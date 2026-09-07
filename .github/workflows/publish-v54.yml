@@ -9,7 +9,7 @@ on:
 permissions:
   contents: write
 
-# v5.4 verified publish trigger
+# v5.4 verified publish trigger 3
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -32,7 +32,7 @@ jobs:
           base64 -d .payload/v54.patch.gz.b64 | gzip -d > /tmp/v54.patch
           git apply /tmp/v54.patch
           mkdir -p assets
-          base64 -d .payload/v54_asset.b64 > assets/mawang-mascot-v54.webp
+          cat .payload/v54_asset.b64 .payload/v54_asset_b.b64 .payload/v54_asset_c.b64 .payload/v54_asset_d.b64 .payload/v54_asset_e.b64 | base64 -d > assets/mawang-mascot-v54.webp
 
       - name: Verify v5.4 output
         shell: bash
