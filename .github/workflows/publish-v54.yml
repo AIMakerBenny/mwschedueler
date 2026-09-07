@@ -9,7 +9,7 @@ on:
 permissions:
   contents: write
 
-# v5.4 verified publish trigger 3
+# v5.4 verified publish trigger 4 - complete asset chunks
 jobs:
   publish:
     runs-on: ubuntu-latest
