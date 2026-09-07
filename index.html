@@ -7560,7 +7560,7 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
         </div>
 
         <button type="button" class="creator-signature" id="creatorEasterEggBtn" title="Created by Majoku">
-          <img src="assets/majoku-mascot.png" alt="MAWANG mascot" class="creator-mascot">
+          <img src="assets/mawang-mascot-v54.webp" alt="MAWANG mascot" class="creator-mascot">
           <span class="creator-credit">Created by Majoku</span>
         </button>
       </div>
@@ -11776,7 +11776,7 @@ function startMascotRain(){
   const count=58;
   for(let i=0;i<count;i++){
     const el=document.createElement('img');
-    el.src='assets/majoku-mascot.png';
+    el.src=document.querySelector('#creatorEasterEggBtn img')?.src||'';
     el.alt='';
     el.className='mascot-rain-item';
     const size=54+Math.random()*105;
@@ -16097,6 +16097,233 @@ body[data-resolution="mobile"] #contacts.active .contact-tag-panel{position:stat
   try{renderPosts()}catch(_){};try{renderMultiDraw()}catch(_){};try{renderPachinko()}catch(_){}
 })();
 </script>
+
+
+<style id="v540-ui-style">
+/* =========================================================
+   v5.4 - Gacha selected dock, compact controls, sticky tags,
+          page-specific text scale, restored mascot
+   ========================================================= */
+
+/* Gacha selected dock: readable cards, glow-on-hover, no horizontal squeezing. */
+#gameMultiDraw .gacha-selected-list-v418{
+  grid-template-columns:1fr!important;
+  gap:12px!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding:4px 5px 10px 3px!important;
+}
+#gameMultiDraw .gacha-selected-item-v54{
+  position:relative;
+  display:grid;
+  grid-template-columns:82px minmax(0,1fr);
+  gap:12px;
+  align-items:center;
+  padding:11px;
+  border:1px solid rgba(146,118,255,.30);
+  border-radius:17px;
+  background:linear-gradient(145deg,rgba(87,57,170,.19),rgba(7,10,19,.97));
+  cursor:pointer;
+  overflow:hidden;
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,filter .16s ease;
+}
+#gameMultiDraw .gacha-selected-item-v54::after{
+  content:"";position:absolute;inset:-45%;pointer-events:none;
+  background:linear-gradient(105deg,transparent 36%,rgba(255,255,255,.18) 49%,transparent 62%);
+  transform:translateX(-70%) rotate(8deg);opacity:0;
+}
+#gameMultiDraw .gacha-selected-item-v54:hover{
+  transform:translateY(-2px) scale(1.01);
+  border-color:rgba(177,148,255,.92);
+  box-shadow:0 0 0 1px rgba(143,105,255,.20),0 0 28px rgba(126,87,255,.34),0 14px 34px rgba(0,0,0,.28);
+  filter:brightness(1.08);
+}
+#gameMultiDraw .gacha-selected-item-v54:hover::after{opacity:1;animation:v54SelectedSweep .75s ease forwards}
+#gameMultiDraw .gacha-selected-item-v54 .thumb{width:82px;height:108px;border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.15);background:#0d1320;display:grid;place-items:center;font-size:22px;font-weight:950}
+#gameMultiDraw .gacha-selected-item-v54 .thumb img{width:100%;height:100%;object-fit:cover}
+#gameMultiDraw .gacha-selected-item-v54 .name{font-size:17px;font-weight:1000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#gameMultiDraw .gacha-selected-item-v54 .order{margin-top:6px;font-size:10px;letter-spacing:.15em;color:#cbb8ff;font-weight:950}
+#gameMultiDraw .gacha-selected-item-v54 .hint{margin-top:6px;font-size:9px;color:var(--muted);font-weight:800}
+@keyframes v54SelectedSweep{to{transform:translateX(72%) rotate(8deg);opacity:0}}
+
+/* Selected card popup. */
+#gachaSelectedCardModalV54{z-index:1100}
+#gachaSelectedCardModalV54 .gacha-selected-popup-box-v54{width:min(610px,94vw)!important;padding:18px!important;background:radial-gradient(circle at 50% 5%,rgba(112,82,255,.18),transparent 38%),linear-gradient(180deg,#11162a,#090d17)!important;border-color:rgba(151,123,255,.50)!important;box-shadow:0 28px 85px rgba(0,0,0,.58),0 0 44px rgba(105,78,255,.20)}
+.gacha-selected-popup-card-v54{display:grid;grid-template-rows:minmax(300px,52vh) auto;border:1px solid rgba(170,144,255,.48);border-radius:22px;overflow:hidden;background:linear-gradient(180deg,rgba(40,35,88,.72),rgba(8,12,22,.98));box-shadow:0 0 0 2px rgba(137,105,255,.10),0 0 40px rgba(126,87,255,.22)}
+.gacha-selected-popup-image-v54{background:#0a0f1a;display:grid;place-items:center;overflow:hidden}
+.gacha-selected-popup-image-v54 img{width:100%;height:100%;object-fit:cover}
+.gacha-selected-popup-initials-v54{font-size:70px;font-weight:1000;color:#d6c9ff}
+.gacha-selected-popup-meta-v54{padding:20px 22px 22px;text-align:center}
+.gacha-selected-popup-kicker-v54{font-size:10px;letter-spacing:.24em;color:#bda8ff;font-weight:1000}
+.gacha-selected-popup-name-v54{font-size:34px;line-height:1.15;font-weight:1000;margin-top:8px}
+.gacha-selected-popup-order-v54{margin-top:9px;color:#ffd86b;font-size:13px;font-weight:950;letter-spacing:.10em}
+.gacha-selected-popup-help-v54{margin-top:9px;color:var(--muted);font-size:10px}
+
+/* Gacha contact palette readability. */
+#gameMultiDraw .multi-draw-contact-palette{gap:9px!important}
+#gameMultiDraw .multi-draw-contact-palette .mini-contact-item{min-height:62px!important;padding:9px 10px!important;gap:11px!important;border-radius:12px!important}
+#gameMultiDraw .multi-draw-contact-palette .mini-contact-item img,
+#gameMultiDraw .multi-draw-contact-palette .mini-contact-avatar{width:42px!important;height:42px!important;flex-basis:42px!important;border-radius:10px!important}
+#gameMultiDraw .multi-draw-contact-palette .mini-contact-name{font-size:calc(16px * var(--ui-text-scale))!important;line-height:1.2!important;font-weight:1000!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+#gameMultiDraw .multi-draw-contact-palette .mini-contact-tags{font-size:calc(11px * var(--ui-text-scale))!important;line-height:1.25!important;margin-top:4px!important;color:#aebad0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+#gameMultiDraw .multi-draw-contact-palette .mini-contact-add{width:36px!important;height:36px!important;min-width:36px!important;padding:0!important;font-size:18px!important}
+
+/* Compact speed and target bubbles in the action row. */
+#gameMultiDraw .gacha-action-row-v419{grid-template-columns:minmax(0,1.65fr) minmax(220px,.82fr) 138px 188px!important;gap:10px!important;align-items:stretch!important}
+#gameMultiDraw .gacha-speed-control-v50{min-height:52px!important;grid-template-columns:auto 65px!important;gap:7px!important;padding:0 10px!important;border-radius:12px!important}
+#gameMultiDraw .gacha-speed-control-v50 label{font-size:9px!important;letter-spacing:.05em!important}
+#gameMultiDraw .gacha-speed-control-v50 select{min-width:65px!important;width:65px!important;padding:7px 7px!important;font-size:12px!important}
+#gameMultiDraw .gacha-target-control-v54{min-height:52px;display:grid;grid-template-columns:auto 30px 50px 30px;gap:5px;align-items:center;padding:0 9px;border:1px solid rgba(116,210,255,.32);border-radius:12px;background:linear-gradient(135deg,rgba(30,91,128,.32),rgba(46,49,111,.42));color:#d9f3ff}
+#gameMultiDraw .gacha-target-control-v54 label{font-size:9px;font-weight:1000;line-height:1.1;color:#bde8ff;white-space:nowrap}
+#gameMultiDraw .gacha-target-control-v54 button{width:30px;height:30px;padding:0;border-radius:8px;font-size:16px;font-weight:1000}
+#gameMultiDraw #multiGachaTargetV54{width:50px;height:34px;padding:5px;text-align:center;font-size:12px;font-weight:1000}
+@media(max-width:1180px){#gameMultiDraw .gacha-action-row-v419{grid-template-columns:1fr 1fr!important}.gacha-speed-control-v50,.gacha-target-control-v54{min-height:50px!important}}
+@media(max-width:720px){#gameMultiDraw .gacha-action-row-v419{grid-template-columns:1fr!important}}
+
+/* Contact tags remain visible while the contact page itself scrolls. */
+#contacts.active,#contacts.active .contact-board-layout,#contacts.active .contact-board-main{overflow:visible!important}
+#contacts.active .contact-tag-panel{
+  position:sticky!important;
+  top:12px!important;
+  align-self:start!important;
+  z-index:90!important;
+  height:max-content!important;
+  max-height:calc(100vh - 24px)!important;
+  overflow:auto!important;
+  box-shadow:0 18px 40px rgba(0,0,0,.26),0 0 0 1px color-mix(in srgb,var(--accent) 8%,transparent)!important;
+}
+@media(max-width:760px){#contacts.active .contact-tag-panel{position:sticky!important;top:6px!important;max-height:46vh!important}}
+
+/* Per-page text size controller in the topbar. */
+.page-text-control-v54{display:flex;align-items:center;gap:5px;margin-left:4px;padding:4px 5px;border:1px solid var(--border);border-radius:10px;background:color-mix(in srgb,var(--panel) 88%,transparent);box-shadow:0 5px 16px rgba(0,0,0,.10)}
+.page-text-control-v54 .page-text-label-v54{min-width:70px;text-align:center;color:#c8d4e8;font-size:10px;font-weight:950;white-space:nowrap}
+.page-text-control-v54 button{width:29px;height:29px;padding:0;border-radius:8px;font-size:11px;font-weight:1000}
+.page-text-control-v54 .page-text-reset-v54{width:27px;color:var(--muted)}
+@media(max-width:900px){.page-text-control-v54{display:none!important}}
+
+/* Restored creator mascot. */
+#settings .creator-signature{min-width:132px;align-items:center!important}
+#settings .creator-mascot{width:128px!important;max-height:112px!important;object-fit:contain!important}
+#settings .creator-credit{text-align:center!important}
+.mascot-rain-item.v54{animation-iteration-count:1!important;animation-fill-mode:forwards!important}
+
+@media(prefers-reduced-motion:reduce){#gameMultiDraw .gacha-selected-item-v54:hover{transform:none}.mascot-rain-item.v54{animation-duration:.01ms!important}}
+</style>
+
+
+<script id="v540-feature-script">
+(function(){
+  try{data.version=Math.max(54,Number(data.version)||0)}catch(_){}
+
+  const MWS_MASCOT_V54='assets/mawang-mascot-v54.webp';
+  window.MWS_MASCOT_V54=MWS_MASCOT_V54;
+  const mascot=document.querySelector('#settings .creator-mascot');
+  if(mascot){mascot.src=MWS_MASCOT_V54;mascot.alt='MAWANG mascot'}
+
+  /* ---------- Gacha selected dock ---------- */
+  function winnerObjectsV54(){return typeof multiDrawWinnerObjects==='function'?multiDrawWinnerObjects():[]}
+  function targetCountV54(){const arr=typeof multiDrawPlayers==='function'?multiDrawPlayers():[];return Math.max(1,Math.min(arr.length||1,Number(data?.miniGames?.multiDraw?.targetCount)||8))}
+  function selectedDockPlayersV54(){
+    const rt=miniGameRuntime.multiDraw||{},all=winnerObjectsV54(),complete=all.length>=targetCountV54();
+    if(complete)return all;
+    return all.filter(p=>p.id!==rt.currentWinnerId);
+  }
+  window.openSelectedGachaCardV54=playerId=>{
+    const p=(typeof multiDrawPlayers==='function'?multiDrawPlayers():[]).find(x=>x.id===playerId);if(!p)return;
+    const winners=winnerObjectsV54(),order=Math.max(1,winners.findIndex(x=>x.id===playerId)+1),modal=document.getElementById('gachaSelectedCardModalV54'),slot=document.getElementById('gachaSelectedCardContentV54');
+    if(!modal||!slot)return;
+    slot.innerHTML=`<div class="gacha-selected-popup-card-v54"><div class="gacha-selected-popup-image-v54">${p.image?`<img src="${esc(p.image)}" alt="${esc(p.name)}">`:`<div class="gacha-selected-popup-initials-v54">${esc(initials(p.name))}</div>`}</div><div class="gacha-selected-popup-meta-v54"><div class="gacha-selected-popup-kicker-v54">SELECTED CARD</div><div class="gacha-selected-popup-name-v54">${esc(p.name)}</div><div class="gacha-selected-popup-order-v54">WINNER ${String(order).padStart(2,'0')}</div><div class="gacha-selected-popup-help-v54">바깥 영역 또는 닫기 버튼을 누르면 돌아갑니다.</div></div></div>`;
+    if(modal.parentElement!==document.body)document.body.appendChild(modal);modal.classList.add('open');modal.setAttribute('aria-hidden','false');try{syncModalInteractionState()}catch(_){}
+  };
+  window.closeSelectedGachaCardV54=()=>{const modal=document.getElementById('gachaSelectedCardModalV54');modal?.classList.remove('open');modal?.setAttribute('aria-hidden','true');try{syncModalInteractionState()}catch(_){}};
+  function renderSelectedDockV54(){
+    const list=document.getElementById('multiStageWinners'),empty=document.getElementById('multiDockEmpty'),count=document.getElementById('multiDockCount');if(!list)return;
+    const players=selectedDockPlayersV54(),all=winnerObjectsV54(),complete=all.length>=targetCountV54();
+    if(count)count.textContent=String(players.length);
+    if(empty){empty.style.display=players.length?'none':'block';empty.textContent=complete?'선발된 카드가 없습니다.':'공개가 끝난 카드는 이곳에 차례대로 보관됩니다.'}
+    list.innerHTML=players.map(p=>{const order=Math.max(1,all.findIndex(x=>x.id===p.id)+1);return `<button type="button" class="gacha-selected-item-v54" onclick="openSelectedGachaCardV54('${p.id}')" title="${esc(p.name)} 카드 크게 보기"><div class="thumb">${p.image?`<img src="${esc(p.image)}" alt="${esc(p.name)}">`:esc(initials(p.name))}</div><div style="min-width:0;text-align:left"><div class="name">${esc(p.name)}</div><div class="order">WINNER ${String(order).padStart(2,'0')}</div><div class="hint">클릭해서 카드 확대</div></div></button>`}).join('');
+  }
+
+  /* ---------- Compact target control beside speed ---------- */
+  function setQuickTargetV54(value){
+    const arr=typeof multiDrawPlayers==='function'?multiDrawPlayers():[],max=Math.max(1,arr.length||150),n=Math.max(1,Math.min(max,Math.floor(Number(value)||1)));
+    const input=document.getElementById('multiGachaTargetV54');if(input){input.max=String(max);input.value=String(n)}
+    const original=document.getElementById('multiDrawTarget');if(original)original.value=String(n);
+    if(Number(data?.miniGames?.multiDraw?.targetCount)!==n&&typeof window.setMultiDrawTarget==='function')window.setMultiDrawTarget(n);else syncGachaQuickControlsV54();
+  }
+  window.adjustGachaTargetV54=delta=>{const cur=Number(document.getElementById('multiGachaTargetV54')?.value)||targetCountV54();setQuickTargetV54(cur+delta)};
+  function ensureGachaTargetControlV54(){
+    const row=document.querySelector('#gameMultiDraw .gacha-action-row-v419');if(!row)return;
+    let box=document.getElementById('gachaTargetControlV54');
+    if(!box){box=document.createElement('div');box.id='gachaTargetControlV54';box.className='gacha-target-control-v54';box.innerHTML=`<label for="multiGachaTargetV54">목표 당첨자</label><button type="button" class="ghost" onclick="adjustGachaTargetV54(-1)" title="한 명 줄이기">−</button><input id="multiGachaTargetV54" type="number" min="1" max="150" value="1" aria-label="목표 당첨자 수"><button type="button" class="ghost" onclick="adjustGachaTargetV54(1)" title="한 명 늘리기">＋</button>`;row.appendChild(box);box.querySelector('input')?.addEventListener('change',e=>setQuickTargetV54(e.target.value));}
+    syncGachaQuickControlsV54();
+  }
+  function syncGachaQuickControlsV54(){
+    const arr=typeof multiDrawPlayers==='function'?multiDrawPlayers():[],max=Math.max(1,arr.length||150),n=targetCountV54(),input=document.getElementById('multiGachaTargetV54'),box=document.getElementById('gachaTargetControlV54');
+    if(input&&document.activeElement!==input){input.max=String(max);input.value=String(n)}
+    const locked=!!miniGameRuntime.multiDraw?.animating||!!miniGameRuntime.multiDraw?.charging||document.getElementById('gameMultiDraw')?.classList.contains('auto-running-v419');
+    if(box)box.querySelectorAll('button,input').forEach(el=>el.disabled=locked);
+  }
+
+  /* ---------- Per-page text size ---------- */
+  const PAGE_SCALE_KEY='mws_page_text_scales_v54';
+  let pageScales={};
+  try{pageScales=JSON.parse(localStorage.getItem(PAGE_SCALE_KEY)||'{}')||{}}catch(_){pageScales={}}
+  const clampScale=n=>Math.max(70,Math.min(180,Math.round((Number(n)||100)/5)*5));
+  function activePageIdV54(){return document.querySelector('.section.active')?.id||'dashboard'}
+  function globalTextScaleV54(){return Math.max(80,Math.min(200,Number(data?.textScale)||100))}
+  function pageScaleV54(id=activePageIdV54()){return clampScale(pageScales[id]||100)}
+  function persistPageScalesV54(){try{localStorage.setItem(PAGE_SCALE_KEY,JSON.stringify(pageScales))}catch(_){}}
+  function applyPageTextScalesV54(){
+    const global=globalTextScaleV54();
+    document.querySelectorAll('.section').forEach(sec=>{const local=pageScaleV54(sec.id),combined=(global*local)/100;sec.style.setProperty('--ui-text-scale',String(combined/100));sec.style.fontSize=`calc(14px * ${combined/100})`});
+    const label=document.getElementById('pageTextScaleValueV54');if(label)label.textContent=`페이지 ${pageScaleV54()}%`;
+  }
+  window.setPageTextScaleV54=value=>{const id=activePageIdV54();pageScales[id]=clampScale(value);persistPageScalesV54();applyPageTextScalesV54()};
+  window.adjustPageTextScaleV54=delta=>window.setPageTextScaleV54(pageScaleV54()+delta);
+  window.resetPageTextScaleV54=()=>window.setPageTextScaleV54(100);
+  function ensurePageTextControlV54(){
+    const clock=document.querySelector('.topbar .clock');if(!clock||document.getElementById('pageTextScaleControlV54'))return;
+    const clockText=document.getElementById('clockText'),box=document.createElement('div');box.id='pageTextScaleControlV54';box.className='page-text-control-v54';box.title='현재 페이지의 글자 크기만 조절합니다. 개인 브라우저에 저장됩니다.';box.innerHTML=`<button type="button" class="ghost" onclick="adjustPageTextScaleV54(-5)" title="현재 페이지 글자 작게">A−</button><span id="pageTextScaleValueV54" class="page-text-label-v54">페이지 100%</span><button type="button" class="ghost" onclick="adjustPageTextScaleV54(5)" title="현재 페이지 글자 크게">A＋</button><button type="button" class="ghost page-text-reset-v54" onclick="resetPageTextScaleV54()" title="현재 페이지 100%로 초기화">↺</button>`;
+    if(clockText)clock.insertBefore(box,clockText);else clock.appendChild(box);applyPageTextScalesV54();
+  }
+
+  /* ---------- Robust contact tag panel ---------- */
+  function reinforceContactTagStickyV54(){
+    const p=document.querySelector('#contacts .contact-tag-panel');if(!p)return;
+    p.style.position='sticky';p.style.top='12px';p.style.alignSelf='start';p.style.maxHeight='calc(100vh - 24px)';p.style.overflow='auto';
+  }
+
+  /* ---------- Restored mascot rain ---------- */
+  let mascotRainTimerV54=0;
+  function startMascotRainV54(){
+    try{if(typeof clearMascotRain==='function')clearMascotRain()}catch(_){}
+    try{mascotRainActive=true}catch(_){}
+    document.body.classList.add('mascot-rain-active');
+    const layer=document.getElementById('mascotRainLayer');if(!layer)return;layer.innerHTML='';
+    const count=86;
+    for(let i=0;i<count;i++){const el=document.createElement('img');el.src=MWS_MASCOT_V54;el.alt='';el.className='mascot-rain-item v54';const size=48+Math.random()*118,startX=Math.random()*100,drift=(Math.random()-.5)*190,rotation=(Math.random()-.5)*540,startRot=(Math.random()-.5)*70,duration=3.2+Math.random()*3.4,delay=Math.random()*2.2;el.style.width=size+'px';el.style.setProperty('--start-x',startX+'vw');el.style.setProperty('--fall-x',drift+'px');el.style.setProperty('--fall-rotate',rotation+'deg');el.style.setProperty('--start-rotate',startRot+'deg');el.style.setProperty('--fall-duration',duration+'s');el.style.setProperty('--fall-delay',delay+'s');layer.appendChild(el)}
+    layer.classList.add('active');layer.setAttribute('aria-hidden','false');clearTimeout(mascotRainTimerV54);mascotRainTimerV54=setTimeout(()=>{try{clearMascotRain()}catch(_){layer.classList.remove('active');layer.innerHTML=''}},8200);
+  }
+  window.toggleMascotRainV54=()=>{const layer=document.getElementById('mascotRainLayer');if(layer?.classList.contains('active')){try{clearMascotRain()}catch(_){};clearTimeout(mascotRainTimerV54)}else startMascotRainV54()};
+  const creatorBtn=document.getElementById('creatorEasterEggBtn');if(creatorBtn)creatorBtn.onclick=window.toggleMascotRainV54;
+
+  /* ---------- Final render wrappers ---------- */
+  const baseRenderMultiV54=window.renderMultiDraw;
+  if(typeof baseRenderMultiV54==='function'){window.renderMultiDraw=function(){const out=baseRenderMultiV54.apply(this,arguments);ensureGachaTargetControlV54();renderSelectedDockV54();syncGachaQuickControlsV54();applyPageTextScalesV54();return out};try{renderMultiDraw=window.renderMultiDraw}catch(_){}}
+  const baseSetTabV54=window.setTab||((typeof setTab==='function')?setTab:null);
+  if(typeof baseSetTabV54==='function'){window.setTab=function(tab){const out=baseSetTabV54.apply(this,arguments);setTimeout(()=>{applyPageTextScalesV54();if(tab==='contacts')reinforceContactTagStickyV54();if(tab==='gameMultiDraw'){ensureGachaTargetControlV54();renderSelectedDockV54()}},0);return out};try{setTab=window.setTab}catch(_){}}
+  const baseApplyTextV54=window.applyTextScale;
+  if(typeof baseApplyTextV54==='function'){window.applyTextScale=function(){const out=baseApplyTextV54.apply(this,arguments);applyPageTextScalesV54();return out};try{applyTextScale=window.applyTextScale}catch(_){}}
+
+  /* Add popup modal once. */
+  if(!document.getElementById('gachaSelectedCardModalV54')){const modal=document.createElement('div');modal.id='gachaSelectedCardModalV54';modal.className='modal';modal.setAttribute('aria-hidden','true');modal.innerHTML=`<div class="modalbox gacha-selected-popup-box-v54"><div class="space" style="margin-bottom:12px"><div><h2 style="margin:0">Selected Card</h2><div class="muted small" style="margin-top:4px">선발된 카드를 크게 확인합니다.</div></div><button type="button" class="ghost" onclick="closeSelectedGachaCardV54()">닫기</button></div><div id="gachaSelectedCardContentV54"></div></div>`;modal.addEventListener('click',e=>{if(e.target===modal)window.closeSelectedGachaCardV54()});document.body.appendChild(modal)}
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('gachaSelectedCardModalV54')?.classList.contains('open')){e.preventDefault();window.closeSelectedGachaCardV54()}},true);
+
+  ensurePageTextControlV54();reinforceContactTagStickyV54();ensureGachaTargetControlV54();applyPageTextScalesV54();try{renderMultiDraw()}catch(_){}
+})();
+</script>
+
 
 </body>
 </html>
