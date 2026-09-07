@@ -1,0 +1,52 @@
+name: Build MAWANG Scheduler v5.1
+
+on:
+  push:
+    paths:
+      - '.github/workflows/build-v51.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch current production base
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 https://mwschedueler.vercel.app -o index.base.html
+          echo "b38f60c91df6dc96b2e24775134fc6856f76266bdb1b32cd7e51565318b3248e  index.base.html" | sha256sum -c -
+
+      - name: Decode update patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d .payload/v1_to_v51.patch.gz.b64 | gzip -d > update.patch
+
+      - name: Build and verify v5.1
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp index.base.html index.html
+          patch index.html < update.patch
+          echo "134737daab8a47cf2513286dae77d07ec3e16c44caaf4f835501356c82b11952  index.html" | sha256sum -c -
+
+      - name: Commit generated index.html
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Publish MAWANG Scheduler v5.1"
+          git push
