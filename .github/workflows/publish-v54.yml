@@ -9,6 +9,7 @@ on:
 permissions:
   contents: write
 
+# v5.4 verified publish trigger
 jobs:
   publish:
     runs-on: ubuntu-latest
