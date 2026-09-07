@@ -1,0 +1,79 @@
+name: Publish MAWANG Scheduler v5.4
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-v54.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify v5.3 production base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(sha256sum index.html | awk '{print $1}')" = "7121e124f7c68a4f7d2e84ffebcc1ddac3fa91e5fc960f3c99e2441473654744"
+
+      - name: Decode v5.4 files
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d .payload/v54.patch.gz.b64 | gzip -d > /tmp/v54.patch
+          git apply /tmp/v54.patch
+          mkdir -p assets
+          base64 -d .payload/v54_asset.b64 > assets/mawang-mascot-v54.webp
+
+      - name: Verify v5.4 output
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(sha256sum index.html | awk '{print $1}')" = "d5b533a9f08f57d256a9a36d2fdee7aa9a32e04c454d50f78a4dbb03b4c112c8"
+          test "$(sha256sum assets/mawang-mascot-v54.webp | awk '{print $1}')" = "674d2bb02e1a2cc13d09e14b51c74fbda8df101d6ef01fd5be7620d4ca3fc30a"
+          grep -q 'id="v540-feature-script"' index.html
+          grep -q 'gachaSelectedCardModalV54' index.html
+          grep -q 'gachaTargetControlV54' index.html
+          grep -q 'mws_page_text_scales_v54' index.html
+          grep -q 'assets/mawang-mascot-v54.webp' index.html
+          ! grep -q '컨텐츠 스케줄러 Beta' index.html
+
+      - name: Validate inline JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import re, subprocess, pathlib, sys
+          text=pathlib.Path('index.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script([^>]*)>(.*?)</script>', text, flags=re.S|re.I)
+          checked=0
+          for i,(attrs,body) in enumerate(scripts):
+              if re.search(r'\bsrc\s*=', attrs, flags=re.I):
+                  continue
+              p=pathlib.Path('/tmp')/f'mawang_script_{i}.js'
+              p.write_text(body, encoding='utf-8')
+              r=subprocess.run(['node','--check',str(p)],capture_output=True,text=True)
+              if r.returncode:
+                  print(r.stderr)
+                  sys.exit(r.returncode)
+              checked+=1
+          print(f'validated {checked} inline scripts')
+          PY
+
+      - name: Commit v5.4
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html assets/mawang-mascot-v54.webp
+          git commit -m 'Publish MAWANG Scheduler v5.4 UI and Gacha refinements'
+          git push origin HEAD:main
