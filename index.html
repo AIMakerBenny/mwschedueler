@@ -6509,7 +6509,7 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
 <div class="app">
   <aside class="sidebar">
     <div class="sidebar-head">
-      <div class="logo"><span class="logo-full">MAWANG</span><span class="logo-mini">M</span><small>컨텐츠 스케줄러 Beta</small></div>
+      <div class="logo"><span class="logo-full">MAWANG</span><span class="logo-mini">M</span><small>컨텐츠 스케줄러</small></div>
       <button type="button" id="sidebarPinBtn" class="sidebar-pin" title="메뉴 고정">
         <span class="sidebar-pin-icon"><svg viewBox="0 0 24 24"><path d="M9 3h6l-1 6 3 3v2H7v-2l3-3zM12 14v7"/></svg></span>
         <span class="sidebar-pin-label">고정</span>
@@ -6753,10 +6753,10 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
           </div>
           <div class="post-view-controls">
             <div class="post-view-mode" role="group" aria-label="신청자 보기 방식">
-              <button type="button" id="postCardViewBtn" class="post-view-btn" onclick="setPostViewMode('card')">▦ 카드형</button>
-              <button type="button" id="postListViewBtn" class="post-view-btn" onclick="setPostViewMode('list')">☷ 리스트형</button>
+              <button type="button" id="postCardViewBtn" class="post-view-btn" onclick="setPostViewMode('card')"><svg class="post-view-icon-v53" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.2"></rect><rect x="14" y="3" width="7" height="7" rx="1.2"></rect><rect x="3" y="14" width="7" height="7" rx="1.2"></rect><rect x="14" y="14" width="7" height="7" rx="1.2"></rect></svg><span>카드형</span></button>
+              <button type="button" id="postListViewBtn" class="post-view-btn" onclick="setPostViewMode('list')"><svg class="post-view-icon-v53" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"></path><rect x="3" y="4" width="2" height="2" rx=".5"></rect><rect x="3" y="10" width="2" height="2" rx=".5"></rect><rect x="3" y="16" width="2" height="2" rx=".5"></rect></svg><span>리스트형</span></button>
             </div>
-            <div class="post-bulk-actions"><button type="button" class="secondary post-bulk-confirm mws-admin-only" onclick="bulkConfirmPostApplicants()">전체 확정</button><button type="button" class="post-bulk-gacha-v50 mws-admin-only" onclick="bulkGachaPostApplicantsV50()">전체 가챠</button><button type="button" class="ghost post-bulk-cancel mws-admin-only" onclick="bulkCancelPostApplicants()">전체 취소</button></div>
+            <div class="post-bulk-actions"><button type="button" class="secondary post-bulk-confirm mws-admin-only" onclick="bulkConfirmPostApplicants()">전체 확정</button><button type="button" class="post-bulk-gacha-v50 mws-admin-only" onclick="bulkGachaPostApplicantsV50()">전체 가챠</button><button type="button" class="ghost post-bulk-cancel mws-admin-only" onclick="bulkCancelPostApplicants()">전체 취소</button><div class="post-partial-confirm-v53"><button type="button" class="post-partial-confirm-btn-v53" onclick="bulkPartialConfirmPostApplicantsV53()">부분 확정</button><label class="post-partial-count-v53">상위 <input id="postPartialConfirmCountV53" type="number" min="1" value="3" inputmode="numeric"> 명</label></div></div>
             <div class="post-column-control">
               <label for="postCardColumns">한 줄 카드</label>
               <select id="postCardColumns" onchange="setPostCardColumns(this.value)">
@@ -7263,9 +7263,9 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
         <div class="mini-drop-zone" data-mini-drop="pachinko" ondragover="miniDropOver(event)" ondragleave="miniDropLeave(event)" ondrop="miniDropContact('pachinko',event)">연락처를 이곳에 끌어 놓으세요</div>
       </div>
       <div class="card mini-game-config horse-race-config">
-        <div class="space"><div><h3>참가 말</h3><div class="subtle">말 위 원형 배지는 프로필 이미지, 몸체에는 참가자 이름이 표시됩니다. 출발 순서는 상단의 순서 섞기 버튼으로 변경할 수 있습니다.</div></div><div class="row"><button class="ghost small" onclick="clearMiniEntries('pachinko')">전체 비우기</button></div></div>
+        <div class="space"><div><h3>참가 인원</h3><div class="subtle">각 참가자의 프로필 이미지와 이름이 표시됩니다. 출발 순서는 상단의 순서 섞기 버튼으로 변경할 수 있습니다.</div></div><div class="row"><button class="ghost small" onclick="clearMiniEntries('pachinko')">전체 비우기</button></div></div>
         <div id="pachinkoEntryList" class="mini-entry-list horse-race-entry-list"></div>
-        <div class="mini-probability-summary">매 턴마다 각 말은 독립적으로 0에서 2 사이만큼 전진합니다. 트랙 중간의 부스터 구간에서는 추가 전진이 발생할 수 있습니다. 화면에는 칸 수를 직접 보여주지 않고 말이 달리는 연출과 실시간 등수만 보여줍니다.</div>
+        <div class="mini-probability-summary">매 턴마다 각 참가자는 독립적으로 0에서 2 사이만큼 전진합니다. 트랙 중간의 부스터 구간에서는 추가 전진이 발생할 수 있습니다. 화면에는 칸 수를 직접 보여주지 않고 경주 연출과 실시간 등수만 보여줍니다.</div>
       </div>
     </div>
   </div>
@@ -7372,8 +7372,21 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
     <div class="space"><div><h3>당첨자 기록</h3><div class="subtle">공개가 끝난 당첨자들을 한눈에 확인합니다.</div></div><span id="multiWinnerCountChip" class="chip">0명</span></div>
     <div id="multiWinnerSlots" class="multi-winner-slots gacha-winner-slots-v418"></div>
     <div id="multiDrawComplete" class="multi-complete-banner" hidden><div class="multi-complete-kicker">SELECTION COMPLETE</div><strong>선발이 완료되었습니다</strong><div id="multiCompleteNames"></div></div>
+    <div class="gacha-apply-post-wrap-v53"><button type="button" id="gachaApplyPostBtnV53" class="gacha-apply-post-btn-v53" onclick="openGachaApplyPostModalV53()">게시글에 적용하기</button><div class="gacha-apply-post-help-v53">현재 선발된 인원을 선택한 게시글에서 확정으로 바꾸고, 해당 게시글의 나머지 가챠 인원은 다음기회에로 변경합니다.</div></div>
   </div>
 </section>
+
+<div id="gachaApplyPostModalV53" class="modal gacha-apply-post-modal-v53" aria-hidden="true">
+  <div class="modalbox gacha-apply-post-box-v53">
+    <div class="space">
+      <div><h2 style="margin:0">Gacha 결과를 게시글에 적용</h2><div id="gachaApplyPostSummaryV53" class="muted small" style="margin-top:5px"></div></div>
+      <button type="button" class="ghost" onclick="closeGachaApplyPostModalV53()">닫기</button>
+    </div>
+    <div class="gacha-apply-note-v53">게시글을 선택하면 당첨자는 확정, 선택한 게시글에 남아 있는 다른 가챠 상태 신청자는 다음기회에로 변경됩니다.</div>
+    <div id="gachaApplyPostListV53" class="gacha-apply-post-list-v53"></div>
+    <div class="gacha-apply-actions-v53"><button type="button" class="secondary" onclick="closeGachaApplyPostModalV53()">취소</button><button type="button" class="primary" onclick="applyGachaWinnersToSelectedPostV53()">적용하기</button></div>
+  </div>
+</div>
 
 <section id="export" class="section">
       <div class="card" style="margin-bottom:14px;border-color:rgba(90,184,255,.28);background:linear-gradient(135deg,rgba(33,96,155,.10),rgba(18,22,33,.96))">
@@ -15935,5 +15948,155 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
   }
   init();
 })();
-</script>\n</body>
+</script>
+
+<style id="v530-ui-enhancement-style">
+/* v5.3 - requested usability and visual refinements */
+#posts .post-view-btn{display:inline-flex!important;align-items:center!important;gap:8px!important;min-height:42px!important;padding:8px 13px!important;font-size:11px!important}
+#posts .post-view-icon-v53{width:22px;height:22px;flex:0 0 22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#posts .post-view-btn.active .post-view-icon-v53{filter:drop-shadow(0 0 4px rgba(255,255,255,.26))}
+#posts .post-partial-confirm-v53{display:flex;align-items:center;gap:7px;margin-left:18px;padding-left:18px;border-left:1px solid color-mix(in srgb,var(--border) 78%,transparent)}
+#posts .post-partial-confirm-btn-v53{min-height:40px;padding:8px 15px;border:1px solid #5b8cff;border-radius:10px;background:rgba(67,112,255,.10);color:#b9d0ff;font-weight:950;cursor:pointer}
+#posts .post-partial-confirm-btn-v53:hover{background:rgba(67,112,255,.18);box-shadow:0 0 18px rgba(67,112,255,.12)}
+#posts .post-partial-count-v53{display:flex;align-items:center;gap:5px;white-space:nowrap;color:var(--muted);font-size:10px;font-weight:850}
+#posts #postPartialConfirmCountV53{width:64px;height:40px;padding:6px 7px;text-align:center;font-weight:950}
+@media(max-width:1180px){#posts .post-partial-confirm-v53{margin-left:0;padding-left:0;border-left:0}}
+
+#gameMultiDraw .gacha-apply-post-wrap-v53{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid color-mix(in srgb,var(--border) 74%,transparent)}
+#gameMultiDraw .gacha-apply-post-btn-v53{min-width:250px;min-height:48px;padding:10px 22px;border-radius:12px;border:1px solid rgba(104,220,173,.72);background:linear-gradient(135deg,rgba(18,151,113,.96),rgba(28,113,168,.96));color:#f1fff9;font-size:14px;font-weight:1000;cursor:pointer;box-shadow:0 12px 30px rgba(20,140,112,.16),0 0 24px rgba(80,224,180,.09)}
+#gameMultiDraw .gacha-apply-post-btn-v53:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px)}
+#gameMultiDraw .gacha-apply-post-btn-v53:disabled{opacity:.38;cursor:not-allowed;filter:grayscale(.35)}
+#gameMultiDraw .gacha-apply-post-help-v53{max-width:780px;text-align:center;color:var(--muted);font-size:10px;line-height:1.55}
+.gacha-apply-post-box-v53{width:min(760px,94vw)!important}
+.gacha-apply-note-v53{margin:13px 0;padding:11px 12px;border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));border-radius:10px;background:color-mix(in srgb,var(--accent) 7%,var(--input));color:var(--muted);font-size:10px;line-height:1.55}
+.gacha-apply-post-list-v53{display:flex;flex-direction:column;gap:8px;max-height:54vh;overflow:auto;padding-right:3px}
+.gacha-post-choice-v53{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 12px;border:1px solid var(--border);border-radius:11px;background:var(--input);cursor:pointer}
+.gacha-post-choice-v53:hover{border-color:color-mix(in srgb,var(--accent) 55%,var(--border));background:color-mix(in srgb,var(--accent) 6%,var(--input))}
+.gacha-post-choice-v53 input{width:17px;height:17px}
+.gacha-post-choice-title-v53{font-size:12px;font-weight:950;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gacha-post-choice-meta-v53{margin-top:4px;color:var(--muted);font-size:9px}
+.gacha-post-choice-count-v53{font-size:9px;color:#b9c7df;white-space:nowrap}
+.gacha-apply-actions-v53{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+
+#gamePachinko .horse-race-bottom{align-items:stretch!important}
+#gamePachinko .horse-race-contact-dock,#gamePachinko .horse-race-config{min-height:690px!important}
+#gamePachinko .horse-race-config{display:flex!important;flex-direction:column}
+#gamePachinko .horse-race-entry-list{max-height:565px!important;flex:1 1 auto}
+#gamePachinko .horse-entry-row{grid-template-columns:36px minmax(0,1fr) 38px 58px!important}
+#gamePachinko .horse-entry-remove-v53{height:34px;padding:0 9px!important;border-color:rgba(232,93,117,.48)!important;color:#ffc3cf!important;background:rgba(232,93,117,.08)!important;font-size:9px!important;font-weight:950!important}
+#gamePachinko .horse-entry-remove-v53:hover{background:rgba(232,93,117,.16)!important}
+@media(max-width:900px){#gamePachinko .horse-race-contact-dock,#gamePachinko .horse-race-config{min-height:auto!important}}
+
+#contacts.active .contact-tag-panel{position:sticky!important;top:18px!important;align-self:start!important;z-index:55!important;max-height:calc(100vh - 36px)!important;box-shadow:0 16px 36px rgba(0,0,0,.18)}
+@media(max-width:900px){#contacts.active .contact-tag-panel{position:static!important;max-height:none!important}}
+body[data-resolution="mobile"] #contacts.active .contact-tag-panel{position:static!important;max-height:none!important}
+
+/* More theatrical ranking presentation without altering ranking math. */
+#sniper .ranking-stage{position:relative;background:radial-gradient(circle at 50% 16%,color-mix(in srgb,var(--accent) 13%,transparent),transparent 34%),linear-gradient(180deg,color-mix(in srgb,var(--panel) 96%,#070912),var(--panel));box-shadow:inset 0 0 70px rgba(0,0,0,.18),0 14px 42px rgba(0,0,0,.16)}
+#sniper .ranking-stage::before,#sniper .ranking-stage::after{content:"✦  ✧  ✦  ·  ✧  ✦  ·  ✦";position:absolute;left:50%;transform:translateX(-50%);width:94%;text-align:center;pointer-events:none;white-space:pre;letter-spacing:clamp(16px,3vw,52px);color:color-mix(in srgb,var(--accent) 62%,#fff);opacity:.18;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 60%,transparent));animation:rankingStarsV53 3.6s ease-in-out infinite alternate}
+#sniper .ranking-stage::before{top:18px}
+#sniper .ranking-stage::after{bottom:14px;animation-delay:-1.7s}
+#sniper .ranking-podium-card{transition:transform .2s ease,box-shadow .2s ease,filter .2s ease!important}
+#sniper .ranking-podium-slot.first .ranking-podium-card{box-shadow:0 0 0 1px rgba(255,211,72,.23),0 0 34px rgba(240,184,30,.22),0 18px 48px rgba(0,0,0,.24)!important;animation:rankingGoldPulseV53 2.6s ease-in-out infinite}
+#sniper .ranking-podium-slot.second .ranking-podium-card{box-shadow:0 0 0 1px rgba(211,224,241,.14),0 0 25px rgba(183,201,222,.13),0 16px 38px rgba(0,0,0,.20)}
+#sniper .ranking-podium-slot.third .ranking-podium-card{box-shadow:0 0 0 1px rgba(216,145,81,.15),0 0 25px rgba(190,112,50,.13),0 16px 38px rgba(0,0,0,.20)}
+#sniper .ranking-podium-card::before{content:"";position:absolute;inset:-60% -35%;z-index:-1;background:linear-gradient(105deg,transparent 36%,rgba(255,255,255,.14) 48%,transparent 60%);transform:translateX(-60%) rotate(7deg);animation:rankingShineV53 4.6s ease-in-out infinite}
+#sniper .ranking-crown{animation:rankingCrownV53 1.8s ease-in-out infinite;filter:drop-shadow(0 0 10px rgba(255,204,49,.58))!important}
+#sniper .ranking-podium-slot.first .ranking-podium-avatar{box-shadow:0 0 0 4px rgba(255,218,84,.10),0 0 28px rgba(255,205,52,.32),0 10px 24px rgba(0,0,0,.30)!important}
+#sniper .ranking-podium-slot.second .ranking-podium-avatar{box-shadow:0 0 20px rgba(205,221,241,.22),0 10px 22px rgba(0,0,0,.26)!important}
+#sniper .ranking-podium-slot.third .ranking-podium-avatar{box-shadow:0 0 20px rgba(219,139,75,.20),0 10px 22px rgba(0,0,0,.26)!important}
+#sniper .ranking-step{position:relative;overflow:hidden;box-shadow:0 10px 24px rgba(0,0,0,.20)}
+#sniper .ranking-step::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.25) 50%,transparent 70%);transform:translateX(-120%);animation:rankingStepShineV53 3.4s ease-in-out infinite}
+#sniper .ranking-list-row:nth-child(-n+3){box-shadow:inset 3px 0 0 color-mix(in srgb,var(--accent) 55%,transparent)}
+@keyframes rankingGoldPulseV53{50%{transform:translateY(-3px) scale(1.006);filter:brightness(1.06);box-shadow:0 0 0 1px rgba(255,226,111,.32),0 0 48px rgba(240,184,30,.31),0 21px 54px rgba(0,0,0,.28)}}
+@keyframes rankingCrownV53{50%{transform:translateY(-4px) scale(1.08) rotate(-1deg)}}
+@keyframes rankingShineV53{0%,58%{transform:translateX(-70%) rotate(7deg);opacity:0}70%{opacity:1}88%,100%{transform:translateX(70%) rotate(7deg);opacity:0}}
+@keyframes rankingStepShineV53{0%,62%{transform:translateX(-120%)}82%,100%{transform:translateX(120%)}}
+@keyframes rankingStarsV53{from{opacity:.10;transform:translateX(-50%) translateY(0) scale(.98)}to{opacity:.29;transform:translateX(-50%) translateY(-3px) scale(1.02)}}
+@media(prefers-reduced-motion:reduce){#sniper .ranking-stage::before,#sniper .ranking-stage::after,#sniper .ranking-podium-slot.first .ranking-podium-card,#sniper .ranking-crown,#sniper .ranking-podium-card::before,#sniper .ranking-step::after{animation:none!important}}
+</style>
+
+<script id="v530-feature-script">
+(function(){
+  try{data.version=Math.max(53,Number(data.version)||0)}catch(_){}
+
+  function v53Status(c){try{return typeof normStatus==='function'?normStatus(c?.status):String(c?.status||'pending')}catch(_){return String(c?.status||'pending')}}
+  function v53SortedPostApplicants(post){
+    const q=(document.getElementById('postApplicantSearch')?.value||'').trim().toLowerCase();
+    const sf=document.getElementById('postApplicantStatusFilter')?.value||'';
+    const sort=document.getElementById('postApplicantSort')?.value||'recent';
+    let arr=[...(post?.comments||[])];
+    if(q)arr=arr.filter(c=>(`${c.name||''} ${c.userId||''} ${c.comment||''}`).toLowerCase().includes(q));
+    if(sf)arr=arr.filter(c=>v53Status(c)===sf);
+    if(sort==='upDesc')arr.sort((a,b)=>(Number(b.upCount)||0)-(Number(a.upCount)||0)||String(b.regDate||'').localeCompare(String(a.regDate||'')));
+    else if(sort==='upAsc')arr.sort((a,b)=>(Number(a.upCount)||0)-(Number(b.upCount)||0)||String(b.regDate||'').localeCompare(String(a.regDate||'')));
+    else if(sort==='oldest')arr.sort((a,b)=>String(a.regDate||'').localeCompare(String(b.regDate||'')));
+    else if(sort==='name')arr.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ko'));
+    else arr.sort((a,b)=>String(b.regDate||'').localeCompare(String(a.regDate||'')));
+    return arr;
+  }
+  function v53ApplicantKey(c){const uid=String(c?.userId||'').trim().toLowerCase();if(uid)return `uid:${uid}`;const station=typeof soopStationKey==='function'?soopStationKey(c?.stationUrl||''):'';if(station)return `station:${station}`;const n=typeof normalizeContactName==='function'?normalizeContactName(c?.name):String(c?.name||'').trim().toLowerCase();return `name:${n}`}
+  window.bulkPartialConfirmPostApplicantsV53=()=>{
+    const p=typeof postById==='function'?postById(activePostId):null;if(!p)return toast('게시글','게시글을 먼저 선택해 주세요');
+    const arr=v53SortedPostApplicants(p);if(!arr.length)return toast('게시글','현재 조건에 맞는 신청자가 없습니다');
+    const unique=[];const seen=new Set();for(const c of arr){const key=v53ApplicantKey(c);if(seen.has(key))continue;seen.add(key);unique.push(c)}
+    const input=document.getElementById('postPartialConfirmCountV53');const n=Math.max(1,Math.min(unique.length,Math.floor(Number(input?.value)||1)));if(input)input.value=String(n);
+    const sortSel=document.getElementById('postApplicantSort'),criterion=sortSel?.selectedOptions?.[0]?.textContent||'현재 정렬';
+    if(!confirm(`${criterion} 기준 상위 ${n}명을 확정으로 변경하시겠습니까?\n현재 검색 및 상태 필터가 있다면 필터에 보이는 고유 신청자 범위에서 계산됩니다.`))return;
+    const selectedKeys=new Set(unique.slice(0,n).map(v53ApplicantKey));let changedPeople=0;for(const key of selectedKeys){if((p.comments||[]).some(c=>v53ApplicantKey(c)===key&&v53Status(c)!=='selected'))changedPeople++}
+    for(const c of p.comments||[])if(selectedKeys.has(v53ApplicantKey(c)))c.status='selected';
+    if(typeof syncPostContactApplicationHistories==='function')syncPostContactApplicationHistories(p);saveData('게시글 부분 확정');if(typeof renderPosts==='function')renderPosts();toast('게시글',`상위 ${n}명 중 ${changedPeople}명을 확정으로 변경했습니다`);
+  };
+
+  function v53WinnerPlayers(){return typeof multiDrawWinnerObjects==='function'?multiDrawWinnerObjects():[]}
+  function v53PlayerMatchesComment(player,comment,targetPost){
+    if(!player||!comment)return false;
+    if(player.sourceCommentId&&player.sourcePostId&&targetPost?.id===player.sourcePostId&&player.sourceCommentId===comment.id)return true;
+    const pu=String(player.sourceUserId||'').trim().toLowerCase(),cu=String(comment.userId||'').trim().toLowerCase();
+    if(pu&&cu)return pu===cu;
+    if(player.contactId&&typeof findContactForSoopApplicant==='function'){const matched=findContactForSoopApplicant(comment);if(matched)return matched.id===player.contactId}
+    const pn=typeof normalizeContactName==='function'?normalizeContactName(player.name):String(player.name||'').trim().toLowerCase();
+    const cn=typeof normalizeContactName==='function'?normalizeContactName(comment.name):String(comment.name||'').trim().toLowerCase();
+    return !!pn&&pn===cn;
+  }
+  function v53RenderGachaPostChoices(){
+    const box=document.getElementById('gachaApplyPostListV53'),summary=document.getElementById('gachaApplyPostSummaryV53');if(!box)return;
+    const winners=v53WinnerPlayers(),posts=Array.isArray(data.posts)?data.posts:[];if(summary)summary.textContent=`현재 선발 ${winners.length}명 · 적용할 게시글을 선택하세요`;
+    if(!posts.length){box.innerHTML='<div class="empty">등록된 게시글이 없습니다.</div>';return}
+    const sourceIds=[...new Set(winners.map(x=>x.sourcePostId).filter(Boolean))],preferred=sourceIds.length===1?sourceIds[0]:(activePostId||posts[0].id);
+    box.innerHTML=posts.map((p,i)=>{const g=(p.comments||[]).filter(c=>v53Status(c)==='gacha').length,s=(p.comments||[]).filter(c=>v53Status(c)==='selected').length;return `<label class="gacha-post-choice-v53"><input type="radio" name="gachaApplyPostV53" value="${p.id}" ${(p.id===preferred||(!posts.some(x=>x.id===preferred)&&i===0))?'checked':''}><span><div class="gacha-post-choice-title-v53">${esc(p.name||`게시글 ${p.postNo||''}`)}</div><div class="gacha-post-choice-meta-v53">${esc(p.bjId||'')} · 글 ${esc(p.postNo||'')}</div></span><span class="gacha-post-choice-count-v53">가챠 ${g}명 · 확정 ${s}명</span></label>`}).join('');
+  }
+  window.openGachaApplyPostModalV53=()=>{
+    const winners=v53WinnerPlayers();if(!winners.length)return toast('Gacha','먼저 한 명 이상 선발해 주세요');
+    const modal=document.getElementById('gachaApplyPostModalV53');if(!modal)return;if(modal.parentElement!==document.body)document.body.appendChild(modal);v53RenderGachaPostChoices();modal.classList.add('open');modal.setAttribute('aria-hidden','false');try{syncModalInteractionState()}catch(_){}
+  };
+  window.closeGachaApplyPostModalV53=()=>{const modal=document.getElementById('gachaApplyPostModalV53');modal?.classList.remove('open');modal?.setAttribute('aria-hidden','true');try{syncModalInteractionState()}catch(_){}};
+  window.applyGachaWinnersToSelectedPostV53=()=>{
+    const chosen=document.querySelector('input[name="gachaApplyPostV53"]:checked')?.value;if(!chosen)return toast('Gacha','적용할 게시글을 선택해 주세요');
+    const post=typeof postById==='function'?postById(chosen):null;if(!post)return toast('Gacha','선택한 게시글을 찾을 수 없습니다');
+    const winners=v53WinnerPlayers();if(!winners.length)return toast('Gacha','현재 선발된 인원이 없습니다');
+    const winnerCommentIds=new Set(),matchedWinnerIds=new Set();
+    winners.forEach(player=>{(post.comments||[]).forEach(c=>{if(v53PlayerMatchesComment(player,c,post)){winnerCommentIds.add(c.id);matchedWinnerIds.add(player.id)}})});
+    if(!winnerCommentIds.size)return toast('Gacha','선택한 게시글에서 당첨자와 일치하는 신청자를 찾지 못했습니다');
+    if(matchedWinnerIds.size<winners.length&&!confirm(`선발 ${winners.length}명 중 ${matchedWinnerIds.size}명만 선택한 게시글에서 찾았습니다.\n찾은 인원만 확정하고 나머지 가챠 인원을 다음기회에로 변경할까요?`))return;
+    let confirmed=0,nexted=0;for(const c of post.comments||[]){if(winnerCommentIds.has(c.id)){if(v53Status(c)!=='selected'){c.status='selected';confirmed++}}else if(v53Status(c)==='gacha'){c.status='nextchance';nexted++}}
+    if(typeof syncPostContactApplicationHistories==='function')syncPostContactApplicationHistories(post);saveData('Gacha 결과 게시글 일괄 적용');activePostId=post.id;try{renderPosts()}catch(_){};try{renderMultiDraw()}catch(_){};window.closeGachaApplyPostModalV53();toast('Gacha',`${matchedWinnerIds.size}명 확정 · 나머지 가챠 ${nexted}명을 다음기회에로 변경했습니다`);
+  };
+
+  const baseRenderMultiV53=window.renderMultiDraw;
+  if(typeof baseRenderMultiV53==='function'){window.renderMultiDraw=function(){const out=baseRenderMultiV53.apply(this,arguments);const btn=document.getElementById('gachaApplyPostBtnV53');if(btn)btn.disabled=v53WinnerPlayers().length===0;return out};try{renderMultiDraw=window.renderMultiDraw}catch(_){}}
+
+  const baseUpdateHorseRaceUIV53=window.updateHorseRaceUI;
+  if(typeof baseUpdateHorseRaceUIV53==='function'){window.updateHorseRaceUI=function(){const out=baseUpdateHorseRaceUIV53.apply(this,arguments);const racers=typeof horseRacers==='function'?horseRacers():[];document.querySelectorAll('#pachinkoEntryList .horse-entry-row').forEach((row,i)=>{const racer=racers[i];if(!racer||row.querySelector('.horse-entry-remove-v53'))return;const b=document.createElement('button');b.type='button';b.className='ghost mini-delete horse-entry-remove-v53';b.textContent='삭제';b.disabled=!!miniGameRuntime.pachinko?.running;b.onclick=()=>miniRemoveEntry('pachinko',racer.id);row.appendChild(b)});return out};try{updateHorseRaceUI=window.updateHorseRaceUI}catch(_){}}
+
+  const baseRenderPostsV53=window.renderPosts;
+  if(typeof baseRenderPostsV53==='function'){window.renderPosts=function(){const out=baseRenderPostsV53.apply(this,arguments);const p=typeof postById==='function'?postById(activePostId):null,input=document.getElementById('postPartialConfirmCountV53');if(input&&p){const seen=new Set(),max=Math.max(1,v53SortedPostApplicants(p).filter(c=>{const k=v53ApplicantKey(c);if(seen.has(k))return false;seen.add(k);return true}).length);input.max=String(max);if(Number(input.value)>max)input.value=String(max)}return out};try{renderPosts=window.renderPosts}catch(_){}}
+
+  document.getElementById('gachaApplyPostModalV53')?.addEventListener('click',e=>{if(e.target?.id==='gachaApplyPostModalV53')window.closeGachaApplyPostModalV53()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('gachaApplyPostModalV53')?.classList.contains('open')){e.preventDefault();window.closeGachaApplyPostModalV53()}},true);
+  try{renderPosts()}catch(_){};try{renderMultiDraw()}catch(_){};try{renderPachinko()}catch(_){}
+})();
+</script>
+
+</body>
 </html>
