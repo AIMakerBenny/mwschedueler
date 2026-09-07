@@ -2,9 +2,9 @@
 
 MAWANG Scheduler web app.
 
-- Static frontend deployed with Vercel
+- Static frontend hosted with Vercel
 - Shared data and admin authentication handled by Supabase
 - `index.html` is the production entry point
-- `app.css` and `app.js` contain the main stylesheet and application logic
+- Current release: v5.1
 
-Current release: v5.1
+Once the Vercel project is connected to this repository, pushes to `main` can be deployed automatically.
