@@ -1,0 +1,61 @@
+name: Publish MAWANG Scheduler v5.8
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apply_v58.py.gz.b64
+      - .github/workflows/publish-v58.yml
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply v5.8 patch
+        run: |
+          base64 -d apply_v58.py.gz.b64 | gzip -d > /tmp/apply_v58.py
+          python /tmp/apply_v58.py index.html
+      - name: Verify v5.8 features
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          required=[
+            'id="mws-v58-style"',
+            'id="mws-v58-script"',
+            'sync_admin_state_to_public',
+            '개인정보 및 접속정보 안내',
+            '7일 참여 예정',
+            'Admin 온라인 저장 완료',
+          ]
+          missing=[x for x in required if x not in s]
+          if missing: raise SystemExit('Missing: '+repr(missing))
+          if '등록된 체크리스트 없음' in s: raise SystemExit('Checklist dashboard text remains')
+          print('v5.8 markers OK')
+          PY
+      - name: Check inline JavaScript syntax
+        run: |
+          python - <<'PY'
+          import re, pathlib
+          s=pathlib.Path('index.html').read_text(encoding='utf-8')
+          out=pathlib.Path('/tmp/v58js'); out.mkdir(exist_ok=True)
+          blocks=re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>',s,re.S|re.I)
+          for i,b in enumerate(blocks): (out/f'{i:02d}.js').write_text(b,encoding='utf-8')
+          print(len(blocks),'inline scripts')
+          PY
+          for f in /tmp/v58js/*.js; do node --check "$f"; done
+      - name: Commit production index
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No production change to commit"
+          else
+            git commit -m "Publish MAWANG Scheduler v5.8"
+            git push
+          fi
