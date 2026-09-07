@@ -8070,12 +8070,6 @@ data.posts=data.posts.filter(Boolean).map(p=>({
   postNo:String(p.postNo||''),
   name:String(p.name||(`게시글 ${p.postNo||''}`)).trim()||'게시글',
   sourceTitle:String(p.sourceTitle||''),
-  sourceContent:normalizeSoopContentValue(p.sourceContent),
-  sourceAuthor:String(p.sourceAuthor||''),
-  sourceAuthorId:String(p.sourceAuthorId||''),
-  sourceRegDate:String(p.sourceRegDate||''),
-  sourceViewCount:Math.max(0,Number(p.sourceViewCount)||0),
-  sourcePhotos:Array.isArray(p.sourcePhotos)?p.sourcePhotos.filter(Boolean).map(String):[],
   nameManual:p.nameManual===true || (p.nameManual===undefined && String(p.name||'').trim() && String(p.name||'').trim()!==`게시글 ${p.postNo||''}`),
   createdAt:p.createdAt||new Date().toISOString(),
   lastSyncAt:p.lastSyncAt||'',
@@ -13051,18 +13045,12 @@ function titleFromBoardResult(root,postNo){
   walk(root);return found;
 }
 async function fetchSoopPostTitle(post,firstJson){
+  // v5.1.1: Keep post syncing lightweight. Never fetch the source article body or its images.
+  // Use a title already present in the comment response when available; otherwise keep the saved title.
   const fromJson=titleFromSoopJson(firstJson);if(fromJson)return fromJson;
-  if(post.sourceTitle)return post.sourceTitle;
-  // Board JSON is on the same public API host as comments, so it often works even when the HTML page is CORS-blocked.
-  try{
-    const firstBoard=await fetchSoopJson(soopBoardApiUrl(post,1));let t=titleFromBoardResult(firstBoard,post.postNo);if(t)return t;
-    const pages=Math.max(1,Math.min(12,Number(firstBoard?.meta?.last_page||firstBoard?.meta?.total_page||firstBoard?.last_page)||1));
-    for(let page=2;page<=pages;page++){const j=await fetchSoopJson(soopBoardApiUrl(post,page));t=titleFromBoardResult(j,post.postNo);if(t)return t}
-  }catch(_){}
-  try{const r=await fetch(post.url,{headers:{accept:'text/html'}});if(r.ok){const t=titleFromSoopHtml(await r.text());if(t)return t}}catch(_){}
-  try{const r=await fetch(`http://127.0.0.1:8765/postmeta?url=${encodeURIComponent(post.url)}`);if(r.ok){const j=await r.json();const t=cleanSoopPostTitle(j?.title);if(t)return t}}catch(_){}
-  return'';
+  return String(post?.sourceTitle||'').trim();
 }
+
 function postById(id){return data.posts.find(p=>p.id===id)}
 function setPostGlobalStatus(text,state=''){const el=document.getElementById('postSyncGlobalStatus');if(!el)return;el.textContent=text;el.className='posts-status-chip'+(state?' '+state:'')}
 function applicantStatusLabel(s){return s==='selected'?'확정':s==='excluded'?'제외':'대기'}
@@ -13215,12 +13203,10 @@ async function fetchSoopBoardRecord(post){
 }
 function metaFromBridgeJson(j){return{title:cleanSoopPostTitle(j?.title),content:String(j?.content||''),author:String(j?.author||''),authorId:String(j?.authorId||''),regDate:String(j?.regDate||''),viewCount:Math.max(0,Number(j?.viewCount)||0),photos:Array.isArray(j?.photos)?j.photos.filter(Boolean).map(String):[]}}
 async function fetchSoopPostMetaV43(post,firstJson){
-  let meta={};const rootTitle=titleFromSoopJson(firstJson);if(rootTitle)meta.title=rootTitle;
-  try{const rec=await fetchSoopBoardRecord(post);if(rec)meta={...meta,...metaFromSoopRecord(rec),title:metaFromSoopRecord(rec).title||meta.title||''}}catch(_){}
-  if(!meta.title||!meta.content){try{const r=await fetch(`http://127.0.0.1:8765/postmeta?url=${encodeURIComponent(post.url)}`);if(r.ok){const b=metaFromBridgeJson(await r.json());meta={...b,...meta,title:meta.title||b.title||'',content:meta.content||b.content||'',author:meta.author||b.author||'',authorId:meta.authorId||b.authorId||'',regDate:meta.regDate||b.regDate||'',viewCount:meta.viewCount||b.viewCount||0,photos:(meta.photos?.length?meta.photos:b.photos)||[]}}}catch(_){}
-  }
-  return meta
+  // Compatibility shim. Source body, author metadata, view count, and images are intentionally not synchronized.
+  return {title:await fetchSoopPostTitle(post,firstJson)};
 }
+
 function extractSoopUpCount(c){
   const keys=['up_count','up_cnt','comment_up_count','comment_up_cnt','like_count','like_cnt','recommend_count','recommend_cnt','good_count','good_cnt','vote_count','vote_cnt','up','likes','like'];
   for(const k of keys){const v=c?.[k];if(typeof v==='number'&&Number.isFinite(v))return Math.max(0,v);if(typeof v==='string'&&/^\d+$/.test(v.trim()))return Number(v)}
@@ -13239,13 +13225,13 @@ function renderPostSourceContent(p){
 }
 
 async function syncSoopPost(id,{quiet=false}={}){
-  const post=postById(id);if(!post)return;setPostGlobalStatus('게시글 · 댓글 · 원문 동기화 중','syncing');post.lastError='';renderPosts();
+  const post=postById(id);if(!post)return;setPostGlobalStatus('게시글 · 댓글 동기화 중','syncing');post.lastError='';renderPosts();
   try{
     const first=await fetchSoopJson(soopApiUrl(post,1));const meta=await fetchSoopPostMetaV43(post,first);
-    if(meta.title){post.sourceTitle=meta.title;const placeholder=/^게시글\s+\d+$/u.test(String(post.name||'').trim());if(!post.nameManual||placeholder){post.name=meta.title;if(placeholder)post.nameManual=false}}if(meta.content!==undefined)post.sourceContent=meta.content||'';post.sourceAuthor=meta.author||post.sourceAuthor||'';post.sourceAuthorId=meta.authorId||post.sourceAuthorId||'';post.sourceRegDate=meta.regDate||post.sourceRegDate||'';post.sourceViewCount=meta.viewCount||post.sourceViewCount||0;if(meta.photos?.length)post.sourcePhotos=meta.photos;
+    if(meta.title){post.sourceTitle=meta.title;const placeholder=/^게시글\s+\d+$/u.test(String(post.name||'').trim());if(!post.nameManual||placeholder){post.name=meta.title;if(placeholder)post.nameManual=false}}if(typeof stripLegacyPostSourceV510==='function')stripLegacyPostSourceV510(post);
     const totalPages=Math.max(1,Math.min(100,Number(first?.meta?.last_page)||1));let raw=[...(Array.isArray(first?.data)?first.data:[])];for(let page=2;page<=totalPages;page++){setPostGlobalStatus(`댓글 동기화 ${page} / ${totalPages}`,'syncing');const j=await fetchSoopJson(soopApiUrl(post,page));if(Array.isArray(j?.data))raw.push(...j.data)}
     const prev=new Map((post.comments||[]).map(c=>[c.commentNo||`${c.userId}|${c.regDate}`,c]));post.comments=raw.map(c=>{const key=String(c.p_comment_no||`${c.user_id||''}|${c.reg_date||''}`),old=prev.get(key),userId=String(c.user_id||'');return{id:old?.id||crypto.randomUUID(),commentNo:String(c.p_comment_no||''),userId,name:String(c.user_nick||c.user_id||'신청자'),profileImage:normalizeSoopUrl(c.profile_image||''),stationUrl:soopUserStationUrl(userId),comment:String(c.comment||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<[^>]+>/g,''),regDate:String(c.reg_date||''),photoUrl:soopPhotoUrl(c.photo),upCount:extractSoopUpCount(c),status:old?.status==='excluded'?'nextchance':(old?.status||'pending')}});
-    post.lastSyncAt=new Date().toISOString();post.lastError='';syncPostContactApplicationHistories(post);data.version=51;saveData('SOOP 게시글 · 댓글 · 원문 동기화');setPostGlobalStatus(`${post.comments.length}개 댓글 동기화 완료`,'ok');if(!quiet)toast('게시글',`${post.name} · ${post.comments.length}개의 댓글과 원문을 불러왔습니다`)
+    post.lastSyncAt=new Date().toISOString();post.lastError='';syncPostContactApplicationHistories(post);data.version=51;saveData('SOOP 게시글 · 댓글 동기화');setPostGlobalStatus(`${post.comments.length}개 댓글 동기화 완료`,'ok');if(!quiet)toast('게시글',`${post.name} · ${post.comments.length}개의 댓글을 불러왔습니다`)
   }catch(err){post.lastError=String(err?.message||err);saveData('SOOP 댓글 동기화 오류');setPostGlobalStatus('댓글 동기화 실패','error');if(!quiet)toast('게시글',post.lastError)}renderPosts()
 }
 window.syncSoopPost=syncSoopPost;
@@ -13564,15 +13550,15 @@ window.openPostGamePicker=()=>{
 
 /* Re-sync while respecting manually removed comments. */
 async function syncSoopPost(id,{quiet=false}={}){
-  const post=postById(id);if(!post)return;setPostGlobalStatus('게시글 · 댓글 · 원문 동기화 중','syncing');post.lastError='';renderPosts();
+  const post=postById(id);if(!post)return;setPostGlobalStatus('게시글 · 댓글 동기화 중','syncing');post.lastError='';renderPosts();
   try{
     const first=await fetchSoopJson(soopApiUrl(post,1)),meta=await fetchSoopPostMetaV43(post,first);
     if(meta.title){post.sourceTitle=meta.title;const placeholder=/^게시글\s+\d+$/u.test(String(post.name||'').trim());if(!post.nameManual||placeholder){post.name=meta.title;if(placeholder)post.nameManual=false}}
-    if(meta.content!==undefined)post.sourceContent=normalizeSoopContentValue(meta.content);post.sourceAuthor=meta.author||post.sourceAuthor||'';post.sourceAuthorId=meta.authorId||post.sourceAuthorId||'';post.sourceRegDate=meta.regDate||post.sourceRegDate||'';post.sourceViewCount=meta.viewCount||post.sourceViewCount||0;if(meta.photos?.length)post.sourcePhotos=meta.photos;
+    if(typeof stripLegacyPostSourceV510==='function')stripLegacyPostSourceV510(post);
     const totalPages=Math.max(1,Math.min(100,Number(first?.meta?.last_page)||1));let raw=[...(Array.isArray(first?.data)?first.data:[])];for(let page=2;page<=totalPages;page++){setPostGlobalStatus(`댓글 동기화 ${page} / ${totalPages}`,'syncing');const j=await fetchSoopJson(soopApiUrl(post,page));if(Array.isArray(j?.data))raw.push(...j.data)}
     const ignored=new Set(post.ignoredCommentKeys||[]),prev=new Map((post.comments||[]).map(c=>[postCommentIdentity(c),c]));raw=raw.filter(c=>!ignored.has(String(c.p_comment_no||`${c.user_id||''}|${c.reg_date||''}`)));
     post.comments=raw.map(c=>{const key=String(c.p_comment_no||`${c.user_id||''}|${c.reg_date||''}`),old=prev.get(key),userId=String(c.user_id||'');return{id:old?.id||crypto.randomUUID(),commentNo:String(c.p_comment_no||''),userId,name:String(c.user_nick||c.user_id||'신청자'),profileImage:normalizeSoopUrl(c.profile_image||''),stationUrl:soopUserStationUrl(userId),comment:String(c.comment||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<[^>]+>/g,''),regDate:String(c.reg_date||''),photoUrl:soopPhotoUrl(c.photo),upCount:extractSoopUpCount(c),status:old?.status==='excluded'?'nextchance':(old?.status||'pending')}});
-    post.lastSyncAt=new Date().toISOString();post.lastError='';syncPostContactApplicationHistories(post);data.version=51;saveData('SOOP 게시글 · 댓글 · 원문 동기화');setPostGlobalStatus(`${post.comments.length}개 댓글 동기화 완료`,'ok');if(!quiet)toast('게시글',`${post.name} · ${post.comments.length}개의 댓글과 원문을 불러왔습니다`)
+    post.lastSyncAt=new Date().toISOString();post.lastError='';syncPostContactApplicationHistories(post);data.version=51;saveData('SOOP 게시글 · 댓글 동기화');setPostGlobalStatus(`${post.comments.length}개 댓글 동기화 완료`,'ok');if(!quiet)toast('게시글',`${post.name} · ${post.comments.length}개의 댓글을 불러왔습니다`)
   }catch(err){post.lastError=String(err?.message||err);saveData('SOOP 댓글 동기화 오류');setPostGlobalStatus('댓글 동기화 실패','error');if(!quiet)toast('게시글',post.lastError)}renderPosts()
 }
 window.syncSoopPost=syncSoopPost;
@@ -15663,17 +15649,20 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
 
 
 <style id="v510-post-source-removal-style">
-/* v5.1 - Source preview removed. External source link remains available. */
+/* v5.1.1 - Source preview and source-article payload sync removed. External source link remains available. */
 #postSourceTab,#postSourcePanel,#postSourceContent{display:none!important}
 </style>
 <script id="v510-post-source-removal-script">
 (function(){
-  /* The source-preview feature intentionally no longer exists. */
+  /* The source-preview feature intentionally no longer exists. Only the external '원문 열기' link remains. */
   window.setPostDetailMode=function(){
     try{postDetailMode='applicants'}catch(_){}
     document.getElementById('postApplicantsTab')?.classList.add('active');
     document.getElementById('postApplicantsPanel')?.classList.add('active');
   };
+  document.getElementById('postSourceTab')?.remove();
+  document.getElementById('postSourcePanel')?.remove();
+  document.getElementById('postSourceContent')?.remove();
   try{setPostDetailMode=window.setPostDetailMode}catch(_){}
   window.renderPostSourceContent=function(){};
   try{renderPostSourceContent=window.renderPostSourceContent}catch(_){}
