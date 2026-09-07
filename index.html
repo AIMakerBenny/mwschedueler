@@ -4943,6 +4943,8 @@ body.sidebar-pinned .sidebar:not(:hover) .nav{
 .nav-game-divider span,.nav-bottom-divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent)}
 .nav-game-divider em{font-style:normal;font-size:9px;font-weight:900;letter-spacing:.16em;color:var(--muted);white-space:nowrap}
 .nav-bottom-divider{margin:0 5px 4px}
+.nav-settings-divider{height:1px;margin:9px 7px 6px;background:linear-gradient(90deg,transparent,var(--border),transparent);flex:0 0 auto}
+body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-settings-divider{margin-left:8px;margin-right:8px}
 body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider em{display:none}
 body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider{grid-template-columns:1fr;padding:0 6px}
 
@@ -5510,6 +5512,7 @@ body[data-resolution="mobile"] .nav-scroll{
   -webkit-overflow-scrolling:touch;
 }
 body[data-resolution="mobile"] .nav-game-divider{display:none!important}
+body[data-resolution="mobile"] .nav-settings-divider{flex:0 0 1px!important;width:1px!important;height:36px!important;margin:6px 4px!important;background:var(--border)!important}
 body[data-resolution="mobile"] .nav-scroll>button,
 body[data-resolution="mobile"] .sidebar:hover .nav-scroll>button,
 body[data-resolution="mobile"].sidebar-pinned .nav-scroll>button{
@@ -6464,10 +6467,10 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
   <div class="mws-login-shell">
     <div class="mws-login-brand">MAWANG WORKSPACE</div>
     <div class="mws-login-title">접속 모드를 선택하세요</div>
-    <div class="mws-login-sub">Admin은 온라인 데이터를 수정할 수 있고, Public은 로그인 없이 공개 정보와 기본 기능을 이용합니다.</div>
+    <div class="mws-login-sub">Admin은 공유 데이터를 저장하고, Public은 같은 기능을 세션 안에서 자유롭게 사용할 수 있습니다.</div>
     <div class="mws-mode-grid">
-      <button type="button" class="mws-mode-card active" id="mwsModeAdmin"><div class="mws-mode-name">Admin</div><div class="mws-mode-desc">관리자 아이디와 비밀번호로 로그인합니다. 일정, 연락처, 설정 및 저장 데이터를 편집할 수 있습니다.</div></button>
-      <button type="button" class="mws-mode-card" id="mwsModePublic"><div class="mws-mode-name">Public</div><div class="mws-mode-desc">아이디와 비밀번호 없이 입장합니다. 공개 정보 열람과 미니게임 등 기본 기능만 사용할 수 있습니다.</div></button>
+      <button type="button" class="mws-mode-card active" id="mwsModeAdmin"><div class="mws-mode-name">Admin</div><div class="mws-mode-desc">관리자 아이디와 비밀번호로 로그인합니다. 일정, 연락처 등 공유 데이터를 편집하고 온라인에 저장할 수 있습니다. 개인 화면 설정은 이 기기에만 저장됩니다.</div></button>
+      <button type="button" class="mws-mode-card" id="mwsModePublic"><div class="mws-mode-name">Public</div><div class="mws-mode-desc">아이디와 비밀번호 없이 입장합니다. Admin과 같은 기능을 사용할 수 있지만 변경사항은 온라인에 저장되지 않습니다.</div></button>
     </div>
     <form id="mwsLoginForm">
       <div id="mwsAdminFields">
@@ -6552,10 +6555,8 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
         <button data-tab="gameMultiDraw" title="Gacha 뽑기">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="M8 3h8v3M8 18h8v3"/><circle cx="12" cy="12" r="3"/><path d="M2 9h2m16 0h2M2 15h2m16 0h2"/></svg></span><span class="nav-label">Gacha 뽑기</span>
         </button>
-      </div>
 
-      <div class="nav-bottom">
-        <div class="nav-bottom-divider"></div>
+        <div class="nav-settings-divider" aria-hidden="true"></div>
         <button data-tab="export" title="가져오기 / 내보내기">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14"/></svg></span><span class="nav-label">가져오기 / 내보내기</span>
         </button>
@@ -7378,14 +7379,14 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
       <div class="card" style="margin-bottom:14px;border-color:rgba(90,184,255,.28);background:linear-gradient(135deg,rgba(33,96,155,.10),rgba(18,22,33,.96))">
         <div class="space">
           <div>
-            <h3 style="margin-bottom:4px">자동 백업 기능 제거됨</h3>
-            <div class="muted small">v4.20부터 자동 스냅샷을 만들지 않습니다. 이전 버전에서 저장된 자동 백업 기록도 이 버전을 실행하면 삭제되어 브라우저 저장공간을 확보합니다. 현재 데이터 자체는 수정할 때마다 계속 저장됩니다.</div>
+            <h3 style="margin-bottom:4px">저장 방식 안내</h3>
+            <div class="muted small">Admin 변경사항은 온라인 공유 데이터에 저장됩니다. Public 변경사항은 현재 세션에만 남고 새로고침하면 사라집니다. Public에서 작업 내용을 유지하려면 전체 백업 JSON을 내보내 주세요. 테마, 배경, 글자 크기, 해상도 같은 개인 화면 설정은 각 브라우저에 자동 저장됩니다.</div>
           </div>
           <span class="chip">수동 JSON 백업 권장</span>
         </div>
       </div>
       <div class="grid cols-2">
-        <div class="card"><h3>전체 백업</h3><p class="muted small">스케줄, 연락처, 메모, 이미지, 카테고리, 설정, 합방 기록을 모두 저장합니다. 프로필 이미지는 백업 파일 안에 직접 포함됩니다.</p><div id="fullBackupAssetStatus" class="backup-asset-status">프로필 이미지 확인 중</div><div class="row"><button class="primary" id="exportAllBtn">백업 내보내기</button><label class="secondary" style="display:inline-block">백업 가져오기<input id="importAllInput" type="file" accept=".json" style="display:none"></label></div></div>
+        <div class="card"><h3>전체 백업</h3><p class="muted small">스케줄, 연락처, 메모, 이미지, 카테고리, 합방 기록 등 현재 작업 데이터를 저장합니다. 프로필 이미지는 백업 파일 안에 직접 포함됩니다. 개인 화면 설정은 브라우저에 별도로 저장되므로 백업에 포함하지 않습니다.</p><div id="fullBackupAssetStatus" class="backup-asset-status">프로필 이미지 확인 중</div><div class="row"><button class="primary" id="exportAllBtn">백업 내보내기</button><label class="secondary" style="display:inline-block">백업 가져오기<input id="importAllInput" type="file" accept=".json" style="display:none"></label></div></div>
         <div class="card"><h3>연락처 패키지</h3><p class="muted small">직원이 연락처를 수정한 뒤 다시 전달할 때 사용합니다.</p><div class="row"><button class="primary" id="exportContactsBtn">연락처 내보내기</button><label class="secondary" style="display:inline-block">연락처 가져오기<input id="importContactsInput" type="file" accept=".json" style="display:none"></label></div></div>
       </div>
 
@@ -7414,7 +7415,7 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
           <span id="storageStatus" class="chip">확인 중</span>
         </div>
       </div>
-      <div class="card" style="margin-top:14px"><h3>데이터 안내</h3><p class="muted small">현재 데이터는 브라우저 로컬 저장소에 즉시 저장됩니다. 별도의 자동 백업 스냅샷은 만들지 않습니다. 중요한 시점에는 전체 백업 JSON을 직접 내보내 보관해 주세요.</p></div>
+      <div class="card" style="margin-top:14px"><h3>데이터 안내</h3><p class="muted small">Admin은 변경사항을 Supabase 공유 데이터에 저장합니다. Public은 모든 기능을 사용할 수 있지만 변경사항은 현재 세션에만 적용되며 서버나 다른 이용자에게 기록되지 않습니다. Public 작업을 유지하려면 전체 백업 JSON을 직접 내보내 보관해 주세요.</p></div>
     </section>
 
     <section id="settings" class="section">
@@ -7954,6 +7955,42 @@ function normalizeMiniGameData(){
 
 const THEME_META=[{"id": "midnight", "name": "미드나잇", "bg": "#0f1115", "panel": "#171a21", "accent": "#8b5cf6"}, {"id": "neon", "name": "네온 퍼플", "bg": "#090b14", "panel": "#11172a", "accent": "#8b5cf6"}, {"id": "rose", "name": "로즈", "bg": "#160d14", "panel": "#24151f", "accent": "#e65b9c"}, {"id": "ocean", "name": "오션", "bg": "#071519", "panel": "#0e252c", "accent": "#22b8cf"}, {"id": "sunset", "name": "선셋", "bg": "#17100a", "panel": "#281a0f", "accent": "#f59f45"}, {"id": "emerald", "name": "에메랄드", "bg": "#07130e", "panel": "#10231a", "accent": "#22c55e"}, {"id": "ruby", "name": "루비", "bg": "#17090d", "panel": "#281118", "accent": "#ef4444"}, {"id": "sapphire", "name": "사파이어", "bg": "#08101d", "panel": "#101d35", "accent": "#3b82f6"}, {"id": "amethyst", "name": "애머시스트", "bg": "#120b1a", "panel": "#211330", "accent": "#a855f7"}, {"id": "lavender", "name": "라벤더", "bg": "#15131c", "panel": "#24212e", "accent": "#a78bfa"}, {"id": "sakura", "name": "사쿠라", "bg": "#1b1115", "panel": "#2d1b22", "accent": "#fb7185"}, {"id": "peach", "name": "피치", "bg": "#1b120d", "panel": "#2d1e16", "accent": "#fb923c"}, {"id": "coral", "name": "코랄", "bg": "#1b100f", "panel": "#2c1b19", "accent": "#f97366"}, {"id": "amber", "name": "앰버", "bg": "#171308", "panel": "#28200e", "accent": "#fbbf24"}, {"id": "lime", "name": "라임", "bg": "#101505", "panel": "#1b260b", "accent": "#84cc16"}, {"id": "mint", "name": "민트", "bg": "#081612", "panel": "#102821", "accent": "#34d399"}, {"id": "aqua", "name": "아쿠아", "bg": "#061518", "panel": "#0d282d", "accent": "#06b6d4"}, {"id": "cobalt", "name": "코발트", "bg": "#090e1c", "panel": "#121b38", "accent": "#4f6df5"}, {"id": "navy", "name": "네이비", "bg": "#08101a", "panel": "#101d2c", "accent": "#4678a9"}, {"id": "graphite", "name": "그래파이트", "bg": "#101214", "panel": "#1a1e22", "accent": "#7c8794"}, {"id": "silver", "name": "실버", "bg": "#17191d", "panel": "#24282e", "accent": "#aeb8c6"}, {"id": "coffee", "name": "커피", "bg": "#17110e", "panel": "#281d18", "accent": "#b77945"}, {"id": "forest", "name": "포레스트", "bg": "#09130b", "panel": "#132318", "accent": "#4d9a62"}, {"id": "cyber", "name": "사이버펑크", "bg": "#080812", "panel": "#141326", "accent": "#f0e130"}, {"id": "aurora", "name": "오로라", "bg": "#0a1016", "panel": "#111f29", "accent": "#33d6a6"}, {"id": "candy", "name": "캔디", "bg": "#17101c", "panel": "#281a31", "accent": "#e879f9"}, {"id": "wine", "name": "와인", "bg": "#160a10", "panel": "#28121c", "accent": "#c2416c"}, {"id": "teal", "name": "틸", "bg": "#071515", "panel": "#102827", "accent": "#2dd4bf"}, {"id": "sky", "name": "스카이", "bg": "#0a1219", "panel": "#122534", "accent": "#38bdf8"}, {"id": "plum", "name": "플럼", "bg": "#160f18", "panel": "#291a2d", "accent": "#d946ef"}, {"id": "cherry", "name": "체리", "bg": "#190b10", "panel": "#2b121b", "accent": "#f43f5e"}, {"id": "orange", "name": "오렌지", "bg": "#181007", "panel": "#2a1c0c", "accent": "#f97316"}];
 
+
+/* v5.2 - Device-local presentation preferences. These never belong to shared Supabase data. */
+const MWS_DEVICE_PREFS_KEY='mws_device_preferences_v1';
+const MWS_DEVICE_PREF_KEYS=['theme','backgroundImage','backgroundDim','textScale','resolutionMode','sidebarPinned','postViewMode','postCardColumns','dashboardUpcomingHidden'];
+function mwsExtractDevicePrefs(src=data){
+  const x=src&&typeof src==='object'?src:{};
+  return {
+    theme:String(x.theme||'neon'),
+    backgroundImage:typeof x.backgroundImage==='string'?x.backgroundImage:'',
+    backgroundDim:Math.max(0,Math.min(85,Number(x.backgroundDim??45))),
+    textScale:Math.max(85,Math.min(130,Number(x.textScale)||100)),
+    resolutionMode:['fhd','2k','4k','wide','mobile'].includes(String(x.resolutionMode||''))?String(x.resolutionMode):'fhd',
+    sidebarPinned:x.sidebarPinned!==false,
+    postViewMode:x.postViewMode==='list'?'list':'card',
+    postCardColumns:Math.max(2,Math.min(5,Number(x.postCardColumns)||4)),
+    dashboardUpcomingHidden:Boolean(x.dashboardUpcomingHidden)
+  };
+}
+function mwsLoadDevicePrefs(){
+  try{const raw=localStorage.getItem(MWS_DEVICE_PREFS_KEY);if(raw){const v=JSON.parse(raw);if(v&&typeof v==='object')return mwsExtractDevicePrefs(v)}}catch(_){}
+  return null;
+}
+function mwsApplyDevicePrefs(target,prefs=mwsLoadDevicePrefs()){
+  if(!target||typeof target!=='object'||!prefs)return target;
+  Object.assign(target,mwsExtractDevicePrefs(prefs));
+  return target;
+}
+function mwsSaveDevicePrefs(src=data){
+  try{localStorage.setItem(MWS_DEVICE_PREFS_KEY,JSON.stringify(mwsExtractDevicePrefs(src)));return true}catch(e){console.error('개인 설정 저장 실패',e);return false}
+}
+function mwsStripDevicePrefs(src){
+  const out=src&&typeof src==='object'?JSON.parse(JSON.stringify(src)):{};
+  for(const key of MWS_DEVICE_PREF_KEYS)delete out[key];
+  return out;
+}
+
 let data=loadData();
 const loadedDataVersion=Number(data?.version||0);
 if(!data.categories)data.categories=DEFAULT_CATEGORIES;
@@ -7974,7 +8011,10 @@ if(loadedDataVersion<28)data.sidebarPinned=true;
 if(!data.theme)data.theme='neon';
 if(data.backgroundImage===undefined)data.backgroundImage='';
 if(data.backgroundDim===undefined)data.backgroundDim=45;
-data.version=51;
+const mwsStoredDevicePrefs=mwsLoadDevicePrefs();
+if(mwsStoredDevicePrefs)mwsApplyDevicePrefs(data,mwsStoredDevicePrefs);
+else mwsSaveDevicePrefs(data);
+data.version=52;
 data.contacts.forEach(c=>{if(c.pendingSetup===undefined)c.pendingSetup=false});
 document.body.dataset.theme=data.theme;
 document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));
@@ -7990,7 +8030,7 @@ let wheelScrollTimers={};
 function loadData(){
   const raw=localStorage.getItem('mawangSchedulerBeta');
   if(raw){try{return JSON.parse(raw)}catch(e){}}
-  return {version:51,categories:DEFAULT_CATEGORIES,contacts:[],posts:[],events:[],collaborations:[],memos:[],targetList:[],contactTags:[],contactTagBanners:{},scheduleClipboard:[],favoriteFolders:[],postViewMode:'card',postCardColumns:4,textScale:100,resolutionMode:'fhd',selfContactId:'',sidebarPinned:true,dashboardUpcomingHidden:false,timezones:DEFAULT_TZS,theme:'neon',backgroundImage:'',backgroundDim:45,miniGames:defaultMiniGames()};
+  return {version:52,categories:DEFAULT_CATEGORIES,contacts:[],posts:[],events:[],collaborations:[],memos:[],targetList:[],contactTags:[],contactTagBanners:{},scheduleClipboard:[],favoriteFolders:[],postViewMode:'card',postCardColumns:4,textScale:100,resolutionMode:'fhd',selfContactId:'',sidebarPinned:true,dashboardUpcomingHidden:false,timezones:DEFAULT_TZS,theme:'neon',backgroundImage:'',backgroundDim:45,miniGames:defaultMiniGames()};
 }
 const AUTOSAVE_KEY='mawangSchedulerAutoBackups';
 
@@ -8018,7 +8058,7 @@ function isQuotaError(err){
   return err && (err.name==='QuotaExceededError' || err.name==='NS_ERROR_DOM_QUOTA_REACHED' || err.code===22 || err.code===1014);
 }
 function persist(){
-  const raw=JSON.stringify(data);
+  const raw=JSON.stringify(mwsStripDevicePrefs(data));
   try{
     localStorage.setItem('mawangSchedulerBeta',raw);
     return true;
@@ -8204,7 +8244,7 @@ normalizeMiniGameData();
   if(!data.theme)data.theme='neon';
   if(data.backgroundImage===undefined)data.backgroundImage='';
   if(data.backgroundDim===undefined)data.backgroundDim=45;
-  data.version=51;
+  data.version=52;
 }
 
 function saveData(reason='데이터 저장'){
@@ -8225,6 +8265,7 @@ window.addEventListener('mawang:datachange',e=>{
 function updateStorageStatus(saved=true){
   const el=document.getElementById('storageStatus');
   if(!el)return;
+  if(document.body.dataset.mwsMode==='public'){el.textContent='세션 전용 · 자동 저장 안 함';el.style.borderColor='var(--accent)';return}
   try{
     const main=(localStorage.getItem('mawangSchedulerBeta')||'').length;
     const mb=(main/1024/1024).toFixed(2);
@@ -8333,7 +8374,7 @@ function syncSidebarPinUI(){
 }
 document.getElementById('sidebarPinBtn').onclick=()=>{
   data.sidebarPinned=!data.sidebarPinned;
-  persist();
+  mwsSaveDevicePrefs(data);
   syncSidebarPinUI();
 };
 syncSidebarPinUI();
@@ -8511,7 +8552,8 @@ document.getElementById('dashboard').addEventListener('click',e=>{
 document.getElementById('toggleUpcomingDashboardBtn').onclick=()=>{
   data.dashboardUpcomingHidden=!Boolean(data.dashboardUpcomingHidden);
   if(data.dashboardUpcomingHidden)dashboardResetPreview();
-  saveData(data.dashboardUpcomingHidden?'예정 컨텐츠 숨김':'예정 컨텐츠 표시');
+  mwsSaveDevicePrefs(data);
+  renderDashboard();
   toast('대시보드',data.dashboardUpcomingHidden?'예정 컨텐츠 목록을 숨겼습니다':'예정 컨텐츠 목록을 다시 표시합니다');
 };
 /* v3.1 - pinned dashboard preview resets from any non-card click */
@@ -11781,7 +11823,7 @@ function updateUpcomingAccent(){
 window.updateUpcomingAccent=updateUpcomingAccent;
 
 /* 설정 */
-function applyTheme(id,notify=true){data.theme=id;document.body.dataset.theme=id;updateUpcomingAccent();persist();renderThemeGrid();document.getElementById('themeSelect').value=id;if(notify)toast('테마를 변경했습니다')}
+function applyTheme(id,notify=true){data.theme=id;document.body.dataset.theme=id;updateUpcomingAccent();mwsSaveDevicePrefs(data);renderThemeGrid();document.getElementById('themeSelect').value=id;if(notify)toast('테마를 변경했습니다')}
 function renderThemeGrid(){
   const box=document.getElementById('themeGrid');box.innerHTML=THEME_META.map(t=>`<button type="button" class="theme-card ${t.id===data.theme?'active':''}" onclick="applyTheme('${t.id}')"><div class="theme-swatches"><span class="theme-swatch" style="background:${t.bg}"></span><span class="theme-swatch" style="background:${t.panel}"></span><span class="theme-swatch" style="background:${t.accent}"></span></div><div>${esc(t.name)}</div></button>`).join('');
 }
@@ -11849,21 +11891,21 @@ document.getElementById('backgroundImageInput').onchange=async e=>{
   try{
     const raw=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file)});
     data.backgroundImage=await compressBackgroundImage(raw);
-    saveData('배경 이미지 변경');
+    mwsSaveDevicePrefs(data);
     applyBackground();
     toast('배경 이미지','새 배경을 적용했습니다');
   }catch(err){toast('배경 이미지','이미지를 불러오지 못했습니다')}
   e.target.value='';
 };
 document.getElementById('removeBackgroundBtn').onclick=()=>{
-  data.backgroundImage='';saveData('배경 이미지 제거');applyBackground();toast('배경 이미지','기본 MAWANG 배경으로 돌아왔습니다');
+  data.backgroundImage='';mwsSaveDevicePrefs(data);applyBackground();toast('배경 이미지','기본 MAWANG 배경으로 돌아왔습니다');
 };
 document.getElementById('backgroundDim').oninput=e=>{
   data.backgroundDim=Number(e.target.value);
   applyBackground();
-  persist();
+  mwsSaveDevicePrefs(data);
 };
-document.getElementById('backgroundDim').onchange=()=>saveData('배경 어둡기 변경');
+document.getElementById('backgroundDim').onchange=()=>mwsSaveDevicePrefs(data);
 
 let categoryReorderSourceId='';
 function clearCategoryReorderMarks(){document.querySelectorAll('#categoryList .reorder-row').forEach(r=>r.classList.remove('drop-before','drop-after','reorder-dragging'))}
@@ -12143,7 +12185,7 @@ function downloadJSON(obj,name){
 }
 function buildFullBackupObject(){
   normalizeDataShape();
-  const payload=JSON.parse(JSON.stringify(data));
+  const payload=mwsStripDevicePrefs(data);
   const contactImages={};
   (payload.contacts||[]).forEach(c=>{
     if(typeof c.image==='string'&&c.image.startsWith('data:image/'))contactImages[c.id]=c.image;
@@ -12161,7 +12203,6 @@ function buildFullBackupObject(){
     data:payload,
     assets:{
       contactImages,
-      backgroundImage:typeof payload.backgroundImage==='string'?payload.backgroundImage:'',
       contactTagBanners:payload.contactTagBanners&&typeof payload.contactTagBanners==='object'
         ? JSON.parse(JSON.stringify(payload.contactTagBanners)):{}
     }
@@ -12184,9 +12225,6 @@ function restoreFullBackupAssets(backup){
         (typeof backupImage==='string'&&backupImage.startsWith('data:image/'))?backupImage:''
       };
     });
-  }
-  if((!payload.backgroundImage||typeof payload.backgroundImage!=='string')&&typeof assets.backgroundImage==='string'){
-    payload.backgroundImage=assets.backgroundImage;
   }
   if(assets.contactTagBanners&&typeof assets.contactTagBanners==='object'){
     payload.contactTagBanners={...assets.contactTagBanners,...(payload.contactTagBanners||{})};
@@ -12215,10 +12253,12 @@ document.getElementById('exportContactsBtn').onclick=()=>downloadJSON({
 },'mawang-contacts.json');
 
 document.getElementById('importAllInput').onchange=e=>importFile(e.target.files[0],obj=>{
+  const currentDevicePrefs=mwsExtractDevicePrefs(data);
   const payload=restoreFullBackupAssets(obj);
   if(!payload.events||!payload.contacts)throw new Error('유효하지 않은 백업 파일입니다');
 
   data=payload;
+  mwsApplyDevicePrefs(data,currentDevicePrefs);
   if(!data.theme)data.theme='neon';
   if(data.backgroundImage===undefined)data.backgroundImage='';
   if(data.backgroundDim===undefined)data.backgroundDim=45;
@@ -12231,7 +12271,7 @@ document.getElementById('importAllInput').onchange=e=>importFile(e.target.files[
   if(!Array.isArray(data.scheduleClipboard))data.scheduleClipboard=[];
   if(data.sidebarPinned===undefined)data.sidebarPinned=true;
   if(!data.timezones)data.timezones=DEFAULT_TZS;
-  data.version=51;
+  data.version=52;
   document.body.dataset.theme=data.theme;
 
   const imageCount=(data.contacts||[]).filter(c=>typeof c.image==='string'&&c.image.startsWith('data:image/')).length;
@@ -12445,7 +12485,7 @@ function weightedRandomIndex(entries,getWeight=x=>x.weight){
 }
 window.__miniRandomTest={randomIntUnbiased,randomBit,randomFloat53,weightedRandomIndex};
 
-function miniPersist(){normalizeMiniGameData();data.version=51;persist()}
+function miniPersist(){normalizeMiniGameData();data.version=52;persist()}
 function miniGameArray(game){
   if(game==='ladder')return data.miniGames.ladder.players;
   if(game==='rps')return data.miniGames.rps.players;
@@ -13045,7 +13085,7 @@ function titleFromBoardResult(root,postNo){
   walk(root);return found;
 }
 async function fetchSoopPostTitle(post,firstJson){
-  // v5.1.1: Keep post syncing lightweight. Never fetch the source article body or its images.
+  // v5.2: Keep post syncing lightweight. Never fetch the source article body or its images.
   // Use a title already present in the comment response when available; otherwise keep the saved title.
   const fromJson=titleFromSoopJson(firstJson);if(fromJson)return fromJson;
   return String(post?.sourceTitle||'').trim();
@@ -13093,7 +13133,7 @@ async function syncSoopPost(id,{quiet=false}={}){
       const key=String(c.p_comment_no||`${c.user_id||''}|${c.reg_date||''}`),old=prev.get(key),userId=String(c.user_id||'');
       return {id:old?.id||crypto.randomUUID(),commentNo:String(c.p_comment_no||''),userId,name:String(c.user_nick||c.user_id||'신청자'),profileImage:normalizeSoopUrl(c.profile_image||''),stationUrl:soopUserStationUrl(userId),comment:String(c.comment||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<[^>]+>/g,''),regDate:String(c.reg_date||''),photoUrl:soopPhotoUrl(c.photo),status:old?.status||'pending'};
     });
-    post.lastSyncAt=new Date().toISOString();post.lastError='';syncPostContactApplicationHistories(post);data.version=51;saveData('SOOP 게시글 · 댓글 동기화');setPostGlobalStatus(`${post.comments.length}개 댓글 동기화 완료`,'ok');if(!quiet)toast('게시글',`${post.name} · ${post.comments.length}개의 댓글을 불러왔습니다`);
+    post.lastSyncAt=new Date().toISOString();post.lastError='';syncPostContactApplicationHistories(post);data.version=52;saveData('SOOP 게시글 · 댓글 동기화');setPostGlobalStatus(`${post.comments.length}개 댓글 동기화 완료`,'ok');if(!quiet)toast('게시글',`${post.name} · ${post.comments.length}개의 댓글을 불러왔습니다`);
   }catch(err){post.lastError=String(err?.message||err);saveData('SOOP 댓글 동기화 오류');setPostGlobalStatus('댓글 동기화 실패','error');if(!quiet)toast('게시글',post.lastError)}
   renderPosts();
 }
@@ -13231,7 +13271,7 @@ async function syncSoopPost(id,{quiet=false}={}){
     if(meta.title){post.sourceTitle=meta.title;const placeholder=/^게시글\s+\d+$/u.test(String(post.name||'').trim());if(!post.nameManual||placeholder){post.name=meta.title;if(placeholder)post.nameManual=false}}if(typeof stripLegacyPostSourceV510==='function')stripLegacyPostSourceV510(post);
     const totalPages=Math.max(1,Math.min(100,Number(first?.meta?.last_page)||1));let raw=[...(Array.isArray(first?.data)?first.data:[])];for(let page=2;page<=totalPages;page++){setPostGlobalStatus(`댓글 동기화 ${page} / ${totalPages}`,'syncing');const j=await fetchSoopJson(soopApiUrl(post,page));if(Array.isArray(j?.data))raw.push(...j.data)}
     const prev=new Map((post.comments||[]).map(c=>[c.commentNo||`${c.userId}|${c.regDate}`,c]));post.comments=raw.map(c=>{const key=String(c.p_comment_no||`${c.user_id||''}|${c.reg_date||''}`),old=prev.get(key),userId=String(c.user_id||'');return{id:old?.id||crypto.randomUUID(),commentNo:String(c.p_comment_no||''),userId,name:String(c.user_nick||c.user_id||'신청자'),profileImage:normalizeSoopUrl(c.profile_image||''),stationUrl:soopUserStationUrl(userId),comment:String(c.comment||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<[^>]+>/g,''),regDate:String(c.reg_date||''),photoUrl:soopPhotoUrl(c.photo),upCount:extractSoopUpCount(c),status:old?.status==='excluded'?'nextchance':(old?.status||'pending')}});
-    post.lastSyncAt=new Date().toISOString();post.lastError='';syncPostContactApplicationHistories(post);data.version=51;saveData('SOOP 게시글 · 댓글 동기화');setPostGlobalStatus(`${post.comments.length}개 댓글 동기화 완료`,'ok');if(!quiet)toast('게시글',`${post.name} · ${post.comments.length}개의 댓글을 불러왔습니다`)
+    post.lastSyncAt=new Date().toISOString();post.lastError='';syncPostContactApplicationHistories(post);data.version=52;saveData('SOOP 게시글 · 댓글 동기화');setPostGlobalStatus(`${post.comments.length}개 댓글 동기화 완료`,'ok');if(!quiet)toast('게시글',`${post.name} · ${post.comments.length}개의 댓글을 불러왔습니다`)
   }catch(err){post.lastError=String(err?.message||err);saveData('SOOP 댓글 동기화 오류');setPostGlobalStatus('댓글 동기화 실패','error');if(!quiet)toast('게시글',post.lastError)}renderPosts()
 }
 window.syncSoopPost=syncSoopPost;
@@ -13289,8 +13329,8 @@ function applyTextScale(value,writeData=true){
 window.applyTextScale=applyTextScale;
 const textScaleSlider=document.getElementById('textScaleSlider');
 if(textScaleSlider){
-  textScaleSlider.oninput=e=>{applyTextScale(e.target.value,true);persist()};
-  textScaleSlider.onchange=()=>saveData('텍스트 크기 변경');
+  textScaleSlider.oninput=e=>{applyTextScale(e.target.value,true);mwsSaveDevicePrefs(data)};
+  textScaleSlider.onchange=()=>mwsSaveDevicePrefs(data);
 }
 applyTextScale(data.textScale??100,false);
 
@@ -13304,8 +13344,8 @@ function applyPostViewPrefs(){
   document.querySelector('.post-column-control')?.classList.toggle('disabled',mode==='list');
   const hint=document.getElementById('postViewHint');if(hint)hint.textContent=mode==='card'?`카드형 · 한 줄 ${cols}개`:'리스트형 · 가로 상세 보기';
 }
-window.setPostViewMode=mode=>{data.postViewMode=mode==='list'?'list':'card';persist();applyPostViewPrefs()};
-window.setPostCardColumns=v=>{data.postCardColumns=Math.max(2,Math.min(5,Number(v)||4));persist();applyPostViewPrefs()};
+window.setPostViewMode=mode=>{data.postViewMode=mode==='list'?'list':'card';mwsSaveDevicePrefs(data);applyPostViewPrefs()};
+window.setPostCardColumns=v=>{data.postCardColumns=Math.max(2,Math.min(5,Number(v)||4));mwsSaveDevicePrefs(data);applyPostViewPrefs()};
 
 function favoriteFolderById(id){return (data.favoriteFolders||[]).find(f=>f.id===id)||null}
 function favoriteFolderCount(id){return favoriteEvents().filter(e=>(e.favoriteFolderId||'')===id).length}
@@ -13558,7 +13598,7 @@ async function syncSoopPost(id,{quiet=false}={}){
     const totalPages=Math.max(1,Math.min(100,Number(first?.meta?.last_page)||1));let raw=[...(Array.isArray(first?.data)?first.data:[])];for(let page=2;page<=totalPages;page++){setPostGlobalStatus(`댓글 동기화 ${page} / ${totalPages}`,'syncing');const j=await fetchSoopJson(soopApiUrl(post,page));if(Array.isArray(j?.data))raw.push(...j.data)}
     const ignored=new Set(post.ignoredCommentKeys||[]),prev=new Map((post.comments||[]).map(c=>[postCommentIdentity(c),c]));raw=raw.filter(c=>!ignored.has(String(c.p_comment_no||`${c.user_id||''}|${c.reg_date||''}`)));
     post.comments=raw.map(c=>{const key=String(c.p_comment_no||`${c.user_id||''}|${c.reg_date||''}`),old=prev.get(key),userId=String(c.user_id||'');return{id:old?.id||crypto.randomUUID(),commentNo:String(c.p_comment_no||''),userId,name:String(c.user_nick||c.user_id||'신청자'),profileImage:normalizeSoopUrl(c.profile_image||''),stationUrl:soopUserStationUrl(userId),comment:String(c.comment||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<[^>]+>/g,''),regDate:String(c.reg_date||''),photoUrl:soopPhotoUrl(c.photo),upCount:extractSoopUpCount(c),status:old?.status==='excluded'?'nextchance':(old?.status||'pending')}});
-    post.lastSyncAt=new Date().toISOString();post.lastError='';syncPostContactApplicationHistories(post);data.version=51;saveData('SOOP 게시글 · 댓글 동기화');setPostGlobalStatus(`${post.comments.length}개 댓글 동기화 완료`,'ok');if(!quiet)toast('게시글',`${post.name} · ${post.comments.length}개의 댓글을 불러왔습니다`)
+    post.lastSyncAt=new Date().toISOString();post.lastError='';syncPostContactApplicationHistories(post);data.version=52;saveData('SOOP 게시글 · 댓글 동기화');setPostGlobalStatus(`${post.comments.length}개 댓글 동기화 완료`,'ok');if(!quiet)toast('게시글',`${post.name} · ${post.comments.length}개의 댓글을 불러왔습니다`)
   }catch(err){post.lastError=String(err?.message||err);saveData('SOOP 댓글 동기화 오류');setPostGlobalStatus('댓글 동기화 실패','error');if(!quiet)toast('게시글',post.lastError)}renderPosts()
 }
 window.syncSoopPost=syncSoopPost;
@@ -13627,7 +13667,7 @@ function applyResolutionMode(mode,writeData=true){
   if(status)status.textContent=meta.label;if(desc)desc.textContent=meta.desc;
 }
 window.applyResolutionMode=applyResolutionMode;
-window.setResolutionMode=mode=>{applyResolutionMode(mode,true);saveData('해상도 설정 변경')};
+window.setResolutionMode=mode=>{applyResolutionMode(mode,true);mwsSaveDevicePrefs(data)};
 applyResolutionMode(data.resolutionMode||'fhd',false);
 
 const renderSettingsV46Base=renderSettings;
@@ -13990,7 +14030,7 @@ window.applyResolutionMode=function(mode,writeData=true){
 const setResolutionModeV410Base=window.setResolutionMode;
 window.setResolutionMode=mode=>{
   window.applyResolutionMode(mode,true);
-  saveData('해상도 설정 변경');
+  mwsSaveDevicePrefs(data);
 };
 
 /* Re-apply current preset once after the new drawer bindings are installed. */
@@ -15486,10 +15526,6 @@ body[data-resolution="mobile"] #gameMultiDraw .gacha-action-row-v419{grid-templa
 #gameMultiDraw .gacha-action-row-v419{grid-template-columns:minmax(0,1.65fr) minmax(220px,.72fr) minmax(170px,.46fr)!important}
 .gacha-post-confirm-v50{margin-top:7px;width:100%;border:1px solid rgba(82,218,145,.52);border-radius:9px;padding:7px 9px;background:rgba(42,151,93,.13);color:#a9f2ca;font-size:10px;font-weight:950;cursor:pointer}
 .gacha-post-confirm-v50:hover{background:rgba(42,151,93,.22);border-color:#5cd995}.gacha-post-confirm-v50.done{opacity:.62;cursor:default}
-body.mws-public-mode .mws-admin-only{display:none!important}
-body.mws-public-mode #postDisplayName{pointer-events:none!important;user-select:text!important;opacity:1!important}
-body.mws-public-mode .post-url-card,body.mws-public-mode #postSyncBtn,body.mws-public-mode #postDeleteBtn,body.mws-public-mode #postScheduleCreateBtn{display:none!important}
-body.mws-public-mode .post-decision-row,body.mws-public-mode .post-applicant-delete{display:none!important}
 body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!important}
 @media(max-width:980px){#gameMultiDraw .gacha-action-row-v419{grid-template-columns:1fr!important}.gacha-speed-control-v50{grid-template-columns:1fr auto;min-height:54px}}
 </style>
@@ -15498,13 +15534,7 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
   window.mwsGachaSpeedV50=Math.max(.5,Number(localStorage.getItem('mws_gacha_speed_v50'))||1);
   const isPublic=()=>document.body.classList.contains('mws-public-mode');
   const normStatus=s=>s==='excluded'?'nextchance':(['pending','selected','nextchance','gacha'].includes(s)?s:'pending');
-  function enforcePublicReadOnlyV50(){
-    if(!isPublic())return;
-    document.querySelectorAll('#contactModal input,#contactModal select,#contactModal textarea,#eventModal input,#eventModal select,#eventModal textarea').forEach(el=>{el.disabled=true});
-    document.querySelectorAll('#contactModal button,#eventModal button').forEach(btn=>{const t=(btn.textContent||'').trim();if(/추가|수정|삭제|저장|휴방|완료/.test(t))btn.style.display='none'});
-    document.querySelectorAll('.mws-admin-only,#newEventBtn,#newContactBtn,#cleanupDuplicatesBtn,#postSyncBtn,#postDeleteBtn,#postScheduleCreateBtn,.post-applicant-delete').forEach(el=>{el.style.display='none'});
-    const title=document.getElementById('postDisplayName');if(title){title.readOnly=true;title.setAttribute('aria-readonly','true')}
-  }
+  function enforcePublicReadOnlyV50(){return}
 
   applicantStatusLabel=function(s){s=normStatus(s);return s==='selected'?'확정':s==='gacha'?'가챠':s==='nextchance'?'다음기회에':'대기'};
   applicationStatusText=applicantStatusLabel;
@@ -15516,12 +15546,10 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
   };
 
   window.updatePostApplicantStatus=(postId,commentId,status)=>{
-    if(isPublic())return toast('Public','열람 모드에서는 신청자 상태를 변경할 수 없습니다');
     const p=postById(postId),c=p?.comments.find(x=>x.id===commentId);if(!c)return;
     c.status=normStatus(status);syncPostContactApplicationHistories(p);saveData('게시글 신청자 상태 변경');renderPosts();
   };
   window.setPostApplicantDecision=(postId,commentId,status)=>{
-    if(isPublic())return;
     const p=postById(postId),c=p?.comments.find(x=>x.id===commentId);if(!c)return;
     const next=normStatus(c.status)===status?'pending':status;window.updatePostApplicantStatus(postId,commentId,next);
   };
@@ -15530,8 +15558,8 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
     const matched=findContactForSoopApplicant(c),station=c.stationUrl||soopUserStationUrl(c.userId),avatar=c.profileImage?`<img class="post-applicant-avatar" src="${esc(c.profileImage)}" loading="lazy">`:`<div class="post-applicant-avatar">${esc(initials(c.name))}</div>`,st=normStatus(c.status);
     const contactAction=matched
       ? `<button class="secondary post-contact-btn" onclick="openMatchedPostContact('${matched.id}')">연락처 보기</button>`
-      : `<button class="secondary post-contact-btn mws-admin-only" onclick="addPostApplicantToContacts('${post.id}','${c.id}')">연락처 추가</button>`;
-    return `<div class="post-applicant-card ${st} ${matched?'':'new-applicant'}" data-comment-id="${c.id}">${matched?'':'<span class="post-new-badge">신규</span>'}<div class="post-applicant-top">${station?`<a class="post-applicant-avatar-link" href="${esc(station)}" target="_blank" rel="noopener noreferrer" title="${esc(c.name)} 방송국 열기">${avatar}</a>`:avatar}<div style="min-width:0"><div class="post-applicant-name">${esc(c.name)}${dups[c.userId]>1?' <span class="chip" style="font-size:7px">중복 댓글</span>':''}</div><div class="post-applicant-id">${esc(c.userId||'ID 없음')}</div>${matched?'<div class="post-contact-match">연락처 연결됨 · 신청 기록 자동 저장</div>':'<div class="post-applicant-id" style="color:#61baff;margin-top:3px">연락처에서 찾을 수 없음</div>'}</div><div class="post-status-block"><span class="post-status-badge ${st}">${applicantStatusLabel(st)}</span><div class="post-decision-row mws-admin-only"><button type="button" class="post-decision-btn selected ${st==='selected'?'active':''}" onclick="setPostApplicantDecision('${post.id}','${c.id}','selected')">확정</button><button type="button" class="post-decision-btn gacha ${st==='gacha'?'active':''}" onclick="setPostApplicantDecision('${post.id}','${c.id}','gacha')">가챠</button><button type="button" class="post-decision-btn nextchance ${st==='nextchance'?'active':''}" onclick="setPostApplicantDecision('${post.id}','${c.id}','nextchance')">다음기회에</button></div></div></div><div class="post-applicant-comment">${esc(c.comment||'(내용 없음)')}</div>${c.photoUrl?`<img class="post-applicant-photo" src="${esc(c.photoUrl)}" loading="lazy">`:''}<div class="post-applicant-foot"><div class="post-applicant-foot-left"><div class="post-applicant-date">${esc(c.regDate||'작성 시간 없음')}</div><span class="post-up-count">♡ UP ${Math.max(0,Number(c.upCount)||0)}</span></div><div class="post-applicant-actions">${contactAction}<button type="button" class="ghost post-contact-btn post-applicant-delete mws-admin-only" onclick="deletePostApplicant('${post.id}','${c.id}')">삭제</button></div></div></div>`;
+      : `<button class="secondary post-contact-btn" onclick="addPostApplicantToContacts('${post.id}','${c.id}')">연락처 추가</button>`;
+    return `<div class="post-applicant-card ${st} ${matched?'':'new-applicant'}" data-comment-id="${c.id}">${matched?'':'<span class="post-new-badge">신규</span>'}<div class="post-applicant-top">${station?`<a class="post-applicant-avatar-link" href="${esc(station)}" target="_blank" rel="noopener noreferrer" title="${esc(c.name)} 방송국 열기">${avatar}</a>`:avatar}<div style="min-width:0"><div class="post-applicant-name">${esc(c.name)}${dups[c.userId]>1?' <span class="chip" style="font-size:7px">중복 댓글</span>':''}</div><div class="post-applicant-id">${esc(c.userId||'ID 없음')}</div>${matched?'<div class="post-contact-match">연락처 연결됨 · 신청 기록 자동 저장</div>':'<div class="post-applicant-id" style="color:#61baff;margin-top:3px">연락처에서 찾을 수 없음</div>'}</div><div class="post-status-block"><span class="post-status-badge ${st}">${applicantStatusLabel(st)}</span><div class="post-decision-row"><button type="button" class="post-decision-btn selected ${st==='selected'?'active':''}" onclick="setPostApplicantDecision('${post.id}','${c.id}','selected')">확정</button><button type="button" class="post-decision-btn gacha ${st==='gacha'?'active':''}" onclick="setPostApplicantDecision('${post.id}','${c.id}','gacha')">가챠</button><button type="button" class="post-decision-btn nextchance ${st==='nextchance'?'active':''}" onclick="setPostApplicantDecision('${post.id}','${c.id}','nextchance')">다음기회에</button></div></div></div><div class="post-applicant-comment">${esc(c.comment||'(내용 없음)')}</div>${c.photoUrl?`<img class="post-applicant-photo" src="${esc(c.photoUrl)}" loading="lazy">`:''}<div class="post-applicant-foot"><div class="post-applicant-foot-left"><div class="post-applicant-date">${esc(c.regDate||'작성 시간 없음')}</div><span class="post-up-count">♡ UP ${Math.max(0,Number(c.upCount)||0)}</span></div><div class="post-applicant-actions">${contactAction}<button type="button" class="ghost post-contact-btn post-applicant-delete" onclick="deletePostApplicant('${post.id}','${c.id}')">삭제</button></div></div></div>`;
   };
 
   uniquePostGameApplicants=function(post){
@@ -15562,20 +15590,17 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
   };
 
   window.bulkGachaPostApplicantsV50=()=>{
-    if(isPublic())return;
     const p=postById(activePostId);if(!p||!(p.comments||[]).length)return toast('게시글','가챠로 지정할 신청자가 없습니다');
     if(!confirm(`현재 게시글의 신청자 ${p.comments.length}명을 모두 가챠 상태로 변경하시겠습니까?`))return;
     for(const c of p.comments)c.status='gacha';syncPostContactApplicationHistories(p);saveData('게시글 신청자 전체 가챠');renderPosts();toast('게시글',`${p.comments.length}명을 전체 가챠 상태로 변경했습니다`);
   };
   window.bulkConfirmPostApplicants=()=>{
-    if(isPublic())return;
     const p=postById(activePostId);if(!p||!(p.comments||[]).length)return toast('게시글','확정할 신청자가 없습니다');
     const count=(p.comments||[]).filter(c=>normStatus(c.status)!=='selected').length;if(!count)return toast('게시글','이미 모든 신청자가 확정 상태입니다');
     if(!confirm(`현재 게시글의 신청자 ${p.comments.length}명을 모두 확정하시겠습니까?`))return;
     for(const c of p.comments)c.status='selected';syncPostContactApplicationHistories(p);saveData('게시글 신청자 전체 확정');renderPosts();toast('게시글',`${p.comments.length}명을 전체 확정했습니다`);
   };
   window.bulkCancelPostApplicants=()=>{
-    if(isPublic())return;
     const p=postById(activePostId);if(!p||!(p.comments||[]).length)return toast('게시글','취소할 신청자가 없습니다');
     const count=(p.comments||[]).filter(c=>['selected','gacha'].includes(normStatus(c.status))).length;if(!count)return toast('게시글','현재 확정 또는 가챠 상태 신청자가 없습니다');
     if(!confirm(`확정 또는 가챠 상태 ${count}명을 대기 상태로 되돌리시겠습니까?
@@ -15603,10 +15628,6 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
       summary.innerHTML=`<span class="chip">댓글 ${p.comments.length}개</span><span class="chip">고유 작성자 ${unique.size}명</span><span class="chip" style="border-color:#38b77a">확정 ${confirmed}명</span><span class="chip" style="border-color:#d44fc7;color:#ffb5f4">가챠 ${gacha}명</span><span class="chip">다음기회에 ${nextchance}명</span><span class="chip" style="border-color:#2ea676">연락처 연결 ${matchedCount}개</span>${newCount?`<span class="chip" style="border-color:#3aa9ff;color:#7ccaff">신규 ${newCount}개 댓글</span>`:''}`;
     }
     const game=document.getElementById('postRandomGameBtn');if(game)game.onclick=window.openPostGamePicker;
-    if(isPublic()){
-      document.querySelectorAll('.mws-admin-only,.post-decision-row,.post-applicant-delete').forEach(el=>el.style.display='none');
-      const title=document.getElementById('postDisplayName');if(title){title.readOnly=true;title.setAttribute('aria-readonly','true')}
-    }
     return out;
   };
   try{renderPosts=window.renderPosts}catch(_){}
@@ -15618,7 +15639,6 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
   }
 
   window.confirmGachaWinnerInSourcePostV50=playerId=>{
-    if(isPublic())return toast('Public','열람 모드에서는 게시글 상태를 변경할 수 없습니다');
     const player=(typeof multiDrawPlayers==='function'?multiDrawPlayers():[]).find(x=>x.id===playerId);if(!player?.sourcePostId)return toast('Gacha','게시글에서 불러온 참가자가 아닙니다');
     const post=postById(player.sourcePostId);if(!post)return toast('Gacha','원본 게시글을 찾을 수 없습니다');
     let changed=0;for(const c of post.comments||[]){const same=(player.sourceCommentId&&c.id===player.sourceCommentId)||(player.sourceUserId&&String(c.userId||'').toLowerCase()===String(player.sourceUserId).toLowerCase());if(same&&normStatus(c.status)!=='selected'){c.status='selected';changed++}}
@@ -15626,12 +15646,11 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
     syncPostContactApplicationHistories(post);saveData('Gacha 당첨자 게시글 확정');renderPosts();if(typeof renderMultiDraw==='function')renderMultiDraw();toast('Gacha',`${player.name}을 원본 게시글에서 확정으로 변경했습니다`);
   };
   function decorateGachaWinnerActionsV50(){
-    if(isPublic())return;
     const winners=typeof multiDrawWinnerObjects==='function'?multiDrawWinnerObjects():[];
     document.querySelectorAll('#multiWinnerSlots .gacha-winner-slot-v418').forEach((slot,i)=>{
       const p=winners[i];if(!p?.sourcePostId||slot.querySelector('.gacha-post-confirm-v50'))return;
       const post=postById(p.sourcePostId),already=post?.comments?.some(c=>((p.sourceCommentId&&c.id===p.sourceCommentId)||(p.sourceUserId&&String(c.userId||'').toLowerCase()===String(p.sourceUserId).toLowerCase()))&&normStatus(c.status)==='selected');
-      const meta=slot.querySelector('div[style*="min-width"]')||slot;const b=document.createElement('button');b.type='button';b.className='gacha-post-confirm-v50 mws-admin-only'+(already?' done':'');b.textContent=already?'게시글 확정 완료':'게시글에서 확정';b.disabled=!!already;if(!already)b.onclick=()=>window.confirmGachaWinnerInSourcePostV50(p.id);meta.appendChild(b);
+      const meta=slot.querySelector('div[style*="min-width"]')||slot;const b=document.createElement('button');b.type='button';b.className='gacha-post-confirm-v50'+(already?' done':'');b.textContent=already?'게시글 확정 완료':'게시글에서 확정';b.disabled=!!already;if(!already)b.onclick=()=>window.confirmGachaWinnerInSourcePostV50(p.id);meta.appendChild(b);
     });
   }
 
@@ -15648,8 +15667,14 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
 </script>
 
 
+<style id="v520-public-session-style">
+/* v5.2 - Public is a fully interactive sandbox. Only Admin management remains privileged. */
+body.mws-public-mode [data-mws-public-hidden="true"]{display:revert!important}
+body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!important}
+</style>
+
 <style id="v510-post-source-removal-style">
-/* v5.1.1 - Source preview and source-article payload sync removed. External source link remains available. */
+/* v5.2 - Source preview and source-article payload sync removed. External source link remains available. */
 #postSourceTab,#postSourcePanel,#postSourceContent{display:none!important}
 </style>
 <script id="v510-post-source-removal-script">
@@ -15733,7 +15758,7 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
   try{window.setPostDetailMode('applicants')}catch(_){}
 })();
 </script>
-\n<script id="mws-supabase-cloud-layer">
+\n<script id="mws-supabase-cloud-layer" data-release="5.2">
 (()=>{
   const SB_URL='https://nysxcqlewzucbpoaymbg.supabase.co';
   const SB_KEY='sb_publishable_H7VPUOVV6nN7QdaJKO3-lA_-SNrg4mW';
@@ -15751,12 +15776,9 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
     return d&&typeof d==='object'?d:{};
   }
   function makePublicData(src){
-    const d=clone(src||{});
-    // Public sees shared schedules, contact details, and post decisions. Workspace-only tools stay private.
-    d.memos=[];d.targetList=[];d.scheduleClipboard=[];
-    d.contacts=Array.isArray(d.contacts)?d.contacts.map(c=>({...c})):[];
+    const d=typeof mwsStripDevicePrefs==='function'?mwsStripDevicePrefs(src||{}):clone(src||{});
+    // v5.2: Public starts from the same shared workspace as Admin. Only persistence differs.
     d.posts=Array.isArray(d.posts)?d.posts.map(p=>{const x={...p,comments:Array.isArray(p.comments)?p.comments.map(c=>({...c})):[]};delete x.sourceContent;delete x.sourcePhotos;delete x.sourceAuthor;delete x.sourceAuthorId;delete x.sourceRegDate;delete x.sourceViewCount;delete x.sourceUrl;return x}):[];
-    d.events=Array.isArray(d.events)?d.events.map(e=>{const x={...e};delete x.memoTitle;delete x.memoContent;delete x.checklist;delete x.favoriteFolderId;delete x.repeatConfig;return x}):[];
     return d;
   }
   function setLoginError(msg=''){const el=$('mwsLoginError');if(el)el.textContent=msg}
@@ -15779,29 +15801,20 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
   function applyModeUi(){
     const isAdmin=mode==='admin';
     document.body.classList.toggle('mws-public-mode',!isAdmin);
+    document.body.dataset.mwsMode=isAdmin?'admin':'public';
     const badge=$('mwsModeBadge');if(badge){badge.textContent=isAdmin?'ADMIN':'PUBLIC';badge.classList.toggle('admin',isAdmin)}
     if($('mwsAdminManageBtn'))$('mwsAdminManageBtn').hidden=!isAdmin;
-    document.querySelectorAll('.nav button').forEach(btn=>{
-      const hidden=!isAdmin&&['sniper','targets','memos','export','settings'].includes(btn.dataset.tab);
-      btn.dataset.mwsPublicHidden=hidden?'true':'false';
-      if(hidden&&btn.classList.contains('active'))setTimeout(()=>{try{setTab('dashboard')}catch(_){}});
-    });
+    document.querySelectorAll('.nav button').forEach(btn=>{delete btn.dataset.mwsPublicHidden});
     applyPublicRestrictions();
+    try{updateStorageStatus(true)}catch(_){}
   }
 
   function applyPublicRestrictions(){
-    if(mode!=='public')return;
-    // View/search/filter controls remain usable. Actual editor fields are read-only.
-    document.querySelectorAll('#contactModal input,#contactModal select,#contactModal textarea,#eventModal input,#eventModal select,#eventModal textarea').forEach(el=>{el.disabled=true});
-    const title=$('postDisplayName');if(title){title.readOnly=true;title.setAttribute('aria-readonly','true')}
-    document.querySelectorAll('.mws-admin-only,#newEventBtn,#newContactBtn,#cleanupDuplicatesBtn,#postUrlAddBtn,#postUrlInput,#postSyncBtn,#postDeleteBtn,#postScheduleCreateBtn,.post-applicant-delete').forEach(el=>{el.style.display='none'});
-    const urlCard=$('postUrlInput')?.closest('.post-url-card');if(urlCard)urlCard.style.display='none';
-    document.querySelectorAll('button').forEach(btn=>{
-      if(btn.closest('.nav,#gameLadder,#gameRps,#gamePachinko,#gameMultiDraw,#worldtime,.mws-access-tools,#mwsAccessGate'))return;
-      if(btn.closest('#postApplicantGrid')&&/연락처 보기/.test((btn.textContent||'').trim()))return;
-      const t=(btn.textContent||'').trim();
-      if(/연락처 추가|컨텐츠 추가|일정 추가|스케줄 저장|삭제|저장|가져오기|내보내기|설정 완료|URL 등록|댓글 다시 동기화/.test(t))btn.style.display='none';
-    });
+    // v5.2: Public has the same in-app capabilities as Admin. The security boundary is persistence, not UI buttons.
+    document.querySelectorAll('#contactModal input,#contactModal select,#contactModal textarea,#eventModal input,#eventModal select,#eventModal textarea').forEach(el=>{el.disabled=false});
+    const title=$('postDisplayName');if(title){title.readOnly=false;title.removeAttribute('aria-readonly')}
+    document.querySelectorAll('.mws-admin-only,#newEventBtn,#newContactBtn,#cleanupDuplicatesBtn,#postUrlAddBtn,#postUrlInput,#postSyncBtn,#postDeleteBtn,#postScheduleCreateBtn,.post-applicant-delete').forEach(el=>{el.style.removeProperty('display')});
+    const urlCard=$('postUrlInput')?.closest('.post-url-card');if(urlCard)urlCard.style.removeProperty('display');
   }
 
   async function readState(kind){
@@ -15815,7 +15828,7 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
     cloudSaving=true;
     try{
       const {data:{user}}=await sb.auth.getUser();if(!user)throw new Error('Admin 세션이 만료되었습니다.');
-      const payload=clone(data);if(Array.isArray(payload.posts))for(const post of payload.posts){delete post.sourceContent;delete post.sourcePhotos;delete post.sourceAuthor;delete post.sourceAuthorId;delete post.sourceRegDate;delete post.sourceViewCount;delete post.sourceUrl}const pub=makePublicData(payload);const now=new Date().toISOString();
+      const payload=typeof mwsStripDevicePrefs==='function'?mwsStripDevicePrefs(data):clone(data);if(Array.isArray(payload.posts))for(const post of payload.posts){delete post.sourceContent;delete post.sourcePhotos;delete post.sourceAuthor;delete post.sourceAuthorId;delete post.sourceRegDate;delete post.sourceViewCount;delete post.sourceUrl}const pub=makePublicData(payload);const now=new Date().toISOString();
       const a=await sb.from('admin_state').upsert({id:'main',data:payload,updated_at:now,updated_by:user.id});if(a.error)throw a.error;
       const p=await sb.from('public_state').upsert({id:'main',data:pub,updated_at:now,updated_by:user.id});if(p.error)throw p.error;
       const st=$('syncStatusText');if(st)st.textContent='Supabase 저장 완료';
@@ -15827,9 +15840,19 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
   function installSaveBridge(){
     if(originalSaveData||typeof saveData!=='function')return;
     originalSaveData=saveData;
+    const originalPersistFn=typeof persist==='function'?persist:null;
+    if(originalPersistFn){
+      persist=function(){
+        if(mode==='public'){if(typeof mwsSaveDevicePrefs==='function')mwsSaveDevicePrefs(data);return true}
+        const result=originalPersistFn();
+        if(typeof mwsSaveDevicePrefs==='function')mwsSaveDevicePrefs(data);
+        if(mode==='admin')queueCloudSave();
+        return result;
+      };
+    }
     saveData=function(reason='데이터 저장'){
       if(mode==='public'){
-        normalizeDataShape();lastSyncReason=reason;renderAll(reason);try{window.dispatchEvent(new CustomEvent('mawang:datachange',{detail:{reason}}))}catch(_){};setTimeout(applyPublicRestrictions,0);return true;
+        normalizeDataShape();lastSyncReason=reason;if(typeof mwsSaveDevicePrefs==='function')mwsSaveDevicePrefs(data);renderAll(reason);try{window.dispatchEvent(new CustomEvent('mawang:datachange',{detail:{reason}}))}catch(_){};return true;
       }
       const result=originalSaveData(reason);queueCloudSave();return result;
     };
@@ -15843,13 +15866,13 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
       await writeInitialState();remote=clone(data);
     }else if(remoteEmpty&&chosen==='public'){remote=makePublicData(blankPublicState())}
     if(remote&&typeof remote==='object'){
-      data=clone(remote);normalizeDataShape();document.body.dataset.theme=data.theme||'neon';document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));renderAll('Supabase 데이터 불러오기');
+      data=clone(remote);normalizeDataShape();if(typeof mwsApplyDevicePrefs==='function')mwsApplyDevicePrefs(data);document.body.dataset.theme=data.theme||'neon';document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));renderAll('Supabase 데이터 불러오기');
     }
     applyModeUi();hideGate();
   }
   async function writeInitialState(){
     const {data:{user}}=await sb.auth.getUser();if(!user)return;
-    const now=new Date().toISOString(),payload=clone(data);if(Array.isArray(payload.posts))for(const post of payload.posts){delete post.sourceContent;delete post.sourcePhotos;delete post.sourceAuthor;delete post.sourceAuthorId;delete post.sourceRegDate;delete post.sourceViewCount;delete post.sourceUrl}const pub=makePublicData(payload);
+    const now=new Date().toISOString(),payload=typeof mwsStripDevicePrefs==='function'?mwsStripDevicePrefs(data):clone(data);if(Array.isArray(payload.posts))for(const post of payload.posts){delete post.sourceContent;delete post.sourcePhotos;delete post.sourceAuthor;delete post.sourceAuthorId;delete post.sourceRegDate;delete post.sourceViewCount;delete post.sourceUrl}const pub=makePublicData(payload);
     const a=await sb.from('admin_state').upsert({id:'main',data:payload,updated_at:now,updated_by:user.id});if(a.error)throw a.error;
     const p=await sb.from('public_state').upsert({id:'main',data:pub,updated_at:now,updated_by:user.id});if(p.error)throw p.error;
   }
@@ -15898,12 +15921,6 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
     $('mwsAdminClose')?.addEventListener('click',()=>{$('mwsAdminModal').classList.remove('open');$('mwsAdminModal').setAttribute('aria-hidden','true')});
     $('mwsAddAdminForm')?.addEventListener('submit',addAdmin);
     window.addEventListener('mawang:datachange',()=>setTimeout(()=>{applyModeUi()},0));
-    document.addEventListener('click',e=>{
-      if(mode!=='public')return;const t=e.target instanceof Element?e.target:null;if(!t)return;
-      if(t.closest('.nav,#gameLadder,#gameRps,#gamePachinko,#gameMultiDraw,#worldtime,.mws-access-tools,#mwsAccessGate'))return;
-      const day=t.closest('.day');
-      if(day&&!t.closest('.mini-event,.event-card,.reminder-card,.upcoming-link')){e.preventDefault();e.stopImmediatePropagation()}
-    },true);
   }
 
   async function init(){
