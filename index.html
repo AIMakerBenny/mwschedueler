@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>MAWANG 라이브 스케줄러 Beta</title>
+<title>MAWANG 라이브 스케줄러</title>
 <style>
 :root{
   --bg:#090b14;--panel:#11172a;--panel2:#293654;--text:#f7f8ff;--muted:#9eadd0;
@@ -6603,6 +6603,51 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
         <div id="upcomingDashboard" class="list dashboard-upcoming-list"></div>
       </div>
     </div>
+
+    <div class="dashboard-insights-v55">
+      <div class="card dashboard-insight-card-v55">
+        <div class="space dashboard-insight-head-v55">
+          <div>
+            <div class="dashboard-insight-kicker-v55">SCHEDULE SNAPSHOT</div>
+            <h3>오늘 · 7일 일정</h3>
+            <div class="subtle">가까운 일정과 준비 상태를 한 번에 확인합니다.</div>
+          </div>
+          <span id="dashboardWeekBadgeV55" class="chip">0개</span>
+        </div>
+        <div id="dashboardWeekSnapshotV55" class="dashboard-week-snapshot-v55"></div>
+      </div>
+
+      <div class="card dashboard-insight-card-v55">
+        <div class="space dashboard-insight-head-v55">
+          <div>
+            <div class="dashboard-insight-kicker-v55">OPERATIONS</div>
+            <h3>운영 현황</h3>
+            <div class="subtle">일정, 신청자, 준비도와 관리 항목을 요약합니다.</div>
+          </div>
+          <span id="dashboardTodayBadgeV55" class="chip">오늘 0개</span>
+        </div>
+        <div class="dashboard-ops-grid-v55">
+          <button type="button" class="dashboard-stat-v55" onclick="setTab('calendar')">
+            <span class="dashboard-stat-label-v55">이번 달 일정</span><strong id="dashboardMonthCountV55">0</strong><small id="dashboardMonthMetaV55">휴방 0일</small>
+          </button>
+          <button type="button" class="dashboard-stat-v55" onclick="setTab('dashboard')">
+            <span class="dashboard-stat-label-v55">7일 준비도</span><strong id="dashboardReadinessV55">0%</strong><small id="dashboardReadinessMetaV55">체크리스트 0 / 0</small>
+          </button>
+          <button type="button" class="dashboard-stat-v55" onclick="setTab('posts')">
+            <span class="dashboard-stat-label-v55">게시글 신청</span><strong id="dashboardPostApplicantsV55">0명</strong><small id="dashboardPostMetaV55">대기 0 · 가챠 0 · 확정 0</small>
+          </button>
+          <button type="button" class="dashboard-stat-v55" onclick="setTab('sniper')">
+            <span class="dashboard-stat-label-v55">최근 30일 합방</span><strong id="dashboardRecentCollabV55">0회</strong><small id="dashboardRecentCollabMetaV55">0명과 함께함</small>
+          </button>
+          <button type="button" class="dashboard-stat-v55" onclick="setTab('targets')">
+            <span class="dashboard-stat-label-v55">저격 리스트</span><strong id="dashboardTargetCountV55">0명</strong><small>현재 등록된 대상</small>
+          </button>
+          <button type="button" class="dashboard-stat-v55" onclick="setTab('contacts');setTimeout(()=>setContactView('incomplete'),0)">
+            <span class="dashboard-stat-label-v55">연락처 미완성</span><strong id="dashboardIncompleteV55">0명</strong><small>태그 또는 URL 확인 필요</small>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="dashboardReminderMode" class="dashboard-mode-panel">
@@ -7841,7 +7886,7 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
             </div>
           </div>
           <div class="field full"><label>태그 - 쉼표로 구분</label><input id="ctLabels" placeholder="버튜버, 게임, 친구"></div>
-          <div class="field full"><label>방송국 주소</label><input id="ctStationUrl" placeholder="https://..."></div>
+          <div class="field full"><label>방송국 주소</label><div class="contact-station-row-v55"><input id="ctStationUrl" placeholder="https://..."><button type="button" class="secondary" id="ctStationVisitBtn" onclick="visitContactStationV55()">방문</button></div></div>
           <div class="field full"><label>메모</label><textarea id="ctNotes"></textarea></div>
         </div>
         <div class="space" style="margin-top:16px">
@@ -15771,7 +15816,7 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
   try{window.setPostDetailMode('applicants')}catch(_){}
 })();
 </script>
-\n<script id="mws-supabase-cloud-layer" data-release="5.2">
+<script id="mws-supabase-cloud-layer" data-release="5.2">
 (()=>{
   const SB_URL='https://nysxcqlewzucbpoaymbg.supabase.co';
   const SB_KEY='sb_publishable_H7VPUOVV6nN7QdaJKO3-lA_-SNrg4mW';
@@ -16211,6 +16256,95 @@ body[data-resolution="mobile"] #contacts.active .contact-tag-panel{position:stat
 </style>
 
 
+
+<style id="v550-style">
+/* =========================================================
+   v5.5 - fixed navigation, contact URL action, dashboard
+   ========================================================= */
+
+/* The desktop navigation rail must never move with document scrolling. */
+@media (min-width:761px){
+  body:not([data-resolution="mobile"]) .app{position:relative!important}
+  body:not([data-resolution="mobile"]) .sidebar,
+  body:not([data-resolution="mobile"]) .sidebar:hover,
+  body:not([data-resolution="mobile"]).sidebar-pinned .sidebar,
+  body:not([data-resolution="mobile"]).sidebar-pinned .sidebar:hover{
+    position:fixed!important;
+    inset:0 auto 0 0!important;
+    top:0!important;
+    left:0!important;
+    height:100vh!important;
+    max-height:100vh!important;
+    align-self:auto!important;
+    overflow:hidden!important;
+    z-index:500!important;
+  }
+  body:not([data-resolution="mobile"]) .main{grid-column:2!important;min-width:0!important}
+}
+body[data-resolution="mobile"] .main{grid-column:auto!important}
+
+/* Keep the Contacts tag/category board visible while its page scrolls. */
+#contacts .contact-board-layout{overflow:visible!important;align-items:start!important}
+#contacts .contact-board-main{overflow:visible!important}
+#contacts .contact-tag-panel{
+  position:sticky!important;
+  top:12px!important;
+  align-self:start!important;
+  max-height:calc(100vh - 24px)!important;
+  overflow-y:auto!important;
+  z-index:20!important;
+}
+
+.contact-station-row-v55{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:stretch}
+.contact-station-row-v55 #ctStationVisitBtn{min-width:76px;font-weight:850}
+
+.dashboard-insights-v55{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:14px}
+.dashboard-insight-card-v55{min-height:330px;overflow:hidden}
+.dashboard-insight-head-v55{align-items:flex-start;margin-bottom:13px}
+.dashboard-insight-head-v55 h3{font-size:18px;margin:3px 0 4px}
+.dashboard-insight-kicker-v55{font-size:9px;letter-spacing:.18em;color:var(--accent);font-weight:950}
+.dashboard-week-snapshot-v55{display:flex;flex-direction:column;gap:8px}
+.dashboard-week-row-v55{
+  display:grid;grid-template-columns:68px minmax(0,1fr) auto;gap:10px;align-items:center;
+  width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:12px;background:var(--input);color:var(--text);text-align:left;
+  transition:transform .14s,border-color .14s,background .14s,box-shadow .14s;
+}
+.dashboard-week-row-v55:hover{transform:translateX(3px);border-color:var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--input));box-shadow:0 0 16px color-mix(in srgb,var(--accent) 10%,transparent)}
+.dashboard-week-date-v55{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:48px;border-radius:10px;background:color-mix(in srgb,var(--accent) 10%,var(--panel));border:1px solid color-mix(in srgb,var(--accent) 26%,var(--border));font-size:10px;font-weight:900;color:var(--muted)}
+.dashboard-week-date-v55 strong{font-size:15px;color:var(--text);line-height:1.1;margin-bottom:2px}
+.dashboard-week-title-v55{font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dashboard-week-meta-v55{margin-top:4px;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dashboard-week-progress-v55{min-width:64px;text-align:right;font-size:10px;color:var(--muted);font-weight:800}
+.dashboard-week-progress-v55 strong{display:block;font-size:15px;color:var(--text);margin-bottom:2px}
+.dashboard-ops-grid-v55{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.dashboard-stat-v55{
+  min-width:0;min-height:120px;padding:13px;border:1px solid var(--border);border-radius:13px;background:var(--input);color:var(--text);text-align:left;
+  display:flex;flex-direction:column;justify-content:center;transition:transform .14s,border-color .14s,background .14s,box-shadow .14s;
+}
+.dashboard-stat-v55:hover{transform:translateY(-2px);border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--input));box-shadow:0 9px 24px rgba(0,0,0,.18),0 0 16px color-mix(in srgb,var(--accent) 10%,transparent)}
+.dashboard-stat-label-v55{font-size:10px;color:var(--muted);font-weight:850}
+.dashboard-stat-v55 strong{display:block;font-size:25px;line-height:1.1;margin:7px 0 5px;font-weight:950;letter-spacing:-.03em}
+.dashboard-stat-v55 small{font-size:9px;color:var(--muted);line-height:1.4;white-space:normal}
+@media(max-width:1250px){.dashboard-ops-grid-v55{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1050px){.dashboard-insights-v55{grid-template-columns:1fr}}
+@media(max-width:760px){.dashboard-ops-grid-v55{grid-template-columns:1fr 1fr}.dashboard-week-row-v55{grid-template-columns:58px minmax(0,1fr)}.dashboard-week-progress-v55{display:none}.contact-station-row-v55{grid-template-columns:1fr}}
+
+/* A separate high-z rain layer avoids old easter-egg state conflicts. */
+#mascotRainLayerV55{position:fixed;inset:0;z-index:5000;overflow:hidden;pointer-events:none;display:none}
+#mascotRainLayerV55.active{display:block}
+.mascot-rain-item-v55{
+  position:absolute;left:var(--rain-x);top:-26vh;width:var(--rain-size);height:auto;opacity:.98;object-fit:contain;
+  filter:drop-shadow(0 9px 10px rgba(0,0,0,.32));will-change:transform,opacity;
+  animation:mascotRainFallV55 var(--rain-duration) cubic-bezier(.22,.5,.34,1) var(--rain-delay) 1 both;
+}
+@keyframes mascotRainFallV55{
+  0%{transform:translate3d(0,-18vh,0) rotate(var(--rain-rot-start));opacity:0}
+  6%{opacity:1}
+  78%{opacity:1}
+  100%{transform:translate3d(var(--rain-drift),150vh,0) rotate(var(--rain-rot-end));opacity:.92}
+}
+</style>
+
 <script id="v540-feature-script">
 (function(){
   try{data.version=Math.max(54,Number(data.version)||0)}catch(_){}
@@ -16324,6 +16458,143 @@ body[data-resolution="mobile"] #contacts.active .contact-tag-panel{position:stat
 })();
 </script>
 
+
+
+<script id="v550-feature-script">
+(function(){
+  try{data.version=Math.max(55,Number(data.version)||0)}catch(_){}
+
+  /* ---------- contact editor: station visit ---------- */
+  window.visitContactStationV55=function(){
+    const input=document.getElementById('ctStationUrl');
+    const raw=String(input?.value||'').trim();
+    if(!raw){try{toast('방송국 주소','먼저 방송국 주소를 입력해 주세요')}catch(_){};return}
+    const url=(typeof normalizeExternalUrl==='function')?normalizeExternalUrl(raw):(/^https?:\/\//i.test(raw)?raw:'https://'+raw);
+    try{new URL(url)}catch(_){try{toast('방송국 주소','올바른 URL을 입력해 주세요')}catch(__){};return}
+    window.open(url,'_blank','noopener,noreferrer');
+  };
+
+  /* ---------- dashboard operational summary ---------- */
+  function v55ApplicantKey(c){return String(c?.userId||c?.sourceUserId||c?.authorId||c?.contactId||c?.name||c?.id||'').trim().toLowerCase()}
+  function v55Status(c){const s=String(c?.status||'pending').toLowerCase();return s==='excluded'?'nextchance':s}
+  function v55Set(id,value){const el=document.getElementById(id);if(el)el.textContent=value}
+  function renderDashboardInsightsV55(){
+    const today=(typeof todayKST==='function')?todayKST():new Date().toISOString().slice(0,10);
+    const todayDate=new Date(today+'T12:00:00');
+    const weekEndDate=new Date(todayDate);weekEndDate.setDate(weekEndDate.getDate()+6);
+    const weekEnd=(typeof ymd==='function')?ymd(weekEndDate):weekEndDate.toISOString().slice(0,10);
+    const allEvents=Array.isArray(data?.events)?data.events:[];
+    const near=allEvents.filter(e=>String(e?.date||'')>=today&&String(e?.date||'')<=weekEnd).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.start||'').localeCompare(String(b.start||'')));
+    const todayRows=near.filter(e=>e.date===today);
+    v55Set('dashboardWeekBadgeV55',`${near.length}개`);
+    v55Set('dashboardTodayBadgeV55',`오늘 ${todayRows.length}개`);
+    const snapshot=document.getElementById('dashboardWeekSnapshotV55');
+    if(snapshot){
+      snapshot.innerHTML=near.length?near.slice(0,6).map(e=>{
+        const d=new Date(String(e.date)+'T12:00:00');
+        const md=`${d.getMonth()+1}/${d.getDate()}`;
+        const day=['일','월','화','수','목','금','토'][d.getDay()]||'';
+        const cat=e.restDay?null:(typeof category==='function'?category(e.categoryId):null);
+        const people=e.restDay?[]:(typeof eventParticipantRows==='function'?eventParticipantRows(e):[]);
+        const prog=e.restDay?[0,0,0]:(typeof checklistProgress==='function'?checklistProgress(e):[0,0,0]);
+        const time=e.restDay?'하루 종일 휴방':(typeof formatTimeKorean==='function'?formatTimeKorean(e.start):String(e.start||''));
+        const meta=[time,cat?.name||'',people.length?`참가 ${people.length}명`:'' ].filter(Boolean).join(' · ');
+        const progressText=prog[1]?`${prog[0]}/${prog[1]}`:'—';
+        const progressPct=prog[1]?`${prog[2]}%`:'체크 없음';
+        return `<button type="button" class="dashboard-week-row-v55" onclick="openEvent('${e.id}')"><span class="dashboard-week-date-v55"><strong>${md}</strong>${day}</span><span style="min-width:0"><span class="dashboard-week-title-v55">${typeof esc==='function'?esc(e.restDay?'휴방':(e.title||'제목 없음')):(e.restDay?'휴방':(e.title||'제목 없음'))}</span><span class="dashboard-week-meta-v55">${typeof esc==='function'?esc(meta):meta}</span></span><span class="dashboard-week-progress-v55"><strong>${progressText}</strong>${progressPct}</span></button>`;
+      }).join('')+(near.length>6?`<button type="button" class="ghost small" style="width:100%;margin-top:2px" onclick="setTab('calendar')">외 ${near.length-6}개 일정 · 캘린더에서 보기</button>`:''):'<div class="empty">앞으로 7일 이내에 등록된 일정이 없습니다</div>';
+    }
+
+    const monthPrefix=today.slice(0,7);
+    const monthRows=allEvents.filter(e=>String(e?.date||'').startsWith(monthPrefix));
+    const restDays=monthRows.filter(e=>e.restDay).length;
+    v55Set('dashboardMonthCountV55',`${monthRows.length}개`);
+    v55Set('dashboardMonthMetaV55',`휴방 ${restDays}일 · 방송/컨텐츠 ${Math.max(0,monthRows.length-restDays)}개`);
+
+    const prepareRows=near.filter(e=>!e.restDay);
+    let checklistDone=0,checklistTotal=0;
+    prepareRows.forEach(e=>{const arr=Array.isArray(e?.checklist)?e.checklist:[];checklistTotal+=arr.length;checklistDone+=arr.filter(x=>x?.done).length});
+    const readiness=checklistTotal?Math.round(checklistDone/checklistTotal*100):(prepareRows.length?100:0);
+    v55Set('dashboardReadinessV55',`${readiness}%`);
+    v55Set('dashboardReadinessMetaV55',checklistTotal?`체크리스트 ${checklistDone} / ${checklistTotal}`:(prepareRows.length?'등록된 체크리스트 없음':'예정 컨텐츠 없음'));
+
+    const postCounts={pending:0,gacha:0,selected:0,nextchance:0};
+    (Array.isArray(data?.posts)?data.posts:[]).forEach(p=>{
+      const seen=new Set();
+      (Array.isArray(p?.comments)?p.comments:[]).forEach(c=>{const key=v55ApplicantKey(c)||String(c?.id||Math.random());if(seen.has(key))return;seen.add(key);const s=v55Status(c);if(postCounts[s]!==undefined)postCounts[s]++;else postCounts.pending++});
+    });
+    const activeApplicants=postCounts.pending+postCounts.gacha+postCounts.selected;
+    v55Set('dashboardPostApplicantsV55',`${activeApplicants}명`);
+    v55Set('dashboardPostMetaV55',`대기 ${postCounts.pending} · 가챠 ${postCounts.gacha} · 확정 ${postCounts.selected}`);
+
+    let history=[];
+    try{history=(typeof normalizedCollaborationHistory==='function'?normalizedCollaborationHistory():(Array.isArray(data?.collaborations)?data.collaborations:[]))||[]}catch(_){history=Array.isArray(data?.collaborations)?data.collaborations:[]}
+    const cutoff=new Date(todayDate);cutoff.setDate(cutoff.getDate()-29);
+    const cutoffStr=(typeof ymd==='function')?ymd(cutoff):cutoff.toISOString().slice(0,10);
+    const recent=history.filter(x=>String(x?.date||'')>=cutoffStr&&String(x?.date||'')<=today&&!x?.restDay&&String(x?.title||'').trim()!=='휴방');
+    const recentPeople=new Set();recent.forEach(x=>(x?.participants||[]).forEach(id=>recentPeople.add(id)));
+    v55Set('dashboardRecentCollabV55',`${recent.length}회`);
+    v55Set('dashboardRecentCollabMetaV55',`${recentPeople.size}명과 함께함`);
+
+    v55Set('dashboardTargetCountV55',`${Array.isArray(data?.targetList)?data.targetList.length:0}명`);
+    const incomplete=(Array.isArray(data?.contacts)?data.contacts:[]).filter(c=>{try{return typeof contactNeedsCompletion==='function'?contactNeedsCompletion(c):(!(c?.labels||[]).length||!String(c?.stationUrl||'').trim())}catch(_){return false}}).length;
+    v55Set('dashboardIncompleteV55',`${incomplete}명`);
+  }
+  window.renderDashboardInsightsV55=renderDashboardInsightsV55;
+  const baseRenderDashboardV55=window.renderDashboard||((typeof renderDashboard==='function')?renderDashboard:null);
+  if(typeof baseRenderDashboardV55==='function'){
+    window.renderDashboard=function(){const out=baseRenderDashboardV55.apply(this,arguments);try{renderDashboardInsightsV55()}catch(e){console.error('dashboard v5.5 summary',e)}return out};
+    try{renderDashboard=window.renderDashboard}catch(_){}
+  }
+
+  /* ---------- fixed sidebar, reinforced at runtime ---------- */
+  function reinforceSidebarV55(){
+    if(document.body.dataset.resolution==='mobile')return;
+    const side=document.querySelector('.sidebar'),main=document.querySelector('.main');
+    if(side){side.style.position='fixed';side.style.top='0';side.style.left='0';side.style.height='100vh';side.style.maxHeight='100vh'}
+    if(main)main.style.gridColumn='2';
+  }
+  window.reinforceSidebarV55=reinforceSidebarV55;
+  window.addEventListener('resize',reinforceSidebarV55,{passive:true});
+
+  /* ---------- mascot rain: independent, immediate, repeatable ---------- */
+  let rainTimerV55=0;
+  function rainLayerV55(){
+    let layer=document.getElementById('mascotRainLayerV55');
+    if(!layer){layer=document.createElement('div');layer.id='mascotRainLayerV55';layer.setAttribute('aria-hidden','true');document.body.appendChild(layer)}
+    return layer;
+  }
+  window.launchMascotRainV55=function(){
+    const layer=rainLayerV55();
+    clearTimeout(rainTimerV55);layer.replaceChildren();layer.classList.add('active');layer.setAttribute('aria-hidden','false');
+    const source=window.MWS_MASCOT_V54||'assets/mawang-mascot-v54.webp';
+    const total=112;
+    for(let i=0;i<total;i++){
+      const img=document.createElement('img');img.src=source;img.alt='';img.className='mascot-rain-item-v55';
+      const duration=3.8+Math.random()*3.3;
+      img.style.setProperty('--rain-x',(Math.random()*101-1)+'vw');
+      img.style.setProperty('--rain-size',(44+Math.random()*118)+'px');
+      img.style.setProperty('--rain-drift',((Math.random()-.5)*280)+'px');
+      img.style.setProperty('--rain-rot-start',((Math.random()-.5)*80)+'deg');
+      img.style.setProperty('--rain-rot-end',((Math.random()-.5)*720)+'deg');
+      img.style.setProperty('--rain-duration',duration+'s');
+      img.style.setProperty('--rain-delay',((-Math.random()*duration*.72)+(Math.random()*.45))+'s');
+      layer.appendChild(img);
+    }
+    try{document.body.classList.add('mascot-rain-active')}catch(_){}
+    rainTimerV55=setTimeout(()=>{layer.classList.remove('active');layer.setAttribute('aria-hidden','true');layer.replaceChildren();try{document.body.classList.remove('mascot-rain-active')}catch(_){}},7600);
+  };
+  const creatorBtnV55=document.getElementById('creatorEasterEggBtn');
+  if(creatorBtnV55){
+    creatorBtnV55.onclick=null;
+    creatorBtnV55.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();window.launchMascotRainV55()},true);
+    creatorBtnV55.title='클릭하면 MAWANG 마스코트가 쏟아집니다';
+  }
+
+  reinforceSidebarV55();
+  try{renderDashboardInsightsV55()}catch(_){}
+})();
+</script>
 
 </body>
 </html>
