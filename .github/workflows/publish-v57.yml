@@ -1,0 +1,62 @@
+name: Publish MAWANG Scheduler v5.7
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apply_v57.py
+      - .github/workflows/publish-v57.yml
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply v5.7 patch
+        run: python apply_v57.py
+      - name: Verify required v5.7 features
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          required=[
+            'id="mws-v57-style"',
+            'id="mws-v57-script"',
+            '미니게임 진행하기',
+            'post-game-best-ribbon-v57',
+            '추천 선택',
+            'postScheduleNoticeModalV57',
+            '이 메세지를 다시 보지 않기',
+            'mws_hide_post_schedule_notice_v57',
+          ]
+          missing=[x for x in required if x not in s]
+          if missing:
+              raise SystemExit('Missing: '+repr(missing))
+          print('v5.7 feature markers OK')
+          PY
+      - name: Check inline JavaScript syntax
+        run: |
+          python - <<'PY'
+          import re, pathlib
+          s=pathlib.Path('index.html').read_text(encoding='utf-8')
+          out=pathlib.Path('/tmp/v57js'); out.mkdir(exist_ok=True)
+          blocks=re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>',s,re.S|re.I)
+          for i,b in enumerate(blocks):
+              (out/f'{i:02d}.js').write_text(b,encoding='utf-8')
+          print(len(blocks),'inline scripts')
+          PY
+          for f in /tmp/v57js/*.js; do node --check "$f"; done
+      - name: Commit production index
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No production change to commit"
+          else
+            git commit -m "Publish MAWANG Scheduler v5.7"
+            git push
+          fi
