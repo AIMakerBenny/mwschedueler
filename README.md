@@ -13,4 +13,6 @@ MAWANG Scheduler web app.
 - v5.5 removes the stray bottom text, fixes the global sidebar in the viewport, reinforces the contact tag panel, adds a station URL visit button, rebuilds the Marorong / 마로롱 rain click effect, and expands the dashboard with schedule and operation insights
 - v5.6 keeps the contact tag folder visible while scrolling, adds a clickable Profile Card popup from the contact profile image, and expands recent collaboration visual tiers from 5 to 10 with progressively stronger effects
 
+2026-09-08 performance refactor: runtime hot paths and cacheable frontend assets were optimized without intentional UI or feature changes.
+
 Pushes to `main` are deployed automatically through the connected Vercel project.
