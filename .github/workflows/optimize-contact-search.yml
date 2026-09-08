@@ -1,0 +1,98 @@
+name: Optimize contact search
+
+on:
+  push:
+    paths:
+      - '.github/workflows/optimize-contact-search.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Optimize contact search rendering
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+
+          old_events = """function refreshContactViews(){renderContacts();renderSniperList();renderTargetList();renderPendingContacts();renderContactTagSidebar()}
+document.getElementById('contactSearch').oninput=refreshContactViews;
+document.getElementById('contactSort').onchange=refreshContactViews;
+document.getElementById('contactLabelFilter').onchange=refreshContactViews;"""
+          new_events = """function refreshContactViews(){renderContacts();renderSniperList();renderTargetList();renderPendingContacts();renderContactTagSidebar()}
+function mwsRenderActiveContactView(){
+  if(contactView==='pending')renderPendingContacts();
+  else if(contactView==='incomplete'&&typeof renderIncompleteContacts==='function')renderIncompleteContacts();
+  else if(contactView==='favorite'&&typeof renderFavoriteContactsV574==='function')renderFavoriteContactsV574();
+  else renderContacts();
+}
+let mwsContactSearchTimer=0;
+const mwsContactSearchInput=document.getElementById('contactSearch');
+if(mwsContactSearchInput){
+  mwsContactSearchInput.oninput=(ev)=>{
+    if(ev?.isComposing)return;
+    clearTimeout(mwsContactSearchTimer);
+    mwsContactSearchTimer=setTimeout(()=>{
+      window.__mwsContactSearchRender=true;
+      try{mwsRenderActiveContactView()}finally{window.__mwsContactSearchRender=false}
+    },100);
+  };
+  mwsContactSearchInput.oncompositionend=()=>{
+    clearTimeout(mwsContactSearchTimer);
+    mwsContactSearchTimer=setTimeout(()=>{
+      window.__mwsContactSearchRender=true;
+      try{mwsRenderActiveContactView()}finally{window.__mwsContactSearchRender=false}
+    },0);
+  };
+}
+document.getElementById('contactSort').onchange=mwsRenderActiveContactView;
+document.getElementById('contactLabelFilter').onchange=()=>{mwsRenderActiveContactView();renderContactTagSidebar()};"""
+          idx = text.rfind(old_events)
+          if idx < 0:
+              raise SystemExit('Contact search event block not found')
+          text = text[:idx] + new_events + text[idx + len(old_events):]
+
+          old_header = """function renderContacts(){
+  renderContactTagSidebar();renderContactTagBanner();let arr=filteredContacts();"""
+          new_header = """function renderContacts(){
+  if(!window.__mwsContactSearchRender)renderContactTagSidebar();
+  renderContactTagBanner();let arr=filteredContacts();"""
+          idx = text.rfind(old_header)
+          if idx < 0:
+              raise SystemExit('Latest renderContacts header not found')
+          text = text[:idx] + new_header + text[idx + len(old_header):]
+
+          old_cards = """  const grid=document.getElementById('contactGrid');if(!grid)return;
+  grid.innerHTML=arr.map(c=>{
+    const last=getLastCollab(c.id),upcoming=upcomingEventsForContact(c.id),isSelf=c.id===data.selfContactId;"""
+          new_cards = """  const grid=document.getElementById('contactGrid');if(!grid)return;
+  const mwsHistory=typeof normalizedCollaborationHistory==='function'?normalizedCollaborationHistory():null;
+  const mwsLastByContact=new Map();
+  if(mwsHistory)for(const row of mwsHistory)for(const id of row.participants||[])if(!mwsLastByContact.has(id))mwsLastByContact.set(id,row);
+  const mwsUpcomingAll=upcomingEvents();
+  grid.innerHTML=arr.map(c=>{
+    const last=mwsHistory?(mwsLastByContact.get(c.id)||null):getLastCollab(c.id),upcoming=mwsUpcomingAll.filter(e=>!e.restDay&&(e.participants||[]).includes(c.id)).slice(0,8),isSelf=c.id===data.selfContactId;"""
+          idx = text.rfind(old_cards)
+          if idx < 0:
+              raise SystemExit('Latest contact card render block not found')
+          text = text[:idx] + new_cards + text[idx + len(old_cards):]
+
+          marker='<!-- mws-contact-search-performance-v1 -->'
+          if marker not in text:
+              text=text.replace('</body>',marker+'\n</body>',1)
+
+          path.write_text(text,encoding='utf-8')
+          PY
+      - name: Commit optimization
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Optimize contacts search performance"
+          git push
