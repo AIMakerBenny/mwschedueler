@@ -16,35 +16,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Index events by date during calendar render
+        env:
+          PATCH_B64: ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCnBhdGg9UGF0aCgiYXNzZXRzL2FwcC1jb3JlLmpzIikKdGV4dD1wYXRoLnJlYWRfdGV4dCgidXRmLTgiKQpvbGQ9IiIiICBjb25zdCBmaXJzdD1uZXcgRGF0ZSh5LG0sMSksb2Zmc2V0PXN1bmRheUluZGV4KGZpcnN0LmdldERheSgpKSxzdGFydD1uZXcgRGF0ZSh5LG0sMS1vZmZzZXQpO2xldCBvdXQ9Jyc7CiAgZm9yKGxldCBpPTA7aTw0MjtpKyspewogICAgY29uc3QgZD1uZXcgRGF0ZShzdGFydCk7ZC5zZXREYXRlKHN0YXJ0LmdldERhdGUoKStpKTsKICAgIGNvbnN0IGRzPXltZChkKSxpbk1vbnRoPWQuZ2V0TW9udGgoKT09PW0sdG9kYXk9ZHM9PT10b2RheUtTVCgpLGRvdz1kLmdldERheSgpOwogICAgY29uc3QgZXZzPWFjdGl2ZUV2ZW50cygpLmZpbHRlcihlPT5lLmRhdGU9PT1kcykuc29ydCgoYSxiKT57CiIiIgpuZXc9IiIiICBjb25zdCBmaXJzdD1uZXcgRGF0ZSh5LG0sMSksb2Zmc2V0PXN1bmRheUluZGV4KGZpcnN0LmdldERheSgpKSxzdGFydD1uZXcgRGF0ZSh5LG0sMS1vZmZzZXQpO2xldCBvdXQ9Jyc7CiAgY29uc3QgZXZlbnRzQnlEYXRlPW5ldyBNYXAoKTsKICBmb3IoY29uc3QgZXZlbnQgb2YgYWN0aXZlRXZlbnRzKCkpewogICAgY29uc3Qga2V5PWV2ZW50Py5kYXRlOwogICAgaWYoIWV2ZW50c0J5RGF0ZS5oYXMoa2V5KSlldmVudHNCeURhdGUuc2V0KGtleSxbXSk7CiAgICBldmVudHNCeURhdGUuZ2V0KGtleSkucHVzaChldmVudCk7CiAgfQogIGZvcihsZXQgaT0wO2k8NDI7aSsrKXsKICAgIGNvbnN0IGQ9bmV3IERhdGUoc3RhcnQpO2Quc2V0RGF0ZShzdGFydC5nZXREYXRlKCkraSk7CiAgICBjb25zdCBkcz15bWQoZCksaW5Nb250aD1kLmdldE1vbnRoKCk9PT1tLHRvZGF5PWRzPT09dG9kYXlLU1QoKSxkb3c9ZC5nZXREYXkoKTsKICAgIGNvbnN0IGV2cz0oZXZlbnRzQnlEYXRlLmdldChkcyl8fFtdKS5zb3J0KChhLGIpPT57CiIiIgpjb3VudD10ZXh0LmNvdW50KG9sZCkKaWYgY291bnQgIT0gMToKICAgIHJhaXNlIFN5c3RlbUV4aXQoZiJFeHBlY3RlZCBleGFjdGx5IG9uZSBjYWxlbmRhciBob3QtcGF0aCB0YXJnZXQsIGZvdW5kIHtjb3VudH0iKQpwYXRoLndyaXRlX3RleHQodGV4dC5yZXBsYWNlKG9sZCxuZXcsMSksInV0Zi04IikK
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          path=Path('assets/app-core.js')
-          text=path.read_text('utf-8')
-          old="""  const first=new Date(y,m,1),offset=sundayIndex(first.getDay()),start=new Date(y,m,1-offset);let out='';
-  for(let i=0;i<42;i++){
-    const d=new Date(start);d.setDate(start.getDate()+i);
-    const ds=ymd(d),inMonth=d.getMonth()===m,today=ds===todayKST(),dow=d.getDay();
-    const evs=activeEvents().filter(e=>e.date===ds).sort((a,b)=>{
-"""
-          new="""  const first=new Date(y,m,1),offset=sundayIndex(first.getDay()),start=new Date(y,m,1-offset);let out='';
-  const eventsByDate=new Map();
-  for(const event of activeEvents()){
-    const key=event?.date;
-    if(!eventsByDate.has(key))eventsByDate.set(key,[]);
-    eventsByDate.get(key).push(event);
-  }
-  for(let i=0;i<42;i++){
-    const d=new Date(start);d.setDate(start.getDate()+i);
-    const ds=ymd(d),inMonth=d.getMonth()===m,today=ds===todayKST(),dow=d.getDay();
-    const evs=(eventsByDate.get(ds)||[]).sort((a,b)=>{
-"""
-          count=text.count(old)
-          if count != 1:
-            raise SystemExit(f'Expected exactly one calendar hot-path target, found {count}')
-          text=text.replace(old,new,1)
-          path.write_text(text,'utf-8')
-          PY
+          echo "$PATCH_B64" | base64 -d > /tmp/patch.py
+          python3 /tmp/patch.py
 
       - name: Verify JavaScript syntax and patch scope
         run: |
