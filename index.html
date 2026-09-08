@@ -6565,6 +6565,10 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
         </button>
       </div>
     </div>
+    <button type="button" id="mwsSidebarSaveBtn" class="sidebar-save-v572" title="현재 Admin 데이터를 즉시 온라인 저장" hidden>
+      <span class="sidebar-save-icon-v572" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h12l2 2v16H5z"/><path d="M8 3v6h8V3M8 17h8"/></svg></span>
+      <span class="sidebar-save-label-v572">SAVE</span>
+    </button>
   </aside>
 
   <main class="main">
@@ -6631,7 +6635,7 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
             <span class="dashboard-stat-label-v55">이번 달 일정</span><strong id="dashboardMonthCountV55">0</strong><small id="dashboardMonthMetaV55">휴방 0일</small>
           </button>
           <button type="button" class="dashboard-stat-v55" onclick="setTab('dashboard')">
-            <span class="dashboard-stat-label-v55">7일 준비도</span><strong id="dashboardReadinessV55">0%</strong><small id="dashboardReadinessMetaV55">체크리스트 0 / 0</small>
+            <span class="dashboard-stat-label-v55">7일 참여 예정</span><strong id="dashboardReadinessV55">0명</strong><small id="dashboardReadinessMetaV55">등록된 참여자</small>
           </button>
           <button type="button" class="dashboard-stat-v55" onclick="setTab('posts')">
             <span class="dashboard-stat-label-v55">게시글 신청</span><strong id="dashboardPostApplicantsV55">0명</strong><small id="dashboardPostMetaV55">대기 0 · 가챠 0 · 확정 0</small>
@@ -7239,7 +7243,7 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
     </div>
     <div class="card mini-game-config ladder-config ladder-config-below">
       <div class="ladder-config-column">
-        <div class="space"><div><h3>참가자</h3><div class="subtle">이 순서대로 사다리 위쪽에 배치됩니다.</div></div><span id="ladderPlayerCountChip" class="chip">0명</span></div>
+        <div class="space"><div><h3>참가자</h3><div class="subtle">이 순서대로 사다리 위쪽에 배치됩니다.</div></div><div class="row"><span id="ladderPlayerCountChip" class="chip">0명</span><button type="button" class="ghost small" onclick="clearMiniEntries('ladder')">전원 제거</button></div></div>
         <div id="ladderPlayerList" class="mini-entry-list ladder-list-wide"></div>
       </div>
       <div class="ladder-config-column">
@@ -15870,6 +15874,7 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
     document.body.dataset.mwsMode=isAdmin?'admin':'public';
     const badge=$('mwsModeBadge');if(badge){badge.textContent=isAdmin?'ADMIN':'PUBLIC';badge.classList.toggle('admin',isAdmin)}
     if($('mwsAdminManageBtn'))$('mwsAdminManageBtn').hidden=!isAdmin;
+    if($('mwsSidebarSaveBtn'))$('mwsSidebarSaveBtn').hidden=!isAdmin;
     document.querySelectorAll('.nav button').forEach(btn=>{delete btn.dataset.mwsPublicHidden});
     applyPublicRestrictions();
     try{updateStorageStatus(true)}catch(_){}
@@ -15889,8 +15894,8 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
     if(error)throw error;return row?.data||null;
   }
   async function writeCloudNow(){
-    if(mode!=='admin'||!sb)return;
-    if(cloudSaving){pendingSave=true;return}
+    if(mode!=='admin'||!sb)return false;
+    if(cloudSaving){pendingSave=true;return false}
     cloudSaving=true;
     try{
       const {data:{user}}=await sb.auth.getUser();if(!user)throw new Error('Admin 세션이 만료되었습니다.');
@@ -15898,6 +15903,7 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
       if(Array.isArray(payload.posts))for(const post of payload.posts){delete post.sourceContent;delete post.sourcePhotos;delete post.sourceAuthor;delete post.sourceAuthorId;delete post.sourceRegDate;delete post.sourceViewCount;delete post.sourceUrl}
       const saved=await sb.rpc('save_shared_state',{p_data:payload});if(saved.error)throw saved.error;
       const st=$('syncStatusText');if(st)st.textContent='Supabase 저장 완료';
+      return true;
     }catch(e){console.error('Supabase 저장 실패',e);try{toast('온라인 저장 실패',e.message||String(e))}catch(_){}}
     finally{cloudSaving=false;if(pendingSave){pendingSave=false;queueCloudSave()}}
   }
@@ -15980,8 +15986,24 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
     }catch(e){msg.style.color='var(--danger)';msg.textContent=e.message||String(e)}
   }
 
+  async function manualCloudSaveV572(){
+    const btn=$('mwsSidebarSaveBtn');
+    if(mode!=='admin'){try{toast('SAVE','Admin 모드에서만 온라인 저장할 수 있습니다.')}catch(_){};return}
+    clearTimeout(cloudSaveTimer);
+    const oldLabel=btn?.querySelector('.sidebar-save-label-v572')?.textContent||'SAVE';
+    if(btn){btn.disabled=true;btn.classList.add('saving');const label=btn.querySelector('.sidebar-save-label-v572');if(label)label.textContent='SAVING';}
+    try{
+      while(cloudSaving)await new Promise(resolve=>setTimeout(resolve,120));
+      const ok=await writeCloudNow();
+      if(ok){try{toast('SAVE 완료','Supabase 온라인 저장이 완료되었습니다.')}catch(_){};}
+      else{try{toast('SAVE 실패','온라인 저장 결과를 확인해 주세요.')}catch(_){};}
+    }finally{
+      if(btn){btn.disabled=false;btn.classList.remove('saving');const label=btn.querySelector('.sidebar-save-label-v572');if(label)label.textContent=oldLabel;}
+    }
+  }
+
   function bindUi(){
-    $('mwsModeAdmin')?.addEventListener('click',()=>selectLoginMode('admin'));$('mwsModePublic')?.addEventListener('click',()=>selectLoginMode('public'));$('mwsLoginForm')?.addEventListener('submit',handleLogin);
+    $('mwsModeAdmin')?.addEventListener('click',()=>selectLoginMode('admin'));$('mwsModePublic')?.addEventListener('click',()=>selectLoginMode('public'));$('mwsLoginForm')?.addEventListener('submit',handleLogin);$('mwsSidebarSaveBtn')?.addEventListener('click',manualCloudSaveV572);
     $('mwsChangeModeBtn')?.addEventListener('click',async()=>{localStorage.removeItem(REMEMBER_KEY);localStorage.removeItem(MODE_KEY);mode=null;await sb.auth.signOut();selectLoginMode('admin');showGate()});
     $('mwsAdminManageBtn')?.addEventListener('click',()=>{$('mwsAdminModal').classList.add('open');$('mwsAdminModal').setAttribute('aria-hidden','false');loadAdminList()});
     $('mwsAdminClose')?.addEventListener('click',()=>{$('mwsAdminModal').classList.remove('open');$('mwsAdminModal').setAttribute('aria-hidden','true')});
@@ -16520,11 +16542,13 @@ body[data-resolution="mobile"] .main{grid-column:auto!important}
     v55Set('dashboardMonthMetaV55',`휴방 ${restDays}일 · 방송/컨텐츠 ${Math.max(0,monthRows.length-restDays)}개`);
 
     const prepareRows=near.filter(e=>!e.restDay);
-    let checklistDone=0,checklistTotal=0;
-    prepareRows.forEach(e=>{const arr=Array.isArray(e?.checklist)?e.checklist:[];checklistTotal+=arr.length;checklistDone+=arr.filter(x=>x?.done).length});
-    const readiness=checklistTotal?Math.round(checklistDone/checklistTotal*100):(prepareRows.length?100:0);
-    v55Set('dashboardReadinessV55',`${readiness}%`);
-    v55Set('dashboardReadinessMetaV55',checklistTotal?`체크리스트 ${checklistDone} / ${checklistTotal}`:(prepareRows.length?'등록된 체크리스트 없음':'예정 컨텐츠 없음'));
+    const upcomingParticipantKeys=new Set();
+    prepareRows.forEach(e=>{
+      let rows=[];try{rows=typeof eventParticipantRows==='function'?eventParticipantRows(e):[]}catch(_){rows=[]}
+      rows.forEach((r,i)=>{const key=String(r?.contactId||r?.id||r?.name||`${e.id||e.date}-${i}`).trim();if(key)upcomingParticipantKeys.add(key)});
+    });
+    v55Set('dashboardReadinessV55',`${upcomingParticipantKeys.size}명`);
+    v55Set('dashboardReadinessMetaV55',prepareRows.length?`${prepareRows.length}개 일정 · 고유 참여자`:'예정 컨텐츠 없음');
 
     const postCounts={pending:0,gacha:0,selected:0,nextchance:0};
     (Array.isArray(data?.posts)?data.posts:[]).forEach(p=>{
@@ -16898,6 +16922,7 @@ body[data-resolution="mobile"] .main{grid-column:auto!important}
   window.openPostGamePicker=function(){
     const p=postById(activePostId); if(!p)return;
     const arr=uniquePostGameApplicants(p), modal=document.getElementById('postGamePickerModal');
+    if(modal&&modal.parentElement!==document.body)document.body.appendChild(modal);
     const subtitle=document.getElementById('postGamePickerSubtitle');
     if(subtitle)subtitle.textContent=`${p.name} · 가챠 상태 게임 참가 대상 ${arr.length}명 (확정 / 대기 / 다음기회에 / 중복 작성자 제외)`;
     const grid=document.getElementById('postGamePickerGrid');
@@ -16983,5 +17008,37 @@ body[data-resolution="mobile"] .main{grid-column:auto!important}
 
 
 <!-- mws-v5.7.1-storage-title-hotfix -->
+
+<style id="mws-v572-predeploy-style">
+/* Ladder contact palette stays visible while the game page scrolls. */
+@media(min-width:851px){
+  #gameLadder.active .ladder-contact-dock{
+    position:sticky!important;top:18px!important;align-self:start!important;z-index:46!important;
+    height:calc(100vh - 36px)!important;min-height:0!important;max-height:calc(100vh - 36px)!important;
+    overflow:hidden!important;display:flex!important;flex-direction:column!important;
+    box-shadow:0 16px 36px rgba(0,0,0,.16)
+  }
+  #gameLadder.active #ladderContactPalette{flex:1 1 auto!important;min-height:0!important;max-height:none!important}
+  #gameLadder.active .mini-contact-search,#gameLadder.active .mini-manual-add,#gameLadder.active .mini-drop-zone{flex:0 0 auto!important}
+}
+body[data-resolution="mobile"] #gameLadder.active .ladder-contact-dock{position:static!important;height:auto!important;max-height:none!important}
+
+/* Checklist presentation is removed from the dashboard summary. */
+#dashboard .dashboard-week-row-v55{grid-template-columns:58px minmax(0,1fr)!important}
+#dashboard .dashboard-week-progress-v55{display:none!important}
+
+/* Bottom manual online SAVE action. */
+.sidebar-save-v572{flex:0 0 auto;width:100%;min-height:47px;margin-top:8px;padding:9px 11px;border-radius:12px;border:1px solid rgba(52,211,153,.38);background:linear-gradient(135deg,rgba(16,185,129,.17),rgba(20,184,166,.10));color:#dffff3;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:1000;letter-spacing:.08em;box-shadow:0 10px 25px rgba(16,185,129,.10);transition:.16s ease}
+.sidebar-save-v572[hidden]{display:none!important}
+.sidebar-save-v572:hover:not(:disabled){transform:translateY(-1px);border-color:rgba(110,231,183,.65);background:linear-gradient(135deg,rgba(16,185,129,.26),rgba(20,184,166,.17));box-shadow:0 14px 30px rgba(16,185,129,.16)}
+.sidebar-save-v572:disabled{cursor:wait;opacity:.72}
+.sidebar-save-v572.saving{animation:mwsSavePulseV572 .9s ease-in-out infinite alternate}
+.sidebar-save-icon-v572{width:21px;height:21px;display:grid;place-items:center}.sidebar-save-icon-v572 svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+body:not(.sidebar-pinned) .sidebar:not(:hover) .sidebar-save-label-v572{display:none}
+body:not(.sidebar-pinned) .sidebar:not(:hover) .sidebar-save-v572{padding-left:0;padding-right:0}
+@keyframes mwsSavePulseV572{from{box-shadow:0 8px 20px rgba(16,185,129,.08)}to{box-shadow:0 8px 28px rgba(16,185,129,.28),0 0 18px rgba(45,212,191,.16)}}
+</style>
+<!-- mws-v5.7.2-predeploy -->
+
 </body>
 </html>
