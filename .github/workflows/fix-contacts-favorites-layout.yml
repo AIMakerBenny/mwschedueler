@@ -20,12 +20,12 @@ jobs:
 
           path = Path("index.html")
           text = path.read_text(encoding="utf-8")
-          old = "#contacts.active .contact-board-main{grid-column:2!important;min-width:0!important;}"
+          old = 'body:not([data-resolution="mobile"]) #contacts.active .contact-board-main{grid-column:2!important;min-width:0!important}'
           new = "\n".join([
-              "#contacts.active .contact-board-layout:not(.maintenance-mode) .contact-board-main{grid-column:2!important;min-width:0!important;}",
-              "#contacts.active .contact-board-layout.maintenance-mode{grid-template-columns:minmax(0,1fr)!important;}",
-              "#contacts.active .contact-board-layout.maintenance-mode .contact-board-main{grid-column:1!important;min-width:0!important;}",
-              "#contacts.active .contact-board-layout.maintenance-mode .contact-tag-banner-area{display:none!important;}",
+              'body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout:not(.maintenance-mode) .contact-board-main{grid-column:2!important;min-width:0!important}',
+              'body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout.maintenance-mode{grid-template-columns:minmax(0,1fr)!important}',
+              'body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout.maintenance-mode .contact-board-main{grid-column:1!important;min-width:0!important}',
+              'body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout.maintenance-mode .contact-tag-banner-area{display:none!important}',
           ])
           count = text.count(old)
           if count != 1:
