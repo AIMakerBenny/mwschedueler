@@ -1,0 +1,50 @@
+name: Optimize stage 3 split core assets
+
+on:
+  push:
+    paths:
+      - '.github/workflows/opt-stage3-split-core.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract first core style and script without changing execution order
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('index.html'); s=p.read_text('utf-8')
+          sm=re.search(r'<style>(.*?)</style>',s,re.S|re.I)
+          jm=re.search(r'<script>(.*?)</script>',s,re.S|re.I)
+          if not sm or not jm: raise SystemExit('core inline blocks not found')
+          css=sm.group(1); js=jm.group(1)
+          if len(css)<300000 or len(js)<300000: raise SystemExit('unexpected core block sizes')
+          Path('assets/app-core.css').write_text(css,'utf-8')
+          Path('assets/app-core.js').write_text(js,'utf-8')
+          s=s[:sm.start()]+'<link rel="stylesheet" href="assets/app-core.css">'+s[sm.end():]
+          # style extraction changes indices, find the exact first large script again
+          jm2=re.search(r'<script>(.*?)</script>',s,re.S|re.I)
+          if not jm2 or len(jm2.group(1))<300000: raise SystemExit('core script not found after style split')
+          s=s[:jm2.start()]+'<script src="assets/app-core.js"></script>'+s[jm2.end():]
+          p.write_text(s,'utf-8')
+          print('index bytes',p.stat().st_size,'css bytes',Path('assets/app-core.css').stat().st_size,'js bytes',Path('assets/app-core.js').stat().st_size)
+          PY
+      - name: Verify split assets and syntax
+        run: |
+          node --check assets/app-core.js
+          node --check assets/perf-runtime.js
+          test -s assets/app-core.css
+          grep -q 'assets/app-core.css' index.html
+          grep -q 'assets/app-core.js' index.html
+      - name: Commit stage 3 core split
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets/app-core.css assets/app-core.js
+          git commit -m "Split core CSS and JavaScript into cacheable assets"
+          git push
