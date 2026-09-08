@@ -2,8 +2,6 @@ name: Performance regression smoke test
 
 on:
   push:
-    branches:
-      - 'perf/full-optimization-20260908'
 
 jobs:
   smoke:
