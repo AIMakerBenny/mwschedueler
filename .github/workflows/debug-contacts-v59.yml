@@ -16,42 +16,28 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Extract concise contacts source
+      - name: Extract exact contacts dependencies
         run: |
           python - <<'PY'
           from pathlib import Path
           import re, textwrap
-          s = Path('index.html').read_text(encoding='utf-8')
-          needles = [
-            'renderContacts','contacts.filter','contactTags','selectedContactTag','activeContactTag',
-            '연락처 카드','드래그해서 분류','정보 미완성','중복 정리','이름 가나다순',
-            'contactGrid','contactsGrid','contactList','contact-list','contact-tag'
-          ]
-          out=[f'FILE_LEN={len(s)}']
+          s=Path('index.html').read_text(encoding='utf-8')
+          needles=['function filteredContacts','function renderContactTagBanner','function safeRenderView','let contactView','contactView=','id="contactGrid"','id="contactTagList"','class="contact-tag-panel"','function contactMatches','function sortContacts','function syncContactTagsFromContacts']
+          out=[]
           for needle in needles:
             ms=list(re.finditer(re.escape(needle),s,re.I))
             out += ['', '='*72, f'NEEDLE {needle} COUNT {len(ms)}']
-            for i,m in enumerate(ms[:12],1):
-              a=max(0,m.start()-1200); b=min(len(s),m.end()+2200)
-              x=s[a:b].replace('\r',' ').replace('\n',' ')
-              x=re.sub(r'\s+',' ',x)
-              out.append(f'-- {i} OFFSET {m.start()} --')
-              out.extend(textwrap.wrap(x, width=180, break_long_words=False, break_on_hyphens=False))
-          # List ids/classes around contacts page labels
-          for label in ['연락처','태그','연락처 추가']:
-            ms=list(re.finditer(re.escape(label),s))
-            out += ['', '='*72, f'LABEL {label} COUNT {len(ms)}']
             for i,m in enumerate(ms[:10],1):
-              x=s[max(0,m.start()-800):min(len(s),m.end()+1200)].replace('\r',' ').replace('\n',' ')
-              x=re.sub(r'\s+',' ',x)
+              a=max(0,m.start()-1600);b=min(len(s),m.end()+4200)
+              x=re.sub(r'\s+',' ',s[a:b].replace('\r',' ').replace('\n',' '))
               out.append(f'-- {i} OFFSET {m.start()} --')
-              out.extend(textwrap.wrap(x,width=180,break_long_words=False,break_on_hyphens=False))
-          Path('debug_contacts_v59_small.txt').write_text('\n'.join(out),encoding='utf-8')
+              out.extend(textwrap.wrap(x,width=170,break_long_words=False,break_on_hyphens=False))
+          Path('debug_contacts_v59_exact.txt').write_text('\n'.join(out),encoding='utf-8')
           PY
       - name: Commit diagnostics
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add debug_contacts_v59_small.txt
-          git commit -m 'Refine contacts renderer diagnostics' || exit 0
+          git add debug_contacts_v59_exact.txt
+          git commit -m 'Inspect exact contacts render dependencies' || exit 0
           git push
