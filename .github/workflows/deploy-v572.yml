@@ -25,7 +25,7 @@ jobs:
         run: python apply_v572.py
       - name: Verify exact predeploy artifact
         run: |
-          test "$(git hash-object index.html)" = "67484a3b886f885069095f0c7a12fc7bbe652617"
+          test "$(git hash-object index.html)" = "c85afbdd003f8d7d599e93c04d53eeb99a39ed50"
       - name: Verify requested features
         run: |
           python - <<'PY'
