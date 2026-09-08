@@ -13148,9 +13148,12 @@ function titleFromBoardResult(root,postNo){
   walk(root);return found;
 }
 async function fetchSoopPostTitle(post,firstJson){
-  // v5.2: Keep post syncing lightweight. Never fetch the source article body or its images.
-  // Use a title already present in the comment response when available; otherwise keep the saved title.
   const fromJson=titleFromSoopJson(firstJson);if(fromJson)return fromJson;
+  try{
+    const rec=await fetchSoopBoardRecord(post);
+    const fromBoard=rec?metaFromSoopRecord(rec).title:'';
+    if(fromBoard)return fromBoard;
+  }catch(err){console.warn('SOOP 제목 보조 조회 실패',err)}
   return String(post?.sourceTitle||'').trim();
 }
 
@@ -15891,9 +15894,9 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
     cloudSaving=true;
     try{
       const {data:{user}}=await sb.auth.getUser();if(!user)throw new Error('Admin 세션이 만료되었습니다.');
-      const payload=typeof mwsStripDevicePrefs==='function'?mwsStripDevicePrefs(data):clone(data);if(Array.isArray(payload.posts))for(const post of payload.posts){delete post.sourceContent;delete post.sourcePhotos;delete post.sourceAuthor;delete post.sourceAuthorId;delete post.sourceRegDate;delete post.sourceViewCount;delete post.sourceUrl}const pub=makePublicData(payload);const now=new Date().toISOString();
-      const a=await sb.from('admin_state').upsert({id:'main',data:payload,updated_at:now,updated_by:user.id});if(a.error)throw a.error;
-      const p=await sb.from('public_state').upsert({id:'main',data:pub,updated_at:now,updated_by:user.id});if(p.error)throw p.error;
+      const payload=typeof mwsStripDevicePrefs==='function'?mwsStripDevicePrefs(data):clone(data);
+      if(Array.isArray(payload.posts))for(const post of payload.posts){delete post.sourceContent;delete post.sourcePhotos;delete post.sourceAuthor;delete post.sourceAuthorId;delete post.sourceRegDate;delete post.sourceViewCount;delete post.sourceUrl}
+      const saved=await sb.rpc('save_shared_state',{p_data:payload});if(saved.error)throw saved.error;
       const st=$('syncStatusText');if(st)st.textContent='Supabase 저장 완료';
     }catch(e){console.error('Supabase 저장 실패',e);try{toast('온라인 저장 실패',e.message||String(e))}catch(_){}}
     finally{cloudSaving=false;if(pendingSave){pendingSave=false;queueCloudSave()}}
@@ -15935,9 +15938,9 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
   }
   async function writeInitialState(){
     const {data:{user}}=await sb.auth.getUser();if(!user)return;
-    const now=new Date().toISOString(),payload=typeof mwsStripDevicePrefs==='function'?mwsStripDevicePrefs(data):clone(data);if(Array.isArray(payload.posts))for(const post of payload.posts){delete post.sourceContent;delete post.sourcePhotos;delete post.sourceAuthor;delete post.sourceAuthorId;delete post.sourceRegDate;delete post.sourceViewCount;delete post.sourceUrl}const pub=makePublicData(payload);
-    const a=await sb.from('admin_state').upsert({id:'main',data:payload,updated_at:now,updated_by:user.id});if(a.error)throw a.error;
-    const p=await sb.from('public_state').upsert({id:'main',data:pub,updated_at:now,updated_by:user.id});if(p.error)throw p.error;
+    const payload=typeof mwsStripDevicePrefs==='function'?mwsStripDevicePrefs(data):clone(data);
+    if(Array.isArray(payload.posts))for(const post of payload.posts){delete post.sourceContent;delete post.sourcePhotos;delete post.sourceAuthor;delete post.sourceAuthorId;delete post.sourceRegDate;delete post.sourceViewCount;delete post.sourceUrl}
+    const saved=await sb.rpc('save_shared_state',{p_data:payload});if(saved.error)throw saved.error;
   }
 
   async function isCurrentUserAdmin(){const {data:{user}}=await sb.auth.getUser();if(!user)return false;const {data:rows,error}=await sb.from('admin_profiles').select('user_id').eq('user_id',user.id).limit(1);return !error&&Array.isArray(rows)&&rows.length===1}
@@ -16979,5 +16982,6 @@ body[data-resolution="mobile"] .main{grid-column:auto!important}
 </script>
 
 
+<!-- mws-v5.7.1-storage-title-hotfix -->
 </body>
 </html>
