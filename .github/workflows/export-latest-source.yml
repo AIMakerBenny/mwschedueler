@@ -1,5 +1,6 @@
 name: Export latest source ZIP
 
+# One-time export workflow for the current main snapshot.
 on:
   push:
     paths:
