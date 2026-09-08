@@ -1,2 +1,0 @@
-Stage 3 core CSS/JavaScript split checkpoint.
-Baseline rollback: 3c5abd92971d186bff82550e57d629e010d93958
