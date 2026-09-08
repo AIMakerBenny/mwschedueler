@@ -13,35 +13,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply stage 1 contact/runtime optimizations
-        env:
-          PATCH_B64: REPLACE_B64
-        run: |
-          echo "$PATCH_B64" | base64 -d > /tmp/patch.py
-          python /tmp/patch.py
-      - name: Static JavaScript syntax check
+      - name: Wire performance runtime
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          from html.parser import HTMLParser
-          class P(HTMLParser):
-            def __init__(self): super().__init__(); self.s=False; self.src=None; self.b=[]; self.items=[]
-            def handle_starttag(self,t,a):
-              if t=='script': self.s=True; self.src=dict(a).get('src'); self.b=[]
-            def handle_data(self,d):
-              if self.s and not self.src: self.b.append(d)
-            def handle_endtag(self,t):
-              if t=='script' and self.s:
-                if not self.src: self.items.append(''.join(self.b))
-                self.s=False; self.src=None
-          p=P();p.feed(Path('index.html').read_text('utf-8'));o=Path('/tmp/js');o.mkdir()
-          for i,s in enumerate(p.items):(o/f'{i}.js').write_text(s,'utf-8')
+          p=Path('index.html');s=p.read_text('utf-8')
+          marker='<script src="assets/perf-runtime.js"></script>'
+          if marker not in s:
+              if '</body>' not in s: raise SystemExit('missing body close')
+              s=s.replace('</body>',marker+'\n</body>',1)
+              p.write_text(s,'utf-8')
           PY
-          for f in /tmp/js/*.js; do node --check "$f"; done
-      - name: Commit stage 1
+          node --check assets/perf-runtime.js
+      - name: Commit stage 1 wiring
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "Optimize contact runtime and derived data caches"
+          git commit -m "Enable contact runtime performance optimizations"
           git push
