@@ -86,9 +86,36 @@
   function searchNow(){window.__mwsContactSearchRender=true;try{if(!applyContactSearch()){if(typeof mwsRenderActiveContactView==='function')mwsRenderActiveContactView();else renderContacts()}}finally{window.__mwsContactSearchRender=false}}
   if(search){search.oninput=e=>{if(e?.isComposing)return;clearTimeout(searchTimer);searchTimer=setTimeout(searchNow,80)};search.oncompositionend=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(searchNow,0)}}
 
+  let saveDepth=0;
+  function renderActiveAfterSave(reason){
+    const started=performance.now();
+    document.body.dataset.theme=data.theme||'neon';
+    try{updateUpcomingAccent()}catch(_){}try{applyBackground()}catch(_){}
+    const active=document.querySelector('.section.active')?.id||'dashboard';
+    try{
+      if(active==='calendar')renderCalendar();
+      else if(active==='worldtime')renderWorldTime();
+      else if(active==='sniper'){sniperViewMode==='ranking'?renderCollabRanking():renderSniperList()}
+      else if(active==='targets')renderTargetList();
+      else if(active==='memos'){memoViewMode==='favorites'?renderFavoriteSchedules():renderMemoLibrary()}
+      else if(active==='dashboard'){renderDashboard();renderReminders()}
+      else if(active==='contacts'){renderContactFilters();if(contactView==='pending')renderPendingContacts();else if(contactView==='incomplete'&&typeof renderIncompleteContacts==='function')renderIncompleteContacts();else if(contactView==='favorite'&&typeof renderFavoriteContactsV574==='function')renderFavoriteContactsV574();else renderContacts()}
+      else if(active==='posts')renderPosts();
+      else if(active==='gameLadder')renderLadder();
+      else if(active==='gameRps')renderRps();
+      else if(active==='gamePachinko')renderPachinko();
+      else if(active==='gameMultiDraw')renderMultiDraw();
+      else if(active==='settings'){renderSettings();try{updateFullBackupAssetStatus()}catch(_){}}
+    }catch(e){console.error('활성 화면 갱신 실패',active,e)}
+    try{updateStorageStatus(true)}catch(_){}
+    const status=document.getElementById('syncStatusText');if(status)status.textContent='전체 화면 동기화';
+    record('app.renderActive',performance.now()-started);return true;
+  }
   const baseRenderAll=typeof renderAll==='function'?renderAll:null;
-  if(baseRenderAll){renderAll=function(reason){invalidate();const s=performance.now(),out=baseRenderAll(reason);record('app.renderAll',performance.now()-s);return out};window.renderAll=renderAll}
+  if(baseRenderAll){renderAll=function(reason){invalidate();const s=performance.now(),out=saveDepth?renderActiveAfterSave(reason):baseRenderAll(reason);record(saveDepth?'app.renderScoped':'app.renderAll',performance.now()-s);return out};window.renderAll=renderAll}
   const baseSaveData=typeof saveData==='function'?saveData:null;
-  if(baseSaveData){saveData=function(reason){invalidate();const s=performance.now(),out=baseSaveData(reason);record('app.saveData',performance.now()-s);return out};window.saveData=saveData}
+  if(baseSaveData){saveData=function(reason){invalidate();const s=performance.now();saveDepth++;try{return baseSaveData(reason)}finally{saveDepth--;record('app.saveData',performance.now()-s)}};window.saveData=saveData}
+  const baseSetTab=typeof setTab==='function'?setTab:null;
+  if(baseSetTab){setTab=function(tab){const out=baseSetTab(tab);if(tab==='settings')try{renderSettings()}catch(_){};return out};window.setTab=setTab}
   window.addEventListener('mawang:datachange',invalidate);
 })();
