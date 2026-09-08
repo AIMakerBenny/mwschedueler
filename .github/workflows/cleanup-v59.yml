@@ -1,0 +1,30 @@
+name: Cleanup MAWANG Scheduler v5.9 helpers
+
+on:
+  push:
+    paths:
+      - '.github/workflows/cleanup-v59.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Remove temporary diagnostics and patch helpers
+        run: |
+          rm -f apply_v59.py apply_v59.py.gz.b64
+          rm -f debug_contacts_v59.txt debug_contacts_v59_small.txt debug_contacts_v59_exact.txt debug_contacts_v59_css.txt debug_contacts_v59_dom.txt
+          rm -f .github/workflows/debug-contacts-v59.yml .github/workflows/publish-v59.yml .github/workflows/cleanup-v59.yml
+      - name: Commit cleanup
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Clean MAWANG Scheduler v5.9 temporary helpers'
+          git push
