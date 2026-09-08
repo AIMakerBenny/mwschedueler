@@ -17007,6 +17007,89 @@ body[data-resolution="mobile"] .main{grid-column:auto!important}
 </script>
 
 
+
+<!-- mws-v5.7.3-gacha-stop-hotfix -->
+<script id="mws-v573-gacha-stop-hotfix">
+(function(){
+  if(window.__mwsV573GachaStopFix)return;
+  window.__mwsV573GachaStopFix=true;
+  const originalToggle=window.toggleMultiDrawAutoV419;
+  let stopWatchV573=0;
+  let stopSafetyV573=0;
+
+  function clearStopTimersV573(){
+    if(stopWatchV573){clearInterval(stopWatchV573);stopWatchV573=0;}
+    if(stopSafetyV573){clearTimeout(stopSafetyV573);stopSafetyV573=0;}
+  }
+
+  function gachaRuntimeV573(){
+    try{return miniGameRuntime?.multiDraw||null}catch(_){return null}
+  }
+
+  function refreshGachaUiV573(){
+    try{if(typeof window.renderMultiDraw==='function')window.renderMultiDraw();}catch(e){console.warn('Gacha stop UI refresh failed',e);}
+    try{if(typeof window.updateMultiDrawAutoUiV419==='function')window.updateMultiDrawAutoUiV419();}catch(_){}
+  }
+
+  function releaseAutoStateV573(force){
+    const auto=window.multiDrawAutoStateV419;
+    const rt=gachaRuntimeV573();
+    if(!auto)return true;
+    const busy=!!(rt?.animating||rt?.preparing||rt?.charging);
+    if(busy&&!force)return false;
+    auto.running=false;
+    auto.stopRequested=false;
+    if(rt){
+      rt.pointerHeld=false;
+      rt.charging=false;
+      if(rt.raf){try{cancelAnimationFrame(rt.raf)}catch(_){}rt.raf=0;}
+    }
+    document.getElementById('multiDrawStage')?.classList.remove('is-charging');
+    document.getElementById('multiFireBtn')?.classList.remove('charging');
+    clearStopTimersV573();
+    refreshGachaUiV573();
+    return true;
+  }
+
+  function requestStopV573(){
+    const auto=window.multiDrawAutoStateV419;
+    if(!auto||!auto.running)return false;
+    auto.stopRequested=true;
+    const btn=document.getElementById('multiAutoBtn');
+    if(btn)btn.textContent='중지 요청됨...';
+    try{toast('자동 가챠','현재 진행 중인 회차가 끝나면 자동 진행을 중지합니다.')}catch(_){}
+
+    if(releaseAutoStateV573(false))return true;
+    clearStopTimersV573();
+    stopWatchV573=window.setInterval(()=>{
+      releaseAutoStateV573(false);
+    },120);
+    stopSafetyV573=window.setTimeout(()=>{
+      const currentAuto=window.multiDrawAutoStateV419;
+      if(!currentAuto?.running)return clearStopTimersV573();
+      const rt=gachaRuntimeV573();
+      if(rt){
+        rt.animating=false;
+        rt.preparing=false;
+        rt.charging=false;
+        rt.pointerHeld=false;
+        if(rt.raf){try{cancelAnimationFrame(rt.raf)}catch(_){}rt.raf=0;}
+      }
+      releaseAutoStateV573(true);
+      try{toast('자동 가챠','자동 진행을 중지하고 조작을 다시 활성화했습니다.')}catch(_){}
+    },15000);
+    return true;
+  }
+
+  window.toggleMultiDrawAutoV419=function(){
+    const auto=window.multiDrawAutoStateV419;
+    if(auto?.running){requestStopV573();return;}
+    clearStopTimersV573();
+    return originalToggle.apply(this,arguments);
+  };
+})();
+</script>
+
 <!-- mws-v5.7.1-storage-title-hotfix -->
 
 <style id="mws-v572-predeploy-style">
