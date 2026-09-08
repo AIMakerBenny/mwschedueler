@@ -1,0 +1,72 @@
+name: Publish MAWANG Scheduler v5.7.3 Gacha stop hotfix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apply_v573.py
+      - .github/workflows/hotfix-v573.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify production base
+        run: |
+          test "$(git hash-object index.html)" = "e1b43470c4dcd90a5303097eb2801ca911319596"
+      - name: Apply Gacha stop hotfix
+        run: python apply_v573.py
+      - name: Verify scoped hotfix
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          required=[
+            'mws-v5.7.3-gacha-stop-hotfix',
+            'requestStopV573',
+            "btn.textContent='중지 요청됨...'",
+            'releaseAutoStateV573',
+            '15000',
+            '<!-- mws-v5.7.2-predeploy -->',
+            "sb.rpc('save_shared_state'",
+          ]
+          missing=[x for x in required if x not in s]
+          if missing: raise SystemExit('Missing markers: '+repr(missing))
+          forbidden=['mws-v5.9-contacts-renderer']
+          present=[x for x in forbidden if x in s]
+          if present: raise SystemExit('Forbidden old markers: '+repr(present))
+          print('v5.7.3 scoped markers OK')
+          PY
+          git diff --stat -- index.html
+      - name: Check inline JavaScript syntax
+        run: |
+          python - <<'PY'
+          import re, pathlib
+          s=pathlib.Path('index.html').read_text(encoding='utf-8')
+          out=pathlib.Path('/tmp/v573js'); out.mkdir(exist_ok=True)
+          files=[]
+          for i,m in enumerate(re.finditer(r'<script\b([^>]*)>(.*?)</script\s*>',s,re.I|re.S),1):
+              attrs=m.group(1) or ''
+              if re.search(r'\bsrc\s*=',attrs,re.I): continue
+              tm=re.search(r'\btype\s*=\s*["\']([^"\']+)',attrs,re.I)
+              if tm and tm.group(1).lower() not in ('text/javascript','application/javascript','module'): continue
+              ext='.mjs' if tm and tm.group(1).lower()=='module' else '.js'
+              f=out/f'{i:02d}{ext}'; f.write_text(m.group(2),encoding='utf-8'); files.append(str(f))
+          pathlib.Path('/tmp/v573-list.txt').write_text('\n'.join(files),encoding='utf-8')
+          print('inline scripts',len(files))
+          PY
+          while IFS= read -r f; do [ -z "$f" ] && continue; node --check "$f"; done < /tmp/v573-list.txt
+      - name: Commit v5.7.3 production
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Publish MAWANG Scheduler v5.7.3 Gacha stop hotfix"
+          git push
