@@ -18,15 +18,14 @@ jobs:
           fetch-depth: 0
       - name: Apply v5.9 contacts recovery patch
         run: |
-          base64 -d apply_v59.py.gz.b64 | gunzip > /tmp/apply_v59.py
-          python /tmp/apply_v59.py
+          python apply_v59.py
       - name: Verify v5.9 anchors
         run: |
-          grep -q 'id="v590-contact-recovery-script"' index.html
-          grep -q 'function renderContactsV59' index.html
-          grep -q 'function renderContactTagSidebarV59' index.html
-          grep -q 'contact-load-status-v59' index.html
-          grep -q 'window.addEventListener.(.mawang:datachange' index.html || grep -q "window.addEventListener('mawang:datachange'" index.html
+          grep -Fq 'id="v590-contact-recovery-script"' index.html
+          grep -Fq 'function renderContactsV59' index.html
+          grep -Fq 'function renderContactTagSidebarV59' index.html
+          grep -Fq 'contact-load-status-v59' index.html
+          grep -Fq "window.addEventListener('mawang:datachange'" index.html
       - name: Check inline JavaScript syntax
         run: |
           python - <<'PY'
