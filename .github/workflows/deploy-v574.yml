@@ -1,0 +1,80 @@
+name: Publish MAWANG Scheduler v5.7.4
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apply_v574.py.gz.b64
+      - .github/workflows/deploy-v574.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify production base
+        run: |
+          test "$(git hash-object index.html)" = "f3dcefb4d61c27ea441e0315702615d63b110b3b"
+      - name: Decode and apply v5.7.4
+        run: |
+          base64 -d apply_v574.py.gz.b64 | gzip -d > /tmp/apply_v574.py
+          python /tmp/apply_v574.py
+      - name: Verify requested features
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          required=[
+            'mws-v5.7.4-save-contact-favorites',
+            'favoriteContactTabBtn',
+            'contactFavoriteBtnV574',
+            'renderFavoriteContactsV574',
+            'uploadSharedStateWithProgressV574',
+            "xhr.upload.onprogress",
+            "onProgress(10+ratio*78,'UPLOAD')",
+            "xhr.upload.onload=()=>onProgress(90,'SERVER')",
+            "p>=100?'SAVED 100%'",
+            '북마크 <span id="favoriteScheduleCountChip"',
+            "favorite:Boolean(src.favorite)",
+            "favorite:Boolean(original?.favorite)",
+            '<!-- mws-v5.7.3-gacha-stop-hotfix -->',
+          ]
+          missing=[x for x in required if x not in s]
+          if missing: raise SystemExit('Missing markers: '+repr(missing))
+          forbidden=['mws-v5.9-contacts-renderer']
+          present=[x for x in forbidden if x in s]
+          if present: raise SystemExit('Forbidden markers: '+repr(present))
+          print('v5.7.4 feature markers OK')
+          PY
+          git diff --stat -- index.html
+      - name: Check inline JavaScript syntax
+        run: |
+          python - <<'PY'
+          import re, pathlib
+          s=pathlib.Path('index.html').read_text(encoding='utf-8')
+          out=pathlib.Path('/tmp/v574js'); out.mkdir(exist_ok=True)
+          files=[]
+          for i,m in enumerate(re.finditer(r'<script\b([^>]*)>(.*?)</script\s*>',s,re.I|re.S),1):
+              attrs=m.group(1) or ''
+              if re.search(r'\bsrc\s*=',attrs,re.I): continue
+              tm=re.search(r'\btype\s*=\s*["\']([^"\']+)',attrs,re.I)
+              if tm and tm.group(1).lower() not in ('text/javascript','application/javascript','module'): continue
+              ext='.mjs' if tm and tm.group(1).lower()=='module' else '.js'
+              f=out/f'{i:02d}{ext}'; f.write_text(m.group(2),encoding='utf-8'); files.append(str(f))
+          pathlib.Path('/tmp/v574-list.txt').write_text('\n'.join(files),encoding='utf-8')
+          print('inline scripts',len(files))
+          PY
+          while IFS= read -r f; do [ -z "$f" ] && continue; node --check "$f"; done < /tmp/v574-list.txt
+      - name: Commit v5.7.4 production
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Publish MAWANG Scheduler v5.7.4"
+          git push
