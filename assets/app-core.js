@@ -1125,10 +1125,16 @@ function renderCalendar(){
   const y=calDate.getFullYear(),m=calDate.getMonth();
   document.getElementById('monthLabel').textContent=new Intl.DateTimeFormat('ko-KR',{month:'long',year:'numeric'}).format(calDate);
   const first=new Date(y,m,1),offset=sundayIndex(first.getDay()),start=new Date(y,m,1-offset);let out='';
+  const eventsByDate=new Map();
+  for(const event of activeEvents()){
+    const key=event?.date;
+    if(!eventsByDate.has(key))eventsByDate.set(key,[]);
+    eventsByDate.get(key).push(event);
+  }
   for(let i=0;i<42;i++){
     const d=new Date(start);d.setDate(start.getDate()+i);
     const ds=ymd(d),inMonth=d.getMonth()===m,today=ds===todayKST(),dow=d.getDay();
-    const evs=activeEvents().filter(e=>e.date===ds).sort((a,b)=>{
+    const evs=(eventsByDate.get(ds)||[]).sort((a,b)=>{
       if(a.restDay&&!b.restDay)return-1;if(!a.restDay&&b.restDay)return 1;
       const at=a.start==='TBD'?'99:99':(a.start||'99:99'),bt=b.start==='TBD'?'99:99':(b.start||'99:99');
       return at.localeCompare(bt)
