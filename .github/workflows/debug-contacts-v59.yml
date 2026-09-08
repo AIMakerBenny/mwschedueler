@@ -1,0 +1,57 @@
+name: Debug contacts renderer v5.9
+
+on:
+  push:
+    paths:
+      - '.github/workflows/debug-contacts-v59.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Extract contacts-related source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          needles = [
+              'renderContacts', '연락처 카드', '드래그해서 분류', '정보 미완성',
+              '중복 정리', '이름 가나다순', 'contactTags', 'contacts.filter',
+              'contact-list', 'contactList', 'contactsGrid', 'contactGrid',
+              'selectedContactTag', 'activeContactTag', 'contact-tag'
+          ]
+          out = []
+          out.append(f'FILE_LEN={len(s)}')
+          for needle in needles:
+              out.append('\n' + '='*100)
+              out.append('NEEDLE: ' + needle)
+              found = False
+              for m in re.finditer(re.escape(needle), s, flags=re.I):
+                  found = True
+                  a = max(0, m.start()-3000)
+                  b = min(len(s), m.end()+5000)
+                  out.append(f'OFFSET {m.start()}..{m.end()}')
+                  out.append(s[a:b])
+                  out.append('\n---MATCH-END---\n')
+                  if len(out) > 450:
+                      break
+              if not found:
+                  out.append('NOT FOUND')
+          Path('debug_contacts_v59.txt').write_text('\n'.join(out), encoding='utf-8')
+          PY
+      - name: Commit diagnostics
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add debug_contacts_v59.txt
+          git commit -m 'Add contacts renderer diagnostics' || exit 0
+          git push
