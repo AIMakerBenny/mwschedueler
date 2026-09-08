@@ -6,9 +6,9 @@ marker='<!-- mws-v5.7.3-gacha-stop-hotfix -->'
 if marker in s:
     raise SystemExit('v5.7.3 hotfix already present')
 required=[
-    'window.toggleMultiDrawAutoV419=function()',
-    'window.multiDrawAutoStateV419',
-    'window.multiDrawRuntimeV418',
+    'window.toggleMultiDrawAutoV419=()=>',
+    'window.multiDrawAutoStateV419=auto;',
+    'miniGameRuntime.multiDraw',
     '<!-- mws-v5.7.2-predeploy -->',
 ]
 missing=[x for x in required if x not in s]
@@ -30,20 +30,30 @@ patch=r'''
     if(stopSafetyV573){clearTimeout(stopSafetyV573);stopSafetyV573=0;}
   }
 
+  function gachaRuntimeV573(){
+    try{return miniGameRuntime?.multiDraw||null}catch(_){return null}
+  }
+
   function refreshGachaUiV573(){
     try{if(typeof window.renderMultiDraw==='function')window.renderMultiDraw();}catch(e){console.warn('Gacha stop UI refresh failed',e);}
+    try{if(typeof window.updateMultiDrawAutoUiV419==='function')window.updateMultiDrawAutoUiV419();}catch(_){}
   }
 
   function releaseAutoStateV573(force){
     const auto=window.multiDrawAutoStateV419;
-    const rt=window.multiDrawRuntimeV418;
+    const rt=gachaRuntimeV573();
     if(!auto)return true;
-    const busy=!!(rt?.animating||rt?.preparing||rt?.charging||auto.charging);
+    const busy=!!(rt?.animating||rt?.preparing||rt?.charging);
     if(busy&&!force)return false;
     auto.running=false;
     auto.stopRequested=false;
-    auto.charging=false;
-    if(auto.raf){try{cancelAnimationFrame(auto.raf)}catch(_){}auto.raf=0;}
+    if(rt){
+      rt.pointerHeld=false;
+      rt.charging=false;
+      if(rt.raf){try{cancelAnimationFrame(rt.raf)}catch(_){}rt.raf=0;}
+    }
+    document.getElementById('multiDrawStage')?.classList.remove('is-charging');
+    document.getElementById('multiFireBtn')?.classList.remove('charging');
     clearStopTimersV573();
     refreshGachaUiV573();
     return true;
@@ -53,7 +63,7 @@ patch=r'''
     const auto=window.multiDrawAutoStateV419;
     if(!auto||!auto.running)return false;
     auto.stopRequested=true;
-    const btn=document.getElementById('multiDrawAutoBtnV419');
+    const btn=document.getElementById('multiAutoBtn');
     if(btn)btn.textContent='중지 요청됨...';
     try{toast('자동 가챠','현재 진행 중인 회차가 끝나면 자동 진행을 중지합니다.')}catch(_){}
 
@@ -65,8 +75,14 @@ patch=r'''
     stopSafetyV573=window.setTimeout(()=>{
       const currentAuto=window.multiDrawAutoStateV419;
       if(!currentAuto?.running)return clearStopTimersV573();
-      const rt=window.multiDrawRuntimeV418;
-      if(rt){rt.animating=false;rt.preparing=false;rt.charging=false;}
+      const rt=gachaRuntimeV573();
+      if(rt){
+        rt.animating=false;
+        rt.preparing=false;
+        rt.charging=false;
+        rt.pointerHeld=false;
+        if(rt.raf){try{cancelAnimationFrame(rt.raf)}catch(_){}rt.raf=0;}
+      }
       releaseAutoStateV573(true);
       try{toast('자동 가챠','자동 진행을 중지하고 조작을 다시 활성화했습니다.')}catch(_){}
     },15000);
