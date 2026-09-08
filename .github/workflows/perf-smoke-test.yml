@@ -39,7 +39,8 @@ jobs:
           print(f'extracted {len(p.items)} inline scripts')
           PY
           for f in .tmp-scripts/*.js; do node --check "$f"; done
-          for f in assets/*.js; do [ -e "$f" ] && node --check "$f"; done
+          shopt -s nullglob
+          for f in assets/*.js; do node --check "$f"; done
 
       - name: Install browser test dependency
         run: |
