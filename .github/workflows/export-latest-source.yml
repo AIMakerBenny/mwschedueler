@@ -1,0 +1,32 @@
+name: Export latest source ZIP
+
+on:
+  push:
+    paths:
+      - '.github/workflows/export-latest-source.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact latest main snapshot
+        uses: actions/checkout@v4
+        with:
+          ref: a885b1e5cb6a683a9a46ed38cbe204c9c2368f75
+
+      - name: Build ZIP
+        run: |
+          printf 'MAWANG Scheduler latest source\nCommit: a885b1e5cb6a683a9a46ed38cbe204c9c2368f75\nExported: 2026-09-09 KST\n' > VERSION.txt
+          zip -r MAWANG-Scheduler-latest-a885b1e.zip index.html assets README.md .gitignore VERSION.txt
+
+      - name: Upload ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MAWANG-Scheduler-latest-a885b1e
+          path: MAWANG-Scheduler-latest-a885b1e.zip
+          if-no-files-found: error
+          retention-days: 1
