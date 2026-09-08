@@ -6715,6 +6715,7 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
           <button class="secondary contact-view active" data-contact-view="cards">연락처 카드</button>
           <button class="secondary contact-view" data-contact-view="pending" id="pendingTabBtn">신규 추가</button>
           <button class="secondary contact-view" data-contact-view="incomplete" id="incompleteTabBtn">정보 미완성</button>
+          <button class="secondary contact-view" data-contact-view="favorite" id="favoriteContactTabBtn">즐겨찾기</button>
         </div>
         <div class="row">
           <input id="contactSearch" class="search" placeholder="이름 또는 태그 검색" />
@@ -6747,6 +6748,7 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
           <div id="contactGrid" class="contact-grid"></div>
           <div id="pendingContacts" class="card" style="display:none"></div>
           <div id="incompleteContacts" class="card" style="display:none"></div>
+          <div id="favoriteContacts" class="card" style="display:none"></div>
         </div>
       </div>
     </section>
@@ -6948,7 +6950,7 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
       <div class="memo-section-tabs">
         <button type="button" class="memo-section-tab active" data-memo-view="library" id="memoLibraryTab">메모장</button>
         <button type="button" class="memo-section-tab" data-memo-view="favorites" id="memoFavoritesTab">
-          즐겨찾기 <span id="favoriteScheduleCountChip" class="memo-tab-count">0</span>
+          북마크 <span id="favoriteScheduleCountChip" class="memo-tab-count">0</span>
         </button>
       </div>
 
@@ -7002,12 +7004,12 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
       <div id="memoFavoritesView" class="memo-section-view">
         <div class="toolbar favorite-toolbar">
           <div>
-            <div style="font-weight:900">즐겨찾기</div>
+            <div style="font-weight:900">북마크</div>
             <div class="subtle" style="margin-top:4px">스케줄 수정창에서 노란 별을 켠 컨텐츠를 모아봅니다.</div>
           </div>
           <div class="row">
             <input id="favoriteScheduleSearch" class="search" placeholder="컨텐츠 제목 또는 참가자 이름 검색">
-            <select id="favoriteScheduleSort" title="즐겨찾기 정렬">
+            <select id="favoriteScheduleSort" title="북마크 정렬">
               <option value="upcoming">다가오는 일정 우선</option>
               <option value="dateAsc">날짜 빠른 순</option>
               <option value="dateDesc">날짜 늦은 순</option>
@@ -7835,7 +7837,10 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
         <h2 id="contactModalTitle">연락처 추가</h2>
         <div id="contactModalSubtitle" class="muted small"></div>
       </div>
-      <button class="ghost" data-close="contactModal">닫기</button>
+      <div class="row contact-modal-actions-v574">
+        <button type="button" id="contactFavoriteBtnV574" class="contact-favorite-btn-v574" aria-pressed="false" title="즐겨찾기에 추가" hidden>☆</button>
+        <button class="ghost" data-close="contactModal">닫기</button>
+      </div>
     </div>
 
     <div class="contact-modal-layout">
@@ -10088,7 +10093,7 @@ function renderFavoriteSchedules(){
   const today=todayKST();
 
   if(countTab)countTab.textContent=String(all.length);
-  if(total)total.textContent=`즐겨찾기 ${all.length}개`;
+  if(total)total.textContent=`북마크 ${all.length}개`;
   if(upcoming)upcoming.textContent=`예정 ${all.filter(e=>(e.date||'')>=today).length}개`;
   if(completed)completed.textContent=`지난 일정 ${all.filter(e=>(e.date||'')<today).length}개`;
   if(!list)return;
@@ -10103,7 +10108,7 @@ function renderFavoriteSchedules(){
       data-event-id="${e.id}"
       style="border-left-color:${cat?.color||'var(--accent)'}"
       onclick="openEvent('${e.id}')">
-      <span class="favorite-schedule-star" title="즐겨찾기">★</span>
+      <span class="favorite-schedule-star" title="북마크">★</span>
       <div class="favorite-schedule-title">${esc(e.title)}</div>
       <div class="favorite-schedule-meta">
         <span>${formatDateWeekday(e.date)}</span>
@@ -10123,8 +10128,8 @@ function renderFavoriteSchedules(){
     </article>`;
   }).join(''):`<div class="favorite-empty">
     ${all.length
-      ? '검색 조건에 맞는 즐겨찾기 컨텐츠가 없습니다.'
-      : '아직 즐겨찾기한 컨텐츠가 없습니다. 스케줄 수정창의 별을 눌러 추가해 보세요.'}
+      ? '검색 조건에 맞는 북마크 컨텐츠가 없습니다.'
+      : '아직 북마크한 컨텐츠가 없습니다. 스케줄 수정창의 별을 눌러 추가해 보세요.'}
   </div>`;
 }
 window.renderFavoriteSchedules=renderFavoriteSchedules;
@@ -11623,6 +11628,14 @@ function openContact(id=null){
   const c=id?contact(id):null;
   document.getElementById('contactModalTitle').textContent=c?(c.pendingSetup?'신규 연락처 정보 입력':'연락처 상세'):'연락처 추가';
   document.getElementById('contactModalSubtitle').textContent=c?`${c.name} · 함께한 과거 컨텐츠와 연락처 정보를 한 화면에서 확인합니다`:'새 연락처를 등록합니다';
+  const favoriteBtnV574=document.getElementById('contactFavoriteBtnV574');
+  if(favoriteBtnV574){
+    favoriteBtnV574.hidden=!c;
+    favoriteBtnV574.classList.toggle('active',Boolean(c?.favorite));
+    favoriteBtnV574.setAttribute('aria-pressed',c?.favorite?'true':'false');
+    favoriteBtnV574.textContent=c?.favorite?'★':'☆';
+    favoriteBtnV574.title=c?.favorite?'즐겨찾기에서 제거':'즐겨찾기에 추가';
+  }
   document.getElementById('ctName').value=c?.name||'';
   document.getElementById('ctLabels').value=(c?.labels||[]).join(', ');
   document.getElementById('ctStationUrl').value=c?.stationUrl||'';
@@ -11637,6 +11650,16 @@ function openContact(id=null){
   document.getElementById('contactModal').classList.add('open');
 }
 window.openContact=openContact;document.getElementById('newContactBtn').onclick=()=>openContact();
+document.getElementById('contactFavoriteBtnV574').onclick=()=>{
+  const c=editingContactId?contact(editingContactId):null;if(!c)return;
+  c.favorite=!Boolean(c.favorite);
+  const btn=document.getElementById('contactFavoriteBtnV574');
+  if(btn){btn.classList.toggle('active',c.favorite);btn.setAttribute('aria-pressed',c.favorite?'true':'false');btn.textContent=c.favorite?'★':'☆';btn.title=c.favorite?'즐겨찾기에서 제거':'즐겨찾기에 추가'}
+  saveData(c.favorite?'연락처 즐겨찾기 추가':'연락처 즐겨찾기 해제');
+  try{renderFavoriteContactsV574()}catch(_){}
+  try{renderContacts()}catch(_){}
+  toast(c.name,c.favorite?'즐겨찾기에 추가했습니다':'즐겨찾기에서 제거했습니다');
+};
 document.getElementById('saveContactBtn').onclick=async()=>{
   const name=document.getElementById('ctName').value.trim();
   if(!name)return toast('연락처 저장','이름을 입력해 주세요');
@@ -11646,6 +11669,7 @@ document.getElementById('saveContactBtn').onclick=async()=>{
     id:original?.id||crypto.randomUUID(),
     image:original?.image||'',
     pendingSetup:false,
+    favorite:Boolean(original?.favorite),
     name,
     labels:[...new Set(document.getElementById('ctLabels').value.split(',').map(x=>x.trim()).filter(Boolean))],
     stationUrl:normalizeExternalUrl(document.getElementById('ctStationUrl').value),
@@ -12100,7 +12124,8 @@ function normalizeImportedContact(src){
     labels:Array.isArray(src.labels)?src.labels.map(x=>String(x).trim()).filter(Boolean):[],
     stationUrl:typeof src.stationUrl==='string'?normalizeExternalUrl(src.stationUrl):'',
     notes:typeof src.notes==='string'?src.notes:'',
-    pendingSetup:Boolean(src.pendingSetup)
+    pendingSetup:Boolean(src.pendingSetup),
+    favorite:Boolean(src.favorite)
   };
 }
 function normalizeContactName(name){
@@ -13284,20 +13309,29 @@ function renderIncompleteContacts(){
   const box=document.getElementById('incompleteContacts');if(!box)return;
   box.innerHTML=`<div class="space" style="margin-bottom:12px"><div><h3 style="margin:0">정보 미완성 연락처</h3><div class="muted small" style="margin-top:4px">태그 또는 방송국 URL이 비어 있는 연락처만 표시합니다.</div></div><span class="chip">${arr.length}명</span></div><div class="contact-incomplete-grid">${arr.map(c=>`<div class="contact-incomplete-card" onclick="openContact('${c.id}')"><div class="row">${c.image?`<img class="avatar" src="${c.image}" loading="lazy">`:`<div class="avatar" style="display:grid;place-items:center;font-weight:850">${esc(initials(c.name))}</div>`}<div style="min-width:0"><div class="event-title">${esc(c.name)}</div><div class="muted small">클릭해서 정보를 보완하세요</div></div></div><div class="contact-missing-badges">${!(c.labels||[]).length?'<span class="contact-missing-badge">태그 없음</span>':''}${!String(c.stationUrl||'').trim()?'<span class="contact-missing-badge">URL 없음</span>':''}</div></div>`).join('')||'<div class="empty">태그와 URL이 모두 입력되어 있습니다</div>'}</div>`;
 }
+function renderFavoriteContactsV574(){
+  const q=(document.getElementById('contactSearch')?.value||'').trim().toLowerCase(),sort=document.getElementById('contactSort')?.value||'nameAsc';
+  let arr=(data.contacts||[]).filter(c=>Boolean(c.favorite)&&contactMatches(c,q));arr=sortContacts(arr,sort);
+  const allCount=(data.contacts||[]).filter(c=>Boolean(c.favorite)).length,btn=document.getElementById('favoriteContactTabBtn');if(btn)btn.textContent=`즐겨찾기${allCount?` ${allCount}`:''}`;
+  const box=document.getElementById('favoriteContacts');if(!box)return;
+  box.innerHTML=`<div class="space" style="margin-bottom:12px"><div><h3 style="margin:0">즐겨찾기 연락처</h3><div class="muted small" style="margin-top:4px">별표를 켠 연락처를 한곳에서 확인합니다.</div></div><span class="chip">${arr.length}명</span></div><div class="contact-maintenance-grid">${arr.map(c=>{const av=c.image?`<img class="contact-maintenance-avatar" src="${c.image}" loading="lazy">`:`<div class="contact-maintenance-avatar">${esc(initials(c.name))}</div>`;const tags=(c.labels||[]).slice(0,4).map(x=>`<span class="chip">${esc(x)}</span>`).join('');return `<div class="contact-maintenance-card contact-favorite-card-v574" onclick="openContact('${c.id}')">${av}<div style="min-width:0"><div class="contact-maintenance-title">★ ${esc(c.name)}</div><div class="contact-maintenance-desc">${c.stationUrl?esc(c.stationUrl):'방송국 URL 없음'}</div><div class="contact-favorite-tags-v574">${tags}</div></div></div>`}).join('')||'<div class="empty" style="grid-column:1/-1">아직 즐겨찾기한 연락처가 없습니다. 연락처 상세의 별표를 눌러 추가해 보세요.</div>'}</div>`;
+}
+window.renderFavoriteContactsV574=renderFavoriteContactsV574;
 function setContactView(view){
-  contactView=['cards','pending','incomplete'].includes(view)?view:'cards';
+  contactView=['cards','pending','incomplete','favorite'].includes(view)?view:'cards';
   document.querySelectorAll('.contact-view').forEach(b=>b.classList.toggle('active',b.dataset.contactView===contactView));
-  const grid=document.getElementById('contactGrid'),pending=document.getElementById('pendingContacts'),incomplete=document.getElementById('incompleteContacts');
+  const grid=document.getElementById('contactGrid'),pending=document.getElementById('pendingContacts'),incomplete=document.getElementById('incompleteContacts'),favorite=document.getElementById('favoriteContacts');
   if(grid)grid.style.display=contactView==='cards'?'grid':'none';
   if(pending)pending.style.display=contactView==='pending'?'block':'none';
   if(incomplete)incomplete.style.display=contactView==='incomplete'?'block':'none';
+  if(favorite)favorite.style.display=contactView==='favorite'?'block':'none';
   const tagPanel=document.querySelector('.contact-tag-panel'),board=document.querySelector('#contacts .contact-board-layout');
   if(tagPanel)tagPanel.style.display=contactView==='cards'?'block':'none';
   board?.classList.toggle('maintenance-mode',contactView!=='cards');
-  if(contactView==='pending')renderPendingContacts();else if(contactView==='incomplete')renderIncompleteContacts();else renderContacts();
+  if(contactView==='pending')renderPendingContacts();else if(contactView==='incomplete')renderIncompleteContacts();else if(contactView==='favorite')renderFavoriteContactsV574();else renderContacts();
 }
 window.setContactView=setContactView;
-function refreshContactViews(){renderContacts();renderSniperList();renderTargetList();renderPendingContacts();renderIncompleteContacts();renderContactTagSidebar()}
+function refreshContactViews(){renderContacts();renderSniperList();renderTargetList();renderPendingContacts();renderIncompleteContacts();renderFavoriteContactsV574();renderContactTagSidebar()}
 
 function soopApiUrl(post,page=1){return `https://chapi.sooplive.co.kr/api/${encodeURIComponent(post.bjId)}/title/${encodeURIComponent(post.postNo)}/comment?page=${page}&orderby=reg_date`}
 function soopBoardApiUrl(post,page=1){return `https://chapi.sooplive.co.kr/api/${encodeURIComponent(post.bjId)}/board/?per_page=50&start_date=&end_date=&field=title,contents,user_nick,user_id,hashtags&keyword=&type=all&order_by=reg_date&board_number=&page=${page}`}
@@ -13961,7 +13995,7 @@ renderMultiDraw();
 /* v4.8 runtime guards */
 function syncContactMaintenanceLayout(){
   const board=document.querySelector('#contacts .contact-board-layout');
-  if(board)board.classList.toggle('maintenance-mode',contactView==='pending'||contactView==='incomplete');
+  if(board)board.classList.toggle('maintenance-mode',contactView==='pending'||contactView==='incomplete'||contactView==='favorite');
 }
 window.syncContactMaintenanceLayout=syncContactMaintenanceLayout;
 window.addEventListener('mawang:datachange',()=>{try{syncContactMaintenanceLayout()}catch(_){}});
@@ -15986,19 +16020,75 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
     }catch(e){msg.style.color='var(--danger)';msg.textContent=e.message||String(e)}
   }
 
+  function setManualSaveProgressV574(percent,phase='SAVE'){
+    const btn=$('mwsSidebarSaveBtn');if(!btn)return;
+    const p=Math.max(0,Math.min(100,Math.round(Number(percent)||0)));
+    btn.style.setProperty('--save-progress-v574',`${p}%`);
+    btn.dataset.saveProgress=String(p);
+    const label=btn.querySelector('.sidebar-save-label-v572');
+    if(label)label.textContent=p>=100?'SAVED 100%':`${phase} ${p}%`;
+  }
+
+  function manualSavePayloadV574(){
+    const payload=typeof mwsStripDevicePrefs==='function'?mwsStripDevicePrefs(data):clone(data);
+    if(Array.isArray(payload.posts))for(const post of payload.posts){delete post.sourceContent;delete post.sourcePhotos;delete post.sourceAuthor;delete post.sourceAuthorId;delete post.sourceRegDate;delete post.sourceViewCount;delete post.sourceUrl}
+    return payload;
+  }
+
+  async function uploadSharedStateWithProgressV574(payload,onProgress){
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session?.access_token)throw new Error('Admin 세션이 만료되었습니다.');
+    const body=JSON.stringify({p_data:payload});
+    return await new Promise((resolve,reject)=>{
+      const xhr=new XMLHttpRequest();
+      xhr.open('POST',`${SB_URL}/rest/v1/rpc/save_shared_state`,true);
+      xhr.setRequestHeader('apikey',SB_KEY);
+      xhr.setRequestHeader('Authorization',`Bearer ${session.access_token}`);
+      xhr.setRequestHeader('Content-Type','application/json');
+      xhr.setRequestHeader('Accept','application/json');
+      xhr.timeout=300000;
+      xhr.upload.onprogress=e=>{
+        if(e.lengthComputable&&e.total>0){
+          const ratio=Math.max(0,Math.min(1,e.loaded/e.total));
+          onProgress(10+ratio*78,'UPLOAD');
+        }
+      };
+      xhr.upload.onload=()=>onProgress(90,'SERVER');
+      xhr.onload=()=>{
+        if(xhr.status>=200&&xhr.status<300){onProgress(100,'SAVED');resolve(xhr.responseText)}
+        else{let msg=`HTTP ${xhr.status}`;try{const j=JSON.parse(xhr.responseText||'{}');msg=j.message||j.error||j.hint||msg}catch(_){}reject(new Error(msg))}
+      };
+      xhr.onerror=()=>reject(new Error('네트워크 오류로 온라인 저장에 실패했습니다.'));
+      xhr.ontimeout=()=>reject(new Error('저장 요청이 5분 안에 완료되지 않았습니다.'));
+      xhr.send(body);
+    });
+  }
+
   async function manualCloudSaveV572(){
     const btn=$('mwsSidebarSaveBtn');
     if(mode!=='admin'){try{toast('SAVE','Admin 모드에서만 온라인 저장할 수 있습니다.')}catch(_){};return}
     clearTimeout(cloudSaveTimer);
-    const oldLabel=btn?.querySelector('.sidebar-save-label-v572')?.textContent||'SAVE';
-    if(btn){btn.disabled=true;btn.classList.add('saving');const label=btn.querySelector('.sidebar-save-label-v572');if(label)label.textContent='SAVING';}
+    if(btn){btn.disabled=true;btn.classList.add('saving');setManualSaveProgressV574(2,'WAIT');}
     try{
       while(cloudSaving)await new Promise(resolve=>setTimeout(resolve,120));
-      const ok=await writeCloudNow();
-      if(ok){try{toast('SAVE 완료','Supabase 온라인 저장이 완료되었습니다.')}catch(_){};}
-      else{try{toast('SAVE 실패','온라인 저장 결과를 확인해 주세요.')}catch(_){};}
+      cloudSaving=true;
+      setManualSaveProgressV574(4,'PREP');
+      const {data:{user}}=await sb.auth.getUser();if(!user)throw new Error('Admin 세션이 만료되었습니다.');
+      setManualSaveProgressV574(7,'PREP');
+      const payload=manualSavePayloadV574();
+      setManualSaveProgressV574(10,'UPLOAD');
+      await uploadSharedStateWithProgressV574(payload,setManualSaveProgressV574);
+      const st=$('syncStatusText');if(st)st.textContent='Supabase 저장 완료';
+      try{toast('SAVE 완료','Supabase 온라인 저장이 완료되었습니다.')}catch(_){}
+      await new Promise(resolve=>setTimeout(resolve,1200));
+    }catch(e){
+      console.error('수동 SAVE 실패',e);
+      if(btn){btn.classList.add('save-failed-v574');const label=btn.querySelector('.sidebar-save-label-v572');if(label)label.textContent='SAVE FAILED'}
+      try{toast('SAVE 실패',e.message||String(e))}catch(_){}
     }finally{
-      if(btn){btn.disabled=false;btn.classList.remove('saving');const label=btn.querySelector('.sidebar-save-label-v572');if(label)label.textContent=oldLabel;}
+      cloudSaving=false;
+      if(btn){btn.disabled=false;btn.classList.remove('saving','save-failed-v574');btn.style.removeProperty('--save-progress-v574');delete btn.dataset.saveProgress;const label=btn.querySelector('.sidebar-save-label-v572');if(label)label.textContent='SAVE';}
+      if(pendingSave){pendingSave=false;queueCloudSave()}
     }
   }
 
@@ -17122,6 +17212,26 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .sidebar-save-v572{padding-left:0
 @keyframes mwsSavePulseV572{from{box-shadow:0 8px 20px rgba(16,185,129,.08)}to{box-shadow:0 8px 28px rgba(16,185,129,.28),0 0 18px rgba(45,212,191,.16)}}
 </style>
 <!-- mws-v5.7.2-predeploy -->
+
+
+<!-- mws-v5.7.4-save-contact-favorites -->
+<style id="mws-v574-style">
+.sidebar-save-v572{position:relative!important;overflow:hidden!important;isolation:isolate}
+.sidebar-save-v572::after{content:"";position:absolute;inset:0 auto 0 0;width:var(--save-progress-v574,0%);background:linear-gradient(90deg,rgba(34,197,94,.30),rgba(45,212,191,.32),rgba(56,189,248,.30));transition:width .18s linear;z-index:-1;pointer-events:none}
+.sidebar-save-v572.saving{border-color:rgba(45,212,191,.48)!important;box-shadow:0 0 22px rgba(45,212,191,.12)!important}
+.sidebar-save-v572.save-failed-v574{border-color:rgba(248,113,113,.62)!important}
+.contact-modal-actions-v574{justify-content:flex-end}
+.contact-favorite-btn-v574{width:48px;height:48px;border-radius:13px;border:1px solid var(--border);background:var(--input);color:#aab5d2;font-size:26px;line-height:1;display:grid;place-items:center;transition:.18s ease}
+.contact-favorite-btn-v574:hover{border-color:#facc15;color:#fde68a;transform:translateY(-1px)}
+.contact-favorite-btn-v574.active{color:#facc15;border-color:rgba(250,204,21,.62);background:rgba(250,204,21,.10);box-shadow:0 0 20px rgba(250,204,21,.16)}
+#contacts #favoriteContacts{width:100%!important;min-width:0!important;max-width:none!important;padding:18px!important;overflow:hidden!important}
+#contacts #favoriteContacts>.space{align-items:flex-start!important;flex-wrap:wrap!important}
+#contacts #favoriteContacts .empty{grid-column:1/-1!important;width:100%!important;min-width:0!important;min-height:110px!important;padding:24px!important;display:grid!important;place-items:center!important;text-align:center!important}
+.contact-favorite-card-v574{position:relative;border-color:color-mix(in srgb,#facc15 32%,var(--border))!important}
+.contact-favorite-card-v574::after{content:"★";position:absolute;right:14px;top:10px;color:#facc15;font-size:18px;opacity:.9}
+.contact-favorite-tags-v574{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;padding-right:24px}
+.contact-favorite-tags-v574 .chip{font-size:10px;padding:3px 7px}
+</style>
 
 </body>
 </html>
