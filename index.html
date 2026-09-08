@@ -8053,7 +8053,7 @@ function mwsSaveDevicePrefs(src=data){
   try{localStorage.setItem(MWS_DEVICE_PREFS_KEY,JSON.stringify(mwsExtractDevicePrefs(src)));return true}catch(e){console.error('개인 설정 저장 실패',e);return false}
 }
 function mwsStripDevicePrefs(src){
-  const out=src&&typeof src==='object'?JSON.parse(JSON.stringify(src)):{};
+  const out=src&&typeof src==='object'?(typeof structuredClone==='function'?structuredClone(src):JSON.parse(JSON.stringify(src))):{};
   for(const key of MWS_DEVICE_PREF_KEYS)delete out[key];
   return out;
 }
@@ -15961,7 +15961,7 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
     if(cloudSaving){pendingSave=true;return false}
     cloudSaving=true;
     try{
-      const {data:{user}}=await sb.auth.getUser();if(!user)throw new Error('Admin 세션이 만료되었습니다.');
+      const {data:{session}}=await sb.auth.getSession();if(!session?.user)throw new Error('Admin 세션이 만료되었습니다.');
       const payload=typeof mwsStripDevicePrefs==='function'?mwsStripDevicePrefs(data):clone(data);
       if(Array.isArray(payload.posts))for(const post of payload.posts){delete post.sourceContent;delete post.sourcePhotos;delete post.sourceAuthor;delete post.sourceAuthorId;delete post.sourceRegDate;delete post.sourceViewCount;delete post.sourceUrl}
       const saved=await sb.rpc('save_shared_state',{p_data:payload});if(saved.error)throw saved.error;
@@ -15989,7 +15989,7 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
       if(mode==='public'){
         normalizeDataShape();lastSyncReason=reason;if(typeof mwsSaveDevicePrefs==='function')mwsSaveDevicePrefs(data);renderAll(reason);try{window.dispatchEvent(new CustomEvent('mawang:datachange',{detail:{reason}}))}catch(_){};return true;
       }
-      const result=originalSaveData(reason);queueCloudSave();return result;
+      return originalSaveData(reason);
     };
   }
 
@@ -16006,7 +16006,7 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
     applyModeUi();hideGate();
   }
   async function writeInitialState(){
-    const {data:{user}}=await sb.auth.getUser();if(!user)return;
+    const {data:{session}}=await sb.auth.getSession();if(!session?.user)return;
     const payload=typeof mwsStripDevicePrefs==='function'?mwsStripDevicePrefs(data):clone(data);
     if(Array.isArray(payload.posts))for(const post of payload.posts){delete post.sourceContent;delete post.sourcePhotos;delete post.sourceAuthor;delete post.sourceAuthorId;delete post.sourceRegDate;delete post.sourceViewCount;delete post.sourceUrl}
     const saved=await sb.rpc('save_shared_state',{p_data:payload});if(saved.error)throw saved.error;
@@ -16102,7 +16102,7 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
       while(cloudSaving)await new Promise(resolve=>setTimeout(resolve,120));
       cloudSaving=true;
       setManualSaveProgressV574(4,'PREP');
-      const {data:{user}}=await sb.auth.getUser();if(!user)throw new Error('Admin 세션이 만료되었습니다.');
+      const {data:{session}}=await sb.auth.getSession();if(!session?.user)throw new Error('Admin 세션이 만료되었습니다.');
       setManualSaveProgressV574(7,'PREP');
       const payload=manualSavePayloadV574();
       setManualSaveProgressV574(10,'UPLOAD');
