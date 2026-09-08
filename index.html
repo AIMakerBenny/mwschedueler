@@ -6610,7 +6610,7 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
           <div>
             <div class="dashboard-insight-kicker-v55">SCHEDULE SNAPSHOT</div>
             <h3>오늘 · 7일 일정</h3>
-            <div class="subtle">가까운 일정과 참여 인원을 한 번에 확인합니다.</div>
+            <div class="subtle">가까운 일정과 준비 상태를 한 번에 확인합니다.</div>
           </div>
           <span id="dashboardWeekBadgeV55" class="chip">0개</span>
         </div>
@@ -6622,7 +6622,7 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
           <div>
             <div class="dashboard-insight-kicker-v55">OPERATIONS</div>
             <h3>운영 현황</h3>
-            <div class="subtle">일정, 신청자와 주요 관리 항목을 요약합니다.</div>
+            <div class="subtle">일정, 신청자, 준비도와 관리 항목을 요약합니다.</div>
           </div>
           <span id="dashboardTodayBadgeV55" class="chip">오늘 0개</span>
         </div>
@@ -6631,7 +6631,7 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
             <span class="dashboard-stat-label-v55">이번 달 일정</span><strong id="dashboardMonthCountV55">0</strong><small id="dashboardMonthMetaV55">휴방 0일</small>
           </button>
           <button type="button" class="dashboard-stat-v55" onclick="setTab('dashboard')">
-            <span class="dashboard-stat-label-v55">7일 참여 예정</span><strong id="dashboardReadinessV55">0명</strong><small id="dashboardReadinessMetaV55">등록된 참여자</small>
+            <span class="dashboard-stat-label-v55">7일 준비도</span><strong id="dashboardReadinessV55">0%</strong><small id="dashboardReadinessMetaV55">체크리스트 0 / 0</small>
           </button>
           <button type="button" class="dashboard-stat-v55" onclick="setTab('posts')">
             <span class="dashboard-stat-label-v55">게시글 신청</span><strong id="dashboardPostApplicantsV55">0명</strong><small id="dashboardPostMetaV55">대기 0 · 가챠 0 · 확정 0</small>
@@ -7725,7 +7725,7 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
 
           <div class="field full"><label>공지 URL</label><input id="evUrl" placeholder="https://..."></div>
           <div class="field full"><label>상세 내용</label><textarea id="evDescription"></textarea></div>
-
+          <div class="field full"><div class="space"><label>Memo</label><button class="secondary small" id="addChecklistBtn" type="button">항목 추가</button></div><div id="checklistEditor"></div></div>
           <div class="field"><label>리마인더</label><select id="evReminder"><option value="">없음</option><option value="60">1시간 전</option><option value="360">6시간 전</option><option value="1440">1일 전</option><option value="4320">3일 전</option><option value="10080">7일 전</option></select></div>
           <div class="field repeat-launch-field">
             <label>반복</label>
@@ -8448,7 +8448,7 @@ let dashboardPinnedEventId=null;
 let dashboardHoverEventId=null;
 
 function dashboardUpcomingCardHTML(e){
-  const cat=category(e.categoryId),color=e.restDay?'#e85d75':(cat?.color||'#64748b');
+  const cat=category(e.categoryId),[d,t]=checklistProgress(e),color=e.restDay?'#e85d75':(cat?.color||'#64748b');
   const pinClass=dashboardPinnedEventId===e.id?'pinned':'';
   if(e.restDay){
     return `<div class="event-card rest-event dashboard-upcoming-card ${pinClass}"
@@ -8471,7 +8471,7 @@ function dashboardUpcomingCardHTML(e){
       <div class="event-title">${esc(e.title)}</div>
       <div class="row">${deviceChip(e)}${cat?`<span class="chip" style="border-color:${color}">${esc(cat.name)}</span>`:''}</div>
     </div>
-    <div class="event-meta"><span>${formatDateWeekday(e.date)}</span><span>${formatTimeKorean(e.start)}</span></div>
+    <div class="event-meta"><span>${formatDateWeekday(e.date)}</span><span>${formatTimeKorean(e.start)}</span><span>Memo ${d}/${t}</span></div>
   </div>`;
 }
 function dashboardDefaultEvent(){
@@ -8504,7 +8504,8 @@ function dashboardDetailHTML(e){
     <div class="row" style="margin-top:15px"><button class="secondary" onclick="event.stopPropagation();openEvent('${e.id}')">수정</button></div>`;
   }
 
-  const cat=category(e.categoryId),people=eventParticipantRows(e),color=cat?.color||'#64748b';
+  const cat=category(e.categoryId),[done,total,pct]=checklistProgress(e),people=eventParticipantRows(e),color=cat?.color||'#64748b';
+  const memos=e.checklist||[];
   const description=(e.description||'').trim();
   return `<div class="space" style="align-items:flex-start">
     <div>
@@ -8525,6 +8526,9 @@ function dashboardDetailHTML(e){
     </div>`).join(''):'<span class="muted small">참여자 없음</span>'}
   </div>
 
+  <div class="small muted" style="margin-bottom:6px">Memo ${done} / ${total}</div>
+  <div class="progress"><div style="width:${pct}%"></div></div>
+  ${memos.length?`<div class="dashboard-memo-list">${memos.slice(0,4).map(x=>`<div class="dashboard-memo-item ${x.done?'done':''}"><span>${x.done?'✓':'○'}</span><span>${esc(x.text)}</span></div>`).join('')}${memos.length>4?`<div class="muted small">외 ${memos.length-4}개 Memo</div>`:''}</div>`:''}
   ${description?`<div class="dashboard-detail-description">${esc(description)}</div>`:''}
 
   <div class="row" style="margin-top:14px">
@@ -8627,6 +8631,8 @@ window.openEventUrl=id=>{const e=data.events.find(x=>x.id===id);if(e?.url)window
 function reminderCardHTML(e){
   const cat=category(e.categoryId),color=e.restDay?'#e85d75':(cat?.color||'#64748b');
   const people=eventParticipantRows(e);
+  const checks=e.checklist||[];
+  const [done,total,pct]=checklistProgress(e);
   const d=daysUntil(e.date);
   const dLabel=d===0?'D-DAY':d===1?'D-1':d>1?`D-${d}`:d<0?`D+${Math.abs(d)}`:'';
   const dateObj=new Date(e.date+'T12:00:00');
@@ -8656,7 +8662,9 @@ function reminderCardHTML(e){
         <div class="event-meta">
           <span>${formatTimeKorean(e.start)}${e.end?` - ${formatTimeKorean(e.end)}`:''}</span>
           <span class="weekday-inline">${weekdayName(e.date)}</span>
+          <span>Memo ${done}/${total}</span>
         </div>
+        <div class="progress" style="margin-top:9px"><div style="width:${pct}%"></div></div>
       </div>
       <div class="dday">${dLabel}</div>
     </div>
@@ -8668,6 +8676,13 @@ function reminderCardHTML(e){
       </div>
     </div>
 
+    <div class="reminder-section">
+      <div class="reminder-label">Memo</div>
+      <div class="reminder-checks">
+        ${checks.length?checks.slice(0,8).map(x=>`<div class="reminder-check ${x.done?'done':''}"><span>${x.done?'✓':'○'}</span><span>${esc(x.text)}</span></div>`).join(''):'<span class="muted small">등록된 Memo가 없습니다</span>'}
+      </div>
+      ${checks.length>8?`<div class="muted small" style="margin-top:7px">외 ${checks.length-8}개 항목</div>`:''}
+    </div>
 
     <div class="row" style="margin-top:12px">
       ${e.url?`<button class="secondary small" onclick="openEventUrl('${e.id}')">공지 열기</button>`:''}
@@ -15870,58 +15885,20 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
     const {data:row,error}=await sb.from(table).select('data').eq('id','main').maybeSingle();
     if(error)throw error;return row?.data||null;
   }
-  const cloudSleepV58=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-  async function cloudAdminUpsertV58(row,tries=3){
-    let last=null;
-    for(let i=0;i<tries;i++){
-      const res=await sb.from('admin_state').upsert(row,{onConflict:'id'});
-      if(!res.error)return null;
-      last=res.error;
-      if(i<tries-1)await cloudSleepV58(450*(i+1));
-    }
-    return last;
-  }
-  async function cloudMirrorPublicV58(tries=3){
-    let last=null;
-    for(let i=0;i<tries;i++){
-      const res=await sb.rpc('sync_admin_state_to_public');
-      if(!res.error)return null;
-      last=res.error;
-      if(i<tries-1)await cloudSleepV58(400*(i+1));
-    }
-    return last;
-  }
   async function writeCloudNow(){
-    if(mode!=='admin'||!sb)return true;
-    if(cloudSaving){pendingSave=true;return false}
+    if(mode!=='admin'||!sb)return;
+    if(cloudSaving){pendingSave=true;return}
     cloudSaving=true;
-    let adminSaved=false;
     try{
       const {data:{user}}=await sb.auth.getUser();if(!user)throw new Error('Admin 세션이 만료되었습니다.');
-      const payload=typeof mwsStripDevicePrefs==='function'?mwsStripDevicePrefs(data):clone(data);
-      if(Array.isArray(payload.posts))for(const post of payload.posts){delete post.sourceContent;delete post.sourcePhotos;delete post.sourceAuthor;delete post.sourceAuthorId;delete post.sourceRegDate;delete post.sourceViewCount;delete post.sourceUrl}
-      const now=new Date().toISOString();
-      const adminError=await cloudAdminUpsertV58({id:'main',data:payload,updated_at:now,updated_by:user.id},3);
-      if(adminError)throw adminError;
-      adminSaved=true;
-      const st=$('syncStatusText');if(st)st.textContent='Admin 온라인 저장 완료';
-      const mirrorError=await cloudMirrorPublicV58(3);
-      if(mirrorError){
-        console.warn('Public 상태 동기화 재시도 필요',mirrorError);
-        if(st)st.textContent='Admin 저장 완료 · Public 동기화 재시도';
-        setTimeout(()=>{if(mode==='admin'&&sb)cloudMirrorPublicV58(3).then(err=>{if(!err&&st)st.textContent='Supabase 저장 완료'})},2400);
-      }else if(st)st.textContent='Supabase 저장 완료';
-      return true;
-    }catch(e){
-      console.error('Supabase Admin 저장 실패',e);
-      try{toast('온라인 저장 실패',adminSaved?'Public 동기화 중 오류가 발생했습니다':(e.message||String(e)))}catch(_){}
-      return false;
-    }finally{
-      cloudSaving=false;
-      if(pendingSave){pendingSave=false;queueCloudSave()}
-    }
+      const payload=typeof mwsStripDevicePrefs==='function'?mwsStripDevicePrefs(data):clone(data);if(Array.isArray(payload.posts))for(const post of payload.posts){delete post.sourceContent;delete post.sourcePhotos;delete post.sourceAuthor;delete post.sourceAuthorId;delete post.sourceRegDate;delete post.sourceViewCount;delete post.sourceUrl}const pub=makePublicData(payload);const now=new Date().toISOString();
+      const a=await sb.from('admin_state').upsert({id:'main',data:payload,updated_at:now,updated_by:user.id});if(a.error)throw a.error;
+      const p=await sb.from('public_state').upsert({id:'main',data:pub,updated_at:now,updated_by:user.id});if(p.error)throw p.error;
+      const st=$('syncStatusText');if(st)st.textContent='Supabase 저장 완료';
+    }catch(e){console.error('Supabase 저장 실패',e);try{toast('온라인 저장 실패',e.message||String(e))}catch(_){}}
+    finally{cloudSaving=false;if(pendingSave){pendingSave=false;queueCloudSave()}}
   }
-  function queueCloudSave(){clearTimeout(cloudSaveTimer);cloudSaveTimer=setTimeout(writeCloudNow,320)}
+  function queueCloudSave(){clearTimeout(cloudSaveTimer);cloudSaveTimer=setTimeout(writeCloudNow,650)}
 
   function installSaveBridge(){
     if(originalSaveData||typeof saveData!=='function')return;
@@ -15958,10 +15935,9 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
   }
   async function writeInitialState(){
     const {data:{user}}=await sb.auth.getUser();if(!user)return;
-    const now=new Date().toISOString(),payload=typeof mwsStripDevicePrefs==='function'?mwsStripDevicePrefs(data):clone(data);
-    if(Array.isArray(payload.posts))for(const post of payload.posts){delete post.sourceContent;delete post.sourcePhotos;delete post.sourceAuthor;delete post.sourceAuthorId;delete post.sourceRegDate;delete post.sourceViewCount;delete post.sourceUrl}
-    const adminError=await cloudAdminUpsertV58({id:'main',data:payload,updated_at:now,updated_by:user.id},3);if(adminError)throw adminError;
-    const mirrorError=await cloudMirrorPublicV58(3);if(mirrorError)console.warn('초기 Public 상태 동기화 재시도 필요',mirrorError);
+    const now=new Date().toISOString(),payload=typeof mwsStripDevicePrefs==='function'?mwsStripDevicePrefs(data):clone(data);if(Array.isArray(payload.posts))for(const post of payload.posts){delete post.sourceContent;delete post.sourcePhotos;delete post.sourceAuthor;delete post.sourceAuthorId;delete post.sourceRegDate;delete post.sourceViewCount;delete post.sourceUrl}const pub=makePublicData(payload);
+    const a=await sb.from('admin_state').upsert({id:'main',data:payload,updated_at:now,updated_by:user.id});if(a.error)throw a.error;
+    const p=await sb.from('public_state').upsert({id:'main',data:pub,updated_at:now,updated_by:user.id});if(p.error)throw p.error;
   }
 
   async function isCurrentUserAdmin(){const {data:{user}}=await sb.auth.getUser();if(!user)return false;const {data:rows,error}=await sb.from('admin_profiles').select('user_id').eq('user_id',user.id).limit(1);return !error&&Array.isArray(rows)&&rows.length===1}
@@ -16003,24 +15979,11 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
 
   function bindUi(){
     $('mwsModeAdmin')?.addEventListener('click',()=>selectLoginMode('admin'));$('mwsModePublic')?.addEventListener('click',()=>selectLoginMode('public'));$('mwsLoginForm')?.addEventListener('submit',handleLogin);
-    $('mwsChangeModeBtn')?.addEventListener('click',async()=>{
-      if(mode==='admin'){
-        clearTimeout(cloudSaveTimer);
-        await writeCloudNow();
-        while(cloudSaving)await cloudSleepV58(80);
-      }
-      localStorage.removeItem(REMEMBER_KEY);localStorage.removeItem(MODE_KEY);mode=null;await sb.auth.signOut();selectLoginMode('admin');showGate();
-    });
+    $('mwsChangeModeBtn')?.addEventListener('click',async()=>{localStorage.removeItem(REMEMBER_KEY);localStorage.removeItem(MODE_KEY);mode=null;await sb.auth.signOut();selectLoginMode('admin');showGate()});
     $('mwsAdminManageBtn')?.addEventListener('click',()=>{$('mwsAdminModal').classList.add('open');$('mwsAdminModal').setAttribute('aria-hidden','false');loadAdminList()});
     $('mwsAdminClose')?.addEventListener('click',()=>{$('mwsAdminModal').classList.remove('open');$('mwsAdminModal').setAttribute('aria-hidden','true')});
     $('mwsAddAdminForm')?.addEventListener('submit',addAdmin);
-    window.addEventListener('mawang:datachange',e=>{
-      setTimeout(()=>{applyModeUi()},0);
-      const reason=String(e?.detail?.reason||'');
-      if(mode==='admin'&&/(백업 가져오기|전체 백업|연락처 가져오기)/.test(reason)){
-        clearTimeout(cloudSaveTimer);cloudSaveTimer=setTimeout(writeCloudNow,0);
-      }
-    });
+    window.addEventListener('mawang:datachange',()=>setTimeout(()=>{applyModeUi()},0));
   }
 
   async function init(){
@@ -16538,11 +16501,12 @@ body[data-resolution="mobile"] .main{grid-column:auto!important}
         const day=['일','월','화','수','목','금','토'][d.getDay()]||'';
         const cat=e.restDay?null:(typeof category==='function'?category(e.categoryId):null);
         const people=e.restDay?[]:(typeof eventParticipantRows==='function'?eventParticipantRows(e):[]);
+        const prog=e.restDay?[0,0,0]:(typeof checklistProgress==='function'?checklistProgress(e):[0,0,0]);
         const time=e.restDay?'하루 종일 휴방':(typeof formatTimeKorean==='function'?formatTimeKorean(e.start):String(e.start||''));
         const meta=[time,cat?.name||'',people.length?`참가 ${people.length}명`:'' ].filter(Boolean).join(' · ');
-        const rightStrong=e.restDay?'—':`${people.length}명`;
-        const rightMeta=e.restDay?'휴방':'참여 예정';
-        return `<button type="button" class="dashboard-week-row-v55" onclick="openEvent('${e.id}')"><span class="dashboard-week-date-v55"><strong>${md}</strong>${day}</span><span style="min-width:0"><span class="dashboard-week-title-v55">${typeof esc==='function'?esc(e.restDay?'휴방':(e.title||'제목 없음')):(e.restDay?'휴방':(e.title||'제목 없음'))}</span><span class="dashboard-week-meta-v55">${typeof esc==='function'?esc(meta):meta}</span></span><span class="dashboard-week-progress-v55"><strong>${rightStrong}</strong>${rightMeta}</span></button>`;
+        const progressText=prog[1]?`${prog[0]}/${prog[1]}`:'—';
+        const progressPct=prog[1]?`${prog[2]}%`:'체크 없음';
+        return `<button type="button" class="dashboard-week-row-v55" onclick="openEvent('${e.id}')"><span class="dashboard-week-date-v55"><strong>${md}</strong>${day}</span><span style="min-width:0"><span class="dashboard-week-title-v55">${typeof esc==='function'?esc(e.restDay?'휴방':(e.title||'제목 없음')):(e.restDay?'휴방':(e.title||'제목 없음'))}</span><span class="dashboard-week-meta-v55">${typeof esc==='function'?esc(meta):meta}</span></span><span class="dashboard-week-progress-v55"><strong>${progressText}</strong>${progressPct}</span></button>`;
       }).join('')+(near.length>6?`<button type="button" class="ghost small" style="width:100%;margin-top:2px" onclick="setTab('calendar')">외 ${near.length-6}개 일정 · 캘린더에서 보기</button>`:''):'<div class="empty">앞으로 7일 이내에 등록된 일정이 없습니다</div>';
     }
 
@@ -16553,10 +16517,11 @@ body[data-resolution="mobile"] .main{grid-column:auto!important}
     v55Set('dashboardMonthMetaV55',`휴방 ${restDays}일 · 방송/컨텐츠 ${Math.max(0,monthRows.length-restDays)}개`);
 
     const prepareRows=near.filter(e=>!e.restDay);
-    const weekParticipantIds=new Set();
-    prepareRows.forEach(e=>(Array.isArray(e?.participantIds)?e.participantIds:[]).forEach(id=>{if(id)weekParticipantIds.add(id)}));
-    v55Set('dashboardReadinessV55',`${weekParticipantIds.size}명`);
-    v55Set('dashboardReadinessMetaV55',prepareRows.length?`향후 7일 ${prepareRows.length}개 일정`:'예정 컨텐츠 없음');
+    let checklistDone=0,checklistTotal=0;
+    prepareRows.forEach(e=>{const arr=Array.isArray(e?.checklist)?e.checklist:[];checklistTotal+=arr.length;checklistDone+=arr.filter(x=>x?.done).length});
+    const readiness=checklistTotal?Math.round(checklistDone/checklistTotal*100):(prepareRows.length?100:0);
+    v55Set('dashboardReadinessV55',`${readiness}%`);
+    v55Set('dashboardReadinessMetaV55',checklistTotal?`체크리스트 ${checklistDone} / ${checklistTotal}`:(prepareRows.length?'등록된 체크리스트 없음':'예정 컨텐츠 없음'));
 
     const postCounts={pending:0,gacha:0,selected:0,nextchance:0};
     (Array.isArray(data?.posts)?data.posts:[]).forEach(p=>{
@@ -16606,12 +16571,6 @@ body[data-resolution="mobile"] .main{grid-column:auto!important}
   }
   window.launchMascotRainV55=function(){
     const layer=rainLayerV55();
-    if(layer.classList.contains('active')||layer.childElementCount){
-      clearTimeout(rainTimerV55);
-      layer.classList.remove('active');layer.setAttribute('aria-hidden','true');layer.replaceChildren();
-      try{document.body.classList.remove('mascot-rain-active')}catch(_){}
-      return;
-    }
     clearTimeout(rainTimerV55);layer.replaceChildren();layer.classList.add('active');layer.setAttribute('aria-hidden','false');
     const source=window.MWS_MASCOT_V54||'assets/mawang-mascot-v54.webp';
     const total=112;
@@ -17019,53 +16978,6 @@ body[data-resolution="mobile"] .main{grid-column:auto!important}
 })();
 </script>
 
-
-
-<style id="mws-v58-style">
-.mws-privacy-brief-v58{margin-top:16px;padding:12px 14px;border:1px solid color-mix(in srgb,var(--border) 88%,transparent);border-radius:12px;background:color-mix(in srgb,var(--input) 76%,transparent);color:var(--muted);font-size:10px;line-height:1.65}
-.mws-privacy-brief-v58 button{margin-left:8px;padding:4px 8px;min-height:0;font-size:9px;vertical-align:middle}
-.mws-privacy-box-v58{width:min(700px,94vw)!important}
-.mws-privacy-section-v58{margin-top:12px;padding:13px 14px;border:1px solid var(--border);border-radius:12px;background:var(--input);line-height:1.7;font-size:11px;color:var(--muted)}
-.mws-privacy-section-v58 strong{color:var(--text)}
-.mws-privacy-note-v58{margin-top:12px;font-size:10px;line-height:1.65;color:var(--muted)}
-#postGamePickerModal{z-index:1120!important}
-</style>
-<script id="mws-v58-script">
-(function(){
-  if(window.__mwsV58Loaded)return;window.__mwsV58Loaded=true;
-
-  function ensurePrivacyV58(){
-    const chooser=document.getElementById('mwsModeChooser');
-    if(chooser&&!document.getElementById('mwsPrivacyBriefV58')){
-      const brief=document.createElement('div');brief.id='mwsPrivacyBriefV58';brief.className='mws-privacy-brief-v58';
-      brief.innerHTML='개인정보 안내 · Admin 로그인 시 계정 인증과 보안을 위해 Supabase Auth에서 접속 IP, 브라우저 정보 및 세션 정보가 자동 처리될 수 있습니다. Public 모드는 Supabase Auth 로그인 세션을 생성하지 않으며, MAWANG Scheduler 자체는 Public 사용자의 버튼 클릭이나 행동 분석 정보를 별도로 저장하지 않습니다. <button type="button" class="ghost" id="mwsPrivacyOpenV58">자세히</button>';
-      chooser.appendChild(brief);
-      brief.querySelector('#mwsPrivacyOpenV58')?.addEventListener('click',()=>window.openMwsPrivacyV58());
-    }
-    if(!document.getElementById('mwsPrivacyModalV58')){
-      const modal=document.createElement('div');modal.id='mwsPrivacyModalV58';modal.className='modal';modal.setAttribute('aria-hidden','true');
-      modal.innerHTML=`<div class="modalbox mws-privacy-box-v58"><div class="space"><div><h2 style="margin:0">개인정보 및 접속정보 안내</h2><div class="muted small" style="margin-top:5px">MAWANG Scheduler의 현재 운영 구조를 기준으로 안내합니다.</div></div><button type="button" class="ghost" onclick="closeMwsPrivacyV58()">닫기</button></div><div class="mws-privacy-section-v58"><strong>Admin 이용</strong><br>Admin 로그인은 Supabase Auth를 사용합니다. 계정 인증, 세션 유지 및 보안을 위해 접속 IP, 브라우저 User-Agent, 접속 세션 정보가 Supabase 인증 시스템에서 자동 처리될 수 있습니다.</div><div class="mws-privacy-section-v58"><strong>Public 이용</strong><br>Public 모드는 Supabase Auth 로그인 세션을 만들지 않습니다. MAWANG Scheduler 자체는 Public 사용자의 버튼 클릭, 미니게임 이용 내역 또는 행동 분석 정보를 별도의 사용자 추적 데이터로 저장하지 않습니다.</div><div class="mws-privacy-section-v58"><strong>서비스 인프라</strong><br>페이지와 데이터를 제공하는 과정에서 Vercel 및 Supabase가 서비스 운영, 네트워크 처리 및 보안을 위한 기본 요청 정보를 처리할 수 있습니다. 본 프로그램에는 별도의 광고 추적 또는 사용자 행동 프로파일링 기능을 두지 않습니다.</div><div class="mws-privacy-note-v58">이 안내는 프로그램 자체의 현재 구현을 설명하기 위한 것입니다. 플랫폼 제공업체의 보안 및 운영 로그 정책은 각 서비스 정책에 따라 변경될 수 있습니다.</div></div>`;
-      modal.addEventListener('click',e=>{if(e.target===modal)window.closeMwsPrivacyV58()});document.body.appendChild(modal);
-    }
-  }
-  window.openMwsPrivacyV58=function(){ensurePrivacyV58();const m=document.getElementById('mwsPrivacyModalV58');m?.classList.add('open');m?.setAttribute('aria-hidden','false');try{syncModalInteractionState()}catch(_){}};
-  window.closeMwsPrivacyV58=function(){const m=document.getElementById('mwsPrivacyModalV58');m?.classList.remove('open');m?.setAttribute('aria-hidden','true');try{syncModalInteractionState()}catch(_){}};
-
-  function relocateGamePickerV58(){
-    const modal=document.getElementById('postGamePickerModal');
-    if(modal&&modal.parentElement!==document.body)document.body.appendChild(modal);
-  }
-  relocateGamePickerV58();
-  if(typeof window.openPostGamePicker==='function'){
-    const baseOpenPostGamePickerV58=window.openPostGamePicker;
-    window.openPostGamePicker=function(){relocateGamePickerV58();return baseOpenPostGamePickerV58.apply(this,arguments)};
-    try{openPostGamePicker=window.openPostGamePicker}catch(_){}
-  }
-
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('mwsPrivacyModalV58')?.classList.contains('open')){e.preventDefault();window.closeMwsPrivacyV58()}},true);
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{ensurePrivacyV58();relocateGamePickerV58()});else{ensurePrivacyV58();relocateGamePickerV58()}
-})();
-</script>
 
 </body>
 </html>
