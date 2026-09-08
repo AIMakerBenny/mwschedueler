@@ -11426,9 +11426,33 @@ function setContactView(view){
 }
 document.querySelectorAll('.contact-view').forEach(b=>b.onclick=()=>setContactView(b.dataset.contactView));
 function refreshContactViews(){renderContacts();renderSniperList();renderTargetList();renderPendingContacts();renderContactTagSidebar()}
-document.getElementById('contactSearch').oninput=refreshContactViews;
-document.getElementById('contactSort').onchange=refreshContactViews;
-document.getElementById('contactLabelFilter').onchange=refreshContactViews;
+function mwsRenderActiveContactView(){
+  if(contactView==='pending')renderPendingContacts();
+  else if(contactView==='incomplete'&&typeof renderIncompleteContacts==='function')renderIncompleteContacts();
+  else if(contactView==='favorite'&&typeof renderFavoriteContactsV574==='function')renderFavoriteContactsV574();
+  else renderContacts();
+}
+let mwsContactSearchTimer=0;
+const mwsContactSearchInput=document.getElementById('contactSearch');
+if(mwsContactSearchInput){
+  mwsContactSearchInput.oninput=(ev)=>{
+    if(ev?.isComposing)return;
+    clearTimeout(mwsContactSearchTimer);
+    mwsContactSearchTimer=setTimeout(()=>{
+      window.__mwsContactSearchRender=true;
+      try{mwsRenderActiveContactView()}finally{window.__mwsContactSearchRender=false}
+    },100);
+  };
+  mwsContactSearchInput.oncompositionend=()=>{
+    clearTimeout(mwsContactSearchTimer);
+    mwsContactSearchTimer=setTimeout(()=>{
+      window.__mwsContactSearchRender=true;
+      try{mwsRenderActiveContactView()}finally{window.__mwsContactSearchRender=false}
+    },0);
+  };
+}
+document.getElementById('contactSort').onchange=mwsRenderActiveContactView;
+document.getElementById('contactLabelFilter').onchange=()=>{mwsRenderActiveContactView();renderContactTagSidebar()};
 document.getElementById('sniperSearch').oninput=renderSniperList;
 document.getElementById('sniperSort').onchange=renderSniperList;
 document.getElementById('sniperLabelFilter').onchange=renderSniperList;
@@ -13634,11 +13658,16 @@ renderSettings=function(){renderSettingsV45Base();renderUserIdentitySettings();a
 
 /* main contact cards */
 function renderContacts(){
-  renderContactTagSidebar();renderContactTagBanner();let arr=filteredContacts();
+  if(!window.__mwsContactSearchRender)renderContactTagSidebar();
+  renderContactTagBanner();let arr=filteredContacts();
   if(data.selfContactId)arr=[...arr].sort((a,b)=>(a.id===data.selfContactId?-1:b.id===data.selfContactId?1:0));
   const grid=document.getElementById('contactGrid');if(!grid)return;
+  const mwsHistory=typeof normalizedCollaborationHistory==='function'?normalizedCollaborationHistory():null;
+  const mwsLastByContact=new Map();
+  if(mwsHistory)for(const row of mwsHistory)for(const id of row.participants||[])if(!mwsLastByContact.has(id))mwsLastByContact.set(id,row);
+  const mwsUpcomingAll=upcomingEvents();
   grid.innerHTML=arr.map(c=>{
-    const last=getLastCollab(c.id),upcoming=upcomingEventsForContact(c.id),isSelf=c.id===data.selfContactId;
+    const last=mwsHistory?(mwsLastByContact.get(c.id)||null):getLastCollab(c.id),upcoming=mwsUpcomingAll.filter(e=>!e.restDay&&(e.participants||[]).includes(c.id)).slice(0,8),isSelf=c.id===data.selfContactId;
     const avatar=c.image?`<img class="contact-card-avatar-lg" loading="lazy" src="${c.image}">`:`<div class="contact-card-avatar-lg">${esc(initials(c.name))}</div>`;
     return `<div class="contact-card ${isSelf?'is-self':''} ${c.pendingSetup?'pending-card':''} ${upcoming.length?'has-upcoming':''}" draggable="true" data-contact-id="${c.id}" ondragstart="contactCardDragStart('${c.id}',event)" ondragend="contactCardDragEnd(event)" onclick="openContact('${c.id}')"><div class="contact-card-core">${avatar}<div class="contact-card-info"><div class="contact-card-name-row"><div class="contact-card-name">${esc(c.name)}</div>${isSelf?'<span class="contact-self-badge">본인</span>':''}${upcoming.length?`<span class="upcoming-count-badge">UPCOMING ${upcoming.length}</span>`:''}</div><div class="contact-card-tags">${(c.labels||[]).map(x=>`<span class="chip">${esc(x)}</span>`).join('')||'<span class="muted small">태그 없음</span>'}</div><div class="contact-card-last">${last?`최근 컨텐츠: <strong style="color:var(--text)">${esc(last.title)}</strong><br>${formatDateWeekday(last.date)} · ${daysSince(last.date)}일 전`:'합방 기록 없음'}</div><div class="contact-card-actions">${c.stationUrl?`<button type="button" class="station-link" onclick="event.stopPropagation();openContactStation('${c.id}')">방송국 열기</button>`:''}${c.pendingSetup?'<span class="chip">신규 추가</span>':''}</div></div></div>${contactUpcomingPopover(c)}</div>`
   }).join('')||'<div class="empty">연락처가 없습니다</div>'
@@ -17236,5 +17265,6 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .sidebar-save-v572{padding-left:0
 .contact-favorite-tags-v574 .chip{font-size:10px;padding:3px 7px}
 </style>
 
+<!-- mws-contact-search-performance-v1 -->
 </body>
 </html>
