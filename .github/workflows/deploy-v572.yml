@@ -1,0 +1,72 @@
+name: Publish MAWANG Scheduler v5.7.2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apply_v572.py
+      - .github/workflows/deploy-v572.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify production base
+        run: |
+          test "$(git hash-object index.html)" = "5781886d6e8bf049fea40bcdc49e76f8d33991da"
+      - name: Apply v5.7.2 patch
+        run: python apply_v572.py
+      - name: Verify exact predeploy artifact
+        run: |
+          test "$(git hash-object index.html)" = "67484a3b886f885069095f0c7a12fc7bbe652617"
+      - name: Verify requested features
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          required=[
+            "if(modal&&modal.parentElement!==document.body)document.body.appendChild(modal);",
+            "clearMiniEntries('ladder')\">전원 제거",
+            "7일 참여 예정",
+            "mwsSidebarSaveBtn",
+            "SAVE 완료",
+            "sb.rpc('save_shared_state'",
+            "fetchSoopBoardRecord(post)",
+            "mws-v5.7.2-predeploy",
+          ]
+          missing=[x for x in required if x not in s]
+          if missing: raise SystemExit('Missing markers: '+repr(missing))
+          print('v5.7.2 feature markers OK')
+          PY
+      - name: Check inline JavaScript syntax
+        run: |
+          python - <<'PY'
+          import re, pathlib
+          s=pathlib.Path('index.html').read_text(encoding='utf-8')
+          out=pathlib.Path('/tmp/v572js'); out.mkdir(exist_ok=True)
+          files=[]
+          for i,m in enumerate(re.finditer(r'<script\b([^>]*)>(.*?)</script\s*>',s,re.I|re.S),1):
+              attrs=m.group(1) or ''
+              if re.search(r'\bsrc\s*=',attrs,re.I): continue
+              tm=re.search(r'\btype\s*=\s*["\']([^"\']+)',attrs,re.I)
+              if tm and tm.group(1).lower() not in ('text/javascript','application/javascript','module'): continue
+              ext='.mjs' if tm and tm.group(1).lower()=='module' else '.js'
+              f=out/f'{i:02d}{ext}'; f.write_text(m.group(2),encoding='utf-8'); files.append(str(f))
+          pathlib.Path('/tmp/v572-list.txt').write_text('\n'.join(files),encoding='utf-8')
+          print('inline scripts',len(files))
+          PY
+          while IFS= read -r f; do [ -z "$f" ] && continue; node --check "$f"; done < /tmp/v572-list.txt
+      - name: Commit v5.7.2 production
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Publish MAWANG Scheduler v5.7.2"
+          git push
