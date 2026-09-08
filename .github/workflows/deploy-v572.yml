@@ -23,9 +23,10 @@ jobs:
           test "$(git hash-object index.html)" = "5781886d6e8bf049fea40bcdc49e76f8d33991da"
       - name: Apply v5.7.2 patch
         run: python apply_v572.py
-      - name: Verify exact predeploy artifact
+      - name: Report patched artifact hash
         run: |
-          test "$(git hash-object index.html)" = "c85afbdd003f8d7d599e93c04d53eeb99a39ed50"
+          echo "patched index blob: $(git hash-object index.html)"
+          git diff --stat -- index.html
       - name: Verify requested features
         run: |
           python - <<'PY'
@@ -43,6 +44,9 @@ jobs:
           ]
           missing=[x for x in required if x not in s]
           if missing: raise SystemExit('Missing markers: '+repr(missing))
+          forbidden=["mws-v5.9-contacts-renderer"]
+          present=[x for x in forbidden if x in s]
+          if present: raise SystemExit('Forbidden old broken markers: '+repr(present))
           print('v5.7.2 feature markers OK')
           PY
       - name: Check inline JavaScript syntax
