@@ -1,0 +1,67 @@
+name: Optimize stage 4 calendar render
+
+on:
+  push:
+    paths:
+      - '.github/workflows/opt-stage4-calendar-index.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Index events by date during calendar render
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('assets/app-core.js')
+          text=path.read_text('utf-8')
+          old="""  const first=new Date(y,m,1),offset=sundayIndex(first.getDay()),start=new Date(y,m,1-offset);let out='';
+  for(let i=0;i<42;i++){
+    const d=new Date(start);d.setDate(start.getDate()+i);
+    const ds=ymd(d),inMonth=d.getMonth()===m,today=ds===todayKST(),dow=d.getDay();
+    const evs=activeEvents().filter(e=>e.date===ds).sort((a,b)=>{
+"""
+          new="""  const first=new Date(y,m,1),offset=sundayIndex(first.getDay()),start=new Date(y,m,1-offset);let out='';
+  const eventsByDate=new Map();
+  for(const event of activeEvents()){
+    const key=event?.date;
+    if(!eventsByDate.has(key))eventsByDate.set(key,[]);
+    eventsByDate.get(key).push(event);
+  }
+  for(let i=0;i<42;i++){
+    const d=new Date(start);d.setDate(start.getDate()+i);
+    const ds=ymd(d),inMonth=d.getMonth()===m,today=ds===todayKST(),dow=d.getDay();
+    const evs=(eventsByDate.get(ds)||[]).sort((a,b)=>{
+"""
+          count=text.count(old)
+          if count != 1:
+            raise SystemExit(f'Expected exactly one calendar hot-path target, found {count}')
+          text=text.replace(old,new,1)
+          path.write_text(text,'utf-8')
+          PY
+
+      - name: Verify JavaScript syntax and patch scope
+        run: |
+          node --check assets/app-core.js
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('assets/app-core.js').read_text('utf-8')
+          if 'const eventsByDate=new Map();' not in text:
+            raise SystemExit('Calendar date index missing')
+          if 'activeEvents().filter(e=>e.date===ds)' in text:
+            raise SystemExit('Old repeated calendar filtering still present')
+          PY
+
+      - name: Commit stage 4
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/app-core.js
+          git commit -m "Index calendar events by date during render"
+          git push
