@@ -1,0 +1,63 @@
+name: Optimize stage 2 data save path
+
+on:
+  push:
+    paths:
+      - '.github/workflows/opt-stage2-data-save.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply safe data and Supabase hot-path optimizations
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html'); s=p.read_text('utf-8')
+          replacements=[
+            ("const out=src&&typeof src==='object'?JSON.parse(JSON.stringify(src)):{};", "const out=src&&typeof src==='object'?(typeof structuredClone==='function'?structuredClone(src):JSON.parse(JSON.stringify(src))):{};"),
+            ("const result=originalSaveData(reason);queueCloudSave();return result;", "return originalSaveData(reason);"),
+            ("const {data:{user}}=await sb.auth.getUser();if(!user)throw new Error('Admin 세션이 만료되었습니다.');", "const {data:{session}}=await sb.auth.getSession();if(!session?.user)throw new Error('Admin 세션이 만료되었습니다.');"),
+            ("const {data:{user}}=await sb.auth.getUser();if(!user)return;\n    const payload=typeof mwsStripDevicePrefs==='function'?mwsStripDevicePrefs(data):clone(data);", "const {data:{session}}=await sb.auth.getSession();if(!session?.user)return;\n    const payload=typeof mwsStripDevicePrefs==='function'?mwsStripDevicePrefs(data):clone(data);")
+          ]
+          for old,new in replacements:
+              count=s.count(old)
+              if count<1: raise SystemExit(f'patch target missing: {old[:80]}')
+              if old.startswith("const {data:{user}}=await sb.auth.getUser();if(!user)throw"):
+                  # two hot save paths intentionally use the same auth check
+                  s=s.replace(old,new)
+              else:
+                  s=s.replace(old,new,1)
+          p.write_text(s,'utf-8')
+          PY
+      - name: Verify JavaScript syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          class P(HTMLParser):
+            def __init__(self): super().__init__(); self.s=False; self.src=None; self.b=[]; self.items=[]
+            def handle_starttag(self,t,a):
+              if t=='script': self.s=True; self.src=dict(a).get('src'); self.b=[]
+            def handle_data(self,d):
+              if self.s and not self.src: self.b.append(d)
+            def handle_endtag(self,t):
+              if t=='script' and self.s:
+                if not self.src: self.items.append(''.join(self.b))
+                self.s=False; self.src=None
+          p=P();p.feed(Path('index.html').read_text('utf-8'));o=Path('/tmp/js');o.mkdir()
+          for i,x in enumerate(p.items):(o/f'{i}.js').write_text(x,'utf-8')
+          PY
+          for f in /tmp/js/*.js; do node --check "$f"; done
+          node --check assets/perf-runtime.js
+      - name: Commit stage 2 source optimizations
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Optimize data serialization and Supabase save hot path"
+          git push
