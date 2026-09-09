@@ -1,8 +1,8 @@
-/* MAWANG Scheduler TEST V5.4 - manifest + IndexedDB incremental cloud cache */
+/* MAWANG Scheduler TEST V5.5 - manifest + IndexedDB incremental cloud cache */
 (()=>{
   'use strict';
-  if(window.__mwsCloudV54Loaded)return;
-  window.__mwsCloudV54Loaded=true;
+  if(window.__mwsCloudV55Loaded)return;
+  window.__mwsCloudV55Loaded=true;
 
   const SB_URL='https://nysxcqlewzucbpoaymbg.supabase.co';
   const SB_KEY='sb_publishable_H7VPUOVV6nN7QdaJKO3-lA_-SNrg4mW';
@@ -32,19 +32,19 @@
   const dirtyParts=new Set();
   let lazyBridgeInstalled=false;
 
-  const metrics=window.__mwsV54NetworkMetrics={
+  const metrics=window.__mwsV55NetworkMetrics={
     startedAt:new Date().toISOString(), cacheSchemaVersion:CACHE_SCHEMA_VERSION, requests:[], cacheHits:0, cacheMisses:0,
     semanticResponseBytes:0, actualSupabaseResponseBytes:0, actualSupabaseRequestBytes:0
   };
   function metric(type,detail={}){metrics.requests.push({at:new Date().toISOString(),type,...detail});if(metrics.requests.length>300)metrics.requests.shift()}
-  window.mwsV54EgressReport=()=>({
+  window.mwsV55EgressReport=()=>({
     ...clone(metrics), mode, manifest:clone(manifest), loadedParts:[...loadedParts], dirtyParts:[...dirtyParts],
     imageResources:(performance.getEntriesByType?.('resource')||[]).filter(x=>/\/functions\/v1\/(contact-image|workspace-image)/.test(x.name)).map(x=>({name:x.name,transferSize:x.transferSize,encodedBodySize:x.encodedBodySize,decodedBodySize:x.decodedBodySize,duration:Math.round(x.duration)}))
   });
 
   function installFetchMeter(){
-    if(window.__mwsV54FetchMeterInstalled)return;
-    window.__mwsV54FetchMeterInstalled=true;
+    if(window.__mwsV55FetchMeterInstalled)return;
+    window.__mwsV55FetchMeterInstalled=true;
     const base=window.fetch.bind(window);
     window.fetch=async function(input,init){
       const url=typeof input==='string'?input:(input?.url||'');
@@ -169,7 +169,7 @@
     try{normalizeDataShape()}catch(_){try{normalizeMiniGameData()}catch(__){}}
     try{if(typeof mwsApplyDevicePrefs==='function')mwsApplyDevicePrefs(data)}catch(_){}
     document.body.dataset.theme=data.theme||'neon';document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));
-    try{renderAll(reason)}catch(e){console.error('V5.4 render failed',e)}
+    try{renderAll(reason)}catch(e){console.error('V5.5 render failed',e)}
   }
 
   async function fetchManifest(scope){
@@ -186,16 +186,6 @@
     const bytes=byteLen(res.data);metrics.semanticResponseBytes+=bytes;metrics.cacheMisses++;metric('part-fetch',{scope,part,version:Number(res.data.version)||0,bytes,ms:Math.round(performance.now()-started)});
     return res.data;
   }
-  async function fetchCompat(scope){
-    const table=scope==='admin'?'admin_state':'public_state';
-    const res=await timeout(sb.from(table).select('data').eq('id','main').maybeSingle(),15000,'호환 데이터 불러오기');
-    if(res.error)throw res.error;const bytes=byteLen(res.data);metrics.semanticResponseBytes+=bytes;metric('compat-fallback',{scope,bytes});return res.data?.data||null;
-  }
-  async function splitCompatToCache(scope,full,versions={}){
-    if(!full||typeof full!=='object')return;
-    const previous=data;data=clone(full);
-    try{for(const part of ALL_PARTS){const value=extractPart(part,data),version=Number(versions?.[part])||0;await putCachedPart(scope,part,version,value)}}finally{data=previous}
-  }
 
   async function loadPartWithCache(scope,part,serverManifest,{allowStale=true}={}){
     const wanted=Number(serverManifest?.parts?.[part])||0;
@@ -209,7 +199,7 @@
     mode=chosen;loadedParts.clear();baselineJson.clear();dirtyParts.clear();
     const scope=chosen==='admin'?'admin':'public';
     let serverManifest=null,offline=false;
-    try{serverManifest=await fetchManifest(scope);manifest=serverManifest}catch(e){offline=true;manifest=null;console.warn('V5.4 manifest unavailable; IndexedDB fallback',e)}
+    try{serverManifest=await fetchManifest(scope);manifest=serverManifest}catch(e){offline=true;manifest=null;console.warn('V5.5 manifest unavailable; IndexedDB fallback',e)}
 
     const next=freshSkeleton();
     let loadedCount=0;
@@ -217,19 +207,16 @@
       const results=await Promise.all(INITIAL_PARTS.map(async part=>[part,await loadPartWithCache(scope,part,serverManifest,{allowStale:true})]));
       for(const [part,row] of results){mergePart(part,row.data,next);loadedParts.add(part);baselineJson.set(part,JSON.stringify(row.data));loadedCount++}
     }catch(e){
-      console.warn('V5.4 incremental initial load failed',e);
-      if(!offline){
-        try{const full=await fetchCompat(scope);if(full){const versions=serverManifest?.parts||{};await splitCompatToCache(scope,full,versions);for(const part of INITIAL_PARTS){const previous=data;data=clone(full);const v=extractPart(part,data);data=previous;mergePart(part,v,next);loadedParts.add(part);baselineJson.set(part,JSON.stringify(v));loadedCount++}}}catch(fallbackError){console.warn('Compatibility fallback failed',fallbackError)}
-      }
+      console.warn('V5.5 incremental initial load failed; cached parts only',e);
     }
 
     if(loadedCount<INITIAL_PARTS.length){
       let allCached=true;
       for(const part of INITIAL_PARTS){if(loadedParts.has(part))continue;const cached=await getCachedPart(scope,part);if(!cached){allCached=false;break}mergePart(part,cached.data,next);loadedParts.add(part);baselineJson.set(part,JSON.stringify(cached.data))}
-      if(!allCached&&loadedCount===0)throw new Error('온라인 데이터와 IndexedDB 캐시를 모두 불러오지 못했습니다.');
+      if(!allCached)throw new Error('필수 데이터와 IndexedDB 캐시를 모두 불러오지 못했습니다.');
     }
 
-    data=next;normalizeAndRender(offline?'IndexedDB 오프라인 캐시':'Supabase V5.4 증분 데이터');
+    data=next;normalizeAndRender(offline?'IndexedDB 오프라인 캐시':'Supabase V5.5 증분 데이터');
     try{localStorage.removeItem('mawangSchedulerBeta')}catch(_){}
     applyModeUi();hideGate();
     const st=$('syncStatusText');if(st)st.textContent=offline?'IndexedDB 캐시 사용 중':'버전 캐시 동기화';
@@ -249,18 +236,18 @@
     if(changed)normalizeAndRender(`${tab} lazy data`);
     return true;
   }
-  window.mwsV54EnsureParts=ensurePartsForTab;
-  window.mwsV54EnsureAllParts=()=>ensurePartsForTab('export');
+  window.mwsV55EnsureParts=ensurePartsForTab;
+  window.mwsV55EnsureAllParts=()=>ensurePartsForTab('export');
 
   function installLazyTabBridge(){
     if(lazyBridgeInstalled||typeof window.setTab!=='function')return;
     lazyBridgeInstalled=true;const base=window.setTab;
-    window.setTab=function(tab){const out=base.apply(this,arguments);Promise.resolve().then(()=>ensurePartsForTab(tab)).catch(e=>console.error('V5.4 lazy tab',e));return out};
+    window.setTab=function(tab){const out=base.apply(this,arguments);Promise.resolve().then(()=>ensurePartsForTab(tab)).catch(e=>console.error('V5.5 lazy tab',e));return out};
     try{setTab=window.setTab}catch(_){}
-    const exportAll=$('exportAllBtn');if(exportAll&&!exportAll.dataset.v54Guard){
-      exportAll.dataset.v54Guard='1';exportAll.addEventListener('click',e=>{if(loadedParts.size<ALL_PARTS.length){e.preventDefault();e.stopImmediatePropagation();ensurePartsForTab('export').then(()=>exportAll.click())}},true);
+    const exportAll=$('exportAllBtn');if(exportAll&&!exportAll.dataset.v55Guard){
+      exportAll.dataset.v55Guard='1';exportAll.addEventListener('click',e=>{if(loadedParts.size<ALL_PARTS.length){e.preventDefault();e.stopImmediatePropagation();ensurePartsForTab('export').then(()=>exportAll.click())}},true);
     }
-    const exportContacts=$('exportContactsBtn');if(exportContacts&&!exportContacts.dataset.v54Guard){exportContacts.dataset.v54Guard='1';exportContacts.addEventListener('click',()=>ensurePartsForTab('contacts'),{capture:true})}
+    const exportContacts=$('exportContactsBtn');if(exportContacts&&!exportContacts.dataset.v55Guard){exportContacts.dataset.v55Guard='1';exportContacts.addEventListener('click',()=>ensurePartsForTab('contacts'),{capture:true})}
   }
 
   function markDirty(){
@@ -280,17 +267,17 @@
       const {data:{session}}=await timeout(sb.auth.getSession(),10000,'Admin 세션 확인');if(!session?.user)throw new Error('Admin 세션이 만료되었습니다.');
       const payload={};for(const part of partsToSave)payload[part]=extractPart(part);
       metric('save-parts',{parts:partsToSave,requestBytes:byteLen(payload)});if(manual)setManualSaveProgress(28,'UPLOAD');
-      const res=await timeout(sb.rpc('save_workspace_parts_v54',{p_parts:payload}),60000,'변경 데이터 저장');if(res.error)throw res.error;
+      const res=await timeout(sb.rpc('save_workspace_parts_v55',{p_parts:payload}),60000,'변경 데이터 저장');if(res.error)throw res.error;
       if(manual)setManualSaveProgress(88,'CACHE');
       const result=res.data||{},versions=result.versions||{},normalized=result.normalized||{};mergeNormalizedResult(normalized);
       if(manifest?.parts)for(const [part,version] of Object.entries(versions))manifest.parts[part]=Number(version)||manifest.parts[part];
       for(const part of partsToSave){const value=extractPart(part),version=Number(versions[part])||Number(manifest?.parts?.[part])||0;baselineJson.set(part,JSON.stringify(value));dirtyParts.delete(part);await putCachedPart('admin',part,version,value)}
       const st=$('syncStatusText');if(st)st.textContent='Supabase 변경 파트 저장 완료';if(manual)setManualSaveProgress(100,'SAVED');
       metric('save-complete',{parts:partsToSave,versions:clone(versions)});return true;
-    }catch(e){console.error('V5.4 incremental save failed',e);try{toast('온라인 저장 실패',e.message||String(e))}catch(_){};if(manual)setManualSaveProgress(0,'FAILED');return false}
+    }catch(e){console.error('V5.5 incremental save failed',e);try{toast('온라인 저장 실패',e.message||String(e))}catch(_){};if(manual)setManualSaveProgress(0,'FAILED');return false}
     finally{cloudSaving=false;if(pendingSave){pendingSave=false;queueCloudSave()}}
   }
-  window.mwsV54SaveNow=()=>writeCloudNow(true);
+  window.mwsV55SaveNow=()=>writeCloudNow(true);
 
   function installSaveBridge(){
     const devicePersist=()=>{try{if(typeof mwsSaveDevicePrefs==='function')mwsSaveDevicePrefs(data)}catch(_){};if(mode==='admin')queueCloudSave();return true};
@@ -298,7 +285,7 @@
     const v54Save=function(reason='데이터 저장'){
       try{normalizeDataShape()}catch(_){try{normalizeMiniGameData()}catch(__){}}
       try{lastSyncReason=reason}catch(_){};try{if(typeof mwsSaveDevicePrefs==='function')mwsSaveDevicePrefs(data)}catch(_){}
-      try{renderAll(reason)}catch(e){console.error('V5.4 render after save',e)}
+      try{renderAll(reason)}catch(e){console.error('V5.5 render after save',e)}
       try{window.dispatchEvent(new CustomEvent('mawang:datachange',{detail:{reason}}))}catch(_){}
       if(mode==='admin')queueCloudSave();return true;
     };
@@ -362,7 +349,7 @@
     await validateCacheSchema();installSaveBridge();bindUi();selectLoginMode('admin');
     try{
       const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm');
-      sb=mod.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});window.__mwsV54Supabase=sb;
+      sb=mod.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});window.__mwsV55Supabase=sb;
       const remember=localStorage.getItem(REMEMBER_KEY)==='1',preferred=localStorage.getItem(MODE_KEY);
       if(remember&&preferred==='public'){await hydrate('public');installLazyTabBridge();return}
       if(remember&&preferred==='admin'){
@@ -372,11 +359,11 @@
         }
       }
       showGate();installLazyTabBridge();
-    }catch(e){console.error('V5.4 init',e);setLoginError('Supabase 연결 실패: '+(e.message||String(e)));showGate();installLazyTabBridge()}
+    }catch(e){console.error('V5.5 init',e);setLoginError('Supabase 연결 실패: '+(e.message||String(e)));showGate();installLazyTabBridge()}
   }
 
-  document.body.dataset.buildVersion='TEST V5.4';
-  const versionLabel=document.querySelector('.sidebar-build-version-v53');if(versionLabel)versionLabel.textContent='TEST V5.4';
-  window.addEventListener('mws:v54-features-ready',installLazyTabBridge,{once:true});
+  document.body.dataset.buildVersion='TEST V5.5';
+  const versionLabel=document.querySelector('.sidebar-build-version-v53');if(versionLabel)versionLabel.textContent='TEST V5.5';
+  window.addEventListener('mws:v55-features-ready',installLazyTabBridge,{once:true});
   init();
 })();

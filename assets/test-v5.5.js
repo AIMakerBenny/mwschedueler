@@ -1,10 +1,10 @@
-/* MAWANG Scheduler TEST V5.4 - automatic Today People from same-day event participants */
+/* MAWANG Scheduler TEST V5.5 - automatic Today People from same-day event participants */
 (()=>{
   'use strict';
   if(window.__mwsTestV53AutoTodayPeople)return;
   window.__mwsTestV53AutoTodayPeople=true;
 
-  const VERSION='TEST V5.4';
+  const VERSION='TEST V5.5';
   let installed=false;
   let pickerState=null;
 
