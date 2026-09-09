@@ -18,45 +18,56 @@ jobs:
           ref: release/test-v5.2-20260909
           fetch-depth: 0
 
-      - name: Rebuild from verified local TEST V5 HTML
+      - name: Apply verified TEST V5 layout to online shell
         shell: bash
         run: |
-          set -euo pipefail
-          git show a885b1e5cb6a683a9a46ed38cbe204c9c2368f75:index.html > index.html
-          git apply .github/patches/test-v5.2-index.patch
-
           python3 - <<'PY'
           from pathlib import Path
-          import re, base64, gzip
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
 
-          loader=Path('assets/online-v5-loader.js').read_text(encoding='utf-8')
-          m=re.search(r"const PAYLOAD='([^']+)'",loader)
-          if not m:
-              raise SystemExit('online V5 payload not found')
-          raw=gzip.decompress(base64.b64decode(m.group(1))).decode('utf-8')
-          head, css = raw.split('\n/*__MWS_SPLIT_FEATURES_CSS__*/\n',1)
-          cloud, features = head.split('\n/*__MWS_SPLIT_CLOUD_FEATURES__*/\n',1)
-          Path('assets/online-cloud-v5.js').write_text(cloud,encoding='utf-8')
-          Path('assets/online-features.js').write_text(features,encoding='utf-8')
-          Path('assets/online-features.css').write_text(css,encoding='utf-8')
+          s=s.replace('mws-test-v51-version-style','mws-test-v52-version-style')
+          s=s.replace('sidebar-build-version-v51','sidebar-build-version-v52')
+          s=s.replace('mwsBuildVersionV51','mwsBuildVersionV52')
+          s=s.replace('TEST V5.1','TEST V5.2')
+          if 'data-build-version="TEST V5.2"' not in s:
+              s=s.replace('<body data-theme="neon" class="mws-gated">','<body data-theme="neon" class="mws-gated" data-build-version="TEST V5.2">',1)
+
+          kpi_start=s.find('    <div class="grid cols-3" style="margin-bottom:14px">')
+          if kpi_start>=0:
+              kpi_end=s.index('    <div class="dashboard-view-controls">',kpi_start)
+              new_kpi='''    <div class="dashboard-kpi-grid-local" style="margin-bottom:14px">\n      <div class="card"><div class="kpi">다음 컨텐츠<strong id="nextStreamKpi">없음</strong></div></div>\n      <div class="card"><div class="kpi">7일 이내 컨텐츠<strong id="weekCountKpi">0</strong></div></div>\n      <div class="card"><div class="kpi">연락처<strong id="contactCountKpi">0</strong></div></div>\n      <button type="button" class="card local-kpi-link" onclick="setTab('posts')"><div class="kpi">게시글 신청<strong id="dashboardPostApplicantsLocal">0</strong></div></button>\n      <button type="button" class="card local-kpi-link" onclick="setTab('sniper');setTimeout(()=>setSniperView('recent'),0)"><div class="kpi">최근 30일 합방<strong id="dashboardRecentCollabLocal">0회</strong></div></button>\n      <button type="button" class="card local-kpi-link" onclick="setTab('targets')"><div class="kpi">저격 리스트<strong id="dashboardTargetCountLocal">0명</strong></div></button>\n    </div>\n'''
+              s=s[:kpi_start]+new_kpi+s[kpi_end:]
+          elif 'dashboard-kpi-grid-local' not in s:
+              raise SystemExit('Dashboard KPI marker not found')
+
+          ins_start=s.find('    <div class="dashboard-insights-v55">')
+          if ins_start>=0:
+              ins_end=s.index('  </div>\n\n  <div id="dashboardReminderMode"',ins_start)
+              new_ins='''    <div class="dashboard-insights-v55 dashboard-insights-local">\n      <div class="card dashboard-insight-card-v55 dashboard-notice-card-local">\n        <div class="space dashboard-insight-head-v55">\n          <div>\n            <div class="dashboard-insight-kicker-v55">NOTICE</div>\n            <h3>공지</h3>\n            <div class="subtle">SOOP 방송국 게시판 URL을 저장하면 최신 공지 5개의 제목과 작성일을 불러옵니다.</div>\n          </div>\n          <button type="button" class="secondary small" id="dashboardNoticeRefreshBtn">새로고침</button>\n        </div>\n        <div class="dashboard-notice-url-row-local">\n          <input id="dashboardNoticeUrlInput" type="url" placeholder="https://www.sooplive.com/station/mawang0216/board/98921353">\n          <button type="button" class="primary" id="dashboardNoticeSaveBtn">URL 저장</button>\n        </div>\n        <div id="dashboardNoticeStatus" class="muted small dashboard-notice-status-local">URL을 입력해 주세요.</div>\n        <div id="dashboardNoticeList" class="dashboard-notice-list-local"></div>\n      </div>\n\n      <div class="card dashboard-insight-card-v55 dashboard-today-people-card-local">\n        <div class="space dashboard-insight-head-v55">\n          <div>\n            <div class="dashboard-insight-kicker-v55">TODAY PEOPLE</div>\n            <h3>오늘 함께한 사람</h3>\n            <div class="subtle">직접 등록한 사람만 표시합니다. 캘린더의 오.함.사 기록과 같은 데이터를 사용합니다.</div>\n          </div>\n          <span id="dashboardTodayPeopleCount" class="chip">0명</span>\n        </div>\n        <div class="dashboard-today-people-layout-local">\n          <button type="button" id="dashboardTodayPeopleAdd" class="today-people-add-local" title="오늘 함께한 사람 등록/수정">\n            <span class="today-people-silhouette-local" aria-hidden="true"></span>\n            <span class="today-people-plus-local">+</span>\n            <strong>인원 등록</strong>\n          </button>\n          <div id="dashboardTodayPeopleCards" class="today-people-cards-local"></div>\n        </div>\n      </div>\n    </div>\n'''
+              s=s[:ins_start]+new_ins+s[ins_end:]
+          elif 'dashboard-insights-local' not in s:
+              raise SystemExit('Dashboard insights marker not found')
+
+          if 'assets/online-v5-loader.js' not in s:
+              raise SystemExit('online V5 loader missing')
+          p.write_text(s,encoding='utf-8')
           PY
 
-          node --check assets/online-cloud-v5.js
-          node --check assets/online-features.js
           grep -q 'data-build-version="TEST V5.2"' index.html
           grep -q 'dashboardPostApplicantsLocal' index.html
           grep -q 'dashboardNoticeUrlInput' index.html
           grep -q 'dashboardTodayPeopleAdd' index.html
-          grep -q 'assets/online-cloud-v5.js' index.html
-          grep -q 'assets/online-features.js' index.html
-          ! grep -q 'assets/local-test' index.html
+          grep -q 'assets/online-v5-loader.js' index.html
+          ! grep -q 'SCHEDULE SNAPSHOT' index.html
+          ! grep -q '>운영 현황<' index.html
 
       - name: Commit TEST V5.2 bundle
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html assets/online-cloud-v5.js assets/online-features.js assets/online-features.css
+          git add index.html
           if git diff --cached --quiet; then
             echo "No generated changes"
             exit 0
