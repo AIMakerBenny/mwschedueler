@@ -1,0 +1,72 @@
+name: Release TEST V5.3
+
+on:
+  push:
+    branches:
+      - release/test-v5.3-20260909
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/test-v5.3-20260909
+          fetch-depth: 0
+
+      - name: Validate V5.3 feature script
+        run: node --check assets/test-v5.3.js
+
+      - name: Patch TEST V5.3 production entry
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          s=s.replace('mws-test-v52-version-style','mws-test-v53-version-style')
+          s=s.replace('sidebar-build-version-v52','sidebar-build-version-v53')
+          s=s.replace('mwsBuildVersionV52','mwsBuildVersionV53')
+          s=s.replace('TEST V5.2','TEST V5.3')
+
+          old='직접 등록한 사람만 표시합니다. 캘린더의 오.함.사 기록과 같은 데이터를 사용합니다.'
+          new='오늘 컨텐츠의 참가자가 자동으로 포함됩니다. 필요한 인원은 직접 추가할 수도 있습니다.'
+          s=s.replace(old,new)
+
+          tag='<script src="assets/test-v5.3.js"></script>'
+          s=s.replace(tag,'')
+          loader='<script src="assets/online-v5-loader.js"></script>'
+          if loader not in s:
+              raise SystemExit('online-v5-loader.js marker missing')
+          s=s.replace(loader,loader+'\n'+tag,1)
+
+          if 'data-build-version="TEST V5.3"' not in s:
+              raise SystemExit('TEST V5.3 body version missing')
+          if s.count(tag)!=1:
+              raise SystemExit('TEST V5.3 script tag count invalid')
+          if 'dashboardTodayPeopleCount' not in s:
+              raise SystemExit('Today People dashboard marker missing')
+          p.write_text(s,encoding='utf-8')
+          PY
+
+          grep -q 'TEST V5.3' index.html
+          grep -q 'assets/test-v5.3.js' index.html
+          grep -q 'assets/online-v5-loader.js' index.html
+
+      - name: Commit TEST V5.3 entrypoint
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No index changes"
+            exit 0
+          fi
+          git commit -m "Publish TEST V5.3 entrypoint"
+          git push origin HEAD:release/test-v5.3-20260909
