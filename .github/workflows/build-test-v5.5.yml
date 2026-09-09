@@ -1,0 +1,127 @@
+name: Build TEST V5.5 No Compat Fallback
+
+on:
+  push:
+    branches:
+      - release/test-v5.5-20260909
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/test-v5.5-20260909
+          fetch-depth: 0
+
+      - name: Build TEST V5.5
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          src = Path('assets/cloud-v5.4.js')
+          if not src.exists():
+              raise SystemExit('assets/cloud-v5.4.js not found')
+          cloud = src.read_text(encoding='utf-8')
+
+          # Remove whole-state compatibility fetch helpers.
+          cloud, n1 = re.subn(
+              r"\n  async function fetchCompat\(scope\)\{.*?\n  \}\n  async function splitCompatToCache\(scope,full,versions=\{\}\)\{.*?\n  \}\n",
+              "\n",
+              cloud,
+              flags=re.S,
+          )
+          if n1 != 1:
+              raise SystemExit(f'Expected one compat helper block, found {n1}')
+
+          # Remove public_state/admin_state fallback from initial hydration.
+          cloud, n2 = re.subn(
+              r"    \}catch\(e\)\{\n      console\.warn\('V5\.4 incremental initial load failed',e\);\n      if\(!offline\)\{\n.*?\n      \}\n    \}\n\n    if\(loadedCount<INITIAL_PARTS\.length\)",
+              "    }catch(e){\n      console.warn('V5.5 incremental initial load failed; cached parts only',e);\n    }\n\n    if(loadedCount<INITIAL_PARTS.length)",
+              cloud,
+              flags=re.S,
+          )
+          if n2 != 1:
+              raise SystemExit(f'Expected one hydrate fallback block, found {n2}')
+
+          # Never silently render a partially missing initial dataset.
+          cloud = cloud.replace(
+              "if(!allCached&&loadedCount===0)throw new Error('온라인 데이터와 IndexedDB 캐시를 모두 불러오지 못했습니다.');",
+              "if(!allCached)throw new Error('필수 데이터와 IndexedDB 캐시를 모두 불러오지 못했습니다.');"
+          )
+
+          # Move to V5.5 identifiers and the no-compat incremental RPC.
+          cloud = cloud.replace('save_workspace_parts_v54', 'save_workspace_parts_v55')
+          cloud = cloud.replace('__mwsCloudV54Loaded', '__mwsCloudV55Loaded')
+          cloud = cloud.replace('__mwsV54', '__mwsV55')
+          cloud = cloud.replace('mwsV54', 'mwsV55')
+          cloud = cloud.replace('v54Guard', 'v55Guard')
+          cloud = cloud.replace('mws:v54-features-ready', 'mws:v55-features-ready')
+          cloud = cloud.replace('V5.4', 'V5.5')
+          cloud = cloud.replace('TEST V5.4', 'TEST V5.5')
+
+          forbidden = ['public_state', 'admin_state', 'fetchCompat', 'splitCompatToCache', 'compat-fallback', 'save_workspace_parts_v54']
+          leftovers = [x for x in forbidden if x in cloud]
+          if leftovers:
+              raise SystemExit('Compat references remain: ' + ', '.join(leftovers))
+
+          Path('assets/cloud-v5.5.js').write_text(cloud, encoding='utf-8')
+
+          feature_src = Path('assets/test-v5.4.js')
+          feature = feature_src.read_text(encoding='utf-8')
+          feature = feature.replace('TEST V5.4', 'TEST V5.5').replace('V5.4', 'V5.5')
+          Path('assets/test-v5.5.js').write_text(feature, encoding='utf-8')
+
+          loader = Path('assets/online-v5-loader.js')
+          s = loader.read_text(encoding='utf-8')
+          s = s.replace('assets/cloud-v5.4.js', 'assets/cloud-v5.5.js')
+          s = s.replace('mws:v54-features-ready', 'mws:v55-features-ready')
+          s = s.replace('V5.4 cloud 로딩 실패', 'V5.5 cloud 로딩 실패')
+          if 'assets/cloud-v5.5.js' not in s:
+              raise SystemExit('V5.5 cloud loader reference missing')
+          loader.write_text(s, encoding='utf-8')
+
+          index = Path('index.html')
+          h = index.read_text(encoding='utf-8')
+          h = h.replace('data-build-version="TEST V5.4"', 'data-build-version="TEST V5.5"')
+          h = h.replace('assets/test-v5.4.js', 'assets/test-v5.5.js')
+          if 'TEST V5.5' not in h or 'assets/test-v5.5.js' not in h:
+              raise SystemExit('V5.5 index markers missing')
+          index.write_text(h, encoding='utf-8')
+
+          # Old V5.4 runtime files and one-shot helper workflows are no longer part of the active structure.
+          for old in [
+              Path('assets/cloud-v5.4.js'),
+              Path('assets/test-v5.4.js'),
+              Path('.github/workflows/v54-activate-cloud.yml'),
+              Path('.github/workflows/v54-decode-loader.yml'),
+              Path('.github/workflows/v54-browser-egress-test.yml'),
+              Path('.github/workflows/test-v5-1-version-label.yml'),
+          ]:
+              if old.exists(): old.unlink()
+          PY
+
+          node --check assets/cloud-v5.5.js
+          node --check assets/test-v5.5.js
+          grep -q 'assets/cloud-v5.5.js' assets/online-v5-loader.js
+          grep -q 'assets/test-v5.5.js' index.html
+          ! grep -q 'public_state\|admin_state\|fetchCompat\|compat-fallback' assets/cloud-v5.5.js
+
+      - name: Commit TEST V5.5
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No V5.5 changes"
+            exit 0
+          fi
+          git commit -m "Publish TEST V5.5 without whole-state fallback"
+          git push origin HEAD:release/test-v5.5-20260909
