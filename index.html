@@ -19,8 +19,14 @@ body.mws-gated .app{pointer-events:none;user-select:none;filter:blur(5px);opacit
 body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
 @media(max-width:650px){.mws-mode-grid{grid-template-columns:1fr}#mwsAdminFields,.mws-admin-grid{grid-template-columns:1fr}.mws-login-shell{padding:20px}.mws-login-title{font-size:25px}.mws-access-tools{left:10px;right:10px;justify-content:flex-end;flex-wrap:wrap}}
 </style>
+
+<style id="mws-test-v51-version-style">
+.sidebar-build-version-v51{display:none;flex:0 0 auto;text-align:center;margin-top:8px;margin-bottom:0;font-size:9px;line-height:1.2;font-weight:850;letter-spacing:.14em;color:var(--muted);opacity:.72;user-select:none}
+body[data-mws-mode="admin"] .sidebar-build-version-v51{display:block}
+.sidebar-build-version-v51 + .sidebar-save-v572{margin-top:4px!important}
+</style>
 </head>
-<body data-theme="neon" class="mws-gated">
+<body data-theme="neon" class="mws-gated" data-build-version="TEST V5.1">
 <div id="mwsAccessGate" aria-modal="true" role="dialog">
   <div class="mws-login-shell">
     <div class="mws-login-brand">MAWANG WORKSPACE</div>
@@ -123,6 +129,7 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
         </button>
       </div>
     </div>
+    <div id="mwsBuildVersion" class="sidebar-build-version-v51" aria-label="현재 버전">TEST V5.1</div>
     <button type="button" id="mwsSidebarSaveBtn" class="sidebar-save-v572" title="현재 Admin 데이터를 즉시 온라인 저장" hidden>
       <span class="sidebar-save-icon-v572" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h12l2 2v16H5z"/><path d="M8 3v6h8V3M8 17h8"/></svg></span>
       <span class="sidebar-save-label-v572">SAVE</span>
