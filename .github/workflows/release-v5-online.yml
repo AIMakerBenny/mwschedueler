@@ -1,0 +1,114 @@
+name: Build MAWANG Online V5
+
+on:
+  push:
+    branches:
+      - release/v5-online-20260909
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/v5-online-20260909
+          fetch-depth: 0
+
+      - name: Assemble and validate online bundle
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import base64, gzip
+
+          parts = [
+              '.mws-release/b64-00.txt',
+              '.mws-release/b64-01.txt',
+              '.mws-release/b64-02.txt',
+              '.mws-release/b64-03-00.txt',
+              '.mws-release/b64-03-01.txt',
+              '.mws-release/b64-03-02.txt',
+              '.mws-release/b64-03-03.txt',
+              '.mws-release/b64-03-04.txt',
+              '.mws-release/b64-04-00.txt',
+              '.mws-release/b64-04-01.txt',
+              '.mws-release/b64-04-02.txt',
+          ]
+          payload = ''.join(Path(p).read_text(encoding='utf-8').strip() for p in parts)
+          raw = gzip.decompress(base64.b64decode(payload)).decode('utf-8')
+          required = [
+              'workspace_parts',
+              'save_shared_state_v2',
+              'friend-finder',
+              '친구 찾기',
+              '/*__MWS_SPLIT_CLOUD_FEATURES__*/',
+              '/*__MWS_SPLIT_FEATURES_CSS__*/',
+          ]
+          missing = [x for x in required if x not in raw]
+          if missing:
+              raise SystemExit('Missing V5 bundle markers: ' + ', '.join(missing))
+
+          loader = r'''/* MAWANG Scheduler V5 online loader */
+          (()=>{
+            const PAYLOAD='__PAYLOAD__';
+            async function unpack(){
+              const bytes=Uint8Array.from(atob(PAYLOAD),c=>c.charCodeAt(0));
+              const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+              return await new Response(stream).text();
+            }
+            function run(code){const s=document.createElement('script');s.textContent=code;document.body.appendChild(s);}
+            (async()=>{
+              const all=await unpack();
+              const [head,css]=all.split('\n/*__MWS_SPLIT_FEATURES_CSS__*/\n');
+              const [cloud,features]=head.split('\n/*__MWS_SPLIT_CLOUD_FEATURES__*/\n');
+              if(!cloud||!features||!css)throw new Error('V5 payload sections are incomplete');
+              const style=document.createElement('style');style.id='mws-online-v5-style';style.textContent=css;document.head.appendChild(style);
+              run(cloud);run(features);
+            })().catch(err=>{console.error('MAWANG V5 loader failed',err);const e=document.getElementById('mwsLoginError');if(e)e.textContent='업데이트 로딩 실패: '+(err?.message||String(err));});
+          })();
+          '''.replace('__PAYLOAD__', payload)
+          Path('assets/online-v5-loader.js').write_text(loader, encoding='utf-8')
+
+          p = Path('index.html')
+          html = p.read_text(encoding='utf-8')
+          active = '<script id="mws-supabase-cloud-layer" data-release="5.2">'
+          disabled = '<script id="mws-supabase-cloud-layer" data-release="5.2" type="application/json">'
+          if active in html:
+              html = html.replace(active, disabled, 1)
+          elif disabled not in html:
+              raise SystemExit('Legacy cloud layer marker not found')
+
+          loader_tag = '<script src="assets/online-v5-loader.js"></script>'
+          html = html.replace(loader_tag, '')
+          perf = '<script src="assets/perf-runtime.js"></script>'
+          if perf not in html:
+              raise SystemExit('perf-runtime script marker not found')
+          html = html.replace(perf, perf + '\n' + loader_tag, 1)
+          if html.count(loader_tag) != 1:
+              raise SystemExit('Online loader must be included exactly once')
+          p.write_text(html, encoding='utf-8')
+          print('Decoded payload bytes:', len(raw.encode('utf-8')))
+          print('Generated loader bytes:', len(loader.encode('utf-8')))
+          PY
+
+          node --check assets/online-v5-loader.js
+          grep -q 'type="application/json"' index.html
+          grep -q 'assets/online-v5-loader.js' index.html
+
+      - name: Commit release bundle
+        shell: bash
+        run: |
+          rm -rf .mws-release
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets/online-v5-loader.js .mws-release
+          if git diff --cached --quiet; then
+            echo "No release changes to commit"
+            exit 0
+          fi
+          git commit -m "Publish MAWANG Scheduler online V5"
+          git push origin HEAD:release/v5-online-20260909
