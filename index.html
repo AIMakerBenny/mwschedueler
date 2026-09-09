@@ -20,13 +20,13 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
 @media(max-width:650px){.mws-mode-grid{grid-template-columns:1fr}#mwsAdminFields,.mws-admin-grid{grid-template-columns:1fr}.mws-login-shell{padding:20px}.mws-login-title{font-size:25px}.mws-access-tools{left:10px;right:10px;justify-content:flex-end;flex-wrap:wrap}}
 </style>
 
-<style id="mws-test-v51-version-style">
-.sidebar-build-version-v51{display:none;flex:0 0 auto;text-align:center;margin-top:8px;margin-bottom:0;font-size:9px;line-height:1.2;font-weight:850;letter-spacing:.14em;color:var(--muted);opacity:.72;user-select:none}
-body[data-mws-mode="admin"] .sidebar-build-version-v51{display:block}
-.sidebar-build-version-v51 + .sidebar-save-v572{margin-top:4px!important}
+<style id="mws-test-v52-version-style">
+.sidebar-build-version-v52{display:none;flex:0 0 auto;text-align:center;margin-top:8px;margin-bottom:0;font-size:9px;line-height:1.2;font-weight:850;letter-spacing:.14em;color:var(--muted);opacity:.72;user-select:none}
+body[data-mws-mode="admin"] .sidebar-build-version-v52{display:block}
+.sidebar-build-version-v52 + .sidebar-save-v572{margin-top:4px!important}
 </style>
 </head>
-<body data-theme="neon" class="mws-gated" data-build-version="TEST V5.1">
+<body data-theme="neon" class="mws-gated" data-build-version="TEST V5.2">
 <div id="mwsAccessGate" aria-modal="true" role="dialog">
   <div class="mws-login-shell">
     <div class="mws-login-brand">MAWANG WORKSPACE</div>
@@ -129,7 +129,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v51{display:block}
         </button>
       </div>
     </div>
-    <div id="mwsBuildVersion" class="sidebar-build-version-v51" aria-label="현재 버전">TEST V5.1</div>
+    <div id="mwsBuildVersion" class="sidebar-build-version-v52" aria-label="현재 버전">TEST V5.2</div>
     <button type="button" id="mwsSidebarSaveBtn" class="sidebar-save-v572" title="현재 Admin 데이터를 즉시 온라인 저장" hidden>
       <span class="sidebar-save-icon-v572" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h12l2 2v16H5z"/><path d="M8 3v6h8V3M8 17h8"/></svg></span>
       <span class="sidebar-save-label-v572">SAVE</span>
@@ -150,10 +150,13 @@ body[data-mws-mode="admin"] .sidebar-build-version-v51{display:block}
   </div>
 
   <div id="dashboardOverviewMode" class="dashboard-mode-panel active">
-    <div class="grid cols-3" style="margin-bottom:14px">
+    <div class="dashboard-kpi-grid-local" style="margin-bottom:14px">
       <div class="card"><div class="kpi">다음 컨텐츠<strong id="nextStreamKpi">없음</strong></div></div>
       <div class="card"><div class="kpi">7일 이내 컨텐츠<strong id="weekCountKpi">0</strong></div></div>
       <div class="card"><div class="kpi">연락처<strong id="contactCountKpi">0</strong></div></div>
+      <button type="button" class="card local-kpi-link" onclick="setTab('posts')"><div class="kpi">게시글 신청<strong id="dashboardPostApplicantsLocal">0</strong></div></button>
+      <button type="button" class="card local-kpi-link" onclick="setTab('sniper');setTimeout(()=>setSniperView('recent'),0)"><div class="kpi">최근 30일 합방<strong id="dashboardRecentCollabLocal">0회</strong></div></button>
+      <button type="button" class="card local-kpi-link" onclick="setTab('targets')"><div class="kpi">저격 리스트<strong id="dashboardTargetCountLocal">0명</strong></div></button>
     </div>
     <div class="dashboard-view-controls">
       <div id="upcomingDashboardSummary" class="dashboard-upcoming-summary">예정 컨텐츠 0개</div>
@@ -173,47 +176,40 @@ body[data-mws-mode="admin"] .sidebar-build-version-v51{display:block}
       </div>
     </div>
 
-    <div class="dashboard-insights-v55">
-      <div class="card dashboard-insight-card-v55">
+    <div class="dashboard-insights-v55 dashboard-insights-local">
+      <div class="card dashboard-insight-card-v55 dashboard-notice-card-local">
         <div class="space dashboard-insight-head-v55">
           <div>
-            <div class="dashboard-insight-kicker-v55">SCHEDULE SNAPSHOT</div>
-            <h3>오늘 · 7일 일정</h3>
-            <div class="subtle">가까운 일정과 준비 상태를 한 번에 확인합니다.</div>
+            <div class="dashboard-insight-kicker-v55">NOTICE</div>
+            <h3>공지</h3>
+            <div class="subtle">SOOP 방송국 게시판 URL을 저장하면 최신 공지 5개의 제목과 작성일을 불러옵니다.</div>
           </div>
-          <span id="dashboardWeekBadgeV55" class="chip">0개</span>
+          <button type="button" class="secondary small" id="dashboardNoticeRefreshBtn">새로고침</button>
         </div>
-        <div id="dashboardWeekSnapshotV55" class="dashboard-week-snapshot-v55"></div>
+        <div class="dashboard-notice-url-row-local">
+          <input id="dashboardNoticeUrlInput" type="url" placeholder="https://www.sooplive.com/station/mawang0216/board/98921353">
+          <button type="button" class="primary" id="dashboardNoticeSaveBtn">URL 저장</button>
+        </div>
+        <div id="dashboardNoticeStatus" class="muted small dashboard-notice-status-local">URL을 입력해 주세요.</div>
+        <div id="dashboardNoticeList" class="dashboard-notice-list-local"></div>
       </div>
 
-      <div class="card dashboard-insight-card-v55">
+      <div class="card dashboard-insight-card-v55 dashboard-today-people-card-local">
         <div class="space dashboard-insight-head-v55">
           <div>
-            <div class="dashboard-insight-kicker-v55">OPERATIONS</div>
-            <h3>운영 현황</h3>
-            <div class="subtle">일정, 신청자, 준비도와 관리 항목을 요약합니다.</div>
+            <div class="dashboard-insight-kicker-v55">TODAY PEOPLE</div>
+            <h3>오늘 함께한 사람</h3>
+            <div class="subtle">직접 등록한 사람만 표시합니다. 캘린더의 오.함.사 기록과 같은 데이터를 사용합니다.</div>
           </div>
-          <span id="dashboardTodayBadgeV55" class="chip">오늘 0개</span>
+          <span id="dashboardTodayPeopleCount" class="chip">0명</span>
         </div>
-        <div class="dashboard-ops-grid-v55">
-          <button type="button" class="dashboard-stat-v55" onclick="setTab('calendar')">
-            <span class="dashboard-stat-label-v55">이번 달 일정</span><strong id="dashboardMonthCountV55">0</strong><small id="dashboardMonthMetaV55">휴방 0일</small>
+        <div class="dashboard-today-people-layout-local">
+          <button type="button" id="dashboardTodayPeopleAdd" class="today-people-add-local" title="오늘 함께한 사람 등록/수정">
+            <span class="today-people-silhouette-local" aria-hidden="true"></span>
+            <span class="today-people-plus-local">+</span>
+            <strong>인원 등록</strong>
           </button>
-          <button type="button" class="dashboard-stat-v55" onclick="setTab('dashboard')">
-            <span class="dashboard-stat-label-v55">7일 참여 예정</span><strong id="dashboardReadinessV55">0명</strong><small id="dashboardReadinessMetaV55">등록된 참여자</small>
-          </button>
-          <button type="button" class="dashboard-stat-v55" onclick="setTab('posts')">
-            <span class="dashboard-stat-label-v55">게시글 신청</span><strong id="dashboardPostApplicantsV55">0명</strong><small id="dashboardPostMetaV55">대기 0 · 가챠 0 · 확정 0</small>
-          </button>
-          <button type="button" class="dashboard-stat-v55" onclick="setTab('sniper')">
-            <span class="dashboard-stat-label-v55">최근 30일 합방</span><strong id="dashboardRecentCollabV55">0회</strong><small id="dashboardRecentCollabMetaV55">0명과 함께함</small>
-          </button>
-          <button type="button" class="dashboard-stat-v55" onclick="setTab('targets')">
-            <span class="dashboard-stat-label-v55">저격 리스트</span><strong id="dashboardTargetCountV55">0명</strong><small>현재 등록된 대상</small>
-          </button>
-          <button type="button" class="dashboard-stat-v55" onclick="setTab('contacts');setTimeout(()=>setContactView('incomplete'),0)">
-            <span class="dashboard-stat-label-v55">연락처 미완성</span><strong id="dashboardIncompleteV55">0명</strong><small>태그 또는 URL 확인 필요</small>
-          </button>
+          <div id="dashboardTodayPeopleCards" class="today-people-cards-local"></div>
         </div>
       </div>
     </div>
