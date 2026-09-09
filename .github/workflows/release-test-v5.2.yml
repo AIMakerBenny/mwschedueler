@@ -1,0 +1,65 @@
+name: Build TEST V5.2
+
+on:
+  push:
+    branches:
+      - release/test-v5.2-20260909
+
+permissions:
+  contents: write
+
+jobs:
+  build-v52:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/test-v5.2-20260909
+          fetch-depth: 0
+
+      - name: Rebuild from verified local TEST V5 HTML
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show a885b1e5cb6a683a9a46ed38cbe204c9c2368f75:index.html > index.html
+          git apply .github/patches/test-v5.2-index.patch
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, base64, gzip
+
+          loader=Path('assets/online-v5-loader.js').read_text(encoding='utf-8')
+          m=re.search(r"const PAYLOAD='([^']+)'",loader)
+          if not m:
+              raise SystemExit('online V5 payload not found')
+          raw=gzip.decompress(base64.b64decode(m.group(1))).decode('utf-8')
+          head, css = raw.split('\n/*__MWS_SPLIT_FEATURES_CSS__*/\n',1)
+          cloud, features = head.split('\n/*__MWS_SPLIT_CLOUD_FEATURES__*/\n',1)
+          Path('assets/online-cloud-v5.js').write_text(cloud,encoding='utf-8')
+          Path('assets/online-features.js').write_text(features,encoding='utf-8')
+          Path('assets/online-features.css').write_text(css,encoding='utf-8')
+          PY
+
+          node --check assets/online-cloud-v5.js
+          node --check assets/online-features.js
+          grep -q 'data-build-version="TEST V5.2"' index.html
+          grep -q 'dashboardPostApplicantsLocal' index.html
+          grep -q 'dashboardNoticeUrlInput' index.html
+          grep -q 'dashboardTodayPeopleAdd' index.html
+          grep -q 'assets/online-cloud-v5.js' index.html
+          grep -q 'assets/online-features.js' index.html
+          ! grep -q 'assets/local-test' index.html
+
+      - name: Commit TEST V5.2 bundle
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html assets/online-cloud-v5.js assets/online-features.js assets/online-features.css
+          if git diff --cached --quiet; then
+            echo "No generated changes"
+            exit 0
+          fi
+          git commit -m "Publish TEST V5.2 verified local layout"
+          git push origin HEAD:release/test-v5.2-20260909
