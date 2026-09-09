@@ -1,0 +1,33 @@
+name: V5.4 Decode Loader Helper
+on:
+  push:
+    paths:
+      - '.github/workflows/v54-decode-loader.yml'
+permissions:
+  contents: write
+jobs:
+  decode:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode current online loader
+        run: |
+          python - <<'PY'
+          import re, base64, gzip, pathlib
+          p=pathlib.Path('assets/online-v5-loader.js')
+          s=p.read_text(encoding='utf-8')
+          m=re.search(r"const PAYLOAD='([^']+)';",s)
+          if not m: raise SystemExit('PAYLOAD not found')
+          decoded=gzip.decompress(base64.b64decode(m.group(1))).decode('utf-8')
+          pathlib.Path('tools').mkdir(exist_ok=True)
+          pathlib.Path('tools/v54-online-decoded.txt').write_text(decoded,encoding='utf-8')
+          print('decoded chars',len(decoded))
+          PY
+      - name: Commit decoded helper
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add tools/v54-online-decoded.txt
+          git diff --cached --quiet && exit 0
+          git commit -m "Decode online loader for V5.4 migration"
+          git push
