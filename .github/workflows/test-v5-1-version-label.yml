@@ -1,0 +1,74 @@
+name: Add TEST V5.1 version label
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  patch-version-label:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Add TEST V5.1 label above SAVE
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('index.html')
+          html = p.read_text(encoding='utf-8')
+
+          version = 'TEST V5.1'
+          marker = '<button type="button" id="mwsSidebarSaveBtn" class="sidebar-save-v572" title="현재 Admin 데이터를 즉시 온라인 저장" hidden>'
+          label = '<div id="mwsBuildVersion" class="sidebar-build-version-v51" aria-label="현재 버전">TEST V5.1</div>\n    ' + marker
+
+          if 'id="mwsBuildVersion"' not in html:
+              if marker not in html:
+                  raise SystemExit('SAVE button marker not found')
+              html = html.replace(marker, label, 1)
+
+          style = '''\n<style id="mws-test-v51-version-style">\n.sidebar-build-version-v51{display:none;flex:0 0 auto;text-align:center;margin-top:8px;margin-bottom:0;font-size:9px;line-height:1.2;font-weight:850;letter-spacing:.14em;color:var(--muted);opacity:.72;user-select:none}\nbody[data-mws-mode="admin"] .sidebar-build-version-v51{display:block}\n.sidebar-build-version-v51 + .sidebar-save-v572{margin-top:4px!important}\n</style>\n'''
+          if 'id="mws-test-v51-version-style"' not in html:
+              if '</head>' not in html:
+                  raise SystemExit('head closing tag not found')
+              html = html.replace('</head>', style + '</head>', 1)
+
+          old_body = '<body data-theme="neon" class="mws-gated">'
+          new_body = '<body data-theme="neon" class="mws-gated" data-build-version="TEST V5.1">'
+          if old_body in html:
+              html = html.replace(old_body, new_body, 1)
+          elif 'data-build-version="TEST V5.1"' not in html:
+              raise SystemExit('body marker not found')
+
+          if html.count('id="mwsBuildVersion"') != 1:
+              raise SystemExit('Version label count is not exactly 1')
+          if 'TEST V5.1' not in html:
+              raise SystemExit('Version text missing')
+
+          p.write_text(html, encoding='utf-8')
+          PY
+
+          grep -q 'id="mwsBuildVersion"' index.html
+          grep -q 'data-build-version="TEST V5.1"' index.html
+          grep -q 'mws-test-v51-version-style' index.html
+
+      - name: Commit TEST V5.1
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Publish TEST V5.1 version label"
+          git push origin HEAD:main
