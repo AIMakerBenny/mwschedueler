@@ -20,13 +20,13 @@ body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
 @media(max-width:650px){.mws-mode-grid{grid-template-columns:1fr}#mwsAdminFields,.mws-admin-grid{grid-template-columns:1fr}.mws-login-shell{padding:20px}.mws-login-title{font-size:25px}.mws-access-tools{left:10px;right:10px;justify-content:flex-end;flex-wrap:wrap}}
 </style>
 
-<style id="mws-test-v52-version-style">
-.sidebar-build-version-v52{display:none;flex:0 0 auto;text-align:center;margin-top:8px;margin-bottom:0;font-size:9px;line-height:1.2;font-weight:850;letter-spacing:.14em;color:var(--muted);opacity:.72;user-select:none}
-body[data-mws-mode="admin"] .sidebar-build-version-v52{display:block}
-.sidebar-build-version-v52 + .sidebar-save-v572{margin-top:4px!important}
+<style id="mws-test-v53-version-style">
+.sidebar-build-version-v53{display:none;flex:0 0 auto;text-align:center;margin-top:8px;margin-bottom:0;font-size:9px;line-height:1.2;font-weight:850;letter-spacing:.14em;color:var(--muted);opacity:.72;user-select:none}
+body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
+.sidebar-build-version-v53 + .sidebar-save-v572{margin-top:4px!important}
 </style>
 </head>
-<body data-theme="neon" class="mws-gated" data-build-version="TEST V5.2">
+<body data-theme="neon" class="mws-gated" data-build-version="TEST V5.3">
 <div id="mwsAccessGate" aria-modal="true" role="dialog">
   <div class="mws-login-shell">
     <div class="mws-login-brand">MAWANG WORKSPACE</div>
@@ -129,7 +129,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v52{display:block}
         </button>
       </div>
     </div>
-    <div id="mwsBuildVersion" class="sidebar-build-version-v52" aria-label="현재 버전">TEST V5.2</div>
+    <div id="mwsBuildVersion" class="sidebar-build-version-v53" aria-label="현재 버전">TEST V5.3</div>
     <button type="button" id="mwsSidebarSaveBtn" class="sidebar-save-v572" title="현재 Admin 데이터를 즉시 온라인 저장" hidden>
       <span class="sidebar-save-icon-v572" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h12l2 2v16H5z"/><path d="M8 3v6h8V3M8 17h8"/></svg></span>
       <span class="sidebar-save-label-v572">SAVE</span>
@@ -199,7 +199,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v52{display:block}
           <div>
             <div class="dashboard-insight-kicker-v55">TODAY PEOPLE</div>
             <h3>오늘 함께한 사람</h3>
-            <div class="subtle">직접 등록한 사람만 표시합니다. 캘린더의 오.함.사 기록과 같은 데이터를 사용합니다.</div>
+            <div class="subtle">오늘 컨텐츠의 참가자가 자동으로 포함됩니다. 필요한 인원은 직접 추가할 수도 있습니다.</div>
           </div>
           <span id="dashboardTodayPeopleCount" class="chip">0명</span>
         </div>
@@ -4209,5 +4209,6 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .sidebar-save-v572{padding-left:0
 <!-- mws-contact-search-performance-v1 -->
 <script src="assets/perf-runtime.js"></script>
 <script src="assets/online-v5-loader.js"></script>
+<script src="assets/test-v5.3.js"></script>
 </body>
 </html>
