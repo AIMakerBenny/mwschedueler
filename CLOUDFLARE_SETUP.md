@@ -20,7 +20,7 @@ Before importing the repository, activate R2 once in Cloudflare Dashboard under 
 2. Connect GitHub and select `AIMakerBenny/mwschedueler`.
 3. Select production branch `cloudflare-v5.5-test`.
 4. Make sure the Worker name is `mawang-scheduler-v55-test` so it matches `wrangler.jsonc`.
-5. Deploy command: `npm run deploy`.
+5. Deploy command: `npx wrangler deploy` or `npm run deploy`.
 6. Cloudflare reads `wrangler.jsonc` and automatically provisions the `DB` D1 binding and `IMAGES` R2 binding when automatic resource provisioning is available on the account.
 7. Deploy.
 
@@ -56,3 +56,7 @@ The normal in-app image upload flow is also supported. When a saved contact/tag/
 - Vercel production is untouched.
 - Supabase production workspace is not deleted or modified by the Cloudflare bootstrap.
 - Cloudflare saves only write to Cloudflare D1/R2. Supabase is used only to validate the existing Admin session and manage Admin accounts.
+
+## Deployment trigger
+
+Production branch was switched to `cloudflare-v5.5-test` in Cloudflare on 2026-09-10. This documentation update intentionally creates a new commit so the Git integration can start a fresh production build from the correct branch.
