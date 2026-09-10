@@ -5,7 +5,7 @@
   window.__mwsCf571Optimizer=true;
 
   const nativeFetch=window.fetch.bind(window);
-  const BUILD='CF V5.7.1';
+  const BUILD='CF MWS V 1.0.1';
   const ETAG_KEY='mws_cf_v571_etag';
   const MANIFEST_KEY='mws_cf_v571_manifest';
   const MEDIA_BASE_KEY='mws_cf_v571_media_base';
@@ -175,8 +175,98 @@
     document.body.appendChild(s);
   }
 
-  window.addEventListener('DOMContentLoaded',forceVersion,{once:true});
-  window.addEventListener('load',()=>{forceVersion();loadRuntimePatch()},{once:true});
+  const PAGE_SCALE_KEY_V101='mws_page_text_scales_v54';
+  const clampPageScaleV101=value=>Math.max(70,Math.min(180,Math.round((Number(value)||100)/5)*5));
+
+  function pageScaleMapV101(){
+    try{
+      const value=JSON.parse(localStorage.getItem(PAGE_SCALE_KEY_V101)||'{}');
+      return value&&typeof value==='object'&&!Array.isArray(value)?value:{};
+    }catch(_){return {}}
+  }
+
+  function activePageIdV101(){return document.querySelector('.section.active')?.id||'dashboard'}
+  function pageScaleV101(id=activePageIdV101()){return clampPageScaleV101(pageScaleMapV101()[id]||100)}
+  function globalTextScaleV101(){
+    try{return Math.max(80,Math.min(200,Number(data?.textScale)||100))}catch(_){return 100}
+  }
+
+  function ensurePageScaleStyleV101(){
+    if(document.getElementById('mws-cf-v101-page-scale-style'))return;
+    const style=document.createElement('style');
+    style.id='mws-cf-v101-page-scale-style';
+    style.textContent='.main{overflow-x:auto!important}.section{transform-origin:top left}';
+    document.head.appendChild(style);
+  }
+
+  function applyPageLayoutScaleV101(){
+    ensurePageScaleStyleV101();
+    const global=globalTextScaleV101();
+    const globalRatio=global/100;
+    const scales=pageScaleMapV101();
+    const supportsZoom=typeof document!=='undefined'&&document.documentElement&&('zoom' in document.documentElement.style);
+    document.querySelectorAll('.section').forEach(sec=>{
+      const local=clampPageScaleV101(scales[sec.id]||100);
+      if(supportsZoom){
+        sec.style.setProperty('--ui-text-scale',String(globalRatio));
+        sec.style.fontSize=`calc(14px * ${globalRatio})`;
+        sec.style.zoom=String(local/100);
+      }else{
+        const combined=(global*local)/100;
+        sec.style.setProperty('--ui-text-scale',String(combined/100));
+        sec.style.fontSize=`calc(14px * ${combined/100})`;
+      }
+    });
+    const current=pageScaleV101();
+    const label=document.getElementById('pageTextScaleValueV54');
+    if(label)label.textContent=`페이지 ${current}%`;
+    const control=document.getElementById('pageTextScaleControlV54');
+    if(control)control.title='현재 페이지의 텍스트와 카드, 버튼 등 UI 크기를 함께 조절합니다. 개인 브라우저에 저장됩니다.';
+    document.body?.style.setProperty('--mws-page-layout-scale',String(current/100));
+  }
+
+  function wrapPageScaleFunctionV101(name){
+    const current=window[name];
+    if(typeof current!=='function'||current.__mwsV101PageScaleBridge)return;
+    const wrapped=function(){
+      const out=current.apply(this,arguments);
+      queueMicrotask(applyPageLayoutScaleV101);
+      return out;
+    };
+    wrapped.__mwsV101PageScaleBridge=true;
+    wrapped.__mwsV101PageScaleBase=current;
+    window[name]=wrapped;
+  }
+
+  function installPageScaleBridgeV101(){
+    wrapPageScaleFunctionV101('setPageTextScaleV54');
+    wrapPageScaleFunctionV101('setTab');
+    wrapPageScaleFunctionV101('applyTextScale');
+    wrapPageScaleFunctionV101('renderMultiDraw');
+    applyPageLayoutScaleV101();
+  }
+
+  function installReleaseVersionGuardV101(){
+    forceVersion();
+    const body=document.body;
+    if(body&&!body.__mwsV101BuildObserver){
+      const observer=new MutationObserver(()=>{if(body.getAttribute('data-build-version')!==BUILD)forceVersion()});
+      observer.observe(body,{attributes:true,attributeFilter:['data-build-version']});
+      body.__mwsV101BuildObserver=observer;
+    }
+    const label=document.querySelector('[id^="mwsBuildVersionV5"], .sidebar-build-version-v52, .sidebar-build-version-v53, [class*="sidebar-build-version"]');
+    if(label&&!label.__mwsV101BuildObserver){
+      const observer=new MutationObserver(()=>{if(label.textContent!==BUILD)forceVersion()});
+      observer.observe(label,{childList:true,characterData:true,subtree:true});
+      label.__mwsV101BuildObserver=observer;
+    }
+  }
+
+  window.mwsV101ApplyPageLayoutScale=applyPageLayoutScaleV101;
+  window.addEventListener('DOMContentLoaded',()=>{forceVersion();installReleaseVersionGuardV101();installPageScaleBridgeV101()},{once:true});
+  window.addEventListener('load',()=>{forceVersion();loadRuntimePatch();installReleaseVersionGuardV101();installPageScaleBridgeV101()},{once:true});
+  window.addEventListener('mawang:datachange',()=>setTimeout(()=>{installReleaseVersionGuardV101();installPageScaleBridgeV101()},0));
+  [50,150,350,800,1500,3000,6000,9000].forEach(ms=>setTimeout(()=>{installReleaseVersionGuardV101();installPageScaleBridgeV101()},ms));
   let tries=0;const versionTimer=setInterval(()=>{forceVersion();if(++tries>=32)clearInterval(versionTimer)},250);
 
   if(document.readyState==='loading'){
