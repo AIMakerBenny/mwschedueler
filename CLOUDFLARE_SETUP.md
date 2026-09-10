@@ -1,6 +1,6 @@
-# MAWANG Scheduler TEST V5.5 CF
+# MAWANG Scheduler V5.5 Cloudflare Production
 
-This branch is an isolated Cloudflare test copy of the current TEST V5.5 production code.
+This branch is the official Cloudflare production copy based on the tested V5.5 Cloudflare build.
 
 ## Architecture
 
@@ -10,21 +10,24 @@ This branch is an isolated Cloudflare test copy of the current TEST V5.5 product
 - Browser cache: IndexedDB, part-by-part version cache
 - Admin authentication only: existing Supabase Auth + `admin_profiles`
 
-The heavy workspace payload and images no longer use Supabase after Cloudflare bootstrap/migration. Supabase remains only for the existing admin login and admin-account management in this test build.
+The heavy workspace payload and images do not use Supabase after Cloudflare bootstrap/migration. Supabase remains only for the existing admin login and admin-account management.
 
-## One-time deployment
-
-Before importing the repository, activate R2 once in Cloudflare Dashboard under Storage & databases -> R2. Cloudflare currently requires an R2 subscription/checkout setup even though Standard R2 includes a free monthly tier. Depending on the account, Cloudflare may request a billing profile/payment method during this activation.
+## Production deployment
 
 1. Cloudflare Dashboard -> Workers & Pages -> Create application -> Import a repository.
 2. Connect GitHub and select `AIMakerBenny/mwschedueler`.
-3. Select production branch `cloudflare-v5.5-test`.
-4. Make sure the Worker name is `mawang-scheduler-v55-test` so it matches `wrangler.jsonc`.
-5. Deploy command: `npx wrangler deploy` or `npm run deploy`.
-6. Cloudflare reads `wrangler.jsonc` and automatically provisions the `DB` D1 binding and `IMAGES` R2 binding when automatic resource provisioning is available on the account.
-7. Deploy.
+3. Select production branch `cloudflare-production`.
+4. Set the Worker/project name to `mawang-scheduler`.
+5. Leave Build command empty.
+6. Deploy command: `npx wrangler deploy` or `npm run deploy`.
+7. Keep Cloudflare Access disabled unless the site should be restricted to approved users.
+8. Deploy.
 
-This project pins Wrangler to version 4.68 or newer. The configuration uses Workers Static Assets plus automatic D1/R2 resource provisioning.
+The configuration provisions these bindings:
+
+- `ASSETS`: Worker Static Assets
+- `DB`: Cloudflare D1
+- `IMAGES`: Cloudflare R2
 
 ## First launch
 
@@ -32,31 +35,26 @@ The first `/api/manifest` request creates the D1 schema and copies the current p
 
 Images migrate lazily: the first time an old image is requested, the Worker fetches that image once from the old Supabase image endpoint, writes it to R2, and serves future requests from R2.
 
-## High-resolution manual image replacement
+## High-resolution images
 
 R2 object keys are:
 
 - Contact image: `contacts/<contact-id>`
 - Workspace/tag/minigame image: `workspace/<asset-key>`
 
-You may replace an object directly in the R2 dashboard with a larger WebP/PNG/JPEG file. Manually replaced files use a short cache policy unless they carry the managed version metadata, so replacements can refresh without waiting for a one-year immutable cache.
-
-The normal in-app image upload flow is also supported. When a saved contact/tag/minigame image arrives as a `data:image/...` value, the Cloudflare Worker externalizes it into R2 and stores only a versioned `/media/...` URL in D1.
+Images may also be replaced directly in the R2 dashboard with larger WebP/PNG/JPEG files. The normal in-app image upload flow externalizes uploaded image data into R2 and stores only the resulting `/media/...` URL in D1.
 
 ## API checks
 
-- `/api/health` -> D1/R2 backend status
-- `/api/manifest` -> tiny part-version manifest
-- `/api/parts/contacts` -> one workspace part
-- `/api/rebootstrap` -> admin-only forced refresh from current Supabase public workspace
+- `/api/health`
+- `/api/manifest`
+- `/api/parts/contacts`
+- `/api/rebootstrap` for admin-only forced refresh from current Supabase public workspace
 
 ## Safety
 
-- `main` is untouched.
-- Vercel production is untouched.
-- Supabase production workspace is not deleted or modified by the Cloudflare bootstrap.
-- Cloudflare saves only write to Cloudflare D1/R2. Supabase is used only to validate the existing Admin session and manage Admin accounts.
-
-## Deployment trigger
-
-Production branch was switched to `cloudflare-v5.5-test` in Cloudflare on 2026-09-10. This documentation update intentionally creates a new commit so the Git integration can start a fresh production build from the correct branch.
+- `main` remains untouched.
+- The existing Vercel deployment remains untouched.
+- The old `cloudflare-v5.5-test` Worker remains available as a test environment.
+- Supabase production workspace is not deleted or modified by Cloudflare bootstrap.
+- Cloudflare workspace saves write to D1/R2. Supabase is used only for existing Admin authentication and admin-account management.
