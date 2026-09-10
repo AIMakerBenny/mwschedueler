@@ -1,7 +1,6 @@
 import cf57 from './cf-v57.js';
 
 const BUILD_VERSION = 'CF MWS V 1.0.3';
-const PLANNER_HOST_TAG = '<script src="/assets/content-planner-host.js?v=1.0.3"></script>';
 
 async function withBuildVersion(response, request) {
   if (!response) return response;
@@ -25,31 +24,9 @@ async function withBuildVersion(response, request) {
   return new Response(text, { status: response.status, headers });
 }
 
-async function withContentPlannerCategory(response, request) {
-  if (!response) return response;
-  const path = new URL(request.url).pathname;
-  if (path !== '/' && path !== '/index.html') return response;
-  const type = response.headers.get('content-type') || '';
-  if (!type.includes('text/html')) return response;
-
-  let text;
-  try { text = await response.text(); } catch (_) { return response; }
-  if (!text.includes(PLANNER_HOST_TAG)) {
-    if (!text.includes('</body>')) return response;
-    text = text.replace('</body>', `${PLANNER_HOST_TAG}\n</body>`);
-  }
-
-  const headers = new Headers(response.headers);
-  headers.set('content-type', 'text/html; charset=utf-8');
-  headers.set('content-length', String(new TextEncoder().encode(text).byteLength));
-  headers.set('x-mws-build', BUILD_VERSION);
-  return new Response(text, { status: response.status, headers });
-}
-
 export default {
   async fetch(request, env, ctx) {
     const response = await cf57.fetch(request, env, ctx);
-    const versioned = await withBuildVersion(response, request);
-    return withContentPlannerCategory(versioned, request);
+    return withBuildVersion(response, request);
   },
 };
