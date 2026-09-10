@@ -1,0 +1,12 @@
+{
+  "name": "mawang-scheduler-cloudflare-v55-test",
+  "private": true,
+  "version": "5.5.0-test",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
