@@ -1,10 +1,10 @@
-/* MAWANG Scheduler TEST V5.5 - automatic Today People from same-day event participants */
+/* MAWANG Scheduler CF V5.7.1 - automatic Today People from same-day event participants */
 (()=>{
   'use strict';
   if(window.__mwsTestV53AutoTodayPeople)return;
   window.__mwsTestV53AutoTodayPeople=true;
 
-  const VERSION='TEST V5.5';
+  const VERSION='CF V5.7.1';
   let installed=false;
   let pickerState=null;
 
@@ -69,8 +69,7 @@
 
   function setVersionLabel(){
     document.body?.setAttribute('data-build-version',VERSION);
-    const label=document.querySelector('[id^="mwsBuildVersionV5"], .sidebar-build-version-v52, .sidebar-build-version-v53');
-    if(label)label.textContent=VERSION;
+    document.querySelectorAll('[id^="mwsBuildVersionV5"], .sidebar-build-version-v52, .sidebar-build-version-v53, [class*="sidebar-build-version"]').forEach(label=>label.textContent=VERSION);
   }
   function updateCopy(){
     setVersionLabel();
@@ -117,7 +116,7 @@
     const effective=syncDate(date);
     try{
       if(typeof saveData==='function')saveData('오늘 함께한 사람 수정');
-    }catch(e){console.error('TEST V5.3 Today People save failed',e)}
+    }catch(e){console.error('CF V5.7.1 Today People save failed',e)}
     document.getElementById('todayPeopleModal')?.classList.remove('open');
     pickerState=null;
     try{if(typeof toast==='function')toast('오늘 함께한 사람',`${date} · ${effective.length}명 저장`)}catch(_){}
@@ -177,15 +176,15 @@
     };
     try{openTodayPeoplePicker=window.openTodayPeoplePicker}catch(_){}
 
-    try{if(typeof renderAll==='function')renderAll('TEST V5.3 자동 함께한 사람 동기화')}catch(e){console.error('TEST V5.3 initial render',e)}
+    try{if(typeof renderAll==='function')renderAll('CF V5.7.1 자동 함께한 사람 동기화')}catch(e){console.error('CF V5.7.1 initial render',e)}
     updateCopy();
-    window.dispatchEvent(new CustomEvent('mawang:v53-ready'));
+    window.dispatchEvent(new CustomEvent('mawang:v571-ready'));
   }
 
   let tries=0;
   const timer=setInterval(()=>{
     tries++;
-    try{install()}catch(e){console.error('TEST V5.3 install failed',e)}
+    try{install()}catch(e){console.error('CF V5.7.1 install failed',e)}
     if(installed||tries>240)clearInterval(timer);
   },50);
 })();
