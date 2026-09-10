@@ -1,13 +1,14 @@
-/* MAWANG Scheduler CF V5.7 - one-request public bootstrap + verified IndexedDB reuse */
+/* MAWANG Scheduler CF V5.7.1 - one-request public bootstrap + verified IndexedDB reuse */
 (()=>{
   'use strict';
-  if(window.__mwsCf57Optimizer)return;
-  window.__mwsCf57Optimizer=true;
+  if(window.__mwsCf571Optimizer)return;
+  window.__mwsCf571Optimizer=true;
 
   const nativeFetch=window.fetch.bind(window);
-  const ETAG_KEY='mws_cf_v57_etag';
-  const MANIFEST_KEY='mws_cf_v57_manifest';
-  const MEDIA_BASE_KEY='mws_cf_v57_media_base';
+  const BUILD='CF V5.7.1';
+  const ETAG_KEY='mws_cf_v571_etag';
+  const MANIFEST_KEY='mws_cf_v571_manifest';
+  const MEDIA_BASE_KEY='mws_cf_v571_media_base';
   const DB_NAME='mawang_data';
   const DB_VERSION=3;
   const PARTS=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook'];
@@ -17,7 +18,7 @@
   function syntheticJson(value,status=200,headers={}){
     return new Response(JSON.stringify(value),{
       status,
-      headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-mws-cf57-synthetic':'1',...headers}
+      headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-mws-cf571-synthetic':'1',...headers}
     });
   }
 
@@ -66,7 +67,7 @@
         tx.onabort=()=>reject(tx.error);
       })));
       db.close();
-    }catch(e){console.warn('CF V5.7 bundle cache write failed',e)}
+    }catch(e){console.warn('CF V5.7.1 bundle cache write failed',e)}
   }
 
   async function hasCompleteCache(manifest){
@@ -101,7 +102,7 @@
 
     if(!res.ok)return {raw:res};
     const body=await res.json();
-    const etag=res.headers.get('etag')||`"${body?.globalVersion||'cf57'}"`;
+    const etag=res.headers.get('etag')||`"${body?.globalVersion||'cf571'}"`;
     bundle=body;
     if(body?.mediaBaseUrl)window.__mwsCf57MediaBaseUrl=body.mediaBaseUrl;
     try{
@@ -128,7 +129,7 @@
     if(url.origin!==location.origin||method!=='GET')return nativeFetch(input,init);
 
     if(url.pathname==='/api/health'){
-      return syntheticJson({ok:true,env:'cloudflare-production',backend:'D1 + R2',optimized:'CF V5.7',mediaMode:'r2-public-direct'});
+      return syntheticJson({ok:true,env:'cloudflare-production',backend:'D1 + R2',optimized:BUILD,mediaMode:'r2-public-direct'});
     }
 
     if(url.pathname==='/api/manifest'){
@@ -161,27 +162,26 @@
 
   function forceVersion(){
     try{
-      document.body?.setAttribute('data-build-version','CF V5.7');
-      const label=document.querySelector('[id^="mwsBuildVersionV5"], .sidebar-build-version-v52, .sidebar-build-version-v53, [class*="sidebar-build-version"]');
-      if(label)label.textContent='CF V5.7';
+      document.body?.setAttribute('data-build-version',BUILD);
+      document.querySelectorAll('[id^="mwsBuildVersionV5"], .sidebar-build-version-v52, .sidebar-build-version-v53, [class*="sidebar-build-version"]').forEach(label=>label.textContent=BUILD);
     }catch(_){}
   }
 
   function loadRuntimePatch(){
-    if(document.getElementById('mwsCf57RuntimeScript'))return;
+    if(document.getElementById('mwsCf571RuntimeScript'))return;
     const s=document.createElement('script');
-    s.id='mwsCf57RuntimeScript';
-    s.src='assets/cf-v5.7-runtime.js';
+    s.id='mwsCf571RuntimeScript';
+    s.src='assets/cf-v5.7-runtime.js?v=5.7.1';
     document.body.appendChild(s);
   }
 
   window.addEventListener('DOMContentLoaded',forceVersion,{once:true});
   window.addEventListener('load',()=>{forceVersion();loadRuntimePatch()},{once:true});
-  let tries=0;const versionTimer=setInterval(()=>{forceVersion();if(++tries>=24)clearInterval(versionTimer)},250);
+  let tries=0;const versionTimer=setInterval(()=>{forceVersion();if(++tries>=32)clearInterval(versionTimer)},250);
 
   if(document.readyState==='loading'){
-    document.write('<script src="assets/perf-runtime-base.js"><\/script>');
+    document.write('<script src="assets/perf-runtime-base.js?v=5.7.1"><\/script>');
   }else{
-    const s=document.createElement('script');s.src='assets/perf-runtime-base.js';document.head.appendChild(s);
+    const s=document.createElement('script');s.src='assets/perf-runtime-base.js?v=5.7.1';document.head.appendChild(s);
   }
 })();
