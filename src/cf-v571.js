@@ -1,6 +1,6 @@
 import cf57 from './cf-v57.js';
 
-const BUILD_VERSION = 'CF MWS V 1.0.1';
+const BUILD_VERSION = 'CF MWS V 1.0.2';
 
 async function withBuildVersion(response, request) {
   if (!response) return response;
