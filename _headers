@@ -21,3 +21,9 @@
 
 /assets/test-v5.6.js
   Cache-Control: no-cache, must-revalidate
+
+/assets/mws-1.0.2.js
+  Cache-Control: no-cache, must-revalidate
+
+/assets/mws-1.0.2-style.js
+  Cache-Control: no-cache, must-revalidate
