@@ -43,8 +43,16 @@
     try{return canvas.toDataURL('image/webp',quality)||dataUrl}catch(_){return dataUrl}
   }
 
-  try{window.compressContactImage=compressProfileImageV57;compressContactImage=compressProfileImageV57}catch(_){}
-  try{window.compressFolderContactPhotoV417=compressProfileImageV57;compressFolderContactPhotoV417=compressProfileImageV57}catch(_){}
+  const compressContactImageV57=(dataUrl)=>compressProfileImageV57(dataUrl,MAX_PROFILE_SIZE,PROFILE_QUALITY);
+  const compressFolderContactPhotoV57=(dataUrl)=>compressProfileImageV57(dataUrl,MAX_PROFILE_SIZE,PROFILE_QUALITY);
+  try{
+    window.compressContactImage=compressContactImageV57;
+    compressContactImage=compressContactImageV57;
+  }catch(_){}
+  try{
+    window.compressFolderContactPhotoV417=compressFolderContactPhotoV57;
+    compressFolderContactPhotoV417=compressFolderContactPhotoV57;
+  }catch(_){}
   window.mwsV57CompressProfileImage=compressProfileImageV57;
 
   function mediaBase(){
@@ -57,8 +65,7 @@
     if(!base)return false;
     try{
       const u=new URL(value,location.href),b=new URL(base);
-      const prefix=b.pathname.replace(/\/$/,'');
-      return u.origin===b.origin&&(u.pathname.startsWith(`${prefix}/contacts/`)||u.pathname.startsWith(`${prefix}/workspace/`));
+      return u.origin===b.origin && (u.pathname.startsWith(`${b.pathname.replace(/\/$/,'')}/contacts/`) || u.pathname.startsWith(`${b.pathname.replace(/\/$/,'')}/workspace/`));
     }catch(_){return false}
   }
 
@@ -86,7 +93,9 @@
     return [...set];
   }
 
-  function replaceManagedMedia(root,map){walk(root,v=>map.has(v)?map.get(v):undefined)}
+  function replaceManagedMedia(root,map){
+    walk(root,v=>map.has(v)?map.get(v):undefined);
+  }
 
   function blobToDataUrl(blob){
     return new Promise((resolve,reject)=>{
@@ -106,20 +115,23 @@
 
   async function mapLimit(items,limit,worker,onProgress){
     let cursor=0,done=0;
+    const out=new Array(items.length);
     async function run(){
       while(true){
         const i=cursor++;
         if(i>=items.length)return;
-        const result=await worker(items[i],i);
+        out[i]=await worker(items[i],i);
         done++;
-        onProgress?.(done,items.length,result,i);
+        onProgress?.(done,items.length,out[i],i);
       }
     }
     await Promise.all(Array.from({length:Math.max(1,Math.min(limit,items.length||1))},run));
+    return out;
   }
 
   function saveJson(obj,name){
-    const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
+    const text=JSON.stringify(obj,null,2);
+    const blob=new Blob([text],{type:'application/json'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
     a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
@@ -133,7 +145,11 @@
   }
 
   function statusEl(){return document.getElementById('fullBackupAssetStatus')}
-  function setStatus(text,ok=false){const el=statusEl();if(el){el.textContent=text;el.classList.toggle('ok',Boolean(ok))}}
+  function setStatus(text,ok=false){
+    const el=statusEl();if(!el)return;
+    el.textContent=text;
+    el.classList.toggle('ok',Boolean(ok));
+  }
 
   async function quickBackup(){
     const backup=baseBackup();
@@ -155,8 +171,10 @@
       if(!base)throw new Error('R2 Public Media URL 설정을 찾지 못했습니다.');
       const backup=baseBackup();
       const refs=collectManagedMedia(backup.data);
-      const map=new Map(),failures=[];
+      const map=new Map();
+      const failures=[];
       let rawBytes=0;
+
       await mapLimit(refs,4,async url=>{
         try{
           const item=await fetchMedia(url);
@@ -170,10 +188,12 @@
         if(btn)btn.textContent=`이미지 ${done}/${total}`;
         setStatus(`완전 백업용 이미지 ${done}/${total} 다운로드 중`);
       });
+
       if(failures.length){
         console.error('CF V5.7 backup media failures',failures);
         throw new Error(`이미지 ${failures.length}개를 받지 못했습니다. R2 CORS 설정을 확인하세요.`);
       }
+
       replaceManagedMedia(backup.data,map);
       if(backup.assets&&typeof backup.assets==='object'){
         backup.assets.contactImages={};
@@ -189,7 +209,9 @@
       console.error('CF V5.7 complete backup failed',err);
       setStatus(`완전 백업 실패 · ${String(err?.message||err)}`,false);
       try{window.toast?.('완전 백업 실패',String(err?.message||err))}catch(_){}
-    }finally{if(btn){btn.disabled=false;btn.textContent=old}}
+    }finally{
+      if(btn){btn.disabled=false;btn.textContent=old}
+    }
   }
 
   function installBackupUi(){
@@ -198,6 +220,7 @@
     full.textContent='완전 백업';
     full.title='현재 데이터와 R2 프로필/워크스페이스 이미지를 실제 데이터로 포함합니다.';
     full.onclick=e=>{e.preventDefault();completeBackup()};
+
     if(!document.getElementById('mwsV57QuickBackupBtn')){
       const quick=document.createElement('button');
       quick.type='button';quick.id='mwsV57QuickBackupBtn';quick.className='secondary';
@@ -214,7 +237,12 @@
     const base=mediaBase();
     const resources=performance.getEntriesByType?.('resource')||[];
     let r2=0;
-    if(base){try{const origin=new URL(base).origin;r2=resources.filter(x=>{try{return new URL(x.name).origin===origin}catch(_){return false}}).length}catch(_){}}
+    if(base){
+      try{
+        const origin=new URL(base).origin;
+        r2=resources.filter(x=>{try{return new URL(x.name).origin===origin}catch(_){return false}}).length;
+      }catch(_){}
+    }
     const legacy=typeof window.mwsV55EgressReport==='function'?window.mwsV55EgressReport():null;
     return {build:BUILD,mediaBase:base||null,r2CdnResourceLoads:r2,legacyMetrics:legacy};
   }
