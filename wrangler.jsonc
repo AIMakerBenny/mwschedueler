@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "mawang-scheduler",
-  "main": "src/index.js",
+  "main": "src/cf-v56.js",
   "compatibility_date": "2026-09-10",
   "assets": {
     "directory": "./",
