@@ -1,10 +1,10 @@
-/* MAWANG Scheduler CF MWS V 1.0.2 - automatic Today People from same-day event participants */
+/* MAWANG Scheduler CF MWS V 1.0.3 - automatic Today People from same-day event participants */
 (()=>{
   'use strict';
   if(window.__mwsTestV53AutoTodayPeople)return;
   window.__mwsTestV53AutoTodayPeople=true;
 
-  const VERSION='CF MWS V 1.0.2';
+  const VERSION='CF MWS V 1.0.3';
   let installed=false;
   let pickerState=null;
   let markingAutoRows=false;
@@ -125,7 +125,7 @@
     const effective=syncDate(date);
     try{
       if(typeof saveData==='function')saveData('오늘 함께한 사람 수정');
-    }catch(e){console.error('CF MWS V 1.0.2 Today People save failed',e)}
+    }catch(e){console.error('CF MWS V 1.0.3 Today People save failed',e)}
     document.getElementById('todayPeopleModal')?.classList.remove('open');
     pickerState=null;
     try{if(typeof toast==='function')toast('오늘 함께한 사람',`${date} · ${effective.length}명 저장`)}catch(_){}
@@ -194,15 +194,24 @@
     };
     try{openTodayPeoplePicker=window.openTodayPeoplePicker}catch(_){}
 
-    try{if(typeof renderAll==='function')renderAll('CF MWS V 1.0.2 자동 함께한 사람 동기화')}catch(e){console.error('CF MWS V 1.0.2 initial render',e)}
+    try{if(typeof renderAll==='function')renderAll('CF MWS V 1.0.3 자동 함께한 사람 동기화')}catch(e){console.error('CF MWS V 1.0.3 initial render',e)}
     updateCopy();
-    window.dispatchEvent(new CustomEvent('mawang:v102-ready'));
+    window.dispatchEvent(new CustomEvent('mawang:v103-ready'));
   }
 
   let tries=0;
   const timer=setInterval(()=>{
     tries++;
-    try{install()}catch(e){console.error('CF MWS V 1.0.2 install failed',e)}
+    try{install()}catch(e){console.error('CF MWS V 1.0.3 install failed',e)}
     if(installed||tries>240)clearInterval(timer);
   },50);
+})();
+
+(()=>{
+  if(window.__mwsContentPlannerHostLoader)return;
+  window.__mwsContentPlannerHostLoader=true;
+  const s=document.createElement('script');
+  s.src='assets/content-planner-host.js?v=1.0.3';
+  s.async=true;
+  document.body.appendChild(s);
 })();
