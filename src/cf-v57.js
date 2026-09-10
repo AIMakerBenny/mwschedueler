@@ -66,6 +66,29 @@ function directMediaUrl(value, base) {
   return `${base}/${folder}/${encodeURIComponent(key)}${suffix}`;
 }
 
+function internalMediaUrl(value, base) {
+  if (typeof value !== 'string' || !value || !base) return value;
+  let u, b;
+  try { u = new URL(value); b = new URL(base); } catch (_) { return value; }
+  if (u.origin !== b.origin) return value;
+  const prefix = b.pathname.replace(/\/$/, '');
+  let rest = u.pathname;
+  if (prefix && prefix !== '/') {
+    if (!rest.startsWith(`${prefix}/`)) return value;
+    rest = rest.slice(prefix.length);
+  }
+  const match = /^\/(contacts|workspace)\/([^/?#]+)$/.exec(rest);
+  if (!match) return value;
+  let key = match[2];
+  try { key = decodeURIComponent(key); } catch (_) {}
+  const kind = match[1] === 'contacts' ? 'contact' : 'workspace';
+  const q = new URLSearchParams();
+  const version = u.searchParams.get('v');
+  if (version) q.set('v', version);
+  const suffix = q.toString() ? `?${q.toString()}` : '';
+  return `/media/${kind}/${encodeURIComponent(key)}${suffix}`;
+}
+
 function rewriteMediaUrls(value, base) {
   if (Array.isArray(value)) return value.map((item) => rewriteMediaUrls(item, base));
   if (value && typeof value === 'object') {
@@ -74,6 +97,29 @@ function rewriteMediaUrls(value, base) {
     return out;
   }
   return directMediaUrl(value, base);
+}
+
+function rewriteDirectUrlsToInternal(value, base) {
+  if (Array.isArray(value)) return value.map((item) => rewriteDirectUrlsToInternal(item, base));
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [key, item] of Object.entries(value)) out[key] = rewriteDirectUrlsToInternal(item, base);
+    return out;
+  }
+  return internalMediaUrl(value, base);
+}
+
+async function normalizedSaveRequest(request, base) {
+  let body;
+  try { body = await request.clone().json(); } catch (_) { return request; }
+  const rewritten = rewriteDirectUrlsToInternal(body, base);
+  const headers = new Headers(request.headers);
+  headers.set('content-type', 'application/json');
+  return new Request(request.url, {
+    method: request.method,
+    headers,
+    body: JSON.stringify(rewritten),
+  });
 }
 
 async function rewriteJsonResponse(response, base) {
@@ -184,7 +230,10 @@ export default {
       }
     }
 
-    const response = await baseWorker.fetch(request, env, ctx);
+    const forwarded = request.method === 'POST' && path === '/api/save'
+      ? await normalizedSaveRequest(request, base)
+      : request;
+    const response = await baseWorker.fetch(forwarded, env, ctx);
     if ((request.method === 'GET' && path.startsWith('/api/parts/')) ||
         (request.method === 'POST' && path === '/api/save')) {
       return rewriteJsonResponse(response, base);
