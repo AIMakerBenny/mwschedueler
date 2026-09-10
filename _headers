@@ -7,12 +7,6 @@
 /assets/cf-v5.7-runtime.js
   Cache-Control: no-cache, must-revalidate
 
-/assets/mws-1.0.1.js
-  Cache-Control: no-cache, must-revalidate
-
-/assets/mws-1.0.1.css
-  Cache-Control: no-cache, must-revalidate
-
 /assets/perf-runtime-base.js
   Cache-Control: no-cache, must-revalidate
 
@@ -26,4 +20,10 @@
   Cache-Control: no-cache, must-revalidate
 
 /assets/test-v5.6.js
+  Cache-Control: no-cache, must-revalidate
+
+/assets/mws-1.0.2.js
+  Cache-Control: no-cache, must-revalidate
+
+/assets/mws-1.0.2-style.js
   Cache-Control: no-cache, must-revalidate

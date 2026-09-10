@@ -1,6 +1,6 @@
-import cf57 from './cf-v57.js';
+import cf57 from './cf-v571.js';
 
-const BUILD_VERSION = 'MWS Version 1.0.1';
+const BUILD_VERSION = 'MWS Version 1.0.2';
 const SUPABASE_URL = 'https://nysxcqlewzucbpoaymbg.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_H7VPUOVV6nN7QdaJKO3-lA_-SNrg4mW';
 
@@ -152,7 +152,7 @@ async function withBuildVersion(response, request) {
   if (!body || typeof body !== 'object') return response;
 
   body.build = BUILD_VERSION;
-  if (path === '/api/bootstrap') body.mode = 'mws-1.0.1-bundle';
+  if (path === '/api/bootstrap') body.mode = 'mws-1.0.2-bundle';
 
   const text = JSON.stringify(body);
   const headers = new Headers(response.headers);
@@ -174,7 +174,7 @@ export default {
       const response = await cf57.fetch(request, env, ctx);
       return await withBuildVersion(response, request);
     } catch (error) {
-      console.error('MWS Version 1.0.1 worker error', error);
+      console.error('MWS Version 1.0.2 worker error', error);
       return json({ error: cleanError(error), build: BUILD_VERSION }, 500);
     }
   },

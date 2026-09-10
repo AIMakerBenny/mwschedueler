@@ -1,11 +1,11 @@
-/* MAWANG Scheduler MWS Version 1.0.1 - one-request public bootstrap + verified IndexedDB reuse */
+/* MAWANG Scheduler MWS Version 1.0.2 - one-request public bootstrap + verified IndexedDB reuse */
 (()=>{
   'use strict';
-  if(window.__mws101Optimizer)return;
-  window.__mws101Optimizer=true;
+  if(window.__mws102Optimizer)return;
+  window.__mws102Optimizer=true;
 
   const nativeFetch=window.fetch.bind(window);
-  const BUILD='MWS Version 1.0.1';
+  const BUILD='MWS Version 1.0.2';
   const ETAG_KEY='mws_cf_v571_etag';
   const MANIFEST_KEY='mws_cf_v571_manifest';
   const MEDIA_BASE_KEY='mws_cf_v571_media_base';
@@ -18,7 +18,7 @@
   function syntheticJson(value,status=200,headers={}){
     return new Response(JSON.stringify(value),{
       status,
-      headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-mws-101-synthetic':'1',...headers}
+      headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-mws-102-synthetic':'1',...headers}
     });
   }
 
@@ -67,7 +67,7 @@
         tx.onabort=()=>reject(tx.error);
       })));
       db.close();
-    }catch(e){console.warn('MWS 1.0.1 bundle cache write failed',e)}
+    }catch(e){console.warn('MWS 1.0.2 bundle cache write failed',e)}
   }
 
   async function hasCompleteCache(manifest){
@@ -102,7 +102,7 @@
 
     if(!res.ok)return {raw:res};
     const body=await res.json();
-    const etag=res.headers.get('etag')||`"${body?.globalVersion||'mws101'}"`;
+    const etag=res.headers.get('etag')||`"${body?.globalVersion||'mws102'}"`;
     bundle=body;
     if(body?.mediaBaseUrl)window.__mwsCf57MediaBaseUrl=body.mediaBaseUrl;
     try{
@@ -178,37 +178,41 @@
   }
 
   function ensureProductStyle(){
-    if(document.getElementById('mws101Style'))return;
-    const link=document.createElement('link');link.id='mws101Style';link.rel='stylesheet';link.href='assets/mws-1.0.1.css?v=1.0.1';document.head.appendChild(link);
+    if(document.getElementById('mws102StyleScript'))return;
+    const s=document.createElement('script');
+    s.id='mws102StyleScript';
+    s.src='assets/mws-1.0.2-style.js?v=1.0.2';
+    document.head.appendChild(s);
   }
 
   function loadProductRuntime(){
     ensureProductStyle();
-    const load101=()=>{
-      if(document.getElementById('mws101RuntimeScript'))return;
-      const p=document.createElement('script');p.id='mws101RuntimeScript';p.src='assets/mws-1.0.1.js?v=1.0.1';document.body.appendChild(p);
+    const load102=()=>{
+      if(document.getElementById('mws102RuntimeScript'))return;
+      const p=document.createElement('script');p.id='mws102RuntimeScript';p.src='assets/mws-1.0.2.js?v=1.0.2';document.body.appendChild(p);
     };
     const existing=document.getElementById('mwsCf571RuntimeScript');
     if(existing){
-      if(existing.dataset.mwsLoaded==='1')load101();
-      else existing.addEventListener('load',()=>{existing.dataset.mwsLoaded='1';load101()},{once:true});
+      if(existing.dataset.mwsLoaded==='1')load102();
+      else existing.addEventListener('load',()=>{existing.dataset.mwsLoaded='1';load102()},{once:true});
       return;
     }
     const s=document.createElement('script');
     s.id='mwsCf571RuntimeScript';
-    s.src='assets/cf-v5.7-runtime.js?v=1.0.1';
-    s.onload=()=>{s.dataset.mwsLoaded='1';load101()};
-    s.onerror=()=>load101();
+    s.src='assets/cf-v5.7-runtime.js?v=1.0.2';
+    s.onload=()=>{s.dataset.mwsLoaded='1';load102()};
+    s.onerror=()=>load102();
     document.body.appendChild(s);
   }
 
   window.addEventListener('DOMContentLoaded',forceVersion,{once:true});
   window.addEventListener('load',()=>{forceVersion();loadProductRuntime()},{once:true});
-  let tries=0;const versionTimer=setInterval(()=>{forceVersion();if(++tries>=32)clearInterval(versionTimer)},250);
+  window.addEventListener('mws:cloud-ready',forceVersion);
+  let tries=0;const versionTimer=setInterval(()=>{forceVersion();if(++tries>=80)clearInterval(versionTimer)},250);
 
   if(document.readyState==='loading'){
-    document.write('<script src="assets/perf-runtime-base.js?v=1.0.1"><\/script>');
+    document.write('<script src="assets/perf-runtime-base.js?v=1.0.2"><\/script>');
   }else{
-    const s=document.createElement('script');s.src='assets/perf-runtime-base.js?v=1.0.1';document.head.appendChild(s);
+    const s=document.createElement('script');s.src='assets/perf-runtime-base.js?v=1.0.2';document.head.appendChild(s);
   }
 })();
