@@ -1,4 +1,4 @@
-/* MAWANG Scheduler MWS Version 1.0.2 - one-request public bootstrap + verified IndexedDB reuse */
+/* MAWANG Scheduler MWS Version 1.0.2 - direct product runtime loader + verified IndexedDB reuse */
 (()=>{
   'use strict';
   if(window.__mws102Optimizer)return;
@@ -14,6 +14,8 @@
   const PARTS=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook'];
   let bundle=null;
   let bootstrapPromise=null;
+  let productRuntimeStarted=false;
+  let productRuntimeReady=false;
 
   function syntheticJson(value,status=200,headers={}){
     return new Response(JSON.stringify(value),{
@@ -160,8 +162,17 @@
     return nativeFetch(input,init);
   };
 
+  function plannerReady(){
+    return !!(
+      document.querySelector('[data-tab="planner"]') &&
+      document.getElementById('planner')
+    );
+  }
+
   function forceVersion(){
+    if(!plannerReady())return false;
     try{
+      productRuntimeReady=true;
       document.body?.setAttribute('data-build-version',BUILD);
       const labels=[...document.querySelectorAll('.sidebar [id^="mwsBuildVersionV5"], .sidebar .sidebar-build-version-v52, .sidebar .sidebar-build-version-v53, .sidebar [class*="sidebar-build-version"]')];
       let keeper=labels.find(x=>x.classList.contains('sidebar-build-version-v53'))||labels[0]||null;
@@ -174,45 +185,78 @@
         else label.style.setProperty('display','none','important');
       }
       if(keeper)keeper.textContent=BUILD;
-    }catch(_){}
+      return true;
+    }catch(_){return false}
   }
 
   function ensureProductStyle(){
     if(document.getElementById('mws102StyleScript'))return;
     const s=document.createElement('script');
     s.id='mws102StyleScript';
-    s.src='assets/mws-1.0.2-style.js?v=1.0.2';
+    s.src='assets/mws-1.0.2-style.js?v=1.0.2-hotfix-loader';
+    s.async=false;
     document.head.appendChild(s);
   }
 
-  function loadProductRuntime(){
-    ensureProductStyle();
-    const load102=()=>{
-      if(document.getElementById('mws102RuntimeScript'))return;
-      const p=document.createElement('script');p.id='mws102RuntimeScript';p.src='assets/mws-1.0.2.js?v=1.0.2';document.body.appendChild(p);
-    };
-    const existing=document.getElementById('mwsCf571RuntimeScript');
-    if(existing){
-      if(existing.dataset.mwsLoaded==='1')load102();
-      else existing.addEventListener('load',()=>{existing.dataset.mwsLoaded='1';load102()},{once:true});
-      return;
-    }
+  function loadLegacyCfRuntime(){
+    if(document.getElementById('mwsCf571RuntimeScript'))return;
     const s=document.createElement('script');
     s.id='mwsCf571RuntimeScript';
-    s.src='assets/cf-v5.7-runtime.js?v=1.0.2';
-    s.onload=()=>{s.dataset.mwsLoaded='1';load102()};
-    s.onerror=()=>load102();
+    s.src='assets/cf-v5.7-runtime.js?v=1.0.2-hotfix-loader';
+    s.async=true;
+    s.onerror=()=>console.error('MWS 1.0.2: CF helper runtime failed to load');
     document.body.appendChild(s);
   }
 
-  window.addEventListener('DOMContentLoaded',forceVersion,{once:true});
-  window.addEventListener('load',()=>{forceVersion();loadProductRuntime()},{once:true});
-  window.addEventListener('mws:cloud-ready',forceVersion);
-  let tries=0;const versionTimer=setInterval(()=>{forceVersion();if(++tries>=80)clearInterval(versionTimer)},250);
+  function waitForPlanner(attempt=0){
+    if(forceVersion()){
+      window.dispatchEvent(new CustomEvent('mws:product-ready',{detail:{build:BUILD}}));
+      return;
+    }
+    if(attempt>=120){
+      console.error('MWS 1.0.2 product runtime loaded but planner did not initialize.');
+      return;
+    }
+    setTimeout(()=>waitForPlanner(attempt+1),100);
+  }
+
+  function loadProductRuntime(){
+    if(productRuntimeStarted)return;
+    productRuntimeStarted=true;
+    ensureProductStyle();
+
+    const p=document.createElement('script');
+    p.id='mws102RuntimeScript';
+    p.src='assets/mws-1.0.2.js?v=1.0.2-hotfix-loader';
+    p.async=false;
+    p.onload=()=>waitForPlanner(0);
+    p.onerror=()=>{
+      console.error('MWS 1.0.2 product runtime failed to load.');
+      productRuntimeStarted=false;
+    };
+    document.body.appendChild(p);
+
+    /* CF V5.7 helper features are optional for planner startup and must never block it. */
+    loadLegacyCfRuntime();
+  }
+
+  function startProductLayers(){
+    if(document.body)loadProductRuntime();
+    else document.addEventListener('DOMContentLoaded',loadProductRuntime,{once:true});
+  }
+
+  window.addEventListener('DOMContentLoaded',startProductLayers,{once:true});
+  window.addEventListener('load',()=>{
+    startProductLayers();
+    if(!productRuntimeReady)waitForPlanner(0);
+  },{once:true});
+  window.addEventListener('mws:cloud-ready',()=>{if(productRuntimeReady)forceVersion()});
+
+  if(document.readyState!=='loading')startProductLayers();
 
   if(document.readyState==='loading'){
-    document.write('<script src="assets/perf-runtime-base.js?v=1.0.2"><\/script>');
+    document.write('<script src="assets/perf-runtime-base.js?v=1.0.2-hotfix-loader"><\/script>');
   }else{
-    const s=document.createElement('script');s.src='assets/perf-runtime-base.js?v=1.0.2';document.head.appendChild(s);
+    const s=document.createElement('script');s.src='assets/perf-runtime-base.js?v=1.0.2-hotfix-loader';document.head.appendChild(s);
   }
 })();
