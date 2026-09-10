@@ -1,0 +1,23 @@
+/index.html
+  Cache-Control: no-cache, must-revalidate
+
+/assets/perf-runtime.js
+  Cache-Control: no-cache, must-revalidate
+
+/assets/cf-v5.7-runtime.js
+  Cache-Control: no-cache, must-revalidate
+
+/assets/perf-runtime-base.js
+  Cache-Control: no-cache, must-revalidate
+
+/assets/online-v5-loader.js
+  Cache-Control: no-cache, must-revalidate
+
+/assets/cloud-v5.5.js
+  Cache-Control: no-cache, must-revalidate
+
+/assets/test-v5.5.js
+  Cache-Control: no-cache, must-revalidate
+
+/assets/test-v5.6.js
+  Cache-Control: no-cache, must-revalidate
