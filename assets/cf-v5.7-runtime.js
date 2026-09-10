@@ -2,6 +2,7 @@
    - high-quality profile image preprocessing
    - quick data backup
    - self-contained full backup with direct R2/CDN media embedding
+   - lower-frequency admin autosave batching
 */
 (()=>{
   'use strict';
@@ -11,6 +12,7 @@
   const BUILD='CF V5.7';
   const MAX_PROFILE_SIZE=1600;
   const PROFILE_QUALITY=.92;
+  const ADMIN_SAVE_DEBOUNCE_MS=2500;
 
   function clone(v){
     try{return structuredClone(v)}catch(_){return JSON.parse(JSON.stringify(v))}
@@ -54,6 +56,31 @@
     compressFolderContactPhotoV417=compressFolderContactPhotoV57;
   }catch(_){}
   window.mwsV57CompressProfileImage=compressProfileImageV57;
+
+  function installSaveRequestOptimizer(){
+    if(window.__mwsCf57SaveOptimizer)return;
+    window.__mwsCf57SaveOptimizer=true;
+    const nativeSetTimeout=window.setTimeout.bind(window);
+    window.setTimeout=function(fn,delay,...args){
+      let nextDelay=delay;
+      if(Number(delay)===650&&typeof fn==='function'){
+        try{
+          const src=Function.prototype.toString.call(fn);
+          if(src.includes('writeCloudNow(false)'))nextDelay=ADMIN_SAVE_DEBOUNCE_MS;
+        }catch(_){}
+      }
+      return nativeSetTimeout(fn,nextDelay,...args);
+    };
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState!=='hidden'||document.body?.dataset?.mwsMode!=='admin')return;
+      try{
+        const report=window.mwsV55EgressReport?.();
+        if(Array.isArray(report?.dirtyParts)&&report.dirtyParts.length&&typeof window.mwsV55SaveNow==='function'){
+          Promise.resolve(window.mwsV55SaveNow()).catch(()=>{});
+        }
+      }catch(_){}
+    });
+  }
 
   function mediaBase(){
     return String(window.__mwsCf57MediaBaseUrl||localStorage.getItem('mws_cf_v57_media_base')||'').replace(/\/+$/,'');
@@ -219,7 +246,14 @@
     if(!full)return;
     full.textContent='완전 백업';
     full.title='현재 데이터와 R2 프로필/워크스페이스 이미지를 실제 데이터로 포함합니다.';
-    full.onclick=e=>{e.preventDefault();completeBackup()};
+    if(!full.dataset.mwsV57FullBackup){
+      full.dataset.mwsV57FullBackup='1';
+      full.addEventListener('click',e=>{
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        completeBackup();
+      },true);
+    }
 
     if(!document.getElementById('mwsV57QuickBackupBtn')){
       const quick=document.createElement('button');
@@ -244,13 +278,14 @@
       }catch(_){}
     }
     const legacy=typeof window.mwsV55EgressReport==='function'?window.mwsV55EgressReport():null;
-    return {build:BUILD,mediaBase:base||null,r2CdnResourceLoads:r2,legacyMetrics:legacy};
+    return {build:BUILD,mediaBase:base||null,r2CdnResourceLoads:r2,adminSaveDebounceMs:ADMIN_SAVE_DEBOUNCE_MS,legacyMetrics:legacy};
   }
 
   window.mwsV57CreateQuickBackup=quickBackup;
   window.mwsV57CreateCompleteBackup=completeBackup;
   window.mwsV57RequestReport=requestReport;
 
+  installSaveRequestOptimizer();
   installBackupUi();
   setTimeout(installBackupUi,500);
   setTimeout(installBackupUi,1500);
