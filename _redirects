@@ -1,0 +1,4 @@
+# CF V5.7.1: legacy media URLs are handled by Static Assets redirects, not Worker code.
+# This protects existing browser/local caches that still contain /media/* URLs.
+/media/contact/* https://pub-ff2081dd33384aa0865bb86b4514bbec.r2.dev/contacts/:splat 302
+/media/workspace/* https://pub-ff2081dd33384aa0865bb86b4514bbec.r2.dev/workspace/:splat 302
