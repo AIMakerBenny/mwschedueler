@@ -95,8 +95,6 @@
     const method=String(init?.method||input?.method||'GET').toUpperCase();
     if(url.origin!==location.origin||method!=='GET')return nativeFetch(input,init);
 
-    // The old CF V5.5 client performs a health request before loading data.
-    // CF V5.6 removes that extra billable request; /api/bootstrap is the real health check.
     if(url.pathname==='/api/health'){
       return syntheticJson({ok:true,env:'cloudflare-production',backend:'D1 + R2',optimized:'CF V5.6'});
     }
@@ -113,8 +111,6 @@
       if(result.raw)return result.raw;
       const row=result.bundle?.parts?.[part];
       if(row)return syntheticJson(row);
-      // If the server returned 304 and this device is missing one old cache part,
-      // fall back to a single part request only for that exceptional case.
       return nativeFetch(input,init);
     }
 
@@ -132,10 +128,8 @@
   window.addEventListener('load',forceVersion,{once:true});
   let tries=0;const versionTimer=setInterval(()=>{forceVersion();if(++tries>=24)clearInterval(versionTimer)},250);
 
-  // Preserve the existing performance runtime while installing this optimizer
-  // before online-v5-loader.js executes.
   if(document.readyState==='loading'){
-    document.write('<script src="assets/perf-runtime-base.js"><\\/script>');
+    document.write('<script src="assets/perf-runtime-base.js"></script>');
   }else{
     const s=document.createElement('script');s.src='assets/perf-runtime-base.js';document.head.appendChild(s);
   }
