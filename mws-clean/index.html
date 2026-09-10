@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MAWANG Scheduler</title>
+<link rel="stylesheet" href="/styles.css?v=1.0.0">
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="/app.js?v=1.0.0"></script>
+<script defer src="/planner.js?v=1.0.0"></script>
+<script defer src="/minigames.js?v=1.0.0"></script>
+</head>
+<body data-theme="night">
+<div id="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-row"><strong>MAWANG</strong><button id="sidebarPinBtn" class="icon-btn tiny" title="사이드바 고정">⌖</button></div>
+      <small>컨텐츠 스케줄러</small>
+    </div>
+    <nav id="nav" class="nav">
+      <button data-tab="dashboard" class="active"><span>▦</span><b>대시보드</b></button>
+      <button data-tab="calendar"><span>▣</span><b>캘린더</b></button>
+      <button data-tab="contacts"><span>♙</span><b>연락처</b></button>
+      <button data-tab="recent"><span>▤</span><b>최근 만난 사람</b></button>
+      <button data-tab="targets"><span>✦</span><b>저격 리스트</b></button>
+      <button data-tab="friendFinder"><span>♧</span><b>친구 찾기</b></button>
+      <button data-tab="posts"><span>▧</span><b>게시글</b></button>
+      <button data-tab="planner"><span>▨</span><b>컨텐츠 플래너</b></button>
+      <button data-tab="notebook"><span>▥</span><b>수첩</b></button>
+      <button data-tab="worldtime"><span>◎</span><b>세계 시간</b></button>
+      <div class="nav-divider"><span></span><em>미니게임</em><span></span></div>
+      <button data-tab="ladder"><span>╬</span><b>사다리타기</b></button>
+      <button data-tab="rps"><span>♨</span><b>가위바위보</b></button>
+      <button data-tab="horse"><span>♘</span><b>경마</b></button>
+      <button data-tab="gacha"><span>▩</span><b>Gacha 뽑기</b></button>
+      <div class="nav-divider plain"></div>
+      <button data-tab="transfer"><span>↕</span><b>가져오기 / 내보내기</b></button>
+      <button data-tab="settings"><span>☼</span><b>설정</b></button>
+    </nav>
+    <div class="sidebar-foot">
+      <div id="buildVersion" class="build-version">MWS Version 1.0.0</div>
+      <button id="globalSaveBtn" class="save-btn admin-only">▣ <span>SAVE</span></button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h1 id="pageTitle">대시보드</h1>
+        <div id="todayText" class="muted"></div>
+      </div>
+      <div class="top-actions">
+        <span id="syncStatus" class="sync-status"><i></i><span>서버 연결 확인 중</span></span>
+        <div class="scale-control">
+          <button id="scaleDown">A−</button>
+          <b id="scaleLabel">페이지 100%</b>
+          <button id="scaleUp">A+</button>
+          <button id="scaleReset" title="크기 초기화">↻</button>
+        </div>
+        <strong id="clockText" class="clock-text"></strong>
+        <button id="newEventBtn" class="primary admin-only">컨텐츠 추가</button>
+      </div>
+    </header>
+
+    <div id="sections">
+      <section id="dashboard" class="section active"></section>
+      <section id="calendar" class="section"></section>
+      <section id="contacts" class="section"></section>
+      <section id="recent" class="section"></section>
+      <section id="targets" class="section"></section>
+      <section id="friendFinder" class="section"></section>
+      <section id="posts" class="section"></section>
+      <section id="planner" class="section planner-section"></section>
+      <section id="notebook" class="section"></section>
+      <section id="worldtime" class="section"></section>
+      <section id="ladder" class="section"></section>
+      <section id="rps" class="section"></section>
+      <section id="horse" class="section"></section>
+      <section id="gacha" class="section"></section>
+      <section id="transfer" class="section"></section>
+      <section id="settings" class="section"></section>
+    </div>
+  </main>
+</div>
+
+<div id="toastHost" class="toast-host"></div>
+
+<div id="accessGate" class="gate">
+  <div class="gate-card">
+    <div class="kicker">MAWANG WORKSPACE</div>
+    <h2>접속 모드를 선택하세요</h2>
+    <p>Admin은 공유 데이터를 저장하고, Public은 같은 기능을 읽기 중심으로 사용할 수 있습니다.</p>
+    <div class="mode-grid">
+      <button id="modeAdmin" class="mode-card active"><b>Admin</b><span>관리자 계정으로 로그인합니다.</span></button>
+      <button id="modePublic" class="mode-card"><b>Public</b><span>로그인 없이 현재 데이터를 확인합니다.</span></button>
+    </div>
+    <div id="adminFields" class="admin-fields">
+      <input id="loginId" placeholder="Admin ID" autocomplete="username">
+      <input id="loginPw" type="password" placeholder="Password" autocomplete="current-password">
+    </div>
+    <div id="loginError" class="error"></div>
+    <label class="remember"><input id="rememberMode" type="checkbox" checked> 다음부터 이 화면 표시 안 함</label>
+    <div class="gate-actions"><button id="loginSubmit" class="primary">Admin 로그인</button></div>
+  </div>
+</div>
+
+<div id="modalHost"></div>
+<input id="hiddenFileInput" type="file" hidden>
+</body>
+</html>
