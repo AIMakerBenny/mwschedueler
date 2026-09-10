@@ -1,11 +1,11 @@
-/* MAWANG Scheduler MWS Version 1.0.2 - one-request public bootstrap + verified IndexedDB reuse */
+/* MAWANG Scheduler MWS Version 1.0.0 - one-request public bootstrap + verified IndexedDB reuse */
 (()=>{
   'use strict';
   if(window.__mws102Optimizer)return;
   window.__mws102Optimizer=true;
 
   const nativeFetch=window.fetch.bind(window);
-  const BUILD='MWS Version 1.0.2';
+  const BUILD='MWS Version 1.0.0';
   const ETAG_KEY='mws_cf_v571_etag';
   const MANIFEST_KEY='mws_cf_v571_manifest';
   const MEDIA_BASE_KEY='mws_cf_v571_media_base';
@@ -18,7 +18,7 @@
   function syntheticJson(value,status=200,headers={}){
     return new Response(JSON.stringify(value),{
       status,
-      headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-mws-102-synthetic':'1',...headers}
+      headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-mws-100-synthetic':'1',...headers}
     });
   }
 
@@ -67,7 +67,7 @@
         tx.onabort=()=>reject(tx.error);
       })));
       db.close();
-    }catch(e){console.warn('MWS 1.0.2 bundle cache write failed',e)}
+    }catch(e){console.warn('MWS 1.0.0 bundle cache write failed',e)}
   }
 
   async function hasCompleteCache(manifest){
@@ -102,7 +102,7 @@
 
     if(!res.ok)return {raw:res};
     const body=await res.json();
-    const etag=res.headers.get('etag')||`"${body?.globalVersion||'mws102'}"`;
+    const etag=res.headers.get('etag')||`"${body?.globalVersion||'mws100'}"`;
     bundle=body;
     if(body?.mediaBaseUrl)window.__mwsCf57MediaBaseUrl=body.mediaBaseUrl;
     try{
@@ -181,7 +181,7 @@
     if(document.getElementById('mws102StyleScript'))return;
     const s=document.createElement('script');
     s.id='mws102StyleScript';
-    s.src='assets/mws-1.0.2-style.js?v=1.0.2';
+    s.src='assets/mws-1.0.2-style.js?v=1.0.0';
     document.head.appendChild(s);
   }
 
@@ -189,7 +189,7 @@
     ensureProductStyle();
     const load102=()=>{
       if(document.getElementById('mws102RuntimeScript'))return;
-      const p=document.createElement('script');p.id='mws102RuntimeScript';p.src='assets/mws-1.0.2.js?v=1.0.2';document.body.appendChild(p);
+      const p=document.createElement('script');p.id='mws102RuntimeScript';p.src='assets/mws-1.0.2.js?v=1.0.0';document.body.appendChild(p);
     };
     const existing=document.getElementById('mwsCf571RuntimeScript');
     if(existing){
@@ -199,7 +199,7 @@
     }
     const s=document.createElement('script');
     s.id='mwsCf571RuntimeScript';
-    s.src='assets/cf-v5.7-runtime.js?v=1.0.2';
+    s.src='assets/cf-v5.7-runtime.js?v=1.0.0';
     s.onload=()=>{s.dataset.mwsLoaded='1';load102()};
     s.onerror=()=>load102();
     document.body.appendChild(s);
@@ -211,8 +211,8 @@
   let tries=0;const versionTimer=setInterval(()=>{forceVersion();if(++tries>=80)clearInterval(versionTimer)},250);
 
   if(document.readyState==='loading'){
-    document.write('<script src="assets/perf-runtime-base.js?v=1.0.2"><\/script>');
+    document.write('<script src="assets/perf-runtime-base.js?v=1.0.0"><\/script>');
   }else{
-    const s=document.createElement('script');s.src='assets/perf-runtime-base.js?v=1.0.2';document.head.appendChild(s);
+    const s=document.createElement('script');s.src='assets/perf-runtime-base.js?v=1.0.0';document.head.appendChild(s);
   }
 })();
