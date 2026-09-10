@@ -21,6 +21,7 @@
     }
   ],
   "vars": {
-    "MWS_ENV": "cloudflare-production"
+    "MWS_ENV": "cloudflare-production",
+    "MWS_R2_PUBLIC_BASE_URL": "https://pub-ff2081dd33384aa0865bb86b4514bbec.r2.dev"
   }
 }
