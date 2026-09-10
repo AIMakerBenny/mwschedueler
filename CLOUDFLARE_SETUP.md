@@ -1,6 +1,32 @@
 # MAWANG Scheduler V5.5 Cloudflare Production
 
-This branch is the official Cloudflare production copy based on the tested V5.5 Cloudflare build.
+This branch is the official Cloudflare production branch.
+
+## Cost-minimized release policy
+
+Cloudflare preview deployments are not used for normal development.
+
+Development flow:
+
+1. If a test is needed, make and test a standalone/local HTML build first.
+2. Do not push temporary test builds or test branches to Cloudflare.
+3. After the local HTML is approved, commit the finished change directly to `cloudflare-production`.
+4. Cloudflare then performs one production build/deploy only.
+5. Keep `Builds for non-production branches` disabled in the Cloudflare project unless a cloud preview is specifically needed.
+6. The Preview workers.dev URL may also remain disabled for normal operation.
+
+This minimizes unnecessary Cloudflare builds and avoids maintaining a second paid-resource test environment.
+
+## Version policy
+
+Use the smallest version increment for normal updates.
+
+- Current official baseline: `V5.5` / package version `5.5.0`
+- Next small update: `V5.5.1`
+- Then: `V5.5.2`, `V5.5.3`, and so on
+- Move to `V5.6` only for a substantial feature/architecture release or when explicitly requested.
+
+Do not create a separate Cloudflare test version merely to test a normal UI/function change. Local HTML is the default test method.
 
 ## Architecture
 
@@ -21,7 +47,8 @@ The heavy workspace payload and images do not use Supabase after Cloudflare boot
 5. Leave Build command empty.
 6. Deploy command: `npx wrangler deploy` or `npm run deploy`.
 7. Keep Cloudflare Access disabled unless the site should be restricted to approved users.
-8. Deploy.
+8. Disable `Builds for non-production branches` for the normal low-cost workflow.
+9. Deploy.
 
 The configuration provisions these bindings:
 
@@ -53,8 +80,8 @@ Images may also be replaced directly in the R2 dashboard with larger WebP/PNG/JP
 
 ## Safety
 
-- `main` remains untouched.
-- The existing Vercel deployment remains untouched.
-- The old `cloudflare-v5.5-test` Worker remains available as a test environment.
+- `main` remains untouched unless explicitly requested.
+- The existing Vercel deployment remains untouched unless explicitly requested.
+- The old `cloudflare-v5.5-test` branch/Worker is legacy test infrastructure and is not part of the normal release flow.
 - Supabase production workspace is not deleted or modified by Cloudflare bootstrap.
 - Cloudflare workspace saves write to D1/R2. Supabase is used only for existing Admin authentication and admin-account management.
