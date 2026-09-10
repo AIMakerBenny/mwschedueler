@@ -1,0 +1,12 @@
+.git*
+.github/
+src/
+migrations/
+tools/
+node_modules/
+wrangler.jsonc
+package.json
+package-lock.json
+CLOUDFLARE_SETUP.md
+README.md
+.assetsignore
