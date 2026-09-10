@@ -1,12 +1,13 @@
-/* MAWANG Scheduler CF V5.6 - one-request public bootstrap + strong local cache */
+/* MAWANG Scheduler CF V5.7 - one-request public bootstrap + verified IndexedDB reuse */
 (()=>{
   'use strict';
-  if(window.__mwsCf56Optimizer)return;
-  window.__mwsCf56Optimizer=true;
+  if(window.__mwsCf57Optimizer)return;
+  window.__mwsCf57Optimizer=true;
 
   const nativeFetch=window.fetch.bind(window);
-  const ETAG_KEY='mws_cf_v56_etag';
-  const MANIFEST_KEY='mws_cf_v56_manifest';
+  const ETAG_KEY='mws_cf_v57_etag';
+  const MANIFEST_KEY='mws_cf_v57_manifest';
+  const MEDIA_BASE_KEY='mws_cf_v57_media_base';
   const DB_NAME='mawang_data';
   const DB_VERSION=3;
   const PARTS=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook'];
@@ -16,7 +17,7 @@
   function syntheticJson(value,status=200,headers={}){
     return new Response(JSON.stringify(value),{
       status,
-      headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-mws-cf56-synthetic':'1',...headers}
+      headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-mws-cf57-synthetic':'1',...headers}
     });
   }
 
@@ -31,6 +32,21 @@
       req.onsuccess=()=>resolve(req.result);
       req.onerror=()=>reject(req.error||new Error('IndexedDB open failed'));
     });
+  }
+
+  async function getCachedPart(part,scope='public'){
+    if(!PARTS.includes(part)||!('indexedDB' in window))return null;
+    let db;
+    try{
+      db=await openDb();
+      return await new Promise((resolve,reject)=>{
+        const tx=db.transaction(part,'readonly');
+        const req=tx.objectStore(part).get(scope);
+        req.onsuccess=()=>resolve(req.result||null);
+        req.onerror=()=>reject(req.error);
+      });
+    }catch(_){return null}
+    finally{try{db?.close()}catch(_){}}
   }
 
   async function persistBundle(body){
@@ -50,7 +66,18 @@
         tx.onabort=()=>reject(tx.error);
       })));
       db.close();
-    }catch(e){console.warn('CF V5.6 bundle cache write failed',e)}
+    }catch(e){console.warn('CF V5.7 bundle cache write failed',e)}
+  }
+
+  async function hasCompleteCache(manifest){
+    if(!manifest?.parts)return false;
+    for(const part of PARTS){
+      const wanted=Number(manifest.parts[part])||0;
+      if(!wanted)continue;
+      const row=await getCachedPart(part,'public');
+      if(!row||Number(row.version)!==wanted)return false;
+    }
+    return true;
   }
 
   async function requestBootstrap(useEtag=true){
@@ -62,20 +89,25 @@
     if(res.status===304){
       let savedManifest=null;
       try{savedManifest=JSON.parse(localStorage.getItem(MANIFEST_KEY)||'null')}catch(_){}
-      if(!savedManifest&&useEtag){
+      const complete=savedManifest?await hasCompleteCache(savedManifest):false;
+      if((!savedManifest||!complete)&&useEtag){
         localStorage.removeItem(ETAG_KEY);
         return requestBootstrap(false);
       }
+      const savedBase=localStorage.getItem(MEDIA_BASE_KEY)||'';
+      if(savedBase)window.__mwsCf57MediaBaseUrl=savedBase;
       return {status:304,manifest:savedManifest,bundle:null};
     }
 
     if(!res.ok)return {raw:res};
     const body=await res.json();
-    const etag=res.headers.get('etag')||`"${body?.globalVersion||'cf56'}"`;
+    const etag=res.headers.get('etag')||`"${body?.globalVersion||'cf57'}"`;
     bundle=body;
+    if(body?.mediaBaseUrl)window.__mwsCf57MediaBaseUrl=body.mediaBaseUrl;
     try{
       localStorage.setItem(ETAG_KEY,etag);
       localStorage.setItem(MANIFEST_KEY,JSON.stringify(body.manifest||null));
+      if(body?.mediaBaseUrl)localStorage.setItem(MEDIA_BASE_KEY,body.mediaBaseUrl);
     }catch(_){}
     await persistBundle(body);
     return {status:200,manifest:body.manifest,bundle:body};
@@ -96,7 +128,7 @@
     if(url.origin!==location.origin||method!=='GET')return nativeFetch(input,init);
 
     if(url.pathname==='/api/health'){
-      return syntheticJson({ok:true,env:'cloudflare-production',backend:'D1 + R2',optimized:'CF V5.6'});
+      return syntheticJson({ok:true,env:'cloudflare-production',backend:'D1 + R2',optimized:'CF V5.7',mediaMode:'r2-public-direct'});
     }
 
     if(url.pathname==='/api/manifest'){
@@ -109,9 +141,19 @@
       const part=decodeURIComponent(url.pathname.slice('/api/parts/'.length));
       const result=await getBootstrap();
       if(result.raw)return result.raw;
-      const row=result.bundle?.parts?.[part];
+      const bundled=result.bundle?.parts?.[part];
+      if(bundled)return syntheticJson(bundled);
+      const cached=await getCachedPart(part,'public');
+      const wanted=Number(result.manifest?.parts?.[part])||0;
+      if(cached&&(!wanted||Number(cached.version)===wanted)){
+        return syntheticJson({part,version:Number(cached.version)||wanted||1,data:cached.data});
+      }
+      try{localStorage.removeItem(ETAG_KEY)}catch(_){}
+      const refreshed=await requestBootstrap(false);
+      if(refreshed.raw)return refreshed.raw;
+      const row=refreshed.bundle?.parts?.[part];
       if(row)return syntheticJson(row);
-      return nativeFetch(input,init);
+      return syntheticJson({error:`Part unavailable after bootstrap: ${part}`},503);
     }
 
     return nativeFetch(input,init);
@@ -119,17 +161,26 @@
 
   function forceVersion(){
     try{
-      document.body?.setAttribute('data-build-version','CF V5.6');
+      document.body?.setAttribute('data-build-version','CF V5.7');
       const label=document.querySelector('[id^="mwsBuildVersionV5"], .sidebar-build-version-v52, .sidebar-build-version-v53, [class*="sidebar-build-version"]');
-      if(label)label.textContent='CF V5.6';
+      if(label)label.textContent='CF V5.7';
     }catch(_){}
   }
+
+  function loadRuntimePatch(){
+    if(document.getElementById('mwsCf57RuntimeScript'))return;
+    const s=document.createElement('script');
+    s.id='mwsCf57RuntimeScript';
+    s.src='assets/cf-v5.7-runtime.js';
+    document.body.appendChild(s);
+  }
+
   window.addEventListener('DOMContentLoaded',forceVersion,{once:true});
-  window.addEventListener('load',forceVersion,{once:true});
+  window.addEventListener('load',()=>{forceVersion();loadRuntimePatch()},{once:true});
   let tries=0;const versionTimer=setInterval(()=>{forceVersion();if(++tries>=24)clearInterval(versionTimer)},250);
 
   if(document.readyState==='loading'){
-    document.write('<script src="assets/perf-runtime-base.js"></script>');
+    document.write('<script src="assets/perf-runtime-base.js"><\/script>');
   }else{
     const s=document.createElement('script');s.src='assets/perf-runtime-base.js';document.head.appendChild(s);
   }
