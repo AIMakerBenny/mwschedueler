@@ -1,12 +1,13 @@
-/* MAWANG Scheduler CF V5.7.1 - automatic Today People from same-day event participants */
+/* MAWANG Scheduler CF MWS V 1.0.2 - automatic Today People from same-day event participants */
 (()=>{
   'use strict';
   if(window.__mwsTestV53AutoTodayPeople)return;
   window.__mwsTestV53AutoTodayPeople=true;
 
-  const VERSION='CF V5.7.1';
+  const VERSION='CF MWS V 1.0.2';
   let installed=false;
   let pickerState=null;
+  let markingAutoRows=false;
 
   function validDateKey(value){return /^\d{4}-\d{2}-\d{2}$/.test(String(value||''))}
   function cloneIdMap(src){
@@ -69,33 +70,41 @@
 
   function setVersionLabel(){
     document.body?.setAttribute('data-build-version',VERSION);
-    document.querySelectorAll('[id^="mwsBuildVersionV5"], .sidebar-build-version-v52, .sidebar-build-version-v53, [class*="sidebar-build-version"]').forEach(label=>label.textContent=VERSION);
+    document.querySelectorAll('[id^="mwsBuildVersionV5"], .sidebar-build-version-v52, .sidebar-build-version-v53, [class*="sidebar-build-version"]').forEach(label=>{
+      if(label.textContent!==VERSION)label.textContent=VERSION;
+    });
   }
   function updateCopy(){
     setVersionLabel();
     const dash=document.querySelector('.dashboard-today-people-card-local .dashboard-insight-head-v55 .subtle');
-    if(dash)dash.textContent='오늘 컨텐츠의 참가자가 자동으로 포함됩니다. 필요한 인원은 직접 추가할 수도 있습니다.';
+    if(dash&&dash.textContent!=='오늘 컨텐츠의 참가자가 자동으로 포함됩니다. 필요한 인원은 직접 추가할 수도 있습니다.')dash.textContent='오늘 컨텐츠의 참가자가 자동으로 포함됩니다. 필요한 인원은 직접 추가할 수도 있습니다.';
     const modalSub=document.querySelector('#todayPeopleModal .today-people-picker-side-local .muted.small');
-    if(modalSub)modalSub.textContent='컨텐츠 참가자는 자동으로 포함됩니다. 그 외 인원은 여기서 직접 추가할 수 있습니다.';
+    if(modalSub&&modalSub.textContent!=='컨텐츠 참가자는 자동으로 포함됩니다. 그 외 인원은 여기서 직접 추가할 수 있습니다.')modalSub.textContent='컨텐츠 참가자는 자동으로 포함됩니다. 그 외 인원은 여기서 직접 추가할 수 있습니다.';
     const contactSub=document.querySelector('#contactTogetherDaysPanel .space .muted.small');
-    if(contactSub)contactSub.textContent='캘린더의 오늘 함께한 사람 기록을 최신순으로 표시합니다.';
+    if(contactSub&&contactSub.textContent!=='캘린더의 오늘 함께한 사람 기록을 최신순으로 표시합니다.')contactSub.textContent='캘린더의 오늘 함께한 사람 기록을 최신순으로 표시합니다.';
     const recentSub=document.querySelector('#sniperTodayPeopleView .today-people-recent-toolbar-local .subtle');
-    if(recentSub)recentSub.textContent='컨텐츠 참가자 자동 기록과 직접 등록한 기록을 합쳐 마지막 만난 날짜와 함께한 횟수를 확인합니다.';
+    if(recentSub&&recentSub.textContent!=='컨텐츠 참가자 자동 기록과 직접 등록한 기록을 합쳐 마지막 만난 날짜와 함께한 횟수를 확인합니다.')recentSub.textContent='컨텐츠 참가자 자동 기록과 직접 등록한 기록을 합쳐 마지막 만난 날짜와 함께한 횟수를 확인합니다.';
   }
 
   function markAutoPickerRows(){
-    if(!pickerState)return;
-    const auto=new Set(autoIdsForDate(pickerState.date));
-    document.querySelectorAll('#todayPeoplePickerList .today-people-picker-row-local[data-id]').forEach(row=>{
-      const id=String(row.dataset.id||'');
-      const isAuto=auto.has(id);
-      row.toggleAttribute('data-auto-v53',isAuto);
-      if(isAuto){
-        row.title='이 날짜의 컨텐츠 참가자로 자동 포함됩니다.';
-        const state=row.lastElementChild;
-        if(state)state.textContent='자동';
-      }
-    });
+    if(markingAutoRows||!pickerState)return;
+    markingAutoRows=true;
+    try{
+      const auto=new Set(autoIdsForDate(pickerState.date));
+      document.querySelectorAll('#todayPeoplePickerList .today-people-picker-row-local[data-id]').forEach(row=>{
+        const id=String(row.dataset.id||'');
+        const isAuto=auto.has(id);
+        if(row.hasAttribute('data-auto-v53')!==isAuto)row.toggleAttribute('data-auto-v53',isAuto);
+        if(isAuto){
+          const title='이 날짜의 컨텐츠 참가자로 자동 포함됩니다.';
+          if(row.title!==title)row.title=title;
+          const state=row.lastElementChild;
+          if(state&&state.textContent!=='자동')state.textContent='자동';
+        }
+      });
+    }finally{
+      markingAutoRows=false;
+    }
   }
 
   function selectedFromState(){return pickerState?new Set(pickerState.selected):new Set()}
@@ -116,7 +125,7 @@
     const effective=syncDate(date);
     try{
       if(typeof saveData==='function')saveData('오늘 함께한 사람 수정');
-    }catch(e){console.error('CF V5.7.1 Today People save failed',e)}
+    }catch(e){console.error('CF MWS V 1.0.2 Today People save failed',e)}
     document.getElementById('todayPeopleModal')?.classList.remove('open');
     pickerState=null;
     try{if(typeof toast==='function')toast('오늘 함께한 사람',`${date} · ${effective.length}명 저장`)}catch(_){}
@@ -140,8 +149,17 @@
         }
         if(pickerState.selected.has(id))pickerState.selected.delete(id);else pickerState.selected.add(id);
       },true);
-      const observer=new MutationObserver(()=>markAutoPickerRows());
-      observer.observe(list,{childList:true,subtree:true});
+      let observerQueued=false;
+      const observer=new MutationObserver(mutations=>{
+        if(!pickerState||observerQueued)return;
+        if(!mutations.some(m=>m.type==='childList'&&(m.addedNodes.length||m.removedNodes.length)))return;
+        observerQueued=true;
+        queueMicrotask(()=>{
+          observerQueued=false;
+          markAutoPickerRows();
+        });
+      });
+      observer.observe(list,{childList:true,subtree:false});
     }
     if(confirm)confirm.onclick=confirmPickerV53;
     if(modal)modal.dataset.v53Date=normalized;
@@ -176,15 +194,15 @@
     };
     try{openTodayPeoplePicker=window.openTodayPeoplePicker}catch(_){}
 
-    try{if(typeof renderAll==='function')renderAll('CF V5.7.1 자동 함께한 사람 동기화')}catch(e){console.error('CF V5.7.1 initial render',e)}
+    try{if(typeof renderAll==='function')renderAll('CF MWS V 1.0.2 자동 함께한 사람 동기화')}catch(e){console.error('CF MWS V 1.0.2 initial render',e)}
     updateCopy();
-    window.dispatchEvent(new CustomEvent('mawang:v571-ready'));
+    window.dispatchEvent(new CustomEvent('mawang:v102-ready'));
   }
 
   let tries=0;
   const timer=setInterval(()=>{
     tries++;
-    try{install()}catch(e){console.error('CF V5.7.1 install failed',e)}
+    try{install()}catch(e){console.error('CF MWS V 1.0.2 install failed',e)}
     if(installed||tries>240)clearInterval(timer);
   },50);
 })();
