@@ -1,25 +1,15 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "mawang-scheduler",
-  "main": "src/mws-1.0.2.js",
+  "main": "src/mws-clean.js",
   "compatibility_date": "2026-09-10",
   "assets": {
-    "directory": "./",
+    "directory": "./mws-clean",
     "binding": "ASSETS",
-    "run_worker_first": [
-      "/api/*"
-    ]
+    "run_worker_first": ["/api/*"]
   },
-  "d1_databases": [
-    {
-      "binding": "DB"
-    }
-  ],
-  "r2_buckets": [
-    {
-      "binding": "IMAGES"
-    }
-  ],
+  "d1_databases": [{"binding": "DB"}],
+  "r2_buckets": [{"binding": "IMAGES"}],
   "vars": {
     "MWS_ENV": "cloudflare-production",
     "MWS_R2_PUBLIC_BASE_URL": "https://pub-ff2081dd33384aa0865bb86b4514bbec.r2.dev"
