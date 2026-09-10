@@ -1,36 +1,62 @@
-# MAWANG Scheduler CF V5.7 - R2 Direct Media Setup
+# MAWANG Scheduler CF V5.7 R2 Direct Media Setup
 
-CF V5.7 removes normal profile/workspace image delivery from the Worker request path.
+Production media base:
 
-## Required before production deploy
+`https://pub-ff2081dd33384aa0865bb86b4514bbec.r2.dev`
 
-1. Open the R2 bucket bound as `IMAGES` (`mawang-scheduler-v55-test-images`).
-2. Expose the bucket through an R2 Public Custom Domain or R2 public URL.
-3. The public base URL must point at the bucket root where these existing object keys are reachable:
-   - `contacts/<contact-id>`
-   - `workspace/<asset-key>`
-4. Configure R2 CORS so the MAWANG Scheduler site origin may `GET` the images. This is required for the browser-side self-contained backup feature.
-5. Put the exact HTTPS base URL into Wrangler vars as `MWS_R2_PUBLIC_BASE_URL` before merging this branch to `cloudflare-production`.
+CF V5.7 serves workspace data through the Worker API, but public images are returned to the browser as direct R2 URLs. There is no automatic fallback to the legacy `/media/* -> Worker -> R2` path.
 
-Example only:
+## Expected request flow
 
-```jsonc
-"vars": {
-  "MWS_ENV": "cloudflare-production",
-  "MWS_R2_PUBLIC_BASE_URL": "https://images.example.com"
-}
+- Static HTML/CSS/JS: Worker Static Assets
+- Public workspace bootstrap: `/api/bootstrap`
+- Contact images: `https://pub-ff2081dd33384aa0865bb86b4514bbec.r2.dev/contacts/<key>?v=<version>`
+- Workspace images: `https://pub-ff2081dd33384aa0865bb86b4514bbec.r2.dev/workspace/<key>?v=<version>`
+- Admin saves: `/api/save`
+
+## R2 public access
+
+The R2 bucket must keep Public Development URL enabled. The configured value in `wrangler.jsonc` is `MWS_R2_PUBLIC_BASE_URL`.
+
+## CORS required for complete backup
+
+Normal `<img>` display does not require the JavaScript CORS permission used by the backup feature. The CF V5.7 complete backup fetches R2 images in browser JavaScript and therefore requires an R2 CORS policy that allows GET from the production site.
+
+Recommended policy:
+
+```json
+[
+  {
+    "AllowedOrigins": [
+      "https://mawang-scheduler.majoku.workers.dev"
+    ],
+    "AllowedMethods": [
+      "GET",
+      "HEAD"
+    ],
+    "AllowedHeaders": [
+      "*"
+    ],
+    "ExposeHeaders": [
+      "ETag"
+    ],
+    "MaxAgeSeconds": 86400
+  }
+]
 ```
 
-Do not use the example domain in production.
+If the application gets a custom production domain later, add that exact HTTPS origin to `AllowedOrigins`.
+
+## Storage model
+
+D1 continues to keep canonical internal media references such as `/media/contact/<key>?v=<version>`. CF V5.7 rewrites them to the configured R2 public base only in API responses. Admin saves convert direct R2 URLs back to canonical internal references before D1 storage, so changing the public media domain later does not require rewriting all D1 records.
 
 ## Request behavior
 
-- Static HTML/CSS/JS: Static Assets, no Worker execution for normal asset hits.
-- Public shared data: `/api/bootstrap`, normally one Worker request per page load/refresh.
-- Cached unchanged bootstrap: one conditional bootstrap request; part reads are served from IndexedDB instead of generating one request per part.
-- Profile/workspace images: direct R2 Custom Domain/CDN requests, not Worker `/media/*` requests.
-- Admin saves: `/api/save` remains a Worker request.
-- Legacy `/media/*` is intentionally disabled in CF V5.7. There is no automatic media fallback.
+- Public shared data normally enters through one `/api/bootstrap` Worker request per page load/refresh.
+- When the bootstrap ETag is unchanged, the browser reuses IndexedDB parts without issuing separate `/api/parts/*` requests.
+- Profile/workspace images use the R2 public URL directly and do not intentionally call the Worker `/media/*` route.
+- Admin autosaves are batched with a 2.5 second debounce. Manual SAVE remains immediate.
 
 ## Backup behavior
 
@@ -42,6 +68,6 @@ Do not use the example domain in production.
 
 Both individual profile uploads and folder profile updates are normalized to a maximum long edge of 1600 px and WebP quality 0.92 in CF V5.7.
 
-## Safety
+## No fallback
 
-CF V5.7 intentionally refuses API operation when `MWS_R2_PUBLIC_BASE_URL` is missing. This prevents a silent return to the old `/media/* -> Worker -> R2` path and makes a configuration mistake obvious before production use.
+If `MWS_R2_PUBLIC_BASE_URL` is missing or invalid, CF V5.7 API requests fail explicitly instead of silently falling back to Worker-served media.
