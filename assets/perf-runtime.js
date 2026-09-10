@@ -1,11 +1,11 @@
-/* MAWANG Scheduler CF V5.7.1 - one-request public bootstrap + verified IndexedDB reuse */
+/* MAWANG Scheduler MWS Version 1.0.2 - one-request public bootstrap + verified IndexedDB reuse */
 (()=>{
   'use strict';
-  if(window.__mwsCf571Optimizer)return;
-  window.__mwsCf571Optimizer=true;
+  if(window.__mws102Optimizer)return;
+  window.__mws102Optimizer=true;
 
   const nativeFetch=window.fetch.bind(window);
-  const BUILD='CF V5.7.1';
+  const BUILD='MWS Version 1.0.2';
   const ETAG_KEY='mws_cf_v571_etag';
   const MANIFEST_KEY='mws_cf_v571_manifest';
   const MEDIA_BASE_KEY='mws_cf_v571_media_base';
@@ -18,7 +18,7 @@
   function syntheticJson(value,status=200,headers={}){
     return new Response(JSON.stringify(value),{
       status,
-      headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-mws-cf571-synthetic':'1',...headers}
+      headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-mws-102-synthetic':'1',...headers}
     });
   }
 
@@ -67,7 +67,7 @@
         tx.onabort=()=>reject(tx.error);
       })));
       db.close();
-    }catch(e){console.warn('CF V5.7.1 bundle cache write failed',e)}
+    }catch(e){console.warn('MWS 1.0.2 bundle cache write failed',e)}
   }
 
   async function hasCompleteCache(manifest){
@@ -102,7 +102,7 @@
 
     if(!res.ok)return {raw:res};
     const body=await res.json();
-    const etag=res.headers.get('etag')||`"${body?.globalVersion||'cf571'}"`;
+    const etag=res.headers.get('etag')||`"${body?.globalVersion||'mws102'}"`;
     bundle=body;
     if(body?.mediaBaseUrl)window.__mwsCf57MediaBaseUrl=body.mediaBaseUrl;
     try{
@@ -129,7 +129,7 @@
     if(url.origin!==location.origin||method!=='GET')return nativeFetch(input,init);
 
     if(url.pathname==='/api/health'){
-      return syntheticJson({ok:true,env:'cloudflare-production',backend:'D1 + R2',optimized:BUILD,mediaMode:'r2-public-direct'});
+      return syntheticJson({ok:true,env:'cloudflare-production',backend:'D1 + R2',optimized:BUILD,mediaMode:'r2-public-direct',build:BUILD});
     }
 
     if(url.pathname==='/api/manifest'){
@@ -163,25 +163,56 @@
   function forceVersion(){
     try{
       document.body?.setAttribute('data-build-version',BUILD);
-      document.querySelectorAll('[id^="mwsBuildVersionV5"], .sidebar-build-version-v52, .sidebar-build-version-v53, [class*="sidebar-build-version"]').forEach(label=>label.textContent=BUILD);
+      const labels=[...document.querySelectorAll('.sidebar [id^="mwsBuildVersionV5"], .sidebar .sidebar-build-version-v52, .sidebar .sidebar-build-version-v53, .sidebar [class*="sidebar-build-version"]')];
+      let keeper=labels.find(x=>x.classList.contains('sidebar-build-version-v53'))||labels[0]||null;
+      if(!keeper){
+        const save=document.getElementById('mwsSidebarSaveBtn');
+        if(save){keeper=document.createElement('div');keeper.className='sidebar-build-version-v53';save.before(keeper)}
+      }
+      for(const label of labels){
+        if(label===keeper){label.style.removeProperty('display');label.textContent=BUILD}
+        else label.style.setProperty('display','none','important');
+      }
+      if(keeper)keeper.textContent=BUILD;
     }catch(_){}
   }
 
-  function loadRuntimePatch(){
-    if(document.getElementById('mwsCf571RuntimeScript'))return;
+  function ensureProductStyle(){
+    if(document.getElementById('mws102StyleScript'))return;
+    const s=document.createElement('script');
+    s.id='mws102StyleScript';
+    s.src='assets/mws-1.0.2-style.js?v=1.0.2';
+    document.head.appendChild(s);
+  }
+
+  function loadProductRuntime(){
+    ensureProductStyle();
+    const load102=()=>{
+      if(document.getElementById('mws102RuntimeScript'))return;
+      const p=document.createElement('script');p.id='mws102RuntimeScript';p.src='assets/mws-1.0.2.js?v=1.0.2';document.body.appendChild(p);
+    };
+    const existing=document.getElementById('mwsCf571RuntimeScript');
+    if(existing){
+      if(existing.dataset.mwsLoaded==='1')load102();
+      else existing.addEventListener('load',()=>{existing.dataset.mwsLoaded='1';load102()},{once:true});
+      return;
+    }
     const s=document.createElement('script');
     s.id='mwsCf571RuntimeScript';
-    s.src='assets/cf-v5.7-runtime.js?v=5.7.1';
+    s.src='assets/cf-v5.7-runtime.js?v=1.0.2';
+    s.onload=()=>{s.dataset.mwsLoaded='1';load102()};
+    s.onerror=()=>load102();
     document.body.appendChild(s);
   }
 
   window.addEventListener('DOMContentLoaded',forceVersion,{once:true});
-  window.addEventListener('load',()=>{forceVersion();loadRuntimePatch()},{once:true});
-  let tries=0;const versionTimer=setInterval(()=>{forceVersion();if(++tries>=32)clearInterval(versionTimer)},250);
+  window.addEventListener('load',()=>{forceVersion();loadProductRuntime()},{once:true});
+  window.addEventListener('mws:cloud-ready',forceVersion);
+  let tries=0;const versionTimer=setInterval(()=>{forceVersion();if(++tries>=80)clearInterval(versionTimer)},250);
 
   if(document.readyState==='loading'){
-    document.write('<script src="assets/perf-runtime-base.js?v=5.7.1"><\/script>');
+    document.write('<script src="assets/perf-runtime-base.js?v=1.0.2"><\/script>');
   }else{
-    const s=document.createElement('script');s.src='assets/perf-runtime-base.js?v=5.7.1';document.head.appendChild(s);
+    const s=document.createElement('script');s.src='assets/perf-runtime-base.js?v=1.0.2';document.head.appendChild(s);
   }
 })();
