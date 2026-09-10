@@ -6,7 +6,7 @@ This branch is an isolated Cloudflare test copy of the current TEST V5.5 product
 
 - Static website: Cloudflare Workers Static Assets
 - Shared workspace data: Cloudflare D1
-- Contact / workspace images: Cloudflare R2
+- Contact / workspace images: Cloudflare R2 Standard
 - Browser cache: IndexedDB, part-by-part version cache
 - Admin authentication only: existing Supabase Auth + `admin_profiles`
 
@@ -14,14 +14,17 @@ The heavy workspace payload and images no longer use Supabase after Cloudflare b
 
 ## One-time deployment
 
+Before importing the repository, activate R2 once in Cloudflare Dashboard under Storage & databases -> R2. Cloudflare currently requires an R2 subscription/checkout setup even though Standard R2 includes a free monthly tier. Depending on the account, Cloudflare may request a billing profile/payment method during this activation.
+
 1. Cloudflare Dashboard -> Workers & Pages -> Create application -> Import a repository.
 2. Connect GitHub and select `AIMakerBenny/mwschedueler`.
 3. Select production branch `cloudflare-v5.5-test`.
-4. Deploy command: `npm run deploy`.
-5. Cloudflare reads `wrangler.jsonc` and automatically provisions the `DB` D1 binding and `IMAGES` R2 binding when supported by the account.
-6. Deploy.
+4. Make sure the Worker name is `mawang-scheduler-v55-test` so it matches `wrangler.jsonc`.
+5. Deploy command: `npm run deploy`.
+6. Cloudflare reads `wrangler.jsonc` and automatically provisions the `DB` D1 binding and `IMAGES` R2 binding when automatic resource provisioning is available on the account.
+7. Deploy.
 
-The Worker name is `mawang-scheduler-v55-test`.
+This project pins Wrangler to version 4.68 or newer. The configuration uses Workers Static Assets plus automatic D1/R2 resource provisioning.
 
 ## First launch
 
