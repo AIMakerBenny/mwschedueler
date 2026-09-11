@@ -9,7 +9,9 @@ function stopOld(){try{const b=document.body;for(const key of ['__mwsV104BuildOb
 function load(src,id,done){if(document.getElementById(id)){done?.();return}const s=document.createElement('script');s.id=id;s.src=src;s.onload=()=>done?.();document.body.appendChild(s)}
 function install(){
   load('/assets/content-planner-host-v104.js?v=1.0.4','mwsContentPlannerHostBaseV104',()=>{forcePlanner();forceVersion()});
-  load('/assets/tools-v1.0.5.js?v=1.0.5','mwsToolsScriptV105',()=>load('/assets/tools-v1.0.6-final.js?v=1.0.6','mwsToolsFinalScriptV106'));
+  load('/assets/tools-v1.0.5.js?v=1.0.5','mwsToolsScriptV105',()=>{
+    load('/assets/tools-v1.0.6-bridge.js?v=1.0.6','mwsToolsBridgeScriptV106',()=>load('/assets/tools-v1.0.6-final.js?v=1.0.6','mwsToolsFinalScriptV106'));
+  });
   forceVersion();forcePlanner();
 }
 window.addEventListener('DOMContentLoaded',install,{once:true});
