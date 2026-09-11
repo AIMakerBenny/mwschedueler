@@ -175,6 +175,14 @@
     document.body.appendChild(s);
   }
 
+  function loadContentPlannerHostV103(){
+    if(document.getElementById('mwsContentPlannerHostScriptV103'))return;
+    const s=document.createElement('script');
+    s.id='mwsContentPlannerHostScriptV103';
+    s.src='assets/content-planner-host.js?v=1.0.3';
+    document.body.appendChild(s);
+  }
+
   const PAGE_SCALE_KEY_V101='mws_page_text_scales_v54';
   const clampPageScaleV101=value=>Math.max(70,Math.min(180,Math.round((Number(value)||100)/5)*5));
 
@@ -263,11 +271,12 @@
   }
 
   window.mwsV101ApplyPageLayoutScale=applyPageLayoutScaleV101;
-  window.addEventListener('DOMContentLoaded',()=>{forceVersion();installReleaseVersionGuardV101();installPageScaleBridgeV101()},{once:true});
-  window.addEventListener('load',()=>{forceVersion();loadRuntimePatch();installReleaseVersionGuardV101();installPageScaleBridgeV101()},{once:true});
+  window.addEventListener('DOMContentLoaded',()=>{forceVersion();installReleaseVersionGuardV101();installPageScaleBridgeV101();loadContentPlannerHostV103()},{once:true});
+  window.addEventListener('load',()=>{forceVersion();loadRuntimePatch();installReleaseVersionGuardV101();installPageScaleBridgeV101();loadContentPlannerHostV103()},{once:true});
   window.addEventListener('mawang:datachange',()=>setTimeout(()=>{installReleaseVersionGuardV101();installPageScaleBridgeV101()},0));
   [50,150,350,800,1500,3000,6000,9000].forEach(ms=>setTimeout(()=>{installReleaseVersionGuardV101();installPageScaleBridgeV101()},ms));
   let tries=0;const versionTimer=setInterval(()=>{forceVersion();if(++tries>=32)clearInterval(versionTimer)},250);
+  if(document.readyState!=='loading')setTimeout(loadContentPlannerHostV103,0);
 
   if(document.readyState==='loading'){
     document.write('<script src="assets/perf-runtime-base.js?v=5.7.1"><\/script>');
