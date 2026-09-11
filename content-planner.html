@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MAWANG Content Planner V1.0.5</title>
+<title>MAWANG Content Planner V1.0.10</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Gowun+Dodum&family=Jua&family=Nanum+Gothic:wght@400;700;800&family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -83,7 +83,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .resize-handle{position:absolute;width:14px;height:14px;right:-7px;bottom:-7px;border-radius:50%;background:#fff;border:3px solid #7658e7;cursor:nwse-resize;display:none}
 .node.selected .resize-handle{display:block}
 .text-node{background:transparent;padding:7px;color:inherit;box-shadow:none}.text-node .editable{width:100%;height:100%;outline:0;white-space:pre-wrap;overflow:hidden}
-.sticky-node{padding:18px 15px 12px;background:#fff09a;color:#292814;transform:rotate(-1deg);box-shadow:0 9px 20px rgba(0,0,0,.18)}.sticky-node .editable{outline:0;width:100%;height:100%;white-space:pre-wrap}
+.sticky-node{padding:18px 15px 12px;background:#fff09a;color:#292814;transform:rotate(0deg);transform-origin:center center;box-shadow:0 9px 20px rgba(0,0,0,.18)}.sticky-node .editable{outline:0;width:100%;height:100%;white-space:pre-wrap}
 .shape-node{background:rgba(139,92,246,.12);border:3px solid #7c5cff}.shape-node.ellipse{border-radius:50%}.shape-node.diamond{transform:rotate(45deg)}.shape-node.diamond .shape-label{transform:rotate(-45deg)}
 .shape-label{height:100%;display:grid;place-items:center;text-align:center;padding:12px;font-weight:800;outline:0}
 .image-node{background:#e8ebf1;border:2px solid #cfd5df;overflow:hidden}.image-node img{width:100%;height:100%;display:block;object-fit:cover}
@@ -155,7 +155,7 @@ body{font-size:14px!important}
 .node.selected.text-node .editable,.node.selected.sticky-node .editable{padding-right:30px!important}
 .draw-size-panel{min-width:270px!important}.draw-size-slider{width:100%;accent-color:#8b5cf6}.draw-size-preview{height:66px;margin-top:8px;border:1px solid var(--line);border-radius:10px;background:#080d18;display:flex;align-items:center;justify-content:center;gap:14px;overflow:hidden}.draw-size-sample{display:block;width:8px;height:8px;max-width:54px;max-height:54px;border-radius:50%;background:#7c5cff;border:1px solid rgba(255,255,255,.65);box-shadow:0 0 0 1px rgba(0,0,0,.35)}.draw-size-preview b{min-width:44px;font-size:13px;color:#e7ecfb}
 .draw-cursor{display:none;position:absolute;z-index:90;pointer-events:none;border-radius:50%;transform:translate(-50%,-50%);box-sizing:border-box;box-shadow:0 0 0 1px rgba(0,0,0,.18)}#board.drawing .draw-cursor.show{display:block}#board.drawing.eraser-mode .draw-cursor{background:rgba(255,255,255,.2)!important;border:2px solid #ef4444!important}
-.canvas-add{width:40px!important;min-width:40px!important;height:40px!important;padding:0!important;font-size:24px!important;line-height:1!important;display:grid!important;place-items:center!important;flex:none!important}.canvas-tabs{overflow-x:auto!important}.workspace-head{background:#fff!important;border-bottom:1px solid #d8dde7!important}.workspace-head .status{color:#667085!important}
+.canvas-add{width:40px!important;min-width:40px!important;height:40px!important;padding:0!important;font-size:24px!important;line-height:1!important;display:grid!important;place-items:center!important;flex:none!important}.canvas-tabs{overflow-x:auto!important}.workspace-head{background:#090e19!important;border-bottom:1px solid #182237!important}.workspace-head .status{color:#94a3c4!important}
 .text-node{padding:7px 9px!important}.text-node .editable{height:auto!important;min-height:1.25em!important;overflow:visible!important;line-height:1.35!important;white-space:pre-wrap!important}.sticky-node .editable{height:auto!important;min-height:1.25em!important;overflow:visible!important;line-height:1.42!important}
 .shape-node{background:transparent!important;border:0!important;box-shadow:none!important}.shape-node>svg{width:100%;height:100%;display:block;overflow:visible;pointer-events:none}.shape-label{display:none!important}
 .sticker-node{background:transparent!important;box-shadow:none!important;padding:0!important}.sticker-art{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;filter:drop-shadow(0 5px 7px rgba(0,0,0,.24))}
@@ -167,6 +167,8 @@ body{font-size:14px!important}
 .canvas-info-participants{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:260px;overflow:auto;margin-top:8px}.canvas-info-person{border:1px solid var(--line);background:#10182a;border-radius:10px;padding:8px;display:flex;gap:9px;align-items:center;font-size:12px}.canvas-info-person input{width:auto}.canvas-info-person .av{width:34px;height:34px;border-radius:9px;overflow:hidden;background:#56449a;display:grid;place-items:center;font-weight:900;flex:none}.canvas-info-person .av img{width:100%;height:100%;object-fit:cover}.canvas-info-person span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .archive{padding:24px!important}.archive-head h1{font-size:32px!important}.archive-tools input,.archive-tools select{font-size:14px!important}.proposal-title{font-size:18px!important}.proposal-summary{font-size:13px!important}.proposal-meta{font-size:11px!important}
 @media(max-width:1280px){.creator-toolbar{min-height:140px!important}.mode-tabs button{min-width:142px!important}.sticker-grid{grid-template-columns:repeat(5,68px)}.canvas-info-participants{grid-template-columns:1fr}}
+.submit-action-stack{display:flex;flex-direction:column;gap:5px;align-items:stretch}.planner-fullscreen-enter{font-weight:950!important;min-width:120px}.planner-fullscreen-blank{display:none}#plannerFullscreenExit{display:none}
+body.planner-fullscreen{overflow:hidden!important}body.planner-fullscreen .topbar{display:none!important}body.planner-fullscreen .app{height:100vh!important}body.planner-fullscreen #creatorMode.creator.active{display:grid!important;grid-template-columns:72vw 28vw!important;grid-template-rows:50vh 50vh!important;height:100vh!important;min-height:0!important}body.planner-fullscreen #creatorMode .workspace{grid-column:1!important;grid-row:1/3!important;height:100vh!important;min-height:0!important;border-right:1px solid var(--line)!important}body.planner-fullscreen #creatorMode .creator-toolbar{grid-column:2!important;grid-row:1!important;min-height:0!important;height:50vh!important;max-height:50vh!important;overflow:auto!important;align-content:flex-start!important;border-bottom:1px solid var(--line)!important}body.planner-fullscreen #creatorMode .planner-fullscreen-blank{display:block!important;grid-column:2!important;grid-row:2!important;background:#070a12!important;border-left:1px solid var(--line)!important}body.planner-fullscreen #plannerFullscreenExit{display:block!important;position:fixed;right:14px;top:14px;z-index:5000;border:1px solid #8b5cf6;background:#241b47;color:#fff;border-radius:11px;padding:10px 14px;font-weight:900;box-shadow:0 12px 32px rgba(0,0,0,.35)}body.planner-fullscreen .workspace-head{background:#090e19!important;border-bottom-color:#182237!important}
 </style>
 
 </head>
@@ -185,7 +187,7 @@ body{font-size:14px!important}
         <div class="delete-canvas-actions"><button class="btn small" onclick="hideCanvasDeleteConfirm()">취소</button><button class="btn small danger" onclick="confirmDeleteCanvas()">확인</button></div>
       </div>
     </div>
-    <button class="btn small primary" onclick="openSubmitModal(false)">기획안 제출</button>
+    <div class="submit-action-stack"><button class="btn small primary" onclick="openSubmitModal(false)">기획안 제출</button><button class="btn small planner-fullscreen-enter" type="button" onclick="enterPlannerFullscreen()">전체화면</button></div>
   </div>
 </header>
 
@@ -254,6 +256,7 @@ body{font-size:14px!important}
     </div>
 
     <aside class="rightbar"><div id="inspector"><div class="inspector-empty">선택 요소 정보</div></div><input id="draftName" class="hidden-input"><input id="draftAuthor" class="hidden-input"><textarea id="draftSummary" class="hidden-input"></textarea><div id="elementCountChip" class="hidden-input"></div><div id="drawCountChip" class="hidden-input"></div><div id="draftTitleChip" class="hidden-input"></div><div id="contactSourceLabel" class="hidden-input"></div></aside>
+    <div id="plannerFullscreenBlank" class="planner-fullscreen-blank" aria-hidden="true"></div>
   </section>
 
   <section id="archiveMode" class="archive">
@@ -264,6 +267,7 @@ body{font-size:14px!important}
     <div id="proposalGrid" class="proposal-grid"></div>
   </section>
 </main>
+<button id="plannerFullscreenExit" type="button" onclick="exitPlannerFullscreen()">전체화면 취소</button>
 
 <input id="imageInput" class="hidden-input" type="file" accept="image/*">
 <input id="videoInput" class="hidden-input" type="file" accept="video/*">
@@ -333,7 +337,7 @@ const uid=()=>crypto.randomUUID?crypto.randomUUID():'id-'+Date.now()+'-'+Math.ra
 const deep=v=>structuredClone?structuredClone(v):JSON.parse(JSON.stringify(v));
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-let state=defaultState(), selectedIds=[], tool='select', zoom=.75, drawActive=false, currentStroke=null;
+let state=defaultState(), selectedIds=[], tool='brush', zoom=.75, drawActive=false, currentStroke=null;
 let undoStack=[],redoStack=[],saveTimer=0,currentViewerId=null,contactDb=[];
 function defaultState(){return{schema:1,background:'grid',elements:[],strokes:[],connectors:[],meta:{title:'제목 없는 기획',author:'',summary:''},activeProposalId:null,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}}
 function demoContacts(){return[
@@ -381,6 +385,18 @@ function requestSchedulerContacts(){
 
 function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),1800)}
 function openModal(id){$(id)?.classList.add('open')} function closeModal(id){$(id)?.classList.remove('open')}
+
+function enterPlannerFullscreen(){
+  switchMode('creator');document.body.classList.add('planner-fullscreen');
+  try{const req=document.documentElement.requestFullscreen?.();if(req?.catch)req.catch(()=>{})}catch(_){}
+  setTimeout(()=>{resizePlannerCanvas?.();redrawDrawCanvas?.();renderConnectors?.()},40)
+}
+function exitPlannerFullscreen(){
+  document.body.classList.remove('planner-fullscreen');
+  try{const req=document.fullscreenElement&&document.exitFullscreen?.();if(req?.catch)req.catch(()=>{})}catch(_){}
+  setTimeout(()=>{resizePlannerCanvas?.();redrawDrawCanvas?.();renderConnectors?.()},40)
+}
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('planner-fullscreen')){document.body.classList.remove('planner-fullscreen');setTimeout(()=>{resizePlannerCanvas?.();redrawDrawCanvas?.();renderConnectors?.()},40)}});
 document.querySelectorAll('.modal').forEach(m=>m.addEventListener('pointerdown',e=>{if(e.target===m)m.classList.remove('open')}));
 
 function switchMode(mode){
@@ -506,6 +522,8 @@ function renderConnectors(){
   const svg=$('connectorSvg');svg.innerHTML='<defs><marker id="smartArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6f52e5"/></marker></defs>';
   for(const c of state.connectors||[]){const a=getEl(c.from),b=getEl(c.to);if(!a||!b)continue;const x1=a.x+a.w/2,y1=a.y+a.h/2,x2=b.x+b.w/2,y2=b.y+b.h/2;const bend=Math.max(45,Math.abs(x2-x1)*.32);svg.insertAdjacentHTML('beforeend',`<path d="M${x1},${y1} C${x1+bend},${y1} ${x2-bend},${y2} ${x2},${y2}" fill="none" stroke="${c.color||'#6f52e5'}" stroke-width="${c.width||4}" marker-end="url(#smartArrow)" opacity=".85"/>`)}
 }
+function stickyRotationDeg(e){const raw=String(e?.style?.transform||'');const m=raw.match(/rotate\((-?[\d.]+)deg\)/);return clamp(Number(m?.[1])||0,-45,45)}
+function updateStickyRotation(v){const e=getEl(selectedIds[0]);if(!e||e.type!=='sticky')return;const deg=clamp(Number(v)||0,-45,45);e.style=e.style||{};e.style.transform=`rotate(${deg}deg)`;const node=document.querySelector(`.node[data-id="${CSS.escape(e.id)}"]`);if(node)node.style.transform=e.style.transform;const out=$('stickyRotationValue');if(out)out.textContent=deg+'°';touch()}
 function renderInspector(){
   const box=$('inspector');if(!selectedIds.length){box.innerHTML='<div class="inspector-empty">캔버스 요소를 클릭하면 위치, 크기, 레이어, 색상, 역할 등의 속성을 편집할 수 있습니다.<br><br><span class="kbd">Shift</span> + 클릭으로 2개를 선택하면 스마트 연결선을 만들 수 있습니다.</div>';return}
   if(selectedIds.length>1){box.innerHTML=`<div class="side-card"><b>${selectedIds.length}개 요소 선택</b><div class="layer-row" style="margin-top:10px"><button class="btn small" onclick="moveLayer('front')">맨 앞으로</button><button class="btn small" onclick="moveLayer('back')">맨 뒤로</button><button class="btn small danger" onclick="deleteSelected()">삭제</button></div></div><div class="side-card"><button class="btn small primary" style="width:100%" onclick="connectSelected()">선택 2개 스마트 연결</button></div>`;return}
@@ -516,6 +534,7 @@ function renderInspector(){
   if(e.type==='timeline')extra=`<div class="side-card"><label>타임라인 제목</label><input value="${esc(e.data.title||'')}" oninput="updateSelectedData('title',this.value)"><div id="timelineInspector">${(e.data.segments||[]).map((s,i)=>`<div class="inline" style="margin-top:6px"><input value="${esc(s.label)}" oninput="updateTimeline(${i},'label',this.value)"><input style="width:65px" type="number" min="0" value="${Number(s.minutes)||0}" oninput="updateTimeline(${i},'minutes',Number(this.value))"><button class="btn small danger" onclick="removeTimeline(${i})">×</button></div>`).join('')}</div><button class="btn small" style="width:100%;margin-top:7px" onclick="addTimelineRow()">구간 추가</button></div>`;
   if(e.type==='checklist')extra=`<div class="side-card"><label>블록 제목</label><input value="${esc(e.data.title||'')}" oninput="updateSelectedData('title',this.value)">${(e.data.items||[]).map((it,i)=>`<div class="inline" style="margin-top:6px"><input value="${esc(it.text)}" oninput="updateChecklist(${i},this.value)"><button class="btn small danger" onclick="removeChecklist(${i})">×</button></div>`).join('')}<button class="btn small" style="width:100%;margin-top:7px" onclick="addChecklistRow()">항목 추가</button></div>`;
   if(e.type==='frame')extra=`<div class="side-card"><label>영역 제목</label><input value="${esc(e.data.title||'')}" oninput="updateSelectedData('title',this.value)"><div style="font-size:9px;color:var(--muted);margin-top:7px">프레임을 움직이면 현재 프레임 안에 들어있는 요소도 함께 이동합니다.</div></div>`;
+  if(e.type==='sticky'){const rot=stickyRotationDeg(e);extra=`<div class="side-card"><label>포스트잇 기울기</label><div class="range-row"><input type="range" min="-45" max="45" step="1" value="${rot}" onpointerdown="snapshot()" oninput="updateStickyRotation(this.value)"><span id="stickyRotationValue">${rot}°</span></div></div>`}
   if(e.type==='sticker')extra=`<div class="side-card"><label>스티커 문자/이모지</label><input value="${esc(e.data.symbol||'')}" oninput="updateSelectedData('symbol',this.value)"></div>`;
   box.innerHTML=`<div class="side-card"><div style="font-weight:900;margin-bottom:8px">${esc(e.type.toUpperCase())}</div><label>위치 X / Y</label><div class="inline"><input type="number" value="${Math.round(e.x)}" onchange="setGeom('x',this.value)"><input type="number" value="${Math.round(e.y)}" onchange="setGeom('y',this.value)"></div><label style="margin-top:8px">크기 W / H</label><div class="inline"><input type="number" value="${Math.round(e.w)}" onchange="setGeom('w',this.value)"><input type="number" value="${Math.round(e.h)}" onchange="setGeom('h',this.value)"></div></div><div class="side-card"><label>레이어 Z ${e.z}</label><div class="layer-row"><button class="btn small" onclick="moveLayer('up')">앞</button><button class="btn small" onclick="moveLayer('down')">뒤</button><button class="btn small" onclick="moveLayer('front')">맨앞</button><button class="btn small" onclick="moveLayer('back')">맨뒤</button></div></div>${extra}<div class="side-card"><button class="btn small danger" style="width:100%" onclick="deleteSelected()">요소 삭제</button></div>`
 }
@@ -574,7 +593,7 @@ async function renderBoardToCanvas(source=state){
     if(e.type==='video'){c.fillStyle='#111827';roundRect(c,x,y,w,h,12,true);c.fillStyle='#fff';c.font='bold 28px sans-serif';c.textAlign='center';c.fillText('▶ VIDEO',x+w/2,y+h/2);c.textAlign='left';continue}
     if(e.type==='link'){c.fillStyle='#fff';roundRect(c,x,y,w,h,12,true);c.strokeStyle='#cfd6e2';roundRect(c,x,y,w,h,12,false,true);c.fillStyle='#6f52e5';c.font='bold 11px sans-serif';c.fillText(e.data.host||'WEB LINK',x+14,y+22);c.fillStyle='#172033';c.font='bold 18px sans-serif';wrapText(c,e.data.title||'링크',x+14,y+48,w-28,22,2);c.fillStyle='#657085';c.font='11px sans-serif';wrapText(c,e.data.desc||'',x+14,y+88,w-28,15,3);continue}
     if(e.type==='timeline'||e.type==='checklist'){c.fillStyle='#fff';roundRect(c,x,y,w,h,12,true);c.strokeStyle='#cfd6e2';roundRect(c,x,y,w,h,12,false,true);c.fillStyle='#172033';c.font='bold 16px sans-serif';c.fillText(e.data.title||'',x+12,y+24);c.font='11px sans-serif';let yy=y+48;if(e.type==='timeline'){for(const s of e.data.segments||[]){c.fillText(`${s.label}  ·  ${Number(s.minutes)||0}분`,x+14,yy);yy+=19}}else{for(const it of e.data.items||[]){c.fillText(`${it.done?'☑':'☐'} ${it.text}`,x+14,yy);yy+=19}}continue}
-    if(e.type==='sticky'){c.fillStyle='#fff09a';c.fillRect(x,y,w,h);c.fillStyle='#292814';c.font=`${parseInt(e.style?.fontSize)||18}px sans-serif`;wrapText(c,e.data.text||'',x+14,y+30,w-28,24,12);continue}
+    if(e.type==='sticky'){c.save();c.translate(x+w/2,y+h/2);c.rotate(stickyRotationDeg(e)*Math.PI/180);c.fillStyle='#fff09a';c.fillRect(-w/2,-h/2,w,h);c.fillStyle='#292814';c.font=`${parseInt(e.style?.fontSize)||18}px sans-serif`;wrapText(c,e.data.text||'',-w/2+14,-h/2+30,w-28,24,12);c.restore();continue}
     if(e.type==='shape'){c.save();c.fillStyle=e.style?.fill||'rgba(124,92,255,.12)';c.strokeStyle=e.style?.borderColor||'#7c5cff';c.lineWidth=3;if(e.data.shape==='ellipse'){c.beginPath();c.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);c.fill();c.stroke()}else{c.fillRect(x,y,w,h);c.strokeRect(x,y,w,h)}c.fillStyle=e.style?.color||'#172033';c.font=`bold ${parseInt(e.style?.fontSize)||18}px sans-serif`;c.textAlign='center';c.fillText(e.data.label||'',x+w/2,y+h/2+6);c.textAlign='left';c.restore();continue}
     if(e.type==='text'){c.fillStyle=e.style?.color||'#172033';c.font=`${e.style?.fontWeight||'700'} ${parseInt(e.style?.fontSize)||24}px sans-serif`;c.textAlign=e.style?.textAlign||'left';const tx=c.textAlign==='center'?x+w/2:c.textAlign==='right'?x+w:x;wrapText(c,e.data.text||'',tx,y+30,w,Math.max(22,(parseInt(e.style?.fontSize)||24)*1.25),10);c.textAlign='left'}
   }
@@ -689,17 +708,17 @@ function renderCanvasTabs(){
 function syncCurrentDocumentV104(){const d=currentDocumentV104();if(!d)return;d.state=deep(state);d.name=String(state.meta?.title||d.name||'새 메모')}
 function newCanvasTab(){
   syncCurrentDocumentV104();
-  const n=documentsV104.length+1,title=`새 메모 ${n}`,doc={id:uid(),name:title,state:v104DefaultState(title)};documentsV104.push(doc);activeDocumentId=doc.id;state=deep(doc.state);selectedIds=[];undoStack=[];redoStack=[];setTool('select');syncMetaInputs();render();renderCanvasTabs();persistDocumentsV104();toast(`${title} 생성`)
+  const n=documentsV104.length+1,title=`새 메모 ${n}`,doc={id:uid(),name:title,state:v104DefaultState(title)};documentsV104.push(doc);activeDocumentId=doc.id;state=deep(doc.state);selectedIds=[];undoStack=[];redoStack=[];setTool('brush');syncMetaInputs();render();renderCanvasTabs();persistDocumentsV104();toast(`${title} 생성`)
 }
 function switchCanvasTab(id){
-  if(id===activeDocumentId)return;syncCurrentDocumentV104();const doc=documentsV104.find(d=>d.id===id);if(!doc)return;activeDocumentId=id;state=deep(doc.state);state.meta=state.meta||{title:doc.name||'새 메모',author:'',summary:'',participantIds:[]};if(!Array.isArray(state.meta.participantIds))state.meta.participantIds=[];selectedIds=[];undoStack=[];redoStack=[];setTool('select');syncMetaInputs();render();renderCanvasTabs();persistDocumentsV104()
+  if(id===activeDocumentId)return;syncCurrentDocumentV104();const doc=documentsV104.find(d=>d.id===id);if(!doc)return;activeDocumentId=id;state=deep(doc.state);state.meta=state.meta||{title:doc.name||'새 메모',author:'',summary:'',participantIds:[]};if(!Array.isArray(state.meta.participantIds))state.meta.participantIds=[];selectedIds=[];undoStack=[];redoStack=[];setTool('brush');syncMetaInputs();render();renderCanvasTabs();persistDocumentsV104()
 }
 function requestDeleteCanvas(id,event){pendingDeleteDocumentId=id||activeDocumentId;const box=$('canvasDeleteConfirm');if(box)box.hidden=false;event?.stopPropagation()}
 function hideCanvasDeleteConfirm(){pendingDeleteDocumentId=null;const box=$('canvasDeleteConfirm');if(box)box.hidden=true}
 function confirmDeleteCanvas(){
   const id=pendingDeleteDocumentId||activeDocumentId;if(!id)return;const idx=documentsV104.findIndex(d=>d.id===id);if(idx<0)return hideCanvasDeleteConfirm();documentsV104.splice(idx,1);
   if(!documentsV104.length){const doc={id:uid(),name:'새 메모 1',state:v104DefaultState('새 메모 1')};documentsV104.push(doc)}
-  if(id===activeDocumentId){const next=documentsV104[Math.min(idx,documentsV104.length-1)];activeDocumentId=next.id;state=deep(next.state);selectedIds=[];undoStack=[];redoStack=[];setTool('select');syncMetaInputs();render()}
+  if(id===activeDocumentId){const next=documentsV104[Math.min(idx,documentsV104.length-1)];activeDocumentId=next.id;state=deep(next.state);selectedIds=[];undoStack=[];redoStack=[];setTool('brush');syncMetaInputs();render()}
   hideCanvasDeleteConfirm();renderCanvasTabs();persistDocumentsV104();toast('캔버스 삭제 완료')
 }
 newDraft=newCanvasTab;
@@ -730,7 +749,7 @@ function toggleShapeMenu(event){closeDropdownsV104('shapeMenu');$('shapeMenu').h
 function toggleStickerMenu(event){closeDropdownsV104('stickerMenu');$('stickerMenu').hidden=!$('stickerMenu').hidden;renderStickerGridV104();event?.stopPropagation()}
 function renderShapeGridV104(){const g=$('shapeGrid');if(g)g.innerHTML=SHAPES_V104.map(x=>`<button class="shape-pick" title="${x.name}" onclick="beginShapePlacement('${x.id}')">${shapeSvgMarkupV104({data:{shape:x.id},style:{borderColor:'#8b5cf6',fill:'rgba(139,92,246,.15)'}})}</button>`).join('')}
 function stickerDataUriV104(id){const x=STICKERS_V104.find(s=>s.id===id)||STICKERS_V104[0];if(x.src)return x.src;return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(x.svg)}
-function renderStickerGridV104(){const g=$('stickerGrid');if(g)g.innerHTML=STICKERS_V104.map(x=>`<button class="sticker-pick" title="${x.name}" onclick="beginStickerPlacement('${x.id}')"><img src="${stickerDataUriV104(x.id)}" alt="${x.name}"></button>`).join('')}
+function renderStickerGridV104(){const g=$('stickerGrid');if(!g)return;const ordered=[...STICKERS_V104.filter(x=>/^user/i.test(String(x.id||''))),...STICKERS_V104.filter(x=>!/^user/i.test(String(x.id||'')))];g.innerHTML=ordered.map(x=>`<button class="sticker-pick" title="${x.name}" onclick="beginStickerPlacement('${x.id}')"><img src="${stickerDataUriV104(x.id)}" alt="${x.name}"></button>`).join('')}
 
 function shapeSvgMarkupV104(e){
   const type=e?.data?.shape||'rect',stroke=e?.style?.borderColor||'#7c5cff',fill=e?.style?.fill||hexToRgbaV104(stroke,.15);let body='';
@@ -761,7 +780,7 @@ function setBackground(bg){snapshot();state.background=bg||'paper';$('board').cl
 
 function addTextAtV104(x=180,y=140,w=300,h=60){setTool('select');return addElement('text',{x,y,w,h,data:{text:'텍스트를 입력하세요'},style:{fontSize:'24px',fontWeight:'700',fontFamily:"'Noto Sans KR',sans-serif",color:'#172033',textAlign:'left'}})}
 function addText(){return addTextAtV104(180+Math.random()*180,140+Math.random()*120,300,60)}
-function addSticky(){setTool('select');return addElement('sticky',{w:240,h:150,data:{text:'아이디어 메모'},style:{fontFamily:"'Noto Sans KR',sans-serif",fontSize:'20px',textAlign:'left'}})}
+function addSticky(){setTool('select');return addElement('sticky',{w:240,h:150,data:{text:'아이디어 메모'},style:{fontFamily:"'Noto Sans KR',sans-serif",fontSize:'20px',textAlign:'left',transform:'rotate(0deg)'}})}
 function addShape(shape='rect'){beginShapePlacement(shape)}
 function addArrow(){beginShapePlacement('arrowRight')}
 function addSticker(id='star'){beginStickerPlacement(id)}
@@ -861,7 +880,7 @@ function setupPlannerV104(){
 }
 
 window.addEventListener('resize',()=>{fitViewer();resizePlannerCanvas()});
-setZoom(1);setTool('select');setupPlannerV104();loadDraft();renderArchive();requestSchedulerContacts();switchMode('creator');
+setZoom(1);setTool('brush');setupPlannerV104();loadDraft();renderArchive();requestSchedulerContacts();switchMode('creator');
 </script>
 </body>
 </html>

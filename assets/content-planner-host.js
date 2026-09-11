@@ -1,15 +1,15 @@
-/* CF MWS V 1.0.9 - consolidated Content Planner host + single tools bundle */
+/* CF MWS V 1.0.10 - consolidated Content Planner host + single tools bundle */
 (()=>{
 'use strict';
-if(window.__mwsContentPlannerHostCleanV109)return;window.__mwsContentPlannerHostCleanV109=1;
-const BUILD='CF MWS V 1.0.9';
+if(window.__mwsContentPlannerHostCleanV110)return;window.__mwsContentPlannerHostCleanV110=1;
+const BUILD='CF MWS V 1.0.10';
 const TAB='contentPlanner';
 const FRAME_ID='mwsContentPlannerFrame';
-const FRAME_URL='/content-planner.html?v=1.0.5';
-const TOOLS_URL='/assets/tools.js?v=1.0.9';
+const FRAME_URL='/content-planner.html?v=1.0.10';
+const TOOLS_URL='/assets/tools.js?v=1.0.10';
 function syncGlobals(){try{if(typeof data!=='undefined')window.data=data}catch(_){ }try{if(typeof saveData==='function'&&!window.saveData)window.saveData=saveData}catch(_){ }try{if(typeof persist==='function'&&!window.persist)window.persist=persist}catch(_){ }}
 function forceVersion(){try{document.body?.setAttribute('data-build-version',BUILD);document.querySelectorAll('[id^="mwsBuildVersionV5"],#mwsBuildVersion,.sidebar-build-version-v52,.sidebar-build-version-v53,[class*="sidebar-build-version"]').forEach(label=>{if(label.textContent!==BUILD)label.textContent=BUILD})}catch(_){ }}
-function ensureStyle(){if(document.getElementById('mwsContentPlannerHostStyleV109Clean'))return;const style=document.createElement('style');style.id='mwsContentPlannerHostStyleV109Clean';style.textContent=`
+function ensureStyle(){if(document.getElementById('mwsContentPlannerHostStyleV110Clean'))return;const style=document.createElement('style');style.id='mwsContentPlannerHostStyleV110Clean';style.textContent=`
 #contentPlanner{padding:0!important;zoom:1!important;font-size:inherit!important;--ui-text-scale:1!important;overflow:hidden!important}
 #mwsContentPlannerShell{height:calc(100vh - 92px);min-height:560px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:#070a12}
 #mwsContentPlannerFrame{display:block;width:100%;height:100%;border:0;background:#070a12}
@@ -50,11 +50,11 @@ function ensureStyle(){if(document.getElementById('mwsContentPlannerHostStyleV10
 function rootData(){syncGlobals();try{return window.data||null}catch(_){return null}}
 function contactsForPlanner(){const d=rootData();try{return(Array.isArray(d?.contacts)?d.contacts:[]).map(c=>({id:String(c?.id||''),name:String(c?.name||''),labels:Array.isArray(c?.labels)?c.labels.map(String):[],image:typeof c?.image==='string'?c.image:'',notes:typeof c?.notes==='string'?c.notes:''})).filter(c=>c.id&&c.name)}catch(_){return[]}}
 function sendContacts(){const frame=document.getElementById(FRAME_ID);if(!frame?.contentWindow)return;try{frame.contentWindow.postMessage({type:'mws:planner-contacts',contacts:contactsForPlanner()},location.origin)}catch(error){console.warn('Content Planner contact sync failed',error)}}
-function ensureSection(){const duplicates=[...document.querySelectorAll(`#${TAB}`)];if(duplicates.length>1)duplicates.slice(1).forEach(x=>x.remove());let section=document.getElementById(TAB);if(section)return section;const main=document.querySelector('.main');if(!main)return null;section=document.createElement('section');section.id=TAB;section.className='section';section.innerHTML=`<div id="mwsContentPlannerShell"><iframe id="${FRAME_ID}" title="MAWANG Content Planner" referrerpolicy="same-origin" allow="clipboard-write"></iframe></div>`;main.appendChild(section);return section}
+function ensureSection(){const duplicates=[...document.querySelectorAll(`#${TAB}`)];if(duplicates.length>1)duplicates.slice(1).forEach(x=>x.remove());let section=document.getElementById(TAB);if(section)return section;const main=document.querySelector('.main');if(!main)return null;section=document.createElement('section');section.id=TAB;section.className='section';section.innerHTML=`<div id="mwsContentPlannerShell"><iframe id="${FRAME_ID}" title="MAWANG Content Planner" referrerpolicy="same-origin" allow="clipboard-write; fullscreen" allowfullscreen></iframe></div>`;main.appendChild(section);return section}
 function loadFrame(){const frame=document.getElementById(FRAME_ID);if(!frame)return;if(frame.dataset.mwsLoaded==='1'){setTimeout(sendContacts,0);return}frame.dataset.mwsLoaded='1';frame.addEventListener('load',()=>setTimeout(sendContacts,0));frame.src=FRAME_URL}
 function activate(){ensureSection();if(typeof window.setTab==='function'){try{window.setTab(TAB)}catch(error){console.warn('Content Planner setTab failed',error)}}const section=document.getElementById(TAB);if(section&&!section.classList.contains('active')){document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s===section));document.querySelectorAll('.nav button[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===TAB))}const title=document.getElementById('pageTitle');if(title)title.textContent='컨텐츠 플래너';loadFrame()}
 function ensureNav(){const existing=[...document.querySelectorAll(`.nav button[data-tab="${TAB}"]`)];let button=existing.shift()||null;existing.forEach(x=>x.remove());const posts=document.querySelector('.nav button[data-tab="posts"]');if(!posts)return;if(!button){button=document.createElement('button');button.type='button';button.dataset.tab=TAB;button.title='컨텐츠 플래너';button.innerHTML='<span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h5M8 16h4M15 15l2 2 3-4"/></svg></span><span class="nav-label">컨텐츠 플래너</span>';button.addEventListener('click',event=>{event.preventDefault();activate()})}posts.insertAdjacentElement('afterend',button)}
-function loadTools(){if(document.getElementById('mwsToolsCleanV109Script'))return;const s=document.createElement('script');s.id='mwsToolsCleanV109Script';s.src=TOOLS_URL;s.onerror=e=>console.error('MWS tools load failed',e);document.body.appendChild(s)}
+function loadTools(){if(document.getElementById('mwsToolsCleanV110Script'))return;const s=document.createElement('script');s.id='mwsToolsCleanV110Script';s.src=TOOLS_URL;s.onerror=e=>console.error('MWS tools load failed',e);document.body.appendChild(s)}
 function install(){syncGlobals();forceVersion();ensureStyle();ensureSection();ensureNav();loadTools()}
 window.addEventListener('message',event=>{if(event.origin!==location.origin)return;const frame=document.getElementById(FRAME_ID);if(!frame||event.source!==frame.contentWindow)return;if(event.data?.type==='mws:planner-request-contacts')sendContacts()});window.addEventListener('mawang:datachange',()=>setTimeout(()=>{syncGlobals();forceVersion();sendContacts()},0));window.addEventListener('DOMContentLoaded',install,{once:true});window.addEventListener('load',install,{once:true});[0,100,300,800,1600,3000].forEach(ms=>setTimeout(install,ms));if(document.readyState!=='loading')install();
 })();

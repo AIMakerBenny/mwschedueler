@@ -7,6 +7,9 @@
 /assets/content-planner-host.js
   Cache-Control: no-cache, must-revalidate
 
+/assets/tools.js
+  Cache-Control: no-cache, must-revalidate
+
 /assets/perf-runtime.js
   Cache-Control: no-cache, must-revalidate
 
@@ -28,11 +31,3 @@
 /assets/test-v5.6.js
   Cache-Control: no-cache, must-revalidate
 
-/assets/tools-v1.0.6-*
-  Cache-Control: no-cache, must-revalidate
-
-/assets/tools-v1.0.7-*
-  Cache-Control: no-cache, must-revalidate
-
-/assets/tools-v1.0.8*
-  Cache-Control: no-cache, must-revalidate
