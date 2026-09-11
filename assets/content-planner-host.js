@@ -27,7 +27,6 @@
       #mwsContentPlannerShell{height:calc(100vh - 92px);min-height:560px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:#070a12}
       #mwsContentPlannerFrame{display:block;width:100%;height:100%;border:0;background:#070a12}
 
-      /* V1.0.4: global/page text scale must grow the containers too. */
       #dashboard .dashboard-kpi-grid-local{grid-template-columns:repeat(auto-fit,minmax(calc(185px * var(--ui-text-scale,1)),1fr))!important;align-items:stretch!important}
       #dashboard .dashboard-kpi-grid-local>.card,#dashboard .dashboard-kpi-grid-local>button.card{height:auto!important;min-height:calc(82px * var(--ui-text-scale,1))!important;overflow:visible!important;padding:calc(15px * var(--ui-text-scale,1))!important}
       #dashboard .dashboard-my-profile-v3{height:auto!important;min-height:calc(82px * var(--ui-text-scale,1))!important;overflow:visible!important}
@@ -69,7 +68,6 @@
       .recent-person-history-main-v55 strong{font-size:calc(13px * var(--ui-text-scale,1))!important;line-height:1.35!important}
       .recent-person-stats-v55>div,.recent-person-history-row-v55,.recent-person-candidate-v55{height:auto!important;min-height:max-content!important}
 
-      /* V5.6 recent-person/history widgets also follow page text scale. */
       .v56-history{font-size:calc(14px * var(--ui-text-scale,1))!important}
       .v56-history .v56-hero{height:auto!important;min-height:calc(92px * var(--ui-text-scale,1))!important;align-items:center!important}
       .v56-history .v56-hero h2{font-size:calc(24px * var(--ui-text-scale,1))!important;line-height:1.25!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
@@ -83,7 +81,6 @@
       .v56-row strong{font-size:calc(14px * var(--ui-text-scale,1))!important;line-height:1.35!important;white-space:normal!important}
       .v56-row small{font-size:calc(11px * var(--ui-text-scale,1))!important;line-height:1.35!important}
 
-      /* Friend Finder name is the primary information and must scale even when its patch uses fixed px sizes. */
       #friendFinder :is(.friend-finder-name-v5,.friend-finder-name,.friend-name,.contact-name,.person-name,[data-friend-name]){font-size:calc(19px * var(--ui-text-scale,1))!important;line-height:1.3!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
       #friendFinder :is(.friend-finder-card-v5,.friend-finder-card,.friend-card) strong{font-size:calc(18px * var(--ui-text-scale,1))!important;line-height:1.3!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
 
@@ -119,5 +116,5 @@
   window.addEventListener('mawang:datachange',()=>setTimeout(()=>{forceVersionV104();sendContacts()},0));
 
   install();[100,300,800,1600,3000].forEach(ms=>setTimeout(install,ms));
-  setTimeout(()=>{forceVersionV104();const label=document.querySelector('[id^="mwsBuildVersionV5"],#mwsBuildVersion,[class*="sidebar-build-version"]');if(label&&!label.__mwsV104BuildObserver){const o=new MutationObserver(()=>{if(label.textContent!==BUILD)forceVersionV104()});o.observe(label,{childList:true,characterData:true,subtree:true});label.__mwsV104BuildObserver=o}},3200);
+  setTimeout(()=>{forceVersionV104();const body=document.body;const label=document.querySelector('[id^="mwsBuildVersionV5"],#mwsBuildVersion,[class*="sidebar-build-version"]');if(body&&!body.__mwsV104BuildObserver){const bo=new MutationObserver(()=>{if(body.getAttribute('data-build-version')!==BUILD)forceVersionV104()});bo.observe(body,{attributes:true,attributeFilter:['data-build-version']});body.__mwsV104BuildObserver=bo}if(label&&!label.__mwsV104BuildObserver){const o=new MutationObserver(()=>{if(label.textContent!==BUILD)forceVersionV104()});o.observe(label,{childList:true,characterData:true,subtree:true});label.__mwsV104BuildObserver=o}},3200);
 })();
