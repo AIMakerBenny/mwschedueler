@@ -1,8 +1,8 @@
-/* CF MWS V 1.0.8 - emergency lazy-load stability hotfix */
+/* CF MWS V 1.0.9 - focus-safe tools + editable titles/new-window tabs */
 (()=>{
 'use strict';
-if(window.__mwsV108LazyStable)return;window.__mwsV108LazyStable=1;
-const BUILD='CF MWS V 1.0.8';
+if(window.__mwsV109Stable)return;window.__mwsV109Stable=1;
+const BUILD='CF MWS V 1.0.9';
 const noopObserver={disconnect(){}};
 
 function forceVersion(){
@@ -26,25 +26,29 @@ function guardVersionObservers(){
     });
   }catch(_){ }
 }
-function cutObserver(code,startToken,endToken,replacement=''){
+function cutBlock(code,startToken,endToken,replacement=''){
   const a=code.indexOf(startToken);if(a<0)return code;
   const b=code.indexOf(endToken,a);if(b<0)return code;
   return code.slice(0,a)+replacement+code.slice(b);
 }
 function stableBase(code){
   code=code.replaceAll('CF MWS V 1.0.4',BUILD).replaceAll('/content-planner.html?v=1.0.4','/content-planner.html?v=1.0.5');
-  return cutObserver(code,'  setTimeout(()=>{forceVersionV104();const body=document.body;','\n})();','');
+  return cutBlock(code,'  setTimeout(()=>{forceVersionV104();const body=document.body;','\n})();','');
 }
-function stableBridge(code){return cutObserver(code,'let raf=0;const mo=new MutationObserver',"window.addEventListener('mawang:datachange'",'let raf=0;')}
-function stableFinal106(code){code=code.replaceAll('CF MWS V 1.0.6',BUILD);return cutObserver(code,'const observer=new MutationObserver',"window.addEventListener('mawang:datachange'",'')}
-function stableTier107(code){return cutObserver(code,'let busy=false;const observer=new MutationObserver',"window.addEventListener('DOMContentLoaded'",'let busy=false;')}
-function stableFinal108(code){return cutObserver(code,'let raf=0;const mo=new MutationObserver',"window.addEventListener('mawang:datachange'",'let raf=0;')}
+function stableBridge(code){return cutBlock(code,'let raf=0;const mo=new MutationObserver',"window.addEventListener('mawang:datachange'",'let raf=0;')}
+function stableFinal106(code){
+  code=code.replaceAll('CF MWS V 1.0.6',BUILD);
+  code=cutBlock(code,'const flushGuard=new WeakSet();','function applyAll(){','');
+  return cutBlock(code,'const observer=new MutationObserver',"window.addEventListener('mawang:datachange'",'');
+}
+function stableTier107(code){return cutBlock(code,'let busy=false;const observer=new MutationObserver',"window.addEventListener('DOMContentLoaded'",'let busy=false;')}
+function stableFinal108(code){return cutBlock(code,'let raf=0;const mo=new MutationObserver',"window.addEventListener('mawang:datachange'",'let raf=0;')}
 
 const evalPromises=new Map();
 function fetchEval(src,key,transform,done){
   if(window[key]){done?.();return}
   if(!evalPromises.has(key)){
-    const p=fetch(src,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`${src} ${r.status}`);return r.text()}).then(code=>(0,eval)(transform?transform(code):code)).catch(e=>{evalPromises.delete(key);console.error('MWS lazy stable load failed',src,e);throw e});
+    const p=fetch(src,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`${src} ${r.status}`);return r.text()}).then(code=>(0,eval)(transform?transform(code):code)).catch(e=>{evalPromises.delete(key);console.error('MWS stable load failed',src,e);throw e});
     evalPromises.set(key,p);
   }
   evalPromises.get(key).then(()=>done?.()).catch(()=>{});
@@ -53,43 +57,54 @@ function loadScript(src,id,done){
   if(document.getElementById(id)){done?.();return}
   const s=document.createElement('script');s.id=id;s.src=src;s.onload=()=>done?.();s.onerror=e=>console.error('MWS script load failed',src,e);document.body.appendChild(s);
 }
-function cleanRecords(){
-  try{document.querySelector('.nav button[data-tab="toolRecords"]')?.remove();document.getElementById('toolRecords')?.remove()}catch(_){ }
-}
-function pingTools(){clearTimeout(pingTools.t);pingTools.t=setTimeout(()=>{try{window.dispatchEvent(new Event('mawang:datachange'))}catch(_){ }},40)}
+function cleanRecords(){try{document.querySelector('.nav button[data-tab="toolRecords"]')?.remove();document.getElementById('toolRecords')?.remove()}catch(_){ }}
 
 let advancedLoading=false,advancedReady=false;
 function loadAdvancedTools(){
-  if(advancedReady){guardVersionObservers();forceVersion();pingTools();return}
+  if(advancedReady){guardVersionObservers();forceVersion();window.dispatchEvent(new Event('mws:v109-tools-ready'));return}
   if(advancedLoading)return;
   advancedLoading=true;
-  fetchEval('/assets/tools-v1.0.6-bridge.js?v=1.0.8-lazy2','__mwsToolsBridgeV106',stableBridge,()=>{
-    fetchEval('/assets/tools-v1.0.6-final.js?v=1.0.8-lazy2','__mwsToolsFinalV106',stableFinal106,()=>{
-      fetchEval('/assets/tools-v1.0.7-tier.js?v=1.0.8-lazy2','__mwsTierVisualV107',stableTier107,()=>{
-        fetchEval('/assets/tools-v1.0.8-final.js?v=1.0.8-lazy2','__mwsToolsV108',stableFinal108,()=>{
-          advancedLoading=false;advancedReady=true;guardVersionObservers();forceVersion();cleanRecords();pingTools();
+  fetchEval('/assets/tools-v1.0.6-bridge.js?v=1.0.9','__mwsToolsBridgeV106',stableBridge,()=>{
+    fetchEval('/assets/tools-v1.0.6-final.js?v=1.0.9','__mwsToolsFinalV106',stableFinal106,()=>{
+      fetchEval('/assets/tools-v1.0.7-tier.js?v=1.0.9','__mwsTierVisualV107',stableTier107,()=>{
+        fetchEval('/assets/tools-v1.0.8-final.js?v=1.0.9','__mwsToolsV108',stableFinal108,()=>{
+          loadScript('/assets/tools-v1.0.9-ui.js?v=1.0.9','mwsToolsUiScriptV109',()=>{
+            advancedLoading=false;advancedReady=true;guardVersionObservers();forceVersion();cleanRecords();window.dispatchEvent(new Event('mws:v109-tools-ready'));
+          });
         });
       });
     });
   });
 }
 
+function requestedTool(){
+  try{
+    const q=new URL(location.href).searchParams.get('mwsTool')||location.hash.replace(/^#/,'');
+    return ['toolTier','toolMatrix','toolRelations'].includes(q)?q:'';
+  }catch(_){return''}
+}
+function activateRequestedTool(){
+  const id=requestedTool();if(!id)return;
+  const btn=document.querySelector(`.nav button[data-tab="${id}"]`);
+  if(btn){btn.click();setTimeout(loadAdvancedTools,0)}
+}
+
 let baseStarted=false;
 function baseInstall(){
-  if(baseStarted){guardVersionObservers();forceVersion();cleanRecords();return}
+  if(baseStarted){guardVersionObservers();forceVersion();cleanRecords();activateRequestedTool();return}
   baseStarted=true;
   guardVersionObservers();forceVersion();
-  fetchEval('/assets/content-planner-host-v104.js?v=1.0.8-lazy2','__mwsContentPlannerHostV104',stableBase,()=>{
+  fetchEval('/assets/content-planner-host-v104.js?v=1.0.9','__mwsContentPlannerHostV104',stableBase,()=>{
     guardVersionObservers();forceVersion();
-    loadScript('/assets/tools-v1.0.5.js?v=1.0.5','mwsToolsScriptV105',()=>{cleanRecords();guardVersionObservers();forceVersion()});
+    loadScript('/assets/tools-v1.0.5.js?v=1.0.5','mwsToolsScriptV105',()=>{
+      cleanRecords();guardVersionObservers();forceVersion();setTimeout(activateRequestedTool,60);
+    });
   });
 }
 
 document.addEventListener('click',e=>{
-  const hit=e.target.closest('.nav button[data-tab="toolTier"],.nav button[data-tab="toolMatrix"],.nav button[data-tab="toolRelations"],#toolTier,#toolMatrix,#toolRelations');
-  if(hit)setTimeout(loadAdvancedTools,0);
+  if(e.target.closest('.nav button[data-tab="toolTier"],.nav button[data-tab="toolMatrix"],.nav button[data-tab="toolRelations"]'))setTimeout(loadAdvancedTools,0);
 },true);
-document.addEventListener('drop',e=>{if(e.target.closest('#toolTier,#toolMatrix,#toolRelations'))loadAdvancedTools()},true);
 window.addEventListener('DOMContentLoaded',baseInstall,{once:true});
 window.addEventListener('load',baseInstall,{once:true});
 if(document.readyState!=='loading')baseInstall();
