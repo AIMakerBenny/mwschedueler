@@ -5,7 +5,7 @@
   window.__mwsCf571Optimizer=true;
 
   const nativeFetch=window.fetch.bind(window);
-  const BUILD='CF MWS V 1.0.5';
+  const BUILD='CF MWS V 1.0.6';
   const ETAG_KEY='mws_cf_v571_etag';
   const MANIFEST_KEY='mws_cf_v571_manifest';
   const MEDIA_BASE_KEY='mws_cf_v571_media_base';
@@ -175,11 +175,11 @@
     document.body.appendChild(s);
   }
 
-  function loadContentPlannerHostV105(){
-    if(document.getElementById('mwsContentPlannerHostScriptV105'))return;
+  function loadContentPlannerHostV106(){
+    if(document.getElementById('mwsContentPlannerHostScriptV106'))return;
     const s=document.createElement('script');
-    s.id='mwsContentPlannerHostScriptV105';
-    s.src='assets/content-planner-host.js?v=1.0.5';
+    s.id='mwsContentPlannerHostScriptV106';
+    s.src='assets/content-planner-host.js?v=1.0.6';
     document.body.appendChild(s);
   }
 
@@ -271,12 +271,12 @@
   }
 
   window.mwsV101ApplyPageLayoutScale=applyPageLayoutScaleV101;
-  window.addEventListener('DOMContentLoaded',()=>{forceVersion();installReleaseVersionGuardV101();installPageScaleBridgeV101();loadContentPlannerHostV105()},{once:true});
-  window.addEventListener('load',()=>{forceVersion();loadRuntimePatch();installReleaseVersionGuardV101();installPageScaleBridgeV101();loadContentPlannerHostV105()},{once:true});
+  window.addEventListener('DOMContentLoaded',()=>{forceVersion();installReleaseVersionGuardV101();installPageScaleBridgeV101();loadContentPlannerHostV106()},{once:true});
+  window.addEventListener('load',()=>{forceVersion();loadRuntimePatch();installReleaseVersionGuardV101();installPageScaleBridgeV101();loadContentPlannerHostV106()},{once:true});
   window.addEventListener('mawang:datachange',()=>setTimeout(()=>{installReleaseVersionGuardV101();installPageScaleBridgeV101()},0));
   [50,150,350,800,1500,3000,6000,9000].forEach(ms=>setTimeout(()=>{installReleaseVersionGuardV101();installPageScaleBridgeV101()},ms));
   let tries=0;const versionTimer=setInterval(()=>{forceVersion();if(++tries>=32)clearInterval(versionTimer)},250);
-  if(document.readyState!=='loading')setTimeout(loadContentPlannerHostV105,0);
+  if(document.readyState!=='loading')setTimeout(loadContentPlannerHostV106,0);
 
   if(document.readyState==='loading'){
     document.write('<script src="assets/perf-runtime-base.js?v=5.7.1"><\/script>');
