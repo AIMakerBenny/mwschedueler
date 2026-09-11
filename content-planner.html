@@ -11,11 +11,13 @@
 <script>
 (async()=>{
   const files=[
-    '/assets/content-planner-payload-1.txt?v=1.0.3',
-    '/assets/content-planner-payload-2.txt?v=1.0.3',
-    '/assets/content-planner-payload-3.txt?v=1.0.3'
+      '/assets/content-planner-payload-1.txt?v=1.0.4',
+      '/assets/content-planner-payload-2.txt?v=1.0.4',
+      '/assets/content-planner-payload-3.txt?v=1.0.4',
+      '/assets/content-planner-payload-4.txt?v=1.0.4',
+      '/assets/content-planner-payload-5.txt?v=1.0.4'
   ];
-  const expected='3f959b6d8d089e106899b0b13970fe8ef74b9ce12805230e2a4b455a6521971a';
+  const expected='8ef554a13bbbd7f3699294c96ad32962837744486495e656dc5fc3fa548e0632';
   try{
     const parts=await Promise.all(files.map(async url=>{
       const response=await fetch(url,{cache:'force-cache'});
@@ -29,9 +31,7 @@
     const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(html));
     const actual=[...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('');
     if(actual!==expected)throw new Error('planner integrity check failed');
-    document.open();
-    document.write(html);
-    document.close();
+    document.open();document.write(html);document.close();
   }catch(error){
     console.error('Content Planner load failed',error);
     document.getElementById('boot').textContent='컨텐츠 플래너를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.';
