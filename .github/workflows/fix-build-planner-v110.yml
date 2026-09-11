@@ -1,0 +1,31 @@
+name: Fix Planner V1.0.10 build
+on:
+  push:
+    branches: [mws-v1.0.10-planner-faithful]
+    paths: [.github/workflows/fix-build-planner-v110.yml]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: mws-v1.0.10-planner-faithful
+      - name: Patch build workflow
+        shell: python
+        run: |
+          import pathlib
+          p=pathlib.Path('.github/workflows/build-planner-v110.yml')
+          s=p.read_text()
+          old="          html=replace_once(html,'function switchMode(mode){\\n',fullscreen_js+'function switchMode(mode){\\n','fullscreen functions')\n"
+          new="          switch_anchor='function switchMode(mode){\\n'\n          switch_pos=html.rfind(switch_anchor)\n          if switch_pos < 0: raise SystemExit('final switchMode not found')\n          html=html[:switch_pos]+fullscreen_js+html[switch_pos:]\n"
+          if s.count(old)!=1: raise SystemExit(f'build line match count {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+      - name: Commit fix
+        run: |
+          git config user.name 'MWS Build'
+          git config user.email 'mws-build@users.noreply.github.com'
+          git add .github/workflows/build-planner-v110.yml
+          git commit -m 'Fix V1.0.10 planner build insertion point'
+          git push origin HEAD:mws-v1.0.10-planner-faithful
