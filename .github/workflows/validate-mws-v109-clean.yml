@@ -1,0 +1,31 @@
+name: Validate MWS V1.0.9 Clean
+on:
+  push:
+    branches: [mws-v1.0.9-clean-faithful]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: |
+          node --check assets/tools.js
+          node --check assets/content-planner-host.js
+      - name: Reject legacy layered loaders
+        run: |
+          ! grep -E 'content-planner-host-v104|tools-v1\.0\.[56789]' assets/content-planner-host.js
+          ! grep -E 'tools-v1\.0\.|MutationObserver' assets/tools.js
+          ! grep -E 'MutationObserver' assets/content-planner-host.js
+      - name: Required V1.0.9 features
+        run: |
+          grep -q 'savedV108' assets/tools.js
+          grep -q 'registeredUsers' assets/tools.js
+          grep -q 'mwsMatrixScale' assets/tools.js
+          grep -q 'mws-marquee-v108' assets/tools.js
+          grep -q 'mws-tool-title-v109' assets/tools.js
+          grep -q '새 티어표' assets/tools.js
+          grep -q 'mwsRelConnect' assets/tools.js
+          grep -q 'mwsSavedList' assets/tools.js
