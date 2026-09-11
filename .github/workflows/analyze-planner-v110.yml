@@ -12,35 +12,16 @@ jobs:
         shell: python
         run: |
           import base64,gzip,hashlib,pathlib,re
-          files=[
-            'assets/content-planner-payload-1.txt','assets/content-planner-payload-2.txt',
-            'assets/content-planner-fix-03a.txt','assets/content-planner-fix-03b.txt',
-            'assets/content-planner-payload-4.txt','assets/content-planner-payload-5.txt',
-            'assets/content-planner-payload-6.txt','assets/content-planner-payload-7.txt',
-            'assets/content-planner-payload-8.txt','assets/content-planner-payload-9.txt',
-            'assets/content-planner-payload-10.txt','assets/content-planner-payload-11.txt',
-            'assets/content-planner-payload-12.txt']
+          files=['assets/content-planner-payload-1.txt','assets/content-planner-payload-2.txt','assets/content-planner-fix-03a.txt','assets/content-planner-fix-03b.txt','assets/content-planner-payload-4.txt','assets/content-planner-payload-5.txt','assets/content-planner-payload-6.txt','assets/content-planner-payload-7.txt','assets/content-planner-payload-8.txt','assets/content-planner-payload-9.txt','assets/content-planner-payload-10.txt','assets/content-planner-payload-11.txt','assets/content-planner-payload-12.txt']
           p=[pathlib.Path(x).read_text().strip() for x in files]
-          p[10]=p[10].replace('tdTheD0Dh','tdTheD/0Dh')[:-1]
-          p[11]='G'+p[11][:-1]
-          p[12]='n'+p[12]
+          p[10]=p[10].replace('tdTheD0Dh','tdTheD/0Dh')[:-1];p[11]='G'+p[11][:-1];p[12]='n'+p[12]
           html=gzip.decompress(base64.b64decode(''.join(p))).decode('utf-8')
-          print('SHA256',hashlib.sha256(html.encode()).hexdigest())
-          print('LENGTH',len(html))
-          terms=['제목 없는 기획','기획안 제출','이모티콘','스티커','포스트잇','메모','브러시','브러쉬','brush','select','선택','sticky','rotation','rotate','emoji','emoticon']
-          for term in terms:
-            print('\n===== TERM',term,'=====')
-            found=False
-            for m in list(re.finditer(re.escape(term),html,re.I))[:12]:
-              found=True
-              a=max(0,m.start()-500);b=min(len(html),m.end()+900)
-              print(html[a:b].replace('\n','\\n'))
-              print('---')
-            if not found: print('NOT FOUND')
-          print('\n===== IDS / CLASSES AROUND PLANNER CONTROLS =====')
-          vals=[]
-          for pat in [r'id="[^"]+"',r'class="[^"]+"']:
-            for m in re.finditer(pat,html):
-              v=m.group(0)
-              if any(k.lower() in v.lower() for k in ['tool','canvas','memo','note','sticky','emoji','sticker','submit','header','tab','brush','select']): vals.append(v)
-          print('\n'.join(dict.fromkeys(vals))[:30000])
+          print('SHA256',hashlib.sha256(html.encode()).hexdigest(),'LENGTH',len(html))
+          keys=['const STICK','STICKER','function initSticker','function toggleStickerMenu','function addSticker','stickerGrid','function addSticky','function nodeHtml','function renderInspector','function render()','function loadDraft','function newCanvasTab','function switchCanvasTab','function addTextAtV104','function switchMode','document.addEventListener','DOMContentLoaded','loadDraft();','setTool(\'select\')','creator-toolbar','workspace-head','canvas-tabs','topbar']
+          for key in keys:
+            print('\n===== KEY',key,'=====')
+            hits=list(re.finditer(re.escape(key),html,re.I))[:8]
+            if not hits: print('NOT FOUND');continue
+            for m in hits:
+              a=max(0,m.start()-1100);b=min(len(html),m.end()+2400)
+              print(html[a:b].replace('\n','\\n'));print('---')
