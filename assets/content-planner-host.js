@@ -22,7 +22,7 @@ function install(){
   load('/assets/content-planner-host-v104.js?v=1.0.4','mwsContentPlannerHostBaseV104',()=>{forcePlanner();forceVersion()});
   load('/assets/tools-v1.0.5.js?v=1.0.5','mwsToolsScriptV105',()=>{
     load('/assets/tools-v1.0.6-bridge.js?v=1.0.6','mwsToolsBridgeScriptV106',()=>{
-      loadFinalCompat(()=>load('/assets/tools-v1.0.7-tier.js?v=1.0.7-hotfix','mwsTierVisualScriptV107',()=>load('/assets/tools-v1.0.8.js?v=1.0.8','mwsToolsScriptV108')));
+      loadFinalCompat(()=>load('/assets/tools-v1.0.7-tier.js?v=1.0.7-hotfix','mwsTierVisualScriptV107',()=>load('/assets/tools-v1.0.8-final.js?v=1.0.8','mwsToolsScriptV108')));
     });
   });
   forceVersion();forcePlanner();
