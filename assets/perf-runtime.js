@@ -5,7 +5,7 @@
   window.__mwsCf571Optimizer=true;
 
   const nativeFetch=window.fetch.bind(window);
-  const BUILD='CF MWS V 1.0.3';
+  const BUILD='CF MWS V 1.0.5';
   const ETAG_KEY='mws_cf_v571_etag';
   const MANIFEST_KEY='mws_cf_v571_manifest';
   const MEDIA_BASE_KEY='mws_cf_v571_media_base';
@@ -28,7 +28,7 @@
       req.onupgradeneeded=()=>{
         const db=req.result;
         for(const name of PARTS)if(!db.objectStoreNames.contains(name))db.createObjectStore(name,{keyPath:'scope'});
-        if(!db.objectStoreNames.contains('meta'))db.createObjectStore('meta',{keyPath:'key'});
+        if(!db.objectStoreNames.contains('meta'))db.createObjectStore(name='meta',{keyPath:'key'});
       };
       req.onsuccess=()=>resolve(req.result);
       req.onerror=()=>reject(req.error||new Error('IndexedDB open failed'));
@@ -175,11 +175,11 @@
     document.body.appendChild(s);
   }
 
-  function loadContentPlannerHostV103(){
-    if(document.getElementById('mwsContentPlannerHostScriptV103'))return;
+  function loadContentPlannerHostV105(){
+    if(document.getElementById('mwsContentPlannerHostScriptV105'))return;
     const s=document.createElement('script');
-    s.id='mwsContentPlannerHostScriptV103';
-    s.src='assets/content-planner-host.js?v=1.0.3';
+    s.id='mwsContentPlannerHostScriptV105';
+    s.src='assets/content-planner-host.js?v=1.0.5';
     document.body.appendChild(s);
   }
 
@@ -271,12 +271,12 @@
   }
 
   window.mwsV101ApplyPageLayoutScale=applyPageLayoutScaleV101;
-  window.addEventListener('DOMContentLoaded',()=>{forceVersion();installReleaseVersionGuardV101();installPageScaleBridgeV101();loadContentPlannerHostV103()},{once:true});
-  window.addEventListener('load',()=>{forceVersion();loadRuntimePatch();installReleaseVersionGuardV101();installPageScaleBridgeV101();loadContentPlannerHostV103()},{once:true});
+  window.addEventListener('DOMContentLoaded',()=>{forceVersion();installReleaseVersionGuardV101();installPageScaleBridgeV101();loadContentPlannerHostV105()},{once:true});
+  window.addEventListener('load',()=>{forceVersion();loadRuntimePatch();installReleaseVersionGuardV101();installPageScaleBridgeV101();loadContentPlannerHostV105()},{once:true});
   window.addEventListener('mawang:datachange',()=>setTimeout(()=>{installReleaseVersionGuardV101();installPageScaleBridgeV101()},0));
   [50,150,350,800,1500,3000,6000,9000].forEach(ms=>setTimeout(()=>{installReleaseVersionGuardV101();installPageScaleBridgeV101()},ms));
   let tries=0;const versionTimer=setInterval(()=>{forceVersion();if(++tries>=32)clearInterval(versionTimer)},250);
-  if(document.readyState!=='loading')setTimeout(loadContentPlannerHostV103,0);
+  if(document.readyState!=='loading')setTimeout(loadContentPlannerHostV105,0);
 
   if(document.readyState==='loading'){
     document.write('<script src="assets/perf-runtime-base.js?v=5.7.1"><\/script>');
