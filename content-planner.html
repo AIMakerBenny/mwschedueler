@@ -37,7 +37,9 @@
     const got=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(html));
     const actual=[...new Uint8Array(got)].map(x=>x.toString(16).padStart(2,'0')).join('');
     if(actual!==expected)throw new Error('planner integrity check failed');
-    document.open();document.write(html);document.close();
+    const patch='<script src="/assets/content-planner-v1.0.10.js?v=1.0.10"></'+'script>';
+    const enhanced=/<\/body>/i.test(html)?html.replace(/<\/body>/i,patch+'</body>'):html+patch;
+    document.open();document.write(enhanced);document.close();
   }catch(error){console.error('Content Planner load failed',error);document.getElementById('boot').textContent='컨텐츠 플래너를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.'}
 })();
 </script>
