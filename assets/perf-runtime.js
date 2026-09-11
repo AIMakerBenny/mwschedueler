@@ -1,11 +1,11 @@
-/* MAWANG Scheduler CF V5.7.1 - one-request public bootstrap + verified IndexedDB reuse */
+/* MAWANG Scheduler CF MWS V 1.0.8 - one-request bootstrap + verified IndexedDB reuse */
 (()=>{
   'use strict';
   if(window.__mwsCf571Optimizer)return;
   window.__mwsCf571Optimizer=true;
 
   const nativeFetch=window.fetch.bind(window);
-  const BUILD='CF MWS V 1.0.6';
+  const BUILD='CF MWS V 1.0.8';
   const ETAG_KEY='mws_cf_v571_etag';
   const MANIFEST_KEY='mws_cf_v571_manifest';
   const MEDIA_BASE_KEY='mws_cf_v571_media_base';
@@ -28,7 +28,7 @@
       req.onupgradeneeded=()=>{
         const db=req.result;
         for(const name of PARTS)if(!db.objectStoreNames.contains(name))db.createObjectStore(name,{keyPath:'scope'});
-        if(!db.objectStoreNames.contains('meta'))db.createObjectStore(name='meta',{keyPath:'key'});
+        if(!db.objectStoreNames.contains('meta'))db.createObjectStore('meta',{keyPath:'key'});
       };
       req.onsuccess=()=>resolve(req.result);
       req.onerror=()=>reject(req.error||new Error('IndexedDB open failed'));
@@ -52,8 +52,9 @@
 
   async function persistBundle(body){
     if(!body?.parts||!('indexedDB' in window))return;
+    let db;
     try{
-      const db=await openDb();
+      db=await openDb();
       await Promise.all(PARTS.map(part=>new Promise((resolve,reject)=>{
         const row=body.parts[part];
         if(!row){resolve();return}
@@ -66,8 +67,8 @@
         tx.onerror=()=>reject(tx.error);
         tx.onabort=()=>reject(tx.error);
       })));
-      db.close();
-    }catch(e){console.warn('CF V5.7.1 bundle cache write failed',e)}
+    }catch(e){console.warn('CF MWS V 1.0.8 bundle cache write failed',e)}
+    finally{try{db?.close()}catch(_){}}
   }
 
   async function hasCompleteCache(manifest){
@@ -131,13 +132,11 @@
     if(url.pathname==='/api/health'){
       return syntheticJson({ok:true,env:'cloudflare-production',backend:'D1 + R2',optimized:BUILD,mediaMode:'r2-public-direct'});
     }
-
     if(url.pathname==='/api/manifest'){
       const result=await getBootstrap();
       if(result.raw)return result.raw;
       return syntheticJson(result.manifest||{parts:{},scope:'public',cacheSchemaVersion:DB_VERSION,backend:'cloudflare-d1'});
     }
-
     if(url.pathname.startsWith('/api/parts/')){
       const part=decodeURIComponent(url.pathname.slice('/api/parts/'.length));
       const result=await getBootstrap();
@@ -146,9 +145,7 @@
       if(bundled)return syntheticJson(bundled);
       const cached=await getCachedPart(part,'public');
       const wanted=Number(result.manifest?.parts?.[part])||0;
-      if(cached&&(!wanted||Number(cached.version)===wanted)){
-        return syntheticJson({part,version:Number(cached.version)||wanted||1,data:cached.data});
-      }
+      if(cached&&(!wanted||Number(cached.version)===wanted))return syntheticJson({part,version:Number(cached.version)||wanted||1,data:cached.data});
       try{localStorage.removeItem(ETAG_KEY)}catch(_){}
       const refreshed=await requestBootstrap(false);
       if(refreshed.raw)return refreshed.raw;
@@ -156,14 +153,13 @@
       if(row)return syntheticJson(row);
       return syntheticJson({error:`Part unavailable after bootstrap: ${part}`},503);
     }
-
     return nativeFetch(input,init);
   };
 
   function forceVersion(){
     try{
       document.body?.setAttribute('data-build-version',BUILD);
-      document.querySelectorAll('[id^="mwsBuildVersionV5"], .sidebar-build-version-v52, .sidebar-build-version-v53, [class*="sidebar-build-version"]').forEach(label=>label.textContent=BUILD);
+      document.querySelectorAll('[id^="mwsBuildVersionV5"],#mwsBuildVersion,.sidebar-build-version-v52,.sidebar-build-version-v53,[class*="sidebar-build-version"]').forEach(label=>{if(label.textContent!==BUILD)label.textContent=BUILD});
     }catch(_){}
   }
 
@@ -175,46 +171,35 @@
     document.body.appendChild(s);
   }
 
-  function loadContentPlannerHostV106(){
-    if(document.getElementById('mwsContentPlannerHostScriptV106'))return;
+  function loadContentPlannerHostV108(){
+    if(document.getElementById('mwsContentPlannerHostScriptV108'))return;
     const s=document.createElement('script');
-    s.id='mwsContentPlannerHostScriptV106';
-    s.src='assets/content-planner-host.js?v=1.0.6';
+    s.id='mwsContentPlannerHostScriptV108';
+    s.src='assets/content-planner-host.js?v=1.0.8';
     document.body.appendChild(s);
   }
 
-  const PAGE_SCALE_KEY_V101='mws_page_text_scales_v54';
-  const clampPageScaleV101=value=>Math.max(70,Math.min(180,Math.round((Number(value)||100)/5)*5));
+  const PAGE_SCALE_KEY='mws_page_text_scales_v54';
+  const clampPageScale=value=>Math.max(70,Math.min(180,Math.round((Number(value)||100)/5)*5));
+  function pageScaleMap(){try{const value=JSON.parse(localStorage.getItem(PAGE_SCALE_KEY)||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{}}catch(_){return {}}}
+  function activePageId(){return document.querySelector('.section.active')?.id||'dashboard'}
+  function pageScale(id=activePageId()){return clampPageScale(pageScaleMap()[id]||100)}
+  function globalTextScale(){try{return Math.max(80,Math.min(200,Number(data?.textScale)||100))}catch(_){return 100}}
 
-  function pageScaleMapV101(){
-    try{
-      const value=JSON.parse(localStorage.getItem(PAGE_SCALE_KEY_V101)||'{}');
-      return value&&typeof value==='object'&&!Array.isArray(value)?value:{};
-    }catch(_){return {}}
-  }
-
-  function activePageIdV101(){return document.querySelector('.section.active')?.id||'dashboard'}
-  function pageScaleV101(id=activePageIdV101()){return clampPageScaleV101(pageScaleMapV101()[id]||100)}
-  function globalTextScaleV101(){
-    try{return Math.max(80,Math.min(200,Number(data?.textScale)||100))}catch(_){return 100}
-  }
-
-  function ensurePageScaleStyleV101(){
-    if(document.getElementById('mws-cf-v101-page-scale-style'))return;
+  function ensurePageScaleStyle(){
+    if(document.getElementById('mws-cf-v108-page-scale-style'))return;
     const style=document.createElement('style');
-    style.id='mws-cf-v101-page-scale-style';
+    style.id='mws-cf-v108-page-scale-style';
     style.textContent='.main{overflow-x:auto!important}.section{transform-origin:top left}';
     document.head.appendChild(style);
   }
 
-  function applyPageLayoutScaleV101(){
-    ensurePageScaleStyleV101();
-    const global=globalTextScaleV101();
-    const globalRatio=global/100;
-    const scales=pageScaleMapV101();
+  function applyPageLayoutScale(){
+    ensurePageScaleStyle();
+    const global=globalTextScale(),globalRatio=global/100,scales=pageScaleMap();
     const supportsZoom=typeof document!=='undefined'&&document.documentElement&&('zoom' in document.documentElement.style);
     document.querySelectorAll('.section').forEach(sec=>{
-      const local=clampPageScaleV101(scales[sec.id]||100);
+      const local=clampPageScale(scales[sec.id]||100);
       if(supportsZoom){
         sec.style.setProperty('--ui-text-scale',String(globalRatio));
         sec.style.fontSize=`calc(14px * ${globalRatio})`;
@@ -225,7 +210,7 @@
         sec.style.fontSize=`calc(14px * ${combined/100})`;
       }
     });
-    const current=pageScaleV101();
+    const current=pageScale();
     const label=document.getElementById('pageTextScaleValueV54');
     if(label)label.textContent=`페이지 ${current}%`;
     const control=document.getElementById('pageTextScaleControlV54');
@@ -233,54 +218,48 @@
     document.body?.style.setProperty('--mws-page-layout-scale',String(current/100));
   }
 
-  function wrapPageScaleFunctionV101(name){
+  function wrapPageScaleFunction(name){
     const current=window[name];
-    if(typeof current!=='function'||current.__mwsV101PageScaleBridge)return;
-    const wrapped=function(){
-      const out=current.apply(this,arguments);
-      queueMicrotask(applyPageLayoutScaleV101);
-      return out;
-    };
-    wrapped.__mwsV101PageScaleBridge=true;
-    wrapped.__mwsV101PageScaleBase=current;
+    if(typeof current!=='function'||current.__mwsV108PageScaleBridge)return;
+    const wrapped=function(){const out=current.apply(this,arguments);queueMicrotask(applyPageLayoutScale);return out};
+    wrapped.__mwsV108PageScaleBridge=true;
+    wrapped.__mwsV108PageScaleBase=current;
     window[name]=wrapped;
   }
 
-  function installPageScaleBridgeV101(){
-    wrapPageScaleFunctionV101('setPageTextScaleV54');
-    wrapPageScaleFunctionV101('setTab');
-    wrapPageScaleFunctionV101('applyTextScale');
-    wrapPageScaleFunctionV101('renderMultiDraw');
-    applyPageLayoutScaleV101();
+  function installPageScaleBridge(){
+    wrapPageScaleFunction('setPageTextScaleV54');
+    wrapPageScaleFunction('setTab');
+    wrapPageScaleFunction('applyTextScale');
+    wrapPageScaleFunction('renderMultiDraw');
+    applyPageLayoutScale();
   }
 
-  function installReleaseVersionGuardV101(){
+  function installReleaseVersionGuard(){
     forceVersion();
     const body=document.body;
-    if(body&&!body.__mwsV101BuildObserver){
+    if(body&&!body.__mwsV108BuildObserver){
       const observer=new MutationObserver(()=>{if(body.getAttribute('data-build-version')!==BUILD)forceVersion()});
       observer.observe(body,{attributes:true,attributeFilter:['data-build-version']});
-      body.__mwsV101BuildObserver=observer;
+      body.__mwsV108BuildObserver=observer;
     }
-    const label=document.querySelector('[id^="mwsBuildVersionV5"], .sidebar-build-version-v52, .sidebar-build-version-v53, [class*="sidebar-build-version"]');
-    if(label&&!label.__mwsV101BuildObserver){
+    const label=document.querySelector('[id^="mwsBuildVersionV5"],#mwsBuildVersion,.sidebar-build-version-v52,.sidebar-build-version-v53,[class*="sidebar-build-version"]');
+    if(label&&!label.__mwsV108BuildObserver){
       const observer=new MutationObserver(()=>{if(label.textContent!==BUILD)forceVersion()});
       observer.observe(label,{childList:true,characterData:true,subtree:true});
-      label.__mwsV101BuildObserver=observer;
+      label.__mwsV108BuildObserver=observer;
     }
   }
 
-  window.mwsV101ApplyPageLayoutScale=applyPageLayoutScaleV101;
-  window.addEventListener('DOMContentLoaded',()=>{forceVersion();installReleaseVersionGuardV101();installPageScaleBridgeV101();loadContentPlannerHostV106()},{once:true});
-  window.addEventListener('load',()=>{forceVersion();loadRuntimePatch();installReleaseVersionGuardV101();installPageScaleBridgeV101();loadContentPlannerHostV106()},{once:true});
-  window.addEventListener('mawang:datachange',()=>setTimeout(()=>{installReleaseVersionGuardV101();installPageScaleBridgeV101()},0));
-  [50,150,350,800,1500,3000,6000,9000].forEach(ms=>setTimeout(()=>{installReleaseVersionGuardV101();installPageScaleBridgeV101()},ms));
+  window.mwsV101ApplyPageLayoutScale=applyPageLayoutScale;
+  const ready=()=>{forceVersion();installReleaseVersionGuard();installPageScaleBridge();loadContentPlannerHostV108()};
+  window.addEventListener('DOMContentLoaded',ready,{once:true});
+  window.addEventListener('load',()=>{forceVersion();loadRuntimePatch();installReleaseVersionGuard();installPageScaleBridge();loadContentPlannerHostV108()},{once:true});
+  window.addEventListener('mawang:datachange',()=>setTimeout(()=>{installReleaseVersionGuard();installPageScaleBridge()},0));
+  [50,150,350,800,1500,3000,6000,9000].forEach(ms=>setTimeout(()=>{installReleaseVersionGuard();installPageScaleBridge()},ms));
   let tries=0;const versionTimer=setInterval(()=>{forceVersion();if(++tries>=32)clearInterval(versionTimer)},250);
-  if(document.readyState!=='loading')setTimeout(loadContentPlannerHostV106,0);
+  if(document.readyState!=='loading')setTimeout(loadContentPlannerHostV108,0);
 
-  if(document.readyState==='loading'){
-    document.write('<script src="assets/perf-runtime-base.js?v=5.7.1"><\/script>');
-  }else{
-    const s=document.createElement('script');s.src='assets/perf-runtime-base.js?v=5.7.1';document.head.appendChild(s);
-  }
+  if(document.readyState==='loading')document.write('<script src="assets/perf-runtime-base.js?v=5.7.1"><\/script>');
+  else{const s=document.createElement('script');s.src='assets/perf-runtime-base.js?v=5.7.1';document.head.appendChild(s)}
 })();
