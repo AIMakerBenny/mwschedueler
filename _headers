@@ -30,3 +30,6 @@
 
 /assets/tools-v1.0.6-*
   Cache-Control: no-cache, must-revalidate
+
+/assets/tools-v1.0.7-*
+  Cache-Control: no-cache, must-revalidate
