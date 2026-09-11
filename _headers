@@ -1,6 +1,12 @@
 /index.html
   Cache-Control: no-cache, must-revalidate
 
+/content-planner.html
+  Cache-Control: no-cache, must-revalidate
+
+/assets/content-planner-host.js
+  Cache-Control: no-cache, must-revalidate
+
 /assets/perf-runtime.js
   Cache-Control: no-cache, must-revalidate
 
