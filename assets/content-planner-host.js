@@ -1,8 +1,8 @@
-/* CF MWS V 1.0.9 - focus-safe tools + editable titles/new-window tabs */
+/* CF MWS V 1.0.10 - planner UI/fullscreen update */
 (()=>{
 'use strict';
-if(window.__mwsV109Stable)return;window.__mwsV109Stable=1;
-const BUILD='CF MWS V 1.0.9';
+if(window.__mwsV110Stable)return;window.__mwsV110Stable=1;
+const BUILD='CF MWS V 1.0.10';
 const noopObserver={disconnect(){}};
 
 function forceVersion(){
@@ -14,12 +14,12 @@ function forceVersion(){
 function guardVersionObservers(){
   try{
     const body=document.body;
-    for(const key of ['__mwsV104BuildObserver','__mwsV101BuildObserver','__mwsV108BuildObserver']){
+    for(const key of ['__mwsV104BuildObserver','__mwsV101BuildObserver','__mwsV108BuildObserver','__mwsV109BuildObserver']){
       try{body?.[key]?.disconnect?.()}catch(_){ }
       if(body)body[key]=noopObserver;
     }
     document.querySelectorAll('[id^="mwsBuildVersionV5"],#mwsBuildVersion,[class*="sidebar-build-version"]').forEach(x=>{
-      for(const key of ['__mwsV104BuildObserver','__mwsV101BuildObserver','__mwsV108BuildObserver']){
+      for(const key of ['__mwsV104BuildObserver','__mwsV101BuildObserver','__mwsV108BuildObserver','__mwsV109BuildObserver']){
         try{x[key]?.disconnect?.()}catch(_){ }
         x[key]=noopObserver;
       }
@@ -32,7 +32,7 @@ function cutBlock(code,startToken,endToken,replacement=''){
   return code.slice(0,a)+replacement+code.slice(b);
 }
 function stableBase(code){
-  code=code.replaceAll('CF MWS V 1.0.4',BUILD).replaceAll('/content-planner.html?v=1.0.4','/content-planner.html?v=1.0.5');
+  code=code.replaceAll('CF MWS V 1.0.4',BUILD).replaceAll('/content-planner.html?v=1.0.4','/content-planner.html?v=1.0.10');
   return cutBlock(code,'  setTimeout(()=>{forceVersionV104();const body=document.body;','\n})();','');
 }
 function stableBridge(code){return cutBlock(code,'let raf=0;const mo=new MutationObserver',"window.addEventListener('mawang:datachange'",'let raf=0;')}
@@ -64,11 +64,11 @@ function loadAdvancedTools(){
   if(advancedReady){guardVersionObservers();forceVersion();window.dispatchEvent(new Event('mws:v109-tools-ready'));return}
   if(advancedLoading)return;
   advancedLoading=true;
-  fetchEval('/assets/tools-v1.0.6-bridge.js?v=1.0.9','__mwsToolsBridgeV106',stableBridge,()=>{
-    fetchEval('/assets/tools-v1.0.6-final.js?v=1.0.9','__mwsToolsFinalV106',stableFinal106,()=>{
-      fetchEval('/assets/tools-v1.0.7-tier.js?v=1.0.9','__mwsTierVisualV107',stableTier107,()=>{
-        fetchEval('/assets/tools-v1.0.8-final.js?v=1.0.9','__mwsToolsV108',stableFinal108,()=>{
-          loadScript('/assets/tools-v1.0.9-ui.js?v=1.0.9','mwsToolsUiScriptV109',()=>{
+  fetchEval('/assets/tools-v1.0.6-bridge.js?v=1.0.10','__mwsToolsBridgeV106',stableBridge,()=>{
+    fetchEval('/assets/tools-v1.0.6-final.js?v=1.0.10','__mwsToolsFinalV106',stableFinal106,()=>{
+      fetchEval('/assets/tools-v1.0.7-tier.js?v=1.0.10','__mwsTierVisualV107',stableTier107,()=>{
+        fetchEval('/assets/tools-v1.0.8-final.js?v=1.0.10','__mwsToolsV108',stableFinal108,()=>{
+          loadScript('/assets/tools-v1.0.9-ui.js?v=1.0.10','mwsToolsUiScriptV109',()=>{
             advancedLoading=false;advancedReady=true;guardVersionObservers();forceVersion();cleanRecords();window.dispatchEvent(new Event('mws:v109-tools-ready'));
           });
         });
@@ -94,9 +94,9 @@ function baseInstall(){
   if(baseStarted){guardVersionObservers();forceVersion();cleanRecords();activateRequestedTool();return}
   baseStarted=true;
   guardVersionObservers();forceVersion();
-  fetchEval('/assets/content-planner-host-v104.js?v=1.0.9','__mwsContentPlannerHostV104',stableBase,()=>{
+  fetchEval('/assets/content-planner-host-v104.js?v=1.0.10','__mwsContentPlannerHostV104',stableBase,()=>{
     guardVersionObservers();forceVersion();
-    loadScript('/assets/tools-v1.0.5.js?v=1.0.5','mwsToolsScriptV105',()=>{
+    loadScript('/assets/tools-v1.0.5.js?v=1.0.10','mwsToolsScriptV105',()=>{
       cleanRecords();guardVersionObservers();forceVersion();setTimeout(activateRequestedTool,60);
     });
   });
