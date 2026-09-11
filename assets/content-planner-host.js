@@ -7,6 +7,14 @@ function forceVersion(){try{document.body?.setAttribute('data-build-version',BUI
 function forcePlanner(){try{const f=document.getElementById('mwsContentPlannerFrame');if(f&&!String(f.getAttribute('src')||'').includes('v=1.0.5')){f.dataset.mwsLoaded='1';f.src='/content-planner.html?v=1.0.5'}}catch(_){}}
 function stopOld(){try{const b=document.body;for(const key of ['__mwsV104BuildObserver','__mwsV101BuildObserver']){if(b?.[key]){b[key].disconnect();b[key]=null}}document.querySelectorAll('[id^="mwsBuildVersionV5"],#mwsBuildVersion,[class*="sidebar-build-version"]').forEach(x=>{for(const key of ['__mwsV104BuildObserver','__mwsV101BuildObserver']){if(x[key]){x[key].disconnect();x[key]=null}}})}catch(_){}}
 function load(src,id,done){if(document.getElementById(id)){done?.();return}const s=document.createElement('script');s.id=id;s.src=src;s.onload=()=>done?.();document.body.appendChild(s)}
-function install(){load('/assets/content-planner-host-v104.js?v=1.0.4','mwsContentPlannerHostBaseV104',()=>{forcePlanner();forceVersion()});load('/assets/tools-v1.0.5.js?v=1.0.5','mwsToolsScriptV105',()=>load('/assets/tools-v1.0.6-loader.js?v=1.0.6','mwsToolsPatchLoaderV106'));forceVersion();forcePlanner()}
-window.addEventListener('DOMContentLoaded',install,{once:true});window.addEventListener('load',install,{once:true});if(document.readyState!=='loading')install();[50,150,400,900,1800,3300,4200,6500,9000,11000].forEach(ms=>setTimeout(()=>{stopOld();forceVersion();forcePlanner();install()},ms));let n=0;const timer=setInterval(()=>{stopOld();forceVersion();forcePlanner();if(++n>50)clearInterval(timer)},250);
+function install(){
+  load('/assets/content-planner-host-v104.js?v=1.0.4','mwsContentPlannerHostBaseV104',()=>{forcePlanner();forceVersion()});
+  load('/assets/tools-v1.0.5.js?v=1.0.5','mwsToolsScriptV105',()=>load('/assets/tools-v1.0.6-final.js?v=1.0.6','mwsToolsFinalScriptV106'));
+  forceVersion();forcePlanner();
+}
+window.addEventListener('DOMContentLoaded',install,{once:true});
+window.addEventListener('load',install,{once:true});
+if(document.readyState!=='loading')install();
+[50,150,400,900,1800,3300,4200,6500,9000,11000].forEach(ms=>setTimeout(()=>{stopOld();forceVersion();forcePlanner();install()},ms));
+let n=0;const timer=setInterval(()=>{stopOld();forceVersion();forcePlanner();if(++n>50)clearInterval(timer)},250);
 })();
