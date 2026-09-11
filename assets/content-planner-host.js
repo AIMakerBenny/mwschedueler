@@ -27,6 +27,7 @@
       #mwsContentPlannerShell{height:calc(100vh - 92px);min-height:560px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:#070a12}
       #mwsContentPlannerFrame{display:block;width:100%;height:100%;border:0;background:#070a12}
 
+      /* V1.0.4: global/page text scale must grow the containers too. */
       #dashboard .dashboard-kpi-grid-local{grid-template-columns:repeat(auto-fit,minmax(calc(185px * var(--ui-text-scale,1)),1fr))!important;align-items:stretch!important}
       #dashboard .dashboard-kpi-grid-local>.card,#dashboard .dashboard-kpi-grid-local>button.card{height:auto!important;min-height:calc(82px * var(--ui-text-scale,1))!important;overflow:visible!important;padding:calc(15px * var(--ui-text-scale,1))!important}
       #dashboard .dashboard-my-profile-v3{height:auto!important;min-height:calc(82px * var(--ui-text-scale,1))!important;overflow:visible!important}
