@@ -4,38 +4,37 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MAWANG Content Planner</title>
-<style>html,body{margin:0;height:100%;background:#070a12;color:#94a3c4;font-family:Pretendard,"Noto Sans KR","Malgun Gothic",Arial,sans-serif}#boot{height:100%;display:grid;place-items:center;text-align:center;padding:24px;box-sizing:border-box}</style>
+<style>html,body{margin:0;height:100%;background:#fff;color:#64748b;font-family:Pretendard,"Noto Sans KR","Malgun Gothic",Arial,sans-serif}#boot{height:100%;display:grid;place-items:center;text-align:center;padding:24px;box-sizing:border-box}</style>
 </head>
 <body>
 <div id="boot">컨텐츠 플래너 불러오는 중...</div>
 <script>
 (async()=>{
   const files=[
-      '/assets/content-planner-payload-1.txt?v=1.0.4',
-      '/assets/content-planner-payload-2.txt?v=1.0.4',
-      '/assets/content-planner-payload-3.txt?v=1.0.4',
-      '/assets/content-planner-payload-4.txt?v=1.0.4',
-      '/assets/content-planner-payload-5.txt?v=1.0.4'
+      '/assets/content-planner-payload-1.txt?v=1.0.5',
+      '/assets/content-planner-payload-2.txt?v=1.0.5',
+      '/assets/content-planner-payload-3.txt?v=1.0.5',
+      '/assets/content-planner-payload-4.txt?v=1.0.5',
+      '/assets/content-planner-payload-5.txt?v=1.0.5',
+      '/assets/content-planner-payload-6.txt?v=1.0.5',
+      '/assets/content-planner-payload-7.txt?v=1.0.5',
+      '/assets/content-planner-payload-8.txt?v=1.0.5',
+      '/assets/content-planner-payload-9.txt?v=1.0.5',
+      '/assets/content-planner-payload-10.txt?v=1.0.5',
+      '/assets/content-planner-payload-11.txt?v=1.0.5',
+      '/assets/content-planner-payload-12.txt?v=1.0.5'
   ];
-  const expected='8ef554a13bbbd7f3699294c96ad32962837744486495e656dc5fc3fa548e0632';
+  const expected='f29e6497db86727d8cbd4a3fea73bb2c266ea7ed98ee0a1cd14e575461e4d799';
   try{
-    const parts=await Promise.all(files.map(async url=>{
-      const response=await fetch(url,{cache:'force-cache'});
-      if(!response.ok)throw new Error('payload '+response.status);
-      return (await response.text()).trim();
-    }));
-    const b64=parts.join('');
-    const compressed=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
+    const parts=await Promise.all(files.map(async url=>{const response=await fetch(url,{cache:'force-cache'});if(!response.ok)throw new Error('payload '+response.status);return (await response.text()).trim()}));
+    const compressed=Uint8Array.from(atob(parts.join('')),c=>c.charCodeAt(0));
     if(typeof DecompressionStream!=='function')throw new Error('gzip decoder unavailable');
     const html=await new Response(new Blob([compressed]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
-    const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(html));
-    const actual=[...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('');
+    const got=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(html));
+    const actual=[...new Uint8Array(got)].map(x=>x.toString(16).padStart(2,'0')).join('');
     if(actual!==expected)throw new Error('planner integrity check failed');
     document.open();document.write(html);document.close();
-  }catch(error){
-    console.error('Content Planner load failed',error);
-    document.getElementById('boot').textContent='컨텐츠 플래너를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.';
-  }
+  }catch(error){console.error('Content Planner load failed',error);document.getElementById('boot').textContent='컨텐츠 플래너를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.'}
 })();
 </script>
 </body>
