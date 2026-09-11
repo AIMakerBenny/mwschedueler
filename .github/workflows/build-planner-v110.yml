@@ -1,0 +1,161 @@
+name: Build faithful Planner V1.0.10
+on:
+  push:
+    branches: [mws-v1.0.10-planner-faithful]
+    paths: [.github/workflows/build-planner-v110.yml]
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: mws-v1.0.10-planner-faithful
+      - name: Reconstruct exact planner and apply V1.0.10 changes
+        shell: python
+        run: |
+          import base64,gzip,hashlib,json,pathlib,re
+
+          def replace_once(text, old, new, label):
+              count=text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 match, got {count}')
+              return text.replace(old,new,1)
+
+          files=['assets/content-planner-payload-1.txt','assets/content-planner-payload-2.txt','assets/content-planner-fix-03a.txt','assets/content-planner-fix-03b.txt','assets/content-planner-payload-4.txt','assets/content-planner-payload-5.txt','assets/content-planner-payload-6.txt','assets/content-planner-payload-7.txt','assets/content-planner-payload-8.txt','assets/content-planner-payload-9.txt','assets/content-planner-payload-10.txt','assets/content-planner-payload-11.txt','assets/content-planner-payload-12.txt']
+          p=[pathlib.Path(x).read_text().strip() for x in files]
+          p[10]=p[10].replace('tdTheD0Dh','tdTheD/0Dh')[:-1]
+          p[11]='G'+p[11][:-1]
+          p[12]='n'+p[12]
+          html=gzip.decompress(base64.b64decode(''.join(p))).decode('utf-8')
+          source_sha=hashlib.sha256(html.encode()).hexdigest()
+          expected='f29e6497db86727d8cbd4a3fea73bb2c266ea7ed98ee0a1cd14e575461e4d799'
+          if source_sha != expected:
+              raise SystemExit(f'planner source SHA mismatch: {source_sha}')
+
+          # V1.0.10 title and top chrome. Keep the actual paper canvas white.
+          html=replace_once(html,'<title>MAWANG Content Planner V1.0.5</title>','<title>MAWANG Content Planner V1.0.10</title>','planner title')
+          html=replace_once(html,'.workspace-head{background:#fff!important;border-bottom:1px solid #d8dde7!important}.workspace-head .status{color:#667085!important}', '.workspace-head{background:#090e19!important;border-bottom:1px solid #182237!important}.workspace-head .status{color:#94a3c4!important}', 'workspace header color')
+
+          # Sticky notes are straight by default. Rotation is a persisted element property.
+          if html.count('transform:rotate(-1deg)') != 1:
+              raise SystemExit('sticky legacy rotation rule not uniquely found')
+          html=html.replace('transform:rotate(-1deg)','transform:rotate(0deg)',1)
+          sticky_old='function addSticky(){setTool(\'select\');return addElement(\'sticky\',{w:240,h:150,data:{text:\'아이디어 메모\'},style:{fontFamily:"\'Noto Sans KR\',sans-serif",fontSize:\'20px\',textAlign:\'left\'}})}'
+          sticky_new='function addSticky(){setTool(\'select\');return addElement(\'sticky\',{w:240,h:150,data:{text:\'아이디어 메모\',rotation:0},style:{fontFamily:"\'Noto Sans KR\',sans-serif",fontSize:\'20px\',textAlign:\'left\',transform:\'rotate(0deg)\'}})}'
+          html=replace_once(html,sticky_old,sticky_new,'final addSticky')
+
+          node_anchor="function nodeHtml(e){\n  const base="
+          node_count=html.count(node_anchor)
+          if node_count < 2:
+              raise SystemExit(f'nodeHtml anchors unexpectedly low: {node_count}')
+          node_prefix="function nodeHtml(e){\n  if(e.type==='sticky'){e.data=e.data||{};const rotation=Math.max(-45,Math.min(45,Number(e.data.rotation)||0));e.data.rotation=rotation;e.style=e.style||{};e.style.transform=`rotate(${rotation}deg)`}\n  const base="
+          html=html.replace(node_anchor,node_prefix)
+
+          inspector_anchor='function renderInspector(){\n'
+          rotation_fn="function updateStickyRotationV110(value,input){const e=getEl(selectedIds[0]);if(!e||e.type!=='sticky')return;const rotation=Math.max(-45,Math.min(45,Number(value)||0));e.data=e.data||{};e.data.rotation=rotation;e.style=e.style||{};e.style.transform=`rotate(${rotation}deg)`;const node=document.querySelector(`.node[data-id=\"${e.id}\"]`);if(node)node.style.transform=e.style.transform;const out=input?.closest('.range-row')?.querySelector('span');if(out)out.textContent=rotation+'°';touch()}\n"
+          html=replace_once(html,inspector_anchor,rotation_fn+inspector_anchor,'sticky rotation function')
+          extra_anchor="  let extra='';\n  if(e.type==='participant')"
+          extra_new="  let extra='';\n  if(e.type==='sticky'){const rotation=Math.max(-45,Math.min(45,Number(e.data?.rotation)||0));extra=`<div class=\"side-card\"><label>포스트잇 기울기</label><div class=\"range-row\"><input type=\"range\" min=\"-45\" max=\"45\" step=\"1\" value=\"${rotation}\" oninput=\"updateStickyRotationV110(this.value,this)\"><span>${rotation}°</span></div></div>`}\n  if(e.type==='participant')"
+          html=replace_once(html,extra_anchor,extra_new,'sticky inspector')
+
+          # Custom/uploaded stickers use src; built-in stickers are inline SVG. Show src entries first.
+          sticker_block=re.search(r'const STICKERS_V104=\[(.*?)\n\];',html,re.S)
+          if not sticker_block:
+              raise SystemExit('STICKERS_V104 block not found')
+          custom_count=sticker_block.group(1).count('src:')
+          if custom_count < 1:
+              raise SystemExit('No src-based custom stickers found')
+          sticker_old='function renderStickerGridV104(){const g=$(\'stickerGrid\');if(g)g.innerHTML=STICKERS_V104.map(x=>`<button class="sticker-pick" title="${x.name}" onclick="beginStickerPlacement(\'${x.id}\')"><img src="${stickerDataUriV104(x.id)}" alt="${x.name}"></button>`).join(\'\')}'
+          sticker_new='function renderStickerGridV104(){const g=$(\'stickerGrid\');if(!g)return;const ordered=[...STICKERS_V104].sort((a,b)=>(b.src?1:0)-(a.src?1:0));g.innerHTML=ordered.map(x=>`<button class="sticker-pick" title="${x.name}" onclick="beginStickerPlacement(\'${x.id}\')"><img src="${stickerDataUriV104(x.id)}" alt="${x.name}"></button>`).join(\'\')}'
+          html=replace_once(html,sticker_old,sticker_new,'sticker ordering')
+          print('Custom/uploaded sticker entries:',custom_count)
+
+          # Fullscreen controls are part of the planner source, not a runtime patch.
+          submit_old='<button class="btn small primary" onclick="openSubmitModal(false)">기획안 제출</button>'
+          submit_new='<div class="submit-stack-v110"><button class="btn small primary" onclick="openSubmitModal(false)">기획안 제출</button><button class="btn fullscreen-launch-v110" type="button" onclick="enterPlannerFullscreenV110()">전체화면</button></div>'
+          html=replace_once(html,submit_old,submit_new,'fullscreen launch markup')
+          html=replace_once(html,'<main class="app">','<main class="app"><button id="fullscreenExitV110" class="fullscreen-exit-v110" type="button" onclick="exitPlannerFullscreenV110()">전체화면 취소</button>','fullscreen exit markup')
+          html=replace_once(html,'    </div>\n\n    <aside class="leftbar"></aside>','    </div>\n    <div id="fullscreenBlankV110" class="fullscreen-blank-v110" aria-hidden="true"></div>\n\n    <aside class="leftbar"></aside>','fullscreen blank panel')
+
+          fullscreen_css='''\n/* CF MWS V1.0.10 fullscreen workspace */\n.submit-stack-v110{display:flex;flex-direction:column;gap:4px;min-width:118px}.submit-stack-v110>.btn{width:100%}.fullscreen-launch-v110{background:#171f35!important;border-color:#53698e!important;color:#f5f7ff!important;font-size:12px!important;padding:7px 10px!important}.fullscreen-blank-v110,.fullscreen-exit-v110{display:none}\nbody.planner-fullscreen-v110 .topbar{display:none!important}body.planner-fullscreen-v110 .app{height:100vh!important}body.planner-fullscreen-v110 #creatorMode.creator.active{display:grid!important;grid-template-columns:minmax(0,72fr) minmax(320px,28fr)!important;grid-template-rows:50vh 50vh!important;height:100vh!important}body.planner-fullscreen-v110 #creatorMode>.workspace{grid-column:1!important;grid-row:1/3!important;min-width:0!important;min-height:0!important}body.planner-fullscreen-v110 #creatorMode>.creator-toolbar{grid-column:2!important;grid-row:1!important;min-height:0!important;height:50vh!important;max-height:50vh!important;overflow:auto!important;align-content:flex-start!important;border-left:1px solid var(--line)!important;border-bottom:1px solid var(--line)!important}body.planner-fullscreen-v110 #fullscreenBlankV110{display:block!important;grid-column:2!important;grid-row:2!important;background:#070a12!important;border-left:1px solid var(--line)!important}body.planner-fullscreen-v110 #fullscreenExitV110{display:block!important;position:fixed!important;right:16px!important;bottom:16px!important;z-index:4000!important;border:1px solid #7c5cff!important;background:#211a40!important;color:#fff!important;border-radius:11px!important;padding:11px 16px!important;font-weight:900!important;box-shadow:0 10px 30px rgba(0,0,0,.4)!important}\n@media(max-width:900px){body.planner-fullscreen-v110 #creatorMode.creator.active{grid-template-columns:minmax(0,68fr) minmax(280px,32fr)!important}}\n'''
+          pos=html.rfind('</style>')
+          if pos < 0:
+              raise SystemExit('final style close not found')
+          html=html[:pos]+fullscreen_css+html[pos:]
+
+          fullscreen_js="""function enterPlannerFullscreenV110(){document.body.classList.add('planner-fullscreen-v110');setTimeout(()=>{resizePlannerCanvas();redrawDrawCanvas()},40);const root=document.documentElement;if(root.requestFullscreen&&!document.fullscreenElement)root.requestFullscreen().catch(()=>{})}\nfunction exitPlannerFullscreenV110(fromEvent=false){document.body.classList.remove('planner-fullscreen-v110');setTimeout(()=>{resizePlannerCanvas();redrawDrawCanvas()},40);if(!fromEvent&&document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{})}\ndocument.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('planner-fullscreen-v110'))exitPlannerFullscreenV110(true)});\n\n"""
+          html=replace_once(html,'function switchMode(mode){\n',fullscreen_js+'function switchMode(mode){\n','fullscreen functions')
+
+          # Brush is the default tool for startup and canvas changes. Text/sticky/shape placement still explicitly selects when required.
+          html=replace_once(html,"setZoom(1);setTool('select');setupPlannerV104();loadDraft();renderArchive();requestSchedulerContacts();switchMode('creator');","setZoom(1);setTool('brush');setupPlannerV104();loadDraft();renderArchive();requestSchedulerContacts();switchMode('creator');",'startup default brush')
+          reset_pattern="selectedIds=[];undoStack=[];redoStack=[];setTool('select');syncMetaInputs();"
+          reset_count=html.count(reset_pattern)
+          if reset_count < 3:
+              raise SystemExit(f'canvas reset pattern unexpectedly low: {reset_count}')
+          html=html.replace(reset_pattern,"selectedIds=[];undoStack=[];redoStack=[];setTool('brush');syncMetaInputs();")
+          if "function addTextAtV104(x=180,y=140,w=300,h=60){setTool('select');" not in html:
+              raise SystemExit('text creation select behavior was lost')
+
+          pathlib.Path('content-planner.html').write_text(html)
+          print('Final planner SHA256',hashlib.sha256(html.encode()).hexdigest(),'length',len(html),'canvas resets changed',reset_count)
+
+          # Release/version alignment without changing tool behavior.
+          host_path=pathlib.Path('assets/content-planner-host.js');host=host_path.read_text()
+          for a,b in [
+              ('CF MWS V 1.0.9','CF MWS V 1.0.10'),('__mwsContentPlannerHostCleanV109','__mwsContentPlannerHostCleanV110'),('mwsContentPlannerHostStyleV109Clean','mwsContentPlannerHostStyleV110Clean'),("FRAME_URL='/content-planner.html?v=1.0.5'","FRAME_URL='/content-planner.html?v=1.0.10'"),("TOOLS_URL='/assets/tools.js?v=1.0.9'","TOOLS_URL='/assets/tools.js?v=1.0.10'"),('mwsToolsCleanV109Script','mwsToolsCleanV110Script'),('allow="clipboard-write"','allow="clipboard-write; fullscreen" allowfullscreen')]:
+              if a not in host: raise SystemExit(f'host replacement missing: {a}')
+              host=host.replace(a,b)
+          host_path.write_text(host)
+
+          tools_path=pathlib.Path('assets/tools.js');tools=tools_path.read_text()
+          for a,b in [('CF MWS V 1.0.9','CF MWS V 1.0.10'),('__mwsToolsCleanV109','__mwsToolsCleanV110'),('mwsToolsCleanV109Style','mwsToolsCleanV110Style'),('MWS V1.0.9 clean tools install failed','MWS V1.0.10 clean tools install failed')]:
+              if a not in tools: raise SystemExit(f'tools replacement missing: {a}')
+              tools=tools.replace(a,b)
+          tools_path.write_text(tools)
+
+          perf_path=pathlib.Path('assets/perf-runtime.js');perf=perf_path.read_text()
+          replacements=[('CF MWS V 1.0.9','CF MWS V 1.0.10'),('loadContentPlannerHostV109','loadContentPlannerHostV110'),('mwsContentPlannerHostScriptV109','mwsContentPlannerHostScriptV110'),('assets/content-planner-host.js?v=1.0.9','assets/content-planner-host.js?v=1.0.10'),('mws-cf-v109-page-scale-style','mws-cf-v110-page-scale-style'),('__mwsV109PageScaleBridge','__mwsV110PageScaleBridge'),('__mwsV109PageScaleBase','__mwsV110PageScaleBase'),('__mwsV109BuildObserver','__mwsV110BuildObserver')]
+          for a,b in replacements:
+              if a not in perf: raise SystemExit(f'perf replacement missing: {a}')
+              perf=perf.replace(a,b)
+          perf_path.write_text(perf)
+
+          pkg_path=pathlib.Path('package.json');pkg=json.loads(pkg_path.read_text());pkg['version']='1.0.10';pkg_path.write_text(json.dumps(pkg,ensure_ascii=False,indent=2)+'\n')
+
+      - name: Validate direct planner and JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -q 'content-planner-payload' content-planner.html
+          ! grep -q 'content-planner-v1\.0' content-planner.html
+          grep -q 'MAWANG Content Planner V1.0.10' content-planner.html
+          grep -q 'planner-fullscreen-v110' content-planner.html
+          grep -q 'updateStickyRotationV110' content-planner.html
+          grep -q "setZoom(1);setTool('brush')" content-planner.html
+          grep -q "function addTextAtV104(x=180,y=140,w=300,h=60){setTool('select')" content-planner.html
+          grep -q "TOOLS_URL='/assets/tools.js?v=1.0.10'" assets/content-planner-host.js
+          grep -q 'allowfullscreen' assets/content-planner-host.js
+          ! grep -q 'tools-v1\.0\.' assets/content-planner-host.js
+          python - <<'PY'
+          import pathlib,re
+          html=pathlib.Path('content-planner.html').read_text()
+          scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',html,re.S|re.I)
+          pathlib.Path('/tmp/planner-inline.js').write_text('\n;\n'.join(scripts))
+          print('inline scripts',len(scripts))
+          PY
+          node --check /tmp/planner-inline.js
+          node --check assets/tools.js
+          node --check assets/content-planner-host.js
+          node --check assets/perf-runtime.js
+      - name: Commit faithful V1.0.10
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'MWS Build'
+          git config user.email 'mws-build@users.noreply.github.com'
+          git add content-planner.html assets/content-planner-host.js assets/tools.js assets/perf-runtime.js package.json
+          git diff --cached --check
+          git commit -m 'Build faithful single-file Content Planner V1.0.10'
+          git push origin HEAD:mws-v1.0.10-planner-faithful
