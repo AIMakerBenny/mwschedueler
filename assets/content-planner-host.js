@@ -7,11 +7,22 @@ function forceVersion(){try{document.body?.setAttribute('data-build-version',BUI
 function forcePlanner(){try{const f=document.getElementById('mwsContentPlannerFrame');if(f&&!String(f.getAttribute('src')||'').includes('v=1.0.5')){f.dataset.mwsLoaded='1';f.src='/content-planner.html?v=1.0.5'}}catch(_){}}
 function stopOld(){try{const b=document.body;for(const key of ['__mwsV104BuildObserver','__mwsV101BuildObserver']){if(b?.[key]){b[key].disconnect();b[key]=null}}document.querySelectorAll('[id^="mwsBuildVersionV5"],#mwsBuildVersion,[class*="sidebar-build-version"]').forEach(x=>{for(const key of ['__mwsV104BuildObserver','__mwsV101BuildObserver']){if(x[key]){x[key].disconnect();x[key]=null}}})}catch(_){}}
 function load(src,id,done){if(document.getElementById(id)){done?.();return}const s=document.createElement('script');s.id=id;s.src=src;s.onload=()=>done?.();document.body.appendChild(s)}
+let finalPromise=null;
+function loadFinalCompat(done){
+  if(window.__mwsToolsFinalV106){done?.();return}
+  if(!finalPromise){
+    finalPromise=fetch('/assets/tools-v1.0.6-final.js?v=1.0.7-hotfix',{cache:'no-store'})
+      .then(r=>{if(!r.ok)throw new Error(`tools final ${r.status}`);return r.text()})
+      .then(code=>{(0,eval)(code.replaceAll('CF MWS V 1.0.6','CF MWS V 1.0.7'))})
+      .catch(e=>{finalPromise=null;console.error('V1.0.7 final tool compatibility load failed',e);throw e});
+  }
+  finalPromise.then(()=>done?.()).catch(()=>{});
+}
 function install(){
   load('/assets/content-planner-host-v104.js?v=1.0.4','mwsContentPlannerHostBaseV104',()=>{forcePlanner();forceVersion()});
   load('/assets/tools-v1.0.5.js?v=1.0.5','mwsToolsScriptV105',()=>{
     load('/assets/tools-v1.0.6-bridge.js?v=1.0.6','mwsToolsBridgeScriptV106',()=>{
-      load('/assets/tools-v1.0.6-final.js?v=1.0.6','mwsToolsFinalScriptV106',()=>load('/assets/tools-v1.0.7-tier.js?v=1.0.7','mwsTierVisualScriptV107'));
+      loadFinalCompat(()=>load('/assets/tools-v1.0.7-tier.js?v=1.0.7-hotfix','mwsTierVisualScriptV107'));
     });
   });
   forceVersion();forcePlanner();
