@@ -1,11 +1,11 @@
-/* MAWANG Scheduler CF MWS V 1.0.8 - one-request bootstrap + verified IndexedDB reuse */
+/* MAWANG Scheduler CF MWS V 1.0.9 - one-request bootstrap + verified IndexedDB reuse */
 (()=>{
   'use strict';
   if(window.__mwsCf571Optimizer)return;
   window.__mwsCf571Optimizer=true;
 
   const nativeFetch=window.fetch.bind(window);
-  const BUILD='CF MWS V 1.0.8';
+  const BUILD='CF MWS V 1.0.9';
   const ETAG_KEY='mws_cf_v571_etag';
   const MANIFEST_KEY='mws_cf_v571_manifest';
   const MEDIA_BASE_KEY='mws_cf_v571_media_base';
@@ -67,7 +67,7 @@
         tx.onerror=()=>reject(tx.error);
         tx.onabort=()=>reject(tx.error);
       })));
-    }catch(e){console.warn('CF MWS V 1.0.8 bundle cache write failed',e)}
+    }catch(e){console.warn('CF MWS V 1.0.9 bundle cache write failed',e)}
     finally{try{db?.close()}catch(_){}}
   }
 
@@ -171,11 +171,11 @@
     document.body.appendChild(s);
   }
 
-  function loadContentPlannerHostV108(){
-    if(document.getElementById('mwsContentPlannerHostScriptV108'))return;
+  function loadContentPlannerHostV109(){
+    if(document.getElementById('mwsContentPlannerHostScriptV109'))return;
     const s=document.createElement('script');
-    s.id='mwsContentPlannerHostScriptV108';
-    s.src='assets/content-planner-host.js?v=1.0.8';
+    s.id='mwsContentPlannerHostScriptV109';
+    s.src='assets/content-planner-host.js?v=1.0.9';
     document.body.appendChild(s);
   }
 
@@ -187,9 +187,9 @@
   function globalTextScale(){try{return Math.max(80,Math.min(200,Number(data?.textScale)||100))}catch(_){return 100}}
 
   function ensurePageScaleStyle(){
-    if(document.getElementById('mws-cf-v108-page-scale-style'))return;
+    if(document.getElementById('mws-cf-v109-page-scale-style'))return;
     const style=document.createElement('style');
-    style.id='mws-cf-v108-page-scale-style';
+    style.id='mws-cf-v109-page-scale-style';
     style.textContent='.main{overflow-x:auto!important}.section{transform-origin:top left}';
     document.head.appendChild(style);
   }
@@ -220,10 +220,10 @@
 
   function wrapPageScaleFunction(name){
     const current=window[name];
-    if(typeof current!=='function'||current.__mwsV108PageScaleBridge)return;
+    if(typeof current!=='function'||current.__mwsV109PageScaleBridge)return;
     const wrapped=function(){const out=current.apply(this,arguments);queueMicrotask(applyPageLayoutScale);return out};
-    wrapped.__mwsV108PageScaleBridge=true;
-    wrapped.__mwsV108PageScaleBase=current;
+    wrapped.__mwsV109PageScaleBridge=true;
+    wrapped.__mwsV109PageScaleBase=current;
     window[name]=wrapped;
   }
 
@@ -238,27 +238,27 @@
   function installReleaseVersionGuard(){
     forceVersion();
     const body=document.body;
-    if(body&&!body.__mwsV108BuildObserver){
+    if(body&&!body.__mwsV109BuildObserver){
       const observer=new MutationObserver(()=>{if(body.getAttribute('data-build-version')!==BUILD)forceVersion()});
       observer.observe(body,{attributes:true,attributeFilter:['data-build-version']});
-      body.__mwsV108BuildObserver=observer;
+      body.__mwsV109BuildObserver=observer;
     }
     const label=document.querySelector('[id^="mwsBuildVersionV5"],#mwsBuildVersion,.sidebar-build-version-v52,.sidebar-build-version-v53,[class*="sidebar-build-version"]');
-    if(label&&!label.__mwsV108BuildObserver){
+    if(label&&!label.__mwsV109BuildObserver){
       const observer=new MutationObserver(()=>{if(label.textContent!==BUILD)forceVersion()});
       observer.observe(label,{childList:true,characterData:true,subtree:true});
-      label.__mwsV108BuildObserver=observer;
+      label.__mwsV109BuildObserver=observer;
     }
   }
 
   window.mwsV101ApplyPageLayoutScale=applyPageLayoutScale;
-  const ready=()=>{forceVersion();installReleaseVersionGuard();installPageScaleBridge();loadContentPlannerHostV108()};
+  const ready=()=>{forceVersion();installReleaseVersionGuard();installPageScaleBridge();loadContentPlannerHostV109()};
   window.addEventListener('DOMContentLoaded',ready,{once:true});
-  window.addEventListener('load',()=>{forceVersion();loadRuntimePatch();installReleaseVersionGuard();installPageScaleBridge();loadContentPlannerHostV108()},{once:true});
+  window.addEventListener('load',()=>{forceVersion();loadRuntimePatch();installReleaseVersionGuard();installPageScaleBridge();loadContentPlannerHostV109()},{once:true});
   window.addEventListener('mawang:datachange',()=>setTimeout(()=>{installReleaseVersionGuard();installPageScaleBridge()},0));
   [50,150,350,800,1500,3000,6000,9000].forEach(ms=>setTimeout(()=>{installReleaseVersionGuard();installPageScaleBridge()},ms));
   let tries=0;const versionTimer=setInterval(()=>{forceVersion();if(++tries>=32)clearInterval(versionTimer)},250);
-  if(document.readyState!=='loading')setTimeout(loadContentPlannerHostV108,0);
+  if(document.readyState!=='loading')setTimeout(loadContentPlannerHostV109,0);
 
   if(document.readyState==='loading')document.write('<script src="assets/perf-runtime-base.js?v=5.7.1"><\/script>');
   else{const s=document.createElement('script');s.src='assets/perf-runtime-base.js?v=5.7.1';document.head.appendChild(s)}
