@@ -1,7 +1,7 @@
 /* CF MWS V 1.0.10 - consolidated tools, behavior-preserving */
 (()=>{
 'use strict';
-if(window.__mwsToolsCleanV110)return;window.__mwsToolsCleanV109=1;
+if(window.__mwsToolsCleanV110)return;window.__mwsToolsCleanV110=1;
 const BUILD='CF MWS V 1.0.10';
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
