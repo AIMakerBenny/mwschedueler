@@ -1,17 +1,17 @@
-/* CF MWS V 1.0.3 - Content Planner category integration */
+/* CF MWS V 1.0.4 - Content Planner category integration */
 (()=>{
   'use strict';
-  if(window.__mwsContentPlannerHostV103)return;
-  window.__mwsContentPlannerHostV103=true;
+  if(window.__mwsContentPlannerHostV104)return;
+  window.__mwsContentPlannerHostV104=true;
 
   const TAB='contentPlanner';
   const FRAME_ID='mwsContentPlannerFrame';
-  const FRAME_URL='/content-planner.html?v=1.0.3';
+  const FRAME_URL='/content-planner.html?v=1.0.4';
 
   function ensureStyle(){
-    if(document.getElementById('mwsContentPlannerHostStyleV103'))return;
+    if(document.getElementById('mwsContentPlannerHostStyleV104'))return;
     const style=document.createElement('style');
-    style.id='mwsContentPlannerHostStyleV103';
+    style.id='mwsContentPlannerHostStyleV104';
     style.textContent=`
       #contentPlanner{padding:0!important;zoom:1!important;font-size:inherit!important;--ui-text-scale:1!important;overflow:hidden!important}
       #mwsContentPlannerShell{height:calc(100vh - 92px);min-height:560px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:#070a12}
@@ -36,12 +36,13 @@
   function sendContacts(){
     const frame=document.getElementById(FRAME_ID);
     if(!frame?.contentWindow)return;
-    try{
-      frame.contentWindow.postMessage({type:'mws:planner-contacts',contacts:contactsForPlanner()},location.origin);
-    }catch(error){console.warn('Content Planner contact sync failed',error)}
+    try{frame.contentWindow.postMessage({type:'mws:planner-contacts',contacts:contactsForPlanner()},location.origin)}
+    catch(error){console.warn('Content Planner contact sync failed',error)}
   }
 
   function ensureSection(){
+    const duplicates=[...document.querySelectorAll(`#${TAB}`)];
+    if(duplicates.length>1)duplicates.slice(1).forEach(x=>x.remove());
     let section=document.getElementById(TAB);
     if(section)return section;
     const main=document.querySelector('.main');
@@ -82,23 +83,25 @@
   }
 
   function ensureNav(){
-    if(document.querySelector(`.nav button[data-tab="${TAB}"]`))return;
-    const anchor=document.querySelector('.nav button[data-tab="posts"]');
-    if(!anchor)return;
-    const button=document.createElement('button');
-    button.type='button';
-    button.dataset.tab=TAB;
-    button.title='컨텐츠 플래너';
-    button.innerHTML='<span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h5M8 16h4M15 15l2 2 3-4"/></svg></span><span class="nav-label">컨텐츠 플래너</span>';
-    button.addEventListener('click',event=>{event.preventDefault();activate()});
-    anchor.insertAdjacentElement('afterend',button);
+    const existing=[...document.querySelectorAll(`.nav button[data-tab="${TAB}"]`)];
+    let button=existing.shift()||null;
+    existing.forEach(x=>x.remove());
+    const posts=document.querySelector('.nav button[data-tab="posts"]');
+    const notebook=document.querySelector('.nav button[data-tab="memos"]');
+    if(!posts)return;
+    if(!button){
+      button=document.createElement('button');
+      button.type='button';
+      button.dataset.tab=TAB;
+      button.title='컨텐츠 플래너';
+      button.innerHTML='<span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h5M8 16h4M15 15l2 2 3-4"/></svg></span><span class="nav-label">컨텐츠 플래너</span>';
+      button.addEventListener('click',event=>{event.preventDefault();activate()});
+    }
+    posts.insertAdjacentElement('afterend',button);
+    if(notebook)button.insertAdjacentElement('afterend',notebook);
   }
 
-  function install(){
-    ensureStyle();
-    ensureSection();
-    ensureNav();
-  }
+  function install(){ensureStyle();ensureSection();ensureNav()}
 
   window.addEventListener('message',event=>{
     if(event.origin!==location.origin)return;
