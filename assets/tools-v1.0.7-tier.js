@@ -145,7 +145,7 @@ style.textContent=`
 }
 `;
 document.head.appendChild(style);
-function forceVersion(){try{document.body?.setAttribute('data-build-version',BUILD);document.querySelectorAll('[id^="mwsBuildVersionV5"],#mwsBuildVersion,.sidebar-build-version-v52,.sidebar-build-version-v53,[class*="sidebar-build-version"]').forEach(x=>{if(x.textContent!==BUILD)x.textContent=BUILD})}catch(_){}}
+function forceVersion(){}
 function decorate(){
   try{
     document.querySelectorAll('#toolTier .mws-tier-drop .mws-placed').forEach(card=>{
