@@ -1,0 +1,155 @@
+name: Build Direct MWS V1.0.10
+on:
+  push:
+    branches: [mws-v1.0.10-direct-final]
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: mws-v1.0.10-direct-final
+      - name: Apply V1.0.10 directly to flattened planner
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json, re
+
+          p=Path('content-planner.html')
+          s=p.read_text(encoding='utf-8')
+
+          def once(old,new,label):
+              global s
+              n=s.count(old)
+              if n!=1:
+                  raise SystemExit(f'{label}: expected 1 match, got {n}')
+              s=s.replace(old,new,1)
+
+          once('<title>MAWANG Content Planner V1.0.5</title>','<title>MAWANG Content Planner V1.0.10</title>','planner title')
+          once(".sticky-node{padding:18px 15px 12px;background:#fff09a;color:#292814;transform:rotate(-1deg);box-shadow:0 9px 20px rgba(0,0,0,.18)}",
+               ".sticky-node{padding:18px 15px 12px;background:#fff09a;color:#292814;transform:rotate(0deg);transform-origin:center center;box-shadow:0 9px 20px rgba(0,0,0,.18)}",'sticky default rotation')
+          once('.canvas-add{width:40px!important;min-width:40px!important;height:40px!important;padding:0!important;font-size:24px!important;line-height:1!important;display:grid!important;place-items:center!important;flex:none!important}.canvas-tabs{overflow-x:auto!important}.workspace-head{background:#fff!important;border-bottom:1px solid #d8dde7!important}.workspace-head .status{color:#667085!important}',
+               '.canvas-add{width:40px!important;min-width:40px!important;height:40px!important;padding:0!important;font-size:24px!important;line-height:1!important;display:grid!important;place-items:center!important;flex:none!important}.canvas-tabs{overflow-x:auto!important}.workspace-head{background:#090e19!important;border-bottom:1px solid #182237!important}.workspace-head .status{color:#94a3c4!important}',
+               'workspace header dark')
+
+          fullscreen_css='''\n.submit-action-stack{display:flex;flex-direction:column;gap:5px;align-items:stretch}.planner-fullscreen-enter{font-weight:950!important;min-width:120px}.planner-fullscreen-blank{display:none}#plannerFullscreenExit{display:none}\nbody.planner-fullscreen{overflow:hidden!important}body.planner-fullscreen .topbar{display:none!important}body.planner-fullscreen .app{height:100vh!important}body.planner-fullscreen #creatorMode.creator.active{display:grid!important;grid-template-columns:72vw 28vw!important;grid-template-rows:50vh 50vh!important;height:100vh!important;min-height:0!important}body.planner-fullscreen #creatorMode .workspace{grid-column:1!important;grid-row:1/3!important;height:100vh!important;min-height:0!important;border-right:1px solid var(--line)!important}body.planner-fullscreen #creatorMode .creator-toolbar{grid-column:2!important;grid-row:1!important;min-height:0!important;height:50vh!important;max-height:50vh!important;overflow:auto!important;align-content:flex-start!important;border-bottom:1px solid var(--line)!important}body.planner-fullscreen #creatorMode .planner-fullscreen-blank{display:block!important;grid-column:2!important;grid-row:2!important;background:#070a12!important;border-left:1px solid var(--line)!important}body.planner-fullscreen #plannerFullscreenExit{display:block!important;position:fixed;right:14px;top:14px;z-index:5000;border:1px solid #8b5cf6;background:#241b47;color:#fff;border-radius:11px;padding:10px 14px;font-weight:900;box-shadow:0 12px 32px rgba(0,0,0,.35)}body.planner-fullscreen .workspace-head{background:#090e19!important;border-bottom-color:#182237!important}\n'''
+          marker='@media(max-width:1280px){.creator-toolbar{min-height:140px!important}.mode-tabs button{min-width:142px!important}.sticker-grid{grid-template-columns:repeat(5,68px)}.canvas-info-participants{grid-template-columns:1fr}}\n</style>'
+          if s.count(marker)!=1: raise SystemExit('fullscreen css marker mismatch')
+          s=s.replace(marker,marker.replace('\n</style>',fullscreen_css+'</style>'),1)
+
+          once('    <button class="btn small primary" onclick="openSubmitModal(false)">기획안 제출</button>',
+               '    <div class="submit-action-stack"><button class="btn small primary" onclick="openSubmitModal(false)">기획안 제출</button><button class="btn small planner-fullscreen-enter" type="button" onclick="enterPlannerFullscreen()">전체화면</button></div>',
+               'fullscreen entry button')
+          once('    <aside class="rightbar"><div id="inspector"><div class="inspector-empty">선택 요소 정보</div></div><input id="draftName" class="hidden-input"><input id="draftAuthor" class="hidden-input"><textarea id="draftSummary" class="hidden-input"></textarea><div id="elementCountChip" class="hidden-input"></div><div id="drawCountChip" class="hidden-input"></div><div id="draftTitleChip" class="hidden-input"></div><div id="contactSourceLabel" class="hidden-input"></div></aside>\n  </section>',
+               '    <aside class="rightbar"><div id="inspector"><div class="inspector-empty">선택 요소 정보</div></div><input id="draftName" class="hidden-input"><input id="draftAuthor" class="hidden-input"><textarea id="draftSummary" class="hidden-input"></textarea><div id="elementCountChip" class="hidden-input"></div><div id="drawCountChip" class="hidden-input"></div><div id="draftTitleChip" class="hidden-input"></div><div id="contactSourceLabel" class="hidden-input"></div></aside>\n    <div id="plannerFullscreenBlank" class="planner-fullscreen-blank" aria-hidden="true"></div>\n  </section>',
+               'fullscreen blank panel')
+          once('</main>\n\n<input id="imageInput"',
+               '</main>\n<button id="plannerFullscreenExit" type="button" onclick="exitPlannerFullscreen()">전체화면 취소</button>\n\n<input id="imageInput"',
+               'fullscreen exit button')
+
+          once("let state=defaultState(), selectedIds=[], tool='select', zoom=.75, drawActive=false, currentStroke=null;",
+               "let state=defaultState(), selectedIds=[], tool='brush', zoom=.75, drawActive=false, currentStroke=null;",'default tool state')
+
+          fullscreen_js="""\nfunction enterPlannerFullscreen(){\n  switchMode('creator');document.body.classList.add('planner-fullscreen');\n  try{const req=document.documentElement.requestFullscreen?.();if(req?.catch)req.catch(()=>{})}catch(_){}\n  setTimeout(()=>{resizePlannerCanvas?.();redrawDrawCanvas?.();renderConnectors?.()},40)\n}\nfunction exitPlannerFullscreen(){\n  document.body.classList.remove('planner-fullscreen');\n  try{const req=document.fullscreenElement&&document.exitFullscreen?.();if(req?.catch)req.catch(()=>{})}catch(_){}\n  setTimeout(()=>{resizePlannerCanvas?.();redrawDrawCanvas?.();renderConnectors?.()},40)\n}\ndocument.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('planner-fullscreen')){document.body.classList.remove('planner-fullscreen');setTimeout(()=>{resizePlannerCanvas?.();redrawDrawCanvas?.();renderConnectors?.()},40)}});\n"""
+          once("function openModal(id){$(id)?.classList.add('open')} function closeModal(id){$(id)?.classList.remove('open')}\n",
+               "function openModal(id){$(id)?.classList.add('open')} function closeModal(id){$(id)?.classList.remove('open')}\n"+fullscreen_js,
+               'fullscreen functions')
+
+          once("function addSticky(){setTool('select');return addElement('sticky',{w:240,h:150,data:{text:'아이디어 메모'},style:{fontFamily:\"'Noto Sans KR',sans-serif\",fontSize:'20px',textAlign:'left'}})}",
+               "function addSticky(){setTool('select');return addElement('sticky',{w:240,h:150,data:{text:'아이디어 메모'},style:{fontFamily:\"'Noto Sans KR',sans-serif\",fontSize:'20px',textAlign:'left',transform:'rotate(0deg)'}})}",
+               'sticky direct default')
+
+          old_render="function renderStickerGridV104(){const g=$('stickerGrid');if(g)g.innerHTML=STICKERS_V104.map(x=>`<button class=\"sticker-pick\" title=\"${x.name}\" onclick=\"beginStickerPlacement('${x.id}')\"><img src=\"${stickerDataUriV104(x.id)}\" alt=\"${x.name}\"></button>`).join('')}"
+          new_render="function renderStickerGridV104(){const g=$('stickerGrid');if(!g)return;const ordered=[...STICKERS_V104.filter(x=>/^user/i.test(String(x.id||''))),...STICKERS_V104.filter(x=>!/^user/i.test(String(x.id||'')))];g.innerHTML=ordered.map(x=>`<button class=\"sticker-pick\" title=\"${x.name}\" onclick=\"beginStickerPlacement('${x.id}')\"><img src=\"${stickerDataUriV104(x.id)}\" alt=\"${x.name}\"></button>`).join('')}"
+          once(old_render,new_render,'custom stickers first')
+
+          rotation_helpers="""function stickyRotationDeg(e){const raw=String(e?.style?.transform||'');const m=raw.match(/rotate\\((-?[\\d.]+)deg\\)/);return clamp(Number(m?.[1])||0,-45,45)}\nfunction updateStickyRotation(v){const e=getEl(selectedIds[0]);if(!e||e.type!=='sticky')return;const deg=clamp(Number(v)||0,-45,45);e.style=e.style||{};e.style.transform=`rotate(${deg}deg)`;const node=document.querySelector(`.node[data-id=\"${CSS.escape(e.id)}\"]`);if(node)node.style.transform=e.style.transform;const out=$('stickyRotationValue');if(out)out.textContent=deg+'°';touch()}\n"""
+          once('function renderInspector(){\n',rotation_helpers+'function renderInspector(){\n','sticky rotation helpers')
+          once("  if(e.type==='frame')extra=`<div class=\"side-card\"><label>영역 제목</label><input value=\"${esc(e.data.title||'')}\" oninput=\"updateSelectedData('title',this.value)\"><div style=\"font-size:9px;color:var(--muted);margin-top:7px\">프레임을 움직이면 현재 프레임 안에 들어있는 요소도 함께 이동합니다.</div></div>`;\n  if(e.type==='sticker')extra=",
+               "  if(e.type==='frame')extra=`<div class=\"side-card\"><label>영역 제목</label><input value=\"${esc(e.data.title||'')}\" oninput=\"updateSelectedData('title',this.value)\"><div style=\"font-size:9px;color:var(--muted);margin-top:7px\">프레임을 움직이면 현재 프레임 안에 들어있는 요소도 함께 이동합니다.</div></div>`;\n  if(e.type==='sticky'){const rot=stickyRotationDeg(e);extra=`<div class=\"side-card\"><label>포스트잇 기울기</label><div class=\"range-row\"><input type=\"range\" min=\"-45\" max=\"45\" step=\"1\" value=\"${rot}\" onpointerdown=\"snapshot()\" oninput=\"updateStickyRotation(this.value)\"><span id=\"stickyRotationValue\">${rot}°</span></div></div>`}\n  if(e.type==='sticker')extra=",
+               'sticky inspector')
+
+          once("    if(e.type==='sticky'){c.fillStyle='#fff09a';c.fillRect(x,y,w,h);c.fillStyle='#292814';c.font=`${parseInt(e.style?.fontSize)||18}px sans-serif`;wrapText(c,e.data.text||'',x+14,y+30,w-28,24,12);continue}",
+               "    if(e.type==='sticky'){c.save();c.translate(x+w/2,y+h/2);c.rotate(stickyRotationDeg(e)*Math.PI/180);c.fillStyle='#fff09a';c.fillRect(-w/2,-h/2,w,h);c.fillStyle='#292814';c.font=`${parseInt(e.style?.fontSize)||18}px sans-serif`;wrapText(c,e.data.text||'',-w/2+14,-h/2+30,w-28,24,12);c.restore();continue}",
+               'sticky png rotation')
+
+          # Brush is the default whenever a canvas is first opened. Text/sticky creation still explicitly switches to Select.
+          s=s.replace("setTool('select');syncMetaInputs();render();renderCanvasTabs();persistDocumentsV104();toast(`${title} 생성`)","setTool('brush');syncMetaInputs();render();renderCanvasTabs();persistDocumentsV104();toast(`${title} 생성`)",1)
+          s=s.replace("selectedIds=[];undoStack=[];redoStack=[];setTool('select');syncMetaInputs();render();renderCanvasTabs();persistDocumentsV104()","selectedIds=[];undoStack=[];redoStack=[];setTool('brush');syncMetaInputs();render();renderCanvasTabs();persistDocumentsV104()",1)
+          s=s.replace("selectedIds=[];undoStack=[];redoStack=[];setTool('select');syncMetaInputs();render()}","selectedIds=[];undoStack=[];redoStack=[];setTool('brush');syncMetaInputs();render()}",1)
+          once("setZoom(1);setTool('select');setupPlannerV104();loadDraft();renderArchive();requestSchedulerContacts();switchMode('creator');",
+               "setZoom(1);setTool('brush');setupPlannerV104();loadDraft();renderArchive();requestSchedulerContacts();switchMode('creator');",'startup brush')
+
+          # Final direct planner must no longer reconstruct itself from payload chunks.
+          if 'content-planner-payload-' in s or 'content-planner-fix-' in s:
+              raise SystemExit('flattened planner still references payload chunks')
+          p.write_text(s,encoding='utf-8')
+
+          # Host: keep the verified clean single-bundle architecture and only advance the release.
+          h=Path('assets/content-planner-host.js')
+          hs=h.read_text(encoding='utf-8')
+          hs=hs.replace('CF MWS V 1.0.9','CF MWS V 1.0.10').replace('__mwsContentPlannerHostCleanV109','__mwsContentPlannerHostCleanV110').replace("/content-planner.html?v=1.0.5","/content-planner.html?v=1.0.10").replace("/assets/tools.js?v=1.0.9","/assets/tools.js?v=1.0.10").replace('mwsContentPlannerHostStyleV109Clean','mwsContentPlannerHostStyleV110Clean').replace('mwsToolsCleanV109Script','mwsToolsCleanV110Script')
+          hs=hs.replace('allow="clipboard-write"','allow="clipboard-write; fullscreen" allowfullscreen')
+          if 'tools-v1.0.' in hs or 'content-planner-host-v104' in hs: raise SystemExit('host reintroduced layered tool/planner loader')
+          h.write_text(hs,encoding='utf-8')
+
+          # Consolidated tools stay functionally identical; only release identity advances.
+          t=Path('assets/tools.js');ts=t.read_text(encoding='utf-8')
+          ts=ts.replace('/* CF MWS V 1.0.9 - consolidated tools, behavior-preserving */','/* CF MWS V 1.0.10 - consolidated tools, behavior-preserving */',1).replace("const BUILD='CF MWS V 1.0.9';","const BUILD='CF MWS V 1.0.10';",1).replace('__mwsToolsCleanV109','__mwsToolsCleanV110',1)
+          t.write_text(ts,encoding='utf-8')
+
+          # Runtime identity and direct host URL advance together, no feature changes.
+          r=Path('assets/perf-runtime.js');rs=r.read_text(encoding='utf-8')
+          rs=rs.replace('CF MWS V 1.0.9','CF MWS V 1.0.10').replace('V109','V110').replace('v109','v110').replace('v=1.0.9','v=1.0.10')
+          r.write_text(rs,encoding='utf-8')
+
+          pkg=Path('package.json');obj=json.loads(pkg.read_text(encoding='utf-8'));obj['version']='1.0.10';pkg.write_text(json.dumps(obj,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+
+          hp=Path('_headers');headers=hp.read_text(encoding='utf-8')
+          headers=re.sub(r'\n/assets/tools-v1\.0\.6-\*\n  Cache-Control: no-cache, must-revalidate\n\n/assets/tools-v1\.0\.7-\*\n  Cache-Control: no-cache, must-revalidate\n\n/assets/tools-v1\.0\.8\*\n  Cache-Control: no-cache, must-revalidate\n?','\n',headers)
+          if '/assets/tools.js\n' not in headers:
+              anchor='/assets/content-planner-host.js\n  Cache-Control: no-cache, must-revalidate\n'
+              headers=headers.replace(anchor,anchor+'\n/assets/tools.js\n  Cache-Control: no-cache, must-revalidate\n',1)
+          hp.write_text(headers,encoding='utf-8')
+          PY
+      - name: Validate direct V1.0.10
+        run: |
+          set -e
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('content-planner.html').read_text(encoding='utf-8')
+          required=['MAWANG Content Planner V1.0.10','planner-fullscreen','enterPlannerFullscreen','exitPlannerFullscreen','포스트잇 기울기','stickyRotationDeg','setTool(\'brush\')','const ordered=[...STICKERS_V104.filter']
+          for x in required:
+              if x not in s: raise SystemExit('missing planner feature: '+x)
+          forbidden=['content-planner-payload-','content-planner-fix-','transform:rotate(-1deg)']
+          for x in forbidden:
+              if x in s: raise SystemExit('forbidden planner legacy reference: '+x)
+          scripts=re.findall(r'<script>([\s\S]*?)</script>',s,re.I)
+          if len(scripts)!=1: raise SystemExit(f'expected one inline planner script, got {len(scripts)}')
+          Path('/tmp/planner-inline.js').write_text(scripts[0],encoding='utf-8')
+          PY
+          node --check /tmp/planner-inline.js
+          node --check assets/content-planner-host.js
+          node --check assets/tools.js
+          node --check assets/perf-runtime.js
+          grep -q "CF MWS V 1.0.10" assets/content-planner-host.js
+          grep -q "/content-planner.html?v=1.0.10" assets/content-planner-host.js
+          grep -q "/assets/tools.js?v=1.0.10" assets/content-planner-host.js
+          ! grep -Eq 'tools-v1\.0\.[5-9]|content-planner-host-v104' assets/content-planner-host.js
+          grep -q 'allowfullscreen' assets/content-planner-host.js
+          grep -q '"version": "1.0.10"' package.json
+          grep -q '/assets/tools.js' _headers
+      - name: Commit direct V1.0.10
+        run: |
+          if git diff --quiet -- content-planner.html assets/content-planner-host.js assets/tools.js assets/perf-runtime.js package.json _headers; then
+            echo "No V1.0.10 diff"
+            exit 0
+          fi
+          git config user.name "MAWANG Build"
+          git config user.email "actions@users.noreply.github.com"
+          git add content-planner.html assets/content-planner-host.js assets/tools.js assets/perf-runtime.js package.json _headers
+          git commit -m "Build direct clean CF MWS V1.0.10"
+          git push origin HEAD:mws-v1.0.10-direct-final
