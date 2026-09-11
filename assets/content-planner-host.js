@@ -69,6 +69,24 @@
       .recent-person-history-main-v55 strong{font-size:calc(13px * var(--ui-text-scale,1))!important;line-height:1.35!important}
       .recent-person-stats-v55>div,.recent-person-history-row-v55,.recent-person-candidate-v55{height:auto!important;min-height:max-content!important}
 
+      /* V5.6 recent-person/history widgets also follow page text scale. */
+      .v56-history{font-size:calc(14px * var(--ui-text-scale,1))!important}
+      .v56-history .v56-hero{height:auto!important;min-height:calc(92px * var(--ui-text-scale,1))!important;align-items:center!important}
+      .v56-history .v56-hero h2{font-size:calc(24px * var(--ui-text-scale,1))!important;line-height:1.25!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
+      .v56-history .v56-stat{height:auto!important;min-height:calc(68px * var(--ui-text-scale,1))!important;padding:calc(10px * var(--ui-text-scale,1))!important}
+      .v56-history .v56-stat span{font-size:calc(11px * var(--ui-text-scale,1))!important;line-height:1.35!important}
+      .v56-history .v56-stat strong{font-size:calc(20px * var(--ui-text-scale,1))!important;line-height:1.25!important;white-space:normal!important}
+      .v56-history .v56-box{font-size:calc(13px * var(--ui-text-scale,1))!important;line-height:1.4!important}
+      .v56-history .v56-event{font-size:calc(13px * var(--ui-text-scale,1))!important;line-height:1.4!important;height:auto!important;min-height:calc(42px * var(--ui-text-scale,1))!important}
+      .v56-history .v56-event small{font-size:calc(11px * var(--ui-text-scale,1))!important;line-height:1.35!important}
+      .v56-history .v56-cands button{font-size:calc(12px * var(--ui-text-scale,1))!important;height:auto!important;min-height:calc(38px * var(--ui-text-scale,1))!important}
+      .v56-row strong{font-size:calc(14px * var(--ui-text-scale,1))!important;line-height:1.35!important;white-space:normal!important}
+      .v56-row small{font-size:calc(11px * var(--ui-text-scale,1))!important;line-height:1.35!important}
+
+      /* Friend Finder name is the primary information and must scale even when its patch uses fixed px sizes. */
+      #friendFinder :is(.friend-finder-name-v5,.friend-finder-name,.friend-name,.contact-name,.person-name,[data-friend-name]){font-size:calc(19px * var(--ui-text-scale,1))!important;line-height:1.3!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
+      #friendFinder :is(.friend-finder-card-v5,.friend-finder-card,.friend-card) strong{font-size:calc(18px * var(--ui-text-scale,1))!important;line-height:1.3!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
+
       @media(max-width:900px){#mwsContentPlannerShell{height:calc(100vh - 78px);min-height:500px}}
     `;
     document.head.appendChild(style);
