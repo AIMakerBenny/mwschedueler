@@ -18,44 +18,23 @@ jobs:
         with:
           ref: mws-v1.0.17-emoticon-persistence
           fetch-depth: 0
-      - name: Put R2 write behind the existing authenticated save handler
+      - name: Put R2 write behind authenticated save handler
         shell: bash
         run: |
           git checkout origin/cloudflare-production -- src/cf-v57.js
           python3 - <<'PY'
           from pathlib import Path
-
-          p=Path('src/index.js')
-          s=p.read_text(encoding='utf-8')
-          old="""    out.contactTagBanners = banners;
-    return out;
-  }
-
-  if (part === 'miniGames') {"""
-          new="""    out.contactTagBanners = banners;
-    const emoticons = Array.isArray(out.emoticons) ? out.emoticons : [];
-    for (let i = 0; i < emoticons.length; i++) {
-      const item = emoticons[i];
-      if (!item || typeof item !== 'object') continue;
-      const src = item.src;
-      if (parseDataImage(src)) {
-        const seed = String(item.id || item.name || `item-${i + 1}`);
-        const key = `emoticon-${await shortHash(seed)}`;
-        item.src = await storeDataImage(env, 'workspace', key, src, true);
-      } else item.src = await normalizeManagedString(env, src);
-    }
-    out.emoticons = emoticons;
-    return out;
-  }
-
-  if (part === 'miniGames') {"""
-          if s.count(old)!=1: raise SystemExit(f'contactMeta target count={s.count(old)}')
-          p.write_text(s.replace(old,new,1),encoding='utf-8')
-
-          worker=Path('src/index.js').read_text(encoding='utf-8')
-          wrapper=Path('src/cf-v57.js').read_text(encoding='utf-8')
-          cloud=Path('assets/cloud-v5.5.js').read_text(encoding='utf-8')
-          host=Path('assets/content-planner-host.js').read_text(encoding='utf-8')
+          p = Path('src/index.js')
+          s = p.read_text(encoding='utf-8')
+          marker = "    out.contactTagBanners = banners;\n    return out;\n  }\n\n  if (part === 'miniGames') {"
+          insert = "    out.contactTagBanners = banners;\n    const emoticons = Array.isArray(out.emoticons) ? out.emoticons : [];\n    for (let i = 0; i < emoticons.length; i++) {\n      const item = emoticons[i];\n      if (!item || typeof item !== 'object') continue;\n      const src = item.src;\n      if (parseDataImage(src)) {\n        const seed = String(item.id || item.name || `item-${i + 1}`);\n        const key = `emoticon-${await shortHash(seed)}`;\n        item.src = await storeDataImage(env, 'workspace', key, src, true);\n      } else item.src = await normalizeManagedString(env, src);\n    }\n    out.emoticons = emoticons;\n    return out;\n  }\n\n  if (part === 'miniGames') {"
+          if s.count(marker) != 1:
+              raise SystemExit(f'contactMeta target count={s.count(marker)}')
+          p.write_text(s.replace(marker, insert, 1), encoding='utf-8')
+          worker = Path('src/index.js').read_text(encoding='utf-8')
+          wrapper = Path('src/cf-v57.js').read_text(encoding='utf-8')
+          cloud = Path('assets/cloud-v5.5.js').read_text(encoding='utf-8')
+          host = Path('assets/content-planner-host.js').read_text(encoding='utf-8')
           assert "key = `emoticon-${await shortHash(seed)}`" in worker
           assert "storeDataImage(env, 'workspace', key, src, true)" in worker
           assert 'externalizeEmoticonsV117' not in wrapper
