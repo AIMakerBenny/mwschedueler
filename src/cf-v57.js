@@ -109,56 +109,9 @@ function rewriteDirectUrlsToInternal(value, base) {
   return internalMediaUrl(value, base);
 }
 
-function parseDataImageV117(value) {
-  if (typeof value !== 'string') return null;
-  const match = /^data:([^;,]+);base64,(.+)$/s.exec(value);
-  if (!match) return null;
-  const binary = atob(match[2]);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return { contentType: match[1] || 'application/octet-stream', bytes };
-}
-
-async function shortHashV117(value) {
-  const bytes = new TextEncoder().encode(String(value));
-  const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
-  return [...hash].slice(0, 16).map((x) => x.toString(16).padStart(2, '0')).join('');
-}
-
-async function storeEmoticonV117(env, seed, dataUrl) {
-  const parsed = parseDataImageV117(dataUrl);
-  if (!parsed) return dataUrl;
-  const key = `emoticon-${await shortHashV117(seed)}`;
-  const row = await env.DB.prepare('SELECT version FROM image_sources WHERE kind=? AND item_key=?').bind('workspace', key).first();
-  const version = Math.max(1, Number(row?.version) || 0) + 1;
-  await env.IMAGES.put(`workspace/${key}`, parsed.bytes, {
-    httpMetadata: { contentType: parsed.contentType },
-    customMetadata: { mwsVersion: String(version), source: 'mws-emoticon-upload' },
-  });
-  await env.DB.prepare(`INSERT INTO image_sources(kind,item_key,source_url,version,content_type,updated_at)
-    VALUES('workspace',?,?,?,?,CURRENT_TIMESTAMP)
-    ON CONFLICT(kind,item_key) DO UPDATE SET source_url=NULL,version=excluded.version,content_type=excluded.content_type,updated_at=CURRENT_TIMESTAMP`)
-    .bind(key, null, version, parsed.contentType).run();
-  return `/media/workspace/${encodeURIComponent(key)}?v=${version}`;
-}
-
-async function externalizeEmoticonsV117(env, body) {
-  const list = body?.parts?.contactMeta?.emoticons;
-  if (!Array.isArray(list)) return;
-  for (let i = 0; i < list.length; i++) {
-    const item = list[i];
-    if (!item || typeof item !== 'object') continue;
-    if (parseDataImageV117(item.src)) {
-      const seed = String(item.id || item.name || `item-${i + 1}`);
-      item.src = await storeEmoticonV117(env, seed, item.src);
-    }
-  }
-}
-
-async function normalizedSaveRequest(request, env, base) {
+async function normalizedSaveRequest(request, base) {
   let body;
   try { body = await request.clone().json(); } catch (_) { return request; }
-  await externalizeEmoticonsV117(env, body);
   const rewritten = rewriteDirectUrlsToInternal(body, base);
   const headers = new Headers(request.headers);
   headers.set('content-type', 'application/json');
@@ -278,7 +231,7 @@ export default {
     }
 
     const forwarded = request.method === 'POST' && path === '/api/save'
-      ? await normalizedSaveRequest(request, env, base)
+      ? await normalizedSaveRequest(request, base)
       : request;
     const response = await baseWorker.fetch(forwarded, env, ctx);
     if ((request.method === 'GET' && path.startsWith('/api/parts/')) ||

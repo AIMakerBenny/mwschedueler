@@ -255,6 +255,18 @@ async function externalizePart(env, part, raw) {
       } else banners[bannerKey] = await normalizeManagedString(env, value);
     }
     out.contactTagBanners = banners;
+    const emoticons = Array.isArray(out.emoticons) ? out.emoticons : [];
+    for (let i = 0; i < emoticons.length; i++) {
+      const item = emoticons[i];
+      if (!item || typeof item !== 'object') continue;
+      const src = item.src;
+      if (parseDataImage(src)) {
+        const seed = String(item.id || item.name || `item-${i + 1}`);
+        const key = `emoticon-${await shortHash(seed)}`;
+        item.src = await storeDataImage(env, 'workspace', key, src, true);
+      } else item.src = await normalizeManagedString(env, src);
+    }
+    out.emoticons = emoticons;
     return out;
   }
 
