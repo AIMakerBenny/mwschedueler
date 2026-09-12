@@ -1,0 +1,23 @@
+name: Apply V1.0.14
+on:
+  push:
+    branches: [mws-v1.0.14-planner-enhancements]
+    paths: [.github/workflows/apply-v1014.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: mws-v1.0.14-planner-enhancements
+          fetch-depth: 0
+      - run: python scripts/patch_v1014.py
+      - run: git diff --check
+      - run: |
+          git config user.name 'MAWANG Build'
+          git config user.email 'actions@users.noreply.github.com'
+          git add README.md package.json index.html content-planner.html src/cf-v571.js assets/content-planner-host.js assets/tools.js assets/test-v5.5.js assets/test-v5.6.js
+          git commit -m 'Implement planner enhancements V1.0.14'
+          git push origin HEAD:mws-v1.0.14-planner-enhancements
