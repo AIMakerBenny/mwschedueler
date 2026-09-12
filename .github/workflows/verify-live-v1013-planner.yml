@@ -1,0 +1,51 @@
+name: Verify live CF MWS V1.0.13 planner read-only
+
+on:
+  push:
+    branches: [mws-v1.0.13-planner-ui-fixes]
+    paths:
+      - .github/workflows/verify-live-v1013-planner.yml
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify deployed planner source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          curl -fsSL 'https://mawang-scheduler.majoku.workers.dev/content-planner.html?v=1.0.13' | grep -q 'MAWANG Content Planner V1.0.13'
+          curl -fsSL 'https://mawang-scheduler.majoku.workers.dev/api/health' | grep -q 'CF MWS V 1.0.13'
+
+      - name: Install browser
+        shell: bash
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install chromium --with-deps
+
+      - name: Verify deployed planner UI without writes
+        shell: bash
+        run: |
+          node <<'NODE'
+          const {chromium}=require('playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:1440,height:900}});
+            const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+            await page.goto('https://mawang-scheduler.majoku.workers.dev/content-planner.html?v=1.0.13',{waitUntil:'load'});
+            await page.waitForTimeout(400);
+            await page.evaluate(()=>{document.body.classList.add('planner-fullscreen');resizePlannerCanvas()});
+            await page.click('#toolBrush');await page.waitForTimeout(80);
+            const pop=await page.evaluate(()=>{const menu=document.getElementById('brushSizeMenu'),toolbar=document.querySelector('.creator-toolbar'),workspace=document.querySelector('.workspace'),r=menu.getBoundingClientRect(),hit=document.elementFromPoint(Math.max(1,r.left+8),Math.max(1,r.top+8));return{hidden:menu.hidden,w:r.width,h:r.height,hit:!!hit&&menu.contains(hit),overflow:getComputedStyle(toolbar).overflow,zToolbar:Number(getComputedStyle(toolbar).zIndex)||0,zWorkspace:Number(getComputedStyle(workspace).zIndex)||0}});
+            if(pop.hidden||pop.w<200||pop.h<80||!pop.hit||pop.overflow!=='visible'||pop.zToolbar<=pop.zWorkspace)throw new Error('live fullscreen popup failed '+JSON.stringify(pop));
+            await page.evaluate(()=>{document.body.classList.remove('planner-fullscreen');closeDropdownsV110();contactDb=[{id:101,name:'테스트 참가자',image:'',labels:['테스트']}];addParticipant('101')});await page.waitForTimeout(80);
+            const participant=await page.evaluate(()=>{const node=document.querySelector('.node.participant-node.selected'),av=node?.querySelector('.participant-avatar'),name=node?.querySelector('.participant-name'),ar=av?.getBoundingClientRect(),nr=name?.getBoundingClientRect();return{node:!!node,avatarW:ar?.width||0,avatarH:ar?.height||0,name:name?.textContent||'',nameH:nr?.height||0,font:parseFloat(name?getComputedStyle(name).fontSize:'0')||0}});
+            if(!participant.node||participant.avatarW<20||participant.avatarH<20||participant.name!=='테스트 참가자'||participant.nameH<8||participant.font<8)throw new Error('live participant failed '+JSON.stringify(participant));
+            await page.evaluate(()=>addSticky());await page.waitForTimeout(50);
+            const close=await page.evaluate(()=>{const node=document.querySelector('.node.sticky-node.selected'),btn=node?.querySelector('.node-delete'),n=node?.getBoundingClientRect(),b=btn?.getBoundingClientRect();return{inside:!!(n&&b&&b.left>=n.left&&b.top>=n.top&&b.right<=n.right&&b.bottom<=n.bottom)}});
+            if(!close.inside)throw new Error('live close button failed '+JSON.stringify(close));
+            if(errors.length)throw new Error(errors.join(' | '));
+            console.log('Live V1.0.13 planner verification passed',{pop,participant,close});
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
