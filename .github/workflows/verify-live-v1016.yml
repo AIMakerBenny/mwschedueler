@@ -1,0 +1,83 @@
+name: Verify live CF MWS V1.0.16 read-only
+
+on:
+  push:
+    branches: [mws-v1.0.16-planner-fixes]
+    paths:
+      - .github/workflows/verify-live-v1016.yml
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: mws-v1.0.16-planner-fixes
+      - name: Verify deployed source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          curl -fsSL 'https://mawang-scheduler.majoku.workers.dev/api/health' -o /tmp/health.json
+          grep -q 'CF MWS V 1.0.16' /tmp/health.json
+          curl -fsSL 'https://mawang-scheduler.majoku.workers.dev/content-planner.html?v=1.0.16' -o /tmp/planner.html
+          grep -q 'MAWANG Content Planner V1.0.16' /tmp/planner.html
+          curl -fsSL 'https://mawang-scheduler.majoku.workers.dev/assets/content-planner-host.js?v=1.0.16' -o /tmp/host.js
+          grep -q 'mwsEmoticonDropV116' /tmp/host.js
+          grep -q 'addEmoticonFilesV116' /tmp/host.js
+          curl -fsSL 'https://mawang-scheduler.majoku.workers.dev/' -o /tmp/index.html
+          grep -q 'CF MWS V 1.0.16' /tmp/index.html
+      - name: Install browser
+        shell: bash
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install chromium --with-deps
+      - name: Verify live planner without server writes
+        shell: bash
+        run: |
+          node <<'NODE'
+          const {chromium}=require('playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:1560,height:960}});
+            const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+            await page.route('**/*',route=>['GET','HEAD'].includes(route.request().method())?route.continue():route.abort());
+            await page.goto('https://mawang-scheduler.majoku.workers.dev/content-planner.html?v=1.0.16',{waitUntil:'load'});
+            await page.waitForTimeout(350);
+            if(!(await page.title()).includes('V1.0.16'))throw new Error('wrong deployed title');
+            await page.evaluate(()=>{contactDb=[{id:'p1',name:'마이곰이',image:'',labels:[]}];addParticipant('p1')});
+            const initial=await page.evaluate(()=>{const e=state.elements.find(x=>x.type==='participant'),a=document.querySelector('.participant-avatar').getBoundingClientRect();return{w:e.w,h:e.h,aw:a.width}});
+            if(initial.w!==190||initial.h!==230||initial.aw<30)throw new Error('participant initial '+JSON.stringify(initial));
+            await page.evaluate(()=>{const e=state.elements.find(x=>x.type==='participant');e.w=420;e.h=430;renderPositions()});
+            const grown=await page.evaluate(()=>document.querySelector('.participant-avatar').getBoundingClientRect().width);
+            if(!(grown>initial.aw*1.7))throw new Error('participant resize '+initial.aw+' -> '+grown);
+            await page.evaluate(()=>{setTool('select');const e=addTextAtV110(260,180,300,70);window.__tid=e.id});
+            const node=page.locator(`.node[data-id="${await page.evaluate(()=>window.__tid)}"]`);
+            await page.locator('#board').click({position:{x:1000,y:700},force:true});
+            if(await node.locator('.drag-handle').isVisible())throw new Error('MOVE bar did not disappear');
+            await node.hover();if(await node.evaluate(n=>getComputedStyle(n).outlineStyle)!=='dashed')throw new Error('text hover indicator missing');
+            await node.click({force:true});if(!(await node.locator('.drag-handle').isVisible()))throw new Error('text cannot reselect');
+            await page.evaluate(()=>{const src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="400"><rect width="200" height="400" fill="black"/></svg>');addElement('image',{x:100,y:400,w:500,h:180,data:{src,crop:{zoom:2,x:20,y:80},border:0,borderColor:'#fff'}})});
+            const fit=await page.evaluate(()=>{const n=[...document.querySelectorAll('.image-node')].at(-1),im=n.querySelector('img'),a=n.getBoundingClientRect(),b=im.getBoundingClientRect(),s=getComputedStyle(im);return{overflow:getComputedStyle(n).overflow,fit:s.objectFit,transform:s.transform,inside:b.left>=a.left-.5&&b.top>=a.top-.5&&b.right<=a.right+.5&&b.bottom<=a.bottom+.5}});
+            if(fit.overflow!=='hidden'||fit.fit!=='contain'||fit.transform!=='none'||!fit.inside)throw new Error('image overflow '+JSON.stringify(fit));
+            await page.evaluate(()=>applyPlannerEmoticonsV114([]));if(await page.locator('#stickerGrid .sticker-pick').count())throw new Error('built-in emoticons remain');
+            await page.evaluate(()=>applyPlannerEmoticonsV114([{id:'u1',name:'내 이모티콘',src:'data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20"/%3E'}]));if(await page.locator('#stickerGrid .sticker-pick').count()!==1)throw new Error('custom emoticon render failed');
+            if(errors.length)throw new Error('page errors '+errors.join(' | '));
+            console.log('LIVE V1.0.16 READ-ONLY PASS',{initial,grown,fit});
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+      - name: Remove temporary verifier from staging branch
+        if: always()
+        shell: bash
+        run: |
+          rm -f .github/workflows/verify-live-v1016.yml
+          git config user.name 'MAWANG Verify'
+          git config user.email 'actions@users.noreply.github.com'
+          git add -u .github/workflows/verify-live-v1016.yml
+          if ! git diff --cached --quiet; then
+            git commit -m 'Remove temporary V1.0.16 live verifier'
+            git push origin HEAD:mws-v1.0.16-planner-fixes
+          fi
