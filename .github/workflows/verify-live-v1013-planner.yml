@@ -14,8 +14,10 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          curl -fsSL 'https://mawang-scheduler.majoku.workers.dev/content-planner.html?v=1.0.13' | grep -q 'MAWANG Content Planner V1.0.13'
-          curl -fsSL 'https://mawang-scheduler.majoku.workers.dev/api/health' | grep -q 'CF MWS V 1.0.13'
+          curl -fsSL 'https://mawang-scheduler.majoku.workers.dev/content-planner.html?v=1.0.13' -o /tmp/live-planner.html
+          grep -q 'MAWANG Content Planner V1.0.13' /tmp/live-planner.html
+          curl -fsSL 'https://mawang-scheduler.majoku.workers.dev/api/health' -o /tmp/live-health.json
+          grep -q 'CF MWS V 1.0.13' /tmp/live-health.json
 
       - name: Install browser
         shell: bash
