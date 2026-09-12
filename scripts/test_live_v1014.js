@@ -22,13 +22,15 @@ const {chromium}=require('playwright');
   await textNode.locator('.editable').click();
   if(!(await textNode.evaluate(n=>n.classList.contains('selected')))) throw new Error('text re-selection failed');
   if((await textNode.locator('.editable').getAttribute('contenteditable'))!=='true') throw new Error('selected text not editable');
-  const stateBefore=await textNode.evaluate(n=>{const e=getEl(n.dataset.id);return{x:e.x,y:e.y}});
+  await page.evaluate(()=>document.activeElement?.blur());
+  const stateBefore=await textNode.evaluate(n=>{const e=getEl(n.dataset.id);const w=document.querySelector('.workspace');return{x:e.x,y:e.y,scrollLeft:w.scrollLeft,scrollTop:w.scrollTop}});
   const hb=await textNode.locator('.drag-handle').boundingBox();
   if(!hb) throw new Error('text move handle missing');
   await page.mouse.move(hb.x+hb.width/2,hb.y+hb.height/2); await page.mouse.down();
   await page.mouse.move(hb.x+100,hb.y+70,{steps:5}); await page.mouse.up(); await page.waitForTimeout(40);
-  const stateAfter=await textNode.evaluate(n=>{const e=getEl(n.dataset.id);return{x:e.x,y:e.y}});
+  const stateAfter=await textNode.evaluate(n=>{const e=getEl(n.dataset.id);const w=document.querySelector('.workspace');return{x:e.x,y:e.y,scrollLeft:w.scrollLeft,scrollTop:w.scrollTop}});
   if(stateAfter.x<=stateBefore.x+60||stateAfter.y<=stateBefore.y+40) throw new Error('text MOVE state failed '+JSON.stringify({stateBefore,stateAfter}));
+  await textNode.locator('.editable').click();
   await textNode.locator('.editable').fill('수정된 텍스트');
   if((await textNode.locator('.editable').textContent())!=='수정된 텍스트') throw new Error('text edit failed');
 
