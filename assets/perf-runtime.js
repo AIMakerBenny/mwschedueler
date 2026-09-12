@@ -1,17 +1,20 @@
-/* MAWANG Scheduler CF MWS V 1.0.10 - one-request bootstrap + verified IndexedDB reuse */
+/* Mawang Scheduler v1.0 - one-request bootstrap + verified IndexedDB reuse */
 (()=>{
   'use strict';
   if(window.__mwsCf571Optimizer)return;
   window.__mwsCf571Optimizer=true;
 
   const nativeFetch=window.fetch.bind(window);
-  const BUILD='CF MWS V 1.0.10';
+  const version=(window.version&&typeof window.version==='object')?window.version:(window.version={});
+  version.name='Mawang Scheduler v1.0';
+  const BUILD=version.name;
   const ETAG_KEY='mws_cf_v571_etag';
   const MANIFEST_KEY='mws_cf_v571_manifest';
   const MEDIA_BASE_KEY='mws_cf_v571_media_base';
   const DB_NAME='mawang_data';
   const DB_VERSION=3;
   const PARTS=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook'];
+  const BAD_PLANNER_PREVIEW='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLAlQAAAABJRU5ErkJggg==';
   let bundle=null;
   let bootstrapPromise=null;
 
@@ -67,7 +70,7 @@
         tx.onerror=()=>reject(tx.error);
         tx.onabort=()=>reject(tx.error);
       })));
-    }catch(e){console.warn('CF MWS V 1.0.10 bundle cache write failed',e)}
+    }catch(e){console.warn('Mawang Scheduler v1.0 bundle cache write failed',e)}
     finally{try{db?.close()}catch(_){}}
   }
 
@@ -103,7 +106,7 @@
 
     if(!res.ok)return {raw:res};
     const body=await res.json();
-    const etag=res.headers.get('etag')||`"${body?.globalVersion||'cf571'}"`;
+    const etag=res.headers.get('etag')||`"${body?.globalVersion||'mws-v1'}"`;
     bundle=body;
     if(body?.mediaBaseUrl)window.__mwsCf57MediaBaseUrl=body.mediaBaseUrl;
     try{
@@ -158,8 +161,9 @@
 
   function forceVersion(){
     try{
-      document.body?.setAttribute('data-build-version',BUILD);
-      document.querySelectorAll('[id^="mwsBuildVersionV5"],#mwsBuildVersion,.sidebar-build-version-v52,.sidebar-build-version-v53,[class*="sidebar-build-version"]').forEach(label=>{if(label.textContent!==BUILD)label.textContent=BUILD});
+      const name=window.version?.name||BUILD;
+      document.body?.setAttribute('data-build-version',name);
+      document.querySelectorAll('[id^="mwsBuildVersionV5"],#mwsBuildVersion,.sidebar-build-version-v52,.sidebar-build-version-v53,[class*="sidebar-build-version"]').forEach(label=>{if(label.textContent!==name)label.textContent=name});
     }catch(_){}
   }
 
@@ -175,8 +179,66 @@
     if(document.getElementById('mwsContentPlannerHostScriptV110'))return;
     const s=document.createElement('script');
     s.id='mwsContentPlannerHostScriptV110';
-    s.src='assets/content-planner-host.js?v=1.0.10';
+    s.src='assets/content-planner-host.js?v=1.0';
     document.body.appendChild(s);
+  }
+
+  function repairPlannerPreviewV10(){
+    const frame=document.getElementById('mwsContentPlannerFrame');
+    if(!frame?.contentWindow)return;
+    const w=frame.contentWindow;
+    let doc;
+    try{doc=w.document}catch(_){return}
+    if(!doc?.documentElement)return;
+
+    try{
+      const proto=w.HTMLCanvasElement?.prototype;
+      if(proto?.__mwsV10ToDataUrlSafe&&!proto.__mwsV10ToDataUrlRestored){
+        const helper=doc.createElement('iframe');
+        helper.style.display='none';
+        doc.documentElement.appendChild(helper);
+        const nativeToDataURL=helper.contentWindow?.HTMLCanvasElement?.prototype?.toDataURL;
+        if(typeof nativeToDataURL==='function'){
+          proto.toDataURL=nativeToDataURL;
+          proto.__mwsV10ToDataUrlSafe=true;
+          proto.__mwsV10ToDataUrlRestored=true;
+        }
+        helper.remove();
+      }
+    }catch(error){console.warn('Planner preview canvas restore failed',error)}
+
+    const scrub=()=>{
+      try{
+        doc.querySelectorAll('.proposal-preview img').forEach(img=>{
+          const raw=img.getAttribute('src')||'';
+          if(raw!==BAD_PLANNER_PREVIEW)return;
+          const box=img.parentElement;
+          img.remove();
+          if(box&&!box.querySelector('.no-preview')){
+            const note=doc.createElement('div');
+            note.className='no-preview';
+            note.textContent='미리보기 없음 · 다시 저장하면 자동 복구됩니다';
+            box.appendChild(note);
+          }
+        });
+      }catch(_){}
+    };
+    scrub();
+    if(!doc.__mwsPlannerPreviewObserverV10){
+      const observer=new w.MutationObserver(scrub);
+      observer.observe(doc.documentElement,{childList:true,subtree:true});
+      doc.__mwsPlannerPreviewObserverV10=observer;
+    }
+  }
+
+  function installPlannerPreviewRepairV10(){
+    const frame=document.getElementById('mwsContentPlannerFrame');
+    if(!frame)return;
+    if(!frame.__mwsPlannerPreviewRepairBound){
+      frame.__mwsPlannerPreviewRepairBound=true;
+      frame.addEventListener('load',()=>setTimeout(repairPlannerPreviewV10,0));
+    }
+    setTimeout(repairPlannerPreviewV10,0);
   }
 
   const PAGE_SCALE_KEY='mws_page_text_scales_v54';
@@ -239,25 +301,25 @@
     forceVersion();
     const body=document.body;
     if(body&&!body.__mwsV110BuildObserver){
-      const observer=new MutationObserver(()=>{if(body.getAttribute('data-build-version')!==BUILD)forceVersion()});
+      const observer=new MutationObserver(()=>{if(body.getAttribute('data-build-version')!==(window.version?.name||BUILD))forceVersion()});
       observer.observe(body,{attributes:true,attributeFilter:['data-build-version']});
       body.__mwsV110BuildObserver=observer;
     }
     const label=document.querySelector('[id^="mwsBuildVersionV5"],#mwsBuildVersion,.sidebar-build-version-v52,.sidebar-build-version-v53,[class*="sidebar-build-version"]');
     if(label&&!label.__mwsV110BuildObserver){
-      const observer=new MutationObserver(()=>{if(label.textContent!==BUILD)forceVersion()});
+      const observer=new MutationObserver(()=>{if(label.textContent!==(window.version?.name||BUILD))forceVersion()});
       observer.observe(label,{childList:true,characterData:true,subtree:true});
       label.__mwsV110BuildObserver=observer;
     }
   }
 
   window.mwsV101ApplyPageLayoutScale=applyPageLayoutScale;
-  const ready=()=>{forceVersion();installReleaseVersionGuard();installPageScaleBridge();loadContentPlannerHostV110()};
+  const ready=()=>{forceVersion();installReleaseVersionGuard();installPageScaleBridge();loadContentPlannerHostV110();setTimeout(installPlannerPreviewRepairV10,80)};
   window.addEventListener('DOMContentLoaded',ready,{once:true});
-  window.addEventListener('load',()=>{forceVersion();loadRuntimePatch();installReleaseVersionGuard();installPageScaleBridge();loadContentPlannerHostV110()},{once:true});
-  window.addEventListener('mawang:datachange',()=>setTimeout(()=>{installReleaseVersionGuard();installPageScaleBridge()},0));
-  [50,150,350,800,1500,3000,6000,9000].forEach(ms=>setTimeout(()=>{installReleaseVersionGuard();installPageScaleBridge()},ms));
-  let tries=0;const versionTimer=setInterval(()=>{forceVersion();if(++tries>=32)clearInterval(versionTimer)},250);
+  window.addEventListener('load',()=>{forceVersion();loadRuntimePatch();installReleaseVersionGuard();installPageScaleBridge();loadContentPlannerHostV110();setTimeout(installPlannerPreviewRepairV10,80)},{once:true});
+  window.addEventListener('mawang:datachange',()=>setTimeout(()=>{installReleaseVersionGuard();installPageScaleBridge();installPlannerPreviewRepairV10()},0));
+  [50,150,350,800,1500,3000,6000,9000].forEach(ms=>setTimeout(()=>{installReleaseVersionGuard();installPageScaleBridge();installPlannerPreviewRepairV10()},ms));
+  let tries=0;const versionTimer=setInterval(()=>{forceVersion();installPlannerPreviewRepairV10();if(++tries>=32)clearInterval(versionTimer)},250);
   if(document.readyState!=='loading')setTimeout(loadContentPlannerHostV110,0);
 
   if(document.readyState==='loading')document.write('<script src="assets/perf-runtime-base.js?v=5.7.1"><\/script>');
