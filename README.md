@@ -5,7 +5,7 @@ MAWANG Scheduler web app.
 - Static frontend hosted with Vercel
 - Shared data and admin authentication handled by Supabase
 - `index.html` is the production entry point
-- Current release: CF MWS V1.0.15
+- Current release: CF MWS V1.0.16
 - Admin changes persist to the shared Supabase workspace
 - Public uses the same app features in a non-persistent session sandbox
 - Theme, background, global text scale, per-page text scale, resolution and other presentation preferences are device-local

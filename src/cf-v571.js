@@ -1,6 +1,6 @@
 import cf57 from './cf-v57.js';
 
-const BUILD_VERSION = 'CF MWS V 1.0.15';
+const BUILD_VERSION = 'CF MWS V 1.0.16';
 
 async function withBuildVersion(response, request) {
   if (!response) return response;
@@ -14,7 +14,7 @@ async function withBuildVersion(response, request) {
   if (!body || typeof body !== 'object') return response;
 
   body.build = BUILD_VERSION;
-  if (path === '/api/bootstrap') body.mode = 'cf-mws-v1.0.15';
+  if (path === '/api/bootstrap') body.mode = 'cf-mws-v1.0.16';
 
   const text = JSON.stringify(body);
   const headers = new Headers(response.headers);
