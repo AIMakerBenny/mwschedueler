@@ -14,7 +14,8 @@
   const DB_NAME='mawang_data';
   const DB_VERSION=3;
   const PARTS=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook'];
-  const BAD_PLANNER_PREVIEW='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLAlQAAAABJRU5ErkJggg==';
+  const OLD_BAD_PLANNER_PREVIEW='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLAlQAAAABJRU5ErkJggg==';
+  const EMPTY_PLANNER_PREVIEW='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGBgAAAABQABpfZFQAAAAABJRU5ErkJggg==';
   let bundle=null;
   let bootstrapPromise=null;
 
@@ -192,26 +193,54 @@
     if(!doc?.documentElement)return;
 
     try{
-      const proto=w.HTMLCanvasElement?.prototype;
-      if(proto?.__mwsV10ToDataUrlSafe&&!proto.__mwsV10ToDataUrlRestored){
-        const helper=doc.createElement('iframe');
-        helper.style.display='none';
-        doc.documentElement.appendChild(helper);
-        const nativeToDataURL=helper.contentWindow?.HTMLCanvasElement?.prototype?.toDataURL;
-        if(typeof nativeToDataURL==='function'){
-          proto.toDataURL=nativeToDataURL;
-          proto.__mwsV10ToDataUrlSafe=true;
-          proto.__mwsV10ToDataUrlRestored=true;
-        }
-        helper.remove();
+      const ctxProto=w.CanvasRenderingContext2D?.prototype;
+      if(ctxProto&&!ctxProto.__mwsV10SafeDrawImage){
+        const baseDrawImage=ctxProto.drawImage;
+        ctxProto.drawImage=function(source){
+          try{
+            if(w.HTMLImageElement&&source instanceof w.HTMLImageElement){
+              const raw=source.currentSrc||source.src||'';
+              if(raw&&!/^(data:|blob:)/i.test(raw)){
+                const u=new w.URL(raw,w.location.href);
+                if(u.origin!==w.location.origin&&source.crossOrigin!=='anonymous'&&source.crossOrigin!=='use-credentials'){
+                  console.warn('Skipped unsafe cross-origin image while rendering planner preview',raw);
+                  return;
+                }
+              }
+            }
+          }catch(_){}
+          return baseDrawImage.apply(this,arguments);
+        };
+        ctxProto.__mwsV10SafeDrawImage=true;
       }
-    }catch(error){console.warn('Planner preview canvas restore failed',error)}
+    }catch(error){console.warn('Planner preview drawImage safety install failed',error)}
+
+    try{
+      const proto=w.HTMLCanvasElement?.prototype;
+      if(proto&&!proto.__mwsV10FinalToDataUrlSafe){
+        const baseToDataURL=proto.toDataURL;
+        proto.toDataURL=function(){
+          try{
+            const result=baseToDataURL.apply(this,arguments);
+            return result===OLD_BAD_PLANNER_PREVIEW?EMPTY_PLANNER_PREVIEW:result;
+          }catch(err){
+            if(err?.name==='SecurityError'||/taint/i.test(String(err?.message||err))){
+              console.warn('Planner preview export blocked by cross-origin image; save continues without preview',err);
+              return EMPTY_PLANNER_PREVIEW;
+            }
+            throw err;
+          }
+        };
+        proto.__mwsV10FinalToDataUrlSafe=true;
+        proto.__mwsV10ToDataUrlSafe=true;
+      }
+    }catch(error){console.warn('Planner preview toDataURL safety install failed',error)}
 
     const scrub=()=>{
       try{
         doc.querySelectorAll('.proposal-preview img').forEach(img=>{
           const raw=img.getAttribute('src')||'';
-          if(raw!==BAD_PLANNER_PREVIEW)return;
+          if(raw!==OLD_BAD_PLANNER_PREVIEW&&raw!==EMPTY_PLANNER_PREVIEW)return;
           const box=img.parentElement;
           img.remove();
           if(box&&!box.querySelector('.no-preview')){
