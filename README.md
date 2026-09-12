@@ -1,18 +1,12 @@
-# MAWANG Scheduler
+# MAWANG Scheduler — CF MWS V 1.0.17
 
-MAWANG Scheduler web app.
+Production target: Cloudflare Workers (`mawang-scheduler`)
 
-- Static frontend hosted with Vercel
-- Shared data and admin authentication handled by Supabase
-- `index.html` is the production entry point
-- Current release: CF MWS V1.0.16
-- Admin changes persist to the shared Supabase workspace
-- Public uses the same app features in a non-persistent session sandbox
-- Theme, background, global text scale, per-page text scale, resolution and other presentation preferences are device-local
-- v5.4 adds complete Selected-card display after Gacha completion, glow and popup card viewing, larger Gacha contact names, compact speed and target controls, stronger sticky contact tags, page-specific text sizing, and the restored Marorong / 마로롱 rain easter egg
-- v5.5 removes the stray bottom text, fixes the global sidebar in the viewport, reinforces the contact tag panel, adds a station URL visit button, rebuilds the Marorong / 마로롱 rain click effect, and expands the dashboard with schedule and operation insights
-- v5.6 keeps the contact tag folder visible while scrolling, adds a clickable Profile Card popup from the contact profile image, and expands recent collaboration visual tiers from 5 to 10 with progressively stronger effects
+## V1.0.17
+- Custom Content Planner emoticons are persisted through the existing Cloudflare workspace data path.
+- Uploaded emoticon image bytes are externalized to the configured R2 workspace bucket before the authenticated save writes metadata to D1.
+- The emoticon manager loads the existing contact metadata part before editing and waits for the cloud save to finish after add/delete.
+- Removed the stale, non-executing legacy cloud JSON block from the main HTML.
 
-2026-09-08 performance refactor: runtime hot paths and cacheable frontend assets were optimized without intentional UI or feature changes.
-
-Pushes to `main` are deployed automatically through the connected Vercel project.
+## Release rule
+Each release continues directly from the immediately previous production release. Do not layer old release branches, temporary runtime overlays, or one-off patch scripts into production.
