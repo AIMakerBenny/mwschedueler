@@ -1,0 +1,147 @@
+name: Apply CF MWS V1.0.13 planner UI fixes
+
+on:
+  push:
+    branches: [mws-v1.0.13-planner-ui-fixes]
+    paths:
+      - .github/workflows/apply-v1013-planner-ui.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: mws-v1.0.13-planner-ui-fixes
+          fetch-depth: 0
+
+      - name: Patch planner UI and release version
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+
+          def once(s, old, new, label):
+              n=s.count(old)
+              if n!=1:
+                  raise SystemExit(f'{label}: expected 1 match, got {n}')
+              return s.replace(old,new,1)
+
+          p=Path('content-planner.html')
+          s=p.read_text(encoding='utf-8')
+
+          old_part=".participant-node{background:linear-gradient(135deg,#12192b,#1d2740);color:#fff;border:1px solid #3a4b70;border-radius:16px;padding:min(8cqw,8cqh);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:min(5cqw,4cqh);overflow:hidden;container-type:size;box-sizing:border-box}.participant-avatar{width:min(72cqw,55cqh);height:min(72cqw,55cqh);border-radius:min(12cqw,10cqh);background:#5e45ba;display:grid;place-items:center;font-size:min(18cqw,14cqh);font-weight:950;overflow:hidden;flex:none}.participant-avatar img{width:100%;height:100%;object-fit:cover}.participant-name{width:100%;font-size:min(14cqw,10cqh);line-height:1.15;font-weight:950;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.participant-meta,.tag-badge{display:none!important}"
+          new_part=".participant-node{background:linear-gradient(135deg,#12192b,#1d2740);color:#fff;border:1px solid #3a4b70;border-radius:14px;padding:8px!important;display:grid!important;grid-template-rows:minmax(0,1fr) auto!important;align-items:center!important;justify-items:center!important;gap:4px!important;overflow:hidden!important;box-sizing:border-box!important;min-width:72px!important;min-height:90px!important}.participant-avatar{width:78%!important;max-width:150px!important;aspect-ratio:1/1!important;height:auto!important;border-radius:11px!important;background:#5e45ba!important;display:grid!important;place-items:center!important;font-size:14px!important;font-weight:950!important;overflow:hidden!important;align-self:center!important;min-width:24px!important}.participant-avatar img{width:100%!important;height:100%!important;display:block!important;object-fit:cover!important}.participant-name{width:100%!important;min-height:13px!important;font-size:11px!important;line-height:1.15!important;font-weight:950!important;text-align:center!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}.participant-meta,.tag-badge{display:none!important}"
+          s=once(s,old_part,new_part,'participant card CSS')
+
+          old_delete=".node-delete{display:none;position:absolute;right:-13px;top:-13px;z-index:40;width:26px;height:26px;border-radius:8px;border:1px solid #ff9aaa;background:#6e2030;color:#fff;font-size:18px;font-weight:950;place-items:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35)}.node.selected .node-delete{display:grid}"
+          new_delete=".node-delete{display:none;position:absolute;right:5px;top:5px;z-index:40;width:24px;height:24px;border-radius:50%;border:1px solid #ff9aaa;background:#6e2030;color:#fff;font-size:17px;font-weight:950;line-height:1;place-items:center;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.32)}.node.selected .node-delete{display:grid}"
+          s=once(s,old_delete,new_delete,'node delete button')
+
+          old_workspace="body.planner-fullscreen #creatorMode .workspace{grid-column:1!important;grid-row:1/3!important;height:100vh!important;min-height:0!important;border-right:1px solid var(--line)!important}"
+          new_workspace="body.planner-fullscreen #creatorMode .workspace{grid-column:1!important;grid-row:1/3!important;height:100vh!important;min-height:0!important;border-right:1px solid var(--line)!important;position:relative!important;z-index:1!important}"
+          s=once(s,old_workspace,new_workspace,'fullscreen workspace stacking')
+
+          old_toolbar="body.planner-fullscreen #creatorMode .creator-toolbar{grid-column:2!important;grid-row:1!important;min-height:0!important;height:44vh!important;max-height:44vh!important;overflow:auto!important;align-content:flex-start!important;border-bottom:1px solid var(--line)!important}"
+          new_toolbar="body.planner-fullscreen #creatorMode .creator-toolbar{grid-column:2!important;grid-row:1!important;min-height:0!important;height:44vh!important;max-height:44vh!important;overflow:visible!important;align-content:flex-start!important;align-items:flex-start!important;flex-wrap:wrap!important;position:relative!important;z-index:300!important;border-bottom:1px solid var(--line)!important}body.planner-fullscreen #creatorMode .creator-toolbar .dropdown-panel{z-index:2500!important}"
+          s=once(s,old_toolbar,new_toolbar,'fullscreen toolbar popover stacking')
+
+          old_render="if(e.type==='participant'){const d=e.data,avatar=d.image?`<img src=\"${esc(d.image)}\">`:esc((d.name||'?').slice(0,2));inner=`<div class=\"participant-avatar\">${avatar}</div><div class=\"participant-name\">${esc(d.name)}</div>`}"
+          new_render="if(e.type==='participant'){const d=e.data||{},name=String(d.name||'참가자'),avatar=d.image?`<img draggable=\"false\" alt=\"\" src=\"${esc(String(d.image))}\">`:esc(name.slice(0,2));inner=`<div class=\"participant-avatar\">${avatar}</div><div class=\"participant-name\">${esc(name)}</div>`}"
+          s=once(s,old_render,new_render,'participant renderer')
+
+          old_add="function addParticipant(id){const c=contactDb.find(x=>x.id===id);if(!c)return;addElement('participant',{w:120,h:150,data:{contactId:c.id,name:c.name,image:c.image||'',labels:c.labels||[],team:'',role:''}});closeModal('participantModal')}"
+          new_add="function addParticipant(id){const key=String(id),c=contactDb.find(x=>String(x.id)===key);if(!c)return;const name=String(c.name||'참가자'),image=typeof c.image==='string'?c.image:'';addElement('participant',{w:120,h:150,data:{contactId:String(c.id),name,image,labels:Array.isArray(c.labels)?c.labels:[],team:'',role:''}});closeModal('participantModal')}"
+          s=once(s,old_add,new_add,'participant insertion')
+
+          s=s.replace('MAWANG Content Planner V1.0.12','MAWANG Content Planner V1.0.13')
+          p.write_text(s,encoding='utf-8')
+
+          replacements={
+            'assets/content-planner-host.js':[('CF MWS V 1.0.12','CF MWS V 1.0.13'),('v=1.0.12','v=1.0.13')],
+            'assets/tools.js':[('CF MWS V 1.0.12','CF MWS V 1.0.13')],
+            'assets/test-v5.5.js':[('CF MWS V 1.0.12','CF MWS V 1.0.13')],
+            'assets/test-v5.6.js':[('CF MWS V 1.0.12','CF MWS V 1.0.13')],
+            'index.html':[('CF MWS V 1.0.12','CF MWS V 1.0.13'),('v=1.0.12','v=1.0.13')],
+            'src/cf-v571.js':[('CF MWS V 1.0.12','CF MWS V 1.0.13'),('cf-mws-v1.0.12','cf-mws-v1.0.13')],
+          }
+          for fn,pairs in replacements.items():
+              q=Path(fn); t=q.read_text(encoding='utf-8')
+              for old,new in pairs: t=t.replace(old,new)
+              q.write_text(t,encoding='utf-8')
+
+          p=Path('package.json'); d=json.loads(p.read_text(encoding='utf-8')); d['version']='1.0.13'; p.write_text(json.dumps(d,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          p=Path('README.md'); t=p.read_text(encoding='utf-8'); t=re.sub(r'Current release: .*','Current release: CF MWS V1.0.13',t,count=1); p.write_text(t,encoding='utf-8')
+          PY
+
+      - name: Static checks
+        shell: bash
+        run: |
+          set -euxo pipefail
+          grep -q 'MAWANG Content Planner V1.0.13' content-planner.html
+          grep -q 'overflow:visible!important' content-planner.html
+          grep -q 'right:5px;top:5px' content-planner.html
+          grep -q 'min-width:72px!important;min-height:90px!important' content-planner.html
+          grep -q "const BUILD_VERSION = 'CF MWS V 1.0.13'" src/cf-v571.js
+          grep -q '"version": "1.0.13"' package.json
+          git diff --check
+
+      - name: Browser regression test
+        shell: bash
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install chromium --with-deps
+          python3 -m http.server 4173 >/tmp/mws-v1013-http.log 2>&1 &
+          node <<'NODE'
+          const {chromium}=require('playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:1440,height:900}});
+            const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+            await page.goto('http://127.0.0.1:4173/content-planner.html',{waitUntil:'load'});
+            await page.waitForTimeout(300);
+
+            await page.evaluate(()=>{document.body.classList.add('planner-fullscreen');resizePlannerCanvas()});
+            await page.click('#toolBrush');
+            await page.waitForTimeout(80);
+            const pop=await page.evaluate(()=>{
+              const menu=document.getElementById('brushSizeMenu'),toolbar=document.querySelector('.creator-toolbar'),workspace=document.querySelector('.workspace'),r=menu.getBoundingClientRect();
+              const hit=document.elementFromPoint(Math.max(1,r.left+8),Math.max(1,r.top+8));
+              return {hidden:menu.hidden,w:r.width,h:r.height,hit:!!hit&&menu.contains(hit),overflow:getComputedStyle(toolbar).overflow,zToolbar:Number(getComputedStyle(toolbar).zIndex)||0,zWorkspace:Number(getComputedStyle(workspace).zIndex)||0};
+            });
+            if(pop.hidden||pop.w<200||pop.h<80||!pop.hit||pop.overflow!=='visible'||pop.zToolbar<=pop.zWorkspace)throw new Error('fullscreen brush popup stacking failed '+JSON.stringify(pop));
+
+            await page.evaluate(()=>{document.body.classList.remove('planner-fullscreen');closeDropdownsV110();contactDb=[{id:101,name:'테스트 참가자',image:'',labels:['테스트']}];addParticipant('101')});
+            await page.waitForTimeout(80);
+            const participant=await page.evaluate(()=>{
+              const node=document.querySelector('.node.participant-node.selected'),av=node?.querySelector('.participant-avatar'),name=node?.querySelector('.participant-name');
+              const ar=av?.getBoundingClientRect(),nr=name?.getBoundingClientRect();
+              return {node:!!node,avatarW:ar?.width||0,avatarH:ar?.height||0,name:name?.textContent||'',nameH:nr?.height||0,font:parseFloat(name?getComputedStyle(name).fontSize:'0')||0};
+            });
+            if(!participant.node||participant.avatarW<20||participant.avatarH<20||participant.name!=='테스트 참가자'||participant.nameH<8||participant.font<8)throw new Error('participant card failed '+JSON.stringify(participant));
+
+            await page.evaluate(()=>addSticky());
+            await page.waitForTimeout(50);
+            const close=await page.evaluate(()=>{
+              const node=document.querySelector('.node.sticky-node.selected'),btn=node?.querySelector('.node-delete'),n=node?.getBoundingClientRect(),b=btn?.getBoundingClientRect();
+              return {node:!!node,btn:!!btn,inside:!!(n&&b&&b.left>=n.left&&b.top>=n.top&&b.right<=n.right&&b.bottom<=n.bottom),n,b};
+            });
+            if(!close.node||!close.btn||!close.inside)throw new Error('delete button outside card '+JSON.stringify(close));
+            if(errors.length)throw new Error('page errors '+errors.join(' | '));
+            console.log('V1.0.13 planner UI regression passed', {pop,participant,close});
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+
+      - name: Commit validated V1.0.13 source
+        shell: bash
+        run: |
+          git config user.name 'MAWANG Build'
+          git config user.email 'actions@users.noreply.github.com'
+          git add README.md package.json index.html content-planner.html src/cf-v571.js assets/content-planner-host.js assets/tools.js assets/test-v5.5.js assets/test-v5.6.js
+          git commit -m 'Fix planner fullscreen popup participant card and close button V1.0.13'
+          git push origin HEAD:mws-v1.0.13-planner-ui-fixes
