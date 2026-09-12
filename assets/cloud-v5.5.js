@@ -11,7 +11,7 @@
   const CACHE_DB='mawang_data';
   const CACHE_SCHEMA_VERSION=3;
   const CACHE_STORES=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook'];
-  const INITIAL_PARTS=['core','contacts','contactMeta','events','posts','activity'];
+  const INITIAL_PARTS=['core','contacts','events','posts','activity'];
   const ALL_PARTS=[...CACHE_STORES];
   const PARTS_BY_TAB={
     dashboard:[],calendar:['clipboard'],contacts:['contactMeta'],posts:[],sniper:[],targets:[],
