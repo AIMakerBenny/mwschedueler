@@ -1,0 +1,90 @@
+name: Apply V1.0.12 static final
+
+on:
+  push:
+    branches: [cloudflare-production]
+    paths:
+      - .github/v1012-static-final-trigger
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: cloudflare-production
+          fetch-depth: 0
+
+      - name: Patch production static files
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+
+          p = Path('content-planner.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('MAWANG Content Planner V1.0.11','MAWANG Content Planner V1.0.12')
+          s = s.replace('<div class="submit-action-stack"><button class="btn small primary" onclick="openSubmitModal(false)">기획안 제출</button><button class="btn small planner-fullscreen-enter" type="button" onclick="enterPlannerFullscreen()">전체화면</button></div>', '<button class="btn small planner-fullscreen-enter" type="button" onclick="enterPlannerFullscreen()">전체화면</button>')
+          s = s.replace('<button class="btn ok" onclick="saveCanvasInfo()">저장</button>', '<button class="btn ok" id="canvasInfoSaveBtn" onclick="saveCanvasInfo()">저장</button>')
+          s = s.replace('.board-wrap{padding:0!important;width:100%!important;height:calc(100% - 54px)!important;min-width:0!important;min-height:0!important;overflow:hidden!important;position:relative!important;background:#fff!important}', '.board-wrap{padding:0!important;width:100%!important;height:calc(100% - 54px)!important;min-width:0!important;min-height:0!important;overflow:hidden!important;position:relative!important;background:#060911!important;--planner-edge-gap:10px}')
+          s = s.replace('#board{width:100%!important;height:100%!important;position:absolute!important;inset:0!important;transform-origin:center center!important;box-shadow:none!important;border-radius:0!important;overflow:hidden!important}', '#board{width:calc(100% - var(--planner-edge-gap))!important;height:calc(100% - var(--planner-edge-gap))!important;position:absolute!important;left:0!important;top:0!important;right:auto!important;bottom:auto!important;transform-origin:center center!important;box-shadow:none!important;border-radius:0!important;overflow:hidden!important}')
+
+          if '저장 및 기획안 등록 완료' not in s:
+              pattern = re.compile(r"function saveCanvasInfo\(\)\{\n  const ids=.*?\n\}", re.S)
+              replacement = '''async function saveCanvasInfo(){
+  const btn=$('canvasInfoSaveBtn'),oldLabel=btn?.textContent||'저장';
+  const ids=[...canvasInfoParticipantSelectionV110],title=$('canvasInfoTitle').value.trim()||'새 메모',author=$('canvasInfoAuthor').value.trim(),summary=$('canvasInfoSummary').value.trim();
+  state.meta={...state.meta,title,author,summary,participantIds:ids};syncCurrentDocumentV110();touch();
+  if(btn){btn.disabled=true;btn.textContent='저장 중...'}
+  try{
+    const canvas=await renderBoardToCanvas(),preview=canvas.toDataURL('image/png',.88),existingId=state.activeProposalId||'',id=existingId||uid(),now=new Date().toISOString(),old=existingId?await dbGet(id):null;
+    const payload={id,title,author,summary,createdAt:old?.createdAt||now,updatedAt:now,participants:proposalParticipantsV110(),preview,canvas:deep(state)};
+    payload.canvas.activeProposalId=id;await submitProposalToBackend(payload);state.activeProposalId=id;syncCurrentDocumentV110();touch();closeModal('canvasInfoModal');await renderArchive();toast(old?'저장 및 기획안 업데이트 완료':'저장 및 기획안 등록 완료')
+  }catch(err){console.error('Canvas save and archive failed',err);alert('저장 실패: '+(err?.message||err))}
+  finally{if(btn){btn.disabled=false;btn.textContent=oldLabel}}
+}'''
+              s, n = pattern.subn(replacement, s, count=1)
+              if n != 1:
+                  raise SystemExit(f'saveCanvasInfo patch failed: {n}')
+          p.write_text(s,encoding='utf-8')
+
+          p = Path('assets/content-planner-host.js')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace("const BUILD='CF MWS V 1.0.11';", "const BUILD='CF MWS V 1.0.12';")
+          s = s.replace("/content-planner.html?v=1.0.11", "/content-planner.html?v=1.0.12")
+          s = s.replace("/assets/tools.js?v=1.0.11", "/assets/tools.js?v=1.0.12")
+          p.write_text(s,encoding='utf-8')
+
+          p = Path('assets/tools.js')
+          s = p.read_text(encoding='utf-8').replace("const BUILD='CF MWS V 1.0.11';", "const BUILD='CF MWS V 1.0.12';")
+          p.write_text(s,encoding='utf-8')
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('CF MWS V 1.0.11','CF MWS V 1.0.12')
+          s = re.sub(r'assets/content-planner-host\.js(?:\?v=[^\"\']+)?', 'assets/content-planner-host.js?v=1.0.12', s)
+          p.write_text(s,encoding='utf-8')
+
+          p = Path('src/cf-v571.js')
+          s = p.read_text(encoding='utf-8').replace('CF MWS V 1.0.11','CF MWS V 1.0.12').replace('cf-mws-v1.0.11','cf-mws-v1.0.12')
+          p.write_text(s,encoding='utf-8')
+
+          p = Path('package.json')
+          data = json.loads(p.read_text(encoding='utf-8'))
+          data['version']='1.0.12'
+          p.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+
+      - name: Commit patched production assets
+        shell: bash
+        run: |
+          rm -f .github/v1012-static-final-trigger
+          git config user.name "MAWANG Build"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Deploy CF MWS V1.0.12 static planner fixes"
+          git push origin HEAD:cloudflare-production
