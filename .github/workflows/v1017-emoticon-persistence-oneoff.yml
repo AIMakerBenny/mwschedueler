@@ -36,6 +36,7 @@ jobs:
                   raise SystemExit(f'unexpected replacement count in {path}: {n} != {count}')
               p.write_text(s.replace(old, new), encoding='utf-8')
 
+          # Custom emoticons belong to the existing contactMeta D1 part.
           must_replace(
               'assets/cloud-v5.5.js',
               "const INITIAL_PARTS=['core','contacts','events','posts','activity'];",
@@ -55,11 +56,13 @@ jobs:
               1,
           )
 
-          p = Path('src/cf-v571.js')
+          # Externalize emoticon data URLs to the already configured R2 workspace bucket,
+          # then let the current authenticated D1 save path store only the R2 reference.
+          p = Path('src/cf-v57.js')
           s = p.read_text(encoding='utf-8')
-          anchor = "function mediaSignature(base) {\n"
+          anchor = "async function normalizedSaveRequest(request, base) {\n"
           if anchor not in s:
-              raise SystemExit('cf-v571 mediaSignature anchor missing')
+              raise SystemExit('cf-v57 normalizedSaveRequest anchor missing')
           helper = r'''function parseDataImageV117(value) {
             if (typeof value !== 'string') return null;
             const match = /^data:([^;,]+);base64,(.+)$/s.exec(value);
@@ -87,7 +90,7 @@ jobs:
               customMetadata: { mwsVersion: String(version), source: 'mws-emoticon-upload' },
             });
             await env.DB.prepare(`INSERT INTO image_sources(kind,item_key,source_url,version,content_type,updated_at)
-              VALUES('workspace',?,?,?, ?,CURRENT_TIMESTAMP)
+              VALUES('workspace',?,?,?,?,CURRENT_TIMESTAMP)
               ON CONFLICT(kind,item_key) DO UPDATE SET source_url=NULL,version=excluded.version,content_type=excluded.content_type,updated_at=CURRENT_TIMESTAMP`)
               .bind(key, null, version, parsed.contentType).run();
             return `/media/workspace/${encodeURIComponent(key)}?v=${version}`;
@@ -107,12 +110,12 @@ jobs:
           }
 
           '''
-          s = s.replace(anchor, helper + anchor, 1)
-          s = s.replace('async function normalizedSaveRequest(request, base) {', 'async function normalizedSaveRequest(request, env, base) {', 1)
+          s = s.replace(anchor, helper + 'async function normalizedSaveRequest(request, env, base) {\n', 1)
           s = s.replace('  const rewritten = rewriteDirectUrlsToInternal(body, base);', '  await externalizeEmoticonsV117(env, body);\n  const rewritten = rewriteDirectUrlsToInternal(body, base);', 1)
           s = s.replace('? await normalizedSaveRequest(request, base)', '? await normalizedSaveRequest(request, env, base)', 1)
           p.write_text(s, encoding='utf-8')
 
+          # Wait for the queued cloud write before the manager reports an add/delete as complete.
           p = Path('assets/content-planner-host.js')
           s = p.read_text(encoding='utf-8')
           anchor = "function renderEmoticonManagerV114()"
@@ -120,10 +123,15 @@ jobs:
           if anchor not in s:
               raise SystemExit('content planner host emoticon anchor missing')
           s = s.replace(anchor, helper + anchor, 1)
-          s = s.replace("const saver=window.saveData||window.persist;if(typeof saver==='function')await saver('이모티콘 삭제');renderEmoticonManagerV114();sendEmoticons()", "await persistEmoticonsV117('이모티콘 삭제');renderEmoticonManagerV114();sendEmoticons()", 1)
-          s = s.replace("const saver=window.saveData||window.persist;if(typeof saver==='function')await saver('이모티콘 추가');renderEmoticonManagerV114();sendEmoticons()", "await persistEmoticonsV117('이모티콘 추가');renderEmoticonManagerV114();sendEmoticons()", 1)
+          old_delete = "const saver=window.saveData||window.persist;if(typeof saver==='function')await saver('이모티콘 삭제');renderEmoticonManagerV114();sendEmoticons()"
+          old_add = "const saver=window.saveData||window.persist;if(typeof saver==='function')await saver('이모티콘 추가');renderEmoticonManagerV114();sendEmoticons()"
+          if old_delete not in s or old_add not in s:
+              raise SystemExit('emoticon save call targets missing')
+          s = s.replace(old_delete, "await persistEmoticonsV117('이모티콘 삭제');renderEmoticonManagerV114();sendEmoticons()", 1)
+          s = s.replace(old_add, "await persistEmoticonsV117('이모티콘 추가');renderEmoticonManagerV114();sendEmoticons()", 1)
           p.write_text(s, encoding='utf-8')
 
+          # Remove only the old non-executing JSON script residue from the page.
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
           s2, removed = re.subn(r'\n?<script id="mws-supabase-cloud-layer"[^>]*>.*?</script>\n?', '\n', s, flags=re.S)
@@ -136,6 +144,7 @@ jobs:
           s = s.replace('These never belong to shared Supabase data.', 'These never belong to shared cloud data.')
           p.write_text(s, encoding='utf-8')
 
+          # Direct V1.0.16 -> V1.0.17 continuation only.
           for filename in ['index.html','content-planner.html','assets/content-planner-host.js','assets/tools.js','src/cf-v571.js','package.json']:
               p = Path(filename)
               s = p.read_text(encoding='utf-8')
@@ -144,12 +153,12 @@ jobs:
 
           cloud = Path('assets/cloud-v5.5.js').read_text(encoding='utf-8')
           host = Path('assets/content-planner-host.js').read_text(encoding='utf-8')
-          worker = Path('src/cf-v571.js').read_text(encoding='utf-8')
+          wrapper = Path('src/cf-v57.js').read_text(encoding='utf-8')
           index = Path('index.html').read_text(encoding='utf-8')
           assert "emoticons:clone(Array.isArray(d.emoticons)?d.emoticons:[])" in cloud
           assert "'contactMeta'" in cloud.split('const INITIAL_PARTS=',1)[1].split(';',1)[0]
           assert 'persistEmoticonsV117' in host and 'mwsV55SaveNow' in host
-          assert 'externalizeEmoticonsV117' in worker and 'mws-emoticon-upload' in worker
+          assert 'externalizeEmoticonsV117' in wrapper and 'mws-emoticon-upload' in wrapper
           assert 'mws-supabase-cloud-layer' not in index
           assert 'CF MWS V 1.0.17' in host
 
@@ -161,6 +170,7 @@ jobs:
           node --check assets/cloud-v5.5.js
           node --check assets/content-planner-host.js
           node --check assets/tools.js
+          node --check src/cf-v57.js
           node --check src/cf-v571.js
           node --check src/index.js
 
