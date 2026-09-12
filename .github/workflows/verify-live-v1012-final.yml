@@ -1,0 +1,100 @@
+name: Verify final live CF MWS V1.0.12 read-only
+
+on:
+  push:
+    branches:
+      - mws-v1.0.12-clean-rebuild
+    paths:
+      - .github/workflows/verify-live-v1012-final.yml
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify live health build
+        run: |
+          curl -fsSL -H 'Cache-Control: no-cache' 'https://mawang-scheduler.majoku.workers.dev/api/health?verify=final1012' -o /tmp/health.json
+          cat /tmp/health.json
+          node -e "const x=require('/tmp/health.json');if(x.build!=='CF MWS V 1.0.12')throw new Error('Unexpected health build: '+JSON.stringify(x))"
+
+      - name: Verify live root source
+        run: |
+          curl -fsSL -H 'Cache-Control: no-cache' 'https://mawang-scheduler.majoku.workers.dev/?verify=final1012' -o /tmp/index.html
+          grep -q 'data-build-version="CF MWS V 1.0.12"' /tmp/index.html
+          ! grep -q 'mws-v1012-version-lock' /tmp/index.html
+
+      - name: Verify live planner source
+        run: |
+          curl -fsSL -H 'Cache-Control: no-cache' 'https://mawang-scheduler.majoku.workers.dev/content-planner.html?verify=final1012' -o /tmp/planner.html
+          grep -q 'MAWANG Content Planner V1.0.12' /tmp/planner.html
+          grep -q 'grid-template-columns:76vw 24vw' /tmp/planner.html
+          grep -q 'grid-template-rows:44vh 56vh' /tmp/planner.html
+          grep -q 'id="canvasInfoSaveBtn"' /tmp/planner.html
+          grep -q '저장 및 기획안 등록 완료' /tmp/planner.html
+          ! grep -q 'onclick="openSubmitModal(false)"' /tmp/planner.html
+          ! grep -q 'id="submitModal"' /tmp/planner.html
+          curl -fsSL -H 'Cache-Control: no-cache' 'https://mawang-scheduler.majoku.workers.dev/assets/tools.js?verify=final1012' -o /tmp/tools.js
+          grep -q "const BUILD='CF MWS V 1.0.12'" /tmp/tools.js
+
+      - name: Install browser
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install chromium --with-deps
+
+      - name: Verify live main screen without writes
+        run: |
+          node <<'NODE'
+          const {chromium}=require('playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const context=await browser.newContext({viewport:{width:1440,height:960}});
+            const page=await context.newPage();
+            const errors=[],blocked=[];
+            page.on('pageerror',e=>errors.push(String(e)));
+            await page.route('**/*',route=>{
+              const m=route.request().method();
+              if(!['GET','HEAD','OPTIONS'].includes(m)){blocked.push(m+' '+route.request().url());return route.abort()}
+              return route.continue();
+            });
+            await page.goto('https://mawang-scheduler.majoku.workers.dev/?verify=browser-final1012',{waitUntil:'domcontentloaded',timeout:60000});
+            await page.waitForSelector('#mwsModePublic',{timeout:20000});
+            await page.click('#mwsModePublic');
+            await page.click('#mwsLoginSubmit');
+            await page.waitForFunction(()=>!document.body.classList.contains('mws-gated'),null,{timeout:30000});
+            await page.waitForTimeout(1500);
+            const state=await page.evaluate(()=>({
+              build:document.body.dataset.buildVersion,
+              versions:[...document.querySelectorAll('[id^="mwsBuildVersionV5"],#mwsBuildVersion,[class*="sidebar-build-version"]')].map(x=>x.textContent.trim()).filter(Boolean),
+              gated:document.body.classList.contains('mws-gated'),
+              app:!!document.querySelector('.app')
+            }));
+            console.log(JSON.stringify({state,blocked,errors},null,2));
+            if(state.build!=='CF MWS V 1.0.12')throw new Error('Bad body build '+JSON.stringify(state));
+            if(state.versions.some(v=>v!=='CF MWS V 1.0.12'))throw new Error('Mixed visible versions '+JSON.stringify(state.versions));
+            if(state.gated||!state.app)throw new Error('Main screen did not enter public mode');
+            if(errors.length)throw new Error('Main page JS errors: '+errors.join(' | '));
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+
+      - name: Verify live planner canvas
+        run: |
+          node <<'NODE'
+          const {chromium}=require('playwright');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:1440,height:960}});
+            const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+            await page.goto('https://mawang-scheduler.majoku.workers.dev/content-planner.html?verify=browser-final1012',{waitUntil:'load',timeout:60000});
+            await page.waitForTimeout(300);
+            const normal=await page.evaluate(()=>{resizePlannerCanvas();const r=document.getElementById('board').getBoundingClientRect();return{ratio:r.width/r.height,w:r.width,h:r.height}});
+            if(Math.abs(normal.ratio-1.6)>.02)throw new Error('Normal canvas stretched '+JSON.stringify(normal));
+            await page.evaluate(()=>{document.body.classList.add('planner-fullscreen');resizePlannerCanvas()});
+            await page.waitForTimeout(100);
+            const full=await page.evaluate(()=>{const r=document.getElementById('board').getBoundingClientRect(),c=getComputedStyle(document.getElementById('creatorMode'));return{ratio:r.width/r.height,cols:c.gridTemplateColumns,rows:c.gridTemplateRows}});
+            console.log(JSON.stringify({normal,full,errors},null,2));
+            if(Math.abs(full.ratio-1.6)>.02)throw new Error('Fullscreen canvas stretched '+JSON.stringify(full));
+            if(errors.length)throw new Error('Planner JS errors: '+errors.join(' | '));
+            await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
