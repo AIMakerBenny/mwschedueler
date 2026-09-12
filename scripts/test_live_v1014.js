@@ -21,20 +21,22 @@ const {chromium}=require('playwright');
   const textNode=page.locator('.node.text-node').last();
   await textNode.locator('.editable').click();
   if(!(await textNode.evaluate(n=>n.classList.contains('selected')))) throw new Error('text re-selection failed');
-  const before=await textNode.boundingBox(), hb=await textNode.locator('.drag-handle').boundingBox();
-  if(!before||!hb) throw new Error('text move handle missing');
+  if((await textNode.locator('.editable').getAttribute('contenteditable'))!=='true') throw new Error('selected text not editable');
+  const stateBefore=await textNode.evaluate(n=>{const e=getEl(n.dataset.id);return{x:e.x,y:e.y}});
+  const hb=await textNode.locator('.drag-handle').boundingBox();
+  if(!hb) throw new Error('text move handle missing');
   await page.mouse.move(hb.x+hb.width/2,hb.y+hb.height/2); await page.mouse.down();
   await page.mouse.move(hb.x+100,hb.y+70,{steps:5}); await page.mouse.up(); await page.waitForTimeout(40);
-  const after=await textNode.boundingBox();
-  if(!after||after.x<before.x+60||after.y<before.y+40) throw new Error('text MOVE failed '+JSON.stringify({before,after}));
+  const stateAfter=await textNode.evaluate(n=>{const e=getEl(n.dataset.id);return{x:e.x,y:e.y}});
+  if(stateAfter.x<=stateBefore.x+60||stateAfter.y<=stateBefore.y+40) throw new Error('text MOVE state failed '+JSON.stringify({stateBefore,stateAfter}));
   await textNode.locator('.editable').fill('수정된 텍스트');
   if((await textNode.locator('.editable').textContent())!=='수정된 텍스트') throw new Error('text edit failed');
 
   const closeStyle=await textNode.locator('.node-delete').evaluate(b=>({bg:getComputedStyle(b).backgroundColor,border:getComputedStyle(b).borderTopWidth}));
   if(closeStyle.bg!=='rgba(0, 0, 0, 0)'||closeStyle.border!=='0px') throw new Error('close button decoration remains '+JSON.stringify(closeStyle));
 
-  await page.click('#toolBrush'); await page.locator('#drawSize').fill('11'); await page.locator('#drawSize').dispatchEvent('input');
-  await page.click('#toolEraser'); await page.locator('#drawSize').fill('47'); await page.locator('#drawSize').dispatchEvent('input');
+  await page.click('#toolBrush'); await page.locator('#drawSize').evaluate((el)=>{el.value='11';el.dispatchEvent(new Event('input',{bubbles:true}))});
+  await page.click('#toolEraser'); await page.locator('#drawSize').evaluate((el)=>{el.value='47';el.dispatchEvent(new Event('input',{bubbles:true}))});
   await page.click('#toolBrush'); if((await page.locator('#drawSize').inputValue())!=='11') throw new Error('brush size not retained');
   const menu=await page.locator('#brushSizeMenu').boundingBox(), group=await page.locator('#toolBrush').locator('..').boundingBox();
   if(!menu||!group||menu.x<group.x-2) throw new Error('brush popup hidden left '+JSON.stringify({menu,group}));
@@ -47,6 +49,6 @@ const {chromium}=require('playwright');
   if(await page.locator('.node.image-node').count()<1) throw new Error('image insertion failed');
 
   if(errors.length) throw new Error('page errors: '+errors.join(' | '));
-  console.log('LIVE V1.0.14 verification passed');
+  console.log('LIVE V1.0.14 verification passed',{stateBefore,stateAfter,a1,a2});
   await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});
