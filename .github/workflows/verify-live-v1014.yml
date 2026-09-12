@@ -1,9 +1,10 @@
 name: Verify live V1.0.14
-# rerun after production text interaction correction
 on:
   push:
     branches: [mws-v1.0.14-planner-enhancements]
-    paths: [.github/workflows/verify-live-v1014.yml]
+    paths:
+      - .github/workflows/verify-live-v1014.yml
+      - scripts/test_live_v1014.js
 jobs:
   verify:
     runs-on: ubuntu-latest
