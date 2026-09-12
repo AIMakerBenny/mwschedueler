@@ -1,7 +1,7 @@
 import baseWorker from './index.js';
 
 const CACHE_SCHEMA_VERSION = 3;
-const BUILD_VERSION = 'CF V5.7';
+const BUILD_VERSION = 'Mawang Scheduler v1.0';
 
 function json(value, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(value), {
@@ -35,6 +35,23 @@ function mediaConfigError() {
   }, 503, { 'x-mws-media-mode': 'r2-public-required' });
 }
 
+async function handleManagedMediaV10(env, kind, key) {
+  if (!['contact', 'workspace'].includes(kind) || !/^[A-Za-z0-9_-]{1,160}$/.test(key)) {
+    return new Response('Invalid media key', { status: 400 });
+  }
+  const folder = kind === 'contact' ? 'contacts' : 'workspace';
+  const object = await env.IMAGES.get(`${folder}/${key}`);
+  if (!object) return new Response('Not found', { status: 404 });
+  const headers = new Headers();
+  if (object.writeHttpMetadata) object.writeHttpMetadata(headers);
+  if (!headers.has('content-type')) headers.set('content-type', object.httpMetadata?.contentType || 'application/octet-stream');
+  headers.set('cache-control', 'public, max-age=31536000, immutable');
+  headers.set('x-content-type-options', 'nosniff');
+  headers.set('access-control-allow-origin', '*');
+  if (object.httpEtag) headers.set('etag', object.httpEtag);
+  return new Response(object.body, { status: 200, headers });
+}
+
 function mediaSignature(base) {
   try {
     const u = new URL(base);
@@ -47,7 +64,7 @@ function mediaSignature(base) {
 function makeEtag(rows, base) {
   const sig = rows.map((row) => `${row.part}:${Number(row.version) || 0}`).join('|') || 'empty';
   const clean = sig.replace(/[^A-Za-z0-9:_|.-]/g, '');
-  return `"cf57-${mediaSignature(base)}-${clean}"`;
+  return `"mws-v1-${mediaSignature(base)}-${clean}"`;
 }
 
 function directMediaUrl(value, base) {
@@ -165,7 +182,7 @@ async function handleBootstrap(request, env, ctx, base) {
       headers: {
         etag,
         'cache-control': 'no-cache',
-        'x-mws-backend': 'cf-v5.7-bundle',
+        'x-mws-backend': 'mawang-scheduler-v1.0',
         'x-mws-media-mode': 'r2-public-direct',
       },
     });
@@ -173,7 +190,7 @@ async function handleBootstrap(request, env, ctx, base) {
 
   return json({
     backend: 'cloudflare-d1-r2',
-    mode: 'cf-v5.7-bundle',
+    mode: 'mawang-scheduler-v1.0',
     build: BUILD_VERSION,
     mediaMode: 'r2-public-direct',
     mediaBaseUrl: base,
@@ -188,7 +205,7 @@ async function handleBootstrap(request, env, ctx, base) {
     parts,
   }, 200, {
     etag,
-    'x-mws-backend': 'cf-v5.7-bundle',
+    'x-mws-backend': 'mawang-scheduler-v1.0',
     'x-mws-media-mode': 'r2-public-direct',
   });
 }
@@ -199,11 +216,12 @@ export default {
     const path = url.pathname;
     const base = mediaBase(env);
 
-    if (path.startsWith('/media/')) {
-      return json({
-        error: 'Legacy Worker media route is disabled in CF V5.7.',
-        code: 'MWS_LEGACY_MEDIA_DISABLED',
-      }, 410, { 'cache-control': 'no-store' });
+    if (request.method === 'GET' && path.startsWith('/media/')) {
+      const match = /^\/media\/(contact|workspace)\/([^/?#]+)$/.exec(path);
+      if (!match) return new Response('Invalid media path', { status: 400 });
+      let key = match[2];
+      try { key = decodeURIComponent(key); } catch (_) {}
+      return handleManagedMediaV10(env, match[1], key);
     }
 
     if (path === '/api/health' && request.method === 'GET') {
@@ -225,7 +243,7 @@ export default {
       try {
         return await handleBootstrap(request, env, ctx, base);
       } catch (error) {
-        console.error('CF V5.7 bootstrap error', error);
+        console.error('Mawang Scheduler v1.0 bootstrap error', error);
         return json({ error: error instanceof Error ? error.message : String(error) }, 500);
       }
     }
