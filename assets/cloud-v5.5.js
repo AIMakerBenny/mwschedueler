@@ -11,7 +11,7 @@
   const CACHE_DB='mawang_data';
   const CACHE_SCHEMA_VERSION=3;
   const CACHE_STORES=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook'];
-  const INITIAL_PARTS=['core','contacts','events','posts','activity'];
+  const INITIAL_PARTS=['core','contacts','contactMeta','events','posts','activity'];
   const ALL_PARTS=[...CACHE_STORES];
   const PARTS_BY_TAB={
     dashboard:[],calendar:['clipboard'],contacts:['contactMeta'],posts:[],sniper:[],targets:[],
@@ -140,13 +140,13 @@
     if(part==='miniGames')return clone(d.miniGames&&typeof d.miniGames==='object'?d.miniGames:{});
     if(part==='activity')return {collaborations:clone(Array.isArray(d.collaborations)?d.collaborations:[]),todayPeopleByDate:clone(d.todayPeopleByDate&&typeof d.todayPeopleByDate==='object'?d.todayPeopleByDate:{}),todayPeopleManualByDate:clone(d.todayPeopleManualByDate&&typeof d.todayPeopleManualByDate==='object'?d.todayPeopleManualByDate:{}),targetList:clone(Array.isArray(d.targetList)?d.targetList:[])};
     if(part==='notebook')return {memos:clone(Array.isArray(d.memos)?d.memos:[]),favoriteFolders:clone(Array.isArray(d.favoriteFolders)?d.favoriteFolders:[])};
-    if(part==='contactMeta')return {contactTags:clone(Array.isArray(d.contactTags)?d.contactTags:[]),contactTagBanners:clone(d.contactTagBanners&&typeof d.contactTagBanners==='object'?d.contactTagBanners:{})};
+    if(part==='contactMeta')return {contactTags:clone(Array.isArray(d.contactTags)?d.contactTags:[]),contactTagBanners:clone(d.contactTagBanners&&typeof d.contactTagBanners==='object'?d.contactTagBanners:{}),emoticons:clone(Array.isArray(d.emoticons)?d.emoticons:[])};
     if(part==='clipboard')return {scheduleClipboard:clone(Array.isArray(d.scheduleClipboard)?d.scheduleClipboard:[])};return null;
   }
   function mergePart(part,value,target=data){
     const v=clone(value);if(part==='core'){Object.assign(target,v||{});return}if(part==='contacts'){target.contacts=Array.isArray(v)?v:[];return}if(part==='events'){target.events=Array.isArray(v)?v:[];return}if(part==='posts'){target.posts=Array.isArray(v)?v:[];return}if(part==='miniGames'){target.miniGames=v&&typeof v==='object'?v:{};return}if(['activity','notebook','contactMeta','clipboard'].includes(part))Object.assign(target,v&&typeof v==='object'?v:{});
   }
-  function freshSkeleton(){return {version:52,categories:[],contacts:[],events:[],posts:[],miniGames:{},collaborations:[],todayPeopleByDate:{},todayPeopleManualByDate:{},targetList:[],memos:[],favoriteFolders:[],contactTags:[],contactTagBanners:{},scheduleClipboard:[],timezones:[]}}
+  function freshSkeleton(){return {version:52,categories:[],contacts:[],events:[],posts:[],miniGames:{},collaborations:[],todayPeopleByDate:{},todayPeopleManualByDate:{},targetList:[],memos:[],favoriteFolders:[],contactTags:[],contactTagBanners:{},emoticons:[],scheduleClipboard:[],timezones:[]}}
   function normalizeAndRender(reason){try{normalizeDataShape()}catch(_){try{normalizeMiniGameData()}catch(__){}}try{if(typeof mwsApplyDevicePrefs==='function')mwsApplyDevicePrefs(data)}catch(_){}document.body.dataset.theme=data.theme||'neon';document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));try{renderAll(reason)}catch(e){console.error('V5.5 render failed',e)}}
 
   async function fetchManifest(scope){
