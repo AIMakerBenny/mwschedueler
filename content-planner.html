@@ -436,7 +436,7 @@ function getEl(id){return state.elements.find(e=>e.id===id)}
 function clearSelection(){selectedIds=[];renderSelectionOnly()}
 function selectAllNodes(){selectedIds=state.elements.map(e=>e.id);renderSelectionOnly()}
 function selectNode(id,event){if(tool!=='select')return;if(event?.shiftKey){if(selectedIds.includes(id))selectedIds=selectedIds.filter(x=>x!==id);else selectedIds.push(id)}else selectedIds=[id];renderSelectionOnly()}
-function renderSelectionOnly(){document.querySelectorAll('.node').forEach(n=>n.classList.toggle('selected',selectedIds.includes(n.dataset.id)));renderInspector();renderConnectors()}
+function renderSelectionOnly(){document.querySelectorAll('.node').forEach(n=>{const selected=selectedIds.includes(n.dataset.id);n.classList.toggle('selected',selected);if(n.classList.contains('text-node')||n.classList.contains('sticky-node'))n.querySelectorAll('.editable').forEach(ed=>ed.setAttribute('contenteditable',selected?'true':'false'))});renderInspector();renderConnectors()}
 function deleteSelected(){if(!selectedIds.length)return;snapshot();const dead=new Set(selectedIds);state.elements=state.elements.filter(e=>!dead.has(e.id));state.connectors=state.connectors.filter(c=>!dead.has(c.from)&&!dead.has(c.to));selectedIds=[];render();touch()}
 function duplicateSelected(){if(!selectedIds.length)return;snapshot();const originals=state.elements.filter(e=>selectedIds.includes(e.id));const ids=[];for(const src of originals){const n=deep(src);n.id=uid();n.x+=28;n.y+=28;n.z=nextZ();state.elements.push(n);ids.push(n.id)}selectedIds=ids;render();touch()}
 function connectSelected(){if(selectedIds.length!==2)return toast('Shift + 클릭으로 연결할 요소 2개를 선택하세요');snapshot();state.connectors.push({id:uid(),from:selectedIds[0],to:selectedIds[1],color:'#6f52e5',width:4});renderConnectors();touch();toast('스마트 연결선이 생성되었습니다')}
@@ -688,7 +688,7 @@ function deleteOneV110(id){snapshot();state.elements=state.elements.filter(e=>e.
 function bindNodes(){
   document.querySelectorAll('.node').forEach(node=>{
     const id=node.dataset.id,e=getEl(id);if(!e)return;
-    node.addEventListener('pointerdown',ev=>{if(ev.target.closest('.resize-handle,.drag-handle,.node-delete,video'))return;const editable=ev.target.closest('[contenteditable]');if(editable){if(!selectedIds.includes(id)){ev.preventDefault();selectNode(id,ev)}return}selectNode(id,ev)});
+    node.addEventListener('pointerdown',ev=>{if(ev.target.closest('.resize-handle,.drag-handle,.node-delete,video'))return;const editable=ev.target.closest('[contenteditable]');if(editable){if(!selectedIds.includes(id)){ev.preventDefault();selectNode(id,ev);editable.setAttribute('contenteditable','true');setTimeout(()=>editable.focus(),0)}return}selectNode(id,ev)});
     const handle=node.querySelector('.drag-handle');if(handle)handle.onpointerdown=ev=>beginDrag(ev,e,node);
     const resize=node.querySelector('.resize-handle');if(resize)resize.onpointerdown=ev=>beginResize(ev,e,node);
     const del=node.querySelector('.node-delete');if(del)del.onclick=ev=>{ev.preventDefault();ev.stopPropagation();deleteOneV110(id)};
@@ -697,8 +697,8 @@ function bindNodes(){
   })
 }
 function beginDrag(ev,e,node){
-  ev.preventDefault();ev.stopPropagation();snapshot();if(!selectedIds.includes(e.id))selectedIds=[e.id];const start={x:ev.clientX,y:ev.clientY};const originals=new Map(selectedIds.map(id=>{const n=getEl(id);return[id,{x:n.x,y:n.y}]}));
-  const move=m=>{const sc=boardScaleV110(),dx=(m.clientX-start.x)/Math.max(.0001,sc.x),dy=(m.clientY-start.y)/Math.max(.0001,sc.y);for(const [id,o] of originals){const n=getEl(id);n.x=clamp(o.x+dx,0,BOARD_W-n.w);n.y=clamp(o.y+dy,0,BOARD_H-n.h)}renderPositions()};
+  ev.preventDefault();ev.stopPropagation();snapshot();if(!selectedIds.includes(e.id))selectedIds=[e.id];const start=boardPoint(ev),originals=new Map(selectedIds.map(id=>{const n=getEl(id);return[id,{x:n.x,y:n.y}]}));
+  const move=m=>{const cur=boardPoint(m),dx=cur.x-start.x,dy=cur.y-start.y;for(const [id,o] of originals){const n=getEl(id);n.x=clamp(o.x+dx,0,BOARD_W-n.w);n.y=clamp(o.y+dy,0,BOARD_H-n.h)}renderPositions()};
   const up=()=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);touch()};window.addEventListener('pointermove',move);window.addEventListener('pointerup',up,{once:true})
 }
 function beginResize(ev,e,node){
