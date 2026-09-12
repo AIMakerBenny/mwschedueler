@@ -82,12 +82,12 @@ jobs:
           node scripts/regression_v1012.js
           kill $SERVER_PID || true
 
-      - name: Commit validated clean release
+      - name: Commit validated source only
         shell: bash
         run: |
-          rm -f .github/workflows/rebuild-v1012-clean.yml scripts/rebuild_v1012.py scripts/regression_v1012.js
           git config user.name "MAWANG Build"
           git config user.email "actions@users.noreply.github.com"
-          git add -A
+          git add assets/app-core.js assets/cloud-v5.5.js assets/tools.js assets/test-v5.5.js assets/test-v5.6.js assets/content-planner-host.js content-planner.html index.html src/cf-v571.js package.json README.md
+          git diff --cached --stat
           git commit -m "Rebuild CF MWS V1.0.12 cleanly from V1.0.10 baseline"
           git push origin HEAD:mws-v1.0.12-clean-rebuild
