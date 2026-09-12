@@ -2,29 +2,17 @@
 
 MAWANG Scheduler web app.
 
-- Production frontend: Cloudflare Workers Static Assets
-- Production branch: `cloudflare-production`
+- Static frontend hosted with Vercel
+- Shared data and admin authentication handled by Supabase
 - `index.html` is the production entry point
 - Current release: CF MWS V1.0.12
-- Primary system timezone: Korea Standard Time `Asia/Seoul`
-- Shared workspace data is loaded incrementally from the Cloudflare backend
+- Admin changes persist to the shared Supabase workspace
 - Public uses the same app features in a non-persistent session sandbox
 - Theme, background, global text scale, per-page text scale, resolution and other presentation preferences are device-local
+- v5.4 adds complete Selected-card display after Gacha completion, glow and popup card viewing, larger Gacha contact names, compact speed and target controls, stronger sticky contact tags, page-specific text sizing, and the restored Marorong / 마로롱 rain easter egg
+- v5.5 removes the stray bottom text, fixes the global sidebar in the viewport, reinforces the contact tag panel, adds a station URL visit button, rebuilds the Marorong / 마로롱 rain click effect, and expands the dashboard with schedule and operation insights
+- v5.6 keeps the contact tag folder visible while scrolling, adds a clickable Profile Card popup from the contact profile image, and expands recent collaboration visual tiers from 5 to 10 with progressively stronger effects
 
-## CF MWS V1.0.12
+2026-09-08 performance refactor: runtime hot paths and cacheable frontend assets were optimized without intentional UI or feature changes.
 
-- Content Planner Save now creates or updates the matching proposal archive entry automatically
-- The separate proposal submission button was removed from the planner header
-- The working canvas now keeps a thin 10 px margin on the right and bottom edges
-
-## CF MWS V1.0.11
-
-- Normalizes app date and time presentation to Korea Standard Time
-- Cleans up the Content Planner top-right action button layout
-- Preloads the `miniGames` data part before Tier Game, 2D Matrix Chart, and Relationship Map render, preventing initially blank tool state and delayed saved-list visibility
-- Adjusts Content Planner fullscreen layout to a 76 percent workspace and 24 percent right column
-- Adjusts the fullscreen right column split to 44 percent controls and 56 percent blank lower area
-
-## Production deployment
-
-Pushes to `cloudflare-production` are built by the connected Cloudflare Workers production project `mawang-scheduler`.
+Pushes to `main` are deployed automatically through the connected Vercel project.

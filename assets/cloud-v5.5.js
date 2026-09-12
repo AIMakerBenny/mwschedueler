@@ -16,8 +16,8 @@
   const PARTS_BY_TAB={
     dashboard:[],calendar:['clipboard'],contacts:['contactMeta'],posts:[],sniper:[],targets:[],
     memos:['notebook'],worldtime:[],gameLadder:['miniGames'],gameRps:['miniGames'],
-    gamePachinko:['miniGames'],gameMultiDraw:['miniGames'],toolTier:['miniGames'],toolMatrix:['miniGames'],toolRelations:['miniGames'],export:['contactMeta','miniGames','notebook','clipboard'],
-    settings:['contactMeta']
+    gamePachinko:['miniGames'],gameMultiDraw:['miniGames'],toolTier:['miniGames'],toolMatrix:['miniGames'],toolRelations:['miniGames'],
+    export:['contactMeta','miniGames','notebook','clipboard'],settings:['contactMeta']
   };
   const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones'];
   const $=id=>document.getElementById(id);

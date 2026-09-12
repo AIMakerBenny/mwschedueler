@@ -1,3 +1,16 @@
+/* CF MWS V 1.0.12 - primary system timezone: Asia/Seoul */
+(()=>{
+  if(window.__mwsKstCoreV112)return;window.__mwsKstCoreV112=1;
+  const TZ='Asia/Seoul';
+  const rawString=Date.prototype.toLocaleString,rawDate=Date.prototype.toLocaleDateString,rawTime=Date.prototype.toLocaleTimeString;
+  const opts=o=>o&&Object.prototype.hasOwnProperty.call(o,'timeZone')?o:{...(o||{}),timeZone:TZ};
+  Date.prototype.toLocaleString=function(locales,options){return rawString.call(this,locales,opts(options))};
+  Date.prototype.toLocaleDateString=function(locales,options){return rawDate.call(this,locales,opts(options))};
+  Date.prototype.toLocaleTimeString=function(locales,options){return rawTime.call(this,locales,opts(options))};
+  window.MWS_PRIMARY_TIME_ZONE=TZ;
+  window.mwsKstDateTime=value=>{const d=value instanceof Date?value:new Date(value);return Number.isNaN(d.getTime())?String(value??''):rawString.call(d,'ko-KR',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})};
+})();
+
 
 const DEFAULT_CATEGORIES=[
 {id:crypto.randomUUID(),name:'개인',color:'#6b7280'},{id:crypto.randomUUID(),name:'합방',color:'#8b5cf6'},
