@@ -2,11 +2,11 @@
 (()=>{
 'use strict';
 if(window.__mwsContentPlannerHostCleanV110)return;window.__mwsContentPlannerHostCleanV110=1;
-const BUILD='CF MWS V 1.0.10';
+const BUILD='CF MWS V 1.0.11';
 const TAB='contentPlanner';
 const FRAME_ID='mwsContentPlannerFrame';
-const FRAME_URL='/content-planner.html?v=1.0.10';
-const TOOLS_URL='/assets/tools.js?v=1.0.10';
+const FRAME_URL='/content-planner.html?v=1.0.11';
+const TOOLS_URL='/assets/tools.js?v=1.0.11';
 function syncGlobals(){try{if(typeof data!=='undefined')window.data=data}catch(_){ }try{if(typeof saveData==='function'&&!window.saveData)window.saveData=saveData}catch(_){ }try{if(typeof persist==='function'&&!window.persist)window.persist=persist}catch(_){ }}
 function forceVersion(){try{document.body?.setAttribute('data-build-version',BUILD);document.querySelectorAll('[id^="mwsBuildVersionV5"],#mwsBuildVersion,.sidebar-build-version-v52,.sidebar-build-version-v53,[class*="sidebar-build-version"]').forEach(label=>{if(label.textContent!==BUILD)label.textContent=BUILD})}catch(_){ }}
 function ensureStyle(){if(document.getElementById('mwsContentPlannerHostStyleV110Clean'))return;const style=document.createElement('style');style.id='mwsContentPlannerHostStyleV110Clean';style.textContent=`
