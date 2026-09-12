@@ -1,12 +1,12 @@
 {
-  "name": "mawang-scheduler-cloudflare",
+  "name": "mawang-scheduler",
+  "version": "1.0.0",
   "private": true,
-  "version": "1.0.17",
+  "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
     "deploy": "wrangler deploy"
   },
   "devDependencies": {
-    "wrangler": "^4.68.0"
+    "wrangler": "^4.75.0"
   }
 }
