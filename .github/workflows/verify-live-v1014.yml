@@ -1,0 +1,15 @@
+name: Verify live V1.0.14
+on:
+  push:
+    branches: [mws-v1.0.14-planner-enhancements]
+    paths: [.github/workflows/verify-live-v1014.yml]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: mws-v1.0.14-planner-enhancements
+      - run: npm install --no-save --package-lock=false playwright@1.55.0
+      - run: npx playwright install chromium --with-deps
+      - run: node scripts/test_live_v1014.js
