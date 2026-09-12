@@ -5,11 +5,17 @@ MAWANG Scheduler web app.
 - Production frontend: Cloudflare Workers Static Assets
 - Production branch: `cloudflare-production`
 - `index.html` is the production entry point
-- Current release: CF MWS V1.0.11
+- Current release: CF MWS V1.0.12
 - Primary system timezone: Korea Standard Time `Asia/Seoul`
 - Shared workspace data is loaded incrementally from the Cloudflare backend
 - Public uses the same app features in a non-persistent session sandbox
 - Theme, background, global text scale, per-page text scale, resolution and other presentation preferences are device-local
+
+## CF MWS V1.0.12
+
+- Content Planner Save now creates or updates the matching proposal archive entry automatically
+- The separate proposal submission button was removed from the planner header
+- The working canvas now keeps a thin 10 px margin on the right and bottom edges
 
 ## CF MWS V1.0.11
 
