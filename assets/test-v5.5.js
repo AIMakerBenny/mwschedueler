@@ -4,7 +4,7 @@
   if(window.__mwsTestV53AutoTodayPeople)return;
   window.__mwsTestV53AutoTodayPeople=true;
 
-  const VERSION='CF MWS V 1.0.14';
+  const VERSION='CF MWS V 1.0.15';
   let installed=false;
   let pickerState=null;
   let markingAutoRows=false;

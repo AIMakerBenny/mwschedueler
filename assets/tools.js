@@ -1,8 +1,8 @@
-/* CF MWS V 1.0.14 - consolidated tools, behavior-preserving */
+/* CF MWS V 1.0.15 - consolidated tools, behavior-preserving */
 (()=>{
 'use strict';
 if(window.__mwsToolsCleanV110)return;window.__mwsToolsCleanV110=1;
-const BUILD='CF MWS V 1.0.14';
+const BUILD='CF MWS V 1.0.15';
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
