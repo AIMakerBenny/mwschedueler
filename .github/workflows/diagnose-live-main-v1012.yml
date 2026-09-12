@@ -1,0 +1,84 @@
+name: Diagnose live main V1.0.12 read-only
+
+on:
+  push:
+    branches:
+      - mws-v1.0.12-clean-rebuild
+    paths:
+      - .github/workflows/diagnose-live-main-v1012.yml
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: mws-v1.0.12-clean-rebuild
+          fetch-depth: 0
+      - name: Install browser
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install chromium --with-deps
+      - name: Diagnose without allowing writes
+        run: |
+          mkdir -p verification
+          node <<'NODE'
+          const fs=require('fs');
+          const {chromium}=require('playwright');
+          (async()=>{
+            const report={stage:'start',blocked:[],requests:[],responses:[],pageErrors:[],consoleErrors:[],state:null,error:null};
+            let browser;
+            try{
+              browser=await chromium.launch({headless:true});
+              const context=await browser.newContext({viewport:{width:1440,height:960}});
+              const page=await context.newPage();
+              page.on('pageerror',e=>report.pageErrors.push(String(e)));
+              page.on('console',m=>{if(m.type()==='error')report.consoleErrors.push(m.text())});
+              page.on('request',r=>{if(report.requests.length<100)report.requests.push({method:r.method(),url:r.url()})});
+              page.on('response',r=>{if(report.responses.length<100)report.responses.push({status:r.status(),url:r.url()})});
+              await page.route('**/*',route=>{
+                const r=route.request(),m=r.method();
+                if(!['GET','HEAD','OPTIONS'].includes(m)){
+                  report.blocked.push({method:m,url:r.url(),postData:r.postData()});
+                  return route.abort();
+                }
+                return route.continue();
+              });
+              report.stage='goto';
+              await page.goto('https://mawang-scheduler.majoku.workers.dev/?verify=diagnostic1012',{waitUntil:'domcontentloaded',timeout:60000});
+              report.stage='loaded';
+              await page.waitForSelector('#mwsModePublic',{timeout:15000});
+              report.stage='public-button-found';
+              await page.click('#mwsModePublic');
+              report.stage='public-selected';
+              await page.click('#mwsLoginSubmit');
+              report.stage='submit-clicked';
+              try{await page.waitForFunction(()=>!document.body.classList.contains('mws-gated'),null,{timeout:12000});report.stage='gate-open'}catch(e){report.error='gate wait: '+String(e)}
+              report.state=await page.evaluate(()=>({
+                bodyClass:document.body.className,
+                build:document.body.dataset.buildVersion,
+                mode:document.body.dataset.mwsMode,
+                gateClass:document.getElementById('mwsAccessGate')?.className,
+                gateDisplay:getComputedStyle(document.getElementById('mwsAccessGate')).display,
+                loginError:document.getElementById('mwsLoginError')?.textContent,
+                submitText:document.getElementById('mwsLoginSubmit')?.textContent,
+                submitDisabled:document.getElementById('mwsLoginSubmit')?.disabled,
+                publicActive:document.getElementById('mwsModePublic')?.classList.contains('active'),
+                adminActive:document.getElementById('mwsModeAdmin')?.classList.contains('active'),
+                pageTitle:document.getElementById('pageTitle')?.textContent,
+                versions:[...document.querySelectorAll('[id^="mwsBuildVersionV5"],#mwsBuildVersion,[class*="sidebar-build-version"]')].map(x=>x.textContent.trim()).filter(Boolean)
+              }));
+            }catch(e){report.error=(report.error?report.error+' | ':'')+String(e)}
+            finally{if(browser)await browser.close();fs.writeFileSync('verification/live-main-diagnostic.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2))}
+          })();
+          NODE
+      - name: Commit diagnostic report
+        run: |
+          git config user.name "MAWANG Verify"
+          git config user.email "actions@users.noreply.github.com"
+          git add verification/live-main-diagnostic.json
+          git commit -m "Record read-only V1.0.12 live main diagnostic"
+          git push origin HEAD:mws-v1.0.12-clean-rebuild
