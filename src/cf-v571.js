@@ -1,8 +1,13 @@
 import cf57 from './cf-v57.js';
 
 const BUILD_VERSION = 'Mawang Scheduler v1.0';
-const SOOP_LIVE_API = 'https://live.sooplive.com/afreeca/player_live_api.php';
+const SOOP_LIVE_APIS = [
+  'https://live.sooplive.co.kr/afreeca/player_live_api.php',
+  'https://live.sooplive.com/afreeca/player_live_api.php',
+  'https://live.afreecatv.com/afreeca/player_live_api.php',
+];
 const SOOP_ALLOWED_HOST_SUFFIXES = ['sooplive.com', 'sooplive.co.kr', 'afreecatv.com'];
+const SOOP_API_TIMEOUT_MS = 7000;
 
 function json(value, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(value), {
@@ -42,6 +47,33 @@ function validSoopPort(value) {
   return port;
 }
 
+async function fetchSoopChannel(apiUrl, identity, encodedBody) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort('timeout'), SOOP_API_TIMEOUT_MS);
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'origin': 'https://play.sooplive.com',
+        'referer': `https://play.sooplive.com/${encodeURIComponent(identity.streamerId)}/${identity.broadNo}`,
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/152 Safari/537.36',
+        'accept': 'application/json, text/plain, */*',
+      },
+      body: encodedBody,
+      signal: controller.signal,
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const payload = await response.json().catch(() => null);
+    const channel = payload?.CHANNEL;
+    if (!channel || typeof channel !== 'object') throw new Error('invalid response');
+    return channel;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function resolveSoopChatInfo(streamerId, broadNo) {
   const identity = validateSoopIdentity(streamerId, broadNo);
   const body = new URLSearchParams({
@@ -53,42 +85,37 @@ async function resolveSoopChatInfo(streamerId, broadNo) {
     from_api: '0',
     mode: 'landing',
     pwd: '',
-  });
+  }).toString();
 
-  const response = await fetch(SOOP_LIVE_API, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-      'origin': 'https://play.sooplive.com',
-      'referer': `https://play.sooplive.com/${encodeURIComponent(identity.streamerId)}/${identity.broadNo}`,
-      'user-agent': 'Mozilla/5.0 Mawang-Scheduler/1.0',
-    },
-    body: body.toString(),
-  });
+  let lastError = null;
+  for (const apiUrl of SOOP_LIVE_APIS) {
+    try {
+      const channel = await fetchSoopChannel(apiUrl, identity, body);
+      const result = Number(channel.RESULT);
+      if (Number.isFinite(result) && result !== 1) throw new Error(`broadcast unavailable (RESULT ${result})`);
 
-  if (!response.ok) throw new Error(`SOOP broadcast info HTTP ${response.status}`);
-  const payload = await response.json().catch(() => null);
-  const channel = payload?.CHANNEL;
-  if (!channel || typeof channel !== 'object') throw new Error('SOOP broadcast info response is invalid.');
+      const domain = String(channel.CHDOMAIN || '').trim().toLowerCase();
+      const chatNo = String(channel.CHATNO || '').trim();
+      const port = validSoopPort(channel.CHPT);
 
-  const result = Number(channel.RESULT);
-  if (Number.isFinite(result) && result !== 1) throw new Error(`SOOP broadcast is unavailable. RESULT ${result}`);
+      if (!isAllowedSoopHost(domain)) throw new Error('untrusted chat hostname');
+      if (!/^\d{1,30}$/.test(chatNo)) throw new Error('invalid CHATNO');
+      if (!port) throw new Error('invalid CHPT');
 
-  const domain = String(channel.CHDOMAIN || '').trim().toLowerCase();
-  const chatNo = String(channel.CHATNO || '').trim();
-  const port = validSoopPort(channel.CHPT);
+      return {
+        streamerId: identity.streamerId,
+        broadNo: identity.broadNo,
+        domain,
+        chatNo,
+        port,
+      };
+    } catch (error) {
+      const suffix = error?.name === 'AbortError' ? 'timeout' : cleanError(error);
+      lastError = new Error(`${new URL(apiUrl).hostname}: ${suffix}`);
+    }
+  }
 
-  if (!isAllowedSoopHost(domain)) throw new Error('SOOP returned an untrusted chat hostname.');
-  if (!/^\d{1,30}$/.test(chatNo)) throw new Error('SOOP returned an invalid CHATNO.');
-  if (!port) throw new Error('SOOP returned an invalid CHPT.');
-
-  return {
-    streamerId: identity.streamerId,
-    broadNo: identity.broadNo,
-    domain,
-    chatNo,
-    port,
-  };
+  throw new Error(`SOOP chat info lookup failed: ${cleanError(lastError)}`);
 }
 
 async function handleSoopChatInfo(request) {
@@ -138,7 +165,7 @@ async function handleSoopWebSocket(request) {
         'Upgrade': 'websocket',
         'Connection': 'Upgrade',
         'Origin': 'https://play.sooplive.com',
-        'User-Agent': 'Mozilla/5.0 Mawang-Scheduler/1.0',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/152 Safari/537.36',
       },
     });
   } catch (error) {
