@@ -29,8 +29,8 @@ jobs:
           set -euo pipefail
           rm -f /tmp/majoku.b64 /tmp/majoku.clean.b64 /tmp/majoku.gz /tmp/majoku.html
           mapfile -t PARTS < <(git ls-tree -r --name-only origin/majoku-stage -- .majoku-upload | sort)
-          if [ "${#PARTS[@]}" -ne 15 ]; then
-            echo "Expected 15 payload parts, found ${#PARTS[@]}"
+          if [ "${#PARTS[@]}" -ne 25 ]; then
+            echo "Expected 25 payload parts, found ${#PARTS[@]}"
             exit 1
           fi
           for part in "${PARTS[@]}"; do
@@ -38,7 +38,7 @@ jobs:
           done
           python - <<'PY'
           from pathlib import Path
-          import base64, re, sys
+          import base64, sys
           raw = Path('/tmp/majoku.b64').read_text('utf-8', errors='replace')
           compact = ''.join(raw.split())
           bad = [(i, ch, ord(ch)) for i, ch in enumerate(compact) if ch not in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=']
