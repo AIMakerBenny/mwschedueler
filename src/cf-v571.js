@@ -8,6 +8,8 @@ const SOOP_LIVE_APIS = [
 ];
 const SOOP_ALLOWED_HOST_SUFFIXES = ['sooplive.com', 'sooplive.co.kr', 'afreecatv.com'];
 const SOOP_API_TIMEOUT_MS = 5000;
+const SOOP_WS_TIMEOUT_MS = 8000;
+const SOOP_JOIN_TIMEOUT_MS = 6000;
 const SOOP_INFO_CACHE_TTL_MS = 30000;
 const SOOP_INFO_CACHE = new Map();
 
@@ -212,6 +214,7 @@ async function handleSoopWebSocket(request) {
   }
 
   const url = new URL(request.url);
+  const debug = url.searchParams.get('debug') === '1';
   let info;
   try {
     info = await resolveSoopChatInfo(url.searchParams.get('streamerId'), url.searchParams.get('broadNo'));
@@ -221,6 +224,8 @@ async function handleSoopWebSocket(request) {
 
   const upstreamUrl = `https://${info.domain}:${info.port}/Websocket/${encodeURIComponent(info.streamerId)}`;
   let upstreamResponse;
+  const wsController = new AbortController();
+  const wsTimer = setTimeout(() => wsController.abort('timeout'), SOOP_WS_TIMEOUT_MS);
   try {
     upstreamResponse = await fetch(upstreamUrl, {
       headers: {
@@ -230,9 +235,13 @@ async function handleSoopWebSocket(request) {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/152 Safari/537.36',
         'Sec-WebSocket-Protocol': 'chat',
       },
+      signal: wsController.signal,
     });
   } catch (error) {
-    return json({ error: `SOOP WebSocket connection failed: ${cleanError(error)}` }, 502);
+    const reason = error?.name === 'AbortError' ? 'timeout' : cleanError(error);
+    return json({ error: `SOOP WebSocket connection failed: ${reason}` }, 502);
+  } finally {
+    clearTimeout(wsTimer);
   }
 
   const upstream = upstreamResponse.webSocket;
@@ -247,6 +256,11 @@ async function handleSoopWebSocket(request) {
   server.accept({ allowHalfOpen: true });
   upstream.accept({ allowHalfOpen: true });
 
+  const debugSend = (stage, detail = '') => {
+    if (!debug || server.readyState !== 1) return;
+    try { server.send(JSON.stringify({ type: 'majoku-soop-debug', stage, detail, at: Date.now() })); } catch (_) {}
+  };
+
   const F = '\x0c';
   const ESC = '\x1b\t';
   const connectPacket = `${ESC}000100000600${F}${F}${F}16${F}`;
@@ -254,30 +268,38 @@ async function handleSoopWebSocket(request) {
   const joinPacket = `${ESC}0002${String(joinByteSize).padStart(6,'0')}00${F}${info.chatNo}${F}${F}${F}${F}${F}`;
   const pingPacket = `${ESC}000000000100${F}`;
 
-  let joinSent = false;
+  let joined = false;
   let pingId = null;
-  let joinFallbackId = null;
-
-  const sendJoin = () => {
-    if (joinSent || upstream.readyState !== 1) return;
-    joinSent = true;
-    try { upstream.send(joinPacket); } catch (_) { safeClose(server, 1011, 'SOOP join failed'); return; }
-    pingId = setInterval(() => {
-      try { if (upstream.readyState === 1) upstream.send(pingPacket); } catch (_) {}
-    }, 60000);
-  };
+  let joinTimeoutId = null;
+  let debugPacketCount = 0;
 
   const clearProtocolTimers = () => {
-    if (joinFallbackId) clearTimeout(joinFallbackId);
+    if (joinTimeoutId) clearTimeout(joinTimeoutId);
     if (pingId) clearInterval(pingId);
-    joinFallbackId = null;
+    joinTimeoutId = null;
     pingId = null;
   };
 
-  try { upstream.send(connectPacket); } catch (_) {
-    safeClose(server, 1011, 'SOOP login failed');
+  try {
+    upstream.send(connectPacket);
+    debugSend('CONNECT_SENT');
+    upstream.send(joinPacket);
+    debugSend('JOIN_SENT');
+  } catch (_) {
+    debugSend('HANDSHAKE_SEND_FAILED');
+    safeClose(server, 1011, 'SOOP handshake failed');
   }
-  joinFallbackId = setTimeout(sendJoin, 1000);
+
+  joinTimeoutId = setTimeout(() => {
+    if (joined) return;
+    debugSend('JOIN_TIMEOUT');
+    safeClose(upstream, 1011, 'SOOP join timeout');
+    safeClose(server, 1011, 'SOOP join timeout');
+  }, SOOP_JOIN_TIMEOUT_MS);
+
+  pingId = setInterval(() => {
+    try { if (upstream.readyState === 1) upstream.send(pingPacket); } catch (_) {}
+  }, 60000);
 
   server.addEventListener('message', (event) => {
     const command = decodeSoopCommand(event.data);
@@ -287,7 +309,17 @@ async function handleSoopWebSocket(request) {
 
   upstream.addEventListener('message', (event) => {
     const command = decodeSoopCommand(event.data);
-    if (command === '0001') sendJoin();
+    if (command === '0002' && !joined) {
+      joined = true;
+      if (joinTimeoutId) clearTimeout(joinTimeoutId);
+      joinTimeoutId = null;
+      debugSend('JOIN_ACK');
+    }
+    if (debug && debugPacketCount < 30) {
+      debugPacketCount += 1;
+      debugSend('UPSTREAM_PACKET', command || 'UNKNOWN');
+    }
+    if (command === '0005') debugSend('CHAT_PACKET');
     try { if (server.readyState === 1) server.send(event.data); } catch (_) { safeClose(upstream, 1011, 'client send failed'); }
   });
 
@@ -296,6 +328,7 @@ async function handleSoopWebSocket(request) {
     safeClose(upstream, event.code, event.reason);
   });
   upstream.addEventListener('close', (event) => {
+    debugSend('UPSTREAM_CLOSE', `${event.code || ''}:${event.reason || ''}`);
     clearProtocolTimers();
     safeClose(server, event.code, event.reason);
   });
@@ -304,6 +337,7 @@ async function handleSoopWebSocket(request) {
     safeClose(upstream, 1011, 'client websocket error');
   });
   upstream.addEventListener('error', () => {
+    debugSend('UPSTREAM_ERROR');
     clearProtocolTimers();
     safeClose(server, 1011, 'upstream websocket error');
   });
