@@ -254,6 +254,7 @@ async function handleSoopWebSocket(request) {
   const client = pair[0];
   const server = pair[1];
   server.accept({ allowHalfOpen: true });
+  upstream.binaryType = 'arraybuffer';
   upstream.accept({ allowHalfOpen: true });
 
   const debugSend = (stage, detail = '') => {
@@ -280,6 +281,22 @@ async function handleSoopWebSocket(request) {
     pingId = null;
   };
 
+  upstream.addEventListener('message', (event) => {
+    const command = decodeSoopCommand(event.data);
+    if (command === '0002' && !joined) {
+      joined = true;
+      if (joinTimeoutId) clearTimeout(joinTimeoutId);
+      joinTimeoutId = null;
+      debugSend('JOIN_ACK');
+    }
+    if (debug && debugPacketCount < 30) {
+      debugPacketCount += 1;
+      debugSend('UPSTREAM_PACKET', command || 'UNKNOWN');
+    }
+    if (command === '0005') debugSend('CHAT_PACKET');
+    try { if (server.readyState === 1) server.send(event.data); } catch (_) { safeClose(upstream, 1011, 'client send failed'); }
+  });
+
   try {
     upstream.send(connectPacket);
     debugSend('CONNECT_SENT');
@@ -305,22 +322,6 @@ async function handleSoopWebSocket(request) {
     const command = decodeSoopCommand(event.data);
     if (command === '0000' || command === '0001' || command === '0002') return;
     try { if (upstream.readyState === 1) upstream.send(event.data); } catch (_) { safeClose(server, 1011, 'upstream send failed'); }
-  });
-
-  upstream.addEventListener('message', (event) => {
-    const command = decodeSoopCommand(event.data);
-    if (command === '0002' && !joined) {
-      joined = true;
-      if (joinTimeoutId) clearTimeout(joinTimeoutId);
-      joinTimeoutId = null;
-      debugSend('JOIN_ACK');
-    }
-    if (debug && debugPacketCount < 30) {
-      debugPacketCount += 1;
-      debugSend('UPSTREAM_PACKET', command || 'UNKNOWN');
-    }
-    if (command === '0005') debugSend('CHAT_PACKET');
-    try { if (server.readyState === 1) server.send(event.data); } catch (_) { safeClose(upstream, 1011, 'client send failed'); }
   });
 
   server.addEventListener('close', (event) => {
