@@ -45,16 +45,39 @@ jobs:
           echo "bytes=$(wc -c < majoku-castle.html)"
           echo "gzip_bytes=$(wc -c < /tmp/majoku.html.gz)"
           sha256sum majoku-castle.html
-          echo '--- tail ---'
-          tail -c 400 majoku-castle.html | tr '\n' ' '
-          echo
-          echo '--- gzip trailer ---'
-          tail -c 16 /tmp/majoku.html.gz | xxd -p
 
-          if [ "$GZIP_STATUS" -ne 0 ]; then
-            echo 'Gzip trailer/data validation failed; diagnostic only. Not committing reconstruction.'
+          python3 - <<'PY'
+          import pathlib, struct, zlib
+          html = pathlib.Path('majoku-castle.html').read_bytes()
+          gz = pathlib.Path('/tmp/majoku.html.gz').read_bytes()
+          exp_crc, exp_size = struct.unpack('<II', gz[-8:])
+          print('expected_crc=%08x expected_size=%d' % (exp_crc, exp_size))
+          print('actual_crc=%08x actual_size=%d' % (zlib.crc32(html) & 0xffffffff, len(html)))
+          print('tail_repr=', repr(html[-32:]))
+          matched = False
+          for cut in range(0, 65):
+              d = html[:-cut] if cut else html
+              if (len(d) & 0xffffffff) == exp_size and (zlib.crc32(d) & 0xffffffff) == exp_crc:
+                  print('TRAILER_MATCH_AFTER_TRIM=', cut)
+                  pathlib.Path('majoku-castle.html').write_bytes(d)
+                  matched = True
+                  break
+          if not matched and len(html) != exp_size:
+              delta = len(html) - exp_size
+              print('size_delta=', delta)
+          pathlib.Path('/tmp/trailer_match').write_text('1' if matched else '0')
+          PY
+
+          grep -qi '</html>' majoku-castle.html
+
+          if [ "$GZIP_STATUS" -ne 0 ] && [ "$(cat /tmp/trailer_match)" != "1" ]; then
+            echo 'Gzip validation failed and could not be explained by trailing bytes. Not committing reconstruction.'
             exit 1
           fi
+
+          echo 'Verified reconstruction:'
+          echo "bytes=$(wc -c < majoku-castle.html)"
+          sha256sum majoku-castle.html
 
       - name: Commit verified reconstruction
         shell: bash
