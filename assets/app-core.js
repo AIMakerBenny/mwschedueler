@@ -513,7 +513,7 @@ let dashboardPinnedEventId=null;
 let dashboardHoverEventId=null;
 
 function dashboardUpcomingCardHTML(e){
-  const cat=category(e.categoryId),[d,t]=checklistProgress(e),color=e.restDay?'#e85d75':(cat?.color||'#64748b');
+  const cat=category(e.categoryId),[d,t]=checklistProgress(e),color=e.restDay?'#e85d75':(e.color||cat?.color||'#64748b');
   const pinClass=dashboardPinnedEventId===e.id?'pinned':'';
   if(e.restDay){
     return `<div class="event-card rest-event dashboard-upcoming-card ${pinClass}"
@@ -694,7 +694,7 @@ document.addEventListener('pointerdown',e=>{
 window.openEventUrl=id=>{const e=data.events.find(x=>x.id===id);if(e?.url)window.open(e.url,'_blank','noopener')}
 
 function reminderCardHTML(e){
-  const cat=category(e.categoryId),color=e.restDay?'#e85d75':(cat?.color||'#64748b');
+  const cat=category(e.categoryId),color=e.restDay?'#e85d75':(e.color||cat?.color||'#64748b');
   const people=eventParticipantRows(e);
   const checks=e.checklist||[];
   const [done,total,pct]=checklistProgress(e);
@@ -825,7 +825,7 @@ function calendarParticipantSummary(e){
   return `${shown.join(' · ')}${extra>0?` +${extra}명`:''}`;
 }
 function calendarPreviewHTML(e){
-  const cat=category(e.categoryId),color=e.restDay?'#e85d75':(cat?.color||'#64748b');
+  const cat=category(e.categoryId),color=e.restDay?'#e85d75':(e.color||cat?.color||'#64748b');
   if(e.restDay){
     return `<div class="space">
       <div class="calendar-preview-title">휴방</div>
@@ -1155,7 +1155,7 @@ function renderCalendar(){
     out+=`<div class="day ${inMonth?'':'out'} ${today?'today':''} ${dow===0?'sun':''} ${dow===6?'sat':''}" data-date="${ds}">
       <div class="daynum">${d.getDate()}</div>
       ${evs.map(e=>{
-        const color=e.restDay?'#e85d75':(category(e.categoryId)?.color||'#64748b');
+        const color=e.restDay?'#e85d75':(e.color||category(e.categoryId)?.color||'#64748b');
         const timePrefix=e.start==='TBD'?'':`${esc(e.start||'')} `;
         const label=e.restDay?'휴방':`${e.device?`[${e.device}] `:''}${timePrefix}${esc(e.title)}`;
         const participantSummary=e.restDay?'':calendarParticipantSummary(e);
@@ -1937,6 +1937,7 @@ function openEvent(id=null,date=null){
   setEventFavoriteState(Boolean(e?.favorite));
   const evDate=e?.date||date||ymd(new Date());document.getElementById('evDate').value=evDate;document.querySelector('#evDateDisplay span').textContent=formatDate(evDate);
   document.getElementById('evCategory').value=e?.categoryId||'';syncCategoryColor();
+  if(e?.color){document.getElementById('evCategoryColor').value=e.color;document.getElementById('evCategoryColorSwatch').style.background=e.color;}
   const start=e?.start||'20:00',end=e?.end||'22:00';document.getElementById('evStart').value=start;document.querySelector('#evStartDisplay span').textContent=formatTimeKorean(start);
   document.getElementById('evEnd').value=end;document.querySelector('#evEndDisplay span').textContent=formatTimeKorean(end);
   selectedParticipantIds=[...(e?.participants||[])];
@@ -1969,7 +1970,7 @@ document.getElementById('saveEventBtn').onclick=()=>{
   if(!date)return toast('스케줄 저장','날짜를 선택해 주세요');
 
   const categoryId=document.getElementById('evCategory').value,c=category(categoryId);
-  if(c)c.color=document.getElementById('evCategoryColor').value;
+  const color=document.getElementById('evCategoryColor').value||c?.color||'#8ba0b7';
 
   const selfId=String(data.selfContactId||'');
   const payloadParticipants=[...selectedParticipantIds];
@@ -1983,7 +1984,7 @@ document.getElementById('saveEventBtn').onclick=()=>{
     favorite:eventFavoriteState,
     date,start:document.getElementById('evStart').value||'TBD',
     end:document.getElementById('evEnd').value||'TBD',
-    categoryId,participants:payloadParticipants,participantStatuses:payloadStatuses,autoSelfParticipantId,
+    categoryId,color,participants:payloadParticipants,participantStatuses:payloadStatuses,autoSelfParticipantId,
     url:document.getElementById('evUrl').value.trim(),
     description:document.getElementById('evDescription').value.trim(),
     memoTitle:document.getElementById('evMemoTitle').value.trim(),
@@ -2168,7 +2169,7 @@ function renderFavoriteSchedules(){
     const end=e.end==='TBD'?'미확정':formatTimeKorean(e.end);
     return `<article class="favorite-schedule-card"
       data-event-id="${e.id}"
-      style="border-left-color:${cat?.color||'var(--accent)'}"
+      style="border-left-color:${e.color||cat?.color||'var(--accent)'}"
       onclick="openEvent('${e.id}')">
       <span class="favorite-schedule-star" title="북마크">★</span>
       <div class="favorite-schedule-title">${esc(e.title)}</div>
@@ -5577,7 +5578,7 @@ function filteredFavoriteEvents(){
 function renderFavoriteSchedules(){
   const all=favoriteEvents(),arr=filteredFavoriteEvents(),list=document.getElementById('favoriteScheduleList'),countTab=document.getElementById('favoriteScheduleCountChip'),total=document.getElementById('favoriteTotalChip'),upcoming=document.getElementById('favoriteUpcomingChip'),completed=document.getElementById('favoriteCompletedChip'),today=todayKST();
   if(countTab)countTab.textContent=String(all.length);if(total)total.textContent=`즐겨찾기 ${all.length}개`;if(upcoming)upcoming.textContent=`예정 ${all.filter(e=>(e.date||'')>=today).length}개`;if(completed)completed.textContent=`지난 일정 ${all.filter(e=>(e.date||'')<today).length}개`;renderFavoriteFolderBar();if(!list)return;
-  list.innerHTML=arr.length?arr.map(e=>{const cat=category(e.categoryId),status=favoriteStatus(e),participantNames=(e.participants||[]).map(id=>contact(id)?.name).filter(Boolean),time=e.start==='TBD'?'미확정':formatTimeKorean(e.start),end=e.end==='TBD'?'미확정':formatTimeKorean(e.end),folder=favoriteFolderById(e.favoriteFolderId);return `<article class="favorite-schedule-card" draggable="true" data-event-id="${e.id}" style="border-left-color:${cat?.color||'var(--accent)'}" ondragstart="favoriteDragStart('${e.id}',event)" ondragend="favoriteDragEnd(event)" onclick="openEvent('${e.id}')"><span class="favorite-schedule-star" title="즐겨찾기">★</span><div class="favorite-schedule-title">${esc(e.title)}</div><div class="favorite-schedule-meta"><span>${formatDateWeekday(e.date)}</span><span>${time}${e.end?` - ${end}`:''}</span>${e.device?`<span class="chip device-chip">${esc(e.device)}</span>`:''}${cat?`<span class="chip" style="border-color:${cat.color}">${esc(cat.name)}</span>`:''}<span class="favorite-status ${status.key}">${status.label}</span></div>${folder?`<div class="favorite-schedule-folder-chip">▰ ${esc(folder.name)}</div>`:''}<div class="favorite-participants">${(e.participants||[]).length?(e.participants||[]).map(favoriteParticipantHTML).join(''):'<span class="muted small">참가자 없음</span>'}</div><div class="muted small" style="margin-top:11px">${participantNames.length?`참가자 ${participantNames.map(esc).join(', ')}`:'참가자 없음'}</div></article>`}).join(''):`<div class="favorite-empty">${all.length?'현재 폴더 또는 검색 조건에 맞는 즐겨찾기 컨텐츠가 없습니다.':'아직 즐겨찾기한 컨텐츠가 없습니다. 스케줄 수정창의 별을 눌러 추가해 보세요.'}</div>`
+  list.innerHTML=arr.length?arr.map(e=>{const cat=category(e.categoryId),status=favoriteStatus(e),participantNames=(e.participants||[]).map(id=>contact(id)?.name).filter(Boolean),time=e.start==='TBD'?'미확정':formatTimeKorean(e.start),end=e.end==='TBD'?'미확정':formatTimeKorean(e.end),folder=favoriteFolderById(e.favoriteFolderId);return `<article class="favorite-schedule-card" draggable="true" data-event-id="${e.id}" style="border-left-color:${e.color||cat?.color||'var(--accent)'}" ondragstart="favoriteDragStart('${e.id}',event)" ondragend="favoriteDragEnd(event)" onclick="openEvent('${e.id}')"><span class="favorite-schedule-star" title="즐겨찾기">★</span><div class="favorite-schedule-title">${esc(e.title)}</div><div class="favorite-schedule-meta"><span>${formatDateWeekday(e.date)}</span><span>${time}${e.end?` - ${end}`:''}</span>${e.device?`<span class="chip device-chip">${esc(e.device)}</span>`:''}${cat?`<span class="chip" style="border-color:${cat.color}">${esc(cat.name)}</span>`:''}<span class="favorite-status ${status.key}">${status.label}</span></div>${folder?`<div class="favorite-schedule-folder-chip">▰ ${esc(folder.name)}</div>`:''}<div class="favorite-participants">${(e.participants||[]).length?(e.participants||[]).map(favoriteParticipantHTML).join(''):'<span class="muted small">참가자 없음</span>'}</div><div class="muted small" style="margin-top:11px">${participantNames.length?`참가자 ${participantNames.map(esc).join(', ')}`:'참가자 없음'}</div></article>`}).join(''):`<div class="favorite-empty">${all.length?'현재 폴더 또는 검색 조건에 맞는 즐겨찾기 컨텐츠가 없습니다.':'아직 즐겨찾기한 컨텐츠가 없습니다. 스케줄 수정창의 별을 눌러 추가해 보세요.'}</div>`
 }
 window.renderFavoriteSchedules=renderFavoriteSchedules;
 
