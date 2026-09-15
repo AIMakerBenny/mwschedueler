@@ -192,6 +192,20 @@ function safeClose(socket, code = 1000, reason = '') {
   } catch (_) {}
 }
 
+function decodeSoopCommand(data) {
+  try {
+    let text = '';
+    if (typeof data === 'string') text = data;
+    else if (data instanceof ArrayBuffer) text = new TextDecoder().decode(data);
+    else if (ArrayBuffer.isView(data)) text = new TextDecoder().decode(data.buffer);
+    else return '';
+    const match = text.match(/^\x1b\t(\d{4})/);
+    return match ? match[1] : '';
+  } catch (_) {
+    return '';
+  }
+}
+
 async function handleSoopWebSocket(request) {
   if ((request.headers.get('upgrade') || '').toLowerCase() !== 'websocket') {
     return json({ error: 'WebSocket upgrade required.' }, 426, { upgrade: 'websocket' });
@@ -233,16 +247,66 @@ async function handleSoopWebSocket(request) {
   server.accept({ allowHalfOpen: true });
   upstream.accept({ allowHalfOpen: true });
 
+  const F = '\x0c';
+  const ESC = '\x1b\t';
+  const connectPacket = `${ESC}000100000600${F}${F}${F}16${F}`;
+  const joinByteSize = new TextEncoder().encode(info.chatNo).length + 6;
+  const joinPacket = `${ESC}0002${String(joinByteSize).padStart(6,'0')}00${F}${info.chatNo}${F}${F}${F}${F}${F}`;
+  const pingPacket = `${ESC}000000000100${F}`;
+
+  let joinSent = false;
+  let pingId = null;
+  let joinFallbackId = null;
+
+  const sendJoin = () => {
+    if (joinSent || upstream.readyState !== 1) return;
+    joinSent = true;
+    try { upstream.send(joinPacket); } catch (_) { safeClose(server, 1011, 'SOOP join failed'); return; }
+    pingId = setInterval(() => {
+      try { if (upstream.readyState === 1) upstream.send(pingPacket); } catch (_) {}
+    }, 60000);
+  };
+
+  const clearProtocolTimers = () => {
+    if (joinFallbackId) clearTimeout(joinFallbackId);
+    if (pingId) clearInterval(pingId);
+    joinFallbackId = null;
+    pingId = null;
+  };
+
+  try { upstream.send(connectPacket); } catch (_) {
+    safeClose(server, 1011, 'SOOP login failed');
+  }
+  joinFallbackId = setTimeout(sendJoin, 1000);
+
   server.addEventListener('message', (event) => {
+    const command = decodeSoopCommand(event.data);
+    if (command === '0000' || command === '0001' || command === '0002') return;
     try { if (upstream.readyState === 1) upstream.send(event.data); } catch (_) { safeClose(server, 1011, 'upstream send failed'); }
   });
+
   upstream.addEventListener('message', (event) => {
+    const command = decodeSoopCommand(event.data);
+    if (command === '0001') sendJoin();
     try { if (server.readyState === 1) server.send(event.data); } catch (_) { safeClose(upstream, 1011, 'client send failed'); }
   });
-  server.addEventListener('close', (event) => safeClose(upstream, event.code, event.reason));
-  upstream.addEventListener('close', (event) => safeClose(server, event.code, event.reason));
-  server.addEventListener('error', () => safeClose(upstream, 1011, 'client websocket error'));
-  upstream.addEventListener('error', () => safeClose(server, 1011, 'upstream websocket error'));
+
+  server.addEventListener('close', (event) => {
+    clearProtocolTimers();
+    safeClose(upstream, event.code, event.reason);
+  });
+  upstream.addEventListener('close', (event) => {
+    clearProtocolTimers();
+    safeClose(server, event.code, event.reason);
+  });
+  server.addEventListener('error', () => {
+    clearProtocolTimers();
+    safeClose(upstream, 1011, 'client websocket error');
+  });
+  upstream.addEventListener('error', () => {
+    clearProtocolTimers();
+    safeClose(server, 1011, 'upstream websocket error');
+  });
 
   return new Response(null, { status: 101, webSocket: client });
 }
