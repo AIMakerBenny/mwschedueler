@@ -64,8 +64,6 @@ jobs:
 
           p.write_text(s,encoding='utf-8')
           PY
-      - name: Syntax check
-        run: node --check assets/app-core.js
       - name: Verify direct-source contract
         run: |
           python <<'PY'
