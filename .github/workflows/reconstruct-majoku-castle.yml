@@ -27,7 +27,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f /tmp/majoku.b64 /tmp/majoku.gz /tmp/majoku.html
+          rm -f /tmp/majoku.b64 /tmp/majoku.clean.b64 /tmp/majoku.gz /tmp/majoku.html
           mapfile -t PARTS < <(git ls-tree -r --name-only origin/majoku-stage -- .majoku-upload | sort)
           if [ "${#PARTS[@]}" -ne 15 ]; then
             echo "Expected 15 payload parts, found ${#PARTS[@]}"
@@ -36,7 +36,27 @@ jobs:
           for part in "${PARTS[@]}"; do
             git show "origin/majoku-stage:${part}" >> /tmp/majoku.b64
           done
-          base64 --decode /tmp/majoku.b64 > /tmp/majoku.gz
+          python - <<'PY'
+          from pathlib import Path
+          import base64, re, sys
+          raw = Path('/tmp/majoku.b64').read_text('utf-8', errors='replace')
+          compact = ''.join(raw.split())
+          bad = [(i, ch, ord(ch)) for i, ch in enumerate(compact) if ch not in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=']
+          print('payload_chars=', len(compact))
+          print('bad_char_count=', len(bad))
+          if bad:
+              print('first_bad=', bad[:20])
+              sys.exit(2)
+          Path('/tmp/majoku.clean.b64').write_text(compact, encoding='ascii')
+          try:
+              decoded = base64.b64decode(compact, validate=True)
+          except Exception as exc:
+              print('base64_validate_error=', repr(exc))
+              sys.exit(3)
+          Path('/tmp/majoku.gz').write_bytes(decoded)
+          print('gzip_bytes=', len(decoded))
+          PY
+          gzip --test /tmp/majoku.gz
           gzip --decompress --stdout /tmp/majoku.gz > /tmp/majoku.html
           echo "decoded_bytes=$(wc -c < /tmp/majoku.html)"
           echo "decoded_sha256=$(sha256sum /tmp/majoku.html | awk '{print $1}')"
