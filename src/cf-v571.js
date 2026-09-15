@@ -2,9 +2,9 @@ import cf57 from './cf-v57.js';
 
 const BUILD_VERSION = 'Mawang Scheduler v1.0';
 const SOOP_LIVE_APIS = [
-  'https://live.sooplive.co.kr/afreeca/player_live_api.php',
-  'https://live.sooplive.com/afreeca/player_live_api.php',
   'https://live.afreecatv.com/afreeca/player_live_api.php',
+  'https://live.sooplive.com/afreeca/player_live_api.php',
+  'https://live.sooplive.co.kr/afreeca/player_live_api.php',
 ];
 const SOOP_ALLOWED_HOST_SUFFIXES = ['sooplive.com', 'sooplive.co.kr', 'afreecatv.com'];
 const SOOP_API_TIMEOUT_MS = 7000;
@@ -51,7 +51,8 @@ async function fetchSoopChannel(apiUrl, identity, encodedBody) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort('timeout'), SOOP_API_TIMEOUT_MS);
   try {
-    const response = await fetch(apiUrl, {
+    const requestUrl = `${apiUrl}?bjid=${encodeURIComponent(identity.streamerId)}`;
+    const response = await fetch(requestUrl, {
       method: 'POST',
       headers: {
         'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -80,11 +81,13 @@ async function resolveSoopChatInfo(streamerId, broadNo) {
     bid: identity.streamerId,
     bno: identity.broadNo,
     type: 'live',
+    confirm_adult: 'false',
     player_type: 'html5',
     stream_type: 'common',
     from_api: '0',
     mode: 'landing',
     pwd: '',
+    quality: 'HD',
   }).toString();
 
   let lastError = null;
@@ -96,7 +99,8 @@ async function resolveSoopChatInfo(streamerId, broadNo) {
 
       const domain = String(channel.CHDOMAIN || '').trim().toLowerCase();
       const chatNo = String(channel.CHATNO || '').trim();
-      const port = validSoopPort(channel.CHPT);
+      const rawPort = validSoopPort(channel.CHPT);
+      const port = rawPort && rawPort < 65535 ? rawPort + 1 : null;
 
       if (!isAllowedSoopHost(domain)) throw new Error('untrusted chat hostname');
       if (!/^\d{1,30}$/.test(chatNo)) throw new Error('invalid CHATNO');
@@ -166,6 +170,7 @@ async function handleSoopWebSocket(request) {
         'Connection': 'Upgrade',
         'Origin': 'https://play.sooplive.com',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/152 Safari/537.36',
+        'Sec-WebSocket-Protocol': 'chat',
       },
     });
   } catch (error) {
