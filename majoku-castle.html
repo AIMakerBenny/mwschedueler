@@ -1483,6 +1483,25 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   let minorityControllerWindow = null;
   let elevatorControllerWindow = null;
   let bossControllerWindow = null;
+
+  window.addEventListener('beforeunload', () => {
+    try { stopSoopConnection(true); } catch (_) {}
+    const controllerWindows = [
+      controllerWindow,
+      foodControllerWindow,
+      choseongControllerWindow,
+      predictionControllerWindow,
+      omokControllerWindow,
+      bombingControllerWindow,
+      minorityControllerWindow,
+      elevatorControllerWindow,
+      bossControllerWindow
+    ];
+    controllerWindows.forEach(w => {
+      try { if (w && !w.closed) w.close(); } catch (_) {}
+    });
+  });
+
   let answerRevealTimer = null;
   let pendingFoodSelection = null;
 
@@ -1618,6 +1637,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     socket: null,
     pingId: null,
     joinTimeout: null,
+    connectTimeoutId: null,
+    attemptId: 0,
     connecting: false,
     connected: false,
     streamerId: '',
@@ -2296,7 +2317,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
         cSoopStatus.className = `pill${soop.statusKind ? ' '+soop.statusKind : ''}`;
       }
       if (cSoopDetail) cSoopDetail.textContent = soop.statusDetail || '';
-      if (cConnect) cConnect.disabled = soop.connecting || soop.connected;
+      if (cConnect) { cConnect.disabled = soop.connecting; cConnect.textContent = soop.connected ? '재연결' : (soop.connecting ? '연결 중…' : '채팅 연동'); }
       if (cDisconnect) cDisconnect.disabled = !(soop.connecting || soop.connected);
       if (cChatFeed) {
         cChatFeed.innerHTML = recentChats.length
@@ -2545,15 +2566,21 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 
   async function getSoopChatInfo(streamerId,broadNo) {
     const endpoint = `${getRelayBase()}/api/soop/chat-info`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     let response;
     try {
       response = await fetch(endpoint, {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({streamerId,broadNo})
+        body:JSON.stringify({streamerId,broadNo}),
+        signal:controller.signal
       });
     } catch (err) {
+      if (err && err.name === 'AbortError') throw new Error('SOOP 채팅 서버 정보 조회 시간이 초과되었습니다.');
       throw new Error('MWS SOOP 중계 API에 연결할 수 없습니다.');
+    } finally {
+      clearTimeout(timeoutId);
     }
     let payload = null;
     try { payload = await response.json(); } catch (_) {}
@@ -2563,14 +2590,18 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   }
 
   function stopSoopConnection(silent=false) {
+    soop.attemptId += 1;
     if (soop.joinTimeout) clearTimeout(soop.joinTimeout);
     if (soop.pingId) clearInterval(soop.pingId);
+    if (soop.connectTimeoutId) clearTimeout(soop.connectTimeoutId);
     soop.joinTimeout = null;
     soop.pingId = null;
+    soop.connectTimeoutId = null;
     const ws = soop.socket;
     soop.socket = null;
     soop.connecting = false;
     soop.connected = false;
+    soop.chatNo = '';
     if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
       try { ws.close(1000,'user disconnect'); } catch (_) {}
     }
@@ -2606,68 +2637,102 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   }
 
   async function connectSoop(rawUrl) {
-    if (soop.connecting || soop.connected) return;
+    if (soop.connecting) return;
     let parsed;
     const suppliedUrl = String(rawUrl || soop.lastUrl || '').trim();
     try { parsed = parseSoopUrl(suppliedUrl); }
     catch (err) { setSoopStatus('bad','URL 오류',err.message); return; }
+
     stopSoopConnection(true);
+    const attemptId = soop.attemptId;
     soop.connecting = true;
+    soop.connected = false;
     soop.lastUrl = suppliedUrl;
     soop.streamerId = parsed.streamerId;
     soop.broadNo = parsed.broadNo;
     setSoopStatus('wait','연결 중',`${parsed.streamerId} · 방송 ${parsed.broadNo} 채팅 서버 확인 중`);
+
     try {
       const info = await getSoopChatInfo(parsed.streamerId,parsed.broadNo);
+      if (attemptId !== soop.attemptId) return;
       soop.chatNo = info.chatNo;
       soop.channelDomain = '';
       soop.port = '';
+
       const wsUrl = getRelayWebSocketUrl(parsed.streamerId, parsed.broadNo);
       const ws = new WebSocket(wsUrl);
       ws.binaryType = 'arraybuffer';
       soop.socket = ws;
+
+      soop.connectTimeoutId = setTimeout(() => {
+        if (attemptId !== soop.attemptId || soop.socket !== ws || soop.connected) return;
+        soop.connectTimeoutId = null;
+        soop.socket = null;
+        soop.connecting = false;
+        soop.connected = false;
+        try { ws.close(1011,'SOOP join confirmation timeout'); } catch (_) {}
+        setSoopStatus('bad','연동 실패','SOOP 채팅방 입장 확인 시간이 초과되었습니다. 다시 시도해 주세요.');
+      },10000);
+
       ws.addEventListener('open', () => {
-        if (soop.socket !== ws) return;
-        const F='\x0c', ESC='\x1b\t';
-        ws.send(`${ESC}000100000600${F}${F}${F}16${F}`);
-        setSoopStatus('wait','입장 중','WebSocket 연결 완료 · 채팅방 입장 요청 중');
-        soop.joinTimeout = setTimeout(() => {
-          if (soop.socket !== ws || ws.readyState !== WebSocket.OPEN) return;
-          const byteSize = new TextEncoder().encode(info.chatNo).length + 6;
-          ws.send(`${ESC}0002${String(byteSize).padStart(6,'0')}00${F}${info.chatNo}${F}${F}${F}${F}${F}`);
-          soop.connected = true;
-          soop.connecting = false;
-          setSoopStatus('good','연결됨',`${parsed.streamerId} · 방송 ${parsed.broadNo} · 실시간 채팅 수신 중`);
-          soop.pingId = setInterval(() => {
-            if (ws.readyState === WebSocket.OPEN) ws.send(`${ESC}000000000100${F}`);
-          },60000);
-        },1600);
+        if (attemptId !== soop.attemptId || soop.socket !== ws) return;
+        setSoopStatus('wait','입장 확인 중','WebSocket 연결 완료 · SOOP 채팅방 입장 확인 중');
       });
+
       ws.addEventListener('message', async ev => {
-        if (soop.socket !== ws) return;
+        if (attemptId !== soop.attemptId || soop.socket !== ws) return;
         try {
-          const chat = await decodeSoopPacket(ev.data);
+          let text = '';
+          if (typeof ev.data === 'string') text = ev.data;
+          else if (ev.data instanceof Blob) text = new TextDecoder('utf-8').decode(await ev.data.arrayBuffer());
+          else if (ev.data instanceof ArrayBuffer) text = new TextDecoder('utf-8').decode(ev.data);
+          else if (ArrayBuffer.isView(ev.data)) text = new TextDecoder('utf-8').decode(ev.data.buffer);
+
+          const header = text.match(/^\x1b\t(\d{4})(\d{6})(\d{2})/);
+          const command = header ? header[1] : '';
+          if (!soop.connected && (command === '0002' || command === '0005')) {
+            if (soop.connectTimeoutId) clearTimeout(soop.connectTimeoutId);
+            soop.connectTimeoutId = null;
+            soop.connected = true;
+            soop.connecting = false;
+            setSoopStatus('good','연결됨',`${parsed.streamerId} · 방송 ${parsed.broadNo} · 실시간 채팅 수신 중`);
+          }
+
+          const chat = await decodeSoopPacket(text || ev.data);
           if (chat) handleChatMessage(chat);
         } catch (_) {}
       });
+
       ws.addEventListener('close', ev => {
-        if (soop.socket !== ws) return;
-        if (soop.pingId) clearInterval(soop.pingId);
+        if (attemptId !== soop.attemptId || soop.socket !== ws) return;
+        if (soop.connectTimeoutId) clearTimeout(soop.connectTimeoutId);
+        soop.connectTimeoutId = null;
         soop.socket = null;
         soop.connected = false;
         soop.connecting = false;
         setSoopStatus('bad','연결 종료',`SOOP 채팅 연결이 종료되었습니다. 코드 ${ev.code || '-'}`);
       });
+
       ws.addEventListener('error', () => {
-        if (soop.socket !== ws) return;
-        setSoopStatus('bad','연결 오류','SOOP WebSocket 연결에 실패했습니다. 방송 URL과 현재 방송 상태를 확인해 주세요.');
+        if (attemptId !== soop.attemptId || soop.socket !== ws) return;
+        if (soop.connectTimeoutId) clearTimeout(soop.connectTimeoutId);
+        soop.connectTimeoutId = null;
+        soop.socket = null;
+        soop.connected = false;
+        soop.connecting = false;
+        try { ws.close(); } catch (_) {}
+        setSoopStatus('bad','연결 오류','SOOP WebSocket 연결에 실패했습니다. 다시 시도해 주세요.');
       });
     } catch (err) {
+      if (attemptId !== soop.attemptId) return;
+      if (soop.connectTimeoutId) clearTimeout(soop.connectTimeoutId);
+      soop.connectTimeoutId = null;
+      soop.socket = null;
       soop.connecting = false;
+      soop.connected = false;
       setSoopStatus('bad','연동 실패',`${err && err.message ? err.message : 'SOOP 채팅 중계에 실패했습니다.'}`);
     }
   }
-
 
   function predFormatTenth(tenth) {
     const n = Number.isFinite(Number(tenth)) ? Number(tenth) : 0;
@@ -3787,7 +3852,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     if (url && !url.matches(':focus')) url.value = soop.lastUrl || '';
     if (status) { status.textContent = soop.statusLabel; status.className = `pill${soop.statusKind ? ' '+soop.statusKind : ''}`; }
     if (detail) detail.textContent = soop.statusDetail || '';
-    if (connect) connect.disabled = soop.connecting || soop.connected;
+    if (connect) { connect.disabled = soop.connecting; connect.textContent = soop.connected ? '재연결' : (soop.connecting ? '연결 중…' : '채팅 연동'); }
     if (disconnect) disconnect.disabled = !(soop.connecting || soop.connected);
     if (sync) sync.textContent = food.classList.contains('active') ? '메인 화면 동기화됨' : '게임 화면 대기';
     if (accept) accept.textContent = foodState.accepting ? '추천 접수 중' : '추천 접수 대기';
@@ -3831,7 +3896,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       if (url && !url.matches(':focus')) url.value = soop.lastUrl || '';
       if (status) { status.textContent = soop.statusLabel; status.className = `pill${soop.statusKind ? ' '+soop.statusKind : ''}`; }
       if (detail) detail.textContent = soop.statusDetail || '';
-      if (connect) connect.disabled = soop.connecting || soop.connected;
+      if (connect) { connect.disabled = soop.connecting; connect.textContent = soop.connected ? '재연결' : (soop.connecting ? '연결 중…' : '채팅 연동'); }
       if (disconnect) disconnect.disabled = !(soop.connecting || soop.connected);
       if (state) state.textContent = cqState.running ? (cqState.paused ? '일시정지' : '진행 중') : (cqState.answer ? '문제 준비 완료' : '대기 중');
       if (time) time.textContent = formatTime(cqState.remaining);
