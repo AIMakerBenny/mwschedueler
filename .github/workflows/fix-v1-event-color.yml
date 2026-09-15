@@ -1,0 +1,93 @@
+name: Fix Mawang Scheduler v1.0 event color persistence
+on:
+  push:
+    branches: [cloudflare-production]
+    paths:
+      - .github/v1-event-color-trigger
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: cloudflare-production
+      - name: Patch current direct source
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          p=Path('assets/app-core.js')
+          s=p.read_text(encoding='utf-8')
+
+          def one(old,new,label):
+              global s
+              n=s.count(old)
+              if n!=1:
+                  raise SystemExit(f'{label}: expected 1 match, got {n}')
+              s=s.replace(old,new,1)
+              print(label, 'ok')
+
+          one(
+              "  const categoryId=document.getElementById('evCategory').value,c=category(categoryId);\n  if(c)c.color=document.getElementById('evCategoryColor').value;\n",
+              "  const categoryId=document.getElementById('evCategory').value,c=category(categoryId);\n  const color=document.getElementById('evCategoryColor').value||c?.color||'#8ba0b7';\n",
+              'store per-event color without mutating category'
+          )
+          one(
+              "    categoryId,participants:payloadParticipants,participantStatuses:payloadStatuses,autoSelfParticipantId,",
+              "    categoryId,color,participants:payloadParticipants,participantStatuses:payloadStatuses,autoSelfParticipantId,",
+              'persist color in event payload'
+          )
+          one(
+              "  document.getElementById('evCategory').value=e?.categoryId||'';syncCategoryColor();",
+              "  document.getElementById('evCategory').value=e?.categoryId||'';syncCategoryColor();\n  if(e?.color){document.getElementById('evCategoryColor').value=e.color;document.getElementById('evCategoryColorSwatch').style.background=e.color;}",
+              'restore saved event color when editing'
+          )
+
+          old="color=e.restDay?'#e85d75':(cat?.color||'#64748b')"
+          n=s.count(old)
+          if n<1: raise SystemExit('event card color expressions: no matches')
+          s=s.replace(old,"color=e.restDay?'#e85d75':(e.color||cat?.color||'#64748b')")
+          print('event card color expressions', n)
+
+          old="const color=e.restDay?'#e85d75':(category(e.categoryId)?.color||'#64748b');"
+          n=s.count(old)
+          if n<1: raise SystemExit('calendar event color expression: no matches')
+          s=s.replace(old,"const color=e.restDay?'#e85d75':(e.color||category(e.categoryId)?.color||'#64748b');")
+          print('calendar event color expressions', n)
+
+          old="border-left-color:${cat?.color||'var(--accent)'}"
+          n=s.count(old)
+          if n:
+              s=s.replace(old,"border-left-color:${e.color||cat?.color||'var(--accent)'}")
+              print('favorite event color expressions', n)
+
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Syntax check
+        run: node --check assets/app-core.js
+      - name: Verify direct-source contract
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          s=Path('assets/app-core.js').read_text(encoding='utf-8')
+          required=[
+            "const color=document.getElementById('evCategoryColor').value||c?.color||'#8ba0b7';",
+            'categoryId,color,participants:payloadParticipants',
+            "if(e?.color){document.getElementById('evCategoryColor').value=e.color;document.getElementById('evCategoryColorSwatch').style.background=e.color;}",
+            "e.color||cat?.color||'#64748b'",
+            "e.color||category(e.categoryId)?.color||'#64748b'"
+          ]
+          for x in required:
+            if x not in s: raise SystemExit('missing verification marker: '+x)
+          if "if(c)c.color=document.getElementById('evCategoryColor').value;" in s:
+            raise SystemExit('old category mutation still present')
+          print('direct-source verification ok')
+          PY
+      - name: Commit direct source fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/app-core.js
+          git commit -m "Fix Mawang Scheduler v1.0 content color persistence"
+          git push origin HEAD:cloudflare-production
