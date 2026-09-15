@@ -270,29 +270,72 @@ async function handleSoopWebSocket(request) {
   const pingPacket = `${ESC}000000000100${F}`;
 
   let joined = false;
+  let joinSent = false;
   let pingId = null;
+  let loginTimeoutId = null;
   let joinTimeoutId = null;
   let debugPacketCount = 0;
 
   const clearProtocolTimers = () => {
+    if (loginTimeoutId) clearTimeout(loginTimeoutId);
     if (joinTimeoutId) clearTimeout(joinTimeoutId);
     if (pingId) clearInterval(pingId);
+    loginTimeoutId = null;
     joinTimeoutId = null;
     pingId = null;
   };
 
+  const startPing = () => {
+    if (pingId) return;
+    pingId = setInterval(() => {
+      try { if (upstream.readyState === 1) upstream.send(pingPacket); } catch (_) {}
+    }, 60000);
+  };
+
+  const sendJoin = () => {
+    if (joinSent || joined) return;
+    try {
+      upstream.send(joinPacket);
+      joinSent = true;
+      debugSend('JOIN_SENT');
+    } catch (_) {
+      debugSend('JOIN_SEND_FAILED');
+      safeClose(upstream, 1011, 'SOOP join send failed');
+      safeClose(server, 1011, 'SOOP join send failed');
+      return;
+    }
+
+    joinTimeoutId = setTimeout(() => {
+      if (joined) return;
+      debugSend('JOIN_TIMEOUT');
+      safeClose(upstream, 1011, 'SOOP join timeout');
+      safeClose(server, 1011, 'SOOP join timeout');
+    }, SOOP_JOIN_TIMEOUT_MS);
+  };
+
   upstream.addEventListener('message', (event) => {
     const command = decodeSoopCommand(event.data);
-    if (command === '0002' && !joined) {
-      joined = true;
-      if (joinTimeoutId) clearTimeout(joinTimeoutId);
-      joinTimeoutId = null;
-      debugSend('JOIN_ACK');
-    }
+
     if (debug && debugPacketCount < 30) {
       debugPacketCount += 1;
       debugSend('UPSTREAM_PACKET', command || 'UNKNOWN');
     }
+
+    if (command === '0001' && !joinSent && !joined) {
+      if (loginTimeoutId) clearTimeout(loginTimeoutId);
+      loginTimeoutId = null;
+      debugSend('LOGIN_ACK');
+      sendJoin();
+    }
+
+    if ((command === '0002' || command === '0005') && !joined) {
+      joined = true;
+      if (joinTimeoutId) clearTimeout(joinTimeoutId);
+      joinTimeoutId = null;
+      debugSend(command === '0002' ? 'JOIN_ACK' : 'JOIN_CONFIRMED_BY_CHAT');
+      startPing();
+    }
+
     if (command === '0005') debugSend('CHAT_PACKET');
     try { if (server.readyState === 1) server.send(event.data); } catch (_) { safeClose(upstream, 1011, 'client send failed'); }
   });
@@ -300,23 +343,18 @@ async function handleSoopWebSocket(request) {
   try {
     upstream.send(connectPacket);
     debugSend('CONNECT_SENT');
-    upstream.send(joinPacket);
-    debugSend('JOIN_SENT');
   } catch (_) {
     debugSend('HANDSHAKE_SEND_FAILED');
+    safeClose(upstream, 1011, 'SOOP handshake failed');
     safeClose(server, 1011, 'SOOP handshake failed');
   }
 
-  joinTimeoutId = setTimeout(() => {
-    if (joined) return;
-    debugSend('JOIN_TIMEOUT');
-    safeClose(upstream, 1011, 'SOOP join timeout');
-    safeClose(server, 1011, 'SOOP join timeout');
+  loginTimeoutId = setTimeout(() => {
+    if (joinSent || joined) return;
+    debugSend('LOGIN_TIMEOUT');
+    safeClose(upstream, 1011, 'SOOP login timeout');
+    safeClose(server, 1011, 'SOOP login timeout');
   }, SOOP_JOIN_TIMEOUT_MS);
-
-  pingId = setInterval(() => {
-    try { if (upstream.readyState === 1) upstream.send(pingPacket); } catch (_) {}
-  }, 60000);
 
   server.addEventListener('message', (event) => {
     const command = decodeSoopCommand(event.data);
