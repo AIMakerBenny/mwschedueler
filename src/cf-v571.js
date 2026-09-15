@@ -7,7 +7,9 @@ const SOOP_LIVE_APIS = [
   'https://live.sooplive.co.kr/afreeca/player_live_api.php',
 ];
 const SOOP_ALLOWED_HOST_SUFFIXES = ['sooplive.com', 'sooplive.co.kr', 'afreecatv.com'];
-const SOOP_API_TIMEOUT_MS = 7000;
+const SOOP_API_TIMEOUT_MS = 5000;
+const SOOP_INFO_CACHE_TTL_MS = 30000;
+const SOOP_INFO_CACHE = new Map();
 
 function json(value, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(value), {
@@ -31,6 +33,35 @@ function validateSoopIdentity(streamerId, broadNo) {
   if (!/^[A-Za-z0-9_]{1,64}$/.test(id)) throw new Error('Invalid SOOP streamerId.');
   if (!/^\d{1,20}$/.test(bno)) throw new Error('Invalid SOOP broadNo.');
   return { streamerId: id, broadNo: bno };
+}
+
+function soopCacheKey(identity) {
+  return `${identity.streamerId}:${identity.broadNo}`;
+}
+
+function readCachedSoopInfo(identity) {
+  const key = soopCacheKey(identity);
+  const cached = SOOP_INFO_CACHE.get(key);
+  if (!cached) return null;
+  if (cached.expiresAt <= Date.now()) {
+    SOOP_INFO_CACHE.delete(key);
+    return null;
+  }
+  return cached.info;
+}
+
+function writeCachedSoopInfo(identity, info) {
+  const now = Date.now();
+  if (SOOP_INFO_CACHE.size > 100) {
+    for (const [key, value] of SOOP_INFO_CACHE) {
+      if (!value || value.expiresAt <= now) SOOP_INFO_CACHE.delete(key);
+    }
+    if (SOOP_INFO_CACHE.size > 100) SOOP_INFO_CACHE.delete(SOOP_INFO_CACHE.keys().next().value);
+  }
+  SOOP_INFO_CACHE.set(soopCacheKey(identity), {
+    info,
+    expiresAt: now + SOOP_INFO_CACHE_TTL_MS,
+  });
 }
 
 function isAllowedSoopHost(hostname) {
@@ -75,8 +106,33 @@ async function fetchSoopChannel(apiUrl, identity, encodedBody) {
   }
 }
 
+function parseSoopChannel(channel, identity) {
+  const result = Number(channel.RESULT);
+  if (Number.isFinite(result) && result !== 1) throw new Error(`broadcast unavailable (RESULT ${result})`);
+
+  const domain = String(channel.CHDOMAIN || '').trim().toLowerCase();
+  const chatNo = String(channel.CHATNO || '').trim();
+  const rawPort = validSoopPort(channel.CHPT);
+  const port = rawPort && rawPort < 65535 ? rawPort + 1 : null;
+
+  if (!isAllowedSoopHost(domain)) throw new Error('untrusted chat hostname');
+  if (!/^\d{1,30}$/.test(chatNo)) throw new Error('invalid CHATNO');
+  if (!port) throw new Error('invalid CHPT');
+
+  return {
+    streamerId: identity.streamerId,
+    broadNo: identity.broadNo,
+    domain,
+    chatNo,
+    port,
+  };
+}
+
 async function resolveSoopChatInfo(streamerId, broadNo) {
   const identity = validateSoopIdentity(streamerId, broadNo);
+  const cached = readCachedSoopInfo(identity);
+  if (cached) return cached;
+
   const body = new URLSearchParams({
     bid: identity.streamerId,
     bno: identity.broadNo,
@@ -90,36 +146,24 @@ async function resolveSoopChatInfo(streamerId, broadNo) {
     quality: 'HD',
   }).toString();
 
-  let lastError = null;
-  for (const apiUrl of SOOP_LIVE_APIS) {
+  const attempts = SOOP_LIVE_APIS.map(async (apiUrl) => {
     try {
       const channel = await fetchSoopChannel(apiUrl, identity, body);
-      const result = Number(channel.RESULT);
-      if (Number.isFinite(result) && result !== 1) throw new Error(`broadcast unavailable (RESULT ${result})`);
-
-      const domain = String(channel.CHDOMAIN || '').trim().toLowerCase();
-      const chatNo = String(channel.CHATNO || '').trim();
-      const rawPort = validSoopPort(channel.CHPT);
-      const port = rawPort && rawPort < 65535 ? rawPort + 1 : null;
-
-      if (!isAllowedSoopHost(domain)) throw new Error('untrusted chat hostname');
-      if (!/^\d{1,30}$/.test(chatNo)) throw new Error('invalid CHATNO');
-      if (!port) throw new Error('invalid CHPT');
-
-      return {
-        streamerId: identity.streamerId,
-        broadNo: identity.broadNo,
-        domain,
-        chatNo,
-        port,
-      };
+      return parseSoopChannel(channel, identity);
     } catch (error) {
       const suffix = error?.name === 'AbortError' ? 'timeout' : cleanError(error);
-      lastError = new Error(`${new URL(apiUrl).hostname}: ${suffix}`);
+      throw new Error(`${new URL(apiUrl).hostname}: ${suffix}`);
     }
-  }
+  });
 
-  throw new Error(`SOOP chat info lookup failed: ${cleanError(lastError)}`);
+  try {
+    const info = await Promise.any(attempts);
+    writeCachedSoopInfo(identity, info);
+    return info;
+  } catch (error) {
+    const messages = Array.isArray(error?.errors) ? error.errors.map(cleanError).join(' | ') : cleanError(error);
+    throw new Error(`SOOP chat info lookup failed: ${messages}`);
+  }
 }
 
 async function handleSoopChatInfo(request) {
