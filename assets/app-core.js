@@ -470,7 +470,7 @@ function setTab(tab){
   if(tab==='reminders'){tab='dashboard';dashboardMode='reminders'}
   document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===tab));
-  const names={dashboard:'대시보드',calendar:'캘린더',contacts:'연락처',posts:'게시글',sniper:'최근 합방 인원',targets:'저격 리스트',memos:'메모',worldtime:'세계 시간',gameLadder:'사다리타기',gameRps:'가위바위보',gamePachinko:'경마',gameMultiDraw:'Gacha 뽑기',export:'가져오기 / 내보내기',settings:'설정'};
+  const names={dashboard:'대시보드',calendar:'캘린더',contacts:'연락처',posts:'게시글',sniper:'최근 합방 인원',targets:'저격 리스트',memos:'메모',worldtime:'세계 시간',gameMajoku:'Majoku Castle',gameLadder:'사다리타기',gameRps:'가위바위보',gamePachinko:'경마',gameMultiDraw:'Gacha 뽑기',export:'가져오기 / 내보내기',settings:'설정'};
   document.getElementById('pageTitle').textContent=names[tab]||tab;
   // 탭 이동 시에도 같은 중앙 데이터에서 최신 상태를 다시 계산
   if(tab==='calendar')safeRenderView('캘린더',renderCalendar);

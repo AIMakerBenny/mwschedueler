@@ -1,6 +1,175 @@
 import cf57 from './cf-v57.js';
 
 const BUILD_VERSION = 'Mawang Scheduler v1.0';
+const SOOP_LIVE_API = 'https://live.sooplive.com/afreeca/player_live_api.php';
+const SOOP_ALLOWED_HOST_SUFFIXES = ['sooplive.com', 'sooplive.co.kr', 'afreecatv.com'];
+
+function json(value, status = 200, extraHeaders = {}) {
+  return new Response(JSON.stringify(value), {
+    status,
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'cache-control': 'no-store',
+      'x-content-type-options': 'nosniff',
+      ...extraHeaders,
+    },
+  });
+}
+
+function cleanError(error) {
+  return error instanceof Error ? error.message : String(error || 'Unknown error');
+}
+
+function validateSoopIdentity(streamerId, broadNo) {
+  const id = String(streamerId || '').trim();
+  const bno = String(broadNo || '').trim();
+  if (!/^[A-Za-z0-9_]{1,64}$/.test(id)) throw new Error('Invalid SOOP streamerId.');
+  if (!/^\d{1,20}$/.test(bno)) throw new Error('Invalid SOOP broadNo.');
+  return { streamerId: id, broadNo: bno };
+}
+
+function isAllowedSoopHost(hostname) {
+  const host = String(hostname || '').trim().toLowerCase().replace(/\.$/, '');
+  if (!host || host.includes('/') || host.includes(':')) return false;
+  return SOOP_ALLOWED_HOST_SUFFIXES.some((suffix) => host === suffix || host.endsWith(`.${suffix}`));
+}
+
+function validSoopPort(value) {
+  const text = String(value ?? '').trim();
+  if (!/^\d{1,5}$/.test(text)) return null;
+  const port = Number(text);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) return null;
+  return port;
+}
+
+async function resolveSoopChatInfo(streamerId, broadNo) {
+  const identity = validateSoopIdentity(streamerId, broadNo);
+  const body = new URLSearchParams({
+    bid: identity.streamerId,
+    bno: identity.broadNo,
+    type: 'live',
+    player_type: 'html5',
+    stream_type: 'common',
+    from_api: '0',
+    mode: 'landing',
+    pwd: '',
+  });
+
+  const response = await fetch(SOOP_LIVE_API, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      'origin': 'https://play.sooplive.com',
+      'referer': `https://play.sooplive.com/${encodeURIComponent(identity.streamerId)}/${identity.broadNo}`,
+      'user-agent': 'Mozilla/5.0 Mawang-Scheduler/1.0',
+    },
+    body: body.toString(),
+  });
+
+  if (!response.ok) throw new Error(`SOOP broadcast info HTTP ${response.status}`);
+  const payload = await response.json().catch(() => null);
+  const channel = payload?.CHANNEL;
+  if (!channel || typeof channel !== 'object') throw new Error('SOOP broadcast info response is invalid.');
+
+  const result = Number(channel.RESULT);
+  if (Number.isFinite(result) && result !== 1) throw new Error(`SOOP broadcast is unavailable. RESULT ${result}`);
+
+  const domain = String(channel.CHDOMAIN || '').trim().toLowerCase();
+  const chatNo = String(channel.CHATNO || '').trim();
+  const port = validSoopPort(channel.CHPT);
+
+  if (!isAllowedSoopHost(domain)) throw new Error('SOOP returned an untrusted chat hostname.');
+  if (!/^\d{1,30}$/.test(chatNo)) throw new Error('SOOP returned an invalid CHATNO.');
+  if (!port) throw new Error('SOOP returned an invalid CHPT.');
+
+  return {
+    streamerId: identity.streamerId,
+    broadNo: identity.broadNo,
+    domain,
+    chatNo,
+    port,
+  };
+}
+
+async function handleSoopChatInfo(request) {
+  let body;
+  try { body = await request.json(); } catch (_) { body = null; }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'JSON body required.' }, 400);
+
+  try {
+    const info = await resolveSoopChatInfo(body.streamerId, body.broadNo);
+    return json({
+      ok: true,
+      streamerId: info.streamerId,
+      broadNo: info.broadNo,
+      chatNo: info.chatNo,
+    });
+  } catch (error) {
+    return json({ error: cleanError(error) }, 502);
+  }
+}
+
+function safeClose(socket, code = 1000, reason = '') {
+  try {
+    if (!socket || socket.readyState === 3) return;
+    const safeCode = Number.isInteger(code) && code >= 1000 && code <= 4999 && ![1004, 1005, 1006, 1015].includes(code) ? code : 1000;
+    socket.close(safeCode, String(reason || '').slice(0, 120));
+  } catch (_) {}
+}
+
+async function handleSoopWebSocket(request) {
+  if ((request.headers.get('upgrade') || '').toLowerCase() !== 'websocket') {
+    return json({ error: 'WebSocket upgrade required.' }, 426, { upgrade: 'websocket' });
+  }
+
+  const url = new URL(request.url);
+  let info;
+  try {
+    info = await resolveSoopChatInfo(url.searchParams.get('streamerId'), url.searchParams.get('broadNo'));
+  } catch (error) {
+    return json({ error: cleanError(error) }, 502);
+  }
+
+  const upstreamUrl = `https://${info.domain}:${info.port}/Websocket/${encodeURIComponent(info.streamerId)}`;
+  let upstreamResponse;
+  try {
+    upstreamResponse = await fetch(upstreamUrl, {
+      headers: {
+        'Upgrade': 'websocket',
+        'Connection': 'Upgrade',
+        'Origin': 'https://play.sooplive.com',
+        'User-Agent': 'Mozilla/5.0 Mawang-Scheduler/1.0',
+      },
+    });
+  } catch (error) {
+    return json({ error: `SOOP WebSocket connection failed: ${cleanError(error)}` }, 502);
+  }
+
+  const upstream = upstreamResponse.webSocket;
+  if (!upstream || upstreamResponse.status !== 101) {
+    try { upstream?.close?.(); } catch (_) {}
+    return json({ error: `SOOP WebSocket upgrade failed. HTTP ${upstreamResponse.status}` }, 502);
+  }
+
+  const pair = new WebSocketPair();
+  const client = pair[0];
+  const server = pair[1];
+  server.accept({ allowHalfOpen: true });
+  upstream.accept({ allowHalfOpen: true });
+
+  server.addEventListener('message', (event) => {
+    try { if (upstream.readyState === 1) upstream.send(event.data); } catch (_) { safeClose(server, 1011, 'upstream send failed'); }
+  });
+  upstream.addEventListener('message', (event) => {
+    try { if (server.readyState === 1) server.send(event.data); } catch (_) { safeClose(upstream, 1011, 'client send failed'); }
+  });
+  server.addEventListener('close', (event) => safeClose(upstream, event.code, event.reason));
+  upstream.addEventListener('close', (event) => safeClose(server, event.code, event.reason));
+  server.addEventListener('error', () => safeClose(upstream, 1011, 'client websocket error'));
+  upstream.addEventListener('error', () => safeClose(server, 1011, 'upstream websocket error'));
+
+  return new Response(null, { status: 101, webSocket: client });
+}
 
 async function withBuildVersion(response, request) {
   if (!response) return response;
@@ -26,6 +195,15 @@ async function withBuildVersion(response, request) {
 
 export default {
   async fetch(request, env, ctx) {
+    const path = new URL(request.url).pathname;
+
+    if (path === '/api/soop/chat-info' && request.method === 'POST') {
+      return handleSoopChatInfo(request);
+    }
+    if (path === '/api/soop/ws' && request.method === 'GET') {
+      return handleSoopWebSocket(request);
+    }
+
     const response = await cf57.fetch(request, env, ctx);
     return withBuildVersion(response, request);
   },

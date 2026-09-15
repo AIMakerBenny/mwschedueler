@@ -107,6 +107,9 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
         </button>
 
         <div class="nav-game-divider"><span></span><em>미니게임</em><span></span></div>
+        <button data-tab="gameMajoku" title="Majoku Castle">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 21V9l4-3 4 3 4-3 4 3v12H4zM4 9V4h4v2M16 6V4h4v5M9 21v-5h6v5"/></svg></span><span class="nav-label">Majoku Castle</span>
+        </button>
         <button data-tab="gameLadder" title="사다리타기">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M7 3v18M17 3v18M7 7h10M7 12h10M7 17h10"/></svg></span><span class="nav-label">사다리타기</span>
         </button>
@@ -777,6 +780,10 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
          ===================================================== -->
 
     
+<section id="gameMajoku" class="section mini-game-section">
+  <iframe src="/majoku-castle.html" title="Majoku Castle" class="majoku-castle-frame" style="width:100%;height:calc(100vh - 118px);min-height:720px;border:0;border-radius:16px;background:#090b14;display:block" loading="lazy"></iframe>
+</section>
+
 <section id="gameLadder" class="section mini-game-section">
   <div class="mini-game-head">
     <div><div class="mini-kicker">MINI GAME 01</div><h2>사다리타기</h2><p>참가자를 추가하면 같은 수의 당첨 항목이 자동으로 생성됩니다. 자동 시작을 누르면 내부적으로 순서와 사다리가 자동 셔플되어 전체 결과가 순차적으로 공개됩니다.</p></div>
