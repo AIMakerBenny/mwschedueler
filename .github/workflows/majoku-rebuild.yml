@@ -30,13 +30,31 @@ jobs:
           test "$(wc -l < /tmp/parts.txt)" -eq 25
           xargs cat < /tmp/parts.txt | tr -d '\r\n\t ' > /tmp/majoku.b64
           base64 --decode /tmp/majoku.b64 > /tmp/majoku.html.gz
-          gzip -t /tmp/majoku.html.gz
-          gzip -dc /tmp/majoku.html.gz > majoku-castle.html
+
+          set +e
+          gzip -dc /tmp/majoku.html.gz > majoku-castle.html 2>/tmp/gzip.err
+          GZIP_STATUS=$?
+          set -e
+
+          echo "gzip_status=${GZIP_STATUS}"
+          cat /tmp/gzip.err || true
           test -s majoku-castle.html
           grep -qi '<html' majoku-castle.html
+          grep -qi '</html>' majoku-castle.html
           grep -qi 'Majoku Castle' majoku-castle.html
           echo "bytes=$(wc -c < majoku-castle.html)"
+          echo "gzip_bytes=$(wc -c < /tmp/majoku.html.gz)"
           sha256sum majoku-castle.html
+          echo '--- tail ---'
+          tail -c 400 majoku-castle.html | tr '\n' ' '
+          echo
+          echo '--- gzip trailer ---'
+          tail -c 16 /tmp/majoku.html.gz | xxd -p
+
+          if [ "$GZIP_STATUS" -ne 0 ]; then
+            echo 'Gzip trailer/data validation failed; diagnostic only. Not committing reconstruction.'
+            exit 1
+          fi
 
       - name: Commit verified reconstruction
         shell: bash
