@@ -1,0 +1,53 @@
+name: Majoku Castle Rebuild Check
+
+on:
+  push:
+    branches:
+      - feature/majoku-castle-cloudflare-20260916
+    paths:
+      - '.majoku-upload/**'
+      - '.github/workflows/majoku-rebuild.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/majoku-castle-cloudflare-20260916
+          fetch-depth: 0
+
+      - name: Rebuild Majoku Castle HTML
+        shell: bash
+        run: |
+          set -euo pipefail
+          ls .majoku-upload/part-*.txt | sort -V > /tmp/parts.txt
+          test "$(wc -l < /tmp/parts.txt)" -eq 25
+          xargs cat < /tmp/parts.txt | tr -d '\r\n\t ' > /tmp/majoku.b64
+          base64 --decode /tmp/majoku.b64 > /tmp/majoku.html.gz
+          gzip -t /tmp/majoku.html.gz
+          gzip -dc /tmp/majoku.html.gz > majoku-castle.html
+          test -s majoku-castle.html
+          grep -qi '<html' majoku-castle.html
+          grep -qi 'Majoku Castle' majoku-castle.html
+          echo "bytes=$(wc -c < majoku-castle.html)"
+          sha256sum majoku-castle.html
+
+      - name: Commit verified reconstruction
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- majoku-castle.html && git ls-files --error-unmatch majoku-castle.html >/dev/null 2>&1; then
+            echo 'No reconstruction change.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add majoku-castle.html
+          git commit -m 'Rebuild verified Majoku Castle HTML'
+          git push origin HEAD:feature/majoku-castle-cloudflare-20260916
