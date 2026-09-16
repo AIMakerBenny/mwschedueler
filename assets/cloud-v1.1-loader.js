@@ -1,8 +1,8 @@
-/* Mawang Scheduler v1.2.0 Cloudflare auth bootstrap */
+/* Mawang Scheduler v1.2.1 Cloudflare auth bootstrap */
 (()=>{
 'use strict';
-if(window.__mwsCloudV120Bootstrap)return;
-window.__mwsCloudV120Bootstrap=true;
+if(window.__mwsCloudV121Bootstrap)return;
+window.__mwsCloudV121Bootstrap=true;
 
 const loadCalendarDragFix=()=>{
   if(document.querySelector('link[data-mws-calendar-drag-fix]'))return;
@@ -19,10 +19,10 @@ const loadMajokuHostFix=()=>{
   const s=document.createElement('script');s.src='/assets/majoku-host-fix-v114.js?v=1.2.0';s.async=false;s.dataset.mwsMajokuHostFixV120='1';s.onerror=()=>console.error('Majoku Castle host fix loading failed');document.body.appendChild(s);
 };
 const loadUiFixes=()=>{
-  if(window.__mwsUiFixesV120){loadTodayPeopleWheel();loadMajokuHostFix();return;}
-  const existing=document.querySelector('script[data-mws-ui-fixes-v120]');
+  if(window.__mwsUiFixesV121){loadTodayPeopleWheel();loadMajokuHostFix();return;}
+  const existing=document.querySelector('script[data-mws-ui-fixes-v121]');
   if(existing){existing.addEventListener('load',()=>{loadTodayPeopleWheel();loadMajokuHostFix()},{once:true});return;}
-  const s=document.createElement('script');s.src='/assets/ui-fixes-v113.js?v=1.2.0';s.async=false;s.dataset.mwsUiFixesV120='1';s.onload=()=>{loadTodayPeopleWheel();loadMajokuHostFix()};s.onerror=()=>{console.error('MWS UI fixes loading failed');loadTodayPeopleWheel();loadMajokuHostFix()};document.body.appendChild(s);
+  const s=document.createElement('script');s.src='/assets/ui-fixes-v121.js?v=1.2.1';s.async=false;s.dataset.mwsUiFixesV121='1';s.onload=()=>{loadTodayPeopleWheel();loadMajokuHostFix()};s.onerror=()=>{console.error('MWS UI fixes loading failed');loadTodayPeopleWheel();loadMajokuHostFix()};document.body.appendChild(s);
 };
 const loadSteamPicker=()=>{
   if(window.__mwsSteamGameV111){loadUiFixes();return;}
@@ -31,10 +31,10 @@ const loadSteamPicker=()=>{
   const s=document.createElement('script');s.src='/assets/steam-game-v111.js?v=1.1.3';s.async=false;s.dataset.mwsSteamV111='1';s.onload=loadUiFixes;s.onerror=()=>{console.error('Steam game picker loading failed');loadUiFixes()};document.body.appendChild(s);
 };
 const loadBossManager=next=>{
-  if(window.__mwsBossManagerV120){next?.();return;}
-  const existing=document.querySelector('script[data-mws-boss-manager-v120]');
+  if(window.__mwsBossManagerV121){next?.();return;}
+  const existing=document.querySelector('script[data-mws-boss-manager-v121]');
   if(existing){existing.addEventListener('load',()=>next?.(),{once:true});return;}
-  const s=document.createElement('script');s.src='/assets/boss-manager-v116.js?v=1.2.0';s.async=false;s.dataset.mwsBossManagerV120='1';s.onload=()=>next?.();s.onerror=()=>{console.error('Boss Raid manager loading failed');next?.()};document.body.appendChild(s);
+  const s=document.createElement('script');s.src='/assets/boss-manager-v121.js?v=1.2.1';s.async=false;s.dataset.mwsBossManagerV121='1';s.onload=()=>next?.();s.onerror=()=>{console.error('Boss Raid manager loading failed');next?.()};document.body.appendChild(s);
 };
 
 loadCalendarDragFix();
