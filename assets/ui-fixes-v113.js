@@ -1,4 +1,4 @@
-/* Mawang Scheduler v1.1.3 - calendar game hover/click and large editor fixes */
+/* Mawang Scheduler v1.1.5 - calendar hover, Steam thumbnail editing, and editor sizing fixes */
 (()=>{
 'use strict';
 if(window.__mwsUiFixesV113)return;
@@ -70,6 +70,23 @@ function installStyle(){
 #calendarEventPreview .mws-game-hover-name-v113{margin-top:5px;font-size:20px;line-height:1.35;font-weight:1000;color:var(--text);word-break:keep-all}
 #calendarEventPreview .mws-game-hover-app-v113{margin-top:6px;font-size:11px;color:var(--muted)}
 
+/* Today-people calendar hover. Wider popup, three columns, and no inner scrollbar for ordinary large groups. */
+#calendarEventPreview.mws-today-people-hover-v115{
+  width:min(570px,calc(100vw - 24px))!important;
+  max-width:570px!important;
+  max-height:calc(100vh - 24px)!important;
+  overflow:auto!important;
+}
+#calendarEventPreview.mws-today-people-hover-v115 .mws-today-people-grid-v115{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:8px!important;
+  width:100%!important;
+  max-height:none!important;
+  overflow:visible!important;
+}
+#calendarEventPreview.mws-today-people-hover-v115 .mws-today-people-grid-v115>*{min-width:0!important}
+
 @media(max-width:1500px){
   #eventModal .event-modalbox.mws-game-panel-enabled-v112 .event-modal-layout{
     grid-template-columns:minmax(280px,330px) minmax(500px,1fr) minmax(390px,450px)!important;
@@ -80,6 +97,10 @@ function installStyle(){
   #eventModal .event-modalbox.mws-game-panel-enabled-v112 .event-modal-layout{grid-template-columns:1fr!important}
   #eventModal .event-game-panel-v112{min-height:620px!important;overflow:visible!important}
   #eventModal .mws-game-results-v112{max-height:380px!important}
+}
+@media(max-width:700px){
+  #calendarEventPreview.mws-today-people-hover-v115{width:min(390px,calc(100vw - 16px))!important}
+  #calendarEventPreview.mws-today-people-hover-v115 .mws-today-people-grid-v115{grid-template-columns:repeat(2,minmax(0,1fr))!important}
 }
 `;
   document.head.appendChild(style);
@@ -103,6 +124,7 @@ function showGamePreview(button,x,y){
   const preview=$('calendarEventPreview');
   if(!preview||!game)return;
   preview.innerHTML=`<div class="mws-game-hover-v113"><img class="mws-game-hover-image-v113" src="${esc(game.image)}" alt="${esc(game.name)}"><div class="mws-game-hover-copy-v113"><div class="mws-game-hover-kicker-v113">STEAM GAME</div><div class="mws-game-hover-name-v113">${esc(game.name)}</div><div class="mws-game-hover-app-v113">Steam App ${esc(game.appid)}</div></div></div>`;
+  preview.classList.remove('mws-today-people-hover-v115');
   preview.classList.add('open');
   preview.setAttribute('aria-hidden','false');
   requestAnimationFrame(()=>positionPreview(preview,x,y));
@@ -115,20 +137,62 @@ function hidePreview(){
   preview.setAttribute('aria-hidden','true');
 }
 
+function findTodayPeopleGrid(preview){
+  const nodes=[...preview.querySelectorAll('*')];
+  const candidates=nodes.filter(node=>{
+    if(node.children.length<3)return false;
+    const style=getComputedStyle(node);
+    const isGrid=style.display==='grid'||/grid/i.test(String(node.className||''));
+    if(!isGrid)return false;
+    const personLike=[...node.children].filter(child=>child.querySelector?.('img,.avatar')||/\S/.test(child.textContent||''));
+    return personLike.length>=3;
+  });
+  candidates.sort((a,b)=>b.children.length-a.children.length);
+  return candidates[0]||null;
+}
+
+function tuneTodayPeoplePreview(){
+  const preview=$('calendarEventPreview');
+  if(!preview)return;
+  preview.querySelectorAll('.mws-today-people-grid-v115').forEach(node=>node.classList.remove('mws-today-people-grid-v115'));
+  const isTodayPeople=/오늘\s*함께한\s*사람/.test(preview.textContent||'');
+  preview.classList.toggle('mws-today-people-hover-v115',isTodayPeople);
+  if(!isTodayPeople)return;
+  const grid=findTodayPeopleGrid(preview);
+  if(grid)grid.classList.add('mws-today-people-grid-v115');
+}
+
+let lastOpenAt=0;
+let lastOpenId='';
 function openGameEditor(button){
   const eventId=String(button?.dataset?.eventId||'');
-  if(!eventId)return;
+  if(!eventId||!eventById(eventId))return;
+  const now=Date.now();
+  if(lastOpenId===eventId&&now-lastOpenAt<350)return;
+  lastOpenId=eventId;
+  lastOpenAt=now;
+  hidePreview();
+
+  let invoked=false;
   try{
     if(typeof window.openSteamGamePickerV111==='function'){
       window.openSteamGamePickerV111(eventId);
-      return;
+      invoked=true;
     }
-    if(typeof window.openEvent==='function'){
-      window.openEvent(eventId);
-      return;
-    }
-    if(typeof openEvent==='function')openEvent(eventId);
-  }catch(error){console.error('Game thumbnail editor open failed',error)}
+  }catch(error){console.error('Steam game editor open failed',error)}
+
+  const forceOpen=()=>{
+    try{
+      const modal=$('eventModal');
+      if(!modal?.classList.contains('open')){
+        if(typeof window.openEvent==='function'){window.openEvent(eventId);invoked=true}
+        else if(typeof openEvent==='function'){openEvent(eventId);invoked=true}
+      }
+      setTimeout(()=>$('eventGameSearchV112')?.focus(),0);
+    }catch(error){console.error('Game thumbnail editor fallback failed',error)}
+  };
+  setTimeout(forceOpen,40);
+  if(!invoked)forceOpen();
 }
 
 function bindSlot(button){
@@ -148,22 +212,43 @@ function bindSlot(button){
 
 function scan(){
   document.querySelectorAll('.mws-steam-slot-v111').forEach(bindSlot);
+  tuneTodayPeoplePreview();
 }
 
-/* Capture before the draggable calendar item handles the click. */
+function gameSlotFromEvent(event){return event.target?.closest?.('.mws-steam-slot-v111')||null}
+
+/* Dedicated thumbnail interaction. Pointer-up handles cases where the draggable calendar row swallows click. */
+document.addEventListener('pointerdown',event=>{
+  const button=gameSlotFromEvent(event);
+  if(!button)return;
+  event.stopPropagation();
+},true);
+document.addEventListener('pointerup',event=>{
+  const button=gameSlotFromEvent(event);
+  if(!button||event.button!==0)return;
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+  openGameEditor(button);
+},true);
 document.addEventListener('click',event=>{
-  const button=event.target?.closest?.('.mws-steam-slot-v111');
+  const button=gameSlotFromEvent(event);
   if(!button)return;
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
-  hidePreview();
   openGameEditor(button);
+},true);
+
+document.addEventListener('mouseover',event=>{
+  if(event.target?.closest?.('#calendar'))requestAnimationFrame(tuneTodayPeoplePreview);
 },true);
 
 function boot(){
   installStyle();
   scan();
+  const preview=$('calendarEventPreview');
+  if(preview)new MutationObserver(()=>requestAnimationFrame(tuneTodayPeoplePreview)).observe(preview,{childList:true,subtree:true,characterData:true});
   const target=document.body||document.documentElement;
   if(target)new MutationObserver(scan).observe(target,{childList:true,subtree:true});
   setInterval(scan,1500);
