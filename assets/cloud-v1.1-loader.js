@@ -1,55 +1,79 @@
-/* Mawang Scheduler v1.2.1 Cloudflare auth bootstrap */
+/* Mawang Scheduler v1.2.2 Cloudflare auth bootstrap */
 (()=>{
 'use strict';
-if(window.__mwsCloudV121Bootstrap)return;
-window.__mwsCloudV121Bootstrap=true;
+if(window.__mwsCloudV122Bootstrap)return;
+window.__mwsCloudV122Bootstrap=true;
 
-const loadCalendarDragFix=()=>{
-  if(document.querySelector('link[data-mws-calendar-drag-fix]'))return;
-  const link=document.createElement('link');link.rel='stylesheet';link.href='/assets/calendar-drag-layout-fix.css?v=1.1.3';link.dataset.mwsCalendarDragFix='1';document.head.appendChild(link);
+const loaded=new Map();
+const loadScript=(key,src,flag)=>{
+  if(flag&&window[flag])return Promise.resolve();
+  if(loaded.has(key))return loaded.get(key);
+  const promise=new Promise(resolve=>{
+    const existing=document.querySelector(`script[data-mws-feature="${key}"]`);
+    if(existing){existing.addEventListener('load',()=>resolve(),{once:true});existing.addEventListener('error',()=>resolve(),{once:true});return}
+    const s=document.createElement('script');s.src=src;s.async=false;s.dataset.mwsFeature=key;s.onload=()=>resolve();s.onerror=()=>{console.error(`${key} loading failed`);resolve()};document.body.appendChild(s);
+  });
+  loaded.set(key,promise);return promise;
 };
-const loadTodayPeopleWheel=()=>{
-  if(window.__mwsTodayPeopleWheelV120)return;
-  if(document.querySelector('script[data-mws-today-people-wheel-v120]'))return;
-  const s=document.createElement('script');s.src='/assets/today-people-wheel-v117.js?v=1.2.0';s.async=false;s.dataset.mwsTodayPeopleWheelV120='1';s.onerror=()=>console.error('Today People wheel fix loading failed');document.body.appendChild(s);
-};
-const loadMajokuHostFix=()=>{
-  if(window.__mwsMajokuHostFixV120)return;
-  if(document.querySelector('script[data-mws-majoku-host-fix-v120]'))return;
-  const s=document.createElement('script');s.src='/assets/majoku-host-fix-v114.js?v=1.2.0';s.async=false;s.dataset.mwsMajokuHostFixV120='1';s.onerror=()=>console.error('Majoku Castle host fix loading failed');document.body.appendChild(s);
-};
-const loadUiFixes=()=>{
-  if(window.__mwsUiFixesV121){loadTodayPeopleWheel();loadMajokuHostFix();return;}
-  const existing=document.querySelector('script[data-mws-ui-fixes-v121]');
-  if(existing){existing.addEventListener('load',()=>{loadTodayPeopleWheel();loadMajokuHostFix()},{once:true});return;}
-  const s=document.createElement('script');s.src='/assets/ui-fixes-v121.js?v=1.2.1';s.async=false;s.dataset.mwsUiFixesV121='1';s.onload=()=>{loadTodayPeopleWheel();loadMajokuHostFix()};s.onerror=()=>{console.error('MWS UI fixes loading failed');loadTodayPeopleWheel();loadMajokuHostFix()};document.body.appendChild(s);
-};
-const loadSteamPicker=()=>{
-  if(window.__mwsSteamGameV111){loadUiFixes();return;}
-  const existing=document.querySelector('script[data-mws-steam-v111]');
-  if(existing){existing.addEventListener('load',loadUiFixes,{once:true});setTimeout(loadUiFixes,800);return;}
-  const s=document.createElement('script');s.src='/assets/steam-game-v111.js?v=1.1.3';s.async=false;s.dataset.mwsSteamV111='1';s.onload=loadUiFixes;s.onerror=()=>{console.error('Steam game picker loading failed');loadUiFixes()};document.body.appendChild(s);
-};
-const loadBossManager=next=>{
-  if(window.__mwsBossManagerV121){next?.();return;}
-  const existing=document.querySelector('script[data-mws-boss-manager-v121]');
-  if(existing){existing.addEventListener('load',()=>next?.(),{once:true});return;}
-  const s=document.createElement('script');s.src='/assets/boss-manager-v121.js?v=1.2.1';s.async=false;s.dataset.mwsBossManagerV121='1';s.onload=()=>next?.();s.onerror=()=>{console.error('Boss Raid manager loading failed');next?.()};document.body.appendChild(s);
+const loadStyle=(key,href)=>{
+  if(document.querySelector(`link[data-mws-feature-style="${key}"]`))return;
+  const link=document.createElement('link');link.rel='stylesheet';link.href=href;link.dataset.mwsFeatureStyle=key;document.head.appendChild(link);
 };
 
-loadCalendarDragFix();
-loadTodayPeopleWheel();
+const loadTodayPeopleWheel=()=>loadScript('today-people-wheel','/assets/today-people-wheel-v117.js?v=1.2.0','__mwsTodayPeopleWheelV120');
+const loadUiFixes=()=>loadScript('ui-fixes','/assets/ui-fixes-v121.js?v=1.2.1','__mwsUiFixesV121');
+const loadSteamPicker=()=>loadScript('steam-picker','/assets/steam-game-v111.js?v=1.1.3','__mwsSteamGameV111');
+const loadBossManager=()=>loadScript('boss-manager','/assets/boss-manager-v121.js?v=1.2.1','__mwsBossManagerV121');
+const loadMajokuHost=()=>loadScript('majoku-host','/assets/majoku-host-fix-v114.js?v=1.2.0','__mwsMajokuHostFixV120');
+
+async function loadCalendarFeatures(){
+  loadStyle('calendar-drag','/assets/calendar-drag-layout-fix.css?v=1.1.3');
+  await loadSteamPicker();
+  await Promise.all([loadUiFixes(),loadTodayPeopleWheel()]);
+}
+async function loadExportFeatures(){await loadBossManager()}
+async function loadMajokuFeatures(){await loadBossManager();await loadMajokuHost()}
+function ensureFeaturesForTab(tab){
+  if(tab==='calendar')return loadCalendarFeatures();
+  if(tab==='export')return loadExportFeatures();
+  if(tab==='gameMajoku')return loadMajokuFeatures();
+  return Promise.resolve();
+}
+window.mwsLoadFeaturesForTabV122=ensureFeaturesForTab;
+
+function installTabBridge(){
+  const current=window.setTab;
+  if(typeof current!=='function'||current.__mwsFeatureGateV122)return;
+  const wrapped=function(tab){const out=current.apply(this,arguments);Promise.resolve(ensureFeaturesForTab(tab)).catch(()=>{});return out};
+  wrapped.__mwsFeatureGateV122=true;window.setTab=wrapped;try{setTab=wrapped}catch(_){}
+}
+function activeTab(){
+  const section=document.querySelector('.section.active');
+  if(section?.id)return section.id;
+  return document.querySelector('.nav button.active[data-tab]')?.dataset?.tab||'';
+}
+function prefetchFeatures(){
+  const urls=['/assets/steam-game-v111.js?v=1.1.3','/assets/ui-fixes-v121.js?v=1.2.1','/assets/boss-manager-v121.js?v=1.2.1','/assets/majoku-host-fix-v114.js?v=1.2.0'];
+  for(const href of urls){if(document.querySelector(`link[rel="prefetch"][href="${href}"]`))continue;const link=document.createElement('link');link.rel='prefetch';link.as='script';link.href=href;document.head.appendChild(link)}
+}
+
+document.addEventListener('click',event=>{
+  const button=event.target?.closest?.('.nav button[data-tab]');
+  if(button?.dataset?.tab)Promise.resolve(ensureFeaturesForTab(button.dataset.tab)).catch(()=>{});
+},true);
 
 fetch('/assets/cloud-v1.1.js?v=1.1.1',{cache:'no-store'})
   .then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.text()})
   .then(code=>{
     code=code.replace("Math.max(0,Math.min(100,Math.round(Number(percent)||0));","Math.max(0,Math.min(100,Math.round(Number(percent)||0)));");
     const s=document.createElement('script');s.textContent=code;document.body.appendChild(s);
-    loadBossManager(loadSteamPicker);
+    installTabBridge();
+    ensureFeaturesForTab(activeTab()).catch(()=>{});
+    if('requestIdleCallback'in window)requestIdleCallback(prefetchFeatures,{timeout:3500});else setTimeout(prefetchFeatures,1200);
   })
   .catch(error=>{
     console.error('Cloudflare auth bootstrap failed',error);
     const el=document.getElementById('mwsLoginError');if(el)el.textContent='Cloudflare 로그인 모듈 로딩 실패: '+(error?.message||String(error));
-    loadBossManager(loadSteamPicker);
+    installTabBridge();ensureFeaturesForTab(activeTab()).catch(()=>{});
   });
 })();
