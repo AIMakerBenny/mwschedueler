@@ -86,9 +86,16 @@ jobs:
           node --check src/cf-v121-boss-media.js
           grep -Fq "url.pathname==='/api/soop/proxy'" src/cf-v121-boss-media.js
           untrusted="$(curl -sS -o /tmp/soop-untrusted.json -w '%{http_code}' "$BASE/api/soop/proxy?url=https%3A%2F%2Fexample.com%2F")"
-          test "$untrusted" = '400'
+          echo "untrusted_status=$untrusted"
           friend_url='https%3A%2F%2Fapi-channel.sooplive.co.kr%2Fv1.1%2Fchannel%2Fmawang0216%2Fhome%2Fsection%2Fbroad'
           friend_status="$(curl -sS --max-time 20 -D /tmp/soop-headers.txt -o /tmp/soop-body.txt -w '%{http_code}' "$BASE/api/soop/proxy?url=$friend_url" || true)"
+          echo "friend_status=$friend_status"
+          echo '--- friend headers ---'
+          cat /tmp/soop-headers.txt || true
+          echo '--- friend body preview ---'
+          head -c 1200 /tmp/soop-body.txt || true
+          echo
+          test "$untrusted" = '400'
           test "$friend_status" != '000'
           test "$friend_status" != '404'
           test "$friend_status" != '400'
