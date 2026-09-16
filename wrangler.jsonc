@@ -9,6 +9,8 @@
     "run_worker_first": [
       "/api/*",
       "/assets/cloud-v5.5.js",
+      "/",
+      "/index.html",
       "/majoku-castle.html"
     ]
   },
