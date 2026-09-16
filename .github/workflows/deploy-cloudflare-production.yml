@@ -64,32 +64,36 @@ jobs:
           session="$(retry_contains "$BASE/api/auth/session" '"authenticated"')"
           SESSION="$session" node -e "const x=JSON.parse(process.env.SESSION); if(typeof x.authenticated!=='boolean') process.exit(1)"
 
-          echo '[2/10] v1.2.3 production loader'
-          retry_contains "$BASE/assets/cloud-v5.5.js?deploy=v123" 'Mawang Scheduler v1.2.3 Cloudflare auth bootstrap' > /tmp/loader.js
+          echo '[2/10] v1.2.4 production loader'
+          retry_contains "$BASE/assets/cloud-v5.5.js?deploy=v124" 'Mawang Scheduler v1.2.4 Cloudflare auth bootstrap' > /tmp/loader.js
           node --check /tmp/loader.js
           grep -Fq 'loadSoopFetchProxy' /tmp/loader.js
-          grep -Fq 'soop-fetch-proxy-v123.js?v=1.2.3' /tmp/loader.js
+          grep -Fq 'soop-fetch-proxy-v123.js?v=1.2.4' /tmp/loader.js
           grep -Fq 'ensureFeaturesForTab' /tmp/loader.js
           grep -Fq "tab==='calendar'" /tmp/loader.js
           grep -Fq "tab==='export'" /tmp/loader.js
           grep -Fq "tab==='gameMajoku'" /tmp/loader.js
           if grep -Fq 'loadBossManager(loadSteamPicker)' /tmp/loader.js; then echo 'Boss manager is still eagerly loaded.' >&2; exit 1; fi
 
-          echo '[3/10] Friend Finder SOOP same-origin bridge'
-          retry_contains "$BASE/assets/soop-fetch-proxy-v123.js?v=1.2.3" '__mwsSoopFetchProxyV123' > /tmp/soop-proxy.js
+          echo '[3/10] Friend Finder legacy SOOP route bridge'
+          retry_contains "$BASE/assets/soop-fetch-proxy-v123.js?v=1.2.4" '__mwsSoopFetchProxyV124' > /tmp/soop-proxy.js
           node --check /tmp/soop-proxy.js
           grep -Fq '/api/soop/proxy' /tmp/soop-proxy.js
+          grep -Fq 'nysxcqlewzucbpoaymbg.supabase.co' /tmp/soop-proxy.js
+          grep -Fq '/functions/v1/soop-proxy' /tmp/soop-proxy.js
           grep -Fq 'sooplive.co.kr' /tmp/soop-proxy.js
           grep -Fq 'afreecatv.com' /tmp/soop-proxy.js
           node --check src/cf-v121-boss-media.js
           grep -Fq "url.pathname==='/api/soop/proxy'" src/cf-v121-boss-media.js
           untrusted="$(curl -sS -o /tmp/soop-untrusted.json -w '%{http_code}' "$BASE/api/soop/proxy?url=https%3A%2F%2Fexample.com%2F")"
           test "$untrusted" = '400'
-          allowed_url='https%3A%2F%2Fst.sooplive.co.kr%2Fapi%2Fget_station_status.php%3FszBjId%3Dmawang0216'
-          allowed="$(curl -sS --max-time 20 -D /tmp/soop-headers.txt -o /tmp/soop-body.txt -w '%{http_code}' "$BASE/api/soop/proxy?url=$allowed_url" || true)"
-          test "$allowed" != '404'
-          test "$allowed" != '400'
+          friend_url='https%3A%2F%2Fapi-channel.sooplive.co.kr%2Fv1.1%2Fchannel%2Fmawang0216%2Fhome%2Fsection%2Fbroad'
+          friend_status="$(curl -sS --max-time 20 -D /tmp/soop-headers.txt -o /tmp/soop-body.txt -w '%{http_code}' "$BASE/api/soop/proxy?url=$friend_url" || true)"
+          test "$friend_status" != '000'
+          test "$friend_status" != '404'
+          test "$friend_status" != '400'
           grep -Fqi 'x-mws-soop-proxy: v1.2.3' /tmp/soop-headers.txt
+          test -s /tmp/soop-body.txt
 
           echo '[4/10] lossless runtime and no startup polling'
           retry_contains "$BASE/assets/perf-runtime.js?v=1.2.2" 'lossless image policy' > /tmp/perf.js
@@ -140,5 +144,6 @@ jobs:
           node --check assets/cloud-v1.1-loader.js
           node --check assets/soop-fetch-proxy-v123.js
           node --check assets/boss-manager-v121.js
+          node --check src/cf-v111-entry.js
 
-          echo 'Live Worker v1.2.3 SOOP Friend Finder proxy, lossless image policy and performance optimizations verified.'
+          echo 'Live Worker v1.2.4 Friend Finder legacy SOOP proxy route and existing optimizations verified.'
