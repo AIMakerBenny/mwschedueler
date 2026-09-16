@@ -1,23 +1,36 @@
-/* Calendar drag layout stability fix v1.1.0
-   Keep the copy tray in normal document flow while dragging so the calendar
-   height never changes and no temporary bottom gap is introduced. */
+/* Calendar drag layout stability fix v1.1.2
+   Keep the copy tray in exactly the same normal-flow geometry while dragging.
+   This neutralizes the fixed-position drag styling from app-core.css. */
 body.calendar-copy-source-dragging #calendar.active .calendar-copy-tray,
 body.calendar-template-dragging #calendar.active .calendar-copy-tray,
 body.calendar-pointer-template-dragging #calendar.active .calendar-copy-tray{
   position:static!important;
+  inset:auto!important;
   left:auto!important;
   right:auto!important;
+  top:auto!important;
   bottom:auto!important;
+  width:auto!important;
   z-index:auto!important;
   margin:14px 0 0!important;
-  min-height:0!important;
+  padding:13px!important;
+  min-height:128px!important;
+  transform:none!important;
   box-shadow:none!important;
   backdrop-filter:none!important;
 }
 
-/* Prevent drag-state styling from changing the calendar section geometry. */
+/* Do not let drag state create artificial space around the calendar section. */
 body.calendar-copy-source-dragging #calendar.active,
 body.calendar-template-dragging #calendar.active,
 body.calendar-pointer-template-dragging #calendar.active{
   padding-bottom:0!important;
+  margin-bottom:0!important;
+}
+
+/* Preserve the normal tray dropzone dimensions while a drag is active. */
+body.calendar-copy-source-dragging #calendar.active .calendar-copy-tray-dropzone,
+body.calendar-template-dragging #calendar.active .calendar-copy-tray-dropzone,
+body.calendar-pointer-template-dragging #calendar.active .calendar-copy-tray-dropzone{
+  min-height:72px!important;
 }
