@@ -111,6 +111,10 @@ function installNav(){
   ].forEach(id=>document.getElementById(id)?.addEventListener('click',()=>setActive('')));
 }
 
-function boot(){installStyle();installNav();installToggle()}
+function removeRecordsRoom(){
+  document.querySelectorAll('.records-wrap,.records-btn').forEach(el=>el.remove());
+}
+
+function boot(){installStyle();installNav();installToggle();removeRecordsRoom()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
