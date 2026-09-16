@@ -1,4 +1,4 @@
-/* Mawang Scheduler v1.1.6 Cloudflare auth bootstrap */
+/* Mawang Scheduler v1.1.7 Cloudflare auth bootstrap */
 (()=>{
   'use strict';
   if(window.__mwsCloudV110Bootstrap)return;
@@ -7,6 +7,11 @@
   const loadCalendarDragFix=()=>{
     if(document.querySelector('link[data-mws-calendar-drag-fix]'))return;
     const link=document.createElement('link');link.rel='stylesheet';link.href='/assets/calendar-drag-layout-fix.css?v=1.1.3';link.dataset.mwsCalendarDragFix='1';document.head.appendChild(link);
+  };
+  const loadTodayPeopleWheel=()=>{
+    if(window.__mwsTodayPeopleWheelV117)return;
+    if(document.querySelector('script[data-mws-today-people-wheel-v117]'))return;
+    const s=document.createElement('script');s.src='/assets/today-people-wheel-v117.js?v=1.1.7';s.async=false;s.dataset.mwsTodayPeopleWheelV117='1';s.onerror=()=>console.error('Today People wheel fix loading failed');document.body.appendChild(s);
   };
   const loadBossManager=()=>{
     if(window.__mwsBossManagerV116)return;
@@ -19,9 +24,9 @@
     const s=document.createElement('script');s.src='/assets/majoku-host-fix-v114.js?v=1.1.6';s.async=false;s.dataset.mwsMajokuHostFixV114='1';s.onerror=()=>console.error('Majoku Castle host fix loading failed');document.body.appendChild(s);
   };
   const loadUiFixes=()=>{
-    if(window.__mwsUiFixesV113){loadMajokuHostFix();return;}
-    if(document.querySelector('script[data-mws-ui-fixes-v113]')){setTimeout(loadMajokuHostFix,800);return;}
-    const s=document.createElement('script');s.src='/assets/ui-fixes-v113.js?v=1.1.5';s.async=false;s.dataset.mwsUiFixesV113='1';s.onload=loadMajokuHostFix;s.onerror=()=>{console.error('MWS UI fixes loading failed');loadMajokuHostFix();};document.body.appendChild(s);
+    if(window.__mwsUiFixesV113){loadTodayPeopleWheel();loadMajokuHostFix();return;}
+    if(document.querySelector('script[data-mws-ui-fixes-v113]')){setTimeout(()=>{loadTodayPeopleWheel();loadMajokuHostFix();},800);return;}
+    const s=document.createElement('script');s.src='/assets/ui-fixes-v113.js?v=1.1.5';s.async=false;s.dataset.mwsUiFixesV113='1';s.onload=()=>{loadTodayPeopleWheel();loadMajokuHostFix();};s.onerror=()=>{console.error('MWS UI fixes loading failed');loadTodayPeopleWheel();loadMajokuHostFix();};document.body.appendChild(s);
   };
   const loadSteamPicker=()=>{
     if(window.__mwsSteamGameV111){loadUiFixes();return;}
@@ -31,6 +36,7 @@
   };
 
   loadCalendarDragFix();
+  loadTodayPeopleWheel();
   loadMajokuHostFix();
 
   fetch('/assets/cloud-v1.1.js?v=1.1.1',{cache:'no-store'})
