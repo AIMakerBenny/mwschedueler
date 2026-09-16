@@ -1,4 +1,4 @@
-/* Mawang Scheduler v1.1.5 - Majoku Castle simplified game sidebar */
+/* Mawang Scheduler v1.1.6 - Majoku Castle simplified game sidebar */
 (()=>{
 'use strict';
 if(window.__mwsMajokuSidebarV115)return;
@@ -18,9 +18,7 @@ const games=[
 
 function installStyle(){
   if(document.getElementById('mwsMajokuSidebarStyleV115'))return;
-  const style=document.createElement('style');
-  style.id='mwsMajokuSidebarStyleV115';
-  style.textContent=`
+  const style=document.createElement('style');style.id='mwsMajokuSidebarStyleV115';style.textContent=`
 .sidebar{position:sticky!important;top:0;height:100vh!important}
 .sidebar .nav.mws-majoku-game-nav{display:flex!important;flex-direction:column!important;gap:5px!important;overflow:auto!important;max-height:calc(100vh - 104px)!important;padding-right:3px!important}
 .sidebar .nav.mws-majoku-game-nav button[data-castle-game-target]{display:block!important;width:100%!important;padding:11px 10px!important;border:1px solid transparent!important;border-radius:10px!important;background:transparent!important;color:var(--muted)!important;text-align:left!important}
@@ -30,72 +28,20 @@ function installStyle(){
 .mws-majoku-sidebar-toggle{display:none!important}
 .sidebar>.logo{padding-right:0!important}
 .records-wrap,.records-btn{display:none!important}
-@media(max-width:760px){
-  .sidebar .nav.mws-majoku-game-nav{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;max-height:none!important}
-  .sidebar .nav.mws-majoku-game-nav button[data-castle-game-target]{text-align:center!important}
-  .mws-majoku-nav-name{font-size:10px}
+@media(max-width:760px){.sidebar .nav.mws-majoku-game-nav{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;max-height:none!important}.sidebar .nav.mws-majoku-game-nav button[data-castle-game-target]{text-align:center!important}.mws-majoku-nav-name{font-size:10px}}
+`;document.head.appendChild(style);
 }
-`;
-  document.head.appendChild(style);
+function ensureBossRaidScript(){
+  if(window.__mwsBossRaidV116||document.querySelector('script[data-mws-boss-raid-v116]'))return;
+  const script=document.createElement('script');script.src='/assets/boss-raid-v116.js?v=1.1.6';script.async=false;script.dataset.mwsBossRaidV116='1';script.onerror=()=>console.error('Boss Raid catalog loading failed');(document.body||document.documentElement).appendChild(script);
 }
-
-function activeGameId(){
-  for(const [id,,sectionId] of games){
-    if(document.getElementById(sectionId)?.classList.contains('active'))return id;
-  }
-  return '';
-}
-
-function setActive(gameId=activeGameId()){
-  document.querySelectorAll('[data-castle-game-target]').forEach(button=>button.classList.toggle('active',button.dataset.castleGameTarget===gameId));
-}
-
-function openGame(gameId){
-  const card=document.querySelector(`.game-card.live[data-game="${CSS.escape(gameId)}"]`);
-  if(card){card.click();requestAnimationFrame(()=>setActive(gameId));return}
-  const item=games.find(row=>row[0]===gameId);
-  if(!item)return;
-  document.querySelectorAll('main .section').forEach(section=>section.classList.remove('active'));
-  document.getElementById(item[2])?.classList.add('active');
-  setActive(gameId);
-}
-
-function installNav(){
-  const nav=document.querySelector('.sidebar .nav');
-  if(!nav)return false;
-  nav.classList.add('mws-majoku-game-nav');
-  const signature='drawing,food,choseong,prediction,omok,bombing,minority,elevator,boss:v115';
-  if(nav.dataset.mwsGameSignature!==signature){
-    nav.dataset.mwsGameSignature=signature;
-    nav.innerHTML=games.map(([id,name])=>`<button type="button" data-castle-game-target="${id}" title="${name}"><span class="mws-majoku-nav-name">${name}</span></button>`).join('');
-    nav.querySelectorAll('[data-castle-game-target]').forEach(button=>button.addEventListener('click',()=>openGame(button.dataset.castleGameTarget)));
-  }
-  setActive();
-  return true;
-}
-
-function removeLegacyToggle(){
-  document.body.classList.remove('mws-majoku-sidebar-collapsed');
-  document.getElementById('mwsMajokuSidebarToggle')?.remove();
-  document.querySelectorAll('.mws-majoku-sidebar-toggle').forEach(node=>node.remove());
-  try{localStorage.removeItem('mwsMajokuSidebarCollapsed')}catch(_){}
-}
-
+function activeGameId(){for(const [id,,sectionId] of games){if(document.getElementById(sectionId)?.classList.contains('active'))return id}return''}
+function setActive(gameId=activeGameId()){document.querySelectorAll('[data-castle-game-target]').forEach(button=>button.classList.toggle('active',button.dataset.castleGameTarget===gameId))}
+function openGame(gameId){const card=document.querySelector(`.game-card.live[data-game="${CSS.escape(gameId)}"]`);if(card){card.click();requestAnimationFrame(()=>setActive(gameId));return}const item=games.find(row=>row[0]===gameId);if(!item)return;document.querySelectorAll('main .section').forEach(section=>section.classList.remove('active'));document.getElementById(item[2])?.classList.add('active');setActive(gameId)}
+function installNav(){const nav=document.querySelector('.sidebar .nav');if(!nav)return false;nav.classList.add('mws-majoku-game-nav');const signature='drawing,food,choseong,prediction,omok,bombing,minority,elevator,boss:v116';if(nav.dataset.mwsGameSignature!==signature){nav.dataset.mwsGameSignature=signature;nav.innerHTML=games.map(([id,name])=>`<button type="button" data-castle-game-target="${id}" title="${name}"><span class="mws-majoku-nav-name">${name}</span></button>`).join('');nav.querySelectorAll('[data-castle-game-target]').forEach(button=>button.addEventListener('click',()=>openGame(button.dataset.castleGameTarget)))}setActive();return true}
+function removeLegacyToggle(){document.body.classList.remove('mws-majoku-sidebar-collapsed');document.getElementById('mwsMajokuSidebarToggle')?.remove();document.querySelectorAll('.mws-majoku-sidebar-toggle').forEach(node=>node.remove());try{localStorage.removeItem('mwsMajokuSidebarCollapsed')}catch(_){}}
 function removeRecordsRoom(){document.querySelectorAll('.records-wrap,.records-btn').forEach(node=>node.remove())}
-
-function sync(){
-  installNav();
-  removeLegacyToggle();
-  removeRecordsRoom();
-  setActive();
-}
-
-function boot(){
-  installStyle();
-  sync();
-  const target=document.body||document.documentElement;
-  if(target)new MutationObserver(()=>requestAnimationFrame(sync)).observe(target,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
-  setInterval(sync,1200);
-}
+function sync(){installNav();removeLegacyToggle();removeRecordsRoom();setActive();ensureBossRaidScript()}
+function boot(){installStyle();sync();const target=document.body||document.documentElement;if(target)new MutationObserver(()=>requestAnimationFrame(sync)).observe(target,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});setInterval(sync,1200)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
