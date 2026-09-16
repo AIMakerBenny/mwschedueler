@@ -1,4 +1,4 @@
-import authWorker from './cf-v111-auth.js';
+import authWorker from './cf-v112-authfix.js';
 
 export default {
   async fetch(request, env, ctx) {
