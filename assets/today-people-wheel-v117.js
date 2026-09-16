@@ -1,20 +1,19 @@
-/* Mawang Scheduler v1.1.8 - keep mouse wheel inside the actual Today People calendar popup */
+/* Mawang Scheduler v1.2.0 - precise Today People popup wheel handling */
 (()=>{
 'use strict';
-if(window.__mwsTodayPeopleWheelV118)return;
-window.__mwsTodayPeopleWheelV118=1;
+if(window.__mwsTodayPeopleWheelV120)return;
+window.__mwsTodayPeopleWheelV120=1;
 
 const TITLE_RE=/오늘\s*함께한\s*사람/;
-let cachedPopup=null;
-let cachedScroller=null;
+let trigger=null;
+let pendingTrigger=null;
 
 function installStyle(){
-  if(document.getElementById('mwsTodayPeopleWheelStyleV118'))return;
+  if(document.getElementById('mwsTodayPeopleWheelStyleV120'))return;
   const style=document.createElement('style');
-  style.id='mwsTodayPeopleWheelStyleV118';
+  style.id='mwsTodayPeopleWheelStyleV120';
   style.textContent=`
-.mws-today-people-wheel-popup-v118,
-.mws-today-people-wheel-scroll-v118{
+#calendarEventPreview.mws-today-people-hover-v115{
   overscroll-behavior:contain!important;
   scrollbar-gutter:stable!important;
 }
@@ -22,81 +21,43 @@ function installStyle(){
   document.head.appendChild(style);
 }
 
-function visible(el){
-  if(!(el instanceof Element))return false;
-  const r=el.getBoundingClientRect();
-  if(r.width<80||r.height<50)return false;
-  const s=getComputedStyle(el);
-  return s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity||1)!==0;
-}
-
-function isTodayPopup(el){
-  if(!visible(el))return false;
-  return TITLE_RE.test(String(el.textContent||''));
-}
-
-function locatePopup(){
-  if(cachedPopup&&cachedPopup.isConnected&&isTodayPopup(cachedPopup))return cachedPopup;
-  cachedPopup=null;
-  cachedScroller=null;
-
-  const selectors='[id*="today" i],[class*="today" i],[class*="popover" i],[class*="preview" i],[class*="popup" i]';
-  let candidates=[...document.querySelectorAll(selectors)].filter(isTodayPopup);
-
-  if(!candidates.length){
-    candidates=[...document.querySelectorAll('div,section,aside')].filter(isTodayPopup);
-  }
-  if(!candidates.length)return null;
-
-  candidates.sort((a,b)=>{
-    const ar=a.getBoundingClientRect(),br=b.getBoundingClientRect();
-    return ar.width*ar.height-br.width*br.height;
-  });
-  cachedPopup=candidates[0];
-  cachedPopup.classList.add('mws-today-people-wheel-popup-v118');
-  return cachedPopup;
-}
-
-function locateScroller(popup){
-  if(!popup)return null;
-  if(cachedScroller&&cachedScroller.isConnected&&popup.contains(cachedScroller))return cachedScroller;
-
-  const nodes=[popup,...popup.querySelectorAll('*')];
-  const scrollables=nodes.filter(el=>{
-    if(!(el instanceof HTMLElement)||!visible(el))return false;
-    if(el.scrollHeight<=el.clientHeight+2)return false;
-    const s=getComputedStyle(el);
-    return /(auto|scroll|overlay)/.test(s.overflowY)||el===popup;
-  });
-
-  scrollables.sort((a,b)=>{
-    const da=(a===popup?0:1),db=(b===popup?0:1);
-    if(da!==db)return da-db;
-    return b.clientHeight-a.clientHeight;
-  });
-
-  cachedScroller=scrollables[0]||popup;
-  if(cachedScroller instanceof HTMLElement){
-    cachedScroller.classList.add('mws-today-people-wheel-scroll-v118');
-    if(cachedScroller.scrollHeight>cachedScroller.clientHeight+2){
-      cachedScroller.style.setProperty('overflow-y','auto','important');
-    }
-  }
-  return cachedScroller;
+function visiblePopup(){
+  const popup=document.getElementById('calendarEventPreview');
+  if(!popup||!popup.classList.contains('open'))return null;
+  if(!TITLE_RE.test(String(popup.textContent||'')))return null;
+  const rect=popup.getBoundingClientRect();
+  if(rect.width<80||rect.height<50)return null;
+  return popup;
 }
 
 function pointInside(el,x,y){
-  if(!el)return false;
+  if(!el?.isConnected)return false;
   const r=el.getBoundingClientRect();
   return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom;
 }
 
-function shouldCapture(event,popup){
+function chooseTrigger(start){
+  if(!(start instanceof Element))return null;
+  const calendar=start.closest('#calendar');
+  if(!calendar)return null;
+  let node=start,chosen=start;
+  while(node&&node!==calendar){
+    const r=node.getBoundingClientRect();
+    if(r.width>=70&&r.height>=18&&r.height<=64)chosen=node;
+    if(node.classList?.contains('day')||node.hasAttribute?.('data-date'))break;
+    node=node.parentElement;
+  }
+  return chosen;
+}
+
+function rememberPotentialTrigger(event){
   const target=event.target instanceof Element?event.target:null;
-  if(target&&popup.contains(target))return true;
-  if(pointInside(popup,event.clientX,event.clientY))return true;
-  if(target&&target.closest('#calendar,#calendarGrid,.day'))return true;
-  return false;
+  if(!target?.closest('#calendar'))return;
+  pendingTrigger=chooseTrigger(target);
+  requestAnimationFrame(()=>{
+    const popup=visiblePopup();
+    if(popup&&pendingTrigger&&!popup.contains(pendingTrigger))trigger=pendingTrigger;
+  });
 }
 
 function normalizedDelta(event,scroller){
@@ -107,30 +68,33 @@ function normalizedDelta(event,scroller){
 }
 
 function onWheel(event){
-  const popup=locatePopup();
-  if(!popup||!shouldCapture(event,popup))return;
-  const scroller=locateScroller(popup);
-  if(!scroller)return;
+  const popup=visiblePopup();
+  if(!popup){trigger=null;return}
 
-  const delta=normalizedDelta(event,scroller);
+  const overPopup=pointInside(popup,event.clientX,event.clientY);
+  const overTrigger=trigger&&pointInside(trigger,event.clientX,event.clientY);
+  if(!overPopup&&!overTrigger)return;
+
+  const delta=normalizedDelta(event,popup);
   if(!delta)return;
-
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
-  scroller.scrollTop+=delta;
+  popup.scrollTop+=delta;
 }
 
-function invalidate(){
-  if(cachedPopup&&!cachedPopup.isConnected){cachedPopup=null;cachedScroller=null;return}
-  if(cachedPopup&&!isTodayPopup(cachedPopup)){cachedPopup=null;cachedScroller=null}
+function onPointerMove(event){
+  const popup=visiblePopup();
+  if(!popup){trigger=null;rememberPotentialTrigger(event);return}
+  if(pointInside(popup,event.clientX,event.clientY))return;
+  if(!trigger||!pointInside(trigger,event.clientX,event.clientY))rememberPotentialTrigger(event);
 }
 
 function boot(){
   installStyle();
+  document.addEventListener('mousemove',onPointerMove,{capture:true,passive:true});
+  document.addEventListener('mouseover',rememberPotentialTrigger,{capture:true,passive:true});
   document.addEventListener('wheel',onWheel,{capture:true,passive:false});
-  const root=document.body||document.documentElement;
-  if(root)new MutationObserver(()=>requestAnimationFrame(invalidate)).observe(root,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style','aria-hidden']});
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
