@@ -58,9 +58,18 @@ jobs:
 
           loader="$(curl -fsS --max-time 15 "$BASE/assets/cloud-v5.5.js")"
           printf '%s' "$loader" | grep -q 'Mawang Scheduler v1.1 Cloudflare auth bootstrap'
+          printf '%s' "$loader" | grep -q 'steam-game-v111.js'
 
           curl -fsS --max-time 15 "$BASE/assets/cloud-v1.1.js?v=1.1.1" > /tmp/cloud-v11.js
           node -e "const fs=require('fs');let s=fs.readFileSync('/tmp/cloud-v11.js','utf8');s=s.replace('Math.max(0,Math.min(100,Math.round(Number(percent)||0));','Math.max(0,Math.min(100,Math.round(Number(percent)||0)));');fs.writeFileSync('/tmp/cloud-v11-fixed.js',s)"
           node --check /tmp/cloud-v11-fixed.js
 
-          echo 'Live Worker, D1 auth, login loader, and browser runtime syntax verified.'
+          curl -fsS --max-time 15 "$BASE/assets/steam-game-v111.js?v=1.1.1" > /tmp/steam-v111.js
+          grep -q '__mwsSteamGameV111' /tmp/steam-v111.js
+          node --check /tmp/steam-v111.js
+
+          home="$(curl -fsS --max-time 15 "$BASE/")"
+          printf '%s' "$home" | grep -q 'steam-game-v111.js'
+          printf '%s' "$home" | grep -q 'data-mws-steam-v111'
+
+          echo 'Live Worker, D1 auth, login runtime, and Steam picker verified.'
