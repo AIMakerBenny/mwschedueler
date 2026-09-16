@@ -1,6 +1,6 @@
 import authWorker from './cf-v112-authfix.js';
 
-const STEAM_SCRIPT='<script src="/assets/steam-game-v111.js?v=1.1.1" data-mws-steam-v111="1"></script>';
+const STEAM_SCRIPT='<script src="/assets/steam-game-v111.js?v=1.1.2" data-mws-steam-v111="1"></script>';
 
 export default {
   async fetch(request, env, ctx) {
@@ -23,7 +23,7 @@ export default {
     const headers = new Headers(response.headers);
     headers.delete('content-length');
     headers.set('cache-control','no-store');
-    headers.set('x-mws-steam-picker','v1.1.1');
+    headers.set('x-mws-steam-picker','v1.1.2');
     return new Response(html,{status:response.status,statusText:response.statusText,headers});
   },
 };
