@@ -1,4 +1,4 @@
-/* Mawang Scheduler v1.1.7 Cloudflare auth bootstrap */
+/* Mawang Scheduler v1.1.8 Cloudflare auth bootstrap */
 (()=>{
   'use strict';
   if(window.__mwsCloudV110Bootstrap)return;
@@ -9,9 +9,9 @@
     const link=document.createElement('link');link.rel='stylesheet';link.href='/assets/calendar-drag-layout-fix.css?v=1.1.3';link.dataset.mwsCalendarDragFix='1';document.head.appendChild(link);
   };
   const loadTodayPeopleWheel=()=>{
-    if(window.__mwsTodayPeopleWheelV117)return;
-    if(document.querySelector('script[data-mws-today-people-wheel-v117]'))return;
-    const s=document.createElement('script');s.src='/assets/today-people-wheel-v117.js?v=1.1.7';s.async=false;s.dataset.mwsTodayPeopleWheelV117='1';s.onerror=()=>console.error('Today People wheel fix loading failed');document.body.appendChild(s);
+    if(window.__mwsTodayPeopleWheelV118)return;
+    if(document.querySelector('script[data-mws-today-people-wheel-v118]'))return;
+    const s=document.createElement('script');s.src='/assets/today-people-wheel-v117.js?v=1.1.8';s.async=false;s.dataset.mwsTodayPeopleWheelV118='1';s.onerror=()=>console.error('Today People wheel fix loading failed');document.body.appendChild(s);
   };
   const loadBossManager=()=>{
     if(window.__mwsBossManagerV116)return;
