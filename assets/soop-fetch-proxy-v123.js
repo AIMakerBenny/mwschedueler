@@ -1,24 +1,47 @@
-/* Mawang Scheduler v1.2.3 - same-origin SOOP fetch bridge */
+/* Mawang Scheduler v1.2.4 - same-origin SOOP fetch bridge */
 (()=>{
 'use strict';
-if(window.__mwsSoopFetchProxyV123)return;
-window.__mwsSoopFetchProxyV123=true;
+if(window.__mwsSoopFetchProxyV124)return;
+window.__mwsSoopFetchProxyV124=true;
 
 const baseFetch=window.fetch.bind(window);
 const allowedSuffixes=['sooplive.com','sooplive.co.kr','afreecatv.com'];
+const legacyProxyHost='nysxcqlewzucbpoaymbg.supabase.co';
+const legacyProxyPath='/functions/v1/soop-proxy';
+
 const allowedHost=host=>{
   const value=String(host||'').toLowerCase().replace(/\.$/,'');
   return allowedSuffixes.some(suffix=>value===suffix||value.endsWith(`.${suffix}`));
 };
-const shouldProxy=url=>url.protocol==='https:'&&url.origin!==location.origin&&allowedHost(url.hostname);
+
+function directSoopTarget(url){
+  if(url?.protocol==='https:'&&allowedHost(url.hostname))return url;
+  return null;
+}
+
+function legacySoopTarget(url){
+  if(!url||url.protocol!=='https:'||url.hostname.toLowerCase()!==legacyProxyHost||url.pathname!==legacyProxyPath)return null;
+  const raw=url.searchParams.get('url');
+  if(!raw)return null;
+  try{
+    const target=new URL(raw);
+    return directSoopTarget(target);
+  }catch(_){return null}
+}
+
+function resolveSoopTarget(url){
+  return directSoopTarget(url)||legacySoopTarget(url);
+}
 
 window.fetch=async function(input,init){
-  let target;
+  let requestUrl;
   try{
     const raw=typeof input==='string'||input instanceof URL?String(input):String(input?.url||'');
-    target=new URL(raw,location.href);
+    requestUrl=new URL(raw,location.href);
   }catch(_){return baseFetch(input,init)}
-  if(!shouldProxy(target))return baseFetch(input,init);
+
+  const target=resolveSoopTarget(requestUrl);
+  if(!target)return baseFetch(input,init);
 
   let source;
   try{source=new Request(input,init)}catch(_){return baseFetch(input,init)}
