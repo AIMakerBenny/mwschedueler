@@ -28,6 +28,9 @@
 /assets/cloud-v5.5.js
   Cache-Control: no-cache, must-revalidate
 
+/assets/cloud-v1.1-loader.js
+  Cache-Control: no-cache, must-revalidate
+
 /assets/test-v5.5.js
   Cache-Control: no-cache, must-revalidate
 
@@ -35,4 +38,19 @@
   Cache-Control: no-cache, must-revalidate
 
 /assets/steam-game-v110.js
+  Cache-Control: no-cache, must-revalidate
+
+/assets/steam-game-v111.js
+  Cache-Control: no-cache, must-revalidate
+
+/assets/ui-fixes-v113.js
+  Cache-Control: no-cache, must-revalidate
+
+/assets/calendar-drag-layout-fix.css
+  Cache-Control: no-cache, must-revalidate
+
+/assets/majoku-host-fix-v114.js
+  Cache-Control: no-cache, must-revalidate
+
+/assets/majoku-sidebar-v113.js
   Cache-Control: no-cache, must-revalidate
