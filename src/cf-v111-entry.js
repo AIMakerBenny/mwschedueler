@@ -6,7 +6,9 @@ const UI_FIX_SCRIPT='<script src="/assets/ui-fixes-v113.js?v=1.1.5" data-mws-ui-
 const TODAY_PEOPLE_WHEEL_SCRIPT='<script src="/assets/today-people-wheel-v117.js?v=1.1.8" data-mws-today-people-wheel-v118="1"></script>';
 const MAJOKU_SIDEBAR_SCRIPT='<script src="/assets/majoku-sidebar-v113.js?v=1.1.6" data-mws-majoku-sidebar="1"></script>';
 const BOSS_MANAGER_SCRIPT='<script src="/assets/boss-manager-v116.js?v=1.1.6" data-mws-boss-manager-v116="1"></script>';
+const BOSS_TOOLS_SCRIPT='<script src="/assets/boss-tools-v119.js?v=1.1.9" data-mws-boss-tools-v119="1"></script>';
 const BOSS_RAID_SCRIPT='<script src="/assets/boss-raid-v116.js?v=1.1.6" data-mws-boss-raid-v116="1"></script>';
+const BOSS_RAID_FIX_SCRIPT='<script src="/assets/boss-raid-fix-v119.js?v=1.1.9" data-mws-boss-raid-fix-v119="1"></script>';
 
 function htmlResponse(response,html,extraHeaders={}){
   const headers=new Headers(response.headers);headers.delete('content-length');headers.set('cache-control','no-store');for(const [key,value] of Object.entries(extraHeaders))headers.set(key,value);return new Response(html,{status:response.status,statusText:response.statusText,headers});
@@ -26,8 +28,9 @@ export default {
       let html=await response.text();
       html=html.replace(/<script\s+src=["']\/assets\/majoku-sidebar-v11\d\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,'');
       html=html.replace(/<script\s+src=["']\/assets\/boss-raid-v116\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,'');
-      html=appendBeforeBody(html,`${MAJOKU_SIDEBAR_SCRIPT}\n${BOSS_RAID_SCRIPT}`);
-      return htmlResponse(response,html,{'x-mws-majoku-sidebar':'v1.1.6','x-mws-boss-raid':'v1.1.6'});
+      html=html.replace(/<script\s+src=["']\/assets\/boss-raid-fix-v119\.js(?:\?[^"']*)?["'][^>]*><\/script>/gi,'');
+      html=appendBeforeBody(html,`${MAJOKU_SIDEBAR_SCRIPT}\n${BOSS_RAID_SCRIPT}\n${BOSS_RAID_FIX_SCRIPT}`);
+      return htmlResponse(response,html,{'x-mws-majoku-sidebar':'v1.1.6','x-mws-boss-raid':'v1.1.9'});
     }
 
     if (url.pathname !== '/' && url.pathname !== '/index.html') return response;
@@ -36,7 +39,8 @@ export default {
     if (!html.includes('steam-game-v111.js')) html=appendBeforeBody(html,`${STEAM_SCRIPT}\n${UI_FIX_SCRIPT}`);else if(!html.includes('ui-fixes-v113.js')) html=appendBeforeBody(html,UI_FIX_SCRIPT);
     if(!html.includes('today-people-wheel-v117.js'))html=appendBeforeBody(html,TODAY_PEOPLE_WHEEL_SCRIPT);
     if(!html.includes('boss-manager-v116.js'))html=appendBeforeBody(html,BOSS_MANAGER_SCRIPT);
+    if(!html.includes('boss-tools-v119.js'))html=appendBeforeBody(html,BOSS_TOOLS_SCRIPT);
     if (!html.includes('calendar-drag-layout-fix.css')) html=html.includes('</head>')?html.replace('</head>',`${CALENDAR_DRAG_FIX}\n</head>`):`${CALENDAR_DRAG_FIX}\n${html}`;
-    return htmlResponse(response,html,{'x-mws-steam-picker':'v1.1.3','x-mws-calendar-drag-fix':'v1.1.3','x-mws-ui-fixes':'v1.1.5','x-mws-today-people-wheel':'v1.1.8','x-mws-boss-manager':'v1.1.6'});
+    return htmlResponse(response,html,{'x-mws-steam-picker':'v1.1.3','x-mws-calendar-drag-fix':'v1.1.3','x-mws-ui-fixes':'v1.1.5','x-mws-today-people-wheel':'v1.1.8','x-mws-boss-manager':'v1.1.9'});
   },
 };
