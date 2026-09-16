@@ -1,4 +1,4 @@
-/* Mawang Scheduler v1.1.4 Cloudflare auth bootstrap */
+/* Mawang Scheduler v1.1.5 Cloudflare auth bootstrap */
 (()=>{
   'use strict';
   if(window.__mwsCloudV110Bootstrap)return;
@@ -17,7 +17,7 @@
     if(window.__mwsMajokuHostFixV114)return;
     if(document.querySelector('script[data-mws-majoku-host-fix-v114]'))return;
     const s=document.createElement('script');
-    s.src='/assets/majoku-host-fix-v114.js?v=1.1.4';
+    s.src='/assets/majoku-host-fix-v114.js?v=1.1.5';
     s.async=false;
     s.dataset.mwsMajokuHostFixV114='1';
     s.onerror=()=>console.error('Majoku Castle host fix loading failed');
@@ -31,7 +31,7 @@
       return;
     }
     const s=document.createElement('script');
-    s.src='/assets/ui-fixes-v113.js?v=1.1.3';
+    s.src='/assets/ui-fixes-v113.js?v=1.1.5';
     s.async=false;
     s.dataset.mwsUiFixesV113='1';
     s.onload=loadMajokuHostFix;
