@@ -66,8 +66,11 @@ jobs:
           echo "$session"
           SESSION="$session" node -e "const x=JSON.parse(process.env.SESSION); if(typeof x.authenticated!=='boolean') process.exit(1)"
 
-          home="$(retry_contains "$BASE/" 'assets/cloud-v5.5.js')"
-          printf '%s' "$home" | grep -Fq 'assets/cloud-v5.5.js'
+          home="$(retry_contains "$BASE/?deploy=steam-v111" 'assets/online-v5-loader.js')"
+          printf '%s' "$home" | grep -Fq 'assets/online-v5-loader.js'
+
+          online="$(retry_contains "$BASE/assets/online-v5-loader.js?deploy=steam-v111" 'assets/cloud-v5.5.js')"
+          printf '%s' "$online" | grep -Fq 'assets/cloud-v5.5.js'
 
           loader="$(retry_contains "$BASE/assets/cloud-v5.5.js?deploy=steam-v111" 'steam-game-v111.js')"
           printf '%s' "$loader" | grep -Fq 'Mawang Scheduler v1.1 Cloudflare auth bootstrap'
@@ -82,4 +85,4 @@ jobs:
           grep -Fq '.mini-event[data-evid]' /tmp/steam-v111.js
           grep -Fq 'mws-steam-slot-v111' /tmp/steam-v111.js
 
-          echo 'Live Worker, D1 auth, root loader, and Steam picker verified.'
+          echo 'Live Worker, D1 auth, online loader chain, and Steam picker verified.'
