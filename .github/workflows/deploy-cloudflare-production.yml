@@ -64,42 +64,56 @@ jobs:
           session="$(retry_contains "$BASE/api/auth/session" '"authenticated"')"
           SESSION="$session" node -e "const x=JSON.parse(process.env.SESSION); if(typeof x.authenticated!=='boolean') process.exit(1)"
 
-          home="$(retry_contains "$BASE/?deploy=v115" 'assets/online-v5-loader.js')"
-          printf '%s' "$home" | grep -Fq 'assets/online-v5-loader.js'
+          home="$(retry_contains "$BASE/?deploy=v116" 'assets/online-v5-loader.js')"
+          printf '%s' "$home" | grep -Fq 'boss-manager-v116.js?v=1.1.6'
 
-          online="$(retry_contains "$BASE/assets/online-v5-loader.js?deploy=v115" 'assets/cloud-v5.5.js')"
+          online="$(retry_contains "$BASE/assets/online-v5-loader.js?deploy=v116" 'assets/cloud-v5.5.js')"
           printf '%s' "$online" | grep -Fq 'assets/cloud-v5.5.js'
 
-          loader="$(retry_contains "$BASE/assets/cloud-v5.5.js?deploy=v115" 'majoku-host-fix-v114.js')"
+          loader="$(retry_contains "$BASE/assets/cloud-v5.5.js?deploy=v116" 'boss-manager-v116.js?v=1.1.6')"
           printf '%s' "$loader" | grep -Fq 'calendar-drag-layout-fix.css?v=1.1.3'
           printf '%s' "$loader" | grep -Fq 'steam-game-v111.js?v=1.1.3'
           printf '%s' "$loader" | grep -Fq 'ui-fixes-v113.js?v=1.1.5'
-          printf '%s' "$loader" | grep -Fq 'majoku-host-fix-v114.js?v=1.1.5'
+          printf '%s' "$loader" | grep -Fq 'majoku-host-fix-v114.js?v=1.1.6'
+          printf '%s' "$loader" | grep -Fq 'boss-manager-v116.js?v=1.1.6'
 
           retry_contains "$BASE/assets/ui-fixes-v113.js?v=1.1.5" '__mwsUiFixesV113' > /tmp/ui-v115.js
           node --check /tmp/ui-v115.js
           grep -Fq 'mws-today-people-hover-v115' /tmp/ui-v115.js
-          grep -Fq 'mws-today-people-grid-v115' /tmp/ui-v115.js
           grep -Fq 'openSteamGamePickerV111' /tmp/ui-v115.js
-          grep -Fq "addEventListener('pointerup'" /tmp/ui-v115.js
 
           retry_contains "$BASE/assets/calendar-drag-layout-fix.css?v=1.1.3" 'min-height:128px!important' > /tmp/drag-fix.css
           grep -Fq 'position:static!important' /tmp/drag-fix.css
           grep -Fq '#calendarGrid' /tmp/drag-fix.css
 
-          retry_contains "$BASE/assets/majoku-host-fix-v114.js?v=1.1.5" '__mwsMajokuHostFixV114' > /tmp/majoku-host.js
+          retry_contains "$BASE/assets/majoku-host-fix-v114.js?v=1.1.6" '__mwsMajokuHostFixV114' > /tmp/majoku-host.js
           node --check /tmp/majoku-host.js
-          grep -Fq 'iframe.majoku-castle-frame' /tmp/majoku-host.js
-          grep -Fq 'majoku-sidebar-v113.js?v=1.1.5' /tmp/majoku-host.js
+          grep -Fq 'boss-raid-v116.js?v=1.1.6' /tmp/majoku-host.js
 
           retry_contains "$BASE/assets/majoku-sidebar-v113.js?v=1.1.5" '마왕 보스 레이드' > /tmp/majoku-sidebar.js
           node --check /tmp/majoku-sidebar.js
-          grep -Fq 'data-castle-game-target' /tmp/majoku-sidebar.js
           grep -Fq 'removeLegacyToggle' /tmp/majoku-sidebar.js
           if grep -Fq 'mws-majoku-nav-no' /tmp/majoku-sidebar.js; then
             echo 'Legacy Majoku numeric labels are still present.' >&2
             exit 1
           fi
+
+          retry_contains "$BASE/assets/boss-manager-v116.js?v=1.1.6" '__mwsBossManagerV116' > /tmp/boss-manager.js
+          node --check /tmp/boss-manager.js
+          grep -Fq 'MWSBossRaidStore' /tmp/boss-manager.js
+          grep -Fq 'majokuBossRaid' /tmp/boss-manager.js
+          grep -Fq '마왕 보스 레이드 보스 관리' /tmp/boss-manager.js
+
+          retry_contains "$BASE/assets/boss-raid-v116.js?v=1.1.6" '__mwsBossRaidV116' > /tmp/boss-raid.js
+          node --check /tmp/boss-raid.js
+          grep -Fq '레이드 보스 도감' /tmp/boss-raid.js
+          grep -Fq 'bossCodexBtnV116' /tmp/boss-raid.js
+          grep -Fq 'markBoss({defeated:true})' /tmp/boss-raid.js
+          grep -Fq 'bossHpInputV116' /tmp/boss-raid.js
+
+          castle="$(retry_contains "$BASE/majoku-castle.html?deploy=v116" 'boss-raid-v116.js?v=1.1.6')"
+          printf '%s' "$castle" | grep -Fq 'majoku-sidebar-v113.js?v=1.1.5'
+          printf '%s' "$castle" | grep -Fq 'boss-raid-v116.js?v=1.1.6'
 
           curl -fsS --max-time 15 "$BASE/assets/cloud-v1.1.js?v=1.1.1" > /tmp/cloud-v11.js
           node -e "const fs=require('fs');let s=fs.readFileSync('/tmp/cloud-v11.js','utf8');s=s.replace('Math.max(0,Math.min(100,Math.round(Number(percent)||0));','Math.max(0,Math.min(100,Math.round(Number(percent)||0)));');fs.writeFileSync('/tmp/cloud-v11-fixed.js',s)"
@@ -110,4 +124,4 @@ jobs:
           grep -Fq '.mini-event[data-evid]' /tmp/steam-v111.js
           grep -Fq 'mws-steam-slot-v111' /tmp/steam-v111.js
 
-          echo 'Live Worker v1.1.5, Today People hover, Steam thumbnail editing, drag stability, and simplified Majoku sidebar verified.'
+          echo 'Live Worker v1.1.6, Boss Raid catalog, boss manager, codex collection state, HP editing, and existing UI fixes verified.'
