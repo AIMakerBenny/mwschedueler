@@ -36,4 +36,26 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
 
-# Production deploy trigger after Cloudflare secrets were configured.
+      - name: Verify live Worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://mawang-scheduler.majoku.workers.dev'
+          health=''
+          for i in {1..12}; do
+            if health="$(curl -fsS --max-time 15 "$BASE/api/health")"; then
+              break
+            fi
+            sleep 5
+          done
+          test -n "$health"
+          echo "$health"
+          HEALTH="$health" node -e "const x=JSON.parse(process.env.HEALTH); if(!x.ok || x.supabase!==false || !String(x.backend||'').includes('D1')) process.exit(1)"
+
+          session="$(curl -fsS --max-time 15 "$BASE/api/auth/session")"
+          echo "$session"
+          SESSION="$session" node -e "const x=JSON.parse(process.env.SESSION); if(typeof x.authenticated!=='boolean') process.exit(1)"
+
+          loader="$(curl -fsS --max-time 15 "$BASE/assets/cloud-v5.5.js")"
+          printf '%s' "$loader" | grep -q 'Mawang Scheduler v1.1 Cloudflare auth bootstrap'
+          echo 'Live Worker health, D1 auth endpoint, and Cloudflare-only login loader verified.'
