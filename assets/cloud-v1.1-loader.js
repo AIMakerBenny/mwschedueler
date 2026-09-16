@@ -1,4 +1,4 @@
-/* Mawang Scheduler v1.1.3 Cloudflare auth bootstrap */
+/* Mawang Scheduler v1.1.4 Cloudflare auth bootstrap */
 (()=>{
   'use strict';
   if(window.__mwsCloudV110Bootstrap)return;
@@ -8,19 +8,34 @@
     if(document.querySelector('link[data-mws-calendar-drag-fix]'))return;
     const link=document.createElement('link');
     link.rel='stylesheet';
-    link.href='/assets/calendar-drag-layout-fix.css?v=1.1.2';
+    link.href='/assets/calendar-drag-layout-fix.css?v=1.1.3';
     link.dataset.mwsCalendarDragFix='1';
     document.head.appendChild(link);
   };
 
+  const loadMajokuHostFix=()=>{
+    if(window.__mwsMajokuHostFixV114)return;
+    if(document.querySelector('script[data-mws-majoku-host-fix-v114]'))return;
+    const s=document.createElement('script');
+    s.src='/assets/majoku-host-fix-v114.js?v=1.1.4';
+    s.async=false;
+    s.dataset.mwsMajokuHostFixV114='1';
+    s.onerror=()=>console.error('Majoku Castle host fix loading failed');
+    document.body.appendChild(s);
+  };
+
   const loadUiFixes=()=>{
-    if(window.__mwsUiFixesV113)return;
-    if(document.querySelector('script[data-mws-ui-fixes-v113]'))return;
+    if(window.__mwsUiFixesV113){loadMajokuHostFix();return;}
+    if(document.querySelector('script[data-mws-ui-fixes-v113]')){
+      setTimeout(loadMajokuHostFix,800);
+      return;
+    }
     const s=document.createElement('script');
     s.src='/assets/ui-fixes-v113.js?v=1.1.3';
     s.async=false;
     s.dataset.mwsUiFixesV113='1';
-    s.onerror=()=>console.error('MWS UI fixes loading failed');
+    s.onload=loadMajokuHostFix;
+    s.onerror=()=>{console.error('MWS UI fixes loading failed');loadMajokuHostFix();};
     document.body.appendChild(s);
   };
 
@@ -42,6 +57,7 @@
   };
 
   loadCalendarDragFix();
+  loadMajokuHostFix();
 
   fetch('/assets/cloud-v1.1.js?v=1.1.1',{cache:'no-store'})
     .then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.text()})
