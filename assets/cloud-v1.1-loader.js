@@ -1,8 +1,8 @@
-/* Mawang Scheduler v1.2.2 Cloudflare auth bootstrap */
+/* Mawang Scheduler v1.2.3 Cloudflare auth bootstrap */
 (()=>{
 'use strict';
-if(window.__mwsCloudV122Bootstrap)return;
-window.__mwsCloudV122Bootstrap=true;
+if(window.__mwsCloudV123Bootstrap)return;
+window.__mwsCloudV123Bootstrap=true;
 
 const loaded=new Map();
 const loadScript=(key,src,flag)=>{
@@ -10,8 +10,8 @@ const loadScript=(key,src,flag)=>{
   if(loaded.has(key))return loaded.get(key);
   const promise=new Promise(resolve=>{
     const existing=document.querySelector(`script[data-mws-feature="${key}"]`);
-    if(existing){existing.addEventListener('load',()=>resolve(),{once:true});existing.addEventListener('error',()=>resolve(),{once:true});return}
-    const s=document.createElement('script');s.src=src;s.async=false;s.dataset.mwsFeature=key;s.onload=()=>resolve();s.onerror=()=>{console.error(`${key} loading failed`);resolve()};document.body.appendChild(s);
+    if(existing){if(existing.dataset.mwsLoaded==='1'){resolve();return}existing.addEventListener('load',()=>resolve(),{once:true});existing.addEventListener('error',()=>resolve(),{once:true});return}
+    const s=document.createElement('script');s.src=src;s.async=false;s.dataset.mwsFeature=key;s.onload=()=>{s.dataset.mwsLoaded='1';resolve()};s.onerror=()=>{console.error(`${key} loading failed`);resolve()};document.body.appendChild(s);
   });
   loaded.set(key,promise);return promise;
 };
@@ -20,6 +20,7 @@ const loadStyle=(key,href)=>{
   const link=document.createElement('link');link.rel='stylesheet';link.href=href;link.dataset.mwsFeatureStyle=key;document.head.appendChild(link);
 };
 
+const loadSoopFetchProxy=()=>loadScript('soop-fetch-proxy','/assets/soop-fetch-proxy-v123.js?v=1.2.3','__mwsSoopFetchProxyV123');
 const loadTodayPeopleWheel=()=>loadScript('today-people-wheel','/assets/today-people-wheel-v117.js?v=1.2.0','__mwsTodayPeopleWheelV120');
 const loadUiFixes=()=>loadScript('ui-fixes','/assets/ui-fixes-v121.js?v=1.2.1','__mwsUiFixesV121');
 const loadSteamPicker=()=>loadScript('steam-picker','/assets/steam-game-v111.js?v=1.1.3','__mwsSteamGameV111');
@@ -62,7 +63,8 @@ document.addEventListener('click',event=>{
   if(button?.dataset?.tab)Promise.resolve(ensureFeaturesForTab(button.dataset.tab)).catch(()=>{});
 },true);
 
-fetch('/assets/cloud-v1.1.js?v=1.1.1',{cache:'no-store'})
+loadSoopFetchProxy()
+  .then(()=>fetch('/assets/cloud-v1.1.js?v=1.1.1',{cache:'no-store'}))
   .then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.text()})
   .then(code=>{
     code=code.replace("Math.max(0,Math.min(100,Math.round(Number(percent)||0));","Math.max(0,Math.min(100,Math.round(Number(percent)||0)));");
