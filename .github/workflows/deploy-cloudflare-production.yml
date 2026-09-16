@@ -58,22 +58,40 @@ jobs:
             return 1
           }
 
-          echo '[1/9] health and auth'
+          echo '[1/10] health and auth'
           health="$(retry_contains "$BASE/api/health" '"ok":true')"
           HEALTH="$health" node -e "const x=JSON.parse(process.env.HEALTH); if(!x.ok || x.supabase!==false || !String(x.backend||'').includes('D1')) process.exit(1)"
           session="$(retry_contains "$BASE/api/auth/session" '"authenticated"')"
           SESSION="$session" node -e "const x=JSON.parse(process.env.SESSION); if(typeof x.authenticated!=='boolean') process.exit(1)"
 
-          echo '[2/9] v1.2.2 production loader'
-          retry_contains "$BASE/assets/cloud-v5.5.js?deploy=v122" 'Mawang Scheduler v1.2.2 Cloudflare auth bootstrap' > /tmp/loader.js
+          echo '[2/10] v1.2.3 production loader'
+          retry_contains "$BASE/assets/cloud-v5.5.js?deploy=v123" 'Mawang Scheduler v1.2.3 Cloudflare auth bootstrap' > /tmp/loader.js
           node --check /tmp/loader.js
+          grep -Fq 'loadSoopFetchProxy' /tmp/loader.js
+          grep -Fq 'soop-fetch-proxy-v123.js?v=1.2.3' /tmp/loader.js
           grep -Fq 'ensureFeaturesForTab' /tmp/loader.js
           grep -Fq "tab==='calendar'" /tmp/loader.js
           grep -Fq "tab==='export'" /tmp/loader.js
           grep -Fq "tab==='gameMajoku'" /tmp/loader.js
           if grep -Fq 'loadBossManager(loadSteamPicker)' /tmp/loader.js; then echo 'Boss manager is still eagerly loaded.' >&2; exit 1; fi
 
-          echo '[3/9] lossless runtime and no startup polling'
+          echo '[3/10] Friend Finder SOOP same-origin bridge'
+          retry_contains "$BASE/assets/soop-fetch-proxy-v123.js?v=1.2.3" '__mwsSoopFetchProxyV123' > /tmp/soop-proxy.js
+          node --check /tmp/soop-proxy.js
+          grep -Fq '/api/soop/proxy' /tmp/soop-proxy.js
+          grep -Fq 'sooplive.co.kr' /tmp/soop-proxy.js
+          grep -Fq 'afreecatv.com' /tmp/soop-proxy.js
+          node --check src/cf-v121-boss-media.js
+          grep -Fq "url.pathname==='/api/soop/proxy'" src/cf-v121-boss-media.js
+          untrusted="$(curl -sS -o /tmp/soop-untrusted.json -w '%{http_code}' "$BASE/api/soop/proxy?url=https%3A%2F%2Fexample.com%2F")"
+          test "$untrusted" = '400'
+          allowed_url='https%3A%2F%2Fst.sooplive.co.kr%2Fapi%2Fget_station_status.php%3FszBjId%3Dmawang0216'
+          allowed="$(curl -sS --max-time 20 -D /tmp/soop-headers.txt -o /tmp/soop-body.txt -w '%{http_code}' "$BASE/api/soop/proxy?url=$allowed_url" || true)"
+          test "$allowed" != '404'
+          test "$allowed" != '400'
+          grep -Fqi 'x-mws-soop-proxy: v1.2.3' /tmp/soop-headers.txt
+
+          echo '[4/10] lossless runtime and no startup polling'
           retry_contains "$BASE/assets/perf-runtime.js?v=1.2.2" 'lossless image policy' > /tmp/perf.js
           node --check /tmp/perf.js
           grep -Fq 'preserveOriginalImage' /tmp/perf.js
@@ -82,13 +100,13 @@ jobs:
           if grep -Fq 'versionTimer=setInterval' /tmp/perf.js; then echo 'Legacy startup version polling remains.' >&2; exit 1; fi
           if grep -Fq "toDataURL('image/webp'" /tmp/perf.js; then echo 'Runtime must not recompress images.' >&2; exit 1; fi
 
-          echo '[4/9] event-driven performance base'
+          echo '[5/10] event-driven performance base'
           retry_contains "$BASE/assets/perf-runtime-base.js?v=1.2.2" 'scheduleImageTune' > /tmp/perf-base.js
           node --check /tmp/perf-base.js
           grep -Fq 'content-visibility:auto' /tmp/perf-base.js
           if grep -Fq 'new MutationObserver' /tmp/perf-base.js; then echo 'Global image MutationObserver remains in performance base.' >&2; exit 1; fi
 
-          echo '[5/9] compact Raid Boss manager'
+          echo '[6/10] compact Raid Boss manager'
           retry_contains "$BASE/assets/boss-manager-v121.js?v=1.2.1" '__mwsBossManagerV121' > /tmp/boss-manager.js
           node --check /tmp/boss-manager.js
           grep -Fq '레이드 보스 관리' /tmp/boss-manager.js
@@ -96,19 +114,19 @@ jobs:
           grep -Fq '이미지는 목록에 표시하지 않고' /tmp/boss-manager.js
           if grep -Fq 'mws-boss-manager-thumb' /tmp/boss-manager.js; then echo 'Inline boss thumbnails remain.' >&2; exit 1; fi
 
-          echo '[6/9] original boss image byte path'
+          echo '[7/10] original boss image byte path'
           node --check src/cf-v121-boss-media.js
           grep -Fq 'file.arrayBuffer' src/cf-v121-boss-media.js
           grep -Fq 'env.IMAGES.put' src/cf-v121-boss-media.js
           if grep -Eq 'toDataURL|drawImage|image/webp|resize' src/cf-v121-boss-media.js; then echo 'Boss image backend must not transform image bytes.' >&2; exit 1; fi
 
-          echo '[7/9] immutable versioned media cache'
+          echo '[8/10] immutable versioned media cache'
           node --check src/cf-v122-cache.js
           grep -Fq 'max-age=31536000, immutable' src/cf-v122-cache.js
           grep -Fq 'original-bytes-no-reencode' src/cf-v122-cache.js
           grep -Fq "./cf-v122-cache.js" src/cf-v111-entry.js
 
-          echo '[8/9] calendar and Majoku fixes still available'
+          echo '[9/10] calendar and Majoku fixes still available'
           retry_contains "$BASE/assets/today-people-wheel-v117.js?v=1.2.0" '__mwsTodayPeopleWheelV120' > /tmp/wheel.js
           node --check /tmp/wheel.js
           retry_contains "$BASE/assets/ui-fixes-v121.js?v=1.2.1" '__mwsUiFixesV121' > /tmp/ui.js
@@ -116,10 +134,11 @@ jobs:
           retry_contains "$BASE/assets/majoku-host-fix-v114.js?v=1.2.0" '__mwsMajokuHostFixV120' > /tmp/majoku.js
           node --check /tmp/majoku.js
 
-          echo '[9/9] worker source syntax'
+          echo '[10/10] worker source syntax'
           node --check assets/perf-runtime.js
           node --check assets/perf-runtime-base.js
           node --check assets/cloud-v1.1-loader.js
+          node --check assets/soop-fetch-proxy-v123.js
           node --check assets/boss-manager-v121.js
 
-          echo 'Live Worker v1.2.2 lossless image policy, lazy feature loading, cache reuse and reduced DOM work verified.'
+          echo 'Live Worker v1.2.3 SOOP Friend Finder proxy, lossless image policy and performance optimizations verified.'
