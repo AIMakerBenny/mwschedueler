@@ -1,6 +1,7 @@
 import authWorker from './cf-v112-authfix.js';
 
 const STEAM_SCRIPT='<script src="/assets/steam-game-v111.js?v=1.1.2" data-mws-steam-v111="1"></script>';
+const CALENDAR_DRAG_FIX='<link rel="stylesheet" href="/assets/calendar-drag-layout-fix.css?v=1.1.0" data-mws-calendar-drag-fix="1">';
 
 export default {
   async fetch(request, env, ctx) {
@@ -20,10 +21,14 @@ export default {
     if (!html.includes('steam-game-v111.js')) {
       html = html.includes('</body>') ? html.replace('</body>', `${STEAM_SCRIPT}\n</body>`) : `${html}\n${STEAM_SCRIPT}`;
     }
+    if (!html.includes('calendar-drag-layout-fix.css')) {
+      html = html.includes('</head>') ? html.replace('</head>', `${CALENDAR_DRAG_FIX}\n</head>`) : `${CALENDAR_DRAG_FIX}\n${html}`;
+    }
     const headers = new Headers(response.headers);
     headers.delete('content-length');
     headers.set('cache-control','no-store');
     headers.set('x-mws-steam-picker','v1.1.2');
+    headers.set('x-mws-calendar-drag-fix','v1.1.0');
     return new Response(html,{status:response.status,statusText:response.statusText,headers});
   },
 };
