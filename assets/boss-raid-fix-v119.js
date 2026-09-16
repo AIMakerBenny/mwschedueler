@@ -1,8 +1,8 @@
-/* Mawang Scheduler v1.1.9 - Boss Raid HP apply reliability fix */
+/* Mawang Scheduler v1.2.0 - Boss Raid HP apply reliability fix */
 (()=>{
 'use strict';
-if(window.__mwsBossRaidFixV119)return;
-window.__mwsBossRaidFixV119=1;
+if(window.__mwsBossRaidFixV120)return;
+window.__mwsBossRaidFixV120=1;
 
 const $=id=>document.getElementById(id);
 const DEFAULT_HP=500;
@@ -25,12 +25,7 @@ async function applyHp(){
     try{
       if(typeof applyBossSettings==='function')applyBossSettings(hp);
       else if(typeof bossState!=='undefined'){
-        bossState.maxHealth=hp;
-        bossState.health=hp;
-        bossState.running=false;
-        bossState.finished=false;
-        bossState.lastAttacker='';
-        bossState.damage={};
+        bossState.maxHealth=hp;bossState.health=hp;bossState.running=false;bossState.finished=false;bossState.lastAttacker='';bossState.damage={};
         if(typeof renderBossState==='function')renderBossState();
       }
     }catch(error){console.error('Boss local HP apply failed',error)}
@@ -40,39 +35,26 @@ async function applyHp(){
   finally{applying=false}
 }
 
-function normalizeDefaultInput(){
-  const input=$('bossHpInputV116');
-  if(input&&!input.matches(':focus')&&(input.value===''||Number(input.value)===100)){
-    const select=$('bossSelectV116');
-    if(!select||String(select.value||'')==='boss-default')input.value=String(DEFAULT_HP);
-  }
-  const btn=$('bossHpApplyV116');if(btn)btn.disabled=false;
-}
-
 function install(){
-  const btn=$('bossHpApplyV116');
-  if(btn&&!btn.dataset.v119Bound){
-    btn.dataset.v119Bound='1';
-    btn.addEventListener('click',event=>{
-      event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();applyHp();
-    },true);
+  const input=$('bossHpInputV116'),btn=$('bossHpApplyV116');
+  if(input&&!input.matches(':focus')&&(input.value===''||Number(input.value)===100))input.value=String(DEFAULT_HP);
+  if(btn&&!btn.dataset.v120Bound){
+    btn.dataset.v120Bound='1';btn.disabled=false;
+    btn.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();applyHp()},true);
   }
-  const input=$('bossHpInputV116');
-  if(input&&!input.dataset.v119Bound){
-    input.dataset.v119Bound='1';
-    input.addEventListener('keydown',event=>{
-      if(event.key!=='Enter')return;
-      event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();applyHp();
-    },true);
+  if(input&&!input.dataset.v120Bound){
+    input.dataset.v120Bound='1';
+    input.addEventListener('keydown',event=>{if(event.key!=='Enter')return;event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();applyHp()},true);
   }
-  normalizeDefaultInput();
+  return Boolean(input&&btn);
 }
 
 function boot(){
-  install();
-  const root=document.body||document.documentElement;
-  if(root)new MutationObserver(()=>requestAnimationFrame(install)).observe(root,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','value','class']});
-  setInterval(install,700);
+  let tries=0;
+  const retry=()=>{tries++;if(install()||tries>=30)return;setTimeout(retry,200)};
+  retry();
+  const boss=$('bossGame');
+  if(boss)new MutationObserver(records=>{if(records.some(r=>[...r.addedNodes].some(n=>n instanceof Element)))install()}).observe(boss,{childList:true,subtree:true});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
