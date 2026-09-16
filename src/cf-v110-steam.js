@@ -1,16 +1,9 @@
 import baseWorker from './cf-v571.js';
 
-const STEAM_APPLIST_URL='https://api.steampowered.com/ISteamApps/GetAppList/v2/';
-const STEAM_DETAIL_BASE='https://store.steampowered.com/api/appdetails';
+const STEAM_SUGGEST_URL='https://store.steampowered.com/search/suggest';
 const FRONTEND_SCRIPT='<script src="/assets/steam-game-v110.js"></script>';
-const APP_LIST_TTL=24*60*60;
-const APP_DETAIL_TTL=7*24*60*60;
 const SEARCH_LIMIT=8;
-const DETAIL_CANDIDATES=14;
-
-let appListMemory=null;
-let appListMemoryExpires=0;
-const detailMemory=new Map();
+const SEARCH_TIMEOUT_MS=8000;
 
 function json(value,status=200,headers={}){
   return new Response(JSON.stringify(value),{
@@ -19,118 +12,69 @@ function json(value,status=200,headers={}){
   });
 }
 function cleanError(error){return error instanceof Error?error.message:String(error||'Unknown error')}
-function normalized(value){return String(value||'').normalize('NFKC').trim().toLocaleLowerCase('en-US')}
-function appScore(name,query){
-  const n=normalized(name),q=normalized(query);
-  if(!n||!q)return Number.POSITIVE_INFINITY;
-  if(n===q)return 0;
-  if(n.startsWith(q))return 10+Math.min(30,n.length-q.length)/10;
-  const word=n.search(new RegExp(`(^|[^a-z0-9])${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}`,'i'));
-  if(word>=0)return 30+word;
-  const pos=n.indexOf(q);
-  if(pos>=0)return 60+pos+Math.min(40,n.length)/100;
-  return Number.POSITIVE_INFINITY;
+function decodeHtml(value){
+  return String(value||'')
+    .replace(/&#(\d+);/g,(_,n)=>String.fromCodePoint(Number(n)||0))
+    .replace(/&#x([0-9a-f]+);/gi,(_,n)=>String.fromCodePoint(parseInt(n,16)||0))
+    .replace(/&amp;/gi,'&').replace(/&quot;/gi,'"').replace(/&#39;|&apos;/gi,"'")
+    .replace(/&lt;/gi,'<').replace(/&gt;/gi,'>').replace(/&nbsp;/gi,' ');
 }
-async function cachedJson(url,ttl,ctx){
-  const cache=globalThis.caches?.default;
-  const key=new Request(url,{method:'GET'});
-  if(cache){
-    const hit=await cache.match(key);
-    if(hit){try{return await hit.json()}catch(_){}}
+function plainText(value){return decodeHtml(String(value||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim())}
+function attrValue(attrs,name){
+  const safe=String(name).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const match=String(attrs||'').match(new RegExp(`${safe}\\s*=\\s*["']([^"']*)["']`,'i'));
+  return match?decodeHtml(match[1]):'';
+}
+function parseSuggestions(html){
+  const out=[];
+  const seen=new Set();
+  const anchor=/<a\b([^>]*)>([\s\S]*?)<\/a>/gi;
+  let match;
+  while((match=anchor.exec(String(html||'')))&&out.length<SEARCH_LIMIT){
+    const attrs=match[1]||'';
+    const appid=attrValue(attrs,'data-ds-appid');
+    if(!/^\d{1,12}$/.test(appid)||seen.has(appid))continue;
+    const body=match[2]||'';
+    const nameMatch=body.match(/<[^>]*class=["'][^"']*\bmatch_name\b[^"']*["'][^>]*>([\s\S]*?)<\/[^>]+>/i);
+    const name=plainText(nameMatch?.[1]||'');
+    if(!name)continue;
+    const imageMatch=body.match(/<img\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/i);
+    const image=decodeHtml(imageMatch?.[1]||'')||`https://cdn.cloudflare.steamstatic.com/steam/apps/${encodeURIComponent(appid)}/header.jpg`;
+    const href=attrValue(attrs,'href')||`https://store.steampowered.com/app/${encodeURIComponent(appid)}/`;
+    seen.add(appid);
+    out.push({appid,name,image,storeUrl:href});
   }
-  const response=await fetch(url,{headers:{accept:'application/json','user-agent':'MawangScheduler/1.1 Steam Search'}});
-  if(!response.ok)throw new Error(`Steam HTTP ${response.status}`);
-  const text=await response.text();
-  let parsed;
-  try{parsed=JSON.parse(text)}catch(_){throw new Error('Invalid Steam JSON response')}
-  if(cache){
-    const stored=new Response(text,{status:200,headers:{'content-type':'application/json; charset=utf-8','cache-control':`public, max-age=${ttl}`}});
-    try{ctx?.waitUntil?.(cache.put(key,stored))}catch(_){}
-  }
-  return parsed;
+  return out;
 }
-async function loadAppList(ctx){
-  if(appListMemory&&Date.now()<appListMemoryExpires)return appListMemory;
-  const payload=await cachedJson(STEAM_APPLIST_URL,APP_LIST_TTL,ctx);
-  const apps=Array.isArray(payload?.applist?.apps)?payload.applist.apps:[];
-  appListMemory=apps.filter(x=>x&&Number.isFinite(Number(x.appid))&&String(x.name||'').trim());
-  appListMemoryExpires=Date.now()+30*60*1000;
-  return appListMemory;
-}
-function rememberDetail(appid,value){
-  if(detailMemory.size>500){
-    const first=detailMemory.keys().next().value;
-    if(first!==undefined)detailMemory.delete(first);
-  }
-  detailMemory.set(String(appid),{expires:Date.now()+60*60*1000,value});
-}
-async function loadAppDetail(app,ctx){
-  const appid=String(app.appid);
-  const memory=detailMemory.get(appid);
-  if(memory&&memory.expires>Date.now())return memory.value;
-  const url=`${STEAM_DETAIL_BASE}?appids=${encodeURIComponent(appid)}&l=koreana&cc=KR`;
-  try{
-    const payload=await cachedJson(url,APP_DETAIL_TTL,ctx);
-    const row=payload?.[appid];
-    if(row?.success&&row.data&&typeof row.data==='object'){
-      const type=String(row.data.type||'').toLowerCase();
-      const value={
-        appid,
-        name:String(row.data.name||app.name||'').trim()||String(app.name||''),
-        image:String(row.data.header_image||'').trim(),
-        type,
-        verified:true,
-      };
-      rememberDetail(appid,value);
-      return value;
-    }
-  }catch(_){}
-  const fallback={
-    appid,
-    name:String(app.name||'').trim(),
-    image:`https://cdn.cloudflare.steamstatic.com/steam/apps/${encodeURIComponent(appid)}/header.jpg`,
-    type:'',
-    verified:false,
-  };
-  rememberDetail(appid,fallback);
-  return fallback;
-}
-function shortlistApps(apps,query){
-  const best=[];
-  for(const app of apps){
-    const score=appScore(app.name,query);
-    if(!Number.isFinite(score))continue;
-    best.push({app,score});
-    if(best.length>=180){best.sort((a,b)=>a.score-b.score||String(a.app.name).localeCompare(String(b.app.name)));best.length=80}
-  }
-  best.sort((a,b)=>a.score-b.score||String(a.app.name).localeCompare(String(b.app.name)));
-  return best.slice(0,DETAIL_CANDIDATES).map(x=>x.app);
-}
-async function handleSteamSearch(request,ctx){
-  const url=new URL(request.url);
-  const q=String(url.searchParams.get('q')||'').trim();
+async function handleSteamSearch(request){
+  const requestUrl=new URL(request.url);
+  const q=String(requestUrl.searchParams.get('q')||'').trim();
   if(q.length<2)return json({error:'Search query must be at least 2 characters.'},400);
   if(q.length>80)return json({error:'Search query is too long.'},400);
+  const suggest=new URL(STEAM_SUGGEST_URL);
+  suggest.searchParams.set('term',q);
+  suggest.searchParams.set('f','games');
+  suggest.searchParams.set('cc','KR');
+  suggest.searchParams.set('l','koreana');
+  suggest.searchParams.set('realm','1');
+  suggest.searchParams.set('origin','https://store.steampowered.com');
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort('timeout'),SEARCH_TIMEOUT_MS);
   try{
-    const apps=await loadAppList(ctx);
-    const candidates=shortlistApps(apps,q);
-    if(!candidates.length)return json({query:q,results:[]},200,{'cache-control':'private, max-age=30'});
-    const details=await Promise.all(candidates.map(app=>loadAppDetail(app,ctx)));
-    let usable=details.filter(x=>x.type==='game');
-    if(usable.length<SEARCH_LIMIT){
-      const fallback=details.filter(x=>!x.verified&&!usable.some(y=>y.appid===x.appid));
-      usable=usable.concat(fallback);
-    }
-    const results=usable.slice(0,SEARCH_LIMIT).map(x=>({
-      appid:x.appid,
-      name:x.name,
-      image:x.image||`https://cdn.cloudflare.steamstatic.com/steam/apps/${encodeURIComponent(x.appid)}/header.jpg`,
-      storeUrl:`https://store.steampowered.com/app/${encodeURIComponent(x.appid)}/`,
-    }));
-    return json({query:q,results},200,{'cache-control':'private, max-age=30'});
+    const response=await fetch(suggest.toString(),{
+      headers:{accept:'text/html,application/xhtml+xml','user-agent':'Mozilla/5.0 MawangScheduler/1.1'},
+      signal:controller.signal,
+    });
+    if(!response.ok)throw new Error(`Steam HTTP ${response.status}`);
+    const html=await response.text();
+    const results=parseSuggestions(html);
+    return json({query:q,results},200,{'cache-control':'private, max-age=60'});
   }catch(error){
+    const message=error?.name==='AbortError'?'Steam search timed out':cleanError(error);
     console.error('Steam search failed',error);
-    return json({error:`Steam search failed: ${cleanError(error)}`},502);
+    return json({error:`Steam search failed: ${message}`},502);
+  }finally{
+    clearTimeout(timer);
   }
 }
 async function injectFrontend(response,request){
@@ -154,7 +98,7 @@ export default{
       const url=new URL(request.url);
       if(url.pathname==='/api/steam/search'){
         if(request.method!=='GET')return json({error:'Method not allowed.'},405,{allow:'GET'});
-        return handleSteamSearch(request,ctx);
+        return handleSteamSearch(request);
       }
       const response=await baseWorker.fetch(request,env,ctx);
       return injectFrontend(response,request);
