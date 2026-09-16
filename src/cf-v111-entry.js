@@ -1,9 +1,9 @@
 import authWorker from './cf-v112-authfix.js';
 
 const STEAM_SCRIPT='<script src="/assets/steam-game-v111.js?v=1.1.3" data-mws-steam-v111="1"></script>';
-const CALENDAR_DRAG_FIX='<link rel="stylesheet" href="/assets/calendar-drag-layout-fix.css?v=1.1.2" data-mws-calendar-drag-fix="1">';
+const CALENDAR_DRAG_FIX='<link rel="stylesheet" href="/assets/calendar-drag-layout-fix.css?v=1.1.3" data-mws-calendar-drag-fix="1">';
 const UI_FIX_SCRIPT='<script src="/assets/ui-fixes-v113.js?v=1.1.3" data-mws-ui-fixes-v113="1"></script>';
-const MAJOKU_SIDEBAR_SCRIPT='<script src="/assets/majoku-sidebar-v113.js?v=1.1.3" data-mws-majoku-sidebar="1"></script>';
+const MAJOKU_SIDEBAR_SCRIPT='<script src="/assets/majoku-sidebar-v113.js?v=1.1.4" data-mws-majoku-sidebar="1"></script>';
 
 function htmlResponse(response,html,extraHeaders={}){
   const headers=new Headers(response.headers);
@@ -32,7 +32,7 @@ export default {
       if(!html.includes('majoku-sidebar-v113.js')){
         html=html.includes('</body>')?html.replace('</body>',`${MAJOKU_SIDEBAR_SCRIPT}\n</body>`):`${html}\n${MAJOKU_SIDEBAR_SCRIPT}`;
       }
-      return htmlResponse(response,html,{'x-mws-majoku-sidebar':'v1.1.3'});
+      return htmlResponse(response,html,{'x-mws-majoku-sidebar':'v1.1.4'});
     }
 
     if (url.pathname !== '/' && url.pathname !== '/index.html') return response;
@@ -49,7 +49,7 @@ export default {
     }
     return htmlResponse(response,html,{
       'x-mws-steam-picker':'v1.1.3',
-      'x-mws-calendar-drag-fix':'v1.1.2',
+      'x-mws-calendar-drag-fix':'v1.1.3',
       'x-mws-ui-fixes':'v1.1.3'
     });
   },
