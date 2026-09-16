@@ -24,9 +24,7 @@
   if(typeof getLastCollab==='function')getLastCollab=id=>lastMap().get(id)||null;
 
   const baseUpcoming=typeof upcomingEvents==='function'?upcomingEvents:null;
-  if(baseUpcoming){
-    upcomingEvents=function(){const day=todayKST();if(upcomingCache&&cacheDay===day)return upcomingCache;cacheDay=day;upcomingCache=baseUpcoming();upcomingMapCache=null;return upcomingCache};
-  }
+  if(baseUpcoming){upcomingEvents=function(){const day=todayKST();if(upcomingCache&&cacheDay===day)return upcomingCache;cacheDay=day;upcomingCache=baseUpcoming();upcomingMapCache=null;return upcomingCache};}
   function upcomingMap(){
     if(upcomingMapCache)return upcomingMapCache;
     const map=new Map();for(const row of upcomingEvents())for(const id of row.participants||[]){if(!map.has(id))map.set(id,[]);const a=map.get(id);if(a.length<8)a.push(row)}
@@ -40,15 +38,19 @@
     return key.includes(needle);
   };
 
-  const style=document.createElement('style');style.id='mws-performance-runtime-style';style.textContent='.contact-card{content-visibility:auto;contain-intrinsic-size:auto 170px}.contact-card[hidden]{display:none!important}';document.head.appendChild(style);
+  const style=document.createElement('style');style.id='mws-performance-runtime-style';style.textContent='.contact-card{content-visibility:auto;contain-intrinsic-size:auto 170px}.contact-card[hidden]{display:none!important}.mws-boss-row-v121{content-visibility:auto;contain-intrinsic-size:auto 58px}';document.head.appendChild(style);
 
-  function tuneImages(root=document){
+  function tuneLazyImages(root=document){
     const imgs=root.querySelectorAll?root.querySelectorAll('img[loading="lazy"]'):[];
     for(const img of imgs)if(!img.hasAttribute('decoding'))img.decoding='async';
   }
-  tuneImages();
-  const imageObserver=new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1){if(n.matches?.('img[loading="lazy"]')&&!n.hasAttribute('decoding'))n.decoding='async';tuneImages(n)}});
-  imageObserver.observe(document.body,{childList:true,subtree:true});
+  let imageTunePending=false;
+  function scheduleImageTune(){
+    if(imageTunePending)return;imageTunePending=true;
+    const run=()=>{imageTunePending=false;tuneLazyImages(document)};
+    if('requestIdleCallback' in window)requestIdleCallback(run,{timeout:1200});else setTimeout(run,80);
+  }
+  scheduleImageTune();
 
   function installGridDelegation(grid){
     if(!grid||grid.dataset.mwsPerfDelegated==='1')return;grid.dataset.mwsPerfDelegated='1';
@@ -78,7 +80,7 @@
       const avatar=c.image?`<img class="contact-card-avatar-lg" loading="lazy" decoding="async" src="${c.image}">`:`<div class="contact-card-avatar-lg">${esc(initials(c.name))}</div>`;
       return `<div class="contact-card ${isSelf?'is-self':''} ${c.pendingSetup?'pending-card':''} ${upcoming.length?'has-upcoming':''}" draggable="true" data-contact-id="${c.id}"><div class="contact-card-core">${avatar}<div class="contact-card-info"><div class="contact-card-name-row"><div class="contact-card-name">${esc(c.name)}</div>${isSelf?'<span class="contact-self-badge">본인</span>':''}${upcoming.length?`<span class="upcoming-count-badge">UPCOMING ${upcoming.length}</span>`:''}</div><div class="contact-card-tags">${(c.labels||[]).map(x=>`<span class="chip">${esc(x)}</span>`).join('')||'<span class="muted small">태그 없음</span>'}</div><div class="contact-card-last">${last?`최근 컨텐츠: <strong style="color:var(--text)">${esc(last.title)}</strong><br>${formatDateWeekday(last.date)} · ${daysSince(last.date)}일 전`:'합방 기록 없음'}</div><div class="contact-card-actions">${c.stationUrl?`<button type="button" class="station-link" onclick="event.stopPropagation();openContactStation('${c.id}')">방송국 열기</button>`:''}${c.pendingSetup?'<span class="chip">신규 추가</span>':''}</div></div></div>${contactUpcomingPopover(c)}</div>`
     }).join('')+'<div class="empty mws-contact-search-empty" hidden>연락처가 없습니다</div>';
-    applyContactSearch();record('contacts.render',performance.now()-started);
+    applyContactSearch();scheduleImageTune();record('contacts.render',performance.now()-started);
   };
   renderContacts=optimizedRenderContacts;window.renderContacts=optimizedRenderContacts;
 
@@ -109,13 +111,13 @@
     }catch(e){console.error('활성 화면 갱신 실패',active,e)}
     try{updateStorageStatus(true)}catch(_){}
     const status=document.getElementById('syncStatusText');if(status)status.textContent='전체 화면 동기화';
-    record('app.renderActive',performance.now()-started);return true;
+    scheduleImageTune();record('app.renderActive',performance.now()-started);return true;
   }
   const baseRenderAll=typeof renderAll==='function'?renderAll:null;
-  if(baseRenderAll){renderAll=function(reason){invalidate();const s=performance.now(),out=saveDepth?renderActiveAfterSave(reason):baseRenderAll(reason);record(saveDepth?'app.renderScoped':'app.renderAll',performance.now()-s);return out};window.renderAll=renderAll}
+  if(baseRenderAll){renderAll=function(reason){invalidate();const s=performance.now(),out=saveDepth?renderActiveAfterSave(reason):baseRenderAll(reason);record(saveDepth?'app.renderScoped':'app.renderAll',performance.now()-s);scheduleImageTune();return out};window.renderAll=renderAll}
   const baseSaveData=typeof saveData==='function'?saveData:null;
   if(baseSaveData){saveData=function(reason){invalidate();const s=performance.now();saveDepth++;try{return baseSaveData(reason)}finally{saveDepth--;record('app.saveData',performance.now()-s)}};window.saveData=saveData}
   const baseSetTab=typeof setTab==='function'?setTab:null;
-  if(baseSetTab){setTab=function(tab){const out=baseSetTab(tab);if(tab==='settings')try{renderSettings()}catch(_){};return out};window.setTab=setTab}
-  window.addEventListener('mawang:datachange',invalidate);
+  if(baseSetTab){setTab=function(tab){const out=baseSetTab(tab);if(tab==='settings')try{renderSettings()}catch(_){};scheduleImageTune();return out};window.setTab=setTab}
+  window.addEventListener('mawang:datachange',()=>{invalidate();scheduleImageTune()});
 })();
