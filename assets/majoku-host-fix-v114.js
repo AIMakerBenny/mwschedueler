@@ -1,18 +1,19 @@
-/* Mawang Scheduler v1.1.4 - inject Majoku Castle sidebar into same-origin iframe */
+/* Mawang Scheduler v1.1.5 - inject Majoku Castle sidebar into same-origin iframe */
 (()=>{
 'use strict';
 if(window.__mwsMajokuHostFixV114)return;
 window.__mwsMajokuHostFixV114=1;
 
-const SCRIPT_SRC='/assets/majoku-sidebar-v113.js?v=1.1.4';
+const SCRIPT_SRC='/assets/majoku-sidebar-v113.js?v=1.1.5';
 
 function inject(frame){
   if(!frame)return;
   try{
     const doc=frame.contentDocument;
     if(!doc||!doc.documentElement)return;
-    if(doc.querySelector('script[data-mws-majoku-sidebar-host-v114]'))return;
-    doc.querySelectorAll('script[src*="majoku-sidebar-v11"]').forEach(node=>node.remove());
+    const existing=doc.querySelector('script[data-mws-majoku-sidebar-host-v114]');
+    if(existing&&existing.getAttribute('src')===SCRIPT_SRC)return;
+    doc.querySelectorAll('script[src*="majoku-sidebar-v11"],script[data-mws-majoku-sidebar-host-v114]').forEach(node=>node.remove());
     const script=doc.createElement('script');
     script.src=SCRIPT_SRC;
     script.dataset.mwsMajokuSidebarHostV114='1';
