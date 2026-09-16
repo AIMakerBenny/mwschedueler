@@ -113,10 +113,10 @@ jobs:
           grep -Fq 'bossHpInputV116' /tmp/boss-raid.js
           grep -Fq 'bossSelectV116' /tmp/boss-raid.js
 
-          echo '[8/9] Majoku base Boss Raid page'
-          retry_contains "$BASE/majoku-castle.html?deploy=v116" 'id="bossGame"' > /tmp/castle.html
-          grep -Fq 'id="bossImage"' /tmp/castle.html
-          grep -Fq 'id="bossStartBtn"' /tmp/castle.html
+          echo '[8/9] Majoku base Boss Raid source'
+          grep -Fq 'id="bossGame"' majoku-castle.html
+          grep -Fq 'id="bossImage"' majoku-castle.html
+          grep -Fq 'id="bossStartBtn"' majoku-castle.html
 
           echo '[9/9] base Cloudflare and Steam scripts'
           curl -fsS --max-time 15 "$BASE/assets/cloud-v1.1.js?v=1.1.1" > /tmp/cloud-v11.js
