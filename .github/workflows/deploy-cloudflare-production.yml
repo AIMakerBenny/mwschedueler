@@ -41,35 +41,45 @@ jobs:
         run: |
           set -euo pipefail
           BASE='https://mawang-scheduler.majoku.workers.dev'
-          health=''
-          for i in {1..12}; do
-            if health="$(curl -fsS --max-time 15 "$BASE/api/health")"; then
-              break
-            fi
-            sleep 5
-          done
-          test -n "$health"
+
+          retry_contains() {
+            local url="$1"
+            local needle="$2"
+            local body=''
+            for i in {1..12}; do
+              body="$(curl -fsS --max-time 15 "$url" || true)"
+              if printf '%s' "$body" | grep -Fq "$needle"; then
+                printf '%s' "$body"
+                return 0
+              fi
+              sleep 5
+            done
+            echo "Verification failed for $url: missing $needle" >&2
+            return 1
+          }
+
+          health="$(retry_contains "$BASE/api/health" '"ok":true')"
           echo "$health"
           HEALTH="$health" node -e "const x=JSON.parse(process.env.HEALTH); if(!x.ok || x.supabase!==false || !String(x.backend||'').includes('D1')) process.exit(1)"
 
-          session="$(curl -fsS --max-time 15 "$BASE/api/auth/session")"
+          session="$(retry_contains "$BASE/api/auth/session" '"authenticated"')"
           echo "$session"
           SESSION="$session" node -e "const x=JSON.parse(process.env.SESSION); if(typeof x.authenticated!=='boolean') process.exit(1)"
 
-          loader="$(curl -fsS --max-time 15 "$BASE/assets/cloud-v5.5.js")"
-          printf '%s' "$loader" | grep -q 'Mawang Scheduler v1.1 Cloudflare auth bootstrap'
-          printf '%s' "$loader" | grep -q 'steam-game-v111.js'
+          home="$(retry_contains "$BASE/" 'assets/cloud-v5.5.js')"
+          printf '%s' "$home" | grep -Fq 'assets/cloud-v5.5.js'
+
+          loader="$(retry_contains "$BASE/assets/cloud-v5.5.js?deploy=steam-v111" 'steam-game-v111.js')"
+          printf '%s' "$loader" | grep -Fq 'Mawang Scheduler v1.1 Cloudflare auth bootstrap'
+          printf '%s' "$loader" | grep -Fq 'steam-game-v111.js'
 
           curl -fsS --max-time 15 "$BASE/assets/cloud-v1.1.js?v=1.1.1" > /tmp/cloud-v11.js
           node -e "const fs=require('fs');let s=fs.readFileSync('/tmp/cloud-v11.js','utf8');s=s.replace('Math.max(0,Math.min(100,Math.round(Number(percent)||0));','Math.max(0,Math.min(100,Math.round(Number(percent)||0)));');fs.writeFileSync('/tmp/cloud-v11-fixed.js',s)"
           node --check /tmp/cloud-v11-fixed.js
 
-          curl -fsS --max-time 15 "$BASE/assets/steam-game-v111.js?v=1.1.1" > /tmp/steam-v111.js
-          grep -q '__mwsSteamGameV111' /tmp/steam-v111.js
+          retry_contains "$BASE/assets/steam-game-v111.js?v=1.1.1" '__mwsSteamGameV111' > /tmp/steam-v111.js
           node --check /tmp/steam-v111.js
+          grep -Fq '.mini-event[data-evid]' /tmp/steam-v111.js
+          grep -Fq 'mws-steam-slot-v111' /tmp/steam-v111.js
 
-          home="$(curl -fsS --max-time 15 "$BASE/")"
-          printf '%s' "$home" | grep -q 'steam-game-v111.js'
-          printf '%s' "$home" | grep -q 'data-mws-steam-v111'
-
-          echo 'Live Worker, D1 auth, login runtime, and Steam picker verified.'
+          echo 'Live Worker, D1 auth, root loader, and Steam picker verified.'
