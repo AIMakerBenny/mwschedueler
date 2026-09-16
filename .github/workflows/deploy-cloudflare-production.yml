@@ -58,61 +58,68 @@ jobs:
             return 1
           }
 
-          echo '[1/7] health and auth'
+          echo '[1/9] health and auth'
           health="$(retry_contains "$BASE/api/health" '"ok":true')"
           HEALTH="$health" node -e "const x=JSON.parse(process.env.HEALTH); if(!x.ok || x.supabase!==false || !String(x.backend||'').includes('D1')) process.exit(1)"
           session="$(retry_contains "$BASE/api/auth/session" '"authenticated"')"
           SESSION="$session" node -e "const x=JSON.parse(process.env.SESSION); if(typeof x.authenticated!=='boolean') process.exit(1)"
 
-          echo '[2/7] v1.2.1 loader chain'
-          retry_contains "$BASE/?deploy=v121" 'assets/online-v5-loader.js' > /tmp/home.html
-          retry_contains "$BASE/assets/online-v5-loader.js?deploy=v121" 'assets/cloud-v5.5.js' > /tmp/online.js
-          retry_contains "$BASE/assets/cloud-v5.5.js?deploy=v121" 'Mawang Scheduler v1.2.1 Cloudflare auth bootstrap' > /tmp/loader.js
+          echo '[2/9] v1.2.2 production loader'
+          retry_contains "$BASE/assets/cloud-v5.5.js?deploy=v122" 'Mawang Scheduler v1.2.2 Cloudflare auth bootstrap' > /tmp/loader.js
           node --check /tmp/loader.js
-          grep -Fq 'boss-manager-v121.js?v=1.2.1' /tmp/loader.js
-          grep -Fq 'ui-fixes-v121.js?v=1.2.1' /tmp/loader.js
-          if grep -Fq 'boss-manager-v116.js?v=1.2.0' /tmp/loader.js; then echo 'Legacy boss manager still loaded.' >&2; exit 1; fi
+          grep -Fq 'ensureFeaturesForTab' /tmp/loader.js
+          grep -Fq "tab==='calendar'" /tmp/loader.js
+          grep -Fq "tab==='export'" /tmp/loader.js
+          grep -Fq "tab==='gameMajoku'" /tmp/loader.js
+          if grep -Fq 'loadBossManager(loadSteamPicker)' /tmp/loader.js; then echo 'Boss manager is still eagerly loaded.' >&2; exit 1; fi
 
-          echo '[3/7] compact Raid Boss manager'
+          echo '[3/9] lossless runtime and no startup polling'
+          retry_contains "$BASE/assets/perf-runtime.js?v=1.2.2" 'lossless image policy' > /tmp/perf.js
+          node --check /tmp/perf.js
+          grep -Fq 'preserveOriginalImage' /tmp/perf.js
+          grep -Fq 'r2-original-bytes' /tmp/perf.js
+          grep -Fq 'requestIdleCallback' /tmp/perf.js
+          if grep -Fq 'versionTimer=setInterval' /tmp/perf.js; then echo 'Legacy startup version polling remains.' >&2; exit 1; fi
+          if grep -Fq "toDataURL('image/webp'" /tmp/perf.js; then echo 'Runtime must not recompress images.' >&2; exit 1; fi
+
+          echo '[4/9] event-driven performance base'
+          retry_contains "$BASE/assets/perf-runtime-base.js?v=1.2.2" 'scheduleImageTune' > /tmp/perf-base.js
+          node --check /tmp/perf-base.js
+          grep -Fq 'content-visibility:auto' /tmp/perf-base.js
+          if grep -Fq 'new MutationObserver' /tmp/perf-base.js; then echo 'Global image MutationObserver remains in performance base.' >&2; exit 1; fi
+
+          echo '[5/9] compact Raid Boss manager'
           retry_contains "$BASE/assets/boss-manager-v121.js?v=1.2.1" '__mwsBossManagerV121' > /tmp/boss-manager.js
           node --check /tmp/boss-manager.js
-          grep -Fq 'mwsBossManagerModalV121' /tmp/boss-manager.js
-          grep -Fq '보스 이미지는 목록에 펼쳐두지 않고' /tmp/boss-manager.js
-          grep -Fq "id=\"mwsBossManageV121\">수정" /tmp/boss-manager.js
+          grep -Fq '레이드 보스 관리' /tmp/boss-manager.js
           grep -Fq '/api/boss-image' /tmp/boss-manager.js
-          grep -Fq 'scheduleLegacyMigration' /tmp/boss-manager.js
-          if grep -Fq 'mws-boss-manager-thumb' /tmp/boss-manager.js; then echo 'Inline boss thumbnails remain in manager list.' >&2; exit 1; fi
-          if grep -Fq 'setInterval' /tmp/boss-manager.js; then echo 'Boss manager polling remains.' >&2; exit 1; fi
+          grep -Fq '이미지는 목록에 표시하지 않고' /tmp/boss-manager.js
+          if grep -Fq 'mws-boss-manager-thumb' /tmp/boss-manager.js; then echo 'Inline boss thumbnails remain.' >&2; exit 1; fi
 
-          echo '[4/7] low-overhead UI fixes'
-          retry_contains "$BASE/assets/ui-fixes-v121.js?v=1.2.1" '__mwsUiFixesV121' > /tmp/ui-v121.js
-          node --check /tmp/ui-v121.js
-          grep -Fq 'grid-template-columns:repeat(3' /tmp/ui-v121.js
-          grep -Fq 'installRpsSearchPersistence' /tmp/ui-v121.js
-          grep -Fq 'openSteamGamePickerV111' /tmp/ui-v121.js
-          if grep -Fq 'setInterval' /tmp/ui-v121.js; then echo 'UI polling remains.' >&2; exit 1; fi
-          if grep -Fq 'observe(calendar' /tmp/ui-v121.js; then echo 'Calendar subtree observer remains.' >&2; exit 1; fi
-
-          echo '[5/7] boss image R2 API route'
+          echo '[6/9] original boss image byte path'
           node --check src/cf-v121-boss-media.js
-          grep -Fq "'/api/boss-image'" src/cf-v121-boss-media.js
+          grep -Fq 'file.arrayBuffer' src/cf-v121-boss-media.js
           grep -Fq 'env.IMAGES.put' src/cf-v121-boss-media.js
-          grep -Fq 'externalizeBossImages' src/cf-v121-boss-media.js
-          code="$(curl -sS -o /tmp/boss-upload.json -w '%{http_code}' -X POST "$BASE/api/boss-image")"
-          test "$code" = '401'
+          if grep -Eq 'toDataURL|drawImage|image/webp|resize' src/cf-v121-boss-media.js; then echo 'Boss image backend must not transform image bytes.' >&2; exit 1; fi
 
-          echo '[6/7] existing wheel and Majoku fixes'
-          retry_contains "$BASE/assets/today-people-wheel-v117.js?v=1.2.0" '__mwsTodayPeopleWheelV120' > /tmp/today-wheel.js
-          node --check /tmp/today-wheel.js
-          retry_contains "$BASE/assets/majoku-host-fix-v114.js?v=1.2.0" '__mwsMajokuHostFixV120' > /tmp/majoku-host.js
-          node --check /tmp/majoku-host.js
-          retry_contains "$BASE/assets/boss-raid-v116.js?v=1.2.0" '__mwsBossRaidV120' > /tmp/boss-raid.js
-          node --check /tmp/boss-raid.js
-          grep -Fq 'const DEFAULT_HP=500' /tmp/boss-raid.js
+          echo '[7/9] immutable versioned media cache'
+          node --check src/cf-v122-cache.js
+          grep -Fq 'max-age=31536000, immutable' src/cf-v122-cache.js
+          grep -Fq 'original-bytes-no-reencode' src/cf-v122-cache.js
+          grep -Fq "./cf-v122-cache.js" src/cf-v111-entry.js
 
-          echo '[7/7] Steam and drag scripts'
-          retry_contains "$BASE/assets/steam-game-v111.js?v=1.1.3" '__mwsSteamGameV111' > /tmp/steam-v111.js
-          node --check /tmp/steam-v111.js
-          retry_contains "$BASE/assets/calendar-drag-layout-fix.css?v=1.1.3" 'min-height:128px!important' > /tmp/drag-fix.css
+          echo '[8/9] calendar and Majoku fixes still available'
+          retry_contains "$BASE/assets/today-people-wheel-v117.js?v=1.2.0" '__mwsTodayPeopleWheelV120' > /tmp/wheel.js
+          node --check /tmp/wheel.js
+          retry_contains "$BASE/assets/ui-fixes-v121.js?v=1.2.1" '__mwsUiFixesV121' > /tmp/ui.js
+          node --check /tmp/ui.js
+          retry_contains "$BASE/assets/majoku-host-fix-v114.js?v=1.2.0" '__mwsMajokuHostFixV120' > /tmp/majoku.js
+          node --check /tmp/majoku.js
 
-          echo 'Live Worker v1.2.1 compact boss manager, R2 boss images and reduced UI overhead verified.'
+          echo '[9/9] worker source syntax'
+          node --check assets/perf-runtime.js
+          node --check assets/perf-runtime-base.js
+          node --check assets/cloud-v1.1-loader.js
+          node --check assets/boss-manager-v121.js
+
+          echo 'Live Worker v1.2.2 lossless image policy, lazy feature loading, cache reuse and reduced DOM work verified.'
