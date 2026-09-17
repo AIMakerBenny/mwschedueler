@@ -35,6 +35,30 @@ function parseAllowedSoopProxyUrl(raw){
   if(target.protocol!=='https:'||target.username||target.password||target.port||!isAllowedSoopProxyHost(target.hostname))return null;
   return target;
 }
+function soopBrowserHeaders(target,sourceHeaders){
+  const headers=new Headers();
+  for(const name of ['accept','accept-language','content-type']){const value=sourceHeaders.get(name);if(value)headers.set(name,value)}
+  if(!headers.has('accept'))headers.set('accept','application/json, text/plain, */*');
+  if(!headers.has('accept-language'))headers.set('accept-language','ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7');
+  headers.set('user-agent','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36');
+
+  /* api-channel returns HTTP 200 with an empty body when called like a generic server request.
+     Reproduce the headers sent by the SOOP channel web app so the upstream returns its JSON payload. */
+  if(target.hostname.toLowerCase()==='api-channel.sooplive.co.kr'){
+    headers.set('origin','https://www.sooplive.co.kr');
+    headers.set('referer','https://www.sooplive.co.kr/');
+    headers.set('sec-fetch-dest','empty');
+    headers.set('sec-fetch-mode','cors');
+    headers.set('sec-fetch-site','same-site');
+  }else if(target.hostname.toLowerCase().endsWith('.afreecatv.com')){
+    headers.set('origin','https://www.sooplive.com');
+    headers.set('referer','https://www.sooplive.com/');
+  }else{
+    headers.set('origin','https://www.sooplive.co.kr');
+    headers.set('referer','https://www.sooplive.co.kr/');
+  }
+  return headers;
+}
 async function fetchAllowedSoopTarget(target,method,headers,body){
   let current=target,currentMethod=method,currentBody=body;
   for(let redirects=0;redirects<=SOOP_PROXY_MAX_REDIRECTS;redirects++){
@@ -59,10 +83,7 @@ async function handleSoopProxy(request){
   const requestUrl=new URL(request.url);
   const target=parseAllowedSoopProxyUrl(requestUrl.searchParams.get('url'));
   if(!target)return json({error:'Invalid or untrusted SOOP URL'},400);
-  const headers=new Headers();
-  for(const name of ['accept','accept-language','content-type']){const value=request.headers.get(name);if(value)headers.set(name,value)}
-  if(!headers.has('accept'))headers.set('accept','application/json,text/plain,text/html,*/*');
-  headers.set('user-agent','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/152 Safari/537.36');
+  const headers=soopBrowserHeaders(target,request.headers);
   let body;
   if(request.method==='POST'){
     const declared=Number(request.headers.get('content-length')||0);
@@ -76,12 +97,12 @@ async function handleSoopProxy(request){
     for(const name of ['content-type','content-language','etag','last-modified']){const value=upstream.headers.get(name);if(value)responseHeaders.set(name,value)}
     responseHeaders.set('cache-control','no-store');
     responseHeaders.set('x-content-type-options','nosniff');
-    responseHeaders.set('x-mws-soop-proxy','v1.2.3');
+    responseHeaders.set('x-mws-soop-proxy','v1.2.5');
     return new Response(request.method==='HEAD'?null:upstream.body,{status:upstream.status,statusText:upstream.statusText,headers:responseHeaders});
   }catch(error){
     const message=error?.name==='AbortError'?'SOOP request timed out':String(error?.message||error||'SOOP request failed');
     console.error('SOOP proxy failed',target.hostname,message);
-    return json({error:message},502,{'x-mws-soop-proxy':'v1.2.3'});
+    return json({error:message},502,{'x-mws-soop-proxy':'v1.2.5'});
   }
 }
 async function isAdmin(request,env,ctx){
