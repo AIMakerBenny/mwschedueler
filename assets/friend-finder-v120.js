@@ -1,24 +1,27 @@
-/* Mawang Scheduler v1.2.0 - Friend Finder category filter, fast LIVE batching, and LIVE thumbnails */
+/* Mawang Scheduler v1.3.0 - Friend Finder category filter, fast LIVE batching, and LIVE thumbnails */
 (()=>{
 'use strict';
 if(window.__mwsFriendFinderV120)return;
 window.__mwsFriendFinderV120=1;
 
-const VERSION_LABEL='Mawang Scheduler v 1.2.0';
 const baseFetch=window.fetch.bind(window);
 const liveCache=new Map();
 const liveByUserId=new Map();
+const LIVE_CACHE_MS=10000;
+const THUMB_REFRESH_MS=10000;
 let batchPromise=null;
 let categoriesPromise=null;
 let forceNextBatch=false;
 let uiScheduled=false;
 
 function setVersionLabel(){
-  document.body?.setAttribute('data-build-version','MWS V 1.2.0');
+  const version=String(window.MWS_APP_VERSION||'1.3.0');
+  const label=String(window.MWS_APP_VERSION_LABEL||`Mawang Scheduler v ${version}`);
+  document.body?.setAttribute('data-build-version',`MWS V ${version}`);
   const direct=document.querySelector('[id^="mwsBuildVersionV5"],.sidebar-build-version-v52,.sidebar-build-version-v53');
-  if(direct)direct.textContent=VERSION_LABEL;
+  if(direct)direct.textContent=label;
   document.querySelectorAll('.sidebar *').forEach(el=>{
-    if(el.children.length===0&&/^Mawang Scheduler\s+v/i.test(String(el.textContent||'').trim()))el.textContent=VERSION_LABEL;
+    if(el.children.length===0&&/^Mawang Scheduler\s+v/i.test(String(el.textContent||'').trim()))el.textContent=label;
   });
 }
 
@@ -58,7 +61,7 @@ function syntheticResponse(row){
   const headers=new Headers();
   if(row?.contentType)headers.set('content-type',row.contentType);
   headers.set('cache-control','no-store');
-  headers.set('x-mws-live-batch','v1.2.0');
+  headers.set('x-mws-live-batch','v1.3.0');
   return new Response(String(row?.body??''),{status:Number(row?.status)||200,headers});
 }
 function rememberRow(row){
@@ -84,7 +87,7 @@ async function runBatch(extraTarget,force=false){
 }
 async function ensureBatch(target,{force=false}={}){
   const cached=liveCache.get(target.href);
-  if(!force&&cached&&Date.now()-cached.at<30000)return cached.row;
+  if(!force&&cached&&Date.now()-cached.at<LIVE_CACHE_MS)return cached.row;
   if(!batchPromise){
     const runForce=force||forceNextBatch;forceNextBatch=false;
     batchPromise=runBatch(target,runForce).finally(()=>{batchPromise=null});
@@ -121,12 +124,17 @@ function installStyle(){
 .mws-live-category-v120.offline{display:none}
 .mws-category-hidden-v120{display:none!important}
 #mwsFriendFastBadge{font-size:10px;color:var(--muted);white-space:nowrap}
-.mws-live-screen-v120{display:block;width:100%;margin-top:12px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,51,79,.72);background:#090b10;cursor:pointer;aspect-ratio:16/9;position:relative;box-sizing:border-box}
+.mws-live-screen-v120{display:block;width:100%;margin-top:12px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,51,79,.72);background:#090b10;cursor:pointer;aspect-ratio:16/9;position:relative;box-sizing:border-box;min-height:128px}
 .mws-live-screen-v120[hidden]{display:none!important}
 .mws-live-screen-v120 img{display:block;width:100%;height:100%;object-fit:cover;background:#090b10}
-.mws-live-screen-v120 .mws-live-screen-label-v120{position:absolute;left:8px;top:8px;padding:4px 7px;border-radius:999px;background:rgba(5,8,14,.82);color:#fff;font-size:10px;font-weight:900;pointer-events:none}
-.mws-live-screen-v120 .mws-live-screen-title-v120{position:absolute;left:0;right:0;bottom:0;padding:22px 10px 9px;background:linear-gradient(transparent,rgba(0,0,0,.86));color:#fff;font-size:11px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.mws-live-screen-v120.is-image-fallback img{opacity:0}
+.mws-live-screen-v120.is-image-fallback::before{content:'LIVE 방송 화면 불러오는 중';position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:12px;font-weight:800;background:linear-gradient(145deg,#0b0f16,#111827)}
+.mws-live-screen-v120 .mws-live-screen-label-v120{position:absolute;left:8px;top:8px;padding:4px 7px;border-radius:999px;background:rgba(5,8,14,.82);color:#fff;font-size:10px;font-weight:900;pointer-events:none;z-index:2}
+.mws-live-screen-v120 .mws-live-screen-title-v120{position:absolute;left:0;right:0;bottom:0;padding:22px 10px 9px;background:linear-gradient(transparent,rgba(0,0,0,.86));color:#fff;font-size:11px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;z-index:2}
 @media(max-width:900px){#mwsFriendCategorySelect{min-width:145px;max-width:180px}}
+body[data-device-mode="mobile"] .mws-live-screen-v120{width:100%!important;aspect-ratio:16/9!important;min-height:180px!important;margin-top:14px!important;border-radius:14px!important}
+body[data-device-mode="mobile"] .mws-live-screen-v120 .mws-live-screen-label-v120{font-size:12px!important;padding:5px 8px!important}
+body[data-device-mode="mobile"] .mws-live-screen-v120 .mws-live-screen-title-v120{font-size:13px!important;padding:28px 12px 11px!important}
 `;
   document.head.appendChild(style);
 }
@@ -157,7 +165,16 @@ function liveCategoryId(entry){const d=entry?.data||{};return String(d.broadCate
 function liveViewers(entry){const d=entry?.data||{};const n=Number(d.currentSumViewer??d.current_sum_viewer??d.total_view_cnt);return Number.isFinite(n)&&n>=0?n:null}
 function liveBroadNo(entry){const d=entry?.data||{};return String(d.broadNo??d.broad_no??d.bno??'').trim()}
 function liveTitle(entry){const d=entry?.data||{};return String(d.broadTitle??d.broad_title??d.title??'').trim()}
-function liveThumbUrl(bno){return bno?`https://liveimg.sooplive.com/m/${encodeURIComponent(bno)}?t=${Math.floor(Date.now()/30000)}`:''}
+function liveThumbCandidates(bno){
+  if(!bno)return[];
+  const id=encodeURIComponent(bno),stamp=Math.floor(Date.now()/THUMB_REFRESH_MS);
+  return [
+    `https://liveimg.sooplive.co.kr/m/${id}?mws=${stamp}`,
+    `https://liveimg.sooplive.com/m/${id}?mws=${stamp}`,
+    `https://liveimg.sooplive.co.kr/m/${id}`,
+    `https://liveimg.sooplive.com/m/${id}`
+  ];
+}
 function livePlayUrl(id,bno){return `https://play.sooplive.com/${encodeURIComponent(id)}${bno?`/${encodeURIComponent(bno)}`:''}`}
 
 async function loadCategories(){
@@ -190,6 +207,19 @@ async function ensureCategoryControl(root){
   for(const entry of liveByUserId.values()){if(!isLiveEntry(entry))continue;const name=liveCategory(entry),id=liveCategoryId(entry);if(name)unique.set(`${id}|${name}`,{id,name})}
   [...unique.values()].sort((a,b)=>a.name.localeCompare(b.name,'ko')).forEach(x=>{const o=document.createElement('option');o.value=x.id?`id:${x.id}`:`name:${x.name}`;o.textContent=x.name;select.appendChild(o)});
 }
+function setLiveImage(img,screen,bno){
+  if(!img||!screen||!bno)return;
+  const candidates=liveThumbCandidates(bno);
+  let index=0;
+  screen.classList.remove('is-image-fallback');
+  img.onload=()=>screen.classList.remove('is-image-fallback');
+  img.onerror=()=>{
+    index+=1;
+    if(index<candidates.length){img.src=candidates[index];return}
+    screen.classList.add('is-image-fallback');
+  };
+  img.src=candidates[0];
+}
 function decorate(root=friendRoot()){
   if(!root)return;installStyle();setVersionLabel();
   ensureCategoryControl(root).catch(()=>{});
@@ -203,15 +233,12 @@ function decorate(root=friendRoot()){
     const bno=liveBroadNo(entry),title=liveTitle(entry);
     if(!live||!bno){if(screen)screen.hidden=true}else{
       if(!screen){
-        screen=document.createElement('div');screen.className='mws-live-screen-v120';screen.innerHTML='<img alt="현재 방송 화면" loading="lazy" decoding="async" fetchpriority="low"><span class="mws-live-screen-label-v120">LIVE 화면</span><span class="mws-live-screen-title-v120"></span>';card.appendChild(screen);
+        screen=document.createElement('div');screen.className='mws-live-screen-v120';screen.innerHTML='<img alt="현재 방송 화면" loading="eager" decoding="async" fetchpriority="high" referrerpolicy="no-referrer"><span class="mws-live-screen-label-v120">LIVE 화면</span><span class="mws-live-screen-title-v120"></span>';card.appendChild(screen);
       }
       screen.hidden=false;screen.onclick=()=>window.open(livePlayUrl(id,bno),'_blank','noopener');
       const titleEl=screen.querySelector('.mws-live-screen-title-v120');if(titleEl)titleEl.textContent=title||'현재 방송 화면';
-      const img=screen.querySelector('img'),src=liveThumbUrl(bno);
-      if(img&&img.dataset.bno!==bno){
-        img.dataset.bno=bno;img.dataset.retry='0';img.src=src;
-        img.onerror=()=>{if(img.dataset.retry==='0'){img.dataset.retry='1';img.src=`https://liveimg.sooplive.com/m/${encodeURIComponent(bno)}`}else screen.hidden=true};
-      }
+      const img=screen.querySelector('img');
+      if(img&&img.dataset.bno!==bno){img.dataset.bno=bno;setLiveImage(img,screen,bno)}
     }
 
     let match=true;if(selected){match=live&&(selected.startsWith('id:')?catId===selected.slice(3):cat===selected.slice(5))}
@@ -223,9 +250,9 @@ window.addEventListener('mws:friend-live-updated',scheduleUi);
 document.addEventListener('click',event=>{
   const text=String(event.target?.closest?.('button')?.textContent||'').trim();
   if(text.includes('라이브 새로고침')){liveCache.clear();liveByUserId.clear();forceNextBatch=true;setTimeout(scheduleUi,0)}
-  const nav=event.target?.closest?.('.nav button[data-tab]');if(nav&&/친구\s*찾기/.test(String(nav.textContent||''))){setTimeout(()=>{scheduleUi();const first=allContactTargets()[0];if(first)ensureBatch(new URL(first)).catch(()=>{})},0)}
+  const nav=event.target?.closest?.('.nav button[data-tab]');if(nav&&/친구\s*찾기/.test(String(nav.textContent||''))){setTimeout(()=>{scheduleUi();const first=allContactTargets()[0];if(first)ensureBatch(new URL(first),{force:true}).catch(()=>{})},0)}
 },true);
 
-function boot(){installStyle();setVersionLabel();scheduleUi();[250,900,2200].forEach(ms=>setTimeout(()=>{setVersionLabel();scheduleUi()},ms))}
+function boot(){installStyle();setVersionLabel();scheduleUi();[100,350,900].forEach(ms=>setTimeout(()=>{setVersionLabel();scheduleUi()},ms))}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
