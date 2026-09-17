@@ -10,7 +10,13 @@ export function runPhase7SaveInflightEditAudit(){
   if(!entry.includes('baselineJson.set(part,JSON.stringify(serverValue))'))issues.push('save acknowledgement does not advance baseline to server-accepted state');
   if(!entry.includes('if(!changedAfterSend&&hasNormalized)mergePart(part,serverValue,data)'))issues.push('server normalization can overwrite edits made after upload started');
   if(!entry.includes('}markDirty()'))issues.push('dirty state is not recalculated after save acknowledgement');
-  if(entry.includes('mergeNormalizedResult(normalized);if(manifest?.parts)'))issues.push('legacy unconditional normalized merge remains active');
+
+  // The old algorithm appears in normalizeCloudCore only as the search string for replace().
+  // Verify that the safe replacement exists after that search target instead of treating the search literal itself as live code.
+  const oldTarget=entry.indexOf('mergeNormalizedResult(normalized);if(manifest?.parts)');
+  const safeReplacement=entry.indexOf('const changedAfterSend=JSON.stringify(extractPart(part))!==sentJson.get(part)');
+  if(oldTarget<0)issues.push('Phase 7 transform no longer has the expected legacy search target');
+  if(safeReplacement<0||safeReplacement<=oldTarget)issues.push('safe save reconciliation replacement is not paired after the legacy search target');
 
   // Reproduce the exact lifecycle: A is sent, user changes to B while request is in flight.
   const sent={events:[{id:'1',title:'A'}]};
