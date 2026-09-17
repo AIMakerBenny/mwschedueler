@@ -39,6 +39,7 @@ async function start(){
   await load('test-v56','/assets/test-v5.6.js?v=1.3.0-post-login');
   await load('device-ui','/assets/device-ui.js?v=1.3.0-post-login');
   loadStyle('mobile-drawer-v130','/assets/mobile-drawer-v130.css?v=1.3.0-drawer-fix');
+  loadStyle('mobile-calendar-v130','/assets/mobile-calendar-v130.css?v=1.3.0-month-redesign');
   window.__mwsPostLoginUiReadyV130=true;
   try{window.dispatchEvent(new Event('mws:post-login-ui-ready'))}catch(_){}
 }
