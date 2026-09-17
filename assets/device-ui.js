@@ -191,3 +191,25 @@ link.href='assets/calendar-drag-layout-fix.css?v=1.3.0';
 link.dataset.mwsCalendarDragFix='1';
 document.head.appendChild(link);
 })();
+
+/* v1.3.0 final version display guard: older helpers must not overwrite the visible version. */
+(()=>{
+'use strict';
+const LABEL='Mawang Scheduler v 1.3.0';
+const BUILD='MWS V 1.3.0';
+let applying=false;
+function applyVersion(){
+ if(applying)return;applying=true;
+ try{
+  if(document.body&&document.body.dataset.buildVersion!==BUILD)document.body.dataset.buildVersion=BUILD;
+  const el=document.getElementById('mwsBuildVersion');
+  if(el&&el.textContent!==LABEL)el.textContent=LABEL;
+ }finally{applying=false}
+}
+applyVersion();
+queueMicrotask(applyVersion);
+setTimeout(applyVersion,0);
+const target=document.getElementById('mwsBuildVersion');
+if(target)new MutationObserver(applyVersion).observe(target,{childList:true,characterData:true,subtree:true});
+if(document.body)new MutationObserver(applyVersion).observe(document.body,{attributes:true,attributeFilter:['data-build-version']});
+})();
