@@ -20,6 +20,7 @@ const loadStyle=(key,href)=>{
   const link=document.createElement('link');link.rel='stylesheet';link.href=href;link.dataset.mwsFeatureStyle=key;document.head.appendChild(link);
 };
 
+const loadAppVersion=()=>loadScript('app-version-v120','/assets/app-version-v120.js?v=1.2.0','__mwsAppVersionV120');
 const loadSoopFetchProxy=()=>loadScript('soop-fetch-proxy','/assets/soop-fetch-proxy-v123.js?v=1.2.5','__mwsSoopFetchProxyV124');
 const loadFriendFinder=()=>loadScript('friend-finder-v120','/assets/friend-finder-v120.js?v=1.2.2','__mwsFriendFinderV120');
 const loadTodayPeopleWheel=()=>loadScript('today-people-wheel','/assets/today-people-wheel-v117.js?v=1.2.0','__mwsTodayPeopleWheelV120');
@@ -64,13 +65,15 @@ document.addEventListener('click',event=>{
   if(button?.dataset?.tab)Promise.resolve(ensureFeaturesForTab(button.dataset.tab)).catch(()=>{});
 },true);
 
-loadSoopFetchProxy()
+loadAppVersion()
+  .then(()=>loadSoopFetchProxy())
   .then(()=>loadFriendFinder())
   .then(()=>fetch('/assets/cloud-v1.1.js?v=1.1.1',{cache:'no-store'}))
   .then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.text()})
   .then(code=>{
     code=code.replace("Math.max(0,Math.min(100,Math.round(Number(percent)||0));","Math.max(0,Math.min(100,Math.round(Number(percent)||0)));");
     const s=document.createElement('script');s.textContent=code;document.body.appendChild(s);
+    window.mwsApplyAppVersionV120?.();
     installTabBridge();
     ensureFeaturesForTab(activeTab()).catch(()=>{});
     if('requestIdleCallback'in window)requestIdleCallback(prefetchFeatures,{timeout:3500});else setTimeout(prefetchFeatures,1200);
@@ -78,6 +81,7 @@ loadSoopFetchProxy()
   .catch(error=>{
     console.error('Cloudflare auth bootstrap failed',error);
     const el=document.getElementById('mwsLoginError');if(el)el.textContent='Cloudflare 로그인 모듈 로딩 실패: '+(error?.message||String(error));
+    window.mwsApplyAppVersionV120?.();
     installTabBridge();ensureFeaturesForTab(activeTab()).catch(()=>{});
   });
 })();
