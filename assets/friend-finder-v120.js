@@ -1,4 +1,4 @@
-/* Mawang Scheduler v1.2.0 - Friend Finder category filter and fast LIVE batching */
+/* Mawang Scheduler v1.2.0 - Friend Finder category filter, fast LIVE batching, and LIVE thumbnails */
 (()=>{
 'use strict';
 if(window.__mwsFriendFinderV120)return;
@@ -48,9 +48,6 @@ function extractActualTarget(input){
   if(u.origin===location.origin&&u.pathname==='/api/soop/proxy'){
     try{const t=new URL(u.searchParams.get('url')||'');if(t.hostname==='api-channel.sooplive.co.kr'&&/\/v1\.1\/channel\/[^/]+\/home\/section\/broad/.test(t.pathname))return t}catch(_){}
   }
-  if(u.hostname==='nysxcqlewzucbpoaymbg.supabase.co'&&u.pathname==='/functions/v1/soop-proxy'){
-    try{const t=new URL(u.searchParams.get('url')||'');if(t.hostname==='api-channel.sooplive.co.kr'&&/\/v1\.1\/channel\/[^/]+\/home\/section\/broad/.test(t.pathname))return t}catch(_){}
-  }
   return null;
 }
 function userIdFromTarget(target){
@@ -76,7 +73,8 @@ function rememberRow(row){
 function dispatchLiveUpdate(){window.dispatchEvent(new CustomEvent('mws:friend-live-updated',{detail:{count:liveByUserId.size}}));scheduleUi()}
 
 async function runBatch(extraTarget,force=false){
-  const urls=allContactTargets();if(extraTarget&&!urls.includes(extraTarget.href))urls.push(extraTarget.href);
+  const urls=allContactTargets();
+  if(extraTarget){const i=urls.indexOf(extraTarget.href);if(i>0){urls.splice(i,1);urls.unshift(extraTarget.href)}else if(i<0)urls.unshift(extraTarget.href)}
   if(!urls.length)return;
   const response=await baseFetch('/api/soop/live-batch',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'content-type':'application/json'},body:JSON.stringify({urls,force})});
   if(!response.ok)throw new Error(`LIVE batch HTTP ${response.status}`);
@@ -86,7 +84,7 @@ async function runBatch(extraTarget,force=false){
 }
 async function ensureBatch(target,{force=false}={}){
   const cached=liveCache.get(target.href);
-  if(!force&&cached&&Date.now()-cached.at<12000)return cached.row;
+  if(!force&&cached&&Date.now()-cached.at<30000)return cached.row;
   if(!batchPromise){
     const runForce=force||forceNextBatch;forceNextBatch=false;
     batchPromise=runBatch(target,runForce).finally(()=>{batchPromise=null});
@@ -123,6 +121,11 @@ function installStyle(){
 .mws-live-category-v120.offline{display:none}
 .mws-category-hidden-v120{display:none!important}
 #mwsFriendFastBadge{font-size:10px;color:var(--muted);white-space:nowrap}
+.mws-live-screen-v120{display:block;width:100%;margin-top:12px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,51,79,.72);background:#090b10;cursor:pointer;aspect-ratio:16/9;position:relative;box-sizing:border-box}
+.mws-live-screen-v120[hidden]{display:none!important}
+.mws-live-screen-v120 img{display:block;width:100%;height:100%;object-fit:cover;background:#090b10}
+.mws-live-screen-v120 .mws-live-screen-label-v120{position:absolute;left:8px;top:8px;padding:4px 7px;border-radius:999px;background:rgba(5,8,14,.82);color:#fff;font-size:10px;font-weight:900;pointer-events:none}
+.mws-live-screen-v120 .mws-live-screen-title-v120{position:absolute;left:0;right:0;bottom:0;padding:22px 10px 9px;background:linear-gradient(transparent,rgba(0,0,0,.86));color:#fff;font-size:11px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 @media(max-width:900px){#mwsFriendCategorySelect{min-width:145px;max-width:180px}}
 `;
   document.head.appendChild(style);
@@ -152,6 +155,10 @@ function isLiveEntry(entry){const d=entry?.data;return Boolean(d&&typeof d==='ob
 function liveCategory(entry){const d=entry?.data||{};return String(d.categoryName||d.category_name||'').trim()}
 function liveCategoryId(entry){const d=entry?.data||{};return String(d.broadCateNo??d.broad_cate_no??'').trim()}
 function liveViewers(entry){const d=entry?.data||{};const n=Number(d.currentSumViewer??d.current_sum_viewer??d.total_view_cnt);return Number.isFinite(n)&&n>=0?n:null}
+function liveBroadNo(entry){const d=entry?.data||{};return String(d.broadNo??d.broad_no??d.bno??'').trim()}
+function liveTitle(entry){const d=entry?.data||{};return String(d.broadTitle??d.broad_title??d.title??'').trim()}
+function liveThumbUrl(bno){return bno?`https://liveimg.sooplive.com/m/${encodeURIComponent(bno)}?t=${Math.floor(Date.now()/30000)}`:''}
+function livePlayUrl(id,bno){return `https://play.sooplive.com/${encodeURIComponent(id)}${bno?`/${encodeURIComponent(bno)}`:''}`}
 
 async function loadCategories(){
   if(categoriesPromise)return categoriesPromise;
@@ -191,6 +198,22 @@ function decorate(root=friendRoot()){
     const entry=id?liveByUserId.get(id):null;const live=isLiveEntry(entry);const cat=liveCategory(entry),catId=liveCategoryId(entry),viewers=liveViewers(entry);
     let meta=card.querySelector('.mws-live-category-v120');if(!meta){meta=document.createElement('div');meta.className='mws-live-category-v120';const actions=[...card.querySelectorAll('button,a')].find(x=>String(x.textContent||'').trim()==='프로필')?.parentElement;actions?.parentElement?.insertBefore(meta,actions)||card.appendChild(meta)}
     meta.classList.toggle('offline',!live);meta.textContent=live?`카테고리 · ${cat||'미분류'}${viewers!==null?` · ${viewers.toLocaleString()}명`:''}`:'';
+
+    let screen=card.querySelector('.mws-live-screen-v120');
+    const bno=liveBroadNo(entry),title=liveTitle(entry);
+    if(!live||!bno){if(screen)screen.hidden=true}else{
+      if(!screen){
+        screen=document.createElement('div');screen.className='mws-live-screen-v120';screen.innerHTML='<img alt="현재 방송 화면" loading="lazy" decoding="async" fetchpriority="low"><span class="mws-live-screen-label-v120">LIVE 화면</span><span class="mws-live-screen-title-v120"></span>';card.appendChild(screen);
+      }
+      screen.hidden=false;screen.onclick=()=>window.open(livePlayUrl(id,bno),'_blank','noopener');
+      const titleEl=screen.querySelector('.mws-live-screen-title-v120');if(titleEl)titleEl.textContent=title||'현재 방송 화면';
+      const img=screen.querySelector('img'),src=liveThumbUrl(bno);
+      if(img&&img.dataset.bno!==bno){
+        img.dataset.bno=bno;img.dataset.retry='0';img.src=src;
+        img.onerror=()=>{if(img.dataset.retry==='0'){img.dataset.retry='1';img.src=`https://liveimg.sooplive.com/m/${encodeURIComponent(bno)}`}else screen.hidden=true};
+      }
+    }
+
     let match=true;if(selected){match=live&&(selected.startsWith('id:')?catId===selected.slice(3):cat===selected.slice(5))}
     card.classList.toggle('mws-category-hidden-v120',!match);
   }
