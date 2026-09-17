@@ -27,14 +27,20 @@ window.mwsApplyAppVersionV120=apply;
 apply();
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});
 
-const root=document.querySelector('.sidebar')||document.body;
-if(root){
-  const observer=new MutationObserver(mutations=>{
+const sidebar=document.querySelector('.sidebar');
+if(sidebar){
+  new MutationObserver(mutations=>{
+    if(applying)return;
     for(const mutation of mutations){
       const target=mutation.target?.nodeType===3?mutation.target.parentElement:mutation.target;
       if(target?.id==='mwsBuildVersion'||target?.closest?.('#mwsBuildVersion')){apply();break}
     }
-  });
-  observer.observe(root,{subtree:true,childList:true,characterData:true});
+  }).observe(sidebar,{subtree:true,childList:true,characterData:true});
+}
+if(document.body){
+  new MutationObserver(mutations=>{
+    if(applying)return;
+    if(mutations.some(m=>m.type==='attributes'&&m.attributeName==='data-build-version'))apply();
+  }).observe(document.body,{attributes:true,attributeFilter:['data-build-version']});
 }
 })();
