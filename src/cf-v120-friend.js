@@ -2,11 +2,11 @@ import appWorker from './cf-v122-cache.js';
 
 const CHANNEL_HOST='api-channel.sooplive.co.kr';
 const CATEGORY_URL='https://live.sooplive.com/script/locale/ko_KR/broad_category.js';
-const LIVE_TTL_MS=12000;
+const LIVE_TTL_MS=30000;
 const CATEGORY_TTL_MS=6*60*60*1000;
 const BATCH_MAX=120;
-const CONCURRENCY=16;
-const FETCH_TIMEOUT_MS=9000;
+const CONCURRENCY=48;
+const FETCH_TIMEOUT_MS=5000;
 const liveCache=new Map();
 let categoryCache={at:0,categories:[]};
 
@@ -49,7 +49,7 @@ async function liveRow(target,force=false){
   if(!force&&hit&&Date.now()-hit.at<LIVE_TTL_MS)return hit.row;
   const row=await fetchText(target);
   liveCache.set(key,{at:Date.now(),row});
-  if(liveCache.size>240){for(const [k,v] of liveCache)if(Date.now()-v.at>60000)liveCache.delete(k)}
+  if(liveCache.size>240){for(const [k,v] of liveCache)if(Date.now()-v.at>120000)liveCache.delete(k)}
   return row;
 }
 async function mapLimit(items,limit,fn){
