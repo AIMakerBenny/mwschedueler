@@ -8,14 +8,61 @@ function normalizeVersionHtml(html){
   let out=String(html||'');
   out=out.replace(/data-build-version=["'][^"']*["']/i,`data-build-version="${BUILD_LABEL}"`);
   out=out.replace(/(<div\s+id=["']mwsBuildVersion["'][^>]*>)[\s\S]*?(<\/div>)/i,`$1${APP_LABEL}$2`);
-  /* Force browsers to fetch the CPU-loop fix instead of reusing the old unversioned runtime. */
+
+  /* Heavy UI/runtime modules must never execute on the login screen. */
+  const deferred=[
+    'perf-runtime\\.js',
+    'test-v5\\.5\\.js',
+    'test-v5\\.6\\.js',
+    'device-ui\\.js'
+  ];
+  for(const file of deferred){
+    const re=new RegExp(`<script\\s+src=["']assets\\/${file}(?:\\?[^"']*)?["']><\\/script>`,`gi`);
+    out=out.replace(re,'');
+  }
+  if(!out.includes('post-login-runtime-v130.js')){
+    out=out.replace(/<\/body>/i,'<script src="assets/post-login-runtime-v130.js?v=1.3.0-auth-isolated"></script>\n</body>');
+  }
+  return out;
+}
+
+function normalizeCloudCore(js){
+  let out=String(js||'');
+
+  /* One authoritative cache name. Do not remap IndexedDB from another loader. */
+  out=out.replace("const CACHE_DB='mawang_data';","const CACHE_DB='mawang_data_v130';");
+
+  /* Data hydration must not control whether authentication is considered successful. */
+  out=out.replace("applyModeUi();hideGate();const st=$('syncStatusText');","applyModeUi();const st=$('syncStatusText');");
+
+  const marker="  async function adminLogin(username,password){";
+  if(out.includes(marker)&&!out.includes('function enterAppShell(chosen)')){
+    const bridge=`  function enterAppShell(chosen){\n    mode=chosen;\n    applyModeUi();\n    hideGate();\n    const st=$('syncStatusText');\n    if(st)st.textContent='로그인 완료 · 데이터 불러오는 중';\n    try{window.dispatchEvent(new CustomEvent('mws:auth-granted',{detail:{mode:chosen,user:currentAdmin||null}}))}catch(_){}\n  }\n  function markAppReady(chosen,degraded=false){\n    window.__mwsAppReadyV130=true;\n    try{window.dispatchEvent(new CustomEvent('mws:app-ready',{detail:{mode:chosen,user:currentAdmin||null,degraded:Boolean(degraded)}}))}catch(_){}\n  }\n  async function startHydration(chosen){\n    try{\n      await hydrate(chosen);\n      installLazyTabBridge();\n      markAppReady(chosen,false);\n    }catch(error){\n      console.error('Mawang data hydration failed after authentication',error);\n      const st=$('syncStatusText');\n      if(st)st.textContent='로그인 완료 · 데이터 로딩 실패';\n      try{applyModeUi()}catch(_){}\n      try{window.dispatchEvent(new CustomEvent('mws:app-data-error',{detail:{mode:chosen,message:error?.message||String(error)}}))}catch(_){}\n      markAppReady(chosen,true);\n    }\n  }\n\n`;
+    out=out.replace(marker,bridge+marker);
+  }
+
   out=out.replace(
-    /<script\s+src=["']assets\/perf-runtime\.js(?:\?[^"']*)?["']><\/script>/i,
-    '<script src="assets/perf-runtime.js?v=1.3.0-login-cpu-fix"></script>'
+    "rememberChoice(chosen);await hydrate(chosen)",
+    "rememberChoice(chosen);enterAppShell(chosen);void startHydration(chosen)"
+  );
+
+  out=out.replace(
+    "async function init(){await validateCacheSchema();installSaveBridge();bindUi();selectLoginMode('admin');try{await fetchJson('/api/health',{},'Cloudflare 상태 확인');const remember=",
+    "async function init(){installSaveBridge();bindUi();selectLoginMode('admin');void validateCacheSchema();try{const remember="
   );
   out=out.replace(
-    /<script\s+src=["']assets\/device-ui\.js(?:\?[^"']*)?["']><\/script>/i,
-    '<script src="assets/device-ui.js?v=1.3.0-login-cpu-fix"></script>'
+    "if(remember&&preferred==='public'){await hydrate('public');installLazyTabBridge();return}",
+    "if(remember&&preferred==='public'){enterAppShell('public');void startHydration('public');return}"
+  );
+  out=out.replace(
+    "if(session.authenticated){currentAdmin=session.user;await hydrate('admin');installLazyTabBridge();return}",
+    "if(session.authenticated){currentAdmin=session.user;enterAppShell('admin');void startHydration('admin');return}"
+  );
+
+  /* Old core version text must not fight app-version-v120.js. */
+  out=out.replace(
+    "document.body.dataset.buildVersion='Mawang Scheduler v.1.1.0';const versionLabel=document.querySelector('.sidebar-build-version-v53');if(versionLabel)versionLabel.textContent='Mawang Scheduler v.1.1.0';",
+    "try{window.mwsApplyAppVersionV120?.()}catch(_){};"
   );
   return out;
 }
@@ -91,12 +138,22 @@ export default {
       return textResponse(response,normalizeBossScript(await response.text()),{'x-mws-boss-hp-policy':'configurable-default-500'});
     }
 
+    if(request.method==='GET'&&url.pathname==='/assets/cloud-v1.1.js'){
+      const response=await serveAsset(env,request,'/assets/cloud-v1.1.js');
+      if(response.status!==200)return response;
+      const patched=normalizeCloudCore(await response.text());
+      return textResponse(response,patched,{
+        'x-mws-auth-boundary':'decoupled-v130',
+        'x-mws-cache-db':'mawang_data_v130'
+      });
+    }
+
     if(url.pathname==='/assets/cloud-v5.5.js'){
-      const replacement=new URL('/assets/cloud-v1.1-loader.js?v=1.3.0-login-cpu-fix',request.url);
+      const replacement=new URL('/assets/cloud-v1.1-loader.js?v=1.3.0-auth-decoupled',request.url);
       const response=await env.ASSETS.fetch(new Request(replacement.toString(),{method:'GET',headers:request.headers}));
       const headers=new Headers(response.headers);
       headers.set('cache-control','no-store');
-      headers.set('x-mws-runtime','v1.3.0');
+      headers.set('x-mws-runtime','v1.3.0-auth-decoupled');
       headers.set('x-mws-image-policy','original-bytes-no-reencode');
       return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
     }
@@ -113,7 +170,7 @@ export default {
     headers.delete('content-length');
     headers.set('cache-control','no-store, max-age=0');
     headers.set('x-mws-app-version',APP_VERSION);
-    headers.set('x-mws-login-cpu-fix','version-observer-loop-removed');
+    headers.set('x-mws-auth-boundary','decoupled-v130');
     return new Response(html,{status:response.status,statusText:response.statusText,headers});
   },
 };
