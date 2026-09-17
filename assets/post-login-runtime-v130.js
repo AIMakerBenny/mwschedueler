@@ -36,13 +36,11 @@ async function start(){
   await load('perf-runtime','/assets/perf-runtime.js?v=1.3.0-post-login','__mwsCf571Optimizer');
   await load('test-v55','/assets/test-v5.5.js?v=1.3.0-post-login');
   await load('test-v56','/assets/test-v5.6.js?v=1.3.0-post-login');
-  await load('device-ui','/assets/device-ui.js?v=1.3.0-calendar-polish');
-  loadStyle('mobile-drawer-v130','/assets/mobile-drawer-v130.css?v=1.3.0-drawer-fix');
-  loadStyle('mobile-calendar-v130','/assets/mobile-calendar-v130.css?v=1.3.0-month-redesign');
-  loadStyle('mobile-calendar-polish-v130','/assets/mobile-calendar-polish-v130.css?v=1.3.0-calendar-polish');
-  loadStyle('mobile-calendar-topbar-v130','/assets/mobile-calendar-topbar-v130.css?v=1.3.0-topbar-cleanup');
-  await load('mobile-access-tools-v130','/assets/mobile-access-tools-v130.js?v=1.3.0-drawer-tools','__mwsMobileAccessToolsV130');
-  await load('mobile-calendar-quick-add-v130','/assets/mobile-calendar-quick-add-v130.js?v=1.3.0-quick-add','__mwsMobileCalendarQuickAddV130');
+  await load('device-ui','/assets/device-ui.js?v=1.3.0-mobile-cleanup');
+  loadStyle('mobile-drawer-v130','/assets/mobile-drawer-v130.css?v=1.3.0-mobile-cleanup');
+  loadStyle('mobile-calendar-v130','/assets/mobile-calendar-v130.css?v=1.3.0-mobile-cleanup');
+  await load('mobile-access-tools-v130','/assets/mobile-access-tools-v130.js?v=1.3.0-mobile-cleanup','__mwsMobileAccessToolsV130');
+  await load('mobile-calendar-quick-add-v130','/assets/mobile-calendar-quick-add-v130.js?v=1.3.0-mobile-cleanup','__mwsMobileCalendarQuickAddV130');
   window.__mwsPostLoginUiReadyV130=true;
   try{window.dispatchEvent(new Event('mws:post-login-ui-ready'))}catch(_){}
 }
