@@ -4,6 +4,7 @@ export function runPhase11LazyTabReadinessAudit(){
   const issues=[];
   const warnings=[];
   const runtime=fs.readFileSync('assets/integrity-runtime-v130.js','utf8');
+  const loader=fs.readFileSync('assets/post-login-runtime-v130.js','utf8');
 
   if(!runtime.includes('const readySetTab=window.setTab'))issues.push('existing tab implementation is not preserved');
   if(!runtime.includes('window.mwsV55EnsureParts(tab)'))issues.push('tab navigation does not await lazy data readiness');
@@ -14,6 +15,7 @@ export function runPhase11LazyTabReadinessAudit(){
   if(ensureIndex<0||openIndex<0||openIndex<ensureIndex)issues.push('tab can become interactive before its lazy data check starts');
   if(!runtime.includes("toast('화면 열기 실패'"))issues.push('lazy tab load failure has no user-visible failure path');
   if(runtime.includes("+' 데이터 확인 중'"))issues.push('tab readiness leaves a transient loading label that is not restored on non-lazy tabs');
+  if(!loader.includes('/assets/integrity-runtime-v130.js?v=1.3.0-phase11'))issues.push('Phase 11 integrity runtime cache key was not advanced');
 
   // Reproduce two quick clicks: the slower first request must not reopen the old tab.
   let seq=0;
