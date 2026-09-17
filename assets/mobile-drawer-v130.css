@@ -1,0 +1,226 @@
+/* Mawang Scheduler v1.3.0 - mobile full-menu drawer normalization */
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar,
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar:hover,
+body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .sidebar,
+body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .sidebar:hover,
+body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .sidebar:not(:hover){
+  position:fixed!important;
+  top:0!important;
+  left:0!important;
+  bottom:0!important;
+  width:min(92vw,390px)!important;
+  min-width:0!important;
+  max-width:390px!important;
+  height:100dvh!important;
+  max-height:100dvh!important;
+  padding:18px 16px calc(16px + env(safe-area-inset-bottom))!important;
+  display:flex!important;
+  flex-direction:column!important;
+  overflow:hidden!important;
+  border-right:1px solid color-mix(in srgb,var(--border) 88%,transparent)!important;
+  border-bottom:0!important;
+  background:var(--sidebar)!important;
+  box-shadow:18px 0 42px rgba(0,0,0,.34)!important;
+  z-index:5102!important;
+}
+
+/* Keep the drawer header and footer outside the scrolling menu body. */
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar-head,
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar:hover .sidebar-head,
+body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .sidebar-head{
+  flex:0 0 auto!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:82px!important;
+  margin:0 0 12px!important;
+  padding:4px 4px 14px!important;
+  border-bottom:1px solid color-mix(in srgb,var(--border) 74%,transparent)!important;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .nav,
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar:hover .nav,
+body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .nav{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  width:100%!important;
+  margin:0!important;
+  padding:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  overflow:hidden!important;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .nav-scroll,
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar:hover .nav-scroll,
+body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .nav-scroll{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  width:100%!important;
+  max-width:none!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  gap:6px!important;
+  margin:0!important;
+  padding:6px 4px 12px 0!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  scroll-snap-type:none!important;
+  scrollbar-gutter:stable!important;
+  scrollbar-width:thin!important;
+  scrollbar-color:color-mix(in srgb,var(--muted) 48%,transparent) transparent!important;
+  -webkit-overflow-scrolling:touch;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .nav-scroll::-webkit-scrollbar{width:5px!important}
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .nav-scroll::-webkit-scrollbar-thumb{
+  background:color-mix(in srgb,var(--muted) 42%,transparent)!important;
+  border-radius:99px!important;
+}
+
+/* Every menu row has a dedicated icon column and text column. */
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .nav-scroll>button,
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar:hover .nav-scroll>button,
+body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .nav-scroll>button,
+body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .sidebar:not(:hover) .nav-scroll>button{
+  flex:0 0 auto!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  min-height:56px!important;
+  height:56px!important;
+  margin:0!important;
+  padding:6px 10px!important;
+  display:grid!important;
+  grid-template-columns:44px minmax(0,1fr)!important;
+  align-items:center!important;
+  justify-content:stretch!important;
+  column-gap:12px!important;
+  border:1px solid transparent!important;
+  border-radius:13px!important;
+  background:transparent!important;
+  overflow:hidden!important;
+  text-align:left!important;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .nav-scroll>button.active{
+  background:color-mix(in srgb,var(--accent) 18%,var(--panel))!important;
+  border-color:color-mix(in srgb,var(--accent) 52%,var(--border))!important;
+  box-shadow:inset 3px 0 0 var(--accent)!important;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .nav-scroll .nav-icon,
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar:hover .nav-scroll .nav-icon,
+body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .nav-scroll .nav-icon,
+body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .sidebar:not(:hover) .nav-scroll .nav-icon{
+  grid-column:1!important;
+  position:static!important;
+  flex:none!important;
+  width:42px!important;
+  min-width:42px!important;
+  height:42px!important;
+  margin:0!important;
+  transform:none!important;
+  border-radius:12px!important;
+  justify-self:start!important;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .nav-scroll .nav-label,
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar:hover .nav-scroll .nav-label,
+body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .nav-scroll .nav-label,
+body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .sidebar:not(:hover) .nav-scroll .nav-label{
+  grid-column:2!important;
+  position:static!important;
+  display:block!important;
+  flex:none!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  height:auto!important;
+  margin:0!important;
+  padding:0!important;
+  transform:none!important;
+  opacity:1!important;
+  visibility:visible!important;
+  color:var(--text)!important;
+  -webkit-text-fill-color:var(--text)!important;
+  font-size:15px!important;
+  font-weight:760!important;
+  line-height:1.3!important;
+  text-align:left!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  clip:auto!important;
+  clip-path:none!important;
+}
+
+/* Majoku Castle sub-navigation follows the text column instead of crowding the icon. */
+body[data-resolution="mobile"][data-device-mode="mobile"] .mws-majoku-subnav-v130{
+  flex:0 0 auto!important;
+  width:calc(100% - 56px)!important;
+  max-width:none!important;
+  margin:0 0 5px 56px!important;
+  padding:4px 0 5px 10px!important;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"] .mws-majoku-subnav-v130 button{
+  width:100%!important;
+  min-height:40px!important;
+  padding:8px 10px!important;
+  font-size:12px!important;
+}
+
+/* Tool buttons remain pinned to the bottom and no longer participate in menu scrolling. */
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .nav-bottom,
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar:hover .nav-bottom,
+body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .nav-bottom{
+  flex:0 0 auto!important;
+  width:100%!important;
+  min-width:0!important;
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px!important;
+  margin:8px 0 0!important;
+  padding:12px 0 0!important;
+  overflow:visible!important;
+  background:var(--sidebar)!important;
+  border-top:1px solid color-mix(in srgb,var(--border) 78%,transparent)!important;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .nav-bottom>button,
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar:hover .nav-bottom>button,
+body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .nav-bottom>button{
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  height:48px!important;
+  margin:0!important;
+  padding:0 10px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  overflow:hidden!important;
+  border:1px solid var(--border)!important;
+  border-radius:12px!important;
+  background:var(--panel)!important;
+}
+
+/* Stronger backdrop keeps the open drawer visually separate from the workspace. */
+body[data-resolution="mobile"][data-device-mode="mobile"].mobile-drawer-open .mobile-nav-backdrop{
+  opacity:1!important;
+  pointer-events:auto!important;
+  background:rgba(2,5,12,.76)!important;
+  backdrop-filter:blur(3px)!important;
+  -webkit-backdrop-filter:blur(3px)!important;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"].mobile-drawer-open .mobile-nav-toggle{
+  left:min(92vw,390px)!important;
+}
+
+@media(max-width:420px){
+  body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar,
+  body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar:hover,
+  body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .sidebar,
+  body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .sidebar:hover,
+  body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .sidebar:not(:hover){
+    width:92vw!important;
+    max-width:92vw!important;
+    padding-left:14px!important;
+    padding-right:14px!important;
+  }
+  body[data-resolution="mobile"][data-device-mode="mobile"].mobile-drawer-open .mobile-nav-toggle{left:92vw!important}
+}
