@@ -17,8 +17,7 @@ function load(key,src,flag){
     script.onerror=()=>{console.error(`Post-login module failed: ${key}`);resolve()};
     document.body.appendChild(script);
   });
-  loaded.set(key,promise);
-  return promise;
+  loaded.set(key,promise);return promise;
 }
 function loadStyle(key,href){
   const existing=document.querySelector(`link[data-mws-post-login-style="${key}"]`);
@@ -41,6 +40,7 @@ async function start(){
   loadStyle('mobile-drawer-v130','/assets/mobile-drawer-v130.css?v=1.3.0-drawer-fix');
   loadStyle('mobile-calendar-v130','/assets/mobile-calendar-v130.css?v=1.3.0-month-redesign');
   await load('mobile-access-tools-v130','/assets/mobile-access-tools-v130.js?v=1.3.0-drawer-tools','__mwsMobileAccessToolsV130');
+  await load('mobile-calendar-quick-add-v130','/assets/mobile-calendar-quick-add-v130.js?v=1.3.0-quick-add','__mwsMobileCalendarQuickAddV130');
   window.__mwsPostLoginUiReadyV130=true;
   try{window.dispatchEvent(new Event('mws:post-login-ui-ready'))}catch(_){}
 }
