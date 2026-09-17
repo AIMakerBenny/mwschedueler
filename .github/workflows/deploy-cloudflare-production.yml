@@ -48,7 +48,7 @@ jobs:
             local body=''
             for i in {1..12}; do
               body="$(curl -fsSL --max-time 15 "$url" || true)"
-              if printf '%s' "$body" | grep -Fq "$needle"; then
+              if [[ "$body" == *"$needle"* ]]; then
                 printf '%s' "$body"
                 return 0
               fi
@@ -135,6 +135,6 @@ jobs:
           grep -Fq "./cf-v120-friend.js" src/cf-v111-entry.js
           grep -Fq "url.pathname==='/api/soop/live-batch'" src/cf-v120-friend.js
           grep -Fq "url.pathname==='/api/soop/categories'" src/cf-v120-friend.js
-          grep -Fq "url.pathname==='/majoku-castle.html'||url.pathname==='/majoku-castle'" src/cf-v111-entry.js
+          grep -Fq "url.pathname==='/majoku-castle'||url.pathname==='/majoku-castle.html'" src/cf-v111-entry.js
 
           echo 'Mawang Scheduler v1.2.0 configurable Boss Raid HP and Friend Finder verified.'
