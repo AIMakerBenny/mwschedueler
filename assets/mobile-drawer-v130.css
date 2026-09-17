@@ -1,4 +1,7 @@
-/* Mawang Scheduler v1.3.0 - mobile full-menu drawer normalization */
+/* Mawang Scheduler v1.3.0 - authoritative mobile full-menu drawer. */
+.mobile-nav-toggle,.mobile-nav-backdrop{display:none}
+
+/* The current drawer owns its complete open/close mechanics; app-core.css no longer does. */
 body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar,
 body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar:hover,
 body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .sidebar,
@@ -19,9 +22,20 @@ body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .sideba
   overflow:hidden!important;
   border-right:1px solid color-mix(in srgb,var(--border) 88%,transparent)!important;
   border-bottom:0!important;
+  border-radius:0!important;
   background:var(--sidebar)!important;
   box-shadow:18px 0 42px rgba(0,0,0,.34)!important;
   z-index:5102!important;
+  transform:translateX(-104%)!important;
+  transition:transform .28s cubic-bezier(.22,.75,.18,1)!important;
+  pointer-events:none!important;
+  visibility:visible!important;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"].mobile-drawer-open .sidebar,
+body[data-resolution="mobile"][data-device-mode="mobile"].mobile-drawer-open .sidebar:hover,
+body[data-resolution="mobile"][data-device-mode="mobile"].mobile-drawer-open.sidebar-pinned .sidebar{
+  transform:translateX(0)!important;
+  pointer-events:auto!important;
 }
 
 /* Keep the drawer header and footer outside the scrolling menu body. */
@@ -75,7 +89,7 @@ body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .nav-scroll::
   border-radius:99px!important;
 }
 
-/* Every menu row has a dedicated icon column and text column. */
+/* Every top-level menu row has one icon column and one text column. */
 body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .nav-scroll>button,
 body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar:hover .nav-scroll>button,
 body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .nav-scroll>button,
@@ -158,10 +172,28 @@ body[data-resolution="mobile"][data-device-mode="mobile"] .mws-majoku-subnav-v13
   padding:4px 0 5px 10px!important;
 }
 body[data-resolution="mobile"][data-device-mode="mobile"] .mws-majoku-subnav-v130 button{
+  display:grid!important;
+  grid-template-columns:24px minmax(0,1fr)!important;
+  align-items:center!important;
+  gap:6px!important;
   width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
   min-height:40px!important;
+  height:auto!important;
+  margin:0!important;
   padding:8px 10px!important;
   font-size:12px!important;
+  text-align:left!important;
+  overflow:hidden!important;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"] .mws-majoku-subnav-v130 button>span:last-child{
+  min-width:0!important;
+  width:auto!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  word-break:keep-all!important;
 }
 
 /* Tool buttons remain pinned to the bottom and no longer participate in menu scrolling. */
@@ -199,16 +231,57 @@ body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .nav-bo
   background:var(--panel)!important;
 }
 
-/* Stronger backdrop keeps the open drawer visually separate from the workspace. */
-body[data-resolution="mobile"][data-device-mode="mobile"].mobile-drawer-open .mobile-nav-backdrop{
-  opacity:1!important;
-  pointer-events:auto!important;
-  background:rgba(2,5,12,.76)!important;
-  backdrop-filter:blur(3px)!important;
-  -webkit-backdrop-filter:blur(3px)!important;
+/* Floating toggle and backdrop are also owned here, not by app-core.css. */
+body[data-resolution="mobile"][data-device-mode="mobile"] .mobile-nav-toggle{
+  display:grid!important;
+  position:fixed!important;
+  left:7px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  width:38px!important;
+  height:62px!important;
+  padding:0!important;
+  place-items:center!important;
+  border:1px solid color-mix(in srgb,var(--accent) 55%,var(--border))!important;
+  border-left:0!important;
+  border-radius:0 14px 14px 0!important;
+  background:color-mix(in srgb,var(--sidebar) 94%,transparent)!important;
+  color:#fff!important;
+  box-shadow:8px 0 24px rgba(0,0,0,.34)!important;
+  z-index:5104!important;
+  cursor:pointer!important;
+  transition:left .28s cubic-bezier(.22,.75,.18,1),transform .2s ease,background .2s!important;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"] .mobile-nav-toggle span{
+  display:block!important;
+  font-size:32px!important;
+  font-weight:500!important;
+  line-height:1!important;
+  transform:translateX(-1px)!important;
 }
 body[data-resolution="mobile"][data-device-mode="mobile"].mobile-drawer-open .mobile-nav-toggle{
   left:min(92vw,390px)!important;
+  transform:translate(-100%,-50%)!important;
+  border-left:1px solid color-mix(in srgb,var(--accent) 55%,var(--border))!important;
+  border-right:0!important;
+  border-radius:14px 0 0 14px!important;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"].mobile-drawer-open .mobile-nav-toggle span{transform:rotate(180deg)!important}
+body[data-resolution="mobile"][data-device-mode="mobile"] .mobile-nav-backdrop{
+  display:block!important;
+  position:fixed!important;
+  inset:0!important;
+  background:rgba(2,5,12,.76)!important;
+  backdrop-filter:blur(3px)!important;
+  -webkit-backdrop-filter:blur(3px)!important;
+  opacity:0!important;
+  pointer-events:none!important;
+  z-index:5100!important;
+  transition:opacity .24s ease!important;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"].mobile-drawer-open .mobile-nav-backdrop{
+  opacity:1!important;
+  pointer-events:auto!important;
 }
 
 @media(max-width:420px){
