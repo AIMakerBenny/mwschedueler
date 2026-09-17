@@ -180,3 +180,14 @@ frame.addEventListener('load',()=>{
 if(frame.contentDocument?.readyState==='complete')cleanLegacyRecords(frameDoc());
 else setTimeout(()=>cleanLegacyRecords(frameDoc()),500);
 })();
+
+/* v1.3.0 calendar drag layout guard: make the dedicated stability stylesheet active. */
+(()=>{
+'use strict';
+if(document.querySelector('link[data-mws-calendar-drag-fix="1"]'))return;
+const link=document.createElement('link');
+link.rel='stylesheet';
+link.href='assets/calendar-drag-layout-fix.css?v=1.3.0';
+link.dataset.mwsCalendarDragFix='1';
+document.head.appendChild(link);
+})();
