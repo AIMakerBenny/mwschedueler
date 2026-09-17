@@ -69,12 +69,44 @@ function loadOptionalNetworkFeatures(){
     .catch(error=>console.error('Optional SOOP/Friend features failed',error));
 }
 
+function patchCoreRuntime(source){
+  let code=String(source||'');
+  code=code.replace("Math.max(0,Math.min(100,Math.round(Number(percent)||0));","Math.max(0,Math.min(100,Math.round(Number(percent)||0)));");
+
+  /* Login freeze fix: never reuse the old IndexedDB connection that can remain blocked after schema changes. */
+  code=code.replace("const CACHE_DB='mawang_data';","const CACHE_DB='mawang_data_v130';");
+
+  /* A blocked IndexedDB upgrade must reject instead of waiting forever. */
+  code=code.replace(
+    "req.onerror=()=>reject(req.error||new Error('IndexedDB 열기 실패'));req.onsuccess=()=>resolve(req.result)",
+    "req.onblocked=()=>reject(new Error('IndexedDB 열기가 차단되었습니다.'));req.onerror=()=>reject(req.error||new Error('IndexedDB 열기 실패'));req.onsuccess=()=>resolve(req.result)"
+  );
+
+  /* Cache is an optimization only. It is never allowed to hold the login/data hydration path. */
+  code=code.replace(
+    "async function getCachedPart(scope,part){if(!CACHE_STORES.includes(part))return null;try{return await idbTx(part,'readonly',os=>os.get(scope))||null}catch(_){return null}}",
+    "async function getCachedPart(scope,part){if(!CACHE_STORES.includes(part))return null;try{return await timeout(idbTx(part,'readonly',os=>os.get(scope)),1200,'IndexedDB 캐시')||null}catch(_){return null}}"
+  );
+  code=code.replace(
+    "async function putCachedPart(scope,part,version,value){if(!CACHE_STORES.includes(part))return;try{await idbTx(part,'readwrite',os=>os.put({scope,version:Number(version)||0,data:clone(value),cachedAt:Date.now()}))}catch(_){}}",
+    "async function putCachedPart(scope,part,version,value){if(!CACHE_STORES.includes(part))return;try{await timeout(idbTx(part,'readwrite',os=>os.put({scope,version:Number(version)||0,data:clone(value),cachedAt:Date.now()})),1200,'IndexedDB 캐시 저장')}catch(_){}}"
+  );
+
+  /* Bind the form first. Cache validation runs in the background and cannot make the login screen inert. */
+  code=code.replace(
+    "async function init(){await validateCacheSchema();installSaveBridge();bindUi();selectLoginMode('admin');",
+    "async function init(){installSaveBridge();bindUi();selectLoginMode('admin');Promise.resolve(validateCacheSchema()).catch(()=>{});"
+  );
+
+  return code;
+}
+
 function startCoreRuntime(){
-  return fetch('/assets/cloud-v1.1.js?v=1.3.0',{cache:'no-store'})
+  return fetch('/assets/cloud-v1.1.js?v=1.3.0-loginfix2',{cache:'no-store'})
     .then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.text()})
-    .then(code=>{
-      code=code.replace("Math.max(0,Math.min(100,Math.round(Number(percent)||0));","Math.max(0,Math.min(100,Math.round(Number(percent)||0)));");
-      const s=document.createElement('script');s.textContent=code;s.dataset.mwsCoreRuntime='v1.3.0';document.body.appendChild(s);
+    .then(source=>{
+      const code=patchCoreRuntime(source);
+      const s=document.createElement('script');s.textContent=code;s.dataset.mwsCoreRuntime='v1.3.0-loginfix2';document.body.appendChild(s);
       window.mwsApplyAppVersionV120?.();
       installTabBridge();
       ensureFeaturesForTab(activeTab()).catch(()=>{});
