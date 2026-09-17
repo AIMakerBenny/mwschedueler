@@ -144,7 +144,6 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .confirm-actions{display:flex;justify-content:flex-end;gap:9px}.no-emphasis{background:var(--accent);border-color:var(--accent);font-weight:800}.no-emphasis:hover{background:var(--accent2)}
 
 @media(max-width:900px){
- .app{grid-template-columns:1fr}.sidebar{height:auto;position:static;border-right:0;border-bottom:1px solid var(--border)}.nav{flex-direction:row;overflow:auto}.main{padding:14px}
  .grid.cols-3,.grid.cols-2{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.title-device{grid-template-columns:1fr}
  .calendar{grid-template-columns:repeat(7,minmax(100px,1fr));overflow:auto}.calendar-head{grid-template-columns:repeat(7,minmax(100px,1fr));overflow:auto}
 }
@@ -2517,15 +2516,6 @@ body.sidebar-pinned .sidebar .nav button{justify-content:flex-start}
   .contact-tag-list{flex-direction:row;flex-wrap:wrap}
   .contact-tag-item{flex:0 1 auto}
 }
-@media(max-width:760px){
-  .app{grid-template-columns:1fr!important}
-  .sidebar{width:100%!important;height:auto!important;position:static!important;overflow:visible}
-  .sidebar-head{min-height:0}
-  .logo-full{display:block!important}.logo-mini{display:none!important}.logo small{display:block!important}
-  .sidebar-pin{display:none!important}
-  .nav{flex-direction:row!important;overflow:auto}
-  .nav button{width:auto;min-width:48px}.nav-label{display:none!important}
-}
 
 
 /* =========================================================
@@ -2957,42 +2947,13 @@ body.sidebar-pinned .sidebar .nav button{
 }
 
 @media(max-width:760px){
-  .app{grid-template-columns:1fr!important}
-  .sidebar{
-    width:100%!important;
-    min-width:100%!important;
-    position:static!important;
-  }
-  .sidebar:hover,
-  body.sidebar-pinned .sidebar{
-    width:100%!important;
-    min-width:100%!important;
-    box-shadow:none!important;
-  }
-  .nav{
-    flex-direction:row!important;
-    overflow:auto!important;
-  }
-  .nav button,
-  .sidebar:hover .nav button,
-  body.sidebar-pinned .nav button{
-    width:46px!important;
-    min-width:46px!important;
-    max-width:46px!important;
-    margin:0!important;
-    padding:0!important;
-    justify-content:center!important;
-  }
-  .nav-label{display:none!important}
   .creator-footer{
     flex-direction:row!important;
     align-items:flex-end!important;
     justify-content:flex-end!important;
     flex-wrap:wrap!important;
   }
-  .creator-links{
-    flex-wrap:wrap!important;
-  }
+  .creator-links{flex-wrap:wrap!important}
 }
 
 
@@ -3522,17 +3483,6 @@ body.sidebar-pinned .sidebar:hover{
   top:0!important;
   height:100vh!important;
   max-height:100vh!important;
-}
-@media(max-width:760px){
-  .sidebar,
-  .sidebar:hover,
-  body.sidebar-pinned .sidebar,
-  body.sidebar-pinned .sidebar:hover{
-    position:static!important;
-    height:auto!important;
-    max-height:none!important;
-    overflow:visible!important;
-  }
 }
 
 /* =========================================================
@@ -5400,7 +5350,7 @@ body[data-resolution="fhd"] .main{padding:22px!important}
 body[data-resolution="2k"] .main{padding:28px!important}body[data-resolution="2k"].sidebar-pinned .app{grid-template-columns:240px minmax(0,1fr)!important}body[data-resolution="2k"].sidebar-pinned .sidebar,body[data-resolution="2k"].sidebar-pinned .sidebar:hover{width:240px!important;min-width:240px!important}body[data-resolution="2k"] #contacts .contact-grid{grid-template-columns:repeat(auto-fill,minmax(380px,1fr))}body[data-resolution="2k"] .contact-card-avatar-lg{width:102px;height:102px}body[data-resolution="2k"] .contact-card-core{grid-template-columns:102px minmax(0,1fr)}body[data-resolution="2k"] .contact-modalbox{width:min(1580px,98vw)!important}
 body[data-resolution="4k"] .main{padding:36px!important}body[data-resolution="4k"].sidebar-pinned .app{grid-template-columns:280px minmax(0,1fr)!important}body[data-resolution="4k"].sidebar-pinned .sidebar,body[data-resolution="4k"].sidebar-pinned .sidebar:hover{width:280px!important;min-width:280px!important}body[data-resolution="4k"] #contacts .contact-grid{grid-template-columns:repeat(auto-fill,minmax(430px,1fr))}body[data-resolution="4k"] .contact-card-avatar-lg{width:116px;height:116px}body[data-resolution="4k"] .contact-card-core{grid-template-columns:116px minmax(0,1fr)}body[data-resolution="4k"] .contact-modalbox{width:min(1760px,98vw)!important}body[data-resolution="4k"] .ladder-auto-result-slots{grid-template-columns:repeat(auto-fit,minmax(270px,1fr))!important}
 body[data-resolution="wide"] .main{padding:18px 24px!important}body[data-resolution="wide"].sidebar-pinned .app{grid-template-columns:205px minmax(0,1fr)!important}body[data-resolution="wide"].sidebar-pinned .sidebar,body[data-resolution="wide"].sidebar-pinned .sidebar:hover{width:205px!important;min-width:205px!important}body[data-resolution="wide"] #contacts .contact-grid{grid-template-columns:repeat(auto-fill,minmax(305px,1fr))}body[data-resolution="wide"] .contact-card-avatar-lg{width:86px;height:86px}body[data-resolution="wide"] .contact-card-core{grid-template-columns:86px minmax(0,1fr)}body[data-resolution="wide"] .ladder-auto-result-slots{grid-template-columns:repeat(auto-fit,minmax(205px,1fr))!important}
-body[data-resolution="mobile"] .app,body[data-resolution="mobile"].sidebar-pinned .app{grid-template-columns:1fr!important}body[data-resolution="mobile"] .sidebar,body[data-resolution="mobile"].sidebar:hover,body[data-resolution="mobile"].sidebar-pinned .sidebar,body[data-resolution="mobile"].sidebar-pinned .sidebar:hover{position:static!important;width:100%!important;min-width:100%!important;height:auto!important;max-height:none!important;overflow:visible!important;border-right:0!important;border-bottom:1px solid var(--border)!important}body[data-resolution="mobile"] .sidebar-head{min-height:52px!important}body[data-resolution="mobile"] .sidebar-pin{display:none!important}body[data-resolution="mobile"] .nav{display:block!important}body[data-resolution="mobile"] .nav-bottom{display:flex!important;flex-direction:row!important;gap:6px!important;overflow-x:auto!important;margin:0!important;padding:5px 2px 8px!important}body[data-resolution="mobile"] .nav-bottom-divider,body[data-resolution="mobile"] .nav-game-divider{display:none!important}body[data-resolution="mobile"] .nav-scroll{display:flex!important;flex-direction:row!important;gap:6px!important;overflow-x:auto!important;overflow-y:hidden!important;padding:5px 2px 8px!important}body[data-resolution="mobile"] .nav button,body[data-resolution="mobile"] .sidebar:hover .nav button,body[data-resolution="mobile"].sidebar-pinned .nav button{width:auto!important;min-width:58px!important;max-width:none!important;height:48px!important;margin:0!important;padding:0 9px!important;justify-content:center!important;gap:5px!important}body[data-resolution="mobile"] .nav-label,body[data-resolution="mobile"] .sidebar:hover .nav-label,body[data-resolution="mobile"].sidebar-pinned .nav-label{opacity:1!important;max-width:110px!important;transform:none!important;font-size:10px!important}body[data-resolution="mobile"] .nav-icon{width:28px!important;min-width:28px!important;height:28px!important;flex-basis:28px!important}body[data-resolution="mobile"] .main{padding:12px!important}body[data-resolution="mobile"] .grid.cols-2,body[data-resolution="mobile"] .mini-game-layout,body[data-resolution="mobile"] .ladder-layout,body[data-resolution="mobile"] .rps-layout,body[data-resolution="mobile"] .horse-race-top,body[data-resolution="mobile"] .horse-race-bottom{grid-template-columns:1fr!important}body[data-resolution="mobile"] #contacts .contact-grid{grid-template-columns:1fr!important}body[data-resolution="mobile"] .contact-modalbox{width:99vw!important;padding:13px!important}body[data-resolution="mobile"] .contact-modal-layout{grid-template-columns:1fr!important;min-height:0!important}body[data-resolution="mobile"] .contact-profile-name-row{grid-template-columns:80px minmax(0,1fr)}body[data-resolution="mobile"] .contact-header-avatar{width:80px;height:80px}body[data-resolution="mobile"] .ladder-auto-result-slots{grid-template-columns:1fr!important}body[data-resolution="mobile"] .resolution-preset-grid{grid-template-columns:repeat(2,1fr)}
+body[data-resolution="mobile"] .grid.cols-2,body[data-resolution="mobile"] .mini-game-layout,body[data-resolution="mobile"] .ladder-layout,body[data-resolution="mobile"] .rps-layout,body[data-resolution="mobile"] .horse-race-top,body[data-resolution="mobile"] .horse-race-bottom{grid-template-columns:1fr!important}body[data-resolution="mobile"] #contacts .contact-grid{grid-template-columns:1fr!important}body[data-resolution="mobile"] .contact-modalbox{width:99vw!important;padding:13px!important}body[data-resolution="mobile"] .contact-modal-layout{grid-template-columns:1fr!important;min-height:0!important}body[data-resolution="mobile"] .contact-profile-name-row{grid-template-columns:80px minmax(0,1fr)}body[data-resolution="mobile"] .contact-header-avatar{width:80px;height:80px}body[data-resolution="mobile"] .ladder-auto-result-slots{grid-template-columns:1fr!important}body[data-resolution="mobile"] .resolution-preset-grid{grid-template-columns:repeat(2,1fr)}
 @media(max-width:1100px){.resolution-preset-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.contact-modal-layout{grid-template-columns:1fr!important;min-height:0!important}}
 @media(max-width:700px){.resolution-preset-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ladder-auto-result-slots{grid-template-columns:1fr!important}.ladder-auto-result-slot{grid-template-columns:minmax(0,1fr) minmax(100px,.8fr)!important}.contact-profile-name-row{grid-template-columns:84px minmax(0,1fr)}.contact-header-avatar{width:84px;height:84px}}
 
@@ -5467,93 +5417,7 @@ body[data-resolution="mobile"] .app,body[data-resolution="mobile"].sidebar-pinne
 #contacts #pendingContacts>.space,#contacts #incompleteContacts>.space{align-items:flex-start!important;flex-wrap:wrap!important}
 #contacts #pendingContacts .empty,#contacts #incompleteContacts .empty{grid-column:1/-1!important;width:100%!important;min-width:0!important;min-height:110px!important;padding:24px!important;display:grid!important;place-items:center!important;text-align:center!important;overflow-wrap:anywhere}
 
-/* Mobile preset is an explicit app layout, not a squeezed desktop sidebar. */
-body[data-resolution="mobile"]{overflow-x:hidden!important}
-body[data-resolution="mobile"] .app,
-body[data-resolution="mobile"].sidebar-pinned .app{display:block!important;grid-template-columns:none!important;min-width:0!important;width:100%!important}
-body[data-resolution="mobile"] .sidebar,
-body[data-resolution="mobile"] .sidebar:hover,
-body[data-resolution="mobile"].sidebar-pinned .sidebar,
-body[data-resolution="mobile"].sidebar-pinned .sidebar:hover{
-  position:relative!important;top:auto!important;left:auto!important;
-  width:100%!important;min-width:0!important;height:auto!important;max-height:none!important;
-  padding:12px 12px 10px!important;overflow:hidden!important;
-  border-right:0!important;border-bottom:1px solid var(--border)!important;
-  box-shadow:0 8px 24px rgba(0,0,0,.22)!important;z-index:20!important;
-}
-body[data-resolution="mobile"] .sidebar-head,
-body[data-resolution="mobile"].sidebar-pinned .sidebar-head{
-  min-height:54px!important;height:auto!important;display:flex!important;align-items:center!important;justify-content:space-between!important;padding:0 2px 8px!important;margin:0!important;
-}
-body[data-resolution="mobile"] .logo,
-body[data-resolution="mobile"] .sidebar:hover .logo,
-body[data-resolution="mobile"].sidebar-pinned .logo{
-  width:auto!important;min-width:0!important;margin:0!important;display:block!important;
-}
-body[data-resolution="mobile"] .logo-full{display:block!important;font-size:19px!important;letter-spacing:.1em!important}
-body[data-resolution="mobile"] .logo-mini{display:none!important}
-body[data-resolution="mobile"] .logo small{display:block!important;font-size:10px!important;margin-top:3px!important}
-body[data-resolution="mobile"] .sidebar-pin{display:none!important}
-body[data-resolution="mobile"] .nav,
-body[data-resolution="mobile"] .sidebar:hover .nav,
-body[data-resolution="mobile"].sidebar-pinned .nav{
-  display:block!important;width:100%!important;min-width:0!important;margin:0!important;padding:0!important;overflow:visible!important;
-}
-body[data-resolution="mobile"] .nav-scroll{
-  display:flex!important;flex-direction:row!important;align-items:stretch!important;gap:8px!important;
-  width:100%!important;max-width:100%!important;padding:5px 1px 10px!important;
-  overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:thin!important;scroll-snap-type:x proximity;
-  -webkit-overflow-scrolling:touch;
-}
-body[data-resolution="mobile"] .nav-game-divider{display:none!important}
-body[data-resolution="mobile"] .nav-settings-divider{flex:0 0 1px!important;width:1px!important;height:36px!important;margin:6px 4px!important;background:var(--border)!important}
-body[data-resolution="mobile"] .nav-scroll>button,
-body[data-resolution="mobile"] .sidebar:hover .nav-scroll>button,
-body[data-resolution="mobile"].sidebar-pinned .nav-scroll>button{
-  flex:0 0 92px!important;width:92px!important;min-width:92px!important;max-width:92px!important;
-  height:66px!important;min-height:66px!important;margin:0!important;padding:7px 5px!important;
-  display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:5px!important;
-  border:1px solid color-mix(in srgb,var(--border) 84%,transparent)!important;border-radius:13px!important;
-  background:color-mix(in srgb,var(--panel) 82%,transparent)!important;overflow:hidden!important;scroll-snap-align:start;
-}
-body[data-resolution="mobile"] .nav-scroll>button.active{background:color-mix(in srgb,var(--accent) 20%,var(--panel))!important;border-color:var(--accent)!important}
-body[data-resolution="mobile"] .nav-scroll .nav-icon,
-body[data-resolution="mobile"] .sidebar:hover .nav-scroll .nav-icon,
-body[data-resolution="mobile"].sidebar-pinned .nav-scroll .nav-icon{
-  flex:0 0 31px!important;width:31px!important;min-width:31px!important;height:31px!important;margin:0!important;transform:none!important;border-radius:9px!important;
-}
-body[data-resolution="mobile"] .nav-scroll .nav-label,
-body[data-resolution="mobile"] .sidebar:hover .nav-scroll .nav-label,
-body[data-resolution="mobile"].sidebar-pinned .nav-scroll .nav-label{
-  display:block!important;opacity:1!important;transform:none!important;width:100%!important;max-width:82px!important;
-  font-size:10px!important;font-weight:850!important;line-height:1.15!important;text-align:center!important;
-  overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
-}
-body[data-resolution="mobile"] .nav-bottom,
-body[data-resolution="mobile"] .sidebar:hover .nav-bottom,
-body[data-resolution="mobile"].sidebar-pinned .nav-bottom{
-  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;
-  width:100%!important;margin:0!important;padding:0!important;overflow:visible!important;
-}
-body[data-resolution="mobile"] .nav-bottom-divider{display:none!important}
-body[data-resolution="mobile"] .nav-bottom>button,
-body[data-resolution="mobile"] .sidebar:hover .nav-bottom>button,
-body[data-resolution="mobile"].sidebar-pinned .nav-bottom>button{
-  width:100%!important;max-width:none!important;min-width:0!important;height:48px!important;margin:0!important;padding:0 10px!important;
-  display:flex!important;flex-direction:row!important;justify-content:center!important;align-items:center!important;gap:8px!important;
-  border:1px solid var(--border)!important;border-radius:12px!important;background:var(--panel)!important;overflow:hidden!important;
-}
-body[data-resolution="mobile"] .nav-bottom .nav-icon{width:28px!important;min-width:28px!important;height:28px!important;flex:0 0 28px!important;margin:0!important}
-body[data-resolution="mobile"] .nav-bottom .nav-label{
-  display:block!important;opacity:1!important;transform:none!important;width:auto!important;max-width:150px!important;
-  font-size:10px!important;font-weight:850!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
-}
-body[data-resolution="mobile"] .main{width:100%!important;min-width:0!important;padding:12px!important}
-body[data-resolution="mobile"] .topbar{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:8px!important;align-items:start!important;margin-bottom:14px!important}
-body[data-resolution="mobile"] .top-left h1{font-size:20px!important}
-body[data-resolution="mobile"] .clock{gap:6px!important;justify-content:flex-end!important;flex-wrap:wrap!important}
-body[data-resolution="mobile"] .clock .sync-status,body[data-resolution="mobile"] #clockText{display:none!important}
-body[data-resolution="mobile"] #newEventBtn{min-height:40px!important;padding:7px 10px!important;font-size:11px!important}
+/* Current component-only mobile rules retained from v4.8. */
 body[data-resolution="mobile"] .toolbar{align-items:stretch!important;gap:9px!important;flex-wrap:wrap!important}
 body[data-resolution="mobile"] .toolbar>.row{width:100%!important}
 body[data-resolution="mobile"] .contact-board-layout{grid-template-columns:1fr!important}
@@ -5561,15 +5425,9 @@ body[data-resolution="mobile"] .contact-tag-panel{position:static!important;max-
 body[data-resolution="mobile"] #contacts .contact-maintenance-grid{grid-template-columns:1fr!important}
 body[data-resolution="mobile"] #contacts .contact-maintenance-card{grid-template-columns:74px minmax(0,1fr)!important;min-height:112px!important}
 body[data-resolution="mobile"] #contacts .contact-maintenance-avatar{width:74px!important;height:74px!important;min-width:74px!important}
-
 @media(max-width:620px){
-  body[data-resolution="mobile"] .nav-scroll>button{flex-basis:82px!important;width:82px!important;min-width:82px!important;max-width:82px!important}
-  body[data-resolution="mobile"] .nav-scroll .nav-label{max-width:72px!important;font-size:9px!important}
-  body[data-resolution="mobile"] .nav-bottom{grid-template-columns:1fr 1fr!important}
   body[data-resolution="mobile"] .contact-controls-note{font-size:10px!important}
 }
-
-
 
 /* v4.9 - cinematic gacha selection redesign */
 .multi-draw-stage-card{min-height:auto!important;padding:15px!important;overflow:hidden!important;background:linear-gradient(180deg,rgba(17,23,34,.98),rgba(9,13,22,.98))!important}
@@ -5616,322 +5474,6 @@ body[data-resolution="mobile"] #contacts .contact-maintenance-avatar{width:74px!
 @media(max-width:1500px){.multi-draw-stage{grid-template-columns:minmax(245px,25%) minmax(550px,52%) minmax(195px,23%)}.multi-cannon{transform:scale(.84)!important;transform-origin:center}.multi-door-frame{height:460px!important}.multi-reveal-card{width:282px!important;height:392px!important}.gacha-card-image{height:267px!important}.multi-selected-dock-list{grid-template-columns:1fr}.multi-draw-controls-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:1050px){.multi-draw-stage{height:auto!important;min-height:890px;grid-template-columns:1fr;grid-template-rows:240px 500px auto}.multi-cannon-zone{padding:20px}.multi-cannon{transform:scale(.75)!important}.multi-gate-zone{padding:20px}.multi-selected-dock{padding:15px}.multi-selected-dock-list{grid-template-columns:repeat(4,minmax(0,1fr));max-height:none}.multi-draw-controls-grid{grid-template-columns:1fr}.multi-draw-contact-palette,.multi-draw-entry-list{grid-template-columns:1fr 1fr}}
 body[data-resolution="mobile"] .multi-draw-stage{grid-template-columns:1fr!important;grid-template-rows:210px 480px auto!important;min-height:860px!important}body[data-resolution="mobile"] .multi-selected-dock-list{grid-template-columns:repeat(3,minmax(0,1fr))!important}body[data-resolution="mobile"] .multi-draw-controls-grid{grid-template-columns:1fr!important}body[data-resolution="mobile"] .multi-draw-contact-palette,body[data-resolution="mobile"] .multi-draw-entry-list{grid-template-columns:1fr!important}
-
-
-
-/* =========================================================
-   v4.10 - true mobile off-canvas navigation drawer
-   ========================================================= */
-.mobile-nav-toggle,.mobile-nav-backdrop{display:none}
-body[data-resolution="mobile"]{overflow-x:hidden!important}
-body[data-resolution="mobile"] .app,
-body[data-resolution="mobile"].sidebar-pinned .app{
-  display:block!important;
-  width:100%!important;
-  min-width:0!important;
-  grid-template-columns:none!important;
-}
-body[data-resolution="mobile"] .main{
-  width:100%!important;
-  min-width:0!important;
-  max-width:none!important;
-  margin:0!important;
-  padding:14px!important;
-}
-
-/* Sidebar is completely off canvas by default on mobile preset. */
-body[data-resolution="mobile"] .sidebar,
-body[data-resolution="mobile"] .sidebar:hover,
-body[data-resolution="mobile"].sidebar-pinned .sidebar,
-body[data-resolution="mobile"].sidebar-pinned .sidebar:hover,
-body[data-resolution="mobile"].sidebar-pinned .sidebar:not(:hover){
-  position:fixed!important;
-  top:0!important;
-  left:0!important;
-  bottom:0!important;
-  width:min(86vw,340px)!important;
-  min-width:0!important;
-  max-width:340px!important;
-  height:100vh!important;
-  height:100dvh!important;
-  max-height:none!important;
-  padding:16px 13px 14px!important;
-  overflow:hidden!important;
-  border-right:1px solid var(--border)!important;
-  border-bottom:0!important;
-  border-radius:0!important;
-  background:color-mix(in srgb,var(--sidebar) 98%,#000)!important;
-  box-shadow:20px 0 55px rgba(0,0,0,.48)!important;
-  z-index:5102!important;
-  transform:translateX(-104%)!important;
-  transition:transform .28s cubic-bezier(.22,.75,.18,1)!important;
-  pointer-events:none!important;
-  visibility:visible!important;
-}
-body[data-resolution="mobile"].mobile-drawer-open .sidebar,
-body[data-resolution="mobile"].mobile-drawer-open .sidebar:hover,
-body[data-resolution="mobile"].mobile-drawer-open.sidebar-pinned .sidebar{
-  transform:translateX(0)!important;
-  pointer-events:auto!important;
-}
-
-/* Drawer header */
-body[data-resolution="mobile"] .sidebar-head,
-body[data-resolution="mobile"].sidebar-pinned .sidebar-head,
-body[data-resolution="mobile"] .sidebar:hover .sidebar-head{
-  height:auto!important;
-  min-height:68px!important;
-  margin:0 0 10px!important;
-  padding:4px 6px 13px!important;
-  display:flex!important;
-  align-items:flex-start!important;
-  justify-content:space-between!important;
-  border-bottom:1px solid color-mix(in srgb,var(--border) 78%,transparent)!important;
-}
-body[data-resolution="mobile"] .logo,
-body[data-resolution="mobile"] .sidebar:hover .logo,
-body[data-resolution="mobile"].sidebar-pinned .logo,
-body[data-resolution="mobile"].sidebar-pinned .sidebar:not(:hover) .logo{
-  width:auto!important;
-  min-width:0!important;
-  height:auto!important;
-  display:block!important;
-  margin:0!important;
-  transform:none!important;
-}
-body[data-resolution="mobile"] .logo-full,
-body[data-resolution="mobile"] .sidebar:hover .logo-full,
-body[data-resolution="mobile"].sidebar-pinned .logo-full{
-  display:block!important;
-  font-size:22px!important;
-  letter-spacing:.13em!important;
-}
-body[data-resolution="mobile"] .logo-mini{display:none!important}
-body[data-resolution="mobile"] .logo small,
-body[data-resolution="mobile"] .sidebar:hover .logo small,
-body[data-resolution="mobile"].sidebar-pinned .logo small{
-  display:block!important;
-  font-size:11px!important;
-  margin-top:4px!important;
-}
-body[data-resolution="mobile"] .sidebar-pin{display:none!important}
-
-/* Drawer menu is a clean vertical list. */
-body[data-resolution="mobile"] .nav,
-body[data-resolution="mobile"] .sidebar:hover .nav,
-body[data-resolution="mobile"].sidebar-pinned .nav{
-  height:calc(100% - 78px)!important;
-  min-height:0!important;
-  width:100%!important;
-  display:flex!important;
-  flex-direction:column!important;
-  gap:0!important;
-  margin:0!important;
-  padding:0!important;
-  overflow:hidden!important;
-}
-body[data-resolution="mobile"] .nav-scroll,
-body[data-resolution="mobile"] .sidebar:hover .nav-scroll,
-body[data-resolution="mobile"].sidebar-pinned .nav-scroll{
-  flex:1 1 auto!important;
-  min-height:0!important;
-  width:100%!important;
-  display:flex!important;
-  flex-direction:column!important;
-  align-items:stretch!important;
-  gap:5px!important;
-  padding:2px 1px 10px!important;
-  overflow-x:hidden!important;
-  overflow-y:auto!important;
-  scroll-snap-type:none!important;
-  -webkit-overflow-scrolling:touch;
-}
-body[data-resolution="mobile"] .nav-scroll>button,
-body[data-resolution="mobile"] .sidebar:hover .nav-scroll>button,
-body[data-resolution="mobile"].sidebar-pinned .nav-scroll>button,
-body[data-resolution="mobile"].sidebar-pinned .sidebar:not(:hover) .nav-scroll>button{
-  flex:0 0 auto!important;
-  width:100%!important;
-  min-width:0!important;
-  max-width:none!important;
-  height:50px!important;
-  min-height:50px!important;
-  margin:0!important;
-  padding:0 11px!important;
-  display:flex!important;
-  flex-direction:row!important;
-  align-items:center!important;
-  justify-content:flex-start!important;
-  gap:11px!important;
-  border:1px solid transparent!important;
-  border-radius:12px!important;
-  background:transparent!important;
-  text-align:left!important;
-  overflow:hidden!important;
-}
-body[data-resolution="mobile"] .nav-scroll>button.active{
-  background:color-mix(in srgb,var(--accent) 18%,var(--panel))!important;
-  border-color:color-mix(in srgb,var(--accent) 60%,var(--border))!important;
-  box-shadow:inset 3px 0 0 var(--accent)!important;
-}
-body[data-resolution="mobile"] .nav-scroll .nav-icon,
-body[data-resolution="mobile"] .sidebar:hover .nav-scroll .nav-icon,
-body[data-resolution="mobile"].sidebar-pinned .nav-scroll .nav-icon,
-body[data-resolution="mobile"].sidebar-pinned .sidebar:not(:hover) .nav-scroll .nav-icon{
-  flex:0 0 34px!important;
-  width:34px!important;
-  min-width:34px!important;
-  height:34px!important;
-  margin:0!important;
-  transform:none!important;
-  border-radius:10px!important;
-}
-body[data-resolution="mobile"] .nav-scroll .nav-label,
-body[data-resolution="mobile"] .sidebar:hover .nav-scroll .nav-label,
-body[data-resolution="mobile"].sidebar-pinned .nav-scroll .nav-label,
-body[data-resolution="mobile"].sidebar-pinned .sidebar:not(:hover) .nav-scroll .nav-label{
-  display:block!important;
-  flex:1 1 auto!important;
-  width:auto!important;
-  max-width:none!important;
-  opacity:1!important;
-  transform:none!important;
-  font-size:14px!important;
-  font-weight:850!important;
-  line-height:1.2!important;
-  text-align:left!important;
-  white-space:nowrap!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-}
-body[data-resolution="mobile"] .nav-game-divider{
-  display:grid!important;
-  grid-template-columns:1fr auto 1fr!important;
-  align-items:center!important;
-  gap:8px!important;
-  width:100%!important;
-  margin:10px 0 5px!important;
-  padding:0 3px!important;
-}
-body[data-resolution="mobile"] .nav-game-divider span{height:1px!important;background:var(--border)!important}
-body[data-resolution="mobile"] .nav-game-divider em{display:block!important;font-size:9px!important;font-style:normal!important;font-weight:950!important;letter-spacing:.16em!important;color:var(--muted)!important}
-
-body[data-resolution="mobile"] .nav-bottom,
-body[data-resolution="mobile"] .sidebar:hover .nav-bottom,
-body[data-resolution="mobile"].sidebar-pinned .nav-bottom{
-  flex:0 0 auto!important;
-  width:100%!important;
-  display:flex!important;
-  flex-direction:column!important;
-  gap:5px!important;
-  margin:0!important;
-  padding:10px 1px 0!important;
-  overflow:visible!important;
-  border-top:1px solid color-mix(in srgb,var(--border) 78%,transparent)!important;
-}
-body[data-resolution="mobile"] .nav-bottom-divider{display:none!important}
-body[data-resolution="mobile"] .nav-bottom>button,
-body[data-resolution="mobile"] .sidebar:hover .nav-bottom>button,
-body[data-resolution="mobile"].sidebar-pinned .nav-bottom>button{
-  width:100%!important;
-  min-width:0!important;
-  max-width:none!important;
-  height:48px!important;
-  margin:0!important;
-  padding:0 11px!important;
-  display:flex!important;
-  flex-direction:row!important;
-  justify-content:flex-start!important;
-  align-items:center!important;
-  gap:11px!important;
-  border:1px solid transparent!important;
-  border-radius:12px!important;
-  background:transparent!important;
-}
-body[data-resolution="mobile"] .nav-bottom>button.active{
-  background:color-mix(in srgb,var(--accent) 18%,var(--panel))!important;
-  border-color:color-mix(in srgb,var(--accent) 60%,var(--border))!important;
-}
-body[data-resolution="mobile"] .nav-bottom .nav-icon{
-  width:34px!important;min-width:34px!important;height:34px!important;flex:0 0 34px!important;margin:0!important
-}
-body[data-resolution="mobile"] .nav-bottom .nav-label{
-  display:block!important;flex:1 1 auto!important;width:auto!important;max-width:none!important;
-  opacity:1!important;transform:none!important;font-size:14px!important;font-weight:850!important;text-align:left!important
-}
-
-/* Floating arrow and dim backdrop */
-body[data-resolution="mobile"] .mobile-nav-toggle{
-  display:grid!important;
-  position:fixed!important;
-  left:7px!important;
-  top:50%!important;
-  transform:translateY(-50%)!important;
-  width:38px!important;
-  height:62px!important;
-  padding:0!important;
-  place-items:center!important;
-  border:1px solid color-mix(in srgb,var(--accent) 55%,var(--border))!important;
-  border-left:0!important;
-  border-radius:0 14px 14px 0!important;
-  background:color-mix(in srgb,var(--sidebar) 94%,transparent)!important;
-  color:#fff!important;
-  box-shadow:8px 0 24px rgba(0,0,0,.34)!important;
-  z-index:5104!important;
-  cursor:pointer!important;
-  transition:left .28s cubic-bezier(.22,.75,.18,1),transform .2s ease,background .2s!important;
-}
-body[data-resolution="mobile"] .mobile-nav-toggle span{
-  display:block!important;font-size:32px!important;font-weight:500!important;line-height:1!important;transform:translateX(-1px)!important
-}
-body[data-resolution="mobile"].mobile-drawer-open .mobile-nav-toggle{
-  left:min(86vw,340px)!important;
-  transform:translate(-100%,-50%)!important;
-  border-left:1px solid color-mix(in srgb,var(--accent) 55%,var(--border))!important;
-  border-right:0!important;
-  border-radius:14px 0 0 14px!important;
-}
-body[data-resolution="mobile"].mobile-drawer-open .mobile-nav-toggle span{transform:rotate(180deg)!important}
-body[data-resolution="mobile"] .mobile-nav-backdrop{
-  display:block!important;
-  position:fixed!important;
-  inset:0!important;
-  background:rgba(0,0,0,.54)!important;
-  backdrop-filter:blur(2px)!important;
-  -webkit-backdrop-filter:blur(2px)!important;
-  opacity:0!important;
-  pointer-events:none!important;
-  z-index:5100!important;
-  transition:opacity .24s ease!important;
-}
-body[data-resolution="mobile"].mobile-drawer-open .mobile-nav-backdrop{
-  opacity:1!important;
-  pointer-events:auto!important;
-}
-
-/* Keep content comfortable on phone screens. */
-body[data-resolution="mobile"] .topbar{
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) auto!important;
-  align-items:start!important;
-  gap:9px!important;
-  margin-bottom:14px!important;
-}
-body[data-resolution="mobile"] .top-left{padding-left:34px!important;min-width:0!important}
-body[data-resolution="mobile"] .top-left h1{font-size:22px!important;overflow-wrap:anywhere!important}
-body[data-resolution="mobile"] .clock{min-width:0!important;justify-content:flex-end!important;gap:6px!important;flex-wrap:wrap!important}
-body[data-resolution="mobile"] .clock .sync-status,
-body[data-resolution="mobile"] #clockText{display:none!important}
-body[data-resolution="mobile"] #newEventBtn{min-height:42px!important;padding:8px 11px!important;font-size:12px!important}
-
-@media(max-width:520px){
-  body[data-resolution="mobile"] .main{padding:10px!important}
-  body[data-resolution="mobile"] .sidebar,
-  body[data-resolution="mobile"] .sidebar:hover,
-  body[data-resolution="mobile"].sidebar-pinned .sidebar{width:min(88vw,320px)!important;max-width:320px!important}
-  body[data-resolution="mobile"].mobile-drawer-open .mobile-nav-toggle{left:min(88vw,320px)!important}
-  body[data-resolution="mobile"] .top-left{padding-left:32px!important}
-}
 
 
 
