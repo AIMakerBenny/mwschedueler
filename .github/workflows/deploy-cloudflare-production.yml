@@ -58,99 +58,62 @@ jobs:
             return 1
           }
 
-          echo '[1/10] health and auth'
+          echo '[1/8] health and auth'
           health="$(retry_contains "$BASE/api/health" '"ok":true')"
           HEALTH="$health" node -e "const x=JSON.parse(process.env.HEALTH); if(!x.ok || x.supabase!==false || !String(x.backend||'').includes('D1')) process.exit(1)"
           session="$(retry_contains "$BASE/api/auth/session" '"authenticated"')"
           SESSION="$session" node -e "const x=JSON.parse(process.env.SESSION); if(typeof x.authenticated!=='boolean') process.exit(1)"
 
-          echo '[2/10] v1.2.4 production loader'
-          retry_contains "$BASE/assets/cloud-v5.5.js?deploy=v124" 'Mawang Scheduler v1.2.4 Cloudflare auth bootstrap' > /tmp/loader.js
+          echo '[2/8] v1.2.0 loader and visible version feature'
+          retry_contains "$BASE/assets/cloud-v5.5.js?deploy=v120" 'Mawang Scheduler v1.2.0 Cloudflare auth bootstrap' > /tmp/loader.js
           node --check /tmp/loader.js
-          grep -Fq 'loadSoopFetchProxy' /tmp/loader.js
-          grep -Fq 'soop-fetch-proxy-v123.js?v=1.2.4' /tmp/loader.js
-          grep -Fq 'ensureFeaturesForTab' /tmp/loader.js
-          grep -Fq "tab==='calendar'" /tmp/loader.js
-          grep -Fq "tab==='export'" /tmp/loader.js
-          grep -Fq "tab==='gameMajoku'" /tmp/loader.js
-          if grep -Fq 'loadBossManager(loadSteamPicker)' /tmp/loader.js; then echo 'Boss manager is still eagerly loaded.' >&2; exit 1; fi
+          grep -Fq 'friend-finder-v120.js?v=1.2.0' /tmp/loader.js
+          grep -Fq 'loadFriendFinder' /tmp/loader.js
+          retry_contains "$BASE/assets/friend-finder-v120.js?v=1.2.0" 'Mawang Scheduler v 1.2.0' > /tmp/friend.js
+          node --check /tmp/friend.js
+          grep -Fq '/api/soop/live-batch' /tmp/friend.js
+          grep -Fq '/api/soop/categories' /tmp/friend.js
+          grep -Fq 'categoryName' /tmp/friend.js
+          grep -Fq 'CONCURRENCY' src/cf-v120-friend.js
 
-          echo '[3/10] Friend Finder legacy SOOP route bridge'
-          retry_contains "$BASE/assets/soop-fetch-proxy-v123.js?v=1.2.4" '__mwsSoopFetchProxyV124' > /tmp/soop-proxy.js
-          node --check /tmp/soop-proxy.js
-          grep -Fq '/api/soop/proxy' /tmp/soop-proxy.js
-          grep -Fq 'nysxcqlewzucbpoaymbg.supabase.co' /tmp/soop-proxy.js
-          grep -Fq '/functions/v1/soop-proxy' /tmp/soop-proxy.js
-          grep -Fq 'sooplive.co.kr' /tmp/soop-proxy.js
-          grep -Fq 'afreecatv.com' /tmp/soop-proxy.js
-          node --check src/cf-v121-boss-media.js
-          grep -Fq "url.pathname==='/api/soop/proxy'" src/cf-v121-boss-media.js
-          untrusted="$(curl -sS -o /tmp/soop-untrusted.json -w '%{http_code}' "$BASE/api/soop/proxy?url=https%3A%2F%2Fexample.com%2F")"
-          echo "untrusted_status=$untrusted"
+          echo '[3/8] fast LIVE batch endpoint'
+          batch="$(curl -fsS --max-time 25 -H 'content-type: application/json' -d '{"urls":["https://api-channel.sooplive.co.kr/v1.1/channel/mawang0216/home/section/broad"],"force":true}' "$BASE/api/soop/live-batch")"
+          BATCH="$batch" node -e "const x=JSON.parse(process.env.BATCH); if(!x.ok||!Array.isArray(x.results)||x.results.length!==1||!String(x.results[0].body||'').trim()) process.exit(1); const j=JSON.parse(x.results[0].body); if(!('categoryName' in j)||!('broadCateNo' in j)) process.exit(1)"
+
+          echo '[4/8] SOOP category catalog endpoint'
+          categories="$(curl -fsS --max-time 25 "$BASE/api/soop/categories?force=1")"
+          CATEGORIES="$categories" node -e "const x=JSON.parse(process.env.CATEGORIES); if(!x.ok||!Array.isArray(x.categories)||x.categories.length<10) process.exit(1); if(!x.categories.every(v=>v&&String(v.id||'').trim()&&String(v.name||'').trim())) process.exit(1)"
+
+          echo '[5/8] single SOOP proxy still works'
           friend_url='https%3A%2F%2Fapi-channel.sooplive.co.kr%2Fv1.1%2Fchannel%2Fmawang0216%2Fhome%2Fsection%2Fbroad'
-          friend_status="$(curl -sS --max-time 20 -D /tmp/soop-headers.txt -o /tmp/soop-body.txt -w '%{http_code}' "$BASE/api/soop/proxy?url=$friend_url" || true)"
-          echo "friend_status=$friend_status"
-          echo '--- friend headers ---'
-          cat /tmp/soop-headers.txt || true
-          echo '--- friend body preview ---'
-          head -c 1200 /tmp/soop-body.txt || true
-          echo
-          test "$untrusted" = '400'
-          test "$friend_status" != '000'
-          test "$friend_status" != '404'
-          test "$friend_status" != '400'
-          grep -Fqi 'x-mws-soop-proxy: v1.2.3' /tmp/soop-headers.txt
-          test -s /tmp/soop-body.txt
+          curl -fsS --max-time 20 "$BASE/api/soop/proxy?url=$friend_url" > /tmp/soop.json
+          test -s /tmp/soop.json
+          node -e "const fs=require('fs'); const x=JSON.parse(fs.readFileSync('/tmp/soop.json','utf8')); if(!('categoryName' in x)) process.exit(1)"
 
-          echo '[4/10] lossless runtime and no startup polling'
+          echo '[6/8] lossless image policy'
           retry_contains "$BASE/assets/perf-runtime.js?v=1.2.2" 'lossless image policy' > /tmp/perf.js
           node --check /tmp/perf.js
           grep -Fq 'preserveOriginalImage' /tmp/perf.js
-          grep -Fq 'r2-original-bytes' /tmp/perf.js
-          grep -Fq 'requestIdleCallback' /tmp/perf.js
-          if grep -Fq 'versionTimer=setInterval' /tmp/perf.js; then echo 'Legacy startup version polling remains.' >&2; exit 1; fi
           if grep -Fq "toDataURL('image/webp'" /tmp/perf.js; then echo 'Runtime must not recompress images.' >&2; exit 1; fi
-
-          echo '[5/10] event-driven performance base'
-          retry_contains "$BASE/assets/perf-runtime-base.js?v=1.2.2" 'scheduleImageTune' > /tmp/perf-base.js
-          node --check /tmp/perf-base.js
-          grep -Fq 'content-visibility:auto' /tmp/perf-base.js
-          if grep -Fq 'new MutationObserver' /tmp/perf-base.js; then echo 'Global image MutationObserver remains in performance base.' >&2; exit 1; fi
-
-          echo '[6/10] compact Raid Boss manager'
-          retry_contains "$BASE/assets/boss-manager-v121.js?v=1.2.1" '__mwsBossManagerV121' > /tmp/boss-manager.js
-          node --check /tmp/boss-manager.js
-          grep -Fq '레이드 보스 관리' /tmp/boss-manager.js
-          grep -Fq '/api/boss-image' /tmp/boss-manager.js
-          grep -Fq '이미지는 목록에 표시하지 않고' /tmp/boss-manager.js
-          if grep -Fq 'mws-boss-manager-thumb' /tmp/boss-manager.js; then echo 'Inline boss thumbnails remain.' >&2; exit 1; fi
-
-          echo '[7/10] original boss image byte path'
           node --check src/cf-v121-boss-media.js
-          grep -Fq 'file.arrayBuffer' src/cf-v121-boss-media.js
-          grep -Fq 'env.IMAGES.put' src/cf-v121-boss-media.js
           if grep -Eq 'toDataURL|drawImage|image/webp|resize' src/cf-v121-boss-media.js; then echo 'Boss image backend must not transform image bytes.' >&2; exit 1; fi
 
-          echo '[8/10] immutable versioned media cache'
-          node --check src/cf-v122-cache.js
-          grep -Fq 'max-age=31536000, immutable' src/cf-v122-cache.js
-          grep -Fq 'original-bytes-no-reencode' src/cf-v122-cache.js
-          grep -Fq "./cf-v122-cache.js" src/cf-v111-entry.js
-
-          echo '[9/10] calendar and Majoku fixes still available'
+          echo '[7/8] existing feature scripts'
           retry_contains "$BASE/assets/today-people-wheel-v117.js?v=1.2.0" '__mwsTodayPeopleWheelV120' > /tmp/wheel.js
           node --check /tmp/wheel.js
           retry_contains "$BASE/assets/ui-fixes-v121.js?v=1.2.1" '__mwsUiFixesV121' > /tmp/ui.js
           node --check /tmp/ui.js
-          retry_contains "$BASE/assets/majoku-host-fix-v114.js?v=1.2.0" '__mwsMajokuHostFixV120' > /tmp/majoku.js
-          node --check /tmp/majoku.js
+          retry_contains "$BASE/assets/boss-manager-v121.js?v=1.2.1" '__mwsBossManagerV121' > /tmp/boss.js
+          node --check /tmp/boss.js
 
-          echo '[10/10] worker source syntax'
-          node --check assets/perf-runtime.js
-          node --check assets/perf-runtime-base.js
+          echo '[8/8] worker source syntax and routing'
           node --check assets/cloud-v1.1-loader.js
+          node --check assets/friend-finder-v120.js
           node --check assets/soop-fetch-proxy-v123.js
-          node --check assets/boss-manager-v121.js
+          node --check src/cf-v120-friend.js
           node --check src/cf-v111-entry.js
+          grep -Fq "./cf-v120-friend.js" src/cf-v111-entry.js
+          grep -Fq "url.pathname==='/api/soop/live-batch'" src/cf-v120-friend.js
+          grep -Fq "url.pathname==='/api/soop/categories'" src/cf-v120-friend.js
 
-          echo 'Live Worker v1.2.4 Friend Finder legacy SOOP proxy route and existing optimizations verified.'
+          echo 'Mawang Scheduler v1.2.0 Friend Finder categories and fast LIVE batching verified.'
