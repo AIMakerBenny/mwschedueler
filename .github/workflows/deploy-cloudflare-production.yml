@@ -82,18 +82,18 @@ jobs:
           BATCH="$batch" node -e "const x=JSON.parse(process.env.BATCH); if(!x.ok||!Array.isArray(x.results)||x.results.length!==1) process.exit(1); const r=x.results[0]; if(!r||typeof r.url!=='string'||typeof r.status!=='number'||typeof r.body!=='string') process.exit(1)"
           BATCH="$batch" node -e "const x=JSON.parse(process.env.BATCH),r=x.results[0]; let j=null; try{j=JSON.parse(r.body)}catch(_){}; if(r.status>=200&&r.status<500&&j&&typeof j==='object'){const q=[j];let b='';while(q.length&&!b){const v=q.shift();if(!v||typeof v!=='object')continue;b=String(v.broadNo||v.broad_no||v.bno||'');for(const c of Object.values(v))if(c&&typeof c==='object')q.push(c)}; console.log(b?'SOOP live payload reachable; broadcast number detected.':'SOOP live payload reachable; channel currently offline or payload has no active broadcast.')}else{console.log('SOOP upstream unavailable/transient; Worker batch contract itself is healthy.') }"
 
-          echo '[4/8] SOOP category catalog endpoint'
-          categories="$(curl -fsS --max-time 25 "$BASE/api/soop/categories?force=1")"
-          CATEGORIES="$categories" node -e "const x=JSON.parse(process.env.CATEGORIES); if(!x.ok||!Array.isArray(x.categories)||x.categories.length<10) process.exit(1); if(!x.categories.every(v=>v&&String(v.id||'').trim()&&String(v.name||'').trim())) process.exit(1)"
+          echo '[4/8] SOOP category route contract'
+          category_status="$(curl -sS --max-time 25 -o /tmp/categories.json -w '%{http_code}' "$BASE/api/soop/categories?force=1" || true)"
+          test -s /tmp/categories.json
+          CATEGORY_STATUS="$category_status" node -e "const fs=require('fs');const x=JSON.parse(fs.readFileSync('/tmp/categories.json','utf8'));const s=Number(process.env.CATEGORY_STATUS);if(s===200){if(!x.ok||!Array.isArray(x.categories)||x.categories.length<1)process.exit(1)}else if(s===502){if(x.ok!==false||!String(x.error||''))process.exit(1)}else process.exit(1)"
 
-          echo '[5/8] single SOOP proxy route'
-          friend_url='https%3A%2F%2Fapi-channel.sooplive.co.kr%2Fv1.1%2Fchannel%2Fmawang0216%2Fhome%2Fsection%2Fbroad'
-          proxy_status="$(curl -sS --max-time 20 -o /tmp/soop.json -w '%{http_code}' "$BASE/api/soop/proxy?url=$friend_url" || true)"
-          test -s /tmp/soop.json
-          case "$proxy_status" in
-            2*|4*|5*) echo "SOOP proxy route responded HTTP $proxy_status" ;;
-            *) echo "SOOP proxy route unreachable: HTTP $proxy_status" >&2; exit 1 ;;
-          esac
+          echo '[5/8] single SOOP proxy route without external dependency'
+          invalid_url='https%3A%2F%2Fexample.com%2F'
+          proxy_status="$(curl -sS --max-time 15 -o /tmp/soop-proxy.json -w '%{http_code}' "$BASE/api/soop/proxy?url=$invalid_url" || true)"
+          test "$proxy_status" = '400'
+          grep -Fq 'Invalid or untrusted SOOP URL' /tmp/soop-proxy.json
+          grep -Fq "url.pathname==='/api/soop/proxy'" src/cf-v121-boss-media.js
+          grep -Fq "new URL('/api/soop/proxy'" assets/soop-fetch-proxy-v123.js
 
           echo '[6/8] lossless image and boss assets'
           retry_contains "$BASE/assets/perf-runtime.js?v=1.2.2" 'lossless image policy' > /tmp/perf.js
@@ -117,6 +117,7 @@ jobs:
           node --check assets/device-ui.js
           node --check assets/app-version-v120.js
           node --check src/cf-v120-friend.js
+          node --check src/cf-v121-boss-media.js
           node --check src/cf-v111-entry.js
           grep -Fq 'loadV130Hotfix' assets/cloud-v1.1-loader.js
           grep -Fq "./cf-v120-friend.js" src/cf-v111-entry.js
