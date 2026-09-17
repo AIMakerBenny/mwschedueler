@@ -70,6 +70,8 @@ jobs:
           retry_contains "$BASE/assets/device-ui.js?deploy=$GITHUB_SHA" 'mws-majoku-subnav-collapsed-v130' > /tmp/device-ui.js
           node --check /tmp/device-ui.js
           grep -Fq 'Majoku Castle sidebar' /tmp/device-ui.js
+          retry_contains "$BASE/assets/v130-live-contact-fix.js?deploy=$GITHUB_SHA" '__mwsV130LiveContactFix' > /tmp/v130-hotfix.js
+          node --check /tmp/v130-hotfix.js
 
           echo '[3/8] Friend Finder UI and live batch endpoint'
           retry_contains "$BASE/assets/friend-finder-v120.js?deploy=$GITHUB_SHA" 'LIVE thumbnails' > /tmp/friend.js
@@ -84,10 +86,14 @@ jobs:
           categories="$(curl -fsS --max-time 25 "$BASE/api/soop/categories?force=1")"
           CATEGORIES="$categories" node -e "const x=JSON.parse(process.env.CATEGORIES); if(!x.ok||!Array.isArray(x.categories)||x.categories.length<10) process.exit(1); if(!x.categories.every(v=>v&&String(v.id||'').trim()&&String(v.name||'').trim())) process.exit(1)"
 
-          echo '[5/8] single SOOP proxy'
+          echo '[5/8] single SOOP proxy route'
           friend_url='https%3A%2F%2Fapi-channel.sooplive.co.kr%2Fv1.1%2Fchannel%2Fmawang0216%2Fhome%2Fsection%2Fbroad'
-          curl -fsS --max-time 20 "$BASE/api/soop/proxy?url=$friend_url" > /tmp/soop.json
+          proxy_status="$(curl -sS --max-time 20 -o /tmp/soop.json -w '%{http_code}' "$BASE/api/soop/proxy?url=$friend_url" || true)"
           test -s /tmp/soop.json
+          case "$proxy_status" in
+            2*|4*|5*) echo "SOOP proxy route responded HTTP $proxy_status" ;;
+            *) echo "SOOP proxy route unreachable: HTTP $proxy_status" >&2; exit 1 ;;
+          esac
 
           echo '[6/8] lossless image and boss assets'
           retry_contains "$BASE/assets/perf-runtime.js?v=1.2.2" 'lossless image policy' > /tmp/perf.js
@@ -106,11 +112,13 @@ jobs:
           echo '[8/8] worker source syntax and routing'
           node --check assets/cloud-v1.1-loader.js
           node --check assets/friend-finder-v120.js
+          node --check assets/v130-live-contact-fix.js
           node --check assets/soop-fetch-proxy-v123.js
           node --check assets/device-ui.js
           node --check assets/app-version-v120.js
           node --check src/cf-v120-friend.js
           node --check src/cf-v111-entry.js
+          grep -Fq 'loadV130Hotfix' assets/cloud-v1.1-loader.js
           grep -Fq "./cf-v120-friend.js" src/cf-v111-entry.js
           grep -Fq "url.pathname==='/api/soop/live-batch'" src/cf-v120-friend.js
           grep -Fq "url.pathname==='/api/soop/categories'" src/cf-v120-friend.js
