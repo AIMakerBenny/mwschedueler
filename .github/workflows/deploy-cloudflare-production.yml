@@ -26,6 +26,9 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Run cumulative phase audits
+        run: node scripts/run-current-full-integration-audit.mjs
+
       - name: Install dependencies
         run: npm install
 
@@ -81,6 +84,19 @@ jobs:
           grep -Fq 'void startHydration(chosen)' /tmp/cloud-core.js
           grep -Fq '__mwsAppReadyV130' /tmp/cloud-core.js
           grep -Fq "const CACHE_DB='mawang_data_v130'" /tmp/cloud-core.js
+          grep -Fq 'mws-app-loading' /tmp/cloud-core.js
+          grep -Fq 'mws:post-login-ui-ready' /tmp/cloud-core.js
+          node - <<'NODE'
+          const fs=require('fs');
+          const src=fs.readFileSync('/tmp/cloud-core.js','utf8');
+          const a=src.indexOf('function enterAppShell(chosen)');
+          const b=src.indexOf('function revealReadyShell()',a);
+          if(a<0||b<0)process.exit(1);
+          const enter=src.slice(a,b);
+          if(enter.includes('hideGate()')){console.error('Login still reveals the incomplete shell before readiness.');process.exit(1)}
+          const r=src.slice(b,src.indexOf('function markAppReady',b));
+          if(!r.includes('hideGate()')){console.error('Ready shell no longer owns gate removal.');process.exit(1)}
+          NODE
           retry_contains "$BASE/assets/device-ui.js?deploy=$GITHUB_SHA" 'mws-majoku-subnav-collapsed-v130' > /tmp/device-ui.js
           node --check /tmp/device-ui.js
 
