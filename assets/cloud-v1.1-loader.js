@@ -61,25 +61,36 @@ function prefetchFeatures(){
   for(const href of urls){if(document.querySelector(`link[rel="prefetch"][href="${href}"]`))continue;const link=document.createElement('link');link.rel='prefetch';link.as='script';link.href=href;document.head.appendChild(link)}
 }
 
+function loadOptionalNetworkFeatures(){
+  Promise.resolve()
+    .then(()=>loadSoopFetchProxy())
+    .then(()=>loadFriendFinder())
+    .then(()=>loadV130Hotfix())
+    .catch(error=>console.error('Optional SOOP/Friend features failed',error));
+}
+
+function startCoreRuntime(){
+  return fetch('/assets/cloud-v1.1.js?v=1.3.0',{cache:'no-store'})
+    .then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.text()})
+    .then(code=>{
+      code=code.replace("Math.max(0,Math.min(100,Math.round(Number(percent)||0));","Math.max(0,Math.min(100,Math.round(Number(percent)||0)));");
+      const s=document.createElement('script');s.textContent=code;s.dataset.mwsCoreRuntime='v1.3.0';document.body.appendChild(s);
+      window.mwsApplyAppVersionV120?.();
+      installTabBridge();
+      ensureFeaturesForTab(activeTab()).catch(()=>{});
+      if('requestIdleCallback'in window)requestIdleCallback(prefetchFeatures,{timeout:3500});else setTimeout(prefetchFeatures,1200);
+      /* Authentication/login core must never wait on SOOP or Friend Finder. */
+      setTimeout(loadOptionalNetworkFeatures,0);
+    });
+}
+
 document.addEventListener('click',event=>{
   const button=event.target?.closest?.('.nav button[data-tab]');
   if(button?.dataset?.tab)Promise.resolve(ensureFeaturesForTab(button.dataset.tab)).catch(()=>{});
 },true);
 
 loadAppVersion()
-  .then(()=>loadSoopFetchProxy())
-  .then(()=>loadFriendFinder())
-  .then(()=>loadV130Hotfix())
-  .then(()=>fetch('/assets/cloud-v1.1.js?v=1.1.1',{cache:'no-store'}))
-  .then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.text()})
-  .then(code=>{
-    code=code.replace("Math.max(0,Math.min(100,Math.round(Number(percent)||0));","Math.max(0,Math.min(100,Math.round(Number(percent)||0)));");
-    const s=document.createElement('script');s.textContent=code;document.body.appendChild(s);
-    window.mwsApplyAppVersionV120?.();
-    installTabBridge();
-    ensureFeaturesForTab(activeTab()).catch(()=>{});
-    if('requestIdleCallback'in window)requestIdleCallback(prefetchFeatures,{timeout:3500});else setTimeout(prefetchFeatures,1200);
-  })
+  .then(()=>startCoreRuntime())
   .catch(error=>{
     console.error('Cloudflare auth bootstrap failed',error);
     const el=document.getElementById('mwsLoginError');if(el)el.textContent='Cloudflare 로그인 모듈 로딩 실패: '+(error?.message||String(error));
