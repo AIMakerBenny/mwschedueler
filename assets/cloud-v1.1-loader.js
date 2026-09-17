@@ -26,8 +26,8 @@ const loadFriendFinder=()=>loadScript('friend-finder-v120','/assets/friend-finde
 const loadTodayPeopleWheel=()=>loadScript('today-people-wheel','/assets/today-people-wheel-v117.js?v=1.2.0','__mwsTodayPeopleWheelV120');
 const loadUiFixes=()=>loadScript('ui-fixes','/assets/ui-fixes-v121.js?v=1.2.1','__mwsUiFixesV121');
 const loadSteamPicker=()=>loadScript('steam-picker','/assets/steam-game-v111.js?v=1.1.3','__mwsSteamGameV111');
-const loadBossManager=()=>loadScript('boss-manager','/assets/boss-manager-v121.js?v=1.2.1','__mwsBossManagerV121');
-const loadMajokuHost=()=>loadScript('majoku-host','/assets/majoku-host-fix-v114.js?v=1.2.0','__mwsMajokuHostFixV120');
+const loadBossManager=()=>loadScript('boss-manager','/assets/boss-manager-v121.js?v=1.2.2','__mwsBossManagerV121');
+const loadMajokuHost=()=>loadScript('majoku-host','/assets/majoku-host-fix-v114.js?v=1.2.2','__mwsMajokuHostFixV122');
 
 async function loadCalendarFeatures(){
   loadStyle('calendar-drag','/assets/calendar-drag-layout-fix.css?v=1.1.3');
@@ -56,7 +56,7 @@ function activeTab(){
   return document.querySelector('.nav button.active[data-tab]')?.dataset?.tab||'';
 }
 function prefetchFeatures(){
-  const urls=['/assets/steam-game-v111.js?v=1.1.3','/assets/ui-fixes-v121.js?v=1.2.1','/assets/boss-manager-v121.js?v=1.2.1','/assets/majoku-host-fix-v114.js?v=1.2.0'];
+  const urls=['/assets/steam-game-v111.js?v=1.1.3','/assets/ui-fixes-v121.js?v=1.2.1','/assets/boss-manager-v121.js?v=1.2.2','/assets/majoku-host-fix-v114.js?v=1.2.2'];
   for(const href of urls){if(document.querySelector(`link[rel="prefetch"][href="${href}"]`))continue;const link=document.createElement('link');link.rel='prefetch';link.as='script';link.href=href;document.head.appendChild(link)}
 }
 
