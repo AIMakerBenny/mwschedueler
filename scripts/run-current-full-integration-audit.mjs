@@ -2,6 +2,7 @@ import {runPhase1MobileShellAudit} from './run-phase1-mobile-shell-audit.mjs';
 import {runPhase2StartupReadinessAudit} from './run-phase2-startup-readiness-audit.mjs';
 import {runPhase3PostLoginStyleReadinessAudit} from './run-phase3-post-login-style-readiness-audit.mjs';
 import {runPhase4PostLoginModuleFailureAudit} from './run-phase4-post-login-module-failure-audit.mjs';
+import {runPhase5MobileCalendarAddAccessAudit} from './run-phase5-mobile-calendar-add-access-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -35,6 +36,17 @@ export function runPhase4FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase4FullIntegrationAudit();}
+export function runPhase5FullIntegrationAudit(){
+  const previous=runPhase4FullIntegrationAudit();
+  const current=runPhase5MobileCalendarAddAccessAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:5,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase5FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
