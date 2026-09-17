@@ -39,6 +39,7 @@ async function start(){
   await load('device-ui','/assets/device-ui.js?v=1.3.0-post-login');
   loadStyle('mobile-drawer-v130','/assets/mobile-drawer-v130.css?v=1.3.0-drawer-fix');
   loadStyle('mobile-calendar-v130','/assets/mobile-calendar-v130.css?v=1.3.0-month-redesign');
+  loadStyle('mobile-calendar-topbar-v130','/assets/mobile-calendar-topbar-v130.css?v=1.3.0-topbar-cleanup');
   await load('mobile-access-tools-v130','/assets/mobile-access-tools-v130.js?v=1.3.0-drawer-tools','__mwsMobileAccessToolsV130');
   await load('mobile-calendar-quick-add-v130','/assets/mobile-calendar-quick-add-v130.js?v=1.3.0-quick-add','__mwsMobileCalendarQuickAddV130');
   window.__mwsPostLoginUiReadyV130=true;
