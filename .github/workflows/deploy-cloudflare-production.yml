@@ -79,6 +79,9 @@ jobs:
           retry_contains "$BASE/assets/post-login-runtime-v130.js?deploy=$GITHUB_SHA" '__mwsPostLoginRuntimeV130' > /tmp/post-login.js
           node --check /tmp/post-login.js
           grep -Fq "mws:app-ready" /tmp/post-login.js
+          grep -Fq 'await Promise.all([' /tmp/post-login.js
+          grep -Fq "loadStyle('mobile-drawer-v130'" /tmp/post-login.js
+          grep -Fq "loadStyle('mobile-calendar-v130'" /tmp/post-login.js
           retry_contains "$BASE/assets/cloud-v1.1.js?deploy=$GITHUB_SHA" 'function enterAppShell(chosen)' > /tmp/cloud-core.js
           node --check /tmp/cloud-core.js
           grep -Fq 'void startHydration(chosen)' /tmp/cloud-core.js
