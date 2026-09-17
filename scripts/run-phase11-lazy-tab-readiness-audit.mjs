@@ -13,6 +13,7 @@ export function runPhase11LazyTabReadinessAudit(){
   const openIndex=runtime.indexOf('readySetTab.apply(context,args)');
   if(ensureIndex<0||openIndex<0||openIndex<ensureIndex)issues.push('tab can become interactive before its lazy data check starts');
   if(!runtime.includes("toast('화면 열기 실패'"))issues.push('lazy tab load failure has no user-visible failure path');
+  if(runtime.includes("+' 데이터 확인 중'"))issues.push('tab readiness leaves a transient loading label that is not restored on non-lazy tabs');
 
   // Reproduce two quick clicks: the slower first request must not reopen the old tab.
   let seq=0;
