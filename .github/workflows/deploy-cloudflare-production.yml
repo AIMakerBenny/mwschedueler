@@ -64,21 +64,24 @@ jobs:
           session="$(retry_contains "$BASE/api/auth/session" '"authenticated"')"
           SESSION="$session" node -e "const x=JSON.parse(process.env.SESSION); if(typeof x.authenticated!=='boolean') process.exit(1)"
 
-          echo '[2/8] v1.2.0 loader and visible version feature'
-          retry_contains "$BASE/assets/cloud-v5.5.js?deploy=v120" 'Mawang Scheduler v1.2.0 Cloudflare auth bootstrap' > /tmp/loader.js
+          echo '[2/8] v1.2.0 loader and Friend Finder thumbnail UI'
+          retry_contains "$BASE/assets/cloud-v5.5.js?deploy=v120-thumb" 'Mawang Scheduler v1.2.0 Cloudflare auth bootstrap' > /tmp/loader.js
           node --check /tmp/loader.js
-          grep -Fq 'friend-finder-v120.js?v=1.2.0' /tmp/loader.js
+          grep -Fq 'friend-finder-v120.js?v=1.2.2' /tmp/loader.js
           grep -Fq 'loadFriendFinder' /tmp/loader.js
-          retry_contains "$BASE/assets/friend-finder-v120.js?v=1.2.0" 'Mawang Scheduler v 1.2.0' > /tmp/friend.js
+          retry_contains "$BASE/assets/friend-finder-v120.js?v=1.2.2" 'LIVE thumbnails' > /tmp/friend.js
           node --check /tmp/friend.js
           grep -Fq '/api/soop/live-batch' /tmp/friend.js
           grep -Fq '/api/soop/categories' /tmp/friend.js
-          grep -Fq 'categoryName' /tmp/friend.js
-          grep -Fq 'CONCURRENCY' src/cf-v120-friend.js
+          grep -Fq 'https://liveimg.sooplive.com/m/' /tmp/friend.js
+          grep -Fq 'mws-live-screen-v120' /tmp/friend.js
 
-          echo '[3/8] fast LIVE batch endpoint'
+          echo '[3/8] fast LIVE batch endpoint and real thumbnail'
           batch="$(curl -fsS --max-time 25 -H 'content-type: application/json' -d '{"urls":["https://api-channel.sooplive.co.kr/v1.1/channel/mawang0216/home/section/broad"],"force":true}' "$BASE/api/soop/live-batch")"
-          BATCH="$batch" node -e "const x=JSON.parse(process.env.BATCH); if(!x.ok||!Array.isArray(x.results)||x.results.length!==1||!String(x.results[0].body||'').trim()) process.exit(1); const j=JSON.parse(x.results[0].body); if(!('categoryName' in j)||!('broadCateNo' in j)) process.exit(1)"
+          BATCH="$batch" node -e "const x=JSON.parse(process.env.BATCH); if(!x.ok||!Array.isArray(x.results)||x.results.length!==1||!String(x.results[0].body||'').trim()) process.exit(1); const j=JSON.parse(x.results[0].body); if(!('categoryName' in j)||!('broadCateNo' in j)||!String(j.broadNo||j.broad_no||'').trim()) process.exit(1)"
+          bno="$(BATCH="$batch" node -e "const x=JSON.parse(process.env.BATCH); const j=JSON.parse(x.results[0].body); process.stdout.write(String(j.broadNo||j.broad_no||''))")"
+          curl -fsSL --max-time 15 "https://liveimg.sooplive.com/m/$bno" -o /tmp/live-thumb
+          test "$(wc -c < /tmp/live-thumb)" -gt 1000
 
           echo '[4/8] SOOP category catalog endpoint'
           categories="$(curl -fsS --max-time 25 "$BASE/api/soop/categories?force=1")"
@@ -116,4 +119,4 @@ jobs:
           grep -Fq "url.pathname==='/api/soop/live-batch'" src/cf-v120-friend.js
           grep -Fq "url.pathname==='/api/soop/categories'" src/cf-v120-friend.js
 
-          echo 'Mawang Scheduler v1.2.0 Friend Finder categories and fast LIVE batching verified.'
+          echo 'Mawang Scheduler v1.2.0 Friend Finder LIVE thumbnails verified.'
