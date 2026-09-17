@@ -47,7 +47,7 @@ jobs:
             local needle="$2"
             local body=''
             for i in {1..12}; do
-              body="$(curl -fsS --max-time 15 "$url" || true)"
+              body="$(curl -fsSL --max-time 15 "$url" || true)"
               if printf '%s' "$body" | grep -Fq "$needle"; then
                 printf '%s' "$body"
                 return 0
@@ -58,16 +58,18 @@ jobs:
             return 1
           }
 
-          echo '[1/8] health and auth'
+          echo '[1/9] health and auth'
           health="$(retry_contains "$BASE/api/health" '"ok":true')"
           HEALTH="$health" node -e "const x=JSON.parse(process.env.HEALTH); if(!x.ok || x.supabase!==false || !String(x.backend||'').includes('D1')) process.exit(1)"
           session="$(retry_contains "$BASE/api/auth/session" '"authenticated"')"
           SESSION="$session" node -e "const x=JSON.parse(process.env.SESSION); if(typeof x.authenticated!=='boolean') process.exit(1)"
 
-          echo '[2/8] v1.2.0 loader and Friend Finder thumbnail UI'
-          retry_contains "$BASE/assets/cloud-v5.5.js?deploy=v120-thumb" 'Mawang Scheduler v1.2.0 Cloudflare auth bootstrap' > /tmp/loader.js
+          echo '[2/9] v1.2.0 loader and Friend Finder thumbnail UI'
+          retry_contains "$BASE/assets/cloud-v5.5.js?deploy=$GITHUB_SHA" 'Mawang Scheduler v1.2.0 Cloudflare auth bootstrap' > /tmp/loader.js
           node --check /tmp/loader.js
           grep -Fq 'friend-finder-v120.js?v=1.2.2' /tmp/loader.js
+          grep -Fq 'boss-manager-v121.js?v=1.2.2' /tmp/loader.js
+          grep -Fq 'majoku-host-fix-v114.js?v=1.2.2' /tmp/loader.js
           grep -Fq 'loadFriendFinder' /tmp/loader.js
           retry_contains "$BASE/assets/friend-finder-v120.js?v=1.2.2" 'LIVE thumbnails' > /tmp/friend.js
           node --check /tmp/friend.js
@@ -76,24 +78,24 @@ jobs:
           grep -Fq 'https://liveimg.sooplive.com/m/' /tmp/friend.js
           grep -Fq 'mws-live-screen-v120' /tmp/friend.js
 
-          echo '[3/8] fast LIVE batch endpoint and real thumbnail'
+          echo '[3/9] fast LIVE batch endpoint and real thumbnail'
           batch="$(curl -fsS --max-time 25 -H 'content-type: application/json' -d '{"urls":["https://api-channel.sooplive.co.kr/v1.1/channel/mawang0216/home/section/broad"],"force":true}' "$BASE/api/soop/live-batch")"
           BATCH="$batch" node -e "const x=JSON.parse(process.env.BATCH); if(!x.ok||!Array.isArray(x.results)||x.results.length!==1||!String(x.results[0].body||'').trim()) process.exit(1); const j=JSON.parse(x.results[0].body); if(!('categoryName' in j)||!('broadCateNo' in j)||!String(j.broadNo||j.broad_no||'').trim()) process.exit(1)"
           bno="$(BATCH="$batch" node -e "const x=JSON.parse(process.env.BATCH); const j=JSON.parse(x.results[0].body); process.stdout.write(String(j.broadNo||j.broad_no||''))")"
           curl -fsSL --max-time 15 "https://liveimg.sooplive.com/m/$bno" -o /tmp/live-thumb
           test "$(wc -c < /tmp/live-thumb)" -gt 1000
 
-          echo '[4/8] SOOP category catalog endpoint'
+          echo '[4/9] SOOP category catalog endpoint'
           categories="$(curl -fsS --max-time 25 "$BASE/api/soop/categories?force=1")"
           CATEGORIES="$categories" node -e "const x=JSON.parse(process.env.CATEGORIES); if(!x.ok||!Array.isArray(x.categories)||x.categories.length<10) process.exit(1); if(!x.categories.every(v=>v&&String(v.id||'').trim()&&String(v.name||'').trim())) process.exit(1)"
 
-          echo '[5/8] single SOOP proxy still works'
+          echo '[5/9] single SOOP proxy still works'
           friend_url='https%3A%2F%2Fapi-channel.sooplive.co.kr%2Fv1.1%2Fchannel%2Fmawang0216%2Fhome%2Fsection%2Fbroad'
           curl -fsS --max-time 20 "$BASE/api/soop/proxy?url=$friend_url" > /tmp/soop.json
           test -s /tmp/soop.json
           node -e "const fs=require('fs'); const x=JSON.parse(fs.readFileSync('/tmp/soop.json','utf8')); if(!('categoryName' in x)) process.exit(1)"
 
-          echo '[6/8] lossless image policy'
+          echo '[6/9] lossless image policy'
           retry_contains "$BASE/assets/perf-runtime.js?v=1.2.2" 'lossless image policy' > /tmp/perf.js
           node --check /tmp/perf.js
           grep -Fq 'preserveOriginalImage' /tmp/perf.js
@@ -101,15 +103,30 @@ jobs:
           node --check src/cf-v121-boss-media.js
           if grep -Eq 'toDataURL|drawImage|image/webp|resize' src/cf-v121-boss-media.js; then echo 'Boss image backend must not transform image bytes.' >&2; exit 1; fi
 
-          echo '[7/8] existing feature scripts'
+          echo '[7/9] existing feature scripts'
           retry_contains "$BASE/assets/today-people-wheel-v117.js?v=1.2.0" '__mwsTodayPeopleWheelV120' > /tmp/wheel.js
           node --check /tmp/wheel.js
           retry_contains "$BASE/assets/ui-fixes-v121.js?v=1.2.1" '__mwsUiFixesV121' > /tmp/ui.js
           node --check /tmp/ui.js
-          retry_contains "$BASE/assets/boss-manager-v121.js?v=1.2.1" '__mwsBossManagerV121' > /tmp/boss.js
+          retry_contains "$BASE/assets/boss-manager-v121.js?v=1.2.2&deploy=$GITHUB_SHA" '__mwsBossManagerV121' > /tmp/boss.js
           node --check /tmp/boss.js
+          if grep -Fq "if(id==='boss-default'&&hp===100)hp=DEFAULT_HP;" /tmp/boss.js; then echo 'Boss HP 100 must be a valid manual value.' >&2; exit 1; fi
+          retry_contains "$BASE/assets/boss-raid-fix-v119.js?v=1.2.2&deploy=$GITHUB_SHA" '__mwsBossRaidFixV122' > /tmp/boss-hp-fix.js
+          node --check /tmp/boss-hp-fix.js
+          grep -Fq 'pointerdown' /tmp/boss-hp-fix.js
+          grep -Fq 'mwsBossRaidSetMaxHealth' /tmp/boss-hp-fix.js
 
-          echo '[8/8] worker source syntax and routing'
+          echo '[8/9] configurable Boss Raid HP on live Majoku page'
+          retry_contains "$BASE/majoku-castle?deploy=$GITHUB_SHA" 'mwsBossRaidSetMaxHealth' > /tmp/majoku.html
+          grep -Fq 'id="bossHpText">500 / 500<' /tmp/majoku.html
+          grep -Fq 'maxHealth:500' /tmp/majoku.html
+          grep -Fq 'health:500' /tmp/majoku.html
+          if grep -Fq 'Number(bossState.maxHealth)||100' /tmp/majoku.html; then echo 'Boss Raid still contains a 100 HP fallback.' >&2; exit 1; fi
+          retry_contains "$BASE/assets/boss-raid-v116.js?v=1.2.2&deploy=$GITHUB_SHA" '__mwsBossRaidV120' > /tmp/boss-raid.js
+          node --check /tmp/boss-raid.js
+          if grep -Fq "if(id==='boss-default'&&hp===100)hp=DEFAULT_HP;" /tmp/boss-raid.js; then echo 'Boss Raid still forces an intentional 100 HP value back to 500.' >&2; exit 1; fi
+
+          echo '[9/9] worker source syntax and routing'
           node --check assets/cloud-v1.1-loader.js
           node --check assets/friend-finder-v120.js
           node --check assets/soop-fetch-proxy-v123.js
@@ -118,5 +135,6 @@ jobs:
           grep -Fq "./cf-v120-friend.js" src/cf-v111-entry.js
           grep -Fq "url.pathname==='/api/soop/live-batch'" src/cf-v120-friend.js
           grep -Fq "url.pathname==='/api/soop/categories'" src/cf-v120-friend.js
+          grep -Fq "url.pathname==='/majoku-castle.html'||url.pathname==='/majoku-castle'" src/cf-v111-entry.js
 
-          echo 'Mawang Scheduler v1.2.0 Friend Finder LIVE thumbnails verified.'
+          echo 'Mawang Scheduler v1.2.0 configurable Boss Raid HP and Friend Finder verified.'
