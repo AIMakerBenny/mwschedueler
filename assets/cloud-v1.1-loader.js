@@ -21,7 +21,8 @@ const loadStyle=(key,href)=>{
 };
 
 const loadSoopFetchProxy=()=>loadScript('soop-fetch-proxy','/assets/soop-fetch-proxy-v123.js?v=1.2.5','__mwsSoopFetchProxyV124');
-const loadFriendFinder=()=>loadScript('friend-finder-v120','/assets/friend-finder-v120.js?v=1.2.0','__mwsFriendFinderV120');
+const loadFriendFinder=()=>loadScript('friend-finder-v120','/assets/friend-finder-v120.js?v=1.2.1','__mwsFriendFinderV120');
+const loadFriendLivePreview=()=>loadScript('friend-live-preview-v120','/assets/friend-live-preview-v120.js?v=1.2.1','__mwsFriendLivePreviewV120');
 const loadTodayPeopleWheel=()=>loadScript('today-people-wheel','/assets/today-people-wheel-v117.js?v=1.2.0','__mwsTodayPeopleWheelV120');
 const loadUiFixes=()=>loadScript('ui-fixes','/assets/ui-fixes-v121.js?v=1.2.1','__mwsUiFixesV121');
 const loadSteamPicker=()=>loadScript('steam-picker','/assets/steam-game-v111.js?v=1.1.3','__mwsSteamGameV111');
@@ -66,6 +67,7 @@ document.addEventListener('click',event=>{
 
 loadSoopFetchProxy()
   .then(()=>loadFriendFinder())
+  .then(()=>loadFriendLivePreview())
   .then(()=>fetch('/assets/cloud-v1.1.js?v=1.1.1',{cache:'no-store'}))
   .then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.text()})
   .then(code=>{
