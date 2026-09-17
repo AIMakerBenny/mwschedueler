@@ -52,7 +52,12 @@ function button(text,fn){const b=document.createElement('button');b.type='button
 function render(){
  const mobile=document.body.dataset.deviceMode==='mobile';section.dataset.mobileCalendarView=view;
  tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.calendarView===view)));
- grid.querySelectorAll('.day').forEach(day=>{const n=day.querySelectorAll('.mini-event').length;day.dataset.mobileCount=n?n+'개':'';day.setAttribute('aria-label',day.dataset.date+' 일정 '+n+'개');});
+ const monthLabel=document.getElementById('monthLabel');
+ if(monthLabel){
+  const match=String(monthLabel.textContent||'').match(/(\d{4}).*?(\d{1,2})월/);
+  if(match){monthLabel.dataset.mobileYear=match[1];monthLabel.dataset.mobileMonth=`${Number(match[2])}월`;}
+ }
+ grid.querySelectorAll('.day').forEach(day=>{const n=day.querySelectorAll('.mini-event').length;day.dataset.mobileCount=n?n+'개':'';day.dataset.mobileMore=n>2?`+${n-2}`:'';day.setAttribute('aria-label',day.dataset.date+' 일정 '+n+'개');});
  agenda.replaceChildren();if(!mobile||view==='month')return;
  const start=view==='week'?weekStart(anchor):anchor;
  const end=shift(start,view==='week'?6:0);
@@ -68,7 +73,7 @@ function render(){
   rows.forEach(e=>{const b=button('',()=>{if(typeof openEvent==='function')openEvent(e.id);});b.className='mws-agenda-event';const time=document.createElement('span');time.textContent=e.restDay?'휴방':e.start==='TBD'||!e.start?'시간 미정':e.start;const label=document.createElement('strong');label.textContent=e.title||'제목 없음';b.append(time,label);day.append(b);});agenda.append(day);
  }
 }
-grid.addEventListener('click',e=>{if(document.body.dataset.deviceMode!=='mobile'||view!=='month')return;const day=e.target.closest('.day[data-date]');if(!day)return;e.preventDefault();e.stopImmediatePropagation();anchor=day.dataset.date;view='day';render();},true);
+grid.addEventListener('click',e=>{if(document.body.dataset.deviceMode!=='mobile'||view!=='month')return;if(e.target.closest('.mini-event'))return;const day=e.target.closest('.day[data-date]');if(!day)return;e.preventDefault();e.stopImmediatePropagation();anchor=day.dataset.date;view='day';render();},true);
 grid.addEventListener('keydown',e=>{if(document.body.dataset.deviceMode==='mobile'&&view==='month'&&(e.key==='Enter'||e.key===' ')){const day=e.target.closest('.day[data-date]');if(day){e.preventDefault();day.click();}}});
 let scheduled=false;function queue(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;render();grid.querySelectorAll('.day').forEach(d=>{if(document.body.dataset.deviceMode==='mobile'){d.tabIndex=0;d.setAttribute('role','button');}else{d.removeAttribute('tabindex');d.removeAttribute('role');}});});}
 new MutationObserver(queue).observe(grid,{childList:true,subtree:true});
