@@ -20,6 +20,15 @@ function load(key,src,flag){
   loaded.set(key,promise);
   return promise;
 }
+function loadStyle(key,href){
+  const existing=document.querySelector(`link[data-mws-post-login-style="${key}"]`);
+  if(existing)return;
+  const link=document.createElement('link');
+  link.rel='stylesheet';
+  link.href=href;
+  link.dataset.mwsPostLoginStyle=key;
+  document.head.appendChild(link);
+}
 
 let started=false;
 async function start(){
@@ -29,6 +38,7 @@ async function start(){
   await load('test-v55','/assets/test-v5.5.js?v=1.3.0-post-login');
   await load('test-v56','/assets/test-v5.6.js?v=1.3.0-post-login');
   await load('device-ui','/assets/device-ui.js?v=1.3.0-post-login');
+  loadStyle('mobile-drawer-v130','/assets/mobile-drawer-v130.css?v=1.3.0-drawer-fix');
   window.__mwsPostLoginUiReadyV130=true;
   try{window.dispatchEvent(new Event('mws:post-login-ui-ready'))}catch(_){}
 }
