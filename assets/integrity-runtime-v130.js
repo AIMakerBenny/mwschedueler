@@ -41,8 +41,6 @@ if(typeof readySetTab==='function'&&typeof window.mwsV55EnsureParts==='function'
     const requestId=++lazyTabRequestSeq;
     const args=[...arguments];
     const context=this;
-    const status=document.getElementById('syncStatusText');
-    if(status)status.textContent=String(tab||'화면')+' 데이터 확인 중';
     Promise.resolve(window.mwsV55EnsureParts(tab)).then(ok=>{
       if(requestId!==lazyTabRequestSeq)return;
       if(ok){
