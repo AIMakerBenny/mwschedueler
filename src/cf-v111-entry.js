@@ -65,6 +65,17 @@ function normalizeCloudCore(js){
     "if(session.authenticated){currentAdmin=session.user;enterAppShell('admin');void startHydration('admin');return}"
   );
 
+  /* Phase 7: a save acknowledgement may only advance the baseline to the payload that the server accepted.
+     Edits made while /api/save is in flight must remain dirty and must never be overwritten by normalization. */
+  out=out.replace(
+    "const payload={};for(const part of partsToSave)payload[part]=extractPart(part);if(manual)setManualSaveProgress(28,'UPLOAD');",
+    "const payload={};for(const part of partsToSave)payload[part]=extractPart(part);const sentJson=new Map(partsToSave.map(part=>[part,JSON.stringify(payload[part])]));if(manual)setManualSaveProgress(28,'UPLOAD');"
+  );
+  out=out.replace(
+    "const versions=result.versions||{},normalized=result.normalized||{};mergeNormalizedResult(normalized);if(manifest?.parts)for(const[part,version]of Object.entries(versions))manifest.parts[part]=Number(version)||manifest.parts[part];for(const part of partsToSave){const value=extractPart(part),version=Number(versions[part])||Number(manifest?.parts?.[part])||0;baselineJson.set(part,JSON.stringify(value));dirtyParts.delete(part);await putCachedPart('admin',part,version,value)}",
+    "const versions=result.versions||{},normalized=result.normalized||{};if(manifest?.parts)for(const[part,version]of Object.entries(versions))manifest.parts[part]=Number(version)||manifest.parts[part];for(const part of partsToSave){const version=Number(versions[part])||Number(manifest?.parts?.[part])||0;const sentValue=payload[part];const hasNormalized=Object.prototype.hasOwnProperty.call(normalized,part)&&normalized[part]!==undefined;const serverValue=hasNormalized?normalized[part]:sentValue;const changedAfterSend=JSON.stringify(extractPart(part))!==sentJson.get(part);if(!changedAfterSend&&hasNormalized)mergePart(part,serverValue,data);baselineJson.set(part,JSON.stringify(serverValue));await putCachedPart('admin',part,version,serverValue)}markDirty()"
+  );
+
   /* Old core version text must not fight app-version-v120.js. */
   out=out.replace(
     "document.body.dataset.buildVersion='Mawang Scheduler v.1.1.0';const versionLabel=document.querySelector('.sidebar-build-version-v53');if(versionLabel)versionLabel.textContent='Mawang Scheduler v.1.1.0';",
