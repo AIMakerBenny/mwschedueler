@@ -20,7 +20,7 @@ const loadStyle=(key,href)=>{
   const link=document.createElement('link');link.rel='stylesheet';link.href=href;link.dataset.mwsFeatureStyle=key;document.head.appendChild(link);
 };
 
-const loadAppVersion=()=>loadScript('app-version-v120','/assets/app-version-v120.js?v=1.2.0','__mwsAppVersionV120');
+const loadAppVersion=()=>loadScript('app-version-v120','/assets/app-version-v120.js?v=1.2.1','__mwsAppVersionV120');
 const loadSoopFetchProxy=()=>loadScript('soop-fetch-proxy','/assets/soop-fetch-proxy-v123.js?v=1.2.5','__mwsSoopFetchProxyV124');
 const loadFriendFinder=()=>loadScript('friend-finder-v120','/assets/friend-finder-v120.js?v=1.2.2','__mwsFriendFinderV120');
 const loadTodayPeopleWheel=()=>loadScript('today-people-wheel','/assets/today-people-wheel-v117.js?v=1.2.0','__mwsTodayPeopleWheelV120');
