@@ -75,3 +75,108 @@ new MutationObserver(queue).observe(grid,{childList:true,subtree:true});
 new MutationObserver(queue).observe(document.body,{attributes:true,attributeFilter:['data-device-mode']});
 window.addEventListener('mawang:datachange',queue);queue();
 })();
+
+/* v1.3.0 Majoku Castle sidebar: game shortcuts, collapsible list, direct iframe navigation, and legacy records removal. */
+(()=>{
+'use strict';
+const STORAGE_KEY='mws-majoku-subnav-collapsed-v130';
+const games=[
+ ['drawing','01','그림 맞추기'],
+ ['food','02','뭐먹지'],
+ ['choseong','03','초성 퀴즈'],
+ ['prediction','04','마왕 기록 예측'],
+ ['omok','05','마왕과 오목'],
+ ['bombing','06','마왕의 폭격을 피해라'],
+ ['minority','07','소수결 눈치싸움'],
+ ['elevator','08','추락하는 엘리베이터'],
+ ['boss','09','마왕 보스 레이드']
+];
+const mainButton=document.querySelector('.sidebar .nav button[data-tab="gameMajoku"]');
+const frame=document.querySelector('#gameMajoku .majoku-castle-frame');
+if(!mainButton||!frame||document.getElementById('mwsMajokuSubnavV130'))return;
+
+const style=document.createElement('style');
+style.id='mwsMajokuSubnavStyleV130';
+style.textContent=`
+.sidebar .nav button[data-tab="gameMajoku"]{position:relative;padding-right:34px!important}
+.mws-majoku-toggle-v130{position:absolute;right:9px;top:50%;width:22px;height:22px;transform:translateY(-50%);display:grid;place-items:center;border-radius:7px;color:var(--muted);font-size:15px;line-height:1;cursor:pointer;transition:transform .16s,background .16s,color .16s}
+.mws-majoku-toggle-v130:hover,.mws-majoku-toggle-v130:focus-visible{background:var(--panel2);color:var(--text);outline:1px solid var(--border)}
+.mws-majoku-subnav-v130{display:flex;flex-direction:column;gap:3px;margin:2px 0 6px 34px;padding:5px 0 5px 9px;border-left:1px solid color-mix(in srgb,var(--accent) 40%,var(--border));overflow:hidden;max-height:430px;opacity:1;transition:max-height .18s ease,opacity .14s ease,padding .18s ease,margin .18s ease}
+.mws-majoku-subnav-v130.collapsed{max-height:0;opacity:0;padding-top:0;padding-bottom:0;margin-top:0;margin-bottom:0;pointer-events:none}
+.mws-majoku-subnav-v130 button{display:grid!important;grid-template-columns:24px minmax(0,1fr)!important;gap:6px!important;align-items:center!important;width:100%!important;min-height:32px!important;padding:6px 8px!important;border-radius:8px!important;font-size:11px!important;color:var(--muted)!important;text-align:left!important;white-space:normal!important}
+.mws-majoku-subnav-v130 button:hover,.mws-majoku-subnav-v130 button.active{background:color-mix(in srgb,var(--accent) 14%,var(--panel2))!important;color:var(--text)!important}
+.mws-majoku-no-v130{font-size:9px;font-weight:900;letter-spacing:.08em;color:var(--accent)}
+body[data-device-mode="mobile"] .mws-majoku-subnav-v130{margin-left:32px!important;margin-right:4px!important}
+body[data-device-mode="mobile"] .mws-majoku-subnav-v130 button{min-height:42px!important;font-size:13px!important;padding:9px 10px!important}
+`;
+document.head.appendChild(style);
+
+let collapsed=false;
+try{collapsed=localStorage.getItem(STORAGE_KEY)==='1'}catch(_){}
+let pendingGame='';
+
+const toggle=document.createElement('span');
+toggle.className='mws-majoku-toggle-v130';
+toggle.setAttribute('role','button');
+toggle.setAttribute('tabindex','0');
+toggle.setAttribute('aria-label','Majoku Castle 게임 목록 접기 또는 펼치기');
+mainButton.appendChild(toggle);
+
+const subnav=document.createElement('div');
+subnav.id='mwsMajokuSubnavV130';
+subnav.className='mws-majoku-subnav-v130';
+subnav.setAttribute('aria-label','Majoku Castle 게임 목록');
+for(const [game,no,label] of games){
+ const b=document.createElement('button');
+ b.type='button';b.dataset.majokuGame=game;
+ b.innerHTML=`<span class="mws-majoku-no-v130">${no}</span><span>${label}</span>`;
+ subnav.appendChild(b);
+}
+mainButton.insertAdjacentElement('afterend',subnav);
+
+function renderCollapsed(){
+ subnav.classList.toggle('collapsed',collapsed);
+ toggle.textContent=collapsed?'›':'⌄';
+ toggle.setAttribute('aria-expanded',String(!collapsed));
+ toggle.title=collapsed?'게임 목록 펼치기':'게임 목록 접기';
+}
+function setCollapsed(next){
+ collapsed=Boolean(next);renderCollapsed();
+ try{localStorage.setItem(STORAGE_KEY,collapsed?'1':'0')}catch(_){}
+}
+function toggleCollapsed(event){event?.preventDefault?.();event?.stopPropagation?.();setCollapsed(!collapsed)}
+toggle.addEventListener('click',toggleCollapsed);
+toggle.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){toggleCollapsed(event)}});
+renderCollapsed();
+
+function frameDoc(){try{return frame.contentDocument||frame.contentWindow?.document||null}catch(_){return null}}
+function cleanLegacyRecords(doc){
+ if(!doc)return false;
+ const records=doc.querySelector('.records-wrap');
+ if(records)records.remove();
+ return Boolean(doc.querySelector('#castleHome'));
+}
+function markActive(game){subnav.querySelectorAll('[data-majoku-game]').forEach(b=>b.classList.toggle('active',b.dataset.majokuGame===game))}
+function openInsideFrame(game){
+ const doc=frameDoc();if(!doc)return false;
+ cleanLegacyRecords(doc);
+ const card=doc.querySelector(`[data-game="${game}"]`);
+ if(!card)return false;
+ card.click();markActive(game);pendingGame='';return true;
+}
+function requestGame(game){
+ pendingGame=game;
+ if(!mainButton.classList.contains('active'))mainButton.click();
+ window.setMobileDrawer?.(false);
+ if(openInsideFrame(game))return;
+ [80,220,600,1200].forEach(ms=>setTimeout(()=>{if(pendingGame===game)openInsideFrame(game)},ms));
+}
+subnav.addEventListener('click',event=>{const b=event.target.closest('[data-majoku-game]');if(!b)return;event.preventDefault();event.stopPropagation();requestGame(b.dataset.majokuGame)});
+
+frame.addEventListener('load',()=>{
+ const doc=frameDoc();cleanLegacyRecords(doc);
+ if(pendingGame)openInsideFrame(pendingGame);
+});
+if(frame.contentDocument?.readyState==='complete')cleanLegacyRecords(frameDoc());
+else setTimeout(()=>cleanLegacyRecords(frameDoc()),500);
+})();
