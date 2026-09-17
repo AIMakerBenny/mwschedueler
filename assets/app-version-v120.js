@@ -6,41 +6,27 @@ window.__mwsAppVersionV120=1;
 
 const VERSION='1.2.0';
 const LABEL=`Mawang Scheduler v ${VERSION}`;
+const BUILD=`MWS V ${VERSION}`;
 window.MWS_APP_VERSION=VERSION;
 window.MWS_APP_VERSION_LABEL=LABEL;
 
-let applying=false;
 function apply(){
-  if(applying)return;
-  applying=true;
-  try{
-    document.body?.setAttribute('data-build-version',`MWS V ${VERSION}`);
-    const direct=document.getElementById('mwsBuildVersion')||document.querySelector('[id^="mwsBuildVersionV5"],[class*="sidebar-build-version"]');
-    if(direct){
-      if(direct.textContent!==LABEL)direct.textContent=LABEL;
-      direct.setAttribute('aria-label',`현재 버전 ${LABEL}`);
-    }
-  }finally{applying=false}
+  const body=document.body;
+  if(body&&body.getAttribute('data-build-version')!==BUILD)body.setAttribute('data-build-version',BUILD);
+  const version=document.getElementById('mwsBuildVersion')||document.querySelector('[id^="mwsBuildVersionV5"],[class*="sidebar-build-version"]');
+  if(version){
+    if(version.textContent!==LABEL)version.textContent=LABEL;
+    const aria=`현재 버전 ${LABEL}`;
+    if(version.getAttribute('aria-label')!==aria)version.setAttribute('aria-label',aria);
+  }
 }
+
 window.mwsApplyAppVersionV120=apply;
 
 apply();
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});
-
-const sidebar=document.querySelector('.sidebar');
-if(sidebar){
-  new MutationObserver(mutations=>{
-    if(applying)return;
-    for(const mutation of mutations){
-      const target=mutation.target?.nodeType===3?mutation.target.parentElement:mutation.target;
-      if(target?.id==='mwsBuildVersion'||target?.closest?.('#mwsBuildVersion')){apply();break}
-    }
-  }).observe(sidebar,{subtree:true,childList:true,characterData:true});
-}
-if(document.body){
-  new MutationObserver(mutations=>{
-    if(applying)return;
-    if(mutations.some(m=>m.type==='attributes'&&m.attributeName==='data-build-version'))apply();
-  }).observe(document.body,{attributes:true,attributeFilter:['data-build-version']});
-}
+window.addEventListener('load',apply,{once:true});
+/* Legacy modules may finish their one-time boot just after load. Re-assert finitely, never observe/mutate in a loop. */
+setTimeout(apply,250);
+setTimeout(apply,1200);
 })();
