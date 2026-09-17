@@ -83,3 +83,40 @@ body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #ca
 body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarGrid .daynum{font-size:11px!important;line-height:16px!important;margin:0!important;padding:0!important;white-space:nowrap!important}
 body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarGrid .mini-event{display:none!important}
 body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarGrid .day::after{font-size:9px!important;line-height:15px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important}
+
+/* v3 stage 3: Steam game thumbnail is an independent touch target on mobile. */
+body[data-device-mode="mobile"] .mini-event.mws-steam-host-v111{padding-right:70px!important;overflow:hidden!important}
+body[data-device-mode="mobile"] .mini-event>.mws-steam-slot-v111{right:4px!important;top:4px!important;bottom:4px!important;width:60px!important;min-width:60px!important;border-radius:10px!important;z-index:60!important;touch-action:manipulation!important;pointer-events:auto!important;-webkit-tap-highlight-color:transparent!important}
+body[data-device-mode="mobile"] .dashboard-upcoming-card.mws-steam-host-v111{padding-right:76px!important}
+body[data-device-mode="mobile"] .dashboard-upcoming-card>.mws-steam-slot-v111{right:6px!important;top:6px!important;bottom:6px!important;width:60px!important;min-width:60px!important;border-radius:10px!important;z-index:60!important;touch-action:manipulation!important;pointer-events:auto!important;-webkit-tap-highlight-color:transparent!important}
+body[data-device-mode="mobile"] .mws-steam-slot-v111:hover{transform:none!important}
+body[data-device-mode="mobile"] .mws-steam-slot-v111:active{filter:brightness(.92)!important}
+
+/* v3 stage 4: keep thumbnail taps separate from the host card and preserve the existing editor action. */
+body[data-device-mode="mobile"] .mws-steam-host-v111>.mws-steam-slot-v111{isolation:isolate!important}
+body[data-device-mode="mobile"] .mws-steam-host-v111>.mws-steam-slot-v111 img{pointer-events:none!important;user-select:none!important;-webkit-user-drag:none!important}
+
+/* v3 stage 5: larger mobile event editor, game panel, and Steam search results. */
+body[data-device-mode="mobile"] #eventModal{padding:0!important;align-items:stretch!important}
+body[data-device-mode="mobile"] #eventModal .event-modalbox.mws-game-panel-enabled-v112{width:100vw!important;max-width:100vw!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;padding:16px 12px calc(22px + env(safe-area-inset-bottom))!important;overflow:auto!important}
+body[data-device-mode="mobile"] #eventModal .event-modalbox.mws-game-panel-enabled-v112 .event-modal-layout,
+body[data-device-mode="mobile"] #eventModal .event-modalbox.mws-game-panel-enabled-v112.repeat-panel-open .event-modal-layout{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:14px!important;width:100%!important;min-width:0!important}
+body[data-device-mode="mobile"] .event-game-panel-v112{min-height:0!important;padding:16px!important;border-radius:16px!important;overflow:visible!important}
+body[data-device-mode="mobile"] .mws-game-panel-head-v112 h3{font-size:20px!important}
+body[data-device-mode="mobile"] .mws-game-panel-head-v112 .muted{font-size:13px!important;line-height:1.45!important}
+body[data-device-mode="mobile"] .mws-game-preview-image-v112{aspect-ratio:16/9!important}
+body[data-device-mode="mobile"] .mws-game-preview-name-v112{font-size:19px!important}
+body[data-device-mode="mobile"] .mws-game-preview-app-v112{font-size:12px!important}
+body[data-device-mode="mobile"] .mws-game-preview-actions-v112 button,
+body[data-device-mode="mobile"] .mws-game-panel-bottom-v112 button,
+body[data-device-mode="mobile"] .mws-game-search-row-v112 button{min-height:48px!important;font-size:14px!important;padding:10px 12px!important}
+body[data-device-mode="mobile"] .mws-game-search-label-v112{font-size:15px!important;margin-bottom:8px!important}
+body[data-device-mode="mobile"] .mws-game-search-row-v112{grid-template-columns:minmax(0,1fr) auto!important;gap:8px!important}
+body[data-device-mode="mobile"] .mws-game-search-row-v112 input{min-height:48px!important;font-size:16px!important}
+body[data-device-mode="mobile"] .mws-game-search-status-v112{font-size:12px!important;min-height:30px!important;padding-top:8px!important}
+body[data-device-mode="mobile"] .mws-game-results-v112{gap:9px!important;max-height:none!important;overflow:visible!important;padding-right:0!important}
+body[data-device-mode="mobile"] .mws-game-result-v112{grid-template-columns:112px minmax(0,1fr)!important;gap:11px!important;min-height:70px!important;padding:9px!important;border-radius:12px!important}
+body[data-device-mode="mobile"] .mws-game-result-v112 img{width:112px!important;height:52px!important;border-radius:8px!important}
+body[data-device-mode="mobile"] .mws-game-result-v112 strong{font-size:14px!important;line-height:1.35!important}
+body[data-device-mode="mobile"] .mws-game-result-v112 small{font-size:11px!important;margin-top:4px!important}
+body[data-device-mode="mobile"] .mws-game-search-empty-v112{font-size:13px!important;padding:20px 14px!important}
