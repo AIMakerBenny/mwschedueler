@@ -76,6 +76,12 @@ function normalizeCloudCore(js){
     "const versions=result.versions||{},normalized=result.normalized||{};if(manifest?.parts)for(const[part,version]of Object.entries(versions))manifest.parts[part]=Number(version)||manifest.parts[part];for(const part of partsToSave){const version=Number(versions[part])||Number(manifest?.parts?.[part])||0;const sentValue=payload[part];const hasNormalized=Object.prototype.hasOwnProperty.call(normalized,part)&&normalized[part]!==undefined;const serverValue=hasNormalized?normalized[part]:sentValue;const changedAfterSend=JSON.stringify(extractPart(part))!==sentJson.get(part);if(!changedAfterSend&&hasNormalized)mergePart(part,serverValue,data);baselineJson.set(part,JSON.stringify(serverValue));await putCachedPart('admin',part,version,serverValue)}markDirty();"
   );
 
+  /* Phase 8: changing access mode is a lifecycle boundary. Flush every Admin edit before logout. */
+  out=out.replace(
+    "$('mwsChangeModeBtn')?.addEventListener('click',async()=>{localStorage.removeItem(REMEMBER_KEY);localStorage.removeItem(MODE_KEY);mode=null;await logout();selectLoginMode('admin');showGate()})",
+    "$('mwsChangeModeBtn')?.addEventListener('click',async()=>{if(mode==='admin'){clearTimeout(cloudSaveTimer);const deadline=Date.now()+65000;while(cloudSaving&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,50));clearTimeout(cloudSaveTimer);if(cloudSaving){try{toast('모드 변경 보류','온라인 저장이 끝나지 않아 모드를 변경하지 않았습니다.')}catch(_){}return}markDirty();if(dirtyParts.size&&!(await writeCloudNow(true)))return}localStorage.removeItem(REMEMBER_KEY);localStorage.removeItem(MODE_KEY);mode=null;await logout();selectLoginMode('admin');showGate()})"
+  );
+
   /* Old core version text must not fight app-version-v120.js. */
   out=out.replace(
     "document.body.dataset.buildVersion='Mawang Scheduler v.1.1.0';const versionLabel=document.querySelector('.sidebar-build-version-v53');if(versionLabel)versionLabel.textContent='Mawang Scheduler v.1.1.0';",
