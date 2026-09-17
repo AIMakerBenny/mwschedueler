@@ -1,7 +1,7 @@
-/* Mawang Scheduler v1.3.0 - isolated mobile month calendar redesign.
-   This file only affects the mobile calendar month view. */
+/* Mawang Scheduler v1.3.0 - authoritative mobile month calendar.
+   This is the only stylesheet that owns the mobile month-view calendar. */
 
-/* Step 2: simplify the month-view controls into a compact month header. */
+/* Compact month header. */
 body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] .calendar-toolbar{
   position:relative!important;
   display:block!important;
@@ -24,9 +24,7 @@ body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] .ca
   gap:0!important;
   pointer-events:none!important;
 }
-body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #todayMonth{
-  display:none!important;
-}
+body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #todayMonth{display:none!important}
 body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #prevMonth,
 body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #nextMonth{
   width:44px!important;
@@ -73,23 +71,46 @@ body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] .ca
   pointer-events:none!important;
 }
 body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarYearSelect,
-body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarMonthSelect{
-  display:none!important;
-}
+body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarMonthSelect{display:none!important}
+
+/* Latest reference-style month title: month first, year secondary. */
 body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] .calendar-month-label{
-  display:block!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:1px!important;
   width:100%!important;
   min-width:0!important;
+  min-height:58px!important;
   margin:0!important;
   padding:0!important;
   color:var(--text)!important;
-  font-size:28px!important;
-  font-weight:900!important;
-  line-height:58px!important;
+  font-size:0!important;
+  line-height:1!important;
   letter-spacing:-.04em!important;
   text-align:center!important;
   white-space:nowrap!important;
 }
+body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] .calendar-month-label::before{
+  content:attr(data-mobile-month);
+  display:block!important;
+  color:var(--text)!important;
+  font-size:28px!important;
+  font-weight:950!important;
+  line-height:31px!important;
+  letter-spacing:-.04em!important;
+}
+body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] .calendar-month-label::after{
+  content:attr(data-mobile-year);
+  display:block!important;
+  color:var(--muted)!important;
+  font-size:10px!important;
+  font-weight:800!important;
+  line-height:14px!important;
+  letter-spacing:.08em!important;
+}
+
 body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] .mws-calendar-tabs{
   margin:0 0 14px!important;
   padding:4px!important;
@@ -103,7 +124,7 @@ body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] .mw
   font-size:13px!important;
 }
 
-/* Step 3: reference-style month grid — larger quiet cells and text-first events. */
+/* Reference-style month grid: larger quiet cells and text-first events. */
 body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] .calendar-head{
   display:grid!important;
   grid-template-columns:repeat(7,minmax(0,1fr))!important;
@@ -214,13 +235,31 @@ body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #ca
   white-space:nowrap!important;
 }
 body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarGrid .mini-event-people,
-body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarGrid .mws-steam-slot-v111{
-  display:none!important;
-}
+body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarGrid .mws-steam-slot-v111{display:none!important}
+
+/* Latest overflow indicator: two visible events plus +N. */
 body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarGrid .day::after{
   content:none!important;
   display:none!important;
 }
+body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarGrid .day[data-mobile-more]:not([data-mobile-more=""])::after{
+  content:attr(data-mobile-more)!important;
+  display:block!important;
+  margin-top:3px!important;
+  padding:0 3px!important;
+  color:var(--muted)!important;
+  font-size:8px!important;
+  font-weight:850!important;
+  line-height:12px!important;
+  text-align:right!important;
+  white-space:nowrap!important;
+}
+
+/* Month view owns the screen; hide duplicate global topbar. */
+body[data-device-mode="mobile"]:has(#calendar.section.active[data-mobile-calendar-view="month"]) .topbar{display:none!important}
+body[data-device-mode="mobile"]:has(#calendar.section.active[data-mobile-calendar-view="month"]) .main{padding-top:10px!important}
+body[data-device-mode="mobile"]:has(#calendar.section.active[data-mobile-calendar-view="month"]) #calendar{margin-top:0!important}
+
 @media(max-width:420px){
   body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarGrid{grid-auto-rows:minmax(80px,auto)!important;gap:3px!important}
   body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarGrid .day{min-height:80px!important;padding:6px 3px 4px!important}
