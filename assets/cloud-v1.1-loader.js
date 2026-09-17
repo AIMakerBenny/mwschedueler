@@ -1,8 +1,8 @@
-/* Mawang Scheduler v1.2.4 Cloudflare auth bootstrap */
+/* Mawang Scheduler v1.2.0 Cloudflare auth bootstrap */
 (()=>{
 'use strict';
-if(window.__mwsCloudV124Bootstrap)return;
-window.__mwsCloudV124Bootstrap=true;
+if(window.__mwsCloudV120Bootstrap)return;
+window.__mwsCloudV120Bootstrap=true;
 
 const loaded=new Map();
 const loadScript=(key,src,flag)=>{
@@ -20,7 +20,8 @@ const loadStyle=(key,href)=>{
   const link=document.createElement('link');link.rel='stylesheet';link.href=href;link.dataset.mwsFeatureStyle=key;document.head.appendChild(link);
 };
 
-const loadSoopFetchProxy=()=>loadScript('soop-fetch-proxy','/assets/soop-fetch-proxy-v123.js?v=1.2.4','__mwsSoopFetchProxyV124');
+const loadSoopFetchProxy=()=>loadScript('soop-fetch-proxy','/assets/soop-fetch-proxy-v123.js?v=1.2.5','__mwsSoopFetchProxyV124');
+const loadFriendFinder=()=>loadScript('friend-finder-v120','/assets/friend-finder-v120.js?v=1.2.0','__mwsFriendFinderV120');
 const loadTodayPeopleWheel=()=>loadScript('today-people-wheel','/assets/today-people-wheel-v117.js?v=1.2.0','__mwsTodayPeopleWheelV120');
 const loadUiFixes=()=>loadScript('ui-fixes','/assets/ui-fixes-v121.js?v=1.2.1','__mwsUiFixesV121');
 const loadSteamPicker=()=>loadScript('steam-picker','/assets/steam-game-v111.js?v=1.1.3','__mwsSteamGameV111');
@@ -64,6 +65,7 @@ document.addEventListener('click',event=>{
 },true);
 
 loadSoopFetchProxy()
+  .then(()=>loadFriendFinder())
   .then(()=>fetch('/assets/cloud-v1.1.js?v=1.1.1',{cache:'no-store'}))
   .then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.text()})
   .then(code=>{
