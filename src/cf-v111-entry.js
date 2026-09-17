@@ -29,6 +29,12 @@ function normalizeVersionHtml(html){
 function normalizeCloudCore(js){
   let out=String(js||'');
 
+  /* Repair the legacy source typo that was previously hidden by the old inline loader. */
+  out=out.replace(
+    "Math.max(0,Math.min(100,Math.round(Number(percent)||0));",
+    "Math.max(0,Math.min(100,Math.round(Number(percent)||0)));"
+  );
+
   /* One authoritative cache name. Do not remap IndexedDB from another loader. */
   out=out.replace("const CACHE_DB='mawang_data';","const CACHE_DB='mawang_data_v130';");
 
