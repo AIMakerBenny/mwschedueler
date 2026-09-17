@@ -82,7 +82,7 @@ export default {
 
     if(request.method!=='GET'||response.status!==200)return response;
 
-    if(url.pathname==='/majoku-castle.html'){
+    if(url.pathname==='/majoku-castle.html'||url.pathname==='/majoku-castle'){
       const contentType=response.headers.get('content-type')||'';
       if(!contentType.toLowerCase().includes('text/html'))return response;
       const html=normalizeBossRaidHtml(await response.text());
