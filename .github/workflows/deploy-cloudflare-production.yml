@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: cloudflare-production
@@ -25,6 +25,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+
+      - name: Phase 1 clean legacy mobile CSS
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/phase1-clean-app-core-mobile.mjs
+          if git diff --quiet -- assets/app-core.css; then
+            echo 'app-core.css already clean.'
+          else
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add assets/app-core.css
+            git commit -m 'Clean legacy mobile shell CSS [skip ci]'
+            git push origin HEAD:cloudflare-production
+          fi
 
       - name: Install dependencies
         run: npm install
