@@ -1,4 +1,4 @@
-/* Mawang Scheduler v1.2.2 - lean bootstrap and lossless image policy */
+/* Mawang Scheduler v1.3.0 - lean bootstrap and lossless image policy */
 (()=>{
   'use strict';
   if(window.__mwsCf571Optimizer)return;
@@ -6,17 +6,18 @@
 
   const nativeFetch=window.fetch.bind(window);
   const version=(window.version&&typeof window.version==='object')?window.version:(window.version={});
-  version.name='Mawang Scheduler v.1.1.0';
+  version.name='Mawang Scheduler v 1.3.0';
   const BUILD=version.name;
   const ETAG_KEY='mws_cf_v571_etag';
   const MANIFEST_KEY='mws_cf_v571_manifest';
   const MEDIA_BASE_KEY='mws_cf_v571_media_base';
-  const DB_NAME='mawang_data';
+  const DB_NAME='mawang_data_v130';
   const DB_VERSION=3;
   const PARTS=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook'];
   let bundle=null;
   let bootstrapPromise=null;
   let dbPromise=null;
+  let postLoginStarted=false;
 
   const idle=(fn,timeout=1800)=>{
     if('requestIdleCallback' in window)return requestIdleCallback(fn,{timeout});
@@ -48,6 +49,7 @@
         for(const name of PARTS)if(!db.objectStoreNames.contains(name))db.createObjectStore(name,{keyPath:'scope'});
         if(!db.objectStoreNames.contains('meta'))db.createObjectStore('meta',{keyPath:'key'});
       };
+      req.onblocked=()=>{dbPromise=null;reject(new Error('IndexedDB open blocked'))};
       req.onsuccess=()=>resolve(req.result);
       req.onerror=()=>{dbPromise=null;reject(req.error||new Error('IndexedDB open failed'))};
     });
@@ -168,10 +170,13 @@
     return nativeFetch(input,init);
   };
 
+  /* app-version-v120.js is the single authoritative version writer. Never observe and rewrite the same DOM nodes here. */
   function forceVersion(){
     try{
-      document.body?.setAttribute('data-build-version',BUILD);
-      document.querySelectorAll('[id^="mwsBuildVersionV5"],#mwsBuildVersion,.sidebar-build-version-v52,.sidebar-build-version-v53,[class*="sidebar-build-version"]').forEach(label=>{if(label.textContent!==BUILD)label.textContent=BUILD});
+      if(typeof window.mwsApplyAppVersionV120==='function'){window.mwsApplyAppVersionV120();return}
+      document.body?.setAttribute('data-build-version','MWS V 1.3.0');
+      const label=document.getElementById('mwsBuildVersion');
+      if(label)label.textContent='Mawang Scheduler v 1.3.0';
     }catch(_){}
   }
 
@@ -200,20 +205,6 @@
   }
   function installPageScaleBridge(){['setPageTextScaleV54','setTab','applyTextScale','renderMultiDraw'].forEach(wrapPageScaleFunction);applyPageLayoutScale()}
 
-  function installReleaseVersionGuard(){
-    forceVersion();
-    const body=document.body;
-    if(body&&!body.__mwsV122BuildObserver){
-      const observer=new MutationObserver(()=>{if(body.getAttribute('data-build-version')!==BUILD)forceVersion()});
-      observer.observe(body,{attributes:true,attributeFilter:['data-build-version']});body.__mwsV122BuildObserver=observer;
-    }
-    const label=document.querySelector('[id^="mwsBuildVersionV5"],#mwsBuildVersion,.sidebar-build-version-v52,.sidebar-build-version-v53,[class*="sidebar-build-version"]');
-    if(label&&!label.__mwsV122BuildObserver){
-      const observer=new MutationObserver(()=>{if(label.textContent!==BUILD)forceVersion()});
-      observer.observe(label,{childList:true,characterData:true,subtree:true});label.__mwsV122BuildObserver=observer;
-    }
-  }
-
   function loadContentPlannerHost(){
     if(document.getElementById('mwsContentPlannerHostScriptV110'))return;
     const s=document.createElement('script');s.id='mwsContentPlannerHostScriptV110';s.src='assets/content-planner-host.js?v=1.0';document.body.appendChild(s);
@@ -224,18 +215,33 @@
     s.onload=()=>{installLosslessImagePolicy();forceVersion()};
     document.body.appendChild(s);
   }
+  function loadPerfBase(){
+    if(document.getElementById('mwsPerfRuntimeBaseV130'))return;
+    const s=document.createElement('script');s.id='mwsPerfRuntimeBaseV130';s.src='assets/perf-runtime-base.js?v=1.3.0';document.head.appendChild(s);
+  }
 
-  window.mwsV101ApplyPageLayoutScale=applyPageLayoutScale;
-  function ready(){
-    installLosslessImagePolicy();installReleaseVersionGuard();installPageScaleBridge();
+  function startPostLoginFeatures(){
+    if(postLoginStarted)return;
+    if(document.body?.classList.contains('mws-gated'))return;
+    postLoginStarted=true;
+    installLosslessImagePolicy();forceVersion();installPageScaleBridge();
+    idle(loadPerfBase,250);
     idle(loadContentPlannerHost,1200);
     idle(loadLegacyRuntimeFeatures,4500);
   }
-  window.addEventListener('DOMContentLoaded',ready,{once:true});
-  window.addEventListener('load',()=>{installLosslessImagePolicy();installReleaseVersionGuard();installPageScaleBridge()},{once:true});
-  window.addEventListener('mawang:datachange',()=>queueMicrotask(()=>{forceVersion();applyPageLayoutScale()}));
-  if(document.readyState!=='loading')ready();
+  function armPostLogin(){
+    if(!document.body?.classList.contains('mws-gated')){startPostLoginFeatures();return}
+    const observer=new MutationObserver(()=>{
+      if(document.body.classList.contains('mws-gated'))return;
+      observer.disconnect();
+      startPostLoginFeatures();
+    });
+    observer.observe(document.body,{attributes:true,attributeFilter:['class']});
+  }
 
-  if(document.readyState==='loading')document.write('<script src="assets/perf-runtime-base.js?v=1.2.2"><\/script>');
-  else{const s=document.createElement('script');s.src='assets/perf-runtime-base.js?v=1.2.2';document.head.appendChild(s)}
+  window.mwsV101ApplyPageLayoutScale=applyPageLayoutScale;
+  window.addEventListener('DOMContentLoaded',armPostLogin,{once:true});
+  window.addEventListener('load',armPostLogin,{once:true});
+  window.addEventListener('mawang:datachange',()=>{if(!document.body.classList.contains('mws-gated'))queueMicrotask(()=>{forceVersion();applyPageLayoutScale()})});
+  if(document.readyState!=='loading')armPostLogin();
 })();
