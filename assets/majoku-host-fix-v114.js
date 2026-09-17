@@ -1,12 +1,12 @@
 /* Mawang Scheduler v1.2.0 - inject Majoku Castle sidebar and Boss Raid scripts */
 (()=>{
 'use strict';
-if(window.__mwsMajokuHostFixV120)return;
-window.__mwsMajokuHostFixV120=1;
+if(window.__mwsMajokuHostFixV122)return;
+window.__mwsMajokuHostFixV122=1;
 
 const SIDEBAR_SRC='/assets/majoku-sidebar-v113.js?v=1.2.0';
-const BOSS_SRC='/assets/boss-raid-v116.js?v=1.2.0';
-const BOSS_FIX_SRC='/assets/boss-raid-fix-v119.js?v=1.2.0';
+const BOSS_SRC='/assets/boss-raid-v116.js?v=1.2.2';
+const BOSS_FIX_SRC='/assets/boss-raid-fix-v119.js?v=1.2.2';
 
 function ensureScript(doc,selector,src,dataKey,errorLabel){
   const existing=doc.querySelector(selector);
@@ -24,8 +24,8 @@ function inject(frame){
   }catch(error){console.error('Majoku Castle iframe access failed',error)}
 }
 function bind(frame){
-  if(!frame||frame.__mwsMajokuHostFixV120)return;
-  frame.__mwsMajokuHostFixV120=1;
+  if(!frame||frame.__mwsMajokuHostFixV122)return;
+  frame.__mwsMajokuHostFixV122=1;
   frame.addEventListener('load',()=>queueMicrotask(()=>inject(frame)));
   inject(frame);
 }
