@@ -9,8 +9,10 @@ export function runPhase3PostLoginStyleReadinessAudit(){
   const startStart=loader.indexOf('async function start()');
   const styleFn=styleStart>=0&&startStart>styleStart?loader.slice(styleStart,startStart):'';
   if(!styleFn.includes('new Promise'))issues.push('loadStyle does not expose stylesheet completion as a Promise');
-  if(!styleFn.includes('link.onload'))issues.push('stylesheet onload is not observed');
-  if(!styleFn.includes('link.onerror'))issues.push('stylesheet onerror is not observed');
+  const observesLoad=styleFn.includes("addEventListener('load'")||styleFn.includes('link.onload');
+  const observesError=styleFn.includes("addEventListener('error'")||styleFn.includes('link.onerror');
+  if(!observesLoad)issues.push('stylesheet load completion is not observed');
+  if(!observesError)issues.push('stylesheet load failure is not observed');
 
   const awaitStyles=loader.indexOf('await Promise.all([');
   const readyFlag=loader.indexOf('window.__mwsPostLoginUiReadyV130=true');
