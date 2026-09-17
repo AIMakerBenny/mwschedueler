@@ -7,15 +7,15 @@ window.__mwsPostLoginRuntimeV130=true;
 const loaded=new Map();
 const loadedStyles=new Map();
 function load(key,src,flag){
-  if(flag&&window[flag])return Promise.resolve();
+  if(flag&&window[flag])return Promise.resolve({key,ok:true,source:'flag'});
   if(loaded.has(key))return loaded.get(key);
   const promise=new Promise(resolve=>{
     const script=document.createElement('script');
     script.src=src;
     script.async=false;
     script.dataset.mwsPostLogin=key;
-    script.onload=()=>resolve();
-    script.onerror=()=>{console.error(`Post-login module failed: ${key}`);resolve()};
+    script.onload=()=>resolve({key,ok:true,source:'loaded'});
+    script.onerror=()=>{console.error(`Post-login module failed: ${key}`);resolve({key,ok:false,source:'error'})};
     document.body.appendChild(script);
   });
   loaded.set(key,promise);return promise;
@@ -43,6 +43,17 @@ function loadStyle(key,href){
   loadedStyles.set(key,promise);
   return promise;
 }
+function markCriticalUiFailure(keys){
+  const failed=[...new Set(keys.filter(Boolean))];
+  window.__mwsPostLoginUiErrorsV130=failed;
+  window.__mwsPostLoginUiFailedV130=true;
+  const message='로그인에는 성공했지만 화면 구성 파일을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.';
+  const loginError=document.getElementById('mwsLoginError');
+  if(loginError)loginError.textContent=message;
+  const sync=document.getElementById('syncStatusText');
+  if(sync)sync.textContent='화면 구성 로딩 실패';
+  try{window.dispatchEvent(new CustomEvent('mws:post-login-ui-error',{detail:{failed}}))}catch(_){}
+}
 
 let started=false;
 async function start(){
@@ -51,14 +62,22 @@ async function start(){
   await load('perf-runtime','/assets/perf-runtime.js?v=1.3.0-post-login','__mwsCf571Optimizer');
   await load('test-v55','/assets/test-v5.5.js?v=1.3.0-post-login');
   await load('test-v56','/assets/test-v5.6.js?v=1.3.0-post-login');
-  await load('device-ui','/assets/device-ui.js?v=1.3.0-mobile-cleanup');
+
+  const deviceUiResult=await load('device-ui','/assets/device-ui.js?v=1.3.0-mobile-cleanup');
+  if(!deviceUiResult.ok){markCriticalUiFailure(['device-ui']);return;}
+
   const styleResults=await Promise.all([
     loadStyle('mobile-drawer-v130','/assets/mobile-drawer-v130.css?v=1.3.0-mobile-cleanup'),
     loadStyle('mobile-calendar-v130','/assets/mobile-calendar-v130.css?v=1.3.0-mobile-cleanup')
   ]);
   window.__mwsPostLoginStyleErrorsV130=styleResults.filter(x=>!x.ok).map(x=>x.key);
-  await load('mobile-access-tools-v130','/assets/mobile-access-tools-v130.js?v=1.3.0-mobile-cleanup','__mwsMobileAccessToolsV130');
-  await load('mobile-calendar-quick-add-v130','/assets/mobile-calendar-quick-add-v130.js?v=1.3.0-mobile-cleanup','__mwsMobileCalendarQuickAddV130');
+  if(window.__mwsPostLoginStyleErrorsV130.length){markCriticalUiFailure(window.__mwsPostLoginStyleErrorsV130);return;}
+
+  const optionalResults=[];
+  optionalResults.push(await load('mobile-access-tools-v130','/assets/mobile-access-tools-v130.js?v=1.3.0-mobile-cleanup','__mwsMobileAccessToolsV130'));
+  optionalResults.push(await load('mobile-calendar-quick-add-v130','/assets/mobile-calendar-quick-add-v130.js?v=1.3.0-mobile-cleanup','__mwsMobileCalendarQuickAddV130'));
+  window.__mwsPostLoginOptionalErrorsV130=optionalResults.filter(x=>!x.ok).map(x=>x.key);
+  window.__mwsPostLoginUiFailedV130=false;
   window.__mwsPostLoginUiReadyV130=true;
   try{window.dispatchEvent(new Event('mws:post-login-ui-ready'))}catch(_){}
 }
