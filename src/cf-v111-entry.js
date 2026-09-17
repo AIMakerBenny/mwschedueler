@@ -1,6 +1,6 @@
 import authWorker from './cf-v120-friend.js';
 
-const APP_VERSION='1.2.0';
+const APP_VERSION='1.3.0';
 const APP_LABEL=`Mawang Scheduler v ${APP_VERSION}`;
 const BUILD_LABEL=`MWS V ${APP_VERSION}`;
 
@@ -8,6 +8,15 @@ function normalizeVersionHtml(html){
   let out=String(html||'');
   out=out.replace(/data-build-version=["'][^"']*["']/i,`data-build-version="${BUILD_LABEL}"`);
   out=out.replace(/(<div\s+id=["']mwsBuildVersion["'][^>]*>)[\s\S]*?(<\/div>)/i,`$1${APP_LABEL}$2`);
+  /* Force browsers to fetch the CPU-loop fix instead of reusing the old unversioned runtime. */
+  out=out.replace(
+    /<script\s+src=["']assets\/perf-runtime\.js(?:\?[^"']*)?["']><\/script>/i,
+    '<script src="assets/perf-runtime.js?v=1.3.0-login-cpu-fix"></script>'
+  );
+  out=out.replace(
+    /<script\s+src=["']assets\/device-ui\.js(?:\?[^"']*)?["']><\/script>/i,
+    '<script src="assets/device-ui.js?v=1.3.0-login-cpu-fix"></script>'
+  );
   return out;
 }
 
@@ -83,11 +92,11 @@ export default {
     }
 
     if(url.pathname==='/assets/cloud-v5.5.js'){
-      const replacement=new URL('/assets/cloud-v1.1-loader.js?v=1.2.2',request.url);
+      const replacement=new URL('/assets/cloud-v1.1-loader.js?v=1.3.0-login-cpu-fix',request.url);
       const response=await env.ASSETS.fetch(new Request(replacement.toString(),{method:'GET',headers:request.headers}));
       const headers=new Headers(response.headers);
       headers.set('cache-control','no-store');
-      headers.set('x-mws-runtime','v1.2.0');
+      headers.set('x-mws-runtime','v1.3.0');
       headers.set('x-mws-image-policy','original-bytes-no-reencode');
       return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
     }
@@ -102,8 +111,9 @@ export default {
     const html=normalizeVersionHtml(await response.text());
     const headers=new Headers(response.headers);
     headers.delete('content-length');
-    headers.set('cache-control','no-store');
+    headers.set('cache-control','no-store, max-age=0');
     headers.set('x-mws-app-version',APP_VERSION);
+    headers.set('x-mws-login-cpu-fix','version-observer-loop-removed');
     return new Response(html,{status:response.status,statusText:response.statusText,headers});
   },
 };
