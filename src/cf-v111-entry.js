@@ -82,6 +82,16 @@ function normalizeCloudCore(js){
     "$('mwsChangeModeBtn')?.addEventListener('click',async()=>{if(mode==='admin'){clearTimeout(cloudSaveTimer);const deadline=Date.now()+65000;while(cloudSaving&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,50));clearTimeout(cloudSaveTimer);if(cloudSaving){try{toast('모드 변경 보류','온라인 저장이 끝나지 않아 모드를 변경하지 않았습니다.')}catch(_){}return}markDirty();if(dirtyParts.size&&!(await writeCloudNow(true)))return}localStorage.removeItem(REMEMBER_KEY);localStorage.removeItem(MODE_KEY);mode=null;await logout();selectLoginMode('admin');showGate()})"
   );
 
+  /* Phase 9: lazy-load failure must be observable and export must never self-retry forever. */
+  out=out.replace(
+    "async function ensurePartsForTab(tab){const extras=PARTS_BY_TAB[tab]||[];if(!extras.length)return true;const scope=mode==='admin'?'admin':'public';if(!manifest){try{manifest=await fetchManifest()}catch(_){}}let changed=false;for(const part of extras){if(loadedParts.has(part))continue;try{const row=await loadPartWithCache(scope,part,manifest,{allowStale:true});mergePart(part,row.data,data);loadedParts.add(part);baselineJson.set(part,JSON.stringify(row.data));changed=true}catch(e){console.error('Lazy part load failed',part,e)}}if(changed)normalizeAndRender(`${tab} lazy data`);return true}",
+    "async function ensurePartsForTab(tab){const extras=PARTS_BY_TAB[tab]||[];if(!extras.length)return true;const scope=mode==='admin'?'admin':'public';if(!manifest){try{manifest=await fetchManifest()}catch(_){}}let changed=false,failed=[];for(const part of extras){if(loadedParts.has(part))continue;try{const row=await loadPartWithCache(scope,part,manifest,{allowStale:true});mergePart(part,row.data,data);loadedParts.add(part);baselineJson.set(part,JSON.stringify(row.data));changed=true}catch(e){failed.push(part);console.error('Lazy part load failed',part,e)}}if(changed)normalizeAndRender(`${tab} lazy data`);if(failed.length){const st=$('syncStatusText');if(st)st.textContent=tab+' 데이터 로딩 실패: '+failed.join(', ');return false}return true}"
+  );
+  out=out.replace(
+    "ensurePartsForTab('export').then(()=>exportAll.click())",
+    "ensurePartsForTab('export').then(ok=>{if(ok&&loadedParts.size===ALL_PARTS.length)exportAll.click();else{try{toast('내보내기 실패','필수 데이터를 모두 불러오지 못했습니다.')}catch(_){}}})"
+  );
+
   /* Old core version text must not fight app-version-v120.js. */
   out=out.replace(
     "document.body.dataset.buildVersion='Mawang Scheduler v.1.1.0';const versionLabel=document.querySelector('.sidebar-build-version-v53');if(versionLabel)versionLabel.textContent='Mawang Scheduler v.1.1.0';",
