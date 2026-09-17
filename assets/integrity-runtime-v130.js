@@ -57,7 +57,75 @@ if(typeof readySetTab==='function'&&typeof window.mwsV55EnsureParts==='function'
   try{setTab=window.setTab}catch(_){}
 }
 
+/* Phase 12: serialize explicit SAVE with any autosave already using /api/save. */
+let activeSaveRequests=0;
+if(!window.__mwsIntegrityFetchTrackedV130){
+  window.__mwsIntegrityFetchTrackedV130=true;
+  const baseFetch=window.fetch.bind(window);
+  window.fetch=async function(input,init={}){
+    const raw=typeof input==='string'?input:(input?.url||'');
+    let isSave=false;
+    try{
+      const url=new URL(raw,location.href);
+      const method=String(init?.method||input?.method||'GET').toUpperCase();
+      isSave=url.origin===location.origin&&url.pathname==='/api/save'&&method==='POST';
+    }catch(_){}
+    if(isSave)activeSaveRequests++;
+    try{return await baseFetch(input,init)}
+    finally{if(isSave)activeSaveRequests=Math.max(0,activeSaveRequests-1)}
+  };
+}
+function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
+async function waitForSaveRequests(timeoutMs=65000){
+  const deadline=Date.now()+timeoutMs;
+  while(activeSaveRequests>0&&Date.now()<deadline)await sleep(50);
+  return activeSaveRequests===0;
+}
+let guardedManualSaveRunning=false;
+async function guardedManualSave(){
+  if(guardedManualSaveRunning)return false;
+  const btn=document.getElementById('mwsSidebarSaveBtn');
+  guardedManualSaveRunning=true;
+  if(btn)btn.disabled=true;
+  try{
+    if(!(await waitForSaveRequests())){
+      try{toast('SAVE 보류','진행 중인 온라인 저장이 끝나지 않았습니다.')}catch(_){}
+      return false;
+    }
+    if(typeof window.mwsV55SaveNow!=='function')return false;
+    let ok=await window.mwsV55SaveNow();
+    if(ok)return true;
+
+    // false can mean that an autosave is between its session check and POST request.
+    const appearDeadline=Date.now()+5000;
+    while(activeSaveRequests===0&&Date.now()<appearDeadline)await sleep(50);
+    if(activeSaveRequests>0){
+      if(!(await waitForSaveRequests())){
+        try{toast('SAVE 보류','진행 중인 온라인 저장이 끝나지 않았습니다.')}catch(_){}
+        return false;
+      }
+      ok=await window.mwsV55SaveNow();
+      if(ok)return true;
+    }
+    try{toast('SAVE FAILED','온라인 저장을 완료하지 못했습니다.')}catch(_){}
+    return false;
+  }finally{
+    guardedManualSaveRunning=false;
+    if(btn)btn.disabled=false;
+  }
+}
+const saveBtn=document.getElementById('mwsSidebarSaveBtn');
+if(saveBtn&&typeof window.mwsV55SaveNow==='function'){
+  saveBtn.addEventListener('click',event=>{
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    void guardedManualSave();
+  },true);
+}
+
 window.__mwsIntegrityHasUnsavedAdminStateV130=hasUnsavedAdminState;
 window.__mwsIntegrityRequestImmediateSaveV130=requestImmediateSave;
 window.__mwsIntegrityLazyTabRequestSeqV130=()=>lazyTabRequestSeq;
+window.__mwsIntegrityActiveSaveRequestsV130=()=>activeSaveRequests;
+window.__mwsIntegrityGuardedManualSaveV130=guardedManualSave;
 })();
