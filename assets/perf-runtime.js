@@ -6,7 +6,7 @@
 
   const nativeFetch=window.fetch.bind(window);
   const version=(window.version&&typeof window.version==='object')?window.version:(window.version={});
-  version.name='Mawang Scheduler v 1.3.0';
+  version.name='Mawang Scheduler v 1.4.0';
   const BUILD=version.name;
   const ETAG_KEY='mws_cf_v571_etag';
   const MANIFEST_KEY='mws_cf_v571_manifest';
@@ -172,12 +172,7 @@
 
   /* app-version-v120.js is the single authoritative version writer. Never observe and rewrite the same DOM nodes here. */
   function forceVersion(){
-    try{
-      if(typeof window.mwsApplyAppVersionV120==='function'){window.mwsApplyAppVersionV120();return}
-      document.body?.setAttribute('data-build-version','MWS V 1.3.0');
-      const label=document.getElementById('mwsBuildVersion');
-      if(label)label.textContent='Mawang Scheduler v 1.3.0';
-    }catch(_){}
+    try{window.mwsApplyAppVersionV120?.()}catch(_){}
   }
 
   const PAGE_SCALE_KEY='mws_page_text_scales_v54';
@@ -207,7 +202,7 @@
 
   function loadContentPlannerHost(){
     if(document.getElementById('mwsContentPlannerHostScriptV110'))return;
-    const s=document.createElement('script');s.id='mwsContentPlannerHostScriptV110';s.src='assets/content-planner-host.js?v=1.3.0-order53';document.body.appendChild(s);
+    const s=document.createElement('script');s.id='mwsContentPlannerHostScriptV110';s.src='assets/content-planner-host.js?v=1.4.0-phase73';document.body.appendChild(s);
   }
   function loadMaintenanceRuntimeFeatures(){
     if(document.getElementById('mwsCf571RuntimeScript'))return;
