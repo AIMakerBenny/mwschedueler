@@ -396,7 +396,7 @@ jobs:
           grep -Fq "new URL('/api/soop/proxy'" assets/soop-fetch-proxy-v123.js
 
           echo '[6/8] post-login performance and boss assets'
-          retry_contains "$BASE/assets/perf-runtime.js?v=1.4.0-phase73" 'lossless image policy' > /tmp/perf.js
+          retry_contains "$BASE/assets/perf-runtime.js?v=1.4.0-phase74" 'lossless image policy' > /tmp/perf.js
           node --check /tmp/perf.js
           grep -Fq 'perf-runtime-base.js?v=1.3.0-search73' /tmp/perf.js
           retry_contains "$BASE/assets/perf-runtime-base.js?deploy=$GITHUB_SHA" 'mws-performance-runtime-style' > /tmp/perf-base.js
@@ -427,10 +427,10 @@ jobs:
           fi
           node --check /tmp/perf.js
           grep -Fq 'preserveOriginalImage' /tmp/perf.js
-          grep -Fq 'content-planner-host.js?v=1.4.0-phase73' /tmp/perf.js
-          retry_contains "$BASE/assets/content-planner-host.js?deploy=$GITHUB_SHA" 'tools.js?v=1.4.0-phase73' > /tmp/planner-host.js
+          grep -Fq 'content-planner-host.js?v=1.4.0-phase74' /tmp/perf.js
+          retry_contains "$BASE/assets/content-planner-host.js?deploy=$GITHUB_SHA" 'tools.js?v=1.4.0-phase74' > /tmp/planner-host.js
           node --check /tmp/planner-host.js
-          retry_contains "$BASE/assets/tools.js?v=1.4.0-phase73&deploy=$GITHUB_SHA" 'window.mwsApplyAppVersionV120?.()' > /tmp/tools.js
+          retry_contains "$BASE/assets/tools.js?v=1.4.0-phase74&deploy=$GITHUB_SHA" 'window.mwsApplyAppVersionV120?.()' > /tmp/tools.js
           node --check /tmp/tools.js
           if grep -Fq "const BUILD='Mawang Scheduler v1.0'" /tmp/tools.js; then
             echo 'Legacy tools version owner is still live.' >&2
@@ -440,6 +440,11 @@ jobs:
             echo 'Tools runtime still writes the app version directly.' >&2
             exit 1
           fi
+          if grep -Fq "const CHO='ㄱ" /tmp/tools.js; then
+            echo 'Duplicate Korean initial table remains in tools runtime.' >&2
+            exit 1
+          fi
+          grep -Fq "typeof window.mwsTextMatches==='function'" /tmp/tools.js
           node --check src/cf-v121-boss-media.js
           retry_contains "$BASE/assets/boss-manager-v121.js?v=1.2.2&deploy=$GITHUB_SHA" '__mwsBossManagerV121' > /tmp/boss.js
           node --check /tmp/boss.js
@@ -466,6 +471,7 @@ jobs:
           node --check scripts/run-phase71-korean-ime-jamo-search-audit.mjs
           node --check scripts/run-phase72-search-owner-collision-audit.mjs
           node --check scripts/run-phase73-version-ownership-audit.mjs
+          node --check scripts/run-phase74-runtime-ownership-audit.mjs
           node --check assets/today-people-runtime-v130.js
           node --check assets/contact-runtime-v130.js
           node --check assets/friend-finder-v120.js
