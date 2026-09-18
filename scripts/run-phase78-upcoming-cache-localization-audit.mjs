@@ -7,11 +7,13 @@ export function runPhase78UpcomingCacheLocalizationAudit(){
   const perf=fs.readFileSync('assets/perf-runtime-base.js','utf8');
 
   if(/upcomingEvents=function\(\)/.test(perf))issues.push('perf runtime still overrides upcomingEvents globally');
-  if(!perf.includes("const baseUpcoming=typeof upcomingEvents==='function'?upcomingEvents:null;"))issues.push('perf runtime lost the canonical upcoming-events source reference');
-  if(!perf.includes('function cachedUpcoming()'))issues.push('localized cachedUpcoming helper is missing');
-  if(!perf.includes('for(const row of cachedUpcoming())'))issues.push('upcomingMap does not use the localized upcoming cache');
+  if(perf.includes('optimizedRenderContacts')){
+    if(!perf.includes("const baseUpcoming=typeof upcomingEvents==='function'?upcomingEvents:null;"))issues.push('optimized renderer lost its localized upcoming source');
+    if(!perf.includes('function cachedUpcoming()'))issues.push('optimized renderer lost localized upcoming cache');
+  }else{
+    if(perf.includes('cachedUpcoming')||perf.includes('upcomingMap(')||perf.includes('baseUpcoming')||perf.includes('upcomingCacheDay'))issues.push('dead localized upcoming cache remains after renderer override removal');
+  }
   if(!app.includes('function upcomingEvents()'))issues.push('canonical upcomingEvents is missing from app-core');
-  if(!perf.includes("historyCacheDay='',upcomingCacheDay=''"))issues.push('history and upcoming caches do not have independent day keys');
   if(/\bcacheDay\b/.test(perf))issues.push('shared cacheDay state still exists');
 
   let historyDay='2026-09-18',upcomingDay='2026-09-17',historyCalls=0,upcomingCalls=0;
