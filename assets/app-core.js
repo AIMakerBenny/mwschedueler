@@ -5839,9 +5839,18 @@ function renderContacts(){
   const mwsLastByContact=new Map();
   if(mwsHistory)for(const row of mwsHistory)for(const id of row.participants||[])if(!mwsLastByContact.has(id))mwsLastByContact.set(id,row);
   const mwsUpcomingAll=upcomingEvents();
+  const mwsUpcomingByContact=new Map();
+  for(const row of mwsUpcomingAll){
+    if(row.restDay)continue;
+    for(const id of row.participants||[]){
+      if(!mwsUpcomingByContact.has(id))mwsUpcomingByContact.set(id,[]);
+      const list=mwsUpcomingByContact.get(id);
+      if(list.length<8)list.push(row);
+    }
+  }
   grid.innerHTML=arr.map(c=>{
-    const last=mwsHistory?(mwsLastByContact.get(c.id)||null):getLastCollab(c.id),upcoming=mwsUpcomingAll.filter(e=>!e.restDay&&(e.participants||[]).includes(c.id)).slice(0,8),isSelf=c.id===data.selfContactId;
-    const avatar=c.image?`<img class="contact-card-avatar-lg" loading="lazy" src="${c.image}">`:`<div class="contact-card-avatar-lg">${esc(initials(c.name))}</div>`;
+    const last=mwsHistory?(mwsLastByContact.get(c.id)||null):getLastCollab(c.id),upcoming=mwsUpcomingByContact.get(c.id)||[],isSelf=c.id===data.selfContactId;
+    const avatar=c.image?`<img class="contact-card-avatar-lg" loading="lazy" decoding="async" src="${c.image}">`:`<div class="contact-card-avatar-lg">${esc(initials(c.name))}</div>`;
     return `<div class="contact-card ${isSelf?'is-self':''} ${c.pendingSetup?'pending-card':''} ${upcoming.length?'has-upcoming':''}" draggable="true" data-contact-id="${c.id}" ondragstart="contactCardDragStart('${c.id}',event)" ondragend="contactCardDragEnd(event)" onclick="openContact('${c.id}')"><div class="contact-card-core">${avatar}<div class="contact-card-info"><div class="contact-card-name-row"><div class="contact-card-name">${esc(c.name)}</div>${isSelf?'<span class="contact-self-badge">본인</span>':''}${upcoming.length?`<span class="upcoming-count-badge">UPCOMING ${upcoming.length}</span>`:''}</div><div class="contact-card-tags">${(c.labels||[]).map(x=>`<span class="chip">${esc(x)}</span>`).join('')||'<span class="muted small">태그 없음</span>'}</div><div class="contact-card-last">${last?`최근 컨텐츠: <strong style="color:var(--text)">${esc(last.title)}</strong><br>${formatDateWeekday(last.date)} · ${daysSince(last.date)}일 전`:'합방 기록 없음'}</div><div class="contact-card-actions">${c.stationUrl?`<button type="button" class="station-link" onclick="event.stopPropagation();openContactStation('${c.id}')">방송국 열기</button>`:''}${c.pendingSetup?'<span class="chip">신규 추가</span>':''}</div></div></div>${contactUpcomingPopover(c)}</div>`
   }).join('')||'<div class="empty">연락처가 없습니다</div>'
 }
