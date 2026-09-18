@@ -12,7 +12,7 @@ export function runPhase31LivePollingPerformanceAudit(){
   if(!src.includes('function stopLiveTimer()'))issues.push('LIVE polling has no explicit stop path');
   if(!src.includes("document.addEventListener('visibilitychange'"))issues.push('LIVE polling does not react to tab visibility');
   if(src.includes("new MutationObserver(()=>{if(friendRoot())scheduleLive()}).observe(document.body,{childList:true,subtree:true})"))issues.push('LIVE fallback still observes all DOM mutations');
-  if(src.includes("'[data-tab="friendFinder"],[data-tab="friends"],button'"))issues.push('LIVE refresh is still triggered by every application button');
+  if(src.includes('[data-tab="friendFinder"],[data-tab="friends"],button'))issues.push('LIVE refresh is still triggered by every application button');
   if(src.includes('new MutationObserver(installVisitFix).observe(document.body'))issues.push('contact station fix still observes the entire DOM permanently');
   if(!loader.includes('v130-live-contact-fix.js?v=1.3.0-perf31'))issues.push('LIVE performance cache-bust revision is missing');
 
