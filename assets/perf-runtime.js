@@ -1,8 +1,8 @@
 /* Mawang Scheduler v1.3.0 - lean bootstrap and lossless image policy */
 (()=>{
   'use strict';
-  if(window.__mwsCf571Optimizer)return;
-  window.__mwsCf571Optimizer=true;
+  if(window.__mwsPerfRuntimeV130)return;
+  window.__mwsPerfRuntimeV130=true;
 
   const nativeFetch=window.fetch.bind(window);
   const version=(window.version&&typeof window.version==='object')?window.version:(window.version={});
@@ -29,8 +29,7 @@
   function installLosslessImagePolicy(){
     try{window.compressContactImage=preserveOriginalImage;compressContactImage=preserveOriginalImage}catch(_){}
     try{window.compressFolderContactPhotoV417=preserveOriginalImage;compressFolderContactPhotoV417=preserveOriginalImage}catch(_){}
-    window.mwsV571CompressProfileImage=preserveOriginalImage;
-    window.mwsV57CompressProfileImage=preserveOriginalImage;
+    window.mwsPreserveOriginalImageV130=preserveOriginalImage;
     window.__mwsLosslessImagesV122=true;
   }
   installLosslessImagePolicy();
@@ -209,9 +208,9 @@
     if(document.getElementById('mwsContentPlannerHostScriptV110'))return;
     const s=document.createElement('script');s.id='mwsContentPlannerHostScriptV110';s.src='assets/content-planner-host.js?v=1.1-order52';document.body.appendChild(s);
   }
-  function loadLegacyRuntimeFeatures(){
-    if(document.getElementById('mwsCf571RuntimeScript'))return;
-    const s=document.createElement('script');s.id='mwsCf571RuntimeScript';s.src='assets/cf-v5.7-runtime.js?v=5.7.1';
+  function loadMaintenanceRuntime(){
+    if(document.getElementById('mwsMaintenanceRuntimeV130'))return;
+    const s=document.createElement('script');s.id='mwsMaintenanceRuntimeV130';s.src='assets/maintenance-runtime-v130.js?v=1.3.0-final69';
     s.onload=()=>{installLosslessImagePolicy();forceVersion()};
     document.body.appendChild(s);
   }
@@ -227,7 +226,7 @@
     installLosslessImagePolicy();forceVersion();installPageScaleBridge();
     idle(loadPerfBase,250);
     idle(loadContentPlannerHost,1200);
-    idle(loadLegacyRuntimeFeatures,4500);
+    idle(loadMaintenanceRuntime,4500);
   }
   function armPostLogin(){
     if(!document.body?.classList.contains('mws-gated')){startPostLoginFeatures();return}
