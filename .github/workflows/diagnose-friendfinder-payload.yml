@@ -77,44 +77,48 @@ jobs:
               return cards.length>0;
             },{timeout:60000});
 
-            await page.waitForFunction(()=>{
-              const images=[...document.querySelectorAll('#friendFinder .friend-finder-card-v5.live .mws-live-screen-v120 img')];
-              return images.some(img=>{
-                const r=img.getBoundingClientRect(),cs=getComputedStyle(img);
-                return img.complete&&img.naturalWidth>100&&img.naturalHeight>50&&r.width>100&&r.height>50&&cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)>0;
-              });
-            },{timeout:60000});
+            const liveCards=await page.$$('#friendFinder .friend-finder-card-v5.live');
+            console.log('LIVE_CARD_COUNT',liveCards.length);
+            for(let i=0;i<liveCards.length;i++){
+              await liveCards[i].evaluate(el=>el.scrollIntoView({block:'center',inline:'nearest'}));
+              await new Promise(resolve=>setTimeout(resolve,700));
+            }
+            await new Promise(resolve=>setTimeout(resolve,7000));
 
             const result=await page.evaluate(()=>{
-              const liveCards=[...document.querySelectorAll('#friendFinder .friend-finder-card-v5.live')];
-              const screens=[...document.querySelectorAll('#friendFinder .friend-finder-card-v5.live .mws-live-screen-v120')];
-              const images=[...document.querySelectorAll('#friendFinder .friend-finder-card-v5.live .mws-live-screen-v120 img')];
-              const visible=images.filter(img=>{
-                const r=img.getBoundingClientRect(),cs=getComputedStyle(img);
-                return img.complete&&img.naturalWidth>100&&img.naturalHeight>50&&r.width>100&&r.height>50&&cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity)>0;
-              });
-              const first=visible[0];
-              const screen=first?.closest('.mws-live-screen-v120');
-              const card=first?.closest('.friend-finder-card-v5');
+              const cards=[...document.querySelectorAll('#friendFinder .friend-finder-card-v5.live')];
               const rect=x=>x?Object.fromEntries(['x','y','width','height'].map(k=>[k,Math.round(x.getBoundingClientRect()[k])])):null;
-              return {
-                liveCards:liveCards.length,
-                screens:screens.length,
-                images:images.length,
-                visibleImages:visible.length,
-                first:{
-                  src:first?.currentSrc||first?.src||'',
-                  naturalWidth:first?.naturalWidth||0,
-                  naturalHeight:first?.naturalHeight||0,
-                  imageRect:rect(first),
+              const rows=cards.map(card=>{
+                const screen=card.querySelector('.mws-live-screen-v120');
+                const img=screen?.querySelector('img');
+                const watch=card.querySelector('[data-watch]')?.dataset?.watch||'';
+                const name=card.querySelector('.friend-finder-name-v5')?.textContent?.trim()||'';
+                return {
+                  name,
+                  watch,
+                  screenExists:Boolean(screen),
+                  screenHidden:Boolean(screen?.hidden),
+                  screenClass:screen?.className||'',
+                  src:img?.currentSrc||img?.src||'',
+                  complete:Boolean(img?.complete),
+                  naturalWidth:Number(img?.naturalWidth||0),
+                  naturalHeight:Number(img?.naturalHeight||0),
+                  imageRect:rect(img),
                   screenRect:rect(screen),
-                  cardRect:rect(card),
-                  cardName:card?.querySelector('.friend-finder-name-v5')?.textContent?.trim()||''
-                }
-              };
+                  cardRect:rect(card)
+                };
+              });
+              const expected=rows.filter(row=>row.watch);
+              const loaded=expected.filter(row=>row.screenExists&&!row.screenHidden&&row.complete&&row.naturalWidth>100&&row.naturalHeight>50&&row.imageRect?.width>100&&row.imageRect?.height>50);
+              return {liveCards:cards.length,expected:expected.length,loaded:loaded.length,rows};
             });
-            console.log('VISIBLE_THUMBNAIL_RESULT',JSON.stringify(result));
-            if(!result.visibleImages)throw new Error('No visible loaded Friend Finder LIVE thumbnail');
+            console.log('ALL_THUMBNAIL_RESULT',JSON.stringify(result));
+            if(!result.expected)throw new Error('No LIVE cards with watch URLs were available for verification');
+            if(result.loaded!==result.expected){
+              const failed=result.rows.filter(row=>row.watch&&!(row.screenExists&&!row.screenHidden&&row.complete&&row.naturalWidth>100&&row.naturalHeight>50&&row.imageRect?.width>100&&row.imageRect?.height>50));
+              throw new Error('Not all LIVE thumbnails loaded: '+JSON.stringify(failed));
+            }
+
             fs.mkdirSync('/tmp/mws-browser',{recursive:true});
             await page.screenshot({path:'/tmp/mws-browser/friend-finder-live.png',fullPage:true});
           }finally{
