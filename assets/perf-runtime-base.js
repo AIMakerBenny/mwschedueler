@@ -66,7 +66,5 @@
   if(baseRenderAll){renderAll=function(reason){invalidate();const s=performance.now(),out=saveDepth?renderActiveAfterSave(reason):baseRenderAll(reason);record(saveDepth?'app.renderScoped':'app.renderAll',performance.now()-s);scheduleImageTune();return out};window.renderAll=renderAll}
   const baseSaveData=typeof saveData==='function'?saveData:null;
   if(baseSaveData){saveData=function(reason){invalidate();const s=performance.now();saveDepth++;try{return baseSaveData(reason)}finally{saveDepth--;record('app.saveData',performance.now()-s)}};window.saveData=saveData}
-  const baseSetTab=typeof setTab==='function'?setTab:null;
-  if(baseSetTab){setTab=function(tab){const out=baseSetTab(tab);if(tab==='settings')try{renderSettings()}catch(_){};scheduleImageTune();return out};window.setTab=setTab}
   window.addEventListener('mawang:datachange',()=>{invalidate();scheduleImageTune()});
 })();
