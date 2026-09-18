@@ -69,6 +69,7 @@ import {runPhase68MaintenanceSuccessorActivationAudit} from './run-phase68-maint
 import {runPhase69LegacyMaintenanceRemovalAudit} from './run-phase69-legacy-maintenance-removal-audit.mjs';
 import {runPhase70UniversalKoreanInitialSearchAudit} from './run-phase70-universal-korean-initial-search-audit.mjs';
 import {runPhase71KoreanImeJamoSearchAudit} from './run-phase71-korean-ime-jamo-search-audit.mjs';
+import './run-phase72-search-owner-collision-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
