@@ -78,7 +78,7 @@ function participantVisuals(event){
   const rows=participantItems(event);
   if(!rows.length)return '<span class="mws-mobile-day-none-v130">등록된 참가자 없음</span>';
   return rows.map(person=>`<span class="mws-mobile-day-person-v130">
-    <span class="mws-mobile-day-person-avatar-v130">${person.image?`<img src="${esc(person.image)}" alt="${esc(person.name)}" loading="lazy">`:`<span>${esc(initials(person.name))}</span>`}</span>
+    <span class="mws-mobile-day-person-avatar-v130">${person.image?`<img src="${esc(person.image)}" alt="${esc(person.name)}" data-mws-fallback-name="${esc(person.name)}" loading="lazy">`:`<span>${esc(initials(person.name))}</span>`}</span>
     <span class="mws-mobile-day-person-copy-v130"><strong>${esc(person.name)}</strong><small>${esc(person.status)}</small></span>
   </span>`).join('');
 }
@@ -92,6 +92,21 @@ function gameVisual(event){
     ${image?`<img class="mws-mobile-day-game-image-v130" src="${esc(image)}" alt="${esc(name)}" loading="lazy">`:'<span class="mws-mobile-day-game-placeholder-v130">GAME</span>'}
     <span class="mws-mobile-day-game-copy-v130"><strong>${esc(name)}</strong>${appid?`<small>Steam App ${esc(appid)}</small>`:''}</span>
   </span>`;
+}
+function replaceBrokenDetailImage(target){
+  if(!(target instanceof HTMLImageElement))return;
+  if(target.classList.contains('mws-mobile-day-game-image-v130')){
+    const fallback=document.createElement('span');
+    fallback.className='mws-mobile-day-game-placeholder-v130';
+    fallback.textContent='GAME';
+    target.replaceWith(fallback);
+    return;
+  }
+  const avatar=target.closest('.mws-mobile-day-person-avatar-v130');
+  if(!avatar)return;
+  const fallback=document.createElement('span');
+  fallback.textContent=initials(target.dataset.mwsFallbackName||target.alt||'?');
+  target.replaceWith(fallback);
 }
 function syncNavOffset(root=document.getElementById(SHEET_ID)){
   if(!root)return;
@@ -123,6 +138,10 @@ function ensureSheet(){
     </section>`;
   document.body.appendChild(root);
   syncNavOffset(root);
+
+  root.addEventListener('error',event=>{
+    replaceBrokenDetailImage(event.target);
+  },true);
 
   root.addEventListener('click',event=>{
     const close=event.target.closest?.('[data-mws-day-close]');

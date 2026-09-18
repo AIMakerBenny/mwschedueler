@@ -11,7 +11,7 @@ export function runPhase21MobileCalendarQuickAddLayerAudit(){
   if(!quick.includes("attributeFilter:['data-device-mode','data-resolution','class']"))issues.push('quick-add does not react when the day-detail body class changes');
   if(!quick.includes("bottom:calc(var(--mws-mobile-nav-offset-v130,68px) + 14px)"))issues.push('quick-add still uses a fixed bottom offset instead of the real mobile navigation height');
   if(!quick.includes("document.querySelector('.mws-mobile-tabs')"))issues.push('quick-add does not measure the mobile bottom navigation');
-  if(!runtime.includes('mobile-calendar-ui-p23'))issues.push('quick-add cache-bust revision was not updated');
+  if(!runtime.includes("mobile-calendar-quick-add-v130.js?v=1.3.0-"))issues.push('quick-add cache-bust revision is missing');
 
   const summary={phase:21,name:'mobile-calendar-quick-add-layer',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));

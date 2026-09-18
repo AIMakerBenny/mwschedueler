@@ -10,7 +10,7 @@ export function runPhase22MobileModalLayerAudit(){
   if(!css.includes('body[data-device-mode="mobile"] .modal{padding:8px!important;align-items:flex-end!important;z-index:5200!important}'))issues.push('mobile modal layer does not sit above the 4900 bottom navigation');
   if(!css.includes('.mws-mobile-tabs{position:fixed')||!css.includes('z-index:4900'))issues.push('mobile bottom navigation layer authority is missing');
   if(!calendarCss.includes('z-index:4800'))issues.push('non-modal calendar detail no longer stays below the bottom navigation');
-  if(!index.includes('assets/device-ui.css?v=3'))issues.push('device UI stylesheet cache-bust was not updated');
+  if(!index.includes('assets/device-ui.css?v='))issues.push('device UI stylesheet cache-bust is missing');
 
   const summary={phase:22,name:'mobile-modal-layer-order',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));

@@ -94,10 +94,14 @@ jobs:
           grep -Fq "mws-mobile-tabs [data-mobile-tab]" /tmp/mobile-day-detail.js
           grep -Fq 'aria-modal="false"' /tmp/mobile-day-detail.js
           grep -Fq ".mobile-nav-toggle, .sidebar [data-tab]" /tmp/mobile-day-detail.js
+          grep -Fq "replaceBrokenDetailImage" /tmp/mobile-day-detail.js
+          grep -Fq "data-mws-fallback-name" /tmp/mobile-day-detail.js
           retry_contains "$BASE/assets/mobile-calendar-quick-add-v130.js?deploy=$GITHUB_SHA" '__mwsMobileCalendarQuickAddV130' > /tmp/mobile-quick-add.js
           node --check /tmp/mobile-quick-add.js
           grep -Fq "mws-mobile-day-detail-open-v130" /tmp/mobile-quick-add.js
           grep -Fq "mws-mobile-nav-offset-v130" /tmp/mobile-quick-add.js
+          grep -Fq "const mobileMonth=isMobileMonth();" /tmp/mobile-quick-add.js
+          grep -Fq "bar.classList.toggle('is-visible',show)" /tmp/mobile-quick-add.js
           retry_contains "$BASE/assets/mobile-calendar-v130.css?deploy=$GITHUB_SHA" 'mws-mobile-calendar-extra-v130' > /tmp/mobile-calendar.css
           grep -Fq "mini-event-main" /tmp/mobile-calendar.css
           grep -Fq "mws-mobile-day-person-avatar-v130" /tmp/mobile-calendar.css
@@ -126,6 +130,8 @@ jobs:
           node --check /tmp/device-ui.js
           retry_contains "$BASE/assets/device-ui.css?deploy=$GITHUB_SHA" 'z-index:5200!important' > /tmp/device-ui.css
           grep -Fq '.mws-mobile-tabs' /tmp/device-ui.css
+          grep -Fq '#eventModal .event-modal-header' /tmp/device-ui.css
+          grep -Fq 'position:sticky!important' /tmp/device-ui.css
 
           echo '[3/8] Friend Finder UI and live batch endpoint'
           retry_contains "$BASE/assets/friend-finder-v120.js?deploy=$GITHUB_SHA" 'LIVE thumbnails' > /tmp/friend.js

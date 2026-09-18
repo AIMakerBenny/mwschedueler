@@ -104,11 +104,12 @@ function syncNavOffset(){
 }
 function sync(){
   syncNavOffset();
-  const show=isMobileMonth()&&!document.body.classList.contains('mws-mobile-day-detail-open-v130');
-  if(show){
+  const mobileMonth=isMobileMonth();
+  const show=mobileMonth&&!document.body.classList.contains('mws-mobile-day-detail-open-v130');
+  if(mobileMonth){
     if(button.parentNode!==bar)bar.appendChild(button);
-    bar.hidden=false;
-    bar.classList.add('is-visible');
+    bar.hidden=!show;
+    bar.classList.toggle('is-visible',show);
   }else{
     bar.classList.remove('is-visible');
     bar.hidden=true;
