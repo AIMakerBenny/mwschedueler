@@ -406,9 +406,9 @@ func onReady() {
 	systray.SetIcon(iconBytes)
 	systray.SetTitle(appTitle)
 	systray.SetTooltip(appTitle)
-	systray.SetOnClick(func() {})
-	systray.SetOnDClick(func() { showWindow() })
-	systray.SetOnRClick(func(menu systray.IMenu) { menu.ShowMenu() })
+	systray.SetOnClick(func(menu systray.IMenu) {})
+	systray.SetOnDClick(func(menu systray.IMenu) { showWindow() })
+	systray.SetOnRClick(func(menu systray.IMenu) { _ = menu.ShowMenu() })
 
 	mDashboard := systray.AddMenuItem("데시보드", "대시보드 열기")
 	mCalendar := systray.AddMenuItem("갤린더", "캘린더 열기")
@@ -418,36 +418,25 @@ func onReady() {
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("종료", "Mawang Scheduler 종료")
 
+	mDashboard.Click(func() { openSection("dashboard", "대시보드|데시보드") })
+	mCalendar.Click(func() { openSection("calendar", "캘린더|갤린더") })
+	mContacts.Click(func() { openSection("contacts", "연락처") })
+	mFriends.Click(func() { openSection("friendFinder", "친구찾기|친구 찾기") })
+	mNotebook.Click(func() { openSection("memos", "수첩|메모|메모장") })
+	mQuit.Click(func() {
+		exiting = true
+		wvMu.Lock()
+		w := wv
+		wvMu.Unlock()
+		if w != nil {
+			w.Terminate()
+		}
+		systray.Quit()
+	})
+
 	go watchShowEvent()
 	go watchAltEnter()
 	go runWebView()
-
-	go func() {
-		for {
-			select {
-			case <-mDashboard.ClickedCh:
-				openSection("dashboard", "대시보드|데시보드")
-			case <-mCalendar.ClickedCh:
-				openSection("calendar", "캘린더|갤린더")
-			case <-mContacts.ClickedCh:
-				openSection("contacts", "연락처")
-			case <-mFriends.ClickedCh:
-				openSection("friendFinder", "친구찾기|친구 찾기")
-			case <-mNotebook.ClickedCh:
-				openSection("memos", "수첩|메모|메모장")
-			case <-mQuit.ClickedCh:
-				exiting = true
-				wvMu.Lock()
-				w := wv
-				wvMu.Unlock()
-				if w != nil {
-					w.Terminate()
-				}
-				systray.Quit()
-				return
-			}
-		}
-	}()
 }
 
 func onExit() { exiting = true }
