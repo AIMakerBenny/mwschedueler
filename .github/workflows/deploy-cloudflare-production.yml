@@ -47,6 +47,7 @@ jobs:
           node --check scripts/run-phase59-friend-live-card-layout-audit.mjs
           node --check scripts/run-phase60-live-thumbnail-proxy-audit.mjs
           node --check scripts/run-phase61-native-friend-card-binding-audit.mjs
+          node --check scripts/run-phase62-nested-live-payload-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -256,7 +257,7 @@ jobs:
           retry_contains "$BASE/assets/cloud-v1.1-loader.js?deploy=$GITHUB_SHA" 'steam-game-v111.js?v=1.1.4-perf30' > /tmp/cloud-loader.js
           node --check /tmp/cloud-loader.js
           grep -Fq "v130-live-contact-fix.js?v=1.3.0-perf31" /tmp/cloud-loader.js
-          grep -Fq "friend-finder-v120.js?v=1.3.0-phase61" /tmp/cloud-loader.js
+          grep -Fq "friend-finder-v120.js?v=1.3.0-phase62" /tmp/cloud-loader.js
           grep -Fq "ui-fixes-v121.js?v=1.2.3-perf44" /tmp/cloud-loader.js
           retry_contains "$BASE/assets/test-v5.5.js?deploy=$GITHUB_SHA" 'function tryInstallV136()' > /tmp/test-v55.js
           node --check /tmp/test-v55.js
@@ -307,6 +308,8 @@ jobs:
           grep -Fq '/api/soop/categories' /tmp/friend.js
           grep -Fq 'const ACTIVE_REFRESH_MS=30000' /tmp/friend.js
           grep -Fq 'function scheduleActiveRefresh' /tmp/friend.js
+          grep -Fq 'function normalizeLivePayload(root)' /tmp/friend.js
+          grep -Fq "const live=row?.live&&typeof row.live==='object'?row.live:normalizeLivePayload(parsed)" /tmp/friend.js
           grep -Fq 'function liveThumbStamp()' /tmp/friend.js
           grep -Fq 'img.dataset.thumbStamp=stamp' /tmp/friend.js
           grep -Fq "screen=document.createElement('div');screen.className='mws-live-screen-v120'" /tmp/friend.js
@@ -336,6 +339,7 @@ jobs:
           fi
           batch="$(curl -fsS --max-time 25 -H 'content-type: application/json' -d '{"urls":["https://api-channel.sooplive.co.kr/v1.1/channel/mawang0216/home/section/broad"],"force":true}' "$BASE/api/soop/live-batch")"
           BATCH="$batch" node -e "const x=JSON.parse(process.env.BATCH); if(!x.ok||!Array.isArray(x.results)||x.results.length!==1) process.exit(1); const r=x.results[0]; if(!r||typeof r.url!=='string'||typeof r.status!=='number'||typeof r.body!=='string') process.exit(1)"
+          BATCH="$batch" node -e "const x=JSON.parse(process.env.BATCH),r=x.results[0]; if(r&&r.live){if(!/^\\d+$/.test(String(r.live.broadNo||'')))process.exit(1); if(typeof r.live.broadTitle!=='string')process.exit(1)}"
           BATCH="$batch" node -e "const x=JSON.parse(process.env.BATCH),r=x.results[0]; let j=null; try{j=JSON.parse(r.body)}catch(_){}; if(r.status>=200&&r.status<500&&j&&typeof j==='object'){const q=[j];let b='';while(q.length&&!b){const v=q.shift();if(!v||typeof v!=='object')continue;b=String(v.broadNo||v.broad_no||v.bno||'');for(const c of Object.values(v))if(c&&typeof c==='object')q.push(c)}; console.log(b?'SOOP live payload reachable; broadcast number detected.':'SOOP live payload reachable; channel currently offline or payload has no active broadcast.')}else{console.log('SOOP upstream unavailable/transient; Worker batch contract itself is healthy.') }"
           thumb_invalid_status="$(curl -sS --max-time 15 -o /tmp/live-thumb-invalid.json -w '%{http_code}' "$BASE/api/soop/live-thumb?bno=abc" || true)"
           test "$thumb_invalid_status" = '400'
@@ -401,6 +405,8 @@ jobs:
           grep -Fq "mws:app-ready" assets/post-login-runtime-v130.js
           grep -Fq 'normalizeCloudCore' src/cf-v111-entry.js
           grep -Fq "./cf-v120-friend.js" src/cf-v111-entry.js
+          grep -Fq "function normalizeLivePayload(root)" src/cf-v120-friend.js
+          grep -Fq "return live?{...row,live}:row" src/cf-v120-friend.js
           grep -Fq "url.pathname==='/api/soop/live-batch'" src/cf-v120-friend.js
           grep -Fq "url.pathname==='/api/soop/live-thumb'" src/cf-v120-friend.js
           grep -Fq "type.startsWith('image/')" src/cf-v120-friend.js
