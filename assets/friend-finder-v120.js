@@ -185,10 +185,11 @@ function liveThumbCandidates(bno,stamp=liveThumbStamp()){
   if(!bno)return[];
   const id=encodeURIComponent(bno);
   return [
-    `https://liveimg.sooplive.co.kr/m/${id}?mws=${stamp}`,
+    `/api/soop/live-thumb?bno=${id}&v=${stamp}`,
     `https://liveimg.sooplive.com/m/${id}?mws=${stamp}`,
-    `https://liveimg.sooplive.co.kr/m/${id}`,
-    `https://liveimg.sooplive.com/m/${id}`
+    `https://liveimg.sooplive.co.kr/m/${id}?mws=${stamp}`,
+    `https://liveimg.sooplive.com/m/${id}`,
+    `https://liveimg.sooplive.co.kr/m/${id}`
   ];
 }
 function livePlayUrl(id,bno){return `https://play.sooplive.com/${encodeURIComponent(id)}${bno?`/${encodeURIComponent(bno)}`:''}`}
