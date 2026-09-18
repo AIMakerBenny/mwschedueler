@@ -39,6 +39,9 @@ import {runPhase38CalendarPreviewMoveAudit} from './run-phase38-calendar-preview
 import {runPhase39TodayPeopleSyncDedupAudit} from './run-phase39-today-people-sync-dedup-audit.mjs';
 import {runPhase40ParticipantSearchDebounceAudit} from './run-phase40-participant-search-debounce-audit.mjs';
 import {runPhase41ContactAddInjectionAudit} from './run-phase41-contact-add-injection-audit.mjs';
+import {runPhase42PostApplicantSearchDebounceAudit} from './run-phase42-post-applicant-search-debounce-audit.mjs';
+import {runPhase43SelfContactSearchDebounceAudit} from './run-phase43-self-contact-search-debounce-audit.mjs';
+import {runPhase44PreviewObserverPerformanceAudit} from './run-phase44-preview-observer-performance-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -479,6 +482,39 @@ export function runPhase41FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase41FullIntegrationAudit();}
+export function runPhase42FullIntegrationAudit(){
+  const previous=runPhase41FullIntegrationAudit();
+  const current=runPhase42PostApplicantSearchDebounceAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:42,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runPhase43FullIntegrationAudit(){
+  const previous=runPhase42FullIntegrationAudit();
+  const current=runPhase43SelfContactSearchDebounceAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:43,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runPhase44FullIntegrationAudit(){
+  const previous=runPhase43FullIntegrationAudit();
+  const current=runPhase44PreviewObserverPerformanceAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:44,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase44FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();

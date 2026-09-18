@@ -5425,7 +5425,19 @@ function renderPosts(){
   const open=document.getElementById('postOpenBtn');if(open)open.onclick=()=>window.open(p.url,'_blank','noopener');const sync=document.getElementById('postSyncBtn');if(sync)sync.onclick=()=>syncSoopPost(p.id);const del=document.getElementById('postDeleteBtn');if(del)del.onclick=()=>deletePost(p.id);const game=document.getElementById('postRandomGameBtn');if(game)game.onclick=openPostGamePicker;
   const q=(document.getElementById('postApplicantSearch')?.value||'').trim().toLowerCase(),sf=document.getElementById('postApplicantStatusFilter')?.value||'';let arr=p.comments||[];if(q)arr=arr.filter(c=>(`${c.name} ${c.userId} ${c.comment}`).toLowerCase().includes(q));if(sf)arr=arr.filter(c=>c.status===sf);const unique=new Set((p.comments||[]).map(c=>c.userId).filter(Boolean));const selected=(p.comments||[]).filter(c=>c.status==='selected').length,excluded=(p.comments||[]).filter(c=>c.status==='excluded').length,matched=uniquePostGameApplicants(p).filter(c=>c.contactId).length;const summary=document.getElementById('postApplicantSummary');if(summary)summary.innerHTML=`<span class="chip">댓글 ${p.comments.length}개</span><span class="chip">고유 작성자 ${unique.size}명</span><span class="chip" style="border-color:#38b77a">확정 ${selected}명</span><span class="chip">제외 ${excluded}명</span><span class="chip" style="border-color:#2ea676">연락처 연결 ${matched}명</span>`;const grid=document.getElementById('postApplicantGrid'),dups=applicantDuplicates(p);if(grid)grid.innerHTML=arr.map(c=>postApplicantCardHTML(p,c,dups)).join('')||'<div class="empty" style="grid-column:1/-1">조건에 맞는 신청자가 없습니다</div>';
 }
-document.getElementById('postUrlAddBtn')?.addEventListener('click',addSoopPostFromUrl);document.getElementById('postUrlInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addSoopPostFromUrl()}});document.getElementById('postDisplayName')?.addEventListener('change',e=>{const p=postById(activePostId);if(!p)return;p.name=e.target.value.trim()||p.sourceTitle||`게시글 ${p.postNo}`;p.nameManual=true;syncPostContactApplicationHistories(p);saveData('게시글 이름 변경');renderPosts()});document.getElementById('postApplicantSearch')?.addEventListener('input',renderPosts);document.getElementById('postApplicantStatusFilter')?.addEventListener('change',renderPosts);
+let postApplicantSearchTimerV142=0;
+function schedulePostApplicantRenderV142(delay=90){
+  clearTimeout(postApplicantSearchTimerV142);
+  postApplicantSearchTimerV142=setTimeout(()=>{postApplicantSearchTimerV142=0;renderPosts()},delay);
+}
+document.getElementById('postUrlAddBtn')?.addEventListener('click',addSoopPostFromUrl);document.getElementById('postUrlInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addSoopPostFromUrl()}});document.getElementById('postDisplayName')?.addEventListener('change',e=>{const p=postById(activePostId);if(!p)return;p.name=e.target.value.trim()||p.sourceTitle||`게시글 ${p.postNo}`;p.nameManual=true;syncPostContactApplicationHistories(p);saveData('게시글 이름 변경');renderPosts()});{
+  const postSearch=document.getElementById('postApplicantSearch');
+  if(postSearch){
+    postSearch.addEventListener('input',e=>{if(e?.isComposing)return;schedulePostApplicantRenderV142(90)});
+    postSearch.addEventListener('compositionend',()=>schedulePostApplicantRenderV142(0));
+  }
+}
+document.getElementById('postApplicantStatusFilter')?.addEventListener('change',renderPosts);
 
 // v4.1 recent collaboration default sort.
 const sniperSortV41=document.getElementById('sniperSort');if(sniperSortV41)sniperSortV41.value='recentFirst';
@@ -5771,7 +5783,18 @@ window.clearSelfContact=()=>{
   toast('이용자 선택',`본인 지정을 해제했습니다 · 자동 참가 ${result.removed}개 정리`);
   renderUserIdentitySettings();refreshContactViews();
 };
-document.getElementById('selfContactSearch')?.addEventListener('input',renderUserIdentitySettings);
+let selfContactSearchTimerV143=0;
+function scheduleUserIdentityRenderV143(delay=80){
+  clearTimeout(selfContactSearchTimerV143);
+  selfContactSearchTimerV143=setTimeout(()=>{selfContactSearchTimerV143=0;renderUserIdentitySettings()},delay);
+}
+{
+  const selfSearch=document.getElementById('selfContactSearch');
+  if(selfSearch){
+    selfSearch.addEventListener('input',e=>{if(e?.isComposing)return;scheduleUserIdentityRenderV143(80)});
+    selfSearch.addEventListener('compositionend',()=>scheduleUserIdentityRenderV143(0));
+  }
+}
 document.getElementById('clearSelfContactBtn')?.addEventListener('click',clearSelfContact);
 const renderSettingsV45Base=renderSettings;
 renderSettings=function(){renderSettingsV45Base();renderUserIdentitySettings();applyTextScale(data.textScale??100,false)};

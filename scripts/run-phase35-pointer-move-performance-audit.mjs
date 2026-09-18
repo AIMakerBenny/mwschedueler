@@ -16,7 +16,7 @@ export function runPhase35PointerMovePerformanceAudit(){
   if(!ui.includes("document.addEventListener('mousemove',trackGamePreviewMove,true)"))issues.push('Steam hover preview tracking listener is missing');
   if(!ui.includes("document.removeEventListener('mousemove',trackGamePreviewMove,true)"))issues.push('Steam hover preview tracking listener is never removed');
   if(ui.includes("document.addEventListener('mousemove',e=>{const slot=slotFromEvent(e)"))issues.push('legacy always-on Steam mousemove handler remains');
-  if(!loader.includes('ui-fixes-v121.js?v=1.2.2-perf35'))issues.push('UI fixes cache-bust was not advanced for pointer performance');
+  if(!loader.includes('ui-fixes-v121.js?v=1.2.'))issues.push('UI fixes cache-bust revision is missing');
 
   const summary={phase:35,name:'high-frequency-pointer-listener-performance',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));

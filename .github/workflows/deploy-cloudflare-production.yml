@@ -68,7 +68,7 @@ jobs:
           SESSION="$session" node -e "const x=JSON.parse(process.env.SESSION); if(typeof x.authenticated!=='boolean') process.exit(1)"
 
           echo '[2/8] isolated login shell and v1.3.0 assets'
-          retry_contains "$BASE/?deploy=$GITHUB_SHA" 'app-core.js?v=1.3.0-perf38' > /tmp/index.html
+          retry_contains "$BASE/?deploy=$GITHUB_SHA" 'app-core.js?v=1.3.0-perf43' > /tmp/index.html
           grep -Fq 'id="mwsAccessGate"' /tmp/index.html
           if grep -Eq '<script[^>]+assets/(perf-runtime\.js|test-v5\.5\.js|test-v5\.6\.js|device-ui\.js)' /tmp/index.html; then
             echo 'Heavy UI/runtime script is still loaded before authentication.' >&2
@@ -123,6 +123,16 @@ jobs:
           grep -Fq "attachCalendarPointerDragListeners" /tmp/app-core.js
           grep -Fq "detachCalendarPointerDragListeners" /tmp/app-core.js
           grep -Fq "queueCalendarEventPreviewPositionV138" /tmp/app-core.js
+          grep -Fq "schedulePostApplicantRenderV142" /tmp/app-core.js
+          grep -Fq "scheduleUserIdentityRenderV143" /tmp/app-core.js
+          if grep -Fq "postApplicantSearch')?.addEventListener('input',renderPosts" /tmp/app-core.js; then
+            echo 'Immediate post applicant search render regression detected.' >&2
+            exit 1
+          fi
+          if grep -Fq "selfContactSearch')?.addEventListener('input',renderUserIdentitySettings" /tmp/app-core.js; then
+            echo 'Immediate self-contact search render regression detected.' >&2
+            exit 1
+          fi
           if grep -Fq "el.onmousemove=e=>positionCalendarEventPreview(e.clientX,e.clientY)" /tmp/app-core.js; then
             echo 'Direct calendar preview mousemove layout regression detected.' >&2
             exit 1
@@ -175,7 +185,7 @@ jobs:
           retry_contains "$BASE/assets/cloud-v1.1-loader.js?deploy=$GITHUB_SHA" 'steam-game-v111.js?v=1.1.4-perf30' > /tmp/cloud-loader.js
           node --check /tmp/cloud-loader.js
           grep -Fq "v130-live-contact-fix.js?v=1.3.0-perf31" /tmp/cloud-loader.js
-          grep -Fq "ui-fixes-v121.js?v=1.2.2-perf35" /tmp/cloud-loader.js
+          grep -Fq "ui-fixes-v121.js?v=1.2.3-perf44" /tmp/cloud-loader.js
           retry_contains "$BASE/assets/test-v5.5.js?deploy=$GITHUB_SHA" 'function tryInstallV136()' > /tmp/test-v55.js
           node --check /tmp/test-v55.js
           if grep -Fq "tries>240" /tmp/test-v55.js; then
@@ -200,8 +210,14 @@ jobs:
             echo 'Repeated contact add DOM injection regression detected.' >&2
             exit 1
           fi
-          retry_contains "$BASE/assets/ui-fixes-v121.js?deploy=$GITHUB_SHA" 'function startGamePreviewTracking()' > /tmp/ui-fixes.js
+          retry_contains "$BASE/assets/ui-fixes-v121.js?deploy=$GITHUB_SHA" 'function queuePreviewTuneV144()' > /tmp/ui-fixes.js
           node --check /tmp/ui-fixes.js
+          grep -Fq "function startGamePreviewTracking()" /tmp/ui-fixes.js
+          grep -Fq "previewTuneFrameV144" /tmp/ui-fixes.js
+          if grep -Fq "characterData:true" /tmp/ui-fixes.js; then
+            echo 'Preview characterData observer regression detected.' >&2
+            exit 1
+          fi
           grep -Fq "removeEventListener('mousemove',trackGamePreviewMove,true)" /tmp/ui-fixes.js
           if grep -Fq "document.addEventListener('mousemove',e=>{const slot=slotFromEvent(e)" /tmp/ui-fixes.js; then
             echo 'Always-on Steam mousemove regression detected.' >&2

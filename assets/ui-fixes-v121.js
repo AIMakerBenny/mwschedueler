@@ -50,6 +50,14 @@ document.addEventListener('pointerup',e=>{const slot=slotFromEvent(e);if(!slot||
 document.addEventListener('click',e=>{const slot=slotFromEvent(e);if(!slot)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();openGameEditor(slot)},true);
 function rpsSearchInput(){const palette=$('rpsContactPalette'),input=palette?.previousElementSibling;return input?.classList?.contains('mini-contact-search')?input:null}
 function installRpsSearchPersistence(){const current=window.renderMiniContactPalette;if(typeof current!=='function'||current.__mwsRpsPersistV121)return false;const wrapped=function(game,q=''){let next=q;if(game==='rps'&&(next==null||String(next)==='')){const input=rpsSearchInput();if(input?.value)next=input.value}return current.call(this,game,next)};wrapped.__mwsRpsPersistV121=1;window.renderMiniContactPalette=wrapped;try{renderMiniContactPalette=wrapped}catch(_){}return true}
-function boot(){installStyle();installRpsSearchPersistence();const preview=$('calendarEventPreview');if(preview)new MutationObserver(()=>requestAnimationFrame(tuneTodayPeoplePreview)).observe(preview,{childList:true,subtree:true,characterData:true});if(!installRpsSearchPersistence()){let tries=0;const retry=()=>{if(installRpsSearchPersistence()||++tries>=12)return;setTimeout(retry,300)};setTimeout(retry,300)}}
+let previewTuneFrameV144=0;
+function queuePreviewTuneV144(){
+  if(document.hidden||previewTuneFrameV144)return;
+  previewTuneFrameV144=requestAnimationFrame(()=>{
+    previewTuneFrameV144=0;
+    tuneTodayPeoplePreview();
+  });
+}
+function boot(){installStyle();installRpsSearchPersistence();const preview=$('calendarEventPreview');if(preview)new MutationObserver(mutations=>{if(mutations.some(m=>m.type==='childList'))queuePreviewTuneV144()}).observe(preview,{childList:true,subtree:true});document.addEventListener('visibilitychange',()=>{if(!document.hidden&&$('calendarEventPreview')?.classList.contains('open'))queuePreviewTuneV144()});if(!installRpsSearchPersistence()){let tries=0;const retry=()=>{if(installRpsSearchPersistence()||++tries>=12)return;setTimeout(retry,300)};setTimeout(retry,300)}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
