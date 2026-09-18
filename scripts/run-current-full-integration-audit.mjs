@@ -52,6 +52,7 @@ import {runPhase51TargetPickerSearchDebounceAudit} from './run-phase51-target-pi
 import {runPhase52NotebookPlannerOrderAudit} from './run-phase52-notebook-planner-order-audit.mjs';
 import {runPhase53SidebarToolWorkspaceAudit} from './run-phase53-sidebar-tool-workspace-audit.mjs';
 import {runPhase54VersionWriterAudit} from './run-phase54-version-writer-audit.mjs';
+import {runPhase55FriendLiveThumbnailAudit} from './run-phase55-friend-live-thumbnail-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -590,6 +591,14 @@ export function runPhase54FullIntegrationAudit(){
   if(issues.length)process.exitCode=1;
   return summary;
 }
-export function runCurrentFullIntegrationAudit(){return runPhase54FullIntegrationAudit();}
+export function runPhase55FullIntegrationAudit(){
+  const previous=runPhase54FullIntegrationAudit(), current=runPhase55FriendLiveThumbnailAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)],warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:55,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+export function runCurrentFullIntegrationAudit(){return runPhase55FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
