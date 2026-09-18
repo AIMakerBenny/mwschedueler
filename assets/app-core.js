@@ -79,6 +79,27 @@ function normalizeMiniGameData(){
 const THEME_META=[{"id": "midnight", "name": "미드나잇", "bg": "#0f1115", "panel": "#171a21", "accent": "#8b5cf6"}, {"id": "neon", "name": "네온 퍼플", "bg": "#090b14", "panel": "#11172a", "accent": "#8b5cf6"}, {"id": "rose", "name": "로즈", "bg": "#160d14", "panel": "#24151f", "accent": "#e65b9c"}, {"id": "ocean", "name": "오션", "bg": "#071519", "panel": "#0e252c", "accent": "#22b8cf"}, {"id": "sunset", "name": "선셋", "bg": "#17100a", "panel": "#281a0f", "accent": "#f59f45"}, {"id": "emerald", "name": "에메랄드", "bg": "#07130e", "panel": "#10231a", "accent": "#22c55e"}, {"id": "ruby", "name": "루비", "bg": "#17090d", "panel": "#281118", "accent": "#ef4444"}, {"id": "sapphire", "name": "사파이어", "bg": "#08101d", "panel": "#101d35", "accent": "#3b82f6"}, {"id": "amethyst", "name": "애머시스트", "bg": "#120b1a", "panel": "#211330", "accent": "#a855f7"}, {"id": "lavender", "name": "라벤더", "bg": "#15131c", "panel": "#24212e", "accent": "#a78bfa"}, {"id": "sakura", "name": "사쿠라", "bg": "#1b1115", "panel": "#2d1b22", "accent": "#fb7185"}, {"id": "peach", "name": "피치", "bg": "#1b120d", "panel": "#2d1e16", "accent": "#fb923c"}, {"id": "coral", "name": "코랄", "bg": "#1b100f", "panel": "#2c1b19", "accent": "#f97366"}, {"id": "amber", "name": "앰버", "bg": "#171308", "panel": "#28200e", "accent": "#fbbf24"}, {"id": "lime", "name": "라임", "bg": "#101505", "panel": "#1b260b", "accent": "#84cc16"}, {"id": "mint", "name": "민트", "bg": "#081612", "panel": "#102821", "accent": "#34d399"}, {"id": "aqua", "name": "아쿠아", "bg": "#061518", "panel": "#0d282d", "accent": "#06b6d4"}, {"id": "cobalt", "name": "코발트", "bg": "#090e1c", "panel": "#121b38", "accent": "#4f6df5"}, {"id": "navy", "name": "네이비", "bg": "#08101a", "panel": "#101d2c", "accent": "#4678a9"}, {"id": "graphite", "name": "그래파이트", "bg": "#101214", "panel": "#1a1e22", "accent": "#7c8794"}, {"id": "silver", "name": "실버", "bg": "#17191d", "panel": "#24282e", "accent": "#aeb8c6"}, {"id": "coffee", "name": "커피", "bg": "#17110e", "panel": "#281d18", "accent": "#b77945"}, {"id": "forest", "name": "포레스트", "bg": "#09130b", "panel": "#132318", "accent": "#4d9a62"}, {"id": "cyber", "name": "사이버펑크", "bg": "#080812", "panel": "#141326", "accent": "#f0e130"}, {"id": "aurora", "name": "오로라", "bg": "#0a1016", "panel": "#111f29", "accent": "#33d6a6"}, {"id": "candy", "name": "캔디", "bg": "#17101c", "panel": "#281a31", "accent": "#e879f9"}, {"id": "wine", "name": "와인", "bg": "#160a10", "panel": "#28121c", "accent": "#c2416c"}, {"id": "teal", "name": "틸", "bg": "#071515", "panel": "#102827", "accent": "#2dd4bf"}, {"id": "sky", "name": "스카이", "bg": "#0a1219", "panel": "#122534", "accent": "#38bdf8"}, {"id": "plum", "name": "플럼", "bg": "#160f18", "panel": "#291a2d", "accent": "#d946ef"}, {"id": "cherry", "name": "체리", "bg": "#190b10", "panel": "#2b121b", "accent": "#f43f5e"}, {"id": "orange", "name": "오렌지", "bg": "#181007", "panel": "#2a1c0c", "accent": "#f97316"}];
 
 
+/* UI frame catalogue. Frames change geometry/depth only and never replace theme colors. */
+const UI_FRAME_META=[
+  {id:'classic',name:'기본 프레임',short:'CLASSIC',description:'기존 Mawang Scheduler UI를 그대로 사용합니다.',transparency:false,category:'기본'},
+  {id:'neo',name:'Neo 모던',short:'NEO',description:'입체적인 패널, 블러, 그림자와 투명도를 사용하는 모던 프레임입니다.',transparency:true,category:'모던'},
+  {id:'glass',name:'Glass',short:'GLASS',description:'유리처럼 배경이 비치고 블러가 강하게 적용되는 글래스 프레임입니다.',transparency:true,category:'투명'},
+  {id:'floating',name:'Floating',short:'FLOAT',description:'카드와 패널이 화면 위에 떠 있는 듯한 깊은 그림자 중심 프레임입니다.',transparency:true,category:'입체'},
+  {id:'flat',name:'Flat',short:'FLAT',description:'그림자를 최소화하고 면과 선으로만 정리한 단정한 평면 프레임입니다.',transparency:false,category:'미니멀'},
+  {id:'soft',name:'Soft',short:'SOFT',description:'큰 라운딩과 부드러운 그림자로 편안하게 보이는 프레임입니다.',transparency:false,category:'부드러움'},
+  {id:'sharp',name:'Sharp',short:'SHARP',description:'각진 모서리와 직선적인 경계로 기계적인 느낌을 주는 프레임입니다.',transparency:false,category:'각진형'},
+  {id:'compact',name:'Compact',short:'DENSE',description:'여백과 패딩을 줄여 한 화면에 더 많은 정보를 표시하는 고밀도 프레임입니다.',transparency:false,category:'고밀도'},
+  {id:'spacious',name:'Spacious',short:'SPACE',description:'패널 간격과 내부 여백을 넓혀 편안한 가독성을 우선한 프레임입니다.',transparency:false,category:'여백형'},
+  {id:'outline',name:'Outline',short:'LINE',description:'배경 채움보다 테두리와 구획선을 강조하는 구조적인 프레임입니다.',transparency:false,category:'라인'},
+  {id:'solid',name:'Solid',short:'SOLID',description:'불투명 패널과 강한 구획으로 안정적인 데스크톱 앱 느낌을 주는 프레임입니다.',transparency:false,category:'불투명'},
+  {id:'pill',name:'Pill',short:'PILL',description:'버튼, 입력창, 내비게이션을 둥근 캡슐 형태로 구성한 프레임입니다.',transparency:false,category:'라운드'},
+  {id:'studio',name:'Studio',short:'STUDIO',description:'방송 및 제작 도구처럼 조작부와 작업 영역의 구분을 강하게 만든 프레임입니다.',transparency:false,category:'작업형'},
+  {id:'executive',name:'Executive',short:'EXEC',description:'절제된 그림자와 정돈된 패널 비율을 사용하는 생산성 앱 스타일 프레임입니다.',transparency:false,category:'업무형'}
+];
+const UI_FRAME_IDS=new Set(UI_FRAME_META.map(frame=>frame.id));
+function normalizeUiFrameId(value){return UI_FRAME_IDS.has(String(value||''))?String(value):'classic'}
+window.UI_FRAME_META=UI_FRAME_META;
+
 /* v5.2 - Device-local presentation preferences. These never belong to shared cloud data. */
 const MWS_DEVICE_PREFS_KEY='mws_device_preferences_v1';
 const MWS_DEVICE_PREF_KEYS=['theme','backgroundImage','backgroundDim','uiFrame','neoTransparency','textScale','resolutionMode','sidebarPinned','postViewMode','postCardColumns','dashboardUpcomingHidden'];
@@ -88,7 +109,7 @@ function mwsExtractDevicePrefs(src=data){
     theme:String(x.theme||'neon'),
     backgroundImage:typeof x.backgroundImage==='string'?x.backgroundImage:'',
     backgroundDim:Math.max(0,Math.min(85,Number(x.backgroundDim??45))),
-    uiFrame:x.uiFrame==='neo'?'neo':'classic',
+    uiFrame:normalizeUiFrameId(x.uiFrame),
     neoTransparency:Math.max(0,Math.min(60,Number(x.neoTransparency??10))),
     textScale:Math.max(85,Math.min(130,Number(x.textScale)||100)),
     resolutionMode:['fhd','2k','4k','wide','mobile'].includes(String(x.resolutionMode||''))?String(x.resolutionMode):'fhd',
@@ -145,8 +166,9 @@ data.version=52;
 data.contacts.forEach(c=>{if(c.pendingSetup===undefined)c.pendingSetup=false});
 document.body.dataset.theme=data.theme;
 document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));
+data.uiFrame=normalizeUiFrameId(data.uiFrame);
 document.body.classList.toggle('mws-neo',data.uiFrame==='neo');
-document.body.dataset.uiFrame=data.uiFrame==='neo'?'neo':'classic';
+document.body.dataset.uiFrame=data.uiFrame;
 document.body.style.setProperty('--neo-surface-opacity',`${100-Math.max(0,Math.min(60,Number(data.neoTransparency??10)))}%`);
 document.body.style.setProperty('--neo-input-opacity',`${Math.min(100,104-Math.max(0,Math.min(60,Number(data.neoTransparency??10))))}%`);
 
@@ -228,7 +250,7 @@ function normalizeDataShape(){
   data.postViewMode=data.postViewMode==='list'?'list':'card';
   data.postCardColumns=Math.max(2,Math.min(5,Number(data.postCardColumns)||4));
   data.textScale=Math.max(80,Math.min(200,Number(data.textScale)||100));
-  data.uiFrame=data.uiFrame==='neo'?'neo':'classic';
+  data.uiFrame=normalizeUiFrameId(data.uiFrame);
   data.neoTransparency=Math.max(0,Math.min(60,Number(data.neoTransparency??10)));
   data.resolutionMode=['fhd','2k','4k','wide','mobile'].includes(String(data.resolutionMode||''))?String(data.resolutionMode):'fhd';
   data.selfContactId=String(data.selfContactId||'');
@@ -4102,39 +4124,51 @@ function renderThemeGrid(){
 }
 window.applyTheme=applyTheme;
 const BUILTIN_DEFAULT_BACKGROUND='assets/default-background.png';
+function uiFrameMeta(id=data.uiFrame){
+  return UI_FRAME_META.find(frame=>frame.id===normalizeUiFrameId(id))||UI_FRAME_META[0];
+}
+function renderUiFrameGrid(){
+  const grid=document.getElementById('uiFrameGrid');
+  if(!grid)return;
+  const selected=normalizeUiFrameId(data.uiFrame);
+  grid.innerHTML=UI_FRAME_META.map(frame=>`
+    <button type="button" class="ui-frame-option ${frame.id===selected?'active':''}" data-ui-frame-choice="${frame.id}" onclick="setUiFrame('${frame.id}')" aria-pressed="${frame.id===selected?'true':'false'}">
+      <span class="ui-frame-preview frame-preview-${frame.id}" aria-hidden="true"><i></i><i></i><i></i><b>${frame.short}</b></span>
+      <span class="ui-frame-option-meta"><strong>${frame.name}</strong><em>${frame.category}</em></span>
+      <small>${frame.description}</small>
+    </button>`).join('');
+}
+window.renderUiFrameGrid=renderUiFrameGrid;
+
 function applyUiFrame(notify=false){
-  const frame=data.uiFrame==='neo'?'neo':'classic';
+  const frame=normalizeUiFrameId(data.uiFrame);
+  const meta=uiFrameMeta(frame);
   data.uiFrame=frame;
+
   document.body.classList.toggle('mws-neo',frame==='neo');
   document.body.dataset.uiFrame=frame;
 
-  document.querySelectorAll('[data-ui-frame-choice]').forEach(btn=>{
-    const active=btn.dataset.uiFrameChoice===frame;
-    btn.classList.toggle('active',active);
-    btn.setAttribute('aria-pressed',String(active));
-  });
+  renderUiFrameGrid();
 
   const status=document.getElementById('uiFrameStatus');
   const desc=document.getElementById('uiFrameDescription');
   const transCard=document.querySelector('.neo-transparency-settings-card');
   const transSlider=document.getElementById('neoTransparency');
 
-  if(status)status.textContent=frame==='neo'?'Neo 모던':'기본';
-  if(desc)desc.textContent=frame==='neo'
-    ?'입체 패널과 블러 효과가 적용됩니다. 아래 UI 창 투명도도 함께 사용할 수 있습니다.'
-    :'기존 Mawang Scheduler의 UI 디자인을 그대로 사용합니다.';
+  if(status)status.textContent=meta.name;
+  if(desc)desc.textContent=meta.description;
   if(transCard){
-    transCard.classList.toggle('frame-option-disabled',frame!=='neo');
-    transCard.setAttribute('data-frame-enabled',frame==='neo'?'true':'false');
+    transCard.classList.toggle('frame-option-disabled',!meta.transparency);
+    transCard.setAttribute('data-frame-enabled',meta.transparency?'true':'false');
   }
-  if(transSlider)transSlider.disabled=frame!=='neo';
+  if(transSlider)transSlider.disabled=!meta.transparency;
 
   applyNeoTransparency(false);
-  if(notify)toast('UI 프레임',frame==='neo'?'Neo 모던 프레임을 적용했습니다':'기본 프레임으로 돌아왔습니다');
+  if(notify)toast('UI 프레임',meta.name+' 프레임을 적용했습니다');
 }
 window.applyUiFrame=applyUiFrame;
 window.setUiFrame=frame=>{
-  data.uiFrame=frame==='neo'?'neo':'classic';
+  data.uiFrame=normalizeUiFrameId(frame);
   applyUiFrame(true);
   mwsSaveDevicePrefs(data);
 };

@@ -1,0 +1,279 @@
+/* Mawang Scheduler UI frame presets v1.0.0
+   Geometry/depth only. Theme color variables remain authoritative. */
+
+.ui-frame-grid{
+  grid-template-columns:repeat(auto-fill,minmax(190px,1fr))!important;
+  gap:10px!important;
+}
+.ui-frame-option{
+  display:flex;
+  flex-direction:column;
+  min-height:164px;
+}
+.ui-frame-option-meta{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  align-items:center;
+  margin-top:9px;
+}
+.ui-frame-option-meta strong{margin:0!important}
+.ui-frame-option-meta em{
+  font-style:normal;
+  color:var(--muted);
+  font-size:9px;
+  font-weight:850;
+  padding:3px 6px;
+  border:1px solid var(--border);
+  border-radius:999px;
+}
+.ui-frame-option small{min-height:29px}
+.ui-frame-preview{position:relative}
+.ui-frame-preview b{
+  position:absolute;
+  right:6px;
+  bottom:5px;
+  color:var(--muted);
+  font-size:7px;
+  letter-spacing:.12em;
+  opacity:.72;
+}
+
+/* Preview diversity */
+.frame-preview-glass{background:color-mix(in srgb,var(--bg) 58%,transparent);backdrop-filter:blur(8px)}
+.frame-preview-glass i{background:color-mix(in srgb,var(--panel) 62%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.10);border-color:color-mix(in srgb,var(--border) 60%,white 40%)}
+.frame-preview-floating{padding:9px;gap:7px}.frame-preview-floating i{box-shadow:0 7px 13px rgba(0,0,0,.32);transform:translateY(-1px)}
+.frame-preview-flat i{border-radius:2px;box-shadow:none}.frame-preview-flat{border-radius:3px}
+.frame-preview-soft,.frame-preview-soft i{border-radius:16px}.frame-preview-soft i{box-shadow:0 5px 13px rgba(0,0,0,.16)}
+.frame-preview-sharp,.frame-preview-sharp i{border-radius:0}
+.frame-preview-compact{padding:4px;gap:3px}.frame-preview-compact i{border-radius:4px}
+.frame-preview-spacious{padding:11px;gap:9px}.frame-preview-spacious i{border-radius:9px}
+.frame-preview-outline i{background:transparent;border-width:2px}.frame-preview-outline{background:transparent;border-width:2px}
+.frame-preview-solid i{background:var(--panel2);border-color:var(--panel2)}.frame-preview-solid{background:var(--sidebar)}
+.frame-preview-pill i{border-radius:999px}.frame-preview-pill{border-radius:18px}
+.frame-preview-studio{grid-template-columns:32% 1fr;background:var(--sidebar)}.frame-preview-studio i{border-radius:4px;border-width:2px}
+.frame-preview-executive{padding:8px}.frame-preview-executive i{border-radius:5px;box-shadow:0 3px 8px rgba(0,0,0,.16)}
+
+/* Glass */
+body[data-ui-frame="glass"]{
+  --frame-surface-opacity:72%;
+  --frame-input-opacity:82%;
+}
+body[data-ui-frame="glass"] .sidebar,
+body[data-ui-frame="glass"] .main,
+body[data-ui-frame="glass"] .modalbox,
+body[data-ui-frame="glass"] .confirm-box,
+body[data-ui-frame="glass"] .picker-popover,
+body[data-ui-frame="glass"] .timezones{
+  background:color-mix(in srgb,var(--sidebar) var(--frame-surface-opacity),transparent)!important;
+  border-color:color-mix(in srgb,var(--border) 62%,white 38%)!important;
+  box-shadow:0 24px 60px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.09)!important;
+  backdrop-filter:blur(26px) saturate(1.13)!important;
+  -webkit-backdrop-filter:blur(26px) saturate(1.13)!important;
+}
+body[data-ui-frame="glass"] .card,
+body[data-ui-frame="glass"] .day,
+body[data-ui-frame="glass"] .contact-card,
+body[data-ui-frame="glass"] .event-card,
+body[data-ui-frame="glass"] .participant-box{
+  background:color-mix(in srgb,var(--panel) var(--frame-surface-opacity),transparent)!important;
+  border-color:color-mix(in srgb,var(--border) 68%,white 32%)!important;
+  border-radius:18px!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.08)!important;
+  backdrop-filter:blur(18px)!important;
+}
+body[data-ui-frame="glass"] input,
+body[data-ui-frame="glass"] select,
+body[data-ui-frame="glass"] textarea,
+body[data-ui-frame="glass"] .picker-button{
+  background:color-mix(in srgb,var(--input) var(--frame-input-opacity),transparent)!important;
+  border-radius:12px!important;
+}
+
+/* Floating */
+body[data-ui-frame="floating"] .main{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+body[data-ui-frame="floating"] .sidebar{
+  border-radius:22px!important;
+  box-shadow:0 24px 58px rgba(0,0,0,.32),0 7px 18px rgba(0,0,0,.18)!important;
+}
+body[data-ui-frame="floating"] .card,
+body[data-ui-frame="floating"] .day,
+body[data-ui-frame="floating"] .contact-card,
+body[data-ui-frame="floating"] .event-card,
+body[data-ui-frame="floating"] .participant-box{
+  border-radius:17px!important;
+  box-shadow:0 18px 36px rgba(0,0,0,.26),0 4px 12px rgba(0,0,0,.15)!important;
+  background:color-mix(in srgb,var(--panel) var(--neo-surface-opacity,90%),transparent)!important;
+  backdrop-filter:blur(12px);
+  transform:translateZ(0);
+}
+body[data-ui-frame="floating"] .card:hover,
+body[data-ui-frame="floating"] .contact-card:hover,
+body[data-ui-frame="floating"] .day:hover{transform:translateY(-3px)!important;box-shadow:0 23px 46px rgba(0,0,0,.32),0 7px 16px rgba(0,0,0,.17)!important}
+
+/* Flat */
+body[data-ui-frame="flat"] .sidebar,
+body[data-ui-frame="flat"] .main,
+body[data-ui-frame="flat"] .card,
+body[data-ui-frame="flat"] .day,
+body[data-ui-frame="flat"] .contact-card,
+body[data-ui-frame="flat"] .event-card,
+body[data-ui-frame="flat"] .modalbox,
+body[data-ui-frame="flat"] .participant-box{
+  border-radius:5px!important;
+  box-shadow:none!important;
+}
+body[data-ui-frame="flat"] button,
+body[data-ui-frame="flat"] input,
+body[data-ui-frame="flat"] select,
+body[data-ui-frame="flat"] textarea,
+body[data-ui-frame="flat"] .picker-button{border-radius:4px!important;box-shadow:none!important}
+body[data-ui-frame="flat"] .nav button{border-radius:3px!important}
+
+/* Soft */
+body[data-ui-frame="soft"] .sidebar,
+body[data-ui-frame="soft"] .main{border-radius:28px!important;box-shadow:0 20px 46px rgba(0,0,0,.20)!important}
+body[data-ui-frame="soft"] .card,
+body[data-ui-frame="soft"] .day,
+body[data-ui-frame="soft"] .contact-card,
+body[data-ui-frame="soft"] .event-card,
+body[data-ui-frame="soft"] .participant-box{border-radius:24px!important;box-shadow:0 10px 25px rgba(0,0,0,.15)!important}
+body[data-ui-frame="soft"] button,
+body[data-ui-frame="soft"] input,
+body[data-ui-frame="soft"] select,
+body[data-ui-frame="soft"] textarea,
+body[data-ui-frame="soft"] .picker-button{border-radius:16px!important}
+
+/* Sharp */
+body[data-ui-frame="sharp"] .sidebar,
+body[data-ui-frame="sharp"] .main,
+body[data-ui-frame="sharp"] .card,
+body[data-ui-frame="sharp"] .day,
+body[data-ui-frame="sharp"] .contact-card,
+body[data-ui-frame="sharp"] .event-card,
+body[data-ui-frame="sharp"] .modalbox,
+body[data-ui-frame="sharp"] .participant-box,
+body[data-ui-frame="sharp"] button,
+body[data-ui-frame="sharp"] input,
+body[data-ui-frame="sharp"] select,
+body[data-ui-frame="sharp"] textarea,
+body[data-ui-frame="sharp"] .picker-button{border-radius:0!important}
+body[data-ui-frame="sharp"] .card,
+body[data-ui-frame="sharp"] .day{box-shadow:5px 5px 0 color-mix(in srgb,var(--border) 72%,transparent)!important}
+
+/* Compact */
+body[data-ui-frame="compact"] .main{padding:14px 16px 30px!important}
+body[data-ui-frame="compact"] .topbar{margin-bottom:10px!important;min-height:48px!important}
+body[data-ui-frame="compact"] .grid{gap:8px!important}
+body[data-ui-frame="compact"] .card{padding:11px!important;border-radius:9px!important}
+body[data-ui-frame="compact"] .day{min-height:92px!important;padding:5px!important;border-radius:7px!important}
+body[data-ui-frame="compact"] .nav button{min-height:38px!important;padding-top:6px!important;padding-bottom:6px!important}
+body[data-ui-frame="compact"] button,
+body[data-ui-frame="compact"] input,
+body[data-ui-frame="compact"] select,
+body[data-ui-frame="compact"] textarea{padding-top:7px!important;padding-bottom:7px!important;border-radius:7px!important}
+
+/* Spacious */
+body[data-ui-frame="spacious"] .main{padding:32px 34px 58px!important}
+body[data-ui-frame="spacious"] .topbar{margin-bottom:28px!important}
+body[data-ui-frame="spacious"] .grid{gap:22px!important}
+body[data-ui-frame="spacious"] .card{padding:24px!important;border-radius:18px!important}
+body[data-ui-frame="spacious"] .calendar{gap:10px!important}
+body[data-ui-frame="spacious"] .day{min-height:136px!important;padding:12px!important;border-radius:15px!important}
+
+/* Outline */
+body[data-ui-frame="outline"] .sidebar,
+body[data-ui-frame="outline"] .main,
+body[data-ui-frame="outline"] .card,
+body[data-ui-frame="outline"] .day,
+body[data-ui-frame="outline"] .contact-card,
+body[data-ui-frame="outline"] .event-card,
+body[data-ui-frame="outline"] .participant-box{
+  background:transparent!important;
+  border:2px solid var(--border)!important;
+  box-shadow:none!important;
+}
+body[data-ui-frame="outline"] button,
+body[data-ui-frame="outline"] input,
+body[data-ui-frame="outline"] select,
+body[data-ui-frame="outline"] textarea,
+body[data-ui-frame="outline"] .picker-button{background:transparent!important;border-width:2px!important;box-shadow:none!important}
+
+/* Solid */
+body[data-ui-frame="solid"] .sidebar{background:var(--sidebar)!important}
+body[data-ui-frame="solid"] .main{background:var(--bg)!important}
+body[data-ui-frame="solid"] .card,
+body[data-ui-frame="solid"] .day,
+body[data-ui-frame="solid"] .contact-card,
+body[data-ui-frame="solid"] .event-card,
+body[data-ui-frame="solid"] .participant-box{background:var(--panel)!important;box-shadow:none!important}
+body[data-ui-frame="solid"] input,
+body[data-ui-frame="solid"] select,
+body[data-ui-frame="solid"] textarea,
+body[data-ui-frame="solid"] .picker-button{background:var(--input)!important}
+
+/* Pill */
+body[data-ui-frame="pill"] .nav button,
+body[data-ui-frame="pill"] .primary,
+body[data-ui-frame="pill"] .secondary,
+body[data-ui-frame="pill"] .ghost,
+body[data-ui-frame="pill"] .pillbtn,
+body[data-ui-frame="pill"] input,
+body[data-ui-frame="pill"] select,
+body[data-ui-frame="pill"] .picker-button,
+body[data-ui-frame="pill"] .chip{border-radius:999px!important}
+body[data-ui-frame="pill"] .card,
+body[data-ui-frame="pill"] .day,
+body[data-ui-frame="pill"] .contact-card,
+body[data-ui-frame="pill"] .event-card{border-radius:22px!important}
+body[data-ui-frame="pill"] textarea{border-radius:18px!important}
+
+/* Studio */
+body[data-ui-frame="studio"] .main{border-left:3px solid color-mix(in srgb,var(--accent) 52%,var(--border))!important}
+body[data-ui-frame="studio"] .topbar{padding:10px 12px!important;background:var(--panel)!important;border:1px solid var(--border)!important;border-radius:8px!important}
+body[data-ui-frame="studio"] .card,
+body[data-ui-frame="studio"] .day,
+body[data-ui-frame="studio"] .contact-card,
+body[data-ui-frame="studio"] .event-card,
+body[data-ui-frame="studio"] .participant-box{border-radius:8px!important;border-left:3px solid color-mix(in srgb,var(--accent) 35%,var(--border))!important;box-shadow:0 7px 18px rgba(0,0,0,.16)!important}
+body[data-ui-frame="studio"] .nav button{border-radius:6px!important}
+body[data-ui-frame="studio"] input,
+body[data-ui-frame="studio"] select,
+body[data-ui-frame="studio"] textarea,
+body[data-ui-frame="studio"] .picker-button{border-radius:6px!important}
+
+/* Executive */
+body[data-ui-frame="executive"] .sidebar,
+body[data-ui-frame="executive"] .main{border-radius:12px!important;box-shadow:0 16px 36px rgba(0,0,0,.20)!important}
+body[data-ui-frame="executive"] .card,
+body[data-ui-frame="executive"] .day,
+body[data-ui-frame="executive"] .contact-card,
+body[data-ui-frame="executive"] .event-card,
+body[data-ui-frame="executive"] .participant-box{border-radius:10px!important;box-shadow:0 5px 14px rgba(0,0,0,.12)!important}
+body[data-ui-frame="executive"] .topbar{border-bottom:1px solid var(--border)!important;padding-bottom:14px!important}
+body[data-ui-frame="executive"] button,
+body[data-ui-frame="executive"] input,
+body[data-ui-frame="executive"] select,
+body[data-ui-frame="executive"] textarea,
+body[data-ui-frame="executive"] .picker-button{border-radius:8px!important}
+
+/* Shared transparency capability for Glass and Floating. */
+body[data-ui-frame="glass"]{
+  --frame-surface-opacity:var(--neo-surface-opacity,90%);
+  --frame-input-opacity:var(--neo-input-opacity,94%);
+}
+body[data-ui-frame="floating"] .sidebar{
+  background:color-mix(in srgb,var(--sidebar) var(--neo-surface-opacity,90%),transparent)!important;
+  backdrop-filter:blur(16px);
+}
+
+/* Transparency settings card availability. */
+.neo-transparency-settings-card.frame-option-disabled::after{
+  content:"현재 선택한 프레임은 투명도 조절을 사용하지 않습니다"!important;
+}
+
+@media(max-width:900px){
+  body[data-ui-frame="spacious"] .main{padding:20px 14px 38px!important}
+  body[data-ui-frame="compact"] .main{padding:12px 10px 30px!important}
+  body[data-ui-frame="floating"] .main{padding-left:12px!important;padding-right:12px!important}
+}
