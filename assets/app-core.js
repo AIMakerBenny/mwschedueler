@@ -2407,10 +2407,28 @@ document.getElementById('importMemosInput').onchange=async e=>{
 };
 
 /* 연락처 */
-function contactMatches(c,q){
-  const text=(String(c.name||'')+' '+(c.labels||[]).join(' ')+' '+String(c.notes||'')).toLowerCase();
-  return !q || text.includes(q.toLowerCase());
+const MWS_KOREAN_INITIALS='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+function mwsKoreanInitials(value=''){
+  let out='';
+  for(const ch of String(value||'')){
+    const code=ch.charCodeAt(0);
+    if(code>=0xAC00&&code<=0xD7A3)out+=MWS_KOREAN_INITIALS[Math.floor((code-0xAC00)/588)]||'';
+    else if(MWS_KOREAN_INITIALS.includes(ch))out+=ch;
+    else if(/[a-z0-9]/i.test(ch))out+=ch.toLowerCase();
+  }
+  return out;
 }
+function contactMatches(c,q=''){
+  const query=String(q||'').trim().toLowerCase();
+  if(!query)return true;
+  const text=(String(c?.name||'')+' '+(c?.labels||[]).join(' ')+' '+String(c?.notes||'')).toLowerCase();
+  if(text.includes(query))return true;
+  const queryInitials=mwsKoreanInitials(query);
+  const targetInitials=mwsKoreanInitials(String(c?.name||'')+' '+(c?.labels||[]).join(' '));
+  return !!queryInitials&&targetInitials.includes(queryInitials);
+}
+window.mwsKoreanInitials=mwsKoreanInitials;
+window.contactMatches=contactMatches;
 function allContactLabels(){
   const out=[];const seen=new Set();
   [...(data.contactTags||[]),...data.contacts.flatMap(c=>Array.isArray(c.labels)?c.labels:[])].forEach(raw=>{
