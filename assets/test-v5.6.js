@@ -7,6 +7,28 @@ const D=()=>{try{return data}catch(_){return null}}, C=id=>{try{return contact(i
 function cho(s=''){let o='';for(const ch of String(s)){let n=ch.charCodeAt(0);if(n>=0xAC00&&n<=0xD7A3)o+=CH[Math.floor((n-0xAC00)/588)]||'';else if(CH.includes(ch))o+=ch;else if(/[a-z0-9]/i.test(ch))o+=ch.toLowerCase()}return o}
 function match(c,q=''){q=String(q).trim().toLowerCase();if(!q)return true;const txt=`${c?.name||''} ${(c?.labels||[]).join(' ')} ${c?.notes||''}`.toLowerCase();if(txt.includes(q))return true;const qi=cho(q), ci=cho(`${c?.name||''} ${(c?.labels||[]).join(' ')}`);return !!qi&&ci.includes(qi)}
 window.mwsKoreanInitials=cho;window.contactMatches=match;try{contactMatches=match}catch(_){}
+const liveSearchImeSeenV165=new WeakMap();
+function isLiveSearchInputV165(el){
+  return !!(el&&el.tagName==='INPUT'&&(String(el.type||'').toLowerCase()==='search'||el.classList?.contains('search')||/search/i.test(String(el.id||''))));
+}
+function scheduleLiveSearchImeV165(el){
+  if(!isLiveSearchInputV165(el))return;
+  clearTimeout(el.__mwsImeSearchTimerV165);
+  el.__mwsImeSearchTimerV165=setTimeout(()=>{
+    if(!el.isConnected)return;
+    const value=String(el.value??'');
+    if(liveSearchImeSeenV165.get(el)===value)return;
+    liveSearchImeSeenV165.set(el,value);
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+  },0);
+}
+document.addEventListener('input',e=>{
+  const el=e.target;
+  if(isLiveSearchInputV165(el)&&!e.isComposing)liveSearchImeSeenV165.set(el,String(el.value??''));
+},true);
+document.addEventListener('compositionupdate',e=>scheduleLiveSearchImeV165(e.target),true);
+document.addEventListener('compositionend',e=>scheduleLiveSearchImeV165(e.target),true);
+
 const css=document.createElement('style');css.id='mws-v56-css';css.textContent=`
 #contacts:not(.v56-fav) #favoriteContacts{display:none!important}#contacts.v56-fav #contactGrid{display:none!important}#contacts.v56-fav #favoriteContacts{display:block!important}
 .v56-add{min-height:150px;border:1px dashed var(--accent);border-radius:15px;background:color-mix(in srgb,var(--panel) 88%,transparent);color:var(--text);display:grid;place-items:center;align-content:center;gap:7px;cursor:pointer}.v56-add:hover{background:color-mix(in srgb,var(--accent) 10%,var(--panel));transform:translateY(-1px)}.v56-add .ico{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 25%,var(--panel));font-size:33px;color:var(--accent)}
@@ -29,7 +51,7 @@ function scheduleParticipantRenderV140(delay=80){
  clearTimeout(participantSearchTimerV140);
  participantSearchTimerV140=setTimeout(()=>{participantSearchTimerV140=0;participantRender()},delay);
 }
-function installParticipant(){window.renderParticipantPicker=participantRender;try{renderParticipantPicker=participantRender}catch(_){}const i=$('participantSearch');if(i){i.placeholder='이름, 태그 또는 초성 검색';i.oninput=e=>{if(e?.isComposing)return;scheduleParticipantRenderV140(80)};i.oncompositionend=()=>scheduleParticipantRenderV140(0)}}
+function installParticipant(){window.renderParticipantPicker=participantRender;try{renderParticipantPicker=participantRender}catch(_){}const i=$('participantSearch');if(i){i.placeholder='이름, 태그 또는 초성 검색';i.oninput=()=>{scheduleParticipantRenderV140(80)};i.oncompositionend=()=>scheduleParticipantRenderV140(0)}}
 
 let group={kind:'tag',tag:''};
 function view(){try{return contactView}catch(_){return'cards'}}function tag(){try{return String(activeContactTag||'')}catch(_){return''}}
