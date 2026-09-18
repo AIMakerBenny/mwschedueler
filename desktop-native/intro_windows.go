@@ -354,6 +354,7 @@ func animateIntro(s *introSession) {
 		return
 	}
 	time.Sleep(introTextHold)
+	waitForStartupWebReady(8 * time.Second)
 	if !fadeIntro(s, 255, 0, introTextFadeOut) {
 		return
 	}
