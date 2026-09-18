@@ -3,7 +3,7 @@ name: Build Mawang Scheduler Native Desktop
 on:
   push:
     branches:
-      - desktop-native-v0.7.1
+      - desktop-native-v0.8-native-intro
     paths:
       - 'desktop-native/**'
       - '.github/workflows/build-desktop-native.yml'
@@ -52,7 +52,7 @@ jobs:
       - name: Upload executable
         uses: actions/upload-artifact@v4
         with:
-          name: MawangScheduler-Native-v0.7.1
+          name: MawangScheduler-Native-v0.8-native-intro
           path: |
             desktop-native/MawangScheduler.exe
             desktop-native/assets/mawang-mascot.webp
