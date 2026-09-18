@@ -10,7 +10,7 @@ export function runPhase75RenderContactsDedupAudit(){
   if(!app.includes('window.renderContacts=renderContacts;'))issues.push('canonical renderContacts is not exported');
   if(!app.includes("if(data.selfContactId)arr=[...arr].sort"))issues.push('canonical renderContacts lost self-contact ordering');
   if(!app.includes('contactUpcomingPopover(c)'))issues.push('canonical renderContacts lost upcoming-content popover');
-  if(!index.includes('assets/app-core.js?v=1.3.0-search75'))issues.push('app-core cache-bust is not search75');
+  if(!/assets\/app-core\.js\?v=1\.3\.0-search(?:7[5-9]|[89][0-9]|[1-9][0-9]{2,})/.test(index))issues.push('app-core cache-bust is older than search75');
   const summary={phase:75,name:'dead-render-contacts-removal',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
   if(issues.length)process.exitCode=1;
