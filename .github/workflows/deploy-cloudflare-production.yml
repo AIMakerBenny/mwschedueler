@@ -267,19 +267,26 @@ jobs:
           fi
           grep -Fq "syncAllIfNeededV139" /tmp/test-v55.js
           grep -Fq "signature===lastSyncSignatureV139" /tmp/test-v55.js
-          retry_contains "$BASE/assets/test-v5.6.js?deploy=$GITHUB_SHA" 'function tryBootV137()' > /tmp/test-v56.js
-          node --check /tmp/test-v56.js
-          if grep -Fq "n>240" /tmp/test-v56.js; then
+          retry_contains "$BASE/assets/contact-runtime-v130.js?deploy=$GITHUB_SHA" 'function tryBootV137()' > /tmp/contact-runtime.js
+          node --check /tmp/contact-runtime.js
+          if grep -Fq "n>240" /tmp/contact-runtime.js; then
             echo 'Contact startup polling regression detected.' >&2
             exit 1
           fi
-          grep -Fq "scheduleParticipantRenderV140" /tmp/test-v56.js
-          grep -Fq "queueInjectAddV141" /tmp/test-v56.js
-          if grep -Fq "i.oninput=participantRender" /tmp/test-v56.js; then
+          grep -Fq "scheduleParticipantRenderV140" /tmp/contact-runtime.js
+          grep -Fq "__mwsContactRuntimeV130" /tmp/contact-runtime.js
+          if grep -Fq "window.contactMatches=match" /tmp/contact-runtime.js; then
+            echo 'Duplicate contact matcher ownership detected.' >&2
+            exit 1
+          fi
+          grep -Fq "function mwsKoreanInitials" /tmp/app-core.js
+          grep -Fq "window.contactMatches=contactMatches" /tmp/app-core.js
+          grep -Fq "queueInjectAddV141" /tmp/contact-runtime.js
+          if grep -Fq "i.oninput=participantRender" /tmp/contact-runtime.js; then
             echo 'Immediate participant-search rerender regression detected.' >&2
             exit 1
           fi
-          if grep -Fq "setTimeout(()=>{visibility();injectAdd()},0)" /tmp/test-v56.js; then
+          if grep -Fq "setTimeout(()=>{visibility();injectAdd()},0)" /tmp/contact-runtime.js; then
             echo 'Repeated contact add DOM injection regression detected.' >&2
             exit 1
           fi
@@ -386,7 +393,7 @@ jobs:
           node --check assets/cloud-v1.1-loader.js
           node --check assets/post-login-runtime-v130.js
           node --check assets/test-v5.5.js
-          node --check assets/test-v5.6.js
+          node --check assets/contact-runtime-v130.js
           node --check assets/friend-finder-v120.js
           node --check assets/v130-live-contact-fix.js
           node --check assets/steam-game-v111.js
