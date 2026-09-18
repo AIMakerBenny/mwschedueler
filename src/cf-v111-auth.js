@@ -162,14 +162,23 @@ async function externalizePart(env,part,raw){
 async function handleSave(request,env){
   const admin=await currentAdmin(request,env);if(!admin)return json({error:'Admin authorization required'},401);await ensureSchema(env);
   const body=await request.json().catch(()=>null);if(!body?.parts||typeof body.parts!=='object'||Array.isArray(body.parts))return json({error:'parts must be an object'},400);
-  const versions={},normalized={};
-  for(const [part,raw] of Object.entries(body.parts)){
-    if(!PARTS.includes(part))return json({error:`Invalid part: ${part}`},400);const value=await externalizePart(env,part,raw);const current=await env.DB.prepare('SELECT version FROM workspace_parts WHERE scope=? AND part=?').bind('public',part).first();const version=Math.max(1,Number(current?.version)||0)+1,text=JSON.stringify(value??null);
-    await env.DB.batch([
+  const entries=Object.entries(body.parts);
+  for(const [part] of entries)if(!PARTS.includes(part))return json({error:`Invalid part: ${part}`},400);
+  const versions={},normalized={},staged=[];
+  for(const [part,raw] of entries){
+    const value=await externalizePart(env,part,raw);
+    const current=await env.DB.prepare('SELECT version FROM workspace_parts WHERE scope=? AND part=?').bind('public',part).first();
+    const version=Math.max(1,Number(current?.version)||0)+1,text=JSON.stringify(value??null);
+    staged.push({part,value,version,text});versions[part]=version;normalized[part]=value;
+  }
+  const statements=[];
+  for(const {part,version,text} of staged){
+    statements.push(
       env.DB.prepare(`INSERT INTO workspace_parts(scope,part,data,version,updated_at) VALUES('public',?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(scope,part) DO UPDATE SET data=excluded.data,version=excluded.version,updated_at=CURRENT_TIMESTAMP`).bind(part,text,version),
       env.DB.prepare(`INSERT INTO workspace_parts(scope,part,data,version,updated_at) VALUES('admin',?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(scope,part) DO UPDATE SET data=excluded.data,version=excluded.version,updated_at=CURRENT_TIMESTAMP`).bind(part,text,version),
-    ]);versions[part]=version;normalized[part]=value;
+    );
   }
+  if(statements.length)await env.DB.batch(statements);
   return json({versions,normalized,savedBy:admin.id});
 }
 async function handleManifest(env){await ensureSchema(env);const {results=[]}=await env.DB.prepare("SELECT part,version FROM workspace_parts WHERE scope='public' ORDER BY part").all();const parts={};for(const row of results)parts[row.part]=Number(row.version)||1;return json({parts,scope:'public',cacheSchemaVersion:3,backend:'cloudflare-d1'})}
