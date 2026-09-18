@@ -14,6 +14,7 @@ import {runPhase13AtomicMultipartSaveAudit} from './run-phase13-atomic-multipart
 import {runPhase14MediaCommitBoundaryAudit} from './run-phase14-media-commit-boundary-audit.mjs';
 import {runPhase15ConcurrentAdminVersionGuardAudit} from './run-phase15-concurrent-admin-version-guard-audit.mjs';
 import {runPhase16MobileCalendarDayDetailAudit} from './run-phase16-mobile-calendar-day-detail-audit.mjs';
+import {runPhase17MobileCalendarTextVisibilityAudit} from './run-phase17-mobile-calendar-text-visibility-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -179,6 +180,17 @@ export function runPhase16FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase16FullIntegrationAudit();}
+export function runPhase17FullIntegrationAudit(){
+  const previous=runPhase16FullIntegrationAudit();
+  const current=runPhase17MobileCalendarTextVisibilityAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:17,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase17FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();

@@ -226,10 +226,19 @@ body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #ca
   transform:none!important;
   box-shadow:none!important;
 }
-body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarGrid .mini-event:nth-child(n+4){display:none!important}
+body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarGrid .mini-event.mws-mobile-event-hidden-v130{display:none!important}
 body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarGrid .mini-event-main{
+  position:relative!important;
+  z-index:5!important;
   display:block!important;
+  width:100%!important;
   min-width:0!important;
+  visibility:visible!important;
+  opacity:1!important;
+  color:var(--text)!important;
+  font-size:inherit!important;
+  font-weight:800!important;
+  line-height:14px!important;
   overflow:hidden!important;
   text-overflow:ellipsis!important;
   white-space:nowrap!important;
@@ -437,4 +446,27 @@ body.mws-mobile-day-detail-open-v130{overflow:hidden!important}
   color:var(--muted);
   font-size:12px;
   text-align:center;
+}
+
+
+/* Mobile month cells only show date number and content title rows.
+   Legacy Today People and other injected day-cell visuals must not displace content text. */
+body:is([data-device-mode="mobile"],[data-resolution="mobile"]) #calendar[data-mobile-calendar-view="month"] #calendarGrid .day > .mws-mobile-calendar-extra-v130,
+body:is([data-device-mode="mobile"],[data-resolution="mobile"]) #calendar[data-mobile-calendar-view="month"] #calendarGrid .day > [class*="today-people"],
+body:is([data-device-mode="mobile"],[data-resolution="mobile"]) #calendar[data-mobile-calendar-view="month"] #calendarGrid .day > [id*="todayPeople"]{
+  display:none!important;
+}
+body:is([data-device-mode="mobile"],[data-resolution="mobile"]) #calendar[data-mobile-calendar-view="month"] #calendarGrid .day img{
+  display:none!important;
+}
+body:is([data-device-mode="mobile"],[data-resolution="mobile"]) #calendar[data-mobile-calendar-view="month"] #calendarGrid .mini-event > :not(.mini-event-main){
+  display:none!important;
+}
+body:is([data-device-mode="mobile"],[data-resolution="mobile"]) #calendar[data-mobile-calendar-view="month"] #calendarGrid .mini-event-main{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  visibility:visible!important;
+  opacity:1!important;
+  color:var(--text)!important;
 }

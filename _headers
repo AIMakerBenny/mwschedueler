@@ -54,3 +54,12 @@
 
 /assets/majoku-sidebar-v113.js
   Cache-Control: no-cache, must-revalidate
+
+/assets/post-login-runtime-v130.js
+  Cache-Control: no-cache, must-revalidate
+
+/assets/mobile-calendar-v130.css
+  Cache-Control: no-cache, must-revalidate
+
+/assets/mobile-calendar-day-detail-v130.js
+  Cache-Control: no-cache, must-revalidate

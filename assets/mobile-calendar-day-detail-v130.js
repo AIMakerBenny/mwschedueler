@@ -161,20 +161,35 @@ function closeSheet(){
 function decorateGrid(){
   decorateQueued=false;
   const mobile=isMobileMonth();
-  grid.querySelectorAll('.mini-event[data-evid]').forEach(node=>{
-    const main=node.querySelector('.mini-event-main');
-    if(!main)return;
-    if(!main.dataset.mwsMobileOriginalText)main.dataset.mwsMobileOriginalText=main.textContent||'';
-    if(mobile){
-      const event=eventById(node.dataset.evid);
-      main.textContent=event?.restDay?'휴방':String(event?.title||main.textContent||'컨텐츠');
-      node.setAttribute('draggable','false');
-    }else{
-      main.textContent=main.dataset.mwsMobileOriginalText;
-    }
-  });
+
   grid.querySelectorAll('.day[data-date]').forEach(day=>{
-    if(!mobile){day.removeAttribute('data-mobile-more');return}
+    const miniEvents=[...day.querySelectorAll(':scope > .mini-event[data-evid]')];
+
+    for(const child of [...day.children]){
+      const keep=child.classList.contains('daynum')||child.classList.contains('mini-event');
+      child.classList.toggle('mws-mobile-calendar-extra-v130',mobile&&!keep);
+    }
+
+    miniEvents.forEach((node,index)=>{
+      const main=node.querySelector('.mini-event-main');
+      node.classList.toggle('mws-mobile-event-hidden-v130',mobile&&index>=2);
+      if(!main)return;
+      if(!main.dataset.mwsMobileOriginalText)main.dataset.mwsMobileOriginalText=main.textContent||'';
+      if(mobile){
+        const event=eventById(node.dataset.evid);
+        main.textContent=event?.restDay?'휴방':String(event?.title||'컨텐츠');
+        node.setAttribute('draggable','false');
+      }else{
+        main.textContent=main.dataset.mwsMobileOriginalText;
+        node.classList.remove('mws-mobile-event-hidden-v130');
+        node.removeAttribute('draggable');
+      }
+    });
+
+    if(!mobile){
+      day.removeAttribute('data-mobile-more');
+      return;
+    }
     const count=eventsForDate(day.dataset.date).length;
     day.dataset.mobileMore=count>2?'+'+(count-2):'';
     day.setAttribute('aria-label',dateLabel(day.dataset.date)+(count?' · 컨텐츠 '+count+'개':' · 컨텐츠 없음'));

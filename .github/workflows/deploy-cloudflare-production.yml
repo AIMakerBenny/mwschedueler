@@ -86,6 +86,9 @@ jobs:
           retry_contains "$BASE/assets/mobile-calendar-day-detail-v130.js?deploy=$GITHUB_SHA" '__mwsMobileCalendarDayDetailV130' > /tmp/mobile-day-detail.js
           node --check /tmp/mobile-day-detail.js
           grep -Fq "event.stopImmediatePropagation()" /tmp/mobile-day-detail.js
+          grep -Fq "mws-mobile-event-hidden-v130" /tmp/mobile-day-detail.js
+          retry_contains "$BASE/assets/mobile-calendar-v130.css?deploy=$GITHUB_SHA" 'mws-mobile-calendar-extra-v130' > /tmp/mobile-calendar.css
+          grep -Fq "mini-event-main" /tmp/mobile-calendar.css
           retry_contains "$BASE/assets/cloud-v1.1.js?deploy=$GITHUB_SHA" 'function enterAppShell(chosen)' > /tmp/cloud-core.js
           node --check /tmp/cloud-core.js
           grep -Fq 'void startHydration(chosen)' /tmp/cloud-core.js
