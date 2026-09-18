@@ -32,12 +32,6 @@
   }
   if(typeof upcomingEventsForContact==='function')upcomingEventsForContact=id=>upcomingMap().get(id)||[];
 
-  if(typeof contactMatches==='function')contactMatches=function(c,q){
-    const needle=String(q||'').toLocaleLowerCase('ko-KR');if(!needle)return true;
-    let key=searchKeyCache.get(c.id);if(key===undefined){key=(String(c.name||'')+' '+(c.labels||[]).join(' ')+' '+String(c.notes||'')).toLocaleLowerCase('ko-KR');searchKeyCache.set(c.id,key)}
-    return key.includes(needle);
-  };
-
   const style=document.createElement('style');style.id='mws-performance-runtime-style';style.textContent='.contact-card{content-visibility:auto;contain-intrinsic-size:auto 170px}.contact-card[hidden]{display:none!important}.mws-boss-row-v121{content-visibility:auto;contain-intrinsic-size:auto 58px}';document.head.appendChild(style);
 
   function tuneLazyImages(root=document){
@@ -86,7 +80,7 @@
 
   let searchTimer=0;const search=document.getElementById('contactSearch');
   function searchNow(){window.__mwsContactSearchRender=true;try{if(!applyContactSearch()){if(typeof mwsRenderActiveContactView==='function')mwsRenderActiveContactView();else renderContacts()}}finally{window.__mwsContactSearchRender=false}}
-  if(search){search.oninput=e=>{if(e?.isComposing)return;clearTimeout(searchTimer);searchTimer=setTimeout(searchNow,80)};search.oncompositionend=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(searchNow,0)}}
+  if(search){search.oninput=e=>{clearTimeout(searchTimer);searchTimer=setTimeout(searchNow,e?.isComposing?0:80)};search.oncompositionend=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(searchNow,0)}}
 
   let saveDepth=0;
   function renderActiveAfterSave(reason){
