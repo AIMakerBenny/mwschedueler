@@ -2,8 +2,8 @@
 (()=>{
   'use strict';
   if(window.__mwsCloudV110Loaded||window.__mwsCloudRuntimeV130)return;
-  window.__mwsCloudV110Loaded=true;
   window.__mwsCloudRuntimeV130=true;
+  window.__mwsCloudRuntimeV130Ready=false;
 
   const REMEMBER_KEY='mws_access_remember_v1';
   const MODE_KEY='mws_access_mode_v1';
@@ -100,5 +100,11 @@
 
   async function init(){await validateCacheSchema();installSaveBridge();bindUi();selectLoginMode('admin');try{await fetchJson('/api/health',{},'Cloudflare 상태 확인');const remember=localStorage.getItem(REMEMBER_KEY)==='1',preferred=localStorage.getItem(MODE_KEY);if(remember&&preferred==='public'){await hydrate('public');installLazyTabBridge();return}if(remember&&preferred==='admin'){const session=await fetchJson('/api/auth/session',{},'Admin 세션 확인');if(session.authenticated){currentAdmin=session.user;await hydrate('admin');installLazyTabBridge();return}}showGate();installLazyTabBridge()}catch(e){console.error('Mawang v1.1 init',e);setLoginError('Cloudflare 연결 실패: '+(e.message||String(e)));showGate();installLazyTabBridge()}}
 
-  try{window.mwsApplyAppVersionV120?.()}catch(_){}window.addEventListener('mws:v55-features-ready',installLazyTabBridge,{once:true});init();
+  try{window.mwsApplyAppVersionV120?.()}catch(_){}
+  window.addEventListener('mws:v55-features-ready',installLazyTabBridge,{once:true});
+  const initPromise=init();
+  window.__mwsCloudV110Loaded=true;
+  window.__mwsCloudRuntimeV130Ready=true;
+  window.__mwsCloudRuntimeV130InitPromise=initPromise;
+  try{window.dispatchEvent(new Event('mws:cloud-runtime-v130-ready'))}catch(_){}
 })();
