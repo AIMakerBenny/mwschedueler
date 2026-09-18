@@ -1615,7 +1615,7 @@ function renderParticipantPicker(){
     : '<span class="muted small">아직 선택된 참여자가 없습니다</span>';
 
   let arr=data.contacts
-    .filter(c=>!q||(c.name+' '+(c.labels||[]).join(' ')).toLowerCase().includes(q))
+    .filter(c=>!q||contactMatches(c,q))
     .sort((a,b)=>a.name.localeCompare(b.name,'ko'))
     .slice(0,40);
 
@@ -2183,7 +2183,7 @@ function favoriteParticipantHTML(id){
 function filteredFavoriteEvents(){
   const q=(document.getElementById('favoriteScheduleSearch')?.value||'').trim().toLowerCase();
   const sort=document.getElementById('favoriteScheduleSort')?.value||'upcoming';
-  let arr=favoriteEvents().filter(e=>!q||favoriteEventSearchText(e).includes(q));
+  let arr=favoriteEvents().filter(e=>!q||mwsTextMatches(favoriteEventSearchText(e),q));
   const today=todayKST();
   if(sort==='dateAsc'){
     arr.sort((a,b)=>favoriteEventTimestamp(a)-favoriteEventTimestamp(b));
@@ -2288,10 +2288,7 @@ function refreshEventMemoLibrarySelect(selected=''){
 function filteredMemos(){
   const q=(document.getElementById('memoSearch')?.value||'').trim().toLowerCase();
   let arr=[...(data.memos||[])];
-  if(q)arr=arr.filter(m=>
-    String(m.title||'').toLowerCase().includes(q) ||
-    String(m.content||'').toLowerCase().includes(q)
-  );
+  if(q)arr=arr.filter(m=>mwsTextMatches(String(m.title||'')+' '+String(m.content||''),q));
   return arr.sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt));
 }
 function renderMemoEditor(){
@@ -2418,16 +2415,21 @@ function mwsKoreanInitials(value=''){
   }
   return out;
 }
-function contactMatches(c,q=''){
+function mwsTextMatches(value,q=''){
   const query=String(q||'').trim().toLowerCase();
   if(!query)return true;
-  const text=(String(c?.name||'')+' '+(c?.labels||[]).join(' ')+' '+String(c?.notes||'')).toLowerCase();
+  const text=String(value??'').toLowerCase();
   if(text.includes(query))return true;
   const queryInitials=mwsKoreanInitials(query);
-  const targetInitials=mwsKoreanInitials(String(c?.name||'')+' '+(c?.labels||[]).join(' '));
-  return !!queryInitials&&targetInitials.includes(queryInitials);
+  if(!queryInitials)return false;
+  return mwsKoreanInitials(text).includes(queryInitials);
+}
+function contactMatches(c,q=''){
+  const text=String(c?.name||'')+' '+(c?.labels||[]).join(' ')+' '+String(c?.notes||'');
+  return mwsTextMatches(text,q);
 }
 window.mwsKoreanInitials=mwsKoreanInitials;
+window.mwsTextMatches=mwsTextMatches;
 window.contactMatches=contactMatches;
 function allContactLabels(){
   const out=[];const seen=new Set();
@@ -4811,7 +4813,7 @@ window.miniSetWeight=(id,value)=>{const x=data.miniGames.roulette.entries.find(x
 function renderMiniContactPalette(game,q=''){
   const box=document.getElementById(`${game}ContactPalette`);if(!box)return;
   const query=String(q||'').trim().toLowerCase();
-  const arr=(data.contacts||[]).filter(c=>!c.pendingSetup&&(!query||(c.name+' '+(c.labels||[]).join(' ')).toLowerCase().includes(query)));
+  const arr=(data.contacts||[]).filter(c=>!c.pendingSetup&&contactMatches(c,query));
   const counter=document.getElementById(`${game}ContactCount`);if(counter)counter.textContent=`${arr.length}명`;
   box.innerHTML=arr.map(c=>`<div class="mini-contact-item" draggable="true" ondragstart="miniContactDragStart('${c.id}',event)" ondragend="miniContactDragEnd(event)" title="게임 영역으로 끌어 놓으세요">
     ${c.image?`<img src="${c.image}">`:`<div class="mini-contact-avatar">${esc(initials(c.name))}</div>`}
@@ -5474,7 +5476,7 @@ function renderPosts(){
   const p=postById(activePostId),empty=document.getElementById('postEmptyState'),detail=document.getElementById('postDetailView');if(empty)empty.style.display=p?'none':'';if(detail)detail.style.display=p?'':'none';if(!p)return;
   const title=document.getElementById('postDisplayName');if(title&&document.activeElement!==title)title.value=p.name;const meta=document.getElementById('postDetailMeta');if(meta)meta.textContent=`${p.bjId} · 글 ${p.postNo} · ${p.lastSyncAt?'마지막 동기화 '+new Date(p.lastSyncAt).toLocaleString('ko-KR'):'아직 동기화하지 않음'}${p.sourceTitle&&p.nameManual?` · SOOP 원문 제목: ${p.sourceTitle}`:''}${p.lastError?' · 최근 오류 있음':''}`;
   const open=document.getElementById('postOpenBtn');if(open)open.onclick=()=>window.open(p.url,'_blank','noopener');const sync=document.getElementById('postSyncBtn');if(sync)sync.onclick=()=>syncSoopPost(p.id);const del=document.getElementById('postDeleteBtn');if(del)del.onclick=()=>deletePost(p.id);const game=document.getElementById('postRandomGameBtn');if(game)game.onclick=openPostGamePicker;
-  const q=(document.getElementById('postApplicantSearch')?.value||'').trim().toLowerCase(),sf=document.getElementById('postApplicantStatusFilter')?.value||'';let arr=p.comments||[];if(q)arr=arr.filter(c=>(`${c.name} ${c.userId} ${c.comment}`).toLowerCase().includes(q));if(sf)arr=arr.filter(c=>c.status===sf);const unique=new Set((p.comments||[]).map(c=>c.userId).filter(Boolean));const selected=(p.comments||[]).filter(c=>c.status==='selected').length,excluded=(p.comments||[]).filter(c=>c.status==='excluded').length,matched=uniquePostGameApplicants(p).filter(c=>c.contactId).length;const summary=document.getElementById('postApplicantSummary');if(summary)summary.innerHTML=`<span class="chip">댓글 ${p.comments.length}개</span><span class="chip">고유 작성자 ${unique.size}명</span><span class="chip" style="border-color:#38b77a">확정 ${selected}명</span><span class="chip">제외 ${excluded}명</span><span class="chip" style="border-color:#2ea676">연락처 연결 ${matched}명</span>`;const grid=document.getElementById('postApplicantGrid'),dups=applicantDuplicates(p);if(grid)grid.innerHTML=arr.map(c=>postApplicantCardHTML(p,c,dups)).join('')||'<div class="empty" style="grid-column:1/-1">조건에 맞는 신청자가 없습니다</div>';
+  const q=(document.getElementById('postApplicantSearch')?.value||'').trim().toLowerCase(),sf=document.getElementById('postApplicantStatusFilter')?.value||'';let arr=p.comments||[];if(q)arr=arr.filter(c=>mwsTextMatches(`${c.name||''} ${c.userId||''} ${c.comment||''}`,q));if(sf)arr=arr.filter(c=>c.status===sf);const unique=new Set((p.comments||[]).map(c=>c.userId).filter(Boolean));const selected=(p.comments||[]).filter(c=>c.status==='selected').length,excluded=(p.comments||[]).filter(c=>c.status==='excluded').length,matched=uniquePostGameApplicants(p).filter(c=>c.contactId).length;const summary=document.getElementById('postApplicantSummary');if(summary)summary.innerHTML=`<span class="chip">댓글 ${p.comments.length}개</span><span class="chip">고유 작성자 ${unique.size}명</span><span class="chip" style="border-color:#38b77a">확정 ${selected}명</span><span class="chip">제외 ${excluded}명</span><span class="chip" style="border-color:#2ea676">연락처 연결 ${matched}명</span>`;const grid=document.getElementById('postApplicantGrid'),dups=applicantDuplicates(p);if(grid)grid.innerHTML=arr.map(c=>postApplicantCardHTML(p,c,dups)).join('')||'<div class="empty" style="grid-column:1/-1">조건에 맞는 신청자가 없습니다</div>';
 }
 let postApplicantSearchTimerV142=0;
 function schedulePostApplicantRenderV142(delay=90){
@@ -5600,7 +5602,7 @@ function renderPosts(){
   const title=document.getElementById('postDisplayName');if(title&&document.activeElement!==title)title.value=p.name;const meta=document.getElementById('postDetailMeta');if(meta)meta.textContent=`${p.bjId} · 글 ${p.postNo} · ${p.lastSyncAt?'마지막 동기화 '+new Date(p.lastSyncAt).toLocaleString('ko-KR'):'아직 동기화하지 않음'}${p.sourceTitle&&p.nameManual?` · SOOP 원문 제목: ${p.sourceTitle}`:''}${p.lastError?' · 최근 오류 있음':''}`;
   const open=document.getElementById('postOpenBtn');if(open)open.onclick=()=>window.open(p.url,'_blank','noopener');const sync=document.getElementById('postSyncBtn');if(sync)sync.onclick=()=>syncSoopPost(p.id);const del=document.getElementById('postDeleteBtn');if(del)del.onclick=()=>deletePost(p.id);const game=document.getElementById('postRandomGameBtn');if(game)game.onclick=openPostGamePicker;
   setPostDetailMode(postDetailMode);renderPostSourceContent(p);
-  const q=(document.getElementById('postApplicantSearch')?.value||'').trim().toLowerCase(),sf=document.getElementById('postApplicantStatusFilter')?.value||'',sort=document.getElementById('postApplicantSort')?.value||'recent';let arr=[...(p.comments||[])];if(q)arr=arr.filter(c=>(`${c.name} ${c.userId} ${c.comment}`).toLowerCase().includes(q));if(sf)arr=arr.filter(c=>(c.status==='excluded'?'nextchance':c.status)===sf);
+  const q=(document.getElementById('postApplicantSearch')?.value||'').trim().toLowerCase(),sf=document.getElementById('postApplicantStatusFilter')?.value||'',sort=document.getElementById('postApplicantSort')?.value||'recent';let arr=[...(p.comments||[])];if(q)arr=arr.filter(c=>mwsTextMatches(`${c.name||''} ${c.userId||''} ${c.comment||''}`,q));if(sf)arr=arr.filter(c=>(c.status==='excluded'?'nextchance':c.status)===sf);
   if(sort==='upDesc')arr.sort((a,b)=>(Number(b.upCount)||0)-(Number(a.upCount)||0)||String(b.regDate||'').localeCompare(String(a.regDate||'')));else if(sort==='upAsc')arr.sort((a,b)=>(Number(a.upCount)||0)-(Number(b.upCount)||0)||String(b.regDate||'').localeCompare(String(a.regDate||'')));else if(sort==='oldest')arr.sort((a,b)=>String(a.regDate||'').localeCompare(String(b.regDate||'')));else if(sort==='name')arr.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ko'));else arr.sort((a,b)=>String(b.regDate||'').localeCompare(String(a.regDate||'')));
   const unique=new Set((p.comments||[]).map(c=>c.userId).filter(Boolean)),selected=(p.comments||[]).filter(c=>c.status==='selected').length,nextchance=(p.comments||[]).filter(c=>c.status==='nextchance'||c.status==='excluded').length,matchedCount=uniquePostGameApplicants(p).filter(c=>c.contactId).length,newCount=(p.comments||[]).filter(c=>!findContactForSoopApplicant(c)).length;const summary=document.getElementById('postApplicantSummary');if(summary)summary.innerHTML=`<span class="chip">댓글 ${p.comments.length}개</span><span class="chip">고유 작성자 ${unique.size}명</span><span class="chip" style="border-color:#38b77a">확정 ${selected}명</span><span class="chip">다음기회에 ${nextchance}명</span><span class="chip" style="border-color:#2ea676">연락처 연결 ${matchedCount}명</span>${newCount?`<span class="chip" style="border-color:#3aa9ff;color:#7ccaff">신규 ${newCount}개 댓글</span>`:''}`;const grid=document.getElementById('postApplicantGrid'),dups=applicantDuplicates(p);if(grid)grid.innerHTML=arr.map(c=>postApplicantCardHTML(p,c,dups)).join('')||'<div class="empty" style="grid-column:1/-1">조건에 맞는 신청자가 없습니다</div>';
 }
@@ -5694,7 +5696,7 @@ function renderFavoriteFolderBar(){
 }
 function filteredFavoriteEvents(){
   const q=(document.getElementById('favoriteScheduleSearch')?.value||'').trim().toLowerCase(),sort=document.getElementById('favoriteScheduleSort')?.value||'upcoming';
-  let arr=favoriteEvents().filter(e=>!q||favoriteEventSearchText(e).includes(q));
+  let arr=favoriteEvents().filter(e=>!q||mwsTextMatches(favoriteEventSearchText(e),q));
   if(favoriteFolderFilter==='unfiled')arr=arr.filter(e=>!e.favoriteFolderId);else if(favoriteFolderFilter!=='all')arr=arr.filter(e=>e.favoriteFolderId===favoriteFolderFilter);
   const today=todayKST();
   if(sort==='dateAsc')arr.sort((a,b)=>favoriteEventTimestamp(a)-favoriteEventTimestamp(b));else if(sort==='dateDesc')arr.sort((a,b)=>favoriteEventTimestamp(b)-favoriteEventTimestamp(a));else if(sort==='titleAsc')arr.sort((a,b)=>String(a.title||'').localeCompare(String(b.title||''),'ko'));else arr.sort((a,b)=>{const au=(a.date||'')>=today,bu=(b.date||'')>=today;if(au!==bu)return au?-1:1;return au?favoriteEventTimestamp(a)-favoriteEventTimestamp(b):favoriteEventTimestamp(b)-favoriteEventTimestamp(a)});
@@ -5713,7 +5715,7 @@ function renderPosts(){
   const p=postById(activePostId),empty=document.getElementById('postEmptyState'),detail=document.getElementById('postDetailView');if(empty)empty.style.display=p?'none':'';if(detail)detail.style.display=p?'':'none';if(!p){applyPostViewPrefs();return}
   const title=document.getElementById('postDisplayName');if(title&&document.activeElement!==title)title.value=p.name;const meta=document.getElementById('postDetailMeta');if(meta)meta.textContent=`${p.bjId} · 글 ${p.postNo} · ${p.lastSyncAt?'마지막 동기화 '+new Date(p.lastSyncAt).toLocaleString('ko-KR'):'아직 동기화하지 않음'}${p.sourceTitle&&p.nameManual?` · SOOP 원문 제목: ${p.sourceTitle}`:''}${p.lastError?' · 최근 오류 있음':''}`;
   const open=document.getElementById('postOpenBtn');if(open)open.onclick=()=>window.open(p.url,'_blank','noopener');const sync=document.getElementById('postSyncBtn');if(sync)sync.onclick=()=>syncSoopPost(p.id);const del=document.getElementById('postDeleteBtn');if(del)del.onclick=()=>deletePost(p.id);const game=document.getElementById('postRandomGameBtn');if(game)game.onclick=openPostGamePicker;setPostDetailMode(postDetailMode);renderPostSourceContent(p);
-  const q=(document.getElementById('postApplicantSearch')?.value||'').trim().toLowerCase(),sf=document.getElementById('postApplicantStatusFilter')?.value||'',sort=document.getElementById('postApplicantSort')?.value||'recent';let arr=[...(p.comments||[])];if(q)arr=arr.filter(c=>(`${c.name} ${c.userId} ${c.comment}`).toLowerCase().includes(q));if(sf)arr=arr.filter(c=>(c.status==='excluded'?'nextchance':c.status)===sf);if(sort==='upDesc')arr.sort((a,b)=>(Number(b.upCount)||0)-(Number(a.upCount)||0)||String(b.regDate||'').localeCompare(String(a.regDate||'')));else if(sort==='upAsc')arr.sort((a,b)=>(Number(a.upCount)||0)-(Number(b.upCount)||0)||String(b.regDate||'').localeCompare(String(a.regDate||'')));else if(sort==='oldest')arr.sort((a,b)=>String(a.regDate||'').localeCompare(String(b.regDate||'')));else if(sort==='name')arr.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ko'));else arr.sort((a,b)=>String(b.regDate||'').localeCompare(String(a.regDate||'')));
+  const q=(document.getElementById('postApplicantSearch')?.value||'').trim().toLowerCase(),sf=document.getElementById('postApplicantStatusFilter')?.value||'',sort=document.getElementById('postApplicantSort')?.value||'recent';let arr=[...(p.comments||[])];if(q)arr=arr.filter(c=>mwsTextMatches(`${c.name||''} ${c.userId||''} ${c.comment||''}`,q));if(sf)arr=arr.filter(c=>(c.status==='excluded'?'nextchance':c.status)===sf);if(sort==='upDesc')arr.sort((a,b)=>(Number(b.upCount)||0)-(Number(a.upCount)||0)||String(b.regDate||'').localeCompare(String(a.regDate||'')));else if(sort==='upAsc')arr.sort((a,b)=>(Number(a.upCount)||0)-(Number(b.upCount)||0)||String(b.regDate||'').localeCompare(String(a.regDate||'')));else if(sort==='oldest')arr.sort((a,b)=>String(a.regDate||'').localeCompare(String(b.regDate||'')));else if(sort==='name')arr.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ko'));else arr.sort((a,b)=>String(b.regDate||'').localeCompare(String(a.regDate||'')));
   const unique=new Set((p.comments||[]).map(c=>c.userId).filter(Boolean)),selected=(p.comments||[]).filter(c=>c.status==='selected').length,nextchance=(p.comments||[]).filter(c=>c.status==='nextchance'||c.status==='excluded').length,matchedCount=uniquePostGameApplicants(p).filter(c=>c.contactId).length,newCount=(p.comments||[]).filter(c=>!findContactForSoopApplicant(c)).length,summary=document.getElementById('postApplicantSummary');if(summary)summary.innerHTML=`<span class="chip">댓글 ${p.comments.length}개</span><span class="chip">고유 작성자 ${unique.size}명</span><span class="chip" style="border-color:#38b77a">확정 ${selected}명</span><span class="chip">다음기회에 ${nextchance}명</span><span class="chip" style="border-color:#2ea676">연락처 연결 ${matchedCount}명</span>${newCount?`<span class="chip" style="border-color:#3aa9ff;color:#7ccaff">신규 ${newCount}개 댓글</span>`:''}`;
   const grid=document.getElementById('postApplicantGrid'),dups=applicantDuplicates(p);if(grid)grid.innerHTML=arr.map(c=>postApplicantCardHTML(p,c,dups)).join('')||'<div class="empty" style="grid-column:1/-1">조건에 맞는 신청자가 없습니다</div>';applyPostViewPrefs()
 }
@@ -5952,7 +5954,7 @@ function renderPosts(){
   const p=postById(activePostId),empty=document.getElementById('postEmptyState'),detail=document.getElementById('postDetailView');if(empty)empty.style.display=p?'none':'';if(detail)detail.style.display=p?'':'none';if(!p){applyPostViewPrefs();return}
   const title=document.getElementById('postDisplayName');if(title&&document.activeElement!==title){title.value=p.name;requestAnimationFrame(()=>autoGrowPostTitle(title))}const meta=document.getElementById('postDetailMeta');if(meta)meta.textContent=`${p.bjId} · 글 ${p.postNo} · ${p.lastSyncAt?'마지막 동기화 '+new Date(p.lastSyncAt).toLocaleString('ko-KR'):'아직 동기화하지 않음'}${p.sourceTitle&&p.nameManual?` · SOOP 원문 제목: ${p.sourceTitle}`:''}${p.lastError?' · 최근 오류 있음':''}`;
   const open=document.getElementById('postOpenBtn');if(open)open.onclick=()=>window.open(p.url,'_blank','noopener');const sync=document.getElementById('postSyncBtn');if(sync)sync.onclick=()=>syncSoopPost(p.id);const del=document.getElementById('postDeleteBtn');if(del)del.onclick=()=>deletePost(p.id);const game=document.getElementById('postRandomGameBtn');if(game)game.onclick=openPostGamePicker;setPostDetailMode(postDetailMode);renderPostSourceContent(p);
-  const q=(document.getElementById('postApplicantSearch')?.value||'').trim().toLowerCase(),sf=document.getElementById('postApplicantStatusFilter')?.value||'',sort=document.getElementById('postApplicantSort')?.value||'recent';let arr=[...(p.comments||[])];if(q)arr=arr.filter(c=>(`${c.name} ${c.userId} ${c.comment}`).toLowerCase().includes(q));if(sf)arr=arr.filter(c=>(c.status==='excluded'?'nextchance':c.status)===sf);if(sort==='upDesc')arr.sort((a,b)=>(Number(b.upCount)||0)-(Number(a.upCount)||0)||String(b.regDate||'').localeCompare(String(a.regDate||'')));else if(sort==='upAsc')arr.sort((a,b)=>(Number(a.upCount)||0)-(Number(b.upCount)||0)||String(b.regDate||'').localeCompare(String(a.regDate||'')));else if(sort==='oldest')arr.sort((a,b)=>String(a.regDate||'').localeCompare(String(b.regDate||'')));else if(sort==='name')arr.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ko'));else arr.sort((a,b)=>String(b.regDate||'').localeCompare(String(a.regDate||'')));
+  const q=(document.getElementById('postApplicantSearch')?.value||'').trim().toLowerCase(),sf=document.getElementById('postApplicantStatusFilter')?.value||'',sort=document.getElementById('postApplicantSort')?.value||'recent';let arr=[...(p.comments||[])];if(q)arr=arr.filter(c=>mwsTextMatches(`${c.name||''} ${c.userId||''} ${c.comment||''}`,q));if(sf)arr=arr.filter(c=>(c.status==='excluded'?'nextchance':c.status)===sf);if(sort==='upDesc')arr.sort((a,b)=>(Number(b.upCount)||0)-(Number(a.upCount)||0)||String(b.regDate||'').localeCompare(String(a.regDate||'')));else if(sort==='upAsc')arr.sort((a,b)=>(Number(a.upCount)||0)-(Number(b.upCount)||0)||String(b.regDate||'').localeCompare(String(a.regDate||'')));else if(sort==='oldest')arr.sort((a,b)=>String(a.regDate||'').localeCompare(String(b.regDate||'')));else if(sort==='name')arr.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ko'));else arr.sort((a,b)=>String(b.regDate||'').localeCompare(String(a.regDate||'')));
   const unique=new Set((p.comments||[]).map(c=>c.userId).filter(Boolean)),confirmed=(p.comments||[]).filter(c=>c.status==='selected').length,nextchance=(p.comments||[]).filter(c=>c.status==='nextchance'||c.status==='excluded').length,matchedCount=(p.comments||[]).filter(c=>findContactForSoopApplicant(c)).length,newCount=(p.comments||[]).filter(c=>!findContactForSoopApplicant(c)).length,summary=document.getElementById('postApplicantSummary');if(summary)summary.innerHTML=`<span class="chip">댓글 ${p.comments.length}개</span><span class="chip">고유 작성자 ${unique.size}명</span><span class="chip" style="border-color:#38b77a">확정 ${confirmed}명</span><span class="chip">다음기회에 ${nextchance}명</span><span class="chip" style="border-color:#2ea676">연락처 연결 ${matchedCount}개</span>${newCount?`<span class="chip" style="border-color:#3aa9ff;color:#7ccaff">신규 ${newCount}개 댓글</span>`:''}`;
   const grid=document.getElementById('postApplicantGrid'),dups=applicantDuplicates(p);if(grid)grid.innerHTML=arr.map(c=>postApplicantCardHTML(p,c,dups)).join('')||'<div class="empty" style="grid-column:1/-1">조건에 맞는 신청자가 없습니다</div>';applyPostViewPrefs()
 }
