@@ -12,7 +12,7 @@ export function runPhase13AtomicMultipartSaveAudit(){
   if(!block)issues.push('handleSave implementation was not found');
   if(!block.includes('const entries=Object.entries(body.parts)'))issues.push('save parts are not staged from one request snapshot');
   if(!block.includes('const versions={},normalized={},staged=[]'))issues.push('multi-part save staging buffer is missing');
-  if(!block.includes('const statements=[]'))issues.push('single transaction statement buffer is missing');
+  if(!/const statements=\[[^\n]*\]/.test(block))issues.push('single transaction statement buffer is missing');
   const batchMatches=block.match(/await env\.DB\.batch\(/g)||[];
   if(batchMatches.length!==1)issues.push(`handleSave must commit workspace parts with exactly one DB.batch; found ${batchMatches.length}`);
   const stageIndex=block.indexOf('staged.push({part,value,version,text})');
