@@ -74,6 +74,9 @@ import {runPhase73VersionOwnershipAudit} from './run-phase73-version-ownership-a
 import {runPhase74RuntimeOwnershipAudit} from './run-phase74-runtime-ownership-audit.mjs';
 import {runPhase75RenderContactsDedupAudit} from './run-phase75-render-contacts-dedup-audit.mjs';
 import {runPhase76SelectorWrapperDedupAudit} from './run-phase76-selector-wrapper-dedup-audit.mjs';
+import {runPhase77HistoryCacheLocalizationAudit} from './run-phase77-history-cache-localization-audit.mjs';
+import {runPhase78UpcomingCacheLocalizationAudit} from './run-phase78-upcoming-cache-localization-audit.mjs';
+import {runPhase79DeadRuntimeReferenceAudit} from './run-phase79-dead-runtime-reference-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -810,6 +813,36 @@ export function runPhase76FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase76FullIntegrationAudit();}
+export function runPhase77FullIntegrationAudit(){
+  const previous=runPhase76FullIntegrationAudit(), current=runPhase77HistoryCacheLocalizationAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:77,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runPhase78FullIntegrationAudit(){
+  const previous=runPhase77FullIntegrationAudit(), current=runPhase78UpcomingCacheLocalizationAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:78,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runPhase79FullIntegrationAudit(){
+  const previous=runPhase78FullIntegrationAudit(), current=runPhase79DeadRuntimeReferenceAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:79,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase79FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
