@@ -21,8 +21,6 @@
     const map=new Map();for(const row of normalizedCollaborationHistory())for(const id of row.participants||[])if(!map.has(id))map.set(id,row);
     lastMapCache=map;cacheDay=day;return map;
   }
-  if(typeof getLastCollab==='function')getLastCollab=id=>lastMap().get(id)||null;
-
   const baseUpcoming=typeof upcomingEvents==='function'?upcomingEvents:null;
   if(baseUpcoming){upcomingEvents=function(){const day=todayKST();if(upcomingCache&&cacheDay===day)return upcomingCache;cacheDay=day;upcomingCache=baseUpcoming();upcomingMapCache=null;return upcomingCache};}
   function upcomingMap(){
@@ -30,8 +28,6 @@
     const map=new Map();for(const row of upcomingEvents())for(const id of row.participants||[]){if(!map.has(id))map.set(id,[]);const a=map.get(id);if(a.length<8)a.push(row)}
     return upcomingMapCache=map;
   }
-  if(typeof upcomingEventsForContact==='function')upcomingEventsForContact=id=>upcomingMap().get(id)||[];
-
   const style=document.createElement('style');style.id='mws-performance-runtime-style';style.textContent='.contact-card{content-visibility:auto;contain-intrinsic-size:auto 170px}.contact-card[hidden]{display:none!important}.mws-boss-row-v121{content-visibility:auto;contain-intrinsic-size:auto 58px}';document.head.appendChild(style);
 
   function tuneLazyImages(root=document){
