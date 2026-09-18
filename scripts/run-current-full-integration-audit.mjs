@@ -73,6 +73,7 @@ import {runPhase72SearchOwnerCollisionAudit} from './run-phase72-search-owner-co
 import {runPhase73VersionOwnershipAudit} from './run-phase73-version-ownership-audit.mjs';
 import {runPhase74RuntimeOwnershipAudit} from './run-phase74-runtime-ownership-audit.mjs';
 import {runPhase75RenderContactsDedupAudit} from './run-phase75-render-contacts-dedup-audit.mjs';
+import {runPhase76SelectorWrapperDedupAudit} from './run-phase76-selector-wrapper-dedup-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -799,6 +800,16 @@ export function runPhase75FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase75FullIntegrationAudit();}
+export function runPhase76FullIntegrationAudit(){
+  const previous=runPhase75FullIntegrationAudit(), current=runPhase76SelectorWrapperDedupAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:76,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase76FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
