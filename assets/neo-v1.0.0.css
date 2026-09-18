@@ -1,0 +1,540 @@
+/*
+  Mawang Scheduler Neo v1.0.0
+  Visual-only skin. Existing markup, data flow, event handlers and app behavior stay untouched.
+*/
+
+body.mws-neo[data-theme="neon"]{
+  --bg:#0a1018;
+  --panel:#172334;
+  --panel2:#24354a;
+  --text:#f5f8fc;
+  --muted:#91a0b4;
+  --accent:#2f9cf4;
+  --accent2:#197fcf;
+  --border:#33475e;
+  --chip:#203044;
+  --sidebar:#111c2b;
+  --input:#142132;
+}
+
+body.mws-neo{
+  min-height:100vh;
+  color:var(--text);
+  background-color:var(--bg);
+  background-image:
+    linear-gradient(145deg,rgba(255,255,255,.035) 0 9%,transparent 9% 32%,rgba(47,156,244,.06) 32% 38%,transparent 38% 100%),
+    radial-gradient(circle at 12% 92%,rgba(47,156,244,.20),transparent 34%),
+    radial-gradient(circle at 85% 10%,rgba(84,111,145,.14),transparent 34%),
+    linear-gradient(rgba(5,10,16,var(--custom-bg-dim,.45)),rgba(5,10,16,var(--custom-bg-dim,.45))),
+    var(--custom-bg-image);
+  background-size:cover;
+  background-position:center;
+  background-attachment:fixed;
+}
+
+body.mws-neo .app{
+  gap:14px;
+  padding:18px;
+  min-height:100vh;
+  align-items:start;
+}
+
+body.mws-neo .sidebar{
+  top:18px;
+  height:calc(100vh - 36px);
+  border:1px solid color-mix(in srgb,var(--border) 88%,#6c89aa);
+  border-radius:24px;
+  background:
+    linear-gradient(180deg,rgba(31,45,64,.98),rgba(16,27,42,.98));
+  box-shadow:0 24px 64px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.03);
+  backdrop-filter:blur(20px);
+}
+
+body.mws-neo .sidebar:hover,
+body.mws-neo.sidebar-pinned .sidebar{
+  box-shadow:0 28px 78px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+body.mws-neo .sidebar-head{
+  min-height:64px;
+  align-items:center;
+}
+
+body.mws-neo .logo{
+  letter-spacing:.035em;
+  font-size:18px;
+  font-weight:900;
+}
+
+body.mws-neo .logo-full{
+  background:linear-gradient(90deg,#f8fbff 0 62%,#41aaf8 62% 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+body.mws-neo .logo-mini{
+  color:#39a7ff;
+  font-size:22px;
+  text-shadow:0 0 18px rgba(47,156,244,.25);
+}
+
+body.mws-neo .logo small{
+  color:#8192a8;
+  font-size:10px;
+  letter-spacing:.06em;
+}
+
+body.mws-neo .sidebar-pin{
+  border-color:rgba(126,151,181,.24);
+  background:rgba(255,255,255,.035);
+  color:#9eb0c4;
+  border-radius:12px;
+}
+
+body.mws-neo .nav-scroll{
+  gap:6px;
+  padding-right:3px;
+}
+
+body.mws-neo .nav button{
+  min-height:46px;
+  border:1px solid transparent;
+  border-radius:13px;
+  color:#91a0b3;
+  transition:background .16s ease,border-color .16s ease,color .16s ease,transform .16s ease,box-shadow .16s ease;
+}
+
+body.mws-neo .nav button:hover{
+  color:#edf7ff;
+  background:rgba(255,255,255,.055);
+  border-color:rgba(132,157,188,.12);
+  transform:translateY(-1px);
+}
+
+body.mws-neo .nav button.active{
+  color:#fff;
+  background:linear-gradient(135deg,rgba(47,156,244,.28),rgba(47,156,244,.13));
+  border-color:rgba(66,171,255,.38);
+  box-shadow:inset 3px 0 0 #31a4ff,0 8px 18px rgba(0,0,0,.12);
+}
+
+body.mws-neo .nav-icon{
+  border-radius:11px;
+  transition:background .16s ease,color .16s ease,box-shadow .16s ease;
+}
+
+body.mws-neo .nav button.active .nav-icon{
+  color:#fff;
+  filter:drop-shadow(0 0 5px rgba(56,170,255,.42));
+}
+
+body.mws-neo .nav-game-divider span,
+body.mws-neo .nav-settings-divider{
+  background:linear-gradient(90deg,transparent,rgba(137,160,188,.20),transparent);
+}
+
+body.mws-neo .nav-game-divider em{
+  color:#6f829a;
+}
+
+body.mws-neo .main{
+  position:relative;
+  min-height:calc(100vh - 36px);
+  padding:24px 26px 42px;
+  border:1px solid color-mix(in srgb,var(--border) 88%,#6c89aa);
+  border-radius:24px;
+  background:linear-gradient(180deg,rgba(27,40,58,.94),rgba(18,30,46,.94));
+  box-shadow:0 24px 64px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.035);
+  backdrop-filter:blur(18px);
+  overflow:hidden;
+}
+
+body.mws-neo .main::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 70% -12%,rgba(72,147,214,.10),transparent 36%),
+    linear-gradient(135deg,rgba(255,255,255,.018),transparent 34%);
+  z-index:0;
+}
+
+body.mws-neo .main > *{
+  position:relative;
+  z-index:1;
+}
+
+body.mws-neo .topbar{
+  min-height:64px;
+  margin-bottom:20px;
+  padding:0 2px 14px;
+  border-bottom:1px solid rgba(137,160,188,.12);
+}
+
+body.mws-neo .top-left h1{
+  font-size:27px;
+  line-height:1.1;
+  font-weight:900;
+  letter-spacing:-.025em;
+}
+
+body.mws-neo .subtle,
+body.mws-neo .muted,
+body.mws-neo label{
+  color:#8d9caf;
+}
+
+body.mws-neo .clock{
+  gap:8px;
+}
+
+body.mws-neo .sync-status{
+  color:#8fa2b8;
+  background:rgba(255,255,255,.035);
+  border:1px solid rgba(126,151,181,.17);
+  border-radius:999px;
+  padding:8px 11px;
+}
+
+body.mws-neo .sync-dot{
+  box-shadow:0 0 10px currentColor;
+}
+
+body.mws-neo .card,
+body.mws-neo .event-card,
+body.mws-neo .reminder-card,
+body.mws-neo .conflict-card,
+body.mws-neo .autosave-row{
+  border-color:rgba(126,151,181,.19);
+  background:linear-gradient(180deg,rgba(49,65,85,.72),rgba(37,52,71,.72));
+  border-radius:17px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 10px 28px rgba(0,0,0,.09);
+}
+
+body.mws-neo .card{
+  padding:17px;
+}
+
+body.mws-neo .card h3{
+  font-size:15px;
+  font-weight:850;
+  letter-spacing:-.01em;
+}
+
+body.mws-neo .primary,
+body.mws-neo .secondary,
+body.mws-neo .ghost,
+body.mws-neo .pillbtn,
+body.mws-neo .danger{
+  min-height:38px;
+  border-radius:11px;
+  border-color:rgba(126,151,181,.24);
+  transition:transform .14s ease,background .14s ease,border-color .14s ease,box-shadow .14s ease;
+}
+
+body.mws-neo .primary{
+  border-color:#309ff7;
+  background:linear-gradient(180deg,#35a8ff,#258edc);
+  color:white;
+  box-shadow:0 8px 18px rgba(28,131,215,.20),inset 0 1px 0 rgba(255,255,255,.18);
+}
+
+body.mws-neo .primary:hover{
+  background:linear-gradient(180deg,#49b1ff,#2d97e5);
+  box-shadow:0 10px 24px rgba(28,131,215,.28),inset 0 1px 0 rgba(255,255,255,.2);
+  transform:translateY(-1px);
+}
+
+body.mws-neo .secondary,
+body.mws-neo .ghost,
+body.mws-neo .pillbtn{
+  background:rgba(19,31,48,.58);
+}
+
+body.mws-neo .secondary:hover,
+body.mws-neo .ghost:hover,
+body.mws-neo .pillbtn:hover{
+  background:rgba(57,75,96,.72);
+  border-color:rgba(88,177,244,.28);
+}
+
+body.mws-neo input,
+body.mws-neo select,
+body.mws-neo textarea,
+body.mws-neo .picker-button{
+  border-color:rgba(126,151,181,.22);
+  background:rgba(14,26,41,.68);
+  border-radius:11px;
+  color:#f6f9fc;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.13);
+}
+
+body.mws-neo input:focus,
+body.mws-neo select:focus,
+body.mws-neo textarea:focus,
+body.mws-neo .picker-button:hover{
+  border-color:#309ff7;
+  box-shadow:0 0 0 3px rgba(48,159,247,.11);
+}
+
+body.mws-neo .chip,
+body.mws-neo .person-chip,
+body.mws-neo .recent-badge,
+body.mws-neo .upcoming-count-badge,
+body.mws-neo .collab-count-badge{
+  background:rgba(20,34,52,.70);
+  border-color:rgba(126,151,181,.19);
+}
+
+body.mws-neo .calendar-toolbar{
+  margin-bottom:14px;
+  padding:12px 14px;
+  border:1px solid rgba(126,151,181,.16);
+  border-radius:15px;
+  background:rgba(20,33,50,.45);
+}
+
+body.mws-neo .calendar-month-label{
+  font-weight:900;
+  letter-spacing:-.02em;
+}
+
+body.mws-neo .calendar-head{
+  gap:7px;
+  margin-bottom:7px;
+}
+
+body.mws-neo .calendar-head div{
+  color:#71839a;
+  font-weight:750;
+  padding:7px 6px;
+}
+
+body.mws-neo .calendar{
+  gap:7px;
+}
+
+body.mws-neo .day{
+  min-height:122px;
+  padding:9px;
+  border-color:rgba(126,151,181,.17);
+  border-radius:15px;
+  background:linear-gradient(180deg,rgba(48,65,85,.66),rgba(38,54,72,.66));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.018);
+}
+
+body.mws-neo .day:hover{
+  border-color:rgba(49,164,255,.62);
+  background:linear-gradient(180deg,rgba(45,75,104,.85),rgba(39,62,83,.85));
+  box-shadow:0 0 0 1px rgba(49,164,255,.18),0 12px 28px rgba(0,0,0,.18);
+}
+
+body.mws-neo .day.today{
+  outline:none;
+  border-color:#39a7ff;
+  background:
+    radial-gradient(circle at 82% 8%,rgba(49,164,255,.23),transparent 34%),
+    linear-gradient(180deg,rgba(43,76,106,.90),rgba(37,61,84,.90));
+  box-shadow:inset 0 0 0 1px rgba(49,164,255,.16),0 0 24px rgba(49,164,255,.10);
+}
+
+body.mws-neo .daynum{
+  color:#d6e1ed;
+  font-size:13px;
+  font-weight:750;
+}
+
+body.mws-neo .day.out{
+  opacity:.28;
+}
+
+body.mws-neo .mini-event{
+  border-radius:7px;
+  background:rgba(14,28,44,.62);
+  border-left:2px solid color-mix(in srgb,var(--accent) 78%,white);
+  padding:5px 7px;
+}
+
+body.mws-neo .contact-card{
+  border-color:rgba(126,151,181,.18);
+  background:linear-gradient(180deg,rgba(48,65,85,.70),rgba(36,51,70,.70));
+  border-radius:17px;
+}
+
+body.mws-neo .contact-card:hover{
+  border-color:rgba(49,164,255,.48);
+  background:linear-gradient(180deg,rgba(50,73,96,.88),rgba(39,59,80,.88));
+  box-shadow:0 0 0 1px rgba(49,164,255,.10),0 18px 36px rgba(0,0,0,.18);
+}
+
+body.mws-neo .avatar{
+  border-color:rgba(126,151,181,.20);
+  border-radius:14px;
+}
+
+body.mws-neo .modal{
+  background:rgba(3,8,14,.72)!important;
+  backdrop-filter:blur(8px)!important;
+}
+
+body.mws-neo .modalbox,
+body.mws-neo .confirm-box,
+body.mws-neo .picker-popover,
+body.mws-neo .timezones,
+body.mws-neo .mws-admin-box{
+  border-color:rgba(126,151,181,.24);
+  border-radius:20px;
+  background:linear-gradient(180deg,rgba(29,44,63,.985),rgba(20,33,50,.985));
+  box-shadow:0 30px 90px rgba(0,0,0,.52),inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+body.mws-neo .dashboard-mode-tabs{
+  padding:4px;
+  border-radius:14px;
+  background:rgba(14,26,41,.50);
+  border:1px solid rgba(126,151,181,.14);
+}
+
+body.mws-neo .dashboard-mode-tab{
+  border-radius:10px;
+}
+
+body.mws-neo .dashboard-mode-tab.active{
+  background:rgba(47,156,244,.18);
+  color:#fff;
+  box-shadow:inset 0 0 0 1px rgba(47,156,244,.24);
+}
+
+body.mws-neo .toast{
+  right:22px;
+  left:auto;
+  bottom:22px;
+  border-color:rgba(126,151,181,.24);
+  background:rgba(27,42,61,.96);
+  border-radius:14px;
+  backdrop-filter:blur(12px);
+}
+
+body.mws-neo .sidebar-build-version-v53{
+  display:block!important;
+  position:fixed!important;
+  z-index:185;
+  right:31px!important;
+  bottom:25px!important;
+  margin:0!important;
+  padding:5px 9px!important;
+  border:1px solid rgba(126,151,181,.15);
+  border-radius:999px;
+  background:rgba(10,20,32,.58);
+  color:#788ba2!important;
+  font-size:9px!important;
+  font-weight:800!important;
+  letter-spacing:.06em!important;
+  line-height:1.2!important;
+  opacity:.88!important;
+  backdrop-filter:blur(8px);
+  pointer-events:none;
+}
+
+body.mws-neo .mws-access-tools{
+  right:18px;
+  bottom:54px;
+}
+
+body.mws-neo #mwsAccessGate{
+  background:
+    radial-gradient(circle at 50% 24%,rgba(47,156,244,.18),transparent 31%),
+    linear-gradient(145deg,#0a111b,#07101a 56%,#0d1c2d)!important;
+}
+
+body.mws-neo .mws-login-shell{
+  border-color:rgba(126,151,181,.24);
+  background:linear-gradient(180deg,rgba(29,44,63,.96),rgba(17,29,45,.96));
+  border-radius:24px;
+  box-shadow:0 34px 100px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+body.mws-neo .mws-mode-card{
+  border-color:rgba(126,151,181,.20);
+  background:rgba(14,26,41,.64);
+  border-radius:16px;
+}
+
+body.mws-neo .mws-mode-card:hover,
+body.mws-neo .mws-mode-card.active{
+  border-color:#309ff7;
+  background:rgba(37,63,88,.72);
+  box-shadow:0 0 0 3px rgba(48,159,247,.08),0 14px 32px rgba(0,0,0,.18);
+}
+
+body.mws-neo ::-webkit-scrollbar{
+  width:9px;
+  height:9px;
+}
+
+body.mws-neo ::-webkit-scrollbar-track{
+  background:transparent;
+}
+
+body.mws-neo ::-webkit-scrollbar-thumb{
+  background:#344960;
+  border:2px solid transparent;
+  background-clip:padding-box;
+  border-radius:999px;
+}
+
+body.mws-neo ::-webkit-scrollbar-thumb:hover{
+  background:#43627f;
+  border:2px solid transparent;
+  background-clip:padding-box;
+}
+
+@media(max-width:900px){
+  body.mws-neo .app{
+    padding:0;
+    gap:0;
+  }
+
+  body.mws-neo .main{
+    min-height:100vh;
+    padding:18px 14px 36px;
+    border:0;
+    border-radius:0;
+  }
+
+  body.mws-neo .sidebar{
+    top:0;
+    height:100vh;
+    border-radius:0 20px 20px 0;
+    border-left:0;
+  }
+
+  body.mws-neo .topbar{
+    min-height:auto;
+    align-items:flex-start;
+  }
+
+  body.mws-neo .top-left h1{
+    font-size:22px;
+  }
+
+  body.mws-neo .calendar-toolbar{
+    padding:10px;
+  }
+
+  body.mws-neo .day{
+    min-height:108px;
+  }
+
+  body.mws-neo .sidebar-build-version-v53{
+    right:12px!important;
+    bottom:10px!important;
+  }
+
+  body.mws-neo .mws-access-tools{
+    right:10px;
+    bottom:42px;
+  }
+}
