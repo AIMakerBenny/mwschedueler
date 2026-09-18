@@ -15,7 +15,7 @@ export function runPhase81CanonicalRendererOwnershipAudit(){
   if(!app.includes('if(mwsFastSearch&&mwsSearchQuery)window.mwsApplyContactSearch();'))issues.push('canonical renderer does not restore the active query after render');
   if(!perf.includes('function applyContactSearch()'))issues.push('search fast-path was removed');
   if(!perf.includes('e?.isComposing?0:80'))issues.push('IME-aware search scheduling was removed');
-  if(!index.includes('assets/app-core.js?v=1.3.0-search81'))issues.push('app-core cache-bust is not search81');
+  if(!/assets\/app-core\.js\?v=1\.3\.0-search(?:8[1-9]|9[0-9]|[1-9][0-9]{2,})/.test(index))issues.push('app-core cache-bust is older than search81');
 
   const summary={phase:81,name:'canonical-contact-renderer-ownership',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
