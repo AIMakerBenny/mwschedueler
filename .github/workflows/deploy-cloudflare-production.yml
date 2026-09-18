@@ -397,6 +397,11 @@ jobs:
           node --check /tmp/perf.js
           grep -Fq 'maintenance-runtime-v130.js?v=1.3.0-stage68' /tmp/perf.js
           grep -Fq 'Mawang maintenance runtime readiness handshake failed' /tmp/perf.js
+          legacy_maintenance_status="$(curl -sS --max-time 20 -o /tmp/legacy-maintenance.js -w '%{http_code}' "$BASE/assets/cf-v5.7-runtime.js?deploy=$GITHUB_SHA" || true)"
+          if [ "$legacy_maintenance_status" = '200' ]; then
+            echo 'Deleted cf-v5.7-runtime.js is still being served.' >&2
+            exit 1
+          fi
           if grep -Fq 'cf-v5.7-runtime.js' /tmp/perf.js; then
             echo 'Legacy maintenance runtime reference remains active.' >&2
             exit 1
@@ -425,6 +430,7 @@ jobs:
           node --check scripts/run-phase66-maintenance-successor-handshake-audit.mjs
           node --check scripts/run-phase67-cloud-successor-handshake-audit.mjs
           node --check scripts/run-phase68-maintenance-successor-activation-audit.mjs
+          node --check scripts/run-phase69-legacy-maintenance-removal-audit.mjs
           node --check assets/today-people-runtime-v130.js
           node --check assets/contact-runtime-v130.js
           node --check assets/friend-finder-v120.js
