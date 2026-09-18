@@ -32,8 +32,8 @@ jobs:
 
       - name: JavaScript syntax check
         run: |
-          node --check assets/app-core.js
-          node --check assets/tools.js
+          node --check --input-type=commonjs < assets/app-core.js
+          node --check --input-type=commonjs < assets/tools.js
           node --check scripts/run-phase53-sidebar-tool-workspace-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
