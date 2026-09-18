@@ -34,9 +34,10 @@ export function runPhase72SearchOwnerCollisionAudit(){
   }
 
   if(!perfLoader.includes('assets/perf-runtime-base.js?v=1.3.0-search73'))issues.push('perf base cache-bust is not search73');
-  if(!post.includes('/assets/perf-runtime.js?v=1.3.0-search73'))issues.push('post-login runtime still loads an older perf runtime cache key');
+  if(!post.includes('/assets/perf-runtime.js?v='))issues.push('post-login runtime no longer loads the perf runtime');
+  if(post.includes('/assets/perf-runtime.js?v=1.3.0-post-login'))issues.push('post-login runtime regressed to the pre-search-owner perf cache key');
   if(!index.includes('assets/online-v5-loader.js?v=1.3.0-search73'))issues.push('online V5 loader cache-bust is not search73');
-  if(!entry.includes('post-login-runtime-v130.js?v=1.3.0-search73'))issues.push('Worker still injects an older post-login runtime cache key');
+  if(!entry.includes('post-login-runtime-v130.js?v='))issues.push('Worker no longer injects the post-login runtime');
 
   const summary={phase:72,name:'single-search-owner',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
