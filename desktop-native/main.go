@@ -130,16 +130,13 @@ func appDataPath() string {
 func windowProc(h uintptr, msg uint32, wparam, lparam uintptr) uintptr {
 	switch msg {
 	case wmClose:
+		rememberWindowState(h)
 		procShowWindow.Call(h, swHide)
 		return 0
 	case wmSysCommand:
 		if wparam&0xFFF0 == scMinimize {
+			rememberWindowState(h)
 			procShowWindow.Call(h, swHide)
-			return 0
-		}
-	case wmKeyDown:
-		if wparam == vkF11 {
-			toggleFullscreen()
 			return 0
 		}
 	}
@@ -160,6 +157,29 @@ func installWindowHook(h uintptr) {
 	}
 }
 
+func rememberWindowState(h uintptr) {
+	if h == 0 {
+		return
+	}
+	fsMu.Lock()
+	isFS := fullscreen
+	fsMu.Unlock()
+	if isFS {
+		return
+	}
+	var r rect
+	ok, _, _ := procGetWindowRect.Call(h, uintptr(unsafe.Pointer(&r)))
+	if ok == 0 || r.Right <= r.Left || r.Bottom <= r.Top {
+		return
+	}
+	z, _, _ := procIsZoomed.Call(h)
+	stateMu.Lock()
+	lastRect = r
+	lastMaximized = z != 0
+	lastStateValid = true
+	stateMu.Unlock()
+}
+
 func showWindow() {
 	wvMu.Lock()
 	h := hwnd
@@ -169,8 +189,29 @@ func showWindow() {
 		go runWebView()
 		return
 	}
-	procShowWindow.Call(h, swRestore)
-	procShowWindow.Call(h, swShow)
+	fsMu.Lock()
+	isFS := fullscreen
+	fsMu.Unlock()
+	if isFS {
+		procShowWindow.Call(h, swShow)
+		procSetForegroundWindow.Call(h)
+		return
+	}
+	stateMu.Lock()
+	r := lastRect
+	maximized := lastMaximized
+	valid := lastStateValid
+	stateMu.Unlock()
+	if valid {
+		if maximized {
+			procShowWindow.Call(h, swMaximize)
+		} else {
+			procSetWindowPos.Call(h, 0, uintptr(r.Left), uintptr(r.Top), uintptr(r.Right-r.Left), uintptr(r.Bottom-r.Top), swpNoZOrder|swpNoActivate)
+			procShowWindow.Call(h, swShow)
+		}
+	} else {
+		procShowWindow.Call(h, swMaximize)
+	}
 	procSetForegroundWindow.Call(h)
 }
 
@@ -179,19 +220,24 @@ func hideWindow() {
 	h := hwnd
 	wvMu.Unlock()
 	if h != 0 {
+		rememberWindowState(h)
 		procShowWindow.Call(h, swHide)
 	}
 }
 
-func toggleFullscreen() {
-	fsMu.Lock()
-	defer fsMu.Unlock()
+func toggleFullscreen() bool {
 	wvMu.Lock()
 	h := hwnd
 	wvMu.Unlock()
 	if h == 0 {
-		return
+		fsMu.Lock()
+		state := fullscreen
+		fsMu.Unlock()
+		return state
 	}
+	rememberWindowState(h)
+	fsMu.Lock()
+	defer fsMu.Unlock()
 	if !fullscreen {
 		procGetWindowRect.Call(h, uintptr(unsafe.Pointer(&savedRect)))
 		savedStyle, _, _ = procGetWindowLongPtr.Call(h, ^uintptr(15))
@@ -218,6 +264,7 @@ func toggleFullscreen() {
 		}
 		fullscreen = false
 	}
+	return fullscreen
 }
 
 func runWebView() {
