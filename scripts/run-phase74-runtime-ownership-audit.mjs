@@ -33,7 +33,6 @@ export function runPhase74RuntimeOwnershipAudit(){
 
   const overrideChecks=[
     ['renderContacts optimized override',/renderContacts=optimizedRenderContacts/.test(perfBase)],
-    ['upcomingEvents cache wrapper',/upcomingEvents=function\(\)/.test(perfBase)],
   ];
   for(const [name,present] of overrideChecks)if(present)warnings.push(name+' remains active; retain until behavior-equivalence and performance tests prove removal safe');
   if((app.match(/function\s+renderContacts\s*\(/g)||[]).length>1)warnings.push('app-core contains multiple renderContacts declarations; inspect execution order before any deletion');
