@@ -16,7 +16,7 @@ export function runPhase65CloudSuccessorAudit(){
   if(!nextCore.includes('__mwsCloudRuntimeV130'))issues.push('staged cloud core marker is missing');
   if(nextCore.includes("document.body.dataset.buildVersion='Mawang Scheduler v.1.1.0'"))issues.push('staged cloud core still writes the old visible version');
   if(!nextLoader.includes('__mwsCloudRuntimeLoaderV130'))issues.push('staged cloud loader marker is missing');
-  if(!nextLoader.includes("/assets/cloud-runtime-v130.js?v=1.3.0-stage65"))issues.push('staged cloud loader does not point to staged cloud core');
+  if(!nextLoader.includes("/assets/cloud-runtime-v130.js?v=1.3.0-stage67"))issues.push('staged cloud loader does not point to staged cloud core');
   if(!entry.includes("url.pathname==='/assets/cloud-runtime-v130.js'"))issues.push('Worker does not expose staged cloud core for production verification');
 
   const summary={phase:65,name:'cloud-successor-staging',issues,warnings,pass:issues.length===0};
