@@ -7,7 +7,7 @@ export function runPhase64MaintenanceSuccessorAudit(){
   const next=fs.readFileSync('assets/maintenance-runtime-v130.js','utf8');
 
   if(!fs.existsSync('assets/cf-v5.7-runtime.js'))issues.push('legacy maintenance fallback was removed before successor validation');
-  if(!perf.includes("assets/maintenance-runtime-v130.js?v=1.3.0-stage64"))issues.push('performance runtime does not prefer the staged maintenance successor');
+  if(!perf.includes("assets/maintenance-runtime-v130.js?v=1.3.0-stage66"))issues.push('performance runtime does not prefer the staged maintenance successor');
   if(!perf.includes("assets/cf-v5.7-runtime.js?v=5.7.1"))issues.push('maintenance runtime has no legacy fallback');
   if(!perf.includes('s.onerror=fallback'))issues.push('maintenance successor load failure does not fall back safely');
   if(!next.includes('__mwsMaintenanceRuntimeV130'))issues.push('maintenance successor marker is missing');
