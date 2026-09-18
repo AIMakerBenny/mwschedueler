@@ -27,7 +27,7 @@ export function runPhase61NativeFriendCardBindingAudit(){
   if(friend.includes('friendGridObserver.observe(grid,{childList:true,subtree:true})'))issues.push('Friend Finder observer is broader than necessary');
   if(!friend.includes('grid-column:1/-1!important'))issues.push('thumbnail does not span the native two-column card');
   if(friend.includes('function cardFromStationButton('))issues.push('old station-button parent guessing remains');
-  if(!loader.includes('friend-finder-v120.js?v=1.3.0-phase61'))issues.push('Phase 61 Friend Finder cache revision is missing');
+  if(!loader.includes('friend-finder-v120.js?v=1.3.0-phase62'))issues.push('Phase 61 Friend Finder cache revision is missing');
 
   const summary={phase:61,name:'native-friend-card-thumbnail-binding',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
