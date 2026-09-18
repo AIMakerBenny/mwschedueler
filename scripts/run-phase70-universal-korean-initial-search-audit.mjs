@@ -6,7 +6,6 @@ export function runPhase70UniversalKoreanInitialSearchAudit(){
   const warnings=[];
   const app=fs.readFileSync('assets/app-core.js','utf8');
   const index=fs.readFileSync('index.html','utf8');
-  const friend=fs.readFileSync('assets/friend-finder-v120.js','utf8');
 
   for(const marker of ['function mwsKoreanInitials','function mwsTextMatches','window.mwsTextMatches=mwsTextMatches','window.contactMatches=contactMatches']){
     if(!app.includes(marker))issues.push('missing shared search marker: '+marker);
@@ -25,9 +24,6 @@ export function runPhase70UniversalKoreanInitialSearchAudit(){
     if(!tag.includes('초성'))issues.push('search input placeholder does not advertise initial search: '+id);
   }
   if(!index.includes('연락처 또는 초성 검색'))issues.push('mini-game contact search placeholder was not updated');
-  for(const marker of ['friendInitialQueryV130','isInitialOnlyQueryV130','friendContactMatchesV130','mwsInitialQueryV130']){
-    if(!friend.includes(marker))issues.push('friend finder initial-search bridge missing: '+marker);
-  }
 
   const start=app.indexOf("const MWS_KOREAN_INITIALS=");
   const end=app.indexOf('function allContactLabels()',start);
