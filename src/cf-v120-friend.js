@@ -45,10 +45,50 @@ async function fetchText(target){
     return {url:target.href,status:502,contentType:'application/json; charset=utf-8',body:JSON.stringify({error:error?.name==='AbortError'?'SOOP request timed out':String(error?.message||error||'SOOP request failed')})};
   }finally{clearTimeout(timer)}
 }
+
+function firstLiveScalar(obj,keys){
+  for(const key of keys){
+    const value=obj?.[key];
+    if((typeof value==='string'||typeof value==='number')&&String(value).trim())return String(value).trim();
+  }
+  return '';
+}
+function normalizeLivePayload(root){
+  if(!root||typeof root!=='object')return null;
+  const queue=[root],seen=new Set();
+  while(queue.length){
+    const value=queue.shift();
+    if(!value||typeof value!=='object'||seen.has(value))continue;
+    seen.add(value);
+    if(!Array.isArray(value)){
+      const broadNo=firstLiveScalar(value,['broadNo','broad_no','bno']);
+      if(broadNo){
+        const viewerRaw=firstLiveScalar(value,['currentSumViewer','current_sum_viewer','total_view_cnt','viewer_cnt','viewerCount']);
+        const viewer=viewerRaw!==''?Number(viewerRaw):null;
+        return {
+          broadNo,
+          broadTitle:firstLiveScalar(value,['broadTitle','broad_title','title']),
+          categoryName:firstLiveScalar(value,['categoryName','category_name','broadCategoryName','broad_category_name']),
+          broadCateNo:firstLiveScalar(value,['broadCateNo','broad_cate_no','categoryNo','category_no']),
+          currentSumViewer:Number.isFinite(viewer)?viewer:null
+        };
+      }
+    }
+    for(const child of Array.isArray(value)?value:Object.values(value))if(child&&typeof child==='object')queue.push(child);
+  }
+  return null;
+}
+function attachNormalizedLive(row){
+  if(!row||typeof row!=='object')return row;
+  let parsed=null;
+  try{parsed=JSON.parse(String(row.body||''))}catch(_){}
+  const live=normalizeLivePayload(parsed);
+  return live?{...row,live}:row;
+}
 async function liveRow(target,force=false){
   const key=target.href,hit=liveCache.get(key);
   if(!force&&hit&&Date.now()-hit.at<LIVE_TTL_MS)return hit.row;
-  const row=await fetchText(target);
+  const row=attachNormalizedLive(await fetchText(target));
   liveCache.set(key,{at:Date.now(),row});
   if(liveCache.size>240){for(const [k,v] of liveCache)if(Date.now()-v.at>120000)liveCache.delete(k)}
   return row;
