@@ -834,6 +834,33 @@ func acquireSingleton() bool {
 	return true
 }
 
+func handleExecutableRelaunch() {
+	// Launching the EXE again while the app is already resident in the tray
+	// should replay the startup intro. Tray double-click still opens the last
+	// Scheduler screen directly through showWindow().
+	introMu.Lock()
+	activeIntro := introWv != nil
+	introMu.Unlock()
+	if activeIntro {
+		showIntroWindow()
+		return
+	}
+
+	appReadyMu.Lock()
+	ready := appReadyState
+	appReadyMu.Unlock()
+	if !ready {
+		showWindow()
+		return
+	}
+
+	startupMu.Lock()
+	startupLocked = true
+	startupMu.Unlock()
+	introDoneOnce = sync.Once{}
+	go runIntroWindow()
+}
+
 func watchShowEvent() {
 	evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV070")
 	ev, _, _ := procCreateEvent.Call(0, 0, 0, uintptr(unsafe.Pointer(evName)))
@@ -844,7 +871,7 @@ func watchShowEvent() {
 	for !exiting {
 		r, _, _ := procWaitForSingleObject.Call(ev, 1000)
 		if r == 0 {
-			showWindow()
+			handleExecutableRelaunch()
 		}
 	}
 }
