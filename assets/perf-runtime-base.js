@@ -20,6 +20,7 @@
     const run=()=>{imageTunePending=false;tuneLazyImages(document)};
     if('requestIdleCallback' in window)requestIdleCallback(run,{timeout:1200});else setTimeout(run,80);
   }
+  window.mwsScheduleImageTune=scheduleImageTune;
   scheduleImageTune();
 
   function applyContactSearch(){
