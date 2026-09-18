@@ -10,8 +10,8 @@
 (()=>{
   'use strict';
   if(window.__mwsCf571Runtime||window.__mwsMaintenanceRuntimeV130)return;
-  window.__mwsCf571Runtime=true;
   window.__mwsMaintenanceRuntimeV130=true;
+  window.__mwsMaintenanceRuntimeV130Ready=false;
 
   const BUILD='CF V5.7.1';
   const R2_MEDIA_BASE='https://pub-ff2081dd33384aa0865bb86b4514bbec.r2.dev';
@@ -26,12 +26,7 @@
   }
 
   function forceBuildVersion(){
-    try{
-      if(document.body?.getAttribute('data-build-version')!==BUILD)document.body?.setAttribute('data-build-version',BUILD);
-      document.querySelectorAll('[id^="mwsBuildVersionV5"],.sidebar-build-version-v52,.sidebar-build-version-v53,[class*="sidebar-build-version"]').forEach(label=>{
-        if(label.textContent!==BUILD)label.textContent=BUILD;
-      });
-    }catch(_){}
+    try{window.mwsApplyAppVersionV120?.()}catch(_){}
   }
 
   function installBuildVersionGuard(){
@@ -444,4 +439,7 @@
   installBackupUi();
   setTimeout(()=>{migrateLiveAndLocalStorage();installCalendarClickGuard();installBuildVersionGuard();installBackupUi()},500);
   setTimeout(()=>{migrateLiveAndLocalStorage();installCalendarClickGuard();forceBuildVersion();installBackupUi()},1500);
+  window.__mwsCf571Runtime=true;
+  window.__mwsMaintenanceRuntimeV130Ready=true;
+  try{window.dispatchEvent(new Event('mws:maintenance-runtime-ready'))}catch(_){}
 })();
