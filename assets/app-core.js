@@ -81,13 +81,14 @@ const THEME_META=[{"id": "midnight", "name": "미드나잇", "bg": "#0f1115", "p
 
 /* v5.2 - Device-local presentation preferences. These never belong to shared cloud data. */
 const MWS_DEVICE_PREFS_KEY='mws_device_preferences_v1';
-const MWS_DEVICE_PREF_KEYS=['theme','backgroundImage','backgroundDim','textScale','resolutionMode','sidebarPinned','postViewMode','postCardColumns','dashboardUpcomingHidden'];
+const MWS_DEVICE_PREF_KEYS=['theme','backgroundImage','backgroundDim','neoTransparency','textScale','resolutionMode','sidebarPinned','postViewMode','postCardColumns','dashboardUpcomingHidden'];
 function mwsExtractDevicePrefs(src=data){
   const x=src&&typeof src==='object'?src:{};
   return {
     theme:String(x.theme||'neon'),
     backgroundImage:typeof x.backgroundImage==='string'?x.backgroundImage:'',
     backgroundDim:Math.max(0,Math.min(85,Number(x.backgroundDim??45))),
+    neoTransparency:Math.max(0,Math.min(60,Number(x.neoTransparency??10))),
     textScale:Math.max(85,Math.min(130,Number(x.textScale)||100)),
     resolutionMode:['fhd','2k','4k','wide','mobile'].includes(String(x.resolutionMode||''))?String(x.resolutionMode):'fhd',
     sidebarPinned:x.sidebarPinned!==false,
@@ -134,6 +135,7 @@ if(loadedDataVersion<28)data.sidebarPinned=true;
 if(!data.theme)data.theme='neon';
 if(data.backgroundImage===undefined)data.backgroundImage='';
 if(data.backgroundDim===undefined)data.backgroundDim=45;
+if(data.neoTransparency===undefined)data.neoTransparency=10;
 const mwsStoredDevicePrefs=mwsLoadDevicePrefs();
 if(mwsStoredDevicePrefs)mwsApplyDevicePrefs(data,mwsStoredDevicePrefs);
 else mwsSaveDevicePrefs(data);
@@ -141,6 +143,8 @@ data.version=52;
 data.contacts.forEach(c=>{if(c.pendingSetup===undefined)c.pendingSetup=false});
 document.body.dataset.theme=data.theme;
 document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));
+document.body.style.setProperty('--neo-surface-opacity',`${100-Math.max(0,Math.min(60,Number(data.neoTransparency??10)))}%`);
+document.body.style.setProperty('--neo-input-opacity',`${Math.min(100,104-Math.max(0,Math.min(60,Number(data.neoTransparency??10))))}%`);
 
 let editingEventId=null,editingContactId=null,calDate=new Date(),contactView='cards';
 let selectedParticipantIds=[];
@@ -153,7 +157,7 @@ let wheelScrollTimers={};
 function loadData(){
   const raw=localStorage.getItem('mawangSchedulerBeta');
   if(raw){try{return JSON.parse(raw)}catch(e){}}
-  return {version:52,categories:DEFAULT_CATEGORIES,contacts:[],posts:[],events:[],collaborations:[],memos:[],targetList:[],contactTags:[],contactTagBanners:{},scheduleClipboard:[],favoriteFolders:[],postViewMode:'card',postCardColumns:4,textScale:100,resolutionMode:'fhd',selfContactId:'',sidebarPinned:true,dashboardUpcomingHidden:false,timezones:DEFAULT_TZS,theme:'neon',backgroundImage:'',backgroundDim:45,miniGames:defaultMiniGames()};
+  return {version:52,categories:DEFAULT_CATEGORIES,contacts:[],posts:[],events:[],collaborations:[],memos:[],targetList:[],contactTags:[],contactTagBanners:{},scheduleClipboard:[],favoriteFolders:[],postViewMode:'card',postCardColumns:4,textScale:100,resolutionMode:'fhd',selfContactId:'',sidebarPinned:true,dashboardUpcomingHidden:false,timezones:DEFAULT_TZS,theme:'neon',backgroundImage:'',backgroundDim:45,neoTransparency:10,miniGames:defaultMiniGames()};
 }
 const AUTOSAVE_KEY='mawangSchedulerAutoBackups';
 
@@ -220,6 +224,7 @@ function normalizeDataShape(){
   data.postViewMode=data.postViewMode==='list'?'list':'card';
   data.postCardColumns=Math.max(2,Math.min(5,Number(data.postCardColumns)||4));
   data.textScale=Math.max(80,Math.min(200,Number(data.textScale)||100));
+  data.neoTransparency=Math.max(0,Math.min(60,Number(data.neoTransparency??10)));
   data.resolutionMode=['fhd','2k','4k','wide','mobile'].includes(String(data.resolutionMode||''))?String(data.resolutionMode):'fhd';
   data.selfContactId=String(data.selfContactId||'');
   if(data.sidebarPinned===undefined)data.sidebarPinned=true;
@@ -4092,6 +4097,20 @@ function renderThemeGrid(){
 }
 window.applyTheme=applyTheme;
 const BUILTIN_DEFAULT_BACKGROUND='assets/default-background.png';
+function applyNeoTransparency(notify=false){
+  const transparency=Math.max(0,Math.min(60,Number(data.neoTransparency??10)));
+  const surfaceOpacity=100-transparency;
+  const inputOpacity=Math.min(100,surfaceOpacity+4);
+  document.body.style.setProperty('--neo-surface-opacity',surfaceOpacity+'%');
+  document.body.style.setProperty('--neo-input-opacity',inputOpacity+'%');
+  const slider=document.getElementById('neoTransparency');
+  const value=document.getElementById('neoTransparencyValue');
+  if(slider)slider.value=transparency;
+  if(value)value.textContent=transparency+'%';
+  if(notify)toast('UI 창 투명도',transparency+'%로 조절했습니다');
+}
+window.applyNeoTransparency=applyNeoTransparency;
+
 function applyBackground(){
   const img=data.backgroundImage||BUILTIN_DEFAULT_BACKGROUND;
   const dim=Math.max(0,Math.min(85,Number(data.backgroundDim??45)));
@@ -4128,6 +4147,7 @@ async function compressBackgroundImage(dataUrl,maxWidth=1920,quality=.82){
 function renderSettings(){
   document.getElementById('themeSelect').value=data.theme;renderThemeGrid();
   applyTextScale(data.textScale??100,false);
+  applyNeoTransparency(false);
   document.getElementById('categoryList').innerHTML=data.categories.map(c=>`<div class="catrow reorder-row" data-category-id="${c.id}"
     ondragover="categoryReorderOver('${c.id}',event)" ondragleave="categoryReorderLeave(event)" ondrop="categoryReorderDrop('${c.id}',event)">
     <button type="button" class="reorder-handle" draggable="true" title="드래그해서 순서 변경"
@@ -4169,6 +4189,18 @@ document.getElementById('backgroundDim').oninput=e=>{
   mwsSaveDevicePrefs(data);
 };
 document.getElementById('backgroundDim').onchange=()=>mwsSaveDevicePrefs(data);
+const neoTransparencySlider=document.getElementById('neoTransparency');
+if(neoTransparencySlider){
+  neoTransparencySlider.oninput=e=>{
+    data.neoTransparency=Math.max(0,Math.min(60,Number(e.target.value)||0));
+    applyNeoTransparency(false);
+    mwsSaveDevicePrefs(data);
+  };
+  neoTransparencySlider.onchange=()=>{
+    mwsSaveDevicePrefs(data);
+    applyNeoTransparency(true);
+  };
+}
 
 let categoryReorderSourceId='';
 function clearCategoryReorderMarks(){document.querySelectorAll('#categoryList .reorder-row').forEach(r=>r.classList.remove('drop-before','drop-after','reorder-dragging'))}
