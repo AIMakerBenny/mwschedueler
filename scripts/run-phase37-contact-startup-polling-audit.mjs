@@ -3,7 +3,7 @@ import fs from 'node:fs';
 export function runPhase37ContactStartupPollingAudit(){
   const issues=[];
   const warnings=[];
-  const src=fs.readFileSync('assets/test-v5.6.js','utf8');
+  const src=fs.readFileSync('assets/contact-runtime-v130.js','utf8');
   const runtime=fs.readFileSync('assets/post-login-runtime-v130.js','utf8');
 
   if(src.includes('setInterval(()=>'))issues.push('contact enhancement startup still uses a tight polling interval');
