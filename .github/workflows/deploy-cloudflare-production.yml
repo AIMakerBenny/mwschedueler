@@ -82,6 +82,10 @@ jobs:
           grep -Fq 'await Promise.all([' /tmp/post-login.js
           grep -Fq "loadStyle('mobile-drawer-v130'" /tmp/post-login.js
           grep -Fq "loadStyle('mobile-calendar-v130'" /tmp/post-login.js
+          grep -Fq "load('mobile-calendar-day-detail-v130'" /tmp/post-login.js
+          retry_contains "$BASE/assets/mobile-calendar-day-detail-v130.js?deploy=$GITHUB_SHA" '__mwsMobileCalendarDayDetailV130' > /tmp/mobile-day-detail.js
+          node --check /tmp/mobile-day-detail.js
+          grep -Fq "event.stopImmediatePropagation()" /tmp/mobile-day-detail.js
           retry_contains "$BASE/assets/cloud-v1.1.js?deploy=$GITHUB_SHA" 'function enterAppShell(chosen)' > /tmp/cloud-core.js
           node --check /tmp/cloud-core.js
           grep -Fq 'void startHydration(chosen)' /tmp/cloud-core.js
@@ -147,6 +151,7 @@ jobs:
           node --check assets/v130-live-contact-fix.js
           node --check assets/soop-fetch-proxy-v123.js
           node --check assets/device-ui.js
+          node --check assets/mobile-calendar-day-detail-v130.js
           node --check assets/app-version-v120.js
           node --check src/cf-v120-friend.js
           node --check src/cf-v121-boss-media.js

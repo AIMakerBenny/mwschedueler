@@ -76,6 +76,9 @@ async function start(){
   const quickAddResult=await load('mobile-calendar-quick-add-v130','/assets/mobile-calendar-quick-add-v130.js?v=1.3.0-mobile-cleanup','__mwsMobileCalendarQuickAddV130');
   if(!quickAddResult.ok){markCriticalUiFailure(['mobile-calendar-quick-add-v130']);return;}
 
+  const dayDetailResult=await load('mobile-calendar-day-detail-v130','/assets/mobile-calendar-day-detail-v130.js?v=1.3.0-mobile-day-detail','__mwsMobileCalendarDayDetailV130');
+  if(!dayDetailResult.ok){markCriticalUiFailure(['mobile-calendar-day-detail-v130']);return;}
+
   const integrityResult=await load('integrity-runtime-v130','/assets/integrity-runtime-v130.js?v=1.3.0-phase12','__mwsIntegrityRuntimeV130');
   if(!integrityResult.ok){markCriticalUiFailure(['integrity-runtime-v130']);return;}
 

@@ -266,3 +266,175 @@ body[data-device-mode="mobile"]:has(#calendar.section.active[data-mobile-calenda
   body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarGrid .daynum{font-size:12px!important}
   body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"] #calendarGrid .mini-event{font-size:8px!important;padding-left:2px!important;padding-right:2px!important}
 }
+
+
+/* Mobile day-detail behavior: title-only month cells and no game artwork. */
+body:is([data-device-mode="mobile"],[data-resolution="mobile"]) #calendar[data-mobile-calendar-view="month"] #calendarGrid .mini-event.mws-steam-host-v111{
+  padding-right:3px!important;
+}
+body:is([data-device-mode="mobile"],[data-resolution="mobile"]) #calendar[data-mobile-calendar-view="month"] #calendarGrid .mini-event>.mws-steam-slot-v111,
+body:is([data-device-mode="mobile"],[data-resolution="mobile"]) #calendar[data-mobile-calendar-view="month"] #calendarGrid .mini-event img{
+  display:none!important;
+}
+body.mws-mobile-day-detail-open-v130{overflow:hidden!important}
+.mws-mobile-calendar-day-detail-v130{
+  position:fixed;
+  inset:0;
+  z-index:12000;
+  display:none;
+  align-items:flex-end;
+  justify-content:center;
+  padding:0;
+}
+.mws-mobile-calendar-day-detail-v130.open{display:flex}
+.mws-mobile-day-backdrop-v130{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.68);
+  backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);
+}
+.mws-mobile-day-sheet-v130{
+  position:relative;
+  z-index:1;
+  width:min(100%,620px);
+  max-height:min(82vh,760px);
+  padding:10px 14px calc(18px + env(safe-area-inset-bottom));
+  border:1px solid color-mix(in srgb,var(--border) 88%,transparent);
+  border-bottom:0;
+  border-radius:22px 22px 0 0;
+  background:color-mix(in srgb,var(--sidebar) 96%,#05070c);
+  box-shadow:0 -18px 50px rgba(0,0,0,.42);
+  overflow:hidden;
+}
+.mws-mobile-day-handle-v130{
+  width:42px;
+  height:4px;
+  margin:0 auto 10px;
+  border-radius:999px;
+  background:color-mix(in srgb,var(--muted) 55%,transparent);
+}
+.mws-mobile-day-head-v130{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:2px 2px 12px;
+}
+.mws-mobile-day-kicker-v130{
+  color:var(--muted);
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.16em;
+}
+.mws-mobile-day-head-v130 h2{
+  margin:2px 0 0;
+  color:var(--text);
+  font-size:23px;
+  line-height:1.25;
+  letter-spacing:-.04em;
+}
+.mws-mobile-day-count-v130{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:11px;
+}
+.mws-mobile-day-close-v130{
+  flex:0 0 42px;
+  width:42px;
+  height:42px;
+  padding:0;
+  border:1px solid var(--border);
+  border-radius:50%;
+  background:var(--input);
+  color:var(--text);
+  font-size:25px;
+  font-weight:300;
+  line-height:1;
+}
+.mws-mobile-day-list-v130{
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+  max-height:calc(min(82vh,760px) - 104px);
+  overflow:auto;
+  overscroll-behavior:contain;
+  padding:1px 1px 4px;
+}
+.mws-mobile-day-event-v130{
+  position:relative;
+  width:100%;
+  min-width:0;
+  padding:13px 13px 12px 16px;
+  border:1px solid var(--border);
+  border-left:4px solid var(--mws-day-event-color,#64748b);
+  border-radius:13px;
+  background:color-mix(in srgb,var(--panel) 94%,#070910);
+  color:var(--text);
+  text-align:left;
+  box-shadow:none;
+}
+.mws-mobile-day-event-v130:active{
+  transform:scale(.992);
+  background:color-mix(in srgb,var(--panel2) 91%,#070910);
+}
+.mws-mobile-day-event-title-v130{
+  display:block;
+  padding-right:84px;
+  font-size:16px;
+  font-weight:950;
+  line-height:1.35;
+  letter-spacing:-.025em;
+}
+.mws-mobile-day-event-time-v130{
+  position:absolute;
+  top:14px;
+  right:13px;
+  color:var(--muted);
+  font-size:10px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.mws-mobile-day-event-row-v130{
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr);
+  gap:8px;
+  margin-top:9px;
+  color:var(--text);
+  font-size:11px;
+  line-height:1.45;
+}
+.mws-mobile-day-event-row-v130 b{
+  color:var(--muted);
+  font-size:10px;
+  font-weight:850;
+}
+.mws-mobile-day-event-row-v130 span{
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.mws-mobile-day-event-description-v130{
+  display:block;
+  margin-top:10px;
+  padding-top:9px;
+  border-top:1px solid color-mix(in srgb,var(--border) 72%,transparent);
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.55;
+}
+.mws-mobile-day-event-action-v130{
+  display:block;
+  margin-top:10px;
+  color:color-mix(in srgb,var(--accent) 82%,var(--text));
+  font-size:10px;
+  font-weight:900;
+  text-align:right;
+}
+.mws-mobile-day-empty-v130{
+  padding:36px 16px;
+  border:1px dashed var(--border);
+  border-radius:13px;
+  color:var(--muted);
+  font-size:12px;
+  text-align:center;
+}
