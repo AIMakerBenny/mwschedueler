@@ -19,8 +19,6 @@ export function runPhase83SetTabSuccessorAudit(){
   if(!/assets\/perf-runtime\.js\?v=1\.4\.0-phase(?:8[3-9]|9[0-9]|[1-9][0-9]{2,})/.test(index))issues.push('index perf cache-bust is older than phase83');
   if(!/post-login-runtime-v130\.js\?v=1\.4\.0-phase(?:8[3-9]|9[0-9]|[1-9][0-9]{2,})/.test(entry))issues.push('Worker post-login cache-bust is older than phase83');
 
-  if(!perf.includes("const baseSetTab=typeof setTab==='function'?setTab:null;"))warnings.push('legacy performance setTab wrapper is already absent; Phase 84 removal may already have occurred');
-
   const summary={phase:83,name:'settab-successor-activation',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
   if(issues.length)process.exitCode=1;
