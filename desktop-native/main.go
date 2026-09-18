@@ -565,9 +565,6 @@ func runWebView() {
 		return
 	}
 	defer w.Destroy()
-	w.Bind("__mwsToggleFullscreen", func() bool { return toggleFullscreen() })
-	bridge := desktopBridgeScriptForPage()
-	w.Init(bridge)
 
 	h := uintptr(w.Window())
 	wvMu.Lock()
@@ -579,6 +576,7 @@ func runWebView() {
 	procShowWindow.Call(h, swHide)
 
 	var revealOnce sync.Once
+	w.Bind("__mwsToggleFullscreen", func() bool { return toggleFullscreen() })
 	w.Bind("__mwsIntroMounted", func() {
 		revealOnce.Do(func() {
 			startupMu.Lock()
@@ -593,6 +591,8 @@ func runWebView() {
 		})
 	})
 
+	bridge := desktopBridgeScriptForPage()
+	w.Init(bridge)
 	w.Navigate(appURL)
 
 	time.AfterFunc(1800*time.Millisecond, func() {
