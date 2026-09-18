@@ -395,6 +395,13 @@ jobs:
           echo '[6/8] post-login performance and boss assets'
           retry_contains "$BASE/assets/perf-runtime.js?v=1.3.0-post-login" 'lossless image policy' > /tmp/perf.js
           node --check /tmp/perf.js
+          grep -Fq 'maintenance-runtime-v130.js?v=1.3.0-stage68' /tmp/perf.js
+          grep -Fq 'Mawang maintenance runtime readiness handshake failed' /tmp/perf.js
+          if grep -Fq 'cf-v5.7-runtime.js' /tmp/perf.js; then
+            echo 'Legacy maintenance runtime reference remains active.' >&2
+            exit 1
+          fi
+          node --check /tmp/perf.js
           grep -Fq 'preserveOriginalImage' /tmp/perf.js
           grep -Fq 'content-planner-host.js?v=1.3.0-order53' /tmp/perf.js
           node --check src/cf-v121-boss-media.js
@@ -417,6 +424,7 @@ jobs:
           node --check scripts/run-phase65-cloud-successor-audit.mjs
           node --check scripts/run-phase66-maintenance-successor-handshake-audit.mjs
           node --check scripts/run-phase67-cloud-successor-handshake-audit.mjs
+          node --check scripts/run-phase68-maintenance-successor-activation-audit.mjs
           node --check assets/today-people-runtime-v130.js
           node --check assets/contact-runtime-v130.js
           node --check assets/friend-finder-v120.js
