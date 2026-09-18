@@ -253,8 +253,8 @@ document.addEventListener('click',event=>{
 document.addEventListener('click',event=>{
   const target=event.target;
   if(!(target instanceof Element))return;
-  const navButton=target.closest('.mws-mobile-tabs [data-mobile-tab]');
-  if(!navButton)return;
+  const navigationAction=target.closest('.mws-mobile-tabs [data-mobile-tab], .mobile-nav-toggle, .sidebar [data-tab]');
+  if(!navigationAction)return;
   const root=document.getElementById(SHEET_ID);
   if(root?.classList.contains('open'))closeSheet();
 },true);

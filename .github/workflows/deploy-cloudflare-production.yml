@@ -93,6 +93,11 @@ jobs:
           grep -Fq "node.setAttribute('draggable','true')" /tmp/mobile-day-detail.js
           grep -Fq "mws-mobile-tabs [data-mobile-tab]" /tmp/mobile-day-detail.js
           grep -Fq 'aria-modal="false"' /tmp/mobile-day-detail.js
+          grep -Fq ".mobile-nav-toggle, .sidebar [data-tab]" /tmp/mobile-day-detail.js
+          retry_contains "$BASE/assets/mobile-calendar-quick-add-v130.js?deploy=$GITHUB_SHA" '__mwsMobileCalendarQuickAddV130' > /tmp/mobile-quick-add.js
+          node --check /tmp/mobile-quick-add.js
+          grep -Fq "mws-mobile-day-detail-open-v130" /tmp/mobile-quick-add.js
+          grep -Fq "mws-mobile-nav-offset-v130" /tmp/mobile-quick-add.js
           retry_contains "$BASE/assets/mobile-calendar-v130.css?deploy=$GITHUB_SHA" 'mws-mobile-calendar-extra-v130' > /tmp/mobile-calendar.css
           grep -Fq "mini-event-main" /tmp/mobile-calendar.css
           grep -Fq "mws-mobile-day-person-avatar-v130" /tmp/mobile-calendar.css
@@ -119,6 +124,8 @@ jobs:
           NODE
           retry_contains "$BASE/assets/device-ui.js?deploy=$GITHUB_SHA" 'mws-majoku-subnav-collapsed-v130' > /tmp/device-ui.js
           node --check /tmp/device-ui.js
+          retry_contains "$BASE/assets/device-ui.css?deploy=$GITHUB_SHA" 'z-index:5200!important' > /tmp/device-ui.css
+          grep -Fq '.mws-mobile-tabs' /tmp/device-ui.css
 
           echo '[3/8] Friend Finder UI and live batch endpoint'
           retry_contains "$BASE/assets/friend-finder-v120.js?deploy=$GITHUB_SHA" 'LIVE thumbnails' > /tmp/friend.js
@@ -164,6 +171,7 @@ jobs:
           node --check assets/soop-fetch-proxy-v123.js
           node --check assets/device-ui.js
           node --check assets/mobile-calendar-day-detail-v130.js
+          node --check assets/mobile-calendar-quick-add-v130.js
           node --check assets/app-version-v120.js
           node --check src/cf-v120-friend.js
           node --check src/cf-v121-boss-media.js

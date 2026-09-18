@@ -37,7 +37,7 @@ body[data-device-mode="mobile"] select,
 body[data-device-mode="mobile"] textarea{font-size:16px!important;min-height:44px;max-width:100%;min-width:0}
 body[data-device-mode="mobile"] button,
 body[data-device-mode="mobile"] label.secondary{min-height:44px;touch-action:manipulation}
-body[data-device-mode="mobile"] .modal{padding:8px!important;align-items:flex-end!important}
+body[data-device-mode="mobile"] .modal{padding:8px!important;align-items:flex-end!important;z-index:5200!important}
 body[data-device-mode="mobile"] .modalbox{width:100%!important;max-width:100%!important;min-width:0!important;max-height:calc(100dvh - 24px)!important;border-radius:20px 20px 12px 12px!important;padding:18px 14px calc(18px + env(safe-area-inset-bottom))!important;overflow:auto!important}
 body[data-device-mode="mobile"] .title-device{grid-template-columns:1fr!important}
 

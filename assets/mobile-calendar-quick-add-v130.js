@@ -23,7 +23,7 @@ style.textContent=`
 body[data-device-mode="mobile"] .mws-mobile-calendar-quick-add-v130{
   position:fixed;
   left:50%;
-  bottom:calc(82px + env(safe-area-inset-bottom));
+  bottom:calc(var(--mws-mobile-nav-offset-v130,68px) + 14px);
   z-index:4850;
   width:min(72vw,420px);
   pointer-events:none;
@@ -31,6 +31,10 @@ body[data-device-mode="mobile"] .mws-mobile-calendar-quick-add-v130{
 }
 body[data-device-mode="mobile"] .mws-mobile-calendar-quick-add-v130.is-visible{
   display:block;
+}
+body[data-device-mode="mobile"].mws-mobile-day-detail-open-v130 .mws-mobile-calendar-quick-add-v130{
+  display:none!important;
+  pointer-events:none!important;
 }
 body[data-device-mode="mobile"] .mws-mobile-calendar-quick-add-v130 #newEventBtn{
   display:flex!important;
@@ -92,8 +96,15 @@ function restoreButton(){
   else originalParent.appendChild(button);
 }
 
+function syncNavOffset(){
+  const nav=document.querySelector('.mws-mobile-tabs');
+  const rect=nav?.getBoundingClientRect?.();
+  const height=rect&&rect.height>0?Math.ceil(rect.height):68;
+  bar.style.setProperty('--mws-mobile-nav-offset-v130',height+'px');
+}
 function sync(){
-  const show=isMobileMonth();
+  syncNavOffset();
+  const show=isMobileMonth()&&!document.body.classList.contains('mws-mobile-day-detail-open-v130');
   if(show){
     if(button.parentNode!==bar)bar.appendChild(button);
     bar.hidden=false;
@@ -113,11 +124,13 @@ function queueSync(){
 }
 
 new MutationObserver(queueSync).observe(calendar,{attributes:true,attributeFilter:['class','data-mobile-calendar-view']});
-new MutationObserver(queueSync).observe(document.body,{attributes:true,attributeFilter:['data-device-mode','data-resolution']});
+new MutationObserver(queueSync).observe(document.body,{attributes:true,attributeFilter:['data-device-mode','data-resolution','class']});
 document.addEventListener('click',event=>{
   if(event.target.closest('[data-tab], [data-calendar-view]'))queueSync();
 },true);
 window.addEventListener('mws:post-login-ui-ready',queueSync);
 window.addEventListener('mawang:datachange',queueSync);
+window.addEventListener('resize',queueSync,{passive:true});
+window.addEventListener('orientationchange',queueSync,{passive:true});
 queueSync();
 })();
