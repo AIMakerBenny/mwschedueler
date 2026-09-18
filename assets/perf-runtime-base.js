@@ -5,49 +5,9 @@
   function record(name,ms){const p=perf[name]||{count:0,total:0,max:0,last:0,avg:0};p.count++;p.total+=ms;p.last=ms;p.max=Math.max(p.max,ms);p.avg=p.total/p.count;perf[name]=p}
   window.mwsPerformanceSnapshot=()=>JSON.parse(JSON.stringify(perf));
 
-  let historyCache=null,lastMapCache=null,upcomingCache=null,upcomingMapCache=null,historyCacheDay='',upcomingCacheDay='';
-  function invalidate(){historyCache=null;lastMapCache=null;upcomingCache=null;upcomingMapCache=null;historyCacheDay='';upcomingCacheDay=''}
+  function invalidate(){}
   window.mwsInvalidatePerformanceCaches=invalidate;
 
-  const baseNormalized=typeof normalizedCollaborationHistory==='function'?normalizedCollaborationHistory:null;
-  function cachedHistory(){
-    const day=todayKST();
-    if(historyCache&&historyCacheDay===day)return historyCache;
-    historyCacheDay=day;
-    historyCache=baseNormalized?baseNormalized():[];
-    lastMapCache=null;
-    return historyCache;
-  }
-  function lastMap(){
-    const day=todayKST();
-    if(lastMapCache&&historyCacheDay===day)return lastMapCache;
-    const map=new Map();
-    for(const row of cachedHistory())for(const id of row.participants||[])if(!map.has(id))map.set(id,row);
-    lastMapCache=map;
-    return map;
-  }
-
-  const baseUpcoming=typeof upcomingEvents==='function'?upcomingEvents:null;
-  function cachedUpcoming(){
-    const day=todayKST();
-    if(upcomingCache&&upcomingCacheDay===day)return upcomingCache;
-    upcomingCacheDay=day;
-    upcomingCache=baseUpcoming?baseUpcoming():[];
-    upcomingMapCache=null;
-    return upcomingCache;
-  }
-  function upcomingMap(){
-    const day=todayKST();
-    if(upcomingMapCache&&upcomingCacheDay===day)return upcomingMapCache;
-    const map=new Map();
-    for(const row of cachedUpcoming())for(const id of row.participants||[]){
-      if(!map.has(id))map.set(id,[]);
-      const a=map.get(id);
-      if(a.length<8)a.push(row);
-    }
-    upcomingMapCache=map;
-    return map;
-  }
   const style=document.createElement('style');style.id='mws-performance-runtime-style';style.textContent='.contact-card{content-visibility:auto;contain-intrinsic-size:auto 170px}.contact-card[hidden]{display:none!important}.mws-boss-row-v121{content-visibility:auto;contain-intrinsic-size:auto 58px}';document.head.appendChild(style);
 
   function tuneLazyImages(root=document){
