@@ -22,7 +22,7 @@ export function runPhase61NativeFriendCardBindingAudit(){
   if(!friend.includes("document.getElementById('friendFinder')"))issues.push('thumbnail runtime does not bind the native Friend Finder section directly');
   if(!friend.includes("root.querySelectorAll('#friendFinderGridV5 .friend-finder-card-v5[data-id],.friend-finder-card-v5[data-id]')"))issues.push('thumbnail runtime does not bind native cards by class and data-id');
   if(!friend.includes('function baseLiveHint(card)'))issues.push('native LIVE card broadcast hint fallback is missing');
-  if(!friend.includes("card.querySelector?.('[data-watch]')"))issues.push('native LIVE watch URL is not used as a broadcast hint');
+  if(!friend.includes("card?.querySelector?.('[data-watch]')"))issues.push('native LIVE watch URL is not used as a broadcast hint');
   if(!friend.includes("friendGridObserver.observe(grid,{childList:true})"))issues.push('native full-grid rerenders are not observed');
   if(friend.includes('friendGridObserver.observe(grid,{childList:true,subtree:true})'))issues.push('Friend Finder observer is broader than necessary');
   if(!friend.includes('grid-column:1/-1!important'))issues.push('thumbnail does not span the native two-column card');
