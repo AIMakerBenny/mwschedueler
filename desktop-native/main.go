@@ -3,13 +3,16 @@
 package main
 
 import (
-	_ "embed"
+	"embed"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
 	"syscall"
@@ -45,8 +48,29 @@ const (
 	vkMenu           = 0x12
 	vkReturn         = 0x0D
 	wmSetIcon        = 0x0080
+	wmDestroy        = 0x0002
+	wmPaint          = 0x000F
+	wmEraseBkgnd     = 0x0014
+	wmTimer          = 0x0113
+	wmKeyDown        = 0x0100
+	wmLButtonDown    = 0x0201
+	wmAppStopIntro   = 0x8001
+	vkEscape         = 0x1B
+	vkSpace          = 0x20
 	iconSmall        = 0
 	iconBig          = 1
+	wsPopup          = 0x80000000
+	wsExTopmost      = 0x00000008
+	wsExToolWindow   = 0x00000080
+	wsExLayered      = 0x00080000
+	lwaAlpha         = 0x00000002
+	dtCenter         = 0x00000001
+	dtVCenter        = 0x00000004
+	dtSingleLine     = 0x00000020
+	transparentBk    = 1
+	fontWeightBold   = 700
+	smCxScreen       = 0
+	smCyScreen       = 1
 )
 
 type rect struct{ Left, Top, Right, Bottom int32 }
@@ -58,21 +82,78 @@ type monitorInfo struct {
 	DwFlags   uint32
 }
 
+type point struct {
+	X int32
+	Y int32
+}
+
+type winMsg struct {
+	Hwnd     uintptr
+	Message  uint32
+	WParam   uintptr
+	LParam   uintptr
+	Time     uint32
+	Pt       point
+	LPrivate uint32
+}
+
+type paintStruct struct {
+	Hdc         uintptr
+	Erase       int32
+	Paint       rect
+	Restore     int32
+	IncUpdate   int32
+	RgbReserved [32]byte
+}
+
+type wndClassEx struct {
+	CbSize     uint32
+	Style      uint32
+	WndProc    uintptr
+	ClsExtra   int32
+	WndExtra   int32
+	Instance   uintptr
+	Icon       uintptr
+	Cursor     uintptr
+	Background uintptr
+	MenuName   *uint16
+	ClassName  *uint16
+	IconSm     uintptr
+}
+
+type gdiplusStartupInput struct {
+	Version                  uint32
+	DebugEventCallback       uintptr
+	SuppressBackgroundThread int32
+	SuppressExternalCodecs   int32
+}
+
 type introSession struct {
-	w    webview.WebView
-	hwnd uintptr
-	done sync.Once
+	mu          sync.Mutex
+	baseHwnd    uintptr
+	imageHwnd   uintptr
+	textHwnd    uintptr
+	image       uintptr
+	gdipToken   uintptr
+	started     time.Time
+	textShownAt time.Time
+	fadeOutAt   time.Time
+	phase       int
+	skip        bool
+	stopping    bool
 }
 
 //go:embed assets/mawang.ico
 var iconBytes []byte
 
-//go:embed assets/mawang-intro.b64
-var introImageB64 string
+//go:embed assets/intro-parts/*.txt
+var introAssetParts embed.FS
 
 var (
 	user32                  = syscall.NewLazyDLL("user32.dll")
 	kernel32                = syscall.NewLazyDLL("kernel32.dll")
+	gdi32                   = syscall.NewLazyDLL("gdi32.dll")
+	gdiplus                 = syscall.NewLazyDLL("gdiplus.dll")
 	procShowWindow          = user32.NewProc("ShowWindow")
 	procSetForegroundWindow = user32.NewProc("SetForegroundWindow")
 	procSetWindowLongPtr    = user32.NewProc("SetWindowLongPtrW")
@@ -92,6 +173,43 @@ var (
 	procSetEvent            = kernel32.NewProc("SetEvent")
 	procWaitForSingleObject = kernel32.NewProc("WaitForSingleObject")
 	procCloseHandle         = kernel32.NewProc("CloseHandle")
+	procGetModuleHandle     = kernel32.NewProc("GetModuleHandleW")
+	procRegisterClassEx     = user32.NewProc("RegisterClassExW")
+	procCreateWindowEx      = user32.NewProc("CreateWindowExW")
+	procDefWindowProc       = user32.NewProc("DefWindowProcW")
+	procGetMessage          = user32.NewProc("GetMessageW")
+	procTranslateMessage    = user32.NewProc("TranslateMessage")
+	procDispatchMessage     = user32.NewProc("DispatchMessageW")
+	procPostQuitMessage     = user32.NewProc("PostQuitMessage")
+	procDestroyWindow       = user32.NewProc("DestroyWindow")
+	procPostMessage         = user32.NewProc("PostMessageW")
+	procSetTimer            = user32.NewProc("SetTimer")
+	procKillTimer           = user32.NewProc("KillTimer")
+	procInvalidateRect      = user32.NewProc("InvalidateRect")
+	procBeginPaint          = user32.NewProc("BeginPaint")
+	procEndPaint            = user32.NewProc("EndPaint")
+	procFillRect            = user32.NewProc("FillRect")
+	procGetClientRect       = user32.NewProc("GetClientRect")
+	procSetLayeredAlpha     = user32.NewProc("SetLayeredWindowAttributes")
+	procGetSystemMetrics    = user32.NewProc("GetSystemMetrics")
+	procDrawText            = user32.NewProc("DrawTextW")
+	procCreateSolidBrush    = gdi32.NewProc("CreateSolidBrush")
+	procDeleteObject        = gdi32.NewProc("DeleteObject")
+	procCreateFont          = gdi32.NewProc("CreateFontW")
+	procSelectObject        = gdi32.NewProc("SelectObject")
+	procSetBkMode           = gdi32.NewProc("SetBkMode")
+	procSetTextColor        = gdi32.NewProc("SetTextColor")
+	procGdiplusStartup      = gdiplus.NewProc("GdiplusStartup")
+	procGdiplusShutdown     = gdiplus.NewProc("GdiplusShutdown")
+	procGdipLoadImage       = gdiplus.NewProc("GdipLoadImageFromFile")
+	procGdipDisposeImage    = gdiplus.NewProc("GdipDisposeImage")
+	procGdipCreateGraphics  = gdiplus.NewProc("GdipCreateFromHDC")
+	procGdipDeleteGraphics  = gdiplus.NewProc("GdipDeleteGraphics")
+	procGdipGraphicsClear   = gdiplus.NewProc("GdipGraphicsClear")
+	procGdipDrawImageRectI  = gdiplus.NewProc("GdipDrawImageRectI")
+	procGdipGetImageWidth   = gdiplus.NewProc("GdipGetImageWidth")
+	procGdipGetImageHeight  = gdiplus.NewProc("GdipGetImageHeight")
+	procGdipInterpolation   = gdiplus.NewProc("GdipSetInterpolationMode")
 )
 
 var (
@@ -114,8 +232,12 @@ var (
 	pendingMu      sync.Mutex
 	pendingSection string
 
-	introMu     sync.Mutex
-	activeIntro *introSession
+	introMu        sync.Mutex
+	activeIntro    *introSession
+	introWndProcCB = syscall.NewCallback(introWndProc)
+	introAssetOnce sync.Once
+	introAssetPath string
+	introAssetErr  error
 
 	appStartOnce  sync.Once
 	appReadyMu    sync.Mutex
@@ -235,116 +357,6 @@ const appBridgeScript = `(function(){
   },true);
 })();`
 
-const introHTMLTemplate = `<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mawang Scheduler</title>
-<style>
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}
-body{user-select:none}
-#stage{position:fixed;inset:0;background:#000;overflow:hidden}
-#photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;transform:scale(1.01);transition:opacity .72s ease,transform 1s ease}
-#stage.photo-in #photo{opacity:1;transform:scale(1)}
-#stage.photo-out #photo{opacity:0}
-#title{position:absolute;left:50%;top:50%;width:min(92vw,1280px);text-align:center;color:#fff;opacity:0;filter:blur(9px);transform:translate(-50%,-44%) scale(.98);transition:opacity .82s ease,filter .82s ease,transform 1s cubic-bezier(.2,.8,.2,1)}
-#stage.title-in #title{opacity:1;filter:blur(0);transform:translate(-50%,-50%) scale(1)}
-#stage.title-out #title{opacity:0;filter:blur(5px);transform:translate(-50%,-53%) scale(1.01)}
-#titleMain{font:900 clamp(46px,6.6vw,108px)/.95 "Segoe UI",Arial,sans-serif;letter-spacing:-.055em;text-shadow:0 0 34px rgba(130,185,255,.18),0 16px 48px rgba(0,0,0,.84)}
-#titleKo{margin-top:20px;font:700 clamp(17px,1.55vw,27px)/1.2 "Segoe UI","Malgun Gothic",sans-serif;letter-spacing:.30em;color:#dfe1e9}
-#line{width:0;height:2px;margin:25px auto 0;background:linear-gradient(90deg,transparent,#8dbdff 24%,#e0a1d7 76%,transparent);transition:width 1s ease .18s}
-#stage.title-in #line{width:min(440px,44vw)}
-#status{position:absolute;left:50%;bottom:25px;transform:translateX(-50%);font:600 10px/1 "Segoe UI","Malgun Gothic",sans-serif;letter-spacing:.14em;color:rgba(255,255,255,.30);opacity:0;transition:opacity .45s ease}
-#stage.waiting #status{opacity:1}
-</style>
-</head>
-<body>
-<div id="stage">
-  <img id="photo" alt="">
-  <div id="title">
-    <div id="titleMain">Mawang Scheduler</div>
-    <div id="titleKo">마왕스케줄러</div>
-    <div id="line"></div>
-  </div>
-  <div id="status">STARTING...</div>
-</div>
-<script>
-(function(){
-  var stage=document.getElementById('stage');
-  var photo=document.getElementById('photo');
-  var titleReady=false;
-  var ending=false;
-  var finished=false;
-  var pollTimer=0;
-  var imageSrc='data:image/webp;base64,__INTRO_B64__';
-
-  function appIsReady(){
-    try{
-      Promise.resolve(window.__mwsIsAppReady()).then(function(ready){
-        if(ready){
-          if(titleReady)beginHandoff();
-        }else if(titleReady){
-          stage.classList.add('waiting');
-        }
-      }).catch(function(){});
-    }catch(_){}
-  }
-
-  function beginHandoff(){
-    if(ending||finished)return;
-    ending=true;
-    clearInterval(pollTimer);
-    stage.classList.remove('waiting');
-    stage.classList.add('title-out');
-    setTimeout(function(){
-      if(finished)return;
-      finished=true;
-      try{window.__mwsIntroDone();}catch(_){}
-    },760);
-  }
-
-  function showTitle(){
-    stage.classList.add('photo-out');
-    setTimeout(function(){
-      stage.classList.add('title-in');
-      setTimeout(function(){
-        titleReady=true;
-        appIsReady();
-      },1400);
-    },620);
-  }
-
-  function skip(){
-    if(ending||finished)return;
-    stage.classList.add('photo-out');
-    stage.classList.add('title-in');
-    titleReady=true;
-    appIsReady();
-  }
-
-  stage.addEventListener('click',skip,true);
-  window.addEventListener('keydown',function(e){
-    if(e.code==='Space'||e.key===' '||e.key==='Escape'){
-      e.preventDefault();
-      skip();
-    }
-  },true);
-
-  photo.onload=function(){
-    requestAnimationFrame(function(){
-      requestAnimationFrame(function(){stage.classList.add('photo-in');});
-    });
-    setTimeout(showTitle,2500);
-  };
-  photo.onerror=showTitle;
-  photo.src=imageSrc;
-
-  pollTimer=setInterval(appIsReady,150);
-})();
-</script>
-</body>
-</html>`
 
 func appDataPath() string {
 	base := os.Getenv("LOCALAPPDATA")
@@ -356,20 +368,50 @@ func appDataPath() string {
 	return dir
 }
 
-func introDataPath() string {
-	base := os.Getenv("LOCALAPPDATA")
-	if base == "" {
-		base = os.TempDir()
-	}
-	dir := filepath.Join(base, "MawangSchedulerDesktop", "IntroWebView2")
-	_ = os.MkdirAll(dir, 0700)
-	return dir
+func ensureIntroAsset() (string, error) {
+	introAssetOnce.Do(func() {
+		names, err := fs.Glob(introAssetParts, "assets/intro-parts/*.txt")
+		if err != nil || len(names) == 0 {
+			introAssetErr = fmt.Errorf("intro asset parts unavailable")
+			return
+		}
+		sort.Strings(names)
+		var encoded strings.Builder
+		for _, name := range names {
+			part, err := introAssetParts.ReadFile(name)
+			if err != nil {
+				introAssetErr = err
+				return
+			}
+			encoded.WriteString(strings.TrimSpace(string(part)))
+		}
+		raw, err := base64.StdEncoding.DecodeString(encoded.String())
+		if err != nil {
+			introAssetErr = err
+			return
+		}
+		if len(raw) < 4 || raw[0] != 0xFF || raw[1] != 0xD8 || raw[len(raw)-2] != 0xFF || raw[len(raw)-1] != 0xD9 {
+			introAssetErr = fmt.Errorf("intro jpeg validation failed")
+			return
+		}
+		base := os.Getenv("LOCALAPPDATA")
+		if base == "" {
+			base = os.TempDir()
+		}
+		dir := filepath.Join(base, "MawangSchedulerDesktop")
+		if err := os.MkdirAll(dir, 0700); err != nil {
+			introAssetErr = err
+			return
+		}
+		path := filepath.Join(dir, "mawang-intro-native.jpg")
+		if err := os.WriteFile(path, raw, 0600); err != nil {
+			introAssetErr = err
+			return
+		}
+		introAssetPath = path
+	})
+	return introAssetPath, introAssetErr
 }
-
-func introHTML() string {
-	return strings.Replace(introHTMLTemplate, "__INTRO_B64__", strings.TrimSpace(introImageB64), 1)
-}
-
 func windowProc(h uintptr, msg uint32, wparam, lparam uintptr) uintptr {
 	switch msg {
 	case wmClose:
@@ -432,13 +474,24 @@ func currentIntro() *introSession {
 
 func showIntroWindow() {
 	session := currentIntro()
-	if session == nil || session.hwnd == 0 {
+	if session == nil {
 		return
 	}
-	procShowWindow.Call(session.hwnd, swShow)
-	procSetForegroundWindow.Call(session.hwnd)
+	session.mu.Lock()
+	target := session.imageHwnd
+	if session.phase >= 1 {
+		target = session.textHwnd
+	}
+	base := session.baseHwnd
+	session.mu.Unlock()
+	if base != 0 {
+		procShowWindow.Call(base, swShow)
+	}
+	if target != 0 {
+		procShowWindow.Call(target, swShow)
+		procSetForegroundWindow.Call(target)
+	}
 }
-
 func showWindow() {
 	startupMu.Lock()
 	locked := startupLocked
@@ -541,22 +594,6 @@ func toggleFullscreen() bool {
 	return fullscreen
 }
 
-func makeIntroBorderless(h uintptr) {
-	if h == 0 {
-		return
-	}
-	style, _, _ := procGetWindowLongPtr.Call(h, ^uintptr(15))
-	style &^= wsCaption | wsThickFrame | wsMinBox | wsMaxBox | wsSysMenu
-	procSetWindowLongPtr.Call(h, ^uintptr(15), style)
-	mon, _, _ := procMonitorFromWindow.Call(h, monitorNearest)
-	mi := monitorInfo{CbSize: uint32(unsafe.Sizeof(monitorInfo{}))}
-	if mon != 0 {
-		procGetMonitorInfo.Call(mon, uintptr(unsafe.Pointer(&mi)))
-		r := mi.RcMonitor
-		procSetWindowPos.Call(h, 0, uintptr(r.Left), uintptr(r.Top), uintptr(r.Right-r.Left), uintptr(r.Bottom-r.Top), swpFrameChanged|swpNoOwnerZOrder)
-	}
-}
-
 func startApp() {
 	appStartOnce.Do(func() {
 		go runAppWebView()
@@ -634,43 +671,573 @@ func runAppWebView() {
 	oldWndProc = 0
 }
 
+func registerIntroClass() error {
+	className, _ := syscall.UTF16PtrFromString("MawangSchedulerNativeIntroV080")
+	instance, _, _ := procGetModuleHandle.Call(0)
+	wc := wndClassEx{
+		CbSize:    uint32(unsafe.Sizeof(wndClassEx{})),
+		WndProc:   introWndProcCB,
+		Instance:  instance,
+		ClassName: className,
+	}
+	r, _, err := procRegisterClassEx.Call(uintptr(unsafe.Pointer(&wc)))
+	if r == 0 {
+		if errno, ok := err.(syscall.Errno); !ok || errno != syscall.Errno(1410) {
+			return fmt.Errorf("register intro class: %v", err)
+		}
+	}
+	return nil
+}
+
+func createIntroWindow(exStyle, style uintptr, width, height int32) uintptr {
+	className, _ := syscall.UTF16PtrFromString("MawangSchedulerNativeIntroV080")
+	title, _ := syscall.UTF16PtrFromString(appTitle)
+	instance, _, _ := procGetModuleHandle.Call(0)
+	h, _, _ := procCreateWindowEx.Call(
+		exStyle,
+		uintptr(unsafe.Pointer(className)),
+		uintptr(unsafe.Pointer(title)),
+		style,
+		0, 0, uintptr(width), uintptr(height),
+		0, 0, instance, 0,
+	)
+	return h
+}
+
+func setIntroAlpha(h uintptr, alpha int) {
+	if h == 0 {
+		return
+	}
+	if alpha < 0 {
+		alpha = 0
+	}
+	if alpha > 255 {
+		alpha = 255
+	}
+	procSetLayeredAlpha.Call(h, 0, uintptr(alpha), lwaAlpha)
+}
+
+func introEase(t float64) float64 {
+	if t < 0 {
+		t = 0
+	}
+	if t > 1 {
+		t = 1
+	}
+	return t * t * (3 - 2*t)
+}
+
+func introAlpha(t time.Duration, duration time.Duration, reverse bool) int {
+	if duration <= 0 {
+		if reverse {
+			return 0
+		}
+		return 255
+	}
+	v := introEase(float64(t) / float64(duration))
+	if reverse {
+		v = 1 - v
+	}
+	return int(v * 255)
+}
+
+func loadNativeIntroImage(path string) (uintptr, uintptr, error) {
+	var token uintptr
+	input := gdiplusStartupInput{Version: 1}
+	status, _, _ := procGdiplusStartup.Call(
+		uintptr(unsafe.Pointer(&token)),
+		uintptr(unsafe.Pointer(&input)),
+		0,
+	)
+	if status != 0 || token == 0 {
+		return 0, 0, fmt.Errorf("gdiplus startup failed: %d", status)
+	}
+	wide, err := syscall.UTF16PtrFromString(path)
+	if err != nil {
+		procGdiplusShutdown.Call(token)
+		return 0, 0, err
+	}
+	var image uintptr
+	status, _, _ = procGdipLoadImage.Call(uintptr(unsafe.Pointer(wide)), uintptr(unsafe.Pointer(&image)))
+	if status != 0 || image == 0 {
+		procGdiplusShutdown.Call(token)
+		return 0, 0, fmt.Errorf("intro image load failed: %d", status)
+	}
+	return token, image, nil
+}
+
+func paintBlack(hdc uintptr, r *rect) {
+	brush, _, _ := procCreateSolidBrush.Call(0)
+	if brush != 0 {
+		procFillRect.Call(hdc, uintptr(unsafe.Pointer(r)), brush)
+		procDeleteObject.Call(brush)
+	}
+}
+
+func paintIntroImage(session *introSession, hdc uintptr, r rect) {
+	paintBlack(hdc, &r)
+	if session == nil || session.image == 0 {
+		return
+	}
+	var graphics uintptr
+	status, _, _ := procGdipCreateGraphics.Call(hdc, uintptr(unsafe.Pointer(&graphics)))
+	if status != 0 || graphics == 0 {
+		return
+	}
+	defer procGdipDeleteGraphics.Call(graphics)
+	procGdipGraphicsClear.Call(graphics, 0xFF000000)
+	procGdipInterpolation.Call(graphics, 7)
+
+	var iw, ih uint32
+	procGdipGetImageWidth.Call(session.image, uintptr(unsafe.Pointer(&iw)))
+	procGdipGetImageHeight.Call(session.image, uintptr(unsafe.Pointer(&ih)))
+	cw := r.Right - r.Left
+	ch := r.Bottom - r.Top
+	if iw == 0 || ih == 0 || cw <= 0 || ch <= 0 {
+		return
+	}
+	imageRatio := float64(iw) / float64(ih)
+	clientRatio := float64(cw) / float64(ch)
+	dx, dy := int32(0), int32(0)
+	dw, dh := cw, ch
+	if imageRatio > clientRatio {
+		dw = int32(float64(ch) * imageRatio)
+		dx = (cw - dw) / 2
+	} else {
+		dh = int32(float64(cw) / imageRatio)
+		dy = (ch - dh) / 2
+	}
+	procGdipDrawImageRectI.Call(session.image, uintptr(dx), uintptr(dy), uintptr(dw), uintptr(dh))
+}
+
+func createIntroFont(height int32, face string) uintptr {
+	name, _ := syscall.UTF16PtrFromString(face)
+	h, _, _ := procCreateFont.Call(
+		uintptr(height), 0, 0, 0,
+		fontWeightBold, 0, 0, 0,
+		1, 0, 0, 5, 0,
+		uintptr(unsafe.Pointer(name)),
+	)
+	return h
+}
+
+func drawCenteredText(hdc uintptr, text string, r rect, font uintptr, color uintptr) {
+	if font == 0 {
+		return
+	}
+	old, _, _ := procSelectObject.Call(hdc, font)
+	defer procSelectObject.Call(hdc, old)
+	procSetBkMode.Call(hdc, transparentBk)
+	procSetTextColor.Call(hdc, color)
+	wide, _ := syscall.UTF16PtrFromString(text)
+	procDrawText.Call(
+		hdc,
+		uintptr(unsafe.Pointer(wide)),
+		uintptr(^uint32(0)),
+		uintptr(unsafe.Pointer(&r)),
+		dtCenter|dtVCenter|dtSingleLine,
+	)
+}
+
+func paintIntroText(hdc uintptr, r rect) {
+	paintBlack(hdc, &r)
+	w := r.Right - r.Left
+	h := r.Bottom - r.Top
+	if w <= 0 || h <= 0 {
+		return
+	}
+
+	mainSize := -h / 9
+	if mainSize > -64 {
+		mainSize = -64
+	}
+	if mainSize < -132 {
+		mainSize = -132
+	}
+	koSize := -h / 32
+	if koSize > -22 {
+		koSize = -22
+	}
+	if koSize < -38 {
+		koSize = -38
+	}
+
+	mainFont := createIntroFont(mainSize, "Segoe UI")
+	koFont := createIntroFont(koSize, "Malgun Gothic")
+	if mainFont != 0 {
+		defer procDeleteObject.Call(mainFont)
+	}
+	if koFont != 0 {
+		defer procDeleteObject.Call(koFont)
+	}
+
+	center := h / 2
+	mainRect := rect{Left: 0, Top: center - h/8, Right: w, Bottom: center + h/30}
+	koRect := rect{Left: 0, Top: center + h/18, Right: w, Bottom: center + h/7}
+	drawCenteredText(hdc, "Mawang Scheduler", mainRect, mainFont, 0x00FFFFFF)
+	drawCenteredText(hdc, "마왕스케줄러", koRect, koFont, 0x00E5E5E5)
+}
+
+func introWndProc(h uintptr, msg uint32, wparam, lparam uintptr) uintptr {
+	session := currentIntro()
+	switch msg {
+	case wmPaint:
+		var ps paintStruct
+		hdc, _, _ := procBeginPaint.Call(h, uintptr(unsafe.Pointer(&ps)))
+		if hdc != 0 {
+			var r rect
+			procGetClientRect.Call(h, uintptr(unsafe.Pointer(&r)))
+			if session != nil && h == session.imageHwnd {
+				paintIntroImage(session, hdc, r)
+			} else if session != nil && h == session.textHwnd {
+				paintIntroText(hdc, r)
+			} else {
+				paintBlack(hdc, &r)
+			}
+			procEndPaint.Call(h, uintptr(unsafe.Pointer(&ps)))
+		}
+		return 0
+	case wmEraseBkgnd:
+		return 1
+	case wmLButtonDown:
+		if session != nil {
+			requestIntroSkip(session)
+		}
+		return 0
+	case wmKeyDown:
+		if session != nil && (wparam == vkEscape || wparam == vkSpace || wparam == vkReturn) {
+			requestIntroSkip(session)
+			return 0
+		}
+	case wmTimer:
+		if session != nil && h == session.baseHwnd {
+			updateNativeIntro(session)
+			return 0
+		}
+	case wmAppStopIntro:
+		if session != nil {
+			stopIntroOnThread(session)
+		}
+		return 0
+	case wmDestroy:
+		if session != nil && h == session.baseHwnd {
+			procPostQuitMessage.Call(0)
+		}
+		return 0
+	}
+	r, _, _ := procDefWindowProc.Call(h, uintptr(msg), wparam, lparam)
+	return r
+}
+
+func requestIntroSkip(session *introSession) {
+	if session == nil {
+		return
+	}
+	session.mu.Lock()
+	session.skip = true
+	if session.phase == 0 {
+		session.phase = 1
+		session.textShownAt = time.Now()
+		image := session.imageHwnd
+		text := session.textHwnd
+		session.mu.Unlock()
+		if image != 0 {
+			procShowWindow.Call(image, swHide)
+		}
+		if text != 0 {
+			setIntroAlpha(text, 255)
+			procShowWindow.Call(text, swShow)
+			procSetForegroundWindow.Call(text)
+		}
+		return
+	}
+	session.mu.Unlock()
+}
+
+func beginIntroText(session *introSession, now time.Time) {
+	session.mu.Lock()
+	if session.phase != 0 {
+		session.mu.Unlock()
+		return
+	}
+	session.phase = 1
+	session.textShownAt = now
+	image := session.imageHwnd
+	text := session.textHwnd
+	session.mu.Unlock()
+
+	if image != 0 {
+		procShowWindow.Call(image, swHide)
+	}
+	if text != 0 {
+		setIntroAlpha(text, 0)
+		procShowWindow.Call(text, swShow)
+		procSetForegroundWindow.Call(text)
+		procInvalidateRect.Call(text, 0, 0)
+	}
+}
+
+func updateNativeIntro(session *introSession) {
+	if session == nil || exiting {
+		return
+	}
+	now := time.Now()
+	session.mu.Lock()
+	phase := session.phase
+	skip := session.skip
+	started := session.started
+	textShown := session.textShownAt
+	fadeOutAt := session.fadeOutAt
+	imageHwnd := session.imageHwnd
+	textHwnd := session.textHwnd
+	session.mu.Unlock()
+
+	const (
+		imageFadeIn  = 1500 * time.Millisecond
+		imageHold    = 2200 * time.Millisecond
+		imageFadeOut = 1500 * time.Millisecond
+		textFadeIn   = 1600 * time.Millisecond
+		textHold     = 1300 * time.Millisecond
+		textFadeOut  = 1500 * time.Millisecond
+	)
+
+	if phase == 0 {
+		elapsed := now.Sub(started)
+		if skip {
+			beginIntroText(session, now)
+			return
+		}
+		switch {
+		case elapsed < imageFadeIn:
+			setIntroAlpha(imageHwnd, introAlpha(elapsed, imageFadeIn, false))
+		case elapsed < imageFadeIn+imageHold:
+			setIntroAlpha(imageHwnd, 255)
+		case elapsed < imageFadeIn+imageHold+imageFadeOut:
+			setIntroAlpha(imageHwnd, introAlpha(elapsed-(imageFadeIn+imageHold), imageFadeOut, true))
+		default:
+			beginIntroText(session, now)
+		}
+		return
+	}
+
+	if phase == 1 {
+		elapsed := now.Sub(textShown)
+		if skip {
+			setIntroAlpha(textHwnd, 255)
+		} else if elapsed < textFadeIn {
+			setIntroAlpha(textHwnd, introAlpha(elapsed, textFadeIn, false))
+		} else {
+			setIntroAlpha(textHwnd, 255)
+		}
+
+		if isAppReady() && (skip || elapsed >= textFadeIn+textHold) {
+			session.mu.Lock()
+			if session.phase == 1 {
+				session.phase = 2
+				session.fadeOutAt = now
+			}
+			session.mu.Unlock()
+		}
+		return
+	}
+
+	if phase == 2 {
+		duration := textFadeOut
+		if skip {
+			duration = 420 * time.Millisecond
+		}
+		elapsed := now.Sub(fadeOutAt)
+		setIntroAlpha(textHwnd, introAlpha(elapsed, duration, true))
+		if elapsed >= duration {
+			completeNativeIntro(session)
+		}
+	}
+}
+
+func completeNativeIntro(session *introSession) {
+	if session == nil {
+		return
+	}
+	session.mu.Lock()
+	if session.stopping {
+		session.mu.Unlock()
+		return
+	}
+	session.stopping = true
+	base := session.baseHwnd
+	image := session.imageHwnd
+	text := session.textHwnd
+	session.mu.Unlock()
+
+	procKillTimer.Call(base, 1)
+	if image != 0 {
+		procShowWindow.Call(image, swHide)
+	}
+	if text != 0 {
+		procShowWindow.Call(text, swHide)
+	}
+	if base != 0 {
+		procShowWindow.Call(base, swHide)
+	}
+
+	startupMu.Lock()
+	startupLocked = false
+	startupMu.Unlock()
+
+	stateMu.Lock()
+	lastMaximized = true
+	lastStateValid = true
+	stateMu.Unlock()
+
+	showWindow()
+
+	if image != 0 {
+		procDestroyWindow.Call(image)
+	}
+	if text != 0 {
+		procDestroyWindow.Call(text)
+	}
+	if base != 0 {
+		procDestroyWindow.Call(base)
+	}
+}
+
+func stopIntroOnThread(session *introSession) {
+	if session == nil {
+		return
+	}
+	session.mu.Lock()
+	if session.stopping {
+		session.mu.Unlock()
+		return
+	}
+	session.stopping = true
+	base := session.baseHwnd
+	image := session.imageHwnd
+	text := session.textHwnd
+	session.mu.Unlock()
+
+	if base != 0 {
+		procKillTimer.Call(base, 1)
+		procShowWindow.Call(base, swHide)
+	}
+	if image != 0 {
+		procShowWindow.Call(image, swHide)
+		procDestroyWindow.Call(image)
+	}
+	if text != 0 {
+		procShowWindow.Call(text, swHide)
+		procDestroyWindow.Call(text)
+	}
+	if base != 0 {
+		procDestroyWindow.Call(base)
+	}
+}
+
+func stopNativeIntro() {
+	session := currentIntro()
+	if session == nil {
+		return
+	}
+	session.mu.Lock()
+	base := session.baseHwnd
+	image := session.imageHwnd
+	text := session.textHwnd
+	session.mu.Unlock()
+	if image != 0 {
+		procShowWindow.Call(image, swHide)
+	}
+	if text != 0 {
+		procShowWindow.Call(text, swHide)
+	}
+	if base != 0 {
+		procShowWindow.Call(base, swHide)
+		procPostMessage.Call(base, wmAppStopIntro, 0, 0)
+	}
+}
+
 func runIntroWindow() {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	w := webview.NewWithOptions(webview.WebViewOptions{
-		Debug:         false,
-		AutoFocus:     true,
-		DataPath:      introDataPath(),
-		WindowOptions: webview.WindowOptions{Title: appTitle, Width: 1280, Height: 720, Center: true},
-	})
-	if w == nil {
+	introMu.Lock()
+	if activeIntro != nil {
+		introMu.Unlock()
+		return
+	}
+	introMu.Unlock()
+
+	if err := registerIntroClass(); err != nil {
 		startApp()
 		return
 	}
-	defer w.Destroy()
 
-	session := &introSession{w: w, hwnd: uintptr(w.Window())}
+	imagePath, assetErr := ensureIntroAsset()
+	var token, image uintptr
+	if assetErr == nil {
+		token, image, _ = loadNativeIntroImage(imagePath)
+	}
+
+	width, _, _ := procGetSystemMetrics.Call(smCxScreen)
+	height, _, _ := procGetSystemMetrics.Call(smCyScreen)
+	if width == 0 || height == 0 {
+		width, height = 1920, 1080
+	}
+
+	base := createIntroWindow(wsExTopmost|wsExToolWindow, wsPopup, int32(width), int32(height))
+	imageWnd := createIntroWindow(wsExTopmost|wsExToolWindow|wsExLayered, wsPopup, int32(width), int32(height))
+	textWnd := createIntroWindow(wsExTopmost|wsExToolWindow|wsExLayered, wsPopup, int32(width), int32(height))
+	if base == 0 || imageWnd == 0 || textWnd == 0 {
+		if image != 0 {
+			procGdipDisposeImage.Call(image)
+		}
+		if token != 0 {
+			procGdiplusShutdown.Call(token)
+		}
+		startApp()
+		return
+	}
+
+	session := &introSession{
+		baseHwnd:  base,
+		imageHwnd: imageWnd,
+		textHwnd:  textWnd,
+		image:     image,
+		gdipToken: token,
+		started:   time.Now(),
+		phase:     0,
+	}
 	introMu.Lock()
 	activeIntro = session
 	introMu.Unlock()
 
-	setWindowIcon(session.hwnd)
+	setIntroAlpha(imageWnd, 0)
+	setIntroAlpha(textWnd, 0)
+	procShowWindow.Call(base, swShow)
+	procShowWindow.Call(imageWnd, swShow)
+	procSetForegroundWindow.Call(imageWnd)
+	procInvalidateRect.Call(imageWnd, 0, 0)
+	procSetTimer.Call(base, 1, 16, 0)
 
-	w.Bind("__mwsIsAppReady", func() bool {
-		return isAppReady()
-	})
-	w.Bind("__mwsIntroDone", func() {
-		go finishIntro(session)
-	})
-
-	w.SetHtml(introHTML())
-	makeIntroBorderless(session.hwnd)
-	procShowWindow.Call(session.hwnd, swShow)
-	procSetForegroundWindow.Call(session.hwnd)
-
+	// The actual Scheduler WebView starts hidden at the same time as the native intro.
 	startApp()
-	w.Run()
+
+	var m winMsg
+	for !exiting {
+		r, _, _ := procGetMessage.Call(uintptr(unsafe.Pointer(&m)), 0, 0, 0)
+		if int32(r) <= 0 {
+			break
+		}
+		procTranslateMessage.Call(uintptr(unsafe.Pointer(&m)))
+		procDispatchMessage.Call(uintptr(unsafe.Pointer(&m)))
+	}
+
+	if image != 0 {
+		procGdipDisposeImage.Call(image)
+	}
+	if token != 0 {
+		procGdiplusShutdown.Call(token)
+	}
 
 	introMu.Lock()
 	if activeIntro == session {
@@ -679,45 +1246,6 @@ func runIntroWindow() {
 	introMu.Unlock()
 }
 
-func finishIntro(session *introSession) {
-	if session == nil {
-		return
-	}
-	session.done.Do(func() {
-		if exiting || !isAppReady() {
-			return
-		}
-
-		wvMu.Lock()
-		h := hwnd
-		aw := wv
-		wvMu.Unlock()
-		if h == 0 || aw == nil {
-			return
-		}
-
-		// Always remove the intro from the screen before exposing the app.
-		if session.hwnd != 0 {
-			procShowWindow.Call(session.hwnd, swHide)
-		}
-
-		startupMu.Lock()
-		startupLocked = false
-		startupMu.Unlock()
-
-		stateMu.Lock()
-		lastMaximized = true
-		lastStateValid = true
-		stateMu.Unlock()
-
-		procShowWindow.Call(h, swMaximize)
-		procSetForegroundWindow.Call(h)
-
-		session.w.Dispatch(func() {
-			session.w.Terminate()
-		})
-	})
-}
 func applyPendingSection(w webview.WebView) {
 	pendingMu.Lock()
 	p := pendingSection
@@ -759,13 +1287,13 @@ func jsString(s string) string {
 }
 
 func acquireSingleton() bool {
-	name, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopNativeMutexV071")
+	name, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopNativeMutexV080")
 	m, _, err := procCreateMutex.Call(0, 0, uintptr(unsafe.Pointer(name)))
 	if m == 0 {
 		return true
 	}
 	if errno, ok := err.(syscall.Errno); ok && errno == syscall.ERROR_ALREADY_EXISTS {
-		evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV071")
+		evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV080")
 		ev, _, _ := procOpenEvent.Call(0x0002, 0, uintptr(unsafe.Pointer(evName)))
 		if ev != 0 {
 			procSetEvent.Call(ev)
@@ -782,11 +1310,6 @@ func handleExecutableRelaunch() {
 		showIntroWindow()
 		return
 	}
-	if !isAppReady() {
-		showWindow()
-		return
-	}
-
 	hideWindow()
 	startupMu.Lock()
 	startupLocked = true
@@ -794,7 +1317,7 @@ func handleExecutableRelaunch() {
 	go runIntroWindow()
 }
 func watchShowEvent() {
-	evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV071")
+	evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV080")
 	ev, _, _ := procCreateEvent.Call(0, 0, 0, uintptr(unsafe.Pointer(evName)))
 	if ev == 0 {
 		return
@@ -856,14 +1379,7 @@ func onReady() {
 			aw.Terminate()
 		}
 
-		session := currentIntro()
-		if session != nil {
-			if session.hwnd != 0 {
-				procShowWindow.Call(session.hwnd, swHide)
-			}
-			session.w.Dispatch(func() { session.w.Terminate() })
-		}
-
+		stopNativeIntro()
 		systray.Quit()
 	})
 
