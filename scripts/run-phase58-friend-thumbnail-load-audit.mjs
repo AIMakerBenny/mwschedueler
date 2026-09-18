@@ -9,7 +9,7 @@ export function runPhase58FriendThumbnailLoadAudit(){
   const matchIndex=friend.indexOf("let match=true;if(selected)");
   const screenIndex=friend.indexOf("let screen=card.querySelector('.mws-live-screen-v120')");
   if(matchIndex<0||screenIndex<0||matchIndex>screenIndex)issues.push('category visibility is not resolved before thumbnail work');
-  if(!friend.includes("if(!live||!bno||!match){if(screen)screen.hidden=true;continue}"))issues.push('hidden or filtered cards can still perform thumbnail work');
+  if(!friend.includes("const bno=liveBroadNo(entry),title=liveTitle(entry),showLive=Boolean(live&&bno&&match)")||!friend.includes("if(!showLive){if(screen)screen.hidden=true;continue}"))issues.push('hidden or filtered cards can still perform thumbnail work');
   if(!friend.includes('loading="lazy"'))issues.push('LIVE thumbnails are not lazy loaded');
   if(!friend.includes('fetchpriority="low"'))issues.push('LIVE thumbnails are not low priority');
   if(!friend.includes("img.loading='lazy'"))issues.push('existing LIVE images are not normalized to lazy loading');
