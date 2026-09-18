@@ -59,7 +59,7 @@ let started=false;
 async function start(){
   if(started)return;
   started=true;
-  await load('perf-runtime','/assets/perf-runtime.js?v=1.4.0-phase73','__mwsCf571Optimizer');
+  await load('perf-runtime','/assets/perf-runtime.js?v=1.4.0-phase74','__mwsCf571Optimizer');
   await load('today-people-runtime-v130','/assets/today-people-runtime-v130.js?v=1.3.0-final68','__mwsTodayPeopleRuntimeV130');
   await load('contact-runtime-v130','/assets/contact-runtime-v130.js?v=1.3.0-search67','__mwsContactRuntimeV130');
 
