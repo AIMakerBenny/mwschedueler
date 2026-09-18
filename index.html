@@ -26,7 +26,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 .sidebar-build-version-v53 + .sidebar-save-v572{margin-top:4px!important}
 </style>
 </head>
-<body data-theme="neon" class="mws-gated mws-neo" data-build-version="MWS V 1.4.0">
+<body data-theme="neon" class="mws-gated" data-build-version="MWS V 1.4.0">
 <div id="mwsAccessGate" aria-modal="true" role="dialog">
   <div class="mws-login-shell">
     <div class="mws-login-brand">MAWANG WORKSPACE</div>
@@ -1140,6 +1140,28 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
             <div id="textScalePreview" class="text-scale-preview-text">AI 딥러닝 기술로 탄생한 사이버 망령 NPC</div>
             <div class="text-scale-preview-sub">설정값은 게시글 카드, 연락처, 메모, 버튼 등 주요 화면에 함께 적용됩니다.</div>
           </div>
+        </div>
+        <div class="card ui-frame-settings-card">
+          <div class="space">
+            <div>
+              <h3>UI 프레임</h3>
+              <p class="muted small" style="margin:3px 0 0">프로그램 기능과 색상 테마는 그대로 두고 화면의 프레임 디자인만 선택합니다. 기본 프레임이 기존 Mawang Scheduler 디자인입니다.</p>
+            </div>
+            <span id="uiFrameStatus" class="chip">기본</span>
+          </div>
+          <div class="ui-frame-grid" id="uiFrameGrid">
+            <button type="button" class="ui-frame-option" data-ui-frame-choice="classic" onclick="setUiFrame('classic')">
+              <span class="ui-frame-preview classic-preview" aria-hidden="true"><i></i><i></i><i></i></span>
+              <strong>기본 프레임</strong>
+              <small>기존 Mawang Scheduler UI</small>
+            </button>
+            <button type="button" class="ui-frame-option" data-ui-frame-choice="neo" onclick="setUiFrame('neo')">
+              <span class="ui-frame-preview neo-preview" aria-hidden="true"><i></i><i></i><i></i></span>
+              <strong>Neo 모던</strong>
+              <small>입체 패널 · 블러 · 투명도</small>
+            </button>
+          </div>
+          <div id="uiFrameDescription" class="muted small ui-frame-description">기존 Mawang Scheduler의 UI 디자인을 그대로 사용합니다.</div>
         </div>
         <div class="card neo-transparency-settings-card">
           <div class="space">

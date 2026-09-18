@@ -1,3 +1,96 @@
+
+/* UI frame selector. This block is intentionally not scoped to .mws-neo. */
+.ui-frame-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin-top:14px;
+}
+.ui-frame-option{
+  min-width:0;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:13px;
+  background:var(--input);
+  color:var(--text);
+  text-align:left;
+  transition:.16s ease;
+}
+.ui-frame-option:hover{
+  border-color:var(--accent);
+  transform:translateY(-1px);
+}
+.ui-frame-option.active{
+  border-color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 9%,var(--input));
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 24%,transparent);
+}
+.ui-frame-option strong{
+  display:block;
+  margin-top:9px;
+  font-size:13px;
+}
+.ui-frame-option small{
+  display:block;
+  margin-top:3px;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.4;
+}
+.ui-frame-preview{
+  height:72px;
+  display:grid;
+  grid-template-columns:24% 1fr;
+  grid-template-rows:1fr 1fr;
+  gap:5px;
+  padding:7px;
+  border:1px solid var(--border);
+  background:var(--bg);
+  border-radius:10px;
+  overflow:hidden;
+}
+.ui-frame-preview i{
+  display:block;
+  border:1px solid var(--border);
+  background:var(--panel);
+  border-radius:6px;
+}
+.ui-frame-preview i:first-child{
+  grid-row:1/3;
+}
+.neo-preview{
+  padding:8px;
+  border-radius:14px;
+  background:color-mix(in srgb,var(--bg) 82%,transparent);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+}
+.neo-preview i{
+  border-radius:9px;
+  background:color-mix(in srgb,var(--panel) 84%,transparent);
+  box-shadow:0 5px 12px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.04);
+}
+.ui-frame-description{
+  margin-top:10px;
+  min-height:18px;
+}
+.neo-transparency-settings-card.frame-option-disabled{
+  opacity:.62;
+}
+.neo-transparency-settings-card.frame-option-disabled .neo-transparency-control,
+.neo-transparency-settings-card.frame-option-disabled .neo-transparency-preview{
+  filter:saturate(.65);
+}
+.neo-transparency-settings-card.frame-option-disabled::after{
+  content:"Neo 모던 프레임에서 사용할 수 있습니다";
+  display:block;
+  margin-top:10px;
+  color:var(--muted);
+  font-size:10px;
+}
+@media(max-width:700px){
+  .ui-frame-grid{grid-template-columns:1fr}
+}
+
 /*
   Mawang Scheduler Neo v1.0.0
   UI-only modern depth layer.

@@ -81,13 +81,14 @@ const THEME_META=[{"id": "midnight", "name": "미드나잇", "bg": "#0f1115", "p
 
 /* v5.2 - Device-local presentation preferences. These never belong to shared cloud data. */
 const MWS_DEVICE_PREFS_KEY='mws_device_preferences_v1';
-const MWS_DEVICE_PREF_KEYS=['theme','backgroundImage','backgroundDim','neoTransparency','textScale','resolutionMode','sidebarPinned','postViewMode','postCardColumns','dashboardUpcomingHidden'];
+const MWS_DEVICE_PREF_KEYS=['theme','backgroundImage','backgroundDim','uiFrame','neoTransparency','textScale','resolutionMode','sidebarPinned','postViewMode','postCardColumns','dashboardUpcomingHidden'];
 function mwsExtractDevicePrefs(src=data){
   const x=src&&typeof src==='object'?src:{};
   return {
     theme:String(x.theme||'neon'),
     backgroundImage:typeof x.backgroundImage==='string'?x.backgroundImage:'',
     backgroundDim:Math.max(0,Math.min(85,Number(x.backgroundDim??45))),
+    uiFrame:x.uiFrame==='neo'?'neo':'classic',
     neoTransparency:Math.max(0,Math.min(60,Number(x.neoTransparency??10))),
     textScale:Math.max(85,Math.min(130,Number(x.textScale)||100)),
     resolutionMode:['fhd','2k','4k','wide','mobile'].includes(String(x.resolutionMode||''))?String(x.resolutionMode):'fhd',
@@ -135,6 +136,7 @@ if(loadedDataVersion<28)data.sidebarPinned=true;
 if(!data.theme)data.theme='neon';
 if(data.backgroundImage===undefined)data.backgroundImage='';
 if(data.backgroundDim===undefined)data.backgroundDim=45;
+if(data.uiFrame===undefined)data.uiFrame='classic';
 if(data.neoTransparency===undefined)data.neoTransparency=10;
 const mwsStoredDevicePrefs=mwsLoadDevicePrefs();
 if(mwsStoredDevicePrefs)mwsApplyDevicePrefs(data,mwsStoredDevicePrefs);
@@ -143,6 +145,8 @@ data.version=52;
 data.contacts.forEach(c=>{if(c.pendingSetup===undefined)c.pendingSetup=false});
 document.body.dataset.theme=data.theme;
 document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));
+document.body.classList.toggle('mws-neo',data.uiFrame==='neo');
+document.body.dataset.uiFrame=data.uiFrame==='neo'?'neo':'classic';
 document.body.style.setProperty('--neo-surface-opacity',`${100-Math.max(0,Math.min(60,Number(data.neoTransparency??10)))}%`);
 document.body.style.setProperty('--neo-input-opacity',`${Math.min(100,104-Math.max(0,Math.min(60,Number(data.neoTransparency??10))))}%`);
 
@@ -157,7 +161,7 @@ let wheelScrollTimers={};
 function loadData(){
   const raw=localStorage.getItem('mawangSchedulerBeta');
   if(raw){try{return JSON.parse(raw)}catch(e){}}
-  return {version:52,categories:DEFAULT_CATEGORIES,contacts:[],posts:[],events:[],collaborations:[],memos:[],targetList:[],contactTags:[],contactTagBanners:{},scheduleClipboard:[],favoriteFolders:[],postViewMode:'card',postCardColumns:4,textScale:100,resolutionMode:'fhd',selfContactId:'',sidebarPinned:true,dashboardUpcomingHidden:false,timezones:DEFAULT_TZS,theme:'neon',backgroundImage:'',backgroundDim:45,neoTransparency:10,miniGames:defaultMiniGames()};
+  return {version:52,categories:DEFAULT_CATEGORIES,contacts:[],posts:[],events:[],collaborations:[],memos:[],targetList:[],contactTags:[],contactTagBanners:{},scheduleClipboard:[],favoriteFolders:[],postViewMode:'card',postCardColumns:4,textScale:100,resolutionMode:'fhd',selfContactId:'',sidebarPinned:true,dashboardUpcomingHidden:false,timezones:DEFAULT_TZS,theme:'neon',backgroundImage:'',backgroundDim:45,uiFrame:'classic',neoTransparency:10,miniGames:defaultMiniGames()};
 }
 const AUTOSAVE_KEY='mawangSchedulerAutoBackups';
 
@@ -224,6 +228,7 @@ function normalizeDataShape(){
   data.postViewMode=data.postViewMode==='list'?'list':'card';
   data.postCardColumns=Math.max(2,Math.min(5,Number(data.postCardColumns)||4));
   data.textScale=Math.max(80,Math.min(200,Number(data.textScale)||100));
+  data.uiFrame=data.uiFrame==='neo'?'neo':'classic';
   data.neoTransparency=Math.max(0,Math.min(60,Number(data.neoTransparency??10)));
   data.resolutionMode=['fhd','2k','4k','wide','mobile'].includes(String(data.resolutionMode||''))?String(data.resolutionMode):'fhd';
   data.selfContactId=String(data.selfContactId||'');
@@ -4097,6 +4102,43 @@ function renderThemeGrid(){
 }
 window.applyTheme=applyTheme;
 const BUILTIN_DEFAULT_BACKGROUND='assets/default-background.png';
+function applyUiFrame(notify=false){
+  const frame=data.uiFrame==='neo'?'neo':'classic';
+  data.uiFrame=frame;
+  document.body.classList.toggle('mws-neo',frame==='neo');
+  document.body.dataset.uiFrame=frame;
+
+  document.querySelectorAll('[data-ui-frame-choice]').forEach(btn=>{
+    const active=btn.dataset.uiFrameChoice===frame;
+    btn.classList.toggle('active',active);
+    btn.setAttribute('aria-pressed',String(active));
+  });
+
+  const status=document.getElementById('uiFrameStatus');
+  const desc=document.getElementById('uiFrameDescription');
+  const transCard=document.querySelector('.neo-transparency-settings-card');
+  const transSlider=document.getElementById('neoTransparency');
+
+  if(status)status.textContent=frame==='neo'?'Neo 모던':'기본';
+  if(desc)desc.textContent=frame==='neo'
+    ?'입체 패널과 블러 효과가 적용됩니다. 아래 UI 창 투명도도 함께 사용할 수 있습니다.'
+    :'기존 Mawang Scheduler의 UI 디자인을 그대로 사용합니다.';
+  if(transCard){
+    transCard.classList.toggle('frame-option-disabled',frame!=='neo');
+    transCard.setAttribute('data-frame-enabled',frame==='neo'?'true':'false');
+  }
+  if(transSlider)transSlider.disabled=frame!=='neo';
+
+  applyNeoTransparency(false);
+  if(notify)toast('UI 프레임',frame==='neo'?'Neo 모던 프레임을 적용했습니다':'기본 프레임으로 돌아왔습니다');
+}
+window.applyUiFrame=applyUiFrame;
+window.setUiFrame=frame=>{
+  data.uiFrame=frame==='neo'?'neo':'classic';
+  applyUiFrame(true);
+  mwsSaveDevicePrefs(data);
+};
+
 function applyNeoTransparency(notify=false){
   const transparency=Math.max(0,Math.min(60,Number(data.neoTransparency??10)));
   const surfaceOpacity=100-transparency;
@@ -4147,6 +4189,7 @@ async function compressBackgroundImage(dataUrl,maxWidth=1920,quality=.82){
 function renderSettings(){
   document.getElementById('themeSelect').value=data.theme;renderThemeGrid();
   applyTextScale(data.textScale??100,false);
+  applyUiFrame(false);
   applyNeoTransparency(false);
   document.getElementById('categoryList').innerHTML=data.categories.map(c=>`<div class="catrow reorder-row" data-category-id="${c.id}"
     ondragover="categoryReorderOver('${c.id}',event)" ondragleave="categoryReorderLeave(event)" ondrop="categoryReorderDrop('${c.id}',event)">
