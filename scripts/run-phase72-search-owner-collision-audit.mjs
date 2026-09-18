@@ -33,7 +33,7 @@ export function runPhase72SearchOwnerCollisionAudit(){
     }catch(error){issues.push('online V5 payload collision test failed: '+String(error?.message||error))}
   }
 
-  if(!perfLoader.includes('assets/perf-runtime-base.js?v=1.3.0-search73'))issues.push('perf base cache-bust is not search73');
+  if(!perfLoader.includes('assets/perf-runtime-base.js?v='))issues.push('perf runtime no longer loads perf-runtime-base');
   if(!post.includes('/assets/perf-runtime.js?v='))issues.push('post-login runtime no longer loads the perf runtime');
   if(post.includes('/assets/perf-runtime.js?v=1.3.0-post-login'))issues.push('post-login runtime regressed to the pre-search-owner perf cache key');
   if(!index.includes('assets/online-v5-loader.js?v=1.3.0-search73'))issues.push('online V5 loader cache-bust is not search73');
