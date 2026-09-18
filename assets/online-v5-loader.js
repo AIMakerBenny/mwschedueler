@@ -18,7 +18,10 @@
       mwsKoreanInitials:window.mwsKoreanInitials,
       mwsTextMatches:window.mwsTextMatches
     };
-    run(features);
+    const legacyContactMatcher=/window\.mwsKoreanInitials=koreanInitials;\s*contactMatches=function\(c,q\)\{[\s\S]*?\};\s*window\.contactMatches=contactMatches;/;
+    const safeFeatures=features.replace(legacyContactMatcher,'window.mwsKoreanInitials=window.mwsKoreanInitials||koreanInitials;');
+    if(safeFeatures===features)console.warn('Legacy V5 contact matcher patch target not found');
+    run(safeFeatures);
     if(typeof sharedSearchOwner.contactMatches==='function'){
       window.contactMatches=sharedSearchOwner.contactMatches;
       try{contactMatches=sharedSearchOwner.contactMatches}catch(_){}
