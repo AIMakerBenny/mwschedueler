@@ -83,8 +83,8 @@ jobs:
           grep -Fq "loadStyle('mobile-drawer-v130'" /tmp/post-login.js
           grep -Fq "loadStyle('mobile-calendar-v130'" /tmp/post-login.js
           grep -Fq "load('mobile-calendar-day-detail-v130'" /tmp/post-login.js
-          grep -Fq "test-v5.5.js?v=1.3.0-perf36" /tmp/post-login.js
-          grep -Fq "test-v5.6.js?v=1.3.0-perf37" /tmp/post-login.js
+          grep -Fq "test-v5.5.js?v=1.3.0-perf39" /tmp/post-login.js
+          grep -Fq "test-v5.6.js?v=1.3.0-perf41" /tmp/post-login.js
           retry_contains "$BASE/assets/mobile-calendar-day-detail-v130.js?deploy=$GITHUB_SHA" 'if(document.hidden||decorateQueued)return' > /tmp/mobile-day-detail.js
           node --check /tmp/mobile-day-detail.js
           grep -Fq "event.stopImmediatePropagation()" /tmp/mobile-day-detail.js
@@ -182,10 +182,22 @@ jobs:
             echo 'Today People startup polling regression detected.' >&2
             exit 1
           fi
+          grep -Fq "syncAllIfNeededV139" /tmp/test-v55.js
+          grep -Fq "signature===lastSyncSignatureV139" /tmp/test-v55.js
           retry_contains "$BASE/assets/test-v5.6.js?deploy=$GITHUB_SHA" 'function tryBootV137()' > /tmp/test-v56.js
           node --check /tmp/test-v56.js
           if grep -Fq "n>240" /tmp/test-v56.js; then
             echo 'Contact startup polling regression detected.' >&2
+            exit 1
+          fi
+          grep -Fq "scheduleParticipantRenderV140" /tmp/test-v56.js
+          grep -Fq "queueInjectAddV141" /tmp/test-v56.js
+          if grep -Fq "i.oninput=participantRender" /tmp/test-v56.js; then
+            echo 'Immediate participant-search rerender regression detected.' >&2
+            exit 1
+          fi
+          if grep -Fq "setTimeout(()=>{visibility();injectAdd()},0)" /tmp/test-v56.js; then
+            echo 'Repeated contact add DOM injection regression detected.' >&2
             exit 1
           fi
           retry_contains "$BASE/assets/ui-fixes-v121.js?deploy=$GITHUB_SHA" 'function startGamePreviewTracking()' > /tmp/ui-fixes.js

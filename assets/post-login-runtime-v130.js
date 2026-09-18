@@ -60,8 +60,8 @@ async function start(){
   if(started)return;
   started=true;
   await load('perf-runtime','/assets/perf-runtime.js?v=1.3.0-post-login','__mwsCf571Optimizer');
-  await load('test-v55','/assets/test-v5.5.js?v=1.3.0-perf36');
-  await load('test-v56','/assets/test-v5.6.js?v=1.3.0-perf37');
+  await load('test-v55','/assets/test-v5.5.js?v=1.3.0-perf39');
+  await load('test-v56','/assets/test-v5.6.js?v=1.3.0-perf41');
 
   const deviceUiResult=await load('device-ui','/assets/device-ui.js?v=1.3.0-perf32');
   if(!deviceUiResult.ok){markCriticalUiFailure(['device-ui']);return;}

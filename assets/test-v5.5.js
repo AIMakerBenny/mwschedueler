@@ -65,7 +65,29 @@
     for(const event of Array.isArray(data.events)?data.events:[])if(validDateKey(event?.date))dates.add(String(event.date));
     for(const date of dates)syncDate(date);
   }
-  window.mwsV53SyncTodayPeople=syncAll;
+  let lastSyncSignatureV139='';
+  function syncSignatureV139(){
+    if(!ensureV53Data())return '';
+    try{
+      return JSON.stringify({
+        self:String(data.selfContactId||''),
+        contacts:(Array.isArray(data.contacts)?data.contacts:[]).map(c=>String(c?.id||'')),
+        manual:data.todayPeopleManualByDate||{},
+        events:(Array.isArray(data.events)?data.events:[]).map(e=>[
+          String(e?.date||''),Boolean(e?.restDay),String(e?.title||''),
+          (Array.isArray(e?.participants)?e.participants:[]).map(String)
+        ])
+      });
+    }catch(_){return ''}
+  }
+  function syncAllIfNeededV139(force=false){
+    const signature=syncSignatureV139();
+    if(!force&&signature&&signature===lastSyncSignatureV139)return false;
+    syncAll();
+    lastSyncSignatureV139=syncSignatureV139();
+    return true;
+  }
+  window.mwsV53SyncTodayPeople=()=>syncAllIfNeededV139(true);
   window.mwsV53AutoTodayPeopleIds=autoIdsForDate;
 
   function setVersionLabel(){
@@ -172,15 +194,15 @@
     if(typeof data==='undefined'||typeof window.openTodayPeoplePicker!=='function'||typeof window.saveData!=='function'||typeof window.renderAll!=='function')return;
     installed=true;
 
-    syncAll();
+    syncAllIfNeededV139(true);
 
     const baseSave=window.saveData;
-    const wrappedSave=function(){syncAll();return baseSave.apply(this,arguments)};
+    const wrappedSave=function(){syncAllIfNeededV139();return baseSave.apply(this,arguments)};
     window.saveData=wrappedSave;
     try{saveData=wrappedSave}catch(_){}
 
     const baseRenderAll=window.renderAll;
-    const wrappedRenderAll=function(){syncAll();const out=baseRenderAll.apply(this,arguments);queueMicrotask(updateCopy);return out};
+    const wrappedRenderAll=function(){syncAllIfNeededV139();const out=baseRenderAll.apply(this,arguments);queueMicrotask(updateCopy);return out};
     window.renderAll=wrappedRenderAll;
     try{renderAll=wrappedRenderAll}catch(_){}
 
