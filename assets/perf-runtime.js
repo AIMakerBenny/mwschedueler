@@ -218,7 +218,7 @@
   }
   function loadPerfBase(){
     if(document.getElementById('mwsPerfRuntimeBaseV130'))return;
-    const s=document.createElement('script');s.id='mwsPerfRuntimeBaseV130';s.src='assets/perf-runtime-base.js?v=1.4.0-phase76';document.head.appendChild(s);
+    const s=document.createElement('script');s.id='mwsPerfRuntimeBaseV130';s.src='assets/perf-runtime-base.js?v=1.4.0-phase79';document.head.appendChild(s);
   }
 
   function startPostLoginFeatures(){
