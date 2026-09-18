@@ -79,28 +79,25 @@ function normalizeMiniGameData(){
 const THEME_META=[{"id": "midnight", "name": "미드나잇", "bg": "#0f1115", "panel": "#171a21", "accent": "#8b5cf6"}, {"id": "neon", "name": "네온 퍼플", "bg": "#090b14", "panel": "#11172a", "accent": "#8b5cf6"}, {"id": "rose", "name": "로즈", "bg": "#160d14", "panel": "#24151f", "accent": "#e65b9c"}, {"id": "ocean", "name": "오션", "bg": "#071519", "panel": "#0e252c", "accent": "#22b8cf"}, {"id": "sunset", "name": "선셋", "bg": "#17100a", "panel": "#281a0f", "accent": "#f59f45"}, {"id": "emerald", "name": "에메랄드", "bg": "#07130e", "panel": "#10231a", "accent": "#22c55e"}, {"id": "ruby", "name": "루비", "bg": "#17090d", "panel": "#281118", "accent": "#ef4444"}, {"id": "sapphire", "name": "사파이어", "bg": "#08101d", "panel": "#101d35", "accent": "#3b82f6"}, {"id": "amethyst", "name": "애머시스트", "bg": "#120b1a", "panel": "#211330", "accent": "#a855f7"}, {"id": "lavender", "name": "라벤더", "bg": "#15131c", "panel": "#24212e", "accent": "#a78bfa"}, {"id": "sakura", "name": "사쿠라", "bg": "#1b1115", "panel": "#2d1b22", "accent": "#fb7185"}, {"id": "peach", "name": "피치", "bg": "#1b120d", "panel": "#2d1e16", "accent": "#fb923c"}, {"id": "coral", "name": "코랄", "bg": "#1b100f", "panel": "#2c1b19", "accent": "#f97366"}, {"id": "amber", "name": "앰버", "bg": "#171308", "panel": "#28200e", "accent": "#fbbf24"}, {"id": "lime", "name": "라임", "bg": "#101505", "panel": "#1b260b", "accent": "#84cc16"}, {"id": "mint", "name": "민트", "bg": "#081612", "panel": "#102821", "accent": "#34d399"}, {"id": "aqua", "name": "아쿠아", "bg": "#061518", "panel": "#0d282d", "accent": "#06b6d4"}, {"id": "cobalt", "name": "코발트", "bg": "#090e1c", "panel": "#121b38", "accent": "#4f6df5"}, {"id": "navy", "name": "네이비", "bg": "#08101a", "panel": "#101d2c", "accent": "#4678a9"}, {"id": "graphite", "name": "그래파이트", "bg": "#101214", "panel": "#1a1e22", "accent": "#7c8794"}, {"id": "silver", "name": "실버", "bg": "#17191d", "panel": "#24282e", "accent": "#aeb8c6"}, {"id": "coffee", "name": "커피", "bg": "#17110e", "panel": "#281d18", "accent": "#b77945"}, {"id": "forest", "name": "포레스트", "bg": "#09130b", "panel": "#132318", "accent": "#4d9a62"}, {"id": "cyber", "name": "사이버펑크", "bg": "#080812", "panel": "#141326", "accent": "#f0e130"}, {"id": "aurora", "name": "오로라", "bg": "#0a1016", "panel": "#111f29", "accent": "#33d6a6"}, {"id": "candy", "name": "캔디", "bg": "#17101c", "panel": "#281a31", "accent": "#e879f9"}, {"id": "wine", "name": "와인", "bg": "#160a10", "panel": "#28121c", "accent": "#c2416c"}, {"id": "teal", "name": "틸", "bg": "#071515", "panel": "#102827", "accent": "#2dd4bf"}, {"id": "sky", "name": "스카이", "bg": "#0a1219", "panel": "#122534", "accent": "#38bdf8"}, {"id": "plum", "name": "플럼", "bg": "#160f18", "panel": "#291a2d", "accent": "#d946ef"}, {"id": "cherry", "name": "체리", "bg": "#190b10", "panel": "#2b121b", "accent": "#f43f5e"}, {"id": "orange", "name": "오렌지", "bg": "#181007", "panel": "#2a1c0c", "accent": "#f97316"}];
 
 
-/* UI frame catalogue v2. Frames are full design languages, not simple radius presets. */
+/* UI design catalogue v3. Each preset changes layout, component geometry, spacing and motion. */
 const UI_FRAME_META=[
-  {id:'classic',name:'기본 프레임',short:'CLASSIC',category:'기본',description:'현재 Mawang Scheduler의 원래 UI를 그대로 사용합니다.',transparency:false,spec:{line:'1px',corner:'기본',depth:'기본',space:'균형',motion:'기본'}},
-  {id:'material',name:'Material',short:'MATERIAL',category:'카드형',description:'명확한 카드 계층, 단계별 그림자와 부드러운 상승 효과를 사용하는 Material 스타일입니다.',transparency:false,spec:{line:'1px',corner:'12px',depth:'계층형',space:'균형',motion:'반응형'}},
-  {id:'minimal',name:'Minimal',short:'MINIMAL',category:'미니멀',description:'프레임과 그림자를 거의 없애고 여백과 타이포그래피로 영역을 구분하는 초미니멀 스타일입니다.',transparency:false,spec:{line:'0-1px',corner:'4px',depth:'없음',space:'넓음',motion:'절제'}},
-  {id:'glass',name:'Glass',short:'GLASS',category:'글래스',description:'반투명 유리 패널, 밝은 엣지, 강한 배경 블러와 깊이감을 사용하는 Glassmorphism 스타일입니다.',transparency:true,spec:{line:'1px light',corner:'20px',depth:'유리',space:'균형',motion:'Smooth'}},
-  {id:'fluent',name:'Fluent',short:'FLUENT',category:'Acrylic',description:'Windows Fluent 계열처럼 Acrylic 질감, 얇은 강조선, 부드러운 레이어와 Reveal 느낌을 사용합니다.',transparency:true,spec:{line:'1px accent',corner:'14px',depth:'Acrylic',space:'균형',motion:'Smooth'}},
-  {id:'bento',name:'Bento',short:'BENTO',category:'모듈형',description:'크고 작은 정보 블록이 모듈처럼 보이도록 카드 간격과 크기 대비를 강조한 Bento 스타일입니다.',transparency:false,spec:{line:'1px',corner:'18px',depth:'Soft',space:'넓음',motion:'Lift'}},
-  {id:'neobrutal',name:'Neo Brutal',short:'BRUTAL',category:'강조형',description:'굵은 프레임, 단단한 하드 섀도, 작은 코너와 즉각적인 움직임을 사용하는 Neo Brutalism 스타일입니다.',transparency:false,spec:{line:'3px',corner:'4px',depth:'Hard',space:'중간',motion:'Snappy'}},
-  {id:'clay',name:'Clay',short:'CLAY',category:'3D Soft',description:'둥글고 두툼한 패널, 안팎의 부드러운 그림자와 탄성 있는 움직임을 사용하는 Claymorphism 스타일입니다.',transparency:false,spec:{line:'0px',corner:'26px',depth:'Inflated',space:'넓음',motion:'Bouncy'}},
-  {id:'metro',name:'Metro',short:'METRO',category:'타일형',description:'사각 타일, 강한 정렬, 그림자 없는 평면 구성과 빠른 상태 전환을 사용하는 Metro 스타일입니다.',transparency:false,spec:{line:'0-2px',corner:'0px',depth:'Flat',space:'촘촘',motion:'Quick'}},
-  {id:'studio',name:'Studio Control',short:'STUDIO',category:'작업형',description:'방송 및 제작 툴처럼 조작부를 촘촘하게 묶고 레일과 구분선을 강하게 사용하는 Studio 스타일입니다.',transparency:false,spec:{line:'1px+rail',corner:'6px',depth:'Low',space:'촘촘',motion:'Precise'}},
-  {id:'gaming',name:'Gaming HUD',short:'GAMING',category:'HUD',description:'잘린 코너, 강조 프레임, Accent Glow와 빠른 Hover를 사용하는 게임 런처 및 HUD 스타일입니다.',transparency:false,spec:{line:'2px glow',corner:'Cut',depth:'Glow',space:'중간',motion:'Energetic'}},
-  {id:'spatial',name:'Spatial',short:'SPATIAL',category:'공간형',description:'큰 라운딩과 넓은 여백, 공중에 떠 있는 반투명 패널과 느린 깊이 전환을 사용하는 Spatial UI입니다.',transparency:true,spec:{line:'1px',corner:'28px',depth:'Floating',space:'매우 넓음',motion:'Slow'}},
-  {id:'terminal',name:'Terminal',short:'TERM',category:'데이터형',description:'각진 1px 프레임, 고밀도 배치, 모노스페이스 타이포와 거의 없는 애니메이션을 사용하는 Terminal 스타일입니다.',transparency:false,spec:{line:'1px',corner:'0px',depth:'없음',space:'고밀도',motion:'즉시'}},
-  {id:'retro',name:'Retro Desktop',short:'RETRO',category:'레트로',description:'2px Bevel 프레임, 눌리는 버튼, 작은 코너와 입체 테두리를 사용하는 클래식 데스크톱 UI입니다.',transparency:false,spec:{line:'2px bevel',corner:'2px',depth:'Emboss',space:'Compact',motion:'Clicky'}}
+  {id:'classic',name:'Classic',short:'CLASSIC',category:'기본',description:'현재 Mawang Scheduler의 원래 화면 구조와 컴포넌트를 그대로 사용합니다.',transparency:false,spec:{line:'기본',corner:'기본',depth:'기본',space:'기본',motion:'기본'}},
+  {id:'workshop',name:'Workshop Scheduler',short:'WORKSHOP',category:'3-Column Pro',description:'전문 예약·정비 스케줄러 계열을 참고한 촘촘한 좌측 탐색, 분리된 작업판, 직선적인 일정 셀 디자인입니다.',transparency:false,spec:{line:'1px',corner:'8px',depth:'Low',space:'Dense',motion:'Precise'}},
+  {id:'agenda',name:'Agenda Dashboard',short:'AGENDA',category:'Modern Calendar',description:'현대 SaaS 캘린더를 참고한 큰 둥근 작업판, 플로팅 사이드바, 넓은 일정 카드와 부드러운 전환 디자인입니다.',transparency:true,spec:{line:'1px',corner:'22px',depth:'Layered',space:'Airy',motion:'Smooth'}},
+  {id:'messenger',name:'Messenger Workspace',short:'MESSENGER',category:'Channel UI',description:'Discord·Slack 계열을 참고한 아이콘 중심 사이드 레일, 평면형 작업영역, 촘촘한 리스트와 상태 강조 디자인입니다.',transparency:false,spec:{line:'0-1px',corner:'8px',depth:'Flat',space:'Dense',motion:'Quick'}},
+  {id:'material',name:'Material Calendar',short:'MATERIAL',category:'Material',description:'Google 계열 Material 원칙을 참고한 명확한 카드 계층, 떠오르는 버튼, 단계별 그림자와 라운드 캘린더 디자인입니다.',transparency:false,spec:{line:'1px',corner:'14px',depth:'Elevation',space:'Balanced',motion:'Responsive'}},
+  {id:'linear',name:'Linear Minimal',short:'LINEAR',category:'Minimal',description:'Linear 계열의 절제된 생산성 UI를 참고해 프레임을 줄이고 여백, 타이포, 얇은 구분선으로 화면을 정리합니다.',transparency:false,spec:{line:'Hairline',corner:'6px',depth:'None',space:'Wide',motion:'Subtle'}},
+  {id:'notion',name:'Notion Workspace',short:'NOTION',category:'Document UI',description:'Notion 계열을 참고한 문서형 작업공간, 넓은 본문, 단순한 카드, 블록 중심 정보 배치 디자인입니다.',transparency:false,spec:{line:'Soft',corner:'8px',depth:'None',space:'Wide',motion:'Quiet'}},
+  {id:'glass',name:'Glass Planner',short:'GLASS',category:'Glass',description:'Apple·Windows의 반투명 패널에서 영감을 받은 유리 작업판, 블러, 밝은 엣지와 깊은 레이어 디자인입니다.',transparency:true,spec:{line:'Glass',corner:'24px',depth:'Deep',space:'Airy',motion:'Smooth'}},
+  {id:'studio',name:'Studio Control',short:'STUDIO',category:'Creator Tool',description:'OBS와 제작 도구 계열을 참고한 조밀한 컨트롤 패널, 레일, 구분선, 작은 입력 요소 중심 디자인입니다.',transparency:false,spec:{line:'Rail',corner:'4px',depth:'Low',space:'Compact',motion:'Precise'}},
+  {id:'brutal',name:'Neo Brutal',short:'BRUTAL',category:'Graphic',description:'굵은 선, 단단한 오프셋 그림자, 작은 코너와 즉각적인 눌림 효과를 사용하는 강한 그래픽 디자인입니다.',transparency:false,spec:{line:'3px',corner:'4px',depth:'Hard',space:'Chunky',motion:'Snappy'}}
 ];
 const UI_FRAME_IDS=new Set(UI_FRAME_META.map(frame=>frame.id));
 const UI_FRAME_ALIASES={
-  neo:'fluent',floating:'spatial',flat:'minimal',soft:'clay',sharp:'neobrutal',
-  compact:'terminal',spacious:'bento',outline:'minimal',solid:'material',
-  pill:'clay',executive:'material'
+  neo:'agenda',fluent:'agenda',floating:'agenda',spatial:'glass',
+  flat:'linear',minimal:'linear',soft:'notion',clay:'notion',sharp:'brutal',neobrutal:'brutal',
+  compact:'studio',terminal:'studio',spacious:'notion',bento:'notion',outline:'linear',
+  solid:'material',pill:'agenda',executive:'workshop',metro:'workshop',gaming:'studio',retro:'classic'
 };
 function normalizeUiFrameId(value){
   const raw=String(value||'');
@@ -109,28 +106,15 @@ function normalizeUiFrameId(value){
 }
 window.UI_FRAME_META=UI_FRAME_META;
 
-/* UI layout catalogue. These presets change the application shell, not just decoration. */
-const UI_LAYOUT_META=[
-  {id:'classic',name:'Classic',category:'기본',short:'CLASSIC',description:'기존 Mawang Scheduler의 왼쪽 메뉴 + 단일 작업영역 구조입니다.'},
-  {id:'channels',name:'Channels',category:'3-Pane',short:'CHANNELS',description:'Discord와 Slack 계열을 참고한 아이콘 레일 + 보조 탐색 + 작업영역의 3단 구조입니다.'},
-  {id:'planner',name:'Planner',category:'Agenda',short:'PLANNER',description:'현대 스케줄러와 Outlook 계열을 참고한 아이콘 레일 + 넓은 작업영역 + 오른쪽 일정 패널 구조입니다.'},
-  {id:'weekboard',name:'Week Board',category:'Calendar',short:'WEEK',description:'Google Calendar와 Notion Calendar 계열을 참고한 시간축 중심의 주간 캘린더 작업공간입니다.'},
-  {id:'command',name:'Command',category:'Top Dock',short:'COMMAND',description:'Linear와 Figma 계열을 참고해 좌측 사이드바 대신 상단 도크를 사용하는 넓은 워크스페이스입니다.'}
-];
-const UI_LAYOUT_IDS=new Set(UI_LAYOUT_META.map(layout=>layout.id));
-function normalizeUiLayoutId(value){return UI_LAYOUT_IDS.has(String(value||''))?String(value):'classic'}
-window.UI_LAYOUT_META=UI_LAYOUT_META;
-
 /* v5.2 - Device-local presentation preferences. These never belong to shared cloud data. */
 const MWS_DEVICE_PREFS_KEY='mws_device_preferences_v1';
-const MWS_DEVICE_PREF_KEYS=['theme','backgroundImage','backgroundDim','uiLayout','uiFrame','neoTransparency','textScale','resolutionMode','sidebarPinned','postViewMode','postCardColumns','dashboardUpcomingHidden'];
+const MWS_DEVICE_PREF_KEYS=['theme','backgroundImage','backgroundDim','uiFrame','neoTransparency','textScale','resolutionMode','sidebarPinned','postViewMode','postCardColumns','dashboardUpcomingHidden'];
 function mwsExtractDevicePrefs(src=data){
   const x=src&&typeof src==='object'?src:{};
   return {
     theme:String(x.theme||'neon'),
     backgroundImage:typeof x.backgroundImage==='string'?x.backgroundImage:'',
     backgroundDim:Math.max(0,Math.min(85,Number(x.backgroundDim??45))),
-    uiLayout:normalizeUiLayoutId(x.uiLayout),
     uiFrame:normalizeUiFrameId(x.uiFrame),
     neoTransparency:Math.max(0,Math.min(60,Number(x.neoTransparency??10))),
     textScale:Math.max(85,Math.min(130,Number(x.textScale)||100)),
@@ -179,7 +163,6 @@ if(loadedDataVersion<28)data.sidebarPinned=true;
 if(!data.theme)data.theme='neon';
 if(data.backgroundImage===undefined)data.backgroundImage='';
 if(data.backgroundDim===undefined)data.backgroundDim=45;
-if(data.uiLayout===undefined)data.uiLayout='classic';
 if(data.uiFrame===undefined)data.uiFrame='classic';
 if(data.neoTransparency===undefined)data.neoTransparency=10;
 const mwsStoredDevicePrefs=mwsLoadDevicePrefs();
@@ -189,8 +172,6 @@ data.version=52;
 data.contacts.forEach(c=>{if(c.pendingSetup===undefined)c.pendingSetup=false});
 document.body.dataset.theme=data.theme;
 document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));
-data.uiLayout=normalizeUiLayoutId(data.uiLayout);
-document.body.dataset.uiLayout=data.uiLayout;
 data.uiFrame=normalizeUiFrameId(data.uiFrame);
 document.body.classList.remove('mws-neo');
 document.body.dataset.uiFrame=data.uiFrame;
@@ -208,7 +189,7 @@ let wheelScrollTimers={};
 function loadData(){
   const raw=localStorage.getItem('mawangSchedulerBeta');
   if(raw){try{return JSON.parse(raw)}catch(e){}}
-  return {version:52,categories:DEFAULT_CATEGORIES,contacts:[],posts:[],events:[],collaborations:[],memos:[],targetList:[],contactTags:[],contactTagBanners:{},scheduleClipboard:[],favoriteFolders:[],postViewMode:'card',postCardColumns:4,textScale:100,resolutionMode:'fhd',selfContactId:'',sidebarPinned:true,dashboardUpcomingHidden:false,timezones:DEFAULT_TZS,theme:'neon',backgroundImage:'',backgroundDim:45,uiLayout:'classic',uiFrame:'classic',neoTransparency:10,miniGames:defaultMiniGames()};
+  return {version:52,categories:DEFAULT_CATEGORIES,contacts:[],posts:[],events:[],collaborations:[],memos:[],targetList:[],contactTags:[],contactTagBanners:{},scheduleClipboard:[],favoriteFolders:[],postViewMode:'card',postCardColumns:4,textScale:100,resolutionMode:'fhd',selfContactId:'',sidebarPinned:true,dashboardUpcomingHidden:false,timezones:DEFAULT_TZS,theme:'neon',backgroundImage:'',backgroundDim:45,uiFrame:'classic',neoTransparency:10,miniGames:defaultMiniGames()};
 }
 const AUTOSAVE_KEY='mawangSchedulerAutoBackups';
 
@@ -275,7 +256,6 @@ function normalizeDataShape(){
   data.postViewMode=data.postViewMode==='list'?'list':'card';
   data.postCardColumns=Math.max(2,Math.min(5,Number(data.postCardColumns)||4));
   data.textScale=Math.max(80,Math.min(200,Number(data.textScale)||100));
-  data.uiLayout=normalizeUiLayoutId(data.uiLayout);
   data.uiFrame=normalizeUiFrameId(data.uiFrame);
   data.neoTransparency=Math.max(0,Math.min(60,Number(data.neoTransparency??10)));
   data.resolutionMode=['fhd','2k','4k','wide','mobile'].includes(String(data.resolutionMode||''))?String(data.resolutionMode):'fhd';
@@ -546,7 +526,6 @@ function setTab(tab){
   if(tab==='settings')safeRenderView('설정',renderSettings);
   try{window.mwsScheduleImageTune?.()}catch(_){}
   try{window.mwsContactRuntimeOnTabV130?.(tab)}catch(_){}
-  try{syncUiLayoutPanels()}catch(_){}
 }
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
 function syncSidebarPinUI(){
@@ -1344,7 +1323,6 @@ function renderCalendar(){
   });
   renderCalendarClipboard();
   initCalendarCopyTrayDnD();
-  try{renderUiLayoutWeekBoard()}catch(_){}
 }
 document.getElementById('prevMonth').onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()-1,1);renderCalendar()}
 document.getElementById('nextMonth').onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()+1,1);renderCalendar()}
@@ -4152,142 +4130,6 @@ function renderThemeGrid(){
 }
 window.applyTheme=applyTheme;
 const BUILTIN_DEFAULT_BACKGROUND='assets/default-background.png';
-function uiLayoutMeta(id=data.uiLayout){
-  return UI_LAYOUT_META.find(layout=>layout.id===normalizeUiLayoutId(id))||UI_LAYOUT_META[0];
-}
-function renderUiLayoutGrid(){
-  const grid=document.getElementById('uiLayoutGrid');
-  if(!grid)return;
-  const selected=normalizeUiLayoutId(data.uiLayout);
-  grid.innerHTML=UI_LAYOUT_META.map(layout=>`
-    <button type="button" class="ui-layout-option ${layout.id===selected?'active':''}" data-ui-layout-choice="${layout.id}" onclick="setUiLayout('${layout.id}')" aria-pressed="${layout.id===selected?'true':'false'}">
-      <span class="ui-layout-preview layout-preview-${layout.id}" aria-hidden="true"><i></i><i></i><i></i><i></i><b>${layout.short}</b></span>
-      <span class="ui-layout-option-meta"><strong>${layout.name}</strong><em>${layout.category}</em></span>
-      <small>${layout.description}</small>
-    </button>`).join('');
-}
-window.renderUiLayoutGrid=renderUiLayoutGrid;
-
-function activeTabId(){
-  return document.querySelector('.section.active')?.id||'dashboard';
-}
-function renderLayoutContextPane(){
-  const pane=document.getElementById('uiLayoutContextPane');
-  if(!pane)return;
-  const current=activeTabId();
-  const primary=['dashboard','calendar','contacts','posts','sniper','targets','memos','worldtime'];
-  const games=['gameMajoku','gameLadder','gameRps','gamePachinko','gameMultiDraw'];
-  const system=['export','settings'];
-  const names={dashboard:'대시보드',calendar:'캘린더',contacts:'연락처',posts:'게시글',sniper:'최근 합방 인원',targets:'저격 리스트',memos:'메모',worldtime:'세계 시간',gameMajoku:'Majoku Castle',gameLadder:'사다리타기',gameRps:'가위바위보',gamePachinko:'경마',gameMultiDraw:'Gacha 뽑기',export:'가져오기 / 내보내기',settings:'설정'};
-  const button=id=>`<button type="button" class="${id===current?'active':''}" data-layout-tab="${id}" onclick="setTab('${id}')"><span>${names[id]||id}</span><i>›</i></button>`;
-  pane.innerHTML=`
-    <div class="layout-context-brand">MAWANG <span>WORKSPACE</span></div>
-    <div class="layout-context-search">빠른 탐색</div>
-    <div class="layout-context-group"><h4>Workspace</h4>${primary.map(button).join('')}</div>
-    <div class="layout-context-group"><h4>Majoku</h4>${games.map(button).join('')}</div>
-    <div class="layout-context-group layout-context-system"><h4>System</h4>${system.map(button).join('')}</div>`;
-}
-function renderLayoutAgendaPane(){
-  const pane=document.getElementById('uiLayoutAgendaPane');
-  if(!pane)return;
-  const up=upcomingEvents().slice(0,8);
-  pane.innerHTML=`
-    <div class="layout-agenda-head"><div><span>UP NEXT</span><strong>예정 일정</strong></div><button type="button" onclick="setTab('calendar')">달력</button></div>
-    <div class="layout-agenda-date">${new Intl.DateTimeFormat('ko-KR',{month:'long',day:'numeric',weekday:'short'}).format(new Date())}</div>
-    <div class="layout-agenda-list">
-      ${up.length?up.map(ev=>{
-        const c=ev.color||category(ev.categoryId)?.color||'var(--accent)';
-        return `<button type="button" class="layout-agenda-event" onclick="openEvent('${ev.id}')">
-          <i style="background:${c}"></i>
-          <span><strong>${esc(ev.title||'일정')}</strong><small>${esc(ev.date||'')} · ${esc(ev.start==='TBD'?'미정':ev.start||'')}</small></span>
-        </button>`;
-      }).join(''):'<div class="layout-agenda-empty">예정된 일정이 없습니다.</div>'}
-    </div>`;
-}
-function weekStartFor(date){
-  const d=new Date(date.getFullYear(),date.getMonth(),date.getDate());
-  const day=(d.getDay()+6)%7;
-  d.setDate(d.getDate()-day);
-  d.setHours(12,0,0,0);
-  return d;
-}
-function renderUiLayoutWeekBoard(){
-  const host=document.getElementById('uiLayoutWeekBoard');
-  if(!host)return;
-  if(normalizeUiLayoutId(data.uiLayout)!=='weekboard'){host.innerHTML='';return}
-  const start=weekStartFor(calDate||new Date());
-  const days=Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d});
-  const startHour=8,endHour=24,hourHeight=52,total=(endHour-startHour)*hourHeight;
-  const hours=Array.from({length:endHour-startHour+1},(_,i)=>startHour+i);
-  const events=activeEvents().filter(ev=>days.some(d=>ymd(d)===ev.date)&&!ev.restDay);
-  const minicalDays=days.map(d=>`<button type="button" class="${ymd(d)===todayKST()?'today':''}" onclick="calDate=new Date('${ymd(d)}T12:00:00');renderCalendar()"><b>${['월','화','수','목','금','토','일'][((d.getDay()+6)%7)]}</b><span>${d.getDate()}</span></button>`).join('');
-  const columns=days.map(d=>{
-    const ds=ymd(d);
-    const dayEvents=events.filter(ev=>ev.date===ds);
-    const blocks=dayEvents.map(ev=>{
-      const parts=String(ev.start||'').match(/^(\d{1,2}):(\d{2})$/);
-      if(!parts)return '';
-      const h=Number(parts[1]),m=Number(parts[2]);
-      if(h<startHour||h>=endHour)return '';
-      const endParts=String(ev.end||'').match(/^(\d{1,2}):(\d{2})$/);
-      const endMinutes=endParts?Number(endParts[1])*60+Number(endParts[2]):h*60+m+60;
-      const startMinutes=h*60+m;
-      const top=((startMinutes-startHour*60)/60)*hourHeight;
-      const height=Math.max(34,((endMinutes-startMinutes)/60)*hourHeight-4);
-      const c=ev.color||category(ev.categoryId)?.color||'var(--accent)';
-      return `<button type="button" class="weekboard-event" style="top:${top}px;height:${height}px;border-color:${c};background:color-mix(in srgb,${c} 24%,var(--panel))" onclick="openEvent('${ev.id}')"><strong>${esc(ev.title||'일정')}</strong><span>${esc(ev.start||'')}</span></button>`;
-    }).join('');
-    return `<div class="weekboard-daycol ${ds===todayKST()?'today':''}" style="height:${total}px">${blocks}</div>`;
-  }).join('');
-  host.innerHTML=`
-    <div class="weekboard-shell">
-      <aside class="weekboard-side">
-        <div class="weekboard-side-kicker">WEEK PLANNER</div>
-        <h3>${new Intl.DateTimeFormat('ko-KR',{year:'numeric',month:'long'}).format(start)}</h3>
-        <div class="weekboard-miniweek">${minicalDays}</div>
-        <div class="weekboard-upcoming">
-          <strong>이번 주 일정</strong>
-          <span>${events.length}개</span>
-        </div>
-      </aside>
-      <div class="weekboard-main">
-        <div class="weekboard-dayheads">${days.map(d=>`<div class="${ymd(d)===todayKST()?'today':''}"><b>${['월','화','수','목','금','토','일'][((d.getDay()+6)%7)]}</b><span>${d.getDate()}</span></div>`).join('')}</div>
-        <div class="weekboard-grid">
-          <div class="weekboard-times" style="height:${total}px">${hours.slice(0,-1).map((h,i)=>`<span style="top:${i*hourHeight}px">${String(h).padStart(2,'0')}:00</span>`).join('')}</div>
-          <div class="weekboard-columns" style="--hour-h:${hourHeight}px;height:${total}px">${columns}</div>
-        </div>
-      </div>
-    </div>`;
-}
-window.renderUiLayoutWeekBoard=renderUiLayoutWeekBoard;
-
-function syncUiLayoutPanels(){
-  renderLayoutContextPane();
-  renderLayoutAgendaPane();
-  renderUiLayoutWeekBoard();
-}
-window.syncUiLayoutPanels=syncUiLayoutPanels;
-
-function applyUiLayout(notify=false){
-  const layout=normalizeUiLayoutId(data.uiLayout);
-  const meta=uiLayoutMeta(layout);
-  data.uiLayout=layout;
-  document.body.dataset.uiLayout=layout;
-  renderUiLayoutGrid();
-  const status=document.getElementById('uiLayoutStatus');
-  const desc=document.getElementById('uiLayoutDescription');
-  if(status)status.textContent=meta.name;
-  if(desc)desc.textContent=meta.description;
-  syncUiLayoutPanels();
-  if(notify)toast('UI 레이아웃',meta.name+' 레이아웃을 적용했습니다');
-}
-window.applyUiLayout=applyUiLayout;
-window.setUiLayout=layout=>{
-  data.uiLayout=normalizeUiLayoutId(layout);
-  applyUiLayout(true);
-  mwsSaveDevicePrefs(data);
-};
-
 function uiFrameMeta(id=data.uiFrame){
   return UI_FRAME_META.find(frame=>frame.id===normalizeUiFrameId(id))||UI_FRAME_META[0];
 }
@@ -4330,7 +4172,7 @@ function applyUiFrame(notify=false){
   if(transSlider)transSlider.disabled=!meta.transparency;
 
   applyNeoTransparency(false);
-  if(notify)toast('UI 프레임',meta.name+' 프레임을 적용했습니다');
+  if(notify)toast('UI 디자인',meta.name+' 디자인을 적용했습니다');
 }
 window.applyUiFrame=applyUiFrame;
 window.setUiFrame=frame=>{
@@ -4389,7 +4231,6 @@ async function compressBackgroundImage(dataUrl,maxWidth=1920,quality=.82){
 function renderSettings(){
   document.getElementById('themeSelect').value=data.theme;renderThemeGrid();
   applyTextScale(data.textScale??100,false);
-  applyUiLayout(false);
   applyUiFrame(false);
   applyNeoTransparency(false);
   document.getElementById('categoryList').innerHTML=data.categories.map(c=>`<div class="catrow reorder-row" data-category-id="${c.id}"
