@@ -89,6 +89,7 @@ jobs:
           grep -Fq "const CACHE_DB='mawang_data_v130'" /tmp/cloud-core.js
           grep -Fq 'mws-app-loading' /tmp/cloud-core.js
           grep -Fq 'mws:post-login-ui-ready' /tmp/cloud-core.js
+          grep -Fq 'versions:Object.fromEntries(partsToSave.map' /tmp/cloud-core.js
           node - <<'NODE'
           const fs=require('fs');
           const src=fs.readFileSync('/tmp/cloud-core.js','utf8');
@@ -150,6 +151,8 @@ jobs:
           node --check src/cf-v120-friend.js
           node --check src/cf-v121-boss-media.js
           node --check src/cf-v111-entry.js
+          node --check src/cf-v111-auth.js
+          grep -Fq 'save_conflict_guard' src/cf-v111-auth.js
           grep -Fq '__mwsAppReadyV130' assets/cloud-v1.1-loader.js
           grep -Fq "mws:app-ready" assets/post-login-runtime-v130.js
           grep -Fq 'normalizeCloudCore' src/cf-v111-entry.js
