@@ -87,8 +87,14 @@ jobs:
           node --check /tmp/mobile-day-detail.js
           grep -Fq "event.stopImmediatePropagation()" /tmp/mobile-day-detail.js
           grep -Fq "mws-mobile-event-hidden-v130" /tmp/mobile-day-detail.js
+          grep -Fq "participantVisuals(event)" /tmp/mobile-day-detail.js
+          grep -Fq "gameVisual(event)" /tmp/mobile-day-detail.js
+          grep -Fq "mws-mobile-nav-offset-v130" /tmp/mobile-day-detail.js
           retry_contains "$BASE/assets/mobile-calendar-v130.css?deploy=$GITHUB_SHA" 'mws-mobile-calendar-extra-v130' > /tmp/mobile-calendar.css
           grep -Fq "mini-event-main" /tmp/mobile-calendar.css
+          grep -Fq "mws-mobile-day-person-avatar-v130" /tmp/mobile-calendar.css
+          grep -Fq "mws-mobile-day-game-image-v130" /tmp/mobile-calendar.css
+          grep -Fq "bottom:var(--mws-mobile-nav-offset-v130,68px)" /tmp/mobile-calendar.css
           retry_contains "$BASE/assets/cloud-v1.1.js?deploy=$GITHUB_SHA" 'function enterAppShell(chosen)' > /tmp/cloud-core.js
           node --check /tmp/cloud-core.js
           grep -Fq 'void startHydration(chosen)' /tmp/cloud-core.js

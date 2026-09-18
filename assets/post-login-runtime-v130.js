@@ -68,7 +68,7 @@ async function start(){
 
   const styleResults=await Promise.all([
     loadStyle('mobile-drawer-v130','/assets/mobile-drawer-v130.css?v=1.3.0-mobile-cleanup'),
-    loadStyle('mobile-calendar-v130','/assets/mobile-calendar-v130.css?v=1.3.0-mobile-calendar-text-fix2')
+    loadStyle('mobile-calendar-v130','/assets/mobile-calendar-v130.css?v=1.3.0-mobile-calendar-detail-media1')
   ]);
   window.__mwsPostLoginStyleErrorsV130=styleResults.filter(x=>!x.ok).map(x=>x.key);
   if(window.__mwsPostLoginStyleErrorsV130.length){markCriticalUiFailure(window.__mwsPostLoginStyleErrorsV130);return;}
@@ -76,7 +76,7 @@ async function start(){
   const quickAddResult=await load('mobile-calendar-quick-add-v130','/assets/mobile-calendar-quick-add-v130.js?v=1.3.0-mobile-cleanup','__mwsMobileCalendarQuickAddV130');
   if(!quickAddResult.ok){markCriticalUiFailure(['mobile-calendar-quick-add-v130']);return;}
 
-  const dayDetailResult=await load('mobile-calendar-day-detail-v130','/assets/mobile-calendar-day-detail-v130.js?v=1.3.0-mobile-calendar-text-fix2','__mwsMobileCalendarDayDetailV130');
+  const dayDetailResult=await load('mobile-calendar-day-detail-v130','/assets/mobile-calendar-day-detail-v130.js?v=1.3.0-mobile-calendar-detail-media1','__mwsMobileCalendarDayDetailV130');
   if(!dayDetailResult.ok){markCriticalUiFailure(['mobile-calendar-day-detail-v130']);return;}
 
   const integrityResult=await load('integrity-runtime-v130','/assets/integrity-runtime-v130.js?v=1.3.0-phase12','__mwsIntegrityRuntimeV130');
