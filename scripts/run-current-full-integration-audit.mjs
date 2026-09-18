@@ -83,6 +83,7 @@ import {runPhase82PerformanceOwnershipCleanupAudit} from './run-phase82-performa
 import {runPhase83SetTabSuccessorAudit} from './run-phase83-settab-successor-audit.mjs';
 import {runPhase84PerformanceSetTabRemovalAudit} from './run-phase84-performance-settab-removal-audit.mjs';
 import {runPhase85ContactTabHookSuccessorAudit} from './run-phase85-contact-tab-hook-successor-audit.mjs';
+import {runPhase86ContactSetTabRemovalAudit} from './run-phase86-contact-settab-removal-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
