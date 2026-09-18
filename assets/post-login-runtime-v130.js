@@ -61,7 +61,7 @@ async function start(){
   started=true;
   await load('perf-runtime','/assets/perf-runtime.js?v=1.4.0-phase84','__mwsCf571Optimizer');
   await load('today-people-runtime-v130','/assets/today-people-runtime-v130.js?v=1.3.0-final68','__mwsTodayPeopleRuntimeV130');
-  await load('contact-runtime-v130','/assets/contact-runtime-v130.js?v=1.3.0-search67','__mwsContactRuntimeV130');
+  await load('contact-runtime-v130','/assets/contact-runtime-v130.js?v=1.3.0-search85','__mwsContactRuntimeV130');
 
   const deviceUiResult=await load('device-ui','/assets/device-ui.js?v=1.3.0-majoku-menu-p45');
   if(!deviceUiResult.ok){markCriticalUiFailure(['device-ui']);return;}
