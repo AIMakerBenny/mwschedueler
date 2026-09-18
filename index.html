@@ -282,7 +282,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
           <button class="secondary contact-view" data-contact-view="favorite" id="favoriteContactTabBtn">즐겨찾기</button>
         </div>
         <div class="row">
-          <input id="contactSearch" class="search" placeholder="이름 또는 태그 검색" />
+          <input id="contactSearch" class="search" placeholder="이름, 태그 또는 초성 검색" />
           <select id="contactSort" title="정렬 기준">
             <option value="nameAsc">이름 가나다순</option>
             <option value="nameDesc">이름 역순</option>
@@ -362,7 +362,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
         <div id="postApplicantsPanel" class="post-detail-panel active">
           <div id="postApplicantSummary" class="post-applicant-summary"></div>
           <div class="post-applicant-tools">
-            <input id="postApplicantSearch" class="search" placeholder="이름, ID, 각오 내용 검색">
+            <input id="postApplicantSearch" class="search" placeholder="이름, ID, 각오 내용 또는 초성 검색">
             <select id="postApplicantStatusFilter"><option value="">전체 상태</option><option value="pending">대기</option><option value="selected">확정</option><option value="gacha">가챠</option><option value="nextchance">다음기회에</option></select>
             <select id="postApplicantSort"><option value="recent">최신 댓글순</option><option value="oldest">오래된 댓글순</option><option value="upDesc">UP 높은순</option><option value="upAsc">UP 낮은순</option><option value="name">이름 가나다순</option></select>
           </div>
@@ -414,7 +414,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
             <div class="subtle" style="margin-top:4px">최근 30일 동안 실제로 함께한 횟수와 마지막 합방 시점을 분석하는 화면입니다. Upcoming은 참고 정보이며 등급 효과에는 영향을 주지 않습니다.</div>
           </div>
           <div class="row">
-            <input id="sniperSearch" class="search" placeholder="이름 또는 태그 검색">
+            <input id="sniperSearch" class="search" placeholder="이름, 태그 또는 초성 검색">
             <select id="sniperSort">
               <option value="recentFirst" selected>마지막 합방 최신 순</option>
               <option value="oldestFirst">마지막 합방 오래된 순</option>
@@ -488,7 +488,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
           <div class="subtle" style="margin-top:4px">요즘 나랑 안 놀아준 사람을 직접 등록해 두고, 마지막 합방과 다음 합방 예정일을 확인하는 개인 추적 목록입니다.</div>
         </div>
         <div class="row target-toolbar-actions">
-          <input id="targetSearch" class="search" placeholder="등록된 인원 검색">
+          <input id="targetSearch" class="search" placeholder="등록된 인원 또는 초성 검색">
           <button class="target-shoot-button" id="targetShootBtn" type="button">
             <span class="target-crosshair-icon" aria-hidden="true"></span>
             <span id="targetShootBtnText">저격</span>
@@ -525,7 +525,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
             <div class="subtle" style="margin-top:4px">컨텐츠와 별개로 아이디어, 준비사항, 대본 초안 등을 저장해 두는 메모장입니다.</div>
           </div>
           <div class="row">
-            <input id="memoSearch" class="search" placeholder="메모 제목 또는 내용 검색">
+            <input id="memoSearch" class="search" placeholder="메모 제목, 내용 또는 초성 검색">
             <button class="secondary" id="exportMemosBtn">메모 내보내기</button>
             <label class="secondary" style="display:inline-flex;align-items:center">메모 불러오기<input id="importMemosInput" type="file" accept=".json" style="display:none"></label>
             <button class="primary" id="newMemoBtn">메모 추가</button>
@@ -572,7 +572,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
             <div class="subtle" style="margin-top:4px">스케줄 수정창에서 노란 별을 켠 컨텐츠를 모아봅니다.</div>
           </div>
           <div class="row">
-            <input id="favoriteScheduleSearch" class="search" placeholder="컨텐츠 제목 또는 참가자 이름 검색">
+            <input id="favoriteScheduleSearch" class="search" placeholder="컨텐츠 제목, 참가자 이름 또는 초성 검색">
             <select id="favoriteScheduleSort" title="북마크 정렬">
               <option value="upcoming">다가오는 일정 우선</option>
               <option value="dateAsc">날짜 빠른 순</option>
@@ -792,7 +792,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
   <div class="mini-game-layout ladder-layout">
     <div class="card mini-contact-dock ladder-contact-dock">
       <div class="space"><div><h3>연락처 팔레트</h3><div class="subtle">최대 12명 · 드래그 또는 +</div></div><span class="chip" id="ladderContactCount">0명</span></div>
-      <input class="mini-contact-search" placeholder="연락처 검색" oninput="renderMiniContactPalette('ladder',this.value)">
+      <input class="mini-contact-search" placeholder="연락처 또는 초성 검색" oninput="renderMiniContactPalette('ladder',this.value)">
       <div id="ladderContactPalette" class="mini-contact-palette"></div>
       <div class="mini-manual-add"><input id="ladderManualName" placeholder="수동 참가자 이름"><button class="secondary" onclick="miniManualAdd('ladder','ladderManualName')">추가</button></div>
       <div class="mini-drop-zone" data-mini-drop="ladder" ondragover="miniDropOver(event)" ondragleave="miniDropLeave(event)" ondrop="miniDropContact('ladder',event)">연락처를 이곳에 끌어 놓으세요</div>
@@ -832,7 +832,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
       <div class="mini-game-layout rps-layout">
         <div class="card mini-contact-dock">
           <div class="space"><div><h3>연락처 팔레트</h3><div class="subtle">드래그 또는 +로 참가</div></div><span class="chip" id="rpsContactCount">0명</span></div>
-          <input class="mini-contact-search" placeholder="연락처 검색" oninput="renderMiniContactPalette('rps',this.value)">
+          <input class="mini-contact-search" placeholder="연락처 또는 초성 검색" oninput="renderMiniContactPalette('rps',this.value)">
           <div id="rpsContactPalette" class="mini-contact-palette"></div>
           <div class="mini-manual-add"><input id="rpsManualName" placeholder="수동 참가자 이름"><button class="secondary" onclick="miniManualAdd('rps','rpsManualName')">추가</button></div>
           <div class="mini-drop-zone" data-mini-drop="rps" ondragover="miniDropOver(event)" ondragleave="miniDropLeave(event)" ondrop="miniDropContact('rps',event)">연락처를 이곳에 끌어 놓으세요</div>
@@ -877,7 +877,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
     <div class="horse-race-bottom">
       <div class="card mini-contact-dock horse-race-contact-dock">
         <div class="space"><div><h3>연락처 팔레트</h3><div class="subtle">연락처에서 참가자를 추가합니다</div></div><span class="chip" id="pachinkoContactCount">0명</span></div>
-        <input class="mini-contact-search" placeholder="연락처 검색" oninput="renderMiniContactPalette('pachinko',this.value)">
+        <input class="mini-contact-search" placeholder="연락처 또는 초성 검색" oninput="renderMiniContactPalette('pachinko',this.value)">
         <div id="pachinkoContactPalette" class="mini-contact-palette"></div>
         <div class="mini-drop-zone" data-mini-drop="pachinko" ondragover="miniDropOver(event)" ondragleave="miniDropLeave(event)" ondrop="miniDropContact('pachinko',event)">연락처를 이곳에 끌어 놓으세요</div>
       </div>
@@ -970,7 +970,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
   <div class="multi-draw-controls-grid gacha-controls-grid-v418">
     <div class="card mini-contact-dock multi-draw-contact-dock">
       <div class="space"><div><h3>연락처 팔레트</h3><div class="subtle">드래그 또는 + 버튼으로 참가자를 추가합니다.</div></div><span class="chip" id="multiDrawContactCount">0명</span></div>
-      <input class="mini-contact-search" placeholder="연락처 검색" oninput="renderMiniContactPalette('multiDraw',this.value)">
+      <input class="mini-contact-search" placeholder="연락처 또는 초성 검색" oninput="renderMiniContactPalette('multiDraw',this.value)">
       <div id="multiDrawContactPalette" class="mini-contact-palette multi-draw-contact-palette"></div>
       <div class="mini-manual-add"><input id="multiDrawManualName" placeholder="수동 참가자 이름"><button class="secondary" onclick="miniManualAdd('multiDraw','multiDrawManualName')">추가</button></div>
       <div class="mini-drop-zone multi-draw-drop-zone" data-mini-drop="multiDraw" ondragover="miniDropOver(event)" ondragleave="miniDropLeave(event)" ondrop="miniDropContact('multiDraw',event)">연락처를 이곳에 끌어 놓으세요</div>
@@ -1101,7 +1101,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
   </div>
   <div id="selfContactPreview" class="self-contact-preview"></div>
   <div class="self-contact-picker-toolbar">
-    <input id="selfContactSearch" placeholder="이름 또는 태그로 이용자 검색">
+    <input id="selfContactSearch" placeholder="이름, 태그 또는 초성으로 이용자 검색">
     <button type="button" class="secondary" id="clearSelfContactBtn">선택 해제</button>
   </div>
   <div id="selfContactPicker" class="self-contact-picker"></div>
@@ -1486,7 +1486,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
     </div>
     <div class="participant-search-wrap target-picker-search-wrap">
       <span class="participant-search-icon">⌕</span>
-      <input id="targetPickerSearch" placeholder="이름 또는 태그 검색">
+      <input id="targetPickerSearch" placeholder="이름, 태그 또는 초성 검색">
     </div>
     <div id="targetPickerTags" class="target-picker-tags"></div>
     <div id="targetPickerList" class="target-picker-list"></div>
@@ -1523,7 +1523,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <div id="miniGameCelebration" class="mini-game-celebration" aria-hidden="true" onclick="closeMiniGameCelebration()"><div class="celebration-glow"></div><div id="celebrationConfetti" class="celebration-confetti"></div><div class="celebration-card"><div id="celebrationKicker" class="celebration-kicker">WINNER</div><div id="celebrationAvatar" class="celebration-avatar"></div><div id="celebrationText" class="celebration-text">당첨</div><div class="celebration-sub">화면을 클릭하면 닫힙니다</div></div></div>
 <div id="toast" class="toast"></div>
 
-<script src="assets/app-core.js?v=1.3.0-ime64"></script>
+<script src="assets/app-core.js?v=1.3.0-search70"></script>
 
 
 
@@ -2916,7 +2916,7 @@ body[data-resolution="mobile"] #contacts.active .contact-tag-panel{position:stat
     const sf=document.getElementById('postApplicantStatusFilter')?.value||'';
     const sort=document.getElementById('postApplicantSort')?.value||'recent';
     let arr=[...(post?.comments||[])];
-    if(q)arr=arr.filter(c=>(`${c.name||''} ${c.userId||''} ${c.comment||''}`).toLowerCase().includes(q));
+    if(q)arr=arr.filter(c=>(window.mwsTextMatches?window.mwsTextMatches(`${c.name||''} ${c.userId||''} ${c.comment||''}`,q):(`${c.name||''} ${c.userId||''} ${c.comment||''}`).toLowerCase().includes(q)));
     if(sf)arr=arr.filter(c=>v53Status(c)===sf);
     if(sort==='upDesc')arr.sort((a,b)=>(Number(b.upCount)||0)-(Number(a.upCount)||0)||String(b.regDate||'').localeCompare(String(a.regDate||'')));
     else if(sort==='upAsc')arr.sort((a,b)=>(Number(a.upCount)||0)-(Number(b.upCount)||0)||String(b.regDate||'').localeCompare(String(a.regDate||'')));
