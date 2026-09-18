@@ -1,0 +1,47 @@
+name: Diagnose Friend Finder Payload
+
+on:
+  push:
+    branches:
+      - diag-friendfinder-payload-20260918
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Decode payload and locate Friend Finder renderer
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const zlib=require('zlib');
+          const src=fs.readFileSync('assets/online-v5-loader.js','utf8');
+          const m=src.match(/const PAYLOAD='([^']+)'/);
+          if(!m)throw new Error('PAYLOAD missing');
+          const all=zlib.gunzipSync(Buffer.from(m[1],'base64')).toString('utf8');
+          console.log('DECODED_BYTES',Buffer.byteLength(all));
+          const terms=['friendFinder','friend-finder-card-v5','friend-finder-grid-v5','친구 찾기','LIVE 보기','현재 방송 OFF','라이브 새로고침'];
+          for(const term of terms){
+            let pos=0,count=0;
+            while(count<12){
+              const i=all.indexOf(term,pos);
+              if(i<0)break;
+              console.log('\n===== '+term+' #'+(++count)+' @'+i+' =====');
+              console.log(all.slice(Math.max(0,i-5000),Math.min(all.length,i+16000)));
+              pos=i+term.length;
+            }
+            console.log('TERM_COUNT',term,count);
+          }
+          const fnRe=/function\s+[A-Za-z0-9_$]*(?:Friend|friend)[A-Za-z0-9_$]*\s*\([^)]*\)\s*\{/g;
+          for(const hit of all.matchAll(fnRe)){
+            console.log('\n===== FUNCTION '+hit[0]+' @'+hit.index+' =====');
+            console.log(all.slice(Math.max(0,hit.index-2500),Math.min(all.length,hit.index+18000)));
+          }
+          NODE
