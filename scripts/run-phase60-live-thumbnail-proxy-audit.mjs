@@ -15,7 +15,7 @@ export function runPhase60LiveThumbnailProxyAudit(){
   if(!backend.includes("type.startsWith('image/')"))issues.push('thumbnail proxy does not validate image content type');
   if(!backend.includes("'cache-control':'public, max-age=5, s-maxage=10'"))issues.push('thumbnail proxy short cache policy is missing');
   if(!backend.includes("url.pathname==='/api/soop/live-thumb'&&request.method==='GET'"))issues.push('thumbnail proxy route is not wired');
-  if(!loader.includes("friend-finder-v120.js?v=1.3.0-phase61"))issues.push('Phase 60 proxy successor Friend Finder cache-bust revision is missing');
+  if(!loader.includes("friend-finder-v120.js?v=1.3.0-phase62"))issues.push('Phase 60 proxy successor Friend Finder cache-bust revision is missing');
 
   const summary={phase:60,name:'same-origin-live-thumbnail-proxy',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
