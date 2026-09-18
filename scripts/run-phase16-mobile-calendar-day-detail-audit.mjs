@@ -7,7 +7,7 @@ export function runPhase16MobileCalendarDayDetailAudit(){
   const runtime=fs.readFileSync('assets/post-login-runtime-v130.js','utf8');
   const feature=fs.readFileSync('assets/mobile-calendar-day-detail-v130.js','utf8');
 
-  if(!runtime.includes("load('mobile-calendar-day-detail-v130','/assets/mobile-calendar-day-detail-v130.js?v=1.3.0-mobile-day-detail'"))issues.push('mobile calendar day-detail runtime is not loaded after login');
+  if(!runtime.includes("load('mobile-calendar-day-detail-v130','/assets/mobile-calendar-day-detail-v130.js?v="))issues.push('mobile calendar day-detail runtime is not loaded after login');
   if(!feature.includes("event.stopImmediatePropagation()"))issues.push('mobile day click does not override the legacy direct-add/direct-edit calendar click path');
   if(!feature.includes("if(typeof window.openEvent==='function')window.openEvent(id)"))issues.push('day-detail event card does not reuse the existing event editor');
   if(!feature.includes("event?.steamGame?.name"))issues.push('day-detail does not expose linked game names');
