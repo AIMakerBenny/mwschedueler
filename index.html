@@ -139,6 +139,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
     </button>
   </aside>
 
+  <aside id="uiLayoutContextPane" class="ui-layout-context-pane" aria-label="보조 탐색"></aside>
   <main class="main">
     <div class="topbar">
       <div class="top-left"><h1 id="pageTitle">대시보드</h1><div class="subtle" id="todayText"></div></div>
@@ -254,6 +255,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
       </div>
       <div class="calendar-head"><div style="color:#ef8b9c">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div style="color:#7da8f7">토</div></div>
       <div id="calendarGrid" class="calendar"></div>
+      <div id="uiLayoutWeekBoard" class="ui-layout-weekboard" aria-label="주간 타임보드"></div>
 
       <div id="calendarCopyTray" class="calendar-copy-tray">
         <div class="calendar-copy-tray-head">
@@ -1141,6 +1143,17 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
             <div class="text-scale-preview-sub">설정값은 게시글 카드, 연락처, 메모, 버튼 등 주요 화면에 함께 적용됩니다.</div>
           </div>
         </div>
+        <div class="card ui-layout-settings-card">
+          <div class="space">
+            <div>
+              <h3>UI 레이아웃</h3>
+              <p class="muted small" style="margin:3px 0 0">같은 기능과 데이터를 유지하면서 화면의 뼈대 자체를 바꿉니다. 사이드바 위치, 보조 패널, 일정 표시 방식까지 달라집니다.</p>
+            </div>
+            <span id="uiLayoutStatus" class="chip">Classic</span>
+          </div>
+          <div id="uiLayoutGrid" class="ui-layout-grid"></div>
+          <div id="uiLayoutDescription" class="muted small ui-layout-description">기존 Mawang Scheduler 화면 구조입니다.</div>
+        </div>
         <div class="card ui-frame-settings-card">
           <div class="space">
             <div>
@@ -1214,6 +1227,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
       </div>
     </section>
   </main>
+  <aside id="uiLayoutAgendaPane" class="ui-layout-agenda-pane" aria-label="다가오는 일정"></aside>
 </div>
 
 <div id="eventModal" class="modal">
@@ -3995,6 +4009,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .sidebar-save-v572{padding-left:0
 <script src="assets/online-v5-loader.js?v=1.3.0-search73"></script>
 <link rel="stylesheet" href="assets/device-ui.css?v=4">
 <link rel="stylesheet" href="assets/ui-frame-presets.css?v=2.0.0">
+<link rel="stylesheet" href="assets/ui-layout-presets.css?v=1.0.0">
 <script src="assets/device-ui.js?v=1.3.0-majoku-menu-p45"></script>
 </body>
 </html>

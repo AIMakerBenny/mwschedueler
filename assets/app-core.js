@@ -109,15 +109,28 @@ function normalizeUiFrameId(value){
 }
 window.UI_FRAME_META=UI_FRAME_META;
 
+/* UI layout catalogue. These presets change the application shell, not just decoration. */
+const UI_LAYOUT_META=[
+  {id:'classic',name:'Classic',category:'기본',short:'CLASSIC',description:'기존 Mawang Scheduler의 왼쪽 메뉴 + 단일 작업영역 구조입니다.'},
+  {id:'channels',name:'Channels',category:'3-Pane',short:'CHANNELS',description:'Discord와 Slack 계열을 참고한 아이콘 레일 + 보조 탐색 + 작업영역의 3단 구조입니다.'},
+  {id:'planner',name:'Planner',category:'Agenda',short:'PLANNER',description:'현대 스케줄러와 Outlook 계열을 참고한 아이콘 레일 + 넓은 작업영역 + 오른쪽 일정 패널 구조입니다.'},
+  {id:'weekboard',name:'Week Board',category:'Calendar',short:'WEEK',description:'Google Calendar와 Notion Calendar 계열을 참고한 시간축 중심의 주간 캘린더 작업공간입니다.'},
+  {id:'command',name:'Command',category:'Top Dock',short:'COMMAND',description:'Linear와 Figma 계열을 참고해 좌측 사이드바 대신 상단 도크를 사용하는 넓은 워크스페이스입니다.'}
+];
+const UI_LAYOUT_IDS=new Set(UI_LAYOUT_META.map(layout=>layout.id));
+function normalizeUiLayoutId(value){return UI_LAYOUT_IDS.has(String(value||''))?String(value):'classic'}
+window.UI_LAYOUT_META=UI_LAYOUT_META;
+
 /* v5.2 - Device-local presentation preferences. These never belong to shared cloud data. */
 const MWS_DEVICE_PREFS_KEY='mws_device_preferences_v1';
-const MWS_DEVICE_PREF_KEYS=['theme','backgroundImage','backgroundDim','uiFrame','neoTransparency','textScale','resolutionMode','sidebarPinned','postViewMode','postCardColumns','dashboardUpcomingHidden'];
+const MWS_DEVICE_PREF_KEYS=['theme','backgroundImage','backgroundDim','uiLayout','uiFrame','neoTransparency','textScale','resolutionMode','sidebarPinned','postViewMode','postCardColumns','dashboardUpcomingHidden'];
 function mwsExtractDevicePrefs(src=data){
   const x=src&&typeof src==='object'?src:{};
   return {
     theme:String(x.theme||'neon'),
     backgroundImage:typeof x.backgroundImage==='string'?x.backgroundImage:'',
     backgroundDim:Math.max(0,Math.min(85,Number(x.backgroundDim??45))),
+    uiLayout:normalizeUiLayoutId(x.uiLayout),
     uiFrame:normalizeUiFrameId(x.uiFrame),
     neoTransparency:Math.max(0,Math.min(60,Number(x.neoTransparency??10))),
     textScale:Math.max(85,Math.min(130,Number(x.textScale)||100)),
@@ -166,6 +179,7 @@ if(loadedDataVersion<28)data.sidebarPinned=true;
 if(!data.theme)data.theme='neon';
 if(data.backgroundImage===undefined)data.backgroundImage='';
 if(data.backgroundDim===undefined)data.backgroundDim=45;
+if(data.uiLayout===undefined)data.uiLayout='classic';
 if(data.uiFrame===undefined)data.uiFrame='classic';
 if(data.neoTransparency===undefined)data.neoTransparency=10;
 const mwsStoredDevicePrefs=mwsLoadDevicePrefs();
@@ -175,6 +189,8 @@ data.version=52;
 data.contacts.forEach(c=>{if(c.pendingSetup===undefined)c.pendingSetup=false});
 document.body.dataset.theme=data.theme;
 document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));
+data.uiLayout=normalizeUiLayoutId(data.uiLayout);
+document.body.dataset.uiLayout=data.uiLayout;
 data.uiFrame=normalizeUiFrameId(data.uiFrame);
 document.body.classList.remove('mws-neo');
 document.body.dataset.uiFrame=data.uiFrame;
@@ -192,7 +208,7 @@ let wheelScrollTimers={};
 function loadData(){
   const raw=localStorage.getItem('mawangSchedulerBeta');
   if(raw){try{return JSON.parse(raw)}catch(e){}}
-  return {version:52,categories:DEFAULT_CATEGORIES,contacts:[],posts:[],events:[],collaborations:[],memos:[],targetList:[],contactTags:[],contactTagBanners:{},scheduleClipboard:[],favoriteFolders:[],postViewMode:'card',postCardColumns:4,textScale:100,resolutionMode:'fhd',selfContactId:'',sidebarPinned:true,dashboardUpcomingHidden:false,timezones:DEFAULT_TZS,theme:'neon',backgroundImage:'',backgroundDim:45,uiFrame:'classic',neoTransparency:10,miniGames:defaultMiniGames()};
+  return {version:52,categories:DEFAULT_CATEGORIES,contacts:[],posts:[],events:[],collaborations:[],memos:[],targetList:[],contactTags:[],contactTagBanners:{},scheduleClipboard:[],favoriteFolders:[],postViewMode:'card',postCardColumns:4,textScale:100,resolutionMode:'fhd',selfContactId:'',sidebarPinned:true,dashboardUpcomingHidden:false,timezones:DEFAULT_TZS,theme:'neon',backgroundImage:'',backgroundDim:45,uiLayout:'classic',uiFrame:'classic',neoTransparency:10,miniGames:defaultMiniGames()};
 }
 const AUTOSAVE_KEY='mawangSchedulerAutoBackups';
 
@@ -259,6 +275,7 @@ function normalizeDataShape(){
   data.postViewMode=data.postViewMode==='list'?'list':'card';
   data.postCardColumns=Math.max(2,Math.min(5,Number(data.postCardColumns)||4));
   data.textScale=Math.max(80,Math.min(200,Number(data.textScale)||100));
+  data.uiLayout=normalizeUiLayoutId(data.uiLayout);
   data.uiFrame=normalizeUiFrameId(data.uiFrame);
   data.neoTransparency=Math.max(0,Math.min(60,Number(data.neoTransparency??10)));
   data.resolutionMode=['fhd','2k','4k','wide','mobile'].includes(String(data.resolutionMode||''))?String(data.resolutionMode):'fhd';
@@ -529,6 +546,7 @@ function setTab(tab){
   if(tab==='settings')safeRenderView('설정',renderSettings);
   try{window.mwsScheduleImageTune?.()}catch(_){}
   try{window.mwsContactRuntimeOnTabV130?.(tab)}catch(_){}
+  try{syncUiLayoutPanels()}catch(_){}
 }
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
 function syncSidebarPinUI(){
@@ -1326,6 +1344,7 @@ function renderCalendar(){
   });
   renderCalendarClipboard();
   initCalendarCopyTrayDnD();
+  try{renderUiLayoutWeekBoard()}catch(_){}
 }
 document.getElementById('prevMonth').onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()-1,1);renderCalendar()}
 document.getElementById('nextMonth').onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()+1,1);renderCalendar()}
@@ -4133,6 +4152,142 @@ function renderThemeGrid(){
 }
 window.applyTheme=applyTheme;
 const BUILTIN_DEFAULT_BACKGROUND='assets/default-background.png';
+function uiLayoutMeta(id=data.uiLayout){
+  return UI_LAYOUT_META.find(layout=>layout.id===normalizeUiLayoutId(id))||UI_LAYOUT_META[0];
+}
+function renderUiLayoutGrid(){
+  const grid=document.getElementById('uiLayoutGrid');
+  if(!grid)return;
+  const selected=normalizeUiLayoutId(data.uiLayout);
+  grid.innerHTML=UI_LAYOUT_META.map(layout=>`
+    <button type="button" class="ui-layout-option ${layout.id===selected?'active':''}" data-ui-layout-choice="${layout.id}" onclick="setUiLayout('${layout.id}')" aria-pressed="${layout.id===selected?'true':'false'}">
+      <span class="ui-layout-preview layout-preview-${layout.id}" aria-hidden="true"><i></i><i></i><i></i><i></i><b>${layout.short}</b></span>
+      <span class="ui-layout-option-meta"><strong>${layout.name}</strong><em>${layout.category}</em></span>
+      <small>${layout.description}</small>
+    </button>`).join('');
+}
+window.renderUiLayoutGrid=renderUiLayoutGrid;
+
+function activeTabId(){
+  return document.querySelector('.section.active')?.id||'dashboard';
+}
+function renderLayoutContextPane(){
+  const pane=document.getElementById('uiLayoutContextPane');
+  if(!pane)return;
+  const current=activeTabId();
+  const primary=['dashboard','calendar','contacts','posts','sniper','targets','memos','worldtime'];
+  const games=['gameMajoku','gameLadder','gameRps','gamePachinko','gameMultiDraw'];
+  const system=['export','settings'];
+  const names={dashboard:'대시보드',calendar:'캘린더',contacts:'연락처',posts:'게시글',sniper:'최근 합방 인원',targets:'저격 리스트',memos:'메모',worldtime:'세계 시간',gameMajoku:'Majoku Castle',gameLadder:'사다리타기',gameRps:'가위바위보',gamePachinko:'경마',gameMultiDraw:'Gacha 뽑기',export:'가져오기 / 내보내기',settings:'설정'};
+  const button=id=>`<button type="button" class="${id===current?'active':''}" data-layout-tab="${id}" onclick="setTab('${id}')"><span>${names[id]||id}</span><i>›</i></button>`;
+  pane.innerHTML=`
+    <div class="layout-context-brand">MAWANG <span>WORKSPACE</span></div>
+    <div class="layout-context-search">빠른 탐색</div>
+    <div class="layout-context-group"><h4>Workspace</h4>${primary.map(button).join('')}</div>
+    <div class="layout-context-group"><h4>Majoku</h4>${games.map(button).join('')}</div>
+    <div class="layout-context-group layout-context-system"><h4>System</h4>${system.map(button).join('')}</div>`;
+}
+function renderLayoutAgendaPane(){
+  const pane=document.getElementById('uiLayoutAgendaPane');
+  if(!pane)return;
+  const up=upcomingEvents().slice(0,8);
+  pane.innerHTML=`
+    <div class="layout-agenda-head"><div><span>UP NEXT</span><strong>예정 일정</strong></div><button type="button" onclick="setTab('calendar')">달력</button></div>
+    <div class="layout-agenda-date">${new Intl.DateTimeFormat('ko-KR',{month:'long',day:'numeric',weekday:'short'}).format(new Date())}</div>
+    <div class="layout-agenda-list">
+      ${up.length?up.map(ev=>{
+        const c=ev.color||category(ev.categoryId)?.color||'var(--accent)';
+        return `<button type="button" class="layout-agenda-event" onclick="openEvent('${ev.id}')">
+          <i style="background:${c}"></i>
+          <span><strong>${esc(ev.title||'일정')}</strong><small>${esc(ev.date||'')} · ${esc(ev.start==='TBD'?'미정':ev.start||'')}</small></span>
+        </button>`;
+      }).join(''):'<div class="layout-agenda-empty">예정된 일정이 없습니다.</div>'}
+    </div>`;
+}
+function weekStartFor(date){
+  const d=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+  const day=(d.getDay()+6)%7;
+  d.setDate(d.getDate()-day);
+  d.setHours(12,0,0,0);
+  return d;
+}
+function renderUiLayoutWeekBoard(){
+  const host=document.getElementById('uiLayoutWeekBoard');
+  if(!host)return;
+  if(normalizeUiLayoutId(data.uiLayout)!=='weekboard'){host.innerHTML='';return}
+  const start=weekStartFor(calDate||new Date());
+  const days=Array.from({length:7},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);return d});
+  const startHour=8,endHour=24,hourHeight=52,total=(endHour-startHour)*hourHeight;
+  const hours=Array.from({length:endHour-startHour+1},(_,i)=>startHour+i);
+  const events=activeEvents().filter(ev=>days.some(d=>ymd(d)===ev.date)&&!ev.restDay);
+  const minicalDays=days.map(d=>`<button type="button" class="${ymd(d)===todayKST()?'today':''}" onclick="calDate=new Date('${ymd(d)}T12:00:00');renderCalendar()"><b>${['월','화','수','목','금','토','일'][((d.getDay()+6)%7)]}</b><span>${d.getDate()}</span></button>`).join('');
+  const columns=days.map(d=>{
+    const ds=ymd(d);
+    const dayEvents=events.filter(ev=>ev.date===ds);
+    const blocks=dayEvents.map(ev=>{
+      const parts=String(ev.start||'').match(/^(\d{1,2}):(\d{2})$/);
+      if(!parts)return '';
+      const h=Number(parts[1]),m=Number(parts[2]);
+      if(h<startHour||h>=endHour)return '';
+      const endParts=String(ev.end||'').match(/^(\d{1,2}):(\d{2})$/);
+      const endMinutes=endParts?Number(endParts[1])*60+Number(endParts[2]):h*60+m+60;
+      const startMinutes=h*60+m;
+      const top=((startMinutes-startHour*60)/60)*hourHeight;
+      const height=Math.max(34,((endMinutes-startMinutes)/60)*hourHeight-4);
+      const c=ev.color||category(ev.categoryId)?.color||'var(--accent)';
+      return `<button type="button" class="weekboard-event" style="top:${top}px;height:${height}px;border-color:${c};background:color-mix(in srgb,${c} 24%,var(--panel))" onclick="openEvent('${ev.id}')"><strong>${esc(ev.title||'일정')}</strong><span>${esc(ev.start||'')}</span></button>`;
+    }).join('');
+    return `<div class="weekboard-daycol ${ds===todayKST()?'today':''}" style="height:${total}px">${blocks}</div>`;
+  }).join('');
+  host.innerHTML=`
+    <div class="weekboard-shell">
+      <aside class="weekboard-side">
+        <div class="weekboard-side-kicker">WEEK PLANNER</div>
+        <h3>${new Intl.DateTimeFormat('ko-KR',{year:'numeric',month:'long'}).format(start)}</h3>
+        <div class="weekboard-miniweek">${minicalDays}</div>
+        <div class="weekboard-upcoming">
+          <strong>이번 주 일정</strong>
+          <span>${events.length}개</span>
+        </div>
+      </aside>
+      <div class="weekboard-main">
+        <div class="weekboard-dayheads">${days.map(d=>`<div class="${ymd(d)===todayKST()?'today':''}"><b>${['월','화','수','목','금','토','일'][((d.getDay()+6)%7)]}</b><span>${d.getDate()}</span></div>`).join('')}</div>
+        <div class="weekboard-grid">
+          <div class="weekboard-times" style="height:${total}px">${hours.slice(0,-1).map((h,i)=>`<span style="top:${i*hourHeight}px">${String(h).padStart(2,'0')}:00</span>`).join('')}</div>
+          <div class="weekboard-columns" style="--hour-h:${hourHeight}px;height:${total}px">${columns}</div>
+        </div>
+      </div>
+    </div>`;
+}
+window.renderUiLayoutWeekBoard=renderUiLayoutWeekBoard;
+
+function syncUiLayoutPanels(){
+  renderLayoutContextPane();
+  renderLayoutAgendaPane();
+  renderUiLayoutWeekBoard();
+}
+window.syncUiLayoutPanels=syncUiLayoutPanels;
+
+function applyUiLayout(notify=false){
+  const layout=normalizeUiLayoutId(data.uiLayout);
+  const meta=uiLayoutMeta(layout);
+  data.uiLayout=layout;
+  document.body.dataset.uiLayout=layout;
+  renderUiLayoutGrid();
+  const status=document.getElementById('uiLayoutStatus');
+  const desc=document.getElementById('uiLayoutDescription');
+  if(status)status.textContent=meta.name;
+  if(desc)desc.textContent=meta.description;
+  syncUiLayoutPanels();
+  if(notify)toast('UI 레이아웃',meta.name+' 레이아웃을 적용했습니다');
+}
+window.applyUiLayout=applyUiLayout;
+window.setUiLayout=layout=>{
+  data.uiLayout=normalizeUiLayoutId(layout);
+  applyUiLayout(true);
+  mwsSaveDevicePrefs(data);
+};
+
 function uiFrameMeta(id=data.uiFrame){
   return UI_FRAME_META.find(frame=>frame.id===normalizeUiFrameId(id))||UI_FRAME_META[0];
 }
@@ -4234,6 +4389,7 @@ async function compressBackgroundImage(dataUrl,maxWidth=1920,quality=.82){
 function renderSettings(){
   document.getElementById('themeSelect').value=data.theme;renderThemeGrid();
   applyTextScale(data.textScale??100,false);
+  applyUiLayout(false);
   applyUiFrame(false);
   applyNeoTransparency(false);
   document.getElementById('categoryList').innerHTML=data.categories.map(c=>`<div class="catrow reorder-row" data-category-id="${c.id}"
