@@ -1,11 +1,11 @@
-/* Mawang Scheduler v1.4.0 - single authoritative version display */
+/* Mawang Scheduler Neo v1.0.0 - visual label; v1.4.0 retained as the internal compatibility version */
 (()=>{
 'use strict';
 if(window.__mwsAppVersionV120)return;
 window.__mwsAppVersionV120=1;
 
 const VERSION='1.4.0';
-const LABEL=`Mawang Scheduler v ${VERSION}`;
+const LABEL='Mawang Scheduler Neo v1.0.0';
 const BUILD=`MWS V ${VERSION}`;
 window.MWS_APP_VERSION=VERSION;
 window.MWS_APP_VERSION_LABEL=LABEL;
