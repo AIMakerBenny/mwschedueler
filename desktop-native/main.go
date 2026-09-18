@@ -100,13 +100,12 @@ const desktopBridgeScript = `(function(){
     function go(){
       tries++;
       try{
-        if(typeof window.setTab==='function' && wanted){ window.setTab(wanted); return true; }
-      }catch(e){}
-      try{
         var buttons=[].slice.call(document.querySelectorAll('[data-tab]'));
         var btn=buttons.find(function(b){return String(b.dataset.tab||'')===wanted;});
         if(!btn && names.length){btn=buttons.find(function(b){var t=norm(b.textContent);return names.some(function(n){return t.indexOf(n)>=0;});});}
         if(btn){btn.click();return true;}
+        var section=wanted?document.getElementById(wanted):null;
+        if(section && typeof window.setTab==='function'){window.setTab(wanted);return true;}
       }catch(e){}
       if(tries<40)setTimeout(go,500);
       return false;
