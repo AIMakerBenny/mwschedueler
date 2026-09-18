@@ -18,7 +18,7 @@ export function runPhase79DeadRuntimeReferenceAudit(){
   if(!index.includes('assets/perf-runtime.js?v=1.4.0-phase79'))issues.push('source index perf cache-bust is not phase79');
   if(!entry.includes('post-login-runtime-v130.js?v=1.4.0-phase79'))issues.push('Worker post-login cache-bust is not phase79');
 
-  if(!perf.includes('renderContacts=optimizedRenderContacts'))issues.push('optimized contact renderer was removed without an equivalence/performance replacement');
+  if(perf.includes('renderContacts=optimizedRenderContacts')||perf.includes('optimizedRenderContacts'))issues.push('legacy optimized contact renderer override remains');
   if(!online.includes('run(safeFeatures)'))issues.push('legacy V5 payload sanitizer was removed while compressed legacy matcher still exists');
   if(entry.includes("'test-v5\\.5\\.js'")&&entry.includes("'test-v5\\.6\\.js'"))warnings.push('Worker keeps deleted test-runtime names only as compatibility stripping guards; source index references are gone');
 
