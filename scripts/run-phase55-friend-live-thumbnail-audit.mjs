@@ -6,7 +6,7 @@ export function runPhase55FriendLiveThumbnailAudit(){
   const friend=fs.readFileSync('assets/friend-finder-v120.js','utf8');
 
   if(!friend.includes("screen=document.createElement('div');screen.className='mws-live-screen-v120'"))issues.push('LIVE thumbnail container is not created in Friend Finder');
-  if(!friend.includes("screen.innerHTML='<img alt="현재 방송 화면""))issues.push('LIVE thumbnail image element is not attached to the card');
+  if(!friend.includes(`screen.innerHTML='<img alt="현재 방송 화면"`))issues.push('LIVE thumbnail image element is not attached to the card');
   if(!friend.includes("card.appendChild(screen)"))issues.push('LIVE thumbnail container is not inserted into the rendered card');
   if(!friend.includes("function activeFriendRoot()"))issues.push('active Friend Finder root guard is missing');
   if(!friend.includes("const ACTIVE_REFRESH_MS=30000"))issues.push('active Friend Finder LIVE refresh cadence is missing');
