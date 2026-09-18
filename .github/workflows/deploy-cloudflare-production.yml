@@ -29,6 +29,13 @@ jobs:
       - name: Run cumulative phase audits
         run: node scripts/run-current-full-integration-audit.mjs
 
+      - name: JavaScript syntax check
+        run: |
+          node --check assets/app-core.js
+          node --check assets/tools.js
+          node --check scripts/run-phase53-sidebar-tool-workspace-audit.mjs
+          node --check scripts/run-current-full-integration-audit.mjs
+
       - name: Install dependencies
         run: npm install
 
