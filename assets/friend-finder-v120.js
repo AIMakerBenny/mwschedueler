@@ -137,6 +137,8 @@ function installStyle(){
 .mws-live-category-v120.offline{display:none}
 .mws-category-hidden-v120{display:none!important}
 #mwsFriendFastBadge{font-size:10px;color:var(--muted);white-space:nowrap}
+.mws-friend-live-grid-v120{grid-auto-rows:auto!important;align-items:start!important}
+.mws-friend-live-card-v120{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;align-self:start!important}
 .mws-live-screen-v120{display:block;width:100%;margin-top:12px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,51,79,.72);background:#090b10;cursor:pointer;aspect-ratio:16/9;position:relative;box-sizing:border-box;min-height:128px}
 .mws-live-screen-v120[hidden]{display:none!important}
 .mws-live-screen-v120 img{display:block;width:100%;height:100%;object-fit:cover;background:#090b10}
@@ -241,6 +243,7 @@ function decorate(root=friendRoot()){
   ensureCategoryControl(root).catch(()=>{});
   const selected=document.getElementById('mwsFriendCategorySelect')?.value||'';
   for(const {card,id} of cardRows(root)){
+    card.parentElement?.classList.add('mws-friend-live-grid-v120');
     const entry=id?liveByUserId.get(id):null;const live=isLiveEntry(entry);const cat=liveCategory(entry),catId=liveCategoryId(entry),viewers=liveViewers(entry);
     let match=true;if(selected){match=live&&(selected.startsWith('id:')?catId===selected.slice(3):cat===selected.slice(5))}
     card.classList.toggle('mws-category-hidden-v120',!match);
@@ -249,8 +252,9 @@ function decorate(root=friendRoot()){
     meta.classList.toggle('offline',!live);meta.textContent=live?`카테고리 · ${cat||'미분류'}${viewers!==null?` · ${viewers.toLocaleString()}명`:''}`:'';
 
     let screen=card.querySelector('.mws-live-screen-v120');
-    const bno=liveBroadNo(entry),title=liveTitle(entry);
-    if(!live||!bno||!match){if(screen)screen.hidden=true;continue}
+    const bno=liveBroadNo(entry),title=liveTitle(entry),showLive=Boolean(live&&bno&&match);
+    card.classList.toggle('mws-friend-live-card-v120',showLive);
+    if(!showLive){if(screen)screen.hidden=true;continue}
     if(!screen){
       screen=document.createElement('div');screen.className='mws-live-screen-v120';screen.innerHTML='<img alt="현재 방송 화면" loading="lazy" decoding="async" fetchpriority="low" referrerpolicy="no-referrer"><span class="mws-live-screen-label-v120">LIVE 화면</span><span class="mws-live-screen-title-v120"></span>';card.appendChild(screen);
     }
