@@ -7,7 +7,7 @@ export function runPhase14MediaCommitBoundaryAudit(){
   const src=fs.readFileSync('src/cf-v111-auth.js','utf8');
 
   if(!src.includes('function r2VersionedKey(kind,key,version)'))issues.push('versioned R2 media key helper is missing');
-  if(!src.includes('env.IMAGES.put(r2VersionedKey(kind,key,version)'))issues.push('new media still overwrites the legacy R2 key before workspace commit');
+  if(!/env\.IMAGES\.put\(r2VersionedKey\(kind,key,version(?:,token)?\)/.test(src))issues.push('new media still overwrites the legacy R2 key before workspace commit');
   if(!src.includes('if(saveContext?.statements)saveContext.statements.push(statement);else await statement.run()'))issues.push('image_sources metadata is not staged with the save transaction');
   if(!src.includes('mediaContext={statements:[]}'))issues.push('handleSave has no media metadata staging context');
   if(!src.includes('const statements=[...mediaContext.statements]'))issues.push('media metadata is not included in the final workspace D1 batch');
