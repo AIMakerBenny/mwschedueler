@@ -110,6 +110,17 @@ var (
 	startupLocked  = true
 )
 
+const startupGuardScript = `(function(){
+  try{
+    var root=document.documentElement;
+    if(root){root.style.background='#000';root.classList.add('mws-native-startup-lock');}
+    var style=document.createElement('style');
+    style.id='mwsNativeStartupGuard';
+    style.textContent='html.mws-native-startup-lock,html.mws-native-startup-lock body{background:#000!important}html.mws-native-startup-lock body>*{visibility:hidden!important}';
+    (document.head||document.documentElement).appendChild(style);
+  }catch(_){}
+})();`
+
 const desktopBridgeScript = `(function(){
   if(window.__mwsDesktopBridgeInstalled)return;
   window.__mwsDesktopBridgeInstalled=true;
@@ -222,6 +233,10 @@ const desktopBridgeScript = `(function(){
     root.appendChild(skip);
 
     document.body.appendChild(root);
+
+    document.documentElement.classList.remove('mws-native-startup-lock');
+    var nativeGuard=document.getElementById('mwsNativeStartupGuard');
+    if(nativeGuard)nativeGuard.remove();
 
     try{Promise.resolve(window.__mwsIntroMounted());}catch(_){}
 
@@ -575,25 +590,35 @@ func runWebView() {
 	setWindowIcon(h)
 	procShowWindow.Call(h, swHide)
 
-	var revealOnce sync.Once
 	w.Bind("__mwsToggleFullscreen", func() bool { return toggleFullscreen() })
-	w.Bind("__mwsIntroMounted", func() {
-		revealOnce.Do(func() {
-			startupMu.Lock()
-			startupLocked = false
-			startupMu.Unlock()
-			stateMu.Lock()
-			lastMaximized = true
-			lastStateValid = true
-			stateMu.Unlock()
-			procShowWindow.Call(h, swMaximize)
-			procSetForegroundWindow.Call(h)
-		})
-	})
+	w.Bind("__mwsIntroMounted", func() {})
 
 	bridge := desktopBridgeScriptForPage()
+	w.Init(startupGuardScript)
 	w.Init(bridge)
+
+	// Paint a local black document before the remote app can ever become visible.
+	w.SetHtml("<!doctype html><html style='background:#000'><head><meta charset='utf-8'><style>html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden}</style></head><body></body></html>")
+	time.Sleep(120 * time.Millisecond)
+
+	startupMu.Lock()
+	startupLocked = false
+	startupMu.Unlock()
+	stateMu.Lock()
+	lastMaximized = true
+	lastStateValid = true
+	stateMu.Unlock()
+	procShowWindow.Call(h, swMaximize)
+	procSetForegroundWindow.Call(h)
+
 	w.Navigate(appURL)
+
+	// If the full intro script fails, never leave the user trapped on a black or hidden window.
+	time.AfterFunc(12*time.Second, func() {
+		w.Dispatch(func() {
+			w.Eval("(function(){try{var i=document.getElementById('mwsDesktopIntro');if(i)i.remove();document.documentElement.classList.remove('mws-preintro-lock','mws-native-startup-lock');var a=document.getElementById('mwsDesktopPreIntroGuard');if(a)a.remove();var b=document.getElementById('mwsNativeStartupGuard');if(b)b.remove();}catch(_){}})();")
+		})
+	})
 
 	time.AfterFunc(1800*time.Millisecond, func() {
 		w.Dispatch(func() {
@@ -648,13 +673,13 @@ func openSection(tab, labels string) {
 func jsString(s string) string { b, _ := json.Marshal(s); return string(b) }
 
 func acquireSingleton() bool {
-	name, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopNativeMutex")
+	name, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopNativeMutexV051")
 	m, _, err := procCreateMutex.Call(0, 0, uintptr(unsafe.Pointer(name)))
 	if m == 0 {
 		return true
 	}
 	if errno, ok := err.(syscall.Errno); ok && errno == syscall.ERROR_ALREADY_EXISTS {
-		evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEvent")
+		evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV051")
 		ev, _, _ := procOpenEvent.Call(0x0002, 0, uintptr(unsafe.Pointer(evName)))
 		if ev != 0 {
 			procSetEvent.Call(ev)
@@ -667,7 +692,7 @@ func acquireSingleton() bool {
 }
 
 func watchShowEvent() {
-	evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEvent")
+	evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV051")
 	ev, _, _ := procCreateEvent.Call(0, 0, 0, uintptr(unsafe.Pointer(evName)))
 	if ev == 0 {
 		return
