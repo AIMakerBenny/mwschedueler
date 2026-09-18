@@ -56,6 +56,8 @@ import {runPhase55FriendLiveThumbnailAudit} from './run-phase55-friend-live-thum
 import {runPhase56SingleLiveRendererAudit} from './run-phase56-single-live-renderer-audit.mjs';
 import {runPhase57LiveThumbnailRefreshAudit} from './run-phase57-live-thumbnail-refresh-audit.mjs';
 import {runPhase58FriendThumbnailLoadAudit} from './run-phase58-friend-thumbnail-load-audit.mjs';
+import {runPhase59FriendLiveCardLayoutAudit} from './run-phase59-friend-live-card-layout-audit.mjs';
+import {runPhase60LiveThumbnailProxyAudit} from './run-phase60-live-thumbnail-proxy-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -626,6 +628,22 @@ export function runPhase58FullIntegrationAudit(){
   if(issues.length)process.exitCode=1;
   return summary;
 }
-export function runCurrentFullIntegrationAudit(){return runPhase58FullIntegrationAudit();}
+export function runPhase59FullIntegrationAudit(){
+  const previous=runPhase58FullIntegrationAudit(), current=runPhase59FriendLiveCardLayoutAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)],warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:59,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+export function runPhase60FullIntegrationAudit(){
+  const previous=runPhase59FullIntegrationAudit(), current=runPhase60LiveThumbnailProxyAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)],warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:60,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+export function runCurrentFullIntegrationAudit(){return runPhase60FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
