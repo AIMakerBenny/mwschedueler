@@ -3,7 +3,7 @@ name: Build Mawang Scheduler Native Desktop
 on:
   push:
     branches:
-      - desktop-native-v0.2
+      - desktop-native-v0.3
     paths:
       - 'desktop-native/**'
       - '.github/workflows/build-desktop-native.yml'
@@ -28,6 +28,19 @@ jobs:
           go-version: '1.23.x'
           cache-dependency-path: desktop-native/go.sum
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Prepare mascot icon
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check pillow
+          python -c "from PIL import Image; im=Image.open('assets/mawang-mascot.webp').convert('RGBA'); side=max(im.size); canvas=Image.new('RGBA',(side,side),(255,255,255,255)); scale=min(side*0.94/im.width,side*0.94/im.height); r=im.resize((int(im.width*scale),int(im.height*scale)),Image.Resampling.LANCZOS); canvas.alpha_composite(r,((side-r.width)//2,(side-r.height)//2)); canvas=canvas.resize((256,256),Image.Resampling.LANCZOS); canvas.save('assets/mawang.ico',format='ICO',sizes=[(16,16),(20,20),(24,24),(32,32),(40,40),(48,48),(64,64),(128,128),(256,256)])"
+          go install github.com/akavel/rsrc@latest
+          & "$env:USERPROFILE\go\bin\rsrc.exe" -ico assets/mawang.ico -o rsrc.syso
+
       - name: Resolve dependencies
         shell: pwsh
         run: go mod tidy
@@ -39,6 +52,9 @@ jobs:
       - name: Upload executable
         uses: actions/upload-artifact@v4
         with:
-          name: MawangScheduler-Native-v0.2
-          path: desktop-native/MawangScheduler.exe
+          name: MawangScheduler-Native-v0.3
+          path: |
+            desktop-native/MawangScheduler.exe
+            desktop-native/assets/mawang-mascot.webp
+            desktop-native/assets/mawang.ico
           if-no-files-found: error
