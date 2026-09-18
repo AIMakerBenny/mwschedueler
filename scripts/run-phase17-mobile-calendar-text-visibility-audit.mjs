@@ -17,7 +17,7 @@ export function runPhase17MobileCalendarTextVisibilityAudit(){
   if(!feature.includes("child.classList.toggle('mws-mobile-calendar-extra-v130',mobile&&!keep)"))issues.push('legacy day-cell elements are not tagged for mobile suppression');
   if(!feature.includes("node.classList.toggle('mws-mobile-event-hidden-v130',mobile&&index>=2)"))issues.push('mobile overflow visibility is not based on actual event index');
   if(!feature.includes("main.textContent=event?.restDay?'휴방':String(event?.title||'컨텐츠')"))issues.push('mobile content title is not force-rendered from event data');
-  if(!runtime.includes('mobile-calendar-text-fix2'))issues.push('mobile calendar asset cache-bust revision was not updated');
+  if(!runtime.includes("mobile-calendar-v130.css?v=1.3.0-")||!runtime.includes("mobile-calendar-day-detail-v130.js?v=1.3.0-"))issues.push('mobile calendar asset cache-bust revision is missing');
   if(!headers.includes('/assets/mobile-calendar-v130.css')||!headers.includes('/assets/mobile-calendar-day-detail-v130.js'))issues.push('mobile calendar assets are missing no-cache headers');
 
   const summary={phase:17,name:'mobile-calendar-text-visibility',issues,warnings,pass:issues.length===0};

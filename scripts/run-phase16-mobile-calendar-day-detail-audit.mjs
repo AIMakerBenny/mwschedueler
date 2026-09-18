@@ -10,7 +10,7 @@ export function runPhase16MobileCalendarDayDetailAudit(){
   if(!runtime.includes("load('mobile-calendar-day-detail-v130','/assets/mobile-calendar-day-detail-v130.js?v="))issues.push('mobile calendar day-detail runtime is not loaded after login');
   if(!feature.includes("event.stopImmediatePropagation()"))issues.push('mobile day click does not override the legacy direct-add/direct-edit calendar click path');
   if(!feature.includes("if(typeof window.openEvent==='function')window.openEvent(id)"))issues.push('day-detail event card does not reuse the existing event editor');
-  if(!feature.includes("event?.steamGame?.name"))issues.push('day-detail does not expose linked game names');
+  if(!feature.includes("game?.name"))issues.push('day-detail does not expose linked game names');
   if(!feature.includes("event?.participants||[]"))issues.push('day-detail does not expose event participants');
   if(!feature.includes("main.textContent=event?.restDay?'휴방':String(event?.title"))issues.push('mobile month cells are not normalized to title-only event text');
   if(!feature.includes("day.dataset.mobileMore=count>2?'+'+(count-2):''"))issues.push('mobile month overflow count is not populated');
