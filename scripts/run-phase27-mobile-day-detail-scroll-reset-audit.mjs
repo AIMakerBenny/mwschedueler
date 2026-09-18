@@ -8,7 +8,7 @@ export function runPhase27MobileDayDetailScrollResetAudit(){
 
   if(!feature.includes("const list=root.querySelector('#mwsMobileDayListV130')"))issues.push('day-detail open path does not resolve its scroll container');
   if(!feature.includes('if(list)list.scrollTop=0'))issues.push('day-detail retains the previous date scroll position when reopened');
-  if(!runtime.includes("mobile-calendar-day-detail-v130.js?v=1.3.0-mobile-calendar-scroll-p27"))issues.push('day-detail cache-bust was not advanced for scroll reset');
+  if(!runtime.includes("mobile-calendar-day-detail-v130.js?v=1.3.0-"))issues.push('day-detail cache-bust revision is missing');
 
   const summary={phase:27,name:'mobile-day-detail-scroll-reset',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));

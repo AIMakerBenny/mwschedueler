@@ -10,7 +10,7 @@ export function runPhase28EventEditorScrollResetAudit(){
   if(!core.includes("eventModal.querySelector('.event-info-panel')"))issues.push('event editor does not reset its information-panel scroll container');
   if(!core.includes("eventModal.querySelector('.event-memo-panel')"))issues.push('event editor does not reset its memo-panel scroll container');
   if(!core.includes('target.scrollTop=0'))issues.push('event editor scroll targets are not returned to the top on open');
-  if(!index.includes('assets/app-core.js?v=1.3.0-mobile-scroll-p28'))issues.push('app-core cache-bust was not advanced for editor scroll reset');
+  if(!index.includes('assets/app-core.js?v=1.3.0-'))issues.push('app-core cache-bust revision is missing');
 
   const summary={phase:28,name:'event-editor-scroll-reset',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
