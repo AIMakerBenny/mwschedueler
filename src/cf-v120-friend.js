@@ -1,6 +1,7 @@
 import appWorker from './cf-v122-cache.js';
 
 const CHANNEL_HOST='api-channel.sooplive.co.kr';
+const THUMB_HOSTS=['liveimg.sooplive.com','liveimg.sooplive.co.kr'];
 const CATEGORY_URL='https://live.sooplive.com/script/locale/ko_KR/broad_category.js';
 const LIVE_TTL_MS=30000;
 const CATEGORY_TTL_MS=6*60*60*1000;
@@ -70,6 +71,37 @@ async function handleLiveBatch(request){
   return json({ok:true,results,elapsedMs:Date.now()-started,cachedForMs:LIVE_TTL_MS,concurrency:CONCURRENCY});
 }
 
+function validBroadcastNo(raw){
+  const value=String(raw||'').trim();
+  return /^\d{3,20}$/.test(value)?value:'';
+}
+async function fetchLiveThumb(target){
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),FETCH_TIMEOUT_MS);
+  try{
+    const headers=browserHeaders(target);
+    headers.set('accept','image/avif,image/webp,image/apng,image/*,*/*;q=0.8');
+    headers.set('referer','https://www.sooplive.com/');
+    const res=await fetch(target,{headers,redirect:'follow',signal:controller.signal});
+    const type=String(res.headers.get('content-type')||'').toLowerCase();
+    if(!res.ok||!type.startsWith('image/'))return null;
+    return new Response(res.body,{status:200,headers:{
+      'content-type':type,
+      'cache-control':'public, max-age=5, s-maxage=10',
+      'x-content-type-options':'nosniff'
+    }});
+  }catch(_){return null}
+  finally{clearTimeout(timer)}
+}
+async function handleLiveThumb(request){
+  const url=new URL(request.url),bno=validBroadcastNo(url.searchParams.get('bno'));
+  if(!bno)return json({error:'Invalid broadcast number'},400);
+  for(const host of THUMB_HOSTS){
+    const response=await fetchLiveThumb(new URL(`https://${host}/m/${encodeURIComponent(bno)}`));
+    if(response)return response;
+  }
+  return json({error:'SOOP live thumbnail unavailable'},502);
+}
+
 function scalar(obj,keys){for(const k of keys){const v=obj?.[k];if((typeof v==='string'||typeof v==='number')&&String(v).trim())return String(v).trim()}return''}
 function flattenCategories(root){
   const found=new Map(),seen=new Set();
@@ -118,6 +150,7 @@ export default {
   async fetch(request,env,ctx){
     const url=new URL(request.url);
     if(url.pathname==='/api/soop/live-batch'&&request.method==='POST')return handleLiveBatch(request);
+    if(url.pathname==='/api/soop/live-thumb'&&request.method==='GET')return handleLiveThumb(request);
     if(url.pathname==='/api/soop/categories'&&request.method==='GET')return handleCategories(request);
     return appWorker.fetch(request,env,ctx);
   }
