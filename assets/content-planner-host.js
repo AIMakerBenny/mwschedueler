@@ -5,7 +5,7 @@ if(window.__mwsContentPlannerHostCleanV110)return;window.__mwsContentPlannerHost
 const TAB='contentPlanner';
 const FRAME_ID='mwsContentPlannerFrame';
 const FRAME_URL='/content-planner.html?v=1.0';
-const TOOLS_URL='/assets/tools.js?v=1.4.0-phase73';
+const TOOLS_URL='/assets/tools.js?v=1.4.0-phase74';
 const EMPTY_PNG='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLAlQAAAABJRU5ErkJggg==';
 function syncGlobals(){try{if(typeof data!=='undefined')window.data=data}catch(_){ }try{if(typeof saveData==='function'&&!window.saveData)window.saveData=saveData}catch(_){ }try{if(typeof persist==='function'&&!window.persist)window.persist=persist}catch(_){ }}
 function forceVersion(){try{window.mwsApplyAppVersionV120?.()}catch(_){ }}
