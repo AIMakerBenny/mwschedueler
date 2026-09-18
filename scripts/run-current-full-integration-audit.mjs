@@ -62,6 +62,7 @@ import {runPhase61NativeFriendCardBindingAudit} from './run-phase61-native-frien
 import {runPhase62NestedLivePayloadAudit} from './run-phase62-nested-live-payload-audit.mjs';
 import {runPhase63NativeFriendRenderAudit} from './run-phase63-native-friend-render-audit.mjs';
 import {runPhase64MaintenanceSuccessorAudit} from './run-phase64-maintenance-successor-audit.mjs';
+import {runPhase65CloudSuccessorAudit} from './run-phase65-cloud-successor-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -680,6 +681,14 @@ export function runPhase64FullIntegrationAudit(){
   if(issues.length)process.exitCode=1;
   return summary;
 }
-export function runCurrentFullIntegrationAudit(){return runPhase64FullIntegrationAudit();}
+export function runPhase65FullIntegrationAudit(){
+  const previous=runPhase64FullIntegrationAudit(), current=runPhase65CloudSuccessorAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)],warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:65,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+export function runCurrentFullIntegrationAudit(){return runPhase65FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
