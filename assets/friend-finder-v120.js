@@ -178,9 +178,10 @@ function liveCategoryId(entry){const d=entry?.data||{};return String(d.broadCate
 function liveViewers(entry){const d=entry?.data||{};const n=Number(d.currentSumViewer??d.current_sum_viewer??d.total_view_cnt);return Number.isFinite(n)&&n>=0?n:null}
 function liveBroadNo(entry){const d=entry?.data||{};return String(d.broadNo??d.broad_no??d.bno??'').trim()}
 function liveTitle(entry){const d=entry?.data||{};return String(d.broadTitle??d.broad_title??d.title??'').trim()}
-function liveThumbCandidates(bno){
+function liveThumbStamp(){return String(Math.floor(Date.now()/THUMB_REFRESH_MS))}
+function liveThumbCandidates(bno,stamp=liveThumbStamp()){
   if(!bno)return[];
-  const id=encodeURIComponent(bno),stamp=Math.floor(Date.now()/THUMB_REFRESH_MS);
+  const id=encodeURIComponent(bno);
   return [
     `https://liveimg.sooplive.co.kr/m/${id}?mws=${stamp}`,
     `https://liveimg.sooplive.com/m/${id}?mws=${stamp}`,
@@ -220,9 +221,9 @@ async function ensureCategoryControl(root){
   for(const entry of liveByUserId.values()){if(!isLiveEntry(entry))continue;const name=liveCategory(entry),id=liveCategoryId(entry);if(name)unique.set(`${id}|${name}`,{id,name})}
   [...unique.values()].sort((a,b)=>a.name.localeCompare(b.name,'ko')).forEach(x=>{const o=document.createElement('option');o.value=x.id?`id:${x.id}`:`name:${x.name}`;o.textContent=x.name;select.appendChild(o)});
 }
-function setLiveImage(img,screen,bno){
+function setLiveImage(img,screen,bno,stamp=liveThumbStamp()){
   if(!img||!screen||!bno)return;
-  const candidates=liveThumbCandidates(bno);
+  const candidates=liveThumbCandidates(bno,stamp);
   let index=0;
   screen.classList.remove('is-image-fallback');
   img.onload=()=>screen.classList.remove('is-image-fallback');
@@ -231,6 +232,8 @@ function setLiveImage(img,screen,bno){
     if(index<candidates.length){img.src=candidates[index];return}
     screen.classList.add('is-image-fallback');
   };
+  img.dataset.bno=bno;
+  img.dataset.thumbStamp=stamp;
   img.src=candidates[0];
 }
 function decorate(root=friendRoot()){
@@ -250,8 +253,8 @@ function decorate(root=friendRoot()){
       }
       screen.hidden=false;screen.onclick=()=>window.open(livePlayUrl(id,bno),'_blank','noopener');
       const titleEl=screen.querySelector('.mws-live-screen-title-v120');if(titleEl)titleEl.textContent=title||'현재 방송 화면';
-      const img=screen.querySelector('img');
-      if(img&&img.dataset.bno!==bno){img.dataset.bno=bno;setLiveImage(img,screen,bno)}
+      const img=screen.querySelector('img'),thumbStamp=liveThumbStamp();
+      if(img&&(img.dataset.bno!==bno||img.dataset.thumbStamp!==thumbStamp))setLiveImage(img,screen,bno,thumbStamp)
     }
 
     let match=true;if(selected){match=live&&(selected.startsWith('id:')?catId===selected.slice(3):cat===selected.slice(5))}
