@@ -17,13 +17,13 @@ export function runPhase73VersionOwnershipAudit(){
   if(tools.includes("mwsBuildVersion")||tools.includes("sidebar-build-version"))issues.push('tools still targets visible version nodes');
   if(!tools.includes("window.mwsApplyAppVersionV120?.()"))issues.push('tools no longer delegates version display');
   if(planner.includes("const BUILD='Mawang Scheduler v1.0'"))issues.push('planner still carries obsolete version owner state');
-  if(!planner.includes("tools.js?v=1.4.0-phase73"))issues.push('planner does not cache-bust the fixed tools runtime');
+  if(!planner.includes("tools.js?v=1.4.0-phase74"))issues.push('planner does not cache-bust the fixed tools runtime');
   if(perf.includes("setAttribute('data-build-version'"))issues.push('perf runtime still writes build version');
   if(perf.includes("label.textContent='Mawang Scheduler v 1.3.0'"))issues.push('perf runtime still has stale visible-version fallback');
-  if(!perf.includes("content-planner-host.js?v=1.4.0-phase73"))issues.push('perf runtime does not load the fixed planner host');
-  if(!post.includes("/assets/perf-runtime.js?v=1.4.0-phase73"))issues.push('post-login loader does not load the fixed perf runtime');
-  if(!index.includes("assets/perf-runtime.js?v=1.4.0-phase73"))issues.push('source index cache-bust is not phase73');
-  if(!entry.includes("post-login-runtime-v130.js?v=1.4.0-phase73"))issues.push('Worker does not inject phase73 post-login runtime');
+  if(!perf.includes("content-planner-host.js?v=1.4.0-phase74"))issues.push('perf runtime does not load the fixed planner host');
+  if(!post.includes("/assets/perf-runtime.js?v=1.4.0-phase74"))issues.push('post-login loader does not load the fixed perf runtime');
+  if(!index.includes("assets/perf-runtime.js?v=1.4.0-phase74"))issues.push('source index cache-bust is not phase73');
+  if(!entry.includes("post-login-runtime-v130.js?v=1.4.0-phase74"))issues.push('Worker does not inject phase73 post-login runtime');
   if(!entry.includes("app-version-v120.js?v=1.4.0-phase73"))issues.push('Worker compatibility loader does not cache-bust the authoritative version writer');
   if(!entry.includes("source.replace('app-version-v120.js?v=1.3.0','app-version-v120.js?v=1.4.0-phase73')"))issues.push('Worker compatibility loader version rewrite is missing');
 
