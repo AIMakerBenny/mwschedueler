@@ -111,12 +111,10 @@ var (
 	introMu       sync.Mutex
 	introWv       webview.WebView
 	introHwnd     uintptr
-	introShown            sync.Once
-	appStartOnce          sync.Once
-	introDoneOnce         sync.Once
-	introExitScheduleOnce sync.Once
-	appReadyCh            = make(chan struct{}, 1)
-	appReadyMu            sync.Mutex
+	introShown    sync.Once
+	appStartOnce  sync.Once
+	introDoneOnce sync.Once
+	appReadyMu    sync.Mutex
 	appReadyState         bool
 
 	startupMu     sync.Mutex
@@ -561,11 +559,6 @@ func setAppReady() {
 	appReadyState = true
 	appReadyMu.Unlock()
 
-	select {
-	case appReadyCh <- struct{}{}:
-	default:
-	}
-
 	introMu.Lock()
 	iw := introWv
 	introMu.Unlock()
@@ -649,28 +642,6 @@ func hideIntroNative() {
 	if h != 0 {
 		procShowWindow.Call(h, swHide)
 	}
-}
-
-func scheduleIntroExit(iw webview.WebView) {
-	introExitScheduleOnce.Do(func() {
-		go func() {
-			// Keep the opening image on screen long enough to be visible.
-			time.Sleep(2400 * time.Millisecond)
-
-			// Prefer handing off only after the Scheduler reports ready.
-			select {
-			case <-appReadyCh:
-			case <-time.After(5500 * time.Millisecond):
-			}
-
-			if exiting || iw == nil {
-				return
-			}
-			iw.Dispatch(func() {
-				iw.Eval("window.__mwsBeginIntroExit && window.__mwsBeginIntroExit('complete')")
-			})
-		}()
-	})
 }
 
 func runIntroWindow() {
