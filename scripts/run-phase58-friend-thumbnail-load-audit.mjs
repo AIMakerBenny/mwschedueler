@@ -4,6 +4,7 @@ export function runPhase58FriendThumbnailLoadAudit(){
   const issues=[];
   const warnings=[];
   const friend=fs.readFileSync('assets/friend-finder-v120.js','utf8');
+  const loader=fs.readFileSync('assets/cloud-v1.1-loader.js','utf8');
 
   const matchIndex=friend.indexOf("let match=true;if(selected)");
   const screenIndex=friend.indexOf("let screen=card.querySelector('.mws-live-screen-v120')");
@@ -15,6 +16,7 @@ export function runPhase58FriendThumbnailLoadAudit(){
   if(!friend.includes("img.fetchPriority='low'"))issues.push('existing LIVE images are not normalized to low priority');
   if(friend.includes('loading="eager"'))issues.push('eager LIVE thumbnail loading remains');
   if(friend.includes('fetchpriority="high"'))issues.push('high-priority LIVE thumbnail loading remains');
+  if(!loader.includes("friend-finder-v120.js?v=1.3.0-phase58"))issues.push('optimized Friend Finder cache-bust revision is missing');
 
   const summary={phase:58,name:'friend-thumbnail-load-budget',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
