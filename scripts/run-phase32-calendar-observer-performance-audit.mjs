@@ -14,8 +14,8 @@ export function runPhase32CalendarObserverPerformanceAudit(){
   if(!src.includes('if(document.hidden||queued)return'))issues.push('device UI refresh is not suspended in hidden tabs');
   if(!src.includes('if(document.hidden||scheduled)return'))issues.push('mobile calendar rendering is not suspended in hidden tabs');
   if((src.match(/visibilitychange/g)||[]).length<2)issues.push('device UI does not resynchronize both observer paths after returning to the tab');
-  if(!runtime.includes('device-ui.js?v=1.3.0-perf32'))issues.push('post-login device UI cache-bust revision is missing');
-  if(!index.includes('assets/device-ui.js?v=1.3.0-perf32'))issues.push('source document device UI cache-bust revision is missing');
+  if(!runtime.includes('device-ui.js?v=1.3.0-'))issues.push('post-login device UI cache-bust revision is missing');
+  if(!index.includes('assets/device-ui.js?v=1.3.0-'))issues.push('source document device UI cache-bust revision is missing');
 
   const summary={phase:32,name:'calendar-observer-performance',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));

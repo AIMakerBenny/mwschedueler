@@ -63,7 +63,7 @@ async function start(){
   await load('test-v55','/assets/test-v5.5.js?v=1.3.0-perf39');
   await load('test-v56','/assets/test-v5.6.js?v=1.3.0-perf41');
 
-  const deviceUiResult=await load('device-ui','/assets/device-ui.js?v=1.3.0-perf32');
+  const deviceUiResult=await load('device-ui','/assets/device-ui.js?v=1.3.0-majoku-menu-p45');
   if(!deviceUiResult.ok){markCriticalUiFailure(['device-ui']);return;}
 
   const styleResults=await Promise.all([

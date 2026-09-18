@@ -42,6 +42,7 @@ import {runPhase41ContactAddInjectionAudit} from './run-phase41-contact-add-inje
 import {runPhase42PostApplicantSearchDebounceAudit} from './run-phase42-post-applicant-search-debounce-audit.mjs';
 import {runPhase43SelfContactSearchDebounceAudit} from './run-phase43-self-contact-search-debounce-audit.mjs';
 import {runPhase44PreviewObserverPerformanceAudit} from './run-phase44-preview-observer-performance-audit.mjs';
+import {runPhase45MajokuSidebarSimplificationAudit} from './run-phase45-majoku-sidebar-simplification-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -515,6 +516,17 @@ export function runPhase44FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase44FullIntegrationAudit();}
+export function runPhase45FullIntegrationAudit(){
+  const previous=runPhase44FullIntegrationAudit();
+  const current=runPhase45MajokuSidebarSimplificationAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:45,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase45FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
