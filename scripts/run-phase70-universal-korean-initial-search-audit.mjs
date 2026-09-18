@@ -15,7 +15,7 @@ export function runPhase70UniversalKoreanInitialSearchAudit(){
   }
   if((app.match(/mwsTextMatches\(/g)||[]).length<6)issues.push('too few app search surfaces use mwsTextMatches');
   if((app.match(/contactMatches\(c,/g)||[]).length<8)issues.push('too few contact search surfaces use contactMatches');
-  if(!index.includes('app-core.js?v=1.3.0-search70'))issues.push('app-core search70 cache-bust missing');
+  if(!index.includes('app-core.js?v=1.3.0-search70'))issues.push('app-core search cache-bust missing');
   if(!index.includes('window.mwsTextMatches?window.mwsTextMatches'))issues.push('late v53 applicant renderer still bypasses shared matcher');
   for(const id of ['postApplicantSearch','targetSearch','memoSearch','favoriteScheduleSearch','selfContactSearch','participantSearch','targetPickerSearch']){
     const pos=index.indexOf('id="'+id+'"');
