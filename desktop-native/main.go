@@ -58,6 +58,12 @@ type monitorInfo struct {
 	DwFlags   uint32
 }
 
+type introSession struct {
+	w    webview.WebView
+	hwnd uintptr
+	done sync.Once
+}
+
 //go:embed assets/mawang.ico
 var iconBytes []byte
 
@@ -108,14 +114,12 @@ var (
 	pendingMu      sync.Mutex
 	pendingSection string
 
-	introMu       sync.Mutex
-	introWv       webview.WebView
-	introHwnd     uintptr
-	introShown    sync.Once
+	introMu     sync.Mutex
+	activeIntro *introSession
+
 	appStartOnce  sync.Once
-	introDoneOnce sync.Once
 	appReadyMu    sync.Mutex
-	appReadyState         bool
+	appReadyState bool
 
 	startupMu     sync.Mutex
 	startupLocked = true
@@ -241,13 +245,13 @@ const introHTMLTemplate = `<!doctype html>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}
 body{user-select:none}
 #stage{position:fixed;inset:0;background:#000;overflow:hidden}
-#photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;transform:scale(1.012);transition:opacity .72s ease,transform 1.05s ease}
+#photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;transform:scale(1.01);transition:opacity .72s ease,transform 1s ease}
 #stage.photo-in #photo{opacity:1;transform:scale(1)}
-#stage.photo-out #photo{opacity:0;transform:scale(1)}
-#title{position:absolute;left:50%;top:50%;width:min(92vw,1280px);transform:translate(-50%,-45%) scale(.985);text-align:center;color:#fff;opacity:0;filter:blur(8px);transition:opacity .78s ease,transform .95s cubic-bezier(.2,.8,.2,1),filter .78s ease}
+#stage.photo-out #photo{opacity:0}
+#title{position:absolute;left:50%;top:50%;width:min(92vw,1280px);text-align:center;color:#fff;opacity:0;filter:blur(9px);transform:translate(-50%,-44%) scale(.98);transition:opacity .82s ease,filter .82s ease,transform 1s cubic-bezier(.2,.8,.2,1)}
 #stage.title-in #title{opacity:1;filter:blur(0);transform:translate(-50%,-50%) scale(1)}
 #stage.title-out #title{opacity:0;filter:blur(5px);transform:translate(-50%,-53%) scale(1.01)}
-#titleMain{font:900 clamp(46px,6.6vw,108px)/.95 "Segoe UI",Arial,sans-serif;letter-spacing:-.055em;text-shadow:0 0 34px rgba(130,185,255,.19),0 16px 48px rgba(0,0,0,.82)}
+#titleMain{font:900 clamp(46px,6.6vw,108px)/.95 "Segoe UI",Arial,sans-serif;letter-spacing:-.055em;text-shadow:0 0 34px rgba(130,185,255,.18),0 16px 48px rgba(0,0,0,.84)}
 #titleKo{margin-top:20px;font:700 clamp(17px,1.55vw,27px)/1.2 "Segoe UI","Malgun Gothic",sans-serif;letter-spacing:.30em;color:#dfe1e9}
 #line{width:0;height:2px;margin:25px auto 0;background:linear-gradient(90deg,transparent,#8dbdff 24%,#e0a1d7 76%,transparent);transition:width 1s ease .18s}
 #stage.title-in #line{width:min(440px,44vw)}
@@ -269,24 +273,35 @@ body{user-select:none}
 (function(){
   var stage=document.getElementById('stage');
   var photo=document.getElementById('photo');
-  var appReady=false;
   var titleReady=false;
   var ending=false;
   var finished=false;
+  var pollTimer=0;
   var imageSrc='data:image/webp;base64,__INTRO_B64__';
 
-  function finish(){
-    if(finished)return;
-    finished=true;
-    try{window.__mwsIntroDone('complete');}catch(_){}
+  function appIsReady(){
+    try{
+      Promise.resolve(window.__mwsIsAppReady()).then(function(ready){
+        if(ready){
+          if(titleReady)beginHandoff();
+        }else if(titleReady){
+          stage.classList.add('waiting');
+        }
+      }).catch(function(){});
+    }catch(_){}
   }
 
-  function tryFinish(){
-    if(ending||finished||!appReady||!titleReady)return;
+  function beginHandoff(){
+    if(ending||finished)return;
     ending=true;
+    clearInterval(pollTimer);
     stage.classList.remove('waiting');
     stage.classList.add('title-out');
-    setTimeout(finish,720);
+    setTimeout(function(){
+      if(finished)return;
+      finished=true;
+      try{window.__mwsIntroDone();}catch(_){}
+    },760);
   }
 
   function showTitle(){
@@ -295,31 +310,24 @@ body{user-select:none}
       stage.classList.add('title-in');
       setTimeout(function(){
         titleReady=true;
-        if(!appReady)stage.classList.add('waiting');
-        tryFinish();
-      },1450);
-    },560);
+        appIsReady();
+      },1400);
+    },620);
   }
 
-  window.__mwsSetAppReady=function(){
-    appReady=true;
-    tryFinish();
-  };
-
-  window.__mwsSkipIntro=function(){
-    if(finished||ending)return;
+  function skip(){
+    if(ending||finished)return;
     stage.classList.add('photo-out');
     stage.classList.add('title-in');
     titleReady=true;
-    if(!appReady)stage.classList.add('waiting');
-    tryFinish();
-  };
+    appIsReady();
+  }
 
-  stage.addEventListener('click',function(){window.__mwsSkipIntro();},true);
+  stage.addEventListener('click',skip,true);
   window.addEventListener('keydown',function(e){
     if(e.code==='Space'||e.key===' '||e.key==='Escape'){
       e.preventDefault();
-      window.__mwsSkipIntro();
+      skip();
     }
   },true);
 
@@ -327,16 +335,12 @@ body{user-select:none}
     requestAnimationFrame(function(){
       requestAnimationFrame(function(){stage.classList.add('photo-in');});
     });
-    try{window.__mwsIntroReady();}catch(_){}
-    setTimeout(showTitle,2450);
+    setTimeout(showTitle,2500);
   };
-
-  photo.onerror=function(){
-    try{window.__mwsIntroReady();}catch(_){}
-    showTitle();
-  };
-
+  photo.onerror=showTitle;
   photo.src=imageSrc;
+
+  pollTimer=setInterval(appIsReady,150);
 })();
 </script>
 </body>
@@ -369,7 +373,6 @@ func introHTML() string {
 func windowProc(h uintptr, msg uint32, wparam, lparam uintptr) uintptr {
 	switch msg {
 	case wmClose:
-		hideIntroNative()
 		rememberWindowState(h)
 		procShowWindow.Call(h, swHide)
 		return 0
@@ -420,16 +423,28 @@ func rememberWindowState(h uintptr) {
 	stateMu.Unlock()
 }
 
-func showIntroWindow() {
+func currentIntro() *introSession {
 	introMu.Lock()
-	h := introHwnd
+	session := activeIntro
 	introMu.Unlock()
-	if h != 0 {
-		procShowWindow.Call(h, swMaximize)
-		procSetForegroundWindow.Call(h)
-	}
+	return session
 }
 
+func showIntroWindow() {
+	session := currentIntro()
+	if session == nil || session.hwnd == 0 {
+		return
+	}
+	procShowWindow.Call(session.hwnd, swShow)
+	procSetForegroundWindow.Call(session.hwnd)
+}
+
+func hideIntroNative() {
+	session := currentIntro()
+	if session != nil && session.hwnd != 0 {
+		procShowWindow.Call(session.hwnd, swHide)
+	}
+}
 func showWindow() {
 	startupMu.Lock()
 	locked := startupLocked
@@ -558,15 +573,6 @@ func setAppReady() {
 	appReadyMu.Lock()
 	appReadyState = true
 	appReadyMu.Unlock()
-
-	introMu.Lock()
-	iw := introWv
-	introMu.Unlock()
-	if iw != nil {
-		iw.Dispatch(func() {
-			iw.Eval("window.__mwsSetAppReady && window.__mwsSetAppReady()")
-		})
-	}
 }
 
 func isAppReady() bool {
@@ -575,7 +581,6 @@ func isAppReady() bool {
 	appReadyMu.Unlock()
 	return ready
 }
-
 func runAppWebView() {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -635,15 +640,6 @@ func runAppWebView() {
 	oldWndProc = 0
 }
 
-func hideIntroNative() {
-	introMu.Lock()
-	h := introHwnd
-	introMu.Unlock()
-	if h != 0 {
-		procShowWindow.Call(h, swHide)
-	}
-}
-
 func runIntroWindow() {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -660,82 +656,41 @@ func runIntroWindow() {
 	}
 	defer w.Destroy()
 
-	h := uintptr(w.Window())
+	session := &introSession{w: w, hwnd: uintptr(w.Window())}
 	introMu.Lock()
-	introWv = w
-	introHwnd = h
+	activeIntro = session
 	introMu.Unlock()
 
-	setWindowIcon(h)
+	setWindowIcon(session.hwnd)
 
-	w.Bind("__mwsIntroReady", func() {
-		if isAppReady() {
-			w.Dispatch(func() {
-				w.Eval("window.__mwsSetAppReady && window.__mwsSetAppReady()")
-			})
-		}
+	w.Bind("__mwsIsAppReady", func() bool {
+		return isAppReady()
 	})
-	w.Bind("__mwsIntroDone", func(reason string) {
-		go revealAppAndCloseIntro(reason)
+	w.Bind("__mwsIntroDone", func() {
+		go finishIntro(session)
 	})
 
 	w.SetHtml(introHTML())
+	makeIntroBorderless(session.hwnd)
+	procShowWindow.Call(session.hwnd, swShow)
+	procSetForegroundWindow.Call(session.hwnd)
 
-	// Show the intro window immediately. Do not wait for a JavaScript callback.
-	// This guarantees the splash is actually visible while the Scheduler loads behind it.
-	makeIntroBorderless(h)
-	procShowWindow.Call(h, swShow)
-	procSetForegroundWindow.Call(h)
 	startApp()
-
-	// If the app became ready before the intro page finished loading, pass that
-	// state into the intro after the document has had time to initialize.
-	time.AfterFunc(300*time.Millisecond, func() {
-		if !isAppReady() {
-			return
-		}
-		w.Dispatch(func() {
-			w.Eval("window.__mwsSetAppReady && window.__mwsSetAppReady()")
-		})
-	})
-
 	w.Run()
 
 	introMu.Lock()
-	if introWv == w {
-		introWv = nil
-		introHwnd = 0
+	if activeIntro == session {
+		activeIntro = nil
 	}
 	introMu.Unlock()
-
-	startupMu.Lock()
-	locked := startupLocked
-	startupMu.Unlock()
-	if locked && !exiting {
-		// Unexpected splash closure must never expose a login page or leave
-		// a black window behind. Close the application instead.
-		exiting = true
-		wvMu.Lock()
-		aw := wv
-		wvMu.Unlock()
-		if aw != nil {
-			aw.Terminate()
-		}
-		systray.Quit()
-	}
 }
-func revealAppAndCloseIntro(reason string) {
-	introDoneOnce.Do(func() {
-		// The intro is only allowed to hand off after the main Scheduler UI
-		// has reported ready. The login screen therefore remains hidden.
-		deadline := time.Now().Add(20 * time.Second)
-		for time.Now().Before(deadline) && !exiting {
-			if isAppReady() {
-				break
-			}
-			time.Sleep(60 * time.Millisecond)
-		}
-		if !isAppReady() || exiting {
+
+func finishIntro(session *introSession) {
+	if session == nil {
+		return
+	}
+	session.done.Do(func() {
+		if exiting || !isAppReady() {
 			return
 		}
 
@@ -747,15 +702,9 @@ func revealAppAndCloseIntro(reason string) {
 			return
 		}
 
-		// Hide the splash at the native window level before the main window is
-		// shown. Even if WebView destruction is delayed, no black overlay can remain.
-		introMu.Lock()
-		ih := introHwnd
-		iw := introWv
-		introHwnd = 0
-		introMu.Unlock()
-		if ih != 0 {
-			procShowWindow.Call(ih, swHide)
+		// Always remove the intro from the screen before exposing the app.
+		if session.hwnd != 0 {
+			procShowWindow.Call(session.hwnd, swHide)
 		}
 
 		startupMu.Lock()
@@ -770,9 +719,9 @@ func revealAppAndCloseIntro(reason string) {
 		procShowWindow.Call(h, swMaximize)
 		procSetForegroundWindow.Call(h)
 
-		if iw != nil {
-			iw.Dispatch(func() { iw.Terminate() })
-		}
+		session.w.Dispatch(func() {
+			session.w.Terminate()
+		})
 	})
 }
 func applyPendingSection(w webview.WebView) {
@@ -816,13 +765,13 @@ func jsString(s string) string {
 }
 
 func acquireSingleton() bool {
-	name, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopNativeMutexV070")
+	name, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopNativeMutexV071")
 	m, _, err := procCreateMutex.Call(0, 0, uintptr(unsafe.Pointer(name)))
 	if m == 0 {
 		return true
 	}
 	if errno, ok := err.(syscall.Errno); ok && errno == syscall.ERROR_ALREADY_EXISTS {
-		evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV070")
+		evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV071")
 		ev, _, _ := procOpenEvent.Call(0x0002, 0, uintptr(unsafe.Pointer(evName)))
 		if ev != 0 {
 			procSetEvent.Call(ev)
@@ -835,34 +784,23 @@ func acquireSingleton() bool {
 }
 
 func handleExecutableRelaunch() {
-	// Launching the EXE again while the app is already resident in the tray
-	// should replay the startup intro. Tray double-click still opens the last
-	// Scheduler screen directly through showWindow().
-	introMu.Lock()
-	activeIntro := introWv != nil
-	introMu.Unlock()
-	if activeIntro {
+	if currentIntro() != nil {
 		showIntroWindow()
 		return
 	}
-
-	appReadyMu.Lock()
-	ready := appReadyState
-	appReadyMu.Unlock()
-	if !ready {
+	if !isAppReady() {
 		showWindow()
 		return
 	}
 
+	hideWindow()
 	startupMu.Lock()
 	startupLocked = true
 	startupMu.Unlock()
-	introDoneOnce = sync.Once{}
 	go runIntroWindow()
 }
-
 func watchShowEvent() {
-	evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV070")
+	evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV071")
 	ev, _, _ := procCreateEvent.Call(0, 0, 0, uintptr(unsafe.Pointer(evName)))
 	if ev == 0 {
 		return
@@ -924,16 +862,12 @@ func onReady() {
 			aw.Terminate()
 		}
 
-		introMu.Lock()
-		ih := introHwnd
-		iw := introWv
-		introHwnd = 0
-		introMu.Unlock()
-		if ih != 0 {
-			procShowWindow.Call(ih, swHide)
-		}
-		if iw != nil {
-			iw.Dispatch(func() { iw.Terminate() })
+		session := currentIntro()
+		if session != nil {
+			if session.hwnd != 0 {
+				procShowWindow.Call(session.hwnd, swHide)
+			}
+			session.w.Dispatch(func() { session.w.Terminate() })
 		}
 
 		systray.Quit()
