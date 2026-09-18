@@ -39,10 +39,10 @@ const loadAppVersion=()=>loadScript('app-version-v120','/assets/app-version-v120
 const loadCoreRuntime=()=>loadScript('cloud-core-v130','/assets/cloud-v1.1.js?v=1.3.0-auth-decoupled','__mwsCloudV110Loaded');
 const loadSoopFetchProxy=()=>loadOptionalScript('soop-fetch-proxy','/assets/soop-fetch-proxy-v123.js?v=1.2.5','__mwsSoopFetchProxyV124');
 const loadFriendFinder=()=>loadOptionalScript('friend-finder-v120','/assets/friend-finder-v120.js?v=1.3.0','__mwsFriendFinderV120');
-const loadV130Hotfix=()=>loadOptionalScript('v130-live-contact-fix','/assets/v130-live-contact-fix.js?v=1.3.0','__mwsV130LiveContactFix');
+const loadV130Hotfix=()=>loadOptionalScript('v130-live-contact-fix','/assets/v130-live-contact-fix.js?v=1.3.0-perf31','__mwsV130LiveContactFix');
 const loadTodayPeopleWheel=()=>loadOptionalScript('today-people-wheel','/assets/today-people-wheel-v117.js?v=1.2.0','__mwsTodayPeopleWheelV120');
 const loadUiFixes=()=>loadOptionalScript('ui-fixes','/assets/ui-fixes-v121.js?v=1.2.1','__mwsUiFixesV121');
-const loadSteamPicker=()=>loadOptionalScript('steam-picker','/assets/steam-game-v111.js?v=1.1.3','__mwsSteamGameV111');
+const loadSteamPicker=()=>loadOptionalScript('steam-picker','/assets/steam-game-v111.js?v=1.1.4-perf30','__mwsSteamGameV111');
 const loadBossManager=()=>loadOptionalScript('boss-manager','/assets/boss-manager-v121.js?v=1.2.2','__mwsBossManagerV121');
 const loadMajokuHost=()=>loadOptionalScript('majoku-host','/assets/majoku-host-fix-v114.js?v=1.2.2','__mwsMajokuHostFixV122');
 
@@ -83,7 +83,7 @@ function activeTab(){
 }
 function prefetchFeatures(){
   if(!window.__mwsAppReadyV130)return;
-  const urls=['/assets/steam-game-v111.js?v=1.1.3','/assets/ui-fixes-v121.js?v=1.2.1','/assets/boss-manager-v121.js?v=1.2.2','/assets/majoku-host-fix-v114.js?v=1.2.2','/assets/v130-live-contact-fix.js?v=1.3.0'];
+  const urls=['/assets/steam-game-v111.js?v=1.1.4-perf30','/assets/ui-fixes-v121.js?v=1.2.1','/assets/boss-manager-v121.js?v=1.2.2','/assets/majoku-host-fix-v114.js?v=1.2.2','/assets/v130-live-contact-fix.js?v=1.3.0-perf31'];
   for(const href of urls){
     if(document.querySelector(`link[rel="prefetch"][href="${href}"]`))continue;
     const link=document.createElement('link');link.rel='prefetch';link.as='script';link.href=href;document.head.appendChild(link);

@@ -27,10 +27,11 @@ function refresh(){
 function apply(mode){if(!['pc','mobile'].includes(mode))return;if(prefs.mode==='pc'&&desktops.includes(document.body.dataset.resolution))prefs.pc=document.body.dataset.resolution;prefs.mode=mode;window.setMobileDrawer?.(false);baseSet(mode==='mobile'?'mobile':prefs.pc);refresh();save();}
 window.setResolutionMode=function(mode){if(mode==='mobile'){apply('mobile');return;}if(desktops.includes(mode)){prefs.pc=mode;prefs.mode='pc';baseSet(mode);refresh();save();}};
 card.addEventListener('click',e=>{const b=e.target.closest('[data-device-choice]');if(b&&!b.disabled)apply(b.dataset.deviceChoice);});
-let queued=false;const update=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;refresh();});};
+let queued=false;const update=()=>{if(document.hidden||queued)return;queued=true;requestAnimationFrame(()=>{queued=false;refresh();});};
 new MutationObserver(update).observe(document.querySelector('.sidebar .nav'),{subtree:true,attributes:true,attributeFilter:['class']});
-new MutationObserver(update).observe(document.getElementById('calendarGrid'),{childList:true,subtree:true});
+new MutationObserver(update).observe(document.getElementById('calendarGrid'),{childList:true});
 window.addEventListener('mawang:datachange',update);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)update()});
 baseSet(prefs.mode==='mobile'?'mobile':prefs.pc);refresh();
 })();
 
@@ -75,10 +76,12 @@ function render(){
 }
 grid.addEventListener('click',e=>{if(document.body.dataset.deviceMode!=='mobile'||view!=='month')return;if(e.target.closest('.mini-event'))return;const day=e.target.closest('.day[data-date]');if(!day)return;e.preventDefault();e.stopImmediatePropagation();anchor=day.dataset.date;view='day';render();},true);
 grid.addEventListener('keydown',e=>{if(document.body.dataset.deviceMode==='mobile'&&view==='month'&&(e.key==='Enter'||e.key===' ')){const day=e.target.closest('.day[data-date]');if(day){e.preventDefault();day.click();}}});
-let scheduled=false;function queue(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;render();grid.querySelectorAll('.day').forEach(d=>{if(document.body.dataset.deviceMode==='mobile'){d.tabIndex=0;d.setAttribute('role','button');}else{d.removeAttribute('tabindex');d.removeAttribute('role');}});});}
-new MutationObserver(queue).observe(grid,{childList:true,subtree:true});
+let scheduled=false;function queue(){if(document.hidden||scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;render();grid.querySelectorAll('.day').forEach(d=>{if(document.body.dataset.deviceMode==='mobile'){d.tabIndex=0;d.setAttribute('role','button');}else{d.removeAttribute('tabindex');d.removeAttribute('role');}});});}
+new MutationObserver(queue).observe(grid,{childList:true});
 new MutationObserver(queue).observe(document.body,{attributes:true,attributeFilter:['data-device-mode']});
-window.addEventListener('mawang:datachange',queue);queue();
+window.addEventListener('mawang:datachange',queue);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)queue()});
+queue();
 })();
 
 /* v1.3.0 Majoku Castle sidebar: game shortcuts, collapsible list, direct iframe navigation, and legacy records removal. */

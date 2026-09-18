@@ -5,7 +5,7 @@ if(window.__mwsV130LiveContactFix)return;
 window.__mwsV130LiveContactFix=1;
 
 const rawFetch=window.fetch.bind(window);
-const LIVE_INTERVAL=15000;
+const LIVE_INTERVAL=30000;
 let liveTimer=0;
 let liveBusy=false;
 
@@ -47,10 +47,11 @@ function thumbUrls(bno){
   return [`https://liveimg.sooplive.co.kr/m/${id}?mws=${stamp}`,`https://liveimg.sooplive.com/m/${id}?mws=${stamp}`,`https://liveimg.sooplive.co.kr/m/${id}`,`https://liveimg.sooplive.com/m/${id}`];
 }
 function friendRoot(){
-  for(const s of document.querySelectorAll('.section')){
-    if(/친구\s*찾기/.test(String(s.textContent||'').slice(0,1400)))return s;
-  }
-  return null;
+  const active=document.querySelector('.section.active');
+  if(!active)return null;
+  if(/친구\s*찾기/.test(String(active.textContent||'').slice(0,1400)))return active;
+  const heading=[...active.querySelectorAll('h1,h2,h3,strong')].find(x=>String(x.textContent||'').trim()==='친구 찾기');
+  return heading?active:null;
 }
 function cardForContact(root,contact){
   const name=String(contact?.name||'').trim();if(!name)return null;
@@ -90,7 +91,7 @@ function decorateLiveCard(card,id,d){
   const count=viewers(d),cat=categoryName(d);meta.classList.remove('offline');meta.textContent=`카테고리 · ${cat||'미분류'}${count!==null?` · ${count.toLocaleString()}명`:''}`;
 }
 async function refreshLiveCards(){
-  if(liveBusy)return;const root=friendRoot();if(!root)return;
+  if(liveBusy||document.hidden)return;const root=friendRoot();if(!root)return;
   const contacts=Array.isArray(dataRef()?.contacts)?dataRef().contacts:[];
   const targets=[],byId=new Map();
   for(const c of contacts){const id=stationKey(c?.stationUrl);if(!id||byId.has(id))continue;byId.set(id,c);targets.push(channelUrl(id))}
@@ -108,12 +109,30 @@ async function refreshLiveCards(){
     }
   }catch(error){console.warn('v1.3.0 LIVE card fallback refresh failed',error)}finally{liveBusy=false}
 }
-function scheduleLive(){clearTimeout(liveTimer);liveTimer=setTimeout(()=>{refreshLiveCards().finally(()=>{liveTimer=setTimeout(scheduleLive,LIVE_INTERVAL)})},80)}
-window.addEventListener('mws:friend-live-updated',scheduleLive);
-window.addEventListener('mawang:datachange',scheduleLive);
-document.addEventListener('click',e=>{if(e.target?.closest?.('[data-tab="friendFinder"],[data-tab="friends"],button'))setTimeout(scheduleLive,120)},true);
-new MutationObserver(()=>{if(friendRoot())scheduleLive()}).observe(document.body,{childList:true,subtree:true});
-scheduleLive();
+function stopLiveTimer(){
+  if(liveTimer)clearTimeout(liveTimer);
+  liveTimer=0;
+}
+function scheduleLive(delay=120){
+  stopLiveTimer();
+  if(document.hidden||!friendRoot())return;
+  liveTimer=setTimeout(async()=>{
+    liveTimer=0;
+    if(document.hidden||!friendRoot())return;
+    await refreshLiveCards();
+    if(!document.hidden&&friendRoot())scheduleLive(LIVE_INTERVAL);
+  },Math.max(0,Number(delay)||0));
+}
+window.addEventListener('mawang:datachange',()=>scheduleLive(250));
+document.addEventListener('click',e=>{
+  const nav=e.target?.closest?.('.nav button[data-tab]');
+  const button=e.target?.closest?.('button');
+  const isLiveRefresh=button&&String(button.textContent||'').includes('라이브 새로고침');
+  if(nav){setTimeout(()=>{if(friendRoot())scheduleLive(120);else stopLiveTimer()},0);return}
+  if(isLiveRefresh)setTimeout(()=>scheduleLive(120),0);
+},true);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopLiveTimer();else scheduleLive(120)});
+scheduleLive(120);
 
 /* Contact detail "방문": keep the navigation in the user's click stack and use a real anchor. */
 function visitStation(){
@@ -125,5 +144,5 @@ function visitStation(){
 }
 function installVisitFix(){window.visitContactStationV55=visitStation;const btn=document.getElementById('ctStationVisitBtn');if(btn)btn.onclick=visitStation}
 installVisitFix();
-new MutationObserver(installVisitFix).observe(document.body,{childList:true,subtree:true});
+window.addEventListener('mws:post-login-ui-ready',installVisitFix,{once:true});
 })();

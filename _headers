@@ -63,3 +63,10 @@
 
 /assets/mobile-calendar-day-detail-v130.js
   Cache-Control: no-cache, must-revalidate
+
+
+/assets/device-ui.js
+  Cache-Control: no-cache, must-revalidate
+
+/assets/v130-live-contact-fix.js
+  Cache-Control: no-cache, must-revalidate

@@ -27,6 +27,9 @@ import {runPhase26MobileEventEditorHeaderAudit} from './run-phase26-mobile-event
 import {runPhase27MobileDayDetailScrollResetAudit} from './run-phase27-mobile-day-detail-scroll-reset-audit.mjs';
 import {runPhase28EventEditorScrollResetAudit} from './run-phase28-event-editor-scroll-reset-audit.mjs';
 import {runPhase29MobileDayDetailViewportAudit} from './run-phase29-mobile-day-detail-viewport-audit.mjs';
+import {runPhase30SteamScanPerformanceAudit} from './run-phase30-steam-scan-performance-audit.mjs';
+import {runPhase31LivePollingPerformanceAudit} from './run-phase31-live-polling-performance-audit.mjs';
+import {runPhase32CalendarObserverPerformanceAudit} from './run-phase32-calendar-observer-performance-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -335,6 +338,39 @@ export function runPhase29FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase29FullIntegrationAudit();}
+export function runPhase30FullIntegrationAudit(){
+  const previous=runPhase29FullIntegrationAudit();
+  const current=runPhase30SteamScanPerformanceAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:30,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runPhase31FullIntegrationAudit(){
+  const previous=runPhase30FullIntegrationAudit();
+  const current=runPhase31LivePollingPerformanceAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:31,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runPhase32FullIntegrationAudit(){
+  const previous=runPhase31FullIntegrationAudit();
+  const current=runPhase32CalendarObserverPerformanceAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:32,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase32FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();

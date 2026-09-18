@@ -343,14 +343,19 @@ function ensureSlot(host,eventId){
   }
   button.dataset.eventId=String(eventId);
   const game=normalizeGame(event.steamGame);
+  const signature=game?`${game.appid}|${game.name}|${game.image}`:'empty';
   button.classList.toggle('linked',!!game);
   button.setAttribute('aria-label',game?`${game.name} 게임 수정`:'Steam 게임 추가');
   button.title=game?`${game.name} - 게임 수정`:'Steam 게임 추가';
-  button.innerHTML=game?`<img src="${esc(game.image)}" alt="">`:'+';
+  if(button.dataset.mwsSteamSignature!==signature){
+    button.dataset.mwsSteamSignature=signature;
+    button.innerHTML=game?`<img src="${esc(game.image)}" alt="">`:'+';
+  }
 }
 
 function scan(){
   scanTimer=null;
+  if(document.hidden)return;
   const current=getData();
   if(current?.events){
     document.querySelectorAll('.mini-event[data-evid]').forEach(node=>ensureSlot(node,node.dataset.evid));
@@ -367,19 +372,26 @@ function scan(){
   if(!open&&eventModalWasOpen)syncEditorPanel(false);
   eventModalWasOpen=open;
 }
-function scheduleScan(){if(scanTimer)return;scanTimer=setTimeout(scan,0)}
+function scheduleScan(){
+  if(document.hidden||scanTimer)return;
+  scanTimer=setTimeout(scan,0);
+}
+function observeScanRoot(root,flag,options){
+  if(!root||root[flag])return;
+  root[flag]=1;
+  new MutationObserver(scheduleScan).observe(root,options);
+}
 
 function boot(){
   installCss();
   ensurePanel();
   installSaveHook();
   scheduleScan();
-  const target=document.body||document.documentElement;
-  if(target&&!target.__mwsSteamObserverV111){
-    target.__mwsSteamObserverV111=1;
-    new MutationObserver(scheduleScan).observe(target,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
-  }
-  setInterval(scan,1200);
+  observeScanRoot($('calendarGrid'),'__mwsSteamGridObserverV111',{childList:true});
+  observeScanRoot($('upcomingDashboard'),'__mwsSteamDashboardObserverV111',{childList:true});
+  observeScanRoot($('eventModal'),'__mwsSteamModalObserverV111',{attributes:true,attributeFilter:['class']});
+  window.addEventListener('mawang:datachange',scheduleScan);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleScan()});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

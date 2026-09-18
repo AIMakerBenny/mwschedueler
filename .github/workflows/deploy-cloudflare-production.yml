@@ -132,8 +132,31 @@ jobs:
           const r=src.slice(b,src.indexOf('function markAppReady',b));
           if(!r.includes('hideGate()')){console.error('Ready shell no longer owns gate removal.');process.exit(1)}
           NODE
-          retry_contains "$BASE/assets/device-ui.js?deploy=$GITHUB_SHA" 'mws-majoku-subnav-collapsed-v130' > /tmp/device-ui.js
+          retry_contains "$BASE/assets/device-ui.js?deploy=$GITHUB_SHA" 'if(document.hidden||queued)return' > /tmp/device-ui.js
           node --check /tmp/device-ui.js
+          grep -Fq "observe(grid,{childList:true})" /tmp/device-ui.js
+          if grep -Fq "observe(grid,{childList:true,subtree:true})" /tmp/device-ui.js; then
+            echo 'Nested mobile calendar observer regression detected.' >&2
+            exit 1
+          fi
+          retry_contains "$BASE/assets/steam-game-v111.js?deploy=$GITHUB_SHA" '__mwsSteamGridObserverV111' > /tmp/steam-game.js
+          node --check /tmp/steam-game.js
+          grep -Fq "mwsSteamSignature" /tmp/steam-game.js
+          if grep -Fq "setInterval(scan,1200)" /tmp/steam-game.js; then
+            echo 'Permanent Steam scan loop regression detected.' >&2
+            exit 1
+          fi
+          retry_contains "$BASE/assets/v130-live-contact-fix.js?deploy=$GITHUB_SHA" 'function stopLiveTimer()' > /tmp/live-contact-fix.js
+          node --check /tmp/live-contact-fix.js
+          grep -Fq "visibilitychange" /tmp/live-contact-fix.js
+          grep -Fq "const LIVE_INTERVAL=30000" /tmp/live-contact-fix.js
+          if grep -Fq "new MutationObserver(()=>{if(friendRoot())scheduleLive()}).observe(document.body" /tmp/live-contact-fix.js; then
+            echo 'Global LIVE mutation observer regression detected.' >&2
+            exit 1
+          fi
+          retry_contains "$BASE/assets/cloud-v1.1-loader.js?deploy=$GITHUB_SHA" 'steam-game-v111.js?v=1.1.4-perf30' > /tmp/cloud-loader.js
+          node --check /tmp/cloud-loader.js
+          grep -Fq "v130-live-contact-fix.js?v=1.3.0-perf31" /tmp/cloud-loader.js
           retry_contains "$BASE/assets/device-ui.css?deploy=$GITHUB_SHA" 'z-index:5200!important' > /tmp/device-ui.css
           grep -Fq '.mws-mobile-tabs' /tmp/device-ui.css
           grep -Fq '#eventModal .event-modal-header' /tmp/device-ui.css
@@ -180,6 +203,7 @@ jobs:
           node --check assets/post-login-runtime-v130.js
           node --check assets/friend-finder-v120.js
           node --check assets/v130-live-contact-fix.js
+          node --check assets/steam-game-v111.js
           node --check assets/soop-fetch-proxy-v123.js
           node --check assets/device-ui.js
           node --check assets/mobile-calendar-day-detail-v130.js
