@@ -68,6 +68,7 @@ import {runPhase67CloudSuccessorHandshakeAudit} from './run-phase67-cloud-succes
 import {runPhase68MaintenanceSuccessorActivationAudit} from './run-phase68-maintenance-successor-activation-audit.mjs';
 import {runPhase69LegacyMaintenanceRemovalAudit} from './run-phase69-legacy-maintenance-removal-audit.mjs';
 import {runPhase70UniversalKoreanInitialSearchAudit} from './run-phase70-universal-korean-initial-search-audit.mjs';
+import {runPhase71KoreanImeJamoSearchAudit} from './run-phase71-korean-ime-jamo-search-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -744,6 +745,16 @@ export function runPhase70FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase70FullIntegrationAudit();}
+export function runPhase71FullIntegrationAudit(){
+  const previous=runPhase70FullIntegrationAudit(), current=runPhase71KoreanImeJamoSearchAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:71,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase71FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
