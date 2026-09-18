@@ -7,7 +7,7 @@ export function runPhase60LiveThumbnailProxyAudit(){
   const backend=fs.readFileSync('src/cf-v120-friend.js','utf8');
   const loader=fs.readFileSync('assets/cloud-v1.1-loader.js','utf8');
 
-  if(!friend.includes(`/api/soop/live-thumb?bno=${id}&v=${stamp}`))issues.push('Friend Finder does not prefer the same-origin thumbnail proxy');
+  if(!friend.includes('/api/soop/live-thumb?bno=${id}&v=${stamp}'))issues.push('Friend Finder does not prefer the same-origin thumbnail proxy');
   if(!backend.includes("const THUMB_HOSTS=['liveimg.sooplive.com','liveimg.sooplive.co.kr']"))issues.push('Worker thumbnail CDN fallback hosts are missing');
   if(!backend.includes('function validBroadcastNo(raw)'))issues.push('thumbnail proxy broadcast number validation is missing');
   if(!backend.includes('async function fetchLiveThumb(target)'))issues.push('thumbnail proxy upstream fetch helper is missing');
