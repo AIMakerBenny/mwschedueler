@@ -90,7 +90,7 @@ jobs:
 
           echo '[2/8] isolated login shell and v1.4.0 display'
           retry_contains "$BASE/?deploy=$GITHUB_SHA" 'app-core.css?v=1.3.0-order52' > /tmp/index.html
-          grep -Fq 'app-core.js?v=1.3.0-search75' /tmp/index.html
+          grep -Fq 'app-core.js?v=1.3.0-search80' /tmp/index.html
           grep -Fq 'id="mwsAccessGate"' /tmp/index.html
           grep -Fq 'assets/app-core.css?v=1.3.0-order52' /tmp/index.html
           grep -Fq 'data-build-version="MWS V 1.4.0"' /tmp/index.html
@@ -290,6 +290,9 @@ jobs:
           grep -Fq "window.mwsTextMatches=mwsTextMatches" /tmp/app-core.js
           grep -Fq "window.contactMatches=contactMatches" /tmp/app-core.js
           grep -Fq "__mwsSearchOwnerV130='app-core-search71'" /tmp/app-core.js
+          grep -Fq 'const mwsUpcomingByContact=new Map();' /tmp/app-core.js
+          grep -Fq 'upcoming=mwsUpcomingByContact.get(c.id)||[]' /tmp/app-core.js
+          grep -Fq 'loading="lazy" decoding="async"' /tmp/app-core.js
           if [ "$(grep -Ec 'function[[:space:]]+renderContacts[[:space:]]*\(' /tmp/app-core.js)" -ne 1 ]; then
             echo 'Duplicate canonical renderContacts declarations remain.' >&2
             exit 1
@@ -505,6 +508,7 @@ jobs:
           node --check scripts/run-phase77-history-cache-localization-audit.mjs
           node --check scripts/run-phase78-upcoming-cache-localization-audit.mjs
           node --check scripts/run-phase79-dead-runtime-reference-audit.mjs
+          node --check scripts/run-phase80-canonical-contact-render-perf-audit.mjs
           node --check assets/today-people-runtime-v130.js
           node --check assets/contact-runtime-v130.js
           node --check assets/friend-finder-v120.js
