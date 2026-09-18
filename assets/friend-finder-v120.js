@@ -9,10 +9,12 @@ const liveCache=new Map();
 const liveByUserId=new Map();
 const LIVE_CACHE_MS=10000;
 const THUMB_REFRESH_MS=10000;
+const ACTIVE_REFRESH_MS=30000;
 let batchPromise=null;
 let categoriesPromise=null;
 let forceNextBatch=false;
 let uiScheduled=false;
+let activeRefreshTimer=0;
 
 function setVersionLabel(){try{window.mwsApplyAppVersionV120?.()}catch(_){}}
 
@@ -88,6 +90,25 @@ async function ensureBatch(target,{force=false}={}){
 }
 window.mwsFriendFinderFastRefresh=async()=>{liveCache.clear();liveByUserId.clear();forceNextBatch=true;const first=allContactTargets()[0];if(first){try{await ensureBatch(new URL(first),{force:true})}catch(e){console.warn('Friend Finder fast refresh failed',e)}}};
 
+function stopActiveRefresh(){if(activeRefreshTimer)clearTimeout(activeRefreshTimer);activeRefreshTimer=0}
+async function refreshActiveFriendLive(force=true){
+  if(document.hidden||!activeFriendRoot())return;
+  const first=allContactTargets()[0];
+  if(!first){scheduleUi();return}
+  try{await ensureBatch(new URL(first),{force})}catch(error){console.warn('Friend Finder active refresh failed',error)}
+  scheduleUi();
+}
+function scheduleActiveRefresh(delay=ACTIVE_REFRESH_MS){
+  stopActiveRefresh();
+  if(document.hidden||!activeFriendRoot())return;
+  activeRefreshTimer=setTimeout(async()=>{
+    activeRefreshTimer=0;
+    if(document.hidden||!activeFriendRoot())return;
+    await refreshActiveFriendLive(true);
+    if(!document.hidden&&activeFriendRoot())scheduleActiveRefresh(ACTIVE_REFRESH_MS);
+  },Math.max(0,Number(delay)||0));
+}
+
 window.fetch=async function(input,init={}){
   let source;try{source=new Request(input,init)}catch(_){return baseFetch(input,init)}
   if(String(source.method||'GET').toUpperCase()!=='GET')return baseFetch(input,init);
@@ -107,6 +128,7 @@ function friendRoot(){
   }
   return null;
 }
+function activeFriendRoot(){const root=friendRoot();return root?.classList.contains('active')?root:null}
 function installStyle(){
   if(document.getElementById('mwsFriendFinderV120Style'))return;
   const style=document.createElement('style');style.id='mwsFriendFinderV120Style';style.textContent=`
@@ -238,12 +260,17 @@ function decorate(root=friendRoot()){
 }
 function scheduleUi(){if(uiScheduled)return;uiScheduled=true;requestAnimationFrame(()=>{uiScheduled=false;decorate()})}
 window.addEventListener('mws:friend-live-updated',scheduleUi);
+window.addEventListener('mawang:datachange',()=>{scheduleUi();scheduleActiveRefresh(250)});
 document.addEventListener('click',event=>{
   const text=String(event.target?.closest?.('button')?.textContent||'').trim();
-  if(text.includes('라이브 새로고침')){liveCache.clear();liveByUserId.clear();forceNextBatch=true;setTimeout(scheduleUi,0)}
-  const nav=event.target?.closest?.('.nav button[data-tab]');if(nav&&/친구\s*찾기/.test(String(nav.textContent||''))){setTimeout(()=>{scheduleUi();const first=allContactTargets()[0];if(first)ensureBatch(new URL(first),{force:true}).catch(()=>{})},0)}
+  if(text.includes('라이브 새로고침')){liveCache.clear();liveByUserId.clear();forceNextBatch=true;setTimeout(()=>{scheduleUi();refreshActiveFriendLive(true).finally(()=>scheduleActiveRefresh())},0)}
+  const nav=event.target?.closest?.('.nav button[data-tab]');
+  if(nav)setTimeout(()=>{if(activeFriendRoot()){scheduleUi();refreshActiveFriendLive(true).finally(()=>scheduleActiveRefresh())}else stopActiveRefresh()},0);
 },true);
+document.addEventListener('input',event=>{if(activeFriendRoot()?.contains(event.target))setTimeout(scheduleUi,0)},true);
+document.addEventListener('change',event=>{if(activeFriendRoot()?.contains(event.target))setTimeout(scheduleUi,0)},true);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopActiveRefresh();else scheduleActiveRefresh(120)});
 
-function boot(){installStyle();setVersionLabel();scheduleUi();[100,350,900].forEach(ms=>setTimeout(()=>{setVersionLabel();scheduleUi()},ms))}
+function boot(){installStyle();setVersionLabel();scheduleUi();scheduleActiveRefresh(120);[100,350,900].forEach(ms=>setTimeout(()=>{setVersionLabel();scheduleUi()},ms))}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
