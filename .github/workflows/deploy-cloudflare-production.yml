@@ -400,9 +400,9 @@ jobs:
           grep -Fq "new URL('/api/soop/proxy'" assets/soop-fetch-proxy-v123.js
 
           echo '[6/8] post-login performance and boss assets'
-          retry_contains "$BASE/assets/perf-runtime.js?v=1.4.0-phase74" 'lossless image policy' > /tmp/perf.js
+          retry_contains "$BASE/assets/perf-runtime.js?v=1.4.0-phase76" 'lossless image policy' > /tmp/perf.js
           node --check /tmp/perf.js
-          grep -Fq 'perf-runtime-base.js?v=1.3.0-search73' /tmp/perf.js
+          grep -Fq 'perf-runtime-base.js?v=1.4.0-phase76' /tmp/perf.js
           retry_contains "$BASE/assets/perf-runtime-base.js?deploy=$GITHUB_SHA" 'mws-performance-runtime-style' > /tmp/perf-base.js
           node --check /tmp/perf-base.js
           if grep -Fq 'contactMatches=function' /tmp/perf-base.js; then
@@ -414,6 +414,14 @@ jobs:
             exit 1
           fi
           grep -Fq 'e?.isComposing?0:80' /tmp/perf-base.js
+          if grep -Fq 'getLastCollab=id=>' /tmp/perf-base.js; then
+            echo 'getLastCollab selector override is still live.' >&2
+            exit 1
+          fi
+          if grep -Fq 'upcomingEventsForContact=id=>' /tmp/perf-base.js; then
+            echo 'upcomingEventsForContact selector override is still live.' >&2
+            exit 1
+          fi
           retry_contains "$BASE/assets/online-v5-loader.js?v=1.3.0-search73" 'legacyContactMatcher' > /tmp/online-v5-loader.js
           node --check /tmp/online-v5-loader.js
           grep -Fq 'safeFeatures=features.replace' /tmp/online-v5-loader.js
@@ -477,6 +485,7 @@ jobs:
           node --check scripts/run-phase73-version-ownership-audit.mjs
           node --check scripts/run-phase74-runtime-ownership-audit.mjs
           node --check scripts/run-phase75-render-contacts-dedup-audit.mjs
+          node --check scripts/run-phase76-selector-wrapper-dedup-audit.mjs
           node --check assets/today-people-runtime-v130.js
           node --check assets/contact-runtime-v130.js
           node --check assets/friend-finder-v120.js
