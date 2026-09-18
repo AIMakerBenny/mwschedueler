@@ -12,7 +12,7 @@ export function runPhase41ContactAddInjectionAudit(){
   if(!src.includes('if(injectQueuedV141)return'))issues.push('contact add injection does not collapse duplicate refresh requests');
   if(!src.includes('queueMicrotask(()=>{injectQueuedV141=false;injectAdd()})'))issues.push('contact add injection is not coalesced into one microtask');
   if(src.includes("setTimeout(()=>{visibility();injectAdd()},0)"))issues.push('legacy repeated setTimeout contact injection remains');
-  if(!runtime.includes('contact-runtime-v130.js?v=1.3.0-search67'))issues.push('contact enhancement cache-bust was not advanced for injection optimization');
+  if(!/contact-runtime-v130\.js\?v=1\.3\.0-search(?:6[7-9]|[7-9][0-9]|[1-9][0-9]{2,})/.test(runtime))issues.push('contact enhancement cache-bust is older than search67');
 
   const summary={phase:41,name:'contact-add-dom-churn-performance',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
