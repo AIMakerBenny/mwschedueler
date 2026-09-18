@@ -50,6 +50,39 @@ function userIdFromTarget(target){
   const m=/\/v1\.1\/channel\/([^/]+)\/home\/section\/broad/.exec(target?.pathname||'');
   return m?decodeURIComponent(m[1]).toLowerCase():'';
 }
+
+function firstLiveScalar(obj,keys){
+  for(const key of keys){
+    const value=obj?.[key];
+    if((typeof value==='string'||typeof value==='number')&&String(value).trim())return String(value).trim();
+  }
+  return '';
+}
+function normalizeLivePayload(root){
+  if(!root||typeof root!=='object')return null;
+  const queue=[root],seen=new Set();
+  while(queue.length){
+    const value=queue.shift();
+    if(!value||typeof value!=='object'||seen.has(value))continue;
+    seen.add(value);
+    if(!Array.isArray(value)){
+      const broadNo=firstLiveScalar(value,['broadNo','broad_no','bno']);
+      if(broadNo){
+        const viewerRaw=firstLiveScalar(value,['currentSumViewer','current_sum_viewer','total_view_cnt','viewer_cnt','viewerCount']);
+        const viewer=viewerRaw!==''?Number(viewerRaw):null;
+        return {
+          broadNo,
+          broadTitle:firstLiveScalar(value,['broadTitle','broad_title','title']),
+          categoryName:firstLiveScalar(value,['categoryName','category_name','broadCategoryName','broad_category_name']),
+          broadCateNo:firstLiveScalar(value,['broadCateNo','broad_cate_no','categoryNo','category_no']),
+          currentSumViewer:Number.isFinite(viewer)?viewer:null
+        };
+      }
+    }
+    for(const child of Array.isArray(value)?value:Object.values(value))if(child&&typeof child==='object')queue.push(child);
+  }
+  return null;
+}
 function syntheticResponse(row){
   const headers=new Headers();
   if(row?.contentType)headers.set('content-type',row.contentType);
@@ -63,7 +96,8 @@ function rememberRow(row){
   try{
     const target=new URL(row.url);const id=userIdFromTarget(target);if(!id)return;
     const body=String(row.body||'').trim();let parsed=null;try{parsed=body?JSON.parse(body):null}catch(_){}
-    liveByUserId.set(id,{at:Date.now(),status:Number(row.status)||0,data:parsed,url:row.url});
+    const live=row?.live&&typeof row.live==='object'?row.live:normalizeLivePayload(parsed);
+    liveByUserId.set(id,{at:Date.now(),status:Number(row.status)||0,data:live,url:row.url});
   }catch(_){}
 }
 function dispatchLiveUpdate(){window.dispatchEvent(new CustomEvent('mws:friend-live-updated',{detail:{count:liveByUserId.size}}));scheduleUi()}
