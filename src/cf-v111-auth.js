@@ -128,29 +128,32 @@ function parseDataImage(value){
 async function shortHash(value){const hash=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(value))));return [...hash].slice(0,16).map(x=>x.toString(16).padStart(2,'0')).join('')}
 function mediaUrl(kind,key,version=1){return `/media/${kind}/${encodeURIComponent(key)}?v=${Math.max(1,Number(version)||1)}`}
 function r2Key(kind,key){return kind==='contact'?`contacts/${key}`:`workspace/${key}`}
+function r2VersionedKey(kind,key,version){return `${r2Key(kind,key)}/v${Math.max(1,Number(version)||1)}`}
 async function currentImageVersion(env,kind,key){const row=await env.DB.prepare('SELECT version FROM image_sources WHERE kind=? AND item_key=?').bind(kind,key).first();return Number(row?.version)||0}
-async function storeDataImage(env,kind,key,dataUrl,authoritative=true){
+async function storeDataImage(env,kind,key,dataUrl,authoritative=true,saveContext=null){
   const parsed=parseDataImage(dataUrl);if(!parsed)return dataUrl;const existing=await currentImageVersion(env,kind,key);if(!authoritative&&existing>0)return mediaUrl(kind,key,existing);
-  const version=existing>0?existing+1:1;await env.IMAGES.put(r2Key(kind,key),parsed.bytes,{httpMetadata:{contentType:parsed.contentType},customMetadata:{mwsVersion:String(version),source:'mws-upload'}});
-  await env.DB.prepare(`INSERT INTO image_sources(kind,item_key,source_url,version,content_type,updated_at) VALUES(?,?,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(kind,item_key) DO UPDATE SET source_url=NULL,version=excluded.version,content_type=excluded.content_type,updated_at=CURRENT_TIMESTAMP`).bind(kind,key,null,version,parsed.contentType).run();
+  const version=existing>0?existing+1:1;
+  await env.IMAGES.put(r2VersionedKey(kind,key,version),parsed.bytes,{httpMetadata:{contentType:parsed.contentType},customMetadata:{mwsVersion:String(version),source:'mws-upload'}});
+  const statement=env.DB.prepare(`INSERT INTO image_sources(kind,item_key,source_url,version,content_type,updated_at) VALUES(?,?,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(kind,item_key) DO UPDATE SET source_url=NULL,version=excluded.version,content_type=excluded.content_type,updated_at=CURRENT_TIMESTAMP`).bind(kind,key,null,version,parsed.contentType);
+  if(saveContext?.statements)saveContext.statements.push(statement);else await statement.run();
   return mediaUrl(kind,key,version);
 }
-async function externalizePart(env,part,raw){
+async function externalizePart(env,part,raw,saveContext=null){
   if(part==='core'){
     const src=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{},out={};for(const key of CORE_KEYS)if(Object.prototype.hasOwnProperty.call(src,key))out[key]=src[key];return out;
   }
   if(part==='contacts'){
-    const out=[];for(const original of Array.isArray(raw)?raw:[]){const item=original&&typeof original==='object'?structuredClone(original):original;if(!item||typeof item!=='object'){out.push(item);continue}const id=String(item.id||'').trim();if(id&&parseDataImage(item.image))item.image=await storeDataImage(env,'contact',id,item.image,true);out.push(item)}return out;
+    const out=[];for(const original of Array.isArray(raw)?raw:[]){const item=original&&typeof original==='object'?structuredClone(original):original;if(!item||typeof item!=='object'){out.push(item);continue}const id=String(item.id||'').trim();if(id&&parseDataImage(item.image))item.image=await storeDataImage(env,'contact',id,item.image,true,saveContext);out.push(item)}return out;
   }
   if(part==='contactMeta'){
     const out=raw&&typeof raw==='object'&&!Array.isArray(raw)?structuredClone(raw):{},banners=out.contactTagBanners&&typeof out.contactTagBanners==='object'&&!Array.isArray(out.contactTagBanners)?out.contactTagBanners:{};
-    for(const [bannerKey,value] of Object.entries(banners))if(parseDataImage(value))banners[bannerKey]=await storeDataImage(env,'workspace',`tag-${await shortHash(bannerKey)}`,value,true);
+    for(const [bannerKey,value] of Object.entries(banners))if(parseDataImage(value))banners[bannerKey]=await storeDataImage(env,'workspace',`tag-${await shortHash(bannerKey)}`,value,true,saveContext);
     out.contactTagBanners=banners;const emoticons=Array.isArray(out.emoticons)?out.emoticons:[];
-    for(let i=0;i<emoticons.length;i++){const item=emoticons[i];if(!item||typeof item!=='object')continue;if(parseDataImage(item.src)){const seed=String(item.id||item.name||`item-${i+1}`);item.src=await storeDataImage(env,'workspace',`emoticon-${await shortHash(seed)}`,item.src,true)}}out.emoticons=emoticons;return out;
+    for(let i=0;i<emoticons.length;i++){const item=emoticons[i];if(!item||typeof item!=='object')continue;if(parseDataImage(item.src)){const seed=String(item.id||item.name||`item-${i+1}`);item.src=await storeDataImage(env,'workspace',`emoticon-${await shortHash(seed)}`,item.src,true,saveContext)}}out.emoticons=emoticons;return out;
   }
   if(part==='miniGames'){
     const games=raw&&typeof raw==='object'&&!Array.isArray(raw)?structuredClone(raw):{};
-    for(const [gameKey,game] of Object.entries(games)){if(!game||typeof game!=='object'||!Array.isArray(game.players))continue;for(let i=0;i<game.players.length;i++){const player=game.players[i];if(!player||typeof player!=='object'||!parseDataImage(player.image))continue;const contactId=String(player.contactId||'').trim();if(contactId)player.image=await storeDataImage(env,'contact',contactId,player.image,false);else player.image=await storeDataImage(env,'workspace',`mini-${await shortHash(`${gameKey}:${player.id||player.name||i+1}`)}`,player.image,true)}}return games;
+    for(const [gameKey,game] of Object.entries(games)){if(!game||typeof game!=='object'||!Array.isArray(game.players))continue;for(let i=0;i<game.players.length;i++){const player=game.players[i];if(!player||typeof player!=='object'||!parseDataImage(player.image))continue;const contactId=String(player.contactId||'').trim();if(contactId)player.image=await storeDataImage(env,'contact',contactId,player.image,false,saveContext);else player.image=await storeDataImage(env,'workspace',`mini-${await shortHash(`${gameKey}:${player.id||player.name||i+1}`)}`,player.image,true,saveContext)}}return games;
   }
   if(part==='posts')return (Array.isArray(raw)?raw:[]).map(post=>{const out=post&&typeof post==='object'?structuredClone(post):post;if(out&&typeof out==='object')for(const key of ['sourceContent','sourcePhotos','sourceAuthor','sourceAuthorId','sourceRegDate','sourceViewCount','sourceUrl'])delete out[key];return out});
   if(part==='events')return Array.isArray(raw)?raw:[];
@@ -164,14 +167,14 @@ async function handleSave(request,env){
   const body=await request.json().catch(()=>null);if(!body?.parts||typeof body.parts!=='object'||Array.isArray(body.parts))return json({error:'parts must be an object'},400);
   const entries=Object.entries(body.parts);
   for(const [part] of entries)if(!PARTS.includes(part))return json({error:`Invalid part: ${part}`},400);
-  const versions={},normalized={},staged=[];
+  const versions={},normalized={},staged=[],mediaContext={statements:[]};
   for(const [part,raw] of entries){
-    const value=await externalizePart(env,part,raw);
+    const value=await externalizePart(env,part,raw,mediaContext);
     const current=await env.DB.prepare('SELECT version FROM workspace_parts WHERE scope=? AND part=?').bind('public',part).first();
     const version=Math.max(1,Number(current?.version)||0)+1,text=JSON.stringify(value??null);
     staged.push({part,value,version,text});versions[part]=version;normalized[part]=value;
   }
-  const statements=[];
+  const statements=[...mediaContext.statements];
   for(const {part,version,text} of staged){
     statements.push(
       env.DB.prepare(`INSERT INTO workspace_parts(scope,part,data,version,updated_at) VALUES('public',?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(scope,part) DO UPDATE SET data=excluded.data,version=excluded.version,updated_at=CURRENT_TIMESTAMP`).bind(part,text,version),
@@ -184,7 +187,7 @@ async function handleSave(request,env){
 async function handleManifest(env){await ensureSchema(env);const {results=[]}=await env.DB.prepare("SELECT part,version FROM workspace_parts WHERE scope='public' ORDER BY part").all();const parts={};for(const row of results)parts[row.part]=Number(row.version)||1;return json({parts,scope:'public',cacheSchemaVersion:3,backend:'cloudflare-d1'})}
 async function handlePart(env,part){if(!PARTS.includes(part))return json({error:'Invalid part'},400);await ensureSchema(env);const row=await env.DB.prepare("SELECT part,version,data FROM workspace_parts WHERE scope='public' AND part=?").bind(part).first();if(!row)return json({error:'Part not found'},404);let data;try{data=JSON.parse(row.data)}catch(_){return json({error:'Stored data is invalid'},500)}return json({part:row.part,version:Number(row.version)||1,data})}
 async function handleBootstrap(env){await ensureSchema(env);const {results=[]}=await env.DB.prepare("SELECT part,version,data FROM workspace_parts WHERE scope='public' ORDER BY part").all();const parts={},versions={};for(const row of results){let data=null;try{data=JSON.parse(row.data)}catch(_){}const version=Number(row.version)||1;versions[row.part]=version;parts[row.part]={part:row.part,version,data}}return json({backend:'cloudflare-d1-r2',mode:'mawang-scheduler-v1.1',build:'Mawang Scheduler v.1.1.0',cacheSchemaVersion:3,manifest:{parts:versions,scope:'public',cacheSchemaVersion:3,backend:'cloudflare-d1'},parts})}
-async function handleMedia(request,env,kind,key){if(!['contact','workspace'].includes(kind)||!/^[A-Za-z0-9_-]{1,160}$/.test(key))return new Response('Invalid media key',{status:400});const object=await env.IMAGES.get(r2Key(kind,key));if(!object)return new Response('Not found',{status:404});const headers=new Headers();object.writeHttpMetadata(headers);headers.set('etag',object.httpEtag);headers.set('x-content-type-options','nosniff');headers.set('cache-control','public, max-age=300, stale-while-revalidate=86400');return new Response(object.body,{headers})}
+async function handleMedia(request,env,kind,key){if(!['contact','workspace'].includes(kind)||!/^[A-Za-z0-9_-]{1,160}$/.test(key))return new Response('Invalid media key',{status:400});const requested=Math.max(0,Number(new URL(request.url).searchParams.get('v'))||0);let object=requested?await env.IMAGES.get(r2VersionedKey(kind,key,requested)):null;if(!object&&!requested){const current=await currentImageVersion(env,kind,key);if(current>0)object=await env.IMAGES.get(r2VersionedKey(kind,key,current))}if(!object)object=await env.IMAGES.get(r2Key(kind,key));if(!object)return new Response('Not found',{status:404});const headers=new Headers();object.writeHttpMetadata(headers);headers.set('etag',object.httpEtag);headers.set('x-content-type-options','nosniff');headers.set('cache-control','public, max-age=300, stale-while-revalidate=86400');return new Response(object.body,{headers})}
 
 export default{
   async fetch(request,env,ctx){
