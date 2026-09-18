@@ -1,51 +1,46 @@
 import fs from 'node:fs';
-import path from 'node:path';
 import zlib from 'node:zlib';
 
-function walk(dir){
-  const out=[];
-  if(!fs.existsSync(dir))return out;
-  for(const ent of fs.readdirSync(dir,{withFileTypes:true})){
-    const p=path.join(dir,ent.name);
-    if(ent.isDirectory())out.push(...walk(p));
-    else if(/\.(?:js|mjs|html)$/i.test(ent.name))out.push(p);
+export function runPhase72SearchOwnerCollisionAudit(){
+  const issues=[];
+  const warnings=[];
+  const app=fs.readFileSync('assets/app-core.js','utf8');
+  const perf=fs.readFileSync('assets/perf-runtime-base.js','utf8');
+  const online=fs.readFileSync('assets/online-v5-loader.js','utf8');
+  const perfLoader=fs.readFileSync('assets/perf-runtime.js','utf8');
+  const post=fs.readFileSync('assets/post-login-runtime-v130.js','utf8');
+  const index=fs.readFileSync('index.html','utf8');
+  const entry=fs.readFileSync('src/cf-v111-entry.js','utf8');
+
+  if(!app.includes("window.__mwsSearchOwnerV130='app-core-search71'"))issues.push('app-core is not marked as the authoritative search owner');
+  if(perf.includes('contactMatches=function'))issues.push('perf-runtime-base still overrides contactMatches');
+  if(perf.includes('if(e?.isComposing)return'))issues.push('perf-runtime-base still suppresses search during IME composition');
+  if(!perf.includes('e?.isComposing?0:80'))issues.push('perf-runtime-base has no IME-composition search scheduling');
+  for(const marker of ['legacyContactMatcher','safeFeatures=features.replace','run(safeFeatures)','sharedSearchOwner']){
+    if(!online.includes(marker))issues.push('online-v5-loader legacy matcher guard missing: '+marker);
   }
-  return out;
-}
-function count(src,re){return (src.match(re)||[]).length}
-function record(name,src){
-  const stats={
-    functionContactMatches:count(src,/function\s+contactMatches\s*\(/g),
-    assignContactMatches:count(src,/(?:window\.)?contactMatches\s*=/g),
-    functionRenderContacts:count(src,/function\s+renderContacts\s*\(/g),
-    assignRenderContacts:count(src,/(?:window\.)?renderContacts\s*=/g),
-    functionFilteredContacts:count(src,/function\s+filteredContacts\s*\(/g),
-    contactSearchHandlers:count(src,/contactSearch[^\n]{0,160}(?:oninput|addEventListener)/gi),
-    mwsTextMatches:count(src,/mwsTextMatches/g),
-    koreanInitials:count(src,/mwsKoreanInitials/g)
-  };
-  if(Object.values(stats).some(Boolean))console.log('SEARCH_OWNER',JSON.stringify({name,...stats}));
-}
+  if(online.includes('run(features);'))issues.push('online-v5-loader still executes unpatched legacy features directly');
 
-for(const file of [...walk('assets'),...walk('src'),'index.html']){
-  if(!fs.existsSync(file))continue;
-  record(file,fs.readFileSync(file,'utf8'));
-}
-
-try{
-  const loader=fs.readFileSync('assets/online-v5-loader.js','utf8');
-  const m=loader.match(/const PAYLOAD='([^']+)'/);
-  if(m){
-    const decoded=zlib.gunzipSync(Buffer.from(m[1],'base64')).toString('utf8');
-    record('DECODED:assets/online-v5-loader.js',decoded);
-    for(const needle of ['contactMatches','renderContacts','filteredContacts','contactSearch']){
-      let from=0,shown=0;
-      while((from=decoded.indexOf(needle,from))>=0&&shown<12){
-        console.log('SEARCH_SNIPPET',JSON.stringify({needle,snippet:decoded.slice(Math.max(0,from-260),Math.min(decoded.length,from+520)).replace(/\s+/g,' ')}));
-        from+=needle.length;shown++;
-      }
-    }
+  const payload=online.match(/const PAYLOAD='([^']+)'/);
+  if(!payload)issues.push('online V5 payload missing');
+  else{
+    try{
+      const decoded=zlib.gunzipSync(Buffer.from(payload[1],'base64')).toString('utf8');
+      const legacy=/window\.mwsKoreanInitials=koreanInitials;\s*contactMatches=function\(c,q\)\{[\s\S]*?\};\s*window\.contactMatches=contactMatches;/;
+      if(!legacy.test(decoded))warnings.push('legacy payload matcher no longer exists; sanitizer can be removed in a later cleanup');
+      const sanitized=decoded.replace(legacy,'window.mwsKoreanInitials=window.mwsKoreanInitials||koreanInitials;');
+      if(/contactMatches=function\(c,q\)/.test(sanitized)||/window\.contactMatches=contactMatches/.test(sanitized))issues.push('legacy payload matcher survives runtime sanitization');
+    }catch(error){issues.push('online V5 payload collision test failed: '+String(error?.message||error))}
   }
-}catch(error){console.log('SEARCH_DECODE_ERROR',String(error?.message||error))}
 
-console.log(JSON.stringify({phase:72,name:'search-owner-collision-diagnostic',issues:[],warnings:[],pass:true}));
+  if(!perfLoader.includes('assets/perf-runtime-base.js?v=1.3.0-search73'))issues.push('perf base cache-bust is not search73');
+  if(!post.includes('/assets/perf-runtime.js?v=1.3.0-search73'))issues.push('post-login runtime still loads an older perf runtime cache key');
+  if(!index.includes('assets/online-v5-loader.js?v=1.3.0-search73'))issues.push('online V5 loader cache-bust is not search73');
+  if(!entry.includes('post-login-runtime-v130.js?v=1.3.0-search73'))issues.push('Worker still injects an older post-login runtime cache key');
+
+  const summary={phase:72,name:'single-search-owner',issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify(summary));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+if(import.meta.url===`file://${process.argv[1]}`)runPhase72SearchOwnerCollisionAudit();
