@@ -2405,13 +2405,18 @@ document.getElementById('importMemosInput').onchange=async e=>{
 
 /* 연락처 */
 const MWS_KOREAN_INITIALS='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+const MWS_KOREAN_CHOSEONG='ᄀᄁᄂᄃᄄᄅᄆᄇᄈᄉᄊᄋᄌᄍᄎᄏᄐᄑᄒ';
 function mwsKoreanInitials(value=''){
+  let source=String(value??'').replace(/[\u200B-\u200D\uFEFF]/g,'');
+  try{source=source.normalize('NFKD')}catch(_){}
   let out='';
-  for(const ch of String(value||'')){
+  for(const ch of source){
+    const choseongIndex=MWS_KOREAN_CHOSEONG.indexOf(ch);
+    if(choseongIndex>=0){out+=MWS_KOREAN_INITIALS[choseongIndex];continue}
+    if(MWS_KOREAN_INITIALS.includes(ch)){out+=ch;continue}
     const code=ch.charCodeAt(0);
-    if(code>=0xAC00&&code<=0xD7A3)out+=MWS_KOREAN_INITIALS[Math.floor((code-0xAC00)/588)]||'';
-    else if(MWS_KOREAN_INITIALS.includes(ch))out+=ch;
-    else if(/[a-z0-9]/i.test(ch))out+=ch.toLowerCase();
+    if(code>=0xAC00&&code<=0xD7A3){out+=MWS_KOREAN_INITIALS[Math.floor((code-0xAC00)/588)]||'';continue}
+    if(/[a-z0-9]/i.test(ch))out+=ch.toLowerCase();
   }
   return out;
 }
