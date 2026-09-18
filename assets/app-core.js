@@ -487,6 +487,7 @@ function setTab(tab){
   if(tab==='gameMultiDraw')safeRenderView('Gacha 뽑기',renderMultiDraw);
   if(tab==='settings')safeRenderView('설정',renderSettings);
   try{window.mwsScheduleImageTune?.()}catch(_){}
+  try{window.mwsContactRuntimeOnTabV130?.(tab)}catch(_){}
 }
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
 function syncSidebarPinUI(){
