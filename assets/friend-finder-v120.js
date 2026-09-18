@@ -121,11 +121,9 @@ window.fetch=async function(input,init={}){
 };
 
 function friendRoot(){
+  const exact=document.getElementById('friendFinder');if(exact)return exact;
   const active=document.querySelector('.section.active');
   if(active&&/친구\s*찾기/.test(String(active.textContent||'').slice(0,1200)))return active;
-  for(const s of document.querySelectorAll('.section')){
-    const h=[...s.querySelectorAll('h1,h2,h3,strong')].find(x=>String(x.textContent||'').trim()==='친구 찾기');if(h)return s;
-  }
   return null;
 }
 function activeFriendRoot(){const root=friendRoot();return root?.classList.contains('active')?root:null}
@@ -137,9 +135,9 @@ function installStyle(){
 .mws-live-category-v120.offline{display:none}
 .mws-category-hidden-v120{display:none!important}
 #mwsFriendFastBadge{font-size:10px;color:var(--muted);white-space:nowrap}
-.mws-friend-live-grid-v120{grid-auto-rows:auto!important;align-items:start!important}
-.mws-friend-live-card-v120{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;align-self:start!important}
-.mws-live-screen-v120{display:block;width:100%;margin-top:12px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,51,79,.72);background:#090b10;cursor:pointer;aspect-ratio:16/9;position:relative;box-sizing:border-box;min-height:128px}
+#friendFinderGridV5.mws-friend-live-grid-v120{grid-auto-rows:auto!important;align-items:start!important}
+#friendFinder .friend-finder-card-v5.mws-friend-live-card-v120{height:auto!important;min-height:0!important;max-height:none!important;overflow:hidden!important;align-self:start!important}
+#friendFinder .friend-finder-card-v5 .mws-live-screen-v120{grid-column:1/-1!important;display:block!important;width:100%!important;min-width:0!important;min-height:0!important;margin-top:2px!important;border-radius:12px;overflow:hidden;border:1px solid rgba(255,51,79,.72);background:#090b10;cursor:pointer;aspect-ratio:16/9!important;position:relative;box-sizing:border-box}
 .mws-live-screen-v120[hidden]{display:none!important}
 .mws-live-screen-v120 img{display:block;width:100%;height:100%;object-fit:cover;background:#090b10}
 .mws-live-screen-v120.is-image-fallback img{opacity:0}
@@ -157,22 +155,27 @@ function findContactForCard(card){
   const contacts=Array.isArray(dataRef()?.contacts)?[...dataRef().contacts]:[];contacts.sort((a,b)=>String(b?.name||'').length-String(a?.name||'').length);
   const text=String(card?.textContent||'');return contacts.find(c=>c?.name&&text.includes(String(c.name)))||null;
 }
-function cardFromStationButton(button,root){
-  let node=button?.parentElement;
-  for(let i=0;i<7&&node&&node!==root;i++,node=node.parentElement){
-    const labels=[...node.querySelectorAll('button,a')].map(x=>String(x.textContent||'').trim());
-    if(labels.includes('프로필')&&labels.some(x=>x.includes('방송국')))return node;
-  }
-  return button?.parentElement||null;
-}
 function cardRows(root){
-  const out=[];const used=new Set();
-  for(const button of root.querySelectorAll('button,a')){
-    if(!String(button.textContent||'').trim().includes('방송국'))continue;
-    const card=cardFromStationButton(button,root);if(!card||used.has(card))continue;
-    const contact=findContactForCard(card);if(!contact)continue;used.add(card);out.push({card,contact,id:stationKey(contact.stationUrl)});
-  }
-  return out;
+  const contacts=Array.isArray(dataRef()?.contacts)?dataRef().contacts:[];
+  const byId=new Map(contacts.map(contact=>[String(contact?.id||''),contact]));
+  const cards=[...root.querySelectorAll('#friendFinderGridV5 .friend-finder-card-v5[data-id],.friend-finder-card-v5[data-id]')];
+  if(cards.length)return cards.map(card=>{
+    const contact=byId.get(String(card.dataset.id||''))||findContactForCard(card);
+    return contact?{card,contact,id:stationKey(contact.stationUrl)}:null;
+  }).filter(Boolean);
+  return [];
+}
+function baseLiveHint(card){
+  const watch=card?.querySelector?.('[data-watch]')?.dataset?.watch||'';
+  let bno='',url='';
+  try{
+    const parsed=new URL(watch,location.href),parts=parsed.pathname.split('/').filter(Boolean);
+    if(parts.length>1&&/^\d+$/.test(parts[parts.length-1]))bno=parts[parts.length-1];
+    if(/^https?:$/.test(parsed.protocol))url=parsed.href;
+  }catch(_){}
+  const text=String(card?.querySelector?.('.friend-finder-state-v5.live')?.textContent||'').trim();
+  const title=text.replace(/^SOOP\s+LIVE\s*[·:]?\s*/i,'').trim();
+  return {bno,url,title};
 }
 function isLiveEntry(entry){const d=entry?.data;return Boolean(d&&typeof d==='object'&&(d.broadNo||d.broad_no||d.broadTitle||d.broad_title))}
 function liveCategory(entry){const d=entry?.data||{};return String(d.categoryName||d.category_name||'').trim()}
@@ -253,13 +256,14 @@ function decorate(root=friendRoot()){
     meta.classList.toggle('offline',!live);meta.textContent=live?`카테고리 · ${cat||'미분류'}${viewers!==null?` · ${viewers.toLocaleString()}명`:''}`:'';
 
     let screen=card.querySelector('.mws-live-screen-v120');
-    const bno=liveBroadNo(entry),title=liveTitle(entry),showLive=Boolean(live&&bno&&match);
+    const hint=baseLiveHint(card),bno=liveBroadNo(entry)||hint.bno,title=liveTitle(entry)||hint.title;
+    const showLive=Boolean(bno&&match&&(live||card.classList.contains('live')||hint.bno));
     card.classList.toggle('mws-friend-live-card-v120',showLive);
     if(!showLive){if(screen)screen.hidden=true;continue}
     if(!screen){
       screen=document.createElement('div');screen.className='mws-live-screen-v120';screen.innerHTML='<img alt="현재 방송 화면" loading="lazy" decoding="async" fetchpriority="low" referrerpolicy="no-referrer"><span class="mws-live-screen-label-v120">LIVE 화면</span><span class="mws-live-screen-title-v120"></span>';card.appendChild(screen);
     }
-    screen.hidden=false;screen.onclick=()=>window.open(livePlayUrl(id,bno),'_blank','noopener');
+    screen.hidden=false;screen.onclick=()=>window.open(hint.url||livePlayUrl(id,bno),'_blank','noopener');
     const titleEl=screen.querySelector('.mws-live-screen-title-v120');if(titleEl)titleEl.textContent=title||'현재 방송 화면';
     const img=screen.querySelector('img'),thumbStamp=liveThumbStamp();
     if(img){
@@ -269,19 +273,33 @@ function decorate(root=friendRoot()){
     }
   }
 }
+let friendGridObserver=null,friendGridObserved=null;
+function bindFriendGridObserver(){
+  const grid=document.getElementById('friendFinderGridV5');if(!grid)return false;
+  grid.classList.add('mws-friend-live-grid-v120');
+  if(friendGridObserved===grid&&friendGridObserver)return true;
+  try{friendGridObserver?.disconnect()}catch(_){}
+  friendGridObserved=grid;
+  friendGridObserver=new MutationObserver(records=>{
+    if(records.some(record=>record.type==='childList'))scheduleUi();
+  });
+  friendGridObserver.observe(grid,{childList:true});
+  scheduleUi();
+  return true;
+}
 function scheduleUi(){if(uiScheduled)return;uiScheduled=true;requestAnimationFrame(()=>{uiScheduled=false;decorate()})}
 window.addEventListener('mws:friend-live-updated',scheduleUi);
-window.addEventListener('mawang:datachange',()=>{scheduleUi();scheduleActiveRefresh(250)});
+window.addEventListener('mawang:datachange',()=>{bindFriendGridObserver();scheduleUi();scheduleActiveRefresh(250)});
 document.addEventListener('click',event=>{
   const text=String(event.target?.closest?.('button')?.textContent||'').trim();
   if(text.includes('라이브 새로고침')){liveCache.clear();liveByUserId.clear();forceNextBatch=true;setTimeout(()=>{scheduleUi();refreshActiveFriendLive(true).finally(()=>scheduleActiveRefresh())},0)}
   const nav=event.target?.closest?.('.nav button[data-tab]');
-  if(nav)setTimeout(()=>{if(activeFriendRoot()){scheduleUi();refreshActiveFriendLive(true).finally(()=>scheduleActiveRefresh())}else stopActiveRefresh()},0);
+  if(nav)setTimeout(()=>{bindFriendGridObserver();if(activeFriendRoot()){scheduleUi();refreshActiveFriendLive(true).finally(()=>scheduleActiveRefresh())}else stopActiveRefresh()},0);
 },true);
 document.addEventListener('input',event=>{if(activeFriendRoot()?.contains(event.target))setTimeout(scheduleUi,0)},true);
 document.addEventListener('change',event=>{if(activeFriendRoot()?.contains(event.target))setTimeout(scheduleUi,0)},true);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopActiveRefresh();else scheduleActiveRefresh(120)});
 
-function boot(){installStyle();setVersionLabel();scheduleUi();scheduleActiveRefresh(120);[100,350,900].forEach(ms=>setTimeout(()=>{setVersionLabel();scheduleUi()},ms))}
+function boot(){installStyle();setVersionLabel();bindFriendGridObserver();scheduleUi();scheduleActiveRefresh(120);[100,350,900,1800].forEach(ms=>setTimeout(()=>{setVersionLabel();bindFriendGridObserver();scheduleUi()},ms))}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
