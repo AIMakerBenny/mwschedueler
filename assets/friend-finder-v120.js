@@ -185,6 +185,23 @@ body[data-device-mode="mobile"] .mws-live-screen-v120 .mws-live-screen-title-v12
 `;
   document.head.appendChild(style);
 }
+let friendInitialQueryV130='';
+function friendSearchInputV130(root=friendRoot()){
+  return root?.querySelector?.('input[placeholder*="이름"],input[placeholder*="검색"]')||null;
+}
+function friendInitialQueryValueV130(root=friendRoot()){
+  const input=friendSearchInputV130(root);
+  return String(input?.dataset?.mwsInitialQueryV130||input?.value||friendInitialQueryV130||'').trim();
+}
+function friendContactMatchesV130(contact,query){
+  if(typeof window.mwsTextMatches==='function')return window.mwsTextMatches(String(contact?.name||'')+' '+(contact?.labels||[]).join(' '),query);
+  const q=String(query||'').trim().toLowerCase();
+  return !q||(String(contact?.name||'')+' '+(contact?.labels||[]).join(' ')).toLowerCase().includes(q);
+}
+function isInitialOnlyQueryV130(query){
+  const q=String(query||'').trim();
+  return /[ㄱ-ㅎ]/.test(q)&&/^[ㄱ-ㅎa-z0-9\s]+$/i.test(q);
+}
 function findContactForCard(card){
   const contacts=Array.isArray(dataRef()?.contacts)?[...dataRef().contacts]:[];contacts.sort((a,b)=>String(b?.name||'').length-String(a?.name||'').length);
   const text=String(card?.textContent||'');return contacts.find(c=>c?.name&&text.includes(String(c.name)))||null;
@@ -280,10 +297,11 @@ function decorate(root=friendRoot()){
   if(!root)return;installStyle();setVersionLabel();
   ensureCategoryControl(root).catch(()=>{});
   const selected=document.getElementById('mwsFriendCategorySelect')?.value||'';
-  for(const {card,id} of cardRows(root)){
+  const searchQuery=friendInitialQueryValueV130(root);
+  for(const {card,contact,id} of cardRows(root)){
     card.parentElement?.classList.add('mws-friend-live-grid-v120');
     const entry=id?liveByUserId.get(id):null;const live=isLiveEntry(entry);const cat=liveCategory(entry),catId=liveCategoryId(entry),viewers=liveViewers(entry);
-    let match=true;if(selected){match=live&&(selected.startsWith('id:')?catId===selected.slice(3):cat===selected.slice(5))}
+    let match=friendContactMatchesV130(contact,searchQuery);if(match&&selected){match=live&&(selected.startsWith('id:')?catId===selected.slice(3):cat===selected.slice(5))}
     card.classList.toggle('mws-category-hidden-v120',!match);
 
     let meta=card.querySelector('.mws-live-category-v120');if(!meta){meta=document.createElement('div');meta.className='mws-live-category-v120';const actions=[...card.querySelectorAll('button,a')].find(x=>String(x.textContent||'').trim()==='프로필')?.parentElement;actions?.parentElement?.insertBefore(meta,actions)||card.appendChild(meta)}
@@ -330,7 +348,20 @@ document.addEventListener('click',event=>{
   const nav=event.target?.closest?.('.nav button[data-tab]');
   if(nav)setTimeout(()=>{bindFriendGridObserver();if(activeFriendRoot()){scheduleUi();refreshActiveFriendLive(true).finally(()=>scheduleActiveRefresh())}else stopActiveRefresh()},0);
 },true);
-document.addEventListener('input',event=>{if(activeFriendRoot()?.contains(event.target))setTimeout(scheduleUi,0)},true);
+document.addEventListener('input',event=>{
+  const root=activeFriendRoot();if(!root?.contains(event.target))return;
+  const search=friendSearchInputV130(root);
+  if(event.target===search){
+    const query=String(search.value||'');
+    if(isInitialOnlyQueryV130(query)){
+      friendInitialQueryV130=query;search.dataset.mwsInitialQueryV130=query;search.value='';
+      queueMicrotask(()=>{search.value=query;scheduleUi()});
+      return;
+    }
+    friendInitialQueryV130='';delete search.dataset.mwsInitialQueryV130;
+  }
+  setTimeout(scheduleUi,0);
+},true);
 document.addEventListener('change',event=>{if(activeFriendRoot()?.contains(event.target))setTimeout(scheduleUi,0)},true);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopActiveRefresh();else scheduleActiveRefresh(120)});
 
