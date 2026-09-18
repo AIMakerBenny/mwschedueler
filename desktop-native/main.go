@@ -111,10 +111,11 @@ var (
 	introMu       sync.Mutex
 	introWv       webview.WebView
 	introHwnd     uintptr
-	introShown    sync.Once
-	appStartOnce  sync.Once
-	introDoneOnce sync.Once
-	appReadyCh    = make(chan struct{}, 1)
+	introShown            sync.Once
+	appStartOnce          sync.Once
+	introDoneOnce         sync.Once
+	introExitScheduleOnce sync.Once
+	appReadyCh            = make(chan struct{}, 1)
 
 	startupMu     sync.Mutex
 	startupLocked = true
@@ -237,186 +238,63 @@ const introHTMLTemplate = `<!doctype html>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mawang Scheduler</title>
 <style>
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;font-family:"Segoe UI","Malgun Gothic",sans-serif}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}
 body{user-select:none}
 #stage{position:fixed;inset:0;background:#000;overflow:hidden}
-#fx{position:absolute;inset:0;width:100%;height:100%;display:block}
-#title{position:absolute;left:50%;top:50%;width:min(92vw,1200px);text-align:center;color:#fff;opacity:0;filter:blur(13px);transform:translate(-50%,-43%) scale(.965);transition:opacity 1.8s ease,filter 1.8s ease,transform 2.1s cubic-bezier(.16,.84,.22,1);pointer-events:none}
-#title.show{opacity:1;filter:blur(0);transform:translate(-50%,-50%) scale(1)}
-#titleMain{font-size:clamp(44px,6.6vw,108px);font-weight:900;line-height:.94;letter-spacing:-.055em;text-shadow:0 0 38px rgba(127,184,255,.20),0 18px 55px rgba(0,0,0,.9)}
-#titleKo{margin-top:22px;font-size:clamp(16px,1.65vw,28px);font-weight:700;line-height:1.2;letter-spacing:.32em;color:#dedfe7}
-#line{width:0;height:2px;margin:26px auto 0;background:linear-gradient(90deg,transparent,#82b9ff 24%,#e7a4dc 76%,transparent);transition:width 1.55s ease .45s}
-#title.show #line{width:min(460px,46vw)}
-#hint{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);font-size:10px;font-weight:600;letter-spacing:.16em;color:#5f6572}
-#stage.out{opacity:0;transition:opacity .55s ease}
+#photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;transform:scale(1.012);transition:opacity .60s ease,transform .85s ease}
+#stage.in #photo{opacity:1;transform:scale(1)}
+#stage.out #photo{opacity:0;transition:opacity .68s ease}
+#hint{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);font:600 10px/1 "Segoe UI","Malgun Gothic",sans-serif;letter-spacing:.14em;color:rgba(255,255,255,.34);text-shadow:0 1px 6px rgba(0,0,0,.7)}
 </style>
 </head>
 <body>
 <div id="stage">
-  <canvas id="fx"></canvas>
-  <div id="title">
-    <div id="titleMain">Mawang Scheduler</div>
-    <div id="titleKo">마왕스케줄러</div>
-    <div id="line"></div>
-  </div>
+  <img id="photo" alt="">
   <div id="hint">CLICK OR SPACE TO SKIP</div>
 </div>
 <script>
 (function(){
   var stage=document.getElementById('stage');
-  var canvas=document.getElementById('fx');
-  var title=document.getElementById('title');
-  var ctx=canvas.getContext('2d',{alpha:false});
-  var img=new Image();
-  var particles=[];
-  var started=0,raf=0,ended=false;
-  var vw=1,vh=1,dpr=1,fit={x:0,y:0,w:1,h:1};
+  var photo=document.getElementById('photo');
+  var finished=false;
+  var fading=false;
   var imageSrc='data:image/webp;base64,__INTRO_B64__';
 
-  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
-  function easeOut(v){v=clamp(v,0,1);return 1-Math.pow(1-v,3);}
-  function easeIn(v){v=clamp(v,0,1);return v*v;}
-
-  function resize(){
-    vw=Math.max(1,window.innerWidth||1280);
-    vh=Math.max(1,window.innerHeight||720);
-    dpr=Math.min(1.4,window.devicePixelRatio||1);
-    canvas.width=Math.floor(vw*dpr);
-    canvas.height=Math.floor(vh*dpr);
-    canvas.style.width=vw+'px';
-    canvas.style.height=vh+'px';
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    ctx.imageSmoothingEnabled=true;
-    ctx.imageSmoothingQuality='high';
-    if(img.naturalWidth){
-      var maxW=vw*.90,maxH=vh*.80,ratio=img.naturalWidth/img.naturalHeight;
-      var w=maxW,h=w/ratio;
-      if(h>maxH){h=maxH;w=h*ratio;}
-      fit={x:(vw-w)/2,y:(vh-h)/2,w:w,h:h};
-    }
+  function done(reason){
+    if(finished)return;
+    finished=true;
+    try{window.__mwsIntroDone(reason||'complete');}catch(_){}
   }
 
-  function makeParticles(){
-    particles=[];
-    resize();
-    var step=24;
-    var sxScale=fit.w/img.naturalWidth;
-    var syScale=fit.h/img.naturalHeight;
-    for(var sy=0;sy<img.naturalHeight;sy+=step){
-      for(var sx=0;sx<img.naturalWidth;sx+=step){
-        var sw=Math.min(step,img.naturalWidth-sx);
-        var sh=Math.min(step,img.naturalHeight-sy);
-        var tx=fit.x+sx*sxScale;
-        var ty=fit.y+sy*syScale;
-        var dw=sw*sxScale+.6;
-        var dh=sh*syScale+.6;
-        var edge=sx/img.naturalWidth;
-        var ang=Math.random()*Math.PI*2;
-        var dist=120+Math.random()*430;
-        particles.push({
-          sx:sx,sy:sy,sw:sw,sh:sh,tx:tx,ty:ty,dw:dw,dh:dh,
-          fromX:tx+Math.cos(ang)*dist,
-          fromY:ty+Math.sin(ang)*dist*.68,
-          fromR:(Math.random()-.5)*1.7,
-          assembleDelay:Math.random()*520,
-          disDelay:(1-edge)*900+Math.random()*330,
-          dx:110+Math.random()*420,
-          dy:-210+Math.random()*390,
-          rot:(Math.random()-.5)*5.2,
-          gravity:70+Math.random()*210,
-          dust:Math.random()<.42
-        });
-      }
-    }
-  }
-
-  function frame(now){
-    if(ended)return;
-    if(!started)started=now;
-    var t=now-started;
-    ctx.fillStyle='#000';
-    ctx.fillRect(0,0,vw,vh);
-
-    var assembleStart=120;
-    var assembleDur=1800;
-    var dissolveStart=3000;
-    var dissolveDur=2350;
-
-    for(var i=0;i<particles.length;i++){
-      var p=particles[i],x=p.tx,y=p.ty,r=0,a=1,scale=1;
-      if(t<dissolveStart){
-        var aq=clamp((t-assembleStart-p.assembleDelay)/assembleDur,0,1);
-        var ae=easeOut(aq);
-        x=p.fromX+(p.tx-p.fromX)*ae;
-        y=p.fromY+(p.ty-p.fromY)*ae;
-        r=p.fromR*(1-ae);
-        a=Math.pow(aq,.72);
-        scale=.35+.65*ae;
-      }else{
-        var dq=clamp((t-dissolveStart-p.disDelay)/dissolveDur,0,1);
-        var de=easeIn(dq);
-        x=p.tx+p.dx*de;
-        y=p.ty+p.dy*de+p.gravity*dq*dq;
-        r=p.rot*de;
-        a=1-Math.pow(dq,.72);
-        scale=1-.48*dq;
-      }
-      if(a<=.01)continue;
-      ctx.save();
-      ctx.globalAlpha=a;
-      ctx.translate(x+p.dw/2,y+p.dh/2);
-      ctx.rotate(r);
-      ctx.scale(scale,scale);
-      ctx.drawImage(img,p.sx,p.sy,p.sw,p.sh,-p.dw/2,-p.dh/2,p.dw,p.dh);
-      if(t>=dissolveStart&&p.dust){
-        var dq2=clamp((t-dissolveStart-p.disDelay)/dissolveDur,0,1);
-        if(dq2>0&&dq2<.88){
-          ctx.globalAlpha=a*.45;
-          ctx.fillStyle='#d9dbe5';
-          ctx.beginPath();
-          ctx.arc((Math.random()-.5)*16,(Math.random()-.5)*16,1+Math.random()*1.8,0,Math.PI*2);
-          ctx.fill();
-        }
-      }
-      ctx.restore();
-    }
-    raf=requestAnimationFrame(frame);
-  }
-
-  function finish(reason){
-    if(ended)return;
-    ended=true;
-    cancelAnimationFrame(raf);
+  window.__mwsBeginIntroExit=function(reason){
+    if(fading||finished)return;
+    fading=true;
     stage.classList.add('out');
-    setTimeout(function(){
-      try{window.__mwsIntroDone(reason||'complete');}catch(_){}
-    },520);
-  }
+    setTimeout(function(){done(reason||'complete');},720);
+  };
 
   function skip(e){
-    if(e){e.preventDefault();}
-    finish('skip');
+    if(e)e.preventDefault();
+    window.__mwsBeginIntroExit('skip');
   }
 
+  stage.addEventListener('click',skip,true);
   window.addEventListener('keydown',function(e){
-    if(e.code==='Space'||e.key===' ')skip(e);
+    if(e.code==='Space'||e.key===' '||e.key==='Escape')skip(e);
   },true);
-  stage.addEventListener('click',skip);
-  window.addEventListener('resize',resize);
 
-  img.onload=function(){
-    makeParticles();
-    requestAnimationFrame(frame);
-    setTimeout(function(){title.classList.add('show');},4450);
-    setTimeout(function(){finish('complete');},7900);
+  photo.onload=function(){
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){stage.classList.add('in');});
+    });
     try{window.__mwsIntroReady();}catch(_){}
   };
-  img.onerror=function(){
-    title.classList.add('show');
+
+  photo.onerror=function(){
     try{window.__mwsIntroReady();}catch(_){}
-    setTimeout(function(){finish('complete');},3400);
   };
-  img.src=imageSrc;
+
+  photo.src=imageSrc;
 })();
 </script>
 </body>
@@ -449,6 +327,7 @@ func introHTML() string {
 func windowProc(h uintptr, msg uint32, wparam, lparam uintptr) uintptr {
 	switch msg {
 	case wmClose:
+		hideIntroNative()
 		rememberWindowState(h)
 		procShowWindow.Call(h, swHide)
 		return 0
@@ -695,6 +574,37 @@ func runAppWebView() {
 	oldWndProc = 0
 }
 
+func hideIntroNative() {
+	introMu.Lock()
+	h := introHwnd
+	introMu.Unlock()
+	if h != 0 {
+		procShowWindow.Call(h, swHide)
+	}
+}
+
+func scheduleIntroExit(iw webview.WebView) {
+	introExitScheduleOnce.Do(func() {
+		go func() {
+			// Keep the opening image on screen long enough to be visible.
+			time.Sleep(2400 * time.Millisecond)
+
+			// Prefer handing off only after the Scheduler reports ready.
+			select {
+			case <-appReadyCh:
+			case <-time.After(5500 * time.Millisecond):
+			}
+
+			if exiting || iw == nil {
+				return
+			}
+			iw.Dispatch(func() {
+				iw.Eval("window.__mwsBeginIntroExit && window.__mwsBeginIntroExit('complete')")
+			})
+		}()
+	})
+}
+
 func runIntroWindow() {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -727,6 +637,7 @@ func runIntroWindow() {
 			procShowWindow.Call(h, swShow)
 			procSetForegroundWindow.Call(h)
 			startApp()
+			scheduleIntroExit(w)
 		})
 	}
 
@@ -739,10 +650,9 @@ func runIntroWindow() {
 
 	w.SetHtml(introHTML())
 
-	time.AfterFunc(1500*time.Millisecond, func() {
-		w.Dispatch(func() {
-			showAndStart()
-		})
+	// Image decode failures must never prevent startup.
+	time.AfterFunc(1200*time.Millisecond, func() {
+		w.Dispatch(func() { showAndStart() })
 	})
 
 	w.Run()
@@ -761,23 +671,27 @@ func runIntroWindow() {
 		go revealAppAndCloseIntro("skip")
 	}
 }
-
 func revealAppAndCloseIntro(reason string) {
 	introDoneOnce.Do(func() {
-		if reason != "skip" {
-			select {
-			case <-appReadyCh:
-			case <-time.After(3500 * time.Millisecond):
-			}
-		}
-
 		deadline := time.Now().Add(8 * time.Second)
 		for time.Now().Before(deadline) && !exiting {
 			wvMu.Lock()
 			h := hwnd
-			w := wv
+			aw := wv
 			wvMu.Unlock()
-			if h != 0 && w != nil {
+
+			if h != 0 && aw != nil {
+				// Remove the intro from the screen first. This prevents a leftover
+				// black full-screen WebView from covering the tray or desktop.
+				introMu.Lock()
+				ih := introHwnd
+				iw := introWv
+				introHwnd = 0
+				introMu.Unlock()
+				if ih != 0 {
+					procShowWindow.Call(ih, swHide)
+				}
+
 				startupMu.Lock()
 				startupLocked = false
 				startupMu.Unlock()
@@ -790,28 +704,25 @@ func revealAppAndCloseIntro(reason string) {
 				procShowWindow.Call(h, swMaximize)
 				procSetForegroundWindow.Call(h)
 
-				introMu.Lock()
-				iw := introWv
-				introMu.Unlock()
 				if iw != nil {
-					time.AfterFunc(120*time.Millisecond, func() { iw.Terminate() })
+					iw.Dispatch(func() { iw.Terminate() })
 				}
 				return
 			}
-			time.Sleep(80 * time.Millisecond)
+			time.Sleep(60 * time.Millisecond)
 		}
 
+		// Absolute fallback: never leave an orphaned full-screen intro behind.
+		hideIntroNative()
 		introMu.Lock()
 		iw := introWv
+		introHwnd = 0
 		introMu.Unlock()
 		if iw != nil {
-			iw.Dispatch(func() {
-				iw.Eval("try{document.getElementById('hint').textContent='SCHEDULER LOADING...';document.getElementById('title').classList.add('show')}catch(e){}")
-			})
+			iw.Dispatch(func() { iw.Terminate() })
 		}
 	})
 }
-
 func applyPendingSection(w webview.WebView) {
 	pendingMu.Lock()
 	p := pendingSection
@@ -853,13 +764,13 @@ func jsString(s string) string {
 }
 
 func acquireSingleton() bool {
-	name, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopNativeMutexV060")
+	name, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopNativeMutexV061")
 	m, _, err := procCreateMutex.Call(0, 0, uintptr(unsafe.Pointer(name)))
 	if m == 0 {
 		return true
 	}
 	if errno, ok := err.(syscall.Errno); ok && errno == syscall.ERROR_ALREADY_EXISTS {
-		evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV060")
+		evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV061")
 		ev, _, _ := procOpenEvent.Call(0x0002, 0, uintptr(unsafe.Pointer(evName)))
 		if ev != 0 {
 			procSetEvent.Call(ev)
@@ -872,7 +783,7 @@ func acquireSingleton() bool {
 }
 
 func watchShowEvent() {
-	evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV060")
+	evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV061")
 	ev, _, _ := procCreateEvent.Call(0, 0, 0, uintptr(unsafe.Pointer(evName)))
 	if ev == 0 {
 		return
@@ -935,10 +846,15 @@ func onReady() {
 		}
 
 		introMu.Lock()
+		ih := introHwnd
 		iw := introWv
+		introHwnd = 0
 		introMu.Unlock()
+		if ih != 0 {
+			procShowWindow.Call(ih, swHide)
+		}
 		if iw != nil {
-			iw.Terminate()
+			iw.Dispatch(func() { iw.Terminate() })
 		}
 
 		systray.Quit()
