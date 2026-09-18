@@ -1,6 +1,6 @@
 import authWorker from './cf-v120-friend.js';
 
-const APP_VERSION='1.3.0';
+const APP_VERSION='1.4.0';
 const APP_LABEL=`Mawang Scheduler v ${APP_VERSION}`;
 const BUILD_LABEL=`MWS V ${APP_VERSION}`;
 
