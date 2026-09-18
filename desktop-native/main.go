@@ -102,11 +102,13 @@ var (
 	lastRect       rect
 	lastMaximized  = true
 	lastStateValid bool
-	pendingMu      sync.Mutex
-	pendingSection string
-	appStartOnce   sync.Once
-	startupMu      sync.Mutex
-	startupLocked  = true
+	pendingMu           sync.Mutex
+	pendingSection      string
+	appStartOnce        sync.Once
+	startupMu           sync.Mutex
+	startupLocked       = true
+	startupWebReadyOnce sync.Once
+	startupWebReady     = make(chan struct{})
 )
 
 const appBridgeScript = `(function(){
@@ -171,15 +173,74 @@ const appBridgeScript = `(function(){
     }catch(_){}
   }
 
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',function(){setTimeout(installDesktopChrome,150);},{once:true});
-  }else{
-    setTimeout(installDesktopChrome,150);
+  function gateIsVisible(){
+    try{
+      var gate=document.getElementById('mwsAccessGate');
+      if(!gate)return false;
+      if(document.body&&document.body.classList.contains('mws-gated'))return true;
+      if(gate.classList.contains('hidden'))return false;
+      var gs=getComputedStyle(gate);
+      return gs.display!=='none'&&gs.visibility!=='hidden'&&Number(gs.opacity||1)!==0;
+    }catch(_){return false;}
   }
 
+  function loginGateReady(){
+    try{
+      if(document.readyState==='loading'||!gateIsVisible())return false;
+      var gate=document.getElementById('mwsAccessGate');
+      var shell=gate&&gate.querySelector('.mws-login-shell');
+      var form=document.getElementById('mwsLoginForm');
+      var admin=document.getElementById('mwsModeAdmin');
+      var pub=document.getElementById('mwsModePublic');
+      if(!shell||!form||!admin||!pub)return false;
+      var r=shell.getBoundingClientRect();
+      return r.width>280&&r.height>180;
+    }catch(_){return false;}
+  }
+
+  function appShellReady(){
+    try{
+      if(gateIsVisible())return false;
+      var body=document.body;
+      if(!body)return false;
+      var mode=String(body.dataset.mwsMode||'');
+      if(mode!=='admin'&&mode!=='public')return false;
+      return !!(document.querySelector('.app')&&document.querySelector('.topbar')&&document.querySelector('.sidebar')&&document.querySelector('.section.active'));
+    }catch(_){return false;}
+  }
+
+  var startupReadyTimer=0;
+  var startupReadyStarted=(performance&&typeof performance.now==='function')?performance.now():0;
+  function reportStartupReady(){
+    if(window.__mwsDesktopStartupReadySent)return;
+    clearTimeout(startupReadyTimer);
+    var kind='';
+    if(appShellReady())kind='app';
+    else{
+      var now=(performance&&typeof performance.now==='function')?performance.now():3000;
+      if(now-startupReadyStarted>=2500&&loginGateReady())kind='login';
+    }
+    if(kind){
+      window.__mwsDesktopStartupReadySent=true;
+      try{Promise.resolve(window.__mwsDesktopStartupReady(kind));}catch(_){}
+      return;
+    }
+    startupReadyTimer=setTimeout(reportStartupReady,120);
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){installDesktopChrome();reportStartupReady();},150);},{once:true});
+  }else{
+    setTimeout(function(){installDesktopChrome();reportStartupReady();},150);
+  }
+  window.addEventListener('load',reportStartupReady);
+  window.addEventListener('mws:auth-granted',reportStartupReady);
+  window.addEventListener('mws:app-ready',reportStartupReady);
+  window.addEventListener('mws:post-login-ui-ready',reportStartupReady);
+
   try{
-    var observer=new MutationObserver(function(){setTimeout(installDesktopChrome,0);});
-    observer.observe(document.documentElement,{subtree:true,childList:true});
+    var observer=new MutationObserver(function(){setTimeout(installDesktopChrome,0);setTimeout(reportStartupReady,0);});
+    observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','data-mws-mode']});
   }catch(_){}
 
   document.addEventListener('keydown',function(e){
@@ -288,6 +349,23 @@ func releaseStartupLock() {
 	startupMu.Lock()
 	startupLocked = false
 	startupMu.Unlock()
+}
+
+func markStartupWebReady(kind string) {
+	startupWebReadyOnce.Do(func() {
+		logDesktop("startup WebView ready: %s", kind)
+		close(startupWebReady)
+	})
+}
+
+func waitForStartupWebReady(timeout time.Duration) bool {
+	select {
+	case <-startupWebReady:
+		return true
+	case <-time.After(timeout):
+		logDesktop("startup WebView readiness timed out after %s", timeout)
+		return false
+	}
 }
 
 func showWindow() {
@@ -431,6 +509,9 @@ func runAppWebView() {
 
 	if err := w.Bind("__mwsToggleFullscreen", func() bool { return toggleFullscreen() }); err != nil {
 		logDesktop("WebView bind __mwsToggleFullscreen failed: %v", err)
+	}
+	if err := w.Bind("__mwsDesktopStartupReady", func(kind string) { markStartupWebReady(kind) }); err != nil {
+		logDesktop("WebView bind __mwsDesktopStartupReady failed: %v", err)
 	}
 	w.Init(appBridgeScript)
 	w.Navigate(appURL)
