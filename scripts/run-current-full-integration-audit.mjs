@@ -64,6 +64,7 @@ import {runPhase63NativeFriendRenderAudit} from './run-phase63-native-friend-ren
 import {runPhase64MaintenanceSuccessorAudit} from './run-phase64-maintenance-successor-audit.mjs';
 import {runPhase65CloudSuccessorAudit} from './run-phase65-cloud-successor-audit.mjs';
 import {runPhase66MaintenanceSuccessorHandshakeAudit} from './run-phase66-maintenance-successor-handshake-audit.mjs';
+import {runPhase67CloudSuccessorHandshakeAudit} from './run-phase67-cloud-successor-handshake-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -700,6 +701,16 @@ export function runPhase66FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase66FullIntegrationAudit();}
+export function runPhase67FullIntegrationAudit(){
+  const previous=runPhase66FullIntegrationAudit(), current=runPhase67CloudSuccessorHandshakeAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:67,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase67FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
