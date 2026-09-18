@@ -312,7 +312,8 @@ jobs:
           grep -Fq 'card.appendChild(screen)' /tmp/friend.js
           grep -Fq 'loading="lazy"' /tmp/friend.js
           grep -Fq 'fetchpriority="low"' /tmp/friend.js
-          grep -Fq 'if(!live||!bno||!match){if(screen)screen.hidden=true;continue}' /tmp/friend.js
+          grep -Fq "const bno=liveBroadNo(entry),title=liveTitle(entry),showLive=Boolean(live&&bno&&match)" /tmp/friend.js
+          grep -Fq 'if(!showLive){if(screen)screen.hidden=true;continue}' /tmp/friend.js
           grep -Fq '.mws-friend-live-grid-v120{grid-auto-rows:auto!important;align-items:start!important}' /tmp/friend.js
           grep -Fq '.mws-friend-live-card-v120{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important' /tmp/friend.js
           grep -Fq "/api/soop/live-thumb?bno=\${id}&v=\${stamp}" /tmp/friend.js
