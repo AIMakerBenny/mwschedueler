@@ -1,0 +1,44 @@
+name: Build Mawang Scheduler Native Desktop
+
+on:
+  push:
+    branches:
+      - desktop-native-v0.2
+    paths:
+      - 'desktop-native/**'
+      - '.github/workflows/build-desktop-native.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop-native
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+          cache-dependency-path: desktop-native/go.sum
+
+      - name: Resolve dependencies
+        shell: pwsh
+        run: go mod tidy
+
+      - name: Build Windows executable
+        shell: pwsh
+        run: go build -trimpath -ldflags "-H windowsgui -s -w" -o MawangScheduler.exe .
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: MawangScheduler-Native-v0.2
+          path: desktop-native/MawangScheduler.exe
+          if-no-files-found: error
