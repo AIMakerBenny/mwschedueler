@@ -38,7 +38,7 @@ const loadStyle=(key,href)=>{
 const loadAppVersion=()=>loadScript('app-version-v120','/assets/app-version-v120.js?v=1.3.0','__mwsAppVersionV120');
 const loadCoreRuntime=()=>loadScript('cloud-core-v130','/assets/cloud-v1.1.js?v=1.3.0-auth-decoupled','__mwsCloudV110Loaded');
 const loadSoopFetchProxy=()=>loadOptionalScript('soop-fetch-proxy','/assets/soop-fetch-proxy-v123.js?v=1.2.5','__mwsSoopFetchProxyV124');
-const loadFriendFinder=()=>loadOptionalScript('friend-finder-v120','/assets/friend-finder-v120.js?v=1.3.0-phase61','__mwsFriendFinderV120');
+const loadFriendFinder=()=>loadOptionalScript('friend-finder-v120','/assets/friend-finder-v120.js?v=1.3.0-phase62','__mwsFriendFinderV120');
 const loadV130Hotfix=()=>loadOptionalScript('v130-live-contact-fix','/assets/v130-live-contact-fix.js?v=1.3.0-perf31','__mwsV130LiveContactFix');
 const loadTodayPeopleWheel=()=>loadOptionalScript('today-people-wheel','/assets/today-people-wheel-v117.js?v=1.2.0','__mwsTodayPeopleWheelV120');
 const loadUiFixes=()=>loadOptionalScript('ui-fixes','/assets/ui-fixes-v121.js?v=1.2.3-perf44','__mwsUiFixesV121');
