@@ -11,6 +11,7 @@ import {runPhase10PageLifecycleSaveAudit} from './run-phase10-page-lifecycle-sav
 import {runPhase11LazyTabReadinessAudit} from './run-phase11-lazy-tab-readiness-audit.mjs';
 import {runPhase12ManualSaveSerializationAudit} from './run-phase12-manual-save-serialization-audit.mjs';
 import {runPhase13AtomicMultipartSaveAudit} from './run-phase13-atomic-multipart-save-audit.mjs';
+import {runPhase14MediaCommitBoundaryAudit} from './run-phase14-media-commit-boundary-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -143,6 +144,17 @@ export function runPhase13FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase13FullIntegrationAudit();}
+export function runPhase14FullIntegrationAudit(){
+  const previous=runPhase13FullIntegrationAudit();
+  const current=runPhase14MediaCommitBoundaryAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:14,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase14FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
