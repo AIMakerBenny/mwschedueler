@@ -209,10 +209,21 @@
     if(document.getElementById('mwsContentPlannerHostScriptV110'))return;
     const s=document.createElement('script');s.id='mwsContentPlannerHostScriptV110';s.src='assets/content-planner-host.js?v=1.1-order52';document.body.appendChild(s);
   }
-  function loadLegacyRuntimeFeatures(){
+  function loadMaintenanceRuntimeFeatures(){
     if(document.getElementById('mwsCf571RuntimeScript'))return;
-    const s=document.createElement('script');s.id='mwsCf571RuntimeScript';s.src='assets/cf-v5.7-runtime.js?v=5.7.1';
+    const fallback=()=>{
+      if(window.__mwsCf571Runtime||document.getElementById('mwsCf571RuntimeFallback'))return;
+      const legacy=document.createElement('script');
+      legacy.id='mwsCf571RuntimeFallback';
+      legacy.src='assets/cf-v5.7-runtime.js?v=5.7.1';
+      legacy.onload=()=>{installLosslessImagePolicy();forceVersion()};
+      document.body.appendChild(legacy);
+    };
+    const s=document.createElement('script');
+    s.id='mwsCf571RuntimeScript';
+    s.src='assets/maintenance-runtime-v130.js?v=1.3.0-stage64';
     s.onload=()=>{installLosslessImagePolicy();forceVersion()};
+    s.onerror=fallback;
     document.body.appendChild(s);
   }
   function loadPerfBase(){
@@ -227,7 +238,7 @@
     installLosslessImagePolicy();forceVersion();installPageScaleBridge();
     idle(loadPerfBase,250);
     idle(loadContentPlannerHost,1200);
-    idle(loadLegacyRuntimeFeatures,4500);
+    idle(loadMaintenanceRuntimeFeatures,4500);
   }
   function armPostLogin(){
     if(!document.body?.classList.contains('mws-gated')){startPostLoginFeatures();return}
