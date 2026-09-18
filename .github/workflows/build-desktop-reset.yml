@@ -1,0 +1,67 @@
+name: Build Mawang Scheduler Desktop Reset
+
+on:
+  push:
+    branches:
+      - desktop-native-v1.0-intro-reset-20260919
+    paths:
+      - 'desktop-native/**'
+      - '.github/workflows/build-desktop-reset.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop-native
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+          cache-dependency-path: desktop-native/go.sum
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Prepare Windows icon
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check pillow
+          python -c "from PIL import Image; im=Image.open('assets/mawang-mascot.webp').convert('RGBA'); side=max(im.size); canvas=Image.new('RGBA',(side,side),(255,255,255,255)); scale=min(side*0.94/im.width,side*0.94/im.height); r=im.resize((int(im.width*scale),int(im.height*scale)),Image.Resampling.LANCZOS); canvas.alpha_composite(r,((side-r.width)//2,(side-r.height)//2)); canvas=canvas.resize((256,256),Image.Resampling.LANCZOS); canvas.save('assets/mawang.ico',format='ICO',sizes=[(16,16),(20,20),(24,24),(32,32),(40,40),(48,48),(64,64),(128,128),(256,256)])"
+          go install github.com/akavel/rsrc@latest
+          & "$env:USERPROFILE\go\bin\rsrc.exe" -ico assets/mawang.ico -o rsrc.syso
+
+      - name: Go format verification
+        shell: pwsh
+        run: |
+          gofmt -w main.go
+          if ((git status --porcelain -- '*.go').Length -ne 0) {
+            git diff -- '*.go'
+            exit 1
+          }
+
+      - name: Resolve dependencies
+        shell: pwsh
+        run: go mod tidy
+
+      - name: Build Windows executable
+        shell: pwsh
+        run: go build -trimpath -ldflags "-H windowsgui -s -w" -o MawangScheduler.exe .
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: MawangScheduler-Desktop-Reset-Phase2
+          path: desktop-native/MawangScheduler.exe
+          if-no-files-found: error
