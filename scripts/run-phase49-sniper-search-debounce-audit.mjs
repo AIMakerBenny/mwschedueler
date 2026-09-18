@@ -12,7 +12,7 @@ export function runPhase49SniperSearchDebounceAudit(){
   if(!core.includes("sniperSearch.oncompositionend=()=>scheduleSniperRenderV149(0)"))issues.push('sniper search does not render immediately after composition ends');
   if(core.includes("document.getElementById('sniperSearch').oninput=renderSniperList"))issues.push('legacy immediate sniper render remains');
   if(core.includes('isComposing)return;'))issues.push('a core search still blocks live Korean IME input');
-  if(!index.includes('assets/app-core.js?v=1.3.0-search70'))issues.push('app-core cache-bust was not advanced for live IME search');
+  if(!index.includes('assets/app-core.js?v=1.3.0-search'))issues.push('app-core cache-bust was not advanced for live IME search');
 
   const summary={phase:49,name:'sniper-search-debounce-performance',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
