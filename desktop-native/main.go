@@ -593,10 +593,6 @@ func runWebView() {
 	w.Bind("__mwsToggleFullscreen", func() bool { return toggleFullscreen() })
 	w.Bind("__mwsIntroMounted", func() {})
 
-	bridge := desktopBridgeScriptForPage()
-	w.Init(startupGuardScript)
-	w.Init(bridge)
-
 	// Paint a local black document before the remote app can ever become visible.
 	w.SetHtml("<!doctype html><html style='background:#000'><head><meta charset='utf-8'><style>html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden}</style></head><body></body></html>")
 	time.Sleep(120 * time.Millisecond)
@@ -611,6 +607,9 @@ func runWebView() {
 	procShowWindow.Call(h, swMaximize)
 	procSetForegroundWindow.Call(h)
 
+	bridge := desktopBridgeScriptForPage()
+	w.Init(startupGuardScript)
+	w.Init(bridge)
 	w.Navigate(appURL)
 
 	// If the full intro script fails, never leave the user trapped on a black or hidden window.
