@@ -7,12 +7,14 @@ export function runPhase52NotebookPlannerOrderAudit(){
   const css=fs.readFileSync('assets/app-core.css','utf8');
   const index=fs.readFileSync('index.html','utf8');
   const perf=fs.readFileSync('assets/perf-runtime.js','utf8');
+  const core=fs.readFileSync('assets/app-core.js','utf8');
 
   if(!planner.includes("const memos=document.querySelector('.nav button[data-tab=\"memos\"]')"))issues.push('content planner is not anchored to the notebook menu');
   if(!planner.includes("memos.insertAdjacentElement('afterend',button)"))issues.push('content planner is not inserted directly after the notebook menu');
   if(planner.includes("posts.insertAdjacentElement('afterend',button)"))issues.push('content planner is still forced directly after posts');
   if(!css.includes('#memoLibraryTab{order:0!important}'))issues.push('notebook tab order is not pinned first');
   if(!css.includes('#memoFavoritesTab{order:1!important}'))issues.push('favorites tab order is not pinned second');
+  if(!core.includes("if(tab==='memos')safeRenderView('메모',()=>setMemoView('library'))"))issues.push('entering notebook does not reset to the library view');
 
   const libraryPos=index.indexOf('id="memoLibraryTab"');
   const favoritePos=index.indexOf('id="memoFavoritesTab"');
