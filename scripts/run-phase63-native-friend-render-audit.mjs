@@ -18,11 +18,17 @@ export function runPhase63NativeFriendRenderAudit(){
   if(cardIndex<0)issues.push('native Friend Finder card template missing');
   if(gridIndex<0)issues.push('native Friend Finder grid renderer missing');
   if(cardIndex>=0){
+    const fetchIndex=source.indexOf('async function fetchLiveV5');
     const before=source.slice(Math.max(0,cardIndex-1400),cardIndex);
     const after=source.slice(cardIndex,Math.min(source.length,cardIndex+4200));
     console.log('PHASE63_NATIVE_FRIEND_EXCERPT_START');
     console.log(before+after);
     console.log('PHASE63_NATIVE_FRIEND_EXCERPT_END');
+    if(fetchIndex>=0){
+      console.log('PHASE63_FETCH_LIVE_EXCERPT_START');
+      console.log(source.slice(fetchIndex,Math.min(source.length,fetchIndex+5200)));
+      console.log('PHASE63_FETCH_LIVE_EXCERPT_END');
+    }else issues.push('native fetchLiveV5 function missing');
   }
   const summary={phase:63,name:'native-friend-render-source',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
