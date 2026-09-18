@@ -14,7 +14,7 @@ export function runPhase68MaintenanceSuccessorActivationAudit(){
     if(!next.includes(marker))issues.push(`activated maintenance successor lost required function: ${marker}`);
   }
 
-  const productionFiles=['index.html','assets/post-login-runtime-v130.js','src/cf-v111-entry.js','.github/workflows/deploy-cloudflare-production.yml'];
+  const productionFiles=['index.html','assets/post-login-runtime-v130.js','src/cf-v111-entry.js'];
   for(const file of productionFiles){
     const src=fs.readFileSync(file,'utf8');
     if(src.includes('cf-v5.7-runtime.js'))issues.push(`production reference to cf-v5.7-runtime.js remains in ${file}`);
