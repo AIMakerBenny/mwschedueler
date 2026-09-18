@@ -281,8 +281,9 @@ func runWebView() {
 		return
 	}
 	defer w.Destroy()
-	w.Bind("__mwsToggleFullscreen", func() { toggleFullscreen() })
-	w.Init(desktopBridgeScript)
+	w.Bind("__mwsToggleFullscreen", func() bool { return toggleFullscreen() })
+	bridge := desktopBridgeScript()
+	w.Init(bridge)
 
 	h := uintptr(w.Window())
 	wvMu.Lock()
@@ -290,11 +291,19 @@ func runWebView() {
 	hwnd = h
 	wvMu.Unlock()
 	installWindowHook(h)
+	setWindowIcon(h)
 	procShowWindow.Call(h, swMaximize)
+	stateMu.Lock()
+	lastMaximized = true
+	lastStateValid = true
+	stateMu.Unlock()
 	w.Navigate(appURL)
 
 	time.AfterFunc(1800*time.Millisecond, func() {
-		w.Dispatch(func() { w.Eval(desktopBridgeScript); applyPendingSection(w) })
+		w.Dispatch(func() {
+			w.Eval(bridge)
+			applyPendingSection(w)
+		})
 	})
 	w.Run()
 
