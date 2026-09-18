@@ -1,8 +1,8 @@
 /* Mawang Scheduler v1.3.0 - isolated auth/bootstrap loader */
 (()=>{
 'use strict';
-if(window.__mwsCloudRuntimeLoaderV130)return;
-window.__mwsCloudRuntimeLoaderV130=true;
+if(window.__mwsCloudV120Bootstrap)return;
+window.__mwsCloudV120Bootstrap=true;
 
 const loaded=new Map();
 const loadScript=(key,src,flag)=>{
@@ -36,7 +36,7 @@ const loadStyle=(key,href)=>{
 };
 
 const loadAppVersion=()=>loadScript('app-version-v120','/assets/app-version-v120.js?v=1.3.0','__mwsAppVersionV120');
-const loadCoreRuntime=()=>loadScript('cloud-runtime-v130','/assets/cloud-runtime-v130.js?v=1.3.0-final70','__mwsCloudRuntimeV130');
+const loadCoreRuntime=()=>loadScript('cloud-core-v130','/assets/cloud-v1.1.js?v=1.3.0-auth-decoupled','__mwsCloudV110Loaded');
 const loadSoopFetchProxy=()=>loadOptionalScript('soop-fetch-proxy','/assets/soop-fetch-proxy-v123.js?v=1.2.5','__mwsSoopFetchProxyV124');
 const loadFriendFinder=()=>loadOptionalScript('friend-finder-v120','/assets/friend-finder-v120.js?v=1.3.0-phase62','__mwsFriendFinderV120');
 const loadV130Hotfix=()=>loadOptionalScript('v130-live-contact-fix','/assets/v130-live-contact-fix.js?v=1.3.0-perf31','__mwsV130LiveContactFix');
@@ -119,7 +119,6 @@ loadAppVersion()
   .then(()=>{
     window.mwsApplyAppVersionV120?.();
     installTabBridge();
-    try{window.dispatchEvent(new Event('mws:cloud-runtime-ready'))}catch(_){}
     armPostLoginFeatures();
   })
   .catch(error=>{

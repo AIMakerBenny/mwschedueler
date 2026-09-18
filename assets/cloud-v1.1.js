@@ -1,12 +1,12 @@
-/* Mawang Scheduler v1.3.0 - cloud runtime */
+/* Mawang Scheduler v1.1 - Cloudflare D1/R2/Auth only */
 (()=>{
   'use strict';
-  if(window.__mwsCloudRuntimeV130)return;
-  window.__mwsCloudRuntimeV130=true;
+  if(window.__mwsCloudV110Loaded)return;
+  window.__mwsCloudV110Loaded=true;
 
   const REMEMBER_KEY='mws_access_remember_v1';
   const MODE_KEY='mws_access_mode_v1';
-  const CACHE_DB='mawang_data_v130';
+  const CACHE_DB='mawang_data';
   const CACHE_SCHEMA_VERSION=3;
   const CACHE_STORES=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook'];
   const INITIAL_PARTS=['core','contacts','events','posts','activity'];
@@ -97,7 +97,7 @@
   async function manualSave(){const btn=$('mwsSidebarSaveBtn');if(btn)btn.disabled=true;try{await writeCloudNow(true)}finally{if(btn)btn.disabled=false}}
   function bindUi(){$('mwsModeAdmin')?.addEventListener('click',()=>selectLoginMode('admin'));$('mwsModePublic')?.addEventListener('click',()=>selectLoginMode('public'));$('mwsLoginForm')?.addEventListener('submit',handleLogin);$('mwsSidebarSaveBtn')?.addEventListener('click',manualSave);$('mwsChangeModeBtn')?.addEventListener('click',async()=>{localStorage.removeItem(REMEMBER_KEY);localStorage.removeItem(MODE_KEY);mode=null;await logout();selectLoginMode('admin');showGate()});$('mwsAdminManageBtn')?.addEventListener('click',()=>{$('mwsAdminModal')?.classList.add('open');$('mwsAdminModal')?.setAttribute('aria-hidden','false');loadAdminList()});$('mwsAdminClose')?.addEventListener('click',()=>{$('mwsAdminModal')?.classList.remove('open');$('mwsAdminModal')?.setAttribute('aria-hidden','true')});$('mwsAddAdminForm')?.addEventListener('submit',addAdmin)}
 
-  async function init(){await validateCacheSchema();installSaveBridge();bindUi();selectLoginMode('admin');try{await fetchJson('/api/health',{},'Cloudflare 상태 확인');const remember=localStorage.getItem(REMEMBER_KEY)==='1',preferred=localStorage.getItem(MODE_KEY);if(remember&&preferred==='public'){await hydrate('public');installLazyTabBridge();return}if(remember&&preferred==='admin'){const session=await fetchJson('/api/auth/session',{},'Admin 세션 확인');if(session.authenticated){currentAdmin=session.user;await hydrate('admin');installLazyTabBridge();return}}showGate();installLazyTabBridge()}catch(e){console.error('Mawang v1.3.0 init',e);setLoginError('Cloudflare 연결 실패: '+(e.message||String(e)));showGate();installLazyTabBridge()}}
+  async function init(){await validateCacheSchema();installSaveBridge();bindUi();selectLoginMode('admin');try{await fetchJson('/api/health',{},'Cloudflare 상태 확인');const remember=localStorage.getItem(REMEMBER_KEY)==='1',preferred=localStorage.getItem(MODE_KEY);if(remember&&preferred==='public'){await hydrate('public');installLazyTabBridge();return}if(remember&&preferred==='admin'){const session=await fetchJson('/api/auth/session',{},'Admin 세션 확인');if(session.authenticated){currentAdmin=session.user;await hydrate('admin');installLazyTabBridge();return}}showGate();installLazyTabBridge()}catch(e){console.error('Mawang v1.1 init',e);setLoginError('Cloudflare 연결 실패: '+(e.message||String(e)));showGate();installLazyTabBridge()}}
 
-  window.addEventListener('mws:cloud-runtime-ready',installLazyTabBridge,{once:true});init();
+  document.body.dataset.buildVersion='Mawang Scheduler v.1.1.0';const versionLabel=document.querySelector('.sidebar-build-version-v53');if(versionLabel)versionLabel.textContent='Mawang Scheduler v.1.1.0';window.addEventListener('mws:v55-features-ready',installLazyTabBridge,{once:true});init();
 })();

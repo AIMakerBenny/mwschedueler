@@ -61,8 +61,6 @@ import {runPhase60LiveThumbnailProxyAudit} from './run-phase60-live-thumbnail-pr
 import {runPhase61NativeFriendCardBindingAudit} from './run-phase61-native-friend-card-binding-audit.mjs';
 import {runPhase62NestedLivePayloadAudit} from './run-phase62-nested-live-payload-audit.mjs';
 import {runPhase63NativeFriendRenderAudit} from './run-phase63-native-friend-render-audit.mjs';
-import {runPhase69LegacyRuntimeFinalizationAudit} from './run-phase69-legacy-runtime-finalization-audit.mjs';
-import {runPhase70CloudRuntimeFinalizationAudit} from './run-phase70-cloud-runtime-finalization-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -673,22 +671,6 @@ export function runPhase63FullIntegrationAudit(){
   if(issues.length)process.exitCode=1;
   return summary;
 }
-export function runPhase69FullIntegrationAudit(){
-  const previous=runPhase63FullIntegrationAudit(), current=runPhase69LegacyRuntimeFinalizationAudit();
-  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)],warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
-  const summary={currentPhase:69,issues,warnings,pass:issues.length===0};
-  console.log(JSON.stringify({fullIntegration:summary}));
-  if(issues.length)process.exitCode=1;
-  return summary;
-}
-export function runPhase70FullIntegrationAudit(){
-  const previous=runPhase69FullIntegrationAudit(), current=runPhase70CloudRuntimeFinalizationAudit();
-  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)],warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
-  const summary={currentPhase:70,issues,warnings,pass:issues.length===0};
-  console.log(JSON.stringify({fullIntegration:summary}));
-  if(issues.length)process.exitCode=1;
-  return summary;
-}
-export function runCurrentFullIntegrationAudit(){return runPhase70FullIntegrationAudit();}
+export function runCurrentFullIntegrationAudit(){return runPhase63FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();

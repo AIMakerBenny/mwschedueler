@@ -93,12 +93,6 @@ jobs:
           grep -Fq 'app-core.js?v=1.3.0-ime64' /tmp/index.html
           grep -Fq 'id="mwsAccessGate"' /tmp/index.html
           grep -Fq 'assets/app-core.css?v=1.3.0-order52' /tmp/index.html
-          grep -Fq 'online-v5-loader.js?v=1.3.0-final70' /tmp/index.html
-          grep -Fq 'post-login-runtime-v130.js?v=1.3.0-auth-isolated' /tmp/index.html
-          if grep -Eq 'test-v5\.[56]\.js|<script[^>]+assets/(perf-runtime\.js|device-ui\.js)' /tmp/index.html; then
-            echo 'Legacy source runtime entrypoint regression detected.' >&2
-            exit 1
-          fi
           grep -Fq 'data-build-version="MWS V 1.3.0"' /tmp/index.html
           grep -Fq '>Mawang Scheduler v 1.3.0</div>' /tmp/index.html
           if grep -Eq '<script[^>]+assets/(perf-runtime\.js|today-people-runtime-v130\.js|contact-runtime-v130\.js|device-ui\.js)' /tmp/index.html; then
@@ -208,7 +202,7 @@ jobs:
             echo 'Permanent clock interval regression detected.' >&2
             exit 1
           fi
-          retry_contains "$BASE/assets/cloud-runtime-v130.js?deploy=$GITHUB_SHA" 'function enterAppShell(chosen)' > /tmp/cloud-core.js
+          retry_contains "$BASE/assets/cloud-v1.1.js?deploy=$GITHUB_SHA" 'function enterAppShell(chosen)' > /tmp/cloud-core.js
           node --check /tmp/cloud-core.js
           grep -Fq 'void startHydration(chosen)' /tmp/cloud-core.js
           grep -Fq '__mwsAppReadyV130' /tmp/cloud-core.js
@@ -260,10 +254,8 @@ jobs:
             echo 'Duplicate LIVE card renderer regression detected in contact fix.' >&2
             exit 1
           fi
-          retry_contains "$BASE/assets/cloud-runtime-loader-v130.js?deploy=$GITHUB_SHA" 'steam-game-v111.js?v=1.1.4-perf30' > /tmp/cloud-loader.js
+          retry_contains "$BASE/assets/cloud-v1.1-loader.js?deploy=$GITHUB_SHA" 'steam-game-v111.js?v=1.1.4-perf30' > /tmp/cloud-loader.js
           node --check /tmp/cloud-loader.js
-          grep -Fq "cloud-runtime-v130.js?v=1.3.0-final70" /tmp/cloud-loader.js
-          grep -Fq "__mwsCloudRuntimeLoaderV130" /tmp/cloud-loader.js
           grep -Fq "v130-live-contact-fix.js?v=1.3.0-perf31" /tmp/cloud-loader.js
           grep -Fq "friend-finder-v120.js?v=1.3.0-phase62" /tmp/cloud-loader.js
           grep -Fq "ui-fixes-v121.js?v=1.2.3-perf44" /tmp/cloud-loader.js
@@ -391,13 +383,6 @@ jobs:
           retry_contains "$BASE/assets/perf-runtime.js?v=1.3.0-post-login" 'lossless image policy' > /tmp/perf.js
           node --check /tmp/perf.js
           grep -Fq 'preserveOriginalImage' /tmp/perf.js
-          retry_contains "$BASE/assets/maintenance-runtime-v130.js?deploy=$GITHUB_SHA" '__mwsMaintenanceRuntimeV130' > /tmp/maintenance-runtime.js
-          node --check /tmp/maintenance-runtime.js
-          grep -Fq 'mwsCreateQuickBackupV130' /tmp/maintenance-runtime.js
-          if grep -Eq 'cf-v5\.7-runtime|forceBuildVersion|installBuildVersionGuard|compressProfileImageV571|installSaveRequestOptimizer' /tmp/maintenance-runtime.js; then
-            echo 'Legacy maintenance runtime behavior detected.' >&2
-            exit 1
-          fi
           grep -Fq 'content-planner-host.js?v=1.1-order52' /tmp/perf.js
           node --check src/cf-v121-boss-media.js
           retry_contains "$BASE/assets/boss-manager-v121.js?v=1.2.2&deploy=$GITHUB_SHA" '__mwsBossManagerV121' > /tmp/boss.js
@@ -410,13 +395,8 @@ jobs:
           grep -Fq 'id="bossGame"' /tmp/majoku.html
 
           echo '[8/8] source syntax and auth/UI boundary'
-          node --check assets/cloud-runtime-loader-v130.js
+          node --check assets/cloud-v1.1-loader.js
           node --check assets/post-login-runtime-v130.js
-          node --check assets/maintenance-runtime-v130.js
-          node --check assets/cloud-runtime-v130.js
-          node --check assets/cloud-runtime-loader-v130.js
-          node --check scripts/run-phase69-legacy-runtime-finalization-audit.mjs
-          node --check scripts/run-phase70-cloud-runtime-finalization-audit.mjs
           node --check assets/today-people-runtime-v130.js
           node --check assets/contact-runtime-v130.js
           node --check assets/friend-finder-v120.js
@@ -433,7 +413,7 @@ jobs:
           node --check src/cf-v111-entry.js
           node --check src/cf-v111-auth.js
           grep -Fq 'save_conflict_guard' src/cf-v111-auth.js
-          grep -Fq '__mwsAppReadyV130' assets/cloud-runtime-loader-v130.js
+          grep -Fq '__mwsAppReadyV130' assets/cloud-v1.1-loader.js
           grep -Fq "mws:app-ready" assets/post-login-runtime-v130.js
           grep -Fq 'normalizeCloudCore' src/cf-v111-entry.js
           grep -Fq "./cf-v120-friend.js" src/cf-v111-entry.js
