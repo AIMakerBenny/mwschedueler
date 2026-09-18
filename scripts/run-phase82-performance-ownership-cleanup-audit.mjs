@@ -22,10 +22,10 @@ export function runPhase82PerformanceOwnershipCleanupAudit(){
   if(!app.includes('function renderContacts()'))issues.push('canonical renderContacts is missing');
   if(!app.includes("const mwsFastSearch=typeof window.mwsApplyContactSearch==='function';"))issues.push('canonical renderer is not fast-search aware');
 
-  if(!perfLoader.includes('assets/perf-runtime-base.js?v=1.4.0-phase82'))issues.push('perf base cache-bust is not phase82');
-  if(!post.includes('/assets/perf-runtime.js?v=1.4.0-phase82'))issues.push('post-login perf cache-bust is not phase82');
-  if(!index.includes('assets/perf-runtime.js?v=1.4.0-phase82'))issues.push('index perf cache-bust is not phase82');
-  if(!entry.includes('post-login-runtime-v130.js?v=1.4.0-phase82'))issues.push('Worker post-login cache-bust is not phase82');
+  if(!/assets\/perf-runtime-base\.js\?v=1\.4\.0-phase(?:8[2-9]|9[0-9]|[1-9][0-9]{2,})/.test(perfLoader))issues.push('perf base cache-bust is older than phase82');
+  if(!/\/assets\/perf-runtime\.js\?v=1\.4\.0-phase(?:8[2-9]|9[0-9]|[1-9][0-9]{2,})/.test(post))issues.push('post-login perf cache-bust is older than phase82');
+  if(!/assets\/perf-runtime\.js\?v=1\.4\.0-phase(?:8[2-9]|9[0-9]|[1-9][0-9]{2,})/.test(index))issues.push('index perf cache-bust is older than phase82');
+  if(!/post-login-runtime-v130\.js\?v=1\.4\.0-phase(?:8[2-9]|9[0-9]|[1-9][0-9]{2,})/.test(entry))issues.push('Worker post-login cache-bust is older than phase82');
   if(index.includes('assets/test-v5.5.js')||index.includes('assets/test-v5.6.js'))issues.push('deleted test runtimes are referenced again');
 
   if(online.includes('legacyContactMatcher'))warnings.push('online V5 still needs its legacy matcher sanitizer; keep until compressed payload is regenerated safely');
