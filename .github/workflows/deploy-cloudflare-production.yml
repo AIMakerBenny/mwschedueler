@@ -68,7 +68,7 @@ jobs:
           SESSION="$session" node -e "const x=JSON.parse(process.env.SESSION); if(typeof x.authenticated!=='boolean') process.exit(1)"
 
           echo '[2/8] isolated login shell and v1.3.0 assets'
-          retry_contains "$BASE/?deploy=$GITHUB_SHA" 'app-core.js?v=1.3.0-perf48' > /tmp/index.html
+          retry_contains "$BASE/?deploy=$GITHUB_SHA" 'app-core.js?v=1.3.0-perf51' > /tmp/index.html
           grep -Fq 'id="mwsAccessGate"' /tmp/index.html
           if grep -Eq '<script[^>]+assets/(perf-runtime\.js|test-v5\.5\.js|test-v5\.6\.js|device-ui\.js)' /tmp/index.html; then
             echo 'Heavy UI/runtime script is still loaded before authentication.' >&2
@@ -129,6 +129,21 @@ jobs:
           grep -Fq "refreshIncompleteContactsOnDataChangeV146" /tmp/app-core.js
           grep -Fq "refreshUserIdentityOnDataChangeV147" /tmp/app-core.js
           grep -Fq "renderPostsAfterSaveV148" /tmp/app-core.js
+          grep -Fq "scheduleSniperRenderV149" /tmp/app-core.js
+          grep -Fq "scheduleTargetListRenderV150" /tmp/app-core.js
+          grep -Fq "scheduleTargetPickerRenderV151" /tmp/app-core.js
+          if grep -Fq "document.getElementById('sniperSearch').oninput=renderSniperList" /tmp/app-core.js; then
+            echo 'Immediate sniper search render regression detected.' >&2
+            exit 1
+          fi
+          if grep -Fq "document.getElementById('targetSearch').oninput=renderTargetList" /tmp/app-core.js; then
+            echo 'Immediate target-list search render regression detected.' >&2
+            exit 1
+          fi
+          if grep -Fq "document.getElementById('targetPickerSearch').oninput=renderTargetPicker" /tmp/app-core.js; then
+            echo 'Immediate target-picker search render regression detected.' >&2
+            exit 1
+          fi
           if grep -Fq "window.addEventListener('mawang:datachange',()=>{try{renderIncompleteContacts()}catch(_){}});" /tmp/app-core.js; then
             echo 'Hidden incomplete-contact render regression detected.' >&2
             exit 1

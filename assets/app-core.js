@@ -3175,8 +3175,30 @@ function clearTargetWithEffect(id){
   },1450);
 }
 document.getElementById('targetShootBtn').onclick=toggleTargetShooting;
-document.getElementById('targetSearch').oninput=renderTargetList;
-document.getElementById('targetPickerSearch').oninput=renderTargetPicker;
+let targetSearchTimerV150=0;
+function scheduleTargetListRenderV150(delay=90){
+  clearTimeout(targetSearchTimerV150);
+  targetSearchTimerV150=setTimeout(()=>{targetSearchTimerV150=0;renderTargetList()},delay);
+}
+{
+  const targetSearch=document.getElementById('targetSearch');
+  if(targetSearch){
+    targetSearch.oninput=e=>{if(e?.isComposing)return;scheduleTargetListRenderV150(90)};
+    targetSearch.oncompositionend=()=>scheduleTargetListRenderV150(0);
+  }
+}
+let targetPickerSearchTimerV151=0;
+function scheduleTargetPickerRenderV151(delay=80){
+  clearTimeout(targetPickerSearchTimerV151);
+  targetPickerSearchTimerV151=setTimeout(()=>{targetPickerSearchTimerV151=0;renderTargetPicker()},delay);
+}
+{
+  const targetPickerSearch=document.getElementById('targetPickerSearch');
+  if(targetPickerSearch){
+    targetPickerSearch.oninput=e=>{if(e?.isComposing)return;scheduleTargetPickerRenderV151(80)};
+    targetPickerSearch.oncompositionend=()=>scheduleTargetPickerRenderV151(0);
+  }
+}
 
 
 
@@ -3573,7 +3595,18 @@ if(mwsContactSearchInput){
 }
 document.getElementById('contactSort').onchange=mwsRenderActiveContactView;
 document.getElementById('contactLabelFilter').onchange=()=>{mwsRenderActiveContactView();renderContactTagSidebar()};
-document.getElementById('sniperSearch').oninput=renderSniperList;
+let sniperSearchTimerV149=0;
+function scheduleSniperRenderV149(delay=90){
+  clearTimeout(sniperSearchTimerV149);
+  sniperSearchTimerV149=setTimeout(()=>{sniperSearchTimerV149=0;renderSniperList()},delay);
+}
+{
+  const sniperSearch=document.getElementById('sniperSearch');
+  if(sniperSearch){
+    sniperSearch.oninput=e=>{if(e?.isComposing)return;scheduleSniperRenderV149(90)};
+    sniperSearch.oncompositionend=()=>scheduleSniperRenderV149(0);
+  }
+}
 document.getElementById('sniperSort').onchange=renderSniperList;
 document.getElementById('sniperLabelFilter').onchange=renderSniperList;
 
