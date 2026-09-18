@@ -13,6 +13,18 @@
     const [cloud,features]=head.split('\n/*__MWS_SPLIT_CLOUD_FEATURES__*/\n');
     if(!cloud||!features||!css)throw new Error('V5 payload sections are incomplete');
     const style=document.createElement('style');style.id='mws-online-v5-style';style.textContent=css;document.head.appendChild(style);
-    run(features);const v54=document.createElement('script');v54.src='assets/cloud-v5.5.js';v54.onload=()=>window.dispatchEvent(new Event('mws:v55-features-ready'));v54.onerror=()=>{const e=document.getElementById('mwsLoginError');if(e)e.textContent='V5.5 cloud 로딩 실패';};document.body.appendChild(v54);
+    const sharedSearchOwner={
+      contactMatches:window.contactMatches,
+      mwsKoreanInitials:window.mwsKoreanInitials,
+      mwsTextMatches:window.mwsTextMatches
+    };
+    run(features);
+    if(typeof sharedSearchOwner.contactMatches==='function'){
+      window.contactMatches=sharedSearchOwner.contactMatches;
+      try{contactMatches=sharedSearchOwner.contactMatches}catch(_){}
+    }
+    if(typeof sharedSearchOwner.mwsKoreanInitials==='function')window.mwsKoreanInitials=sharedSearchOwner.mwsKoreanInitials;
+    if(typeof sharedSearchOwner.mwsTextMatches==='function')window.mwsTextMatches=sharedSearchOwner.mwsTextMatches;
+    const v54=document.createElement('script');v54.src='assets/cloud-v5.5.js';v54.onload=()=>window.dispatchEvent(new Event('mws:v55-features-ready'));v54.onerror=()=>{const e=document.getElementById('mwsLoginError');if(e)e.textContent='V5.5 cloud 로딩 실패';};document.body.appendChild(v54);
   })().catch(err=>{console.error('MAWANG V5 loader failed',err);const e=document.getElementById('mwsLoginError');if(e)e.textContent='업데이트 로딩 실패: '+(err?.message||String(err));});
 })();
