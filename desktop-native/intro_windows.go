@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	introClassName          = "MawangSchedulerNativeIntroV090"
+	introClassName          = "MawangSchedulerCleanIntroV100"
 	introTimerID            = 1
 	introTimerMS            = 33
 	introWMAppFinish        = 0x8001
@@ -41,11 +41,11 @@ const (
 )
 
 const (
-	introImageFadeInDuration  = 1800 * time.Millisecond
-	introImageHoldDuration    = 1700 * time.Millisecond
-	introImageFadeOutDuration = 1700 * time.Millisecond
-	introTitleFadeInDuration  = 1800 * time.Millisecond
-	introTitleHoldDuration    = 1500 * time.Millisecond
+	introImageFadeInDuration  = 900 * time.Millisecond
+	introImageHoldDuration    = 1000 * time.Millisecond
+	introImageFadeOutDuration = 900 * time.Millisecond
+	introTitleFadeInDuration  = 1100 * time.Millisecond
+	introTitleHoldDuration    = 1000 * time.Millisecond
 	introTitleFadeOutDuration = 1200 * time.Millisecond
 	introSkipTitleHold        = 300 * time.Millisecond
 	introSkipFadeOutDuration  = 450 * time.Millisecond
@@ -448,10 +448,6 @@ func tickIntro(s *introSession) {
 			enterIntroPhase(s, introPhaseTitleFadeOut, now)
 		}
 	case introPhaseTitleFadeOut:
-		if !isAppReady() {
-			enterIntroPhase(s, introPhaseTitleWait, now)
-			return
-		}
 		duration := introTitleFadeOutDuration
 		if s.skipped {
 			duration = introSkipFadeOutDuration
@@ -460,6 +456,10 @@ func tickIntro(s *introSession) {
 		setIntroVisual(s, 0, alphaFromProgress(p, true))
 		if elapsed >= duration {
 			enterIntroPhase(s, introPhaseFinished, now)
+			finishIntro(s)
+		}
+	case introPhaseFinished:
+		if isAppReady() {
 			finishIntro(s)
 		}
 	}
@@ -544,14 +544,6 @@ func nativeIntroWndProc(h uintptr, msg uint32, wparam, lparam uintptr) uintptr {
 		return 0
 	case introWMEraseBkgnd:
 		return 1
-	case introWMKeyDown:
-		if wparam == introVKEscape || wparam == introVKSpace || wparam == introVKReturn {
-			requestIntroSkip(s)
-		}
-		return 0
-	case introWMLButtonDown, introWMRButtonDown, introWMMButtonDown:
-		requestIntroSkip(s)
-		return 0
 	case introWMTimer:
 		if wparam == introTimerID {
 			tickIntro(s)
@@ -654,11 +646,11 @@ func runNativeIntro() {
 		logDesktop("initial intro UpdateWindow failed: %v", updateErr)
 	}
 	if !s.firstPaint {
-		logDesktop("native intro first frame was not confirmed; WebView startup withheld")
+		logDesktop("clean intro first frame was not confirmed; continuing startup with hidden WebView2")
 	} else {
-		logDesktop("native intro first frame confirmed; starting hidden WebView2")
-		startApp()
+		logDesktop("clean intro first frame confirmed; starting hidden WebView2")
 	}
+	startApp()
 
 	timer, _, timerErr := introSetTimer.Call(h, introTimerID, introTimerMS, 0)
 	if timer == 0 {
