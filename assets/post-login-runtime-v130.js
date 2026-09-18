@@ -61,7 +61,7 @@ async function start(){
   started=true;
   await load('perf-runtime','/assets/perf-runtime.js?v=1.3.0-post-login','__mwsCf571Optimizer');
   await load('test-v55','/assets/test-v5.5.js?v=1.3.0-perf39');
-  await load('test-v56','/assets/test-v5.6.js?v=1.3.0-ime65');
+  await load('contact-runtime-v130','/assets/contact-runtime-v130.js?v=1.3.0-search67','__mwsContactRuntimeV130');
 
   const deviceUiResult=await load('device-ui','/assets/device-ui.js?v=1.3.0-majoku-menu-p45');
   if(!deviceUiResult.ok){markCriticalUiFailure(['device-ui']);return;}
