@@ -69,7 +69,7 @@ import {runPhase68MaintenanceSuccessorActivationAudit} from './run-phase68-maint
 import {runPhase69LegacyMaintenanceRemovalAudit} from './run-phase69-legacy-maintenance-removal-audit.mjs';
 import {runPhase70UniversalKoreanInitialSearchAudit} from './run-phase70-universal-korean-initial-search-audit.mjs';
 import {runPhase71KoreanImeJamoSearchAudit} from './run-phase71-korean-ime-jamo-search-audit.mjs';
-import './run-phase72-search-owner-collision-audit.mjs';
+import {runPhase72SearchOwnerCollisionAudit} from './run-phase72-search-owner-collision-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -756,6 +756,16 @@ export function runPhase71FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase71FullIntegrationAudit();}
+export function runPhase72FullIntegrationAudit(){
+  const previous=runPhase71FullIntegrationAudit(), current=runPhase72SearchOwnerCollisionAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:72,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase72FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
