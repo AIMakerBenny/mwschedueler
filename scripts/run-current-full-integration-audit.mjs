@@ -33,6 +33,9 @@ import {runPhase32CalendarObserverPerformanceAudit} from './run-phase32-calendar
 import {runPhase33ClockPerformanceAudit} from './run-phase33-clock-performance-audit.mjs';
 import {runPhase34MobileDayObserverPerformanceAudit} from './run-phase34-mobile-day-observer-performance-audit.mjs';
 import {runPhase35PointerMovePerformanceAudit} from './run-phase35-pointer-move-performance-audit.mjs';
+import {runPhase36TodayPeopleStartupPollingAudit} from './run-phase36-today-people-startup-polling-audit.mjs';
+import {runPhase37ContactStartupPollingAudit} from './run-phase37-contact-startup-polling-audit.mjs';
+import {runPhase38CalendarPreviewMoveAudit} from './run-phase38-calendar-preview-mousemove-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -407,6 +410,39 @@ export function runPhase35FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase35FullIntegrationAudit();}
+export function runPhase36FullIntegrationAudit(){
+  const previous=runPhase35FullIntegrationAudit();
+  const current=runPhase36TodayPeopleStartupPollingAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:36,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runPhase37FullIntegrationAudit(){
+  const previous=runPhase36FullIntegrationAudit();
+  const current=runPhase37ContactStartupPollingAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:37,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runPhase38FullIntegrationAudit(){
+  const previous=runPhase37FullIntegrationAudit();
+  const current=runPhase38CalendarPreviewMoveAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:38,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase38FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();

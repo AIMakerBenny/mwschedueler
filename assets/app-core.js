@@ -886,15 +886,29 @@ function positionCalendarEventPreview(clientX,clientY){
   preview.style.left=Math.max(10,left)+'px';
   preview.style.top=Math.max(10,top)+'px';
 }
+let calendarPreviewMoveFrameV138=0,calendarPreviewMoveXV138=0,calendarPreviewMoveYV138=0;
+function queueCalendarEventPreviewPositionV138(clientX,clientY){
+  calendarPreviewMoveXV138=clientX;
+  calendarPreviewMoveYV138=clientY;
+  if(calendarPreviewMoveFrameV138)return;
+  calendarPreviewMoveFrameV138=requestAnimationFrame(()=>{
+    calendarPreviewMoveFrameV138=0;
+    positionCalendarEventPreview(calendarPreviewMoveXV138,calendarPreviewMoveYV138);
+  });
+}
 function showCalendarEventPreview(id,clientX,clientY){
   const e=data.events.find(x=>x.id===id),preview=document.getElementById('calendarEventPreview');
   if(!e||!preview)return;
   preview.innerHTML=calendarPreviewHTML(e);
   preview.classList.add('open');
   preview.setAttribute('aria-hidden','false');
-  requestAnimationFrame(()=>positionCalendarEventPreview(clientX,clientY));
+  queueCalendarEventPreviewPositionV138(clientX,clientY);
 }
 function hideCalendarEventPreview(){
+  if(calendarPreviewMoveFrameV138){
+    cancelAnimationFrame(calendarPreviewMoveFrameV138);
+    calendarPreviewMoveFrameV138=0;
+  }
   const preview=document.getElementById('calendarEventPreview');
   if(!preview)return;
   preview.classList.remove('open');
@@ -1263,7 +1277,7 @@ function renderCalendar(){
       document.getElementById('calendarCopyTrayDropzone')?.classList.remove('drag-over');
     };
     el.onmouseenter=e=>showCalendarEventPreview(el.dataset.evid,e.clientX,e.clientY);
-    el.onmousemove=e=>positionCalendarEventPreview(e.clientX,e.clientY);
+    el.onmousemove=e=>queueCalendarEventPreviewPositionV138(e.clientX,e.clientY);
     el.onmouseleave=hideCalendarEventPreview;
   });
   renderCalendarClipboard();

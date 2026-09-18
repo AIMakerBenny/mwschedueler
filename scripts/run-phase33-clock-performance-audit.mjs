@@ -12,7 +12,7 @@ export function runPhase33ClockPerformanceAudit(){
   if(!core.includes('if(document.hidden)return'))issues.push('clock work is not suspended in hidden tabs');
   if(!core.includes("document.addEventListener('visibilitychange',scheduleClockV133)"))issues.push('clock does not restart from visibility state changes');
   if(!core.includes('setTimeout(scheduleClockV133,delay)'))issues.push('clock does not use a visibility-aware scheduled timeout');
-  if(!index.includes('assets/app-core.js?v=1.3.0-perf35'))issues.push('app-core cache-bust was not advanced for performance fixes');
+  if(!index.includes('assets/app-core.js?v=1.3.0-'))issues.push('app-core cache-bust revision is missing');
 
   const summary={phase:33,name:'clock-background-performance',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));

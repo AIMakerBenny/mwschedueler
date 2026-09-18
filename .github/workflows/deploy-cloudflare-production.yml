@@ -68,7 +68,7 @@ jobs:
           SESSION="$session" node -e "const x=JSON.parse(process.env.SESSION); if(typeof x.authenticated!=='boolean') process.exit(1)"
 
           echo '[2/8] isolated login shell and v1.3.0 assets'
-          retry_contains "$BASE/?deploy=$GITHUB_SHA" 'app-core.js?v=1.3.0-perf35' > /tmp/index.html
+          retry_contains "$BASE/?deploy=$GITHUB_SHA" 'app-core.js?v=1.3.0-perf38' > /tmp/index.html
           grep -Fq 'id="mwsAccessGate"' /tmp/index.html
           if grep -Eq '<script[^>]+assets/(perf-runtime\.js|test-v5\.5\.js|test-v5\.6\.js|device-ui\.js)' /tmp/index.html; then
             echo 'Heavy UI/runtime script is still loaded before authentication.' >&2
@@ -83,6 +83,8 @@ jobs:
           grep -Fq "loadStyle('mobile-drawer-v130'" /tmp/post-login.js
           grep -Fq "loadStyle('mobile-calendar-v130'" /tmp/post-login.js
           grep -Fq "load('mobile-calendar-day-detail-v130'" /tmp/post-login.js
+          grep -Fq "test-v5.5.js?v=1.3.0-perf36" /tmp/post-login.js
+          grep -Fq "test-v5.6.js?v=1.3.0-perf37" /tmp/post-login.js
           retry_contains "$BASE/assets/mobile-calendar-day-detail-v130.js?deploy=$GITHUB_SHA" 'if(document.hidden||decorateQueued)return' > /tmp/mobile-day-detail.js
           node --check /tmp/mobile-day-detail.js
           grep -Fq "event.stopImmediatePropagation()" /tmp/mobile-day-detail.js
@@ -120,6 +122,11 @@ jobs:
           grep -Fq "eventModal.querySelector('.event-info-panel')" /tmp/app-core.js
           grep -Fq "attachCalendarPointerDragListeners" /tmp/app-core.js
           grep -Fq "detachCalendarPointerDragListeners" /tmp/app-core.js
+          grep -Fq "queueCalendarEventPreviewPositionV138" /tmp/app-core.js
+          if grep -Fq "el.onmousemove=e=>positionCalendarEventPreview(e.clientX,e.clientY)" /tmp/app-core.js; then
+            echo 'Direct calendar preview mousemove layout regression detected.' >&2
+            exit 1
+          fi
           if grep -Fq "setInterval(tickClock,1000)" /tmp/app-core.js; then
             echo 'Permanent clock interval regression detected.' >&2
             exit 1
@@ -169,6 +176,18 @@ jobs:
           node --check /tmp/cloud-loader.js
           grep -Fq "v130-live-contact-fix.js?v=1.3.0-perf31" /tmp/cloud-loader.js
           grep -Fq "ui-fixes-v121.js?v=1.2.2-perf35" /tmp/cloud-loader.js
+          retry_contains "$BASE/assets/test-v5.5.js?deploy=$GITHUB_SHA" 'function tryInstallV136()' > /tmp/test-v55.js
+          node --check /tmp/test-v55.js
+          if grep -Fq "tries>240" /tmp/test-v55.js; then
+            echo 'Today People startup polling regression detected.' >&2
+            exit 1
+          fi
+          retry_contains "$BASE/assets/test-v5.6.js?deploy=$GITHUB_SHA" 'function tryBootV137()' > /tmp/test-v56.js
+          node --check /tmp/test-v56.js
+          if grep -Fq "n>240" /tmp/test-v56.js; then
+            echo 'Contact startup polling regression detected.' >&2
+            exit 1
+          fi
           retry_contains "$BASE/assets/ui-fixes-v121.js?deploy=$GITHUB_SHA" 'function startGamePreviewTracking()' > /tmp/ui-fixes.js
           node --check /tmp/ui-fixes.js
           grep -Fq "removeEventListener('mousemove',trackGamePreviewMove,true)" /tmp/ui-fixes.js
@@ -220,6 +239,8 @@ jobs:
           echo '[8/8] source syntax and auth/UI boundary'
           node --check assets/cloud-v1.1-loader.js
           node --check assets/post-login-runtime-v130.js
+          node --check assets/test-v5.5.js
+          node --check assets/test-v5.6.js
           node --check assets/friend-finder-v120.js
           node --check assets/v130-live-contact-fix.js
           node --check assets/steam-game-v111.js

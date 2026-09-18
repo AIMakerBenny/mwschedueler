@@ -199,10 +199,18 @@
     window.dispatchEvent(new CustomEvent('mawang:v102-ready'));
   }
 
-  let tries=0;
-  const timer=setInterval(()=>{
-    tries++;
+  let installRetryV136=0;
+  function tryInstallV136(){
+    if(installed)return true;
     try{install()}catch(e){console.error('CF MWS V 1.0.2 install failed',e)}
-    if(installed||tries>240)clearInterval(timer);
-  },50);
+    if(installed)return true;
+    const delays=[120,600,1800];
+    if(installRetryV136<delays.length){
+      const delay=delays[installRetryV136++];
+      setTimeout(tryInstallV136,delay);
+    }
+    return false;
+  }
+  window.addEventListener('mws:post-login-ui-ready',tryInstallV136,{once:true});
+  tryInstallV136();
 })();

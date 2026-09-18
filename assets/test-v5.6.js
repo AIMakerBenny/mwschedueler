@@ -46,5 +46,21 @@ function v110Notice(title,msg){try{if(typeof toast==='function'){toast(title,msg
 function visitSelfStationV110(){const d=D(),selfId=String(d?.selfContactId||'').trim();if(!selfId)return v110Notice('방송국 가기','설정에서 이용자를 먼저 선택해 주세요.');const c=(d?.contacts||[]).find(x=>String(x?.id||'')===selfId);if(!c)return v110Notice('방송국 가기','선택된 이용자의 연락처를 찾을 수 없습니다.');const raw=String(c.stationUrl||'').trim();if(!raw)return v110Notice('방송국 가기',`${c.name||'선택된 이용자'}의 방송국 주소가 등록되어 있지 않습니다.`);const url=(typeof normalizeExternalUrl==='function')?normalizeExternalUrl(raw):(/^https?:\/\//i.test(raw)?raw:'https://'+raw);let parsed;try{parsed=new URL(url)}catch(_){return v110Notice('방송국 가기','등록된 방송국 주소가 올바른 URL이 아닙니다.')}if(!/^https?:$/.test(parsed.protocol))return v110Notice('방송국 가기','HTTP 또는 HTTPS 방송국 주소만 열 수 있습니다.');window.open(parsed.href,'_blank','noopener,noreferrer')}
 function installSidebarV110(){const save=$('mwsSidebarSaveBtn');if(!save||$('mwsStationVisitBtnV110'))return;const b=document.createElement('button');b.type='button';b.id='mwsStationVisitBtnV110';b.className='sidebar-save-v572 sidebar-station-v110';b.title='현재 이용자의 방송국 열기';b.innerHTML='<span class="sidebar-save-icon-v572" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 5h5v5"/><path d="M10 14 19 5"/><path d="M19 13v6H5V5h6"/></svg></span><span class="sidebar-save-label-v572">방송국 가기</span>';b.onclick=visitSelfStationV110;save.before(b);const sync=()=>{b.hidden=!!save.hidden};sync();try{new MutationObserver(sync).observe(save,{attributes:true,attributeFilter:['hidden']})}catch(_){}}
 function boot(){installParticipant();hookContacts();historyUI();hookTab();installSidebarV110();const ss=$('sniperSearch');if(ss)ss.placeholder='이름, 태그 또는 초성 검색'}
-let n=0,t=setInterval(()=>{if(++n>240)return clearInterval(t);if(D()&&$('participantSearch')&&$('contactGrid')&&typeof window.setTab==='function'){clearInterval(t);boot()}},50);
+let bootedV137=false,bootRetryV137=0;
+function tryBootV137(){
+  if(bootedV137)return true;
+  if(D()&&$('participantSearch')&&$('contactGrid')&&typeof window.setTab==='function'){
+    bootedV137=true;
+    boot();
+    return true;
+  }
+  const delays=[120,600,1800];
+  if(bootRetryV137<delays.length){
+    const delay=delays[bootRetryV137++];
+    setTimeout(tryBootV137,delay);
+  }
+  return false;
+}
+window.addEventListener('mws:post-login-ui-ready',tryBootV137,{once:true});
+tryBootV137();
 })();
