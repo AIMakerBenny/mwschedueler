@@ -12,8 +12,8 @@ function normalizeVersionHtml(html){
   /* Heavy UI/runtime modules must never execute on the login screen. */
   const deferred=[
     'perf-runtime\\.js',
-    'test-v5\\.5\\.js',
-    'test-v5\\.6\\.js',
+    'today-people-runtime-v130\\.js',
+    'contact-runtime-v130\\.js',
     'device-ui\\.js'
   ];
   for(const file of deferred){
@@ -177,24 +177,14 @@ export default {
       return textResponse(response,normalizeBossScript(await response.text()),{'x-mws-boss-hp-policy':'configurable-default-500'});
     }
 
-    if(request.method==='GET'&&url.pathname==='/assets/cloud-v1.1.js'){
-      const response=await serveAsset(env,request,'/assets/cloud-v1.1.js');
+    if(request.method==='GET'&&url.pathname==='/assets/cloud-runtime-v130.js'){
+      const response=await serveAsset(env,request,'/assets/cloud-runtime-v130.js');
       if(response.status!==200)return response;
       const patched=normalizeCloudCore(await response.text());
       return textResponse(response,patched,{
         'x-mws-auth-boundary':'decoupled-v130',
         'x-mws-cache-db':'mawang_data_v130'
       });
-    }
-
-    if(url.pathname==='/assets/cloud-v5.5.js'){
-      const replacement=new URL('/assets/cloud-v1.1-loader.js?v=1.3.0-auth-decoupled',request.url);
-      const response=await env.ASSETS.fetch(new Request(replacement.toString(),{method:'GET',headers:request.headers}));
-      const headers=new Headers(response.headers);
-      headers.set('cache-control','no-store');
-      headers.set('x-mws-runtime','v1.3.0-auth-decoupled');
-      headers.set('x-mws-image-policy','original-bytes-no-reencode');
-      return new Response(response.body,{status:response.status,statusText:response.statusText,headers});
     }
 
     const response=await authWorker.fetch(request,env,ctx);
