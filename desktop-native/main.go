@@ -124,7 +124,7 @@ const appBridgeScript = `(function(){
   if(window.__mwsDesktopBridgeInstalled)return;
   window.__mwsDesktopBridgeInstalled=true;
 
-  function norm(v){return String(v||'').replace(/\\s+/g,'').toLowerCase();}
+  function norm(v){return String(v||'').replace(/\s+/g,'').toLowerCase();}
 
   window.__mwsDesktopOpenSection=function(tab,labels){
     var tries=0,wanted=String(tab||''),names=String(labels||'').split('|').map(norm).filter(Boolean);
