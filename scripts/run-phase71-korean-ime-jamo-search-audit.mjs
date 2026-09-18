@@ -9,7 +9,7 @@ export function runPhase71KoreanImeJamoSearchAudit(){
 
   if(!app.includes("const MWS_KOREAN_CHOSEONG='ᄀᄁᄂᄃᄄᄅᄆᄇᄈᄉᄊᄋᄌᄍᄎᄏᄐᄑᄒ'"))issues.push('modern Hangul choseong map is missing');
   if(!app.includes("normalize('NFKD')"))issues.push('Korean search does not Unicode-normalize IME input');
-  if(!index.includes('assets/app-core.js?v=1.3.0-search71'))issues.push('search71 cache-bust is missing');
+  if(!/assets\/app-core\.js\?v=1\.3\.0-search(?:7[1-9]|[89][0-9]|[1-9][0-9]{2,})/.test(index))issues.push('app-core search cache-bust is older than search71');
 
   const start=app.indexOf("const MWS_KOREAN_INITIALS=");
   const end=app.indexOf('function allContactLabels()',start);
