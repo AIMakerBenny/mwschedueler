@@ -42,6 +42,8 @@ jobs:
           node --check scripts/run-phase54-version-writer-audit.mjs
           node --check scripts/run-phase55-friend-live-thumbnail-audit.mjs
           node --check scripts/run-phase56-single-live-renderer-audit.mjs
+          node --check scripts/run-phase57-live-thumbnail-refresh-audit.mjs
+          node --check scripts/run-phase58-friend-thumbnail-load-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -251,6 +253,7 @@ jobs:
           retry_contains "$BASE/assets/cloud-v1.1-loader.js?deploy=$GITHUB_SHA" 'steam-game-v111.js?v=1.1.4-perf30' > /tmp/cloud-loader.js
           node --check /tmp/cloud-loader.js
           grep -Fq "v130-live-contact-fix.js?v=1.3.0-perf31" /tmp/cloud-loader.js
+          grep -Fq "friend-finder-v120.js?v=1.3.0-phase58" /tmp/cloud-loader.js
           grep -Fq "ui-fixes-v121.js?v=1.2.3-perf44" /tmp/cloud-loader.js
           retry_contains "$BASE/assets/test-v5.5.js?deploy=$GITHUB_SHA" 'function tryInstallV136()' > /tmp/test-v55.js
           node --check /tmp/test-v55.js
@@ -301,8 +304,21 @@ jobs:
           grep -Fq '/api/soop/categories' /tmp/friend.js
           grep -Fq 'const ACTIVE_REFRESH_MS=30000' /tmp/friend.js
           grep -Fq 'function scheduleActiveRefresh' /tmp/friend.js
+          grep -Fq 'function liveThumbStamp()' /tmp/friend.js
+          grep -Fq 'img.dataset.thumbStamp=stamp' /tmp/friend.js
           grep -Fq "screen=document.createElement('div');screen.className='mws-live-screen-v120'" /tmp/friend.js
           grep -Fq 'card.appendChild(screen)' /tmp/friend.js
+          grep -Fq 'loading="lazy"' /tmp/friend.js
+          grep -Fq 'fetchpriority="low"' /tmp/friend.js
+          grep -Fq 'if(!live||!bno||!match){if(screen)screen.hidden=true;continue}' /tmp/friend.js
+          if grep -Fq 'loading="eager"' /tmp/friend.js; then
+            echo 'Eager Friend Finder LIVE thumbnail loading regression detected.' >&2
+            exit 1
+          fi
+          if grep -Fq 'fetchpriority="high"' /tmp/friend.js; then
+            echo 'High-priority Friend Finder LIVE thumbnail loading regression detected.' >&2
+            exit 1
+          fi
           batch="$(curl -fsS --max-time 25 -H 'content-type: application/json' -d '{"urls":["https://api-channel.sooplive.co.kr/v1.1/channel/mawang0216/home/section/broad"],"force":true}' "$BASE/api/soop/live-batch")"
           BATCH="$batch" node -e "const x=JSON.parse(process.env.BATCH); if(!x.ok||!Array.isArray(x.results)||x.results.length!==1) process.exit(1); const r=x.results[0]; if(!r||typeof r.url!=='string'||typeof r.status!=='number'||typeof r.body!=='string') process.exit(1)"
           BATCH="$batch" node -e "const x=JSON.parse(process.env.BATCH),r=x.results[0]; let j=null; try{j=JSON.parse(r.body)}catch(_){}; if(r.status>=200&&r.status<500&&j&&typeof j==='object'){const q=[j];let b='';while(q.length&&!b){const v=q.shift();if(!v||typeof v!=='object')continue;b=String(v.broadNo||v.broad_no||v.bno||'');for(const c of Object.values(v))if(c&&typeof c==='object')q.push(c)}; console.log(b?'SOOP live payload reachable; broadcast number detected.':'SOOP live payload reachable; channel currently offline or payload has no active broadcast.')}else{console.log('SOOP upstream unavailable/transient; Worker batch contract itself is healthy.') }"
