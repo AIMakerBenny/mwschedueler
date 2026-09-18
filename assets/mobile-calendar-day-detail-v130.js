@@ -109,7 +109,7 @@ function ensureSheet(){
   root.setAttribute('aria-hidden','true');
   root.innerHTML=`
     <div class="mws-mobile-day-backdrop-v130" data-mws-day-close="1"></div>
-    <section class="mws-mobile-day-sheet-v130" role="dialog" aria-modal="true" aria-labelledby="mwsMobileDayTitleV130">
+    <section class="mws-mobile-day-sheet-v130" role="dialog" aria-modal="false" aria-labelledby="mwsMobileDayTitleV130">
       <div class="mws-mobile-day-handle-v130" aria-hidden="true"></div>
       <div class="mws-mobile-day-head-v130">
         <div>
@@ -219,7 +219,7 @@ function decorateGrid(){
       }else{
         main.textContent=main.dataset.mwsMobileOriginalText;
         node.classList.remove('mws-mobile-event-hidden-v130');
-        node.removeAttribute('draggable');
+        node.setAttribute('draggable','true');
       }
     });
 
@@ -248,6 +248,15 @@ document.addEventListener('click',event=>{
   event.stopPropagation();
   event.stopImmediatePropagation();
   openSheet(day.dataset.date);
+},true);
+
+document.addEventListener('click',event=>{
+  const target=event.target;
+  if(!(target instanceof Element))return;
+  const navButton=target.closest('.mws-mobile-tabs [data-mobile-tab]');
+  if(!navButton)return;
+  const root=document.getElementById(SHEET_ID);
+  if(root?.classList.contains('open'))closeSheet();
 },true);
 
 document.addEventListener('keydown',event=>{

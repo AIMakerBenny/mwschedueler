@@ -16,6 +16,8 @@ import {runPhase15ConcurrentAdminVersionGuardAudit} from './run-phase15-concurre
 import {runPhase16MobileCalendarDayDetailAudit} from './run-phase16-mobile-calendar-day-detail-audit.mjs';
 import {runPhase17MobileCalendarTextVisibilityAudit} from './run-phase17-mobile-calendar-text-visibility-audit.mjs';
 import {runPhase18MobileCalendarDetailMediaAudit} from './run-phase18-mobile-calendar-detail-media-audit.mjs';
+import {runPhase19MobileCalendarPcDragRestoreAudit} from './run-phase19-mobile-calendar-pc-drag-restore-audit.mjs';
+import {runPhase20MobileCalendarDetailNavStateAudit} from './run-phase20-mobile-calendar-detail-nav-state-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -203,6 +205,28 @@ export function runPhase18FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase18FullIntegrationAudit();}
+export function runPhase19FullIntegrationAudit(){
+  const previous=runPhase18FullIntegrationAudit();
+  const current=runPhase19MobileCalendarPcDragRestoreAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:19,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runPhase20FullIntegrationAudit(){
+  const previous=runPhase19FullIntegrationAudit();
+  const current=runPhase20MobileCalendarDetailNavStateAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:20,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase20FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();

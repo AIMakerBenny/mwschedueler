@@ -90,6 +90,9 @@ jobs:
           grep -Fq "participantVisuals(event)" /tmp/mobile-day-detail.js
           grep -Fq "gameVisual(event)" /tmp/mobile-day-detail.js
           grep -Fq "mws-mobile-nav-offset-v130" /tmp/mobile-day-detail.js
+          grep -Fq "node.setAttribute('draggable','true')" /tmp/mobile-day-detail.js
+          grep -Fq "mws-mobile-tabs [data-mobile-tab]" /tmp/mobile-day-detail.js
+          grep -Fq 'aria-modal="false"' /tmp/mobile-day-detail.js
           retry_contains "$BASE/assets/mobile-calendar-v130.css?deploy=$GITHUB_SHA" 'mws-mobile-calendar-extra-v130' > /tmp/mobile-calendar.css
           grep -Fq "mini-event-main" /tmp/mobile-calendar.css
           grep -Fq "mws-mobile-day-person-avatar-v130" /tmp/mobile-calendar.css
