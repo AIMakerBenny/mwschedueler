@@ -3183,7 +3183,7 @@ function scheduleTargetListRenderV150(delay=90){
 {
   const targetSearch=document.getElementById('targetSearch');
   if(targetSearch){
-    targetSearch.oninput=e=>{if(e?.isComposing)return;scheduleTargetListRenderV150(90)};
+    targetSearch.oninput=e=>{scheduleTargetListRenderV150(90)};
     targetSearch.oncompositionend=()=>scheduleTargetListRenderV150(0);
   }
 }
@@ -3195,7 +3195,7 @@ function scheduleTargetPickerRenderV151(delay=80){
 {
   const targetPickerSearch=document.getElementById('targetPickerSearch');
   if(targetPickerSearch){
-    targetPickerSearch.oninput=e=>{if(e?.isComposing)return;scheduleTargetPickerRenderV151(80)};
+    targetPickerSearch.oninput=e=>{scheduleTargetPickerRenderV151(80)};
     targetPickerSearch.oncompositionend=()=>scheduleTargetPickerRenderV151(0);
   }
 }
@@ -3578,7 +3578,7 @@ let mwsContactSearchTimer=0;
 const mwsContactSearchInput=document.getElementById('contactSearch');
 if(mwsContactSearchInput){
   mwsContactSearchInput.oninput=(ev)=>{
-    if(ev?.isComposing)return;
+    
     clearTimeout(mwsContactSearchTimer);
     mwsContactSearchTimer=setTimeout(()=>{
       window.__mwsContactSearchRender=true;
@@ -3603,7 +3603,7 @@ function scheduleSniperRenderV149(delay=90){
 {
   const sniperSearch=document.getElementById('sniperSearch');
   if(sniperSearch){
-    sniperSearch.oninput=e=>{if(e?.isComposing)return;scheduleSniperRenderV149(90)};
+    sniperSearch.oninput=e=>{scheduleSniperRenderV149(90)};
     sniperSearch.oncompositionend=()=>scheduleSniperRenderV149(0);
   }
 }
@@ -5466,7 +5466,7 @@ function schedulePostApplicantRenderV142(delay=90){
 document.getElementById('postUrlAddBtn')?.addEventListener('click',addSoopPostFromUrl);document.getElementById('postUrlInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addSoopPostFromUrl()}});document.getElementById('postDisplayName')?.addEventListener('change',e=>{const p=postById(activePostId);if(!p)return;p.name=e.target.value.trim()||p.sourceTitle||`게시글 ${p.postNo}`;p.nameManual=true;syncPostContactApplicationHistories(p);saveData('게시글 이름 변경');renderPosts()});{
   const postSearch=document.getElementById('postApplicantSearch');
   if(postSearch){
-    postSearch.addEventListener('input',e=>{if(e?.isComposing)return;schedulePostApplicantRenderV142(90)});
+    postSearch.addEventListener('input',e=>{schedulePostApplicantRenderV142(90)});
     postSearch.addEventListener('compositionend',()=>schedulePostApplicantRenderV142(0));
   }
 }
@@ -5829,7 +5829,7 @@ function scheduleUserIdentityRenderV143(delay=80){
 {
   const selfSearch=document.getElementById('selfContactSearch');
   if(selfSearch){
-    selfSearch.addEventListener('input',e=>{if(e?.isComposing)return;scheduleUserIdentityRenderV143(80)});
+    selfSearch.addEventListener('input',e=>{scheduleUserIdentityRenderV143(80)});
     selfSearch.addEventListener('compositionend',()=>scheduleUserIdentityRenderV143(0));
   }
 }
