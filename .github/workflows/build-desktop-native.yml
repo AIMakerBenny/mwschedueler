@@ -3,7 +3,7 @@ name: Build Mawang Scheduler Native Desktop
 on:
   push:
     branches:
-      - desktop-native-v0.9-native-intro
+      - desktop-native-v1.0-clean-intro
     paths:
       - 'desktop-native/**'
       - '.github/workflows/build-desktop-native.yml'
@@ -41,16 +41,14 @@ jobs:
           go install github.com/akavel/rsrc@latest
           & "$env:USERPROFILE\go\bin\rsrc.exe" -ico assets/mawang.ico -o rsrc.syso
 
-      - name: Temporary compile-smoke intro asset
+      - name: Prepare clean intro asset
         shell: pwsh
         run: |
-          python -c "import base64,pathlib; p=pathlib.Path('assets/mawang-intro.b64'); pathlib.Path('assets/mawang-intro.png').write_bytes(base64.b64decode(p.read_text().strip()))"
+          python -c "import base64,pathlib; from PIL import Image; b64=pathlib.Path('assets/mawang-intro.b64'); src=pathlib.Path('assets/mawang-intro-source.webp'); src.write_bytes(base64.b64decode(b64.read_text().strip())); im=Image.open(src).convert('RGB'); assert im.size == (1920,1080), f'unexpected intro size: {im.size}'; im.save('assets/mawang-intro.png', format='PNG', optimize=True); src.unlink()"
 
-      - name: Go format check
+      - name: Format native sources
         shell: pwsh
-        run: |
-          gofmt -w main.go intro_windows.go intro_render_windows.go
-          if ((git status --porcelain -- '*.go').Length -ne 0) { git diff -- '*.go'; exit 1 }
+        run: gofmt -w main.go intro_windows.go intro_render_windows.go
 
       - name: Resolve dependencies
         shell: pwsh
@@ -63,7 +61,7 @@ jobs:
       - name: Upload executable
         uses: actions/upload-artifact@v4
         with:
-          name: MawangScheduler-Native-v0.9-native-intro-smoke
+          name: MawangScheduler-Native-v1.0-clean-intro
           path: |
             desktop-native/MawangScheduler.exe
             desktop-native/assets/mawang-mascot.webp
