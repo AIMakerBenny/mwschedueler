@@ -7,9 +7,12 @@ export function runPhase77HistoryCacheLocalizationAudit(){
   const perf=fs.readFileSync('assets/perf-runtime-base.js','utf8');
 
   if(/normalizedCollaborationHistory=function/.test(perf))issues.push('perf runtime still overrides normalizedCollaborationHistory globally');
-  if(!perf.includes("const baseNormalized=typeof normalizedCollaborationHistory==='function'?normalizedCollaborationHistory:null;"))issues.push('perf runtime lost the canonical history source reference');
-  if(!perf.includes('function cachedHistory()'))issues.push('localized cachedHistory helper is missing');
-  if(!perf.includes('for(const row of cachedHistory())'))issues.push('lastMap does not use the localized history cache');
+  if(perf.includes('optimizedRenderContacts')){
+    if(!perf.includes("const baseNormalized=typeof normalizedCollaborationHistory==='function'?normalizedCollaborationHistory:null;"))issues.push('optimized renderer lost its localized history source');
+    if(!perf.includes('function cachedHistory()'))issues.push('optimized renderer lost localized history cache');
+  }else{
+    if(perf.includes('cachedHistory')||perf.includes('lastMap(')||perf.includes('baseNormalized'))issues.push('dead localized history cache remains after renderer override removal');
+  }
   if(!app.includes('function normalizedCollaborationHistory()'))issues.push('canonical normalizedCollaborationHistory is missing from app-core');
 
   let calls=0,day='2026-09-18',cache=null,cacheDay='';
