@@ -116,6 +116,8 @@ var (
 	introDoneOnce         sync.Once
 	introExitScheduleOnce sync.Once
 	appReadyCh            = make(chan struct{}, 1)
+	appReadyMu            sync.Mutex
+	appReadyState         bool
 
 	startupMu     sync.Mutex
 	startupLocked = true
@@ -241,57 +243,99 @@ const introHTMLTemplate = `<!doctype html>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}
 body{user-select:none}
 #stage{position:fixed;inset:0;background:#000;overflow:hidden}
-#photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;transform:scale(1.012);transition:opacity .60s ease,transform .85s ease}
-#stage.in #photo{opacity:1;transform:scale(1)}
-#stage.out #photo{opacity:0;transition:opacity .68s ease}
-#hint{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);font:600 10px/1 "Segoe UI","Malgun Gothic",sans-serif;letter-spacing:.14em;color:rgba(255,255,255,.34);text-shadow:0 1px 6px rgba(0,0,0,.7)}
+#photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;transform:scale(1.012);transition:opacity .72s ease,transform 1.05s ease}
+#stage.photo-in #photo{opacity:1;transform:scale(1)}
+#stage.photo-out #photo{opacity:0;transform:scale(1)}
+#title{position:absolute;left:50%;top:50%;width:min(92vw,1280px);transform:translate(-50%,-45%) scale(.985);text-align:center;color:#fff;opacity:0;filter:blur(8px);transition:opacity .78s ease,transform .95s cubic-bezier(.2,.8,.2,1),filter .78s ease}
+#stage.title-in #title{opacity:1;filter:blur(0);transform:translate(-50%,-50%) scale(1)}
+#stage.title-out #title{opacity:0;filter:blur(5px);transform:translate(-50%,-53%) scale(1.01)}
+#titleMain{font:900 clamp(46px,6.6vw,108px)/.95 "Segoe UI",Arial,sans-serif;letter-spacing:-.055em;text-shadow:0 0 34px rgba(130,185,255,.19),0 16px 48px rgba(0,0,0,.82)}
+#titleKo{margin-top:20px;font:700 clamp(17px,1.55vw,27px)/1.2 "Segoe UI","Malgun Gothic",sans-serif;letter-spacing:.30em;color:#dfe1e9}
+#line{width:0;height:2px;margin:25px auto 0;background:linear-gradient(90deg,transparent,#8dbdff 24%,#e0a1d7 76%,transparent);transition:width 1s ease .18s}
+#stage.title-in #line{width:min(440px,44vw)}
+#status{position:absolute;left:50%;bottom:25px;transform:translateX(-50%);font:600 10px/1 "Segoe UI","Malgun Gothic",sans-serif;letter-spacing:.14em;color:rgba(255,255,255,.30);opacity:0;transition:opacity .45s ease}
+#stage.waiting #status{opacity:1}
 </style>
 </head>
 <body>
 <div id="stage">
   <img id="photo" alt="">
-  <div id="hint">CLICK OR SPACE TO SKIP</div>
+  <div id="title">
+    <div id="titleMain">Mawang Scheduler</div>
+    <div id="titleKo">마왕스케줄러</div>
+    <div id="line"></div>
+  </div>
+  <div id="status">STARTING...</div>
 </div>
 <script>
 (function(){
   var stage=document.getElementById('stage');
   var photo=document.getElementById('photo');
+  var appReady=false;
+  var titleReady=false;
+  var ending=false;
   var finished=false;
-  var fading=false;
   var imageSrc='data:image/webp;base64,__INTRO_B64__';
 
-  function done(reason){
+  function finish(){
     if(finished)return;
     finished=true;
-    try{window.__mwsIntroDone(reason||'complete');}catch(_){}
+    try{window.__mwsIntroDone('complete');}catch(_){}
   }
 
-  window.__mwsBeginIntroExit=function(reason){
-    if(fading||finished)return;
-    fading=true;
-    stage.classList.add('out');
-    setTimeout(function(){done(reason||'complete');},720);
+  function tryFinish(){
+    if(ending||finished||!appReady||!titleReady)return;
+    ending=true;
+    stage.classList.remove('waiting');
+    stage.classList.add('title-out');
+    setTimeout(finish,720);
+  }
+
+  function showTitle(){
+    stage.classList.add('photo-out');
+    setTimeout(function(){
+      stage.classList.add('title-in');
+      setTimeout(function(){
+        titleReady=true;
+        if(!appReady)stage.classList.add('waiting');
+        tryFinish();
+      },1450);
+    },560);
+  }
+
+  window.__mwsSetAppReady=function(){
+    appReady=true;
+    tryFinish();
   };
 
-  function skip(e){
-    if(e)e.preventDefault();
-    window.__mwsBeginIntroExit('skip');
-  }
+  window.__mwsSkipIntro=function(){
+    if(finished||ending)return;
+    stage.classList.add('photo-out');
+    stage.classList.add('title-in');
+    titleReady=true;
+    if(!appReady)stage.classList.add('waiting');
+    tryFinish();
+  };
 
-  stage.addEventListener('click',skip,true);
+  stage.addEventListener('click',function(){window.__mwsSkipIntro();},true);
   window.addEventListener('keydown',function(e){
-    if(e.code==='Space'||e.key===' '||e.key==='Escape')skip(e);
+    if(e.code==='Space'||e.key===' '||e.key==='Escape'){
+      e.preventDefault();
+      window.__mwsSkipIntro();
+    }
   },true);
 
   photo.onload=function(){
     requestAnimationFrame(function(){
-      requestAnimationFrame(function(){stage.classList.add('in');});
+      requestAnimationFrame(function(){stage.classList.add('photo-in');});
     });
     try{window.__mwsIntroReady();}catch(_){}
+    setTimeout(showTitle,2450);
   };
 
   photo.onerror=function(){
     try{window.__mwsIntroReady();}catch(_){}
+    showTitle();
   };
 
   photo.src=imageSrc;
@@ -512,6 +556,33 @@ func startApp() {
 	})
 }
 
+func setAppReady() {
+	appReadyMu.Lock()
+	appReadyState = true
+	appReadyMu.Unlock()
+
+	select {
+	case appReadyCh <- struct{}{}:
+	default:
+	}
+
+	introMu.Lock()
+	iw := introWv
+	introMu.Unlock()
+	if iw != nil {
+		iw.Dispatch(func() {
+			iw.Eval("window.__mwsSetAppReady && window.__mwsSetAppReady()")
+		})
+	}
+}
+
+func isAppReady() bool {
+	appReadyMu.Lock()
+	ready := appReadyState
+	appReadyMu.Unlock()
+	return ready
+}
+
 func runAppWebView() {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
@@ -547,10 +618,7 @@ func runAppWebView() {
 
 	w.Bind("__mwsToggleFullscreen", func() bool { return toggleFullscreen() })
 	w.Bind("__mwsAppReady", func() {
-		select {
-		case appReadyCh <- struct{}{}:
-		default:
-		}
+		setAppReady()
 	})
 	w.Init(appBridgeScript)
 	w.Navigate(appURL)
@@ -617,7 +685,6 @@ func runIntroWindow() {
 	})
 	if w == nil {
 		startApp()
-		go revealAppAndCloseIntro("skip")
 		return
 	}
 	defer w.Destroy()
@@ -629,20 +696,13 @@ func runIntroWindow() {
 	introMu.Unlock()
 
 	setWindowIcon(h)
-	procShowWindow.Call(h, swHide)
-
-	showAndStart := func() {
-		introShown.Do(func() {
-			makeIntroBorderless(h)
-			procShowWindow.Call(h, swShow)
-			procSetForegroundWindow.Call(h)
-			startApp()
-			scheduleIntroExit(w)
-		})
-	}
 
 	w.Bind("__mwsIntroReady", func() {
-		showAndStart()
+		if isAppReady() {
+			w.Dispatch(func() {
+				w.Eval("window.__mwsSetAppReady && window.__mwsSetAppReady()")
+			})
+		}
 	})
 	w.Bind("__mwsIntroDone", func(reason string) {
 		go revealAppAndCloseIntro(reason)
@@ -650,9 +710,22 @@ func runIntroWindow() {
 
 	w.SetHtml(introHTML())
 
-	// Image decode failures must never prevent startup.
-	time.AfterFunc(1200*time.Millisecond, func() {
-		w.Dispatch(func() { showAndStart() })
+	// Show the intro window immediately. Do not wait for a JavaScript callback.
+	// This guarantees the splash is actually visible while the Scheduler loads behind it.
+	makeIntroBorderless(h)
+	procShowWindow.Call(h, swShow)
+	procSetForegroundWindow.Call(h)
+	startApp()
+
+	// If the app became ready before the intro page finished loading, pass that
+	// state into the intro after the document has had time to initialize.
+	time.AfterFunc(300*time.Millisecond, func() {
+		if !isAppReady() {
+			return
+		}
+		w.Dispatch(func() {
+			w.Eval("window.__mwsSetAppReady && window.__mwsSetAppReady()")
+		})
 	})
 
 	w.Run()
@@ -668,56 +741,64 @@ func runIntroWindow() {
 	locked := startupLocked
 	startupMu.Unlock()
 	if locked && !exiting {
-		go revealAppAndCloseIntro("skip")
+		// Unexpected splash closure must never expose a login page or leave
+		// a black window behind. Close the application instead.
+		exiting = true
+		wvMu.Lock()
+		aw := wv
+		wvMu.Unlock()
+		if aw != nil {
+			aw.Terminate()
+		}
+		systray.Quit()
 	}
 }
 func revealAppAndCloseIntro(reason string) {
 	introDoneOnce.Do(func() {
-		deadline := time.Now().Add(8 * time.Second)
+		// The intro is only allowed to hand off after the main Scheduler UI
+		// has reported ready. The login screen therefore remains hidden.
+		deadline := time.Now().Add(20 * time.Second)
 		for time.Now().Before(deadline) && !exiting {
-			wvMu.Lock()
-			h := hwnd
-			aw := wv
-			wvMu.Unlock()
-
-			if h != 0 && aw != nil {
-				// Remove the intro from the screen first. This prevents a leftover
-				// black full-screen WebView from covering the tray or desktop.
-				introMu.Lock()
-				ih := introHwnd
-				iw := introWv
-				introHwnd = 0
-				introMu.Unlock()
-				if ih != 0 {
-					procShowWindow.Call(ih, swHide)
-				}
-
-				startupMu.Lock()
-				startupLocked = false
-				startupMu.Unlock()
-
-				stateMu.Lock()
-				lastMaximized = true
-				lastStateValid = true
-				stateMu.Unlock()
-
-				procShowWindow.Call(h, swMaximize)
-				procSetForegroundWindow.Call(h)
-
-				if iw != nil {
-					iw.Dispatch(func() { iw.Terminate() })
-				}
-				return
+			if isAppReady() {
+				break
 			}
 			time.Sleep(60 * time.Millisecond)
 		}
+		if !isAppReady() || exiting {
+			return
+		}
 
-		// Absolute fallback: never leave an orphaned full-screen intro behind.
-		hideIntroNative()
+		wvMu.Lock()
+		h := hwnd
+		aw := wv
+		wvMu.Unlock()
+		if h == 0 || aw == nil {
+			return
+		}
+
+		// Hide the splash at the native window level before the main window is
+		// shown. Even if WebView destruction is delayed, no black overlay can remain.
 		introMu.Lock()
+		ih := introHwnd
 		iw := introWv
 		introHwnd = 0
 		introMu.Unlock()
+		if ih != 0 {
+			procShowWindow.Call(ih, swHide)
+		}
+
+		startupMu.Lock()
+		startupLocked = false
+		startupMu.Unlock()
+
+		stateMu.Lock()
+		lastMaximized = true
+		lastStateValid = true
+		stateMu.Unlock()
+
+		procShowWindow.Call(h, swMaximize)
+		procSetForegroundWindow.Call(h)
+
 		if iw != nil {
 			iw.Dispatch(func() { iw.Terminate() })
 		}
@@ -764,13 +845,13 @@ func jsString(s string) string {
 }
 
 func acquireSingleton() bool {
-	name, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopNativeMutexV061")
+	name, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopNativeMutexV070")
 	m, _, err := procCreateMutex.Call(0, 0, uintptr(unsafe.Pointer(name)))
 	if m == 0 {
 		return true
 	}
 	if errno, ok := err.(syscall.Errno); ok && errno == syscall.ERROR_ALREADY_EXISTS {
-		evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV061")
+		evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV070")
 		ev, _, _ := procOpenEvent.Call(0x0002, 0, uintptr(unsafe.Pointer(evName)))
 		if ev != 0 {
 			procSetEvent.Call(ev)
@@ -783,7 +864,7 @@ func acquireSingleton() bool {
 }
 
 func watchShowEvent() {
-	evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV061")
+	evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV070")
 	ev, _, _ := procCreateEvent.Call(0, 0, 0, uintptr(unsafe.Pointer(evName)))
 	if ev == 0 {
 		return
