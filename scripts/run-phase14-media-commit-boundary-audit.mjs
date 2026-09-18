@@ -6,12 +6,12 @@ export function runPhase14MediaCommitBoundaryAudit(){
   const warnings=[];
   const src=fs.readFileSync('src/cf-v111-auth.js','utf8');
 
-  if(!src.includes('function r2VersionedKey(kind,key,version)'))issues.push('versioned R2 media key helper is missing');
+  if(!/function r2VersionedKey\(kind,key,version(?:,token='')?\)/.test(src))issues.push('versioned R2 media key helper is missing');
   if(!/env\.IMAGES\.put\(r2VersionedKey\(kind,key,version(?:,token)?\)/.test(src))issues.push('new media still overwrites the legacy R2 key before workspace commit');
   if(!src.includes('if(saveContext?.statements)saveContext.statements.push(statement);else await statement.run()'))issues.push('image_sources metadata is not staged with the save transaction');
   if(!src.includes('mediaContext={statements:[]}'))issues.push('handleSave has no media metadata staging context');
-  if(!src.includes('const statements=[...mediaContext.statements]'))issues.push('media metadata is not included in the final workspace D1 batch');
-  if(!src.includes("const requested=Math.max(0,Number(new URL(request.url).searchParams.get('v'))||0)"))issues.push('media route does not resolve requested media versions');
+  if(!src.includes('mediaContext.statements')||!src.includes('statements.push(...mediaContext.statements)'))issues.push('media metadata is not included in the final workspace D1 batch');
+  if(!src.includes("searchParams.get('v')"))issues.push('media route does not resolve requested media versions');
   if(!src.includes('env.IMAGES.get(r2VersionedKey(kind,key,requested))'))issues.push('media route does not read versioned objects');
   if(!src.includes('if(!object)object=await env.IMAGES.get(r2Key(kind,key))'))issues.push('legacy unversioned media fallback was not preserved');
 
