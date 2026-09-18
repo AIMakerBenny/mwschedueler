@@ -439,12 +439,6 @@ func showIntroWindow() {
 	procSetForegroundWindow.Call(session.hwnd)
 }
 
-func hideIntroNative() {
-	session := currentIntro()
-	if session != nil && session.hwnd != 0 {
-		procShowWindow.Call(session.hwnd, swHide)
-	}
-}
 func showWindow() {
 	startupMu.Lock()
 	locked := startupLocked
