@@ -242,23 +242,26 @@ function decorate(root=friendRoot()){
   const selected=document.getElementById('mwsFriendCategorySelect')?.value||'';
   for(const {card,id} of cardRows(root)){
     const entry=id?liveByUserId.get(id):null;const live=isLiveEntry(entry);const cat=liveCategory(entry),catId=liveCategoryId(entry),viewers=liveViewers(entry);
+    let match=true;if(selected){match=live&&(selected.startsWith('id:')?catId===selected.slice(3):cat===selected.slice(5))}
+    card.classList.toggle('mws-category-hidden-v120',!match);
+
     let meta=card.querySelector('.mws-live-category-v120');if(!meta){meta=document.createElement('div');meta.className='mws-live-category-v120';const actions=[...card.querySelectorAll('button,a')].find(x=>String(x.textContent||'').trim()==='프로필')?.parentElement;actions?.parentElement?.insertBefore(meta,actions)||card.appendChild(meta)}
     meta.classList.toggle('offline',!live);meta.textContent=live?`카테고리 · ${cat||'미분류'}${viewers!==null?` · ${viewers.toLocaleString()}명`:''}`:'';
 
     let screen=card.querySelector('.mws-live-screen-v120');
     const bno=liveBroadNo(entry),title=liveTitle(entry);
-    if(!live||!bno){if(screen)screen.hidden=true}else{
-      if(!screen){
-        screen=document.createElement('div');screen.className='mws-live-screen-v120';screen.innerHTML='<img alt="현재 방송 화면" loading="eager" decoding="async" fetchpriority="high" referrerpolicy="no-referrer"><span class="mws-live-screen-label-v120">LIVE 화면</span><span class="mws-live-screen-title-v120"></span>';card.appendChild(screen);
-      }
-      screen.hidden=false;screen.onclick=()=>window.open(livePlayUrl(id,bno),'_blank','noopener');
-      const titleEl=screen.querySelector('.mws-live-screen-title-v120');if(titleEl)titleEl.textContent=title||'현재 방송 화면';
-      const img=screen.querySelector('img'),thumbStamp=liveThumbStamp();
-      if(img&&(img.dataset.bno!==bno||img.dataset.thumbStamp!==thumbStamp))setLiveImage(img,screen,bno,thumbStamp)
+    if(!live||!bno||!match){if(screen)screen.hidden=true;continue}
+    if(!screen){
+      screen=document.createElement('div');screen.className='mws-live-screen-v120';screen.innerHTML='<img alt="현재 방송 화면" loading="lazy" decoding="async" fetchpriority="low" referrerpolicy="no-referrer"><span class="mws-live-screen-label-v120">LIVE 화면</span><span class="mws-live-screen-title-v120"></span>';card.appendChild(screen);
     }
-
-    let match=true;if(selected){match=live&&(selected.startsWith('id:')?catId===selected.slice(3):cat===selected.slice(5))}
-    card.classList.toggle('mws-category-hidden-v120',!match);
+    screen.hidden=false;screen.onclick=()=>window.open(livePlayUrl(id,bno),'_blank','noopener');
+    const titleEl=screen.querySelector('.mws-live-screen-title-v120');if(titleEl)titleEl.textContent=title||'현재 방송 화면';
+    const img=screen.querySelector('img'),thumbStamp=liveThumbStamp();
+    if(img){
+      img.loading='lazy';
+      try{img.fetchPriority='low'}catch(_){}
+      if(img.dataset.bno!==bno||img.dataset.thumbStamp!==thumbStamp)setLiveImage(img,screen,bno,thumbStamp)
+    }
   }
 }
 function scheduleUi(){if(uiScheduled)return;uiScheduled=true;requestAnimationFrame(()=>{uiScheduled=false;decorate()})}
