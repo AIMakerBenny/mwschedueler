@@ -2436,6 +2436,7 @@ function contactMatches(c,q=''){
 window.mwsKoreanInitials=mwsKoreanInitials;
 window.mwsTextMatches=mwsTextMatches;
 window.contactMatches=contactMatches;
+window.__mwsSearchOwnerV130='app-core-search71';
 function allContactLabels(){
   const out=[];const seen=new Set();
   [...(data.contactTags||[]),...data.contacts.flatMap(c=>Array.isArray(c.labels)?c.labels:[])].forEach(raw=>{
