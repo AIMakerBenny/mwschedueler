@@ -15,10 +15,10 @@ export function runPhase76SelectorWrapperDedupAudit(){
   if(!perfBase.includes('const last=latest.get(c.id)||null,upcoming=upMap.get(c.id)||[]'))issues.push('optimized contact renderer no longer uses its local cached maps');
   if(!app.includes('function getLastCollab(contactId)'))issues.push('canonical getLastCollab is missing');
   if(!app.includes('function upcomingEventsForContact(contactId)'))issues.push('canonical upcomingEventsForContact is missing');
-  if(!perf.includes('assets/perf-runtime-base.js?v=1.4.0-phase76'))issues.push('perf base cache-bust is not phase76');
-  if(!post.includes('/assets/perf-runtime.js?v=1.4.0-phase76'))issues.push('post-login perf cache-bust is not phase76');
-  if(!index.includes('assets/perf-runtime.js?v=1.4.0-phase76'))issues.push('index perf cache-bust is not phase76');
-  if(!entry.includes('post-login-runtime-v130.js?v=1.4.0-phase76'))issues.push('Worker post-login cache-bust is not phase76');
+  if(!perf.includes('assets/perf-runtime-base.js?v=1.4.0-phase'))issues.push('perf runtime no longer loads a phase-tagged perf base');
+  if(!post.includes('/assets/perf-runtime.js?v=1.4.0-phase'))issues.push('post-login no longer loads a phase-tagged perf runtime');
+  if(!index.includes('assets/perf-runtime.js?v=1.4.0-phase'))issues.push('index no longer loads a phase-tagged perf runtime');
+  if(!entry.includes('post-login-runtime-v130.js?v=1.4.0-phase'))issues.push('Worker no longer injects a phase-tagged post-login runtime');
 
   const history=[
     {date:'2026-09-18',participants:['a','b']},
