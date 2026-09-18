@@ -188,6 +188,18 @@ const appBridgeScript = `(function(){
     return gs.display!=='none'&&gs.visibility!=='hidden'&&Number(gs.opacity||1)!==0;
   }
 
+  function loginIsReady(){
+    var gate=document.getElementById('mwsAccessGate');
+    if(!gate||!gateIsVisible())return false;
+    return !!(
+      gate.querySelector('.mws-login-shell') &&
+      document.getElementById('mwsModeAdmin') &&
+      document.getElementById('mwsModePublic') &&
+      document.getElementById('mwsLoginForm') &&
+      document.getElementById('mwsLoginSubmit')
+    );
+  }
+
   function shellIsReady(){
     var body=document.body;
     if(!body)return false;
@@ -217,7 +229,7 @@ const appBridgeScript = `(function(){
     clearTimeout(checkTimer);
     installDesktopChrome();
     var ready=false;
-    try{ready=!gateIsVisible()&&shellIsReady();}catch(_){ready=false;}
+    try{ready=loginIsReady()||(!gateIsVisible()&&shellIsReady());}catch(_){ready=false;}
     reportReady(ready);
     if(!ready)checkTimer=setTimeout(checkReady,250);
   }
@@ -561,13 +573,13 @@ func jsString(s string) string {
 }
 
 func acquireSingleton() bool {
-	name, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopNativeMutexV080N")
+	name, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopNativeMutexV100C")
 	m, _, err := procCreateMutex.Call(0, 0, uintptr(unsafe.Pointer(name)))
 	if m == 0 {
 		return true
 	}
 	if errno, ok := err.(syscall.Errno); ok && errno == syscall.ERROR_ALREADY_EXISTS {
-		evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV080N")
+		evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV100C")
 		ev, _, _ := procOpenEvent.Call(0x0002, 0, uintptr(unsafe.Pointer(evName)))
 		if ev != 0 {
 			procSetEvent.Call(ev)
@@ -596,7 +608,7 @@ func handleExecutableRelaunch() {
 	go runNativeIntro()
 }
 func watchShowEvent() {
-	evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV080N")
+	evName, _ := syscall.UTF16PtrFromString("MawangSchedulerDesktopShowEventV100C")
 	ev, _, _ := procCreateEvent.Call(0, 0, 0, uintptr(unsafe.Pointer(evName)))
 	if ev == 0 {
 		return
