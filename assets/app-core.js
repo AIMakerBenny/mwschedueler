@@ -477,7 +477,7 @@ function setTab(tab){
   if(tab==='worldtime')safeRenderView('세계 시간',renderWorldTime);
   if(tab==='sniper')safeRenderView('최근 합방 인원',()=>{sniperViewMode==='ranking'?renderCollabRanking():renderSniperList()});
   if(tab==='targets')safeRenderView('저격 리스트',renderTargetList);
-  if(tab==='memos')safeRenderView('메모',()=>{memoViewMode==='favorites'?renderFavoriteSchedules():renderMemoLibrary()});
+  if(tab==='memos')safeRenderView('메모',()=>setMemoView('library'));
   if(tab==='dashboard')safeRenderView('대시보드',renderDashboard);
   if(tab==='contacts')safeRenderView('연락처',renderContacts);
   if(tab==='posts')safeRenderView('게시글',renderPosts);
