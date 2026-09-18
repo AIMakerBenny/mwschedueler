@@ -9,9 +9,9 @@ export function runPhase54VersionWriterAudit(){
   const friend=fs.readFileSync('assets/friend-finder-v120.js','utf8');
   const planner=fs.readFileSync('assets/content-planner-host.js','utf8');
 
-  if(!version.includes("const VERSION='1.3.0'"))issues.push('authoritative app version is not v1.3.0');
-  if(!index.includes('data-build-version="MWS V 1.3.0"'))issues.push('initial body build version is stale');
-  if(!index.includes('>Mawang Scheduler v 1.3.0</div>'))issues.push('initial visible version label is stale');
+  if(!version.includes("const VERSION='1.4.0'"))issues.push('authoritative app version is not v1.4.0');
+  if(!index.includes('data-build-version="MWS V 1.4.0"'))issues.push('initial body build version is stale');
+  if(!index.includes('>Mawang Scheduler v 1.4.0</div>'))issues.push('initial visible version label is stale');
   if(device.includes('final version display guard'))issues.push('device UI still contains a competing version observer');
   if(device.includes("const BUILD='MWS V 1.3.0'"))issues.push('device UI still writes the version directly');
   if(!friend.includes("function setVersionLabel(){try{window.mwsApplyAppVersionV120?.()}catch(_){}}"))issues.push('Friend Finder does not delegate version display');
