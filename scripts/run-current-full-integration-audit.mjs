@@ -80,6 +80,7 @@ import {runPhase79DeadRuntimeReferenceAudit} from './run-phase79-dead-runtime-re
 import {runPhase80CanonicalContactRenderPerfAudit} from './run-phase80-canonical-contact-render-perf-audit.mjs';
 import {runPhase81CanonicalRendererOwnershipAudit} from './run-phase81-canonical-renderer-ownership-audit.mjs';
 import {runPhase82PerformanceOwnershipCleanupAudit} from './run-phase82-performance-ownership-cleanup-audit.mjs';
+import {runPhase83SetTabSuccessorAudit} from './run-phase83-settab-successor-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -876,6 +877,16 @@ export function runPhase82FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase82FullIntegrationAudit();}
+export function runPhase83FullIntegrationAudit(){
+  const previous=runPhase82FullIntegrationAudit(), current=runPhase83SetTabSuccessorAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:83,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase83FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
