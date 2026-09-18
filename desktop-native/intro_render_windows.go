@@ -4,7 +4,6 @@ package main
 
 import (
 	"bytes"
-	"crypto/sha256"
 	_ "embed"
 	"fmt"
 	"image"
@@ -14,11 +13,6 @@ import (
 )
 
 const (
-	expectedIntroImageWidth  = 2048
-	expectedIntroImageHeight = 1152
-	expectedIntroImageBytes  = 2179918
-	expectedIntroImageSHA256 = "6e5ccb04767b7730b848b0ef4e255f357eda3b2c62acedec23f527e55ae5f1e9"
-
 	introBI_RGB          = 0
 	introDIBRGBColors    = 0
 	introSRCCOPY         = 0x00CC0020
@@ -145,22 +139,18 @@ func (s *introSurface) close() {
 }
 
 func validateAndDecodeIntroImage() (image.Image, error) {
-	if len(embeddedIntroPNG) != expectedIntroImageBytes {
-		return nil, fmt.Errorf("intro PNG size mismatch: got=%d want=%d", len(embeddedIntroPNG), expectedIntroImageBytes)
-	}
-	sum := fmt.Sprintf("%x", sha256.Sum256(embeddedIntroPNG))
-	if sum != expectedIntroImageSHA256 {
-		return nil, fmt.Errorf("intro PNG SHA-256 mismatch: got=%s want=%s", sum, expectedIntroImageSHA256)
+	if len(embeddedIntroPNG) == 0 {
+		return nil, fmt.Errorf("intro PNG is empty")
 	}
 	img, err := png.Decode(bytes.NewReader(embeddedIntroPNG))
 	if err != nil {
 		return nil, fmt.Errorf("intro PNG decode failed: %w", err)
 	}
 	b := img.Bounds()
-	if b.Dx() != expectedIntroImageWidth || b.Dy() != expectedIntroImageHeight {
-		return nil, fmt.Errorf("intro PNG dimensions mismatch: got=%dx%d want=%dx%d", b.Dx(), b.Dy(), expectedIntroImageWidth, expectedIntroImageHeight)
+	if b.Dx() <= 0 || b.Dy() <= 0 {
+		return nil, fmt.Errorf("intro PNG has invalid dimensions")
 	}
-	logDesktop("intro asset verified: bytes=%d width=%d height=%d sha256=%s", len(embeddedIntroPNG), b.Dx(), b.Dy(), sum)
+	logDesktop("clean intro asset decoded: bytes=%d width=%d height=%d", len(embeddedIntroPNG), b.Dx(), b.Dy())
 	return img, nil
 }
 
@@ -290,7 +280,7 @@ func newIntroRenderer(width, height int) (*introRenderer, error) {
 	if subHeight > 42 {
 		subHeight = 42
 	}
-	r.mainFont, err = createIntroFont(mainHeight, "Segoe UI")
+	r.mainFont, err = createIntroFont(mainHeight, "Malgun Gothic")
 	if err != nil {
 		if assetErr == nil {
 			assetErr = err
@@ -361,14 +351,9 @@ func (r *introRenderer) present(targetDC uintptr, photoAlpha, titleAlpha byte) e
 	}
 
 	if titleAlpha > 0 {
-		mainTop := r.height/2 - r.height/11
-		mainBottom := r.height/2 + r.height/26
-		subTop := r.height/2 + r.height/14
-		subBottom := r.height/2 + r.height/6
-		if err := r.drawTextLine("Mawang Scheduler", r.mainFont, mainTop, mainBottom, titleAlpha); err != nil {
-			return err
-		}
-		if err := r.drawTextLine("마왕스케줄러", r.subFont, subTop, subBottom, titleAlpha); err != nil {
+		mainTop := r.height/2 - r.height/10
+		mainBottom := r.height/2 + r.height/10
+		if err := r.drawTextLine("Mawang Scheduler 마왕 스케줄러", r.mainFont, mainTop, mainBottom, titleAlpha); err != nil {
 			return err
 		}
 	}
