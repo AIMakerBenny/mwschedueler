@@ -1957,9 +1957,19 @@ function openEvent(id=null,date=null){
   renderChecklistEditor(e?.checklist||[]);
   document.getElementById('deleteEventBtn').style.display=e?'':'none';document.getElementById('duplicateEventBtn').style.display=e?'':'none';
   document.getElementById('restDayBtn').style.display=e?'none':'';document.getElementById('saveEventBtn').style.display=e?.restDay?'none':'';
-  document.getElementById('eventModal').classList.add('open');
-  // 먼저 창을 보여준 뒤 무거운 연락처 목록을 다음 프레임에 렌더링
-  requestAnimationFrame(()=>renderParticipantPicker());
+  const eventModal=document.getElementById('eventModal');
+  eventModal.classList.add('open');
+  // 재사용되는 편집창은 이전 스크롤 위치를 이어받지 않고 항상 맨 위에서 시작한다.
+  requestAnimationFrame(()=>{
+    [
+      eventModal.querySelector('.event-modalbox'),
+      eventModal.querySelector('.event-info-panel'),
+      eventModal.querySelector('.event-memo-panel'),
+      eventModal.querySelector('.event-game-panel-v112'),
+      eventModal.querySelector('.event-repeat-panel')
+    ].forEach(target=>{if(target)target.scrollTop=0});
+    renderParticipantPicker();
+  });
 }
 window.openEvent=openEvent;document.getElementById('newEventBtn').onclick=()=>openEvent();
 

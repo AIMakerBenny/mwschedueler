@@ -24,6 +24,9 @@ import {runPhase23MobileCalendarDrawerStateAudit} from './run-phase23-mobile-cal
 import {runPhase24MobileQuickAddAnchorAudit} from './run-phase24-mobile-quick-add-anchor-audit.mjs';
 import {runPhase25MobileDetailMediaFallbackAudit} from './run-phase25-mobile-detail-media-fallback-audit.mjs';
 import {runPhase26MobileEventEditorHeaderAudit} from './run-phase26-mobile-event-editor-header-audit.mjs';
+import {runPhase27MobileDayDetailScrollResetAudit} from './run-phase27-mobile-day-detail-scroll-reset-audit.mjs';
+import {runPhase28EventEditorScrollResetAudit} from './run-phase28-event-editor-scroll-reset-audit.mjs';
+import {runPhase29MobileDayDetailViewportAudit} from './run-phase29-mobile-day-detail-viewport-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -299,6 +302,39 @@ export function runPhase26FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase26FullIntegrationAudit();}
+export function runPhase27FullIntegrationAudit(){
+  const previous=runPhase26FullIntegrationAudit();
+  const current=runPhase27MobileDayDetailScrollResetAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:27,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runPhase28FullIntegrationAudit(){
+  const previous=runPhase27FullIntegrationAudit();
+  const current=runPhase28EventEditorScrollResetAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:28,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runPhase29FullIntegrationAudit(){
+  const previous=runPhase28FullIntegrationAudit();
+  const current=runPhase29MobileDayDetailViewportAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:29,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase29FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();

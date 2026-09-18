@@ -96,6 +96,7 @@ jobs:
           grep -Fq ".mobile-nav-toggle, .sidebar [data-tab]" /tmp/mobile-day-detail.js
           grep -Fq "replaceBrokenDetailImage" /tmp/mobile-day-detail.js
           grep -Fq "data-mws-fallback-name" /tmp/mobile-day-detail.js
+          grep -Fq "if(list)list.scrollTop=0" /tmp/mobile-day-detail.js
           retry_contains "$BASE/assets/mobile-calendar-quick-add-v130.js?deploy=$GITHUB_SHA" '__mwsMobileCalendarQuickAddV130' > /tmp/mobile-quick-add.js
           node --check /tmp/mobile-quick-add.js
           grep -Fq "mws-mobile-day-detail-open-v130" /tmp/mobile-quick-add.js
@@ -107,6 +108,11 @@ jobs:
           grep -Fq "mws-mobile-day-person-avatar-v130" /tmp/mobile-calendar.css
           grep -Fq "mws-mobile-day-game-image-v130" /tmp/mobile-calendar.css
           grep -Fq "bottom:var(--mws-mobile-nav-offset-v130,68px)" /tmp/mobile-calendar.css
+          grep -Fq "82dvh" /tmp/mobile-calendar.css
+          grep -Fq "flex:1 1 auto" /tmp/mobile-calendar.css
+          retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" "target.scrollTop=0" > /tmp/app-core.js
+          node --check /tmp/app-core.js
+          grep -Fq "eventModal.querySelector('.event-info-panel')" /tmp/app-core.js
           retry_contains "$BASE/assets/cloud-v1.1.js?deploy=$GITHUB_SHA" 'function enterAppShell(chosen)' > /tmp/cloud-core.js
           node --check /tmp/cloud-core.js
           grep -Fq 'void startHydration(chosen)' /tmp/cloud-core.js
@@ -178,6 +184,7 @@ jobs:
           node --check assets/device-ui.js
           node --check assets/mobile-calendar-day-detail-v130.js
           node --check assets/mobile-calendar-quick-add-v130.js
+          node --check assets/app-core.js
           node --check assets/app-version-v120.js
           node --check src/cf-v120-friend.js
           node --check src/cf-v121-boss-media.js

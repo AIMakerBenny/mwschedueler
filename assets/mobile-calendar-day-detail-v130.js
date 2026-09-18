@@ -202,6 +202,8 @@ function openSheet(date){
   const root=ensureSheet();
   syncNavOffset(root);
   renderSheet();
+  const list=root.querySelector('#mwsMobileDayListV130');
+  if(list)list.scrollTop=0;
   root.classList.add('open');
   root.setAttribute('aria-hidden','false');
   document.body.classList.add('mws-mobile-day-detail-open-v130');

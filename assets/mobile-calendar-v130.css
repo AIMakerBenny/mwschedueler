@@ -310,7 +310,9 @@ body.mws-mobile-day-detail-open-v130{overflow:hidden!important}
   position:relative;
   z-index:1;
   width:min(100%,620px);
-  max-height:min(82vh,760px);
+  display:flex;
+  flex-direction:column;
+  max-height:min(82dvh,760px,calc(100dvh - var(--mws-mobile-nav-offset-v130,68px) - 12px));
   padding:10px 14px 18px;
   border:1px solid color-mix(in srgb,var(--border) 88%,transparent);
   border-bottom:0;
@@ -368,7 +370,9 @@ body.mws-mobile-day-detail-open-v130{overflow:hidden!important}
   display:flex;
   flex-direction:column;
   gap:9px;
-  max-height:calc(min(82vh,760px) - 104px);
+  min-height:0;
+  max-height:none;
+  flex:1 1 auto;
   overflow:auto;
   overscroll-behavior:contain;
   padding:1px 1px 4px;

@@ -19,7 +19,7 @@ export function runPhase18MobileCalendarDetailMediaAudit(){
   if(!feature.includes('game?.image||game?.headerImage'))issues.push('linked game artwork is not read from existing event data');
   if(!css.includes('.mws-mobile-day-person-avatar-v130 img'))issues.push('participant image styling is missing');
   if(!css.includes('.mws-mobile-day-game-image-v130'))issues.push('game image styling is missing');
-  if(!runtime.includes('mobile-calendar-detail-media1'))issues.push('mobile detail media cache-bust revision was not updated');
+  if(!runtime.includes("mobile-calendar-v130.css?v=1.3.0-")||!runtime.includes("mobile-calendar-day-detail-v130.js?v=1.3.0-"))issues.push('mobile detail asset cache-bust revision is missing');
 
   const summary={phase:18,name:'mobile-calendar-detail-media-and-nav',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
