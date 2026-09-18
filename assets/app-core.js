@@ -2853,40 +2853,6 @@ document.getElementById('contactTagBannerInput').onchange=async e=>{
   }
 };
 
-function renderContacts(){
-  renderContactTagSidebar();
-  renderContactTagBanner();
-  const arr=filteredContacts();
-  document.getElementById('contactGrid').innerHTML=arr.map(c=>{
-    const last=getLastCollab(c.id);
-    const upcoming=upcomingEventsForContact(c.id);
-
-    return `<div class="contact-card ${c.pendingSetup?'pending-card':''} ${upcoming.length?'has-upcoming':''}"
-      draggable="true" data-contact-id="${c.id}"
-      ondragstart="contactCardDragStart('${c.id}',event)"
-      ondragend="contactCardDragEnd(event)"
-      onclick="openContact('${c.id}')">
-      <div class="space" style="align-items:flex-start">
-        <div class="row">
-          ${c.image?`<img class="avatar" loading="lazy" src="${c.image}">`:`<div class="avatar" style="display:grid;place-items:center;font-weight:800">${esc(initials(c.name))}</div>`}
-          <div>
-            <div class="event-title">${esc(c.name)}</div>
-            ${c.pendingSetup?'<span class="chip" style="margin-top:5px">신규 추가</span>':''}
-          </div>
-        </div>
-        <div class="contact-statuses">
-          ${upcoming.length?`<span class="upcoming-count-badge">UPCOMING ${upcoming.length}</span>`:''}
-        </div>
-      </div>
-      <div class="row" style="margin-top:10px">${(c.labels||[]).map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div>
-      <div class="small" style="margin-top:12px">
-        ${last?`최근 컨텐츠: ${esc(last.title)}<br><span class="muted">${formatDateWeekday(last.date)} · ${daysSince(last.date)}일 전</span>`:'<span class="muted">합방 기록 없음</span>'}
-      </div>
-      ${c.stationUrl?`<button type="button" class="station-link" onclick="event.stopPropagation();openContactStation('${c.id}')">방송국 열기</button>`:''}
-      ${contactUpcomingPopover(c)}
-    </div>`;
-  }).join('')||'<div class="empty">연락처가 없습니다</div>';
-}
 function renderSniperFilters(){
   const select=document.getElementById('sniperLabelFilter');
   if(!select)return;
