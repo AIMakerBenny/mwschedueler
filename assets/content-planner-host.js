@@ -9,7 +9,7 @@ const FRAME_URL='/content-planner.html?v=1.0';
 const TOOLS_URL='/assets/tools.js?v=1.0';
 const EMPTY_PNG='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLAlQAAAABJRU5ErkJggg==';
 function syncGlobals(){try{if(typeof data!=='undefined')window.data=data}catch(_){ }try{if(typeof saveData==='function'&&!window.saveData)window.saveData=saveData}catch(_){ }try{if(typeof persist==='function'&&!window.persist)window.persist=persist}catch(_){ }}
-function forceVersion(){try{document.body?.setAttribute('data-build-version',BUILD);document.querySelectorAll('[id^="mwsBuildVersionV5"],#mwsBuildVersion,.sidebar-build-version-v52,.sidebar-build-version-v53,[class*="sidebar-build-version"]').forEach(label=>{if(label.textContent!==BUILD)label.textContent=BUILD})}catch(_){ }}
+function forceVersion(){try{window.mwsApplyAppVersionV120?.()}catch(_){ }}
 function ensureStyle(){if(document.getElementById('mwsContentPlannerHostStyleV110Clean'))return;const style=document.createElement('style');style.id='mwsContentPlannerHostStyleV110Clean';style.textContent=`
 #contentPlanner{padding:0!important;zoom:1!important;font-size:inherit!important;--ui-text-scale:1!important;overflow:hidden!important}
 #mwsContentPlannerShell{height:calc(100vh - 92px);min-height:560px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:#070a12}
