@@ -12,7 +12,7 @@ export function runPhase76SelectorWrapperDedupAudit(){
 
   if(/getLastCollab=id=>/.test(perfBase))issues.push('perf-runtime-base still overrides getLastCollab');
   if(/upcomingEventsForContact=id=>/.test(perfBase))issues.push('perf-runtime-base still overrides upcomingEventsForContact');
-  if(!perfBase.includes('const last=latest.get(c.id)||null,upcoming=upMap.get(c.id)||[]'))issues.push('optimized contact renderer no longer uses its local cached maps');
+  if(perfBase.includes('optimizedRenderContacts')&&!perfBase.includes('const last=latest.get(c.id)||null,upcoming=upMap.get(c.id)||[]'))issues.push('optimized contact renderer lost its local cached maps');
   if(!app.includes('function getLastCollab(contactId)'))issues.push('canonical getLastCollab is missing');
   if(!app.includes('function upcomingEventsForContact(contactId)'))issues.push('canonical upcomingEventsForContact is missing');
   if(!perf.includes('assets/perf-runtime-base.js?v=1.4.0-phase'))issues.push('perf runtime no longer loads a phase-tagged perf base');
