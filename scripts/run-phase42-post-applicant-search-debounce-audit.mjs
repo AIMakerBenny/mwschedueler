@@ -12,7 +12,7 @@ export function runPhase42PostApplicantSearchDebounceAudit(){
   if(!core.includes('schedulePostApplicantRenderV142(90)'))issues.push('post applicant search is not debounced');
   if(!core.includes('schedulePostApplicantRenderV142(0)'))issues.push('post applicant search does not render immediately after composition ends');
   if(core.includes("document.getElementById('postApplicantSearch')?.addEventListener('input',renderPosts)"))issues.push('legacy immediate post applicant render remains');
-  if(!index.includes('assets/app-core.js?v=1.3.0-ime64'))issues.push('live IME search cache-bust revision is missing');
+  if(!index.includes('assets/app-core.js?v=1.3.0-search70'))issues.push('live IME search cache-bust revision is missing');
 
   const summary={phase:42,name:'post-applicant-search-debounce-performance',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
