@@ -13,10 +13,10 @@ export function runPhase79DeadRuntimeReferenceAudit(){
   if(index.includes('assets/test-v5.5.js'))issues.push('source index still references deleted test-v5.5.js');
   if(index.includes('assets/test-v5.6.js'))issues.push('source index still references deleted test-v5.6.js');
   if(perf.includes('searchKeyCache'))issues.push('dead performance searchKeyCache state remains');
-  if(!perfLoader.includes('assets/perf-runtime-base.js?v=1.4.0-phase79'))issues.push('perf base cache-bust is not phase79');
-  if(!post.includes('/assets/perf-runtime.js?v=1.4.0-phase79'))issues.push('post-login runtime cache-bust is not phase79');
-  if(!index.includes('assets/perf-runtime.js?v=1.4.0-phase79'))issues.push('source index perf cache-bust is not phase79');
-  if(!entry.includes('post-login-runtime-v130.js?v=1.4.0-phase79'))issues.push('Worker post-login cache-bust is not phase79');
+  if(!perfLoader.includes('assets/perf-runtime-base.js?v=1.4.0-phase'))issues.push('perf base no longer uses a phase-tagged cache key');
+  if(!post.includes('/assets/perf-runtime.js?v=1.4.0-phase'))issues.push('post-login runtime no longer uses a phase-tagged perf cache key');
+  if(!index.includes('assets/perf-runtime.js?v=1.4.0-phase'))issues.push('source index no longer uses a phase-tagged perf cache key');
+  if(!entry.includes('post-login-runtime-v130.js?v=1.4.0-phase'))issues.push('Worker no longer uses a phase-tagged post-login cache key');
 
   if(perf.includes('renderContacts=optimizedRenderContacts')||perf.includes('optimizedRenderContacts'))issues.push('legacy optimized contact renderer override remains');
   if(!online.includes('run(safeFeatures)'))issues.push('legacy V5 payload sanitizer was removed while compressed legacy matcher still exists');
