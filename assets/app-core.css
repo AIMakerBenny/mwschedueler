@@ -3759,6 +3759,9 @@ body.sidebar-pinned .sidebar:not(:hover) .nav-label{
   background:var(--accent);
   box-shadow:0 0 12px color-mix(in srgb,var(--accent) 20%,transparent);
 }
+/* Keep notebook first and favorites second even if later UI layers restyle these tabs. */
+#memoLibraryTab{order:0!important}
+#memoFavoritesTab{order:1!important}
 .memo-tab-count{
   display:inline-flex;
   align-items:center;

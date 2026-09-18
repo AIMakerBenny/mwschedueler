@@ -70,6 +70,7 @@ jobs:
           echo '[2/8] isolated login shell and v1.3.0 assets'
           retry_contains "$BASE/?deploy=$GITHUB_SHA" 'app-core.js?v=1.3.0-perf51' > /tmp/index.html
           grep -Fq 'id="mwsAccessGate"' /tmp/index.html
+          grep -Fq 'assets/app-core.css?v=1.3.0-order52' /tmp/index.html
           if grep -Eq '<script[^>]+assets/(perf-runtime\.js|test-v5\.5\.js|test-v5\.6\.js|device-ui\.js)' /tmp/index.html; then
             echo 'Heavy UI/runtime script is still loaded before authentication.' >&2
             exit 1
@@ -111,6 +112,15 @@ jobs:
           grep -Fq "mws-mobile-nav-offset-v130" /tmp/mobile-quick-add.js
           grep -Fq "const mobileMonth=isMobileMonth();" /tmp/mobile-quick-add.js
           grep -Fq "bar.classList.toggle('is-visible',show)" /tmp/mobile-quick-add.js
+          retry_contains "$BASE/assets/app-core.css?deploy=$GITHUB_SHA" '#memoLibraryTab{order:0!important}' > /tmp/app-core.css
+          grep -Fq '#memoFavoritesTab{order:1!important}' /tmp/app-core.css
+          retry_contains "$BASE/assets/content-planner-host.js?deploy=$GITHUB_SHA" "const memos=document.querySelector('.nav button[data-tab=\"memos\"]')" > /tmp/content-planner-host.js
+          node --check /tmp/content-planner-host.js
+          grep -Fq "memos.insertAdjacentElement('afterend',button)" /tmp/content-planner-host.js
+          if grep -Fq "posts.insertAdjacentElement('afterend',button)" /tmp/content-planner-host.js; then
+            echo 'Content Planner sidebar order regression detected.' >&2
+            exit 1
+          fi
           retry_contains "$BASE/assets/mobile-calendar-v130.css?deploy=$GITHUB_SHA" '82dvh' > /tmp/mobile-calendar.css
           grep -Fq "mini-event-main" /tmp/mobile-calendar.css
           grep -Fq "mws-mobile-day-person-avatar-v130" /tmp/mobile-calendar.css
@@ -290,6 +300,7 @@ jobs:
           retry_contains "$BASE/assets/perf-runtime.js?v=1.3.0-post-login" 'lossless image policy' > /tmp/perf.js
           node --check /tmp/perf.js
           grep -Fq 'preserveOriginalImage' /tmp/perf.js
+          grep -Fq 'content-planner-host.js?v=1.1-order52' /tmp/perf.js
           node --check src/cf-v121-boss-media.js
           retry_contains "$BASE/assets/boss-manager-v121.js?v=1.2.2&deploy=$GITHUB_SHA" '__mwsBossManagerV121' > /tmp/boss.js
           node --check /tmp/boss.js

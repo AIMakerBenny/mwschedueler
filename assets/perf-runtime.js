@@ -207,7 +207,7 @@
 
   function loadContentPlannerHost(){
     if(document.getElementById('mwsContentPlannerHostScriptV110'))return;
-    const s=document.createElement('script');s.id='mwsContentPlannerHostScriptV110';s.src='assets/content-planner-host.js?v=1.0';document.body.appendChild(s);
+    const s=document.createElement('script');s.id='mwsContentPlannerHostScriptV110';s.src='assets/content-planner-host.js?v=1.1-order52';document.body.appendChild(s);
   }
   function loadLegacyRuntimeFeatures(){
     if(document.getElementById('mwsCf571RuntimeScript'))return;

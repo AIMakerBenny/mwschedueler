@@ -77,3 +77,7 @@
 
 /assets/ui-fixes-v121.js
   Cache-Control: no-cache, must-revalidate
+
+
+/assets/app-core.css
+  Cache-Control: no-cache, must-revalidate
