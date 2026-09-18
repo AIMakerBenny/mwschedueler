@@ -3,7 +3,7 @@ name: Build Mawang Scheduler Native Desktop
 on:
   push:
     branches:
-      - desktop-native-v1.0-clean-intro
+      - desktop-native-v1.0-clean-intro-staging
     paths:
       - 'desktop-native/**'
       - '.github/workflows/build-desktop-native.yml'
