@@ -45,6 +45,8 @@ async function ensureSchema(env){
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS mws_admins(id TEXT PRIMARY KEY,username TEXT NOT NULL UNIQUE,username_norm TEXT NOT NULL UNIQUE,password_hash TEXT NOT NULL,password_salt TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)`),
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS mws_admin_sessions(token_hash TEXT PRIMARY KEY,admin_id TEXT NOT NULL,created_at TEXT NOT NULL,expires_at TEXT NOT NULL,FOREIGN KEY(admin_id) REFERENCES mws_admins(id) ON DELETE CASCADE)`),
       env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_mws_admin_sessions_expiry ON mws_admin_sessions(expires_at)`),
+      env.DB.prepare(`CREATE TABLE IF NOT EXISTS save_conflict_guard(id INTEGER PRIMARY KEY)`),
+      env.DB.prepare(`INSERT OR IGNORE INTO save_conflict_guard(id) VALUES(1)`),
       env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_workspace_parts_scope ON workspace_parts(scope)`),
     ]).catch(error=>{schemaPromise=undefined;throw error});
   }
@@ -126,17 +128,20 @@ function parseDataImage(value){
   return {contentType:match[1]||'application/octet-stream',bytes};
 }
 async function shortHash(value){const hash=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(value))));return [...hash].slice(0,16).map(x=>x.toString(16).padStart(2,'0')).join('')}
-function mediaUrl(kind,key,version=1){return `/media/${kind}/${encodeURIComponent(key)}?v=${Math.max(1,Number(version)||1)}`}
+function cleanMediaToken(value){const token=String(value||'').toLowerCase();return /^[a-f0-9]{32}$/.test(token)?token:''}
+function tokenFromImageSource(value){const match=/^mws-r2:([a-f0-9]{32})$/i.exec(String(value||''));return match?cleanMediaToken(match[1]):''}
+function mediaUrl(kind,key,version=1,token=''){const safe=cleanMediaToken(token);return `/media/${kind}/${encodeURIComponent(key)}?v=${Math.max(1,Number(version)||1)}${safe?`&h=${safe}`:''}`}
 function r2Key(kind,key){return kind==='contact'?`contacts/${key}`:`workspace/${key}`}
-function r2VersionedKey(kind,key,version){return `${r2Key(kind,key)}/v${Math.max(1,Number(version)||1)}`}
-async function currentImageVersion(env,kind,key){const row=await env.DB.prepare('SELECT version FROM image_sources WHERE kind=? AND item_key=?').bind(kind,key).first();return Number(row?.version)||0}
+function r2VersionedKey(kind,key,version,token=''){const safe=cleanMediaToken(token);return `${r2Key(kind,key)}/v${Math.max(1,Number(version)||1)}${safe?`-${safe}`:''}`}
+async function currentImageRecord(env,kind,key){return await env.DB.prepare('SELECT version,source_url FROM image_sources WHERE kind=? AND item_key=?').bind(kind,key).first()}
+async function currentImageVersion(env,kind,key){const row=await currentImageRecord(env,kind,key);return Number(row?.version)||0}
 async function storeDataImage(env,kind,key,dataUrl,authoritative=true,saveContext=null){
-  const parsed=parseDataImage(dataUrl);if(!parsed)return dataUrl;const existing=await currentImageVersion(env,kind,key);if(!authoritative&&existing>0)return mediaUrl(kind,key,existing);
-  const version=existing>0?existing+1:1;
-  await env.IMAGES.put(r2VersionedKey(kind,key,version),parsed.bytes,{httpMetadata:{contentType:parsed.contentType},customMetadata:{mwsVersion:String(version),source:'mws-upload'}});
-  const statement=env.DB.prepare(`INSERT INTO image_sources(kind,item_key,source_url,version,content_type,updated_at) VALUES(?,?,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(kind,item_key) DO UPDATE SET source_url=NULL,version=excluded.version,content_type=excluded.content_type,updated_at=CURRENT_TIMESTAMP`).bind(kind,key,null,version,parsed.contentType);
+  const parsed=parseDataImage(dataUrl);if(!parsed)return dataUrl;const current=await currentImageRecord(env,kind,key),existing=Number(current?.version)||0,existingToken=tokenFromImageSource(current?.source_url);if(!authoritative&&existing>0)return mediaUrl(kind,key,existing,existingToken);
+  const version=existing>0?existing+1:1,token=cleanMediaToken(crypto.randomUUID().replace(/-/g,''));
+  await env.IMAGES.put(r2VersionedKey(kind,key,version,token),parsed.bytes,{httpMetadata:{contentType:parsed.contentType},customMetadata:{mwsVersion:String(version),source:'mws-upload'}});
+  const statement=env.DB.prepare(`INSERT INTO image_sources(kind,item_key,source_url,version,content_type,updated_at) VALUES(?,?,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(kind,item_key) DO UPDATE SET source_url=excluded.source_url,version=excluded.version,content_type=excluded.content_type,updated_at=CURRENT_TIMESTAMP`).bind(kind,key,`mws-r2:${token}`,version,parsed.contentType);
   if(saveContext?.statements)saveContext.statements.push(statement);else await statement.run();
-  return mediaUrl(kind,key,version);
+  return mediaUrl(kind,key,version,token);
 }
 async function externalizePart(env,part,raw,saveContext=null){
   if(part==='core'){
@@ -165,8 +170,9 @@ async function externalizePart(env,part,raw,saveContext=null){
 async function handleSave(request,env){
   const admin=await currentAdmin(request,env);if(!admin)return json({error:'Admin authorization required'},401);await ensureSchema(env);
   const body=await request.json().catch(()=>null);if(!body?.parts||typeof body.parts!=='object'||Array.isArray(body.parts))return json({error:'parts must be an object'},400);
+  const expectedVersions=body?.versions;if(!expectedVersions||typeof expectedVersions!=='object'||Array.isArray(expectedVersions))return json({error:'저장 기준 버전이 없습니다. 새로고침 후 다시 시도해 주세요.'},409);
   const entries=Object.entries(body.parts);
-  for(const [part] of entries)if(!PARTS.includes(part))return json({error:`Invalid part: ${part}`},400);
+  for(const [part] of entries){if(!PARTS.includes(part))return json({error:`Invalid part: ${part}`},400);const expected=Number(expectedVersions[part]);if(!Number.isInteger(expected)||expected<0)return json({error:`${part} 저장 기준 버전이 올바르지 않습니다. 새로고침 후 다시 시도해 주세요.`},409)}
   const versions={},normalized={},staged=[],mediaContext={statements:[]};
   for(const [part,raw] of entries){
     const value=await externalizePart(env,part,raw,mediaContext);
@@ -174,20 +180,37 @@ async function handleSave(request,env){
     const version=Math.max(1,Number(current?.version)||0)+1,text=JSON.stringify(value??null);
     staged.push({part,value,version,text});versions[part]=version;normalized[part]=value;
   }
-  const statements=[...mediaContext.statements];
+  const statements=[];
+  for(const {part} of staged){
+    const expected=Number(expectedVersions[part]);
+    statements.push(env.DB.prepare(`INSERT INTO save_conflict_guard(id) SELECT 1 WHERE COALESCE((SELECT version FROM workspace_parts WHERE scope='public' AND part=?),0)<>?`).bind(part,expected));
+  }
+  statements.push(...mediaContext.statements);
   for(const {part,version,text} of staged){
     statements.push(
       env.DB.prepare(`INSERT INTO workspace_parts(scope,part,data,version,updated_at) VALUES('public',?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(scope,part) DO UPDATE SET data=excluded.data,version=excluded.version,updated_at=CURRENT_TIMESTAMP`).bind(part,text,version),
       env.DB.prepare(`INSERT INTO workspace_parts(scope,part,data,version,updated_at) VALUES('admin',?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(scope,part) DO UPDATE SET data=excluded.data,version=excluded.version,updated_at=CURRENT_TIMESTAMP`).bind(part,text,version),
     );
   }
-  if(statements.length)await env.DB.batch(statements);
+  if(statements.length){
+    try{await env.DB.batch(statements)}
+    catch(error){
+      const conflicts=[];
+      for(const {part} of staged){
+        const row=await env.DB.prepare('SELECT version FROM workspace_parts WHERE scope=? AND part=?').bind('public',part).first();
+        const current=Number(row?.version)||0,expected=Number(expectedVersions[part]);
+        if(current!==expected)conflicts.push({part,expected,current});
+      }
+      if(conflicts.length)return json({error:'다른 Admin 또는 다른 화면에서 데이터가 먼저 변경되었습니다. 새로고침 후 다시 시도해 주세요.',conflicts},409);
+      throw error;
+    }
+  }
   return json({versions,normalized,savedBy:admin.id});
 }
 async function handleManifest(env){await ensureSchema(env);const {results=[]}=await env.DB.prepare("SELECT part,version FROM workspace_parts WHERE scope='public' ORDER BY part").all();const parts={};for(const row of results)parts[row.part]=Number(row.version)||1;return json({parts,scope:'public',cacheSchemaVersion:3,backend:'cloudflare-d1'})}
 async function handlePart(env,part){if(!PARTS.includes(part))return json({error:'Invalid part'},400);await ensureSchema(env);const row=await env.DB.prepare("SELECT part,version,data FROM workspace_parts WHERE scope='public' AND part=?").bind(part).first();if(!row)return json({error:'Part not found'},404);let data;try{data=JSON.parse(row.data)}catch(_){return json({error:'Stored data is invalid'},500)}return json({part:row.part,version:Number(row.version)||1,data})}
 async function handleBootstrap(env){await ensureSchema(env);const {results=[]}=await env.DB.prepare("SELECT part,version,data FROM workspace_parts WHERE scope='public' ORDER BY part").all();const parts={},versions={};for(const row of results){let data=null;try{data=JSON.parse(row.data)}catch(_){}const version=Number(row.version)||1;versions[row.part]=version;parts[row.part]={part:row.part,version,data}}return json({backend:'cloudflare-d1-r2',mode:'mawang-scheduler-v1.1',build:'Mawang Scheduler v.1.1.0',cacheSchemaVersion:3,manifest:{parts:versions,scope:'public',cacheSchemaVersion:3,backend:'cloudflare-d1'},parts})}
-async function handleMedia(request,env,kind,key){if(!['contact','workspace'].includes(kind)||!/^[A-Za-z0-9_-]{1,160}$/.test(key))return new Response('Invalid media key',{status:400});const requested=Math.max(0,Number(new URL(request.url).searchParams.get('v'))||0);let object=requested?await env.IMAGES.get(r2VersionedKey(kind,key,requested)):null;if(!object&&!requested){const current=await currentImageVersion(env,kind,key);if(current>0)object=await env.IMAGES.get(r2VersionedKey(kind,key,current))}if(!object)object=await env.IMAGES.get(r2Key(kind,key));if(!object)return new Response('Not found',{status:404});const headers=new Headers();object.writeHttpMetadata(headers);headers.set('etag',object.httpEtag);headers.set('x-content-type-options','nosniff');headers.set('cache-control','public, max-age=300, stale-while-revalidate=86400');return new Response(object.body,{headers})}
+async function handleMedia(request,env,kind,key){if(!['contact','workspace'].includes(kind)||!/^[A-Za-z0-9_-]{1,160}$/.test(key))return new Response('Invalid media key',{status:400});const url=new URL(request.url),requested=Math.max(0,Number(url.searchParams.get('v'))||0),explicitToken=cleanMediaToken(url.searchParams.get('h'));let object=explicitToken&&requested?await env.IMAGES.get(r2VersionedKey(kind,key,requested,explicitToken)):null;if(!object&&!explicitToken){const current=await currentImageRecord(env,kind,key),currentVersion=Number(current?.version)||0,currentToken=tokenFromImageSource(current?.source_url);if(currentToken&&(!requested||requested===currentVersion))object=await env.IMAGES.get(r2VersionedKey(kind,key,currentVersion,currentToken))}if(!object&&requested)object=await env.IMAGES.get(r2VersionedKey(kind,key,requested));if(!object)object=await env.IMAGES.get(r2Key(kind,key));if(!object)return new Response('Not found',{status:404});const headers=new Headers();object.writeHttpMetadata(headers);headers.set('etag',object.httpEtag);headers.set('x-content-type-options','nosniff');headers.set('cache-control','public, max-age=300, stale-while-revalidate=86400');return new Response(object.body,{headers})}
 
 export default{
   async fetch(request,env,ctx){
