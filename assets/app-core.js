@@ -502,12 +502,32 @@ document.getElementById('sidebarPinBtn').onclick=()=>{
 };
 syncSidebarPinUI();
 
+const clockTimeFormatterV133=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+const clockDateFormatterV133=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',weekday:'long',year:'numeric',month:'long',day:'numeric'});
+let clockTimerV133=0;
+let clockDateRefreshAtV133=0;
 function tickClock(){
+  if(document.hidden)return;
   const now=new Date();
-  document.getElementById('clockText').textContent=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(now);
-  document.getElementById('todayText').textContent=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(now);
+  const clock=document.getElementById('clockText');
+  const nextTime=clockTimeFormatterV133.format(now);
+  if(clock&&clock.textContent!==nextTime)clock.textContent=nextTime;
+  if(!clockDateRefreshAtV133||Date.now()-clockDateRefreshAtV133>=30000){
+    clockDateRefreshAtV133=Date.now();
+    const today=document.getElementById('todayText');
+    const nextDate=clockDateFormatterV133.format(now);
+    if(today&&today.textContent!==nextDate)today.textContent=nextDate;
+  }
 }
-setInterval(tickClock,1000);
+function scheduleClockV133(){
+  clearTimeout(clockTimerV133);
+  if(document.hidden)return;
+  tickClock();
+  const delay=Math.max(250,1000-(Date.now()%1000)+30);
+  clockTimerV133=setTimeout(scheduleClockV133,delay);
+}
+document.addEventListener('visibilitychange',scheduleClockV133);
+scheduleClockV133();
 
 let dashboardPinnedEventId=null;
 let dashboardHoverEventId=null;
@@ -998,16 +1018,32 @@ function renderCalendarClipboard(){
 window.renderCalendarClipboard=renderCalendarClipboard;
 
 let calendarPointerTemplateDrag=null;
+let calendarPointerDragListenersAttached=false;
+function attachCalendarPointerDragListeners(){
+  if(calendarPointerDragListenersAttached)return;
+  calendarPointerDragListenersAttached=true;
+  document.addEventListener('pointermove',moveCalendarPointerTemplateDrag,{passive:false});
+  document.addEventListener('pointerup',endCalendarPointerTemplateDrag,{passive:false});
+  document.addEventListener('pointercancel',clearCalendarPointerTemplateDrag);
+}
+function detachCalendarPointerDragListeners(){
+  if(!calendarPointerDragListenersAttached)return;
+  calendarPointerDragListenersAttached=false;
+  document.removeEventListener('pointermove',moveCalendarPointerTemplateDrag,{passive:false});
+  document.removeEventListener('pointerup',endCalendarPointerTemplateDrag,{passive:false});
+  document.removeEventListener('pointercancel',clearCalendarPointerTemplateDrag);
+}
 
 function clearCalendarPointerTemplateDrag(){
   const s=calendarPointerTemplateDrag;
-  if(!s)return;
+  if(!s){detachCalendarPointerDragListeners();return;}
   try{if(s.source?.hasPointerCapture?.(s.pointerId))s.source.releasePointerCapture(s.pointerId)}catch(_){}
   s.ghost?.remove();
   s.targetDay?.classList.remove('template-drag-over');
   s.source?.classList.remove('dragging');
   document.body.classList.remove('calendar-pointer-template-dragging');
   calendarPointerTemplateDrag=null;
+  detachCalendarPointerDragListeners();
 }
 
 function updateCalendarPointerTemplateTarget(x,y){
@@ -1039,6 +1075,7 @@ function beginCalendarPointerTemplateDrag(e,chip){
   document.body.appendChild(ghost);
 
   calendarPointerTemplateDrag={pointerId:e.pointerId,id,source:chip,ghost,targetDay:null};
+  attachCalendarPointerDragListeners();
   chip.classList.add('dragging');
   document.body.classList.add('calendar-pointer-template-dragging');
   try{chip.setPointerCapture(e.pointerId)}catch(_){}
@@ -1064,10 +1101,6 @@ function endCalendarPointerTemplateDrag(e){
   clearCalendarPointerTemplateDrag();
   if(id&&date)createEventFromClipboardItem(id,date);
 }
-document.addEventListener('pointermove',moveCalendarPointerTemplateDrag,{passive:false});
-document.addEventListener('pointerup',endCalendarPointerTemplateDrag,{passive:false});
-document.addEventListener('pointercancel',clearCalendarPointerTemplateDrag);
-
 
 function initCalendarCopyTrayDnD(){
   const tray=document.getElementById('calendarCopyTrayDropzone');

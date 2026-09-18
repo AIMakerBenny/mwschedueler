@@ -20,14 +20,30 @@ function installStyle(){if($('mwsUiFixesStyleV121'))return;const s=document.crea
 @media(max-width:700px){#calendarEventPreview.mws-today-people-hover-v121{width:min(390px,calc(100vw - 16px))!important}#calendarEventPreview.mws-today-people-hover-v121 .mws-today-people-grid-v121{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 `;document.head.appendChild(s)}
 function positionPreview(preview,x,y){if(!preview)return;const gap=14,r=preview.getBoundingClientRect();let left=x+gap,top=y+gap;if(left+r.width>innerWidth-10)left=x-r.width-gap;if(top+r.height>innerHeight-10)top=y-r.height-gap;preview.style.left=Math.max(10,left)+'px';preview.style.top=Math.max(10,top)+'px'}
-function showGamePreview(slot,x,y){const game=normalizeGame(eventById(slot?.dataset?.eventId)?.steamGame),preview=$('calendarEventPreview');if(!game||!preview)return;preview.innerHTML=`<div class="mws-game-hover-v121"><img class="mws-game-hover-image-v121" src="${esc(game.image)}" alt="${esc(game.name)}"><div class="mws-game-hover-copy-v121"><div class="mws-game-hover-name-v121">${esc(game.name)}</div><div class="mws-game-hover-app-v121">Steam App ${esc(game.appid)}</div></div></div>`;preview.classList.remove('mws-today-people-hover-v121');preview.classList.add('open');preview.setAttribute('aria-hidden','false');requestAnimationFrame(()=>positionPreview(preview,x,y))}
-function hidePreview(){const preview=$('calendarEventPreview');if(!preview)return;preview.classList.remove('open');preview.setAttribute('aria-hidden','true')}
+function showGamePreview(slot,x,y){const game=normalizeGame(eventById(slot?.dataset?.eventId)?.steamGame),preview=$('calendarEventPreview');if(!game||!preview)return;startGamePreviewTracking();preview.innerHTML=`<div class="mws-game-hover-v121"><img class="mws-game-hover-image-v121" src="${esc(game.image)}" alt="${esc(game.name)}"><div class="mws-game-hover-copy-v121"><div class="mws-game-hover-name-v121">${esc(game.name)}</div><div class="mws-game-hover-app-v121">Steam App ${esc(game.appid)}</div></div></div>`;preview.classList.remove('mws-today-people-hover-v121');preview.classList.add('open');preview.setAttribute('aria-hidden','false');requestAnimationFrame(()=>positionPreview(preview,x,y))}
+function hidePreview(){stopGamePreviewTracking();const preview=$('calendarEventPreview');if(!preview)return;preview.classList.remove('open');preview.setAttribute('aria-hidden','true')}
 function tuneTodayPeoplePreview(){const preview=$('calendarEventPreview');if(!preview)return;preview.querySelectorAll('.mws-today-people-grid-v121').forEach(n=>n.classList.remove('mws-today-people-grid-v121'));const active=/오늘\s*함께한\s*사람/.test(preview.textContent||'');preview.classList.toggle('mws-today-people-hover-v121',active);if(!active)return;const candidates=[...preview.querySelectorAll('*')].filter(n=>n.children.length>=3&&getComputedStyle(n).display==='grid');candidates.sort((a,b)=>b.children.length-a.children.length);candidates[0]?.classList.add('mws-today-people-grid-v121')}
 let lastOpenAt=0,lastOpenId='';
 function openGameEditor(slot){const id=String(slot?.dataset?.eventId||'');if(!id||!eventById(id))return;const t=Date.now();if(lastOpenId===id&&t-lastOpenAt<300)return;lastOpenId=id;lastOpenAt=t;hidePreview();try{if(typeof window.openSteamGamePickerV111==='function')window.openSteamGamePickerV111(id)}catch(e){console.error(e)}setTimeout(()=>{try{if(!$('eventModal')?.classList.contains('open')){if(typeof window.openEvent==='function')window.openEvent(id);else if(typeof openEvent==='function')openEvent(id)}$('eventGameSearchV112')?.focus()}catch(e){console.error(e)}},30)}
 function slotFromEvent(e){return e.target?.closest?.('.mws-steam-slot-v111')||null}
+let gamePreviewTracking=false;
+function trackGamePreviewMove(e){
+  const preview=$('calendarEventPreview');
+  if(!preview?.classList.contains('open')){stopGamePreviewTracking();return}
+  const slot=slotFromEvent(e);
+  if(slot)positionPreview(preview,e.clientX,e.clientY);
+}
+function startGamePreviewTracking(){
+  if(gamePreviewTracking)return;
+  gamePreviewTracking=true;
+  document.addEventListener('mousemove',trackGamePreviewMove,true);
+}
+function stopGamePreviewTracking(){
+  if(!gamePreviewTracking)return;
+  gamePreviewTracking=false;
+  document.removeEventListener('mousemove',trackGamePreviewMove,true);
+}
 document.addEventListener('mouseover',e=>{const slot=slotFromEvent(e);if(!slot||slot.contains(e.relatedTarget))return;showGamePreview(slot,e.clientX,e.clientY)},true);
-document.addEventListener('mousemove',e=>{const slot=slotFromEvent(e);if(slot&&$('calendarEventPreview')?.classList.contains('open'))positionPreview($('calendarEventPreview'),e.clientX,e.clientY)},true);
 document.addEventListener('mouseout',e=>{const slot=slotFromEvent(e);if(!slot||slot.contains(e.relatedTarget))return;hidePreview()},true);
 document.addEventListener('pointerdown',e=>{if(slotFromEvent(e))e.stopPropagation()},true);
 document.addEventListener('pointerup',e=>{const slot=slotFromEvent(e);if(!slot||e.button!==0)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();openGameEditor(slot)},true);

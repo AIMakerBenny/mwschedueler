@@ -70,3 +70,10 @@
 
 /assets/v130-live-contact-fix.js
   Cache-Control: no-cache, must-revalidate
+
+
+/assets/app-core.js
+  Cache-Control: no-cache, must-revalidate
+
+/assets/ui-fixes-v121.js
+  Cache-Control: no-cache, must-revalidate
