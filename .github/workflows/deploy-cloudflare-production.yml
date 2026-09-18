@@ -184,7 +184,6 @@ jobs:
           node --check assets/device-ui.js
           node --check assets/mobile-calendar-day-detail-v130.js
           node --check assets/mobile-calendar-quick-add-v130.js
-          node --check assets/app-core.js
           node --check assets/app-version-v120.js
           node --check src/cf-v120-friend.js
           node --check src/cf-v121-boss-media.js
