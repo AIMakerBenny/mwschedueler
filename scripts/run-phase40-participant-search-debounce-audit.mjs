@@ -16,7 +16,7 @@ export function runPhase40ParticipantSearchDebounceAudit(){
   if(src.includes('window.contactMatches=match')||src.includes('function match(c,q'))issues.push('contact runtime still owns a duplicate contact matcher');
   if(!src.includes("document.addEventListener('compositionupdate',e=>scheduleLiveSearchImeV165(e.target),true)"))issues.push('global live-search IME bridge is missing');
   if(!src.includes("document.addEventListener('compositionend',e=>scheduleLiveSearchImeV165(e.target),true)"))issues.push('global live-search IME completion fallback is missing');
-  if(!runtime.includes('contact-runtime-v130.js?v=1.3.0-search67'))issues.push('final contact runtime cache-bust was not advanced');
+  if(!/contact-runtime-v130\.js\?v=1\.3\.0-search(?:6[7-9]|[7-9][0-9]|[1-9][0-9]{2,})/.test(runtime))issues.push('contact runtime cache-bust is older than search67');
 
   const summary={phase:40,name:'participant-search-debounce-performance',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
