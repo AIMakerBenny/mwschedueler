@@ -14,16 +14,7 @@ let categoriesPromise=null;
 let forceNextBatch=false;
 let uiScheduled=false;
 
-function setVersionLabel(){
-  const version=String(window.MWS_APP_VERSION||'1.3.0');
-  const label=String(window.MWS_APP_VERSION_LABEL||`Mawang Scheduler v ${version}`);
-  document.body?.setAttribute('data-build-version',`MWS V ${version}`);
-  const direct=document.querySelector('[id^="mwsBuildVersionV5"],.sidebar-build-version-v52,.sidebar-build-version-v53');
-  if(direct)direct.textContent=label;
-  document.querySelectorAll('.sidebar *').forEach(el=>{
-    if(el.children.length===0&&/^Mawang Scheduler\s+v/i.test(String(el.textContent||'').trim()))el.textContent=label;
-  });
-}
+function setVersionLabel(){try{window.mwsApplyAppVersionV120?.()}catch(_){}}
 
 function dataRef(){try{return data}catch(_){return window.data||null}}
 function stationKey(raw){
