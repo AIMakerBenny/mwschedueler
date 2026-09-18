@@ -58,6 +58,7 @@ import {runPhase57LiveThumbnailRefreshAudit} from './run-phase57-live-thumbnail-
 import {runPhase58FriendThumbnailLoadAudit} from './run-phase58-friend-thumbnail-load-audit.mjs';
 import {runPhase59FriendLiveCardLayoutAudit} from './run-phase59-friend-live-card-layout-audit.mjs';
 import {runPhase60LiveThumbnailProxyAudit} from './run-phase60-live-thumbnail-proxy-audit.mjs';
+import {runPhase61NativeFriendCardBindingAudit} from './run-phase61-native-friend-card-binding-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -644,6 +645,14 @@ export function runPhase60FullIntegrationAudit(){
   if(issues.length)process.exitCode=1;
   return summary;
 }
-export function runCurrentFullIntegrationAudit(){return runPhase60FullIntegrationAudit();}
+export function runPhase61FullIntegrationAudit(){
+  const previous=runPhase60FullIntegrationAudit(), current=runPhase61NativeFriendCardBindingAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)],warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:61,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+export function runCurrentFullIntegrationAudit(){return runPhase61FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
