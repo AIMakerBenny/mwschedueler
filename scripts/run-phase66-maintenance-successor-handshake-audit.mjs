@@ -6,11 +6,10 @@ export function runPhase66MaintenanceSuccessorHandshakeAudit(){
   const perf=fs.readFileSync('assets/perf-runtime.js','utf8');
   const next=fs.readFileSync('assets/maintenance-runtime-v130.js','utf8');
 
-  if(!fs.existsSync('assets/cf-v5.7-runtime.js'))issues.push('legacy maintenance fallback was removed before activation proof');
-  if(!perf.includes("assets/maintenance-runtime-v130.js?v=1.3.0-stage66"))issues.push('maintenance successor cache-bust was not advanced for handshake validation');
-  if(!perf.includes("assets/cf-v5.7-runtime.js?v=5.7.1"))issues.push('legacy maintenance fallback path is missing');
-  if(!perf.includes('s.onerror=fallback'))issues.push('network load failure does not trigger the legacy fallback');
-  if(!perf.includes("s.onload=()=>{if(window.__mwsMaintenanceRuntimeV130Ready)"))issues.push('successful script download is trusted without a runtime readiness handshake');
+  if(!perf.includes("assets/maintenance-runtime-v130.js?v=1.3.0-stage68"))issues.push('maintenance successor cache-bust was not advanced for activation validation');
+  if(perf.includes("assets/cf-v5.7-runtime.js"))issues.push('legacy maintenance runtime is still referenced by the active loader');
+  if(!perf.includes("if(window.__mwsMaintenanceRuntimeV130Ready){installLosslessImagePolicy();forceVersion();return}"))issues.push('successful script download is trusted without a runtime readiness handshake');
+  if(!perf.includes("Mawang maintenance runtime loading failed"))issues.push('network load failure is not surfaced by the activated successor path');
   if(!next.includes('window.__mwsMaintenanceRuntimeV130Ready=false'))issues.push('successor does not begin in an unready state');
   if(!next.includes('window.__mwsMaintenanceRuntimeV130Ready=true'))issues.push('successor never publishes a ready state');
   if(!next.includes('window.__mwsCf571Runtime=true'))issues.push('successor does not claim the legacy compatibility marker after successful installation');
