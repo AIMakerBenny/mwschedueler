@@ -105,6 +105,8 @@ var (
 	pendingMu      sync.Mutex
 	pendingSection string
 	appStartOnce   sync.Once
+	startupMu      sync.Mutex
+	startupLocked  = true
 )
 
 const appBridgeScript = `(function(){
@@ -275,7 +277,25 @@ func rememberWindowState(h uintptr) {
 	stateMu.Unlock()
 }
 
+func startupIsLocked() bool {
+	startupMu.Lock()
+	locked := startupLocked
+	startupMu.Unlock()
+	return locked
+}
+
+func releaseStartupLock() {
+	startupMu.Lock()
+	startupLocked = false
+	startupMu.Unlock()
+}
+
 func showWindow() {
+	if startupIsLocked() {
+		showIntroWindow()
+		return
+	}
+
 	wvMu.Lock()
 	h := hwnd
 	w := wv
@@ -419,7 +439,9 @@ func runAppWebView() {
 		w.Dispatch(func() {
 			w.Eval(appBridgeScript)
 			applyPendingSection(w)
-			showWindow()
+			if !startupIsLocked() {
+				showWindow()
+			}
 		})
 	})
 
@@ -549,6 +571,7 @@ func onReady() {
 	mNotebook.Click(func() { openSection("memos", "수첩|메모|메모장") })
 	mQuit.Click(func() {
 		exiting = true
+		closeIntroForExit()
 		wvMu.Lock()
 		aw := wv
 		wvMu.Unlock()
@@ -561,6 +584,7 @@ func onReady() {
 	go watchShowEvent()
 	go watchAltEnter()
 	startApp()
+	go runStartupIntro()
 }
 
 func onExit() {
