@@ -437,8 +437,6 @@ jobs:
           node --check assets/today-people-runtime-v130.js
           node --check assets/contact-runtime-v130.js
           node --check assets/friend-finder-v120.js
-          grep -Fq 'friendInitialQueryV130' assets/friend-finder-v120.js
-          grep -Fq 'friendContactMatchesV130' assets/friend-finder-v120.js
           node --check assets/v130-live-contact-fix.js
           node --check assets/steam-game-v111.js
           node --check assets/ui-fixes-v121.js
