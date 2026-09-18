@@ -11,7 +11,7 @@ export function runPhase43SelfContactSearchDebounceAudit(){
   if(!core.includes("selfSearch.addEventListener('input',e=>{if(e?.isComposing)return;scheduleUserIdentityRenderV143(80)})"))issues.push('self-contact search is not IME-aware and debounced');
   if(!core.includes("selfSearch.addEventListener('compositionend',()=>scheduleUserIdentityRenderV143(0))"))issues.push('self-contact search does not render immediately after composition ends');
   if(core.includes("document.getElementById('selfContactSearch')?.addEventListener('input',renderUserIdentitySettings)"))issues.push('legacy immediate self-contact render remains');
-  if(!index.includes('assets/app-core.js?v=1.3.0-perf43'))issues.push('app-core cache-bust was not advanced for identity-search optimization');
+  if(!index.includes('assets/app-core.js?v=1.3.0-'))issues.push('app-core cache-bust revision is missing');
 
   const summary={phase:43,name:'self-contact-search-debounce-performance',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));

@@ -5384,7 +5384,7 @@ window.addSoopPostFromUrl=async()=>{
   activePostId=post.id;if(input)input.value='';renderPosts();await syncSoopPost(post.id);
 };
 window.deletePost=id=>{const p=postById(id);if(!p)return;if(!confirm(`'${p.name}' 게시글과 가져온 신청자 정보를 삭제하시겠습니까?\n연락처의 신청 기록은 과거 기록으로 유지됩니다.`))return;data.posts=data.posts.filter(x=>x.id!==id);if(activePostId===id)activePostId=data.posts[0]?.id||'';saveData('게시글 삭제');renderPosts()};
-window.updatePostApplicantStatus=(postId,commentId,status)=>{const p=postById(postId),c=p?.comments.find(x=>x.id===commentId);if(!c)return;c.status=['pending','selected','excluded'].includes(status)?status:'pending';syncPostContactApplicationHistories(p);saveData('게시글 신청자 상태 변경');renderPosts()};
+window.updatePostApplicantStatus=(postId,commentId,status)=>{const p=postById(postId),c=p?.comments.find(x=>x.id===commentId);if(!c)return;c.status=['pending','selected','excluded'].includes(status)?status:'pending';syncPostContactApplicationHistories(p);saveData('게시글 신청자 상태 변경');renderPostsAfterSaveV148()};
 window.openMatchedPostContact=id=>openContact(id);
 window.addPostApplicantToContacts=(postId,commentId)=>{
   const p=postById(postId),c=p?.comments.find(x=>x.id===commentId);if(!c)return;const matched=findContactForSoopApplicant(c);if(matched)return openContact(matched.id);
@@ -5516,7 +5516,7 @@ function extractSoopUpCount(c){
 function applicantStatusLabel(s){return s==='selected'?'확정':(s==='nextchance'||s==='excluded')?'다음기회에':'대기'}
 function applicationStatusText(s){return applicantStatusLabel(s)}
 function aggregateApplicantStatus(comments){if(comments.some(c=>c.status==='selected'))return'selected';if(comments.length&&comments.every(c=>c.status==='nextchance'||c.status==='excluded'))return'nextchance';return'pending'}
-window.updatePostApplicantStatus=(postId,commentId,status)=>{const p=postById(postId),c=p?.comments.find(x=>x.id===commentId);if(!c)return;c.status=status==='excluded'?'nextchance':(['pending','selected','nextchance'].includes(status)?status:'pending');syncPostContactApplicationHistories(p);saveData('게시글 신청자 상태 변경');renderPosts()};
+window.updatePostApplicantStatus=(postId,commentId,status)=>{const p=postById(postId),c=p?.comments.find(x=>x.id===commentId);if(!c)return;c.status=status==='excluded'?'nextchance':(['pending','selected','nextchance'].includes(status)?status:'pending');syncPostContactApplicationHistories(p);saveData('게시글 신청자 상태 변경');renderPostsAfterSaveV148()};
 window.setPostApplicantDecision=(postId,commentId,status)=>{const p=postById(postId),c=p?.comments.find(x=>x.id===commentId);if(!c)return;const next=(c.status===status)?'pending':status;updatePostApplicantStatus(postId,commentId,next)};
 
 function renderPostSourceContent(p){
@@ -5532,7 +5532,7 @@ async function syncSoopPost(id,{quiet=false}={}){
     const totalPages=Math.max(1,Math.min(100,Number(first?.meta?.last_page)||1));let raw=[...(Array.isArray(first?.data)?first.data:[])];for(let page=2;page<=totalPages;page++){setPostGlobalStatus(`댓글 동기화 ${page} / ${totalPages}`,'syncing');const j=await fetchSoopJson(soopApiUrl(post,page));if(Array.isArray(j?.data))raw.push(...j.data)}
     const prev=new Map((post.comments||[]).map(c=>[c.commentNo||`${c.userId}|${c.regDate}`,c]));post.comments=raw.map(c=>{const key=String(c.p_comment_no||`${c.user_id||''}|${c.reg_date||''}`),old=prev.get(key),userId=String(c.user_id||'');return{id:old?.id||crypto.randomUUID(),commentNo:String(c.p_comment_no||''),userId,name:String(c.user_nick||c.user_id||'신청자'),profileImage:normalizeSoopUrl(c.profile_image||''),stationUrl:soopUserStationUrl(userId),comment:String(c.comment||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<[^>]+>/g,''),regDate:String(c.reg_date||''),photoUrl:soopPhotoUrl(c.photo),upCount:extractSoopUpCount(c),status:old?.status==='excluded'?'nextchance':(old?.status||'pending')}});
     post.lastSyncAt=new Date().toISOString();post.lastError='';syncPostContactApplicationHistories(post);data.version=52;saveData('SOOP 게시글 · 댓글 동기화');setPostGlobalStatus(`${post.comments.length}개 댓글 동기화 완료`,'ok');if(!quiet)toast('게시글',`${post.name} · ${post.comments.length}개의 댓글을 불러왔습니다`)
-  }catch(err){post.lastError=String(err?.message||err);saveData('SOOP 댓글 동기화 오류');setPostGlobalStatus('댓글 동기화 실패','error');if(!quiet)toast('게시글',post.lastError)}renderPosts()
+  }catch(err){post.lastError=String(err?.message||err);saveData('SOOP 댓글 동기화 오류');setPostGlobalStatus('댓글 동기화 실패','error');if(!quiet)toast('게시글',post.lastError)}renderPostsAfterSaveV148()
 }
 window.syncSoopPost=syncSoopPost;
 
@@ -5567,7 +5567,12 @@ window.closePostGamePicker=closePostGamePicker;
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('postGamePickerModal')?.classList.contains('open')){e.preventDefault();e.stopImmediatePropagation();closePostGamePicker()}},true);
 
 // Keep completeness count current after every global render.
-window.addEventListener('mawang:datachange',()=>{try{renderIncompleteContacts()}catch(_){}});
+function refreshIncompleteContactsOnDataChangeV146(){
+  const section=document.getElementById('contacts');
+  if(!section?.classList.contains('active')||contactView!=='incomplete')return;
+  try{renderIncompleteContacts()}catch(_){}
+}
+window.addEventListener('mawang:datachange',refreshIncompleteContactsOnDataChangeV146);
 
 
 
@@ -5774,14 +5779,14 @@ window.setSelfContact=id=>{
   const result=syncSelectedUserAcrossEvents(c.id);
   saveData('이용자 선택 · 전체 컨텐츠 참가자 동기화');
   toast('이용자 선택',`${c.name}을(를) 본인으로 지정했습니다 · 컨텐츠 ${result.added+result.replaced}개 동기화`);
-  renderUserIdentitySettings();refreshContactViews();
+  if(!window.__mwsCf571Optimizer){renderUserIdentitySettings();refreshContactViews()}
 };
 window.clearSelfContact=()=>{
   const result=syncSelectedUserAcrossEvents('');
   data.selfContactId='';
   saveData('이용자 선택 해제');
   toast('이용자 선택',`본인 지정을 해제했습니다 · 자동 참가 ${result.removed}개 정리`);
-  renderUserIdentitySettings();refreshContactViews();
+  if(!window.__mwsCf571Optimizer){renderUserIdentitySettings();refreshContactViews()}
 };
 let selfContactSearchTimerV143=0;
 function scheduleUserIdentityRenderV143(delay=80){
@@ -5843,9 +5848,12 @@ window.renderPostSourceContent=renderPostSourceContent;
 function postCommentIdentity(c){return String(c?.commentNo||c?.p_comment_no||`${c?.userId||c?.user_id||''}|${c?.regDate||c?.reg_date||''}`)}
 window.deletePostApplicant=(postId,commentId)=>{
   const p=postById(postId),c=p?.comments?.find(x=>x.id===commentId);if(!p||!c)return;if(!confirm(`${c.name}의 신청 댓글을 이 게시글 목록에서 삭제하시겠습니까?\n다시 동기화해도 이 댓글은 자동 복구되지 않습니다.`))return;
-  if(!Array.isArray(p.ignoredCommentKeys))p.ignoredCommentKeys=[];const key=postCommentIdentity(c);if(key&&!p.ignoredCommentKeys.includes(key))p.ignoredCommentKeys.push(key);p.comments=p.comments.filter(x=>x.id!==commentId);syncPostContactApplicationHistories(p);saveData('게시글 신청자 삭제');toast('게시글',`${c.name} 신청자를 삭제했습니다`);renderPosts()
+  if(!Array.isArray(p.ignoredCommentKeys))p.ignoredCommentKeys=[];const key=postCommentIdentity(c);if(key&&!p.ignoredCommentKeys.includes(key))p.ignoredCommentKeys.push(key);p.comments=p.comments.filter(x=>x.id!==commentId);syncPostContactApplicationHistories(p);saveData('게시글 신청자 삭제');toast('게시글',`${c.name} 신청자를 삭제했습니다`);renderPostsAfterSaveV148()
 };
 
+function renderPostsAfterSaveV148(){
+  if(!window.__mwsCf571Optimizer)renderPosts();
+}
 function applicantStatusLabel(s){return s==='selected'?'확정':(s==='nextchance'||s==='excluded')?'다음기회에':'대기'}
 function applicationStatusText(s){return applicantStatusLabel(s)}
 function postApplicantCardHTML(post,c,dups){
@@ -5875,7 +5883,7 @@ async function syncSoopPost(id,{quiet=false}={}){
     const ignored=new Set(post.ignoredCommentKeys||[]),prev=new Map((post.comments||[]).map(c=>[postCommentIdentity(c),c]));raw=raw.filter(c=>!ignored.has(String(c.p_comment_no||`${c.user_id||''}|${c.reg_date||''}`)));
     post.comments=raw.map(c=>{const key=String(c.p_comment_no||`${c.user_id||''}|${c.reg_date||''}`),old=prev.get(key),userId=String(c.user_id||'');return{id:old?.id||crypto.randomUUID(),commentNo:String(c.p_comment_no||''),userId,name:String(c.user_nick||c.user_id||'신청자'),profileImage:normalizeSoopUrl(c.profile_image||''),stationUrl:soopUserStationUrl(userId),comment:String(c.comment||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<[^>]+>/g,''),regDate:String(c.reg_date||''),photoUrl:soopPhotoUrl(c.photo),upCount:extractSoopUpCount(c),status:old?.status==='excluded'?'nextchance':(old?.status||'pending')}});
     post.lastSyncAt=new Date().toISOString();post.lastError='';syncPostContactApplicationHistories(post);data.version=52;saveData('SOOP 게시글 · 댓글 동기화');setPostGlobalStatus(`${post.comments.length}개 댓글 동기화 완료`,'ok');if(!quiet)toast('게시글',`${post.name} · ${post.comments.length}개의 댓글을 불러왔습니다`)
-  }catch(err){post.lastError=String(err?.message||err);saveData('SOOP 댓글 동기화 오류');setPostGlobalStatus('댓글 동기화 실패','error');if(!quiet)toast('게시글',post.lastError)}renderPosts()
+  }catch(err){post.lastError=String(err?.message||err);saveData('SOOP 댓글 동기화 오류');setPostGlobalStatus('댓글 동기화 실패','error');if(!quiet)toast('게시글',post.lastError)}renderPostsAfterSaveV148()
 }
 window.syncSoopPost=syncSoopPost;
 
@@ -5899,7 +5907,11 @@ function renderPosts(){
 }
 window.renderPosts=renderPosts;
 
-window.addEventListener('mawang:datachange',()=>{try{renderUserIdentitySettings()}catch(_){}});
+function refreshUserIdentityOnDataChangeV147(){
+  if(!document.getElementById('settings')?.classList.contains('active'))return;
+  try{renderUserIdentitySettings()}catch(_){}
+}
+window.addEventListener('mawang:datachange',refreshUserIdentityOnDataChangeV147);
 renderUserIdentitySettings();
 
 
@@ -6031,7 +6043,7 @@ window.bulkConfirmPostApplicants=()=>{
   if(!count)return toast('게시글','이미 모든 신청자가 확정 상태입니다');
   if(!confirm(`현재 게시글의 신청자 ${p.comments.length}명을 모두 확정하시겠습니까?\n다음기회에 상태도 확정으로 변경됩니다.`))return;
   for(const c of p.comments)c.status='selected';
-  syncPostContactApplicationHistories(p);saveData('게시글 신청자 전체 확정');renderPosts();toast('게시글',`${p.comments.length}명을 전체 확정했습니다`)
+  syncPostContactApplicationHistories(p);saveData('게시글 신청자 전체 확정');renderPostsAfterSaveV148();toast('게시글',`${p.comments.length}명을 전체 확정했습니다`)
 };
 window.bulkCancelPostApplicants=()=>{
   const p=postById(activePostId);if(!p||!(p.comments||[]).length)return toast('게시글','취소할 신청자가 없습니다');
@@ -6039,7 +6051,7 @@ window.bulkCancelPostApplicants=()=>{
   if(!selected)return toast('게시글','현재 확정된 신청자가 없습니다');
   if(!confirm(`확정된 ${selected}명의 확정을 모두 취소하고 대기 상태로 되돌리시겠습니까?\n다음기회에 상태는 그대로 유지됩니다.`))return;
   for(const c of p.comments)if(c.status==='selected')c.status='pending';
-  syncPostContactApplicationHistories(p);saveData('게시글 신청자 전체 확정 취소');renderPosts();toast('게시글',`${selected}명의 확정을 취소했습니다`)
+  syncPostContactApplicationHistories(p);saveData('게시글 신청자 전체 확정 취소');renderPostsAfterSaveV148();toast('게시글',`${selected}명의 확정을 취소했습니다`)
 };
 
 /* Gacha 뽑기 샘플 데이터 - 필요할 때 '샘플 참가자 10명 채우기'로 불러옵니다. */

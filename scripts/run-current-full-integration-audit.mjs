@@ -43,6 +43,9 @@ import {runPhase42PostApplicantSearchDebounceAudit} from './run-phase42-post-app
 import {runPhase43SelfContactSearchDebounceAudit} from './run-phase43-self-contact-search-debounce-audit.mjs';
 import {runPhase44PreviewObserverPerformanceAudit} from './run-phase44-preview-observer-performance-audit.mjs';
 import {runPhase45MajokuSidebarSimplificationAudit} from './run-phase45-majoku-sidebar-simplification-audit.mjs';
+import {runPhase46HiddenIncompleteContactsRenderAudit} from './run-phase46-hidden-incomplete-contacts-render-audit.mjs';
+import {runPhase47IdentitySettingsRenderAudit} from './run-phase47-identity-settings-render-audit.mjs';
+import {runPhase48PostSaveRenderDedupAudit} from './run-phase48-post-save-render-dedup-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -527,6 +530,21 @@ export function runPhase45FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase45FullIntegrationAudit();}
+export function runPhase46FullIntegrationAudit(){
+  const previous=runPhase45FullIntegrationAudit(), current=runPhase46HiddenIncompleteContactsRenderAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)],warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:46,issues,warnings,pass:issues.length===0};console.log(JSON.stringify({fullIntegration:summary}));if(issues.length)process.exitCode=1;return summary;
+}
+export function runPhase47FullIntegrationAudit(){
+  const previous=runPhase46FullIntegrationAudit(), current=runPhase47IdentitySettingsRenderAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)],warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:47,issues,warnings,pass:issues.length===0};console.log(JSON.stringify({fullIntegration:summary}));if(issues.length)process.exitCode=1;return summary;
+}
+export function runPhase48FullIntegrationAudit(){
+  const previous=runPhase47FullIntegrationAudit(), current=runPhase48PostSaveRenderDedupAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)],warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:48,issues,warnings,pass:issues.length===0};console.log(JSON.stringify({fullIntegration:summary}));if(issues.length)process.exitCode=1;return summary;
+}
+export function runCurrentFullIntegrationAudit(){return runPhase48FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
