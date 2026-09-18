@@ -212,7 +212,8 @@
   function loadMaintenanceRuntimeFeatures(){
     if(document.getElementById('mwsCf571RuntimeScript'))return;
     const fallback=()=>{
-      if(window.__mwsCf571Runtime||document.getElementById('mwsCf571RuntimeFallback'))return;
+      if(window.__mwsMaintenanceRuntimeV130Ready||document.getElementById('mwsCf571RuntimeFallback'))return;
+      if(window.__mwsCf571Runtime&&!window.__mwsMaintenanceRuntimeV130)return;
       const legacy=document.createElement('script');
       legacy.id='mwsCf571RuntimeFallback';
       legacy.src='assets/cf-v5.7-runtime.js?v=5.7.1';
@@ -221,8 +222,8 @@
     };
     const s=document.createElement('script');
     s.id='mwsCf571RuntimeScript';
-    s.src='assets/maintenance-runtime-v130.js?v=1.3.0-stage64';
-    s.onload=()=>{installLosslessImagePolicy();forceVersion()};
+    s.src='assets/maintenance-runtime-v130.js?v=1.3.0-stage66';
+    s.onload=()=>{if(window.__mwsMaintenanceRuntimeV130Ready){installLosslessImagePolicy();forceVersion()}else fallback()};
     s.onerror=fallback;
     document.body.appendChild(s);
   }
