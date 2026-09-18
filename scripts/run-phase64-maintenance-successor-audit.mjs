@@ -6,10 +6,9 @@ export function runPhase64MaintenanceSuccessorAudit(){
   const perf=fs.readFileSync('assets/perf-runtime.js','utf8');
   const next=fs.readFileSync('assets/maintenance-runtime-v130.js','utf8');
 
-  if(!fs.existsSync('assets/cf-v5.7-runtime.js'))issues.push('legacy maintenance fallback was removed before successor validation');
-  if(!perf.includes("assets/maintenance-runtime-v130.js?v=1.3.0-stage66"))issues.push('performance runtime does not prefer the staged maintenance successor');
-  if(!perf.includes("assets/cf-v5.7-runtime.js?v=5.7.1"))issues.push('maintenance runtime has no legacy fallback');
-  if(!perf.includes('s.onerror=fallback'))issues.push('maintenance successor load failure does not fall back safely');
+  if(!perf.includes("assets/maintenance-runtime-v130.js?v=1.3.0-stage68"))issues.push('performance runtime does not use the activated maintenance successor');
+  if(perf.includes("assets/cf-v5.7-runtime.js"))issues.push('performance runtime still references the legacy maintenance runtime after activation');
+  if(!perf.includes("Mawang maintenance runtime readiness handshake failed"))issues.push('activated maintenance successor has no readiness failure signal');
   if(!next.includes('__mwsMaintenanceRuntimeV130'))issues.push('maintenance successor marker is missing');
   for(const marker of ['installSaveRequestOptimizer','quickBackup','completeBackup','installCalendarClickGuard']){
     if(!next.includes(marker))issues.push(`maintenance successor lost required function: ${marker}`);
