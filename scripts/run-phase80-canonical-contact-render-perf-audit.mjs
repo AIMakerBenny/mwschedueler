@@ -10,7 +10,7 @@ export function runPhase80CanonicalContactRenderPerfAudit(){
   if(!app.includes('upcoming=mwsUpcomingByContact.get(c.id)||[]'))issues.push('canonical renderContacts still lacks O(1) upcoming lookup');
   if(app.includes('mwsUpcomingAll.filter(e=>!e.restDay&&(e.participants||[]).includes(c.id)).slice(0,8)'))issues.push('canonical renderContacts still filters all upcoming events per contact');
   if(!app.includes('loading="lazy" decoding="async"'))issues.push('canonical contact avatar lost async decode optimization');
-  if(!index.includes('assets/app-core.js?v=1.3.0-search80'))issues.push('app-core cache-bust is not search80');
+  if(!/assets\/app-core\.js\?v=1\.3\.0-search(?:8[0-9]|9[0-9]|[1-9][0-9]{2,})/.test(index))issues.push('app-core cache-bust is older than search80');
 
   const upcoming=[
     {id:'1',restDay:false,participants:['a','b']},
