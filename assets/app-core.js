@@ -485,6 +485,8 @@ function setTab(tab){
   if(tab==='gameRps')safeRenderView('가위바위보',renderRps);
   if(tab==='gamePachinko')safeRenderView('경마',renderPachinko);
   if(tab==='gameMultiDraw')safeRenderView('Gacha 뽑기',renderMultiDraw);
+  if(tab==='settings')safeRenderView('설정',renderSettings);
+  try{window.mwsScheduleImageTune?.()}catch(_){}
 }
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
 function syncSidebarPinUI(){
