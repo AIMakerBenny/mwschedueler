@@ -92,6 +92,12 @@ function normalizeCloudCore(js){
     "ensurePartsForTab('export').then(ok=>{if(ok&&loadedParts.size===ALL_PARTS.length)exportAll.click();else{try{toast('내보내기 실패','필수 데이터를 모두 불러오지 못했습니다.')}catch(_){}}})"
   );
 
+  /* Phase 15: every save carries the baseline part versions so stale Admin screens cannot overwrite newer data. */
+  out=out.replace(
+    "body:JSON.stringify({parts:payload}),timeout:60000",
+    "body:JSON.stringify({parts:payload,versions:Object.fromEntries(partsToSave.map(part=>[part,Number(manifest?.parts?.[part])||0]))}),timeout:60000"
+  );
+
   /* Old core version text must not fight app-version-v120.js. */
   out=out.replace(
     "document.body.dataset.buildVersion='Mawang Scheduler v.1.1.0';const versionLabel=document.querySelector('.sidebar-build-version-v53');if(versionLabel)versionLabel.textContent='Mawang Scheduler v.1.1.0';",
