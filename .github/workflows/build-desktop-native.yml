@@ -3,7 +3,7 @@ name: Build Mawang Scheduler Native Desktop
 on:
   push:
     branches:
-      - desktop-native-v0.8-native-intro
+      - desktop-native-v0.9-native-intro
     paths:
       - 'desktop-native/**'
       - '.github/workflows/build-desktop-native.yml'
@@ -41,6 +41,17 @@ jobs:
           go install github.com/akavel/rsrc@latest
           & "$env:USERPROFILE\go\bin\rsrc.exe" -ico assets/mawang.ico -o rsrc.syso
 
+      - name: Temporary compile-smoke intro asset
+        shell: pwsh
+        run: |
+          python -c "import base64,pathlib; p=pathlib.Path('assets/mawang-intro.b64'); pathlib.Path('assets/mawang-intro.png').write_bytes(base64.b64decode(p.read_text().strip()))"
+
+      - name: Go format check
+        shell: pwsh
+        run: |
+          gofmt -w main.go intro_windows.go intro_render_windows.go
+          if ((git status --porcelain -- '*.go').Length -ne 0) { git diff -- '*.go'; exit 1 }
+
       - name: Resolve dependencies
         shell: pwsh
         run: go mod tidy
@@ -52,7 +63,7 @@ jobs:
       - name: Upload executable
         uses: actions/upload-artifact@v4
         with:
-          name: MawangScheduler-Native-v0.8-native-intro
+          name: MawangScheduler-Native-v0.9-native-intro-smoke
           path: |
             desktop-native/MawangScheduler.exe
             desktop-native/assets/mawang-mascot.webp
