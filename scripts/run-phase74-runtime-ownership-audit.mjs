@@ -31,10 +31,7 @@ export function runPhase74RuntimeOwnershipAudit(){
     }catch(error){issues.push('cannot inspect online V5 payload: '+String(error?.message||error))}
   }else issues.push('online V5 payload missing');
 
-  const overrideChecks=[
-    ['renderContacts optimized override',/renderContacts=optimizedRenderContacts/.test(perfBase)],
-  ];
-  for(const [name,present] of overrideChecks)if(present)warnings.push(name+' remains active; retain until behavior-equivalence and performance tests prove removal safe');
+  if(/renderContacts=optimizedRenderContacts/.test(perfBase))issues.push('perf runtime still overrides canonical renderContacts');
   if((app.match(/function\s+renderContacts\s*\(/g)||[]).length>1)warnings.push('app-core contains multiple renderContacts declarations; inspect execution order before any deletion');
   if(cloud.includes("versionLabel.textContent='Mawang Scheduler v.1.1.0'")){
     if(entry.includes("window.mwsApplyAppVersionV120?.()"))warnings.push('protected cloud core still contains legacy version text statically, but Worker normalization neutralizes it at runtime; do not delete the cloud core');
