@@ -7,12 +7,36 @@
     return await new Response(stream).text();
   }
   function run(code){const s=document.createElement('script');s.textContent=code;document.body.appendChild(s);}
+  function patchFriendFinderFeaturesV64(source){
+    let code=String(source||'');
+    const watchMarker='const watch=st.live&&userId?';
+    const watchAt=code.indexOf(watchMarker);
+    if(watchAt<0)throw new Error('Friend Finder LIVE renderer marker missing');
+    const lineEnd=code.indexOf('\n',watchAt);
+    if(lineEnd<0)throw new Error('Friend Finder LIVE renderer line end missing');
+    const thumbLine="      const liveThumb=st.live&&userId&&st.broadNo?\`<button type=\"button\" class=\"friend-finder-native-thumb-v64\" data-watch=\"https://play.sooplive.com/\${encodeURIComponent(userId)}/\${encodeURIComponent(st.broadNo)}\"><img src=\"/api/soop/live-thumb?bno=\${encodeURIComponent(st.broadNo)}&v=\${Math.floor(Date.now()/10000)}\" alt=\"\${escV5(c.name)} LIVE 방송 썸네일\" loading=\"lazy\" decoding=\"async\"><span>LIVE 화면</span></button>\`:'';\n";
+    code=code.slice(0,lineEnd+1)+thumbLine+code.slice(lineEnd+1);
+    const oldTail='\${station}\${watch}</div></div></article>\`;';
+    const newTail='\${station}\${watch}</div></div>\${liveThumb}</article>\`;';
+    const returnAt=code.indexOf('return \`<article class="friend-finder-card-v5',watchAt);
+    const tailAt=code.indexOf(oldTail,returnAt);
+    if(returnAt<0||tailAt<0)throw new Error('Friend Finder native card template tail missing');
+    code=code.slice(0,tailAt)+newTail+code.slice(tailAt+oldTail.length);
+    return code;
+  }
+  const nativeFriendThumbCss=\`
+#friendFinderGridV5{align-items:start!important}
+#friendFinder .friend-finder-card-v5.live{height:auto!important;min-height:0!important;max-height:none!important;overflow:hidden!important;align-self:start!important}
+#friendFinder .friend-finder-native-thumb-v64{grid-column:1/-1!important;width:100%!important;aspect-ratio:16/9!important;margin-top:10px!important;padding:0!important;border:1px solid rgba(255,51,79,.75)!important;border-radius:12px!important;overflow:hidden!important;background:#090b10!important;position:relative!important;cursor:pointer!important}
+#friendFinder .friend-finder-native-thumb-v64 img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;background:#090b10!important}
+#friendFinder .friend-finder-native-thumb-v64 span{position:absolute;left:8px;top:8px;padding:4px 7px;border-radius:999px;background:rgba(5,8,14,.82);color:#fff;font-size:10px;font-weight:900;pointer-events:none}
+\`;
   (async()=>{
     const all=await unpack();
     const [head,css]=all.split('\n/*__MWS_SPLIT_FEATURES_CSS__*/\n');
     const [cloud,features]=head.split('\n/*__MWS_SPLIT_CLOUD_FEATURES__*/\n');
     if(!cloud||!features||!css)throw new Error('V5 payload sections are incomplete');
-    const style=document.createElement('style');style.id='mws-online-v5-style';style.textContent=css;document.head.appendChild(style);
-    run(features);const v54=document.createElement('script');v54.src='assets/cloud-v5.5.js';v54.onload=()=>window.dispatchEvent(new Event('mws:v55-features-ready'));v54.onerror=()=>{const e=document.getElementById('mwsLoginError');if(e)e.textContent='V5.5 cloud 로딩 실패';};document.body.appendChild(v54);
+    const style=document.createElement('style');style.id='mws-online-v5-style';style.textContent=css+nativeFriendThumbCss;document.head.appendChild(style);
+    run(patchFriendFinderFeaturesV64(features));const v54=document.createElement('script');v54.src='assets/cloud-v5.5.js';v54.onload=()=>window.dispatchEvent(new Event('mws:v55-features-ready'));v54.onerror=()=>{const e=document.getElementById('mwsLoginError');if(e)e.textContent='V5.5 cloud 로딩 실패';};document.body.appendChild(v54);
   })().catch(err=>{console.error('MAWANG V5 loader failed',err);const e=document.getElementById('mwsLoginError');if(e)e.textContent='업데이트 로딩 실패: '+(err?.message||String(err));});
 })();
