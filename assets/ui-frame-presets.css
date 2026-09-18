@@ -1,279 +1,175 @@
-/* Mawang Scheduler UI frame presets v1.0.0
-   Geometry/depth only. Theme color variables remain authoritative. */
+/* Mawang Scheduler UI frame system v2.0
+   Each mode is a distinct design language. Theme colors remain authoritative. */
 
-.ui-frame-grid{
-  grid-template-columns:repeat(auto-fill,minmax(190px,1fr))!important;
-  gap:10px!important;
-}
-.ui-frame-option{
-  display:flex;
-  flex-direction:column;
-  min-height:164px;
-}
-.ui-frame-option-meta{
-  display:flex;
-  justify-content:space-between;
-  gap:8px;
-  align-items:center;
-  margin-top:9px;
-}
-.ui-frame-option-meta strong{margin:0!important}
-.ui-frame-option-meta em{
-  font-style:normal;
-  color:var(--muted);
-  font-size:9px;
-  font-weight:850;
-  padding:3px 6px;
-  border:1px solid var(--border);
-  border-radius:999px;
-}
-.ui-frame-option small{min-height:29px}
-.ui-frame-preview{position:relative}
-.ui-frame-preview b{
-  position:absolute;
-  right:6px;
-  bottom:5px;
-  color:var(--muted);
-  font-size:7px;
-  letter-spacing:.12em;
-  opacity:.72;
-}
+.ui-frame-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-top:14px}
+.ui-frame-option{display:flex;flex-direction:column;min-width:0;min-height:216px;padding:12px;border:1px solid var(--border);border-radius:13px;background:var(--input);color:var(--text);text-align:left;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,background .16s ease}
+.ui-frame-option:hover{border-color:var(--accent);transform:translateY(-2px)}
+.ui-frame-option.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--input));box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 18%,transparent)}
+.ui-frame-option-meta{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:9px}
+.ui-frame-option-meta strong{margin:0!important;font-size:13px}
+.ui-frame-option-meta em{font-style:normal;color:var(--muted);font-size:9px;font-weight:850;padding:3px 6px;border:1px solid var(--border);border-radius:999px}
+.ui-frame-option small{display:block;margin-top:8px;min-height:43px;color:var(--muted);font-size:10px;line-height:1.45}
+.ui-frame-specs{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.ui-frame-specs span{padding:3px 5px;border:1px solid color-mix(in srgb,var(--border) 78%,transparent);border-radius:5px;color:var(--muted);font-size:8px;line-height:1.2;background:color-mix(in srgb,var(--panel) 55%,transparent)}
+.ui-frame-preview{position:relative;height:82px;display:grid;grid-template-columns:25% 1fr;grid-template-rows:1fr 1fr;gap:6px;padding:8px;border:1px solid var(--border);background:var(--bg);border-radius:10px;overflow:hidden}
+.ui-frame-preview i{display:block;border:1px solid var(--border);background:var(--panel);border-radius:6px}
+.ui-frame-preview i:first-child{grid-row:1/3}
+.ui-frame-preview b{position:absolute;right:7px;bottom:5px;font-size:7px;letter-spacing:.12em;color:var(--muted);opacity:.78}
+.ui-frame-description{margin-top:10px;min-height:18px}
+.neo-transparency-settings-card.frame-option-disabled{opacity:.60}
+.neo-transparency-settings-card.frame-option-disabled .neo-transparency-control,.neo-transparency-settings-card.frame-option-disabled .neo-transparency-preview{filter:saturate(.55)}
+.neo-transparency-settings-card.frame-option-disabled::after{content:"현재 선택한 프레임은 패널 투명도 조절을 사용하지 않습니다";display:block;margin-top:10px;color:var(--muted);font-size:10px}
 
-/* Preview diversity */
-.frame-preview-glass{background:color-mix(in srgb,var(--bg) 58%,transparent);backdrop-filter:blur(8px)}
-.frame-preview-glass i{background:color-mix(in srgb,var(--panel) 62%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.10);border-color:color-mix(in srgb,var(--border) 60%,white 40%)}
-.frame-preview-floating{padding:9px;gap:7px}.frame-preview-floating i{box-shadow:0 7px 13px rgba(0,0,0,.32);transform:translateY(-1px)}
-.frame-preview-flat i{border-radius:2px;box-shadow:none}.frame-preview-flat{border-radius:3px}
-.frame-preview-soft,.frame-preview-soft i{border-radius:16px}.frame-preview-soft i{box-shadow:0 5px 13px rgba(0,0,0,.16)}
-.frame-preview-sharp,.frame-preview-sharp i{border-radius:0}
-.frame-preview-compact{padding:4px;gap:3px}.frame-preview-compact i{border-radius:4px}
-.frame-preview-spacious{padding:11px;gap:9px}.frame-preview-spacious i{border-radius:9px}
-.frame-preview-outline i{background:transparent;border-width:2px}.frame-preview-outline{background:transparent;border-width:2px}
-.frame-preview-solid i{background:var(--panel2);border-color:var(--panel2)}.frame-preview-solid{background:var(--sidebar)}
-.frame-preview-pill i{border-radius:999px}.frame-preview-pill{border-radius:18px}
-.frame-preview-studio{grid-template-columns:32% 1fr;background:var(--sidebar)}.frame-preview-studio i{border-radius:4px;border-width:2px}
-.frame-preview-executive{padding:8px}.frame-preview-executive i{border-radius:5px;box-shadow:0 3px 8px rgba(0,0,0,.16)}
+/* Preset thumbnails */
+.frame-preview-material i{border-radius:8px;box-shadow:0 5px 10px rgba(0,0,0,.23)}
+.frame-preview-material i:nth-child(3){transform:translateY(-2px);box-shadow:0 8px 14px rgba(0,0,0,.30)}
+.frame-preview-minimal{border-color:transparent;background:transparent;padding:10px}
+.frame-preview-minimal i{border:0;border-radius:2px;background:color-mix(in srgb,var(--panel) 70%,transparent)}
+.frame-preview-glass{background:color-mix(in srgb,var(--bg) 45%,transparent);backdrop-filter:blur(8px);border-color:color-mix(in srgb,var(--border) 55%,white 45%)}
+.frame-preview-glass i{background:color-mix(in srgb,var(--panel) 55%,transparent);border-color:color-mix(in srgb,var(--border) 52%,white 48%);border-radius:13px;box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+.frame-preview-fluent{border-radius:14px;background:color-mix(in srgb,var(--panel) 68%,transparent)}
+.frame-preview-fluent i{border-radius:9px;background:linear-gradient(135deg,color-mix(in srgb,var(--panel2) 88%,transparent),color-mix(in srgb,var(--panel) 72%,transparent));box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.frame-preview-fluent::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:2px;background:var(--accent)}
+.frame-preview-bento{grid-template-columns:38% 1fr;grid-template-rows:1.25fr .75fr;gap:8px;padding:9px}
+.frame-preview-bento i{border-radius:12px}.frame-preview-bento i:first-child{grid-row:1/3}
+.frame-preview-neobrutal{border:3px solid var(--text);border-radius:4px;box-shadow:7px 7px 0 color-mix(in srgb,var(--accent) 65%,var(--text))}
+.frame-preview-neobrutal i{border:3px solid var(--text);border-radius:2px;box-shadow:4px 4px 0 color-mix(in srgb,var(--accent) 55%,var(--text))}
+.frame-preview-clay{border:0;border-radius:22px;background:var(--panel);box-shadow:10px 10px 20px rgba(0,0,0,.28),inset 3px 3px 7px rgba(255,255,255,.05)}
+.frame-preview-clay i{border:0;border-radius:18px;background:var(--panel2);box-shadow:6px 6px 13px rgba(0,0,0,.23),inset 2px 2px 6px rgba(255,255,255,.05)}
+.frame-preview-metro{border-radius:0;border:0;padding:5px;gap:3px}
+.frame-preview-metro i{border-radius:0;border:0;background:var(--panel2)}.frame-preview-metro i:first-child{border-left:4px solid var(--accent)}
+.frame-preview-studio{border-radius:5px;grid-template-columns:34% 1fr;background:var(--sidebar)}
+.frame-preview-studio i{border-radius:3px;border-left:3px solid var(--accent);background:var(--input)}
+.frame-preview-gaming{border:2px solid var(--accent);border-radius:0;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);box-shadow:0 0 16px color-mix(in srgb,var(--accent) 35%,transparent)}
+.frame-preview-gaming i{border:1px solid var(--accent);border-radius:0;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.frame-preview-spatial{padding:11px;gap:9px;border-radius:22px;background:color-mix(in srgb,var(--bg) 48%,transparent);backdrop-filter:blur(9px)}
+.frame-preview-spatial i{border-radius:16px;background:color-mix(in srgb,var(--panel) 56%,transparent);box-shadow:0 12px 24px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.08)}
+.frame-preview-terminal{border-radius:0;border:1px solid var(--accent);background:var(--bg);padding:5px;gap:3px}
+.frame-preview-terminal i{border-radius:0;border:1px solid color-mix(in srgb,var(--accent) 70%,var(--border));background:transparent}
+.frame-preview-retro{border-radius:2px;border:2px solid;border-color:color-mix(in srgb,var(--border) 55%,white) color-mix(in srgb,var(--border) 45%,black) color-mix(in srgb,var(--border) 45%,black) color-mix(in srgb,var(--border) 55%,white);background:var(--panel2)}
+.frame-preview-retro i{border-radius:1px;border:2px solid;border-color:color-mix(in srgb,var(--border) 58%,white) color-mix(in srgb,var(--border) 42%,black) color-mix(in srgb,var(--border) 42%,black) color-mix(in srgb,var(--border) 58%,white);background:var(--panel)}
+
+body[data-ui-frame]:not([data-ui-frame="classic"]) .card,body[data-ui-frame]:not([data-ui-frame="classic"]) .day,body[data-ui-frame]:not([data-ui-frame="classic"]) .contact-card,body[data-ui-frame]:not([data-ui-frame="classic"]) .event-card,body[data-ui-frame]:not([data-ui-frame="classic"]) .participant-box,body[data-ui-frame]:not([data-ui-frame="classic"]) .modalbox{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background .18s ease}
+
+/* Material */
+body[data-ui-frame="material"] .sidebar,body[data-ui-frame="material"] .main{border-radius:14px!important;box-shadow:0 10px 28px rgba(0,0,0,.22)!important}
+body[data-ui-frame="material"] .card,body[data-ui-frame="material"] .day,body[data-ui-frame="material"] .contact-card,body[data-ui-frame="material"] .event-card,body[data-ui-frame="material"] .participant-box,body[data-ui-frame="material"] .modalbox{border-radius:12px!important;border-width:1px!important;box-shadow:0 3px 8px rgba(0,0,0,.18),0 1px 2px rgba(0,0,0,.12)!important}
+body[data-ui-frame="material"] .card:hover,body[data-ui-frame="material"] .day:hover,body[data-ui-frame="material"] .contact-card:hover{transform:translateY(-2px)!important;box-shadow:0 9px 22px rgba(0,0,0,.26),0 3px 7px rgba(0,0,0,.14)!important}
+body[data-ui-frame="material"] button,body[data-ui-frame="material"] input,body[data-ui-frame="material"] select,body[data-ui-frame="material"] textarea,body[data-ui-frame="material"] .picker-button{border-radius:9px!important}
+body[data-ui-frame="material"] .primary{box-shadow:0 4px 10px color-mix(in srgb,var(--accent) 20%,transparent)!important}
+body[data-ui-frame="material"] .nav button.active{box-shadow:inset 3px 0 0 var(--accent),0 3px 8px rgba(0,0,0,.15)!important}
+
+/* Minimal */
+body[data-ui-frame="minimal"] .sidebar,body[data-ui-frame="minimal"] .main{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+body[data-ui-frame="minimal"] .main{padding-left:34px!important;padding-right:34px!important}
+body[data-ui-frame="minimal"] .card,body[data-ui-frame="minimal"] .day,body[data-ui-frame="minimal"] .contact-card,body[data-ui-frame="minimal"] .event-card,body[data-ui-frame="minimal"] .participant-box{background:transparent!important;border:0!important;border-radius:4px!important;box-shadow:none!important}
+body[data-ui-frame="minimal"] .card{border-bottom:1px solid color-mix(in srgb,var(--border) 70%,transparent)!important}
+body[data-ui-frame="minimal"] .day{border:1px solid color-mix(in srgb,var(--border) 42%,transparent)!important}
+body[data-ui-frame="minimal"] button,body[data-ui-frame="minimal"] input,body[data-ui-frame="minimal"] select,body[data-ui-frame="minimal"] textarea,body[data-ui-frame="minimal"] .picker-button{border-radius:4px!important;box-shadow:none!important}
+body[data-ui-frame="minimal"] .nav button{background:transparent!important;border-color:transparent!important}
+body[data-ui-frame="minimal"] .nav button.active{border-left:2px solid var(--accent)!important;border-radius:0!important;box-shadow:none!important}
+body[data-ui-frame="minimal"] .card:hover{transform:none!important;background:color-mix(in srgb,var(--panel) 18%,transparent)!important}
 
 /* Glass */
-body[data-ui-frame="glass"]{
-  --frame-surface-opacity:72%;
-  --frame-input-opacity:82%;
-}
-body[data-ui-frame="glass"] .sidebar,
-body[data-ui-frame="glass"] .main,
-body[data-ui-frame="glass"] .modalbox,
-body[data-ui-frame="glass"] .confirm-box,
-body[data-ui-frame="glass"] .picker-popover,
-body[data-ui-frame="glass"] .timezones{
-  background:color-mix(in srgb,var(--sidebar) var(--frame-surface-opacity),transparent)!important;
-  border-color:color-mix(in srgb,var(--border) 62%,white 38%)!important;
-  box-shadow:0 24px 60px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.09)!important;
-  backdrop-filter:blur(26px) saturate(1.13)!important;
-  -webkit-backdrop-filter:blur(26px) saturate(1.13)!important;
-}
-body[data-ui-frame="glass"] .card,
-body[data-ui-frame="glass"] .day,
-body[data-ui-frame="glass"] .contact-card,
-body[data-ui-frame="glass"] .event-card,
-body[data-ui-frame="glass"] .participant-box{
-  background:color-mix(in srgb,var(--panel) var(--frame-surface-opacity),transparent)!important;
-  border-color:color-mix(in srgb,var(--border) 68%,white 32%)!important;
-  border-radius:18px!important;
-  box-shadow:0 10px 28px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.08)!important;
-  backdrop-filter:blur(18px)!important;
-}
-body[data-ui-frame="glass"] input,
-body[data-ui-frame="glass"] select,
-body[data-ui-frame="glass"] textarea,
-body[data-ui-frame="glass"] .picker-button{
-  background:color-mix(in srgb,var(--input) var(--frame-input-opacity),transparent)!important;
-  border-radius:12px!important;
-}
+body[data-ui-frame="glass"]{--glass-surface:var(--neo-surface-opacity,90%);--glass-input:var(--neo-input-opacity,94%)}
+body[data-ui-frame="glass"] .sidebar,body[data-ui-frame="glass"] .main,body[data-ui-frame="glass"] .modalbox,body[data-ui-frame="glass"] .confirm-box,body[data-ui-frame="glass"] .picker-popover,body[data-ui-frame="glass"] .timezones{background:color-mix(in srgb,var(--sidebar) var(--glass-surface),transparent)!important;border:1px solid color-mix(in srgb,var(--border) 55%,white 45%)!important;border-radius:22px!important;box-shadow:0 30px 70px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.12)!important;backdrop-filter:blur(28px) saturate(1.12)!important;-webkit-backdrop-filter:blur(28px) saturate(1.12)!important}
+body[data-ui-frame="glass"] .card,body[data-ui-frame="glass"] .day,body[data-ui-frame="glass"] .contact-card,body[data-ui-frame="glass"] .event-card,body[data-ui-frame="glass"] .participant-box{background:color-mix(in srgb,var(--panel) var(--glass-surface),transparent)!important;border:1px solid color-mix(in srgb,var(--border) 60%,white 40%)!important;border-radius:18px!important;box-shadow:0 12px 28px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.09)!important;backdrop-filter:blur(18px)!important}
+body[data-ui-frame="glass"] input,body[data-ui-frame="glass"] select,body[data-ui-frame="glass"] textarea,body[data-ui-frame="glass"] .picker-button{background:color-mix(in srgb,var(--input) var(--glass-input),transparent)!important;border-radius:12px!important}
+body[data-ui-frame="glass"] .card:hover{transform:translateY(-2px)!important;box-shadow:0 18px 34px rgba(0,0,0,.23),inset 0 1px 0 rgba(255,255,255,.12)!important}
 
-/* Floating */
-body[data-ui-frame="floating"] .main{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
-body[data-ui-frame="floating"] .sidebar{
-  border-radius:22px!important;
-  box-shadow:0 24px 58px rgba(0,0,0,.32),0 7px 18px rgba(0,0,0,.18)!important;
-}
-body[data-ui-frame="floating"] .card,
-body[data-ui-frame="floating"] .day,
-body[data-ui-frame="floating"] .contact-card,
-body[data-ui-frame="floating"] .event-card,
-body[data-ui-frame="floating"] .participant-box{
-  border-radius:17px!important;
-  box-shadow:0 18px 36px rgba(0,0,0,.26),0 4px 12px rgba(0,0,0,.15)!important;
-  background:color-mix(in srgb,var(--panel) var(--neo-surface-opacity,90%),transparent)!important;
-  backdrop-filter:blur(12px);
-  transform:translateZ(0);
-}
-body[data-ui-frame="floating"] .card:hover,
-body[data-ui-frame="floating"] .contact-card:hover,
-body[data-ui-frame="floating"] .day:hover{transform:translateY(-3px)!important;box-shadow:0 23px 46px rgba(0,0,0,.32),0 7px 16px rgba(0,0,0,.17)!important}
+/* Fluent */
+body[data-ui-frame="fluent"] .sidebar,body[data-ui-frame="fluent"] .main{border-radius:16px!important;border:1px solid color-mix(in srgb,var(--border) 76%,white 24%)!important;background:color-mix(in srgb,var(--sidebar) var(--neo-surface-opacity,90%),transparent)!important;box-shadow:0 20px 50px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.06)!important;backdrop-filter:blur(20px) saturate(1.06)!important}
+body[data-ui-frame="fluent"] .card,body[data-ui-frame="fluent"] .day,body[data-ui-frame="fluent"] .contact-card,body[data-ui-frame="fluent"] .event-card,body[data-ui-frame="fluent"] .participant-box{border-radius:14px!important;background:color-mix(in srgb,var(--panel) var(--neo-surface-opacity,90%),transparent)!important;border:1px solid color-mix(in srgb,var(--border) 82%,white 18%)!important;box-shadow:0 7px 20px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.04)!important}
+body[data-ui-frame="fluent"] .topbar{border-bottom:1px solid color-mix(in srgb,var(--accent) 18%,var(--border))!important}
+body[data-ui-frame="fluent"] .nav button{border-radius:8px!important}
+body[data-ui-frame="fluent"] .nav button.active{box-shadow:inset 3px 0 0 var(--accent),0 0 18px color-mix(in srgb,var(--accent) 10%,transparent)!important}
+body[data-ui-frame="fluent"] button,body[data-ui-frame="fluent"] input,body[data-ui-frame="fluent"] select,body[data-ui-frame="fluent"] textarea,body[data-ui-frame="fluent"] .picker-button{border-radius:8px!important}
+body[data-ui-frame="fluent"] .card:hover{border-color:color-mix(in srgb,var(--accent) 38%,var(--border))!important;box-shadow:0 9px 24px rgba(0,0,0,.20),0 0 18px color-mix(in srgb,var(--accent) 7%,transparent)!important}
 
-/* Flat */
-body[data-ui-frame="flat"] .sidebar,
-body[data-ui-frame="flat"] .main,
-body[data-ui-frame="flat"] .card,
-body[data-ui-frame="flat"] .day,
-body[data-ui-frame="flat"] .contact-card,
-body[data-ui-frame="flat"] .event-card,
-body[data-ui-frame="flat"] .modalbox,
-body[data-ui-frame="flat"] .participant-box{
-  border-radius:5px!important;
-  box-shadow:none!important;
-}
-body[data-ui-frame="flat"] button,
-body[data-ui-frame="flat"] input,
-body[data-ui-frame="flat"] select,
-body[data-ui-frame="flat"] textarea,
-body[data-ui-frame="flat"] .picker-button{border-radius:4px!important;box-shadow:none!important}
-body[data-ui-frame="flat"] .nav button{border-radius:3px!important}
+/* Bento */
+body[data-ui-frame="bento"] .main{padding:28px 30px 52px!important}
+body[data-ui-frame="bento"] .grid{gap:18px!important}
+body[data-ui-frame="bento"] .card,body[data-ui-frame="bento"] .day,body[data-ui-frame="bento"] .contact-card,body[data-ui-frame="bento"] .event-card,body[data-ui-frame="bento"] .participant-box{border-radius:20px!important;padding:20px!important;box-shadow:0 8px 22px rgba(0,0,0,.15)!important}
+body[data-ui-frame="bento"] #dashboard .dashboard-insights-v55{grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr)!important;gap:18px!important}
+body[data-ui-frame="bento"] #dashboard .dashboard-ops-grid-v55{gap:12px!important}
+body[data-ui-frame="bento"] #dashboard .dashboard-stat-v55:nth-child(1){grid-column:span 2}
+body[data-ui-frame="bento"] .card:hover{transform:scale(1.006)!important;box-shadow:0 13px 30px rgba(0,0,0,.20)!important}
+body[data-ui-frame="bento"] button,body[data-ui-frame="bento"] input,body[data-ui-frame="bento"] select,body[data-ui-frame="bento"] textarea{border-radius:12px!important}
 
-/* Soft */
-body[data-ui-frame="soft"] .sidebar,
-body[data-ui-frame="soft"] .main{border-radius:28px!important;box-shadow:0 20px 46px rgba(0,0,0,.20)!important}
-body[data-ui-frame="soft"] .card,
-body[data-ui-frame="soft"] .day,
-body[data-ui-frame="soft"] .contact-card,
-body[data-ui-frame="soft"] .event-card,
-body[data-ui-frame="soft"] .participant-box{border-radius:24px!important;box-shadow:0 10px 25px rgba(0,0,0,.15)!important}
-body[data-ui-frame="soft"] button,
-body[data-ui-frame="soft"] input,
-body[data-ui-frame="soft"] select,
-body[data-ui-frame="soft"] textarea,
-body[data-ui-frame="soft"] .picker-button{border-radius:16px!important}
+/* Neo Brutal */
+body[data-ui-frame="neobrutal"] .sidebar,body[data-ui-frame="neobrutal"] .main{border:3px solid var(--text)!important;border-radius:4px!important;box-shadow:9px 9px 0 color-mix(in srgb,var(--accent) 50%,var(--text))!important}
+body[data-ui-frame="neobrutal"] .card,body[data-ui-frame="neobrutal"] .day,body[data-ui-frame="neobrutal"] .contact-card,body[data-ui-frame="neobrutal"] .event-card,body[data-ui-frame="neobrutal"] .participant-box,body[data-ui-frame="neobrutal"] .modalbox{border:3px solid var(--text)!important;border-radius:4px!important;box-shadow:6px 6px 0 color-mix(in srgb,var(--accent) 46%,var(--text))!important}
+body[data-ui-frame="neobrutal"] button,body[data-ui-frame="neobrutal"] input,body[data-ui-frame="neobrutal"] select,body[data-ui-frame="neobrutal"] textarea,body[data-ui-frame="neobrutal"] .picker-button{border:3px solid var(--text)!important;border-radius:3px!important;box-shadow:3px 3px 0 color-mix(in srgb,var(--accent) 42%,var(--text))!important}
+body[data-ui-frame="neobrutal"] button:hover,body[data-ui-frame="neobrutal"] .card:hover{transform:translate(2px,2px)!important;box-shadow:2px 2px 0 color-mix(in srgb,var(--accent) 46%,var(--text))!important}
+body[data-ui-frame="neobrutal"] button:active{transform:translate(4px,4px)!important;box-shadow:none!important}
 
-/* Sharp */
-body[data-ui-frame="sharp"] .sidebar,
-body[data-ui-frame="sharp"] .main,
-body[data-ui-frame="sharp"] .card,
-body[data-ui-frame="sharp"] .day,
-body[data-ui-frame="sharp"] .contact-card,
-body[data-ui-frame="sharp"] .event-card,
-body[data-ui-frame="sharp"] .modalbox,
-body[data-ui-frame="sharp"] .participant-box,
-body[data-ui-frame="sharp"] button,
-body[data-ui-frame="sharp"] input,
-body[data-ui-frame="sharp"] select,
-body[data-ui-frame="sharp"] textarea,
-body[data-ui-frame="sharp"] .picker-button{border-radius:0!important}
-body[data-ui-frame="sharp"] .card,
-body[data-ui-frame="sharp"] .day{box-shadow:5px 5px 0 color-mix(in srgb,var(--border) 72%,transparent)!important}
+/* Clay */
+body[data-ui-frame="clay"] .sidebar,body[data-ui-frame="clay"] .main{border:0!important;border-radius:30px!important;box-shadow:18px 18px 42px rgba(0,0,0,.30),inset 3px 3px 9px rgba(255,255,255,.035)!important}
+body[data-ui-frame="clay"] .card,body[data-ui-frame="clay"] .day,body[data-ui-frame="clay"] .contact-card,body[data-ui-frame="clay"] .event-card,body[data-ui-frame="clay"] .participant-box{border:0!important;border-radius:26px!important;box-shadow:10px 12px 25px rgba(0,0,0,.24),inset 3px 3px 8px rgba(255,255,255,.045),inset -3px -3px 8px rgba(0,0,0,.10)!important}
+body[data-ui-frame="clay"] button,body[data-ui-frame="clay"] input,body[data-ui-frame="clay"] select,body[data-ui-frame="clay"] textarea,body[data-ui-frame="clay"] .picker-button{border:0!important;border-radius:18px!important;box-shadow:5px 6px 13px rgba(0,0,0,.18),inset 2px 2px 5px rgba(255,255,255,.035)!important}
+body[data-ui-frame="clay"] .card:hover{transform:translateY(-3px) scale(1.008)!important;transition-timing-function:cubic-bezier(.2,.8,.2,1.25)!important}
 
-/* Compact */
-body[data-ui-frame="compact"] .main{padding:14px 16px 30px!important}
-body[data-ui-frame="compact"] .topbar{margin-bottom:10px!important;min-height:48px!important}
-body[data-ui-frame="compact"] .grid{gap:8px!important}
-body[data-ui-frame="compact"] .card{padding:11px!important;border-radius:9px!important}
-body[data-ui-frame="compact"] .day{min-height:92px!important;padding:5px!important;border-radius:7px!important}
-body[data-ui-frame="compact"] .nav button{min-height:38px!important;padding-top:6px!important;padding-bottom:6px!important}
-body[data-ui-frame="compact"] button,
-body[data-ui-frame="compact"] input,
-body[data-ui-frame="compact"] select,
-body[data-ui-frame="compact"] textarea{padding-top:7px!important;padding-bottom:7px!important;border-radius:7px!important}
-
-/* Spacious */
-body[data-ui-frame="spacious"] .main{padding:32px 34px 58px!important}
-body[data-ui-frame="spacious"] .topbar{margin-bottom:28px!important}
-body[data-ui-frame="spacious"] .grid{gap:22px!important}
-body[data-ui-frame="spacious"] .card{padding:24px!important;border-radius:18px!important}
-body[data-ui-frame="spacious"] .calendar{gap:10px!important}
-body[data-ui-frame="spacious"] .day{min-height:136px!important;padding:12px!important;border-radius:15px!important}
-
-/* Outline */
-body[data-ui-frame="outline"] .sidebar,
-body[data-ui-frame="outline"] .main,
-body[data-ui-frame="outline"] .card,
-body[data-ui-frame="outline"] .day,
-body[data-ui-frame="outline"] .contact-card,
-body[data-ui-frame="outline"] .event-card,
-body[data-ui-frame="outline"] .participant-box{
-  background:transparent!important;
-  border:2px solid var(--border)!important;
-  box-shadow:none!important;
-}
-body[data-ui-frame="outline"] button,
-body[data-ui-frame="outline"] input,
-body[data-ui-frame="outline"] select,
-body[data-ui-frame="outline"] textarea,
-body[data-ui-frame="outline"] .picker-button{background:transparent!important;border-width:2px!important;box-shadow:none!important}
-
-/* Solid */
-body[data-ui-frame="solid"] .sidebar{background:var(--sidebar)!important}
-body[data-ui-frame="solid"] .main{background:var(--bg)!important}
-body[data-ui-frame="solid"] .card,
-body[data-ui-frame="solid"] .day,
-body[data-ui-frame="solid"] .contact-card,
-body[data-ui-frame="solid"] .event-card,
-body[data-ui-frame="solid"] .participant-box{background:var(--panel)!important;box-shadow:none!important}
-body[data-ui-frame="solid"] input,
-body[data-ui-frame="solid"] select,
-body[data-ui-frame="solid"] textarea,
-body[data-ui-frame="solid"] .picker-button{background:var(--input)!important}
-
-/* Pill */
-body[data-ui-frame="pill"] .nav button,
-body[data-ui-frame="pill"] .primary,
-body[data-ui-frame="pill"] .secondary,
-body[data-ui-frame="pill"] .ghost,
-body[data-ui-frame="pill"] .pillbtn,
-body[data-ui-frame="pill"] input,
-body[data-ui-frame="pill"] select,
-body[data-ui-frame="pill"] .picker-button,
-body[data-ui-frame="pill"] .chip{border-radius:999px!important}
-body[data-ui-frame="pill"] .card,
-body[data-ui-frame="pill"] .day,
-body[data-ui-frame="pill"] .contact-card,
-body[data-ui-frame="pill"] .event-card{border-radius:22px!important}
-body[data-ui-frame="pill"] textarea{border-radius:18px!important}
+/* Metro */
+body[data-ui-frame="metro"] .sidebar,body[data-ui-frame="metro"] .main,body[data-ui-frame="metro"] .card,body[data-ui-frame="metro"] .day,body[data-ui-frame="metro"] .contact-card,body[data-ui-frame="metro"] .event-card,body[data-ui-frame="metro"] .participant-box,body[data-ui-frame="metro"] .modalbox{border-radius:0!important;box-shadow:none!important}
+body[data-ui-frame="metro"] .main{padding:20px!important}
+body[data-ui-frame="metro"] .grid{gap:6px!important}
+body[data-ui-frame="metro"] .card{border:0!important;border-left:4px solid color-mix(in srgb,var(--accent) 55%,var(--border))!important}
+body[data-ui-frame="metro"] .day{border:0!important;border-bottom:3px solid var(--border)!important}
+body[data-ui-frame="metro"] .nav button{border-radius:0!important;margin:1px 0!important}
+body[data-ui-frame="metro"] .nav button.active{background:var(--accent)!important;color:var(--bg)!important;box-shadow:none!important}
+body[data-ui-frame="metro"] button,body[data-ui-frame="metro"] input,body[data-ui-frame="metro"] select,body[data-ui-frame="metro"] textarea,body[data-ui-frame="metro"] .picker-button{border-radius:0!important;box-shadow:none!important}
+body[data-ui-frame="metro"] .card:hover{transform:none!important;border-left-width:8px!important}
 
 /* Studio */
-body[data-ui-frame="studio"] .main{border-left:3px solid color-mix(in srgb,var(--accent) 52%,var(--border))!important}
-body[data-ui-frame="studio"] .topbar{padding:10px 12px!important;background:var(--panel)!important;border:1px solid var(--border)!important;border-radius:8px!important}
-body[data-ui-frame="studio"] .card,
-body[data-ui-frame="studio"] .day,
-body[data-ui-frame="studio"] .contact-card,
-body[data-ui-frame="studio"] .event-card,
-body[data-ui-frame="studio"] .participant-box{border-radius:8px!important;border-left:3px solid color-mix(in srgb,var(--accent) 35%,var(--border))!important;box-shadow:0 7px 18px rgba(0,0,0,.16)!important}
-body[data-ui-frame="studio"] .nav button{border-radius:6px!important}
-body[data-ui-frame="studio"] input,
-body[data-ui-frame="studio"] select,
-body[data-ui-frame="studio"] textarea,
-body[data-ui-frame="studio"] .picker-button{border-radius:6px!important}
+body[data-ui-frame="studio"] .main{padding:16px 18px 34px!important;border-left:4px solid color-mix(in srgb,var(--accent) 50%,var(--border))!important}
+body[data-ui-frame="studio"] .topbar{min-height:48px!important;margin-bottom:10px!important;padding:8px 10px!important;background:var(--panel)!important;border:1px solid var(--border)!important;border-radius:6px!important}
+body[data-ui-frame="studio"] .grid{gap:8px!important}
+body[data-ui-frame="studio"] .card,body[data-ui-frame="studio"] .day,body[data-ui-frame="studio"] .contact-card,body[data-ui-frame="studio"] .event-card,body[data-ui-frame="studio"] .participant-box{border-radius:6px!important;border-left:3px solid color-mix(in srgb,var(--accent) 38%,var(--border))!important;box-shadow:0 5px 13px rgba(0,0,0,.13)!important}
+body[data-ui-frame="studio"] .card{padding:12px!important}
+body[data-ui-frame="studio"] .day{min-height:102px!important;padding:6px!important}
+body[data-ui-frame="studio"] .nav button,body[data-ui-frame="studio"] button,body[data-ui-frame="studio"] input,body[data-ui-frame="studio"] select,body[data-ui-frame="studio"] textarea,body[data-ui-frame="studio"] .picker-button{border-radius:5px!important}
+body[data-ui-frame="studio"] .nav button{min-height:39px!important}
 
-/* Executive */
-body[data-ui-frame="executive"] .sidebar,
-body[data-ui-frame="executive"] .main{border-radius:12px!important;box-shadow:0 16px 36px rgba(0,0,0,.20)!important}
-body[data-ui-frame="executive"] .card,
-body[data-ui-frame="executive"] .day,
-body[data-ui-frame="executive"] .contact-card,
-body[data-ui-frame="executive"] .event-card,
-body[data-ui-frame="executive"] .participant-box{border-radius:10px!important;box-shadow:0 5px 14px rgba(0,0,0,.12)!important}
-body[data-ui-frame="executive"] .topbar{border-bottom:1px solid var(--border)!important;padding-bottom:14px!important}
-body[data-ui-frame="executive"] button,
-body[data-ui-frame="executive"] input,
-body[data-ui-frame="executive"] select,
-body[data-ui-frame="executive"] textarea,
-body[data-ui-frame="executive"] .picker-button{border-radius:8px!important}
+/* Gaming */
+body[data-ui-frame="gaming"] .sidebar,body[data-ui-frame="gaming"] .main,body[data-ui-frame="gaming"] .card,body[data-ui-frame="gaming"] .day,body[data-ui-frame="gaming"] .contact-card,body[data-ui-frame="gaming"] .event-card,body[data-ui-frame="gaming"] .participant-box,body[data-ui-frame="gaming"] .modalbox{border:2px solid color-mix(in srgb,var(--accent) 70%,var(--border))!important;border-radius:0!important;clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);box-shadow:0 0 18px color-mix(in srgb,var(--accent) 10%,transparent),inset 0 0 18px rgba(0,0,0,.12)!important}
+body[data-ui-frame="gaming"] .topbar{border-bottom:2px solid color-mix(in srgb,var(--accent) 60%,var(--border))!important}
+body[data-ui-frame="gaming"] .nav button,body[data-ui-frame="gaming"] button,body[data-ui-frame="gaming"] input,body[data-ui-frame="gaming"] select,body[data-ui-frame="gaming"] textarea,body[data-ui-frame="gaming"] .picker-button{border-radius:0!important;clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px)}
+body[data-ui-frame="gaming"] .nav button.active{box-shadow:inset 4px 0 0 var(--accent),0 0 20px color-mix(in srgb,var(--accent) 16%,transparent)!important}
+body[data-ui-frame="gaming"] .card:hover,body[data-ui-frame="gaming"] .day:hover{border-color:var(--accent)!important;box-shadow:0 0 26px color-mix(in srgb,var(--accent) 22%,transparent)!important;transform:translateY(-1px)!important}
 
-/* Shared transparency capability for Glass and Floating. */
-body[data-ui-frame="glass"]{
-  --frame-surface-opacity:var(--neo-surface-opacity,90%);
-  --frame-input-opacity:var(--neo-input-opacity,94%);
-}
-body[data-ui-frame="floating"] .sidebar{
-  background:color-mix(in srgb,var(--sidebar) var(--neo-surface-opacity,90%),transparent)!important;
-  backdrop-filter:blur(16px);
-}
+/* Spatial */
+body[data-ui-frame="spatial"] .app{gap:22px!important;padding:24px!important}
+body[data-ui-frame="spatial"] .sidebar,body[data-ui-frame="spatial"] .main{border-radius:30px!important;background:color-mix(in srgb,var(--sidebar) var(--neo-surface-opacity,90%),transparent)!important;border:1px solid color-mix(in srgb,var(--border) 62%,white 38%)!important;box-shadow:0 38px 90px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.09)!important;backdrop-filter:blur(30px) saturate(1.06)!important}
+body[data-ui-frame="spatial"] .main{padding:34px 36px 60px!important}
+body[data-ui-frame="spatial"] .grid{gap:24px!important}
+body[data-ui-frame="spatial"] .card,body[data-ui-frame="spatial"] .day,body[data-ui-frame="spatial"] .contact-card,body[data-ui-frame="spatial"] .event-card,body[data-ui-frame="spatial"] .participant-box{border-radius:28px!important;background:color-mix(in srgb,var(--panel) var(--neo-surface-opacity,90%),transparent)!important;box-shadow:0 24px 52px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.07)!important;backdrop-filter:blur(20px)!important}
+body[data-ui-frame="spatial"] .card{padding:26px!important}
+body[data-ui-frame="spatial"] button,body[data-ui-frame="spatial"] input,body[data-ui-frame="spatial"] select,body[data-ui-frame="spatial"] textarea,body[data-ui-frame="spatial"] .picker-button{border-radius:16px!important}
+body[data-ui-frame="spatial"] .card:hover{transform:translateY(-4px) scale(1.008)!important;transition-duration:.32s!important;transition-timing-function:cubic-bezier(.2,.85,.25,1)!important}
 
-/* Transparency settings card availability. */
-.neo-transparency-settings-card.frame-option-disabled::after{
-  content:"현재 선택한 프레임은 투명도 조절을 사용하지 않습니다"!important;
-}
+/* Terminal */
+body[data-ui-frame="terminal"]{font-family:"Cascadia Mono","Consolas","SFMono-Regular",monospace!important}
+body[data-ui-frame="terminal"] .sidebar,body[data-ui-frame="terminal"] .main,body[data-ui-frame="terminal"] .card,body[data-ui-frame="terminal"] .day,body[data-ui-frame="terminal"] .contact-card,body[data-ui-frame="terminal"] .event-card,body[data-ui-frame="terminal"] .participant-box,body[data-ui-frame="terminal"] .modalbox{border-radius:0!important;border:1px solid color-mix(in srgb,var(--accent) 55%,var(--border))!important;box-shadow:none!important}
+body[data-ui-frame="terminal"] .main{padding:12px 14px 28px!important}
+body[data-ui-frame="terminal"] .topbar{min-height:42px!important;margin-bottom:8px!important;border-bottom:1px dashed color-mix(in srgb,var(--accent) 55%,var(--border))!important}
+body[data-ui-frame="terminal"] .grid{gap:5px!important}
+body[data-ui-frame="terminal"] .card{padding:9px!important}
+body[data-ui-frame="terminal"] .day{min-height:88px!important;padding:4px!important}
+body[data-ui-frame="terminal"] .nav button,body[data-ui-frame="terminal"] button,body[data-ui-frame="terminal"] input,body[data-ui-frame="terminal"] select,body[data-ui-frame="terminal"] textarea,body[data-ui-frame="terminal"] .picker-button{border-radius:0!important;box-shadow:none!important}
+body[data-ui-frame="terminal"] .nav button{min-height:34px!important}
+body[data-ui-frame="terminal"] .nav button.active{border:1px solid var(--accent)!important;box-shadow:none!important}
+body[data-ui-frame="terminal"] .card:hover,body[data-ui-frame="terminal"] .day:hover{transform:none!important;background:color-mix(in srgb,var(--accent) 5%,var(--panel))!important}
+
+/* Retro */
+body[data-ui-frame="retro"] .sidebar,body[data-ui-frame="retro"] .main,body[data-ui-frame="retro"] .card,body[data-ui-frame="retro"] .day,body[data-ui-frame="retro"] .contact-card,body[data-ui-frame="retro"] .event-card,body[data-ui-frame="retro"] .participant-box,body[data-ui-frame="retro"] .modalbox{border-radius:2px!important;border:2px solid!important;border-color:color-mix(in srgb,var(--border) 52%,white) color-mix(in srgb,var(--border) 45%,black) color-mix(in srgb,var(--border) 45%,black) color-mix(in srgb,var(--border) 52%,white)!important;box-shadow:inset 1px 1px 0 rgba(255,255,255,.05),inset -1px -1px 0 rgba(0,0,0,.28)!important}
+body[data-ui-frame="retro"] .topbar{border-bottom:2px ridge var(--border)!important}
+body[data-ui-frame="retro"] .nav button,body[data-ui-frame="retro"] button,body[data-ui-frame="retro"] input,body[data-ui-frame="retro"] select,body[data-ui-frame="retro"] textarea,body[data-ui-frame="retro"] .picker-button{border-radius:2px!important;border:2px solid!important;border-color:color-mix(in srgb,var(--border) 55%,white) color-mix(in srgb,var(--border) 42%,black) color-mix(in srgb,var(--border) 42%,black) color-mix(in srgb,var(--border) 55%,white)!important;box-shadow:none!important}
+body[data-ui-frame="retro"] button:active,body[data-ui-frame="retro"] .nav button:active{border-color:color-mix(in srgb,var(--border) 42%,black) color-mix(in srgb,var(--border) 55%,white) color-mix(in srgb,var(--border) 55%,white) color-mix(in srgb,var(--border) 42%,black)!important;transform:translate(1px,1px)!important}
 
 @media(max-width:900px){
-  body[data-ui-frame="spacious"] .main{padding:20px 14px 38px!important}
-  body[data-ui-frame="compact"] .main{padding:12px 10px 30px!important}
-  body[data-ui-frame="floating"] .main{padding-left:12px!important;padding-right:12px!important}
+  .ui-frame-grid{grid-template-columns:1fr}
+  body[data-ui-frame="minimal"] .main{padding-left:14px!important;padding-right:14px!important}
+  body[data-ui-frame="bento"] .main,body[data-ui-frame="spatial"] .main{padding:18px 14px 38px!important}
+  body[data-ui-frame="spatial"] .app{padding:0!important;gap:0!important}
+  body[data-ui-frame="neobrutal"] .sidebar,body[data-ui-frame="neobrutal"] .main{box-shadow:none!important}
 }

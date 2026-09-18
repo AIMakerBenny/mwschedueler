@@ -79,25 +79,34 @@ function normalizeMiniGameData(){
 const THEME_META=[{"id": "midnight", "name": "미드나잇", "bg": "#0f1115", "panel": "#171a21", "accent": "#8b5cf6"}, {"id": "neon", "name": "네온 퍼플", "bg": "#090b14", "panel": "#11172a", "accent": "#8b5cf6"}, {"id": "rose", "name": "로즈", "bg": "#160d14", "panel": "#24151f", "accent": "#e65b9c"}, {"id": "ocean", "name": "오션", "bg": "#071519", "panel": "#0e252c", "accent": "#22b8cf"}, {"id": "sunset", "name": "선셋", "bg": "#17100a", "panel": "#281a0f", "accent": "#f59f45"}, {"id": "emerald", "name": "에메랄드", "bg": "#07130e", "panel": "#10231a", "accent": "#22c55e"}, {"id": "ruby", "name": "루비", "bg": "#17090d", "panel": "#281118", "accent": "#ef4444"}, {"id": "sapphire", "name": "사파이어", "bg": "#08101d", "panel": "#101d35", "accent": "#3b82f6"}, {"id": "amethyst", "name": "애머시스트", "bg": "#120b1a", "panel": "#211330", "accent": "#a855f7"}, {"id": "lavender", "name": "라벤더", "bg": "#15131c", "panel": "#24212e", "accent": "#a78bfa"}, {"id": "sakura", "name": "사쿠라", "bg": "#1b1115", "panel": "#2d1b22", "accent": "#fb7185"}, {"id": "peach", "name": "피치", "bg": "#1b120d", "panel": "#2d1e16", "accent": "#fb923c"}, {"id": "coral", "name": "코랄", "bg": "#1b100f", "panel": "#2c1b19", "accent": "#f97366"}, {"id": "amber", "name": "앰버", "bg": "#171308", "panel": "#28200e", "accent": "#fbbf24"}, {"id": "lime", "name": "라임", "bg": "#101505", "panel": "#1b260b", "accent": "#84cc16"}, {"id": "mint", "name": "민트", "bg": "#081612", "panel": "#102821", "accent": "#34d399"}, {"id": "aqua", "name": "아쿠아", "bg": "#061518", "panel": "#0d282d", "accent": "#06b6d4"}, {"id": "cobalt", "name": "코발트", "bg": "#090e1c", "panel": "#121b38", "accent": "#4f6df5"}, {"id": "navy", "name": "네이비", "bg": "#08101a", "panel": "#101d2c", "accent": "#4678a9"}, {"id": "graphite", "name": "그래파이트", "bg": "#101214", "panel": "#1a1e22", "accent": "#7c8794"}, {"id": "silver", "name": "실버", "bg": "#17191d", "panel": "#24282e", "accent": "#aeb8c6"}, {"id": "coffee", "name": "커피", "bg": "#17110e", "panel": "#281d18", "accent": "#b77945"}, {"id": "forest", "name": "포레스트", "bg": "#09130b", "panel": "#132318", "accent": "#4d9a62"}, {"id": "cyber", "name": "사이버펑크", "bg": "#080812", "panel": "#141326", "accent": "#f0e130"}, {"id": "aurora", "name": "오로라", "bg": "#0a1016", "panel": "#111f29", "accent": "#33d6a6"}, {"id": "candy", "name": "캔디", "bg": "#17101c", "panel": "#281a31", "accent": "#e879f9"}, {"id": "wine", "name": "와인", "bg": "#160a10", "panel": "#28121c", "accent": "#c2416c"}, {"id": "teal", "name": "틸", "bg": "#071515", "panel": "#102827", "accent": "#2dd4bf"}, {"id": "sky", "name": "스카이", "bg": "#0a1219", "panel": "#122534", "accent": "#38bdf8"}, {"id": "plum", "name": "플럼", "bg": "#160f18", "panel": "#291a2d", "accent": "#d946ef"}, {"id": "cherry", "name": "체리", "bg": "#190b10", "panel": "#2b121b", "accent": "#f43f5e"}, {"id": "orange", "name": "오렌지", "bg": "#181007", "panel": "#2a1c0c", "accent": "#f97316"}];
 
 
-/* UI frame catalogue. Frames change geometry/depth only and never replace theme colors. */
+/* UI frame catalogue v2. Frames are full design languages, not simple radius presets. */
 const UI_FRAME_META=[
-  {id:'classic',name:'기본 프레임',short:'CLASSIC',description:'기존 Mawang Scheduler UI를 그대로 사용합니다.',transparency:false,category:'기본'},
-  {id:'neo',name:'Neo 모던',short:'NEO',description:'입체적인 패널, 블러, 그림자와 투명도를 사용하는 모던 프레임입니다.',transparency:true,category:'모던'},
-  {id:'glass',name:'Glass',short:'GLASS',description:'유리처럼 배경이 비치고 블러가 강하게 적용되는 글래스 프레임입니다.',transparency:true,category:'투명'},
-  {id:'floating',name:'Floating',short:'FLOAT',description:'카드와 패널이 화면 위에 떠 있는 듯한 깊은 그림자 중심 프레임입니다.',transparency:true,category:'입체'},
-  {id:'flat',name:'Flat',short:'FLAT',description:'그림자를 최소화하고 면과 선으로만 정리한 단정한 평면 프레임입니다.',transparency:false,category:'미니멀'},
-  {id:'soft',name:'Soft',short:'SOFT',description:'큰 라운딩과 부드러운 그림자로 편안하게 보이는 프레임입니다.',transparency:false,category:'부드러움'},
-  {id:'sharp',name:'Sharp',short:'SHARP',description:'각진 모서리와 직선적인 경계로 기계적인 느낌을 주는 프레임입니다.',transparency:false,category:'각진형'},
-  {id:'compact',name:'Compact',short:'DENSE',description:'여백과 패딩을 줄여 한 화면에 더 많은 정보를 표시하는 고밀도 프레임입니다.',transparency:false,category:'고밀도'},
-  {id:'spacious',name:'Spacious',short:'SPACE',description:'패널 간격과 내부 여백을 넓혀 편안한 가독성을 우선한 프레임입니다.',transparency:false,category:'여백형'},
-  {id:'outline',name:'Outline',short:'LINE',description:'배경 채움보다 테두리와 구획선을 강조하는 구조적인 프레임입니다.',transparency:false,category:'라인'},
-  {id:'solid',name:'Solid',short:'SOLID',description:'불투명 패널과 강한 구획으로 안정적인 데스크톱 앱 느낌을 주는 프레임입니다.',transparency:false,category:'불투명'},
-  {id:'pill',name:'Pill',short:'PILL',description:'버튼, 입력창, 내비게이션을 둥근 캡슐 형태로 구성한 프레임입니다.',transparency:false,category:'라운드'},
-  {id:'studio',name:'Studio',short:'STUDIO',description:'방송 및 제작 도구처럼 조작부와 작업 영역의 구분을 강하게 만든 프레임입니다.',transparency:false,category:'작업형'},
-  {id:'executive',name:'Executive',short:'EXEC',description:'절제된 그림자와 정돈된 패널 비율을 사용하는 생산성 앱 스타일 프레임입니다.',transparency:false,category:'업무형'}
+  {id:'classic',name:'기본 프레임',short:'CLASSIC',category:'기본',description:'현재 Mawang Scheduler의 원래 UI를 그대로 사용합니다.',transparency:false,spec:{line:'1px',corner:'기본',depth:'기본',space:'균형',motion:'기본'}},
+  {id:'material',name:'Material',short:'MATERIAL',category:'카드형',description:'명확한 카드 계층, 단계별 그림자와 부드러운 상승 효과를 사용하는 Material 스타일입니다.',transparency:false,spec:{line:'1px',corner:'12px',depth:'계층형',space:'균형',motion:'반응형'}},
+  {id:'minimal',name:'Minimal',short:'MINIMAL',category:'미니멀',description:'프레임과 그림자를 거의 없애고 여백과 타이포그래피로 영역을 구분하는 초미니멀 스타일입니다.',transparency:false,spec:{line:'0-1px',corner:'4px',depth:'없음',space:'넓음',motion:'절제'}},
+  {id:'glass',name:'Glass',short:'GLASS',category:'글래스',description:'반투명 유리 패널, 밝은 엣지, 강한 배경 블러와 깊이감을 사용하는 Glassmorphism 스타일입니다.',transparency:true,spec:{line:'1px light',corner:'20px',depth:'유리',space:'균형',motion:'Smooth'}},
+  {id:'fluent',name:'Fluent',short:'FLUENT',category:'Acrylic',description:'Windows Fluent 계열처럼 Acrylic 질감, 얇은 강조선, 부드러운 레이어와 Reveal 느낌을 사용합니다.',transparency:true,spec:{line:'1px accent',corner:'14px',depth:'Acrylic',space:'균형',motion:'Smooth'}},
+  {id:'bento',name:'Bento',short:'BENTO',category:'모듈형',description:'크고 작은 정보 블록이 모듈처럼 보이도록 카드 간격과 크기 대비를 강조한 Bento 스타일입니다.',transparency:false,spec:{line:'1px',corner:'18px',depth:'Soft',space:'넓음',motion:'Lift'}},
+  {id:'neobrutal',name:'Neo Brutal',short:'BRUTAL',category:'강조형',description:'굵은 프레임, 단단한 하드 섀도, 작은 코너와 즉각적인 움직임을 사용하는 Neo Brutalism 스타일입니다.',transparency:false,spec:{line:'3px',corner:'4px',depth:'Hard',space:'중간',motion:'Snappy'}},
+  {id:'clay',name:'Clay',short:'CLAY',category:'3D Soft',description:'둥글고 두툼한 패널, 안팎의 부드러운 그림자와 탄성 있는 움직임을 사용하는 Claymorphism 스타일입니다.',transparency:false,spec:{line:'0px',corner:'26px',depth:'Inflated',space:'넓음',motion:'Bouncy'}},
+  {id:'metro',name:'Metro',short:'METRO',category:'타일형',description:'사각 타일, 강한 정렬, 그림자 없는 평면 구성과 빠른 상태 전환을 사용하는 Metro 스타일입니다.',transparency:false,spec:{line:'0-2px',corner:'0px',depth:'Flat',space:'촘촘',motion:'Quick'}},
+  {id:'studio',name:'Studio Control',short:'STUDIO',category:'작업형',description:'방송 및 제작 툴처럼 조작부를 촘촘하게 묶고 레일과 구분선을 강하게 사용하는 Studio 스타일입니다.',transparency:false,spec:{line:'1px+rail',corner:'6px',depth:'Low',space:'촘촘',motion:'Precise'}},
+  {id:'gaming',name:'Gaming HUD',short:'GAMING',category:'HUD',description:'잘린 코너, 강조 프레임, Accent Glow와 빠른 Hover를 사용하는 게임 런처 및 HUD 스타일입니다.',transparency:false,spec:{line:'2px glow',corner:'Cut',depth:'Glow',space:'중간',motion:'Energetic'}},
+  {id:'spatial',name:'Spatial',short:'SPATIAL',category:'공간형',description:'큰 라운딩과 넓은 여백, 공중에 떠 있는 반투명 패널과 느린 깊이 전환을 사용하는 Spatial UI입니다.',transparency:true,spec:{line:'1px',corner:'28px',depth:'Floating',space:'매우 넓음',motion:'Slow'}},
+  {id:'terminal',name:'Terminal',short:'TERM',category:'데이터형',description:'각진 1px 프레임, 고밀도 배치, 모노스페이스 타이포와 거의 없는 애니메이션을 사용하는 Terminal 스타일입니다.',transparency:false,spec:{line:'1px',corner:'0px',depth:'없음',space:'고밀도',motion:'즉시'}},
+  {id:'retro',name:'Retro Desktop',short:'RETRO',category:'레트로',description:'2px Bevel 프레임, 눌리는 버튼, 작은 코너와 입체 테두리를 사용하는 클래식 데스크톱 UI입니다.',transparency:false,spec:{line:'2px bevel',corner:'2px',depth:'Emboss',space:'Compact',motion:'Clicky'}}
 ];
 const UI_FRAME_IDS=new Set(UI_FRAME_META.map(frame=>frame.id));
-function normalizeUiFrameId(value){return UI_FRAME_IDS.has(String(value||''))?String(value):'classic'}
+const UI_FRAME_ALIASES={
+  neo:'fluent',floating:'spatial',flat:'minimal',soft:'clay',sharp:'neobrutal',
+  compact:'terminal',spacious:'bento',outline:'minimal',solid:'material',
+  pill:'clay',executive:'material'
+};
+function normalizeUiFrameId(value){
+  const raw=String(value||'');
+  const migrated=UI_FRAME_ALIASES[raw]||raw;
+  return UI_FRAME_IDS.has(migrated)?migrated:'classic';
+}
 window.UI_FRAME_META=UI_FRAME_META;
 
 /* v5.2 - Device-local presentation preferences. These never belong to shared cloud data. */
@@ -167,7 +176,7 @@ data.contacts.forEach(c=>{if(c.pendingSetup===undefined)c.pendingSetup=false});
 document.body.dataset.theme=data.theme;
 document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));
 data.uiFrame=normalizeUiFrameId(data.uiFrame);
-document.body.classList.toggle('mws-neo',data.uiFrame==='neo');
+document.body.classList.remove('mws-neo');
 document.body.dataset.uiFrame=data.uiFrame;
 document.body.style.setProperty('--neo-surface-opacity',`${100-Math.max(0,Math.min(60,Number(data.neoTransparency??10)))}%`);
 document.body.style.setProperty('--neo-input-opacity',`${Math.min(100,104-Math.max(0,Math.min(60,Number(data.neoTransparency??10))))}%`);
@@ -4135,17 +4144,19 @@ function renderUiFrameGrid(){
     <button type="button" class="ui-frame-option ${frame.id===selected?'active':''}" data-ui-frame-choice="${frame.id}" onclick="setUiFrame('${frame.id}')" aria-pressed="${frame.id===selected?'true':'false'}">
       <span class="ui-frame-preview frame-preview-${frame.id}" aria-hidden="true"><i></i><i></i><i></i><b>${frame.short}</b></span>
       <span class="ui-frame-option-meta"><strong>${frame.name}</strong><em>${frame.category}</em></span>
+      <span class="ui-frame-specs">
+        <span>선 ${frame.spec.line}</span><span>코너 ${frame.spec.corner}</span><span>${frame.spec.depth}</span><span>${frame.spec.motion}</span>
+      </span>
       <small>${frame.description}</small>
     </button>`).join('');
 }
 window.renderUiFrameGrid=renderUiFrameGrid;
-
 function applyUiFrame(notify=false){
   const frame=normalizeUiFrameId(data.uiFrame);
   const meta=uiFrameMeta(frame);
   data.uiFrame=frame;
 
-  document.body.classList.toggle('mws-neo',frame==='neo');
+  document.body.classList.remove('mws-neo');
   document.body.dataset.uiFrame=frame;
 
   renderUiFrameGrid();
@@ -4183,7 +4194,7 @@ function applyNeoTransparency(notify=false){
   const value=document.getElementById('neoTransparencyValue');
   if(slider)slider.value=transparency;
   if(value)value.textContent=transparency+'%';
-  if(notify)toast('UI 창 투명도',transparency+'%로 조절했습니다');
+  if(notify)toast('UI 패널 투명도',transparency+'%로 조절했습니다');
 }
 window.applyNeoTransparency=applyNeoTransparency;
 
