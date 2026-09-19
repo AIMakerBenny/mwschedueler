@@ -9,8 +9,10 @@ export function runPhase93AchievementTouchAudit(){
   const entry=fs.readFileSync('src/cf-v111-entry.js','utf8');
 
   for(const token of [
-    "const TOUCH_DRAG_THRESHOLD=10;",
+    "const TOUCH_DRAG_THRESHOLD=8;",
     "const TOUCH_HORIZONTAL_RATIO=1.18;",
+    "const TOUCH_ROTATE_X_PER_PX=.28;",
+    "const TOUCH_ROTATE_Y_PER_PX=1.18;",
     "pointerType==='touch'?'pending':'rotate'",
     "if(detailDrag.pointerType==='touch'&&detailDrag.mode==='pending')",
     "if(Math.max(ax,ay)<TOUCH_DRAG_THRESHOLD)return",
@@ -18,8 +20,8 @@ export function runPhase93AchievementTouchAudit(){
     "detailDrag.mode='scroll';",
     "if(ax<ay*TOUCH_HORIZONTAL_RATIO)return",
     "if(detailDrag.pointerType==='touch'){",
-    "detailRotation.x=clamp(detailDrag.rotateX-clamp(dy,-90,90)*.16,-22,22)",
-    "detailRotation.y=clamp(detailDrag.rotateY+dx*.52,-360,360)",
+    "detailRotation.x=clamp(detailDrag.rotateX-clamp(dy,-120,120)*TOUCH_ROTATE_X_PER_PX,-32,32)",
+    "detailRotation.y=detailDrag.rotateY+dx*TOUCH_ROTATE_Y_PER_PX",
     "stage.classList.remove('dragging','touch-dragging')",
     "achievement-detail-hint-touch"
   ]){
