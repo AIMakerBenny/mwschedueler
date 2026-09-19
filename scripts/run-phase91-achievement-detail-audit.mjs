@@ -43,8 +43,8 @@ export function runPhase91AchievementDetailAudit(){
   if(!css.includes('grid-template-columns:minmax(300px,390px) minmax(0,1fr);'))issues.push('desktop achievement detail split layout is missing');
   if(!css.includes('white-space:pre-wrap;'))issues.push('achievement description multiline rendering is missing');
 
-  if(!post.includes("achievement-gallery-v1621.css?v=1.6.21-phase91"))issues.push('Phase 91 achievement detail CSS cache is missing');
-  if(!post.includes("achievement-gallery-v1621.js?v=1.6.21-phase91"))issues.push('Phase 91 achievement detail runtime cache is missing');
+  if(!/achievement-gallery-v1621\.css\?v=1\.6\.21-phase(?:9[1-9]|[1-9][0-9]{2,})/.test(post))issues.push('achievement detail CSS cache is older than Phase 91');
+  if(!/achievement-gallery-v1621\.js\?v=1\.6\.21-phase(?:9[1-9]|[1-9][0-9]{2,})/.test(post))issues.push('achievement detail runtime cache is older than Phase 91');
   if(!/post-login-runtime-v130\.js\?v=1\.4\.0-phase(?:9[1-9]|[1-9][0-9]{2,})/.test(entry))issues.push('Worker post-login cache-bust is older than Phase 91');
 
   const summary={phase:91,name:'achievement-detail-modal',issues,warnings,pass:issues.length===0};
