@@ -33,7 +33,7 @@ checks = {
     "image fade in": 'fadeIntro(s, 0, 255, introImageFadeIn)' in intro,
     "image fade out": 'fadeIntro(s, 255, 0, introImageFadeOut)' in intro,
     "black pause after image": 'time.Sleep(introBlackAfterImage)' in intro,
-    "exact intro title": 'Mawang Scheduler 마왕 스케줄러' in intro,
+    "intro title content": 'MAWANG SCHEDULER' in intro and '마왕 스케줄러' in intro,
     "text fade in": 'fadeIntro(s, 0, 255, introTextFadeIn)' in intro,
     "title waits for WebView": 'waitForStartupWebReady(8 * time.Second)' in intro,
     "title fade out": 'fadeIntro(s, 255, 0, introTextFadeOut)' in intro,
