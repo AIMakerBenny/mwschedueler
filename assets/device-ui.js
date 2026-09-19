@@ -14,24 +14,32 @@ const nav=document.createElement('nav');nav.className='mws-mobile-tabs';nav.setA
 [['dashboard','홈'],['calendar','일정'],['contacts','연락처'],['settings','설정'],['menu','전체 메뉴']].forEach(([id,label])=>{const b=document.createElement('button');b.type='button';b.dataset.mobileTab=id;b.textContent=label;b.onclick=()=>{if(id==='menu'){window.toggleMobileDrawer?.();return;}document.querySelector('.sidebar [data-tab="'+id+'"]')?.click();window.setMobileDrawer?.(false);window.scrollTo({top:0});};nav.append(b);});document.body.append(nav);
 const baseSet=window.setResolutionMode;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(prefs));}catch(_){document.getElementById('mwsDeviceStatus').textContent='화면을 변경했습니다. 브라우저 설정 때문에 선택값을 저장하지 못했습니다.';}}
-function refresh(){
+function refreshModeUi(){
  document.body.dataset.deviceMode=prefs.mode;
  card.querySelectorAll('[data-device-choice]').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.deviceChoice===prefs.mode));});
  document.getElementById('mwsDeviceStatus').textContent=prefs.mode==='pc'?'PC 화면을 사용 중입니다.':'모바일 화면을 사용 중입니다. 선택은 이 브라우저에 저장됩니다.';
  const res=document.querySelector('.resolution-settings-card');if(res)res.hidden=prefs.mode==='mobile';
  document.querySelectorAll('[data-resolution-choice="mobile"]').forEach(b=>b.hidden=true);
+}
+function refreshNavState(){
  const active=document.querySelector('.sidebar [data-tab].active')?.dataset.tab;
  nav.querySelectorAll('[data-mobile-tab]').forEach(b=>{if(b.dataset.mobileTab===active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
+}
+function refreshCalendarDates(){
  document.querySelectorAll('#calendarGrid .day[data-date]').forEach(d=>{const n=d.querySelector('.daynum');if(n)n.dataset.mobileDate=d.dataset.date.slice(5).replace('-',' / ');});
 }
+function refresh(){refreshModeUi();refreshNavState();refreshCalendarDates();}
 function apply(mode){if(!['pc','mobile'].includes(mode))return;if(prefs.mode==='pc'&&desktops.includes(document.body.dataset.resolution))prefs.pc=document.body.dataset.resolution;prefs.mode=mode;window.setMobileDrawer?.(false);baseSet(mode==='mobile'?'mobile':prefs.pc);refresh();save();}
 window.setResolutionMode=function(mode){if(mode==='mobile'){apply('mobile');return;}if(desktops.includes(mode)){prefs.pc=mode;prefs.mode='pc';baseSet(mode);refresh();save();}};
 card.addEventListener('click',e=>{const b=e.target.closest('[data-device-choice]');if(b&&!b.disabled)apply(b.dataset.deviceChoice);});
-let queued=false;const update=()=>{if(document.hidden||queued)return;queued=true;requestAnimationFrame(()=>{queued=false;refresh();});};
-new MutationObserver(update).observe(document.querySelector('.sidebar .nav'),{subtree:true,attributes:true,attributeFilter:['class']});
-new MutationObserver(update).observe(document.getElementById('calendarGrid'),{childList:true});
-window.addEventListener('mawang:datachange',update);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)update()});
+let navQueued=false,calendarQueued=false,fullQueued=false;
+const queueNav=()=>{if(document.hidden||navQueued)return;navQueued=true;requestAnimationFrame(()=>{navQueued=false;refreshNavState();});};
+const queueCalendar=()=>{if(document.hidden||calendarQueued)return;calendarQueued=true;requestAnimationFrame(()=>{calendarQueued=false;refreshCalendarDates();});};
+const queueFull=()=>{if(document.hidden||fullQueued)return;fullQueued=true;requestAnimationFrame(()=>{fullQueued=false;refresh();});};
+const sidebarNav=document.querySelector('.sidebar .nav');if(sidebarNav)new MutationObserver(queueNav).observe(sidebarNav,{subtree:true,attributes:true,attributeFilter:['class']});
+const calendarGrid=document.getElementById('calendarGrid');if(calendarGrid)new MutationObserver(queueCalendar).observe(calendarGrid,{childList:true});
+window.addEventListener('mawang:datachange',queueFull);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)queueFull()});
 baseSet(prefs.mode==='mobile'?'mobile':prefs.pc);refresh();
 })();
 
