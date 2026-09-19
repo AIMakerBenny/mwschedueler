@@ -189,10 +189,10 @@ jobs:
           grep -Fq "achievement-media-v1621.js?v=1.6.21-phase88" /tmp/post-login.js
           grep -Fq "achievement-gallery-v1621.css?v=1.6.21-phase98" /tmp/post-login.js
           grep -Fq "achievement-gallery-v1621.js?v=1.6.21-phase104" /tmp/post-login.js
-          grep -Fq "perf-runtime.js?v=1.4.0-achievement-navfix1" /tmp/post-login.js
-          retry_contains "$BASE/assets/perf-runtime.js?deploy=$GITHUB_SHA" "content-planner-host.js?v=1.4.0-achievement-navfix1" > /tmp/perf-runtime.js
+          grep -Fq "perf-runtime.js?v=1.4.0-phase105-achievement-navfix1" /tmp/post-login.js
+          retry_contains "$BASE/assets/perf-runtime.js?deploy=$GITHUB_SHA" "content-planner-host.js?v=1.4.0-phase105-achievement-navfix1" > /tmp/perf-runtime.js
           node --check /tmp/perf-runtime.js
-          retry_contains "$BASE/assets/content-planner-host.js?deploy=$GITHUB_SHA" "tools.js?v=1.4.0-achievement-navfix1" > /tmp/content-planner-host.js
+          retry_contains "$BASE/assets/content-planner-host.js?deploy=$GITHUB_SHA" "tools.js?v=1.4.0-phase105-achievement-navfix1" > /tmp/content-planner-host.js
           node --check /tmp/content-planner-host.js
           retry_contains "$BASE/assets/tools.js?deploy=$GITHUB_SHA" "world.nextElementSibling!==achievements" > /tmp/tools.js
           node --check /tmp/tools.js
