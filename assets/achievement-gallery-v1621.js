@@ -1,4 +1,4 @@
-/* Mawang Scheduler v1.6.21 - Achievement manager entry runtime, Phase 94 */
+/* Mawang Scheduler v1.6.21 - Achievement manager runtime, Phase 95 */
 (()=>{
 'use strict';
 if(window.__mwsAchievementGalleryRuntimeV1621)return;
@@ -15,6 +15,7 @@ let detailRotation={x:0,y:0};
 let detailDrag=null;
 let managerModal=null;
 let managerLastFocus=null;
+let managerSelectedId='';
 
 function cards(){
   try{
@@ -367,6 +368,13 @@ function updateManagerCount(){
   const count=document.getElementById('achievementManageCount');
   if(count)count.textContent=`${cards().length}장`;
 }
+function managerApi(){return window.mwsAchievementCardsV1621||null}
+function setManagerStatus(message,tone=''){
+  const el=managerModal?.querySelector('[data-achievement-manager-status]');
+  if(!el)return;
+  el.textContent=String(message||'');
+  el.dataset.tone=tone;
+}
 function ensureManagerModal(){
   if(managerModal?.isConnected)return managerModal;
   const root=document.createElement('div');
@@ -382,22 +390,176 @@ function ensureManagerModal(){
         <div>
           <div class="achievement-manager-kicker">ACHIEVEMENT MANAGEMENT</div>
           <h2 id="achievementManagerTitle">업적 카드 관리</h2>
-          <p>업적 카드 이미지와 상세 정보를 관리하는 공간입니다.</p>
+          <p>카드를 추가하고 게임 이름, 컨텐츠 이름, 설명을 편집할 수 있습니다.</p>
         </div>
         <button type="button" class="achievement-manager-close" aria-label="업적 카드 관리 닫기">×</button>
       </div>
-      <div class="achievement-manager-shell">
-        <div class="achievement-manager-shell-icon" aria-hidden="true">◆</div>
-        <strong>업적 카드 관리</strong>
-        <span>카드 목록, 이미지 추가, 정보 편집, 순서 변경 도구가 이 창에 표시됩니다.</span>
-        <span class="chip achievement-manager-shell-count" data-achievement-manager-count>0장</span>
+      <div class="achievement-manager-shell achievement-manager-workspace">
+        <aside class="achievement-manager-list-panel">
+          <div class="achievement-manager-list-head">
+            <div>
+              <strong>카드 목록</strong>
+              <span class="chip achievement-manager-shell-count" data-achievement-manager-count>0장</span>
+            </div>
+            <button type="button" class="primary achievement-manager-add" data-achievement-manager-add>새 카드</button>
+          </div>
+          <div class="achievement-manager-list" data-achievement-manager-list></div>
+        </aside>
+        <section class="achievement-manager-editor-panel">
+          <div class="achievement-manager-editor-empty" data-achievement-manager-empty>
+            <div class="achievement-manager-shell-icon" aria-hidden="true">◆</div>
+            <strong>편집할 카드를 선택하세요.</strong>
+            <span>새 카드를 추가하거나 왼쪽 목록에서 기존 카드를 선택할 수 있습니다.</span>
+          </div>
+          <form class="achievement-manager-editor" data-achievement-manager-editor hidden>
+            <div class="achievement-manager-editor-heading">
+              <div>
+                <div class="achievement-manager-kicker">CARD DETAILS</div>
+                <h3 data-achievement-manager-editor-title>업적 카드</h3>
+              </div>
+              <span class="chip" data-achievement-manager-order>#1</span>
+            </div>
+            <label class="achievement-manager-field">
+              <span>게임 이름</span>
+              <input type="text" maxlength="120" data-achievement-manager-game placeholder="게임 이름">
+            </label>
+            <label class="achievement-manager-field">
+              <span>컨텐츠 이름</span>
+              <input type="text" maxlength="160" data-achievement-manager-content placeholder="컨텐츠 이름">
+            </label>
+            <label class="achievement-manager-field achievement-manager-description-field">
+              <span>설명</span>
+              <textarea rows="8" maxlength="4000" data-achievement-manager-description placeholder="업적 카드 설명"></textarea>
+            </label>
+            <div class="achievement-manager-image-note">카드 앞면·뒷면 이미지 추가는 다음 단계에서 연결됩니다.</div>
+            <div class="achievement-manager-editor-actions">
+              <button type="button" class="secondary achievement-manager-delete" data-achievement-manager-delete>삭제</button>
+              <button type="submit" class="primary" data-achievement-manager-save>저장</button>
+            </div>
+          </form>
+          <div class="achievement-manager-status" data-achievement-manager-status aria-live="polite"></div>
+        </section>
       </div>
     </div>`;
   root.querySelector('.achievement-manager-close')?.addEventListener('click',closeManager);
+  root.querySelector('[data-achievement-manager-add]')?.addEventListener('click',createManagerCard);
+  root.querySelector('[data-achievement-manager-delete]')?.addEventListener('click',deleteManagerCard);
+  root.querySelector('[data-achievement-manager-editor]')?.addEventListener('submit',saveManagerCard);
   root.addEventListener('click',event=>{if(event.target===root)closeManager()});
   document.body.appendChild(root);
   managerModal=root;
   return root;
+}
+function managerCurrentCard(){
+  return managerSelectedId?cardById(managerSelectedId):null;
+}
+function renderManagerList(){
+  const root=ensureManagerModal();
+  const listEl=root.querySelector('[data-achievement-manager-list]');
+  if(!listEl)return;
+  const list=cards();
+  listEl.replaceChildren();
+  if(!list.length){
+    const empty=document.createElement('div');
+    empty.className='achievement-manager-list-empty';
+    empty.textContent='등록된 업적 카드가 없습니다.';
+    listEl.appendChild(empty);
+    return;
+  }
+  list.forEach((card,index)=>{
+    const button=document.createElement('button');
+    button.type='button';
+    button.className='achievement-manager-list-item';
+    button.dataset.achievementManagerCardId=String(card.id||'');
+    button.classList.toggle('active',String(card.id||'')===managerSelectedId);
+    const order=document.createElement('span');
+    order.className='achievement-manager-list-order';
+    order.textContent=String(index+1).padStart(2,'0');
+    const copy=document.createElement('span');
+    copy.className='achievement-manager-list-copy';
+    const game=document.createElement('strong');
+    game.textContent=text(card.gameName,'게임 이름 없음');
+    const content=document.createElement('small');
+    content.textContent=text(card.contentName,'컨텐츠 이름 없음');
+    copy.append(game,content);
+    button.append(order,copy);
+    button.addEventListener('click',()=>selectManagerCard(card.id));
+    listEl.appendChild(button);
+  });
+}
+function renderManagerEditor(){
+  const root=ensureManagerModal();
+  const empty=root.querySelector('[data-achievement-manager-empty]');
+  const editor=root.querySelector('[data-achievement-manager-editor]');
+  const card=managerCurrentCard();
+  if(!empty||!editor)return;
+  if(!card){
+    empty.hidden=false;
+    editor.hidden=true;
+    return;
+  }
+  empty.hidden=true;
+  editor.hidden=false;
+  root.querySelector('[data-achievement-manager-editor-title]').textContent=text(card.contentName,'업적 카드');
+  root.querySelector('[data-achievement-manager-order]').textContent=`#${Number(card.order||0)+1}`;
+  root.querySelector('[data-achievement-manager-game]').value=String(card.gameName||'');
+  root.querySelector('[data-achievement-manager-content]').value=String(card.contentName||'');
+  root.querySelector('[data-achievement-manager-description]').value=String(card.description||'');
+}
+function renderManager(){
+  const list=cards();
+  if(managerSelectedId&&!list.some(card=>String(card.id||'')===managerSelectedId))managerSelectedId='';
+  if(!managerSelectedId&&list.length)managerSelectedId=String(list[0].id||'');
+  syncManagerShellCount();
+  renderManagerList();
+  renderManagerEditor();
+}
+function selectManagerCard(id){
+  managerSelectedId=String(id||'');
+  setManagerStatus('');
+  renderManagerList();
+  renderManagerEditor();
+}
+function createManagerCard(){
+  const api=managerApi();
+  if(!api?.create){setManagerStatus('카드 저장 기능을 불러오지 못했습니다.','error');return}
+  const result=api.create({gameName:'',contentName:'새 업적 카드',description:''});
+  if(!result?.ok){setManagerStatus('새 카드를 만들지 못했습니다.','error');return}
+  managerSelectedId=String(result.card?.id||'');
+  renderManager();
+  setManagerStatus(result.saved?'새 업적 카드를 추가했습니다.':'카드는 추가했지만 브라우저 저장 공간을 확인해 주세요.',result.saved?'ok':'warn');
+  setTimeout(()=>managerModal?.querySelector('[data-achievement-manager-game]')?.focus(),0);
+}
+function saveManagerCard(event){
+  event?.preventDefault();
+  const card=managerCurrentCard();
+  const api=managerApi();
+  if(!card||!api?.update){setManagerStatus('저장할 카드를 선택해 주세요.','error');return}
+  const root=ensureManagerModal();
+  const patch={
+    gameName:root.querySelector('[data-achievement-manager-game]').value,
+    contentName:root.querySelector('[data-achievement-manager-content]').value,
+    description:root.querySelector('[data-achievement-manager-description]').value
+  };
+  const result=api.update(card.id,patch);
+  if(!result?.ok){setManagerStatus('업적 카드를 저장하지 못했습니다.','error');return}
+  renderManager();
+  setManagerStatus(result.saved?'업적 카드 정보를 저장했습니다.':'변경사항은 화면에 반영했지만 브라우저 저장 공간을 확인해 주세요.',result.saved?'ok':'warn');
+}
+function deleteManagerCard(){
+  const card=managerCurrentCard();
+  const api=managerApi();
+  if(!card||!api?.remove){setManagerStatus('삭제할 카드를 선택해 주세요.','error');return}
+  const label=text(card.contentName,text(card.gameName,'이 업적 카드'));
+  if(!window.confirm(`"${label}" 카드를 삭제하시겠습니까?`))return;
+  const previousIndex=cards().findIndex(item=>String(item.id||'')===String(card.id||''));
+  const result=api.remove(card.id);
+  if(!result?.ok){setManagerStatus('업적 카드를 삭제하지 못했습니다.','error');return}
+  const list=cards();
+  const next=list[Math.min(Math.max(previousIndex,0),Math.max(list.length-1,0))]||null;
+  managerSelectedId=next?String(next.id||''):'';
+  renderManager();
+  setManagerStatus(result.saved?'업적 카드를 삭제했습니다.':'카드는 삭제했지만 브라우저 저장 공간을 확인해 주세요.',result.saved?'ok':'warn');
 }
 function syncManagerShellCount(){
   const count=cards().length;
@@ -411,10 +573,16 @@ function openManager(){
   const root=ensureManagerModal();
   if(detailModal&&!detailModal.hidden)closeDetail();
   managerLastFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
-  syncManagerShellCount();
+  renderManager();
+  setManagerStatus('');
   root.hidden=false;
   document.body.classList.add('mws-achievement-manager-open');
-  setTimeout(()=>root.querySelector('.achievement-manager-close')?.focus(),0);
+  setTimeout(()=>{
+    const target=managerSelectedId
+      ?root.querySelector(`[data-achievement-manager-card-id="${CSS.escape(managerSelectedId)}"]`)
+      :root.querySelector('[data-achievement-manager-add]');
+    target?.focus();
+  },0);
   return true;
 }
 function closeManager(){
@@ -467,10 +635,11 @@ window.mwsCloseAchievementDetailV1621=closeDetail;
 window.mwsResetAchievementCardV1621=resetDetailRotation;
 window.mwsOpenAchievementManagerV1621=openManager;
 window.mwsCloseAchievementManagerV1621=closeManager;
-window.addEventListener('mawang:datachange',()=>{
+window.addEventListener('mawang:datachange',event=>{
   if(document.getElementById('achievements')?.classList.contains('active'))render();
   if(detailModal&&!detailModal.hidden&&detailCardId&&!cardById(detailCardId))closeDetail();
   syncManagerShellCount();
+  if(managerModal&&!managerModal.hidden&&String(event?.detail?.reason||'').startsWith('업적 카드'))renderManager();
 });
 window.addEventListener('mws:achievement-media-ready',()=>{
   if(document.getElementById('achievements')?.classList.contains('active'))render();
