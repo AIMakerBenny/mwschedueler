@@ -1,4 +1,4 @@
-/* Mawang Scheduler v1.6.21 - Achievement 3D gallery runtime, Phase 92 */
+/* Mawang Scheduler v1.6.21 - Achievement mobile 3D gallery runtime, Phase 93 */
 (()=>{
 'use strict';
 if(window.__mwsAchievementGalleryRuntimeV1621)return;
@@ -112,28 +112,57 @@ function resetDetailRotation(){
   detailModal?.querySelector('[data-achievement-stage]')?.classList.remove('dragging');
   applyDetailRotation();
 }
+const TOUCH_DRAG_THRESHOLD=10;
+const TOUCH_HORIZONTAL_RATIO=1.18;
+function activateDetailDrag(stage,event){
+  detailDrag.mode='rotate';
+  stage.classList.add('dragging');
+  if(detailDrag.pointerType==='touch')stage.classList.add('touch-dragging');
+  try{stage.setPointerCapture(event.pointerId)}catch(_){}
+}
 function beginDetailDrag(event){
-  if(event.pointerType&&event.pointerType!=='mouse')return;
-  if(event.button!==0)return;
+  const pointerType=event.pointerType||'mouse';
+  if(!['mouse','touch','pen'].includes(pointerType))return;
+  if(pointerType==='mouse'&&event.button!==0)return;
+  if(pointerType==='pen'&&event.button!==0)return;
   const stage=event.currentTarget;
-  event.preventDefault();
   detailDrag={
     pointerId:event.pointerId,
+    pointerType,
+    mode:pointerType==='touch'?'pending':'rotate',
     startX:event.clientX,
     startY:event.clientY,
     rotateX:detailRotation.x,
     rotateY:detailRotation.y
   };
-  stage.classList.add('dragging');
-  try{stage.setPointerCapture(event.pointerId)}catch(_){}
+  if(pointerType==='touch')return;
+  event.preventDefault();
+  activateDetailDrag(stage,event);
 }
 function moveDetailDrag(event){
   if(!detailDrag||event.pointerId!==detailDrag.pointerId)return;
-  event.preventDefault();
+  const stage=event.currentTarget;
   const dx=event.clientX-detailDrag.startX;
   const dy=event.clientY-detailDrag.startY;
-  detailRotation.x=clamp(detailDrag.rotateX-dy*.34,-35,35);
-  detailRotation.y=detailDrag.rotateY+dx*.58;
+  if(detailDrag.pointerType==='touch'&&detailDrag.mode==='pending'){
+    const ax=Math.abs(dx),ay=Math.abs(dy);
+    if(Math.max(ax,ay)<TOUCH_DRAG_THRESHOLD)return;
+    if(ay>ax){
+      detailDrag.mode='scroll';
+      return;
+    }
+    if(ax<ay*TOUCH_HORIZONTAL_RATIO)return;
+    activateDetailDrag(stage,event);
+  }
+  if(detailDrag.mode!=='rotate')return;
+  event.preventDefault();
+  if(detailDrag.pointerType==='touch'){
+    detailRotation.x=clamp(detailDrag.rotateX-clamp(dy,-90,90)*.16,-22,22);
+    detailRotation.y=clamp(detailDrag.rotateY+dx*.52,-360,360);
+  }else{
+    detailRotation.x=clamp(detailDrag.rotateX-dy*.34,-35,35);
+    detailRotation.y=detailDrag.rotateY+dx*.58;
+  }
   applyDetailRotation();
 }
 function endDetailDrag(event){
@@ -141,7 +170,7 @@ function endDetailDrag(event){
   const stage=event.currentTarget;
   try{if(stage.hasPointerCapture?.(event.pointerId))stage.releasePointerCapture(event.pointerId)}catch(_){}
   detailDrag=null;
-  stage.classList.remove('dragging');
+  stage.classList.remove('dragging','touch-dragging');
 }
 
 function ensureDetailModal(){
@@ -174,7 +203,7 @@ function ensureDetailModal(){
             </div>
           </div>
           <div class="achievement-detail-controls">
-            <span>마우스로 드래그해 카드를 회전하세요.</span>
+            <span class="achievement-detail-hint"><span class="achievement-detail-hint-mouse">마우스로 드래그해 카드를 회전하세요.</span><span class="achievement-detail-hint-touch">카드를 좌우로 밀어 회전하세요. 위아래 스크롤은 그대로 사용할 수 있습니다.</span></span>
             <button type="button" class="achievement-detail-reset">정면 보기</button>
           </div>
         </div>
@@ -208,7 +237,7 @@ function ensureDetailModal(){
   stage?.addEventListener('lostpointercapture',event=>{
     if(detailDrag&&event.pointerId===detailDrag.pointerId){
       detailDrag=null;
-      stage.classList.remove('dragging');
+      stage.classList.remove('dragging','touch-dragging');
     }
   });
   stage?.addEventListener('dblclick',event=>{if(!event.pointerType||event.pointerType==='mouse')resetDetailRotation()});
