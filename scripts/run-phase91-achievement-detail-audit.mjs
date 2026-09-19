@@ -41,9 +41,11 @@ export function runPhase91AchievementDetailAudit(){
   ]){
     if(!css.includes(token))issues.push('achievement detail CSS missing: '+token);
   }
-  if(!css.includes('grid-template-columns:minmax(430px,540px) minmax(300px,1fr);'))issues.push('desktop achievement detail enlarged split layout is missing');
-  if(!css.includes('width:min(1280px,96vw);'))issues.push('desktop achievement detail dialog is not enlarged');
-  if(!css.includes('width:min(100%,500px,calc((94vh - 150px)*2/3));'))issues.push('desktop achievement card stage is not enlarged responsively');
+  if(!css.includes('grid-template-columns:minmax(560px,680px) minmax(360px,1fr);'))issues.push('desktop achievement detail enlarged split layout is missing');
+  if(!css.includes('width:min(1500px,98vw);'))issues.push('desktop achievement detail dialog is not enlarged');
+  if(!css.includes('width:min(100%,620px,calc((96vh - 120px)*2/3));'))issues.push('desktop achievement card stage is not enlarged responsively');
+  if(!css.includes('width:min(90vw,400px)'))issues.push('mobile achievement card viewer is still too small');
+  if(!css.includes('width:100%;'))issues.push('mobile achievement detail dialog does not use full width');
   if(!css.includes('white-space:pre-wrap;'))issues.push('achievement description multiline rendering is missing');
 
   if(!/achievement-gallery-v1621\.css\?v=1\.6\.21-phase(?:9[1-9]|[1-9][0-9]{2,})/.test(post))issues.push('achievement detail CSS cache is older than Phase 91');
