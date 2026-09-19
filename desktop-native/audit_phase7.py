@@ -9,7 +9,7 @@ checks = {
     "black shield retained": 'shieldHwnd' in intro and 'introBlackBeforeMain' in intro,
     "readiness handoff retained": 'waitStartupReadyOrSkip(s, 8*time.Second)' in intro,
     "single title font": 'Segoe UI' in intro and 'introFontMedium' in intro,
-    "single wordmark": 'Mawang Scheduler' in intro and '마왕 스케줄러' not in intro and 'MAWANG  DESKTOP' not in intro,
+    "single wordmark": 'UTF16PtrFromString("Mawang")' in intro and 'UTF16PtrFromString("Scheduler")' in intro and '마왕 스케줄러' not in intro and 'MAWANG  DESKTOP' not in intro,
     "fresh wordmark phase": 'wordmarkPhase atomic.Uint32' in intro,
     "fresh animation": 'func animateFreshWordmark' in intro,
     "image intro retained": '//go:embed assets/mawang-intro.jpg' in intro,
