@@ -48,6 +48,8 @@ export function runPhase99AchievementBackupAudit(){
   if(!core.includes("const payload=mwsStripDevicePrefs(data);"))issues.push('full backup no longer strips device preferences');
   if(!core.includes("const previousData=typeof structuredClone==='function'?structuredClone(data):JSON.parse(JSON.stringify(data));"))issues.push('full import rollback snapshot missing');
   if(!core.includes("try{await cleanupAchievementMediaAfterImport()}"))issues.push('post-commit orphan cleanup is not isolated from import commit');
+  if(!core.includes("const currentImage=typeof c.image==='string'?c.image:'';"))issues.push('full backup restore does not preserve existing cloud contact image references');
+  if(!core.includes("return {...c,image:currentImage||embeddedImage};"))issues.push('full backup restore can blank non-Base64 contact images');
 
   for(const token of [
     '업적 카드와 카드 이미지를 저장합니다.',
