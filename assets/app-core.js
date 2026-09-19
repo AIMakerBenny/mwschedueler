@@ -4930,10 +4930,9 @@ function restoreFullBackupAssets(backup){
   if(Array.isArray(payload.contacts)){
     payload.contacts=payload.contacts.map(c=>{
       const backupImage=imageMap[c.id];
-      return {...c,image:
-        (typeof c.image==='string'&&c.image.startsWith('data:image/'))?c.image:
-        (typeof backupImage==='string'&&backupImage.startsWith('data:image/'))?backupImage:''
-      };
+      const currentImage=typeof c.image==='string'?c.image:'';
+      const embeddedImage=typeof backupImage==='string'&&backupImage.startsWith('data:image/')?backupImage:'';
+      return {...c,image:currentImage||embeddedImage};
     });
   }
   if(assets.contactTagBanners&&typeof assets.contactTagBanners==='object'){
