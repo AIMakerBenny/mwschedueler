@@ -176,6 +176,17 @@ jobs:
           retry_contains "$BASE/assets/app-version-v120.js?deploy=$GITHUB_SHA" "const LABEL='Mawang Scheduler v 1.6.21'" > /tmp/version.js
           grep -Fq "const VERSION='1.4.0'" /tmp/version.js
           node --check /tmp/version.js
+          echo '[2-achievement] live authoritative cloud runtime'
+          retry_contains "$BASE/assets/cloud-v1.1.js?deploy=$GITHUB_SHA" "const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','achievementCards'];" > /tmp/live-cloud-core.js
+          node --check /tmp/live-cloud-core.js
+          grep -Fq "Object.prototype.hasOwnProperty.call(v,'achievementCards')" /tmp/live-cloud-core.js
+          grep -Fq "window.mwsLoadAchievementShadowV1621?.()" /tmp/live-cloud-core.js
+          grep -Fq 'achievementCards:[]' /tmp/live-cloud-core.js
+          if grep -Fq "const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones'];" /tmp/live-cloud-core.js; then
+            echo 'Live cloud runtime still drops achievementCards.' >&2
+            exit 1
+          fi
+
           echo '[2a] post-login successor freshness'
           retry_contains "$BASE/assets/post-login-runtime-v130.js?deploy=$GITHUB_SHA" 'achievement-gallery-v1621.js?v=1.6.21-phase104' > /tmp/post-login.js
           grep -Fq 'mobile-calendar-viewport-p29' /tmp/post-login.js

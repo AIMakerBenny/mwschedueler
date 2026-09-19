@@ -39,6 +39,21 @@ function normalizeCloudCore(js){
   /* One authoritative cache name. Do not remap IndexedDB from another loader. */
   out=out.replace("const CACHE_DB='mawang_data';","const CACHE_DB='mawang_data_v130';");
 
+  /* Achievement cards are part of the authoritative cloud core. The legacy runtime
+     did not know this field, so dirty detection and /api/save silently ignored it. */
+  out=out.replace(
+    "const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones'];",
+    "const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','achievementCards'];"
+  );
+  out=out.replace(
+    "function mergePart(part,value,target=data){const v=clone(value);if(part==='core'){Object.assign(target,v||{});return}",
+    "function mergePart(part,value,target=data){const v=clone(value);if(part==='core'){const hadAchievements=Boolean(v&&typeof v==='object'&&Object.prototype.hasOwnProperty.call(v,'achievementCards'));Object.assign(target,v||{});if(!hadAchievements){const shadow=window.mwsLoadAchievementShadowV1621?.();if(Array.isArray(shadow)&&shadow.length)target.achievementCards=clone(shadow)}return}"
+  );
+  out=out.replace(
+    "function freshSkeleton(){return{version:52,categories:[],contacts:[],events:[],posts:[],miniGames:{},collaborations:[],todayPeopleByDate:{},todayPeopleManualByDate:{},targetList:[],memos:[],favoriteFolders:[],contactTags:[],contactTagBanners:{},emoticons:[],scheduleClipboard:[],timezones:[]}}",
+    "function freshSkeleton(){return{version:52,categories:[],contacts:[],events:[],posts:[],miniGames:{},collaborations:[],todayPeopleByDate:{},todayPeopleManualByDate:{},targetList:[],memos:[],favoriteFolders:[],contactTags:[],contactTagBanners:{},emoticons:[],scheduleClipboard:[],timezones:[],achievementCards:[]}}"
+  );
+
   /* Data hydration must not control whether authentication is considered successful. */
   out=out.replace("applyModeUi();hideGate();const st=$('syncStatusText');","applyModeUi();const st=$('syncStatusText');");
 
@@ -184,7 +199,8 @@ export default {
       const patched=normalizeCloudCore(await response.text());
       return textResponse(response,patched,{
         'x-mws-auth-boundary':'decoupled-v130',
-        'x-mws-cache-db':'mawang_data_v130'
+        'x-mws-cache-db':'mawang_data_v130',
+        'x-mws-achievement-core':patched.includes("'achievementCards'")?'enabled':'missing'
       });
     }
 
