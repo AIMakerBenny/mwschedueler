@@ -93,11 +93,9 @@ var (
 	oldWndProc     uintptr
 	newWndProc     = syscall.NewCallback(windowProc)
 	exiting        bool
-	fullscreen     bool
-	savedStyle     uintptr
-	savedRect      rect
-	wasMaximized   bool
-	fsMu           sync.Mutex
+	fullscreen  bool
+	savedStyle  uintptr
+	fsMu        sync.Mutex
 	stateMu        sync.Mutex
 	lastRect       rect
 	lastMaximized  = true
@@ -442,10 +440,7 @@ func toggleFullscreen() bool {
 	defer fsMu.Unlock()
 
 	if !fullscreen {
-		procGetWindowRect.Call(h, uintptr(unsafe.Pointer(&savedRect)))
 		savedStyle, _, _ = procGetWindowLongPtr.Call(h, ^uintptr(15))
-		z, _, _ := procIsZoomed.Call(h)
-		wasMaximized = z != 0
 		mon, _, _ := procMonitorFromWindow.Call(h, monitorNearest)
 		mi := monitorInfo{CbSize: uint32(unsafe.Sizeof(monitorInfo{}))}
 		if mon != 0 {
