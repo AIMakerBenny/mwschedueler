@@ -91,7 +91,7 @@ jobs:
           SESSION="$session" node -e "const x=JSON.parse(process.env.SESSION); if(typeof x.authenticated!=='boolean') process.exit(1)"
 
           echo '[2/8] isolated login shell and v1.6.21 display'
-          retry_contains "$BASE/?deploy=$GITHUB_SHA" 'app-core.js?v=1.3.0-search99' > /tmp/index.html
+          retry_contains "$BASE/?deploy=$GITHUB_SHA" 'app-core.js?v=1.3.0-search100' > /tmp/index.html
           grep -Eq 'app-core\.js\?v=1\.3\.0-search(8[3-9]|9[0-9]|[1-9][0-9]{2,})' /tmp/index.html
           grep -Fq 'id="mwsAccessGate"' /tmp/index.html
           grep -Fq 'assets/app-core.css?v=1.6.21-navfix1' /tmp/index.html
@@ -109,8 +109,11 @@ jobs:
           grep -Fq 'class="card achievement-manager-entry-card"' /tmp/index.html
           grep -Fq '업적 카드와 카드 이미지를 저장합니다.' /tmp/index.html
           grep -Fq '업적 이미지는 가져올 때 IndexedDB Blob으로 다시 복원됩니다.' /tmp/index.html
+          grep -Fq 'id="achievementExportPackageBtn"' /tmp/index.html
+          grep -Fq 'id="achievementImportPackageInput"' /tmp/index.html
+          grep -Fq '패키지 가져오기는 기존 카드를 지우지 않고 뒤에 추가합니다.' /tmp/index.html
           node -e "const fs=require('fs'),s=fs.readFileSync('/tmp/index.html','utf8'),w=s.indexOf('data-tab=\"worldtime\"'),a=s.indexOf('data-tab=\"achievements\"'),m=s.indexOf('<div class=\"nav-game-divider\"');if(!(w>=0&&a>w&&m>a))process.exit(1)"
-          retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" "async function buildFullBackupObjectAsync()" > /tmp/app-core.js
+          retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" "async function buildAchievementPackageObjectAsync()" > /tmp/app-core.js
           node --check /tmp/app-core.js
           grep -Fq 'function mwsAchievementCreateCardV1621(fields={})' /tmp/app-core.js
           grep -Fq 'function mwsAchievementUpdateCardV1621(id,patch={})' /tmp/app-core.js
@@ -130,11 +133,17 @@ jobs:
           grep -Fq 'async function buildAchievementBackupMedia(payload)' /tmp/app-core.js
           grep -Fq 'backup.assets.achievementMedia=packed.items;' /tmp/app-core.js
           grep -Fq 'async function restoreAchievementBackupMedia(backup,payload)' /tmp/app-core.js
-          grep -Fq 'frontImageId:remap.get(front)||front' /tmp/app-core.js
-          grep -Fq 'backImageId:remap.get(back)||back' /tmp/app-core.js
+          grep -Fq "frontImageId:remap.get(front)||(strictEmbedded?'':front)" /tmp/app-core.js
+          grep -Fq "backImageId:remap.get(back)||(strictEmbedded?'':back)" /tmp/app-core.js
           grep -Fq 'let committed=false;' /tmp/app-core.js
           grep -Fq 'document.getElementById('"'"'exportAllBtn'"'"').onclick=async()=>' /tmp/app-core.js
           grep -Fq 'document.getElementById('"'"'importAllInput'"'"').onchange=async e=>' /tmp/app-core.js
+          grep -Fq 'function mwsAchievementImportCardsV1621(items=[])' /tmp/app-core.js
+          grep -Fq 'importCards:mwsAchievementImportCardsV1621' /tmp/app-core.js
+          grep -Fq "format:'MAWANG_ACHIEVEMENT_PACKAGE'" /tmp/app-core.js
+          grep -Fq 'async function buildAchievementPackageObjectAsync()' /tmp/app-core.js
+          grep -Fq 'document.getElementById('"'"'achievementExportPackageBtn'"'"').onclick=async()=>' /tmp/app-core.js
+          grep -Fq 'document.getElementById('"'"'achievementImportPackageInput'"'"').onchange=async e=>' /tmp/app-core.js
           if grep -Fq '\\n</head>' /tmp/index.html; then
             echo 'Literal backslash-n text leaked into HTML before closing head.' >&2
             exit 1
@@ -734,6 +743,7 @@ jobs:
           node --check scripts/run-phase97-achievement-ordering-audit.mjs
           node --check scripts/run-phase98-achievement-media-cleanup-audit.mjs
           node --check scripts/run-phase99-achievement-backup-audit.mjs
+          node --check scripts/run-phase100-achievement-package-audit.mjs
           node --check assets/today-people-runtime-v130.js
           node --check assets/contact-runtime-v130.js
           node --check assets/friend-finder-v120.js

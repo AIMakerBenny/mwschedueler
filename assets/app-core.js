@@ -238,11 +238,46 @@ function mwsAchievementMoveCardV1621(id,targetIndex){
   try{window.dispatchEvent(new CustomEvent('mawang:datachange',{detail:{reason}}))}catch(e){}
   return {ok:true,saved:true,card:mwsAchievementCardClone(moved)};
 }
+function mwsAchievementImportCardsV1621(items=[]){
+  normalizeDataShape();
+  if(!Array.isArray(items)||!items.length)return {ok:false,saved:false,cards:[],count:0};
+  const previous=data.achievementCards.map(mwsAchievementCardClone);
+  const now=new Date().toISOString();
+  const startOrder=data.achievementCards.length;
+  const imported=items.filter(Boolean).map((raw,index)=>({
+    id:crypto.randomUUID(),
+    order:startOrder+index,
+    gameName:String(raw?.gameName||'').trim(),
+    contentName:String(raw?.contentName||'').trim(),
+    description:String(raw?.description||''),
+    frontImageId:String(raw?.frontImageId||''),
+    backImageId:String(raw?.backImageId||''),
+    createdAt:String(raw?.createdAt||now),
+    updatedAt:now
+  }));
+  if(!imported.length)return {ok:false,saved:false,cards:[],count:0};
+  data.achievementCards.push(...imported);
+  data.achievementCards.forEach((card,order)=>{card.order=order});
+  const reason='업적 패키지 가져오기';
+  const saved=persist();
+  if(!saved){
+    data.achievementCards=previous;
+    renderAll('업적 패키지 가져오기 실패');
+    updateStorageStatus(false);
+    return {ok:false,saved:false,cards:[],count:0};
+  }
+  lastSyncReason=reason;
+  renderAll(reason);
+  updateStorageStatus(true);
+  try{window.dispatchEvent(new CustomEvent('mawang:datachange',{detail:{reason}}))}catch(e){}
+  return {ok:true,saved:true,cards:imported.map(mwsAchievementCardClone),count:imported.length};
+}
 window.mwsAchievementCardsV1621=Object.freeze({
   create:mwsAchievementCreateCardV1621,
   update:mwsAchievementUpdateCardV1621,
   remove:mwsAchievementDeleteCardV1621,
-  move:mwsAchievementMoveCardV1621
+  move:mwsAchievementMoveCardV1621,
+  importCards:mwsAchievementImportCardsV1621
 });
 const loadedDataVersion=Number(data?.version||0);
 if(!data.categories)data.categories=DEFAULT_CATEGORIES;
@@ -4778,6 +4813,27 @@ async function buildFullBackupObjectAsync(){
 }
 window.buildFullBackupObjectAsync=buildFullBackupObjectAsync;
 
+async function buildAchievementPackageObjectAsync(){
+  normalizeDataShape();
+  const cards=(data.achievementCards||[]).map(mwsAchievementCardClone);
+  const payload={achievementCards:cards};
+  const packed=await buildAchievementBackupMedia(payload);
+  return {
+    format:'MAWANG_ACHIEVEMENT_PACKAGE',
+    version:1,
+    assetSchema:2,
+    exportedAt:new Date().toISOString(),
+    meta:{
+      achievementCards:cards.length,
+      achievementMedia:packed.items.length,
+      achievementMediaMissing:packed.missing
+    },
+    cards,
+    assets:{achievementMedia:packed.items}
+  };
+}
+window.buildAchievementPackageObjectAsync=buildAchievementPackageObjectAsync;
+
 function restoreFullBackupAssets(backup){
   const payload=backup?.data&&typeof backup.data==='object'
     ? JSON.parse(JSON.stringify(backup.data))
@@ -4825,17 +4881,18 @@ async function restoreAchievementBackupMedia(backup,payload){
       remap.set(sourceId,newId);
     }
     if(Array.isArray(payload.achievementCards)){
+      const strictEmbedded=Number(backup?.assetSchema||0)>=2;
       payload.achievementCards=payload.achievementCards.map(card=>{
         const front=String(card?.frontImageId||'');
         const back=String(card?.backImageId||'');
         return {
           ...card,
-          frontImageId:remap.get(front)||front,
-          backImageId:remap.get(back)||back
+          frontImageId:remap.get(front)||(strictEmbedded?'':front),
+          backImageId:remap.get(back)||(strictEmbedded?'':back)
         };
       });
     }
-    return {createdIds,restored:createdIds.length,legacy:false};
+    return {createdIds,restored:createdIds.length,legacy:false,remap};
   }catch(error){
     await Promise.allSettled(createdIds.map(id=>media.remove(id)));
     throw error;
@@ -4903,6 +4960,58 @@ document.getElementById('exportAllBtn').onclick=async()=>{
 document.getElementById('exportContactsBtn').onclick=()=>downloadJSON({
   version:37,contacts:data.contacts,contactTags:data.contactTags,contactTagBanners:data.contactTagBanners
 },'mawang-contacts.json');
+
+document.getElementById('achievementExportPackageBtn').onclick=async()=>{
+  const button=document.getElementById('achievementExportPackageBtn');
+  if(button?.disabled)return;
+  if(!(data.achievementCards||[]).length){toast('업적 패키지','내보낼 업적 카드가 없습니다');return}
+  if(button)button.disabled=true;
+  toast('업적 패키지','카드 이미지까지 포함해 패키지를 만드는 중입니다');
+  try{
+    const pack=await buildAchievementPackageObjectAsync();
+    downloadJSON(pack,'mawang-achievements.json');
+    const missing=Number(pack.meta.achievementMediaMissing||0);
+    toast('업적 패키지',missing
+      ? `카드 ${pack.meta.achievementCards}장 · 이미지 ${pack.meta.achievementMedia}개 저장 · 누락 ${missing}개`
+      : `카드 ${pack.meta.achievementCards}장 · 이미지 ${pack.meta.achievementMedia}개를 저장했습니다`);
+  }catch(error){
+    console.error('Achievement package export failed',error);
+    toast('업적 패키지',error?.message||'업적 패키지를 만들지 못했습니다');
+  }finally{
+    if(button)button.disabled=false;
+  }
+};
+
+document.getElementById('achievementImportPackageInput').onchange=async e=>{
+  const input=e.target,file=input.files?.[0];
+  if(!file)return;
+  let createdIds=[];
+  let committed=false;
+  try{
+    const pack=JSON.parse(await file.text());
+    if(pack?.format!=='MAWANG_ACHIEVEMENT_PACKAGE'||!Array.isArray(pack.cards))throw new Error('유효하지 않은 업적 패키지입니다');
+    if(!pack.cards.length)throw new Error('가져올 업적 카드가 없습니다');
+    const payload={achievementCards:JSON.parse(JSON.stringify(pack.cards))};
+    const mediaResult=await restoreAchievementBackupMedia(pack,payload);
+    createdIds=mediaResult.createdIds;
+    const api=window.mwsAchievementCardsV1621;
+    if(!api?.importCards)throw new Error('업적 카드 가져오기 기능을 불러오지 못했습니다');
+    const result=api.importCards(payload.achievementCards);
+    if(!result?.ok||result.saved!==true)throw new Error('업적 카드를 저장하지 못했습니다. 기존 데이터는 유지됩니다');
+    committed=true;
+    updateFullBackupAssetStatus();
+    toast('업적 패키지',`카드 ${result.count}장 · 이미지 ${mediaResult.restored}개를 추가했습니다`);
+  }catch(error){
+    if(!committed){
+      const media=window.mwsAchievementMediaV1;
+      if(createdIds.length&&media?.remove)await Promise.allSettled(createdIds.map(id=>media.remove(id)));
+    }
+    console.error('Achievement package import failed',error);
+    toast('업적 패키지',error?.message||'업적 패키지를 불러오지 못했습니다');
+  }finally{
+    input.value='';
+  }
+};
 
 document.getElementById('importAllInput').onchange=async e=>{
   const input=e.target,file=input.files?.[0];
