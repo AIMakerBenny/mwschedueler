@@ -269,6 +269,39 @@ async function handlePart(env,part){if(!PARTS.includes(part))return json({error:
 async function handleBootstrap(env){await ensureSchema(env);await repairStoredContactImageRefs(env);const {results=[]}=await env.DB.prepare("SELECT part,version,data FROM workspace_parts WHERE scope='public' ORDER BY part").all();const parts={},versions={};for(const row of results){let data=null;try{data=JSON.parse(row.data)}catch(_){}const version=Number(row.version)||1;versions[row.part]=version;parts[row.part]={part:row.part,version,data}}return json({backend:'cloudflare-d1-r2',mode:'mawang-scheduler-v1.1',build:'Mawang Scheduler v.1.1.0',cacheSchemaVersion:3,manifest:{parts:versions,scope:'public',cacheSchemaVersion:3,backend:'cloudflare-d1'},parts})}
 async function handleMedia(request,env,kind,key){if(!['contact','workspace'].includes(kind)||!/^[A-Za-z0-9_-]{1,160}$/.test(key))return new Response('Invalid media key',{status:400});const url=new URL(request.url),requested=Math.max(0,Number(url.searchParams.get('v'))||0),explicitToken=cleanMediaToken(url.searchParams.get('h'));let object=explicitToken&&requested?await env.IMAGES.get(r2VersionedKey(kind,key,requested,explicitToken)):null;if(!object&&!explicitToken){const current=await currentImageRecord(env,kind,key),currentVersion=Number(current?.version)||0,currentToken=tokenFromImageSource(current?.source_url);if(currentToken&&(!requested||requested===currentVersion))object=await env.IMAGES.get(r2VersionedKey(kind,key,currentVersion,currentToken))}if(!object&&requested)object=await env.IMAGES.get(r2VersionedKey(kind,key,requested));if(!object)object=await env.IMAGES.get(r2Key(kind,key));if(!object)return new Response('Not found',{status:404});const headers=new Headers();object.writeHttpMetadata(headers);headers.set('etag',object.httpEtag);headers.set('x-content-type-options','nosniff');headers.set('cache-control','public, max-age=300, stale-while-revalidate=86400');return new Response(object.body,{headers})}
 
+const ACHIEVEMENT_MEDIA_MAX_BYTES=32*1024*1024;
+function validAchievementMediaId(value){return /^[A-Za-z0-9_-]{1,160}$/.test(String(value||''))}
+function achievementMediaKey(id){return `achievements/${id}`}
+async function handleAchievementMediaRead(request,env,id){
+  if(!validAchievementMediaId(id))return new Response('Invalid achievement media id',{status:400});
+  const object=await env.IMAGES.get(achievementMediaKey(id));
+  if(!object)return new Response('Not found',{status:404});
+  const headers=new Headers();
+  object.writeHttpMetadata(headers);
+  headers.set('etag',object.httpEtag);
+  headers.set('x-content-type-options','nosniff');
+  headers.set('cache-control','public, max-age=31536000, immutable');
+  headers.set('content-length',String(object.size||0));
+  return new Response(request.method==='HEAD'?null:object.body,{status:200,headers});
+}
+async function handleAchievementMediaWrite(request,env,id){
+  if(!validAchievementMediaId(id))return json({error:'Invalid achievement media id'},400);
+  const admin=await currentAdmin(request,env);if(!admin)return json({error:'Admin authorization required'},401);
+  if(request.method==='DELETE'){
+    await env.IMAGES.delete(achievementMediaKey(id));
+    return json({ok:true,id,deleted:true});
+  }
+  const type=String(request.headers.get('content-type')||'').split(';')[0].trim().toLowerCase();
+  if(!type.startsWith('image/'))return json({error:'Achievement media must be an image'},415);
+  const declared=Number(request.headers.get('content-length'))||0;
+  if(declared>ACHIEVEMENT_MEDIA_MAX_BYTES)return json({error:'Achievement media exceeds 32MB'},413);
+  const bytes=await request.arrayBuffer();
+  if(bytes.byteLength<1)return json({error:'Achievement media is empty'},400);
+  if(bytes.byteLength>ACHIEVEMENT_MEDIA_MAX_BYTES)return json({error:'Achievement media exceeds 32MB'},413);
+  await env.IMAGES.put(achievementMediaKey(id),bytes,{httpMetadata:{contentType:type},customMetadata:{source:'achievement-card',uploadedBy:String(admin.id||'')}});
+  return json({ok:true,id,size:bytes.byteLength,contentType:type});
+}
+
 export default{
   async fetch(request,env,ctx){
     try{
@@ -284,6 +317,10 @@ export default{
       if(path==='/api/bootstrap'&&request.method==='GET')return handleBootstrap(env);
       if(path==='/api/save'&&request.method==='POST')return handleSave(request,env);
       if(path==='/api/rebootstrap')return json({error:'Supabase rebootstrap has been removed.'},410);
+      const achievementApi=path.match(/^\/api\/achievement-media\/([^/]+)$/);
+      if(achievementApi&&['PUT','DELETE'].includes(request.method))return handleAchievementMediaWrite(request,env,decodeURIComponent(achievementApi[1]));
+      const achievementMedia=path.match(/^\/media\/achievement\/([^/]+)$/);
+      if(achievementMedia&&['GET','HEAD'].includes(request.method))return handleAchievementMediaRead(request,env,decodeURIComponent(achievementMedia[1]));
       const media=path.match(/^\/media\/(contact|workspace)\/([^/]+)$/);if(media&&request.method==='GET')return handleMedia(request,env,media[1],decodeURIComponent(media[2]));
       return appWorker.fetch(request,env,ctx);
     }catch(error){console.error('Mawang Scheduler D1 auth wrapper error',error);return json({error:cleanError(error)},500)}
