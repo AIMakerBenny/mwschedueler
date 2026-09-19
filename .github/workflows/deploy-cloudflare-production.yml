@@ -82,18 +82,37 @@ jobs:
           const images=rows.filter(x=>typeof x?.image==='string'&&x.image.length>0);
           const mediaImages=images.filter(x=>x.image.startsWith('/media/contact/'));
           const dataImages=images.filter(x=>x.image.startsWith('data:image/'));
-          console.log(JSON.stringify({
-            manifestVersions:manifest.parts||{},
-            contactsVersion:Number(contacts.version)||0,
-            contactsCount:rows.length,
-            contactsWithImage:images.length,
-            contactsWithMediaImage:mediaImages.length,
-            contactsWithDataImage:dataImages.length,
-            eventsVersion:Number(events.version)||0,
-            eventsCount:eventRows.length,
-            coreVersion:Number(core.version)||0,
-            achievementCards:Array.isArray(core.data?.achievementCards)?core.data.achievementCards.length:0
-          }));
+          (async()=>{
+            let recoverableMedia=0;
+            const base='https://mawang-scheduler.majoku.workers.dev';
+            const queue=[...rows];
+            const workers=Array.from({length:8},async()=>{
+              while(queue.length){
+                const row=queue.pop();
+                const id=String(row?.id||'');
+                if(!id)continue;
+                try{
+                  const response=await fetch(base+'/media/contact/'+encodeURIComponent(id),{headers:{range:'bytes=0-0'}});
+                  if(response.ok)recoverableMedia++;
+                  try{await response.body?.cancel()}catch(_){}
+                }catch(_){}
+              }
+            });
+            await Promise.all(workers);
+            console.log(JSON.stringify({
+              manifestVersions:manifest.parts||{},
+              contactsVersion:Number(contacts.version)||0,
+              contactsCount:rows.length,
+              contactsWithImage:images.length,
+              contactsWithMediaImage:mediaImages.length,
+              contactsWithDataImage:dataImages.length,
+              recoverableMedia,
+              eventsVersion:Number(events.version)||0,
+              eventsCount:eventRows.length,
+              coreVersion:Number(core.version)||0,
+              achievementCards:Array.isArray(core.data?.achievementCards)?core.data.achievementCards.length:0
+            }));
+          })().catch(error=>{console.error(error);process.exit(1)});
           NODE
 
       - name: Verify live Worker
