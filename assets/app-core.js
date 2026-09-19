@@ -145,6 +145,53 @@ function mwsStripDevicePrefs(src){
 
 let data=loadData();
 window.mwsGetAchievementCardsV1621=()=>Array.isArray(data?.achievementCards)?data.achievementCards:[];
+function mwsAchievementCardClone(card){return card?{...card}:null}
+function mwsAchievementCreateCardV1621(fields={}){
+  normalizeDataShape();
+  const now=new Date().toISOString();
+  const card={
+    id:crypto.randomUUID(),
+    order:data.achievementCards.length,
+    gameName:String(fields.gameName||'').trim(),
+    contentName:String(fields.contentName||'').trim(),
+    description:String(fields.description||''),
+    frontImageId:String(fields.frontImageId||''),
+    backImageId:String(fields.backImageId||''),
+    createdAt:now,
+    updatedAt:now
+  };
+  data.achievementCards.push(card);
+  const saved=saveData('업적 카드 추가');
+  return {ok:true,saved,card:mwsAchievementCardClone(card)};
+}
+function mwsAchievementUpdateCardV1621(id,patch={}){
+  normalizeDataShape();
+  const card=data.achievementCards.find(item=>item.id===String(id||''));
+  if(!card)return {ok:false,saved:false,card:null};
+  if(Object.prototype.hasOwnProperty.call(patch,'gameName'))card.gameName=String(patch.gameName||'').trim();
+  if(Object.prototype.hasOwnProperty.call(patch,'contentName'))card.contentName=String(patch.contentName||'').trim();
+  if(Object.prototype.hasOwnProperty.call(patch,'description'))card.description=String(patch.description||'');
+  if(Object.prototype.hasOwnProperty.call(patch,'frontImageId'))card.frontImageId=String(patch.frontImageId||'');
+  if(Object.prototype.hasOwnProperty.call(patch,'backImageId'))card.backImageId=String(patch.backImageId||'');
+  card.updatedAt=new Date().toISOString();
+  const saved=saveData('업적 카드 저장');
+  return {ok:true,saved,card:mwsAchievementCardClone(card)};
+}
+function mwsAchievementDeleteCardV1621(id){
+  normalizeDataShape();
+  const target=String(id||'');
+  const index=data.achievementCards.findIndex(item=>item.id===target);
+  if(index<0)return {ok:false,saved:false,card:null};
+  const [removed]=data.achievementCards.splice(index,1);
+  data.achievementCards.forEach((card,order)=>{card.order=order});
+  const saved=saveData('업적 카드 삭제');
+  return {ok:true,saved,card:mwsAchievementCardClone(removed)};
+}
+window.mwsAchievementCardsV1621=Object.freeze({
+  create:mwsAchievementCreateCardV1621,
+  update:mwsAchievementUpdateCardV1621,
+  remove:mwsAchievementDeleteCardV1621
+});
 const loadedDataVersion=Number(data?.version||0);
 if(!data.categories)data.categories=DEFAULT_CATEGORIES;
 if(!data.contacts)data.contacts=[];
