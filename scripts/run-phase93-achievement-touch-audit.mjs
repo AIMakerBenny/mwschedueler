@@ -37,7 +37,7 @@ export function runPhase93AchievementTouchAudit(){
     '@media(pointer:coarse){',
     '.achievement-detail-hint-mouse{display:none}',
     '.achievement-detail-hint-touch{display:inline}',
-    '.achievement-detail-stage{width:min(72vw,286px)}',
+    '.achievement-detail-stage{width:min(90vw,400px)}',
     'max-height:none;',
     'overflow:auto;'
   ]){
