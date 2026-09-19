@@ -779,14 +779,16 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
     </section>
 
     <section id="achievements" class="section">
-      <div class="toolbar">
-        <div>
+      <div class="achievement-gallery-head">
+        <div class="achievement-gallery-head-copy">
           <div style="font-weight:800">업적</div>
           <div class="subtle" style="margin-top:4px">지금까지 진행한 게임과 컨텐츠의 업적 카드를 모아 보는 공간입니다.</div>
         </div>
+        <span class="chip achievement-count-chip" id="achievementCountChip">0장</span>
       </div>
       <div class="card">
         <div class="empty" id="achievementEmptyState">아직 등록된 업적 카드가 없습니다.</div>
+        <div id="achievementGallery" aria-live="polite" hidden></div>
       </div>
     </section>
 
@@ -1568,7 +1570,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <div id="miniGameCelebration" class="mini-game-celebration" aria-hidden="true" onclick="closeMiniGameCelebration()"><div class="celebration-glow"></div><div id="celebrationConfetti" class="celebration-confetti"></div><div class="celebration-card"><div id="celebrationKicker" class="celebration-kicker">WINNER</div><div id="celebrationAvatar" class="celebration-avatar"></div><div id="celebrationText" class="celebration-text">당첨</div><div class="celebration-sub">화면을 클릭하면 닫힙니다</div></div></div>
 <div id="toast" class="toast"></div>
 
-<script src="assets/app-core.js?v=1.3.0-search89"></script>
+<script src="assets/app-core.js?v=1.3.0-search90"></script>
 
 
 
