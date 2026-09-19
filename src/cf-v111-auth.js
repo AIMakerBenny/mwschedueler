@@ -1,7 +1,7 @@
 import appWorker from './cf-v110-steam.js';
 
 const PARTS=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook'];
-const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones'];
+const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','achievementCards'];
 const SESSION_COOKIE='mws_admin_session';
 const SESSION_DAYS=30;
 const PBKDF2_ITERATIONS=180000;
@@ -175,7 +175,13 @@ async function handleSave(request,env){
   for(const [part] of entries){if(!PARTS.includes(part))return json({error:`Invalid part: ${part}`},400);const expected=Number(expectedVersions[part]);if(!Number.isInteger(expected)||expected<0)return json({error:`${part} 저장 기준 버전이 올바르지 않습니다. 새로고침 후 다시 시도해 주세요.`},409)}
   const versions={},normalized={},staged=[],mediaContext={statements:[]};
   for(const [part,raw] of entries){
-    const value=await externalizePart(env,part,raw,mediaContext);
+    let source=raw;
+    if(part==='core'&&raw&&typeof raw==='object'&&!Array.isArray(raw)&&!Object.prototype.hasOwnProperty.call(raw,'achievementCards')){
+      const previousRow=await env.DB.prepare("SELECT data FROM workspace_parts WHERE scope='public' AND part='core'").first();
+      let previousCore={};try{previousCore=JSON.parse(previousRow?.data||'{}')}catch(_){}
+      source={...raw,achievementCards:Array.isArray(previousCore?.achievementCards)?previousCore.achievementCards:[]};
+    }
+    const value=await externalizePart(env,part,source,mediaContext);
     const current=await env.DB.prepare('SELECT version FROM workspace_parts WHERE scope=? AND part=?').bind('public',part).first();
     const version=Math.max(1,Number(current?.version)||0)+1,text=JSON.stringify(value??null);
     staged.push({part,value,version,text});versions[part]=version;normalized[part]=value;

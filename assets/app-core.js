@@ -144,6 +144,24 @@ function mwsStripDevicePrefs(src){
 }
 
 let data=loadData();
+const MWS_ACHIEVEMENT_SHADOW_KEY='mws_achievement_cards_shadow_v1';
+function mwsLoadAchievementShadowV1621(){
+  try{
+    const parsed=JSON.parse(localStorage.getItem(MWS_ACHIEVEMENT_SHADOW_KEY)||'[]');
+    return Array.isArray(parsed)?parsed:[];
+  }catch(_){return []}
+}
+function mwsSaveAchievementShadowV1621(cards=data?.achievementCards){
+  try{
+    localStorage.setItem(MWS_ACHIEVEMENT_SHADOW_KEY,JSON.stringify(Array.isArray(cards)?cards:[]));
+    return true;
+  }catch(error){
+    console.error('업적 카드 로컬 안전 사본 저장 실패',error);
+    return false;
+  }
+}
+window.mwsLoadAchievementShadowV1621=mwsLoadAchievementShadowV1621;
+window.mwsSaveAchievementShadowV1621=mwsSaveAchievementShadowV1621;
 window.mwsGetAchievementCardsV1621=()=>Array.isArray(data?.achievementCards)?data.achievementCards:[];
 function mwsAchievementCardClone(card){return card?{...card}:null}
 function mwsAchievementCreateCardV1621(fields={}){
@@ -161,8 +179,14 @@ function mwsAchievementCreateCardV1621(fields={}){
     updatedAt:now
   };
   data.achievementCards.push(card);
+  mwsSaveAchievementShadowV1621();
   const saved=saveData('업적 카드 추가');
-  return {ok:true,saved,card:mwsAchievementCardClone(card)};
+  if(!saved){
+    data.achievementCards.pop();
+    mwsSaveAchievementShadowV1621();
+    return {ok:false,saved:false,card:null};
+  }
+  return {ok:true,saved:true,card:mwsAchievementCardClone(card)};
 }
 function mwsAchievementUpdateCardV1621(id,patch={}){
   normalizeDataShape();
@@ -183,6 +207,7 @@ function mwsAchievementUpdateCardV1621(id,patch={}){
     updateStorageStatus(false);
     return {ok:false,saved:false,card:mwsAchievementCardClone(card)};
   }
+  mwsSaveAchievementShadowV1621();
   lastSyncReason=reason;
   renderAll(reason);
   updateStorageStatus(true);
@@ -205,6 +230,7 @@ function mwsAchievementDeleteCardV1621(id){
     updateStorageStatus(false);
     return {ok:false,saved:false,card:mwsAchievementCardClone(removed)};
   }
+  mwsSaveAchievementShadowV1621();
   lastSyncReason=reason;
   renderAll(reason);
   updateStorageStatus(true);
@@ -232,6 +258,7 @@ function mwsAchievementMoveCardV1621(id,targetIndex){
     updateStorageStatus(false);
     return {ok:false,saved:false,card:mwsAchievementCardClone(previous[fromIndex])};
   }
+  mwsSaveAchievementShadowV1621();
   lastSyncReason=reason;
   renderAll(reason);
   updateStorageStatus(true);
@@ -266,6 +293,7 @@ function mwsAchievementImportCardsV1621(items=[]){
     updateStorageStatus(false);
     return {ok:false,saved:false,cards:[],count:0};
   }
+  mwsSaveAchievementShadowV1621();
   lastSyncReason=reason;
   renderAll(reason);
   updateStorageStatus(true);
