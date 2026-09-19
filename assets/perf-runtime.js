@@ -202,7 +202,7 @@
 
   function loadContentPlannerHost(){
     if(document.getElementById('mwsContentPlannerHostScriptV110'))return;
-    const s=document.createElement('script');s.id='mwsContentPlannerHostScriptV110';s.src='assets/content-planner-host.js?v=1.4.0-phase87';document.body.appendChild(s);
+    const s=document.createElement('script');s.id='mwsContentPlannerHostScriptV110';s.src='assets/content-planner-host.js?v=1.4.0-achievement-navfix1';document.body.appendChild(s);
   }
   function loadMaintenanceRuntimeFeatures(){
     if(document.getElementById('mwsCf571RuntimeScript'))return;
