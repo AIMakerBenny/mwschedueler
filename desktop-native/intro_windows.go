@@ -41,15 +41,14 @@ const (
 	introStretchHalftone       = 4
 	introBkTransparent         = 1
 	introDTCenter              = 0x00000001
+	introDTRight               = 0x00000002
 	introDTVCenter             = 0x00000004
 	introDTSingleLine          = 0x00000020
 	introVKReturn              = 0x0D
 	introVKEscape              = 0x1B
 	introVKSpace               = 0x20
-	introFontRegular           = 400
+	introFontMedium            = 500
 	introFontSemibold          = 600
-	introFontBold              = 700
-	introFontExtraBold         = 800
 	introModeImage       uint8 = 0
 	introModeText        uint8 = 1
 )
@@ -135,9 +134,9 @@ type introSession struct {
 	imageBGRA  []byte
 	imageW     int
 	imageH     int
-	titleFont uintptr
-	effectStep atomic.Uint32
-	skipCh    chan struct{}
+	titleFont     uintptr
+	wordmarkPhase atomic.Uint32
+	skipCh        chan struct{}
 	done      chan struct{}
 	destroyed bool
 	mainShown bool
@@ -307,14 +306,14 @@ func createIntroFont(faceName string, height, weight int) (uintptr, error) {
 }
 
 func createIntroTitleFont(screenH int) (uintptr, error) {
-	titleH := screenH / 12
-	if titleH < 58 {
-		titleH = 58
+	titleH := screenH / 13
+	if titleH < 56 {
+		titleH = 56
 	}
-	if titleH > 92 {
-		titleH = 92
+	if titleH > 86 {
+		titleH = 86
 	}
-	return createIntroFont("Segoe UI Semibold", titleH, introFontSemibold)
+	return createIntroFont("Segoe UI", titleH, introFontMedium)
 }
 
 func setIntroAlpha(h uintptr, alpha byte) {
@@ -518,22 +517,22 @@ func runTextIntroStage(s *introSession) bool {
 	return true
 }
 
-func animateIntroTextEffect(s *introSession) {
+func animateFreshWordmark(s *introSession) {
 	if s == nil || s.hwnd == 0 {
 		return
 	}
 	start := time.Now()
-	const duration = 760 * time.Millisecond
+	const duration = 700 * time.Millisecond
 	for {
 		if exiting || s.destroyed || s.mode != introModeText {
 			return
 		}
 		elapsed := time.Since(start)
 		p := smoothIntro(float64(elapsed) / float64(duration))
-		s.effectStep.Store(uint32(p * 1000))
+		s.wordmarkPhase.Store(uint32(p * 1000))
 		introInvalidateRect.Call(s.hwnd, 0, 0)
 		if elapsed >= duration {
-			s.effectStep.Store(1000)
+			s.wordmarkPhase.Store(1000)
 			introInvalidateRect.Call(s.hwnd, 0, 0)
 			return
 		}
@@ -617,14 +616,7 @@ func paintIntro(s *introSession, h uintptr) {
 	if s.mode == introModeText && s.titleFont != 0 {
 		introSetBkMode.Call(hdc, introBkTransparent)
 
-		centerY := s.height / 2
-		contentW := s.width
-		if contentW > 1240 {
-			contentW = 1240
-		}
-		left := (s.width - contentW) / 2
-		right := left + contentW
-		phase := int(s.effectStep.Load())
+		phase := int(s.wordmarkPhase.Load())
 		if phase < 0 {
 			phase = 0
 		}
@@ -632,81 +624,82 @@ func paintIntro(s *introSession, h uintptr) {
 			phase = 1000
 		}
 
-		title, _ := syscall.UTF16PtrFromString("Mawang Scheduler")
-		titleRc := rect{Left: int32(left), Top: int32(centerY - 72), Right: int32(right), Bottom: int32(centerY + 42)}
+		centerX := s.width / 2
+		centerY := s.height/2 + (18 * (1000 - phase) / 1000)
+		contentW := s.width
+		if contentW > 1180 {
+			contentW = 1180
+		}
+		left := (s.width - contentW) / 2
+		right := left + contentW
+		gap := 13
+
 		old, _, _ := introSelectObject.Call(hdc, s.titleFont)
 
-		// Layered violet halo. It gives depth without adding any extra text.
-		glowOffsets := [][2]int32{{-4, 0}, {4, 0}, {0, -4}, {0, 4}, {-3, -3}, {3, -3}, {-3, 3}, {3, 3}}
-		introSetTextColor.Call(hdc, 0x00442755)
-		for _, off := range glowOffsets {
-			rc := titleRc
-			rc.Left += off[0]
-			rc.Right += off[0]
-			rc.Top += off[1]
-			rc.Bottom += off[1]
-			introDrawText.Call(hdc, uintptr(unsafe.Pointer(title)), ^uintptr(0), uintptr(unsafe.Pointer(&rc)), introDTCenter|introDTVCenter|introDTSingleLine)
-		}
+		mawang, _ := syscall.UTF16PtrFromString("Mawang")
+		scheduler, _ := syscall.UTF16PtrFromString("Scheduler")
+		mawangRc := rect{Left: int32(left), Top: int32(centerY - 55), Right: int32(centerX - gap), Bottom: int32(centerY + 55)}
+		schedulerRc := rect{Left: int32(centerX + gap), Top: int32(centerY - 55), Right: int32(right), Bottom: int32(centerY + 55)}
 
-		innerOffsets := [][2]int32{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}
-		introSetTextColor.Call(hdc, 0x009259B8)
-		for _, off := range innerOffsets {
-			rc := titleRc
-			rc.Left += off[0]
-			rc.Right += off[0]
-			rc.Top += off[1]
-			rc.Bottom += off[1]
-			introDrawText.Call(hdc, uintptr(unsafe.Pointer(title)), ^uintptr(0), uintptr(unsafe.Pointer(&rc)), introDTCenter|introDTVCenter|introDTSingleLine)
-		}
+		introSetTextColor.Call(hdc, 0x00F8F8F8)
+		introDrawText.Call(
+			hdc,
+			uintptr(unsafe.Pointer(mawang)),
+			^uintptr(0),
+			uintptr(unsafe.Pointer(&mawangRc)),
+			introDTRight|introDTVCenter|introDTSingleLine,
+		)
 
-		// Crisp white wordmark.
-		introSetTextColor.Call(hdc, 0x00FFFDFE)
-		introDrawText.Call(hdc, uintptr(unsafe.Pointer(title)), ^uintptr(0), uintptr(unsafe.Pointer(&titleRc)), introDTCenter|introDTVCenter|introDTSingleLine)
+		schedulerTone := byte(188 + (48*phase)/1000)
+		schedulerColor := uintptr(schedulerTone) | uintptr(schedulerTone-8)<<8 | uintptr(schedulerTone+8)<<16
+		introSetTextColor.Call(hdc, schedulerColor)
+		introDrawText.Call(
+			hdc,
+			uintptr(unsafe.Pointer(scheduler)),
+			^uintptr(0),
+			uintptr(unsafe.Pointer(&schedulerRc)),
+			introDTVCenter|introDTSingleLine,
+		)
+
 		if old != 0 && old != ^uintptr(0) {
 			introSelectObject.Call(hdc, old)
 		}
 
-		// Animated precision line below the wordmark.
-		maxLineW := s.width / 6
-		if maxLineW < 180 {
-			maxLineW = 180
+		separatorH := 52 * phase / 1000
+		if separatorH > 0 {
+			separatorRc := rect{
+				Left:   int32(centerX),
+				Top:    int32(centerY - separatorH/2),
+				Right:  int32(centerX + 1),
+				Bottom: int32(centerY + separatorH/2),
+			}
+			separatorBrush, _, _ := introCreateSolidBrush.Call(0x00D77AA8)
+			if separatorBrush != 0 {
+				introFillRect.Call(hdc, uintptr(unsafe.Pointer(&separatorRc)), separatorBrush)
+				introDeleteObject.Call(separatorBrush)
+			}
 		}
-		if maxLineW > 320 {
-			maxLineW = 320
-		}
-		lineW := maxLineW * phase / 1000
-		if lineW > 0 {
-			lineLeft := (s.width - lineW) / 2
-			baseRc := rect{Left: int32(lineLeft), Top: int32(centerY + 64), Right: int32(lineLeft + lineW), Bottom: int32(centerY + 65)}
-			baseBrush, _, _ := introCreateSolidBrush.Call(0x00513268)
-			if baseBrush != 0 {
-				introFillRect.Call(hdc, uintptr(unsafe.Pointer(&baseRc)), baseBrush)
-				introDeleteObject.Call(baseBrush)
-			}
 
-			coreW := lineW / 3
-			if coreW < 2 {
-				coreW = 2
+		railW := 92 * phase / 1000
+		if railW > 0 {
+			railY := centerY + 69
+			leftRail := rect{
+				Left:   int32(centerX - 24 - railW),
+				Top:    int32(railY),
+				Right:  int32(centerX - 24),
+				Bottom: int32(railY + 1),
 			}
-			coreLeft := (s.width - coreW) / 2
-			coreRc := rect{Left: int32(coreLeft), Top: int32(centerY + 63), Right: int32(coreLeft + coreW), Bottom: int32(centerY + 66)}
-			coreBrush, _, _ := introCreateSolidBrush.Call(0x00FF7C9E)
-			if coreBrush != 0 {
-				introFillRect.Call(hdc, uintptr(unsafe.Pointer(&coreRc)), coreBrush)
-				introDeleteObject.Call(coreBrush)
+			rightRail := rect{
+				Left:   int32(centerX + 24),
+				Top:    int32(railY),
+				Right:  int32(centerX + 24 + railW),
+				Bottom: int32(railY + 1),
 			}
-
-			if phase > 520 {
-				sparkX := lineLeft + (lineW*(phase-520))/480
-				if sparkX > lineLeft+lineW-14 {
-					sparkX = lineLeft + lineW - 14
-				}
-				sparkRc := rect{Left: int32(sparkX), Top: int32(centerY + 62), Right: int32(sparkX + 14), Bottom: int32(centerY + 67)}
-				sparkBrush, _, _ := introCreateSolidBrush.Call(0x00FFEAF5)
-				if sparkBrush != 0 {
-					introFillRect.Call(hdc, uintptr(unsafe.Pointer(&sparkRc)), sparkBrush)
-					introDeleteObject.Call(sparkBrush)
-				}
+			railBrush, _, _ := introCreateSolidBrush.Call(0x00684A78)
+			if railBrush != 0 {
+				introFillRect.Call(hdc, uintptr(unsafe.Pointer(&leftRail)), railBrush)
+				introFillRect.Call(hdc, uintptr(unsafe.Pointer(&rightRail)), railBrush)
+				introDeleteObject.Call(railBrush)
 			}
 		}
 	}
@@ -731,10 +724,10 @@ func introWndProc(h uintptr, msg uint32, wparam, lparam uintptr) uintptr {
 	case introWMSwitchText:
 		if s != nil && s.hwnd == h {
 			s.mode = introModeText
-			s.effectStep.Store(0)
+			s.wordmarkPhase.Store(0)
 			introInvalidateRect.Call(h, 0, 0)
 			introUpdateWindow.Call(h)
-			go animateIntroTextEffect(s)
+			go animateFreshWordmark(s)
 		}
 		return 0
 	case introWMFinish:
