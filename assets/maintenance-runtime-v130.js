@@ -241,8 +241,27 @@
     });
   }
 
+  function managedMediaProxyUrl(value){
+    if(!isManagedDirectMedia(value))return String(value||'');
+    try{
+      const u=new URL(value,location.href),b=new URL(mediaBase());
+      const prefix=b.pathname.replace(/\/$/,'');
+      const relative=u.pathname.slice(prefix.length).replace(/^\/+/, '');
+      const match=/^(contacts|workspace)\/([^/]+)$/.exec(relative);
+      if(!match)return String(value||'');
+      let key=match[2];try{key=decodeURIComponent(key)}catch(_){}
+      const kind=match[1]==='contacts'?'contact':'workspace';
+      const params=new URLSearchParams();
+      const version=u.searchParams.get('v');
+      if(version)params.set('v',version);
+      return `/media/${kind}/${encodeURIComponent(key)}${params.size?`?${params.toString()}`:''}`;
+    }catch(_){return String(value||'')}
+  }
+
   async function fetchMedia(url){
-    const res=await fetch(url,{method:'GET',mode:'cors',cache:'force-cache'});
+    const target=managedMediaProxyUrl(url);
+    const sameOrigin=String(target||'').startsWith('/');
+    const res=await fetch(target,{method:'GET',cache:'no-store',credentials:sameOrigin?'same-origin':'omit',...(sameOrigin?{}:{mode:'cors'})});
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     const blob=await res.blob();
     return {dataUrl:await blobToDataUrl(blob),bytes:Number(blob.size)||0};
@@ -281,6 +300,16 @@
     return backup;
   }
 
+  async function baseBackupAsync(){
+    const builder=typeof window.buildFullBackupObjectAsync==='function'
+      ? window.buildFullBackupObjectAsync
+      : window.buildFullBackupObject;
+    if(typeof builder!=='function')throw new Error('백업 생성 함수를 찾지 못했습니다.');
+    const backup=clone(await builder());
+    rewriteLegacyMediaInPlace(backup);
+    return backup;
+  }
+
   function statusEl(){return document.getElementById('fullBackupAssetStatus')}
   function setStatus(text,ok=false){
     const el=statusEl();if(!el)return;
@@ -306,7 +335,7 @@
     try{
       const base=mediaBase();
       if(!base)throw new Error('R2 Public Media URL 설정을 찾지 못했습니다.');
-      const backup=baseBackup();
+      const backup=await baseBackupAsync();
       const refs=collectManagedMedia(backup.data);
       const map=new Map();
       const failures=[];
@@ -326,10 +355,7 @@
         setStatus(`완전 백업용 이미지 ${done}/${total} 다운로드 중`);
       });
 
-      if(failures.length){
-        console.error('CF V5.7.1 backup media failures',failures);
-        throw new Error(`이미지 ${failures.length}개를 받지 못했습니다. R2 CORS 설정을 확인하세요.`);
-      }
+      if(failures.length)console.warn('CF V5.7.1 backup media partial failures',failures);
 
       replaceManagedMedia(backup.data,map);
       if(backup.assets&&typeof backup.assets==='object'){
@@ -338,10 +364,16 @@
       }
       backup.version=Math.max(40,Number(backup.version)||0);
       backup.exportedAt=new Date().toISOString();
-      backup.meta={...(backup.meta||{}),backupMode:'self-contained',appBuild:BUILD,managedMediaEmbedded:map.size,embeddedMediaBytes:rawBytes,externalManagedMedia:0};
+      backup.meta={...(backup.meta||{}),backupMode:failures.length?'self-contained-partial':'self-contained',appBuild:BUILD,managedMediaEmbedded:map.size,embeddedMediaBytes:rawBytes,externalManagedMedia:failures.length,managedMediaFailures:failures.length};
       const bytes=saveJson(backup,'mawang-scheduler-full-backup.json');
-      setStatus(`완전 백업 완료 · 이미지 ${map.size}개 · ${(bytes/1024/1024).toFixed(1)} MB`,true);
-      try{window.toast?.('완전 백업',`이미지 ${map.size}개를 실제 파일 데이터로 포함했습니다.`)}catch(_){}
+      const achievementMedia=Number(backup.meta?.achievementMedia||0);
+      if(failures.length){
+        setStatus(`전체 백업 완료 · 업적 이미지 ${achievementMedia}개 포함 · R2 이미지 ${map.size}개 포함 · ${failures.length}개 URL 유지 · ${(bytes/1024/1024).toFixed(1)} MB`,true);
+        try{window.toast?.('전체 백업 완료',`업적 이미지는 백업했습니다. R2 이미지 ${failures.length}개는 원본 URL로 유지했습니다.`)}catch(_){}
+      }else{
+        setStatus(`전체 백업 완료 · 업적 이미지 ${achievementMedia}개 · R2 이미지 ${map.size}개 · ${(bytes/1024/1024).toFixed(1)} MB`,true);
+        try{window.toast?.('전체 백업 완료',`업적 이미지 ${achievementMedia}개와 R2 이미지 ${map.size}개를 포함했습니다.`)}catch(_){}
+      }
     }catch(err){
       console.error('CF V5.7.1 complete backup failed',err);
       setStatus(`완전 백업 실패 · ${String(err?.message||err)}`,false);
@@ -354,8 +386,8 @@
   function installBackupUi(){
     const full=document.getElementById('exportAllBtn');
     if(!full)return;
-    full.textContent='완전 백업';
-    full.title='현재 데이터와 R2 프로필/워크스페이스 이미지를 실제 데이터로 포함합니다.';
+    full.textContent='전체 백업';
+    full.title='업적 카드 이미지를 먼저 포함하고, R2 프로필/워크스페이스 이미지는 가능한 만큼 실제 데이터로 포함합니다.';
     if(!full.dataset.mwsV571FullBackup){
       full.dataset.mwsV571FullBackup='1';
       full.addEventListener('click',e=>{
