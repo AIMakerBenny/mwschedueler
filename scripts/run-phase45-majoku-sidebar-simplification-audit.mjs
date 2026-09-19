@@ -13,8 +13,8 @@ export function runPhase45MajokuSidebarSimplificationAudit(){
   if(src.includes('data-majoku-game'))issues.push('Majoku Castle sidebar still creates direct game shortcut buttons');
   if(!src.includes("document.querySelector('#gameMajoku .majoku-castle-frame')"))issues.push('Majoku Castle iframe helper was removed with the subnav');
   if(!src.includes("const records=doc.querySelector('.records-wrap')"))issues.push('Majoku Castle legacy records cleanup was unintentionally removed');
-  if(!runtime.includes('device-ui.js?v=1.3.0-majoku-menu-p45'))issues.push('post-login device UI cache-bust was not advanced');
-  if(!index.includes('assets/device-ui.js?v=1.3.0-majoku-menu-p45'))issues.push('source document device UI cache-bust was not advanced');
+  if(!/device-ui\.js\?v=1\.3\.0-(?:majoku-menu-p45|perf(?:8[7-9]|9[0-9]|[1-9][0-9]{2,}))/.test(runtime))issues.push('post-login device UI cache-bust is older than the Phase 45 baseline');
+  if(!/assets\/device-ui\.js\?v=1\.3\.0-(?:majoku-menu-p45|perf(?:8[7-9]|9[0-9]|[1-9][0-9]{2,}))/.test(index))issues.push('source document device UI cache-bust is older than the Phase 45 baseline');
 
   const summary={phase:45,name:'majoku-sidebar-game-list-removal',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
