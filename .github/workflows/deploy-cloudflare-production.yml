@@ -303,11 +303,11 @@ jobs:
           grep -Fq "if(detailModal&&!detailModal.hidden){event.preventDefault();closeDetail()}" /tmp/achievement-gallery.js
           grep -Fq 'data-achievement-card3d' /tmp/achievement-gallery.js
           grep -Fq "stage?.addEventListener('pointerdown',beginDetailDrag)" /tmp/achievement-gallery.js
-          grep -Fq "const TOUCH_DRAG_THRESHOLD=10;" /tmp/achievement-gallery.js
+          grep -Fq "const TOUCH_DRAG_THRESHOLD=8;" /tmp/achievement-gallery.js
           grep -Fq "const TOUCH_HORIZONTAL_RATIO=1.18;" /tmp/achievement-gallery.js
           grep -Fq "pointerType==='touch'?'pending':'rotate'" /tmp/achievement-gallery.js
           grep -Fq "detailDrag.mode='scroll'" /tmp/achievement-gallery.js
-          grep -Fq "detailRotation.y=clamp(detailDrag.rotateY+dx*.52,-360,360)" /tmp/achievement-gallery.js
+          grep -Fq "detailRotation.y=detailDrag.rotateY+dx*TOUCH_ROTATE_Y_PER_PX" /tmp/achievement-gallery.js
           if grep -Fq "if(event.pointerType&&event.pointerType!=='mouse')return" /tmp/achievement-gallery.js; then
             echo 'Achievement 3D viewer still blocks touch input.' >&2
             exit 1
