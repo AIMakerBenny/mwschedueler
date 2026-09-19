@@ -12,6 +12,7 @@ export function runPhase54VersionWriterAudit(){
   const perf=fs.readFileSync('assets/perf-runtime.js','utf8');
 
   if(!version.includes("const VERSION='1.4.0'"))issues.push('authoritative app version is not v1.4.0');
+  if(!version.includes("const LABEL='Mawang Scheduler v 1.6.21'"))issues.push('authoritative visible version label is not v1.6.21');
   if(!index.includes('data-build-version="MWS V 1.4.0"'))issues.push('initial body build version is stale');
   if(!index.includes('>Mawang Scheduler v 1.6.21</div>'))issues.push('initial visible version label is stale');
   if(device.includes('final version display guard'))issues.push('device UI still contains a competing version observer');
