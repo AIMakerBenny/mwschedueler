@@ -64,6 +64,10 @@ jobs:
         shell: pwsh
         run: python audit_phase7.py
 
+      - name: Phase 8 intro interaction audit
+        shell: pwsh
+        run: python audit_phase8.py
+
       - name: Resolve dependencies
         shell: pwsh
         run: go mod tidy
@@ -75,6 +79,6 @@ jobs:
       - name: Upload executable
         uses: actions/upload-artifact@v4
         with:
-          name: MawangScheduler-Desktop-Reset-Phase7
+          name: MawangScheduler-Desktop-Reset-Phase8
           path: desktop-native/MawangScheduler.exe
           if-no-files-found: error
