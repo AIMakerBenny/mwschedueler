@@ -27,7 +27,19 @@ export function runPhase88AchievementDataFoundationAudit(){
   if(/localStorage\./.test(media))issues.push('achievement media runtime must not store image bytes in localStorage');
   if(/toDataURL\(|readAsDataURL\(/.test(media))issues.push('achievement media runtime must not Base64-encode stored card images');
 
-  if(!post.includes("load('achievement-media-v1621','/assets/achievement-media-v1621.js?v=1.6.21-phase88','__mwsAchievementMediaRuntimeV1621')"))issues.push('achievement media runtime is not loaded after login');
+  if(!/load\('achievement-media-v1621','\/assets\/achievement-media-v1621\.js\?v=1\.6\.21-phase(?:88|[1-9][0-9]{2,})(?:-[^']+)?','__mwsAchievementMediaRuntimeV1621'\)/.test(post))issues.push('achievement media runtime is not loaded after login');
+  for(const token of [
+    "function cloudUrl(id){return '/media/achievement/'",
+    "function cloudApiUrl(id){return '/api/achievement-media/'",
+    "async function fetchCloudBlob(id)",
+    "async function uploadCloud(id,blob)",
+    "async function syncReferencedToCloud()",
+    "setTimeout(()=>{syncReferencedToCloud()",
+    "if(local?.blob instanceof Blob)return local;",
+    "const blob=await fetchCloudBlob(id);"
+  ]){
+    if(!media.includes(token))issues.push('achievement cloud media sync/fallback missing: '+token);
+  }
   if(!/assets\/app-core\.js\?v=1\.3\.0-search(?:8[8-9]|9[0-9]|[1-9][0-9]{2,})/.test(index))issues.push('app-core cache-bust is older than search88');
   if(!/post-login-runtime-v130\.js\?v=1\.4\.0-phase(?:8[8-9]|9[0-9]|[1-9][0-9]{2,})/.test(entry))issues.push('Worker post-login cache-bust is older than phase88');
 
