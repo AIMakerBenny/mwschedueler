@@ -20,7 +20,7 @@ export function runPhase73VersionOwnershipAudit(){
   if(!planner.includes("tools.js?v=1.4.0-phase74"))issues.push('planner does not cache-bust the fixed tools runtime');
   if(perf.includes("setAttribute('data-build-version'"))issues.push('perf runtime still writes build version');
   if(perf.includes("label.textContent='Mawang Scheduler v 1.3.0'"))issues.push('perf runtime still has stale visible-version fallback');
-  if(!perf.includes("content-planner-host.js?v=1.4.0-phase74"))issues.push('perf runtime does not load the fixed planner host');
+  if(!/content-planner-host\.js\?v=1\.4\.0-phase(?:7[4-9]|[89][0-9]|[1-9][0-9]{2,})/.test(perf))issues.push('perf runtime planner host cache is older than the Phase 73 baseline');
   if(!/\/assets\/perf-runtime\.js\?v=1\.4\.0-phase(?:7[3-9]|[89][0-9]|[1-9][0-9]{2,})/.test(post))issues.push('post-login loader does not load a Phase 73+ perf runtime');
   if(!/assets\/perf-runtime\.js\?v=1\.4\.0-phase(?:7[3-9]|[89][0-9]|[1-9][0-9]{2,})/.test(index))issues.push('source index cache-bust is older than phase73');
   if(!/post-login-runtime-v130\.js\?v=1\.4\.0-phase(?:7[3-9]|[89][0-9]|[1-9][0-9]{2,})/.test(entry))issues.push('Worker does not inject a Phase 73+ post-login runtime');
