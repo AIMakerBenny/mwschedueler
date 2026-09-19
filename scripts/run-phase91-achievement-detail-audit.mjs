@@ -19,7 +19,7 @@ export function runPhase91AchievementDetailAudit(){
     "data-achievement-detail=\"description\"",
     "window.mwsOpenAchievementDetailV1621=openDetail",
     "window.mwsCloseAchievementDetailV1621=closeDetail",
-    "event.key==='Escape'",
+    "if(event.key!=='Escape')return;",
     "URL.revokeObjectURL(url)"
   ]){
     if(!gallery.includes(token))issues.push('achievement detail runtime missing: '+token);
@@ -28,6 +28,7 @@ export function runPhase91AchievementDetailAudit(){
   if(!gallery.includes("root.querySelector('[data-achievement-detail=\"content\"]').textContent"))issues.push('content name is not populated in achievement detail');
   if(!gallery.includes("root.querySelector('[data-achievement-detail=\"description\"]').textContent"))issues.push('description is not populated in achievement detail');
   if(!gallery.includes('clearDetailObjectUrls();'))issues.push('detail object URL cleanup is missing');
+  if(!gallery.includes("if(detailModal&&!detailModal.hidden){event.preventDefault();closeDetail()}"))issues.push('Escape no longer closes the achievement detail modal');
   if(!gallery.includes("detailLastFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;"))issues.push('detail modal does not preserve the opening focus target');
 
   for(const token of [
