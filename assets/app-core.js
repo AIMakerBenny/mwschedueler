@@ -144,6 +144,7 @@ function mwsStripDevicePrefs(src){
 }
 
 let data=loadData();
+window.mwsGetAchievementCardsV1621=()=>Array.isArray(data?.achievementCards)?data.achievementCards:[];
 const loadedDataVersion=Number(data?.version||0);
 if(!data.categories)data.categories=DEFAULT_CATEGORIES;
 if(!data.contacts)data.contacts=[];
@@ -533,6 +534,7 @@ function setTab(tab){
   // 탭 이동 시에도 같은 중앙 데이터에서 최신 상태를 다시 계산
   if(tab==='calendar')safeRenderView('캘린더',renderCalendar);
   if(tab==='worldtime')safeRenderView('세계 시간',renderWorldTime);
+  if(tab==='achievements')safeRenderView('업적',()=>window.mwsRenderAchievementGalleryV1621?.());
   if(tab==='sniper')safeRenderView('최근 합방 인원',()=>{sniperViewMode==='ranking'?renderCollabRanking():renderSniperList()});
   if(tab==='targets')safeRenderView('저격 리스트',renderTargetList);
   if(tab==='memos')safeRenderView('메모',()=>setMemoView('library'));
