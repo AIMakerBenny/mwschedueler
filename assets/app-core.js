@@ -4857,13 +4857,36 @@ function restoreFullBackupAssets(backup){
 }
 window.restoreFullBackupAssets=restoreFullBackupAssets;
 
+function remapAchievementBackupMediaReferences(backup,payload,remap){
+  if(!Array.isArray(payload?.achievementCards))return 0;
+  const strictEmbedded=Number(backup?.assetSchema||0)>=2;
+  let missingRefs=0;
+  payload.achievementCards=payload.achievementCards.map(card=>{
+    const front=String(card?.frontImageId||'');
+    const back=String(card?.backImageId||'');
+    const mappedFront=front?String(remap.get(front)||''):'';
+    const mappedBack=back?String(remap.get(back)||''):'';
+    if(strictEmbedded&&front&&!mappedFront)missingRefs++;
+    if(strictEmbedded&&back&&!mappedBack)missingRefs++;
+    return {
+      ...card,
+      frontImageId:mappedFront||(strictEmbedded?'':front),
+      backImageId:mappedBack||(strictEmbedded?'':back)
+    };
+  });
+  return missingRefs;
+}
 async function restoreAchievementBackupMedia(backup,payload){
   const packed=Array.isArray(backup?.assets?.achievementMedia)?backup.assets.achievementMedia:[];
-  if(!packed.length)return {createdIds:[],restored:0,legacy:true};
-  const media=window.mwsAchievementMediaV1;
-  if(!media?.put||!media?.remove)throw new Error('업적 카드 이미지 저장소를 불러오지 못했습니다');
+  const strictEmbedded=Number(backup?.assetSchema||0)>=2;
   const remap=new Map();
   const createdIds=[];
+  if(!packed.length){
+    const missingRefs=remapAchievementBackupMediaReferences(backup,payload,remap);
+    return {createdIds,restored:0,legacy:!strictEmbedded,remap,missingRefs};
+  }
+  const media=window.mwsAchievementMediaV1;
+  if(!media?.put||!media?.remove)throw new Error('업적 카드 이미지 저장소를 불러오지 못했습니다');
   try{
     for(const item of packed){
       const sourceId=String(item?.sourceId||'');
@@ -4880,19 +4903,8 @@ async function restoreAchievementBackupMedia(backup,payload){
       createdIds.push(newId);
       remap.set(sourceId,newId);
     }
-    if(Array.isArray(payload.achievementCards)){
-      const strictEmbedded=Number(backup?.assetSchema||0)>=2;
-      payload.achievementCards=payload.achievementCards.map(card=>{
-        const front=String(card?.frontImageId||'');
-        const back=String(card?.backImageId||'');
-        return {
-          ...card,
-          frontImageId:remap.get(front)||(strictEmbedded?'':front),
-          backImageId:remap.get(back)||(strictEmbedded?'':back)
-        };
-      });
-    }
-    return {createdIds,restored:createdIds.length,legacy:false,remap};
+    const missingRefs=remapAchievementBackupMediaReferences(backup,payload,remap);
+    return {createdIds,restored:createdIds.length,legacy:!strictEmbedded,remap,missingRefs};
   }catch(error){
     await Promise.allSettled(createdIds.map(id=>media.remove(id)));
     throw error;
@@ -5000,7 +5012,9 @@ document.getElementById('achievementImportPackageInput').onchange=async e=>{
     if(!result?.ok||result.saved!==true)throw new Error('업적 카드를 저장하지 못했습니다. 기존 데이터는 유지됩니다');
     committed=true;
     updateFullBackupAssetStatus();
-    toast('업적 패키지',`카드 ${result.count}장 · 이미지 ${mediaResult.restored}개를 추가했습니다`);
+    toast('업적 패키지',mediaResult.missingRefs
+      ? `카드 ${result.count}장 · 이미지 ${mediaResult.restored}개 추가 · 누락된 이미지 연결 ${mediaResult.missingRefs}개 제외`
+      : `카드 ${result.count}장 · 이미지 ${mediaResult.restored}개를 추가했습니다`);
   }catch(error){
     if(!committed){
       const media=window.mwsAchievementMediaV1;
@@ -5041,7 +5055,9 @@ document.getElementById('importAllInput').onchange=async e=>{
     catch(cleanupError){console.warn('Post-import achievement media cleanup failed',cleanupError)}
     updateFullBackupAssetStatus();
     const imageCount=(data.contacts||[]).filter(c=>typeof c.image==='string'&&c.image.startsWith('data:image/')).length;
-    toast('전체 백업',`백업을 불러왔습니다 · 프로필 이미지 ${imageCount}개 · 업적 이미지 ${mediaResult.restored}개 복원`);
+    toast('전체 백업',mediaResult.missingRefs
+      ? `백업을 불러왔습니다 · 프로필 이미지 ${imageCount}개 · 업적 이미지 ${mediaResult.restored}개 복원 · 누락된 이미지 연결 ${mediaResult.missingRefs}개 제외`
+      : `백업을 불러왔습니다 · 프로필 이미지 ${imageCount}개 · 업적 이미지 ${mediaResult.restored}개 복원`);
   }catch(error){
     if(!committed){
       data=previousData;
