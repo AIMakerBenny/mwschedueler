@@ -14,7 +14,7 @@ export function runPhase94AchievementManagerEntryAudit(){
     'id="achievementManageBtn"',
     'id="achievementManageCount"',
     '>관리</button>',
-    '업적 카드 이미지와 게임 이름, 컨텐츠 이름, 설명, 표시 순서를 관리합니다.'
+    '업적 카드 이미지와 게임 이름, 컨텐츠 이름, 설명, 표시 순서를 관리'
   ]){
     if(!index.includes(token))issues.push('achievement manager entry missing: '+token);
   }
