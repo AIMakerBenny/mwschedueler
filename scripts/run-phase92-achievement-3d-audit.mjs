@@ -18,7 +18,7 @@ export function runPhase92Achievement3dAudit(){
     "stage?.addEventListener('pointerdown',beginDetailDrag)",
     "stage?.addEventListener('pointermove',moveDetailDrag)",
     "stage?.addEventListener('pointerup',endDetailDrag)",
-    "if(event.pointerType&&event.pointerType!=='mouse')return",
+    "['mouse','touch','pen'].includes(pointerType)",
     "detailRotation.x=clamp(detailDrag.rotateX-dy*.34,-35,35)",
     "detailRotation.y=detailDrag.rotateY+dx*.58",
     "rotateX(",
@@ -48,8 +48,8 @@ export function runPhase92Achievement3dAudit(){
   }
   if(!css.includes('aspect-ratio:2/3;'))issues.push('3D achievement card lost its 2:3 aspect ratio');
 
-  if(!post.includes("achievement-gallery-v1621.css?v=1.6.21-phase92"))issues.push('Phase 92 achievement 3D CSS cache is missing');
-  if(!post.includes("achievement-gallery-v1621.js?v=1.6.21-phase92"))issues.push('Phase 92 achievement 3D runtime cache is missing');
+  if(!/achievement-gallery-v1621\.css\?v=1\.6\.21-phase(?:9[2-9]|[1-9][0-9]{2,})/.test(post))issues.push('achievement 3D CSS cache is older than Phase 92');
+  if(!/achievement-gallery-v1621\.js\?v=1\.6\.21-phase(?:9[2-9]|[1-9][0-9]{2,})/.test(post))issues.push('achievement 3D runtime cache is older than Phase 92');
   if(!/post-login-runtime-v130\.js\?v=1\.4\.0-phase(?:9[2-9]|[1-9][0-9]{2,})/.test(entry))issues.push('Worker post-login cache-bust is older than Phase 92');
 
   const summary={phase:92,name:'achievement-3d-viewer',issues,warnings,pass:issues.length===0};
