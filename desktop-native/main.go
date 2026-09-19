@@ -28,6 +28,7 @@ const (
 const (
 	swHide           = 0
 	swShow           = 5
+	swRestore        = 9
 	swMaximize       = 3
 	wmClose          = 0x0010
 	wmSysCommand     = 0x0112
@@ -69,11 +70,9 @@ var (
 	procSetWindowLongPtr    = user32.NewProc("SetWindowLongPtrW")
 	procGetWindowLongPtr    = user32.NewProc("GetWindowLongPtrW")
 	procCallWindowProc      = user32.NewProc("CallWindowProcW")
-	procGetWindowRect       = user32.NewProc("GetWindowRect")
 	procSetWindowPos        = user32.NewProc("SetWindowPos")
 	procMonitorFromWindow   = user32.NewProc("MonitorFromWindow")
 	procGetMonitorInfo      = user32.NewProc("GetMonitorInfoW")
-	procIsZoomed            = user32.NewProc("IsZoomed")
 	procGetAsyncKeyState    = user32.NewProc("GetAsyncKeyState")
 	procSendMessage         = user32.NewProc("SendMessageW")
 	procCreateIconFromRes   = user32.NewProc("CreateIconFromResourceEx")
@@ -93,13 +92,9 @@ var (
 	oldWndProc     uintptr
 	newWndProc     = syscall.NewCallback(windowProc)
 	exiting        bool
-	fullscreen  bool
-	savedStyle  uintptr
-	fsMu        sync.Mutex
-	stateMu        sync.Mutex
-	lastRect       rect
-	lastMaximized  = true
-	lastStateValid bool
+	fullscreen bool
+	savedStyle uintptr
+	fsMu       sync.Mutex
 	pendingMu           sync.Mutex
 	pendingSection      string
 	appStartOnce        sync.Once
@@ -289,12 +284,10 @@ func logDesktop(format string, args ...interface{}) {
 func windowProc(h uintptr, msg uint32, wparam, lparam uintptr) uintptr {
 	switch msg {
 	case wmClose:
-		rememberWindowState(h)
 		procShowWindow.Call(h, swHide)
 		return 0
 	case wmSysCommand:
 		if wparam&0xFFF0 == scMinimize {
-			rememberWindowState(h)
 			procShowWindow.Call(h, swHide)
 			return 0
 		}
@@ -314,29 +307,6 @@ func installWindowHook(h uintptr) {
 	if r != 0 {
 		oldWndProc = r
 	}
-}
-
-func rememberWindowState(h uintptr) {
-	if h == 0 {
-		return
-	}
-	fsMu.Lock()
-	isFS := fullscreen
-	fsMu.Unlock()
-	if isFS {
-		return
-	}
-	var r rect
-	ok, _, _ := procGetWindowRect.Call(h, uintptr(unsafe.Pointer(&r)))
-	if ok == 0 || r.Right <= r.Left || r.Bottom <= r.Top {
-		return
-	}
-	z, _, _ := procIsZoomed.Call(h)
-	stateMu.Lock()
-	lastRect = r
-	lastMaximized = z != 0
-	lastStateValid = true
-	stateMu.Unlock()
 }
 
 func startupIsLocked() bool {
@@ -392,23 +362,6 @@ func showWindow() {
 	fsMu.Unlock()
 	if isFS {
 		procShowWindow.Call(h, swShow)
-		procSetForegroundWindow.Call(h)
-		return
-	}
-
-	stateMu.Lock()
-	r := lastRect
-	maximized := lastMaximized
-	valid := lastStateValid
-	stateMu.Unlock()
-
-	if valid {
-		if maximized {
-			procShowWindow.Call(h, swMaximize)
-		} else {
-			procSetWindowPos.Call(h, 0, uintptr(r.Left), uintptr(r.Top), uintptr(r.Right-r.Left), uintptr(r.Bottom-r.Top), swpNoZOrder|swpNoActivate)
-			procShowWindow.Call(h, swShow)
-		}
 	} else {
 		procShowWindow.Call(h, swMaximize)
 	}
@@ -420,7 +373,6 @@ func hideWindow() {
 	h := hwnd
 	wvMu.Unlock()
 	if h != 0 {
-		rememberWindowState(h)
 		procShowWindow.Call(h, swHide)
 	}
 }
@@ -435,32 +387,44 @@ func toggleFullscreen() bool {
 		fsMu.Unlock()
 		return state
 	}
-	rememberWindowState(h)
+
 	fsMu.Lock()
 	defer fsMu.Unlock()
 
+	mon, _, _ := procMonitorFromWindow.Call(h, monitorNearest)
+	mi := monitorInfo{CbSize: uint32(unsafe.Sizeof(monitorInfo{}))}
+	if mon != 0 {
+		procGetMonitorInfo.Call(mon, uintptr(unsafe.Pointer(&mi)))
+	}
+
 	if !fullscreen {
 		savedStyle, _, _ = procGetWindowLongPtr.Call(h, ^uintptr(15))
-		mon, _, _ := procMonitorFromWindow.Call(h, monitorNearest)
-		mi := monitorInfo{CbSize: uint32(unsafe.Sizeof(monitorInfo{}))}
-		if mon != 0 {
-			procGetMonitorInfo.Call(mon, uintptr(unsafe.Pointer(&mi)))
-		}
+		procShowWindow.Call(h, swRestore)
 		style := savedStyle &^ (wsCaption | wsThickFrame | wsMinBox | wsMaxBox | wsSysMenu)
 		procSetWindowLongPtr.Call(h, ^uintptr(15), style)
 		r := mi.RcMonitor
-		procSetWindowPos.Call(h, 0, uintptr(r.Left), uintptr(r.Top), uintptr(r.Right-r.Left), uintptr(r.Bottom-r.Top), swpFrameChanged|swpNoOwnerZOrder)
+		procSetWindowPos.Call(
+			h, 0,
+			uintptr(r.Left), uintptr(r.Top),
+			uintptr(r.Right-r.Left), uintptr(r.Bottom-r.Top),
+			swpFrameChanged|swpNoOwnerZOrder|swpNoActivate,
+		)
+		procShowWindow.Call(h, swShow)
 		fullscreen = true
 	} else {
+		procShowWindow.Call(h, swRestore)
 		procSetWindowLongPtr.Call(h, ^uintptr(15), savedStyle)
-		procSetWindowPos.Call(h, 0, 0, 0, 0, 0, swpFrameChanged|swpNoOwnerZOrder|swpNoActivate)
+		r := mi.RcWork
+		procSetWindowPos.Call(
+			h, 0,
+			uintptr(r.Left), uintptr(r.Top),
+			uintptr(r.Right-r.Left), uintptr(r.Bottom-r.Top),
+			swpFrameChanged|swpNoOwnerZOrder|swpNoActivate,
+		)
 		procShowWindow.Call(h, swMaximize)
-		stateMu.Lock()
-		lastMaximized = true
-		lastStateValid = true
-		stateMu.Unlock()
 		fullscreen = false
 	}
+	procSetForegroundWindow.Call(h)
 	return fullscreen
 }
 
@@ -650,13 +614,6 @@ func watchAltEnter() {
 		now := keyDown(vkMenu) && keyDown(vkReturn)
 		if now && !pressed {
 			state := toggleFullscreen()
-			wvMu.Lock()
-			h := hwnd
-			wvMu.Unlock()
-			if h != 0 {
-				procShowWindow.Call(h, swShow)
-				procSetForegroundWindow.Call(h)
-			}
 			syncFullscreenUI(state)
 		}
 		pressed = now
