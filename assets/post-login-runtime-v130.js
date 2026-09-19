@@ -67,7 +67,7 @@ async function start(){
   if(!deviceUiResult.ok){markCriticalUiFailure(['device-ui']);return;}
 
   const styleResults=await Promise.all([
-    loadStyle('mobile-drawer-v130','/assets/mobile-drawer-v130.css?v=1.3.0-mobile-cleanup'),
+    loadStyle('mobile-drawer-v130','/assets/mobile-drawer-v130.css?v=1.6.21-navfix1'),
     loadStyle('mobile-calendar-v130','/assets/mobile-calendar-v130.css?v=1.3.0-mobile-calendar-viewport-p29')
   ]);
   window.__mwsPostLoginStyleErrorsV130=styleResults.filter(x=>!x.ok).map(x=>x.key);
