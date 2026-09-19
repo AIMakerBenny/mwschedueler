@@ -37,7 +37,10 @@ const (
 	introDTCenter              = 0x00000001
 	introDTVCenter             = 0x00000004
 	introDTSingleLine          = 0x00000020
+	introFontRegular           = 400
 	introFontSemibold          = 600
+	introFontBold              = 700
+	introFontExtraBold         = 800
 	introModeImage       uint8 = 0
 	introModeText        uint8 = 1
 )
@@ -124,8 +127,10 @@ type introSession struct {
 	imageBGRA  []byte
 	imageW     int
 	imageH     int
-	font       uintptr
-	done       chan struct{}
+	titleFont    uintptr
+	subtitleFont uintptr
+	labelFont    uintptr
+	done         chan struct{}
 	destroyed  bool
 	mainShown  bool
 }
@@ -159,6 +164,8 @@ var (
 	introDeleteObject          = introGDI32.NewProc("DeleteObject")
 	introSetBkMode             = introGDI32.NewProc("SetBkMode")
 	introSetTextColor          = introGDI32.NewProc("SetTextColor")
+	introCreateSolidBrush      = introGDI32.NewProc("CreateSolidBrush")
+	introFillRect              = introUser32.NewProc("FillRect")
 	introDrawText              = introUser32.NewProc("DrawTextW")
 
 	introClassOnce sync.Once
@@ -277,25 +284,61 @@ func fitIntroImage(screenW, screenH, imageW, imageH int) (x, y, width, height in
 	return
 }
 
-func createIntroFont(screenH int) (uintptr, error) {
-	height := screenH / 18
-	if height < 42 {
-		height = 42
-	}
-	if height > 84 {
-		height = 84
-	}
-	face, _ := syscall.UTF16PtrFromString("Malgun Gothic")
+func createIntroFont(faceName string, height, weight int) (uintptr, error) {
+	face, _ := syscall.UTF16PtrFromString(faceName)
 	font, _, err := introCreateFont.Call(
 		uintptr(int32(-height)), 0, 0, 0,
-		introFontSemibold,
+		uintptr(weight),
 		0, 0, 0, 1, 0, 0, 5, 0,
 		uintptr(unsafe.Pointer(face)),
 	)
 	if font == 0 {
-		return 0, fmt.Errorf("CreateFontW failed: %v", err)
+		return 0, fmt.Errorf("CreateFontW %s failed: %v", faceName, err)
 	}
 	return font, nil
+}
+
+func createIntroFonts(screenH int) (title, subtitle, label uintptr, err error) {
+	titleH := screenH / 11
+	if titleH < 58 {
+		titleH = 58
+	}
+	if titleH > 104 {
+		titleH = 104
+	}
+	subtitleH := screenH / 30
+	if subtitleH < 27 {
+		subtitleH = 27
+	}
+	if subtitleH > 42 {
+		subtitleH = 42
+	}
+	labelH := screenH / 55
+	if labelH < 16 {
+		labelH = 16
+	}
+	if labelH > 22 {
+		labelH = 22
+	}
+
+	title, err = createIntroFont("Segoe UI Semibold", titleH, introFontExtraBold)
+	if err != nil {
+		return
+	}
+	subtitle, err = createIntroFont("Malgun Gothic", subtitleH, introFontSemibold)
+	if err != nil {
+		introDeleteObject.Call(title)
+		title = 0
+		return
+	}
+	label, err = createIntroFont("Segoe UI", labelH, introFontBold)
+	if err != nil {
+		introDeleteObject.Call(title)
+		introDeleteObject.Call(subtitle)
+		title, subtitle = 0, 0
+		return
+	}
+	return
 }
 
 func setIntroAlpha(h uintptr, alpha byte) {
@@ -438,22 +481,69 @@ func paintIntro(s *introSession, h uintptr) {
 		return
 	}
 
-	if s.mode == introModeText && s.font != 0 {
-		old, _, _ := introSelectObject.Call(hdc, s.font)
-		if old != 0 && old != ^uintptr(0) {
-			defer introSelectObject.Call(hdc, old)
-		}
+	if s.mode == introModeText && s.titleFont != 0 && s.subtitleFont != 0 && s.labelFont != 0 {
 		introSetBkMode.Call(hdc, introBkTransparent)
+
+		centerY := s.height / 2
+		contentW := s.width
+		if contentW > 1260 {
+			contentW = 1260
+		}
+		left := (s.width - contentW) / 2
+		right := left + contentW
+
+		// Quiet premium label above the main title.
+		label, _ := syscall.UTF16PtrFromString("MAWANG  DESKTOP")
+		labelRc := rect{Left: int32(left), Top: int32(centerY - 118), Right: int32(right), Bottom: int32(centerY - 78)}
+		old, _, _ := introSelectObject.Call(hdc, s.labelFont)
+		introSetTextColor.Call(hdc, 0x00FF7C9E)
+		introDrawText.Call(hdc, uintptr(unsafe.Pointer(label)), ^uintptr(0), uintptr(unsafe.Pointer(&labelRc)), introDTCenter|introDTVCenter|introDTSingleLine)
+		if old != 0 && old != ^uintptr(0) {
+			introSelectObject.Call(hdc, old)
+		}
+
+		// Main wordmark with a restrained violet shadow for depth.
+		title, _ := syscall.UTF16PtrFromString("MAWANG SCHEDULER")
+		titleRc := rect{Left: int32(left), Top: int32(centerY - 80), Right: int32(right), Bottom: int32(centerY + 26)}
+		shadowRc := titleRc
+		shadowRc.Left += 2
+		shadowRc.Top += 3
+		shadowRc.Right += 2
+		shadowRc.Bottom += 3
+		old, _, _ = introSelectObject.Call(hdc, s.titleFont)
+		introSetTextColor.Call(hdc, 0x00623A72)
+		introDrawText.Call(hdc, uintptr(unsafe.Pointer(title)), ^uintptr(0), uintptr(unsafe.Pointer(&shadowRc)), introDTCenter|introDTVCenter|introDTSingleLine)
 		introSetTextColor.Call(hdc, 0x00FFFFFF)
-		text, _ := syscall.UTF16PtrFromString("Mawang Scheduler 마왕 스케줄러")
-		rc := rect{Left: 0, Top: 0, Right: int32(s.width), Bottom: int32(s.height)}
-		introDrawText.Call(
-			hdc,
-			uintptr(unsafe.Pointer(text)),
-			^uintptr(0),
-			uintptr(unsafe.Pointer(&rc)),
-			introDTCenter|introDTVCenter|introDTSingleLine,
-		)
+		introDrawText.Call(hdc, uintptr(unsafe.Pointer(title)), ^uintptr(0), uintptr(unsafe.Pointer(&titleRc)), introDTCenter|introDTVCenter|introDTSingleLine)
+		if old != 0 && old != ^uintptr(0) {
+			introSelectObject.Call(hdc, old)
+		}
+
+		// Accent rule creates a clear visual break between English and Korean.
+		lineW := s.width / 8
+		if lineW < 150 {
+			lineW = 150
+		}
+		if lineW > 260 {
+			lineW = 260
+		}
+		lineLeft := (s.width - lineW) / 2
+		lineRc := rect{Left: int32(lineLeft), Top: int32(centerY + 31), Right: int32(lineLeft + lineW), Bottom: int32(centerY + 33)}
+		brush, _, _ := introCreateSolidBrush.Call(0x00FF7C9E)
+		if brush != 0 {
+			introFillRect.Call(hdc, uintptr(unsafe.Pointer(&lineRc)), brush)
+			introDeleteObject.Call(brush)
+		}
+
+		// Korean name stays understated so the English wordmark remains dominant.
+		subtitle, _ := syscall.UTF16PtrFromString("마왕 스케줄러")
+		subtitleRc := rect{Left: int32(left), Top: int32(centerY + 45), Right: int32(right), Bottom: int32(centerY + 105)}
+		old, _, _ = introSelectObject.Call(hdc, s.subtitleFont)
+		introSetTextColor.Call(hdc, 0x00C9C5D3)
+		introDrawText.Call(hdc, uintptr(unsafe.Pointer(subtitle)), ^uintptr(0), uintptr(unsafe.Pointer(&subtitleRc)), introDTCenter|introDTVCenter|introDTSingleLine)
+		if old != 0 && old != ^uintptr(0) {
+			introSelectObject.Call(hdc, old)
+		}
 	}
 }
 
@@ -561,7 +651,7 @@ func runStartupIntro() {
 		failIntroStart(err)
 		return
 	}
-	font, err := createIntroFont(int(h))
+	titleFont, subtitleFont, labelFont, err := createIntroFonts(int(h))
 	if err != nil {
 		failIntroStart(err)
 		return
@@ -569,41 +659,57 @@ func runStartupIntro() {
 
 	shieldHwnd, err := createIntroWindow(int(w), int(h))
 	if err != nil {
-		introDeleteObject.Call(font)
+		introDeleteObject.Call(titleFont)
+		introDeleteObject.Call(subtitleFont)
+		introDeleteObject.Call(labelFont)
 		failIntroStart(err)
 		return
 	}
 	hwnd, err := createIntroWindow(int(w), int(h))
 	if err != nil {
 		introDestroyWindow.Call(shieldHwnd)
-		introDeleteObject.Call(font)
+		introDeleteObject.Call(titleFont)
+		introDeleteObject.Call(subtitleFont)
+		introDeleteObject.Call(labelFont)
 		failIntroStart(err)
 		return
 	}
 
 	s := &introSession{
-		hwnd:       hwnd,
-		shieldHwnd: shieldHwnd,
-		width:      int(w),
-		height:     int(h),
-		mode:       introModeImage,
-		imageBGRA:  pixels,
-		imageW:     imageW,
-		imageH:     imageH,
-		font:       font,
-		done:       make(chan struct{}),
+		hwnd:         hwnd,
+		shieldHwnd:   shieldHwnd,
+		width:        int(w),
+		height:       int(h),
+		mode:         introModeImage,
+		imageBGRA:    pixels,
+		imageW:       imageW,
+		imageH:       imageH,
+		titleFont:    titleFont,
+		subtitleFont: subtitleFont,
+		labelFont:    labelFont,
+		done:         make(chan struct{}),
 	}
 	if !setCurrentIntro(s) {
 		introDestroyWindow.Call(hwnd)
 		introDestroyWindow.Call(shieldHwnd)
-		introDeleteObject.Call(font)
+		introDeleteObject.Call(titleFont)
+		introDeleteObject.Call(subtitleFont)
+		introDeleteObject.Call(labelFont)
 		failIntroStart(fmt.Errorf("another intro session is already active"))
 		return
 	}
 	defer func() {
-		if s.font != 0 {
-			introDeleteObject.Call(s.font)
-			s.font = 0
+		if s.titleFont != 0 {
+			introDeleteObject.Call(s.titleFont)
+			s.titleFont = 0
+		}
+		if s.subtitleFont != 0 {
+			introDeleteObject.Call(s.subtitleFont)
+			s.subtitleFont = 0
+		}
+		if s.labelFont != 0 {
+			introDeleteObject.Call(s.labelFont)
+			s.labelFont = 0
 		}
 		clearCurrentIntro(s)
 		close(s.done)
