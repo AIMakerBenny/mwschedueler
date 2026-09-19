@@ -132,8 +132,8 @@ jobs:
           grep -Eq 'contact-runtime-v130\.js\?v=1\.3\.0-search(8[6-9]|9[0-9]|[1-9][0-9]{2,})' /tmp/post-login.js
           grep -Fq "device-ui.js?v=1.3.0-perf87" /tmp/post-login.js
           grep -Fq "achievement-media-v1621.js?v=1.6.21-phase88" /tmp/post-login.js
-          grep -Fq "achievement-gallery-v1621.css?v=1.6.21-phase92" /tmp/post-login.js
-          grep -Fq "achievement-gallery-v1621.js?v=1.6.21-phase92" /tmp/post-login.js
+          grep -Fq "achievement-gallery-v1621.css?v=1.6.21-phase93" /tmp/post-login.js
+          grep -Fq "achievement-gallery-v1621.js?v=1.6.21-phase93" /tmp/post-login.js
           retry_contains "$BASE/assets/achievement-media-v1621.js?deploy=$GITHUB_SHA" "const DB_NAME='mws_achievement_media_v1'" > /tmp/achievement-media.js
           node --check /tmp/achievement-media.js
           grep -Fq "createObjectStore(STORE,{keyPath:'id'})" /tmp/achievement-media.js
@@ -155,7 +155,15 @@ jobs:
           grep -Fq "event.key==='Escape'" /tmp/achievement-gallery.js
           grep -Fq 'data-achievement-card3d' /tmp/achievement-gallery.js
           grep -Fq "stage?.addEventListener('pointerdown',beginDetailDrag)" /tmp/achievement-gallery.js
-          grep -Fq "if(event.pointerType&&event.pointerType!=='mouse')return" /tmp/achievement-gallery.js
+          grep -Fq "const TOUCH_DRAG_THRESHOLD=10;" /tmp/achievement-gallery.js
+          grep -Fq "const TOUCH_HORIZONTAL_RATIO=1.18;" /tmp/achievement-gallery.js
+          grep -Fq "pointerType==='touch'?'pending':'rotate'" /tmp/achievement-gallery.js
+          grep -Fq "detailDrag.mode='scroll'" /tmp/achievement-gallery.js
+          grep -Fq "detailRotation.y=clamp(detailDrag.rotateY+dx*.52,-360,360)" /tmp/achievement-gallery.js
+          if grep -Fq "if(event.pointerType&&event.pointerType!=='mouse')return" /tmp/achievement-gallery.js; then
+            echo 'Achievement 3D viewer still blocks touch input.' >&2
+            exit 1
+          fi
           grep -Fq 'detailRotation.y=detailDrag.rotateY+dx*.58' /tmp/achievement-gallery.js
           grep -Fq 'window.mwsResetAchievementCardV1621=resetDetailRotation' /tmp/achievement-gallery.js
           grep -Fq 'String(card.backImageId)' /tmp/achievement-gallery.js
@@ -172,6 +180,14 @@ jobs:
           grep -Fq 'transform:rotateY(180deg)' /tmp/achievement-gallery.css
           grep -Fq '.achievement-detail-back-default{' /tmp/achievement-gallery.css
           grep -Fq '.achievement-detail-reset{' /tmp/achievement-gallery.css
+          grep -Fq 'touch-action:pan-y pinch-zoom' /tmp/achievement-gallery.css
+          grep -Fq '@media(pointer:coarse)' /tmp/achievement-gallery.css
+          grep -Fq '.achievement-detail-hint-touch{display:inline}' /tmp/achievement-gallery.css
+          grep -Fq '.achievement-detail-stage{width:min(72vw,286px)}' /tmp/achievement-gallery.css
+          if grep -Fq 'touch-action:none' /tmp/achievement-gallery.css; then
+            echo 'Achievement touch CSS blocks native scrolling.' >&2
+            exit 1
+          fi
           retry_contains "$BASE/assets/mobile-calendar-day-detail-v130.js?deploy=$GITHUB_SHA" 'if(document.hidden||decorateQueued)return' > /tmp/mobile-day-detail.js
           node --check /tmp/mobile-day-detail.js
           grep -Fq "event.stopImmediatePropagation()" /tmp/mobile-day-detail.js
@@ -622,6 +638,7 @@ jobs:
           node --check scripts/run-phase90-achievement-gallery-audit.mjs
           node --check scripts/run-phase91-achievement-detail-audit.mjs
           node --check scripts/run-phase92-achievement-3d-audit.mjs
+          node --check scripts/run-phase93-achievement-touch-audit.mjs
           node --check assets/today-people-runtime-v130.js
           node --check assets/contact-runtime-v130.js
           node --check assets/friend-finder-v120.js
