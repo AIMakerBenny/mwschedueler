@@ -20,6 +20,11 @@ const (
 	introWMPaint               = 0x000F
 	introWMClose               = 0x0010
 	introWMEraseBkgnd          = 0x0014
+	introWMKeyDown             = 0x0100
+	introWMSysKeyDown          = 0x0104
+	introWMLButtonDown         = 0x0201
+	introWMRButtonDown         = 0x0204
+	introWMMButtonDown         = 0x0207
 	introWMSwitchText          = 0x8001
 	introWMFinish              = 0x8002
 	introWSPopup               = 0x80000000
@@ -37,6 +42,9 @@ const (
 	introDTCenter              = 0x00000001
 	introDTVCenter             = 0x00000004
 	introDTSingleLine          = 0x00000020
+	introVKReturn              = 0x0D
+	introVKEscape              = 0x1B
+	introVKSpace               = 0x20
 	introFontRegular           = 400
 	introFontSemibold          = 600
 	introFontBold              = 700
@@ -46,15 +54,14 @@ const (
 )
 
 const (
-	introImageFadeIn     = 1000 * time.Millisecond
-	introImageHold       = 1200 * time.Millisecond
-	introImageFadeOut    = 800 * time.Millisecond
-	introBlackAfterImage = 250 * time.Millisecond
+	introImageFadeIn     = 950 * time.Millisecond
+	introImageHold       = 1100 * time.Millisecond
+	introImageFadeOut    = 750 * time.Millisecond
 	introTextFadeIn      = 800 * time.Millisecond
 	introTextHold        = 1000 * time.Millisecond
 	introTextFadeOut     = 800 * time.Millisecond
 	introBlackBeforeMain = 250 * time.Millisecond
-	introMainFadeIn      = 350 * time.Millisecond
+	introMainFadeIn      = 340 * time.Millisecond
 )
 
 //go:embed assets/mawang-intro.jpg
@@ -129,9 +136,9 @@ type introSession struct {
 	imageH     int
 	titleFont    uintptr
 	subtitleFont uintptr
-	labelFont    uintptr
+	skipCh       chan struct{}
 	done         chan struct{}
-	destroyed  bool
+	destroyed    bool
 	mainShown  bool
 }
 
@@ -298,44 +305,30 @@ func createIntroFont(faceName string, height, weight int) (uintptr, error) {
 	return font, nil
 }
 
-func createIntroFonts(screenH int) (title, subtitle, label uintptr, err error) {
-	titleH := screenH / 11
-	if titleH < 58 {
-		titleH = 58
+func createIntroFonts(screenH int) (title, subtitle uintptr, err error) {
+	titleH := screenH / 13
+	if titleH < 54 {
+		titleH = 54
 	}
-	if titleH > 104 {
-		titleH = 104
+	if titleH > 84 {
+		titleH = 84
 	}
-	subtitleH := screenH / 30
-	if subtitleH < 27 {
-		subtitleH = 27
+	subtitleH := screenH / 36
+	if subtitleH < 24 {
+		subtitleH = 24
 	}
-	if subtitleH > 42 {
-		subtitleH = 42
-	}
-	labelH := screenH / 55
-	if labelH < 16 {
-		labelH = 16
-	}
-	if labelH > 22 {
-		labelH = 22
+	if subtitleH > 34 {
+		subtitleH = 34
 	}
 
-	title, err = createIntroFont("Segoe UI Semibold", titleH, introFontExtraBold)
+	title, err = createIntroFont("Segoe UI Semibold", titleH, introFontSemibold)
 	if err != nil {
 		return
 	}
-	subtitle, err = createIntroFont("Malgun Gothic", subtitleH, introFontSemibold)
+	subtitle, err = createIntroFont("Malgun Gothic", subtitleH, introFontRegular)
 	if err != nil {
 		introDeleteObject.Call(title)
 		title = 0
-		return
-	}
-	label, err = createIntroFont("Segoe UI", labelH, introFontBold)
-	if err != nil {
-		introDeleteObject.Call(title)
-		introDeleteObject.Call(subtitle)
-		title, subtitle = 0, 0
 		return
 	}
 	return
@@ -395,33 +388,167 @@ func fadeIntro(s *introSession, from, to byte, duration time.Duration) bool {
 	return fadeWindowAlpha(s, s.hwnd, from, to, duration)
 }
 
+func requestIntroSkip(s *introSession) {
+	if s == nil || s.destroyed || s.skipCh == nil {
+		return
+	}
+	select {
+	case s.skipCh <- struct{}{}:
+	default:
+	}
+}
+
+func clearIntroSkip(s *introSession) {
+	if s == nil || s.skipCh == nil {
+		return
+	}
+	for {
+		select {
+		case <-s.skipCh:
+		default:
+			return
+		}
+	}
+}
+
+func fadeIntroStage(s *introSession, from, to byte, duration time.Duration) (alive, skipped bool) {
+	if s == nil || s.hwnd == 0 {
+		return false, false
+	}
+	start := time.Now()
+	for {
+		if exiting || s.destroyed {
+			return false, false
+		}
+		select {
+		case <-s.skipCh:
+			setIntroAlpha(s.hwnd, to)
+			return true, true
+		default:
+		}
+		elapsed := time.Since(start)
+		p := smoothIntro(float64(elapsed) / float64(duration))
+		v := float64(from) + (float64(to)-float64(from))*p
+		if v < 0 {
+			v = 0
+		}
+		if v > 255 {
+			v = 255
+		}
+		setIntroAlpha(s.hwnd, byte(v+0.5))
+		if elapsed >= duration {
+			break
+		}
+		time.Sleep(16 * time.Millisecond)
+	}
+	setIntroAlpha(s.hwnd, to)
+	return true, false
+}
+
+func waitIntroStage(s *introSession, duration time.Duration) (alive, skipped bool) {
+	if s == nil {
+		return false, false
+	}
+	timer := time.NewTimer(duration)
+	defer timer.Stop()
+	for {
+		if exiting || s.destroyed {
+			return false, false
+		}
+		select {
+		case <-s.skipCh:
+			return true, true
+		case <-timer.C:
+			return true, false
+		case <-time.After(20 * time.Millisecond):
+		}
+	}
+}
+
+func waitStartupReadyOrSkip(s *introSession, timeout time.Duration) bool {
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	select {
+	case <-startupWebReady:
+		return true
+	case <-s.skipCh:
+		logDesktop("startup intro readiness wait skipped by user")
+		return true
+	case <-timer.C:
+		logDesktop("startup WebView readiness timed out after %s", timeout)
+		return true
+	}
+}
+
+func runImageIntroStage(s *introSession) bool {
+	clearIntroSkip(s)
+	alive, skipped := fadeIntroStage(s, 0, 255, introImageFadeIn)
+	if !alive {
+		return false
+	}
+	if skipped {
+		setIntroAlpha(s.hwnd, 0)
+		return true
+	}
+	alive, skipped = waitIntroStage(s, introImageHold)
+	if !alive {
+		return false
+	}
+	if skipped {
+		setIntroAlpha(s.hwnd, 0)
+		return true
+	}
+	alive, _ = fadeIntroStage(s, 255, 0, introImageFadeOut)
+	if !alive {
+		return false
+	}
+	setIntroAlpha(s.hwnd, 0)
+	return true
+}
+
+func runTextIntroStage(s *introSession) bool {
+	clearIntroSkip(s)
+	alive, skipped := fadeIntroStage(s, 0, 255, introTextFadeIn)
+	if !alive {
+		return false
+	}
+	if skipped {
+		setIntroAlpha(s.hwnd, 0)
+		return waitStartupReadyOrSkip(s, 8*time.Second)
+	}
+	alive, skipped = waitIntroStage(s, introTextHold)
+	if !alive {
+		return false
+	}
+	if skipped {
+		setIntroAlpha(s.hwnd, 0)
+		return waitStartupReadyOrSkip(s, 8*time.Second)
+	}
+	if !waitStartupReadyOrSkip(s, 8*time.Second) {
+		return false
+	}
+	alive, _ = fadeIntroStage(s, 255, 0, introTextFadeOut)
+	if !alive {
+		return false
+	}
+	setIntroAlpha(s.hwnd, 0)
+	return true
+}
+
 func animateIntro(s *introSession) {
-	if !fadeIntro(s, 0, 255, introImageFadeIn) {
+	if !runImageIntroStage(s) {
 		return
 	}
-	time.Sleep(introImageHold)
 
-	if !fadeIntro(s, 255, 0, introImageFadeOut) {
-		return
-	}
-	time.Sleep(introBlackAfterImage)
-
+	// Switch paint content while fully transparent, then begin the title fade immediately.
 	if r, _, err := introPostMessage.Call(s.hwnd, introWMSwitchText, 0, 0); r == 0 {
 		logDesktop("intro switch message failed: %v", err)
 		return
 	}
-	time.Sleep(40 * time.Millisecond)
-
-	if !fadeIntro(s, 0, 255, introTextFadeIn) {
+	if !runTextIntroStage(s) {
 		return
 	}
-	time.Sleep(introTextHold)
 
-	waitForStartupWebReady(8 * time.Second)
-
-	if !fadeIntro(s, 255, 0, introTextFadeOut) {
-		return
-	}
 	time.Sleep(introBlackBeforeMain)
 
 	releaseStartupLock()
@@ -481,65 +608,47 @@ func paintIntro(s *introSession, h uintptr) {
 		return
 	}
 
-	if s.mode == introModeText && s.titleFont != 0 && s.subtitleFont != 0 && s.labelFont != 0 {
+	if s.mode == introModeText && s.titleFont != 0 && s.subtitleFont != 0 {
 		introSetBkMode.Call(hdc, introBkTransparent)
 
 		centerY := s.height / 2
 		contentW := s.width
-		if contentW > 1260 {
-			contentW = 1260
+		if contentW > 1120 {
+			contentW = 1120
 		}
 		left := (s.width - contentW) / 2
 		right := left + contentW
 
-		// Quiet premium label above the main title.
-		label, _ := syscall.UTF16PtrFromString("MAWANG  DESKTOP")
-		labelRc := rect{Left: int32(left), Top: int32(centerY - 118), Right: int32(right), Bottom: int32(centerY - 78)}
-		old, _, _ := introSelectObject.Call(hdc, s.labelFont)
-		introSetTextColor.Call(hdc, 0x00FF7C9E)
-		introDrawText.Call(hdc, uintptr(unsafe.Pointer(label)), ^uintptr(0), uintptr(unsafe.Pointer(&labelRc)), introDTCenter|introDTVCenter|introDTSingleLine)
-		if old != 0 && old != ^uintptr(0) {
-			introSelectObject.Call(hdc, old)
+		// Minimal accent line.
+		lineW := s.width / 18
+		if lineW < 72 {
+			lineW = 72
 		}
-
-		// Main wordmark with a restrained violet shadow for depth.
-		title, _ := syscall.UTF16PtrFromString("MAWANG SCHEDULER")
-		titleRc := rect{Left: int32(left), Top: int32(centerY - 80), Right: int32(right), Bottom: int32(centerY + 26)}
-		shadowRc := titleRc
-		shadowRc.Left += 2
-		shadowRc.Top += 3
-		shadowRc.Right += 2
-		shadowRc.Bottom += 3
-		old, _, _ = introSelectObject.Call(hdc, s.titleFont)
-		introSetTextColor.Call(hdc, 0x00623A72)
-		introDrawText.Call(hdc, uintptr(unsafe.Pointer(title)), ^uintptr(0), uintptr(unsafe.Pointer(&shadowRc)), introDTCenter|introDTVCenter|introDTSingleLine)
-		introSetTextColor.Call(hdc, 0x00FFFFFF)
-		introDrawText.Call(hdc, uintptr(unsafe.Pointer(title)), ^uintptr(0), uintptr(unsafe.Pointer(&titleRc)), introDTCenter|introDTVCenter|introDTSingleLine)
-		if old != 0 && old != ^uintptr(0) {
-			introSelectObject.Call(hdc, old)
-		}
-
-		// Accent rule creates a clear visual break between English and Korean.
-		lineW := s.width / 8
-		if lineW < 150 {
-			lineW = 150
-		}
-		if lineW > 260 {
-			lineW = 260
+		if lineW > 110 {
+			lineW = 110
 		}
 		lineLeft := (s.width - lineW) / 2
-		lineRc := rect{Left: int32(lineLeft), Top: int32(centerY + 31), Right: int32(lineLeft + lineW), Bottom: int32(centerY + 33)}
+		lineRc := rect{Left: int32(lineLeft), Top: int32(centerY - 82), Right: int32(lineLeft + lineW), Bottom: int32(centerY - 80)}
 		brush, _, _ := introCreateSolidBrush.Call(0x00FF7C9E)
 		if brush != 0 {
 			introFillRect.Call(hdc, uintptr(unsafe.Pointer(&lineRc)), brush)
 			introDeleteObject.Call(brush)
 		}
 
-		// Korean name stays understated so the English wordmark remains dominant.
+		// Clean mixed-case wordmark with no shadow.
+		title, _ := syscall.UTF16PtrFromString("Mawang Scheduler")
+		titleRc := rect{Left: int32(left), Top: int32(centerY - 64), Right: int32(right), Bottom: int32(centerY + 28)}
+		old, _, _ := introSelectObject.Call(hdc, s.titleFont)
+		introSetTextColor.Call(hdc, 0x00F7F5FA)
+		introDrawText.Call(hdc, uintptr(unsafe.Pointer(title)), ^uintptr(0), uintptr(unsafe.Pointer(&titleRc)), introDTCenter|introDTVCenter|introDTSingleLine)
+		if old != 0 && old != ^uintptr(0) {
+			introSelectObject.Call(hdc, old)
+		}
+
 		subtitle, _ := syscall.UTF16PtrFromString("마왕 스케줄러")
-		subtitleRc := rect{Left: int32(left), Top: int32(centerY + 45), Right: int32(right), Bottom: int32(centerY + 105)}
+		subtitleRc := rect{Left: int32(left), Top: int32(centerY + 31), Right: int32(right), Bottom: int32(centerY + 78)}
 		old, _, _ = introSelectObject.Call(hdc, s.subtitleFont)
-		introSetTextColor.Call(hdc, 0x00C9C5D3)
+		introSetTextColor.Call(hdc, 0x00BDB8C6)
 		introDrawText.Call(hdc, uintptr(unsafe.Pointer(subtitle)), ^uintptr(0), uintptr(unsafe.Pointer(&subtitleRc)), introDTCenter|introDTVCenter|introDTSingleLine)
 		if old != 0 && old != ^uintptr(0) {
 			introSelectObject.Call(hdc, old)
@@ -550,6 +659,14 @@ func paintIntro(s *introSession, h uintptr) {
 func introWndProc(h uintptr, msg uint32, wparam, lparam uintptr) uintptr {
 	s := currentIntro()
 	switch msg {
+	case introWMKeyDown, introWMSysKeyDown:
+		if wparam == introVKSpace || wparam == introVKReturn || wparam == introVKEscape {
+			requestIntroSkip(s)
+			return 0
+		}
+	case introWMLButtonDown, introWMRButtonDown, introWMMButtonDown:
+		requestIntroSkip(s)
+		return 0
 	case introWMPaint:
 		paintIntro(s, h)
 		return 0
@@ -651,7 +768,7 @@ func runStartupIntro() {
 		failIntroStart(err)
 		return
 	}
-	titleFont, subtitleFont, labelFont, err := createIntroFonts(int(h))
+	titleFont, subtitleFont, err := createIntroFonts(int(h))
 	if err != nil {
 		failIntroStart(err)
 		return
@@ -661,7 +778,6 @@ func runStartupIntro() {
 	if err != nil {
 		introDeleteObject.Call(titleFont)
 		introDeleteObject.Call(subtitleFont)
-		introDeleteObject.Call(labelFont)
 		failIntroStart(err)
 		return
 	}
@@ -670,7 +786,6 @@ func runStartupIntro() {
 		introDestroyWindow.Call(shieldHwnd)
 		introDeleteObject.Call(titleFont)
 		introDeleteObject.Call(subtitleFont)
-		introDeleteObject.Call(labelFont)
 		failIntroStart(err)
 		return
 	}
@@ -686,7 +801,7 @@ func runStartupIntro() {
 		imageH:       imageH,
 		titleFont:    titleFont,
 		subtitleFont: subtitleFont,
-		labelFont:    labelFont,
+		skipCh:       make(chan struct{}, 1),
 		done:         make(chan struct{}),
 	}
 	if !setCurrentIntro(s) {
@@ -694,7 +809,6 @@ func runStartupIntro() {
 		introDestroyWindow.Call(shieldHwnd)
 		introDeleteObject.Call(titleFont)
 		introDeleteObject.Call(subtitleFont)
-		introDeleteObject.Call(labelFont)
 		failIntroStart(fmt.Errorf("another intro session is already active"))
 		return
 	}
@@ -706,10 +820,6 @@ func runStartupIntro() {
 		if s.subtitleFont != 0 {
 			introDeleteObject.Call(s.subtitleFont)
 			s.subtitleFont = 0
-		}
-		if s.labelFont != 0 {
-			introDeleteObject.Call(s.labelFont)
-			s.labelFont = 0
 		}
 		clearCurrentIntro(s)
 		close(s.done)
