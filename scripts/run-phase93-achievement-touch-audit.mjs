@@ -20,8 +20,11 @@ export function runPhase93AchievementTouchAudit(){
     "detailDrag.mode='scroll';",
     "if(ax<ay*TOUCH_HORIZONTAL_RATIO)return",
     "if(detailDrag.pointerType==='touch'){",
-    "detailRotation.x=clamp(detailDrag.rotateX-clamp(dy,-120,120)*TOUCH_ROTATE_X_PER_PX,-32,32)",
-    "detailRotation.y=detailDrag.rotateY+dx*TOUCH_ROTATE_Y_PER_PX",
+    "queueDetailTouchRotation(",
+    "requestAnimationFrame(renderPendingDetailTouch)",
+    "cancelAnimationFrame(detailTouchFrame)",
+    "applyDetailRotation(detailModal,false)",
+    "if(detailDrag.pointerType==='touch')flushDetailTouchRotation();",
     "stage.classList.remove('dragging','touch-dragging')",
     "achievement-detail-hint-touch"
   ]){
@@ -31,6 +34,9 @@ export function runPhase93AchievementTouchAudit(){
   if(gallery.includes("if(event.pointerType&&event.pointerType!=='mouse')return"))issues.push('legacy touch-blocking guard still prevents mobile card rotation');
   if(!gallery.includes("if(pointerType==='touch')return;"))issues.push('touch pointerdown should defer capture until direction is known');
   if(!gallery.includes("activateDetailDrag(stage,event);"))issues.push('direction-locked touch gesture never activates card rotation');
+  if(!gallery.includes("let detailTouchFrame=0;"))issues.push('touch rotation is not frame-batched');
+  if(!gallery.includes("let detailTouchPending=null;"))issues.push('touch rotation has no pending-frame state');
+  if(!gallery.includes("detailModal?.classList.add('is-touch-rotating');"))issues.push('touch rotation activity state is missing');
 
   for(const token of [
     'touch-action:pan-y pinch-zoom;',
@@ -38,6 +44,10 @@ export function runPhase93AchievementTouchAudit(){
     '.achievement-detail-hint-mouse{display:none}',
     '.achievement-detail-hint-touch{display:inline}',
     '.achievement-detail-stage{width:min(90vw,400px)}',
+    '.achievement-detail-stage.touch-dragging .achievement-detail-card3d{',
+    'transition:transform .028s linear;',
+    'body.mws-achievement-modal-open #achievementGallery{visibility:hidden}',
+    'backdrop-filter:none;',
     'max-height:none;',
     'overflow:auto;'
   ]){
