@@ -33,7 +33,7 @@ checks = {
     "image fade in": 'fadeIntroStage(s, 0, 255, introImageFadeIn)' in intro,
     "image fade out": 'fadeIntroStage(s, 255, 0, introImageFadeOut)' in intro,
     "immediate image to text transition": 'introBlackAfterImage' not in intro and 'introWMSwitchText' in intro,
-    "intro title content": 'Mawang Scheduler' in intro and '마왕 스케줄러' not in intro,
+    "intro title content": 'UTF16PtrFromString("Mawang")' in intro and 'UTF16PtrFromString("Scheduler")' in intro and '마왕 스케줄러' not in intro,
     "text fade in": 'fadeIntroStage(s, 0, 255, introTextFadeIn)' in intro,
     "title waits for WebView": 'waitStartupReadyOrSkip(s, 8*time.Second)' in intro,
     "title fade out": 'fadeIntroStage(s, 255, 0, introTextFadeOut)' in intro,
