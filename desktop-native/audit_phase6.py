@@ -30,7 +30,7 @@ checks = {
     "black shield window": 'shieldHwnd' in intro,
     "shield starts opaque": 'setIntroAlpha(shieldHwnd, 255)' in intro,
     "content starts transparent": 'setIntroAlpha(hwnd, 0)' in intro,
-    "image fade in": 'fadeIntro(s, 0, 255, introImageFadeIn)' in intro,
+    "image fade in": 'fadeIntroStage(s, 0, 255, introImageFadeIn)' in intro,
     "image fade out": 'fadeIntroStage(s, 255, 0, introImageFadeOut)' in intro,
     "immediate image to text transition": 'introBlackAfterImage' not in intro and 'introWMSwitchText' in intro,
     "intro title content": 'Mawang Scheduler' in intro and '마왕 스케줄러' in intro,
