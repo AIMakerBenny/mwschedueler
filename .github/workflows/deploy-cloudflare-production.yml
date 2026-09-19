@@ -96,6 +96,10 @@ jobs:
           grep -Fq 'data-build-version="MWS V 1.4.0"' /tmp/index.html
           grep -Fq '>Mawang Scheduler v 1.6.21</div>' /tmp/index.html
           grep -Fq '<title>마왕 스케줄러</title>' /tmp/index.html
+          if grep -Fq '\\n</head>' /tmp/index.html; then
+            echo 'Literal backslash-n text leaked into HTML before closing head.' >&2
+            exit 1
+          fi
           if grep -Eq '<script[^>]+assets/(perf-runtime\.js|today-people-runtime-v130\.js|contact-runtime-v130\.js|device-ui\.js)' /tmp/index.html; then
             echo 'Heavy UI/runtime script is still loaded before authentication.' >&2
             exit 1
