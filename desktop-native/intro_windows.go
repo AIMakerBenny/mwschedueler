@@ -9,6 +9,7 @@ import (
 	"image/jpeg"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 	"unsafe"
@@ -134,12 +135,12 @@ type introSession struct {
 	imageBGRA  []byte
 	imageW     int
 	imageH     int
-	titleFont    uintptr
-	subtitleFont uintptr
-	skipCh       chan struct{}
-	done         chan struct{}
-	destroyed    bool
-	mainShown  bool
+	titleFont uintptr
+	effectStep atomic.Uint32
+	skipCh    chan struct{}
+	done      chan struct{}
+	destroyed bool
+	mainShown bool
 }
 
 var (
@@ -305,33 +306,15 @@ func createIntroFont(faceName string, height, weight int) (uintptr, error) {
 	return font, nil
 }
 
-func createIntroFonts(screenH int) (title, subtitle uintptr, err error) {
-	titleH := screenH / 13
-	if titleH < 54 {
-		titleH = 54
+func createIntroTitleFont(screenH int) (uintptr, error) {
+	titleH := screenH / 12
+	if titleH < 58 {
+		titleH = 58
 	}
-	if titleH > 84 {
-		titleH = 84
+	if titleH > 92 {
+		titleH = 92
 	}
-	subtitleH := screenH / 36
-	if subtitleH < 24 {
-		subtitleH = 24
-	}
-	if subtitleH > 34 {
-		subtitleH = 34
-	}
-
-	title, err = createIntroFont("Segoe UI Semibold", titleH, introFontSemibold)
-	if err != nil {
-		return
-	}
-	subtitle, err = createIntroFont("Malgun Gothic", subtitleH, introFontRegular)
-	if err != nil {
-		introDeleteObject.Call(title)
-		title = 0
-		return
-	}
-	return
+	return createIntroFont("Segoe UI Semibold", titleH, introFontSemibold)
 }
 
 func setIntroAlpha(h uintptr, alpha byte) {
@@ -535,6 +518,29 @@ func runTextIntroStage(s *introSession) bool {
 	return true
 }
 
+func animateIntroTextEffect(s *introSession) {
+	if s == nil || s.hwnd == 0 {
+		return
+	}
+	start := time.Now()
+	const duration = 760 * time.Millisecond
+	for {
+		if exiting || s.destroyed || s.mode != introModeText {
+			return
+		}
+		elapsed := time.Since(start)
+		p := smoothIntro(float64(elapsed) / float64(duration))
+		s.effectStep.Store(uint32(p * 1000))
+		introInvalidateRect.Call(s.hwnd, 0, 0)
+		if elapsed >= duration {
+			s.effectStep.Store(1000)
+			introInvalidateRect.Call(s.hwnd, 0, 0)
+			return
+		}
+		time.Sleep(16 * time.Millisecond)
+	}
+}
+
 func animateIntro(s *introSession) {
 	if !runImageIntroStage(s) {
 		return
@@ -608,50 +614,100 @@ func paintIntro(s *introSession, h uintptr) {
 		return
 	}
 
-	if s.mode == introModeText && s.titleFont != 0 && s.subtitleFont != 0 {
+	if s.mode == introModeText && s.titleFont != 0 {
 		introSetBkMode.Call(hdc, introBkTransparent)
 
 		centerY := s.height / 2
 		contentW := s.width
-		if contentW > 1120 {
-			contentW = 1120
+		if contentW > 1240 {
+			contentW = 1240
 		}
 		left := (s.width - contentW) / 2
 		right := left + contentW
-
-		// Minimal accent line.
-		lineW := s.width / 18
-		if lineW < 72 {
-			lineW = 72
+		phase := int(s.effectStep.Load())
+		if phase < 0 {
+			phase = 0
 		}
-		if lineW > 110 {
-			lineW = 110
-		}
-		lineLeft := (s.width - lineW) / 2
-		lineRc := rect{Left: int32(lineLeft), Top: int32(centerY - 82), Right: int32(lineLeft + lineW), Bottom: int32(centerY - 80)}
-		brush, _, _ := introCreateSolidBrush.Call(0x00FF7C9E)
-		if brush != 0 {
-			introFillRect.Call(hdc, uintptr(unsafe.Pointer(&lineRc)), brush)
-			introDeleteObject.Call(brush)
+		if phase > 1000 {
+			phase = 1000
 		}
 
-		// Clean mixed-case wordmark with no shadow.
 		title, _ := syscall.UTF16PtrFromString("Mawang Scheduler")
-		titleRc := rect{Left: int32(left), Top: int32(centerY - 64), Right: int32(right), Bottom: int32(centerY + 28)}
+		titleRc := rect{Left: int32(left), Top: int32(centerY - 72), Right: int32(right), Bottom: int32(centerY + 42)}
 		old, _, _ := introSelectObject.Call(hdc, s.titleFont)
-		introSetTextColor.Call(hdc, 0x00F7F5FA)
+
+		// Layered violet halo. It gives depth without adding any extra text.
+		glowOffsets := [][2]int32{{-4, 0}, {4, 0}, {0, -4}, {0, 4}, {-3, -3}, {3, -3}, {-3, 3}, {3, 3}}
+		introSetTextColor.Call(hdc, 0x00442755)
+		for _, off := range glowOffsets {
+			rc := titleRc
+			rc.Left += off[0]
+			rc.Right += off[0]
+			rc.Top += off[1]
+			rc.Bottom += off[1]
+			introDrawText.Call(hdc, uintptr(unsafe.Pointer(title)), ^uintptr(0), uintptr(unsafe.Pointer(&rc)), introDTCenter|introDTVCenter|introDTSingleLine)
+		}
+
+		innerOffsets := [][2]int32{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}
+		introSetTextColor.Call(hdc, 0x009259B8)
+		for _, off := range innerOffsets {
+			rc := titleRc
+			rc.Left += off[0]
+			rc.Right += off[0]
+			rc.Top += off[1]
+			rc.Bottom += off[1]
+			introDrawText.Call(hdc, uintptr(unsafe.Pointer(title)), ^uintptr(0), uintptr(unsafe.Pointer(&rc)), introDTCenter|introDTVCenter|introDTSingleLine)
+		}
+
+		// Crisp white wordmark.
+		introSetTextColor.Call(hdc, 0x00FFFDFE)
 		introDrawText.Call(hdc, uintptr(unsafe.Pointer(title)), ^uintptr(0), uintptr(unsafe.Pointer(&titleRc)), introDTCenter|introDTVCenter|introDTSingleLine)
 		if old != 0 && old != ^uintptr(0) {
 			introSelectObject.Call(hdc, old)
 		}
 
-		subtitle, _ := syscall.UTF16PtrFromString("마왕 스케줄러")
-		subtitleRc := rect{Left: int32(left), Top: int32(centerY + 31), Right: int32(right), Bottom: int32(centerY + 78)}
-		old, _, _ = introSelectObject.Call(hdc, s.subtitleFont)
-		introSetTextColor.Call(hdc, 0x00BDB8C6)
-		introDrawText.Call(hdc, uintptr(unsafe.Pointer(subtitle)), ^uintptr(0), uintptr(unsafe.Pointer(&subtitleRc)), introDTCenter|introDTVCenter|introDTSingleLine)
-		if old != 0 && old != ^uintptr(0) {
-			introSelectObject.Call(hdc, old)
+		// Animated precision line below the wordmark.
+		maxLineW := s.width / 6
+		if maxLineW < 180 {
+			maxLineW = 180
+		}
+		if maxLineW > 320 {
+			maxLineW = 320
+		}
+		lineW := maxLineW * phase / 1000
+		if lineW > 0 {
+			lineLeft := (s.width - lineW) / 2
+			baseRc := rect{Left: int32(lineLeft), Top: int32(centerY + 64), Right: int32(lineLeft + lineW), Bottom: int32(centerY + 65)}
+			baseBrush, _, _ := introCreateSolidBrush.Call(0x00513268)
+			if baseBrush != 0 {
+				introFillRect.Call(hdc, uintptr(unsafe.Pointer(&baseRc)), baseBrush)
+				introDeleteObject.Call(baseBrush)
+			}
+
+			coreW := lineW / 3
+			if coreW < 2 {
+				coreW = 2
+			}
+			coreLeft := (s.width - coreW) / 2
+			coreRc := rect{Left: int32(coreLeft), Top: int32(centerY + 63), Right: int32(coreLeft + coreW), Bottom: int32(centerY + 66)}
+			coreBrush, _, _ := introCreateSolidBrush.Call(0x00FF7C9E)
+			if coreBrush != 0 {
+				introFillRect.Call(hdc, uintptr(unsafe.Pointer(&coreRc)), coreBrush)
+				introDeleteObject.Call(coreBrush)
+			}
+
+			if phase > 520 {
+				sparkX := lineLeft + (lineW*(phase-520))/480
+				if sparkX > lineLeft+lineW-14 {
+					sparkX = lineLeft + lineW - 14
+				}
+				sparkRc := rect{Left: int32(sparkX), Top: int32(centerY + 62), Right: int32(sparkX + 14), Bottom: int32(centerY + 67)}
+				sparkBrush, _, _ := introCreateSolidBrush.Call(0x00FFEAF5)
+				if sparkBrush != 0 {
+					introFillRect.Call(hdc, uintptr(unsafe.Pointer(&sparkRc)), sparkBrush)
+					introDeleteObject.Call(sparkBrush)
+				}
+			}
 		}
 	}
 }
@@ -675,8 +731,10 @@ func introWndProc(h uintptr, msg uint32, wparam, lparam uintptr) uintptr {
 	case introWMSwitchText:
 		if s != nil && s.hwnd == h {
 			s.mode = introModeText
+			s.effectStep.Store(0)
 			introInvalidateRect.Call(h, 0, 0)
 			introUpdateWindow.Call(h)
+			go animateIntroTextEffect(s)
 		}
 		return 0
 	case introWMFinish:
@@ -768,7 +826,7 @@ func runStartupIntro() {
 		failIntroStart(err)
 		return
 	}
-	titleFont, subtitleFont, err := createIntroFonts(int(h))
+	titleFont, err := createIntroTitleFont(int(h))
 	if err != nil {
 		failIntroStart(err)
 		return
@@ -777,7 +835,6 @@ func runStartupIntro() {
 	shieldHwnd, err := createIntroWindow(int(w), int(h))
 	if err != nil {
 		introDeleteObject.Call(titleFont)
-		introDeleteObject.Call(subtitleFont)
 		failIntroStart(err)
 		return
 	}
@@ -785,7 +842,6 @@ func runStartupIntro() {
 	if err != nil {
 		introDestroyWindow.Call(shieldHwnd)
 		introDeleteObject.Call(titleFont)
-		introDeleteObject.Call(subtitleFont)
 		failIntroStart(err)
 		return
 	}
@@ -799,16 +855,14 @@ func runStartupIntro() {
 		imageBGRA:    pixels,
 		imageW:       imageW,
 		imageH:       imageH,
-		titleFont:    titleFont,
-		subtitleFont: subtitleFont,
-		skipCh:       make(chan struct{}, 1),
+		titleFont: titleFont,
+		skipCh:    make(chan struct{}, 1),
 		done:         make(chan struct{}),
 	}
 	if !setCurrentIntro(s) {
 		introDestroyWindow.Call(hwnd)
 		introDestroyWindow.Call(shieldHwnd)
 		introDeleteObject.Call(titleFont)
-		introDeleteObject.Call(subtitleFont)
 		failIntroStart(fmt.Errorf("another intro session is already active"))
 		return
 	}
@@ -816,10 +870,6 @@ func runStartupIntro() {
 		if s.titleFont != 0 {
 			introDeleteObject.Call(s.titleFont)
 			s.titleFont = 0
-		}
-		if s.subtitleFont != 0 {
-			introDeleteObject.Call(s.subtitleFont)
-			s.subtitleFont = 0
 		}
 		clearCurrentIntro(s)
 		close(s.done)
