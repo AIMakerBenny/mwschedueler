@@ -29,7 +29,7 @@ checks = {
     "embedded exact intro JPEG": '//go:embed assets/mawang-intro.jpg' in intro,
     "image fade in": 'introImageFadeIn' in intro and 'fadeIntroStage(s, 0, 255, introImageFadeIn)' in intro,
     "image fade out": 'fadeIntroStage(s, 255, 0, introImageFadeOut)' in intro,
-    "intro title content": 'Mawang Scheduler' in intro and '마왕 스케줄러' in intro,
+    "intro title content": 'Mawang Scheduler' in intro and '마왕 스케줄러' not in intro,
     "title waits for WebView": 'waitStartupReadyOrSkip(s, 8*time.Second)' in intro,
     "title fade out": 'fadeIntroStage(s, 255, 0, introTextFadeOut)' in intro,
     "handoff destroys intro": 'introDestroyWindow.Call(h)' in intro,
