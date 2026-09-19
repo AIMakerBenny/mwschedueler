@@ -43,12 +43,15 @@ const (
 )
 
 const (
-	introImageFadeIn  = 1100 * time.Millisecond
-	introImageHold    = 1200 * time.Millisecond
-	introImageFadeOut = 1000 * time.Millisecond
-	introTextFadeIn   = 1000 * time.Millisecond
-	introTextHold     = 1250 * time.Millisecond
-	introTextFadeOut  = 900 * time.Millisecond
+	introImageFadeIn     = 1000 * time.Millisecond
+	introImageHold       = 1200 * time.Millisecond
+	introImageFadeOut    = 800 * time.Millisecond
+	introBlackAfterImage = 250 * time.Millisecond
+	introTextFadeIn      = 800 * time.Millisecond
+	introTextHold        = 1000 * time.Millisecond
+	introTextFadeOut     = 800 * time.Millisecond
+	introBlackBeforeMain = 250 * time.Millisecond
+	introMainFadeIn      = 350 * time.Millisecond
 )
 
 //go:embed assets/mawang-intro.jpg
@@ -113,16 +116,18 @@ type introBitmapInfo struct {
 }
 
 type introSession struct {
-	hwnd      uintptr
-	width     int
-	height    int
-	mode      uint8
-	imageBGRA []byte
-	imageW    int
-	imageH    int
-	font      uintptr
-	done      chan struct{}
-	destroyed bool
+	hwnd       uintptr
+	shieldHwnd uintptr
+	width      int
+	height     int
+	mode       uint8
+	imageBGRA  []byte
+	imageW     int
+	imageH     int
+	font       uintptr
+	done       chan struct{}
+	destroyed  bool
+	mainShown  bool
 }
 
 var (
@@ -192,6 +197,9 @@ func showIntroWindow() {
 	s := currentIntro()
 	if s == nil || s.hwnd == 0 || s.destroyed {
 		return
+	}
+	if s.shieldHwnd != 0 {
+		procShowWindow.Call(s.shieldHwnd, swShow)
 	}
 	procShowWindow.Call(s.hwnd, swShow)
 	procSetForegroundWindow.Call(s.hwnd)
@@ -309,8 +317,8 @@ func smoothIntro(t float64) float64 {
 	return t * t * (3 - 2*t)
 }
 
-func fadeIntro(s *introSession, from, to byte, duration time.Duration) bool {
-	if s == nil || s.hwnd == 0 {
+func fadeWindowAlpha(s *introSession, h uintptr, from, to byte, duration time.Duration) bool {
+	if s == nil || h == 0 {
 		return false
 	}
 	start := time.Now()
@@ -327,14 +335,21 @@ func fadeIntro(s *introSession, from, to byte, duration time.Duration) bool {
 		if v > 255 {
 			v = 255
 		}
-		setIntroAlpha(s.hwnd, byte(v+0.5))
+		setIntroAlpha(h, byte(v+0.5))
 		if elapsed >= duration {
 			break
 		}
 		time.Sleep(16 * time.Millisecond)
 	}
-	setIntroAlpha(s.hwnd, to)
+	setIntroAlpha(h, to)
 	return true
+}
+
+func fadeIntro(s *introSession, from, to byte, duration time.Duration) bool {
+	if s == nil {
+		return false
+	}
+	return fadeWindowAlpha(s, s.hwnd, from, to, duration)
 }
 
 func animateIntro(s *introSession) {
@@ -342,29 +357,47 @@ func animateIntro(s *introSession) {
 		return
 	}
 	time.Sleep(introImageHold)
+
 	if !fadeIntro(s, 255, 0, introImageFadeOut) {
 		return
 	}
+	time.Sleep(introBlackAfterImage)
+
 	if r, _, err := introPostMessage.Call(s.hwnd, introWMSwitchText, 0, 0); r == 0 {
 		logDesktop("intro switch message failed: %v", err)
 		return
 	}
-	time.Sleep(80 * time.Millisecond)
+	time.Sleep(40 * time.Millisecond)
+
 	if !fadeIntro(s, 0, 255, introTextFadeIn) {
 		return
 	}
 	time.Sleep(introTextHold)
+
 	waitForStartupWebReady(8 * time.Second)
+
 	if !fadeIntro(s, 255, 0, introTextFadeOut) {
 		return
 	}
+	time.Sleep(introBlackBeforeMain)
+
+	releaseStartupLock()
+	s.mainShown = true
+	showWindow()
+
+	if s.shieldHwnd != 0 {
+		if !fadeWindowAlpha(s, s.shieldHwnd, 255, 0, introMainFadeIn) {
+			return
+		}
+	}
+
 	if r, _, err := introPostMessage.Call(s.hwnd, introWMFinish, 0, 0); r == 0 {
 		logDesktop("intro finish message failed: %v", err)
 	}
 }
 
 func paintIntro(s *introSession, h uintptr) {
-	if s == nil || s.hwnd != h {
+	if s == nil {
 		return
 	}
 	var ps introPaintStruct
@@ -376,6 +409,13 @@ func paintIntro(s *introSession, h uintptr) {
 	defer introEndPaint.Call(h, uintptr(unsafe.Pointer(&ps)))
 
 	introPatBlt.Call(hdc, 0, 0, uintptr(s.width), uintptr(s.height), introBLACKNESS)
+
+	if h == s.shieldHwnd {
+		return
+	}
+	if h != s.hwnd {
+		return
+	}
 
 	if s.mode == introModeImage && len(s.imageBGRA) > 0 {
 		x, y, drawW, drawH := fitIntroImage(s.width, s.height, s.imageW, s.imageH)
@@ -434,20 +474,36 @@ func introWndProc(h uintptr, msg uint32, wparam, lparam uintptr) uintptr {
 		return 0
 	case introWMFinish:
 		if s != nil && s.hwnd == h {
+			if s.shieldHwnd != 0 {
+				procShowWindow.Call(s.shieldHwnd, swHide)
+				introDestroyWindow.Call(s.shieldHwnd)
+				s.shieldHwnd = 0
+			}
 			procShowWindow.Call(h, swHide)
 			introDestroyWindow.Call(h)
 		}
 		return 0
 	case introWMClose:
-		if exiting {
+		if exiting && s != nil && s.hwnd == h {
+			if s.shieldHwnd != 0 {
+				introDestroyWindow.Call(s.shieldHwnd)
+				s.shieldHwnd = 0
+			}
 			introDestroyWindow.Call(h)
 		}
 		return 0
 	case introWMDestroy:
-		if s != nil && s.hwnd == h {
-			s.destroyed = true
+		if s != nil {
+			if s.shieldHwnd == h {
+				s.shieldHwnd = 0
+				return 0
+			}
+			if s.hwnd == h {
+				s.destroyed = true
+				introPostQuitMessage.Call(0)
+				return 0
+			}
 		}
-		introPostQuitMessage.Call(0)
 		return 0
 	}
 	r, _, _ := introDefWindowProc.Call(h, uintptr(msg), wparam, lparam)
@@ -511,26 +567,35 @@ func runStartupIntro() {
 		return
 	}
 
+	shieldHwnd, err := createIntroWindow(int(w), int(h))
+	if err != nil {
+		introDeleteObject.Call(font)
+		failIntroStart(err)
+		return
+	}
 	hwnd, err := createIntroWindow(int(w), int(h))
 	if err != nil {
+		introDestroyWindow.Call(shieldHwnd)
 		introDeleteObject.Call(font)
 		failIntroStart(err)
 		return
 	}
 
 	s := &introSession{
-		hwnd:      hwnd,
-		width:     int(w),
-		height:    int(h),
-		mode:      introModeImage,
-		imageBGRA: pixels,
-		imageW:    imageW,
-		imageH:    imageH,
-		font:      font,
-		done:      make(chan struct{}),
+		hwnd:       hwnd,
+		shieldHwnd: shieldHwnd,
+		width:      int(w),
+		height:     int(h),
+		mode:       introModeImage,
+		imageBGRA:  pixels,
+		imageW:     imageW,
+		imageH:     imageH,
+		font:       font,
+		done:       make(chan struct{}),
 	}
 	if !setCurrentIntro(s) {
 		introDestroyWindow.Call(hwnd)
+		introDestroyWindow.Call(shieldHwnd)
 		introDeleteObject.Call(font)
 		failIntroStart(fmt.Errorf("another intro session is already active"))
 		return
@@ -542,13 +607,19 @@ func runStartupIntro() {
 		}
 		clearCurrentIntro(s)
 		close(s.done)
-		if !exiting {
+		if !exiting && !s.mainShown {
 			releaseStartupLock()
 			showWindow()
 		}
 	}()
 
+	setIntroAlpha(shieldHwnd, 255)
 	setIntroAlpha(hwnd, 0)
+
+	procShowWindow.Call(shieldHwnd, swShow)
+	introInvalidateRect.Call(shieldHwnd, 0, 0)
+	introUpdateWindow.Call(shieldHwnd)
+
 	procShowWindow.Call(hwnd, swShow)
 	procSetForegroundWindow.Call(hwnd)
 	introInvalidateRect.Call(hwnd, 0, 0)
