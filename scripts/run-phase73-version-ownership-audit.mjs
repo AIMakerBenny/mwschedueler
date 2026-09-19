@@ -17,7 +17,7 @@ export function runPhase73VersionOwnershipAudit(){
   if(tools.includes("mwsBuildVersion")||tools.includes("sidebar-build-version"))issues.push('tools still targets visible version nodes');
   if(!tools.includes("window.mwsApplyAppVersionV120?.()"))issues.push('tools no longer delegates version display');
   if(planner.includes("const BUILD='Mawang Scheduler v1.0'"))issues.push('planner still carries obsolete version owner state');
-  if(!planner.includes("tools.js?v=1.4.0-phase74"))issues.push('planner does not cache-bust the fixed tools runtime');
+  if(!/tools\.js\?v=1\.4\.0-phase(?:7[4-9]|[89][0-9]|[1-9][0-9]{2,})/.test(planner))issues.push('planner does not cache-bust the fixed tools runtime');
   if(perf.includes("setAttribute('data-build-version'"))issues.push('perf runtime still writes build version');
   if(perf.includes("label.textContent='Mawang Scheduler v 1.3.0'"))issues.push('perf runtime still has stale visible-version fallback');
   if(!/content-planner-host\.js\?v=1\.4\.0-phase(?:7[4-9]|[89][0-9]|[1-9][0-9]{2,})/.test(perf))issues.push('perf runtime planner host cache is older than the Phase 73 baseline');
