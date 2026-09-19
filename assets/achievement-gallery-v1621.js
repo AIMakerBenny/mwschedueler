@@ -13,6 +13,8 @@ let detailLastFocus=null;
 let detailCardId='';
 let detailRotation={x:0,y:0};
 let detailDrag=null;
+let detailTouchFrame=0;
+let detailTouchPending=null;
 let managerModal=null;
 let managerLastFocus=null;
 let managerSelectedId='';
@@ -107,17 +109,52 @@ async function loadFront(card,view,token){
   }
 }
 
-function applyDetailRotation(root=detailModal){
+function applyDetailRotation(root=detailModal,syncDataset=true){
   const card=root?.querySelector('[data-achievement-card3d]');
   if(!card)return;
   card.style.transform=`rotateX(${detailRotation.x.toFixed(2)}deg) rotateY(${detailRotation.y.toFixed(2)}deg)`;
-  card.dataset.rotateX=String(Math.round(detailRotation.x));
-  card.dataset.rotateY=String(Math.round(detailRotation.y));
+  if(syncDataset){
+    card.dataset.rotateX=String(Math.round(detailRotation.x));
+    card.dataset.rotateY=String(Math.round(detailRotation.y));
+  }
+}
+function cancelDetailTouchFrame(){
+  if(detailTouchFrame){
+    cancelAnimationFrame(detailTouchFrame);
+    detailTouchFrame=0;
+  }
+  detailTouchPending=null;
+}
+function renderPendingDetailTouch(){
+  detailTouchFrame=0;
+  const next=detailTouchPending;
+  detailTouchPending=null;
+  if(!next)return;
+  detailRotation=next;
+  applyDetailRotation(detailModal,false);
+}
+function queueDetailTouchRotation(x,y){
+  detailTouchPending={x,y};
+  if(detailTouchFrame)return;
+  detailTouchFrame=requestAnimationFrame(renderPendingDetailTouch);
+}
+function flushDetailTouchRotation(){
+  if(detailTouchFrame){
+    cancelAnimationFrame(detailTouchFrame);
+    detailTouchFrame=0;
+  }
+  if(detailTouchPending){
+    detailRotation=detailTouchPending;
+    detailTouchPending=null;
+  }
+  applyDetailRotation();
 }
 function resetDetailRotation(){
+  cancelDetailTouchFrame();
   detailRotation={x:0,y:0};
   detailDrag=null;
-  detailModal?.querySelector('[data-achievement-stage]')?.classList.remove('dragging');
+  detailModal?.classList.remove('is-touch-rotating');
+  detailModal?.querySelector('[data-achievement-stage]')?.classList.remove('dragging','touch-dragging');
   applyDetailRotation();
 }
 const TOUCH_DRAG_THRESHOLD=8;
@@ -127,7 +164,10 @@ const TOUCH_ROTATE_Y_PER_PX=1.18;
 function activateDetailDrag(stage,event){
   detailDrag.mode='rotate';
   stage.classList.add('dragging');
-  if(detailDrag.pointerType==='touch')stage.classList.add('touch-dragging');
+  if(detailDrag.pointerType==='touch'){
+    stage.classList.add('touch-dragging');
+    detailModal?.classList.add('is-touch-rotating');
+  }
   try{stage.setPointerCapture(event.pointerId)}catch(_){}
 }
 function beginDetailDrag(event){
@@ -167,8 +207,11 @@ function moveDetailDrag(event){
   if(detailDrag.mode!=='rotate')return;
   event.preventDefault();
   if(detailDrag.pointerType==='touch'){
-    detailRotation.x=clamp(detailDrag.rotateX-clamp(dy,-120,120)*TOUCH_ROTATE_X_PER_PX,-32,32);
-    detailRotation.y=detailDrag.rotateY+dx*TOUCH_ROTATE_Y_PER_PX;
+    queueDetailTouchRotation(
+      clamp(detailDrag.rotateX-clamp(dy,-120,120)*TOUCH_ROTATE_X_PER_PX,-32,32),
+      detailDrag.rotateY+dx*TOUCH_ROTATE_Y_PER_PX
+    );
+    return;
   }else{
     detailRotation.x=clamp(detailDrag.rotateX-dy*.34,-35,35);
     detailRotation.y=detailDrag.rotateY+dx*.58;
@@ -178,9 +221,11 @@ function moveDetailDrag(event){
 function endDetailDrag(event){
   if(!detailDrag||event.pointerId!==detailDrag.pointerId)return;
   const stage=event.currentTarget;
+  if(detailDrag.pointerType==='touch')flushDetailTouchRotation();
   try{if(stage.hasPointerCapture?.(event.pointerId))stage.releasePointerCapture(event.pointerId)}catch(_){}
   detailDrag=null;
   stage.classList.remove('dragging','touch-dragging');
+  detailModal?.classList.remove('is-touch-rotating');
 }
 
 function ensureDetailModal(){
@@ -246,8 +291,10 @@ function ensureDetailModal(){
   stage?.addEventListener('pointercancel',endDetailDrag);
   stage?.addEventListener('lostpointercapture',event=>{
     if(detailDrag&&event.pointerId===detailDrag.pointerId){
+      if(detailDrag.pointerType==='touch')flushDetailTouchRotation();
       detailDrag=null;
       stage.classList.remove('dragging','touch-dragging');
+      detailModal?.classList.remove('is-touch-rotating');
     }
   });
   stage?.addEventListener('dblclick',event=>{if(!event.pointerType||event.pointerType==='mouse')resetDetailRotation()});
@@ -363,6 +410,8 @@ function closeDetail(){
   detailToken++;
   detailModal.hidden=true;
   document.body.classList.remove('mws-achievement-modal-open');
+  cancelDetailTouchFrame();
+  detailModal.classList.remove('is-touch-rotating');
   detailDrag=null;
   detailCardId='';
   clearDetailObjectUrls();
