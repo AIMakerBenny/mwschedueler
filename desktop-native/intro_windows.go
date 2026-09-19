@@ -48,7 +48,6 @@ const (
 	introVKEscape              = 0x1B
 	introVKSpace               = 0x20
 	introFontMedium            = 500
-	introFontSemibold          = 600
 	introModeImage       uint8 = 0
 	introModeText        uint8 = 1
 )
