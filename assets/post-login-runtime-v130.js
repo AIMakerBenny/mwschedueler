@@ -1,4 +1,4 @@
-/* Mawang Scheduler v1.3.0 - isolated post-login UI/runtime loader */
+/* Mawang Scheduler v1.3.0 - isolated post-login UI/runtime loader, Phase 96 */
 (()=>{
 'use strict';
 if(window.__mwsPostLoginRuntimeV130)return;
@@ -84,8 +84,8 @@ async function start(){
 
   const optionalResults=[];
   optionalResults.push(await load('achievement-media-v1621','/assets/achievement-media-v1621.js?v=1.6.21-phase88','__mwsAchievementMediaRuntimeV1621'));
-  optionalResults.push(await loadStyle('achievement-gallery-v1621','/assets/achievement-gallery-v1621.css?v=1.6.21-phase95'));
-  optionalResults.push(await load('achievement-gallery-v1621','/assets/achievement-gallery-v1621.js?v=1.6.21-phase95','__mwsAchievementGalleryRuntimeV1621'));
+  optionalResults.push(await loadStyle('achievement-gallery-v1621','/assets/achievement-gallery-v1621.css?v=1.6.21-phase96'));
+  optionalResults.push(await load('achievement-gallery-v1621','/assets/achievement-gallery-v1621.js?v=1.6.21-phase96','__mwsAchievementGalleryRuntimeV1621'));
   optionalResults.push(await load('mobile-access-tools-v130','/assets/mobile-access-tools-v130.js?v=1.3.0-mobile-cleanup','__mwsMobileAccessToolsV130'));
   window.__mwsPostLoginOptionalErrorsV130=optionalResults.filter(x=>!x.ok).map(x=>x.key);
   window.__mwsPostLoginUiFailedV130=false;

@@ -1,4 +1,4 @@
-/* Mawang Scheduler v1.6.21 - Achievement manager runtime, Phase 95 */
+/* Mawang Scheduler v1.6.21 - Achievement image manager runtime, Phase 96 */
 (()=>{
 'use strict';
 if(window.__mwsAchievementGalleryRuntimeV1621)return;
@@ -17,6 +17,9 @@ let managerModal=null;
 let managerLastFocus=null;
 let managerSelectedId='';
 let managerDirty=false;
+let managerObjectUrls=[];
+let managerMediaToken=0;
+let managerImageBusy=false;
 
 function cards(){
   try{
@@ -376,6 +379,127 @@ function setManagerStatus(message,tone=''){
   el.textContent=String(message||'');
   el.dataset.tone=tone;
 }
+function managerMedia(){return window.mwsAchievementMediaV1||null}
+function managerImageField(kind){return kind==='back'?'backImageId':'frontImageId'}
+function managerImageLabel(kind){return kind==='back'?'뒷면':'앞면'}
+function clearManagerObjectUrls(){revokeAll(managerObjectUrls)}
+function setManagerImageBusy(busy){
+  managerImageBusy=Boolean(busy);
+  const root=managerModal;
+  if(!root)return;
+  root.classList.toggle('is-media-busy',managerImageBusy);
+  root.querySelectorAll('[data-achievement-manager-pick],[data-achievement-manager-file]').forEach(control=>{control.disabled=managerImageBusy});
+}
+function managerDraftPatch(){
+  const root=ensureManagerModal();
+  return {
+    gameName:root.querySelector('[data-achievement-manager-game]')?.value||'',
+    contentName:root.querySelector('[data-achievement-manager-content]')?.value||'',
+    description:root.querySelector('[data-achievement-manager-description]')?.value||''
+  };
+}
+async function managerImageDimensions(blob){
+  if(typeof createImageBitmap!=='function')return {width:0,height:0};
+  try{
+    const bitmap=await createImageBitmap(blob);
+    const dimensions={width:Math.max(0,Number(bitmap.width)||0),height:Math.max(0,Number(bitmap.height)||0)};
+    try{bitmap.close?.()}catch(_){}
+    return dimensions;
+  }catch(_){return {width:0,height:0}}
+}
+async function renderManagerMediaPreview(card,kind,token){
+  const root=managerModal;
+  const preview=root?.querySelector(`[data-achievement-manager-preview="${kind}"]`);
+  const state=preview?.querySelector('[data-achievement-manager-preview-state]');
+  if(!preview||!state)return;
+  preview.querySelector('img')?.remove();
+  preview.classList.remove('has-image','is-loading');
+  const imageId=String(card?.[managerImageField(kind)]||'');
+  state.textContent=imageId?`${managerImageLabel(kind)} 이미지를 불러오는 중입니다.`:`${managerImageLabel(kind)} 이미지가 등록되지 않았습니다.`;
+  if(!imageId)return;
+  const media=managerMedia();
+  if(!media?.getBlob){state.textContent='카드 이미지 저장소를 불러오지 못했습니다.';return}
+  preview.classList.add('is-loading');
+  try{
+    const blob=await media.getBlob(imageId);
+    if(token!==managerMediaToken)return;
+    if(!(blob instanceof Blob)){
+      preview.classList.remove('is-loading');
+      state.textContent='등록된 카드 이미지를 찾을 수 없습니다.';
+      return;
+    }
+    const url=URL.createObjectURL(blob);
+    if(token!==managerMediaToken){URL.revokeObjectURL(url);return}
+    managerObjectUrls.push(url);
+    const img=document.createElement('img');
+    img.alt=`${text(card?.gameName,'업적 카드')} ${managerImageLabel(kind)} 미리보기`;
+    img.decoding='async';
+    img.draggable=false;
+    img.src=url;
+    img.onload=()=>{if(token===managerMediaToken){preview.classList.remove('is-loading');preview.classList.add('has-image')}};
+    img.onerror=()=>{if(token===managerMediaToken){preview.classList.remove('is-loading');state.textContent='이미지를 표시할 수 없습니다.'}};
+    preview.appendChild(img);
+  }catch(error){
+    console.warn('Achievement manager preview load failed',imageId,error);
+    if(token===managerMediaToken){preview.classList.remove('is-loading');state.textContent='이미지를 불러오지 못했습니다.'}
+  }
+}
+function renderManagerMediaPreviews(card){
+  const token=++managerMediaToken;
+  clearManagerObjectUrls();
+  void Promise.allSettled([renderManagerMediaPreview(card,'front',token),renderManagerMediaPreview(card,'back',token)]);
+}
+function openManagerFilePicker(kind){
+  if(managerImageBusy)return;
+  const input=managerModal?.querySelector(`[data-achievement-manager-file="${kind}"]`);
+  if(!input)return;
+  input.value='';
+  input.click();
+}
+function managerImageFile(files){
+  return Array.from(files||[]).find(file=>file instanceof File&&String(file.type||'').toLowerCase().startsWith('image/'))||null;
+}
+async function replaceManagerImage(kind,file){
+  kind=kind==='back'?'back':'front';
+  if(!(file instanceof File)||!String(file.type||'').toLowerCase().startsWith('image/')){
+    setManagerStatus('이미지 파일만 등록할 수 있습니다.','error');
+    return false;
+  }
+  const card=managerCurrentCard();
+  const api=managerApi();
+  const media=managerMedia();
+  if(!card||!api?.update){setManagerStatus('이미지를 등록할 카드를 선택해 주세요.','error');return false}
+  if(!media?.put||!media?.remove){setManagerStatus('카드 이미지 저장소를 불러오지 못했습니다.','error');return false}
+  if(managerImageBusy)return false;
+  const cardId=String(card.id||'');
+  const field=managerImageField(kind);
+  const label=managerImageLabel(kind);
+  let createdId='';
+  setManagerImageBusy(true);
+  setManagerStatus(`${label} 이미지를 저장하는 중입니다.`,'warn');
+  try{
+    const {width,height}=await managerImageDimensions(file);
+    const stored=await media.put(file,{kind,width,height});
+    createdId=String(stored?.id||'');
+    if(!createdId)throw new Error('Achievement media id was not created');
+    const latest=cardById(cardId);
+    if(!latest)throw new Error('Achievement card no longer exists');
+    const patch={...managerDraftPatch(),[field]:createdId};
+    const result=api.update(cardId,patch);
+    if(!result?.ok||result.saved!==true)throw new Error('Achievement metadata commit failed');
+    managerDirty=false;
+    if(managerSelectedId===cardId)renderManager();
+    setManagerStatus(`${label} 이미지를 저장했습니다.`,'ok');
+    return true;
+  }catch(error){
+    if(createdId){
+      try{await media.remove(createdId)}catch(cleanupError){console.warn('Unreferenced achievement media rollback failed',createdId,cleanupError)}
+    }
+    console.error('Achievement image replacement failed',error);
+    setManagerStatus(`${label} 이미지 저장에 실패했습니다. 기존 이미지는 유지됩니다.`,'error');
+    return false;
+  }finally{setManagerImageBusy(false)}
+}
 function ensureManagerModal(){
   if(managerModal?.isConnected)return managerModal;
   const root=document.createElement('div');
@@ -432,7 +556,30 @@ function ensureManagerModal(){
               <span>설명</span>
               <textarea rows="8" maxlength="4000" data-achievement-manager-description placeholder="업적 카드 설명"></textarea>
             </label>
-            <div class="achievement-manager-image-note">카드 앞면·뒷면 이미지 추가는 다음 단계에서 연결됩니다.</div>
+            <div class="achievement-manager-media-grid">
+              <section class="achievement-manager-media-card">
+                <div class="achievement-manager-media-head"><strong>앞면 이미지</strong><span>2:3 권장</span></div>
+                <div class="achievement-manager-dropzone" data-achievement-manager-drop="front" tabindex="0">
+                  <div class="achievement-manager-media-preview" data-achievement-manager-preview="front"><span data-achievement-manager-preview-state>앞면 이미지가 등록되지 않았습니다.</span></div>
+                  <div class="achievement-manager-media-actions">
+                    <button type="button" class="secondary" data-achievement-manager-pick="front">파일 선택</button>
+                    <small class="achievement-manager-media-hint">PC에서는 이미지를 끌어다 놓을 수 있습니다.</small>
+                  </div>
+                  <input type="file" accept="image/*" data-achievement-manager-file="front" hidden>
+                </div>
+              </section>
+              <section class="achievement-manager-media-card">
+                <div class="achievement-manager-media-head"><strong>뒷면 이미지</strong><span>2:3 권장</span></div>
+                <div class="achievement-manager-dropzone" data-achievement-manager-drop="back" tabindex="0">
+                  <div class="achievement-manager-media-preview" data-achievement-manager-preview="back"><span data-achievement-manager-preview-state>뒷면 이미지가 등록되지 않았습니다.</span></div>
+                  <div class="achievement-manager-media-actions">
+                    <button type="button" class="secondary" data-achievement-manager-pick="back">파일 선택</button>
+                    <small class="achievement-manager-media-hint">PC에서는 이미지를 끌어다 놓을 수 있습니다.</small>
+                  </div>
+                  <input type="file" accept="image/*" data-achievement-manager-file="back" hidden>
+                </div>
+              </section>
+            </div>
             <div class="achievement-manager-editor-actions">
               <button type="button" class="secondary achievement-manager-delete" data-achievement-manager-delete>삭제</button>
               <button type="submit" class="primary" data-achievement-manager-save>저장</button>
@@ -450,6 +597,56 @@ function ensureManagerModal(){
     if(!event.target.matches?.('[data-achievement-manager-game],[data-achievement-manager-content],[data-achievement-manager-description]'))return;
     managerDirty=true;
     setManagerStatus('저장하지 않은 변경사항이 있습니다.','warn');
+  });
+  root.querySelectorAll('[data-achievement-manager-pick]').forEach(button=>{
+    button.addEventListener('click',event=>{
+      event.preventDefault();
+      event.stopPropagation();
+      openManagerFilePicker(String(button.dataset.achievementManagerPick||'front'));
+    });
+  });
+  root.querySelectorAll('[data-achievement-manager-file]').forEach(input=>{
+    input.addEventListener('change',()=>{
+      const kind=String(input.dataset.achievementManagerFile||'front');
+      const file=managerImageFile(input.files);
+      input.value='';
+      if(file)void replaceManagerImage(kind,file);
+    });
+  });
+  root.querySelectorAll('[data-achievement-manager-drop]').forEach(drop=>{
+    const kind=String(drop.dataset.achievementManagerDrop||'front');
+    drop.addEventListener('click',event=>{
+      if(event.target.closest?.('[data-achievement-manager-pick]'))return;
+      openManagerFilePicker(kind);
+    });
+    drop.addEventListener('keydown',event=>{
+      if(event.key!=='Enter'&&event.key!==' ')return;
+      event.preventDefault();
+      openManagerFilePicker(kind);
+    });
+    drop.addEventListener('dragenter',event=>{
+      if(managerImageBusy||!Array.from(event.dataTransfer?.types||[]).includes('Files'))return;
+      event.preventDefault();
+      drop.classList.add('is-dragover');
+    });
+    drop.addEventListener('dragover',event=>{
+      if(managerImageBusy||!Array.from(event.dataTransfer?.types||[]).includes('Files'))return;
+      event.preventDefault();
+      if(event.dataTransfer)event.dataTransfer.dropEffect='copy';
+      drop.classList.add('is-dragover');
+    });
+    drop.addEventListener('dragleave',event=>{
+      if(event.relatedTarget&&drop.contains(event.relatedTarget))return;
+      drop.classList.remove('is-dragover');
+    });
+    drop.addEventListener('drop',event=>{
+      event.preventDefault();
+      drop.classList.remove('is-dragover');
+      if(managerImageBusy)return;
+      const file=managerImageFile(event.dataTransfer?.files);
+      if(!file){setManagerStatus('드롭한 파일에서 이미지를 찾지 못했습니다.','error');return}
+      void replaceManagerImage(kind,file);
+    });
   });
   root.addEventListener('click',event=>{if(event.target===root)closeManager()});
   document.body.appendChild(root);
@@ -500,6 +697,8 @@ function renderManagerEditor(){
   const card=managerCurrentCard();
   if(!empty||!editor)return;
   if(!card){
+    managerMediaToken++;
+    clearManagerObjectUrls();
     empty.hidden=false;
     editor.hidden=true;
     return;
@@ -511,6 +710,7 @@ function renderManagerEditor(){
   root.querySelector('[data-achievement-manager-game]').value=String(card.gameName||'');
   root.querySelector('[data-achievement-manager-content]').value=String(card.contentName||'');
   root.querySelector('[data-achievement-manager-description]').value=String(card.description||'');
+  renderManagerMediaPreviews(card);
 }
 function renderManager(){
   const list=cards();
@@ -521,6 +721,7 @@ function renderManager(){
   renderManagerEditor();
 }
 function selectManagerCard(id){
+  if(managerImageBusy){setManagerStatus('이미지 저장이 끝난 뒤 다른 카드를 선택해 주세요.','warn');return}
   const next=String(id||'');
   if(next===managerSelectedId)return;
   if(managerDirty&&!window.confirm('저장하지 않은 변경사항이 있습니다. 다른 카드로 이동할까요?'))return;
@@ -531,6 +732,7 @@ function selectManagerCard(id){
   renderManagerEditor();
 }
 function createManagerCard(){
+  if(managerImageBusy){setManagerStatus('이미지 저장이 끝난 뒤 새 카드를 추가해 주세요.','warn');return}
   const api=managerApi();
   if(!api?.create){setManagerStatus('카드 저장 기능을 불러오지 못했습니다.','error');return}
   if(managerDirty&&!window.confirm('저장하지 않은 변경사항을 버리고 새 카드를 추가할까요?'))return;
@@ -544,6 +746,7 @@ function createManagerCard(){
 }
 function saveManagerCard(event){
   event?.preventDefault();
+  if(managerImageBusy){setManagerStatus('이미지 저장이 끝난 뒤 다시 저장해 주세요.','warn');return}
   const card=managerCurrentCard();
   const api=managerApi();
   if(!card||!api?.update){setManagerStatus('저장할 카드를 선택해 주세요.','error');return}
@@ -560,12 +763,15 @@ function saveManagerCard(event){
   setManagerStatus(result.saved?'업적 카드 정보를 저장했습니다.':'변경사항은 화면에 반영했지만 브라우저 저장 공간을 확인해 주세요.',result.saved?'ok':'warn');
 }
 function deleteManagerCard(){
+  if(managerImageBusy){setManagerStatus('이미지 저장이 끝난 뒤 카드를 삭제해 주세요.','warn');return}
   const card=managerCurrentCard();
   const api=managerApi();
   if(!card||!api?.remove){setManagerStatus('삭제할 카드를 선택해 주세요.','error');return}
   const label=text(card.contentName,text(card.gameName,'이 업적 카드'));
   if(!window.confirm(`"${label}" 카드를 삭제하시겠습니까?`))return;
   const previousIndex=cards().findIndex(item=>String(item.id||'')===String(card.id||''));
+  // Phase 96 policy: metadata deletion intentionally leaves media blobs untouched.
+  // A blob may be referenced by another card, so automatic cleanup must wait for a reference-scanning GC.
   const result=api.remove(card.id);
   if(!result?.ok){setManagerStatus('업적 카드를 삭제하지 못했습니다.','error');return}
   managerDirty=false;
@@ -601,8 +807,11 @@ function openManager(){
 }
 function closeManager(){
   if(!managerModal||managerModal.hidden)return;
+  if(managerImageBusy){setManagerStatus('이미지 저장이 끝난 뒤 관리창을 닫아 주세요.','warn');return}
   if(managerDirty&&!window.confirm('저장하지 않은 변경사항이 있습니다. 관리창을 닫을까요?'))return;
   managerDirty=false;
+  managerMediaToken++;
+  clearManagerObjectUrls();
   managerModal.hidden=true;
   document.body.classList.remove('mws-achievement-manager-open');
   const focus=managerLastFocus;

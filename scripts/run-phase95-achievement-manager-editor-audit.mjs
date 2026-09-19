@@ -19,7 +19,7 @@ export function runPhase95AchievementManagerEditorAudit(){
     'update:mwsAchievementUpdateCardV1621',
     'remove:mwsAchievementDeleteCardV1621',
     "saveData('업적 카드 추가')",
-    "saveData('업적 카드 저장')",
+    "lastSyncReason=reason",
     "saveData('업적 카드 삭제')",
     'data.achievementCards.forEach((card,order)=>{card.order=order})'
   ]){

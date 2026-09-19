@@ -168,14 +168,26 @@ function mwsAchievementUpdateCardV1621(id,patch={}){
   normalizeDataShape();
   const card=data.achievementCards.find(item=>item.id===String(id||''));
   if(!card)return {ok:false,saved:false,card:null};
+  const previous=mwsAchievementCardClone(card);
   if(Object.prototype.hasOwnProperty.call(patch,'gameName'))card.gameName=String(patch.gameName||'').trim();
   if(Object.prototype.hasOwnProperty.call(patch,'contentName'))card.contentName=String(patch.contentName||'').trim();
   if(Object.prototype.hasOwnProperty.call(patch,'description'))card.description=String(patch.description||'');
   if(Object.prototype.hasOwnProperty.call(patch,'frontImageId'))card.frontImageId=String(patch.frontImageId||'');
   if(Object.prototype.hasOwnProperty.call(patch,'backImageId'))card.backImageId=String(patch.backImageId||'');
   card.updatedAt=new Date().toISOString();
-  const saved=saveData('업적 카드 저장');
-  return {ok:true,saved,card:mwsAchievementCardClone(card)};
+  const reason='업적 카드 저장';
+  const saved=persist();
+  if(!saved){
+    Object.assign(card,previous);
+    renderAll('업적 카드 저장 실패');
+    updateStorageStatus(false);
+    return {ok:false,saved:false,card:mwsAchievementCardClone(card)};
+  }
+  lastSyncReason=reason;
+  renderAll(reason);
+  updateStorageStatus(true);
+  try{window.dispatchEvent(new CustomEvent('mawang:datachange',{detail:{reason}}))}catch(e){}
+  return {ok:true,saved:true,card:mwsAchievementCardClone(card)};
 }
 function mwsAchievementDeleteCardV1621(id){
   normalizeDataShape();
