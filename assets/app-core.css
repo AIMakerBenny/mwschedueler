@@ -4618,6 +4618,15 @@ body.sidebar-pinned .sidebar:not(:hover){
 }
 
 
+/* Sidebar nav groups: collapsed rows must stay hidden even when pinned/hover geometry forces button display. */
+html body .app .sidebar .nav .nav-scroll>button.mws-nav-group-hidden,
+html body.sidebar-pinned .app .sidebar .nav .nav-scroll>button.mws-nav-group-hidden,
+html body.sidebar-pinned .app .sidebar:hover .nav .nav-scroll>button.mws-nav-group-hidden,
+html body.sidebar-pinned .app .sidebar:not(:hover) .nav .nav-scroll>button.mws-nav-group-hidden{
+  display:none!important;
+}
+
+
 /* v3.0 - robust clipboard pointer drag */
 .calendar-copy-chip{touch-action:none!important}
 .calendar-template-ghost{
