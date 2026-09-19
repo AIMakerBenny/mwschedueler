@@ -26,7 +26,7 @@ export function runPhase90AchievementGalleryAudit(){
     "img.decoding='async'",
     'URL.createObjectURL(blob)',
     'URL.revokeObjectURL(url)',
-    'clearObjectUrls();',
+    'clearGalleryObjectUrls();',
     'count.textContent=',
     'empty.hidden=list.length>0',
     'grid.hidden=list.length===0'
