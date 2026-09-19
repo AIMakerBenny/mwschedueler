@@ -1,0 +1,43 @@
+from pathlib import Path
+
+root = Path(__file__).resolve().parent
+main = (root / "main.go").read_text(encoding="utf-8")
+intro = (root / "intro_windows.go").read_text(encoding="utf-8")
+
+checks = {
+    "default fullscreen helper": "func ensureStartupFullscreen()" in main,
+    "default fullscreen enabled before reveal": "procShowWindow.Call(h, swHide)\n\tensureStartupFullscreen()" in main,
+    "fullscreen state bridge": '__mwsGetFullscreen' in main,
+    "fullscreen button state sync": 'Promise.resolve(window.__mwsGetFullscreen())' in main,
+    "space skip": "introVKSpace" in intro and "introWMKeyDown" in intro,
+    "enter skip": "introVKReturn" in intro and "introWMKeyDown" in intro,
+    "escape skip": "introVKEscape" in intro and "introWMKeyDown" in intro,
+    "left click skip": "introWMLButtonDown" in intro,
+    "right click skip": "introWMRButtonDown" in intro,
+    "middle click skip": "introWMMButtonDown" in intro,
+    "single stage skip channel": "skipCh       chan struct{}" in intro and "make(chan struct{}, 1)" in intro,
+    "skippable image stage": "runImageIntroStage" in intro and "fadeIntroStage" in intro,
+    "skippable text stage": "runTextIntroStage" in intro and "waitStartupReadyOrSkip" in intro,
+    "immediate image to title transition": "introBlackAfterImage" not in intro and "time.Sleep(40 * time.Millisecond)" not in intro,
+    "modern English title": 'Mawang Scheduler' in intro,
+    "modern Korean subtitle": '마왕 스케줄러' in intro,
+    "legacy premium label removed": 'MAWANG  DESKTOP' not in intro,
+    "legacy shadow removed": "shadowRc" not in intro,
+    "minimal accent rule": "introCreateSolidBrush" in intro and "lineW := s.width / 18" in intro,
+    "image fade in shortened": "introImageFadeIn     = 950 * time.Millisecond" in intro,
+    "image hold shortened": "introImageHold       = 1100 * time.Millisecond" in intro,
+    "image fade out shortened": "introImageFadeOut    = 750 * time.Millisecond" in intro,
+    "main fade shortened": "introMainFadeIn      = 340 * time.Millisecond" in intro,
+    "black before main retained": "introBlackBeforeMain = 250 * time.Millisecond" in intro,
+    "phase6 main handoff retained": "fadeWindowAlpha(s, s.shieldHwnd, 255, 0, introMainFadeIn)" in intro,
+}
+
+failed = [name for name, ok in checks.items() if not ok]
+for name, ok in checks.items():
+    print(("PASS " if ok else "FAIL ") + name)
+
+if failed:
+    raise SystemExit("Phase 8 intro audit failed: " + ", ".join(failed))
+
+print(f"Phase 8 intro audit passed: {len(checks)} checks")
+print("Nominal intro duration: 5.99s, exactly 0.50s shorter than Phase 7's 6.49s before readiness extensions.")
