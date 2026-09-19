@@ -1,0 +1,96 @@
+/* Mawang Scheduler v1.6.21 - Achievement gallery, Phase 90 */
+#achievements .achievement-gallery-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+}
+#achievements .achievement-gallery-head-copy{
+  min-width:0;
+}
+#achievements .achievement-count-chip{
+  flex:0 0 auto;
+}
+#achievementGallery{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+  gap:18px;
+  align-items:start;
+}
+#achievementGallery[hidden],
+#achievementEmptyState[hidden]{
+  display:none!important;
+}
+.achievement-card-tile{
+  min-width:0;
+  display:grid;
+  gap:9px;
+}
+.achievement-card-thumb{
+  position:relative;
+  width:100%;
+  aspect-ratio:2/3;
+  overflow:hidden;
+  border:1px solid color-mix(in srgb,var(--border) 88%,transparent);
+  border-radius:16px;
+  background:
+    radial-gradient(circle at 30% 15%,color-mix(in srgb,var(--accent) 14%,transparent),transparent 45%),
+    color-mix(in srgb,var(--panel) 92%,#000);
+  box-shadow:0 14px 34px rgba(0,0,0,.22);
+}
+.achievement-card-thumb img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:#070a12;
+}
+.achievement-card-placeholder{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  text-align:center;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:800;
+  line-height:1.45;
+}
+.achievement-card-thumb.has-image .achievement-card-placeholder{
+  display:none;
+}
+.achievement-card-caption{
+  min-width:0;
+  padding:0 3px;
+}
+.achievement-card-game{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:var(--text);
+  font-size:13px;
+  font-weight:900;
+  line-height:1.35;
+}
+.achievement-card-content{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  margin-top:2px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.35;
+}
+@media(max-width:760px){
+  #achievementGallery{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+  }
+  .achievement-card-thumb{
+    border-radius:13px;
+  }
+}
