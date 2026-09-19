@@ -19,7 +19,7 @@ export function runPhase52NotebookPlannerOrderAudit(){
   const libraryPos=index.indexOf('id="memoLibraryTab"');
   const favoritePos=index.indexOf('id="memoFavoritesTab"');
   if(libraryPos<0||favoritePos<0||libraryPos>favoritePos)issues.push('memo tab DOM order is not notebook then favorites');
-  if(!index.includes('assets/app-core.css?v=1.3.0-order52'))issues.push('app-core stylesheet cache-bust was not advanced');
+  if(!/assets\/app-core\.css\?v=(?:1\.3\.0-order(?:5[2-9]|[6-9][0-9]|[1-9][0-9]{2,})|1\.6\.21-navfix\d+)/.test(index))issues.push('app-core stylesheet cache-bust is older than the Phase 52 baseline');
   if(!perf.includes('content-planner-host.js?v=1.4.0-phase74'))issues.push('content planner host cache-bust was not advanced');
 
   const summary={phase:52,name:'notebook-content-planner-order',issues,warnings,pass:issues.length===0};
