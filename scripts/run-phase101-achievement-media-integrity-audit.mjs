@@ -35,7 +35,7 @@ export function runPhase101AchievementMediaIntegrityAudit(){
     }
   }
 
-  if(!/assets\/app-core\.js\?v=1\.3\.0-search(?:101|1[1-9][0-9]|[2-9][0-9]{2,})/.test(index)){
+  if(!/assets\/app-core\.js\?v=1\.3\.0-search(?:10[1-9]|1[1-9][0-9]|[2-9][0-9]{2,})/.test(index)){
     issues.push('app-core cache-bust is older than search101');
   }
 
