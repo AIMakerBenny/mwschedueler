@@ -43,8 +43,8 @@ export function runPhase93AchievementTouchAudit(){
   }
   if(css.includes('touch-action:none'))issues.push('achievement card touch CSS blocks native scrolling');
 
-  if(!post.includes("achievement-gallery-v1621.css?v=1.6.21-phase93"))issues.push('Phase 93 achievement mobile CSS cache is missing');
-  if(!post.includes("achievement-gallery-v1621.js?v=1.6.21-phase93"))issues.push('Phase 93 achievement mobile runtime cache is missing');
+  if(!/achievement-gallery-v1621\.css\?v=1\.6\.21-phase(?:9[3-9]|[1-9][0-9]{2,})/.test(post))issues.push('achievement mobile CSS cache is older than Phase 93');
+  if(!/achievement-gallery-v1621\.js\?v=1\.6\.21-phase(?:9[3-9]|[1-9][0-9]{2,})/.test(post))issues.push('achievement mobile runtime cache is older than Phase 93');
   if(!/post-login-runtime-v130\.js\?v=1\.4\.0-phase(?:9[3-9]|[1-9][0-9]{2,})/.test(entry))issues.push('Worker post-login cache-bust is older than Phase 93');
 
   const summary={phase:93,name:'achievement-mobile-touch',issues,warnings,pass:issues.length===0};
