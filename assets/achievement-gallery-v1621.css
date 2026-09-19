@@ -154,7 +154,7 @@ body.mws-achievement-modal-open{overflow:hidden!important}
 }
 .achievement-detail-stage{
   width:min(100%,500px,calc((94vh - 150px)*2/3));
-  perspective:1600px;
+  perspective:1400px;
   perspective-origin:50% 48%;
   user-select:none;
   touch-action:pan-y pinch-zoom;
