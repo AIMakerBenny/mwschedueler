@@ -143,6 +143,56 @@ async function storeDataImage(env,kind,key,dataUrl,authoritative=true,saveContex
   if(saveContext?.statements)saveContext.statements.push(statement);else await statement.run();
   return mediaUrl(kind,key,version,token);
 }
+async function recoverContactImageRefs(env,raw){
+  const contacts=Array.isArray(raw)?structuredClone(raw):[];
+  const missing=contacts.filter(item=>item&&typeof item==='object'&&String(item.id||'').trim()&&!String(item.image||'').trim());
+  if(!missing.length)return {contacts,recovered:0};
+  const {results=[]}=await env.DB.prepare("SELECT item_key,version,source_url FROM image_sources WHERE kind='contact'").all();
+  const registry=new Map(results.map(row=>[String(row.item_key||''),row]));
+  let recovered=0;
+  for(const item of missing){
+    const id=String(item.id||'').trim(),record=registry.get(id);
+    if(!record)continue;
+    const version=Math.max(1,Number(record.version)||1),token=tokenFromImageSource(record.source_url);
+    item.image=mediaUrl('contact',id,version,token);
+    recovered++;
+  }
+  return {contacts,recovered};
+}
+async function preserveContactImagesForSave(env,raw){
+  const incoming=Array.isArray(raw)?structuredClone(raw):[];
+  const previousRow=await env.DB.prepare("SELECT data FROM workspace_parts WHERE scope='public' AND part='contacts'").first();
+  let previous=[];try{previous=JSON.parse(previousRow?.data||'[]')}catch(_){}
+  const previousById=new Map((Array.isArray(previous)?previous:[]).filter(Boolean).map(item=>[String(item.id||''),item]));
+  for(const item of incoming){
+    if(!item||typeof item!=='object'||String(item.image||'').trim())continue;
+    const old=previousById.get(String(item.id||''));
+    if(old&&typeof old.image==='string'&&old.image.trim())item.image=old.image;
+  }
+  return (await recoverContactImageRefs(env,incoming)).contacts;
+}
+let contactImageRepairPromise;
+async function repairStoredContactImageRefs(env){
+  if(contactImageRepairPromise)return contactImageRepairPromise;
+  contactImageRepairPromise=(async()=>{
+    const row=await env.DB.prepare("SELECT data,version FROM workspace_parts WHERE scope='public' AND part='contacts'").first();
+    if(!row)return {recovered:0,version:0};
+    let current=[];try{current=JSON.parse(row.data||'[]')}catch(_){return {recovered:0,version:Number(row.version)||0}}
+    const repaired=await recoverContactImageRefs(env,current);
+    if(!repaired.recovered)return {recovered:0,version:Number(row.version)||0};
+    const currentVersion=Math.max(0,Number(row.version)||0),nextVersion=Math.max(1,currentVersion+1),text=JSON.stringify(repaired.contacts);
+    const statements=[
+      env.DB.prepare("INSERT INTO save_conflict_guard(id) SELECT 1 WHERE COALESCE((SELECT version FROM workspace_parts WHERE scope='public' AND part='contacts'),0)<>?").bind(currentVersion),
+      env.DB.prepare("INSERT INTO workspace_parts(scope,part,data,version,updated_at) VALUES('public','contacts',?,?,CURRENT_TIMESTAMP) ON CONFLICT(scope,part) DO UPDATE SET data=excluded.data,version=excluded.version,updated_at=CURRENT_TIMESTAMP").bind(text,nextVersion),
+      env.DB.prepare("INSERT INTO workspace_parts(scope,part,data,version,updated_at) VALUES('admin','contacts',?,?,CURRENT_TIMESTAMP) ON CONFLICT(scope,part) DO UPDATE SET data=excluded.data,version=excluded.version,updated_at=CURRENT_TIMESTAMP").bind(text,nextVersion)
+    ];
+    await env.DB.batch(statements);
+    console.log('Recovered contact image references',{count:repaired.recovered,version:nextVersion});
+    return {recovered:repaired.recovered,version:nextVersion};
+  })().catch(error=>{contactImageRepairPromise=undefined;throw error});
+  return contactImageRepairPromise;
+}
+
 async function externalizePart(env,part,raw,saveContext=null){
   if(part==='core'){
     const src=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{},out={};for(const key of CORE_KEYS)if(Object.prototype.hasOwnProperty.call(src,key))out[key]=src[key];return out;
@@ -181,6 +231,7 @@ async function handleSave(request,env){
       let previousCore={};try{previousCore=JSON.parse(previousRow?.data||'{}')}catch(_){}
       source={...raw,achievementCards:Array.isArray(previousCore?.achievementCards)?previousCore.achievementCards:[]};
     }
+    if(part==='contacts')source=await preserveContactImagesForSave(env,source);
     const value=await externalizePart(env,part,source,mediaContext);
     const current=await env.DB.prepare('SELECT version FROM workspace_parts WHERE scope=? AND part=?').bind('public',part).first();
     const version=Math.max(1,Number(current?.version)||0)+1,text=JSON.stringify(value??null);
@@ -213,9 +264,9 @@ async function handleSave(request,env){
   }
   return json({versions,normalized,savedBy:admin.id});
 }
-async function handleManifest(env){await ensureSchema(env);const {results=[]}=await env.DB.prepare("SELECT part,version FROM workspace_parts WHERE scope='public' ORDER BY part").all();const parts={};for(const row of results)parts[row.part]=Number(row.version)||1;return json({parts,scope:'public',cacheSchemaVersion:3,backend:'cloudflare-d1'})}
-async function handlePart(env,part){if(!PARTS.includes(part))return json({error:'Invalid part'},400);await ensureSchema(env);const row=await env.DB.prepare("SELECT part,version,data FROM workspace_parts WHERE scope='public' AND part=?").bind(part).first();if(!row)return json({error:'Part not found'},404);let data;try{data=JSON.parse(row.data)}catch(_){return json({error:'Stored data is invalid'},500)}return json({part:row.part,version:Number(row.version)||1,data})}
-async function handleBootstrap(env){await ensureSchema(env);const {results=[]}=await env.DB.prepare("SELECT part,version,data FROM workspace_parts WHERE scope='public' ORDER BY part").all();const parts={},versions={};for(const row of results){let data=null;try{data=JSON.parse(row.data)}catch(_){}const version=Number(row.version)||1;versions[row.part]=version;parts[row.part]={part:row.part,version,data}}return json({backend:'cloudflare-d1-r2',mode:'mawang-scheduler-v1.1',build:'Mawang Scheduler v.1.1.0',cacheSchemaVersion:3,manifest:{parts:versions,scope:'public',cacheSchemaVersion:3,backend:'cloudflare-d1'},parts})}
+async function handleManifest(env){await ensureSchema(env);await repairStoredContactImageRefs(env);const {results=[]}=await env.DB.prepare("SELECT part,version FROM workspace_parts WHERE scope='public' ORDER BY part").all();const parts={};for(const row of results)parts[row.part]=Number(row.version)||1;return json({parts,scope:'public',cacheSchemaVersion:3,backend:'cloudflare-d1'})}
+async function handlePart(env,part){if(!PARTS.includes(part))return json({error:'Invalid part'},400);await ensureSchema(env);if(part==='contacts')await repairStoredContactImageRefs(env);const row=await env.DB.prepare("SELECT part,version,data FROM workspace_parts WHERE scope='public' AND part=?").bind(part).first();if(!row)return json({error:'Part not found'},404);let data;try{data=JSON.parse(row.data)}catch(_){return json({error:'Stored data is invalid'},500)}return json({part:row.part,version:Number(row.version)||1,data})}
+async function handleBootstrap(env){await ensureSchema(env);await repairStoredContactImageRefs(env);const {results=[]}=await env.DB.prepare("SELECT part,version,data FROM workspace_parts WHERE scope='public' ORDER BY part").all();const parts={},versions={};for(const row of results){let data=null;try{data=JSON.parse(row.data)}catch(_){}const version=Number(row.version)||1;versions[row.part]=version;parts[row.part]={part:row.part,version,data}}return json({backend:'cloudflare-d1-r2',mode:'mawang-scheduler-v1.1',build:'Mawang Scheduler v.1.1.0',cacheSchemaVersion:3,manifest:{parts:versions,scope:'public',cacheSchemaVersion:3,backend:'cloudflare-d1'},parts})}
 async function handleMedia(request,env,kind,key){if(!['contact','workspace'].includes(kind)||!/^[A-Za-z0-9_-]{1,160}$/.test(key))return new Response('Invalid media key',{status:400});const url=new URL(request.url),requested=Math.max(0,Number(url.searchParams.get('v'))||0),explicitToken=cleanMediaToken(url.searchParams.get('h'));let object=explicitToken&&requested?await env.IMAGES.get(r2VersionedKey(kind,key,requested,explicitToken)):null;if(!object&&!explicitToken){const current=await currentImageRecord(env,kind,key),currentVersion=Number(current?.version)||0,currentToken=tokenFromImageSource(current?.source_url);if(currentToken&&(!requested||requested===currentVersion))object=await env.IMAGES.get(r2VersionedKey(kind,key,currentVersion,currentToken))}if(!object&&requested)object=await env.IMAGES.get(r2VersionedKey(kind,key,requested));if(!object)object=await env.IMAGES.get(r2Key(kind,key));if(!object)return new Response('Not found',{status:404});const headers=new Headers();object.writeHttpMetadata(headers);headers.set('etag',object.httpEtag);headers.set('x-content-type-options','nosniff');headers.set('cache-control','public, max-age=300, stale-while-revalidate=86400');return new Response(object.body,{headers})}
 
 export default{
