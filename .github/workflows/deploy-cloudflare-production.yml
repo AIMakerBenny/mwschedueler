@@ -704,10 +704,10 @@ jobs:
           fi
           node --check /tmp/perf.js
           grep -Fq 'preserveOriginalImage' /tmp/perf.js
-          grep -Fq 'content-planner-host.js?v=1.4.0-phase87' /tmp/perf.js
-          retry_contains "$BASE/assets/content-planner-host.js?deploy=$GITHUB_SHA" 'tools.js?v=1.4.0-phase74' > /tmp/planner-host.js
+          grep -Fq 'content-planner-host.js?v=1.4.0-phase105-achievement-navfix1' /tmp/perf.js
+          retry_contains "$BASE/assets/content-planner-host.js?deploy=$GITHUB_SHA" 'tools.js?v=1.4.0-phase105-achievement-navfix1' > /tmp/planner-host.js
           node --check /tmp/planner-host.js
-          retry_contains "$BASE/assets/tools.js?v=1.4.0-phase74&deploy=$GITHUB_SHA" 'window.mwsApplyAppVersionV120?.()' > /tmp/tools.js
+          retry_contains "$BASE/assets/tools.js?deploy=$GITHUB_SHA" 'window.mwsApplyAppVersionV120?.()' > /tmp/tools.js
           node --check /tmp/tools.js
           if grep -Fq "const BUILD='Mawang Scheduler v1.0'" /tmp/tools.js; then
             echo 'Legacy tools version owner is still live.' >&2
