@@ -853,6 +853,15 @@ body.mws-achievement-manager-open{overflow:hidden!important}
   .achievement-detail-info h2{font-size:23px;margin-right:42px}
 }
 @media(pointer:coarse){
+  .achievement-detail-modal{
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+  }
+  body.mws-achievement-modal-open #achievementGallery{visibility:hidden}
+  .achievement-detail-stage.touch-dragging .achievement-detail-card3d{
+    transition:transform .028s linear;
+  }
+  .achievement-detail-face{will-change:transform}
   .achievement-manager-media-hint{display:none}
   .achievement-manager-drag-handle{display:none}
   .achievement-manager-list-item{grid-template-columns:minmax(0,1fr) auto;padding:7px}
