@@ -108,8 +108,8 @@ body.mws-achievement-modal-open{overflow:hidden!important}
 }
 .achievement-detail-dialog{
   position:relative;
-  width:min(1280px,96vw);
-  max-height:min(980px,94vh);
+  width:min(1500px,98vw);
+  max-height:96vh;
   overflow:auto;
   border:1px solid color-mix(in srgb,var(--border) 88%,transparent);
   border-radius:22px;
@@ -141,10 +141,10 @@ body.mws-achievement-modal-open{overflow:hidden!important}
 }
 .achievement-detail-layout{
   display:grid;
-  grid-template-columns:minmax(430px,540px) minmax(300px,1fr);
-  gap:42px;
+  grid-template-columns:minmax(560px,680px) minmax(360px,1fr);
+  gap:36px;
   align-items:center;
-  padding:40px;
+  padding:32px 36px;
 }
 .achievement-detail-visual{
   display:grid;
@@ -153,7 +153,7 @@ body.mws-achievement-modal-open{overflow:hidden!important}
   min-width:0;
 }
 .achievement-detail-stage{
-  width:min(100%,500px,calc((94vh - 150px)*2/3));
+  width:min(100%,620px,calc((96vh - 120px)*2/3));
   perspective:1400px;
   perspective-origin:50% 48%;
   user-select:none;
@@ -275,7 +275,7 @@ body.mws-achievement-modal-open{overflow:hidden!important}
   letter-spacing:.2em;
 }
 .achievement-detail-controls{
-  width:min(100%,500px,calc((94vh - 150px)*2/3));
+  width:min(100%,620px,calc((96vh - 120px)*2/3));
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -830,23 +830,23 @@ body.mws-achievement-manager-open{overflow:hidden!important}
   .achievement-card-thumb{border-radius:13px}
   .achievement-detail-modal{
     align-items:start;
-    padding:8px;
+    padding:4px;
     overflow:auto;
   }
   .achievement-detail-dialog{
-    width:min(100%,560px);
+    width:100%;
     max-height:none;
-    margin:auto 0;
-    border-radius:17px;
+    margin:0;
+    border-radius:14px;
   }
   .achievement-detail-layout{
     grid-template-columns:1fr;
     gap:18px;
-    padding:46px 14px 18px;
+    padding:46px 8px 18px;
   }
-  .achievement-detail-stage{width:min(72vw,286px)}
+  .achievement-detail-stage{width:min(90vw,400px)}
   .achievement-detail-controls{
-    width:min(82vw,320px);
+    width:min(90vw,400px);
     align-items:flex-start;
   }
   .achievement-detail-info{padding:0}
