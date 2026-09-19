@@ -22,7 +22,7 @@ function normalizeVersionHtml(html){
     out=out.replace(re,'');
   }
   if(!out.includes('post-login-runtime-v130.js')){
-    out=out.replace(/<\/body>/i,'<script src="assets/post-login-runtime-v130.js?v=1.4.0-phase92-achievement-3d1"></script>\n</body>');
+    out=out.replace(/<\/body>/i,'<script src="assets/post-login-runtime-v130.js?v=1.4.0-phase93-achievement-touch1"></script>\n</body>');
   }
   return out;
 }
