@@ -170,6 +170,9 @@ const appBridgeScript = `(function(){
         });
         if(sync)clock.insertBefore(b,sync);else clock.insertBefore(b,clock.firstChild);
       }
+      try{
+        Promise.resolve(window.__mwsGetFullscreen()).then(function(v){syncFullscreenButton(!!v);});
+      }catch(_){}
     }catch(_){}
   }
 
@@ -467,6 +470,20 @@ func toggleFullscreen() bool {
 	return fullscreen
 }
 
+func fullscreenState() bool {
+	fsMu.Lock()
+	state := fullscreen
+	fsMu.Unlock()
+	return state
+}
+
+func ensureStartupFullscreen() {
+	if fullscreenState() {
+		return
+	}
+	toggleFullscreen()
+}
+
 func startApp() {
 	appStartOnce.Do(func() {
 		go runAppWebView()
@@ -506,9 +523,13 @@ func runAppWebView() {
 	installWindowHook(h)
 	setWindowIcon(h)
 	procShowWindow.Call(h, swHide)
+	ensureStartupFullscreen()
 
 	if err := w.Bind("__mwsToggleFullscreen", func() bool { return toggleFullscreen() }); err != nil {
 		logDesktop("WebView bind __mwsToggleFullscreen failed: %v", err)
+	}
+	if err := w.Bind("__mwsGetFullscreen", func() bool { return fullscreenState() }); err != nil {
+		logDesktop("WebView bind __mwsGetFullscreen failed: %v", err)
 	}
 	if err := w.Bind("__mwsDesktopStartupReady", func(kind string) { markStartupWebReady(kind) }); err != nil {
 		logDesktop("WebView bind __mwsDesktopStartupReady failed: %v", err)
