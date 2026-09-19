@@ -50,6 +50,59 @@ body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .sideba
   padding:4px 4px 14px!important;
   border-bottom:1px solid color-mix(in srgb,var(--border) 74%,transparent)!important;
 }
+/* Mobile drawer header is always expanded; never depend on touch-generated :hover. */
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .sidebar-head .logo{
+  position:absolute!important;
+  left:4px!important;
+  top:4px!important;
+  width:calc(100% - 104px)!important;
+  min-width:0!important;
+  max-width:none!important;
+  height:56px!important;
+  min-height:56px!important;
+  max-height:56px!important;
+  margin:0!important;
+  padding:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  justify-content:flex-start!important;
+  transform:none!important;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .sidebar-head .logo-full{
+  display:block!important;
+  margin:0!important;
+  padding:0!important;
+  transform:none!important;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .sidebar-head .logo-mini{
+  display:none!important;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .sidebar-head .logo small{
+  display:block!important;
+  margin:3px 0 0!important;
+  padding:0!important;
+  transform:none!important;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .sidebar-head .sidebar-pin{
+  position:absolute!important;
+  top:4px!important;
+  right:4px!important;
+  display:flex!important;
+  width:82px!important;
+  min-width:82px!important;
+  max-width:82px!important;
+  height:36px!important;
+  margin:0!important;
+  padding:0 9px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  transform:none!important;
+}
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .sidebar-head .sidebar-pin-label{
+  display:inline!important;
+}
+
 body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .nav,
 body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar:hover .nav,
 body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .nav{
@@ -117,6 +170,15 @@ body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .nav-scroll>b
   background:color-mix(in srgb,var(--accent) 18%,var(--panel))!important;
   border-color:color-mix(in srgb,var(--accent) 52%,var(--border))!important;
   box-shadow:inset 3px 0 0 var(--accent)!important;
+}
+
+
+/* Group collapse must outrank the mobile row display:grid rule. */
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .nav-scroll>button.mws-nav-group-hidden,
+body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar:hover .nav-scroll>button.mws-nav-group-hidden,
+body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .sidebar .nav-scroll>button.mws-nav-group-hidden,
+body[data-resolution="mobile"][data-device-mode="mobile"].sidebar-pinned .sidebar:not(:hover) .nav-scroll>button.mws-nav-group-hidden{
+  display:none!important;
 }
 body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar .nav-scroll .nav-icon,
 body[data-resolution="mobile"][data-device-mode="mobile"] .sidebar:hover .nav-scroll .nav-icon,
