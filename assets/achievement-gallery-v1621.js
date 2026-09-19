@@ -120,8 +120,10 @@ function resetDetailRotation(){
   detailModal?.querySelector('[data-achievement-stage]')?.classList.remove('dragging');
   applyDetailRotation();
 }
-const TOUCH_DRAG_THRESHOLD=10;
+const TOUCH_DRAG_THRESHOLD=8;
 const TOUCH_HORIZONTAL_RATIO=1.18;
+const TOUCH_ROTATE_X_PER_PX=.28;
+const TOUCH_ROTATE_Y_PER_PX=1.18;
 function activateDetailDrag(stage,event){
   detailDrag.mode='rotate';
   stage.classList.add('dragging');
@@ -165,8 +167,8 @@ function moveDetailDrag(event){
   if(detailDrag.mode!=='rotate')return;
   event.preventDefault();
   if(detailDrag.pointerType==='touch'){
-    detailRotation.x=clamp(detailDrag.rotateX-clamp(dy,-90,90)*.16,-22,22);
-    detailRotation.y=clamp(detailDrag.rotateY+dx*.52,-360,360);
+    detailRotation.x=clamp(detailDrag.rotateX-clamp(dy,-120,120)*TOUCH_ROTATE_X_PER_PX,-32,32);
+    detailRotation.y=detailDrag.rotateY+dx*TOUCH_ROTATE_Y_PER_PX;
   }else{
     detailRotation.x=clamp(detailDrag.rotateX-dy*.34,-35,35);
     detailRotation.y=detailDrag.rotateY+dx*.58;
