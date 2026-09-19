@@ -12,7 +12,7 @@ checks = {
     "windowed mode maximizes": "procShowWindow.Call(h, swMaximize)" in main,
     "small restore state removed": "savedRect" not in main and "wasMaximized" not in main,
     "default fullscreen retained": "ensureStartupFullscreen()" in main,
-    "single wordmark only": 'Mawang Scheduler' in intro and '마왕 스케줄러' not in intro,
+    "single wordmark only": 'UTF16PtrFromString("Mawang")' in intro and 'UTF16PtrFromString("Scheduler")' in intro and '마왕 스케줄러' not in intro,
     "fresh wordmark effect state": "wordmarkPhase atomic.Uint32" in intro,
     "fresh wordmark effect loop": "func animateFreshWordmark" in intro,
     "fresh effect starts on text switch": "go animateFreshWordmark(s)" in intro,
