@@ -458,13 +458,12 @@ func toggleFullscreen() bool {
 		fullscreen = true
 	} else {
 		procSetWindowLongPtr.Call(h, ^uintptr(15), savedStyle)
-		r := savedRect
-		procSetWindowPos.Call(h, 0, uintptr(r.Left), uintptr(r.Top), uintptr(r.Right-r.Left), uintptr(r.Bottom-r.Top), swpFrameChanged|swpNoOwnerZOrder)
-		if wasMaximized {
-			procShowWindow.Call(h, swMaximize)
-		} else {
-			procShowWindow.Call(h, swShow)
-		}
+		procSetWindowPos.Call(h, 0, 0, 0, 0, 0, swpFrameChanged|swpNoOwnerZOrder|swpNoActivate)
+		procShowWindow.Call(h, swMaximize)
+		stateMu.Lock()
+		lastMaximized = true
+		lastStateValid = true
+		stateMu.Unlock()
 		fullscreen = false
 	}
 	return fullscreen
@@ -656,7 +655,13 @@ func watchAltEnter() {
 		now := keyDown(vkMenu) && keyDown(vkReturn)
 		if now && !pressed {
 			state := toggleFullscreen()
-			showWindow()
+			wvMu.Lock()
+			h := hwnd
+			wvMu.Unlock()
+			if h != 0 {
+				procShowWindow.Call(h, swShow)
+				procSetForegroundWindow.Call(h)
+			}
 			syncFullscreenUI(state)
 		}
 		pressed = now
