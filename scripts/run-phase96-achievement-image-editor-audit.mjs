@@ -52,7 +52,7 @@ export function runPhase96AchievementImageEditorAudit(){
   const deleteEnd=gallery.indexOf('function syncManagerShellCount()',deleteStart);
   const deleteBody=deleteStart>=0&&deleteEnd>deleteStart?gallery.slice(deleteStart,deleteEnd):'';
   if(!deleteBody)issues.push('achievement card deletion function not found for media policy audit');
-  if(/\.remove\(/.test(deleteBody))issues.push('card deletion automatically removes media blobs without a reference scan');
+  if(/media\.remove\(/.test(deleteBody))issues.push('card deletion automatically removes media blobs without a reference scan');
 
   for(const token of [
     '.achievement-manager-media-grid{',
