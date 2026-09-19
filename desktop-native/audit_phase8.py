@@ -17,7 +17,7 @@ checks = {
     "skippable image stage": "runImageIntroStage" in intro and "fadeIntroStage" in intro,
     "skippable text stage": "runTextIntroStage" in intro and "waitStartupReadyOrSkip" in intro,
     "immediate image to title transition": "introBlackAfterImage" not in intro and "time.Sleep(40 * time.Millisecond)" not in intro,
-    "single English wordmark only": 'Mawang Scheduler' in intro and '마왕 스케줄러' not in intro,
+    "single English wordmark only": 'UTF16PtrFromString("Mawang")' in intro and 'UTF16PtrFromString("Scheduler")' in intro and '마왕 스케줄러' not in intro,
     "fresh separator": "separatorH := 52 * phase / 1000" in intro,
     "fresh side rails": "railW := 92 * phase / 1000" in intro,
     "image fade in shortened": "introImageFadeIn     = 950 * time.Millisecond" in intro,
