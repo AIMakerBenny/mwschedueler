@@ -199,10 +199,38 @@ function mwsAchievementDeleteCardV1621(id){
   const saved=saveData('업적 카드 삭제');
   return {ok:true,saved,card:mwsAchievementCardClone(removed)};
 }
+function mwsAchievementMoveCardV1621(id,targetIndex){
+  normalizeDataShape();
+  const target=String(id||'');
+  const fromIndex=data.achievementCards.findIndex(item=>item.id===target);
+  if(fromIndex<0)return {ok:false,saved:false,card:null};
+  const finalIndex=Math.max(0,Math.min(data.achievementCards.length-1,Math.floor(Number(targetIndex)||0)));
+  const current=data.achievementCards[fromIndex];
+  if(fromIndex===finalIndex)return {ok:true,saved:true,card:mwsAchievementCardClone(current)};
+  const previous=data.achievementCards.map(mwsAchievementCardClone);
+  const [moved]=data.achievementCards.splice(fromIndex,1);
+  data.achievementCards.splice(finalIndex,0,moved);
+  data.achievementCards.forEach((card,order)=>{card.order=order});
+  moved.updatedAt=new Date().toISOString();
+  const reason='업적 카드 순서 변경';
+  const saved=persist();
+  if(!saved){
+    data.achievementCards=previous;
+    renderAll('업적 카드 순서 변경 실패');
+    updateStorageStatus(false);
+    return {ok:false,saved:false,card:mwsAchievementCardClone(previous[fromIndex])};
+  }
+  lastSyncReason=reason;
+  renderAll(reason);
+  updateStorageStatus(true);
+  try{window.dispatchEvent(new CustomEvent('mawang:datachange',{detail:{reason}}))}catch(e){}
+  return {ok:true,saved:true,card:mwsAchievementCardClone(moved)};
+}
 window.mwsAchievementCardsV1621=Object.freeze({
   create:mwsAchievementCreateCardV1621,
   update:mwsAchievementUpdateCardV1621,
-  remove:mwsAchievementDeleteCardV1621
+  remove:mwsAchievementDeleteCardV1621,
+  move:mwsAchievementMoveCardV1621
 });
 const loadedDataVersion=Number(data?.version||0);
 if(!data.categories)data.categories=DEFAULT_CATEGORIES;

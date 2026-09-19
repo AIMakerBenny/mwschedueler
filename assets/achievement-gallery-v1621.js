@@ -1,4 +1,4 @@
-/* Mawang Scheduler v1.6.21 - Achievement image manager runtime, Phase 96 */
+/* Mawang Scheduler v1.6.21 - Achievement ordering manager runtime, Phase 97 */
 (()=>{
 'use strict';
 if(window.__mwsAchievementGalleryRuntimeV1621)return;
@@ -20,6 +20,7 @@ let managerDirty=false;
 let managerObjectUrls=[];
 let managerMediaToken=0;
 let managerImageBusy=false;
+let managerDragId='';
 
 function cards(){
   try{
@@ -515,7 +516,7 @@ function ensureManagerModal(){
         <div>
           <div class="achievement-manager-kicker">ACHIEVEMENT MANAGEMENT</div>
           <h2 id="achievementManagerTitle">업적 카드 관리</h2>
-          <p>카드를 추가하고 게임 이름, 컨텐츠 이름, 설명을 편집할 수 있습니다.</p>
+          <p>카드를 추가하고 내용을 편집하거나 목록에서 순서를 변경할 수 있습니다.</p>
         </div>
         <button type="button" class="achievement-manager-close" aria-label="업적 카드 관리 닫기">×</button>
       </div>
@@ -656,6 +657,35 @@ function ensureManagerModal(){
 function managerCurrentCard(){
   return managerSelectedId?cardById(managerSelectedId):null;
 }
+function clearManagerDropMarkers(){
+  managerModal?.querySelectorAll('.achievement-manager-list-item').forEach(item=>item.classList.remove('dragging','drop-before','drop-after'));
+}
+function moveManagerCard(id,targetIndex){
+  if(managerImageBusy){setManagerStatus('이미지 저장이 끝난 뒤 순서를 변경해 주세요.','warn');return false}
+  const api=managerApi();
+  const list=cards();
+  const fromIndex=list.findIndex(card=>String(card.id||'')===String(id||''));
+  const nextIndex=Math.max(0,Math.min(list.length-1,Math.floor(Number(targetIndex)||0)));
+  if(fromIndex<0||fromIndex===nextIndex)return false;
+  if(!api?.move){setManagerStatus('카드 순서 저장 기능을 불러오지 못했습니다.','error');return false}
+  if(managerDirty&&!window.confirm('저장하지 않은 변경사항을 버리고 카드 순서를 변경할까요?'))return false;
+  managerDirty=false;
+  const result=api.move(id,nextIndex);
+  if(!result?.ok||result.saved!==true){
+    setManagerStatus('카드 순서를 저장하지 못했습니다. 기존 순서를 유지합니다.','error');
+    return false;
+  }
+  managerSelectedId=String(managerSelectedId||id);
+  renderManager();
+  setManagerStatus('카드 순서를 저장했습니다.','ok');
+  return true;
+}
+function moveManagerCardBy(id,delta){
+  const list=cards();
+  const index=list.findIndex(card=>String(card.id||'')===String(id||''));
+  if(index<0)return false;
+  return moveManagerCard(id,index+Number(delta||0));
+}
 function renderManagerList(){
   const root=ensureManagerModal();
   const listEl=root.querySelector('[data-achievement-manager-list]');
@@ -670,11 +700,22 @@ function renderManagerList(){
     return;
   }
   list.forEach((card,index)=>{
-    const button=document.createElement('button');
-    button.type='button';
-    button.className='achievement-manager-list-item';
-    button.dataset.achievementManagerCardId=String(card.id||'');
-    button.classList.toggle('active',String(card.id||'')===managerSelectedId);
+    const id=String(card.id||'');
+    const item=document.createElement('div');
+    item.className='achievement-manager-list-item';
+    item.dataset.achievementManagerCardId=id;
+    item.classList.toggle('active',id===managerSelectedId);
+
+    const handle=document.createElement('span');
+    handle.className='achievement-manager-drag-handle';
+    handle.draggable=true;
+    handle.title='드래그해서 순서 변경';
+    handle.setAttribute('aria-label','드래그해서 카드 순서 변경');
+    handle.textContent='잡기';
+
+    const select=document.createElement('button');
+    select.type='button';
+    select.className='achievement-manager-list-select';
     const order=document.createElement('span');
     order.className='achievement-manager-list-order';
     order.textContent=String(index+1).padStart(2,'0');
@@ -685,9 +726,71 @@ function renderManagerList(){
     const content=document.createElement('small');
     content.textContent=text(card.contentName,'컨텐츠 이름 없음');
     copy.append(game,content);
-    button.append(order,copy);
-    button.addEventListener('click',()=>selectManagerCard(card.id));
-    listEl.appendChild(button);
+    select.append(order,copy);
+    select.addEventListener('click',()=>selectManagerCard(id));
+
+    const controls=document.createElement('span');
+    controls.className='achievement-manager-move-controls';
+    const up=document.createElement('button');
+    up.type='button';
+    up.className='achievement-manager-move-button';
+    up.textContent='위';
+    up.disabled=index===0;
+    up.setAttribute('aria-label','카드를 위로 이동');
+    up.addEventListener('click',event=>{event.stopPropagation();moveManagerCardBy(id,-1)});
+    const down=document.createElement('button');
+    down.type='button';
+    down.className='achievement-manager-move-button';
+    down.textContent='아래';
+    down.disabled=index===list.length-1;
+    down.setAttribute('aria-label','카드를 아래로 이동');
+    down.addEventListener('click',event=>{event.stopPropagation();moveManagerCardBy(id,1)});
+    controls.append(up,down);
+
+    handle.addEventListener('dragstart',event=>{
+      if(managerImageBusy){event.preventDefault();setManagerStatus('이미지 저장이 끝난 뒤 순서를 변경해 주세요.','warn');return}
+      managerDragId=id;
+      item.classList.add('dragging');
+      if(event.dataTransfer){
+        event.dataTransfer.effectAllowed='move';
+        event.dataTransfer.setData('text/plain',id);
+      }
+    });
+    handle.addEventListener('dragend',()=>{
+      managerDragId='';
+      clearManagerDropMarkers();
+    });
+    item.addEventListener('dragover',event=>{
+      if(!managerDragId||managerDragId===id)return;
+      event.preventDefault();
+      if(event.dataTransfer)event.dataTransfer.dropEffect='move';
+      const rect=item.getBoundingClientRect();
+      const after=event.clientY>rect.top+rect.height/2;
+      item.classList.toggle('drop-before',!after);
+      item.classList.toggle('drop-after',after);
+    });
+    item.addEventListener('dragleave',event=>{
+      if(event.relatedTarget&&item.contains(event.relatedTarget))return;
+      item.classList.remove('drop-before','drop-after');
+    });
+    item.addEventListener('drop',event=>{
+      if(!managerDragId||managerDragId===id)return;
+      event.preventDefault();
+      const movingId=managerDragId;
+      const current=cards();
+      const fromIndex=current.findIndex(entry=>String(entry.id||'')===movingId);
+      const overIndex=current.findIndex(entry=>String(entry.id||'')===id);
+      const rect=item.getBoundingClientRect();
+      let insertIndex=overIndex+(event.clientY>rect.top+rect.height/2?1:0);
+      if(fromIndex<insertIndex)insertIndex--;
+      insertIndex=Math.max(0,Math.min(current.length-1,insertIndex));
+      managerDragId='';
+      clearManagerDropMarkers();
+      moveManagerCard(movingId,insertIndex);
+    });
+
+    item.append(handle,select,controls);
+    listEl.appendChild(item);
   });
 }
 function renderManagerEditor(){
@@ -810,6 +913,8 @@ function closeManager(){
   if(managerImageBusy){setManagerStatus('이미지 저장이 끝난 뒤 관리창을 닫아 주세요.','warn');return}
   if(managerDirty&&!window.confirm('저장하지 않은 변경사항이 있습니다. 관리창을 닫을까요?'))return;
   managerDirty=false;
+  managerDragId='';
+  clearManagerDropMarkers();
   managerMediaToken++;
   clearManagerObjectUrls();
   managerModal.hidden=true;
@@ -877,6 +982,7 @@ document.addEventListener('keydown',event=>{
 window.addEventListener('beforeunload',()=>{
   clearGalleryObjectUrls();
   clearDetailObjectUrls();
+  clearManagerObjectUrls();
 },{once:true});
 bindManagerEntry();
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindManagerEntry,{once:true});
