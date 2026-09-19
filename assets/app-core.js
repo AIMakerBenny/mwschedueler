@@ -4879,6 +4879,7 @@ function remapAchievementBackupMediaReferences(backup,payload,remap){
 async function restoreAchievementBackupMedia(backup,payload){
   const packed=Array.isArray(backup?.assets?.achievementMedia)?backup.assets.achievementMedia:[];
   const strictEmbedded=Number(backup?.assetSchema||0)>=2;
+  const referencedIds=new Set(achievementBackupReferencedIds(payload));
   const remap=new Map();
   const createdIds=[];
   if(!packed.length){
@@ -4891,8 +4892,10 @@ async function restoreAchievementBackupMedia(backup,payload){
     for(const item of packed){
       const sourceId=String(item?.sourceId||'');
       const encoded=String(item?.base64||'');
-      if(!sourceId||!encoded||remap.has(sourceId))continue;
-      const blob=backupBase64ToBlob(encoded,item?.mime);
+      const mime=String(item?.mime||'').trim().toLowerCase();
+      if(!sourceId||!referencedIds.has(sourceId)||!encoded||remap.has(sourceId))continue;
+      if(!mime.startsWith('image/'))continue;
+      const blob=backupBase64ToBlob(encoded,mime);
       const stored=await media.put(blob,{
         kind:item?.kind==='back'?'back':'front',
         width:Math.max(0,Number(item?.width)||0),
