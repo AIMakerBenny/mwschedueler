@@ -638,12 +638,26 @@ func keyDown(vk uintptr) bool {
 	return r&0x8000 != 0
 }
 
+func syncFullscreenUI(state bool) {
+	wvMu.Lock()
+	w := wv
+	wvMu.Unlock()
+	if w == nil {
+		return
+	}
+	w.Dispatch(func() {
+		w.Eval(fmt.Sprintf("window.__mwsDesktopSyncFullscreen && window.__mwsDesktopSyncFullscreen(%t)", state))
+	})
+}
+
 func watchAltEnter() {
 	pressed := false
 	for !exiting {
 		now := keyDown(vkMenu) && keyDown(vkReturn)
 		if now && !pressed {
+			state := toggleFullscreen()
 			showWindow()
+			syncFullscreenUI(state)
 		}
 		pressed = now
 		time.Sleep(45 * time.Millisecond)
