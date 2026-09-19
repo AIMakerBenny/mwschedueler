@@ -1,4 +1,4 @@
-/* Mawang Scheduler v1.6.21 - Achievement 3D gallery, Phase 92 */
+/* Mawang Scheduler v1.6.21 - Achievement mobile 3D gallery, Phase 93 */
 #achievements .achievement-gallery-head{
   display:flex;
   align-items:flex-start;
@@ -157,6 +157,7 @@ body.mws-achievement-modal-open{overflow:hidden!important}
   perspective:1400px;
   perspective-origin:50% 48%;
   user-select:none;
+  touch-action:pan-y pinch-zoom;
   cursor:grab;
 }
 .achievement-detail-stage.dragging{cursor:grabbing}
@@ -283,6 +284,8 @@ body.mws-achievement-modal-open{overflow:hidden!important}
   font-size:10px;
   line-height:1.35;
 }
+.achievement-detail-hint{min-width:0}
+.achievement-detail-hint-touch{display:none}
 .achievement-detail-reset{
   flex:0 0 auto;
   border:1px solid var(--border);
@@ -351,19 +354,37 @@ body.mws-achievement-modal-open{overflow:hidden!important}
     gap:12px;
   }
   .achievement-card-thumb{border-radius:13px}
-  .achievement-detail-modal{padding:10px}
+  .achievement-detail-modal{
+    align-items:start;
+    padding:8px;
+    overflow:auto;
+  }
   .achievement-detail-dialog{
     width:min(100%,560px);
-    max-height:94vh;
+    max-height:none;
+    margin:auto 0;
     border-radius:17px;
   }
   .achievement-detail-layout{
     grid-template-columns:1fr;
-    gap:20px;
-    padding:48px 16px 20px;
+    gap:18px;
+    padding:46px 14px 18px;
   }
-  .achievement-detail-stage{width:min(78vw,310px)}
-  .achievement-detail-controls{width:min(78vw,310px)}
+  .achievement-detail-stage{width:min(72vw,286px)}
+  .achievement-detail-controls{
+    width:min(82vw,320px);
+    align-items:flex-start;
+  }
   .achievement-detail-info{padding:0}
   .achievement-detail-info h2{font-size:23px;margin-right:42px}
+}
+@media(pointer:coarse){
+  .achievement-detail-stage{
+    touch-action:pan-y pinch-zoom;
+    cursor:default;
+  }
+  .achievement-detail-stage.dragging,
+  .achievement-detail-stage.touch-dragging{cursor:default}
+  .achievement-detail-hint-mouse{display:none}
+  .achievement-detail-hint-touch{display:inline}
 }
