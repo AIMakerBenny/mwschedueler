@@ -41,9 +41,11 @@ export function runPhase91AchievementDetailAudit(){
   ]){
     if(!css.includes(token))issues.push('achievement detail CSS missing: '+token);
   }
-  if(!css.includes('grid-template-columns:minmax(560px,680px) minmax(360px,1fr);'))issues.push('desktop achievement detail enlarged split layout is missing');
-  if(!css.includes('width:min(1500px,98vw);'))issues.push('desktop achievement detail dialog is not enlarged');
-  if(!css.includes('width:min(100%,620px,calc((96vh - 120px)*2/3));'))issues.push('desktop achievement card stage is not enlarged responsively');
+  if(!css.includes('grid-template-columns:minmax(720px,820px) minmax(420px,1fr);'))issues.push('desktop achievement detail enlarged split layout is missing');
+  if(!css.includes('width:min(1720px,99vw);'))issues.push('desktop achievement detail dialog is not enlarged');
+  if(!css.includes('width:min(100%,620px,calc((96vh - 120px)*2/3));'))issues.push('desktop achievement card stage size changed unexpectedly');
+  if(!css.includes('padding:32px 72px;'))issues.push('achievement detail outer side spacing is not widened');
+  if(!css.includes('gap:56px;'))issues.push('achievement detail content spacing is not widened');
   if(!css.includes('width:min(90vw,400px)'))issues.push('mobile achievement card viewer is still too small');
   if(!css.includes('width:100%;'))issues.push('mobile achievement detail dialog does not use full width');
   if(!css.includes('white-space:pre-wrap;'))issues.push('achievement description multiline rendering is missing');
