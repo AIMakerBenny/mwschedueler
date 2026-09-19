@@ -469,6 +469,9 @@ function openManagerFilePicker(kind){
 function managerImageFile(files){
   return Array.from(files||[]).find(file=>file instanceof File&&String(file.type||'').toLowerCase().startsWith('image/'))||null;
 }
+function managerImageMaxBytes(){
+  return Math.max(1,Number(window.mwsAchievementPackageLimitsV1621?.maxImageBytes)||32*1024*1024);
+}
 function managerReferencedMediaIds(){
   const ids=new Set();
   for(const card of cards()){
@@ -551,6 +554,10 @@ async function replaceManagerImage(kind,file){
   kind=kind==='back'?'back':'front';
   if(!(file instanceof File)||!String(file.type||'').toLowerCase().startsWith('image/')){
     setManagerStatus('이미지 파일만 등록할 수 있습니다.','error');
+    return false;
+  }
+  if(file.size>managerImageMaxBytes()){
+    setManagerStatus('업적 카드 이미지는 한 장당 32MB 이하만 등록할 수 있습니다.','error');
     return false;
   }
   const card=managerCurrentCard();
@@ -658,7 +665,7 @@ function ensureManagerModal(){
                   <div class="achievement-manager-media-actions">
                     <button type="button" class="secondary" data-achievement-manager-pick="front">파일 선택</button>
                     <button type="button" class="secondary achievement-manager-image-remove" data-achievement-manager-remove="front">등록 해제</button>
-                    <small class="achievement-manager-media-hint">PC에서는 이미지를 끌어다 놓을 수 있습니다.</small>
+                    <small class="achievement-manager-media-hint">PC에서는 이미지를 끌어다 놓을 수 있습니다. · 이미지당 32MB 이하</small>
                   </div>
                   <input type="file" accept="image/*" data-achievement-manager-file="front" hidden>
                 </div>
@@ -670,7 +677,7 @@ function ensureManagerModal(){
                   <div class="achievement-manager-media-actions">
                     <button type="button" class="secondary" data-achievement-manager-pick="back">파일 선택</button>
                     <button type="button" class="secondary achievement-manager-image-remove" data-achievement-manager-remove="back">등록 해제</button>
-                    <small class="achievement-manager-media-hint">PC에서는 이미지를 끌어다 놓을 수 있습니다.</small>
+                    <small class="achievement-manager-media-hint">PC에서는 이미지를 끌어다 놓을 수 있습니다. · 이미지당 32MB 이하</small>
                   </div>
                   <input type="file" accept="image/*" data-achievement-manager-file="back" hidden>
                 </div>

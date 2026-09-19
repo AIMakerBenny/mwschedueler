@@ -101,6 +101,7 @@ import {runPhase100AchievementPackageAudit} from './run-phase100-achievement-pac
 import {runPhase101AchievementMediaIntegrityAudit} from './run-phase101-achievement-media-integrity-audit.mjs';
 import {runPhase102AchievementMediaScopeAudit} from './run-phase102-achievement-media-scope-audit.mjs';
 import {runPhase103AchievementPackageValidationAudit} from './run-phase103-achievement-package-validation-audit.mjs';
+import {runPhase104AchievementDirectUploadLimitAudit} from './run-phase104-achievement-direct-upload-limit-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1107,6 +1108,16 @@ export function runPhase103FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase103FullIntegrationAudit();}
+export function runPhase104FullIntegrationAudit(){
+  const previous=runPhase103FullIntegrationAudit(), current=runPhase104AchievementDirectUploadLimitAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:104,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase104FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();

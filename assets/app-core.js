@@ -4784,6 +4784,7 @@ const ACHIEVEMENT_PACKAGE_LIMITS=Object.freeze({
   maxDescription:4000,
   maxSourceId:256
 });
+window.mwsAchievementPackageLimitsV1621=ACHIEVEMENT_PACKAGE_LIMITS;
 function achievementBase64DecodedBytes(base64){
   const value=String(base64||'');
   if(!value)return 0;
