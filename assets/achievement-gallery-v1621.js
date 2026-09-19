@@ -1,4 +1,4 @@
-/* Mawang Scheduler v1.6.21 - Achievement mobile 3D gallery runtime, Phase 93 */
+/* Mawang Scheduler v1.6.21 - Achievement manager entry runtime, Phase 94 */
 (()=>{
 'use strict';
 if(window.__mwsAchievementGalleryRuntimeV1621)return;
@@ -13,6 +13,8 @@ let detailLastFocus=null;
 let detailCardId='';
 let detailRotation={x:0,y:0};
 let detailDrag=null;
+let managerModal=null;
+let managerLastFocus=null;
 
 function cards(){
   try{
@@ -361,6 +363,77 @@ function closeDetail(){
   if(focus?.isConnected)setTimeout(()=>focus.focus(),0);
 }
 
+function updateManagerCount(){
+  const count=document.getElementById('achievementManageCount');
+  if(count)count.textContent=`${cards().length}장`;
+}
+function ensureManagerModal(){
+  if(managerModal?.isConnected)return managerModal;
+  const root=document.createElement('div');
+  root.id='achievementManagerModal';
+  root.className='achievement-manager-modal';
+  root.hidden=true;
+  root.setAttribute('role','dialog');
+  root.setAttribute('aria-modal','true');
+  root.setAttribute('aria-labelledby','achievementManagerTitle');
+  root.innerHTML=`
+    <div class="achievement-manager-dialog" role="document">
+      <div class="achievement-manager-head">
+        <div>
+          <div class="achievement-manager-kicker">ACHIEVEMENT MANAGEMENT</div>
+          <h2 id="achievementManagerTitle">업적 카드 관리</h2>
+          <p>업적 카드 이미지와 상세 정보를 관리하는 공간입니다.</p>
+        </div>
+        <button type="button" class="achievement-manager-close" aria-label="업적 카드 관리 닫기">×</button>
+      </div>
+      <div class="achievement-manager-shell">
+        <div class="achievement-manager-shell-icon" aria-hidden="true">◆</div>
+        <strong>업적 카드 관리</strong>
+        <span>카드 목록, 이미지 추가, 정보 편집, 순서 변경 도구가 이 창에 표시됩니다.</span>
+        <span class="chip achievement-manager-shell-count" data-achievement-manager-count>0장</span>
+      </div>
+    </div>`;
+  root.querySelector('.achievement-manager-close')?.addEventListener('click',closeManager);
+  root.addEventListener('click',event=>{if(event.target===root)closeManager()});
+  document.body.appendChild(root);
+  managerModal=root;
+  return root;
+}
+function syncManagerShellCount(){
+  const count=cards().length;
+  updateManagerCount();
+  if(managerModal){
+    const modalCount=managerModal.querySelector('[data-achievement-manager-count]');
+    if(modalCount)modalCount.textContent=`${count}장`;
+  }
+}
+function openManager(){
+  const root=ensureManagerModal();
+  if(detailModal&&!detailModal.hidden)closeDetail();
+  managerLastFocus=document.activeElement instanceof HTMLElement?document.activeElement:null;
+  syncManagerShellCount();
+  root.hidden=false;
+  document.body.classList.add('mws-achievement-manager-open');
+  setTimeout(()=>root.querySelector('.achievement-manager-close')?.focus(),0);
+  return true;
+}
+function closeManager(){
+  if(!managerModal||managerModal.hidden)return;
+  managerModal.hidden=true;
+  document.body.classList.remove('mws-achievement-manager-open');
+  const focus=managerLastFocus;
+  managerLastFocus=null;
+  if(focus?.isConnected)setTimeout(()=>focus.focus(),0);
+}
+function bindManagerEntry(){
+  const button=document.getElementById('achievementManageBtn');
+  if(!button||button.dataset.mwsAchievementManagerBound==='1')return false;
+  button.dataset.mwsAchievementManagerBound='1';
+  button.addEventListener('click',openManager);
+  updateManagerCount();
+  return true;
+}
+
 async function render(){
   const section=document.getElementById('achievements');
   const grid=document.getElementById('achievementGallery');
@@ -392,19 +465,26 @@ window.mwsRenderAchievementGalleryV1621=render;
 window.mwsOpenAchievementDetailV1621=openDetail;
 window.mwsCloseAchievementDetailV1621=closeDetail;
 window.mwsResetAchievementCardV1621=resetDetailRotation;
+window.mwsOpenAchievementManagerV1621=openManager;
+window.mwsCloseAchievementManagerV1621=closeManager;
 window.addEventListener('mawang:datachange',()=>{
   if(document.getElementById('achievements')?.classList.contains('active'))render();
   if(detailModal&&!detailModal.hidden&&detailCardId&&!cardById(detailCardId))closeDetail();
+  syncManagerShellCount();
 });
 window.addEventListener('mws:achievement-media-ready',()=>{
   if(document.getElementById('achievements')?.classList.contains('active'))render();
 });
 document.addEventListener('keydown',event=>{
-  if(event.key==='Escape'&&detailModal&&!detailModal.hidden){event.preventDefault();closeDetail()}
+  if(event.key!=='Escape')return;
+  if(managerModal&&!managerModal.hidden){event.preventDefault();closeManager();return}
+  if(detailModal&&!detailModal.hidden){event.preventDefault();closeDetail()}
 });
 window.addEventListener('beforeunload',()=>{
   clearGalleryObjectUrls();
   clearDetailObjectUrls();
 },{once:true});
+bindManagerEntry();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindManagerEntry,{once:true});
 if(document.getElementById('achievements')?.classList.contains('active'))render();
 })();
