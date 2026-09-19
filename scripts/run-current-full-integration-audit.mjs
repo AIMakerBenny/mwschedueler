@@ -96,6 +96,7 @@ import {runPhase95AchievementManagerEditorAudit} from './run-phase95-achievement
 import {runPhase96AchievementImageEditorAudit} from './run-phase96-achievement-image-editor-audit.mjs';
 import {runPhase97AchievementOrderingAudit} from './run-phase97-achievement-ordering-audit.mjs';
 import {runPhase98AchievementMediaCleanupAudit} from './run-phase98-achievement-media-cleanup-audit.mjs';
+import {runPhase99AchievementBackupAudit} from './run-phase99-achievement-backup-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1052,6 +1053,16 @@ export function runPhase98FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase98FullIntegrationAudit();}
+export function runPhase99FullIntegrationAudit(){
+  const previous=runPhase98FullIntegrationAudit(), current=runPhase99AchievementBackupAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:99,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase99FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();

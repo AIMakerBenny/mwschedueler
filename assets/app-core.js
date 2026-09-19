@@ -4695,23 +4695,88 @@ function buildFullBackupObject(){
   return {
     format:'MAWANG_CONTENT_SCHEDULER_FULL_BACKUP',
     version:37,
+    assetSchema:2,
     exportedAt:new Date().toISOString(),
     meta:{
       contacts:(payload.contacts||[]).length,
       contactImages:Object.keys(contactImages).length,
       events:(payload.events||[]).length,
       memos:(payload.memos||[]).length,
-      achievementCards:(payload.achievementCards||[]).length
+      achievementCards:(payload.achievementCards||[]).length,
+      achievementMedia:0,
+      achievementMediaMissing:0
     },
     data:payload,
     assets:{
       contactImages,
       contactTagBanners:payload.contactTagBanners&&typeof payload.contactTagBanners==='object'
-        ? JSON.parse(JSON.stringify(payload.contactTagBanners)):{}
+        ? JSON.parse(JSON.stringify(payload.contactTagBanners)):{},
+      achievementMedia:[]
     }
   };
 }
 window.buildFullBackupObject=buildFullBackupObject;
+
+function achievementBackupReferencedIds(payload){
+  const ids=new Set();
+  for(const card of payload?.achievementCards||[]){
+    const front=String(card?.frontImageId||'');
+    const back=String(card?.backImageId||'');
+    if(front)ids.add(front);
+    if(back)ids.add(back);
+  }
+  return [...ids];
+}
+function blobToBackupBase64(blob){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const raw=String(reader.result||'');
+      const comma=raw.indexOf(',');
+      if(comma<0){reject(new Error('업적 이미지 직렬화에 실패했습니다'));return}
+      resolve(raw.slice(comma+1));
+    };
+    reader.onerror=()=>reject(reader.error||new Error('업적 이미지 직렬화에 실패했습니다'));
+    reader.readAsDataURL(blob);
+  });
+}
+function backupBase64ToBlob(base64,mime='application/octet-stream'){
+  const binary=atob(String(base64||''));
+  const bytes=new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+  return new Blob([bytes],{type:String(mime||'application/octet-stream')});
+}
+async function buildAchievementBackupMedia(payload){
+  const ids=achievementBackupReferencedIds(payload);
+  if(!ids.length)return {items:[],missing:0};
+  const media=window.mwsAchievementMediaV1;
+  if(!media?.get)throw new Error('업적 카드 이미지 저장소를 불러오지 못했습니다');
+  const items=[];
+  let missing=0;
+  for(const id of ids){
+    const record=await media.get(id);
+    if(!record?.blob||!(record.blob instanceof Blob)){missing++;continue}
+    items.push({
+      sourceId:id,
+      mime:String(record.mime||record.blob.type||'application/octet-stream'),
+      kind:record.kind==='back'?'back':'front',
+      width:Math.max(0,Number(record.width)||0),
+      height:Math.max(0,Number(record.height)||0),
+      size:Math.max(0,Number(record.size||record.blob.size)||0),
+      base64:await blobToBackupBase64(record.blob)
+    });
+  }
+  return {items,missing};
+}
+async function buildFullBackupObjectAsync(){
+  const backup=buildFullBackupObject();
+  const packed=await buildAchievementBackupMedia(backup.data);
+  backup.assets.achievementMedia=packed.items;
+  backup.meta.achievementMedia=packed.items.length;
+  backup.meta.achievementMediaMissing=packed.missing;
+  return backup;
+}
+window.buildFullBackupObjectAsync=buildFullBackupObjectAsync;
 
 function restoreFullBackupAssets(backup){
   const payload=backup?.data&&typeof backup.data==='object'
@@ -4736,54 +4801,153 @@ function restoreFullBackupAssets(backup){
 }
 window.restoreFullBackupAssets=restoreFullBackupAssets;
 
+async function restoreAchievementBackupMedia(backup,payload){
+  const packed=Array.isArray(backup?.assets?.achievementMedia)?backup.assets.achievementMedia:[];
+  if(!packed.length)return {createdIds:[],restored:0,legacy:true};
+  const media=window.mwsAchievementMediaV1;
+  if(!media?.put||!media?.remove)throw new Error('업적 카드 이미지 저장소를 불러오지 못했습니다');
+  const remap=new Map();
+  const createdIds=[];
+  try{
+    for(const item of packed){
+      const sourceId=String(item?.sourceId||'');
+      const encoded=String(item?.base64||'');
+      if(!sourceId||!encoded||remap.has(sourceId))continue;
+      const blob=backupBase64ToBlob(encoded,item?.mime);
+      const stored=await media.put(blob,{
+        kind:item?.kind==='back'?'back':'front',
+        width:Math.max(0,Number(item?.width)||0),
+        height:Math.max(0,Number(item?.height)||0)
+      });
+      const newId=String(stored?.id||'');
+      if(!newId)throw new Error('업적 이미지 복원 ID를 만들지 못했습니다');
+      createdIds.push(newId);
+      remap.set(sourceId,newId);
+    }
+    if(Array.isArray(payload.achievementCards)){
+      payload.achievementCards=payload.achievementCards.map(card=>{
+        const front=String(card?.frontImageId||'');
+        const back=String(card?.backImageId||'');
+        return {
+          ...card,
+          frontImageId:remap.get(front)||front,
+          backImageId:remap.get(back)||back
+        };
+      });
+    }
+    return {createdIds,restored:createdIds.length,legacy:false};
+  }catch(error){
+    await Promise.allSettled(createdIds.map(id=>media.remove(id)));
+    throw error;
+  }
+}
+window.restoreAchievementBackupMedia=restoreAchievementBackupMedia;
+
+async function cleanupAchievementMediaAfterImport(){
+  const media=window.mwsAchievementMediaV1;
+  if(!media?.listIds||!media?.remove)return;
+  const referenced=new Set(achievementBackupReferencedIds(data));
+  const ids=await media.listIds();
+  await Promise.allSettled(ids.filter(id=>!referenced.has(String(id))).map(id=>media.remove(id)));
+}
+
+function prepareImportedFullBackupPayload(payload,currentDevicePrefs){
+  mwsApplyDevicePrefs(payload,currentDevicePrefs);
+  if(!payload.theme)payload.theme='neon';
+  if(payload.backgroundImage===undefined)payload.backgroundImage='';
+  if(payload.backgroundDim===undefined)payload.backgroundDim=45;
+  if(!payload.categories)payload.categories=DEFAULT_CATEGORIES;
+  if(!payload.collaborations)payload.collaborations=[];
+  if(!payload.memos)payload.memos=[];
+  if(!payload.targetList)payload.targetList=[];
+  if(!payload.contactTags)payload.contactTags=[];
+  if(!payload.contactTagBanners||typeof payload.contactTagBanners!=='object')payload.contactTagBanners={};
+  if(!Array.isArray(payload.scheduleClipboard))payload.scheduleClipboard=[];
+  if(payload.sidebarPinned===undefined)payload.sidebarPinned=true;
+  if(!payload.timezones)payload.timezones=DEFAULT_TZS;
+  payload.version=52;
+  return payload;
+}
+
 function updateFullBackupAssetStatus(){
   const el=document.getElementById('fullBackupAssetStatus');
   if(!el)return;
   const contacts=(data.contacts||[]).length;
   const images=(data.contacts||[]).filter(c=>typeof c.image==='string'&&c.image.startsWith('data:image/')).length;
-  el.textContent=`연락처 ${contacts}명 · 백업에 포함될 프로필 이미지 ${images}개`;
-  el.classList.toggle('ok',images>0);
+  const achievementCards=(data.achievementCards||[]).length;
+  const achievementMedia=achievementBackupReferencedIds(data).length;
+  el.textContent=`연락처 ${contacts}명 · 프로필 이미지 ${images}개 · 업적 카드 ${achievementCards}장 · 카드 이미지 ${achievementMedia}개`;
+  el.classList.toggle('ok',images>0||achievementMedia>0);
 }
 window.updateFullBackupAssetStatus=updateFullBackupAssetStatus;
 
-document.getElementById('exportAllBtn').onclick=()=>{
-  const backup=buildFullBackupObject();
-  downloadJSON(backup,'mawang-scheduler-backup.json');
-  toast('전체 백업',`프로필 이미지 ${backup.meta.contactImages}개를 포함해 저장했습니다`);
+document.getElementById('exportAllBtn').onclick=async()=>{
+  const button=document.getElementById('exportAllBtn');
+  if(button?.disabled)return;
+  if(button)button.disabled=true;
+  toast('전체 백업','업적 카드 이미지를 포함해 백업 파일을 만드는 중입니다');
+  try{
+    const backup=await buildFullBackupObjectAsync();
+    downloadJSON(backup,'mawang-scheduler-backup.json');
+    const missing=Number(backup.meta.achievementMediaMissing||0);
+    toast('전체 백업',missing
+      ? `백업 완료 · 프로필 이미지 ${backup.meta.contactImages}개 · 업적 이미지 ${backup.meta.achievementMedia}개 · 누락 ${missing}개`
+      : `백업 완료 · 프로필 이미지 ${backup.meta.contactImages}개 · 업적 이미지 ${backup.meta.achievementMedia}개 포함`);
+  }catch(error){
+    console.error('Full backup export failed',error);
+    toast('전체 백업',error?.message||'백업 파일을 만들지 못했습니다');
+  }finally{
+    if(button)button.disabled=false;
+  }
 };
 document.getElementById('exportContactsBtn').onclick=()=>downloadJSON({
   version:37,contacts:data.contacts,contactTags:data.contactTags,contactTagBanners:data.contactTagBanners
 },'mawang-contacts.json');
 
-document.getElementById('importAllInput').onchange=e=>importFile(e.target.files[0],obj=>{
+document.getElementById('importAllInput').onchange=async e=>{
+  const input=e.target,file=input.files?.[0];
+  if(!file)return;
+  const previousData=typeof structuredClone==='function'?structuredClone(data):JSON.parse(JSON.stringify(data));
   const currentDevicePrefs=mwsExtractDevicePrefs(data);
-  const payload=restoreFullBackupAssets(obj);
-  if(!payload.events||!payload.contacts)throw new Error('유효하지 않은 백업 파일입니다');
-
-  data=payload;
-  mwsApplyDevicePrefs(data,currentDevicePrefs);
-  if(!data.theme)data.theme='neon';
-  if(data.backgroundImage===undefined)data.backgroundImage='';
-  if(data.backgroundDim===undefined)data.backgroundDim=45;
-  if(!data.categories)data.categories=DEFAULT_CATEGORIES;
-  if(!data.collaborations)data.collaborations=[];
-  if(!data.memos)data.memos=[];
-  if(!data.targetList)data.targetList=[];
-  if(!data.contactTags)data.contactTags=[];
-  if(!data.contactTagBanners||typeof data.contactTagBanners!=='object')data.contactTagBanners={};
-  if(!Array.isArray(data.scheduleClipboard))data.scheduleClipboard=[];
-  if(data.sidebarPinned===undefined)data.sidebarPinned=true;
-  if(!data.timezones)data.timezones=DEFAULT_TZS;
-  data.version=52;
-  document.body.dataset.theme=data.theme;
-
-  const imageCount=(data.contacts||[]).filter(c=>typeof c.image==='string'&&c.image.startsWith('data:image/')).length;
-  const saved=saveData('전체 백업 가져오기');
-  updateFullBackupAssetStatus();
-  toast('전체 백업',saved
-    ? `백업을 불러왔습니다 · 프로필 이미지 ${imageCount}개 복원`
-    : '백업은 화면에 불러왔지만 브라우저 저장 공간이 부족합니다');
-});
+  let createdIds=[];
+  let committed=false;
+  try{
+    const obj=JSON.parse(await file.text());
+    const payload=restoreFullBackupAssets(obj);
+    if(!payload.events||!payload.contacts)throw new Error('유효하지 않은 백업 파일입니다');
+    const mediaResult=await restoreAchievementBackupMedia(obj,payload);
+    createdIds=mediaResult.createdIds;
+    data=prepareImportedFullBackupPayload(payload,currentDevicePrefs);
+    normalizeDataShape();
+    const reason='전체 백업 가져오기';
+    const saved=persist();
+    if(!saved)throw new Error('브라우저 저장 공간이 부족해 기존 데이터를 유지했습니다');
+    committed=true;
+    lastSyncReason=reason;
+    document.body.dataset.theme=data.theme;
+    renderAll(reason);
+    updateStorageStatus(true);
+    try{window.dispatchEvent(new CustomEvent('mawang:datachange',{detail:{reason}}))}catch(_){}
+    try{await cleanupAchievementMediaAfterImport()}
+    catch(cleanupError){console.warn('Post-import achievement media cleanup failed',cleanupError)}
+    updateFullBackupAssetStatus();
+    const imageCount=(data.contacts||[]).filter(c=>typeof c.image==='string'&&c.image.startsWith('data:image/')).length;
+    toast('전체 백업',`백업을 불러왔습니다 · 프로필 이미지 ${imageCount}개 · 업적 이미지 ${mediaResult.restored}개 복원`);
+  }catch(error){
+    if(!committed){
+      data=previousData;
+      const media=window.mwsAchievementMediaV1;
+      if(createdIds.length&&media?.remove)await Promise.allSettled(createdIds.map(id=>media.remove(id)));
+      renderAll('전체 백업 가져오기 실패');
+      updateStorageStatus(false);
+      updateFullBackupAssetStatus();
+    }
+    console.error('Full backup import failed',error);
+    toast('전체 백업',error?.message||'백업 파일을 불러오지 못했습니다');
+  }finally{
+    input.value='';
+  }
+};
 document.getElementById('importContactsInput').onchange=async e=>{
   const input=e.target,file=input.files[0];
   if(!file)return;
