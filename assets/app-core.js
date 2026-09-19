@@ -189,7 +189,7 @@ let wheelScrollTimers={};
 function loadData(){
   const raw=localStorage.getItem('mawangSchedulerBeta');
   if(raw){try{return JSON.parse(raw)}catch(e){}}
-  return {version:52,categories:DEFAULT_CATEGORIES,contacts:[],posts:[],events:[],collaborations:[],memos:[],targetList:[],contactTags:[],contactTagBanners:{},scheduleClipboard:[],favoriteFolders:[],postViewMode:'card',postCardColumns:4,textScale:100,resolutionMode:'fhd',selfContactId:'',sidebarPinned:true,dashboardUpcomingHidden:false,timezones:DEFAULT_TZS,theme:'neon',backgroundImage:'',backgroundDim:45,uiFrame:'classic',neoTransparency:10,miniGames:defaultMiniGames()};
+  return {version:52,categories:DEFAULT_CATEGORIES,contacts:[],posts:[],events:[],collaborations:[],memos:[],targetList:[],contactTags:[],contactTagBanners:{},scheduleClipboard:[],favoriteFolders:[],achievementCards:[],postViewMode:'card',postCardColumns:4,textScale:100,resolutionMode:'fhd',selfContactId:'',sidebarPinned:true,dashboardUpcomingHidden:false,timezones:DEFAULT_TZS,theme:'neon',backgroundImage:'',backgroundDim:45,uiFrame:'classic',neoTransparency:10,miniGames:defaultMiniGames()};
 }
 const AUTOSAVE_KEY='mawangSchedulerAutoBackups';
 
@@ -253,6 +253,26 @@ function normalizeDataShape(){
   if(!Array.isArray(data.scheduleClipboard))data.scheduleClipboard=[];
   if(!Array.isArray(data.favoriteFolders))data.favoriteFolders=[];
   data.favoriteFolders=data.favoriteFolders.filter(Boolean).map(f=>({id:String(f.id||crypto.randomUUID()),name:String(f.name||'새 폴더').trim()||'새 폴더'}));
+  if(!Array.isArray(data.achievementCards))data.achievementCards=[];
+  {
+    const now=new Date().toISOString(),seen=new Set();
+    data.achievementCards=data.achievementCards.filter(Boolean).map((card,index)=>{
+      let id=String(card.id||crypto.randomUUID());
+      if(seen.has(id))id=crypto.randomUUID();
+      seen.add(id);
+      return {
+        id,
+        order:Math.max(0,Math.floor(Number(card.order??index)||0)),
+        gameName:String(card.gameName||'').trim(),
+        contentName:String(card.contentName||'').trim(),
+        description:String(card.description||''),
+        frontImageId:String(card.frontImageId||''),
+        backImageId:String(card.backImageId||''),
+        createdAt:String(card.createdAt||now),
+        updatedAt:String(card.updatedAt||card.createdAt||now)
+      };
+    }).sort((a,b)=>a.order-b.order).map((card,order)=>({...card,order}));
+  }
   data.postViewMode=data.postViewMode==='list'?'list':'card';
   data.postCardColumns=Math.max(2,Math.min(5,Number(data.postCardColumns)||4));
   data.textScale=Math.max(80,Math.min(200,Number(data.textScale)||100));
@@ -4579,7 +4599,8 @@ function buildFullBackupObject(){
       contacts:(payload.contacts||[]).length,
       contactImages:Object.keys(contactImages).length,
       events:(payload.events||[]).length,
-      memos:(payload.memos||[]).length
+      memos:(payload.memos||[]).length,
+      achievementCards:(payload.achievementCards||[]).length
     },
     data:payload,
     assets:{
