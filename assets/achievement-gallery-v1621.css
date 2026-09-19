@@ -448,9 +448,22 @@ body.mws-achievement-manager-open{overflow:hidden!important}
   color:var(--text);
   font-size:13px;
 }
+.achievement-manager-list-tools{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:6px;
+}
 .achievement-manager-add{
   flex:0 0 auto;
   padding:8px 10px;
+}
+.achievement-manager-cleanup{
+  flex:0 1 auto;
+  min-height:32px;
+  padding:6px 8px;
+  font-size:9px;
+  white-space:nowrap;
 }
 .achievement-manager-list{
   min-height:0;
@@ -738,9 +751,25 @@ body.mws-achievement-manager-open{overflow:hidden!important}
 }
 .achievement-manager-media-preview.has-image>span{display:none}
 .achievement-manager-media-preview.is-loading{opacity:.82}
-.achievement-manager-media-actions{display:grid;gap:6px;justify-items:center}
+.achievement-manager-media-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:6px;
+  justify-items:center;
+}
 .achievement-manager-media-actions button{width:100%;min-height:34px;padding:7px 9px}
-.achievement-manager-media-hint{color:var(--muted);font-size:8px;line-height:1.35;text-align:center}
+.achievement-manager-image-remove{
+  border-color:color-mix(in srgb,var(--danger) 45%,var(--border))!important;
+  color:color-mix(in srgb,var(--danger) 80%,var(--text))!important;
+}
+.achievement-manager-image-remove:disabled{opacity:.38;cursor:default}
+.achievement-manager-media-hint{
+  grid-column:1/-1;
+  color:var(--muted);
+  font-size:8px;
+  line-height:1.35;
+  text-align:center;
+}
 .achievement-manager-modal.is-media-busy .achievement-manager-dropzone{cursor:progress;opacity:.72}
 .achievement-manager-editor-actions{
   display:flex;
@@ -785,6 +814,9 @@ body.mws-achievement-manager-open{overflow:hidden!important}
   .achievement-manager-head{padding:18px 16px 14px}
   .achievement-manager-workspace{grid-template-columns:1fr}
   .achievement-manager-list-panel{border-right:0;border-bottom:1px solid var(--border)}
+  .achievement-manager-list-head{align-items:flex-start;flex-wrap:wrap}
+  .achievement-manager-list-tools{width:100%;justify-content:stretch}
+  .achievement-manager-list-tools button{flex:1 1 0}
   .achievement-manager-list{max-height:260px}
   .achievement-manager-editor-panel{min-height:360px;max-height:none;padding:16px}
   .achievement-manager-field textarea{min-height:130px}

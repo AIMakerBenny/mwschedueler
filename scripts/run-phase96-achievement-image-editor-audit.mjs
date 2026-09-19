@@ -37,7 +37,7 @@ export function runPhase96AchievementImageEditorAudit(){
     'api.update(cardId,patch)',
     'await media.remove(createdId)',
     '기존 이미지는 유지됩니다.',
-    'metadata deletion intentionally leaves media blobs untouched'
+    'function cleanupUnreferencedManagerMedia(ids)'
   ]){
     if(!gallery.includes(token))issues.push('achievement image editor runtime missing: '+token);
   }
@@ -52,7 +52,9 @@ export function runPhase96AchievementImageEditorAudit(){
   const deleteEnd=gallery.indexOf('function syncManagerShellCount()',deleteStart);
   const deleteBody=deleteStart>=0&&deleteEnd>deleteStart?gallery.slice(deleteStart,deleteEnd):'';
   if(!deleteBody)issues.push('achievement card deletion function not found for media policy audit');
-  if(/media\.remove\(/.test(deleteBody))issues.push('card deletion automatically removes media blobs without a reference scan');
+  if(deleteBody.includes('media.remove(')&&!deleteBody.includes('cleanupUnreferencedManagerMedia(mediaIds)')){
+    issues.push('card deletion removes media without the Phase 98 reference scan successor');
+  }
 
   for(const token of [
     '.achievement-manager-media-grid{',

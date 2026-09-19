@@ -194,10 +194,22 @@ function mwsAchievementDeleteCardV1621(id){
   const target=String(id||'');
   const index=data.achievementCards.findIndex(item=>item.id===target);
   if(index<0)return {ok:false,saved:false,card:null};
+  const previous=data.achievementCards.map(mwsAchievementCardClone);
   const [removed]=data.achievementCards.splice(index,1);
   data.achievementCards.forEach((card,order)=>{card.order=order});
-  const saved=saveData('업적 카드 삭제');
-  return {ok:true,saved,card:mwsAchievementCardClone(removed)};
+  const reason='업적 카드 삭제';
+  const saved=persist();
+  if(!saved){
+    data.achievementCards=previous;
+    renderAll('업적 카드 삭제 실패');
+    updateStorageStatus(false);
+    return {ok:false,saved:false,card:mwsAchievementCardClone(removed)};
+  }
+  lastSyncReason=reason;
+  renderAll(reason);
+  updateStorageStatus(true);
+  try{window.dispatchEvent(new CustomEvent('mawang:datachange',{detail:{reason}}))}catch(e){}
+  return {ok:true,saved:true,card:mwsAchievementCardClone(removed)};
 }
 function mwsAchievementMoveCardV1621(id,targetIndex){
   normalizeDataShape();

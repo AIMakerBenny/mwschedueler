@@ -20,7 +20,8 @@ export function runPhase95AchievementManagerEditorAudit(){
     'remove:mwsAchievementDeleteCardV1621',
     "saveData('업적 카드 추가')",
     "lastSyncReason=reason",
-    "saveData('업적 카드 삭제')",
+    "const reason='업적 카드 삭제';",
+    "renderAll('업적 카드 삭제 실패');",
     'data.achievementCards.forEach((card,order)=>{card.order=order})'
   ]){
     if(!core.includes(token))issues.push('achievement mutation API missing: '+token);
