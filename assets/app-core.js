@@ -4775,6 +4775,63 @@ function blobToBackupBase64(blob){
     reader.readAsDataURL(blob);
   });
 }
+const ACHIEVEMENT_PACKAGE_LIMITS=Object.freeze({
+  maxFileBytes:512*1024*1024,
+  maxCards:5000,
+  maxImageBytes:32*1024*1024,
+  maxGameName:120,
+  maxContentName:160,
+  maxDescription:4000,
+  maxSourceId:256
+});
+function achievementBase64DecodedBytes(base64){
+  const value=String(base64||'');
+  if(!value)return 0;
+  if(value.length%4!==0||!/^[A-Za-z0-9+/]*={0,2}$/.test(value))throw new Error('업적 이미지 Base64 형식이 올바르지 않습니다');
+  const padding=value.endsWith('==')?2:value.endsWith('=')?1:0;
+  return Math.floor(value.length*3/4)-padding;
+}
+function validateAchievementEmbeddedMedia(backup,payload,{packageMode=false}={}){
+  const cards=Array.isArray(payload?.achievementCards)?payload.achievementCards:[];
+  if(cards.length>ACHIEVEMENT_PACKAGE_LIMITS.maxCards)throw new Error(`업적 카드는 최대 ${ACHIEVEMENT_PACKAGE_LIMITS.maxCards}장까지 가져올 수 있습니다`);
+  const fields=[
+    ['gameName',ACHIEVEMENT_PACKAGE_LIMITS.maxGameName,'게임 이름'],
+    ['contentName',ACHIEVEMENT_PACKAGE_LIMITS.maxContentName,'컨텐츠 이름'],
+    ['description',ACHIEVEMENT_PACKAGE_LIMITS.maxDescription,'설명']
+  ];
+  for(const card of cards){
+    if(!card||typeof card!=='object'||Array.isArray(card))throw new Error('업적 카드 데이터 형식이 올바르지 않습니다');
+    for(const [field,max,label] of fields){
+      if(card[field]!==undefined&&typeof card[field]!=='string')throw new Error(`${label} 형식이 올바르지 않습니다`);
+      if(String(card[field]||'').length>max)throw new Error(`${label}은 최대 ${max}자까지 가져올 수 있습니다`);
+    }
+    for(const field of ['frontImageId','backImageId']){
+      if(card[field]!==undefined&&typeof card[field]!=='string')throw new Error('업적 이미지 ID 형식이 올바르지 않습니다');
+      if(String(card[field]||'').length>ACHIEVEMENT_PACKAGE_LIMITS.maxSourceId)throw new Error('업적 이미지 ID가 너무 깁니다');
+    }
+  }
+  const packed=Array.isArray(backup?.assets?.achievementMedia)?backup.assets.achievementMedia:[];
+  const structuralMax=Math.min(ACHIEVEMENT_PACKAGE_LIMITS.maxCards*2,Math.max(0,cards.length*2));
+  if(packed.length>structuralMax)throw new Error('업적 이미지 항목 수가 카드 구조상 허용 범위를 초과합니다');
+  for(const item of packed){
+    if(!item||typeof item!=='object'||Array.isArray(item))throw new Error('업적 이미지 데이터 형식이 올바르지 않습니다');
+    const sourceId=String(item.sourceId||'');
+    const mime=String(item.mime||'').trim().toLowerCase();
+    const encoded=String(item.base64||'');
+    if(!sourceId||sourceId.length>ACHIEVEMENT_PACKAGE_LIMITS.maxSourceId)throw new Error('업적 이미지 ID 형식이 올바르지 않습니다');
+    if(!mime.startsWith('image/')||mime.length>100)throw new Error('업적 이미지 MIME 형식이 올바르지 않습니다');
+    const decodedBytes=achievementBase64DecodedBytes(encoded);
+    if(decodedBytes>ACHIEVEMENT_PACKAGE_LIMITS.maxImageBytes)throw new Error('업적 이미지 한 장은 32MB를 초과할 수 없습니다');
+    if(Number.isFinite(Number(item.size))&&Number(item.size)>ACHIEVEMENT_PACKAGE_LIMITS.maxImageBytes)throw new Error('업적 이미지 선언 크기가 32MB를 초과합니다');
+  }
+  if(packageMode){
+    if(backup?.format!=='MAWANG_ACHIEVEMENT_PACKAGE'||Number(backup?.version)!==1||Number(backup?.assetSchema)!==2){
+      throw new Error('지원하지 않는 업적 패키지 형식입니다');
+    }
+  }
+  return {cards:cards.length,media:packed.length};
+}
+window.validateAchievementEmbeddedMedia=validateAchievementEmbeddedMedia;
 function backupBase64ToBlob(base64,mime='application/octet-stream'){
   const binary=atob(String(base64||''));
   const bytes=new Uint8Array(binary.length);
@@ -5003,10 +5060,12 @@ document.getElementById('achievementImportPackageInput').onchange=async e=>{
   let createdIds=[];
   let committed=false;
   try{
+    if(file.size>ACHIEVEMENT_PACKAGE_LIMITS.maxFileBytes)throw new Error('업적 패키지 파일은 512MB를 초과할 수 없습니다');
     const pack=JSON.parse(await file.text());
     if(pack?.format!=='MAWANG_ACHIEVEMENT_PACKAGE'||!Array.isArray(pack.cards))throw new Error('유효하지 않은 업적 패키지입니다');
     if(!pack.cards.length)throw new Error('가져올 업적 카드가 없습니다');
     const payload={achievementCards:JSON.parse(JSON.stringify(pack.cards))};
+    validateAchievementEmbeddedMedia(pack,payload,{packageMode:true});
     const mediaResult=await restoreAchievementBackupMedia(pack,payload);
     createdIds=mediaResult.createdIds;
     const api=window.mwsAchievementCardsV1621;
@@ -5041,6 +5100,7 @@ document.getElementById('importAllInput').onchange=async e=>{
     const obj=JSON.parse(await file.text());
     const payload=restoreFullBackupAssets(obj);
     if(!payload.events||!payload.contacts)throw new Error('유효하지 않은 백업 파일입니다');
+    if(Number(obj?.assetSchema||0)>=2)validateAchievementEmbeddedMedia(obj,payload);
     const mediaResult=await restoreAchievementBackupMedia(obj,payload);
     createdIds=mediaResult.createdIds;
     data=prepareImportedFullBackupPayload(payload,currentDevicePrefs);

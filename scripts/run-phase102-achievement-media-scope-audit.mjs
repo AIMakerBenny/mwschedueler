@@ -28,7 +28,7 @@ export function runPhase102AchievementMediaScopeAudit(){
     if(!restoreBody.includes("if(!mime.startsWith('image/'))continue;"))issues.push('non-image backup assets can still be persisted');
   }
 
-  if(!/assets\/app-core\.js\?v=1\.3\.0-search(?:102|1[1-9][0-9]|[2-9][0-9]{2,})/.test(index)){
+  if(!/assets\/app-core\.js\?v=1\.3\.0-search(?:10[2-9]|1[1-9][0-9]|[2-9][0-9]{2,})/.test(index)){
     issues.push('app-core cache-bust is older than search102');
   }
 
