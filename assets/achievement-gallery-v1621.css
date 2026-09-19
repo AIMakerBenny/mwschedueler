@@ -108,7 +108,7 @@ body.mws-achievement-modal-open{overflow:hidden!important}
 }
 .achievement-detail-dialog{
   position:relative;
-  width:min(1500px,98vw);
+  width:min(1720px,99vw);
   max-height:96vh;
   overflow:auto;
   border:1px solid color-mix(in srgb,var(--border) 88%,transparent);
@@ -141,10 +141,10 @@ body.mws-achievement-modal-open{overflow:hidden!important}
 }
 .achievement-detail-layout{
   display:grid;
-  grid-template-columns:minmax(560px,680px) minmax(360px,1fr);
-  gap:36px;
+  grid-template-columns:minmax(720px,820px) minmax(420px,1fr);
+  gap:56px;
   align-items:center;
-  padding:32px 36px;
+  padding:32px 72px;
 }
 .achievement-detail-visual{
   display:grid;
