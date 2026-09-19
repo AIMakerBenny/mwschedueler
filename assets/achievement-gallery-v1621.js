@@ -585,7 +585,10 @@ function ensureManagerModal(){
 }
 function syncManagerShellCount(){
   updateManagerCount();
-  if(managerModal&&!managerModal.hidden)renderManagerList();
+  if(!managerModal||managerModal.hidden)return;
+  const modalCount=managerModal.querySelector('[data-achievement-manager-count]');
+  if(modalCount)modalCount.textContent=`${cards().length}장`;
+  if(!managerDirty)renderManagerList();
 }
 function openManager(){
   const root=ensureManagerModal();
