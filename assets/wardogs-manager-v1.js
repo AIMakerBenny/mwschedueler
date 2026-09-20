@@ -1,0 +1,483 @@
+/* WARDOGS Phase 122 - Import/Export card manager */
+(()=>{
+'use strict';
+if(window.__mwsWardogsManagerV122)return;
+window.__mwsWardogsManagerV122=true;
+
+const CLASS_META=Object.freeze([
+  {id:'assault',label:'ASSAULT'},
+  {id:'medic',label:'MEDIC'},
+  {id:'recon',label:'RECON'},
+  {id:'support',label:'SUPPORT'},
+  {id:'driver',label:'DRIVER'},
+  {id:'pilot',label:'PILOT'}
+]);
+const CLASS_RANK=new Map(CLASS_META.map((item,index)=>[item.id,index]));
+
+let modal=null;
+let selectedId='';
+let selectedContactId='';
+let pendingFile=null;
+let pendingPreviewUrl='';
+let existingPreviewUrl='';
+let previewToken=0;
+let busy=false;
+let draftDirty=false;
+let lastFocus=null;
+
+function isAdmin(){return document.body?.dataset?.mwsMode==='admin'}
+function state(){
+  const api=window.mwsWardogsDataV119;
+  return api?.get?.()||{schemaVersion:1,cards:[]};
+}
+function cards(){
+  return (state().cards||[]).slice().sort((a,b)=>{
+    const ca=CLASS_RANK.get(String(a?.classId||''))??99;
+    const cb=CLASS_RANK.get(String(b?.classId||''))??99;
+    return ca-cb||(Number(a?.order)||0)-(Number(b?.order)||0)||String(a?.createdAt||'').localeCompare(String(b?.createdAt||''));
+  });
+}
+function cardById(id){return cards().find(card=>String(card?.id||'')===String(id||''))||null}
+function contactLink(value){return window.mwsWardogsDataV119?.resolveContactLink?.(value)||{contactId:String(value?.contactId||value||''),linked:false,orphaned:true,contact:null}}
+function media(){return window.mwsWardogsMediaV1}
+function clsLabel(id){return CLASS_META.find(item=>item.id===id)?.label||String(id||'').toUpperCase()}
+function esc(value=''){return String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]))}
+function cloneWardogs(){return JSON.parse(JSON.stringify(state()))}
+function setBusy(next){
+  busy=Boolean(next);
+  modal?.querySelector('.wardogs-manager-editor-v122')?.classList.toggle('is-busy',busy);
+  modal?.querySelectorAll('button,input,select').forEach(el=>{
+    if(el.matches('[data-wardogs-manager-close]'))return;
+    el.disabled=busy||(!isAdmin()&&el.matches('[data-wardogs-manager-write]'));
+  });
+}
+function setStatus(message='',kind=''){
+  const el=modal?.querySelector('[data-wardogs-manager-status]');
+  if(!el)return;
+  el.textContent=message||'WARDOGS 카드 정보를 관리합니다.';
+  el.className='wardogs-manager-status-v122'+(kind?' '+kind:'');
+}
+function clearObjectUrl(name){
+  const value=name==='pending'?pendingPreviewUrl:existingPreviewUrl;
+  if(value){try{URL.revokeObjectURL(value)}catch(_){}}
+  if(name==='pending')pendingPreviewUrl='';
+  else existingPreviewUrl='';
+}
+function clearPendingFile(){
+  pendingFile=null;
+  clearObjectUrl('pending');
+  const input=modal?.querySelector('[data-wardogs-manager-file]');
+  if(input)input.value='';
+}
+function markDirty(){draftDirty=true}
+function updateCount(){
+  const chip=document.getElementById('wardogsManageCount');
+  if(chip)chip.textContent=`${cards().length}장`;
+}
+function managerModeReady(){
+  return isAdmin()&&window.mwsWardogsDataV119&&window.mwsWardogsMediaV1;
+}
+async function waitForWardogsPart(){
+  if(typeof window.mwsV55EgressReport!=='function')return true;
+  for(let i=0;i<60;i++){
+    try{
+      if(window.mwsV55EgressReport()?.loadedParts?.includes('wardogs'))return true;
+    }catch(_){}
+    await new Promise(resolve=>setTimeout(resolve,50));
+  }
+  return false;
+}
+function normalizeStateInPlace(){
+  const root=state();
+  const normalized=window.mwsWardogsDataV119?.normalize?.(root);
+  if(normalized){root.schemaVersion=normalized.schemaVersion;root.cards=normalized.cards}
+  return root;
+}
+async function callSave(reason){
+  let saved=true;
+  if(typeof window.saveData==='function')saved=window.saveData(reason);
+  else{
+    try{if(typeof saveData==='function')saved=saveData(reason)}catch(_){saved=false}
+  }
+  if(saved===false)throw new Error('로컬 데이터 반영에 실패했습니다.');
+  if(isAdmin()&&typeof window.mwsV55SaveNow==='function'){
+    const cloudOk=await window.mwsV55SaveNow();
+    if(!cloudOk)throw new Error('Cloudflare D1 저장에 실패했습니다.');
+  }
+  return true;
+}
+async function restoreSnapshot(snapshot){
+  try{
+    const root=state();
+    root.schemaVersion=Number(snapshot?.schemaVersion)||1;
+    root.cards=Array.isArray(snapshot?.cards)?JSON.parse(JSON.stringify(snapshot.cards)):[];
+    if(typeof window.saveData==='function')window.saveData('WARDOGS 카드 변경 롤백');
+    if(isAdmin()&&typeof window.mwsV55SaveNow==='function')await window.mwsV55SaveNow();
+  }catch(error){console.error('WARDOGS manager rollback failed',error)}
+}
+function referencedImage(id){
+  id=String(id||'');if(!id)return false;
+  return cards().some(card=>String(card?.imageId||'')===id);
+}
+async function cleanupImageIfUnused(id){
+  id=String(id||'');if(!id||referencedImage(id))return false;
+  try{return await media()?.remove?.(id)}
+  catch(error){console.warn('WARDOGS unreferenced media cleanup failed',id,error);return false}
+}
+async function imageDimensions(blob){
+  if(typeof createImageBitmap!=='function')return {width:0,height:0};
+  try{
+    const bitmap=await createImageBitmap(blob);
+    const result={width:Number(bitmap.width)||0,height:Number(bitmap.height)||0};
+    try{bitmap.close?.()}catch(_){}
+    return result;
+  }catch(_){return {width:0,height:0}}
+}
+
+function listHtml(){
+  const list=cards();
+  if(!list.length)return '<div class="wardogs-manager-empty-list-v122">등록된 WARDOGS 카드가 없습니다.</div>';
+  return list.map(card=>{
+    const link=contactLink(card);
+    const name=link.linked?String(link.contact?.name||'이름 없음'):`연결 끊김 · ${String(card.contactId||'ID 없음')}`;
+    const stateClass=link.orphaned?'orphan':(card.active===false?'off':'');
+    const stateText=link.orphaned?'ORPHAN':(card.active===false?'OFF':'ACTIVE');
+    return `<button type="button" class="wardogs-manager-item-v122 ${selectedId===card.id?'active':''}" data-wardogs-manager-card="${esc(card.id)}">
+      <span><span class="wardogs-manager-item-name-v122">${esc(name)}</span><span class="wardogs-manager-item-meta-v122">${esc(clsLabel(card.classId))} · ORDER ${Number(card.order)||0}</span></span>
+      <span class="wardogs-manager-item-state-v122 ${stateClass}">${stateText}</span>
+    </button>`;
+  }).join('');
+}
+function renderList(){
+  const box=modal?.querySelector('[data-wardogs-manager-list]');
+  if(box)box.innerHTML=listHtml();
+  box?.querySelectorAll('[data-wardogs-manager-card]').forEach(btn=>btn.addEventListener('click',()=>selectCard(btn.dataset.wardogsManagerCard)));
+  updateCount();
+}
+function selectedContactHtml(){
+  const link=contactLink(selectedContactId);
+  if(!selectedContactId)return '<span><strong>연락처 미선택</strong><small>아래 검색에서 WARDOGS 인원을 선택하세요.</small></span>';
+  if(!link.linked)return `<span><strong>연결이 끊긴 연락처</strong><small>${esc(selectedContactId)}</small></span>`;
+  return `<span><strong>${esc(link.contact?.name||'이름 없음')}</strong><small>ID · ${esc(link.contactId)}</small></span>`;
+}
+function renderSelectedContact(){
+  const box=modal?.querySelector('[data-wardogs-manager-selected-contact]');
+  if(box)box.innerHTML=selectedContactHtml();
+}
+function renderContactResults(){
+  const root=modal;if(!root)return;
+  const query=root.querySelector('[data-wardogs-manager-search]')?.value||'';
+  const box=root.querySelector('[data-wardogs-manager-search-results]');
+  if(!box)return;
+  const list=window.mwsWardogsDataV119?.searchContacts?.(query,{limit:40})||[];
+  box.innerHTML=list.length?list.map(contact=>`<button type="button" class="wardogs-manager-contact-result-v122" data-wardogs-manager-contact="${esc(contact.id)}">
+      <span><strong>${esc(contact.name||'이름 없음')}</strong><small>${esc((contact.labels||[]).join(' · ')||'라벨 없음')}</small></span><span>선택</span>
+    </button>`).join(''):'<div class="wardogs-manager-empty-list-v122">검색 결과가 없습니다.</div>';
+  box.querySelectorAll('[data-wardogs-manager-contact]').forEach(btn=>btn.addEventListener('click',()=>{
+    selectedContactId=String(btn.dataset.wardogsManagerContact||'');
+    markDirty();
+    renderSelectedContact();
+    renderContactResults();
+  }));
+}
+async function renderExistingPreview(card,token){
+  const drop=modal?.querySelector('[data-wardogs-manager-drop]');
+  const stateEl=modal?.querySelector('[data-wardogs-manager-drop-state]');
+  if(!drop||!stateEl)return;
+  clearObjectUrl('existing');
+  drop.querySelector('img')?.remove();
+  if(pendingFile){
+    clearObjectUrl('pending');
+    pendingPreviewUrl=URL.createObjectURL(pendingFile);
+    const img=document.createElement('img');
+    img.alt='선택한 WARDOGS 카드 이미지 미리보기';img.src=pendingPreviewUrl;img.draggable=false;
+    drop.appendChild(img);stateEl.hidden=true;return;
+  }
+  const imageId=String(card?.imageId||'');
+  if(!imageId){stateEl.hidden=false;stateEl.innerHTML='<strong>카드 이미지 없음</strong>이미지를 드래그하거나 파일을 선택하세요.';return}
+  stateEl.hidden=false;stateEl.innerHTML='<strong>이미지 불러오는 중</strong>등록된 WARDOGS 카드 이미지를 확인하고 있습니다.';
+  try{
+    const blob=await media()?.getBlob?.(imageId);
+    if(token!==previewToken)return;
+    if(!(blob instanceof Blob)){stateEl.innerHTML='<strong>이미지 없음</strong>등록된 이미지 파일을 찾지 못했습니다.';return}
+    existingPreviewUrl=URL.createObjectURL(blob);
+    const img=document.createElement('img');img.alt='WARDOGS 카드 이미지';img.src=existingPreviewUrl;img.draggable=false;
+    drop.appendChild(img);stateEl.hidden=true;
+  }catch(error){
+    console.warn('WARDOGS manager preview failed',error);
+    if(token===previewToken){stateEl.hidden=false;stateEl.innerHTML='<strong>이미지 오류</strong>카드 이미지를 불러오지 못했습니다.'}
+  }
+}
+function currentDraftCard(){return selectedId?cardById(selectedId):null}
+function renderEditor(){
+  const root=modal;if(!root)return;
+  const card=currentDraftCard();
+  selectedContactId=card?String(card.contactId||''):selectedContactId;
+  root.querySelector('[data-wardogs-manager-title]').textContent=card?'WARDOGS 카드 수정':'새 WARDOGS 카드';
+  root.querySelector('[data-wardogs-manager-class]').value=card?.classId||root.querySelector('[data-wardogs-manager-class]').value||'assault';
+  root.querySelector('[data-wardogs-manager-active]').checked=card?card.active!==false:true;
+  root.querySelector('[data-wardogs-manager-delete]').hidden=!card;
+  root.querySelector('[data-wardogs-manager-save]').textContent=card?'변경 저장':'카드 추가';
+  root.querySelector('[data-wardogs-manager-search]').value='';
+  renderSelectedContact();
+  renderContactResults();
+  const token=++previewToken;
+  void renderExistingPreview(card,token);
+  setBusy(busy);
+}
+function resetDraftForNew(){
+  selectedId='';
+  selectedContactId='';
+  draftDirty=false;
+  clearPendingFile();
+  renderList();
+  renderEditor();
+  setStatus('새 카드에 연결할 연락처, 클래스, 이미지를 선택하세요.');
+}
+function selectCard(id){
+  if(busy)return;
+  if(draftDirty&&!window.confirm('저장하지 않은 변경사항을 버리고 다른 카드를 열까요?'))return;
+  selectedId=String(id||'');
+  selectedContactId='';
+  draftDirty=false;
+  clearPendingFile();
+  renderList();
+  renderEditor();
+  const card=cardById(selectedId),link=contactLink(card||'');
+  setStatus(link.orphaned?'연결된 연락처가 삭제되었습니다. 다른 연락처로 재연결할 수 있습니다.':'카드 정보를 수정할 수 있습니다.',link.orphaned?'warn':'');
+}
+function validateFile(file){
+  if(!(file instanceof File))return '이미지 파일을 선택해 주세요.';
+  if(!String(file.type||'').toLowerCase().startsWith('image/'))return '이미지 파일만 등록할 수 있습니다.';
+  const limit=Math.max(1,Number(media()?.maxBytes)||32*1024*1024);
+  if(file.size<1)return '빈 파일은 등록할 수 없습니다.';
+  if(file.size>limit)return 'WARDOGS 카드 이미지는 32MB 이하만 등록할 수 있습니다.';
+  return '';
+}
+function setPendingFile(file){
+  const error=validateFile(file);
+  if(error){setStatus(error,'error');return false}
+  pendingFile=file;
+  markDirty();
+  void renderExistingPreview(currentDraftCard(),++previewToken);
+  setStatus('새 이미지가 선택되었습니다. 저장하면 Cloudflare R2에 반영됩니다.','warn');
+  return true;
+}
+async function saveDraft(){
+  if(busy||!isAdmin())return;
+  const root=modal;
+  const classId=String(root?.querySelector('[data-wardogs-manager-class]')?.value||'');
+  const active=root?.querySelector('[data-wardogs-manager-active]')?.checked!==false;
+  const existing=currentDraftCard();
+  if(!selectedContactId){setStatus('연결할 연락처를 선택해 주세요.','error');return}
+  if(!CLASS_RANK.has(classId)){setStatus('WARDOGS 클래스를 선택해 주세요.','error');return}
+  if(!existing&&!pendingFile){setStatus('새 카드에는 카드 이미지가 필요합니다.','error');return}
+  const duplicate=cards().find(card=>card.id!==selectedId&&card.contactId===selectedContactId&&card.classId===classId);
+  if(duplicate){setStatus('같은 연락처와 클래스 조합의 카드가 이미 있습니다.','error');return}
+
+  const snapshot=cloneWardogs();
+  const previousImageId=String(existing?.imageId||'');
+  let uploadedId='';
+  setBusy(true);
+  setStatus('WARDOGS 카드를 저장하는 중입니다.','warn');
+  try{
+    let imageId=previousImageId;
+    if(pendingFile){
+      const dimensions=await imageDimensions(pendingFile);
+      const result=await media().put(pendingFile,dimensions);
+      imageId=String(result?.id||'');
+      uploadedId=imageId;
+      if(!imageId)throw new Error('업로드된 이미지 ID를 확인할 수 없습니다.');
+    }
+    const rootState=state();
+    const now=new Date().toISOString();
+    if(existing){
+      const target=rootState.cards.find(card=>card.id===selectedId);
+      if(!target)throw new Error('수정할 카드를 찾을 수 없습니다.');
+      Object.assign(target,{contactId:selectedContactId,classId,imageId,active,updatedAt:now});
+    }else{
+      const classOrders=rootState.cards.filter(card=>card.classId===classId).map(card=>Number(card.order)||0);
+      rootState.cards.push({
+        id:crypto.randomUUID(),contactId:selectedContactId,classId,imageId,
+        order:classOrders.length?Math.max(...classOrders)+1:0,active,createdAt:now,updatedAt:now
+      });
+    }
+    normalizeStateInPlace();
+    await callSave(existing?'WARDOGS 카드 수정':'WARDOGS 카드 추가');
+    if(previousImageId&&uploadedId&&previousImageId!==uploadedId)await cleanupImageIfUnused(previousImageId);
+    const savedCard=cards().find(card=>card.contactId===selectedContactId&&card.classId===classId)||null;
+    selectedId=String(savedCard?.id||selectedId||'');
+    draftDirty=false;
+    clearPendingFile();
+    renderList();renderEditor();
+    setStatus(existing?'WARDOGS 카드 변경사항을 저장했습니다.':'WARDOGS 카드를 추가했습니다.','ok');
+  }catch(error){
+    console.error('WARDOGS manager save failed',error);
+    await restoreSnapshot(snapshot);
+    if(uploadedId)await cleanupImageIfUnused(uploadedId);
+    setStatus(error?.message||'WARDOGS 카드 저장에 실패했습니다.','error');
+  }finally{setBusy(false)}
+}
+async function deleteCard(){
+  if(busy||!isAdmin())return;
+  const card=currentDraftCard();if(!card)return;
+  const link=contactLink(card);
+  const name=link.linked?String(link.contact?.name||'이름 없음'):String(card.contactId||'연결 끊김');
+  if(!window.confirm(`${name} · ${clsLabel(card.classId)} 카드를 삭제하시겠습니까?`))return;
+  const snapshot=cloneWardogs();
+  const oldImageId=String(card.imageId||'');
+  setBusy(true);setStatus('WARDOGS 카드를 삭제하는 중입니다.','warn');
+  try{
+    const rootState=state();
+    rootState.cards=rootState.cards.filter(item=>item.id!==card.id);
+    normalizeStateInPlace();
+    await callSave('WARDOGS 카드 삭제');
+    await cleanupImageIfUnused(oldImageId);
+    selectedId='';selectedContactId='';draftDirty=false;clearPendingFile();
+    renderList();renderEditor();
+    setStatus('WARDOGS 카드를 삭제했습니다.','ok');
+  }catch(error){
+    console.error('WARDOGS manager delete failed',error);
+    await restoreSnapshot(snapshot);
+    setStatus(error?.message||'WARDOGS 카드 삭제에 실패했습니다.','error');
+  }finally{setBusy(false)}
+}
+function ensureModal(){
+  if(modal?.isConnected)return modal;
+  const root=document.createElement('div');
+  root.id='wardogsManagerModalV122';
+  root.className='wardogs-manager-modal-v122';
+  root.hidden=true;
+  root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');root.setAttribute('aria-labelledby','wardogsManagerTitleV122');
+  root.innerHTML=`
+    <div class="wardogs-manager-dialog-v122" role="document">
+      <div class="wardogs-manager-head-v122">
+        <div><div class="wardogs-manager-kicker-v122">WARDOGS PERSONNEL CARD CONTROL</div><h2 id="wardogsManagerTitleV122">WARDOGS 카드 관리</h2></div>
+        <button type="button" class="ghost wardogs-manager-close-v122" data-wardogs-manager-close aria-label="WARDOGS 카드 관리 닫기">×</button>
+      </div>
+      <div class="wardogs-manager-layout-v122">
+        <aside class="wardogs-manager-list-pane-v122">
+          <div class="wardogs-manager-list-head-v122"><strong>등록 카드</strong><span class="chip" data-wardogs-manager-modal-count>0장</span></div>
+          <button type="button" class="primary wardogs-manager-add-v122" data-wardogs-manager-new data-wardogs-manager-write>+ 새 카드</button>
+          <div class="wardogs-manager-list-v122" data-wardogs-manager-list></div>
+        </aside>
+        <section class="wardogs-manager-editor-v122">
+          <div class="wardogs-manager-status-v122" data-wardogs-manager-status>WARDOGS 카드 정보를 관리합니다.</div>
+          <div class="space" style="margin-bottom:14px"><div><div class="wardogs-manager-kicker-v122">CARD EDITOR</div><h3 data-wardogs-manager-title style="margin:4px 0 0">새 WARDOGS 카드</h3></div></div>
+          <div class="wardogs-manager-form-v122">
+            <div class="wardogs-manager-fields-v122">
+              <div class="wardogs-manager-field-v122">
+                <label>연결 연락처</label>
+                <div class="wardogs-manager-contact-selected-v122" data-wardogs-manager-selected-contact></div>
+              </div>
+              <div class="wardogs-manager-field-v122">
+                <label for="wardogsManagerContactSearchV122">연락처 검색</label>
+                <input id="wardogsManagerContactSearchV122" data-wardogs-manager-search placeholder="이름, 라벨, 메모 또는 초성 검색" autocomplete="off">
+                <div class="wardogs-manager-search-results-v122" data-wardogs-manager-search-results></div>
+              </div>
+              <div class="wardogs-manager-field-v122">
+                <label for="wardogsManagerClassV122">클래스</label>
+                <select id="wardogsManagerClassV122" data-wardogs-manager-class data-wardogs-manager-write>
+                  ${CLASS_META.map(item=>`<option value="${item.id}">${item.label}</option>`).join('')}
+                </select>
+              </div>
+              <label class="wardogs-manager-active-v122"><input type="checkbox" data-wardogs-manager-active data-wardogs-manager-write checked> <span><strong>활성 카드</strong><br><small>비활성으로 저장하면 향후 갤러리에서 숨길 수 있습니다.</small></span></label>
+            </div>
+            <div class="wardogs-manager-media-v122">
+              <div class="wardogs-manager-drop-v122" data-wardogs-manager-drop>
+                <div class="wardogs-manager-drop-state-v122" data-wardogs-manager-drop-state><strong>카드 이미지를 드래그</strong>또는 아래 버튼으로 이미지 파일을 선택하세요.</div>
+              </div>
+              <input type="file" accept="image/*" hidden data-wardogs-manager-file data-wardogs-manager-write>
+              <div class="wardogs-manager-media-actions-v122">
+                <button type="button" class="secondary" data-wardogs-manager-pick data-wardogs-manager-write>이미지 선택 / 교체</button>
+              </div>
+              <div class="wardogs-manager-media-note-v122">원본 비율과 원본 바이트를 유지합니다. 이미지당 최대 32MB · IndexedDB Blob + Cloudflare R2 저장.</div>
+            </div>
+          </div>
+          <div class="wardogs-manager-actions-v122">
+            <div><button type="button" class="ghost wardogs-manager-danger-v122" data-wardogs-manager-delete data-wardogs-manager-write hidden>카드 삭제</button></div>
+            <div><button type="button" class="secondary" data-wardogs-manager-close>닫기</button><button type="button" class="primary" data-wardogs-manager-save data-wardogs-manager-write>카드 추가</button></div>
+          </div>
+        </section>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  modal=root;
+
+  root.querySelectorAll('[data-wardogs-manager-close]').forEach(btn=>btn.addEventListener('click',closeManager));
+  root.querySelector('[data-wardogs-manager-new]')?.addEventListener('click',()=>{
+    if(draftDirty&&!window.confirm('저장하지 않은 변경사항을 버리고 새 카드를 만들까요?'))return;
+    resetDraftForNew();
+  });
+  root.querySelector('[data-wardogs-manager-search]')?.addEventListener('input',renderContactResults);
+  root.querySelector('[data-wardogs-manager-class]')?.addEventListener('change',markDirty);
+  root.querySelector('[data-wardogs-manager-active]')?.addEventListener('change',markDirty);
+  root.querySelector('[data-wardogs-manager-save]')?.addEventListener('click',()=>void saveDraft());
+  root.querySelector('[data-wardogs-manager-delete]')?.addEventListener('click',()=>void deleteCard());
+  const fileInput=root.querySelector('[data-wardogs-manager-file]');
+  root.querySelector('[data-wardogs-manager-pick]')?.addEventListener('click',()=>{if(!busy&&isAdmin()){fileInput.value='';fileInput.click()}});
+  fileInput?.addEventListener('change',()=>{const file=Array.from(fileInput.files||[]).find(item=>String(item.type||'').startsWith('image/'));if(file)setPendingFile(file)});
+  const drop=root.querySelector('[data-wardogs-manager-drop]');
+  ['dragenter','dragover'].forEach(type=>drop?.addEventListener(type,event=>{event.preventDefault();if(isAdmin()&&!busy)drop.classList.add('dragover')}));
+  ['dragleave','drop'].forEach(type=>drop?.addEventListener(type,event=>{event.preventDefault();drop.classList.remove('dragover')}));
+  drop?.addEventListener('drop',event=>{if(!isAdmin()||busy)return;const file=Array.from(event.dataTransfer?.files||[]).find(item=>String(item.type||'').startsWith('image/'));if(file)setPendingFile(file)});
+  return root;
+}
+async function openManager(){
+  const root=ensureModal();
+  lastFocus=document.activeElement;
+  root.hidden=false;
+  document.body.classList.add('mws-wardogs-manager-open-v122');
+  setStatus('WARDOGS 데이터를 불러오는 중입니다.','warn');
+  setBusy(true);
+  const loaded=await waitForWardogsPart();
+  setBusy(false);
+  if(!loaded){setStatus('WARDOGS cloud part를 불러오지 못했습니다. 페이지를 새로고침한 뒤 다시 시도해 주세요.','error');return}
+  if(!isAdmin()){
+    resetDraftForNew();
+    setStatus('WARDOGS 카드 관리는 Admin 로그인에서만 저장할 수 있습니다.','warn');
+    setBusy(false);
+    root.querySelectorAll('[data-wardogs-manager-write]').forEach(el=>el.disabled=true);
+    return;
+  }
+  resetDraftForNew();
+  setStatus('새 카드를 추가하거나 왼쪽 목록에서 기존 카드를 선택하세요.');
+}
+function closeManager(){
+  if(!modal||modal.hidden||busy)return;
+  if(draftDirty&&!window.confirm('저장하지 않은 변경사항이 있습니다. 관리창을 닫을까요?'))return;
+  draftDirty=false;selectedId='';selectedContactId='';clearPendingFile();clearObjectUrl('existing');previewToken++;
+  modal.hidden=true;document.body.classList.remove('mws-wardogs-manager-open-v122');
+  if(lastFocus?.isConnected)setTimeout(()=>lastFocus.focus(),0);
+  lastFocus=null;
+}
+function bindEntry(){
+  const btn=document.getElementById('wardogsManageBtn');
+  if(!btn||btn.dataset.mwsWardogsManagerBound==='1')return false;
+  btn.dataset.mwsWardogsManagerBound='1';
+  btn.addEventListener('click',()=>void openManager());
+  updateCount();
+  return true;
+}
+function syncShell(){
+  updateCount();
+  const modalCount=modal?.querySelector('[data-wardogs-manager-modal-count]');
+  if(modalCount)modalCount.textContent=`${cards().length}장`;
+  if(modal&&!modal.hidden){renderList()}
+}
+window.mwsOpenWardogsManagerV122=openManager;
+window.mwsCloseWardogsManagerV122=closeManager;
+window.addEventListener('mawang:datachange',event=>{
+  if(String(event?.detail?.reason||'').startsWith('WARDOGS')){
+    syncShell();
+    if(modal&&!modal.hidden&&!busy&&selectedId&&!cardById(selectedId))resetDraftForNew();
+  }
+});
+window.addEventListener('mws:wardogs-media-ready',syncShell);
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&modal&&!modal.hidden){event.preventDefault();closeManager()}
+});
+window.addEventListener('beforeunload',()=>{clearPendingFile();clearObjectUrl('existing')},{once:true});
+bindEntry();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindEntry,{once:true});
+})();

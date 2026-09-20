@@ -71,6 +71,8 @@ jobs:
           node --check scripts/run-phase120-wardogs-contact-link-search-audit.mjs
           node --check scripts/run-phase121-wardogs-media-persistence-audit.mjs
           node --check assets/wardogs-media-v1.js
+          node --check scripts/run-phase122-wardogs-manager-audit.mjs
+          node --check assets/wardogs-manager-v1.js
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -367,6 +369,11 @@ jobs:
           grep -Fq 'MISSION DATA <b>READY</b>' /tmp/index.html
           grep -Fq 'assets/wardogs-data-v1.js?v=1.0.0-phase120' /tmp/index.html
           grep -Fq 'assets/wardogs-media-v1.js?v=1.0.0-phase121' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase122' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase122' /tmp/index.html
+          grep -Fq 'class="card wardogs-manager-entry-card-v122"' /tmp/index.html
+          grep -Fq 'id="wardogsManageBtn"' /tmp/index.html
+          grep -Fq 'id="wardogsManageCount"' /tmp/index.html
           grep -Fq 'id="achievementEmptyState"' /tmp/index.html
           grep -Fq 'id="achievementCountChip"' /tmp/index.html
           grep -Fq 'id="achievementGallery" aria-live="polite" hidden' /tmp/index.html
@@ -439,6 +446,22 @@ jobs:
           unauth_status="$(printf 'x' | curl -sS -o /tmp/wardogs-unauth.json -w '%{http_code}' -X PUT -H 'content-type: image/png' --data-binary @- "$BASE/api/wardogs-media/phase121-probe?deploy=$GITHUB_SHA")"
           test "$unauth_status" = "401"
           grep -Fq 'Admin authorization required' /tmp/wardogs-unauth.json
+          retry_contains "$BASE/assets/wardogs-manager-v1.js?deploy=$GITHUB_SHA" "window.mwsOpenWardogsManagerV122=openManager;" > /tmp/wardogs-manager-v1.js
+          node --check /tmp/wardogs-manager-v1.js
+          grep -Fq "window.mwsWardogsDataV119?.searchContacts?.(query,{limit:40})" /tmp/wardogs-manager-v1.js
+          grep -Fq "window.mwsWardogsDataV119?.resolveContactLink?.(value)" /tmp/wardogs-manager-v1.js
+          grep -Fq "const cloudOk=await window.mwsV55SaveNow();" /tmp/wardogs-manager-v1.js
+          grep -Fq "await callSave(existing?'WARDOGS 카드 수정':'WARDOGS 카드 추가');" /tmp/wardogs-manager-v1.js
+          grep -Fq "await callSave('WARDOGS 카드 삭제');" /tmp/wardogs-manager-v1.js
+          grep -Fq "drop?.addEventListener('drop'" /tmp/wardogs-manager-v1.js
+          if grep -Eqi 'localStorage|readAsDataURL|data:image' /tmp/wardogs-manager-v1.js; then
+            echo 'WARDOGS manager contains forbidden Base64/localStorage media handling.' >&2
+            exit 1
+          fi
+          retry_contains "$BASE/assets/wardogs-manager-v1.css?deploy=$GITHUB_SHA" '.wardogs-manager-modal-v122{' > /tmp/wardogs-manager-v1.css
+          grep -Fq '.wardogs-manager-drop-v122 img{' /tmp/wardogs-manager-v1.css
+          grep -Fq 'object-fit:contain' /tmp/wardogs-manager-v1.css
+          grep -Fq '@media(max-width:860px)' /tmp/wardogs-manager-v1.css
           grep -Fq 'function mwsAchievementCreateCardV1621(fields={})' /tmp/app-core.js
           grep -Fq 'function mwsAchievementUpdateCardV1621(id,patch={})' /tmp/app-core.js
           grep -Fq 'function mwsAchievementDeleteCardV1621(id)' /tmp/app-core.js

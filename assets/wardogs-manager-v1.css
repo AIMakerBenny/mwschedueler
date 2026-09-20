@@ -1,0 +1,90 @@
+/* WARDOGS Phase 122 - Import/Export card manager */
+.wardogs-manager-entry-card-v122{border-color:rgba(255,107,44,.28);background:linear-gradient(135deg,rgba(255,107,44,.07),rgba(18,22,33,.96))}
+.wardogs-manager-modal-v122[hidden]{display:none!important}
+.wardogs-manager-modal-v122{
+  position:fixed;inset:0;z-index:10040;display:grid;place-items:center;padding:22px;
+  background:rgba(3,6,9,.82);
+}
+.wardogs-manager-dialog-v122{
+  width:min(1160px,96vw);max-height:min(900px,94vh);overflow:hidden;
+  display:grid;grid-template-rows:auto minmax(0,1fr);
+  border:1px solid rgba(255,107,44,.34);border-radius:18px;background:#0b0f14;color:#eef2f6;
+  box-shadow:0 28px 90px rgba(0,0,0,.48);
+}
+.wardogs-manager-head-v122{
+  display:flex;justify-content:space-between;gap:16px;align-items:flex-start;
+  padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.09);
+}
+.wardogs-manager-kicker-v122{font:800 10px/1.2 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.18em;color:#ff6b2c}
+.wardogs-manager-head-v122 h2{margin:4px 0 0;font-size:24px}
+.wardogs-manager-close-v122{min-width:42px}
+.wardogs-manager-layout-v122{display:grid;grid-template-columns:minmax(250px,320px) minmax(0,1fr);min-height:0}
+.wardogs-manager-list-pane-v122{min-height:0;overflow:auto;border-right:1px solid rgba(255,255,255,.08);padding:14px;background:rgba(255,255,255,.018)}
+.wardogs-manager-list-head-v122{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.wardogs-manager-add-v122{width:100%;margin-bottom:10px}
+.wardogs-manager-list-v122{display:grid;gap:7px}
+.wardogs-manager-item-v122{
+  width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;text-align:left;
+  padding:10px 11px;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:rgba(255,255,255,.025);color:inherit
+}
+.wardogs-manager-item-v122:hover{border-color:rgba(255,107,44,.28)}
+.wardogs-manager-item-v122.active{border-color:rgba(255,107,44,.55);background:rgba(255,107,44,.09);box-shadow:inset 3px 0 0 #ff6b2c}
+.wardogs-manager-item-name-v122{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wardogs-manager-item-meta-v122{margin-top:3px;font-size:10px;color:#8f9aa8;letter-spacing:.05em}
+.wardogs-manager-item-state-v122{font:800 9px/1 ui-monospace,SFMono-Regular,Consolas,monospace;color:#94d67d;align-self:center}
+.wardogs-manager-item-state-v122.off{color:#8c96a3}
+.wardogs-manager-item-state-v122.orphan{color:#ff7272}
+.wardogs-manager-empty-list-v122{padding:18px 8px;text-align:center;color:#85909d;font-size:12px}
+.wardogs-manager-editor-v122{min-height:0;overflow:auto;padding:18px 20px}
+.wardogs-manager-editor-v122.is-busy{pointer-events:none;opacity:.64}
+.wardogs-manager-status-v122{margin-bottom:12px;padding:9px 11px;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#98a3b1;font-size:12px}
+.wardogs-manager-status-v122.ok{border-color:rgba(132,214,107,.32);color:#a8e393}
+.wardogs-manager-status-v122.warn{border-color:rgba(255,190,80,.32);color:#ffd27f}
+.wardogs-manager-status-v122.error{border-color:rgba(255,82,82,.36);color:#ff9292}
+.wardogs-manager-form-v122{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,390px);gap:18px}
+.wardogs-manager-fields-v122{display:grid;align-content:start;gap:13px}
+.wardogs-manager-field-v122 label{display:block;margin-bottom:6px;font-size:11px;font-weight:850;color:#a8b2be}
+.wardogs-manager-field-v122 input,
+.wardogs-manager-field-v122 select{
+  width:100%;box-sizing:border-box;background:#10161d;color:#eef2f6;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:10px 11px
+}
+.wardogs-manager-contact-selected-v122{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid rgba(255,107,44,.24);border-radius:8px;background:rgba(255,107,44,.06)}
+.wardogs-manager-contact-selected-v122 strong{display:block}
+.wardogs-manager-contact-selected-v122 small{color:#8793a1}
+.wardogs-manager-search-results-v122{display:grid;gap:5px;max-height:210px;overflow:auto;margin-top:7px;padding-right:2px}
+.wardogs-manager-contact-result-v122{
+  width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;
+  padding:8px 9px;border:1px solid rgba(255,255,255,.07);border-radius:7px;background:rgba(255,255,255,.025);color:inherit
+}
+.wardogs-manager-contact-result-v122:hover{border-color:rgba(255,107,44,.28)}
+.wardogs-manager-contact-result-v122 small{color:#7f8a98}
+.wardogs-manager-active-v122{display:flex;align-items:center;gap:9px;padding:10px;border:1px solid rgba(255,255,255,.08);border-radius:8px}
+.wardogs-manager-media-v122{display:grid;align-content:start;gap:10px}
+.wardogs-manager-drop-v122{
+  position:relative;min-height:420px;display:grid;place-items:center;overflow:hidden;
+  border:1px dashed rgba(255,107,44,.38);border-radius:12px;background:rgba(255,255,255,.018);text-align:center;padding:14px
+}
+.wardogs-manager-drop-v122.dragover{border-color:#ff6b2c;background:rgba(255,107,44,.08)}
+.wardogs-manager-drop-v122 img{max-width:100%;max-height:520px;width:auto;height:auto;object-fit:contain;border-radius:7px;display:block}
+.wardogs-manager-drop-state-v122{color:#8d98a5;font-size:12px;line-height:1.6}
+.wardogs-manager-drop-state-v122 strong{display:block;color:#eef2f6;font-size:13px}
+.wardogs-manager-media-actions-v122{display:flex;gap:8px;flex-wrap:wrap}
+.wardogs-manager-media-note-v122{font-size:10px;color:#788593;line-height:1.5}
+.wardogs-manager-actions-v122{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08)}
+.wardogs-manager-actions-v122>div{display:flex;gap:8px;flex-wrap:wrap}
+.wardogs-manager-danger-v122{border-color:rgba(255,82,82,.35)!important;color:#ff9292!important}
+body.mws-wardogs-manager-open-v122{overflow:hidden}
+@media(max-width:860px){
+  .wardogs-manager-modal-v122{padding:8px}
+  .wardogs-manager-dialog-v122{width:98vw;max-height:96vh}
+  .wardogs-manager-layout-v122{grid-template-columns:1fr;grid-template-rows:minmax(150px,30vh) minmax(0,1fr)}
+  .wardogs-manager-list-pane-v122{border-right:0;border-bottom:1px solid rgba(255,255,255,.08)}
+  .wardogs-manager-form-v122{grid-template-columns:1fr}
+  .wardogs-manager-drop-v122{min-height:320px}
+}
+@media(max-width:560px){
+  .wardogs-manager-editor-v122{padding:13px}
+  .wardogs-manager-head-v122{padding:14px}
+  .wardogs-manager-actions-v122{align-items:stretch;flex-direction:column}
+  .wardogs-manager-actions-v122>div{display:grid;grid-template-columns:1fr 1fr}
+}
