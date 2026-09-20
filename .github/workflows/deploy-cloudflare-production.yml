@@ -493,7 +493,6 @@ jobs:
           grep -Fq 'width:100%;height:auto;max-width:100%;' /tmp/wardogs-v1.css
           grep -Fq 'object-fit:contain;' /tmp/wardogs-v1.css
           grep -Fq '.wd-class-count-v124{' /tmp/wardogs-v1.css
-          grep -Fq "new CustomEvent('mws:parts-loaded',{detail:{tab,parts:[...extras]}})" /tmp/live-cloud-core.js
           grep -Fq 'function mwsAchievementCreateCardV1621(fields={})' /tmp/app-core.js
           grep -Fq 'function mwsAchievementUpdateCardV1621(id,patch={})' /tmp/app-core.js
           grep -Fq 'function mwsAchievementDeleteCardV1621(id)' /tmp/app-core.js
@@ -615,6 +614,7 @@ jobs:
           grep -Fq "export:['contactMeta','miniGames','notebook','clipboard','wardogs']" /tmp/live-cloud-core.js
           grep -Fq "indexedDB.open(WARDOGS_CACHE_DB,WARDOGS_CACHE_VERSION)" /tmp/live-cloud-core.js
           grep -Fq "wardogs:{schemaVersion:1,cards:[]}" /tmp/live-cloud-core.js
+          grep -Fq "new CustomEvent('mws:parts-loaded',{detail:{tab,parts:[...extras]}})" /tmp/live-cloud-core.js
           wardogs_part="$(retry_contains "$BASE/api/parts/wardogs?deploy=$GITHUB_SHA" '"schemaVersion":1')"
           WARDOGS_PART="$wardogs_part" node -e "const x=JSON.parse(process.env.WARDOGS_PART);if(x.part!=='wardogs'||!Number.isInteger(Number(x.version))||Number(x.version)<1||x.data?.schemaVersion!==1||!Array.isArray(x.data?.cards))process.exit(1)"
           grep -Fq "const PARTS=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook','wardogs'];" src/cf-v111-auth.js
