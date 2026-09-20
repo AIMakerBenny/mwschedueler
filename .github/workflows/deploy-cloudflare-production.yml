@@ -453,12 +453,6 @@ jobs:
           grep -Fq "async function tryGetLocal(id)" /tmp/wardogs-media-v1.js
           grep -Fq "async function tryStoreLocal(blob,meta={})" /tmp/wardogs-media-v1.js
           grep -Fq "window.__mwsWardogsMediaStorageV130='r2-with-indexeddb-cache-fallback';" /tmp/wardogs-media-v1.js
-          echo '[phase131] final WARDOGS mobile/WebView2 web integration'
-          grep -Fq "window.__mwsWardogsTouchOrderingV127='pointer-events-touch-pen';" /tmp/wardogs-manager-v1.js
-          grep -Fq "addEventListener('input',renderContactResults)" /tmp/wardogs-manager-v1.js
-          grep -Fq "fileInput?.addEventListener('change'" /tmp/wardogs-manager-v1.js
-          grep -Fq "window.__mwsWardogsMediaStorageV130='r2-with-indexeddb-cache-fallback';" /tmp/wardogs-media-v1.js
-          grep -Fq "typeof crypto.getRandomValues==='function'" /tmp/wardogs-data-v1.js
           if grep -Eqi 'localStorage|readAsDataURL|data:image' /tmp/wardogs-media-v1.js; then
             echo 'WARDOGS media runtime contains forbidden Base64/localStorage persistence.' >&2
             exit 1
@@ -558,6 +552,12 @@ jobs:
           grep -Fq 'max-height:96dvh;' /tmp/wardogs-manager-v1.css
           grep -Fq 'max-height:96dvh;' /tmp/wardogs-v1.css
           grep -Fq -- '-webkit-overflow-scrolling:touch;' /tmp/wardogs-v1.css
+          echo '[phase131] final WARDOGS mobile/WebView2 web integration'
+          grep -Fq "window.__mwsWardogsTouchOrderingV127='pointer-events-touch-pen';" /tmp/wardogs-manager-v1.js
+          grep -Fq "addEventListener('input',renderContactResults)" /tmp/wardogs-manager-v1.js
+          grep -Fq "fileInput?.addEventListener('change'" /tmp/wardogs-manager-v1.js
+          grep -Fq "window.__mwsWardogsMediaStorageV130='r2-with-indexeddb-cache-fallback';" /tmp/wardogs-media-v1.js
+          grep -Fq "typeof crypto.getRandomValues==='function'" /tmp/wardogs-data-v1.js
           grep -Fq "assetSchema:3," /tmp/app-core.js
           grep -Fq "async function buildWardogsBackupMedia(payload)" /tmp/app-core.js
           grep -Fq "async function restoreWardogsBackupMedia(backup,payload)" /tmp/app-core.js
