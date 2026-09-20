@@ -83,9 +83,9 @@ export function runPhase114ContactImageEndToEndOwnershipAudit(){
 
   if(legacyFeatures){
     const forbidden=[
-      /(?:^|[^\\w$])(?:async\\s+)?function\\s+compressContactImage\\s*\\(/m,
-      /(?:window\\.)?compressContactImage\\s*=/m,
-      /mwsCompressContactImageV113\\s*=/m
+      /(?:^|[^\w$])(?:async\s+)?function\s+compressContactImage\s*\(/m,
+      /(?:window\.)?compressContactImage\s*=/m,
+      /mwsCompressContactImageV113\s*=/m
     ];
     if(forbidden.some(re=>re.test(legacyFeatures)))issues.push('compressed legacy V5 features still own or overwrite the contact image processor');
   }

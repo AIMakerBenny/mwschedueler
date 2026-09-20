@@ -1023,9 +1023,9 @@ jobs:
           if(parts.length!==2)throw new Error('online V5 compressed feature split invalid');
           const features=parts[1];
           const forbidden=[
-            /(?:^|[^\\w$])(?:async\\s+)?function\\s+compressContactImage\\s*\\(/m,
-            /(?:window\\.)?compressContactImage\\s*=/m,
-            /mwsCompressContactImageV113\\s*=/m
+            /(?:^|[^\w$])(?:async\s+)?function\s+compressContactImage\s*\(/m,
+            /(?:window\.)?compressContactImage\s*=/m,
+            /mwsCompressContactImageV113\s*=/m
           ];
           if(forbidden.some(re=>re.test(features))){
             console.error('compressed legacy V5 features still own or overwrite the contact image processor');
