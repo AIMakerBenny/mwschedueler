@@ -93,7 +93,7 @@ export function runPhase114ContactImageEndToEndOwnershipAudit(){
 
   for(const token of [
     'window.mwsRecoverContactMediaImageV110=img=>',
-    'new MutationObserver(mutations=>'
+    'const observer=new MutationObserver(records=>'
   ])if(!app.includes(token))issues.push('shared contact image recovery missing: '+token);
   if(!app.includes("img.src=\`/media/contact/\${encodeURIComponent(id)}?fallback=110&cb=\${Date.now().toString(36)}\`"))issues.push('same-origin contact retry URL missing');
 
