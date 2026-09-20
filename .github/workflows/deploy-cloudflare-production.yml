@@ -111,7 +111,7 @@ jobs:
           });
           console.log(JSON.stringify({targetPostScheduleExpectation}));
           const normalizedName=value=>String(value||'').trim().toLowerCase().replace(/\s+/g,'');
-          const stationKey=value=>{try{const u=new URL(String(value||''));return u.pathname.replace(/^\/+|\/+$/g,'').split('/')[0].toLowerCase()}catch(_){return ''}};
+          const stationKey=value=>{try{const u=new URL(String(value||''));const parts=u.pathname.split('/').filter(Boolean).map(decodeURIComponent);if(u.hostname.toLowerCase().endsWith('sooplive.com')){if(parts[0]?.toLowerCase()==='station'&&parts[1])return parts[1].toLowerCase();if(u.hostname.toLowerCase().startsWith('play.')&&parts[0])return parts[0].toLowerCase()}if(u.hostname.toLowerCase().endsWith('afreecatv.com')){if(parts[0]?.toLowerCase()==='station'&&parts[1])return parts[1].toLowerCase();if(parts[0])return parts[0].toLowerCase()}return ''}catch(_){return ''}};
           const targetApplicantContacts=[];
           for(const p of targetPosts){
             for(const applicant of Array.isArray(p.comments)?p.comments:[]){
