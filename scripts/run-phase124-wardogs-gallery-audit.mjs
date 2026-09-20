@@ -10,9 +10,9 @@ export function runPhase124WardogsGalleryAudit(){
   const staged=fs.readFileSync('assets/cloud-runtime-v130.js','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
+  if(!/assets\/wardogs-v1\.css\?v=1\.0\.0-phase(?:124|1[2-9][5-9]|[2-9][0-9]{2,})/.test(index))issues.push('WARDOGS gallery stylesheet is not loaded by index');
+  if(!/assets\/wardogs-v1\.js\?v=1\.0\.0-phase(?:124|1[2-9][5-9]|[2-9][0-9]{2,})/.test(index))issues.push('WARDOGS gallery runtime is not loaded by index');
   for(const token of [
-    'assets/wardogs-v1.css?v=1.0.0-phase124',
-    'assets/wardogs-v1.js?v=1.0.0-phase124',
     'id="wardogsPersonnelCountV124"',
     'id="wardogsGalleryV124"',
     'id="wardogsEmptyV124"'
@@ -36,7 +36,7 @@ export function runPhase124WardogsGalleryAudit(){
     "if(parts.includes('wardogs'))void renderGallery();",
     "if(String(event?.detail?.reason||'').startsWith('WARDOGS'))void renderGallery();",
     "window.addEventListener('mws:wardogs-media-ready',()=>void renderGallery());",
-    "window.addEventListener('beforeunload',revokeGalleryUrls,{once:true});"
+    "revokeGalleryUrls();revokeDetailImageUrl()"
   ])if(!gallery.includes(token))issues.push('WARDOGS gallery runtime missing: '+token);
 
   if(/\.sort\s*\(/.test(gallery.split('function linkedActiveCards')[1]?.split('function updateClassCounts')[0]||'')){
@@ -67,8 +67,8 @@ export function runPhase124WardogsGalleryAudit(){
 
   for(const token of [
     'run-phase124-wardogs-gallery-audit.mjs',
-    'assets/wardogs-v1.js?v=1.0.0-phase124',
-    'assets/wardogs-v1.css?v=1.0.0-phase124',
+    'assets/wardogs-v1.js?v=1.0.0-phase125',
+    'assets/wardogs-v1.css?v=1.0.0-phase125',
     "window.__mwsWardogsGalleryV124='active-linked-order-preserving';",
     "api.getCards(classId,{activeOnly:true})",
     "filter(card=>api.resolveContactLink?.(card)?.linked===true)",

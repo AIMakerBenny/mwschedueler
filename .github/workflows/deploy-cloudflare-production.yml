@@ -75,6 +75,7 @@ jobs:
           node --check assets/wardogs-manager-v1.js
           node --check scripts/run-phase123-wardogs-class-ordering-audit.mjs
           node --check scripts/run-phase124-wardogs-gallery-audit.mjs
+          node --check scripts/run-phase125-wardogs-card-detail-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -350,8 +351,8 @@ jobs:
           grep -Fq 'data-tab="wardogs"' /tmp/index.html
           grep -Fq '<span class="nav-label">워독스 전쟁견들</span>' /tmp/index.html
           grep -Fq '<section id="wardogs" class="section" data-wardogs-shell-v116="1">' /tmp/index.html
-          grep -Fq 'assets/wardogs-v1.css?v=1.0.0-phase124' /tmp/index.html
-          grep -Fq 'assets/wardogs-v1.js?v=1.0.0-phase124' /tmp/index.html
+          grep -Fq 'assets/wardogs-v1.css?v=1.0.0-phase125' /tmp/index.html
+          grep -Fq 'assets/wardogs-v1.js?v=1.0.0-phase125' /tmp/index.html
           grep -Fq 'data-wardogs-ui-v117="1"' /tmp/index.html
           grep -Fq 'WARDOGS COMMAND INTERFACE' /tmp/index.html
           grep -Fq 'TACTICAL OPERATIONS SYSTEM // 전쟁견들' /tmp/index.html
@@ -493,6 +494,23 @@ jobs:
           grep -Fq 'width:100%;height:auto;max-width:100%;' /tmp/wardogs-v1.css
           grep -Fq 'object-fit:contain;' /tmp/wardogs-v1.css
           grep -Fq '.wd-class-count-v124{' /tmp/wardogs-v1.css
+          grep -Fq "window.__mwsWardogsDetailV125='linked-contact-card-detail';" /tmp/wardogs-v1.js
+          grep -Fq "root.id='wardogsDetailModalV125';" /tmp/wardogs-v1.js
+          grep -Fq "article.addEventListener('click',()=>void openDetail(card.id,article));" /tmp/wardogs-v1.js
+          grep -Fq "if(!card||card.active===false||!link?.linked)return false;" /tmp/wardogs-v1.js
+          grep -Fq "const blob=await mediaApi()?.getBlob?.(imageId);" /tmp/wardogs-v1.js
+          grep -Fq "root.querySelector('[data-wardogs-detail-notes]').textContent=String(contact?.notes||'').trim()||'등록된 메모 없음';" /tmp/wardogs-v1.js
+          grep -Fq "if(event.key==='Escape'&&detailModal&&!detailModal.hidden){event.preventDefault();closeDetail()}" /tmp/wardogs-v1.js
+          grep -Fq '.wardogs-detail-modal-v125{' /tmp/wardogs-v1.css
+          grep -Fq '.wardogs-detail-layout-v125{' /tmp/wardogs-v1.css
+          grep -Fq '.wardogs-detail-media-frame-v125 img{' /tmp/wardogs-v1.css
+          grep -Fq 'display:block;width:auto;height:auto;' /tmp/wardogs-v1.css
+          grep -Fq 'max-width:100%;max-height:calc(94vh - 150px);' /tmp/wardogs-v1.css
+          grep -Fq 'body.mws-wardogs-detail-open-v125{overflow:hidden!important}' /tmp/wardogs-v1.css
+          if grep -Eqi 'backdrop-filter|filter:[[:space:]]*blur' /tmp/wardogs-v1.css; then
+            echo 'WARDOGS detail contains a prohibited blur filter.' >&2
+            exit 1
+          fi
           grep -Fq 'function mwsAchievementCreateCardV1621(fields={})' /tmp/app-core.js
           grep -Fq 'function mwsAchievementUpdateCardV1621(id,patch={})' /tmp/app-core.js
           grep -Fq 'function mwsAchievementDeleteCardV1621(id)' /tmp/app-core.js

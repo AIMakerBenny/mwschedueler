@@ -51,8 +51,8 @@ export function runPhase117WardogsTacticalClassTabsAudit(){
 
   for(const token of [
     'run-phase117-wardogs-tactical-class-tabs-audit.mjs',
-    'assets/wardogs-v1.css?v=1.0.0-phase124',
-    'assets/wardogs-v1.js?v=1.0.0-phase124',
+    'assets/wardogs-v1.css?v=1.0.0-phase125',
+    'assets/wardogs-v1.js?v=1.0.0-phase125',
     'WARDOGS COMMAND INTERFACE',
     'data-wardogs-class="pilot"'
   ])if(!workflow.includes(token))issues.push('production Phase 117 verification missing: '+token);
