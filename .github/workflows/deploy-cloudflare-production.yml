@@ -83,7 +83,8 @@ jobs:
           const mediaImages=images.filter(x=>x.image.startsWith('/media/contact/'));
           const dataImages=images.filter(x=>x.image.startsWith('data:image/'));
           (async()=>{
-            let recoverableMedia=0,validManagedMedia=0,invalidManagedMedia=0;
+            let recoverableMedia=0,validManagedMedia=0,invalidManagedMedia=0,missingManagedMedia=0;
+            const missingManagedMediaIds=[];
             const base='https://mawang-scheduler.majoku.workers.dev';
             const legacyHost='pub-ff2081dd33384aa0865bb86b4514bbec.r2.dev';
             const legacyRefs=images.filter(row=>{try{return new URL(row.image,base).hostname===legacyHost}catch(_){return false}});
@@ -101,7 +102,7 @@ jobs:
                 const row=queue.pop(),id=String(row?.id||'');
                 if(!id)continue;
                 try{
-                  const response=await fetch(base+'/media/contact/'+encodeURIComponent(id));
+                  const response=await fetch(base+'/media/contact/'+encodeURIComponent(id)+'?audit='+encodeURIComponent(process.env.GITHUB_SHA||'live'));
                   if(response.ok)recoverableMedia++;
                   try{await response.body?.cancel()}catch(_){}
                 }catch(_){}
@@ -113,9 +114,18 @@ jobs:
               while(managedQueue.length){
                 const row=managedQueue.pop();
                 try{
-                  const response=await fetch(new URL(row.image,base));
+                  const target=new URL(row.image,base);
+                  target.searchParams.set('audit',process.env.GITHUB_SHA||'live');
+                  const response=await fetch(target);
+                  if(response.status===404){
+                    missingManagedMedia++;
+                    missingManagedMediaIds.push(String(row.id||''));
+                    try{await response.body?.cancel()}catch(_){}
+                    continue;
+                  }
                   const type=String(response.headers.get('content-type')||'').split(';')[0].toLowerCase();
                   const policy=response.headers.get('x-mws-image-policy')||'';
+                  const cacheControl=response.headers.get('cache-control')||'';
                   let first=new Uint8Array();
                   if(response.body){
                     const reader=response.body.getReader();
@@ -124,8 +134,8 @@ jobs:
                     try{await reader.cancel()}catch(_){}
                   }
                   const signature=signatureType(first);
-                  if(response.ok&&type.startsWith('image/')&&signature&&policy==='original-bytes-no-reencode')validManagedMedia++;
-                  else{invalidManagedMedia++;console.error('Invalid managed contact media',{id:row.id,status:response.status,type,signature,policy})}
+                  if(response.ok&&type.startsWith('image/')&&signature&&policy==='original-bytes-no-reencode'&&/max-age=31536000/i.test(cacheControl)&&/immutable/i.test(cacheControl))validManagedMedia++;
+                  else{invalidManagedMedia++;console.error('Invalid managed contact media',{id:row.id,status:response.status,type,signature,policy,cacheControl})}
                 }catch(error){invalidManagedMedia++;console.error('Managed contact media fetch failed',{id:row?.id,error:String(error)})}
               }
             });
@@ -141,6 +151,8 @@ jobs:
               recoverableMedia,
               validManagedMedia,
               invalidManagedMedia,
+              missingManagedMedia,
+              missingManagedMediaIds,
               eventsVersion:Number(events.version)||0,
               eventsCount:eventRows.length,
               coreVersion:Number(core.version)||0,
@@ -149,6 +161,7 @@ jobs:
             if(dataImages.length)throw new Error('Contact Data URLs remain in production storage');
             if(legacyRefs.length)throw new Error('Legacy direct R2 contact image references remain in production storage');
             if(invalidManagedMedia)throw new Error('Managed contact media failed Content-Type, byte-signature or cache-policy validation');
+            if(missingManagedMedia>1)throw new Error('Missing managed contact media count increased above the known single stale reference');
           })().catch(error=>{console.error(error);process.exit(1)});
           NODE
 
@@ -267,6 +280,7 @@ jobs:
           grep -Fq 'async function canonicalizeLegacyR2ContactRefs(env,raw)' src/cf-v111-auth.js
           grep -Fq 'function isLegacyR2ContactUrl(env,value)' src/cf-v111-auth.js
           grep -Fq 'async function repairStoredContactImageRefs(env)' src/cf-v111-auth.js
+          grep -Fq '"/media/*"' wrangler.jsonc
           grep -Fq "const MWS_ACHIEVEMENT_SHADOW_KEY='mws_achievement_cards_shadow_v1';" /tmp/app-core.js
           grep -Fq 'window.mwsLoadAchievementShadowV1621=mwsLoadAchievementShadowV1621;' /tmp/app-core.js
           grep -Fq 'mwsSaveAchievementShadowV1621();' /tmp/app-core.js

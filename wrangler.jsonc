@@ -10,6 +10,7 @@
       "/",
       "/index.html",
       "/api/*",
+      "/media/*",
       "/assets/cloud-v5.5.js",
       "/assets/cloud-v1.1.js",
       "/assets/boss-manager-v121.js",
