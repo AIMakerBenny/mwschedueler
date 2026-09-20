@@ -92,6 +92,32 @@ jobs:
             return {id:String(row.id||''),name:String(row.name||''),protocol,host,path};
           });
           console.log(JSON.stringify({unmanagedContactImages:unmanagedImageDetails}));
+          const namedContacts=rows.filter(row=>String(row?.name||'').includes('제갈통'));
+          const namedContactDetails=[];
+          for(const row of namedContacts){
+            const detail={id:String(row.id||''),name:String(row.name||''),image:String(row.image||''),status:0,type:'',signature:'',policy:'',cacheControl:''};
+            if(detail.image){
+              try{
+                const target=new URL(detail.image,'https://mawang-scheduler.majoku.workers.dev');
+                target.searchParams.set('namedAudit',process.env.GITHUB_SHA||'live');
+                const response=await fetch(target);
+                detail.status=response.status;
+                detail.type=String(response.headers.get('content-type')||'').split(';')[0].toLowerCase();
+                detail.policy=response.headers.get('x-mws-image-policy')||'';
+                detail.cacheControl=response.headers.get('cache-control')||'';
+                let first=new Uint8Array();
+                if(response.body){
+                  const reader=response.body.getReader();
+                  const part=await reader.read();
+                  first=part.value instanceof Uint8Array?part.value.slice(0,32):new Uint8Array();
+                  try{await reader.cancel()}catch(_){}
+                }
+                detail.signature=signatureType(first);
+              }catch(error){detail.error=String(error)}
+            }
+            namedContactDetails.push(detail);
+          }
+          console.log(JSON.stringify({namedContactImageAudit:namedContactDetails}));
           (async()=>{
             let recoverableMedia=0,validManagedMedia=0,invalidManagedMedia=0,missingManagedMedia=0;
             const missingManagedMediaIds=[];
