@@ -23,8 +23,8 @@ export function runPhase110UniversalContactMediaRecoveryAudit(){
     'window.__mwsContactMediaRecoveryV110=true;'
   ])if(!app.includes(token))issues.push('universal contact media recovery missing: '+token);
 
-  if(!index.includes('assets/app-core.js?v=1.3.0-search111'))issues.push('app-core cache revision is not search111');
-  if(index.includes('assets/app-core.js?v=1.3.0-search110'))issues.push('stale app-core search110 reference remains');
+  if(!index.includes('assets/app-core.js?v=1.3.0-search112'))issues.push('app-core cache revision is not search111');
+  if(/assets\/app-core\.js\?v=1\.3\.0-search(?:10[0-9]|11[01])/.test(index))issues.push('stale app-core pre-search112 reference remains');
 
   for(const token of [
     "target.dataset.mwsContactRecoveryV110==='retry'",

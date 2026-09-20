@@ -1866,16 +1866,39 @@ window.mwsRecoverContactMediaImageV110=img=>{
   img.replaceWith(mwsContactFallbackNodeV110(img,id));
   return true;
 };
-if(!window.__mwsContactMediaRecoveryV110){
-  window.__mwsContactMediaRecoveryV110=true;
-  document.addEventListener('error',event=>{
-    const target=event.target;
-    if(target instanceof HTMLImageElement)window.mwsRecoverContactMediaImageV110(target);
-  },true);
-  document.addEventListener('load',event=>{
-    const target=event.target;
-    if(target instanceof HTMLImageElement)window.mwsContactMediaLoadedV110(target);
-  },true);
+function mwsBindContactMediaImageV111(img){
+  if(!(img instanceof HTMLImageElement)||img.dataset.mwsContactBoundV111==='1')return false;
+  const id=mwsContactMediaIdV110(img);
+  if(!id)return false;
+  img.dataset.mwsContactBoundV111='1';
+  img.dataset.contactId=id;
+  img.addEventListener('error',()=>window.mwsRecoverContactMediaImageV110(img));
+  img.addEventListener('load',()=>window.mwsContactMediaLoadedV110(img));
+  if(img.complete&&img.naturalWidth===0){
+    queueMicrotask(()=>{if(img.isConnected&&img.complete&&img.naturalWidth===0)window.mwsRecoverContactMediaImageV110(img)});
+  }
+  return true;
+}
+function mwsScanContactMediaImagesV111(root=document){
+  if(root instanceof HTMLImageElement)mwsBindContactMediaImageV111(root);
+  const scope=root&&typeof root.querySelectorAll==='function'?root:document;
+  scope.querySelectorAll('img[src*="/media/contact/"]').forEach(mwsBindContactMediaImageV111);
+}
+if(!window.__mwsContactMediaRecoveryV111){
+  window.__mwsContactMediaRecoveryV111=true;
+  const start=()=>{
+    mwsScanContactMediaImagesV111(document);
+    const observer=new MutationObserver(records=>{
+      for(const record of records)for(const node of record.addedNodes){
+        if(node instanceof Element)mwsScanContactMediaImagesV111(node);
+      }
+    });
+    observer.observe(document.documentElement,{childList:true,subtree:true});
+    window.__mwsContactMediaObserverV111=observer;
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else queueMicrotask(start);
+  window.addEventListener('mawang:datachange',()=>queueMicrotask(()=>mwsScanContactMediaImagesV111(document)));
+  window.addEventListener('mws:app-ready',()=>queueMicrotask(()=>mwsScanContactMediaImagesV111(document)));
 }
 
 function participantAvatarHTMLV109(c,eager=false){
