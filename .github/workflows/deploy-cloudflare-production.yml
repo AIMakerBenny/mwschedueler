@@ -82,6 +82,7 @@ jobs:
           node --check scripts/run-phase129-wardogs-mobile-interaction-regression-audit.mjs
           node --check scripts/run-phase130-wardogs-webview2-compatibility-audit.mjs
           node --check scripts/run-phase131-wardogs-final-mobile-webview-integration-audit.mjs
+          node --check scripts/run-phase132-page-title-content-spacing-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -431,6 +432,12 @@ jobs:
           grep -Fq "window.__mwsWardogsContactSearchV120='app-core-search71-consumer';" /tmp/wardogs-data-v1.js
           grep -Fq "typeof crypto.randomUUID==='function'" /tmp/wardogs-data-v1.js
           grep -Fq "typeof crypto.getRandomValues==='function'" /tmp/wardogs-data-v1.js
+          echo '[phase132] page title/content spacing'
+          grep -Fq 'assets/ui-frame-presets.css?v=3.0.0-space132' /tmp/index.html
+          retry_contains "$BASE/assets/ui-frame-presets.css?deploy=$GITHUB_SHA" 'Phase 132: normalize page-title to first-content spacing' > /tmp/ui-frame-presets.css
+          grep -Fq 'body.mws-premium .main>.section.active>:first-child{' /tmp/ui-frame-presets.css
+          grep -Fq 'height:62px!important;' /tmp/ui-frame-presets.css
+          grep -Fq 'margin-bottom:14px!important;' /tmp/ui-frame-presets.css
           grep -Fq "createId," /tmp/wardogs-data-v1.js
           grep -Fq "window.mwsTextMatches=mwsTextMatches;" /tmp/app-core.js
           grep -Fq "window.contactMatches=contactMatches;" /tmp/app-core.js

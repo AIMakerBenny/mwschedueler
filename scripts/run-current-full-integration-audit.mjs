@@ -129,6 +129,7 @@ import {runPhase128WardogsMobileViewportAudit} from './run-phase128-wardogs-mobi
 import {runPhase129WardogsMobileInteractionRegressionAudit} from './run-phase129-wardogs-mobile-interaction-regression-audit.mjs';
 import {runPhase130WardogsWebView2CompatibilityAudit} from './run-phase130-wardogs-webview2-compatibility-audit.mjs';
 import {runPhase131WardogsFinalMobileWebViewIntegrationAudit} from './run-phase131-wardogs-final-mobile-webview-integration-audit.mjs';
+import {runPhase132PageTitleContentSpacingAudit} from './run-phase132-page-title-content-spacing-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1415,6 +1416,16 @@ export function runPhase131FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase131FullIntegrationAudit();}
+export function runPhase132FullIntegrationAudit(){
+  const previous=runPhase131FullIntegrationAudit(), current=runPhase132PageTitleContentSpacingAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:132,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase132FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();

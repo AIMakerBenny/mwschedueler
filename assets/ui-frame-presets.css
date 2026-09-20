@@ -206,3 +206,33 @@ body[data-ui-frame="brutal"] button:active{transform:translate(4px,4px)!importan
   body[data-ui-frame="workshop"] .main,body[data-ui-frame="agenda"] .main,body[data-ui-frame="messenger"] .main,body[data-ui-frame="linear"] .main,body[data-ui-frame="notion"] .main,body[data-ui-frame="glass"] .main,body[data-ui-frame="studio"] .main{padding:18px 14px 36px!important;max-width:none!important}
   body[data-ui-frame="brutal"] .sidebar,body[data-ui-frame="brutal"] .main{box-shadow:none!important}
 }
+
+
+/* Phase 132: normalize page-title to first-content spacing.
+   Prevent premium/frame-specific topbar rules from creating oversized blank bands. */
+body.mws-premium .topbar{
+  min-height:58px;
+  margin-bottom:14px!important;
+  padding-bottom:10px;
+}
+body.mws-premium .main>.section.active>:first-child{
+  margin-top:0!important;
+}
+body[data-ui-frame="workshop"] .topbar{
+  height:62px!important;
+  margin-bottom:14px!important;
+}
+body[data-ui-frame="agenda"] .topbar,
+body[data-ui-frame="notion"] .topbar{
+  margin-bottom:14px!important;
+}
+body[data-ui-frame="linear"] .topbar{
+  padding-bottom:10px!important;
+}
+@media(max-width:900px){
+  body.mws-premium .topbar{
+    min-height:auto;
+    margin-bottom:12px!important;
+    padding-bottom:10px;
+  }
+}
