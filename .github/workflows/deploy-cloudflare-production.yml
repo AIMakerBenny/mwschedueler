@@ -53,6 +53,7 @@ jobs:
           node --check scripts/run-phase105-contact-profile-image-persistence-audit.mjs
           node --check scripts/run-phase106-contact-immediate-cloud-commit-audit.mjs
           node --check scripts/run-phase107-contact-image-migration-cache-revision-audit.mjs
+          node --check scripts/run-phase108-post-schedule-participant-prefill-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -95,6 +96,20 @@ jobs:
             }
             return {id:String(p.id||''),name:String(p.name||''),postNo:String(p.postNo||''),commentCount:comments.length,counts,selectedNames:comments.filter(c=>c.status==='selected').map(c=>String(c.name||''))};
           })}));
+          const targetPostScheduleExpectation=targetPosts.map(p=>{
+            const map=new Map();
+            for(const c of Array.isArray(p.comments)?p.comments:[]){
+              const raw=String(c?.status||'pending').trim().toLowerCase();
+              const status=(raw==='selected'||raw==='confirmed')?'confirmed':((raw==='pending'||raw==='planned')?'planned':'');
+              if(!status)continue;
+              const key=String(c?.userId||'').trim().toLowerCase()||String(c?.stationUrl||'').trim().toLowerCase()||('name:'+String(c?.name||'').trim().toLowerCase());
+              const rank=status==='confirmed'?2:1,prev=map.get(key);
+              if(!prev||rank>prev.rank||(rank===prev.rank&&String(c?.regDate||'')>String(prev.comment?.regDate||'')))map.set(key,{status,rank,comment:c});
+            }
+            const rows=[...map.values()];
+            return {postNo:String(p.postNo||''),total:rows.length,confirmed:rows.filter(x=>x.status==='confirmed').length,planned:rows.filter(x=>x.status==='planned').length};
+          });
+          console.log(JSON.stringify({targetPostScheduleExpectation}));
           const images=rows.filter(x=>typeof x?.image==='string'&&x.image.length>0);
           const mediaImages=images.filter(x=>x.image.startsWith('/media/contact/'));
           const dataImages=images.filter(x=>x.image.startsWith('data:image/'));
@@ -329,6 +344,9 @@ jobs:
           grep -Fq 'cloudSaved=await window.mwsV55SaveNow();' /tmp/app-core.js
           grep -Fq "if(!String(stored?.image||'').startsWith('/media/contact/'))" /tmp/app-core.js
           grep -Fq 'function contactSaveFailureMessage(result)' /tmp/app-core.js
+          grep -Fq 'function postScheduleParticipantStatusV108(comment)' /tmp/index.html
+          grep -Fq 'function scheduleEligiblePostApplicantsV108(post)' /tmp/index.html
+          grep -Fq "if(raw==='pending'||raw==='planned')return 'planned';" /tmp/index.html
           grep -Fq "createImageBitmap(blob,{imageOrientation:'from-image'})" /tmp/app-core.js
           retry_contains "$BASE/assets/app-core.css?deploy=$GITHUB_SHA" '.contact-image-preview-wrap{display:block!important}' > /tmp/app-core.css
           grep -Fq 'justify-content:flex-start!important;text-align:left!important' /tmp/app-core.css

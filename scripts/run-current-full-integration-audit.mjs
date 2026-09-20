@@ -105,6 +105,7 @@ import {runPhase104AchievementDirectUploadLimitAudit} from './run-phase104-achie
 import {runPhase105ContactProfileImagePersistenceAudit} from './run-phase105-contact-profile-image-persistence-audit.mjs';
 import {runPhase106ContactImmediateCloudCommitAudit} from './run-phase106-contact-immediate-cloud-commit-audit.mjs';
 import {runPhase107ContactImageMigrationAndCacheRevisionAudit} from './run-phase107-contact-image-migration-cache-revision-audit.mjs';
+import {runPhase108PostScheduleParticipantPrefillAudit} from './run-phase108-post-schedule-participant-prefill-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1151,6 +1152,16 @@ export function runPhase107FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase107FullIntegrationAudit();}
+export function runPhase108FullIntegrationAudit(){
+  const previous=runPhase107FullIntegrationAudit(), current=runPhase108PostScheduleParticipantPrefillAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:108,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase108FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();

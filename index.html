@@ -1634,15 +1634,26 @@ body[data-resolution="mobile"] .post-schedule-create-btn-v415{width:100%;min-hei
   const globalAddBtnV415=document.getElementById('newEventBtn');
   if(globalAddBtnV415)globalAddBtnV415.onclick=()=>openEvent();
 
-  function confirmedUniquePostApplicants(post){
+  function postScheduleParticipantStatusV108(comment){
+    const raw=String(comment?.status||'pending').trim().toLowerCase();
+    if(raw==='selected'||raw==='confirmed')return 'confirmed';
+    if(raw==='pending'||raw==='planned')return 'planned';
+    return '';
+  }
+
+  function scheduleEligiblePostApplicantsV108(post){
     const map=new Map();
     for(const c of post?.comments||[]){
-      if(c.status!=='selected')continue;
+      const participantStatus=postScheduleParticipantStatusV108(c);
+      if(!participantStatus)continue;
       const key=String(c.userId||'').trim().toLowerCase() || soopStationKey(c.stationUrl) || `name:${normalizeContactName(c.name)}`;
+      const rank=participantStatus==='confirmed'?2:1;
       const prev=map.get(key);
-      if(!prev || String(c.regDate||'')>String(prev.regDate||'')) map.set(key,c);
+      if(!prev || rank>prev.rank || (rank===prev.rank&&String(c.regDate||'')>String(prev.applicant?.regDate||''))){
+        map.set(key,{applicant:c,status:participantStatus,rank});
+      }
     }
-    return [...map.values()];
+    return [...map.values()].map(({applicant,status})=>({applicant,status}));
   }
 
   function ensurePostApplicantContactV415(post, applicant){
@@ -1667,12 +1678,19 @@ body[data-resolution="mobile"] .post-schedule-create-btn-v415{width:100%;min-hei
     const post=postById(postId||activePostId);
     if(!post)return toast('컨텐츠 일정 추가','게시글을 먼저 선택해 주세요');
 
-    const applicants=confirmedUniquePostApplicants(post);
+    const applicantRows=scheduleEligiblePostApplicantsV108(post);
     const contactIds=[];
+    const contactStatusById=new Map();
     let createdCount=0;
-    for(const applicant of applicants){
+    for(const row of applicantRows){
+      const applicant=row.applicant;
       const result=ensurePostApplicantContactV415(post,applicant);
-      if(result.contact?.id && !contactIds.includes(result.contact.id))contactIds.push(result.contact.id);
+      const id=String(result.contact?.id||'');
+      if(id){
+        if(!contactIds.includes(id))contactIds.push(id);
+        const previous=contactStatusById.get(id);
+        if(!previous||row.status==='confirmed')contactStatusById.set(id,row.status);
+      }
       if(result.created)createdCount++;
     }
 
@@ -1691,10 +1709,15 @@ body[data-resolution="mobile"] .post-schedule-create-btn-v415{width:100%;min-hei
     if(urlInput)urlInput.value=post.url||'';
 
     const merged=[...(selectedParticipantIds||[])];
-    for(const id of contactIds)if(!merged.includes(id))merged.push(id);
+    const mergedStatuses={...(selectedParticipantStatuses||{})};
+    for(const id of contactIds){
+      if(!merged.includes(id))merged.push(id);
+      const importedStatus=contactStatusById.get(id)||'planned';
+      if(mergedStatuses[id]!=='confirmed'||importedStatus==='confirmed')mergedStatuses[id]=importedStatus;
+    }
     selectedParticipantIds=merged;
-    selectedParticipantStatuses={};
-    selectedParticipantIds.forEach(id=>selectedParticipantStatuses[id]='confirmed');
+    selectedParticipantStatuses=mergedStatuses;
+    selectedParticipantIds.forEach(id=>{if(!selectedParticipantStatuses[id])selectedParticipantStatuses[id]='confirmed'});
 
     const modalTitle=document.getElementById('eventModalTitle');
     if(modalTitle)modalTitle.textContent='게시글에서 컨텐츠 일정 추가';
@@ -1708,8 +1731,10 @@ body[data-resolution="mobile"] .post-schedule-create-btn-v415{width:100%;min-hei
         note.className='post-schedule-prefill-note-v415';
         infoPanel.prepend(note);
       }
-      const unconfirmed=(post.comments||[]).filter(c=>c.status!=='selected').length;
-      note.textContent=`게시글에서 제목, 공지 URL, 확정 참가자 ${applicants.length}명을 불러왔습니다.${createdCount?` 연락처에 없던 ${createdCount}명은 신규 연락처로 자동 연결했습니다.`:''} 날짜, 시간, 카테고리 등 나머지 항목을 확인한 뒤 스케줄 저장을 눌러 주세요.${unconfirmed?` 대기/다음기회에 인원은 참가자에서 제외됩니다.`:''}`;
+      const confirmedCount=applicantRows.filter(row=>row.status==='confirmed').length;
+      const plannedCount=applicantRows.filter(row=>row.status==='planned').length;
+      const excludedCount=(post.comments||[]).filter(c=>['gacha','nextchance','excluded'].includes(String(c?.status||'').toLowerCase())).length;
+      note.textContent=`게시글에서 제목, 공지 URL, 참가자 ${applicantRows.length}명을 불러왔습니다. 확정 ${confirmedCount}명 · 예정 ${plannedCount}명.${createdCount?` 연락처에 없던 ${createdCount}명은 신규 연락처로 자동 연결했습니다.`:''} 날짜, 시간, 카테고리 등 나머지 항목을 확인한 뒤 스케줄 저장을 눌러 주세요.${excludedCount?` 가챠/다음기회에 ${excludedCount}개 댓글은 자동 참가자에서 제외했습니다.`:''}`;
     }
 
     requestAnimationFrame(()=>{
@@ -1717,7 +1742,9 @@ body[data-resolution="mobile"] .post-schedule-create-btn-v415{width:100%;min-hei
       document.getElementById('evDateDisplay')?.scrollIntoView({block:'nearest'});
     });
 
-    toast('컨텐츠 일정 추가',`${title} · 확정 참가자 ${applicants.length}명을 미리 입력했습니다${createdCount?` · 신규 연락처 ${createdCount}명 연결`:''}`);
+    const confirmedCount=applicantRows.filter(row=>row.status==='confirmed').length;
+    const plannedCount=applicantRows.filter(row=>row.status==='planned').length;
+    toast('컨텐츠 일정 추가',`${title} · 참가자 ${applicantRows.length}명 미리 입력 · 확정 ${confirmedCount}명 · 예정 ${plannedCount}명${createdCount?` · 신규 연락처 ${createdCount}명 연결`:''}`);
   };
 
   const baseRenderPostsV415=renderPosts;
@@ -1728,8 +1755,9 @@ body[data-resolution="mobile"] .post-schedule-create-btn-v415{width:100%;min-hei
     if(btn){
       btn.disabled=!post;
       btn.onclick=()=>openPostAsContentSchedule(activePostId);
-      const n=post?confirmedUniquePostApplicants(post).length:0;
-      btn.title=post?`현재 게시글 제목, 공지 URL, 확정 참가자 ${n}명을 스케줄 작성창에 미리 입력합니다`:'게시글을 먼저 선택해 주세요';
+      const rows=post?scheduleEligiblePostApplicantsV108(post):[];
+      const confirmed=rows.filter(row=>row.status==='confirmed').length,planned=rows.filter(row=>row.status==='planned').length;
+      btn.title=post?`현재 게시글 제목, 공지 URL, 참가자 ${rows.length}명을 스케줄 작성창에 미리 입력합니다 · 확정 ${confirmed}명 · 예정 ${planned}명`:'게시글을 먼저 선택해 주세요';
     }
   };
   window.renderPosts=renderPosts;
@@ -3811,7 +3839,7 @@ body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout.main
     modal.id='postScheduleNoticeModalV57';
     modal.className='modal post-schedule-notice-modal-v57';
     modal.setAttribute('aria-hidden','true');
-    modal.innerHTML=`<div class="modalbox post-schedule-notice-box-v57"><div class="post-schedule-notice-kicker-v57">CONTENT SCHEDULE GUIDE</div><h2 class="post-schedule-notice-title-v57">참여자 자동 등록 안내</h2><div class="post-schedule-notice-body-v57">이 게시글에서 <strong>확정</strong>을 누른 인원들은 컨텐츠 일정 추가 창의 <strong>참여자</strong>에 자동으로 등록됩니다.<br>반대로 <strong>가챠</strong>, <strong>대기</strong>, <strong>다음기회에</strong> 상태 인원은 자동 등록되지 않습니다.</div><label class="post-schedule-notice-check-v57"><input type="checkbox" id="postScheduleNoticeDontShowV57"><span>이 메세지를 다시 보지 않기</span></label><div class="post-schedule-notice-sub-v57">이 설정은 현재 브라우저에 저장됩니다.</div><div class="post-schedule-notice-actions-v57"><button type="button" class="ghost" id="postScheduleNoticeCloseBtnV57">닫기</button><button type="button" class="post-schedule-notice-ok-v57" id="postScheduleNoticeOkBtnV57">확인</button></div></div>`;
+    modal.innerHTML=`<div class="modalbox post-schedule-notice-box-v57"><div class="post-schedule-notice-kicker-v57">CONTENT SCHEDULE GUIDE</div><h2 class="post-schedule-notice-title-v57">참여자 자동 등록 안내</h2><div class="post-schedule-notice-body-v57">이 게시글의 <strong>확정</strong> 인원은 일정 참여자에 <strong>확정</strong>으로, <strong>대기</strong> 인원은 <strong>예정</strong>으로 자동 등록됩니다.<br><strong>가챠</strong>와 <strong>다음기회에</strong> 상태 인원만 자동 등록에서 제외됩니다.</div><label class="post-schedule-notice-check-v57"><input type="checkbox" id="postScheduleNoticeDontShowV57"><span>이 메세지를 다시 보지 않기</span></label><div class="post-schedule-notice-sub-v57">이 설정은 현재 브라우저에 저장됩니다.</div><div class="post-schedule-notice-actions-v57"><button type="button" class="ghost" id="postScheduleNoticeCloseBtnV57">닫기</button><button type="button" class="post-schedule-notice-ok-v57" id="postScheduleNoticeOkBtnV57">확인</button></div></div>`;
     modal.addEventListener('click',e=>{if(e.target===modal)window.closePostScheduleNoticeV57()});
     document.body.appendChild(modal);
     modal.querySelector('#postScheduleNoticeCloseBtnV57')?.addEventListener('click',()=>window.closePostScheduleNoticeV57());
