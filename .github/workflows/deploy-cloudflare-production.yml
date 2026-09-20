@@ -337,7 +337,7 @@ jobs:
           SESSION="$session" node -e "const x=JSON.parse(process.env.SESSION); if(typeof x.authenticated!=='boolean') process.exit(1)"
 
           echo '[2/8] isolated login shell and v1.6.21 display'
-          retry_contains "$BASE/?deploy=$GITHUB_SHA" 'app-core.js?v=1.3.0-search115-wardogs116' > /tmp/index.html
+          retry_contains "$BASE/?deploy=$GITHUB_SHA" 'assets/app-core.js?v=1.3.0-search115-wardogs116-backup126' > /tmp/index.html
           grep -Fq 'assets/app-core.js?v=1.3.0-search115-wardogs116-backup126' /tmp/index.html
           grep -Fq 'assets/wardogs-media-v1.js?v=1.0.0-phase121-backup126' /tmp/index.html
           grep -Fq 'WARDOGS 카드와 각 카드 이미지를 저장합니다.' /tmp/index.html
@@ -433,7 +433,7 @@ jobs:
             echo 'WARDOGS attempted to define or override the canonical contact search owner.' >&2
             exit 1
           fi
-          retry_contains "$BASE/assets/wardogs-media-v1.js?deploy=$GITHUB_SHA" "const DB_NAME='mws_wardogs_media_v1';" > /tmp/wardogs-media-v1.js
+          retry_contains "$BASE/assets/wardogs-media-v1.js?deploy=$GITHUB_SHA" "async function putLocal(blob,meta={})" > /tmp/wardogs-media-v1.js
           node --check /tmp/wardogs-media-v1.js
           grep -Fq "const MAX_BYTES=32*1024*1024;" /tmp/wardogs-media-v1.js
           grep -Fq "function cloudUrl(id){return '/media/wardogs/'" /tmp/wardogs-media-v1.js
@@ -882,7 +882,7 @@ jobs:
           grep -Fq "bottom:var(--mws-mobile-nav-offset-v130,68px)" /tmp/mobile-calendar.css
           grep -Fq "82dvh" /tmp/mobile-calendar.css
           grep -Fq "flex:1 1 auto" /tmp/mobile-calendar.css
-          retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" "clockTimeFormatterV133" > /tmp/app-core.js
+          retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" "assetSchema:3," > /tmp/app-core.js
           node --check /tmp/app-core.js
           grep -Fq "eventModal.querySelector('.event-info-panel')" /tmp/app-core.js
           grep -Fq "attachCalendarPointerDragListeners" /tmp/app-core.js
