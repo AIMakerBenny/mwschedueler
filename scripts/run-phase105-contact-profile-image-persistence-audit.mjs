@@ -38,7 +38,7 @@ export function runPhase105ContactProfileImagePersistenceAudit(){
   for(const token of [
     'function isLegacyR2ContactUrl(env,value)',
     'async function canonicalizeLegacyR2ContactRefs(env,raw)',
-    'const canonicalized=await canonicalizeLegacyR2ContactRefs(env,recovered.contacts);',
+    'const legacy=await canonicalizeLegacyR2ContactRefs(env,recovered.contacts);',
     "headers.set('cache-control','public, max-age=31536000, immutable')",
     "headers.set('x-mws-image-policy','original-bytes-no-reencode')"
   ]){
