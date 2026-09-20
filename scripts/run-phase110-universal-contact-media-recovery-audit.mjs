@@ -20,8 +20,8 @@ export function runPhase110UniversalContactMediaRecoveryAudit(){
     '?fallback=110&cb=',
   ])if(!app.includes(token))issues.push('universal contact media recovery missing: '+token);
 
-  if(!index.includes('assets/app-core.js?v=1.3.0-search113'))issues.push('app-core cache revision is not search113');
-  if(/assets\/app-core\.js\?v=1\.3\.0-search(?:10[0-9]|11[0-2])/.test(index))issues.push('stale app-core pre-search113 reference remains');
+  if(!index.includes('assets/app-core.js?v=1.3.0-search115'))issues.push('app-core cache revision is not search115');
+  if(/assets\/app-core\.js\?v=1\.3\.0-search(?:10[0-9]|11[0-2])/.test(index))issues.push('stale app-core pre-search115 reference remains');
 
   for(const token of [
     "target.dataset.mwsContactRecoveryV110==='retry'",
@@ -34,7 +34,7 @@ export function runPhase110UniversalContactMediaRecoveryAudit(){
   for(const token of [
     'run-phase110-universal-contact-media-recovery-audit.mjs',
     'mwsRecoverContactMediaImageV110',
-    'search113',
+    'search115',
     'perf35'
   ])if(!workflow.includes(token))issues.push('production Phase 110 verification missing: '+token);
 
