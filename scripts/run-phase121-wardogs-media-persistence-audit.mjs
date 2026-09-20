@@ -19,7 +19,7 @@ export function runPhase121WardogsMediaPersistenceAudit(){
     "if(!(blob instanceof Blob))throw new TypeError('WARDOGS media must be a Blob');",
     "if(blob.size>MAX_BYTES)throw new Error('WARDOGS media exceeds 32MB');",
     "if(!type.startsWith('image/'))throw new Error('WARDOGS media must be an image');",
-    "const previous=await getLocal(id);",
+    "const previous=await tryGetLocal(id);",
     "if(previous)await withStore('readwrite',store=>store.put(previous));",
     "else await withStore('readwrite',store=>store.delete(id));",
     "for(const card of window.mwsWardogsDataV119?.get?.()?.cards||[])",

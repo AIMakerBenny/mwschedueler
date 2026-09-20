@@ -18,7 +18,7 @@ function createId(){
   return 'wdm-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)+'-'+Math.random().toString(36).slice(2);
 }
 function noteLocalFailure(error){
-  window.__mwsWardogsMediaLocalStorageV130='unavailable';
+  window.__mwsWardogsMediaLocalCacheV130='unavailable';
   if(localWarningShown)return;
   localWarningShown=true;
   console.warn('WARDOGS IndexedDB cache unavailable; continuing with Cloudflare R2 where possible.',error);
