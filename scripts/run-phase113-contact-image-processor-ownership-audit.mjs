@@ -27,7 +27,7 @@ export function runPhase113ContactImageProcessorOwnershipAudit(){
     issues.push('maintenance runtime still overrides contact image processor');
   }
 
-  if(!index.includes('assets/app-core.js?v=1.3.0-search113'))issues.push('app-core cache revision is not search113');
+  if(!index.includes('assets/app-core.js?v=1.3.0-search115'))issues.push('app-core cache revision is not search115');
   if(!postLogin.includes('/assets/perf-runtime.js?v=1.4.0-phase113-contact-image-owner1'))issues.push('perf runtime cache revision is stale');
   if(!perf.includes('maintenance-runtime-v130.js?v=1.3.0-stage68-contact-media-canonical2'))issues.push('maintenance runtime cache revision is stale');
   if(!entry.includes('post-login-runtime-v130.js?v=1.4.0-phase113-contact-image-owner1'))issues.push('post-login runtime cache revision is stale');
@@ -37,7 +37,7 @@ export function runPhase113ContactImageProcessorOwnershipAudit(){
     'mwsCompressContactImageV113',
     'phase113-contact-image-owner1',
     'stage68-contact-media-canonical2',
-    'search113'
+    'search115'
   ])if(!workflow.includes(token))issues.push('production Phase 113 verification missing: '+token);
 
   const summary={phase:113,name:'contact-image-processor-ownership',issues,warnings,pass:issues.length===0};
