@@ -435,6 +435,7 @@ jobs:
           fi
           retry_contains "$BASE/assets/wardogs-media-v1.js?deploy=$GITHUB_SHA" "async function putLocal(blob,meta={})" > /tmp/wardogs-media-v1.js
           node --check /tmp/wardogs-media-v1.js
+          grep -Fq "const DB_NAME='mws_wardogs_media_v1';" /tmp/wardogs-media-v1.js
           grep -Fq "const MAX_BYTES=32*1024*1024;" /tmp/wardogs-media-v1.js
           grep -Fq "function cloudUrl(id){return '/media/wardogs/'" /tmp/wardogs-media-v1.js
           grep -Fq "function cloudApiUrl(id){return '/api/wardogs-media/'" /tmp/wardogs-media-v1.js
