@@ -429,6 +429,40 @@ async function handleAchievementMediaWrite(request,env,id){
   return json({ok:true,id,size:bytes.byteLength,contentType:type});
 }
 
+const WARDOGS_MEDIA_MAX_BYTES=32*1024*1024;
+function validWardogsMediaId(value){return /^[A-Za-z0-9_-]{1,160}$/.test(String(value||''))}
+function wardogsMediaKey(id){return `wardogs/${id}`}
+async function handleWardogsMediaRead(request,env,id){
+  if(!validWardogsMediaId(id))return new Response('Invalid WARDOGS media id',{status:400});
+  const object=await env.IMAGES.get(wardogsMediaKey(id));
+  if(!object)return new Response('Not found',{status:404});
+  const headers=new Headers();
+  object.writeHttpMetadata(headers);
+  headers.set('etag',object.httpEtag);
+  headers.set('x-content-type-options','nosniff');
+  headers.set('cache-control','public, max-age=31536000, immutable');
+  headers.set('content-length',String(object.size||0));
+  headers.set('x-mws-image-policy','original-bytes-no-reencode');
+  return new Response(request.method==='HEAD'?null:object.body,{status:200,headers});
+}
+async function handleWardogsMediaWrite(request,env,id){
+  if(!validWardogsMediaId(id))return json({error:'Invalid WARDOGS media id'},400);
+  const admin=await currentAdmin(request,env);if(!admin)return json({error:'Admin authorization required'},401);
+  if(request.method==='DELETE'){
+    await env.IMAGES.delete(wardogsMediaKey(id));
+    return json({ok:true,id,deleted:true});
+  }
+  const type=String(request.headers.get('content-type')||'').split(';')[0].trim().toLowerCase();
+  if(!type.startsWith('image/'))return json({error:'WARDOGS media must be an image'},415);
+  const declared=Number(request.headers.get('content-length'))||0;
+  if(declared>WARDOGS_MEDIA_MAX_BYTES)return json({error:'WARDOGS media exceeds 32MB'},413);
+  const bytes=await request.arrayBuffer();
+  if(bytes.byteLength<1)return json({error:'WARDOGS media is empty'},400);
+  if(bytes.byteLength>WARDOGS_MEDIA_MAX_BYTES)return json({error:'WARDOGS media exceeds 32MB'},413);
+  await env.IMAGES.put(wardogsMediaKey(id),bytes,{httpMetadata:{contentType:type},customMetadata:{source:'wardogs-card',uploadedBy:String(admin.id||'')}});
+  return json({ok:true,id,size:bytes.byteLength,contentType:type});
+}
+
 export default{
   async fetch(request,env,ctx){
     try{
@@ -448,6 +482,10 @@ export default{
       if(achievementApi&&['PUT','DELETE'].includes(request.method))return handleAchievementMediaWrite(request,env,decodeURIComponent(achievementApi[1]));
       const achievementMedia=path.match(/^\/media\/achievement\/([^/]+)$/);
       if(achievementMedia&&['GET','HEAD'].includes(request.method))return handleAchievementMediaRead(request,env,decodeURIComponent(achievementMedia[1]));
+      const wardogsApi=path.match(/^\/api\/wardogs-media\/([^/]+)$/);
+      if(wardogsApi&&['PUT','DELETE'].includes(request.method))return handleWardogsMediaWrite(request,env,decodeURIComponent(wardogsApi[1]));
+      const wardogsMedia=path.match(/^\/media\/wardogs\/([^/]+)$/);
+      if(wardogsMedia&&['GET','HEAD'].includes(request.method))return handleWardogsMediaRead(request,env,decodeURIComponent(wardogsMedia[1]));
       const media=path.match(/^\/media\/(contact|workspace)\/([^/]+)$/);if(media&&request.method==='GET')return handleMedia(request,env,media[1],decodeURIComponent(media[2]));
       return appWorker.fetch(request,env,ctx);
     }catch(error){console.error('Mawang Scheduler D1 auth wrapper error',error);return json({error:cleanError(error)},500)}

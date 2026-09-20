@@ -69,6 +69,8 @@ jobs:
           node --check scripts/run-phase119-wardogs-data-foundation-audit.mjs
           node --check assets/wardogs-data-v1.js
           node --check scripts/run-phase120-wardogs-contact-link-search-audit.mjs
+          node --check scripts/run-phase121-wardogs-media-persistence-audit.mjs
+          node --check assets/wardogs-media-v1.js
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -364,6 +366,7 @@ jobs:
           grep -Fq 'CLASS SYSTEM <b>ONLINE</b>' /tmp/index.html
           grep -Fq 'MISSION DATA <b>READY</b>' /tmp/index.html
           grep -Fq 'assets/wardogs-data-v1.js?v=1.0.0-phase120' /tmp/index.html
+          grep -Fq 'assets/wardogs-media-v1.js?v=1.0.0-phase121' /tmp/index.html
           grep -Fq 'id="achievementEmptyState"' /tmp/index.html
           grep -Fq 'id="achievementCountChip"' /tmp/index.html
           grep -Fq 'id="achievementGallery" aria-live="polite" hidden' /tmp/index.html
@@ -416,6 +419,26 @@ jobs:
             echo 'WARDOGS attempted to define or override the canonical contact search owner.' >&2
             exit 1
           fi
+          retry_contains "$BASE/assets/wardogs-media-v1.js?deploy=$GITHUB_SHA" "const DB_NAME='mws_wardogs_media_v1';" > /tmp/wardogs-media-v1.js
+          node --check /tmp/wardogs-media-v1.js
+          grep -Fq "const MAX_BYTES=32*1024*1024;" /tmp/wardogs-media-v1.js
+          grep -Fq "function cloudUrl(id){return '/media/wardogs/'" /tmp/wardogs-media-v1.js
+          grep -Fq "function cloudApiUrl(id){return '/api/wardogs-media/'" /tmp/wardogs-media-v1.js
+          grep -Fq "window.mwsWardogsMediaV1=Object.freeze({" /tmp/wardogs-media-v1.js
+          if grep -Eqi 'localStorage|readAsDataURL|data:image' /tmp/wardogs-media-v1.js; then
+            echo 'WARDOGS media runtime contains forbidden Base64/localStorage persistence.' >&2
+            exit 1
+          fi
+          grep -Fq "function wardogsMediaKey(id){return `wardogs/${id}`}" src/cf-v111-auth.js
+          grep -Fq "async function handleWardogsMediaRead(request,env,id)" src/cf-v111-auth.js
+          grep -Fq "async function handleWardogsMediaWrite(request,env,id)" src/cf-v111-auth.js
+          grep -Fq "headers.set('x-mws-image-policy','original-bytes-no-reencode');" src/cf-v111-auth.js
+          bad_status="$(curl -sS -o /tmp/wardogs-invalid.txt -w '%{http_code}' "$BASE/media/wardogs/bad%20id?deploy=$GITHUB_SHA")"
+          test "$bad_status" = "400"
+          grep -Fq 'Invalid WARDOGS media id' /tmp/wardogs-invalid.txt
+          unauth_status="$(printf 'x' | curl -sS -o /tmp/wardogs-unauth.json -w '%{http_code}' -X PUT -H 'content-type: image/png' --data-binary @- "$BASE/api/wardogs-media/phase121-probe?deploy=$GITHUB_SHA")"
+          test "$unauth_status" = "401"
+          grep -Fq 'Admin authorization required' /tmp/wardogs-unauth.json
           grep -Fq 'function mwsAchievementCreateCardV1621(fields={})' /tmp/app-core.js
           grep -Fq 'function mwsAchievementUpdateCardV1621(id,patch={})' /tmp/app-core.js
           grep -Fq 'function mwsAchievementDeleteCardV1621(id)' /tmp/app-core.js
