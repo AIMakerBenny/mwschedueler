@@ -1,0 +1,116 @@
+/* WARDOGS Phase 117 - tactical shell and class tabs */
+#wardogs{
+  --wd-bg:#07090c;
+  --wd-panel:#0d1116;
+  --wd-panel-2:#111821;
+  --wd-line:rgba(255,255,255,.10);
+  --wd-line-hot:rgba(255,103,44,.42);
+  --wd-text:#f3f5f7;
+  --wd-muted:#8d98a7;
+  --wd-accent:#ff6b2c;
+  --wd-danger:#ff4242;
+  --wd-ok:#84d66b;
+}
+#wardogs.active{display:block}
+.wardogs-shell-v117{
+  position:relative;
+  overflow:hidden;
+  min-height:calc(100vh - 118px);
+  border:1px solid var(--wd-line);
+  border-radius:18px;
+  background:
+    linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px),
+    radial-gradient(circle at 88% 8%,rgba(255,103,44,.11),transparent 28%),
+    linear-gradient(180deg,#0a0d11 0%,var(--wd-bg) 100%);
+  background-size:32px 32px,32px 32px,auto,auto;
+  color:var(--wd-text);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.015),0 18px 46px rgba(0,0,0,.26);
+}
+.wardogs-shell-v117::before,
+.wardogs-shell-v117::after{
+  content:"";
+  position:absolute;
+  pointer-events:none;
+  z-index:0;
+}
+.wardogs-shell-v117::before{
+  inset:14px;
+  border:1px solid rgba(255,103,44,.10);
+  clip-path:polygon(0 0,74px 0,74px 1px,calc(100% - 74px) 1px,calc(100% - 74px) 0,100% 0,100% 100%,calc(100% - 74px) 100%,calc(100% - 74px) calc(100% - 1px),74px calc(100% - 1px),74px 100%,0 100%);
+}
+.wardogs-shell-v117::after{
+  top:0;right:0;width:190px;height:4px;
+  background:linear-gradient(90deg,transparent,var(--wd-accent));
+}
+.wardogs-shell-inner-v117{position:relative;z-index:1;padding:24px}
+.wardogs-eyebrow-v117{
+  display:flex;align-items:center;gap:9px;
+  color:var(--wd-accent);font-size:10px;font-weight:900;letter-spacing:.22em;text-transform:uppercase;
+}
+.wardogs-eyebrow-v117::before{content:"";width:26px;height:2px;background:var(--wd-accent);box-shadow:0 0 10px rgba(255,103,44,.35)}
+.wardogs-header-v117{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;padding-bottom:18px;border-bottom:1px solid var(--wd-line)}
+.wardogs-title-v117{margin:8px 0 5px;font-size:clamp(28px,4vw,48px);line-height:.96;font-weight:950;letter-spacing:.035em}
+.wardogs-title-v117 span{display:block;margin-top:9px;font-size:11px;line-height:1.3;color:var(--wd-muted);letter-spacing:.24em;font-weight:800}
+.wardogs-status-v117{display:grid;grid-template-columns:repeat(2,minmax(150px,1fr));gap:7px;width:min(420px,100%)}
+.wardogs-status-item-v117{
+  display:flex;justify-content:space-between;gap:12px;align-items:center;
+  min-height:38px;padding:8px 10px;border:1px solid var(--wd-line);background:rgba(10,14,19,.72);
+  font-size:10px;letter-spacing:.08em;color:var(--wd-muted)
+}
+.wardogs-status-item-v117 b{color:var(--wd-ok);font-size:9px;letter-spacing:.14em}
+.wardogs-console-v117{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0 12px}
+.wardogs-console-code-v117{font:700 10px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--wd-muted);letter-spacing:.12em}
+.wardogs-console-code-v117 strong{color:var(--wd-text)}
+.wardogs-class-tabs-v117{
+  display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;
+  padding:7px;border:1px solid var(--wd-line);background:rgba(6,9,12,.76)
+}
+.wardogs-class-tab-v117{
+  position:relative;overflow:hidden;min-height:62px;padding:10px 8px;
+  border:1px solid transparent;border-radius:4px;background:rgba(255,255,255,.025);color:var(--wd-muted);
+  text-align:left;transition:border-color .14s ease,background .14s ease,color .14s ease,transform .14s ease;
+}
+.wardogs-class-tab-v117:hover{border-color:rgba(255,103,44,.28);background:rgba(255,103,44,.06);color:var(--wd-text)}
+.wardogs-class-tab-v117.active,
+.wardogs-class-tab-v117[aria-selected="true"]{
+  border-color:var(--wd-line-hot);background:linear-gradient(180deg,rgba(255,103,44,.13),rgba(255,103,44,.035));color:#fff;
+  box-shadow:inset 3px 0 0 var(--wd-accent)
+}
+.wardogs-class-tab-v117 .wd-class-code{display:block;font:800 9px/1 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--wd-accent);letter-spacing:.14em;margin-bottom:7px}
+.wardogs-class-tab-v117 .wd-class-name{display:block;font-size:13px;font-weight:900;letter-spacing:.08em}
+.wardogs-class-stage-v117{
+  margin-top:12px;min-height:360px;border:1px solid var(--wd-line);background:rgba(8,12,16,.72);
+}
+.wardogs-stage-head-v117{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:15px 16px;border-bottom:1px solid var(--wd-line)}
+.wardogs-stage-kicker-v117{font:800 9px/1 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--wd-accent);letter-spacing:.18em}
+.wardogs-stage-title-v117{margin-top:5px;font-size:20px;font-weight:950;letter-spacing:.06em}
+.wardogs-stage-count-v117{padding:6px 9px;border:1px solid var(--wd-line);color:var(--wd-muted);font:800 10px/1 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.1em}
+.wardogs-empty-v117{
+  min-height:290px;display:grid;place-items:center;padding:32px;text-align:center;
+  background:linear-gradient(135deg,transparent 48%,rgba(255,255,255,.018) 48%,rgba(255,255,255,.018) 52%,transparent 52%);
+  background-size:18px 18px;
+}
+.wardogs-empty-mark-v117{
+  width:64px;height:64px;margin:0 auto 16px;display:grid;place-items:center;
+  border:1px solid rgba(255,103,44,.26);color:var(--wd-accent);font:950 18px/1 ui-monospace,SFMono-Regular,Consolas,monospace;
+  transform:rotate(45deg)
+}
+.wardogs-empty-mark-v117 span{transform:rotate(-45deg)}
+.wardogs-empty-v117 h3{margin:0 0 7px;font-size:16px;letter-spacing:.08em}
+.wardogs-empty-v117 p{margin:0;color:var(--wd-muted);font-size:12px;line-height:1.55}
+@media(max-width:980px){
+  .wardogs-header-v117{flex-direction:column}
+  .wardogs-status-v117{width:100%}
+  .wardogs-class-tabs-v117{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:640px){
+  .wardogs-shell-inner-v117{padding:14px}
+  .wardogs-status-v117{grid-template-columns:1fr}
+  .wardogs-class-tabs-v117{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .wardogs-class-tab-v117{min-height:54px}
+  .wardogs-console-v117{align-items:flex-start;flex-direction:column}
+}
+@media(prefers-reduced-motion:reduce){
+  .wardogs-class-tab-v117{transition:none}
+}

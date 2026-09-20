@@ -1,0 +1,65 @@
+import fs from 'node:fs';
+
+export function runPhase117WardogsTacticalClassTabsAudit(){
+  const issues=[];
+  const warnings=[];
+  const index=fs.readFileSync('index.html','utf8');
+  const css=fs.readFileSync('assets/wardogs-v1.css','utf8');
+  const js=fs.readFileSync('assets/wardogs-v1.js','utf8');
+  const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
+
+  for(const token of [
+    'assets/wardogs-v1.css?v=1.0.0-phase117',
+    'assets/wardogs-v1.js?v=1.0.0-phase117',
+    'data-wardogs-ui-v117="1"',
+    'WARDOGS COMMAND INTERFACE',
+    'TACTICAL OPERATIONS SYSTEM // 전쟁견들',
+    'id="wardogsClassStageCode"',
+    'id="wardogsClassStageTitle"',
+    'id="wardogsClassEmptyText"'
+  ])if(!index.includes(token))issues.push('WARDOGS tactical shell missing: '+token);
+
+  const classes=['assault','medic','recon','support','driver','pilot'];
+  for(const id of classes){
+    const count=(index.match(new RegExp('data-wardogs-class="'+id+'"','g'))||[]).length;
+    if(count!==1)issues.push('WARDOGS class tab '+id+' count is '+count+', expected 1');
+  }
+
+  for(const token of [
+    '#wardogs{',
+    '.wardogs-shell-v117{',
+    '.wardogs-class-tabs-v117{',
+    '.wardogs-class-tab-v117.active',
+    '.wardogs-class-stage-v117{',
+    '@media(max-width:640px)'
+  ])if(!css.includes(token))issues.push('WARDOGS tactical CSS missing: '+token);
+
+  for(const token of [
+    "const CLASSES=Object.freeze([",
+    "{id:'assault',name:'ASSAULT',code:'ASLT',label:'Assault'}",
+    "{id:'medic',name:'MEDIC',code:'MED',label:'Medic'}",
+    "{id:'recon',name:'RECON',code:'RCN',label:'Recon'}",
+    "{id:'support',name:'SUPPORT',code:'SUP',label:'Support'}",
+    "{id:'driver',name:'DRIVER',code:'DRV',label:'Driver'}",
+    "{id:'pilot',name:'PILOT',code:'PLT',label:'Pilot'}",
+    "function setClass(next)",
+    "['ArrowLeft','ArrowRight','Home','End']",
+    "window.mwsWardogsV117=Object.freeze({"
+  ])if(!js.includes(token))issues.push('WARDOGS class runtime missing: '+token);
+
+  if(/@keyframes\s+wardogs/i.test(css))issues.push('Phase 117 must not add WARDOGS intro animation before Phase 118');
+
+  for(const token of [
+    'run-phase117-wardogs-tactical-class-tabs-audit.mjs',
+    'assets/wardogs-v1.css?v=1.0.0-phase117',
+    'assets/wardogs-v1.js?v=1.0.0-phase117',
+    'WARDOGS COMMAND INTERFACE',
+    'data-wardogs-class="pilot"'
+  ])if(!workflow.includes(token))issues.push('production Phase 117 verification missing: '+token);
+
+  const summary={phase:117,name:'wardogs-tactical-class-tabs',issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify(summary));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+if(import.meta.url===`file://${process.argv[1]}`)runPhase117WardogsTacticalClassTabsAudit();
