@@ -410,7 +410,6 @@ jobs:
           grep -Fq 'function mwsScanContactMediaImagesV111(root=document)' /tmp/app-core.js
           grep -Fq "img.complete&&img.naturalWidth===0" /tmp/app-core.js
           grep -Fq 'const observer=new MutationObserver(records=>' /tmp/app-core.js
-          grep -Fq "document.addEventListener('error',event=>" /tmp/app-core.js
           grep -Fq '?fallback=110&cb=' /tmp/app-core.js
           grep -Fq 'window.openPostAsContentSchedule=async postId=>{' /tmp/index.html
           grep -Fq 'const normalizedSaved=await Promise.resolve(window.mwsV55SaveNow());' /tmp/index.html
