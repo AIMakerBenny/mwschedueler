@@ -81,6 +81,7 @@ jobs:
           node --check scripts/run-phase128-wardogs-mobile-viewport-audit.mjs
           node --check scripts/run-phase129-wardogs-mobile-interaction-regression-audit.mjs
           node --check scripts/run-phase130-wardogs-webview2-compatibility-audit.mjs
+          node --check scripts/run-phase131-wardogs-final-mobile-webview-integration-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -452,6 +453,12 @@ jobs:
           grep -Fq "async function tryGetLocal(id)" /tmp/wardogs-media-v1.js
           grep -Fq "async function tryStoreLocal(blob,meta={})" /tmp/wardogs-media-v1.js
           grep -Fq "window.__mwsWardogsMediaStorageV130='r2-with-indexeddb-cache-fallback';" /tmp/wardogs-media-v1.js
+          echo '[phase131] final WARDOGS mobile/WebView2 web integration'
+          grep -Fq "window.__mwsWardogsTouchOrderingV127='pointer-events-touch-pen';" /tmp/wardogs-manager-v1.js
+          grep -Fq "addEventListener('input',renderContactResults)" /tmp/wardogs-manager-v1.js
+          grep -Fq "fileInput?.addEventListener('change'" /tmp/wardogs-manager-v1.js
+          grep -Fq "window.__mwsWardogsMediaStorageV130='r2-with-indexeddb-cache-fallback';" /tmp/wardogs-media-v1.js
+          grep -Fq "typeof crypto.getRandomValues==='function'" /tmp/wardogs-data-v1.js
           if grep -Eqi 'localStorage|readAsDataURL|data:image' /tmp/wardogs-media-v1.js; then
             echo 'WARDOGS media runtime contains forbidden Base64/localStorage persistence.' >&2
             exit 1
