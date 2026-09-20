@@ -84,6 +84,14 @@ jobs:
           const images=rows.filter(x=>typeof x?.image==='string'&&x.image.length>0);
           const mediaImages=images.filter(x=>x.image.startsWith('/media/contact/'));
           const dataImages=images.filter(x=>x.image.startsWith('data:image/'));
+          const unmanagedImages=images.filter(x=>!x.image.startsWith('/media/contact/')&&!x.image.startsWith('data:image/'));
+          const unmanagedImageDetails=unmanagedImages.map(row=>{
+            const raw=String(row.image||'');
+            let protocol='',host='',path='';
+            try{const u=new URL(raw,'https://mawang-scheduler.majoku.workers.dev');protocol=u.protocol;host=u.hostname;path=(u.pathname||'').slice(0,180)}catch(_){path=raw.slice(0,180)}
+            return {id:String(row.id||''),name:String(row.name||''),protocol,host,path};
+          });
+          console.log(JSON.stringify({unmanagedContactImages:unmanagedImageDetails}));
           (async()=>{
             let recoverableMedia=0,validManagedMedia=0,invalidManagedMedia=0,missingManagedMedia=0;
             const missingManagedMediaIds=[];
