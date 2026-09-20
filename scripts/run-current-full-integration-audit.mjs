@@ -111,6 +111,7 @@ import {runPhase110UniversalContactMediaRecoveryAudit} from './run-phase110-univ
 import {runPhase111ContactMediaDomBindingAudit} from './run-phase111-contact-media-dom-binding-audit.mjs';
 import {runPhase112CanonicalManagedMediaOwnershipAudit} from './run-phase112-canonical-managed-media-ownership-audit.mjs';
 import {runPhase113ContactImageProcessorOwnershipAudit} from './run-phase113-contact-image-processor-ownership-audit.mjs';
+import {runPhase114ContactImageEndToEndOwnershipAudit} from './run-phase114-contact-image-end-to-end-ownership-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1217,6 +1218,16 @@ export function runPhase113FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase113FullIntegrationAudit();}
+export function runPhase114FullIntegrationAudit(){
+  const previous=runPhase113FullIntegrationAudit(), current=runPhase114ContactImageEndToEndOwnershipAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:114,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase114FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
