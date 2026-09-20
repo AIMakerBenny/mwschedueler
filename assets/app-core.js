@@ -4258,7 +4258,7 @@ document.getElementById('saveContactBtn').onclick=async()=>{
   if(file){
     try{
       const raw=pendingContactImageDataUrl||await readContactImageFile(file);
-      candidate.image=await compressContactImage(raw);
+      candidate.image=await mwsCompressContactImageV113(raw);
       if(!/^data:image\/(?:jpeg|png|webp);base64,/i.test(candidate.image))throw new Error('저장 가능한 프로필 이미지 형식으로 변환하지 못했습니다');
     }catch(error){
       console.error('프로필 이미지 저장 준비 실패',error);
@@ -4807,6 +4807,8 @@ async function compressContactImage(dataUrl,maxSize=1024,quality=.9){
     closeSource();
   }
 }
+const mwsCompressContactImageV113=compressContactImage;
+window.mwsCompressContactImageV113=mwsCompressContactImageV113;
 function extractContactsFromImport(obj){
   if(Array.isArray(obj))return obj;
   if(obj && Array.isArray(obj.contacts))return obj.contacts;
@@ -4939,7 +4941,7 @@ async function importContactsObject(obj){
     if(!incoming){invalid++;continue}
     incoming.pendingSetup=false;
     incoming.labels.forEach(ensureContactTag);
-    if(incoming.image)incoming.image=await compressContactImage(incoming.image);
+    if(incoming.image)incoming.image=await mwsCompressContactImageV113(incoming.image);
 
     const key=normalizeContactName(incoming.name);
     const existing=data.contacts.find(c=>normalizeContactName(c.name)===key);

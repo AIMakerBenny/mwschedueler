@@ -23,13 +23,13 @@ export function runPhase111ContactMediaDomBindingAudit(){
   if(app.includes("document.addEventListener('error',event=>")&&app.includes('__mwsContactMediaRecoveryV110')){
     issues.push('legacy document-level V110 image error capture remains alongside V111 binder');
   }
-  if(!index.includes('assets/app-core.js?v=1.3.0-search112'))issues.push('app-core cache revision is not search112');
+  if(!index.includes('assets/app-core.js?v=1.3.0-search113'))issues.push('app-core cache revision is not search113');
 
   for(const token of [
     'run-phase111-contact-media-dom-binding-audit.mjs',
     'mwsBindContactMediaImageV111',
     'mwsScanContactMediaImagesV111',
-    'search112'
+    'search113'
   ])if(!workflow.includes(token))issues.push('production Phase 111 verification missing: '+token);
 
   const summary={phase:111,name:'contact-media-dom-binding',issues,warnings,pass:issues.length===0};

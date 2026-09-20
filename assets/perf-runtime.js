@@ -27,7 +27,6 @@
   /* Image quality rule: never resize, recompress, or transcode user images. */
   const preserveOriginalImage=async value=>value||'';
   function installLosslessImagePolicy(){
-    try{window.compressContactImage=preserveOriginalImage;compressContactImage=preserveOriginalImage}catch(_){}
     try{window.compressFolderContactPhotoV417=preserveOriginalImage;compressFolderContactPhotoV417=preserveOriginalImage}catch(_){}
     window.mwsV571CompressProfileImage=preserveOriginalImage;
     window.mwsV57CompressProfileImage=preserveOriginalImage;
@@ -208,7 +207,7 @@
     if(document.getElementById('mwsCf571RuntimeScript'))return;
     const s=document.createElement('script');
     s.id='mwsCf571RuntimeScript';
-    s.src='assets/maintenance-runtime-v130.js?v=1.3.0-stage68-contact-media-canonical1';
+    s.src='assets/maintenance-runtime-v130.js?v=1.3.0-stage68-contact-media-canonical2';
     s.onload=()=>{
       if(window.__mwsMaintenanceRuntimeV130Ready){installLosslessImagePolicy();forceVersion();return}
       console.error('Mawang maintenance runtime readiness handshake failed');

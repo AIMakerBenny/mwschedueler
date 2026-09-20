@@ -21,13 +21,13 @@ export function runPhase112CanonicalManagedMediaOwnershipAudit(){
 
   if(maintenance.includes('function directMediaUrl(value)'))issues.push('legacy same-origin to direct-R2 converter remains active');
   if(maintenance.includes('isManagedDirectMedia('))issues.push('legacy direct-only media ownership remains active');
-  if(!perf.includes('maintenance-runtime-v130.js?v=1.3.0-stage68-contact-media-canonical1'))issues.push('maintenance runtime cache revision not advanced');
+  if(!perf.includes('maintenance-runtime-v130.js?v=1.3.0-stage68-contact-media-canonical2'))issues.push('maintenance runtime cache revision not advanced');
 
   for(const token of [
     'run-phase112-canonical-managed-media-ownership-audit.mjs',
     'canonicalMediaUrl(value)',
     'isManagedMediaRef(value)',
-    'stage68-contact-media-canonical1'
+    'stage68-contact-media-canonical2'
   ])if(!workflow.includes(token))issues.push('production Phase 112 verification missing: '+token);
 
   const summary={phase:112,name:'canonical-managed-media-ownership',issues,warnings,pass:issues.length===0};

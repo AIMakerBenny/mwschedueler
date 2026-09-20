@@ -73,12 +73,7 @@
     try{return canvas.toDataURL('image/webp',quality)||dataUrl}catch(_){return dataUrl}
   }
 
-  const compressContactImageV571=(dataUrl)=>compressProfileImageV571(dataUrl,MAX_PROFILE_SIZE,PROFILE_QUALITY);
   const compressFolderContactPhotoV571=(dataUrl)=>compressProfileImageV571(dataUrl,MAX_PROFILE_SIZE,PROFILE_QUALITY);
-  try{
-    window.compressContactImage=compressContactImageV571;
-    compressContactImage=compressContactImageV571;
-  }catch(_){}
   try{
     window.compressFolderContactPhotoV417=compressFolderContactPhotoV571;
     compressFolderContactPhotoV417=compressFolderContactPhotoV571;
