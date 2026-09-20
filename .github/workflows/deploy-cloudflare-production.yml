@@ -78,6 +78,7 @@ jobs:
           node --check scripts/run-phase125-wardogs-card-detail-audit.mjs
           node --check scripts/run-phase126-wardogs-full-backup-audit.mjs
           node --check scripts/run-phase127-wardogs-mobile-touch-ordering-audit.mjs
+          node --check scripts/run-phase128-wardogs-mobile-viewport-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -494,6 +495,11 @@ jobs:
           grep -Fq '.wardogs-manager-drag-handle-v123[data-wardogs-manager-touch-handle]{' /tmp/wardogs-manager-v1.css
           grep -Fq 'touch-action:none;' /tmp/wardogs-manager-v1.css
           grep -Fq 'body.mws-wardogs-touch-ordering-v127{' /tmp/wardogs-manager-v1.css
+          grep -Fq 'min-height:100dvh;' /tmp/wardogs-manager-v1.css
+          grep -Fq 'max-height:94dvh;' /tmp/wardogs-manager-v1.css
+          grep -Fq 'padding-top:max(8px,env(safe-area-inset-top));' /tmp/wardogs-manager-v1.css
+          grep -Fq 'grid-template-rows:minmax(150px,30dvh) minmax(0,1fr);' /tmp/wardogs-manager-v1.css
+          grep -Fq -- '-webkit-overflow-scrolling:touch;' /tmp/wardogs-manager-v1.css
           grep -Fq "group.forEach((card,order)=>normalized.push({...card,order}));" /tmp/wardogs-data-v1.js
           grep -Fq "group.forEach((card,order)=>normalized.push({...card,order}));" src/cf-v111-auth.js
           grep -Fq 'id="wardogsGalleryV124"' /tmp/index.html
@@ -524,6 +530,11 @@ jobs:
           grep -Fq 'display:block;width:auto;height:auto;' /tmp/wardogs-v1.css
           grep -Fq 'max-width:100%;max-height:calc(94vh - 150px);' /tmp/wardogs-v1.css
           grep -Fq 'body.mws-wardogs-detail-open-v125{overflow:hidden!important}' /tmp/wardogs-v1.css
+          grep -Fq 'min-height:100dvh;' /tmp/wardogs-v1.css
+          grep -Fq 'max-height:94dvh;' /tmp/wardogs-v1.css
+          grep -Fq 'grid-template-rows:minmax(280px,55dvh) minmax(0,1fr);' /tmp/wardogs-v1.css
+          grep -Fq 'max-height:calc(48dvh - 24px);' /tmp/wardogs-v1.css
+          grep -Fq -- '-webkit-overflow-scrolling:touch;' /tmp/wardogs-v1.css
           grep -Fq "assetSchema:3," /tmp/app-core.js
           grep -Fq "async function buildWardogsBackupMedia(payload)" /tmp/app-core.js
           grep -Fq "async function restoreWardogsBackupMedia(backup,payload)" /tmp/app-core.js

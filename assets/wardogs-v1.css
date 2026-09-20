@@ -333,3 +333,50 @@ body.mws-wardogs-detail-open-v125{overflow:hidden!important}
 @media(prefers-reduced-motion:reduce){
   .wardogs-gallery-card-v124{transition:none}
 }
+
+/* Phase 128: mobile viewport + scroll stability */
+.wardogs-detail-modal-v125{
+  min-height:100vh;
+  min-height:100dvh;
+  padding-top:max(8px,env(safe-area-inset-top));
+  padding-right:max(8px,env(safe-area-inset-right));
+  padding-bottom:max(8px,env(safe-area-inset-bottom));
+  padding-left:max(8px,env(safe-area-inset-left));
+}
+.wardogs-detail-dialog-v125{
+  max-height:94vh;
+  max-height:94dvh;
+}
+.wardogs-detail-media-v125,
+.wardogs-detail-info-v125{
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+.wardogs-detail-media-frame-v125 img{
+  max-height:calc(94vh - 150px);
+  max-height:calc(94dvh - 150px);
+}
+@media(max-width:900px){
+  .wardogs-detail-dialog-v125{
+    max-height:96vh;
+    max-height:96dvh;
+  }
+  .wardogs-detail-layout-v125{
+    grid-template-rows:minmax(280px,55vh) minmax(0,1fr);
+    grid-template-rows:minmax(280px,55dvh) minmax(0,1fr);
+  }
+  .wardogs-detail-media-frame-v125 img{
+    max-height:calc(55vh - 26px);
+    max-height:calc(55dvh - 26px);
+  }
+}
+@media(max-width:520px){
+  .wardogs-detail-layout-v125{
+    grid-template-rows:minmax(240px,48vh) minmax(0,1fr);
+    grid-template-rows:minmax(240px,48dvh) minmax(0,1fr);
+  }
+  .wardogs-detail-media-frame-v125 img{
+    max-height:calc(48vh - 24px);
+    max-height:calc(48dvh - 24px);
+  }
+}

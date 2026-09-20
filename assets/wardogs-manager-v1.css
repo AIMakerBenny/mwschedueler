@@ -163,3 +163,33 @@ body.mws-wardogs-touch-ordering-v127 .wardogs-manager-list-pane-v122{
     cursor:grab;
   }
 }
+
+/* Phase 128: mobile viewport + scroll stability */
+.wardogs-manager-modal-v122{
+  min-height:100vh;
+  min-height:100dvh;
+  padding-top:max(8px,env(safe-area-inset-top));
+  padding-right:max(8px,env(safe-area-inset-right));
+  padding-bottom:max(8px,env(safe-area-inset-bottom));
+  padding-left:max(8px,env(safe-area-inset-left));
+}
+.wardogs-manager-dialog-v122{
+  max-height:94vh;
+  max-height:94dvh;
+}
+.wardogs-manager-list-pane-v122,
+.wardogs-manager-editor-v122,
+.wardogs-manager-search-results-v122{
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+@media(max-width:860px){
+  .wardogs-manager-dialog-v122{
+    max-height:96vh;
+    max-height:96dvh;
+  }
+  .wardogs-manager-layout-v122{
+    grid-template-rows:minmax(150px,30vh) minmax(0,1fr);
+    grid-template-rows:minmax(150px,30dvh) minmax(0,1fr);
+  }
+}
