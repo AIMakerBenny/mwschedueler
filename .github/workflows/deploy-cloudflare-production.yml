@@ -79,6 +79,7 @@ jobs:
           node --check scripts/run-phase126-wardogs-full-backup-audit.mjs
           node --check scripts/run-phase127-wardogs-mobile-touch-ordering-audit.mjs
           node --check scripts/run-phase128-wardogs-mobile-viewport-audit.mjs
+          node --check scripts/run-phase129-wardogs-mobile-interaction-regression-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -357,7 +358,7 @@ jobs:
           grep -Fq 'data-tab="wardogs"' /tmp/index.html
           grep -Fq '<span class="nav-label">워독스 전쟁견들</span>' /tmp/index.html
           grep -Fq '<section id="wardogs" class="section" data-wardogs-shell-v116="1">' /tmp/index.html
-          grep -Fq 'assets/wardogs-v1.css?v=1.0.0-phase125' /tmp/index.html
+          grep -Fq 'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129' /tmp/index.html
           grep -Fq 'assets/wardogs-v1.js?v=1.0.0-phase125' /tmp/index.html
           grep -Fq 'data-wardogs-ui-v117="1"' /tmp/index.html
           grep -Fq 'WARDOGS COMMAND INTERFACE' /tmp/index.html
@@ -378,7 +379,7 @@ jobs:
           grep -Fq 'MISSION DATA <b>READY</b>' /tmp/index.html
           grep -Fq 'assets/wardogs-data-v1.js?v=1.0.0-phase120' /tmp/index.html
           grep -Fq 'assets/wardogs-media-v1.js?v=1.0.0-phase121' /tmp/index.html
-          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129' /tmp/index.html
           grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127' /tmp/index.html
           grep -Fq 'class="card wardogs-manager-entry-card-v122"' /tmp/index.html
           grep -Fq 'id="wardogsManageBtn"' /tmp/index.html
@@ -534,6 +535,12 @@ jobs:
           grep -Fq 'max-height:94dvh;' /tmp/wardogs-v1.css
           grep -Fq 'grid-template-rows:minmax(280px,55dvh) minmax(0,1fr);' /tmp/wardogs-v1.css
           grep -Fq 'max-height:calc(48dvh - 24px);' /tmp/wardogs-v1.css
+          grep -Fq "fileInput?.addEventListener('change'" /tmp/wardogs-manager-v1.js
+          grep -Fq "addEventListener('input',renderContactResults)" /tmp/wardogs-manager-v1.js
+          grep -Fq "handle?.addEventListener('pointerdown',handleTouchOrderPointerDown);" /tmp/wardogs-manager-v1.js
+          grep -Fq "article.addEventListener('click',()=>void openDetail(card.id,article));" /tmp/wardogs-v1.js
+          grep -Fq 'max-height:96dvh;' /tmp/wardogs-manager-v1.css
+          grep -Fq 'max-height:96dvh;' /tmp/wardogs-v1.css
           grep -Fq -- '-webkit-overflow-scrolling:touch;' /tmp/wardogs-v1.css
           grep -Fq "assetSchema:3," /tmp/app-core.js
           grep -Fq "async function buildWardogsBackupMedia(payload)" /tmp/app-core.js
