@@ -380,7 +380,7 @@ jobs:
           grep -Fq 'assets/wardogs-data-v1.js?v=1.0.0-phase120' /tmp/index.html
           grep -Fq 'assets/wardogs-media-v1.js?v=1.0.0-phase121' /tmp/index.html
           grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129' /tmp/index.html
-          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix' /tmp/index.html
           grep -Fq 'class="card wardogs-manager-entry-card-v122"' /tmp/index.html
           grep -Fq 'id="wardogsManageBtn"' /tmp/index.html
           grep -Fq 'id="wardogsManageCount"' /tmp/index.html
@@ -492,6 +492,7 @@ jobs:
           grep -Fq "handle?.addEventListener('pointermove',handleTouchOrderPointerMove);" /tmp/wardogs-manager-v1.js
           grep -Fq "handle?.addEventListener('pointerup',handleTouchOrderPointerUp);" /tmp/wardogs-manager-v1.js
           grep -Fq "handle?.addEventListener('pointercancel',handleTouchOrderPointerCancel);" /tmp/wardogs-manager-v1.js
+          grep -Fq "classList.remove('drop-before','drop-after','dragging','touch-ordering')" /tmp/wardogs-manager-v1.js
           grep -Fq "pane.scrollBy({top:delta,left:0,behavior:'auto'});" /tmp/wardogs-manager-v1.js
           grep -Fq '.wardogs-manager-drag-handle-v123[data-wardogs-manager-touch-handle]{' /tmp/wardogs-manager-v1.css
           grep -Fq 'touch-action:none;' /tmp/wardogs-manager-v1.css

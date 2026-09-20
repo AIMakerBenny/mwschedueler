@@ -176,7 +176,7 @@ function listHtml(){
   }).join('');
 }
 function clearOrderDropMarkers(){
-  modal?.querySelectorAll('.wardogs-manager-item-v122.drop-before,.wardogs-manager-item-v122.drop-after,.wardogs-manager-item-v122.dragging').forEach(el=>el.classList.remove('drop-before','drop-after','dragging'));
+  modal?.querySelectorAll('.wardogs-manager-item-v122.drop-before,.wardogs-manager-item-v122.drop-after,.wardogs-manager-item-v122.dragging,.wardogs-manager-item-v122.touch-ordering').forEach(el=>el.classList.remove('drop-before','drop-after','dragging','touch-ordering'));
 }
 function setOrderClass(classId){
   const next=String(classId||'').trim().toLowerCase();

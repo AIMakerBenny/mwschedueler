@@ -10,7 +10,7 @@ export function runPhase127WardogsMobileTouchOrderingAudit(){
 
   for(const token of [
     'assets/wardogs-manager-v1.css?v=1.0.0-phase127',
-    'assets/wardogs-manager-v1.js?v=1.0.0-phase127'
+    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix'
   ])if(!index.includes(token))issues.push('Phase 127 manager asset revision missing: '+token);
 
   for(const token of [
@@ -36,6 +36,7 @@ export function runPhase127WardogsMobileTouchOrderingAudit(){
     "handle?.addEventListener('pointermove',handleTouchOrderPointerMove);",
     "handle?.addEventListener('pointerup',handleTouchOrderPointerUp);",
     "handle?.addEventListener('pointercancel',handleTouchOrderPointerCancel);",
+    "classList.remove('drop-before','drop-after','dragging','touch-ordering')",
     "window.__mwsWardogsTouchOrderingV127='pointer-events-touch-pen';"
   ])if(!manager.includes(token))issues.push('mobile touch ordering runtime missing: '+token);
 
@@ -55,7 +56,7 @@ export function runPhase127WardogsMobileTouchOrderingAudit(){
 
   for(const token of [
     'run-phase127-wardogs-mobile-touch-ordering-audit.mjs',
-    'assets/wardogs-manager-v1.js?v=1.0.0-phase127',
+    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix',
     'assets/wardogs-manager-v1.css?v=1.0.0-phase127',
     "window.__mwsWardogsTouchOrderingV127='pointer-events-touch-pen';",
     "handle?.addEventListener('pointerdown',handleTouchOrderPointerDown);",
