@@ -522,7 +522,6 @@ jobs:
           grep -Fq "const cloudSaved=await window.mwsV55SaveNow();" /tmp/app-core.js
           grep -Fq "window.restoreWardogsBackupMediaV126=restoreWardogsBackupMedia;" /tmp/app-core.js
           grep -Fq "window.validateWardogsEmbeddedMediaV126=validateWardogsEmbeddedMedia;" /tmp/app-core.js
-          grep -Fq "export:['contactMeta','miniGames','notebook','clipboard','wardogs']" /tmp/live-cloud-core.js
           if grep -Eqi 'backdrop-filter|filter:[[:space:]]*blur' /tmp/wardogs-v1.css; then
             echo 'WARDOGS detail contains a prohibited blur filter.' >&2
             exit 1
@@ -648,6 +647,7 @@ jobs:
           grep -Fq "export:['contactMeta','miniGames','notebook','clipboard','wardogs']" /tmp/live-cloud-core.js
           grep -Fq "indexedDB.open(WARDOGS_CACHE_DB,WARDOGS_CACHE_VERSION)" /tmp/live-cloud-core.js
           grep -Fq "wardogs:{schemaVersion:1,cards:[]}" /tmp/live-cloud-core.js
+          grep -Fq "export:['contactMeta','miniGames','notebook','clipboard','wardogs']" /tmp/live-cloud-core.js
           grep -Fq "new CustomEvent('mws:parts-loaded',{detail:{tab,parts:[...extras]}})" /tmp/live-cloud-core.js
           wardogs_part="$(retry_contains "$BASE/api/parts/wardogs?deploy=$GITHUB_SHA" '"schemaVersion":1')"
           WARDOGS_PART="$wardogs_part" node -e "const x=JSON.parse(process.env.WARDOGS_PART);if(x.part!=='wardogs'||!Number.isInteger(Number(x.version))||Number(x.version)<1||x.data?.schemaVersion!==1||!Array.isArray(x.data?.cards))process.exit(1)"
