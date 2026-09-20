@@ -60,6 +60,7 @@ jobs:
           node --check scripts/run-phase112-canonical-managed-media-ownership-audit.mjs
           node --check scripts/run-phase113-contact-image-processor-ownership-audit.mjs
           node --check scripts/run-phase114-contact-image-end-to-end-ownership-audit.mjs
+          node --check scripts/run-phase115-persistent-contact-profile-media-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -320,7 +321,7 @@ jobs:
           SESSION="$session" node -e "const x=JSON.parse(process.env.SESSION); if(typeof x.authenticated!=='boolean') process.exit(1)"
 
           echo '[2/8] isolated login shell and v1.6.21 display'
-          retry_contains "$BASE/?deploy=$GITHUB_SHA" 'app-core.js?v=1.3.0-search113' > /tmp/index.html
+          retry_contains "$BASE/?deploy=$GITHUB_SHA" 'app-core.js?v=1.3.0-search115' > /tmp/index.html
           grep -Eq 'app-core\.js\?v=1\.3\.0-search(8[3-9]|9[0-9]|[1-9][0-9]{2,})' /tmp/index.html
           grep -Fq 'id="mwsAccessGate"' /tmp/index.html
           grep -Fq 'assets/app-core.css?v=1.6.21-profileimgfix1' /tmp/index.html
@@ -416,10 +417,13 @@ jobs:
           grep -Fq 'function mwsScanContactMediaImagesV111(root=document)' /tmp/app-core.js
           grep -Fq "img.complete&&img.naturalWidth===0" /tmp/app-core.js
           grep -Fq 'const observer=new MutationObserver(records=>' /tmp/app-core.js
+          grep -Fq 'function mwsPersistentContactMediaFallbackV115(img,id)' /tmp/app-core.js
+          grep -Fq "const raw=String(img.getAttribute('src')||img.currentSrc||'').trim();" /tmp/app-core.js
+          grep -Fq 'mwsBindContactMediaImageV111(headerImg);' /tmp/app-core.js
           grep -Fq '?fallback=110&cb=' /tmp/app-core.js
           grep -Fq 'window.openPostAsContentSchedule=async postId=>{' /tmp/index.html
           grep -Fq 'const normalizedSaved=await Promise.resolve(window.mwsV55SaveNow());' /tmp/index.html
-          grep -Fq 'assets/app-core.js?v=1.3.0-search113' /tmp/index.html
+          grep -Fq 'assets/app-core.js?v=1.3.0-search115' /tmp/index.html
           grep -Fq "createImageBitmap(blob,{imageOrientation:'from-image'})" /tmp/app-core.js
           retry_contains "$BASE/assets/app-core.css?deploy=$GITHUB_SHA" '.contact-image-preview-wrap{display:block!important}' > /tmp/app-core.css
           grep -Fq 'justify-content:flex-start!important;text-align:left!important' /tmp/app-core.css
