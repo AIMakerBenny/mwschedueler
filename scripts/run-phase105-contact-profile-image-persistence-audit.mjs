@@ -30,9 +30,9 @@ export function runPhase105ContactProfileImagePersistenceAudit(){
   if(saveBody){
     const fileIndex=saveBody.indexOf("const file=pendingContactImageFile||document.getElementById('ctImage').files?.[0]||null;");
     const decodeIndex=saveBody.indexOf('candidate.image=await compressContactImage(raw);');
-    const saveIndex=saveBody.indexOf("saveData('연락처 저장')");
+    const awaitedCommitIndex=saveBody.indexOf("await persistContactSaveAndWait('연락처 저장'");
     if(fileIndex<0||decodeIndex<0||fileIndex>decodeIndex)issues.push('profile file is not resolved before image conversion');
-    if(decodeIndex<0||saveIndex<0||decodeIndex>saveIndex)issues.push('profile image conversion is not completed before contact save');
+    if(decodeIndex<0||awaitedCommitIndex<0||decodeIndex>awaitedCommitIndex)issues.push('profile image conversion is not completed before durable contact save');
   }
 
   for(const token of [
