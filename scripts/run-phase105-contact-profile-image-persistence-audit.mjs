@@ -23,10 +23,10 @@ export function runPhase105ContactProfileImagePersistenceAudit(){
     if(!core.includes(token))issues.push('contact profile upload pipeline missing: '+token);
   }
 
-  const saveStart=core.indexOf('async function saveContact(){');
-  const saveEnd=core.indexOf('\nfunction deleteContact',saveStart);
+  const saveStart=core.indexOf("document.getElementById('saveContactBtn').onclick=async()=>{");
+  const saveEnd=core.indexOf("\ndocument.getElementById('deleteContactBtn').onclick=",saveStart);
   const saveBody=saveStart>=0&&saveEnd>saveStart?core.slice(saveStart,saveEnd):'';
-  if(!saveBody)issues.push('saveContact function not found');
+  if(!saveBody)issues.push('saveContact button handler not found');
   if(saveBody){
     const fileIndex=saveBody.indexOf("const file=pendingContactImageFile||document.getElementById('ctImage').files?.[0]||null;");
     const decodeIndex=saveBody.indexOf('candidate.image=await compressContactImage(raw);');
