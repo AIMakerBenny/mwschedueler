@@ -88,3 +88,49 @@ body.mws-wardogs-manager-open-v122{overflow:hidden}
   .wardogs-manager-actions-v122{align-items:stretch;flex-direction:column}
   .wardogs-manager-actions-v122>div{display:grid;grid-template-columns:1fr 1fr}
 }
+
+/* Phase 123: class-scoped drag ordering */
+.wardogs-manager-class-tabs-v123{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:2px 0 8px
+}
+.wardogs-manager-class-tabs-v123 button{
+  display:flex;align-items:center;justify-content:space-between;gap:6px;
+  min-width:0;padding:7px 8px;border:1px solid rgba(255,255,255,.08);border-radius:7px;
+  background:rgba(255,255,255,.025);color:#98a3b0;font:800 9px/1.15 ui-monospace,SFMono-Regular,Consolas,monospace;
+  letter-spacing:.055em;text-align:left
+}
+.wardogs-manager-class-tabs-v123 button:hover{border-color:rgba(255,107,44,.28);color:#e9edf2}
+.wardogs-manager-class-tabs-v123 button.active{
+  border-color:rgba(255,107,44,.52);background:rgba(255,107,44,.10);color:#fff;
+  box-shadow:inset 2px 0 0 #ff6b2c
+}
+.wardogs-manager-class-tabs-v123 button b{
+  display:grid;place-items:center;min-width:19px;height:19px;padding:0 4px;border-radius:999px;
+  background:rgba(255,255,255,.07);font-size:8px;color:#b7c0ca
+}
+.wardogs-manager-class-tabs-v123 button.active b{background:rgba(255,107,44,.18);color:#ffb28e}
+.wardogs-manager-order-note-v123{
+  margin:0 0 9px;padding:7px 8px;border-left:2px solid rgba(255,107,44,.45);
+  color:#7f8a98;font-size:10px;line-height:1.45
+}
+.wardogs-manager-item-v122{grid-template-columns:18px minmax(0,1fr) auto;position:relative}
+.wardogs-manager-drag-handle-v123{
+  align-self:center;color:#677381;font:900 12px/1 ui-monospace,SFMono-Regular,Consolas,monospace;
+  letter-spacing:-3px;cursor:grab;user-select:none
+}
+.wardogs-manager-item-v122[draggable="true"]{cursor:grab}
+.wardogs-manager-item-v122.dragging{opacity:.38;border-color:rgba(255,107,44,.35)}
+.wardogs-manager-item-v122.drop-before::before,
+.wardogs-manager-item-v122.drop-after::after{
+  content:"";position:absolute;left:4px;right:4px;height:2px;background:#ff6b2c;
+  box-shadow:0 0 10px rgba(255,107,44,.55);z-index:2
+}
+.wardogs-manager-item-v122.drop-before::before{top:-5px}
+.wardogs-manager-item-v122.drop-after::after{bottom:-5px}
+.wardogs-manager-item-v122[draggable="false"] .wardogs-manager-drag-handle-v123{opacity:.25;cursor:default}
+@media(max-width:860px){
+  .wardogs-manager-class-tabs-v123{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:560px){
+  .wardogs-manager-class-tabs-v123{grid-template-columns:repeat(2,minmax(0,1fr))}
+}

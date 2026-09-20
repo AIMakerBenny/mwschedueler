@@ -8,9 +8,9 @@ export function runPhase122WardogsManagerAudit(){
   const css=fs.readFileSync('assets/wardogs-manager-v1.css','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
+  if(!/assets\/wardogs-manager-v1\.css\?v=1\.0\.0-phase(?:122|1[2-9][3-9]|[2-9][0-9]{2,})/.test(index))issues.push('WARDOGS manager stylesheet is not loaded by index');
+  if(!/assets\/wardogs-manager-v1\.js\?v=1\.0\.0-phase(?:122|1[2-9][3-9]|[2-9][0-9]{2,})/.test(index))issues.push('WARDOGS manager runtime is not loaded by index');
   for(const token of [
-    'assets/wardogs-manager-v1.css?v=1.0.0-phase122',
-    'assets/wardogs-manager-v1.js?v=1.0.0-phase122',
     'class="card wardogs-manager-entry-card-v122"',
     'id="wardogsManageBtn"',
     'id="wardogsManageCount"',
@@ -45,7 +45,7 @@ export function runPhase122WardogsManagerAudit(){
 
   if(/function\s+mwsTextMatches\s*\(|function\s+contactMatches\s*\(/.test(manager))issues.push('WARDOGS manager must not create another contact search owner');
   if(/localStorage|readAsDataURL|data:image/i.test(manager))issues.push('WARDOGS manager must not use localStorage/Base64 for card media');
-  if(/dragstart|draggable\s*=\s*true|data-wardogs-manager-order/.test(manager))warnings.push('Phase 122 unexpectedly contains card ordering behavior reserved for Phase 123');
+  if(index.includes('phase122')&&/dragstart|draggable\s*=\s*true|data-wardogs-manager-order/.test(manager))warnings.push('Phase 122 unexpectedly contains card ordering behavior reserved for Phase 123');
 
   for(const token of [
     '.wardogs-manager-modal-v122{',
@@ -58,8 +58,8 @@ export function runPhase122WardogsManagerAudit(){
 
   for(const token of [
     'run-phase122-wardogs-manager-audit.mjs',
-    'assets/wardogs-manager-v1.js?v=1.0.0-phase122',
-    'assets/wardogs-manager-v1.css?v=1.0.0-phase122',
+    'assets/wardogs-manager-v1.js?v=1.0.0-phase123',
+    'assets/wardogs-manager-v1.css?v=1.0.0-phase123',
     'window.mwsOpenWardogsManagerV122=openManager;',
     "window.mwsWardogsDataV119?.searchContacts?.(query,{limit:40})",
     "const cloudOk=await window.mwsV55SaveNow();",

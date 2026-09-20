@@ -1,4 +1,4 @@
-/* WARDOGS Phase 122 - Import/Export card manager */
+/* WARDOGS Phase 123 - class-scoped persistent card ordering */
 (()=>{
 'use strict';
 if(window.__mwsWardogsManagerV122)return;
@@ -24,6 +24,9 @@ let previewToken=0;
 let busy=false;
 let draftDirty=false;
 let lastFocus=null;
+let orderClass='assault';
+let dragCardId='';
+let dragClassId='';
 
 function isAdmin(){return document.body?.dataset?.mwsMode==='admin'}
 function state(){
@@ -38,6 +41,10 @@ function cards(){
   });
 }
 function cardById(id){return cards().find(card=>String(card?.id||'')===String(id||''))||null}
+function classCards(classId=orderClass){
+  const id=String(classId||'').trim().toLowerCase();
+  return cards().filter(card=>card.classId===id);
+}
 function contactLink(value){return window.mwsWardogsDataV119?.resolveContactLink?.(value)||{contactId:String(value?.contactId||value||''),linked:false,orphaned:true,contact:null}}
 function media(){return window.mwsWardogsMediaV1}
 function clsLabel(id){return CLASS_META.find(item=>item.id===id)?.label||String(id||'').toUpperCase()}
@@ -134,24 +141,132 @@ async function imageDimensions(blob){
   }catch(_){return {width:0,height:0}}
 }
 
+function renderClassTabs(){
+  const root=modal;if(!root)return;
+  root.querySelectorAll('[data-wardogs-manager-order-class]').forEach(btn=>{
+    const classId=String(btn.dataset.wardogsManagerOrderClass||'');
+    const count=classCards(classId).length;
+    btn.classList.toggle('active',classId===orderClass);
+    btn.setAttribute('aria-pressed',classId===orderClass?'true':'false');
+    const countEl=btn.querySelector('[data-wardogs-manager-class-count]');
+    if(countEl)countEl.textContent=String(count);
+  });
+}
 function listHtml(){
-  const list=cards();
-  if(!list.length)return '<div class="wardogs-manager-empty-list-v122">등록된 WARDOGS 카드가 없습니다.</div>';
+  const list=classCards(orderClass);
+  if(!list.length)return `<div class="wardogs-manager-empty-list-v122">${esc(clsLabel(orderClass))} 클래스에 등록된 카드가 없습니다.</div>`;
+  const canDrag=isAdmin()&&list.length>1;
   return list.map(card=>{
     const link=contactLink(card);
     const name=link.linked?String(link.contact?.name||'이름 없음'):`연결 끊김 · ${String(card.contactId||'ID 없음')}`;
     const stateClass=link.orphaned?'orphan':(card.active===false?'off':'');
     const stateText=link.orphaned?'ORPHAN':(card.active===false?'OFF':'ACTIVE');
-    return `<button type="button" class="wardogs-manager-item-v122 ${selectedId===card.id?'active':''}" data-wardogs-manager-card="${esc(card.id)}">
+    return `<button type="button" class="wardogs-manager-item-v122 ${selectedId===card.id?'active':''}" data-wardogs-manager-card="${esc(card.id)}" data-wardogs-manager-card-class="${esc(card.classId)}" draggable="${canDrag?'true':'false'}">
+      <span class="wardogs-manager-drag-handle-v123" aria-hidden="true">⋮⋮</span>
       <span><span class="wardogs-manager-item-name-v122">${esc(name)}</span><span class="wardogs-manager-item-meta-v122">${esc(clsLabel(card.classId))} · ORDER ${Number(card.order)||0}</span></span>
       <span class="wardogs-manager-item-state-v122 ${stateClass}">${stateText}</span>
     </button>`;
   }).join('');
 }
+function clearOrderDropMarkers(){
+  modal?.querySelectorAll('.wardogs-manager-item-v122.drop-before,.wardogs-manager-item-v122.drop-after,.wardogs-manager-item-v122.dragging').forEach(el=>el.classList.remove('drop-before','drop-after','dragging'));
+}
+function setOrderClass(classId){
+  const next=String(classId||'').trim().toLowerCase();
+  if(!CLASS_RANK.has(next)||busy)return;
+  orderClass=next;
+  renderList();
+  setStatus(`${clsLabel(orderClass)} 클래스 카드만 표시 중입니다. 같은 클래스 안에서 드래그해 순서를 변경할 수 있습니다.`);
+}
+function handleOrderDragStart(event){
+  const btn=event.currentTarget;
+  const card=cardById(btn?.dataset?.wardogsManagerCard);
+  if(!isAdmin()||busy||!card||card.classId!==orderClass||classCards(orderClass).length<2){event.preventDefault();return}
+  if(draftDirty){
+    event.preventDefault();
+    setStatus('편집 중인 변경사항을 먼저 저장하거나 취소한 뒤 순서를 변경해 주세요.','warn');
+    return;
+  }
+  dragCardId=card.id;
+  dragClassId=card.classId;
+  try{event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',card.id)}catch(_){}
+  requestAnimationFrame(()=>btn.classList.add('dragging'));
+}
+function handleOrderDragOver(event){
+  const target=cardById(event.currentTarget?.dataset?.wardogsManagerCard);
+  if(!dragCardId||!target||target.id===dragCardId||target.classId!==dragClassId||target.classId!==orderClass)return;
+  event.preventDefault();
+  try{event.dataTransfer.dropEffect='move'}catch(_){}
+  modal?.querySelectorAll('.wardogs-manager-item-v122.drop-before,.wardogs-manager-item-v122.drop-after').forEach(el=>el.classList.remove('drop-before','drop-after'));
+  const rect=event.currentTarget.getBoundingClientRect();
+  event.currentTarget.classList.add(event.clientY>rect.top+rect.height/2?'drop-after':'drop-before');
+}
+async function persistClassOrder(sourceId,targetId,after){
+  if(busy||!isAdmin())return false;
+  const source=cardById(sourceId),target=cardById(targetId);
+  if(!source||!target||source.id===target.id||source.classId!==target.classId||source.classId!==orderClass)return false;
+  const snapshot=cloneWardogs();
+  const ordered=classCards(orderClass).map(card=>card.id);
+  const from=ordered.indexOf(source.id),targetIndex=ordered.indexOf(target.id);
+  if(from<0||targetIndex<0)return false;
+  ordered.splice(from,1);
+  let insertAt=ordered.indexOf(target.id)+(after?1:0);
+  insertAt=Math.max(0,Math.min(ordered.length,insertAt));
+  ordered.splice(insertAt,0,source.id);
+  const before=classCards(orderClass).map(card=>card.id).join('|');
+  const next=ordered.join('|');
+  if(before===next)return true;
+
+  setBusy(true);
+  setStatus(`${clsLabel(orderClass)} 클래스 순서를 저장하는 중입니다.`,'warn');
+  try{
+    const rootState=state(),now=new Date().toISOString(),rank=new Map(ordered.map((id,index)=>[id,index]));
+    rootState.cards.forEach(card=>{
+      if(card.classId===orderClass&&rank.has(card.id)){
+        card.order=rank.get(card.id);
+        card.updatedAt=now;
+      }
+    });
+    normalizeStateInPlace();
+    await callSave('WARDOGS 카드 순서 변경');
+    renderList();
+    setStatus(`${clsLabel(orderClass)} 클래스 순서를 저장했습니다.`,'ok');
+    return true;
+  }catch(error){
+    console.error('WARDOGS class order save failed',error);
+    await restoreSnapshot(snapshot);
+    renderList();
+    setStatus(error?.message||'WARDOGS 카드 순서 저장에 실패했습니다.','error');
+    return false;
+  }finally{setBusy(false)}
+}
+function handleOrderDrop(event){
+  const target=cardById(event.currentTarget?.dataset?.wardogsManagerCard);
+  if(!dragCardId||!target||target.classId!==dragClassId)return;
+  event.preventDefault();
+  const after=event.currentTarget.classList.contains('drop-after');
+  const sourceId=dragCardId;
+  dragCardId='';dragClassId='';
+  clearOrderDropMarkers();
+  void persistClassOrder(sourceId,target.id,after);
+}
+function handleOrderDragEnd(){
+  dragCardId='';dragClassId='';
+  clearOrderDropMarkers();
+}
 function renderList(){
   const box=modal?.querySelector('[data-wardogs-manager-list]');
   if(box)box.innerHTML=listHtml();
-  box?.querySelectorAll('[data-wardogs-manager-card]').forEach(btn=>btn.addEventListener('click',()=>selectCard(btn.dataset.wardogsManagerCard)));
+  box?.querySelectorAll('[data-wardogs-manager-card]').forEach(btn=>{
+    btn.addEventListener('click',()=>selectCard(btn.dataset.wardogsManagerCard));
+    btn.addEventListener('dragstart',handleOrderDragStart);
+    btn.addEventListener('dragover',handleOrderDragOver);
+    btn.addEventListener('drop',handleOrderDrop);
+    btn.addEventListener('dragend',handleOrderDragEnd);
+  });
+  renderClassTabs();
+  const modalCount=modal?.querySelector('[data-wardogs-manager-modal-count]');
+  if(modalCount)modalCount.textContent=`${cards().length}장`;
   updateCount();
 }
 function selectedContactHtml(){
@@ -214,7 +329,7 @@ function renderEditor(){
   const card=currentDraftCard();
   selectedContactId=card?String(card.contactId||''):selectedContactId;
   root.querySelector('[data-wardogs-manager-title]').textContent=card?'WARDOGS 카드 수정':'새 WARDOGS 카드';
-  root.querySelector('[data-wardogs-manager-class]').value=card?.classId||root.querySelector('[data-wardogs-manager-class]').value||'assault';
+  root.querySelector('[data-wardogs-manager-class]').value=card?.classId||orderClass;
   root.querySelector('[data-wardogs-manager-active]').checked=card?card.active!==false:true;
   root.querySelector('[data-wardogs-manager-delete]').hidden=!card;
   root.querySelector('[data-wardogs-manager-save]').textContent=card?'변경 저장':'카드 추가';
@@ -294,7 +409,13 @@ async function saveDraft(){
     if(existing){
       const target=rootState.cards.find(card=>card.id===selectedId);
       if(!target)throw new Error('수정할 카드를 찾을 수 없습니다.');
-      Object.assign(target,{contactId:selectedContactId,classId,imageId,active,updatedAt:now});
+      const classChanged=target.classId!==classId;
+      let nextOrder=Number(target.order)||0;
+      if(classChanged){
+        const targetOrders=rootState.cards.filter(card=>card.id!==target.id&&card.classId===classId).map(card=>Number(card.order)||0);
+        nextOrder=targetOrders.length?Math.max(...targetOrders)+1:0;
+      }
+      Object.assign(target,{contactId:selectedContactId,classId,imageId,active,order:nextOrder,updatedAt:now});
     }else{
       const classOrders=rootState.cards.filter(card=>card.classId===classId).map(card=>Number(card.order)||0);
       rootState.cards.push({
@@ -307,6 +428,7 @@ async function saveDraft(){
     if(previousImageId&&uploadedId&&previousImageId!==uploadedId)await cleanupImageIfUnused(previousImageId);
     const savedCard=cards().find(card=>card.contactId===selectedContactId&&card.classId===classId)||null;
     selectedId=String(savedCard?.id||selectedId||'');
+    orderClass=classId;
     draftDirty=false;
     clearPendingFile();
     renderList();renderEditor();
@@ -359,6 +481,10 @@ function ensureModal(){
         <aside class="wardogs-manager-list-pane-v122">
           <div class="wardogs-manager-list-head-v122"><strong>등록 카드</strong><span class="chip" data-wardogs-manager-modal-count>0장</span></div>
           <button type="button" class="primary wardogs-manager-add-v122" data-wardogs-manager-new data-wardogs-manager-write>+ 새 카드</button>
+          <div class="wardogs-manager-class-tabs-v123" data-wardogs-manager-class-tabs aria-label="정렬할 WARDOGS 클래스">
+            ${CLASS_META.map(item=>`<button type="button" data-wardogs-manager-order-class="${item.id}" aria-pressed="false"><span>${item.label}</span><b data-wardogs-manager-class-count>0</b></button>`).join('')}
+          </div>
+          <div class="wardogs-manager-order-note-v123">같은 클래스 안에서 카드를 드래그해 표시 순서를 변경합니다.</div>
           <div class="wardogs-manager-list-v122" data-wardogs-manager-list></div>
         </aside>
         <section class="wardogs-manager-editor-v122">
@@ -409,6 +535,10 @@ function ensureModal(){
     if(draftDirty&&!window.confirm('저장하지 않은 변경사항을 버리고 새 카드를 만들까요?'))return;
     resetDraftForNew();
   });
+  root.querySelector('[data-wardogs-manager-class-tabs]')?.addEventListener('click',event=>{
+    const btn=event.target.closest?.('[data-wardogs-manager-order-class]');
+    if(btn)setOrderClass(btn.dataset.wardogsManagerOrderClass);
+  });
   root.querySelector('[data-wardogs-manager-search]')?.addEventListener('input',renderContactResults);
   root.querySelector('[data-wardogs-manager-class]')?.addEventListener('change',markDirty);
   root.querySelector('[data-wardogs-manager-active]')?.addEventListener('change',markDirty);
@@ -446,7 +576,7 @@ async function openManager(){
 function closeManager(){
   if(!modal||modal.hidden||busy)return;
   if(draftDirty&&!window.confirm('저장하지 않은 변경사항이 있습니다. 관리창을 닫을까요?'))return;
-  draftDirty=false;selectedId='';selectedContactId='';clearPendingFile();clearObjectUrl('existing');previewToken++;
+  draftDirty=false;selectedId='';selectedContactId='';dragCardId='';dragClassId='';clearOrderDropMarkers();clearPendingFile();clearObjectUrl('existing');previewToken++;
   modal.hidden=true;document.body.classList.remove('mws-wardogs-manager-open-v122');
   if(lastFocus?.isConnected)setTimeout(()=>lastFocus.focus(),0);
   lastFocus=null;
@@ -467,6 +597,8 @@ function syncShell(){
 }
 window.mwsOpenWardogsManagerV122=openManager;
 window.mwsCloseWardogsManagerV122=closeManager;
+window.mwsWardogsPersistClassOrderV123=persistClassOrder;
+window.__mwsWardogsOrderingV123='class-scoped-dnd';
 window.addEventListener('mawang:datachange',event=>{
   if(String(event?.detail?.reason||'').startsWith('WARDOGS')){
     syncShell();

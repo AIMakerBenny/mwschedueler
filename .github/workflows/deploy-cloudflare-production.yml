@@ -73,6 +73,7 @@ jobs:
           node --check assets/wardogs-media-v1.js
           node --check scripts/run-phase122-wardogs-manager-audit.mjs
           node --check assets/wardogs-manager-v1.js
+          node --check scripts/run-phase123-wardogs-class-ordering-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -369,8 +370,8 @@ jobs:
           grep -Fq 'MISSION DATA <b>READY</b>' /tmp/index.html
           grep -Fq 'assets/wardogs-data-v1.js?v=1.0.0-phase120' /tmp/index.html
           grep -Fq 'assets/wardogs-media-v1.js?v=1.0.0-phase121' /tmp/index.html
-          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase122' /tmp/index.html
-          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase122' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase123' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase123' /tmp/index.html
           grep -Fq 'class="card wardogs-manager-entry-card-v122"' /tmp/index.html
           grep -Fq 'id="wardogsManageBtn"' /tmp/index.html
           grep -Fq 'id="wardogsManageCount"' /tmp/index.html
@@ -462,6 +463,20 @@ jobs:
           grep -Fq '.wardogs-manager-drop-v122 img{' /tmp/wardogs-manager-v1.css
           grep -Fq 'object-fit:contain' /tmp/wardogs-manager-v1.css
           grep -Fq '@media(max-width:860px)' /tmp/wardogs-manager-v1.css
+          grep -Fq "window.__mwsWardogsOrderingV123='class-scoped-dnd';" /tmp/wardogs-manager-v1.js
+          grep -Fq "function classCards(classId=orderClass)" /tmp/wardogs-manager-v1.js
+          grep -Fq "function handleOrderDragStart(event)" /tmp/wardogs-manager-v1.js
+          grep -Fq "async function persistClassOrder(sourceId,targetId,after)" /tmp/wardogs-manager-v1.js
+          grep -Fq "source.classId!==target.classId||source.classId!==orderClass" /tmp/wardogs-manager-v1.js
+          grep -Fq "card.order=rank.get(card.id);" /tmp/wardogs-manager-v1.js
+          grep -Fq "await callSave('WARDOGS 카드 순서 변경');" /tmp/wardogs-manager-v1.js
+          grep -Fq "const classChanged=target.classId!==classId;" /tmp/wardogs-manager-v1.js
+          grep -Fq "nextOrder=targetOrders.length?Math.max(...targetOrders)+1:0;" /tmp/wardogs-manager-v1.js
+          grep -Fq '.wardogs-manager-class-tabs-v123{' /tmp/wardogs-manager-v1.css
+          grep -Fq '.wardogs-manager-item-v122.drop-before::before' /tmp/wardogs-manager-v1.css
+          grep -Fq '.wardogs-manager-item-v122.drop-after::after' /tmp/wardogs-manager-v1.css
+          grep -Fq "group.forEach((card,order)=>normalized.push({...card,order}));" /tmp/wardogs-data-v1.js
+          grep -Fq "group.forEach((card,order)=>normalized.push({...card,order}));" src/cf-v111-auth.js
           grep -Fq 'function mwsAchievementCreateCardV1621(fields={})' /tmp/app-core.js
           grep -Fq 'function mwsAchievementUpdateCardV1621(id,patch={})' /tmp/app-core.js
           grep -Fq 'function mwsAchievementDeleteCardV1621(id)' /tmp/app-core.js
