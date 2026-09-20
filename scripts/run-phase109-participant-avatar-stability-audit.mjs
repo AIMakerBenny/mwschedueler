@@ -11,11 +11,9 @@ export function runPhase109ParticipantAvatarStabilityAudit(){
     'function participantAvatarHTMLV109(c,eager=false)',
     'window.mwsParticipantAvatarLoadedV109=img=>',
     'window.mwsRecoverParticipantAvatarV109=img=>',
-    "img.dataset.mwsFallbackV109='1';",
-    "img.style.visibility='hidden';",
-    '?fallback=109',
     'participantAvatarHTMLV109(c,true)',
-    'participantAvatarHTMLV109(c,false)'
+    'participantAvatarHTMLV109(c,false)',
+    'window.mwsRecoverParticipantAvatarV109=img=>window.mwsRecoverContactMediaImageV110(img)'
   ])if(!app.includes(token))issues.push('participant avatar stability guard missing: '+token);
 
   for(const token of [

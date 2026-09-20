@@ -1814,35 +1814,80 @@ window.setParticipantStatus=(id,status)=>{
 };
 
 /* 참여자 검색, 다중 선택, 버블 표시, 빠른 추가 */
+function mwsContactMediaIdV110(img){
+  if(!(img instanceof HTMLImageElement))return '';
+  const explicit=String(img.dataset.contactId||'').trim();
+  if(explicit)return explicit;
+  const raw=String(img.currentSrc||img.getAttribute('src')||'').trim();
+  if(!raw)return '';
+  try{
+    const url=new URL(raw,location.href);
+    const match=url.pathname.match(/^\/media\/contact\/([^/]+)$/);
+    return match?decodeURIComponent(match[1]):'';
+  }catch(_){return ''}
+}
+function mwsContactFallbackNodeV110(img,id){
+  const person=typeof contact==='function'?contact(id):(data?.contacts||[]).find(row=>String(row?.id||'')===String(id));
+  const name=String(person?.name||img.alt||'');
+  const fallback=document.createElement('span');
+  fallback.className=img.className||'avatar';
+  fallback.dataset.contactId=String(id||'');
+  fallback.dataset.mwsContactAvatarFallbackV110='1';
+  fallback.style.display='grid';
+  fallback.style.placeItems='center';
+  fallback.textContent=String(img.dataset.contactInitials||initials(name)||'?');
+  return fallback;
+}
+window.mwsContactMediaLoadedV110=img=>{
+  if(!(img instanceof HTMLImageElement))return false;
+  if(img.dataset.mwsContactRecoveryV110){
+    img.dataset.mwsContactRecoveryV110='ok';
+    img.style.visibility='visible';
+  }
+  return true;
+};
+window.mwsRecoverContactMediaImageV110=img=>{
+  if(!(img instanceof HTMLImageElement))return false;
+  const id=mwsContactMediaIdV110(img);
+  if(!id)return false;
+  const state=String(img.dataset.mwsContactRecoveryV110||'');
+  if(state!=='retry'){
+    const person=typeof contact==='function'?contact(id):(data?.contacts||[]).find(row=>String(row?.id||'')===String(id));
+    if(!img.dataset.contactInitials)img.dataset.contactInitials=String(initials(person?.name||img.alt||'')||'?');
+    img.dataset.contactId=id;
+    img.dataset.mwsContactRecoveryV110='retry';
+    img.style.visibility='hidden';
+    img.loading='eager';
+    img.removeAttribute('srcset');
+    img.src=`/media/contact/${encodeURIComponent(id)}?fallback=110&cb=${Date.now().toString(36)}`;
+    return true;
+  }
+  img.dataset.mwsContactRecoveryV110='failed';
+  img.replaceWith(mwsContactFallbackNodeV110(img,id));
+  return true;
+};
+if(!window.__mwsContactMediaRecoveryV110){
+  window.__mwsContactMediaRecoveryV110=true;
+  document.addEventListener('error',event=>{
+    const target=event.target;
+    if(target instanceof HTMLImageElement)window.mwsRecoverContactMediaImageV110(target);
+  },true);
+  document.addEventListener('load',event=>{
+    const target=event.target;
+    if(target instanceof HTMLImageElement)window.mwsContactMediaLoadedV110(target);
+  },true);
+}
+
 function participantAvatarHTMLV109(c,eager=false){
   const id=String(c?.id||'');
   const name=String(c?.name||'');
   const initial=esc(initials(name));
   const src=String(c?.image||'').trim();
   if(!src)return `<span class="avatar sm" style="display:grid;place-items:center">${initial}</span>`;
-  return `<img class="avatar sm" loading="${eager?'eager':'lazy'}" decoding="async" src="${esc(src)}" data-contact-id="${esc(id)}" data-contact-initials="${initial}" onload="mwsParticipantAvatarLoadedV109(this)" onerror="mwsRecoverParticipantAvatarV109(this)">`;
+  return `<img class="avatar sm" loading="${eager?'eager':'lazy'}" decoding="async" src="${esc(src)}" data-contact-id="${esc(id)}" data-contact-initials="${initial}">`;
 }
-window.mwsParticipantAvatarLoadedV109=img=>{
-  if(!(img instanceof HTMLImageElement))return;
-  img.style.visibility='visible';
-};
-window.mwsRecoverParticipantAvatarV109=img=>{
-  if(!(img instanceof HTMLImageElement))return;
-  const id=String(img.dataset.contactId||'');
-  if(img.dataset.mwsFallbackV109!=='1'&&id){
-    img.dataset.mwsFallbackV109='1';
-    img.style.visibility='hidden';
-    img.loading='eager';
-    img.src=`/media/contact/${encodeURIComponent(id)}?fallback=109`;
-    return;
-  }
-  const fallback=document.createElement('span');
-  fallback.className=img.className||'avatar sm';
-  fallback.style.display='grid';
-  fallback.style.placeItems='center';
-  fallback.textContent=String(img.dataset.contactInitials||'?');
-  img.replaceWith(fallback);
-};
+window.mwsParticipantAvatarLoadedV109=img=>window.mwsContactMediaLoadedV110(img);
+window.mwsRecoverParticipantAvatarV109=img=>window.mwsRecoverContactMediaImageV110(img);
 
 function renderParticipantPicker(){
   const selectedBox=document.getElementById('selectedParticipants');

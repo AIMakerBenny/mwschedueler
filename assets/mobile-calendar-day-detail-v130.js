@@ -95,6 +95,8 @@ function gameVisual(event){
 }
 function replaceBrokenDetailImage(target){
   if(!(target instanceof HTMLImageElement))return;
+  if(target.dataset.mwsContactRecoveryV110==='retry'||target.dataset.mwsContactRecoveryV110==='ok')return;
+  if(typeof window.mwsRecoverContactMediaImageV110==='function'&&window.mwsRecoverContactMediaImageV110(target))return;
   if(target.classList.contains('mws-mobile-day-game-image-v130')){
     const fallback=document.createElement('span');
     fallback.className='mws-mobile-day-game-placeholder-v130';

@@ -107,6 +107,7 @@ import {runPhase106ContactImmediateCloudCommitAudit} from './run-phase106-contac
 import {runPhase107ContactImageMigrationAndCacheRevisionAudit} from './run-phase107-contact-image-migration-cache-revision-audit.mjs';
 import {runPhase108PostScheduleParticipantPrefillAudit} from './run-phase108-post-schedule-participant-prefill-audit.mjs';
 import {runPhase109ParticipantAvatarStabilityAudit} from './run-phase109-participant-avatar-stability-audit.mjs';
+import {runPhase110UniversalContactMediaRecoveryAudit} from './run-phase110-universal-contact-media-recovery-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1173,6 +1174,16 @@ export function runPhase109FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase109FullIntegrationAudit();}
+export function runPhase110FullIntegrationAudit(){
+  const previous=runPhase109FullIntegrationAudit(), current=runPhase110UniversalContactMediaRecoveryAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:110,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase110FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
