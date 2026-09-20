@@ -20,7 +20,7 @@ export function runPhase109ParticipantAvatarStabilityAudit(){
     'window.openPostAsContentSchedule=async postId=>{',
     "document.body.dataset.mwsMode==='admin'&&typeof window.mwsV55SaveNow==='function'",
     'const normalizedSaved=await Promise.resolve(window.mwsV55SaveNow());',
-    'assets/app-core.js?v=1.3.0-search110'
+    'assets/app-core.js?v=1.3.0-search111'
   ])if(!index.includes(token))issues.push('post contact image normalization guard missing: '+token);
 
   if(index.includes('assets/app-core.js?v=1.3.0-search109'))issues.push('stale app-core cache key remains');
