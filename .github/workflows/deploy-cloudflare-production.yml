@@ -74,14 +74,27 @@ jobs:
           curl -fsSL --max-time 20 "$BASE/api/parts/contacts?diag=$GITHUB_SHA" > /tmp/mws-contacts.json
           curl -fsSL --max-time 20 "$BASE/api/parts/events?diag=$GITHUB_SHA" > /tmp/mws-events.json
           curl -fsSL --max-time 20 "$BASE/api/parts/core?diag=$GITHUB_SHA" > /tmp/mws-core.json
+          curl -fsSL --max-time 20 "$BASE/api/parts/posts?diag=$GITHUB_SHA" > /tmp/mws-posts.json
           node <<'NODE'
           const fs=require('fs');
           const manifest=JSON.parse(fs.readFileSync('/tmp/mws-manifest.json','utf8'));
           const contacts=JSON.parse(fs.readFileSync('/tmp/mws-contacts.json','utf8'));
           const events=JSON.parse(fs.readFileSync('/tmp/mws-events.json','utf8'));
           const core=JSON.parse(fs.readFileSync('/tmp/mws-core.json','utf8'));
+          const posts=JSON.parse(fs.readFileSync('/tmp/mws-posts.json','utf8'));
           const rows=Array.isArray(contacts.data)?contacts.data:[];
           const eventRows=Array.isArray(events.data)?events.data:[];
+          const postRows=Array.isArray(posts.data)?posts.data:[];
+          const targetPosts=postRows.filter(p=>String(p?.postNo||'')==='207631249');
+          console.log(JSON.stringify({targetPostStatusAudit:targetPosts.map(p=>{
+            const comments=Array.isArray(p.comments)?p.comments:[];
+            const counts={pending:0,selected:0,gacha:0,nextchance:0,excluded:0,other:0};
+            for(const c of comments){
+              const s=String(c?.status||'pending');
+              if(Object.prototype.hasOwnProperty.call(counts,s))counts[s]++;else counts.other++;
+            }
+            return {id:String(p.id||''),name:String(p.name||''),postNo:String(p.postNo||''),commentCount:comments.length,counts,selectedNames:comments.filter(c=>c.status==='selected').map(c=>String(c.name||''))};
+          })}));
           const images=rows.filter(x=>typeof x?.image==='string'&&x.image.length>0);
           const mediaImages=images.filter(x=>x.image.startsWith('/media/contact/'));
           const dataImages=images.filter(x=>x.image.startsWith('data:image/'));
