@@ -159,6 +159,25 @@ async function recoverContactImageRefs(env,raw){
   }
   return {contacts,recovered};
 }
+function isLegacyR2ContactUrl(env,value){
+  const raw=String(value||'').trim(),base=String(env.MWS_R2_PUBLIC_BASE_URL||'').trim();
+  if(!raw||!base||!/^https?:\/\//i.test(raw))return false;
+  try{return new URL(raw).origin===new URL(base).origin}catch(_){return false}
+}
+async function canonicalizeLegacyR2ContactRefs(env,raw){
+  const contacts=Array.isArray(raw)?structuredClone(raw):[];
+  const legacy=contacts.filter(item=>item&&typeof item==='object'&&String(item.id||'').trim()&&isLegacyR2ContactUrl(env,item.image));
+  if(!legacy.length)return {contacts,canonicalized:0};
+  const {results=[]}=await env.DB.prepare("SELECT item_key,version,source_url FROM image_sources WHERE kind='contact'").all();
+  const registry=new Map(results.map(row=>[String(row.item_key||''),row]));
+  let canonicalized=0;
+  for(const item of legacy){
+    const id=String(item.id||'').trim(),record=registry.get(id),version=Math.max(1,Number(record?.version)||1),token=tokenFromImageSource(record?.source_url);
+    item.image=mediaUrl('contact',id,version,token);
+    canonicalized++;
+  }
+  return {contacts,canonicalized};
+}
 async function preserveContactImagesForSave(env,raw){
   const incoming=Array.isArray(raw)?structuredClone(raw):[];
   const previousRow=await env.DB.prepare("SELECT data FROM workspace_parts WHERE scope='public' AND part='contacts'").first();
@@ -178,17 +197,19 @@ async function repairStoredContactImageRefs(env){
     const row=await env.DB.prepare("SELECT data,version FROM workspace_parts WHERE scope='public' AND part='contacts'").first();
     if(!row)return {recovered:0,version:0};
     let current=[];try{current=JSON.parse(row.data||'[]')}catch(_){return {recovered:0,version:Number(row.version)||0}}
-    const repaired=await recoverContactImageRefs(env,current);
-    if(!repaired.recovered)return {recovered:0,version:Number(row.version)||0};
-    const currentVersion=Math.max(0,Number(row.version)||0),nextVersion=Math.max(1,currentVersion+1),text=JSON.stringify(repaired.contacts);
+    const recovered=await recoverContactImageRefs(env,current);
+    const canonicalized=await canonicalizeLegacyR2ContactRefs(env,recovered.contacts);
+    const changed=recovered.recovered+canonicalized.canonicalized;
+    if(!changed)return {recovered:0,canonicalized:0,version:Number(row.version)||0};
+    const currentVersion=Math.max(0,Number(row.version)||0),nextVersion=Math.max(1,currentVersion+1),text=JSON.stringify(canonicalized.contacts);
     const statements=[
       env.DB.prepare("INSERT INTO save_conflict_guard(id) SELECT 1 WHERE COALESCE((SELECT version FROM workspace_parts WHERE scope='public' AND part='contacts'),0)<>?").bind(currentVersion),
       env.DB.prepare("INSERT INTO workspace_parts(scope,part,data,version,updated_at) VALUES('public','contacts',?,?,CURRENT_TIMESTAMP) ON CONFLICT(scope,part) DO UPDATE SET data=excluded.data,version=excluded.version,updated_at=CURRENT_TIMESTAMP").bind(text,nextVersion),
       env.DB.prepare("INSERT INTO workspace_parts(scope,part,data,version,updated_at) VALUES('admin','contacts',?,?,CURRENT_TIMESTAMP) ON CONFLICT(scope,part) DO UPDATE SET data=excluded.data,version=excluded.version,updated_at=CURRENT_TIMESTAMP").bind(text,nextVersion)
     ];
     await env.DB.batch(statements);
-    console.log('Recovered contact image references',{count:repaired.recovered,version:nextVersion});
-    return {recovered:repaired.recovered,version:nextVersion};
+    console.log('Repaired contact image references',{recovered:recovered.recovered,canonicalized:canonicalized.canonicalized,version:nextVersion});
+    return {recovered:recovered.recovered,canonicalized:canonicalized.canonicalized,version:nextVersion};
   })().catch(error=>{contactImageRepairPromise=undefined;throw error});
   return contactImageRepairPromise;
 }

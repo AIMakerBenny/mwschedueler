@@ -3948,26 +3948,70 @@ function autofillContactNameFromImageFile(file){
   if(stem)nameInput.value=stem;
 }
 let pendingContactImageFile=null;
-function handleContactImageFile(file){
+let pendingContactImageDataUrl='';
+function contactImageMimeFromFile(file){
+  const raw=String(file?.type||'').split(';')[0].trim().toLowerCase();
+  const aliases={'image/jpg':'image/jpeg','image/pjpeg':'image/jpeg','image/x-png':'image/png'};
+  const normalized=aliases[raw]||raw;
+  const allowed=new Set(['image/jpeg','image/png','image/webp','image/gif','image/bmp','image/heic','image/heif']);
+  if(allowed.has(normalized))return normalized;
+  const ext=String(file?.name||'').toLowerCase().split('.').pop();
+  return ({jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',gif:'image/gif',bmp:'image/bmp',heic:'image/heic',heif:'image/heif'})[ext]||'';
+}
+function normalizeContactImageDataUrl(value,file){
+  const raw=String(value||'');
+  const mime=contactImageMimeFromFile(file);
+  if(!mime||!/^data:[^;,]*;base64,/i.test(raw))return '';
+  return raw.replace(/^data:[^;,]*;base64,/i,`data:${mime};base64,`);
+}
+function readContactImageFile(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const raw=normalizeContactImageDataUrl(reader.result,file);
+      if(raw)resolve(raw);else reject(new Error('프로필 이미지 Data URL을 만들지 못했습니다'));
+    };
+    reader.onerror=()=>reject(reader.error||new Error('프로필 이미지 파일을 읽지 못했습니다'));
+    reader.readAsDataURL(file);
+  });
+}
+function verifyContactImageDecodable(dataUrl){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>{if((img.naturalWidth||0)>0&&(img.naturalHeight||0)>0)resolve(true);else reject(new Error('이미지 크기를 읽지 못했습니다'))};
+    img.onerror=()=>reject(new Error('현재 브라우저에서 해석할 수 없는 이미지 형식입니다'));
+    img.src=dataUrl;
+  });
+}
+async function handleContactImageFile(file){
   if(!file)return false;
-  if(!(file.type||'').startsWith('image/')){
-    toast('프로필 이미지','이미지 파일만 사용할 수 있습니다');
+  if(!contactImageMimeFromFile(file)){
+    toast('프로필 이미지','JPEG, PNG, WebP, GIF, BMP, HEIC 또는 HEIF 이미지 파일만 사용할 수 있습니다');
     return false;
   }
-  pendingContactImageFile=file;
-  const input=document.getElementById('ctImage');
   try{
-    const dt=new DataTransfer();
-    dt.items.add(file);
-    input.files=dt.files;
-  }catch(e){
-    console.warn('드롭 파일을 file input에 연결하지 못했습니다',e);
+    const raw=await readContactImageFile(file);
+    await verifyContactImageDecodable(raw);
+    pendingContactImageFile=file;
+    pendingContactImageDataUrl=raw;
+    const input=document.getElementById('ctImage');
+    try{
+      const dt=new DataTransfer();
+      dt.items.add(file);
+      input.files=dt.files;
+    }catch(e){
+      console.warn('드롭 파일을 file input에 연결하지 못했습니다',e);
+    }
+    autofillContactNameFromImageFile(file);
+    setContactImagePreview(raw,file.name);
+    return true;
+  }catch(error){
+    pendingContactImageFile=null;
+    pendingContactImageDataUrl='';
+    console.error('프로필 이미지 미리보기 실패',error);
+    toast('프로필 이미지','이미지를 열 수 없습니다. JPEG, PNG 또는 WebP로 변환한 뒤 다시 시도해 주세요');
+    return false;
   }
-  autofillContactNameFromImageFile(file);
-  const reader=new FileReader();
-  reader.onload=()=>setContactImagePreview(reader.result,file.name);
-  reader.readAsDataURL(file);
-  return true;
 }
 window.handleContactImageFile=handleContactImageFile;
 
@@ -4038,6 +4082,7 @@ function openContact(id=null){
   document.getElementById('ctNotes').value=c?.notes||'';
   document.getElementById('ctImage').value='';
   pendingContactImageFile=null;
+  pendingContactImageDataUrl='';
   setContactImagePreview(c?.image||'',c?.image?'현재 저장된 프로필 이미지':'선택된 파일 없음');
   document.getElementById('deleteContactBtn').style.display=c?'':'none';
   contactDetailTab='content';
@@ -4077,10 +4122,15 @@ document.getElementById('saveContactBtn').onclick=async()=>{
 
   const file=pendingContactImageFile||document.getElementById('ctImage').files?.[0]||null;
   if(file){
-    const raw=await new Promise((resolve,reject)=>{
-      const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);
-    });
-    candidate.image=await compressContactImage(raw);
+    try{
+      const raw=pendingContactImageDataUrl||await readContactImageFile(file);
+      candidate.image=await compressContactImage(raw);
+      if(!/^data:image\/(?:jpeg|png|webp);base64,/i.test(candidate.image))throw new Error('저장 가능한 프로필 이미지 형식으로 변환하지 못했습니다');
+    }catch(error){
+      console.error('프로필 이미지 저장 준비 실패',error);
+      toast('프로필 이미지','이미지 변환에 실패했습니다. JPEG, PNG 또는 WebP 파일로 다시 시도해 주세요');
+      return;
+    }
   }
 
   const sameName=data.contacts.find(c=>c.id!==candidate.id&&normalizeContactName(c.name)===normalizeContactName(candidate.name));
@@ -4111,6 +4161,7 @@ document.getElementById('saveContactBtn').onclick=async()=>{
   }
   document.getElementById('contactModal').classList.remove('open');
   pendingContactImageFile=null;
+  pendingContactImageDataUrl='';
   syncAllPostContactApplicationHistories();
   const saved=saveData('연락처 저장');
   renderContactFilters();
@@ -4566,31 +4617,50 @@ function renderAutoSaveHistory(){/* v4.20: 자동 백업 기능 제거 */}
 
 
 async function compressContactImage(dataUrl,maxSize=1024,quality=.9){
-  if(!dataUrl || typeof dataUrl!=='string' || !dataUrl.startsWith('data:image/'))return dataUrl||'';
-  return new Promise(resolve=>{
-    const img=new Image();
-    img.onload=()=>{
-      try{
-        const sourceMime=(/^data:(image\/[^;,]+)/i.exec(dataUrl)||[])[1]?.toLowerCase()||'image/jpeg';
-        const scale=Math.min(1,maxSize/Math.max(img.naturalWidth||1,img.naturalHeight||1));
-        if(scale>=1 && dataUrl.length<750000)return resolve(dataUrl);
-        const w=Math.max(1,Math.round((img.naturalWidth||1)*scale));
-        const h=Math.max(1,Math.round((img.naturalHeight||1)*scale));
-        const canvas=document.createElement('canvas');
-        canvas.width=w;canvas.height=h;
-        const preserveAlpha=sourceMime==='image/png'||sourceMime==='image/webp';
-        const ctx=canvas.getContext('2d',{alpha:preserveAlpha});
-        if(!ctx)return resolve(dataUrl);
-        if(!preserveAlpha){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,w,h)}
-        ctx.drawImage(img,0,0,w,h);
-        const outputMime=sourceMime==='image/png'?'image/png':sourceMime==='image/webp'?'image/webp':'image/jpeg';
-        const compressed=canvas.toDataURL(outputMime,quality);
-        resolve(compressed&&compressed.length<dataUrl.length?compressed:dataUrl);
-      }catch(e){console.warn('프로필 이미지 압축 실패, 원본을 유지합니다',e);resolve(dataUrl)}
-    };
-    img.onerror=()=>resolve(dataUrl);
-    img.src=dataUrl;
-  });
+  if(!dataUrl||typeof dataUrl!=='string'||!dataUrl.startsWith('data:image/'))throw new Error('올바른 이미지 Data URL이 아닙니다');
+  const sourceMime=(/^data:(image\/[^;,]+)/i.exec(dataUrl)||[])[1]?.toLowerCase()||'';
+  let source=null,closeSource=()=>{};
+  if(typeof createImageBitmap==='function'){
+    try{
+      const blob=await (await fetch(dataUrl)).blob();
+      const bitmap=await createImageBitmap(blob,{imageOrientation:'from-image'});
+      source=bitmap;
+      closeSource=()=>{try{bitmap.close()}catch(_){}};
+    }catch(error){
+      console.warn('createImageBitmap 프로필 이미지 디코드 실패, Image 디코더로 재시도합니다',error);
+    }
+  }
+  if(!source){
+    source=await new Promise((resolve,reject)=>{
+      const img=new Image();
+      img.onload=()=>resolve(img);
+      img.onerror=()=>reject(new Error('현재 브라우저에서 프로필 이미지를 디코드할 수 없습니다'));
+      img.src=dataUrl;
+    });
+  }
+  try{
+    const sw=Number(source.naturalWidth||source.width)||0;
+    const sh=Number(source.naturalHeight||source.height)||0;
+    if(sw<1||sh<1)throw new Error('프로필 이미지 크기가 올바르지 않습니다');
+    const scale=Math.min(1,maxSize/Math.max(sw,sh));
+    const stableMime=sourceMime==='image/jpeg'||sourceMime==='image/png'||sourceMime==='image/webp';
+    if(scale>=1&&stableMime&&dataUrl.length<750000)return dataUrl;
+    const w=Math.max(1,Math.round(sw*scale));
+    const h=Math.max(1,Math.round(sh*scale));
+    const canvas=document.createElement('canvas');
+    canvas.width=w;canvas.height=h;
+    const preserveAlpha=sourceMime==='image/png'||sourceMime==='image/webp';
+    const ctx=canvas.getContext('2d',{alpha:preserveAlpha});
+    if(!ctx)throw new Error('프로필 이미지 Canvas를 만들지 못했습니다');
+    if(!preserveAlpha){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,w,h)}
+    ctx.drawImage(source,0,0,w,h);
+    const outputMime=sourceMime==='image/png'?'image/png':sourceMime==='image/webp'?'image/webp':'image/jpeg';
+    const compressed=canvas.toDataURL(outputMime,quality);
+    if(!compressed||!compressed.startsWith(`data:${outputMime};base64,`))throw new Error('프로필 이미지 인코딩에 실패했습니다');
+    return compressed.length<dataUrl.length||!stableMime?compressed:dataUrl;
+  }finally{
+    closeSource();
+  }
 }
 function extractContactsFromImport(obj){
   if(Array.isArray(obj))return obj;
