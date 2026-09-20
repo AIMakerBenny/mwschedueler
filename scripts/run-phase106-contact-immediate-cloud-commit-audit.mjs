@@ -42,7 +42,7 @@ export function runPhase106ContactImmediateCloudCommitAudit(){
   for(const token of [
     'persistContactSaveAndWait',
     'contactSaveFailureMessage',
-    'search109'
+    'app-core.js?v=1.3.0-search'
   ])if(!workflow.includes(token))issues.push('production verification missing Phase 106 token: '+token);
 
   const summary={phase:106,name:'contact-immediate-cloud-commit',issues,warnings,pass:issues.length===0};
