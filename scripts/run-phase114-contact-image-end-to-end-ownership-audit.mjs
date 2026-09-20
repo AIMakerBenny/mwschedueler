@@ -23,6 +23,7 @@ export function runPhase114ContactImageEndToEndOwnershipAudit(){
   const warnings=[];
   const app=read('assets/app-core.js');
   const perf=read('assets/perf-runtime.js');
+  const perfBase=read('assets/perf-runtime-base.js');
   const maintenance=read('assets/maintenance-runtime-v130.js');
   const postLogin=read('assets/post-login-runtime-v130.js');
   const contactRuntime=read('assets/contact-runtime-v130.js');
@@ -35,10 +36,10 @@ export function runPhase114ContactImageEndToEndOwnershipAudit(){
   const legacyFeatures=unpackLegacyFeatures(loader,issues);
 
   for(const token of [
-    "document.getElementById('ctImage').onchange=async e=>",
+    'contactImageInput.onchange=()=>',
     'verifyContactImageDecodable(raw)',
     'candidate.image=await mwsCompressContactImageV113(raw);',
-    "saveResult=await persistContactSaveAndWait('연락처 수정',editingContactId,{requireManagedImage:imageChanged});",
+    "const result=await persistContactSaveAndWait('연락처 저장',savedContactId,{requireManagedImage:Boolean(file)});",
     'cloudSaved=await window.mwsV55SaveNow();',
     "if(!String(stored?.image||'').startsWith('/media/contact/'))",
     'const mwsCompressContactImageV113=compressContactImage;',
@@ -68,7 +69,7 @@ export function runPhase114ContactImageEndToEndOwnershipAudit(){
     "const DB_NAME='mawang_data_v130';",
     'window.mwsScheduleImageTune=scheduleImageTune;',
     'maintenance-runtime-v130.js?v=1.3.0-stage68-contact-media-canonical2'
-  ])if(!perf.includes(token))issues.push('performance/runtime ownership missing: '+token);
+  ])if(!(token==='window.mwsScheduleImageTune=scheduleImageTune;'?perfBase:perf).includes(token))issues.push('performance/runtime ownership missing: '+token);
 
   for(const token of [
     "const CACHE_DB='mawang_data_v130';",
@@ -91,10 +92,10 @@ export function runPhase114ContactImageEndToEndOwnershipAudit(){
   }
 
   for(const token of [
-    'function mwsRecoverContactMediaImageV110(img)',
-    'const mwsContactMediaObserverV111=new MutationObserver'
+    'window.mwsRecoverContactMediaImageV110=img=>',
+    'new MutationObserver(mutations=>'
   ])if(!app.includes(token))issues.push('shared contact image recovery missing: '+token);
-  if(!app.includes("img.src=\`/media/contact/\${encodeURIComponent(id)}?fallback=110&cb=\${Date.now()}\`"))issues.push('same-origin contact retry URL missing');
+  if(!app.includes("img.src=\`/media/contact/\${encodeURIComponent(id)}?fallback=110&cb=\${Date.now().toString(36)}\`"))issues.push('same-origin contact retry URL missing');
 
   if(!mobileDay.includes("typeof window.mwsRecoverContactMediaImageV110==='function'&&window.mwsRecoverContactMediaImageV110(target)"))issues.push('mobile calendar does not delegate participant image failure to shared contact recovery');
 
