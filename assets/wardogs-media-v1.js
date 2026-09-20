@@ -114,6 +114,16 @@ async function deleteCloud(id){
   if(!res.ok)throw new Error(body?.error||('WARDOGS cloud media delete failed: HTTP '+res.status));
   return true;
 }
+async function putLocal(blob,meta={}){
+  if(!(blob instanceof Blob))throw new TypeError('WARDOGS media must be a Blob');
+  const record=await storeLocal(blob,meta);
+  return {...record,blob:undefined};
+}
+async function removeLocal(id){
+  id=String(id||'');if(!id)return false;
+  await withStore('readwrite',store=>store.delete(id));
+  return true;
+}
 async function put(blob,meta={}){
   if(!(blob instanceof Blob))throw new TypeError('WARDOGS media must be a Blob');
   const id=String(meta.id||crypto.randomUUID());
@@ -213,6 +223,8 @@ window.mwsWardogsMediaV1=Object.freeze({
   maxBytes:MAX_BYTES,
   open:openDb,
   put,
+  putLocal,
+  removeLocal,
   get,
   getBlob,
   has,
