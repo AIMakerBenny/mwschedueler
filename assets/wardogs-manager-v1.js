@@ -1,4 +1,4 @@
-/* WARDOGS Phase 127 - desktop + mobile class-scoped persistent ordering */
+/* WARDOGS Phase 130 - manager + mobile ordering + WebView2-safe ID generation */
 (()=>{
 'use strict';
 if(window.__mwsWardogsManagerV122)return;
@@ -54,6 +54,11 @@ function classCards(classId=orderClass){
 }
 function contactLink(value){return window.mwsWardogsDataV119?.resolveContactLink?.(value)||{contactId:String(value?.contactId||value||''),linked:false,orphaned:true,contact:null}}
 function media(){return window.mwsWardogsMediaV1}
+function createId(){
+  const shared=window.mwsWardogsDataV119?.createId;
+  if(typeof shared==='function')return shared();
+  return 'wdc-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)+'-'+Math.random().toString(36).slice(2);
+}
 function clsLabel(id){return CLASS_META.find(item=>item.id===id)?.label||String(id||'').toUpperCase()}
 function esc(value=''){return String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]))}
 function cloneWardogs(){return JSON.parse(JSON.stringify(state()))}
@@ -528,7 +533,7 @@ async function saveDraft(){
     }else{
       const classOrders=rootState.cards.filter(card=>card.classId===classId).map(card=>Number(card.order)||0);
       rootState.cards.push({
-        id:crypto.randomUUID(),contactId:selectedContactId,classId,imageId,
+        id:createId(),contactId:selectedContactId,classId,imageId,
         order:classOrders.length?Math.max(...classOrders)+1:0,active,createdAt:now,updatedAt:now
       });
     }

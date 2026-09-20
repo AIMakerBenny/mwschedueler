@@ -1,4 +1,4 @@
-/* WARDOGS Phase 120 - metadata + contact linkage/search foundation */
+/* WARDOGS Phase 130 - metadata + contact linkage/search + WebView2-safe ID fallback */
 (()=>{
 'use strict';
 if(window.__mwsWardogsDataV119)return;
@@ -7,6 +7,21 @@ window.__mwsWardogsDataV119=true;
 const SCHEMA_VERSION=1;
 const CLASS_IDS=Object.freeze(['assault','medic','recon','support','driver','pilot']);
 const CLASS_SET=new Set(CLASS_IDS);
+
+function createId(){
+  try{
+    if(typeof crypto!=='undefined'&&typeof crypto.randomUUID==='function')return crypto.randomUUID();
+    if(typeof crypto!=='undefined'&&typeof crypto.getRandomValues==='function'){
+      const bytes=new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      bytes[6]=(bytes[6]&15)|64;
+      bytes[8]=(bytes[8]&63)|128;
+      const hex=Array.from(bytes,byte=>byte.toString(16).padStart(2,'0')).join('');
+      return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+    }
+  }catch(_){}
+  return 'wd-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)+'-'+Math.random().toString(36).slice(2);
+}
 
 function empty(){
   return {schemaVersion:SCHEMA_VERSION,cards:[]};
@@ -24,7 +39,7 @@ function normalize(raw){
     const classId=String(item.classId||'').trim().toLowerCase();
     if(!contactId||!CLASS_SET.has(classId))continue;
     let id=String(item.id||'').trim();
-    if(!id||seen.has(id))id=crypto.randomUUID();
+    if(!id||seen.has(id))id=createId();
     seen.add(id);
     cards.push({
       id,
@@ -111,6 +126,7 @@ window.mwsWardogsDataV119=Object.freeze({
   schemaVersion:SCHEMA_VERSION,
   classIds:CLASS_IDS,
   empty,
+  createId,
   normalize,
   get,
   getCards,

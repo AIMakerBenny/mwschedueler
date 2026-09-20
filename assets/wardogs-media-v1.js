@@ -1,4 +1,4 @@
-/* WARDOGS Phase 121 - card media local Blob cache + Cloudflare R2 sync */
+/* WARDOGS Phase 130 - card media R2 persistence + optional IndexedDB cache */
 (()=>{
 'use strict';
 if(window.__mwsWardogsMediaV121)return;
@@ -10,6 +10,19 @@ const STORE='media';
 const MAX_BYTES=32*1024*1024;
 let dbPromise=null;
 let syncPromise=null;
+let localWarningShown=false;
+
+function createId(){
+  const shared=window.mwsWardogsDataV119?.createId;
+  if(typeof shared==='function')return shared();
+  return 'wdm-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)+'-'+Math.random().toString(36).slice(2);
+}
+function noteLocalFailure(error){
+  window.__mwsWardogsMediaLocalStorageV130='unavailable';
+  if(localWarningShown)return;
+  localWarningShown=true;
+  console.warn('WARDOGS IndexedDB cache unavailable; continuing with Cloudflare R2 where possible.',error);
+}
 
 function openDb(){
   if(dbPromise)return dbPromise;
@@ -48,12 +61,24 @@ async function getLocal(id){
     req.onerror=()=>reject(req.error||new Error('WARDOGS media read failed'));
   });
 }
+async function tryGetLocal(id){
+  try{return await getLocal(id)}
+  catch(error){noteLocalFailure(error);return null}
+}
+async function tryStoreLocal(blob,meta={}){
+  try{return await storeLocal(blob,meta)}
+  catch(error){noteLocalFailure(error);return null}
+}
+async function tryDeleteLocal(id){
+  try{await withStore('readwrite',store=>store.delete(id));return true}
+  catch(error){noteLocalFailure(error);return false}
+}
 async function storeLocal(blob,meta={}){
   if(!(blob instanceof Blob))throw new TypeError('WARDOGS media must be a Blob');
   if(blob.size<1)throw new Error('WARDOGS media is empty');
   if(blob.size>MAX_BYTES)throw new Error('WARDOGS media exceeds 32MB');
   const now=new Date().toISOString();
-  const id=String(meta.id||crypto.randomUUID());
+  const id=String(meta.id||createId());
   const existing=meta.id?await getLocal(id):null;
   const record={
     id,
@@ -126,37 +151,52 @@ async function removeLocal(id){
 }
 async function put(blob,meta={}){
   if(!(blob instanceof Blob))throw new TypeError('WARDOGS media must be a Blob');
-  const id=String(meta.id||crypto.randomUUID());
-  const previous=await getLocal(id);
-  const record=await storeLocal(blob,{...meta,id});
+  const id=String(meta.id||createId());
+  const previous=await tryGetLocal(id);
+  const record=await tryStoreLocal(blob,{...meta,id});
   try{
     await uploadCloud(id,blob);
   }catch(error){
-    try{
-      if(previous)await withStore('readwrite',store=>store.put(previous));
-      else await withStore('readwrite',store=>store.delete(id));
-    }catch(_){}
+    if(record){
+      try{
+        if(previous)await withStore('readwrite',store=>store.put(previous));
+        else await withStore('readwrite',store=>store.delete(id));
+      }catch(_){}
+    }
     throw error;
   }
-  return {...record,blob:undefined};
+  if(record)return {...record,blob:undefined};
+  const now=new Date().toISOString();
+  return {
+    id,
+    mime:String(blob.type||meta.mime||'application/octet-stream'),
+    width:Math.max(0,Number(meta.width)||0),
+    height:Math.max(0,Number(meta.height)||0),
+    size:Math.max(0,Number(blob.size)||0),
+    createdAt:String(meta.createdAt||now),
+    updatedAt:now
+  };
 }
 async function get(id){
   id=String(id||'');if(!id)return null;
-  const local=await getLocal(id);
+  const local=await tryGetLocal(id);
   if(local?.blob instanceof Blob)return local;
   const blob=await fetchCloudBlob(id);
   if(!(blob instanceof Blob))return null;
-  return await storeLocal(blob,{id,mime:blob.type});
+  const cached=await tryStoreLocal(blob,{id,mime:blob.type});
+  if(cached)return cached;
+  const now=new Date().toISOString();
+  return {id,blob,mime:String(blob.type||'application/octet-stream'),width:0,height:0,size:blob.size,createdAt:now,updatedAt:now};
 }
 async function getBlob(id){const record=await get(id);return record?.blob instanceof Blob?record.blob:null}
 async function has(id){
   id=String(id||'');if(!id)return false;
-  if(await getLocal(id))return true;
+  if(await tryGetLocal(id))return true;
   return await cloudExists(id);
 }
 async function remove(id){
   id=String(id||'');if(!id)return false;
-  await withStore('readwrite',store=>store.delete(id));
+  await tryDeleteLocal(id);
   await deleteCloud(id);
   return true;
 }
@@ -196,7 +236,7 @@ async function syncReferencedToCloud(){
         const id=ids[index];
         try{
           if(await cloudExists(id)){existing++;continue}
-          const record=await getLocal(id);
+          const record=await tryGetLocal(id);
           if(!(record?.blob instanceof Blob)){missingLocal++;continue}
           local++;
           await uploadCloud(id,record.blob);
@@ -216,6 +256,7 @@ async function syncReferencedToCloud(){
   return syncPromise;
 }
 
+window.__mwsWardogsMediaStorageV130='r2-with-indexeddb-cache-fallback';
 window.mwsWardogsMediaV1=Object.freeze({
   dbName:DB_NAME,
   dbVersion:DB_VERSION,

@@ -80,6 +80,7 @@ jobs:
           node --check scripts/run-phase127-wardogs-mobile-touch-ordering-audit.mjs
           node --check scripts/run-phase128-wardogs-mobile-viewport-audit.mjs
           node --check scripts/run-phase129-wardogs-mobile-interaction-regression-audit.mjs
+          node --check scripts/run-phase130-wardogs-webview2-compatibility-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -377,10 +378,10 @@ jobs:
           grep -Fq 'CONTACT DATABASE <b>LINKED</b>' /tmp/index.html
           grep -Fq 'CLASS SYSTEM <b>ONLINE</b>' /tmp/index.html
           grep -Fq 'MISSION DATA <b>READY</b>' /tmp/index.html
-          grep -Fq 'assets/wardogs-data-v1.js?v=1.0.0-phase120' /tmp/index.html
+          grep -Fq 'assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130' /tmp/index.html
           grep -Fq 'assets/wardogs-media-v1.js?v=1.0.0-phase121' /tmp/index.html
           grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129' /tmp/index.html
-          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130' /tmp/index.html
           grep -Fq 'class="card wardogs-manager-entry-card-v122"' /tmp/index.html
           grep -Fq 'id="wardogsManageBtn"' /tmp/index.html
           grep -Fq 'id="wardogsManageCount"' /tmp/index.html
@@ -427,6 +428,9 @@ jobs:
           grep -Fq "function searchContacts(query='',options={})" /tmp/wardogs-data-v1.js
           grep -Fq "if(typeof window.contactMatches==='function')return window.contactMatches;" /tmp/wardogs-data-v1.js
           grep -Fq "window.__mwsWardogsContactSearchV120='app-core-search71-consumer';" /tmp/wardogs-data-v1.js
+          grep -Fq "typeof crypto.randomUUID==='function'" /tmp/wardogs-data-v1.js
+          grep -Fq "typeof crypto.getRandomValues==='function'" /tmp/wardogs-data-v1.js
+          grep -Fq "createId," /tmp/wardogs-data-v1.js
           grep -Fq "window.mwsTextMatches=mwsTextMatches;" /tmp/app-core.js
           grep -Fq "window.contactMatches=contactMatches;" /tmp/app-core.js
           grep -Fq "window.__mwsSearchOwnerV130='app-core-search71';" /tmp/app-core.js
@@ -445,6 +449,9 @@ jobs:
           grep -Fq "window.mwsWardogsMediaV1=Object.freeze({" /tmp/wardogs-media-v1.js
           grep -Fq "async function putLocal(blob,meta={})" /tmp/wardogs-media-v1.js
           grep -Fq "async function removeLocal(id)" /tmp/wardogs-media-v1.js
+          grep -Fq "async function tryGetLocal(id)" /tmp/wardogs-media-v1.js
+          grep -Fq "async function tryStoreLocal(blob,meta={})" /tmp/wardogs-media-v1.js
+          grep -Fq "window.__mwsWardogsMediaStorageV130='r2-with-indexeddb-cache-fallback';" /tmp/wardogs-media-v1.js
           if grep -Eqi 'localStorage|readAsDataURL|data:image' /tmp/wardogs-media-v1.js; then
             echo 'WARDOGS media runtime contains forbidden Base64/localStorage persistence.' >&2
             exit 1
@@ -493,6 +500,7 @@ jobs:
           grep -Fq "handle?.addEventListener('pointerup',handleTouchOrderPointerUp);" /tmp/wardogs-manager-v1.js
           grep -Fq "handle?.addEventListener('pointercancel',handleTouchOrderPointerCancel);" /tmp/wardogs-manager-v1.js
           grep -Fq "classList.remove('drop-before','drop-after','dragging','touch-ordering')" /tmp/wardogs-manager-v1.js
+          grep -Fq "const shared=window.mwsWardogsDataV119?.createId;" /tmp/wardogs-manager-v1.js
           grep -Fq "pane.scrollBy({top:delta,left:0,behavior:'auto'});" /tmp/wardogs-manager-v1.js
           grep -Fq '.wardogs-manager-drag-handle-v123[data-wardogs-manager-touch-handle]{' /tmp/wardogs-manager-v1.css
           grep -Fq 'touch-action:none;' /tmp/wardogs-manager-v1.css
