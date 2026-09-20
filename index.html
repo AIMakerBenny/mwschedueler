@@ -1571,7 +1571,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <div id="miniGameCelebration" class="mini-game-celebration" aria-hidden="true" onclick="closeMiniGameCelebration()"><div class="celebration-glow"></div><div id="celebrationConfetti" class="celebration-confetti"></div><div class="celebration-card"><div id="celebrationKicker" class="celebration-kicker">WINNER</div><div id="celebrationAvatar" class="celebration-avatar"></div><div id="celebrationText" class="celebration-text">당첨</div><div class="celebration-sub">화면을 클릭하면 닫힙니다</div></div></div>
 <div id="toast" class="toast"></div>
 
-<script src="assets/app-core.js?v=1.3.0-search109"></script>
+<script src="assets/app-core.js?v=1.3.0-search110"></script>
 
 
 
@@ -1674,7 +1674,7 @@ body[data-resolution="mobile"] .post-schedule-create-btn-v415{width:100%;min-hei
     return {contact:item,created:true};
   }
 
-  window.openPostAsContentSchedule=postId=>{
+  window.openPostAsContentSchedule=async postId=>{
     const post=postById(postId||activePostId);
     if(!post)return toast('컨텐츠 일정 추가','게시글을 먼저 선택해 주세요');
 
@@ -1697,9 +1697,16 @@ body[data-resolution="mobile"] .post-schedule-create-btn-v415{width:100%;min-hei
     if(createdCount){
       syncPostContactApplicationHistories(post);
       saveData('게시글 확정 신청자 연락처 자동 연결');
+      if(document.body.dataset.mwsMode==='admin'&&typeof window.mwsV55SaveNow==='function'){
+        try{
+          const normalizedSaved=await Promise.resolve(window.mwsV55SaveNow());
+          if(!normalizedSaved)console.warn('게시글 신규 연락처의 Cloudflare 이미지 정규화가 진행 중입니다');
+        }catch(error){
+          console.warn('게시글 신규 연락처 이미지 정규화 저장 실패',error);
+        }
+      }
       try{renderContactFilters()}catch(_){}
     }
-
     openEvent(null);
 
     const title=String(post.name||post.sourceTitle||`게시글 ${post.postNo||''}`).trim();

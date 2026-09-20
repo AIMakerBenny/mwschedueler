@@ -1814,6 +1814,36 @@ window.setParticipantStatus=(id,status)=>{
 };
 
 /* 참여자 검색, 다중 선택, 버블 표시, 빠른 추가 */
+function participantAvatarHTMLV109(c,eager=false){
+  const id=String(c?.id||'');
+  const name=String(c?.name||'');
+  const initial=esc(initials(name));
+  const src=String(c?.image||'').trim();
+  if(!src)return `<span class="avatar sm" style="display:grid;place-items:center">${initial}</span>`;
+  return `<img class="avatar sm" loading="${eager?'eager':'lazy'}" decoding="async" src="${esc(src)}" data-contact-id="${esc(id)}" data-contact-initials="${initial}" onload="mwsParticipantAvatarLoadedV109(this)" onerror="mwsRecoverParticipantAvatarV109(this)">`;
+}
+window.mwsParticipantAvatarLoadedV109=img=>{
+  if(!(img instanceof HTMLImageElement))return;
+  img.style.visibility='visible';
+};
+window.mwsRecoverParticipantAvatarV109=img=>{
+  if(!(img instanceof HTMLImageElement))return;
+  const id=String(img.dataset.contactId||'');
+  if(img.dataset.mwsFallbackV109!=='1'&&id){
+    img.dataset.mwsFallbackV109='1';
+    img.style.visibility='hidden';
+    img.loading='eager';
+    img.src=`/media/contact/${encodeURIComponent(id)}?fallback=109`;
+    return;
+  }
+  const fallback=document.createElement('span');
+  fallback.className=img.className||'avatar sm';
+  fallback.style.display='grid';
+  fallback.style.placeItems='center';
+  fallback.textContent=String(img.dataset.contactInitials||'?');
+  img.replaceWith(fallback);
+};
+
 function renderParticipantPicker(){
   const selectedBox=document.getElementById('selectedParticipants');
   const searchEl=document.getElementById('participantSearch');
@@ -1827,7 +1857,7 @@ function renderParticipantPicker(){
     ? selectedContacts.map(c=>{
         const status=normalizeParticipantStatus(selectedParticipantStatuses[c.id]||'confirmed');
         return `<span class="person-chip">
-          ${c.image?`<img class="avatar sm" loading="lazy" src="${c.image}">`:''}
+          ${participantAvatarHTMLV109(c,true)}
           <span>${esc(c.name)}</span>
           ${c.pendingSetup?'<span class="muted">신규</span>':''}
           <select class="participant-status-select" onclick="event.stopPropagation()" onchange="setParticipantStatus('${c.id}',this.value)">
@@ -1854,7 +1884,7 @@ function renderParticipantPicker(){
       onclick="toggleParticipant('${c.id}')"
       onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleParticipant('${c.id}')}">
       <span class="row">
-        ${c.image?`<img class="avatar sm" loading="lazy" src="${c.image}">`:`<span class="avatar sm" style="display:grid;place-items:center">${esc(initials(c.name))}</span>`}
+        ${participantAvatarHTMLV109(c,false)}
         <span>
           <span style="display:block;font-weight:700">${esc(c.name)}</span>
           <span class="muted small">${(c.labels||[]).slice(0,3).map(esc).join(' · ')}${c.pendingSetup?`${(c.labels||[]).length?' · ':''}신규 추가`:''}</span>

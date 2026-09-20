@@ -54,6 +54,7 @@ jobs:
           node --check scripts/run-phase106-contact-immediate-cloud-commit-audit.mjs
           node --check scripts/run-phase107-contact-image-migration-cache-revision-audit.mjs
           node --check scripts/run-phase108-post-schedule-participant-prefill-audit.mjs
+          node --check scripts/run-phase109-participant-avatar-stability-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -377,6 +378,12 @@ jobs:
           grep -Fq 'function postScheduleParticipantStatusV108(comment)' /tmp/index.html
           grep -Fq 'function scheduleEligiblePostApplicantsV108(post)' /tmp/index.html
           grep -Fq "if(raw==='pending'||raw==='planned')return 'planned';" /tmp/index.html
+          grep -Fq 'function participantAvatarHTMLV109(c,eager=false)' /tmp/app-core.js
+          grep -Fq 'window.mwsRecoverParticipantAvatarV109=img=>' /tmp/app-core.js
+          grep -Fq 'participantAvatarHTMLV109(c,true)' /tmp/app-core.js
+          grep -Fq 'window.openPostAsContentSchedule=async postId=>{' /tmp/index.html
+          grep -Fq 'const normalizedSaved=await Promise.resolve(window.mwsV55SaveNow());' /tmp/index.html
+          grep -Fq 'assets/app-core.js?v=1.3.0-search110' /tmp/index.html
           grep -Fq "createImageBitmap(blob,{imageOrientation:'from-image'})" /tmp/app-core.js
           retry_contains "$BASE/assets/app-core.css?deploy=$GITHUB_SHA" '.contact-image-preview-wrap{display:block!important}' > /tmp/app-core.css
           grep -Fq 'justify-content:flex-start!important;text-align:left!important' /tmp/app-core.css
