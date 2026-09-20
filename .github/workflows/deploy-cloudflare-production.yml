@@ -429,7 +429,7 @@ jobs:
             echo 'WARDOGS media runtime contains forbidden Base64/localStorage persistence.' >&2
             exit 1
           fi
-          grep -Fq "function wardogsMediaKey(id){return `wardogs/${id}`}" src/cf-v111-auth.js
+          grep -Fq 'function wardogsMediaKey(id){return `wardogs/${id}`}' src/cf-v111-auth.js
           grep -Fq "async function handleWardogsMediaRead(request,env,id)" src/cf-v111-auth.js
           grep -Fq "async function handleWardogsMediaWrite(request,env,id)" src/cf-v111-auth.js
           grep -Fq "headers.set('x-mws-image-policy','original-bytes-no-reencode');" src/cf-v111-auth.js
