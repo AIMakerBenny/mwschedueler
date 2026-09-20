@@ -7,7 +7,6 @@ export function runPhase99AchievementBackupAudit(){
   const index=fs.readFileSync('index.html','utf8');
 
   for(const token of [
-    "assetSchema:2",
     "achievementMedia:[]",
     "function achievementBackupReferencedIds(payload)",
     "function blobToBackupBase64(blob)",
@@ -15,8 +14,8 @@ export function runPhase99AchievementBackupAudit(){
     "function backupBase64ToBlob(base64,mime='application/octet-stream')",
     "async function buildAchievementBackupMedia(payload)",
     "async function buildFullBackupObjectAsync()",
-    "backup.assets.achievementMedia=packed.items;",
-    "backup.meta.achievementMedia=packed.items.length;",
+    "backup.assets.achievementMedia=achievementPacked.items;",
+    "backup.meta.achievementMedia=achievementPacked.items.length;",
     "function remapAchievementBackupMediaReferences(backup,payload,remap)",
     "async function restoreAchievementBackupMedia(backup,payload)",
     "const packed=Array.isArray(backup?.assets?.achievementMedia)?backup.assets.achievementMedia:[];",
@@ -51,9 +50,10 @@ export function runPhase99AchievementBackupAudit(){
   if(!core.includes("const currentImage=typeof c.image==='string'?c.image:'';"))issues.push('full backup restore does not preserve existing cloud contact image references');
   if(!core.includes("return {...c,image:currentImage||embeddedImage};"))issues.push('full backup restore can blank non-Base64 contact images');
 
+  if(!/assetSchema:(?:2|[3-9]|[1-9][0-9]+)/.test(core))issues.push('achievement full-backup asset schema is older than 2');
   for(const token of [
-    '업적 카드와 카드 이미지를 저장합니다.',
-    '업적 이미지는 가져올 때 IndexedDB Blob으로 다시 복원됩니다.',
+    '업적 카드',
+    '백업 파일 안에 포함',
     'id="fullBackupAssetStatus" class="backup-asset-status">백업 이미지 확인 중'
   ]){
     if(!index.includes(token))issues.push('achievement backup UI copy missing: '+token);
