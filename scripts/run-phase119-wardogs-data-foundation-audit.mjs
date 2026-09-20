@@ -58,7 +58,7 @@ export function runPhase119WardogsDataFoundationAudit(){
   ])if(!auth.includes(token))issues.push('WARDOGS D1 foundation missing: '+token);
   if(!auth.includes('schemaVersion\\":1')||!auth.includes('cards\\":[]'))issues.push('WARDOGS empty D1 seed JSON missing');
 
-  if(!entry.includes("out=out.replace("const CACHE_DB='mawang_data';","const CACHE_DB='mawang_data_v130';");")){
+  if(!entry.includes(`out=out.replace("const CACHE_DB='mawang_data';","const CACHE_DB='mawang_data_v130';");`)){
     issues.push('production entry must preserve authoritative main cache remap without changing schema');
   }
 
