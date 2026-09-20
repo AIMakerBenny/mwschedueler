@@ -1,7 +1,10 @@
 import appWorker from './cf-v110-steam.js';
 
-const PARTS=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook'];
+const PARTS=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook','wardogs'];
 const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','achievementCards'];
+const WARDOGS_CLASS_IDS=Object.freeze(['assault','medic','recon','support','driver','pilot']);
+const WARDOGS_CLASS_SET=new Set(WARDOGS_CLASS_IDS);
+const WARDOGS_MAX_CARDS=5000;
 const SESSION_COOKIE='mws_admin_session';
 const SESSION_DAYS=30;
 const PBKDF2_ITERATIONS=180000;
@@ -48,6 +51,8 @@ async function ensureSchema(env){
       env.DB.prepare(`CREATE TABLE IF NOT EXISTS save_conflict_guard(id INTEGER PRIMARY KEY)`),
       env.DB.prepare(`INSERT OR IGNORE INTO save_conflict_guard(id) VALUES(1)`),
       env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_workspace_parts_scope ON workspace_parts(scope)`),
+      env.DB.prepare("INSERT OR IGNORE INTO workspace_parts(scope,part,data,version,updated_at) VALUES('public','wardogs','{\"schemaVersion\":1,\"cards\":[]}',1,CURRENT_TIMESTAMP)"),
+      env.DB.prepare("INSERT OR IGNORE INTO workspace_parts(scope,part,data,version,updated_at) VALUES('admin','wardogs','{\"schemaVersion\":1,\"cards\":[]}',1,CURRENT_TIMESTAMP)"),
     ]).catch(error=>{schemaPromise=undefined;throw error});
   }
   await schemaPromise;
@@ -282,6 +287,38 @@ async function repairStoredContactImageRefs(env){
   return contactImageRepairPromise;
 }
 
+function normalizeWardogsPart(raw){
+  const src=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+  const now=nowIso(),seen=new Set(),cards=[];
+  const input=Array.isArray(src.cards)?src.cards.slice(0,WARDOGS_MAX_CARDS):[];
+  for(let index=0;index<input.length;index++){
+    const item=input[index];
+    if(!item||typeof item!=='object'||Array.isArray(item))continue;
+    const contactId=String(item.contactId||'').trim().slice(0,160);
+    const classId=String(item.classId||'').trim().toLowerCase();
+    if(!contactId||!WARDOGS_CLASS_SET.has(classId))continue;
+    let id=String(item.id||'').trim().slice(0,160);
+    if(!id||seen.has(id))id=crypto.randomUUID();
+    seen.add(id);
+    cards.push({
+      id,
+      contactId,
+      classId,
+      imageId:String(item.imageId||'').trim().slice(0,160),
+      order:Math.max(0,Math.floor(Number(item.order??index)||0)),
+      active:item.active!==false,
+      createdAt:String(item.createdAt||now).slice(0,64),
+      updatedAt:String(item.updatedAt||item.createdAt||now).slice(0,64)
+    });
+  }
+  const normalized=[];
+  for(const classId of WARDOGS_CLASS_IDS){
+    const group=cards.filter(card=>card.classId===classId).sort((a,b)=>a.order-b.order||a.createdAt.localeCompare(b.createdAt)||a.id.localeCompare(b.id));
+    group.forEach((card,order)=>normalized.push({...card,order}));
+  }
+  return {schemaVersion:1,cards:normalized};
+}
+
 async function externalizePart(env,part,raw,saveContext=null){
   if(part==='core'){
     const src=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{},out={};for(const key of CORE_KEYS)if(Object.prototype.hasOwnProperty.call(src,key))out[key]=src[key];return out;
@@ -304,6 +341,7 @@ async function externalizePart(env,part,raw,saveContext=null){
   if(part==='activity'){const src=raw&&typeof raw==='object'?raw:{};return {collaborations:Array.isArray(src.collaborations)?src.collaborations:[],todayPeopleByDate:src.todayPeopleByDate&&typeof src.todayPeopleByDate==='object'?src.todayPeopleByDate:{},todayPeopleManualByDate:src.todayPeopleManualByDate&&typeof src.todayPeopleManualByDate==='object'?src.todayPeopleManualByDate:{},targetList:Array.isArray(src.targetList)?src.targetList:[]}}
   if(part==='notebook'){const src=raw&&typeof raw==='object'?raw:{};return {memos:Array.isArray(src.memos)?src.memos:[],favoriteFolders:Array.isArray(src.favoriteFolders)?src.favoriteFolders:[]}}
   if(part==='clipboard'){const src=raw&&typeof raw==='object'?raw:{};return {scheduleClipboard:Array.isArray(src.scheduleClipboard)?src.scheduleClipboard:[]}}
+  if(part==='wardogs')return normalizeWardogsPart(raw);
   return raw??null;
 }
 async function handleSave(request,env){

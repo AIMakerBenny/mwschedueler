@@ -66,6 +66,8 @@ jobs:
           node --check assets/wardogs-v1.js
           node --check scripts/run-phase118-wardogs-session-entry-audit.mjs
           node --check assets/wardogs-intro-v1.js
+          node --check scripts/run-phase119-wardogs-data-foundation-audit.mjs
+          node --check assets/wardogs-data-v1.js
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -360,6 +362,7 @@ jobs:
           grep -Fq 'CONTACT DATABASE <b>LINKED</b>' /tmp/index.html
           grep -Fq 'CLASS SYSTEM <b>ONLINE</b>' /tmp/index.html
           grep -Fq 'MISSION DATA <b>READY</b>' /tmp/index.html
+          grep -Fq 'assets/wardogs-data-v1.js?v=1.0.0-phase119' /tmp/index.html
           grep -Fq 'id="achievementEmptyState"' /tmp/index.html
           grep -Fq 'id="achievementCountChip"' /tmp/index.html
           grep -Fq 'id="achievementGallery" aria-live="polite" hidden' /tmp/index.html
@@ -394,6 +397,11 @@ jobs:
           grep -Fq '.wardogs-entry-v118.is-full' /tmp/wardogs-intro-v1.css
           grep -Fq '.wardogs-entry-v118.is-quick' /tmp/wardogs-intro-v1.css
           grep -Fq '@media(prefers-reduced-motion:reduce)' /tmp/wardogs-intro-v1.css
+          retry_contains "$BASE/assets/wardogs-data-v1.js?deploy=$GITHUB_SHA" "window.mwsWardogsDataV119=Object.freeze({" > /tmp/wardogs-data-v1.js
+          node --check /tmp/wardogs-data-v1.js
+          grep -Fq "const CLASS_IDS=Object.freeze(['assault','medic','recon','support','driver','pilot']);" /tmp/wardogs-data-v1.js
+          grep -Fq "const contactId=String(item.contactId||'').trim();" /tmp/wardogs-data-v1.js
+          grep -Fq "function findContact(contactId)" /tmp/wardogs-data-v1.js
           grep -Fq 'function mwsAchievementCreateCardV1621(fields={})' /tmp/app-core.js
           grep -Fq 'function mwsAchievementUpdateCardV1621(id,patch={})' /tmp/app-core.js
           grep -Fq 'function mwsAchievementDeleteCardV1621(id)' /tmp/app-core.js
@@ -507,6 +515,20 @@ jobs:
             echo 'Live cloud runtime still drops achievementCards.' >&2
             exit 1
           fi
+
+          echo '[2-wardogs] live WARDOGS data foundation'
+          grep -Fq "const WARDOGS_CACHE_DB='mws_wardogs_meta_v1';" /tmp/live-cloud-core.js
+          grep -Fq "const EXTRA_PARTS=['wardogs'];" /tmp/live-cloud-core.js
+          grep -Fq "wardogs:['wardogs']" /tmp/live-cloud-core.js
+          grep -Fq "export:['contactMeta','miniGames','notebook','clipboard','wardogs']" /tmp/live-cloud-core.js
+          grep -Fq "indexedDB.open(WARDOGS_CACHE_DB,WARDOGS_CACHE_VERSION)" /tmp/live-cloud-core.js
+          grep -Fq "wardogs:{schemaVersion:1,cards:[]}" /tmp/live-cloud-core.js
+          wardogs_part="$(retry_contains "$BASE/api/parts/wardogs?deploy=$GITHUB_SHA" '"schemaVersion":1')"
+          WARDOGS_PART="$wardogs_part" node -e "const x=JSON.parse(process.env.WARDOGS_PART);if(x.part!=='wardogs'||!Number.isInteger(Number(x.version))||Number(x.version)<1||x.data?.schemaVersion!==1||!Array.isArray(x.data?.cards))process.exit(1)"
+          grep -Fq "const PARTS=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook','wardogs'];" src/cf-v111-auth.js
+          grep -Fq "function normalizeWardogsPart(raw)" src/cf-v111-auth.js
+          grep -Fq "VALUES('public','wardogs'" src/cf-v111-auth.js
+          grep -Fq "VALUES('admin','wardogs'" src/cf-v111-auth.js
 
           echo '[2a] post-login successor freshness'
           retry_contains "$BASE/assets/post-login-runtime-v130.js?deploy=$GITHUB_SHA" 'achievement-gallery-v1621.js?v=1.6.21-phase111' > /tmp/post-login.js
