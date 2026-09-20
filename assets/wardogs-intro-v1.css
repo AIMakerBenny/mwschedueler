@@ -1,0 +1,166 @@
+/* WARDOGS Phase 118 - lightweight tactical entry transition */
+.wardogs-entry-v118{
+  position:absolute;
+  inset:0;
+  z-index:40;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  background:#05070a;
+  color:#f4f6f8;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
+.wardogs-entry-v118.is-running{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+}
+.wardogs-entry-grid-v118,
+.wardogs-entry-scan-v118{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+.wardogs-entry-grid-v118{
+  background:
+    linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);
+  background-size:30px 30px;
+  opacity:.62;
+}
+.wardogs-entry-scan-v118{
+  height:18%;
+  top:-20%;
+  bottom:auto;
+  background:linear-gradient(180deg,transparent,rgba(255,105,44,.11),rgba(255,105,44,.28),rgba(255,105,44,.08),transparent);
+  border-bottom:1px solid rgba(255,105,44,.32);
+  opacity:0;
+  transform:translateY(0);
+}
+.wardogs-entry-center-v118{
+  position:relative;
+  z-index:2;
+  width:min(620px,86%);
+  text-align:center;
+}
+.wardogs-entry-mark-v118{
+  width:54px;
+  height:54px;
+  margin:0 auto 18px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(255,105,44,.55);
+  color:#ff6b2c;
+  font:900 12px/1 ui-monospace,SFMono-Regular,Consolas,monospace;
+  letter-spacing:.08em;
+  transform:rotate(45deg);
+  opacity:0;
+}
+.wardogs-entry-mark-v118 span{transform:rotate(-45deg)}
+.wardogs-entry-title-v118{
+  font-size:clamp(30px,6vw,58px);
+  line-height:.92;
+  font-weight:950;
+  letter-spacing:.08em;
+  opacity:0;
+  transform:translateY(8px);
+}
+.wardogs-entry-sub-v118{
+  margin-top:11px;
+  color:#aab2bc;
+  font:800 10px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;
+  letter-spacing:.24em;
+  opacity:0;
+}
+.wardogs-entry-line-v118{
+  width:min(360px,76%);
+  height:1px;
+  margin:18px auto 14px;
+  background:linear-gradient(90deg,transparent,rgba(255,105,44,.75),transparent);
+  transform:scaleX(0);
+  transform-origin:center;
+}
+.wardogs-entry-status-v118{
+  display:grid;
+  gap:5px;
+  width:min(390px,100%);
+  margin:0 auto;
+  text-align:left;
+}
+.wardogs-entry-status-v118 span{
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  padding:5px 8px;
+  color:#7f8995;
+  font:700 9px/1.2 ui-monospace,SFMono-Regular,Consolas,monospace;
+  letter-spacing:.09em;
+  opacity:0;
+  transform:translateX(-5px);
+}
+.wardogs-entry-status-v118 b{color:#9ddb82;font-weight:900;letter-spacing:.12em}
+.wardogs-entry-corner-v118{
+  position:absolute;
+  width:46px;
+  height:46px;
+  opacity:.45;
+  pointer-events:none;
+}
+.wardogs-entry-corner-v118.tl{top:18px;left:18px;border-top:1px solid #ff6b2c;border-left:1px solid #ff6b2c}
+.wardogs-entry-corner-v118.br{right:18px;bottom:18px;border-right:1px solid #ff6b2c;border-bottom:1px solid #ff6b2c}
+
+.wardogs-entry-v118.is-full .wardogs-entry-mark-v118{animation:wd118FadeUp .22s ease-out .08s forwards}
+.wardogs-entry-v118.is-full .wardogs-entry-title-v118{animation:wd118FadeUp .24s ease-out .18s forwards}
+.wardogs-entry-v118.is-full .wardogs-entry-sub-v118{animation:wd118Fade .18s ease-out .32s forwards}
+.wardogs-entry-v118.is-full .wardogs-entry-line-v118{animation:wd118Line .22s ease-out .39s forwards}
+.wardogs-entry-v118.is-full .wardogs-entry-status-v118 span:nth-child(1){animation:wd118Status .16s ease-out .52s forwards}
+.wardogs-entry-v118.is-full .wardogs-entry-status-v118 span:nth-child(2){animation:wd118Status .16s ease-out .67s forwards}
+.wardogs-entry-v118.is-full .wardogs-entry-status-v118 span:nth-child(3){animation:wd118Status .16s ease-out .82s forwards}
+.wardogs-entry-v118.is-full .wardogs-entry-status-v118 span:nth-child(4){animation:wd118Status .16s ease-out .97s forwards}
+.wardogs-entry-v118.is-full .wardogs-entry-scan-v118{animation:wd118Scan .72s linear .2s forwards}
+.wardogs-entry-v118.is-full.is-exiting{animation:wd118OverlayOut .2s ease-in forwards}
+
+.wardogs-entry-v118.is-quick{
+  background:rgba(5,7,10,.88);
+  animation:wd118QuickOverlay .32s ease-out forwards;
+}
+.wardogs-entry-v118.is-quick .wardogs-entry-center-v118{display:none}
+.wardogs-entry-v118.is-quick .wardogs-entry-scan-v118{
+  opacity:1;
+  animation:wd118QuickScan .32s ease-out forwards;
+}
+
+@keyframes wd118Fade{to{opacity:1}}
+@keyframes wd118FadeUp{to{opacity:1;transform:translateY(0)}}
+@keyframes wd118Line{to{transform:scaleX(1)}}
+@keyframes wd118Status{to{opacity:1;transform:translateX(0)}}
+@keyframes wd118Scan{
+  0%{opacity:0;transform:translateY(0)}
+  12%{opacity:1}
+  82%{opacity:.82}
+  100%{opacity:0;transform:translateY(650%)}
+}
+@keyframes wd118OverlayOut{
+  from{opacity:1}
+  to{opacity:0;visibility:hidden}
+}
+@keyframes wd118QuickOverlay{
+  0%{opacity:.72;visibility:visible}
+  100%{opacity:0;visibility:hidden}
+}
+@keyframes wd118QuickScan{
+  from{transform:translateY(0);opacity:.9}
+  to{transform:translateY(650%);opacity:0}
+}
+
+@media(max-width:640px){
+  .wardogs-entry-center-v118{width:88%}
+  .wardogs-entry-title-v118{font-size:34px}
+  .wardogs-entry-status-v118 span{font-size:8px}
+}
+@media(prefers-reduced-motion:reduce){
+  .wardogs-entry-v118 *,
+  .wardogs-entry-v118{animation:none!important}
+}

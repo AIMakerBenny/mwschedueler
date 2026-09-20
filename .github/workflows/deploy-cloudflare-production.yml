@@ -64,6 +64,8 @@ jobs:
           node --check scripts/run-phase116-wardogs-navigation-shell-audit.mjs
           node --check scripts/run-phase117-wardogs-tactical-class-tabs-audit.mjs
           node --check assets/wardogs-v1.js
+          node --check scripts/run-phase118-wardogs-session-entry-audit.mjs
+          node --check assets/wardogs-intro-v1.js
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -350,6 +352,14 @@ jobs:
           grep -Fq 'data-wardogs-class="support"' /tmp/index.html
           grep -Fq 'data-wardogs-class="driver"' /tmp/index.html
           grep -Fq 'data-wardogs-class="pilot"' /tmp/index.html
+          grep -Fq 'assets/wardogs-intro-v1.css?v=1.0.0-phase118' /tmp/index.html
+          grep -Fq 'assets/wardogs-intro-v1.js?v=1.0.0-phase118' /tmp/index.html
+          grep -Fq 'id="wardogsEntryV118"' /tmp/index.html
+          grep -Fq 'TACTICAL OPERATIONS SYSTEM' /tmp/index.html
+          grep -Fq 'PERSONNEL DATABASE <b>CONNECTED</b>' /tmp/index.html
+          grep -Fq 'CONTACT DATABASE <b>LINKED</b>' /tmp/index.html
+          grep -Fq 'CLASS SYSTEM <b>ONLINE</b>' /tmp/index.html
+          grep -Fq 'MISSION DATA <b>READY</b>' /tmp/index.html
           grep -Fq 'id="achievementEmptyState"' /tmp/index.html
           grep -Fq 'id="achievementCountChip"' /tmp/index.html
           grep -Fq 'id="achievementGallery" aria-live="polite" hidden' /tmp/index.html
@@ -373,6 +383,17 @@ jobs:
           grep -Fq '.wardogs-class-tabs-v117{' /tmp/wardogs-v1.css
           grep -Fq '.wardogs-class-stage-v117{' /tmp/wardogs-v1.css
           grep -Fq '@media(max-width:640px)' /tmp/wardogs-v1.css
+          retry_contains "$BASE/assets/wardogs-intro-v1.js?deploy=$GITHUB_SHA" "const SESSION_KEY='mws_wardogs_intro_v118';" > /tmp/wardogs-intro-v1.js
+          node --check /tmp/wardogs-intro-v1.js
+          grep -Fq 'const FULL_HIDE_AT=1710;' /tmp/wardogs-intro-v1.js
+          grep -Fq 'const QUICK_HIDE_AT=340;' /tmp/wardogs-intro-v1.js
+          grep -Fq "sessionStorage.setItem(SESSION_KEY,'1')" /tmp/wardogs-intro-v1.js
+          grep -Fq "observer.observe(root,{attributes:true,attributeFilter:['class']});" /tmp/wardogs-intro-v1.js
+          grep -Fq 'window.mwsWardogsIntroV118=Object.freeze({' /tmp/wardogs-intro-v1.js
+          retry_contains "$BASE/assets/wardogs-intro-v1.css?deploy=$GITHUB_SHA" '.wardogs-entry-v118{' > /tmp/wardogs-intro-v1.css
+          grep -Fq '.wardogs-entry-v118.is-full' /tmp/wardogs-intro-v1.css
+          grep -Fq '.wardogs-entry-v118.is-quick' /tmp/wardogs-intro-v1.css
+          grep -Fq '@media(prefers-reduced-motion:reduce)' /tmp/wardogs-intro-v1.css
           grep -Fq 'function mwsAchievementCreateCardV1621(fields={})' /tmp/app-core.js
           grep -Fq 'function mwsAchievementUpdateCardV1621(id,patch={})' /tmp/app-core.js
           grep -Fq 'function mwsAchievementDeleteCardV1621(id)' /tmp/app-core.js
