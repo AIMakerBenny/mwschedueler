@@ -543,7 +543,7 @@ jobs:
           grep -Fq "renderAll('업적 카드 삭제 실패');" /tmp/app-core.js
           grep -Fq 'data.achievementCards=previous;' /tmp/app-core.js
           grep -Fq 'async function buildAchievementBackupMedia(payload)' /tmp/app-core.js
-          grep -Fq 'backup.assets.achievementMedia=packed.items;' /tmp/app-core.js
+          grep -Fq 'backup.assets.achievementMedia=achievementPacked.items;' /tmp/app-core.js
           grep -Fq 'async function restoreAchievementBackupMedia(backup,payload)' /tmp/app-core.js
           grep -Fq "frontImageId:mappedFront||(strictEmbedded?'':front)" /tmp/app-core.js
           grep -Fq "backImageId:mappedBack||(strictEmbedded?'':back)" /tmp/app-core.js
