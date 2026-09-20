@@ -10,10 +10,8 @@ export function runPhase123WardogsClassOrderingAudit(){
   const auth=fs.readFileSync('src/cf-v111-auth.js','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  for(const token of [
-    'assets/wardogs-manager-v1.css?v=1.0.0-phase123',
-    'assets/wardogs-manager-v1.js?v=1.0.0-phase123'
-  ])if(!index.includes(token))issues.push('WARDOGS Phase 123 asset revision missing: '+token);
+  if(!/assets\/wardogs-manager-v1\.css\?v=1\.0\.0-phase(?:123|12[7-9]|1[3-9][0-9]|[2-9][0-9]{2,})/.test(index))issues.push('WARDOGS class ordering stylesheet is not loaded by index');
+  if(!/assets\/wardogs-manager-v1\.js\?v=1\.0\.0-phase(?:123|12[7-9]|1[3-9][0-9]|[2-9][0-9]{2,})/.test(index))issues.push('WARDOGS class ordering runtime is not loaded by index');
 
   for(const token of [
     "let orderClass='assault';",
@@ -64,8 +62,8 @@ export function runPhase123WardogsClassOrderingAudit(){
 
   for(const token of [
     'run-phase123-wardogs-class-ordering-audit.mjs',
-    'assets/wardogs-manager-v1.js?v=1.0.0-phase123',
-    'assets/wardogs-manager-v1.css?v=1.0.0-phase123',
+    'assets/wardogs-manager-v1.js?v=1.0.0-phase127',
+    'assets/wardogs-manager-v1.css?v=1.0.0-phase127',
     "window.__mwsWardogsOrderingV123='class-scoped-dnd';",
     "await callSave('WARDOGS 카드 순서 변경');",
     "source.classId!==target.classId||source.classId!==orderClass",

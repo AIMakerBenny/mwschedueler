@@ -58,8 +58,8 @@ export function runPhase122WardogsManagerAudit(){
 
   for(const token of [
     'run-phase122-wardogs-manager-audit.mjs',
-    'assets/wardogs-manager-v1.js?v=1.0.0-phase123',
-    'assets/wardogs-manager-v1.css?v=1.0.0-phase123',
+    'assets/wardogs-manager-v1.js?v=1.0.0-phase127',
+    'assets/wardogs-manager-v1.css?v=1.0.0-phase127',
     'window.mwsOpenWardogsManagerV122=openManager;',
     "window.mwsWardogsDataV119?.searchContacts?.(query,{limit:40})",
     "const cloudOk=await window.mwsV55SaveNow();",

@@ -77,6 +77,7 @@ jobs:
           node --check scripts/run-phase124-wardogs-gallery-audit.mjs
           node --check scripts/run-phase125-wardogs-card-detail-audit.mjs
           node --check scripts/run-phase126-wardogs-full-backup-audit.mjs
+          node --check scripts/run-phase127-wardogs-mobile-touch-ordering-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -376,8 +377,8 @@ jobs:
           grep -Fq 'MISSION DATA <b>READY</b>' /tmp/index.html
           grep -Fq 'assets/wardogs-data-v1.js?v=1.0.0-phase120' /tmp/index.html
           grep -Fq 'assets/wardogs-media-v1.js?v=1.0.0-phase121' /tmp/index.html
-          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase123' /tmp/index.html
-          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase123' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127' /tmp/index.html
           grep -Fq 'class="card wardogs-manager-entry-card-v122"' /tmp/index.html
           grep -Fq 'id="wardogsManageBtn"' /tmp/index.html
           grep -Fq 'id="wardogsManageCount"' /tmp/index.html
@@ -484,6 +485,15 @@ jobs:
           grep -Fq '.wardogs-manager-class-tabs-v123{' /tmp/wardogs-manager-v1.css
           grep -Fq '.wardogs-manager-item-v122.drop-before::before' /tmp/wardogs-manager-v1.css
           grep -Fq '.wardogs-manager-item-v122.drop-after::after' /tmp/wardogs-manager-v1.css
+          grep -Fq "window.__mwsWardogsTouchOrderingV127='pointer-events-touch-pen';" /tmp/wardogs-manager-v1.js
+          grep -Fq "handle?.addEventListener('pointerdown',handleTouchOrderPointerDown);" /tmp/wardogs-manager-v1.js
+          grep -Fq "handle?.addEventListener('pointermove',handleTouchOrderPointerMove);" /tmp/wardogs-manager-v1.js
+          grep -Fq "handle?.addEventListener('pointerup',handleTouchOrderPointerUp);" /tmp/wardogs-manager-v1.js
+          grep -Fq "handle?.addEventListener('pointercancel',handleTouchOrderPointerCancel);" /tmp/wardogs-manager-v1.js
+          grep -Fq "pane.scrollBy({top:delta,left:0,behavior:'auto'});" /tmp/wardogs-manager-v1.js
+          grep -Fq '.wardogs-manager-drag-handle-v123[data-wardogs-manager-touch-handle]{' /tmp/wardogs-manager-v1.css
+          grep -Fq 'touch-action:none;' /tmp/wardogs-manager-v1.css
+          grep -Fq 'body.mws-wardogs-touch-ordering-v127{' /tmp/wardogs-manager-v1.css
           grep -Fq "group.forEach((card,order)=>normalized.push({...card,order}));" /tmp/wardogs-data-v1.js
           grep -Fq "group.forEach((card,order)=>normalized.push({...card,order}));" src/cf-v111-auth.js
           grep -Fq 'id="wardogsGalleryV124"' /tmp/index.html

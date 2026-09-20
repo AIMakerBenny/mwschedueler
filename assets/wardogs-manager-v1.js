@@ -1,4 +1,4 @@
-/* WARDOGS Phase 123 - class-scoped persistent card ordering */
+/* WARDOGS Phase 127 - desktop + mobile class-scoped persistent ordering */
 (()=>{
 'use strict';
 if(window.__mwsWardogsManagerV122)return;
@@ -27,6 +27,13 @@ let lastFocus=null;
 let orderClass='assault';
 let dragCardId='';
 let dragClassId='';
+let pointerOrderId=0;
+let pointerSourceId='';
+let pointerTargetId='';
+let pointerAfter=false;
+let pointerMoved=false;
+let pointerStartY=0;
+let suppressCardClickUntil=0;
 
 function isAdmin(){return document.body?.dataset?.mwsMode==='admin'}
 function state(){
@@ -162,7 +169,7 @@ function listHtml(){
     const stateClass=link.orphaned?'orphan':(card.active===false?'off':'');
     const stateText=link.orphaned?'ORPHAN':(card.active===false?'OFF':'ACTIVE');
     return `<button type="button" class="wardogs-manager-item-v122 ${selectedId===card.id?'active':''}" data-wardogs-manager-card="${esc(card.id)}" data-wardogs-manager-card-class="${esc(card.classId)}" draggable="${canDrag?'true':'false'}">
-      <span class="wardogs-manager-drag-handle-v123" aria-hidden="true">⋮⋮</span>
+      <span class="wardogs-manager-drag-handle-v123" data-wardogs-manager-touch-handle aria-label="카드 순서 이동 핸들">⋮⋮</span>
       <span><span class="wardogs-manager-item-name-v122">${esc(name)}</span><span class="wardogs-manager-item-meta-v122">${esc(clsLabel(card.classId))} · ORDER ${Number(card.order)||0}</span></span>
       <span class="wardogs-manager-item-state-v122 ${stateClass}">${stateText}</span>
     </button>`;
@@ -254,15 +261,117 @@ function handleOrderDragEnd(){
   dragCardId='';dragClassId='';
   clearOrderDropMarkers();
 }
+function touchPointerSupported(event){
+  return event?.pointerType==='touch'||event?.pointerType==='pen';
+}
+function touchOrderCleanup(handle=null){
+  if(handle&&pointerOrderId){
+    try{if(handle.hasPointerCapture?.(pointerOrderId))handle.releasePointerCapture(pointerOrderId)}catch(_){}
+  }
+  pointerOrderId=0;
+  pointerSourceId='';
+  pointerTargetId='';
+  pointerAfter=false;
+  pointerMoved=false;
+  pointerStartY=0;
+  dragCardId='';
+  dragClassId='';
+  clearOrderDropMarkers();
+  document.body.classList.remove('mws-wardogs-touch-ordering-v127');
+}
+function autoScrollTouchOrder(clientY){
+  const pane=modal?.querySelector('.wardogs-manager-list-pane-v122');
+  if(!pane)return;
+  const rect=pane.getBoundingClientRect();
+  const edge=Math.min(72,Math.max(42,rect.height*.18));
+  let delta=0;
+  if(clientY<rect.top+edge)delta=-Math.max(5,Math.round((rect.top+edge-clientY)/5));
+  else if(clientY>rect.bottom-edge)delta=Math.max(5,Math.round((clientY-(rect.bottom-edge))/5));
+  if(delta)pane.scrollBy({top:delta,left:0,behavior:'auto'});
+}
+function updateTouchOrderTarget(clientX,clientY){
+  autoScrollTouchOrder(clientY);
+  const hit=document.elementFromPoint(clientX,clientY)?.closest?.('[data-wardogs-manager-card]');
+  const target=hit?cardById(hit.dataset.wardogsManagerCard):null;
+  if(!target||target.id===pointerSourceId||target.classId!==dragClassId||target.classId!==orderClass)return;
+  modal?.querySelectorAll('.wardogs-manager-item-v122.drop-before,.wardogs-manager-item-v122.drop-after').forEach(el=>el.classList.remove('drop-before','drop-after'));
+  const rect=hit.getBoundingClientRect();
+  pointerTargetId=target.id;
+  pointerAfter=clientY>rect.top+rect.height/2;
+  hit.classList.add(pointerAfter?'drop-after':'drop-before');
+}
+function handleTouchOrderPointerDown(event){
+  if(!touchPointerSupported(event))return;
+  const handle=event.currentTarget;
+  const btn=handle?.closest?.('[data-wardogs-manager-card]');
+  const card=btn?cardById(btn.dataset.wardogsManagerCard):null;
+  if(!isAdmin()||busy||!card||card.classId!==orderClass||classCards(orderClass).length<2)return;
+  if(draftDirty){
+    event.preventDefault();
+    event.stopPropagation();
+    setStatus('편집 중인 변경사항을 먼저 저장하거나 취소한 뒤 순서를 변경해 주세요.','warn');
+    return;
+  }
+  event.preventDefault();
+  event.stopPropagation();
+  pointerOrderId=event.pointerId;
+  pointerSourceId=card.id;
+  pointerTargetId='';
+  pointerAfter=false;
+  pointerMoved=false;
+  pointerStartY=event.clientY;
+  dragCardId=card.id;
+  dragClassId=card.classId;
+  try{handle.setPointerCapture?.(event.pointerId)}catch(_){}
+  document.body.classList.add('mws-wardogs-touch-ordering-v127');
+  btn.classList.add('dragging','touch-ordering');
+  setStatus(`${clsLabel(orderClass)} 카드를 위/아래로 이동한 뒤 손가락을 놓으세요.`,'warn');
+}
+function handleTouchOrderPointerMove(event){
+  if(!touchPointerSupported(event)||event.pointerId!==pointerOrderId||!pointerSourceId)return;
+  event.preventDefault();
+  event.stopPropagation();
+  if(Math.abs(event.clientY-pointerStartY)>=4)pointerMoved=true;
+  updateTouchOrderTarget(event.clientX,event.clientY);
+}
+function handleTouchOrderPointerUp(event){
+  if(!touchPointerSupported(event)||event.pointerId!==pointerOrderId||!pointerSourceId)return;
+  event.preventDefault();
+  event.stopPropagation();
+  const handle=event.currentTarget;
+  const sourceId=pointerSourceId;
+  const targetId=pointerTargetId;
+  const after=pointerAfter;
+  const moved=pointerMoved&&Boolean(targetId)&&targetId!==sourceId;
+  suppressCardClickUntil=Date.now()+450;
+  touchOrderCleanup(handle);
+  if(moved)void persistClassOrder(sourceId,targetId,after);
+  else setStatus(`${clsLabel(orderClass)} 클래스 카드만 표시 중입니다. 이동할 카드의 핸들을 위/아래로 드래그하세요.`);
+}
+function handleTouchOrderPointerCancel(event){
+  if(event.pointerId!==pointerOrderId)return;
+  event.preventDefault();
+  event.stopPropagation();
+  touchOrderCleanup(event.currentTarget);
+  setStatus(`${clsLabel(orderClass)} 카드 순서 이동을 취소했습니다.`,'warn');
+}
 function renderList(){
   const box=modal?.querySelector('[data-wardogs-manager-list]');
   if(box)box.innerHTML=listHtml();
   box?.querySelectorAll('[data-wardogs-manager-card]').forEach(btn=>{
-    btn.addEventListener('click',()=>selectCard(btn.dataset.wardogsManagerCard));
+    btn.addEventListener('click',()=>{
+      if(Date.now()<suppressCardClickUntil)return;
+      selectCard(btn.dataset.wardogsManagerCard);
+    });
     btn.addEventListener('dragstart',handleOrderDragStart);
     btn.addEventListener('dragover',handleOrderDragOver);
     btn.addEventListener('drop',handleOrderDrop);
     btn.addEventListener('dragend',handleOrderDragEnd);
+    const handle=btn.querySelector('[data-wardogs-manager-touch-handle]');
+    handle?.addEventListener('pointerdown',handleTouchOrderPointerDown);
+    handle?.addEventListener('pointermove',handleTouchOrderPointerMove);
+    handle?.addEventListener('pointerup',handleTouchOrderPointerUp);
+    handle?.addEventListener('pointercancel',handleTouchOrderPointerCancel);
   });
   renderClassTabs();
   const modalCount=modal?.querySelector('[data-wardogs-manager-modal-count]');
@@ -576,7 +685,7 @@ async function openManager(){
 function closeManager(){
   if(!modal||modal.hidden||busy)return;
   if(draftDirty&&!window.confirm('저장하지 않은 변경사항이 있습니다. 관리창을 닫을까요?'))return;
-  draftDirty=false;selectedId='';selectedContactId='';dragCardId='';dragClassId='';clearOrderDropMarkers();clearPendingFile();clearObjectUrl('existing');previewToken++;
+  draftDirty=false;selectedId='';selectedContactId='';dragCardId='';dragClassId='';touchOrderCleanup();clearPendingFile();clearObjectUrl('existing');previewToken++;
   modal.hidden=true;document.body.classList.remove('mws-wardogs-manager-open-v122');
   if(lastFocus?.isConnected)setTimeout(()=>lastFocus.focus(),0);
   lastFocus=null;
@@ -599,6 +708,7 @@ window.mwsOpenWardogsManagerV122=openManager;
 window.mwsCloseWardogsManagerV122=closeManager;
 window.mwsWardogsPersistClassOrderV123=persistClassOrder;
 window.__mwsWardogsOrderingV123='class-scoped-dnd';
+window.__mwsWardogsTouchOrderingV127='pointer-events-touch-pen';
 window.addEventListener('mawang:datachange',event=>{
   if(String(event?.detail?.reason||'').startsWith('WARDOGS')){
     syncShell();

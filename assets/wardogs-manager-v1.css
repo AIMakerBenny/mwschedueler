@@ -1,4 +1,4 @@
-/* WARDOGS Phase 122 - Import/Export card manager */
+/* WARDOGS Phase 127 - Import/Export manager + mobile touch ordering */
 .wardogs-manager-entry-card-v122{border-color:rgba(255,107,44,.28);background:linear-gradient(135deg,rgba(255,107,44,.07),rgba(18,22,33,.96))}
 .wardogs-manager-modal-v122[hidden]{display:none!important}
 .wardogs-manager-modal-v122{
@@ -133,4 +133,33 @@ body.mws-wardogs-manager-open-v122{overflow:hidden}
 }
 @media(max-width:560px){
   .wardogs-manager-class-tabs-v123{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* Phase 127: touch/pen ordering */
+.wardogs-manager-drag-handle-v123[data-wardogs-manager-touch-handle]{
+  touch-action:none;
+  -webkit-user-select:none;
+  user-select:none;
+}
+.wardogs-manager-item-v122.touch-ordering{
+  border-color:rgba(255,107,44,.5);
+  box-shadow:0 0 0 1px rgba(255,107,44,.12),0 10px 24px rgba(0,0,0,.25);
+}
+body.mws-wardogs-touch-ordering-v127{
+  overscroll-behavior:none;
+}
+body.mws-wardogs-touch-ordering-v127 .wardogs-manager-list-pane-v122{
+  overscroll-behavior:contain;
+}
+@media(pointer:coarse){
+  .wardogs-manager-drag-handle-v123[data-wardogs-manager-touch-handle]{
+    display:grid;
+    place-items:center;
+    width:26px;
+    min-height:34px;
+    margin:-4px 0;
+    font-size:15px;
+    color:#a7b1bc;
+    cursor:grab;
+  }
 }
