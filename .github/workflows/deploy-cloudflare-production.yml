@@ -110,6 +110,36 @@ jobs:
             return {postNo:String(p.postNo||''),total:rows.length,confirmed:rows.filter(x=>x.status==='confirmed').length,planned:rows.filter(x=>x.status==='planned').length};
           });
           console.log(JSON.stringify({targetPostScheduleExpectation}));
+          const normalizedName=value=>String(value||'').trim().toLowerCase().replace(/\s+/g,'');
+          const stationKey=value=>{try{const u=new URL(String(value||''));return u.pathname.replace(/^\/+|\/+$/g,'').split('/')[0].toLowerCase()}catch(_){return ''}};
+          const targetApplicantContacts=[];
+          for(const p of targetPosts){
+            for(const applicant of Array.isArray(p.comments)?p.comments:[]){
+              const byStation=stationKey(applicant.stationUrl);
+              const match=contactRows.find(c=>{
+                const ck=stationKey(c?.stationUrl);
+                if(byStation&&ck&&byStation===ck)return true;
+                return normalizedName(c?.name)===normalizedName(applicant?.name);
+              });
+              targetApplicantContacts.push({applicant:String(applicant?.name||''),status:String(applicant?.status||''),contactId:String(match?.id||''),contactName:String(match?.name||''),image:String(match?.image||'')});
+            }
+          }
+          console.log(JSON.stringify({targetApplicantContacts}));
+          const repeatedMediaAudit=[];
+          for(const row of targetApplicantContacts.filter(x=>x.image.startsWith('/media/contact/'))){
+            const attempts=[];
+            for(let i=0;i<5;i++){
+              try{
+                const resp=await fetch(BASE+row.image,{headers:{'cache-control':'no-cache'}});
+                const type=String(resp.headers.get('content-type')||'');
+                const bytes=new Uint8Array(await resp.arrayBuffer());
+                const sig=bytes.length>=8&&bytes[0]===0x89&&bytes[1]===0x50&&bytes[2]===0x4e&&bytes[3]===0x47?'png':bytes.length>=3&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff?'jpeg':bytes.length>=12&&String.fromCharCode(...bytes.slice(0,4))==='RIFF'&&String.fromCharCode(...bytes.slice(8,12))==='WEBP'?'webp':'other';
+                attempts.push({status:resp.status,type,size:bytes.length,sig,policy:String(resp.headers.get('x-mws-image-policy')||'')});
+              }catch(error){attempts.push({error:String(error)})}
+            }
+            repeatedMediaAudit.push({applicant:row.applicant,contactId:row.contactId,image:row.image,attempts});
+          }
+          console.log(JSON.stringify({repeatedMediaAudit}));
           const images=rows.filter(x=>typeof x?.image==='string'&&x.image.length>0);
           const mediaImages=images.filter(x=>x.image.startsWith('/media/contact/'));
           const dataImages=images.filter(x=>x.image.startsWith('data:image/'));
