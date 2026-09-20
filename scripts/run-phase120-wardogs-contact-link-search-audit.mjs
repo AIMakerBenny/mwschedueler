@@ -47,8 +47,8 @@ export function runPhase120WardogsContactLinkSearchAudit(){
 
   if(/function\s+mwsTextMatches\s*\(/.test(wardogs))issues.push('WARDOGS must not define a second mwsTextMatches owner');
   if(/function\s+contactMatches\s*\(/.test(wardogs))issues.push('WARDOGS must not define a second contactMatches owner');
-  if(/window\.mwsTextMatches\s*=/.test(wardogs))issues.push('WARDOGS must not override window.mwsTextMatches');
-  if(/window\.contactMatches\s*=/.test(wardogs))issues.push('WARDOGS must not override window.contactMatches');
+  if(/window\.mwsTextMatches\s*=(?!=)/.test(wardogs))issues.push('WARDOGS must not override window.mwsTextMatches');
+  if(/window\.contactMatches\s*=(?!=)/.test(wardogs))issues.push('WARDOGS must not override window.contactMatches');
   if(/filter\([^\n]*findContact|filter\([^\n]*linked/.test(wardogs))warnings.push('review WARDOGS filtering to ensure orphaned card records remain preserved');
 
   for(const token of [

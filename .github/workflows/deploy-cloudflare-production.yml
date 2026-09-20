@@ -412,7 +412,7 @@ jobs:
           grep -Fq "window.__mwsSearchOwnerV130='app-core-search71';" /tmp/app-core.js
           test "$(grep -Ec 'function[[:space:]]+mwsTextMatches[[:space:]]*\(' /tmp/app-core.js)" -eq 1
           test "$(grep -Ec 'function[[:space:]]+contactMatches[[:space:]]*\(' /tmp/app-core.js)" -eq 1
-          if grep -Eq 'function[[:space:]]+mwsTextMatches[[:space:]]*\(|function[[:space:]]+contactMatches[[:space:]]*\(|window\.mwsTextMatches[[:space:]]*=|window\.contactMatches[[:space:]]*=' /tmp/wardogs-data-v1.js; then
+          if grep -Eq 'function[[:space:]]+mwsTextMatches[[:space:]]*\(|function[[:space:]]+contactMatches[[:space:]]*\(|window\.mwsTextMatches[[:space:]]*=[^=]|window\.contactMatches[[:space:]]*=[^=]' /tmp/wardogs-data-v1.js; then
             echo 'WARDOGS attempted to define or override the canonical contact search owner.' >&2
             exit 1
           fi
