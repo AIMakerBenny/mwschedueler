@@ -387,13 +387,13 @@ jobs:
           grep -Fq 'id="achievementManageBtn"' /tmp/index.html
           grep -Fq 'id="achievementManageCount"' /tmp/index.html
           grep -Fq 'class="card achievement-manager-entry-card"' /tmp/index.html
-          grep -Fq '업적 카드와 카드 이미지를 저장합니다.' /tmp/index.html
-          grep -Fq '업적 이미지는 가져올 때 IndexedDB Blob으로 다시 복원됩니다.' /tmp/index.html
+          grep -Fq '업적 카드, WARDOGS 카드와 각 카드 이미지를 저장합니다.' /tmp/index.html
+          grep -Fq '프로필·업적·WARDOGS 이미지는 백업 파일 안에 포함' /tmp/index.html
           grep -Fq 'id="achievementExportPackageBtn"' /tmp/index.html
           grep -Fq 'id="achievementImportPackageInput"' /tmp/index.html
           grep -Fq '패키지 가져오기는 기존 카드를 지우지 않고 뒤에 추가합니다.' /tmp/index.html
           node -e "const fs=require('fs'),s=fs.readFileSync('/tmp/index.html','utf8'),w=s.indexOf('data-tab=\"worldtime\"'),a=s.indexOf('data-tab=\"achievements\"'),c=s.indexOf('wardogs-content-divider-v116'),d=s.indexOf('data-tab=\"wardogs\"'),m=s.indexOf('<div class=\"nav-game-divider\"><span></span><em>미니게임</em>');if(!(w>=0&&a>w&&c>a&&d>c&&m>d))process.exit(1)"
-          retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" "const ACHIEVEMENT_PACKAGE_LIMITS=Object.freeze({" > /tmp/app-core.js
+          retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" "assetSchema:3," > /tmp/app-core.js
           node --check /tmp/app-core.js
           grep -Fq "achievements:'업적',wardogs:'워독스 전쟁견들'" /tmp/app-core.js
           retry_contains "$BASE/assets/wardogs-v1.js?deploy=$GITHUB_SHA" "window.mwsWardogsV117=Object.freeze({" > /tmp/wardogs-v1.js
