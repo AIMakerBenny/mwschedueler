@@ -130,7 +130,8 @@ function parseDataImage(value){
 async function shortHash(value){const hash=new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(String(value))));return [...hash].slice(0,16).map(x=>x.toString(16).padStart(2,'0')).join('')}
 function cleanMediaToken(value){const token=String(value||'').toLowerCase();return /^[a-f0-9]{32}$/.test(token)?token:''}
 function tokenFromImageSource(value){const match=/^mws-r2:([a-f0-9]{32})$/i.exec(String(value||''));return match?cleanMediaToken(match[1]):''}
-function mediaUrl(kind,key,version=1,token=''){const safe=cleanMediaToken(token);return `/media/${kind}/${encodeURIComponent(key)}?v=${Math.max(1,Number(version)||1)}${safe?`&h=${safe}`:''}`}
+const CONTACT_MEDIA_REVISION='2';
+function mediaUrl(kind,key,version=1,token=''){const safe=cleanMediaToken(token),revision=kind==='contact'?`&r=${CONTACT_MEDIA_REVISION}`:'';return `/media/${kind}/${encodeURIComponent(key)}?v=${Math.max(1,Number(version)||1)}${safe?`&h=${safe}`:''}${revision}`}
 function r2Key(kind,key){return kind==='contact'?`contacts/${key}`:`workspace/${key}`}
 function r2VersionedKey(kind,key,version,token=''){const safe=cleanMediaToken(token);return `${r2Key(kind,key)}/v${Math.max(1,Number(version)||1)}${safe?`-${safe}`:''}`}
 async function currentImageRecord(env,kind,key){return await env.DB.prepare('SELECT version,source_url FROM image_sources WHERE kind=? AND item_key=?').bind(kind,key).first()}
@@ -143,6 +144,71 @@ async function storeDataImage(env,kind,key,dataUrl,authoritative=true,saveContex
   if(saveContext?.statements)saveContext.statements.push(statement);else await statement.run();
   return mediaUrl(kind,key,version,token);
 }
+
+const CONTACT_REMOTE_IMAGE_MAX_BYTES=8*1024*1024;
+const CONTACT_REMOTE_IMAGE_HOSTS=new Set(['profile.img.sooplive.co.kr']);
+function trustedRemoteContactImageUrl(value){
+  const raw=String(value||'').trim();if(!raw||!/^https:\/\//i.test(raw))return '';
+  try{const url=new URL(raw);return CONTACT_REMOTE_IMAGE_HOSTS.has(url.hostname.toLowerCase())?url.href:''}catch(_){return ''}
+}
+function detectContactImageContentType(bytes){
+  if(bytes.length>=8&&bytes[0]===0x89&&bytes[1]===0x50&&bytes[2]===0x4e&&bytes[3]===0x47&&bytes[4]===0x0d&&bytes[5]===0x0a&&bytes[6]===0x1a&&bytes[7]===0x0a)return 'image/png';
+  if(bytes.length>=3&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff)return 'image/jpeg';
+  if(bytes.length>=12&&String.fromCharCode(...bytes.slice(0,4))==='RIFF'&&String.fromCharCode(...bytes.slice(8,12))==='WEBP')return 'image/webp';
+  if(bytes.length>=6&&/^GIF8[79]a$/.test(String.fromCharCode(...bytes.slice(0,6))))return 'image/gif';
+  if(bytes.length>=2&&bytes[0]===0x42&&bytes[1]===0x4d)return 'image/bmp';
+  return '';
+}
+async function storeRemoteContactImage(env,key,remoteUrl,saveContext=null){
+  const source=trustedRemoteContactImageUrl(remoteUrl);if(!source)return remoteUrl;
+  let response;
+  try{response=await fetch(source,{headers:{accept:'image/webp,image/png,image/jpeg,image/gif,image/*;q=0.8','user-agent':'MawangScheduler/1.6.21'}})}catch(error){console.warn('Remote contact image fetch failed',{key,error:String(error)});return remoteUrl}
+  if(!response.ok){try{await response.body?.cancel()}catch(_){};console.warn('Remote contact image fetch returned non-OK',{key,status:response.status});return remoteUrl}
+  const declared=Math.max(0,Number(response.headers.get('content-length'))||0);
+  if(declared>CONTACT_REMOTE_IMAGE_MAX_BYTES){try{await response.body?.cancel()}catch(_){};console.warn('Remote contact image is too large',{key,declared});return remoteUrl}
+  let buffer;
+  try{buffer=await response.arrayBuffer()}catch(error){console.warn('Remote contact image body read failed',{key,error:String(error)});return remoteUrl}
+  if(!buffer.byteLength||buffer.byteLength>CONTACT_REMOTE_IMAGE_MAX_BYTES){console.warn('Remote contact image body size rejected',{key,size:buffer.byteLength});return remoteUrl}
+  const bytes=new Uint8Array(buffer),contentType=detectContactImageContentType(bytes);
+  if(!contentType){console.warn('Remote contact image signature rejected',{key});return remoteUrl}
+  const current=await currentImageRecord(env,'contact',key),existing=Number(current?.version)||0;
+  const version=existing>0?existing+1:1,token=cleanMediaToken(crypto.randomUUID().replace(/-/g,''));
+  await env.IMAGES.put(r2VersionedKey('contact',key,version,token),bytes,{httpMetadata:{contentType},customMetadata:{mwsVersion:String(version),source:'mws-remote-profile'}});
+  const statement=env.DB.prepare(`INSERT INTO image_sources(kind,item_key,source_url,version,content_type,updated_at) VALUES('contact',?,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(kind,item_key) DO UPDATE SET source_url=excluded.source_url,version=excluded.version,content_type=excluded.content_type,updated_at=CURRENT_TIMESTAMP`).bind(key,`mws-r2:${token}`,version,contentType);
+  if(saveContext?.statements)saveContext.statements.push(statement);else await statement.run();
+  return mediaUrl('contact',key,version,token);
+}
+async function migrateTrustedRemoteContactRefs(env,raw){
+  const contacts=Array.isArray(raw)?structuredClone(raw):[];
+  let migrated=0;
+  for(const item of contacts){
+    if(!item||typeof item!=='object')continue;
+    const id=String(item.id||'').trim(),source=trustedRemoteContactImageUrl(item.image);
+    if(!id||!source)continue;
+    const managed=await storeRemoteContactImage(env,id,source);
+    if(String(managed||'').startsWith('/media/contact/')){item.image=managed;migrated++}
+  }
+  return {contacts,migrated};
+}
+async function canonicalizeManagedContactRefs(env,raw){
+  const contacts=Array.isArray(raw)?structuredClone(raw):[];
+  const managed=contacts.filter(item=>item&&typeof item==='object'&&String(item.id||'').trim()&&String(item.image||'').startsWith('/media/contact/'));
+  if(!managed.length)return {contacts,canonicalized:0};
+  const {results=[]}=await env.DB.prepare("SELECT item_key,version,source_url FROM image_sources WHERE kind='contact'").all();
+  const registry=new Map(results.map(row=>[String(row.item_key||''),row]));
+  let canonicalized=0;
+  for(const item of managed){
+    const id=String(item.id||'').trim(),record=registry.get(id);if(!record)continue;
+    const expected=mediaUrl('contact',id,Math.max(1,Number(record.version)||1),tokenFromImageSource(record.source_url));
+    if(item.image!==expected){item.image=expected;canonicalized++}
+  }
+  return {contacts,canonicalized};
+}
+async function canonicalManagedContactUrl(env,id,fallback=''){
+  const record=await currentImageRecord(env,'contact',id);if(!record)return fallback;
+  return mediaUrl('contact',id,Math.max(1,Number(record.version)||1),tokenFromImageSource(record.source_url));
+}
+
 async function recoverContactImageRefs(env,raw){
   const contacts=Array.isArray(raw)?structuredClone(raw):[];
   const missing=contacts.filter(item=>item&&typeof item==='object'&&String(item.id||'').trim()&&!String(item.image||'').trim());
@@ -198,18 +264,20 @@ async function repairStoredContactImageRefs(env){
     if(!row)return {recovered:0,version:0};
     let current=[];try{current=JSON.parse(row.data||'[]')}catch(_){return {recovered:0,version:Number(row.version)||0}}
     const recovered=await recoverContactImageRefs(env,current);
-    const canonicalized=await canonicalizeLegacyR2ContactRefs(env,recovered.contacts);
-    const changed=recovered.recovered+canonicalized.canonicalized;
-    if(!changed)return {recovered:0,canonicalized:0,version:Number(row.version)||0};
-    const currentVersion=Math.max(0,Number(row.version)||0),nextVersion=Math.max(1,currentVersion+1),text=JSON.stringify(canonicalized.contacts);
+    const legacy=await canonicalizeLegacyR2ContactRefs(env,recovered.contacts);
+    const remote=await migrateTrustedRemoteContactRefs(env,legacy.contacts);
+    const managed=await canonicalizeManagedContactRefs(env,remote.contacts);
+    const changed=recovered.recovered+legacy.canonicalized+remote.migrated+managed.canonicalized;
+    if(!changed)return {recovered:0,legacyCanonicalized:0,remoteMigrated:0,managedCanonicalized:0,version:Number(row.version)||0};
+    const currentVersion=Math.max(0,Number(row.version)||0),nextVersion=Math.max(1,currentVersion+1),text=JSON.stringify(managed.contacts);
     const statements=[
       env.DB.prepare("INSERT INTO save_conflict_guard(id) SELECT 1 WHERE COALESCE((SELECT version FROM workspace_parts WHERE scope='public' AND part='contacts'),0)<>?").bind(currentVersion),
       env.DB.prepare("INSERT INTO workspace_parts(scope,part,data,version,updated_at) VALUES('public','contacts',?,?,CURRENT_TIMESTAMP) ON CONFLICT(scope,part) DO UPDATE SET data=excluded.data,version=excluded.version,updated_at=CURRENT_TIMESTAMP").bind(text,nextVersion),
       env.DB.prepare("INSERT INTO workspace_parts(scope,part,data,version,updated_at) VALUES('admin','contacts',?,?,CURRENT_TIMESTAMP) ON CONFLICT(scope,part) DO UPDATE SET data=excluded.data,version=excluded.version,updated_at=CURRENT_TIMESTAMP").bind(text,nextVersion)
     ];
     await env.DB.batch(statements);
-    console.log('Repaired contact image references',{recovered:recovered.recovered,canonicalized:canonicalized.canonicalized,version:nextVersion});
-    return {recovered:recovered.recovered,canonicalized:canonicalized.canonicalized,version:nextVersion};
+    console.log('Repaired contact image references',{recovered:recovered.recovered,legacyCanonicalized:legacy.canonicalized,remoteMigrated:remote.migrated,managedCanonicalized:managed.canonicalized,version:nextVersion});
+    return {recovered:recovered.recovered,legacyCanonicalized:legacy.canonicalized,remoteMigrated:remote.migrated,managedCanonicalized:managed.canonicalized,version:nextVersion};
   })().catch(error=>{contactImageRepairPromise=undefined;throw error});
   return contactImageRepairPromise;
 }
@@ -219,7 +287,7 @@ async function externalizePart(env,part,raw,saveContext=null){
     const src=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{},out={};for(const key of CORE_KEYS)if(Object.prototype.hasOwnProperty.call(src,key))out[key]=src[key];return out;
   }
   if(part==='contacts'){
-    const out=[];for(const original of Array.isArray(raw)?raw:[]){const item=original&&typeof original==='object'?structuredClone(original):original;if(!item||typeof item!=='object'){out.push(item);continue}const id=String(item.id||'').trim();if(id&&parseDataImage(item.image))item.image=await storeDataImage(env,'contact',id,item.image,true,saveContext);out.push(item)}return out;
+    const out=[];for(const original of Array.isArray(raw)?raw:[]){const item=original&&typeof original==='object'?structuredClone(original):original;if(!item||typeof item!=='object'){out.push(item);continue}const id=String(item.id||'').trim();if(id&&parseDataImage(item.image))item.image=await storeDataImage(env,'contact',id,item.image,true,saveContext);else if(id&&trustedRemoteContactImageUrl(item.image))item.image=await storeRemoteContactImage(env,id,item.image,saveContext);else if(id&&String(item.image||'').startsWith('/media/contact/'))item.image=await canonicalManagedContactUrl(env,id,item.image);out.push(item)}return out;
   }
   if(part==='contactMeta'){
     const out=raw&&typeof raw==='object'&&!Array.isArray(raw)?structuredClone(raw):{},banners=out.contactTagBanners&&typeof out.contactTagBanners==='object'&&!Array.isArray(out.contactTagBanners)?out.contactTagBanners:{};

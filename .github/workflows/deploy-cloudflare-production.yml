@@ -52,6 +52,7 @@ jobs:
           node --check scripts/run-phase62-nested-live-payload-audit.mjs
           node --check scripts/run-phase105-contact-profile-image-persistence-audit.mjs
           node --check scripts/run-phase106-contact-immediate-cloud-commit-audit.mjs
+          node --check scripts/run-phase107-contact-image-migration-cache-revision-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -197,6 +198,9 @@ jobs:
             }));
             if(dataImages.length)throw new Error('Contact Data URLs remain in production storage');
             if(legacyRefs.length)throw new Error('Legacy direct R2 contact image references remain in production storage');
+            if(unmanagedImages.length)throw new Error('Unmanaged contact image references remain in production storage');
+            if(images.length!==mediaImages.length)throw new Error('Not every stored contact image is managed by same-origin media');
+            if(mediaImages.some(row=>!/[?&]r=2(?:&|$)/.test(row.image)))throw new Error('Managed contact image revision is stale');
             if(invalidManagedMedia)throw new Error('Managed contact media failed Content-Type, byte-signature or cache-policy validation');
             if(missingManagedMedia>1)throw new Error('Missing managed contact media count increased above the known single stale reference');
           })().catch(error=>{console.error(error);process.exit(1)});
