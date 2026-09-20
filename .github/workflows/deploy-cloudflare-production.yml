@@ -83,19 +83,56 @@ jobs:
           const mediaImages=images.filter(x=>x.image.startsWith('/media/contact/'));
           const dataImages=images.filter(x=>x.image.startsWith('data:image/'));
           (async()=>{
-            let recoverableMedia=0;
+            let recoverableMedia=0,validRecoverableMedia=0,invalidRecoverableMedia=0;
             const base='https://mawang-scheduler.majoku.workers.dev';
+            const refKinds={managed:0,data:0,relative:0,empty:0,absoluteHosts:{}};
+            for(const row of rows){
+              const value=String(row?.image||'').trim();
+              if(!value){refKinds.empty++;continue}
+              if(value.startsWith('/media/contact/')){refKinds.managed++;continue}
+              if(value.startsWith('data:image/')){refKinds.data++;continue}
+              if(/^https?:\/\//i.test(value)){
+                try{const host=new URL(value).hostname;refKinds.absoluteHosts[host]=(refKinds.absoluteHosts[host]||0)+1}catch(_){refKinds.relative++}
+              }else refKinds.relative++;
+            }
+            const signatureType=bytes=>{
+              if(bytes.length>=8&&bytes[0]===0x89&&bytes[1]===0x50&&bytes[2]===0x4e&&bytes[3]===0x47&&bytes[4]===0x0d&&bytes[5]===0x0a&&bytes[6]===0x1a&&bytes[7]===0x0a)return 'image/png';
+              if(bytes.length>=3&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff)return 'image/jpeg';
+              if(bytes.length>=12&&String.fromCharCode(...bytes.slice(0,4))==='RIFF'&&String.fromCharCode(...bytes.slice(8,12))==='WEBP')return 'image/webp';
+              if(bytes.length>=6&&/^GIF8[79]a$/.test(String.fromCharCode(...bytes.slice(0,6))))return 'image/gif';
+              if(bytes.length>=2&&bytes[0]===0x42&&bytes[1]===0x4d)return 'image/bmp';
+              return '';
+            };
             const queue=[...rows];
+            const mediaTypes={},signatures={},policies={};
             const workers=Array.from({length:8},async()=>{
               while(queue.length){
                 const row=queue.pop();
                 const id=String(row?.id||'');
                 if(!id)continue;
                 try{
-                  const response=await fetch(base+'/media/contact/'+encodeURIComponent(id),{headers:{range:'bytes=0-0'}});
-                  if(response.ok)recoverableMedia++;
-                  try{await response.body?.cancel()}catch(_){}
-                }catch(_){}
+                  const response=await fetch(base+'/media/contact/'+encodeURIComponent(id));
+                  if(!response.ok){try{await response.body?.cancel()}catch(_){};continue}
+                  recoverableMedia++;
+                  const type=String(response.headers.get('content-type')||'').split(';')[0].toLowerCase()||'missing';
+                  const policy=response.headers.get('x-mws-image-policy')||'missing';
+                  mediaTypes[type]=(mediaTypes[type]||0)+1;
+                  policies[policy]=(policies[policy]||0)+1;
+                  let first=new Uint8Array();
+                  if(response.body){
+                    const reader=response.body.getReader();
+                    const part=await reader.read();
+                    first=part.value instanceof Uint8Array?part.value.slice(0,32):new Uint8Array();
+                    try{await reader.cancel()}catch(_){}
+                  }
+                  const signature=signatureType(first)||'unknown';
+                  signatures[signature]=(signatures[signature]||0)+1;
+                  if(type.startsWith('image/')&&signature!=='unknown')validRecoverableMedia++;
+                  else invalidRecoverableMedia++;
+                }catch(error){
+                  invalidRecoverableMedia++;
+                  console.error('Contact media diagnostic fetch failed',{id,error:String(error)});
+                }
               }
             });
             await Promise.all(workers);
@@ -107,6 +144,12 @@ jobs:
               contactsWithMediaImage:mediaImages.length,
               contactsWithDataImage:dataImages.length,
               recoverableMedia,
+              validRecoverableMedia,
+              invalidRecoverableMedia,
+              contactImageReferenceKinds:refKinds,
+              recoverableMediaContentTypes:mediaTypes,
+              recoverableMediaSignatures:signatures,
+              recoverableMediaPolicies:policies,
               eventsVersion:Number(events.version)||0,
               eventsCount:eventRows.length,
               coreVersion:Number(core.version)||0,
