@@ -3947,12 +3947,14 @@ function autofillContactNameFromImageFile(file){
   const stem=contactImageStem(file.name);
   if(stem)nameInput.value=stem;
 }
+let pendingContactImageFile=null;
 function handleContactImageFile(file){
   if(!file)return false;
   if(!(file.type||'').startsWith('image/')){
     toast('프로필 이미지','이미지 파일만 사용할 수 있습니다');
     return false;
   }
+  pendingContactImageFile=file;
   const input=document.getElementById('ctImage');
   try{
     const dt=new DataTransfer();
@@ -4035,6 +4037,7 @@ function openContact(id=null){
   document.getElementById('ctStationUrl').value=c?.stationUrl||'';
   document.getElementById('ctNotes').value=c?.notes||'';
   document.getElementById('ctImage').value='';
+  pendingContactImageFile=null;
   setContactImagePreview(c?.image||'',c?.image?'현재 저장된 프로필 이미지':'선택된 파일 없음');
   document.getElementById('deleteContactBtn').style.display=c?'':'none';
   contactDetailTab='content';
@@ -4072,7 +4075,7 @@ document.getElementById('saveContactBtn').onclick=async()=>{
   };
   candidate.labels.forEach(ensureContactTag);
 
-  const file=document.getElementById('ctImage').files[0];
+  const file=pendingContactImageFile||document.getElementById('ctImage').files?.[0]||null;
   if(file){
     const raw=await new Promise((resolve,reject)=>{
       const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);
@@ -4107,6 +4110,7 @@ document.getElementById('saveContactBtn').onclick=async()=>{
     data.contacts.push(candidate);
   }
   document.getElementById('contactModal').classList.remove('open');
+  pendingContactImageFile=null;
   syncAllPostContactApplicationHistories();
   const saved=saveData('연락처 저장');
   renderContactFilters();
@@ -4561,20 +4565,28 @@ document.getElementById('addCategoryBtn').onclick=()=>{
 function renderAutoSaveHistory(){/* v4.20: 자동 백업 기능 제거 */}
 
 
-async function compressContactImage(dataUrl,maxSize=320,quality=.78){
+async function compressContactImage(dataUrl,maxSize=1024,quality=.9){
   if(!dataUrl || typeof dataUrl!=='string' || !dataUrl.startsWith('data:image/'))return dataUrl||'';
   return new Promise(resolve=>{
     const img=new Image();
     img.onload=()=>{
       try{
+        const sourceMime=(/^data:(image\/[^;,]+)/i.exec(dataUrl)||[])[1]?.toLowerCase()||'image/jpeg';
         const scale=Math.min(1,maxSize/Math.max(img.naturalWidth||1,img.naturalHeight||1));
-        if(scale>=1 && dataUrl.length<60000)return resolve(dataUrl);
-        const w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale));
-        const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
-        const ctx=canvas.getContext('2d',{alpha:false});ctx.drawImage(img,0,0,w,h);
-        const compressed=canvas.toDataURL('image/jpeg',quality);
-        resolve(compressed.length<dataUrl.length?compressed:dataUrl);
-      }catch(e){resolve(dataUrl)}
+        if(scale>=1 && dataUrl.length<750000)return resolve(dataUrl);
+        const w=Math.max(1,Math.round((img.naturalWidth||1)*scale));
+        const h=Math.max(1,Math.round((img.naturalHeight||1)*scale));
+        const canvas=document.createElement('canvas');
+        canvas.width=w;canvas.height=h;
+        const preserveAlpha=sourceMime==='image/png'||sourceMime==='image/webp';
+        const ctx=canvas.getContext('2d',{alpha:preserveAlpha});
+        if(!ctx)return resolve(dataUrl);
+        if(!preserveAlpha){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,w,h)}
+        ctx.drawImage(img,0,0,w,h);
+        const outputMime=sourceMime==='image/png'?'image/png':sourceMime==='image/webp'?'image/webp':'image/jpeg';
+        const compressed=canvas.toDataURL(outputMime,quality);
+        resolve(compressed&&compressed.length<dataUrl.length?compressed:dataUrl);
+      }catch(e){console.warn('프로필 이미지 압축 실패, 원본을 유지합니다',e);resolve(dataUrl)}
     };
     img.onerror=()=>resolve(dataUrl);
     img.src=dataUrl;
