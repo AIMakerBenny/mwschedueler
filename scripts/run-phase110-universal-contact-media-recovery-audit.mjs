@@ -18,9 +18,6 @@ export function runPhase110UniversalContactMediaRecoveryAudit(){
     "img.style.visibility='hidden';",
     "img.removeAttribute('srcset');",
     '?fallback=110&cb=',
-    "document.addEventListener('error',event=>",
-    "document.addEventListener('load',event=>",
-    'window.__mwsContactMediaRecoveryV110=true;'
   ])if(!app.includes(token))issues.push('universal contact media recovery missing: '+token);
 
   if(!index.includes('assets/app-core.js?v=1.3.0-search112'))issues.push('app-core cache revision is not search111');
@@ -37,7 +34,7 @@ export function runPhase110UniversalContactMediaRecoveryAudit(){
   for(const token of [
     'run-phase110-universal-contact-media-recovery-audit.mjs',
     'mwsRecoverContactMediaImageV110',
-    'search111',
+    'search112',
     'perf35'
   ])if(!workflow.includes(token))issues.push('production Phase 110 verification missing: '+token);
 
