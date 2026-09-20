@@ -12,7 +12,6 @@ export function runPhase116WardogsNavigationShellAudit(){
     '<span class="nav-label">워독스 전쟁견들</span>',
     '<div class="nav-game-divider wardogs-content-divider-v116"><span></span><em>컨텐츠</em><span></span></div>',
     '<section id="wardogs" class="section" data-wardogs-shell-v116="1">',
-    'WARDOGS 모듈의 기본 페이지입니다.',
     'assets/app-core.js?v=1.3.0-search115-wardogs116'
   ])if(!index.includes(token))issues.push('WARDOGS navigation shell missing: '+token);
 
