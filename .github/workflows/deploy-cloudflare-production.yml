@@ -51,6 +51,7 @@ jobs:
           node --check scripts/run-phase61-native-friend-card-binding-audit.mjs
           node --check scripts/run-phase62-nested-live-payload-audit.mjs
           node --check scripts/run-phase105-contact-profile-image-persistence-audit.mjs
+          node --check scripts/run-phase106-contact-immediate-cloud-commit-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -195,7 +196,7 @@ jobs:
           SESSION="$session" node -e "const x=JSON.parse(process.env.SESSION); if(typeof x.authenticated!=='boolean') process.exit(1)"
 
           echo '[2/8] isolated login shell and v1.6.21 display'
-          retry_contains "$BASE/?deploy=$GITHUB_SHA" 'app-core.js?v=1.3.0-search108' > /tmp/index.html
+          retry_contains "$BASE/?deploy=$GITHUB_SHA" 'app-core.js?v=1.3.0-search109' > /tmp/index.html
           grep -Eq 'app-core\.js\?v=1\.3\.0-search(8[3-9]|9[0-9]|[1-9][0-9]{2,})' /tmp/index.html
           grep -Fq 'id="mwsAccessGate"' /tmp/index.html
           grep -Fq 'assets/app-core.css?v=1.6.21-profileimgfix1' /tmp/index.html
@@ -272,6 +273,10 @@ jobs:
           grep -Fq 'function verifyContactImageDecodable(dataUrl)' /tmp/app-core.js
           grep -Fq 'const file=pendingContactImageFile||document.getElementById('"'"'ctImage'"'"').files?.[0]||null;' /tmp/app-core.js
           grep -Fq 'async function compressContactImage(dataUrl,maxSize=1024,quality=.9)' /tmp/app-core.js
+          grep -Fq 'async function persistContactSaveAndWait(reason,contactId,{requireManagedImage=false}={})' /tmp/app-core.js
+          grep -Fq 'cloudSaved=await window.mwsV55SaveNow();' /tmp/app-core.js
+          grep -Fq "if(!String(stored?.image||'').startsWith('/media/contact/'))" /tmp/app-core.js
+          grep -Fq 'function contactSaveFailureMessage(result)' /tmp/app-core.js
           grep -Fq "createImageBitmap(blob,{imageOrientation:'from-image'})" /tmp/app-core.js
           retry_contains "$BASE/assets/app-core.css?deploy=$GITHUB_SHA" '.contact-image-preview-wrap{display:block!important}' > /tmp/app-core.css
           grep -Fq 'justify-content:flex-start!important;text-align:left!important' /tmp/app-core.css

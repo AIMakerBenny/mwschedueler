@@ -4102,6 +4102,42 @@ document.getElementById('contactFavoriteBtnV574').onclick=()=>{
   try{renderContacts()}catch(_){}
   toast(c.name,c.favorite?'즐겨찾기에 추가했습니다':'즐겨찾기에서 제거했습니다');
 };
+async function persistContactSaveAndWait(reason,contactId,{requireManagedImage=false}={}){
+  const localSaved=saveData(reason);
+  if(!localSaved)return {ok:false,stage:'local'};
+  const adminMode=document.body.dataset.mwsMode==='admin';
+  if(!adminMode)return {ok:true,stage:'local-only'};
+  if(typeof window.mwsV55SaveNow!=='function')return {ok:false,stage:'bridge'};
+  const saveBtn=document.getElementById('saveContactBtn');
+  if(saveBtn)saveBtn.disabled=true;
+  try{
+    let cloudSaved=false;
+    for(let attempt=0;attempt<6&&!cloudSaved;attempt++){
+      cloudSaved=await window.mwsV55SaveNow();
+      if(!cloudSaved)await new Promise(resolve=>setTimeout(resolve,180));
+    }
+    if(!cloudSaved)return {ok:false,stage:'cloud'};
+    if(requireManagedImage){
+      const stored=contact(contactId);
+      if(!String(stored?.image||'').startsWith('/media/contact/')){
+        console.error('프로필 이미지 R2 정규화 확인 실패',{contactId,image:stored?.image||''});
+        return {ok:false,stage:'media'};
+      }
+    }
+    return {ok:true,stage:'cloud'};
+  }catch(error){
+    console.error('연락처 즉시 Cloudflare 저장 실패',error);
+    return {ok:false,stage:'cloud',error};
+  }finally{
+    if(saveBtn)saveBtn.disabled=false;
+  }
+}
+function contactSaveFailureMessage(result){
+  if(result?.stage==='media')return '프로필 이미지가 R2에 반영되지 않아 저장을 완료하지 않았습니다. 새로고침하지 말고 다시 저장해 주세요';
+  if(result?.stage==='bridge')return 'Cloudflare 저장 연결을 찾지 못했습니다. 새로고침하지 말고 다시 시도해 주세요';
+  if(result?.stage==='local')return '브라우저 저장 공간이 부족해 저장하지 못했습니다';
+  return '온라인 저장이 완료되지 않았습니다. 새로고침하지 말고 다시 저장해 주세요';
+}
 document.getElementById('saveContactBtn').onclick=async()=>{
   const name=document.getElementById('ctName').value.trim();
   if(!name)return toast('연락처 저장','이름을 입력해 주세요');
@@ -4147,25 +4183,36 @@ document.getElementById('saveContactBtn').onclick=async()=>{
       replaceContactReferences(original.id,sameName.id);
       data.contacts=data.contacts.filter(c=>c.id!==original.id);
     }
-    document.getElementById('contactModal').classList.remove('open');
     syncAllPostContactApplicationHistories();
-    const saved=saveData('연락처 중복 교체');
-    toast(candidate.name,saved?'기존 중복 연락처를 선택한 정보로 교체했습니다':'연락처는 변경되었지만 저장 공간이 부족합니다');
+    const result=await persistContactSaveAndWait('연락처 중복 교체',sameName.id,{requireManagedImage:Boolean(file)});
+    if(!result.ok){
+      toast(candidate.name,contactSaveFailureMessage(result));
+      return;
+    }
+    document.getElementById('contactModal').classList.remove('open');
+    pendingContactImageFile=null;
+    pendingContactImageDataUrl='';
+    toast(candidate.name,'기존 중복 연락처를 선택한 정보로 교체하고 온라인 저장까지 완료했습니다');
     return;
   }
 
+  const savedContactId=original?.id||candidate.id;
   if(original){
     Object.assign(original,candidate,{id:original.id});
   }else{
     data.contacts.push(candidate);
   }
+  syncAllPostContactApplicationHistories();
+  const result=await persistContactSaveAndWait('연락처 저장',savedContactId,{requireManagedImage:Boolean(file)});
+  if(!result.ok){
+    toast(candidate.name,contactSaveFailureMessage(result));
+    return;
+  }
   document.getElementById('contactModal').classList.remove('open');
   pendingContactImageFile=null;
   pendingContactImageDataUrl='';
-  syncAllPostContactApplicationHistories();
-  const saved=saveData('연락처 저장');
   renderContactFilters();
-  toast(candidate.name,saved?'연락처에 저장되었습니다':'연락처는 추가되었지만 브라우저 저장 공간이 부족합니다');
+  toast(candidate.name,'연락처와 프로필 이미지의 온라인 저장이 완료되었습니다');
 }
 document.getElementById('deleteContactBtn').onclick=()=>{if(!editingContactId)return;data.contacts=data.contacts.filter(x=>x.id!==editingContactId);data.events.forEach(e=>e.participants=(e.participants||[]).filter(x=>x!==editingContactId));data.targetList=(data.targetList||[]).filter(x=>x!==editingContactId);document.getElementById('contactModal').classList.remove('open');saveData('연락처 삭제');toast('연락처','삭제되었습니다')}
 
