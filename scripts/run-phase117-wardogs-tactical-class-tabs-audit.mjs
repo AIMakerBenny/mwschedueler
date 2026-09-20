@@ -8,9 +8,9 @@ export function runPhase117WardogsTacticalClassTabsAudit(){
   const js=fs.readFileSync('assets/wardogs-v1.js','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
+  if(!/assets\/wardogs-v1\.css\?v=1\.0\.0-phase(?:117|1[2-9][0-9]|[2-9][0-9]{2,})/.test(index))issues.push('WARDOGS tactical stylesheet is not loaded by index');
+  if(!/assets\/wardogs-v1\.js\?v=1\.0\.0-phase(?:117|1[2-9][0-9]|[2-9][0-9]{2,})/.test(index))issues.push('WARDOGS tactical runtime is not loaded by index');
   for(const token of [
-    'assets/wardogs-v1.css?v=1.0.0-phase117',
-    'assets/wardogs-v1.js?v=1.0.0-phase117',
     'data-wardogs-ui-v117="1"',
     'WARDOGS COMMAND INTERFACE',
     'TACTICAL OPERATIONS SYSTEM // 전쟁견들',
@@ -51,8 +51,8 @@ export function runPhase117WardogsTacticalClassTabsAudit(){
 
   for(const token of [
     'run-phase117-wardogs-tactical-class-tabs-audit.mjs',
-    'assets/wardogs-v1.css?v=1.0.0-phase117',
-    'assets/wardogs-v1.js?v=1.0.0-phase117',
+    'assets/wardogs-v1.css?v=1.0.0-phase124',
+    'assets/wardogs-v1.js?v=1.0.0-phase124',
     'WARDOGS COMMAND INTERFACE',
     'data-wardogs-class="pilot"'
   ])if(!workflow.includes(token))issues.push('production Phase 117 verification missing: '+token);
