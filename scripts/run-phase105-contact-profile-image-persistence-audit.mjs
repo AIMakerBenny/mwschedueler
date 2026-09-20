@@ -29,7 +29,7 @@ export function runPhase105ContactProfileImagePersistenceAudit(){
   if(!saveBody)issues.push('saveContact button handler not found');
   if(saveBody){
     const fileIndex=saveBody.indexOf("const file=pendingContactImageFile||document.getElementById('ctImage').files?.[0]||null;");
-    const decodeIndex=saveBody.indexOf('candidate.image=await compressContactImage(raw);');
+    const decodeIndex=saveBody.indexOf('candidate.image=await mwsCompressContactImageV113(raw);');
     const awaitedCommitIndex=saveBody.indexOf("await persistContactSaveAndWait('연락처 저장'");
     if(fileIndex<0||decodeIndex<0||fileIndex>decodeIndex)issues.push('profile file is not resolved before image conversion');
     if(decodeIndex<0||awaitedCommitIndex<0||decodeIndex>awaitedCommitIndex)issues.push('profile image conversion is not completed before durable contact save');
