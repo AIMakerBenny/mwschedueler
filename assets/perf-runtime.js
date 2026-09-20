@@ -208,7 +208,7 @@
     if(document.getElementById('mwsCf571RuntimeScript'))return;
     const s=document.createElement('script');
     s.id='mwsCf571RuntimeScript';
-    s.src='assets/maintenance-runtime-v130.js?v=1.3.0-stage68-achievement-backupfix1';
+    s.src='assets/maintenance-runtime-v130.js?v=1.3.0-stage68-contact-media-canonical1';
     s.onload=()=>{
       if(window.__mwsMaintenanceRuntimeV130Ready){installLosslessImagePolicy();forceVersion();return}
       console.error('Mawang maintenance runtime readiness handshake failed');

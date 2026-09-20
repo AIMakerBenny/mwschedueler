@@ -57,6 +57,7 @@ jobs:
           node --check scripts/run-phase109-participant-avatar-stability-audit.mjs
           node --check scripts/run-phase110-universal-contact-media-recovery-audit.mjs
           node --check scripts/run-phase111-contact-media-dom-binding-audit.mjs
+          node --check scripts/run-phase112-canonical-managed-media-ownership-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -998,13 +999,20 @@ jobs:
           node --check /tmp/online-v5-loader.js
           grep -Fq 'safeFeatures=features.replace' /tmp/online-v5-loader.js
           grep -Fq 'run(safeFeatures)' /tmp/online-v5-loader.js
-          grep -Fq 'maintenance-runtime-v130.js?v=1.3.0-stage68-achievement-backupfix1' /tmp/perf.js
+          grep -Fq 'maintenance-runtime-v130.js?v=1.3.0-stage68-contact-media-canonical1' /tmp/perf.js
           grep -Fq 'Mawang maintenance runtime readiness handshake failed' /tmp/perf.js
           retry_contains "$BASE/assets/maintenance-runtime-v130.js?deploy=$GITHUB_SHA" 'async function baseBackupAsync()' > /tmp/maintenance-runtime.js
           node --check /tmp/maintenance-runtime.js
           grep -Fq "typeof window.buildFullBackupObjectAsync==='function'" /tmp/maintenance-runtime.js
           grep -Fq 'const backup=await baseBackupAsync();' /tmp/maintenance-runtime.js
           grep -Fq 'function managedMediaProxyUrl(value)' /tmp/maintenance-runtime.js
+          grep -Fq 'function canonicalMediaUrl(value)' /tmp/maintenance-runtime.js
+          grep -Fq 'function isManagedMediaRef(value)' /tmp/maintenance-runtime.js
+          grep -Fq "const CACHE_DB='mawang_data_v130';" /tmp/maintenance-runtime.js
+          if grep -Fq 'function directMediaUrl(value)' /tmp/maintenance-runtime.js; then
+            echo 'Legacy same-origin to direct-R2 migration remains live.' >&2
+            exit 1
+          fi
           grep -Fq 'CF V5.7.1 backup media partial failures' /tmp/maintenance-runtime.js
           if grep -Fq 'R2 CORS 설정을 확인하세요.' /tmp/maintenance-runtime.js; then
             echo 'Legacy all-or-nothing R2 CORS backup failure remains.' >&2

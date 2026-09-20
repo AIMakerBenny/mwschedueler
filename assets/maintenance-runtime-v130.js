@@ -1,9 +1,9 @@
 /* Mawang Scheduler v1.3.0 maintenance runtime successor - staged with legacy fallback
    - high-quality profile image preprocessing
    - quick data backup
-   - self-contained full backup with direct R2 media embedding
+   - self-contained full backup through same-origin managed media
    - lower-frequency admin autosave batching
-   - legacy /media URL migration to direct R2
+   - legacy direct R2 URL migration back to same-origin /media
    - calendar nested-control click guard
    - persistent build-version label
 */
@@ -18,7 +18,7 @@
   const MAX_PROFILE_SIZE=1600;
   const PROFILE_QUALITY=.92;
   const ADMIN_SAVE_DEBOUNCE_MS=2500;
-  const CACHE_DB='mawang_data';
+  const CACHE_DB='mawang_data_v130';
   const CACHE_STORES=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook'];
 
   function clone(v){
@@ -115,18 +115,29 @@
     return String(window.__mwsCf57MediaBaseUrl||localStorage.getItem('mws_cf_v571_media_base')||localStorage.getItem('mws_cf_v57_media_base')||R2_MEDIA_BASE).replace(/\/+$/,'');
   }
 
-  function directMediaUrl(value){
+  function canonicalMediaUrl(value){
     if(typeof value!=='string'||!value)return value;
     let u;
     try{u=new URL(value,location.href)}catch(_){return value}
-    if(u.origin!==location.origin)return value;
-    const match=/^\/media\/(contact|workspace)\/([^/?#]+)$/.exec(u.pathname);
+    if(u.origin===location.origin){
+      return /^\/media\/(contact|workspace)\/[^/?#]+$/.test(u.pathname)?value:value;
+    }
+    let base;
+    try{base=new URL(mediaBase())}catch(_){return value}
+    if(u.origin!==base.origin)return value;
+    const prefix=base.pathname.replace(/\/$/,'');
+    const relative=u.pathname.slice(prefix.length).replace(/^\/+/, '');
+    const match=/^(contacts|workspace)\/([^/]+)(?:\/v(\d+)(?:-([a-f0-9]{32}))?)?$/.exec(relative);
     if(!match)return value;
-    let key=match[2];
-    try{key=decodeURIComponent(key)}catch(_){}
-    const folder=match[1]==='contact'?'contacts':'workspace';
-    const v=u.searchParams.get('v');
-    return `${mediaBase()}/${folder}/${encodeURIComponent(key)}${v?`?v=${encodeURIComponent(v)}`:''}`;
+    let key=match[2];try{key=decodeURIComponent(key)}catch(_){}
+    const kind=match[1]==='contacts'?'contact':'workspace';
+    const params=new URLSearchParams();
+    const version=match[3]||u.searchParams.get('v')||'';
+    const token=String(match[4]||u.searchParams.get('h')||'').toLowerCase();
+    if(/^\d+$/.test(version)&&Number(version)>0)params.set('v',String(Number(version)));
+    if(/^[a-f0-9]{32}$/.test(token))params.set('h',token);
+    if(kind==='contact')params.set('r','2');
+    return `/media/${kind}/${encodeURIComponent(key)}${params.size?`?${params.toString()}`:''}`;
   }
 
   function rewriteLegacyMediaInPlace(root){
@@ -134,13 +145,13 @@
     function visit(value){
       if(Array.isArray(value)){
         for(let i=0;i<value.length;i++){
-          const next=directMediaUrl(value[i]);
+          const next=canonicalMediaUrl(value[i]);
           if(next!==value[i]){value[i]=next;changed++}
           if(value[i]&&typeof value[i]==='object')visit(value[i]);
         }
       }else if(value&&typeof value==='object'){
         for(const key of Object.keys(value)){
-          const next=directMediaUrl(value[key]);
+          const next=canonicalMediaUrl(value[key]);
           if(next!==value[key]){value[key]=next;changed++}
           if(value[key]&&typeof value[key]==='object')visit(value[key]);
         }
@@ -195,13 +206,12 @@
     });
   }
 
-  function isManagedDirectMedia(value){
+  function isManagedMediaRef(value){
     if(typeof value!=='string'||!value)return false;
-    const base=mediaBase();
-    if(!base)return false;
     try{
-      const u=new URL(value,location.href),b=new URL(base);
-      const prefix=b.pathname.replace(/\/$/,'');
+      const u=new URL(value,location.href);
+      if(u.origin===location.origin)return /^\/media\/(contact|workspace)\/[^/?#]+$/.test(u.pathname);
+      const b=new URL(mediaBase()),prefix=b.pathname.replace(/\/$/,'');
       return u.origin===b.origin&&(u.pathname.startsWith(`${prefix}/contacts/`)||u.pathname.startsWith(`${prefix}/workspace/`));
     }catch(_){return false}
   }
@@ -226,7 +236,7 @@
 
   function collectManagedMedia(root){
     const set=new Set();
-    walk(root,v=>{if(isManagedDirectMedia(v))set.add(v)});
+    walk(root,v=>{if(isManagedMediaRef(v))set.add(v)});
     return [...set];
   }
 
@@ -242,20 +252,8 @@
   }
 
   function managedMediaProxyUrl(value){
-    if(!isManagedDirectMedia(value))return String(value||'');
-    try{
-      const u=new URL(value,location.href),b=new URL(mediaBase());
-      const prefix=b.pathname.replace(/\/$/,'');
-      const relative=u.pathname.slice(prefix.length).replace(/^\/+/, '');
-      const match=/^(contacts|workspace)\/([^/]+)$/.exec(relative);
-      if(!match)return String(value||'');
-      let key=match[2];try{key=decodeURIComponent(key)}catch(_){}
-      const kind=match[1]==='contacts'?'contact':'workspace';
-      const params=new URLSearchParams();
-      const version=u.searchParams.get('v');
-      if(version)params.set('v',version);
-      return `/media/${kind}/${encodeURIComponent(key)}${params.size?`?${params.toString()}`:''}`;
-    }catch(_){return String(value||'')}
+    if(!isManagedMediaRef(value))return String(value||'');
+    return canonicalMediaUrl(value);
   }
 
   async function fetchMedia(url){

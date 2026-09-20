@@ -109,6 +109,7 @@ import {runPhase108PostScheduleParticipantPrefillAudit} from './run-phase108-pos
 import {runPhase109ParticipantAvatarStabilityAudit} from './run-phase109-participant-avatar-stability-audit.mjs';
 import {runPhase110UniversalContactMediaRecoveryAudit} from './run-phase110-universal-contact-media-recovery-audit.mjs';
 import {runPhase111ContactMediaDomBindingAudit} from './run-phase111-contact-media-dom-binding-audit.mjs';
+import {runPhase112CanonicalManagedMediaOwnershipAudit} from './run-phase112-canonical-managed-media-ownership-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1195,6 +1196,16 @@ export function runPhase111FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase111FullIntegrationAudit();}
+export function runPhase112FullIntegrationAudit(){
+  const previous=runPhase111FullIntegrationAudit(), current=runPhase112CanonicalManagedMediaOwnershipAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:112,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase112FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
