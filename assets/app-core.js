@@ -1816,10 +1816,9 @@ window.setParticipantStatus=(id,status)=>{
 /* 참여자 검색, 다중 선택, 버블 표시, 빠른 추가 */
 function mwsContactMediaIdV110(img){
   if(!(img instanceof HTMLImageElement))return '';
+  const raw=String(img.getAttribute('src')||img.currentSrc||'').trim();
   const explicit=String(img.dataset.contactId||'').trim();
-  if(explicit)return explicit;
-  const raw=String(img.currentSrc||img.getAttribute('src')||'').trim();
-  if(!raw)return '';
+  if(!raw)return explicit;
   try{
     const url=new URL(raw,location.href);
     const match=url.pathname.match(/^\/media\/contact\/([^/]+)$/);
@@ -1837,6 +1836,30 @@ function mwsContactFallbackNodeV110(img,id){
   fallback.style.placeItems='center';
   fallback.textContent=String(img.dataset.contactInitials||initials(name)||'?');
   return fallback;
+}
+function mwsPersistentContactMediaFallbackV115(img,id){
+  if(!(img instanceof HTMLImageElement))return false;
+  const person=typeof contact==='function'?contact(id):(data?.contacts||[]).find(row=>String(row?.id||'')===String(id));
+  const name=String(person?.name||img.alt||'');
+  if(img.id==='ctHeaderAvatarImage'){
+    img.removeAttribute('src');
+    img.style.display='none';
+    img.style.visibility='visible';
+    const fallback=document.getElementById('ctHeaderAvatarFallback');
+    if(fallback){
+      fallback.style.display='grid';
+      fallback.textContent=String(initials(name)||'?').slice(0,1);
+    }
+    return true;
+  }
+  if(img.id==='ctImagePreview'){
+    img.removeAttribute('src');
+    img.classList.remove('visible');
+    img.style.visibility='visible';
+    document.getElementById('ctImagePreviewPlaceholder')?.classList.remove('hidden');
+    return true;
+  }
+  return false;
 }
 window.mwsContactMediaLoadedV110=img=>{
   if(!(img instanceof HTMLImageElement))return false;
@@ -1863,6 +1886,7 @@ window.mwsRecoverContactMediaImageV110=img=>{
     return true;
   }
   img.dataset.mwsContactRecoveryV110='failed';
+  if(mwsPersistentContactMediaFallbackV115(img,id))return true;
   img.replaceWith(mwsContactFallbackNodeV110(img,id));
   return true;
 };
@@ -4027,12 +4051,16 @@ function setContactImagePreview(src='',filename=''){
   const headerFallback=document.getElementById('ctHeaderAvatarFallback');
   const name=String(document.getElementById('ctName')?.value||'').trim();
   if(img){
-    if(src){img.src=src;img.classList.add('visible');placeholder?.classList.add('hidden')}
-    else{img.removeAttribute('src');img.classList.remove('visible');placeholder?.classList.remove('hidden')}
+    if(src){
+      img.src=src;img.classList.add('visible');placeholder?.classList.add('hidden');
+      mwsBindContactMediaImageV111(img);
+    }else{img.removeAttribute('src');img.classList.remove('visible');placeholder?.classList.remove('hidden')}
   }
   if(headerImg&&headerFallback){
-    if(src){headerImg.src=src;headerImg.style.display='block';headerFallback.style.display='none'}
-    else{headerImg.removeAttribute('src');headerImg.style.display='none';headerFallback.style.display='grid';headerFallback.textContent=(name||'?').slice(0,1)}
+    if(src){
+      headerImg.src=src;headerImg.style.display='block';headerFallback.style.display='none';
+      mwsBindContactMediaImageV111(headerImg);
+    }else{headerImg.removeAttribute('src');headerImg.style.display='none';headerFallback.style.display='grid';headerFallback.textContent=(name||'?').slice(0,1)}
   }
   if(fileName)fileName.textContent=filename||'선택된 파일 없음';
 }
