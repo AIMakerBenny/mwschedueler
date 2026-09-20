@@ -11,7 +11,7 @@ export function runPhase119WardogsDataFoundationAudit(){
   const entry=fs.readFileSync('src/cf-v111-entry.js','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  if(!index.includes('assets/wardogs-data-v1.js?v=1.0.0-phase119'))issues.push('WARDOGS data runtime is not loaded by index');
+  if(!/assets\/wardogs-data-v1\.js\?v=1\.0\.0-phase(?:119|1[2-9][0-9]|[2-9][0-9]{2,})/.test(index))issues.push('WARDOGS data runtime is not loaded by index');
 
   for(const token of [
     "const SCHEMA_VERSION=1;",
@@ -64,7 +64,7 @@ export function runPhase119WardogsDataFoundationAudit(){
 
   for(const token of [
     'run-phase119-wardogs-data-foundation-audit.mjs',
-    'assets/wardogs-data-v1.js?v=1.0.0-phase119',
+    'assets/wardogs-data-v1.js?v=1.0.0-phase120',
     'mws_wardogs_meta_v1',
     "wardogs:['wardogs']",
     '/api/parts/wardogs',

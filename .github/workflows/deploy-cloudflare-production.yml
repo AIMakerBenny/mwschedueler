@@ -68,6 +68,7 @@ jobs:
           node --check assets/wardogs-intro-v1.js
           node --check scripts/run-phase119-wardogs-data-foundation-audit.mjs
           node --check assets/wardogs-data-v1.js
+          node --check scripts/run-phase120-wardogs-contact-link-search-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -362,7 +363,7 @@ jobs:
           grep -Fq 'CONTACT DATABASE <b>LINKED</b>' /tmp/index.html
           grep -Fq 'CLASS SYSTEM <b>ONLINE</b>' /tmp/index.html
           grep -Fq 'MISSION DATA <b>READY</b>' /tmp/index.html
-          grep -Fq 'assets/wardogs-data-v1.js?v=1.0.0-phase119' /tmp/index.html
+          grep -Fq 'assets/wardogs-data-v1.js?v=1.0.0-phase120' /tmp/index.html
           grep -Fq 'id="achievementEmptyState"' /tmp/index.html
           grep -Fq 'id="achievementCountChip"' /tmp/index.html
           grep -Fq 'id="achievementGallery" aria-live="polite" hidden' /tmp/index.html
@@ -402,6 +403,19 @@ jobs:
           grep -Fq "const CLASS_IDS=Object.freeze(['assault','medic','recon','support','driver','pilot']);" /tmp/wardogs-data-v1.js
           grep -Fq "const contactId=String(item.contactId||'').trim();" /tmp/wardogs-data-v1.js
           grep -Fq "function findContact(contactId)" /tmp/wardogs-data-v1.js
+          grep -Fq "function resolveContactLink(cardOrContactId)" /tmp/wardogs-data-v1.js
+          grep -Fq "function searchContacts(query='',options={})" /tmp/wardogs-data-v1.js
+          grep -Fq "if(typeof window.contactMatches==='function')return window.contactMatches;" /tmp/wardogs-data-v1.js
+          grep -Fq "window.__mwsWardogsContactSearchV120='app-core-search71-consumer';" /tmp/wardogs-data-v1.js
+          grep -Fq "window.mwsTextMatches=mwsTextMatches;" /tmp/app-core.js
+          grep -Fq "window.contactMatches=contactMatches;" /tmp/app-core.js
+          grep -Fq "window.__mwsSearchOwnerV130='app-core-search71';" /tmp/app-core.js
+          test "$(grep -Ec 'function[[:space:]]+mwsTextMatches[[:space:]]*\(' /tmp/app-core.js)" -eq 1
+          test "$(grep -Ec 'function[[:space:]]+contactMatches[[:space:]]*\(' /tmp/app-core.js)" -eq 1
+          if grep -Eq 'function[[:space:]]+mwsTextMatches[[:space:]]*\(|function[[:space:]]+contactMatches[[:space:]]*\(|window\.mwsTextMatches[[:space:]]*=|window\.contactMatches[[:space:]]*=' /tmp/wardogs-data-v1.js; then
+            echo 'WARDOGS attempted to define or override the canonical contact search owner.' >&2
+            exit 1
+          fi
           grep -Fq 'function mwsAchievementCreateCardV1621(fields={})' /tmp/app-core.js
           grep -Fq 'function mwsAchievementUpdateCardV1621(id,patch={})' /tmp/app-core.js
           grep -Fq 'function mwsAchievementDeleteCardV1621(id)' /tmp/app-core.js

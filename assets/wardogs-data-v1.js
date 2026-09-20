@@ -1,4 +1,4 @@
-/* WARDOGS Phase 119 - metadata schema foundation */
+/* WARDOGS Phase 120 - metadata + contact linkage/search foundation */
 (()=>{
 'use strict';
 if(window.__mwsWardogsDataV119)return;
@@ -49,6 +49,10 @@ function normalize(raw){
 function appData(){
   try{return typeof data==='object'&&data?data:null}catch(_){return null}
 }
+function contacts(){
+  const root=appData();
+  return Array.isArray(root?.contacts)?root.contacts:[];
+}
 function get(){
   const root=appData();
   if(!root)return empty();
@@ -63,9 +67,44 @@ function getCards(classId,{activeOnly=false}={}){
 function findContact(contactId){
   const id=String(contactId||'').trim();
   if(!id)return null;
-  const root=appData();
-  const contacts=Array.isArray(root?.contacts)?root.contacts:[];
-  return contacts.find(contact=>String(contact?.id||'')===id)||null;
+  return contacts().find(contact=>String(contact?.id||'')===id)||null;
+}
+function resolveContactLink(cardOrContactId){
+  const contactId=typeof cardOrContactId==='string'
+    ?String(cardOrContactId||'').trim()
+    :String(cardOrContactId?.contactId||'').trim();
+  const contact=findContact(contactId);
+  return Object.freeze({
+    contactId,
+    linked:Boolean(contact),
+    orphaned:Boolean(contactId&&!contact),
+    contact:contact||null
+  });
+}
+function contactMatcher(){
+  if(typeof window.contactMatches==='function')return window.contactMatches;
+  if(typeof window.mwsTextMatches==='function'){
+    return (contact,q='')=>{
+      const text=String(contact?.name||'')+' '+(contact?.labels||[]).join(' ')+' '+String(contact?.notes||'');
+      return window.mwsTextMatches(text,q);
+    };
+  }
+  return null;
+}
+function searchContacts(query='',options={}){
+  const q=String(query||'');
+  const includePending=options?.includePending===true;
+  const rawLimit=Math.floor(Number(options?.limit)||50);
+  const limit=Math.max(1,Math.min(200,rawLimit));
+  const matcher=contactMatcher();
+  if(q.trim()&&!matcher)return [];
+  return contacts()
+    .filter(contact=>contact&&String(contact.id||'').trim())
+    .filter(contact=>includePending||contact.pendingSetup!==true)
+    .filter(contact=>!q.trim()||matcher(contact,q))
+    .slice()
+    .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'ko-KR',{sensitivity:'base'}))
+    .slice(0,limit);
 }
 
 window.mwsWardogsDataV119=Object.freeze({
@@ -75,6 +114,9 @@ window.mwsWardogsDataV119=Object.freeze({
   normalize,
   get,
   getCards,
-  findContact
+  findContact,
+  resolveContactLink,
+  searchContacts
 });
+window.__mwsWardogsContactSearchV120='app-core-search71-consumer';
 })();
