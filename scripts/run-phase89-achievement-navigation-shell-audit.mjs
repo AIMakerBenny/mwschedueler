@@ -20,7 +20,7 @@ export function runPhase89AchievementNavigationShellAudit(){
   if(!index.includes('id="achievementEmptyState"'))issues.push('achievement empty state is missing');
   if(!index.includes('아직 등록된 업적 카드가 없습니다.'))issues.push('achievement empty-state copy is missing');
 
-  if(!core.includes("worldtime:'세계 시간',achievements:'업적',toolTier:'티어 게임'"))issues.push('setTab title registry does not include achievements');
+  if(!core.includes("achievements:'업적'"))issues.push('setTab title registry does not include achievements');
   if(!core.includes("if(!Array.isArray(data.achievementCards))data.achievementCards=[];"))issues.push('Phase 88 achievement card data normalization was lost');
   if(!/assets\/app-core\.js\?v=1\.3\.0-search(?:8[9]|9[0-9]|[1-9][0-9]{2,})/.test(index))issues.push('app-core cache-bust is older than search89');
 
