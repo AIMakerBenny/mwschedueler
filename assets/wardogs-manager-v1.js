@@ -8,7 +8,7 @@ const CLASS_META=Object.freeze([
   {id:'assault',label:'어썰트'},
   {id:'medic',label:'메딕'},
   {id:'recon',label:'리콘'},
-  {id:'support',label:'SUPPORT'},
+  {id:'support',label:'서포트'},
   {id:'driver',label:'DRIVER'},
   {id:'pilot',label:'PILOT'}
 ]);
@@ -18,7 +18,7 @@ const CLASS_FRAMES=Object.freeze({
   assault:'assets/wardogs-frames/assault.webp?v=phase157',
   medic:'assets/wardogs-frames/medic.webp?v=phase158',
   recon:'assets/wardogs-frames/recon.webp?v=phase159',
-  support:'assets/wardogs-frames/support.webp?v=phase150',
+  support:'assets/wardogs-frames/support.webp?v=phase160',
   driver:'assets/wardogs-frames/driver.webp?v=phase150',
   pilot:'assets/wardogs-frames/pilot.webp?v=phase150'
 });

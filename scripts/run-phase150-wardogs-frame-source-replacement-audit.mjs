@@ -5,12 +5,12 @@ const EXPECTED={
   "assault": "5e2a34cafe88ef564b9b8cde4179a91f866a3856",
   "medic": "a320ccb4ec568daa81fd51df8c0d741f046f6141",
   "recon": "85677f44395b581f7d6982bae252d2a6b07797cd",
-  "support": "bd618cad27d13bd876d4c55ed3e35ef8b3c89449",
+  "support": "a87968f01538a02b008bde8bece912b843697af7",
   "driver": "23a2a8ea301fec55a20c16cacdb3d5df3f2b4a96",
   "pilot": "8be14e57997d1cc1e567448a6184bfe64ec29102"
 };
 
-const FRAME_REVISION={assault:'phase157',medic:'phase158',recon:'phase159',support:'phase150',driver:'phase150',pilot:'phase150'};
+const FRAME_REVISION={assault:'phase157',medic:'phase158',recon:'phase159',support:'phase160',driver:'phase150',pilot:'phase150'};
 
 function gitBlobSha(bytes){
   return crypto.createHash('sha1')

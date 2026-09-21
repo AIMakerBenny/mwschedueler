@@ -22,7 +22,7 @@ export function runPhase122WardogsManagerAudit(){
     "{id:'assault',label:'어썰트'}",
     "{id:'medic',label:'메딕'}",
     "{id:'recon',label:'리콘'}",
-    "{id:'support',label:'SUPPORT'}",
+    "{id:'support',label:'서포트'}",
     "{id:'driver',label:'DRIVER'}",
     "{id:'pilot',label:'PILOT'}",
     "function isAdmin(){return document.body?.dataset?.mwsMode==='admin'}",

@@ -39,7 +39,7 @@ export function runPhase117WardogsTacticalClassTabsAudit(){
     "{id:'assault',name:'어썰트',code:'ASLT',label:'어썰트'}",
     "{id:'medic',name:'메딕',code:'MED',label:'메딕'}",
     "{id:'recon',name:'리콘',code:'RCN',label:'리콘'}",
-    "{id:'support',name:'SUPPORT',code:'SUP',label:'Support'}",
+    "{id:'support',name:'서포트',code:'SUP',label:'서포트'}",
     "{id:'driver',name:'DRIVER',code:'DRV',label:'Driver'}",
     "{id:'pilot',name:'PILOT',code:'PLT',label:'Pilot'}",
     "function setClass(next)",
