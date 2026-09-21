@@ -19,8 +19,8 @@ export function runPhase122WardogsManagerAudit(){
 
   for(const token of [
     "const CLASS_META=Object.freeze([",
-    "{id:'assault',label:'ASSAULT'}",
-    "{id:'medic',label:'MEDIC'}",
+    "{id:'assault',label:'어썰트'}",
+    "{id:'medic',label:'메딕'}",
     "{id:'recon',label:'RECON'}",
     "{id:'support',label:'SUPPORT'}",
     "{id:'driver',label:'DRIVER'}",
