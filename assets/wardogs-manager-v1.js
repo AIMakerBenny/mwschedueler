@@ -1,4 +1,4 @@
-/* WARDOGS Phase 133 - portrait source manager + mobile ordering */
+/* WARDOGS Phase 137 - portrait framing controls + mobile ordering */
 (()=>{
 'use strict';
 if(window.__mwsWardogsManagerV122)return;
@@ -14,10 +14,27 @@ const CLASS_META=Object.freeze([
 ]);
 const CLASS_RANK=new Map(CLASS_META.map((item,index)=>[item.id,index]));
 
+const CLASS_FRAMES=Object.freeze({
+  assault:'assets/wardogs-frames/assault.webp',
+  medic:'assets/wardogs-frames/medic.webp',
+  recon:'assets/wardogs-frames/recon.webp',
+  support:'assets/wardogs-frames/support.webp',
+  driver:'assets/wardogs-frames/driver.webp',
+  pilot:'assets/wardogs-frames/pilot.webp'
+});
+
 let modal=null;
 let selectedId='';
 let selectedContactId='';
 let draftPortraitSource='contact';
+let draftPortraitX=50;
+let draftPortraitY=50;
+let draftPortraitScale=1;
+let portraitPointerId=0;
+let portraitPointerStartClientX=0;
+let portraitPointerStartClientY=0;
+let portraitPointerStartX=50;
+let portraitPointerStartY=50;
 let pendingFile=null;
 let pendingPreviewUrl='';
 let existingPreviewUrl='';
@@ -90,6 +107,85 @@ function clearPendingFile(){
   if(input)input.value='';
 }
 function markDirty(){draftDirty=true}
+
+function clampPortrait(value,min,max,fallback){
+  const n=Number(value);
+  if(!Number.isFinite(n))return fallback;
+  return Math.min(max,Math.max(min,n));
+}
+function currentEditorClass(){
+  return String(modal?.querySelector('[data-wardogs-manager-class]')?.value||orderClass||'assault').toLowerCase();
+}
+function renderPortraitFrame(){
+  const layer=modal?.querySelector('[data-wardogs-manager-frame]');
+  if(!layer)return;
+  const classId=currentEditorClass();
+  layer.dataset.wardogsManagerFrame=classId;
+  layer.style.backgroundImage=`url("${CLASS_FRAMES[classId]||CLASS_FRAMES.assault}")`;
+}
+function renderPortraitGeometryControls(){
+  const zoom=modal?.querySelector('[data-wardogs-manager-portrait-scale]');
+  const value=modal?.querySelector('[data-wardogs-manager-portrait-scale-value]');
+  if(zoom)zoom.value=String(draftPortraitScale);
+  if(value)value.textContent=Math.round(draftPortraitScale*100)+'%';
+}
+function applyDraftPortraitGeometry(img){
+  if(!img)return;
+  img.classList.add('wardogs-manager-portrait-image-v137');
+  img.style.setProperty('--wd-manager-portrait-x',draftPortraitX+'%');
+  img.style.setProperty('--wd-manager-portrait-y',draftPortraitY+'%');
+  img.style.setProperty('--wd-manager-portrait-scale',String(draftPortraitScale));
+}
+function refreshDraftPortraitGeometry(){
+  modal?.querySelectorAll('.wardogs-manager-portrait-image-v137').forEach(applyDraftPortraitGeometry);
+  renderPortraitGeometryControls();
+}
+function setDraftPortraitGeometry(next,{dirty=true}={}){
+  if(Object.prototype.hasOwnProperty.call(next,'x'))draftPortraitX=clampPortrait(next.x,0,100,50);
+  if(Object.prototype.hasOwnProperty.call(next,'y'))draftPortraitY=clampPortrait(next.y,0,100,50);
+  if(Object.prototype.hasOwnProperty.call(next,'scale'))draftPortraitScale=clampPortrait(next.scale,1,3,1);
+  refreshDraftPortraitGeometry();
+  if(dirty)markDirty();
+}
+function resetDraftPortraitGeometry(){
+  if(busy||!isAdmin())return;
+  setDraftPortraitGeometry({x:50,y:50,scale:1});
+  setStatus('사진 위치와 확대를 중앙 기본값으로 초기화했습니다.','warn');
+}
+function portraitPointerCleanup(){
+  const drop=modal?.querySelector('[data-wardogs-manager-drop]');
+  if(drop&&portraitPointerId){
+    try{drop.releasePointerCapture?.(portraitPointerId)}catch(_){}
+  }
+  portraitPointerId=0;
+  drop?.classList.remove('is-positioning-v137');
+}
+function handlePortraitPointerDown(event){
+  const drop=modal?.querySelector('[data-wardogs-manager-drop]');
+  if(!drop||busy||!isAdmin()||event.button>0||!drop.classList.contains('has-portrait-v137'))return;
+  portraitPointerId=event.pointerId;
+  portraitPointerStartClientX=event.clientX;
+  portraitPointerStartClientY=event.clientY;
+  portraitPointerStartX=draftPortraitX;
+  portraitPointerStartY=draftPortraitY;
+  drop.classList.add('is-positioning-v137');
+  try{drop.setPointerCapture?.(event.pointerId)}catch(_){}
+  event.preventDefault();
+}
+function handlePortraitPointerMove(event){
+  const drop=modal?.querySelector('[data-wardogs-manager-drop]');
+  if(!drop||!portraitPointerId||event.pointerId!==portraitPointerId)return;
+  const rect=drop.getBoundingClientRect();
+  if(!rect.width||!rect.height)return;
+  const dx=(event.clientX-portraitPointerStartClientX)/rect.width*100;
+  const dy=(event.clientY-portraitPointerStartClientY)/rect.height*100;
+  setDraftPortraitGeometry({x:portraitPointerStartX-dx,y:portraitPointerStartY-dy});
+  event.preventDefault();
+}
+function handlePortraitPointerEnd(event){
+  if(!portraitPointerId||event.pointerId!==portraitPointerId)return;
+  portraitPointerCleanup();
+}
 function updateCount(){
   const chip=document.getElementById('wardogsManageCount');
   if(chip)chip.textContent=`${cards().length}장`;
@@ -432,8 +528,12 @@ async function renderExistingPreview(card,token){
   const stateEl=modal?.querySelector('[data-wardogs-manager-drop-state]');
   if(!drop||!stateEl)return;
   clearObjectUrl('existing');
+  portraitPointerCleanup();
+  drop.classList.remove('has-portrait-v137');
   drop.querySelectorAll('img').forEach(img=>img.remove());
   renderPortraitSourceControls();
+  renderPortraitFrame();
+  renderPortraitGeometryControls();
 
   if(draftPortraitSource==='contact'){
     const link=contactLink(selectedContactId||card||'');
@@ -456,6 +556,8 @@ async function renderExistingPreview(card,token){
     img.src=imageUrl;
     img.draggable=false;
     img.dataset.contactId=String(link.contactId||'');
+    applyDraftPortraitGeometry(img);
+    drop.classList.add('has-portrait-v137');
     img.onload=()=>{if(token===previewToken)stateEl.hidden=true};
     img.onerror=()=>{
       if(token!==previewToken)return;
@@ -473,6 +575,8 @@ async function renderExistingPreview(card,token){
     img.alt='선택한 WARDOGS 커스텀 이미지 미리보기';
     img.src=pendingPreviewUrl;
     img.draggable=false;
+    applyDraftPortraitGeometry(img);
+    drop.classList.add('has-portrait-v137');
     drop.appendChild(img);
     stateEl.hidden=true;
     return;
@@ -498,6 +602,8 @@ async function renderExistingPreview(card,token){
     img.alt='WARDOGS 커스텀 이미지';
     img.src=existingPreviewUrl;
     img.draggable=false;
+    applyDraftPortraitGeometry(img);
+    drop.classList.add('has-portrait-v137');
     img.onload=()=>{if(token===previewToken)stateEl.hidden=true};
     img.onerror=()=>{
       if(token!==previewToken)return;
@@ -519,6 +625,9 @@ function renderEditor(){
   const card=currentDraftCard();
   selectedContactId=card?String(card.contactId||''):selectedContactId;
   draftPortraitSource=card?.portraitSource==='custom'?'custom':'contact';
+  draftPortraitX=clampPortrait(card?.portraitPositionX,0,100,50);
+  draftPortraitY=clampPortrait(card?.portraitPositionY,0,100,50);
+  draftPortraitScale=clampPortrait(card?.portraitScale,1,3,1);
   root.querySelector('[data-wardogs-manager-title]').textContent=card?'WARDOGS 카드 수정':'새 WARDOGS 카드';
   root.querySelector('[data-wardogs-manager-class]').value=card?.classId||orderClass;
   root.querySelector('[data-wardogs-manager-active]').checked=card?card.active!==false:true;
@@ -528,6 +637,8 @@ function renderEditor(){
   renderSelectedContact();
   renderContactResults();
   renderPortraitSourceControls();
+  renderPortraitGeometryControls();
+  renderPortraitFrame();
   const token=++previewToken;
   void renderExistingPreview(card,token);
   setBusy(busy);
@@ -536,6 +647,8 @@ function resetDraftForNew(){
   selectedId='';
   selectedContactId='';
   draftPortraitSource='contact';
+  draftPortraitX=50;draftPortraitY=50;draftPortraitScale=1;
+  portraitPointerCleanup();
   draftDirty=false;
   clearPendingFile();
   renderList();
@@ -628,9 +741,9 @@ async function saveDraft(){
         imageId:previousImageId,
         portraitSource,
         portraitImageId,
-        portraitPositionX:Number(target.portraitPositionX)||50,
-        portraitPositionY:Number(target.portraitPositionY)||50,
-        portraitScale:Number(target.portraitScale)||1,
+        portraitPositionX:draftPortraitX,
+        portraitPositionY:draftPortraitY,
+        portraitScale:draftPortraitScale,
         active,
         order:nextOrder,
         updatedAt:now
@@ -644,9 +757,9 @@ async function saveDraft(){
         imageId:'',
         portraitSource,
         portraitImageId,
-        portraitPositionX:50,
-        portraitPositionY:50,
-        portraitScale:1,
+        portraitPositionX:draftPortraitX,
+        portraitPositionY:draftPortraitY,
+        portraitScale:draftPortraitScale,
         order:classOrders.length?Math.max(...classOrders)+1:0,
         active,
         createdAt:now,
@@ -752,7 +865,13 @@ function ensureModal(){
                 <button type="button" data-wardogs-manager-source="custom" data-wardogs-manager-write aria-pressed="false"><strong>커스텀 이미지</strong><small>WARDOGS 전용</small></button>
               </div>
               <div class="wardogs-manager-drop-v122" data-wardogs-manager-drop>
+                <div class="wardogs-manager-frame-v137" data-wardogs-manager-frame aria-hidden="true"></div>
                 <div class="wardogs-manager-drop-state-v122" data-wardogs-manager-drop-state><strong>연락처 이미지</strong>선택한 연락처의 프로필 이미지를 자동으로 사용합니다.</div>
+              </div>
+              <div class="wardogs-manager-portrait-tools-v137">
+                <div class="wardogs-manager-portrait-help-v137"><strong>사진 구도 조절</strong><span>미리보기 사진을 마우스 또는 터치로 드래그해 위치를 이동합니다.</span></div>
+                <label class="wardogs-manager-portrait-scale-v137"><span>확대</span><input type="range" min="1" max="3" step="0.05" value="1" data-wardogs-manager-portrait-scale data-wardogs-manager-write><output data-wardogs-manager-portrait-scale-value>100%</output></label>
+                <button type="button" class="secondary wardogs-manager-portrait-reset-v137" data-wardogs-manager-portrait-reset data-wardogs-manager-write>중앙 / 100% 초기화</button>
               </div>
               <input type="file" accept="image/*" hidden data-wardogs-manager-file data-wardogs-manager-write>
               <div class="wardogs-manager-media-actions-v122">
@@ -781,17 +900,25 @@ function ensureModal(){
     if(btn)setOrderClass(btn.dataset.wardogsManagerOrderClass);
   });
   root.querySelector('[data-wardogs-manager-search]')?.addEventListener('input',renderContactResults);
-  root.querySelector('[data-wardogs-manager-class]')?.addEventListener('change',markDirty);
+  root.querySelector('[data-wardogs-manager-class]')?.addEventListener('change',()=>{markDirty();renderPortraitFrame()});
   root.querySelector('[data-wardogs-manager-active]')?.addEventListener('change',markDirty);
   root.querySelectorAll('[data-wardogs-manager-source]').forEach(btn=>btn.addEventListener('click',()=>{
     if(!busy&&isAdmin())setPortraitSource(String(btn.dataset.wardogsManagerSource||'contact'));
   }));
+  root.querySelector('[data-wardogs-manager-portrait-scale]')?.addEventListener('input',event=>{
+    if(!busy&&isAdmin())setDraftPortraitGeometry({scale:event.currentTarget.value});
+  });
+  root.querySelector('[data-wardogs-manager-portrait-reset]')?.addEventListener('click',resetDraftPortraitGeometry);
   root.querySelector('[data-wardogs-manager-save]')?.addEventListener('click',()=>void saveDraft());
   root.querySelector('[data-wardogs-manager-delete]')?.addEventListener('click',()=>void deleteCard());
   const fileInput=root.querySelector('[data-wardogs-manager-file]');
   root.querySelector('[data-wardogs-manager-pick]')?.addEventListener('click',()=>{if(!busy&&isAdmin()){fileInput.value='';fileInput.click()}});
   fileInput?.addEventListener('change',()=>{const file=Array.from(fileInput.files||[]).find(item=>String(item.type||'').startsWith('image/'));if(file)setPendingFile(file)});
   const drop=root.querySelector('[data-wardogs-manager-drop]');
+  drop?.addEventListener('pointerdown',handlePortraitPointerDown);
+  drop?.addEventListener('pointermove',handlePortraitPointerMove);
+  drop?.addEventListener('pointerup',handlePortraitPointerEnd);
+  drop?.addEventListener('pointercancel',handlePortraitPointerEnd);
   ['dragenter','dragover'].forEach(type=>drop?.addEventListener(type,event=>{event.preventDefault();if(isAdmin()&&!busy)drop.classList.add('dragover')}));
   ['dragleave','drop'].forEach(type=>drop?.addEventListener(type,event=>{event.preventDefault();drop.classList.remove('dragover')}));
   drop?.addEventListener('drop',event=>{if(!isAdmin()||busy)return;const file=Array.from(event.dataTransfer?.files||[]).find(item=>String(item.type||'').startsWith('image/'));if(file)setPendingFile(file)});
@@ -820,7 +947,7 @@ async function openManager(){
 function closeManager(){
   if(!modal||modal.hidden||busy)return;
   if(draftDirty&&!window.confirm('저장하지 않은 변경사항이 있습니다. 관리창을 닫을까요?'))return;
-  draftDirty=false;selectedId='';selectedContactId='';draftPortraitSource='contact';dragCardId='';dragClassId='';touchOrderCleanup();clearPendingFile();clearObjectUrl('existing');previewToken++;
+  draftDirty=false;selectedId='';selectedContactId='';draftPortraitSource='contact';draftPortraitX=50;draftPortraitY=50;draftPortraitScale=1;dragCardId='';dragClassId='';portraitPointerCleanup();touchOrderCleanup();clearPendingFile();clearObjectUrl('existing');previewToken++;
   modal.hidden=true;document.body.classList.remove('mws-wardogs-manager-open-v122');
   if(lastFocus?.isConnected)setTimeout(()=>lastFocus.focus(),0);
   lastFocus=null;
@@ -845,6 +972,7 @@ window.mwsWardogsPersistClassOrderV123=persistClassOrder;
 window.__mwsWardogsOrderingV123='class-scoped-dnd';
 window.__mwsWardogsTouchOrderingV127='pointer-events-touch-pen';
 window.__mwsWardogsPortraitManagerV133='contact-default-custom-override';
+window.__mwsWardogsPortraitAdjustV137='drag-position-zoom-frame-preview';
 window.addEventListener('mawang:datachange',event=>{
   if(String(event?.detail?.reason||'').startsWith('WARDOGS')){
     syncShell();

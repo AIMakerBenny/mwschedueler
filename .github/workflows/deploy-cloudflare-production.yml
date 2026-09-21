@@ -87,6 +87,7 @@ jobs:
           node --check scripts/run-phase134-wardogs-portrait-render-audit.mjs
           node --check scripts/run-phase135-wardogs-class-frame-assets-audit.mjs
           node --check scripts/run-phase136-wardogs-gallery-card-scale-audit.mjs
+          node --check scripts/run-phase137-wardogs-portrait-adjust-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -386,8 +387,8 @@ jobs:
           grep -Fq 'MISSION DATA <b>READY</b>' /tmp/index.html
           grep -Fq 'assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130' /tmp/index.html
           grep -Fq 'assets/wardogs-media-v1.js?v=1.0.0-phase121' /tmp/index.html
-          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait133' /tmp/index.html
-          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait133' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait137' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait137' /tmp/index.html
           grep -Fq 'class="card wardogs-manager-entry-card-v122"' /tmp/index.html
           grep -Fq 'id="wardogsManageBtn"' /tmp/index.html
           grep -Fq 'id="wardogsManageCount"' /tmp/index.html
@@ -529,8 +530,8 @@ jobs:
           grep -Fq 'object-fit:contain' /tmp/wardogs-manager-v1.css
           grep -Fq '@media(max-width:860px)' /tmp/wardogs-manager-v1.css
           echo '[phase133] WARDOGS portrait manager'
-          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait133' /tmp/index.html
-          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait133' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait137' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait137' /tmp/index.html
           grep -Fq "window.__mwsWardogsPortraitSchemaV133='contact-custom-position-scale';" /tmp/wardogs-data-v1.js
           grep -Fq "window.__mwsWardogsPortraitManagerV133='contact-default-custom-override';" /tmp/wardogs-manager-v1.js
           grep -Fq "const imageUrl=String(contact?.image||'').trim();" /tmp/wardogs-manager-v1.js
@@ -538,6 +539,20 @@ jobs:
           retry_contains "$BASE/assets/wardogs-manager-v1.css?deploy=$GITHUB_SHA" '.wardogs-manager-source-v133{' > /tmp/wardogs-manager-v133.css
           grep -Fq '.wardogs-manager-source-v133 button.active{' /tmp/wardogs-manager-v133.css
           grep -Fq "const portraitImageId=String(item.portraitImageId||'').trim().slice(0,160);" src/cf-v111-auth.js
+          echo '[phase137] WARDOGS portrait position and zoom'
+          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait137' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait137' /tmp/index.html
+          grep -Fq "window.__mwsWardogsPortraitAdjustV137='drag-position-zoom-frame-preview';" /tmp/wardogs-manager-v1.js
+          grep -Fq "function handlePortraitPointerMove(event)" /tmp/wardogs-manager-v1.js
+          grep -Fq "drop?.addEventListener('pointerdown',handlePortraitPointerDown);" /tmp/wardogs-manager-v1.js
+          grep -Fq "portraitPositionX:draftPortraitX" /tmp/wardogs-manager-v1.js
+          grep -Fq "portraitPositionY:draftPortraitY" /tmp/wardogs-manager-v1.js
+          grep -Fq "portraitScale:draftPortraitScale" /tmp/wardogs-manager-v1.js
+          grep -Fq "pilot:'assets/wardogs-frames/pilot.webp'" /tmp/wardogs-manager-v1.js
+          grep -Fq '/* Phase 137: portrait framing controls */' /tmp/wardogs-manager-v1.css
+          grep -Fq '.wardogs-manager-frame-v137{' /tmp/wardogs-manager-v1.css
+          grep -Fq 'object-position:var(--wd-manager-portrait-x,50%) var(--wd-manager-portrait-y,50%);' /tmp/wardogs-manager-v1.css
+          grep -Fq 'transform:scale(var(--wd-manager-portrait-scale,1));' /tmp/wardogs-manager-v1.css
           grep -Fq "window.__mwsWardogsOrderingV123='class-scoped-dnd';" /tmp/wardogs-manager-v1.js
           grep -Fq "function classCards(classId=orderClass)" /tmp/wardogs-manager-v1.js
           grep -Fq "function handleOrderDragStart(event)" /tmp/wardogs-manager-v1.js
