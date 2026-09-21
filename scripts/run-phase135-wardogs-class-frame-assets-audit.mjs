@@ -27,9 +27,34 @@ export function runPhase135WardogsClassFrameAssetsAudit(){
     const bytes=fs.readFileSync(file);
     if(bytes.length<8000)issues.push('class frame asset unexpectedly small: '+file);
     if(bytes.length>30000)issues.push('class frame asset exceeds 30KB performance guard: '+file);
-    if(bytes.subarray(0,4).toString()!=='RIFF'||bytes.subarray(8,12).toString()!=='WEBP'){
+    if(bytes.length<12||bytes.subarray(0,4).toString()!=='RIFF'||bytes.subarray(8,12).toString()!=='WEBP'){
       issues.push('class frame asset is not WebP: '+file);
+      continue;
     }
+    const riffSize=bytes.readUInt32LE(4);
+    if(riffSize+8!==bytes.length){
+      issues.push('class frame RIFF size mismatch/truncated file: '+file+' expected '+(riffSize+8)+' bytes, got '+bytes.length);
+      continue;
+    }
+    let offset=12;
+    let hasImageChunk=false;
+    while(offset<bytes.length){
+      if(offset+8>bytes.length){
+        issues.push('class frame has truncated chunk header: '+file);
+        break;
+      }
+      const type=bytes.subarray(offset,offset+4).toString();
+      const size=bytes.readUInt32LE(offset+4);
+      const end=offset+8+size;
+      if(end>bytes.length){
+        issues.push('class frame has truncated '+type+' chunk: '+file);
+        break;
+      }
+      if(type==='VP8 '||type==='VP8L')hasImageChunk=true;
+      offset=end+(size&1);
+    }
+    if(offset!==bytes.length)issues.push('class frame chunk alignment mismatch: '+file);
+    if(!hasImageChunk)issues.push('class frame image payload missing: '+file);
   }
 
   for(const token of [
