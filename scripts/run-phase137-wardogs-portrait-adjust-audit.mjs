@@ -17,12 +17,12 @@ export function runPhase137WardogsPortraitAdjustAudit(){
 
   for(const token of [
     "const CLASS_FRAMES=Object.freeze({",
-    "assault:'assets/wardogs-frames/assault.webp'",
-    "medic:'assets/wardogs-frames/medic.webp'",
-    "recon:'assets/wardogs-frames/recon.webp'",
-    "support:'assets/wardogs-frames/support.webp'",
-    "driver:'assets/wardogs-frames/driver.webp'",
-    "pilot:'assets/wardogs-frames/pilot.webp'",
+    "assault:'assets/wardogs-frames/assault.webp",
+    "medic:'assets/wardogs-frames/medic.webp",
+    "recon:'assets/wardogs-frames/recon.webp",
+    "support:'assets/wardogs-frames/support.webp",
+    "driver:'assets/wardogs-frames/driver.webp",
+    "pilot:'assets/wardogs-frames/pilot.webp",
     "let draftPortraitX=50;",
     "let draftPortraitY=50;",
     "let draftPortraitScale=1;",

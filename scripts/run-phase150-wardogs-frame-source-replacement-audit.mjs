@@ -7,7 +7,7 @@ const EXPECTED={
   "recon": "d318aecf49be050b3825028a20354475f3a00e1d",
   "support": "bd618cad27d13bd876d4c55ed3e35ef8b3c89449",
   "driver": "23a2a8ea301fec55a20c16cacdb3d5df3f2b4a96",
-  "pilot": "05949e678d33c5a935c6dcf071f7c3c1c3bfb67f"
+  "pilot": "8be14e57997d1cc1e567448a6184bfe64ec29102"
 };
 
 function gitBlobSha(bytes){
