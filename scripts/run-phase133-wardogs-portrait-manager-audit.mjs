@@ -29,9 +29,9 @@ export function runPhase133WardogsPortraitManagerAudit(){
     "portraitImageId=String(result?.id||'');",
     "portraitImageId=previousImageId;",
     "imageId:previousImageId,",
-    "portraitPositionX:Number(target.portraitPositionX)||50",
-    "portraitPositionY:Number(target.portraitPositionY)||50",
-    "portraitScale:Number(target.portraitScale)||1",
+    "portraitPositionX:draftPortraitX",
+    "portraitPositionY:draftPortraitY",
+    "portraitScale:draftPortraitScale",
     "String(card?.imageId||'')===id||String(card?.portraitImageId||'')===id",
     "window.__mwsWardogsPortraitManagerV133='contact-default-custom-override';"
   ])if(!manager.includes(token))issues.push('portrait manager behavior missing: '+token);
