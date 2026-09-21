@@ -27,7 +27,7 @@ export function runPhase125WardogsCardDetailAudit(){
     "async function openDetail(cardId,opener=null)",
     "if(!card||card.active===false||!link?.linked)return false;",
     "root.querySelector('#wardogsDetailNameV125').textContent=String(contact?.name||'이름 없음');",
-    "root.querySelector('[data-wardogs-detail-contact-id]').textContent=String(card.contactId||'-');",
+    "root.querySelector('[data-wardogs-detail-contact-id]').textContent=",
     "root.querySelector('[data-wardogs-detail-class]').textContent=classMeta(card.classId).name;",
     "root.querySelector('[data-wardogs-detail-order]').textContent=String(Number(card.order)||0).padStart(2,'0');",
     "root.querySelector('[data-wardogs-detail-notes]').textContent=String(contact?.notes||'').trim()||'등록된 메모 없음';",
