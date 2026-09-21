@@ -43,14 +43,14 @@ export function runPhase134WardogsPortraitRenderAudit(){
   ])if(!css.includes(token))issues.push('portrait render CSS missing: '+token);
 
   for(const token of [
-    'assets/wardogs-v1.js?v=1.0.0-phase125-portrait134',
-    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait134'
+    'assets/wardogs-v1.js?v=1.0.0-phase125-portrait135',
+    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135'
   ])if(!index.includes(token))issues.push('portrait render cache revision missing: '+token);
 
   for(const token of [
     'run-phase134-wardogs-portrait-render-audit.mjs',
-    'assets/wardogs-v1.js?v=1.0.0-phase125-portrait134',
-    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait134',
+    'assets/wardogs-v1.js?v=1.0.0-phase125-portrait135',
+    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135',
     "__mwsWardogsPortraitRenderV134='contact-custom-transform-frame-slot'",
     "function portraitSpec(card)",
     "imageId:String(card?.portraitImageId||card?.imageId||'').trim(),",
@@ -58,7 +58,7 @@ export function runPhase134WardogsPortraitRenderAudit(){
     '.wardogs-class-frame-layer-v134{'
   ])if(!workflow.includes(token))issues.push('production Phase 134 verification missing: '+token);
 
-  warnings.push('Class frame layers are now present but intentionally have no frame image assigned yet; the next phase will map the six supplied frame assets to Assault/Medic/Recon/Support/Driver/Pilot.');
+  // Phase 135 verifies the six class frame assets and mapping.
   const summary={phase:134,name:'wardogs-portrait-render',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
   if(issues.length)process.exitCode=1;

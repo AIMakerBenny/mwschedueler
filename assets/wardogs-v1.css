@@ -407,3 +407,21 @@ body.mws-wardogs-detail-open-v125{overflow:hidden!important}
   position:absolute;inset:0;z-index:2;pointer-events:none;
   background-position:center;background-repeat:no-repeat;background-size:100% 100%
 }
+
+
+/* Phase 135: WARDOGS class frame assets */
+.wardogs-gallery-visual-v124.wardogs-portrait-stage-v134{
+  min-height:0;
+  aspect-ratio:3/4;
+}
+.wardogs-detail-media-frame-v125.wardogs-portrait-stage-v134{
+  width:min(100%,720px);
+  min-height:0;
+  aspect-ratio:3/4;
+}
+@media(max-width:900px){
+  .wardogs-detail-media-frame-v125.wardogs-portrait-stage-v134{
+    width:min(100%,540px);
+    min-height:0;
+  }
+}

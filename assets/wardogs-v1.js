@@ -1,4 +1,4 @@
-/* WARDOGS Phase 134 - portrait source gallery + card detail */
+/* WARDOGS Phase 135 - class frame assets + portrait gallery/detail */
 (()=>{
 'use strict';
 if(window.__mwsWardogsV117)return;
@@ -12,6 +12,20 @@ const CLASSES=Object.freeze([
   {id:'driver',name:'DRIVER',code:'DRV',label:'Driver'},
   {id:'pilot',name:'PILOT',code:'PLT',label:'Pilot'}
 ]);
+
+const CLASS_FRAMES=Object.freeze({
+  assault:'assets/wardogs-frames/assault.webp',
+  medic:'assets/wardogs-frames/medic.webp',
+  recon:'assets/wardogs-frames/recon.webp',
+  support:'assets/wardogs-frames/support.webp',
+  driver:'assets/wardogs-frames/driver.webp',
+  pilot:'assets/wardogs-frames/pilot.webp'
+});
+function applyClassFrame(layer,classId){
+  if(!layer)return;
+  const frame=CLASS_FRAMES[String(classId||'')]||CLASS_FRAMES.assault;
+  layer.style.backgroundImage=`url("${frame}")`;
+}
 
 let activeClass='assault';
 let renderToken=0;
@@ -181,6 +195,7 @@ async function loadGalleryImage(card,view,token){
   const spec=portraitSpec(card);
   view.visual.dataset.wardogsPortraitSource=spec.source;
   view.frameLayer.dataset.wardogsClassFrame=String(card?.classId||'');
+  applyClassFrame(view.frameLayer,card?.classId);
 
   if(spec.source==='contact'){
     if(!spec.url){
@@ -315,6 +330,7 @@ async function loadDetailImage(card,token){
   const spec=portraitSpec(card);
   frame.dataset.wardogsPortraitSource=spec.source;
   frameLayer.dataset.wardogsClassFrame=String(card?.classId||'');
+  applyClassFrame(frameLayer,card?.classId);
   stateEl.hidden=false;
 
   if(spec.source==='contact'){
@@ -539,6 +555,7 @@ window.mwsOpenWardogsDetailV125=openDetail;
 window.mwsCloseWardogsDetailV125=closeDetail;
 window.__mwsWardogsDetailV125='linked-contact-card-detail';
 window.__mwsWardogsPortraitRenderV134='contact-custom-transform-frame-slot';
+window.__mwsWardogsClassFramesV135='uploaded-transparent-overlays';
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
 else init();
