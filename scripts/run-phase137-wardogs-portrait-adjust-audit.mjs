@@ -64,7 +64,7 @@ export function runPhase137WardogsPortraitAdjustAudit(){
     'object-position:var(--wd-manager-portrait-x,50%) var(--wd-manager-portrait-y,50%);',
     'transform:scale(var(--wd-manager-portrait-scale,1));',
     '.wardogs-manager-drop-v122 img.wardogs-manager-frame-v140{',
-    'background-size:100% 100%',
+    'object-fit:fill;object-position:center;transform:none;transform-origin:center;',
     '.wardogs-manager-portrait-tools-v137{',
     '@media(max-width:560px)'
   ])if(!css.includes(token))issues.push('portrait adjustment CSS missing: '+token);
