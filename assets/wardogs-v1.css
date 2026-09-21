@@ -491,3 +491,18 @@ body.mws-wardogs-detail-open-v125{overflow:hidden!important}
   -webkit-clip-path:inset(8.2% 11.7% 23% 11.8%);
   clip-path:inset(8.2% 11.7% 23% 11.8%);
 }
+
+
+/* Phase 166: class-specific portrait apertures for refreshed frames. */
+.wardogs-portrait-stage-v134[data-wardogs-class="assault"] .wardogs-portrait-clip-v152{
+  -webkit-clip-path:inset(7.9% 11.6% 22.6% 11.8%);
+  clip-path:inset(7.9% 11.6% 22.6% 11.8%);
+}
+.wardogs-portrait-stage-v134[data-wardogs-class="support"] .wardogs-portrait-clip-v152{
+  -webkit-clip-path:inset(8.2% 12.1% 23.8% 12.2%);
+  clip-path:inset(8.2% 12.1% 23.8% 12.2%);
+}
+.wardogs-portrait-stage-v134[data-wardogs-class="pilot"] .wardogs-portrait-clip-v152{
+  -webkit-clip-path:inset(8.8% 12.2% 23.9% 13.3%);
+  clip-path:inset(8.8% 12.2% 23.9% 13.3%);
+}

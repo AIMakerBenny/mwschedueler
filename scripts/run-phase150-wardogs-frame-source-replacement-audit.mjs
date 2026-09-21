@@ -2,15 +2,15 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 
 const EXPECTED={
-  "assault": "5e2a34cafe88ef564b9b8cde4179a91f866a3856",
+  "assault": "5be42ac6d73f84d55b4f1c201438fb46610c476d",
   "medic": "07469c310003d6c4fc85e58a10fdbe642756205c",
   "recon": "8968e1138f207dee71d3fb6955351e5a2002e642",
-  "support": "fa16ddac7ae0bdb1ea128635b0152e4213433596",
+  "support": "e79a71aeed6dfbf459f4db8c47f3a7c5d596a5d8",
   "driver": "db53d6f5f106d3369eb3e0f83520e1839fb1dd5b",
-  "pilot": "c5e15dca8a09ff76a38d424dd9ec08b891df0855"
+  "pilot": "e1b408f3502ef05714a623b22110ad0f2b107cea"
 };
 
-const FRAME_REVISION={assault:'phase157',medic:'phase165',recon:'phase163',support:'phase164',driver:'phase161',pilot:'phase162'};
+const FRAME_REVISION={assault:'phase166',medic:'phase165',recon:'phase163',support:'phase166',driver:'phase161',pilot:'phase166'};
 
 function gitBlobSha(bytes){
   return crypto.createHash('sha1')
@@ -47,6 +47,8 @@ export function runPhase150WardogsFrameSourceReplacementAudit(){
   const manager=fs.readFileSync('assets/wardogs-manager-v1.js','utf8');
   const gallery=fs.readFileSync('assets/wardogs-v1.js','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
+  const galleryCss=fs.readFileSync('assets/wardogs-v1.css','utf8');
+  const managerCss=fs.readFileSync('assets/wardogs-manager-v1.css','utf8');
 
   for(const [classId,expectedSha] of Object.entries(EXPECTED)){
     const file=`assets/wardogs-frames/${classId}.webp`;
@@ -69,9 +71,22 @@ export function runPhase150WardogsFrameSourceReplacementAudit(){
     'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138-soopid141-frames150'
   ])if(!index.includes(token))issues.push('Phase 150 runtime cache revision missing: '+token);
 
+  for(const [classId,inset] of Object.entries({
+    assault:'7.9% 11.6% 22.6% 11.8%',
+    medic:'8.2% 11.7% 23% 11.8%',
+    support:'8.2% 12.1% 23.8% 12.2%',
+    pilot:'8.8% 12.2% 23.9% 13.3%'
+  })){
+    if(!galleryCss.includes(`data-wardogs-class="${classId}"`))issues.push('Phase 166 gallery aperture selector missing: '+classId);
+    if(!managerCss.includes(`data-wardogs-class="${classId}"`))issues.push('Phase 166 manager aperture selector missing: '+classId);
+    if(!galleryCss.includes(`clip-path:inset(${inset});`))issues.push('Phase 166 gallery aperture geometry missing: '+classId);
+    if(!managerCss.includes(`clip-path:inset(${inset});`))issues.push('Phase 166 manager aperture geometry missing: '+classId);
+  }
+
   for(const runtime of [manager,gallery]){
     if(!runtime.includes("window.__mwsWardogsFrameSourcesV150='user-source-rebuild-cache-busted';"))
       issues.push('Phase 150 frame source marker missing from a WARDOGS runtime');
+    if(!runtime.includes("window.__mwsWardogsFrameBatchV166='assault-support-pilot-class-apertures';"))issues.push('Phase 166 frame batch marker missing from a WARDOGS runtime');
   }
 
   for(const token of [

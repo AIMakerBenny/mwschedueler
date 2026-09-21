@@ -307,3 +307,18 @@ body.mws-wardogs-touch-ordering-v127 .wardogs-manager-list-pane-v122{
   -webkit-clip-path:inset(8.2% 11.7% 23% 11.8%);
   clip-path:inset(8.2% 11.7% 23% 11.8%);
 }
+
+
+/* Phase 166: class-specific portrait apertures for refreshed frames. */
+.wardogs-manager-drop-v122[data-wardogs-class="assault"] .wardogs-manager-portrait-clip-v152{
+  -webkit-clip-path:inset(7.9% 11.6% 22.6% 11.8%);
+  clip-path:inset(7.9% 11.6% 22.6% 11.8%);
+}
+.wardogs-manager-drop-v122[data-wardogs-class="support"] .wardogs-manager-portrait-clip-v152{
+  -webkit-clip-path:inset(8.2% 12.1% 23.8% 12.2%);
+  clip-path:inset(8.2% 12.1% 23.8% 12.2%);
+}
+.wardogs-manager-drop-v122[data-wardogs-class="pilot"] .wardogs-manager-portrait-clip-v152{
+  -webkit-clip-path:inset(8.8% 12.2% 23.9% 13.3%);
+  clip-path:inset(8.8% 12.2% 23.9% 13.3%);
+}
