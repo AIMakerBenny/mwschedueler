@@ -1,4 +1,4 @@
-/* WARDOGS Phase 130 - manager + mobile ordering + WebView2-safe ID generation */
+/* WARDOGS Phase 133 - portrait source manager + mobile ordering */
 (()=>{
 'use strict';
 if(window.__mwsWardogsManagerV122)return;
@@ -17,6 +17,7 @@ const CLASS_RANK=new Map(CLASS_META.map((item,index)=>[item.id,index]));
 let modal=null;
 let selectedId='';
 let selectedContactId='';
+let draftPortraitSource='contact';
 let pendingFile=null;
 let pendingPreviewUrl='';
 let existingPreviewUrl='';
@@ -136,7 +137,7 @@ async function restoreSnapshot(snapshot){
 }
 function referencedImage(id){
   id=String(id||'');if(!id)return false;
-  return cards().some(card=>String(card?.imageId||'')===id);
+  return cards().some(card=>String(card?.imageId||'')===id||String(card?.portraitImageId||'')===id);
 }
 async function cleanupImageIfUnused(id){
   id=String(id||'');if(!id||referencedImage(id))return false;
@@ -407,34 +408,109 @@ function renderContactResults(){
     markDirty();
     renderSelectedContact();
     renderContactResults();
+    if(draftPortraitSource==='contact')void renderExistingPreview(currentDraftCard(),++previewToken);
   }));
+}
+function renderPortraitSourceControls(){
+  modal?.querySelectorAll('[data-wardogs-manager-source]').forEach(btn=>{
+    const active=String(btn.dataset.wardogsManagerSource||'')===draftPortraitSource;
+    btn.classList.toggle('active',active);
+    btn.setAttribute('aria-pressed',active?'true':'false');
+  });
+}
+function setPortraitSource(source,{dirty=true}={}){
+  const next=source==='custom'?'custom':'contact';
+  if(draftPortraitSource===next){renderPortraitSourceControls();return}
+  draftPortraitSource=next;
+  if(dirty)markDirty();
+  renderPortraitSourceControls();
+  void renderExistingPreview(currentDraftCard(),++previewToken);
+  setStatus(next==='contact'?'연락처 프로필 이미지를 사용합니다.':'WARDOGS 전용 커스텀 이미지를 사용합니다.',dirty?'warn':'');
 }
 async function renderExistingPreview(card,token){
   const drop=modal?.querySelector('[data-wardogs-manager-drop]');
   const stateEl=modal?.querySelector('[data-wardogs-manager-drop-state]');
   if(!drop||!stateEl)return;
   clearObjectUrl('existing');
-  drop.querySelector('img')?.remove();
+  drop.querySelectorAll('img').forEach(img=>img.remove());
+  renderPortraitSourceControls();
+
+  if(draftPortraitSource==='contact'){
+    const link=contactLink(selectedContactId||card||'');
+    const contact=link?.contact||null;
+    const imageUrl=String(contact?.image||'').trim();
+    if(!link?.linked){
+      stateEl.hidden=false;
+      stateEl.innerHTML='<strong>연락처 미선택</strong>먼저 WARDOGS 인원과 연결할 연락처를 선택하세요.';
+      return;
+    }
+    if(!imageUrl){
+      stateEl.hidden=false;
+      stateEl.innerHTML='<strong>연락처 이미지 없음</strong>연락처에 프로필 이미지를 등록하면 자동으로 사용됩니다.';
+      return;
+    }
+    stateEl.hidden=false;
+    stateEl.innerHTML='<strong>연락처 이미지</strong>등록된 프로필 이미지를 불러오는 중입니다.';
+    const img=document.createElement('img');
+    img.alt=`${String(contact?.name||'WARDOGS')} 연락처 이미지`;
+    img.src=imageUrl;
+    img.draggable=false;
+    img.dataset.contactId=String(link.contactId||'');
+    img.onload=()=>{if(token===previewToken)stateEl.hidden=true};
+    img.onerror=()=>{
+      if(token!==previewToken)return;
+      stateEl.hidden=false;
+      stateEl.innerHTML='<strong>연락처 이미지 오류</strong>현재 프로필 이미지를 불러오지 못했습니다.';
+    };
+    drop.appendChild(img);
+    return;
+  }
+
   if(pendingFile){
     clearObjectUrl('pending');
     pendingPreviewUrl=URL.createObjectURL(pendingFile);
     const img=document.createElement('img');
-    img.alt='선택한 WARDOGS 카드 이미지 미리보기';img.src=pendingPreviewUrl;img.draggable=false;
-    drop.appendChild(img);stateEl.hidden=true;return;
+    img.alt='선택한 WARDOGS 커스텀 이미지 미리보기';
+    img.src=pendingPreviewUrl;
+    img.draggable=false;
+    drop.appendChild(img);
+    stateEl.hidden=true;
+    return;
   }
-  const imageId=String(card?.imageId||'');
-  if(!imageId){stateEl.hidden=false;stateEl.innerHTML='<strong>카드 이미지 없음</strong>이미지를 드래그하거나 파일을 선택하세요.';return}
-  stateEl.hidden=false;stateEl.innerHTML='<strong>이미지 불러오는 중</strong>등록된 WARDOGS 카드 이미지를 확인하고 있습니다.';
+
+  const imageId=String(card?.portraitImageId||card?.imageId||'').trim();
+  if(!imageId){
+    stateEl.hidden=false;
+    stateEl.innerHTML='<strong>커스텀 이미지 없음</strong>이미지를 드래그하거나 아래 버튼으로 파일을 선택하세요.';
+    return;
+  }
+  stateEl.hidden=false;
+  stateEl.innerHTML='<strong>커스텀 이미지</strong>등록된 WARDOGS 이미지를 불러오는 중입니다.';
   try{
     const blob=await media()?.getBlob?.(imageId);
     if(token!==previewToken)return;
-    if(!(blob instanceof Blob)){stateEl.innerHTML='<strong>이미지 없음</strong>등록된 이미지 파일을 찾지 못했습니다.';return}
+    if(!(blob instanceof Blob)){
+      stateEl.innerHTML='<strong>커스텀 이미지 없음</strong>등록된 이미지 파일을 찾지 못했습니다.';
+      return;
+    }
     existingPreviewUrl=URL.createObjectURL(blob);
-    const img=document.createElement('img');img.alt='WARDOGS 카드 이미지';img.src=existingPreviewUrl;img.draggable=false;
-    drop.appendChild(img);stateEl.hidden=true;
+    const img=document.createElement('img');
+    img.alt='WARDOGS 커스텀 이미지';
+    img.src=existingPreviewUrl;
+    img.draggable=false;
+    img.onload=()=>{if(token===previewToken)stateEl.hidden=true};
+    img.onerror=()=>{
+      if(token!==previewToken)return;
+      stateEl.hidden=false;
+      stateEl.innerHTML='<strong>커스텀 이미지 오류</strong>등록된 이미지를 불러오지 못했습니다.';
+    };
+    drop.appendChild(img);
   }catch(error){
-    console.warn('WARDOGS manager preview failed',error);
-    if(token===previewToken){stateEl.hidden=false;stateEl.innerHTML='<strong>이미지 오류</strong>카드 이미지를 불러오지 못했습니다.'}
+    console.warn('WARDOGS manager portrait preview failed',error);
+    if(token===previewToken){
+      stateEl.hidden=false;
+      stateEl.innerHTML='<strong>커스텀 이미지 오류</strong>등록된 이미지를 불러오지 못했습니다.';
+    }
   }
 }
 function currentDraftCard(){return selectedId?cardById(selectedId):null}
@@ -442,6 +518,7 @@ function renderEditor(){
   const root=modal;if(!root)return;
   const card=currentDraftCard();
   selectedContactId=card?String(card.contactId||''):selectedContactId;
+  draftPortraitSource=card?.portraitSource==='custom'?'custom':'contact';
   root.querySelector('[data-wardogs-manager-title]').textContent=card?'WARDOGS 카드 수정':'새 WARDOGS 카드';
   root.querySelector('[data-wardogs-manager-class]').value=card?.classId||orderClass;
   root.querySelector('[data-wardogs-manager-active]').checked=card?card.active!==false:true;
@@ -450,6 +527,7 @@ function renderEditor(){
   root.querySelector('[data-wardogs-manager-search]').value='';
   renderSelectedContact();
   renderContactResults();
+  renderPortraitSourceControls();
   const token=++previewToken;
   void renderExistingPreview(card,token);
   setBusy(busy);
@@ -457,11 +535,12 @@ function renderEditor(){
 function resetDraftForNew(){
   selectedId='';
   selectedContactId='';
+  draftPortraitSource='contact';
   draftDirty=false;
   clearPendingFile();
   renderList();
   renderEditor();
-  setStatus('새 카드에 연결할 연락처, 클래스, 이미지를 선택하세요.');
+  setStatus('새 카드에 연결할 연락처와 클래스를 선택하세요. 이미지는 연락처 프로필을 기본으로 사용합니다.');
 }
 function selectCard(id){
   if(busy)return;
@@ -487,9 +566,11 @@ function setPendingFile(file){
   const error=validateFile(file);
   if(error){setStatus(error,'error');return false}
   pendingFile=file;
+  draftPortraitSource='custom';
   markDirty();
+  renderPortraitSourceControls();
   void renderExistingPreview(currentDraftCard(),++previewToken);
-  setStatus('새 이미지가 선택되었습니다. 저장하면 Cloudflare R2에 반영됩니다.','warn');
+  setStatus('커스텀 이미지가 선택되었습니다. 저장하면 WARDOGS 전용 이미지로 Cloudflare R2에 반영됩니다.','warn');
   return true;
 }
 async function saveDraft(){
@@ -497,27 +578,39 @@ async function saveDraft(){
   const root=modal;
   const classId=String(root?.querySelector('[data-wardogs-manager-class]')?.value||'');
   const active=root?.querySelector('[data-wardogs-manager-active]')?.checked!==false;
+  const portraitSource=draftPortraitSource==='custom'?'custom':'contact';
   const existing=currentDraftCard();
   if(!selectedContactId){setStatus('연결할 연락처를 선택해 주세요.','error');return}
   if(!CLASS_RANK.has(classId)){setStatus('WARDOGS 클래스를 선택해 주세요.','error');return}
-  if(!existing&&!pendingFile){setStatus('새 카드에는 카드 이미지가 필요합니다.','error');return}
+
+  const fallbackCustomId=String(existing?.portraitImageId||existing?.imageId||'').trim();
+  if(portraitSource==='custom'&&!pendingFile&&!fallbackCustomId){
+    setStatus('커스텀 이미지를 사용할 경우 이미지 파일을 선택해 주세요.','error');
+    return;
+  }
   const duplicate=cards().find(card=>card.id!==selectedId&&card.contactId===selectedContactId&&card.classId===classId);
   if(duplicate){setStatus('같은 연락처와 클래스 조합의 카드가 이미 있습니다.','error');return}
 
   const snapshot=cloneWardogs();
   const previousImageId=String(existing?.imageId||'');
-  let uploadedId='';
+  const previousPortraitImageId=String(existing?.portraitImageId||'');
+  let uploadedPortraitId='';
   setBusy(true);
   setStatus('WARDOGS 카드를 저장하는 중입니다.','warn');
   try{
-    let imageId=previousImageId;
-    if(pendingFile){
-      const dimensions=await imageDimensions(pendingFile);
-      const result=await media().put(pendingFile,dimensions);
-      imageId=String(result?.id||'');
-      uploadedId=imageId;
-      if(!imageId)throw new Error('업로드된 이미지 ID를 확인할 수 없습니다.');
+    let portraitImageId=previousPortraitImageId;
+    if(portraitSource==='custom'){
+      if(pendingFile){
+        const dimensions=await imageDimensions(pendingFile);
+        const result=await media().put(pendingFile,dimensions);
+        portraitImageId=String(result?.id||'');
+        uploadedPortraitId=portraitImageId;
+        if(!portraitImageId)throw new Error('업로드된 커스텀 이미지 ID를 확인할 수 없습니다.');
+      }else if(!portraitImageId&&previousImageId){
+        portraitImageId=previousImageId;
+      }
     }
+
     const rootState=state();
     const now=new Date().toISOString();
     if(existing){
@@ -529,28 +622,55 @@ async function saveDraft(){
         const targetOrders=rootState.cards.filter(card=>card.id!==target.id&&card.classId===classId).map(card=>Number(card.order)||0);
         nextOrder=targetOrders.length?Math.max(...targetOrders)+1:0;
       }
-      Object.assign(target,{contactId:selectedContactId,classId,imageId,active,order:nextOrder,updatedAt:now});
+      Object.assign(target,{
+        contactId:selectedContactId,
+        classId,
+        imageId:previousImageId,
+        portraitSource,
+        portraitImageId,
+        portraitPositionX:Number(target.portraitPositionX)||50,
+        portraitPositionY:Number(target.portraitPositionY)||50,
+        portraitScale:Number(target.portraitScale)||1,
+        active,
+        order:nextOrder,
+        updatedAt:now
+      });
     }else{
       const classOrders=rootState.cards.filter(card=>card.classId===classId).map(card=>Number(card.order)||0);
       rootState.cards.push({
-        id:createId(),contactId:selectedContactId,classId,imageId,
-        order:classOrders.length?Math.max(...classOrders)+1:0,active,createdAt:now,updatedAt:now
+        id:createId(),
+        contactId:selectedContactId,
+        classId,
+        imageId:'',
+        portraitSource,
+        portraitImageId,
+        portraitPositionX:50,
+        portraitPositionY:50,
+        portraitScale:1,
+        order:classOrders.length?Math.max(...classOrders)+1:0,
+        active,
+        createdAt:now,
+        updatedAt:now
       });
     }
+
     normalizeStateInPlace();
     await callSave(existing?'WARDOGS 카드 수정':'WARDOGS 카드 추가');
-    if(previousImageId&&uploadedId&&previousImageId!==uploadedId)await cleanupImageIfUnused(previousImageId);
+    if(previousPortraitImageId&&uploadedPortraitId&&previousPortraitImageId!==uploadedPortraitId){
+      await cleanupImageIfUnused(previousPortraitImageId);
+    }
     const savedCard=cards().find(card=>card.contactId===selectedContactId&&card.classId===classId)||null;
     selectedId=String(savedCard?.id||selectedId||'');
     orderClass=classId;
     draftDirty=false;
     clearPendingFile();
-    renderList();renderEditor();
+    renderList();
+    renderEditor();
     setStatus(existing?'WARDOGS 카드 변경사항을 저장했습니다.':'WARDOGS 카드를 추가했습니다.','ok');
   }catch(error){
     console.error('WARDOGS manager save failed',error);
     await restoreSnapshot(snapshot);
-    if(uploadedId)await cleanupImageIfUnused(uploadedId);
+    if(uploadedPortraitId)await cleanupImageIfUnused(uploadedPortraitId);
     setStatus(error?.message||'WARDOGS 카드 저장에 실패했습니다.','error');
   }finally{setBusy(false)}
 }
@@ -562,6 +682,7 @@ async function deleteCard(){
   if(!window.confirm(`${name} · ${clsLabel(card.classId)} 카드를 삭제하시겠습니까?`))return;
   const snapshot=cloneWardogs();
   const oldImageId=String(card.imageId||'');
+  const oldPortraitImageId=String(card.portraitImageId||'');
   setBusy(true);setStatus('WARDOGS 카드를 삭제하는 중입니다.','warn');
   try{
     const rootState=state();
@@ -569,7 +690,8 @@ async function deleteCard(){
     normalizeStateInPlace();
     await callSave('WARDOGS 카드 삭제');
     await cleanupImageIfUnused(oldImageId);
-    selectedId='';selectedContactId='';draftDirty=false;clearPendingFile();
+    if(oldPortraitImageId&&oldPortraitImageId!==oldImageId)await cleanupImageIfUnused(oldPortraitImageId);
+    selectedId='';selectedContactId='';draftPortraitSource='contact';draftDirty=false;clearPendingFile();
     renderList();renderEditor();
     setStatus('WARDOGS 카드를 삭제했습니다.','ok');
   }catch(error){
@@ -624,14 +746,19 @@ function ensureModal(){
               <label class="wardogs-manager-active-v122"><input type="checkbox" data-wardogs-manager-active data-wardogs-manager-write checked> <span><strong>활성 카드</strong><br><small>비활성으로 저장하면 향후 갤러리에서 숨길 수 있습니다.</small></span></label>
             </div>
             <div class="wardogs-manager-media-v122">
+              <div class="wardogs-manager-source-label-v133">이미지 소스</div>
+              <div class="wardogs-manager-source-v133" data-wardogs-manager-source-group>
+                <button type="button" data-wardogs-manager-source="contact" data-wardogs-manager-write aria-pressed="true"><strong>연락처 이미지</strong><small>기본 · 자동 연결</small></button>
+                <button type="button" data-wardogs-manager-source="custom" data-wardogs-manager-write aria-pressed="false"><strong>커스텀 이미지</strong><small>WARDOGS 전용</small></button>
+              </div>
               <div class="wardogs-manager-drop-v122" data-wardogs-manager-drop>
-                <div class="wardogs-manager-drop-state-v122" data-wardogs-manager-drop-state><strong>카드 이미지를 드래그</strong>또는 아래 버튼으로 이미지 파일을 선택하세요.</div>
+                <div class="wardogs-manager-drop-state-v122" data-wardogs-manager-drop-state><strong>연락처 이미지</strong>선택한 연락처의 프로필 이미지를 자동으로 사용합니다.</div>
               </div>
               <input type="file" accept="image/*" hidden data-wardogs-manager-file data-wardogs-manager-write>
               <div class="wardogs-manager-media-actions-v122">
-                <button type="button" class="secondary" data-wardogs-manager-pick data-wardogs-manager-write>이미지 선택 / 교체</button>
+                <button type="button" class="secondary" data-wardogs-manager-pick data-wardogs-manager-write>커스텀 이미지 선택 / 교체</button>
               </div>
-              <div class="wardogs-manager-media-note-v122">원본 비율과 원본 바이트를 유지합니다. 이미지당 최대 32MB · IndexedDB Blob + Cloudflare R2 저장.</div>
+              <div class="wardogs-manager-media-note-v122">연락처 이미지는 원본 연락처를 그대로 참조합니다. 커스텀 이미지만 WARDOGS 전용 R2 이미지로 저장합니다.</div>
             </div>
           </div>
           <div class="wardogs-manager-actions-v122">
@@ -656,6 +783,9 @@ function ensureModal(){
   root.querySelector('[data-wardogs-manager-search]')?.addEventListener('input',renderContactResults);
   root.querySelector('[data-wardogs-manager-class]')?.addEventListener('change',markDirty);
   root.querySelector('[data-wardogs-manager-active]')?.addEventListener('change',markDirty);
+  root.querySelectorAll('[data-wardogs-manager-source]').forEach(btn=>btn.addEventListener('click',()=>{
+    if(!busy&&isAdmin())setPortraitSource(String(btn.dataset.wardogsManagerSource||'contact'));
+  }));
   root.querySelector('[data-wardogs-manager-save]')?.addEventListener('click',()=>void saveDraft());
   root.querySelector('[data-wardogs-manager-delete]')?.addEventListener('click',()=>void deleteCard());
   const fileInput=root.querySelector('[data-wardogs-manager-file]');
@@ -690,7 +820,7 @@ async function openManager(){
 function closeManager(){
   if(!modal||modal.hidden||busy)return;
   if(draftDirty&&!window.confirm('저장하지 않은 변경사항이 있습니다. 관리창을 닫을까요?'))return;
-  draftDirty=false;selectedId='';selectedContactId='';dragCardId='';dragClassId='';touchOrderCleanup();clearPendingFile();clearObjectUrl('existing');previewToken++;
+  draftDirty=false;selectedId='';selectedContactId='';draftPortraitSource='contact';dragCardId='';dragClassId='';touchOrderCleanup();clearPendingFile();clearObjectUrl('existing');previewToken++;
   modal.hidden=true;document.body.classList.remove('mws-wardogs-manager-open-v122');
   if(lastFocus?.isConnected)setTimeout(()=>lastFocus.focus(),0);
   lastFocus=null;
@@ -714,6 +844,7 @@ window.mwsCloseWardogsManagerV122=closeManager;
 window.mwsWardogsPersistClassOrderV123=persistClassOrder;
 window.__mwsWardogsOrderingV123='class-scoped-dnd';
 window.__mwsWardogsTouchOrderingV127='pointer-events-touch-pen';
+window.__mwsWardogsPortraitManagerV133='contact-default-custom-override';
 window.addEventListener('mawang:datachange',event=>{
   if(String(event?.detail?.reason||'').startsWith('WARDOGS')){
     syncShell();
