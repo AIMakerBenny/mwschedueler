@@ -21,7 +21,7 @@ export function runPhase122WardogsManagerAudit(){
     "const CLASS_META=Object.freeze([",
     "{id:'assault',label:'어썰트'}",
     "{id:'medic',label:'메딕'}",
-    "{id:'recon',label:'RECON'}",
+    "{id:'recon',label:'리콘'}",
     "{id:'support',label:'SUPPORT'}",
     "{id:'driver',label:'DRIVER'}",
     "{id:'pilot',label:'PILOT'}",

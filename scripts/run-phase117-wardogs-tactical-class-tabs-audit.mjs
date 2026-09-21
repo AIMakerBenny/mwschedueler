@@ -38,7 +38,7 @@ export function runPhase117WardogsTacticalClassTabsAudit(){
     "const CLASSES=Object.freeze([",
     "{id:'assault',name:'어썰트',code:'ASLT',label:'어썰트'}",
     "{id:'medic',name:'메딕',code:'MED',label:'메딕'}",
-    "{id:'recon',name:'RECON',code:'RCN',label:'Recon'}",
+    "{id:'recon',name:'리콘',code:'RCN',label:'리콘'}",
     "{id:'support',name:'SUPPORT',code:'SUP',label:'Support'}",
     "{id:'driver',name:'DRIVER',code:'DRV',label:'Driver'}",
     "{id:'pilot',name:'PILOT',code:'PLT',label:'Pilot'}",

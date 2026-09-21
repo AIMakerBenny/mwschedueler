@@ -7,7 +7,7 @@ window.__mwsWardogsV117=true;
 const CLASSES=Object.freeze([
   {id:'assault',name:'어썰트',code:'ASLT',label:'어썰트'},
   {id:'medic',name:'메딕',code:'MED',label:'메딕'},
-  {id:'recon',name:'RECON',code:'RCN',label:'Recon'},
+  {id:'recon',name:'리콘',code:'RCN',label:'리콘'},
   {id:'support',name:'SUPPORT',code:'SUP',label:'Support'},
   {id:'driver',name:'DRIVER',code:'DRV',label:'Driver'},
   {id:'pilot',name:'PILOT',code:'PLT',label:'Pilot'}
@@ -16,7 +16,7 @@ const CLASSES=Object.freeze([
 const CLASS_FRAMES=Object.freeze({
   assault:'assets/wardogs-frames/assault.webp?v=phase157',
   medic:'assets/wardogs-frames/medic.webp?v=phase158',
-  recon:'assets/wardogs-frames/recon.webp?v=phase150',
+  recon:'assets/wardogs-frames/recon.webp?v=phase159',
   support:'assets/wardogs-frames/support.webp?v=phase150',
   driver:'assets/wardogs-frames/driver.webp?v=phase150',
   pilot:'assets/wardogs-frames/pilot.webp?v=phase150'
