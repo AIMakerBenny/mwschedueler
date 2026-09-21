@@ -1,4 +1,4 @@
-/* WARDOGS Phase 125 - class gallery + card detail */
+/* WARDOGS Phase 134 - portrait source gallery + card detail */
 (()=>{
 'use strict';
 if(window.__mwsWardogsV117)return;
@@ -48,6 +48,62 @@ function safeHttpUrl(raw){
 function revokeDetailImageUrl(){
   if(detailImageUrl){try{URL.revokeObjectURL(detailImageUrl)}catch(_){}detailImageUrl=''}
 }
+function clampPortraitValue(value,min,max,fallback){
+  const number=Number(value);
+  if(!Number.isFinite(number))return fallback;
+  return Math.min(max,Math.max(min,number));
+}
+function portraitSpec(card){
+  const api=dataApi();
+  const link=api?.resolveContactLink?.(card);
+  const contact=link?.contact||null;
+  const source=card?.portraitSource==='custom'?'custom':'contact';
+  const geometry={
+    x:clampPortraitValue(card?.portraitPositionX,0,100,50),
+    y:clampPortraitValue(card?.portraitPositionY,0,100,50),
+    scale:clampPortraitValue(card?.portraitScale,1,3,1)
+  };
+  if(source==='custom'){
+    return {
+      source,
+      imageId:String(card?.portraitImageId||card?.imageId||'').trim(),
+      url:'',
+      contact,
+      contactId:String(card?.contactId||''),
+      ...geometry
+    };
+  }
+  return {
+    source:'contact',
+    imageId:'',
+    url:String(contact?.image||'').trim(),
+    contact,
+    contactId:String(card?.contactId||''),
+    ...geometry
+  };
+}
+function applyPortraitGeometry(img,spec){
+  img.classList.add('wardogs-portrait-image-v134');
+  img.dataset.wardogsPortraitSource=spec.source;
+  if(spec.contactId)img.dataset.contactId=spec.contactId;
+  img.style.setProperty('--wd-portrait-x',spec.x+'%');
+  img.style.setProperty('--wd-portrait-y',spec.y+'%');
+  img.style.setProperty('--wd-portrait-scale',String(spec.scale));
+}
+function handleContactPortraitError(img,placeholder,container,token,expectedToken){
+  queueMicrotask(()=>{
+    if(token!==expectedToken())return;
+    const recovery=String(img.dataset.mwsContactRecoveryV110||'');
+    if(recovery==='retry')return;
+    if(recovery==='failed'&&!img.isConnected){
+      container.classList.add('has-image','has-contact-fallback');
+      placeholder.hidden=true;
+      return;
+    }
+    placeholder.hidden=false;
+    placeholder.innerHTML='<span>CONTACT IMAGE</span><strong>LOAD FAILED</strong>';
+  });
+}
 function linkedActiveCards(classId){
   const api=dataApi();
   if(!api?.getCards)return [];
@@ -88,12 +144,19 @@ function makeGalleryCard(card){
   });
 
   const visual=document.createElement('div');
-  visual.className='wardogs-gallery-visual-v124';
+  visual.className='wardogs-gallery-visual-v124 wardogs-portrait-stage-v134';
+  visual.dataset.wardogsClass=String(card?.classId||'');
 
   const placeholder=document.createElement('div');
   placeholder.className='wardogs-gallery-placeholder-v124';
-  placeholder.innerHTML='<span>IMAGE LINK</span><strong>LOADING</strong>';
+  placeholder.innerHTML='<span>PORTRAIT</span><strong>LOADING</strong>';
   visual.appendChild(placeholder);
+
+  const frameLayer=document.createElement('div');
+  frameLayer.className='wardogs-class-frame-layer-v134';
+  frameLayer.dataset.wardogsClassFrame=String(card?.classId||'');
+  frameLayer.setAttribute('aria-hidden','true');
+  visual.appendChild(frameLayer);
 
   const footer=document.createElement('div');
   footer.className='wardogs-gallery-footer-v124';
@@ -112,34 +175,64 @@ function makeGalleryCard(card){
 
   footer.append(identity,state);
   article.append(visual,footer);
-  return {article,visual,placeholder};
+  return {article,visual,placeholder,frameLayer};
 }
 async function loadGalleryImage(card,view,token){
-  const imageId=String(card?.imageId||'').trim();
+  const spec=portraitSpec(card);
+  view.visual.dataset.wardogsPortraitSource=spec.source;
+  view.frameLayer.dataset.wardogsClassFrame=String(card?.classId||'');
+
+  if(spec.source==='contact'){
+    if(!spec.url){
+      view.placeholder.innerHTML='<span>CONTACT IMAGE</span><strong>NOT SET</strong>';
+      return;
+    }
+    view.placeholder.innerHTML='<span>CONTACT IMAGE</span><strong>LOADING</strong>';
+    const img=document.createElement('img');
+    img.alt='WARDOGS '+String(spec.contact?.name||'연락처')+' 프로필 이미지';
+    img.loading='lazy';
+    img.decoding='async';
+    img.draggable=false;
+    applyPortraitGeometry(img,spec);
+    img.onload=()=>{
+      if(token===renderToken){
+        view.visual.classList.add('has-image');
+        view.placeholder.hidden=true;
+      }
+    };
+    img.onerror=()=>handleContactPortraitError(img,view.placeholder,view.visual,token,()=>renderToken);
+    img.src=spec.url;
+    view.visual.insertBefore(img,view.frameLayer);
+    return;
+  }
+
+  const imageId=spec.imageId;
   if(!imageId){
-    view.placeholder.innerHTML='<span>NO MEDIA</span><strong>IMAGE MISSING</strong>';
+    view.placeholder.innerHTML='<span>CUSTOM IMAGE</span><strong>NOT SET</strong>';
     return;
   }
   const media=mediaApi();
   if(!media?.getBlob){
-    view.placeholder.innerHTML='<span>MEDIA OFFLINE</span><strong>STORE UNAVAILABLE</strong>';
+    view.placeholder.innerHTML='<span>CUSTOM IMAGE</span><strong>STORE UNAVAILABLE</strong>';
     return;
   }
+  view.placeholder.innerHTML='<span>CUSTOM IMAGE</span><strong>LOADING</strong>';
   try{
     const blob=await media.getBlob(imageId);
     if(token!==renderToken)return;
     if(!(blob instanceof Blob)){
-      view.placeholder.innerHTML='<span>NO MEDIA</span><strong>IMAGE MISSING</strong>';
+      view.placeholder.innerHTML='<span>CUSTOM IMAGE</span><strong>IMAGE MISSING</strong>';
       return;
     }
     const url=URL.createObjectURL(blob);
     if(token!==renderToken){URL.revokeObjectURL(url);return}
     galleryObjectUrls.push(url);
     const img=document.createElement('img');
-    img.alt='WARDOGS '+String(dataApi()?.findContact?.(card.contactId)?.name||'카드');
+    img.alt='WARDOGS '+String(spec.contact?.name||'커스텀')+' 이미지';
     img.loading='lazy';
     img.decoding='async';
     img.draggable=false;
+    applyPortraitGeometry(img,spec);
     img.src=url;
     img.onload=()=>{
       if(token===renderToken){
@@ -150,13 +243,13 @@ async function loadGalleryImage(card,view,token){
     img.onerror=()=>{
       if(token===renderToken){
         view.placeholder.hidden=false;
-        view.placeholder.innerHTML='<span>MEDIA ERROR</span><strong>LOAD FAILED</strong>';
+        view.placeholder.innerHTML='<span>CUSTOM IMAGE</span><strong>LOAD FAILED</strong>';
       }
     };
-    view.visual.appendChild(img);
+    view.visual.insertBefore(img,view.frameLayer);
   }catch(error){
-    console.warn('WARDOGS gallery media load failed',imageId,error);
-    if(token===renderToken)view.placeholder.innerHTML='<span>MEDIA ERROR</span><strong>LOAD FAILED</strong>';
+    console.warn('WARDOGS gallery portrait load failed',imageId,error);
+    if(token===renderToken)view.placeholder.innerHTML='<span>CUSTOM IMAGE</span><strong>LOAD FAILED</strong>';
   }
 }
 function ensureDetailModal(){
@@ -176,8 +269,9 @@ function ensureDetailModal(){
       </div>
       <div class="wardogs-detail-layout-v125">
         <section class="wardogs-detail-media-v125">
-          <div class="wardogs-detail-media-frame-v125" data-wardogs-detail-media>
-            <div class="wardogs-detail-media-state-v125" data-wardogs-detail-media-state><span>IMAGE LINK</span><strong>LOADING</strong></div>
+          <div class="wardogs-detail-media-frame-v125 wardogs-portrait-stage-v134" data-wardogs-detail-media>
+            <div class="wardogs-detail-media-state-v125" data-wardogs-detail-media-state><span>PORTRAIT</span><strong>LOADING</strong></div>
+            <div class="wardogs-class-frame-layer-v134" data-wardogs-detail-frame-layer aria-hidden="true"></div>
           </div>
         </section>
         <aside class="wardogs-detail-info-v125">
@@ -212,31 +306,78 @@ async function loadDetailImage(card,token){
   const root=ensureDetailModal();
   const frame=root.querySelector('[data-wardogs-detail-media]');
   const stateEl=root.querySelector('[data-wardogs-detail-media-state]');
-  if(!frame||!stateEl)return;
-  frame.querySelector('img')?.remove();
+  const frameLayer=root.querySelector('[data-wardogs-detail-frame-layer]');
+  if(!frame||!stateEl||!frameLayer)return;
+  frame.querySelectorAll('.wardogs-portrait-image-v134').forEach(node=>node.remove());
+  frame.classList.remove('has-image','has-contact-fallback');
   revokeDetailImageUrl();
+
+  const spec=portraitSpec(card);
+  frame.dataset.wardogsPortraitSource=spec.source;
+  frameLayer.dataset.wardogsClassFrame=String(card?.classId||'');
   stateEl.hidden=false;
-  stateEl.innerHTML='<span>IMAGE LINK</span><strong>LOADING</strong>';
-  const imageId=String(card?.imageId||'').trim();
-  if(!imageId){stateEl.innerHTML='<span>NO MEDIA</span><strong>IMAGE MISSING</strong>';return}
+
+  if(spec.source==='contact'){
+    if(!spec.url){
+      stateEl.innerHTML='<span>CONTACT IMAGE</span><strong>NOT SET</strong>';
+      return;
+    }
+    stateEl.innerHTML='<span>CONTACT IMAGE</span><strong>LOADING</strong>';
+    const img=document.createElement('img');
+    img.alt=`WARDOGS ${String(spec.contact?.name||'연락처')} 상세 프로필 이미지`;
+    img.decoding='async';
+    img.draggable=false;
+    applyPortraitGeometry(img,spec);
+    img.onload=()=>{
+      if(token===detailToken&&detailCardId===card.id){
+        stateEl.hidden=true;
+        frame.classList.add('has-image');
+      }
+    };
+    img.onerror=()=>handleContactPortraitError(img,stateEl,frame,token,()=>detailToken);
+    img.src=spec.url;
+    frame.insertBefore(img,frameLayer);
+    return;
+  }
+
+  const imageId=spec.imageId;
+  if(!imageId){
+    stateEl.innerHTML='<span>CUSTOM IMAGE</span><strong>NOT SET</strong>';
+    return;
+  }
+  stateEl.innerHTML='<span>CUSTOM IMAGE</span><strong>LOADING</strong>';
   try{
     const blob=await mediaApi()?.getBlob?.(imageId);
     if(token!==detailToken||detailCardId!==card.id)return;
-    if(!(blob instanceof Blob)){stateEl.innerHTML='<span>NO MEDIA</span><strong>IMAGE MISSING</strong>';return}
+    if(!(blob instanceof Blob)){
+      stateEl.innerHTML='<span>CUSTOM IMAGE</span><strong>IMAGE MISSING</strong>';
+      return;
+    }
     const url=URL.createObjectURL(blob);
     if(token!==detailToken||detailCardId!==card.id){URL.revokeObjectURL(url);return}
     detailImageUrl=url;
     const img=document.createElement('img');
-    img.alt=`WARDOGS ${String(dataApi()?.findContact?.(card.contactId)?.name||'카드')} 상세 이미지`;
+    img.alt=`WARDOGS ${String(spec.contact?.name||'커스텀')} 상세 이미지`;
     img.decoding='async';
     img.draggable=false;
+    applyPortraitGeometry(img,spec);
     img.src=url;
-    img.onload=()=>{if(token===detailToken){stateEl.hidden=true;frame.classList.add('has-image')}};
-    img.onerror=()=>{if(token===detailToken){stateEl.hidden=false;stateEl.innerHTML='<span>MEDIA ERROR</span><strong>LOAD FAILED</strong>'}};
-    frame.appendChild(img);
+    img.onload=()=>{
+      if(token===detailToken&&detailCardId===card.id){
+        stateEl.hidden=true;
+        frame.classList.add('has-image');
+      }
+    };
+    img.onerror=()=>{
+      if(token===detailToken){
+        stateEl.hidden=false;
+        stateEl.innerHTML='<span>CUSTOM IMAGE</span><strong>LOAD FAILED</strong>';
+      }
+    };
+    frame.insertBefore(img,frameLayer);
   }catch(error){
-    console.warn('WARDOGS detail media load failed',imageId,error);
-    if(token===detailToken)stateEl.innerHTML='<span>MEDIA ERROR</span><strong>LOAD FAILED</strong>';
+    console.warn('WARDOGS detail portrait load failed',imageId,error);
+    if(token===detailToken)stateEl.innerHTML='<span>CUSTOM IMAGE</span><strong>LOAD FAILED</strong>';
   }
 }
 async function openDetail(cardId,opener=null){
@@ -397,6 +538,7 @@ window.__mwsWardogsGalleryV124='active-linked-order-preserving';
 window.mwsOpenWardogsDetailV125=openDetail;
 window.mwsCloseWardogsDetailV125=closeDetail;
 window.__mwsWardogsDetailV125='linked-contact-card-detail';
+window.__mwsWardogsPortraitRenderV134='contact-custom-transform-frame-slot';
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
 else init();
@@ -408,11 +550,15 @@ window.addEventListener('mws:parts-loaded',event=>{
   if(parts.includes('wardogs'))void renderGallery();
 });
 window.addEventListener('mawang:datachange',event=>{
-  if(!String(event?.detail?.reason||'').startsWith('WARDOGS'))return;
+  const reason=String(event?.detail?.reason||'');
+  const wardogsChanged=reason.startsWith('WARDOGS');
+  const contactChanged=reason.includes('연락처')||/contact/i.test(reason);
+  if(!wardogsChanged&&!contactChanged)return;
   if(detailCardId){
     const card=cardById(detailCardId);
     const link=card?dataApi()?.resolveContactLink?.(card):null;
     if(!card||card.active===false||!link?.linked)closeDetail();
+    else if(contactChanged)void loadDetailImage(card,++detailToken);
   }
   void renderGallery();
 });

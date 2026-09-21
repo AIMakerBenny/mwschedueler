@@ -19,7 +19,7 @@ export function runPhase131WardogsFinalMobileWebViewIntegrationAudit(){
     'assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130',
     'assets/wardogs-media-v1.js?v=1.0.0-phase121-backup126-webview130',
     'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait133',
-    'assets/wardogs-v1.js?v=1.0.0-phase125',
+    'assets/wardogs-v1.js?v=1.0.0-phase125-portrait134',
     'assets/wardogs-intro-v1.js?v=1.0.0-phase118'
   ];
   let last=-1;
