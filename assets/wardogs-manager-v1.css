@@ -291,3 +291,12 @@ body.mws-wardogs-touch-ordering-v127 .wardogs-manager-list-pane-v122{
 .wardogs-manager-drop-v122>img.wardogs-manager-frame-v140:not([hidden]){
   display:block!important;visibility:visible!important;opacity:1!important
 }
+
+
+/* Phase 152: fixed portrait aperture; pan/zoom remains in the full 3:4 coordinate space. */
+.wardogs-manager-portrait-clip-v152{
+  position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none;
+  -webkit-clip-path:inset(12% 13% 24% 16%);
+  clip-path:inset(12% 13% 24% 16%);
+}
+.wardogs-manager-portrait-clip-v152>.wardogs-manager-portrait-image-v137{z-index:0}

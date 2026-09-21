@@ -527,12 +527,13 @@ function setPortraitSource(source,{dirty=true}={}){
 }
 async function renderExistingPreview(card,token){
   const drop=modal?.querySelector('[data-wardogs-manager-drop]');
+  const portraitClip=modal?.querySelector('[data-wardogs-manager-portrait-clip]');
   const stateEl=modal?.querySelector('[data-wardogs-manager-drop-state]');
-  if(!drop||!stateEl)return;
+  if(!drop||!portraitClip||!stateEl)return;
   clearObjectUrl('existing');
   portraitPointerCleanup();
   drop.classList.remove('has-portrait-v137');
-  drop.querySelectorAll('.wardogs-manager-portrait-image-v137').forEach(img=>img.remove());
+  portraitClip.replaceChildren();
   renderPortraitSourceControls();
   renderPortraitFrame();
   renderPortraitGeometryControls();
@@ -565,7 +566,7 @@ async function renderExistingPreview(card,token){
       stateEl.innerHTML='<strong>연락처 이미지 오류</strong>현재 프로필 이미지를 불러오지 못했습니다.';
     };
     stateEl.hidden=true;
-    drop.appendChild(img);
+    portraitClip.appendChild(img);
     img.src=imageUrl;
     if(img.complete&&img.naturalWidth>0)queueMicrotask(ready);
     return;
@@ -587,7 +588,7 @@ async function renderExistingPreview(card,token){
       stateEl.innerHTML='<strong>커스텀 이미지 오류</strong>선택한 이미지를 불러오지 못했습니다.';
     };
     stateEl.hidden=true;
-    drop.appendChild(img);
+    portraitClip.appendChild(img);
     img.src=pendingPreviewUrl;
     if(img.complete&&img.naturalWidth>0)queueMicrotask(ready);
     return;
@@ -621,7 +622,7 @@ async function renderExistingPreview(card,token){
       stateEl.innerHTML='<strong>커스텀 이미지 오류</strong>등록된 이미지를 불러오지 못했습니다.';
     };
     stateEl.hidden=true;
-    drop.appendChild(img);
+    portraitClip.appendChild(img);
     img.src=existingPreviewUrl;
     if(img.complete&&img.naturalWidth>0)queueMicrotask(ready);
   }catch(error){
@@ -878,6 +879,7 @@ function ensureModal(){
                 <button type="button" data-wardogs-manager-source="custom" data-wardogs-manager-write aria-pressed="false"><strong>커스텀 이미지</strong><small>WARDOGS 전용</small></button>
               </div>
               <div class="wardogs-manager-drop-v122" data-wardogs-manager-drop>
+                <div class="wardogs-manager-portrait-clip-v152" data-wardogs-manager-portrait-clip aria-hidden="true"></div>
                 <img class="wardogs-manager-frame-v140" data-wardogs-manager-frame alt="" draggable="false" aria-hidden="true">
                 <div class="wardogs-manager-drop-state-v122" data-wardogs-manager-drop-state><strong>연락처 이미지</strong>선택한 연락처의 프로필 이미지를 자동으로 사용합니다.</div>
               </div>
@@ -990,6 +992,7 @@ window.__mwsWardogsPortraitCanvasV138='quarter-scale-contain-black-no-loading-ov
 window.__mwsWardogsManagerFrameV140='img-layer-class-frame';
 window.__mwsWardogsManagerFrameV144='single-img-frame-no-overlay';
 window.__mwsWardogsFrameSourcesV150='user-source-rebuild-cache-busted';
+window.__mwsWardogsPortraitApertureV152='fixed-inner-window-manager-gallery-detail';
 window.addEventListener('mawang:datachange',event=>{
   if(String(event?.detail?.reason||'').startsWith('WARDOGS')){
     syncShell();

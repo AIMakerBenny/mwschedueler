@@ -176,6 +176,12 @@ function makeGalleryCard(card){
   visual.className='wardogs-gallery-visual-v124 wardogs-portrait-stage-v134';
   visual.dataset.wardogsClass=String(card?.classId||'');
 
+  const portraitClip=document.createElement('div');
+  portraitClip.className='wardogs-portrait-clip-v152';
+  portraitClip.dataset.wardogsPortraitClip='gallery';
+  portraitClip.setAttribute('aria-hidden','true');
+  visual.appendChild(portraitClip);
+
   const placeholder=document.createElement('div');
   placeholder.className='wardogs-gallery-placeholder-v124';
   placeholder.innerHTML='<span>PORTRAIT</span><strong>LOADING</strong>';
@@ -204,7 +210,7 @@ function makeGalleryCard(card){
 
   footer.append(identity,state);
   article.append(visual,footer);
-  return {article,visual,placeholder,frameLayer};
+  return {article,visual,portraitClip,placeholder,frameLayer};
 }
 async function loadGalleryImage(card,view,token){
   const spec=portraitSpec(card);
@@ -232,7 +238,7 @@ async function loadGalleryImage(card,view,token){
     img.onload=ready;
     img.onerror=()=>handleContactPortraitError(img,view.placeholder,view.visual,token,()=>renderToken);
     view.placeholder.hidden=true;
-    view.visual.insertBefore(img,view.frameLayer);
+    view.portraitClip.appendChild(img);
     img.src=spec.url;
     if(img.complete&&img.naturalWidth>0)queueMicrotask(ready);
     return;
@@ -280,7 +286,7 @@ async function loadGalleryImage(card,view,token){
       }
     };
     view.placeholder.hidden=true;
-    view.visual.insertBefore(img,view.frameLayer);
+    view.portraitClip.appendChild(img);
     img.src=url;
     if(img.complete&&img.naturalWidth>0)queueMicrotask(ready);
   }catch(error){
@@ -309,6 +315,7 @@ function ensureDetailModal(){
       <div class="wardogs-detail-layout-v125">
         <section class="wardogs-detail-media-v125">
           <div class="wardogs-detail-media-frame-v125 wardogs-portrait-stage-v134" data-wardogs-detail-media>
+            <div class="wardogs-portrait-clip-v152" data-wardogs-detail-portrait-clip aria-hidden="true"></div>
             <div class="wardogs-detail-media-state-v125" data-wardogs-detail-media-state><span>PORTRAIT</span><strong>LOADING</strong></div>
             <div class="wardogs-class-frame-layer-v134" data-wardogs-detail-frame-layer aria-hidden="true"></div>
           </div>
@@ -344,10 +351,11 @@ function ensureDetailModal(){
 async function loadDetailImage(card,token){
   const root=ensureDetailModal();
   const frame=root.querySelector('[data-wardogs-detail-media]');
+  const portraitClip=root.querySelector('[data-wardogs-detail-portrait-clip]');
   const stateEl=root.querySelector('[data-wardogs-detail-media-state]');
   const frameLayer=root.querySelector('[data-wardogs-detail-frame-layer]');
-  if(!frame||!stateEl||!frameLayer)return;
-  frame.querySelectorAll('.wardogs-portrait-image-v134').forEach(node=>node.remove());
+  if(!frame||!portraitClip||!stateEl||!frameLayer)return;
+  portraitClip.replaceChildren();
   frame.classList.remove('has-image','has-contact-fallback');
   revokeDetailImageUrl();
 
@@ -375,7 +383,7 @@ async function loadDetailImage(card,token){
     img.onload=ready;
     img.onerror=()=>handleContactPortraitError(img,stateEl,frame,token,()=>detailToken);
     stateEl.hidden=true;
-    frame.insertBefore(img,frameLayer);
+    portraitClip.appendChild(img);
     img.src=spec.url;
     if(img.complete&&img.naturalWidth>0)queueMicrotask(ready);
     return;
@@ -416,7 +424,7 @@ async function loadDetailImage(card,token){
       }
     };
     stateEl.hidden=true;
-    frame.insertBefore(img,frameLayer);
+    portraitClip.appendChild(img);
     img.src=url;
     if(img.complete&&img.naturalWidth>0)queueMicrotask(ready);
   }catch(error){
@@ -591,6 +599,7 @@ window.__mwsWardogsClassFramesV135='uploaded-transparent-overlays';
 window.__mwsWardogsPortraitCanvasV138='quarter-scale-contain-black-no-loading-overlay';
 window.__mwsWardogsSoopIdV141='station-url-display-fallback-contact-id';
 window.__mwsWardogsFrameSourcesV150='user-source-rebuild-cache-busted';
+window.__mwsWardogsPortraitApertureV152='fixed-inner-window-manager-gallery-detail';
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
 else init();

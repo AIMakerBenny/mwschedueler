@@ -475,3 +475,12 @@ body.mws-wardogs-detail-open-v125{overflow:hidden!important}
 .wardogs-portrait-stage-v134{background:#000!important}
 .wardogs-gallery-placeholder-v124[hidden],
 .wardogs-detail-media-state-v125[hidden]{display:none!important}
+
+
+/* Phase 152: fixed portrait aperture shared by gallery and detail renderers. */
+.wardogs-portrait-clip-v152{
+  position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;
+  -webkit-clip-path:inset(12% 13% 24% 16%);
+  clip-path:inset(12% 13% 24% 16%);
+}
+.wardogs-portrait-clip-v152>.wardogs-portrait-image-v134{z-index:0}
