@@ -101,6 +101,8 @@ jobs:
           node --check scripts/run-phase153-standard-page-top-spacing-audit.mjs
           node --check scripts/diagnose-phase154-live-layout.mjs
           node --check scripts/run-phase154-main-overlay-flow-audit.mjs
+          node --check scripts/diagnose-phase155-tier-planner-ui.mjs
+          node --check scripts/run-phase155-tier-planner-ui-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -115,6 +117,9 @@ jobs:
 
       - name: Phase 154 live layout geometry
         run: node scripts/diagnose-phase154-live-layout.mjs
+
+      - name: Phase 155 live tier planner UI
+        run: node scripts/diagnose-phase155-tier-planner-ui.mjs
 
       - name: Diagnose live data shape
         shell: bash
@@ -963,6 +968,15 @@ jobs:
             echo 'legacy broad premium child positioning remains'
             exit 1
           fi
+
+          echo '[phase155] tier controls and planner title'
+          retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" "contentPlanner:'컨텐츠 플래너'" > /tmp/app-core-phase155.js
+          node --check --input-type=commonjs < /tmp/app-core-phase155.js
+          retry_contains "$BASE/assets/tools.js?deploy=$GITHUB_SHA" 'background:rgba(255,255,255,.72)!important;color:#111!important;' > /tmp/tools-phase155.js
+          node --check --input-type=commonjs < /tmp/tools-phase155.js
+          test "$(grep -oF 'background:rgba(255,255,255,.72)!important;color:#111!important;' /tmp/tools-phase155.js | wc -l)" -ge 2
+          grep -Fq '#toolTier .mws-tier-rank{' /tmp/tools-phase155.js
+          grep -Fq '#toolTier .mws-tier-title-v106{' /tmp/tools-phase155.js
 
           echo '[2a] post-login successor freshness'
           retry_contains "$BASE/assets/post-login-runtime-v130.js?deploy=$GITHUB_SHA" 'achievement-gallery-v1621.js?v=1.6.21-phase111' > /tmp/post-login.js
