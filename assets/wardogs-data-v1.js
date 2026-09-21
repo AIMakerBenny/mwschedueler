@@ -1,4 +1,4 @@
-/* WARDOGS Phase 130 - metadata + contact linkage/search + WebView2-safe ID fallback */
+/* WARDOGS portrait schema foundation - contact/custom source + crop transforms */
 (()=>{
 'use strict';
 if(window.__mwsWardogsDataV119)return;
@@ -7,6 +7,14 @@ window.__mwsWardogsDataV119=true;
 const SCHEMA_VERSION=1;
 const CLASS_IDS=Object.freeze(['assault','medic','recon','support','driver','pilot']);
 const CLASS_SET=new Set(CLASS_IDS);
+const PORTRAIT_SOURCES=Object.freeze(['contact','custom']);
+const PORTRAIT_SOURCE_SET=new Set(PORTRAIT_SOURCES);
+
+function clampNumber(value,min,max,fallback){
+  const number=Number(value);
+  if(!Number.isFinite(number))return fallback;
+  return Math.min(max,Math.max(min,number));
+}
 
 function createId(){
   try{
@@ -41,11 +49,19 @@ function normalize(raw){
     let id=String(item.id||'').trim();
     if(!id||seen.has(id))id=createId();
     seen.add(id);
+    const portraitImageId=String(item.portraitImageId||'').trim();
+    const requestedPortraitSource=String(item.portraitSource||'contact').trim().toLowerCase();
+    const portraitSource=PORTRAIT_SOURCE_SET.has(requestedPortraitSource)&&requestedPortraitSource==='custom'&&portraitImageId?'custom':'contact';
     cards.push({
       id,
       contactId,
       classId,
       imageId:String(item.imageId||'').trim(),
+      portraitSource,
+      portraitImageId,
+      portraitPositionX:clampNumber(item.portraitPositionX,0,100,50),
+      portraitPositionY:clampNumber(item.portraitPositionY,0,100,50),
+      portraitScale:clampNumber(item.portraitScale,1,3,1),
       order:Math.max(0,Math.floor(Number(item.order??index)||0)),
       active:item.active!==false,
       createdAt:String(item.createdAt||now),
@@ -125,6 +141,7 @@ function searchContacts(query='',options={}){
 window.mwsWardogsDataV119=Object.freeze({
   schemaVersion:SCHEMA_VERSION,
   classIds:CLASS_IDS,
+  portraitSources:PORTRAIT_SOURCES,
   empty,
   createId,
   normalize,
@@ -135,4 +152,5 @@ window.mwsWardogsDataV119=Object.freeze({
   searchContacts
 });
 window.__mwsWardogsContactSearchV120='app-core-search71-consumer';
+window.__mwsWardogsPortraitSchemaV133='contact-custom-position-scale';
 })();

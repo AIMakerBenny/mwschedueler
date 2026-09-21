@@ -300,11 +300,22 @@ function normalizeWardogsPart(raw){
     let id=String(item.id||'').trim().slice(0,160);
     if(!id||seen.has(id))id=crypto.randomUUID();
     seen.add(id);
+    const portraitImageId=String(item.portraitImageId||'').trim().slice(0,160);
+    const requestedPortraitSource=String(item.portraitSource||'contact').trim().toLowerCase();
+    const portraitSource=requestedPortraitSource==='custom'&&portraitImageId?'custom':'contact';
+    const portraitPositionX=Math.min(100,Math.max(0,Number.isFinite(Number(item.portraitPositionX))?Number(item.portraitPositionX):50));
+    const portraitPositionY=Math.min(100,Math.max(0,Number.isFinite(Number(item.portraitPositionY))?Number(item.portraitPositionY):50));
+    const portraitScale=Math.min(3,Math.max(1,Number.isFinite(Number(item.portraitScale))?Number(item.portraitScale):1));
     cards.push({
       id,
       contactId,
       classId,
       imageId:String(item.imageId||'').trim().slice(0,160),
+      portraitSource,
+      portraitImageId,
+      portraitPositionX,
+      portraitPositionY,
+      portraitScale,
       order:Math.max(0,Math.floor(Number(item.order??index)||0)),
       active:item.active!==false,
       createdAt:String(item.createdAt||now).slice(0,64),
