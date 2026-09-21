@@ -2,7 +2,7 @@ import appWorker from './cf-v110-steam.js';
 
 const PARTS=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook','wardogs'];
 const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','achievementCards'];
-const WARDOGS_CLASS_IDS=Object.freeze(['assault','medic','recon','support','driver','pilot']);
+const WARDOGS_CLASS_IDS=Object.freeze(['assault','medic','recon','support','driver','pilot','unassigned']);
 const WARDOGS_CLASS_SET=new Set(WARDOGS_CLASS_IDS);
 const WARDOGS_MAX_CARDS=5000;
 const SESSION_COOKIE='mws_admin_session';

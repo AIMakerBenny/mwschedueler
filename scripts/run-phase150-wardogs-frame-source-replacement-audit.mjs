@@ -7,10 +7,11 @@ const EXPECTED={
   "recon": "8968e1138f207dee71d3fb6955351e5a2002e642",
   "support": "e79a71aeed6dfbf459f4db8c47f3a7c5d596a5d8",
   "driver": "db53d6f5f106d3369eb3e0f83520e1839fb1dd5b",
-  "pilot": "e1b408f3502ef05714a623b22110ad0f2b107cea"
+  "pilot": "e1b408f3502ef05714a623b22110ad0f2b107cea",
+  "unassigned": "7cdf33dc7aead9760f00ca3abbc30031283c6543"
 };
 
-const FRAME_REVISION={assault:'phase166',medic:'phase165',recon:'phase163',support:'phase166',driver:'phase161',pilot:'phase166'};
+const FRAME_REVISION={assault:'phase166',medic:'phase165',recon:'phase163',support:'phase166',driver:'phase161',pilot:'phase166',unassigned:'phase168'};
 
 function gitBlobSha(bytes){
   return crypto.createHash('sha1')
@@ -75,7 +76,8 @@ export function runPhase150WardogsFrameSourceReplacementAudit(){
     assault:'7.9% 11.6% 22.6% 11.8%',
     medic:'8.2% 11.7% 23% 11.8%',
     support:'8.2% 12.1% 23.8% 12.2%',
-    pilot:'8.8% 12.2% 23.9% 13.3%'
+    pilot:'8.8% 12.2% 23.9% 13.3%',
+    unassigned:'8.2% 11.5% 22.3% 12.1%'
   })){
     if(!galleryCss.includes(`data-wardogs-class="${classId}"`))issues.push('Phase 166 gallery aperture selector missing: '+classId);
     if(!managerCss.includes(`data-wardogs-class="${classId}"`))issues.push('Phase 166 manager aperture selector missing: '+classId);

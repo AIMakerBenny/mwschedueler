@@ -322,3 +322,10 @@ body.mws-wardogs-touch-ordering-v127 .wardogs-manager-list-pane-v122{
   -webkit-clip-path:inset(8.8% 12.2% 23.9% 13.3%);
   clip-path:inset(8.8% 12.2% 23.9% 13.3%);
 }
+
+
+/* Phase 168: Unassigned frame portrait aperture. */
+.wardogs-manager-drop-v122[data-wardogs-class="unassigned"] .wardogs-manager-portrait-clip-v152{
+  -webkit-clip-path:inset(8.2% 11.5% 22.3% 12.1%);
+  clip-path:inset(8.2% 11.5% 22.3% 12.1%);
+}

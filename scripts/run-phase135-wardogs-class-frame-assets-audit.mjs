@@ -14,7 +14,8 @@ export function runPhase135WardogsClassFrameAssetsAudit(){
     recon:'assets/wardogs-frames/recon.webp',
     support:'assets/wardogs-frames/support.webp',
     driver:'assets/wardogs-frames/driver.webp',
-    pilot:'assets/wardogs-frames/pilot.webp'
+    pilot:'assets/wardogs-frames/pilot.webp',
+    unassigned:'assets/wardogs-frames/unassigned.webp'
   };
 
   for(const [classId,file] of Object.entries(frames)){
@@ -88,6 +89,7 @@ export function runPhase135WardogsClassFrameAssetsAudit(){
     "support:'assets/wardogs-frames/support.webp",
     "driver:'assets/wardogs-frames/driver.webp",
     "pilot:'assets/wardogs-frames/pilot.webp",
+    "unassigned:'assets/wardogs-frames/unassigned.webp",
     'aspect-ratio:3/4;',
     "[phase148] live WARDOGS frame WebP integrity OK"
   ])if(!workflow.includes(token))issues.push('production Phase 135 verification missing: '+token);

@@ -25,6 +25,7 @@ export function runPhase122WardogsManagerAudit(){
     "{id:'support',label:'서포트'}",
     "{id:'driver',label:'드라이버'}",
     "{id:'pilot',label:'파일럿'}",
+    "{id:'unassigned',label:'미배치'}",
     "function isAdmin(){return document.body?.dataset?.mwsMode==='admin'}",
     "function waitForWardogsPart()",
     "loadedParts?.includes('wardogs')",

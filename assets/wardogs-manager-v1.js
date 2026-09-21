@@ -10,7 +10,8 @@ const CLASS_META=Object.freeze([
   {id:'recon',label:'리콘'},
   {id:'support',label:'서포트'},
   {id:'driver',label:'드라이버'},
-  {id:'pilot',label:'파일럿'}
+  {id:'pilot',label:'파일럿'},
+  {id:'unassigned',label:'미배치'}
 ]);
 const CLASS_RANK=new Map(CLASS_META.map((item,index)=>[item.id,index]));
 
@@ -20,7 +21,8 @@ const CLASS_FRAMES=Object.freeze({
   recon:'assets/wardogs-frames/recon.webp?v=phase163',
   support:'assets/wardogs-frames/support.webp?v=phase166',
   driver:'assets/wardogs-frames/driver.webp?v=phase161',
-  pilot:'assets/wardogs-frames/pilot.webp?v=phase166'
+  pilot:'assets/wardogs-frames/pilot.webp?v=phase166',
+  unassigned:'assets/wardogs-frames/unassigned.webp?v=phase168'
 });
 
 let modal=null;
@@ -995,6 +997,7 @@ window.__mwsWardogsManagerFrameV140='img-layer-class-frame';
 window.__mwsWardogsManagerFrameV144='single-img-frame-no-overlay';
 window.__mwsWardogsFrameSourcesV150='user-source-rebuild-cache-busted';
 window.__mwsWardogsFrameBatchV166='assault-support-pilot-class-apertures';
+window.__mwsWardogsUnassignedV168='seventh-class-last-slot';
 window.__mwsWardogsPortraitApertureV152='fixed-inner-window-manager-gallery-detail';
 window.addEventListener('mawang:datachange',event=>{
   if(String(event?.detail?.reason||'').startsWith('WARDOGS')){

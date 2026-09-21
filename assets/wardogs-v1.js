@@ -10,7 +10,8 @@ const CLASSES=Object.freeze([
   {id:'recon',name:'리콘',code:'RCN',label:'리콘'},
   {id:'support',name:'서포트',code:'SUP',label:'서포트'},
   {id:'driver',name:'드라이버',code:'DRV',label:'드라이버'},
-  {id:'pilot',name:'파일럿',code:'PLT',label:'파일럿'}
+  {id:'pilot',name:'파일럿',code:'PLT',label:'파일럿'},
+  {id:'unassigned',name:'미배치',code:'UNA',label:'미배치'}
 ]);
 
 const CLASS_FRAMES=Object.freeze({
@@ -19,7 +20,8 @@ const CLASS_FRAMES=Object.freeze({
   recon:'assets/wardogs-frames/recon.webp?v=phase163',
   support:'assets/wardogs-frames/support.webp?v=phase166',
   driver:'assets/wardogs-frames/driver.webp?v=phase161',
-  pilot:'assets/wardogs-frames/pilot.webp?v=phase166'
+  pilot:'assets/wardogs-frames/pilot.webp?v=phase166',
+  unassigned:'assets/wardogs-frames/unassigned.webp?v=phase168'
 });
 function applyClassFrame(layer,classId){
   if(!layer)return;
@@ -601,6 +603,7 @@ window.__mwsWardogsPortraitCanvasV138='quarter-scale-contain-black-no-loading-ov
 window.__mwsWardogsSoopIdV141='station-url-display-fallback-contact-id';
 window.__mwsWardogsFrameSourcesV150='user-source-rebuild-cache-busted';
 window.__mwsWardogsFrameBatchV166='assault-support-pilot-class-apertures';
+window.__mwsWardogsUnassignedV168='seventh-class-last-slot';
 window.__mwsWardogsPortraitApertureV152='fixed-inner-window-manager-gallery-detail';
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});

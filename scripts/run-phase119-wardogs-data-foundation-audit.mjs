@@ -15,7 +15,7 @@ export function runPhase119WardogsDataFoundationAudit(){
 
   for(const token of [
     "const SCHEMA_VERSION=1;",
-    "const CLASS_IDS=Object.freeze(['assault','medic','recon','support','driver','pilot']);",
+    "const CLASS_IDS=Object.freeze(['assault','medic','recon','support','driver','pilot','unassigned']);",
     "const contactId=String(item.contactId||'').trim();",
     "const classId=String(item.classId||'').trim().toLowerCase();",
     "imageId:String(item.imageId||'').trim()",
@@ -49,7 +49,7 @@ export function runPhase119WardogsDataFoundationAudit(){
 
   for(const token of [
     "const PARTS=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook','wardogs'];",
-    "const WARDOGS_CLASS_IDS=Object.freeze(['assault','medic','recon','support','driver','pilot']);",
+    "const WARDOGS_CLASS_IDS=Object.freeze(['assault','medic','recon','support','driver','pilot','unassigned']);",
     'const WARDOGS_MAX_CARDS=5000;',
     "VALUES('public','wardogs'",
     "VALUES('admin','wardogs'",

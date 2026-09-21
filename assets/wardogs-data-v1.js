@@ -5,7 +5,7 @@ if(window.__mwsWardogsDataV119)return;
 window.__mwsWardogsDataV119=true;
 
 const SCHEMA_VERSION=1;
-const CLASS_IDS=Object.freeze(['assault','medic','recon','support','driver','pilot']);
+const CLASS_IDS=Object.freeze(['assault','medic','recon','support','driver','pilot','unassigned']);
 const CLASS_SET=new Set(CLASS_IDS);
 const PORTRAIT_SOURCES=Object.freeze(['contact','custom']);
 const PORTRAIT_SOURCE_SET=new Set(PORTRAIT_SOURCES);
@@ -154,3 +154,5 @@ window.mwsWardogsDataV119=Object.freeze({
 window.__mwsWardogsContactSearchV120='app-core-search71-consumer';
 window.__mwsWardogsPortraitSchemaV133='contact-custom-position-scale';
 })();
+
+window.__mwsWardogsClassSetV168='unassigned-last';

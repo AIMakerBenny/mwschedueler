@@ -19,7 +19,7 @@ export function runPhase117WardogsTacticalClassTabsAudit(){
     'id="wardogsClassEmptyText"'
   ])if(!index.includes(token))issues.push('WARDOGS tactical shell missing: '+token);
 
-  const classes=['assault','medic','recon','support','driver','pilot'];
+  const classes=['assault','medic','recon','support','driver','pilot','unassigned'];
   for(const id of classes){
     const count=(index.match(new RegExp('data-wardogs-class="'+id+'"','g'))||[]).length;
     if(count!==1)issues.push('WARDOGS class tab '+id+' count is '+count+', expected 1');
@@ -42,6 +42,7 @@ export function runPhase117WardogsTacticalClassTabsAudit(){
     "{id:'support',name:'서포트',code:'SUP',label:'서포트'}",
     "{id:'driver',name:'드라이버',code:'DRV',label:'드라이버'}",
     "{id:'pilot',name:'파일럿',code:'PLT',label:'파일럿'}",
+    "{id:'unassigned',name:'미배치',code:'UNA',label:'미배치'}",
     "function setClass(next)",
     "['ArrowLeft','ArrowRight','Home','End']",
     "window.mwsWardogsV117=Object.freeze({"
@@ -54,7 +55,8 @@ export function runPhase117WardogsTacticalClassTabsAudit(){
     'assets/wardogs-v1.css?v=1.0.0-phase125',
     'assets/wardogs-v1.js?v=1.0.0-phase125',
     'WARDOGS COMMAND INTERFACE',
-    'data-wardogs-class="pilot"'
+    'data-wardogs-class="pilot"',
+    'data-wardogs-class="unassigned"'
   ])if(!workflow.includes(token))issues.push('production Phase 117 verification missing: '+token);
 
   const summary={phase:117,name:'wardogs-tactical-class-tabs',issues,warnings,pass:issues.length===0};

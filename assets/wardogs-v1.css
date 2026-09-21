@@ -63,7 +63,7 @@
 .wardogs-console-code-v117{font:700 10px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--wd-muted);letter-spacing:.12em}
 .wardogs-console-code-v117 strong{color:var(--wd-text)}
 .wardogs-class-tabs-v117{
-  display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;
+  display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;
   padding:7px;border:1px solid var(--wd-line);background:rgba(6,9,12,.76)
 }
 .wardogs-class-tab-v117{
@@ -505,4 +505,11 @@ body.mws-wardogs-detail-open-v125{overflow:hidden!important}
 .wardogs-portrait-stage-v134[data-wardogs-class="pilot"] .wardogs-portrait-clip-v152{
   -webkit-clip-path:inset(8.8% 12.2% 23.9% 13.3%);
   clip-path:inset(8.8% 12.2% 23.9% 13.3%);
+}
+
+
+/* Phase 168: Unassigned frame portrait aperture. */
+.wardogs-portrait-stage-v134[data-wardogs-class="unassigned"] .wardogs-portrait-clip-v152{
+  -webkit-clip-path:inset(8.2% 11.5% 22.3% 12.1%);
+  clip-path:inset(8.2% 11.5% 22.3% 12.1%);
 }
