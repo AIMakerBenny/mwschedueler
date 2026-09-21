@@ -1783,6 +1783,60 @@ window.setTimeTBD=()=>{
 }
 document.querySelectorAll('.time-trigger').forEach(b=>b.onclick=()=>openTimePicker(b.dataset.timeTarget));
 
+/* Phase 149: paste a timestamp to fill event date + start time together. */
+function parseQuickEventDateTimeV149(raw){
+  const text=String(raw||'').trim();
+  const match=text.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})(?:\s*,\s*|\s+|T)(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if(!match)return null;
+  const year=Number(match[1]),month=Number(match[2]),day=Number(match[3]);
+  const hour=Number(match[4]),minute=Number(match[5]),second=match[6]===undefined?null:Number(match[6]);
+  if(year<1000||month<1||month>12||day<1||hour<0||hour>23||minute<0||minute>59||(second!==null&&(second<0||second>59)))return null;
+  const probe=new Date(Date.UTC(year,month-1,day));
+  if(probe.getUTCFullYear()!==year||probe.getUTCMonth()!==month-1||probe.getUTCDate()!==day)return null;
+  return {
+    date:`${String(year).padStart(4,'0')}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`,
+    time:`${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`,
+    second
+  };
+}
+function applyQuickEventDateTimeV149(raw,{showError=false}={}){
+  const input=document.getElementById('evDateTimeQuickV149');
+  const status=document.getElementById('evDateTimeQuickStatusV149');
+  const parsed=parseQuickEventDateTimeV149(raw);
+  if(!parsed){
+    if(status&&showError&&String(raw||'').trim())status.textContent='형식을 확인해 주세요. 예: 2026-09-21, 16:07:59';
+    return false;
+  }
+  const dateInput=document.getElementById('evDate');
+  const startInput=document.getElementById('evStart');
+  if(dateInput)dateInput.value=parsed.date;
+  if(startInput)startInput.value=parsed.time;
+  const dateText=document.querySelector('#evDateDisplay span');
+  const startText=document.querySelector('#evStartDisplay span');
+  if(dateText)dateText.textContent=formatDate(parsed.date);
+  if(startText)startText.textContent=formatTimeKorean(parsed.time);
+  if(typeof updateRepeatEditorUI==='function')updateRepeatEditorUI();
+  if(status)status.textContent=`적용됨 · ${parsed.date} · ${formatTimeKorean(parsed.time)}${parsed.second!==null?' · 초 단위는 저장하지 않음':''}`;
+  if(input&&input.value!==String(raw||''))input.value=String(raw||'');
+  return true;
+}
+window.parseQuickEventDateTimeV149=parseQuickEventDateTimeV149;
+window.applyQuickEventDateTimeV149=applyQuickEventDateTimeV149;
+{
+  const input=document.getElementById('evDateTimeQuickV149');
+  if(input){
+    input.addEventListener('input',()=>{if(parseQuickEventDateTimeV149(input.value))applyQuickEventDateTimeV149(input.value)});
+    input.addEventListener('change',()=>applyQuickEventDateTimeV149(input.value,{showError:true}));
+    input.addEventListener('keydown',event=>{
+      if(event.key==='Enter'){
+        event.preventDefault();
+        applyQuickEventDateTimeV149(input.value,{showError:true});
+      }
+    });
+  }
+}
+window.__mwsEventDateTimeQuickV149='date-start-time-paste';
+
 
 function normalizeParticipantStatus(value){
   return value==='planned'?'planned':'confirmed';
@@ -2334,6 +2388,10 @@ function openEvent(id=null,date=null){
   if(e?.color){document.getElementById('evCategoryColor').value=e.color;document.getElementById('evCategoryColorSwatch').style.background=e.color;}
   const start=e?.start||'20:00',end=e?.end||'22:00';document.getElementById('evStart').value=start;document.querySelector('#evStartDisplay span').textContent=formatTimeKorean(start);
   document.getElementById('evEnd').value=end;document.querySelector('#evEndDisplay span').textContent=formatTimeKorean(end);
+  const quickDateTimeInput=document.getElementById('evDateTimeQuickV149');
+  const quickDateTimeStatus=document.getElementById('evDateTimeQuickStatusV149');
+  if(quickDateTimeInput)quickDateTimeInput.value='';
+  if(quickDateTimeStatus)quickDateTimeStatus.textContent='날짜와 시작 시간을 한 번에 입력할 수 있습니다.';
   selectedParticipantIds=[...(e?.participants||[])];
   if(!e&&data.selfContactId&&contact(data.selfContactId)&&!selectedParticipantIds.includes(data.selfContactId))selectedParticipantIds.push(data.selfContactId);
   selectedParticipantStatuses={};

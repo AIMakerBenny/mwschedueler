@@ -94,6 +94,7 @@ jobs:
           node --check scripts/run-phase142-wardogs-gallery-transparent-canvas-audit.mjs
           node --check scripts/run-phase143-wardogs-manager-frame-visibility-audit.mjs
           node --check scripts/run-phase144-wardogs-manager-single-frame-audit.mjs
+          node --check scripts/run-phase149-content-datetime-quick-input-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -632,6 +633,14 @@ jobs:
           echo '[phase143] superseded by Phase 144 single img frame'
           ! grep -Fq 'assets/wardogs-manager-frame-phase143.css' /tmp/index.html
           ! grep -Fq '__mwsWardogsManagerFrameV143' /tmp/wardogs-manager-v1.js
+          echo '[phase149] content date/time quick input'
+          grep -Fq 'assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149' /tmp/index.html
+          grep -Fq 'id="evDateTimeQuickV149"' /tmp/index.html
+          grep -Fq 'placeholder="예: 2026-09-21, 16:07:59"' /tmp/index.html
+          grep -Fq "window.__mwsEventDateTimeQuickV149='date-start-time-paste';" /tmp/app-core.js
+          grep -Fq 'function parseQuickEventDateTimeV149(raw){' /tmp/app-core.js
+          grep -Fq "if(dateInput)dateInput.value=parsed.date;" /tmp/app-core.js
+          grep -Fq "if(startInput)startInput.value=parsed.time;" /tmp/app-core.js
           echo '[phase144] WARDOGS manager single img frame'
           grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140-frame144' /tmp/index.html
           grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-frame140-frame144' /tmp/index.html

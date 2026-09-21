@@ -141,6 +141,7 @@ import {runPhase141WardogsSoopIdAudit} from './run-phase141-wardogs-soop-id-audi
 import {runPhase142WardogsGalleryTransparentCanvasAudit} from './run-phase142-wardogs-gallery-transparent-canvas-audit.mjs';
 import {runPhase143WardogsManagerFrameVisibilityAudit} from './run-phase143-wardogs-manager-frame-visibility-audit.mjs';
 import {runPhase144WardogsManagerSingleFrameAudit} from './run-phase144-wardogs-manager-single-frame-audit.mjs';
+import {runPhase149ContentDateTimeQuickInputAudit} from './run-phase149-content-datetime-quick-input-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1547,6 +1548,16 @@ export function runPhase144FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase144FullIntegrationAudit();}
+export function runPhase149FullIntegrationAudit(){
+  const previous=runPhase144FullIntegrationAudit(), current=runPhase149ContentDateTimeQuickInputAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:149,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase149FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
