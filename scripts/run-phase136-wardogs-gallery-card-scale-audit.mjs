@@ -25,11 +25,11 @@ export function runPhase136WardogsGalleryCardScaleAudit(){
     '.wardogs-gallery-v124{grid-template-columns:1fr}'
   ])if(!css.includes(token))issues.push('mobile gallery layout regression: '+token);
 
-  if(!index.includes('assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135-gallery136'))issues.push('Phase 136 CSS cache revision missing from index');
+  if(!index.includes('assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136'))issues.push('Phase 136 CSS cache revision missing from index');
 
   for(const token of [
     'run-phase136-wardogs-gallery-card-scale-audit.mjs',
-    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135-gallery136',
+    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136',
     '/* Phase 136: enlarged WARDOGS gallery cards */',
     'grid-template-columns:repeat(auto-fill,minmax(320px,360px));',
     'grid-template-columns:repeat(auto-fill,minmax(280px,320px));'

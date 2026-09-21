@@ -237,7 +237,7 @@ body.mws-wardogs-touch-ordering-v127 .wardogs-manager-list-pane-v122{
 .wardogs-manager-drop-v122 img.wardogs-manager-portrait-image-v137{
   position:absolute;inset:0;z-index:1;
   width:100%;height:100%;max-width:none;max-height:none;
-  object-fit:cover;
+  object-fit:contain;
   object-position:var(--wd-manager-portrait-x,50%) var(--wd-manager-portrait-y,50%);
   transform:scale(var(--wd-manager-portrait-scale,1));
   transform-origin:var(--wd-manager-portrait-x,50%) var(--wd-manager-portrait-y,50%);
@@ -277,3 +277,8 @@ body.mws-wardogs-touch-ordering-v127 .wardogs-manager-list-pane-v122{
   .wardogs-manager-portrait-scale-v137{grid-template-columns:auto minmax(0,1fr) 44px}
   .wardogs-manager-portrait-reset-v137{width:100%}
 }
+
+
+/* Phase 138: true zoom-out black canvas + hidden loading state */
+.wardogs-manager-drop-v122{background:#000}
+.wardogs-manager-drop-state-v122[hidden]{display:none!important}

@@ -48,14 +48,14 @@ export function runPhase135WardogsClassFrameAssetsAudit(){
   ])if(!css.includes(token))issues.push('class frame layout CSS missing: '+token);
 
   for(const token of [
-    'assets/wardogs-v1.js?v=1.0.0-phase125-portrait135',
-    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135-gallery136'
+    'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138',
+    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136'
   ])if(!index.includes(token))issues.push('Phase 135 cache revision missing: '+token);
 
   for(const token of [
     'run-phase135-wardogs-class-frame-assets-audit.mjs',
-    'assets/wardogs-v1.js?v=1.0.0-phase125-portrait135',
-    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135-gallery136',
+    'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138',
+    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136',
     "__mwsWardogsClassFramesV135='uploaded-transparent-overlays';",
     "assault:'assets/wardogs-frames/assault.webp'",
     "medic:'assets/wardogs-frames/medic.webp'",

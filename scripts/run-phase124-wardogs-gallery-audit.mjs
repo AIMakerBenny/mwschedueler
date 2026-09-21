@@ -69,8 +69,8 @@ export function runPhase124WardogsGalleryAudit(){
 
   for(const token of [
     'run-phase124-wardogs-gallery-audit.mjs',
-    'assets/wardogs-v1.js?v=1.0.0-phase125-portrait135',
-    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135-gallery136',
+    'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138',
+    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136',
     "window.__mwsWardogsGalleryV124='active-linked-order-preserving';",
     "api.getCards(classId,{activeOnly:true})",
     "filter(card=>api.resolveContactLink?.(card)?.linked===true)",

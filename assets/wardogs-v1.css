@@ -390,7 +390,7 @@ body.mws-wardogs-detail-open-v125{overflow:hidden!important}
 .wardogs-detail-media-frame-v125 img.wardogs-portrait-image-v134{
   position:absolute;inset:0;z-index:0;
   display:block;width:100%;height:100%;max-width:none;max-height:none;
-  object-fit:cover;
+  object-fit:contain;
   object-position:var(--wd-portrait-x,50%) var(--wd-portrait-y,50%);
   transform:scale(var(--wd-portrait-scale,1));
   transform-origin:var(--wd-portrait-x,50%) var(--wd-portrait-y,50%);
@@ -469,3 +469,9 @@ body.mws-wardogs-detail-open-v125{overflow:hidden!important}
     font-size:8px
   }
 }
+
+
+/* Phase 138: true zoom-out black canvas + hidden loading states */
+.wardogs-portrait-stage-v134{background:#000!important}
+.wardogs-gallery-placeholder-v124[hidden],
+.wardogs-detail-media-state-v125[hidden]{display:none!important}

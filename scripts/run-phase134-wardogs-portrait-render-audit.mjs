@@ -36,21 +36,21 @@ export function runPhase134WardogsPortraitRenderAudit(){
   for(const token of [
     '.wardogs-portrait-stage-v134{',
     '.wardogs-gallery-visual-v124 img.wardogs-portrait-image-v134,',
-    'object-fit:cover;',
+    'object-fit:contain;',
     'object-position:var(--wd-portrait-x,50%) var(--wd-portrait-y,50%);',
     'transform:scale(var(--wd-portrait-scale,1));',
     '.wardogs-class-frame-layer-v134{'
   ])if(!css.includes(token))issues.push('portrait render CSS missing: '+token);
 
   for(const token of [
-    'assets/wardogs-v1.js?v=1.0.0-phase125-portrait135',
-    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135-gallery136'
+    'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138',
+    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136'
   ])if(!index.includes(token))issues.push('portrait render cache revision missing: '+token);
 
   for(const token of [
     'run-phase134-wardogs-portrait-render-audit.mjs',
-    'assets/wardogs-v1.js?v=1.0.0-phase125-portrait135',
-    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135-gallery136',
+    'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138',
+    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136',
     "__mwsWardogsPortraitRenderV134='contact-custom-transform-frame-slot'",
     "function portraitSpec(card)",
     "imageId:String(card?.portraitImageId||card?.imageId||'').trim(),",

@@ -12,7 +12,7 @@ export function runPhase137WardogsPortraitAdjustAudit(){
   for(const token of [
     "portraitPositionX:clampNumber(item.portraitPositionX,0,100,50)",
     "portraitPositionY:clampNumber(item.portraitPositionY,0,100,50)",
-    "portraitScale:clampNumber(item.portraitScale,1,3,1)"
+    "portraitScale:clampNumber(item.portraitScale,0.25,3,1)"
   ])if(!data.includes(token))issues.push('portrait schema regression: '+token);
 
   for(const token of [
@@ -38,7 +38,7 @@ export function runPhase137WardogsPortraitAdjustAudit(){
     "setDraftPortraitGeometry({x:portraitPointerStartX-dx,y:portraitPointerStartY-dy});",
     "data-wardogs-manager-frame",
     "data-wardogs-manager-portrait-scale",
-    'type="range" min="1" max="3" step="0.05"',
+    'type="range" min="0.25" max="3" step="0.05"',
     "data-wardogs-manager-portrait-reset",
     "drop?.addEventListener('pointerdown',handlePortraitPointerDown);",
     "drop?.addEventListener('pointermove',handlePortraitPointerMove);",
@@ -60,7 +60,7 @@ export function runPhase137WardogsPortraitAdjustAudit(){
     '.wardogs-manager-drop-v122.has-portrait-v137{',
     'touch-action:none',
     '.wardogs-manager-drop-v122 img.wardogs-manager-portrait-image-v137{',
-    'object-fit:cover;',
+    'object-fit:contain;',
     'object-position:var(--wd-manager-portrait-x,50%) var(--wd-manager-portrait-y,50%);',
     'transform:scale(var(--wd-manager-portrait-scale,1));',
     '.wardogs-manager-frame-v137{',
@@ -69,13 +69,13 @@ export function runPhase137WardogsPortraitAdjustAudit(){
     '@media(max-width:560px)'
   ])if(!css.includes(token))issues.push('portrait adjustment CSS missing: '+token);
 
-  if(!index.includes('assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait137'))issues.push('Phase 137 manager JS cache revision missing');
-  if(!index.includes('assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait137'))issues.push('Phase 137 manager CSS cache revision missing');
+  if(!index.includes('assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait138'))issues.push('Phase 137 manager JS cache revision missing');
+  if(!index.includes('assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait138'))issues.push('Phase 137 manager CSS cache revision missing');
 
   for(const token of [
     'run-phase137-wardogs-portrait-adjust-audit.mjs',
-    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait137',
-    'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait137',
+    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait138',
+    'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait138',
     "__mwsWardogsPortraitAdjustV137='drag-position-zoom-frame-preview'",
     "function handlePortraitPointerMove(event)",
     "portraitPositionX:draftPortraitX",

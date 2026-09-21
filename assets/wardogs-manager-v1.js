@@ -1,4 +1,4 @@
-/* WARDOGS Phase 137 - portrait framing controls + mobile ordering */
+/* WARDOGS Phase 138 - portrait zoom-out + stable preview loading */
 (()=>{
 'use strict';
 if(window.__mwsWardogsManagerV122)return;
@@ -143,7 +143,7 @@ function refreshDraftPortraitGeometry(){
 function setDraftPortraitGeometry(next,{dirty=true}={}){
   if(Object.prototype.hasOwnProperty.call(next,'x'))draftPortraitX=clampPortrait(next.x,0,100,50);
   if(Object.prototype.hasOwnProperty.call(next,'y'))draftPortraitY=clampPortrait(next.y,0,100,50);
-  if(Object.prototype.hasOwnProperty.call(next,'scale'))draftPortraitScale=clampPortrait(next.scale,1,3,1);
+  if(Object.prototype.hasOwnProperty.call(next,'scale'))draftPortraitScale=clampPortrait(next.scale,0.25,3,1);
   refreshDraftPortraitGeometry();
   if(dirty)markDirty();
 }
@@ -549,22 +549,23 @@ async function renderExistingPreview(card,token){
       stateEl.innerHTML='<strong>연락처 이미지 없음</strong>연락처에 프로필 이미지를 등록하면 자동으로 사용됩니다.';
       return;
     }
-    stateEl.hidden=false;
-    stateEl.innerHTML='<strong>연락처 이미지</strong>등록된 프로필 이미지를 불러오는 중입니다.';
     const img=document.createElement('img');
     img.alt=`${String(contact?.name||'WARDOGS')} 연락처 이미지`;
-    img.src=imageUrl;
     img.draggable=false;
     img.dataset.contactId=String(link.contactId||'');
     applyDraftPortraitGeometry(img);
     drop.classList.add('has-portrait-v137');
-    img.onload=()=>{if(token===previewToken)stateEl.hidden=true};
+    const ready=()=>{if(token===previewToken)stateEl.hidden=true};
+    img.onload=ready;
     img.onerror=()=>{
       if(token!==previewToken)return;
       stateEl.hidden=false;
       stateEl.innerHTML='<strong>연락처 이미지 오류</strong>현재 프로필 이미지를 불러오지 못했습니다.';
     };
+    stateEl.hidden=true;
     drop.appendChild(img);
+    img.src=imageUrl;
+    if(img.complete&&img.naturalWidth>0)queueMicrotask(ready);
     return;
   }
 
@@ -573,12 +574,20 @@ async function renderExistingPreview(card,token){
     pendingPreviewUrl=URL.createObjectURL(pendingFile);
     const img=document.createElement('img');
     img.alt='선택한 WARDOGS 커스텀 이미지 미리보기';
-    img.src=pendingPreviewUrl;
     img.draggable=false;
     applyDraftPortraitGeometry(img);
     drop.classList.add('has-portrait-v137');
-    drop.appendChild(img);
+    const ready=()=>{if(token===previewToken)stateEl.hidden=true};
+    img.onload=ready;
+    img.onerror=()=>{
+      if(token!==previewToken)return;
+      stateEl.hidden=false;
+      stateEl.innerHTML='<strong>커스텀 이미지 오류</strong>선택한 이미지를 불러오지 못했습니다.';
+    };
     stateEl.hidden=true;
+    drop.appendChild(img);
+    img.src=pendingPreviewUrl;
+    if(img.complete&&img.naturalWidth>0)queueMicrotask(ready);
     return;
   }
 
@@ -588,29 +597,31 @@ async function renderExistingPreview(card,token){
     stateEl.innerHTML='<strong>커스텀 이미지 없음</strong>이미지를 드래그하거나 아래 버튼으로 파일을 선택하세요.';
     return;
   }
-  stateEl.hidden=false;
-  stateEl.innerHTML='<strong>커스텀 이미지</strong>등록된 WARDOGS 이미지를 불러오는 중입니다.';
   try{
     const blob=await media()?.getBlob?.(imageId);
     if(token!==previewToken)return;
     if(!(blob instanceof Blob)){
+      stateEl.hidden=false;
       stateEl.innerHTML='<strong>커스텀 이미지 없음</strong>등록된 이미지 파일을 찾지 못했습니다.';
       return;
     }
     existingPreviewUrl=URL.createObjectURL(blob);
     const img=document.createElement('img');
     img.alt='WARDOGS 커스텀 이미지';
-    img.src=existingPreviewUrl;
     img.draggable=false;
     applyDraftPortraitGeometry(img);
     drop.classList.add('has-portrait-v137');
-    img.onload=()=>{if(token===previewToken)stateEl.hidden=true};
+    const ready=()=>{if(token===previewToken)stateEl.hidden=true};
+    img.onload=ready;
     img.onerror=()=>{
       if(token!==previewToken)return;
       stateEl.hidden=false;
       stateEl.innerHTML='<strong>커스텀 이미지 오류</strong>등록된 이미지를 불러오지 못했습니다.';
     };
+    stateEl.hidden=true;
     drop.appendChild(img);
+    img.src=existingPreviewUrl;
+    if(img.complete&&img.naturalWidth>0)queueMicrotask(ready);
   }catch(error){
     console.warn('WARDOGS manager portrait preview failed',error);
     if(token===previewToken){
@@ -627,7 +638,7 @@ function renderEditor(){
   draftPortraitSource=card?.portraitSource==='custom'?'custom':'contact';
   draftPortraitX=clampPortrait(card?.portraitPositionX,0,100,50);
   draftPortraitY=clampPortrait(card?.portraitPositionY,0,100,50);
-  draftPortraitScale=clampPortrait(card?.portraitScale,1,3,1);
+  draftPortraitScale=clampPortrait(card?.portraitScale,0.25,3,1);
   root.querySelector('[data-wardogs-manager-title]').textContent=card?'WARDOGS 카드 수정':'새 WARDOGS 카드';
   root.querySelector('[data-wardogs-manager-class]').value=card?.classId||orderClass;
   root.querySelector('[data-wardogs-manager-active]').checked=card?card.active!==false:true;
@@ -870,7 +881,7 @@ function ensureModal(){
               </div>
               <div class="wardogs-manager-portrait-tools-v137">
                 <div class="wardogs-manager-portrait-help-v137"><strong>사진 구도 조절</strong><span>미리보기 사진을 마우스 또는 터치로 드래그해 위치를 이동합니다.</span></div>
-                <label class="wardogs-manager-portrait-scale-v137"><span>확대</span><input type="range" min="1" max="3" step="0.05" value="1" data-wardogs-manager-portrait-scale data-wardogs-manager-write><output data-wardogs-manager-portrait-scale-value>100%</output></label>
+                <label class="wardogs-manager-portrait-scale-v137"><span>확대</span><input type="range" min="0.25" max="3" step="0.05" value="1" data-wardogs-manager-portrait-scale data-wardogs-manager-write><output data-wardogs-manager-portrait-scale-value>100%</output></label>
                 <button type="button" class="secondary wardogs-manager-portrait-reset-v137" data-wardogs-manager-portrait-reset data-wardogs-manager-write>중앙 / 100% 초기화</button>
               </div>
               <input type="file" accept="image/*" hidden data-wardogs-manager-file data-wardogs-manager-write>
@@ -973,6 +984,7 @@ window.__mwsWardogsOrderingV123='class-scoped-dnd';
 window.__mwsWardogsTouchOrderingV127='pointer-events-touch-pen';
 window.__mwsWardogsPortraitManagerV133='contact-default-custom-override';
 window.__mwsWardogsPortraitAdjustV137='drag-position-zoom-frame-preview';
+window.__mwsWardogsPortraitCanvasV138='quarter-scale-contain-black-no-loading-overlay';
 window.addEventListener('mawang:datachange',event=>{
   if(String(event?.detail?.reason||'').startsWith('WARDOGS')){
     syncShell();

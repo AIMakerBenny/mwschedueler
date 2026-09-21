@@ -14,7 +14,7 @@ export function runPhase133WardogsPortraitManagerAudit(){
     "const PORTRAIT_SOURCES=Object.freeze(['contact','custom']);",
     "portraitPositionX:clampNumber(item.portraitPositionX,0,100,50)",
     "portraitPositionY:clampNumber(item.portraitPositionY,0,100,50)",
-    "portraitScale:clampNumber(item.portraitScale,1,3,1)",
+    "portraitScale:clampNumber(item.portraitScale,0.25,3,1)",
     "window.__mwsWardogsPortraitSchemaV133='contact-custom-position-scale';"
   ])if(!data.includes(token))issues.push('portrait schema foundation missing: '+token);
 
@@ -50,14 +50,14 @@ export function runPhase133WardogsPortraitManagerAudit(){
   ])if(!worker.includes(token))issues.push('Cloudflare portrait field preservation missing: '+token);
 
   for(const token of [
-    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait137',
-    'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait137'
+    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait138',
+    'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait138'
   ])if(!index.includes(token))issues.push('portrait manager cache revision missing: '+token);
 
   for(const token of [
     'run-phase133-wardogs-portrait-manager-audit.mjs',
-    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait137',
-    'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait137',
+    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait138',
+    'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait138',
     "__mwsWardogsPortraitManagerV133='contact-default-custom-override'",
     "const imageUrl=String(contact?.image||'').trim();",
     "portraitImageId=String(result?.id||'');"

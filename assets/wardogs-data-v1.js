@@ -61,7 +61,7 @@ function normalize(raw){
       portraitImageId,
       portraitPositionX:clampNumber(item.portraitPositionX,0,100,50),
       portraitPositionY:clampNumber(item.portraitPositionY,0,100,50),
-      portraitScale:clampNumber(item.portraitScale,1,3,1),
+      portraitScale:clampNumber(item.portraitScale,0.25,3,1),
       order:Math.max(0,Math.floor(Number(item.order??index)||0)),
       active:item.active!==false,
       createdAt:String(item.createdAt||now),

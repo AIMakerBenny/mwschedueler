@@ -88,6 +88,7 @@ jobs:
           node --check scripts/run-phase135-wardogs-class-frame-assets-audit.mjs
           node --check scripts/run-phase136-wardogs-gallery-card-scale-audit.mjs
           node --check scripts/run-phase137-wardogs-portrait-adjust-audit.mjs
+          node --check scripts/run-phase138-wardogs-portrait-canvas-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -366,8 +367,8 @@ jobs:
           grep -Fq 'data-tab="wardogs"' /tmp/index.html
           grep -Fq '<span class="nav-label">워독스 전쟁견들</span>' /tmp/index.html
           grep -Fq '<section id="wardogs" class="section" data-wardogs-shell-v116="1">' /tmp/index.html
-          grep -Fq 'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135-gallery136' /tmp/index.html
-          grep -Fq 'assets/wardogs-v1.js?v=1.0.0-phase125-portrait135' /tmp/index.html
+          grep -Fq 'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136' /tmp/index.html
+          grep -Fq 'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138' /tmp/index.html
           grep -Fq 'data-wardogs-ui-v117="1"' /tmp/index.html
           grep -Fq 'WARDOGS COMMAND INTERFACE' /tmp/index.html
           grep -Fq 'TACTICAL OPERATIONS SYSTEM // 전쟁견들' /tmp/index.html
@@ -385,10 +386,10 @@ jobs:
           grep -Fq 'CONTACT DATABASE <b>LINKED</b>' /tmp/index.html
           grep -Fq 'CLASS SYSTEM <b>ONLINE</b>' /tmp/index.html
           grep -Fq 'MISSION DATA <b>READY</b>' /tmp/index.html
-          grep -Fq 'assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130' /tmp/index.html
+          grep -Fq 'assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130-zoom138' /tmp/index.html
           grep -Fq 'assets/wardogs-media-v1.js?v=1.0.0-phase121' /tmp/index.html
-          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait137' /tmp/index.html
-          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait137' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait138' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait138' /tmp/index.html
           grep -Fq 'class="card wardogs-manager-entry-card-v122"' /tmp/index.html
           grep -Fq 'id="wardogsManageBtn"' /tmp/index.html
           grep -Fq 'id="wardogsManageCount"' /tmp/index.html
@@ -416,8 +417,8 @@ jobs:
           grep -Fq '.wardogs-class-stage-v117{' /tmp/wardogs-v1.css
           grep -Fq '@media(max-width:640px)' /tmp/wardogs-v1.css
           echo '[phase134] WARDOGS portrait rendering'
-          grep -Fq 'assets/wardogs-v1.js?v=1.0.0-phase125-portrait135' /tmp/index.html
-          grep -Fq 'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135-gallery136' /tmp/index.html
+          grep -Fq 'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138' /tmp/index.html
+          grep -Fq 'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136' /tmp/index.html
           grep -Fq "window.__mwsWardogsPortraitRenderV134='contact-custom-transform-frame-slot';" /tmp/wardogs-v1.js
           grep -Fq "function portraitSpec(card)" /tmp/wardogs-v1.js
           grep -Fq "imageId:String(card?.portraitImageId||card?.imageId||'').trim()," /tmp/wardogs-v1.js
@@ -426,8 +427,8 @@ jobs:
           grep -Fq '.wardogs-class-frame-layer-v134{' /tmp/wardogs-v1.css
           grep -Fq 'object-position:var(--wd-portrait-x,50%) var(--wd-portrait-y,50%);' /tmp/wardogs-v1.css
           echo '[phase135] WARDOGS class frame assets'
-          grep -Fq 'assets/wardogs-v1.js?v=1.0.0-phase125-portrait135' /tmp/index.html
-          grep -Fq 'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135-gallery136' /tmp/index.html
+          grep -Fq 'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138' /tmp/index.html
+          grep -Fq 'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136' /tmp/index.html
           grep -Fq "window.__mwsWardogsClassFramesV135='uploaded-transparent-overlays';" /tmp/wardogs-v1.js
           grep -Fq "assault:'assets/wardogs-frames/assault.webp'" /tmp/wardogs-v1.js
           grep -Fq "medic:'assets/wardogs-frames/medic.webp'" /tmp/wardogs-v1.js
@@ -444,7 +445,7 @@ jobs:
             test "$(dd if="/tmp/wardogs-frame-$frame.webp" bs=1 skip=8 count=4 2>/dev/null)" = 'WEBP'
           done
           echo '[phase136] WARDOGS gallery card scale'
-          grep -Fq 'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135-gallery136' /tmp/index.html
+          grep -Fq 'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136' /tmp/index.html
           grep -Fq '/* Phase 136: enlarged WARDOGS gallery cards */' /tmp/wardogs-v1.css
           grep -Fq 'grid-template-columns:repeat(auto-fill,minmax(320px,360px));' /tmp/wardogs-v1.css
           grep -Fq 'grid-template-columns:repeat(auto-fill,minmax(280px,320px));' /tmp/wardogs-v1.css
@@ -530,8 +531,8 @@ jobs:
           grep -Fq 'object-fit:contain' /tmp/wardogs-manager-v1.css
           grep -Fq '@media(max-width:860px)' /tmp/wardogs-manager-v1.css
           echo '[phase133] WARDOGS portrait manager'
-          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait137' /tmp/index.html
-          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait137' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait138' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait138' /tmp/index.html
           grep -Fq "window.__mwsWardogsPortraitSchemaV133='contact-custom-position-scale';" /tmp/wardogs-data-v1.js
           grep -Fq "window.__mwsWardogsPortraitManagerV133='contact-default-custom-override';" /tmp/wardogs-manager-v1.js
           grep -Fq "const imageUrl=String(contact?.image||'').trim();" /tmp/wardogs-manager-v1.js
@@ -540,8 +541,8 @@ jobs:
           grep -Fq '.wardogs-manager-source-v133 button.active{' /tmp/wardogs-manager-v133.css
           grep -Fq "const portraitImageId=String(item.portraitImageId||'').trim().slice(0,160);" src/cf-v111-auth.js
           echo '[phase137] WARDOGS portrait position and zoom'
-          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait137' /tmp/index.html
-          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait137' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait138' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait138' /tmp/index.html
           grep -Fq "window.__mwsWardogsPortraitAdjustV137='drag-position-zoom-frame-preview';" /tmp/wardogs-manager-v1.js
           grep -Fq "function handlePortraitPointerMove(event)" /tmp/wardogs-manager-v1.js
           grep -Fq "drop?.addEventListener('pointerdown',handlePortraitPointerDown);" /tmp/wardogs-manager-v1.js
@@ -553,6 +554,23 @@ jobs:
           grep -Fq '.wardogs-manager-frame-v137{' /tmp/wardogs-manager-v1.css
           grep -Fq 'object-position:var(--wd-manager-portrait-x,50%) var(--wd-manager-portrait-y,50%);' /tmp/wardogs-manager-v1.css
           grep -Fq 'transform:scale(var(--wd-manager-portrait-scale,1));' /tmp/wardogs-manager-v1.css
+          echo '[phase138] WARDOGS zoom-out black canvas and loading-state fix'
+          grep -Fq 'assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130-zoom138' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait138' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait138' /tmp/index.html
+          grep -Fq 'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138' /tmp/index.html
+          grep -Fq 'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136' /tmp/index.html
+          grep -Fq "portraitScale:clampNumber(item.portraitScale,0.25,3,1)" /tmp/wardogs-data-v1.js
+          grep -Fq "Math.max(0.25,Number.isFinite(Number(item.portraitScale))" src/cf-v111-auth.js
+          grep -Fq "window.__mwsWardogsPortraitCanvasV138='quarter-scale-contain-black-no-loading-overlay';" /tmp/wardogs-manager-v1.js
+          grep -Fq "window.__mwsWardogsPortraitCanvasV138='quarter-scale-contain-black-no-loading-overlay';" /tmp/wardogs-v1.js
+          grep -Fq 'type="range" min="0.25" max="3" step="0.05" value="1"' /tmp/wardogs-manager-v1.js
+          grep -Fq "if(img.complete&&img.naturalWidth>0)queueMicrotask(ready);" /tmp/wardogs-manager-v1.js
+          grep -Fq "if(img.complete&&img.naturalWidth>0)queueMicrotask(ready);" /tmp/wardogs-v1.js
+          grep -Fq '.wardogs-manager-drop-v122{background:#000}' /tmp/wardogs-manager-v1.css
+          grep -Fq '.wardogs-manager-drop-state-v122[hidden]{display:none!important}' /tmp/wardogs-manager-v1.css
+          grep -Fq '.wardogs-portrait-stage-v134{background:#000!important}' /tmp/wardogs-v1.css
+          grep -Fq '.wardogs-detail-media-state-v125[hidden]{display:none!important}' /tmp/wardogs-v1.css
           grep -Fq "window.__mwsWardogsOrderingV123='class-scoped-dnd';" /tmp/wardogs-manager-v1.js
           grep -Fq "function classCards(classId=orderClass)" /tmp/wardogs-manager-v1.js
           grep -Fq "function handleOrderDragStart(event)" /tmp/wardogs-manager-v1.js

@@ -16,10 +16,10 @@ export function runPhase131WardogsFinalMobileWebViewIntegrationAudit(){
 
   const scriptOrder=[
     'assets/app-core.js?v=1.3.0-search115-wardogs116-backup126',
-    'assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130',
+    'assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130-zoom138',
     'assets/wardogs-media-v1.js?v=1.0.0-phase121-backup126-webview130',
-    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait137',
-    'assets/wardogs-v1.js?v=1.0.0-phase125-portrait135',
+    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait138',
+    'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138',
     'assets/wardogs-intro-v1.js?v=1.0.0-phase118'
   ];
   let last=-1;
@@ -103,9 +103,9 @@ export function runPhase131WardogsFinalMobileWebViewIntegrationAudit(){
     'run-phase129-wardogs-mobile-interaction-regression-audit.mjs',
     'run-phase130-wardogs-webview2-compatibility-audit.mjs',
     'run-phase131-wardogs-final-mobile-webview-integration-audit.mjs',
-    'assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130',
+    'assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130-zoom138',
     'assets/wardogs-media-v1.js?v=1.0.0-phase121-backup126-webview130',
-    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait137',
+    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait138',
     "window.__mwsWardogsTouchOrderingV127='pointer-events-touch-pen';",
     "window.__mwsWardogsMediaStorageV130='r2-with-indexeddb-cache-fallback';",
     "wardogs_part=\"$(retry_contains \"$BASE/api/parts/wardogs?deploy=$GITHUB_SHA\" '\"schemaVersion\":1')\""

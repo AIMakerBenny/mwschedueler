@@ -13,9 +13,9 @@ export function runPhase130WardogsWebView2CompatibilityAudit(){
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
   for(const token of [
-    'assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130',
+    'assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130-zoom138',
     'assets/wardogs-media-v1.js?v=1.0.0-phase121-backup126-webview130',
-    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait137'
+    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait138'
   ])if(!index.includes(token))issues.push('WebView2 compatibility asset revision missing: '+token);
 
   for(const token of [
@@ -74,9 +74,9 @@ export function runPhase130WardogsWebView2CompatibilityAudit(){
 
   for(const token of [
     'run-phase130-wardogs-webview2-compatibility-audit.mjs',
-    'assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130',
+    'assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130-zoom138',
     'assets/wardogs-media-v1.js?v=1.0.0-phase121-backup126-webview130',
-    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait137',
+    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait138',
     "window.__mwsWardogsMediaStorageV130='r2-with-indexeddb-cache-fallback';",
     'async function tryGetLocal(id)',
     "typeof crypto.getRandomValues==='function'"
