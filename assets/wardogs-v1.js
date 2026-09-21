@@ -5,7 +5,7 @@ if(window.__mwsWardogsV117)return;
 window.__mwsWardogsV117=true;
 
 const CLASSES=Object.freeze([
-  {id:'assault',name:'ASSAULT',code:'ASLT',label:'Assault'},
+  {id:'assault',name:'어썰트',code:'ASLT',label:'어썰트'},
   {id:'medic',name:'MEDIC',code:'MED',label:'Medic'},
   {id:'recon',name:'RECON',code:'RCN',label:'Recon'},
   {id:'support',name:'SUPPORT',code:'SUP',label:'Support'},

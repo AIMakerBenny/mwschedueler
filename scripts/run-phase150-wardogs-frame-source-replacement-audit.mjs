@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 
 const EXPECTED={
-  "assault": "e9856fa81de759d20c9f0feb90fceee72bed7234",
+  "assault": "8b8b07765d2333a0e26a6587a4261e4afd77edf7",
   "medic": "ef4766349e902dbd79a1a91bf5eaf298a2843e3a",
   "recon": "d318aecf49be050b3825028a20354475f3a00e1d",
   "support": "bd618cad27d13bd876d4c55ed3e35ef8b3c89449",

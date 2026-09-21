@@ -5,7 +5,7 @@ if(window.__mwsWardogsManagerV122)return;
 window.__mwsWardogsManagerV122=true;
 
 const CLASS_META=Object.freeze([
-  {id:'assault',label:'ASSAULT'},
+  {id:'assault',label:'어썰트'},
   {id:'medic',label:'MEDIC'},
   {id:'recon',label:'RECON'},
   {id:'support',label:'SUPPORT'},
