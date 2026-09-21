@@ -165,7 +165,13 @@ try{
         const button=document.querySelector('.nav button[data-tab="'+tab+'"]');
         if(!button){failures.push(frame+'/'+tab+': nav button missing');continue}
         button.click();
-        await raf();
+        for(let attempt=0;attempt<50;attempt++){
+          await sleep(100);
+          await raf();
+          const currentTitle=String(document.getElementById('pageTitle')?.textContent||'').trim();
+          const firstControl=document.querySelector('#'+tab+' '+selectors[tab][0]);
+          if(currentTitle===expectedTitles[tab]&&firstControl)break;
+        }
         const title=String(document.getElementById('pageTitle')?.textContent||'').trim();
         if(title!==expectedTitles[tab])failures.push(frame+'/'+tab+': title='+title);
 
@@ -188,7 +194,11 @@ try{
       if(!plannerButton){failures.push(frame+'/contentPlanner: nav button missing')}
       else{
         plannerButton.click();
-        await raf();
+        for(let attempt=0;attempt<40;attempt++){
+          await sleep(75);
+          await raf();
+          if(String(document.getElementById('pageTitle')?.textContent||'').trim()===expectedTitles.contentPlanner)break;
+        }
         const setTabFn=typeof window.setTab==='function'?window.setTab:(typeof setTab==='function'?setTab:null);
         if(!setTabFn)failures.push(frame+'/contentPlanner: setTab unavailable');
         else{
