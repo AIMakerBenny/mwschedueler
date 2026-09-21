@@ -2,13 +2,15 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 
 const EXPECTED={
-  "assault": "8b8b07765d2333a0e26a6587a4261e4afd77edf7",
-  "medic": "ef4766349e902dbd79a1a91bf5eaf298a2843e3a",
+  "assault": "5e2a34cafe88ef564b9b8cde4179a91f866a3856",
+  "medic": "a320ccb4ec568daa81fd51df8c0d741f046f6141",
   "recon": "d318aecf49be050b3825028a20354475f3a00e1d",
   "support": "bd618cad27d13bd876d4c55ed3e35ef8b3c89449",
   "driver": "23a2a8ea301fec55a20c16cacdb3d5df3f2b4a96",
   "pilot": "8be14e57997d1cc1e567448a6184bfe64ec29102"
 };
+
+const FRAME_REVISION={assault:'phase157',medic:'phase158',recon:'phase150',support:'phase150',driver:'phase150',pilot:'phase150'};
 
 function gitBlobSha(bytes){
   return crypto.createHash('sha1')
@@ -57,7 +59,7 @@ export function runPhase150WardogsFrameSourceReplacementAudit(){
     if(!info.hasAlpha)issues.push('Phase 150 frame lacks alpha: '+classId);
     if(!info.hasImage)issues.push('Phase 150 frame lacks image payload: '+classId);
     if(info.width!==360||info.height!==480)issues.push(`Phase 150 frame size mismatch: ${classId} ${info.width}x${info.height}`);
-    const token=`${classId}:'assets/wardogs-frames/${classId}.webp?v=phase150'`;
+    const token=`${classId}:'assets/wardogs-frames/${classId}.webp?v=${FRAME_REVISION[classId]}'`;
     if(!manager.includes(token))issues.push('Phase 150 manager cache-busted frame mapping missing: '+token);
     if(!gallery.includes(token))issues.push('Phase 150 gallery cache-busted frame mapping missing: '+token);
   }
