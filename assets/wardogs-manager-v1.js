@@ -6,7 +6,7 @@ window.__mwsWardogsManagerV122=true;
 
 const CLASS_META=Object.freeze([
   {id:'assault',label:'어썰트'},
-  {id:'medic',label:'MEDIC'},
+  {id:'medic',label:'메딕'},
   {id:'recon',label:'RECON'},
   {id:'support',label:'SUPPORT'},
   {id:'driver',label:'DRIVER'},
@@ -15,8 +15,8 @@ const CLASS_META=Object.freeze([
 const CLASS_RANK=new Map(CLASS_META.map((item,index)=>[item.id,index]));
 
 const CLASS_FRAMES=Object.freeze({
-  assault:'assets/wardogs-frames/assault.webp?v=phase150',
-  medic:'assets/wardogs-frames/medic.webp?v=phase150',
+  assault:'assets/wardogs-frames/assault.webp?v=phase157',
+  medic:'assets/wardogs-frames/medic.webp?v=phase158',
   recon:'assets/wardogs-frames/recon.webp?v=phase150',
   support:'assets/wardogs-frames/support.webp?v=phase150',
   driver:'assets/wardogs-frames/driver.webp?v=phase150',
