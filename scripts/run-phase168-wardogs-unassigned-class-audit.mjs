@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 const EXPECTED_SHA='7cdf33dc7aead9760f00ca3abbc30031283c6543';
-function gitBlobSha(bytes){return crypto.createHash('sha1').update(Buffer.from(`blob ${bytes.length}\\0`)).update(bytes).digest('hex')}
+function gitBlobSha(bytes){return crypto.createHash('sha1').update(Buffer.from('blob '+bytes.length+String.fromCharCode(0))).update(bytes).digest('hex')}
 function webpInfo(bytes){
  if(bytes.length<30||bytes.subarray(0,4).toString()!=='RIFF'||bytes.subarray(8,12).toString()!=='WEBP'||bytes.readUInt32LE(4)+8!==bytes.length)return {ok:false};
  let offset=12,hasAlpha=false,hasImage=false,width=0,height=0;
