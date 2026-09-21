@@ -59,6 +59,21 @@ function safeHttpUrl(raw){
     return url.href;
   }catch(_){return ''}
 }
+function wardogsStationId(raw){
+  const text=String(raw||'').trim();
+  if(!text)return '';
+  try{
+    const url=new URL(/^https?:\/\//i.test(text)?text:`https://${text}`);
+    const host=url.hostname.toLowerCase();
+    if(!/(^|\.)sooplive\.com$/.test(host)&&!/(^|\.)afreecatv\.com$/.test(host))return '';
+    const parts=url.pathname.split('/').filter(Boolean).map(part=>{try{return decodeURIComponent(part)}catch(_){return part}});
+    if(parts[0]?.toLowerCase()==='station'&&parts[1])return parts[1];
+    if((host.startsWith('bj.')||host.startsWith('play.'))&&parts[0])return parts[0];
+    if(parts[0]&&!['live','directory'].includes(parts[0].toLowerCase()))return parts[0];
+  }catch(_){}
+  return '';
+}
+
 function revokeDetailImageUrl(){
   if(detailImageUrl){try{URL.revokeObjectURL(detailImageUrl)}catch(_){}detailImageUrl=''}
 }
@@ -303,7 +318,7 @@ function ensureDetailModal(){
           <h2 id="wardogsDetailNameV125">-</h2>
           <div class="wardogs-detail-tags-v125" data-wardogs-detail-tags></div>
           <div class="wardogs-detail-grid-v125">
-            <div><span>CONTACT ID</span><strong data-wardogs-detail-contact-id>-</strong></div>
+            <div><span>SOOP ID</span><strong data-wardogs-detail-contact-id>-</strong></div>
             <div><span>WARDOGS CLASS</span><strong data-wardogs-detail-class>-</strong></div>
             <div><span>DISPLAY ORDER</span><strong data-wardogs-detail-order>-</strong></div>
             <div><span>CARD STATUS</span><strong data-wardogs-detail-status>ACTIVE</strong></div>
@@ -424,7 +439,8 @@ async function openDetail(cardId,opener=null){
 
   root.querySelector('#wardogsDetailClassV125').textContent=`CLASS // ${classMeta(card.classId).code}`;
   root.querySelector('#wardogsDetailNameV125').textContent=String(contact?.name||'이름 없음');
-  root.querySelector('[data-wardogs-detail-contact-id]').textContent=String(card.contactId||'-');
+  const stationId=wardogsStationId(contact?.stationUrl);
+  root.querySelector('[data-wardogs-detail-contact-id]').textContent=stationId||String(card.contactId||'-');
   root.querySelector('[data-wardogs-detail-class]').textContent=classMeta(card.classId).name;
   root.querySelector('[data-wardogs-detail-order]').textContent=String(Number(card.order)||0).padStart(2,'0');
   root.querySelector('[data-wardogs-detail-status]').textContent=card.active===false?'INACTIVE':'ACTIVE';
@@ -573,6 +589,7 @@ window.__mwsWardogsDetailV125='linked-contact-card-detail';
 window.__mwsWardogsPortraitRenderV134='contact-custom-transform-frame-slot';
 window.__mwsWardogsClassFramesV135='uploaded-transparent-overlays';
 window.__mwsWardogsPortraitCanvasV138='quarter-scale-contain-black-no-loading-overlay';
+window.__mwsWardogsSoopIdV141='station-url-display-fallback-contact-id';
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
 else init();

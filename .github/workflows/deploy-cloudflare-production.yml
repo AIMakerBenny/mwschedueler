@@ -90,6 +90,7 @@ jobs:
           node --check scripts/run-phase137-wardogs-portrait-adjust-audit.mjs
           node --check scripts/run-phase138-wardogs-portrait-canvas-audit.mjs
           node --check scripts/run-phase140-wardogs-manager-frame-audit.mjs
+          node --check scripts/run-phase141-wardogs-soop-id-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -582,6 +583,14 @@ jobs:
           ! grep -Fq "drop.querySelectorAll('img').forEach(img=>img.remove());" /tmp/wardogs-manager-v1.js
           ! grep -Fq 'layer.style.backgroundImage=' /tmp/wardogs-manager-v1.js
           grep -Fq '.wardogs-manager-drop-v122 img.wardogs-manager-frame-v140{' /tmp/wardogs-manager-v1.css
+          echo '[phase141] WARDOGS detail SOOP ID display'
+          grep -Fq 'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138-soopid141' /tmp/index.html
+          grep -Fq "window.__mwsWardogsSoopIdV141='station-url-display-fallback-contact-id';" /tmp/wardogs-v1.js
+          grep -Fq 'function wardogsStationId(raw){' /tmp/wardogs-v1.js
+          grep -Fq '<span>SOOP ID</span>' /tmp/wardogs-v1.js
+          grep -Fq "const stationId=wardogsStationId(contact?.stationUrl);" /tmp/wardogs-v1.js
+          grep -Fq "stationId||String(card.contactId||'-')" /tmp/wardogs-v1.js
+          ! grep -Fq "root.querySelector('[data-wardogs-detail-contact-id]').textContent=String(card.contactId||'-');" /tmp/wardogs-v1.js
           grep -Fq "window.__mwsWardogsOrderingV123='class-scoped-dnd';" /tmp/wardogs-manager-v1.js
           grep -Fq "function classCards(classId=orderClass)" /tmp/wardogs-manager-v1.js
           grep -Fq "function handleOrderDragStart(event)" /tmp/wardogs-manager-v1.js
