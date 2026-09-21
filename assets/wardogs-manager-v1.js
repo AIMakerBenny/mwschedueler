@@ -15,12 +15,12 @@ const CLASS_META=Object.freeze([
 const CLASS_RANK=new Map(CLASS_META.map((item,index)=>[item.id,index]));
 
 const CLASS_FRAMES=Object.freeze({
-  assault:'assets/wardogs-frames/assault.webp',
-  medic:'assets/wardogs-frames/medic.webp',
-  recon:'assets/wardogs-frames/recon.webp',
-  support:'assets/wardogs-frames/support.webp',
-  driver:'assets/wardogs-frames/driver.webp',
-  pilot:'assets/wardogs-frames/pilot.webp'
+  assault:'assets/wardogs-frames/assault.webp?v=phase150',
+  medic:'assets/wardogs-frames/medic.webp?v=phase150',
+  recon:'assets/wardogs-frames/recon.webp?v=phase150',
+  support:'assets/wardogs-frames/support.webp?v=phase150',
+  driver:'assets/wardogs-frames/driver.webp?v=phase150',
+  pilot:'assets/wardogs-frames/pilot.webp?v=phase150'
 });
 
 let modal=null;
@@ -989,6 +989,7 @@ window.__mwsWardogsPortraitAdjustV137='drag-position-zoom-frame-preview';
 window.__mwsWardogsPortraitCanvasV138='quarter-scale-contain-black-no-loading-overlay';
 window.__mwsWardogsManagerFrameV140='img-layer-class-frame';
 window.__mwsWardogsManagerFrameV144='single-img-frame-no-overlay';
+window.__mwsWardogsFrameSourcesV150='user-source-rebuild-cache-busted';
 window.addEventListener('mawang:datachange',event=>{
   if(String(event?.detail?.reason||'').startsWith('WARDOGS')){
     syncShell();

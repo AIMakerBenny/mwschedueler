@@ -18,7 +18,7 @@ export function runPhase135WardogsClassFrameAssetsAudit(){
   };
 
   for(const [classId,file] of Object.entries(frames)){
-    const token=`${classId}:'${file}'`;
+    const token=`${classId}:'${file}`;
     if(!runtime.includes(token))issues.push('class frame mapping missing: '+token);
     if(!fs.existsSync(file)){
       issues.push('class frame asset missing: '+file);
@@ -82,12 +82,12 @@ export function runPhase135WardogsClassFrameAssetsAudit(){
     'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138',
     'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136',
     "__mwsWardogsClassFramesV135='uploaded-transparent-overlays';",
-    "assault:'assets/wardogs-frames/assault.webp'",
-    "medic:'assets/wardogs-frames/medic.webp'",
-    "recon:'assets/wardogs-frames/recon.webp'",
-    "support:'assets/wardogs-frames/support.webp'",
-    "driver:'assets/wardogs-frames/driver.webp'",
-    "pilot:'assets/wardogs-frames/pilot.webp'",
+    "assault:'assets/wardogs-frames/assault.webp",
+    "medic:'assets/wardogs-frames/medic.webp",
+    "recon:'assets/wardogs-frames/recon.webp",
+    "support:'assets/wardogs-frames/support.webp",
+    "driver:'assets/wardogs-frames/driver.webp",
+    "pilot:'assets/wardogs-frames/pilot.webp",
     'aspect-ratio:3/4;',
     "[phase148] live WARDOGS frame WebP integrity OK"
   ])if(!workflow.includes(token))issues.push('production Phase 135 verification missing: '+token);

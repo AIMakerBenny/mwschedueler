@@ -95,6 +95,7 @@ jobs:
           node --check scripts/run-phase143-wardogs-manager-frame-visibility-audit.mjs
           node --check scripts/run-phase144-wardogs-manager-single-frame-audit.mjs
           node --check scripts/run-phase149-content-datetime-quick-input-audit.mjs
+          node --check scripts/run-phase150-wardogs-frame-source-replacement-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -436,12 +437,12 @@ jobs:
           grep -Fq 'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138' /tmp/index.html
           grep -Fq 'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136' /tmp/index.html
           grep -Fq "window.__mwsWardogsClassFramesV135='uploaded-transparent-overlays';" /tmp/wardogs-v1.js
-          grep -Fq "assault:'assets/wardogs-frames/assault.webp'" /tmp/wardogs-v1.js
-          grep -Fq "medic:'assets/wardogs-frames/medic.webp'" /tmp/wardogs-v1.js
-          grep -Fq "recon:'assets/wardogs-frames/recon.webp'" /tmp/wardogs-v1.js
-          grep -Fq "support:'assets/wardogs-frames/support.webp'" /tmp/wardogs-v1.js
-          grep -Fq "driver:'assets/wardogs-frames/driver.webp'" /tmp/wardogs-v1.js
-          grep -Fq "pilot:'assets/wardogs-frames/pilot.webp'" /tmp/wardogs-v1.js
+          grep -Fq "assault:'assets/wardogs-frames/assault.webp?v=phase150'" /tmp/wardogs-v1.js
+          grep -Fq "medic:'assets/wardogs-frames/medic.webp?v=phase150'" /tmp/wardogs-v1.js
+          grep -Fq "recon:'assets/wardogs-frames/recon.webp?v=phase150'" /tmp/wardogs-v1.js
+          grep -Fq "support:'assets/wardogs-frames/support.webp?v=phase150'" /tmp/wardogs-v1.js
+          grep -Fq "driver:'assets/wardogs-frames/driver.webp?v=phase150'" /tmp/wardogs-v1.js
+          grep -Fq "pilot:'assets/wardogs-frames/pilot.webp?v=phase150'" /tmp/wardogs-v1.js
           grep -Fq 'aspect-ratio:3/4;' /tmp/wardogs-v1.css
           for frame in assault medic recon support driver pilot; do
             curl -fsS --retry 5 --retry-delay 2 "$BASE/assets/wardogs-frames/$frame.webp?deploy=$GITHUB_SHA" -o "/tmp/wardogs-frame-$frame.webp"
@@ -478,6 +479,37 @@ jobs:
           }
           console.log('[phase148] live WARDOGS frame WebP integrity OK');
           NODE
+          node - <<'NODE'
+          const fs=require('fs'),crypto=require('crypto');
+          const expected={"assault":"e9856fa81de759d20c9f0feb90fceee72bed7234","medic":"ef4766349e902dbd79a1a91bf5eaf298a2843e3a","recon":"d318aecf49be050b3825028a20354475f3a00e1d","support":"bd618cad27d13bd876d4c55ed3e35ef8b3c89449","driver":"23a2a8ea301fec55a20c16cacdb3d5df3f2b4a96","pilot":"05949e678d33c5a935c6dcf071f7c3c1c3bfb67f"};
+          const gitBlobSha=bytes=>crypto.createHash('sha1').update(Buffer.from(`blob ${bytes.length}\0`)).update(bytes).digest('hex');
+          for(const frame of Object.keys(expected)){
+            const bytes=fs.readFileSync(`/tmp/wardogs-frame-${frame}.webp`);
+            if(gitBlobSha(bytes)!==expected[frame])throw new Error(`[phase150] stale/wrong frame bytes: ${frame}`);
+            let offset=12,width=0,height=0,hasAlpha=false,hasImage=false;
+            while(offset<bytes.length){
+              const type=bytes.subarray(offset,offset+4).toString();
+              const size=bytes.readUInt32LE(offset+4),start=offset+8,end=start+size;
+              if(type==='VP8X'){width=1+bytes[start+4]+(bytes[start+5]<<8)+(bytes[start+6]<<16);height=1+bytes[start+7]+(bytes[start+8]<<8)+(bytes[start+9]<<16);}
+              if(type==='ALPH')hasAlpha=true;
+              if(type==='VP8 '||type==='VP8L')hasImage=true;
+              offset=end+(size&1);
+            }
+            if(width!==360||height!==480||!hasAlpha||!hasImage)throw new Error(`[phase150] frame alpha/dimensions invalid: ${frame} ${width}x${height}`);
+          }
+          console.log('[phase150] live replacement frame alpha/dimensions/source bytes OK');
+          NODE
+          echo '[phase150] WARDOGS rebuilt source frames'
+          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140-frame144-frames150' /tmp/index.html
+          grep -Fq 'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138-soopid141-frames150' /tmp/index.html
+          grep -Fq "window.__mwsWardogsFrameSourcesV150='user-source-rebuild-cache-busted';" /tmp/wardogs-manager-v1.js
+          grep -Fq "window.__mwsWardogsFrameSourcesV150='user-source-rebuild-cache-busted';" /tmp/wardogs-v1.js
+          grep -Fq "assault:'assets/wardogs-frames/assault.webp?v=phase150'" /tmp/wardogs-manager-v1.js
+          grep -Fq "medic:'assets/wardogs-frames/medic.webp?v=phase150'" /tmp/wardogs-manager-v1.js
+          grep -Fq "recon:'assets/wardogs-frames/recon.webp?v=phase150'" /tmp/wardogs-v1.js
+          grep -Fq "support:'assets/wardogs-frames/support.webp?v=phase150'" /tmp/wardogs-v1.js
+          grep -Fq "driver:'assets/wardogs-frames/driver.webp?v=phase150'" /tmp/wardogs-v1.js
+          grep -Fq "pilot:'assets/wardogs-frames/pilot.webp?v=phase150'" /tmp/wardogs-v1.js
           echo '[phase136] WARDOGS gallery card scale'
           grep -Fq 'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136' /tmp/index.html
           grep -Fq '/* Phase 136: enlarged WARDOGS gallery cards */' /tmp/wardogs-v1.css
@@ -583,7 +615,7 @@ jobs:
           grep -Fq "portraitPositionX:draftPortraitX" /tmp/wardogs-manager-v1.js
           grep -Fq "portraitPositionY:draftPortraitY" /tmp/wardogs-manager-v1.js
           grep -Fq "portraitScale:draftPortraitScale" /tmp/wardogs-manager-v1.js
-          grep -Fq "pilot:'assets/wardogs-frames/pilot.webp'" /tmp/wardogs-manager-v1.js
+          grep -Fq "pilot:'assets/wardogs-frames/pilot.webp?v=phase150'" /tmp/wardogs-manager-v1.js
           grep -Fq '/* Phase 137: portrait framing controls */' /tmp/wardogs-manager-v1.css
           grep -Fq '.wardogs-manager-drop-v122 img.wardogs-manager-frame-v140{' /tmp/wardogs-manager-v1.css
           grep -Fq 'object-position:var(--wd-manager-portrait-x,50%) var(--wd-manager-portrait-y,50%);' /tmp/wardogs-manager-v1.css
@@ -616,7 +648,7 @@ jobs:
           ! grep -Fq 'layer.style.backgroundImage=' /tmp/wardogs-manager-v1.js
           grep -Fq '.wardogs-manager-drop-v122 img.wardogs-manager-frame-v140{' /tmp/wardogs-manager-v1.css
           echo '[phase141] WARDOGS detail SOOP ID display'
-          grep -Fq 'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138-soopid141' /tmp/index.html
+          grep -Fq 'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138-soopid141-frames150' /tmp/index.html
           grep -Fq "window.__mwsWardogsSoopIdV141='station-url-display-fallback-contact-id';" /tmp/wardogs-v1.js
           grep -Fq 'function wardogsStationId(raw){' /tmp/wardogs-v1.js
           grep -Fq '<span>SOOP ID</span>' /tmp/wardogs-v1.js
@@ -642,7 +674,7 @@ jobs:
           grep -Fq "if(dateInput)dateInput.value=parsed.date;" /tmp/app-core.js
           grep -Fq "if(startInput)startInput.value=parsed.time;" /tmp/app-core.js
           echo '[phase144] WARDOGS manager single img frame'
-          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140-frame144' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140-frame144-frames150' /tmp/index.html
           grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-frame140-frame144' /tmp/index.html
           grep -Fq "window.__mwsWardogsManagerFrameV144='single-img-frame-no-overlay';" /tmp/wardogs-manager-v1.js
           grep -Fq '<img class="wardogs-manager-frame-v140" data-wardogs-manager-frame alt="" draggable="false" aria-hidden="true">' /tmp/wardogs-manager-v1.js

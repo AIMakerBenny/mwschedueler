@@ -14,12 +14,12 @@ const CLASSES=Object.freeze([
 ]);
 
 const CLASS_FRAMES=Object.freeze({
-  assault:'assets/wardogs-frames/assault.webp',
-  medic:'assets/wardogs-frames/medic.webp',
-  recon:'assets/wardogs-frames/recon.webp',
-  support:'assets/wardogs-frames/support.webp',
-  driver:'assets/wardogs-frames/driver.webp',
-  pilot:'assets/wardogs-frames/pilot.webp'
+  assault:'assets/wardogs-frames/assault.webp?v=phase150',
+  medic:'assets/wardogs-frames/medic.webp?v=phase150',
+  recon:'assets/wardogs-frames/recon.webp?v=phase150',
+  support:'assets/wardogs-frames/support.webp?v=phase150',
+  driver:'assets/wardogs-frames/driver.webp?v=phase150',
+  pilot:'assets/wardogs-frames/pilot.webp?v=phase150'
 });
 function applyClassFrame(layer,classId){
   if(!layer)return;
@@ -590,6 +590,7 @@ window.__mwsWardogsPortraitRenderV134='contact-custom-transform-frame-slot';
 window.__mwsWardogsClassFramesV135='uploaded-transparent-overlays';
 window.__mwsWardogsPortraitCanvasV138='quarter-scale-contain-black-no-loading-overlay';
 window.__mwsWardogsSoopIdV141='station-url-display-fallback-contact-id';
+window.__mwsWardogsFrameSourcesV150='user-source-rebuild-cache-busted';
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
 else init();
