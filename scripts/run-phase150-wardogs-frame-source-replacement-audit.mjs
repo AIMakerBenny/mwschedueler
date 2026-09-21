@@ -92,7 +92,7 @@ export function runPhase150WardogsFrameSourceReplacementAudit(){
   for(const token of [
     'run-phase150-wardogs-frame-source-replacement-audit.mjs',
     "[phase150] live replacement frame alpha/dimensions/source bytes OK",
-    "?v=phase150",
+    "?v=phase166",
     'frames150'
   ])if(!workflow.includes(token))issues.push('Phase 150 production verification missing: '+token);
 
