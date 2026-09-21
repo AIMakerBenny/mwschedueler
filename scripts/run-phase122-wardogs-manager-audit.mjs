@@ -36,7 +36,7 @@ export function runPhase122WardogsManagerAudit(){
     "await callSave('WARDOGS 카드 삭제');",
     "const cloudOk=await window.mwsV55SaveNow();",
     "await restoreSnapshot(snapshot);",
-    "if(previousImageId&&uploadedId&&previousImageId!==uploadedId)await cleanupImageIfUnused(previousImageId);",
+    "if(previousPortraitImageId&&uploadedPortraitId&&previousPortraitImageId!==uploadedPortraitId){",
     "drop?.addEventListener('drop'",
     "data-wardogs-manager-active",
     "data-wardogs-manager-delete",
