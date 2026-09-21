@@ -99,7 +99,8 @@ jobs:
           node --check scripts/run-phase151-wardogs-gallery-portrait-transparency-audit.mjs
           node --check scripts/run-phase152-wardogs-portrait-aperture-audit.mjs
           node --check scripts/run-phase153-standard-page-top-spacing-audit.mjs
-          node --check scripts/diagnose-phase154-live-layout.mjs\n          node --check scripts/run-phase154-main-overlay-flow-audit.mjs
+          node --check scripts/diagnose-phase154-live-layout.mjs
+          node --check scripts/run-phase154-main-overlay-flow-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
