@@ -43,8 +43,12 @@ export function runPhase144WardogsManagerSingleFrameAudit(){
   const cssFiles=fs.readdirSync('assets').filter(name=>name.endsWith('.css'));
   for(const name of cssFiles){
     const body=fs.readFileSync(path.join('assets',name),'utf8');
-    if(/wardogs-manager-frame-v140[^\{]*\{[^\}]*display\s*:\s*none/i.test(body)){
-      issues.push('CSS collision hides manager frame img: assets/'+name);
+    for(const match of body.matchAll(/([^{}]*wardogs-manager-frame-v140[^{}]*)\{([^{}]*)\}/gi)){
+      const selector=String(match[1]||'');
+      const rules=String(match[2]||'');
+      if(!selector.includes('[hidden]')&&/display\s*:\s*none/i.test(rules)){
+        issues.push('CSS collision hides manager frame img: assets/'+name+' selector '+selector.trim());
+      }
     }
     if(/wardogs-manager-drop-v122\s*::after[^\{]*\{[^\}]*background-image/i.test(body)||
        /data-wardogs-manager-frame-v143/i.test(body)){
