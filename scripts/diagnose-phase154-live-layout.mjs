@@ -100,7 +100,7 @@ try{
     try{window.dispatchEvent(new Event('mws:app-ready'))}catch(_){}
     await sleep(2200);
 
-    const pageIds=['contacts','posts','sniper','targets','friendFinder','memos','worldtime','achievements','wardogs','export','settings'];
+    const pageIds=['contacts','posts','sniper','targets','friendFinder','memos','worldtime','achievements','wardogs','export','settings','contentPlanner'];
     const frames=['classic','workshop','agenda','messenger','material','linear','notion','glass','studio','brutal'];
     const sections=[...document.querySelectorAll('.section')];
     const topbar=document.querySelector('.topbar');
@@ -152,7 +152,12 @@ try{
   const value=evaluated.result?.value;
   if(!value?.results?.length)throw new Error('Layout probe returned no section measurements');
   const worst=[...value.results].sort((a,b)=>(b.firstGap??-999)-(a.firstGap??-999)).slice(0,20);
-  console.log(JSON.stringify({phase154LayoutGeometry:{sampleCount:value.results.length,worst,children:value.children}},null,2));
+  const oversized=value.results.filter(row=>Number.isFinite(row.firstGap)&&row.firstGap>24);
+  console.log(JSON.stringify({phase154LayoutGeometry:{sampleCount:value.results.length,worst,oversized,children:value.children}},null,2));
+  if(oversized.length){
+    const sample=oversized.slice(0,12).map(row=>`${row.frame}/${row.id}=${row.firstGap}px`).join(', ');
+    throw new Error(`Phase154 oversized title/content gap remains: ${sample}`);
+  }
 }finally{
   cdp?.close();
   child.kill('SIGTERM');

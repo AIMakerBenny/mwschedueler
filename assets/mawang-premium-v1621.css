@@ -270,7 +270,7 @@ body.mws-premium .main::before{
   pointer-events:none;
   background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 4%,transparent),transparent);
 }
-body.mws-premium .main>*{position:relative;z-index:1}
+body.mws-premium .main>.topbar,\nbody.mws-premium .main>.section{position:relative;z-index:1}
 
 body.mws-premium .topbar{
   min-height:68px;

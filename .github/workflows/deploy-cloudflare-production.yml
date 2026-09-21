@@ -99,7 +99,7 @@ jobs:
           node --check scripts/run-phase151-wardogs-gallery-portrait-transparency-audit.mjs
           node --check scripts/run-phase152-wardogs-portrait-aperture-audit.mjs
           node --check scripts/run-phase153-standard-page-top-spacing-audit.mjs
-          node --check scripts/diagnose-phase154-live-layout.mjs
+          node --check scripts/diagnose-phase154-live-layout.mjs\n          node --check scripts/run-phase154-main-overlay-flow-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -953,6 +953,15 @@ jobs:
           grep -Fq "function normalizeWardogsPart(raw)" src/cf-v111-auth.js
           grep -Fq "VALUES('public','wardogs'" src/cf-v111-auth.js
           grep -Fq "VALUES('admin','wardogs'" src/cf-v111-auth.js
+
+          echo '[phase154] premium overlay flow restored'
+          grep -Fq 'assets/mawang-premium-v1621.css?v=1.6.21-premium2-phase154' /tmp/index.html
+          retry_contains "$BASE/assets/mawang-premium-v1621.css?deploy=$GITHUB_SHA" 'body.mws-premium .main>.topbar,' > /tmp/mawang-premium-phase154.css
+          grep -Fq 'body.mws-premium .main>.section{position:relative;z-index:1}' /tmp/mawang-premium-phase154.css
+          if grep -Fq 'body.mws-premium .main>*{position:relative;z-index:1}' /tmp/mawang-premium-phase154.css; then
+            echo 'legacy broad premium child positioning remains'
+            exit 1
+          fi
 
           echo '[2a] post-login successor freshness'
           retry_contains "$BASE/assets/post-login-runtime-v130.js?deploy=$GITHUB_SHA" 'achievement-gallery-v1621.js?v=1.6.21-phase111' > /tmp/post-login.js
