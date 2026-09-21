@@ -286,3 +286,8 @@ body.mws-wardogs-touch-ordering-v127 .wardogs-manager-list-pane-v122{
 
 /* Phase 140: keep the real class frame image above the portrait */
 .wardogs-manager-drop-v122 img.wardogs-manager-frame-v140[hidden]{display:none!important}
+
+/* Phase 144: the real frame img is the only manager frame renderer. */
+.wardogs-manager-drop-v122>img.wardogs-manager-frame-v140:not([hidden]){
+  display:block!important;visibility:visible!important;opacity:1!important
+}
