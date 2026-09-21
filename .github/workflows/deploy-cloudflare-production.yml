@@ -91,6 +91,7 @@ jobs:
           node --check scripts/run-phase138-wardogs-portrait-canvas-audit.mjs
           node --check scripts/run-phase140-wardogs-manager-frame-audit.mjs
           node --check scripts/run-phase141-wardogs-soop-id-audit.mjs
+          node --check scripts/run-phase142-wardogs-gallery-transparent-canvas-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -591,6 +592,13 @@ jobs:
           grep -Fq "const stationId=wardogsStationId(contact?.stationUrl);" /tmp/wardogs-v1.js
           grep -Fq "stationId||String(card.contactId||'-')" /tmp/wardogs-v1.js
           ! grep -Fq "root.querySelector('[data-wardogs-detail-contact-id]').textContent=String(card.contactId||'-');" /tmp/wardogs-v1.js
+          echo '[phase142] WARDOGS gallery transparent canvas'
+          grep -Fq 'assets/wardogs-gallery-phase142.css?v=1.0.0' /tmp/index.html
+          retry_contains "$BASE/assets/wardogs-gallery-phase142.css?deploy=$GITHUB_SHA" '.wardogs-gallery-visual-v124.wardogs-portrait-stage-v134{background:transparent!important}' > /tmp/wardogs-gallery-phase142.css
+          grep -Fq '.wardogs-gallery-visual-v124.wardogs-portrait-stage-v134{background:transparent!important}' /tmp/wardogs-gallery-phase142.css
+          grep -Fq '.wardogs-portrait-stage-v134{background:#000!important}' /tmp/wardogs-v1.css
+          grep -Fq '.wardogs-gallery-footer-v124{' /tmp/wardogs-v1.css
+          grep -Fq 'border:1px solid var(--wd-line);border-radius:10px;' /tmp/wardogs-v1.css
           grep -Fq "window.__mwsWardogsOrderingV123='class-scoped-dnd';" /tmp/wardogs-manager-v1.js
           grep -Fq "function classCards(classId=orderClass)" /tmp/wardogs-manager-v1.js
           grep -Fq "function handleOrderDragStart(event)" /tmp/wardogs-manager-v1.js
