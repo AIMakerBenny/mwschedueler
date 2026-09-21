@@ -449,6 +449,34 @@ jobs:
             test "$(head -c 4 "/tmp/wardogs-frame-$frame.webp")" = 'RIFF'
             test "$(dd if="/tmp/wardogs-frame-$frame.webp" bs=1 skip=8 count=4 2>/dev/null)" = 'WEBP'
           done
+          node - <<'NODE'
+          const fs=require('fs');
+          for(const frame of ['assault','medic','recon','support','driver','pilot']){
+            const file=`/tmp/wardogs-frame-${frame}.webp`;
+            const bytes=fs.readFileSync(file);
+            if(bytes.length<12||bytes.subarray(0,4).toString()!=='RIFF'||bytes.subarray(8,12).toString()!=='WEBP'){
+              throw new Error(`[phase148] invalid WebP header: ${frame}`);
+            }
+            const riffSize=bytes.readUInt32LE(4);
+            if(riffSize+8!==bytes.length){
+              throw new Error(`[phase148] RIFF size mismatch: ${frame} expected ${riffSize+8}, got ${bytes.length}`);
+            }
+            let offset=12;
+            let hasImageChunk=false;
+            while(offset<bytes.length){
+              if(offset+8>bytes.length)throw new Error(`[phase148] truncated chunk header: ${frame}`);
+              const type=bytes.subarray(offset,offset+4).toString();
+              const size=bytes.readUInt32LE(offset+4);
+              const end=offset+8+size;
+              if(end>bytes.length)throw new Error(`[phase148] truncated ${type} chunk: ${frame}`);
+              if(type==='VP8 '||type==='VP8L')hasImageChunk=true;
+              offset=end+(size&1);
+            }
+            if(offset!==bytes.length)throw new Error(`[phase148] chunk alignment mismatch: ${frame}`);
+            if(!hasImageChunk)throw new Error(`[phase148] image payload missing: ${frame}`);
+          }
+          console.log('[phase148] live WARDOGS frame WebP integrity OK');
+          NODE
           echo '[phase136] WARDOGS gallery card scale'
           grep -Fq 'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136' /tmp/index.html
           grep -Fq '/* Phase 136: enlarged WARDOGS gallery cards */' /tmp/wardogs-v1.css

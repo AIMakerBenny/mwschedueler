@@ -88,7 +88,8 @@ export function runPhase135WardogsClassFrameAssetsAudit(){
     "support:'assets/wardogs-frames/support.webp'",
     "driver:'assets/wardogs-frames/driver.webp'",
     "pilot:'assets/wardogs-frames/pilot.webp'",
-    'aspect-ratio:3/4;'
+    'aspect-ratio:3/4;',
+    "[phase148] live WARDOGS frame WebP integrity OK"
   ])if(!workflow.includes(token))issues.push('production Phase 135 verification missing: '+token);
 
   const summary={phase:135,name:'wardogs-class-frame-assets',issues,warnings,pass:issues.length===0};
