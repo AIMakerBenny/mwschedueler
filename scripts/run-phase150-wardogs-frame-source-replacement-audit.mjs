@@ -3,14 +3,14 @@ import crypto from 'node:crypto';
 
 const EXPECTED={
   "assault": "5e2a34cafe88ef564b9b8cde4179a91f866a3856",
-  "medic": "a320ccb4ec568daa81fd51df8c0d741f046f6141",
+  "medic": "07469c310003d6c4fc85e58a10fdbe642756205c",
   "recon": "8968e1138f207dee71d3fb6955351e5a2002e642",
   "support": "fa16ddac7ae0bdb1ea128635b0152e4213433596",
   "driver": "db53d6f5f106d3369eb3e0f83520e1839fb1dd5b",
   "pilot": "c5e15dca8a09ff76a38d424dd9ec08b891df0855"
 };
 
-const FRAME_REVISION={assault:'phase157',medic:'phase158',recon:'phase163',support:'phase164',driver:'phase161',pilot:'phase162'};
+const FRAME_REVISION={assault:'phase157',medic:'phase165',recon:'phase163',support:'phase164',driver:'phase161',pilot:'phase162'};
 
 function gitBlobSha(bytes){
   return crypto.createHash('sha1')

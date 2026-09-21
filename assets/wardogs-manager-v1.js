@@ -16,7 +16,7 @@ const CLASS_RANK=new Map(CLASS_META.map((item,index)=>[item.id,index]));
 
 const CLASS_FRAMES=Object.freeze({
   assault:'assets/wardogs-frames/assault.webp?v=phase157',
-  medic:'assets/wardogs-frames/medic.webp?v=phase158',
+  medic:'assets/wardogs-frames/medic.webp?v=phase165',
   recon:'assets/wardogs-frames/recon.webp?v=phase163',
   support:'assets/wardogs-frames/support.webp?v=phase164',
   driver:'assets/wardogs-frames/driver.webp?v=phase161',
@@ -118,8 +118,10 @@ function currentEditorClass(){
 }
 function renderPortraitFrame(){
   const layer=modal?.querySelector('[data-wardogs-manager-frame]');
+  const drop=modal?.querySelector('[data-wardogs-manager-drop]');
   if(!layer)return;
   const classId=currentEditorClass();
+  if(drop)drop.dataset.wardogsClass=classId;
   const frameSrc=CLASS_FRAMES[classId]||CLASS_FRAMES.assault;
   layer.dataset.wardogsManagerFrame=classId;
   if(layer.getAttribute('src')!==frameSrc)layer.setAttribute('src',frameSrc);

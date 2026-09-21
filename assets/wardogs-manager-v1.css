@@ -300,3 +300,10 @@ body.mws-wardogs-touch-ordering-v127 .wardogs-manager-list-pane-v122{
   clip-path:inset(12% 13% 24% 16%);
 }
 .wardogs-manager-portrait-clip-v152>.wardogs-manager-portrait-image-v137{z-index:0}
+
+
+/* Phase 165: Medic frame-specific portrait aperture. */
+.wardogs-manager-drop-v122[data-wardogs-class="medic"] .wardogs-manager-portrait-clip-v152{
+  -webkit-clip-path:inset(8.2% 11.7% 23% 11.8%);
+  clip-path:inset(8.2% 11.7% 23% 11.8%);
+}

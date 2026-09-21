@@ -15,7 +15,7 @@ const CLASSES=Object.freeze([
 
 const CLASS_FRAMES=Object.freeze({
   assault:'assets/wardogs-frames/assault.webp?v=phase157',
-  medic:'assets/wardogs-frames/medic.webp?v=phase158',
+  medic:'assets/wardogs-frames/medic.webp?v=phase165',
   recon:'assets/wardogs-frames/recon.webp?v=phase163',
   support:'assets/wardogs-frames/support.webp?v=phase164',
   driver:'assets/wardogs-frames/driver.webp?v=phase161',
@@ -361,6 +361,7 @@ async function loadDetailImage(card,token){
 
   const spec=portraitSpec(card);
   frame.dataset.wardogsPortraitSource=spec.source;
+  frame.dataset.wardogsClass=String(card?.classId||'');
   frameLayer.dataset.wardogsClassFrame=String(card?.classId||'');
   applyClassFrame(frameLayer,card?.classId);
 
