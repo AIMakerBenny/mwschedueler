@@ -92,6 +92,7 @@ jobs:
           node --check scripts/run-phase140-wardogs-manager-frame-audit.mjs
           node --check scripts/run-phase141-wardogs-soop-id-audit.mjs
           node --check scripts/run-phase142-wardogs-gallery-transparent-canvas-audit.mjs
+          node --check scripts/run-phase143-wardogs-manager-frame-visibility-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -599,6 +600,19 @@ jobs:
           grep -Fq '.wardogs-portrait-stage-v134{background:#000!important}' /tmp/wardogs-v1.css
           grep -Fq '.wardogs-gallery-footer-v124{' /tmp/wardogs-v1.css
           grep -Fq 'border:1px solid var(--wd-line);border-radius:10px;' /tmp/wardogs-v1.css
+          echo '[phase143] WARDOGS manager frame visible CSS overlay'
+          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140-frame143' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-frame-phase143.css?v=1.0.0' /tmp/index.html
+          grep -Fq "window.__mwsWardogsManagerFrameV143='css-overlay-class-frame';" /tmp/wardogs-manager-v1.js
+          grep -Fq "if(drop)drop.dataset.wardogsManagerFrameV143=classId;" /tmp/wardogs-manager-v1.js
+          retry_contains "$BASE/assets/wardogs-manager-frame-phase143.css?deploy=$GITHUB_SHA" 'data-wardogs-manager-frame-v143="medic"' > /tmp/wardogs-manager-frame-phase143.css
+          grep -Fq '.wardogs-manager-drop-v122::after{' /tmp/wardogs-manager-frame-phase143.css
+          grep -Fq 'data-wardogs-manager-frame-v143="medic"' /tmp/wardogs-manager-frame-phase143.css
+          grep -Fq '.wardogs-manager-drop-v122>img.wardogs-manager-frame-v140{display:none!important}' /tmp/wardogs-manager-frame-phase143.css
+          for class in assault medic recon support driver pilot; do
+            curl -fsSL --max-time 20 "$BASE/assets/wardogs-frames/$class.webp?deploy=$GITHUB_SHA" -o "/tmp/wardogs-frame-$class.webp"
+            test -s "/tmp/wardogs-frame-$class.webp"
+          done
           grep -Fq "window.__mwsWardogsOrderingV123='class-scoped-dnd';" /tmp/wardogs-manager-v1.js
           grep -Fq "function classCards(classId=orderClass)" /tmp/wardogs-manager-v1.js
           grep -Fq "function handleOrderDragStart(event)" /tmp/wardogs-manager-v1.js

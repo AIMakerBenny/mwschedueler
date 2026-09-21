@@ -117,10 +117,12 @@ function currentEditorClass(){
   return String(modal?.querySelector('[data-wardogs-manager-class]')?.value||orderClass||'assault').toLowerCase();
 }
 function renderPortraitFrame(){
-  const layer=modal?.querySelector('[data-wardogs-manager-frame]');
-  if(!layer)return;
   const classId=currentEditorClass();
   const frameSrc=CLASS_FRAMES[classId]||CLASS_FRAMES.assault;
+  const drop=modal?.querySelector('[data-wardogs-manager-drop]');
+  if(drop)drop.dataset.wardogsManagerFrameV143=classId;
+  const layer=modal?.querySelector('[data-wardogs-manager-frame]');
+  if(!layer)return;
   layer.dataset.wardogsManagerFrame=classId;
   if(layer.getAttribute('src')!==frameSrc)layer.setAttribute('src',frameSrc);
   layer.hidden=false;
@@ -988,6 +990,7 @@ window.__mwsWardogsPortraitManagerV133='contact-default-custom-override';
 window.__mwsWardogsPortraitAdjustV137='drag-position-zoom-frame-preview';
 window.__mwsWardogsPortraitCanvasV138='quarter-scale-contain-black-no-loading-overlay';
 window.__mwsWardogsManagerFrameV140='img-layer-class-frame';
+window.__mwsWardogsManagerFrameV143='css-overlay-class-frame';
 window.addEventListener('mawang:datachange',event=>{
   if(String(event?.detail?.reason||'').startsWith('WARDOGS')){
     syncShell();
