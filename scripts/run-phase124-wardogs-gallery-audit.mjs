@@ -34,7 +34,9 @@ export function runPhase124WardogsGalleryAudit(){
     "window.mwsRenderWardogsGalleryV124=renderGallery;",
     "window.__mwsWardogsGalleryV124='active-linked-order-preserving';",
     "if(parts.includes('wardogs'))void renderGallery();",
-    "if(!String(event?.detail?.reason||'').startsWith('WARDOGS'))return;",
+    "const wardogsChanged=reason.startsWith('WARDOGS');",
+    "const contactChanged=reason.includes('연락처')||/contact/i.test(reason);",
+    "if(!wardogsChanged&&!contactChanged)return;",
     "window.addEventListener('mws:wardogs-media-ready',()=>void renderGallery());",
     "revokeGalleryUrls();revokeDetailImageUrl()"
   ])if(!gallery.includes(token))issues.push('WARDOGS gallery runtime missing: '+token);

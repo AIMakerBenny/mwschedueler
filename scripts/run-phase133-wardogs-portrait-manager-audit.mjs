@@ -63,7 +63,7 @@ export function runPhase133WardogsPortraitManagerAudit(){
     "portraitImageId=String(result?.id||'');"
   ])if(!workflow.includes(token))issues.push('production Phase 133 verification missing: '+token);
 
-  warnings.push('Gallery/detail rendering still uses the legacy image path until the next portrait composition phase; Phase 133 changes the manager and persisted source selection only.');
+  // Portrait rendering is verified by Phase 134 and later audits.
   const summary={phase:133,name:'wardogs-portrait-manager',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
   if(issues.length)process.exitCode=1;
