@@ -50,14 +50,14 @@ export function runPhase133WardogsPortraitManagerAudit(){
   ])if(!worker.includes(token))issues.push('Cloudflare portrait field preservation missing: '+token);
 
   for(const token of [
-    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait138',
-    'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait138'
+    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140',
+    'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-frame140'
   ])if(!index.includes(token))issues.push('portrait manager cache revision missing: '+token);
 
   for(const token of [
     'run-phase133-wardogs-portrait-manager-audit.mjs',
-    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait138',
-    'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait138',
+    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140',
+    'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-frame140',
     "__mwsWardogsPortraitManagerV133='contact-default-custom-override'",
     "const imageUrl=String(contact?.image||'').trim();",
     "portraitImageId=String(result?.id||'');"

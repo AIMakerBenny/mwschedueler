@@ -52,8 +52,8 @@ export function runPhase138WardogsPortraitCanvasAudit(){
 
   for(const token of [
     'assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130-zoom138',
-    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait138',
-    'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait138',
+    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140',
+    'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-frame140',
     'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138',
     'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136'
   ])if(!index.includes(token))issues.push('Phase 138 cache revision missing: '+token);

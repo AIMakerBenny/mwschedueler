@@ -1,4 +1,4 @@
-/* WARDOGS Phase 138 - portrait zoom-out + stable preview loading */
+/* WARDOGS Phase 140 - reliable manager frame image layer */
 (()=>{
 'use strict';
 if(window.__mwsWardogsManagerV122)return;
@@ -120,8 +120,10 @@ function renderPortraitFrame(){
   const layer=modal?.querySelector('[data-wardogs-manager-frame]');
   if(!layer)return;
   const classId=currentEditorClass();
+  const frameSrc=CLASS_FRAMES[classId]||CLASS_FRAMES.assault;
   layer.dataset.wardogsManagerFrame=classId;
-  layer.style.backgroundImage=`url("${CLASS_FRAMES[classId]||CLASS_FRAMES.assault}")`;
+  if(layer.getAttribute('src')!==frameSrc)layer.setAttribute('src',frameSrc);
+  layer.hidden=false;
 }
 function renderPortraitGeometryControls(){
   const zoom=modal?.querySelector('[data-wardogs-manager-portrait-scale]');
@@ -530,7 +532,7 @@ async function renderExistingPreview(card,token){
   clearObjectUrl('existing');
   portraitPointerCleanup();
   drop.classList.remove('has-portrait-v137');
-  drop.querySelectorAll('img').forEach(img=>img.remove());
+  drop.querySelectorAll('.wardogs-manager-portrait-image-v137').forEach(img=>img.remove());
   renderPortraitSourceControls();
   renderPortraitFrame();
   renderPortraitGeometryControls();
@@ -876,7 +878,7 @@ function ensureModal(){
                 <button type="button" data-wardogs-manager-source="custom" data-wardogs-manager-write aria-pressed="false"><strong>커스텀 이미지</strong><small>WARDOGS 전용</small></button>
               </div>
               <div class="wardogs-manager-drop-v122" data-wardogs-manager-drop>
-                <div class="wardogs-manager-frame-v137" data-wardogs-manager-frame aria-hidden="true"></div>
+                <img class="wardogs-manager-frame-v140" data-wardogs-manager-frame alt="" draggable="false" aria-hidden="true">
                 <div class="wardogs-manager-drop-state-v122" data-wardogs-manager-drop-state><strong>연락처 이미지</strong>선택한 연락처의 프로필 이미지를 자동으로 사용합니다.</div>
               </div>
               <div class="wardogs-manager-portrait-tools-v137">
@@ -985,6 +987,7 @@ window.__mwsWardogsTouchOrderingV127='pointer-events-touch-pen';
 window.__mwsWardogsPortraitManagerV133='contact-default-custom-override';
 window.__mwsWardogsPortraitAdjustV137='drag-position-zoom-frame-preview';
 window.__mwsWardogsPortraitCanvasV138='quarter-scale-contain-black-no-loading-overlay';
+window.__mwsWardogsManagerFrameV140='img-layer-class-frame';
 window.addEventListener('mawang:datachange',event=>{
   if(String(event?.detail?.reason||'').startsWith('WARDOGS')){
     syncShell();

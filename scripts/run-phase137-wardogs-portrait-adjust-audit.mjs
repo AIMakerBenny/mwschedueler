@@ -63,25 +63,25 @@ export function runPhase137WardogsPortraitAdjustAudit(){
     'object-fit:contain;',
     'object-position:var(--wd-manager-portrait-x,50%) var(--wd-manager-portrait-y,50%);',
     'transform:scale(var(--wd-manager-portrait-scale,1));',
-    '.wardogs-manager-frame-v137{',
+    '.wardogs-manager-drop-v122 img.wardogs-manager-frame-v140{',
     'background-size:100% 100%',
     '.wardogs-manager-portrait-tools-v137{',
     '@media(max-width:560px)'
   ])if(!css.includes(token))issues.push('portrait adjustment CSS missing: '+token);
 
-  if(!index.includes('assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait138'))issues.push('Phase 137 manager JS cache revision missing');
-  if(!index.includes('assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait138'))issues.push('Phase 137 manager CSS cache revision missing');
+  if(!index.includes('assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140'))issues.push('Phase 137 manager JS cache revision missing');
+  if(!index.includes('assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-frame140'))issues.push('Phase 137 manager CSS cache revision missing');
 
   for(const token of [
     'run-phase137-wardogs-portrait-adjust-audit.mjs',
-    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait138',
-    'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait138',
+    'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140',
+    'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-frame140',
     "__mwsWardogsPortraitAdjustV137='drag-position-zoom-frame-preview'",
     "function handlePortraitPointerMove(event)",
     "portraitPositionX:draftPortraitX",
     "portraitPositionY:draftPortraitY",
     "portraitScale:draftPortraitScale",
-    '.wardogs-manager-frame-v137{',
+    '.wardogs-manager-drop-v122 img.wardogs-manager-frame-v140{',
     'object-position:var(--wd-manager-portrait-x,50%) var(--wd-manager-portrait-y,50%);'
   ])if(!workflow.includes(token))issues.push('production Phase 137 verification missing: '+token);
 
