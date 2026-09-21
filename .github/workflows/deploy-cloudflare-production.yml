@@ -103,6 +103,8 @@ jobs:
           node --check scripts/run-phase154-main-overlay-flow-audit.mjs
           node --check scripts/diagnose-phase155-tier-planner-ui.mjs
           node --check scripts/run-phase155-tier-planner-ui-audit.mjs
+          node --check scripts/diagnose-phase156-tool-planner-regression.mjs
+          node --check scripts/run-phase156-tool-planner-regression-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -120,6 +122,9 @@ jobs:
 
       - name: Phase 155 live tier planner UI
         run: node scripts/diagnose-phase155-tier-planner-ui.mjs
+
+      - name: Phase 156 live tool planner regression
+        run: node scripts/diagnose-phase156-tool-planner-regression.mjs
 
       - name: Diagnose live data shape
         shell: bash
