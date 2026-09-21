@@ -439,16 +439,6 @@ jobs:
           grep -Fq 'body.mws-premium .main>.section.active>:first-child{' /tmp/ui-frame-presets.css
           grep -Fq 'height:62px!important;' /tmp/ui-frame-presets.css
           grep -Fq 'margin-bottom:14px!important;' /tmp/ui-frame-presets.css
-          echo '[phase133] WARDOGS portrait manager'
-          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait133' /tmp/index.html
-          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait133' /tmp/index.html
-          grep -Fq "window.__mwsWardogsPortraitSchemaV133='contact-custom-position-scale';" /tmp/wardogs-data-v1.js
-          grep -Fq "window.__mwsWardogsPortraitManagerV133='contact-default-custom-override';" /tmp/wardogs-manager-v1.js
-          grep -Fq "const imageUrl=String(contact?.image||'').trim();" /tmp/wardogs-manager-v1.js
-          grep -Fq "portraitImageId=String(result?.id||'');" /tmp/wardogs-manager-v1.js
-          retry_contains "$BASE/assets/wardogs-manager-v1.css?deploy=$GITHUB_SHA" '.wardogs-manager-source-v133{' > /tmp/wardogs-manager-v133.css
-          grep -Fq '.wardogs-manager-source-v133 button.active{' /tmp/wardogs-manager-v133.css
-          grep -Fq "const portraitImageId=String(item.portraitImageId||'').trim().slice(0,160);" src/cf-v111-auth.js
           grep -Fq "createId," /tmp/wardogs-data-v1.js
           grep -Fq "window.mwsTextMatches=mwsTextMatches;" /tmp/app-core.js
           grep -Fq "window.contactMatches=contactMatches;" /tmp/app-core.js
@@ -501,6 +491,16 @@ jobs:
           grep -Fq '.wardogs-manager-drop-v122 img{' /tmp/wardogs-manager-v1.css
           grep -Fq 'object-fit:contain' /tmp/wardogs-manager-v1.css
           grep -Fq '@media(max-width:860px)' /tmp/wardogs-manager-v1.css
+          echo '[phase133] WARDOGS portrait manager'
+          grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-portrait133' /tmp/index.html
+          grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait133' /tmp/index.html
+          grep -Fq "window.__mwsWardogsPortraitSchemaV133='contact-custom-position-scale';" /tmp/wardogs-data-v1.js
+          grep -Fq "window.__mwsWardogsPortraitManagerV133='contact-default-custom-override';" /tmp/wardogs-manager-v1.js
+          grep -Fq "const imageUrl=String(contact?.image||'').trim();" /tmp/wardogs-manager-v1.js
+          grep -Fq "portraitImageId=String(result?.id||'');" /tmp/wardogs-manager-v1.js
+          retry_contains "$BASE/assets/wardogs-manager-v1.css?deploy=$GITHUB_SHA" '.wardogs-manager-source-v133{' > /tmp/wardogs-manager-v133.css
+          grep -Fq '.wardogs-manager-source-v133 button.active{' /tmp/wardogs-manager-v133.css
+          grep -Fq "const portraitImageId=String(item.portraitImageId||'').trim().slice(0,160);" src/cf-v111-auth.js
           grep -Fq "window.__mwsWardogsOrderingV123='class-scoped-dnd';" /tmp/wardogs-manager-v1.js
           grep -Fq "function classCards(classId=orderClass)" /tmp/wardogs-manager-v1.js
           grep -Fq "function handleOrderDragStart(event)" /tmp/wardogs-manager-v1.js
