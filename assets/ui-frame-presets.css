@@ -236,3 +236,21 @@ body[data-ui-frame="linear"] .topbar{
     padding-bottom:10px;
   }
 }
+
+
+/* Phase 153: remove recurrent top blank bands from standard content pages.
+   Phase 132 reset only the first child's margin; normalize the active section itself. */
+body.mws-premium .main > :is(
+  #contacts,#posts,#sniper,#targets,#friendFinder,
+  #memos,#worldtime,#achievements,#export,#settings
+).section.active{
+  margin-top:0!important;
+  padding-top:0!important;
+  top:auto!important;
+}
+body.mws-premium .main > :is(
+  #contacts,#posts,#sniper,#targets,#friendFinder,
+  #memos,#worldtime,#achievements,#export,#settings
+).section.active > :first-child{
+  margin-top:0!important;
+}

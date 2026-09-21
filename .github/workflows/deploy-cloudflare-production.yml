@@ -98,6 +98,7 @@ jobs:
           node --check scripts/run-phase150-wardogs-frame-source-replacement-audit.mjs
           node --check scripts/run-phase151-wardogs-gallery-portrait-transparency-audit.mjs
           node --check scripts/run-phase152-wardogs-portrait-aperture-audit.mjs
+          node --check scripts/run-phase153-standard-page-top-spacing-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -545,7 +546,7 @@ jobs:
           grep -Fq "typeof crypto.randomUUID==='function'" /tmp/wardogs-data-v1.js
           grep -Fq "typeof crypto.getRandomValues==='function'" /tmp/wardogs-data-v1.js
           echo '[phase132] page title/content spacing'
-          grep -Fq 'assets/ui-frame-presets.css?v=3.0.0-space132' /tmp/index.html
+          grep -Fq 'assets/ui-frame-presets.css?v=3.0.0-space132-space153' /tmp/index.html
           retry_contains "$BASE/assets/ui-frame-presets.css?deploy=$GITHUB_SHA" 'Phase 132: normalize page-title to first-content spacing' > /tmp/ui-frame-presets.css
           grep -Fq 'body.mws-premium .main>.section.active>:first-child{' /tmp/ui-frame-presets.css
           grep -Fq 'height:62px!important;' /tmp/ui-frame-presets.css
@@ -677,6 +678,14 @@ jobs:
           grep -Fq 'border-radius:0;background:#05070a;' /tmp/wardogs-v1.css
           grep -Fq '.wardogs-gallery-footer-v124{' /tmp/wardogs-v1.css
           grep -Fq 'border:1px solid var(--wd-line);border-radius:10px;' /tmp/wardogs-v1.css
+          echo '[phase153] standard page top spacing normalized'
+          grep -Fq 'assets/ui-frame-presets.css?v=3.0.0-space132-space153' /tmp/index.html
+          retry_contains "$BASE/assets/ui-frame-presets.css?deploy=$GITHUB_SHA" '/* Phase 153: remove recurrent top blank bands from standard content pages.' > /tmp/ui-frame-presets-phase153.css
+          grep -Fq '#contacts,#posts,#sniper,#targets,#friendFinder,' /tmp/ui-frame-presets-phase153.css
+          grep -Fq '#memos,#worldtime,#achievements,#export,#settings' /tmp/ui-frame-presets-phase153.css
+          grep -Fq 'margin-top:0!important;' /tmp/ui-frame-presets-phase153.css
+          grep -Fq 'padding-top:0!important;' /tmp/ui-frame-presets-phase153.css
+          grep -Fq 'top:auto!important;' /tmp/ui-frame-presets-phase153.css
           echo '[phase152] WARDOGS portrait aperture clipping'
           grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140-frame144-frames150-aperture152' /tmp/index.html
           grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-frame140-frame144-aperture152' /tmp/index.html
