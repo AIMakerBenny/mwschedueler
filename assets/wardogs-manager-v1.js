@@ -9,8 +9,8 @@ const CLASS_META=Object.freeze([
   {id:'medic',label:'메딕'},
   {id:'recon',label:'리콘'},
   {id:'support',label:'서포트'},
-  {id:'driver',label:'DRIVER'},
-  {id:'pilot',label:'PILOT'}
+  {id:'driver',label:'드라이버'},
+  {id:'pilot',label:'파일럿'}
 ]);
 const CLASS_RANK=new Map(CLASS_META.map((item,index)=>[item.id,index]));
 
@@ -19,8 +19,8 @@ const CLASS_FRAMES=Object.freeze({
   medic:'assets/wardogs-frames/medic.webp?v=phase158',
   recon:'assets/wardogs-frames/recon.webp?v=phase159',
   support:'assets/wardogs-frames/support.webp?v=phase160',
-  driver:'assets/wardogs-frames/driver.webp?v=phase150',
-  pilot:'assets/wardogs-frames/pilot.webp?v=phase150'
+  driver:'assets/wardogs-frames/driver.webp?v=phase161',
+  pilot:'assets/wardogs-frames/pilot.webp?v=phase162'
 });
 
 let modal=null;

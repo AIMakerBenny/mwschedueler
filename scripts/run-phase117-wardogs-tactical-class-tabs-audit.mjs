@@ -40,8 +40,8 @@ export function runPhase117WardogsTacticalClassTabsAudit(){
     "{id:'medic',name:'메딕',code:'MED',label:'메딕'}",
     "{id:'recon',name:'리콘',code:'RCN',label:'리콘'}",
     "{id:'support',name:'서포트',code:'SUP',label:'서포트'}",
-    "{id:'driver',name:'DRIVER',code:'DRV',label:'Driver'}",
-    "{id:'pilot',name:'PILOT',code:'PLT',label:'Pilot'}",
+    "{id:'driver',name:'드라이버',code:'DRV',label:'드라이버'}",
+    "{id:'pilot',name:'파일럿',code:'PLT',label:'파일럿'}",
     "function setClass(next)",
     "['ArrowLeft','ArrowRight','Home','End']",
     "window.mwsWardogsV117=Object.freeze({"

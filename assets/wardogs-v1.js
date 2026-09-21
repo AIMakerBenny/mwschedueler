@@ -9,8 +9,8 @@ const CLASSES=Object.freeze([
   {id:'medic',name:'메딕',code:'MED',label:'메딕'},
   {id:'recon',name:'리콘',code:'RCN',label:'리콘'},
   {id:'support',name:'서포트',code:'SUP',label:'서포트'},
-  {id:'driver',name:'DRIVER',code:'DRV',label:'Driver'},
-  {id:'pilot',name:'PILOT',code:'PLT',label:'Pilot'}
+  {id:'driver',name:'드라이버',code:'DRV',label:'드라이버'},
+  {id:'pilot',name:'파일럿',code:'PLT',label:'파일럿'}
 ]);
 
 const CLASS_FRAMES=Object.freeze({
@@ -18,8 +18,8 @@ const CLASS_FRAMES=Object.freeze({
   medic:'assets/wardogs-frames/medic.webp?v=phase158',
   recon:'assets/wardogs-frames/recon.webp?v=phase159',
   support:'assets/wardogs-frames/support.webp?v=phase160',
-  driver:'assets/wardogs-frames/driver.webp?v=phase150',
-  pilot:'assets/wardogs-frames/pilot.webp?v=phase150'
+  driver:'assets/wardogs-frames/driver.webp?v=phase161',
+  pilot:'assets/wardogs-frames/pilot.webp?v=phase162'
 });
 function applyClassFrame(layer,classId){
   if(!layer)return;
