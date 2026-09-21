@@ -162,35 +162,35 @@ try{
       await raf();
 
       for(const tab of ['toolTier','toolMatrix','toolRelations']){
-        const button=document.querySelector(`.nav button[data-tab="${tab}"]`);
-        if(!button){failures.push(`${frame}/${tab}: nav button missing`);continue}
+        const button=document.querySelector('.nav button[data-tab="'+tab+'"]');
+        if(!button){failures.push(frame+'/'+tab+': nav button missing');continue}
         button.click();
         await raf();
         const title=String(document.getElementById('pageTitle')?.textContent||'').trim();
-        if(title!==expectedTitles[tab])failures.push(`${frame}/${tab}: title=${title}`);
+        if(title!==expectedTitles[tab])failures.push(frame+'/'+tab+': title='+title);
 
         for(const selector of selectors[tab]){
-          const nodes=[...document.querySelectorAll(`#${tab} ${selector}`)];
-          if(!nodes.length){failures.push(`${frame}/${tab}: control missing ${selector}`);continue}
+          const nodes=[...document.querySelectorAll('#'+tab+' '+selector)];
+          if(!nodes.length){failures.push(frame+'/'+tab+': control missing '+selector);continue}
           for(const el of nodes.slice(0,3)){
             const info=controlInfo(el,tab,frame,selector);
             results.push(info);
             if(info.display==='none'||info.visibility==='hidden'||Number(info.opacity)===0){
-              failures.push(`${frame}/${tab}: hidden control ${selector}`);
+              failures.push(frame+'/'+tab+': hidden control '+selector);
             }else if(info.contrast<3){
-              failures.push(`${frame}/${tab}: low contrast ${selector}=${info.contrast}`);
+              failures.push(frame+'/'+tab+': low contrast '+selector+'='+info.contrast);
             }
           }
         }
       }
 
       const plannerButton=document.querySelector('.nav button[data-tab="contentPlanner"]');
-      if(!plannerButton){failures.push(`${frame}/contentPlanner: nav button missing`)}
+      if(!plannerButton){failures.push(frame+'/contentPlanner: nav button missing')}
       else{
         plannerButton.click();
         await raf();
         const setTabFn=typeof window.setTab==='function'?window.setTab:(typeof setTab==='function'?setTab:null);
-        if(!setTabFn)failures.push(`${frame}/contentPlanner: setTab unavailable`);
+        if(!setTabFn)failures.push(frame+'/contentPlanner: setTab unavailable');
         else{
           setTabFn('contentPlanner');
           await raf();
@@ -199,11 +199,11 @@ try{
         const navLabel=String(plannerButton.querySelector('.nav-label')?.textContent||'').trim();
         const navTitle=String(plannerButton.getAttribute('title')||'').trim();
         results.push({tab:'contentPlanner',frame,title,navLabel,navTitle});
-        if(title!==expectedTitles.contentPlanner)failures.push(`${frame}/contentPlanner: title=${title}`);
-        if(navLabel!==expectedTitles.contentPlanner)failures.push(`${frame}/contentPlanner: navLabel=${navLabel}`);
-        if(navTitle!==expectedTitles.contentPlanner)failures.push(`${frame}/contentPlanner: navTitle=${navTitle}`);
+        if(title!==expectedTitles.contentPlanner)failures.push(frame+'/contentPlanner: title='+title);
+        if(navLabel!==expectedTitles.contentPlanner)failures.push(frame+'/contentPlanner: navLabel='+navLabel);
+        if(navTitle!==expectedTitles.contentPlanner)failures.push(frame+'/contentPlanner: navTitle='+navTitle);
         if(title==='contentPlanner'||navLabel==='contentPlanner'||navTitle==='contentPlanner'){
-          failures.push(`${frame}/contentPlanner: raw id visible`);
+          failures.push(frame+'/contentPlanner: raw id visible');
         }
       }
     }
