@@ -14,9 +14,14 @@ export function runPhase140WardogsManagerFrameAudit(){
     "if(layer.getAttribute('src')!==frameSrc)layer.setAttribute('src',frameSrc);",
     'layer.hidden=false;',
     '<img class="wardogs-manager-frame-v140" data-wardogs-manager-frame alt="" draggable="false" aria-hidden="true">',
-    "drop.querySelectorAll('.wardogs-manager-portrait-image-v137').forEach(img=>img.remove());",
     "window.__mwsWardogsManagerFrameV140='img-layer-class-frame';"
   ])if(!manager.includes(token))issues.push('manager frame runtime missing: '+token);
+
+  const legacyPortraitCleanup="drop.querySelectorAll('.wardogs-manager-portrait-image-v137').forEach(img=>img.remove());";
+  const aperturePortraitCleanup='portraitClip.replaceChildren();';
+  if(!manager.includes(legacyPortraitCleanup)&&!manager.includes(aperturePortraitCleanup)){
+    issues.push('manager portrait cleanup path missing');
+  }
 
   if(manager.includes("drop.querySelectorAll('img').forEach(img=>img.remove());")){
     issues.push('generic manager preview image cleanup can delete the class frame');
@@ -42,7 +47,7 @@ export function runPhase140WardogsManagerFrameAudit(){
     'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-frame140',
     "__mwsWardogsManagerFrameV140='img-layer-class-frame'",
     "if(layer.getAttribute('src')!==frameSrc)layer.setAttribute('src',frameSrc);",
-    "drop.querySelectorAll('.wardogs-manager-portrait-image-v137').forEach(img=>img.remove());",
+    "portraitClip.replaceChildren();",
     '.wardogs-manager-drop-v122 img.wardogs-manager-frame-v140{'
   ])if(!workflow.includes(token))issues.push('production Phase 140 verification missing: '+token);
 

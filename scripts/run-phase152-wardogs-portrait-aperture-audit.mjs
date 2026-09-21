@@ -36,7 +36,7 @@ export function runPhase152WardogsPortraitApertureAudit(){
   ])if(!wardogsJs.includes(token))issues.push('Phase 152 gallery/detail clip runtime missing: '+token);
   if((wardogsJs.match(/view\.portraitClip\.appendChild\(img\);/g)||[]).length!==2)
     issues.push('Phase 152 gallery must route both portrait sources through clip host');
-  if((wardogsJs.match(/portraitClip\.appendChild\(img\);/g)||[]).length!==2)
+  if((wardogsJs.match(/(^|[^.])portraitClip\.appendChild\(img\);/gm)||[]).length!==2)
     issues.push('Phase 152 detail must route both portrait sources through clip host');
   if(wardogsJs.includes('view.visual.insertBefore(img,view.frameLayer);')||wardogsJs.includes('frame.insertBefore(img,frameLayer);'))
     issues.push('Phase 152 direct portrait insertion outside fixed aperture remains');

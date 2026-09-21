@@ -649,7 +649,7 @@ jobs:
           grep -Fq "window.__mwsWardogsManagerFrameV140='img-layer-class-frame';" /tmp/wardogs-manager-v1.js
           grep -Fq "if(layer.getAttribute('src')!==frameSrc)layer.setAttribute('src',frameSrc);" /tmp/wardogs-manager-v1.js
           grep -Fq "<img class=\"wardogs-manager-frame-v140\" data-wardogs-manager-frame alt=\"\" draggable=\"false\" aria-hidden=\"true\">" /tmp/wardogs-manager-v1.js
-          grep -Fq "drop.querySelectorAll('.wardogs-manager-portrait-image-v137').forEach(img=>img.remove());" /tmp/wardogs-manager-v1.js
+          (grep -Fq "drop.querySelectorAll('.wardogs-manager-portrait-image-v137').forEach(img=>img.remove());" /tmp/wardogs-manager-v1.js || grep -Fq "portraitClip.replaceChildren();" /tmp/wardogs-manager-v1.js)
           ! grep -Fq "drop.querySelectorAll('img').forEach(img=>img.remove());" /tmp/wardogs-manager-v1.js
           ! grep -Fq 'layer.style.backgroundImage=' /tmp/wardogs-manager-v1.js
           grep -Fq '.wardogs-manager-drop-v122 img.wardogs-manager-frame-v140{' /tmp/wardogs-manager-v1.css

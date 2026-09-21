@@ -23,7 +23,6 @@ export function runPhase144WardogsManagerSingleFrameAudit(){
     "if(layer.getAttribute('src')!==frameSrc)layer.setAttribute('src',frameSrc);",
     'layer.hidden=false;',
     '<img class="wardogs-manager-frame-v140" data-wardogs-manager-frame alt="" draggable="false" aria-hidden="true">',
-    "drop.querySelectorAll('.wardogs-manager-portrait-image-v137').forEach(img=>img.remove());",
     "root.querySelector('[data-wardogs-manager-class]')?.addEventListener('change',()=>{markDirty();renderPortraitFrame()});",
     "window.__mwsWardogsManagerFrameV144='single-img-frame-no-overlay';"
   ])if(!manager.includes(token))issues.push('single manager frame runtime missing: '+token);
@@ -35,6 +34,11 @@ export function runPhase144WardogsManagerSingleFrameAudit(){
     '.wardogs-manager-drop-v122>img.wardogs-manager-frame-v140:not([hidden]){',
     'display:block!important;visibility:visible!important;opacity:1!important'
   ])if(!managerCss.includes(token))issues.push('single manager frame CSS missing: '+token);
+
+  const legacyPortraitCleanup="drop.querySelectorAll('.wardogs-manager-portrait-image-v137').forEach(img=>img.remove());";
+  const aperturePortraitCleanup='portraitClip.replaceChildren();';
+  if(!manager.includes(legacyPortraitCleanup)&&!manager.includes(aperturePortraitCleanup))
+    issues.push('manager portrait cleanup path missing');
 
   if(manager.includes('wardogsManagerFrameV143'))issues.push('Phase 143 dataset overlay runtime remains');
   if(manager.includes('__mwsWardogsManagerFrameV143'))issues.push('Phase 143 overlay marker remains');
