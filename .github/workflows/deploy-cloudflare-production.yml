@@ -99,6 +99,7 @@ jobs:
           node --check scripts/run-phase151-wardogs-gallery-portrait-transparency-audit.mjs
           node --check scripts/run-phase152-wardogs-portrait-aperture-audit.mjs
           node --check scripts/run-phase153-standard-page-top-spacing-audit.mjs
+          node --check scripts/diagnose-phase154-live-layout.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
       - name: Install dependencies
@@ -110,6 +111,9 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
+
+      - name: Phase 154 live layout geometry
+        run: node scripts/diagnose-phase154-live-layout.mjs
 
       - name: Diagnose live data shape
         shell: bash
