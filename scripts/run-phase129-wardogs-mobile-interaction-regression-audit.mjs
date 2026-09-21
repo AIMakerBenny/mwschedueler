@@ -12,7 +12,7 @@ export function runPhase129WardogsMobileInteractionRegressionAudit(){
 
   for(const token of [
     'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait133',
-    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135'
+    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135-gallery136'
   ])if(!index.includes(token))issues.push('mobile regression cache-bust missing: '+token);
 
   for(const token of [
@@ -66,7 +66,7 @@ export function runPhase129WardogsMobileInteractionRegressionAudit(){
   for(const token of [
     'run-phase129-wardogs-mobile-interaction-regression-audit.mjs',
     'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-portrait133',
-    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135',
+    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135-gallery136',
     "fileInput?.addEventListener('change'",
     "addEventListener('input',renderContactResults)",
     "handle?.addEventListener('pointerdown',handleTouchOrderPointerDown);",

@@ -44,13 +44,13 @@ export function runPhase134WardogsPortraitRenderAudit(){
 
   for(const token of [
     'assets/wardogs-v1.js?v=1.0.0-phase125-portrait135',
-    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135'
+    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135-gallery136'
   ])if(!index.includes(token))issues.push('portrait render cache revision missing: '+token);
 
   for(const token of [
     'run-phase134-wardogs-portrait-render-audit.mjs',
     'assets/wardogs-v1.js?v=1.0.0-phase125-portrait135',
-    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135',
+    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135-gallery136',
     "__mwsWardogsPortraitRenderV134='contact-custom-transform-frame-slot'",
     "function portraitSpec(card)",
     "imageId:String(card?.portraitImageId||card?.imageId||'').trim(),",

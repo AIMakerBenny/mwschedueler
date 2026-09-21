@@ -9,7 +9,7 @@ export function runPhase125WardogsCardDetailAudit(){
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
   for(const token of [
-    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135',
+    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135-gallery136',
     'assets/wardogs-v1.js?v=1.0.0-phase125-portrait135'
   ])if(!index.includes(token))issues.push('WARDOGS Phase 125 asset revision missing: '+token);
 
@@ -72,7 +72,7 @@ export function runPhase125WardogsCardDetailAudit(){
   for(const token of [
     'run-phase125-wardogs-card-detail-audit.mjs',
     'assets/wardogs-v1.js?v=1.0.0-phase125-portrait135',
-    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135',
+    'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait135-gallery136',
     "window.__mwsWardogsDetailV125='linked-contact-card-detail';",
     "root.id='wardogsDetailModalV125';",
     "article.addEventListener('click',()=>void openDetail(card.id,article));",

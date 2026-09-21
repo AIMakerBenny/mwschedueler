@@ -425,3 +425,47 @@ body.mws-wardogs-detail-open-v125{overflow:hidden!important}
     min-height:0;
   }
 }
+
+
+/* Phase 136: enlarged WARDOGS gallery cards */
+@media(min-width:981px){
+  .wardogs-gallery-v124{
+    grid-template-columns:repeat(auto-fill,minmax(320px,360px));
+    gap:22px;
+    padding:24px
+  }
+  .wardogs-gallery-footer-v124{
+    gap:14px;
+    padding:14px 15px
+  }
+  .wardogs-gallery-identity-v124 strong{
+    font-size:17px
+  }
+  .wardogs-gallery-identity-v124 span{
+    margin-top:6px;
+    font-size:10px
+  }
+  .wardogs-gallery-state-v124{
+    padding:7px 9px;
+    font-size:9px
+  }
+}
+@media(min-width:641px) and (max-width:980px){
+  .wardogs-gallery-v124{
+    grid-template-columns:repeat(auto-fill,minmax(280px,320px));
+    gap:16px;
+    padding:16px
+  }
+  .wardogs-gallery-footer-v124{
+    padding:12px 13px
+  }
+  .wardogs-gallery-identity-v124 strong{
+    font-size:15px
+  }
+  .wardogs-gallery-identity-v124 span{
+    font-size:9px
+  }
+  .wardogs-gallery-state-v124{
+    font-size:8px
+  }
+}
