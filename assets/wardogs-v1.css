@@ -531,6 +531,8 @@ body.mws-wardogs-detail-open-v125{overflow:hidden!important}
 }
 
 
+/* Phase 142: gallery portrait stage uses the page/card surface instead of a forced black canvas. */
+/* Phase 151: remove the remaining black fill from the gallery portrait image layer only. */
 /* Phase 170: consolidated gallery transparency. Former Phase 142/151 override stylesheet merged here. */
 .wardogs-gallery-visual-v124.wardogs-portrait-stage-v134{background:transparent!important}
 .wardogs-gallery-visual-v124 img.wardogs-portrait-image-v134{background:transparent!important}

@@ -37,7 +37,7 @@ export function runPhase170RuntimeOverlapCleanupAudit(){
   for(const file of ['assets/majoku-sidebar-v113.js','assets/steam-game-v111.js','assets/ui-fixes-v121.js','assets/boss-manager-v121.js'])
     if(!fs.existsSync(file))issues.push('current successor asset missing: '+file);
 
-  if(!entry.includes("'perf-runtime\\.js'")||!entry.includes("'device-ui\\.js'"))
+  if(!entry.includes('const deferred=[')||!entry.includes('perf-runtime')||!entry.includes('device-ui'))
     issues.push('Worker compatibility stripping for source fallback scripts changed unexpectedly');
   if(!post.includes('/assets/perf-runtime.js?v=1.4.0-phase')||!post.includes('/assets/device-ui.js?v=1.3.0-perf'))
     issues.push('post-login authoritative runtime ownership changed unexpectedly');
