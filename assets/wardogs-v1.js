@@ -28,6 +28,36 @@ function applyClassFrame(layer,classId){
   const frame=CLASS_FRAMES[String(classId||'')]||CLASS_FRAMES.assault;
   layer.style.backgroundImage=`url("${frame}")`;
 }
+const framePreloadCache=new Map();
+function preloadClassFrame(classId){
+  const frame=CLASS_FRAMES[String(classId||'')]||CLASS_FRAMES.assault;
+  if(framePreloadCache.has(frame))return framePreloadCache.get(frame);
+  const task=new Promise(resolve=>{
+    const probe=new Image();
+    let settled=false;
+    const done=ok=>{
+      if(settled)return;
+      settled=true;
+      resolve(ok===true);
+    };
+    const decodeAndDone=()=>{
+      if(typeof probe.decode==='function'){
+        Promise.resolve(probe.decode()).catch(()=>{}).finally(()=>done(true));
+      }else done(true);
+    };
+    probe.onload=decodeAndDone;
+    probe.onerror=()=>done(false);
+    probe.src=frame;
+    if(probe.complete&&probe.naturalWidth>0)queueMicrotask(decodeAndDone);
+    setTimeout(()=>done(false),5000);
+  });
+  framePreloadCache.set(frame,task);
+  return task;
+}
+function preloadAllClassFrames(){
+  return Promise.allSettled(CLASSES.map(item=>preloadClassFrame(item.id)));
+}
+void preloadAllClassFrames();
 
 let activeClass='assault';
 let renderToken=0;
@@ -175,7 +205,7 @@ function makeGalleryCard(card){
   });
 
   const visual=document.createElement('div');
-  visual.className='wardogs-gallery-visual-v124 wardogs-portrait-stage-v134';
+  visual.className='wardogs-gallery-visual-v124 wardogs-portrait-stage-v134 wardogs-composite-pending-v169';
   visual.dataset.wardogsClass=String(card?.classId||'');
 
   const portraitClip=document.createElement('div');
@@ -218,12 +248,21 @@ async function loadGalleryImage(card,view,token){
   const spec=portraitSpec(card);
   view.visual.dataset.wardogsPortraitSource=spec.source;
   view.frameLayer.dataset.wardogsClassFrame=String(card?.classId||'');
+  const frameReady=preloadClassFrame(card?.classId);
   applyClassFrame(view.frameLayer,card?.classId);
+
+  const revealFrameOnly=async()=>{
+    await frameReady;
+    if(token!==renderToken)return;
+    view.visual.classList.remove('wardogs-composite-pending-v169');
+    view.visual.classList.add('wardogs-composite-ready-v169');
+  };
 
   if(spec.source==='contact'){
     if(!spec.url){
       view.placeholder.hidden=false;
       view.placeholder.innerHTML='<span>CONTACT IMAGE</span><strong>NOT SET</strong>';
+      await revealFrameOnly();
       return;
     }
     const img=document.createElement('img');
@@ -232,13 +271,19 @@ async function loadGalleryImage(card,view,token){
     img.decoding='async';
     img.draggable=false;
     applyPortraitGeometry(img,spec);
-    const ready=()=>{
+    const ready=async()=>{
       if(token!==renderToken)return;
-      view.visual.classList.add('has-image');
+      await frameReady;
+      if(token!==renderToken)return;
+      view.visual.classList.remove('wardogs-composite-pending-v169');
+      view.visual.classList.add('wardogs-composite-ready-v169','has-image');
       view.placeholder.hidden=true;
     };
     img.onload=ready;
-    img.onerror=()=>handleContactPortraitError(img,view.placeholder,view.visual,token,()=>renderToken);
+    img.onerror=async()=>{
+      handleContactPortraitError(img,view.placeholder,view.visual,token,()=>renderToken);
+      await revealFrameOnly();
+    };
     view.placeholder.hidden=true;
     view.portraitClip.appendChild(img);
     img.src=spec.url;
@@ -250,12 +295,14 @@ async function loadGalleryImage(card,view,token){
   if(!imageId){
     view.placeholder.hidden=false;
     view.placeholder.innerHTML='<span>CUSTOM IMAGE</span><strong>NOT SET</strong>';
+    await revealFrameOnly();
     return;
   }
   const media=mediaApi();
   if(!media?.getBlob){
     view.placeholder.hidden=false;
     view.placeholder.innerHTML='<span>CUSTOM IMAGE</span><strong>STORE UNAVAILABLE</strong>';
+    await revealFrameOnly();
     return;
   }
   try{
@@ -264,6 +311,7 @@ async function loadGalleryImage(card,view,token){
     if(!(blob instanceof Blob)){
       view.placeholder.hidden=false;
       view.placeholder.innerHTML='<span>CUSTOM IMAGE</span><strong>IMAGE MISSING</strong>';
+      await revealFrameOnly();
       return;
     }
     const url=URL.createObjectURL(blob);
@@ -275,17 +323,21 @@ async function loadGalleryImage(card,view,token){
     img.decoding='async';
     img.draggable=false;
     applyPortraitGeometry(img,spec);
-    const ready=()=>{
+    const ready=async()=>{
       if(token!==renderToken)return;
-      view.visual.classList.add('has-image');
+      await frameReady;
+      if(token!==renderToken)return;
+      view.visual.classList.remove('wardogs-composite-pending-v169');
+      view.visual.classList.add('wardogs-composite-ready-v169','has-image');
       view.placeholder.hidden=true;
     };
     img.onload=ready;
-    img.onerror=()=>{
+    img.onerror=async()=>{
       if(token===renderToken){
         view.placeholder.hidden=false;
         view.placeholder.innerHTML='<span>CUSTOM IMAGE</span><strong>LOAD FAILED</strong>';
       }
+      await revealFrameOnly();
     };
     view.placeholder.hidden=true;
     view.portraitClip.appendChild(img);
@@ -297,6 +349,7 @@ async function loadGalleryImage(card,view,token){
       view.placeholder.hidden=false;
       view.placeholder.innerHTML='<span>CUSTOM IMAGE</span><strong>LOAD FAILED</strong>';
     }
+    await revealFrameOnly();
   }
 }
 function ensureDetailModal(){
@@ -358,19 +411,29 @@ async function loadDetailImage(card,token){
   const frameLayer=root.querySelector('[data-wardogs-detail-frame-layer]');
   if(!frame||!portraitClip||!stateEl||!frameLayer)return;
   portraitClip.replaceChildren();
-  frame.classList.remove('has-image','has-contact-fallback');
+  frame.classList.remove('has-image','has-contact-fallback','wardogs-composite-ready-v169');
+  frame.classList.add('wardogs-composite-pending-v169');
   revokeDetailImageUrl();
 
   const spec=portraitSpec(card);
   frame.dataset.wardogsPortraitSource=spec.source;
   frame.dataset.wardogsClass=String(card?.classId||'');
   frameLayer.dataset.wardogsClassFrame=String(card?.classId||'');
+  const frameReady=preloadClassFrame(card?.classId);
   applyClassFrame(frameLayer,card?.classId);
+
+  const revealFrameOnly=async()=>{
+    await frameReady;
+    if(token!==detailToken||detailCardId!==card.id)return;
+    frame.classList.remove('wardogs-composite-pending-v169');
+    frame.classList.add('wardogs-composite-ready-v169');
+  };
 
   if(spec.source==='contact'){
     if(!spec.url){
       stateEl.hidden=false;
       stateEl.innerHTML='<span>CONTACT IMAGE</span><strong>NOT SET</strong>';
+      await revealFrameOnly();
       return;
     }
     const img=document.createElement('img');
@@ -378,13 +441,19 @@ async function loadDetailImage(card,token){
     img.decoding='async';
     img.draggable=false;
     applyPortraitGeometry(img,spec);
-    const ready=()=>{
+    const ready=async()=>{
+      if(token!==detailToken||detailCardId!==card.id)return;
+      await frameReady;
       if(token!==detailToken||detailCardId!==card.id)return;
       stateEl.hidden=true;
-      frame.classList.add('has-image');
+      frame.classList.remove('wardogs-composite-pending-v169');
+      frame.classList.add('wardogs-composite-ready-v169','has-image');
     };
     img.onload=ready;
-    img.onerror=()=>handleContactPortraitError(img,stateEl,frame,token,()=>detailToken);
+    img.onerror=async()=>{
+      handleContactPortraitError(img,stateEl,frame,token,()=>detailToken);
+      await revealFrameOnly();
+    };
     stateEl.hidden=true;
     portraitClip.appendChild(img);
     img.src=spec.url;
@@ -396,6 +465,7 @@ async function loadDetailImage(card,token){
   if(!imageId){
     stateEl.hidden=false;
     stateEl.innerHTML='<span>CUSTOM IMAGE</span><strong>NOT SET</strong>';
+    await revealFrameOnly();
     return;
   }
   try{
@@ -404,6 +474,7 @@ async function loadDetailImage(card,token){
     if(!(blob instanceof Blob)){
       stateEl.hidden=false;
       stateEl.innerHTML='<span>CUSTOM IMAGE</span><strong>IMAGE MISSING</strong>';
+      await revealFrameOnly();
       return;
     }
     const url=URL.createObjectURL(blob);
@@ -414,17 +485,21 @@ async function loadDetailImage(card,token){
     img.decoding='async';
     img.draggable=false;
     applyPortraitGeometry(img,spec);
-    const ready=()=>{
+    const ready=async()=>{
+      if(token!==detailToken||detailCardId!==card.id)return;
+      await frameReady;
       if(token!==detailToken||detailCardId!==card.id)return;
       stateEl.hidden=true;
-      frame.classList.add('has-image');
+      frame.classList.remove('wardogs-composite-pending-v169');
+      frame.classList.add('wardogs-composite-ready-v169','has-image');
     };
     img.onload=ready;
-    img.onerror=()=>{
+    img.onerror=async()=>{
       if(token===detailToken){
         stateEl.hidden=false;
         stateEl.innerHTML='<span>CUSTOM IMAGE</span><strong>LOAD FAILED</strong>';
       }
+      await revealFrameOnly();
     };
     stateEl.hidden=true;
     portraitClip.appendChild(img);
@@ -436,6 +511,7 @@ async function loadDetailImage(card,token){
       stateEl.hidden=false;
       stateEl.innerHTML='<span>CUSTOM IMAGE</span><strong>LOAD FAILED</strong>';
     }
+    await revealFrameOnly();
   }
 }
 async function openDetail(cardId,opener=null){
@@ -499,7 +575,7 @@ function closeDetail(){
   detailToken++;
   detailCardId='';
   revokeDetailImageUrl();
-  detailModal.querySelector('[data-wardogs-detail-media]')?.classList.remove('has-image');
+  detailModal.querySelector('[data-wardogs-detail-media]')?.classList.remove('has-image','wardogs-composite-pending-v169','wardogs-composite-ready-v169');
   detailModal.hidden=true;
   document.body.classList.remove('mws-wardogs-detail-open-v125');
   const focus=detailLastFocus;
@@ -604,6 +680,7 @@ window.__mwsWardogsSoopIdV141='station-url-display-fallback-contact-id';
 window.__mwsWardogsFrameSourcesV150='user-source-rebuild-cache-busted';
 window.__mwsWardogsFrameBatchV166='assault-support-pilot-class-apertures';
 window.__mwsWardogsUnassignedV168='seventh-class-last-slot';
+window.__mwsWardogsCompositeLoadV169='frame-preload-synchronized-reveal';
 window.__mwsWardogsPortraitApertureV152='fixed-inner-window-manager-gallery-detail';
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});

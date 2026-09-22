@@ -150,6 +150,7 @@ import {runPhase154MainOverlayFlowAudit} from './run-phase154-main-overlay-flow-
 import {runPhase155TierPlannerUiAudit} from './run-phase155-tier-planner-ui-audit.mjs';
 import {runPhase156ToolPlannerRegressionAudit} from './run-phase156-tool-planner-regression-audit.mjs';
 import {runPhase168WardogsUnassignedClassAudit} from './run-phase168-wardogs-unassigned-class-audit.mjs';
+import {runPhase169WardogsFramePreloadAudit} from './run-phase169-wardogs-frame-preload-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1646,6 +1647,16 @@ export function runPhase168FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase168FullIntegrationAudit();}
+export function runPhase169FullIntegrationAudit(){
+  const previous=runPhase168FullIntegrationAudit(), current=runPhase169WardogsFramePreloadAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:169,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase169FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();

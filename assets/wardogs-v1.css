@@ -513,3 +513,19 @@ body.mws-wardogs-detail-open-v125{overflow:hidden!important}
   -webkit-clip-path:inset(8.2% 11.5% 22.3% 12.1%);
   clip-path:inset(8.2% 11.5% 22.3% 12.1%);
 }
+
+
+/* Phase 169: synchronize portrait and frame reveal after frame preload. */
+.wardogs-portrait-stage-v134.wardogs-composite-pending-v169 .wardogs-portrait-clip-v152,
+.wardogs-portrait-stage-v134.wardogs-composite-pending-v169 .wardogs-class-frame-layer-v134{
+  opacity:0!important;
+}
+.wardogs-portrait-stage-v134.wardogs-composite-ready-v169 .wardogs-portrait-clip-v152,
+.wardogs-portrait-stage-v134.wardogs-composite-ready-v169 .wardogs-class-frame-layer-v134{
+  opacity:1;
+  transition:opacity .08s linear;
+}
+@media(prefers-reduced-motion:reduce){
+  .wardogs-portrait-stage-v134.wardogs-composite-ready-v169 .wardogs-portrait-clip-v152,
+  .wardogs-portrait-stage-v134.wardogs-composite-ready-v169 .wardogs-class-frame-layer-v134{transition:none}
+}
