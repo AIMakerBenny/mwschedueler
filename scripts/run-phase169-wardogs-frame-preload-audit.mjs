@@ -8,7 +8,7 @@ export function runPhase169WardogsFramePreloadAudit(){
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
   for(const token of [
-    "assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136-aperture152-medicaperture165-classapertures166-unassigned168-framepreload169",
+    "assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136-aperture152-medicaperture165-classapertures166-unassigned168-framepreload169-consolidated170",
     "assets/wardogs-v1.js?v=1.0.0-phase125-portrait138-soopid141-frames150-aperture152-assault166-medic165-recon163-support166-driver161-pilot166-unassigned168-framepreload169"
   ])if(!index.includes(token))issues.push('Phase 169 cache token missing: '+token);
 

@@ -4,11 +4,12 @@ export function runPhase151WardogsGalleryPortraitTransparencyAudit(){
   const issues=[];
   const warnings=[];
   const index=fs.readFileSync('index.html','utf8');
-  const baseCss=fs.readFileSync('assets/wardogs-v1.css','utf8');
-  const css=fs.readFileSync('assets/wardogs-gallery-phase142.css','utf8');
+  const css=fs.readFileSync('assets/wardogs-v1.css','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
+  if(index.includes('assets/wardogs-gallery-phase142.css'))issues.push('retired Phase 142/151 override stylesheet is still wired in index');
+  if(fs.existsSync('assets/wardogs-gallery-phase142.css'))issues.push('retired Phase 142/151 override stylesheet still exists');
 
-  const sheet='assets/wardogs-gallery-phase142.css?v=1.0.0-phase151';
+  const sheet='assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136-aperture152-medicaperture165-classapertures166-unassigned168-framepreload169-consolidated170';
   if(!index.includes(sheet))issues.push('Phase 151 stylesheet cache revision missing: '+sheet);
 
   for(const token of [
@@ -24,7 +25,7 @@ export function runPhase151WardogsGalleryPortraitTransparencyAudit(){
     '.wardogs-gallery-footer-v124{',
     'border:1px solid var(--wd-line);border-radius:10px;',
     '.wardogs-class-frame-layer-v134{'
-  ])if(!baseCss.includes(token))issues.push('protected WARDOGS base styling missing: '+token);
+  ])if(!css.includes(token))issues.push('protected WARDOGS base styling missing: '+token);
 
   if(/wardogs-detail[^\n{]*\{[^}]*background\s*:\s*transparent!important/s.test(css))
     issues.push('Phase 151 must not make detail portrait/canvas transparent');

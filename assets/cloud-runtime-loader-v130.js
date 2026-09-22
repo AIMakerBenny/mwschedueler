@@ -29,13 +29,6 @@ const loadScript=(key,src,flag)=>{
   return promise;
 };
 const loadOptionalScript=(key,src,flag)=>loadScript(key,src,flag).catch(error=>{console.error(error);return null});
-const loadStyle=(key,href)=>{
-  if(document.querySelector(`link[data-mws-feature-style="${key}"]`))return;
-  const link=document.createElement('link');
-  link.rel='stylesheet';link.href=href;link.dataset.mwsFeatureStyle=key;
-  document.head.appendChild(link);
-};
-
 const loadAppVersion=()=>loadScript('app-version-v120','/assets/app-version-v120.js?v=1.3.0','__mwsAppVersionV120');
 const loadCoreRuntime=async()=>{
   await loadScript('cloud-core-v130','/assets/cloud-runtime-v130.js?v=1.3.0-stage67');
@@ -57,7 +50,6 @@ gateStyle.textContent='#mwsAccessGate{pointer-events:auto!important;z-index:2147
 document.head.appendChild(gateStyle);
 
 async function loadCalendarFeatures(){
-  loadStyle('calendar-drag','/assets/calendar-drag-layout-fix.css?v=1.3.0');
   await loadSteamPicker();
   await Promise.all([loadUiFixes(),loadTodayPeopleWheel()]);
 }

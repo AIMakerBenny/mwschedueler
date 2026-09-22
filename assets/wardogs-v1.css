@@ -529,3 +529,8 @@ body.mws-wardogs-detail-open-v125{overflow:hidden!important}
   .wardogs-portrait-stage-v134.wardogs-composite-ready-v169 .wardogs-portrait-clip-v152,
   .wardogs-portrait-stage-v134.wardogs-composite-ready-v169 .wardogs-class-frame-layer-v134{transition:none}
 }
+
+
+/* Phase 170: consolidated gallery transparency. Former Phase 142/151 override stylesheet merged here. */
+.wardogs-gallery-visual-v124.wardogs-portrait-stage-v134{background:transparent!important}
+.wardogs-gallery-visual-v124 img.wardogs-portrait-image-v134{background:transparent!important}

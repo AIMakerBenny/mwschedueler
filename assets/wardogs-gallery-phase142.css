@@ -1,5 +1,0 @@
-/* Phase 142: gallery portrait stage uses the page/card surface instead of a forced black canvas. */
-.wardogs-gallery-visual-v124.wardogs-portrait-stage-v134{background:transparent!important}
-
-/* Phase 151: remove the remaining black fill from the gallery portrait image layer only. */
-.wardogs-gallery-visual-v124 img.wardogs-portrait-image-v134{background:transparent!important}
