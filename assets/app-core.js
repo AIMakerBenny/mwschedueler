@@ -1161,6 +1161,92 @@ function ensureCalendarYearOptions(){
 
 let calendarDragPayload=null;
 
+/* Phase 171: calendar content search. Highlights dates without filtering or rebuilding event data. */
+let calendarSearchTimerV171=0;
+function calendarEventSearchFieldsV171(event){
+  const fields=[String(event?.title||''),String(event?.steamGame?.name||'')];
+  const ids=[...new Set([
+    ...(Array.isArray(event?.participants)?event.participants:[]),
+    ...(event?.autoSelfParticipantId?[event.autoSelfParticipantId]:[])
+  ].filter(Boolean))];
+  for(const id of ids){
+    const person=contact(id);
+    if(person?.name)fields.push(String(person.name));
+  }
+  return fields.filter(Boolean);
+}
+function calendarEventMatchesSearchV171(event,query){
+  const q=String(query||'').trim();
+  if(!q||!event||event.restDay)return false;
+  return calendarEventSearchFieldsV171(event).some(value=>mwsTextMatches(value,q));
+}
+function calendarSearchMatchesV171(query){
+  const byDate=new Map();
+  let totalEvents=0;
+  for(const event of activeEvents()){
+    if(!calendarEventMatchesSearchV171(event,query))continue;
+    const date=String(event?.date||'');
+    if(!date)continue;
+    totalEvents++;
+    byDate.set(date,(byDate.get(date)||0)+1);
+  }
+  return {byDate,totalEvents};
+}
+function applyCalendarSearchHighlightsV171(){
+  const input=document.getElementById('calendarSearchV171');
+  const clear=document.getElementById('calendarSearchClearV171');
+  const status=document.getElementById('calendarSearchStatusV171');
+  const query=String(input?.value||'').trim();
+  const days=[...document.querySelectorAll('#calendarGrid .day[data-date]')];
+
+  if(clear)clear.hidden=!query;
+  if(!query){
+    for(const day of days){
+      day.classList.remove('calendar-search-hit-v171');
+      day.removeAttribute('data-calendar-search-count');
+    }
+    if(status)status.textContent='연락처 · 게임 · 컨텐츠 제목 검색';
+    return;
+  }
+
+  const {byDate,totalEvents}=calendarSearchMatchesV171(query);
+  let visibleDates=0;
+  for(const day of days){
+    const count=byDate.get(String(day.dataset.date||''))||0;
+    day.classList.toggle('calendar-search-hit-v171',count>0);
+    if(count>0){
+      visibleDates++;
+      day.dataset.calendarSearchCount=String(count);
+    }else day.removeAttribute('data-calendar-search-count');
+  }
+  if(status)status.textContent=totalEvents
+    ? `전체 ${totalEvents}개 일정 · 현재 화면 ${visibleDates}일 강조`
+    : '검색 결과 없음';
+}
+function scheduleCalendarSearchHighlightsV171(){
+  clearTimeout(calendarSearchTimerV171);
+  calendarSearchTimerV171=setTimeout(applyCalendarSearchHighlightsV171,70);
+}
+function initCalendarSearchV171(){
+  const input=document.getElementById('calendarSearchV171');
+  const clear=document.getElementById('calendarSearchClearV171');
+  if(!input||input.dataset.calendarSearchReady==='1')return;
+  input.dataset.calendarSearchReady='1';
+  input.addEventListener('input',scheduleCalendarSearchHighlightsV171);
+  input.addEventListener('compositionend',()=>{
+    clearTimeout(calendarSearchTimerV171);
+    applyCalendarSearchHighlightsV171();
+  });
+  clear?.addEventListener('click',()=>{
+    input.value='';
+    clearTimeout(calendarSearchTimerV171);
+    applyCalendarSearchHighlightsV171();
+    input.focus();
+  });
+  applyCalendarSearchHighlightsV171();
+}
+window.__mwsCalendarSearchV171='title-participant-game-choseong-date-glow';
+
 function cloneEventAsTemplate(e){
   const copy=JSON.parse(JSON.stringify(e));
   delete copy.id;
@@ -1443,6 +1529,8 @@ function renderCalendar(){
     </div>`;
   }
   const grid=document.getElementById('calendarGrid');grid.innerHTML=out;
+  initCalendarSearchV171();
+  applyCalendarSearchHighlightsV171();
   grid.querySelectorAll('.day').forEach(day=>{
     day.onclick=()=>openEvent(null,day.dataset.date);
     day.ondragenter=e=>{

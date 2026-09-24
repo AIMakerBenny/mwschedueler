@@ -101,6 +101,7 @@ jobs:
           node --check scripts/run-phase168-wardogs-unassigned-class-audit.mjs
           node --check scripts/run-phase169-wardogs-frame-preload-audit.mjs
           node --check scripts/run-phase170-runtime-overlap-cleanup-audit.mjs
+          node --check scripts/run-phase171-calendar-content-search-audit.mjs
           node --check scripts/run-phase153-standard-page-top-spacing-audit.mjs
           node --check scripts/diagnose-phase154-live-layout.mjs
           node --check scripts/run-phase154-main-overlay-flow-audit.mjs
@@ -383,7 +384,7 @@ jobs:
           grep -Fq 'WARDOGS 카드와 각 카드 이미지를 저장합니다.' /tmp/index.html
           grep -Eq 'app-core\.js\?v=1\.3\.0-search(8[3-9]|9[0-9]|[1-9][0-9]{2,})' /tmp/index.html
           grep -Fq 'id="mwsAccessGate"' /tmp/index.html
-          grep -Fq 'assets/app-core.css?v=1.6.21-profileimgfix1' /tmp/index.html
+          grep -Fq 'assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171' /tmp/index.html
           grep -Fq 'data-build-version="MWS V 1.4.0"' /tmp/index.html
           grep -Fq '>Mawang Scheduler v 1.6.21</div>' /tmp/index.html
           grep -Fq '<title>마왕 스케줄러</title>' /tmp/index.html
@@ -714,6 +715,20 @@ jobs:
           retry_contains "$BASE/assets/cloud-v1.1-loader.js?deploy=$GITHUB_SHA" '__mwsCloudV120Bootstrap' > /tmp/cloud-v1.1-loader-phase170.js
           grep -Fq 'calendar-drag-layout-fix.css' /tmp/device-ui-phase170.js
           ! grep -Fq 'calendar-drag-layout-fix.css' /tmp/cloud-v1.1-loader-phase170.js
+          echo '[phase171] calendar title / participant / game search'
+          grep -Fq 'assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171' /tmp/index.html
+          grep -Fq 'assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171' /tmp/index.html
+          grep -Fq 'id="calendarSearchV171"' /tmp/index.html
+          grep -Fq 'id="calendarSearchClearV171"' /tmp/index.html
+          grep -Fq 'id="calendarSearchStatusV171"' /tmp/index.html
+          retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" "__mwsCalendarSearchV171='title-participant-game-choseong-date-glow'" > /tmp/app-core-phase171.js
+          retry_contains "$BASE/assets/app-core.css?deploy=$GITHUB_SHA" 'calendar-search-hit-v171' > /tmp/app-core-phase171.css
+          node --check /tmp/app-core-phase171.js
+          grep -Fq 'function calendarEventSearchFieldsV171(event){' /tmp/app-core-phase171.js
+          grep -Fq "String(event?.steamGame?.name||'')" /tmp/app-core-phase171.js
+          grep -Fq 'mwsTextMatches(value,q)' /tmp/app-core-phase171.js
+          grep -Fq "day.classList.toggle('calendar-search-hit-v171',count>0);" /tmp/app-core-phase171.js
+          grep -Fq '#calendarGrid .day.calendar-search-hit-v171{' /tmp/app-core-phase171.css
           echo '[phase153] standard page top spacing normalized'
           grep -Fq 'assets/ui-frame-presets.css?v=3.0.0-space132-space153' /tmp/index.html
           retry_contains "$BASE/assets/ui-frame-presets.css?deploy=$GITHUB_SHA" '/* Phase 153: remove recurrent top blank bands from standard content pages.' > /tmp/ui-frame-presets-phase153.css
@@ -746,7 +761,7 @@ jobs:
           ! grep -Fq 'assets/wardogs-manager-frame-phase143.css' /tmp/index.html
           ! grep -Fq '__mwsWardogsManagerFrameV143' /tmp/wardogs-manager-v1.js
           echo '[phase149] content date/time quick input'
-          grep -Fq 'assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149' /tmp/index.html
+          grep -Fq 'assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171' /tmp/index.html
           grep -Fq 'id="evDateTimeQuickV149"' /tmp/index.html
           grep -Fq 'placeholder="예: 2026-09-21, 16:07:59"' /tmp/index.html
           grep -Fq "window.__mwsEventDateTimeQuickV149='date-start-time-paste';" /tmp/app-core.js

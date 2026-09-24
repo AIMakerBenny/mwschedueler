@@ -5994,3 +5994,70 @@ body[data-resolution="mobile"] #gameMultiDraw .holo-draw-btn-v416{min-height:54p
 .photo-folder-result-v416 strong{color:var(--text)}
 body[data-resolution="mobile"] .photo-folder-actions-v416{display:grid;grid-template-columns:1fr}
 
+
+
+/* Phase 171: calendar content search and matching-date glow. */
+.calendar-searchbar-v171{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin:0 0 10px;
+}
+.calendar-searchbox-v171{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+  flex:1 1 520px;
+}
+.calendar-search-input-v171{
+  width:min(560px,100%);
+  min-width:280px;
+}
+.calendar-search-clear-v171{
+  flex:0 0 auto;
+  min-height:38px;
+}
+.calendar-search-status-v171{
+  flex:0 0 auto;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:750;
+  line-height:1.35;
+  text-align:right;
+  white-space:nowrap;
+}
+#calendarGrid .day.calendar-search-hit-v171{
+  border-color:color-mix(in srgb,var(--accent) 78%,#ffffff)!important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb,var(--accent) 72%,transparent),
+    0 0 18px color-mix(in srgb,var(--accent) 58%,transparent),
+    inset 0 0 18px color-mix(in srgb,var(--accent) 12%,transparent)!important;
+  background:color-mix(in srgb,var(--panel) 90%,var(--accent))!important;
+  z-index:2;
+}
+#calendarGrid .day.calendar-search-hit-v171.out{
+  opacity:.72;
+}
+#calendarGrid .day.calendar-search-hit-v171:hover{
+  box-shadow:
+    0 0 0 2px color-mix(in srgb,var(--accent) 82%,transparent),
+    0 0 24px color-mix(in srgb,var(--accent) 68%,transparent),
+    inset 0 0 20px color-mix(in srgb,var(--accent) 16%,transparent)!important;
+}
+body[data-device-mode="mobile"] #calendar.section #calendarGrid.calendar .day.calendar-search-hit-v171,
+body[data-resolution="mobile"] #calendar.section #calendarGrid.calendar .day.calendar-search-hit-v171{
+  border-color:color-mix(in srgb,var(--accent) 82%,#ffffff)!important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb,var(--accent) 76%,transparent),
+    0 0 12px color-mix(in srgb,var(--accent) 56%,transparent),
+    inset 0 0 12px color-mix(in srgb,var(--accent) 13%,transparent)!important;
+  background:color-mix(in srgb,var(--panel) 84%,var(--accent))!important;
+}
+@media(max-width:760px){
+  .calendar-searchbar-v171{align-items:stretch;flex-direction:column;gap:6px}
+  .calendar-searchbox-v171{width:100%;flex-basis:auto}
+  .calendar-search-input-v171{width:100%;min-width:0}
+  .calendar-search-status-v171{text-align:left;white-space:normal}
+}
