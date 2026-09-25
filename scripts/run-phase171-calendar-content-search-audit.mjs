@@ -8,53 +8,37 @@ export function runPhase171CalendarContentSearchAudit(){
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
   for(const token of [
-    "assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171",
-    "assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171",
+    "assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172",
+    "assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171-searchtab172",
     'id="calendarSearchV171"',
     'id="calendarSearchClearV171"',
     'id="calendarSearchStatusV171"',
     '연락처, 게임, 컨텐츠 제목 또는 초성 검색'
-  ])if(!index.includes(token))issues.push('Phase 171 calendar search UI/cache token missing: '+token);
+  ])if(!index.includes(token))issues.push('Phase 171 shared search UI/cache token missing: '+token);
 
   for(const token of [
     "function calendarEventSearchFieldsV171(event){",
+    "function calendarEventSearchFieldGroupsV172(event){",
     "String(event?.title||'')",
     "String(event?.steamGame?.name||'')",
     "Array.isArray(event?.participants)?event.participants:[]",
     "const person=contact(id);",
     "mwsTextMatches(value,q)",
-    "function applyCalendarSearchHighlightsV171(){",
-    "day.classList.toggle('calendar-search-hit-v171',count>0);",
-    "input.addEventListener('input',scheduleCalendarSearchHighlightsV171);",
-    "input.addEventListener('compositionend',()=>{",
-    "window.__mwsCalendarSearchV171='title-participant-game-choseong-date-glow';",
-    "initCalendarSearchV171();"
-  ])if(!app.includes(token))issues.push('Phase 171 calendar search runtime missing: '+token);
+    "window.__mwsCalendarSearchV171='title-participant-game-choseong-engine';"
+  ])if(!app.includes(token))issues.push('Phase 171 shared search engine missing: '+token);
 
-  if(!app.includes("if(!q||!event||event.restDay)return false;"))
-    issues.push('Phase 171 calendar search must ignore rest-day placeholders');
-  if(!app.includes("setTimeout(applyCalendarSearchHighlightsV171,70)"))
-    issues.push('Phase 171 calendar search input debounce missing');
-  if((app.match(/applyCalendarSearchHighlightsV171\(\);/g)||[]).length<3)
-    issues.push('Phase 171 calendar search does not reapply after render/input/clear');
-
-  for(const token of [
-    '/* Phase 171: calendar content search and matching-date glow. */',
-    '.calendar-searchbar-v171{',
-    '#calendarGrid .day.calendar-search-hit-v171{',
-    'box-shadow:',
-    'body[data-device-mode="mobile"] #calendar.section #calendarGrid.calendar .day.calendar-search-hit-v171'
-  ])if(!css.includes(token))issues.push('Phase 171 calendar search CSS missing: '+token);
+  if(app.includes('calendar-search-hit-v171'))issues.push('Phase 171 date-glow runtime should be retired by Phase 172');
+  if(css.includes('calendar-search-hit-v171'))issues.push('Phase 171 date-glow CSS should be retired by Phase 172');
 
   for(const token of [
     'run-phase171-calendar-content-search-audit.mjs',
-    "assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171",
-    "assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171",
-    "__mwsCalendarSearchV171='title-participant-game-choseong-date-glow'",
-    'calendar-search-hit-v171'
+    "assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172",
+    "assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171-searchtab172",
+    "__mwsCalendarSearchV171='title-participant-game-choseong-engine'"
   ])if(!workflow.includes(token))issues.push('Phase 171 workflow verification missing: '+token);
 
-  const summary={phase:171,name:'calendar-title-participant-game-choseong-search',issues,warnings,pass:issues.length===0};
+  warnings.push('Phase 171 matching engine is retained; its calendar-cell glow presentation is superseded by the Phase 172 search tab.');
+  const summary={phase:171,name:'calendar-title-participant-game-choseong-engine',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
   if(issues.length)process.exitCode=1;
   return summary;

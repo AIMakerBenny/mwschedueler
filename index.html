@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>마왕 스케줄러</title>
-<link rel="stylesheet" href="assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171">
+<link rel="stylesheet" href="assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171-searchtab172">
 
 <style id="mws-cloud-access-style">
 body.mws-gated .app{pointer-events:none;user-select:none;filter:blur(5px);opacity:.36}
@@ -248,47 +248,92 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 </section>
 
 <section id="calendar" class="section">
-      <div class="toolbar calendar-toolbar">
-        <div class="row">
-          <button class="secondary" id="prevMonth">이전</button>
-          <button class="secondary" id="todayMonth">오늘</button>
-          <button class="secondary" id="nextMonth">다음</button>
-        </div>
-        <div class="calendar-jump">
-          <select id="calendarYearSelect" aria-label="연도 선택"></select>
-          <select id="calendarMonthSelect" aria-label="월 선택">
-            <option value="0">1월</option><option value="1">2월</option><option value="2">3월</option>
-            <option value="3">4월</option><option value="4">5월</option><option value="5">6월</option>
-            <option value="6">7월</option><option value="7">8월</option><option value="8">9월</option>
-            <option value="9">10월</option><option value="10">11월</option><option value="11">12월</option>
-          </select>
-          <div class="big calendar-month-label" id="monthLabel"></div>
-        </div>
+      <div class="calendar-view-tabs-v172" role="tablist" aria-label="캘린더 보기">
+        <button type="button" class="secondary calendar-view-tab-v172 active" data-calendar-view-tab="month" role="tab" aria-selected="true">캘린더</button>
+        <button type="button" class="secondary calendar-view-tab-v172" data-calendar-view-tab="search" role="tab" aria-selected="false">검색</button>
       </div>
-      <div class="calendar-searchbar-v171" role="search" aria-label="캘린더 컨텐츠 검색">
-        <div class="calendar-searchbox-v171">
-          <input id="calendarSearchV171" class="search calendar-search-input-v171" autocomplete="off" placeholder="연락처, 게임, 컨텐츠 제목 또는 초성 검색">
-          <button type="button" id="calendarSearchClearV171" class="ghost calendar-search-clear-v171" hidden>지우기</button>
-        </div>
-        <div id="calendarSearchStatusV171" class="calendar-search-status-v171" aria-live="polite">연락처 · 게임 · 컨텐츠 제목 검색</div>
-      </div>
-      <div class="calendar-head"><div style="color:#ef8b9c">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div style="color:#7da8f7">토</div></div>
-      <div id="calendarGrid" class="calendar"></div>
 
-      <div id="calendarCopyTray" class="calendar-copy-tray">
-        <div class="calendar-copy-tray-head">
-          <div>
-            <div class="calendar-copy-tray-title">복사 보관함</div>
-            <div class="calendar-copy-tray-help">달력의 컨텐츠를 이곳으로 끌어오면 원본은 제자리에 유지되고 복사용 버블만 저장됩니다. 저장된 버블을 원하는 날짜로 끌어 놓으면 새 컨텐츠가 만들어집니다.</div>
+      <div id="calendarMonthPanelV172" class="calendar-view-panel-v172 active" data-calendar-view-panel="month">
+        <div class="toolbar calendar-toolbar">
+          <div class="row">
+            <button class="secondary" id="prevMonth">이전</button>
+            <button class="secondary" id="todayMonth">오늘</button>
+            <button class="secondary" id="nextMonth">다음</button>
           </div>
-          <span id="calendarCopyTrayCount" class="chip">0개</span>
+          <div class="calendar-jump">
+            <select id="calendarYearSelect" aria-label="연도 선택"></select>
+            <select id="calendarMonthSelect" aria-label="월 선택">
+              <option value="0">1월</option><option value="1">2월</option><option value="2">3월</option>
+              <option value="3">4월</option><option value="4">5월</option><option value="5">6월</option>
+              <option value="6">7월</option><option value="7">8월</option><option value="8">9월</option>
+              <option value="9">10월</option><option value="10">11월</option><option value="11">12월</option>
+            </select>
+            <div class="big calendar-month-label" id="monthLabel"></div>
+          </div>
         </div>
-        <div id="calendarCopyTrayDropzone" class="calendar-copy-tray-dropzone">
-          <div id="calendarCopyTrayEmpty" class="calendar-copy-tray-empty">
-            <span class="calendar-copy-tray-icon">＋</span>
-            <span>달력의 컨텐츠를 여기로 끌어다 놓으세요</span>
+        <div class="calendar-head"><div style="color:#ef8b9c">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div style="color:#7da8f7">토</div></div>
+        <div id="calendarGrid" class="calendar"></div>
+
+        <div id="calendarCopyTray" class="calendar-copy-tray">
+          <div class="calendar-copy-tray-head">
+            <div>
+              <div class="calendar-copy-tray-title">복사 보관함</div>
+              <div class="calendar-copy-tray-help">달력의 컨텐츠를 이곳으로 끌어오면 원본은 제자리에 유지되고 복사용 버블만 저장됩니다. 저장된 버블을 원하는 날짜로 끌어 놓으면 새 컨텐츠가 만들어집니다.</div>
+            </div>
+            <span id="calendarCopyTrayCount" class="chip">0개</span>
           </div>
-          <div id="calendarCopyTrayItems" class="calendar-copy-tray-items"></div>
+          <div id="calendarCopyTrayDropzone" class="calendar-copy-tray-dropzone">
+            <div id="calendarCopyTrayEmpty" class="calendar-copy-tray-empty">
+              <span class="calendar-copy-tray-icon">＋</span>
+              <span>달력의 컨텐츠를 여기로 끌어다 놓으세요</span>
+            </div>
+            <div id="calendarCopyTrayItems" class="calendar-copy-tray-items"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="calendarSearchPanelV172" class="calendar-view-panel-v172 calendar-search-panel-v172" data-calendar-view-panel="search" hidden>
+        <div class="calendar-search-head-v172">
+          <div>
+            <div class="calendar-search-title-v172">컨텐츠 검색</div>
+            <div class="calendar-search-help-v172">연락처 이름, 게임 이름, 컨텐츠 제목을 검색합니다. 한글 초성 검색도 지원합니다.</div>
+          </div>
+        </div>
+        <div class="calendar-searchbar-v171" role="search" aria-label="캘린더 컨텐츠 검색">
+          <div class="calendar-searchbox-v171">
+            <input id="calendarSearchV171" class="search calendar-search-input-v171" autocomplete="off" placeholder="연락처, 게임, 컨텐츠 제목 또는 초성 검색">
+            <button type="button" id="calendarSearchClearV171" class="ghost calendar-search-clear-v171" hidden>지우기</button>
+          </div>
+          <div id="calendarSearchStatusV171" class="calendar-search-status-v171" aria-live="polite">검색어를 입력해 주세요</div>
+        </div>
+        <div class="calendar-search-controls-v172">
+          <div class="calendar-search-filter-group-v172" role="group" aria-label="검색 대상">
+            <button type="button" class="secondary calendar-search-type-v172 active" data-calendar-search-type="all">전체</button>
+            <button type="button" class="secondary calendar-search-type-v172" data-calendar-search-type="contact">연락처</button>
+            <button type="button" class="secondary calendar-search-type-v172" data-calendar-search-type="game">게임</button>
+            <button type="button" class="secondary calendar-search-type-v172" data-calendar-search-type="title">컨텐츠</button>
+          </div>
+          <div class="calendar-search-options-v172">
+            <select id="calendarSearchRangeV172" aria-label="검색 기간">
+              <option value="all">전체 기간</option>
+              <option value="thisMonth">이번 달</option>
+              <option value="past30">지난 30일</option>
+              <option value="next30">앞으로 30일</option>
+              <option value="custom">직접 지정</option>
+            </select>
+            <select id="calendarSearchSortV172" aria-label="검색 결과 정렬">
+              <option value="asc">날짜 빠른 순</option>
+              <option value="desc">날짜 최신 순</option>
+            </select>
+          </div>
+        </div>
+        <div id="calendarSearchCustomRangeV172" class="calendar-search-custom-range-v172" hidden>
+          <label>시작일 <input type="date" id="calendarSearchFromV172"></label>
+          <span>~</span>
+          <label>종료일 <input type="date" id="calendarSearchToV172"></label>
+        </div>
+        <div id="calendarSearchResultsV172" class="calendar-search-results-v172">
+          <div class="calendar-search-empty-v172">검색어를 입력하면 날짜별 결과가 여기에 표시됩니다.</div>
         </div>
       </div>
     </section>
@@ -1664,7 +1709,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <div id="miniGameCelebration" class="mini-game-celebration" aria-hidden="true" onclick="closeMiniGameCelebration()"><div class="celebration-glow"></div><div id="celebrationConfetti" class="celebration-confetti"></div><div class="celebration-card"><div id="celebrationKicker" class="celebration-kicker">WINNER</div><div id="celebrationAvatar" class="celebration-avatar"></div><div id="celebrationText" class="celebration-text">당첨</div><div class="celebration-sub">화면을 클릭하면 닫힙니다</div></div></div>
 <div id="toast" class="toast"></div>
 
-<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171"></script>
+<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172"></script>
 <script src="assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130-zoom138-unassigned168"></script>
 <script src="assets/wardogs-media-v1.js?v=1.0.0-phase121-backup126-webview130"></script>
 <script src="assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140-frame144-frames150-aperture152-assault166-medic165-recon163-support166-driver161-pilot166-unassigned168"></script>

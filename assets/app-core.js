@@ -1161,91 +1161,231 @@ function ensureCalendarYearOptions(){
 
 let calendarDragPayload=null;
 
-/* Phase 171: calendar content search. Highlights dates without filtering or rebuilding event data. */
+/* Phase 171/172: shared calendar search engine + date-grouped search tab. */
 let calendarSearchTimerV171=0;
-function calendarEventSearchFieldsV171(event){
-  const fields=[String(event?.title||''),String(event?.steamGame?.name||'')];
+let calendarViewModeV172='month';
+
+function calendarEventSearchFieldGroupsV172(event){
+  const contacts=[];
   const ids=[...new Set([
     ...(Array.isArray(event?.participants)?event.participants:[]),
     ...(event?.autoSelfParticipantId?[event.autoSelfParticipantId]:[])
   ].filter(Boolean))];
   for(const id of ids){
     const person=contact(id);
-    if(person?.name)fields.push(String(person.name));
+    if(person?.name)contacts.push(String(person.name));
   }
-  return fields.filter(Boolean);
+  return {
+    title:[String(event?.title||'')].filter(Boolean),
+    game:[String(event?.steamGame?.name||'')].filter(Boolean),
+    contact:contacts
+  };
 }
-function calendarEventMatchesSearchV171(event,query){
+function calendarEventSearchFieldsV171(event){
+  const groups=calendarEventSearchFieldGroupsV172(event);
+  return [...groups.title,...groups.game,...groups.contact];
+}
+function calendarEventMatchesSearchV171(event,query,type='all'){
   const q=String(query||'').trim();
   if(!q||!event||event.restDay)return false;
+  const groups=calendarEventSearchFieldGroupsV172(event);
+  if(type==='title')return groups.title.some(value=>mwsTextMatches(value,q));
+  if(type==='game')return groups.game.some(value=>mwsTextMatches(value,q));
+  if(type==='contact')return groups.contact.some(value=>mwsTextMatches(value,q));
   return calendarEventSearchFieldsV171(event).some(value=>mwsTextMatches(value,q));
 }
-function calendarSearchMatchesV171(query){
-  const byDate=new Map();
-  let totalEvents=0;
-  for(const event of activeEvents()){
-    if(!calendarEventMatchesSearchV171(event,query))continue;
-    const date=String(event?.date||'');
-    if(!date)continue;
-    totalEvents++;
-    byDate.set(date,(byDate.get(date)||0)+1);
-  }
-  return {byDate,totalEvents};
+function calendarSearchMatchKindsV172(event,query){
+  const q=String(query||'').trim();
+  if(!q)return [];
+  const groups=calendarEventSearchFieldGroupsV172(event);
+  const labels={title:'컨텐츠',game:'게임',contact:'연락처'};
+  return Object.entries(groups)
+    .filter(([,values])=>values.some(value=>mwsTextMatches(value,q)))
+    .map(([key])=>labels[key]);
 }
-function applyCalendarSearchHighlightsV171(){
+function calendarSearchShiftDateV172(baseDate,days){
+  const d=new Date(String(baseDate||todayKST())+'T12:00:00');
+  d.setDate(d.getDate()+Number(days||0));
+  return ymd(d);
+}
+function calendarSearchDateBoundsV172(){
+  const range=document.getElementById('calendarSearchRangeV172')?.value||'all';
+  const today=todayKST();
+  if(range==='thisMonth'){
+    const d=new Date(today+'T12:00:00');
+    const first=ymd(new Date(d.getFullYear(),d.getMonth(),1,12));
+    const last=ymd(new Date(d.getFullYear(),d.getMonth()+1,0,12));
+    return {from:first,to:last};
+  }
+  if(range==='past30')return {from:calendarSearchShiftDateV172(today,-29),to:today};
+  if(range==='next30')return {from:today,to:calendarSearchShiftDateV172(today,29)};
+  if(range==='custom'){
+    let from=String(document.getElementById('calendarSearchFromV172')?.value||'');
+    let to=String(document.getElementById('calendarSearchToV172')?.value||'');
+    if(from&&to&&from>to)[from,to]=[to,from];
+    return {from,to};
+  }
+  return {from:'',to:''};
+}
+function calendarEventInSearchRangeV172(event){
+  const date=String(event?.date||'');
+  if(!date)return false;
+  const {from,to}=calendarSearchDateBoundsV172();
+  if(from&&date<from)return false;
+  if(to&&date>to)return false;
+  return true;
+}
+function calendarSearchParticipantNamesV172(event){
+  return eventParticipantRows(event).map(row=>String(row?.person?.name||'')).filter(Boolean);
+}
+function calendarSearchResultCardV172(event,query){
+  const cat=category(event.categoryId);
+  const color=event.color||cat?.color||'#64748b';
+  const game=String(event?.steamGame?.name||'');
+  const people=calendarSearchParticipantNamesV172(event);
+  const time=event.start==='TBD'||!event.start
+    ? '시간 미정'
+    : `${formatTimeKorean(event.start)}${event.end&&event.end!=='TBD'?` - ${formatTimeKorean(event.end)}`:''}`;
+  const kinds=calendarSearchMatchKindsV172(event,query);
+  const peopleText=people.length
+    ? `${people.slice(0,8).map(esc).join(' · ')}${people.length>8?` +${people.length-8}명`:''}`
+    : '참가자 없음';
+  return `<button type="button" class="calendar-search-result-v172" data-calendar-search-event-id="${esc(event.id)}">
+    <span class="calendar-search-result-accent-v172" style="background:${color}"></span>
+    <span class="calendar-search-result-main-v172">
+      <span class="calendar-search-result-top-v172">
+        <strong class="calendar-search-result-title-v172">${esc(event.title||'제목 없음')}</strong>
+        <span class="calendar-search-result-time-v172">${esc(time)}</span>
+      </span>
+      <span class="calendar-search-result-meta-v172">
+        ${game?`<span><b>게임</b> ${esc(game)}</span>`:''}
+        <span><b>참가자</b> ${peopleText}</span>
+      </span>
+      ${kinds.length?`<span class="calendar-search-result-match-v172">${kinds.map(x=>`<span class="chip">${esc(x)} 일치</span>`).join('')}</span>`:''}
+    </span>
+  </button>`;
+}
+function renderCalendarSearchResultsV172(){
   const input=document.getElementById('calendarSearchV171');
   const clear=document.getElementById('calendarSearchClearV171');
   const status=document.getElementById('calendarSearchStatusV171');
-  const query=String(input?.value||'').trim();
-  const days=[...document.querySelectorAll('#calendarGrid .day[data-date]')];
+  const results=document.getElementById('calendarSearchResultsV172');
+  const custom=document.getElementById('calendarSearchCustomRangeV172');
+  if(!input||!status||!results)return;
 
+  const query=String(input.value||'').trim();
+  const type=document.querySelector('.calendar-search-type-v172.active')?.dataset.calendarSearchType||'all';
+  const range=document.getElementById('calendarSearchRangeV172')?.value||'all';
+  const sort=document.getElementById('calendarSearchSortV172')?.value||'asc';
   if(clear)clear.hidden=!query;
+  if(custom)custom.hidden=range!=='custom';
+
   if(!query){
-    for(const day of days){
-      day.classList.remove('calendar-search-hit-v171');
-      day.removeAttribute('data-calendar-search-count');
-    }
-    if(status)status.textContent='연락처 · 게임 · 컨텐츠 제목 검색';
+    status.textContent='검색어를 입력해 주세요';
+    results.innerHTML='<div class="calendar-search-empty-v172">검색어를 입력하면 날짜별 결과가 여기에 표시됩니다.</div>';
     return;
   }
 
-  const {byDate,totalEvents}=calendarSearchMatchesV171(query);
-  let visibleDates=0;
-  for(const day of days){
-    const count=byDate.get(String(day.dataset.date||''))||0;
-    day.classList.toggle('calendar-search-hit-v171',count>0);
-    if(count>0){
-      visibleDates++;
-      day.dataset.calendarSearchCount=String(count);
-    }else day.removeAttribute('data-calendar-search-count');
+  const matched=activeEvents()
+    .filter(event=>calendarEventMatchesSearchV171(event,query,type)&&calendarEventInSearchRangeV172(event))
+    .sort((a,b)=>{
+      const ak=`${a.date||''} ${a.start==='TBD'?'99:99':(a.start||'99:99')}`;
+      const bk=`${b.date||''} ${b.start==='TBD'?'99:99':(b.start||'99:99')}`;
+      return sort==='desc'?bk.localeCompare(ak):ak.localeCompare(bk);
+    });
+
+  if(!matched.length){
+    status.textContent='검색 결과 없음';
+    results.innerHTML='<div class="calendar-search-empty-v172">조건에 맞는 컨텐츠가 없습니다.</div>';
+    return;
   }
-  if(status)status.textContent=totalEvents
-    ? `전체 ${totalEvents}개 일정 · 현재 화면 ${visibleDates}일 강조`
-    : '검색 결과 없음';
+
+  const groups=new Map();
+  for(const event of matched){
+    const date=String(event.date||'');
+    if(!groups.has(date))groups.set(date,[]);
+    groups.get(date).push(event);
+  }
+
+  status.textContent=`${matched.length}개 일정 · ${groups.size}일`;
+  results.innerHTML=[...groups.entries()].map(([date,items])=>`
+    <section class="calendar-search-date-group-v172">
+      <div class="calendar-search-date-head-v172">
+        <strong>${esc(formatDateWeekday(date))}</strong>
+        <span class="chip">${items.length}개</span>
+      </div>
+      <div class="calendar-search-date-list-v172">
+        ${items.map(event=>calendarSearchResultCardV172(event,query)).join('')}
+      </div>
+    </section>
+  `).join('');
+
+  results.querySelectorAll('[data-calendar-search-event-id]').forEach(button=>{
+    button.addEventListener('click',()=>{
+      const id=String(button.dataset.calendarSearchEventId||'');
+      if(id)openEvent(id);
+    });
+  });
 }
-function scheduleCalendarSearchHighlightsV171(){
+function scheduleCalendarSearchResultsV172(){
   clearTimeout(calendarSearchTimerV171);
-  calendarSearchTimerV171=setTimeout(applyCalendarSearchHighlightsV171,70);
+  calendarSearchTimerV171=setTimeout(renderCalendarSearchResultsV172,70);
 }
-function initCalendarSearchV171(){
+function setCalendarViewModeV172(mode){
+  calendarViewModeV172=mode==='search'?'search':'month';
+  document.querySelectorAll('[data-calendar-view-tab]').forEach(button=>{
+    const active=button.dataset.calendarViewTab===calendarViewModeV172;
+    button.classList.toggle('active',active);
+    button.setAttribute('aria-selected',active?'true':'false');
+  });
+  document.querySelectorAll('[data-calendar-view-panel]').forEach(panel=>{
+    const active=panel.dataset.calendarViewPanel===calendarViewModeV172;
+    panel.hidden=!active;
+    panel.classList.toggle('active',active);
+  });
+  if(calendarViewModeV172==='search')renderCalendarSearchResultsV172();
+}
+function initCalendarSearchV172(){
   const input=document.getElementById('calendarSearchV171');
-  const clear=document.getElementById('calendarSearchClearV171');
-  if(!input||input.dataset.calendarSearchReady==='1')return;
-  input.dataset.calendarSearchReady='1';
-  input.addEventListener('input',scheduleCalendarSearchHighlightsV171);
+  if(!input||input.dataset.calendarSearchReady==='172')return;
+  input.dataset.calendarSearchReady='172';
+
+  input.addEventListener('input',scheduleCalendarSearchResultsV172);
   input.addEventListener('compositionend',()=>{
     clearTimeout(calendarSearchTimerV171);
-    applyCalendarSearchHighlightsV171();
+    renderCalendarSearchResultsV172();
   });
-  clear?.addEventListener('click',()=>{
+  document.getElementById('calendarSearchClearV171')?.addEventListener('click',()=>{
     input.value='';
     clearTimeout(calendarSearchTimerV171);
-    applyCalendarSearchHighlightsV171();
+    renderCalendarSearchResultsV172();
     input.focus();
   });
-  applyCalendarSearchHighlightsV171();
+  document.querySelectorAll('[data-calendar-search-type]').forEach(button=>{
+    button.addEventListener('click',()=>{
+      document.querySelectorAll('[data-calendar-search-type]').forEach(x=>x.classList.toggle('active',x===button));
+      renderCalendarSearchResultsV172();
+    });
+  });
+  document.getElementById('calendarSearchRangeV172')?.addEventListener('change',renderCalendarSearchResultsV172);
+  document.getElementById('calendarSearchSortV172')?.addEventListener('change',renderCalendarSearchResultsV172);
+  document.getElementById('calendarSearchFromV172')?.addEventListener('change',renderCalendarSearchResultsV172);
+  document.getElementById('calendarSearchToV172')?.addEventListener('change',renderCalendarSearchResultsV172);
+  renderCalendarSearchResultsV172();
 }
-window.__mwsCalendarSearchV171='title-participant-game-choseong-date-glow';
+function initCalendarViewTabsV172(){
+  const root=document.getElementById('calendar');
+  if(!root||root.dataset.calendarTabsReady==='172')return;
+  root.dataset.calendarTabsReady='172';
+  root.querySelectorAll('[data-calendar-view-tab]').forEach(button=>{
+    button.addEventListener('click',()=>setCalendarViewModeV172(button.dataset.calendarViewTab));
+  });
+  initCalendarSearchV172();
+  setCalendarViewModeV172(calendarViewModeV172);
+}
+window.setCalendarViewModeV172=setCalendarViewModeV172;
+window.__mwsCalendarSearchV171='title-participant-game-choseong-engine';
+window.__mwsCalendarSearchTabV172='second-tab-date-grouped-list';
 
 function cloneEventAsTemplate(e){
   const copy=JSON.parse(JSON.stringify(e));
@@ -1529,8 +1669,8 @@ function renderCalendar(){
     </div>`;
   }
   const grid=document.getElementById('calendarGrid');grid.innerHTML=out;
-  initCalendarSearchV171();
-  applyCalendarSearchHighlightsV171();
+  initCalendarViewTabsV172();
+  renderCalendarSearchResultsV172();
   grid.querySelectorAll('.day').forEach(day=>{
     day.onclick=()=>openEvent(null,day.dataset.date);
     day.ondragenter=e=>{

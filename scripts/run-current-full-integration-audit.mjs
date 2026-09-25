@@ -153,6 +153,7 @@ import {runPhase168WardogsUnassignedClassAudit} from './run-phase168-wardogs-una
 import {runPhase169WardogsFramePreloadAudit} from './run-phase169-wardogs-frame-preload-audit.mjs';
 import {runPhase170RuntimeOverlapCleanupAudit} from './run-phase170-runtime-overlap-cleanup-audit.mjs';
 import {runPhase171CalendarContentSearchAudit} from './run-phase171-calendar-content-search-audit.mjs';
+import {runPhase172CalendarSearchTabAudit} from './run-phase172-calendar-search-tab-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1679,6 +1680,16 @@ export function runPhase171FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase171FullIntegrationAudit();}
+export function runPhase172FullIntegrationAudit(){
+  const previous=runPhase171FullIntegrationAudit(), current=runPhase172CalendarSearchTabAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:172,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase172FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
