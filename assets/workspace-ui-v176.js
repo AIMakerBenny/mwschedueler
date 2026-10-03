@@ -184,9 +184,10 @@ async function openComposerV176(type){
   if(author)author.value='';
   if(content)content.value='';
   modal.classList.add('open');
+  document.body.classList.add('modal-active');
   setTimeout(()=>author?.focus(),0);
 }
-function closeComposerV176(){$('memoEntryComposerV176')?.classList.remove('open')}
+function closeComposerV176(){$('memoEntryComposerV176')?.classList.remove('open');document.body.classList.remove('modal-active')}
 function saveComposerV176(){
   const author=String($('memoComposerAuthorV176')?.value||'').trim();
   const content=String($('memoComposerContentV176')?.value||'').trim();
@@ -308,9 +309,6 @@ function installSetTabBridgeV176(){
   };
   window.setTab=wrapped;
   try{setTab=wrapped}catch(_){}
-  document.querySelectorAll('.nav button[data-tab]').forEach(button=>{
-    button.onclick=event=>{event.preventDefault();wrapped(button.dataset.tab)};
-  });
   friendFinderNavButtonV176();
 }
 
