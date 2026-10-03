@@ -27,11 +27,15 @@ export function runPhase2StartupReadinessAudit(){
   const dispatchAt=ready.lastIndexOf('mws:app-ready');
   if(listenAt<0||dispatchAt<0||listenAt>dispatchAt)issues.push('post-login readiness listener must be armed before app-ready dispatch');
 
+  const startAt=loader.indexOf('async function start()');
+  const deviceAt=loader.indexOf("const deviceUiResult=await load('device-ui'",startAt);
+  const criticalAt=loader.indexOf('const criticalResults=await Promise.all([',startAt);
+  const finishAt=loader.indexOf('finishPostLoginUi(criticalFailures)',startAt);
   const flagAt=loader.indexOf('window.__mwsPostLoginUiReadyV130=true');
-  const eventAt=loader.indexOf("mws:post-login-ui-ready");
-  const deviceAt=loader.indexOf("await load('device-ui'");
-  if(deviceAt<0||flagAt<0||eventAt<0)issues.push('post-login loader readiness chain is incomplete');
-  else if(!(deviceAt<flagAt&&flagAt<eventAt))issues.push('post-login UI ready event fires before device UI is loaded');
+  const eventAt=loader.indexOf("window.dispatchEvent(new Event('mws:post-login-ui-ready'))");
+  if(deviceAt<0||criticalAt<0||finishAt<0||flagAt<0||eventAt<0)issues.push('post-login loader readiness chain is incomplete');
+  else if(!(deviceAt<criticalAt&&criticalAt<finishAt))issues.push('post-login UI can be released before device UI and critical shell attempts settle');
+  if(flagAt>=0&&eventAt>=0&&flagAt>eventAt)issues.push('post-login UI ready event is dispatched before the ready flag is set');
 
   const result={phase:2,name:'startup-readiness-gate',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(result));
