@@ -154,6 +154,7 @@ import {runPhase169WardogsFramePreloadAudit} from './run-phase169-wardogs-frame-
 import {runPhase170RuntimeOverlapCleanupAudit} from './run-phase170-runtime-overlap-cleanup-audit.mjs';
 import {runPhase171CalendarContentSearchAudit} from './run-phase171-calendar-content-search-audit.mjs';
 import {runPhase172CalendarSearchTabAudit} from './run-phase172-calendar-search-tab-audit.mjs';
+import {runPhase173PostLoginTimeoutReleaseAudit} from './run-phase173-post-login-timeout-release-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1690,6 +1691,16 @@ export function runPhase172FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase172FullIntegrationAudit();}
+export function runPhase173FullIntegrationAudit(){
+  const previous=runPhase172FullIntegrationAudit(), current=runPhase173PostLoginTimeoutReleaseAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:173,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase173FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
