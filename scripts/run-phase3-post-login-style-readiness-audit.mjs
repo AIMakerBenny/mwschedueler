@@ -14,15 +14,18 @@ export function runPhase3PostLoginStyleReadinessAudit(){
   if(!observesLoad)issues.push('stylesheet load completion is not observed');
   if(!observesError)issues.push('stylesheet load failure is not observed');
 
-  const awaitStyles=loader.indexOf('await Promise.all([');
+  const startAt=loader.indexOf('async function start()');
+  const awaitStyles=loader.indexOf('const criticalResults=await Promise.all([',startAt);
+  const finishAt=loader.indexOf('finishPostLoginUi(criticalFailures)',startAt);
   const readyFlag=loader.indexOf('window.__mwsPostLoginUiReadyV130=true');
-  const readyEvent=loader.indexOf("mws:post-login-ui-ready");
-  if(awaitStyles<0)issues.push('required mobile styles are not awaited as a readiness barrier');
+  const readyEvent=loader.indexOf("window.dispatchEvent(new Event('mws:post-login-ui-ready'))");
+  if(awaitStyles<0)issues.push('required mobile styles are not awaited as a bounded readiness barrier');
   if(readyFlag<0||readyEvent<0)issues.push('post-login UI ready marker/event is missing');
-  if(awaitStyles>=0&&readyFlag>=0&&awaitStyles>readyFlag)issues.push('UI is marked ready before required styles finish loading');
+  if(awaitStyles>=0&&finishAt>=0&&awaitStyles>finishAt)issues.push('UI is released before required styles settle or time out');
   if(readyFlag>=0&&readyEvent>=0&&readyFlag>readyEvent)issues.push('UI ready event is dispatched before the ready flag is set');
   if(!loader.includes("loadStyle('mobile-drawer-v130'"))issues.push('authoritative mobile drawer stylesheet is absent from readiness barrier');
   if(!loader.includes("loadStyle('mobile-calendar-v130'"))issues.push('authoritative mobile calendar stylesheet is absent from readiness barrier');
+  if(!styleFn.includes("finish(false,'timeout')"))issues.push('stylesheet readiness can still block forever');
 
   const result={phase:3,name:'post-login-style-readiness',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(result));
