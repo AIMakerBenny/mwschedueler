@@ -9,11 +9,11 @@ export function runPhase156ToolPlannerRegressionAudit(){
   const diagnostic=fs.readFileSync('scripts/diagnose-phase156-tool-planner-regression.mjs','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  if(!appCore.includes("contentPlanner:'컨텐츠 플래너'"))issues.push('common content planner title mapping regressed');
+  if(!appCore.includes("contentPlanner:'그림판'"))issues.push('common content planner title mapping regressed');
   for(const token of [
-    "button.title='컨텐츠 플래너'",
-    '<span class="nav-label">컨텐츠 플래너</span>',
-    "title.textContent='컨텐츠 플래너'"
+    "button.title='그림판'",
+    '<span class="nav-label">그림판</span>',
+    "title.textContent='그림판'"
   ])if(!host.includes(token))issues.push('content planner display label contract missing: '+token);
 
   const restored='background:rgba(255,255,255,.72)!important;color:#111!important;';
