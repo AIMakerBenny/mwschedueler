@@ -1,0 +1,45 @@
+/* Mawang Scheduler v1.6.21 - workspace organization, Phase 176 */
+#dashboard>.mws-dashboard-worldtime-v176{display:none}
+#dashboard>.mws-dashboard-worldtime-v176.active{display:block}
+#dashboard>.mws-dashboard-worldtime-v176 .toolbar{margin-top:0}
+
+.mws-friend-tabs-v176{
+  display:flex;gap:8px;align-items:center;margin:0 0 14px;padding:5px;
+  border:1px solid var(--border);border-radius:12px;background:var(--panel)
+}
+.mws-friend-tab-v176{
+  min-width:110px;padding:9px 14px;border:1px solid transparent;border-radius:9px;
+  background:transparent;color:var(--muted);font-weight:850
+}
+.mws-friend-tab-v176:hover{color:var(--text);background:var(--input)}
+.mws-friend-tab-v176.active{color:#fff;border-color:color-mix(in srgb,var(--accent) 60%,var(--border));background:color-mix(in srgb,var(--accent) 24%,var(--input))}
+#friendFinder>.mws-friend-tabs-v176{margin-bottom:14px}
+
+.mws-note-view-v176{display:none}
+.mws-note-view-v176.active{display:block}
+.mws-note-toolbar-v176{align-items:center}
+.mws-note-title-v176{font-size:18px;font-weight:900}
+.mws-note-card-grid-v176{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;align-items:start
+}
+.mws-note-card-v176{
+  min-width:0;padding:16px;border:1px solid var(--border);border-radius:14px;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 5%,var(--panel)),var(--panel));
+  box-shadow:0 8px 22px rgba(0,0,0,.12)
+}
+.mws-note-card-head-v176{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.mws-note-card-head-v176 strong{font-size:14px;color:var(--text)}
+.mws-note-card-head-v176 time{font-size:10px;color:var(--muted);white-space:nowrap}
+.mws-note-card-content-v176{padding-top:12px;white-space:pre-wrap;word-break:break-word;line-height:1.65;font-size:13px}
+.mws-note-empty-v176{grid-column:1/-1;padding:30px;text-align:center;border:1px dashed var(--border);border-radius:14px;color:var(--muted)}
+.mws-note-composer-v176{width:min(660px,94vw)}
+.mws-note-composer-v176 .field{margin-top:14px}
+.mws-note-composer-v176 textarea{width:100%;min-height:220px;resize:vertical}
+.mws-note-composer-actions-v176{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+
+@media(max-width:720px){
+  .mws-friend-tabs-v176{display:grid;grid-template-columns:1fr 1fr}
+  .mws-friend-tab-v176{min-width:0}
+  .mws-note-card-grid-v176{grid-template-columns:1fr}
+  .mws-note-card-head-v176{flex-direction:column;gap:5px}
+}
