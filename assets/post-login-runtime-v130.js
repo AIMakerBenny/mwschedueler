@@ -122,7 +122,9 @@ async function start(){
     loadStyle('mobile-calendar-v130','/assets/mobile-calendar-v130.css?v=1.3.0-mobile-calendar-viewport-p29'),
     load('mobile-calendar-quick-add-v130','/assets/mobile-calendar-quick-add-v130.js?v=1.3.0-mobile-calendar-ui-p26','__mwsMobileCalendarQuickAddV130'),
     load('mobile-calendar-day-detail-v130','/assets/mobile-calendar-day-detail-v130.js?v=1.3.0-perf35','__mwsMobileCalendarDayDetailV130'),
-    load('integrity-runtime-v130','/assets/integrity-runtime-v130.js?v=1.3.0-phase12','__mwsIntegrityRuntimeV130')
+    load('integrity-runtime-v130','/assets/integrity-runtime-v130.js?v=1.3.0-phase12','__mwsIntegrityRuntimeV130'),
+    loadStyle('workspace-ui-v176','/assets/workspace-ui-v176.css?v=1.6.21-workspace176'),
+    load('workspace-ui-v176','/assets/workspace-ui-v176.js?v=1.6.21-workspace176','__mwsWorkspaceUiV176')
   ]);
   const criticalFailures=criticalResults.filter(x=>!x?.ok).map(x=>x.key);
 
