@@ -9,14 +9,13 @@ export function runPhase5MobileCalendarAddAccessAudit(){
   const topbarHidden=calendarCss.includes(':has(#calendar.section.active[data-mobile-calendar-view="month"]) .topbar{display:none!important}');
   if(!topbarHidden)warnings.push('month view no longer hides the global topbar; Phase 5 dependency assumption changed');
 
-  const loadAt=loader.indexOf("const quickAddResult=await load('mobile-calendar-quick-add-v130'");
-  const guardAt=loader.indexOf("if(!quickAddResult.ok){markCriticalUiFailure(['mobile-calendar-quick-add-v130']);return;}");
-  const readyAt=loader.indexOf('window.__mwsPostLoginUiReadyV130=true');
+  const loadAt=loader.indexOf("load('mobile-calendar-quick-add-v130'");
+  const criticalAt=loader.indexOf('const criticalFailures=');
+  const finishAt=loader.indexOf('finishPostLoginUi(criticalFailures)');
   if(loadAt<0)issues.push('mobile month quick-add module is not explicitly loaded before readiness');
-  if(guardAt<0)issues.push('quick-add load failure is still treated as optional');
-  if(readyAt<0)issues.push('UI ready marker is missing');
-  if(loadAt>=0&&readyAt>=0&&loadAt>readyAt)issues.push('UI can become ready before quick-add module is loaded');
-  if(guardAt>=0&&readyAt>=0&&guardAt>readyAt)issues.push('UI can become ready before quick-add failure is rejected');
+  if(criticalAt<0||!loader.includes('criticalResults.filter'))issues.push('quick-add load failure is not retained in critical UI failure state');
+  if(finishAt<0)issues.push('UI readiness release is missing');
+  if(loadAt>=0&&finishAt>=0&&loadAt>finishAt)issues.push('UI can become ready before quick-add module is attempted');
 
   const simulated={mobileMonth:true,topbarHidden:true,quickAddLoaded:false};
   const hasAddEntrypoint=!simulated.mobileMonth||!simulated.topbarHidden||simulated.quickAddLoaded;
