@@ -8,12 +8,13 @@ export function runPhase89AchievementNavigationShellAudit(){
   const tools=fs.readFileSync('assets/tools.js','utf8');
 
   const world=index.indexOf('data-tab="worldtime"');
+  const dashboardWorld=index.indexOf('data-dashboard-mode="worldtime"');
   const achievement=index.indexOf('data-tab="achievements"');
   const mini=index.indexOf('<div class="nav-game-divider"');
-  if(world<0)issues.push('world time navigation entry is missing');
+  if(world<0&&dashboardWorld<0)issues.push('world time navigation entry/dashboard tab is missing');
   if(achievement<0)issues.push('achievement navigation entry is missing');
   if(mini<0)issues.push('mini-game divider is missing');
-  if(world>=0&&achievement>=0&&world>achievement)issues.push('achievement navigation is not below world time');
+  if(world>=0&&achievement>=0&&world>achievement)issues.push('achievement navigation is not below legacy world time');
   if(achievement>=0&&mini>=0&&achievement>mini)issues.push('achievement navigation is not above the tool/game groups');
   if(!index.includes('<span class="nav-label">업적</span>'))issues.push('achievement navigation label is missing');
   if(!index.includes('<section id="achievements" class="section">'))issues.push('achievement section shell is missing');
