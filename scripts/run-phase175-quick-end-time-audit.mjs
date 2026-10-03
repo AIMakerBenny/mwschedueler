@@ -39,7 +39,7 @@ export function runPhase175QuickEndTimeAudit(){
     }
   }
 
-  const syntax=spawnSync(process.execPath,['--check','assets/app-core.js'],{encoding:'utf8'});
+  const syntax=spawnSync(process.execPath,['--check','--input-type=commonjs'],{input:core,encoding:'utf8'});
   if(syntax.status!==0)issues.push('assets/app-core.js syntax check failed: '+String(syntax.stderr||syntax.stdout||'').trim());
 
   const result={phase:175,name:'content-quick-end-time',issues,warnings,pass:issues.length===0};
