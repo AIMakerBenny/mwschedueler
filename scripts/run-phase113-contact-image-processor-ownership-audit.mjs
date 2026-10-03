@@ -30,7 +30,8 @@ export function runPhase113ContactImageProcessorOwnershipAudit(){
   if(!index.includes('assets/app-core.js?v=1.3.0-search115'))issues.push('app-core cache revision is not search115');
   if(!postLogin.includes('/assets/perf-runtime.js?v=1.4.0-phase113-contact-image-owner1'))issues.push('perf runtime cache revision is stale');
   if(!perf.includes('maintenance-runtime-v130.js?v=1.3.0-stage68-contact-media-canonical2'))issues.push('maintenance runtime cache revision is stale');
-  const postLoginMatch=entry.match(/post-login-runtime-v130\.js\?v=1\.4\.0-phase(\d+)/);\n  if(!postLoginMatch||Number(postLoginMatch[1])<113)issues.push('post-login runtime cache revision is stale');
+  const postLoginMatch=entry.match(/post-login-runtime-v130\.js\?v=1\.4\.0-phase(\d+)/);
+  if(!postLoginMatch||Number(postLoginMatch[1])<113)issues.push('post-login runtime cache revision is stale');
 
   for(const token of [
     'run-phase113-contact-image-processor-ownership-audit.mjs',
