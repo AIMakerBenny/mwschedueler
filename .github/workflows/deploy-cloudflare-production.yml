@@ -104,6 +104,8 @@ jobs:
           node --check scripts/run-phase171-calendar-content-search-audit.mjs
           node --check scripts/run-phase172-calendar-search-tab-audit.mjs
           node --check scripts/run-phase173-post-login-timeout-release-audit.mjs
+          node --check scripts/run-phase174-calendar-pointer-drag-audit.mjs
+          node --check scripts/run-phase175-quick-end-time-audit.mjs
           node --check scripts/run-phase153-standard-page-top-spacing-audit.mjs
           node --check scripts/diagnose-phase154-live-layout.mjs
           node --check scripts/run-phase154-main-overlay-flow-audit.mjs
@@ -748,6 +750,18 @@ jobs:
           grep -Fq 'calendarEventMatchesSearchV171(event,query,type)' /tmp/app-core-phase172.js
           grep -Fq 'calendarEventInSearchRangeV172(event)' /tmp/app-core-phase172.js
           grep -Fq 'if(id)openEvent(id);' /tmp/app-core-phase172.js
+          echo '[phase174] robust PC calendar pointer drag'
+          retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" 'function beginCalendarPointerEventDragV174(event,node){' > /tmp/app-core-phase174.js
+          retry_contains "$BASE/assets/app-core.css?deploy=$GITHUB_SHA" '.calendar-event-pointer-ghost-v174{' > /tmp/app-core-phase174.css
+          node --check /tmp/app-core-phase174.js
+          grep -Fq "el.onpointerdown=e=>beginCalendarPointerEventDragV174(e,el);" /tmp/app-core-phase174.js
+          grep -Fq "saveData('일정 이동');" /tmp/app-core-phase174.js
+          grep -Fq 'calendarSuppressEventClickV174' /tmp/app-core-phase174.js
+          echo '[phase175] content quick end time'
+          grep -Fq 'placeholder="예: 2026-10-03, 12:12:51, 14:30:00"' /tmp/index.html
+          grep -Fq "window.__mwsEventDateTimeQuickV149='date-start-end-time-paste-v175';" /tmp/app-core-phase174.js
+          grep -Fq "if(endInput&&parsed.endTime)endInput.value=parsed.endTime;" /tmp/app-core-phase174.js
+          grep -Fq "if(endText&&parsed.endTime)endText.textContent=formatTimeKorean(parsed.endTime);" /tmp/app-core-phase174.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css
@@ -785,11 +799,12 @@ jobs:
           echo '[phase149] content date/time quick input'
           grep -Fq 'assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172' /tmp/index.html
           grep -Fq 'id="evDateTimeQuickV149"' /tmp/index.html
-          grep -Fq 'placeholder="예: 2026-09-21, 16:07:59"' /tmp/index.html
-          grep -Fq "window.__mwsEventDateTimeQuickV149='date-start-time-paste';" /tmp/app-core.js
+          grep -Fq 'placeholder="예: 2026-10-03, 12:12:51, 14:30:00"' /tmp/index.html
+          grep -Fq "window.__mwsEventDateTimeQuickV149='date-start-end-time-paste-v175';" /tmp/app-core.js
           grep -Fq 'function parseQuickEventDateTimeV149(raw){' /tmp/app-core.js
           grep -Fq "if(dateInput)dateInput.value=parsed.date;" /tmp/app-core.js
           grep -Fq "if(startInput)startInput.value=parsed.time;" /tmp/app-core.js
+          grep -Fq "if(endInput&&parsed.endTime)endInput.value=parsed.endTime;" /tmp/app-core.js
           echo '[phase144] WARDOGS manager single img frame'
           grep -Fq 'assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140-frame144-frames150-aperture152-assault166-medic165-recon163-support166-driver161-pilot166-unassigned168' /tmp/index.html
           grep -Fq 'assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-frame140-frame144-aperture152-medicaperture165-classapertures166-unassigned168' /tmp/index.html
