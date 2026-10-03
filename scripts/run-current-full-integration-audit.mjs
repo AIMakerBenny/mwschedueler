@@ -155,6 +155,8 @@ import {runPhase170RuntimeOverlapCleanupAudit} from './run-phase170-runtime-over
 import {runPhase171CalendarContentSearchAudit} from './run-phase171-calendar-content-search-audit.mjs';
 import {runPhase172CalendarSearchTabAudit} from './run-phase172-calendar-search-tab-audit.mjs';
 import {runPhase173PostLoginTimeoutReleaseAudit} from './run-phase173-post-login-timeout-release-audit.mjs';
+import {runPhase174CalendarPointerDragAudit} from './run-phase174-calendar-pointer-drag-audit.mjs';
+import {runPhase175QuickEndTimeAudit} from './run-phase175-quick-end-time-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1701,6 +1703,26 @@ export function runPhase173FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase173FullIntegrationAudit();}
+export function runPhase174FullIntegrationAudit(){
+  const previous=runPhase173FullIntegrationAudit(), current=runPhase174CalendarPointerDragAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:174,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runPhase175FullIntegrationAudit(){
+  const previous=runPhase174FullIntegrationAudit(), current=runPhase175QuickEndTimeAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>`Phase ${current.phase}: ${x}`)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>`Phase ${current.phase}: ${x}`)];
+  const summary={currentPhase:175,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+
+export function runCurrentFullIntegrationAudit(){return runPhase175FullIntegrationAudit();}
 
 if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
