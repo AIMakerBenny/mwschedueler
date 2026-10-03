@@ -1069,7 +1069,7 @@ jobs:
           retry_contains "$BASE/assets/tools.js?deploy=$GITHUB_SHA" "world.nextElementSibling!==achievements" > /tmp/tools.js
           node --check /tmp/tools.js
           grep -Fq "world.insertAdjacentElement('afterend',achievements)" /tmp/tools.js
-          grep -Fq "post-login-runtime-v130.js?v=1.6.21-phase173-login-timeout" src/cf-v111-entry.js
+          grep -Fq "post-login-runtime-v130.js?v=1.4.0-phase173-login-timeout" src/cf-v111-entry.js
           retry_contains "$BASE/assets/achievement-media-v1621.js?deploy=$GITHUB_SHA" "const DB_NAME='mws_achievement_media_v1'" > /tmp/achievement-media.js
           node --check /tmp/achievement-media.js
           grep -Fq "createObjectStore(STORE,{keyPath:'id'})" /tmp/achievement-media.js
