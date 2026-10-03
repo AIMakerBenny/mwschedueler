@@ -260,16 +260,16 @@ function installNotebookViewsV176(){
   renderNotebookCardsV176('patch');
   renderNotebookCardsV176('suggestions');
   const nav=document.querySelector('.nav button[data-tab="memos"]');
-  if(nav){nav.title='수첩';const label=nav.querySelector('.nav-label');if(label)label.textContent='수첩'}
+  if(nav){nav.title='수첩';const label=nav.querySelector('.nav-label');if(label&&label.textContent!=='수첩')label.textContent='수첩'}
   return true;
 }
 
 /* Content Planner visible name -> Drawing Board */
 function enforceDrawingBoardLabelV176(){
   const button=document.querySelector('.nav button[data-tab="contentPlanner"]');
-  if(button){button.title='그림판';const label=button.querySelector('.nav-label');if(label)label.textContent='그림판'}
+  if(button){button.title='그림판';const label=button.querySelector('.nav-label');if(label&&label.textContent!=='그림판')label.textContent='그림판'}
   if(document.getElementById('contentPlanner')?.classList.contains('active')){
-    const title=$('pageTitle');if(title)title.textContent='그림판';
+    const title=$('pageTitle');if(title&&title.textContent!=='그림판')title.textContent='그림판';
   }
 }
 
@@ -277,7 +277,7 @@ function syncGroupedNavigationV176(tab){
   const friendButton=document.querySelector('.nav button[data-tab="friendFinder"]');
   if(friendButton)friendButton.classList.toggle('active',tab==='friendFinder'||tab==='targets');
   if(tab==='friendFinder'||tab==='targets'){
-    const title=$('pageTitle');if(title)title.textContent='친구 찾기';
+    const title=$('pageTitle');if(title&&title.textContent!=='친구 찾기')title.textContent='친구 찾기';
   }
   document.querySelectorAll('.mws-friend-tabs-v176').forEach(tabs=>{
     tabs.querySelectorAll('[data-friend-view-v176]').forEach(button=>{
