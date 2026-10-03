@@ -117,7 +117,7 @@ try{
       toolTier:'티어 게임',
       toolMatrix:'2D Matrix Chart',
       toolRelations:'인물 관계도',
-      contentPlanner:'컨텐츠 플래너'
+      contentPlanner:'그림판'
     };
     const selectors={
       toolTier:['.mws-tier-rank','.mws-tier-title-v106'],
