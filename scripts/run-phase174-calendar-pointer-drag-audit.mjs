@@ -25,7 +25,7 @@ export function runPhase174CalendarPointerDragAudit(){
   if(!css.includes('.calendar-event-pointer-ghost-v174{'))issues.push('pointer drag ghost styling is missing');
   if(!css.includes('.mws-calendar-event-pointer-active-v174'))issues.push('pointer drag active-state styling is missing');
 
-  const syntax=spawnSync(process.execPath,['--check','assets/app-core.js'],{encoding:'utf8'});
+  const syntax=spawnSync(process.execPath,['--check','--input-type=commonjs'],{input:core,encoding:'utf8'});
   if(syntax.status!==0)issues.push('assets/app-core.js syntax check failed: '+String(syntax.stderr||syntax.stdout||'').trim());
 
   const result={phase:174,name:'calendar-pc-pointer-drag-restore',issues,warnings,pass:issues.length===0};
