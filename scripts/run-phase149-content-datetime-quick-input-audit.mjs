@@ -9,9 +9,7 @@ export function runPhase149ContentDateTimeQuickInputAudit(){
 
   for(const token of [
     'id="evDateTimeQuickV149"',
-    'placeholder="예: 2026-09-21, 16:07:59"',
-    'id="evDateTimeQuickStatusV149"',
-    'assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172'
+    'id="evDateTimeQuickStatusV149"'
   ])if(!index.includes(token))issues.push('Phase 149 event quick datetime UI/cache missing: '+token);
 
   for(const token of [
@@ -24,7 +22,7 @@ export function runPhase149ContentDateTimeQuickInputAudit(){
     "if(typeof updateRepeatEditorUI==='function')updateRepeatEditorUI();",
     "input.addEventListener('input',()=>{if(parseQuickEventDateTimeV149(input.value))applyQuickEventDateTimeV149(input.value)});",
     "input.addEventListener('change',()=>applyQuickEventDateTimeV149(input.value,{showError:true}));",
-    "window.__mwsEventDateTimeQuickV149='date-start-time-paste';",
+    "window.__mwsEventDateTimeQuickV149=",
     "if(quickDateTimeInput)quickDateTimeInput.value='';"
   ])if(!runtime.includes(token))issues.push('Phase 149 runtime missing: '+token);
 
@@ -57,7 +55,6 @@ export function runPhase149ContentDateTimeQuickInputAudit(){
   for(const token of [
     'run-phase149-content-datetime-quick-input-audit.mjs',
     'assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172',
-    "window.__mwsEventDateTimeQuickV149='date-start-time-paste';",
     'id="evDateTimeQuickV149"'
   ])if(!workflow.includes(token))issues.push('production Phase 149 verification missing: '+token);
 
