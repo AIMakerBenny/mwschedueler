@@ -1608,9 +1608,14 @@ function setCalendarCtrlCopyMode(active){
     hint.setAttribute('aria-hidden',calendarCtrlCopyMode?'false':'true');
   }
 }
+let calendarSuppressEventClickV174={id:'',until:0};
 function handleCalendarMiniEventClick(ev,id){
   ev.stopPropagation();
   hideCalendarEventPreview();
+  if(calendarSuppressEventClickV174.id===String(id||'')&&performance.now()<calendarSuppressEventClickV174.until){
+    ev.preventDefault();
+    return;
+  }
   if((ev.ctrlKey||calendarCtrlCopyMode)&&isCalendarTabActive()){
     ev.preventDefault();
     duplicateEventById(id,{closeModal:false,source:'ctrl'});
@@ -1629,6 +1634,136 @@ document.addEventListener('keyup',e=>{
   if(e.key==='Control')setCalendarCtrlCopyMode(false);
 });
 window.addEventListener('blur',()=>setCalendarCtrlCopyMode(false));
+
+/* Phase 174: pointer-based PC calendar event drag.
+   Native HTML5 DnD remains as a fallback, but pointer drag is the primary path so
+   calendar moves keep working even when the browser suppresses dragstart. */
+let calendarPointerEventDragV174=null;
+let calendarPointerEventListenersV174=false;
+function calendarPcDragEnabledV174(){
+  return isCalendarTabActive()
+    && calendarViewModeV172==='month'
+    && document.body.dataset.deviceMode!=='mobile'
+    && document.body.dataset.resolution!=='mobile';
+}
+function attachCalendarPointerEventListenersV174(){
+  if(calendarPointerEventListenersV174)return;
+  calendarPointerEventListenersV174=true;
+  document.addEventListener('pointermove',moveCalendarPointerEventDragV174,{passive:false});
+  document.addEventListener('pointerup',endCalendarPointerEventDragV174,{passive:false});
+  document.addEventListener('pointercancel',cancelCalendarPointerEventDragV174,{passive:false});
+}
+function detachCalendarPointerEventListenersV174(){
+  if(!calendarPointerEventListenersV174)return;
+  calendarPointerEventListenersV174=false;
+  document.removeEventListener('pointermove',moveCalendarPointerEventDragV174,{passive:false});
+  document.removeEventListener('pointerup',endCalendarPointerEventDragV174,{passive:false});
+  document.removeEventListener('pointercancel',cancelCalendarPointerEventDragV174,{passive:false});
+}
+function setCalendarPointerEventTargetV174(clientX,clientY){
+  const state=calendarPointerEventDragV174;
+  if(!state||!state.dragging)return;
+  state.ghost.style.left=clientX+'px';
+  state.ghost.style.top=clientY+'px';
+  state.ghost.style.display='none';
+  const hit=document.elementFromPoint(clientX,clientY);
+  state.ghost.style.display='flex';
+  const day=hit?.closest?.('#calendarGrid .day[data-date]')||null;
+  const tray=hit?.closest?.('#calendarCopyTrayDropzone')||null;
+  if(day!==state.targetDay){
+    state.targetDay?.classList.remove('drag-over');
+    state.targetDay=day;
+    day?.classList.add('drag-over');
+  }
+  if(tray!==state.targetTray){
+    state.targetTray?.classList.remove('drag-over');
+    state.targetTray=tray;
+    tray?.classList.add('drag-over');
+  }
+}
+function activateCalendarPointerEventDragV174(state,event){
+  if(state.dragging)return;
+  state.dragging=true;
+  calendarDragPayload={type:'event',id:state.id};
+  hideCalendarEventPreview();
+  state.source.classList.add('mws-calendar-event-pointer-dragging-v174');
+  document.body.classList.add('mws-calendar-event-pointer-active-v174');
+  const ghost=document.createElement('div');
+  ghost.className='calendar-event-pointer-ghost-v174';
+  ghost.textContent=state.source.querySelector('.mini-event-main')?.textContent||'컨텐츠';
+  document.body.appendChild(ghost);
+  state.ghost=ghost;
+  setCalendarPointerEventTargetV174(event.clientX,event.clientY);
+}
+function clearCalendarPointerEventDragV174({suppressClick=false}={}){
+  const state=calendarPointerEventDragV174;
+  if(!state){detachCalendarPointerEventListenersV174();return;}
+  try{if(state.source?.hasPointerCapture?.(state.pointerId))state.source.releasePointerCapture(state.pointerId)}catch(_){}
+  state.ghost?.remove();
+  state.targetDay?.classList.remove('drag-over');
+  state.targetTray?.classList.remove('drag-over');
+  state.source?.classList.remove('mws-calendar-event-pointer-dragging-v174');
+  if(state.source?.isConnected)state.source.setAttribute('draggable',calendarPcDragEnabledV174()?'true':'false');
+  document.body.classList.remove('mws-calendar-event-pointer-active-v174');
+  calendarDragPayload=null;
+  if(suppressClick)calendarSuppressEventClickV174={id:state.id,until:performance.now()+450};
+  calendarPointerEventDragV174=null;
+  detachCalendarPointerEventListenersV174();
+}
+function beginCalendarPointerEventDragV174(event,node){
+  if(event.button!==0||event.ctrlKey||calendarCtrlCopyMode||!calendarPcDragEnabledV174())return;
+  const id=String(node?.dataset?.evid||'');
+  if(!id||!data.events.some(row=>String(row?.id||'')===id))return;
+  if(calendarPointerEventDragV174)clearCalendarPointerEventDragV174();
+  node.setAttribute('draggable','false');
+  calendarPointerEventDragV174={
+    pointerId:event.pointerId,id,source:node,
+    startX:event.clientX,startY:event.clientY,
+    dragging:false,ghost:null,targetDay:null,targetTray:null
+  };
+  attachCalendarPointerEventListenersV174();
+  try{node.setPointerCapture(event.pointerId)}catch(_){}
+}
+function moveCalendarPointerEventDragV174(event){
+  const state=calendarPointerEventDragV174;
+  if(!state||state.pointerId!==event.pointerId)return;
+  if(!state.dragging){
+    const distance=Math.hypot(event.clientX-state.startX,event.clientY-state.startY);
+    if(distance<7)return;
+    activateCalendarPointerEventDragV174(state,event);
+  }
+  event.preventDefault();
+  setCalendarPointerEventTargetV174(event.clientX,event.clientY);
+}
+function endCalendarPointerEventDragV174(event){
+  const state=calendarPointerEventDragV174;
+  if(!state||state.pointerId!==event.pointerId)return;
+  if(!state.dragging){
+    clearCalendarPointerEventDragV174();
+    return;
+  }
+  event.preventDefault();
+  event.stopPropagation();
+  const id=state.id;
+  const date=state.targetDay?.dataset?.date||'';
+  const dropToTray=Boolean(state.targetTray);
+  clearCalendarPointerEventDragV174({suppressClick:true});
+  if(dropToTray){
+    addEventToCalendarClipboard(id);
+    return;
+  }
+  if(!date)return;
+  const row=data.events.find(item=>String(item?.id||'')===id);
+  if(!row||row.date===date)return;
+  row.date=date;
+  saveData('일정 이동');
+  toast(row.restDay?'휴방':row.title,'선택한 날짜로 이동되었습니다');
+}
+function cancelCalendarPointerEventDragV174(event){
+  const state=calendarPointerEventDragV174;
+  if(!state||state.pointerId!==event.pointerId)return;
+  clearCalendarPointerEventDragV174({suppressClick:state.dragging});
+}
 
 function renderCalendar(){
   hideCalendarEventPreview();
@@ -1715,6 +1850,7 @@ function renderCalendar(){
     };
   });
   grid.querySelectorAll('.mini-event').forEach(el=>{
+    el.onpointerdown=e=>beginCalendarPointerEventDragV174(e,el);
     el.ondragstart=e=>{
       hideCalendarEventPreview();
       calendarDragPayload={type:'event',id:el.dataset.evid};
