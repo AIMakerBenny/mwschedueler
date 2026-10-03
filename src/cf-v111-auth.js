@@ -350,7 +350,7 @@ async function externalizePart(env,part,raw,saveContext=null){
   if(part==='posts')return (Array.isArray(raw)?raw:[]).map(post=>{const out=post&&typeof post==='object'?structuredClone(post):post;if(out&&typeof out==='object')for(const key of ['sourceContent','sourcePhotos','sourceAuthor','sourceAuthorId','sourceRegDate','sourceViewCount','sourceUrl'])delete out[key];return out});
   if(part==='events')return Array.isArray(raw)?raw:[];
   if(part==='activity'){const src=raw&&typeof raw==='object'?raw:{};return {collaborations:Array.isArray(src.collaborations)?src.collaborations:[],todayPeopleByDate:src.todayPeopleByDate&&typeof src.todayPeopleByDate==='object'?src.todayPeopleByDate:{},todayPeopleManualByDate:src.todayPeopleManualByDate&&typeof src.todayPeopleManualByDate==='object'?src.todayPeopleManualByDate:{},targetList:Array.isArray(src.targetList)?src.targetList:[]}}
-  if(part==='notebook'){const src=raw&&typeof raw==='object'?raw:{};return {memos:Array.isArray(src.memos)?src.memos:[],favoriteFolders:Array.isArray(src.favoriteFolders)?src.favoriteFolders:[]}}
+  if(part==='notebook'){const src=raw&&typeof raw==='object'?raw:{};return {memos:Array.isArray(src.memos)?src.memos:[],favoriteFolders:Array.isArray(src.favoriteFolders)?src.favoriteFolders:[],patchNotes:Array.isArray(src.patchNotes)?src.patchNotes:[],suggestions:Array.isArray(src.suggestions)?src.suggestions:[]}}
   if(part==='clipboard'){const src=raw&&typeof raw==='object'?raw:{};return {scheduleClipboard:Array.isArray(src.scheduleClipboard)?src.scheduleClipboard:[]}}
   if(part==='wardogs')return normalizeWardogsPart(raw);
   return raw??null;
