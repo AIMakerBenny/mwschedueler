@@ -14,7 +14,11 @@ export function runPhase10PageLifecycleSaveAudit(){
   if(!runtime.includes("r.mode==='admin'"))issues.push('public mode is not excluded from unload save guarding');
   if(!runtime.includes("event.returnValue=''"))issues.push('unsaved admin data can still leave without an unload confirmation');
   if(!loader.includes("load('integrity-runtime-v130'"))issues.push('integrity runtime is not loaded by the post-login runtime');
-  if(!loader.includes("if(!integrityResult.ok){markCriticalUiFailure(['integrity-runtime-v130']);return;}"))issues.push('app can become ready without the lifecycle integrity guard');
+  const startAt=loader.indexOf('async function start()');
+  const integrityAt=loader.indexOf("load('integrity-runtime-v130'",startAt);
+  const criticalAt=loader.indexOf('const criticalFailures=',startAt);
+  const finishAt=loader.indexOf('finishPostLoginUi(criticalFailures)',startAt);
+  if(integrityAt<0||criticalAt<0||finishAt<0||!(integrityAt<criticalAt&&criticalAt<finishAt))issues.push('integrity runtime is not attempted and recorded before bounded UI release');
 
   const hasUnsaved=r=>Boolean(r&&r.mode==='admin'&&Array.isArray(r.dirtyParts)&&r.dirtyParts.length);
   if(hasUnsaved({mode:'public',dirtyParts:['events']}))issues.push('public session incorrectly blocks unload');
