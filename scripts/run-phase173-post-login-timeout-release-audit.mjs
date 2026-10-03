@@ -25,7 +25,8 @@ export function runPhase173PostLoginTimeoutReleaseAudit(){
   if(achievementLoad<0||achievementLoad<finishCall)issues.push('achievement extras still block login readiness');
   if(!loader.includes("void Promise.all([\n    load('perf-runtime'"))issues.push('noncritical performance/contact enhancements still block login readiness');
   if(!loader.includes("window.__mwsPostLoginUiFailedV130=failed.length>0"))issues.push('degraded UI state is not retained when a bounded load fails');
-  const cacheMatch=entry.match(/post-login-runtime-v130\.js\?v=1\.4\.0-phase(\d+)/);\n  if(!cacheMatch||Number(cacheMatch[1])<173)issues.push('HTML transform does not preserve a Phase 173+ post-login cache revision');
+  const cacheMatch=entry.match(/post-login-runtime-v130\.js\?v=1\.4\.0-phase(\d+)/);
+  if(!cacheMatch||Number(cacheMatch[1])<173)issues.push('HTML transform does not preserve a Phase 173+ post-login cache revision');
 
   const syntaxFiles=['assets/post-login-runtime-v130.js','src/cf-v111-entry.js'];
   for(const file of syntaxFiles){
