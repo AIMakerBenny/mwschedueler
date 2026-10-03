@@ -106,6 +106,8 @@ jobs:
           node --check scripts/run-phase173-post-login-timeout-release-audit.mjs
           node --check scripts/run-phase174-calendar-pointer-drag-audit.mjs
           node --check scripts/run-phase175-quick-end-time-audit.mjs
+          node --check scripts/run-phase176-workspace-organization-audit.mjs
+          node --check assets/workspace-ui-v176.js
           node --check scripts/run-phase153-standard-page-top-spacing-audit.mjs
           node --check scripts/diagnose-phase154-live-layout.mjs
           node --check scripts/run-phase154-main-overlay-flow-audit.mjs
@@ -439,7 +441,7 @@ jobs:
           grep -Fq 'id="achievementExportPackageBtn"' /tmp/index.html
           grep -Fq 'id="achievementImportPackageInput"' /tmp/index.html
           grep -Fq '패키지 가져오기는 기존 카드를 지우지 않고 뒤에 추가합니다.' /tmp/index.html
-          node -e "const fs=require('fs'),s=fs.readFileSync('/tmp/index.html','utf8'),w=s.indexOf('data-tab=\"worldtime\"'),a=s.indexOf('data-tab=\"achievements\"'),c=s.indexOf('wardogs-content-divider-v116'),d=s.indexOf('data-tab=\"wardogs\"'),m=s.indexOf('<div class=\"nav-game-divider\"><span></span><em>미니게임</em>');if(!(w>=0&&a>w&&c>a&&d>c&&m>d))process.exit(1)"
+          node -e "const fs=require('fs'),s=fs.readFileSync('/tmp/index.html','utf8'),a=s.indexOf('data-tab=\"achievements\"'),c=s.indexOf('wardogs-content-divider-v116'),d=s.indexOf('data-tab=\"wardogs\"'),m=s.indexOf('<div class=\"nav-game-divider\"><span></span><em>미니게임</em>');if(/<button[^>]+data-tab=\"worldtime\"/.test(s)||/<button[^>]+data-tab=\"targets\"/.test(s)||!(a>=0&&c>a&&d>c&&m>d))process.exit(1)"
           retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" "assetSchema:3," > /tmp/app-core.js
           node --check /tmp/app-core.js
           grep -Fq "achievements:'업적',wardogs:'워독스 전쟁견들'" /tmp/app-core.js
@@ -447,6 +449,9 @@ jobs:
           node --check /tmp/wardogs-v1.js
           grep -Fq "{id:'pilot',name:'파일럿',code:'PLT',label:'파일럿'}" /tmp/wardogs-v1.js
           grep -Fq "['ArrowLeft','ArrowRight','Home','End']" /tmp/wardogs-v1.js
+          grep -Fq 'data-wardogs-class="all"' /tmp/index.html
+          grep -Fq "window.__mwsWardogsAllViewV176='all-active-linked-cards-first-tab';" /tmp/wardogs-v1.js
+          grep -Fq "let activeClass='all';" /tmp/wardogs-v1.js
           retry_contains "$BASE/assets/wardogs-v1.css?deploy=$GITHUB_SHA" '.wardogs-shell-v117{' > /tmp/wardogs-v1.css
           grep -Fq '.wardogs-class-tabs-v117{' /tmp/wardogs-v1.css
           grep -Fq '.wardogs-class-stage-v117{' /tmp/wardogs-v1.css
@@ -750,6 +755,15 @@ jobs:
           grep -Fq 'calendarEventMatchesSearchV171(event,query,type)' /tmp/app-core-phase172.js
           grep -Fq 'calendarEventInSearchRangeV172(event)' /tmp/app-core-phase172.js
           grep -Fq 'if(id)openEvent(id);' /tmp/app-core-phase172.js
+          echo '[phase176] workspace navigation and notebook cards'
+          grep -Fq 'data-dashboard-mode="worldtime"' /tmp/index.html
+          grep -Fq 'id="dashboardGoCalendarBtnV176"' /tmp/index.html
+          ! grep -Fq 'id="toggleUpcomingDashboardBtn"' /tmp/index.html
+          ! grep -Eq '<button[^>]+data-tab="worldtime"' /tmp/index.html
+          ! grep -Eq '<button[^>]+data-tab="targets"' /tmp/index.html
+          grep -Fq "contentPlanner:'그림판'" /tmp/app-core-phase172.js
+          grep -Fq 'patchNotes:[]' /tmp/app-core-phase172.js
+          grep -Fq 'suggestions:[]' /tmp/app-core-phase172.js
           echo '[phase174] robust PC calendar pointer drag'
           retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" 'function beginCalendarPointerEventDragV174(event,node){' > /tmp/app-core-phase174.js
           retry_contains "$BASE/assets/app-core.css?deploy=$GITHUB_SHA" '.calendar-event-pointer-ghost-v174{' > /tmp/app-core-phase174.css
@@ -1077,14 +1091,22 @@ jobs:
           grep -Fq "achievement-gallery-v1621.css?v=1.6.21-phase111" /tmp/post-login.js
           grep -Fq "achievement-gallery-v1621.js?v=1.6.21-phase111" /tmp/post-login.js
           grep -Fq "perf-runtime.js?v=1.4.0-phase113-contact-image-owner1" /tmp/post-login.js
+          grep -Fq "workspace-ui-v176.css?v=1.6.21-workspace176" /tmp/post-login.js
+          grep -Fq "workspace-ui-v176.js?v=1.6.21-workspace176" /tmp/post-login.js
+          retry_contains "$BASE/assets/workspace-ui-v176.js?deploy=$GITHUB_SHA" "__mwsWorkspaceUiMarkerV176='dashboard-worldtime-friend-target-notebook-cards-drawing-board'" > /tmp/workspace-ui-v176.js
+          node --check /tmp/workspace-ui-v176.js
+          retry_contains "$BASE/assets/workspace-ui-v176.css?deploy=$GITHUB_SHA" '.mws-note-card-v176{' > /tmp/workspace-ui-v176.css
+          grep -Fq '.mws-friend-tabs-v176{' /tmp/workspace-ui-v176.css
           retry_contains "$BASE/assets/perf-runtime.js?deploy=$GITHUB_SHA" "content-planner-host.js?v=1.4.0-phase105-achievement-navfix1" > /tmp/perf-runtime.js
           node --check /tmp/perf-runtime.js
           retry_contains "$BASE/assets/content-planner-host.js?deploy=$GITHUB_SHA" "tools.js?v=1.4.0-phase105-achievement-navfix1" > /tmp/content-planner-host.js
           node --check /tmp/content-planner-host.js
+          grep -Fq "title.textContent='그림판'" /tmp/content-planner-host.js
+          grep -Fq "button.title='그림판'" /tmp/content-planner-host.js
           retry_contains "$BASE/assets/tools.js?deploy=$GITHUB_SHA" "world.nextElementSibling!==achievements" > /tmp/tools.js
           node --check /tmp/tools.js
           grep -Fq "world.insertAdjacentElement('afterend',achievements)" /tmp/tools.js
-          grep -Fq "post-login-runtime-v130.js?v=1.4.0-phase173-login-timeout" src/cf-v111-entry.js
+          grep -Fq "post-login-runtime-v130.js?v=1.4.0-phase176-workspace-ui" src/cf-v111-entry.js
           retry_contains "$BASE/assets/achievement-media-v1621.js?deploy=$GITHUB_SHA" "const DB_NAME='mws_achievement_media_v1'" > /tmp/achievement-media.js
           node --check /tmp/achievement-media.js
           grep -Fq "createObjectStore(STORE,{keyPath:'id'})" /tmp/achievement-media.js
@@ -1698,6 +1720,7 @@ jobs:
           echo '[8/8] source syntax and auth/UI boundary'
           node --check assets/cloud-v1.1-loader.js
           node --check assets/post-login-runtime-v130.js
+          node --check assets/workspace-ui-v176.js
           node --check assets/maintenance-runtime-v130.js
           node --check assets/cloud-runtime-v130.js
           node --check assets/cloud-runtime-loader-v130.js
@@ -1766,6 +1789,10 @@ jobs:
           retry_contains "$BASE/assets/cloud-runtime-v130.js?deploy=$GITHUB_SHA" "const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','achievementCards'];" > /tmp/cloud-runtime-achievement.js
           node --check /tmp/cloud-runtime-achievement.js
           grep -Fq 'achievementCards:[]' /tmp/cloud-runtime-achievement.js
+          grep -Fq 'patchNotes:clone(Array.isArray(d.patchNotes)?d.patchNotes:[])' /tmp/cloud-runtime-achievement.js
+          grep -Fq 'suggestions:clone(Array.isArray(d.suggestions)?d.suggestions:[])' /tmp/cloud-runtime-achievement.js
+          grep -Fq 'patchNotes:Array.isArray(src.patchNotes)?src.patchNotes:[]' src/cf-v111-auth.js
+          grep -Fq 'suggestions:Array.isArray(src.suggestions)?src.suggestions:[]' src/cf-v111-auth.js
           grep -Fq "window.mwsLoadAchievementShadowV1621?.()" /tmp/cloud-runtime-achievement.js
           grep -Fq "/^업적/.test(String(reason||''))" /tmp/cloud-runtime-achievement.js
                     grep -Fq '__mwsAppReadyV130' assets/cloud-v1.1-loader.js
