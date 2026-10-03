@@ -1062,7 +1062,7 @@ jobs:
           fi
 
           echo '[phase155] tier controls and planner title'
-          retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" "contentPlanner:'컨텐츠 플래너'" > /tmp/app-core-phase155.js
+          retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" "contentPlanner:'그림판'" > /tmp/app-core-phase155.js
           node --check --input-type=commonjs < /tmp/app-core-phase155.js
           retry_contains "$BASE/assets/tools.js?deploy=$GITHUB_SHA" 'background:rgba(255,255,255,.72)!important;color:#111!important;' > /tmp/tools-phase155.js
           node --check --input-type=commonjs < /tmp/tools-phase155.js
