@@ -162,7 +162,7 @@ try{
   if(t.rankColorLuma>90||t.titleColorLuma>90){
     throw new Error(`Phase155 tier input text is not dark on restored light controls: rank=${t.rankColor}, title=${t.titleColor}`);
   }
-  if(value.plannerTitle!=='컨텐츠 플래너'){
+  if(value.plannerTitle!=='그림판'){
     throw new Error(`Phase155 content planner title mismatch: ${value.plannerTitle}`);
   }
 }finally{
