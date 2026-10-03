@@ -7,35 +7,44 @@ export function runPhase175QuickEndTimeAudit(){
   const index=fs.readFileSync('index.html','utf8');
   const core=fs.readFileSync('assets/app-core.js','utf8');
 
-  if(!index.includes('placeholder="예: 2026-10-03, 12:12:51, 14:30:00"'))issues.push('quick-input UI does not advertise end time');
-  if(!index.includes('날짜와 시작/종료 시간을 한 번에 입력할 수 있습니다. 종료시간은 생략할 수 있습니다.'))issues.push('quick-input help text is stale');
   for(const token of [
+    'id="evDateTimeQuickEndV177"',
+    'placeholder="예: 14:30:00"',
+    '종료 빠른 입력'
+  ])if(!index.includes(token))issues.push('quick end-time UI missing: '+token);
+
+  for(const token of [
+    'function parseQuickEventEndTimeV177(raw){',
+    'function applyQuickEventEndTimeV177(raw,{showError=false}={}){',
     "const endInput=document.getElementById('evEnd');",
-    "if(endInput&&parsed.endTime)endInput.value=parsed.endTime;",
+    "if(endInput)endInput.value=parsed.time;",
     "const endText=document.querySelector('#evEndDisplay span');",
-    "if(endText&&parsed.endTime)endText.textContent=formatTimeKorean(parsed.endTime);",
-    "window.__mwsEventDateTimeQuickV149='date-start-end-time-paste-v175';"
+    "if(endText)endText.textContent=formatTimeKorean(parsed.time);",
+    "window.__mwsEventDateTimeQuickV149='split-start-end-input-v177';"
   ])if(!core.includes(token))issues.push('Phase 175 runtime missing: '+token);
 
-  const fnStart=core.indexOf('function parseQuickEventDateTimeV149(raw){');
+  const fnStart=core.indexOf('function parseQuickEventEndTimeV177(raw){');
   const fnEnd=core.indexOf('\n}\nfunction applyQuickEventDateTimeV149',fnStart);
   if(fnStart<0||fnEnd<0){
-    issues.push('quick-input parser source could not be isolated');
+    issues.push('quick end-time parser source could not be isolated');
   }else{
     try{
-      const parse=Function(`${core.slice(fnStart,fnEnd+2)};return parseQuickEventDateTimeV149;`)();
+      const parse=Function(`${core.slice(fnStart,fnEnd+2)};return parseQuickEventEndTimeV177;`)();
       const cases=[
-        ['2026-10-03, 12:12:51, 14:30:00',{date:'2026-10-03',time:'12:12',second:51,endTime:'14:30',endSecond:0}],
-        ['2026-10-03 12:12 ~ 14:30',{date:'2026-10-03',time:'12:12',second:null,endTime:'14:30',endSecond:null}],
-        ['2026-10-03T12:12:51',{date:'2026-10-03',time:'12:12',second:51}]
+        ['14:30:00',{time:'14:30',second:0,sourceDate:null}],
+        ['14:30',{time:'14:30',second:null,sourceDate:null}],
+        ['2026-10-03, 14:30:00',{time:'14:30',second:0,sourceDate:'2026-10-03'}],
+        ['2026-10-03T14:30',{time:'14:30',second:null,sourceDate:'2026-10-03'}]
       ];
       for(const [input,expected] of cases){
         const actual=parse(input);
-        if(JSON.stringify(actual)!==JSON.stringify(expected))issues.push('quick-input parser mismatch for '+input+': '+JSON.stringify(actual));
+        if(JSON.stringify(actual)!==JSON.stringify(expected))issues.push('quick end-time parser mismatch for '+input+': '+JSON.stringify(actual));
       }
-      for(const invalid of ['2026-10-03, 12:12, 24:00','2026-02-30, 12:12, 14:30'])if(parse(invalid)!==null)issues.push('quick-input parser accepted invalid value: '+invalid);
+      for(const invalid of ['24:00','14:60:00','2026-02-30, 14:30:00','2026-10-03']){
+        if(parse(invalid)!==null)issues.push('quick end-time parser accepted invalid value: '+invalid);
+      }
     }catch(error){
-      issues.push('quick-input parser execution failed: '+String(error?.message||error));
+      issues.push('quick end-time parser execution failed: '+String(error?.message||error));
     }
   }
 
