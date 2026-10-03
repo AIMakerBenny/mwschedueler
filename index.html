@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>마왕 스케줄러</title>
-<link rel="stylesheet" href="assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171-searchtab172-drag174">
+<link rel="stylesheet" href="assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171-searchtab172-drag174-workspace176">
 
 <style id="mws-cloud-access-style">
 body.mws-gated .app{pointer-events:none;user-select:none;filter:blur(5px);opacity:.36}
@@ -26,7 +26,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 .sidebar-build-version-v53 + .sidebar-save-v572{margin-top:4px!important}
 </style>
 <link rel="stylesheet" href="assets/mawang-premium-v1621.css?v=1.6.21-premium2-phase154">
-<link rel="stylesheet" href="assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136-aperture152-medicaperture165-classapertures166-unassigned168-framepreload169-consolidated170">
+<link rel="stylesheet" href="assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136-aperture152-medicaperture165-classapertures166-unassigned168-framepreload169-consolidated170-all176">
 
 <link rel="stylesheet" href="assets/wardogs-intro-v1.css?v=1.0.0-phase118">
 <link rel="stylesheet" href="assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-frame140-frame144-aperture152-medicaperture165-classapertures166-unassigned168">
@@ -101,14 +101,8 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
         <button data-tab="sniper" title="최근 합방 인원">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M7 6h10M7 18h10M6 8v8m12-8v8M9 12h6"/></svg></span><span class="nav-label">최근 합방 인원</span>
         </button>
-        <button data-tab="targets" title="저격 리스트">
-          <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg></span><span class="nav-label">저격 리스트</span>
-        </button>
         <button data-tab="memos" title="메모">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5zM8 9h8M8 13h8M8 17h5"/></svg></span><span class="nav-label">메모</span>
-        </button>
-        <button data-tab="worldtime" title="세계 시간">
-          <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg></span><span class="nav-label">세계 시간</span>
         </button>
         <button data-tab="achievements" title="업적">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 6H4v2a4 4 0 0 0 4 4M17 6h3v2a4 4 0 0 1-4 4M12 13v4M8 21h8M9 17h6v4"/></svg></span><span class="nav-label">업적</span>
@@ -163,6 +157,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
   <div class="dashboard-mode-tabs" role="tablist" aria-label="대시보드 보기">
     <button type="button" class="dashboard-mode-tab active" data-dashboard-mode="overview">대시보드</button>
     <button type="button" class="dashboard-mode-tab" data-dashboard-mode="reminders">리마인더</button>
+    <button type="button" class="dashboard-mode-tab" data-dashboard-mode="worldtime" id="dashboardWorldTimeTabV176">세계 시간</button>
   </div>
 
   <div id="dashboardOverviewMode" class="dashboard-mode-panel active">
@@ -176,7 +171,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
     </div>
     <div class="dashboard-view-controls">
       <div id="upcomingDashboardSummary" class="dashboard-upcoming-summary">예정 컨텐츠 0개</div>
-      <button type="button" class="secondary small" id="toggleUpcomingDashboardBtn" aria-pressed="false">예정 컨텐츠 숨기기</button>
+      <button type="button" class="secondary small" id="dashboardGoCalendarBtnV176" onclick="setTab('calendar')">캘린더로 가기</button>
     </div>
     <div class="grid cols-2" id="dashboardMainGrid">
       <div class="card dashboard-detail-card">
@@ -893,7 +888,8 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
           </div>
 
           <div class="wardogs-class-tabs-v117" role="tablist" aria-label="WARDOGS 클래스">
-            <button type="button" class="wardogs-class-tab-v117 active" data-wardogs-class="assault" role="tab" aria-selected="true"><span class="wd-class-code">ASLT // 01</span><span class="wd-class-name">ASSAULT</span></button>
+            <button type="button" class="wardogs-class-tab-v117 active" data-wardogs-class="all" role="tab" aria-selected="true"><span class="wd-class-code">ALL // 00</span><span class="wd-class-name">전체</span></button>
+            <button type="button" class="wardogs-class-tab-v117" data-wardogs-class="assault" role="tab" aria-selected="false" tabindex="-1"><span class="wd-class-code">ASLT // 01</span><span class="wd-class-name">ASSAULT</span></button>
             <button type="button" class="wardogs-class-tab-v117" data-wardogs-class="medic" role="tab" aria-selected="false" tabindex="-1"><span class="wd-class-code">MED // 02</span><span class="wd-class-name">MEDIC</span></button>
             <button type="button" class="wardogs-class-tab-v117" data-wardogs-class="recon" role="tab" aria-selected="false" tabindex="-1"><span class="wd-class-code">RCN // 03</span><span class="wd-class-name">리콘</span></button>
             <button type="button" class="wardogs-class-tab-v117" data-wardogs-class="support" role="tab" aria-selected="false" tabindex="-1"><span class="wd-class-code">SUP // 04</span><span class="wd-class-name">서포트</span></button>
@@ -905,8 +901,8 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
           <div class="wardogs-class-stage-v117" role="tabpanel" aria-live="polite">
             <div class="wardogs-stage-head-v117">
               <div>
-                <div class="wardogs-stage-kicker-v117" id="wardogsClassStageCode">CLASS // ASLT</div>
-                <div class="wardogs-stage-title-v117" id="wardogsClassStageTitle">ASSAULT</div>
+                <div class="wardogs-stage-kicker-v117" id="wardogsClassStageCode">CLASS // ALL</div>
+                <div class="wardogs-stage-title-v117" id="wardogsClassStageTitle">전체</div>
               </div>
               <div class="wardogs-stage-count-v117" id="wardogsPersonnelCountV124">PERSONNEL 000</div>
             </div>
@@ -915,7 +911,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
               <div>
                 <div class="wardogs-empty-mark-v117"><span>00</span></div>
                 <h3>NO PERSONNEL CARDS</h3>
-                <p id="wardogsClassEmptyText">Assault 클래스에 표시할 활성 WARDOGS 카드가 없습니다.</p>
+                <p id="wardogsClassEmptyText">표시할 활성 WARDOGS 카드가 없습니다.</p>
               </div>
             </div>
           </div>
@@ -1709,11 +1705,11 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <div id="miniGameCelebration" class="mini-game-celebration" aria-hidden="true" onclick="closeMiniGameCelebration()"><div class="celebration-glow"></div><div id="celebrationConfetti" class="celebration-confetti"></div><div class="celebration-card"><div id="celebrationKicker" class="celebration-kicker">WINNER</div><div id="celebrationAvatar" class="celebration-avatar"></div><div id="celebrationText" class="celebration-text">당첨</div><div class="celebration-sub">화면을 클릭하면 닫힙니다</div></div></div>
 <div id="toast" class="toast"></div>
 
-<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175"></script>
+<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176"></script>
 <script src="assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130-zoom138-unassigned168"></script>
 <script src="assets/wardogs-media-v1.js?v=1.0.0-phase121-backup126-webview130"></script>
 <script src="assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140-frame144-frames150-aperture152-assault166-medic165-recon163-support166-driver161-pilot166-unassigned168"></script>
-<script src="assets/wardogs-v1.js?v=1.0.0-phase125-portrait138-soopid141-frames150-aperture152-assault166-medic165-recon163-support166-driver161-pilot166-unassigned168-framepreload169"></script>
+<script src="assets/wardogs-v1.js?v=1.0.0-phase125-portrait138-all176-soopid141-frames150-aperture152-assault166-medic165-recon163-support166-driver161-pilot166-unassigned168-framepreload169"></script>
 <script src="assets/wardogs-intro-v1.js?v=1.0.0-phase118"></script>
 
 
