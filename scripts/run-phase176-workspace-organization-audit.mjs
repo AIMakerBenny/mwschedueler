@@ -71,7 +71,7 @@ export function runPhase176WorkspaceOrganizationAudit(){
 
   const syntaxFiles=[
     'assets/workspace-ui-v176.js','assets/post-login-runtime-v130.js',
-    'assets/cloud-v1.1.js','assets/cloud-runtime-v130.js',
+    'assets/cloud-runtime-v130.js',
     'assets/content-planner-host.js','assets/wardogs-v1.js',
     'src/cf-v111-auth.js','src/cf-v111-entry.js'
   ];
