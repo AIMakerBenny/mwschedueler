@@ -352,7 +352,7 @@ let wheelScrollTimers={};
 function loadData(){
   const raw=localStorage.getItem('mawangSchedulerBeta');
   if(raw){try{return JSON.parse(raw)}catch(e){}}
-  return {version:52,categories:DEFAULT_CATEGORIES,contacts:[],posts:[],events:[],collaborations:[],memos:[],targetList:[],contactTags:[],contactTagBanners:{},scheduleClipboard:[],favoriteFolders:[],achievementCards:[],postViewMode:'card',postCardColumns:4,textScale:100,resolutionMode:'fhd',selfContactId:'',sidebarPinned:true,dashboardUpcomingHidden:false,timezones:DEFAULT_TZS,theme:'neon',backgroundImage:'',backgroundDim:45,uiFrame:'classic',neoTransparency:10,miniGames:defaultMiniGames()};
+  return {version:52,categories:DEFAULT_CATEGORIES,contacts:[],posts:[],events:[],collaborations:[],memos:[],patchNotes:[],suggestions:[],targetList:[],contactTags:[],contactTagBanners:{},scheduleClipboard:[],favoriteFolders:[],achievementCards:[],postViewMode:'card',postCardColumns:4,textScale:100,resolutionMode:'fhd',selfContactId:'',sidebarPinned:true,dashboardUpcomingHidden:false,timezones:DEFAULT_TZS,theme:'neon',backgroundImage:'',backgroundDim:45,uiFrame:'classic',neoTransparency:10,miniGames:defaultMiniGames()};
 }
 const AUTOSAVE_KEY='mawangSchedulerAutoBackups';
 
@@ -410,6 +410,8 @@ function normalizeDataShape(){
   if(!Array.isArray(data.collaborations))data.collaborations=[];
   if(!Array.isArray(data.timezones))data.timezones=[];
   if(!Array.isArray(data.memos))data.memos=[];
+  if(!Array.isArray(data.patchNotes))data.patchNotes=[];
+  if(!Array.isArray(data.suggestions))data.suggestions=[];
   if(!Array.isArray(data.targetList))data.targetList=[];
   if(!Array.isArray(data.contactTags))data.contactTags=[];
   if(!data.contactTagBanners||typeof data.contactTagBanners!=='object'||Array.isArray(data.contactTagBanners))data.contactTagBanners={};
@@ -488,6 +490,18 @@ normalizeMiniGameData();
     content:String(m.content||''),
     createdAt:m.createdAt||new Date().toISOString(),
     updatedAt:m.updatedAt||m.createdAt||new Date().toISOString()
+  }));
+  data.patchNotes=data.patchNotes.filter(Boolean).map(item=>({
+    id:String(item.id||crypto.randomUUID()),
+    author:String(item.author||'').trim(),
+    content:String(item.content||''),
+    createdAt:String(item.createdAt||new Date().toISOString())
+  }));
+  data.suggestions=data.suggestions.filter(Boolean).map(item=>({
+    id:String(item.id||crypto.randomUUID()),
+    author:String(item.author||'').trim(),
+    content:String(item.content||''),
+    createdAt:String(item.createdAt||new Date().toISOString())
   }));
 
     data.contacts=data.contacts.filter(Boolean).map(c=>({
@@ -691,7 +705,7 @@ function setTab(tab){
   if(tab==='reminders'){tab='dashboard';dashboardMode='reminders'}
   document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===tab));
-  const names={dashboard:'대시보드',calendar:'캘린더',contacts:'연락처',posts:'게시글',sniper:'최근 합방 인원',targets:'저격 리스트',memos:'메모',worldtime:'세계 시간',achievements:'업적',wardogs:'워독스 전쟁견들',contentPlanner:'컨텐츠 플래너',toolTier:'티어 게임',toolMatrix:'2D Matrix Chart',toolRelations:'인물 관계도',gameMajoku:'Majoku Castle',gameLadder:'사다리타기',gameRps:'가위바위보',gamePachinko:'경마',gameMultiDraw:'Gacha 뽑기',export:'가져오기 / 내보내기',settings:'설정'};
+  const names={dashboard:'대시보드',calendar:'캘린더',contacts:'연락처',posts:'게시글',sniper:'최근 합방 인원',targets:'저격 리스트',memos:'메모',worldtime:'세계 시간',achievements:'업적',wardogs:'워독스 전쟁견들',contentPlanner:'그림판',toolTier:'티어 게임',toolMatrix:'2D Matrix Chart',toolRelations:'인물 관계도',gameMajoku:'Majoku Castle',gameLadder:'사다리타기',gameRps:'가위바위보',gamePachinko:'경마',gameMultiDraw:'Gacha 뽑기',export:'가져오기 / 내보내기',settings:'설정'};
   document.getElementById('pageTitle').textContent=names[tab]||tab;
   // 탭 이동 시에도 같은 중앙 데이터에서 최신 상태를 다시 계산
   if(tab==='calendar')safeRenderView('캘린더',renderCalendar);
@@ -896,16 +910,9 @@ function renderDashboard(){
   document.getElementById('upcomingDashboard').innerHTML=up.slice(0,15).map(dashboardUpcomingCardHTML).join('')||'<div class="empty">예정된 컨텐츠가 없습니다</div>';
 
   const dashboard=document.getElementById('dashboard');
-  const hidden=Boolean(data.dashboardUpcomingHidden);
-  dashboard?.classList.toggle('dashboard-upcoming-hidden',hidden);
-
-  const toggle=document.getElementById('toggleUpcomingDashboardBtn');
-  if(toggle){
-    toggle.textContent=hidden?'예정 컨텐츠 보이기':'예정 컨텐츠 숨기기';
-    toggle.setAttribute('aria-pressed',String(hidden));
-  }
+  dashboard?.classList.remove('dashboard-upcoming-hidden');
   const summary=document.getElementById('upcomingDashboardSummary');
-  if(summary)summary.textContent=hidden?`예정 컨텐츠 ${up.length}개 · 숨김`:`예정 컨텐츠 ${up.length}개`;
+  if(summary)summary.textContent=`예정 컨텐츠 ${up.length}개`;
   const count=document.getElementById('upcomingDashboardCount');
   if(count)count.textContent=up.length>15?`전체 ${up.length}개 중 15개 표시`:`${visibleCount}개 표시`;
 
@@ -917,13 +924,7 @@ document.getElementById('dashboard').addEventListener('click',e=>{
   dashboardResetPreview();
 });
 
-document.getElementById('toggleUpcomingDashboardBtn').onclick=()=>{
-  data.dashboardUpcomingHidden=!Boolean(data.dashboardUpcomingHidden);
-  if(data.dashboardUpcomingHidden)dashboardResetPreview();
-  mwsSaveDevicePrefs(data);
-  renderDashboard();
-  toast('대시보드',data.dashboardUpcomingHidden?'예정 컨텐츠 목록을 숨겼습니다':'예정 컨텐츠 목록을 다시 표시합니다');
-};
+document.getElementById('dashboardGoCalendarBtnV176')?.addEventListener('click',()=>setTab('calendar'));
 /* v3.1 - pinned dashboard preview resets from any non-card click */
 document.addEventListener('pointerdown',e=>{
   const dashboard=document.getElementById('dashboard');
@@ -4877,6 +4878,8 @@ function resetContentAndContactData(){
   data.events=[];
   data.contacts=[];
   data.memos=[];
+  data.patchNotes=[];
+  data.suggestions=[];
   data.targetList=[];
   data.contactTags=[];
   data.scheduleClipboard=[];
@@ -4886,7 +4889,7 @@ function resetContentAndContactData(){
   persist();
   renderAll('데이터 초기화');
   setTab('settings');
-  toast('데이터 초기화','컨텐츠, 연락처, 메모, 저격 리스트, 합방 기록을 모두 비웠습니다');
+  toast('데이터 초기화','컨텐츠, 연락처, 수첩, 패치노트, 건의함, 저격 리스트, 합방 기록을 모두 비웠습니다');
 }
 document.getElementById('resetDataBtn').onclick=resetContentAndContactData;
 
