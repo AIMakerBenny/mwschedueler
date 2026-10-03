@@ -9,10 +9,10 @@ export function runPhase155TierPlannerUiAudit(){
   const diagnostic=fs.readFileSync('scripts/diagnose-phase155-tier-planner-ui.mjs','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  if(!appCore.includes("contentPlanner:'컨텐츠 플래너'")){
+  if(!appCore.includes("contentPlanner:'그림판'")){
     issues.push('contentPlanner common page-title mapping missing');
   }
-  if(!host.includes("title.textContent='컨텐츠 플래너'")){
+  if(!host.includes("title.textContent='그림판'")){
     issues.push('content planner host display title guard missing');
   }
 
@@ -26,7 +26,7 @@ export function runPhase155TierPlannerUiAudit(){
 
   for(const token of [
     'rankBackgroundLuma<180',
-    "value.plannerTitle!=='컨텐츠 플래너'",
+    "value.plannerTitle!=='그림판'",
     'Phase155 tier inputs remain dark'
   ])if(!diagnostic.includes(token))issues.push('Phase155 live UI regression guard missing: '+token);
 
