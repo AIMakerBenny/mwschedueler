@@ -13,6 +13,10 @@ const CLASSES=Object.freeze([
   {id:'pilot',name:'파일럿',code:'PLT',label:'파일럿'},
   {id:'unassigned',name:'미배치',code:'UNA',label:'미배치'}
 ]);
+const VIEW_CLASSES=Object.freeze([
+  {id:'all',name:'전체',code:'ALL',label:'전체'},
+  ...CLASSES
+]);
 
 const CLASS_FRAMES=Object.freeze({
   assault:'assets/wardogs-frames/assault.webp?v=phase166',
@@ -59,7 +63,7 @@ function preloadAllClassFrames(){
 }
 void preloadAllClassFrames();
 
-let activeClass='assault';
+let activeClass='all';
 let renderToken=0;
 let galleryObjectUrls=[];
 let detailModal=null;
@@ -74,7 +78,7 @@ function revokeGalleryUrls(){
     try{URL.revokeObjectURL(url)}catch(_){}
   }
 }
-function classMeta(id){return CLASSES.find(item=>item.id===id)||CLASSES[0]}
+function classMeta(id){return VIEW_CLASSES.find(item=>item.id===id)||VIEW_CLASSES[0]}
 function dataApi(){return window.mwsWardogsDataV119}
 function mediaApi(){return window.mwsWardogsMediaV1}
 function cardById(id){
@@ -168,13 +172,16 @@ function handleContactPortraitError(img,placeholder,container,token,expectedToke
 function linkedActiveCards(classId){
   const api=dataApi();
   if(!api?.getCards)return [];
-  return api.getCards(classId,{activeOnly:true}).filter(card=>api.resolveContactLink?.(card)?.linked===true);
+  const source=classId==='all'
+    ? (Array.isArray(api.get?.()?.cards)?api.get().cards:[]).filter(card=>card?.active!==false)
+    : api.getCards(classId,{activeOnly:true});
+  return source.filter(card=>api.resolveContactLink?.(card)?.linked===true);
 }
 function updateClassCounts(){
   const api=dataApi();
   const root=document.getElementById('wardogs');
   if(!root||!api?.getCards)return;
-  for(const item of CLASSES){
+  for(const item of VIEW_CLASSES){
     const button=root.querySelector(`[data-wardogs-class="${item.id}"]`);
     if(!button)continue;
     let countEl=button.querySelector('.wd-class-count-v124');
@@ -616,7 +623,7 @@ async function renderGallery(){
 }
 
 function setClass(next){
-  if(!CLASSES.some(item=>item.id===next))next='assault';
+  if(!VIEW_CLASSES.some(item=>item.id===next))next='all';
   activeClass=next;
   const root=document.getElementById('wardogs');
   if(!root)return;
@@ -638,16 +645,16 @@ function setClass(next){
 function onKeydown(event){
   const button=event.target.closest?.('[data-wardogs-class]');
   if(!button||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
-  const index=CLASSES.findIndex(item=>item.id===button.dataset.wardogsClass);
+  const index=VIEW_CLASSES.findIndex(item=>item.id===button.dataset.wardogsClass);
   if(index<0)return;
   event.preventDefault();
   let next=index;
-  if(event.key==='ArrowLeft')next=(index-1+CLASSES.length)%CLASSES.length;
-  if(event.key==='ArrowRight')next=(index+1)%CLASSES.length;
+  if(event.key==='ArrowLeft')next=(index-1+VIEW_CLASSES.length)%VIEW_CLASSES.length;
+  if(event.key==='ArrowRight')next=(index+1)%VIEW_CLASSES.length;
   if(event.key==='Home')next=0;
-  if(event.key==='End')next=CLASSES.length-1;
-  setClass(CLASSES[next].id);
-  document.querySelector(`[data-wardogs-class="${CLASSES[next].id}"]`)?.focus();
+  if(event.key==='End')next=VIEW_CLASSES.length-1;
+  setClass(VIEW_CLASSES[next].id);
+  document.querySelector(`[data-wardogs-class="${VIEW_CLASSES[next].id}"]`)?.focus();
 }
 
 function init(){
@@ -663,6 +670,7 @@ function init(){
 
 window.mwsWardogsV117=Object.freeze({
   classes:CLASSES,
+  views:VIEW_CLASSES,
   setClass,
   getActiveClass:()=>activeClass,
   init,
@@ -680,6 +688,7 @@ window.__mwsWardogsSoopIdV141='station-url-display-fallback-contact-id';
 window.__mwsWardogsFrameSourcesV150='user-source-rebuild-cache-busted';
 window.__mwsWardogsFrameBatchV166='assault-support-pilot-class-apertures';
 window.__mwsWardogsUnassignedV168='seventh-class-last-slot';
+window.__mwsWardogsAllViewV176='all-active-linked-cards-first-tab';
 window.__mwsWardogsCompositeLoadV169='frame-preload-synchronized-reveal';
 window.__mwsWardogsPortraitApertureV152='fixed-inner-window-manager-gallery-detail';
 
