@@ -2150,37 +2150,52 @@ document.querySelectorAll('.time-trigger').forEach(b=>b.onclick=()=>openTimePick
 /* Phase 149: paste a timestamp to fill event date + start time together. */
 function parseQuickEventDateTimeV149(raw){
   const text=String(raw||'').trim();
-  const match=text.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})(?:\s*,\s*|\s+|T)(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  const match=text.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})(?:\s*,\s*|\s+|T)(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*(?:,|~|～|→)\s*(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
   if(!match)return null;
   const year=Number(match[1]),month=Number(match[2]),day=Number(match[3]);
   const hour=Number(match[4]),minute=Number(match[5]),second=match[6]===undefined?null:Number(match[6]);
+  const endHour=match[7]===undefined?null:Number(match[7]);
+  const endMinute=match[8]===undefined?null:Number(match[8]);
+  const endSecond=match[9]===undefined?null:Number(match[9]);
   if(year<1000||month<1||month>12||day<1||hour<0||hour>23||minute<0||minute>59||(second!==null&&(second<0||second>59)))return null;
+  if(endHour!==null&&(endHour<0||endHour>23||endMinute<0||endMinute>59||(endSecond!==null&&(endSecond<0||endSecond>59))))return null;
   const probe=new Date(Date.UTC(year,month-1,day));
   if(probe.getUTCFullYear()!==year||probe.getUTCMonth()!==month-1||probe.getUTCDate()!==day)return null;
-  return {
+  const parsed={
     date:`${String(year).padStart(4,'0')}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`,
     time:`${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`,
     second
   };
+  if(endHour!==null){
+    parsed.endTime=`${String(endHour).padStart(2,'0')}:${String(endMinute).padStart(2,'0')}`;
+    parsed.endSecond=endSecond;
+  }
+  return parsed;
 }
 function applyQuickEventDateTimeV149(raw,{showError=false}={}){
   const input=document.getElementById('evDateTimeQuickV149');
   const status=document.getElementById('evDateTimeQuickStatusV149');
   const parsed=parseQuickEventDateTimeV149(raw);
   if(!parsed){
-    if(status&&showError&&String(raw||'').trim())status.textContent='형식을 확인해 주세요. 예: 2026-09-21, 16:07:59';
+    if(status&&showError&&String(raw||'').trim())status.textContent='형식을 확인해 주세요. 예: 2026-10-03, 12:12:51, 14:30:00';
     return false;
   }
   const dateInput=document.getElementById('evDate');
   const startInput=document.getElementById('evStart');
+  const endInput=document.getElementById('evEnd');
   if(dateInput)dateInput.value=parsed.date;
   if(startInput)startInput.value=parsed.time;
+  if(endInput&&parsed.endTime)endInput.value=parsed.endTime;
   const dateText=document.querySelector('#evDateDisplay span');
   const startText=document.querySelector('#evStartDisplay span');
+  const endText=document.querySelector('#evEndDisplay span');
   if(dateText)dateText.textContent=formatDate(parsed.date);
   if(startText)startText.textContent=formatTimeKorean(parsed.time);
+  if(endText&&parsed.endTime)endText.textContent=formatTimeKorean(parsed.endTime);
   if(typeof updateRepeatEditorUI==='function')updateRepeatEditorUI();
-  if(status)status.textContent=`적용됨 · ${parsed.date} · ${formatTimeKorean(parsed.time)}${parsed.second!==null?' · 초 단위는 저장하지 않음':''}`;
+  const secondNotice=parsed.second!==null||parsed.endSecond!==undefined&&parsed.endSecond!==null?' · 초 단위는 저장하지 않음':'';
+  const endNotice=parsed.endTime?` ~ ${formatTimeKorean(parsed.endTime)}`:'';
+  if(status)status.textContent=`적용됨 · ${parsed.date} · ${formatTimeKorean(parsed.time)}${endNotice}${secondNotice}`;
   if(input&&input.value!==String(raw||''))input.value=String(raw||'');
   return true;
 }
@@ -2199,8 +2214,7 @@ window.applyQuickEventDateTimeV149=applyQuickEventDateTimeV149;
     });
   }
 }
-window.__mwsEventDateTimeQuickV149='date-start-time-paste';
-
+window.__mwsEventDateTimeQuickV149='date-start-end-time-paste-v175';
 
 function normalizeParticipantStatus(value){
   return value==='planned'?'planned':'confirmed';
@@ -2755,7 +2769,7 @@ function openEvent(id=null,date=null){
   const quickDateTimeInput=document.getElementById('evDateTimeQuickV149');
   const quickDateTimeStatus=document.getElementById('evDateTimeQuickStatusV149');
   if(quickDateTimeInput)quickDateTimeInput.value='';
-  if(quickDateTimeStatus)quickDateTimeStatus.textContent='날짜와 시작 시간을 한 번에 입력할 수 있습니다.';
+  if(quickDateTimeStatus)quickDateTimeStatus.textContent='날짜와 시작/종료 시간을 한 번에 입력할 수 있습니다. 종료시간은 생략할 수 있습니다.';
   selectedParticipantIds=[...(e?.participants||[])];
   if(!e&&data.selfContactId&&contact(data.selfContactId)&&!selectedParticipantIds.includes(data.selfContactId))selectedParticipantIds.push(data.selfContactId);
   selectedParticipantStatuses={};
