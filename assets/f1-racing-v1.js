@@ -45,6 +45,7 @@ const VERSION215='phase215-backmarker-blue-flag';
 const VERSION216='phase216-driver-markers-camera';
 const VERSION217='phase217-compact-three-panel-workspace';
 const VERSION218='phase218-korean-interface';
+const VERSION219='phase219-race-commentary-engine';
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
 const CAMERA_MODES_V216=Object.freeze(['AUTO','FULL','LEADER','BATTLE','MANUAL']);
 const raceCameraV216={mode:'AUTO',zoom:1.9,cx:500,cy:300,dragging:false,pointerId:null,lastX:0,lastY:0,initialized:false};
@@ -2262,6 +2263,7 @@ function finishRaceRecoveryG(force=false){
 function updateRaceLifecycleRecoveryG(){
   if(f1ScreenStateV185!=='RACE')return false;
   markRaceFinishersRecoveryG();
+  updateRaceCommentaryV219(true);
   const allFinished=raceMotionV189.vehicles.length>0&&raceMotionV189.vehicles.every(vehicle=>vehicle.finished);
   if(allFinished)return finishRaceRecoveryG(false);
   return false;
@@ -2310,6 +2312,119 @@ function bindRaceLifecycleRecoveryG(){
   }
 }
 
+const commentaryStateV219={
+  initialized:false,lastPollSimMs:-Infinity,lastLeaderId:'',lastFlag:'GREEN',lastLeaderLap:0,
+  vehicle:new Map(),sequence:0
+};
+function commentaryTimeV219(){
+  const total=Math.max(0,Number(simClockV192.simTimeMs)||0);
+  const minutes=Math.floor(total/60000),seconds=Math.floor((total%60000)/1000);
+  return String(minutes).padStart(2,'0')+':'+String(seconds).padStart(2,'0');
+}
+function appendRaceCommentaryV219(message,type='info'){
+  const log=document.getElementById('f1RacingCommentaryLogV188');
+  const text=String(message||'').trim();
+  if(!log||!text)return false;
+  log.querySelector('.f1-racing-commentary-empty-v188')?.remove();
+  const row=document.createElement('div');
+  row.className='f1-racing-commentary-entry-v219 '+String(type||'info');
+  row.dataset.commentarySeq=String(++commentaryStateV219.sequence);
+  row.innerHTML='<span class="time">'+commentaryTimeV219()+'</span><span class="message"></span>';
+  row.querySelector('.message').textContent=text;
+  log.appendChild(row);
+  while(log.children.length>120)log.firstElementChild?.remove();
+  log.scrollTop=log.scrollHeight;
+  return true;
+}
+function commentaryVehicleStateV219(vehicle){
+  return {
+    passCompleted:Number(vehicle?.passCompletedCount)||0,
+    pitState:String(vehicle?.pitState||'TRACK'),
+    incident:activeDrivingIncidentV204(vehicle),
+    blueFlag:Boolean(vehicle?.blueFlag),
+    finished:Boolean(vehicle?.finished),
+    finishPosition:Number(vehicle?.finishPosition)||0
+  };
+}
+function resetRaceCommentaryV219(){
+  const log=document.getElementById('f1RacingCommentaryLogV188');
+  if(log)log.innerHTML='';
+  commentaryStateV219.initialized=true;
+  commentaryStateV219.lastPollSimMs=-Infinity;
+  commentaryStateV219.lastLeaderId='';
+  commentaryStateV219.lastFlag=String(raceFlagStateV214.flag||'GREEN');
+  commentaryStateV219.lastLeaderLap=0;
+  commentaryStateV219.vehicle=new Map();
+  commentaryStateV219.sequence=0;
+  for(const vehicle of raceMotionV189.vehicles)commentaryStateV219.vehicle.set(String(vehicle.id),commentaryVehicleStateV219(vehicle));
+  const track=activeRaceSnapshotV187?.track?.name||'선택된 트랙';
+  appendRaceCommentaryV219(track+'에서 경기가 시작됐습니다.','start');
+  return true;
+}
+function incidentCommentaryTextV219(type,name){
+  if(type==='LOCK_UP')return name+'가 제동 중 타이어를 잠갔습니다.';
+  if(type==='UNDERSTEER')return name+'가 코너에서 언더스티어를 겪고 있습니다.';
+  if(type==='OVERSTEER')return name+'가 오버스티어를 바로잡고 있습니다.';
+  return '';
+}
+function flagCommentaryTextV219(flag){
+  return ({GREEN:'그린 플래그. 정상 레이싱이 재개됩니다.',YELLOW:'옐로 플래그가 발령됐습니다. 추월이 제한됩니다.',VSC:'가상 세이프티카가 발령됐습니다.',SAFETY_CAR:'세이프티카가 투입됐습니다.',RED:'레드 플래그. 경기가 중단됩니다.'})[flag]||'';
+}
+function updateRaceCommentaryV219(force=false){
+  if(!commentaryStateV219.initialized||!raceMotionV189.vehicles.length)return false;
+  if(!force&&Number(simClockV192.simTimeMs)-Number(commentaryStateV219.lastPollSimMs)<250)return false;
+  commentaryStateV219.lastPollSimMs=Number(simClockV192.simTimeMs)||0;
+  const standings=computeRaceStandingsV191();
+  const leader=standings[0]?.vehicle||null;
+  if(leader&&commentaryStateV219.lastLeaderId&&commentaryStateV219.lastLeaderId!==String(leader.id)){
+    appendRaceCommentaryV219((leader.driver?.name||'드라이버')+'가 선두로 올라섰습니다.','lead');
+  }
+  if(leader){
+    commentaryStateV219.lastLeaderId=String(leader.id);
+    const lap=Math.max(1,Number(leader.currentLap)||1);
+    if(commentaryStateV219.lastLeaderLap&&lap>commentaryStateV219.lastLeaderLap){
+      const total=Math.max(1,Number(activeRaceSnapshotV187?.totalLaps)||DEFAULT_TOTAL_LAPS_V190);
+      appendRaceCommentaryV219(lap>=total?'마지막 랩에 들어갑니다.':lap+'랩에 들어갑니다.','lap');
+    }
+    commentaryStateV219.lastLeaderLap=lap;
+  }
+  const flag=String(raceFlagStateV214.flag||'GREEN');
+  if(flag!==commentaryStateV219.lastFlag){
+    const flagText=flagCommentaryTextV219(flag);if(flagText)appendRaceCommentaryV219(flagText,'flag');
+    commentaryStateV219.lastFlag=flag;
+  }
+  const byId=new Map(raceMotionV189.vehicles.map(vehicle=>[String(vehicle.id),vehicle]));
+  for(const vehicle of raceMotionV189.vehicles){
+    const id=String(vehicle.id),name=vehicle.driver?.name||'드라이버';
+    const previous=commentaryStateV219.vehicle.get(id)||commentaryVehicleStateV219(vehicle);
+    const current=commentaryVehicleStateV219(vehicle);
+    if(current.passCompleted>previous.passCompleted){
+      const target=byId.get(String(vehicle.battleTargetId||''));
+      appendRaceCommentaryV219(name+'가 '+(target?.driver?.name||'앞차')+'를 추월했습니다.','pass');
+    }
+    if(current.pitState!==previous.pitState){
+      if(current.pitState==='PIT_ENTRY')appendRaceCommentaryV219(name+'가 피트로 들어갑니다.','pit');
+      else if(current.pitState==='PIT_BOX')appendRaceCommentaryV219(name+'가 피트 스톱을 진행합니다.','pit');
+      else if(current.pitState==='TRACK'&&previous.pitState!=='TRACK')appendRaceCommentaryV219(name+'가 피트에서 트랙으로 복귀했습니다.','pit');
+    }
+    if(current.incident&&current.incident!==previous.incident){
+      const incidentText=incidentCommentaryTextV219(current.incident,name);if(incidentText)appendRaceCommentaryV219(incidentText,'incident');
+    }
+    if(current.blueFlag&&!previous.blueFlag)appendRaceCommentaryV219(name+'에게 블루 플래그가 제시됐습니다. 선두권 차량에 길을 내줘야 합니다.','flag');
+    if(current.finished&&!previous.finished)appendRaceCommentaryV219(name+'가 '+current.finishPosition+'위로 결승선을 통과했습니다.','finish');
+    commentaryStateV219.vehicle.set(id,current);
+  }
+  return true;
+}
+function qaRaceCommentaryV219(){
+  return {
+    initialized:Boolean(commentaryStateV219.initialized),
+    entries:document.querySelectorAll('#f1RacingCommentaryLogV188 .f1-racing-commentary-entry-v219').length,
+    hasLog:Boolean(document.getElementById('f1RacingCommentaryLogV188')),
+    allPass:typeof appendRaceCommentaryV219==='function'&&typeof updateRaceCommentaryV219==='function'&&Boolean(document.getElementById('f1RacingCommentaryLogV188'))
+  };
+}
+
 function simulateRaceStepV192(stepMs){
   if(simClockV192.paused||!(stepMs>0))return false;
   simClockV192.simTimeMs+=stepMs;
@@ -2338,6 +2453,7 @@ function simulateRaceStepV192(stepMs){
     if(vehicle.finished)continue;
     simulateVehicleDynamicsV196(vehicle,stepMs);
   }
+  updateRaceCommentaryV219(false);
   if(updateRaceLifecycleRecoveryG())return false;
   return true;
 }
@@ -2601,6 +2717,7 @@ function renderRaceControlV188(){
   ensureRaceCameraControlsV216();
   resetRaceCameraV216('AUTO');
   bindSimulationControlsV192();
+  resetRaceCommentaryV219();
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='레이스 관제';
   return true;
 }
@@ -3768,6 +3885,10 @@ window.__mwsF1RacingV215=VERSION215;
 window.__mwsF1RacingV216=VERSION216;
 window.__mwsF1RacingV217=VERSION217;
 window.__mwsF1RacingV218=VERSION218;
+window.mwsF1AppendRaceCommentaryV219=appendRaceCommentaryV219;
+window.mwsF1UpdateRaceCommentaryV219=updateRaceCommentaryV219;
+window.mwsF1QaRaceCommentaryV219=qaRaceCommentaryV219;
+window.__mwsF1RacingV219=VERSION219;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
