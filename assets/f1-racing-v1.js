@@ -1391,8 +1391,12 @@ function qaTrafficV207(){
   if(!ahead||!follower)return null;
   const keys=['raceProgress','progress','speedKph','slipstreamStrength','racingLineMode','trafficState','trafficCarAheadId','trafficGapMeters','trafficClosingRateKph','trafficPressure','trafficThreatFromId','defenceActive','trafficLineIntent'];
   const saved=new Map(vehicles.map(v=>[v.id,Object.fromEntries(keys.map(k=>[k,v[k]]))]));
-  const straight=(track.zones||[]).find(zone=>zone.type==='straight'&&Number(zone.end)-Number(zone.start)>.05)||(track.zones||[])[0];
-  const base=straight?(Number(straight.start)+Number(straight.end))/2:.05,gapProgress=12/Math.max(1,Number(track.lengthMeters)||1);
+  let base=.05;
+  for(let i=0;i<100;i++){
+    const candidate=(i+.5)/100;
+    if(trafficBattlePhaseV207({progress:candidate}).phase==='STRAIGHT'){base=candidate;break}
+  }
+  const gapProgress=12/Math.max(1,Number(track.lengthMeters)||1);
   ahead.raceProgress=2+base;ahead.progress=normalizedProgressV190(ahead.raceProgress);ahead.speedKph=250;ahead.racingLineMode='IDEAL';
   follower.raceProgress=ahead.raceProgress-gapProgress;follower.progress=normalizedProgressV190(follower.raceProgress);follower.speedKph=272;follower.slipstreamStrength=.65;follower.racingLineMode='IDEAL';
   const states=updateTrafficAndDefenceV207(),output={follower:states.find(row=>row.id===String(follower.id))||null,ahead:states.find(row=>row.id===String(ahead.id))||null};
