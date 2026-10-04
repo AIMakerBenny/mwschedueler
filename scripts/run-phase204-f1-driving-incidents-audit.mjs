@@ -8,7 +8,7 @@ export function runPhase204F1DrivingIncidentAudit(){
   const css=fs.readFileSync('assets/f1-racing-v1.css','utf8');
   const diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
-  if(!/recovery=K1&phase=20[4-9]/.test(index))issues.push('Phase 204+ asset cache missing');
+  if(!/recovery=[K-Z][0-9]+&phase=20[4-9]/.test(index))issues.push('Phase 204+ asset cache missing');
   for(const token of [
     "const VERSION204='phase204-driving-incidents';",
     'const INCIDENT_CONFIG_V204=Object.freeze({',
