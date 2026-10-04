@@ -211,6 +211,7 @@ import {runPhase212F1LiveTimingFlipAudit} from './run-phase212-f1-live-timing-fl
 import {runPhase213F1TopThreePresentationAudit} from './run-phase213-f1-top-three-presentation-audit.mjs';
 import {runPhase214F1RaceControlFlagAudit} from './run-phase214-f1-race-control-flag-audit.mjs';
 import {runPhase215F1BackmarkerBlueFlagAudit} from './run-phase215-f1-backmarker-blue-flag-audit.mjs';
+import {runPhase216F1DriverCameraAudit} from './run-phase216-f1-driver-camera-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2223,5 +2224,10 @@ export function runPhase215FullIntegrationAudit(){
   const issues=[...previous.issues,...current.issues.map(x=>'Phase 215: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 215: '+x)];
   const summary={currentPhase:215,issues,warnings,pass:issues.length===0};console.log(JSON.stringify({fullIntegration:summary}));if(issues.length)process.exitCode=1;return summary;
 }
-export function runCurrentFullIntegrationAudit(){return runPhase215FullIntegrationAudit();}
+export function runPhase216FullIntegrationAudit(){
+  const previous=runPhase215FullIntegrationAudit(),current=runPhase216F1DriverCameraAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>'Phase 216: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 216: '+x)];
+  const summary={currentPhase:216,issues,warnings,pass:issues.length===0};console.log(JSON.stringify({fullIntegration:summary}));if(issues.length)process.exitCode=1;return summary;
+}
+export function runCurrentFullIntegrationAudit(){return runPhase216FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
