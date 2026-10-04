@@ -18,7 +18,7 @@ export function runRecoveryEF1WorkspaceAudit(){
     "workspace.id='f1RacingWorkspaceRecoveryE';",
     "toolbar.id='f1RacingWorkspaceToolbarRecoveryE';",
     "guide.id='f1RacingWorkspaceDockGuideRecoveryE';",
-    "const pairs=[['timing',timing],['track',track],['commentary',commentary],['radio',radio],['speed',speed]];",
+    "const pairs=[['timing',timing],['track',track],['commentary',commentary]];",
     "workspace.addEventListener('pointerdown',event=>{",
     "window.addEventListener('pointermove',onWorkspacePointerMoveRecoveryE);",
     "window.addEventListener('pointerup',onWorkspacePointerUpRecoveryE);",
