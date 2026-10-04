@@ -62,6 +62,7 @@ const VERSION232='phase232-driver-marker-number-identity';
 const VERSION233='phase233-track-silhouette-cards';
 const VERSION234='phase234-track-runtime-character-profile';
 const VERSION235='phase235-track-character-driving-behavior';
+const VERSION236='phase236-track-aware-commentary';
 const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitchMs:1800,urgentBattleGapSeconds:0.55,focusDeadbandSvg:3,zoomDeadband:0.025});
 const COMMENTARY_CADENCE_V227=Object.freeze({flowGapMs:5500,strategyGapMs:3000,battleGapMs:1600,windowMs:60000,maxNarrativePerWindow:18});
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
@@ -2662,6 +2663,21 @@ function qaCommentaryEventOrderV230(){
   const target=commentaryPassTargetV230({id:'self',battleTargetId:'',carAheadId:'next'},{battleTargetId:'passed',carAheadId:'passed'},byId);
   return {pitSequence,invalidReturn,passTargetId:String(target?.id||''),allPass:pitSequence.join('|')==='ENTRY||BOX||RETURN'&&invalidReturn===''&&String(target?.id||'')==='passed'};
 }
+function trackCommentaryLineV236(track=activeRaceSnapshotV187?.track){
+  const profile=track?.runtimeProfile||(track?trackRuntimeProfileV234(track):null);
+  if(!track||!profile)return '트랙 특성을 확인하며 레이스가 시작됩니다.';
+  let trait='균형 잡힌 구성이어서 제동, 코너링, 추월 판단이 모두 중요합니다.';
+  if(Number(profile.incidentRiskFactor)>=1.12)trait='좁고 저속 코너가 많아 제동 실수와 트랙 포지션 관리가 중요합니다.';
+  else if(Number(profile.overtakeFactor)>=1.20)trait='긴 직선과 추월 구간을 활용한 슬립스트림과 제동 싸움이 중요합니다.';
+  else if(Number(profile.tyreStressFactor)>=1.08)trait='고속 코너가 이어져 타이어와 코너 페이스 관리가 중요합니다.';
+  else if(Number(profile.overtakeFactor)<=.95)trait='추월 공간이 제한적이어서 코너 진입과 출구 가속이 중요합니다.';
+  return String(track.name||'트랙')+'은 '+String(profile.archetype||'종합형')+'입니다. '+trait;
+}
+function qaTrackAwareCommentaryV236(){
+  const ids=['majoku-ring-v1','castle-street-circuit-v1','blue-coast-speedway-v1','mawang-speed-park-v1','royal-street-circuit-v1','infinity-eight-circuit-v1','highland-flow-ring-v1'];
+  const rows=ids.map(id=>{const track=window.mwsGetF1TrackV182?.(id);if(!track)return {id,line:''};const runtimeProfile=trackRuntimeProfileV234(track);return {id,line:trackCommentaryLineV236({...track,runtimeProfile})}});
+  return {rows,uniqueLines:new Set(rows.map(row=>row.line)).size,allPass:rows.every(row=>row.line&&row.line.includes('입니다.'))&&new Set(rows.map(row=>row.line)).size===rows.length};
+}
 function resetRaceCommentaryV219(){
   const log=document.getElementById('f1RacingCommentaryLogV188');
   if(log)log.innerHTML='';
@@ -2675,8 +2691,8 @@ function resetRaceCommentaryV219(){
   commentaryReadV226.followTail=true;commentaryReadV226.unread=0;commentaryReadV226.lastTextAt=new Map();
   bindCommentaryReadabilityV226();
   for(const vehicle of raceMotionV189.vehicles)commentaryStateV219.vehicle.set(String(vehicle.id),commentaryVehicleStateV219(vehicle));
-  const track=activeRaceSnapshotV187?.track?.name||'선택된 트랙';
-  appendRaceCommentaryV219(track+'에서 경기가 시작됐습니다.','start');
+  const track=activeRaceSnapshotV187?.track;
+  appendRaceCommentaryV219((track?.name||'선택된 트랙')+'에서 경기가 시작됐습니다. '+trackCommentaryLineV236(track),'start');
   return true;
 }
 function incidentCommentaryTextV219(type,name){
@@ -4473,6 +4489,8 @@ window.mwsF1QaTrackRuntimeProfilesV234=qaTrackRuntimeProfilesV234;
 window.__mwsF1RacingV234=VERSION234;
 window.mwsF1QaTrackBehaviorModifiersV235=qaTrackBehaviorModifiersV235;
 window.__mwsF1RacingV235=VERSION235;
+window.mwsF1QaTrackAwareCommentaryV236=qaTrackAwareCommentaryV236;
+window.__mwsF1RacingV236=VERSION236;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
