@@ -20,8 +20,9 @@ export function runPhase199F1DirtyAirAudit(){
     'vehicle.dirtyAirTyreHeatLoad=tyreHeatLoad;',
     'function updateDirtyAirStatesV199(){',
     'updateDirtyAirStatesV199();',
-    'const aeroGripMultiplier=Math.max(.85,Math.min(1,Number(vehicle.aeroGripMultiplier)||1));',
-    'const maxTarget=baseTarget*aeroGripMultiplier+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;',
+    'const rawAeroGrip=Math.max(.85,Math.min(1,Number(vehicle.aeroGripMultiplier)||1));',
+    'const dirtyAirRecovery=Math.max(0,racecraftNorm)*.08;',
+    'const aeroGripMultiplier=Math.min(1,rawAeroGrip+(1-rawAeroGrip)*dirtyAirRecovery);',
     "row.dataset.dirtyAir=(Number(vehicle.dirtyAirStrength)||0).toFixed(3);",
     'window.mwsF1ResolveDirtyAirV199=resolveDirtyAirV199;',
     'window.__mwsF1RacingV199=VERSION199;'

@@ -1015,7 +1015,8 @@ jobs:
           node --check /tmp/f1-racing-v1-phase199.js
           grep -Fq 'function resolveDirtyAirV199(vehicle,vehicles=raceMotionV189.vehicles){' /tmp/f1-racing-v1-phase199.js
           grep -Fq 'vehicle.aeroGripMultiplier=aeroGripMultiplier;' /tmp/f1-racing-v1-phase199.js
-          grep -Fq 'const maxTarget=baseTarget*aeroGripMultiplier+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;' /tmp/f1-racing-v1-phase199.js
+          grep -Fq 'const rawAeroGrip=Math.max(.85,Math.min(1,Number(vehicle.aeroGripMultiplier)||1));' /tmp/f1-racing-v1-phase199.js
+          grep -Fq 'const aeroGripMultiplier=Math.min(1,rawAeroGrip+(1-rawAeroGrip)*dirtyAirRecovery);' /tmp/f1-racing-v1-phase199.js
           grep -Fq 'window.mwsF1ResolveDirtyAirV199=resolveDirtyAirV199;' /tmp/f1-racing-v1-phase199.js
           echo '[phase200] F1 driver pace consistency racecraft'
           grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=200' /tmp/index.html
