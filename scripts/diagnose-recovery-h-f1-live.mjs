@@ -147,6 +147,19 @@ try{
     assert(selected.length>=2,'Participant selection did not reach 2 drivers');
     assert(String(window.mwsF1GetActiveTrackV182?.()?.id||'')===String(targetTrack.id),'Selected track not active');
 
+    const activeTrackModel=window.mwsF1GetActiveTrackV182?.();
+    const threshold=Math.max(.00001,Number(activeTrackModel?.geometry?.cornerCurvatureThreshold)||.0018);
+    const maxStraight=Number(activeTrackModel?.geometry?.maxStraightKph)||320;
+    const mildZone=(activeTrackModel?.zones||[]).find(zone=>String(zone.type||'').toLowerCase()==='fastcorner')||(activeTrackModel?.zones||[]).find(zone=>String(zone.type||'').toLowerCase()==='mediumcorner');
+    const sharpZone=(activeTrackModel?.zones||[]).find(zone=>String(zone.type||'').toLowerCase()==='hairpin')||(activeTrackModel?.zones||[]).find(zone=>String(zone.type||'').toLowerCase()==='slowcorner');
+    assert(mildZone&&sharpZone,'Recovery L QA zones missing');
+    const mildProgress=(Number(mildZone.start)+Number(mildZone.end))/2;
+    const sharpProgress=(Number(sharpZone.start)+Number(sharpZone.end))/2;
+    const mildLimit=window.mwsF1CurvatureWeightedZoneLimitRecoveryL?.(activeTrackModel,{progress:mildProgress,curvatureRadPerMeter:threshold*.60},maxStraight);
+    const sharpLimit=window.mwsF1CurvatureWeightedZoneLimitRecoveryL?.(activeTrackModel,{progress:sharpProgress,curvatureRadPerMeter:threshold*3.0},maxStraight);
+    assert(Number(mildLimit)>maxStraight*.84,'Recovery L gentle bend still over-slows: '+mildLimit);
+    assert(Number(sharpLimit)<Number(mildLimit)-100,'Recovery L curvature speed separation too small: mild='+mildLimit+' sharp='+sharpLimit);
+
     const setupLine=document.querySelector('#f1RacingTrackAnnotationsV183 [data-f1-start-finish="1"]');
     const setupStripe=setupLine?.querySelector('.finish-stripe');
     assert(setupLine&&setupStripe,'Setup Start / Finish line missing');
@@ -306,7 +319,21 @@ try{
     const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]');
     const title=commentary?.querySelector('[data-f1-panel-drag="commentary"]');
     assert(title,'Commentary drag handle missing');
-    const tr=title.getBoundingClientRect(),wr=workspace.getBoundingClientRect();
+    let tr=title.getBoundingClientRect(),wr=workspace.getBoundingClientRect();
+
+    title.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,clientX:tr.left+40,clientY:tr.top+12,pointerId:20,buttons:1}));
+    window.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,clientX:wr.left+wr.width*.5,clientY:wr.top+wr.height*.45,pointerId:20,buttons:1}));
+    window.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,clientX:wr.left+wr.width*.5,clientY:wr.top+wr.height*.45,pointerId:20,buttons:0}));
+    await raf();
+    const centerDocked=window.mwsF1GetWorkspaceLayoutRecoveryE?.().panels.commentary;
+    assert(centerDocked.x===4&&centerDocked.w===4,'Recovery N Commentary did not dock to center third: '+JSON.stringify(centerDocked));
+    const centerLayout=window.mwsF1GetWorkspaceLayoutRecoveryE?.();
+    const centerXs=Object.entries(centerLayout?.panels||{}).filter(([,row])=>!row.hidden).map(([,row])=>Number(row.x));
+    assert(centerXs.includes(0)&&centerXs.includes(8),'Recovery N remaining panels did not redistribute to left and right columns: '+centerXs.join(','));
+    assertNoDomOverlap('after center dock');
+
+    document.getElementById('f1RacingWorkspaceResetRecoveryE')?.click();await raf();
+    tr=title.getBoundingClientRect();wr=workspace.getBoundingClientRect();
     title.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,clientX:tr.left+40,clientY:tr.top+12,pointerId:2,buttons:1}));
     window.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,clientX:wr.left+3,clientY:wr.top+wr.height*.45,pointerId:2,buttons:1}));
     window.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,clientX:wr.left+3,clientY:wr.top+wr.height*.45,pointerId:2,buttons:0}));
@@ -371,7 +398,9 @@ try{
     assert(errors.length===0,'Browser errors during Recovery H: '+errors.join(' | '));
 
     return {
+      curvatureSpeedQa:{mildLimit:Number(mildLimit)||0,sharpLimit:Number(sharpLimit)||0},
       manualStartGate:true,
+      centerTripleDock:centerDocked,
       pausedAndResumed:true,
       phase204Incident:{type:forcedIncident?.type||'',lockupActiveMs:Number(incidentAfter?.lockupActiveMs)||0,flatSpot:Number(incidentAfter?.tyreFlatSpot)||0},
       phase205Pit:{states:pitCycle?.states||[],laneSpeedCapKph:Number(pitCycle?.laneSpeedCapKph)||0,compound:pitAfter?.compound||'',warmupFactor:Number(pitAfter?.tyreWarmupFactor)||0},
