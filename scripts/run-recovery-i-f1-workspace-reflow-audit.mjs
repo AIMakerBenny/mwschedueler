@@ -17,7 +17,7 @@ export function runRecoveryIF1WorkspaceReflowAudit(){
     'function workspaceFindFreeRectRecoveryI(id,desired,occupied){',
     'function workspaceReflowRecoveryI(layout,preferredId=',
     'function workspaceOverlapPairsRecoveryI(layout=workspaceLayoutRecoveryE){',
-    'return workspaceReflowRecoveryI(result);',
+    'normalized=workspaceReflowRecoveryI(result);',
     'workspaceReflowRecoveryI(workspaceLayoutRecoveryE,pointer.id,{x:drop.x,y:drop.y,w:state.w,h:state.h});',
     'window.mwsF1WorkspaceOverlapPairsRecoveryI=function(){return workspaceOverlapPairsRecoveryI().map(pair=>pair.slice())};',
     "window.__mwsF1RecoveryI='collision-free-reflow-v1';"
