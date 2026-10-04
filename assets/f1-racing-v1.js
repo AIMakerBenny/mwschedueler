@@ -497,7 +497,7 @@ function updateDriverPaceStateV200(vehicle,stepMs){
   if(vehicle.nextPaceNoiseMs<=0){
     const shock=nextDriverRandomV200(vehicle)*2-1;
     const volatility=DRIVER_PACE_CONFIG_V200.noiseBase+(1-consistency)*DRIVER_PACE_CONFIG_V200.noiseRange;
-    const resistance=.92+errorResistance*.08;
+    const resistance=1.08-errorResistance*.08;
     vehicle.paceNoise+=shock*volatility*resistance;
     vehicle.nextPaceNoiseMs=DRIVER_PACE_CONFIG_V200.noiseSampleMs;
   }
