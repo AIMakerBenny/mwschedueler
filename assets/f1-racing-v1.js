@@ -60,6 +60,7 @@ const VERSION230='phase230-commentary-event-order-integrity';
 const VERSION231='phase231-production-verifier-future-safe';
 const VERSION232='phase232-driver-marker-number-identity';
 const VERSION233='phase233-track-silhouette-cards';
+const VERSION234='phase234-track-runtime-character-profile';
 const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitchMs:1800,urgentBattleGapSeconds:0.55,focusDeadbandSvg:3,zoomDeadband:0.025});
 const COMMENTARY_CADENCE_V227=Object.freeze({flowGapMs:5500,strategyGapMs:3000,battleGapMs:1600,windowMs:60000,maxNarrativePerWindow:18});
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
@@ -370,6 +371,21 @@ function trackProfileV223(track){
 function trackCornerMixLabelV223(profile){
   return '저속 '+profile.slowCount+' · 중속 '+profile.mediumCount+' · 고속 '+profile.fastCount;
 }
+function trackRuntimeProfileV234(track){
+  const profile=trackProfileV223(track);
+  const cornerTotal=Math.max(1,profile.slowCount+profile.mediumCount+profile.fastCount);
+  const slowShare=profile.slowCount/cornerTotal,fastShare=profile.fastCount/cornerTotal;
+  const narrow=clamp01V198((14-profile.widthMeters)/5);
+  const highSpeed=clamp01V198((profile.maxStraightKph-285)/75);
+  const overtakeFactor=Math.max(.72,Math.min(1.28,.80+profile.straightShare*.58+profile.overtakeZones*.07+(profile.widthMeters-10)*.025));
+  const incidentRiskFactor=Math.max(.82,Math.min(1.28,.92+narrow*.18+slowShare*.12+highSpeed*.07));
+  const tyreStressFactor=Math.max(.88,Math.min(1.20,.92+fastShare*.13+highSpeed*.09+slowShare*.05));
+  return Object.freeze({
+    archetype:String(track?.archetype||'종합형'),straightShare:profile.straightShare,slowShare:Number(slowShare.toFixed(3)),fastShare:Number(fastShare.toFixed(3)),
+    widthMeters:profile.widthMeters,maxStraightKph:profile.maxStraightKph,overtakeZones:profile.overtakeZones,
+    overtakeFactor:Number(overtakeFactor.toFixed(3)),incidentRiskFactor:Number(incidentRiskFactor.toFixed(3)),tyreStressFactor:Number(tyreStressFactor.toFixed(3))
+  });
+}
 function getTrackCatalogV186(){
   const source=window.MWS_F1_TRACKS_V182||{};
   return Object.values(source).map(track=>({
@@ -446,6 +462,8 @@ function buildRaceSnapshotV187(){
     track:Object.freeze({
       id:String(track.id),
       name:String(track.name),
+      archetype:String(track.archetype||'종합형'),
+      runtimeProfile:trackRuntimeProfileV234(track),
       lengthMeters:Number(track.lengthMeters)||0,
       viewBox:Object.freeze([...(track.viewBox||[])]),
       path:String(track.path||''),
@@ -984,6 +1002,12 @@ function qaDiverseTrackCatalogV220(){
     allPass:catalog.length>=7&&required.every(id=>catalog.some(row=>row.id===id))&&paths.size===7&&archetypes.size>=6&&validations.every(row=>row.issues.length===0)};
 }
 
+function qaTrackRuntimeProfilesV234(){
+  const ids=['majoku-ring-v1','castle-street-circuit-v1','blue-coast-speedway-v1','mawang-speed-park-v1','royal-street-circuit-v1','infinity-eight-circuit-v1','highland-flow-ring-v1'];
+  const rows=ids.map(id=>{const track=window.mwsGetF1TrackV182?.(id);const profile=track?trackRuntimeProfileV234(track):null;return {id,profile}});
+  const signatures=new Set(rows.map(row=>row.profile?[row.profile.overtakeFactor,row.profile.incidentRiskFactor,row.profile.tyreStressFactor].join('|'):''));
+  return {rows,uniqueProfiles:signatures.size,allPass:rows.length===7&&rows.every(row=>row.profile&&row.profile.archetype&&row.profile.overtakeFactor>0&&row.profile.incidentRiskFactor>0&&row.profile.tyreStressFactor>0)&&signatures.size>=5};
+}
 function qaTrackSilhouetteCardsV233(){
   const catalog=getTrackCatalogV186();
   const pathSet=new Set(catalog.map(track=>String(track.path||'')));
@@ -4422,6 +4446,8 @@ window.mwsF1QaDriverMarkerIdentityV232=qaDriverMarkerIdentityV232;
 window.__mwsF1RacingV232=VERSION232;
 window.mwsF1QaTrackSilhouetteCardsV233=qaTrackSilhouetteCardsV233;
 window.__mwsF1RacingV233=VERSION233;
+window.mwsF1QaTrackRuntimeProfilesV234=qaTrackRuntimeProfilesV234;
+window.__mwsF1RacingV234=VERSION234;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
