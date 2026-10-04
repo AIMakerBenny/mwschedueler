@@ -184,6 +184,17 @@ try{
     assert(document.getElementById('f1RacingCommentaryLogV188')?.textContent?.includes('경기가 시작됐습니다.'),'Phase 219 race-start commentary missing');
     const narrativeQa=window.mwsF1QaRaceNarrativeV222?.();
     assert(narrativeQa?.allPass===true,'Phase 222 commentary flow QA failed: '+JSON.stringify(narrativeQa));
+    const commentaryReadQa=window.mwsF1QaCommentaryReadabilityV226?.();
+    assert(commentaryReadQa?.allPass===true&&commentaryReadQa?.badgeReady===true,'Phase 226 commentary readability QA failed: '+JSON.stringify(commentaryReadQa));
+    for(let i=0;i<20;i++)window.mwsF1AppendRaceCommentaryV222?.('QA 흐름 '+i,'flow','qa-flow-'+i,0);
+    const commentaryLog=document.getElementById('f1RacingCommentaryLogV188');
+    commentaryLog.scrollTop=0;commentaryLog.dispatchEvent(new Event('scroll'));await raf();
+    window.mwsF1AppendRaceCommentaryV222?.('QA 읽지 않은 해설','flow','qa-unread',0);await raf();
+    const unreadQa=window.mwsF1QaCommentaryReadabilityV226?.();
+    assert(Number(unreadQa?.unread)>=1,'Phase 226 unread commentary counter did not increment: '+JSON.stringify(unreadQa));
+    document.getElementById('f1RacingCommentaryUnreadV226')?.click();await raf();
+    const unreadCleared=window.mwsF1QaCommentaryReadabilityV226?.();
+    assert(Number(unreadCleared?.unread)===0&&unreadCleared?.followTail===true,'Phase 226 unread commentary return-to-tail failed: '+JSON.stringify(unreadCleared));
 
     const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
     assert(workspace,'Race workspace missing');
@@ -331,6 +342,9 @@ try{
     assert(window.mwsF1SetRaceControlFlagV214?.('GREEN','')===true,'Phase 214 Green Flag restore failed');
     const blueQa=window.mwsF1QaBackmarkerBlueFlagV215?.();
     assert(blueQa?.allPass===true,'Phase 215 backmarker/blue flag QA failed: '+JSON.stringify(blueQa));
+    const cameraDirectorQa=window.mwsF1QaCameraDirectorV225?.();
+    assert(cameraDirectorQa?.allPass===true&&cameraDirectorQa?.hasFront===true,'Phase 225 camera director QA failed: '+JSON.stringify(cameraDirectorQa));
+    assert(document.querySelector('[data-f1-camera-mode="FRONT"]')?.textContent?.includes('상위권'),'Phase 225 front-group camera button missing');
     const cameraQa=window.mwsF1QaDriverMarkerCameraV216?.();
     assert(cameraQa?.allPass===true&&Number(cameraQa?.paletteCount)>=8,'Phase 216 marker/camera QA failed: '+JSON.stringify(cameraQa));
     const markerColors=Array.from(document.querySelectorAll('.f1-racing-race-vehicle-v189')).map(node=>node.style.getPropertyValue('--f1-driver-color')).filter(Boolean);
@@ -375,6 +389,13 @@ try{
     assert(compactLayout?.panels?.commentary?.x===8&&compactLayout?.panels?.commentary?.y===3&&compactLayout?.panels?.commentary?.w===4,'Phase 217 commentary default layout mismatch: '+JSON.stringify(compactLayout?.panels?.commentary));
     assert(!document.querySelector('[data-f1-workspace-panel="radio"],[data-f1-workspace-panel="speed"]'),'Phase 217 obsolete Team Radio or Speed Trap panel remains in workspace');
     assertNoDomOverlap('after compact default');
+    const raceHeaderRect=document.querySelector('#f1RacingViewRaceV185 .f1-racing-race-header-v188')?.getBoundingClientRect();
+    assert(raceHeaderRect&&raceHeaderRect.height<=46,'Phase 224 race header is not compact: '+String(raceHeaderRect?.height));
+    const timingPanel=document.querySelector('[data-f1-workspace-panel="timing"]');
+    const gearCell=timingPanel?.querySelector('.f1-racing-timing-row-v188 .gear');
+    const rpmCell=timingPanel?.querySelector('.f1-racing-timing-row-v188 .rpm');
+    assert(gearCell&&getComputedStyle(gearCell).display==='none','Phase 224 compact timing gear column still visible');
+    assert(rpmCell&&getComputedStyle(rpmCell).display==='none','Phase 224 compact timing RPM column still visible');
     assert(document.querySelector('[data-f1-workspace-panel="timing"] [data-f1-panel-drag="timing"]')?.textContent?.includes('실시간 순위'),'Phase 218 timing panel is not Korean');
     assert(document.querySelector('[data-f1-workspace-panel="track"] [data-f1-panel-drag="track"]')?.textContent?.includes('트랙 맵'),'Phase 218 track panel is not Korean');
     assert(document.querySelector('[data-f1-workspace-panel="commentary"] [data-f1-panel-drag="commentary"]')?.textContent?.includes('경기 해설'),'Phase 218 commentary panel is not Korean');
