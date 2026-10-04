@@ -1455,7 +1455,7 @@ const F1_WORKSPACE_PANEL_META_RECOVERY_E=Object.freeze({
   speed:Object.freeze({label:'SPEED TRAP',minW:3,minH:2})
 });
 const F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E=Object.freeze({
-  version:3,
+  version:4,
   panels:Object.freeze({
     timing:Object.freeze({x:0,y:0,w:12,h:2,hidden:false,maximized:false,tabGroup:''}),
     track:Object.freeze({x:0,y:2,w:7,h:6,hidden:false,maximized:false,tabGroup:''}),
@@ -1583,7 +1583,7 @@ function workspaceReflowRecoveryI(layout,preferredId='',preferredRect=null){
     const rect=workspaceClampRectRecoveryI(leader,layout.panels[leader]);
     members.forEach(id=>Object.assign(layout.panels[id],rect));
   }
-  return layout;
+  return workspaceCompactRecoveryK(layout,preferredId);
 }
 function workspaceOverlapPairsRecoveryI(layout=workspaceLayoutRecoveryE){
   const slots=workspaceSlotLeadersRecoveryI(layout);
@@ -1596,11 +1596,91 @@ function workspaceOverlapPairsRecoveryI(layout=workspaceLayoutRecoveryE){
   return pairs;
 }
 
+
+let workspaceRepairReportRecoveryK={repaired:false,reasons:[],version:4};
+
+function workspaceRawIssuesRecoveryK(raw){
+  const reasons=[];
+  const candidate=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:null;
+  if(!candidate){reasons.push('missing-layout');return reasons}
+  if(Number(candidate.version)<4)reasons.push('legacy-version');
+  const panels=candidate.panels&&typeof candidate.panels==='object'?candidate.panels:{};
+  const rects=[];
+  for(const id of Object.keys(F1_WORKSPACE_PANEL_META_RECOVERY_E)){
+    const row=panels[id];
+    if(!row||typeof row!=='object'){reasons.push('missing-panel:'+id);continue}
+    const min=workspaceMinSizeRecoveryI(id);
+    const x=Math.round(Number(row.x)),y=Math.round(Number(row.y)),w=Math.round(Number(row.w)),h=Math.round(Number(row.h));
+    if(![x,y,w,h].every(Number.isFinite)){reasons.push('invalid-rect:'+id);continue}
+    if(w<min.w||h<min.h||w>12||h>12||x<0||x+w>12||y<0||y+h>F1_WORKSPACE_MAX_ROWS_RECOVERY_I)reasons.push('out-of-bounds:'+id);
+    rects.push({id,x,y,w,h,tabGroup:String(row.tabGroup||'')});
+  }
+  for(let i=0;i<rects.length;i++){
+    for(let j=i+1;j<rects.length;j++){
+      const a=rects[i],b=rects[j];
+      if(a.tabGroup&&a.tabGroup===b.tabGroup)continue;
+      if(workspaceRectIntersectsRecoveryI(a,b))reasons.push('overlap:'+a.id+':'+b.id);
+    }
+  }
+  const groups=new Map();
+  for(const rect of rects){
+    if(!rect.tabGroup)continue;
+    if(!groups.has(rect.tabGroup))groups.set(rect.tabGroup,[]);
+    groups.get(rect.tabGroup).push(rect);
+  }
+  for(const [group,members] of groups){
+    if(members.length<2){reasons.push('orphan-tab:'+group);continue}
+    const first=members[0];
+    for(const member of members.slice(1)){
+      if(member.x!==first.x||member.y!==first.y||member.w!==first.w||member.h!==first.h){reasons.push('tab-rect-mismatch:'+group);break}
+    }
+  }
+  return [...new Set(reasons)];
+}
+function workspaceCompactRecoveryK(layout,preferredId=''){
+  if(!layout?.panels)return layout;
+  const preferredKey=preferredId
+    ?(layout.panels[preferredId]?.tabGroup?'tab:'+layout.panels[preferredId].tabGroup:'panel:'+preferredId)
+    :'';
+  const slotKey=slot=>slot.key;
+  let slots=workspaceSlotLeadersRecoveryI(layout).sort((a,b)=>a.rect.y-b.rect.y||a.rect.x-b.rect.x);
+  for(const slot of slots){
+    if(slotKey(slot)===preferredKey)continue;
+    let rect=workspaceClampRectRecoveryI(slot.id,layout.panels[slot.id]);
+    const others=()=>workspaceSlotLeadersRecoveryI(layout).filter(other=>other.key!==slot.key).map(other=>other.rect);
+    let moved=true;
+    while(moved){
+      moved=false;
+      if(rect.y>0){
+        const up={...rect,y:rect.y-1};
+        if(!others().some(other=>workspaceRectIntersectsRecoveryI(up,other))){rect=up;moved=true}
+      }
+      if(rect.x>0){
+        const left={...rect,x:rect.x-1};
+        if(!others().some(other=>workspaceRectIntersectsRecoveryI(left,other))){rect=left;moved=true}
+      }
+    }
+    workspaceApplySlotRectRecoveryI(layout,slot.id,rect);
+  }
+  return layout;
+}
+function workspaceUsedRowsRecoveryK(layout=workspaceLayoutRecoveryE){
+  const slots=workspaceSlotLeadersRecoveryI(layout);
+  return Math.max(4,...slots.map(slot=>slot.rect.y+slot.rect.h));
+}
+function workspaceAuditLayoutRecoveryK(raw){
+  const before=workspaceRawIssuesRecoveryK(raw);
+  const layout=normalizeWorkspaceLayoutRecoveryE(raw);
+  const overlaps=workspaceOverlapPairsRecoveryI(layout);
+  return {layout:cloneWorkspaceLayoutRecoveryE(layout),overlaps:overlaps.map(pair=>pair.slice()),before,repaired:before.length>0||overlaps.length>0};
+}
+
 function normalizeWorkspaceLayoutRecoveryE(raw){
   const defaults=cloneWorkspaceLayoutRecoveryE(F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E);
   const candidate=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+  const rawIssues=workspaceRawIssuesRecoveryK(candidate);
   const source=Number(candidate.version)>=3?candidate:{};
-  const result={version:3,panels:{},activeTabs:{}};
+  const result={version:4,panels:{},activeTabs:{}};
   for(const id of Object.keys(F1_WORKSPACE_PANEL_META_RECOVERY_E)){
     const base=defaults.panels[id];
     const row=source.panels?.[id]&&typeof source.panels[id]==='object'?source.panels[id]:{};
@@ -1623,7 +1703,18 @@ function normalizeWorkspaceLayoutRecoveryE(raw){
   }
   const maxIds=Object.keys(result.panels).filter(id=>result.panels[id].maximized);
   maxIds.slice(1).forEach(id=>{result.panels[id].maximized=false});
-  return workspaceReflowRecoveryI(result);
+  let normalized=workspaceReflowRecoveryI(result);
+  let overlaps=workspaceOverlapPairsRecoveryI(normalized);
+  if(overlaps.length){
+    const fallback=cloneWorkspaceLayoutRecoveryE(F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E);
+    fallback.version=4;
+    normalized=workspaceReflowRecoveryI(fallback);
+    overlaps=workspaceOverlapPairsRecoveryI(normalized);
+    rawIssues.push('fallback-default-layout');
+  }
+  normalized.version=4;
+  workspaceRepairReportRecoveryK={repaired:rawIssues.length>0,reasons:[...new Set(rawIssues)],version:4,overlapCount:overlaps.length};
+  return normalized;
 }
 function readWorkspaceLayoutRecoveryE(){
   const saved=readPersistedF1SettingsRecoveryD()?.workspaceLayout;
@@ -1712,6 +1803,15 @@ function applyWorkspaceLayoutRecoveryE(){
     panel.dataset.f1Dock=state.x===0&&state.w===6?'left':state.x===6&&state.w===6?'right':state.y===0&&state.w===12&&state.h===4?'top':state.y===4&&state.w===12&&state.h===4?'bottom':'free';
     const maxButton=panel.querySelector('[data-f1-workspace-action="maximize"]');
     if(maxButton)maxButton.textContent=maximizedId===id?'RESTORE':'MAX';
+  }
+  const usedRows=workspaceUsedRowsRecoveryK(workspaceLayoutRecoveryE);
+  workspace.dataset.usedRows=String(usedRows);
+  if(window.matchMedia?.('(min-width:901px)').matches){
+    const rowHeight=workspaceGridRowHeightRecoveryJ(workspace);
+    const gap=parseFloat(getComputedStyle(workspace).gap)||0;
+    workspace.style.setProperty('min-height',Math.ceil(usedRows*rowHeight+Math.max(0,usedRows-1)*gap)+'px','important');
+  }else{
+    workspace.style.removeProperty('min-height');
   }
   renderWorkspaceTabsRecoveryE();
   renderWorkspaceVisibilityControlsRecoveryE();
@@ -2271,6 +2371,8 @@ window.mwsF1ResizeSplitRecoveryJ=function(id,dw=0,dh=0){
   const ok=workspaceResizeSplitRecoveryJ(pointer,Number(dw)||0,Number(dh)||0);
   applyWorkspaceLayoutRecoveryE();persistWorkspaceLayoutRecoveryE();return ok;
 };
+window.mwsF1AuditWorkspaceLayoutRecoveryK=workspaceAuditLayoutRecoveryK;
+window.mwsF1GetWorkspaceRepairReportRecoveryK=function(){return {...workspaceRepairReportRecoveryK,reasons:[...(workspaceRepairReportRecoveryK.reasons||[])]}};
 window.mwsF1FinishRaceRecoveryG=finishRaceRecoveryG;
 window.mwsF1ForceFinishRecoveryG=function(){return finishRaceRecoveryG(true)};
 window.mwsF1ShowPodiumRecoveryG=showPodiumRecoveryG;
@@ -2354,6 +2456,7 @@ window.__mwsF1RecoveryF='race-workspace-default-redesign-v1';
 window.__mwsF1RecoveryG='complete-race-lifecycle-v1';
 window.__mwsF1RecoveryI='collision-free-reflow-v1';
 window.__mwsF1RecoveryJ='split-resize-dock-preview-v1';
+window.__mwsF1RecoveryK='saved-layout-repair-dom-overlap-qa-v1';
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){
