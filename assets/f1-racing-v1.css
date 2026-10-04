@@ -581,3 +581,7 @@
 @media(min-width:1500px){
   #f1RacingViewRaceV185 .f1-racing-workspace-recovery-e{grid-auto-rows:70px!important;min-height:588px!important}
 }
+
+/* Phase 225: camera director controls */
+.f1-racing-camera-controls-v216{max-width:calc(100% - 16px);flex-wrap:wrap}
+.f1-racing-camera-controls-v216>span{min-width:74px}
