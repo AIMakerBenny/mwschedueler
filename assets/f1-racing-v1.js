@@ -41,6 +41,8 @@ const VERSION211='phase211-track-marker-integration';
 const VERSION212='phase212-live-timing-flip';
 const VERSION213='phase213-top-three-presentation';
 const VERSION214='phase214-race-control-flags';
+const VERSION215='phase215-backmarker-blue-flag';
+const BLUE_FLAG_CONFIG_V215=Object.freeze({approachProgress:0.12,paceFactor:0.985});
 const RACE_FLAGS_V214=Object.freeze(['GREEN','YELLOW','VSC','SAFETY_CAR','RED']);
 const RACE_FLAG_SPEED_V214=Object.freeze({GREEN:1,YELLOW:.82,VSC:.72,SAFETY_CAR:.58,RED:0});
 const PASS_STATES_V208=Object.freeze(['FOLLOWING','CLOSING','TOWING','PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','PASS_COMPLETED','PASS_FAILED','COUNTER_ATTACK']);
@@ -592,6 +594,9 @@ function updateRaceProgressHudV190(){
     row.dataset.battleState=String(vehicle.battleState||'FOLLOWING');
     row.dataset.battleTarget=String(vehicle.battleTargetId||'');
     row.dataset.passCompleted=String(Number(vehicle.passCompletedCount)||0);
+    row.dataset.backmarker=vehicle.backmarker?'1':'0';
+    row.dataset.blueFlag=vehicle.blueFlag?'1':'0';
+    row.dataset.lapDeficit=String(Number(vehicle.lapDeficitV215)||0);
     row.dataset.pitStrategyReason=String(vehicle.strategyReason||'');
     row.dataset.pitStrategyScore=(Number(vehicle.strategyScore)||0).toFixed(3);
     row.dataset.pitStrategyTarget=String(vehicle.strategyTargetCompound||vehicle.tyreCompound||'MEDIUM');
@@ -605,6 +610,44 @@ function updateRaceProgressHudV190(){
   updateRaceStandingsV191();
   return true;
 }
+function classifyBackmarkerV215(leader,vehicle){
+  if(!leader||!vehicle||leader===vehicle)return {backmarker:false,blueFlag:false,lapDeficit:0,leaderClosingProgress:1};
+  const lapDeficit=Math.max(0,(Number(leader.completedLaps)||0)-(Number(vehicle.completedLaps)||0));
+  const leaderClosingProgress=normalizedProgressV190((Number(vehicle.progress)||0)-(Number(leader.progress)||0));
+  const backmarker=lapDeficit>=1;
+  const blueFlag=backmarker&&leaderClosingProgress<=BLUE_FLAG_CONFIG_V215.approachProgress&&raceFlagStateV214.flag==='GREEN';
+  return {backmarker,blueFlag,lapDeficit,leaderClosingProgress};
+}
+function updateBackmarkerBlueFlagsV215(){
+  const standings=computeRaceStandingsV191();
+  const leader=standings[0]?.vehicle||null;
+  const rows=[];
+  for(const vehicle of raceMotionV189.vehicles){
+    const state=classifyBackmarkerV215(leader,vehicle);
+    vehicle.backmarker=state.backmarker;
+    vehicle.blueFlag=state.blueFlag;
+    vehicle.lapDeficitV215=state.lapDeficit;
+    vehicle.blueFlagGapProgressV215=state.leaderClosingProgress;
+    if(vehicle.blueFlag){
+      vehicle.defenceActive=false;
+      vehicle.battleSpeedBiasKph=Math.min(0,Number(vehicle.battleSpeedBiasKph)||0);
+      if(vehicle.pitState==='TRACK')vehicle.racingLineMode='OUTSIDE';
+    }
+    rows.push({id:vehicle.id,...state});
+  }
+  return rows;
+}
+function qaBackmarkerBlueFlagV215(){
+  const original={...raceFlagStateV214};raceFlagStateV214={flag:'GREEN',reason:'QA',sinceSimMs:0};
+  const leader={completedLaps:4,progress:.40};
+  const approaching={completedLaps:3,progress:.47};
+  const far={completedLaps:3,progress:.72};
+  const sameLap={completedLaps:4,progress:.47};
+  const a=classifyBackmarkerV215(leader,approaching),b=classifyBackmarkerV215(leader,far),c=classifyBackmarkerV215(leader,sameLap);
+  raceFlagStateV214=original;
+  return {approaching:a,far:b,sameLap:c,allPass:a.backmarker&&a.blueFlag&&b.backmarker&&!b.blueFlag&&!c.backmarker&&!c.blueFlag};
+}
+
 function computeRaceStandingsV191(){
   const sorted=[...raceMotionV189.vehicles].sort(function(a,b){
     const delta=Number(b.raceProgress||0)-Number(a.raceProgress||0);
@@ -2036,6 +2079,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const aeroGripMultiplier=Math.min(1,rawAeroGrip+(1-rawAeroGrip)*dirtyAirRecovery);
   let maxTarget=baseTarget*driverPaceMultiplier*aeroGripMultiplier*tyreCornerFactor+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph+(Number(vehicle.battleSpeedBiasKph)||0);
   maxTarget*=raceFlagSpeedFactorV214();
+  if(vehicle.blueFlag)maxTarget*=BLUE_FLAG_CONFIG_V215.paceFactor;
   const current=Math.max(0,Number(vehicle.speedKph)||0);
   const preError=maxTarget-current;
   const preThrottle=preError>1.5?Math.max(.08,Math.min(1,preError/45)):preError>=-1.5?.12:0;
@@ -2250,9 +2294,17 @@ function simulateRaceStepV192(stepMs){
   simClockV192.simTimeMs+=stepMs;
   updateSlipstreamStatesV198();
   updateDirtyAirStatesV199();
+  updateBackmarkerBlueFlagsV215();
   if(raceFlagStateV214.flag==='GREEN'){
     updateTrafficAndDefenceV207();
     updatePassStateMachineV208(stepMs);
+    for(const vehicle of raceMotionV189.vehicles){
+      if(vehicle.blueFlag){
+        vehicle.defenceActive=false;
+        vehicle.battleSpeedBiasKph=Math.min(0,Number(vehicle.battleSpeedBiasKph)||0);
+        if(vehicle.pitState==='TRACK')vehicle.racingLineMode='OUTSIDE';
+      }
+    }
   }else{
     for(const vehicle of raceMotionV189.vehicles){
       vehicle.defenceActive=false;
@@ -3476,6 +3528,9 @@ window.mwsF1QaTopThreePresentationV213=qaTopThreePresentationV213;
 window.mwsF1SetRaceControlFlagV214=setRaceControlFlagV214;
 window.mwsF1GetRaceControlFlagV214=getRaceControlFlagV214;
 window.mwsF1QaRaceControlFlagsV214=qaRaceControlFlagsV214;
+window.mwsF1ClassifyBackmarkerV215=classifyBackmarkerV215;
+window.mwsF1UpdateBackmarkerBlueFlagsV215=updateBackmarkerBlueFlagsV215;
+window.mwsF1QaBackmarkerBlueFlagV215=qaBackmarkerBlueFlagV215;
 window.mwsF1ErsNormalPowerLimitV201=ersNormalPowerLimitV201;
 window.mwsF1UpdateEnergySystemV201=updateEnergySystemV201;
 window.mwsF1GetEnergyStatesV201=getEnergyStatesV201;
@@ -3538,6 +3593,7 @@ window.__mwsF1RacingV211=VERSION211;
 window.__mwsF1RacingV212=VERSION212;
 window.__mwsF1RacingV213=VERSION213;
 window.__mwsF1RacingV214=VERSION214;
+window.__mwsF1RacingV215=VERSION215;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
