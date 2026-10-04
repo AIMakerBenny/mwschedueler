@@ -6,7 +6,7 @@ export function runPhase182F1TrackModelAudit(){
   const track=fs.readFileSync('assets/f1-track-v1.js','utf8');
   const racing=fs.readFileSync('assets/f1-racing-v1.js','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
-  for(const token of ['assets/f1-track-v1.js?v=',"id:'majoku-ring-v1'","name:'Majoku Ring'",'lengthMeters:5280','speedTraps:Object.freeze([','overtakeZones:Object.freeze([',"root.__mwsF1TrackModelV182='majoku-ring-metadata-v1';"])if(!(index+track).includes(token))issues.push('Phase 182 track token missing: '+token);
+  for(const token of ['assets/f1-track-v1.js?v=',"id:'majoku-ring-v1'","name:'Majoku Ring'",'lengthMeters:5280','speedTraps:[','overtakeZones:[',"root.__mwsF1TrackModelV182='majoku-ring-metadata-v1';"])if(!(index+track).includes(token))issues.push('Phase 182 track token missing: '+token);
   for(const token of ["const VERSION182='phase182-track-model';","let activeTrackId='majoku-ring-v1';",'function getActiveTrack(){','function updateTrackFoundationStatusV182(){','window.mwsF1GetActiveTrackV182=getActiveTrack;','window.__mwsF1RacingV182=VERSION182;'])if(!racing.includes(token))issues.push('Phase 182 integration missing: '+token);
   for(const token of ["id:'majoku-ring-v1'","id:'castle-street-circuit-v1'","id:'blue-coast-speedway-v1'","root.__mwsF1TrackRecoveryA='three-track-catalog-v1';"])if(!track.includes(token))issues.push('Phase 182+ multi-track compatibility missing: '+token);
   const zoneMatches=[...track.matchAll(/type:'(?:straight|fastCorner|mediumCorner|slowCorner|hairpin)',start:(0(?:\.\d+)?|1(?:\.0+)?),end:(0(?:\.\d+)?|1(?:\.0+)?),targetKph:(\d+)/g)];
