@@ -335,6 +335,8 @@ try{
     const diverseTracksQa=window.mwsF1QaDiverseTrackCatalogV220?.();
     assert(diverseTracksQa?.allPass===true&&Number(diverseTracksQa?.trackCount)>=7,'Phase 220 diverse track catalog failed: '+JSON.stringify(diverseTracksQa));
     assert(Number(diverseTracksQa?.pathShapes)===7&&Number(diverseTracksQa?.archetypes)>=6,'Phase 220 track silhouettes/archetypes are not diverse: '+JSON.stringify(diverseTracksQa));
+    const trackBehaviorQa=window.mwsF1QaTrackBehaviorModifiersV235?.();
+    assert(trackBehaviorQa?.allPass===true&&Number(trackBehaviorQa?.overtakeSpread)>0&&Number(trackBehaviorQa?.incidentSpread)>0,'Phase 235 track behavior QA failed: '+JSON.stringify(trackBehaviorQa));
     const trackRuntimeProfileQa=window.mwsF1QaTrackRuntimeProfilesV234?.();
     assert(trackRuntimeProfileQa?.allPass===true&&Number(trackRuntimeProfileQa?.uniqueProfiles)>=5,'Phase 234 track runtime profile QA failed: '+JSON.stringify(trackRuntimeProfileQa));
     const activeSnapshotProfile=window.mwsF1GetActiveRaceSnapshotV187?.()?.track?.runtimeProfile;
