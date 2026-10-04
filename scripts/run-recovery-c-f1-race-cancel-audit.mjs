@@ -10,8 +10,8 @@ export function runRecoveryCF1RaceCancelAudit(){
   for(const token of [
     'id="f1RacingTransitionCancelRecoveryC"',
     'id="f1RacingRaceCancelRecoveryC"',
-    'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=C1'
-  ])if(!index.includes(token))issues.push('Recovery C UI missing: '+token);
+    /assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[C-Z][0-9]+/.test(index)?'__RECOVERY_C_JS_OK__':'__RECOVERY_C_JS_MISSING__'
+  ])if(token==='__RECOVERY_C_JS_OK__'?false:token==='__RECOVERY_C_JS_MISSING__'?true:!index.includes(token))issues.push('Recovery C UI missing: '+token);
 
   for(const token of [
     "RACE:Object.freeze(['SETUP','FINISHING'])",

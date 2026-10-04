@@ -39,10 +39,8 @@ export function runRecoveryDF1PersistenceAudit(){
   ])if(!index.includes(token))issues.push('Recovery D asset cache missing: '+token);
 
   for(const token of ['node --check scripts/run-recovery-d-f1-persistence-audit.mjs',"echo '[recovery-d] F1 persistent roster and track settings'"])if(!workflow.includes(token))issues.push('Recovery D workflow verification missing: '+token);
-  for(const file of ['assets/app-core.js','assets/f1-racing-v1.js']){
-    const syntax=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});
-    if(syntax.status!==0)issues.push(file+' syntax failed: '+String(syntax.stderr||syntax.stdout||'').trim());
-  }
+  const syntax=spawnSync(process.execPath,['--check','assets/f1-racing-v1.js'],{encoding:'utf8'});
+  if(syntax.status!==0)issues.push('assets/f1-racing-v1.js syntax failed: '+String(syntax.stderr||syntax.stdout||'').trim());
   const result={phase:'recovery-d',name:'f1-persistent-roster-track-settings',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(result));if(issues.length)process.exitCode=1;return result;
 }

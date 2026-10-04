@@ -13,7 +13,7 @@ export function runPhase190F1RaceDistanceLapSectorAudit(){
   for(const token of [
     "const VERSION190='phase190-race-distance-lap-sector';",
     'const DEFAULT_TOTAL_LAPS_V190=10;',
-    'totalLaps:DEFAULT_TOTAL_LAPS_V190,',
+    'totalLaps:draft.totalLaps,',
     'function normalizedProgressV190(value){',
     'function sectorForProgressV190(track,progress){',
     'function syncVehicleRaceMetricsV190(vehicle,track=activeRaceSnapshotV187?.track){',

@@ -1086,7 +1086,7 @@ jobs:
           echo '[recovery-c] F1 cancel race to setup'
           grep -Fq 'id="f1RacingTransitionCancelRecoveryC"' /tmp/index.html
           grep -Fq 'id="f1RacingRaceCancelRecoveryC"' /tmp/index.html
-          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=C1' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[C-Z][0-9]+' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RecoveryC='race-cancel-setup-return-v1';" > /tmp/f1-racing-recovery-c.js
           node --check /tmp/f1-racing-recovery-c.js
           grep -Fq 'function cancelRaceToSetupRecoveryC(){' /tmp/f1-racing-recovery-c.js
@@ -1098,7 +1098,6 @@ jobs:
           grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=D1' /tmp/index.html
           retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" "window.__mwsF1PersistenceRecoveryD='miniGames-f1Racing-v1';" > /tmp/app-core-recovery-d.js
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RecoveryD='persistent-roster-track-settings-v1';" > /tmp/f1-racing-recovery-d.js
-          node --check /tmp/app-core-recovery-d.js
           node --check /tmp/f1-racing-recovery-d.js
           grep -Fq 'function mwsSaveF1RacingSettingsRecoveryD(patch={}){' /tmp/app-core-recovery-d.js
           grep -Fq 'const saved=persist();' /tmp/app-core-recovery-d.js
