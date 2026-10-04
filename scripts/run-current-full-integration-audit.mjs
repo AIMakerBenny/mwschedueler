@@ -225,6 +225,7 @@ import {runPhase226F1CommentaryReadabilityAudit} from './run-phase226-f1-comment
 import {runPhase227F1CommentaryCadenceAudit} from './run-phase227-f1-commentary-cadence-audit.mjs';
 import {runPhase228F1DriverLabelCollisionAudit} from './run-phase228-f1-driver-label-collision-audit.mjs';
 import {runPhase229F1CameraDirectorStabilityAudit} from './run-phase229-f1-camera-director-stability-audit.mjs';
+import {runPhase230F1CommentaryEventOrderAudit} from './run-phase230-f1-commentary-event-order-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2307,5 +2308,10 @@ export function runPhase229FullIntegrationAudit(){
   const issues=[...previous.issues,...current.issues.map(x=>'Phase 229: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 229: '+x)];
   return {phase:229,previous,current,issues,warnings,pass:issues.length===0};
 }
-export function runCurrentFullIntegrationAudit(){return runPhase229FullIntegrationAudit();}
+export function runPhase230FullIntegrationAudit(){
+  const previous=runPhase229FullIntegrationAudit(),current=runPhase230F1CommentaryEventOrderAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>'Phase 230: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 230: '+x)];
+  return {phase:230,previous,current,issues,warnings,pass:issues.length===0};
+}
+export function runCurrentFullIntegrationAudit(){return runPhase230FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
