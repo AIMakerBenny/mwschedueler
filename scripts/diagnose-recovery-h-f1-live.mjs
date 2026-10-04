@@ -186,6 +186,14 @@ try{
     assert(narrativeQa?.allPass===true,'Phase 222 commentary flow QA failed: '+JSON.stringify(narrativeQa));
     const commentaryReadQa=window.mwsF1QaCommentaryReadabilityV226?.();
     assert(commentaryReadQa?.allPass===true&&commentaryReadQa?.badgeReady===true,'Phase 226 commentary readability QA failed: '+JSON.stringify(commentaryReadQa));
+    window.mwsF1ResetCommentaryCadenceV227?.();
+    const cadenceBefore=document.querySelectorAll('#f1RacingCommentaryLogV188 .f1-racing-commentary-entry-v219').length;
+    const cadenceFirst=window.mwsF1AppendRaceCommentaryV222?.('QA 장시간 흐름 A','flow','qa-cadence-a',1000);
+    const cadenceSecond=window.mwsF1AppendRaceCommentaryV222?.('QA 장시간 흐름 B','flow','qa-cadence-b',1000);
+    const cadenceAfter=document.querySelectorAll('#f1RacingCommentaryLogV188 .f1-racing-commentary-entry-v219').length;
+    const cadenceQa=window.mwsF1QaCommentaryCadenceV227?.();
+    assert(cadenceFirst===true&&cadenceSecond===false&&cadenceAfter-cadenceBefore===1,'Phase 227 cadence gate did not suppress same-tick flow spam: '+JSON.stringify({cadenceFirst,cadenceSecond,cadenceBefore,cadenceAfter,cadenceQa}));
+    assert(cadenceQa?.allPass===true&&Number(cadenceQa?.suppressed)>=1&&Number(cadenceQa?.maxNarrativePerWindow)===18,'Phase 227 cadence QA failed: '+JSON.stringify(cadenceQa));
     for(let i=0;i<20;i++)window.mwsF1AppendRaceCommentaryV222?.('QA 흐름 '+i,'flow','qa-flow-'+i,0);
     const commentaryLog=document.getElementById('f1RacingCommentaryLogV188');
     commentaryLog.scrollTop=0;commentaryLog.dispatchEvent(new Event('scroll'));await raf();
