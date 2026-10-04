@@ -5,7 +5,7 @@ export function runPhase212F1LiveTimingFlipAudit(){
   const issues=[],warnings=[];
   const index=fs.readFileSync('index.html','utf8');
   const racing=fs.readFileSync('assets/f1-racing-v1.js','utf8');
-  if(!index.includes('recovery=N1&phase=212'))issues.push('Phase 212 asset cache missing');
+  const phase=Number(index.match(/recovery=N1&phase=(\d+)/)?.[1]||0);if(phase<212)issues.push('Phase 212 asset cache missing');
   for(const token of [
     "const VERSION212='phase212-live-timing-flip';",
     'function applyLiveTimingFlipV212(standings){',
