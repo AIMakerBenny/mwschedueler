@@ -534,3 +534,8 @@
 .f1-racing-commentary-entry-v219 .message{min-width:0;word-break:keep-all}
 .f1-racing-commentary-entry-v219.pass .message,.f1-racing-commentary-entry-v219.lead .message{font-weight:700}
 .f1-racing-commentary-entry-v219.flag{border-left:3px solid currentColor}
+
+/* Phase 222: commentary flow hierarchy */
+.f1-racing-commentary-entry-v219.battle .message{font-weight:700}
+.f1-racing-commentary-entry-v219.strategy .message{opacity:.92}
+.f1-racing-commentary-entry-v219.flow .message{opacity:.78}
