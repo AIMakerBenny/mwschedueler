@@ -9,7 +9,7 @@ export function runRecoveryJF1SplitDockAudit(){
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
   if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[J-Z][0-9]+/.test(index))issues.push('Recovery J+ JS cache missing');
-  if(!index.includes('assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196&recovery=J1'))issues.push('Recovery J CSS cache missing');
+  if(!/assets\/f1-racing-v1\.css\?v=1\.0\.0-phase180-shell&p=196&recovery=[J-Z][0-9]+/.test(index))issues.push('Recovery J+ CSS cache missing');
   for(const token of [
     'function workspaceDockSplitRecoveryJ(id,zone){',
     'function workspacePackRegionRecoveryJ(layout,excludeId,region){',
