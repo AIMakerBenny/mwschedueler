@@ -15,7 +15,7 @@ export function runPhase186F1SetupTrackSelectAudit(){
     'id="f1RacingTrackOptionsV186"',
     'id="f1RacingTrackCountV186"',
     'id="f1RacingTrackSvgV183"',
-    'TRACK PREVIEW'
+    '트랙 미리보기'
   ])if(!index.includes(token))issues.push('Phase 186 setup UI missing: '+token);
 
   for(const forbidden of ['id="f1RacingPreviewStartV184"','id="f1RacingPreviewStopV184"','id="f1RacingPreviewStatusV184"','주행 미리보기'])if(index.includes(forbidden))issues.push('Phase 184 user-facing preview control should be removed: '+forbidden);
