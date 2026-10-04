@@ -56,6 +56,7 @@ const VERSION226='phase226-commentary-readability';
 const VERSION227='phase227-commentary-cadence-quality';
 const VERSION228='phase228-driver-label-collision-avoidance';
 const VERSION229='phase229-camera-director-stability';
+const VERSION230='phase230-commentary-event-order-integrity';
 const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitchMs:1800,urgentBattleGapSeconds:0.55,focusDeadbandSvg:3,zoomDeadband:0.025});
 const COMMENTARY_CADENCE_V227=Object.freeze({flowGapMs:5500,strategyGapMs:3000,battleGapMs:1600,windowMs:60000,maxNarrativePerWindow:18});
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
@@ -2555,8 +2556,39 @@ function commentaryVehicleStateV219(vehicle){
     incident:activeDrivingIncidentV204(vehicle),
     blueFlag:Boolean(vehicle?.blueFlag),
     finished:Boolean(vehicle?.finished),
-    finishPosition:Number(vehicle?.finishPosition)||0
+    finishPosition:Number(vehicle?.finishPosition)||0,
+    battleTargetId:String(vehicle?.battleTargetId||''),
+    carAheadId:String(vehicle?.carAheadId||'')
   };
+}
+function pitCommentaryEventV230(previousState,currentState){
+  const previous=String(previousState||'TRACK'),current=String(currentState||'TRACK');
+  if(previous===current)return '';
+  if(current==='PIT_ENTRY'&&previous==='TRACK')return 'ENTRY';
+  if(current==='PIT_BOX'&&['PIT_ENTRY','PIT_LANE'].includes(previous))return 'BOX';
+  if(current==='TRACK'&&previous==='PIT_EXIT')return 'RETURN';
+  return '';
+}
+function commentaryPassTargetV230(vehicle,previous,byId){
+  const candidates=[previous?.battleTargetId,vehicle?.battleTargetId,previous?.carAheadId,vehicle?.carAheadId];
+  for(const id of candidates){
+    const target=byId?.get?.(String(id||''));if(target&&target!==vehicle)return target;
+  }
+  return null;
+}
+function qaCommentaryEventOrderV230(){
+  const pitSequence=[
+    pitCommentaryEventV230('TRACK','PIT_ENTRY'),
+    pitCommentaryEventV230('PIT_ENTRY','PIT_LANE'),
+    pitCommentaryEventV230('PIT_LANE','PIT_BOX'),
+    pitCommentaryEventV230('PIT_BOX','PIT_EXIT'),
+    pitCommentaryEventV230('PIT_EXIT','TRACK')
+  ];
+  const invalidReturn=pitCommentaryEventV230('PIT_BOX','TRACK');
+  const passed={id:'passed',driver:{name:'추월 대상'}},nextAhead={id:'next',driver:{name:'새 앞차'}};
+  const byId=new Map([['passed',passed],['next',nextAhead]]);
+  const target=commentaryPassTargetV230({id:'self',battleTargetId:'',carAheadId:'next'},{battleTargetId:'passed',carAheadId:'passed'},byId);
+  return {pitSequence,invalidReturn,passTargetId:String(target?.id||''),allPass:pitSequence.join('|')==='ENTRY||BOX||RETURN'&&invalidReturn===''&&String(target?.id||'')==='passed'};
 }
 function resetRaceCommentaryV219(){
   const log=document.getElementById('f1RacingCommentaryLogV188');
@@ -2613,13 +2645,14 @@ function updateRaceCommentaryV219(force=false){
     const previous=commentaryStateV219.vehicle.get(id)||commentaryVehicleStateV219(vehicle);
     const current=commentaryVehicleStateV219(vehicle);
     if(current.passCompleted>previous.passCompleted){
-      const target=byId.get(String(vehicle.battleTargetId||''));
+      const target=commentaryPassTargetV230(vehicle,previous,byId);
       appendRaceCommentaryV219(name+'가 '+(target?.driver?.name||'앞차')+'를 추월했습니다.','pass');
     }
     if(current.pitState!==previous.pitState){
-      if(current.pitState==='PIT_ENTRY')appendRaceCommentaryV219(name+'가 피트로 들어갑니다.','pit');
-      else if(current.pitState==='PIT_BOX')appendRaceCommentaryV219(name+'가 피트 스톱을 진행합니다.','pit');
-      else if(current.pitState==='TRACK'&&previous.pitState!=='TRACK')appendRaceCommentaryV219(name+'가 피트에서 트랙으로 복귀했습니다.','pit');
+      const pitEvent=pitCommentaryEventV230(previous.pitState,current.pitState);
+      if(pitEvent==='ENTRY')appendRaceCommentaryV219(name+'가 피트로 들어갑니다.','pit');
+      else if(pitEvent==='BOX')appendRaceCommentaryV219(name+'가 피트 스톱을 진행합니다.','pit');
+      else if(pitEvent==='RETURN')appendRaceCommentaryV219(name+'가 피트에서 트랙으로 복귀했습니다.','pit');
     }
     if(current.incident&&current.incident!==previous.incident){
       const incidentText=incidentCommentaryTextV219(current.incident,name);if(incidentText)appendRaceCommentaryV219(incidentText,'incident');
@@ -4347,6 +4380,8 @@ window.mwsF1QaDriverLabelCollisionV228=qaDriverLabelCollisionV228;
 window.__mwsF1RacingV228=VERSION228;
 window.mwsF1QaCameraDirectorStabilityV229=qaCameraDirectorStabilityV229;
 window.__mwsF1RacingV229=VERSION229;
+window.mwsF1QaCommentaryEventOrderV230=qaCommentaryEventOrderV230;
+window.__mwsF1RacingV230=VERSION230;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
