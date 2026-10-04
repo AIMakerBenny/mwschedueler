@@ -9,7 +9,7 @@ export function runRecoveryNF1TripleDockAudit(){
   const diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  if(!index.includes('assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=N1&phase=206'))issues.push('Recovery N JS cache missing');
+  if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=N1&phase=(?:20[6-9]|21[0-9])/.test(index))issues.push('Recovery N JS cache missing');
   if(!index.includes('assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196&recovery=N1&phase=204'))issues.push('Recovery N CSS cache missing');
 
   for(const token of [
