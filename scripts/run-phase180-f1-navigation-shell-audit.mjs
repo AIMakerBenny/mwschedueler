@@ -19,7 +19,7 @@ export function runPhase180F1NavigationShellAudit(){
 
   for(const token of [
     '<span class="nav-label">F1 레이싱</span>',
-    'MINI GAME 03',
+    '미니게임 03',
     '<h2>F1 레이싱</h2>',
     'assets/f1-racing-v1.css?v=1.0.0-phase180-shell',
     'assets/f1-racing-v1.js?v=1.0.0-phase180-shell'
