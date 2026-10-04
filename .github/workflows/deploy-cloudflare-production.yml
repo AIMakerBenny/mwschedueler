@@ -1171,7 +1171,7 @@ jobs:
           grep -Fq 'function workspaceDropPreviewRectRecoveryJ(drop,sourceId){' /tmp/f1-racing-recovery-j.js
           grep -Fq '.f1-racing-workspace-dock-guide-recovery-e.free{' /tmp/f1-racing-recovery-j.css
           echo '[recovery-k] F1 saved layout repair and DOM overlap QA'
-          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=K1' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[K-Z][0-9]+&phase=20[4-9]' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RecoveryK='saved-layout-repair-dom-overlap-qa-v1';" > /tmp/f1-racing-recovery-k.js
           node --check /tmp/f1-racing-recovery-k.js
           grep -Fq 'function workspaceRawIssuesRecoveryK(raw){' /tmp/f1-racing-recovery-k.js
