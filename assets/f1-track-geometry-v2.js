@@ -142,6 +142,65 @@ function cornerPhaseAtProgress(geometry,progress){
   }
   return null;
 }
+function buildSpeedProfile(track,geometry){
+  if(!track||!geometry?.samples?.length)return {...geometry,speedProfile:[]};
+  const samples=geometry.samples;
+  const count=samples.length;
+  const spacing=Math.max(1,Number(geometry.sampleMeters)||Number(track.lengthMeters)/count||20);
+  const brake=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20);
+  const accel=Math.max(0.5,Number(track?.geometry?.referenceAccelMps2)||8.5);
+  const maxKph=Math.max(100,Number(track?.geometry?.maxStraightKph)||335);
+  const iterations=Math.max(2,Math.round(Number(track?.geometry?.speedProfileIterations)||6));
+  const raw=samples.map(function(sample){
+    const zoneLimit=Math.min(maxKph,targetKphAtProgress(track,sample.progress));
+    const curvature=Math.abs(Number(sample.curvatureRadPerMeter)||0);
+    const curveLimit=curvature>0.00001
+      ?Math.min(maxKph,Math.max(70,Math.sqrt(25/curvature)*3.6))
+      :maxKph;
+    return Math.min(zoneLimit,curveLimit);
+  });
+  const speed=raw.slice();
+  for(let pass=0;pass<iterations;pass++){
+    for(let i=count-1;i>=0;i--){
+      const next=(i+1)%count;
+      const vNext=speed[next]/3.6;
+      const allowed=Math.sqrt(Math.max(0,vNext*vNext+2*brake*spacing))*3.6;
+      speed[i]=Math.min(speed[i],raw[i],allowed);
+    }
+    for(let i=0;i<count;i++){
+      const prev=(i-1+count)%count;
+      const vPrev=speed[prev]/3.6;
+      const allowed=Math.sqrt(Math.max(0,vPrev*vPrev+2*accel*spacing))*3.6;
+      speed[i]=Math.min(speed[i],raw[i],allowed);
+    }
+  }
+  const speedProfile=samples.map(function(sample,index){
+    return {
+      index,
+      progress:sample.progress,
+      distanceMeters:sample.distanceMeters,
+      rawLimitKph:raw[index],
+      targetKph:speed[index],
+      cornerPhase:cornerPhaseAtProgress(geometry,sample.progress)?.phase||'STRAIGHT'
+    };
+  });
+  return {...geometry,speedProfile};
+}
+function speedTargetAtProgress(geometry,progress){
+  const profile=geometry?.speedProfile||[];
+  if(!profile.length)return null;
+  const p=normalizeProgress(progress);
+  const scaled=p*profile.length;
+  const i0=Math.floor(scaled)%profile.length;
+  const i1=(i0+1)%profile.length;
+  const t=scaled-Math.floor(scaled);
+  const a=profile[i0],b=profile[i1];
+  return {
+    targetKph:Number(a.targetKph)+(Number(b.targetKph)-Number(a.targetKph))*t,
+    rawLimitKph:Number(a.rawLimitKph)+(Number(b.rawLimitKph)-Number(a.rawLimitKph))*t,
+    cornerPhase:t<0.5?a.cornerPhase:b.cornerPhase
+  };
+}
 function buildTrackGeometry(track,pathElement){
   if(!track||!pathElement)return null;
   const samples=makeSamples(track,pathElement);
@@ -168,6 +227,9 @@ root.mwsBuildF1TrackGeometryV193=buildTrackGeometry;
 root.mwsF1TrackGeometrySampleAtProgressV193=sampleAtProgress;
 root.mwsBuildF1CornerPhasesV194=buildCornerPhases;
 root.mwsF1CornerPhaseAtProgressV194=cornerPhaseAtProgress;
+root.mwsBuildF1SpeedProfileV195=buildSpeedProfile;
+root.mwsF1SpeedTargetAtProgressV195=speedTargetAtProgress;
 root.__mwsF1TrackGeometryV193='svg-sampling-curvature-corners-v1';
 root.__mwsF1TrackCornerPhasesV194='approach-brake-turn-apex-exit-v1';
+root.__mwsF1SpeedProfileV195='backward-brake-forward-accel-v1';
 })(typeof window!=='undefined'?window:globalThis);

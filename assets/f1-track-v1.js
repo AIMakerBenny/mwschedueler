@@ -17,6 +17,9 @@ const TRACK=Object.freeze({
     referenceBrakeDecelMps2:20,
     approachLeadMeters:80,
     apexWindowMeters:30,
+    referenceAccelMps2:8.5,
+    maxStraightKph:335,
+    speedProfileIterations:6,
     direction:'clockwise'
   }),
   sectors:Object.freeze([
@@ -61,6 +64,7 @@ function validateTrack(track){
   if(!Array.isArray(track.sectors)||track.sectors.length!==3)issues.push('sector count invalid');
   if(!track.geometry||!(track.geometry.sampleMeters>0)||!(track.geometry.cornerCurvatureThreshold>0)||!(track.geometry.trackWidthMeters>0))issues.push('geometry metadata invalid');
   if(!(track.geometry.referenceBrakeDecelMps2>0)||!(track.geometry.approachLeadMeters>=0)||!(track.geometry.apexWindowMeters>0))issues.push('corner phase metadata invalid');
+  if(!(track.geometry.referenceAccelMps2>0)||!(track.geometry.maxStraightKph>0)||!(track.geometry.speedProfileIterations>=2))issues.push('speed profile metadata invalid');
   if(!track.pit||!(track.pit.entry>=0&&track.pit.entry<1)||!(track.pit.exit>=0&&track.pit.exit<1))issues.push('pit metadata invalid');
   if(!Array.isArray(track.speedTraps)||track.speedTraps.length<3)issues.push('speed traps missing');
   if(!Array.isArray(track.zones)||!track.zones.length)issues.push('speed zones missing');
@@ -82,4 +86,5 @@ root.mwsValidateF1TrackV182=validateTrack;
 root.__mwsF1TrackModelV182='majoku-ring-metadata-v1';
 root.__mwsF1TrackGeometryMetaV193='sample-curvature-width-v1';
 root.__mwsF1TrackCornerMetaV194='brake-turn-apex-exit-v1';
+root.__mwsF1TrackSpeedProfileMetaV195='backward-brake-forward-accel-v1';
 })(typeof window!=='undefined'?window:globalThis);

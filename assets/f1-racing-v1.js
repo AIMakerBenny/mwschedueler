@@ -15,6 +15,7 @@ const VERSION191='phase191-position-gap-interval';
 const VERSION192='phase192-simulation-clock';
 const VERSION193='phase193-track-geometry-v2';
 const VERSION194='phase194-corner-phase-model';
+const VERSION195='phase195-speed-profile';
 const DEFAULT_TOTAL_LAPS_V190=10;
 const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
 const F1_TRANSITIONS_V185=Object.freeze({
@@ -577,6 +578,9 @@ function refreshRaceGeometryV193(snapshot=activeRaceSnapshotV187,pathElement=doc
   if(raceGeometryV193&&typeof window.mwsBuildF1CornerPhasesV194==='function'){
     raceGeometryV193=window.mwsBuildF1CornerPhasesV194(snapshot.track,raceGeometryV193);
   }
+  if(raceGeometryV193&&typeof window.mwsBuildF1SpeedProfileV195==='function'){
+    raceGeometryV193=window.mwsBuildF1SpeedProfileV195(snapshot.track,raceGeometryV193);
+  }
   const meta=document.getElementById('f1RacingRaceMapMetaV188');
   if(meta&&raceGeometryV193){
     meta.textContent=(snapshot.track.lengthMeters/1000).toFixed(3)+' km · '+snapshot.drivers.length+' drivers · '+raceGeometryV193.samples.length+' samples · '+(raceGeometryV193.cornerPhases?.length||raceGeometryV193.corners.length)+' corners';
@@ -590,6 +594,14 @@ function getCornerPhasesV194(){
 function getCornerPhaseAtProgressV194(progress){
   return typeof window.mwsF1CornerPhaseAtProgressV194==='function'
     ?window.mwsF1CornerPhaseAtProgressV194(raceGeometryV193,progress)
+    :null;
+}
+function getSpeedProfileV195(){
+  return (raceGeometryV193?.speedProfile||[]).map(row=>({...row}));
+}
+function getSpeedTargetAtProgressV195(progress){
+  return typeof window.mwsF1SpeedTargetAtProgressV195==='function'
+    ?window.mwsF1SpeedTargetAtProgressV195(raceGeometryV193,progress)
     :null;
 }
 function driverCodeV188(driver){
@@ -656,7 +668,7 @@ function render(){
   if(previewStateV184.running)stopPreviewV184(true);
   if(f1ScreenStateV185==='RACE'&&activeRaceSnapshotV187){renderRaceControlV188();startRaceMotionV189()}
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent=f1ScreenStateV185==='SETUP'?'RACE SETUP':'RACE CONTROL';
-  section.dataset.f1Runtime=VERSION194;
+  section.dataset.f1Runtime=VERSION195;
   return true;
 }
 function toggleDriver(id){
@@ -768,6 +780,8 @@ window.mwsF1RefreshRaceGeometryV193=refreshRaceGeometryV193;
 window.mwsF1GetRaceGeometryV193=getRaceGeometryV193;
 window.mwsF1GetCornerPhasesV194=getCornerPhasesV194;
 window.mwsF1GetCornerPhaseAtProgressV194=getCornerPhaseAtProgressV194;
+window.mwsF1GetSpeedProfileV195=getSpeedProfileV195;
+window.mwsF1GetSpeedTargetAtProgressV195=getSpeedTargetAtProgressV195;
 window.__mwsF1RacingV180=VERSION;
 window.__mwsF1RacingV181=VERSION181;
 window.__mwsF1RacingV182=VERSION182;
@@ -783,6 +797,7 @@ window.__mwsF1RacingV191=VERSION191;
 window.__mwsF1RacingV192=VERSION192;
 window.__mwsF1RacingV193=VERSION193;
 window.__mwsF1RacingV194=VERSION194;
+window.__mwsF1RacingV195=VERSION195;
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){
