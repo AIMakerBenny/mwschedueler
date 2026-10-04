@@ -505,3 +505,25 @@
 .f1-racing-camera-controls-v216 button{min-height:24px;padding:3px 7px;border:1px solid #323d4d;border-radius:5px;background:#111722;color:#9aa9bd;font-size:9px;font-weight:850;cursor:pointer}
 .f1-racing-camera-controls-v216 button.active{border-color:#6fa8ef;background:#17283d;color:#eff7ff;box-shadow:inset 0 0 0 1px rgba(111,168,239,.18)}
 .f1-racing-camera-controls-v216 button:hover{color:#fff;border-color:#5a6a80}
+
+
+/* Phase 217: compact three-panel race workspace */
+#gameF1Racing[data-f1-screen="RACE"]>.f1-racing-head-v180{display:none!important}
+#gameF1Racing[data-f1-screen="RACE"] .f1-racing-console-top-v180{display:none!important}
+#gameF1Racing[data-f1-screen="RACE"] .f1-racing-console-v180{padding-top:0!important}
+#f1RacingViewRaceV185 .f1-racing-race-header-v188{min-height:44px!important;padding:5px 8px!important;align-items:center!important}
+#f1RacingViewRaceV185 .f1-racing-race-header-v188 .f1-racing-panel-kicker-v181{font-size:7px!important;line-height:1!important}
+#f1RacingViewRaceV185 .f1-racing-race-header-v188 strong{font-size:12px!important;line-height:1.1!important}
+#f1RacingViewRaceV185 .f1-racing-race-status-v188 span{min-width:66px!important;padding:3px 6px!important;font-size:7px!important}
+#f1RacingViewRaceV185 .f1-racing-race-controls-v188 button{min-height:24px!important;padding:3px 6px!important;font-size:9px!important}
+#f1RacingViewRaceV185 .f1-racing-workspace-toolbar-recovery-e{margin-top:4px!important;min-height:32px!important;padding:3px 5px!important;justify-content:flex-end!important}
+#f1RacingViewRaceV185 .f1-racing-workspace-panel-toggles-recovery-e{margin-left:auto!important;gap:3px!important}
+#f1RacingViewRaceV185 .f1-racing-workspace-panel-toggles-recovery-e button{padding:3px 6px!important;font-size:8px!important}
+#f1RacingViewRaceV185 #f1RacingWorkspaceResetRecoveryE{min-height:24px!important;padding:3px 7px!important;font-size:9px!important}
+#f1RacingViewRaceV185 .f1-racing-workspace-recovery-e{grid-auto-rows:72px!important;gap:5px!important;margin-top:4px!important;min-height:571px!important}
+#f1RacingViewRaceV185 [data-f1-workspace-panel="track"]{grid-column:1 / span 8;grid-row:1 / span 8}
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"]{grid-column:9 / span 4;grid-row:1 / span 3}
+#f1RacingViewRaceV185 [data-f1-workspace-panel="commentary"]{grid-column:9 / span 4;grid-row:4 / span 5}
+@media(min-width:1500px){
+  #f1RacingViewRaceV185 .f1-racing-workspace-recovery-e{grid-auto-rows:76px!important;min-height:603px!important}
+}
