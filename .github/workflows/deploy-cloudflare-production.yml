@@ -150,6 +150,7 @@ jobs:
           node --check scripts/run-phase205-f1-pit-lane-audit.mjs
           node --check scripts/run-phase206-f1-pit-strategy-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
+          node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-v1.js
@@ -1205,6 +1206,14 @@ jobs:
           node --check /tmp/f1-track-geometry-recovery-l.js
           grep -Fq 'function curvatureSeverityRecoveryL(track,curvature){' /tmp/f1-track-geometry-recovery-l.js
           grep -Fq 'function curvatureWeightedZoneLimitRecoveryL(track,sample,maxKph){' /tmp/f1-track-geometry-recovery-l.js
+          echo '[recovery-m] F1 explicit grid start gate'
+          grep -Fq 'id="f1RacingGridStartRecoveryM"' /tmp/index.html
+          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=M1&phase=206' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RecoveryM='explicit-grid-start-v1';" > /tmp/f1-racing-recovery-m.js
+          node --check /tmp/f1-racing-recovery-m.js
+          grep -Fq "setScreenStateV185('GRID');" /tmp/f1-racing-recovery-m.js
+          grep -Fq 'function confirmRaceStartRecoveryM(){' /tmp/f1-racing-recovery-m.js
+          grep -Fq "start.addEventListener('click',confirmRaceStartRecoveryM);" /tmp/f1-racing-recovery-m.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css
