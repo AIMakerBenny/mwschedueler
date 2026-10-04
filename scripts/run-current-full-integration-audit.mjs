@@ -231,6 +231,7 @@ import {runPhase232F1DriverMarkerIdentityAudit} from './run-phase232-f1-driver-m
 import {runPhase233F1TrackSilhouetteCardsAudit} from './run-phase233-f1-track-silhouette-cards-audit.mjs';
 import {runPhase234F1TrackRuntimeProfileAudit} from './run-phase234-f1-track-runtime-profile-audit.mjs';
 import {runPhase235F1TrackBehaviorAudit} from './run-phase235-f1-track-behavior-audit.mjs';
+import {runPhase236F1TrackAwareCommentaryAudit} from './run-phase236-f1-track-aware-commentary-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2343,5 +2344,10 @@ export function runPhase235FullIntegrationAudit(){
  const issues=[...previous.issues,...current.issues.map(x=>'Phase 235: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 235: '+x)];
  return {phase:235,previous,current,issues,warnings,pass:issues.length===0};
 }
-export function runCurrentFullIntegrationAudit(){return runPhase235FullIntegrationAudit();}
+export function runPhase236FullIntegrationAudit(){
+ const previous=runPhase235FullIntegrationAudit(),current=runPhase236F1TrackAwareCommentaryAudit();
+ const issues=[...previous.issues,...current.issues.map(x=>'Phase 236: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 236: '+x)];
+ return {phase:236,previous,current,issues,warnings,pass:issues.length===0};
+}
+export function runCurrentFullIntegrationAudit(){return runPhase236FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
