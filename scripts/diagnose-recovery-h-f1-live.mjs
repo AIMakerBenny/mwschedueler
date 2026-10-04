@@ -335,6 +335,11 @@ try{
     const diverseTracksQa=window.mwsF1QaDiverseTrackCatalogV220?.();
     assert(diverseTracksQa?.allPass===true&&Number(diverseTracksQa?.trackCount)>=7,'Phase 220 diverse track catalog failed: '+JSON.stringify(diverseTracksQa));
     assert(Number(diverseTracksQa?.pathShapes)===7&&Number(diverseTracksQa?.archetypes)>=6,'Phase 220 track silhouettes/archetypes are not diverse: '+JSON.stringify(diverseTracksQa));
+    const trackCommentaryQa=window.mwsF1QaTrackAwareCommentaryV236?.();
+    assert(trackCommentaryQa?.allPass===true&&Number(trackCommentaryQa?.uniqueLines)>=7,'Phase 236 track-aware commentary QA failed: '+JSON.stringify(trackCommentaryQa));
+    const activeTrackArchetype=String(window.mwsF1GetActiveRaceSnapshotV187?.()?.track?.runtimeProfile?.archetype||'');
+    const commentaryTextV236=String(document.getElementById('f1RacingCommentaryLogV188')?.textContent||'');
+    assert(activeTrackArchetype&&commentaryTextV236.includes(activeTrackArchetype),'Phase 236 live commentary missing active track archetype: '+JSON.stringify({activeTrackArchetype,commentaryTextV236:commentaryTextV236.slice(0,600)}));
     const trackBehaviorQa=window.mwsF1QaTrackBehaviorModifiersV235?.();
     assert(trackBehaviorQa?.allPass===true&&Number(trackBehaviorQa?.overtakeSpread)>0&&Number(trackBehaviorQa?.incidentSpread)>0,'Phase 235 track behavior QA failed: '+JSON.stringify(trackBehaviorQa));
     const trackRuntimeProfileQa=window.mwsF1QaTrackRuntimeProfilesV234?.();
