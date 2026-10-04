@@ -52,6 +52,7 @@ const VERSION222='phase222-race-commentary-flow';
 const VERSION223='phase223-track-profile-ui';
 const VERSION224='phase224-race-ui-density-qa';
 const VERSION225='phase225-camera-director';
+const VERSION226='phase226-commentary-readability';
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
 const CAMERA_MODES_V216=Object.freeze(['AUTO','FULL','LEADER','FRONT','BATTLE','MANUAL']);
 const raceCameraV216={mode:'AUTO',zoom:1.9,cx:500,cy:300,dragging:false,pointerId:null,lastX:0,lastY:0,initialized:false};
@@ -2375,6 +2376,46 @@ const commentaryStateV219={
   initialized:false,lastPollSimMs:-Infinity,lastLeaderId:'',lastFlag:'GREEN',lastLeaderLap:0,
   vehicle:new Map(),sequence:0
 };
+const commentaryReadV226={followTail:true,unread:0,lastTextAt:new Map(),bound:false};
+function commentaryPriorityV226(type){
+  const value=String(type||'info');
+  if(['flag','finish','lead','pass','start'].includes(value))return 'critical';
+  if(['battle','incident','pit'].includes(value))return 'high';
+  if(value==='strategy')return 'medium';
+  return 'low';
+}
+function syncCommentaryUnreadV226(){
+  const badge=document.getElementById('f1RacingCommentaryUnreadV226');
+  if(!badge)return false;
+  badge.hidden=commentaryReadV226.unread<=0;
+  badge.textContent='새 해설 '+commentaryReadV226.unread+'개';
+  return true;
+}
+function scrollCommentaryTailV226(){
+  const log=document.getElementById('f1RacingCommentaryLogV188');if(!log)return false;
+  commentaryReadV226.followTail=true;commentaryReadV226.unread=0;
+  log.scrollTop=log.scrollHeight;syncCommentaryUnreadV226();return true;
+}
+function bindCommentaryReadabilityV226(){
+  const log=document.getElementById('f1RacingCommentaryLogV188');if(!log)return false;
+  const panel=log.closest('[data-f1-workspace-panel="commentary"]')||log.closest('.f1-racing-commentary-v188');
+  if(panel&&!document.getElementById('f1RacingCommentaryUnreadV226')){
+    const badge=document.createElement('button');
+    badge.type='button';badge.id='f1RacingCommentaryUnreadV226';badge.className='f1-racing-commentary-unread-v226';badge.hidden=true;
+    badge.addEventListener('click',scrollCommentaryTailV226);
+    panel.appendChild(badge);
+  }
+  if(!log.dataset.f1CommentaryReadBound){
+    log.dataset.f1CommentaryReadBound='1';
+    log.addEventListener('scroll',()=>{
+      const distance=log.scrollHeight-log.scrollTop-log.clientHeight;
+      commentaryReadV226.followTail=distance<=42;
+      if(commentaryReadV226.followTail){commentaryReadV226.unread=0;syncCommentaryUnreadV226()}
+    },{passive:true});
+  }
+  commentaryReadV226.bound=true;syncCommentaryUnreadV226();return true;
+}
+
 function commentaryTimeV219(){
   const total=Math.max(0,Number(simClockV192.simTimeMs)||0);
   const minutes=Math.floor(total/60000),seconds=Math.floor((total%60000)/1000);
@@ -2384,15 +2425,28 @@ function appendRaceCommentaryV219(message,type='info'){
   const log=document.getElementById('f1RacingCommentaryLogV188');
   const text=String(message||'').trim();
   if(!log||!text)return false;
+  bindCommentaryReadabilityV226();
+  const now=Number(simClockV192.simTimeMs)||0;
+  const duplicateAt=Number(commentaryReadV226.lastTextAt.get(text));
+  if(Number.isFinite(duplicateAt)&&now-duplicateAt<1800)return false;
+  commentaryReadV226.lastTextAt.set(text,now);
+  const priority=commentaryPriorityV226(type);
   log.querySelector('.f1-racing-commentary-empty-v188')?.remove();
   const row=document.createElement('div');
   row.className='f1-racing-commentary-entry-v219 '+String(type||'info');
   row.dataset.commentarySeq=String(++commentaryStateV219.sequence);
+  row.dataset.commentaryPriority=priority;
   row.innerHTML='<span class="time">'+commentaryTimeV219()+'</span><span class="message"></span>';
   row.querySelector('.message').textContent=text;
   log.appendChild(row);
   while(log.children.length>120)log.firstElementChild?.remove();
-  log.scrollTop=log.scrollHeight;
+  if(commentaryReadV226.followTail||priority==='critical'){
+    log.scrollTop=log.scrollHeight;
+    if(priority==='critical'){commentaryReadV226.followTail=true;commentaryReadV226.unread=0}
+  }else{
+    commentaryReadV226.unread+=1;
+  }
+  syncCommentaryUnreadV226();
   return true;
 }
 function commentaryVehicleStateV219(vehicle){
@@ -2415,6 +2469,8 @@ function resetRaceCommentaryV219(){
   commentaryStateV219.lastLeaderLap=0;
   commentaryStateV219.vehicle=new Map();
   commentaryStateV219.sequence=0;
+  commentaryReadV226.followTail=true;commentaryReadV226.unread=0;commentaryReadV226.lastTextAt=new Map();
+  bindCommentaryReadabilityV226();
   for(const vehicle of raceMotionV189.vehicles)commentaryStateV219.vehicle.set(String(vehicle.id),commentaryVehicleStateV219(vehicle));
   const track=activeRaceSnapshotV187?.track?.name||'선택된 트랙';
   appendRaceCommentaryV219(track+'에서 경기가 시작됐습니다.','start');
@@ -2579,6 +2635,18 @@ function updateRaceNarrativeV222(force=false){
   }
   return emitted;
 }
+function qaCommentaryReadabilityV226(){
+  bindCommentaryReadabilityV226();
+  return {
+    bound:commentaryReadV226.bound,
+    followTail:commentaryReadV226.followTail,
+    unread:commentaryReadV226.unread,
+    badgeReady:Boolean(document.getElementById('f1RacingCommentaryUnreadV226')),
+    duplicateCache:Boolean(commentaryReadV226.lastTextAt),
+    allPass:commentaryReadV226.bound&&Boolean(document.getElementById('f1RacingCommentaryUnreadV226'))&&Boolean(commentaryReadV226.lastTextAt)
+  };
+}
+
 function qaRaceNarrativeV222(){
   const vehicleStates=raceMotionV189.vehicles.map(vehicle=>commentaryFlowVehicleStateV222(vehicle));
   return {
@@ -4132,6 +4200,9 @@ window.__mwsF1RacingV223=VERSION223;
 window.__mwsF1RacingV224=VERSION224;
 window.mwsF1QaCameraDirectorV225=qaCameraDirectorV225;
 window.__mwsF1RacingV225=VERSION225;
+window.mwsF1ScrollCommentaryTailV226=scrollCommentaryTailV226;
+window.mwsF1QaCommentaryReadabilityV226=qaCommentaryReadabilityV226;
+window.__mwsF1RacingV226=VERSION226;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
