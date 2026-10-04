@@ -1028,7 +1028,7 @@ jobs:
           grep -Fq 'function createDriverProfileV200(driver,snapshot){' /tmp/f1-racing-v1-phase200.js
           grep -Fq 'function updateDriverPaceStateV200(vehicle,stepMs){' /tmp/f1-racing-v1-phase200.js
           grep -Fq "const racecraftNorm=driverSkillNormV200(vehicle,'racecraft');" /tmp/f1-racing-v1-phase200.js
-          grep -Fq 'const maxTarget=baseTarget*driverPaceMultiplier*aeroGripMultiplier+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;' /tmp/f1-racing-v1-phase200.js
+          grep -Fq 'const maxTarget=baseTarget*driverPaceMultiplier*aeroGripMultiplier*tyreCornerFactor+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;' /tmp/f1-racing-v1-phase200.js
           grep -Fq 'window.mwsF1GetDriverProfilesV200=getDriverProfilesV200;' /tmp/f1-racing-v1-phase200.js
           echo '[phase201] F1 energy recharge boost'
           grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=(20[1-9]|[3-9][0-9]{2,})' /tmp/index.html
