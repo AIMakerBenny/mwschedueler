@@ -2600,6 +2600,7 @@ function workspaceDropTargetRecoveryE(clientX,clientY,sourceId){
   if(ry>.92)return {kind:'dock',zone:'bottom'};
   if(rx<.14)return {kind:'dock',zone:'left'};
   if(rx>.86)return {kind:'dock',zone:'right'};
+  if(rx>=.46&&rx<=.54)return {kind:'dock',zone:'center'};
   const target=document.elementFromPoint(clientX,clientY)?.closest?.('[data-f1-workspace-panel]');
   if(target&&target.dataset.f1WorkspacePanel!==sourceId&&!target.hidden){
     const tr=target.getBoundingClientRect();
@@ -2607,7 +2608,6 @@ function workspaceDropTargetRecoveryE(clientX,clientY,sourceId){
     const ty=(clientY-tr.top)/Math.max(1,tr.height);
     if(tx>.22&&tx<.78&&ty>.18&&ty<.82)return {kind:'tab',targetId:target.dataset.f1WorkspacePanel,rect:tr};
   }
-  if(rx>=.40&&rx<=.60)return {kind:'dock',zone:'center'};
   const state=workspaceLayoutRecoveryE.panels[sourceId];
   const col=Math.max(0,Math.min(12-state.w,Math.round(rx*12-state.w/2)));
   const rowHeight=workspaceGridRowHeightRecoveryJ(workspace);
