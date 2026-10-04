@@ -13,7 +13,7 @@ export function runRecoveryNF1TripleDockAudit(){
   if(!/assets\/f1-racing-v1\.css\?v=1\.0\.0-phase180-shell&p=196&recovery=N1&phase=(?:20[4-9]|21[0-9]|2[2-9][0-9])/.test(index))issues.push('Recovery N CSS cache missing');
 
   for(const token of [
-    "timing:Object.freeze({label:'LIVE TIMING',minW:4,minH:2})",
+    "timing:Object.freeze({label:'실시간 순위',minW:4,minH:2})",
     'const F1_TRIPLE_DOCK_COLUMNS_RECOVERY_N=Object.freeze({',
     "left:Object.freeze({x:0,w:4})",
     "center:Object.freeze({x:4,w:4})",
