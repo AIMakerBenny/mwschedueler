@@ -305,6 +305,21 @@ try{
     assert(JSON.stringify(multiTrackQa?.ids)===JSON.stringify(['majoku-ring-v1','castle-street-circuit-v1','blue-coast-speedway-v1']),'Phase 210 track ids mismatch: '+JSON.stringify(multiTrackQa?.ids));
     assert(multiTrackQa?.allPass===true,'Phase 210 multi-track integration failed: '+JSON.stringify(multiTrackQa?.tracks));
     assert(multiTrackQa?.tracks?.every(row=>row.snapshotReady&&row.geometryReady&&row.pitReady&&row.overtakeReady&&row.renderingReady&&row.dynamicsReady&&row.trafficPassReady),'Phase 210 subsystem coverage incomplete');
+    const markerQa=window.mwsF1QaTrackMarkersV211?.();
+    assert(markerQa?.trackCount===3&&markerQa?.allPass===true,'Phase 211 marker integration failed: '+JSON.stringify(markerQa));
+    const raceMarkerText=String(document.getElementById('f1RacingRaceAnnotationsRecoveryB')?.textContent||'');
+    assert(raceMarkerText.includes('START / FINISH')&&raceMarkerText.includes('PIT IN')&&raceMarkerText.includes('PIT OUT')&&raceMarkerText.includes('OVT D1'),'Phase 211 Race Control markers incomplete: '+raceMarkerText);
+    const flipQa=window.mwsF1QaLiveTimingFlipV212?.();
+    assert(flipQa?.allPass===true&&Number(flipQa?.domRows)>=2,'Phase 212 FLIP live timing QA failed: '+JSON.stringify(flipQa));
+    const topThreeQa=window.mwsF1QaTopThreePresentationV213?.();
+    assert(topThreeQa?.allPass===true,'Phase 213 top-three presentation failed: '+JSON.stringify(topThreeQa));
+    const flagQa=window.mwsF1QaRaceControlFlagsV214?.();
+    assert(flagQa?.allPass===true,'Phase 214 race control flag engine failed: '+JSON.stringify(flagQa));
+    assert(window.mwsF1SetRaceControlFlagV214?.('YELLOW','QA')===true,'Phase 214 Yellow Flag setter failed');
+    assert(window.mwsF1GetRaceControlFlagV214?.().flag==='YELLOW','Phase 214 Yellow Flag state missing');
+    assert(window.mwsF1SetRaceControlFlagV214?.('GREEN','')===true,'Phase 214 Green Flag restore failed');
+    const blueQa=window.mwsF1QaBackmarkerBlueFlagV215?.();
+    assert(blueQa?.allPass===true,'Phase 215 backmarker/blue flag QA failed: '+JSON.stringify(blueQa));
     pause.click();await raf();
     assert(window.mwsF1GetSimulationClockV192?.().paused===false,'Pause button did not resume simulation');
 
