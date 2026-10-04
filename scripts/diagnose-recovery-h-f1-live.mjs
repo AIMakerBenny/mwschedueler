@@ -353,6 +353,8 @@ try{
     const cameraDirectorQa=window.mwsF1QaCameraDirectorV225?.();
     assert(cameraDirectorQa?.allPass===true&&cameraDirectorQa?.hasFront===true,'Phase 225 camera director QA failed: '+JSON.stringify(cameraDirectorQa));
     assert(document.querySelector('[data-f1-camera-mode="FRONT"]')?.textContent?.includes('상위권'),'Phase 225 front-group camera button missing');
+    const labelCollisionQa=window.mwsF1QaDriverLabelCollisionV228?.();
+    assert(labelCollisionQa?.allPass===true&&Number(labelCollisionQa?.syntheticOverlapPairs)===0,'Phase 228 driver label collision QA failed: '+JSON.stringify(labelCollisionQa));
     const cameraQa=window.mwsF1QaDriverMarkerCameraV216?.();
     assert(cameraQa?.allPass===true&&Number(cameraQa?.paletteCount)>=8,'Phase 216 marker/camera QA failed: '+JSON.stringify(cameraQa));
     const markerColors=Array.from(document.querySelectorAll('.f1-racing-race-vehicle-v189')).map(node=>node.style.getPropertyValue('--f1-driver-color')).filter(Boolean);
