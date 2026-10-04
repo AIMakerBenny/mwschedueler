@@ -357,6 +357,10 @@ try{
     const cameraStabilityQa=window.mwsF1QaCameraDirectorStabilityV229?.();
     assert(cameraStabilityQa?.allPass===true&&Number(cameraStabilityQa?.candidateHoldMs)>=500&&Number(cameraStabilityQa?.minSwitchMs)>=1500,'Phase 229 camera director stability QA failed: '+JSON.stringify(cameraStabilityQa));
     assert(document.querySelector('[data-f1-camera-mode="FRONT"]')?.textContent?.includes('상위권'),'Phase 225 front-group camera button missing');
+    const markerIdentityQa=window.mwsF1QaDriverMarkerIdentityV232?.();
+    assert(markerIdentityQa?.allPass===true&&Number(markerIdentityQa?.liveMarkerCount)>=2&&Number(markerIdentityQa?.liveMarkerCount)===Number(markerIdentityQa?.liveNumberCount),'Phase 232 driver marker identity QA failed: '+JSON.stringify(markerIdentityQa));
+    const markerNumberTexts=[...document.querySelectorAll('.f1-racing-race-vehicle-v189 .car-number-v232')].map(node=>String(node.textContent||'').trim());
+    assert(markerNumberTexts.length>=2&&new Set(markerNumberTexts).size===markerNumberTexts.length,'Phase 232 driver marker numbers are not unique: '+JSON.stringify(markerNumberTexts));
     const labelCollisionQa=window.mwsF1QaDriverLabelCollisionV228?.();
     assert(labelCollisionQa?.allPass===true&&Number(labelCollisionQa?.syntheticOverlapPairs)===0,'Phase 228 driver label collision QA failed: '+JSON.stringify(labelCollisionQa));
     const cameraQa=window.mwsF1QaDriverMarkerCameraV216?.();
