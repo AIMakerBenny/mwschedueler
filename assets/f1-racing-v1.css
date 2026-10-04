@@ -271,3 +271,10 @@
 .f1-racing-race-vehicle-v189 .car-ring{fill:#0b1018;stroke:#e2e8f0;stroke-width:3}
 .f1-racing-race-vehicle-v189 .car-core{fill:#60a5fa}
 .f1-racing-race-vehicle-v189 .car-label{fill:#f8fafc;font:900 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#020305;stroke-width:4;stroke-linejoin:round}
+
+/* Phase 190: race distance, lap and sector telemetry */
+.f1-racing-timing-row-v188 .driver em[data-f1-current-sector]{flex:0 0 auto;margin-left:auto;padding:2px 5px;border:1px solid #2d3745;border-radius:4px;color:#8ea0b8;background:#0b1017;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-style:normal;letter-spacing:.06em}
+.f1-racing-timing-row-v188[data-sector="S1"] .driver em[data-f1-current-sector]{color:#9ac5ff}
+.f1-racing-timing-row-v188[data-sector="S2"] .driver em[data-f1-current-sector]{color:#c8b5ff}
+.f1-racing-timing-row-v188[data-sector="S3"] .driver em[data-f1-current-sector]{color:#f2ca8a}
+.f1-racing-timing-row-v188[data-sector="GRID"] .driver em[data-f1-current-sector]{color:#64748b}

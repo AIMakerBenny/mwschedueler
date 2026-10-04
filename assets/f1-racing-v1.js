@@ -10,6 +10,8 @@ const VERSION186='phase186-setup-track-select';
 const VERSION187='phase187-race-draft-snapshot-transition';
 const VERSION188='phase188-race-control-frame';
 const VERSION189='phase189-shared-multicar-raf';
+const VERSION190='phase190-race-distance-lap-sector';
+const DEFAULT_TOTAL_LAPS_V190=10;
 const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
 const F1_TRANSITIONS_V185=Object.freeze({
   SETUP:Object.freeze(['TRANSITION']),
@@ -26,7 +28,7 @@ let activeTrackId='majoku-ring-v1';
 const previewStateV184={running:false,progress:0,lastTimestamp:0,rafId:0,lapDurationMs:18000};
 let activeRaceSnapshotV187=null;
 let raceTransitionTimerV187=0;
-const raceMotionV189={running:false,suspended:false,rafId:0,lastTimestamp:0,vehicles:[],snapshotCreatedAt:''};
+const raceMotionV189={running:false,suspended:false,rafId:0,lastTimestamp:0,vehicles:[],snapshotCreatedAt:'',hudAccumulatorMs:0};
 
 function escapeHtml(value=''){
   return String(value).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]});
@@ -266,6 +268,7 @@ function buildRaceSnapshotV187(){
   return Object.freeze({
     createdAt:new Date().toISOString(),
     trackId:String(track.id),
+    totalLaps:DEFAULT_TOTAL_LAPS_V190,
     track:Object.freeze({
       id:String(track.id),
       name:String(track.name),
@@ -323,11 +326,55 @@ function hashDriverV189(value=''){
   for(const ch of String(value)){hash^=ch.charCodeAt(0);hash=Math.imul(hash,16777619)}
   return hash>>>0;
 }
+function normalizedProgressV190(value){
+  return ((Number(value)||0)%1+1)%1;
+}
+function sectorForProgressV190(track,progress){
+  const p=normalizedProgressV190(progress);
+  const sectors=Array.isArray(track?.sectors)?track.sectors:[];
+  const found=sectors.find(function(sector){return p>=Number(sector.start)&&p<Number(sector.end)})||sectors[sectors.length-1];
+  return found?.id||'S1';
+}
+function syncVehicleRaceMetricsV190(vehicle,track=activeRaceSnapshotV187?.track){
+  if(!vehicle||!track)return vehicle;
+  const length=Math.max(1,Number(track.lengthMeters)||1);
+  const raceProgress=Number(vehicle.startOffset||0)+Number(vehicle.travel||0);
+  vehicle.raceProgress=raceProgress;
+  vehicle.progress=normalizedProgressV190(raceProgress);
+  vehicle.raceDistanceMeters=Math.max(0,raceProgress*length);
+  vehicle.completedLaps=Math.max(0,Math.floor(Math.max(0,raceProgress)));
+  vehicle.currentLap=vehicle.completedLaps+1;
+  vehicle.sector=raceProgress<0?'GRID':sectorForProgressV190(track,vehicle.progress);
+  return vehicle;
+}
+function findTimingRowV190(driverId){
+  return Array.from(document.querySelectorAll('#f1RacingTimingListV188 [data-f1-driver-id]')).find(function(row){return String(row.dataset.f1DriverId)===String(driverId)})||null;
+}
+function updateRaceProgressHudV190(){
+  const snapshot=activeRaceSnapshotV187;if(!snapshot||!raceMotionV189.vehicles.length)return false;
+  const leader=raceMotionV189.vehicles.reduce((best,vehicle)=>!best||vehicle.raceProgress>best.raceProgress?vehicle:best,null);
+  const totalLaps=Number(snapshot.totalLaps)||DEFAULT_TOTAL_LAPS_V190;
+  const lap=document.getElementById('f1RacingRaceLapV188');
+  const meta=document.getElementById('f1RacingRaceMapMetaV188');
+  if(lap)lap.textContent=Math.min(totalLaps,leader?.currentLap||1)+' / '+totalLaps;
+  if(meta)meta.textContent=(snapshot.track.lengthMeters/1000).toFixed(3)+' km · '+snapshot.drivers.length+' drivers · '+(leader?.sector||'GRID');
+  for(const vehicle of raceMotionV189.vehicles){
+    const row=findTimingRowV190(vehicle.id);if(!row)continue;
+    row.dataset.lap=String(vehicle.currentLap||1);
+    row.dataset.sector=String(vehicle.sector||'GRID');
+    row.dataset.raceDistance=String(Math.round(vehicle.raceDistanceMeters||0));
+    const badge=row.querySelector('[data-f1-current-sector]');
+    if(badge)badge.textContent=vehicle.sector||'GRID';
+  }
+  return true;
+}
 function createRaceVehiclesV189(snapshot){
   const count=Math.max(1,snapshot?.drivers?.length||0);
   return (snapshot?.drivers||[]).map(function(driver,index){
     const hash=hashDriverV189(driver.contactId||driver.name);
-    return {id:String(driver.contactId),driver,progress:(1-(index*Math.min(.0045,.045/count)))%1,travel:0,lapDurationMs:17500+(hash%6500),marker:null};
+    const startOffset=-(index*Math.min(.0045,.045/count));
+    const vehicle={id:String(driver.contactId),driver,startOffset,progress:normalizedProgressV190(startOffset),travel:0,raceProgress:startOffset,raceDistanceMeters:0,currentLap:1,completedLaps:0,sector:'GRID',lapDurationMs:17500+(hash%6500),marker:null};
+    return syncVehicleRaceMetricsV190(vehicle,snapshot.track);
   });
 }
 function ensureRaceVehicleMarkerV189(vehicle,index){
@@ -359,8 +406,10 @@ function initializeRaceMotionV189(snapshot=activeRaceSnapshotV187){
   raceMotionV189.vehicles=createRaceVehiclesV189(snapshot);
   raceMotionV189.snapshotCreatedAt=String(snapshot.createdAt||'');
   raceMotionV189.lastTimestamp=0;
+  raceMotionV189.hudAccumulatorMs=0;
   const layer=document.getElementById('f1RacingRaceVehicleLayerV188');if(layer)layer.replaceChildren();
   renderRaceVehiclesV189();
+  updateRaceProgressHudV190();
   return raceMotionV189.vehicles.length>0;
 }
 function raceFrameV189(timestamp){
@@ -368,8 +417,10 @@ function raceFrameV189(timestamp){
   if(!raceMotionV189.lastTimestamp)raceMotionV189.lastTimestamp=timestamp;
   const delta=Math.min(50,Math.max(0,timestamp-raceMotionV189.lastTimestamp));
   raceMotionV189.lastTimestamp=timestamp;
-  for(const vehicle of raceMotionV189.vehicles){const step=delta/vehicle.lapDurationMs;vehicle.travel+=step;vehicle.progress=(vehicle.progress+step)%1}
+  for(const vehicle of raceMotionV189.vehicles){const step=delta/vehicle.lapDurationMs;vehicle.travel+=step;syncVehicleRaceMetricsV190(vehicle)}
   renderRaceVehiclesV189();
+  raceMotionV189.hudAccumulatorMs+=delta;
+  if(raceMotionV189.hudAccumulatorMs>=100){raceMotionV189.hudAccumulatorMs=0;updateRaceProgressHudV190()}
   raceMotionV189.rafId=requestAnimationFrame(raceFrameV189);
 }
 function startRaceMotionV189(){
@@ -397,7 +448,7 @@ function timingRowV188(driver,index){
   const podium=pos<=3?' podium p'+pos:'';
   return '<div class="f1-racing-timing-row-v188'+podium+'" data-f1-driver-id="'+escapeHtml(driver.contactId)+'">'+
     '<span class="pos">P'+String(pos).padStart(2,'0')+'</span>'+
-    '<span class="driver"><b>'+escapeHtml(driverCodeV188(driver))+'</b><small>'+escapeHtml(driver.name)+'</small></span>'+
+    '<span class="driver"><b>'+escapeHtml(driverCodeV188(driver))+'</b><small>'+escapeHtml(driver.name)+'</small><em data-f1-current-sector>GRID</em></span>'+
     '<span>--</span><span>----</span><span>---</span><span>--:--.---</span><span>--:--.---</span><span>'+(pos===1?'LEADER':'--.---')+'</span><span>--</span><span>--.---</span><span>--.---</span><span>--.---</span>'+
     '</div>';
 }
@@ -416,7 +467,7 @@ function renderRaceControlV188(){
   if(name)name.textContent=String(snapshot.track.name||'TRACK').toUpperCase();
   if(count)count.textContent=String(snapshot.drivers.length);
   if(status)status.textContent='PRE-RACE';
-  if(lap)lap.textContent='0 / --';
+  if(lap)lap.textContent='1 / '+(Number(snapshot.totalLaps)||DEFAULT_TOTAL_LAPS_V190);
   if(list)list.innerHTML=snapshot.drivers.map(timingRowV188).join('');
   if(mapMeta)mapMeta.textContent=(snapshot.track.lengthMeters/1000).toFixed(3)+' km · '+snapshot.drivers.length+' drivers';
   if(svg)svg.setAttribute('viewBox',(snapshot.track.viewBox||[0,0,1000,600]).join(' '));
@@ -450,7 +501,7 @@ function render(){
   if(previewStateV184.running)stopPreviewV184(true);
   if(f1ScreenStateV185==='RACE'&&activeRaceSnapshotV187){renderRaceControlV188();startRaceMotionV189()}
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent=f1ScreenStateV185==='SETUP'?'RACE SETUP':'RACE CONTROL';
-  section.dataset.f1Runtime=VERSION187;
+  section.dataset.f1Runtime=VERSION190;
   return true;
 }
 function toggleDriver(id){
@@ -548,6 +599,9 @@ window.mwsF1StartRaceMotionV189=startRaceMotionV189;
 window.mwsF1PauseRaceMotionV189=pauseRaceMotionV189;
 window.mwsF1ResetRaceMotionV189=resetRaceMotionV189;
 window.mwsF1RenderRaceVehiclesV189=renderRaceVehiclesV189;
+window.mwsF1SectorForProgressV190=sectorForProgressV190;
+window.mwsF1SyncVehicleRaceMetricsV190=syncVehicleRaceMetricsV190;
+window.mwsF1UpdateRaceProgressHudV190=updateRaceProgressHudV190;
 window.__mwsF1RacingV180=VERSION;
 window.__mwsF1RacingV181=VERSION181;
 window.__mwsF1RacingV182=VERSION182;
@@ -558,6 +612,7 @@ window.__mwsF1RacingV186=VERSION186;
 window.__mwsF1RacingV187=VERSION187;
 window.__mwsF1RacingV188=VERSION188;
 window.__mwsF1RacingV189=VERSION189;
+window.__mwsF1RacingV190=VERSION190;
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){

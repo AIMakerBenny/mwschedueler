@@ -120,6 +120,7 @@ jobs:
           node --check scripts/run-phase187-f1-race-draft-snapshot-audit.mjs
           node --check scripts/run-phase188-f1-race-control-frame-audit.mjs
           node --check scripts/run-phase189-f1-shared-multicar-raf-audit.mjs
+          node --check scripts/run-phase190-f1-race-distance-lap-sector-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-racing-v1.js
           node --check assets/workspace-ui-v176.js
@@ -909,6 +910,14 @@ jobs:
           grep -Fq 'for(const vehicle of raceMotionV189.vehicles)' /tmp/f1-racing-v1-phase189.js
           grep -Fq 'raceMotionV189.rafId=requestAnimationFrame(raceFrameV189);' /tmp/f1-racing-v1-phase189.js
           grep -Fq 'window.mwsF1StartRaceMotionV189=startRaceMotionV189;' /tmp/f1-racing-v1-phase189.js
+          echo '[phase190] F1 race distance lap and sector telemetry'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV190=VERSION190;' > /tmp/f1-racing-v1-phase190.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-timing-row-v188 .driver em[data-f1-current-sector]' > /tmp/f1-racing-v1-phase190.css
+          node --check /tmp/f1-racing-v1-phase190.js
+          grep -Fq 'function syncVehicleRaceMetricsV190(vehicle,track=activeRaceSnapshotV187?.track){' /tmp/f1-racing-v1-phase190.js
+          grep -Fq 'vehicle.raceDistanceMeters=Math.max(0,raceProgress*length);' /tmp/f1-racing-v1-phase190.js
+          grep -Fq 'function updateRaceProgressHudV190(){' /tmp/f1-racing-v1-phase190.js
+          grep -Fq 'window.mwsF1SyncVehicleRaceMetricsV190=syncVehicleRaceMetricsV190;' /tmp/f1-racing-v1-phase190.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css
