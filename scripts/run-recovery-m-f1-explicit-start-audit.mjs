@@ -14,7 +14,7 @@ export function runRecoveryMF1ExplicitStartAudit(){
     'id="f1RacingGridTrackRecoveryM"',
     '아래 경기 시작 버튼을 눌러야 레이스가 시작됩니다.'
   ])if(!index.includes(token))issues.push('Recovery M grid UI missing: '+token);
-  if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[M-Z][0-9]+&phase=(?:20[6-9]|21[0-9])/.test(index))issues.push('Recovery M+ runtime cache missing');
+  if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[M-Z][0-9]+&phase=(?:20[6-9]|21[0-9]|22[0-9])/.test(index))issues.push('Recovery M+ runtime cache missing');
 
   for(const token of [
     'function populateGridRecoveryM(snapshot){',
