@@ -119,6 +119,7 @@ jobs:
           node --check scripts/run-phase186-f1-setup-track-select-audit.mjs
           node --check scripts/run-phase187-f1-race-draft-snapshot-audit.mjs
           node --check scripts/run-phase188-f1-race-control-frame-audit.mjs
+          node --check scripts/run-phase189-f1-shared-multicar-raf-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-racing-v1.js
           node --check assets/workspace-ui-v176.js
@@ -900,6 +901,14 @@ jobs:
           node --check /tmp/f1-racing-v1-phase188.js
           grep -Fq 'function renderRaceControlV188(){' /tmp/f1-racing-v1-phase188.js
           grep -Fq 'window.mwsF1RenderRaceControlV188=renderRaceControlV188;' /tmp/f1-racing-v1-phase188.js
+          echo '[phase189] F1 shared multi-car requestAnimationFrame loop'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV189=VERSION189;' > /tmp/f1-racing-v1-phase189.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-race-vehicle-v189{' > /tmp/f1-racing-v1-phase189.css
+          node --check /tmp/f1-racing-v1-phase189.js
+          grep -Fq 'function raceFrameV189(timestamp){' /tmp/f1-racing-v1-phase189.js
+          grep -Fq 'for(const vehicle of raceMotionV189.vehicles)' /tmp/f1-racing-v1-phase189.js
+          grep -Fq 'raceMotionV189.rafId=requestAnimationFrame(raceFrameV189);' /tmp/f1-racing-v1-phase189.js
+          grep -Fq 'window.mwsF1StartRaceMotionV189=startRaceMotionV189;' /tmp/f1-racing-v1-phase189.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css
