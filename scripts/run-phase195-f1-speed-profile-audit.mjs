@@ -35,18 +35,27 @@ export function runPhase195F1SpeedProfileAudit(){
   try{
     const holder={};
     Function('globalThis',geometry+';return globalThis;')(holder);
-    const samples=Array.from({length:100},(_,i)=>({index:i,progress:i/100,distanceMeters:i*10,curvatureRadPerMeter:0}));
+    const samples=Array.from({length:100},(_,i)=>({
+      index:i,progress:i/100,distanceMeters:i*10,
+      curvatureRadPerMeter:i>=42&&i<=48?0.012:i>=20&&i<=28?0.0009:0
+    }));
     const base={trackId:'test',lengthMeters:1000,sampleMeters:10,samples,corners:[],cornerPhases:[]};
-    const fakeTrack={lengthMeters:1000,geometry:{referenceBrakeDecelMps2:20,referenceAccelMps2:8.5,maxStraightKph:335,speedProfileIterations:6},zones:[
-      {start:0,end:.4,targetKph:320},{start:.4,end:.5,targetKph:90},{start:.5,end:1,targetKph:320}
+    const fakeTrack={lengthMeters:1000,geometry:{referenceBrakeDecelMps2:20,referenceAccelMps2:8.5,maxStraightKph:335,speedProfileIterations:6,cornerCurvatureThreshold:0.0018},zones:[
+      {type:'straight',start:0,end:.2,targetKph:320},
+      {type:'fastCorner',start:.2,end:.35,targetKph:220},
+      {type:'straight',start:.35,end:.4,targetKph:320},
+      {type:'hairpin',start:.4,end:.5,targetKph:90},
+      {type:'straight',start:.5,end:1,targetKph:320}
     ]};
     const built=holder.mwsBuildF1SpeedProfileV195?.(fakeTrack,base);
     if(!built||built.speedProfile.length!==samples.length)issues.push('Speed profile smoke test length mismatch');
     const before=built?.speedProfile?.[35]?.targetKph;
     const straight=built?.speedProfile?.[15]?.targetKph;
+    const gentle=built?.speedProfile?.[24]?.rawLimitKph;
     const apex=built?.speedProfile?.[45]?.targetKph;
     if(!(Number(before)<Number(straight)))issues.push('Backward braking pass did not lower speed before slow corner');
-    if(!(Number(apex)<=95))issues.push('Slow corner target speed not respected');
+    if(!(Number(gentle)>280))issues.push('Gentle curvature is over-slowed: '+gentle);
+    if(!(Number(apex)<=110))issues.push('Sharp corner target speed not respected: '+apex);
     const after=built?.speedProfile?.[55]?.targetKph;
     if(!(Number(after)<320))issues.push('Forward acceleration pass did not limit instant exit acceleration');
   }catch(error){issues.push('Speed profile smoke test failed: '+String(error?.message||error));}
