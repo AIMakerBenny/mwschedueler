@@ -39,6 +39,7 @@ const VERSION209='phase209-long-run-gap-balance';
 const VERSION210='phase210-multi-track-integration';
 const VERSION211='phase211-track-marker-integration';
 const VERSION212='phase212-live-timing-flip';
+const VERSION213='phase213-top-three-presentation';
 const PASS_STATES_V208=Object.freeze(['FOLLOWING','CLOSING','TOWING','PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','PASS_COMPLETED','PASS_FAILED','COUNTER_ATTACK']);
 const PASS_CONFIG_V208=Object.freeze({followGapMeters:48,prepareGapMeters:20,pullOutGapMeters:15,sideBySideGapMeters:8,failGapMeters:32,passMarginMeters:1.2,stateHoldMs:160,maxBattleBiasKph:2.4});
 const LONG_RUN_GAP_CONFIG_V209=Object.freeze({settlingLaps:3.5,maxOpeningPaceBias:0.0045,maxSettledPaceBias:0.0018,relativeShape:1.25,qaLapSeconds:90,qaLaps:30});
@@ -620,6 +621,40 @@ function applyLiveTimingFlipV212(standings){
   }
   return {moved,order:standings.map(row=>String(row.vehicle.id))};
 }
+function ensureTopThreeStylesV213(){
+  if(document.getElementById('f1RacingTopThreeStylesV213'))return true;
+  const style=document.createElement('style');
+  style.id='f1RacingTopThreeStylesV213';
+  style.textContent=[
+    '.f1-racing-timing-row-v188[data-top-three="p1"]{box-shadow:inset 4px 0 0 #ffd54a,0 0 0 1px rgba(255,213,74,.35);background:linear-gradient(90deg,rgba(255,213,74,.16),rgba(255,213,74,.025));}',
+    '.f1-racing-timing-row-v188[data-top-three="p2"]{box-shadow:inset 4px 0 0 #c7d2df,0 0 0 1px rgba(199,210,223,.28);background:linear-gradient(90deg,rgba(199,210,223,.13),rgba(199,210,223,.02));}',
+    '.f1-racing-timing-row-v188[data-top-three="p3"]{box-shadow:inset 4px 0 0 #c98b5a,0 0 0 1px rgba(201,139,90,.28);background:linear-gradient(90deg,rgba(201,139,90,.13),rgba(201,139,90,.02));}',
+    '.f1-racing-timing-row-v188[data-top-three] .pos{font-size:1.08em;letter-spacing:.04em;}',
+    '.f1-racing-timing-row-v188[data-top-three="p1"] .driver b{font-size:1.05em;}'
+  ].join('');
+  document.head.appendChild(style);
+  return true;
+}
+function applyTopThreePresentationV213(standings){
+  ensureTopThreeStylesV213();
+  const rows=document.querySelectorAll('#f1RacingTimingListV188 [data-f1-driver-id]');
+  rows.forEach(row=>{delete row.dataset.topThree;delete row.dataset.topThreeLabel;});
+  for(const standing of standings||[]){
+    const row=findTimingRowV190(standing.vehicle.id);if(!row)continue;
+    if(standing.position<=3){
+      row.dataset.topThree='p'+standing.position;
+      row.dataset.topThreeLabel=standing.position===1?'LEADER':standing.position===2?'P2':'P3';
+    }
+  }
+  return Array.from(rows).filter(row=>row.dataset.topThree).map(row=>({id:row.dataset.f1DriverId,rank:row.dataset.topThree}));
+}
+function qaTopThreePresentationV213(){
+  ensureTopThreeStylesV213();
+  const standings=computeRaceStandingsV191();
+  const applied=applyTopThreePresentationV213(standings);
+  return {standings:standings.length,applied,styleReady:Boolean(document.getElementById('f1RacingTopThreeStylesV213')),allPass:standings.length<3||applied.length===3};
+}
+
 function qaLiveTimingFlipV212(){
   const standings=computeRaceStandingsV191();
   const list=document.getElementById('f1RacingTimingListV188');
@@ -648,6 +683,7 @@ function updateRaceStandingsV191(){
     if(standing.position<=3)row.classList.add('podium','p'+standing.position);
     if(vehicle.marker)vehicle.marker.classList.toggle('leader',standing.position===1);
   }
+  applyTopThreePresentationV213(standings);
   applyLiveTimingFlipV212(standings);
   return standings;
 }
@@ -2288,6 +2324,7 @@ function renderRaceControlV188(){
   if(status)status.textContent='PRE-RACE';
   if(lap)lap.textContent='1 / '+(Number(snapshot.totalLaps)||DEFAULT_TOTAL_LAPS_V190);
   if(list)list.innerHTML=snapshot.drivers.map(timingRowV188).join('');
+  ensureTopThreeStylesV213();
   if(mapMeta)mapMeta.textContent=(snapshot.track.lengthMeters/1000).toFixed(3)+' km · '+snapshot.drivers.length+' drivers';
   if(svg)svg.setAttribute('viewBox',(snapshot.track.viewBox||[0,0,1000,600]).join(' '));
   if(path)path.setAttribute('d',snapshot.track.path||'');
@@ -3381,6 +3418,8 @@ window.mwsF1RenderTrackMarkersV211=renderTrackMarkersV211;
 window.mwsF1QaTrackMarkersV211=qaTrackMarkersV211;
 window.mwsF1ApplyLiveTimingFlipV212=applyLiveTimingFlipV212;
 window.mwsF1QaLiveTimingFlipV212=qaLiveTimingFlipV212;
+window.mwsF1ApplyTopThreePresentationV213=applyTopThreePresentationV213;
+window.mwsF1QaTopThreePresentationV213=qaTopThreePresentationV213;
 window.mwsF1ErsNormalPowerLimitV201=ersNormalPowerLimitV201;
 window.mwsF1UpdateEnergySystemV201=updateEnergySystemV201;
 window.mwsF1GetEnergyStatesV201=getEnergyStatesV201;
@@ -3441,6 +3480,7 @@ window.__mwsF1RacingV209=VERSION209;
 window.__mwsF1RacingV210=VERSION210;
 window.__mwsF1RacingV211=VERSION211;
 window.__mwsF1RacingV212=VERSION212;
+window.__mwsF1RacingV213=VERSION213;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
