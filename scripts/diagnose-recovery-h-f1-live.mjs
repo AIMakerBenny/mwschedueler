@@ -178,6 +178,10 @@ try{
     assert(manualStart,'Explicit grid start button missing');
     manualStart.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='RACE','Explicit grid start click did not enter RACE');
+    await sleep(350);await raf();
+    const commentaryQa=window.mwsF1QaRaceCommentaryV219?.();
+    assert(commentaryQa?.allPass===true&&Number(commentaryQa?.entries)>=1,'Phase 219 commentary engine did not produce a live entry: '+JSON.stringify(commentaryQa));
+    assert(document.getElementById('f1RacingCommentaryLogV188')?.textContent?.includes('경기가 시작됐습니다.'),'Phase 219 race-start commentary missing');
 
     const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
     assert(workspace,'Race workspace missing');
