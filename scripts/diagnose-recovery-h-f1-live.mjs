@@ -315,7 +315,7 @@ try{
     const markerQa=window.mwsF1QaTrackMarkersV211?.();
     assert(markerQa?.trackCount>=3&&markerQa?.allPass===true,'Phase 211 marker integration failed: '+JSON.stringify(markerQa));
     const raceMarkerText=String(document.getElementById('f1RacingRaceAnnotationsRecoveryB')?.textContent||'');
-    assert(raceMarkerText.includes('출발 / 결승선')&&raceMarkerText.includes('PIT IN')&&raceMarkerText.includes('PIT OUT')&&raceMarkerText.includes('OVT D1'),'Phase 211 Race Control markers incomplete: '+raceMarkerText);
+    assert(raceMarkerText.includes('출발 / 결승선')&&raceMarkerText.includes('피트 진입')&&raceMarkerText.includes('피트 출구')&&raceMarkerText.includes('추월 감지 1'),'Phase 211 Race Control markers incomplete: '+raceMarkerText);
     const flipQa=window.mwsF1QaLiveTimingFlipV212?.();
     assert(flipQa?.allPass===true&&Number(flipQa?.domRows)>=2,'Phase 212 FLIP live timing QA failed: '+JSON.stringify(flipQa));
     const topThreeQa=window.mwsF1QaTopThreePresentationV213?.();
