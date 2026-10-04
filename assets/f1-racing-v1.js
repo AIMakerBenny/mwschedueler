@@ -59,6 +59,7 @@ const VERSION229='phase229-camera-director-stability';
 const VERSION230='phase230-commentary-event-order-integrity';
 const VERSION231='phase231-production-verifier-future-safe';
 const VERSION232='phase232-driver-marker-number-identity';
+const VERSION233='phase233-track-silhouette-cards';
 const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitchMs:1800,urgentBattleGapSeconds:0.55,focusDeadbandSvg:3,zoomDeadband:0.025});
 const COMMENTARY_CADENCE_V227=Object.freeze({flowGapMs:5500,strategyGapMs:3000,battleGapMs:1600,windowMs:60000,maxNarrativePerWindow:18});
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
@@ -380,6 +381,8 @@ function getTrackCatalogV186(){
     zones:Array.isArray(track.zones)?track.zones.length:0,
     overtakeZones:Array.isArray(track.overtakeZones)?track.overtakeZones.length:0,
     archetype:String(track.archetype||'종합형'),
+    path:String(track.path||''),
+    viewBox:Array.isArray(track.viewBox)&&track.viewBox.length===4?track.viewBox.map(Number):[0,0,1000,600],
     profile:trackProfileV223(track)
   }));
 }
@@ -402,7 +405,9 @@ function renderTrackChoicesV186(){
   if(count)count.textContent=tracks.length+'개 트랙';
   box.innerHTML=tracks.map(track=>{
     const selected=track.id===activeTrackId;
+    const viewBox=track.viewBox.map(value=>Number(value)||0).join(' ');
     return '<button type="button" class="f1-racing-track-card-v186 '+(selected?'selected':'')+'" data-f1-track-id="'+escapeHtml(track.id)+'" aria-pressed="'+(selected?'true':'false')+'">'+
+      '<span class="f1-racing-track-card-silhouette-v233"><svg viewBox="'+escapeHtml(viewBox)+'" aria-hidden="true" focusable="false"><path d="'+escapeHtml(track.path)+'"></path></svg></span>'+
       '<span class="f1-racing-track-card-title-v186">'+escapeHtml(track.name)+'</span>'+
       '<span class="f1-racing-track-card-type-v223">'+escapeHtml(track.archetype)+'</span>'+
       '<span class="f1-racing-track-card-meta-v186">'+(track.lengthMeters/1000).toFixed(3)+' km · 최고속도 성향 '+Math.round(track.profile.maxStraightKph)+' km/h · 폭 '+track.profile.widthMeters.toFixed(1)+' m</span>'+
@@ -979,6 +984,17 @@ function qaDiverseTrackCatalogV220(){
     allPass:catalog.length>=7&&required.every(id=>catalog.some(row=>row.id===id))&&paths.size===7&&archetypes.size>=6&&validations.every(row=>row.issues.length===0)};
 }
 
+function qaTrackSilhouetteCardsV233(){
+  const catalog=getTrackCatalogV186();
+  const pathSet=new Set(catalog.map(track=>String(track.path||'')));
+  const cards=[...document.querySelectorAll('#f1RacingTrackOptionsV186 [data-f1-track-id]')];
+  const cardPaths=cards.map(card=>String(card.querySelector('.f1-racing-track-card-silhouette-v233 path')?.getAttribute('d')||''));
+  return {
+    trackCount:catalog.length,uniqueCatalogPaths:pathSet.size,cardCount:cards.length,
+    silhouetteCount:cardPaths.filter(Boolean).length,uniqueCardPaths:new Set(cardPaths.filter(Boolean)).size,
+    allPass:catalog.length>=7&&pathSet.size===catalog.length&&cards.length===catalog.length&&cardPaths.every(Boolean)&&new Set(cardPaths).size===catalog.length
+  };
+}
 function qaTrackProfileUiV223(){
   const catalog=getTrackCatalogV186();
   const rows=catalog.map(track=>({
@@ -4404,6 +4420,8 @@ window.__mwsF1RacingV230=VERSION230;
 window.__mwsF1RacingV231=VERSION231;
 window.mwsF1QaDriverMarkerIdentityV232=qaDriverMarkerIdentityV232;
 window.__mwsF1RacingV232=VERSION232;
+window.mwsF1QaTrackSilhouetteCardsV233=qaTrackSilhouetteCardsV233;
+window.__mwsF1RacingV233=VERSION233;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
