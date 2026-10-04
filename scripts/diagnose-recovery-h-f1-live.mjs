@@ -335,6 +335,8 @@ try{
     const diverseTracksQa=window.mwsF1QaDiverseTrackCatalogV220?.();
     assert(diverseTracksQa?.allPass===true&&Number(diverseTracksQa?.trackCount)>=7,'Phase 220 diverse track catalog failed: '+JSON.stringify(diverseTracksQa));
     assert(Number(diverseTracksQa?.pathShapes)===7&&Number(diverseTracksQa?.archetypes)>=6,'Phase 220 track silhouettes/archetypes are not diverse: '+JSON.stringify(diverseTracksQa));
+    const benchmarkAlignmentQa=window.mwsF1QaTrackBenchmarkAlignmentV239?.();
+    assert(benchmarkAlignmentQa?.allPass===true&&Number(benchmarkAlignmentQa?.overtakeCorrelation)>=.72&&Number(benchmarkAlignmentQa?.incidentCorrelation)>=.72&&Number(benchmarkAlignmentQa?.speedCorrelation)>=.72,'Phase 239 benchmark alignment QA failed: '+JSON.stringify(benchmarkAlignmentQa));
     const trackBenchmarkQa=window.mwsF1QaSevenTrackBenchmarkV238?.();
     assert(trackBenchmarkQa?.allPass===true&&Number(trackBenchmarkQa?.rows?.length)===7&&Number(trackBenchmarkQa?.speedSpread)>=20&&Number(trackBenchmarkQa?.passSpread)>=1,'Phase 238 seven-track benchmark QA failed: '+JSON.stringify(trackBenchmarkQa));
     const telemetryQa=window.mwsF1QaRaceResultTelemetryV237?.();
