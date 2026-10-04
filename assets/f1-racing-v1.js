@@ -1717,21 +1717,121 @@ function applyWorkspaceLayoutRecoveryE(){
   renderWorkspaceVisibilityControlsRecoveryE();
   return true;
 }
-function workspaceDockLayoutRecoveryE(id,zone){
+
+function workspaceGridRowHeightRecoveryJ(workspace=document.getElementById('f1RacingWorkspaceRecoveryE')){
+  if(!workspace)return 72;
+  const raw=parseFloat(getComputedStyle(workspace).gridAutoRows);
+  return Number.isFinite(raw)&&raw>0?raw:72;
+}
+function workspaceDockRectRecoveryJ(id,zone){
+  const min=workspaceMinSizeRecoveryI(id);
+  if(zone==='left')return {x:0,y:0,w:Math.max(min.w,5),h:10};
+  if(zone==='right'){const w=Math.max(min.w,5);return {x:12-w,y:0,w,h:10}}
+  if(zone==='top')return {x:0,y:0,w:12,h:Math.max(min.h,3)};
+  if(zone==='bottom'){const h=Math.max(min.h,3);return {x:0,y:10-h,w:12,h}}
+  return null;
+}
+function workspaceRegionFreeRectRecoveryJ(id,desired,region,occupied){
+  const min=workspaceMinSizeRecoveryI(id);
+  const w=Math.max(min.w,Math.min(region.w,Math.round(Number(desired?.w)||min.w)));
+  const h=Math.max(min.h,Math.min(region.h,Math.round(Number(desired?.h)||min.h)));
+  const find=(width,height)=>{
+    const maxX=region.x+region.w-width,maxY=region.y+region.h-height,candidates=[];
+    for(let y=region.y;y<=maxY;y++){
+      for(let x=region.x;x<=maxX;x++){
+        const rect={x,y,w:width,h:height};
+        if(occupied.some(other=>workspaceRectIntersectsRecoveryI(rect,other)))continue;
+        const score=Math.abs(x-(Number(desired?.x)||region.x))*2+Math.abs(y-(Number(desired?.y)||region.y))+y*.01+x*.002;
+        candidates.push({rect,score});
+      }
+    }
+    candidates.sort((a,b)=>a.score-b.score);
+    return candidates[0]?.rect||null;
+  };
+  return find(w,h)||find(min.w,min.h);
+}
+function workspacePackRegionRecoveryJ(layout,excludeId,region){
+  const excludedKey=layout.panels[excludeId]?.tabGroup?'tab:'+layout.panels[excludeId].tabGroup:'panel:'+excludeId;
+  const slots=workspaceSlotLeadersRecoveryI(layout).filter(slot=>slot.key!==excludedKey).sort((a,b)=>a.rect.y-b.rect.y||a.rect.x-b.rect.x);
+  const occupied=[];
+  for(const slot of slots){
+    const placed=workspaceRegionFreeRectRecoveryJ(slot.id,slot.rect,region,occupied);
+    if(!placed)return false;
+    workspaceApplySlotRectRecoveryI(layout,slot.id,placed);
+    occupied.push(placed);
+  }
+  return true;
+}
+function workspaceDockSplitRecoveryJ(id,zone){
   if(!workspaceLayoutRecoveryE?.panels[id])return false;
   workspaceDetachTabRecoveryI(workspaceLayoutRecoveryE,id);
-  const state=workspaceLayoutRecoveryE.panels[id];
-  state.maximized=false;
-  let desired=null;
-  if(zone==='left')desired={x:0,y:0,w:6,h:8};
-  else if(zone==='right')desired={x:6,y:0,w:6,h:8};
-  else if(zone==='top')desired={x:0,y:0,w:12,h:4};
-  else if(zone==='bottom')desired={x:0,y:4,w:12,h:4};
-  else return false;
-  workspaceReflowRecoveryI(workspaceLayoutRecoveryE,id,desired);
-  applyWorkspaceLayoutRecoveryE();
-  persistWorkspaceLayoutRecoveryE();
+  const source=workspaceLayoutRecoveryE.panels[id];
+  source.maximized=false;source.hidden=false;
+  const desired=workspaceDockRectRecoveryJ(id,zone);
+  if(!desired)return false;
+  const placed=workspaceApplySlotRectRecoveryI(workspaceLayoutRecoveryE,id,desired);
+  let region=null;
+  if(zone==='left')region={x:placed.w,y:0,w:12-placed.w,h:10};
+  else if(zone==='right')region={x:0,y:0,w:placed.x,h:10};
+  else if(zone==='top')region={x:0,y:placed.h,w:12,h:10-placed.h};
+  else if(zone==='bottom')region={x:0,y:0,w:12,h:placed.y};
+  if(!region||region.w<3||region.h<2)return false;
+  if(!workspacePackRegionRecoveryJ(workspaceLayoutRecoveryE,id,region))workspaceReflowRecoveryI(workspaceLayoutRecoveryE,id,placed);
+  applyWorkspaceLayoutRecoveryE();persistWorkspaceLayoutRecoveryE();
   return workspaceOverlapPairsRecoveryI().length===0;
+}
+function workspaceAdjacentSlotsRecoveryJ(layout,id,edge){
+  const source=workspaceClampRectRecoveryI(id,layout.panels[id]);
+  return workspaceSlotLeadersRecoveryI(layout).filter(slot=>{
+    if(slot.members.includes(id))return false;
+    const rect=slot.rect;
+    if(edge==='right')return rect.x===source.x+source.w&&Math.min(source.y+source.h,rect.y+rect.h)>Math.max(source.y,rect.y);
+    if(edge==='bottom')return rect.y===source.y+source.h&&Math.min(source.x+source.w,rect.x+rect.w)>Math.max(source.x,rect.x);
+    return false;
+  });
+}
+function workspaceResizeSplitRecoveryJ(pointer,dw,dh){
+  if(!pointer?.layoutStart?.panels?.[pointer.id])return false;
+  workspaceLayoutRecoveryE=cloneWorkspaceLayoutRecoveryE(pointer.layoutStart);
+  const id=pointer.id,start=workspaceClampRectRecoveryI(id,pointer.layoutStart.panels[id]),min=workspaceMinSizeRecoveryI(id);
+  let targetW=Math.max(min.w,Math.min(12-start.x,start.w+dw));
+  const right=workspaceAdjacentSlotsRecoveryJ(pointer.layoutStart,id,'right');
+  if(right.length){
+    const maxPositive=Math.min(...right.map(slot=>slot.rect.w-workspaceMinSizeRecoveryI(slot.id).w));
+    const delta=Math.max(min.w-start.w,Math.min(targetW-start.w,maxPositive));
+    targetW=start.w+delta;
+    for(const slot of right)workspaceApplySlotRectRecoveryI(workspaceLayoutRecoveryE,slot.id,{x:slot.rect.x+delta,y:slot.rect.y,w:slot.rect.w-delta,h:slot.rect.h});
+  }
+  let targetH=Math.max(min.h,Math.min(12,start.h+dh));
+  const bottom=workspaceAdjacentSlotsRecoveryJ(pointer.layoutStart,id,'bottom');
+  if(bottom.length){
+    const maxPositive=Math.min(...bottom.map(slot=>slot.rect.h-workspaceMinSizeRecoveryI(slot.id).h));
+    const delta=Math.max(min.h-start.h,Math.min(targetH-start.h,maxPositive));
+    targetH=start.h+delta;
+    for(const slot of bottom)workspaceApplySlotRectRecoveryI(workspaceLayoutRecoveryE,slot.id,{x:slot.rect.x,y:slot.rect.y+delta,w:slot.rect.w,h:slot.rect.h-delta});
+  }
+  workspaceApplySlotRectRecoveryI(workspaceLayoutRecoveryE,id,{x:start.x,y:start.y,w:targetW,h:targetH});
+  workspaceReflowRecoveryI(workspaceLayoutRecoveryE,id,workspaceLayoutRecoveryE.panels[id]);
+  return workspaceOverlapPairsRecoveryI().length===0;
+}
+function workspaceDropPreviewRectRecoveryJ(drop,sourceId){
+  const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
+  if(!workspace||!drop)return null;
+  const wr=workspace.getBoundingClientRect();
+  if(drop.kind==='tab'&&drop.rect)return {left:drop.rect.left-wr.left,top:drop.rect.top-wr.top,width:drop.rect.width,height:drop.rect.height};
+  let rect=null;
+  if(drop.kind==='dock')rect=workspaceDockRectRecoveryJ(sourceId,drop.zone);
+  if(drop.kind==='free'){
+    const state=workspaceLayoutRecoveryE?.panels?.[sourceId];if(!state)return null;
+    rect=workspaceClampRectRecoveryI(sourceId,{x:drop.x,y:drop.y,w:state.w,h:state.h});
+  }
+  if(!rect)return null;
+  const col=wr.width/12,row=workspaceGridRowHeightRecoveryJ(workspace),gap=parseFloat(getComputedStyle(workspace).gap)||0;
+  return {left:rect.x*col,top:rect.y*row,width:Math.max(0,rect.w*col-gap),height:Math.max(0,rect.h*row-gap)};
+}
+
+function workspaceDockLayoutRecoveryE(id,zone){
+  return workspaceDockSplitRecoveryJ(id,zone);
 }
 function workspaceTabGroupRecoveryE(sourceId,targetId){
   if(sourceId===targetId||!workspaceLayoutRecoveryE?.panels[sourceId]||!workspaceLayoutRecoveryE?.panels[targetId])return false;
@@ -1797,25 +1897,21 @@ function workspaceDropTargetRecoveryE(clientX,clientY,sourceId){
   }
   const state=workspaceLayoutRecoveryE.panels[sourceId];
   const col=Math.max(0,Math.min(12-state.w,Math.round(rx*12-state.w/2)));
-  const rowHeight=72;
-  const row=Math.max(0,Math.min(12-state.h,Math.round((clientY-rect.top)/rowHeight-state.h/2)));
+  const rowHeight=workspaceGridRowHeightRecoveryJ(workspace);
+  const row=Math.max(0,Math.min(F1_WORKSPACE_MAX_ROWS_RECOVERY_I-state.h,Math.round((clientY-rect.top)/rowHeight-state.h/2)));
   return {kind:'free',x:col,y:row};
 }
-function showWorkspaceDockGuideRecoveryE(drop){
+function showWorkspaceDockGuideRecoveryE(drop,sourceId=''){
   const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
   const guide=document.getElementById('f1RacingWorkspaceDockGuideRecoveryE');
   if(!workspace||!guide)return;
-  if(!drop||drop.kind==='none'||drop.kind==='free'){guide.hidden=true;return}
+  if(!drop||drop.kind==='none'){guide.hidden=true;return}
+  const preview=workspaceDropPreviewRectRecoveryJ(drop,sourceId);
+  if(!preview){guide.hidden=true;return}
   guide.hidden=false;
-  guide.className='f1-racing-workspace-dock-guide-recovery-e '+(drop.kind==='tab'?'tab':drop.zone||'');
-  guide.removeAttribute('style');
-  if(drop.kind==='tab'&&drop.rect){
-    const wr=workspace.getBoundingClientRect();
-    guide.style.left=(drop.rect.left-wr.left)+'px';
-    guide.style.top=(drop.rect.top-wr.top)+'px';
-    guide.style.width=drop.rect.width+'px';
-    guide.style.height=drop.rect.height+'px';
-  }
+  guide.className='f1-racing-workspace-dock-guide-recovery-e '+(drop.kind==='tab'?'tab':drop.kind==='free'?'free':drop.zone||'');
+  guide.dataset.preview=drop.kind==='tab'?'TAB':drop.kind==='free'?'MOVE':String(drop.zone||'DOCK').toUpperCase();
+  guide.style.left=preview.left+'px';guide.style.top=preview.top+'px';guide.style.width=preview.width+'px';guide.style.height=preview.height+'px';
 }
 function beginWorkspacePointerRecoveryE(event,type,id){
   const panel=workspacePanelRecoveryE(id);
@@ -1825,6 +1921,7 @@ function beginWorkspacePointerRecoveryE(event,type,id){
   workspacePointerRecoveryE={
     type,id,startX:event.clientX,startY:event.clientY,
     start:cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE.panels[id]),
+    layoutStart:cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE),
     lastX:event.clientX,lastY:event.clientY
   };
   panel.classList.add(type==='drag'?'is-dragging':'is-resizing');
@@ -1835,21 +1932,15 @@ function onWorkspacePointerMoveRecoveryE(event){
   const panel=workspacePanelRecoveryE(state.id);if(!panel)return;
   if(state.type==='drag'){
     panel.style.transform='translate('+(event.clientX-state.startX)+'px,'+(event.clientY-state.startY)+'px)';
-    showWorkspaceDockGuideRecoveryE(workspaceDropTargetRecoveryE(event.clientX,event.clientY,state.id));
+    showWorkspaceDockGuideRecoveryE(workspaceDropTargetRecoveryE(event.clientX,event.clientY,state.id),state.id);
     return;
   }
   const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');if(!workspace)return;
   const colWidth=Math.max(1,workspace.clientWidth/12);
+  const rowHeight=workspaceGridRowHeightRecoveryJ(workspace);
   const dw=Math.round((event.clientX-state.startX)/colWidth);
-  const dh=Math.round((event.clientY-state.startY)/72);
-  const row=workspaceLayoutRecoveryE.panels[state.id];
-  const min=workspaceMinSizeRecoveryI(state.id);
-  const desired={
-    x:state.start.x,y:state.start.y,
-    w:Math.max(min.w,Math.min(12-state.start.x,state.start.w+dw)),
-    h:Math.max(min.h,Math.min(12,state.start.h+dh))
-  };
-  workspaceReflowRecoveryI(workspaceLayoutRecoveryE,state.id,desired);
+  const dh=Math.round((event.clientY-state.startY)/rowHeight);
+  workspaceResizeSplitRecoveryJ(state,dw,dh);
   applyWorkspaceLayoutRecoveryE();
 }
 function onWorkspacePointerUpRecoveryE(event){
@@ -1857,7 +1948,7 @@ function onWorkspacePointerUpRecoveryE(event){
   workspacePointerRecoveryE=null;
   const panel=workspacePanelRecoveryE(pointer.id);
   if(panel){panel.classList.remove('is-dragging','is-resizing');panel.style.transform=''}
-  showWorkspaceDockGuideRecoveryE(null);
+  showWorkspaceDockGuideRecoveryE(null,pointer.id);
   if(pointer.type==='resize'){persistWorkspaceLayoutRecoveryE();return}
   const drop=workspaceDropTargetRecoveryE(event.clientX,event.clientY,pointer.id);
   const state=workspaceLayoutRecoveryE.panels[pointer.id];
@@ -2173,6 +2264,13 @@ window.mwsF1ToggleWorkspaceMaximizeRecoveryE=workspaceToggleMaximizeRecoveryE;
 window.mwsF1GetWorkspaceLayoutRecoveryE=function(){return workspaceLayoutRecoveryE?cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE):null};
 window.mwsF1ReflowWorkspaceRecoveryI=function(id='',rect=null){if(!workspaceLayoutRecoveryE)return false;workspaceReflowRecoveryI(workspaceLayoutRecoveryE,id,rect);applyWorkspaceLayoutRecoveryE();persistWorkspaceLayoutRecoveryE();return workspaceOverlapPairsRecoveryI().length===0};
 window.mwsF1WorkspaceOverlapPairsRecoveryI=function(){return workspaceOverlapPairsRecoveryI().map(pair=>pair.slice())};
+window.mwsF1DockSplitRecoveryJ=workspaceDockSplitRecoveryJ;
+window.mwsF1ResizeSplitRecoveryJ=function(id,dw=0,dh=0){
+  if(!workspaceLayoutRecoveryE?.panels?.[id])return false;
+  const pointer={id,start:cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE.panels[id]),layoutStart:cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE)};
+  const ok=workspaceResizeSplitRecoveryJ(pointer,Number(dw)||0,Number(dh)||0);
+  applyWorkspaceLayoutRecoveryE();persistWorkspaceLayoutRecoveryE();return ok;
+};
 window.mwsF1FinishRaceRecoveryG=finishRaceRecoveryG;
 window.mwsF1ForceFinishRecoveryG=function(){return finishRaceRecoveryG(true)};
 window.mwsF1ShowPodiumRecoveryG=showPodiumRecoveryG;
@@ -2255,6 +2353,7 @@ window.__mwsF1RecoveryE='premiere-workspace-foundation-v1';
 window.__mwsF1RecoveryF='race-workspace-default-redesign-v1';
 window.__mwsF1RecoveryG='complete-race-lifecycle-v1';
 window.__mwsF1RecoveryI='collision-free-reflow-v1';
+window.__mwsF1RecoveryJ='split-resize-dock-preview-v1';
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){
