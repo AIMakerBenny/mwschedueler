@@ -46,6 +46,7 @@ const VERSION216='phase216-driver-markers-camera';
 const VERSION217='phase217-compact-three-panel-workspace';
 const VERSION218='phase218-korean-interface';
 const VERSION219='phase219-race-commentary-engine';
+const VERSION220='phase220-diverse-track-catalog';
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
 const CAMERA_MODES_V216=Object.freeze(['AUTO','FULL','LEADER','BATTLE','MANUAL']);
 const raceCameraV216={mode:'AUTO',zoom:1.9,cx:500,cy:300,dragging:false,pointerId:null,lastX:0,lastY:0,initialized:false};
@@ -341,7 +342,8 @@ function getTrackCatalogV186(){
     sectors:Array.isArray(track.sectors)?track.sectors.length:0,
     pitLimit:Number(track.pit?.speedLimitKph)||0,
     zones:Array.isArray(track.zones)?track.zones.length:0,
-    overtakeZones:Array.isArray(track.overtakeZones)?track.overtakeZones.length:0
+    overtakeZones:Array.isArray(track.overtakeZones)?track.overtakeZones.length:0,
+    archetype:String(track.archetype||'종합형')
   }));
 }
 function selectTrackV186(trackId){
@@ -360,13 +362,13 @@ function renderTrackChoicesV186(){
   const count=document.getElementById('f1RacingTrackCountV186');
   if(!box)return;
   const tracks=getTrackCatalogV186();
-  if(count)count.textContent=tracks.length+' TRACK'+(tracks.length===1?'':'S');
+  if(count)count.textContent=tracks.length+'개 트랙';
   box.innerHTML=tracks.map(track=>{
     const selected=track.id===activeTrackId;
     return '<button type="button" class="f1-racing-track-card-v186 '+(selected?'selected':'')+'" data-f1-track-id="'+escapeHtml(track.id)+'" aria-pressed="'+(selected?'true':'false')+'">'+
       '<span class="f1-racing-track-card-title-v186">'+escapeHtml(track.name)+'</span>'+
-      '<span class="f1-racing-track-card-meta-v186">'+(track.lengthMeters/1000).toFixed(3)+' km · '+track.sectors+' sectors · '+track.zones+' zones</span>'+
-      '<span class="f1-racing-track-card-meta-v186">Pit '+track.pitLimit+' km/h · Overtake '+track.overtakeZones+'</span>'+
+      '<span class="f1-racing-track-card-meta-v186">'+escapeHtml(track.archetype)+' · '+(track.lengthMeters/1000).toFixed(3)+' km · '+track.sectors+'개 섹터</span>'+
+      '<span class="f1-racing-track-card-meta-v186">피트 '+track.pitLimit+' km/h · 추월 구간 '+track.overtakeZones+'개</span>'+
       '</button>';
   }).join('');
   box.querySelectorAll('[data-f1-track-id]').forEach(button=>button.addEventListener('click',()=>selectTrackV186(button.dataset.f1TrackId)));
@@ -923,10 +925,20 @@ function qaMultiTrackIntegrationV210(){
       tracks.push({id:item.id,name:item.name,validation,snapshotReady,geometryReady,pitReady,overtakeReady,renderingReady,dynamicsReady,trafficPassReady,samples:geometry?.samples?.length||0,corners:cornered?.cornerPhases?.length||0,pass});
     }
   }finally{activeTrackId=originalTrackId}
-  return {trackCount:tracks.length,ids:tracks.map(row=>row.id),tracks,allPass:tracks.length===3&&tracks.every(row=>row.pass)};
+  return {trackCount:tracks.length,ids:tracks.map(row=>row.id),tracks,allPass:tracks.length>=3&&tracks.every(row=>row.pass)};
 }
 
 
+
+function qaDiverseTrackCatalogV220(){
+  const catalog=getTrackCatalogV186();
+  const required=['majoku-ring-v1','castle-street-circuit-v1','blue-coast-speedway-v1','mawang-speed-park-v1','royal-street-circuit-v1','infinity-eight-circuit-v1','highland-flow-ring-v1'];
+  const paths=new Set(required.map(id=>String(window.mwsGetF1TrackV182?.(id)?.path||'')));
+  const archetypes=new Set(catalog.map(row=>String(row.archetype||'')));
+  const validations=required.map(id=>({id,issues:window.mwsValidateF1TrackV182?.(window.mwsGetF1TrackV182?.(id))||['validator missing']}));
+  return {trackCount:catalog.length,ids:catalog.map(row=>row.id),pathShapes:paths.size,archetypes:archetypes.size,validations,
+    allPass:catalog.length>=7&&required.every(id=>catalog.some(row=>row.id===id))&&paths.size===7&&archetypes.size>=6&&validations.every(row=>row.issues.length===0)};
+}
 
 function trackZoneAtProgressV202(progress){
   const track=activeRaceSnapshotV187?.track;
@@ -3671,7 +3683,7 @@ function qaTrackMarkersV211(){
     pitReady:Boolean(track.pit&&Number.isFinite(Number(track.pit.entry))&&Number.isFinite(Number(track.pit.exit))),
     detectionLines:(track.overtakeZones||[]).filter(zone=>Number.isFinite(Number(zone.detection))).length
   }));
-  return {trackCount:rows.length,rows,allPass:rows.length===3&&rows.every(row=>row.sectors===3&&row.speedTraps>=3&&row.pitReady&&row.detectionLines>=1)};
+  return {trackCount:rows.length,rows,allPass:rows.length>=3&&rows.every(row=>row.sectors===3&&row.speedTraps>=3&&row.pitReady&&row.detectionLines>=1)};
 }
 
 function renderTrackMapV183(){
@@ -3889,6 +3901,8 @@ window.mwsF1AppendRaceCommentaryV219=appendRaceCommentaryV219;
 window.mwsF1UpdateRaceCommentaryV219=updateRaceCommentaryV219;
 window.mwsF1QaRaceCommentaryV219=qaRaceCommentaryV219;
 window.__mwsF1RacingV219=VERSION219;
+window.mwsF1QaDiverseTrackCatalogV220=qaDiverseTrackCatalogV220;
+window.__mwsF1RacingV220=VERSION220;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
