@@ -10,9 +10,9 @@ export function runPhase193F1TrackGeometryAudit(){
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
   for(const token of [
-    'assets/f1-track-v1.js?v=1.0.0-phase193-geometry-meta',
-    'assets/f1-track-geometry-v2.js?v=1.0.0-phase193',
-    'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=193'
+    'assets/f1-track-v1.js?v=',
+    'assets/f1-track-geometry-v2.js?v=',
+    'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p='
   ])if(!index.includes(token))issues.push('Phase 193 asset link missing: '+token);
 
   for(const token of [

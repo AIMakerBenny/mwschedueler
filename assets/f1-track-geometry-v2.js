@@ -67,6 +67,70 @@ function detectCorners(track,samples){
     };
   });
 }
+function normalizeProgress(value){return ((Number(value)||0)%1+1)%1}
+function targetKphAtProgress(track,progress){
+  const p=normalizeProgress(progress);
+  const zones=Array.isArray(track?.zones)?track.zones:[];
+  const zone=zones.find(z=>p>=Number(z.start)&&p<Number(z.end))||zones[zones.length-1];
+  return Math.max(1,Number(zone?.targetKph)||180);
+}
+function classifyCornerBySpeed(apexKph){
+  if(apexKph<110)return 'hairpin';
+  if(apexKph<160)return 'slow';
+  if(apexKph<220)return 'medium';
+  return 'fast';
+}
+function buildCornerPhases(track,geometry){
+  if(!track||!geometry?.corners?.length)return {...geometry,cornerPhases:[]};
+  const length=Math.max(1,Number(track.lengthMeters)||1);
+  const decel=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20);
+  const lead=Math.max(0,Number(track?.geometry?.approachLeadMeters)||80);
+  const phases=geometry.corners.map(function(corner){
+    const turnInProgress=normalizeProgress(corner.startProgress);
+    const apexProgress=normalizeProgress(corner.apexProgress);
+    const exitProgress=normalizeProgress(corner.endProgress);
+    const apexKph=targetKphAtProgress(track,apexProgress);
+    const candidates=[0.03,0.05,0.08].map(offset=>targetKphAtProgress(track,turnInProgress-offset));
+    const approachKph=Math.max(apexKph+20,...candidates);
+    const v0=approachKph/3.6,v1=apexKph/3.6;
+    const brakingDistanceMeters=Math.max(0,(v0*v0-v1*v1)/(2*decel));
+    const brakingProgress=normalizeProgress(turnInProgress-brakingDistanceMeters/length);
+    const approachProgress=normalizeProgress(brakingProgress-lead/length);
+    return {
+      ...corner,
+      approachProgress,
+      brakingProgress,
+      turnInProgress,
+      apexProgress,
+      exitProgress,
+      referenceApproachKph:approachKph,
+      referenceApexKph:apexKph,
+      referenceBrakeDecelMps2:decel,
+      brakingDistanceMeters,
+      cornerClass:classifyCornerBySpeed(apexKph)
+    };
+  });
+  return {...geometry,cornerPhases:phases};
+}
+function forwardProgressDistance(from,to){return normalizeProgress(Number(to)-Number(from))}
+function cornerPhaseAtProgress(geometry,progress){
+  const p=normalizeProgress(progress);
+  for(const corner of geometry?.cornerPhases||[]){
+    const total=forwardProgressDistance(corner.approachProgress,corner.exitProgress);
+    const here=forwardProgressDistance(corner.approachProgress,p);
+    if(here>total)continue;
+    const brake=forwardProgressDistance(corner.approachProgress,corner.brakingProgress);
+    const turn=forwardProgressDistance(corner.approachProgress,corner.turnInProgress);
+    const apex=forwardProgressDistance(corner.approachProgress,corner.apexProgress);
+    if(here<brake)return {corner,phase:'APPROACH'};
+    if(here<turn)return {corner,phase:'BRAKING'};
+    if(here<apex)return {corner,phase:'TURN_IN'};
+    const apexWindow=Math.max(0.0005,(Number(corner.lengthMeters)||40)/(Math.max(1,Number(geometry.lengthMeters)||1))*0.18);
+    if(here<Math.min(total,apex+apexWindow))return {corner,phase:'APEX'};
+    return {corner,phase:'EXIT'};
+  }
+  return null;
+}
 function buildTrackGeometry(track,pathElement){
   if(!track||!pathElement)return null;
   const samples=makeSamples(track,pathElement);
@@ -91,5 +155,8 @@ function sampleAtProgress(geometry,progress){
 
 root.mwsBuildF1TrackGeometryV193=buildTrackGeometry;
 root.mwsF1TrackGeometrySampleAtProgressV193=sampleAtProgress;
+root.mwsBuildF1CornerPhasesV194=buildCornerPhases;
+root.mwsF1CornerPhaseAtProgressV194=cornerPhaseAtProgress;
 root.__mwsF1TrackGeometryV193='svg-sampling-curvature-corners-v1';
+root.__mwsF1TrackCornerPhasesV194='approach-brake-turn-apex-exit-v1';
 })(typeof window!=='undefined'?window:globalThis);
