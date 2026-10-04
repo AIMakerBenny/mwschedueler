@@ -36,7 +36,7 @@ export function runPhase188F1RaceControlFrameAudit(){
     'window.__mwsF1RacingV188=VERSION188;'
   ])if(!js.includes(token))issues.push('Phase 188 runtime missing: '+token);
 
-  if(!js.includes("setScreenStateV185('RACE');\n    renderRaceControlV188();"))issues.push('Race transition does not render Race Control from the active snapshot');
+  if(!js.includes("if(!setScreenStateV185('RACE'))return false;\n  renderRaceControlV188();"))issues.push('Explicit race start does not render Race Control from the active snapshot');
 
   for(const token of [
     '.f1-racing-race-control-v188{',
