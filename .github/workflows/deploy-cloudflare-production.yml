@@ -181,6 +181,7 @@ jobs:
           node --check scripts/run-phase236-f1-track-aware-commentary-audit.mjs
           node --check scripts/run-phase237-f1-race-result-telemetry-audit.mjs
           node --check scripts/run-phase238-f1-seven-track-benchmark-audit.mjs
+          node --check scripts/run-phase239-f1-track-benchmark-alignment-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
