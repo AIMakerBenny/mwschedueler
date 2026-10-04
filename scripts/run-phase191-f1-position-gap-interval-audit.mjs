@@ -11,7 +11,7 @@ export function runPhase191F1PositionGapIntervalAudit(){
   for(const token of [
     'assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=',
     'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=',
-    '<span>GAP</span><span>INT</span><span>TYRE</span>'
+    '<span>격차</span><span>앞차</span><span>타이어</span>'
   ])if(!index.includes(token))issues.push('Phase 191 HTML missing: '+token);
 
   for(const token of [
@@ -23,8 +23,8 @@ export function runPhase191F1PositionGapIntervalAudit(){
     'gapSeconds:index===0?0:gapProgress*leaderLapMs/1000',
     'intervalSeconds:index===0?0:intervalProgress*previousLapMs/1000',
     'function formatRaceDeltaV191(progress,seconds,isLeader=false){',
-    "if(isLeader)return 'LEADER';",
-    "return '+'+laps+' LAP'+(laps===1?'':'S');",
+    "if(isLeader)return '선두';",
+    "return '+'+laps+'랩';",
     'function updateRaceStandingsV191(){',
     "row.dataset.position=String(standing.position);",
     "pos.textContent='P'+String(standing.position).padStart(2,'0');",
