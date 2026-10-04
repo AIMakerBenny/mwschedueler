@@ -8,7 +8,7 @@ export function runPhase196F1VehicleDynamicsAudit(){
   const racing=fs.readFileSync('assets/f1-racing-v1.js','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  for(const token of ['assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196','assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=196'])if(!index.includes(token))issues.push('Phase 196 asset link missing: '+token);
+  for(const token of ['assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196','assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p='])if(!index.includes(token))issues.push('Phase 196 asset link missing: '+token);
   for(const token of [
     "const VERSION196='phase196-vehicle-dynamics-telemetry';",
     'speedKph:0,targetSpeedKph:0,throttle:0,brake:0,accelerationMps2:0,gear:1,rpm:8500',

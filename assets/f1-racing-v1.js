@@ -17,7 +17,9 @@ const VERSION193='phase193-track-geometry-v2';
 const VERSION194='phase194-corner-phase-model';
 const VERSION195='phase195-speed-profile';
 const VERSION196='phase196-vehicle-dynamics-telemetry';
+const VERSION197='phase197-racing-line-track-width';
 const DEFAULT_TOTAL_LAPS_V190=10;
+const F1_LINE_MODES_V197=Object.freeze(['IDEAL','ATTACK_INSIDE','DEFENSIVE_INSIDE','OUTSIDE','PIT_LINE']);
 const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
 const F1_TRANSITIONS_V185=Object.freeze({
   SETUP:Object.freeze(['TRANSITION']),
@@ -449,6 +451,7 @@ function createRaceVehiclesV189(snapshot){
       id:String(driver.contactId),driver,startOffset,progress:normalizedProgressV190(startOffset),travel:0,raceProgress:startOffset,raceDistanceMeters:0,currentLap:1,completedLaps:0,sector:'GRID',
       lapDurationMs:21000,
       speedKph:0,targetSpeedKph:0,throttle:0,brake:0,accelerationMps2:0,gear:1,rpm:8500,
+      racingLineMode:'IDEAL',lateralOffsetMeters:0,
       marker:null
     };
     return syncVehicleRaceMetricsV190(vehicle,snapshot.track);
@@ -466,6 +469,53 @@ function ensureRaceVehicleMarkerV189(vehicle,index){
   }
   vehicle.marker=marker;return marker;
 }
+function lineOffsetMetersV197(vehicle){
+  const track=activeRaceSnapshotV187?.track;
+  const width=Math.max(4,Number(track?.geometry?.trackWidthMeters)||14);
+  const margin=Math.max(0,Number(track?.geometry?.racingLineMarginMeters)||1.5);
+  const usable=Math.max(1,width/2-margin);
+  const phaseInfo=getCornerPhaseAtProgressV194(vehicle?.progress);
+  const corner=phaseInfo?.corner;
+  const direction=corner?.direction==='right'?-1:1;
+  const mode=F1_LINE_MODES_V197.includes(vehicle?.racingLineMode)?vehicle.racingLineMode:'IDEAL';
+  if(mode==='ATTACK_INSIDE')return direction*usable*.72;
+  if(mode==='DEFENSIVE_INSIDE')return direction*usable*.55;
+  if(mode==='OUTSIDE')return -direction*usable*.72;
+  if(mode==='PIT_LINE')return -usable*.9;
+  if(!phaseInfo)return 0;
+  if(phaseInfo.phase==='APPROACH'||phaseInfo.phase==='BRAKING')return -direction*usable*.62;
+  if(phaseInfo.phase==='TURN_IN')return -direction*usable*.18;
+  if(phaseInfo.phase==='APEX')return direction*usable*.72;
+  if(phaseInfo.phase==='EXIT')return -direction*usable*.42;
+  return 0;
+}
+function raceLinePointV197(path,progress,offsetMeters){
+  const total=Number(path?.getTotalLength?.())||0;
+  if(!(total>0))return null;
+  const p=((Number(progress)||0)%1+1)%1;
+  const at=p*total;
+  const center=path.getPointAtLength(at);
+  const d=Math.max(1,total/800);
+  const before=path.getPointAtLength(Math.max(0,at-d));
+  const after=path.getPointAtLength(Math.min(total,at+d));
+  const dx=Number(after.x)-Number(before.x),dy=Number(after.y)-Number(before.y);
+  const mag=Math.hypot(dx,dy)||1;
+  const nx=-dy/mag,ny=dx/mag;
+  const track=activeRaceSnapshotV187?.track;
+  const physicalWidth=Math.max(1,Number(track?.geometry?.trackWidthMeters)||14);
+  const visualWidth=Math.max(8,Number(track?.geometry?.visualTrackWidthSvg)||26);
+  const offsetSvg=(Number(offsetMeters)||0)*(visualWidth/physicalWidth);
+  return {x:Number(center.x)+nx*offsetSvg,y:Number(center.y)+ny*offsetSvg};
+}
+function setVehicleRacingLineV197(driverId,mode){
+  const key=String(driverId||'');
+  const next=String(mode||'').toUpperCase();
+  if(!F1_LINE_MODES_V197.includes(next))return false;
+  const vehicle=raceMotionV189.vehicles.find(v=>String(v.id)===key);
+  if(!vehicle)return false;
+  vehicle.racingLineMode=next;
+  return true;
+}
 function renderRaceVehiclesV189(){
   const path=document.getElementById('f1RacingRaceTrackPathV188');
   const layer=document.getElementById('f1RacingRaceVehicleLayerV188');
@@ -473,8 +523,11 @@ function renderRaceVehiclesV189(){
   const totalLength=path.getTotalLength();if(!(totalLength>0))return false;
   raceMotionV189.vehicles.forEach(function(vehicle,index){
     const marker=vehicle.marker||ensureRaceVehicleMarkerV189(vehicle,index);if(!marker)return;
-    const point=path.getPointAtLength((((Number(vehicle.progress)||0)%1+1)%1)*totalLength);
+    vehicle.lateralOffsetMeters=lineOffsetMetersV197(vehicle);
+    const point=raceLinePointV197(path,vehicle.progress,vehicle.lateralOffsetMeters);if(!point)return;
     marker.setAttribute('transform','translate('+point.x.toFixed(2)+' '+point.y.toFixed(2)+')');
+    marker.dataset.lineMode=vehicle.racingLineMode||'IDEAL';
+    marker.dataset.cornerPhase=getCornerPhaseAtProgressV194(vehicle.progress)?.phase||'STRAIGHT';
   });
   return true;
 }
@@ -726,7 +779,7 @@ function render(){
   if(previewStateV184.running)stopPreviewV184(true);
   if(f1ScreenStateV185==='RACE'&&activeRaceSnapshotV187){renderRaceControlV188();startRaceMotionV189()}
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent=f1ScreenStateV185==='SETUP'?'RACE SETUP':'RACE CONTROL';
-  section.dataset.f1Runtime=VERSION196;
+  section.dataset.f1Runtime=VERSION197;
   return true;
 }
 function toggleDriver(id){
@@ -843,6 +896,9 @@ window.mwsF1GetSpeedTargetAtProgressV195=getSpeedTargetAtProgressV195;
 window.mwsF1SimulateVehicleDynamicsV196=simulateVehicleDynamicsV196;
 window.mwsF1GearForSpeedV196=gearForSpeedV196;
 window.mwsF1RpmForSpeedAndGearV196=rpmForSpeedAndGearV196;
+window.mwsF1SetVehicleRacingLineV197=setVehicleRacingLineV197;
+window.mwsF1LineOffsetMetersV197=lineOffsetMetersV197;
+window.mwsF1RaceLinePointV197=raceLinePointV197;
 window.__mwsF1RacingV180=VERSION;
 window.__mwsF1RacingV181=VERSION181;
 window.__mwsF1RacingV182=VERSION182;
@@ -860,6 +916,7 @@ window.__mwsF1RacingV193=VERSION193;
 window.__mwsF1RacingV194=VERSION194;
 window.__mwsF1RacingV195=VERSION195;
 window.__mwsF1RacingV196=VERSION196;
+window.__mwsF1RacingV197=VERSION197;
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){
