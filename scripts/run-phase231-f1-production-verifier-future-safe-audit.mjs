@@ -15,10 +15,11 @@ export function runPhase231F1ProductionVerifierFutureSafeAudit(){
     'phase=(20[6-9]|21[0-9]|22[0-9])',
     'phase=(20[7-9]|21[0-9]|22[0-9])',
     'phase=(20[8-9]|21[0-9]|22[0-9])',
-    'phase=(209|21[0-9]|22[0-9])'
+    'phase=(209|21[0-9]|22[0-9])',
+    'phase=(210|21[1-9]|22[0-9])'
   ];
   for(const token of forbidden)if(workflow.includes(token))issues.push('Legacy bounded live phase verifier remains: '+token);
-  for(const min of [204,205,206,207,208,209]){
+  for(const min of [204,205,206,207,208,209,210]){
     if(!workflow.includes('Number(m[1])<'+min))issues.push('Numeric future-safe live phase verifier missing for '+min);
   }
   const syntax=spawnSync(process.execPath,['--check','assets/f1-racing-v1.js'],{encoding:'utf8'});
