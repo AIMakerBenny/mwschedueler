@@ -2,7 +2,9 @@
 'use strict';
 const VERSION='phase180-shell';
 const VERSION181='phase181-participants';
+const VERSION182='phase182-track-model';
 const selectedIds=[];
+let activeTrackId='majoku-ring-v1';
 
 function escapeHtml(value=''){
   return String(value).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]});
@@ -73,7 +75,8 @@ function render(){
   if(clear&&!clear.dataset.f1Bound){clear.dataset.f1Bound='1';clear.addEventListener('click',function(){selectedIds.splice(0);renderContacts();renderSelected()})}
   renderContacts();
   renderSelected();
-  section.dataset.f1Runtime=VERSION181;
+  updateTrackFoundationStatusV182();
+  section.dataset.f1Runtime=VERSION182;
   return true;
 }
 function toggleDriver(id){
@@ -89,13 +92,25 @@ function removeDriver(id){
   renderContacts();renderSelected();
 }
 function getSelectedContactIds(){return selectedIds.slice()}
+function getActiveTrack(){return typeof window.mwsGetF1TrackV182==='function'?window.mwsGetF1TrackV182(activeTrackId):null}
+function updateTrackFoundationStatusV182(){
+  const track=getActiveTrack();
+  const chip=document.getElementById('f1RacingPhaseChipV180');
+  const status=document.getElementById('f1RacingFoundationStatusV180');
+  if(chip)chip.textContent=track?'TRACK MODEL':'TRACK ERROR';
+  if(status)status.textContent=track
+    ?'트랙 데이터 준비 완료 · '+track.name+' · '+(track.lengthMeters/1000).toFixed(3)+' km · 3 Sectors · Pit/Speed Trap metadata'
+    :'트랙 데이터를 불러오지 못했습니다.';
+}
 
 window.mwsRenderF1RacingV180=render;
 window.mwsRenderF1RacingV181=render;
 window.mwsF1ToggleDriverV181=toggleDriver;
 window.mwsF1RemoveDriverV181=removeDriver;
 window.mwsF1GetSelectedContactIdsV181=getSelectedContactIds;
+window.mwsF1GetActiveTrackV182=getActiveTrack;
 window.__mwsF1RacingV180=VERSION;
 window.__mwsF1RacingV181=VERSION181;
+window.__mwsF1RacingV182=VERSION182;
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 })();
