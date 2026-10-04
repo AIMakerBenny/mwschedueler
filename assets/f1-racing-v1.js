@@ -6,6 +6,7 @@ const VERSION182='phase182-track-model';
 const VERSION183='phase183-svg-track';
 const VERSION184='phase184-smooth-single-marker';
 const VERSION185='phase185-screen-state-machine';
+const VERSION186='phase186-setup-track-select';
 const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
 const F1_TRANSITIONS_V185=Object.freeze({
   SETUP:Object.freeze(['TRANSITION']),
@@ -197,6 +198,43 @@ function setScreenStateV185(next,options={}){
   return true;
 }
 function getScreenStateV185(){return f1ScreenStateV185}
+function getTrackCatalogV186(){
+  const source=window.MWS_F1_TRACKS_V182||{};
+  return Object.values(source).map(track=>({
+    id:String(track.id||''),
+    name:String(track.name||'Track'),
+    lengthMeters:Number(track.lengthMeters)||0,
+    sectors:Array.isArray(track.sectors)?track.sectors.length:0,
+    pitLimit:Number(track.pit?.speedLimitKph)||0,
+    zones:Array.isArray(track.zones)?track.zones.length:0,
+    overtakeZones:Array.isArray(track.overtakeZones)?track.overtakeZones.length:0
+  }));
+}
+function selectTrackV186(trackId){
+  const id=String(trackId||'');
+  if(!window.mwsGetF1TrackV182?.(id))return false;
+  activeTrackId=id;
+  renderTrackChoicesV186();
+  updateTrackFoundationStatusV182();
+  renderTrackMapV183();
+  return true;
+}
+function renderTrackChoicesV186(){
+  const box=document.getElementById('f1RacingTrackOptionsV186');
+  const count=document.getElementById('f1RacingTrackCountV186');
+  if(!box)return;
+  const tracks=getTrackCatalogV186();
+  if(count)count.textContent=tracks.length+' TRACK'+(tracks.length===1?'':'S');
+  box.innerHTML=tracks.map(track=>{
+    const selected=track.id===activeTrackId;
+    return '<button type="button" class="f1-racing-track-card-v186 '+(selected?'selected':'')+'" data-f1-track-id="'+escapeHtml(track.id)+'" aria-pressed="'+(selected?'true':'false')+'">'+
+      '<span class="f1-racing-track-card-title-v186">'+escapeHtml(track.name)+'</span>'+
+      '<span class="f1-racing-track-card-meta-v186">'+(track.lengthMeters/1000).toFixed(3)+' km · '+track.sectors+' sectors · '+track.zones+' zones</span>'+
+      '<span class="f1-racing-track-card-meta-v186">Pit '+track.pitLimit+' km/h · Overtake '+track.overtakeZones+'</span>'+
+      '</button>';
+  }).join('');
+  box.querySelectorAll('[data-f1-track-id]').forEach(button=>button.addEventListener('click',()=>selectTrackV186(button.dataset.f1TrackId)));
+}
 function render(){
   const section=document.getElementById('gameF1Racing');
   if(!section)return false;
@@ -207,11 +245,12 @@ function render(){
   applyScreenStateV185();
   renderContacts();
   renderSelected();
+  renderTrackChoicesV186();
   updateTrackFoundationStatusV182();
   renderTrackMapV183();
-  bindPreviewControlsV184();
-  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='SMOOTH MARKER';
-  section.dataset.f1Runtime=VERSION184;
+  if(previewStateV184.running)stopPreviewV184(true);
+  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='RACE SETUP';
+  section.dataset.f1Runtime=VERSION186;
   return true;
 }
 function toggleDriver(id){
@@ -298,12 +337,15 @@ window.mwsF1PositionPreviewV184=positionPreviewMarkerV184;
 window.mwsF1SetScreenStateV185=setScreenStateV185;
 window.mwsF1GetScreenStateV185=getScreenStateV185;
 window.mwsF1CanTransitionV185=canTransitionF1V185;
+window.mwsF1SelectTrackV186=selectTrackV186;
+window.mwsF1GetTrackCatalogV186=getTrackCatalogV186;
 window.__mwsF1RacingV180=VERSION;
 window.__mwsF1RacingV181=VERSION181;
 window.__mwsF1RacingV182=VERSION182;
 window.__mwsF1RacingV183=VERSION183;
 window.__mwsF1RacingV184=VERSION184;
 window.__mwsF1RacingV185=VERSION185;
+window.__mwsF1RacingV186=VERSION186;
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){if(document.hidden&&previewStateV184.running)stopPreviewV184(false)});
 })();

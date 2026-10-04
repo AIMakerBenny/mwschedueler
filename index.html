@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>마왕 스케줄러</title>
 <link rel="stylesheet" href="assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171-searchtab172-drag174-workspace176-splitquick177">
-<link rel="stylesheet" href="assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=185">
+<link rel="stylesheet" href="assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=186">
 
 <style id="mws-cloud-access-style">
 body.mws-gated .app{pointer-events:none;user-select:none;filter:blur(5px);opacity:.36}
@@ -1025,13 +1025,13 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
         <span class="f1-racing-phase-chip-v180" id="f1RacingPhaseChipV180">FOUNDATION</span>
       </div>
       <div id="f1RacingViewSetupV185" class="f1-racing-view-v185 active" data-f1-view="SETUP">
-      <div class="f1-racing-setup-v181">
-        <section class="f1-racing-panel-v181 f1-racing-contact-panel-v181">
+      <div class="f1-racing-setup-layout-v186">
+        <section class="f1-racing-panel-v181 f1-racing-drivers-panel-v186">
           <div class="f1-racing-panel-head-v181">
             <div>
-              <span class="f1-racing-panel-kicker-v181">CONTACT DATABASE</span>
+              <span class="f1-racing-panel-kicker-v181">DRIVER ENTRY</span>
               <h3>드라이버 참가자</h3>
-              <p>기존 연락처에서 레이스에 참가할 드라이버를 선택합니다. 연락처 원본 데이터는 변경하지 않습니다.</p>
+              <p>연락처에서 참가자를 선택합니다. 선택값은 경기 시작 전까지 준비 상태로만 유지됩니다.</p>
             </div>
             <span class="f1-racing-count-v181" id="f1RacingContactCountV181">0명</span>
           </div>
@@ -1040,72 +1040,57 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
             <input id="f1RacingContactSearchV181" autocomplete="off" placeholder="연락처 이름, 라벨 또는 초성 검색">
           </div>
           <div id="f1RacingContactListV181" class="f1-racing-contact-list-v181" aria-live="polite"></div>
-        </section>
-
-        <section class="f1-racing-panel-v181 f1-racing-grid-panel-v181">
-          <div class="f1-racing-panel-head-v181">
-            <div>
-              <span class="f1-racing-panel-kicker-v181">STARTING GRID</span>
-              <h3>출전 그리드</h3>
-              <p>선택 순서가 현재 임시 그리드 순서입니다. 실제 스타팅 그리드 규칙은 후속 단계에서 연결합니다.</p>
-            </div>
-            <button type="button" class="ghost small" id="f1RacingClearDriversV181">전체 비우기</button>
-          </div>
-          <div class="f1-racing-grid-summary-v181">
-            <div><span>선택 인원</span><strong id="f1RacingSelectedCountV181">0명</strong></div>
-            <div><span>데이터 소스</span><strong>연락처</strong></div>
-            <div><span>저장 상태</span><strong>세션 임시</strong></div>
+          <div class="f1-racing-selected-head-v186">
+            <div><span class="f1-racing-panel-kicker-v181">STARTING GRID</span><strong>출전 명단</strong></div>
+            <div class="row"><span id="f1RacingSelectedCountV181">0명</span><button type="button" class="ghost small" id="f1RacingClearDriversV181">전체 비우기</button></div>
           </div>
           <div id="f1RacingSelectedListV181" class="f1-racing-selected-list-v181"></div>
-          <div class="f1-racing-next-step-v181">
-            <span class="f1-racing-next-step-label-v181">NEXT</span>
+        </section>
+
+        <section class="f1-racing-panel-v181 f1-racing-track-picker-v186">
+          <div class="f1-racing-panel-head-v181">
             <div>
-              <strong>트랙 데이터 모델과 SVG 트랙</strong>
-              <p id="f1RacingFoundationStatusV180">참가자 선택 기반이 준비되었습니다. 아직 레이스 계산이나 차량 이동은 시작하지 않습니다.</p>
+              <span class="f1-racing-panel-kicker-v181">CIRCUIT SELECT</span>
+              <h3>트랙 선택</h3>
+              <p>경기에서 사용할 맵을 고릅니다. 선택된 트랙 정보가 아래 미리보기에 표시됩니다.</p>
+            </div>
+            <span class="f1-racing-count-v181" id="f1RacingTrackCountV186">0 TRACKS</span>
+          </div>
+          <div id="f1RacingTrackOptionsV186" class="f1-racing-track-options-v186"></div>
+          <div class="f1-racing-track-preview-v186">
+            <div class="f1-racing-track-head-v183">
+              <div>
+                <span class="f1-racing-panel-kicker-v181">TRACK PREVIEW</span>
+                <h3 id="f1RacingTrackNameV183">Majoku Ring</h3>
+                <p id="f1RacingFoundationStatusV180">트랙 데이터를 불러오는 중입니다.</p>
+              </div>
+              <div class="f1-racing-track-stats-v183">
+                <span><small>LENGTH</small><strong id="f1RacingTrackLengthV183">5.280 km</strong></span>
+                <span><small>SECTORS</small><strong>3</strong></span>
+                <span><small>PIT LIMIT</small><strong id="f1RacingPitLimitV183">80 km/h</strong></span>
+              </div>
+            </div>
+            <div class="f1-racing-track-stage-v183">
+              <svg id="f1RacingTrackSvgV183" class="f1-racing-track-svg-v183" viewBox="0 0 1000 600" role="img" aria-label="Majoku Ring track map">
+                <path id="f1RacingTrackGlowV183" class="f1-racing-track-glow-v183"></path>
+                <path id="f1RacingTrackPathV183" class="f1-racing-track-path-v183"></path>
+                <g id="f1RacingTrackAnnotationsV183"></g>
+                <g id="f1RacingVehicleLayerV183"></g>
+              </svg>
+              <div class="f1-racing-track-corner-v183">
+                <span id="f1RacingTrackModelStateV183">TRACK MODEL READY</span>
+                <strong id="f1RacingTrackPathStateV183">SVG PATH</strong>
+              </div>
+            </div>
+            <div class="f1-racing-track-legend-v183">
+              <span><i class="sector"></i>Sector boundary</span>
+              <span><i class="trap"></i>Speed trap</span>
+              <span><i class="pit"></i>Pit entry / exit</span>
+              <span><i class="start"></i>Start / Finish</span>
             </div>
           </div>
         </section>
       </div>
-
-      <section class="f1-racing-track-panel-v183" id="f1RacingTrackPanelV183">
-        <div class="f1-racing-track-head-v183">
-          <div>
-            <span class="f1-racing-panel-kicker-v181">CIRCUIT MAP</span>
-            <h3 id="f1RacingTrackNameV183">Majoku Ring</h3>
-            <p>트랙 경로, 섹터 경계, 피트 진출입 지점과 스피드 트랩을 트랙 데이터에서 직접 렌더링합니다.</p>
-          </div>
-          <div class="f1-racing-track-side-v184">
-            <div class="f1-racing-track-stats-v183">
-              <span><small>LENGTH</small><strong id="f1RacingTrackLengthV183">5.280 km</strong></span>
-              <span><small>SECTORS</small><strong>3</strong></span>
-              <span><small>PIT LIMIT</small><strong id="f1RacingPitLimitV183">80 km/h</strong></span>
-            </div>
-            <div class="f1-racing-preview-controls-v184">
-              <span id="f1RacingPreviewStatusV184">드라이버 선택 후 테스트 가능</span>
-              <button type="button" class="secondary small" id="f1RacingPreviewStopV184" disabled>정지</button>
-              <button type="button" class="primary small" id="f1RacingPreviewStartV184" disabled>주행 미리보기</button>
-            </div>
-          </div>
-        </div>
-        <div class="f1-racing-track-stage-v183">
-          <svg id="f1RacingTrackSvgV183" class="f1-racing-track-svg-v183" viewBox="0 0 1000 600" role="img" aria-label="Majoku Ring track map">
-            <path id="f1RacingTrackGlowV183" class="f1-racing-track-glow-v183"></path>
-            <path id="f1RacingTrackPathV183" class="f1-racing-track-path-v183"></path>
-            <g id="f1RacingTrackAnnotationsV183"></g>
-            <g id="f1RacingVehicleLayerV183"></g>
-          </svg>
-          <div class="f1-racing-track-corner-v183">
-            <span id="f1RacingTrackModelStateV183">TRACK MODEL READY</span>
-            <strong id="f1RacingTrackPathStateV183">SVG PATH</strong>
-          </div>
-        </div>
-        <div class="f1-racing-track-legend-v183">
-          <span><i class="sector"></i>Sector boundary</span>
-          <span><i class="trap"></i>Speed trap</span>
-          <span><i class="pit"></i>Pit entry / exit</span>
-          <span><i class="start"></i>Start / Finish</span>
-        </div>
-      </section>
       </div>
       <section id="f1RacingViewTransitionV185" class="f1-racing-view-v185" data-f1-view="TRANSITION" hidden><div class="f1-racing-state-placeholder-v185"><span>TRANSITION</span><strong>Race transition reserved</strong></div></section>
       <section id="f1RacingViewGridV185" class="f1-racing-view-v185" data-f1-view="GRID" hidden><div class="f1-racing-state-placeholder-v185"><span>GRID</span><strong>Starting grid sequence reserved</strong></div></section>
@@ -1832,7 +1817,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 
 <script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181"></script>
 <script src="assets/f1-track-v1.js?v=1.0.0-phase182-model"></script>
-<script src="assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=185"></script>
+<script src="assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=186"></script>
 <script src="assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130-zoom138-unassigned168"></script>
 <script src="assets/wardogs-media-v1.js?v=1.0.0-phase121-backup126-webview130"></script>
 <script src="assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140-frame144-frames150-aperture152-assault166-medic165-recon163-support166-driver161-pilot166-unassigned168"></script>

@@ -116,6 +116,7 @@ jobs:
           node --check scripts/run-phase183-f1-svg-track-audit.mjs
           node --check scripts/run-phase184-f1-smooth-marker-audit.mjs
           node --check scripts/run-phase185-f1-screen-state-audit.mjs
+          node --check scripts/run-phase186-f1-setup-track-select-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-racing-v1.js
           node --check assets/workspace-ui-v176.js
@@ -852,8 +853,6 @@ jobs:
           grep -Fq "path.setAttribute('d',track.path);" /tmp/f1-racing-v1-phase183.js
           grep -Fq 'window.mwsF1RenderTrackMapV183=renderTrackMapV183;' /tmp/f1-racing-v1-phase183.js
           echo '[phase184] F1 Racing requestAnimationFrame single marker preview'
-          grep -Fq 'id="f1RacingPreviewStartV184"' /tmp/index.html
-          grep -Fq 'id="f1RacingPreviewStopV184"' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV184=VERSION184;' > /tmp/f1-racing-v1-phase184.js
           retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-preview-car-v184{' > /tmp/f1-racing-v1-phase184.css
           node --check /tmp/f1-racing-v1-phase184.js
@@ -869,6 +868,17 @@ jobs:
           node --check /tmp/f1-racing-v1-phase185.js
           grep -Fq 'function setScreenStateV185(next,options={}){' /tmp/f1-racing-v1-phase185.js
           grep -Fq 'window.mwsF1SetScreenStateV185=setScreenStateV185;' /tmp/f1-racing-v1-phase185.js
+          echo '[phase186] F1 setup driver and track selection'
+          grep -Fq 'class="f1-racing-setup-layout-v186"' /tmp/index.html
+          grep -Fq 'id="f1RacingTrackOptionsV186"' /tmp/index.html
+          grep -Fq 'id="f1RacingTrackSvgV183"' /tmp/index.html
+          ! grep -Fq 'id="f1RacingPreviewStartV184"' /tmp/index.html
+          ! grep -Fq 'id="f1RacingPreviewStopV184"' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV186=VERSION186;' > /tmp/f1-racing-v1-phase186.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-setup-layout-v186{' > /tmp/f1-racing-v1-phase186.css
+          node --check /tmp/f1-racing-v1-phase186.js
+          grep -Fq 'function renderTrackChoicesV186(){' /tmp/f1-racing-v1-phase186.js
+          grep -Fq 'window.mwsF1SelectTrackV186=selectTrackV186;' /tmp/f1-racing-v1-phase186.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css
