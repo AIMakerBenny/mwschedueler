@@ -202,6 +202,7 @@ import {runPhase206F1PitStrategyAudit} from './run-phase206-f1-pit-strategy-audi
 import {runRecoveryLF1CurvatureSpeedAudit} from './run-recovery-l-f1-curvature-speed-audit.mjs';
 import {runRecoveryMF1ExplicitStartAudit} from './run-recovery-m-f1-explicit-start-audit.mjs';
 import {runRecoveryNF1TripleDockAudit} from './run-recovery-n-f1-triple-dock-audit.mjs';
+import {runPhase207F1TrafficDefenceAudit} from './run-phase207-f1-traffic-defence-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2165,5 +2166,14 @@ export function runRecoveryNFullIntegrationAudit(){
   if(issues.length)process.exitCode=1;
   return summary;
 }
-export function runCurrentFullIntegrationAudit(){return runRecoveryNFullIntegrationAudit();}
+export function runPhase207FullIntegrationAudit(){
+  const previous=runRecoveryNFullIntegrationAudit(),current=runPhase207F1TrafficDefenceAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>'Phase 207: '+x)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 207: '+x)];
+  const summary={currentPhase:207,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+export function runCurrentFullIntegrationAudit(){return runPhase207FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
