@@ -422,7 +422,7 @@ function syncSetupActionV187(){
   const track=getActiveTrack();
   const ready=selectedIds.length>=2&&Boolean(track);
   if(summary)summary.textContent='드라이버 '+selectedIds.length+'명 · '+(track?.name||'트랙 미선택');
-  if(hint)hint.textContent=ready?'준비가 완료되었습니다. 경기 진행 후 STARTING GRID에서 경기 시작을 눌러야 출발합니다.':'드라이버를 2명 이상 선택하고 트랙을 선택해 주세요.';
+  if(hint)hint.textContent=ready?'준비가 완료되었습니다. 경기 진행 후 스타팅 그리드에서 경기 시작을 눌러야 출발합니다.':'드라이버를 2명 이상 선택하고 트랙을 선택해 주세요.';
   if(button)button.disabled=!ready;
   return ready;
 }
@@ -430,7 +430,7 @@ function populateTransitionV187(snapshot){
   const track=document.getElementById('f1RacingTransitionTrackV187');
   const drivers=document.getElementById('f1RacingTransitionDriversV187');
   if(track)track.textContent=String(snapshot?.track?.name||'TRACK').toUpperCase();
-  if(drivers)drivers.textContent=(snapshot?.drivers?.length||0)+' DRIVERS';
+  if(drivers)drivers.textContent='드라이버 '+(snapshot?.drivers?.length||0)+'명';
 }
 function populateGridRecoveryM(snapshot){
   const track=document.getElementById('f1RacingGridTrackRecoveryM');
@@ -438,7 +438,7 @@ function populateGridRecoveryM(snapshot){
   const laps=document.getElementById('f1RacingGridLapsRecoveryM');
   if(track)track.textContent=String(snapshot?.track?.name||'TRACK').toUpperCase();
   if(drivers)drivers.textContent=(snapshot?.drivers?.length||0)+' DRIVERS';
-  if(laps)laps.textContent=(Number(snapshot?.totalLaps)||DEFAULT_TOTAL_LAPS_V190)+' LAPS';
+  if(laps)laps.textContent=(Number(snapshot?.totalLaps)||DEFAULT_TOTAL_LAPS_V190)+'랩';
 }
 function startRaceFromSetupV187(){
   if(f1ScreenStateV185!=='SETUP')return false;
@@ -2223,9 +2223,9 @@ function renderFinishingRecoveryG(){
   const title=document.getElementById('f1RacingFinishingTitleRecoveryG');
   const summary=document.getElementById('f1RacingFinishingSummaryRecoveryG');
   const winner=result?.rows?.[0];
-  if(title)title.textContent=winner?winner.name+' 우승':'RACE FINISHED';
+  if(title)title.textContent=winner?winner.name+' 우승':'경기 종료';
   if(summary)summary.textContent=result
-    ?result.trackName+' · '+result.totalLaps+' LAPS · '+result.rows.length+' DRIVERS · '+formatRaceTimeRecoveryG(result.simTimeMs)
+    ?result.trackName+' · '+result.totalLaps+'랩 · 드라이버 '+result.rows.length+'명 · '+formatRaceTimeRecoveryG(result.simTimeMs)
     :'결과를 정리하고 있습니다.';
 }
 function renderPodiumRecoveryG(){
@@ -2284,14 +2284,14 @@ function showPodiumRecoveryG(){
   if(f1ScreenStateV185!=='FINISHING')return false;
   if(!setScreenStateV185('PODIUM'))return false;
   renderPodiumRecoveryG();
-  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='PODIUM';
+  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='포디움';
   return true;
 }
 function showResultRecoveryG(){
   if(!['FINISHING','PODIUM'].includes(f1ScreenStateV185))return false;
   if(!setScreenStateV185('RESULT'))return false;
   renderResultRecoveryG();
-  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='RESULT';
+  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='결과';
   return true;
 }
 function returnToSetupRecoveryG(){
@@ -2715,12 +2715,12 @@ function renderRaceControlV188(){
   const annotations=document.getElementById('f1RacingRaceAnnotationsRecoveryB');
   if(name)name.textContent=String(snapshot.track.name||'TRACK').toUpperCase();
   if(count)count.textContent=String(snapshot.drivers.length);
-  if(status)status.textContent='PRE-RACE';
+  if(status)status.textContent='경기 전';
   syncRaceFlagHudV214();
   if(lap)lap.textContent='1 / '+(Number(snapshot.totalLaps)||DEFAULT_TOTAL_LAPS_V190);
   if(list)list.innerHTML=snapshot.drivers.map(timingRowV188).join('');
   ensureTopThreeStylesV213();
-  if(mapMeta)mapMeta.textContent=(snapshot.track.lengthMeters/1000).toFixed(3)+' km · '+snapshot.drivers.length+' drivers';
+  if(mapMeta)mapMeta.textContent=(snapshot.track.lengthMeters/1000).toFixed(3)+' km · 드라이버 '+snapshot.drivers.length+'명';
   if(svg)svg.setAttribute('viewBox',(snapshot.track.viewBox||[0,0,1000,600]).join(' '));
   if(path)path.setAttribute('d',snapshot.track.path||'');
   if(glow)glow.setAttribute('d',snapshot.track.path||'');
@@ -3666,11 +3666,11 @@ function renderTrackMarkersV211(layer,path,track,scope='race'){
   (track.sectors||[]).slice(0,-1).forEach((sector,index)=>addTrackAnnotationV183(layer,path,'sector','S'+(index+1),sector.end));
   (track.speedTraps||[]).forEach((trap,index)=>addTrackAnnotationV183(layer,path,'trap',String(trap.id||('ST'+(index+1))),trap.progress));
   if(track.pit){
-    addTrackAnnotationV183(layer,path,'pit','PIT IN',track.pit.entry);
-    addTrackAnnotationV183(layer,path,'pit','PIT OUT',track.pit.exit);
+    addTrackAnnotationV183(layer,path,'pit','피트 진입',track.pit.entry);
+    addTrackAnnotationV183(layer,path,'pit','피트 출구',track.pit.exit);
   }
   (track.overtakeZones||[]).forEach((zone,index)=>{
-    if(Number.isFinite(Number(zone.detection)))addTrackAnnotationV183(layer,path,'overtake','OVT D'+(index+1),zone.detection);
+    if(Number.isFinite(Number(zone.detection)))addTrackAnnotationV183(layer,path,'overtake','추월 감지 '+(index+1),zone.detection);
   });
   return true;
 }
@@ -3694,7 +3694,7 @@ function renderTrackMapV183(){
   const layer=document.getElementById('f1RacingTrackAnnotationsV183');
   if(!track||!svg||!path||!glow||!layer)return false;
   svg.setAttribute('viewBox',track.viewBox.join(' '));
-  svg.setAttribute('aria-label',track.name+' track map');
+  svg.setAttribute('aria-label',track.name+' 트랙 맵');
   path.setAttribute('d',track.path);
   glow.setAttribute('d',track.path);
   layer.replaceChildren();
@@ -3706,7 +3706,7 @@ function renderTrackMapV183(){
   if(name)name.textContent=track.name;
   if(length)length.textContent=(track.lengthMeters/1000).toFixed(3)+' km';
   if(pit)pit.textContent=track.pit.speedLimitKph+' km/h';
-  if(pathState)pathState.textContent=Math.round(path.getTotalLength())+' SVG units';
+  if(pathState)pathState.textContent=Math.round(path.getTotalLength())+' SVG 단위';
   return true;
 }
 function updateTrackFoundationStatusV182(){
