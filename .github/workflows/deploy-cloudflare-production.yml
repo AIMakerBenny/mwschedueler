@@ -117,6 +117,7 @@ jobs:
           node --check scripts/run-phase184-f1-smooth-marker-audit.mjs
           node --check scripts/run-phase185-f1-screen-state-audit.mjs
           node --check scripts/run-phase186-f1-setup-track-select-audit.mjs
+          node --check scripts/run-phase187-f1-race-draft-snapshot-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-racing-v1.js
           node --check assets/workspace-ui-v176.js
@@ -879,6 +880,15 @@ jobs:
           node --check /tmp/f1-racing-v1-phase186.js
           grep -Fq 'function renderTrackChoicesV186(){' /tmp/f1-racing-v1-phase186.js
           grep -Fq 'window.mwsF1SelectTrackV186=selectTrackV186;' /tmp/f1-racing-v1-phase186.js
+          echo '[phase187] F1 race draft snapshot and setup transition'
+          grep -Fq 'id="f1RacingProceedV187"' /tmp/index.html
+          grep -Fq 'id="f1RacingTransitionTrackV187"' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV187=VERSION187;' > /tmp/f1-racing-v1-phase187.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-setup-action-v187{' > /tmp/f1-racing-v1-phase187.css
+          node --check /tmp/f1-racing-v1-phase187.js
+          grep -Fq 'function buildRaceSnapshotV187(){' /tmp/f1-racing-v1-phase187.js
+          grep -Fq "if(!setScreenStateV185('TRANSITION'))return false;" /tmp/f1-racing-v1-phase187.js
+          grep -Fq 'window.mwsF1StartRaceFromSetupV187=startRaceFromSetupV187;' /tmp/f1-racing-v1-phase187.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css

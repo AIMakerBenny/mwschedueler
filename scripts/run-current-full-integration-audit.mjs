@@ -168,6 +168,7 @@ import {runPhase183F1SvgTrackAudit} from './run-phase183-f1-svg-track-audit.mjs'
 import {runPhase184F1SmoothMarkerAudit} from './run-phase184-f1-smooth-marker-audit.mjs';
 import {runPhase185F1ScreenStateAudit} from './run-phase185-f1-screen-state-audit.mjs';
 import {runPhase186F1SetupTrackSelectAudit} from './run-phase186-f1-setup-track-select-audit.mjs';
+import {runPhase187F1RaceDraftSnapshotAudit} from './run-phase187-f1-race-draft-snapshot-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1827,5 +1828,14 @@ export function runPhase186FullIntegrationAudit(){
   if(issues.length)process.exitCode=1;
   return summary;
 }
-export function runCurrentFullIntegrationAudit(){return runPhase186FullIntegrationAudit();}
+export function runPhase187FullIntegrationAudit(){
+  const previous=runPhase186FullIntegrationAudit(),current=runPhase187F1RaceDraftSnapshotAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>'Phase '+current.phase+': '+x)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>'Phase '+current.phase+': '+x)];
+  const summary={currentPhase:187,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+export function runCurrentFullIntegrationAudit(){return runPhase187FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();

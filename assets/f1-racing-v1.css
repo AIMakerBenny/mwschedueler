@@ -208,3 +208,20 @@
 .f1-racing-track-preview-v186 .f1-racing-track-stage-v183{min-height:360px}
 .f1-racing-track-preview-v186 .f1-racing-track-svg-v183{height:360px}
 @media(max-width:1180px){.f1-racing-setup-layout-v186{grid-template-columns:1fr}.f1-racing-drivers-panel-v186,.f1-racing-track-picker-v186{min-height:0}}
+
+/* Phase 187: setup proceed action and page-like race transition */
+.f1-racing-setup-action-v187{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 12px 12px;padding:13px 14px;border:1px solid #2a3340;border-radius:10px;background:#0c1118}
+.f1-racing-setup-ready-v187{min-width:0}
+.f1-racing-setup-ready-v187 strong{display:block;margin:4px 0 3px;color:#f8fafc;font-size:14px}
+.f1-racing-setup-ready-v187 small{display:block;color:#7d899c;line-height:1.4}
+.f1-racing-proceed-v187{min-width:150px;min-height:42px;font-weight:850;letter-spacing:.02em}
+.f1-racing-transition-v187{min-height:620px;background:#020305}
+.f1-racing-transition-stage-v187{min-height:620px;display:grid;place-items:center;align-content:center;gap:11px;text-align:center;background:radial-gradient(circle at center,rgba(30,41,59,.36),rgba(0,0,0,.98) 66%);animation:f1TransitionFadeV187 .45s ease-out both}
+.f1-racing-transition-kicker-v187{color:#8694a9;font:800 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.28em}
+.f1-racing-transition-stage-v187 strong{color:#f8fafc;font:900 clamp(28px,4vw,58px) ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.08em}
+.f1-racing-transition-stage-v187>span:not(.f1-racing-transition-kicker-v187){color:#aab5c5;font:800 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.12em}
+.f1-racing-transition-stage-v187 i{width:min(420px,70vw);height:1px;background:linear-gradient(90deg,transparent,#64748b,transparent)}
+.f1-racing-transition-stage-v187 b{color:#dbe5f2;font:850 13px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.22em;animation:f1RaceReadyPulseV187 .8s ease-in-out infinite alternate}
+@keyframes f1TransitionFadeV187{from{opacity:0;transform:scale(1.015)}to{opacity:1;transform:scale(1)}}
+@keyframes f1RaceReadyPulseV187{from{opacity:.45}to{opacity:1}}
+@media(max-width:700px){.f1-racing-setup-action-v187{align-items:stretch;flex-direction:column}.f1-racing-proceed-v187{width:100%}}

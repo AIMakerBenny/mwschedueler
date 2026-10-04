@@ -7,6 +7,7 @@ const VERSION183='phase183-svg-track';
 const VERSION184='phase184-smooth-single-marker';
 const VERSION185='phase185-screen-state-machine';
 const VERSION186='phase186-setup-track-select';
+const VERSION187='phase187-race-draft-snapshot-transition';
 const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
 const F1_TRANSITIONS_V185=Object.freeze({
   SETUP:Object.freeze(['TRANSITION']),
@@ -21,6 +22,8 @@ let f1ScreenStateV185='SETUP';
 const selectedIds=[];
 let activeTrackId='majoku-ring-v1';
 const previewStateV184={running:false,progress:0,lastTimestamp:0,rafId:0,lapDurationMs:18000};
+let activeRaceSnapshotV187=null;
+let raceTransitionTimerV187=0;
 
 function escapeHtml(value=''){
   return String(value).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]});
@@ -217,6 +220,7 @@ function selectTrackV186(trackId){
   renderTrackChoicesV186();
   updateTrackFoundationStatusV182();
   renderTrackMapV183();
+  syncSetupActionV187();
   return true;
 }
 function renderTrackChoicesV186(){
@@ -235,35 +239,117 @@ function renderTrackChoicesV186(){
   }).join('');
   box.querySelectorAll('[data-f1-track-id]').forEach(button=>button.addEventListener('click',()=>selectTrackV186(button.dataset.f1TrackId)));
 }
+function getRaceDraftV187(){
+  return Object.freeze({
+    selectedDriverIds:Object.freeze(selectedIds.slice()),
+    selectedTrackId:String(activeTrackId||'')
+  });
+}
+function cloneDriverForRaceV187(row,index){
+  return Object.freeze({
+    contactId:String(row?.id||''),
+    name:String(row?.name||'Driver'),
+    image:String(row?.image||''),
+    labels:Object.freeze(Array.isArray(row?.labels)?row.labels.slice():[]),
+    gridPosition:index+1
+  });
+}
+function buildRaceSnapshotV187(){
+  const draft=getRaceDraftV187();
+  const byId=new Map(getContacts().map(row=>[String(row.id),row]));
+  const drivers=draft.selectedDriverIds.map((id,index)=>cloneDriverForRaceV187(byId.get(String(id)),index)).filter(row=>row.contactId);
+  const track=window.mwsGetF1TrackV182?.(draft.selectedTrackId);
+  if(drivers.length<2||!track)return null;
+  return Object.freeze({
+    createdAt:new Date().toISOString(),
+    trackId:String(track.id),
+    track:Object.freeze({
+      id:String(track.id),
+      name:String(track.name),
+      lengthMeters:Number(track.lengthMeters)||0,
+      viewBox:Object.freeze([...(track.viewBox||[])]),
+      path:String(track.path||''),
+      sectors:Object.freeze((track.sectors||[]).map(row=>Object.freeze({...row}))),
+      pit:Object.freeze({...track.pit}),
+      speedTraps:Object.freeze((track.speedTraps||[]).map(row=>Object.freeze({...row}))),
+      overtakeZones:Object.freeze((track.overtakeZones||[]).map(row=>Object.freeze({...row}))),
+      zones:Object.freeze((track.zones||[]).map(row=>Object.freeze({...row})))
+    }),
+    drivers:Object.freeze(drivers)
+  });
+}
+function syncSetupActionV187(){
+  const button=document.getElementById('f1RacingProceedV187');
+  const summary=document.getElementById('f1RacingSetupSummaryV187');
+  const hint=document.getElementById('f1RacingSetupHintV187');
+  const track=getActiveTrack();
+  const ready=selectedIds.length>=2&&Boolean(track);
+  if(summary)summary.textContent='드라이버 '+selectedIds.length+'명 · '+(track?.name||'트랙 미선택');
+  if(hint)hint.textContent=ready?'준비가 완료되었습니다. 경기 진행을 누르면 관제 화면으로 전환됩니다.':'드라이버를 2명 이상 선택하고 트랙을 선택해 주세요.';
+  if(button)button.disabled=!ready;
+  return ready;
+}
+function populateTransitionV187(snapshot){
+  const track=document.getElementById('f1RacingTransitionTrackV187');
+  const drivers=document.getElementById('f1RacingTransitionDriversV187');
+  if(track)track.textContent=String(snapshot?.track?.name||'TRACK').toUpperCase();
+  if(drivers)drivers.textContent=(snapshot?.drivers?.length||0)+' DRIVERS';
+}
+function startRaceFromSetupV187(){
+  if(f1ScreenStateV185!=='SETUP')return false;
+  const snapshot=buildRaceSnapshotV187();
+  if(!snapshot)return false;
+  activeRaceSnapshotV187=snapshot;
+  populateTransitionV187(snapshot);
+  if(!setScreenStateV185('TRANSITION'))return false;
+  if(raceTransitionTimerV187)clearTimeout(raceTransitionTimerV187);
+  raceTransitionTimerV187=window.setTimeout(function(){
+    raceTransitionTimerV187=0;
+    setScreenStateV185('RACE');
+    const chip=document.getElementById('f1RacingPhaseChipV180');
+    if(chip)chip.textContent='RACE CONTROL';
+  },1600);
+  return true;
+}
+function getActiveRaceSnapshotV187(){return activeRaceSnapshotV187}
+function bindRaceProceedV187(){
+  const button=document.getElementById('f1RacingProceedV187');
+  if(button&&!button.dataset.f1Bound){
+    button.dataset.f1Bound='1';
+    button.addEventListener('click',startRaceFromSetupV187);
+  }
+  syncSetupActionV187();
+}
 function render(){
   const section=document.getElementById('gameF1Racing');
   if(!section)return false;
   const search=document.getElementById('f1RacingContactSearchV181');
   const clear=document.getElementById('f1RacingClearDriversV181');
   if(search&&!search.dataset.f1Bound){search.dataset.f1Bound='1';search.addEventListener('input',renderContacts)}
-  if(clear&&!clear.dataset.f1Bound){clear.dataset.f1Bound='1';clear.addEventListener('click',function(){selectedIds.splice(0);stopPreviewV184(true);renderContacts();renderSelected();syncPreviewControlsV184()})}
+  if(clear&&!clear.dataset.f1Bound){clear.dataset.f1Bound='1';clear.addEventListener('click',function(){selectedIds.splice(0);stopPreviewV184(true);renderContacts();renderSelected();syncSetupActionV187()})}
   applyScreenStateV185();
   renderContacts();
   renderSelected();
   renderTrackChoicesV186();
+  bindRaceProceedV187();
   updateTrackFoundationStatusV182();
   renderTrackMapV183();
   if(previewStateV184.running)stopPreviewV184(true);
-  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='RACE SETUP';
-  section.dataset.f1Runtime=VERSION186;
+  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent=f1ScreenStateV185==='SETUP'?'RACE SETUP':'RACE CONTROL';
+  section.dataset.f1Runtime=VERSION187;
   return true;
 }
 function toggleDriver(id){
   const key=String(id||'');if(!key)return;
   const index=selectedIds.findIndex(function(value){return String(value)===key});
   if(index>=0)selectedIds.splice(index,1);else selectedIds.push(key);
-  renderContacts();renderSelected();syncPreviewControlsV184();
+  renderContacts();renderSelected();syncSetupActionV187();
 }
 function removeDriver(id){
   const key=String(id||'');
   const index=selectedIds.findIndex(function(value){return String(value)===key});
   if(index>=0)selectedIds.splice(index,1);
-  renderContacts();renderSelected();syncPreviewControlsV184();
+  renderContacts();renderSelected();syncSetupActionV187();
 }
 function getSelectedContactIds(){return selectedIds.slice()}
 function getActiveTrack(){return typeof window.mwsGetF1TrackV182==='function'?window.mwsGetF1TrackV182(activeTrackId):null}
@@ -339,6 +425,10 @@ window.mwsF1GetScreenStateV185=getScreenStateV185;
 window.mwsF1CanTransitionV185=canTransitionF1V185;
 window.mwsF1SelectTrackV186=selectTrackV186;
 window.mwsF1GetTrackCatalogV186=getTrackCatalogV186;
+window.mwsF1GetRaceDraftV187=getRaceDraftV187;
+window.mwsF1BuildRaceSnapshotV187=buildRaceSnapshotV187;
+window.mwsF1StartRaceFromSetupV187=startRaceFromSetupV187;
+window.mwsF1GetActiveRaceSnapshotV187=getActiveRaceSnapshotV187;
 window.__mwsF1RacingV180=VERSION;
 window.__mwsF1RacingV181=VERSION181;
 window.__mwsF1RacingV182=VERSION182;
@@ -346,6 +436,7 @@ window.__mwsF1RacingV183=VERSION183;
 window.__mwsF1RacingV184=VERSION184;
 window.__mwsF1RacingV185=VERSION185;
 window.__mwsF1RacingV186=VERSION186;
+window.__mwsF1RacingV187=VERSION187;
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){if(document.hidden&&previewStateV184.running)stopPreviewV184(false)});
 })();

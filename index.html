@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>마왕 스케줄러</title>
 <link rel="stylesheet" href="assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171-searchtab172-drag174-workspace176-splitquick177">
-<link rel="stylesheet" href="assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=186">
+<link rel="stylesheet" href="assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=187">
 
 <style id="mws-cloud-access-style">
 body.mws-gated .app{pointer-events:none;user-select:none;filter:blur(5px);opacity:.36}
@@ -1091,8 +1091,24 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
           </div>
         </section>
       </div>
+      <div class="f1-racing-setup-action-v187">
+        <div class="f1-racing-setup-ready-v187">
+          <span class="f1-racing-panel-kicker-v181">RACE READY</span>
+          <strong id="f1RacingSetupSummaryV187">드라이버 0명 · Majoku Ring</strong>
+          <small id="f1RacingSetupHintV187">드라이버를 2명 이상 선택해 주세요.</small>
+        </div>
+        <button type="button" class="primary f1-racing-proceed-v187" id="f1RacingProceedV187" disabled>경기 진행</button>
       </div>
-      <section id="f1RacingViewTransitionV185" class="f1-racing-view-v185" data-f1-view="TRANSITION" hidden><div class="f1-racing-state-placeholder-v185"><span>TRANSITION</span><strong>Race transition reserved</strong></div></section>
+      </div>
+      <section id="f1RacingViewTransitionV185" class="f1-racing-view-v185 f1-racing-transition-v187" data-f1-view="TRANSITION" hidden>
+        <div class="f1-racing-transition-stage-v187">
+          <span class="f1-racing-transition-kicker-v187">MAWANG GRAND PRIX</span>
+          <strong id="f1RacingTransitionTrackV187">MAJOKU RING</strong>
+          <span id="f1RacingTransitionDriversV187">0 DRIVERS</span>
+          <i></i>
+          <b>RACE READY</b>
+        </div>
+      </section>
       <section id="f1RacingViewGridV185" class="f1-racing-view-v185" data-f1-view="GRID" hidden><div class="f1-racing-state-placeholder-v185"><span>GRID</span><strong>Starting grid sequence reserved</strong></div></section>
       <section id="f1RacingViewRaceV185" class="f1-racing-view-v185" data-f1-view="RACE" hidden><div class="f1-racing-state-placeholder-v185"><span>RACE</span><strong>Race Control reserved</strong></div></section>
       <section id="f1RacingViewFinishingV185" class="f1-racing-view-v185" data-f1-view="FINISHING" hidden><div class="f1-racing-state-placeholder-v185"><span>FINISHING</span><strong>Finish sequence reserved</strong></div></section>
@@ -1817,7 +1833,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 
 <script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181"></script>
 <script src="assets/f1-track-v1.js?v=1.0.0-phase182-model"></script>
-<script src="assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=186"></script>
+<script src="assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=187"></script>
 <script src="assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130-zoom138-unassigned168"></script>
 <script src="assets/wardogs-media-v1.js?v=1.0.0-phase121-backup126-webview130"></script>
 <script src="assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140-frame144-frames150-aperture152-assault166-medic165-recon163-support166-driver161-pilot166-unassigned168"></script>
