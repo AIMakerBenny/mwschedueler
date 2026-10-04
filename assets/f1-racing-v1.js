@@ -37,6 +37,7 @@ const VERSION207='phase207-traffic-slipstream-defence';
 const VERSION208='phase208-pass-state-machine';
 const VERSION209='phase209-long-run-gap-balance';
 const VERSION210='phase210-multi-track-integration';
+const VERSION211='phase211-track-marker-integration';
 const PASS_STATES_V208=Object.freeze(['FOLLOWING','CLOSING','TOWING','PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','PASS_COMPLETED','PASS_FAILED','COUNTER_ATTACK']);
 const PASS_CONFIG_V208=Object.freeze({followGapMeters:48,prepareGapMeters:20,pullOutGapMeters:15,sideBySideGapMeters:8,failGapMeters:32,passMarginMeters:1.2,stateHoldMs:160,maxBattleBiasKph:2.4});
 const LONG_RUN_GAP_CONFIG_V209=Object.freeze({settlingLaps:3.5,maxOpeningPaceBias:0.0045,maxSettledPaceBias:0.0018,relativeShape:1.25,qaLapSeconds:90,qaLaps:30});
@@ -2250,7 +2251,7 @@ function renderRaceControlV188(){
   if(svg)svg.setAttribute('viewBox',(snapshot.track.viewBox||[0,0,1000,600]).join(' '));
   if(path)path.setAttribute('d',snapshot.track.path||'');
   if(glow)glow.setAttribute('d',snapshot.track.path||'');
-  if(path&&annotations)renderRaceStartFinishRecoveryB(annotations,path,snapshot.track);
+  if(path&&annotations)renderTrackMarkersV211(annotations,path,snapshot.track,'race');
   if(path)refreshRaceGeometryV193(snapshot,path);
   bindSimulationControlsV192();
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='RACE CONTROL';
@@ -3180,6 +3181,33 @@ function renderRaceStartFinishRecoveryB(layer,path,track){
   layer.replaceChildren();
   return Boolean(addStartFinishLineRecoveryB(layer,path,track,'race'));
 }
+function renderTrackMarkersV211(layer,path,track,scope='race'){
+  if(!layer||!path||!track)return false;
+  layer.replaceChildren();
+  addStartFinishLineRecoveryB(layer,path,track,scope);
+  (track.sectors||[]).slice(0,-1).forEach((sector,index)=>addTrackAnnotationV183(layer,path,'sector','S'+(index+1),sector.end));
+  (track.speedTraps||[]).forEach((trap,index)=>addTrackAnnotationV183(layer,path,'trap',String(trap.id||('ST'+(index+1))),trap.progress));
+  if(track.pit){
+    addTrackAnnotationV183(layer,path,'pit','PIT IN',track.pit.entry);
+    addTrackAnnotationV183(layer,path,'pit','PIT OUT',track.pit.exit);
+  }
+  (track.overtakeZones||[]).forEach((zone,index)=>{
+    if(Number.isFinite(Number(zone.detection)))addTrackAnnotationV183(layer,path,'overtake','OVT D'+(index+1),zone.detection);
+  });
+  return true;
+}
+function qaTrackMarkersV211(){
+  const tracks=typeof window.mwsGetF1TrackCatalogV186==='function'?window.mwsGetF1TrackCatalogV186():[];
+  const catalog=(tracks&&tracks.length)?tracks:(window.MWS_F1_TRACKS_V182?Object.values(window.MWS_F1_TRACKS_V182):[]);
+  const rows=catalog.map(track=>({
+    id:track.id,
+    sectors:(track.sectors||[]).length,
+    speedTraps:(track.speedTraps||[]).length,
+    pitReady:Boolean(track.pit&&Number.isFinite(Number(track.pit.entry))&&Number.isFinite(Number(track.pit.exit))),
+    detectionLines:(track.overtakeZones||[]).filter(zone=>Number.isFinite(Number(zone.detection))).length
+  }));
+  return {trackCount:rows.length,rows,allPass:rows.length===3&&rows.every(row=>row.sectors===3&&row.speedTraps>=3&&row.pitReady&&row.detectionLines>=1)};
+}
 
 function renderTrackMapV183(){
   const track=getActiveTrack();
@@ -3193,12 +3221,7 @@ function renderTrackMapV183(){
   path.setAttribute('d',track.path);
   glow.setAttribute('d',track.path);
   layer.replaceChildren();
-  addStartFinishLineRecoveryB(layer,path,track,'setup');
-  addTrackAnnotationV183(layer,path,'sector','S1',track.sectors[0].end);
-  addTrackAnnotationV183(layer,path,'sector','S2',track.sectors[1].end);
-  track.speedTraps.forEach((trap,index)=>addTrackAnnotationV183(layer,path,'trap','ST'+(index+1),trap.progress));
-  addTrackAnnotationV183(layer,path,'pit','PIT IN',track.pit.entry);
-  addTrackAnnotationV183(layer,path,'pit','PIT OUT',track.pit.exit);
+  renderTrackMarkersV211(layer,path,track,'setup');
   const name=document.getElementById('f1RacingTrackNameV183');
   const length=document.getElementById('f1RacingTrackLengthV183');
   const pit=document.getElementById('f1RacingPitLimitV183');
@@ -3313,6 +3336,8 @@ window.mwsF1LongRunPaceCorrectionV209=longRunPaceCorrectionV209;
 window.mwsF1GetLongRunBalanceStatesV209=getLongRunBalanceStatesV209;
 window.mwsF1QaLongRunGapBalanceV209=qaLongRunGapBalanceV209;
 window.mwsF1QaMultiTrackIntegrationV210=qaMultiTrackIntegrationV210;
+window.mwsF1RenderTrackMarkersV211=renderTrackMarkersV211;
+window.mwsF1QaTrackMarkersV211=qaTrackMarkersV211;
 window.mwsF1ErsNormalPowerLimitV201=ersNormalPowerLimitV201;
 window.mwsF1UpdateEnergySystemV201=updateEnergySystemV201;
 window.mwsF1GetEnergyStatesV201=getEnergyStatesV201;
@@ -3371,6 +3396,7 @@ window.__mwsF1RacingV207=VERSION207;
 window.__mwsF1RacingV208=VERSION208;
 window.__mwsF1RacingV209=VERSION209;
 window.__mwsF1RacingV210=VERSION210;
+window.__mwsF1RacingV211=VERSION211;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
