@@ -209,7 +209,7 @@ try{
     section.scrollIntoView({block:'start'});
     await raf();
 
-    window.__recoveryHContext={driverIds,targetTrackId:String(targetTrack.id),synthetic};
+    window.__recoveryHContext={driverIds,targetTrackId:String(targetTrack.id),synthetic,curvatureSpeedQa:{mildLimit:Number(mildLimit)||0,sharpLimit:Number(sharpLimit)||0}};
     return {
       tracks:tracks.map(row=>row.id),
       targetTrackId:String(targetTrack.id),
@@ -398,7 +398,7 @@ try{
     assert(errors.length===0,'Browser errors during Recovery H: '+errors.join(' | '));
 
     return {
-      curvatureSpeedQa:{mildLimit:Number(mildLimit)||0,sharpLimit:Number(sharpLimit)||0},
+      curvatureSpeedQa:context.curvatureSpeedQa||null,
       manualStartGate:true,
       centerTripleDock:centerDocked,
       pausedAndResumed:true,
