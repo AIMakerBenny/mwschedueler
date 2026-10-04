@@ -352,6 +352,8 @@ try{
     assert(blueQa?.allPass===true,'Phase 215 backmarker/blue flag QA failed: '+JSON.stringify(blueQa));
     const cameraDirectorQa=window.mwsF1QaCameraDirectorV225?.();
     assert(cameraDirectorQa?.allPass===true&&cameraDirectorQa?.hasFront===true,'Phase 225 camera director QA failed: '+JSON.stringify(cameraDirectorQa));
+    const cameraStabilityQa=window.mwsF1QaCameraDirectorStabilityV229?.();
+    assert(cameraStabilityQa?.allPass===true&&Number(cameraStabilityQa?.candidateHoldMs)>=500&&Number(cameraStabilityQa?.minSwitchMs)>=1500,'Phase 229 camera director stability QA failed: '+JSON.stringify(cameraStabilityQa));
     assert(document.querySelector('[data-f1-camera-mode="FRONT"]')?.textContent?.includes('상위권'),'Phase 225 front-group camera button missing');
     const labelCollisionQa=window.mwsF1QaDriverLabelCollisionV228?.();
     assert(labelCollisionQa?.allPass===true&&Number(labelCollisionQa?.syntheticOverlapPairs)===0,'Phase 228 driver label collision QA failed: '+JSON.stringify(labelCollisionQa));
