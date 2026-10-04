@@ -165,6 +165,7 @@ import {runPhase180F1NavigationShellAudit} from './run-phase180-f1-navigation-sh
 import {runPhase181F1ContactParticipantsAudit} from './run-phase181-f1-contact-participants-audit.mjs';
 import {runPhase182F1TrackModelAudit} from './run-phase182-f1-track-model-audit.mjs';
 import {runPhase183F1SvgTrackAudit} from './run-phase183-f1-svg-track-audit.mjs';
+import {runPhase184F1SmoothMarkerAudit} from './run-phase184-f1-smooth-marker-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1803,5 +1804,11 @@ export function runPhase183FullIntegrationAudit(){
   const warnings=[...previous.warnings,...current.warnings.map(x=>'Phase '+current.phase+': '+x)];
   const summary={currentPhase:183,issues,warnings,pass:issues.length===0};console.log(JSON.stringify({fullIntegration:summary}));if(issues.length)process.exitCode=1;return summary;
 }
-export function runCurrentFullIntegrationAudit(){return runPhase183FullIntegrationAudit();}
+export function runPhase184FullIntegrationAudit(){
+  const previous=runPhase183FullIntegrationAudit(),current=runPhase184F1SmoothMarkerAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>'Phase '+current.phase+': '+x)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>'Phase '+current.phase+': '+x)];
+  const summary={currentPhase:184,issues,warnings,pass:issues.length===0};console.log(JSON.stringify({fullIntegration:summary}));if(issues.length)process.exitCode=1;return summary;
+}
+export function runCurrentFullIntegrationAudit(){return runPhase184FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();

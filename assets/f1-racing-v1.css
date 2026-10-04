@@ -168,3 +168,16 @@
 .f1-racing-track-legend-v183 i.pit{background:#f59e0b}
 .f1-racing-track-legend-v183 i.start{background:#22c55e}
 @media(max-width:900px){.f1-racing-track-head-v183{flex-direction:column}.f1-racing-track-stats-v183{width:100%}.f1-racing-track-stats-v183 span{flex:1;min-width:0}.f1-racing-track-stage-v183,.f1-racing-track-svg-v183{height:340px;min-height:340px}}
+
+/* Phase 184: requestAnimationFrame single-car smooth preview */
+.f1-racing-track-side-v184{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex:0 0 auto}
+.f1-racing-preview-controls-v184{display:flex;align-items:center;justify-content:flex-end;gap:6px;width:100%}
+.f1-racing-preview-controls-v184>span{margin-right:auto;color:#718096;font:700 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap}
+.f1-racing-preview-car-v184{pointer-events:none}
+.f1-racing-preview-car-v184 .car-halo{fill:rgba(248,250,252,.16)}
+.f1-racing-preview-car-v184 .car-body{fill:#f8fafc;stroke:#06080c;stroke-width:4}
+.f1-racing-preview-car-v184 .car-core{fill:#ef4444}
+.f1-racing-preview-car-v184 text{fill:#f8fafc;font:900 14px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#06080c;stroke-width:5;stroke-linejoin:round}
+.f1-racing-preview-car-v184.running .car-halo{animation:f1PreviewPulseV184 .9s ease-in-out infinite alternate}
+@keyframes f1PreviewPulseV184{from{opacity:.3}to{opacity:.85}}
+@media(max-width:900px){.f1-racing-track-side-v184{width:100%;align-items:stretch}.f1-racing-preview-controls-v184{justify-content:flex-start;flex-wrap:wrap}.f1-racing-preview-controls-v184>span{width:100%;margin:0 0 2px}}

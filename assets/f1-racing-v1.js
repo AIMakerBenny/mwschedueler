@@ -4,8 +4,10 @@ const VERSION='phase180-shell';
 const VERSION181='phase181-participants';
 const VERSION182='phase182-track-model';
 const VERSION183='phase183-svg-track';
+const VERSION184='phase184-smooth-single-marker';
 const selectedIds=[];
 let activeTrackId='majoku-ring-v1';
+const previewStateV184={running:false,progress:0,lastTimestamp:0,rafId:0,lapDurationMs:18000};
 
 function escapeHtml(value=''){
   return String(value).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]});
@@ -67,32 +69,126 @@ function renderSelected(){
   }).join(''):'<div class="f1-racing-empty-v181">왼쪽 연락처에서 레이스 참가자를 선택해 주세요.</div>';
   list.querySelectorAll('[data-remove-contact-id]').forEach(function(button){button.addEventListener('click',function(){removeDriver(button.dataset.removeContactId)})});
 }
+function driverForPreviewV184(){
+  const firstId=selectedIds[0];
+  if(!firstId)return null;
+  return getContacts().find(row=>String(row.id)===String(firstId))||null;
+}
+function driverCodeV184(driver){
+  const raw=String(driver?.name||'CAR').replace(/\s+/g,'');
+  return raw.slice(0,3).toUpperCase()||'CAR';
+}
+function ensurePreviewMarkerV184(){
+  const layer=document.getElementById('f1RacingVehicleLayerV183');
+  if(!layer)return null;
+  let marker=document.getElementById('f1RacingPreviewCarV184');
+  if(marker)return marker;
+  marker=svgNodeV183('g',{id:'f1RacingPreviewCarV184',class:'f1-racing-preview-car-v184'});
+  marker.append(
+    svgNodeV183('circle',{class:'car-halo',cx:0,cy:0,r:20}),
+    svgNodeV183('circle',{class:'car-body',cx:0,cy:0,r:11}),
+    svgNodeV183('circle',{class:'car-core',cx:0,cy:0,r:5})
+  );
+  const label=svgNodeV183('text',{class:'car-label',x:17,y:-13});
+  marker.appendChild(label);
+  layer.appendChild(marker);
+  return marker;
+}
+function positionPreviewMarkerV184(progress=previewStateV184.progress){
+  const path=document.getElementById('f1RacingTrackPathV183');
+  const marker=ensurePreviewMarkerV184();
+  if(!path||!marker)return false;
+  const total=path.getTotalLength();
+  if(!(total>0))return false;
+  const point=path.getPointAtLength(Math.max(0,Math.min(1,Number(progress)||0))*total);
+  marker.setAttribute('transform','translate('+point.x.toFixed(2)+' '+point.y.toFixed(2)+')');
+  const label=marker.querySelector('.car-label');
+  const driver=driverForPreviewV184();
+  if(label)label.textContent=driverCodeV184(driver);
+  marker.style.display=driver?'':'none';
+  return Boolean(driver);
+}
+function syncPreviewControlsV184(){
+  const driver=driverForPreviewV184();
+  const start=document.getElementById('f1RacingPreviewStartV184');
+  const stop=document.getElementById('f1RacingPreviewStopV184');
+  const status=document.getElementById('f1RacingPreviewStatusV184');
+  if(!driver&&previewStateV184.running)return stopPreviewV184(true);
+  if(start){start.disabled=!driver||previewStateV184.running;start.textContent=previewStateV184.running?'주행 중':'주행 미리보기'}
+  if(stop)stop.disabled=!previewStateV184.running;
+  if(status)status.textContent=!driver?'드라이버 선택 후 테스트 가능':previewStateV184.running?driver.name+' · smooth preview running':driver.name+' · ready';
+  positionPreviewMarkerV184();
+}
+function previewFrameV184(timestamp){
+  if(!previewStateV184.running)return;
+  if(!previewStateV184.lastTimestamp)previewStateV184.lastTimestamp=timestamp;
+  const delta=Math.min(50,Math.max(0,timestamp-previewStateV184.lastTimestamp));
+  previewStateV184.lastTimestamp=timestamp;
+  previewStateV184.progress=(previewStateV184.progress+delta/previewStateV184.lapDurationMs)%1;
+  positionPreviewMarkerV184(previewStateV184.progress);
+  previewStateV184.rafId=requestAnimationFrame(previewFrameV184);
+}
+function startPreviewV184(){
+  if(previewStateV184.running||!driverForPreviewV184())return false;
+  if(!renderTrackMapV183())return false;
+  previewStateV184.running=true;
+  previewStateV184.lastTimestamp=0;
+  const marker=ensurePreviewMarkerV184();if(marker)marker.classList.add('running');
+  syncPreviewControlsV184();
+  previewStateV184.rafId=requestAnimationFrame(previewFrameV184);
+  return true;
+}
+function stopPreviewV184(reset=false){
+  previewStateV184.running=false;
+  previewStateV184.lastTimestamp=0;
+  if(previewStateV184.rafId)cancelAnimationFrame(previewStateV184.rafId);
+  previewStateV184.rafId=0;
+  if(reset)previewStateV184.progress=0;
+  const marker=document.getElementById('f1RacingPreviewCarV184');if(marker)marker.classList.remove('running');
+  positionPreviewMarkerV184(previewStateV184.progress);
+  const driver=driverForPreviewV184();
+  const start=document.getElementById('f1RacingPreviewStartV184');
+  const stop=document.getElementById('f1RacingPreviewStopV184');
+  const status=document.getElementById('f1RacingPreviewStatusV184');
+  if(start){start.disabled=!driver;start.textContent='주행 미리보기'}
+  if(stop)stop.disabled=true;
+  if(status)status.textContent=driver?driver.name+' · ready':'드라이버 선택 후 테스트 가능';
+  return true;
+}
+function bindPreviewControlsV184(){
+  const start=document.getElementById('f1RacingPreviewStartV184');
+  const stop=document.getElementById('f1RacingPreviewStopV184');
+  if(start&&!start.dataset.f1Bound){start.dataset.f1Bound='1';start.addEventListener('click',startPreviewV184)}
+  if(stop&&!stop.dataset.f1Bound){stop.dataset.f1Bound='1';stop.addEventListener('click',()=>stopPreviewV184(false))}
+  syncPreviewControlsV184();
+}
 function render(){
   const section=document.getElementById('gameF1Racing');
   if(!section)return false;
   const search=document.getElementById('f1RacingContactSearchV181');
   const clear=document.getElementById('f1RacingClearDriversV181');
   if(search&&!search.dataset.f1Bound){search.dataset.f1Bound='1';search.addEventListener('input',renderContacts)}
-  if(clear&&!clear.dataset.f1Bound){clear.dataset.f1Bound='1';clear.addEventListener('click',function(){selectedIds.splice(0);renderContacts();renderSelected()})}
+  if(clear&&!clear.dataset.f1Bound){clear.dataset.f1Bound='1';clear.addEventListener('click',function(){selectedIds.splice(0);stopPreviewV184(true);renderContacts();renderSelected();syncPreviewControlsV184()})}
   renderContacts();
   renderSelected();
   updateTrackFoundationStatusV182();
   renderTrackMapV183();
-  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='TRACK MAP';
-  section.dataset.f1Runtime=VERSION183;
+  bindPreviewControlsV184();
+  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='SMOOTH MARKER';
+  section.dataset.f1Runtime=VERSION184;
   return true;
 }
 function toggleDriver(id){
   const key=String(id||'');if(!key)return;
   const index=selectedIds.findIndex(function(value){return String(value)===key});
   if(index>=0)selectedIds.splice(index,1);else selectedIds.push(key);
-  renderContacts();renderSelected();
+  renderContacts();renderSelected();syncPreviewControlsV184();
 }
 function removeDriver(id){
   const key=String(id||'');
   const index=selectedIds.findIndex(function(value){return String(value)===key});
   if(index>=0)selectedIds.splice(index,1);
-  renderContacts();renderSelected();
+  renderContacts();renderSelected();syncPreviewControlsV184();
 }
 function getSelectedContactIds(){return selectedIds.slice()}
 function getActiveTrack(){return typeof window.mwsGetF1TrackV182==='function'?window.mwsGetF1TrackV182(activeTrackId):null}
@@ -160,9 +256,14 @@ window.mwsF1GetSelectedContactIdsV181=getSelectedContactIds;
 window.mwsF1GetActiveTrackV182=getActiveTrack;
 window.mwsF1RenderTrackMapV183=renderTrackMapV183;
 window.mwsF1PointAtProgressV183=pointAtProgressV183;
+window.mwsF1StartPreviewV184=startPreviewV184;
+window.mwsF1StopPreviewV184=stopPreviewV184;
+window.mwsF1PositionPreviewV184=positionPreviewMarkerV184;
 window.__mwsF1RacingV180=VERSION;
 window.__mwsF1RacingV181=VERSION181;
 window.__mwsF1RacingV182=VERSION182;
 window.__mwsF1RacingV183=VERSION183;
+window.__mwsF1RacingV184=VERSION184;
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
+document.addEventListener('visibilitychange',function(){if(document.hidden&&previewStateV184.running)stopPreviewV184(false)});
 })();
