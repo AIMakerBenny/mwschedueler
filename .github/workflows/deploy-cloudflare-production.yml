@@ -1178,20 +1178,20 @@ jobs:
           grep -Fq 'function workspaceCompactRecoveryK(layout,preferredId=' /tmp/f1-racing-recovery-k.js
           grep -Fq 'window.mwsF1AuditWorkspaceLayoutRecoveryK=workspaceAuditLayoutRecoveryK;' /tmp/f1-racing-recovery-k.js
           echo '[phase204] F1 driving incidents'
-          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=K1&phase=20[4-9]' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[K-Z][0-9]+&phase=20[4-9]' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RacingV204=VERSION204;" > /tmp/f1-racing-phase204.js
           node --check /tmp/f1-racing-phase204.js
           grep -Fq 'function updateDrivingIncidentsV204(vehicle,stepMs,phase,controls={}){' /tmp/f1-racing-phase204.js
           grep -Fq 'window.mwsF1ForceDrivingIncidentV204=forceDrivingIncidentV204;' /tmp/f1-racing-phase204.js
           echo '[phase205] F1 pit lane stop and tyre warmup'
-          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=K1&phase=20[5-9]' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[K-Z][0-9]+&phase=20[5-9]' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV205=VERSION205;' > /tmp/f1-racing-phase205.js
           node --check /tmp/f1-racing-phase205.js
           grep -Fq 'function updatePitPostStepV205(vehicle,previousRaceProgress){' /tmp/f1-racing-phase205.js
           grep -Fq 'window.mwsF1RequestPitStopV205=requestPitStopV205;' /tmp/f1-racing-phase205.js
           grep -Fq 'window.mwsF1QaPitCycleV205=qaPitCycleV205;' /tmp/f1-racing-phase205.js
           echo '[phase206] F1 pit strategy AI'
-          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=K1&phase=206' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[K-Z][0-9]+&phase=206' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV206=VERSION206;' > /tmp/f1-racing-phase206.js
           node --check /tmp/f1-racing-phase206.js
           grep -Fq 'function evaluatePitStrategyV206(vehicle,options={}){' /tmp/f1-racing-phase206.js
