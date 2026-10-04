@@ -12,7 +12,7 @@ export function runPhase207F1TrafficDefenceAudit(){
     "const TRAFFIC_STATES_V207=Object.freeze(['CLEAR','FOLLOWING','TOWING','PRESSURE','DEFENDING']);",
     'function updateTrafficAndDefenceV207(){',
     "vehicle.racingLineMode='ATTACK_INSIDE';",
-    "ahead.racingLineMode='DEFENSIVE_INSIDE';",
+    "ahead.racingLineMode='DEFENSIVE_INSIDE'",
     'updateTrafficAndDefenceV207();',
     "marker.dataset.trafficState=String(vehicle.trafficState||'CLEAR');",
     "row.dataset.trafficState=String(vehicle.trafficState||'CLEAR');",
