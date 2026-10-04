@@ -4,7 +4,7 @@ export function runPhase215F1BackmarkerBlueFlagAudit(){
   const issues=[],warnings=[];
   const index=fs.readFileSync('index.html','utf8');
   const racing=fs.readFileSync('assets/f1-racing-v1.js','utf8');
-  if(!index.includes('recovery=N1&phase=215'))issues.push('Phase 215 asset cache missing');
+  const phase=Number(index.match(/recovery=N1&phase=(\d+)/)?.[1]||0);if(phase<215)issues.push('Phase 215 asset cache missing');
   for(const token of [
     "const VERSION215='phase215-backmarker-blue-flag';",
     'function classifyBackmarkerV215(leader,vehicle){',
