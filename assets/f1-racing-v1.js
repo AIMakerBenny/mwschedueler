@@ -50,6 +50,7 @@ const VERSION220='phase220-diverse-track-catalog';
 const VERSION221='phase221-production-verification-compatibility';
 const VERSION222='phase222-race-commentary-flow';
 const VERSION223='phase223-track-profile-ui';
+const VERSION224='phase224-race-ui-density-qa';
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
 const CAMERA_MODES_V216=Object.freeze(['AUTO','FULL','LEADER','BATTLE','MANUAL']);
 const raceCameraV216={mode:'AUTO',zoom:1.9,cx:500,cy:300,dragging:false,pointerId:null,lastX:0,lastY:0,initialized:false};
@@ -2847,8 +2848,8 @@ function timingRowV188(driver,index){
   const driverColor=driverColorV216(index);
   return '<div class="f1-racing-timing-row-v188'+podium+'" data-f1-driver-id="'+escapeHtml(driver.contactId)+'" data-driver-color="'+driverColor+'" style="--f1-driver-color:'+driverColor+'">'+
     '<span class="pos">P'+String(pos).padStart(2,'0')+'</span>'+
-    '<span class="driver"><b>'+escapeHtml(driverCodeV188(driver))+'</b><small>'+escapeHtml(driver.name)+'</small><em data-f1-current-sector>GRID</em></span>'+
-    '<span class="gear">--</span><span class="rpm">----</span><span class="speed">---</span><span class="last">--:--.---</span><span class="best">--:--.---</span><span class="gap" data-f1-gap>'+(pos===1?'LEADER':'--.---')+'</span><span class="interval" data-f1-interval>--</span><span class="tyre">--</span><span class="s1">--.---</span><span class="s2">--.---</span><span class="s3">--.---</span>'+
+    '<span class="driver"><b>'+escapeHtml(driverCodeV188(driver))+'</b><small>'+escapeHtml(driver.name)+'</small><em data-f1-current-sector>그리드</em></span>'+
+    '<span class="gear">--</span><span class="rpm">----</span><span class="speed">---</span><span class="last">--:--.---</span><span class="best">--:--.---</span><span class="gap" data-f1-gap>'+(pos===1?'선두':'--.---')+'</span><span class="interval" data-f1-interval>--</span><span class="tyre">--</span><span class="s1">--.---</span><span class="s2">--.---</span><span class="s3">--.---</span>'+
     '</div>';
 }
 function renderRaceControlV188(){
@@ -4063,6 +4064,7 @@ window.__mwsF1RacingV222=VERSION222;
 window.mwsF1TrackProfileV223=trackProfileV223;
 window.mwsF1QaTrackProfileUiV223=qaTrackProfileUiV223;
 window.__mwsF1RacingV223=VERSION223;
+window.__mwsF1RacingV224=VERSION224;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
