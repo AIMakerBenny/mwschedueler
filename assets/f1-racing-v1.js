@@ -26,7 +26,9 @@ const VERSION200='phase200-driver-pace-consistency-racecraft';
 const DRIVER_PROFILE_KEYS_V200=Object.freeze(['pace','braking','cornering','racecraft','consistency','tyreManagement','start','aggression','errorResistance']);
 const DRIVER_PACE_CONFIG_V200=Object.freeze({ratingMin:55,ratingMax:95,paceRange:0.006,brakingRange:0.004,corneringRange:0.007,noiseSampleMs:350,noiseBase:0.0025,noiseRange:0.0065,noiseClamp:0.018});
 const VERSION201='phase201-energy-recharge-boost';
-const ENERGY_CONFIG_V201=Object.freeze({usableCapacityMJ:4,maxRechargePerLapMJ:7,maxHarvestPowerKW:350,maxDeployPowerKW:350,maxBoostDeltaKW:150,icePowerKW:400,minStandingDeployKph:50});
+const ENERGY_CONFIG_V201=Object.freeze({usableCapacityMJ:4,maxRechargePerLapMJ:8.5,maxHarvestPowerKW:350,maxDeployPowerKW:350,icePowerKW:400,minStandingDeployKph:50});
+const VERSION202='phase202-active-aero-overtake';
+const ACTIVE_AERO_CONFIG_V202=Object.freeze({transitionMs:400,detectionGapSeconds:1,extraRechargeMJ:0.5,overtakeFullPowerToKph:337,overtakeCutoffKph:355});
 const DEFAULT_TOTAL_LAPS_V190=10;
 const F1_LINE_MODES_V197=Object.freeze(['IDEAL','ATTACK_INSIDE','DEFENSIVE_INSIDE','OUTSIDE','PIT_LINE']);
 const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
@@ -414,6 +416,11 @@ function updateRaceProgressHudV190(){
     row.dataset.energyHarvestLapMJ=(Number(vehicle.energyHarvestLapMJ)||0).toFixed(3);
     row.dataset.boost=vehicle.boostActive?'1':'0';
     row.dataset.boostKW=String(Math.round(vehicle.boostPowerKW||0));
+    row.dataset.activeAero=String(vehicle.activeAeroMode||'CORNER');
+    row.dataset.activeAeroTarget=String(vehicle.activeAeroTarget||'CORNER');
+    row.dataset.overtakeEligible=vehicle.overtakeEligible?'1':'0';
+    row.dataset.overtakeActive=vehicle.overtakeActive?'1':'0';
+    row.dataset.overtakeGap=Number.isFinite(vehicle.overtakeGapSeconds)?Number(vehicle.overtakeGapSeconds).toFixed(3):'';
   }
   updateRaceStandingsV191();
   return true;
@@ -525,6 +532,61 @@ function getDriverProfilesV200(){
 }
 
 
+
+function trackZoneAtProgressV202(progress){
+  const track=activeRaceSnapshotV187?.track;
+  const p=normalizedProgressV190(progress);
+  return (track?.zones||[]).find(zone=>p>=Number(zone.start)&&p<Number(zone.end))||null;
+}
+function overtakeZoneAtProgressV202(progress){
+  const track=activeRaceSnapshotV187?.track;
+  const p=normalizedProgressV190(progress);
+  return (track?.overtakeZones||[]).find(zone=>p>=Number(zone.start)&&p<Number(zone.end))||null;
+}
+function ersOvertakePowerLimitV202(speedKph){
+  const speed=Math.max(0,Number(speedKph)||0);
+  if(speed>=ACTIVE_AERO_CONFIG_V202.overtakeCutoffKph)return 0;
+  return Math.max(0,Math.min(ENERGY_CONFIG_V201.maxDeployPowerKW,7100-20*speed));
+}
+function estimatedGapSecondsV202(vehicle){
+  const gap=Math.max(0,Number(vehicle?.gapToCarAheadMeters));
+  if(!Number.isFinite(gap))return Infinity;
+  const ahead=raceMotionV189.vehicles.find(v=>String(v.id)===String(vehicle?.carAheadId||''))||null;
+  const meanKph=Math.max(1,((Number(vehicle?.speedKph)||0)+(Number(ahead?.speedKph)||Number(vehicle?.speedKph)||0))/2);
+  return gap/(meanKph/3.6);
+}
+function updateActiveAeroAndOvertakeV202(vehicle,stepMs){
+  if(!vehicle)return null;
+  const cfg=ACTIVE_AERO_CONFIG_V202;
+  const zone=trackZoneAtProgressV202(vehicle.progress);
+  const requestedMode=zone?.type==='straight'?'STRAIGHT':'CORNER';
+  if(vehicle.activeAeroTarget!==requestedMode){
+    vehicle.activeAeroTarget=requestedMode;
+    vehicle.activeAeroTransitionMs=cfg.transitionMs;
+  }
+  vehicle.activeAeroTransitionMs=Math.max(0,(Number(vehicle.activeAeroTransitionMs)||0)-Math.max(0,Number(stepMs)||0));
+  if(vehicle.activeAeroTransitionMs<=0)vehicle.activeAeroMode=requestedMode;
+
+  const overtakeZone=overtakeZoneAtProgressV202(vehicle.progress);
+  const gapSeconds=estimatedGapSecondsV202(vehicle);
+  const eligible=Boolean(overtakeZone&&vehicle.carAheadId&&gapSeconds<=cfg.detectionGapSeconds);
+  vehicle.overtakeZoneId=overtakeZone?.id||'';
+  vehicle.overtakeGapSeconds=gapSeconds;
+  vehicle.overtakeEligible=eligible;
+  vehicle.overtakeActive=eligible;
+  if(eligible)vehicle.overtakeRechargeAllowanceActive=true;
+  return {activeAeroMode:vehicle.activeAeroMode,activeAeroTarget:vehicle.activeAeroTarget,transitionMs:vehicle.activeAeroTransitionMs,overtakeZoneId:vehicle.overtakeZoneId,gapSeconds,eligible,overtakeActive:vehicle.overtakeActive};
+}
+function getActiveAeroOvertakeStatesV202(){
+  return raceMotionV189.vehicles.map(vehicle=>({
+    id:vehicle.id,name:vehicle.driver?.name||'',activeAeroMode:vehicle.activeAeroMode,
+    activeAeroTarget:vehicle.activeAeroTarget,activeAeroTransitionMs:Number(vehicle.activeAeroTransitionMs)||0,
+    overtakeZoneId:vehicle.overtakeZoneId||'',overtakeGapSeconds:Number(vehicle.overtakeGapSeconds),
+    overtakeEligible:Boolean(vehicle.overtakeEligible),overtakeActive:Boolean(vehicle.overtakeActive),
+    overtakeRechargeAllowanceActive:Boolean(vehicle.overtakeRechargeAllowanceActive)
+  }));
+}
+
 function ersNormalPowerLimitV201(speedKph){
   const speed=Math.max(0,Number(speedKph)||0);
   const cfg=ENERGY_CONFIG_V201;
@@ -561,7 +623,8 @@ function updateEnergySystemV201(vehicle,stepMs,phase,throttle,brake){
   let rechargeKW=0;
   let harvestedMJ=0;
   if(Number(brake)>0){
-    const lapRoom=Math.max(0,cfg.maxRechargePerLapMJ-(Number(vehicle.energyHarvestLapMJ)||0));
+    const rechargeLimit=cfg.maxRechargePerLapMJ+(vehicle.overtakeRechargeAllowanceActive?ACTIVE_AERO_CONFIG_V202.extraRechargeMJ:0);
+    const lapRoom=Math.max(0,rechargeLimit-(Number(vehicle.energyHarvestLapMJ)||0));
     const storeRoom=Math.max(0,cfg.usableCapacityMJ-battery);
     const requestedKW=cfg.maxHarvestPowerKW*clamp01V198(brake);
     const requestedMJ=requestedKW*dt/1000;
@@ -571,14 +634,12 @@ function updateEnergySystemV201(vehicle,stepMs,phase,throttle,brake){
   }
 
   const normalLimitKW=Number(brake)>0?0:ersNormalPowerLimitV201(vehicle.speedKph);
+  const overtakeLimitKW=vehicle.overtakeActive?ersOvertakePowerLimitV202(vehicle.speedKph):normalLimitKW;
+  const deployLimitKW=Math.max(normalLimitKW,overtakeLimitKW);
   const attackOpportunityScore=clamp01V198(vehicle.slipstreamStrength);
   const defenceThreatScore=trailingThreatScoreV201(vehicle);
-  const boostOpportunityScore=Math.max(attackOpportunityScore,defenceThreatScore);
-  const boostHeadroomKW=Math.max(0,cfg.maxDeployPowerKW-normalLimitKW);
-  let boostKW=(Number(throttle)>0&&normalLimitKW>0)
-    ?Math.min(cfg.maxBoostDeltaKW,boostHeadroomKW)*boostOpportunityScore
-    :0;
-  let requestedDeployKW=Number(throttle)>0?Math.min(cfg.maxDeployPowerKW,normalLimitKW+boostKW):0;
+  let boostKW=vehicle.overtakeActive?Math.max(0,deployLimitKW-normalLimitKW):0;
+  let requestedDeployKW=Number(throttle)>0?Math.min(cfg.maxDeployPowerKW,deployLimitKW):0;
   const availableDeployKW=dt>0?battery*1000/dt:0;
   const deployKW=Math.max(0,Math.min(requestedDeployKW,availableDeployKW));
   if(requestedDeployKW>0&&deployKW<requestedDeployKW){
@@ -633,6 +694,7 @@ function createRaceVehiclesV189(snapshot){
       dirtyAirStrength:0,aeroGripMultiplier:1,understeerRisk:0,slideRisk:0,dirtyAirTyreHeatLoad:0,
       driverProfile,driverRandomState:raceSeed||1,paceNoise:0,nextPaceNoiseMs:0,driverPaceMultiplier:1,
       batteryMJ:ENERGY_CONFIG_V201.usableCapacityMJ,energyTargetMJ:ENERGY_CONFIG_V201.usableCapacityMJ,energyDeployKW:0,energyRechargeKW:0,energyDeployMJ:0,energyHarvestMJ:0,energyHarvestLapMJ:0,energyLapNumber:1,boostActive:false,boostPowerKW:0,boostEnergyMJ:0,attackOpportunityScore:0,defenceThreatScore:0,powerUnitFactor:1,
+      activeAeroMode:'CORNER',activeAeroTarget:'CORNER',activeAeroTransitionMs:0,overtakeZoneId:'',overtakeGapSeconds:Infinity,overtakeEligible:false,overtakeActive:false,overtakeRechargeAllowanceActive:false,
       marker:null
     };
     return syncVehicleRaceMetricsV190(vehicle,snapshot.track);
@@ -891,6 +953,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const targetData=getSpeedTargetAtProgressV195(vehicle.progress);
   const baseTarget=Math.max(60,Number(targetData?.targetKph)||250);
   const phase=getCornerPhaseAtProgressV194(vehicle.progress)?.phase||'STRAIGHT';
+  updateActiveAeroAndOvertakeV202(vehicle,stepMs);
   updateDriverPaceStateV200(vehicle,stepMs);
   const driverPaceMultiplier=driverTargetMultiplierV200(vehicle,phase);
   vehicle.driverPaceMultiplier=driverPaceMultiplier;
@@ -1086,7 +1149,7 @@ function render(){
   if(previewStateV184.running)stopPreviewV184(true);
   if(f1ScreenStateV185==='RACE'&&activeRaceSnapshotV187){renderRaceControlV188();startRaceMotionV189()}
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent=f1ScreenStateV185==='SETUP'?'RACE SETUP':'RACE CONTROL';
-  section.dataset.f1Runtime=VERSION201;
+  section.dataset.f1Runtime=VERSION202;
   return true;
 }
 function toggleDriver(id){
@@ -1217,6 +1280,9 @@ window.mwsF1GetDriverProfilesV200=getDriverProfilesV200;
 window.mwsF1ErsNormalPowerLimitV201=ersNormalPowerLimitV201;
 window.mwsF1UpdateEnergySystemV201=updateEnergySystemV201;
 window.mwsF1GetEnergyStatesV201=getEnergyStatesV201;
+window.mwsF1ErsOvertakePowerLimitV202=ersOvertakePowerLimitV202;
+window.mwsF1UpdateActiveAeroAndOvertakeV202=updateActiveAeroAndOvertakeV202;
+window.mwsF1GetActiveAeroOvertakeStatesV202=getActiveAeroOvertakeStatesV202;
 window.__mwsF1RacingV180=VERSION;
 window.__mwsF1RacingV181=VERSION181;
 window.__mwsF1RacingV182=VERSION182;
@@ -1239,6 +1305,7 @@ window.__mwsF1RacingV198=VERSION198;
 window.__mwsF1RacingV199=VERSION199;
 window.__mwsF1RacingV200=VERSION200;
 window.__mwsF1RacingV201=VERSION201;
+window.__mwsF1RacingV202=VERSION202;
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){

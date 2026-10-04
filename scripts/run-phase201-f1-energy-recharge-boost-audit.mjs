@@ -7,15 +7,14 @@ export function runPhase201F1EnergyRechargeBoostAudit(){
   const racing=fs.readFileSync('assets/f1-racing-v1.js','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  if(!index.includes('assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=201'))issues.push('Phase 201 racing asset link missing');
+  if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=(?:20[1-9]|[3-9]\d{2,})/.test(index))issues.push('Phase 201+ racing runtime asset link missing');
   for(const token of [
     "const VERSION201='phase201-energy-recharge-boost';",
     'usableCapacityMJ:4',
-    'maxRechargePerLapMJ:7',
+    'maxRechargePerLapMJ:8.5',
     'maxHarvestPowerKW:350',
     'maxDeployPowerKW:350',
-    'maxBoostDeltaKW:150',
-    'minStandingDeployKph:50',
+        'minStandingDeployKph:50',
     'function ersNormalPowerLimitV201(speedKph){',
     'if(speed<290)return cfg.maxDeployPowerKW;',
     'if(speed<340)return Math.max(0,Math.min(cfg.maxDeployPowerKW,1800-5*speed));',
@@ -23,9 +22,7 @@ export function runPhase201F1EnergyRechargeBoostAudit(){
     'function trailingThreatScoreV201(vehicle,vehicles=raceMotionV189.vehicles){',
     'function updateEnergySystemV201(vehicle,stepMs,phase,throttle,brake){',
     'const lapRoom=Math.max(0,cfg.maxRechargePerLapMJ-(Number(vehicle.energyHarvestLapMJ)||0));',
-    'const boostOpportunityScore=Math.max(attackOpportunityScore,defenceThreatScore);',
-    'boostKW=(Number(throttle)>0&&normalLimitKW>0)',
-    'const deployKW=Math.max(0,Math.min(requestedDeployKW,availableDeployKW));',
+            'const deployKW=Math.max(0,Math.min(requestedDeployKW,availableDeployKW));',
     'vehicle.energyHarvestLapMJ=(Number(vehicle.energyHarvestLapMJ)||0)+harvestedMJ;',
     'vehicle.boostActive=boostKW>0.01;',
     'batteryMJ:ENERGY_CONFIG_V201.usableCapacityMJ',

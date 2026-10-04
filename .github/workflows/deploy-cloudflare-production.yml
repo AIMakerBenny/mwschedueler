@@ -132,6 +132,7 @@ jobs:
           node --check scripts/run-phase199-f1-dirty-air-audit.mjs
           node --check scripts/run-phase200-f1-driver-profile-audit.mjs
           node --check scripts/run-phase201-f1-energy-recharge-boost-audit.mjs
+          node --check scripts/run-phase202-f1-active-aero-overtake-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-v1.js
@@ -1029,7 +1030,7 @@ jobs:
           grep -Fq 'const maxTarget=baseTarget*driverPaceMultiplier*aeroGripMultiplier+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;' /tmp/f1-racing-v1-phase200.js
           grep -Fq 'window.mwsF1GetDriverProfilesV200=getDriverProfilesV200;' /tmp/f1-racing-v1-phase200.js
           echo '[phase201] F1 energy recharge boost'
-          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=201' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=(20[1-9]|[3-9][0-9]{2,})' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV201=VERSION201;' > /tmp/f1-racing-v1-phase201.js
           node --check /tmp/f1-racing-v1-phase201.js
           grep -Fq 'const ENERGY_CONFIG_V201=Object.freeze({usableCapacityMJ:4,maxRechargePerLapMJ:7,maxHarvestPowerKW:350,maxDeployPowerKW:350,maxBoostDeltaKW:150,icePowerKW:400,minStandingDeployKph:50});' /tmp/f1-racing-v1-phase201.js
@@ -1038,6 +1039,15 @@ jobs:
           grep -Fq 'const boostOpportunityScore=Math.max(attackOpportunityScore,defenceThreatScore);' /tmp/f1-racing-v1-phase201.js
           grep -Fq 'if(accelMps2>0)accelMps2*=energyState.powerUnitFactor;' /tmp/f1-racing-v1-phase201.js
           grep -Fq 'window.mwsF1GetEnergyStatesV201=getEnergyStatesV201;' /tmp/f1-racing-v1-phase201.js
+          echo '[phase202] F1 active aero and overtake mode'
+          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=202' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV202=VERSION202;' > /tmp/f1-racing-v1-phase202.js
+          node --check /tmp/f1-racing-v1-phase202.js
+          grep -Fq "const VERSION202='phase202-active-aero-overtake';" /tmp/f1-racing-v1-phase202.js
+          grep -Fq 'function ersOvertakePowerLimitV202(speedKph){' /tmp/f1-racing-v1-phase202.js
+          grep -Fq 'const eligible=Boolean(overtakeZone&&vehicle.carAheadId&&gapSeconds<=cfg.detectionGapSeconds);' /tmp/f1-racing-v1-phase202.js
+          grep -Fq "const requestedMode=zone?.type==='straight'?'STRAIGHT':'CORNER';" /tmp/f1-racing-v1-phase202.js
+          grep -Fq 'window.mwsF1GetActiveAeroOvertakeStatesV202=getActiveAeroOvertakeStatesV202;' /tmp/f1-racing-v1-phase202.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css
