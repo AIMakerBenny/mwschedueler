@@ -196,6 +196,7 @@ import {runRecoveryHF1LiveQaAudit} from './run-recovery-h-f1-live-qa-audit.mjs';
 import {runRecoveryIF1WorkspaceReflowAudit} from './run-recovery-i-f1-workspace-reflow-audit.mjs';
 import {runRecoveryJF1SplitDockAudit} from './run-recovery-j-f1-split-dock-audit.mjs';
 import {runRecoveryKF1WorkspaceRepairAudit} from './run-recovery-k-f1-workspace-repair-audit.mjs';
+import {runPhase204F1DrivingIncidentAudit} from './run-phase204-f1-driving-incidents-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2105,5 +2106,14 @@ export function runRecoveryKFullIntegrationAudit(){
   if(issues.length)process.exitCode=1;
   return summary;
 }
-export function runCurrentFullIntegrationAudit(){return runRecoveryKFullIntegrationAudit();}
+export function runPhase204FullIntegrationAudit(){
+  const previous=runRecoveryKFullIntegrationAudit(),current=runPhase204F1DrivingIncidentAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>'Phase 204: '+x)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 204: '+x)];
+  const summary={currentPhase:204,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+export function runCurrentFullIntegrationAudit(){return runPhase204FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();

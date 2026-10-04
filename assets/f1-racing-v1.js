@@ -30,6 +30,17 @@ const ENERGY_CONFIG_V201=Object.freeze({usableCapacityMJ:4,maxRechargePerLapMJ:8
 const VERSION202='phase202-active-aero-overtake';
 const ACTIVE_AERO_CONFIG_V202=Object.freeze({transitionMs:400,detectionGapSeconds:1,extraRechargeMJ:0.5,overtakeFullPowerToKph:337,overtakeCutoffKph:355});
 const VERSION203='phase203-tyre-system';
+const VERSION204='phase204-driving-incidents';
+const INCIDENT_CONFIG_V204=Object.freeze({
+  evaluationMs:240,
+  lockupDurationMs:720,
+  understeerDurationMs:900,
+  oversteerDurationMs:760,
+  lockupBrakeFactor:0.80,
+  understeerSpeedFactor:0.93,
+  oversteerSpeedFactor:0.91,
+  oversteerThrottleFactor:0.48
+});
 const TYRE_COMPOUNDS_V203=Object.freeze({SOFT:Object.freeze({code:'S',gripBias:1.01,wearPerLap:0.070,heatFactor:1.10,idealSurface:0.60}),MEDIUM:Object.freeze({code:'M',gripBias:1.00,wearPerLap:0.052,heatFactor:1.00,idealSurface:0.56}),HARD:Object.freeze({code:'H',gripBias:0.99,wearPerLap:0.038,heatFactor:0.90,idealSurface:0.52})});
 const TYRE_CONFIG_V203=Object.freeze({ambientSurface:0.42,ambientCarcass:0.44,minGrip:0.82,maxGrip:1.03});
 const DEFAULT_TOTAL_LAPS_V190=10;
@@ -465,6 +476,10 @@ function updateRaceProgressHudV190(){
     row.dataset.overtakeActive=vehicle.overtakeActive?'1':'0';
     row.dataset.overtakeGap=Number.isFinite(vehicle.overtakeGapSeconds)?Number(vehicle.overtakeGapSeconds).toFixed(3):'';
     row.dataset.tyreCompound=String(vehicle.tyreCompound||'MEDIUM');
+    row.dataset.incident=activeDrivingIncidentV204(vehicle)||'';
+    row.dataset.lockups=String(Number(vehicle.lockupCount)||0);
+    row.dataset.understeers=String(Number(vehicle.understeerCount)||0);
+    row.dataset.oversteers=String(Number(vehicle.oversteerCount)||0);
     row.dataset.tyreWear=(Number(vehicle.tyreWear)||0).toFixed(3);
     row.dataset.tyreSurface=(Number(vehicle.tyreSurfaceTemp)||0).toFixed(3);
     row.dataset.tyreCarcass=(Number(vehicle.tyreCarcassTemp)||0).toFixed(3);
@@ -788,7 +803,7 @@ function updateTyreSystemV203(vehicle,stepMs,phase){
   const thermalDegGain=thermalStress*lapFraction*3.2*managementWearFactor;
   const coldStress=Math.max(0,(spec.idealSurface-.12)-surface);
   const grainingGain=coldStress*cornerLoad*lapFraction*2.4*managementWearFactor;
-  const flatSpotGain=(brakeLoad>.92&&speedKph>120)?(brakeLoad-.92)*lapFraction*8:0;
+  const flatSpotGain=(Number(vehicle.lockupActiveMs)||0)>0?clamp01V198(vehicle.lockupSeverity)*lapFraction*1.6:0;
   const wearGain=spec.wearPerLap*lapFraction*managementWearFactor*(1+thermalStress*.8+dirtyHeat*.18);
 
   vehicle.tyreWear=Math.max(0,Math.min(1,(Number(vehicle.tyreWear)||0)+wearGain));
@@ -817,6 +832,102 @@ function getTyreStatesV203(){
   }));
 }
 
+function activeDrivingIncidentV204(vehicle){
+  if((Number(vehicle?.lockupActiveMs)||0)>0)return 'LOCK_UP';
+  if((Number(vehicle?.understeerActiveMs)||0)>0)return 'UNDERSTEER';
+  if((Number(vehicle?.oversteerActiveMs)||0)>0)return 'OVERSTEER';
+  return '';
+}
+function triggerDrivingIncidentV204(vehicle,type,severity=.7,forced=false){
+  if(!vehicle)return null;
+  const key=String(type||'').toUpperCase();
+  const s=Math.max(.15,Math.min(1,Number(severity)||.7));
+  if(key==='LOCK_UP'){
+    vehicle.lockupActiveMs=Math.max(Number(vehicle.lockupActiveMs)||0,INCIDENT_CONFIG_V204.lockupDurationMs*(.72+s*.38));
+    vehicle.lockupSeverity=s;
+    vehicle.tyreFlatSpot=Math.max(0,Math.min(1,(Number(vehicle.tyreFlatSpot)||0)+.012+s*.028));
+    vehicle.lockupCount=(Number(vehicle.lockupCount)||0)+1;
+  }else if(key==='UNDERSTEER'){
+    vehicle.understeerActiveMs=Math.max(Number(vehicle.understeerActiveMs)||0,INCIDENT_CONFIG_V204.understeerDurationMs*(.72+s*.38));
+    vehicle.understeerIncidentSeverity=s;
+    vehicle.understeerCount=(Number(vehicle.understeerCount)||0)+1;
+  }else if(key==='OVERSTEER'){
+    vehicle.oversteerActiveMs=Math.max(Number(vehicle.oversteerActiveMs)||0,INCIDENT_CONFIG_V204.oversteerDurationMs*(.72+s*.38));
+    vehicle.oversteerIncidentSeverity=s;
+    vehicle.oversteerCount=(Number(vehicle.oversteerCount)||0)+1;
+  }else return null;
+  vehicle.lastIncidentType=key;
+  vehicle.lastIncidentSimMs=simClockV192.simTimeMs;
+  vehicle.lastIncidentForced=Boolean(forced);
+  return {type:key,severity:s,forced:Boolean(forced)};
+}
+function updateDrivingIncidentsV204(vehicle,stepMs,phase,controls={}){
+  if(!vehicle||!(stepMs>0))return {active:'',speedFactor:1,brakeFactor:1,throttleFactor:1,lateralOffsetMeters:0};
+  vehicle.lockupActiveMs=Math.max(0,(Number(vehicle.lockupActiveMs)||0)-stepMs);
+  vehicle.understeerActiveMs=Math.max(0,(Number(vehicle.understeerActiveMs)||0)-stepMs);
+  vehicle.oversteerActiveMs=Math.max(0,(Number(vehicle.oversteerActiveMs)||0)-stepMs);
+  vehicle.incidentEvalMs=Math.max(0,(Number(vehicle.incidentEvalMs)||0)-stepMs);
+  if(vehicle.incidentEvalMs<=0&&!activeDrivingIncidentV204(vehicle)){
+    vehicle.incidentEvalMs=INCIDENT_CONFIG_V204.evaluationMs;
+    const errorResistance=Math.max(0,Math.min(1,(Number(vehicle.driverProfile?.errorResistance)||75)/100));
+    const aggression=Math.max(0,Math.min(1,(Number(vehicle.driverProfile?.aggression)||75)/100));
+    const tyreGrip=Math.max(TYRE_CONFIG_V203.minGrip,Math.min(TYRE_CONFIG_V203.maxGrip,Number(vehicle.tyreGrip)||1));
+    const gripLoss=clamp01V198((1-tyreGrip)/.18);
+    const evalSeconds=INCIDENT_CONFIG_V204.evaluationMs/1000;
+    const brake=clamp01V198(controls.brake);
+    const throttle=clamp01V198(controls.throttle);
+    const speed=Math.max(0,Number(vehicle.speedKph)||0);
+    const lockRisk=phase==='BRAKING'&&brake>.82&&speed>110
+      ?clamp01V198((brake-.82)/.18*.55+gripLoss*.25+Math.max(0,driverSkillNormV200(vehicle,'aggression'))*.2):0;
+    const underRisk=(phase==='TURN_IN'||phase==='APEX')
+      ?clamp01V198((Number(vehicle.understeerRisk)||0)*.6+gripLoss*.3+clamp01V198(vehicle.dirtyAirStrength)*.25):0;
+    const overRisk=(phase==='EXIT'||phase==='TURN_IN')
+      ?clamp01V198(Math.max(0,throttle-.55)*1.35+gripLoss*.35+aggression*.12):0;
+    const resistanceFactor=Math.max(.45,1-errorResistance*.5);
+    const candidates=[
+      {type:'LOCK_UP',risk:lockRisk,rate:.045},
+      {type:'UNDERSTEER',risk:underRisk,rate:.055},
+      {type:'OVERSTEER',risk:overRisk,rate:.050}
+    ].filter(row=>row.risk>0).sort((a,b)=>b.risk-a.risk);
+    if(candidates.length){
+      const pick=candidates[0];
+      const chance=pick.risk*pick.rate*evalSeconds*resistanceFactor;
+      if(nextDriverRandomV200(vehicle)<chance)triggerDrivingIncidentV204(vehicle,pick.type,pick.risk,false);
+    }
+  }
+  const lockSeverity=(Number(vehicle.lockupActiveMs)||0)>0?Math.max(.15,Number(vehicle.lockupSeverity)||.5):0;
+  const underSeverity=(Number(vehicle.understeerActiveMs)||0)>0?Math.max(.15,Number(vehicle.understeerIncidentSeverity)||.5):0;
+  const overSeverity=(Number(vehicle.oversteerActiveMs)||0)>0?Math.max(.15,Number(vehicle.oversteerIncidentSeverity)||.5):0;
+  const phaseInfo=getCornerPhaseAtProgressV194(vehicle.progress);
+  const direction=phaseInfo?.corner?.direction==='right'?-1:1;
+  const lateralOffsetMeters=-direction*underSeverity*1.15+direction*overSeverity*.48;
+  vehicle.incidentLateralOffsetMeters=lateralOffsetMeters;
+  const active=activeDrivingIncidentV204(vehicle);
+  return {
+    active,
+    speedFactor:Math.min(1,
+      underSeverity?1-(1-INCIDENT_CONFIG_V204.understeerSpeedFactor)*underSeverity:1,
+      overSeverity?1-(1-INCIDENT_CONFIG_V204.oversteerSpeedFactor)*overSeverity:1
+    ),
+    brakeFactor:lockSeverity?1-(1-INCIDENT_CONFIG_V204.lockupBrakeFactor)*lockSeverity:1,
+    throttleFactor:overSeverity?1-(1-INCIDENT_CONFIG_V204.oversteerThrottleFactor)*overSeverity:1,
+    lateralOffsetMeters
+  };
+}
+function getDrivingIncidentStatesV204(){
+  return raceMotionV189.vehicles.map(vehicle=>({
+    id:vehicle.id,name:vehicle.driver?.name||'',active:activeDrivingIncidentV204(vehicle),
+    lockupActiveMs:Number(vehicle.lockupActiveMs)||0,understeerActiveMs:Number(vehicle.understeerActiveMs)||0,oversteerActiveMs:Number(vehicle.oversteerActiveMs)||0,
+    lockupCount:Number(vehicle.lockupCount)||0,understeerCount:Number(vehicle.understeerCount)||0,oversteerCount:Number(vehicle.oversteerCount)||0,
+    tyreFlatSpot:Number(vehicle.tyreFlatSpot)||0,lastIncidentType:String(vehicle.lastIncidentType||''),lastIncidentSimMs:Number(vehicle.lastIncidentSimMs)||0
+  }));
+}
+function forceDrivingIncidentV204(driverId,type,severity=.85){
+  const key=String(driverId||'');
+  const vehicle=raceMotionV189.vehicles.find(v=>String(v.id)===key)||raceMotionV189.vehicles[0];
+  return triggerDrivingIncidentV204(vehicle,type,severity,true);
+}
+
 function createRaceVehiclesV189(snapshot){
   const count=Math.max(1,snapshot?.drivers?.length||0);
   return (snapshot?.drivers||[]).map(function(driver,index){
@@ -835,6 +946,9 @@ function createRaceVehiclesV189(snapshot){
       batteryMJ:ENERGY_CONFIG_V201.usableCapacityMJ,energyTargetMJ:ENERGY_CONFIG_V201.usableCapacityMJ,energyDeployKW:0,energyRechargeKW:0,energyDeployMJ:0,energyHarvestMJ:0,energyHarvestLapMJ:0,energyLapNumber:1,boostActive:false,boostPowerKW:0,boostEnergyMJ:0,attackOpportunityScore:0,defenceThreatScore:0,powerUnitFactor:1,
       activeAeroMode:'CORNER',activeAeroTarget:'CORNER',activeAeroTransitionMs:0,overtakeZoneId:'',overtakeGapSeconds:Infinity,overtakeEligible:false,overtakeActive:false,overtakeRechargeAllowanceActive:false,
       tyreCompound:'MEDIUM',tyreStartRaceProgress:startOffset,tyreAgeLaps:0,tyreWear:0,tyreSurfaceTemp:.5,tyreCarcassTemp:.5,tyreGrip:TYRE_COMPOUNDS_V203.MEDIUM.gripBias,tyreThermalDeg:0,tyreGraining:0,tyreFlatSpot:0,tyreStrategyPressure:0,
+      incidentEvalMs:INCIDENT_CONFIG_V204.evaluationMs,lockupActiveMs:0,understeerActiveMs:0,oversteerActiveMs:0,
+      lockupSeverity:0,understeerIncidentSeverity:0,oversteerIncidentSeverity:0,incidentLateralOffsetMeters:0,
+      lockupCount:0,understeerCount:0,oversteerCount:0,lastIncidentType:'',lastIncidentSimMs:0,lastIncidentForced:false,
       finished:false,finishPosition:0,finishedAtSimMs:0,
       marker:null
     };
@@ -1015,11 +1129,12 @@ function renderRaceVehiclesV189(){
   const totalLength=path.getTotalLength();if(!(totalLength>0))return false;
   raceMotionV189.vehicles.forEach(function(vehicle,index){
     const marker=vehicle.marker||ensureRaceVehicleMarkerV189(vehicle,index);if(!marker)return;
-    vehicle.lateralOffsetMeters=lineOffsetMetersV197(vehicle);
+    vehicle.lateralOffsetMeters=lineOffsetMetersV197(vehicle)+(Number(vehicle.incidentLateralOffsetMeters)||0);
     const point=raceLinePointV197(path,vehicle.progress,vehicle.lateralOffsetMeters);if(!point)return;
     marker.setAttribute('transform','translate('+point.x.toFixed(2)+' '+point.y.toFixed(2)+')');
     marker.dataset.lineMode=vehicle.racingLineMode||'IDEAL';
     marker.dataset.cornerPhase=getCornerPhaseAtProgressV194(vehicle.progress)?.phase||'STRAIGHT';
+    marker.dataset.incident=activeDrivingIncidentV204(vehicle)||'';
   });
   return true;
 }
@@ -1106,14 +1221,19 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const rawAeroGrip=Math.max(.85,Math.min(1,Number(vehicle.aeroGripMultiplier)||1));
   const dirtyAirRecovery=Math.max(0,racecraftNorm)*.08;
   const aeroGripMultiplier=Math.min(1,rawAeroGrip+(1-rawAeroGrip)*dirtyAirRecovery);
-  const maxTarget=baseTarget*driverPaceMultiplier*aeroGripMultiplier*tyreCornerFactor+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;
+  let maxTarget=baseTarget*driverPaceMultiplier*aeroGripMultiplier*tyreCornerFactor+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;
   const current=Math.max(0,Number(vehicle.speedKph)||0);
+  const preError=maxTarget-current;
+  const preThrottle=preError>1.5?Math.max(.08,Math.min(1,preError/45)):preError>=-1.5?.12:0;
+  const preBrake=preError<-1.5?Math.max(.08,Math.min(1,(-preError)/55)):0;
+  const incidentState=updateDrivingIncidentsV204(vehicle,stepMs,phase,{throttle:preThrottle,brake:preBrake});
+  maxTarget*=incidentState.speedFactor;
   const error=maxTarget-current;
   const accelBase=Math.max(0.5,Number(track?.geometry?.referenceAccelMps2)||8.5);
-  const brakeBase=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20)*tyreGrip;
+  let brakeBase=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20)*tyreGrip*incidentState.brakeFactor;
   let throttle=0,brake=0,accelMps2=0;
   if(error>1.5){
-    throttle=Math.max(.08,Math.min(1,error/45));
+    throttle=Math.max(.08,Math.min(1,error/45))*incidentState.throttleFactor;
     const dragRelief=Math.max(0,Number(vehicle.slipstreamDragReduction)||0);
     const highSpeedFade=Math.max(.35,1-current/520+dragRelief*.45);
     const tractionGrip=phase==='EXIT'?tyreGrip:1;
@@ -1122,7 +1242,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
     brake=Math.max(.08,Math.min(1,(-error)/55));
     accelMps2=-brakeBase*brake;
   }else{
-    throttle=.12;
+    throttle=.12*incidentState.throttleFactor;
     accelMps2=0;
   }
   const propulsionThrottle=accelMps2>0?throttle:0;
@@ -2197,7 +2317,7 @@ function render(){
   if(previewStateV184.running)stopPreviewV184(true);
   if(f1ScreenStateV185==='RACE'&&activeRaceSnapshotV187){renderRaceControlV188();startRaceMotionV189()}
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent=f1ScreenStateV185==='SETUP'?'RACE SETUP':'RACE CONTROL';
-  section.dataset.f1Runtime=VERSION203;
+  section.dataset.f1Runtime=VERSION204;
   return true;
 }
 function toggleDriver(id){
@@ -2424,6 +2544,9 @@ window.mwsF1GetActiveAeroOvertakeStatesV202=getActiveAeroOvertakeStatesV202;
 window.mwsF1SetVehicleTyreCompoundV203=setVehicleTyreCompoundV203;
 window.mwsF1UpdateTyreSystemV203=updateTyreSystemV203;
 window.mwsF1GetTyreStatesV203=getTyreStatesV203;
+window.mwsF1UpdateDrivingIncidentsV204=updateDrivingIncidentsV204;
+window.mwsF1GetDrivingIncidentStatesV204=getDrivingIncidentStatesV204;
+window.mwsF1ForceDrivingIncidentV204=forceDrivingIncidentV204;
 window.__mwsF1RacingV180=VERSION;
 window.__mwsF1RacingV181=VERSION181;
 window.__mwsF1RacingV182=VERSION182;
@@ -2448,6 +2571,7 @@ window.__mwsF1RacingV200=VERSION200;
 window.__mwsF1RacingV201=VERSION201;
 window.__mwsF1RacingV202=VERSION202;
 window.__mwsF1RacingV203=VERSION203;
+window.__mwsF1RacingV204=VERSION204;
 window.__mwsF1RecoveryB='start-finish-line-v1';
 window.__mwsF1RecoveryC='race-cancel-setup-return-v1';
 window.__mwsF1RecoveryD='persistent-roster-track-settings-v1';

@@ -242,6 +242,16 @@ try{
     assert(pause,'Pause button missing');
     pause.click();await raf();
     assert(window.mwsF1GetSimulationClockV192?.().paused===true,'Pause button did not pause simulation');
+    const incidentDriver=context.driverIds?.[0];
+    const tyreBefore=(window.mwsF1GetTyreStatesV203?.()||[]).find(row=>String(row.id)===String(incidentDriver));
+    const forcedIncident=window.mwsF1ForceDrivingIncidentV204?.(incidentDriver,'LOCK_UP',.9);
+    window.mwsF1RenderRaceVehiclesV189?.();await raf();
+    const incidentAfter=(window.mwsF1GetDrivingIncidentStatesV204?.()||[]).find(row=>String(row.id)===String(incidentDriver));
+    const incidentMarker=document.querySelector('[data-f1-driver-id="'+CSS.escape(String(incidentDriver))+'"]');
+    assert(forcedIncident?.type==='LOCK_UP','Phase 204 forced lock-up failed');
+    assert((incidentAfter?.lockupActiveMs||0)>0,'Phase 204 lock-up timer missing');
+    assert((incidentAfter?.tyreFlatSpot||0)>(tyreBefore?.flatSpot||0),'Phase 204 lock-up did not add flat spot');
+    assert(incidentMarker?.dataset.incident==='LOCK_UP','Phase 204 marker did not expose lock-up state');
     pause.click();await raf();
     assert(window.mwsF1GetSimulationClockV192?.().paused===false,'Pause button did not resume simulation');
 
@@ -340,6 +350,7 @@ try{
 
     return {
       pausedAndResumed:true,
+      phase204Incident:{type:forcedIncident?.type||'',lockupActiveMs:Number(incidentAfter?.lockupActiveMs)||0,flatSpot:Number(incidentAfter?.tyreFlatSpot)||0},
       resizeChanged:{before:beforeResize,after:afterResize},
       dockedCommentary:docked,
       overlapPairsAfterDock:window.mwsF1WorkspaceOverlapPairsRecoveryI?.()||[],

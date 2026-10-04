@@ -481,3 +481,8 @@
   padding:4px 7px;border-radius:3px;background:rgba(4,8,14,.82);color:#dbeafe;
   font:900 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.12em
 }
+
+/* Phase 204: driving incident marker feedback */
+.f1-racing-race-vehicle-v189[data-incident="LOCK_UP"] .car-ring{stroke-width:4}
+.f1-racing-race-vehicle-v189[data-incident="UNDERSTEER"] .car-halo{opacity:.72}
+.f1-racing-race-vehicle-v189[data-incident="OVERSTEER"] .car-core{transform:scale(1.28);transform-box:fill-box;transform-origin:center}
