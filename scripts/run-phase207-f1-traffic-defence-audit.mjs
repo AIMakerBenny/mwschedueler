@@ -6,7 +6,7 @@ export function runPhase207F1TrafficDefenceAudit(){
   const racing=fs.readFileSync('assets/f1-racing-v1.js','utf8');
   const diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
-  if(!/recovery=N1&phase=(?:20[7-9]|21[0-9])/.test(index))issues.push('Phase 207+ asset cache missing');
+  if(!/recovery=N1&phase=(?:20[7-9]|21[0-9]|22[0-9])/.test(index))issues.push('Phase 207+ asset cache missing');
   for(const token of [
     "const VERSION207='phase207-traffic-slipstream-defence';",
     "const TRAFFIC_STATES_V207=Object.freeze(['CLEAR','FOLLOWING','TOWING','PRESSURE','DEFENDING']);",
