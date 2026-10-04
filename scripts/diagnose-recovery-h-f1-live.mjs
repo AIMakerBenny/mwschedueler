@@ -181,26 +181,26 @@ try{
 
     const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
     assert(workspace,'Race workspace missing');
-    const panelIds=['timing','track','commentary','radio','speed'];
+    const panelIds=['timing','track','commentary'];
     for(const id of panelIds)assert(document.querySelector('[data-f1-workspace-panel="'+id+'"]'),'Workspace panel missing: '+id);
+    assert(!document.querySelector('[data-f1-workspace-panel="radio"],[data-f1-workspace-panel="speed"]'),'Obsolete workspace panel still mounted');
 
     const visible=panelIds.filter(id=>{
       const panel=document.querySelector('[data-f1-workspace-panel="'+id+'"]');
       return panel&&!panel.hidden&&getComputedStyle(panel).display!=='none';
     });
-    assert(visible.includes('timing')&&visible.includes('track')&&visible.includes('commentary')&&visible.includes('radio'),'Default visible workspace panels incorrect: '+visible.join(','));
-    assert(!visible.includes('speed'),'Speed Trap should start as inactive tab');
+    assert(visible.length===3&&visible.includes('timing')&&visible.includes('track')&&visible.includes('commentary'),'Default visible workspace panels incorrect: '+visible.join(','));
 
     const wr=workspace.getBoundingClientRect();
     const timing=document.querySelector('[data-f1-workspace-panel="timing"]').getBoundingClientRect();
     const track=document.querySelector('[data-f1-workspace-panel="track"]').getBoundingClientRect();
     const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]').getBoundingClientRect();
-    const radio=document.querySelector('[data-f1-workspace-panel="radio"]').getBoundingClientRect();
-    const coverage=(timing.width*timing.height+track.width*track.height+commentary.width*commentary.height+radio.width*radio.height)/Math.max(1,wr.width*wr.height);
+    const coverage=(timing.width*timing.height+track.width*track.height+commentary.width*commentary.height)/Math.max(1,wr.width*wr.height);
     assert(wr.width>1000&&wr.height>500,'Workspace geometry too small');
-    assert(timing.width>wr.width*.9,'Live Timing is not full-width');
-    assert(track.width*track.height>commentary.width*commentary.height*1.6,'Track Map is not dominant in default layout');
-    assert(coverage>.68,'Workspace visible coverage too low: '+coverage.toFixed(3));
+    assert(track.width>wr.width*.60&&track.width<wr.width*.72,'Track Map width is not the expected left two-thirds: '+track.width+'/'+wr.width);
+    assert(timing.width>wr.width*.28&&timing.width<wr.width*.40,'Live Timing width is not the expected right third: '+timing.width+'/'+wr.width);
+    assert(track.width*track.height>commentary.width*commentary.height*2,'Track Map is not dominant in default layout');
+    assert(coverage>.78,'Workspace visible coverage too low: '+coverage.toFixed(3));
 
     const raceLine=document.querySelector('#f1RacingRaceAnnotationsRecoveryB [data-f1-start-finish="1"]');
     const raceStripe=raceLine?.querySelector('.finish-stripe');
@@ -217,7 +217,7 @@ try{
       setupLineLength:Number(setupLength.toFixed(2)),
       visible,
       workspace:{width:Number(wr.width.toFixed(1)),height:Number(wr.height.toFixed(1)),coverage:Number(coverage.toFixed(3))},
-      panelAreas:{timing:Math.round(timing.width*timing.height),track:Math.round(track.width*track.height),commentary:Math.round(commentary.width*commentary.height),radio:Math.round(radio.width*radio.height)},
+      panelAreas:{timing:Math.round(timing.width*timing.height),track:Math.round(track.width*track.height),commentary:Math.round(commentary.width*commentary.height)},
       state:window.mwsF1GetScreenStateV185?.(),
       errors:[...(window.__recoveryHErrors||[])]
     };
