@@ -38,6 +38,7 @@ const VERSION208='phase208-pass-state-machine';
 const VERSION209='phase209-long-run-gap-balance';
 const VERSION210='phase210-multi-track-integration';
 const VERSION211='phase211-track-marker-integration';
+const VERSION212='phase212-live-timing-flip';
 const PASS_STATES_V208=Object.freeze(['FOLLOWING','CLOSING','TOWING','PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','PASS_COMPLETED','PASS_FAILED','COUNTER_ATTACK']);
 const PASS_CONFIG_V208=Object.freeze({followGapMeters:48,prepareGapMeters:20,pullOutGapMeters:15,sideBySideGapMeters:8,failGapMeters:32,passMarginMeters:1.2,stateHoldMs:160,maxBattleBiasKph:2.4});
 const LONG_RUN_GAP_CONFIG_V209=Object.freeze({settlingLaps:3.5,maxOpeningPaceBias:0.0045,maxSettledPaceBias:0.0018,relativeShape:1.25,qaLapSeconds:90,qaLaps:30});
@@ -590,6 +591,45 @@ function formatRaceDeltaV191(progress,seconds,isLeader=false){
   if(laps>=1)return '+'+laps+' LAP'+(laps===1?'':'S');
   return '+'+Math.max(0,Number(seconds)||0).toFixed(3);
 }
+function applyLiveTimingFlipV212(standings){
+  const list=document.getElementById('f1RacingTimingListV188');
+  if(!list||!Array.isArray(standings)||!standings.length)return {moved:0,order:[]};
+  const before=new Map();
+  for(const row of Array.from(list.querySelectorAll('[data-f1-driver-id]'))){
+    const rect=row.getBoundingClientRect();
+    before.set(String(row.dataset.f1DriverId),rect.top);
+  }
+  let moved=0;
+  for(const standing of standings){
+    const row=findTimingRowV190(standing.vehicle.id);
+    if(row)list.appendChild(row);
+  }
+  for(const standing of standings){
+    const row=findTimingRowV190(standing.vehicle.id);if(!row)continue;
+    const previousTop=before.get(String(row.dataset.f1DriverId));
+    const nextTop=row.getBoundingClientRect().top;
+    const delta=Number.isFinite(previousTop)?previousTop-nextTop:0;
+    row.dataset.flipDelta=String(Math.round(delta));
+    if(Math.abs(delta)>.5){
+      moved+=1;
+      if(typeof row.animate==='function')row.animate(
+        [{transform:'translateY('+delta+'px)'},{transform:'translateY(0px)'}],
+        {duration:320,easing:'cubic-bezier(.2,.8,.2,1)'}
+      );
+    }
+  }
+  return {moved,order:standings.map(row=>String(row.vehicle.id))};
+}
+function qaLiveTimingFlipV212(){
+  const standings=computeRaceStandingsV191();
+  const list=document.getElementById('f1RacingTimingListV188');
+  return {
+    standings:standings.length,
+    domRows:list?list.querySelectorAll('[data-f1-driver-id]').length:0,
+    functionReady:typeof applyLiveTimingFlipV212==='function',
+    allPass:typeof applyLiveTimingFlipV212==='function'&&(!list||list.querySelectorAll('[data-f1-driver-id]').length===standings.length)
+  };
+}
 function updateRaceStandingsV191(){
   const standings=computeRaceStandingsV191();
   for(const standing of standings){
@@ -608,6 +648,7 @@ function updateRaceStandingsV191(){
     if(standing.position<=3)row.classList.add('podium','p'+standing.position);
     if(vehicle.marker)vehicle.marker.classList.toggle('leader',standing.position===1);
   }
+  applyLiveTimingFlipV212(standings);
   return standings;
 }
 
@@ -3338,6 +3379,8 @@ window.mwsF1QaLongRunGapBalanceV209=qaLongRunGapBalanceV209;
 window.mwsF1QaMultiTrackIntegrationV210=qaMultiTrackIntegrationV210;
 window.mwsF1RenderTrackMarkersV211=renderTrackMarkersV211;
 window.mwsF1QaTrackMarkersV211=qaTrackMarkersV211;
+window.mwsF1ApplyLiveTimingFlipV212=applyLiveTimingFlipV212;
+window.mwsF1QaLiveTimingFlipV212=qaLiveTimingFlipV212;
 window.mwsF1ErsNormalPowerLimitV201=ersNormalPowerLimitV201;
 window.mwsF1UpdateEnergySystemV201=updateEnergySystemV201;
 window.mwsF1GetEnergyStatesV201=getEnergyStatesV201;
@@ -3397,6 +3440,7 @@ window.__mwsF1RacingV208=VERSION208;
 window.__mwsF1RacingV209=VERSION209;
 window.__mwsF1RacingV210=VERSION210;
 window.__mwsF1RacingV211=VERSION211;
+window.__mwsF1RacingV212=VERSION212;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
