@@ -23,7 +23,7 @@ export function runPhase203F1TyreSystemAudit(){
     'vehicle.tyreGrip=Math.max(TYRE_CONFIG_V203.minGrip,Math.min(TYRE_CONFIG_V203.maxGrip,spec.gripBias*tempGrip*wearGrip*damageGrip));',
     "tyreCompound:'MEDIUM'",
     "const tyreCornerFactor=(phase==='TURN_IN'||phase==='APEX'||phase==='EXIT')?tyreGrip:1;",
-    'const brakeBase=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20)*tyreGrip;',
+    'let brakeBase=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20)*tyreGrip*incidentState.brakeFactor;',
     "const tractionGrip=phase==='EXIT'?tyreGrip:1;",
     'updateTyreSystemV203(vehicle,stepMs,phase);',
     "row.dataset.tyreWear=(Number(vehicle.tyreWear)||0).toFixed(3);",

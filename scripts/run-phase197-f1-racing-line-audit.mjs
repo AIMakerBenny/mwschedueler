@@ -24,7 +24,7 @@ export function runPhase197F1RacingLineAudit(){
     "if(phaseInfo.phase==='APEX')",
     'function raceLinePointV197(path,progress,offsetMeters){',
     'function setVehicleRacingLineV197(driverId,mode){',
-    'vehicle.lateralOffsetMeters=lineOffsetMetersV197(vehicle);',
+    'vehicle.lateralOffsetMeters=lineOffsetMetersV197(vehicle)+(Number(vehicle.incidentLateralOffsetMeters)||0);',
     'const point=raceLinePointV197(path,vehicle.progress,vehicle.lateralOffsetMeters);',
     "marker.dataset.lineMode=vehicle.racingLineMode||'IDEAL';",
     'window.mwsF1SetVehicleRacingLineV197=setVehicleRacingLineV197;',

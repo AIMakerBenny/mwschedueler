@@ -25,7 +25,7 @@ export function runPhase200F1DriverProfileAudit(){
     'updateDriverPaceStateV200(vehicle,stepMs);',
     "const racecraftNorm=driverSkillNormV200(vehicle,'racecraft');",
     "const aggressionNorm=driverSkillNormV200(vehicle,'aggression');",
-    'const maxTarget=baseTarget*driverPaceMultiplier*aeroGripMultiplier*tyreCornerFactor+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;',
+    'let maxTarget=baseTarget*driverPaceMultiplier*aeroGripMultiplier*tyreCornerFactor+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;',
     "row.dataset.driverConsistency=String(vehicle.driverProfile?.consistency||'');",
     'window.mwsF1GetDriverProfilesV200=getDriverProfilesV200;',
     'window.__mwsF1RacingV200=VERSION200;'
