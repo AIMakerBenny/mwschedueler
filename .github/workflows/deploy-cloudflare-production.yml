@@ -128,6 +128,7 @@ jobs:
           node --check scripts/run-phase195-f1-speed-profile-audit.mjs
           node --check scripts/run-phase196-f1-vehicle-dynamics-audit.mjs
           node --check scripts/run-phase197-f1-racing-line-audit.mjs
+          node --check scripts/run-phase198-f1-slipstream-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-v1.js
@@ -998,6 +999,14 @@ jobs:
           grep -Fq 'function lineOffsetMetersV197(vehicle){' /tmp/f1-racing-v1-phase197.js
           grep -Fq 'function raceLinePointV197(path,progress,offsetMeters){' /tmp/f1-racing-v1-phase197.js
           grep -Fq 'window.mwsF1SetVehicleRacingLineV197=setVehicleRacingLineV197;' /tmp/f1-racing-v1-phase197.js
+          echo '[phase198] F1 slipstream wake model'
+          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=198' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV198=VERSION198;' > /tmp/f1-racing-v1-phase198.js
+          node --check /tmp/f1-racing-v1-phase198.js
+          grep -Fq 'function resolveSlipstreamV198(vehicle,vehicles=raceMotionV189.vehicles){' /tmp/f1-racing-v1-phase198.js
+          grep -Fq 'gapEffect*alignmentEffect*lateralEffect*straightEffect*wakeEffect' /tmp/f1-racing-v1-phase198.js
+          grep -Fq 'const dragRelief=Math.max(0,Number(vehicle.slipstreamDragReduction)||0);' /tmp/f1-racing-v1-phase198.js
+          grep -Fq 'window.mwsF1ResolveSlipstreamV198=resolveSlipstreamV198;' /tmp/f1-racing-v1-phase198.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css

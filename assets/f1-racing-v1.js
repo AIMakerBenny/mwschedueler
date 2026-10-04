@@ -18,6 +18,8 @@ const VERSION194='phase194-corner-phase-model';
 const VERSION195='phase195-speed-profile';
 const VERSION196='phase196-vehicle-dynamics-telemetry';
 const VERSION197='phase197-racing-line-track-width';
+const VERSION198='phase198-slipstream';
+const SLIPSTREAM_CONFIG_V198=Object.freeze({maxGapMeters:42,minGapMeters:1.5,maxLateralMeters:8,minSpeedKph:120,maxDragReduction:0.14,maxTargetBonusKph:8});
 const DEFAULT_TOTAL_LAPS_V190=10;
 const F1_LINE_MODES_V197=Object.freeze(['IDEAL','ATTACK_INSIDE','DEFENSIVE_INSIDE','OUTSIDE','PIT_LINE']);
 const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
@@ -389,6 +391,8 @@ function updateRaceProgressHudV190(){
     row.dataset.throttle=(Number(vehicle.throttle)||0).toFixed(2);
     row.dataset.brake=(Number(vehicle.brake)||0).toFixed(2);
     row.dataset.targetSpeed=String(Math.round(vehicle.targetSpeedKph||0));
+    row.dataset.slipstream=(Number(vehicle.slipstreamStrength)||0).toFixed(3);
+    row.dataset.carAhead=String(vehicle.carAheadId||'');
   }
   updateRaceStandingsV191();
   return true;
@@ -452,6 +456,7 @@ function createRaceVehiclesV189(snapshot){
       lapDurationMs:21000,
       speedKph:0,targetSpeedKph:0,throttle:0,brake:0,accelerationMps2:0,gear:1,rpm:8500,
       racingLineMode:'IDEAL',lateralOffsetMeters:0,
+      carAheadId:null,gapToCarAheadMeters:Infinity,slipstreamStrength:0,slipstreamDragReduction:0,slipstreamGapEffect:0,slipstreamAlignmentEffect:0,slipstreamLateralEffect:0,slipstreamStraightEffect:0,
       marker:null
     };
     return syncVehicleRaceMetricsV190(vehicle,snapshot.track);
@@ -516,6 +521,73 @@ function setVehicleRacingLineV197(driverId,mode){
   vehicle.racingLineMode=next;
   return true;
 }
+
+function clamp01V198(value){return Math.max(0,Math.min(1,Number(value)||0))}
+function angleDeltaRadV198(a,b){
+  let d=(Number(a)||0)-(Number(b)||0);
+  while(d>Math.PI)d-=Math.PI*2;
+  while(d<-Math.PI)d+=Math.PI*2;
+  return Math.abs(d);
+}
+function geometrySampleAtProgressV198(progress){
+  return typeof window.mwsF1TrackGeometrySampleAtProgressV193==='function'
+    ?window.mwsF1TrackGeometrySampleAtProgressV193(raceGeometryV193,progress)
+    :null;
+}
+function resolveSlipstreamV198(vehicle,vehicles=raceMotionV189.vehicles){
+  const track=activeRaceSnapshotV187?.track;
+  if(!vehicle||!track){
+    return {carAhead:null,gapMeters:Infinity,strength:0,dragReduction:0,gapEffect:0,alignmentEffect:0,lateralEffect:0,straightEffect:0};
+  }
+  const length=Math.max(1,Number(track.lengthMeters)||1);
+  let ahead=null,gapMeters=Infinity;
+  for(const candidate of vehicles||[]){
+    if(!candidate||candidate===vehicle)continue;
+    const delta=(Number(candidate.raceProgress)||0)-(Number(vehicle.raceProgress)||0);
+    if(!(delta>0))continue;
+    const meters=delta*length;
+    if(meters<gapMeters){gapMeters=meters;ahead=candidate}
+  }
+  const cfg=SLIPSTREAM_CONFIG_V198;
+  if(!ahead||gapMeters>cfg.maxGapMeters||gapMeters<cfg.minGapMeters||Number(vehicle.speedKph||0)<cfg.minSpeedKph){
+    vehicle.carAheadId=ahead?String(ahead.id):null;
+    vehicle.gapToCarAheadMeters=gapMeters;
+    vehicle.slipstreamStrength=0;vehicle.slipstreamDragReduction=0;
+    vehicle.slipstreamGapEffect=0;vehicle.slipstreamAlignmentEffect=0;vehicle.slipstreamLateralEffect=0;vehicle.slipstreamStraightEffect=0;
+    return {carAhead:ahead,gapMeters,strength:0,dragReduction:0,gapEffect:0,alignmentEffect:0,lateralEffect:0,straightEffect:0};
+  }
+  const hereSample=geometrySampleAtProgressV198(vehicle.progress);
+  const aheadSample=geometrySampleAtProgressV198(ahead.progress);
+  const headingDelta=angleDeltaRadV198(hereSample?.headingRad,aheadSample?.headingRad);
+  const alignmentEffect=clamp01V198(1-headingDelta/(Math.PI/5));
+  const hereOffset=lineOffsetMetersV197(vehicle);
+  const aheadOffset=lineOffsetMetersV197(ahead);
+  const lateralDelta=Math.abs(hereOffset-aheadOffset);
+  const lateralEffect=clamp01V198(1-lateralDelta/cfg.maxLateralMeters);
+  const curvature=Math.abs(Number(hereSample?.curvatureRadPerMeter)||0);
+  const phase=getCornerPhaseAtProgressV194(vehicle.progress)?.phase||'STRAIGHT';
+  const phaseFactor=phase==='STRAIGHT'||phase==='APPROACH' ? 1 : phase==='EXIT' ? .55 : .15;
+  const curvatureFactor=clamp01V198(1-curvature/0.0025);
+  const straightEffect=clamp01V198(phaseFactor*curvatureFactor);
+  const gapEffect=clamp01V198(1-(gapMeters-cfg.minGapMeters)/(cfg.maxGapMeters-cfg.minGapMeters));
+  const wakeEffect=clamp01V198((Number(ahead.speedKph)||0)/300);
+  const strength=clamp01V198(gapEffect*alignmentEffect*lateralEffect*straightEffect*wakeEffect);
+  const dragReduction=strength*cfg.maxDragReduction;
+  vehicle.carAheadId=String(ahead.id);
+  vehicle.gapToCarAheadMeters=gapMeters;
+  vehicle.slipstreamStrength=strength;
+  vehicle.slipstreamDragReduction=dragReduction;
+  vehicle.slipstreamGapEffect=gapEffect;
+  vehicle.slipstreamAlignmentEffect=alignmentEffect;
+  vehicle.slipstreamLateralEffect=lateralEffect;
+  vehicle.slipstreamStraightEffect=straightEffect;
+  return {carAhead:ahead,gapMeters,strength,dragReduction,gapEffect,alignmentEffect,lateralEffect,straightEffect};
+}
+function updateSlipstreamStatesV198(){
+  for(const vehicle of raceMotionV189.vehicles)resolveSlipstreamV198(vehicle,raceMotionV189.vehicles);
+  return raceMotionV189.vehicles.map(vehicle=>({id:vehicle.id,carAheadId:vehicle.carAheadId,gapToCarAheadMeters:vehicle.gapToCarAheadMeters,slipstreamStrength:vehicle.slipstreamStrength}));
+}
+
 function renderRaceVehiclesV189(){
   const path=document.getElementById('f1RacingRaceTrackPathV188');
   const layer=document.getElementById('f1RacingRaceVehicleLayerV188');
@@ -600,7 +672,9 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const track=activeRaceSnapshotV187?.track;
   if(!vehicle||!track||!(stepMs>0))return false;
   const targetData=getSpeedTargetAtProgressV195(vehicle.progress);
-  const maxTarget=Math.max(60,Number(targetData?.targetKph)||250);
+  const baseTarget=Math.max(60,Number(targetData?.targetKph)||250);
+  const towStrength=clamp01V198(vehicle.slipstreamStrength);
+  const maxTarget=baseTarget+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;
   const current=Math.max(0,Number(vehicle.speedKph)||0);
   const error=maxTarget-current;
   const accelBase=Math.max(0.5,Number(track?.geometry?.referenceAccelMps2)||8.5);
@@ -608,7 +682,8 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   let throttle=0,brake=0,accelMps2=0;
   if(error>1.5){
     throttle=Math.max(.08,Math.min(1,error/45));
-    const highSpeedFade=Math.max(.35,1-current/520);
+    const dragRelief=Math.max(0,Number(vehicle.slipstreamDragReduction)||0);
+    const highSpeedFade=Math.max(.35,1-current/520+dragRelief*.45);
     accelMps2=accelBase*throttle*highSpeedFade;
   }else if(error<-1.5){
     brake=Math.max(.08,Math.min(1,(-error)/55));
@@ -619,7 +694,8 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   }
   const dt=stepMs/1000;
   const nextMps=Math.max(0,current/3.6+accelMps2*dt);
-  const nextKph=Math.max(0,Math.min(Number(track?.geometry?.maxStraightKph)||335,nextMps*3.6));
+  const straightCap=(Number(track?.geometry?.maxStraightKph)||335)+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;
+  const nextKph=Math.max(0,Math.min(straightCap,nextMps*3.6));
   const avgMps=((current+nextKph)/2)/3.6;
   const distanceMeters=avgMps*dt;
   vehicle.speedKph=nextKph;
@@ -636,6 +712,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
 function simulateRaceStepV192(stepMs){
   if(simClockV192.paused||!(stepMs>0))return false;
   simClockV192.simTimeMs+=stepMs;
+  updateSlipstreamStatesV198();
   for(const vehicle of raceMotionV189.vehicles){
     simulateVehicleDynamicsV196(vehicle,stepMs);
   }
@@ -779,7 +856,7 @@ function render(){
   if(previewStateV184.running)stopPreviewV184(true);
   if(f1ScreenStateV185==='RACE'&&activeRaceSnapshotV187){renderRaceControlV188();startRaceMotionV189()}
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent=f1ScreenStateV185==='SETUP'?'RACE SETUP':'RACE CONTROL';
-  section.dataset.f1Runtime=VERSION197;
+  section.dataset.f1Runtime=VERSION198;
   return true;
 }
 function toggleDriver(id){
@@ -899,6 +976,8 @@ window.mwsF1RpmForSpeedAndGearV196=rpmForSpeedAndGearV196;
 window.mwsF1SetVehicleRacingLineV197=setVehicleRacingLineV197;
 window.mwsF1LineOffsetMetersV197=lineOffsetMetersV197;
 window.mwsF1RaceLinePointV197=raceLinePointV197;
+window.mwsF1ResolveSlipstreamV198=resolveSlipstreamV198;
+window.mwsF1UpdateSlipstreamStatesV198=updateSlipstreamStatesV198;
 window.__mwsF1RacingV180=VERSION;
 window.__mwsF1RacingV181=VERSION181;
 window.__mwsF1RacingV182=VERSION182;
@@ -917,6 +996,7 @@ window.__mwsF1RacingV194=VERSION194;
 window.__mwsF1RacingV195=VERSION195;
 window.__mwsF1RacingV196=VERSION196;
 window.__mwsF1RacingV197=VERSION197;
+window.__mwsF1RacingV198=VERSION198;
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){
