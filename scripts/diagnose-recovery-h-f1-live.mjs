@@ -335,6 +335,8 @@ try{
     const diverseTracksQa=window.mwsF1QaDiverseTrackCatalogV220?.();
     assert(diverseTracksQa?.allPass===true&&Number(diverseTracksQa?.trackCount)>=7,'Phase 220 diverse track catalog failed: '+JSON.stringify(diverseTracksQa));
     assert(Number(diverseTracksQa?.pathShapes)===7&&Number(diverseTracksQa?.archetypes)>=6,'Phase 220 track silhouettes/archetypes are not diverse: '+JSON.stringify(diverseTracksQa));
+    const trackSilhouetteQa=window.mwsF1QaTrackSilhouetteCardsV233?.();
+    assert(trackSilhouetteQa?.allPass===true&&Number(trackSilhouetteQa?.trackCount)>=7&&Number(trackSilhouetteQa?.uniqueCardPaths)===Number(trackSilhouetteQa?.trackCount),'Phase 233 track silhouette card QA failed: '+JSON.stringify(trackSilhouetteQa));
     const trackProfileQa=window.mwsF1QaTrackProfileUiV223?.();
     assert(trackProfileQa?.allPass===true&&Number(trackProfileQa?.trackCount)>=7,'Phase 223 track profile UI data failed: '+JSON.stringify(trackProfileQa));
     const markerQa=window.mwsF1QaTrackMarkersV211?.();
