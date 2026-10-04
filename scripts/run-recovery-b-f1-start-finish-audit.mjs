@@ -28,11 +28,11 @@ export function runRecoveryBF1StartFinishAudit(){
     'function addStartFinishLineRecoveryB(layer,path,track,scope=',
     "class:'f1-racing-start-finish-recovery-b '+scope",
     "label.textContent='START / FINISH';",
-    "addStartFinishLineRecoveryB(layer,path,track,'setup');",
-    'if(path&&annotations)renderRaceStartFinishRecoveryB(annotations,path,snapshot.track);',
     'window.mwsF1StartFinishGeometryRecoveryB=startFinishGeometryRecoveryB;',
     "window.__mwsF1RecoveryB='start-finish-line-v1';"
   ])if(!racing.includes(token))issues.push('Recovery B renderer missing: '+token);
+  if(!racing.includes("addStartFinishLineRecoveryB(layer,path,track,'setup');")&&!racing.includes("renderTrackMarkersV211(layer,path,track,'setup');"))issues.push("Recovery B renderer missing: setup start/finish owner");
+  if(!racing.includes("if(path&&annotations)renderRaceStartFinishRecoveryB(annotations,path,snapshot.track);")&&!racing.includes("if(path&&annotations)renderTrackMarkersV211(annotations,path,snapshot.track,'race');"))issues.push("Recovery B renderer missing: race start/finish owner");
 
   if(racing.includes("addTrackAnnotationV183(layer,path,'start','START',track.startFinish);"))issues.push('Legacy start-dot annotation still owns setup start marker');
   for(const token of [
