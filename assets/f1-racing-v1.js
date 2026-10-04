@@ -3380,8 +3380,7 @@ function renderTrackMarkersV211(layer,path,track,scope='race'){
   return true;
 }
 function qaTrackMarkersV211(){
-  const tracks=typeof window.mwsGetF1TrackCatalogV186==='function'?window.mwsGetF1TrackCatalogV186():[];
-  const catalog=(tracks&&tracks.length)?tracks:(window.MWS_F1_TRACKS_V182?Object.values(window.MWS_F1_TRACKS_V182):[]);
+  const catalog=window.MWS_F1_TRACKS_V182?Object.values(window.MWS_F1_TRACKS_V182):[];
   const rows=catalog.map(track=>({
     id:track.id,
     sectors:(track.sectors||[]).length,
