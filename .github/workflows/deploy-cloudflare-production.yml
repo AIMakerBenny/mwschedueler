@@ -170,6 +170,7 @@ jobs:
           node --check scripts/run-phase225-f1-camera-director-audit.mjs
           node --check scripts/run-phase226-f1-commentary-readability-audit.mjs
           node --check scripts/run-phase227-f1-commentary-cadence-audit.mjs
+          node --check scripts/run-phase228-f1-driver-label-collision-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
