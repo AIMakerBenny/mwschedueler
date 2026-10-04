@@ -7,7 +7,7 @@ export function runPhase198F1SlipstreamAudit(){
   const racing=fs.readFileSync('assets/f1-racing-v1.js','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  for(const token of ['assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=198'])if(!index.includes(token))issues.push('Phase 198 asset link missing: '+token);
+  if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=(?:19[8-9]|[2-9]\d{2,})/.test(index))issues.push('Phase 198+ racing runtime asset link missing');
   for(const token of [
     "const VERSION198='phase198-slipstream';",
     'const SLIPSTREAM_CONFIG_V198=Object.freeze({',

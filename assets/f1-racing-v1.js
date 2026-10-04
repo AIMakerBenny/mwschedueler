@@ -20,6 +20,8 @@ const VERSION196='phase196-vehicle-dynamics-telemetry';
 const VERSION197='phase197-racing-line-track-width';
 const VERSION198='phase198-slipstream';
 const SLIPSTREAM_CONFIG_V198=Object.freeze({maxGapMeters:42,minGapMeters:1.5,maxLateralMeters:8,minSpeedKph:120,maxDragReduction:0.14,maxTargetBonusKph:8});
+const VERSION199='phase199-dirty-air';
+const DIRTY_AIR_CONFIG_V199=Object.freeze({maxGapMeters:32,minGapMeters:1.5,maxLateralMeters:7,maxCornerGripLoss:0.08,maxUndersteerRisk:0.62,maxSlideRisk:0.38,maxTyreHeatLoad:0.5});
 const DEFAULT_TOTAL_LAPS_V190=10;
 const F1_LINE_MODES_V197=Object.freeze(['IDEAL','ATTACK_INSIDE','DEFENSIVE_INSIDE','OUTSIDE','PIT_LINE']);
 const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
@@ -393,6 +395,9 @@ function updateRaceProgressHudV190(){
     row.dataset.targetSpeed=String(Math.round(vehicle.targetSpeedKph||0));
     row.dataset.slipstream=(Number(vehicle.slipstreamStrength)||0).toFixed(3);
     row.dataset.carAhead=String(vehicle.carAheadId||'');
+    row.dataset.dirtyAir=(Number(vehicle.dirtyAirStrength)||0).toFixed(3);
+    row.dataset.aeroGrip=(Number(vehicle.aeroGripMultiplier)||1).toFixed(3);
+    row.dataset.understeerRisk=(Number(vehicle.understeerRisk)||0).toFixed(3);
   }
   updateRaceStandingsV191();
   return true;
@@ -457,6 +462,7 @@ function createRaceVehiclesV189(snapshot){
       speedKph:0,targetSpeedKph:0,throttle:0,brake:0,accelerationMps2:0,gear:1,rpm:8500,
       racingLineMode:'IDEAL',lateralOffsetMeters:0,
       carAheadId:null,gapToCarAheadMeters:Infinity,slipstreamStrength:0,slipstreamDragReduction:0,slipstreamGapEffect:0,slipstreamAlignmentEffect:0,slipstreamLateralEffect:0,slipstreamStraightEffect:0,
+      dirtyAirStrength:0,aeroGripMultiplier:1,understeerRisk:0,slideRisk:0,dirtyAirTyreHeatLoad:0,
       marker:null
     };
     return syncVehicleRaceMetricsV190(vehicle,snapshot.track);
@@ -588,6 +594,47 @@ function updateSlipstreamStatesV198(){
   return raceMotionV189.vehicles.map(vehicle=>({id:vehicle.id,carAheadId:vehicle.carAheadId,gapToCarAheadMeters:vehicle.gapToCarAheadMeters,slipstreamStrength:vehicle.slipstreamStrength}));
 }
 
+
+function resolveDirtyAirV199(vehicle,vehicles=raceMotionV189.vehicles){
+  const track=activeRaceSnapshotV187?.track;
+  const cfg=DIRTY_AIR_CONFIG_V199;
+  if(!vehicle||!track){
+    return {carAhead:null,gapMeters:Infinity,strength:0,aeroGripMultiplier:1,understeerRisk:0,slideRisk:0,tyreHeatLoad:0};
+  }
+  const ahead=(vehicles||[]).find(v=>String(v?.id||'')===String(vehicle.carAheadId||''))||null;
+  const gapMeters=Math.max(0,Number(vehicle.gapToCarAheadMeters)||Infinity);
+  const phase=getCornerPhaseAtProgressV194(vehicle.progress)?.phase||'STRAIGHT';
+  const phaseWeight=phase==='BRAKING'?.35:phase==='TURN_IN'?.8:phase==='APEX'?1:phase==='EXIT'?.65:phase==='APPROACH'?.12:0;
+  if(!ahead||gapMeters>cfg.maxGapMeters||gapMeters<cfg.minGapMeters||phaseWeight<=0){
+    vehicle.dirtyAirStrength=0;vehicle.aeroGripMultiplier=1;vehicle.understeerRisk=0;vehicle.slideRisk=0;vehicle.dirtyAirTyreHeatLoad=0;
+    return {carAhead:ahead,gapMeters,strength:0,aeroGripMultiplier:1,understeerRisk:0,slideRisk:0,tyreHeatLoad:0};
+  }
+  const hereSample=geometrySampleAtProgressV198(vehicle.progress);
+  const aheadSample=geometrySampleAtProgressV198(ahead.progress);
+  const headingDelta=angleDeltaRadV198(hereSample?.headingRad,aheadSample?.headingRad);
+  const alignmentEffect=clamp01V198(1-headingDelta/(Math.PI/4));
+  const lateralDelta=Math.abs(lineOffsetMetersV197(vehicle)-lineOffsetMetersV197(ahead));
+  const lateralEffect=clamp01V198(1-lateralDelta/cfg.maxLateralMeters);
+  const gapEffect=clamp01V198(1-(gapMeters-cfg.minGapMeters)/(cfg.maxGapMeters-cfg.minGapMeters));
+  const curvature=Math.abs(Number(hereSample?.curvatureRadPerMeter)||0);
+  const curvatureEffect=clamp01V198(curvature/0.0022);
+  const strength=clamp01V198(gapEffect*alignmentEffect*lateralEffect*phaseWeight*Math.max(.25,curvatureEffect));
+  const aeroGripMultiplier=1-strength*cfg.maxCornerGripLoss;
+  const understeerRisk=strength*cfg.maxUndersteerRisk;
+  const slideRisk=strength*cfg.maxSlideRisk;
+  const tyreHeatLoad=strength*cfg.maxTyreHeatLoad;
+  vehicle.dirtyAirStrength=strength;
+  vehicle.aeroGripMultiplier=aeroGripMultiplier;
+  vehicle.understeerRisk=understeerRisk;
+  vehicle.slideRisk=slideRisk;
+  vehicle.dirtyAirTyreHeatLoad=tyreHeatLoad;
+  return {carAhead:ahead,gapMeters,strength,aeroGripMultiplier,understeerRisk,slideRisk,tyreHeatLoad,phase};
+}
+function updateDirtyAirStatesV199(){
+  for(const vehicle of raceMotionV189.vehicles)resolveDirtyAirV199(vehicle,raceMotionV189.vehicles);
+  return raceMotionV189.vehicles.map(vehicle=>({id:vehicle.id,dirtyAirStrength:vehicle.dirtyAirStrength,aeroGripMultiplier:vehicle.aeroGripMultiplier,understeerRisk:vehicle.understeerRisk,slideRisk:vehicle.slideRisk,dirtyAirTyreHeatLoad:vehicle.dirtyAirTyreHeatLoad}));
+}
+
 function renderRaceVehiclesV189(){
   const path=document.getElementById('f1RacingRaceTrackPathV188');
   const layer=document.getElementById('f1RacingRaceVehicleLayerV188');
@@ -674,7 +721,8 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const targetData=getSpeedTargetAtProgressV195(vehicle.progress);
   const baseTarget=Math.max(60,Number(targetData?.targetKph)||250);
   const towStrength=clamp01V198(vehicle.slipstreamStrength);
-  const maxTarget=baseTarget+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;
+  const aeroGripMultiplier=Math.max(.85,Math.min(1,Number(vehicle.aeroGripMultiplier)||1));
+  const maxTarget=baseTarget*aeroGripMultiplier+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;
   const current=Math.max(0,Number(vehicle.speedKph)||0);
   const error=maxTarget-current;
   const accelBase=Math.max(0.5,Number(track?.geometry?.referenceAccelMps2)||8.5);
@@ -713,6 +761,7 @@ function simulateRaceStepV192(stepMs){
   if(simClockV192.paused||!(stepMs>0))return false;
   simClockV192.simTimeMs+=stepMs;
   updateSlipstreamStatesV198();
+  updateDirtyAirStatesV199();
   for(const vehicle of raceMotionV189.vehicles){
     simulateVehicleDynamicsV196(vehicle,stepMs);
   }
@@ -856,7 +905,7 @@ function render(){
   if(previewStateV184.running)stopPreviewV184(true);
   if(f1ScreenStateV185==='RACE'&&activeRaceSnapshotV187){renderRaceControlV188();startRaceMotionV189()}
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent=f1ScreenStateV185==='SETUP'?'RACE SETUP':'RACE CONTROL';
-  section.dataset.f1Runtime=VERSION198;
+  section.dataset.f1Runtime=VERSION199;
   return true;
 }
 function toggleDriver(id){
@@ -978,6 +1027,8 @@ window.mwsF1LineOffsetMetersV197=lineOffsetMetersV197;
 window.mwsF1RaceLinePointV197=raceLinePointV197;
 window.mwsF1ResolveSlipstreamV198=resolveSlipstreamV198;
 window.mwsF1UpdateSlipstreamStatesV198=updateSlipstreamStatesV198;
+window.mwsF1ResolveDirtyAirV199=resolveDirtyAirV199;
+window.mwsF1UpdateDirtyAirStatesV199=updateDirtyAirStatesV199;
 window.__mwsF1RacingV180=VERSION;
 window.__mwsF1RacingV181=VERSION181;
 window.__mwsF1RacingV182=VERSION182;
@@ -997,6 +1048,7 @@ window.__mwsF1RacingV195=VERSION195;
 window.__mwsF1RacingV196=VERSION196;
 window.__mwsF1RacingV197=VERSION197;
 window.__mwsF1RacingV198=VERSION198;
+window.__mwsF1RacingV199=VERSION199;
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){
