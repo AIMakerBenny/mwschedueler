@@ -968,7 +968,7 @@ jobs:
           grep -Fq 'function updateRaceProgressHudV190(){' /tmp/f1-racing-v1-phase190.js
           grep -Fq 'window.mwsF1SyncVehicleRaceMetricsV190=syncVehicleRaceMetricsV190;' /tmp/f1-racing-v1-phase190.js
           echo '[phase191] F1 official position gap and interval'
-          grep -Fq '<span>GAP</span><span>INT</span><span>TYRE</span>' /tmp/index.html
+          grep -Fq '<span>격차</span><span>앞차</span><span>타이어</span>' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV191=VERSION191;' > /tmp/f1-racing-v1-phase191.js
           retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-timing-row-v188 .gap,.f1-racing-timing-row-v188 .interval{' > /tmp/f1-racing-v1-phase191.css
           node --check /tmp/f1-racing-v1-phase191.js
