@@ -8,7 +8,8 @@ export function runPhase197F1RacingLineAudit(){
   const racing=fs.readFileSync('assets/f1-racing-v1.js','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  for(const token of ['assets/f1-track-v1.js?v=1.0.0-phase197-line-meta','assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=197'])if(!index.includes(token))issues.push('Phase 197 asset link missing: '+token);
+  for(const token of ['assets/f1-track-v1.js?v=1.0.0-phase197-line-meta'])if(!index.includes(token))issues.push('Phase 197 asset link missing: '+token);
+  if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=(?:19[7-9]|[2-9]\d{2,})/.test(index))issues.push('Phase 197+ racing runtime asset link missing');
   for(const token of ['visualTrackWidthSvg:26','racingLineMarginMeters:1.5',"root.__mwsF1TrackRacingLineMetaV197='track-width-line-offset-v1';"])if(!track.includes(token))issues.push('Phase 197 track line metadata missing: '+token);
   for(const token of [
     "const VERSION197='phase197-racing-line-track-width';",
