@@ -320,6 +320,18 @@ try{
     assert(window.mwsF1SetRaceControlFlagV214?.('GREEN','')===true,'Phase 214 Green Flag restore failed');
     const blueQa=window.mwsF1QaBackmarkerBlueFlagV215?.();
     assert(blueQa?.allPass===true,'Phase 215 backmarker/blue flag QA failed: '+JSON.stringify(blueQa));
+    const cameraQa=window.mwsF1QaDriverMarkerCameraV216?.();
+    assert(cameraQa?.allPass===true&&Number(cameraQa?.paletteCount)>=8,'Phase 216 marker/camera QA failed: '+JSON.stringify(cameraQa));
+    const markerColors=Array.from(document.querySelectorAll('.f1-racing-race-vehicle-v189')).map(node=>node.style.getPropertyValue('--f1-driver-color')).filter(Boolean);
+    assert(new Set(markerColors).size===markerColors.length&&markerColors.length>=2,'Phase 216 driver markers are not uniquely colored: '+JSON.stringify(markerColors));
+    assert(window.mwsF1SetRaceCameraModeV216?.('AUTO')===true,'Phase 216 auto camera enable failed');
+    const mapStage=document.querySelector('#f1RacingWorkspaceRecoveryE .f1-racing-race-map-stage-v188');
+    assert(mapStage,'Phase 216 race map stage missing');
+    const mapRect=mapStage.getBoundingClientRect();
+    mapStage.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:-120,clientX:mapRect.left+mapRect.width/2,clientY:mapRect.top+mapRect.height/2}));
+    await raf();
+    assert(window.mwsF1GetRaceCameraStateV216?.().mode==='MANUAL','Phase 216 wheel did not disable automatic camera');
+    assert(window.mwsF1SetRaceCameraModeV216?.('AUTO')===true,'Phase 216 auto camera restore failed');
     pause.click();await raf();
     assert(window.mwsF1GetSimulationClockV192?.().paused===false,'Pause button did not resume simulation');
 
