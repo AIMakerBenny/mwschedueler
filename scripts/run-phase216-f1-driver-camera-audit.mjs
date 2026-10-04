@@ -10,7 +10,7 @@ export function runPhase216F1DriverCameraAudit(){
   for(const token of [
     "const VERSION216='phase216-driver-markers-camera';",
     'const DRIVER_COLORS_V216=Object.freeze([',
-    "const CAMERA_MODES_V216=Object.freeze(['AUTO','FULL','LEADER','BATTLE','MANUAL']);",
+    "const CAMERA_MODES_V216=Object.freeze(['AUTO','FULL','LEADER','FRONT','BATTLE','MANUAL']);",
     'function ensureRaceCameraControlsV216(){',
     "stage.addEventListener('wheel'",
     "raceCameraV216.mode='MANUAL'",
