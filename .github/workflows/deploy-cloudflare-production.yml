@@ -151,6 +151,7 @@ jobs:
           node --check scripts/run-phase206-f1-pit-strategy-audit.mjs
           node --check scripts/run-phase207-f1-traffic-defence-audit.mjs
           node --check scripts/run-phase208-f1-pass-state-audit.mjs
+          node --check scripts/run-phase209-f1-long-run-gap-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -1236,12 +1237,19 @@ jobs:
           grep -Fq "ahead.racingLineMode='DEFENSIVE_INSIDE'" /tmp/f1-racing-phase207.js
           grep -Fq 'window.mwsF1QaTrafficV207=qaTrafficV207;' /tmp/f1-racing-phase207.js
           echo '[phase208] F1 pass state machine'
-          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=N1&phase=208' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=N1&phase=(20[8-9]|21[0-9])' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV208=VERSION208;' > /tmp/f1-racing-phase208.js
           node --check /tmp/f1-racing-phase208.js
           grep -Fq 'function nextPassStateV208(current,ctx={}){' /tmp/f1-racing-phase208.js
           grep -Fq 'function updatePassStateMachineV208(stepMs){' /tmp/f1-racing-phase208.js
           grep -Fq 'window.mwsF1QaPassStateMachineV208=qaPassStateMachineV208;' /tmp/f1-racing-phase208.js
+          echo '[phase209] F1 long-run gap balance'
+          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=N1&phase=209' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV209=VERSION209;' > /tmp/f1-racing-phase209.js
+          node --check /tmp/f1-racing-phase209.js
+          grep -Fq 'function longRunPaceBiasV209(vehicle,lapAge=' /tmp/f1-racing-phase209.js
+          grep -Fq 'function qaLongRunGapBalanceV209(){' /tmp/f1-racing-phase209.js
+          grep -Fq 'window.mwsF1QaLongRunGapBalanceV209=qaLongRunGapBalanceV209;' /tmp/f1-racing-phase209.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css

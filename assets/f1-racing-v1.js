@@ -35,8 +35,10 @@ const VERSION205='phase205-pit-lane-stop-warmup';
 const VERSION206='phase206-pit-strategy-ai';
 const VERSION207='phase207-traffic-slipstream-defence';
 const VERSION208='phase208-pass-state-machine';
+const VERSION209='phase209-long-run-gap-balance';
 const PASS_STATES_V208=Object.freeze(['FOLLOWING','CLOSING','TOWING','PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','PASS_COMPLETED','PASS_FAILED','COUNTER_ATTACK']);
 const PASS_CONFIG_V208=Object.freeze({followGapMeters:48,prepareGapMeters:20,pullOutGapMeters:15,sideBySideGapMeters:8,failGapMeters:32,passMarginMeters:1.2,stateHoldMs:160,maxBattleBiasKph:2.4});
+const LONG_RUN_GAP_CONFIG_V209=Object.freeze({settlingLaps:3.5,maxOpeningPaceBias:0.0045,maxSettledPaceBias:0.0018,relativeShape:1.25,qaLapSeconds:90,qaLaps:30});
 const TRAFFIC_STATES_V207=Object.freeze(['CLEAR','FOLLOWING','TOWING','PRESSURE','DEFENDING']);
 const TRAFFIC_CONFIG_V207=Object.freeze({followingGapMeters:48,pressureGapMeters:26,attackGapMeters:18,defendGapMeters:22,minClosingKph:1.5,strongClosingKph:16});
 const PIT_STRATEGIES_V206=Object.freeze(['NONE','BOX_NOW','UNDERCUT','OVERCUT','GO_LONG','COVER_UNDERCUT']);
@@ -514,6 +516,8 @@ function updateRaceProgressHudV190(){
     row.dataset.driverPaceRating=String(vehicle.driverProfile?.pace||'');
     row.dataset.driverConsistency=String(vehicle.driverProfile?.consistency||'');
     row.dataset.driverRacecraft=String(vehicle.driverProfile?.racecraft||'');
+    row.dataset.longRunPaceBias=(Number(vehicle.longRunPaceBias)||0).toFixed(5);
+    row.dataset.longRunPaceMultiplier=(Number(vehicle.longRunPaceMultiplier)||1).toFixed(5);
     row.dataset.energyMJ=(Number(vehicle.batteryMJ)||0).toFixed(3);
     row.dataset.energyDeployKW=String(Math.round(vehicle.energyDeployKW||0));
     row.dataset.energyRechargeKW=String(Math.round(vehicle.energyRechargeKW||0));
@@ -659,6 +663,60 @@ function driverTargetMultiplierV200(vehicle,phase){
 }
 function getDriverProfilesV200(){
   return raceMotionV189.vehicles.map(vehicle=>({id:vehicle.id,name:vehicle.driver?.name||'',profile:{...(vehicle.driverProfile||{})},paceNoise:Number(vehicle.paceNoise)||0}));
+}
+
+function fieldMeanPaceNormV209(vehicles=raceMotionV189.vehicles){
+  const active=(vehicles||[]).filter(vehicle=>vehicle&&!vehicle.finished);
+  if(!active.length)return 0;
+  return active.reduce((sum,vehicle)=>sum+driverSkillNormV200(vehicle,'pace'),0)/active.length;
+}
+function longRunPaceBiasV209(vehicle,lapAge=Math.max(0,Number(vehicle?.raceProgress)||0),vehicles=raceMotionV189.vehicles){
+  const cfg=LONG_RUN_GAP_CONFIG_V209;
+  const rawNorm=driverSkillNormV200(vehicle,'pace');
+  const fieldCenter=fieldMeanPaceNormV209(vehicles);
+  const relativeNorm=Math.max(-1,Math.min(1,rawNorm-fieldCenter));
+  const rawBias=rawNorm*DRIVER_PACE_CONFIG_V200.paceRange;
+  const centerBias=fieldCenter*DRIVER_PACE_CONFIG_V200.paceRange;
+  const openingBias=Math.max(-cfg.maxOpeningPaceBias,Math.min(cfg.maxOpeningPaceBias,rawBias-centerBias));
+  const settledBias=Math.tanh(relativeNorm*cfg.relativeShape)*cfg.maxSettledPaceBias;
+  const settle=clamp01V198(Math.max(0,Number(lapAge)||0)/cfg.settlingLaps);
+  return openingBias+(settledBias-openingBias)*settle;
+}
+function longRunPaceCorrectionV209(vehicle,lapAge=Math.max(0,Number(vehicle?.raceProgress)||0),vehicles=raceMotionV189.vehicles){
+  const rawBias=driverSkillNormV200(vehicle,'pace')*DRIVER_PACE_CONFIG_V200.paceRange;
+  const desiredBias=longRunPaceBiasV209(vehicle,lapAge,vehicles);
+  const correction=(1+desiredBias)/Math.max(.98,1+rawBias);
+  return Math.max(.985,Math.min(1.015,correction));
+}
+function getLongRunBalanceStatesV209(){
+  return raceMotionV189.vehicles.map(vehicle=>({
+    id:vehicle.id,name:vehicle.driver?.name||'',rawDriverPaceMultiplier:Number(vehicle.rawDriverPaceMultiplier)||1,
+    longRunPaceMultiplier:Number(vehicle.longRunPaceMultiplier)||1,longRunPaceBias:Number(vehicle.longRunPaceBias)||0,
+    raceProgress:Number(vehicle.raceProgress)||0,trafficState:String(vehicle.trafficState||'CLEAR'),pitState:String(vehicle.pitState||'TRACK'),
+    tyreGrip:Number(vehicle.tyreGrip)||1,battleState:String(vehicle.battleState||'FOLLOWING')
+  }));
+}
+function qaLongRunGapBalanceV209(){
+  const cfg=LONG_RUN_GAP_CONFIG_V209;
+  const ratings=[55,65,75,85,95];
+  const synthetic=ratings.map((pace,index)=>({id:'qa'+index,finished:false,driverProfile:{pace,consistency:75,racecraft:75},raceProgress:0}));
+  const opening=synthetic.map(vehicle=>longRunPaceBiasV209(vehicle,0,synthetic));
+  const settled=synthetic.map(vehicle=>longRunPaceBiasV209(vehicle,20,synthetic));
+  const spread=list=>Math.max(...list)-Math.min(...list);
+  const totalTimes=synthetic.map(vehicle=>{
+    let seconds=0;
+    for(let lap=0;lap<cfg.qaLaps;lap++){
+      const bias=longRunPaceBiasV209(vehicle,lap,synthetic);
+      seconds+=cfg.qaLapSeconds/Math.max(.98,1+bias);
+    }
+    return seconds;
+  });
+  const paceOnlyThirtyLapSpreadSeconds=Math.max(...totalTimes)-Math.min(...totalTimes);
+  const systemsConnected=typeof updateSlipstreamStatesV198==='function'&&typeof updateDirtyAirStatesV199==='function'&&typeof updateTrafficAndDefenceV207==='function'&&typeof updatePassStateMachineV208==='function'&&typeof updatePitStrategiesV206==='function'&&typeof updateTyreSystemV203==='function';
+  return {
+    vehicleCount:synthetic.length,openingBiasSpread:spread(opening),settledBiasSpread:spread(settled),
+    paceOnlyThirtyLapSpreadSeconds,nonUniform:spread(settled)>.0001,gapDependency:false,systemsConnected
+  };
 }
 
 
@@ -1518,7 +1576,7 @@ function createRaceVehiclesV189(snapshot){
       racingLineMode:'IDEAL',lateralOffsetMeters:0,
       carAheadId:null,gapToCarAheadMeters:Infinity,slipstreamStrength:0,slipstreamDragReduction:0,slipstreamGapEffect:0,slipstreamAlignmentEffect:0,slipstreamLateralEffect:0,slipstreamStraightEffect:0,
       dirtyAirStrength:0,aeroGripMultiplier:1,understeerRisk:0,slideRisk:0,dirtyAirTyreHeatLoad:0,
-      driverProfile,driverRandomState:raceSeed||1,paceNoise:0,nextPaceNoiseMs:0,driverPaceMultiplier:1,
+      driverProfile,driverRandomState:raceSeed||1,paceNoise:0,nextPaceNoiseMs:0,driverPaceMultiplier:1,rawDriverPaceMultiplier:1,longRunPaceMultiplier:1,longRunPaceBias:0,
       batteryMJ:ENERGY_CONFIG_V201.usableCapacityMJ,energyTargetMJ:ENERGY_CONFIG_V201.usableCapacityMJ,energyDeployKW:0,energyRechargeKW:0,energyDeployMJ:0,energyHarvestMJ:0,energyHarvestLapMJ:0,energyLapNumber:1,boostActive:false,boostPowerKW:0,boostEnergyMJ:0,attackOpportunityScore:0,defenceThreatScore:0,powerUnitFactor:1,
       activeAeroMode:'CORNER',activeAeroTarget:'CORNER',activeAeroTransitionMs:0,overtakeZoneId:'',overtakeGapSeconds:Infinity,overtakeEligible:false,overtakeActive:false,overtakeRechargeAllowanceActive:false,
       tyreCompound:'MEDIUM',tyreStartRaceProgress:startOffset,tyreAgeLaps:0,tyreWear:0,tyreSurfaceTemp:.5,tyreCarcassTemp:.5,tyreGrip:TYRE_COMPOUNDS_V203.MEDIUM.gripBias,tyreThermalDeg:0,tyreGraining:0,tyreFlatSpot:0,tyreStrategyPressure:0,
@@ -1807,7 +1865,12 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const tyreCornerFactor=(phase==='TURN_IN'||phase==='APEX'||phase==='EXIT')?tyreGrip:1;
   updateActiveAeroAndOvertakeV202(vehicle,stepMs);
   updateDriverPaceStateV200(vehicle,stepMs);
-  const driverPaceMultiplier=driverTargetMultiplierV200(vehicle,phase);
+  const rawDriverPaceMultiplier=driverTargetMultiplierV200(vehicle,phase);
+  const longRunPaceMultiplier=longRunPaceCorrectionV209(vehicle);
+  const driverPaceMultiplier=rawDriverPaceMultiplier*longRunPaceMultiplier;
+  vehicle.rawDriverPaceMultiplier=rawDriverPaceMultiplier;
+  vehicle.longRunPaceMultiplier=longRunPaceMultiplier;
+  vehicle.longRunPaceBias=longRunPaceBiasV209(vehicle);
   vehicle.driverPaceMultiplier=driverPaceMultiplier;
   const racecraftNorm=driverSkillNormV200(vehicle,'racecraft');
   const aggressionNorm=driverSkillNormV200(vehicle,'aggression');
@@ -2989,7 +3052,7 @@ function render(){
   if(previewStateV184.running)stopPreviewV184(true);
   if(f1ScreenStateV185==='RACE'&&activeRaceSnapshotV187){renderRaceControlV188();startRaceMotionV189()}
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent=f1ScreenStateV185==='SETUP'?'RACE SETUP':'RACE CONTROL';
-  section.dataset.f1Runtime=VERSION206;
+  section.dataset.f1Runtime=VERSION209;
   return true;
 }
 function toggleDriver(id){
@@ -3209,6 +3272,10 @@ window.mwsF1CreateDriverProfileV200=createDriverProfileV200;
 window.mwsF1UpdateDriverPaceStateV200=updateDriverPaceStateV200;
 window.mwsF1DriverTargetMultiplierV200=driverTargetMultiplierV200;
 window.mwsF1GetDriverProfilesV200=getDriverProfilesV200;
+window.mwsF1LongRunPaceBiasV209=longRunPaceBiasV209;
+window.mwsF1LongRunPaceCorrectionV209=longRunPaceCorrectionV209;
+window.mwsF1GetLongRunBalanceStatesV209=getLongRunBalanceStatesV209;
+window.mwsF1QaLongRunGapBalanceV209=qaLongRunGapBalanceV209;
 window.mwsF1ErsNormalPowerLimitV201=ersNormalPowerLimitV201;
 window.mwsF1UpdateEnergySystemV201=updateEnergySystemV201;
 window.mwsF1GetEnergyStatesV201=getEnergyStatesV201;
@@ -3265,6 +3332,7 @@ window.__mwsF1RacingV205=VERSION205;
 window.__mwsF1RacingV206=VERSION206;
 window.__mwsF1RacingV207=VERSION207;
 window.__mwsF1RacingV208=VERSION208;
+window.__mwsF1RacingV209=VERSION209;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';

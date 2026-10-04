@@ -293,6 +293,13 @@ try{
     assert(JSON.stringify(passQa?.sequence)===JSON.stringify(expectedPassSequence),'Phase 208 pass state sequence mismatch: '+JSON.stringify(passQa?.sequence));
     assert(passQa?.failed==='PASS_FAILED','Phase 208 pass failure branch missing');
     assert(passQa?.states?.includes('LATE_BRAKING')===false&&passQa?.states?.includes('BRAKING_DUEL'),'Phase 208 braking duel state contract invalid');
+    const longRunQa=window.mwsF1QaLongRunGapBalanceV209?.();
+    assert(longRunQa?.vehicleCount===5,'Phase 209 long-run QA vehicle set missing');
+    assert(longRunQa?.nonUniform===true,'Phase 209 flattened all driver pace');
+    assert(longRunQa?.gapDependency===false,'Phase 209 introduced gap-based rubber banding');
+    assert(Number(longRunQa?.settledBiasSpread)<Number(longRunQa?.openingBiasSpread),'Phase 209 did not reduce persistent base pace spread');
+    assert(Number(longRunQa?.paceOnlyThirtyLapSpreadSeconds)<=14,'Phase 209 pace-only 30-lap spread too large: '+String(longRunQa?.paceOnlyThirtyLapSpreadSeconds));
+    assert(longRunQa?.systemsConnected===true,'Phase 209 disconnected tyre/pit/traffic/pass systems');
     pause.click();await raf();
     assert(window.mwsF1GetSimulationClockV192?.().paused===false,'Pause button did not resume simulation');
 

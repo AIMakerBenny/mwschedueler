@@ -3,7 +3,7 @@ import {spawnSync} from 'node:child_process';
 export function runPhase208F1PassStateAudit(){
   const issues=[],warnings=[];
   const index=fs.readFileSync('index.html','utf8'),racing=fs.readFileSync('assets/f1-racing-v1.js','utf8'),diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8'),workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
-  if(!/recovery=N1&phase=208/.test(index))issues.push('Phase 208 asset cache missing');
+  if(!/recovery=N1&phase=(?:20[8-9]|21[0-9])/.test(index))issues.push('Phase 208+ asset cache missing');
   for(const token of [
     "const VERSION208='phase208-pass-state-machine';",
     "const PASS_STATES_V208=Object.freeze(['FOLLOWING','CLOSING','TOWING','PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','PASS_COMPLETED','PASS_FAILED','COUNTER_ATTACK']);",

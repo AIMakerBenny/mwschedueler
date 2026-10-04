@@ -204,6 +204,7 @@ import {runRecoveryMF1ExplicitStartAudit} from './run-recovery-m-f1-explicit-sta
 import {runRecoveryNF1TripleDockAudit} from './run-recovery-n-f1-triple-dock-audit.mjs';
 import {runPhase207F1TrafficDefenceAudit} from './run-phase207-f1-traffic-defence-audit.mjs';
 import {runPhase208F1PassStateAudit} from './run-phase208-f1-pass-state-audit.mjs';
+import {runPhase209F1LongRunGapAudit} from './run-phase209-f1-long-run-gap-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2181,5 +2182,10 @@ export function runPhase208FullIntegrationAudit(){
   const issues=[...previous.issues,...current.issues.map(x=>'Phase 208: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 208: '+x)];
   const summary={currentPhase:208,issues,warnings,pass:issues.length===0};console.log(JSON.stringify({fullIntegration:summary}));if(issues.length)process.exitCode=1;return summary;
 }
-export function runCurrentFullIntegrationAudit(){return runPhase208FullIntegrationAudit();}
+export function runPhase209FullIntegrationAudit(){
+  const previous=runPhase208FullIntegrationAudit(),current=runPhase209F1LongRunGapAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>'Phase 209: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 209: '+x)];
+  const summary={currentPhase:209,issues,warnings,pass:issues.length===0};console.log(JSON.stringify({fullIntegration:summary}));if(issues.length)process.exitCode=1;return summary;
+}
+export function runCurrentFullIntegrationAudit(){return runPhase209FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
