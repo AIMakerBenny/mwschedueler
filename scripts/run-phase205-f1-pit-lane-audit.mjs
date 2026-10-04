@@ -7,7 +7,7 @@ export function runPhase205F1PitLaneAudit(){
   const racing=fs.readFileSync('assets/f1-racing-v1.js','utf8');
   const diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
-  if(!/recovery=[K-Z][0-9]+&phase=(?:20[5-9]|21[0-9])/.test(index))issues.push('Phase 205+ asset cache missing');
+  if(!/recovery=[K-Z][0-9]+&phase=(?:20[5-9]|21[0-9]|22[0-9])/.test(index))issues.push('Phase 205+ asset cache missing');
   for(const token of [
     "const VERSION205='phase205-pit-lane-stop-warmup';",
     "const PIT_STATES_V205=Object.freeze(['TRACK','PIT_ENTRY','PIT_LANE','PIT_BOX','PIT_EXIT']);",
