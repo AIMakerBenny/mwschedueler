@@ -15,7 +15,7 @@ export function runPhase187F1RaceDraftSnapshotAudit(){
     'id="f1RacingTransitionTrackV187"',
     'id="f1RacingTransitionDriversV187"',
     '>경기 진행<',
-    '>RACE READY<'
+    '>경기 준비 완료<'
   ])if(!index.includes(token))issues.push('Phase 187 setup/transition UI missing: '+token);
 
   for(const token of [
