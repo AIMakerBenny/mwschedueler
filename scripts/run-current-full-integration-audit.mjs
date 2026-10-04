@@ -177,6 +177,7 @@ import {runPhase192F1SimulationClockAudit} from './run-phase192-f1-simulation-cl
 import {runPhase193F1TrackGeometryAudit} from './run-phase193-f1-track-geometry-audit.mjs';
 import {runPhase194F1CornerPhaseAudit} from './run-phase194-f1-corner-phase-audit.mjs';
 import {runPhase195F1SpeedProfileAudit} from './run-phase195-f1-speed-profile-audit.mjs';
+import {runPhase196F1VehicleDynamicsAudit} from './run-phase196-f1-vehicle-dynamics-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1915,5 +1916,14 @@ export function runPhase195FullIntegrationAudit(){
   const summary={currentPhase:195,issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify({fullIntegration:summary}));if(issues.length)process.exitCode=1;return summary;
 }
-export function runCurrentFullIntegrationAudit(){return runPhase195FullIntegrationAudit();}
+export function runPhase196FullIntegrationAudit(){
+  const previous=runPhase195FullIntegrationAudit(),current=runPhase196F1VehicleDynamicsAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>'Phase '+current.phase+': '+x)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>'Phase '+current.phase+': '+x)];
+  const summary={currentPhase:196,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+export function runCurrentFullIntegrationAudit(){return runPhase196FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();

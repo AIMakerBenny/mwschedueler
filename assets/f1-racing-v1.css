@@ -289,3 +289,7 @@
 #f1RacingRaceControlsV192 button{min-width:44px;transition:border-color .16s ease,background .16s ease,color .16s ease,box-shadow .16s ease}
 #f1RacingRaceControlsV192 button.active,#f1RacingRaceControlsV192 button[aria-pressed="true"]{border-color:#718096;background:#1a2432;color:#f8fafc;box-shadow:inset 0 0 0 1px rgba(148,163,184,.12)}
 #f1RacingPauseV192.active{border-color:#b7791f;background:#2b2112;color:#f6d48f}
+
+/* Phase 196: live vehicle dynamics telemetry */
+.f1-racing-timing-row-v188 .gear,.f1-racing-timing-row-v188 .rpm,.f1-racing-timing-row-v188 .speed{font-variant-numeric:tabular-nums;color:#dbe5f1}
+.f1-racing-timing-row-v188[data-brake]:not([data-brake="0.00"]) .speed{color:#f4b183}

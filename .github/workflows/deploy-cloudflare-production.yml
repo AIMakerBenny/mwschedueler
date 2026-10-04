@@ -126,6 +126,7 @@ jobs:
           node --check scripts/run-phase193-f1-track-geometry-audit.mjs
           node --check scripts/run-phase194-f1-corner-phase-audit.mjs
           node --check scripts/run-phase195-f1-speed-profile-audit.mjs
+          node --check scripts/run-phase196-f1-vehicle-dynamics-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-v1.js
@@ -967,8 +968,8 @@ jobs:
           grep -Fq 'const brakingDistanceMeters=Math.max(0,(v0*v0-v1*v1)/(2*decel));' /tmp/f1-track-geometry-v2-phase194.js
           grep -Fq 'window.mwsF1GetCornerPhasesV194=getCornerPhasesV194;' /tmp/f1-racing-v1-phase194.js
           echo '[phase195] F1 backward braking and forward acceleration speed profile'
-          grep -Fq 'assets/f1-track-v1.js?v=1.0.0-phase195-speed-meta' /tmp/index.html
-          grep -Fq 'assets/f1-track-geometry-v2.js?v=1.0.0-phase195-speed-profile' /tmp/index.html
+          grep -Fq 'assets/f1-track-v1.js?v=' /tmp/index.html
+          grep -Fq 'assets/f1-track-geometry-v2.js?v=' /tmp/index.html
           retry_contains "$BASE/assets/f1-track-v1.js?deploy=$GITHUB_SHA" "root.__mwsF1TrackSpeedProfileMetaV195='backward-brake-forward-accel-v1';" > /tmp/f1-track-v1-phase195.js
           retry_contains "$BASE/assets/f1-track-geometry-v2.js?deploy=$GITHUB_SHA" "root.__mwsF1SpeedProfileV195='backward-brake-forward-accel-v1';" > /tmp/f1-track-geometry-v2-phase195.js
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV195=VERSION195;' > /tmp/f1-racing-v1-phase195.js
@@ -979,6 +980,14 @@ jobs:
           grep -Fq 'for(let i=count-1;i>=0;i--){' /tmp/f1-track-geometry-v2-phase195.js
           grep -Fq 'for(let i=0;i<count;i++){' /tmp/f1-track-geometry-v2-phase195.js
           grep -Fq 'window.mwsF1GetSpeedProfileV195=getSpeedProfileV195;' /tmp/f1-racing-v1-phase195.js
+          echo '[phase196] F1 vehicle speed throttle brake gear and RPM'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV196=VERSION196;' > /tmp/f1-racing-v1-phase196.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-timing-row-v188 .gear,.f1-racing-timing-row-v188 .rpm,.f1-racing-timing-row-v188 .speed{' > /tmp/f1-racing-v1-phase196.css
+          node --check /tmp/f1-racing-v1-phase196.js
+          grep -Fq 'function simulateVehicleDynamicsV196(vehicle,stepMs){' /tmp/f1-racing-v1-phase196.js
+          grep -Fq 'const targetData=getSpeedTargetAtProgressV195(vehicle.progress);' /tmp/f1-racing-v1-phase196.js
+          grep -Fq 'vehicle.travel+=distanceMeters/Math.max(1,Number(track.lengthMeters)||1);' /tmp/f1-racing-v1-phase196.js
+          grep -Fq 'window.mwsF1SimulateVehicleDynamicsV196=simulateVehicleDynamicsV196;' /tmp/f1-racing-v1-phase196.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css

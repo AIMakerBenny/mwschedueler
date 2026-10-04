@@ -16,6 +16,7 @@ const VERSION192='phase192-simulation-clock';
 const VERSION193='phase193-track-geometry-v2';
 const VERSION194='phase194-corner-phase-model';
 const VERSION195='phase195-speed-profile';
+const VERSION196='phase196-vehicle-dynamics-telemetry';
 const DEFAULT_TOTAL_LAPS_V190=10;
 const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
 const F1_TRANSITIONS_V185=Object.freeze({
@@ -380,6 +381,12 @@ function updateRaceProgressHudV190(){
     row.dataset.raceDistance=String(Math.round(vehicle.raceDistanceMeters||0));
     const badge=row.querySelector('[data-f1-current-sector]');
     if(badge)badge.textContent=vehicle.sector||'GRID';
+    const gear=row.querySelector('.gear');if(gear)gear.textContent=String(vehicle.gear||1);
+    const rpm=row.querySelector('.rpm');if(rpm)rpm.textContent=String(Math.round(vehicle.rpm||0));
+    const speed=row.querySelector('.speed');if(speed)speed.textContent=String(Math.round(vehicle.speedKph||0));
+    row.dataset.throttle=(Number(vehicle.throttle)||0).toFixed(2);
+    row.dataset.brake=(Number(vehicle.brake)||0).toFixed(2);
+    row.dataset.targetSpeed=String(Math.round(vehicle.targetSpeedKph||0));
   }
   updateRaceStandingsV191();
   return true;
@@ -438,7 +445,12 @@ function createRaceVehiclesV189(snapshot){
   return (snapshot?.drivers||[]).map(function(driver,index){
     const hash=hashDriverV189(driver.contactId||driver.name);
     const startOffset=-(index*Math.min(.0045,.045/count));
-    const vehicle={id:String(driver.contactId),driver,startOffset,progress:normalizedProgressV190(startOffset),travel:0,raceProgress:startOffset,raceDistanceMeters:0,currentLap:1,completedLaps:0,sector:'GRID',lapDurationMs:17500+(hash%6500),marker:null};
+    const vehicle={
+      id:String(driver.contactId),driver,startOffset,progress:normalizedProgressV190(startOffset),travel:0,raceProgress:startOffset,raceDistanceMeters:0,currentLap:1,completedLaps:0,sector:'GRID',
+      lapDurationMs:21000,
+      speedKph:0,targetSpeedKph:0,throttle:0,brake:0,accelerationMps2:0,gear:1,rpm:8500,
+      marker:null
+    };
     return syncVehicleRaceMetricsV190(vehicle,snapshot.track);
   });
 }
@@ -520,13 +532,59 @@ function bindSimulationControlsV192(){
   });
   syncSimulationControlsV192();
 }
+function gearForSpeedV196(speedKph){
+  const speed=Math.max(0,Number(speedKph)||0);
+  if(speed<85)return 1;if(speed<125)return 2;if(speed<165)return 3;if(speed<205)return 4;
+  if(speed<245)return 5;if(speed<280)return 6;if(speed<315)return 7;return 8;
+}
+function rpmForSpeedAndGearV196(speedKph,gear){
+  const bands=[[0,85],[65,125],[100,165],[135,205],[170,245],[205,280],[235,315],[270,350]];
+  const band=bands[Math.max(0,Math.min(7,(Number(gear)||1)-1))];
+  const t=Math.max(0,Math.min(1,((Number(speedKph)||0)-band[0])/Math.max(1,band[1]-band[0])));
+  return Math.round(8500+t*3500);
+}
+function simulateVehicleDynamicsV196(vehicle,stepMs){
+  const track=activeRaceSnapshotV187?.track;
+  if(!vehicle||!track||!(stepMs>0))return false;
+  const targetData=getSpeedTargetAtProgressV195(vehicle.progress);
+  const maxTarget=Math.max(60,Number(targetData?.targetKph)||250);
+  const current=Math.max(0,Number(vehicle.speedKph)||0);
+  const error=maxTarget-current;
+  const accelBase=Math.max(0.5,Number(track?.geometry?.referenceAccelMps2)||8.5);
+  const brakeBase=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20);
+  let throttle=0,brake=0,accelMps2=0;
+  if(error>1.5){
+    throttle=Math.max(.08,Math.min(1,error/45));
+    const highSpeedFade=Math.max(.35,1-current/520);
+    accelMps2=accelBase*throttle*highSpeedFade;
+  }else if(error<-1.5){
+    brake=Math.max(.08,Math.min(1,(-error)/55));
+    accelMps2=-brakeBase*brake;
+  }else{
+    throttle=.12;
+    accelMps2=0;
+  }
+  const dt=stepMs/1000;
+  const nextMps=Math.max(0,current/3.6+accelMps2*dt);
+  const nextKph=Math.max(0,Math.min(Number(track?.geometry?.maxStraightKph)||335,nextMps*3.6));
+  const avgMps=((current+nextKph)/2)/3.6;
+  const distanceMeters=avgMps*dt;
+  vehicle.speedKph=nextKph;
+  vehicle.targetSpeedKph=maxTarget;
+  vehicle.throttle=throttle;
+  vehicle.brake=brake;
+  vehicle.accelerationMps2=accelMps2;
+  vehicle.gear=gearForSpeedV196(nextKph);
+  vehicle.rpm=rpmForSpeedAndGearV196(nextKph,vehicle.gear);
+  vehicle.travel+=distanceMeters/Math.max(1,Number(track.lengthMeters)||1);
+  syncVehicleRaceMetricsV190(vehicle,track);
+  return true;
+}
 function simulateRaceStepV192(stepMs){
   if(simClockV192.paused||!(stepMs>0))return false;
   simClockV192.simTimeMs+=stepMs;
   for(const vehicle of raceMotionV189.vehicles){
-    const step=stepMs/vehicle.lapDurationMs;
-    vehicle.travel+=step;
-    syncVehicleRaceMetricsV190(vehicle);
+    simulateVehicleDynamicsV196(vehicle,stepMs);
   }
   return true;
 }
@@ -668,7 +726,7 @@ function render(){
   if(previewStateV184.running)stopPreviewV184(true);
   if(f1ScreenStateV185==='RACE'&&activeRaceSnapshotV187){renderRaceControlV188();startRaceMotionV189()}
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent=f1ScreenStateV185==='SETUP'?'RACE SETUP':'RACE CONTROL';
-  section.dataset.f1Runtime=VERSION195;
+  section.dataset.f1Runtime=VERSION196;
   return true;
 }
 function toggleDriver(id){
@@ -782,6 +840,9 @@ window.mwsF1GetCornerPhasesV194=getCornerPhasesV194;
 window.mwsF1GetCornerPhaseAtProgressV194=getCornerPhaseAtProgressV194;
 window.mwsF1GetSpeedProfileV195=getSpeedProfileV195;
 window.mwsF1GetSpeedTargetAtProgressV195=getSpeedTargetAtProgressV195;
+window.mwsF1SimulateVehicleDynamicsV196=simulateVehicleDynamicsV196;
+window.mwsF1GearForSpeedV196=gearForSpeedV196;
+window.mwsF1RpmForSpeedAndGearV196=rpmForSpeedAndGearV196;
 window.__mwsF1RacingV180=VERSION;
 window.__mwsF1RacingV181=VERSION181;
 window.__mwsF1RacingV182=VERSION182;
@@ -798,6 +859,7 @@ window.__mwsF1RacingV192=VERSION192;
 window.__mwsF1RacingV193=VERSION193;
 window.__mwsF1RacingV194=VERSION194;
 window.__mwsF1RacingV195=VERSION195;
+window.__mwsF1RacingV196=VERSION196;
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){
