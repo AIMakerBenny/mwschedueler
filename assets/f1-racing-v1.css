@@ -267,9 +267,9 @@
 
 /* Phase 189: shared multi-car requestAnimationFrame renderer */
 .f1-racing-race-vehicle-v189{pointer-events:none;will-change:transform}
-.f1-racing-race-vehicle-v189 .car-halo{fill:rgba(96,165,250,.13);stroke:rgba(148,163,184,.18);stroke-width:1}
-.f1-racing-race-vehicle-v189 .car-ring{fill:#0b1018;stroke:#e2e8f0;stroke-width:3}
-.f1-racing-race-vehicle-v189 .car-core{fill:#60a5fa}
+.f1-racing-race-vehicle-v189 .car-halo{fill:var(--f1-driver-color,#60a5fa);fill-opacity:.16;stroke:var(--f1-driver-color,#94a3b8);stroke-opacity:.32;stroke-width:1}
+.f1-racing-race-vehicle-v189 .car-ring{fill:#0b1018;stroke:var(--f1-driver-color,#e2e8f0);stroke-width:3}
+.f1-racing-race-vehicle-v189 .car-core{fill:var(--f1-driver-color,#60a5fa)}
 .f1-racing-race-vehicle-v189 .car-label{fill:#f8fafc;font:900 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#020305;stroke-width:4;stroke-linejoin:round}
 
 /* Phase 190: race distance, lap and sector telemetry */
@@ -282,8 +282,8 @@
 /* Phase 191: official position, leader gap and interval telemetry */
 .f1-racing-timing-row-v188 .gap,.f1-racing-timing-row-v188 .interval{font-variant-numeric:tabular-nums;color:#aeb9c9}
 .f1-racing-timing-row-v188[data-position="1"] .gap{color:#e8cf76;font-weight:900}
-.f1-racing-race-vehicle-v189.leader .car-halo{fill:rgba(216,183,77,.2);stroke:rgba(232,207,118,.55);stroke-width:2}
-.f1-racing-race-vehicle-v189.leader .car-ring{stroke:#e8cf76}
+.f1-racing-race-vehicle-v189.leader .car-halo{fill:var(--f1-driver-color,#e8cf76);fill-opacity:.24;stroke:var(--f1-driver-color,#e8cf76);stroke-opacity:.72;stroke-width:2}
+.f1-racing-race-vehicle-v189.leader .car-ring{stroke:var(--f1-driver-color,#e8cf76);stroke-width:4}
 
 /* Phase 192: live simulation clock controls */
 #f1RacingRaceControlsV192 button{min-width:44px;transition:border-color .16s ease,background .16s ease,color .16s ease,box-shadow .16s ease}
@@ -493,3 +493,15 @@
 .f1-racing-workspace-dock-guide-recovery-e.left::after{content:"LEFT"}
 .f1-racing-workspace-dock-guide-recovery-e.center::after{content:"CENTER"}
 .f1-racing-workspace-dock-guide-recovery-e.right::after{content:"RIGHT"}
+
+
+/* Phase 216: distinct driver markers and interactive race camera */
+.f1-racing-timing-row-v188 .driver b::before{content:"";display:inline-block;width:7px;height:7px;margin-right:5px;border-radius:999px;background:var(--f1-driver-color,#60a5fa);box-shadow:0 0 8px color-mix(in srgb,var(--f1-driver-color,#60a5fa) 55%,transparent)}
+.f1-racing-race-map-stage-v188{position:relative;overflow:hidden}
+.f1-racing-race-map-stage-v188.is-camera-dragging{cursor:grabbing}
+#f1RacingRaceTrackSvgV188{cursor:grab;user-select:none;touch-action:none}
+.f1-racing-camera-controls-v216{position:absolute;z-index:15;left:8px;top:8px;display:flex;align-items:center;gap:4px;padding:4px;border:1px solid #283241;border-radius:7px;background:rgba(6,10,15,.88);backdrop-filter:blur(8px);box-shadow:0 5px 18px rgba(0,0,0,.28)}
+.f1-racing-camera-controls-v216>span{padding:0 6px;color:#8595aa;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap}
+.f1-racing-camera-controls-v216 button{min-height:24px;padding:3px 7px;border:1px solid #323d4d;border-radius:5px;background:#111722;color:#9aa9bd;font-size:9px;font-weight:850;cursor:pointer}
+.f1-racing-camera-controls-v216 button.active{border-color:#6fa8ef;background:#17283d;color:#eff7ff;box-shadow:inset 0 0 0 1px rgba(111,168,239,.18)}
+.f1-racing-camera-controls-v216 button:hover{color:#fff;border-color:#5a6a80}
