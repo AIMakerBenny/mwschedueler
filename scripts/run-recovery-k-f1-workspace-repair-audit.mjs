@@ -8,7 +8,7 @@ export function runRecoveryKF1WorkspaceRepairAudit(){
   const diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[K-Z][0-9]+&phase=(?:20[4-9]|21[0-9])/.test(index))issues.push('Recovery K+ JS cache missing');
+  if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[K-Z][0-9]+&phase=(?:20[4-9]|21[0-9]|22[0-9])/.test(index))issues.push('Recovery K+ JS cache missing');
   for(const token of [
     'version:5,',
     'let workspaceRepairReportRecoveryK={repaired:false,reasons:[],version:5};',
