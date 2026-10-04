@@ -134,6 +134,7 @@ jobs:
           node --check scripts/run-phase201-f1-energy-recharge-boost-audit.mjs
           node --check scripts/run-phase202-f1-active-aero-overtake-audit.mjs
           node --check scripts/run-phase203-f1-tyre-system-audit.mjs
+          node --check scripts/run-recovery-a-f1-track-catalog-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-v1.js
@@ -1059,6 +1060,14 @@ jobs:
           grep -Fq 'const dirtyHeat=clamp01V198(vehicle.dirtyAirTyreHeatLoad);' /tmp/f1-racing-v1-phase203.js
           grep -Fq 'const brakeBase=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20)*tyreGrip;' /tmp/f1-racing-v1-phase203.js
           grep -Fq 'window.mwsF1GetTyreStatesV203=getTyreStatesV203;' /tmp/f1-racing-v1-phase203.js
+          echo '[recovery-a] F1 three-track catalog'
+          grep -Fq 'assets/f1-track-v1.js?v=1.0.0-phase197-line-meta-recoveryA-tracks3' /tmp/index.html
+          retry_contains "$BASE/assets/f1-track-v1.js?deploy=$GITHUB_SHA" "root.__mwsF1TrackRecoveryA='three-track-catalog-v1';" > /tmp/f1-track-recovery-a.js
+          node --check /tmp/f1-track-recovery-a.js
+          grep -Fq "id:'castle-street-circuit-v1'" /tmp/f1-track-recovery-a.js
+          grep -Fq "name:'Castle Street Circuit'" /tmp/f1-track-recovery-a.js
+          grep -Fq "id:'blue-coast-speedway-v1'" /tmp/f1-track-recovery-a.js
+          grep -Fq "name:'Blue Coast Speedway'" /tmp/f1-track-recovery-a.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css
