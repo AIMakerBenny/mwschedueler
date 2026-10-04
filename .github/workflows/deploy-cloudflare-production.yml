@@ -147,6 +147,7 @@ jobs:
           node --check scripts/run-recovery-j-f1-split-dock-audit.mjs
           node --check scripts/run-recovery-k-f1-workspace-repair-audit.mjs
           node --check scripts/run-phase204-f1-driving-incidents-audit.mjs
+          node --check scripts/run-phase205-f1-pit-lane-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-v1.js
@@ -1174,11 +1175,18 @@ jobs:
           grep -Fq 'function workspaceCompactRecoveryK(layout,preferredId=' /tmp/f1-racing-recovery-k.js
           grep -Fq 'window.mwsF1AuditWorkspaceLayoutRecoveryK=workspaceAuditLayoutRecoveryK;' /tmp/f1-racing-recovery-k.js
           echo '[phase204] F1 driving incidents'
-          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=K1&phase=204' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=K1&phase=20[4-9]' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RacingV204=VERSION204;" > /tmp/f1-racing-phase204.js
           node --check /tmp/f1-racing-phase204.js
           grep -Fq 'function updateDrivingIncidentsV204(vehicle,stepMs,phase,controls={}){' /tmp/f1-racing-phase204.js
           grep -Fq 'window.mwsF1ForceDrivingIncidentV204=forceDrivingIncidentV204;' /tmp/f1-racing-phase204.js
+          echo '[phase205] F1 pit lane stop and tyre warmup'
+          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=K1&phase=205' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV205=VERSION205;' > /tmp/f1-racing-phase205.js
+          node --check /tmp/f1-racing-phase205.js
+          grep -Fq 'function updatePitPostStepV205(vehicle,previousRaceProgress){' /tmp/f1-racing-phase205.js
+          grep -Fq 'window.mwsF1RequestPitStopV205=requestPitStopV205;' /tmp/f1-racing-phase205.js
+          grep -Fq 'window.mwsF1QaPitCycleV205=qaPitCycleV205;' /tmp/f1-racing-phase205.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css

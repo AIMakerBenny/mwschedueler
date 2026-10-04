@@ -252,6 +252,13 @@ try{
     assert((incidentAfter?.lockupActiveMs||0)>0,'Phase 204 lock-up timer missing');
     assert((incidentAfter?.tyreFlatSpot||0)>(tyreBefore?.flatSpot||0),'Phase 204 lock-up did not add flat spot');
     assert(incidentMarker?.dataset.incident==='LOCK_UP','Phase 204 marker did not expose lock-up state');
+    const pitCycle=window.mwsF1QaPitCycleV205?.(incidentDriver,'SOFT');
+    window.mwsF1RenderRaceVehiclesV189?.();await raf();
+    const pitAfter=(window.mwsF1GetPitStatesV205?.()||[]).find(row=>String(row.id)===String(incidentDriver));
+    assert(Array.isArray(pitCycle?.states)&&pitCycle.states.join('>')==='PIT_ENTRY>PIT_LANE>PIT_BOX>PIT_LANE>PIT_EXIT>TRACK','Phase 205 pit state sequence failed');
+    assert(Number(pitCycle?.laneSpeedCapKph)===Number(window.mwsF1GetActiveRaceSnapshotV187?.()?.track?.pit?.speedLimitKph),'Phase 205 pit limiter cap mismatch');
+    assert(pitAfter?.compound==='SOFT'&&Number(pitAfter?.stopCount)>=1,'Phase 205 tyre service failed');
+    assert(Number(pitAfter?.tyreWarmupFactor)<1&&Number(pitAfter?.warmupRemainingLaps)>0,'Phase 205 tyre warmup state missing');
     pause.click();await raf();
     assert(window.mwsF1GetSimulationClockV192?.().paused===false,'Pause button did not resume simulation');
 
@@ -351,6 +358,7 @@ try{
     return {
       pausedAndResumed:true,
       phase204Incident:{type:forcedIncident?.type||'',lockupActiveMs:Number(incidentAfter?.lockupActiveMs)||0,flatSpot:Number(incidentAfter?.tyreFlatSpot)||0},
+      phase205Pit:{states:pitCycle?.states||[],laneSpeedCapKph:Number(pitCycle?.laneSpeedCapKph)||0,compound:pitAfter?.compound||'',warmupFactor:Number(pitAfter?.tyreWarmupFactor)||0},
       resizeChanged:{before:beforeResize,after:afterResize},
       dockedCommentary:docked,
       overlapPairsAfterDock:window.mwsF1WorkspaceOverlapPairsRecoveryI?.()||[],
