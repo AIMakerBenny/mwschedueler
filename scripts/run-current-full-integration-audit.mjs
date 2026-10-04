@@ -201,6 +201,7 @@ import {runPhase205F1PitLaneAudit} from './run-phase205-f1-pit-lane-audit.mjs';
 import {runPhase206F1PitStrategyAudit} from './run-phase206-f1-pit-strategy-audit.mjs';
 import {runRecoveryLF1CurvatureSpeedAudit} from './run-recovery-l-f1-curvature-speed-audit.mjs';
 import {runRecoveryMF1ExplicitStartAudit} from './run-recovery-m-f1-explicit-start-audit.mjs';
+import {runRecoveryNF1TripleDockAudit} from './run-recovery-n-f1-triple-dock-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2155,5 +2156,14 @@ export function runRecoveryMFullIntegrationAudit(){
   if(issues.length)process.exitCode=1;
   return summary;
 }
-export function runCurrentFullIntegrationAudit(){return runRecoveryMFullIntegrationAudit();}
+export function runRecoveryNFullIntegrationAudit(){
+  const previous=runRecoveryMFullIntegrationAudit(),current=runRecoveryNF1TripleDockAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>'Recovery N: '+x)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>'Recovery N: '+x)];
+  const summary={currentPhase:'recovery-n',issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+export function runCurrentFullIntegrationAudit(){return runRecoveryNFullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
