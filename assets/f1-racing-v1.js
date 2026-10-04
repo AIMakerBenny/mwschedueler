@@ -44,6 +44,7 @@ const VERSION214='phase214-race-control-flags';
 const VERSION215='phase215-backmarker-blue-flag';
 const VERSION216='phase216-driver-markers-camera';
 const VERSION217='phase217-compact-three-panel-workspace';
+const VERSION218='phase218-korean-interface';
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
 const CAMERA_MODES_V216=Object.freeze(['AUTO','FULL','LEADER','BATTLE','MANUAL']);
 const raceCameraV216={mode:'AUTO',zoom:1.9,cx:500,cy:300,dragging:false,pointerId:null,lastX:0,lastY:0,initialized:false};
@@ -121,7 +122,8 @@ function syncRaceFlagHudV214(){
   const status=document.getElementById('f1RacingRaceStatusV188');
   if(status){
     const flag=String(raceFlagStateV214.flag||'GREEN');
-    status.textContent=flag==='GREEN'?'RACING':flag.replace('_',' ')+(raceFlagStateV214.reason?' · '+raceFlagStateV214.reason:'');
+    const labels={GREEN:'진행 중',YELLOW:'옐로 플래그',VSC:'가상 세이프티카',SAFETY_CAR:'세이프티카',RED:'레드 플래그'};
+    status.textContent=labels[flag]||flag;
     status.dataset.raceFlag=flag;
   }
   const section=document.getElementById('gameF1Racing');
@@ -451,7 +453,7 @@ function startRaceFromSetupV187(){
     populateGridRecoveryM(snapshot);
     setScreenStateV185('GRID');
     const chip=document.getElementById('f1RacingPhaseChipV180');
-    if(chip)chip.textContent='STARTING GRID';
+    if(chip)chip.textContent='스타팅 그리드';
   },900);
   return true;
 }
@@ -466,7 +468,7 @@ function confirmRaceStartRecoveryM(){
     return false;
   }
   const chip=document.getElementById('f1RacingPhaseChipV180');
-  if(chip)chip.textContent='RACE CONTROL';
+  if(chip)chip.textContent='레이스 관제';
   return true;
 }
 function bindManualRaceStartRecoveryM(){
@@ -495,7 +497,7 @@ function cancelRaceToSetupRecoveryC(){
   renderSelected();
   syncSetupActionV187();
   const chip=document.getElementById('f1RacingPhaseChipV180');
-  if(chip)chip.textContent='RACE SETUP';
+  if(chip)chip.textContent='경기 설정';
   return true;
 }
 function bindRaceCancelRecoveryC(){
@@ -677,9 +679,9 @@ function computeRaceStandingsV191(){
   });
 }
 function formatRaceDeltaV191(progress,seconds,isLeader=false){
-  if(isLeader)return 'LEADER';
+  if(isLeader)return '선두';
   const laps=Math.floor(Math.max(0,Number(progress)||0));
-  if(laps>=1)return '+'+laps+' LAP'+(laps===1?'':'S');
+  if(laps>=1)return '+'+laps+'랩';
   return '+'+Math.max(0,Number(seconds)||0).toFixed(3);
 }
 function applyLiveTimingFlipV212(standings){
@@ -2017,7 +2019,7 @@ function syncSimulationControlsV192(){
   const pause=document.getElementById('f1RacingPauseV192');
   const status=document.getElementById('f1RacingRaceStatusV188');
   if(pause){
-    pause.textContent=simClockV192.paused?'Resume':'Pause';
+    pause.textContent=simClockV192.paused?'재개':'일시정지';
     pause.setAttribute('aria-pressed',simClockV192.paused?'true':'false');
     pause.classList.toggle('active',simClockV192.paused);
   }
@@ -2026,7 +2028,7 @@ function syncSimulationControlsV192(){
     button.classList.toggle('active',active);
     button.setAttribute('aria-pressed',active?'true':'false');
   });
-  if(status&&raceMotionV189.running)status.textContent=simClockV192.paused?'PAUSED':'RUNNING';
+  if(status&&raceMotionV189.running)status.textContent=simClockV192.paused?'일시정지':'진행 중';
 }
 function setSimulationTimeScaleV192(scale){
   const next=Number(scale);
@@ -2286,7 +2288,7 @@ function returnToSetupRecoveryG(){
   finishCounterRecoveryG=0;
   setScreenStateV185('SETUP',{force:true});
   renderContacts();renderSelected();renderTrackChoicesV186();updateTrackFoundationStatusV182();renderTrackMapV183();syncSetupActionV187();
-  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='RACE SETUP';
+  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='경기 설정';
   return true;
 }
 function newRaceSameSettingsRecoveryG(){
@@ -2599,7 +2601,7 @@ function renderRaceControlV188(){
   ensureRaceCameraControlsV216();
   resetRaceCameraV216('AUTO');
   bindSimulationControlsV192();
-  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='RACE CONTROL';
+  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='레이스 관제';
   return true;
 }
 function bindRaceProceedV187(){
@@ -2613,9 +2615,9 @@ function bindRaceProceedV187(){
 
 
 const F1_WORKSPACE_PANEL_META_RECOVERY_E=Object.freeze({
-  timing:Object.freeze({label:'LIVE TIMING',minW:4,minH:2}),
-  track:Object.freeze({label:'TRACK MAP',minW:4,minH:4}),
-  commentary:Object.freeze({label:'RACE COMMENTARY',minW:3,minH:3})
+  timing:Object.freeze({label:'실시간 순위',minW:4,minH:2}),
+  track:Object.freeze({label:'트랙 맵',minW:4,minH:4}),
+  commentary:Object.freeze({label:'경기 해설',minW:3,minH:3})
 });
 const F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E=Object.freeze({
   version:5,
@@ -3518,7 +3520,7 @@ function addStartFinishLineRecoveryB(layer,path,track,scope='setup'){
     y:geometry.center.y+geometry.tangent.y*labelDistance+geometry.normal.y*18,
     'text-anchor':'middle'
   });
-  label.textContent='START / FINISH';
+  label.textContent='출발 / 결승선';
   group.append(underlay,stripe,label);
   layer.appendChild(group);
   return group;
@@ -3582,9 +3584,9 @@ function updateTrackFoundationStatusV182(){
   const track=getActiveTrack();
   const chip=document.getElementById('f1RacingPhaseChipV180');
   const status=document.getElementById('f1RacingFoundationStatusV180');
-  if(chip)chip.textContent=track?'TRACK MODEL':'TRACK ERROR';
+  if(chip)chip.textContent=track?'트랙 모델':'트랙 오류';
   if(status)status.textContent=track
-    ?'트랙 데이터 준비 완료 · '+track.name+' · '+(track.lengthMeters/1000).toFixed(3)+' km · 3 Sectors · Pit/Speed Trap metadata'
+    ?'트랙 데이터 준비 완료 · '+track.name+' · '+(track.lengthMeters/1000).toFixed(3)+' km · 3개 섹터 · 피트/스피드 트랩 데이터'
     :'트랙 데이터를 불러오지 못했습니다.';
 }
 
@@ -3765,6 +3767,7 @@ window.__mwsF1RacingV214=VERSION214;
 window.__mwsF1RacingV215=VERSION215;
 window.__mwsF1RacingV216=VERSION216;
 window.__mwsF1RacingV217=VERSION217;
+window.__mwsF1RacingV218=VERSION218;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
