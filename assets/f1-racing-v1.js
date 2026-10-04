@@ -47,6 +47,8 @@ const F1_TRANSITIONS_V185=Object.freeze({
 let f1ScreenStateV185='SETUP';
 const selectedIds=[];
 let activeTrackId='majoku-ring-v1';
+let selectedTotalLapsRecoveryD=DEFAULT_TOTAL_LAPS_V190;
+let persistenceRestoredRecoveryD=false;
 const previewStateV184={running:false,progress:0,lastTimestamp:0,rafId:0,lapDurationMs:18000};
 let activeRaceSnapshotV187=null;
 let raceTransitionTimerV187=0;
@@ -253,6 +255,7 @@ function selectTrackV186(trackId){
   const id=String(trackId||'');
   if(!window.mwsGetF1TrackV182?.(id))return false;
   activeTrackId=id;
+  persistF1SettingsRecoveryD();
   renderTrackChoicesV186();
   updateTrackFoundationStatusV182();
   renderTrackMapV183();
@@ -278,7 +281,8 @@ function renderTrackChoicesV186(){
 function getRaceDraftV187(){
   return Object.freeze({
     selectedDriverIds:Object.freeze(selectedIds.slice()),
-    selectedTrackId:String(activeTrackId||'')
+    selectedTrackId:String(activeTrackId||''),
+    totalLaps:selectedTotalLapsRecoveryD
   });
 }
 function cloneDriverForRaceV187(row,index){
@@ -299,7 +303,7 @@ function buildRaceSnapshotV187(){
   return Object.freeze({
     createdAt:new Date().toISOString(),
     trackId:String(track.id),
-    totalLaps:DEFAULT_TOTAL_LAPS_V190,
+    totalLaps:draft.totalLaps,
     track:Object.freeze({
       id:String(track.id),
       name:String(track.name),
@@ -1268,13 +1272,45 @@ function bindRaceProceedV187(){
   }
   syncSetupActionV187();
 }
+
+function readPersistedF1SettingsRecoveryD(){
+  return typeof window.mwsGetF1RacingSettingsRecoveryD==='function'
+    ?window.mwsGetF1RacingSettingsRecoveryD()
+    :null;
+}
+function restoreF1SettingsRecoveryD(force=false){
+  if(persistenceRestoredRecoveryD&&!force)return false;
+  const settings=readPersistedF1SettingsRecoveryD();
+  if(!settings){persistenceRestoredRecoveryD=true;return false}
+  const contacts=getContacts();
+  const validContactIds=new Set(contacts.map(row=>String(row.id)));
+  const restoredIds=(Array.isArray(settings.selectedDriverIds)?settings.selectedDriverIds:[])
+    .map(String).filter(id=>validContactIds.has(id));
+  selectedIds.splice(0,selectedIds.length,...restoredIds);
+  const restoredTrack=String(settings.selectedTrackId||'majoku-ring-v1');
+  activeTrackId=window.mwsGetF1TrackV182?.(restoredTrack)?restoredTrack:'majoku-ring-v1';
+  selectedTotalLapsRecoveryD=Math.max(1,Math.min(200,Math.floor(Number(settings.totalLaps)||DEFAULT_TOTAL_LAPS_V190)));
+  persistenceRestoredRecoveryD=true;
+  return true;
+}
+function persistF1SettingsRecoveryD(extra={}){
+  if(typeof window.mwsSaveF1RacingSettingsRecoveryD!=='function')return false;
+  return Boolean(window.mwsSaveF1RacingSettingsRecoveryD({
+    selectedDriverIds:selectedIds.slice(),
+    selectedTrackId:String(activeTrackId||'majoku-ring-v1'),
+    totalLaps:selectedTotalLapsRecoveryD,
+    ...extra
+  })?.ok);
+}
+
 function render(){
   const section=document.getElementById('gameF1Racing');
   if(!section)return false;
+  restoreF1SettingsRecoveryD(false);
   const search=document.getElementById('f1RacingContactSearchV181');
   const clear=document.getElementById('f1RacingClearDriversV181');
   if(search&&!search.dataset.f1Bound){search.dataset.f1Bound='1';search.addEventListener('input',renderContacts)}
-  if(clear&&!clear.dataset.f1Bound){clear.dataset.f1Bound='1';clear.addEventListener('click',function(){selectedIds.splice(0);stopPreviewV184(true);renderContacts();renderSelected();syncSetupActionV187()})}
+  if(clear&&!clear.dataset.f1Bound){clear.dataset.f1Bound='1';clear.addEventListener('click',function(){selectedIds.splice(0);persistF1SettingsRecoveryD();stopPreviewV184(true);renderContacts();renderSelected();syncSetupActionV187()})}
   applyScreenStateV185();
   renderContacts();
   renderSelected();
@@ -1293,12 +1329,14 @@ function toggleDriver(id){
   const key=String(id||'');if(!key)return;
   const index=selectedIds.findIndex(function(value){return String(value)===key});
   if(index>=0)selectedIds.splice(index,1);else selectedIds.push(key);
+  persistF1SettingsRecoveryD();
   renderContacts();renderSelected();syncSetupActionV187();
 }
 function removeDriver(id){
   const key=String(id||'');
   const index=selectedIds.findIndex(function(value){return String(value)===key});
   if(index>=0)selectedIds.splice(index,1);
+  persistF1SettingsRecoveryD();
   renderContacts();renderSelected();syncSetupActionV187();
 }
 function getSelectedContactIds(){return selectedIds.slice()}
@@ -1439,6 +1477,8 @@ window.mwsF1BuildRaceSnapshotV187=buildRaceSnapshotV187;
 window.mwsF1StartRaceFromSetupV187=startRaceFromSetupV187;
 window.mwsF1GetActiveRaceSnapshotV187=getActiveRaceSnapshotV187;
 window.mwsF1CancelRaceRecoveryC=cancelRaceToSetupRecoveryC;
+window.mwsF1RestoreSettingsRecoveryD=restoreF1SettingsRecoveryD;
+window.mwsF1PersistSettingsRecoveryD=persistF1SettingsRecoveryD;
 window.mwsF1RenderRaceControlV188=renderRaceControlV188;
 window.mwsF1StartRaceMotionV189=startRaceMotionV189;
 window.mwsF1PauseRaceMotionV189=pauseRaceMotionV189;
@@ -1509,6 +1549,7 @@ window.__mwsF1RacingV202=VERSION202;
 window.__mwsF1RacingV203=VERSION203;
 window.__mwsF1RecoveryB='start-finish-line-v1';
 window.__mwsF1RecoveryC='race-cancel-setup-return-v1';
+window.__mwsF1RecoveryD='persistent-roster-track-settings-v1';
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){

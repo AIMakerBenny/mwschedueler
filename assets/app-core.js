@@ -45,7 +45,8 @@ function defaultMiniGames(){
     ladder:{players:[],prizes:[]},
     rps:{players:[]},
     pachinko:{players:[]},
-    multiDraw:{players:[],targetCount:8}
+    multiDraw:{players:[],targetCount:8},
+    f1Racing:{selectedDriverIds:[],selectedTrackId:'majoku-ring-v1',totalLaps:10,workspaceLayout:{}}
   };
 }
 function normalizeMiniGameData(){
@@ -68,6 +69,12 @@ function normalizeMiniGameData(){
   }
   if(data.miniGames.ladder.prizes.length>data.miniGames.ladder.players.length)data.miniGames.ladder.prizes.splice(data.miniGames.ladder.players.length);
   data.miniGames.multiDraw.targetCount=Math.max(1,Math.min(150,Number(data.miniGames.multiDraw.targetCount)||8));
+  const f1=data.miniGames.f1Racing;
+  if(!Array.isArray(f1.selectedDriverIds))f1.selectedDriverIds=[];
+  f1.selectedDriverIds=[...new Set(f1.selectedDriverIds.map(x=>String(x||'')).filter(Boolean))];
+  f1.selectedTrackId=String(f1.selectedTrackId||'majoku-ring-v1');
+  f1.totalLaps=Math.max(1,Math.min(200,Math.floor(Number(f1.totalLaps)||10)));
+  if(!f1.workspaceLayout||typeof f1.workspaceLayout!=='object'||Array.isArray(f1.workspaceLayout))f1.workspaceLayout={};
 
   delete data.miniGames.roulette;
   delete data.miniGames.capsule;
@@ -620,6 +627,44 @@ window.addEventListener('mawang:datachange',e=>{
   const status=document.getElementById('syncStatusText');
   if(status)status.textContent='전체 화면 동기화';
 });
+
+function mwsGetF1RacingSettingsRecoveryD(){
+  normalizeMiniGameData();
+  const f1=data.miniGames.f1Racing;
+  return {
+    selectedDriverIds:[...f1.selectedDriverIds],
+    selectedTrackId:String(f1.selectedTrackId||'majoku-ring-v1'),
+    totalLaps:Number(f1.totalLaps)||10,
+    workspaceLayout:typeof structuredClone==='function'?structuredClone(f1.workspaceLayout||{}):JSON.parse(JSON.stringify(f1.workspaceLayout||{}))
+  };
+}
+function mwsSaveF1RacingSettingsRecoveryD(patch={}){
+  normalizeMiniGameData();
+  const f1=data.miniGames.f1Racing;
+  if(Object.prototype.hasOwnProperty.call(patch,'selectedDriverIds')){
+    const ids=Array.isArray(patch.selectedDriverIds)?patch.selectedDriverIds:[];
+    f1.selectedDriverIds=[...new Set(ids.map(x=>String(x||'')).filter(Boolean))];
+  }
+  if(Object.prototype.hasOwnProperty.call(patch,'selectedTrackId'))f1.selectedTrackId=String(patch.selectedTrackId||'majoku-ring-v1');
+  if(Object.prototype.hasOwnProperty.call(patch,'totalLaps'))f1.totalLaps=Math.max(1,Math.min(200,Math.floor(Number(patch.totalLaps)||10)));
+  if(Object.prototype.hasOwnProperty.call(patch,'workspaceLayout')){
+    const layout=patch.workspaceLayout;
+    f1.workspaceLayout=layout&&typeof layout==='object'&&!Array.isArray(layout)
+      ?(typeof structuredClone==='function'?structuredClone(layout):JSON.parse(JSON.stringify(layout)))
+      :{};
+  }
+  data.version=52;
+  const reason='F1 레이싱 설정 저장';
+  lastSyncReason=reason;
+  const saved=persist();
+  updateStorageStatus(saved);
+  try{window.dispatchEvent(new CustomEvent('mawang:datachange',{detail:{reason}}))}catch(e){}
+  return {ok:saved,settings:mwsGetF1RacingSettingsRecoveryD()};
+}
+window.mwsGetF1RacingSettingsRecoveryD=mwsGetF1RacingSettingsRecoveryD;
+window.mwsSaveF1RacingSettingsRecoveryD=mwsSaveF1RacingSettingsRecoveryD;
+window.__mwsF1PersistenceRecoveryD='miniGames-f1Racing-v1';
+
 function updateStorageStatus(saved=true){
   const el=document.getElementById('storageStatus');
   if(!el)return;

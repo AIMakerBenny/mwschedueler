@@ -137,6 +137,7 @@ jobs:
           node --check scripts/run-recovery-a-f1-track-catalog-audit.mjs
           node --check scripts/run-recovery-b-f1-start-finish-audit.mjs
           node --check scripts/run-recovery-c-f1-race-cancel-audit.mjs
+          node --check scripts/run-recovery-d-f1-persistence-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-v1.js
@@ -1092,6 +1093,17 @@ jobs:
           grep -Fq 'resetRaceMotionV189();' /tmp/f1-racing-recovery-c.js
           grep -Fq "setScreenStateV185('SETUP',{force:true});" /tmp/f1-racing-recovery-c.js
           grep -Fq 'window.mwsF1CancelRaceRecoveryC=cancelRaceToSetupRecoveryC;' /tmp/f1-racing-recovery-c.js
+          echo '[recovery-d] F1 persistent roster and track settings'
+          grep -Fq 'assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD' /tmp/index.html
+          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=D1' /tmp/index.html
+          retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" "window.__mwsF1PersistenceRecoveryD='miniGames-f1Racing-v1';" > /tmp/app-core-recovery-d.js
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RecoveryD='persistent-roster-track-settings-v1';" > /tmp/f1-racing-recovery-d.js
+          node --check /tmp/app-core-recovery-d.js
+          node --check /tmp/f1-racing-recovery-d.js
+          grep -Fq 'function mwsSaveF1RacingSettingsRecoveryD(patch={}){' /tmp/app-core-recovery-d.js
+          grep -Fq 'const saved=persist();' /tmp/app-core-recovery-d.js
+          grep -Fq 'function restoreF1SettingsRecoveryD(force=false){' /tmp/f1-racing-recovery-d.js
+          grep -Fq 'persistF1SettingsRecoveryD();' /tmp/f1-racing-recovery-d.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css
