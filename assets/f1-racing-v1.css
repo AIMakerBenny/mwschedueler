@@ -464,3 +464,20 @@
   .f1-racing-podium-recovery-g{grid-template-columns:1fr}
   .f1-racing-result-row-recovery-g{grid-template-columns:48px 1fr}.f1-racing-result-row-recovery-g>small,.f1-racing-result-row-recovery-g>time{grid-column:2;text-align:left}
 }
+
+
+/* Recovery J: explicit drop preview for move, dock and tab targets */
+.f1-racing-workspace-dock-guide-recovery-e{
+  transition:left .08s ease,top .08s ease,width .08s ease,height .08s ease,background .08s ease;
+}
+.f1-racing-workspace-dock-guide-recovery-e.free{
+  border-style:dashed;background:rgba(84,133,205,.13);
+}
+.f1-racing-workspace-dock-guide-recovery-e.tab{
+  border-color:rgba(174,126,255,.92);background:rgba(125,76,210,.20);
+}
+.f1-racing-workspace-dock-guide-recovery-e::after{
+  content:attr(data-preview);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  padding:4px 7px;border-radius:3px;background:rgba(4,8,14,.82);color:#dbeafe;
+  font:900 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.12em
+}
