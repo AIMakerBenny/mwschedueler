@@ -184,6 +184,7 @@ import {runPhase199F1DirtyAirAudit} from './run-phase199-f1-dirty-air-audit.mjs'
 import {runPhase200F1DriverProfileAudit} from './run-phase200-f1-driver-profile-audit.mjs';
 import {runPhase201F1EnergyRechargeBoostAudit} from './run-phase201-f1-energy-recharge-boost-audit.mjs';
 import {runPhase202F1ActiveAeroOvertakeAudit} from './run-phase202-f1-active-aero-overtake-audit.mjs';
+import {runPhase203F1TyreSystemAudit} from './run-phase203-f1-tyre-system-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1985,5 +1986,14 @@ export function runPhase202FullIntegrationAudit(){
   if(issues.length)process.exitCode=1;
   return summary;
 }
-export function runCurrentFullIntegrationAudit(){return runPhase202FullIntegrationAudit();}
+export function runPhase203FullIntegrationAudit(){
+  const previous=runPhase202FullIntegrationAudit(),current=runPhase203F1TyreSystemAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>'Phase '+current.phase+': '+x)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>'Phase '+current.phase+': '+x)];
+  const summary={currentPhase:203,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+export function runCurrentFullIntegrationAudit(){return runPhase203FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();

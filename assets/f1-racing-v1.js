@@ -29,6 +29,9 @@ const VERSION201='phase201-energy-recharge-boost';
 const ENERGY_CONFIG_V201=Object.freeze({usableCapacityMJ:4,maxRechargePerLapMJ:8.5,maxHarvestPowerKW:350,maxDeployPowerKW:350,icePowerKW:400,minStandingDeployKph:50});
 const VERSION202='phase202-active-aero-overtake';
 const ACTIVE_AERO_CONFIG_V202=Object.freeze({transitionMs:400,detectionGapSeconds:1,extraRechargeMJ:0.5,overtakeFullPowerToKph:337,overtakeCutoffKph:355});
+const VERSION203='phase203-tyre-system';
+const TYRE_COMPOUNDS_V203=Object.freeze({SOFT:Object.freeze({code:'S',gripBias:1.01,wearPerLap:0.070,heatFactor:1.10,idealSurface:0.60}),MEDIUM:Object.freeze({code:'M',gripBias:1.00,wearPerLap:0.052,heatFactor:1.00,idealSurface:0.56}),HARD:Object.freeze({code:'H',gripBias:0.99,wearPerLap:0.038,heatFactor:0.90,idealSurface:0.52})});
+const TYRE_CONFIG_V203=Object.freeze({ambientSurface:0.42,ambientCarcass:0.44,minGrip:0.82,maxGrip:1.03});
 const DEFAULT_TOTAL_LAPS_V190=10;
 const F1_LINE_MODES_V197=Object.freeze(['IDEAL','ATTACK_INSIDE','DEFENSIVE_INSIDE','OUTSIDE','PIT_LINE']);
 const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
@@ -421,6 +424,13 @@ function updateRaceProgressHudV190(){
     row.dataset.overtakeEligible=vehicle.overtakeEligible?'1':'0';
     row.dataset.overtakeActive=vehicle.overtakeActive?'1':'0';
     row.dataset.overtakeGap=Number.isFinite(vehicle.overtakeGapSeconds)?Number(vehicle.overtakeGapSeconds).toFixed(3):'';
+    row.dataset.tyreCompound=String(vehicle.tyreCompound||'MEDIUM');
+    row.dataset.tyreWear=(Number(vehicle.tyreWear)||0).toFixed(3);
+    row.dataset.tyreSurface=(Number(vehicle.tyreSurfaceTemp)||0).toFixed(3);
+    row.dataset.tyreCarcass=(Number(vehicle.tyreCarcassTemp)||0).toFixed(3);
+    row.dataset.tyreGrip=(Number(vehicle.tyreGrip)||1).toFixed(3);
+    row.dataset.tyreStrategy=(Number(vehicle.tyreStrategyPressure)||0).toFixed(3);
+    const tyre=row.querySelector('.tyre');if(tyre)tyre.textContent=tyreCompoundSpecV203(vehicle.tyreCompound).code;
   }
   updateRaceStandingsV191();
   return true;
@@ -678,6 +688,95 @@ function getEnergyStatesV201(){
   }));
 }
 
+
+function tyreCompoundSpecV203(compound){
+  const key=String(compound||'MEDIUM').toUpperCase();
+  return TYRE_COMPOUNDS_V203[key]||TYRE_COMPOUNDS_V203.MEDIUM;
+}
+function tyreCornerLoadV203(phase){
+  if(phase==='TURN_IN'||phase==='APEX')return 1;
+  if(phase==='EXIT')return .75;
+  if(phase==='BRAKING')return .55;
+  if(phase==='APPROACH')return .25;
+  return .08;
+}
+function setVehicleTyreCompoundV203(driverId,compound){
+  const key=String(compound||'').toUpperCase();
+  if(!TYRE_COMPOUNDS_V203[key])return false;
+  const vehicle=raceMotionV189.vehicles.find(v=>String(v.id)===String(driverId));
+  if(!vehicle)return false;
+  vehicle.tyreCompound=key;
+  vehicle.tyreStartRaceProgress=Number(vehicle.raceProgress)||0;
+  vehicle.tyreAgeLaps=0;
+  vehicle.tyreWear=0;
+  vehicle.tyreSurfaceTemp=.5;
+  vehicle.tyreCarcassTemp=.5;
+  vehicle.tyreGrip=tyreCompoundSpecV203(key).gripBias;
+  vehicle.tyreThermalDeg=0;
+  vehicle.tyreGraining=0;
+  vehicle.tyreFlatSpot=0;
+  vehicle.tyreStrategyPressure=0;
+  return true;
+}
+function updateTyreSystemV203(vehicle,stepMs,phase){
+  if(!vehicle||!(stepMs>0))return null;
+  const dt=stepMs/1000;
+  const spec=tyreCompoundSpecV203(vehicle.tyreCompound);
+  const track=activeRaceSnapshotV187?.track;
+  const speedKph=Math.max(0,Number(vehicle.speedKph)||0);
+  const speedMps=speedKph/3.6;
+  const lapFraction=(speedMps*dt)/Math.max(1,Number(track?.lengthMeters)||1);
+  const managementNorm=driverSkillNormV200(vehicle,'tyreManagement');
+  const managementWearFactor=Math.max(.85,Math.min(1.15,1-managementNorm*.12));
+  const cornerLoad=tyreCornerLoadV203(phase);
+  const brakeLoad=clamp01V198(vehicle.brake);
+  const throttleLoad=clamp01V198(vehicle.throttle);
+  const dirtyHeat=clamp01V198(vehicle.dirtyAirTyreHeatLoad);
+
+  let surface=Math.max(0,Math.min(1,Number(vehicle.tyreSurfaceTemp)||.5));
+  let carcass=Math.max(0,Math.min(1,Number(vehicle.tyreCarcassTemp)||.5));
+  const heatInput=(brakeLoad*.34+throttleLoad*.13+cornerLoad*.22+dirtyHeat*.18)*spec.heatFactor;
+  surface+=heatInput*dt*.18;
+  surface+=(TYRE_CONFIG_V203.ambientSurface-surface)*dt*.035;
+  surface=Math.max(0,Math.min(1,surface));
+  carcass+=(surface-carcass)*dt*.075;
+  carcass+=(TYRE_CONFIG_V203.ambientCarcass-carcass)*dt*.012;
+  carcass=Math.max(0,Math.min(1,carcass));
+
+  const tempError=Math.abs(surface-spec.idealSurface);
+  const thermalStress=Math.max(0,tempError-.10);
+  const thermalDegGain=thermalStress*lapFraction*3.2*managementWearFactor;
+  const coldStress=Math.max(0,(spec.idealSurface-.12)-surface);
+  const grainingGain=coldStress*cornerLoad*lapFraction*2.4*managementWearFactor;
+  const flatSpotGain=(brakeLoad>.92&&speedKph>120)?(brakeLoad-.92)*lapFraction*8:0;
+  const wearGain=spec.wearPerLap*lapFraction*managementWearFactor*(1+thermalStress*.8+dirtyHeat*.18);
+
+  vehicle.tyreWear=Math.max(0,Math.min(1,(Number(vehicle.tyreWear)||0)+wearGain));
+  vehicle.tyreThermalDeg=Math.max(0,Math.min(1,(Number(vehicle.tyreThermalDeg)||0)+thermalDegGain));
+  vehicle.tyreGraining=Math.max(0,Math.min(1,(Number(vehicle.tyreGraining)||0)+grainingGain));
+  vehicle.tyreFlatSpot=Math.max(0,Math.min(1,(Number(vehicle.tyreFlatSpot)||0)+flatSpotGain));
+  vehicle.tyreSurfaceTemp=surface;
+  vehicle.tyreCarcassTemp=carcass;
+  vehicle.tyreAgeLaps=Math.max(0,(Number(vehicle.raceProgress)||0)-(Number(vehicle.tyreStartRaceProgress)||0));
+
+  const tempGrip=Math.max(.88,1-tempError*.42);
+  const wearGrip=Math.max(.84,1-vehicle.tyreWear*.15);
+  const damageGrip=Math.max(.88,1-vehicle.tyreThermalDeg*.06-vehicle.tyreGraining*.05-vehicle.tyreFlatSpot*.10);
+  vehicle.tyreGrip=Math.max(TYRE_CONFIG_V203.minGrip,Math.min(TYRE_CONFIG_V203.maxGrip,spec.gripBias*tempGrip*wearGrip*damageGrip));
+  vehicle.tyreStrategyPressure=clamp01V198(vehicle.tyreWear*.55+vehicle.tyreThermalDeg*.20+vehicle.tyreGraining*.15+vehicle.tyreFlatSpot*.35);
+  return {compound:vehicle.tyreCompound,ageLaps:vehicle.tyreAgeLaps,wear:vehicle.tyreWear,surfaceTemp:surface,carcassTemp:carcass,grip:vehicle.tyreGrip,thermalDeg:vehicle.tyreThermalDeg,graining:vehicle.tyreGraining,flatSpot:vehicle.tyreFlatSpot,strategyPressure:vehicle.tyreStrategyPressure};
+}
+function getTyreStatesV203(){
+  return raceMotionV189.vehicles.map(vehicle=>({
+    id:vehicle.id,name:vehicle.driver?.name||'',compound:vehicle.tyreCompound,
+    ageLaps:Number(vehicle.tyreAgeLaps)||0,wear:Number(vehicle.tyreWear)||0,
+    surfaceTemp:Number(vehicle.tyreSurfaceTemp)||0,carcassTemp:Number(vehicle.tyreCarcassTemp)||0,
+    grip:Number(vehicle.tyreGrip)||1,thermalDeg:Number(vehicle.tyreThermalDeg)||0,
+    graining:Number(vehicle.tyreGraining)||0,flatSpot:Number(vehicle.tyreFlatSpot)||0,
+    strategyPressure:Number(vehicle.tyreStrategyPressure)||0
+  }));
+}
+
 function createRaceVehiclesV189(snapshot){
   const count=Math.max(1,snapshot?.drivers?.length||0);
   return (snapshot?.drivers||[]).map(function(driver,index){
@@ -695,6 +794,7 @@ function createRaceVehiclesV189(snapshot){
       driverProfile,driverRandomState:raceSeed||1,paceNoise:0,nextPaceNoiseMs:0,driverPaceMultiplier:1,
       batteryMJ:ENERGY_CONFIG_V201.usableCapacityMJ,energyTargetMJ:ENERGY_CONFIG_V201.usableCapacityMJ,energyDeployKW:0,energyRechargeKW:0,energyDeployMJ:0,energyHarvestMJ:0,energyHarvestLapMJ:0,energyLapNumber:1,boostActive:false,boostPowerKW:0,boostEnergyMJ:0,attackOpportunityScore:0,defenceThreatScore:0,powerUnitFactor:1,
       activeAeroMode:'CORNER',activeAeroTarget:'CORNER',activeAeroTransitionMs:0,overtakeZoneId:'',overtakeGapSeconds:Infinity,overtakeEligible:false,overtakeActive:false,overtakeRechargeAllowanceActive:false,
+      tyreCompound:'MEDIUM',tyreStartRaceProgress:startOffset,tyreAgeLaps:0,tyreWear:0,tyreSurfaceTemp:.5,tyreCarcassTemp:.5,tyreGrip:TYRE_COMPOUNDS_V203.MEDIUM.gripBias,tyreThermalDeg:0,tyreGraining:0,tyreFlatSpot:0,tyreStrategyPressure:0,
       marker:null
     };
     return syncVehicleRaceMetricsV190(vehicle,snapshot.track);
@@ -953,6 +1053,8 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const targetData=getSpeedTargetAtProgressV195(vehicle.progress);
   const baseTarget=Math.max(60,Number(targetData?.targetKph)||250);
   const phase=getCornerPhaseAtProgressV194(vehicle.progress)?.phase||'STRAIGHT';
+  const tyreGrip=Math.max(TYRE_CONFIG_V203.minGrip,Math.min(TYRE_CONFIG_V203.maxGrip,Number(vehicle.tyreGrip)||1));
+  const tyreCornerFactor=(phase==='TURN_IN'||phase==='APEX'||phase==='EXIT')?tyreGrip:1;
   updateActiveAeroAndOvertakeV202(vehicle,stepMs);
   updateDriverPaceStateV200(vehicle,stepMs);
   const driverPaceMultiplier=driverTargetMultiplierV200(vehicle,phase);
@@ -963,17 +1065,18 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const rawAeroGrip=Math.max(.85,Math.min(1,Number(vehicle.aeroGripMultiplier)||1));
   const dirtyAirRecovery=Math.max(0,racecraftNorm)*.08;
   const aeroGripMultiplier=Math.min(1,rawAeroGrip+(1-rawAeroGrip)*dirtyAirRecovery);
-  const maxTarget=baseTarget*driverPaceMultiplier*aeroGripMultiplier+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;
+  const maxTarget=baseTarget*driverPaceMultiplier*aeroGripMultiplier*tyreCornerFactor+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;
   const current=Math.max(0,Number(vehicle.speedKph)||0);
   const error=maxTarget-current;
   const accelBase=Math.max(0.5,Number(track?.geometry?.referenceAccelMps2)||8.5);
-  const brakeBase=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20);
+  const brakeBase=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20)*tyreGrip;
   let throttle=0,brake=0,accelMps2=0;
   if(error>1.5){
     throttle=Math.max(.08,Math.min(1,error/45));
     const dragRelief=Math.max(0,Number(vehicle.slipstreamDragReduction)||0);
     const highSpeedFade=Math.max(.35,1-current/520+dragRelief*.45);
-    accelMps2=accelBase*throttle*highSpeedFade;
+    const tractionGrip=phase==='EXIT'?tyreGrip:1;
+    accelMps2=accelBase*throttle*highSpeedFade*tractionGrip;
   }else if(error<-1.5){
     brake=Math.max(.08,Math.min(1,(-error)/55));
     accelMps2=-brakeBase*brake;
@@ -997,6 +1100,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   vehicle.accelerationMps2=accelMps2;
   vehicle.gear=gearForSpeedV196(nextKph);
   vehicle.rpm=rpmForSpeedAndGearV196(nextKph,vehicle.gear);
+  updateTyreSystemV203(vehicle,stepMs,phase);
   vehicle.travel+=distanceMeters/Math.max(1,Number(track.lengthMeters)||1);
   syncVehicleRaceMetricsV190(vehicle,track);
   return true;
@@ -1149,7 +1253,7 @@ function render(){
   if(previewStateV184.running)stopPreviewV184(true);
   if(f1ScreenStateV185==='RACE'&&activeRaceSnapshotV187){renderRaceControlV188();startRaceMotionV189()}
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent=f1ScreenStateV185==='SETUP'?'RACE SETUP':'RACE CONTROL';
-  section.dataset.f1Runtime=VERSION202;
+  section.dataset.f1Runtime=VERSION203;
   return true;
 }
 function toggleDriver(id){
@@ -1283,6 +1387,9 @@ window.mwsF1GetEnergyStatesV201=getEnergyStatesV201;
 window.mwsF1ErsOvertakePowerLimitV202=ersOvertakePowerLimitV202;
 window.mwsF1UpdateActiveAeroAndOvertakeV202=updateActiveAeroAndOvertakeV202;
 window.mwsF1GetActiveAeroOvertakeStatesV202=getActiveAeroOvertakeStatesV202;
+window.mwsF1SetVehicleTyreCompoundV203=setVehicleTyreCompoundV203;
+window.mwsF1UpdateTyreSystemV203=updateTyreSystemV203;
+window.mwsF1GetTyreStatesV203=getTyreStatesV203;
 window.__mwsF1RacingV180=VERSION;
 window.__mwsF1RacingV181=VERSION181;
 window.__mwsF1RacingV182=VERSION182;
@@ -1306,6 +1413,7 @@ window.__mwsF1RacingV199=VERSION199;
 window.__mwsF1RacingV200=VERSION200;
 window.__mwsF1RacingV201=VERSION201;
 window.__mwsF1RacingV202=VERSION202;
+window.__mwsF1RacingV203=VERSION203;
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){

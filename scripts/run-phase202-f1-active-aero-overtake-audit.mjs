@@ -7,7 +7,7 @@ export function runPhase202F1ActiveAeroOvertakeAudit(){
   const racing=fs.readFileSync('assets/f1-racing-v1.js','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  if(!index.includes('assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=202'))issues.push('Phase 202 racing asset link missing');
+  if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=(?:20[2-9]|[3-9]\d{2,})/.test(index))issues.push('Phase 202+ racing runtime asset link missing');
   for(const token of [
     "const VERSION202='phase202-active-aero-overtake';",
     'transitionMs:400',
