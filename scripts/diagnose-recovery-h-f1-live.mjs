@@ -335,6 +335,8 @@ try{
     const diverseTracksQa=window.mwsF1QaDiverseTrackCatalogV220?.();
     assert(diverseTracksQa?.allPass===true&&Number(diverseTracksQa?.trackCount)>=7,'Phase 220 diverse track catalog failed: '+JSON.stringify(diverseTracksQa));
     assert(Number(diverseTracksQa?.pathShapes)===7&&Number(diverseTracksQa?.archetypes)>=6,'Phase 220 track silhouettes/archetypes are not diverse: '+JSON.stringify(diverseTracksQa));
+    const telemetryQa=window.mwsF1QaRaceResultTelemetryV237?.();
+    assert(telemetryQa?.allPass===true&&Number(telemetryQa?.sample?.totalPasses)===5&&Number(telemetryQa?.sample?.incidentCount)===3,'Phase 237 race telemetry QA failed: '+JSON.stringify(telemetryQa));
     const trackCommentaryQa=window.mwsF1QaTrackAwareCommentaryV236?.();
     assert(trackCommentaryQa?.allPass===true&&Number(trackCommentaryQa?.uniqueLines)>=7,'Phase 236 track-aware commentary QA failed: '+JSON.stringify(trackCommentaryQa));
     const activeTrackArchetype=String(window.mwsF1GetActiveRaceSnapshotV187?.()?.track?.runtimeProfile?.archetype||'');
