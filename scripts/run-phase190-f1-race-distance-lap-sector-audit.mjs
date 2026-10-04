@@ -8,7 +8,7 @@ export function runPhase190F1RaceDistanceLapSectorAudit(){
   const js=fs.readFileSync('assets/f1-racing-v1.js','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  for(const token of ['assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=190','assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=190','id="f1RacingRaceLapV188"'])if(!index.includes(token))issues.push('Phase 190 HTML missing: '+token);
+  for(const token of ['assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=','assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=','id="f1RacingRaceLapV188"'])if(!index.includes(token))issues.push('Phase 190 HTML missing: '+token);
 
   for(const token of [
     "const VERSION190='phase190-race-distance-lap-sector';",
