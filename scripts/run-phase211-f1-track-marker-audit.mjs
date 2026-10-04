@@ -6,7 +6,7 @@ export function runPhase211F1TrackMarkerAudit(){
   const index=fs.readFileSync('index.html','utf8');
   const racing=fs.readFileSync('assets/f1-racing-v1.js','utf8');
   const track=fs.readFileSync('assets/f1-track-v1.js','utf8');
-  if(!index.includes('recovery=N1&phase=211'))issues.push('Phase 211 asset cache missing');
+  const phase=Number(index.match(/recovery=N1&phase=(\d+)/)?.[1]||0);if(phase<211)issues.push('Phase 211 asset cache missing');
   for(const token of [
     "const VERSION211='phase211-track-marker-integration';",
     'function renderTrackMarkersV211(layer,path,track,scope=\'race\'){',
