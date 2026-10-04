@@ -8,6 +8,7 @@ const VERSION184='phase184-smooth-single-marker';
 const VERSION185='phase185-screen-state-machine';
 const VERSION186='phase186-setup-track-select';
 const VERSION187='phase187-race-draft-snapshot-transition';
+const VERSION188='phase188-race-control-frame';
 const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
 const F1_TRANSITIONS_V185=Object.freeze({
   SETUP:Object.freeze(['TRANSITION']),
@@ -306,12 +307,50 @@ function startRaceFromSetupV187(){
   raceTransitionTimerV187=window.setTimeout(function(){
     raceTransitionTimerV187=0;
     setScreenStateV185('RACE');
+    renderRaceControlV188();
     const chip=document.getElementById('f1RacingPhaseChipV180');
     if(chip)chip.textContent='RACE CONTROL';
   },1600);
   return true;
 }
 function getActiveRaceSnapshotV187(){return activeRaceSnapshotV187}
+function driverCodeV188(driver){
+  const raw=String(driver?.name||'DRV').replace(/\s+/g,'');
+  return raw.slice(0,4).toUpperCase()||'DRV';
+}
+function timingRowV188(driver,index){
+  const pos=index+1;
+  const podium=pos<=3?' podium p'+pos:'';
+  return '<div class="f1-racing-timing-row-v188'+podium+'" data-f1-driver-id="'+escapeHtml(driver.contactId)+'">'+
+    '<span class="pos">P'+String(pos).padStart(2,'0')+'</span>'+
+    '<span class="driver"><b>'+escapeHtml(driverCodeV188(driver))+'</b><small>'+escapeHtml(driver.name)+'</small></span>'+
+    '<span>--</span><span>----</span><span>---</span><span>--:--.---</span><span>--:--.---</span><span>'+(pos===1?'LEADER':'--.---')+'</span><span>--</span><span>--.---</span><span>--.---</span><span>--.---</span>'+
+    '</div>';
+}
+function renderRaceControlV188(){
+  const snapshot=activeRaceSnapshotV187;
+  if(!snapshot)return false;
+  const name=document.getElementById('f1RacingRaceTrackNameV188');
+  const count=document.getElementById('f1RacingRaceDriverCountV188');
+  const status=document.getElementById('f1RacingRaceStatusV188');
+  const lap=document.getElementById('f1RacingRaceLapV188');
+  const list=document.getElementById('f1RacingTimingListV188');
+  const mapMeta=document.getElementById('f1RacingRaceMapMetaV188');
+  const svg=document.getElementById('f1RacingRaceTrackSvgV188');
+  const path=document.getElementById('f1RacingRaceTrackPathV188');
+  const glow=document.getElementById('f1RacingRaceTrackGlowV188');
+  if(name)name.textContent=String(snapshot.track.name||'TRACK').toUpperCase();
+  if(count)count.textContent=String(snapshot.drivers.length);
+  if(status)status.textContent='PRE-RACE';
+  if(lap)lap.textContent='0 / --';
+  if(list)list.innerHTML=snapshot.drivers.map(timingRowV188).join('');
+  if(mapMeta)mapMeta.textContent=(snapshot.track.lengthMeters/1000).toFixed(3)+' km · '+snapshot.drivers.length+' drivers';
+  if(svg)svg.setAttribute('viewBox',(snapshot.track.viewBox||[0,0,1000,600]).join(' '));
+  if(path)path.setAttribute('d',snapshot.track.path||'');
+  if(glow)glow.setAttribute('d',snapshot.track.path||'');
+  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='RACE CONTROL';
+  return true;
+}
 function bindRaceProceedV187(){
   const button=document.getElementById('f1RacingProceedV187');
   if(button&&!button.dataset.f1Bound){
@@ -335,6 +374,7 @@ function render(){
   updateTrackFoundationStatusV182();
   renderTrackMapV183();
   if(previewStateV184.running)stopPreviewV184(true);
+  if(f1ScreenStateV185==='RACE'&&activeRaceSnapshotV187)renderRaceControlV188();
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent=f1ScreenStateV185==='SETUP'?'RACE SETUP':'RACE CONTROL';
   section.dataset.f1Runtime=VERSION187;
   return true;
@@ -429,6 +469,7 @@ window.mwsF1GetRaceDraftV187=getRaceDraftV187;
 window.mwsF1BuildRaceSnapshotV187=buildRaceSnapshotV187;
 window.mwsF1StartRaceFromSetupV187=startRaceFromSetupV187;
 window.mwsF1GetActiveRaceSnapshotV187=getActiveRaceSnapshotV187;
+window.mwsF1RenderRaceControlV188=renderRaceControlV188;
 window.__mwsF1RacingV180=VERSION;
 window.__mwsF1RacingV181=VERSION181;
 window.__mwsF1RacingV182=VERSION182;
@@ -437,6 +478,7 @@ window.__mwsF1RacingV184=VERSION184;
 window.__mwsF1RacingV185=VERSION185;
 window.__mwsF1RacingV186=VERSION186;
 window.__mwsF1RacingV187=VERSION187;
+window.__mwsF1RacingV188=VERSION188;
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){if(document.hidden&&previewStateV184.running)stopPreviewV184(false)});
 })();

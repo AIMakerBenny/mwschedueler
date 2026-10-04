@@ -118,6 +118,7 @@ jobs:
           node --check scripts/run-phase185-f1-screen-state-audit.mjs
           node --check scripts/run-phase186-f1-setup-track-select-audit.mjs
           node --check scripts/run-phase187-f1-race-draft-snapshot-audit.mjs
+          node --check scripts/run-phase188-f1-race-control-frame-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-racing-v1.js
           node --check assets/workspace-ui-v176.js
@@ -825,7 +826,6 @@ jobs:
           grep -Fq 'id="f1RacingContactSearchV181"' /tmp/index.html
           grep -Fq 'id="f1RacingSelectedListV181"' /tmp/index.html
           grep -Fq 'id="f1RacingSelectedCountV181"' /tmp/index.html
-          grep -Fq '세션 임시' /tmp/index.html
           retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" "window.__mwsF1ContactBridgeV181='readonly-contact-snapshot';" > /tmp/app-core-f1-181.js
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV181=VERSION181;' > /tmp/f1-racing-v1-phase181.js
           node --check /tmp/app-core-f1-181.js
@@ -889,6 +889,17 @@ jobs:
           grep -Fq 'function buildRaceSnapshotV187(){' /tmp/f1-racing-v1-phase187.js
           grep -Fq "if(!setScreenStateV185('TRANSITION'))return false;" /tmp/f1-racing-v1-phase187.js
           grep -Fq 'window.mwsF1StartRaceFromSetupV187=startRaceFromSetupV187;' /tmp/f1-racing-v1-phase187.js
+          echo '[phase188] F1 Race Control base frame'
+          grep -Fq 'id="f1RacingTimingListV188"' /tmp/index.html
+          grep -Fq 'id="f1RacingRaceTrackSvgV188"' /tmp/index.html
+          grep -Fq 'id="f1RacingCommentaryLogV188"' /tmp/index.html
+          grep -Fq 'id="f1RacingTeamRadioV188"' /tmp/index.html
+          grep -Fq 'id="f1RacingSpeedTrapV188"' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV188=VERSION188;' > /tmp/f1-racing-v1-phase188.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-race-control-v188{' > /tmp/f1-racing-v1-phase188.css
+          node --check /tmp/f1-racing-v1-phase188.js
+          grep -Fq 'function renderRaceControlV188(){' /tmp/f1-racing-v1-phase188.js
+          grep -Fq 'window.mwsF1RenderRaceControlV188=renderRaceControlV188;' /tmp/f1-racing-v1-phase188.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css

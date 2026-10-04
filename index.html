@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>마왕 스케줄러</title>
 <link rel="stylesheet" href="assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171-searchtab172-drag174-workspace176-splitquick177">
-<link rel="stylesheet" href="assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=187">
+<link rel="stylesheet" href="assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=188">
 
 <style id="mws-cloud-access-style">
 body.mws-gated .app{pointer-events:none;user-select:none;filter:blur(5px);opacity:.36}
@@ -1110,7 +1110,64 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
         </div>
       </section>
       <section id="f1RacingViewGridV185" class="f1-racing-view-v185" data-f1-view="GRID" hidden><div class="f1-racing-state-placeholder-v185"><span>GRID</span><strong>Starting grid sequence reserved</strong></div></section>
-      <section id="f1RacingViewRaceV185" class="f1-racing-view-v185" data-f1-view="RACE" hidden><div class="f1-racing-state-placeholder-v185"><span>RACE</span><strong>Race Control reserved</strong></div></section>
+      <section id="f1RacingViewRaceV185" class="f1-racing-view-v185 f1-racing-race-control-v188" data-f1-view="RACE" hidden>
+        <div class="f1-racing-race-header-v188">
+          <div>
+            <span class="f1-racing-panel-kicker-v181">MAWANG GRAND PRIX</span>
+            <strong id="f1RacingRaceTrackNameV188">MAJOKU RING</strong>
+          </div>
+          <div class="f1-racing-race-status-v188">
+            <span>STATUS <b id="f1RacingRaceStatusV188">PRE-RACE</b></span>
+            <span>LAP <b id="f1RacingRaceLapV188">0 / --</b></span>
+            <span>DRIVERS <b id="f1RacingRaceDriverCountV188">0</b></span>
+          </div>
+          <div class="f1-racing-race-controls-v188">
+            <button type="button" class="secondary small" disabled>Pause</button>
+            <button type="button" class="secondary small active" disabled>1x</button>
+            <button type="button" class="secondary small" disabled>2x</button>
+            <button type="button" class="secondary small" disabled>4x</button>
+          </div>
+        </div>
+
+        <section class="f1-racing-live-timing-v188">
+          <div class="f1-racing-panel-title-v188"><span>LIVE TIMING</span><small>Position animation and live metrics connect in later phases</small></div>
+          <div class="f1-racing-timing-head-v188">
+            <span>POS</span><span>DRIVER</span><span>GEAR</span><span>RPM</span><span>SPD</span><span>LAST</span><span>BEST</span><span>GAP</span><span>TYRE</span><span>S1</span><span>S2</span><span>S3</span>
+          </div>
+          <div id="f1RacingTimingListV188" class="f1-racing-timing-list-v188"></div>
+        </section>
+
+        <div class="f1-racing-race-grid-v188">
+          <section class="f1-racing-race-map-v188">
+            <div class="f1-racing-panel-title-v188"><span>TRACK MAP</span><small id="f1RacingRaceMapMetaV188">Track snapshot</small></div>
+            <div class="f1-racing-race-map-stage-v188">
+              <svg id="f1RacingRaceTrackSvgV188" viewBox="0 0 1000 600" role="img" aria-label="Race track map">
+                <path id="f1RacingRaceTrackGlowV188" class="f1-racing-track-glow-v183"></path>
+                <path id="f1RacingRaceTrackPathV188" class="f1-racing-track-path-v183"></path>
+                <g id="f1RacingRaceVehicleLayerV188"></g>
+              </svg>
+            </div>
+          </section>
+
+          <section class="f1-racing-commentary-v188">
+            <div class="f1-racing-panel-title-v188"><span>RACE COMMENTARY</span><small>Event narration queue reserved</small></div>
+            <div id="f1RacingCommentaryLogV188" class="f1-racing-commentary-log-v188">
+              <div class="f1-racing-commentary-empty-v188">경기가 시작되면 실제 상황 기반 나레이션이 이곳에 표시됩니다.</div>
+            </div>
+          </section>
+
+          <aside class="f1-racing-race-side-v188">
+            <section>
+              <div class="f1-racing-panel-title-v188"><span>TEAM RADIO</span><small>Latest messages</small></div>
+              <div id="f1RacingTeamRadioV188" class="f1-racing-side-empty-v188">No radio messages</div>
+            </section>
+            <section>
+              <div class="f1-racing-panel-title-v188"><span>SPEED TRAP</span><small>Session best</small></div>
+              <div id="f1RacingSpeedTrapV188" class="f1-racing-side-empty-v188">Awaiting timing data</div>
+            </section>
+          </aside>
+        </div>
+      </section>
       <section id="f1RacingViewFinishingV185" class="f1-racing-view-v185" data-f1-view="FINISHING" hidden><div class="f1-racing-state-placeholder-v185"><span>FINISHING</span><strong>Finish sequence reserved</strong></div></section>
       <section id="f1RacingViewPodiumV185" class="f1-racing-view-v185" data-f1-view="PODIUM" hidden><div class="f1-racing-state-placeholder-v185"><span>PODIUM</span><strong>Podium ceremony reserved</strong></div></section>
       <section id="f1RacingViewResultV185" class="f1-racing-view-v185" data-f1-view="RESULT" hidden><div class="f1-racing-state-placeholder-v185"><span>RESULT</span><strong>Final result reserved</strong></div></section>
@@ -1833,7 +1890,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 
 <script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181"></script>
 <script src="assets/f1-track-v1.js?v=1.0.0-phase182-model"></script>
-<script src="assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=187"></script>
+<script src="assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=188"></script>
 <script src="assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130-zoom138-unassigned168"></script>
 <script src="assets/wardogs-media-v1.js?v=1.0.0-phase121-backup126-webview130"></script>
 <script src="assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140-frame144-frames150-aperture152-assault166-medic165-recon163-support166-driver161-pilot166-unassigned168"></script>
