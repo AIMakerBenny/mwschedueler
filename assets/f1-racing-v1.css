@@ -270,6 +270,7 @@
 .f1-racing-race-vehicle-v189 .car-halo{fill:var(--f1-driver-color,#60a5fa);fill-opacity:.16;stroke:var(--f1-driver-color,#94a3b8);stroke-opacity:.32;stroke-width:1}
 .f1-racing-race-vehicle-v189 .car-ring{fill:#0b1018;stroke:var(--f1-driver-color,#e2e8f0);stroke-width:3}
 .f1-racing-race-vehicle-v189 .car-core{fill:var(--f1-driver-color,#60a5fa)}
+.f1-racing-race-vehicle-v189 .car-number-v232{fill:#fff;font:900 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#020305;stroke-width:1.5;dominant-baseline:middle}
 .f1-racing-race-vehicle-v189 .car-label{fill:#f8fafc;font:900 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#020305;stroke-width:4;stroke-linejoin:round}
 
 /* Phase 190: race distance, lap and sector telemetry */
