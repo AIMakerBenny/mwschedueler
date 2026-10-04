@@ -527,3 +527,10 @@
 @media(min-width:1500px){
   #f1RacingViewRaceV185 .f1-racing-workspace-recovery-e{grid-auto-rows:76px!important;min-height:603px!important}
 }
+
+/* Phase 219: live race commentary event feed */
+.f1-racing-commentary-entry-v219{display:grid;grid-template-columns:48px minmax(0,1fr);gap:8px;padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.055);font-size:12px;line-height:1.45}
+.f1-racing-commentary-entry-v219 .time{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;opacity:.58}
+.f1-racing-commentary-entry-v219 .message{min-width:0;word-break:keep-all}
+.f1-racing-commentary-entry-v219.pass .message,.f1-racing-commentary-entry-v219.lead .message{font-weight:700}
+.f1-racing-commentary-entry-v219.flag{border-left:3px solid currentColor}
