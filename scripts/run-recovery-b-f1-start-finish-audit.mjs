@@ -27,7 +27,7 @@ export function runRecoveryBF1StartFinishAudit(){
     "const progress=normalizedProgressV190(Number(track.startFinish)||0);",
     'function addStartFinishLineRecoveryB(layer,path,track,scope=',
     "class:'f1-racing-start-finish-recovery-b '+scope",
-    "label.textContent='START / FINISH';",
+    "label.textContent='출발 / 결승선';",
     'window.mwsF1StartFinishGeometryRecoveryB=startFinishGeometryRecoveryB;',
     "window.__mwsF1RecoveryB='start-finish-line-v1';"
   ])if(!racing.includes(token))issues.push('Recovery B renderer missing: '+token);
