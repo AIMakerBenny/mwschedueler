@@ -149,6 +149,7 @@ jobs:
           node --check scripts/run-phase204-f1-driving-incidents-audit.mjs
           node --check scripts/run-phase205-f1-pit-lane-audit.mjs
           node --check scripts/run-phase206-f1-pit-strategy-audit.mjs
+          node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-v1.js
@@ -1198,6 +1199,12 @@ jobs:
           grep -Fq "decision='COVER_UNDERCUT';reason='COVER_RIVAL_PIT';" /tmp/f1-racing-phase206.js
           grep -Fq 'requested=requestPitStopV205(vehicle.id,compound,decision);' /tmp/f1-racing-phase206.js
           grep -Fq 'window.mwsF1GetPitStrategyStatesV206=getPitStrategyStatesV206;' /tmp/f1-racing-phase206.js
+          echo '[recovery-l] F1 curvature weighted corner speed'
+          grep -Fq 'assets/f1-track-geometry-v2.js?v=1.0.0-phase195-speed-profile&recovery=L1' /tmp/index.html
+          retry_contains "$BASE/assets/f1-track-geometry-v2.js?deploy=$GITHUB_SHA" "root.__mwsF1RecoveryL='curvature-weighted-speed-v1';" > /tmp/f1-track-geometry-recovery-l.js
+          node --check /tmp/f1-track-geometry-recovery-l.js
+          grep -Fq 'function curvatureSeverityRecoveryL(track,curvature){' /tmp/f1-track-geometry-recovery-l.js
+          grep -Fq 'function curvatureWeightedZoneLimitRecoveryL(track,sample,maxKph){' /tmp/f1-track-geometry-recovery-l.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css
