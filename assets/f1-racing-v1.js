@@ -11,6 +11,7 @@ const VERSION187='phase187-race-draft-snapshot-transition';
 const VERSION188='phase188-race-control-frame';
 const VERSION189='phase189-shared-multicar-raf';
 const VERSION190='phase190-race-distance-lap-sector';
+const VERSION191='phase191-position-gap-interval';
 const DEFAULT_TOTAL_LAPS_V190=10;
 const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
 const F1_TRANSITIONS_V185=Object.freeze({
@@ -366,7 +367,57 @@ function updateRaceProgressHudV190(){
     const badge=row.querySelector('[data-f1-current-sector]');
     if(badge)badge.textContent=vehicle.sector||'GRID';
   }
+  updateRaceStandingsV191();
   return true;
+}
+function computeRaceStandingsV191(){
+  const sorted=[...raceMotionV189.vehicles].sort(function(a,b){
+    const delta=Number(b.raceProgress||0)-Number(a.raceProgress||0);
+    if(Math.abs(delta)>1e-9)return delta;
+    return Number(a.driver?.gridPosition||999)-Number(b.driver?.gridPosition||999);
+  });
+  const leader=sorted[0]||null;
+  return sorted.map(function(vehicle,index){
+    const previous=index>0?sorted[index-1]:null;
+    const gapProgress=leader?Math.max(0,Number(leader.raceProgress)-Number(vehicle.raceProgress)):0;
+    const intervalProgress=previous?Math.max(0,Number(previous.raceProgress)-Number(vehicle.raceProgress)):0;
+    const leaderLapMs=Math.max(1,Number(leader?.lapDurationMs)||1);
+    const previousLapMs=Math.max(1,Number(previous?.lapDurationMs)||leaderLapMs);
+    return {
+      vehicle,
+      position:index+1,
+      gapProgress,
+      intervalProgress,
+      gapSeconds:index===0?0:gapProgress*leaderLapMs/1000,
+      intervalSeconds:index===0?0:intervalProgress*previousLapMs/1000
+    };
+  });
+}
+function formatRaceDeltaV191(progress,seconds,isLeader=false){
+  if(isLeader)return 'LEADER';
+  const laps=Math.floor(Math.max(0,Number(progress)||0));
+  if(laps>=1)return '+'+laps+' LAP'+(laps===1?'':'S');
+  return '+'+Math.max(0,Number(seconds)||0).toFixed(3);
+}
+function updateRaceStandingsV191(){
+  const standings=computeRaceStandingsV191();
+  for(const standing of standings){
+    const vehicle=standing.vehicle;
+    vehicle.position=standing.position;
+    vehicle.gapProgress=standing.gapProgress;
+    vehicle.intervalProgress=standing.intervalProgress;
+    vehicle.gapSeconds=standing.gapSeconds;
+    vehicle.intervalSeconds=standing.intervalSeconds;
+    const row=findTimingRowV190(vehicle.id);if(!row)continue;
+    row.dataset.position=String(standing.position);
+    const pos=row.querySelector('.pos');if(pos)pos.textContent='P'+String(standing.position).padStart(2,'0');
+    const gap=row.querySelector('[data-f1-gap]');if(gap)gap.textContent=formatRaceDeltaV191(standing.gapProgress,standing.gapSeconds,standing.position===1);
+    const interval=row.querySelector('[data-f1-interval]');if(interval)interval.textContent=standing.position===1?'--':formatRaceDeltaV191(standing.intervalProgress,standing.intervalSeconds,false);
+    row.classList.remove('podium','p1','p2','p3');
+    if(standing.position<=3)row.classList.add('podium','p'+standing.position);
+    if(vehicle.marker)vehicle.marker.classList.toggle('leader',standing.position===1);
+  }
+  return standings;
 }
 function createRaceVehiclesV189(snapshot){
   const count=Math.max(1,snapshot?.drivers?.length||0);
@@ -449,7 +500,7 @@ function timingRowV188(driver,index){
   return '<div class="f1-racing-timing-row-v188'+podium+'" data-f1-driver-id="'+escapeHtml(driver.contactId)+'">'+
     '<span class="pos">P'+String(pos).padStart(2,'0')+'</span>'+
     '<span class="driver"><b>'+escapeHtml(driverCodeV188(driver))+'</b><small>'+escapeHtml(driver.name)+'</small><em data-f1-current-sector>GRID</em></span>'+
-    '<span>--</span><span>----</span><span>---</span><span>--:--.---</span><span>--:--.---</span><span>'+(pos===1?'LEADER':'--.---')+'</span><span>--</span><span>--.---</span><span>--.---</span><span>--.---</span>'+
+    '<span class="gear">--</span><span class="rpm">----</span><span class="speed">---</span><span class="last">--:--.---</span><span class="best">--:--.---</span><span class="gap" data-f1-gap>'+(pos===1?'LEADER':'--.---')+'</span><span class="interval" data-f1-interval>--</span><span class="tyre">--</span><span class="s1">--.---</span><span class="s2">--.---</span><span class="s3">--.---</span>'+
     '</div>';
 }
 function renderRaceControlV188(){
@@ -501,7 +552,7 @@ function render(){
   if(previewStateV184.running)stopPreviewV184(true);
   if(f1ScreenStateV185==='RACE'&&activeRaceSnapshotV187){renderRaceControlV188();startRaceMotionV189()}
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent=f1ScreenStateV185==='SETUP'?'RACE SETUP':'RACE CONTROL';
-  section.dataset.f1Runtime=VERSION190;
+  section.dataset.f1Runtime=VERSION191;
   return true;
 }
 function toggleDriver(id){
@@ -602,6 +653,9 @@ window.mwsF1RenderRaceVehiclesV189=renderRaceVehiclesV189;
 window.mwsF1SectorForProgressV190=sectorForProgressV190;
 window.mwsF1SyncVehicleRaceMetricsV190=syncVehicleRaceMetricsV190;
 window.mwsF1UpdateRaceProgressHudV190=updateRaceProgressHudV190;
+window.mwsF1ComputeRaceStandingsV191=computeRaceStandingsV191;
+window.mwsF1UpdateRaceStandingsV191=updateRaceStandingsV191;
+window.mwsF1FormatRaceDeltaV191=formatRaceDeltaV191;
 window.__mwsF1RacingV180=VERSION;
 window.__mwsF1RacingV181=VERSION181;
 window.__mwsF1RacingV182=VERSION182;
@@ -613,6 +667,7 @@ window.__mwsF1RacingV187=VERSION187;
 window.__mwsF1RacingV188=VERSION188;
 window.__mwsF1RacingV189=VERSION189;
 window.__mwsF1RacingV190=VERSION190;
+window.__mwsF1RacingV191=VERSION191;
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){

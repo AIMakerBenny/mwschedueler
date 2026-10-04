@@ -240,7 +240,7 @@
 .f1-racing-panel-title-v188{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:36px;padding:8px 10px;border-bottom:1px solid #202733;background:#0d1117}
 .f1-racing-panel-title-v188 span{color:#dbe4f0;font:850 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.12em}
 .f1-racing-panel-title-v188 small{color:#657186;font-size:9px}
-.f1-racing-timing-head-v188,.f1-racing-timing-row-v188{display:grid;grid-template-columns:46px minmax(150px,1.3fr) 48px 62px 56px 88px 88px 72px 58px 66px 66px 66px;align-items:center}
+.f1-racing-timing-head-v188,.f1-racing-timing-row-v188{display:grid;grid-template-columns:46px minmax(150px,1.3fr) 48px 62px 56px 88px 88px 72px 66px 58px 66px 66px 66px;align-items:center}
 .f1-racing-timing-head-v188{min-height:28px;padding:0 8px;border-bottom:1px solid #202733;background:#090c11;color:#5f6c80;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.08em}
 .f1-racing-timing-row-v188{position:relative;min-height:42px;padding:0 8px;border-bottom:1px solid #171d26;color:#cbd5e1;font:750 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
 .f1-racing-timing-row-v188:last-child{border-bottom:0}
@@ -262,7 +262,7 @@
 .f1-racing-commentary-empty-v188,.f1-racing-side-empty-v188{display:grid;place-items:center;min-height:90px;padding:18px;color:#64748b;text-align:center;font-size:10px;line-height:1.5}
 .f1-racing-race-side-v188{display:grid;grid-template-rows:1fr 1fr;gap:10px}
 .f1-racing-race-side-v188>section{min-height:0}
-@media(max-width:1280px){.f1-racing-race-header-v188{grid-template-columns:1fr}.f1-racing-race-status-v188{width:max-content}.f1-racing-race-grid-v188{grid-template-columns:1fr 1fr}.f1-racing-race-side-v188{grid-column:1/-1;grid-template-columns:1fr 1fr;grid-template-rows:none}.f1-racing-live-timing-v188{overflow:auto}.f1-racing-timing-head-v188,.f1-racing-timing-row-v188{min-width:900px}}
+@media(max-width:1280px){.f1-racing-race-header-v188{grid-template-columns:1fr}.f1-racing-race-status-v188{width:max-content}.f1-racing-race-grid-v188{grid-template-columns:1fr 1fr}.f1-racing-race-side-v188{grid-column:1/-1;grid-template-columns:1fr 1fr;grid-template-rows:none}.f1-racing-live-timing-v188{overflow:auto}.f1-racing-timing-head-v188,.f1-racing-timing-row-v188{min-width:970px}}
 @media(max-width:800px){.f1-racing-race-grid-v188{grid-template-columns:1fr}.f1-racing-race-side-v188{grid-column:auto;grid-template-columns:1fr}.f1-racing-race-status-v188{width:100%}.f1-racing-race-status-v188 span{flex:1;min-width:0}}
 
 /* Phase 189: shared multi-car requestAnimationFrame renderer */
@@ -278,3 +278,9 @@
 .f1-racing-timing-row-v188[data-sector="S2"] .driver em[data-f1-current-sector]{color:#c8b5ff}
 .f1-racing-timing-row-v188[data-sector="S3"] .driver em[data-f1-current-sector]{color:#f2ca8a}
 .f1-racing-timing-row-v188[data-sector="GRID"] .driver em[data-f1-current-sector]{color:#64748b}
+
+/* Phase 191: official position, leader gap and interval telemetry */
+.f1-racing-timing-row-v188 .gap,.f1-racing-timing-row-v188 .interval{font-variant-numeric:tabular-nums;color:#aeb9c9}
+.f1-racing-timing-row-v188[data-position="1"] .gap{color:#e8cf76;font-weight:900}
+.f1-racing-race-vehicle-v189.leader .car-halo{fill:rgba(216,183,77,.2);stroke:rgba(232,207,118,.55);stroke-width:2}
+.f1-racing-race-vehicle-v189.leader .car-ring{stroke:#e8cf76}

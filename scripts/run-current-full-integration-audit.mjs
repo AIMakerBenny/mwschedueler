@@ -172,6 +172,7 @@ import {runPhase187F1RaceDraftSnapshotAudit} from './run-phase187-f1-race-draft-
 import {runPhase188F1RaceControlFrameAudit} from './run-phase188-f1-race-control-frame-audit.mjs';
 import {runPhase189F1SharedMultiCarRafAudit} from './run-phase189-f1-shared-multicar-raf-audit.mjs';
 import {runPhase190F1RaceDistanceLapSectorAudit} from './run-phase190-f1-race-distance-lap-sector-audit.mjs';
+import {runPhase191F1PositionGapIntervalAudit} from './run-phase191-f1-position-gap-interval-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1867,5 +1868,14 @@ export function runPhase190FullIntegrationAudit(){
   if(issues.length)process.exitCode=1;
   return summary;
 }
-export function runCurrentFullIntegrationAudit(){return runPhase190FullIntegrationAudit();}
+export function runPhase191FullIntegrationAudit(){
+  const previous=runPhase190FullIntegrationAudit(),current=runPhase191F1PositionGapIntervalAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>'Phase '+current.phase+': '+x)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>'Phase '+current.phase+': '+x)];
+  const summary={currentPhase:191,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+export function runCurrentFullIntegrationAudit(){return runPhase191FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();

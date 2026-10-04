@@ -121,6 +121,7 @@ jobs:
           node --check scripts/run-phase188-f1-race-control-frame-audit.mjs
           node --check scripts/run-phase189-f1-shared-multicar-raf-audit.mjs
           node --check scripts/run-phase190-f1-race-distance-lap-sector-audit.mjs
+          node --check scripts/run-phase191-f1-position-gap-interval-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-racing-v1.js
           node --check assets/workspace-ui-v176.js
@@ -918,6 +919,14 @@ jobs:
           grep -Fq 'vehicle.raceDistanceMeters=Math.max(0,raceProgress*length);' /tmp/f1-racing-v1-phase190.js
           grep -Fq 'function updateRaceProgressHudV190(){' /tmp/f1-racing-v1-phase190.js
           grep -Fq 'window.mwsF1SyncVehicleRaceMetricsV190=syncVehicleRaceMetricsV190;' /tmp/f1-racing-v1-phase190.js
+          echo '[phase191] F1 official position gap and interval'
+          grep -Fq '<span>GAP</span><span>INT</span><span>TYRE</span>' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV191=VERSION191;' > /tmp/f1-racing-v1-phase191.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-timing-row-v188 .gap,.f1-racing-timing-row-v188 .interval{' > /tmp/f1-racing-v1-phase191.css
+          node --check /tmp/f1-racing-v1-phase191.js
+          grep -Fq 'function computeRaceStandingsV191(){' /tmp/f1-racing-v1-phase191.js
+          grep -Fq 'function updateRaceStandingsV191(){' /tmp/f1-racing-v1-phase191.js
+          grep -Fq 'window.mwsF1ComputeRaceStandingsV191=computeRaceStandingsV191;' /tmp/f1-racing-v1-phase191.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css
