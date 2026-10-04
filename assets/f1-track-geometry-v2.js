@@ -94,8 +94,13 @@ function buildCornerPhases(track,geometry){
     const approachKph=Math.max(apexKph+20,...candidates);
     const v0=approachKph/3.6,v1=apexKph/3.6;
     const brakingDistanceMeters=Math.max(0,(v0*v0-v1*v1)/(2*decel));
-    const brakingProgress=normalizeProgress(turnInProgress-brakingDistanceMeters/length);
-    const approachProgress=normalizeProgress(brakingProgress-lead/length);
+    const turnInDistanceMeters=Number(corner.startProgress)*length;
+    const apexDistanceMeters=Number(corner.apexProgress)*length;
+    const exitDistanceMeters=Number(corner.endProgress)*length;
+    const brakingPointDistanceMeters=turnInDistanceMeters-brakingDistanceMeters;
+    const approachDistanceMeters=brakingPointDistanceMeters-lead;
+    const brakingProgress=normalizeProgress(brakingPointDistanceMeters/length);
+    const approachProgress=normalizeProgress(approachDistanceMeters/length);
     return {
       ...corner,
       approachProgress,
@@ -103,6 +108,11 @@ function buildCornerPhases(track,geometry){
       turnInProgress,
       apexProgress,
       exitProgress,
+      approachDistanceMeters,
+      brakingPointDistanceMeters,
+      turnInDistanceMeters,
+      apexDistanceMeters,
+      exitDistanceMeters,
       referenceApproachKph:approachKph,
       referenceApexKph:apexKph,
       referenceBrakeDecelMps2:decel,
@@ -112,21 +122,22 @@ function buildCornerPhases(track,geometry){
   });
   return {...geometry,cornerPhases:phases};
 }
-function forwardProgressDistance(from,to){return normalizeProgress(Number(to)-Number(from))}
 function cornerPhaseAtProgress(geometry,progress){
-  const p=normalizeProgress(progress);
+  const lapLength=Math.max(1,Number(geometry?.lengthMeters)||1);
+  const baseDistance=normalizeProgress(progress)*lapLength;
   for(const corner of geometry?.cornerPhases||[]){
-    const total=forwardProgressDistance(corner.approachProgress,corner.exitProgress);
-    const here=forwardProgressDistance(corner.approachProgress,p);
-    if(here>total)continue;
-    const brake=forwardProgressDistance(corner.approachProgress,corner.brakingProgress);
-    const turn=forwardProgressDistance(corner.approachProgress,corner.turnInProgress);
-    const apex=forwardProgressDistance(corner.approachProgress,corner.apexProgress);
-    if(here<brake)return {corner,phase:'APPROACH'};
-    if(here<turn)return {corner,phase:'BRAKING'};
-    if(here<apex)return {corner,phase:'TURN_IN'};
-    const apexWindow=Math.max(0.0005,(Number(corner.lengthMeters)||40)/(Math.max(1,Number(geometry.lengthMeters)||1))*0.18);
-    if(here<Math.min(total,apex+apexWindow))return {corner,phase:'APEX'};
+    const start=Number(corner.approachDistanceMeters);
+    const end=Number(corner.exitDistanceMeters);
+    if(!Number.isFinite(start)||!Number.isFinite(end)||end<start)continue;
+    let here=baseDistance;
+    while(here<start)here+=lapLength;
+    while(here-lapLength>=start)here-=lapLength;
+    if(here>end)continue;
+    if(here<Number(corner.brakingPointDistanceMeters))return {corner,phase:'APPROACH'};
+    if(here<Number(corner.turnInDistanceMeters))return {corner,phase:'BRAKING'};
+    if(here<Number(corner.apexDistanceMeters))return {corner,phase:'TURN_IN'};
+    const apexWindowMeters=Math.max(5,Number(corner.lengthMeters||40)*0.18);
+    if(here<Math.min(end,Number(corner.apexDistanceMeters)+apexWindowMeters))return {corner,phase:'APEX'};
     return {corner,phase:'EXIT'};
   }
   return null;
