@@ -1990,7 +1990,7 @@ function bindRaceProceedV187(){
 
 
 const F1_WORKSPACE_PANEL_META_RECOVERY_E=Object.freeze({
-  timing:Object.freeze({label:'LIVE TIMING',minW:6,minH:2}),
+  timing:Object.freeze({label:'LIVE TIMING',minW:4,minH:2}),
   track:Object.freeze({label:'TRACK MAP',minW:4,minH:4}),
   commentary:Object.freeze({label:'RACE COMMENTARY',minW:3,minH:3}),
   radio:Object.freeze({label:'TEAM RADIO',minW:3,minH:2}),
@@ -2365,10 +2365,79 @@ function workspaceGridRowHeightRecoveryJ(workspace=document.getElementById('f1Ra
   const raw=parseFloat(getComputedStyle(workspace).gridAutoRows);
   return Number.isFinite(raw)&&raw>0?raw:72;
 }
-function workspaceDockRectRecoveryJ(id,zone){
+
+const F1_TRIPLE_DOCK_COLUMNS_RECOVERY_N=Object.freeze({
+  left:Object.freeze({x:0,w:4}),
+  center:Object.freeze({x:4,w:4}),
+  right:Object.freeze({x:8,w:4})
+});
+function workspaceTripleDockRectRecoveryN(id,zone){
+  const col=F1_TRIPLE_DOCK_COLUMNS_RECOVERY_N[String(zone||'')];
+  if(!col)return null;
   const min=workspaceMinSizeRecoveryI(id);
-  if(zone==='left')return {x:0,y:0,w:Math.max(min.w,5),h:10};
-  if(zone==='right'){const w=Math.max(min.w,5);return {x:12-w,y:0,w,h:10}}
+  if(min.w>4)return null;
+  return {x:col.x,y:0,w:4,h:10};
+}
+function workspacePackColumnGroupRecoveryN(layout,slots,column){
+  if(!slots.length)return true;
+  const totalMin=slots.reduce((sum,slot)=>sum+workspaceMinSizeRecoveryI(slot.id).h,0);
+  if(totalMin>10)return false;
+  let extra=10-totalMin;
+  let y=0;
+  slots.forEach((slot,index)=>{
+    const minH=workspaceMinSizeRecoveryI(slot.id).h;
+    const remaining=slots.length-index;
+    const add=Math.floor(extra/remaining);
+    const h=minH+add;
+    extra-=add;
+    workspaceApplySlotRectRecoveryI(layout,slot.id,{x:column.x,y,w:4,h});
+    y+=h;
+  });
+  return true;
+}
+function workspacePackRemainingTripleColumnsRecoveryN(layout,excludeId,zone){
+  const selected=F1_TRIPLE_DOCK_COLUMNS_RECOVERY_N[zone];
+  if(!selected)return false;
+  const excludedKey=layout.panels[excludeId]?.tabGroup?'tab:'+layout.panels[excludeId].tabGroup:'panel:'+excludeId;
+  const columns=Object.entries(F1_TRIPLE_DOCK_COLUMNS_RECOVERY_N)
+    .filter(([,col])=>col.x!==selected.x)
+    .map(([name,col])=>({name,...col}));
+  const slots=workspaceSlotLeadersRecoveryI(layout)
+    .filter(slot=>slot.key!==excludedKey)
+    .sort((a,b)=>a.rect.y-b.rect.y||a.rect.x-b.rect.x);
+  const groups=columns.map(()=>[]);
+  const used=columns.map(()=>0);
+  for(const slot of slots){
+    let best=0;
+    for(let i=1;i<columns.length;i++)if(used[i]<used[best])best=i;
+    groups[best].push(slot);
+    used[best]+=workspaceMinSizeRecoveryI(slot.id).h;
+  }
+  for(let i=0;i<columns.length;i++){
+    if(!workspacePackColumnGroupRecoveryN(layout,groups[i],columns[i]))return false;
+  }
+  return true;
+}
+function workspaceDockTripleRecoveryN(id,zone){
+  if(!workspaceLayoutRecoveryE?.panels[id])return false;
+  const desired=workspaceTripleDockRectRecoveryN(id,zone);
+  if(!desired)return false;
+  workspaceDetachTabRecoveryI(workspaceLayoutRecoveryE,id);
+  const source=workspaceLayoutRecoveryE.panels[id];
+  source.hidden=false;source.maximized=false;
+  workspaceApplySlotRectRecoveryI(workspaceLayoutRecoveryE,id,desired);
+  if(!workspacePackRemainingTripleColumnsRecoveryN(workspaceLayoutRecoveryE,id,zone)){
+    workspaceReflowRecoveryI(workspaceLayoutRecoveryE,id,desired);
+  }
+  applyWorkspaceLayoutRecoveryE();
+  persistWorkspaceLayoutRecoveryE();
+  return workspaceOverlapPairsRecoveryI().length===0;
+}
+
+function workspaceDockRectRecoveryJ(id,zone){
+  const triple=workspaceTripleDockRectRecoveryN(id,zone);
+  if(triple)return triple;
+  const min=workspaceMinSizeRecoveryI(id);
   if(zone==='top')return {x:0,y:0,w:12,h:Math.max(min.h,3)};
   if(zone==='bottom'){const h=Math.max(min.h,3);return {x:0,y:10-h,w:12,h}}
   return null;
@@ -2405,6 +2474,7 @@ function workspacePackRegionRecoveryJ(layout,excludeId,region){
   return true;
 }
 function workspaceDockSplitRecoveryJ(id,zone){
+  if(['left','center','right'].includes(String(zone||'')))return workspaceDockTripleRecoveryN(id,String(zone));
   if(!workspaceLayoutRecoveryE?.panels[id])return false;
   workspaceDetachTabRecoveryI(workspaceLayoutRecoveryE,id);
   const source=workspaceLayoutRecoveryE.panels[id];
@@ -2526,10 +2596,10 @@ function workspaceDropTargetRecoveryE(clientX,clientY,sourceId){
   const rect=workspace.getBoundingClientRect();
   const rx=(clientX-rect.left)/Math.max(1,rect.width);
   const ry=(clientY-rect.top)/Math.max(1,rect.height);
-  if(rx<.12)return {kind:'dock',zone:'left'};
-  if(rx>.88)return {kind:'dock',zone:'right'};
-  if(ry<.12)return {kind:'dock',zone:'top'};
-  if(ry>.88)return {kind:'dock',zone:'bottom'};
+  if(ry<.08)return {kind:'dock',zone:'top'};
+  if(ry>.92)return {kind:'dock',zone:'bottom'};
+  if(rx<.14)return {kind:'dock',zone:'left'};
+  if(rx>.86)return {kind:'dock',zone:'right'};
   const target=document.elementFromPoint(clientX,clientY)?.closest?.('[data-f1-workspace-panel]');
   if(target&&target.dataset.f1WorkspacePanel!==sourceId&&!target.hidden){
     const tr=target.getBoundingClientRect();
@@ -2537,6 +2607,7 @@ function workspaceDropTargetRecoveryE(clientX,clientY,sourceId){
     const ty=(clientY-tr.top)/Math.max(1,tr.height);
     if(tx>.22&&tx<.78&&ty>.18&&ty<.82)return {kind:'tab',targetId:target.dataset.f1WorkspacePanel,rect:tr};
   }
+  if(rx>=.40&&rx<=.60)return {kind:'dock',zone:'center'};
   const state=workspaceLayoutRecoveryE.panels[sourceId];
   const col=Math.max(0,Math.min(12-state.w,Math.round(rx*12-state.w/2)));
   const rowHeight=workspaceGridRowHeightRecoveryJ(workspace);
@@ -2909,6 +2980,7 @@ window.mwsF1GetWorkspaceLayoutRecoveryE=function(){return workspaceLayoutRecover
 window.mwsF1ReflowWorkspaceRecoveryI=function(id='',rect=null){if(!workspaceLayoutRecoveryE)return false;workspaceReflowRecoveryI(workspaceLayoutRecoveryE,id,rect);applyWorkspaceLayoutRecoveryE();persistWorkspaceLayoutRecoveryE();return workspaceOverlapPairsRecoveryI().length===0};
 window.mwsF1WorkspaceOverlapPairsRecoveryI=function(){return workspaceOverlapPairsRecoveryI().map(pair=>pair.slice())};
 window.mwsF1DockSplitRecoveryJ=workspaceDockSplitRecoveryJ;
+window.mwsF1DockTripleRecoveryN=workspaceDockTripleRecoveryN;
 window.mwsF1ResizeSplitRecoveryJ=function(id,dw=0,dh=0){
   if(!workspaceLayoutRecoveryE?.panels?.[id])return false;
   const pointer={id,start:cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE.panels[id]),layoutStart:cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE)};
@@ -3007,6 +3079,7 @@ window.__mwsF1RacingV204=VERSION204;
 window.__mwsF1RacingV205=VERSION205;
 window.__mwsF1RacingV206=VERSION206;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
+window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
 window.__mwsF1RecoveryC='race-cancel-setup-return-v1';
 window.__mwsF1RecoveryD='persistent-roster-track-settings-v1';
