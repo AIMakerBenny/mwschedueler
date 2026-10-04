@@ -19,10 +19,10 @@ export function runPhase188F1RaceControlFrameAudit(){
     'id="f1RacingCommentaryLogV188"',
     'id="f1RacingTeamRadioV188"',
     'id="f1RacingSpeedTrapV188"',
-    'LIVE TIMING',
-    'RACE COMMENTARY',
-    'TEAM RADIO',
-    'SPEED TRAP'
+    '실시간 순위',
+    '경기 해설',
+    '팀 라디오',
+    '스피드 트랩'
   ])if(!index.includes(token))issues.push('Phase 188 Race Control UI missing: '+token);
 
   for(const token of [
