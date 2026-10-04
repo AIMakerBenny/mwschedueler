@@ -8,7 +8,8 @@ export function runPhase209F1LongRunGapAudit(){
   const diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  if(!/recovery=N1&phase=(?:209|21[0-9]|22[0-9])/.test(index))issues.push('Phase 209+ racing asset cache missing');
+  const cachePhase=Number(index.match(/recovery=N1&phase=(\d+)/)?.[1]||0);
+  if(cachePhase<209)issues.push('Phase 209+ racing asset cache missing');
   for(const token of [
     "const VERSION209='phase209-long-run-gap-balance';",
     'const LONG_RUN_GAP_CONFIG_V209=Object.freeze({settlingLaps:3.5,maxOpeningPaceBias:0.0045,maxSettledPaceBias:0.0018',
