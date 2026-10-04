@@ -247,7 +247,7 @@ try{
     const forcedIncident=window.mwsF1ForceDrivingIncidentV204?.(incidentDriver,'LOCK_UP',.9);
     window.mwsF1RenderRaceVehiclesV189?.();await raf();
     const incidentAfter=(window.mwsF1GetDrivingIncidentStatesV204?.()||[]).find(row=>String(row.id)===String(incidentDriver));
-    const incidentMarker=document.querySelector('[data-f1-driver-id="'+CSS.escape(String(incidentDriver))+'"]');
+    const incidentMarker=document.querySelector('.f1-racing-race-vehicle-v189[data-driver-id="'+CSS.escape(String(incidentDriver))+'"]');
     assert(forcedIncident?.type==='LOCK_UP','Phase 204 forced lock-up failed');
     assert((incidentAfter?.lockupActiveMs||0)>0,'Phase 204 lock-up timer missing');
     assert((incidentAfter?.tyreFlatSpot||0)>(tyreBefore?.flatSpot||0),'Phase 204 lock-up did not add flat spot');
