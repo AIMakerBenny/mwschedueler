@@ -7,7 +7,7 @@ export function runPhase199F1DirtyAirAudit(){
   const racing=fs.readFileSync('assets/f1-racing-v1.js','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  if(!index.includes('assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=199'))issues.push('Phase 199 racing asset link missing');
+  if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=(?:199|[2-9]\d{2,})/.test(index))issues.push('Phase 199+ racing runtime asset link missing');
   for(const token of [
     "const VERSION199='phase199-dirty-air';",
     'const DIRTY_AIR_CONFIG_V199=Object.freeze({',

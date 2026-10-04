@@ -130,6 +130,7 @@ jobs:
           node --check scripts/run-phase197-f1-racing-line-audit.mjs
           node --check scripts/run-phase198-f1-slipstream-audit.mjs
           node --check scripts/run-phase199-f1-dirty-air-audit.mjs
+          node --check scripts/run-phase200-f1-driver-profile-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-v1.js
@@ -1009,13 +1010,22 @@ jobs:
           grep -Fq 'const dragRelief=Math.max(0,Number(vehicle.slipstreamDragReduction)||0);' /tmp/f1-racing-v1-phase198.js
           grep -Fq 'window.mwsF1ResolveSlipstreamV198=resolveSlipstreamV198;' /tmp/f1-racing-v1-phase198.js
           echo '[phase199] F1 dirty air corner grip'
-          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=199' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=(199|[2-9][0-9]{2,})' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV199=VERSION199;' > /tmp/f1-racing-v1-phase199.js
           node --check /tmp/f1-racing-v1-phase199.js
           grep -Fq 'function resolveDirtyAirV199(vehicle,vehicles=raceMotionV189.vehicles){' /tmp/f1-racing-v1-phase199.js
           grep -Fq 'vehicle.aeroGripMultiplier=aeroGripMultiplier;' /tmp/f1-racing-v1-phase199.js
           grep -Fq 'const maxTarget=baseTarget*aeroGripMultiplier+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;' /tmp/f1-racing-v1-phase199.js
           grep -Fq 'window.mwsF1ResolveDirtyAirV199=resolveDirtyAirV199;' /tmp/f1-racing-v1-phase199.js
+          echo '[phase200] F1 driver pace consistency racecraft'
+          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=200' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV200=VERSION200;' > /tmp/f1-racing-v1-phase200.js
+          node --check /tmp/f1-racing-v1-phase200.js
+          grep -Fq 'function createDriverProfileV200(driver,snapshot){' /tmp/f1-racing-v1-phase200.js
+          grep -Fq 'function updateDriverPaceStateV200(vehicle,stepMs){' /tmp/f1-racing-v1-phase200.js
+          grep -Fq "const racecraftNorm=driverSkillNormV200(vehicle,'racecraft');" /tmp/f1-racing-v1-phase200.js
+          grep -Fq 'const maxTarget=baseTarget*driverPaceMultiplier*aeroGripMultiplier+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;' /tmp/f1-racing-v1-phase200.js
+          grep -Fq 'window.mwsF1GetDriverProfilesV200=getDriverProfilesV200;' /tmp/f1-racing-v1-phase200.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css
