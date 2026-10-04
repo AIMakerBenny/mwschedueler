@@ -162,6 +162,7 @@ import {runPhase177SplitQuickDateTimeAudit} from './run-phase177-split-quick-dat
 import {runPhase178CircularTimeWheelAudit} from './run-phase178-circular-time-wheel-audit.mjs';
 import {runPhase179F1FoundationAudit} from './run-phase179-f1-foundation-audit.mjs';
 import {runPhase180F1NavigationShellAudit} from './run-phase180-f1-navigation-shell-audit.mjs';
+import {runPhase181F1ContactParticipantsAudit} from './run-phase181-f1-contact-participants-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1778,6 +1779,16 @@ export function runPhase180FullIntegrationAudit(){
   return summary;
 }
 
-export function runCurrentFullIntegrationAudit(){return runPhase180FullIntegrationAudit();}
+export function runPhase181FullIntegrationAudit(){
+  const previous=runPhase180FullIntegrationAudit(), current=runPhase181F1ContactParticipantsAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>'Phase '+current.phase+': '+x)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>'Phase '+current.phase+': '+x)];
+  const summary={currentPhase:181,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
 
-if(import.meta.url===`file://${process.argv[1]}`)runCurrentFullIntegrationAudit();
+export function runCurrentFullIntegrationAudit(){return runPhase181FullIntegrationAudit();}
+
+if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();

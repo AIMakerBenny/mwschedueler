@@ -3345,6 +3345,17 @@ function contactMatches(c,q=''){
 window.mwsKoreanInitials=mwsKoreanInitials;
 window.mwsTextMatches=mwsTextMatches;
 window.contactMatches=contactMatches;
+window.mwsGetF1ContactsV181=()=>Object.freeze((data.contacts||[])
+  .filter(c=>!c.pendingSetup)
+  .map(c=>Object.freeze({
+    id:String(c.id||''),
+    name:String(c.name||''),
+    image:String(c.image||''),
+    labels:Array.isArray(c.labels)?[...c.labels]:[],
+    notes:String(c.notes||'')
+  })));
+window.mwsF1ContactMatchesV181=(contactRow,q='')=>contactMatches(contactRow,q);
+window.__mwsF1ContactBridgeV181='readonly-contact-snapshot';
 window.__mwsSearchOwnerV130='app-core-search71';
 function allContactLabels(){
   const out=[];const seen=new Set();

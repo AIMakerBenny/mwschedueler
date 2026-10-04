@@ -104,3 +104,37 @@
   .f1-racing-console-v180{min-height:520px}
   .f1-racing-placeholder-v180{min-height:460px}
 }
+
+/* Phase 181: contact-backed driver selection */
+.f1-racing-setup-v181{display:grid;grid-template-columns:minmax(320px,.9fr) minmax(420px,1.35fr);gap:12px;padding:12px;min-height:560px}
+.f1-racing-panel-v181{min-width:0;border:1px solid #252d39;border-radius:10px;background:#0a0d12;overflow:hidden}
+.f1-racing-panel-head-v181{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px;border-bottom:1px solid #202733;background:#0e1218}
+.f1-racing-panel-head-v181 h3{margin:3px 0 4px;color:#f8fafc;font-size:15px}
+.f1-racing-panel-head-v181 p{margin:0;color:#8995a8;font-size:11px;line-height:1.5}
+.f1-racing-panel-kicker-v181,.f1-racing-next-step-label-v181{font:700 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.16em;color:#64748b}
+.f1-racing-count-v181{flex:0 0 auto;border:1px solid #303846;border-radius:999px;padding:5px 8px;color:#d9e2ef;font:700 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-search-wrap-v181{position:relative;margin:12px 12px 8px}
+.f1-racing-search-mark-v181{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#758196;pointer-events:none}
+#f1RacingContactSearchV181{width:100%;padding-left:34px;background:#070a0f;border-color:#28303c}
+.f1-racing-contact-list-v181{height:430px;overflow:auto;padding:4px 8px 10px}
+.f1-racing-contact-row-v181{width:100%;min-height:54px;display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:10px;border:1px solid transparent;border-radius:8px;padding:7px 8px;background:transparent;color:#e6edf7;text-align:left}
+.f1-racing-contact-row-v181:hover{border-color:#2f3948;background:#10151d}
+.f1-racing-contact-row-v181.selected{border-color:#43516a;background:#121a25}
+.f1-racing-avatar-v181{width:36px;height:36px;border-radius:50%;object-fit:cover;border:1px solid #364152;background:#151b24;display:grid;place-items:center;color:#cbd5e1;font-size:11px;font-weight:800}
+.f1-racing-contact-name-v181{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:750}
+.f1-racing-contact-meta-v181{display:block;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#738095;font-size:10px}
+.f1-racing-contact-action-v181{min-width:38px;border:1px solid #303949;border-radius:7px;padding:5px 8px;background:#11161e;color:#dbe5f2;font-size:11px}
+.f1-racing-grid-summary-v181{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;border-bottom:1px solid #202733;background:#202733}
+.f1-racing-grid-summary-v181>div{padding:10px 12px;background:#090c11}
+.f1-racing-grid-summary-v181 span{display:block;color:#667287;font-size:9px;text-transform:uppercase;letter-spacing:.08em}
+.f1-racing-grid-summary-v181 strong{display:block;margin-top:4px;color:#f1f5f9;font:750 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-selected-list-v181{min-height:330px;max-height:390px;overflow:auto;padding:9px}
+.f1-racing-selected-row-v181{display:grid;grid-template-columns:34px 36px minmax(0,1fr) auto;gap:9px;align-items:center;min-height:52px;padding:6px 7px;border-bottom:1px solid #1c232d}
+.f1-racing-grid-pos-v181{color:#718096;font:800 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-selected-remove-v181{border:0;background:transparent;color:#778397;padding:5px;font-size:16px}
+.f1-racing-selected-remove-v181:hover{color:#e5e7eb}
+.f1-racing-empty-v181{min-height:90px;display:grid;place-items:center;padding:22px;color:#68758a;text-align:center;font-size:11px}
+.f1-racing-next-step-v181{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;margin:0 10px 10px;padding:11px 12px;border:1px solid #242d3a;border-radius:8px;background:#0d1219}
+.f1-racing-next-step-v181 strong{color:#dce5f2;font-size:12px}
+.f1-racing-next-step-v181 p{margin:3px 0 0;color:#758196;font-size:10px;line-height:1.5}
+@media(max-width:1050px){.f1-racing-setup-v181{grid-template-columns:1fr}.f1-racing-contact-list-v181{height:300px}.f1-racing-selected-list-v181{min-height:220px}}

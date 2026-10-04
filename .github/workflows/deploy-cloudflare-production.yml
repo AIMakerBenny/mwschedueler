@@ -111,6 +111,7 @@ jobs:
           node --check scripts/run-phase178-circular-time-wheel-audit.mjs
           node --check scripts/run-phase179-f1-foundation-audit.mjs
           node --check scripts/run-phase180-f1-navigation-shell-audit.mjs
+          node --check scripts/run-phase181-f1-contact-participants-audit.mjs
           node --check assets/f1-racing-v1.js
           node --check assets/workspace-ui-v176.js
           node --check scripts/run-phase153-standard-page-top-spacing-audit.mjs
@@ -813,6 +814,19 @@ jobs:
           retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-shell-v180{' > /tmp/f1-racing-v1.css
           node --check /tmp/f1-racing-v1.js
           grep -Fq "window.mwsRenderF1RacingV180=render;" /tmp/f1-racing-v1.js
+          echo '[phase181] F1 Racing contact-backed participant selector'
+          grep -Fq 'id="f1RacingContactSearchV181"' /tmp/index.html
+          grep -Fq 'id="f1RacingSelectedListV181"' /tmp/index.html
+          grep -Fq 'id="f1RacingSelectedCountV181"' /tmp/index.html
+          grep -Fq '세션 임시' /tmp/index.html
+          retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" "window.__mwsF1ContactBridgeV181='readonly-contact-snapshot';" > /tmp/app-core-f1-181.js
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV181=VERSION181;' > /tmp/f1-racing-v1-phase181.js
+          node --check /tmp/app-core-f1-181.js
+          node --check /tmp/f1-racing-v1-phase181.js
+          grep -Fq 'window.mwsGetF1ContactsV181=()=>Object.freeze((data.contacts||[])' /tmp/app-core-f1-181.js
+          grep -Fq 'window.mwsF1GetSelectedContactIdsV181=getSelectedContactIds;' /tmp/f1-racing-v1-phase181.js
+          grep -Fq 'function renderContacts(){' /tmp/f1-racing-v1-phase181.js
+          grep -Fq 'function renderSelected(){' /tmp/f1-racing-v1-phase181.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css
