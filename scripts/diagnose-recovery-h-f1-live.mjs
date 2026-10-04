@@ -156,10 +156,15 @@ try{
     );
     assert(setupLength>20,'Setup Start / Finish line too short');
 
-    assert(window.mwsF1StartRaceFromSetupV187?.()===true,'Race start failed');
-    await sleep(1900);
+    assert(window.mwsF1StartRaceFromSetupV187?.()===true,'Race preparation failed');
+    await sleep(1200);
     await raf();
-    assert(window.mwsF1GetScreenStateV185?.()==='RACE','Race did not reach RACE state');
+    assert(window.mwsF1GetScreenStateV185?.()==='GRID','Race started before explicit grid start click');
+    assert(Number(window.mwsF1GetSimulationClockV192?.().simTimeMs||0)===0,'Simulation advanced before explicit grid start click');
+    const manualStart=document.getElementById('f1RacingGridStartRecoveryM');
+    assert(manualStart,'Explicit grid start button missing');
+    manualStart.click();await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='RACE','Explicit grid start click did not enter RACE');
 
     const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
     assert(workspace,'Race workspace missing');
@@ -332,9 +337,11 @@ try{
     assert(context.driverIds?.every(id=>afterCancelIds.includes(id)),'Participants were lost after race cancel');
     assert(String(window.mwsF1GetActiveTrackV182?.()?.id||'')===String(context.targetTrackId),'Track was lost after race cancel');
 
-    assert(window.mwsF1StartRaceFromSetupV187?.()===true,'Second race start failed');
-    await sleep(1900);await raf();
-    assert(window.mwsF1GetScreenStateV185?.()==='RACE','Second race did not reach RACE');
+    assert(window.mwsF1StartRaceFromSetupV187?.()===true,'Second race preparation failed');
+    await sleep(1200);await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='GRID','Second race started before explicit grid click');
+    document.getElementById('f1RacingGridStartRecoveryM')?.click();await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='RACE','Second explicit start did not reach RACE');
 
     assert(window.mwsF1ForceFinishRecoveryG?.()===true,'Force finish QA hook failed');
     await raf();
@@ -349,8 +356,10 @@ try{
     assert(resultCount>=2,'Final result rows missing');
 
     document.getElementById('f1RacingResultNewRaceRecoveryG')?.click();
-    await sleep(1900);await raf();
-    assert(window.mwsF1GetScreenStateV185?.()==='RACE','Same-settings new race did not reach RACE');
+    await sleep(1200);await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='GRID','Same-settings new race auto-started before explicit click');
+    document.getElementById('f1RacingGridStartRecoveryM')?.click();await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='RACE','Same-settings explicit start did not reach RACE');
     const afterNewRaceIds=window.mwsF1GetSelectedContactIdsV181?.()||[];
     assert(context.driverIds?.every(id=>afterNewRaceIds.includes(id)),'Participants were lost for same-settings new race');
     assert(String(window.mwsF1GetActiveTrackV182?.()?.id||'')===String(context.targetTrackId),'Track was lost for same-settings new race');
@@ -362,6 +371,7 @@ try{
     assert(errors.length===0,'Browser errors during Recovery H: '+errors.join(' | '));
 
     return {
+      manualStartGate:true,
       pausedAndResumed:true,
       phase204Incident:{type:forcedIncident?.type||'',lockupActiveMs:Number(incidentAfter?.lockupActiveMs)||0,flatSpot:Number(incidentAfter?.tyreFlatSpot)||0},
       phase205Pit:{states:pitCycle?.states||[],laneSpeedCapKph:Number(pitCycle?.laneSpeedCapKph)||0,compound:pitAfter?.compound||'',warmupFactor:Number(pitAfter?.tyreWarmupFactor)||0},
