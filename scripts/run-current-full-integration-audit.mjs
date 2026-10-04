@@ -221,6 +221,7 @@ import {runPhase222F1RaceCommentaryFlowAudit} from './run-phase222-f1-race-comme
 import {runPhase223F1TrackProfileUiAudit} from './run-phase223-f1-track-profile-ui-audit.mjs';
 import {runPhase224F1RaceUiDensityAudit} from './run-phase224-f1-race-ui-density-audit.mjs';
 import {runPhase225F1CameraDirectorAudit} from './run-phase225-f1-camera-director-audit.mjs';
+import {runPhase226F1CommentaryReadabilityAudit} from './run-phase226-f1-commentary-readability-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2283,5 +2284,10 @@ export function runPhase225FullIntegrationAudit(){
   const issues=[...previous.issues,...current.issues.map(x=>'Phase 225: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 225: '+x)];
   const summary={currentPhase:225,issues,warnings,pass:issues.length===0};console.log(JSON.stringify({fullIntegration:summary}));if(issues.length)process.exitCode=1;return summary;
 }
-export function runCurrentFullIntegrationAudit(){return runPhase225FullIntegrationAudit();}
+export function runPhase226FullIntegrationAudit(){
+  const previous=runPhase225FullIntegrationAudit(),current=runPhase226F1CommentaryReadabilityAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>'Phase 226: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 226: '+x)];
+  const summary={currentPhase:226,issues,warnings,pass:issues.length===0};console.log(JSON.stringify({fullIntegration:summary}));if(issues.length)process.exitCode=1;return summary;
+}
+export function runCurrentFullIntegrationAudit(){return runPhase226FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
