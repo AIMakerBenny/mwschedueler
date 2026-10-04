@@ -208,6 +208,7 @@ import {runPhase209F1LongRunGapAudit} from './run-phase209-f1-long-run-gap-audit
 import {runPhase210F1MultiTrackAudit} from './run-phase210-f1-multi-track-audit.mjs';
 import {runPhase211F1TrackMarkerAudit} from './run-phase211-f1-track-marker-audit.mjs';
 import {runPhase212F1LiveTimingFlipAudit} from './run-phase212-f1-live-timing-flip-audit.mjs';
+import {runPhase213F1TopThreePresentationAudit} from './run-phase213-f1-top-three-presentation-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2205,5 +2206,10 @@ export function runPhase212FullIntegrationAudit(){
   const issues=[...previous.issues,...current.issues.map(x=>'Phase 212: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 212: '+x)];
   const summary={currentPhase:212,issues,warnings,pass:issues.length===0};console.log(JSON.stringify({fullIntegration:summary}));if(issues.length)process.exitCode=1;return summary;
 }
-export function runCurrentFullIntegrationAudit(){return runPhase212FullIntegrationAudit();}
+export function runPhase213FullIntegrationAudit(){
+  const previous=runPhase212FullIntegrationAudit(),current=runPhase213F1TopThreePresentationAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>'Phase 213: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 213: '+x)];
+  const summary={currentPhase:213,issues,warnings,pass:issues.length===0};console.log(JSON.stringify({fullIntegration:summary}));if(issues.length)process.exitCode=1;return summary;
+}
+export function runCurrentFullIntegrationAudit(){return runPhase213FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
