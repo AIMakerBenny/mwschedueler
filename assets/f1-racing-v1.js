@@ -48,6 +48,7 @@ const VERSION218='phase218-korean-interface';
 const VERSION219='phase219-race-commentary-engine';
 const VERSION220='phase220-diverse-track-catalog';
 const VERSION221='phase221-production-verification-compatibility';
+const VERSION222='phase222-race-commentary-flow';
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
 const CAMERA_MODES_V216=Object.freeze(['AUTO','FULL','LEADER','BATTLE','MANUAL']);
 const raceCameraV216={mode:'AUTO',zoom:1.9,cx:500,cy:300,dragging:false,pointerId:null,lastX:0,lastY:0,initialized:false};
@@ -2438,6 +2439,112 @@ function qaRaceCommentaryV219(){
   };
 }
 
+const commentaryFlowV222={
+  lastPollSimMs:-Infinity,lastAmbientSimMs:-Infinity,lastEventSimMs:-Infinity,
+  signatureAt:new Map(),vehicle:new Map()
+};
+function commentaryFlowVehicleStateV222(vehicle){
+  return {
+    pitRequested:Boolean(vehicle?.pitRequested),
+    strategyDecision:String(vehicle?.strategyDecision||'NONE'),
+    strategyTargetCompound:String(vehicle?.strategyTargetCompound||vehicle?.tyreCompound||''),
+    tyreWear:Number(vehicle?.tyreWear)||0,
+    overtakeEligible:Boolean(vehicle?.overtakeEligible),
+    battleState:String(vehicle?.battleState||'FOLLOWING'),
+    battleTargetId:String(vehicle?.battleTargetId||'')
+  };
+}
+function commentaryCanEmitV222(signature,cooldownMs=8000){
+  const key=String(signature||'');
+  const now=Number(simClockV192.simTimeMs)||0;
+  if(!key)return true;
+  const previous=Number(commentaryFlowV222.signatureAt.get(key));
+  if(Number.isFinite(previous)&&now-previous<Math.max(0,Number(cooldownMs)||0))return false;
+  commentaryFlowV222.signatureAt.set(key,now);
+  return true;
+}
+function appendRaceCommentaryV222(message,type='flow',signature='',cooldownMs=8000){
+  if(!commentaryCanEmitV222(signature,cooldownMs))return false;
+  const appended=appendRaceCommentaryV219(message,type);
+  if(appended)commentaryFlowV222.lastEventSimMs=Number(simClockV192.simTimeMs)||0;
+  return appended;
+}
+function resetCommentaryFlowV222(){
+  commentaryFlowV222.lastPollSimMs=-Infinity;
+  commentaryFlowV222.lastAmbientSimMs=Number(simClockV192.simTimeMs)||0;
+  commentaryFlowV222.lastEventSimMs=Number(simClockV192.simTimeMs)||0;
+  commentaryFlowV222.signatureAt=new Map();
+  commentaryFlowV222.vehicle=new Map();
+  for(const vehicle of raceMotionV189.vehicles)commentaryFlowV222.vehicle.set(String(vehicle.id),commentaryFlowVehicleStateV222(vehicle));
+  return true;
+}
+function updateRaceNarrativeV222(force=false){
+  if(!commentaryStateV219.initialized||!raceMotionV189.vehicles.length)return false;
+  const now=Number(simClockV192.simTimeMs)||0;
+  if(!force&&now-Number(commentaryFlowV222.lastPollSimMs)<500)return false;
+  commentaryFlowV222.lastPollSimMs=now;
+  const byId=new Map(raceMotionV189.vehicles.map(vehicle=>[String(vehicle.id),vehicle]));
+  let emitted=false;
+  for(const vehicle of raceMotionV189.vehicles){
+    const id=String(vehicle.id),name=vehicle.driver?.name||'드라이버';
+    const previous=commentaryFlowV222.vehicle.get(id)||commentaryFlowVehicleStateV222(vehicle);
+    const current=commentaryFlowVehicleStateV222(vehicle);
+    if(current.pitRequested&&!previous.pitRequested){
+      const target=current.strategyTargetCompound?current.strategyTargetCompound+' 타이어':'새 타이어';
+      emitted=appendRaceCommentaryV222(name+'가 '+target+' 교체를 위한 피트 전략을 준비합니다.','strategy','pit-request:'+id,15000)||emitted;
+    }
+    if(current.tyreWear>=0.72&&previous.tyreWear<0.72){
+      emitted=appendRaceCommentaryV222(name+'의 타이어 마모가 커졌습니다. 페이스 관리가 중요해집니다.','strategy','tyre-wear:'+id,30000)||emitted;
+    }
+    const battleStates=['SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','COUNTER_ATTACK'];
+    if(battleStates.includes(current.battleState)&&current.battleState!==previous.battleState){
+      const target=byId.get(current.battleTargetId);
+      const targetName=target?.driver?.name||'앞차';
+      const text=current.battleState==='SIDE_BY_SIDE'
+        ?name+'와 '+targetName+'가 나란히 달리며 순위를 다투고 있습니다.'
+        :current.battleState==='BRAKING_DUEL'
+          ?name+'와 '+targetName+'가 제동 구간에서 치열하게 맞붙습니다.'
+          :current.battleState==='COUNTER_ATTACK'
+            ?targetName+'의 반격에 '+name+'가 다시 대응하고 있습니다.'
+            :name+'와 '+targetName+'의 코너 싸움이 이어집니다.';
+      emitted=appendRaceCommentaryV222(text,'battle','battle:'+id+':'+current.battleState,7000)||emitted;
+    }
+    if(current.overtakeEligible&&!previous.overtakeEligible){
+      const ahead=byId.get(String(vehicle.carAheadId||''));
+      emitted=appendRaceCommentaryV222(name+'가 '+(ahead?.driver?.name||'앞차')+'를 상대로 추월 기회를 잡았습니다.','battle','overtake-window:'+id,10000)||emitted;
+    }
+    commentaryFlowV222.vehicle.set(id,current);
+  }
+  const quietFor=now-Number(commentaryFlowV222.lastEventSimMs);
+  if(now-Number(commentaryFlowV222.lastAmbientSimMs)>=12000&&quietFor>=6000){
+    commentaryFlowV222.lastAmbientSimMs=now;
+    const standings=computeRaceStandingsV191();
+    const leader=standings[0],second=standings[1];
+    if(leader&&second){
+      const gap=Math.max(0,Number(second.gapSeconds)||0);
+      const leaderName=leader.vehicle?.driver?.name||'선두';
+      const secondName=second.vehicle?.driver?.name||'2위';
+      const message=gap<=1.5
+        ?leaderName+'와 '+secondName+'의 선두 경쟁이 '+gap.toFixed(3)+'초 차이로 매우 가깝습니다.'
+        :leaderName+'가 선두를 달리고 있으며 '+secondName+'와의 격차는 '+gap.toFixed(3)+'초입니다.';
+      emitted=appendRaceCommentaryV222(message,'flow','ambient-lead-gap',10000)||emitted;
+    }else if(leader){
+      emitted=appendRaceCommentaryV222((leader.vehicle?.driver?.name||'선두')+'가 현재 레이스를 이끌고 있습니다.','flow','ambient-single-leader',10000)||emitted;
+    }
+  }
+  return emitted;
+}
+function qaRaceNarrativeV222(){
+  const vehicleStates=raceMotionV189.vehicles.map(vehicle=>commentaryFlowVehicleStateV222(vehicle));
+  return {
+    vehicles:vehicleStates.length,
+    signatureCount:commentaryFlowV222.signatureAt.size,
+    hasFlowState:Boolean(commentaryFlowV222.vehicle),
+    functionsReady:typeof appendRaceCommentaryV222==='function'&&typeof updateRaceNarrativeV222==='function'&&typeof resetCommentaryFlowV222==='function',
+    allPass:typeof appendRaceCommentaryV222==='function'&&typeof updateRaceNarrativeV222==='function'&&typeof resetCommentaryFlowV222==='function'
+  };
+}
+
 function simulateRaceStepV192(stepMs){
   if(simClockV192.paused||!(stepMs>0))return false;
   simClockV192.simTimeMs+=stepMs;
@@ -2467,6 +2574,7 @@ function simulateRaceStepV192(stepMs){
     simulateVehicleDynamicsV196(vehicle,stepMs);
   }
   updateRaceCommentaryV219(false);
+  updateRaceNarrativeV222(false);
   if(updateRaceLifecycleRecoveryG())return false;
   return true;
 }
@@ -2731,6 +2839,7 @@ function renderRaceControlV188(){
   resetRaceCameraV216('AUTO');
   bindSimulationControlsV192();
   resetRaceCommentaryV219();
+  resetCommentaryFlowV222();
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='레이스 관제';
   return true;
 }
@@ -3905,6 +4014,10 @@ window.__mwsF1RacingV219=VERSION219;
 window.mwsF1QaDiverseTrackCatalogV220=qaDiverseTrackCatalogV220;
 window.__mwsF1RacingV220=VERSION220;
 window.__mwsF1RacingV221=VERSION221;
+window.mwsF1AppendRaceCommentaryV222=appendRaceCommentaryV222;
+window.mwsF1UpdateRaceNarrativeV222=updateRaceNarrativeV222;
+window.mwsF1QaRaceNarrativeV222=qaRaceNarrativeV222;
+window.__mwsF1RacingV222=VERSION222;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
