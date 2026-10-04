@@ -54,6 +54,7 @@ const VERSION224='phase224-race-ui-density-qa';
 const VERSION225='phase225-camera-director';
 const VERSION226='phase226-commentary-readability';
 const VERSION227='phase227-commentary-cadence-quality';
+const VERSION228='phase228-driver-label-collision-avoidance';
 const COMMENTARY_CADENCE_V227=Object.freeze({flowGapMs:5500,strategyGapMs:3000,battleGapMs:1600,windowMs:60000,maxNarrativePerWindow:18});
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
 const CAMERA_MODES_V216=Object.freeze(['AUTO','FULL','LEADER','FRONT','BATTLE','MANUAL']);
@@ -1882,6 +1883,67 @@ function ensureRaceVehicleMarkerV189(vehicle,index){
   }
   vehicle.marker=marker;vehicle.driverColorV216=color;return marker;
 }
+function rectOverlapAreaV228(a,b){
+  const w=Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left));
+  const h=Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
+  return w*h;
+}
+function labelCandidateRectV228(point,label,dx,dy,anchor){
+  const chars=Math.max(1,String(label?.textContent||'DRV').length);
+  const width=Math.max(30,Math.min(78,chars*8.5+10)),height=17;
+  const gx=Number(point?.x||0)+dx,gy=Number(point?.y||0)+dy;
+  const left=anchor==='start'?gx:anchor==='end'?gx-width:gx-width/2;
+  return {left,right:left+width,top:gy-height+4,bottom:gy+4,x:dx,y:dy,anchor,width,height};
+}
+function layoutRaceVehicleLabelsV228(rendered=[]){
+  const occupied=[],placements=[];
+  const angles=Array.from({length:16},(_,i)=>-Math.PI/2+(Math.PI*2*i/16));
+  const radii=[24,36,50,66,84];
+  for(const entry of rendered){
+    const label=entry?.marker?.querySelector?.('.car-label');if(!label)continue;
+    let best=null,bestScore=Infinity,bestSlot=-1,slot=0;
+    for(const radius of radii){
+      for(const angle of angles){
+        const cos=Math.cos(angle),sin=Math.sin(angle);
+        const anchor=cos<-.28?'end':cos>.28?'start':'middle';
+        const candidate=labelCandidateRectV228(entry.point,label,cos*radius,sin*radius,anchor);
+        let score=radius*.02;
+        for(const rect of occupied)score+=rectOverlapAreaV228(candidate,rect)*20;
+        for(const other of rendered){
+          if(other===entry)continue;
+          const px=Number(other?.point?.x),py=Number(other?.point?.y);
+          if(px>=candidate.left-8&&px<=candidate.right+8&&py>=candidate.top-8&&py<=candidate.bottom+8)score+=500;
+        }
+        if(score<bestScore){bestScore=score;best=candidate;bestSlot=slot}
+        slot+=1;
+      }
+    }
+    if(best){
+      label.setAttribute('x',best.x.toFixed(1));label.setAttribute('y',best.y.toFixed(1));label.setAttribute('text-anchor',best.anchor);
+      label.dataset.labelSlotV228=String(bestSlot);label.dataset.labelCollisionScoreV228=bestScore.toFixed(2);
+      occupied.push(best);placements.push({...best,driverId:String(entry.vehicle?.id||''),score:bestScore});
+    }
+  }
+  return placements;
+}
+function countLabelOverlapsV228(placements=[]){
+  let pairs=0;
+  for(let i=0;i<placements.length;i++)for(let j=i+1;j<placements.length;j++)if(rectOverlapAreaV228(placements[i],placements[j])>0)pairs+=1;
+  return pairs;
+}
+function qaDriverLabelCollisionV228(){
+  const svgNS='http://www.w3.org/2000/svg',synthetic=[];
+  for(let i=0;i<10;i++){
+    const marker=document.createElementNS(svgNS,'g'),label=document.createElementNS(svgNS,'text');
+    label.setAttribute('class','car-label');label.textContent='D'+String(i+1).padStart(2,'0');marker.appendChild(label);
+    synthetic.push({vehicle:{id:'qa-'+i},marker,point:{x:500+(i%2)*2,y:300+(i%3)*2}});
+  }
+  const placements=layoutRaceVehicleLabelsV228(synthetic);
+  const syntheticOverlapPairs=countLabelOverlapsV228(placements);
+  const liveLabels=[...document.querySelectorAll('.f1-racing-race-vehicle-v189 .car-label')];
+  const assigned=liveLabels.filter(label=>label.dataset.labelSlotV228!==undefined).length;
+  return {syntheticCount:placements.length,syntheticOverlapPairs,liveLabels:liveLabels.length,assigned,allPass:placements.length===10&&syntheticOverlapPairs===0};
+}
 function lineOffsetMetersV197(vehicle){
   const track=activeRaceSnapshotV187?.track;
   const width=Math.max(4,Number(track?.geometry?.trackWidthMeters)||14);
@@ -2058,12 +2120,7 @@ function renderRaceVehiclesV189(){
     marker.dataset.battleState=String(vehicle.battleState||'FOLLOWING');
     rendered.push({vehicle,marker,point});
   });
-  rendered.forEach((entry,index)=>{
-    const nearby=rendered.slice(0,index).filter(other=>Math.hypot(other.point.x-entry.point.x,other.point.y-entry.point.y)<34).length;
-    const slot=nearby%8,angle=(-Math.PI/2)+(Math.PI*2*slot/8),radius=22+Math.floor(nearby/8)*12;
-    const label=entry.marker.querySelector('.car-label');
-    if(label){label.setAttribute('x',(Math.cos(angle)*radius).toFixed(1));label.setAttribute('y',(Math.sin(angle)*radius).toFixed(1));label.setAttribute('text-anchor',Math.cos(angle)<-.25?'end':Math.cos(angle)>.25?'start':'middle')}
-  });
+  layoutRaceVehicleLabelsV228(rendered);
   updateAutoRaceCameraV216(false);
   return true;
 }
@@ -4267,6 +4324,8 @@ window.__mwsF1RacingV226=VERSION226;
 window.mwsF1ResetCommentaryCadenceV227=resetCommentaryCadenceV227;
 window.mwsF1QaCommentaryCadenceV227=qaCommentaryCadenceV227;
 window.__mwsF1RacingV227=VERSION227;
+window.mwsF1QaDriverLabelCollisionV228=qaDriverLabelCollisionV228;
+window.__mwsF1RacingV228=VERSION228;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
