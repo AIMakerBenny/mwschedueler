@@ -8,7 +8,7 @@ export function runPhase206F1PitStrategyAudit(){
   const diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  if(!/recovery=[K-Z][0-9]+&phase=(?:20[6-9]|21[0-9])/.test(index))issues.push('Phase 206+ asset cache missing');
+  if(!/recovery=[K-Z][0-9]+&phase=(?:20[6-9]|21[0-9]|22[0-9])/.test(index))issues.push('Phase 206+ asset cache missing');
   for(const token of [
     "const VERSION206='phase206-pit-strategy-ai';",
     "const PIT_STRATEGIES_V206=Object.freeze(['NONE','BOX_NOW','UNDERCUT','OVERCUT','GO_LONG','COVER_UNDERCUT']);",
