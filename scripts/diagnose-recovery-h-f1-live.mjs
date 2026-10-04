@@ -182,6 +182,8 @@ try{
     const commentaryQa=window.mwsF1QaRaceCommentaryV219?.();
     assert(commentaryQa?.allPass===true&&Number(commentaryQa?.entries)>=1,'Phase 219 commentary engine did not produce a live entry: '+JSON.stringify(commentaryQa));
     assert(document.getElementById('f1RacingCommentaryLogV188')?.textContent?.includes('경기가 시작됐습니다.'),'Phase 219 race-start commentary missing');
+    const narrativeQa=window.mwsF1QaRaceNarrativeV222?.();
+    assert(narrativeQa?.allPass===true,'Phase 222 commentary flow QA failed: '+JSON.stringify(narrativeQa));
 
     const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
     assert(workspace,'Race workspace missing');
@@ -312,6 +314,8 @@ try{
     const diverseTracksQa=window.mwsF1QaDiverseTrackCatalogV220?.();
     assert(diverseTracksQa?.allPass===true&&Number(diverseTracksQa?.trackCount)>=7,'Phase 220 diverse track catalog failed: '+JSON.stringify(diverseTracksQa));
     assert(Number(diverseTracksQa?.pathShapes)===7&&Number(diverseTracksQa?.archetypes)>=6,'Phase 220 track silhouettes/archetypes are not diverse: '+JSON.stringify(diverseTracksQa));
+    const trackProfileQa=window.mwsF1QaTrackProfileUiV223?.();
+    assert(trackProfileQa?.allPass===true&&Number(trackProfileQa?.trackCount)>=7,'Phase 223 track profile UI data failed: '+JSON.stringify(trackProfileQa));
     const markerQa=window.mwsF1QaTrackMarkersV211?.();
     assert(markerQa?.trackCount>=3&&markerQa?.allPass===true,'Phase 211 marker integration failed: '+JSON.stringify(markerQa));
     const raceMarkerText=String(document.getElementById('f1RacingRaceAnnotationsRecoveryB')?.textContent||'');
