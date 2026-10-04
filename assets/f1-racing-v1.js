@@ -58,6 +58,7 @@ const VERSION228='phase228-driver-label-collision-avoidance';
 const VERSION229='phase229-camera-director-stability';
 const VERSION230='phase230-commentary-event-order-integrity';
 const VERSION231='phase231-production-verifier-future-safe';
+const VERSION232='phase232-driver-marker-number-identity';
 const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitchMs:1800,urgentBattleGapSeconds:0.55,focusDeadbandSvg:3,zoomDeadband:0.025});
 const COMMENTARY_CADENCE_V227=Object.freeze({flowGapMs:5500,strategyGapMs:3000,battleGapMs:1600,windowMs:60000,maxNarrativePerWindow:18});
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
@@ -1871,6 +1872,10 @@ function createRaceVehiclesV189(snapshot){
     return syncVehicleRaceMetricsV190(vehicle,snapshot.track);
   });
 }
+function driverNumberV232(vehicle,index=0){
+  const grid=Number(vehicle?.driver?.gridPosition);
+  return String(Number.isFinite(grid)&&grid>0?Math.floor(grid):Math.max(1,Number(index)+1));
+}
 function ensureRaceVehicleMarkerV189(vehicle,index){
   const layer=document.getElementById('f1RacingRaceVehicleLayerV188');
   if(!layer)return null;
@@ -1880,11 +1885,14 @@ function ensureRaceVehicleMarkerV189(vehicle,index){
   if(!marker){
     marker=svgNodeV183('g',{id:safeId,class:'f1-racing-race-vehicle-v189','data-driver-id':vehicle.id,'data-grid':index+1,'data-driver-color':color});
     marker.style.setProperty('--f1-driver-color',color);
-    marker.append(svgNodeV183('circle',{class:'car-halo',cx:0,cy:0,r:18}),svgNodeV183('circle',{class:'car-ring',cx:0,cy:0,r:10}),svgNodeV183('circle',{class:'car-core',cx:0,cy:0,r:5}));
+    marker.append(svgNodeV183('circle',{class:'car-halo',cx:0,cy:0,r:18}),svgNodeV183('circle',{class:'car-ring',cx:0,cy:0,r:10}),svgNodeV183('circle',{class:'car-core',cx:0,cy:0,r:7}));
+    const number=svgNodeV183('text',{class:'car-number-v232',x:0,y:2.7,'text-anchor':'middle'});number.textContent=driverNumberV232(vehicle,index);marker.appendChild(number);
     const label=svgNodeV183('text',{class:'car-label',x:15,y:-12});label.textContent=driverCodeV188(vehicle.driver);marker.appendChild(label);layer.appendChild(marker);
   }else{
     marker.dataset.driverColor=color;marker.style.setProperty('--f1-driver-color',color);
+    const number=marker.querySelector('.car-number-v232');if(number)number.textContent=driverNumberV232(vehicle,index);
   }
+  marker.dataset.driverNumberV232=driverNumberV232(vehicle,index);
   vehicle.marker=marker;vehicle.driverColorV216=color;return marker;
 }
 function rectOverlapAreaV228(a,b){
@@ -3141,6 +3149,16 @@ function qaCameraDirectorStabilityV229(){
     allPass:cfg.candidateHoldMs>=500&&cfg.minSwitchMs>=1500&&cfg.urgentBattleGapSeconds<0.7&&cfg.focusDeadbandSvg>0&&cfg.zoomDeadband>0
   };
 }
+function qaDriverMarkerIdentityV232(){
+  const samples=Array.from({length:12},(_,index)=>driverNumberV232({driver:{gridPosition:index+1}},index));
+  const markers=[...document.querySelectorAll('.f1-racing-race-vehicle-v189')];
+  const liveNumbers=markers.map(marker=>String(marker.dataset.driverNumberV232||marker.querySelector('.car-number-v232')?.textContent||'')).filter(Boolean);
+  return {
+    sampleCount:samples.length,sampleUnique:new Set(samples).size,
+    liveMarkerCount:markers.length,liveNumberCount:liveNumbers.length,liveUnique:new Set(liveNumbers).size,
+    allPass:new Set(samples).size===samples.length&&samples.every((value,index)=>value===String(index+1))&&markers.every(marker=>Boolean(marker.querySelector('.car-number-v232')))
+  };
+}
 function qaDriverMarkerCameraV216(){
   const paletteUnique=new Set(DRIVER_COLORS_V216).size===DRIVER_COLORS_V216.length;
   const controls=ensureRaceCameraControlsV216();
@@ -4384,6 +4402,8 @@ window.__mwsF1RacingV229=VERSION229;
 window.mwsF1QaCommentaryEventOrderV230=qaCommentaryEventOrderV230;
 window.__mwsF1RacingV230=VERSION230;
 window.__mwsF1RacingV231=VERSION231;
+window.mwsF1QaDriverMarkerIdentityV232=qaDriverMarkerIdentityV232;
+window.__mwsF1RacingV232=VERSION232;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
