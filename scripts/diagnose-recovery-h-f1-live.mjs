@@ -1,0 +1,326 @@
+import {spawn,spawnSync} from 'node:child_process';
+import {mkdtempSync,rmSync} from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+const BASE=process.env.MWS_RECOVERY_H_BASE||'https://mawang-scheduler.majoku.workers.dev';
+const candidates=['google-chrome','google-chrome-stable','chromium','chromium-browser'];
+let chrome='';
+for(const candidate of candidates){
+  const found=spawnSync('which',[candidate],{encoding:'utf8'});
+  if(found.status===0&&found.stdout.trim()){chrome=found.stdout.trim();break}
+}
+if(!chrome)throw new Error('Recovery H live browser QA requires Chrome/Chromium');
+
+const profile=mkdtempSync(path.join(os.tmpdir(),'mws-recovery-h-'));
+const port=9444;
+const child=spawn(chrome,[
+  '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
+  '--disable-background-networking','--disable-default-apps','--disable-extensions',
+  `--remote-debugging-port=${port}`,`--user-data-dir=${profile}`,
+  '--window-size=1920,1080','about:blank'
+],{stdio:'ignore'});
+
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function json(url,init){
+  const response=await fetch(url,init);
+  if(!response.ok)throw new Error(`HTTP ${response.status}: ${url}`);
+  return response.json();
+}
+async function waitDebugger(){
+  let last;
+  for(let i=0;i<100;i++){
+    try{return await json(`http://127.0.0.1:${port}/json/version`)}
+    catch(error){last=error;await sleep(120)}
+  }
+  throw last||new Error('Chrome DevTools endpoint did not start');
+}
+class Cdp{
+  constructor(url){this.nextId=1;this.pending=new Map();this.listeners=new Map();this.ws=new WebSocket(url)}
+  async open(){
+    if(this.ws.readyState!==WebSocket.OPEN)await new Promise((resolve,reject)=>{
+      this.ws.addEventListener('open',resolve,{once:true});
+      this.ws.addEventListener('error',reject,{once:true});
+    });
+    this.ws.addEventListener('message',event=>{
+      const message=JSON.parse(String(event.data));
+      if(message.id){
+        const pending=this.pending.get(message.id);if(!pending)return;
+        this.pending.delete(message.id);
+        if(message.error)pending.reject(new Error(message.error.message||JSON.stringify(message.error)));
+        else pending.resolve(message.result);
+        return;
+      }
+      for(const listener of this.listeners.get(message.method)||[])listener(message.params||{});
+    });
+  }
+  send(method,params={}){
+    const id=this.nextId++;
+    return new Promise((resolve,reject)=>{
+      this.pending.set(id,{resolve,reject});
+      this.ws.send(JSON.stringify({id,method,params}));
+    });
+  }
+  once(method,timeout=20000){
+    return new Promise((resolve,reject)=>{
+      const timer=setTimeout(()=>reject(new Error(`Timeout waiting for ${method}`)),timeout);
+      const fn=params=>{
+        clearTimeout(timer);
+        this.listeners.set(method,(this.listeners.get(method)||[]).filter(x=>x!==fn));
+        resolve(params);
+      };
+      this.listeners.set(method,[...(this.listeners.get(method)||[]),fn]);
+    });
+  }
+  close(){try{this.ws.close()}catch(_){}}
+}
+async function evaluate(cdp,expression,label){
+  const result=await cdp.send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});
+  if(result.exceptionDetails)throw new Error(label+' browser exception: '+(result.exceptionDetails.exception?.description||result.exceptionDetails.text||'unknown'));
+  return result.result?.value;
+}
+
+let cdp;
+try{
+  await waitDebugger();
+  const pages=await json(`http://127.0.0.1:${port}/json`);
+  const page=pages.find(row=>row.type==='page');
+  if(!page?.webSocketDebuggerUrl)throw new Error('No debuggable Chrome page');
+  cdp=new Cdp(page.webSocketDebuggerUrl);
+  await cdp.open();
+  await cdp.send('Page.enable');
+  await cdp.send('Runtime.enable');
+  await cdp.send('Emulation.setDeviceMetricsOverride',{width:1920,height:1080,deviceScaleFactor:1,mobile:false});
+
+  const loaded=cdp.once('Page.loadEventFired',30000);
+  await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1=${Date.now()}`});
+  await loaded;
+  await sleep(1800);
+
+  const baseline=await evaluate(cdp,`(async()=>{
+    const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+    const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    const assert=(condition,message)=>{if(!condition)throw new Error(message)};
+    window.__recoveryHErrors=[];
+    window.addEventListener('error',event=>window.__recoveryHErrors.push('error:'+String(event.message||event.error||'')));
+    window.addEventListener('unhandledrejection',event=>window.__recoveryHErrors.push('rejection:'+String(event.reason||'')));
+
+    const gate=document.getElementById('mwsAccessGate');
+    if(gate)gate.style.setProperty('display','none','important');
+    document.body.classList.remove('mws-gated');
+    document.body.dataset.resolution='fhd';
+    document.body.dataset.deviceMode='pc';
+    try{window.dispatchEvent(new Event('mws:app-ready'))}catch(_){}
+    await sleep(2200);
+
+    const section=document.getElementById('gameF1Racing');
+    assert(section,'F1 section missing');
+    document.querySelectorAll('.section').forEach(node=>node.classList.toggle('active',node===section));
+
+    assert(typeof window.mwsRenderF1RacingV180==='function','F1 renderer missing');
+    let contacts=typeof window.mwsGetF1ContactsV181==='function'?window.mwsGetF1ContactsV181():[];
+    let synthetic=false;
+    if(!Array.isArray(contacts)||contacts.length<2){
+      synthetic=true;
+      contacts=[
+        {id:'recovery-h-alpha',name:'Recovery H Alpha',image:'',labels:['QA']},
+        {id:'recovery-h-bravo',name:'Recovery H Bravo',image:'',labels:['QA']},
+        {id:'recovery-h-charlie',name:'Recovery H Charlie',image:'',labels:['QA']}
+      ];
+      window.mwsGetF1ContactsV181=()=>contacts;
+    }
+    window.mwsRenderF1RacingV180();
+    await raf();
+
+    document.getElementById('f1RacingClearDriversV181')?.click();
+    await raf();
+
+    const tracks=window.mwsF1GetTrackCatalogV186?.()||[];
+    assert(tracks.length>=3,'Expected at least 3 F1 tracks, found '+tracks.length);
+    const targetTrack=tracks[1]||tracks[0];
+    assert(window.mwsF1SelectTrackV186?.(targetTrack.id)===true,'Could not select QA track');
+    const driverIds=contacts.slice(0,2).map(row=>String(row.id));
+    for(const id of driverIds)window.mwsF1ToggleDriverV181?.(id);
+    await raf();
+
+    const selected=window.mwsF1GetSelectedContactIdsV181?.()||[];
+    assert(selected.length>=2,'Participant selection did not reach 2 drivers');
+    assert(String(window.mwsF1GetActiveTrackV182?.()?.id||'')===String(targetTrack.id),'Selected track not active');
+
+    const setupLine=document.querySelector('#f1RacingTrackAnnotationsV183 [data-f1-start-finish="1"]');
+    const setupStripe=setupLine?.querySelector('.finish-stripe');
+    assert(setupLine&&setupStripe,'Setup Start / Finish line missing');
+    const setupLength=Math.hypot(
+      Number(setupStripe.getAttribute('x2'))-Number(setupStripe.getAttribute('x1')),
+      Number(setupStripe.getAttribute('y2'))-Number(setupStripe.getAttribute('y1'))
+    );
+    assert(setupLength>20,'Setup Start / Finish line too short');
+
+    assert(window.mwsF1StartRaceFromSetupV187?.()===true,'Race start failed');
+    await sleep(1900);
+    await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='RACE','Race did not reach RACE state');
+
+    const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
+    assert(workspace,'Race workspace missing');
+    const panelIds=['timing','track','commentary','radio','speed'];
+    for(const id of panelIds)assert(document.querySelector('[data-f1-workspace-panel="'+id+'"]'),'Workspace panel missing: '+id);
+
+    const visible=panelIds.filter(id=>{
+      const panel=document.querySelector('[data-f1-workspace-panel="'+id+'"]');
+      return panel&&!panel.hidden&&getComputedStyle(panel).display!=='none';
+    });
+    assert(visible.includes('timing')&&visible.includes('track')&&visible.includes('commentary')&&visible.includes('radio'),'Default visible workspace panels incorrect: '+visible.join(','));
+    assert(!visible.includes('speed'),'Speed Trap should start as inactive tab');
+
+    const wr=workspace.getBoundingClientRect();
+    const timing=document.querySelector('[data-f1-workspace-panel="timing"]').getBoundingClientRect();
+    const track=document.querySelector('[data-f1-workspace-panel="track"]').getBoundingClientRect();
+    const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]').getBoundingClientRect();
+    const radio=document.querySelector('[data-f1-workspace-panel="radio"]').getBoundingClientRect();
+    const coverage=(timing.width*timing.height+track.width*track.height+commentary.width*commentary.height+radio.width*radio.height)/Math.max(1,wr.width*wr.height);
+    assert(wr.width>1000&&wr.height>500,'Workspace geometry too small');
+    assert(timing.width>wr.width*.9,'Live Timing is not full-width');
+    assert(track.width*track.height>commentary.width*commentary.height*1.6,'Track Map is not dominant in default layout');
+    assert(coverage>.68,'Workspace visible coverage too low: '+coverage.toFixed(3));
+
+    const raceLine=document.querySelector('#f1RacingRaceAnnotationsRecoveryB [data-f1-start-finish="1"]');
+    const raceStripe=raceLine?.querySelector('.finish-stripe');
+    assert(raceLine&&raceStripe,'Race Start / Finish line missing');
+
+    section.scrollIntoView({block:'start'});
+    await raf();
+
+    window.__recoveryHContext={driverIds,targetTrackId:String(targetTrack.id),synthetic};
+    return {
+      tracks:tracks.map(row=>row.id),
+      targetTrackId:String(targetTrack.id),
+      selected,
+      setupLineLength:Number(setupLength.toFixed(2)),
+      visible,
+      workspace:{width:Number(wr.width.toFixed(1)),height:Number(wr.height.toFixed(1)),coverage:Number(coverage.toFixed(3))},
+      panelAreas:{timing:Math.round(timing.width*timing.height),track:Math.round(track.width*track.height),commentary:Math.round(commentary.width*commentary.height),radio:Math.round(radio.width*radio.height)},
+      state:window.mwsF1GetScreenStateV185?.(),
+      errors:[...(window.__recoveryHErrors||[])]
+    };
+  })()`,'Recovery H baseline');
+
+  const shot=await cdp.send('Page.captureScreenshot',{format:'jpeg',quality:58,fromSurface:true,captureBeyondViewport:false});
+  console.log('RECOVERY_H_SCREENSHOT_JPEG_BASE64='+String(shot.data||''));
+
+  const interaction=await evaluate(cdp,`(async()=>{
+    const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+    const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    const assert=(condition,message)=>{if(!condition)throw new Error(message)};
+    const context=window.__recoveryHContext||{};
+    const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
+    assert(workspace,'Workspace disappeared');
+
+    const pause=document.getElementById('f1RacingPauseV192');
+    assert(pause,'Pause button missing');
+    pause.click();await raf();
+    assert(window.mwsF1GetSimulationClockV192?.().paused===true,'Pause button did not pause simulation');
+    pause.click();await raf();
+    assert(window.mwsF1GetSimulationClockV192?.().paused===false,'Pause button did not resume simulation');
+
+    const trackPanel=document.querySelector('[data-f1-workspace-panel="track"]');
+    const maxButton=trackPanel?.querySelector('[data-f1-workspace-action="maximize"]');
+    assert(maxButton,'Track maximize control missing');
+    maxButton.click();await raf();
+    assert(workspace.dataset.maximized==='track'&&trackPanel.classList.contains('is-maximized'),'Track maximize failed');
+    trackPanel.querySelector('[data-f1-workspace-action="maximize"]')?.click();await raf();
+    assert(!workspace.dataset.maximized,'Track restore failed');
+
+    const beforeResize=window.mwsF1GetWorkspaceLayoutRecoveryE?.().panels.track;
+    const resize=trackPanel.querySelector('[data-f1-workspace-resize]');
+    assert(resize,'Track resize handle missing');
+    const rr=resize.getBoundingClientRect();
+    resize.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,clientX:rr.left+5,clientY:rr.top+5,pointerId:1,buttons:1}));
+    window.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,clientX:rr.left+Math.max(100,workspace.clientWidth/12),clientY:rr.top+80,pointerId:1,buttons:1}));
+    window.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,clientX:rr.left+Math.max(100,workspace.clientWidth/12),clientY:rr.top+80,pointerId:1,buttons:0}));
+    await raf();
+    const afterResize=window.mwsF1GetWorkspaceLayoutRecoveryE?.().panels.track;
+    assert(afterResize.w!==beforeResize.w||afterResize.h!==beforeResize.h,'Pointer resize did not change Track panel size');
+
+    document.getElementById('f1RacingWorkspaceResetRecoveryE')?.click();await raf();
+    const speedTab=document.querySelector('[data-f1-workspace-tab="speed"]');
+    assert(speedTab,'Speed Trap tab control missing');
+    speedTab.click();await raf();
+    const speedPanel=document.querySelector('[data-f1-workspace-panel="speed"]');
+    const radioPanel=document.querySelector('[data-f1-workspace-panel="radio"]');
+    assert(!speedPanel.hidden&&radioPanel.hidden,'Tab switching Radio -> Speed Trap failed');
+
+    document.getElementById('f1RacingWorkspaceResetRecoveryE')?.click();await raf();
+    const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]');
+    const title=commentary?.querySelector('[data-f1-panel-drag="commentary"]');
+    assert(title,'Commentary drag handle missing');
+    const tr=title.getBoundingClientRect(),wr=workspace.getBoundingClientRect();
+    title.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,clientX:tr.left+40,clientY:tr.top+12,pointerId:2,buttons:1}));
+    window.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,clientX:wr.left+3,clientY:wr.top+wr.height*.45,pointerId:2,buttons:1}));
+    window.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,clientX:wr.left+3,clientY:wr.top+wr.height*.45,pointerId:2,buttons:0}));
+    await raf();
+    const docked=window.mwsF1GetWorkspaceLayoutRecoveryE?.().panels.commentary;
+    assert(docked.x===0&&docked.w===6,'Pointer drag did not dock Commentary left');
+
+    document.getElementById('f1RacingWorkspaceResetRecoveryE')?.click();await raf();
+    const persisted=window.mwsGetF1RacingSettingsRecoveryD?.()?.workspaceLayout;
+    assert(Number(persisted?.version)>=2,'Workspace layout did not persist');
+
+    document.getElementById('f1RacingRaceCancelRecoveryC')?.click();await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Race cancel did not return to Setup');
+    const afterCancelIds=window.mwsF1GetSelectedContactIdsV181?.()||[];
+    assert(context.driverIds?.every(id=>afterCancelIds.includes(id)),'Participants were lost after race cancel');
+    assert(String(window.mwsF1GetActiveTrackV182?.()?.id||'')===String(context.targetTrackId),'Track was lost after race cancel');
+
+    assert(window.mwsF1StartRaceFromSetupV187?.()===true,'Second race start failed');
+    await sleep(1900);await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='RACE','Second race did not reach RACE');
+
+    assert(window.mwsF1ForceFinishRecoveryG?.()===true,'Force finish QA hook failed');
+    await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='FINISHING','Finish did not enter FINISHING');
+    document.getElementById('f1RacingShowPodiumRecoveryG')?.click();await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='PODIUM','Podium button failed');
+    const podiumCount=document.querySelectorAll('#f1RacingPodiumRowsRecoveryG .f1-racing-podium-place-recovery-g').length;
+    assert(podiumCount>=2,'Podium did not render expected drivers');
+    document.getElementById('f1RacingPodiumResultRecoveryG')?.click();await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='RESULT','Result button failed');
+    const resultCount=document.querySelectorAll('#f1RacingResultRowsRecoveryG .f1-racing-result-row-recovery-g').length;
+    assert(resultCount>=2,'Final result rows missing');
+
+    document.getElementById('f1RacingResultNewRaceRecoveryG')?.click();
+    await sleep(1900);await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='RACE','Same-settings new race did not reach RACE');
+    const afterNewRaceIds=window.mwsF1GetSelectedContactIdsV181?.()||[];
+    assert(context.driverIds?.every(id=>afterNewRaceIds.includes(id)),'Participants were lost for same-settings new race');
+    assert(String(window.mwsF1GetActiveTrackV182?.()?.id||'')===String(context.targetTrackId),'Track was lost for same-settings new race');
+
+    document.getElementById('f1RacingRaceCancelRecoveryC')?.click();await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Final cancel did not return to Setup');
+
+    const errors=[...(window.__recoveryHErrors||[])];
+    assert(errors.length===0,'Browser errors during Recovery H: '+errors.join(' | '));
+
+    return {
+      pausedAndResumed:true,
+      resizeChanged:{before:beforeResize,after:afterResize},
+      dockedCommentary:docked,
+      tabSwitch:true,
+      persistenceVersion:Number(persisted?.version)||0,
+      cancelPreservedDrivers:afterCancelIds,
+      podiumCount,
+      resultCount,
+      newRacePreservedDrivers:afterNewRaceIds,
+      finalState:window.mwsF1GetScreenStateV185?.(),
+      errors
+    };
+  })()`,'Recovery H interaction');
+
+  const result={phase:'recovery-h',name:'f1-live-browser-qa',baseline,interaction,pass:true};
+  console.log(JSON.stringify({recoveryHLiveBrowser:result},null,2));
+}finally{
+  cdp?.close();
+  child.kill('SIGTERM');
+  await sleep(150);
+  try{rmSync(profile,{recursive:true,force:true})}catch(_){}
+}

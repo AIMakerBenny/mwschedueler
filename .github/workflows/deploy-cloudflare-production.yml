@@ -141,6 +141,8 @@ jobs:
           node --check scripts/run-recovery-e-f1-workspace-audit.mjs
           node --check scripts/run-recovery-f-f1-workspace-default-audit.mjs
           node --check scripts/run-recovery-g-f1-lifecycle-audit.mjs
+          node --check scripts/diagnose-recovery-h-f1-live.mjs
+          node --check scripts/run-recovery-h-f1-live-qa-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-v1.js
@@ -163,6 +165,9 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
+
+      - name: Recovery H F1 live browser QA
+        run: node scripts/diagnose-recovery-h-f1-live.mjs
 
       - name: Phase 154 live layout geometry
         run: node scripts/diagnose-phase154-live-layout.mjs
