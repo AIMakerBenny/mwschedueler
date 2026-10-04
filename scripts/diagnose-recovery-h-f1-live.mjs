@@ -335,6 +335,10 @@ try{
     const diverseTracksQa=window.mwsF1QaDiverseTrackCatalogV220?.();
     assert(diverseTracksQa?.allPass===true&&Number(diverseTracksQa?.trackCount)>=7,'Phase 220 diverse track catalog failed: '+JSON.stringify(diverseTracksQa));
     assert(Number(diverseTracksQa?.pathShapes)===7&&Number(diverseTracksQa?.archetypes)>=6,'Phase 220 track silhouettes/archetypes are not diverse: '+JSON.stringify(diverseTracksQa));
+    const trackRuntimeProfileQa=window.mwsF1QaTrackRuntimeProfilesV234?.();
+    assert(trackRuntimeProfileQa?.allPass===true&&Number(trackRuntimeProfileQa?.uniqueProfiles)>=5,'Phase 234 track runtime profile QA failed: '+JSON.stringify(trackRuntimeProfileQa));
+    const activeSnapshotProfile=window.mwsF1GetActiveRaceSnapshotV187?.()?.track?.runtimeProfile;
+    assert(activeSnapshotProfile&&Number(activeSnapshotProfile.overtakeFactor)>0&&String(activeSnapshotProfile.archetype||''),'Phase 234 active race snapshot profile missing: '+JSON.stringify(activeSnapshotProfile));
     const trackSilhouetteQa=window.mwsF1QaTrackSilhouetteCardsV233?.();
     assert(trackSilhouetteQa?.allPass===true&&Number(trackSilhouetteQa?.trackCount)>=7&&Number(trackSilhouetteQa?.uniqueCardPaths)===Number(trackSilhouetteQa?.trackCount),'Phase 233 track silhouette card QA failed: '+JSON.stringify(trackSilhouetteQa));
     const trackProfileQa=window.mwsF1QaTrackProfileUiV223?.();
