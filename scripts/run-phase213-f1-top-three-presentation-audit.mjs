@@ -4,7 +4,7 @@ export function runPhase213F1TopThreePresentationAudit(){
   const issues=[],warnings=[];
   const index=fs.readFileSync('index.html','utf8');
   const racing=fs.readFileSync('assets/f1-racing-v1.js','utf8');
-  if(!index.includes('recovery=N1&phase=213'))issues.push('Phase 213 asset cache missing');
+  const phase=Number(index.match(/recovery=N1&phase=(\d+)/)?.[1]||0);if(phase<213)issues.push('Phase 213 asset cache missing');
   for(const token of [
     "const VERSION213='phase213-top-three-presentation';",
     'function ensureTopThreeStylesV213(){',
