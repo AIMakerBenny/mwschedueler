@@ -1274,7 +1274,7 @@ jobs:
           grep -Fq 'function qaLongRunGapBalanceV209(){' /tmp/f1-racing-phase209.js
           grep -Fq 'window.mwsF1QaLongRunGapBalanceV209=qaLongRunGapBalanceV209;' /tmp/f1-racing-phase209.js
           echo '[phase210] F1 multi-track integration'
-          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=N1&phase=(210|21[1-9]|22[0-9])' /tmp/index.html
+          node -e "const s=require('fs').readFileSync('/tmp/index.html','utf8');const m=s.match(/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=N1&phase=(\d+)/);if(!m||Number(m[1])<210)process.exit(1)"
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV210=VERSION210;' > /tmp/f1-racing-phase210.js
           node --check /tmp/f1-racing-phase210.js
           grep -Fq 'function qaMultiTrackIntegrationV210(){' /tmp/f1-racing-phase210.js
