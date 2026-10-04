@@ -8,12 +8,9 @@ export function runRecoveryFF1WorkspaceDefaultAudit(){
   const css=fs.readFileSync('assets/f1-racing-v1.css','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  for(const token of [
-    'assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196&recovery=F1',
-    'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=F1',
-    'POSITION · GAP · TELEMETRY',
-    'LIVE EVENT FEED'
-  ])if(!index.includes(token))issues.push('Recovery F HTML/cache missing: '+token);
+  if(!/assets\/f1-racing-v1\.css\?v=1\.0\.0-phase180-shell&p=196&recovery=[F-Z][0-9]+/.test(index))issues.push('Recovery F+ CSS asset cache missing');
+  if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[F-Z][0-9]+/.test(index))issues.push('Recovery F+ JS asset cache missing');
+  for(const token of ['POSITION · GAP · TELEMETRY','LIVE EVENT FEED'])if(!index.includes(token))issues.push('Recovery F HTML label missing: '+token);
 
   for(const token of [
     'version:2,',

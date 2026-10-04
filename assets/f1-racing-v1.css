@@ -435,3 +435,32 @@
 @media(max-width:1100px){
   #f1RacingViewRaceV185 .f1-racing-race-header-v188{grid-template-columns:1fr!important}
 }
+
+
+/* Recovery G: complete race lifecycle screens */
+.f1-racing-lifecycle-view-recovery-g{padding:18px 10px}
+.f1-racing-lifecycle-card-recovery-g{
+  width:min(760px,100%);margin:20px auto;padding:22px;border:1px solid #252d39;border-radius:8px;
+  background:linear-gradient(180deg,#0d1219,#070a0f);box-shadow:0 18px 50px rgba(0,0,0,.28)
+}
+.f1-racing-lifecycle-card-recovery-g.wide{width:min(920px,100%)}
+.f1-racing-lifecycle-card-recovery-g>strong{display:block;margin:7px 0 4px;color:#f8fafc;font:950 24px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.04em}
+.f1-racing-lifecycle-card-recovery-g>p{margin:0 0 18px;color:#8895a8;font-size:11px}
+.f1-racing-lifecycle-actions-recovery-g{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+.f1-racing-podium-recovery-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:18px}
+.f1-racing-podium-place-recovery-g{display:flex;flex-direction:column;gap:5px;padding:15px;border:1px solid #293342;border-radius:6px;background:#0b1017}
+.f1-racing-podium-place-recovery-g span{color:#7f8ea3;font:900 11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-podium-place-recovery-g strong{color:#f8fafc;font-size:16px}
+.f1-racing-podium-place-recovery-g small{color:#6f7d91}
+.f1-racing-podium-place-recovery-g.p1{border-color:#8f7934;background:linear-gradient(180deg,rgba(114,92,25,.25),#0b1017)}
+.f1-racing-result-list-recovery-g{display:grid;gap:4px;margin-top:16px;max-height:52vh;overflow:auto}
+.f1-racing-result-row-recovery-g{display:grid;grid-template-columns:58px minmax(160px,1fr) minmax(150px,.7fr) 100px;align-items:center;gap:8px;min-height:42px;padding:6px 10px;border:1px solid #202733;background:#090d12}
+.f1-racing-result-row-recovery-g>span{color:#e8edf5;font:900 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-result-row-recovery-g>strong{color:#f8fafc}
+.f1-racing-result-row-recovery-g>small{color:#6f7d91}
+.f1-racing-result-row-recovery-g>time{color:#9fb0c7;text-align:right;font:750 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-lifecycle-empty-recovery-g{padding:20px;color:#64748b;text-align:center}
+@media(max-width:700px){
+  .f1-racing-podium-recovery-g{grid-template-columns:1fr}
+  .f1-racing-result-row-recovery-g{grid-template-columns:48px 1fr}.f1-racing-result-row-recovery-g>small,.f1-racing-result-row-recovery-g>time{grid-column:2;text-align:left}
+}

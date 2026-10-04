@@ -53,6 +53,8 @@ const previewStateV184={running:false,progress:0,lastTimestamp:0,rafId:0,lapDura
 let activeRaceSnapshotV187=null;
 let raceTransitionTimerV187=0;
 let raceGeometryV193=null;
+let activeRaceResultRecoveryG=null;
+let finishCounterRecoveryG=0;
 const raceMotionV189={running:false,suspended:false,rafId:0,lastTimestamp:0,vehicles:[],snapshotCreatedAt:'',hudAccumulatorMs:0};
 const simClockV192={
   paused:false,
@@ -342,6 +344,8 @@ function startRaceFromSetupV187(){
   const snapshot=buildRaceSnapshotV187();
   if(!snapshot)return false;
   resetRaceMotionV189();
+  activeRaceResultRecoveryG=null;
+  finishCounterRecoveryG=0;
   activeRaceSnapshotV187=snapshot;
   populateTransitionV187(snapshot);
   if(!setScreenStateV185('TRANSITION'))return false;
@@ -365,6 +369,8 @@ function cancelRaceToSetupRecoveryC(){
   }
   resetRaceMotionV189();
   activeRaceSnapshotV187=null;
+  activeRaceResultRecoveryG=null;
+  finishCounterRecoveryG=0;
   setScreenStateV185('SETUP',{force:true});
   renderTrackChoicesV186();
   updateTrackFoundationStatusV182();
@@ -829,6 +835,7 @@ function createRaceVehiclesV189(snapshot){
       batteryMJ:ENERGY_CONFIG_V201.usableCapacityMJ,energyTargetMJ:ENERGY_CONFIG_V201.usableCapacityMJ,energyDeployKW:0,energyRechargeKW:0,energyDeployMJ:0,energyHarvestMJ:0,energyHarvestLapMJ:0,energyLapNumber:1,boostActive:false,boostPowerKW:0,boostEnergyMJ:0,attackOpportunityScore:0,defenceThreatScore:0,powerUnitFactor:1,
       activeAeroMode:'CORNER',activeAeroTarget:'CORNER',activeAeroTransitionMs:0,overtakeZoneId:'',overtakeGapSeconds:Infinity,overtakeEligible:false,overtakeActive:false,overtakeRechargeAllowanceActive:false,
       tyreCompound:'MEDIUM',tyreStartRaceProgress:startOffset,tyreAgeLaps:0,tyreWear:0,tyreSurfaceTemp:.5,tyreCarcassTemp:.5,tyreGrip:TYRE_COMPOUNDS_V203.MEDIUM.gripBias,tyreThermalDeg:0,tyreGraining:0,tyreFlatSpot:0,tyreStrategyPressure:0,
+      finished:false,finishPosition:0,finishedAtSimMs:0,
       marker:null
     };
     return syncVehicleRaceMetricsV190(vehicle,snapshot.track);
@@ -1139,14 +1146,178 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   syncVehicleRaceMetricsV190(vehicle,track);
   return true;
 }
+
+function markRaceFinishersRecoveryG(){
+  const snapshot=activeRaceSnapshotV187;
+  if(!snapshot||f1ScreenStateV185!=='RACE')return false;
+  const totalLaps=Math.max(1,Number(snapshot.totalLaps)||DEFAULT_TOTAL_LAPS_V190);
+  let changed=false;
+  const newlyFinished=raceMotionV189.vehicles
+    .filter(vehicle=>!vehicle.finished&&Number(vehicle.raceProgress)>=totalLaps)
+    .sort((a,b)=>Number(b.raceProgress)-Number(a.raceProgress));
+  for(const vehicle of newlyFinished){
+    finishCounterRecoveryG+=1;
+    vehicle.finished=true;
+    vehicle.finishPosition=finishCounterRecoveryG;
+    vehicle.finishedAtSimMs=simClockV192.simTimeMs;
+    vehicle.travel=Math.max(0,totalLaps-Number(vehicle.startOffset||0));
+    vehicle.speedKph=0;
+    vehicle.targetSpeedKph=0;
+    vehicle.throttle=0;
+    vehicle.brake=0;
+    syncVehicleRaceMetricsV190(vehicle,snapshot.track);
+    changed=true;
+  }
+  return changed;
+}
+function buildRaceResultRecoveryG(){
+  const snapshot=activeRaceSnapshotV187;
+  if(!snapshot)return null;
+  const rows=[...raceMotionV189.vehicles]
+    .sort((a,b)=>{
+      const ap=Number(a.finishPosition)||9999,bp=Number(b.finishPosition)||9999;
+      if(ap!==bp)return ap-bp;
+      return Number(b.raceProgress||0)-Number(a.raceProgress||0);
+    })
+    .map((vehicle,index)=>Object.freeze({
+      position:Number(vehicle.finishPosition)||index+1,
+      contactId:String(vehicle.id||''),
+      name:String(vehicle.driver?.name||'Driver'),
+      gridPosition:Number(vehicle.driver?.gridPosition)||index+1,
+      finishedAtSimMs:Number(vehicle.finishedAtSimMs)||simClockV192.simTimeMs,
+      tyreCompound:String(vehicle.tyreCompound||'MEDIUM'),
+      raceProgress:Number(vehicle.raceProgress)||0
+    }));
+  return Object.freeze({
+    trackId:String(snapshot.trackId||''),
+    trackName:String(snapshot.track?.name||'Track'),
+    totalLaps:Number(snapshot.totalLaps)||DEFAULT_TOTAL_LAPS_V190,
+    simTimeMs:simClockV192.simTimeMs,
+    rows:Object.freeze(rows)
+  });
+}
+function formatRaceTimeRecoveryG(ms){
+  const total=Math.max(0,Math.floor(Number(ms)||0));
+  const minutes=Math.floor(total/60000);
+  const seconds=Math.floor((total%60000)/1000);
+  const millis=total%1000;
+  return String(minutes).padStart(2,'0')+':'+String(seconds).padStart(2,'0')+'.'+String(millis).padStart(3,'0');
+}
+function renderFinishingRecoveryG(){
+  const result=activeRaceResultRecoveryG;
+  const title=document.getElementById('f1RacingFinishingTitleRecoveryG');
+  const summary=document.getElementById('f1RacingFinishingSummaryRecoveryG');
+  const winner=result?.rows?.[0];
+  if(title)title.textContent=winner?winner.name+' 우승':'RACE FINISHED';
+  if(summary)summary.textContent=result
+    ?result.trackName+' · '+result.totalLaps+' LAPS · '+result.rows.length+' DRIVERS · '+formatRaceTimeRecoveryG(result.simTimeMs)
+    :'결과를 정리하고 있습니다.';
+}
+function renderPodiumRecoveryG(){
+  const box=document.getElementById('f1RacingPodiumRowsRecoveryG');
+  if(!box)return false;
+  const rows=(activeRaceResultRecoveryG?.rows||[]).slice(0,3);
+  box.innerHTML=rows.length?rows.map((row,index)=>
+    '<div class="f1-racing-podium-place-recovery-g p'+(index+1)+'"><span>P'+(index+1)+'</span><strong>'+escapeHtml(row.name)+'</strong><small>GRID P'+String(row.gridPosition).padStart(2,'0')+'</small></div>'
+  ).join(''):'<div class="f1-racing-lifecycle-empty-recovery-g">Podium 결과가 없습니다.</div>';
+  return true;
+}
+function renderResultRecoveryG(){
+  const title=document.getElementById('f1RacingResultTitleRecoveryG');
+  const list=document.getElementById('f1RacingResultRowsRecoveryG');
+  const result=activeRaceResultRecoveryG;
+  if(title)title.textContent=result?result.trackName+' · FINAL RESULT':'FINAL RESULT';
+  if(!list)return false;
+  list.innerHTML=result?.rows?.length?result.rows.map(row=>
+    '<div class="f1-racing-result-row-recovery-g"><span>P'+String(row.position).padStart(2,'0')+'</span><strong>'+escapeHtml(row.name)+'</strong><small>GRID P'+String(row.gridPosition).padStart(2,'0')+' · '+escapeHtml(row.tyreCompound)+'</small><time>'+formatRaceTimeRecoveryG(row.finishedAtSimMs)+'</time></div>'
+  ).join(''):'<div class="f1-racing-lifecycle-empty-recovery-g">결과가 없습니다.</div>';
+  return true;
+}
+function finishRaceRecoveryG(force=false){
+  if(f1ScreenStateV185!=='RACE'||!activeRaceSnapshotV187||!raceMotionV189.vehicles.length)return false;
+  if(force){
+    const unfinished=computeRaceStandingsV191().map(row=>row.vehicle).filter(vehicle=>!vehicle.finished);
+    for(const vehicle of unfinished){
+      finishCounterRecoveryG+=1;
+      vehicle.finished=true;
+      vehicle.finishPosition=finishCounterRecoveryG;
+      vehicle.finishedAtSimMs=simClockV192.simTimeMs;
+    }
+  }else{
+    markRaceFinishersRecoveryG();
+    if(raceMotionV189.vehicles.some(vehicle=>!vehicle.finished))return false;
+  }
+  updateRaceProgressHudV190();
+  pauseRaceMotionV189(false);
+  simClockV192.paused=true;
+  activeRaceResultRecoveryG=buildRaceResultRecoveryG();
+  if(!setScreenStateV185('FINISHING'))setScreenStateV185('FINISHING',{force:true});
+  renderFinishingRecoveryG();
+  const chip=document.getElementById('f1RacingPhaseChipV180');
+  if(chip)chip.textContent='FINISHING';
+  return true;
+}
+function updateRaceLifecycleRecoveryG(){
+  if(f1ScreenStateV185!=='RACE')return false;
+  markRaceFinishersRecoveryG();
+  const allFinished=raceMotionV189.vehicles.length>0&&raceMotionV189.vehicles.every(vehicle=>vehicle.finished);
+  if(allFinished)return finishRaceRecoveryG(false);
+  return false;
+}
+function showPodiumRecoveryG(){
+  if(f1ScreenStateV185!=='FINISHING')return false;
+  if(!setScreenStateV185('PODIUM'))return false;
+  renderPodiumRecoveryG();
+  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='PODIUM';
+  return true;
+}
+function showResultRecoveryG(){
+  if(!['FINISHING','PODIUM'].includes(f1ScreenStateV185))return false;
+  if(!setScreenStateV185('RESULT'))return false;
+  renderResultRecoveryG();
+  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='RESULT';
+  return true;
+}
+function returnToSetupRecoveryG(){
+  if(raceTransitionTimerV187){clearTimeout(raceTransitionTimerV187);raceTransitionTimerV187=0}
+  resetRaceMotionV189();
+  activeRaceSnapshotV187=null;
+  activeRaceResultRecoveryG=null;
+  finishCounterRecoveryG=0;
+  setScreenStateV185('SETUP',{force:true});
+  renderContacts();renderSelected();renderTrackChoicesV186();updateTrackFoundationStatusV182();renderTrackMapV183();syncSetupActionV187();
+  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='RACE SETUP';
+  return true;
+}
+function newRaceSameSettingsRecoveryG(){
+  returnToSetupRecoveryG();
+  return startRaceFromSetupV187();
+}
+function bindRaceLifecycleRecoveryG(){
+  const handlers={
+    f1RacingShowPodiumRecoveryG:showPodiumRecoveryG,
+    f1RacingFinishingResultRecoveryG:showResultRecoveryG,
+    f1RacingPodiumResultRecoveryG:showResultRecoveryG,
+    f1RacingPodiumSetupRecoveryG:returnToSetupRecoveryG,
+    f1RacingResultNewRaceRecoveryG:newRaceSameSettingsRecoveryG,
+    f1RacingResultSetupRecoveryG:returnToSetupRecoveryG
+  };
+  for(const [id,handler] of Object.entries(handlers)){
+    const button=document.getElementById(id);
+    if(button&&!button.dataset.f1LifecycleBound){button.dataset.f1LifecycleBound='1';button.addEventListener('click',handler)}
+  }
+}
+
 function simulateRaceStepV192(stepMs){
   if(simClockV192.paused||!(stepMs>0))return false;
   simClockV192.simTimeMs+=stepMs;
   updateSlipstreamStatesV198();
   updateDirtyAirStatesV199();
   for(const vehicle of raceMotionV189.vehicles){
+    if(vehicle.finished)continue;
     simulateVehicleDynamicsV196(vehicle,stepMs);
   }
+  if(updateRaceLifecycleRecoveryG())return false;
   return true;
 }
 function raceFrameV189(timestamp){
@@ -1158,12 +1329,14 @@ function raceFrameV189(timestamp){
     simClockV192.accumulatorMs+=delta*simClockV192.timeScale;
     let steps=0;
     while(simClockV192.accumulatorMs>=simClockV192.fixedStepMs&&steps<simClockV192.maxStepsPerFrame){
-      simulateRaceStepV192(simClockV192.fixedStepMs);
+      const continued=simulateRaceStepV192(simClockV192.fixedStepMs);
       simClockV192.accumulatorMs-=simClockV192.fixedStepMs;
       steps+=1;
+      if(!continued||!raceMotionV189.running)break;
     }
     if(steps>=simClockV192.maxStepsPerFrame)simClockV192.accumulatorMs=0;
   }
+  if(!raceMotionV189.running)return;
   renderRaceVehiclesV189();
   raceMotionV189.hudAccumulatorMs+=delta;
   if(raceMotionV189.hudAccumulatorMs>=100){raceMotionV189.hudAccumulatorMs=0;updateRaceProgressHudV190()}
@@ -1692,6 +1865,7 @@ function render(){
   renderTrackChoicesV186();
   bindRaceProceedV187();
   bindRaceCancelRecoveryC();
+  bindRaceLifecycleRecoveryG();
   installF1WorkspaceRecoveryE();
   updateTrackFoundationStatusV182();
   renderTrackMapV183();
@@ -1863,6 +2037,13 @@ window.mwsF1TabGroupRecoveryE=workspaceTabGroupRecoveryE;
 window.mwsF1ToggleWorkspacePanelRecoveryE=workspaceTogglePanelRecoveryE;
 window.mwsF1ToggleWorkspaceMaximizeRecoveryE=workspaceToggleMaximizeRecoveryE;
 window.mwsF1GetWorkspaceLayoutRecoveryE=function(){return workspaceLayoutRecoveryE?cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE):null};
+window.mwsF1FinishRaceRecoveryG=finishRaceRecoveryG;
+window.mwsF1ForceFinishRecoveryG=function(){return finishRaceRecoveryG(true)};
+window.mwsF1ShowPodiumRecoveryG=showPodiumRecoveryG;
+window.mwsF1ShowResultRecoveryG=showResultRecoveryG;
+window.mwsF1ReturnToSetupRecoveryG=returnToSetupRecoveryG;
+window.mwsF1NewRaceSameSettingsRecoveryG=newRaceSameSettingsRecoveryG;
+window.mwsF1GetRaceResultRecoveryG=function(){return activeRaceResultRecoveryG};
 window.mwsF1RenderRaceControlV188=renderRaceControlV188;
 window.mwsF1StartRaceMotionV189=startRaceMotionV189;
 window.mwsF1PauseRaceMotionV189=pauseRaceMotionV189;
@@ -1936,6 +2117,7 @@ window.__mwsF1RecoveryC='race-cancel-setup-return-v1';
 window.__mwsF1RecoveryD='persistent-roster-track-settings-v1';
 window.__mwsF1RecoveryE='premiere-workspace-foundation-v1';
 window.__mwsF1RecoveryF='race-workspace-default-redesign-v1';
+window.__mwsF1RecoveryG='complete-race-lifecycle-v1';
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){
