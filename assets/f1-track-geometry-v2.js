@@ -68,11 +68,32 @@ function detectCorners(track,samples){
   });
 }
 function normalizeProgress(value){return ((Number(value)||0)%1+1)%1}
-function targetKphAtProgress(track,progress){
+function zoneAtProgressRecoveryL(track,progress){
   const p=normalizeProgress(progress);
   const zones=Array.isArray(track?.zones)?track.zones:[];
-  const zone=zones.find(z=>p>=Number(z.start)&&p<Number(z.end))||zones[zones.length-1];
+  return zones.find(z=>p>=Number(z.start)&&p<Number(z.end))||zones[zones.length-1]||null;
+}
+function targetKphAtProgress(track,progress){
+  const zone=zoneAtProgressRecoveryL(track,progress);
   return Math.max(1,Number(zone?.targetKph)||180);
+}
+function curvatureSeverityRecoveryL(track,curvature){
+  const threshold=Math.max(0.00001,Number(track?.geometry?.cornerCurvatureThreshold)||0.0018);
+  const abs=Math.abs(Number(curvature)||0);
+  const soft=threshold*.45;
+  const full=threshold*2.35;
+  const linear=Math.max(0,Math.min(1,(abs-soft)/Math.max(0.000001,full-soft)));
+  return linear*linear*(3-2*linear);
+}
+function curvatureWeightedZoneLimitRecoveryL(track,sample,maxKph){
+  const zone=zoneAtProgressRecoveryL(track,sample?.progress);
+  const zoneTarget=Math.min(maxKph,Math.max(1,Number(zone?.targetKph)||maxKph));
+  const type=String(zone?.type||'').toLowerCase();
+  if(type==='straight')return maxKph;
+  const severity=curvatureSeverityRecoveryL(track,sample?.curvatureRadPerMeter);
+  const typeFloor=type==='fastcorner'?.18:type==='mediumcorner'?.28:type==='slowcorner'?.42:type==='hairpin'?.62:.24;
+  const influence=Math.max(typeFloor*severity,severity);
+  return maxKph-(maxKph-zoneTarget)*influence;
 }
 function classifyCornerBySpeed(apexKph){
   if(apexKph<110)return 'hairpin';
@@ -152,12 +173,12 @@ function buildSpeedProfile(track,geometry){
   const maxKph=Math.max(100,Number(track?.geometry?.maxStraightKph)||335);
   const iterations=Math.max(2,Math.round(Number(track?.geometry?.speedProfileIterations)||6));
   const raw=samples.map(function(sample){
-    const zoneLimit=Math.min(maxKph,targetKphAtProgress(track,sample.progress));
+    const zoneLimit=curvatureWeightedZoneLimitRecoveryL(track,sample,maxKph);
     const curvature=Math.abs(Number(sample.curvatureRadPerMeter)||0);
     const curveLimit=curvature>0.00001
       ?Math.min(maxKph,Math.max(70,Math.sqrt(25/curvature)*3.6))
       :maxKph;
-    return Math.min(zoneLimit,curveLimit);
+    return Math.min(maxKph,zoneLimit,curveLimit);
   });
   const speed=raw.slice();
   for(let pass=0;pass<iterations;pass++){
@@ -229,7 +250,10 @@ root.mwsBuildF1CornerPhasesV194=buildCornerPhases;
 root.mwsF1CornerPhaseAtProgressV194=cornerPhaseAtProgress;
 root.mwsBuildF1SpeedProfileV195=buildSpeedProfile;
 root.mwsF1SpeedTargetAtProgressV195=speedTargetAtProgress;
+root.mwsF1CurvatureSeverityRecoveryL=curvatureSeverityRecoveryL;
+root.mwsF1CurvatureWeightedZoneLimitRecoveryL=curvatureWeightedZoneLimitRecoveryL;
 root.__mwsF1TrackGeometryV193='svg-sampling-curvature-corners-v1';
 root.__mwsF1TrackCornerPhasesV194='approach-brake-turn-apex-exit-v1';
 root.__mwsF1SpeedProfileV195='backward-brake-forward-accel-v1';
+root.__mwsF1RecoveryL='curvature-weighted-speed-v1';
 })(typeof window!=='undefined'?window:globalThis);
