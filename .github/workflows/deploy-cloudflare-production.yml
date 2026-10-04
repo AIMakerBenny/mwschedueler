@@ -1200,14 +1200,14 @@ jobs:
           grep -Fq 'function updateDrivingIncidentsV204(vehicle,stepMs,phase,controls={}){' /tmp/f1-racing-phase204.js
           grep -Fq 'window.mwsF1ForceDrivingIncidentV204=forceDrivingIncidentV204;' /tmp/f1-racing-phase204.js
           echo '[phase205] F1 pit lane stop and tyre warmup'
-          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[K-Z][0-9]+&phase=(20[5-9]|21[0-9])' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[K-Z][0-9]+&phase=(20[5-9]|21[0-9]|22[0-9])' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV205=VERSION205;' > /tmp/f1-racing-phase205.js
           node --check /tmp/f1-racing-phase205.js
           grep -Fq 'function updatePitPostStepV205(vehicle,previousRaceProgress){' /tmp/f1-racing-phase205.js
           grep -Fq 'window.mwsF1RequestPitStopV205=requestPitStopV205;' /tmp/f1-racing-phase205.js
           grep -Fq 'window.mwsF1QaPitCycleV205=qaPitCycleV205;' /tmp/f1-racing-phase205.js
           echo '[phase206] F1 pit strategy AI'
-          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[K-Z][0-9]+&phase=(20[6-9]|21[0-9])' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[K-Z][0-9]+&phase=(20[6-9]|21[0-9]|22[0-9])' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV206=VERSION206;' > /tmp/f1-racing-phase206.js
           node --check /tmp/f1-racing-phase206.js
           grep -Fq 'function evaluatePitStrategyV206(vehicle,options={}){' /tmp/f1-racing-phase206.js
@@ -1224,14 +1224,14 @@ jobs:
           grep -Fq 'function curvatureWeightedZoneLimitRecoveryL(track,sample,maxKph){' /tmp/f1-track-geometry-recovery-l.js
           echo '[recovery-m] F1 explicit grid start gate'
           grep -Fq 'id="f1RacingGridStartRecoveryM"' /tmp/index.html
-          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[M-Z][0-9]+&phase=(20[6-9]|21[0-9])' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[M-Z][0-9]+&phase=(20[6-9]|21[0-9]|22[0-9])' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RecoveryM='explicit-grid-start-v1';" > /tmp/f1-racing-recovery-m.js
           node --check /tmp/f1-racing-recovery-m.js
           grep -Fq "setScreenStateV185('GRID');" /tmp/f1-racing-recovery-m.js
           grep -Fq 'function confirmRaceStartRecoveryM(){' /tmp/f1-racing-recovery-m.js
           grep -Fq "start.addEventListener('click',confirmRaceStartRecoveryM);" /tmp/f1-racing-recovery-m.js
           echo '[recovery-n] F1 left center right triple dock'
-          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=N1&phase=(20[6-9]|21[0-9])' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=N1&phase=(20[6-9]|21[0-9]|22[0-9])' /tmp/index.html
           grep -Eq 'assets/f1-racing-v1\.css\?v=1\.0\.0-phase180-shell&p=196&recovery=N1&phase=(20[4-9]|21[0-9]|2[2-9][0-9])' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';" > /tmp/f1-racing-recovery-n.js
           retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '/* Recovery N: left / center / right triple-column dock preview */' > /tmp/f1-racing-recovery-n.css
@@ -1241,7 +1241,7 @@ jobs:
           grep -Fq "if(rx>=.46&&rx<=.54)return {kind:'dock',zone:'center'};" /tmp/f1-racing-recovery-n.js
           grep -Fq '.f1-racing-workspace-dock-guide-recovery-e.center{left:33.3333%!important' /tmp/f1-racing-recovery-n.css
           echo '[phase207] F1 traffic slipstream battle and defence'
-          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=N1&phase=(20[7-9]|21[0-9])' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=N1&phase=(20[7-9]|21[0-9]|22[0-9])' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV207=VERSION207;' > /tmp/f1-racing-phase207.js
           node --check /tmp/f1-racing-phase207.js
           grep -Fq 'function updateTrafficAndDefenceV207(){' /tmp/f1-racing-phase207.js
@@ -1249,7 +1249,7 @@ jobs:
           grep -Fq "ahead.racingLineMode='DEFENSIVE_INSIDE'" /tmp/f1-racing-phase207.js
           grep -Fq 'window.mwsF1QaTrafficV207=qaTrafficV207;' /tmp/f1-racing-phase207.js
           echo '[phase208] F1 pass state machine'
-          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=N1&phase=(20[8-9]|21[0-9])' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=N1&phase=(20[8-9]|21[0-9]|22[0-9])' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV208=VERSION208;' > /tmp/f1-racing-phase208.js
           node --check /tmp/f1-racing-phase208.js
           grep -Fq 'function nextPassStateV208(current,ctx={}){' /tmp/f1-racing-phase208.js
