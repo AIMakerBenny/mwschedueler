@@ -163,6 +163,9 @@ jobs:
           node --check scripts/run-phase218-f1-korean-interface-audit.mjs
           node --check scripts/run-phase219-f1-race-commentary-audit.mjs
           node --check scripts/run-phase220-f1-diverse-track-catalog-audit.mjs
+          node --check scripts/run-phase221-f1-production-verification-audit.mjs
+          node --check scripts/run-phase222-f1-race-commentary-flow-audit.mjs
+          node --check scripts/run-phase223-f1-track-profile-ui-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -1268,8 +1271,8 @@ jobs:
           node --check /tmp/f1-racing-phase210.js
           grep -Fq 'function qaMultiTrackIntegrationV210(){' /tmp/f1-racing-phase210.js
           grep -Fq 'window.mwsF1QaMultiTrackIntegrationV210=qaMultiTrackIntegrationV210;' /tmp/f1-racing-phase210.js
-          echo '[phase211-220] F1 markers timing podium flags camera workspace localization commentary tracks'
-          grep -Fq 'window.__mwsF1RacingV220=VERSION220;' /tmp/f1-racing-phase210.js
+          echo '[phase211-223] F1 markers timing podium flags camera workspace localization commentary tracks'
+          grep -Fq 'window.__mwsF1RacingV223=VERSION223;' /tmp/f1-racing-phase210.js
           grep -Fq 'window.mwsF1QaTrackMarkersV211=qaTrackMarkersV211;' /tmp/f1-racing-phase210.js
           grep -Fq 'window.mwsF1QaLiveTimingFlipV212=qaLiveTimingFlipV212;' /tmp/f1-racing-phase210.js
           grep -Fq 'window.mwsF1QaTopThreePresentationV213=qaTopThreePresentationV213;' /tmp/f1-racing-phase210.js
@@ -1278,6 +1281,8 @@ jobs:
           grep -Fq "pause.textContent=simClockV192.paused?'재개':'일시정지';" /tmp/f1-racing-phase210.js
           grep -Fq 'window.mwsF1QaRaceCommentaryV219=qaRaceCommentaryV219;' /tmp/f1-racing-phase210.js
           grep -Fq 'window.mwsF1QaDiverseTrackCatalogV220=qaDiverseTrackCatalogV220;' /tmp/f1-racing-phase210.js
+          grep -Fq 'window.mwsF1QaRaceNarrativeV222=qaRaceNarrativeV222;' /tmp/f1-racing-phase210.js
+          grep -Fq 'window.mwsF1QaTrackProfileUiV223=qaTrackProfileUiV223;' /tmp/f1-racing-phase210.js
           echo '[phase216] F1 driver markers and interactive camera'
           grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=N1&phase=(21[6-9]|2[2-9][0-9])' /tmp/index.html
           grep -Eq 'assets/f1-racing-v1\.css\?v=1\.0\.0-phase180-shell&p=196&recovery=N1&phase=(21[6-9]|2[2-9][0-9])' /tmp/index.html
