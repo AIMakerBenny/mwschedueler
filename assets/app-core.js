@@ -2049,7 +2049,25 @@ window.selectMiniDate=ds=>{
 }
 document.getElementById('evDateDisplay').onclick=()=>openDatePicker('evDate');
 
-/* 모바일식 시간 휠 */
+/* 모바일식 시간 휠 - Phase 178: 시간/분 순환 휠 */
+const circularWheelCopiesV178=7;
+const circularWheelMiddleCopyV178=Math.floor(circularWheelCopiesV178/2);
+function isCircularTimeWheelV178(kind){return kind==='hour'||kind==='minute'}
+function timeWheelValuesV178(kind){
+  if(kind==='hour')return Array.from({length:12},(_,i)=>i+1);
+  if(kind==='minute')return Array.from({length:12},(_,i)=>i*5);
+  return kind==='ampm'?['오전','오후']:[];
+}
+function circularWheelStepValueV178(kind,value,direction){
+  const values=timeWheelValuesV178(kind);
+  if(!values.length)return value;
+  const numeric=kind==='hour'||kind==='minute';
+  const current=numeric?Number(value):value;
+  const index=values.findIndex(v=>String(v)===String(current));
+  if(index<0)return values[0];
+  const delta=direction>0?1:-1;
+  return values[(index+delta+values.length)%values.length];
+}
 function openTimePicker(target){
   const current=document.getElementById(target).value;
   const raw=(!current||current==='TBD')?(target==='evEnd'?'22:00':'20:00'):current;
@@ -2059,34 +2077,88 @@ function openTimePicker(target){
   requestAnimationFrame(()=>{positionPopover(document.getElementById(target+'Display'),pop);centerSelectedWheels()});
 }
 function renderWheel(kind,values,formatter=x=>x){
-  const selected=timePickerState[kind];
-  return `<div class="wheel-column" data-kind="${kind}">${values.map(v=>`<div class="wheel-item ${v===selected?'selected':''}" data-value="${v}" onclick="pickWheel('${kind}','${v}')">${formatter(v)}</div>`).join('')}</div>`;
+  const selected=timePickerState[kind],circular=isCircularTimeWheelV178(kind);
+  const copies=circular?circularWheelCopiesV178:1;
+  let items='';
+  for(let copy=0;copy<copies;copy++){
+    items+=values.map(v=>{
+      const selectedHere=String(v)===String(selected)&&(!circular||copy===circularWheelMiddleCopyV178);
+      return `<div class="wheel-item ${selectedHere?'selected':''}" data-value="${v}" data-wheel-copy="${copy}" onclick="pickWheel('${kind}','${v}')">${formatter(v)}</div>`;
+    }).join('');
+  }
+  return `<div class="wheel-column" data-kind="${kind}" data-circular="${circular?'1':'0'}">${items}</div>`;
 }
 function renderTimePicker(){
-  const pop=document.getElementById('timePickerPopover'),mins=Array.from({length:12},(_,i)=>i*5);
+  const pop=document.getElementById('timePickerPopover'),mins=timeWheelValuesV178('minute');
   const worldMode=timePickerState.target==='worldBaseTime';
   pop.innerHTML=`<div class="picker-head">
       <strong>${worldMode?'한국 기준 시간':'시간 선택'}</strong>
-      <span class="time-picker-scroll-note">휠 한 번에 한 칸</span>
+      <span class="time-picker-scroll-note">시간·분 순환 휠</span>
     </div>
     <div class="wheel-wrap"><div class="wheel-guide"></div>
       ${renderWheel('ampm',['오전','오후'])}
-      ${renderWheel('hour',Array.from({length:12},(_,i)=>i+1),v=>String(v).padStart(2,'0'))}
+      ${renderWheel('hour',timeWheelValuesV178('hour'),v=>String(v).padStart(2,'0'))}
       ${renderWheel('minute',mins,v=>String(v).padStart(2,'0'))}
     </div>
     <div class="space" style="margin-top:10px">
-      ${worldMode?'<span></span>':'<button class="secondary" type="button" onclick="setTimeTBD()">미확정</button>'}
+      ${worldMode?'<span></span>':'<button class="secondary" type="button" onclick="setTimeTBD()">미지정</button>'}
       <div class="row"><span class="muted small" id="timePreview"></span><button class="primary" type="button" onclick="confirmWheelTime()">확인</button></div>
     </div>`;
   updateTimePreview();attachWheelScroll();
 }
+function wheelCenterTopV178(col,item){return item.offsetTop-(col.clientHeight-item.offsetHeight)/2}
+function closestWheelItemV178(col){
+  const center=col.scrollTop+col.clientHeight/2,items=[...col.querySelectorAll('.wheel-item')];
+  let best=null,bestD=Infinity;
+  items.forEach(it=>{
+    const c=it.offsetTop+it.offsetHeight/2,d=Math.abs(c-center);
+    if(d<bestD){bestD=d;best=it}
+  });
+  return best;
+}
+function middleWheelItemV178(col,value){
+  const items=[...col.querySelectorAll('.wheel-item')].filter(it=>String(it.dataset.value)===String(value));
+  if(col.dataset.circular==='1')return items.find(it=>Number(it.dataset.wheelCopy)===circularWheelMiddleCopyV178)||items[0]||null;
+  return items[0]||null;
+}
+function selectWheelDomItemV178(col,item,scroll=true){
+  if(!col||!item)return;
+  const kind=col.dataset.kind;
+  let value=item.dataset.value;
+  if(kind==='hour'||kind==='minute')value=Number(value);
+  timePickerState[kind]=value;
+  col.querySelectorAll('.wheel-item').forEach(x=>x.classList.toggle('selected',x===item));
+  if(scroll)col.scrollTo({top:wheelCenterTopV178(col,item),behavior:'auto'});
+  updateTimePreview();
+}
+function rebaseCircularWheelV178(col,item){
+  if(!col||!item||col.dataset.circular!=='1')return;
+  if(Number(item.dataset.wheelCopy)===circularWheelMiddleCopyV178)return;
+  const target=middleWheelItemV178(col,item.dataset.value);
+  if(!target||target===item)return;
+  col.dataset.wheelRebasing='1';
+  col.querySelectorAll('.wheel-item').forEach(x=>x.classList.toggle('selected',x===target));
+  col.scrollTop=wheelCenterTopV178(col,target);
+  requestAnimationFrame(()=>{delete col.dataset.wheelRebasing});
+}
 function centerSelectedWheels(){
-  document.querySelectorAll('#timePickerPopover .wheel-column').forEach(col=>{const sel=col.querySelector('.selected');if(sel)col.scrollTop=sel.offsetTop-(col.clientHeight-sel.offsetHeight)/2});
+  document.querySelectorAll('#timePickerPopover .wheel-column').forEach(col=>{
+    const value=timePickerState[col.dataset.kind];
+    const sel=middleWheelItemV178(col,value)||col.querySelector('.selected');
+    if(sel){
+      col.querySelectorAll('.wheel-item').forEach(x=>x.classList.toggle('selected',x===sel));
+      col.scrollTop=wheelCenterTopV178(col,sel);
+    }
+  });
 }
 function setWheelSelection(kind,value,scroll=true){
-  if(kind==='hour'||kind==='minute')value=Number(value);timePickerState[kind]=value;
+  if(kind==='hour'||kind==='minute')value=Number(value);
+  timePickerState[kind]=value;
   const col=document.querySelector(`#timePickerPopover .wheel-column[data-kind="${kind}"]`);
-  if(col){col.querySelectorAll('.wheel-item').forEach(x=>x.classList.toggle('selected',String(x.dataset.value)===String(value)));const sel=col.querySelector('.selected');if(scroll&&sel)col.scrollTo({top:sel.offsetTop-(col.clientHeight-sel.offsetHeight)/2,behavior:'auto'})}
+  if(col){
+    const sel=middleWheelItemV178(col,value);
+    if(sel)selectWheelDomItemV178(col,sel,scroll);
+  }
   updateTimePreview();
 }
 window.pickWheel=(kind,value)=>setWheelSelection(kind,value,true)
@@ -2101,29 +2173,45 @@ function attachWheelScroll(){
       wheelLocked=true;
 
       const items=[...col.querySelectorAll('.wheel-item')];
-      let index=items.findIndex(it=>it.classList.contains('selected'));
+      let selected=col.querySelector('.wheel-item.selected')||closestWheelItemV178(col);
+      let index=items.indexOf(selected);
       if(index<0)index=0;
       const direction=e.deltaY>0?1:-1;
-      const next=Math.max(0,Math.min(items.length-1,index+direction));
-      if(next!==index)setWheelSelection(col.dataset.kind,items[next].dataset.value,true);
+
+      if(col.dataset.circular==='1'){
+        let next=items[index+direction];
+        if(!next){
+          const rebased=middleWheelItemV178(col,selected?.dataset.value);
+          if(rebased){
+            col.scrollTop=wheelCenterTopV178(col,rebased);
+            selected=rebased;index=items.indexOf(rebased);next=items[index+direction];
+          }
+        }
+        if(next){
+          selectWheelDomItemV178(col,next,true);
+          setTimeout(()=>rebaseCircularWheelV178(col,next),0);
+        }
+      }else{
+        const next=Math.max(0,Math.min(items.length-1,index+direction));
+        if(next!==index)selectWheelDomItemV178(col,items[next],true);
+      }
 
       setTimeout(()=>{wheelLocked=false},72);
     },{passive:false});
 
     col.onscroll=()=>{
+      if(col.dataset.wheelRebasing==='1')return;
       clearTimeout(wheelScrollTimers[col.dataset.kind]);
       wheelScrollTimers[col.dataset.kind]=setTimeout(()=>{
-        const center=col.scrollTop+col.clientHeight/2,items=[...col.querySelectorAll('.wheel-item')];
-        let best=null,bestD=Infinity;
-        items.forEach(it=>{
-          const c=it.offsetTop+it.offsetHeight/2,d=Math.abs(c-center);
-          if(d<bestD){bestD=d;best=it}
-        });
-        if(best)setWheelSelection(col.dataset.kind,best.dataset.value,false);
+        const best=closestWheelItemV178(col);
+        if(!best)return;
+        selectWheelDomItemV178(col,best,false);
+        rebaseCircularWheelV178(col,best);
       },110);
     };
   });
 }
+window.__mwsCircularTimeWheelV178='hour-minute-loop-all-shared-time-pickers';
 function updateTimePreview(){
   const el=document.getElementById('timePreview');if(el)el.textContent=`${timePickerState.ampm} ${String(timePickerState.hour).padStart(2,'0')}:${String(timePickerState.minute).padStart(2,'0')}`;
 }
@@ -2143,7 +2231,7 @@ window.setTimeTBD=()=>{
   const target=timePickerState.target;
   if(!target)return;
   document.getElementById(target).value='TBD';
-  document.querySelector('#'+target+'Display span').textContent='미확정';
+  document.querySelector('#'+target+'Display span').textContent='미지정';
   document.getElementById('timePickerPopover').classList.remove('open');
 }
 document.querySelectorAll('.time-trigger').forEach(b=>b.onclick=()=>openTimePicker(b.dataset.timeTarget));
@@ -2799,8 +2887,8 @@ function openEvent(id=null,date=null){
   const evDate=e?.date||date||ymd(new Date());document.getElementById('evDate').value=evDate;document.querySelector('#evDateDisplay span').textContent=formatDate(evDate);
   document.getElementById('evCategory').value=e?.categoryId||'';syncCategoryColor();
   if(e?.color){document.getElementById('evCategoryColor').value=e.color;document.getElementById('evCategoryColorSwatch').style.background=e.color;}
-  const start=e?.start||'20:00',end=e?.end||'22:00';document.getElementById('evStart').value=start;document.querySelector('#evStartDisplay span').textContent=formatTimeKorean(start);
-  document.getElementById('evEnd').value=end;document.querySelector('#evEndDisplay span').textContent=formatTimeKorean(end);
+  const start=e?(e.start||'TBD'):'TBD',end=e?(e.end||'TBD'):'TBD';document.getElementById('evStart').value=start;document.querySelector('#evStartDisplay span').textContent=start==='TBD'?'미지정':formatTimeKorean(start);
+  document.getElementById('evEnd').value=end;document.querySelector('#evEndDisplay span').textContent=end==='TBD'?'미지정':formatTimeKorean(end);
   const quickStartInput=document.getElementById('evDateTimeQuickStartV177');
   const quickEndInput=document.getElementById('evDateTimeQuickEndV177');
   const quickDateTimeStatus=document.getElementById('evDateTimeQuickStatusV149');
