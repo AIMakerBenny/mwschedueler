@@ -176,6 +176,7 @@ jobs:
           node --check scripts/run-phase231-f1-production-verifier-future-safe-audit.mjs
           node --check scripts/run-phase232-f1-driver-marker-identity-audit.mjs
           node --check scripts/run-phase233-f1-track-silhouette-cards-audit.mjs
+          node --check scripts/run-phase234-f1-track-runtime-profile-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
