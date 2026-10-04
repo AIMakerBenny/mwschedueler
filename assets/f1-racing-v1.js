@@ -43,6 +43,7 @@ const VERSION213='phase213-top-three-presentation';
 const VERSION214='phase214-race-control-flags';
 const VERSION215='phase215-backmarker-blue-flag';
 const VERSION216='phase216-driver-markers-camera';
+const VERSION217='phase217-compact-three-panel-workspace';
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
 const CAMERA_MODES_V216=Object.freeze(['AUTO','FULL','LEADER','BATTLE','MANUAL']);
 const raceCameraV216={mode:'AUTO',zoom:1.9,cx:500,cy:300,dragging:false,pointerId:null,lastX:0,lastY:0,initialized:false};
@@ -2614,20 +2615,16 @@ function bindRaceProceedV187(){
 const F1_WORKSPACE_PANEL_META_RECOVERY_E=Object.freeze({
   timing:Object.freeze({label:'LIVE TIMING',minW:4,minH:2}),
   track:Object.freeze({label:'TRACK MAP',minW:4,minH:4}),
-  commentary:Object.freeze({label:'RACE COMMENTARY',minW:3,minH:3}),
-  radio:Object.freeze({label:'TEAM RADIO',minW:3,minH:2}),
-  speed:Object.freeze({label:'SPEED TRAP',minW:3,minH:2})
+  commentary:Object.freeze({label:'RACE COMMENTARY',minW:3,minH:3})
 });
 const F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E=Object.freeze({
-  version:4,
+  version:5,
   panels:Object.freeze({
-    timing:Object.freeze({x:0,y:0,w:12,h:2,hidden:false,maximized:false,tabGroup:''}),
-    track:Object.freeze({x:0,y:2,w:7,h:6,hidden:false,maximized:false,tabGroup:''}),
-    commentary:Object.freeze({x:7,y:2,w:5,h:3,hidden:false,maximized:false,tabGroup:''}),
-    radio:Object.freeze({x:7,y:5,w:5,h:3,hidden:false,maximized:false,tabGroup:'race-side'}),
-    speed:Object.freeze({x:7,y:5,w:5,h:3,hidden:false,maximized:false,tabGroup:'race-side'})
+    track:Object.freeze({x:0,y:0,w:8,h:8,hidden:false,maximized:false,tabGroup:''}),
+    timing:Object.freeze({x:8,y:0,w:4,h:3,hidden:false,maximized:false,tabGroup:''}),
+    commentary:Object.freeze({x:8,y:3,w:4,h:5,hidden:false,maximized:false,tabGroup:''})
   }),
-  activeTabs:Object.freeze({'race-side':'radio'})
+  activeTabs:Object.freeze({})
 });
 let workspaceLayoutRecoveryE=null;
 let workspacePointerRecoveryE=null;
@@ -2761,13 +2758,13 @@ function workspaceOverlapPairsRecoveryI(layout=workspaceLayoutRecoveryE){
 }
 
 
-let workspaceRepairReportRecoveryK={repaired:false,reasons:[],version:4};
+let workspaceRepairReportRecoveryK={repaired:false,reasons:[],version:5};
 
 function workspaceRawIssuesRecoveryK(raw){
   const reasons=[];
   const candidate=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:null;
   if(!candidate){reasons.push('missing-layout');return reasons}
-  if(Number(candidate.version)<4)reasons.push('legacy-version');
+  if(Number(candidate.version)<5)reasons.push('legacy-version');
   const panels=candidate.panels&&typeof candidate.panels==='object'?candidate.panels:{};
   const rects=[];
   for(const id of Object.keys(F1_WORKSPACE_PANEL_META_RECOVERY_E)){
@@ -2843,8 +2840,8 @@ function normalizeWorkspaceLayoutRecoveryE(raw){
   const defaults=cloneWorkspaceLayoutRecoveryE(F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E);
   const candidate=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
   const rawIssues=workspaceRawIssuesRecoveryK(candidate);
-  const source=Number(candidate.version)>=3?candidate:{};
-  const result={version:4,panels:{},activeTabs:{}};
+  const source=Number(candidate.version)>=5?candidate:{};
+  const result={version:5,panels:{},activeTabs:{}};
   for(const id of Object.keys(F1_WORKSPACE_PANEL_META_RECOVERY_E)){
     const base=defaults.panels[id];
     const row=source.panels?.[id]&&typeof source.panels[id]==='object'?source.panels[id]:{};
@@ -2871,13 +2868,13 @@ function normalizeWorkspaceLayoutRecoveryE(raw){
   let overlaps=workspaceOverlapPairsRecoveryI(normalized);
   if(overlaps.length){
     const fallback=cloneWorkspaceLayoutRecoveryE(F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E);
-    fallback.version=4;
+    fallback.version=5;
     normalized=workspaceReflowRecoveryI(fallback);
     overlaps=workspaceOverlapPairsRecoveryI(normalized);
     rawIssues.push('fallback-default-layout');
   }
-  normalized.version=4;
-  workspaceRepairReportRecoveryK={repaired:rawIssues.length>0,reasons:[...new Set(rawIssues)],version:4,overlapCount:overlaps.length};
+  normalized.version=5;
+  workspaceRepairReportRecoveryK={repaired:rawIssues.length>0,reasons:[...new Set(rawIssues)],version:5,overlapCount:overlaps.length};
   return normalized;
 }
 function readWorkspaceLayoutRecoveryE(){
@@ -3324,7 +3321,7 @@ function installF1WorkspaceRecoveryE(){
     const toolbar=document.createElement('div');
     toolbar.id='f1RacingWorkspaceToolbarRecoveryE';
     toolbar.className='f1-racing-workspace-toolbar-recovery-e';
-    toolbar.innerHTML='<div class="f1-racing-workspace-toolbar-label-recovery-e"><span>WORKSPACE</span><small>Drag · Resize · Dock · Tab · Maximize</small></div><div id="f1RacingWorkspacePanelTogglesRecoveryE" class="f1-racing-workspace-panel-toggles-recovery-e"></div><button type="button" class="secondary small" id="f1RacingWorkspaceResetRecoveryE">Reset Layout</button>';
+    toolbar.innerHTML='<div id="f1RacingWorkspacePanelTogglesRecoveryE" class="f1-racing-workspace-panel-toggles-recovery-e"></div><button type="button" class="secondary small" id="f1RacingWorkspaceResetRecoveryE">레이아웃 초기화</button>';
     workspace=document.createElement('div');
     workspace.id='f1RacingWorkspaceRecoveryE';
     workspace.className='f1-racing-workspace-recovery-e';
@@ -3341,10 +3338,7 @@ function installF1WorkspaceRecoveryE(){
     const track=legacyGrid?.querySelector('.f1-racing-race-map-v188');
     const commentary=legacyGrid?.querySelector('.f1-racing-commentary-v188');
     const side=legacyGrid?.querySelector('.f1-racing-race-side-v188');
-    const sideSections=side?Array.from(side.querySelectorAll(':scope > section')):[];
-    const radio=sideSections.find(section=>section.querySelector('#f1RacingTeamRadioV188'))||null;
-    const speed=sideSections.find(section=>section.querySelector('#f1RacingSpeedTrapV188'))||null;
-    const pairs=[['timing',timing],['track',track],['commentary',commentary],['radio',radio],['speed',speed]];
+    const pairs=[['timing',timing],['track',track],['commentary',commentary]];
     for(const [id,panel] of pairs){
       if(panel){workspace.appendChild(panel);addWorkspacePanelChromeRecoveryE(panel,id)}
     }
@@ -3381,6 +3375,15 @@ function installF1WorkspaceRecoveryE(){
   return true;
 }
 
+function qaCompactWorkspaceV217(){
+  if(!workspaceLayoutRecoveryE)readWorkspaceLayoutRecoveryE();
+  const panelIds=Object.keys(F1_WORKSPACE_PANEL_META_RECOVERY_E);
+  const layout=workspaceLayoutRecoveryE||normalizeWorkspaceLayoutRecoveryE(F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E);
+  const expected=layout.panels.track?.x===0&&layout.panels.track?.w===8&&layout.panels.timing?.x===8&&layout.panels.timing?.y===0&&layout.panels.commentary?.x===8&&layout.panels.commentary?.y===3;
+  const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
+  const removed=workspace?!workspace.querySelector('[data-f1-workspace-panel="radio"],[data-f1-workspace-panel="speed"]'):true;
+  return {version:Number(layout.version)||0,panelIds,expectedDefault:expected,obsoletePanelsRemoved:removed,allPass:Number(layout.version)>=5&&panelIds.length===3&&panelIds.includes('track')&&panelIds.includes('timing')&&panelIds.includes('commentary')&&removed};
+}
 function readPersistedF1SettingsRecoveryD(){
   return typeof window.mwsGetF1RacingSettingsRecoveryD==='function'
     ?window.mwsGetF1RacingSettingsRecoveryD()
@@ -3433,7 +3436,7 @@ function render(){
   if(previewStateV184.running)stopPreviewV184(true);
   if(f1ScreenStateV185==='RACE'&&activeRaceSnapshotV187){renderRaceControlV188();startRaceMotionV189()}
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent=f1ScreenStateV185==='SETUP'?'RACE SETUP':'RACE CONTROL';
-  section.dataset.f1Runtime=VERSION216;
+  section.dataset.f1Runtime=VERSION217;
   return true;
 }
 function toggleDriver(id){
@@ -3696,6 +3699,7 @@ window.mwsF1SetRaceCameraModeV216=setRaceCameraModeV216;
 window.mwsF1GetRaceCameraStateV216=getRaceCameraStateV216;
 window.mwsF1UpdateAutoRaceCameraV216=updateAutoRaceCameraV216;
 window.mwsF1QaDriverMarkerCameraV216=qaDriverMarkerCameraV216;
+window.mwsF1QaCompactWorkspaceV217=qaCompactWorkspaceV217;
 window.mwsF1ErsNormalPowerLimitV201=ersNormalPowerLimitV201;
 window.mwsF1UpdateEnergySystemV201=updateEnergySystemV201;
 window.mwsF1GetEnergyStatesV201=getEnergyStatesV201;
@@ -3760,6 +3764,7 @@ window.__mwsF1RacingV213=VERSION213;
 window.__mwsF1RacingV214=VERSION214;
 window.__mwsF1RacingV215=VERSION215;
 window.__mwsF1RacingV216=VERSION216;
+window.__mwsF1RacingV217=VERSION217;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
