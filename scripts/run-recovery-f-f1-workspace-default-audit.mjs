@@ -13,7 +13,7 @@ export function runRecoveryFF1WorkspaceDefaultAudit(){
   for(const token of ['POSITION · GAP · TELEMETRY','LIVE EVENT FEED'])if(!index.includes(token))issues.push('Recovery F HTML label missing: '+token);
 
   for(const token of [
-    'version:3,',
+    'version:4,',
     "timing:Object.freeze({x:0,y:0,w:12,h:2",
     "track:Object.freeze({x:0,y:2,w:7,h:6",
     "commentary:Object.freeze({x:7,y:2,w:5,h:3",
