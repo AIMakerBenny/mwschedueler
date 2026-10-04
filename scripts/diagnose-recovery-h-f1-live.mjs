@@ -215,6 +215,28 @@ try{
     const context=window.__recoveryHContext||{};
     const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
     assert(workspace,'Workspace disappeared');
+    const domOverlapPairs=()=>{
+      const panels=Array.from(workspace.querySelectorAll('[data-f1-workspace-panel]')).filter(panel=>!panel.hidden&&getComputedStyle(panel).display!=='none');
+      const rows=[];
+      for(let i=0;i<panels.length;i++){
+        const a=panels[i].getBoundingClientRect();
+        for(let j=i+1;j<panels.length;j++){
+          const b=panels[j].getBoundingClientRect();
+          const width=Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left));
+          const height=Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
+          const area=width*height;
+          if(area>1)rows.push({a:panels[i].dataset.f1WorkspacePanel,b:panels[j].dataset.f1WorkspacePanel,area:Number(area.toFixed(2))});
+        }
+      }
+      return rows;
+    };
+    const assertNoDomOverlap=label=>{
+      const pairs=domOverlapPairs();
+      assert(pairs.length===0,label+' DOM panel overlap: '+JSON.stringify(pairs));
+      assert((window.mwsF1WorkspaceOverlapPairsRecoveryI?.()||[]).length===0,label+' grid overlap');
+      return pairs;
+    };
+    assertNoDomOverlap('baseline');
 
     const pause=document.getElementById('f1RacingPauseV192');
     assert(pause,'Pause button missing');
@@ -241,6 +263,7 @@ try{
     await raf();
     const afterResize=window.mwsF1GetWorkspaceLayoutRecoveryE?.().panels.track;
     assert(afterResize.w!==beforeResize.w||afterResize.h!==beforeResize.h,'Pointer resize did not change Track panel size');
+    assertNoDomOverlap('after resize');
 
     document.getElementById('f1RacingWorkspaceResetRecoveryE')?.click();await raf();
     const speedTab=document.querySelector('[data-f1-workspace-tab="speed"]');
@@ -249,6 +272,7 @@ try{
     const speedPanel=document.querySelector('[data-f1-workspace-panel="speed"]');
     const radioPanel=document.querySelector('[data-f1-workspace-panel="radio"]');
     assert(!speedPanel.hidden&&radioPanel.hidden,'Tab switching Radio -> Speed Trap failed');
+    assertNoDomOverlap('after tab switch');
 
     document.getElementById('f1RacingWorkspaceResetRecoveryE')?.click();await raf();
     const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]');
@@ -262,10 +286,22 @@ try{
     const docked=window.mwsF1GetWorkspaceLayoutRecoveryE?.().panels.commentary;
     assert(docked.x===0&&docked.w>=4,'Pointer drag did not dock Commentary left');
     assert((window.mwsF1WorkspaceOverlapPairsRecoveryI?.()||[]).length===0,'Workspace overlap after Commentary dock');
+    assertNoDomOverlap('after dock');
 
     document.getElementById('f1RacingWorkspaceResetRecoveryE')?.click();await raf();
+    assertNoDomOverlap('after reset');
     const persisted=window.mwsGetF1RacingSettingsRecoveryD?.()?.workspaceLayout;
-    assert(Number(persisted?.version)>=2,'Workspace layout did not persist');
+    assert(Number(persisted?.version)>=4,'Workspace layout did not persist as repaired schema');
+    const malformed={version:3,panels:{
+      timing:{x:0,y:0,w:12,h:3,hidden:false,maximized:false,tabGroup:''},
+      track:{x:0,y:0,w:7,h:6,hidden:false,maximized:false,tabGroup:''},
+      commentary:{x:0,y:0,w:5,h:4,hidden:false,maximized:false,tabGroup:''},
+      radio:{x:0,y:0,w:5,h:3,hidden:false,maximized:false,tabGroup:''},
+      speed:{x:0,y:0,w:5,h:3,hidden:false,maximized:false,tabGroup:''}
+    },activeTabs:{}};
+    const repaired=window.mwsF1AuditWorkspaceLayoutRecoveryK?.(malformed);
+    assert(repaired&&repaired.overlaps.length===0,'Malformed saved layout was not repaired');
+    assert(repaired.repaired===true,'Malformed saved layout repair was not reported');
 
     document.getElementById('f1RacingRaceCancelRecoveryC')?.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Race cancel did not return to Setup');
@@ -309,6 +345,8 @@ try{
       overlapPairsAfterDock:window.mwsF1WorkspaceOverlapPairsRecoveryI?.()||[],
       tabSwitch:true,
       persistenceVersion:Number(persisted?.version)||0,
+      malformedRepairReasons:repaired?.before||[],
+      finalDomOverlapPairs:domOverlapPairs(),
       cancelPreservedDrivers:afterCancelIds,
       podiumCount,
       resultCount,
