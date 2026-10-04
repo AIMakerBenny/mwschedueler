@@ -24,7 +24,7 @@ const MAJOKU_RING=freezeTrack({
   sectors:[{id:'S1',start:0,end:0.333333},{id:'S2',start:0.333333,end:0.666667},{id:'S3',start:0.666667,end:1}],
   pit:{entry:0.918,stop:0.972,exit:0.084,speedLimitKph:80},
   speedTraps:[{id:'ST1',label:'Sector 1 Trap',progress:0.287},{id:'ST2',label:'Sector 2 Trap',progress:0.648},{id:'FL',label:'Finish Line',progress:0.992}],
-  overtakeZones:[{id:'O1',start:0.018,end:0.094},{id:'O2',start:0.604,end:0.716}],
+  overtakeZones:[{id:'O1',detection:0.992,start:0.018,end:0.094},{id:'O2',detection:0.574,start:0.604,end:0.716}],
   zones:[
     {id:'Z01',type:'straight',start:0.000,end:0.100,targetKph:315},
     {id:'Z02',type:'fastCorner',start:0.100,end:0.180,targetKph:250},
@@ -50,7 +50,7 @@ const CASTLE_STREET_CIRCUIT=freezeTrack({
   sectors:[{id:'S1',start:0,end:0.318},{id:'S2',start:0.318,end:0.672},{id:'S3',start:0.672,end:1}],
   pit:{entry:0.948,stop:0.986,exit:0.105,speedLimitKph:60},
   speedTraps:[{id:'ST1',label:'Castle Straight',progress:0.255},{id:'ST2',label:'Harbour Avenue',progress:0.704},{id:'FL',label:'Finish Line',progress:0.040}],
-  overtakeZones:[{id:'O1',start:0.105,end:0.245},{id:'O2',start:0.666,end:0.758}],
+  overtakeZones:[{id:'O1',detection:0.078,start:0.105,end:0.245},{id:'O2',detection:0.635,start:0.666,end:0.758}],
   zones:[
     {id:'C01',type:'straight',start:0.000,end:0.105,targetKph:278},
     {id:'C02',type:'mediumCorner',start:0.105,end:0.190,targetKph:165},
@@ -76,7 +76,7 @@ const BLUE_COAST_SPEEDWAY=freezeTrack({
   sectors:[{id:'S1',start:0,end:0.345},{id:'S2',start:0.345,end:0.658},{id:'S3',start:0.658,end:1}],
   pit:{entry:0.925,stop:0.978,exit:0.075,speedLimitKph:80},
   speedTraps:[{id:'ST1',label:'Ocean Straight',progress:0.245},{id:'ST2',label:'North Straight',progress:0.575},{id:'FL',label:'Finish Line',progress:0.010}],
-  overtakeZones:[{id:'O1',start:0.055,end:0.255},{id:'O2',start:0.515,end:0.675}],
+  overtakeZones:[{id:'O1',detection:0.028,start:0.055,end:0.255},{id:'O2',detection:0.488,start:0.515,end:0.675}],
   zones:[
     {id:'B01',type:'straight',start:0.000,end:0.145,targetKph:340},
     {id:'B02',type:'fastCorner',start:0.145,end:0.245,targetKph:265},
@@ -115,6 +115,7 @@ function validateTrack(track){
   if(!track.pit||!(track.pit.entry>=0&&track.pit.entry<1)||!(track.pit.exit>=0&&track.pit.exit<1))issues.push('pit metadata invalid');
   if(!Array.isArray(track.speedTraps)||track.speedTraps.length<3)issues.push('speed traps missing');
   if(!Array.isArray(track.overtakeZones)||track.overtakeZones.length<1)issues.push('overtake zones missing');
+  if(Array.isArray(track.overtakeZones)&&track.overtakeZones.some(zone=>!(Number(zone.detection)>=0&&Number(zone.detection)<1)))issues.push('overtake detection lines missing');
   if(!Array.isArray(track.zones)||!track.zones.length)issues.push('speed zones missing');
   if(Array.isArray(track.zones)){
     let cursor=0;
@@ -137,4 +138,5 @@ root.__mwsF1TrackGeometryMetaV193='sample-curvature-width-v1';
 root.__mwsF1TrackCornerMetaV194='brake-turn-apex-exit-v1';
 root.__mwsF1TrackSpeedProfileMetaV195='backward-brake-forward-accel-v1';
 root.__mwsF1TrackRacingLineMetaV197='track-width-line-offset-v1';
+root.__mwsF1TrackMarkersV211='full-track-markers-v1';
 })(typeof window!=='undefined'?window:globalThis);
