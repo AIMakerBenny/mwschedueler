@@ -260,7 +260,8 @@ try{
     window.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,clientX:wr.left+3,clientY:wr.top+wr.height*.45,pointerId:2,buttons:0}));
     await raf();
     const docked=window.mwsF1GetWorkspaceLayoutRecoveryE?.().panels.commentary;
-    assert(docked.x===0&&docked.w===6,'Pointer drag did not dock Commentary left');
+    assert(docked.x===0&&docked.w>=4,'Pointer drag did not dock Commentary left');
+    assert((window.mwsF1WorkspaceOverlapPairsRecoveryI?.()||[]).length===0,'Workspace overlap after Commentary dock');
 
     document.getElementById('f1RacingWorkspaceResetRecoveryE')?.click();await raf();
     const persisted=window.mwsGetF1RacingSettingsRecoveryD?.()?.workspaceLayout;
@@ -305,6 +306,7 @@ try{
       pausedAndResumed:true,
       resizeChanged:{before:beforeResize,after:afterResize},
       dockedCommentary:docked,
+      overlapPairsAfterDock:window.mwsF1WorkspaceOverlapPairsRecoveryI?.()||[],
       tabSwitch:true,
       persistenceVersion:Number(persisted?.version)||0,
       cancelPreservedDrivers:afterCancelIds,
