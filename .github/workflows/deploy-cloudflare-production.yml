@@ -113,6 +113,7 @@ jobs:
           node --check scripts/run-phase180-f1-navigation-shell-audit.mjs
           node --check scripts/run-phase181-f1-contact-participants-audit.mjs
           node --check scripts/run-phase182-f1-track-model-audit.mjs
+          node --check scripts/run-phase183-f1-svg-track-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-racing-v1.js
           node --check assets/workspace-ui-v176.js
@@ -838,6 +839,16 @@ jobs:
           grep -Fq "id:'majoku-ring-v1'" /tmp/f1-track-v1-phase182.js
           grep -Fq 'lengthMeters:5280' /tmp/f1-track-v1-phase182.js
           grep -Fq 'window.mwsF1GetActiveTrackV182=getActiveTrack;' /tmp/f1-racing-v1-phase182.js
+          echo '[phase183] F1 Racing SVG circuit rendering'
+          grep -Fq 'id="f1RacingTrackSvgV183"' /tmp/index.html
+          grep -Fq 'id="f1RacingTrackPathV183"' /tmp/index.html
+          grep -Fq 'id="f1RacingTrackAnnotationsV183"' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV183=VERSION183;' > /tmp/f1-racing-v1-phase183.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-track-panel-v183{' > /tmp/f1-racing-v1-phase183.css
+          node --check /tmp/f1-racing-v1-phase183.js
+          grep -Fq 'function renderTrackMapV183(){' /tmp/f1-racing-v1-phase183.js
+          grep -Fq "path.setAttribute('d',track.path);" /tmp/f1-racing-v1-phase183.js
+          grep -Fq 'window.mwsF1RenderTrackMapV183=renderTrackMapV183;' /tmp/f1-racing-v1-phase183.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css

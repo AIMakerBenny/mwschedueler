@@ -3,6 +3,7 @@
 const VERSION='phase180-shell';
 const VERSION181='phase181-participants';
 const VERSION182='phase182-track-model';
+const VERSION183='phase183-svg-track';
 const selectedIds=[];
 let activeTrackId='majoku-ring-v1';
 
@@ -76,7 +77,9 @@ function render(){
   renderContacts();
   renderSelected();
   updateTrackFoundationStatusV182();
-  section.dataset.f1Runtime=VERSION182;
+  renderTrackMapV183();
+  const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='TRACK MAP';
+  section.dataset.f1Runtime=VERSION183;
   return true;
 }
 function toggleDriver(id){
@@ -93,6 +96,52 @@ function removeDriver(id){
 }
 function getSelectedContactIds(){return selectedIds.slice()}
 function getActiveTrack(){return typeof window.mwsGetF1TrackV182==='function'?window.mwsGetF1TrackV182(activeTrackId):null}
+function svgNodeV183(name,attrs={}){
+  const node=document.createElementNS('http://www.w3.org/2000/svg',name);
+  Object.entries(attrs).forEach(([key,value])=>node.setAttribute(key,String(value)));
+  return node;
+}
+function pointAtProgressV183(path,progress){
+  const length=path.getTotalLength();
+  return path.getPointAtLength(Math.max(0,Math.min(1,Number(progress)||0))*length);
+}
+function addTrackAnnotationV183(layer,path,kind,label,progress){
+  const point=pointAtProgressV183(path,progress);
+  const group=svgNodeV183('g',{class:'f1-racing-track-annotation-v183 '+kind,'data-kind':kind,'data-progress':progress});
+  const circle=svgNodeV183('circle',{cx:point.x,cy:point.y,r:kind==='start'?9:7});
+  const textNode=svgNodeV183('text',{x:point.x+12,y:point.y-10});
+  textNode.textContent=label;
+  group.append(circle,textNode);
+  layer.appendChild(group);
+}
+function renderTrackMapV183(){
+  const track=getActiveTrack();
+  const svg=document.getElementById('f1RacingTrackSvgV183');
+  const path=document.getElementById('f1RacingTrackPathV183');
+  const glow=document.getElementById('f1RacingTrackGlowV183');
+  const layer=document.getElementById('f1RacingTrackAnnotationsV183');
+  if(!track||!svg||!path||!glow||!layer)return false;
+  svg.setAttribute('viewBox',track.viewBox.join(' '));
+  svg.setAttribute('aria-label',track.name+' track map');
+  path.setAttribute('d',track.path);
+  glow.setAttribute('d',track.path);
+  layer.replaceChildren();
+  addTrackAnnotationV183(layer,path,'start','START',track.startFinish);
+  addTrackAnnotationV183(layer,path,'sector','S1',track.sectors[0].end);
+  addTrackAnnotationV183(layer,path,'sector','S2',track.sectors[1].end);
+  track.speedTraps.forEach((trap,index)=>addTrackAnnotationV183(layer,path,'trap','ST'+(index+1),trap.progress));
+  addTrackAnnotationV183(layer,path,'pit','PIT IN',track.pit.entry);
+  addTrackAnnotationV183(layer,path,'pit','PIT OUT',track.pit.exit);
+  const name=document.getElementById('f1RacingTrackNameV183');
+  const length=document.getElementById('f1RacingTrackLengthV183');
+  const pit=document.getElementById('f1RacingPitLimitV183');
+  const pathState=document.getElementById('f1RacingTrackPathStateV183');
+  if(name)name.textContent=track.name;
+  if(length)length.textContent=(track.lengthMeters/1000).toFixed(3)+' km';
+  if(pit)pit.textContent=track.pit.speedLimitKph+' km/h';
+  if(pathState)pathState.textContent=Math.round(path.getTotalLength())+' SVG units';
+  return true;
+}
 function updateTrackFoundationStatusV182(){
   const track=getActiveTrack();
   const chip=document.getElementById('f1RacingPhaseChipV180');
@@ -109,8 +158,11 @@ window.mwsF1ToggleDriverV181=toggleDriver;
 window.mwsF1RemoveDriverV181=removeDriver;
 window.mwsF1GetSelectedContactIdsV181=getSelectedContactIds;
 window.mwsF1GetActiveTrackV182=getActiveTrack;
+window.mwsF1RenderTrackMapV183=renderTrackMapV183;
+window.mwsF1PointAtProgressV183=pointAtProgressV183;
 window.__mwsF1RacingV180=VERSION;
 window.__mwsF1RacingV181=VERSION181;
 window.__mwsF1RacingV182=VERSION182;
+window.__mwsF1RacingV183=VERSION183;
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 })();
