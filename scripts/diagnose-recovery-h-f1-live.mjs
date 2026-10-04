@@ -259,6 +259,12 @@ try{
     assert(Number(pitCycle?.laneSpeedCapKph)===Number(window.mwsF1GetActiveRaceSnapshotV187?.()?.track?.pit?.speedLimitKph),'Phase 205 pit limiter cap mismatch');
     assert(pitAfter?.compound==='SOFT'&&Number(pitAfter?.stopCount)>=1,'Phase 205 tyre service failed');
     assert(Number(pitAfter?.tyreWarmupFactor)<1&&Number(pitAfter?.warmupRemainingLaps)>0,'Phase 205 tyre warmup state missing');
+    const strategyDriver=context.driverIds?.[1]||incidentDriver;
+    const strategyQa=window.mwsF1QaPitStrategyV206?.(strategyDriver,'BOX_NOW');
+    assert(strategyQa?.decision==='BOX_NOW','Phase 206 critical tyre strategy did not choose BOX_NOW');
+    assert(strategyQa?.pitRequested===true&&strategyQa?.requestReason==='BOX_NOW','Phase 206 BOX_NOW did not issue Phase 205 pit request');
+    assert(['SOFT','MEDIUM','HARD'].includes(strategyQa?.targetCompound),'Phase 206 target compound invalid');
+    assert(Number(strategyQa?.context?.pressure)>=.8&&Number(strategyQa?.context?.tyreNeed)>.5,'Phase 206 strategy did not expose tyre evidence');
     pause.click();await raf();
     assert(window.mwsF1GetSimulationClockV192?.().paused===false,'Pause button did not resume simulation');
 
@@ -359,6 +365,7 @@ try{
       pausedAndResumed:true,
       phase204Incident:{type:forcedIncident?.type||'',lockupActiveMs:Number(incidentAfter?.lockupActiveMs)||0,flatSpot:Number(incidentAfter?.tyreFlatSpot)||0},
       phase205Pit:{states:pitCycle?.states||[],laneSpeedCapKph:Number(pitCycle?.laneSpeedCapKph)||0,compound:pitAfter?.compound||'',warmupFactor:Number(pitAfter?.tyreWarmupFactor)||0},
+      phase206Strategy:{decision:strategyQa?.decision||'',reason:strategyQa?.reason||'',pitRequested:Boolean(strategyQa?.pitRequested),targetCompound:strategyQa?.targetCompound||'',context:strategyQa?.context||{}},
       resizeChanged:{before:beforeResize,after:afterResize},
       dockedCommentary:docked,
       overlapPairsAfterDock:window.mwsF1WorkspaceOverlapPairsRecoveryI?.()||[],
