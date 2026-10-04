@@ -356,7 +356,7 @@ function syncSetupActionV187(){
   const track=getActiveTrack();
   const ready=selectedIds.length>=2&&Boolean(track);
   if(summary)summary.textContent='드라이버 '+selectedIds.length+'명 · '+(track?.name||'트랙 미선택');
-  if(hint)hint.textContent=ready?'준비가 완료되었습니다. 경기 진행을 누르면 관제 화면으로 전환됩니다.':'드라이버를 2명 이상 선택하고 트랙을 선택해 주세요.';
+  if(hint)hint.textContent=ready?'준비가 완료되었습니다. 경기 진행 후 STARTING GRID에서 경기 시작을 눌러야 출발합니다.':'드라이버를 2명 이상 선택하고 트랙을 선택해 주세요.';
   if(button)button.disabled=!ready;
   return ready;
 }
@@ -365,6 +365,14 @@ function populateTransitionV187(snapshot){
   const drivers=document.getElementById('f1RacingTransitionDriversV187');
   if(track)track.textContent=String(snapshot?.track?.name||'TRACK').toUpperCase();
   if(drivers)drivers.textContent=(snapshot?.drivers?.length||0)+' DRIVERS';
+}
+function populateGridRecoveryM(snapshot){
+  const track=document.getElementById('f1RacingGridTrackRecoveryM');
+  const drivers=document.getElementById('f1RacingGridDriversRecoveryM');
+  const laps=document.getElementById('f1RacingGridLapsRecoveryM');
+  if(track)track.textContent=String(snapshot?.track?.name||'TRACK').toUpperCase();
+  if(drivers)drivers.textContent=(snapshot?.drivers?.length||0)+' DRIVERS';
+  if(laps)laps.textContent=(Number(snapshot?.totalLaps)||DEFAULT_TOTAL_LAPS_V190)+' LAPS';
 }
 function startRaceFromSetupV187(){
   if(f1ScreenStateV185!=='SETUP')return false;
@@ -379,13 +387,33 @@ function startRaceFromSetupV187(){
   if(raceTransitionTimerV187)clearTimeout(raceTransitionTimerV187);
   raceTransitionTimerV187=window.setTimeout(function(){
     raceTransitionTimerV187=0;
-    setScreenStateV185('RACE');
-    renderRaceControlV188();
-    startRaceMotionV189();
+    populateGridRecoveryM(snapshot);
+    setScreenStateV185('GRID');
     const chip=document.getElementById('f1RacingPhaseChipV180');
-    if(chip)chip.textContent='RACE CONTROL';
-  },1600);
+    if(chip)chip.textContent='STARTING GRID';
+  },900);
   return true;
+}
+function confirmRaceStartRecoveryM(){
+  if(f1ScreenStateV185!=='GRID'||!activeRaceSnapshotV187)return false;
+  if(raceMotionV189.running)return false;
+  if(!setScreenStateV185('RACE'))return false;
+  renderRaceControlV188();
+  const started=startRaceMotionV189();
+  if(!started){
+    setScreenStateV185('GRID',{force:true});
+    return false;
+  }
+  const chip=document.getElementById('f1RacingPhaseChipV180');
+  if(chip)chip.textContent='RACE CONTROL';
+  return true;
+}
+function bindManualRaceStartRecoveryM(){
+  const start=document.getElementById('f1RacingGridStartRecoveryM');
+  if(start&&!start.dataset.f1ManualStartBound){
+    start.dataset.f1ManualStartBound='1';
+    start.addEventListener('click',confirmRaceStartRecoveryM);
+  }
 }
 
 function cancelRaceToSetupRecoveryC(){
@@ -410,7 +438,7 @@ function cancelRaceToSetupRecoveryC(){
   return true;
 }
 function bindRaceCancelRecoveryC(){
-  ['f1RacingTransitionCancelRecoveryC','f1RacingRaceCancelRecoveryC'].forEach(id=>{
+  ['f1RacingTransitionCancelRecoveryC','f1RacingGridCancelRecoveryM','f1RacingRaceCancelRecoveryC'].forEach(id=>{
     const button=document.getElementById(id);
     if(button&&!button.dataset.f1CancelBound){
       button.dataset.f1CancelBound='1';
@@ -2703,6 +2731,7 @@ function render(){
   renderSelected();
   renderTrackChoicesV186();
   bindRaceProceedV187();
+  bindManualRaceStartRecoveryM();
   bindRaceCancelRecoveryC();
   bindRaceLifecycleRecoveryG();
   installF1WorkspaceRecoveryE();
@@ -2864,6 +2893,7 @@ window.mwsF1GetTrackCatalogV186=getTrackCatalogV186;
 window.mwsF1GetRaceDraftV187=getRaceDraftV187;
 window.mwsF1BuildRaceSnapshotV187=buildRaceSnapshotV187;
 window.mwsF1StartRaceFromSetupV187=startRaceFromSetupV187;
+window.mwsF1ConfirmRaceStartRecoveryM=confirmRaceStartRecoveryM;
 window.mwsF1GetActiveRaceSnapshotV187=getActiveRaceSnapshotV187;
 window.mwsF1CancelRaceRecoveryC=cancelRaceToSetupRecoveryC;
 window.mwsF1RestoreSettingsRecoveryD=restoreF1SettingsRecoveryD;
@@ -2976,6 +3006,7 @@ window.__mwsF1RacingV203=VERSION203;
 window.__mwsF1RacingV204=VERSION204;
 window.__mwsF1RacingV205=VERSION205;
 window.__mwsF1RacingV206=VERSION206;
+window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
 window.__mwsF1RecoveryC='race-cancel-setup-return-v1';
 window.__mwsF1RecoveryD='persistent-roster-track-settings-v1';
