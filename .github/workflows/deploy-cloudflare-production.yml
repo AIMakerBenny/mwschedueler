@@ -159,6 +159,7 @@ jobs:
           node --check scripts/run-phase214-f1-race-control-flag-audit.mjs
           node --check scripts/run-phase215-f1-backmarker-blue-flag-audit.mjs
           node --check scripts/run-phase216-f1-driver-camera-audit.mjs
+          node --check scripts/run-phase217-f1-compact-workspace-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -1275,6 +1276,11 @@ jobs:
           grep -Eq 'assets/f1-racing-v1\.css\?v=1\.0\.0-phase180-shell&p=196&recovery=N1&phase=(21[6-9]|2[2-9][0-9])' /tmp/index.html
           grep -Fq 'window.__mwsF1RacingV216=VERSION216;' /tmp/f1-racing-phase210.js
           grep -Fq 'window.mwsF1QaDriverMarkerCameraV216=qaDriverMarkerCameraV216;' /tmp/f1-racing-phase210.js
+          echo '[phase217] F1 compact three-panel workspace'
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=N1&phase=(217|21[8-9]|2[2-9][0-9])' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.css\?v=1\.0\.0-phase180-shell&p=196&recovery=N1&phase=(217|21[8-9]|2[2-9][0-9])' /tmp/index.html
+          grep -Fq 'window.__mwsF1RacingV217=VERSION217;' /tmp/f1-racing-phase210.js
+          grep -Fq 'window.mwsF1QaCompactWorkspaceV217=qaCompactWorkspaceV217;' /tmp/f1-racing-phase210.js
           retry_contains "$BASE/assets/f1-track-v1.js?deploy=$GITHUB_SHA" "id:'majoku-ring-v1'" > /tmp/f1-track-phase210.js
           grep -Fq "id:'castle-street-circuit-v1'" /tmp/f1-track-phase210.js
           grep -Fq "id:'blue-coast-speedway-v1'" /tmp/f1-track-phase210.js
