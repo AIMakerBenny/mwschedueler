@@ -13,14 +13,12 @@ export function runRecoveryFF1WorkspaceDefaultAudit(){
   for(const token of ['POSITION · GAP · TELEMETRY','LIVE EVENT FEED'])if(!index.includes(token))issues.push('Recovery F HTML label missing: '+token);
 
   for(const token of [
-    'version:4,',
-    "timing:Object.freeze({x:0,y:0,w:12,h:2",
-    "track:Object.freeze({x:0,y:2,w:7,h:6",
-    "commentary:Object.freeze({x:7,y:2,w:5,h:3",
-    "radio:Object.freeze({x:7,y:5,w:5,h:3,hidden:false,maximized:false,tabGroup:'race-side'})",
-    "speed:Object.freeze({x:7,y:5,w:5,h:3,hidden:false,maximized:false,tabGroup:'race-side'})",
-    "activeTabs:Object.freeze({'race-side':'radio'})",
-    'const source=Number(candidate.version)>=3?candidate:{};',
+    'version:5,',
+    "track:Object.freeze({x:0,y:0,w:8,h:8",
+    "timing:Object.freeze({x:8,y:0,w:4,h:3",
+    "commentary:Object.freeze({x:8,y:3,w:4,h:5",
+    "activeTabs:Object.freeze({})",
+    'const source=Number(candidate.version)>=5?candidate:{};',
     "tabGroup:Object.prototype.hasOwnProperty.call(row,'tabGroup')?String(row.tabGroup||''):String(base.tabGroup||'')",
     "for(const [group,id] of Object.entries(defaults.activeTabs||{})){",
     "window.__mwsF1RecoveryF='race-workspace-default-redesign-v1';"
