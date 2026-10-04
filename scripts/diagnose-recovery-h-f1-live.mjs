@@ -283,6 +283,11 @@ try{
     assert(strategyQa?.pitRequested===true&&strategyQa?.requestReason==='BOX_NOW','Phase 206 BOX_NOW did not issue Phase 205 pit request');
     assert(['SOFT','MEDIUM','HARD'].includes(strategyQa?.targetCompound),'Phase 206 target compound invalid');
     assert(Number(strategyQa?.context?.pressure)>=.8&&Number(strategyQa?.context?.tyreNeed)>.5,'Phase 206 strategy did not expose tyre evidence');
+    const trafficQa=window.mwsF1QaTrafficV207?.();
+    assert(trafficQa?.follower?.state==='PRESSURE','Phase 207 follower did not enter PRESSURE');
+    assert(Number(trafficQa?.follower?.gapMeters)<20&&Number(trafficQa?.follower?.closingRateKph)>0,'Phase 207 traffic gap or closing rate invalid');
+    assert(trafficQa?.follower?.lineIntent==='ATTACK_INSIDE','Phase 207 attacker did not choose inside line');
+    assert(trafficQa?.ahead?.defenceActive===true&&trafficQa?.ahead?.lineIntent==='DEFENSIVE_INSIDE','Phase 207 defender did not react to pressure');
     pause.click();await raf();
     assert(window.mwsF1GetSimulationClockV192?.().paused===false,'Pause button did not resume simulation');
 
