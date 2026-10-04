@@ -546,3 +546,38 @@
 .f1-racing-track-card-profile-v223{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:2px;font-size:9px;color:#9aa7ba}
 .f1-racing-track-card-profile-v223 b{color:#eef4fb;font-size:10px}
 .f1-racing-track-card-profile-v223 small{font-size:8px;opacity:.58}
+
+/* Phase 224: desktop race UI density QA */
+#f1RacingViewRaceV185 .f1-racing-race-header-v188{min-height:38px!important;padding:3px 6px!important;gap:8px!important}
+#f1RacingViewRaceV185 .f1-racing-race-header-v188 .f1-racing-panel-kicker-v181{display:none!important}
+#f1RacingViewRaceV185 .f1-racing-race-header-v188 strong{margin-top:0!important;font-size:11px!important}
+#f1RacingViewRaceV185 .f1-racing-race-status-v188 span{min-width:56px!important;padding:2px 5px!important}
+#f1RacingViewRaceV185 .f1-racing-race-status-v188 b{margin-top:1px!important;font-size:9px!important}
+#f1RacingViewRaceV185 .f1-racing-race-controls-v188{gap:3px!important}
+#f1RacingViewRaceV185 .f1-racing-workspace-toolbar-recovery-e{min-height:28px!important;padding:2px 4px!important}
+#f1RacingViewRaceV185 .f1-racing-panel-title-v188{min-height:30px!important;padding:5px 7px!important}
+#f1RacingViewRaceV185 .f1-racing-panel-title-v188 span{font-size:9px!important}
+#f1RacingViewRaceV185 .f1-racing-panel-title-v188 small{font-size:8px!important}
+#f1RacingViewRaceV185 .f1-racing-workspace-recovery-e{grid-auto-rows:68px!important;gap:4px!important;min-height:572px!important}
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-head-v188,
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-row-v188{
+  grid-template-columns:38px minmax(105px,1.35fr) 48px 66px 66px 56px 54px 40px!important;
+  min-width:0!important
+}
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-head-v188>span:nth-child(3),
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-head-v188>span:nth-child(4),
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-head-v188>span:nth-child(11),
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-head-v188>span:nth-child(12),
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-head-v188>span:nth-child(13),
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-row-v188>.gear,
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-row-v188>.rpm,
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-row-v188>.s1,
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-row-v188>.s2,
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-row-v188>.s3{display:none!important}
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-head-v188{min-height:24px!important;padding:0 5px!important;font-size:7px!important}
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-row-v188{min-height:36px!important;padding:0 5px!important;font-size:9px!important}
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-list-v188{overflow:auto!important;min-height:0!important}
+#f1RacingViewRaceV185 [data-f1-workspace-panel="commentary"] .f1-racing-commentary-log-v188{padding:4px!important}
+@media(min-width:1500px){
+  #f1RacingViewRaceV185 .f1-racing-workspace-recovery-e{grid-auto-rows:70px!important;min-height:588px!important}
+}
