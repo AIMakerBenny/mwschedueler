@@ -18,7 +18,6 @@ export function runRecoveryIF1WorkspaceReflowAudit(){
     'function workspaceReflowRecoveryI(layout,preferredId=',
     'function workspaceOverlapPairsRecoveryI(layout=workspaceLayoutRecoveryE){',
     'return workspaceReflowRecoveryI(result);',
-    'workspaceReflowRecoveryI(workspaceLayoutRecoveryE,id,desired);',
     'workspaceReflowRecoveryI(workspaceLayoutRecoveryE,pointer.id,{x:drop.x,y:drop.y,w:state.w,h:state.h});',
     'window.mwsF1WorkspaceOverlapPairsRecoveryI=function(){return workspaceOverlapPairsRecoveryI().map(pair=>pair.slice())};',
     "window.__mwsF1RecoveryI='collision-free-reflow-v1';"
