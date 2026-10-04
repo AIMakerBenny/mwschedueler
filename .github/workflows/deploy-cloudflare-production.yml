@@ -161,6 +161,7 @@ jobs:
           node --check scripts/run-phase216-f1-driver-camera-audit.mjs
           node --check scripts/run-phase217-f1-compact-workspace-audit.mjs
           node --check scripts/run-phase218-f1-korean-interface-audit.mjs
+          node --check scripts/run-phase219-f1-race-commentary-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -1267,13 +1268,14 @@ jobs:
           grep -Fq 'function qaMultiTrackIntegrationV210(){' /tmp/f1-racing-phase210.js
           grep -Fq 'window.mwsF1QaMultiTrackIntegrationV210=qaMultiTrackIntegrationV210;' /tmp/f1-racing-phase210.js
           echo '[phase211-218] F1 markers timing podium flags blue-flag camera workspace localization'
-          grep -Fq 'window.__mwsF1RacingV218=VERSION218;' /tmp/f1-racing-phase210.js
+          grep -Fq 'window.__mwsF1RacingV219=VERSION219;' /tmp/f1-racing-phase210.js
           grep -Fq 'window.mwsF1QaTrackMarkersV211=qaTrackMarkersV211;' /tmp/f1-racing-phase210.js
           grep -Fq 'window.mwsF1QaLiveTimingFlipV212=qaLiveTimingFlipV212;' /tmp/f1-racing-phase210.js
           grep -Fq 'window.mwsF1QaTopThreePresentationV213=qaTopThreePresentationV213;' /tmp/f1-racing-phase210.js
           grep -Fq 'window.mwsF1QaRaceControlFlagsV214=qaRaceControlFlagsV214;' /tmp/f1-racing-phase210.js
           grep -Fq 'window.mwsF1QaBackmarkerBlueFlagV215=qaBackmarkerBlueFlagV215;' /tmp/f1-racing-phase210.js
           grep -Fq "pause.textContent=simClockV192.paused?'재개':'일시정지';" /tmp/f1-racing-phase210.js
+          grep -Fq 'window.mwsF1QaRaceCommentaryV219=qaRaceCommentaryV219;' /tmp/f1-racing-phase210.js
           echo '[phase216] F1 driver markers and interactive camera'
           grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=N1&phase=(21[6-9]|2[2-9][0-9])' /tmp/index.html
           grep -Eq 'assets/f1-racing-v1\.css\?v=1\.0\.0-phase180-shell&p=196&recovery=N1&phase=(21[6-9]|2[2-9][0-9])' /tmp/index.html
