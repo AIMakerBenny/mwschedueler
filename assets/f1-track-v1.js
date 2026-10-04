@@ -8,6 +8,14 @@ const TRACK=Object.freeze({
   path:'M 205 430 C 125 385 105 305 145 225 C 195 125 320 95 410 145 C 485 188 545 175 610 115 C 690 42 830 70 875 165 C 925 270 855 355 760 370 C 675 383 645 425 605 490 C 558 566 438 555 385 500 C 330 444 270 468 205 430 Z',
   lengthMeters:5280,
   startFinish:0,
+  geometry:Object.freeze({
+    sampleMeters:20,
+    cornerCurvatureThreshold:0.0018,
+    minCornerLengthMeters:40,
+    mergeGapMeters:20,
+    trackWidthMeters:14,
+    direction:'clockwise'
+  }),
   sectors:Object.freeze([
     Object.freeze({id:'S1',start:0,end:0.333333}),
     Object.freeze({id:'S2',start:0.333333,end:0.666667}),
@@ -37,7 +45,7 @@ const TRACK=Object.freeze({
   ])
 });
 function cloneTrack(track){
-  return {...track,viewBox:[...track.viewBox],sectors:track.sectors.map(x=>({...x})),pit:{...track.pit},speedTraps:track.speedTraps.map(x=>({...x})),overtakeZones:track.overtakeZones.map(x=>({...x})),zones:track.zones.map(x=>({...x}))};
+  return {...track,viewBox:[...track.viewBox],geometry:{...track.geometry},sectors:track.sectors.map(x=>({...x})),pit:{...track.pit},speedTraps:track.speedTraps.map(x=>({...x})),overtakeZones:track.overtakeZones.map(x=>({...x})),zones:track.zones.map(x=>({...x}))};
 }
 function getTrack(id='majoku-ring-v1'){return id===TRACK.id?cloneTrack(TRACK):null}
 function validateTrack(track){
@@ -48,6 +56,7 @@ function validateTrack(track){
   if(typeof track.path!=='string'||!track.path.startsWith('M '))issues.push('SVG path invalid');
   if(!(Number(track.lengthMeters)>1000))issues.push('lengthMeters invalid');
   if(!Array.isArray(track.sectors)||track.sectors.length!==3)issues.push('sector count invalid');
+  if(!track.geometry||!(track.geometry.sampleMeters>0)||!(track.geometry.cornerCurvatureThreshold>0)||!(track.geometry.trackWidthMeters>0))issues.push('geometry metadata invalid');
   if(!track.pit||!(track.pit.entry>=0&&track.pit.entry<1)||!(track.pit.exit>=0&&track.pit.exit<1))issues.push('pit metadata invalid');
   if(!Array.isArray(track.speedTraps)||track.speedTraps.length<3)issues.push('speed traps missing');
   if(!Array.isArray(track.zones)||!track.zones.length)issues.push('speed zones missing');
@@ -67,4 +76,5 @@ root.MWS_F1_TRACKS_V182=Object.freeze({[TRACK.id]:TRACK});
 root.mwsGetF1TrackV182=getTrack;
 root.mwsValidateF1TrackV182=validateTrack;
 root.__mwsF1TrackModelV182='majoku-ring-metadata-v1';
+root.__mwsF1TrackGeometryMetaV193='sample-curvature-width-v1';
 })(typeof window!=='undefined'?window:globalThis);

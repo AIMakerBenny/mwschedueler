@@ -13,6 +13,7 @@ const VERSION189='phase189-shared-multicar-raf';
 const VERSION190='phase190-race-distance-lap-sector';
 const VERSION191='phase191-position-gap-interval';
 const VERSION192='phase192-simulation-clock';
+const VERSION193='phase193-track-geometry-v2';
 const DEFAULT_TOTAL_LAPS_V190=10;
 const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
 const F1_TRANSITIONS_V185=Object.freeze({
@@ -30,6 +31,7 @@ let activeTrackId='majoku-ring-v1';
 const previewStateV184={running:false,progress:0,lastTimestamp:0,rafId:0,lapDurationMs:18000};
 let activeRaceSnapshotV187=null;
 let raceTransitionTimerV187=0;
+let raceGeometryV193=null;
 const raceMotionV189={running:false,suspended:false,rafId:0,lastTimestamp:0,vehicles:[],snapshotCreatedAt:'',hudAccumulatorMs:0};
 const simClockV192={
   paused:false,
@@ -285,6 +287,7 @@ function buildRaceSnapshotV187(){
       lengthMeters:Number(track.lengthMeters)||0,
       viewBox:Object.freeze([...(track.viewBox||[])]),
       path:String(track.path||''),
+      geometry:Object.freeze({...track.geometry}),
       sectors:Object.freeze((track.sectors||[]).map(row=>Object.freeze({...row}))),
       pit:Object.freeze({...track.pit}),
       speedTraps:Object.freeze((track.speedTraps||[]).map(row=>Object.freeze({...row}))),
@@ -559,11 +562,24 @@ function pauseRaceMotionV189(suspended=false){
   if(raceMotionV189.rafId)cancelAnimationFrame(raceMotionV189.rafId);raceMotionV189.rafId=0;return true;
 }
 function resetRaceMotionV189(){
-  pauseRaceMotionV189(false);raceMotionV189.vehicles=[];raceMotionV189.snapshotCreatedAt='';
+  pauseRaceMotionV189(false);raceMotionV189.vehicles=[];raceMotionV189.snapshotCreatedAt='';raceGeometryV193=null;
   simClockV192.paused=false;simClockV192.timeScale=1;simClockV192.simTimeMs=0;simClockV192.accumulatorMs=0;
   const layer=document.getElementById('f1RacingRaceVehicleLayerV188');if(layer)layer.replaceChildren();
   syncSimulationControlsV192();
 }
+function refreshRaceGeometryV193(snapshot=activeRaceSnapshotV187,pathElement=document.getElementById('f1RacingRaceTrackPathV188')){
+  if(!snapshot?.track||!pathElement||typeof window.mwsBuildF1TrackGeometryV193!=='function'){
+    raceGeometryV193=null;
+    return null;
+  }
+  raceGeometryV193=window.mwsBuildF1TrackGeometryV193(snapshot.track,pathElement);
+  const meta=document.getElementById('f1RacingRaceMapMetaV188');
+  if(meta&&raceGeometryV193){
+    meta.textContent=(snapshot.track.lengthMeters/1000).toFixed(3)+' km · '+snapshot.drivers.length+' drivers · '+raceGeometryV193.samples.length+' samples · '+raceGeometryV193.corners.length+' corners';
+  }
+  return raceGeometryV193;
+}
+function getRaceGeometryV193(){return raceGeometryV193}
 function driverCodeV188(driver){
   const raw=String(driver?.name||'DRV').replace(/\s+/g,'');
   return raw.slice(0,4).toUpperCase()||'DRV';
@@ -598,6 +614,7 @@ function renderRaceControlV188(){
   if(svg)svg.setAttribute('viewBox',(snapshot.track.viewBox||[0,0,1000,600]).join(' '));
   if(path)path.setAttribute('d',snapshot.track.path||'');
   if(glow)glow.setAttribute('d',snapshot.track.path||'');
+  if(path)refreshRaceGeometryV193(snapshot,path);
   bindSimulationControlsV192();
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='RACE CONTROL';
   return true;
@@ -627,7 +644,7 @@ function render(){
   if(previewStateV184.running)stopPreviewV184(true);
   if(f1ScreenStateV185==='RACE'&&activeRaceSnapshotV187){renderRaceControlV188();startRaceMotionV189()}
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent=f1ScreenStateV185==='SETUP'?'RACE SETUP':'RACE CONTROL';
-  section.dataset.f1Runtime=VERSION192;
+  section.dataset.f1Runtime=VERSION193;
   return true;
 }
 function toggleDriver(id){
@@ -735,6 +752,8 @@ window.mwsF1SetSimulationTimeScaleV192=setSimulationTimeScaleV192;
 window.mwsF1ToggleSimulationPauseV192=toggleSimulationPauseV192;
 window.mwsF1GetSimulationClockV192=function(){return {...simClockV192}};
 window.mwsF1SimulateRaceStepV192=simulateRaceStepV192;
+window.mwsF1RefreshRaceGeometryV193=refreshRaceGeometryV193;
+window.mwsF1GetRaceGeometryV193=getRaceGeometryV193;
 window.__mwsF1RacingV180=VERSION;
 window.__mwsF1RacingV181=VERSION181;
 window.__mwsF1RacingV182=VERSION182;
@@ -748,6 +767,7 @@ window.__mwsF1RacingV189=VERSION189;
 window.__mwsF1RacingV190=VERSION190;
 window.__mwsF1RacingV191=VERSION191;
 window.__mwsF1RacingV192=VERSION192;
+window.__mwsF1RacingV193=VERSION193;
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){
