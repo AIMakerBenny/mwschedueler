@@ -65,6 +65,7 @@ const VERSION235='phase235-track-character-driving-behavior';
 const VERSION236='phase236-track-aware-commentary';
 const VERSION237='phase237-race-result-telemetry';
 const VERSION238='phase238-seven-track-long-run-benchmark';
+const VERSION239='phase239-track-benchmark-alignment-gate';
 const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitchMs:1800,urgentBattleGapSeconds:0.55,focusDeadbandSvg:3,zoomDeadband:0.025});
 const COMMENTARY_CADENCE_V227=Object.freeze({flowGapMs:5500,strategyGapMs:3000,battleGapMs:1600,windowMs:60000,maxNarrativePerWindow:18});
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
@@ -1053,6 +1054,38 @@ function runSevenTrackBenchmarkV238(options={}){
   const ids=['majoku-ring-v1','castle-street-circuit-v1','blue-coast-speedway-v1','mawang-speed-park-v1','royal-street-circuit-v1','infinity-eight-circuit-v1','highland-flow-ring-v1'];
   return ids.map(id=>window.mwsGetF1TrackV182?.(id)).filter(Boolean).map(track=>aggregateTrackBenchmarkV238(track,options));
 }
+function pearsonV239(rows,xKey,yKey){
+  const pairs=(rows||[]).map(row=>[Number(row?.[xKey]),Number(row?.[yKey])]).filter(pair=>pair.every(Number.isFinite));
+  if(pairs.length<2)return 0;
+  const meanX=pairs.reduce((s,row)=>s+row[0],0)/pairs.length,meanY=pairs.reduce((s,row)=>s+row[1],0)/pairs.length;
+  let numerator=0,dx2=0,dy2=0;
+  for(const [x,y] of pairs){const dx=x-meanX,dy=y-meanY;numerator+=dx*dy;dx2+=dx*dx;dy2+=dy*dy}
+  return dx2>0&&dy2>0?numerator/Math.sqrt(dx2*dy2):0;
+}
+function trackBenchmarkAlignmentV239(){
+  const rows=runSevenTrackBenchmarkV238({runs:24,drivers:10,laps:10});
+  const enriched=rows.map(row=>{
+    const track=window.mwsGetF1TrackV182?.(row.trackId);
+    return {...row,maxStraightKph:Number(track?.geometry?.maxStraightKph)||0};
+  });
+  const overtakeCorrelation=pearsonV239(enriched,'overtakeFactor','avgPasses');
+  const incidentCorrelation=pearsonV239(enriched,'incidentRiskFactor','avgIncidents');
+  const speedCorrelation=pearsonV239(enriched,'maxStraightKph','avgSpeedKph');
+  const fastest=[...enriched].sort((a,b)=>b.avgSpeedKph-a.avgSpeedKph)[0]||null;
+  const slowest=[...enriched].sort((a,b)=>a.avgSpeedKph-b.avgSpeedKph)[0]||null;
+  const mostPassing=[...enriched].sort((a,b)=>b.avgPasses-a.avgPasses)[0]||null;
+  const mostIncidents=[...enriched].sort((a,b)=>b.avgIncidents-a.avgIncidents)[0]||null;
+  return {
+    rows:enriched,
+    overtakeCorrelation:Number(overtakeCorrelation.toFixed(3)),
+    incidentCorrelation:Number(incidentCorrelation.toFixed(3)),
+    speedCorrelation:Number(speedCorrelation.toFixed(3)),
+    fastestTrackId:String(fastest?.trackId||''),slowestTrackId:String(slowest?.trackId||''),
+    mostPassingTrackId:String(mostPassing?.trackId||''),mostIncidentTrackId:String(mostIncidents?.trackId||''),
+    allPass:enriched.length===7&&overtakeCorrelation>=.72&&incidentCorrelation>=.72&&speedCorrelation>=.72&&String(fastest?.trackId||'')!==String(slowest?.trackId||'')
+  };
+}
+function qaTrackBenchmarkAlignmentV239(){return trackBenchmarkAlignmentV239()}
 function qaSevenTrackBenchmarkV238(){
   const rows=runSevenTrackBenchmarkV238({runs:18,drivers:10,laps:10});
   const range=key=>rows.length?Math.max(...rows.map(row=>Number(row[key])))-Math.min(...rows.map(row=>Number(row[key]))):0;
@@ -4598,6 +4631,9 @@ window.__mwsF1RacingV237=VERSION237;
 window.mwsF1RunSevenTrackBenchmarkV238=runSevenTrackBenchmarkV238;
 window.mwsF1QaSevenTrackBenchmarkV238=qaSevenTrackBenchmarkV238;
 window.__mwsF1RacingV238=VERSION238;
+window.mwsF1TrackBenchmarkAlignmentV239=trackBenchmarkAlignmentV239;
+window.mwsF1QaTrackBenchmarkAlignmentV239=qaTrackBenchmarkAlignmentV239;
+window.__mwsF1RacingV239=VERSION239;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
