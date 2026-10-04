@@ -152,6 +152,7 @@ jobs:
           node --check scripts/run-phase207-f1-traffic-defence-audit.mjs
           node --check scripts/run-phase208-f1-pass-state-audit.mjs
           node --check scripts/run-phase209-f1-long-run-gap-audit.mjs
+          node --check scripts/run-phase210-f1-multi-track-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -1244,12 +1245,21 @@ jobs:
           grep -Fq 'function updatePassStateMachineV208(stepMs){' /tmp/f1-racing-phase208.js
           grep -Fq 'window.mwsF1QaPassStateMachineV208=qaPassStateMachineV208;' /tmp/f1-racing-phase208.js
           echo '[phase209] F1 long-run gap balance'
-          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=N1&phase=209' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=N1&phase=(209|21[0-9])' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV209=VERSION209;' > /tmp/f1-racing-phase209.js
           node --check /tmp/f1-racing-phase209.js
           grep -Fq 'function longRunPaceBiasV209(vehicle,lapAge=' /tmp/f1-racing-phase209.js
           grep -Fq 'function qaLongRunGapBalanceV209(){' /tmp/f1-racing-phase209.js
           grep -Fq 'window.mwsF1QaLongRunGapBalanceV209=qaLongRunGapBalanceV209;' /tmp/f1-racing-phase209.js
+          echo '[phase210] F1 multi-track integration'
+          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=N1&phase=210' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV210=VERSION210;' > /tmp/f1-racing-phase210.js
+          node --check /tmp/f1-racing-phase210.js
+          grep -Fq 'function qaMultiTrackIntegrationV210(){' /tmp/f1-racing-phase210.js
+          grep -Fq 'window.mwsF1QaMultiTrackIntegrationV210=qaMultiTrackIntegrationV210;' /tmp/f1-racing-phase210.js
+          retry_contains "$BASE/assets/f1-track-v1.js?deploy=$GITHUB_SHA" "id:'majoku-ring-v1'" > /tmp/f1-track-phase210.js
+          grep -Fq "id:'castle-street-circuit-v1'" /tmp/f1-track-phase210.js
+          grep -Fq "id:'blue-coast-speedway-v1'" /tmp/f1-track-phase210.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css

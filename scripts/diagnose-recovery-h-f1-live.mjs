@@ -300,6 +300,11 @@ try{
     assert(Number(longRunQa?.settledBiasSpread)<Number(longRunQa?.openingBiasSpread),'Phase 209 did not reduce persistent base pace spread');
     assert(Number(longRunQa?.paceOnlyThirtyLapSpreadSeconds)<=14,'Phase 209 pace-only 30-lap spread too large: '+String(longRunQa?.paceOnlyThirtyLapSpreadSeconds));
     assert(longRunQa?.systemsConnected===true,'Phase 209 disconnected tyre/pit/traffic/pass systems');
+    const multiTrackQa=window.mwsF1QaMultiTrackIntegrationV210?.();
+    assert(multiTrackQa?.trackCount===3,'Phase 210 track catalog count mismatch: '+String(multiTrackQa?.trackCount));
+    assert(JSON.stringify(multiTrackQa?.ids)===JSON.stringify(['majoku-ring-v1','castle-street-circuit-v1','blue-coast-speedway-v1']),'Phase 210 track ids mismatch: '+JSON.stringify(multiTrackQa?.ids));
+    assert(multiTrackQa?.allPass===true,'Phase 210 multi-track integration failed: '+JSON.stringify(multiTrackQa?.tracks));
+    assert(multiTrackQa?.tracks?.every(row=>row.snapshotReady&&row.geometryReady&&row.pitReady&&row.overtakeReady&&row.renderingReady&&row.dynamicsReady&&row.trafficPassReady),'Phase 210 subsystem coverage incomplete');
     pause.click();await raf();
     assert(window.mwsF1GetSimulationClockV192?.().paused===false,'Pause button did not resume simulation');
 

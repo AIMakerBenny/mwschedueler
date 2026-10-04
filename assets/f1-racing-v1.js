@@ -36,6 +36,7 @@ const VERSION206='phase206-pit-strategy-ai';
 const VERSION207='phase207-traffic-slipstream-defence';
 const VERSION208='phase208-pass-state-machine';
 const VERSION209='phase209-long-run-gap-balance';
+const VERSION210='phase210-multi-track-integration';
 const PASS_STATES_V208=Object.freeze(['FOLLOWING','CLOSING','TOWING','PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','PASS_COMPLETED','PASS_FAILED','COUNTER_ATTACK']);
 const PASS_CONFIG_V208=Object.freeze({followGapMeters:48,prepareGapMeters:20,pullOutGapMeters:15,sideBySideGapMeters:8,failGapMeters:32,passMarginMeters:1.2,stateHoldMs:160,maxBattleBiasKph:2.4});
 const LONG_RUN_GAP_CONFIG_V209=Object.freeze({settlingLaps:3.5,maxOpeningPaceBias:0.0045,maxSettledPaceBias:0.0018,relativeShape:1.25,qaLapSeconds:90,qaLaps:30});
@@ -717,6 +718,41 @@ function qaLongRunGapBalanceV209(){
     vehicleCount:synthetic.length,openingBiasSpread:spread(opening),settledBiasSpread:spread(settled),
     paceOnlyThirtyLapSpreadSeconds,nonUniform:spread(settled)>.0001,gapDependency:false,systemsConnected
   };
+}
+function qaMultiTrackIntegrationV210(){
+  const originalTrackId=activeTrackId;
+  const catalog=getTrackCatalogV186();
+  const tracks=[];
+  try{
+    for(const item of catalog){
+      const track=window.mwsGetF1TrackV182?.(item.id);
+      const validation=typeof window.mwsValidateF1TrackV182==='function'?window.mwsValidateF1TrackV182(track):['validator missing'];
+      activeTrackId=String(item.id);
+      const snapshot=buildRaceSnapshotV187();
+      const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+      svg.setAttribute('viewBox',(track?.viewBox||[0,0,1000,600]).join(' '));
+      path.setAttribute('d',String(track?.path||''));
+      svg.style.cssText='position:fixed;left:-10000px;top:-10000px;width:1000px;height:600px;visibility:hidden';
+      svg.appendChild(path);document.body.appendChild(svg);
+      let geometry=null,cornered=null,profiled=null;
+      try{
+        geometry=window.mwsBuildF1TrackGeometryV193?.(track,path)||null;
+        cornered=geometry&&window.mwsBuildF1CornerPhasesV194?.(track,geometry)||null;
+        profiled=cornered&&window.mwsBuildF1SpeedProfileV195?.(track,cornered)||null;
+      }finally{svg.remove()}
+      const snapshotReady=Boolean(snapshot&&snapshot.trackId===item.id&&snapshot.track?.path===track?.path&&snapshot.track?.lengthMeters===track?.lengthMeters);
+      const geometryReady=Boolean(geometry?.samples?.length&&cornered?.cornerPhases?.length&&profiled?.speedProfile?.length);
+      const pitReady=Boolean(snapshot?.track?.pit&&Number(snapshot.track.pit.speedLimitKph)>0);
+      const overtakeReady=Boolean(snapshot?.track?.overtakeZones?.length);
+      const renderingReady=Boolean(snapshot?.track?.viewBox?.length===4&&String(snapshot?.track?.path||'').startsWith('M '));
+      const dynamicsReady=Boolean(profiled?.speedProfile?.every(row=>Number(row.targetKph)>0));
+      const trafficPassReady=typeof updateTrafficAndDefenceV207==='function'&&typeof updatePassStateMachineV208==='function';
+      const pass=validation.length===0&&snapshotReady&&geometryReady&&pitReady&&overtakeReady&&renderingReady&&dynamicsReady&&trafficPassReady;
+      tracks.push({id:item.id,name:item.name,validation,snapshotReady,geometryReady,pitReady,overtakeReady,renderingReady,dynamicsReady,trafficPassReady,samples:geometry?.samples?.length||0,corners:cornered?.cornerPhases?.length||0,pass});
+    }
+  }finally{activeTrackId=originalTrackId}
+  return {trackCount:tracks.length,ids:tracks.map(row=>row.id),tracks,allPass:tracks.length===3&&tracks.every(row=>row.pass)};
 }
 
 
@@ -3052,7 +3088,7 @@ function render(){
   if(previewStateV184.running)stopPreviewV184(true);
   if(f1ScreenStateV185==='RACE'&&activeRaceSnapshotV187){renderRaceControlV188();startRaceMotionV189()}
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent=f1ScreenStateV185==='SETUP'?'RACE SETUP':'RACE CONTROL';
-  section.dataset.f1Runtime=VERSION209;
+  section.dataset.f1Runtime=VERSION210;
   return true;
 }
 function toggleDriver(id){
@@ -3276,6 +3312,7 @@ window.mwsF1LongRunPaceBiasV209=longRunPaceBiasV209;
 window.mwsF1LongRunPaceCorrectionV209=longRunPaceCorrectionV209;
 window.mwsF1GetLongRunBalanceStatesV209=getLongRunBalanceStatesV209;
 window.mwsF1QaLongRunGapBalanceV209=qaLongRunGapBalanceV209;
+window.mwsF1QaMultiTrackIntegrationV210=qaMultiTrackIntegrationV210;
 window.mwsF1ErsNormalPowerLimitV201=ersNormalPowerLimitV201;
 window.mwsF1UpdateEnergySystemV201=updateEnergySystemV201;
 window.mwsF1GetEnergyStatesV201=getEnergyStatesV201;
@@ -3333,6 +3370,7 @@ window.__mwsF1RacingV206=VERSION206;
 window.__mwsF1RacingV207=VERSION207;
 window.__mwsF1RacingV208=VERSION208;
 window.__mwsF1RacingV209=VERSION209;
+window.__mwsF1RacingV210=VERSION210;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
