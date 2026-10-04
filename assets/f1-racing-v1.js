@@ -1448,11 +1448,11 @@ function bindRaceProceedV187(){
 
 
 const F1_WORKSPACE_PANEL_META_RECOVERY_E=Object.freeze({
-  timing:Object.freeze({label:'LIVE TIMING'}),
-  track:Object.freeze({label:'TRACK MAP'}),
-  commentary:Object.freeze({label:'RACE COMMENTARY'}),
-  radio:Object.freeze({label:'TEAM RADIO'}),
-  speed:Object.freeze({label:'SPEED TRAP'})
+  timing:Object.freeze({label:'LIVE TIMING',minW:6,minH:2}),
+  track:Object.freeze({label:'TRACK MAP',minW:4,minH:4}),
+  commentary:Object.freeze({label:'RACE COMMENTARY',minW:3,minH:3}),
+  radio:Object.freeze({label:'TEAM RADIO',minW:3,minH:2}),
+  speed:Object.freeze({label:'SPEED TRAP',minW:3,minH:2})
 });
 const F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E=Object.freeze({
   version:3,
@@ -1471,6 +1471,131 @@ let workspacePointerRecoveryE=null;
 function cloneWorkspaceLayoutRecoveryE(layout){
   return JSON.parse(JSON.stringify(layout));
 }
+
+const F1_WORKSPACE_MAX_ROWS_RECOVERY_I=32;
+function workspaceMinSizeRecoveryI(id){
+  const meta=F1_WORKSPACE_PANEL_META_RECOVERY_E[id]||{};
+  return {w:Math.max(2,Number(meta.minW)||2),h:Math.max(2,Number(meta.minH)||2)};
+}
+function workspaceClampRectRecoveryI(id,rect={}){
+  const min=workspaceMinSizeRecoveryI(id);
+  const w=Math.max(min.w,Math.min(12,Math.round(Number(rect.w)||min.w)));
+  const h=Math.max(min.h,Math.min(12,Math.round(Number(rect.h)||min.h)));
+  const x=Math.max(0,Math.min(12-w,Math.round(Number(rect.x)||0)));
+  const y=Math.max(0,Math.min(F1_WORKSPACE_MAX_ROWS_RECOVERY_I-h,Math.round(Number(rect.y)||0)));
+  return {x,y,w,h};
+}
+function workspaceRectsOverlapRecoveryI(a,b){
+  if(!a||!b)return false;
+  return a.x<a.x+b.w&&b.x<b.x+a.w&&a.y<a.y+b.h&&b.y<b.y+a.h;
+}
+function workspaceRectIntersectsRecoveryI(a,b){
+  if(!a||!b)return false;
+  return a.x<b.x+b.w&&b.x<a.x+a.w&&a.y<b.y+b.h&&b.y<a.y+a.h;
+}
+function workspaceSlotMembersRecoveryI(layout,id){
+  const state=layout?.panels?.[id];
+  if(!state)return [];
+  const group=String(state.tabGroup||'');
+  return group
+    ?Object.keys(layout.panels).filter(memberId=>String(layout.panels[memberId]?.tabGroup||'')===group)
+    :[id];
+}
+function workspaceSlotLeadersRecoveryI(layout){
+  const slots=[],seen=new Set();
+  for(const id of Object.keys(F1_WORKSPACE_PANEL_META_RECOVERY_E)){
+    const state=layout?.panels?.[id];if(!state)continue;
+    const group=String(state.tabGroup||'');
+    const key=group?'tab:'+group:'panel:'+id;
+    if(seen.has(key))continue;
+    seen.add(key);
+    const members=workspaceSlotMembersRecoveryI(layout,id);
+    const visible=members.filter(memberId=>!layout.panels[memberId]?.hidden);
+    if(!visible.length)continue;
+    const active=group&&visible.includes(layout.activeTabs?.[group])?layout.activeTabs[group]:visible[0];
+    slots.push({id:active,key,members,rect:workspaceClampRectRecoveryI(active,layout.panels[active])});
+  }
+  return slots;
+}
+function workspaceApplySlotRectRecoveryI(layout,id,rect){
+  const next=workspaceClampRectRecoveryI(id,rect);
+  for(const memberId of workspaceSlotMembersRecoveryI(layout,id)){
+    Object.assign(layout.panels[memberId],next);
+  }
+  return next;
+}
+function workspaceFindFreeRectRecoveryI(id,desired,occupied){
+  const base=workspaceClampRectRecoveryI(id,desired);
+  const fits=rect=>!occupied.some(other=>workspaceRectIntersectsRecoveryI(rect,other));
+  if(fits(base))return base;
+  const candidates=[];
+  for(let y=0;y<=F1_WORKSPACE_MAX_ROWS_RECOVERY_I-base.h;y++){
+    for(let x=0;x<=12-base.w;x++){
+      const rect={x,y,w:base.w,h:base.h};
+      if(!fits(rect))continue;
+      const distance=Math.abs(x-base.x)*2+Math.abs(y-base.y);
+      candidates.push({rect,score:distance+y*.02+x*.005});
+    }
+  }
+  candidates.sort((a,b)=>a.score-b.score);
+  return candidates[0]?.rect||base;
+}
+function workspaceDetachTabRecoveryI(layout,id){
+  const state=layout?.panels?.[id];
+  const group=String(state?.tabGroup||'');
+  if(!state||!group)return;
+  state.tabGroup='';
+  const remaining=Object.keys(layout.panels).filter(memberId=>String(layout.panels[memberId]?.tabGroup||'')===group);
+  if(remaining.length<2){
+    remaining.forEach(memberId=>{layout.panels[memberId].tabGroup=''});
+    delete layout.activeTabs[group];
+  }else if(!remaining.includes(layout.activeTabs[group])){
+    layout.activeTabs[group]=remaining[0];
+  }
+}
+function workspaceReflowRecoveryI(layout,preferredId='',preferredRect=null){
+  if(!layout?.panels)return layout;
+  const preferredMembers=preferredId?workspaceSlotMembersRecoveryI(layout,preferredId):[];
+  const preferredKey=preferredId
+    ?(layout.panels[preferredId]?.tabGroup?'tab:'+layout.panels[preferredId].tabGroup:'panel:'+preferredId)
+    :'';
+  const slots=workspaceSlotLeadersRecoveryI(layout);
+  const ordered=[...slots].sort((a,b)=>{
+    if(a.key===preferredKey)return -1;
+    if(b.key===preferredKey)return 1;
+    if(a.rect.y!==b.rect.y)return a.rect.y-b.rect.y;
+    return a.rect.x-b.rect.x;
+  });
+  const occupied=[];
+  for(const slot of ordered){
+    let desired=slot.rect;
+    if(slot.key===preferredKey&&preferredRect)desired=workspaceClampRectRecoveryI(slot.id,preferredRect);
+    const placed=workspaceFindFreeRectRecoveryI(slot.id,desired,occupied);
+    workspaceApplySlotRectRecoveryI(layout,slot.id,placed);
+    occupied.push(placed);
+  }
+  for(const group of new Set(Object.values(layout.panels).map(state=>String(state.tabGroup||'')).filter(Boolean))){
+    const members=Object.keys(layout.panels).filter(id=>String(layout.panels[id]?.tabGroup||'')===group);
+    const visible=members.filter(id=>!layout.panels[id].hidden);
+    if(!visible.length)continue;
+    const leader=visible.includes(layout.activeTabs[group])?layout.activeTabs[group]:visible[0];
+    layout.activeTabs[group]=leader;
+    const rect=workspaceClampRectRecoveryI(leader,layout.panels[leader]);
+    members.forEach(id=>Object.assign(layout.panels[id],rect));
+  }
+  return layout;
+}
+function workspaceOverlapPairsRecoveryI(layout=workspaceLayoutRecoveryE){
+  const slots=workspaceSlotLeadersRecoveryI(layout);
+  const pairs=[];
+  for(let i=0;i<slots.length;i++){
+    for(let j=i+1;j<slots.length;j++){
+      if(workspaceRectIntersectsRecoveryI(slots[i].rect,slots[j].rect))pairs.push([slots[i].id,slots[j].id]);
+    }
+  }
+  return pairs;
+}
+
 function normalizeWorkspaceLayoutRecoveryE(raw){
   const defaults=cloneWorkspaceLayoutRecoveryE(F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E);
   const candidate=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
@@ -1498,7 +1623,7 @@ function normalizeWorkspaceLayoutRecoveryE(raw){
   }
   const maxIds=Object.keys(result.panels).filter(id=>result.panels[id].maximized);
   maxIds.slice(1).forEach(id=>{result.panels[id].maximized=false});
-  return result;
+  return workspaceReflowRecoveryI(result);
 }
 function readWorkspaceLayoutRecoveryE(){
   const saved=readPersistedF1SettingsRecoveryD()?.workspaceLayout;
@@ -1594,20 +1719,23 @@ function applyWorkspaceLayoutRecoveryE(){
 }
 function workspaceDockLayoutRecoveryE(id,zone){
   if(!workspaceLayoutRecoveryE?.panels[id])return false;
+  workspaceDetachTabRecoveryI(workspaceLayoutRecoveryE,id);
   const state=workspaceLayoutRecoveryE.panels[id];
-  state.tabGroup='';
   state.maximized=false;
-  if(zone==='left')Object.assign(state,{x:0,y:0,w:6,h:8});
-  else if(zone==='right')Object.assign(state,{x:6,y:0,w:6,h:8});
-  else if(zone==='top')Object.assign(state,{x:0,y:0,w:12,h:4});
-  else if(zone==='bottom')Object.assign(state,{x:0,y:4,w:12,h:4});
+  let desired=null;
+  if(zone==='left')desired={x:0,y:0,w:6,h:8};
+  else if(zone==='right')desired={x:6,y:0,w:6,h:8};
+  else if(zone==='top')desired={x:0,y:0,w:12,h:4};
+  else if(zone==='bottom')desired={x:0,y:4,w:12,h:4};
   else return false;
+  workspaceReflowRecoveryI(workspaceLayoutRecoveryE,id,desired);
   applyWorkspaceLayoutRecoveryE();
   persistWorkspaceLayoutRecoveryE();
-  return true;
+  return workspaceOverlapPairsRecoveryI().length===0;
 }
 function workspaceTabGroupRecoveryE(sourceId,targetId){
   if(sourceId===targetId||!workspaceLayoutRecoveryE?.panels[sourceId]||!workspaceLayoutRecoveryE?.panels[targetId])return false;
+  workspaceDetachTabRecoveryI(workspaceLayoutRecoveryE,sourceId);
   const source=workspaceLayoutRecoveryE.panels[sourceId];
   const target=workspaceLayoutRecoveryE.panels[targetId];
   const group=target.tabGroup||('f1-tab-'+targetId);
@@ -1617,6 +1745,7 @@ function workspaceTabGroupRecoveryE(sourceId,targetId){
   source.hidden=false;target.hidden=false;
   source.maximized=false;target.maximized=false;
   workspaceLayoutRecoveryE.activeTabs[group]=sourceId;
+  workspaceReflowRecoveryI(workspaceLayoutRecoveryE,targetId,target);
   applyWorkspaceLayoutRecoveryE();
   persistWorkspaceLayoutRecoveryE();
   return true;
@@ -1634,7 +1763,8 @@ function workspaceTogglePanelRecoveryE(id){
   state.hidden=!state.hidden;
   if(!state.hidden&&state.tabGroup)workspaceLayoutRecoveryE.activeTabs[state.tabGroup]=id;
   if(state.hidden)state.maximized=false;
-  applyWorkspaceLayoutRecoveryE();persistWorkspaceLayoutRecoveryE();return true;
+  workspaceReflowRecoveryI(workspaceLayoutRecoveryE,state.hidden?'':id,state.hidden?null:state);
+  applyWorkspaceLayoutRecoveryE();persistWorkspaceLayoutRecoveryE();return workspaceOverlapPairsRecoveryI().length===0;
 }
 function workspaceToggleMaximizeRecoveryE(id){
   if(!workspaceLayoutRecoveryE?.panels[id])return false;
@@ -1713,14 +1843,13 @@ function onWorkspacePointerMoveRecoveryE(event){
   const dw=Math.round((event.clientX-state.startX)/colWidth);
   const dh=Math.round((event.clientY-state.startY)/72);
   const row=workspaceLayoutRecoveryE.panels[state.id];
-  row.w=Math.max(2,Math.min(12-row.x,state.start.w+dw));
-  row.h=Math.max(2,Math.min(10-row.y,state.start.h+dh));
-  if(row.tabGroup){
-    for(const member of workspaceGroupMembersRecoveryE(row.tabGroup)){
-      workspaceLayoutRecoveryE.panels[member].w=row.w;
-      workspaceLayoutRecoveryE.panels[member].h=row.h;
-    }
-  }
+  const min=workspaceMinSizeRecoveryI(state.id);
+  const desired={
+    x:state.start.x,y:state.start.y,
+    w:Math.max(min.w,Math.min(12-state.start.x,state.start.w+dw)),
+    h:Math.max(min.h,Math.min(12,state.start.h+dh))
+  };
+  workspaceReflowRecoveryI(workspaceLayoutRecoveryE,state.id,desired);
   applyWorkspaceLayoutRecoveryE();
 }
 function onWorkspacePointerUpRecoveryE(event){
@@ -1735,7 +1864,9 @@ function onWorkspacePointerUpRecoveryE(event){
   if(drop.kind==='dock'){workspaceDockLayoutRecoveryE(pointer.id,drop.zone);return}
   if(drop.kind==='tab'){workspaceTabGroupRecoveryE(pointer.id,drop.targetId);return}
   if(drop.kind==='free'){
-    state.tabGroup='';state.maximized=false;state.x=drop.x;state.y=drop.y;
+    workspaceDetachTabRecoveryI(workspaceLayoutRecoveryE,pointer.id);
+    state.maximized=false;
+    workspaceReflowRecoveryI(workspaceLayoutRecoveryE,pointer.id,{x:drop.x,y:drop.y,w:state.w,h:state.h});
     applyWorkspaceLayoutRecoveryE();persistWorkspaceLayoutRecoveryE();
   }
 }
@@ -2040,6 +2171,8 @@ window.mwsF1TabGroupRecoveryE=workspaceTabGroupRecoveryE;
 window.mwsF1ToggleWorkspacePanelRecoveryE=workspaceTogglePanelRecoveryE;
 window.mwsF1ToggleWorkspaceMaximizeRecoveryE=workspaceToggleMaximizeRecoveryE;
 window.mwsF1GetWorkspaceLayoutRecoveryE=function(){return workspaceLayoutRecoveryE?cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE):null};
+window.mwsF1ReflowWorkspaceRecoveryI=function(id='',rect=null){if(!workspaceLayoutRecoveryE)return false;workspaceReflowRecoveryI(workspaceLayoutRecoveryE,id,rect);applyWorkspaceLayoutRecoveryE();persistWorkspaceLayoutRecoveryE();return workspaceOverlapPairsRecoveryI().length===0};
+window.mwsF1WorkspaceOverlapPairsRecoveryI=function(){return workspaceOverlapPairsRecoveryI().map(pair=>pair.slice())};
 window.mwsF1FinishRaceRecoveryG=finishRaceRecoveryG;
 window.mwsF1ForceFinishRecoveryG=function(){return finishRaceRecoveryG(true)};
 window.mwsF1ShowPodiumRecoveryG=showPodiumRecoveryG;
@@ -2121,6 +2254,7 @@ window.__mwsF1RecoveryD='persistent-roster-track-settings-v1';
 window.__mwsF1RecoveryE='premiere-workspace-foundation-v1';
 window.__mwsF1RecoveryF='race-workspace-default-redesign-v1';
 window.__mwsF1RecoveryG='complete-race-lifecycle-v1';
+window.__mwsF1RecoveryI='collision-free-reflow-v1';
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){

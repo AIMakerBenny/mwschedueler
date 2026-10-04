@@ -8,9 +8,9 @@ export function runRecoveryGF1LifecycleAudit(){
   const css=fs.readFileSync('assets/f1-racing-v1.css','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
+  if(!/assets\/f1-racing-v1\.css\?v=1\.0\.0-phase180-shell&p=196&recovery=[G-Z][0-9]+/.test(index))issues.push('Recovery G+ CSS asset cache missing');
+  if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[G-Z][0-9]+/.test(index))issues.push('Recovery G+ JS asset cache missing');
   for(const token of [
-    'assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196&recovery=G1',
-    'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=G1',
     'id="f1RacingFinishingTitleRecoveryG"',
     'id="f1RacingShowPodiumRecoveryG"',
     'id="f1RacingPodiumRowsRecoveryG"',
