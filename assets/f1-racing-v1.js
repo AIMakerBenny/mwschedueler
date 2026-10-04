@@ -918,7 +918,8 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
     throttle=.12;
     accelMps2=0;
   }
-  const energyState=updateEnergySystemV201(vehicle,stepMs,phase,throttle,brake);
+  const propulsionThrottle=accelMps2>0?throttle:0;
+  const energyState=updateEnergySystemV201(vehicle,stepMs,phase,propulsionThrottle,brake);
   if(accelMps2>0)accelMps2*=energyState.powerUnitFactor;
   const dt=stepMs/1000;
   const nextMps=Math.max(0,current/3.6+accelMps2*dt);
