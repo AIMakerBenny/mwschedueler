@@ -122,6 +122,7 @@ jobs:
           node --check scripts/run-phase189-f1-shared-multicar-raf-audit.mjs
           node --check scripts/run-phase190-f1-race-distance-lap-sector-audit.mjs
           node --check scripts/run-phase191-f1-position-gap-interval-audit.mjs
+          node --check scripts/run-phase192-f1-simulation-clock-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-racing-v1.js
           node --check assets/workspace-ui-v176.js
@@ -927,6 +928,17 @@ jobs:
           grep -Fq 'function computeRaceStandingsV191(){' /tmp/f1-racing-v1-phase191.js
           grep -Fq 'function updateRaceStandingsV191(){' /tmp/f1-racing-v1-phase191.js
           grep -Fq 'window.mwsF1ComputeRaceStandingsV191=computeRaceStandingsV191;' /tmp/f1-racing-v1-phase191.js
+          echo '[phase192] F1 simulation clock pause and time scale'
+          grep -Fq 'id="f1RacingPauseV192"' /tmp/index.html
+          grep -Fq 'data-f1-timescale="1"' /tmp/index.html
+          grep -Fq 'data-f1-timescale="2"' /tmp/index.html
+          grep -Fq 'data-f1-timescale="4"' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV192=VERSION192;' > /tmp/f1-racing-v1-phase192.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '#f1RacingRaceControlsV192 button{' > /tmp/f1-racing-v1-phase192.css
+          node --check /tmp/f1-racing-v1-phase192.js
+          grep -Fq 'function simulateRaceStepV192(stepMs){' /tmp/f1-racing-v1-phase192.js
+          grep -Fq 'simClockV192.accumulatorMs+=delta*simClockV192.timeScale;' /tmp/f1-racing-v1-phase192.js
+          grep -Fq 'window.mwsF1SetSimulationTimeScaleV192=setSimulationTimeScaleV192;' /tmp/f1-racing-v1-phase192.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css

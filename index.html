@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>마왕 스케줄러</title>
 <link rel="stylesheet" href="assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171-searchtab172-drag174-workspace176-splitquick177">
-<link rel="stylesheet" href="assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=191">
+<link rel="stylesheet" href="assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=192">
 
 <style id="mws-cloud-access-style">
 body.mws-gated .app{pointer-events:none;user-select:none;filter:blur(5px);opacity:.36}
@@ -1121,11 +1121,11 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
             <span>LAP <b id="f1RacingRaceLapV188">0 / --</b></span>
             <span>DRIVERS <b id="f1RacingRaceDriverCountV188">0</b></span>
           </div>
-          <div class="f1-racing-race-controls-v188">
-            <button type="button" class="secondary small" disabled>Pause</button>
-            <button type="button" class="secondary small active" disabled>1x</button>
-            <button type="button" class="secondary small" disabled>2x</button>
-            <button type="button" class="secondary small" disabled>4x</button>
+          <div class="f1-racing-race-controls-v188" id="f1RacingRaceControlsV192">
+            <button type="button" class="secondary small" id="f1RacingPauseV192" aria-pressed="false">Pause</button>
+            <button type="button" class="secondary small active" id="f1RacingSpeed1V192" data-f1-timescale="1" aria-pressed="true">1x</button>
+            <button type="button" class="secondary small" id="f1RacingSpeed2V192" data-f1-timescale="2" aria-pressed="false">2x</button>
+            <button type="button" class="secondary small" id="f1RacingSpeed4V192" data-f1-timescale="4" aria-pressed="false">4x</button>
           </div>
         </div>
 
@@ -1890,7 +1890,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 
 <script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181"></script>
 <script src="assets/f1-track-v1.js?v=1.0.0-phase182-model"></script>
-<script src="assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=191"></script>
+<script src="assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=192"></script>
 <script src="assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130-zoom138-unassigned168"></script>
 <script src="assets/wardogs-media-v1.js?v=1.0.0-phase121-backup126-webview130"></script>
 <script src="assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140-frame144-frames150-aperture152-assault166-medic165-recon163-support166-driver161-pilot166-unassigned168"></script>

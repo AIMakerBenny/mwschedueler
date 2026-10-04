@@ -173,6 +173,7 @@ import {runPhase188F1RaceControlFrameAudit} from './run-phase188-f1-race-control
 import {runPhase189F1SharedMultiCarRafAudit} from './run-phase189-f1-shared-multicar-raf-audit.mjs';
 import {runPhase190F1RaceDistanceLapSectorAudit} from './run-phase190-f1-race-distance-lap-sector-audit.mjs';
 import {runPhase191F1PositionGapIntervalAudit} from './run-phase191-f1-position-gap-interval-audit.mjs';
+import {runPhase192F1SimulationClockAudit} from './run-phase192-f1-simulation-clock-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -1877,5 +1878,14 @@ export function runPhase191FullIntegrationAudit(){
   if(issues.length)process.exitCode=1;
   return summary;
 }
-export function runCurrentFullIntegrationAudit(){return runPhase191FullIntegrationAudit();}
+export function runPhase192FullIntegrationAudit(){
+  const previous=runPhase191FullIntegrationAudit(),current=runPhase192F1SimulationClockAudit();
+  const issues=[...previous.issues,...current.issues.map(x=>'Phase '+current.phase+': '+x)];
+  const warnings=[...previous.warnings,...current.warnings.map(x=>'Phase '+current.phase+': '+x)];
+  const summary={currentPhase:192,issues,warnings,pass:issues.length===0};
+  console.log(JSON.stringify({fullIntegration:summary}));
+  if(issues.length)process.exitCode=1;
+  return summary;
+}
+export function runCurrentFullIntegrationAudit(){return runPhase192FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
