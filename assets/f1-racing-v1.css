@@ -585,3 +585,14 @@
 /* Phase 225: camera director controls */
 .f1-racing-camera-controls-v216{max-width:calc(100% - 16px);flex-wrap:wrap}
 .f1-racing-camera-controls-v216>span{min-width:74px}
+
+/* Phase 226: commentary readability */
+#f1RacingViewRaceV185 [data-f1-workspace-panel="commentary"]{position:relative!important}
+.f1-racing-commentary-entry-v219{grid-template-columns:42px minmax(0,1fr);gap:7px;padding:6px 7px;font-size:11px;line-height:1.48}
+.f1-racing-commentary-entry-v219[data-commentary-priority="critical"]{background:rgba(148,163,184,.075);border-left:3px solid currentColor}
+.f1-racing-commentary-entry-v219[data-commentary-priority="critical"] .message{font-weight:800;color:#eef4fb}
+.f1-racing-commentary-entry-v219[data-commentary-priority="high"] .message{font-weight:700;color:#dce6f2}
+.f1-racing-commentary-entry-v219[data-commentary-priority="medium"] .message{color:#b8c5d6}
+.f1-racing-commentary-entry-v219[data-commentary-priority="low"] .message{color:#8e9aad}
+.f1-racing-commentary-unread-v226{position:absolute;right:10px;bottom:10px;z-index:12;min-height:26px;padding:4px 8px;border:1px solid #53657e;border-radius:999px;background:rgba(12,20,31,.94);color:#eef5ff;font-size:9px;font-weight:850;box-shadow:0 6px 18px rgba(0,0,0,.32);cursor:pointer}
+.f1-racing-commentary-unread-v226[hidden]{display:none!important}
