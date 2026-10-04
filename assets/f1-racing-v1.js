@@ -63,6 +63,7 @@ const VERSION233='phase233-track-silhouette-cards';
 const VERSION234='phase234-track-runtime-character-profile';
 const VERSION235='phase235-track-character-driving-behavior';
 const VERSION236='phase236-track-aware-commentary';
+const VERSION237='phase237-race-result-telemetry';
 const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitchMs:1800,urgentBattleGapSeconds:0.55,focusDeadbandSvg:3,zoomDeadband:0.025});
 const COMMENTARY_CADENCE_V227=Object.freeze({flowGapMs:5500,strategyGapMs:3000,battleGapMs:1600,windowMs:60000,maxNarrativePerWindow:18});
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
@@ -2368,6 +2369,44 @@ function markRaceFinishersRecoveryG(){
   }
   return changed;
 }
+function buildRaceTelemetryV237(snapshot=activeRaceSnapshotV187,vehicles=raceMotionV189.vehicles){
+  if(!snapshot||!Array.isArray(vehicles)||!vehicles.length)return null;
+  const laps=Math.max(1,Number(snapshot.totalLaps)||DEFAULT_TOTAL_LAPS_V190);
+  const length=Math.max(1,Number(snapshot.track?.lengthMeters)||1);
+  const completed=vehicles.filter(vehicle=>Number(vehicle.finishedAtSimMs)>0);
+  const finishTimes=completed.map(vehicle=>Math.max(1,Number(vehicle.finishedAtSimMs)||0));
+  const totalPasses=vehicles.reduce((sum,vehicle)=>sum+(Number(vehicle.passCompletedCount)||0),0);
+  const failedPasses=vehicles.reduce((sum,vehicle)=>sum+(Number(vehicle.passFailedCount)||0),0);
+  const lockups=vehicles.reduce((sum,vehicle)=>sum+(Number(vehicle.lockupCount)||0),0);
+  const understeer=vehicles.reduce((sum,vehicle)=>sum+(Number(vehicle.understeerCount)||0),0);
+  const oversteer=vehicles.reduce((sum,vehicle)=>sum+(Number(vehicle.oversteerCount)||0),0);
+  const incidentCount=lockups+understeer+oversteer;
+  const avgFinishMs=finishTimes.length?finishTimes.reduce((a,b)=>a+b,0)/finishTimes.length:Math.max(1,Number(simClockV192.simTimeMs)||1);
+  const winnerMs=finishTimes.length?Math.min(...finishTimes):avgFinishMs;
+  const raceDistanceMeters=length*laps;
+  const fieldAverageSpeedKph=raceDistanceMeters/(avgFinishMs/3600000)/1000;
+  const winnerAverageSpeedKph=raceDistanceMeters/(winnerMs/3600000)/1000;
+  const averageLapMs=avgFinishMs/laps;
+  const pitStops=vehicles.reduce((sum,vehicle)=>sum+(Number(vehicle.pitStopCount)||0),0);
+  return Object.freeze({
+    drivers:vehicles.length,totalPasses,failedPasses,incidentCount,lockups,understeer,oversteer,pitStops,
+    fieldAverageSpeedKph:Number(fieldAverageSpeedKph.toFixed(2)),
+    winnerAverageSpeedKph:Number(winnerAverageSpeedKph.toFixed(2)),
+    averageLapMs:Number(averageLapMs.toFixed(1)),
+    raceDistanceMeters
+  });
+}
+function qaRaceResultTelemetryV237(){
+  const snapshot=activeRaceSnapshotV187;
+  const live=snapshot?buildRaceTelemetryV237(snapshot,raceMotionV189.vehicles):null;
+  const syntheticSnapshot={totalLaps:10,track:{lengthMeters:5000}};
+  const synthetic=[
+    {finishedAtSimMs:600000,passCompletedCount:3,passFailedCount:1,lockupCount:1,understeerCount:0,oversteerCount:1,pitStopCount:1},
+    {finishedAtSimMs:612000,passCompletedCount:2,passFailedCount:2,lockupCount:0,understeerCount:1,oversteerCount:0,pitStopCount:1}
+  ];
+  const sample=buildRaceTelemetryV237(syntheticSnapshot,synthetic);
+  return {live,sample,allPass:Boolean(sample)&&sample.totalPasses===5&&sample.failedPasses===3&&sample.incidentCount===3&&sample.pitStops===2&&sample.fieldAverageSpeedKph>0&&sample.averageLapMs>0};
+}
 function buildRaceResultRecoveryG(){
   const snapshot=activeRaceSnapshotV187;
   if(!snapshot)return null;
@@ -2389,8 +2428,10 @@ function buildRaceResultRecoveryG(){
   return Object.freeze({
     trackId:String(snapshot.trackId||''),
     trackName:String(snapshot.track?.name||'Track'),
+    trackArchetype:String(snapshot.track?.runtimeProfile?.archetype||snapshot.track?.archetype||'종합형'),
     totalLaps:Number(snapshot.totalLaps)||DEFAULT_TOTAL_LAPS_V190,
     simTimeMs:simClockV192.simTimeMs,
+    telemetry:buildRaceTelemetryV237(snapshot,raceMotionV189.vehicles),
     rows:Object.freeze(rows)
   });
 }
@@ -4491,6 +4532,9 @@ window.mwsF1QaTrackBehaviorModifiersV235=qaTrackBehaviorModifiersV235;
 window.__mwsF1RacingV235=VERSION235;
 window.mwsF1QaTrackAwareCommentaryV236=qaTrackAwareCommentaryV236;
 window.__mwsF1RacingV236=VERSION236;
+window.mwsF1BuildRaceTelemetryV237=buildRaceTelemetryV237;
+window.mwsF1QaRaceResultTelemetryV237=qaRaceResultTelemetryV237;
+window.__mwsF1RacingV237=VERSION237;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
