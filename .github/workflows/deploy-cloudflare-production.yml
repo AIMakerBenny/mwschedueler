@@ -145,6 +145,7 @@ jobs:
           node --check scripts/run-recovery-h-f1-live-qa-audit.mjs
           node --check scripts/run-recovery-i-f1-workspace-reflow-audit.mjs
           node --check scripts/run-recovery-j-f1-split-dock-audit.mjs
+          node --check scripts/run-recovery-k-f1-workspace-repair-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-v1.js
@@ -1155,7 +1156,7 @@ jobs:
           grep -Fq 'function workspaceOverlapPairsRecoveryI(layout=workspaceLayoutRecoveryE){' /tmp/f1-racing-recovery-i.js
           grep -Fq 'window.mwsF1WorkspaceOverlapPairsRecoveryI=function(){return workspaceOverlapPairsRecoveryI().map(pair=>pair.slice())};' /tmp/f1-racing-recovery-i.js
           echo '[recovery-j] F1 split resize and dock preview'
-          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=J1' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[J-Z][0-9]+' /tmp/index.html
           grep -Fq 'assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196&recovery=J1' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RecoveryJ='split-resize-dock-preview-v1';" > /tmp/f1-racing-recovery-j.js
           retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '/* Recovery J: explicit drop preview for move, dock and tab targets */' > /tmp/f1-racing-recovery-j.css
@@ -1164,6 +1165,13 @@ jobs:
           grep -Fq 'function workspaceResizeSplitRecoveryJ(pointer,dw,dh){' /tmp/f1-racing-recovery-j.js
           grep -Fq 'function workspaceDropPreviewRectRecoveryJ(drop,sourceId){' /tmp/f1-racing-recovery-j.js
           grep -Fq '.f1-racing-workspace-dock-guide-recovery-e.free{' /tmp/f1-racing-recovery-j.css
+          echo '[recovery-k] F1 saved layout repair and DOM overlap QA'
+          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=K1' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RecoveryK='saved-layout-repair-dom-overlap-qa-v1';" > /tmp/f1-racing-recovery-k.js
+          node --check /tmp/f1-racing-recovery-k.js
+          grep -Fq 'function workspaceRawIssuesRecoveryK(raw){' /tmp/f1-racing-recovery-k.js
+          grep -Fq 'function workspaceCompactRecoveryK(layout,preferredId=' /tmp/f1-racing-recovery-k.js
+          grep -Fq 'window.mwsF1AuditWorkspaceLayoutRecoveryK=workspaceAuditLayoutRecoveryK;' /tmp/f1-racing-recovery-k.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css
