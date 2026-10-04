@@ -33,10 +33,8 @@ export function runRecoveryDF1PersistenceAudit(){
     "window.__mwsF1RecoveryD='persistent-roster-track-settings-v1';"
   ])if(!racing.includes(token))issues.push('Recovery D F1 runtime missing: '+token);
 
-  for(const token of [
-    'assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD',
-    'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=D1'
-  ])if(!index.includes(token))issues.push('Recovery D asset cache missing: '+token);
+  if(!index.includes('assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD'))issues.push('Recovery D app-core asset cache missing');
+  if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[D-Z][0-9]+/.test(index))issues.push('Recovery D+ F1 runtime cache missing');
 
   for(const token of ['node --check scripts/run-recovery-d-f1-persistence-audit.mjs',"echo '[recovery-d] F1 persistent roster and track settings'"])if(!workflow.includes(token))issues.push('Recovery D workflow verification missing: '+token);
   const syntax=spawnSync(process.execPath,['--check','assets/f1-racing-v1.js'],{encoding:'utf8'});

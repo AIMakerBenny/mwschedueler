@@ -138,6 +138,7 @@ jobs:
           node --check scripts/run-recovery-b-f1-start-finish-audit.mjs
           node --check scripts/run-recovery-c-f1-race-cancel-audit.mjs
           node --check scripts/run-recovery-d-f1-persistence-audit.mjs
+          node --check scripts/run-recovery-e-f1-workspace-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-v1.js
@@ -1073,7 +1074,7 @@ jobs:
           grep -Fq "name:'Blue Coast Speedway'" /tmp/f1-track-recovery-a.js
           echo '[recovery-b] F1 visible start finish line'
           grep -Fq 'id="f1RacingRaceAnnotationsRecoveryB"' /tmp/index.html
-          grep -Fq 'assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196&recovery=B1' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.css\?v=1\.0\.0-phase180-shell&p=196&recovery=[B-Z][0-9]+' /tmp/index.html
           grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[B-Z][0-9]+' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RecoveryB='start-finish-line-v1';" > /tmp/f1-racing-recovery-b.js
           retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-start-finish-recovery-b .finish-stripe{' > /tmp/f1-racing-recovery-b.css
@@ -1095,7 +1096,7 @@ jobs:
           grep -Fq 'window.mwsF1CancelRaceRecoveryC=cancelRaceToSetupRecoveryC;' /tmp/f1-racing-recovery-c.js
           echo '[recovery-d] F1 persistent roster and track settings'
           grep -Fq 'assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD' /tmp/index.html
-          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=D1' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[D-Z][0-9]+' /tmp/index.html
           retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" "window.__mwsF1PersistenceRecoveryD='miniGames-f1Racing-v1';" > /tmp/app-core-recovery-d.js
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RecoveryD='persistent-roster-track-settings-v1';" > /tmp/f1-racing-recovery-d.js
           node --check /tmp/f1-racing-recovery-d.js
@@ -1103,6 +1104,20 @@ jobs:
           grep -Fq 'const saved=persist();' /tmp/app-core-recovery-d.js
           grep -Fq 'function restoreF1SettingsRecoveryD(force=false){' /tmp/f1-racing-recovery-d.js
           grep -Fq 'persistF1SettingsRecoveryD();' /tmp/f1-racing-recovery-d.js
+          echo '[recovery-e] F1 Premiere workspace foundation'
+          grep -Fq 'assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196&recovery=E1' /tmp/index.html
+          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=E1' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RecoveryE='premiere-workspace-foundation-v1';" > /tmp/f1-racing-recovery-e.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-workspace-recovery-e{' > /tmp/f1-racing-recovery-e.css
+          node --check /tmp/f1-racing-recovery-e.js
+          grep -Fq 'function installF1WorkspaceRecoveryE(){' /tmp/f1-racing-recovery-e.js
+          grep -Fq 'function workspaceDockLayoutRecoveryE(id,zone){' /tmp/f1-racing-recovery-e.js
+          grep -Fq 'function workspaceTabGroupRecoveryE(sourceId,targetId){' /tmp/f1-racing-recovery-e.js
+          grep -Fq 'function workspaceToggleMaximizeRecoveryE(id){' /tmp/f1-racing-recovery-e.js
+          grep -Fq 'function resetWorkspaceRecoveryE(){' /tmp/f1-racing-recovery-e.js
+          grep -Fq 'persistF1SettingsRecoveryD({workspaceLayout:cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE)})' /tmp/f1-racing-recovery-e.js
+          grep -Fq '.f1-racing-workspace-resize-recovery-e{' /tmp/f1-racing-recovery-e.css
+          grep -Fq '.f1-racing-workspace-tabs-recovery-e{' /tmp/f1-racing-recovery-e.css
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css

@@ -1273,6 +1273,380 @@ function bindRaceProceedV187(){
   syncSetupActionV187();
 }
 
+
+const F1_WORKSPACE_PANEL_META_RECOVERY_E=Object.freeze({
+  timing:Object.freeze({label:'LIVE TIMING'}),
+  track:Object.freeze({label:'TRACK MAP'}),
+  commentary:Object.freeze({label:'RACE COMMENTARY'}),
+  radio:Object.freeze({label:'TEAM RADIO'}),
+  speed:Object.freeze({label:'SPEED TRAP'})
+});
+const F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E=Object.freeze({
+  version:1,
+  panels:Object.freeze({
+    timing:Object.freeze({x:0,y:0,w:12,h:3,hidden:false,maximized:false,tabGroup:''}),
+    track:Object.freeze({x:0,y:3,w:5,h:5,hidden:false,maximized:false,tabGroup:''}),
+    commentary:Object.freeze({x:5,y:3,w:4,h:5,hidden:false,maximized:false,tabGroup:''}),
+    radio:Object.freeze({x:9,y:3,w:3,h:2,hidden:false,maximized:false,tabGroup:''}),
+    speed:Object.freeze({x:9,y:5,w:3,h:3,hidden:false,maximized:false,tabGroup:''})
+  }),
+  activeTabs:Object.freeze({})
+});
+let workspaceLayoutRecoveryE=null;
+let workspacePointerRecoveryE=null;
+
+function cloneWorkspaceLayoutRecoveryE(layout){
+  return JSON.parse(JSON.stringify(layout));
+}
+function normalizeWorkspaceLayoutRecoveryE(raw){
+  const defaults=cloneWorkspaceLayoutRecoveryE(F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E);
+  const source=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+  const result={version:1,panels:{},activeTabs:{}};
+  for(const id of Object.keys(F1_WORKSPACE_PANEL_META_RECOVERY_E)){
+    const base=defaults.panels[id];
+    const row=source.panels?.[id]&&typeof source.panels[id]==='object'?source.panels[id]:{};
+    let w=Math.max(2,Math.min(12,Math.round(Number(row.w)||base.w)));
+    let h=Math.max(2,Math.min(10,Math.round(Number(row.h)||base.h)));
+    let x=Math.max(0,Math.min(12-w,Math.round(Number(row.x)||base.x)));
+    let y=Math.max(0,Math.min(12-h,Math.round(Number(row.y)||base.y)));
+    result.panels[id]={
+      x,y,w,h,
+      hidden:Boolean(row.hidden),
+      maximized:Boolean(row.maximized),
+      tabGroup:String(row.tabGroup||'')
+    };
+  }
+  for(const [group,id] of Object.entries(source.activeTabs||{})){
+    if(result.panels[id]?.tabGroup===group)result.activeTabs[group]=id;
+  }
+  const maxIds=Object.keys(result.panels).filter(id=>result.panels[id].maximized);
+  maxIds.slice(1).forEach(id=>{result.panels[id].maximized=false});
+  return result;
+}
+function readWorkspaceLayoutRecoveryE(){
+  const saved=readPersistedF1SettingsRecoveryD()?.workspaceLayout;
+  workspaceLayoutRecoveryE=normalizeWorkspaceLayoutRecoveryE(saved);
+  return workspaceLayoutRecoveryE;
+}
+function persistWorkspaceLayoutRecoveryE(){
+  if(!workspaceLayoutRecoveryE)return false;
+  return persistF1SettingsRecoveryD({workspaceLayout:cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE)});
+}
+function workspacePanelRecoveryE(id){
+  return document.querySelector('#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="'+id+'"]');
+}
+function workspacePanelLabelRecoveryE(id){
+  return F1_WORKSPACE_PANEL_META_RECOVERY_E[id]?.label||String(id||'PANEL').toUpperCase();
+}
+function workspaceGroupMembersRecoveryE(group){
+  if(!group||!workspaceLayoutRecoveryE)return [];
+  return Object.keys(workspaceLayoutRecoveryE.panels).filter(id=>workspaceLayoutRecoveryE.panels[id].tabGroup===group);
+}
+function renderWorkspaceTabsRecoveryE(){
+  const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
+  if(!workspace||!workspaceLayoutRecoveryE)return;
+  workspace.querySelectorAll('.f1-racing-workspace-tabs-recovery-e').forEach(node=>node.remove());
+  for(const id of Object.keys(workspaceLayoutRecoveryE.panels)){
+    const state=workspaceLayoutRecoveryE.panels[id];
+    const group=state.tabGroup;
+    if(!group)continue;
+    const members=workspaceGroupMembersRecoveryE(group);
+    if(members.length<2)continue;
+    const active=workspaceLayoutRecoveryE.activeTabs[group]&&members.includes(workspaceLayoutRecoveryE.activeTabs[group])
+      ?workspaceLayoutRecoveryE.activeTabs[group]
+      :members[0];
+    workspaceLayoutRecoveryE.activeTabs[group]=active;
+    if(id!==active)continue;
+    const panel=workspacePanelRecoveryE(id);
+    const title=panel?.querySelector('.f1-racing-panel-title-v188');
+    if(!title)continue;
+    const tabs=document.createElement('div');
+    tabs.className='f1-racing-workspace-tabs-recovery-e';
+    tabs.dataset.f1TabGroup=group;
+    for(const memberId of members){
+      const button=document.createElement('button');
+      button.type='button';
+      button.dataset.f1WorkspaceTab=memberId;
+      button.className=memberId===active?'active':'';
+      button.textContent=workspacePanelLabelRecoveryE(memberId);
+      tabs.appendChild(button);
+    }
+    title.prepend(tabs);
+  }
+}
+function renderWorkspaceVisibilityControlsRecoveryE(){
+  const box=document.getElementById('f1RacingWorkspacePanelTogglesRecoveryE');
+  if(!box||!workspaceLayoutRecoveryE)return;
+  box.replaceChildren();
+  for(const id of Object.keys(F1_WORKSPACE_PANEL_META_RECOVERY_E)){
+    const button=document.createElement('button');
+    button.type='button';
+    button.className='secondary small'+(workspaceLayoutRecoveryE.panels[id].hidden?' is-hidden':'');
+    button.dataset.f1WorkspaceToggle=id;
+    button.textContent=workspacePanelLabelRecoveryE(id);
+    button.setAttribute('aria-pressed',workspaceLayoutRecoveryE.panels[id].hidden?'false':'true');
+    box.appendChild(button);
+  }
+}
+function applyWorkspaceLayoutRecoveryE(){
+  const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
+  if(!workspace)return false;
+  if(!workspaceLayoutRecoveryE)readWorkspaceLayoutRecoveryE();
+  const maximizedId=Object.keys(workspaceLayoutRecoveryE.panels).find(id=>workspaceLayoutRecoveryE.panels[id].maximized)||'';
+  workspace.classList.toggle('has-maximized',Boolean(maximizedId));
+  workspace.dataset.maximized=maximizedId;
+  for(const id of Object.keys(workspaceLayoutRecoveryE.panels)){
+    const state=workspaceLayoutRecoveryE.panels[id];
+    const panel=workspacePanelRecoveryE(id);
+    if(!panel)continue;
+    const members=state.tabGroup?workspaceGroupMembersRecoveryE(state.tabGroup):[];
+    const activeTab=state.tabGroup?(workspaceLayoutRecoveryE.activeTabs[state.tabGroup]||members[0]||id):id;
+    const tabHidden=Boolean(state.tabGroup&&activeTab!==id);
+    const maxHidden=Boolean(maximizedId&&maximizedId!==id);
+    panel.hidden=Boolean(state.hidden||tabHidden||maxHidden);
+    panel.classList.toggle('is-maximized',maximizedId===id);
+    panel.style.gridColumn=(state.x+1)+' / span '+state.w;
+    panel.style.gridRow=(state.y+1)+' / span '+state.h;
+    panel.dataset.f1Dock=state.x===0&&state.w===6?'left':state.x===6&&state.w===6?'right':state.y===0&&state.w===12&&state.h===4?'top':state.y===4&&state.w===12&&state.h===4?'bottom':'free';
+    const maxButton=panel.querySelector('[data-f1-workspace-action="maximize"]');
+    if(maxButton)maxButton.textContent=maximizedId===id?'RESTORE':'MAX';
+  }
+  renderWorkspaceTabsRecoveryE();
+  renderWorkspaceVisibilityControlsRecoveryE();
+  return true;
+}
+function workspaceDockLayoutRecoveryE(id,zone){
+  if(!workspaceLayoutRecoveryE?.panels[id])return false;
+  const state=workspaceLayoutRecoveryE.panels[id];
+  state.tabGroup='';
+  state.maximized=false;
+  if(zone==='left')Object.assign(state,{x:0,y:0,w:6,h:8});
+  else if(zone==='right')Object.assign(state,{x:6,y:0,w:6,h:8});
+  else if(zone==='top')Object.assign(state,{x:0,y:0,w:12,h:4});
+  else if(zone==='bottom')Object.assign(state,{x:0,y:4,w:12,h:4});
+  else return false;
+  applyWorkspaceLayoutRecoveryE();
+  persistWorkspaceLayoutRecoveryE();
+  return true;
+}
+function workspaceTabGroupRecoveryE(sourceId,targetId){
+  if(sourceId===targetId||!workspaceLayoutRecoveryE?.panels[sourceId]||!workspaceLayoutRecoveryE?.panels[targetId])return false;
+  const source=workspaceLayoutRecoveryE.panels[sourceId];
+  const target=workspaceLayoutRecoveryE.panels[targetId];
+  const group=target.tabGroup||('f1-tab-'+targetId);
+  target.tabGroup=group;
+  source.tabGroup=group;
+  source.x=target.x;source.y=target.y;source.w=target.w;source.h=target.h;
+  source.hidden=false;target.hidden=false;
+  source.maximized=false;target.maximized=false;
+  workspaceLayoutRecoveryE.activeTabs[group]=sourceId;
+  applyWorkspaceLayoutRecoveryE();
+  persistWorkspaceLayoutRecoveryE();
+  return true;
+}
+function workspaceSetActiveTabRecoveryE(id){
+  const state=workspaceLayoutRecoveryE?.panels[id];
+  if(!state?.tabGroup)return false;
+  workspaceLayoutRecoveryE.activeTabs[state.tabGroup]=id;
+  applyWorkspaceLayoutRecoveryE();
+  persistWorkspaceLayoutRecoveryE();
+  return true;
+}
+function workspaceTogglePanelRecoveryE(id){
+  const state=workspaceLayoutRecoveryE?.panels[id];if(!state)return false;
+  state.hidden=!state.hidden;
+  if(!state.hidden&&state.tabGroup)workspaceLayoutRecoveryE.activeTabs[state.tabGroup]=id;
+  if(state.hidden)state.maximized=false;
+  applyWorkspaceLayoutRecoveryE();persistWorkspaceLayoutRecoveryE();return true;
+}
+function workspaceToggleMaximizeRecoveryE(id){
+  if(!workspaceLayoutRecoveryE?.panels[id])return false;
+  const next=!workspaceLayoutRecoveryE.panels[id].maximized;
+  Object.values(workspaceLayoutRecoveryE.panels).forEach(state=>{state.maximized=false});
+  workspaceLayoutRecoveryE.panels[id].maximized=next;
+  workspaceLayoutRecoveryE.panels[id].hidden=false;
+  applyWorkspaceLayoutRecoveryE();persistWorkspaceLayoutRecoveryE();return true;
+}
+function resetWorkspaceRecoveryE(){
+  workspaceLayoutRecoveryE=normalizeWorkspaceLayoutRecoveryE(F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E);
+  applyWorkspaceLayoutRecoveryE();persistWorkspaceLayoutRecoveryE();return true;
+}
+function workspaceDropTargetRecoveryE(clientX,clientY,sourceId){
+  const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
+  if(!workspace)return {kind:'none'};
+  const rect=workspace.getBoundingClientRect();
+  const rx=(clientX-rect.left)/Math.max(1,rect.width);
+  const ry=(clientY-rect.top)/Math.max(1,rect.height);
+  if(rx<.12)return {kind:'dock',zone:'left'};
+  if(rx>.88)return {kind:'dock',zone:'right'};
+  if(ry<.12)return {kind:'dock',zone:'top'};
+  if(ry>.88)return {kind:'dock',zone:'bottom'};
+  const target=document.elementFromPoint(clientX,clientY)?.closest?.('[data-f1-workspace-panel]');
+  if(target&&target.dataset.f1WorkspacePanel!==sourceId&&!target.hidden){
+    const tr=target.getBoundingClientRect();
+    const tx=(clientX-tr.left)/Math.max(1,tr.width);
+    const ty=(clientY-tr.top)/Math.max(1,tr.height);
+    if(tx>.22&&tx<.78&&ty>.18&&ty<.82)return {kind:'tab',targetId:target.dataset.f1WorkspacePanel,rect:tr};
+  }
+  const state=workspaceLayoutRecoveryE.panels[sourceId];
+  const col=Math.max(0,Math.min(12-state.w,Math.round(rx*12-state.w/2)));
+  const rowHeight=72;
+  const row=Math.max(0,Math.min(12-state.h,Math.round((clientY-rect.top)/rowHeight-state.h/2)));
+  return {kind:'free',x:col,y:row};
+}
+function showWorkspaceDockGuideRecoveryE(drop){
+  const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
+  const guide=document.getElementById('f1RacingWorkspaceDockGuideRecoveryE');
+  if(!workspace||!guide)return;
+  if(!drop||drop.kind==='none'||drop.kind==='free'){guide.hidden=true;return}
+  guide.hidden=false;
+  guide.className='f1-racing-workspace-dock-guide-recovery-e '+(drop.kind==='tab'?'tab':drop.zone||'');
+  guide.removeAttribute('style');
+  if(drop.kind==='tab'&&drop.rect){
+    const wr=workspace.getBoundingClientRect();
+    guide.style.left=(drop.rect.left-wr.left)+'px';
+    guide.style.top=(drop.rect.top-wr.top)+'px';
+    guide.style.width=drop.rect.width+'px';
+    guide.style.height=drop.rect.height+'px';
+  }
+}
+function beginWorkspacePointerRecoveryE(event,type,id){
+  const panel=workspacePanelRecoveryE(id);
+  if(!panel||!workspaceLayoutRecoveryE?.panels[id])return;
+  if(type==='drag'&&event.target.closest('button'))return;
+  event.preventDefault();
+  workspacePointerRecoveryE={
+    type,id,startX:event.clientX,startY:event.clientY,
+    start:cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE.panels[id]),
+    lastX:event.clientX,lastY:event.clientY
+  };
+  panel.classList.add(type==='drag'?'is-dragging':'is-resizing');
+}
+function onWorkspacePointerMoveRecoveryE(event){
+  const state=workspacePointerRecoveryE;if(!state)return;
+  state.lastX=event.clientX;state.lastY=event.clientY;
+  const panel=workspacePanelRecoveryE(state.id);if(!panel)return;
+  if(state.type==='drag'){
+    panel.style.transform='translate('+(event.clientX-state.startX)+'px,'+(event.clientY-state.startY)+'px)';
+    showWorkspaceDockGuideRecoveryE(workspaceDropTargetRecoveryE(event.clientX,event.clientY,state.id));
+    return;
+  }
+  const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');if(!workspace)return;
+  const colWidth=Math.max(1,workspace.clientWidth/12);
+  const dw=Math.round((event.clientX-state.startX)/colWidth);
+  const dh=Math.round((event.clientY-state.startY)/72);
+  const row=workspaceLayoutRecoveryE.panels[state.id];
+  row.w=Math.max(2,Math.min(12-row.x,state.start.w+dw));
+  row.h=Math.max(2,Math.min(10-row.y,state.start.h+dh));
+  if(row.tabGroup){
+    for(const member of workspaceGroupMembersRecoveryE(row.tabGroup)){
+      workspaceLayoutRecoveryE.panels[member].w=row.w;
+      workspaceLayoutRecoveryE.panels[member].h=row.h;
+    }
+  }
+  applyWorkspaceLayoutRecoveryE();
+}
+function onWorkspacePointerUpRecoveryE(event){
+  const pointer=workspacePointerRecoveryE;if(!pointer)return;
+  workspacePointerRecoveryE=null;
+  const panel=workspacePanelRecoveryE(pointer.id);
+  if(panel){panel.classList.remove('is-dragging','is-resizing');panel.style.transform=''}
+  showWorkspaceDockGuideRecoveryE(null);
+  if(pointer.type==='resize'){persistWorkspaceLayoutRecoveryE();return}
+  const drop=workspaceDropTargetRecoveryE(event.clientX,event.clientY,pointer.id);
+  const state=workspaceLayoutRecoveryE.panels[pointer.id];
+  if(drop.kind==='dock'){workspaceDockLayoutRecoveryE(pointer.id,drop.zone);return}
+  if(drop.kind==='tab'){workspaceTabGroupRecoveryE(pointer.id,drop.targetId);return}
+  if(drop.kind==='free'){
+    state.tabGroup='';state.maximized=false;state.x=drop.x;state.y=drop.y;
+    applyWorkspaceLayoutRecoveryE();persistWorkspaceLayoutRecoveryE();
+  }
+}
+function addWorkspacePanelChromeRecoveryE(panel,id){
+  if(!panel||panel.dataset.f1WorkspacePrepared)return;
+  panel.dataset.f1WorkspacePrepared='1';
+  panel.dataset.f1WorkspacePanel=id;
+  panel.classList.add('f1-racing-workspace-panel-recovery-e');
+  const title=panel.querySelector('.f1-racing-panel-title-v188');
+  if(title){
+    title.dataset.f1PanelDrag=id;
+    const controls=document.createElement('div');
+    controls.className='f1-racing-workspace-panel-controls-recovery-e';
+    controls.innerHTML='<button type="button" data-f1-workspace-action="maximize" title="패널 최대화">MAX</button><button type="button" data-f1-workspace-action="hide" title="패널 숨기기">HIDE</button>';
+    title.appendChild(controls);
+  }
+  const resize=document.createElement('button');
+  resize.type='button';
+  resize.className='f1-racing-workspace-resize-recovery-e';
+  resize.dataset.f1WorkspaceResize=id;
+  resize.setAttribute('aria-label',workspacePanelLabelRecoveryE(id)+' 크기 조절');
+  panel.appendChild(resize);
+}
+function installF1WorkspaceRecoveryE(){
+  const race=document.getElementById('f1RacingViewRaceV185');if(!race)return false;
+  let workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
+  if(!workspace){
+    const header=race.querySelector('.f1-racing-race-header-v188');
+    const toolbar=document.createElement('div');
+    toolbar.id='f1RacingWorkspaceToolbarRecoveryE';
+    toolbar.className='f1-racing-workspace-toolbar-recovery-e';
+    toolbar.innerHTML='<div class="f1-racing-workspace-toolbar-label-recovery-e"><span>WORKSPACE</span><small>Drag · Resize · Dock · Tab · Maximize</small></div><div id="f1RacingWorkspacePanelTogglesRecoveryE" class="f1-racing-workspace-panel-toggles-recovery-e"></div><button type="button" class="secondary small" id="f1RacingWorkspaceResetRecoveryE">Reset Layout</button>';
+    workspace=document.createElement('div');
+    workspace.id='f1RacingWorkspaceRecoveryE';
+    workspace.className='f1-racing-workspace-recovery-e';
+    const guide=document.createElement('div');
+    guide.id='f1RacingWorkspaceDockGuideRecoveryE';
+    guide.className='f1-racing-workspace-dock-guide-recovery-e';
+    guide.hidden=true;
+    workspace.appendChild(guide);
+    header?.insertAdjacentElement('afterend',toolbar);
+    toolbar.insertAdjacentElement('afterend',workspace);
+
+    const timing=race.querySelector('.f1-racing-live-timing-v188');
+    const legacyGrid=race.querySelector('.f1-racing-race-grid-v188');
+    const track=legacyGrid?.querySelector('.f1-racing-race-map-v188');
+    const commentary=legacyGrid?.querySelector('.f1-racing-commentary-v188');
+    const side=legacyGrid?.querySelector('.f1-racing-race-side-v188');
+    const sideSections=side?Array.from(side.querySelectorAll(':scope > section')):[];
+    const radio=sideSections.find(section=>section.querySelector('#f1RacingTeamRadioV188'))||null;
+    const speed=sideSections.find(section=>section.querySelector('#f1RacingSpeedTrapV188'))||null;
+    const pairs=[['timing',timing],['track',track],['commentary',commentary],['radio',radio],['speed',speed]];
+    for(const [id,panel] of pairs){
+      if(panel){workspace.appendChild(panel);addWorkspacePanelChromeRecoveryE(panel,id)}
+    }
+    if(legacyGrid)legacyGrid.hidden=true;
+    if(side)side.hidden=true;
+
+    toolbar.addEventListener('click',event=>{
+      const toggle=event.target.closest('[data-f1-workspace-toggle]');
+      if(toggle){workspaceTogglePanelRecoveryE(toggle.dataset.f1WorkspaceToggle);return}
+      if(event.target.closest('#f1RacingWorkspaceResetRecoveryE'))resetWorkspaceRecoveryE();
+    });
+    workspace.addEventListener('click',event=>{
+      const tab=event.target.closest('[data-f1-workspace-tab]');
+      if(tab){workspaceSetActiveTabRecoveryE(tab.dataset.f1WorkspaceTab);return}
+      const action=event.target.closest('[data-f1-workspace-action]');
+      if(action){
+        const panel=action.closest('[data-f1-workspace-panel]');
+        const id=panel?.dataset.f1WorkspacePanel;if(!id)return;
+        if(action.dataset.f1WorkspaceAction==='maximize')workspaceToggleMaximizeRecoveryE(id);
+        if(action.dataset.f1WorkspaceAction==='hide')workspaceTogglePanelRecoveryE(id);
+      }
+    });
+    workspace.addEventListener('pointerdown',event=>{
+      const resize=event.target.closest('[data-f1-workspace-resize]');
+      if(resize){beginWorkspacePointerRecoveryE(event,'resize',resize.dataset.f1WorkspaceResize);return}
+      const title=event.target.closest('[data-f1-panel-drag]');
+      if(title)beginWorkspacePointerRecoveryE(event,'drag',title.dataset.f1PanelDrag);
+    });
+    window.addEventListener('pointermove',onWorkspacePointerMoveRecoveryE);
+    window.addEventListener('pointerup',onWorkspacePointerUpRecoveryE);
+  }
+  if(!workspaceLayoutRecoveryE)readWorkspaceLayoutRecoveryE();
+  applyWorkspaceLayoutRecoveryE();
+  return true;
+}
+
 function readPersistedF1SettingsRecoveryD(){
   return typeof window.mwsGetF1RacingSettingsRecoveryD==='function'
     ?window.mwsGetF1RacingSettingsRecoveryD()
@@ -1317,6 +1691,7 @@ function render(){
   renderTrackChoicesV186();
   bindRaceProceedV187();
   bindRaceCancelRecoveryC();
+  installF1WorkspaceRecoveryE();
   updateTrackFoundationStatusV182();
   renderTrackMapV183();
   if(previewStateV184.running)stopPreviewV184(true);
@@ -1479,6 +1854,14 @@ window.mwsF1GetActiveRaceSnapshotV187=getActiveRaceSnapshotV187;
 window.mwsF1CancelRaceRecoveryC=cancelRaceToSetupRecoveryC;
 window.mwsF1RestoreSettingsRecoveryD=restoreF1SettingsRecoveryD;
 window.mwsF1PersistSettingsRecoveryD=persistF1SettingsRecoveryD;
+window.mwsF1InstallWorkspaceRecoveryE=installF1WorkspaceRecoveryE;
+window.mwsF1ApplyWorkspaceLayoutRecoveryE=applyWorkspaceLayoutRecoveryE;
+window.mwsF1ResetWorkspaceRecoveryE=resetWorkspaceRecoveryE;
+window.mwsF1DockPanelRecoveryE=workspaceDockLayoutRecoveryE;
+window.mwsF1TabGroupRecoveryE=workspaceTabGroupRecoveryE;
+window.mwsF1ToggleWorkspacePanelRecoveryE=workspaceTogglePanelRecoveryE;
+window.mwsF1ToggleWorkspaceMaximizeRecoveryE=workspaceToggleMaximizeRecoveryE;
+window.mwsF1GetWorkspaceLayoutRecoveryE=function(){return workspaceLayoutRecoveryE?cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE):null};
 window.mwsF1RenderRaceControlV188=renderRaceControlV188;
 window.mwsF1StartRaceMotionV189=startRaceMotionV189;
 window.mwsF1PauseRaceMotionV189=pauseRaceMotionV189;
@@ -1550,6 +1933,7 @@ window.__mwsF1RacingV203=VERSION203;
 window.__mwsF1RecoveryB='start-finish-line-v1';
 window.__mwsF1RecoveryC='race-cancel-setup-return-v1';
 window.__mwsF1RecoveryD='persistent-roster-track-settings-v1';
+window.__mwsF1RecoveryE='premiere-workspace-foundation-v1';
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){
