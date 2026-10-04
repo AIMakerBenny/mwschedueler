@@ -61,6 +61,7 @@ const VERSION231='phase231-production-verifier-future-safe';
 const VERSION232='phase232-driver-marker-number-identity';
 const VERSION233='phase233-track-silhouette-cards';
 const VERSION234='phase234-track-runtime-character-profile';
+const VERSION235='phase235-track-character-driving-behavior';
 const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitchMs:1800,urgentBattleGapSeconds:0.55,focusDeadbandSvg:3,zoomDeadband:0.025});
 const COMMENTARY_CADENCE_V227=Object.freeze({flowGapMs:5500,strategyGapMs:3000,battleGapMs:1600,windowMs:60000,maxNarrativePerWindow:18});
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
@@ -1002,6 +1003,17 @@ function qaDiverseTrackCatalogV220(){
     allPass:catalog.length>=7&&required.every(id=>catalog.some(row=>row.id===id))&&paths.size===7&&archetypes.size>=6&&validations.every(row=>row.issues.length===0)};
 }
 
+function qaTrackBehaviorModifiersV235(){
+  const blue=trackRuntimeProfileV234(window.mwsGetF1TrackV182?.('blue-coast-speedway-v1'));
+  const royal=trackRuntimeProfileV234(window.mwsGetF1TrackV182?.('royal-street-circuit-v1'));
+  const highland=trackRuntimeProfileV234(window.mwsGetF1TrackV182?.('highland-flow-ring-v1'));
+  return {
+    blue,royal,highland,
+    overtakeSpread:Number((blue.overtakeFactor-royal.overtakeFactor).toFixed(3)),
+    incidentSpread:Number((royal.incidentRiskFactor-blue.incidentRiskFactor).toFixed(3)),
+    allPass:blue.overtakeFactor>royal.overtakeFactor&&royal.incidentRiskFactor>blue.incidentRiskFactor&&highland.overtakeFactor>=1
+  };
+}
 function qaTrackRuntimeProfilesV234(){
   const ids=['majoku-ring-v1','castle-street-circuit-v1','blue-coast-speedway-v1','mawang-speed-park-v1','royal-street-circuit-v1','infinity-eight-circuit-v1','highland-flow-ring-v1'];
   const rows=ids.map(id=>{const track=window.mwsGetF1TrackV182?.(id);const profile=track?trackRuntimeProfileV234(track):null;return {id,profile}});
@@ -1271,6 +1283,14 @@ function getTyreStatesV203(){
   }));
 }
 
+function activeTrackRuntimeProfileV235(){
+  const profile=activeRaceSnapshotV187?.track?.runtimeProfile;
+  if(profile)return profile;
+  const track=activeRaceSnapshotV187?.track;
+  return track?trackRuntimeProfileV234(track):Object.freeze({overtakeFactor:1,incidentRiskFactor:1,tyreStressFactor:1,archetype:'종합형'});
+}
+function trackOvertakeFactorV235(){return Math.max(.7,Math.min(1.3,Number(activeTrackRuntimeProfileV235()?.overtakeFactor)||1))}
+function trackIncidentRiskFactorV235(){return Math.max(.8,Math.min(1.3,Number(activeTrackRuntimeProfileV235()?.incidentRiskFactor)||1))}
 function activeDrivingIncidentV204(vehicle){
   if((Number(vehicle?.lockupActiveMs)||0)>0)return 'LOCK_UP';
   if((Number(vehicle?.understeerActiveMs)||0)>0)return 'UNDERSTEER';
@@ -1330,7 +1350,7 @@ function updateDrivingIncidentsV204(vehicle,stepMs,phase,controls={}){
     ].filter(row=>row.risk>0).sort((a,b)=>b.risk-a.risk);
     if(candidates.length){
       const pick=candidates[0];
-      const chance=pick.risk*pick.rate*evalSeconds*resistanceFactor;
+      const chance=pick.risk*pick.rate*evalSeconds*resistanceFactor*trackIncidentRiskFactorV235();
       if(nextDriverRandomV200(vehicle)<chance)triggerDrivingIncidentV204(vehicle,pick.type,pick.risk,false);
     }
   }
@@ -1739,17 +1759,19 @@ function updateTrafficAndDefenceV207(){
     if(String(vehicle.pitState||'TRACK')!=='TRACK'||String(ahead.pitState||'TRACK')!=='TRACK')continue;
     const gapMeters=Math.max(0,(Number(ahead.raceProgress)-Number(vehicle.raceProgress))*length);
     const closingRateKph=(Number(vehicle.speedKph)||0)-(Number(ahead.speedKph)||0);
-    const gapFactor=clamp01V198(1-gapMeters/TRAFFIC_CONFIG_V207.followingGapMeters);
+    const trackFactor=trackOvertakeFactorV235();
+    const followingGap=TRAFFIC_CONFIG_V207.followingGapMeters*(.9+.1*trackFactor);
+    const gapFactor=clamp01V198(1-gapMeters/followingGap);
     const closingFactor=clamp01V198((closingRateKph+4)/(TRAFFIC_CONFIG_V207.strongClosingKph+4));
     const pressure=clamp01V198(gapFactor*(.35+.65*closingFactor));
     vehicle.trafficCarAheadId=String(ahead.id);vehicle.trafficGapMeters=gapMeters;vehicle.trafficClosingRateKph=closingRateKph;vehicle.trafficPressure=pressure;
     let state='CLEAR';
-    if(gapMeters<=TRAFFIC_CONFIG_V207.followingGapMeters)state='FOLLOWING';
-    if(gapMeters<=TRAFFIC_CONFIG_V207.followingGapMeters&&Number(vehicle.slipstreamStrength)>.08)state='TOWING';
-    if(gapMeters<=TRAFFIC_CONFIG_V207.pressureGapMeters&&closingRateKph>=TRAFFIC_CONFIG_V207.minClosingKph)state='PRESSURE';
+    if(gapMeters<=followingGap)state='FOLLOWING';
+    if(gapMeters<=followingGap&&Number(vehicle.slipstreamStrength)>.08)state='TOWING';
+    if(gapMeters<=TRAFFIC_CONFIG_V207.pressureGapMeters*trackFactor&&closingRateKph>=TRAFFIC_CONFIG_V207.minClosingKph)state='PRESSURE';
     vehicle.trafficState=state;
     const battle=trafficBattlePhaseV207(vehicle);
-    if(state==='PRESSURE'&&gapMeters<=TRAFFIC_CONFIG_V207.attackGapMeters&&battle.open){
+    if(state==='PRESSURE'&&gapMeters<=TRAFFIC_CONFIG_V207.attackGapMeters*trackFactor&&battle.open){
       vehicle.trafficLineIntent='ATTACK_INSIDE';vehicle.racingLineMode='ATTACK_INSIDE';
     }
     if(pressure>=.24&&gapMeters<=TRAFFIC_CONFIG_V207.defendGapMeters){
@@ -1809,7 +1831,8 @@ function battleBiasKphV208(vehicle,state){
   const aggression=driverSkillNormV200(vehicle,'aggression');
   const skill=1+racecraft*.12+Math.max(0,aggression)*.06;
   const base={FOLLOWING:0,CLOSING:.3,TOWING:.9,PREPARING_ATTACK:.7,PULLING_OUT:1.1,SIDE_BY_SIDE:.55,BRAKING_DUEL:.35,CORNER_BATTLE:.15,SWITCHBACK:1.0,COUNTER_ATTACK:.8,PASS_COMPLETED:0,PASS_FAILED:-.25}[state]||0;
-  return Math.max(-PASS_CONFIG_V208.maxBattleBiasKph,Math.min(PASS_CONFIG_V208.maxBattleBiasKph,base*skill));
+  const trackFactor=trackOvertakeFactorV235();
+  return Math.max(-PASS_CONFIG_V208.maxBattleBiasKph,Math.min(PASS_CONFIG_V208.maxBattleBiasKph,base*skill*trackFactor));
 }
 function setPassStateV208(vehicle,next,targetId='',reason=''){
   const current=String(vehicle.battleState||'FOLLOWING');
@@ -4448,6 +4471,8 @@ window.mwsF1QaTrackSilhouetteCardsV233=qaTrackSilhouetteCardsV233;
 window.__mwsF1RacingV233=VERSION233;
 window.mwsF1QaTrackRuntimeProfilesV234=qaTrackRuntimeProfilesV234;
 window.__mwsF1RacingV234=VERSION234;
+window.mwsF1QaTrackBehaviorModifiersV235=qaTrackBehaviorModifiersV235;
+window.__mwsF1RacingV235=VERSION235;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
