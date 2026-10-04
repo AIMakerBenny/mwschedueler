@@ -200,6 +200,11 @@
 .f1-racing-drivers-panel-v186 .f1-racing-selected-list-v181{min-height:180px;max-height:220px}
 .f1-racing-track-options-v186{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;padding:12px;border-bottom:1px solid #202733}
 .f1-racing-track-card-v186{min-height:88px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;padding:10px 11px;border:1px solid #28313e;border-radius:8px;background:#090d13;color:#cbd5e1;text-align:left}
+
+.f1-racing-track-card-silhouette-v233{display:flex;align-items:center;justify-content:center;height:72px;padding:6px 8px;border:1px solid rgba(148,163,184,.18);border-radius:9px;background:rgba(2,6,23,.26);overflow:hidden}
+.f1-racing-track-card-silhouette-v233 svg{display:block;width:100%;height:100%;overflow:visible}
+.f1-racing-track-card-silhouette-v233 path{fill:none;stroke:#94a3b8;stroke-width:18;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.88}
+.f1-racing-track-card-v186.selected .f1-racing-track-card-silhouette-v233 path{stroke:#e2e8f0;opacity:1}
 .f1-racing-track-card-v186:hover{border-color:#445066;background:#0d131c}
 .f1-racing-track-card-v186.selected{border-color:#8da2bf;background:#111a26;box-shadow:inset 0 0 0 1px rgba(203,213,225,.12)}
 .f1-racing-track-card-title-v186{font-size:13px;font-weight:800;color:#f1f5f9}
