@@ -9,7 +9,7 @@ export function runRecoveryIF1WorkspaceReflowAudit(){
 
   if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[I-Z][0-9]+/.test(index))issues.push('Recovery I+ runtime cache missing');
   for(const token of [
-    "timing:Object.freeze({label:'LIVE TIMING',minW:6,minH:2})",
+    "timing:Object.freeze({label:'LIVE TIMING',minW:4,minH:2})",
     "track:Object.freeze({label:'TRACK MAP',minW:4,minH:4})",
     'const F1_WORKSPACE_MAX_ROWS_RECOVERY_I=32;',
     'function workspaceRectsOverlapRecoveryI(a,b){',
