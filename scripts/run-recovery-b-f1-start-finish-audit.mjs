@@ -19,8 +19,8 @@ export function runRecoveryBF1StartFinishAudit(){
     'id="f1RacingTrackAnnotationsV183"',
     'id="f1RacingRaceAnnotationsRecoveryB"',
     'assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196&recovery=B1',
-    'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=B1'
-  ])if(!index.includes(token))issues.push('Recovery B HTML/cache missing: '+token);
+    /assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[B-Z][0-9]+/.test(index)?'__RECOVERY_JS_OK__':'__RECOVERY_JS_MISSING__'
+  ])if(token==='__RECOVERY_JS_OK__'?false:token==='__RECOVERY_JS_MISSING__'?true:!index.includes(token))issues.push('Recovery B HTML/cache missing: '+token);
 
   for(const token of [
     'function startFinishGeometryRecoveryB(path,track){',

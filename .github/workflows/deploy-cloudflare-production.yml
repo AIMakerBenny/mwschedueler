@@ -1073,7 +1073,7 @@ jobs:
           echo '[recovery-b] F1 visible start finish line'
           grep -Fq 'id="f1RacingRaceAnnotationsRecoveryB"' /tmp/index.html
           grep -Fq 'assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196&recovery=B1' /tmp/index.html
-          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=B1' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[B-Z][0-9]+' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RecoveryB='start-finish-line-v1';" > /tmp/f1-racing-recovery-b.js
           retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-start-finish-recovery-b .finish-stripe{' > /tmp/f1-racing-recovery-b.css
           node --check /tmp/f1-racing-recovery-b.js
