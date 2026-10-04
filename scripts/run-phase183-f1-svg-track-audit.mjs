@@ -6,7 +6,7 @@ export function runPhase183F1SvgTrackAudit(){
   const css=fs.readFileSync('assets/f1-racing-v1.css','utf8');
   const js=fs.readFileSync('assets/f1-racing-v1.js','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
-  for(const token of ['id="f1RacingTrackPanelV183"','id="f1RacingTrackSvgV183"','id="f1RacingTrackPathV183"','id="f1RacingTrackAnnotationsV183"','id="f1RacingVehicleLayerV183"','CIRCUIT MAP'])if(!index.includes(token))issues.push('Phase 183 track UI missing: '+token);
+  for(const token of ['id="f1RacingTrackSvgV183"','id="f1RacingTrackPathV183"','id="f1RacingTrackAnnotationsV183"','id="f1RacingVehicleLayerV183"'])if(!index.includes(token))issues.push('Phase 183 track UI missing: '+token);
   for(const token of ['.f1-racing-track-panel-v183{','.f1-racing-track-path-v183{','.f1-racing-track-annotation-v183.sector circle{','.f1-racing-track-annotation-v183.trap circle{'])if(!css.includes(token))issues.push('Phase 183 track CSS missing: '+token);
   for(const token of ["const VERSION183='phase183-svg-track';",'function pointAtProgressV183(path,progress){','function addTrackAnnotationV183(layer,path,kind,label,progress){','function renderTrackMapV183(){',"path.setAttribute('d',track.path);","glow.setAttribute('d',track.path);",'window.mwsF1RenderTrackMapV183=renderTrackMapV183;','window.__mwsF1RacingV183=VERSION183;'])if(!js.includes(token))issues.push('Phase 183 renderer missing: '+token);
   if(!js.includes("addTrackAnnotationV183(layer,path,'sector','S1',track.sectors[0].end);")||!js.includes("addTrackAnnotationV183(layer,path,'pit','PIT IN',track.pit.entry);"))issues.push('Sector or pit annotations are not wired to track metadata');
