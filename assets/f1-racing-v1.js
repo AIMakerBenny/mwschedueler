@@ -55,11 +55,13 @@ const VERSION225='phase225-camera-director';
 const VERSION226='phase226-commentary-readability';
 const VERSION227='phase227-commentary-cadence-quality';
 const VERSION228='phase228-driver-label-collision-avoidance';
+const VERSION229='phase229-camera-director-stability';
+const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitchMs:1800,urgentBattleGapSeconds:0.55,focusDeadbandSvg:3,zoomDeadband:0.025});
 const COMMENTARY_CADENCE_V227=Object.freeze({flowGapMs:5500,strategyGapMs:3000,battleGapMs:1600,windowMs:60000,maxNarrativePerWindow:18});
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
 const CAMERA_MODES_V216=Object.freeze(['AUTO','FULL','LEADER','FRONT','BATTLE','MANUAL']);
 const raceCameraV216={mode:'AUTO',zoom:1.9,cx:500,cy:300,dragging:false,pointerId:null,lastX:0,lastY:0,initialized:false};
-const cameraDirectorV225={kind:'LEADER',targetIds:[],lockUntilSimMs:0,lastSwitchSimMs:0};
+const cameraDirectorV225={kind:'LEADER',targetIds:[],lockUntilSimMs:0,lastSwitchSimMs:0,candidateKey:'',candidateSinceSimMs:0};
 const BLUE_FLAG_CONFIG_V215=Object.freeze({approachProgress:0.12,paceFactor:0.985});
 const RACE_FLAGS_V214=Object.freeze(['GREEN','YELLOW','VSC','SAFETY_CAR','RED']);
 const RACE_FLAG_SPEED_V214=Object.freeze({GREEN:1,YELLOW:.82,VSC:.72,SAFETY_CAR:.58,RED:0});
@@ -2913,10 +2915,11 @@ function applyRaceCameraV216(target={},smooth=false){
     Object.prototype.hasOwnProperty.call(target,'cy')?target.cy:raceCameraV216.cy,
     Object.prototype.hasOwnProperty.call(target,'zoom')?target.zoom:raceCameraV216.zoom
   );
+  const deadband=smooth&&raceCameraV216.initialized&&Math.abs(next.cx-raceCameraV216.cx)<CAMERA_DIRECTOR_STABILITY_V229.focusDeadbandSvg&&Math.abs(next.cy-raceCameraV216.cy)<CAMERA_DIRECTOR_STABILITY_V229.focusDeadbandSvg&&Math.abs(next.zoom-raceCameraV216.zoom)<CAMERA_DIRECTOR_STABILITY_V229.zoomDeadband;
   const blend=smooth&&raceCameraV216.initialized?.14:1;
-  raceCameraV216.cx=raceCameraV216.initialized?raceCameraV216.cx+(next.cx-raceCameraV216.cx)*blend:next.cx;
-  raceCameraV216.cy=raceCameraV216.initialized?raceCameraV216.cy+(next.cy-raceCameraV216.cy)*blend:next.cy;
-  raceCameraV216.zoom=raceCameraV216.initialized?raceCameraV216.zoom+(next.zoom-raceCameraV216.zoom)*blend:next.zoom;
+  raceCameraV216.cx=deadband?raceCameraV216.cx:raceCameraV216.initialized?raceCameraV216.cx+(next.cx-raceCameraV216.cx)*blend:next.cx;
+  raceCameraV216.cy=deadband?raceCameraV216.cy:raceCameraV216.initialized?raceCameraV216.cy+(next.cy-raceCameraV216.cy)*blend:next.cy;
+  raceCameraV216.zoom=deadband?raceCameraV216.zoom:raceCameraV216.initialized?raceCameraV216.zoom+(next.zoom-raceCameraV216.zoom)*blend:next.zoom;
   raceCameraV216.initialized=true;
   const box=clampRaceCameraV216(raceCameraV216.cx,raceCameraV216.cy,raceCameraV216.zoom);
   svg.setAttribute('viewBox',[box.cx-box.w/2,box.cy-box.h/2,box.w,box.h].map(value=>Number(value).toFixed(3)).join(' '));
@@ -2928,7 +2931,7 @@ function resetRaceCameraV216(mode='AUTO'){
   raceCameraV216.mode=CAMERA_MODES_V216.includes(String(mode).toUpperCase())?String(mode).toUpperCase():'AUTO';
   raceCameraV216.zoom=raceCameraV216.mode==='FULL'?1:1.9;
   raceCameraV216.cx=base.x+base.w/2;raceCameraV216.cy=base.y+base.h/2;raceCameraV216.initialized=false;
-  cameraDirectorV225.kind='LEADER';cameraDirectorV225.targetIds=[];cameraDirectorV225.lockUntilSimMs=0;cameraDirectorV225.lastSwitchSimMs=0;
+  cameraDirectorV225.kind='LEADER';cameraDirectorV225.targetIds=[];cameraDirectorV225.lockUntilSimMs=0;cameraDirectorV225.lastSwitchSimMs=0;cameraDirectorV225.candidateKey='';cameraDirectorV225.candidateSinceSimMs=0;
   applyRaceCameraV216({cx:raceCameraV216.cx,cy:raceCameraV216.cy,zoom:raceCameraV216.zoom},false);
   return {...raceCameraV216};
 }
@@ -3023,31 +3026,39 @@ function selectAutoCameraTargetV225(standings=computeRaceStandingsV191()){
   const now=Number(simClockV192.simTimeMs)||0;
   const valid=standings.filter(row=>row?.vehicle?.renderPointV216);
   const nearestBattle=valid.slice(1).filter(row=>Number.isFinite(Number(row.intervalSeconds))).sort((a,b)=>Number(a.intervalSeconds)-Number(b.intervalSeconds))[0]||null;
-  const strongBattle=nearestBattle&&Number(nearestBattle.intervalSeconds)<=0.9;
-  if(now<cameraDirectorV225.lockUntilSimMs&&!strongBattle){
-    const targets=cameraDirectorV225.targetIds.map(id=>raceMotionV189.vehicles.find(vehicle=>String(vehicle.id)===String(id))).filter(vehicle=>vehicle?.renderPointV216);
-    if(targets.length)return {kind:cameraDirectorV225.kind,vehicles:targets};
-  }
   let kind='LEADER',vehicles=valid[0]?.vehicle?[valid[0].vehicle]:[];
   if(nearestBattle&&Number(nearestBattle.intervalSeconds)<=1.4){
     const ahead=standings[nearestBattle.position-2]?.vehicle;
     if(ahead?.renderPointV216){kind='BATTLE';vehicles=[ahead,nearestBattle.vehicle]}
   }else{
     const front=valid.slice(0,3);
-    const secondGap=Number(front[1]?.gapSeconds);
-    const thirdGap=Number(front[2]?.gapSeconds);
+    const secondGap=Number(front[1]?.gapSeconds),thirdGap=Number(front[2]?.gapSeconds);
     if(front.length>=2&&((Number.isFinite(secondGap)&&secondGap<=4.5)||(Number.isFinite(thirdGap)&&thirdGap<=8))){
       kind='FRONT';vehicles=front.map(row=>row.vehicle);
     }
   }
   const ids=vehicles.map(vehicle=>String(vehicle.id));
-  if(kind!==cameraDirectorV225.kind||ids.join('|')!==cameraDirectorV225.targetIds.join('|')){
-    cameraDirectorV225.kind=kind;
-    cameraDirectorV225.targetIds=ids;
-    cameraDirectorV225.lastSwitchSimMs=now;
+  const candidateKey=kind+':'+ids.join('|');
+  const currentKey=cameraDirectorV225.kind+':'+cameraDirectorV225.targetIds.join('|');
+  const currentTargets=cameraDirectorV225.targetIds.map(id=>raceMotionV189.vehicles.find(vehicle=>String(vehicle.id)===String(id))).filter(vehicle=>vehicle?.renderPointV216);
+  if(candidateKey!==currentKey){
+    if(cameraDirectorV225.candidateKey!==candidateKey){
+      cameraDirectorV225.candidateKey=candidateKey;
+      cameraDirectorV225.candidateSinceSimMs=now;
+    }
+    const stableFor=now-Number(cameraDirectorV225.candidateSinceSimMs||0);
+    const urgentBattle=kind==='BATTLE'&&nearestBattle&&Number(nearestBattle.intervalSeconds)<=CAMERA_DIRECTOR_STABILITY_V229.urgentBattleGapSeconds;
+    const minSwitchReady=now-Number(cameraDirectorV225.lastSwitchSimMs||0)>=CAMERA_DIRECTOR_STABILITY_V229.minSwitchMs;
+    const lockReady=now>=Number(cameraDirectorV225.lockUntilSimMs||0);
+    const canSwitch=!currentTargets.length||urgentBattle||(lockReady&&minSwitchReady&&stableFor>=CAMERA_DIRECTOR_STABILITY_V229.candidateHoldMs);
+    if(!canSwitch&&currentTargets.length)return {kind:cameraDirectorV225.kind,vehicles:currentTargets};
+    cameraDirectorV225.kind=kind;cameraDirectorV225.targetIds=ids;cameraDirectorV225.lastSwitchSimMs=now;
     cameraDirectorV225.lockUntilSimMs=now+(kind==='BATTLE'?3200:2600);
+    cameraDirectorV225.candidateKey='';cameraDirectorV225.candidateSinceSimMs=0;
+    return {kind,vehicles};
   }
-  return {kind,vehicles};
+  cameraDirectorV225.candidateKey='';cameraDirectorV225.candidateSinceSimMs=0;
+  return {kind:cameraDirectorV225.kind,vehicles:currentTargets.length?currentTargets:vehicles};
 }
 function raceCameraFocusV216(mode=raceCameraV216.mode){
   const rendered=raceMotionV189.vehicles.filter(vehicle=>vehicle?.renderPointV216);
@@ -3086,6 +3097,14 @@ function qaCameraDirectorV225(){
     hasManual:modeSet.has('MANUAL'),
     lockConfigured:true,
     allPass:modeSet.has('AUTO')&&modeSet.has('FULL')&&modeSet.has('LEADER')&&modeSet.has('FRONT')&&modeSet.has('BATTLE')&&modeSet.has('MANUAL')
+  };
+}
+function qaCameraDirectorStabilityV229(){
+  const cfg=CAMERA_DIRECTOR_STABILITY_V229;
+  return {
+    candidateHoldMs:cfg.candidateHoldMs,minSwitchMs:cfg.minSwitchMs,urgentBattleGapSeconds:cfg.urgentBattleGapSeconds,
+    focusDeadbandSvg:cfg.focusDeadbandSvg,zoomDeadband:cfg.zoomDeadband,director:{...cameraDirectorV225},
+    allPass:cfg.candidateHoldMs>=500&&cfg.minSwitchMs>=1500&&cfg.urgentBattleGapSeconds<0.7&&cfg.focusDeadbandSvg>0&&cfg.zoomDeadband>0
   };
 }
 function qaDriverMarkerCameraV216(){
@@ -4326,6 +4345,8 @@ window.mwsF1QaCommentaryCadenceV227=qaCommentaryCadenceV227;
 window.__mwsF1RacingV227=VERSION227;
 window.mwsF1QaDriverLabelCollisionV228=qaDriverLabelCollisionV228;
 window.__mwsF1RacingV228=VERSION228;
+window.mwsF1QaCameraDirectorStabilityV229=qaCameraDirectorStabilityV229;
+window.__mwsF1RacingV229=VERSION229;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
