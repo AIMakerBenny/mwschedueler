@@ -10,8 +10,8 @@ export function runRecoveryKF1WorkspaceRepairAudit(){
 
   if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[K-Z][0-9]+&phase=(?:20[4-9]|21[0-9])/.test(index))issues.push('Recovery K+ JS cache missing');
   for(const token of [
-    'version:4,',
-    'let workspaceRepairReportRecoveryK={repaired:false,reasons:[],version:4};',
+    'version:5,',
+    'let workspaceRepairReportRecoveryK={repaired:false,reasons:[],version:5};',
     'function workspaceRawIssuesRecoveryK(raw){',
     "reasons.push('overlap:'+a.id+':'+b.id);",
     'function workspaceCompactRecoveryK(layout,preferredId=',
@@ -28,11 +28,11 @@ export function runRecoveryKF1WorkspaceRepairAudit(){
     "const domOverlapPairs=()=>{",
     "assertNoDomOverlap('baseline');",
     "assertNoDomOverlap('after resize');",
-    "assertNoDomOverlap('after tab switch');",
+    "assertNoDomOverlap('after compact default');",
     "assertNoDomOverlap('after dock');",
     "assertNoDomOverlap('after reset');",
     'Malformed saved layout was not repaired',
-    "assert(Number(persisted?.version)>=4,'Workspace layout did not persist as repaired schema');",
+    "assert(Number(persisted?.version)>=5,'Workspace layout did not persist as repaired schema');",
     'finalDomOverlapPairs:domOverlapPairs()'
   ])if(!diag.includes(token))issues.push('Recovery K live DOM QA missing: '+token);
 
