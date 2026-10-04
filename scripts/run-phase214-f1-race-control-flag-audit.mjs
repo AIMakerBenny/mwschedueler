@@ -4,7 +4,7 @@ export function runPhase214F1RaceControlFlagAudit(){
   const issues=[],warnings=[];
   const index=fs.readFileSync('index.html','utf8');
   const racing=fs.readFileSync('assets/f1-racing-v1.js','utf8');
-  if(!index.includes('recovery=N1&phase=214'))issues.push('Phase 214 asset cache missing');
+  const phase=Number(index.match(/recovery=N1&phase=(\d+)/)?.[1]||0);if(phase<214)issues.push('Phase 214 asset cache missing');
   for(const token of [
     "const VERSION214='phase214-race-control-flags';",
     "const RACE_FLAGS_V214=Object.freeze(['GREEN','YELLOW','VSC','SAFETY_CAR','RED']);",
