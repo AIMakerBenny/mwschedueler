@@ -364,6 +364,10 @@ try{
     assert(compactLayout?.panels?.commentary?.x===8&&compactLayout?.panels?.commentary?.y===3&&compactLayout?.panels?.commentary?.w===4,'Phase 217 commentary default layout mismatch: '+JSON.stringify(compactLayout?.panels?.commentary));
     assert(!document.querySelector('[data-f1-workspace-panel="radio"],[data-f1-workspace-panel="speed"]'),'Phase 217 obsolete Team Radio or Speed Trap panel remains in workspace');
     assertNoDomOverlap('after compact default');
+    assert(document.querySelector('[data-f1-workspace-panel="timing"] [data-f1-panel-drag="timing"]')?.textContent?.includes('실시간 순위'),'Phase 218 timing panel is not Korean');
+    assert(document.querySelector('[data-f1-workspace-panel="track"] [data-f1-panel-drag="track"]')?.textContent?.includes('트랙 맵'),'Phase 218 track panel is not Korean');
+    assert(document.querySelector('[data-f1-workspace-panel="commentary"] [data-f1-panel-drag="commentary"]')?.textContent?.includes('경기 해설'),'Phase 218 commentary panel is not Korean');
+    assert(document.getElementById('f1RacingPauseV192')?.textContent==='일시정지','Phase 218 pause control is not Korean');
 
     document.getElementById('f1RacingWorkspaceResetRecoveryE')?.click();await raf();
     const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]');
