@@ -1107,8 +1107,8 @@ jobs:
           retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-start-finish-recovery-b .finish-stripe{' > /tmp/f1-racing-recovery-b.css
           node --check /tmp/f1-racing-recovery-b.js
           grep -Fq 'function startFinishGeometryRecoveryB(path,track){' /tmp/f1-racing-recovery-b.js
-          grep -Fq "addStartFinishLineRecoveryB(layer,path,track,'setup');" /tmp/f1-racing-recovery-b.js
-          grep -Fq 'if(path&&annotations)renderRaceStartFinishRecoveryB(annotations,path,snapshot.track);' /tmp/f1-racing-recovery-b.js
+          grep -Fq "renderTrackMarkersV211(layer,path,track,'setup');" /tmp/f1-racing-recovery-b.js
+          grep -Fq "renderTrackMarkersV211(annotations,path,snapshot.track,'race');" /tmp/f1-racing-recovery-b.js
           grep -Fq "label.textContent='START / FINISH';" /tmp/f1-racing-recovery-b.js
           grep -Fq 'stroke-dasharray:9 7' /tmp/f1-racing-recovery-b.css
           echo '[recovery-c] F1 cancel race to setup'
@@ -1151,9 +1151,10 @@ jobs:
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RecoveryF='race-workspace-default-redesign-v1';" > /tmp/f1-racing-recovery-f.js
           retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '/* Recovery F: dense race-control default presentation */' > /tmp/f1-racing-recovery-f.css
           node --check /tmp/f1-racing-recovery-f.js
-          grep -Fq "track:Object.freeze({x:0,y:2,w:7,h:6" /tmp/f1-racing-recovery-f.js
-          grep -Fq "activeTabs:Object.freeze({'race-side':'radio'})" /tmp/f1-racing-recovery-f.js
-          grep -Fq 'min-height:571px!important' /tmp/f1-racing-recovery-f.css
+          grep -Fq "track:Object.freeze({x:0,y:0,w:8,h:8" /tmp/f1-racing-recovery-f.js
+          grep -Fq "timing:Object.freeze({x:8,y:0,w:4,h:3" /tmp/f1-racing-recovery-f.js
+          grep -Fq "commentary:Object.freeze({x:8,y:3,w:4,h:5" /tmp/f1-racing-recovery-f.js
+          grep -Fq '/* Phase 217: compact three-panel race workspace */' /tmp/f1-racing-recovery-f.css
           echo '[recovery-g] F1 complete race lifecycle'
           grep -Eq 'assets/f1-racing-v1\.css\?v=1\.0\.0-phase180-shell&p=196&recovery=[G-Z][0-9]+' /tmp/index.html
           grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[G-Z][0-9]+' /tmp/index.html
