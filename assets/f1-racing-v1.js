@@ -5,6 +5,18 @@ const VERSION181='phase181-participants';
 const VERSION182='phase182-track-model';
 const VERSION183='phase183-svg-track';
 const VERSION184='phase184-smooth-single-marker';
+const VERSION185='phase185-screen-state-machine';
+const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
+const F1_TRANSITIONS_V185=Object.freeze({
+  SETUP:Object.freeze(['TRANSITION']),
+  TRANSITION:Object.freeze(['SETUP','GRID','RACE']),
+  GRID:Object.freeze(['SETUP','RACE']),
+  RACE:Object.freeze(['FINISHING']),
+  FINISHING:Object.freeze(['PODIUM','RESULT']),
+  PODIUM:Object.freeze(['RESULT']),
+  RESULT:Object.freeze(['SETUP'])
+});
+let f1ScreenStateV185='SETUP';
 const selectedIds=[];
 let activeTrackId='majoku-ring-v1';
 const previewStateV184={running:false,progress:0,lastTimestamp:0,rafId:0,lapDurationMs:18000};
@@ -162,6 +174,29 @@ function bindPreviewControlsV184(){
   if(stop&&!stop.dataset.f1Bound){stop.dataset.f1Bound='1';stop.addEventListener('click',()=>stopPreviewV184(false))}
   syncPreviewControlsV184();
 }
+function applyScreenStateV185(){
+  document.querySelectorAll('#gameF1Racing [data-f1-view]').forEach(function(view){
+    const active=view.dataset.f1View===f1ScreenStateV185;
+    view.hidden=!active;
+    view.classList.toggle('active',active);
+  });
+  const section=document.getElementById('gameF1Racing');
+  if(section)section.dataset.f1Screen=f1ScreenStateV185;
+  return f1ScreenStateV185;
+}
+function canTransitionF1V185(next){
+  return F1_TRANSITIONS_V185[f1ScreenStateV185]?.includes(next)===true;
+}
+function setScreenStateV185(next,options={}){
+  const target=String(next||'').toUpperCase();
+  const force=options&&options.force===true;
+  if(!F1_STATES_V185.includes(target))return false;
+  if(!force&&target!==f1ScreenStateV185&&!canTransitionF1V185(target))return false;
+  f1ScreenStateV185=target;
+  applyScreenStateV185();
+  return true;
+}
+function getScreenStateV185(){return f1ScreenStateV185}
 function render(){
   const section=document.getElementById('gameF1Racing');
   if(!section)return false;
@@ -169,6 +204,7 @@ function render(){
   const clear=document.getElementById('f1RacingClearDriversV181');
   if(search&&!search.dataset.f1Bound){search.dataset.f1Bound='1';search.addEventListener('input',renderContacts)}
   if(clear&&!clear.dataset.f1Bound){clear.dataset.f1Bound='1';clear.addEventListener('click',function(){selectedIds.splice(0);stopPreviewV184(true);renderContacts();renderSelected();syncPreviewControlsV184()})}
+  applyScreenStateV185();
   renderContacts();
   renderSelected();
   updateTrackFoundationStatusV182();
@@ -259,11 +295,15 @@ window.mwsF1PointAtProgressV183=pointAtProgressV183;
 window.mwsF1StartPreviewV184=startPreviewV184;
 window.mwsF1StopPreviewV184=stopPreviewV184;
 window.mwsF1PositionPreviewV184=positionPreviewMarkerV184;
+window.mwsF1SetScreenStateV185=setScreenStateV185;
+window.mwsF1GetScreenStateV185=getScreenStateV185;
+window.mwsF1CanTransitionV185=canTransitionF1V185;
 window.__mwsF1RacingV180=VERSION;
 window.__mwsF1RacingV181=VERSION181;
 window.__mwsF1RacingV182=VERSION182;
 window.__mwsF1RacingV183=VERSION183;
 window.__mwsF1RacingV184=VERSION184;
+window.__mwsF1RacingV185=VERSION185;
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){if(document.hidden&&previewStateV184.running)stopPreviewV184(false)});
 })();

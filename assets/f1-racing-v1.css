@@ -181,3 +181,10 @@
 .f1-racing-preview-car-v184.running .car-halo{animation:f1PreviewPulseV184 .9s ease-in-out infinite alternate}
 @keyframes f1PreviewPulseV184{from{opacity:.3}to{opacity:.85}}
 @media(max-width:900px){.f1-racing-track-side-v184{width:100%;align-items:stretch}.f1-racing-preview-controls-v184{justify-content:flex-start;flex-wrap:wrap}.f1-racing-preview-controls-v184>span{width:100%;margin:0 0 2px}}
+
+/* Phase 185: F1 internal screen state machine */
+.f1-racing-view-v185{min-height:0}
+.f1-racing-view-v185[hidden]{display:none!important}
+.f1-racing-state-placeholder-v185{min-height:520px;display:grid;place-items:center;align-content:center;gap:8px;background:radial-gradient(circle at center,rgba(30,41,59,.28),rgba(3,5,8,.98) 62%);color:#64748b;text-align:center}
+.f1-racing-state-placeholder-v185 span{font:800 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.2em}
+.f1-racing-state-placeholder-v185 strong{color:#dbe5f2;font-size:16px}

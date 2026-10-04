@@ -115,6 +115,7 @@ jobs:
           node --check scripts/run-phase182-f1-track-model-audit.mjs
           node --check scripts/run-phase183-f1-svg-track-audit.mjs
           node --check scripts/run-phase184-f1-smooth-marker-audit.mjs
+          node --check scripts/run-phase185-f1-screen-state-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-racing-v1.js
           node --check assets/workspace-ui-v176.js
@@ -860,6 +861,14 @@ jobs:
           grep -Fq 'previewStateV184.rafId=requestAnimationFrame(previewFrameV184);' /tmp/f1-racing-v1-phase184.js
           grep -Fq 'const delta=Math.min(50,Math.max(0,timestamp-previewStateV184.lastTimestamp));' /tmp/f1-racing-v1-phase184.js
           grep -Fq 'window.mwsF1StartPreviewV184=startPreviewV184;' /tmp/f1-racing-v1-phase184.js
+          echo '[phase185] F1 internal screen state machine'
+          grep -Fq 'data-f1-view="SETUP"' /tmp/index.html
+          grep -Fq 'data-f1-view="RACE"' /tmp/index.html
+          grep -Fq 'data-f1-view="PODIUM"' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV185=VERSION185;' > /tmp/f1-racing-v1-phase185.js
+          node --check /tmp/f1-racing-v1-phase185.js
+          grep -Fq 'function setScreenStateV185(next,options={}){' /tmp/f1-racing-v1-phase185.js
+          grep -Fq 'window.mwsF1SetScreenStateV185=setScreenStateV185;' /tmp/f1-racing-v1-phase185.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css
