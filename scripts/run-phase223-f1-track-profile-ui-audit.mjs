@@ -11,8 +11,8 @@ export function runPhase223F1TrackProfileUiAudit(){
     "const VERSION223='phase223-track-profile-ui';",
     'function trackProfileV223(track){',
     "const overtakeDifficulty=overtakeScore>=5.3?'쉬움':overtakeScore>=4.1?'보통':'어려움';",
-    "'<span class=\"f1-racing-track-card-profile-v223\">예상 추월 난이도 <b>'",
-    "'<small>내부 트랙 데이터 기준</small>'",
+    "f1-racing-track-card-profile-v223\">예상 추월 난이도 <b>",
+    "<small>내부 트랙 데이터 기준</small>",
     'function qaTrackProfileUiV223(){',
     'window.mwsF1QaTrackProfileUiV223=qaTrackProfileUiV223;',
     'window.__mwsF1RacingV223=VERSION223;'
