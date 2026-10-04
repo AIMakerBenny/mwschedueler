@@ -53,6 +53,8 @@ const VERSION223='phase223-track-profile-ui';
 const VERSION224='phase224-race-ui-density-qa';
 const VERSION225='phase225-camera-director';
 const VERSION226='phase226-commentary-readability';
+const VERSION227='phase227-commentary-cadence-quality';
+const COMMENTARY_CADENCE_V227=Object.freeze({flowGapMs:5500,strategyGapMs:3000,battleGapMs:1600,windowMs:60000,maxNarrativePerWindow:18});
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
 const CAMERA_MODES_V216=Object.freeze(['AUTO','FULL','LEADER','FRONT','BATTLE','MANUAL']);
 const raceCameraV216={mode:'AUTO',zoom:1.9,cx:500,cy:300,dragging:false,pointerId:null,lastX:0,lastY:0,initialized:false};
@@ -2377,6 +2379,44 @@ const commentaryStateV219={
   vehicle:new Map(),sequence:0
 };
 const commentaryReadV226={followTail:true,unread:0,lastTextAt:new Map(),bound:false};
+const commentaryCadenceV227={
+  lastByType:new Map(),recentNarrativeTimes:[],emitted:0,suppressed:0
+};
+function commentaryCadenceGapV227(type='flow'){
+  const value=String(type||'flow');
+  if(value==='battle')return COMMENTARY_CADENCE_V227.battleGapMs;
+  if(value==='strategy')return COMMENTARY_CADENCE_V227.strategyGapMs;
+  return COMMENTARY_CADENCE_V227.flowGapMs;
+}
+function resetCommentaryCadenceV227(){
+  commentaryCadenceV227.lastByType=new Map();
+  commentaryCadenceV227.recentNarrativeTimes=[];
+  commentaryCadenceV227.emitted=0;
+  commentaryCadenceV227.suppressed=0;
+  return true;
+}
+function commentaryCadenceAllowsV227(type='flow',bypass=false){
+  if(bypass)return true;
+  const now=Number(simClockV192.simTimeMs)||0;
+  const windowStart=now-COMMENTARY_CADENCE_V227.windowMs;
+  commentaryCadenceV227.recentNarrativeTimes=commentaryCadenceV227.recentNarrativeTimes.filter(value=>Number(value)>=windowStart);
+  if(commentaryCadenceV227.recentNarrativeTimes.length>=COMMENTARY_CADENCE_V227.maxNarrativePerWindow){
+    commentaryCadenceV227.suppressed+=1;return false;
+  }
+  const key=String(type||'flow');
+  const previous=Number(commentaryCadenceV227.lastByType.get(key));
+  if(Number.isFinite(previous)&&now-previous<commentaryCadenceGapV227(key)){
+    commentaryCadenceV227.suppressed+=1;return false;
+  }
+  return true;
+}
+function recordCommentaryCadenceV227(type='flow'){
+  const now=Number(simClockV192.simTimeMs)||0,key=String(type||'flow');
+  commentaryCadenceV227.lastByType.set(key,now);
+  commentaryCadenceV227.recentNarrativeTimes.push(now);
+  commentaryCadenceV227.emitted+=1;
+  return true;
+}
 function commentaryPriorityV226(type){
   const value=String(type||'info');
   if(['flag','finish','lead','pass','start'].includes(value))return 'critical';
@@ -2565,12 +2605,18 @@ function commentaryCanEmitV222(signature,cooldownMs=8000){
   return true;
 }
 function appendRaceCommentaryV222(message,type='flow',signature='',cooldownMs=8000){
+  const bypassCadence=Number(cooldownMs)<=0;
+  if(!commentaryCadenceAllowsV227(type,bypassCadence))return false;
   if(!commentaryCanEmitV222(signature,cooldownMs))return false;
   const appended=appendRaceCommentaryV219(message,type);
-  if(appended)commentaryFlowV222.lastEventSimMs=Number(simClockV192.simTimeMs)||0;
+  if(appended){
+    commentaryFlowV222.lastEventSimMs=Number(simClockV192.simTimeMs)||0;
+    if(!bypassCadence)recordCommentaryCadenceV227(type);
+  }
   return appended;
 }
 function resetCommentaryFlowV222(){
+  resetCommentaryCadenceV227();
   commentaryFlowV222.lastPollSimMs=-Infinity;
   commentaryFlowV222.lastAmbientSimMs=Number(simClockV192.simTimeMs)||0;
   commentaryFlowV222.lastEventSimMs=Number(simClockV192.simTimeMs)||0;
@@ -2634,6 +2680,21 @@ function updateRaceNarrativeV222(force=false){
     }
   }
   return emitted;
+}
+function qaCommentaryCadenceV227(){
+  const now=Number(simClockV192.simTimeMs)||0;
+  const windowStart=now-COMMENTARY_CADENCE_V227.windowMs;
+  const recent=commentaryCadenceV227.recentNarrativeTimes.filter(value=>Number(value)>=windowStart);
+  return {
+    emitted:commentaryCadenceV227.emitted,
+    suppressed:commentaryCadenceV227.suppressed,
+    recentNarrativeCount:recent.length,
+    maxNarrativePerWindow:COMMENTARY_CADENCE_V227.maxNarrativePerWindow,
+    flowGapMs:COMMENTARY_CADENCE_V227.flowGapMs,
+    strategyGapMs:COMMENTARY_CADENCE_V227.strategyGapMs,
+    battleGapMs:COMMENTARY_CADENCE_V227.battleGapMs,
+    allPass:recent.length<=COMMENTARY_CADENCE_V227.maxNarrativePerWindow&&COMMENTARY_CADENCE_V227.flowGapMs>COMMENTARY_CADENCE_V227.strategyGapMs&&COMMENTARY_CADENCE_V227.strategyGapMs>COMMENTARY_CADENCE_V227.battleGapMs
+  };
 }
 function qaCommentaryReadabilityV226(){
   bindCommentaryReadabilityV226();
@@ -4203,6 +4264,9 @@ window.__mwsF1RacingV225=VERSION225;
 window.mwsF1ScrollCommentaryTailV226=scrollCommentaryTailV226;
 window.mwsF1QaCommentaryReadabilityV226=qaCommentaryReadabilityV226;
 window.__mwsF1RacingV226=VERSION226;
+window.mwsF1ResetCommentaryCadenceV227=resetCommentaryCadenceV227;
+window.mwsF1QaCommentaryCadenceV227=qaCommentaryCadenceV227;
+window.__mwsF1RacingV227=VERSION227;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
