@@ -184,6 +184,8 @@ try{
     assert(document.getElementById('f1RacingCommentaryLogV188')?.textContent?.includes('경기가 시작됐습니다.'),'Phase 219 race-start commentary missing');
     const narrativeQa=window.mwsF1QaRaceNarrativeV222?.();
     assert(narrativeQa?.allPass===true,'Phase 222 commentary flow QA failed: '+JSON.stringify(narrativeQa));
+    const commentaryOrderQa=window.mwsF1QaCommentaryEventOrderV230?.();
+    assert(commentaryOrderQa?.allPass===true&&commentaryOrderQa?.passTargetId==='passed'&&commentaryOrderQa?.invalidReturn==='','Phase 230 commentary event order QA failed: '+JSON.stringify(commentaryOrderQa));
     const commentaryReadQa=window.mwsF1QaCommentaryReadabilityV226?.();
     assert(commentaryReadQa?.allPass===true&&commentaryReadQa?.badgeReady===true,'Phase 226 commentary readability QA failed: '+JSON.stringify(commentaryReadQa));
     window.mwsF1ResetCommentaryCadenceV227?.();
