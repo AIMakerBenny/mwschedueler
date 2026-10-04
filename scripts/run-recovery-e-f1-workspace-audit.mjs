@@ -8,10 +8,8 @@ export function runRecoveryEF1WorkspaceAudit(){
   const css=fs.readFileSync('assets/f1-racing-v1.css','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  for(const token of [
-    'assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196&recovery=E1',
-    'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=E1'
-  ])if(!index.includes(token))issues.push('Recovery E asset cache missing: '+token);
+  if(!/assets\/f1-racing-v1\.css\?v=1\.0\.0-phase180-shell&p=196&recovery=[E-Z][0-9]+/.test(index))issues.push('Recovery E+ CSS asset cache missing');
+  if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[E-Z][0-9]+/.test(index))issues.push('Recovery E+ JS asset cache missing');
 
   for(const token of [
     'const F1_WORKSPACE_PANEL_META_RECOVERY_E=Object.freeze({',

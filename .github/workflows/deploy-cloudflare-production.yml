@@ -139,6 +139,7 @@ jobs:
           node --check scripts/run-recovery-c-f1-race-cancel-audit.mjs
           node --check scripts/run-recovery-d-f1-persistence-audit.mjs
           node --check scripts/run-recovery-e-f1-workspace-audit.mjs
+          node --check scripts/run-recovery-f-f1-workspace-default-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-v1.js
@@ -1105,8 +1106,8 @@ jobs:
           grep -Fq 'function restoreF1SettingsRecoveryD(force=false){' /tmp/f1-racing-recovery-d.js
           grep -Fq 'persistF1SettingsRecoveryD();' /tmp/f1-racing-recovery-d.js
           echo '[recovery-e] F1 Premiere workspace foundation'
-          grep -Fq 'assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196&recovery=E1' /tmp/index.html
-          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=E1' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.css\?v=1\.0\.0-phase180-shell&p=196&recovery=[E-Z][0-9]+' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=[E-Z][0-9]+' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RecoveryE='premiere-workspace-foundation-v1';" > /tmp/f1-racing-recovery-e.js
           retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-workspace-recovery-e{' > /tmp/f1-racing-recovery-e.css
           node --check /tmp/f1-racing-recovery-e.js
@@ -1118,6 +1119,15 @@ jobs:
           grep -Fq 'persistF1SettingsRecoveryD({workspaceLayout:cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE)})' /tmp/f1-racing-recovery-e.js
           grep -Fq '.f1-racing-workspace-resize-recovery-e{' /tmp/f1-racing-recovery-e.css
           grep -Fq '.f1-racing-workspace-tabs-recovery-e{' /tmp/f1-racing-recovery-e.css
+          echo '[recovery-f] F1 dense default workspace'
+          grep -Fq 'assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196&recovery=F1' /tmp/index.html
+          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=F1' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RecoveryF='race-workspace-default-redesign-v1';" > /tmp/f1-racing-recovery-f.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '/* Recovery F: dense race-control default presentation */' > /tmp/f1-racing-recovery-f.css
+          node --check /tmp/f1-racing-recovery-f.js
+          grep -Fq "track:Object.freeze({x:0,y:2,w:7,h:6" /tmp/f1-racing-recovery-f.js
+          grep -Fq "activeTabs:Object.freeze({'race-side':'radio'})" /tmp/f1-racing-recovery-f.js
+          grep -Fq 'min-height:571px!important' /tmp/f1-racing-recovery-f.css
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css

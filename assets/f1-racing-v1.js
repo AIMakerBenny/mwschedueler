@@ -1282,15 +1282,15 @@ const F1_WORKSPACE_PANEL_META_RECOVERY_E=Object.freeze({
   speed:Object.freeze({label:'SPEED TRAP'})
 });
 const F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E=Object.freeze({
-  version:1,
+  version:2,
   panels:Object.freeze({
-    timing:Object.freeze({x:0,y:0,w:12,h:3,hidden:false,maximized:false,tabGroup:''}),
-    track:Object.freeze({x:0,y:3,w:5,h:5,hidden:false,maximized:false,tabGroup:''}),
-    commentary:Object.freeze({x:5,y:3,w:4,h:5,hidden:false,maximized:false,tabGroup:''}),
-    radio:Object.freeze({x:9,y:3,w:3,h:2,hidden:false,maximized:false,tabGroup:''}),
-    speed:Object.freeze({x:9,y:5,w:3,h:3,hidden:false,maximized:false,tabGroup:''})
+    timing:Object.freeze({x:0,y:0,w:12,h:2,hidden:false,maximized:false,tabGroup:''}),
+    track:Object.freeze({x:0,y:2,w:7,h:6,hidden:false,maximized:false,tabGroup:''}),
+    commentary:Object.freeze({x:7,y:2,w:5,h:3,hidden:false,maximized:false,tabGroup:''}),
+    radio:Object.freeze({x:7,y:5,w:5,h:3,hidden:false,maximized:false,tabGroup:'race-side'}),
+    speed:Object.freeze({x:7,y:5,w:5,h:3,hidden:false,maximized:false,tabGroup:'race-side'})
   }),
-  activeTabs:Object.freeze({})
+  activeTabs:Object.freeze({'race-side':'radio'})
 });
 let workspaceLayoutRecoveryE=null;
 let workspacePointerRecoveryE=null;
@@ -1300,8 +1300,9 @@ function cloneWorkspaceLayoutRecoveryE(layout){
 }
 function normalizeWorkspaceLayoutRecoveryE(raw){
   const defaults=cloneWorkspaceLayoutRecoveryE(F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E);
-  const source=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
-  const result={version:1,panels:{},activeTabs:{}};
+  const candidate=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+  const source=Number(candidate.version)>=2?candidate:{};
+  const result={version:2,panels:{},activeTabs:{}};
   for(const id of Object.keys(F1_WORKSPACE_PANEL_META_RECOVERY_E)){
     const base=defaults.panels[id];
     const row=source.panels?.[id]&&typeof source.panels[id]==='object'?source.panels[id]:{};
@@ -1934,6 +1935,7 @@ window.__mwsF1RecoveryB='start-finish-line-v1';
 window.__mwsF1RecoveryC='race-cancel-setup-return-v1';
 window.__mwsF1RecoveryD='persistent-roster-track-settings-v1';
 window.__mwsF1RecoveryE='premiere-workspace-foundation-v1';
+window.__mwsF1RecoveryF='race-workspace-default-redesign-v1';
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){
