@@ -1214,6 +1214,7 @@ function renderRaceControlV188(){
   const svg=document.getElementById('f1RacingRaceTrackSvgV188');
   const path=document.getElementById('f1RacingRaceTrackPathV188');
   const glow=document.getElementById('f1RacingRaceTrackGlowV188');
+  const annotations=document.getElementById('f1RacingRaceAnnotationsRecoveryB');
   if(name)name.textContent=String(snapshot.track.name||'TRACK').toUpperCase();
   if(count)count.textContent=String(snapshot.drivers.length);
   if(status)status.textContent='PRE-RACE';
@@ -1223,6 +1224,7 @@ function renderRaceControlV188(){
   if(svg)svg.setAttribute('viewBox',(snapshot.track.viewBox||[0,0,1000,600]).join(' '));
   if(path)path.setAttribute('d',snapshot.track.path||'');
   if(glow)glow.setAttribute('d',snapshot.track.path||'');
+  if(path&&annotations)renderRaceStartFinishRecoveryB(annotations,path,snapshot.track);
   if(path)refreshRaceGeometryV193(snapshot,path);
   bindSimulationControlsV192();
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='RACE CONTROL';
@@ -1288,6 +1290,62 @@ function addTrackAnnotationV183(layer,path,kind,label,progress){
   group.append(circle,textNode);
   layer.appendChild(group);
 }
+
+function startFinishGeometryRecoveryB(path,track){
+  const total=Number(path?.getTotalLength?.())||0;
+  if(!(total>0)||!track)return null;
+  const progress=normalizedProgressV190(Number(track.startFinish)||0);
+  const at=progress*total;
+  const d=Math.max(2,total/900);
+  const beforeAt=(at-d+total)%total;
+  const afterAt=(at+d)%total;
+  const center=path.getPointAtLength(at);
+  const before=path.getPointAtLength(beforeAt);
+  const after=path.getPointAtLength(afterAt);
+  const dx=Number(after.x)-Number(before.x),dy=Number(after.y)-Number(before.y);
+  const mag=Math.hypot(dx,dy)||1;
+  const tx=dx/mag,ty=dy/mag;
+  const nx=-ty,ny=tx;
+  const visualWidth=Math.max(10,Number(track?.geometry?.visualTrackWidthSvg)||26);
+  const halfSpan=Math.max(18,visualWidth*.92);
+  return {
+    progress,
+    center:{x:Number(center.x),y:Number(center.y)},
+    tangent:{x:tx,y:ty},
+    normal:{x:nx,y:ny},
+    a:{x:Number(center.x)-nx*halfSpan,y:Number(center.y)-ny*halfSpan},
+    b:{x:Number(center.x)+nx*halfSpan,y:Number(center.y)+ny*halfSpan}
+  };
+}
+function addStartFinishLineRecoveryB(layer,path,track,scope='setup'){
+  if(!layer||!path||!track)return null;
+  const geometry=startFinishGeometryRecoveryB(path,track);
+  if(!geometry)return null;
+  const group=svgNodeV183('g',{
+    class:'f1-racing-start-finish-recovery-b '+scope,
+    'data-f1-start-finish':'1',
+    'data-progress':geometry.progress.toFixed(6)
+  });
+  const underlay=svgNodeV183('line',{class:'finish-underlay',x1:geometry.a.x,y1:geometry.a.y,x2:geometry.b.x,y2:geometry.b.y});
+  const stripe=svgNodeV183('line',{class:'finish-stripe',x1:geometry.a.x,y1:geometry.a.y,x2:geometry.b.x,y2:geometry.b.y});
+  const labelDistance=scope==='race'?34:42;
+  const label=svgNodeV183('text',{
+    class:'finish-label',
+    x:geometry.center.x+geometry.tangent.x*labelDistance+geometry.normal.x*18,
+    y:geometry.center.y+geometry.tangent.y*labelDistance+geometry.normal.y*18,
+    'text-anchor':'middle'
+  });
+  label.textContent='START / FINISH';
+  group.append(underlay,stripe,label);
+  layer.appendChild(group);
+  return group;
+}
+function renderRaceStartFinishRecoveryB(layer,path,track){
+  if(!layer||!path||!track)return false;
+  layer.replaceChildren();
+  return Boolean(addStartFinishLineRecoveryB(layer,path,track,'race'));
+}
+
 function renderTrackMapV183(){
   const track=getActiveTrack();
   const svg=document.getElementById('f1RacingTrackSvgV183');
@@ -1300,7 +1358,7 @@ function renderTrackMapV183(){
   path.setAttribute('d',track.path);
   glow.setAttribute('d',track.path);
   layer.replaceChildren();
-  addTrackAnnotationV183(layer,path,'start','START',track.startFinish);
+  addStartFinishLineRecoveryB(layer,path,track,'setup');
   addTrackAnnotationV183(layer,path,'sector','S1',track.sectors[0].end);
   addTrackAnnotationV183(layer,path,'sector','S2',track.sectors[1].end);
   track.speedTraps.forEach((trap,index)=>addTrackAnnotationV183(layer,path,'trap','ST'+(index+1),trap.progress));
@@ -1334,6 +1392,9 @@ window.mwsF1GetSelectedContactIdsV181=getSelectedContactIds;
 window.mwsF1GetActiveTrackV182=getActiveTrack;
 window.mwsF1RenderTrackMapV183=renderTrackMapV183;
 window.mwsF1PointAtProgressV183=pointAtProgressV183;
+window.mwsF1StartFinishGeometryRecoveryB=startFinishGeometryRecoveryB;
+window.mwsF1AddStartFinishLineRecoveryB=addStartFinishLineRecoveryB;
+window.mwsF1RenderRaceStartFinishRecoveryB=renderRaceStartFinishRecoveryB;
 window.mwsF1StartPreviewV184=startPreviewV184;
 window.mwsF1StopPreviewV184=stopPreviewV184;
 window.mwsF1PositionPreviewV184=positionPreviewMarkerV184;
@@ -1414,6 +1475,7 @@ window.__mwsF1RacingV200=VERSION200;
 window.__mwsF1RacingV201=VERSION201;
 window.__mwsF1RacingV202=VERSION202;
 window.__mwsF1RacingV203=VERSION203;
+window.__mwsF1RecoveryB='start-finish-line-v1';
 window.addEventListener('mawang:datachange',function(){const section=document.getElementById('gameF1Racing');if(section&&section.classList.contains('active'))render()});
 document.addEventListener('visibilitychange',function(){
   if(document.hidden){

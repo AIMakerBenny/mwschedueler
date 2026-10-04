@@ -135,6 +135,7 @@ jobs:
           node --check scripts/run-phase202-f1-active-aero-overtake-audit.mjs
           node --check scripts/run-phase203-f1-tyre-system-audit.mjs
           node --check scripts/run-recovery-a-f1-track-catalog-audit.mjs
+          node --check scripts/run-recovery-b-f1-start-finish-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-v1.js
@@ -1068,6 +1069,18 @@ jobs:
           grep -Fq "name:'Castle Street Circuit'" /tmp/f1-track-recovery-a.js
           grep -Fq "id:'blue-coast-speedway-v1'" /tmp/f1-track-recovery-a.js
           grep -Fq "name:'Blue Coast Speedway'" /tmp/f1-track-recovery-a.js
+          echo '[recovery-b] F1 visible start finish line'
+          grep -Fq 'id="f1RacingRaceAnnotationsRecoveryB"' /tmp/index.html
+          grep -Fq 'assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196&recovery=B1' /tmp/index.html
+          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=B1' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RecoveryB='start-finish-line-v1';" > /tmp/f1-racing-recovery-b.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-start-finish-recovery-b .finish-stripe{' > /tmp/f1-racing-recovery-b.css
+          node --check /tmp/f1-racing-recovery-b.js
+          grep -Fq 'function startFinishGeometryRecoveryB(path,track){' /tmp/f1-racing-recovery-b.js
+          grep -Fq "addStartFinishLineRecoveryB(layer,path,track,'setup');" /tmp/f1-racing-recovery-b.js
+          grep -Fq 'if(path&&annotations)renderRaceStartFinishRecoveryB(annotations,path,snapshot.track);' /tmp/f1-racing-recovery-b.js
+          grep -Fq "label.textContent='START / FINISH';" /tmp/f1-racing-recovery-b.js
+          grep -Fq 'stroke-dasharray:9 7' /tmp/f1-racing-recovery-b.css
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css
