@@ -27,7 +27,7 @@ export function runPhase190F1RaceDistanceLapSectorAudit(){
     'window.__mwsF1RacingV190=VERSION190;'
   ])if(!js.includes(token))issues.push('Phase 190 telemetry runtime missing: '+token);
 
-  if(!js.includes('syncVehicleRaceMetricsV190(vehicle)'))issues.push('Shared race frame does not update race distance/lap/sector telemetry');
+  if(!js.includes('syncVehicleRaceMetricsV190(vehicle,track)')&&!js.includes('syncVehicleRaceMetricsV190(vehicle)'))issues.push('Race simulation does not update race distance/lap/sector telemetry');
   if(!js.includes('data-f1-current-sector'))issues.push('Timing row current-sector badge missing');
   for(const token of ['.f1-racing-timing-row-v188 .driver em[data-f1-current-sector]','[data-sector="S1"]','[data-sector="S2"]','[data-sector="S3"]'])if(!css.includes(token))issues.push('Phase 190 telemetry CSS missing: '+token);
 
