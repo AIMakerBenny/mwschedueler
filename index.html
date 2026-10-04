@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>마왕 스케줄러</title>
 <link rel="stylesheet" href="assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171-searchtab172-drag174-workspace176-splitquick177">
+<link rel="stylesheet" href="assets/f1-racing-v1.css?v=1.0.0-phase180-shell">
 
 <style id="mws-cloud-access-style">
 body.mws-gated .app{pointer-events:none;user-select:none;filter:blur(5px);opacity:.36}
@@ -122,6 +123,9 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
         </button>
         <button data-tab="gameRps" title="가위바위보">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M5 18c3-1 4-4 4-7V7m0 4 3-7m-3 7 6-5m-6 5 8-1M5 18c2 3 9 3 12-1 2-3 2-6 0-7"/></svg></span><span class="nav-label">가위바위보</span>
+        </button>
+        <button data-tab="gameF1Racing" title="F1 레이싱">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 17h3l2-5h7l2 5h2"/><path d="M7 17h10M9 12l2-4h3l2 4"/><circle cx="8" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><span class="nav-label">F1 레이싱</span>
         </button>
         <button data-tab="gamePachinko" title="경마">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M5 3h14v18H5z"/><circle cx="9" cy="8" r="1"/><circle cx="15" cy="8" r="1"/><circle cx="12" cy="11" r="1"/><circle cx="8" cy="14" r="1"/><circle cx="16" cy="14" r="1"/><path d="M8 18h8M12 3v2"/></svg></span><span class="nav-label">경마</span>
@@ -1001,9 +1005,41 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
     </section>
 
     
+<section id="gameF1Racing" class="section mini-game-section f1-racing-section-v180" data-f1-phase="180">
+  <div class="f1-racing-head-v180">
+    <div>
+      <div class="f1-racing-kicker-v180">MINI GAME 03</div>
+      <h2>F1 레이싱</h2>
+      <p>연락처 참가자를 드라이버로 불러와 내부 시뮬레이션으로 진행하는 관전형 레이스입니다. 차량 이동과 타이밍 데이터는 이후 단계에서 하나의 레이스 상태를 기준으로 연결합니다.</p>
+    </div>
+    <div class="f1-racing-head-badge-v180">MAWANG GRAND PRIX</div>
+  </div>
+
+  <div class="f1-racing-shell-v180" id="f1RacingShellV180">
+    <div class="f1-racing-console-v180">
+      <div class="f1-racing-console-top-v180">
+        <div>
+          <span class="f1-racing-console-label-v180">RACE CONTROL</span>
+          <h3>F1 Racing Control Center</h3>
+        </div>
+        <span class="f1-racing-phase-chip-v180" id="f1RacingPhaseChipV180">FOUNDATION</span>
+      </div>
+      <div class="f1-racing-placeholder-v180">
+        <div class="f1-racing-placeholder-grid-v180" aria-hidden="true"></div>
+        <div class="f1-racing-placeholder-content-v180">
+          <span class="f1-racing-placeholder-eyebrow-v180">PHASE 180</span>
+          <strong>레이스 관제 화면 기반 구조 준비 완료</strong>
+          <p id="f1RacingFoundationStatusV180">다음 단계에서 연락처 참가자 선택기를 연결합니다.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
 <section id="gamePachinko" class="section mini-game-section">
   <div class="mini-game-head">
-    <div><div class="mini-kicker">MINI GAME 03</div><h2>경마</h2><p>연락처 참가자들이 각자의 말을 타고 달립니다. 한 번 뛸 때마다 0에서 2칸 사이를 확률적으로 전진하고, 중간 부스터 구간에 따라 순위가 실시간으로 바뀝니다. 결승선에 도착한 전체 순위를 모두 보여줍니다.</p></div>
+    <div><div class="mini-kicker">MINI GAME 04</div><h2>경마</h2><p>연락처 참가자들이 각자의 말을 타고 달립니다. 한 번 뛸 때마다 0에서 2칸 사이를 확률적으로 전진하고, 중간 부스터 구간에 따라 순위가 실시간으로 바뀝니다. 결승선에 도착한 전체 순위를 모두 보여줍니다.</p></div>
     <div class="mini-game-head-badge">실시간 순위 · 전원 랭킹</div>
   </div>
   <div class="horse-race-shell">
@@ -1042,7 +1078,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <section id="gameMultiDraw" class="section mini-game-section">
   <div class="mini-game-head">
     <div>
-      <div class="mini-kicker">MINI GAME 04</div>
+      <div class="mini-kicker">MINI GAME 05</div>
       <h2>Gacha 뽑기</h2>
       <p>참가자 중 원하는 인원만큼을 중복 없이 뽑습니다. 버튼을 누르고 있으면 게이지가 계속 왕복하며 충전되고, 손을 떼는 순간 게이지에 비례한 추가 셔플 계산이 적용된 뒤 대형 카드로 당첨자가 공개됩니다.</p>
     </div>
@@ -1713,7 +1749,8 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <div id="miniGameCelebration" class="mini-game-celebration" aria-hidden="true" onclick="closeMiniGameCelebration()"><div class="celebration-glow"></div><div id="celebrationConfetti" class="celebration-confetti"></div><div class="celebration-card"><div id="celebrationKicker" class="celebration-kicker">WINNER</div><div id="celebrationAvatar" class="celebration-avatar"></div><div id="celebrationText" class="celebration-text">당첨</div><div class="celebration-sub">화면을 클릭하면 닫힙니다</div></div></div>
 <div id="toast" class="toast"></div>
 
-<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178"></script>
+<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180"></script>
+<script src="assets/f1-racing-v1.js?v=1.0.0-phase180-shell"></script>
 <script src="assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130-zoom138-unassigned168"></script>
 <script src="assets/wardogs-media-v1.js?v=1.0.0-phase121-backup126-webview130"></script>
 <script src="assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140-frame144-frames150-aperture152-assault166-medic165-recon163-support166-driver161-pilot166-unassigned168"></script>

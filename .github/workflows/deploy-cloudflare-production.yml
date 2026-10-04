@@ -110,6 +110,8 @@ jobs:
           node --check scripts/run-phase177-split-quick-datetime-audit.mjs
           node --check scripts/run-phase178-circular-time-wheel-audit.mjs
           node --check scripts/run-phase179-f1-foundation-audit.mjs
+          node --check scripts/run-phase180-f1-navigation-shell-audit.mjs
+          node --check assets/f1-racing-v1.js
           node --check assets/workspace-ui-v176.js
           node --check scripts/run-phase153-standard-page-top-spacing-audit.mjs
           node --check scripts/diagnose-phase154-live-layout.mjs
@@ -801,6 +803,16 @@ jobs:
           grep -Fq "const start=e?(e.start||'TBD'):'TBD',end=e?(e.end||'TBD'):'TBD';" /tmp/app-core-phase174.js
           grep -Fq "textContent=start==='TBD'?'미지정':formatTimeKorean(start);" /tmp/app-core-phase174.js
           grep -Fq "textContent=end==='TBD'?'미지정':formatTimeKorean(end);" /tmp/app-core-phase174.js
+          echo '[phase180] F1 Racing navigation and isolated page shell'
+          grep -Fq 'data-tab="gameF1Racing"' /tmp/index.html
+          grep -Fq '<span class="nav-label">F1 레이싱</span>' /tmp/index.html
+          grep -Fq '<section id="gameF1Racing"' /tmp/index.html
+          grep -Fq 'assets/f1-racing-v1.css?v=1.0.0-phase180-shell' /tmp/index.html
+          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RacingV180=VERSION;" > /tmp/f1-racing-v1.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-shell-v180{' > /tmp/f1-racing-v1.css
+          node --check /tmp/f1-racing-v1.js
+          grep -Fq "window.mwsRenderF1RacingV180=render;" /tmp/f1-racing-v1.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css

@@ -1,0 +1,106 @@
+/* Mawang Scheduler F1 Racing
+   Phase 180: isolated navigation and page shell. */
+.f1-racing-section-v180{
+  min-height:calc(100vh - 112px);
+}
+.f1-racing-head-v180{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:24px;
+  margin-bottom:16px;
+}
+.f1-racing-head-v180 h2{
+  margin:4px 0 8px;
+  font-size:26px;
+  letter-spacing:-.02em;
+}
+.f1-racing-head-v180 p{
+  max-width:920px;
+  margin:0;
+  color:var(--muted);
+  line-height:1.65;
+}
+.f1-racing-kicker-v180,
+.f1-racing-console-label-v180,
+.f1-racing-placeholder-eyebrow-v180{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:10px;
+  letter-spacing:.18em;
+  color:#94a3b8;
+}
+.f1-racing-head-badge-v180,
+.f1-racing-phase-chip-v180{
+  flex:0 0 auto;
+  border:1px solid #313846;
+  border-radius:999px;
+  padding:7px 10px;
+  background:#0b0e13;
+  color:#d8dee9;
+  font:700 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  letter-spacing:.12em;
+}
+.f1-racing-shell-v180{
+  border:1px solid #242a35;
+  border-radius:14px;
+  overflow:hidden;
+  background:#07090d;
+  box-shadow:0 22px 60px rgba(0,0,0,.28);
+}
+.f1-racing-console-v180{min-height:620px}
+.f1-racing-console-top-v180{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+  min-height:58px;
+  padding:10px 14px;
+  border-bottom:1px solid #292f39;
+  background:#0d1015;
+}
+.f1-racing-console-top-v180 h3{
+  margin:4px 0 0;
+  color:#f8fafc;
+  font-size:15px;
+}
+.f1-racing-placeholder-v180{
+  position:relative;
+  min-height:560px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+}
+.f1-racing-placeholder-grid-v180{
+  position:absolute;
+  inset:0;
+  opacity:.32;
+  background-image:
+    linear-gradient(rgba(148,163,184,.08) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(148,163,184,.08) 1px,transparent 1px);
+  background-size:32px 32px;
+}
+.f1-racing-placeholder-content-v180{
+  position:relative;
+  width:min(620px,calc(100% - 40px));
+  border:1px solid #2b3340;
+  border-radius:12px;
+  padding:28px;
+  text-align:center;
+  background:rgba(10,13,18,.88);
+}
+.f1-racing-placeholder-content-v180 strong{
+  display:block;
+  margin:10px 0 8px;
+  color:#f8fafc;
+  font-size:20px;
+}
+.f1-racing-placeholder-content-v180 p{
+  margin:0;
+  color:#94a3b8;
+  line-height:1.6;
+}
+@media(max-width:800px){
+  .f1-racing-head-v180{flex-direction:column}
+  .f1-racing-console-v180{min-height:520px}
+  .f1-racing-placeholder-v180{min-height:460px}
+}
