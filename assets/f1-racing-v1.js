@@ -1455,7 +1455,7 @@ const F1_WORKSPACE_PANEL_META_RECOVERY_E=Object.freeze({
   speed:Object.freeze({label:'SPEED TRAP'})
 });
 const F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E=Object.freeze({
-  version:2,
+  version:3,
   panels:Object.freeze({
     timing:Object.freeze({x:0,y:0,w:12,h:2,hidden:false,maximized:false,tabGroup:''}),
     track:Object.freeze({x:0,y:2,w:7,h:6,hidden:false,maximized:false,tabGroup:''}),
@@ -1474,8 +1474,8 @@ function cloneWorkspaceLayoutRecoveryE(layout){
 function normalizeWorkspaceLayoutRecoveryE(raw){
   const defaults=cloneWorkspaceLayoutRecoveryE(F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E);
   const candidate=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
-  const source=Number(candidate.version)>=2?candidate:{};
-  const result={version:2,panels:{},activeTabs:{}};
+  const source=Number(candidate.version)>=3?candidate:{};
+  const result={version:3,panels:{},activeTabs:{}};
   for(const id of Object.keys(F1_WORKSPACE_PANEL_META_RECOVERY_E)){
     const base=defaults.panels[id];
     const row=source.panels?.[id]&&typeof source.panels[id]==='object'?source.panels[id]:{};
@@ -1485,10 +1485,13 @@ function normalizeWorkspaceLayoutRecoveryE(raw){
     let y=Math.max(0,Math.min(12-h,Math.round(Number(row.y)||base.y)));
     result.panels[id]={
       x,y,w,h,
-      hidden:Boolean(row.hidden),
-      maximized:Boolean(row.maximized),
-      tabGroup:String(row.tabGroup||'')
+      hidden:Object.prototype.hasOwnProperty.call(row,'hidden')?Boolean(row.hidden):Boolean(base.hidden),
+      maximized:Object.prototype.hasOwnProperty.call(row,'maximized')?Boolean(row.maximized):Boolean(base.maximized),
+      tabGroup:Object.prototype.hasOwnProperty.call(row,'tabGroup')?String(row.tabGroup||''):String(base.tabGroup||'')
     };
+  }
+  for(const [group,id] of Object.entries(defaults.activeTabs||{})){
+    if(result.panels[id]?.tabGroup===group)result.activeTabs[group]=id;
   }
   for(const [group,id] of Object.entries(source.activeTabs||{})){
     if(result.panels[id]?.tabGroup===group)result.activeTabs[group]=id;
