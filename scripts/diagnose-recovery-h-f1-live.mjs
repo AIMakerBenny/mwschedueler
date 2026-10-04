@@ -356,13 +356,14 @@ try{
     assertNoDomOverlap('after resize');
 
     document.getElementById('f1RacingWorkspaceResetRecoveryE')?.click();await raf();
-    const speedTab=document.querySelector('[data-f1-workspace-tab="speed"]');
-    assert(speedTab,'Speed Trap tab control missing');
-    speedTab.click();await raf();
-    const speedPanel=document.querySelector('[data-f1-workspace-panel="speed"]');
-    const radioPanel=document.querySelector('[data-f1-workspace-panel="radio"]');
-    assert(!speedPanel.hidden&&radioPanel.hidden,'Tab switching Radio -> Speed Trap failed');
-    assertNoDomOverlap('after tab switch');
+    const compactQa=window.mwsF1QaCompactWorkspaceV217?.();
+    assert(compactQa?.allPass===true,'Phase 217 compact workspace QA failed: '+JSON.stringify(compactQa));
+    const compactLayout=window.mwsF1GetWorkspaceLayoutRecoveryE?.();
+    assert(compactLayout?.panels?.track?.x===0&&compactLayout?.panels?.track?.w===8&&compactLayout?.panels?.track?.h===8,'Phase 217 track default layout mismatch: '+JSON.stringify(compactLayout?.panels?.track));
+    assert(compactLayout?.panels?.timing?.x===8&&compactLayout?.panels?.timing?.y===0&&compactLayout?.panels?.timing?.w===4,'Phase 217 timing default layout mismatch: '+JSON.stringify(compactLayout?.panels?.timing));
+    assert(compactLayout?.panels?.commentary?.x===8&&compactLayout?.panels?.commentary?.y===3&&compactLayout?.panels?.commentary?.w===4,'Phase 217 commentary default layout mismatch: '+JSON.stringify(compactLayout?.panels?.commentary));
+    assert(!document.querySelector('[data-f1-workspace-panel="radio"],[data-f1-workspace-panel="speed"]'),'Phase 217 obsolete Team Radio or Speed Trap panel remains in workspace');
+    assertNoDomOverlap('after compact default');
 
     document.getElementById('f1RacingWorkspaceResetRecoveryE')?.click();await raf();
     const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]');
@@ -395,7 +396,7 @@ try{
     document.getElementById('f1RacingWorkspaceResetRecoveryE')?.click();await raf();
     assertNoDomOverlap('after reset');
     const persisted=window.mwsGetF1RacingSettingsRecoveryD?.()?.workspaceLayout;
-    assert(Number(persisted?.version)>=4,'Workspace layout did not persist as repaired schema');
+    assert(Number(persisted?.version)>=5,'Workspace layout did not persist as repaired schema');
     const malformed={version:3,panels:{
       timing:{x:0,y:0,w:12,h:3,hidden:false,maximized:false,tabGroup:''},
       track:{x:0,y:0,w:7,h:6,hidden:false,maximized:false,tabGroup:''},
@@ -457,7 +458,7 @@ try{
       resizeChanged:{before:beforeResize,after:afterResize},
       dockedCommentary:docked,
       overlapPairsAfterDock:window.mwsF1WorkspaceOverlapPairsRecoveryI?.()||[],
-      tabSwitch:true,
+      compactDefault:true,
       persistenceVersion:Number(persisted?.version)||0,
       malformedRepairReasons:repaired?.before||[],
       finalDomOverlapPairs:domOverlapPairs(),
