@@ -131,6 +131,7 @@ jobs:
           node --check scripts/run-phase198-f1-slipstream-audit.mjs
           node --check scripts/run-phase199-f1-dirty-air-audit.mjs
           node --check scripts/run-phase200-f1-driver-profile-audit.mjs
+          node --check scripts/run-phase201-f1-energy-recharge-boost-audit.mjs
           node --check assets/f1-track-v1.js
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-v1.js
@@ -1019,7 +1020,7 @@ jobs:
           grep -Fq 'const aeroGripMultiplier=Math.min(1,rawAeroGrip+(1-rawAeroGrip)*dirtyAirRecovery);' /tmp/f1-racing-v1-phase199.js
           grep -Fq 'window.mwsF1ResolveDirtyAirV199=resolveDirtyAirV199;' /tmp/f1-racing-v1-phase199.js
           echo '[phase200] F1 driver pace consistency racecraft'
-          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=200' /tmp/index.html
+          grep -Eq 'assets/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=(20[0-9]|[3-9][0-9]{2,})' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV200=VERSION200;' > /tmp/f1-racing-v1-phase200.js
           node --check /tmp/f1-racing-v1-phase200.js
           grep -Fq 'function createDriverProfileV200(driver,snapshot){' /tmp/f1-racing-v1-phase200.js
@@ -1027,6 +1028,16 @@ jobs:
           grep -Fq "const racecraftNorm=driverSkillNormV200(vehicle,'racecraft');" /tmp/f1-racing-v1-phase200.js
           grep -Fq 'const maxTarget=baseTarget*driverPaceMultiplier*aeroGripMultiplier+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;' /tmp/f1-racing-v1-phase200.js
           grep -Fq 'window.mwsF1GetDriverProfilesV200=getDriverProfilesV200;' /tmp/f1-racing-v1-phase200.js
+          echo '[phase201] F1 energy recharge boost'
+          grep -Fq 'assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=201' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV201=VERSION201;' > /tmp/f1-racing-v1-phase201.js
+          node --check /tmp/f1-racing-v1-phase201.js
+          grep -Fq 'const ENERGY_CONFIG_V201=Object.freeze({usableCapacityMJ:4,maxRechargePerLapMJ:7,maxHarvestPowerKW:350,maxDeployPowerKW:350,maxBoostDeltaKW:150,icePowerKW:400,minStandingDeployKph:50});' /tmp/f1-racing-v1-phase201.js
+          grep -Fq 'function ersNormalPowerLimitV201(speedKph){' /tmp/f1-racing-v1-phase201.js
+          grep -Fq 'function updateEnergySystemV201(vehicle,stepMs,phase,throttle,brake){' /tmp/f1-racing-v1-phase201.js
+          grep -Fq 'const boostOpportunityScore=Math.max(attackOpportunityScore,defenceThreatScore);' /tmp/f1-racing-v1-phase201.js
+          grep -Fq 'if(accelMps2>0)accelMps2*=energyState.powerUnitFactor;' /tmp/f1-racing-v1-phase201.js
+          grep -Fq 'window.mwsF1GetEnergyStatesV201=getEnergyStatesV201;' /tmp/f1-racing-v1-phase201.js
           grep -Fq '.calendar-view-tabs-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-date-group-v172{' /tmp/app-core-phase172.css
           grep -Fq '.calendar-search-result-v172{' /tmp/app-core-phase172.css

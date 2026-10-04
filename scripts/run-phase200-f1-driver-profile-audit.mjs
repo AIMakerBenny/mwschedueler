@@ -7,7 +7,7 @@ export function runPhase200F1DriverProfileAudit(){
   const racing=fs.readFileSync('assets/f1-racing-v1.js','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  if(!index.includes('assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=200'))issues.push('Phase 200 racing asset link missing');
+  if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=(?:20[0-9]|[3-9]\d{2,})/.test(index))issues.push('Phase 200+ racing runtime asset link missing');
   for(const token of [
     "const VERSION200='phase200-driver-pace-consistency-racecraft';",
     "const DRIVER_PROFILE_KEYS_V200=Object.freeze(['pace','braking','cornering','racecraft','consistency','tyreManagement','start','aggression','errorResistance']);",
