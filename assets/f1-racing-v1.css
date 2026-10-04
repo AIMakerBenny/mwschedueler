@@ -539,3 +539,10 @@
 .f1-racing-commentary-entry-v219.battle .message{font-weight:700}
 .f1-racing-commentary-entry-v219.strategy .message{opacity:.92}
 .f1-racing-commentary-entry-v219.flow .message{opacity:.78}
+
+/* Phase 223: track profile cards */
+.f1-racing-track-card-v186{min-height:132px;justify-content:flex-start}
+.f1-racing-track-card-type-v223{display:inline-flex;align-items:center;min-height:20px;padding:2px 7px;border:1px solid #344154;border-radius:999px;font-size:9px;font-weight:800;color:#c6d3e4;background:#0d141d}
+.f1-racing-track-card-profile-v223{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:2px;font-size:9px;color:#9aa7ba}
+.f1-racing-track-card-profile-v223 b{color:#eef4fb;font-size:10px}
+.f1-racing-track-card-profile-v223 small{font-size:8px;opacity:.58}
