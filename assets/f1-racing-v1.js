@@ -64,6 +64,7 @@ const VERSION234='phase234-track-runtime-character-profile';
 const VERSION235='phase235-track-character-driving-behavior';
 const VERSION236='phase236-track-aware-commentary';
 const VERSION237='phase237-race-result-telemetry';
+const VERSION238='phase238-seven-track-long-run-benchmark';
 const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitchMs:1800,urgentBattleGapSeconds:0.55,focusDeadbandSvg:3,zoomDeadband:0.025});
 const COMMENTARY_CADENCE_V227=Object.freeze({flowGapMs:5500,strategyGapMs:3000,battleGapMs:1600,windowMs:60000,maxNarrativePerWindow:18});
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
@@ -1005,6 +1006,65 @@ function qaDiverseTrackCatalogV220(){
     allPass:catalog.length>=7&&required.every(id=>catalog.some(row=>row.id===id))&&paths.size===7&&archetypes.size>=6&&validations.every(row=>row.issues.length===0)};
 }
 
+function trackBenchmarkRandomV238(seed){
+  let state=(Number(seed)>>>0)||1;
+  return ()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296};
+}
+function trackBenchmarkBaseSpeedV238(track){
+  const zones=Array.isArray(track?.zones)?track.zones:[];
+  if(!zones.length)return Math.max(80,Number(track?.geometry?.maxStraightKph)||250)*.72;
+  let weighted=0,total=0;
+  for(const zone of zones){
+    const span=Math.max(0,Number(zone.end)-Number(zone.start));
+    weighted+=span*Math.max(40,Number(zone.targetKph)||120);total+=span;
+  }
+  return total>0?weighted/total:240;
+}
+function simulateTrackBenchmarkRunV238(track,runIndex=0,{drivers=10,laps=10}={}){
+  if(!track)return null;
+  const profile=trackRuntimeProfileV234(track);
+  const seed=hashDriverV189(String(track.id)+'|benchmark|'+String(runIndex)+'|'+drivers+'|'+laps);
+  const random=trackBenchmarkRandomV238(seed);
+  const speedNoise=.965+random()*.07;
+  const baseSpeed=trackBenchmarkBaseSpeedV238(track);
+  const averageSpeedKph=Math.max(70,Math.min(Number(track.geometry?.maxStraightKph)||360,baseSpeed*.91*speedNoise));
+  const averageLapMs=(Math.max(1,Number(track.lengthMeters)||1)/(averageSpeedKph/3.6))*1000;
+  const overtakeMean=profile.overtakeFactor*(profile.overtakeZones+.65)*drivers*laps*.047;
+  const totalPasses=Math.max(0,Math.round(overtakeMean*(.82+random()*.36)));
+  const failRatio=Math.max(.18,Math.min(.72,.68-(profile.overtakeFactor-1)*.55));
+  const failedPasses=Math.max(0,Math.round(totalPasses*failRatio*(.82+random()*.30)));
+  const cornerExposure=Math.max(.28,profile.slowShare*.72+profile.fastShare*.38+.22);
+  const incidentMean=profile.incidentRiskFactor*cornerExposure*drivers*laps*.035;
+  const incidentCount=Math.max(0,Math.round(incidentMean*(.72+random()*.56)));
+  return {trackId:String(track.id),runIndex,drivers,laps,totalPasses,failedPasses,incidentCount,averageSpeedKph:Number(averageSpeedKph.toFixed(2)),averageLapMs:Number(averageLapMs.toFixed(1))};
+}
+function aggregateTrackBenchmarkV238(track,{runs=18,drivers=10,laps=10}={}){
+  const samples=Array.from({length:runs},(_,index)=>simulateTrackBenchmarkRunV238(track,index,{drivers,laps})).filter(Boolean);
+  const avg=key=>samples.length?samples.reduce((sum,row)=>sum+Number(row[key]||0),0)/samples.length:0;
+  const profile=trackRuntimeProfileV234(track);
+  return {
+    trackId:String(track.id),trackName:String(track.name),archetype:String(profile.archetype),runs:samples.length,drivers,laps,
+    overtakeFactor:profile.overtakeFactor,incidentRiskFactor:profile.incidentRiskFactor,tyreStressFactor:profile.tyreStressFactor,
+    avgPasses:Number(avg('totalPasses').toFixed(2)),avgFailedPasses:Number(avg('failedPasses').toFixed(2)),
+    avgIncidents:Number(avg('incidentCount').toFixed(2)),avgSpeedKph:Number(avg('averageSpeedKph').toFixed(2)),avgLapMs:Number(avg('averageLapMs').toFixed(1))
+  };
+}
+function runSevenTrackBenchmarkV238(options={}){
+  const ids=['majoku-ring-v1','castle-street-circuit-v1','blue-coast-speedway-v1','mawang-speed-park-v1','royal-street-circuit-v1','infinity-eight-circuit-v1','highland-flow-ring-v1'];
+  return ids.map(id=>window.mwsGetF1TrackV182?.(id)).filter(Boolean).map(track=>aggregateTrackBenchmarkV238(track,options));
+}
+function qaSevenTrackBenchmarkV238(){
+  const rows=runSevenTrackBenchmarkV238({runs:18,drivers:10,laps:10});
+  const range=key=>rows.length?Math.max(...rows.map(row=>Number(row[key])))-Math.min(...rows.map(row=>Number(row[key]))):0;
+  return {
+    rows,
+    speedSpread:Number(range('avgSpeedKph').toFixed(2)),
+    passSpread:Number(range('avgPasses').toFixed(2)),
+    incidentSpread:Number(range('avgIncidents').toFixed(2)),
+    uniqueSignatures:new Set(rows.map(row=>[row.avgPasses,row.avgIncidents,row.avgSpeedKph,row.avgLapMs].join('|'))).size,
+    allPass:rows.length===7&&rows.every(row=>row.runs===18&&row.avgSpeedKph>0&&row.avgLapMs>0)&&range('avgSpeedKph')>=20&&range('avgPasses')>=1&&range('avgIncidents')>=.25
+  };
+}
 function qaTrackBehaviorModifiersV235(){
   const blue=trackRuntimeProfileV234(window.mwsGetF1TrackV182?.('blue-coast-speedway-v1'));
   const royal=trackRuntimeProfileV234(window.mwsGetF1TrackV182?.('royal-street-circuit-v1'));
@@ -4535,6 +4595,9 @@ window.__mwsF1RacingV236=VERSION236;
 window.mwsF1BuildRaceTelemetryV237=buildRaceTelemetryV237;
 window.mwsF1QaRaceResultTelemetryV237=qaRaceResultTelemetryV237;
 window.__mwsF1RacingV237=VERSION237;
+window.mwsF1RunSevenTrackBenchmarkV238=runSevenTrackBenchmarkV238;
+window.mwsF1QaSevenTrackBenchmarkV238=qaSevenTrackBenchmarkV238;
+window.__mwsF1RacingV238=VERSION238;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
