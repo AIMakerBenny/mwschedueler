@@ -77,6 +77,7 @@ const VERSION247='phase247-rebased-race-playback';
 const VERSION248='phase248-live-lap-sector-timing';
 const VERSION249='phase249-remove-obsolete-race-panels';
 const VERSION250='phase250-driver-profile-marker';
+const VERSION251='phase251-live-timing-driver-identity';
 const F1_WORKSPACE_LAYOUT_VERSION_V249=6;
 const RACE_PLAYBACK_BASE_V247=2;
 const engineQaV240={active:false};
@@ -3782,15 +3783,48 @@ function qaDriverMarkerCameraV216(){
   const controls=ensureRaceCameraControlsV216();
   return {paletteCount:DRIVER_COLORS_V216.length,paletteUnique,controls,cameraModes:[...CAMERA_MODES_V216],mode:raceCameraV216.mode,allPass:paletteUnique&&DRIVER_COLORS_V216.length>=8&&CAMERA_MODES_V216.includes('AUTO')&&CAMERA_MODES_V216.includes('MANUAL')};
 }
+function timingAvatarV251(driver){
+  const src=String(driver?.image||'').trim();
+  const fallback=escapeHtml(driverProfileInitialsV250(driver));
+  return '<span class="f1-racing-timing-avatar-v251" data-f1-timing-avatar data-has-image="'+(src?'1':'0')+'">'+
+    '<span class="f1-racing-timing-avatar-fallback-v251">'+fallback+'</span>'+
+    (src?'<img loading="lazy" decoding="async" src="'+escapeHtml(src)+'" alt="" aria-hidden="true">':'')+
+    '</span>';
+}
+function bindTimingIdentityImagesV251(root=document.getElementById('f1RacingTimingListV188')){
+  if(!root)return false;
+  root.querySelectorAll('.f1-racing-timing-avatar-v251 img').forEach(img=>{
+    if(img.dataset.f1TimingIdentityBound)return;
+    img.dataset.f1TimingIdentityBound='1';
+    const avatar=img.closest('.f1-racing-timing-avatar-v251');
+    img.addEventListener('load',()=>{avatar?.classList.add('has-loaded-image');avatar?.classList.remove('image-error')});
+    img.addEventListener('error',()=>{img.style.display='none';avatar?.classList.add('image-error');avatar?.classList.remove('has-loaded-image')});
+    if(img.complete&&img.naturalWidth>0)avatar?.classList.add('has-loaded-image');
+  });
+  return true;
+}
 function timingRowV188(driver,index){
   const pos=index+1;
   const podium=pos<=3?' podium p'+pos:'';
   const driverColor=driverColorV216(index);
   return '<div class="f1-racing-timing-row-v188'+podium+'" data-f1-driver-id="'+escapeHtml(driver.contactId)+'" data-driver-color="'+driverColor+'" style="--f1-driver-color:'+driverColor+'">'+
     '<span class="pos">P'+String(pos).padStart(2,'0')+'</span>'+
-    '<span class="driver"><b>'+escapeHtml(driverCodeV188(driver))+'</b><small>'+escapeHtml(driver.name)+'</small><em data-f1-current-sector>그리드</em></span>'+
+    '<span class="driver"><i class="f1-racing-driver-color-v251" aria-hidden="true"></i>'+timingAvatarV251(driver)+'<span class="f1-racing-driver-copy-v251"><b>'+escapeHtml(driverCodeV188(driver))+'</b><small>'+escapeHtml(driver.name)+'</small></span><em data-f1-current-sector>그리드</em></span>'+
     '<span class="gear">--</span><span class="rpm">----</span><span class="speed">---</span><span class="last">--:--.---</span><span class="best">--:--.---</span><span class="gap" data-f1-gap>'+(pos===1?'선두':'--.---')+'</span><span class="interval" data-f1-interval>--</span><span class="tyre">--</span><span class="s1">--.---</span><span class="s2">--.---</span><span class="s3">--.---</span>'+
     '</div>';
+}
+function qaLiveTimingIdentityV251(){
+  const rows=[...document.querySelectorAll('#f1RacingTimingListV188 .f1-racing-timing-row-v188')].map(row=>({
+    id:String(row.dataset.f1DriverId||''),
+    color:String(row.dataset.driverColor||''),
+    strip:Boolean(row.querySelector('.f1-racing-driver-color-v251')),
+    avatar:Boolean(row.querySelector('[data-f1-timing-avatar]')),
+    copy:Boolean(row.querySelector('.f1-racing-driver-copy-v251')),
+    fallback:String(row.querySelector('.f1-racing-timing-avatar-fallback-v251')?.textContent||'').trim(),
+    expectsImage:row.querySelector('[data-f1-timing-avatar]')?.dataset.hasImage==='1',
+    hasImage:Boolean(row.querySelector('.f1-racing-timing-avatar-v251 img'))
+  }));
+  return {rowCount:rows.length,uniqueColors:new Set(rows.map(row=>row.color).filter(Boolean)).size,rows,allPass:rows.length>0&&rows.every(row=>row.color&&row.strip&&row.avatar&&row.copy&&row.fallback&&(row.expectsImage===row.hasImage))};
 }
 function renderRaceControlV188(){
   const snapshot=activeRaceSnapshotV187;
@@ -3810,7 +3844,7 @@ function renderRaceControlV188(){
   if(status)status.textContent='경기 전';
   syncRaceFlagHudV214();
   if(lap)lap.textContent='1 / '+(Number(snapshot.totalLaps)||DEFAULT_TOTAL_LAPS_V190);
-  if(list)list.innerHTML=snapshot.drivers.map(timingRowV188).join('');
+  if(list){list.innerHTML=snapshot.drivers.map(timingRowV188).join('');bindTimingIdentityImagesV251(list)}
   ensureTopThreeStylesV213();
   if(mapMeta)mapMeta.textContent=(snapshot.track.lengthMeters/1000).toFixed(3)+' km · 드라이버 '+snapshot.drivers.length+'명';
   if(svg)svg.setAttribute('viewBox',(snapshot.track.viewBox||[0,0,1000,600]).join(' '));
@@ -5123,6 +5157,8 @@ window.mwsF1QaWorkspacePanelMigrationV249=qaWorkspacePanelMigrationV249;
 window.__mwsF1RacingV249=VERSION249;
 window.mwsF1QaDriverProfileMarkersV250=qaDriverProfileMarkersV250;
 window.__mwsF1RacingV250=VERSION250;
+window.mwsF1QaLiveTimingIdentityV251=qaLiveTimingIdentityV251;
+window.__mwsF1RacingV251=VERSION251;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
