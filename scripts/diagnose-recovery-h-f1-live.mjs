@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase273Ready=false;
+  let phase274Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase273Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV273==='phase273-starting-grid-card-shuffle-reveal'","Phase 273 runtime readiness"));
-    if(phase273Ready)break;
+    phase274Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV274==='phase274-field-compression-leader-pressure'","Phase 274 runtime readiness"));
+    if(phase274Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v273=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v274=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase273Ready)throw new Error('Phase 273 runtime did not propagate to Recovery H browser');
+  if(!phase274Ready)throw new Error('Phase 274 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -282,6 +282,13 @@ try{
     await raf();
     const headline260=window.mwsF1RaceHeadlineStateV255?.();
     assert(Number(headline260?.total)===17&&Number(headline260?.remaining)===17,'Phase 260 headline remaining laps mismatch: '+JSON.stringify(headline260));
+
+    const pressureQa274=window.mwsF1QaLeaderPressureV274?.();
+    assert(pressureQa274?.allPass===true,'Phase 274 leader pressure QA failed: '+JSON.stringify(pressureQa274));
+    assert(Number(pressureQa274?.close?.score)===0&&Number(pressureQa274?.runaway?.score)>0,'Phase 274 tight-fight suppression missing: '+JSON.stringify(pressureQa274));
+    assert(Number(pressureQa274?.late?.score)<Number(pressureQa274?.runaway?.score)&&Number(pressureQa274?.group?.score)<Number(pressureQa274?.runaway?.score),'Phase 274 late/group pressure scaling invalid: '+JSON.stringify(pressureQa274));
+    const pressureStates274=window.mwsF1GetLeaderPressureStatesV274?.()||[];
+    assert(pressureStates274.length>=2&&pressureStates274.every(row=>Number(row.speedFactor)>=.94&&Number(row.speedFactor)<=1&&Number(row.score)>=0&&Number(row.score)<=1),'Phase 274 pressure state invalid: '+JSON.stringify(pressureStates274));
 
     const cornerQa270=window.mwsF1QaCornerDynamicsV270?.();
     assert(cornerQa270?.allPass===true&&cornerQa270?.exitsRecover===true&&cornerQa270?.lineTransitions===true,'Phase 270 corner dynamics QA failed: '+JSON.stringify(cornerQa270));
