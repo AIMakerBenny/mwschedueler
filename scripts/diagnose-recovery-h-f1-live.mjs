@@ -520,6 +520,9 @@ try{
     const engineQa240=window.mwsF1QaAcceleratedEngineRaceV240?.();
     assert(engineQa240?.allPass===true&&engineQa240?.result?.completed===true&&Number(engineQa240?.result?.telemetry?.fieldAverageSpeedKph)>0,'Phase 240 accelerated real-engine QA failed: '+JSON.stringify(engineQa240));
     assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Phase 240 engine QA did not restore Setup');
+    const engineSuiteQa241=window.mwsF1QaSevenTrackEngineSuiteV241?.();
+    assert(engineSuiteQa241?.allPass===true&&Number(engineSuiteQa241?.suite?.rows?.length)===7&&Number(engineSuiteQa241?.suite?.completedRuns)===7,'Phase 241 seven-track real-engine suite failed: '+JSON.stringify(engineSuiteQa241));
+    assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Phase 241 engine suite did not restore Setup');
 
     const errors=[...(window.__recoveryHErrors||[])];
     assert(errors.length===0,'Browser errors during Recovery H: '+errors.join(' | '));
