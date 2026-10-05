@@ -185,6 +185,7 @@ jobs:
           node --check scripts/run-phase240-f1-accelerated-engine-audit.mjs
           node --check scripts/run-phase241-f1-seven-track-engine-suite-audit.mjs
           node --check scripts/run-phase242-f1-real-engine-alignment-audit.mjs
+          node --check scripts/run-phase243-f1-flowing-circuit-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
