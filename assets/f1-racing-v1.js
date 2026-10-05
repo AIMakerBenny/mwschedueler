@@ -72,6 +72,7 @@ const VERSION242='phase242-real-engine-benchmark-alignment';
 const VERSION243='phase243-flowing-circuit-redesign';
 const VERSION244='phase244-starting-grid-top-actions';
 const VERSION245='phase245-zoom-aware-marker-scale';
+const VERSION246='phase246-clean-track-indicators';
 const engineQaV240={active:false};
 let engineSuiteCacheV241=null;
 const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitchMs:1800,urgentBattleGapSeconds:0.55,focusDeadbandSvg:3,zoomDeadband:0.025});
@@ -4564,20 +4565,52 @@ function renderRaceStartFinishRecoveryB(layer,path,track){
   layer.replaceChildren();
   return Boolean(addStartFinishLineRecoveryB(layer,path,track,'race'));
 }
+function trackIndicatorGeometryV246(path,progress,index=0){
+  const total=Number(path?.getTotalLength?.())||0;if(!(total>0))return null;
+  const at=Math.max(0,Math.min(1,Number(progress)||0))*total;
+  const d=Math.max(2,total/900);
+  const before=path.getPointAtLength(Math.max(0,at-d));
+  const after=path.getPointAtLength(Math.min(total,at+d));
+  const point=path.getPointAtLength(at);
+  const dx=Number(after.x)-Number(before.x),dy=Number(after.y)-Number(before.y),mag=Math.hypot(dx,dy)||1;
+  const nx=-dy/mag,ny=dx/mag,side=index%2===0?1:-1;
+  const startOffset=24,endOffset=58;
+  return {
+    point:{x:Number(point.x),y:Number(point.y)},
+    a:{x:Number(point.x)+nx*side*startOffset,y:Number(point.y)+ny*side*startOffset},
+    b:{x:Number(point.x)+nx*side*endOffset,y:Number(point.y)+ny*side*endOffset},
+    side
+  };
+}
+function addTrackIndicatorV246(layer,path,label,progress,index=0){
+  const geometry=trackIndicatorGeometryV246(path,progress,index);if(!geometry)return null;
+  const group=svgNodeV183('g',{class:'f1-racing-track-indicator-v246 sector','data-kind':'sector-indicator','data-progress':progress});
+  const line=svgNodeV183('line',{x1:geometry.a.x,y1:geometry.a.y,x2:geometry.b.x,y2:geometry.b.y});
+  const rect=svgNodeV183('rect',{x:geometry.b.x-18,y:geometry.b.y-11,width:36,height:18,rx:5,ry:5});
+  const textNode=svgNodeV183('text',{x:geometry.b.x,y:geometry.b.y+2,'text-anchor':'middle'});
+  textNode.textContent=label;
+  group.append(line,rect,textNode);layer.appendChild(group);return group;
+}
 function renderTrackMarkersV211(layer,path,track,scope='race'){
   if(!layer||!path||!track)return false;
   layer.replaceChildren();
   addStartFinishLineRecoveryB(layer,path,track,scope);
-  (track.sectors||[]).slice(0,-1).forEach((sector,index)=>addTrackAnnotationV183(layer,path,'sector','S'+(index+1),sector.end));
-  (track.speedTraps||[]).forEach((trap,index)=>addTrackAnnotationV183(layer,path,'trap',String(trap.id||('ST'+(index+1))),trap.progress));
+  (track.sectors||[]).slice(0,-1).forEach((sector,index)=>addTrackIndicatorV246(layer,path,'S'+(index+1),sector.end,index));
   if(track.pit){
     addTrackAnnotationV183(layer,path,'pit','피트 진입',track.pit.entry);
     addTrackAnnotationV183(layer,path,'pit','피트 출구',track.pit.exit);
   }
-  (track.overtakeZones||[]).forEach((zone,index)=>{
-    if(Number.isFinite(Number(zone.detection)))addTrackAnnotationV183(layer,path,'overtake','추월 감지 '+(index+1),zone.detection);
-  });
   return true;
+}
+function qaTrackPresentationV246(){
+  renderTrackMapV183();
+  const layer=document.getElementById('f1RacingTrackAnnotationsV183');
+  const sectorIndicators=layer?.querySelectorAll('.f1-racing-track-indicator-v246.sector').length||0;
+  const trapDots=layer?.querySelectorAll('.f1-racing-track-annotation-v183.trap').length||0;
+  const overtakeDots=layer?.querySelectorAll('.f1-racing-track-annotation-v183.overtake').length||0;
+  const pitDots=layer?.querySelectorAll('.f1-racing-track-annotation-v183.pit').length||0;
+  const startLines=layer?.querySelectorAll('[data-f1-start-finish="1"]').length||0;
+  return {sectorIndicators,trapDots,overtakeDots,pitDots,startLines,allPass:sectorIndicators===2&&trapDots===0&&overtakeDots===0&&pitDots===2&&startLines===1};
 }
 function qaTrackMarkersV211(){
   const catalog=window.MWS_F1_TRACKS_V182?Object.values(window.MWS_F1_TRACKS_V182):[];
@@ -4620,7 +4653,7 @@ function updateTrackFoundationStatusV182(){
   const status=document.getElementById('f1RacingFoundationStatusV180');
   if(chip)chip.textContent=track?'트랙 모델':'트랙 오류';
   if(status)status.textContent=track
-    ?'트랙 데이터 준비 완료 · '+track.name+' · '+(track.lengthMeters/1000).toFixed(3)+' km · 3개 섹터 · 피트/스피드 트랩 데이터'
+    ?'트랙 데이터 준비 완료 · '+track.name+' · '+(track.lengthMeters/1000).toFixed(3)+' km · 3개 섹터 · 피트 데이터'
     :'트랙 데이터를 불러오지 못했습니다.';
 }
 
@@ -4867,6 +4900,8 @@ window.__mwsF1RacingV244=VERSION244;
 window.mwsF1RaceMarkerScaleV245=raceMarkerScaleV245;
 window.mwsF1QaZoomAwareMarkerScaleV245=qaZoomAwareMarkerScaleV245;
 window.__mwsF1RacingV245=VERSION245;
+window.mwsF1QaTrackPresentationV246=qaTrackPresentationV246;
+window.__mwsF1RacingV246=VERSION246;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
