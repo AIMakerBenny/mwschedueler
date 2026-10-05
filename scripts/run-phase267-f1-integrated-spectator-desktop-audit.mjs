@@ -39,8 +39,9 @@ export function runPhase267F1IntegratedSpectatorDesktopAudit(){
   if(!racing.includes('const totalLaps=Math.max(1,Math.min(20,Math.floor(Number(laps)||1)));'))
     issues.push('Phase 267 accelerated engine does not support 20-lap QA');
 
-  const hasCurrentRuntimeReadiness=live.includes("window.__mwsF1RacingV271==='phase271-track-boundary-wall-riding-fix'")||live.includes("window.__mwsF1RacingV267==='phase267-integrated-spectator-desktop-qa'");
-  if(!hasCurrentRuntimeReadiness)issues.push('Phase 267+ runtime readiness QA missing');
+  const runtimeReadinessMatch=live.match(/window\.__mwsF1RacingV(\d+)===['"]phase\d+[^'"]*['"]/);
+  const runtimeReadinessPhase=Number(runtimeReadinessMatch?.[1]||0);
+  if(runtimeReadinessPhase<267)issues.push('Phase 267+ runtime readiness QA missing');
   for(const token of [
     'Phase 267 integrated spectator desktop QA failed',
     'Phase 267 3-driver 5-lap case failed',
