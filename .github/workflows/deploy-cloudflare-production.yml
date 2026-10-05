@@ -204,6 +204,7 @@ jobs:
           node --check scripts/run-phase259-f1-workspace-user-default-audit.mjs
           node --check scripts/run-phase260-f1-manual-lap-control-audit.mjs
           node --check scripts/run-phase261-f1-immersive-fullscreen-audit.mjs
+          node --check scripts/run-phase262-f1-race-momentum-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -2490,6 +2491,15 @@ jobs:
           grep -Fq "restoreWorkspaceUserDefaultV259('immersive-exit')" /tmp/f1-racing-v1-phase261.js
           retry_contains "$BASE/?phase261=$GITHUB_SHA" 'id="f1RacingImmersiveV261"' > /tmp/index-phase261.html
           grep -Fq '전체화면을 취소하시려면 ESC를 누르세요' /tmp/index-phase261.html
+
+          echo '[phase262] F1 deterministic race momentum rebalance'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV262=VERSION262;' > /tmp/f1-racing-v1-phase262.js
+          node --check /tmp/f1-racing-v1-phase262.js
+          grep -Fq 'function updateRaceMomentumV262(' /tmp/f1-racing-v1-phase262.js
+          grep -Fq 'function raceMomentumBenchmarkV262(' /tmp/f1-racing-v1-phase262.js
+          grep -Fq 'runSevenTrackBenchmarkV238({runs:8,drivers,laps})' /tmp/f1-racing-v1-phase262.js
+          grep -Fq 'realEngineBenchmarkAlignmentV242(engineSuiteCacheV241)' /tmp/f1-racing-v1-phase262.js
+          retry_contains "$BASE/?phase262=$GITHUB_SHA" 'recovery=N1&phase=262&zoomfix=1' > /tmp/index-phase262.html
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
