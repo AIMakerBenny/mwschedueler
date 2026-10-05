@@ -90,6 +90,7 @@ const VERSION260='phase260-manual-lap-control';
 const VERSION261='phase261-immersive-fullscreen-spectator';
 const VERSION262='phase262-race-momentum-rebalance';
 const VERSION263='phase263-race-narrative-engine';
+const VERSION264='phase264-live-overtake-comic-cutin';
 const RACE_MOMENTUM_CONFIG_V262=Object.freeze({
   min:-1,max:1,paceRange:.02,decayPerSecond:.032,evaluationMs:620,
   passSuccess:.18,passFailed:-.12,defenceSuccess:.075,incident:-.14,
@@ -175,6 +176,82 @@ function qaRaceNarrativeEngineV263(){
   const rendered=formatNarrativeV263(sample?.text,{driver:'A',target:'B',position:'P02',corner:'T1'});
   const eventCounts=Object.fromEntries(NARRATIVE_EVENTS_V263.map(event=>[event,NARRATIVE_TEMPLATES_V263.filter(row=>row.event===event).length]));
   return {templateCount:NARRATIVE_TEMPLATES_V263.length,eventCount:NARRATIVE_EVENTS_V263.length,recentLimit:narrativeStateV263.recentLimit,eventCounts,rendered,technicalLogLimit:80,allPass:NARRATIVE_TEMPLATES_V263.length>=120&&NARRATIVE_EVENTS_V263.length>=16&&narrativeStateV263.recentLimit>=10&&narrativeStateV263.recentLimit<=15&&!/[{](driver|target|position|corner)[}]/.test(rendered)&&Object.values(eventCounts).every(count=>count>=4)};
+}
+
+
+const LIVE_CUTIN_CONFIG_V264=Object.freeze({maxActive:3,dedupeMs:1000,minDurationMs:1500,maxDurationMs:2500,exitMs:320});
+const liveCutinStateV264={queue:[],active:new Map(),lastDriverAt:new Map(),timers:new Map(),sequence:0};
+function liveCutinEventV264(state){
+  return ({PULLING_OUT:'ATTACK',SIDE_BY_SIDE:'SIDE_BY_SIDE',COUNTER_ATTACK:'COUNTER_ATTACK',PASS_COMPLETED:'PASS_SUCCESS'})[String(state||'')]||'';
+}
+function liveCutinMessageV264(event,vehicle,target){
+  const pool=NARRATIVE_BASES_V263[String(event||'')]||[];
+  const seed=hashDriverV189([String(activeRaceSnapshotV187?.createdAt||'race'),String(event||''),String(vehicle?.id||''),String(target?.id||''),'cutin'].join('|'))||1;
+  const template=pool.length?pool[Math.abs(seed)%pool.length]:'승부의 순간이 찾아왔다.';
+  return formatNarrativeV263(template,{driver:vehicle?.driver?.name||'드라이버',target:target?.driver?.name||'앞차',position:narrativePositionLabelV263(vehicle),corner:narrativeCornerLabelV263(vehicle)});
+}
+function liveCutinLayerV264(){return document.getElementById('f1RacingLiveCutinLayerV264')}
+function clearLiveCutinTimerV264(id){
+  const timer=liveCutinStateV264.timers.get(String(id));if(timer)clearTimeout(timer);
+  liveCutinStateV264.timers.delete(String(id));
+}
+function removeLiveCutinV264(id){
+  const key=String(id||''),entry=liveCutinStateV264.active.get(key);
+  clearLiveCutinTimerV264(key);
+  entry?.node?.remove();liveCutinStateV264.active.delete(key);
+  drainLiveCutinQueueV264();return true;
+}
+function showLiveCutinV264(item){
+  const layer=liveCutinLayerV264();if(!layer)return false;
+  const duration=LIVE_CUTIN_CONFIG_V264.minDurationMs+(Math.abs(hashDriverV189(item.id+'|duration'))%(LIVE_CUTIN_CONFIG_V264.maxDurationMs-LIVE_CUTIN_CONFIG_V264.minDurationMs+1));
+  const card=document.createElement('article');
+  card.className='f1-racing-live-cutin-v264';
+  card.dataset.cutinIdV264=String(item.id);card.dataset.driverIdV264=String(item.driverId);card.dataset.eventV264=String(item.event);
+  card.style.setProperty('--cutin-driver-color',String(item.color||'#ffd166'));
+  const portrait=item.image
+    ?'<img class="f1-racing-live-cutin-avatar-v264" src="'+escapeHtml(item.image)+'" alt="">'
+    :'<span class="f1-racing-live-cutin-avatar-v264 fallback">'+escapeHtml(initials(item.driverName))+'</span>';
+  card.innerHTML='<div class="f1-racing-live-cutin-speed-v264" aria-hidden="true"></div><header><strong>'+escapeHtml(item.driverName)+'</strong><span><i></i> LIVE</span></header><div class="f1-racing-live-cutin-body-v264">'+portrait+'<div class="f1-racing-live-cutin-burst-v264" aria-hidden="true"></div><p>'+escapeHtml(item.message)+'</p></div>';
+  layer.appendChild(card);
+  liveCutinStateV264.active.set(String(item.id),{...item,node:card,duration});
+  requestAnimationFrame(()=>card.classList.add('is-visible'));
+  const timer=setTimeout(()=>{
+    card.classList.add('is-leaving');
+    const exitTimer=setTimeout(()=>removeLiveCutinV264(item.id),LIVE_CUTIN_CONFIG_V264.exitMs);
+    liveCutinStateV264.timers.set(String(item.id),exitTimer);
+  },duration);
+  liveCutinStateV264.timers.set(String(item.id),timer);
+  return true;
+}
+function drainLiveCutinQueueV264(){
+  while(liveCutinStateV264.active.size<LIVE_CUTIN_CONFIG_V264.maxActive&&liveCutinStateV264.queue.length){
+    const item=liveCutinStateV264.queue.shift();if(!showLiveCutinV264(item))break;
+  }
+  const layer=liveCutinLayerV264();if(layer)layer.dataset.activeCutinsV264=String(liveCutinStateV264.active.size);
+  return {active:liveCutinStateV264.active.size,queued:liveCutinStateV264.queue.length};
+}
+function enqueueLiveCutinV264(vehicle,state,targetId=''){
+  if(engineQaV240.active||!vehicle||!liveCutinLayerV264())return false;
+  const event=liveCutinEventV264(state);if(!event)return false;
+  const now=Number(simClockV192.simTimeMs)||0,key=String(vehicle.id||'');
+  const previous=Number(liveCutinStateV264.lastDriverAt.get(key));
+  if(Number.isFinite(previous)&&now-previous<LIVE_CUTIN_CONFIG_V264.dedupeMs)return false;
+  const target=raceMotionV189.vehicles.find(row=>String(row.id)===String(targetId||vehicle.battleTargetId||''))||null;
+  liveCutinStateV264.lastDriverAt.set(key,now);
+  const id='v264-'+(++liveCutinStateV264.sequence)+'-'+key;
+  liveCutinStateV264.queue.push({id,event,state:String(state),driverId:key,driverName:String(vehicle.driver?.name||'드라이버'),image:String(vehicle.driver?.image||''),color:String(vehicle.driverColorV216||'#ffd166'),targetId:String(target?.id||''),message:liveCutinMessageV264(event,vehicle,target),simTimeMs:now});
+  drainLiveCutinQueueV264();return true;
+}
+function resetLiveCutinsV264(){
+  for(const id of [...liveCutinStateV264.timers.keys()])clearLiveCutinTimerV264(id);
+  liveCutinStateV264.queue=[];liveCutinStateV264.active.clear();liveCutinStateV264.lastDriverAt=new Map();liveCutinStateV264.sequence=0;
+  const layer=liveCutinLayerV264();if(layer){layer.innerHTML='';layer.dataset.activeCutinsV264='0'}
+  return true;
+}
+function qaLiveCutinV264(){
+  const states=['PULLING_OUT','SIDE_BY_SIDE','COUNTER_ATTACK','PASS_COMPLETED'];
+  const events=states.map(state=>liveCutinEventV264(state));
+  return {layerReady:Boolean(liveCutinLayerV264()),maxActive:LIVE_CUTIN_CONFIG_V264.maxActive,dedupeMs:LIVE_CUTIN_CONFIG_V264.dedupeMs,minDurationMs:LIVE_CUTIN_CONFIG_V264.minDurationMs,maxDurationMs:LIVE_CUTIN_CONFIG_V264.maxDurationMs,states,events,active:liveCutinStateV264.active.size,queued:liveCutinStateV264.queue.length,allPass:Boolean(liveCutinLayerV264())&&LIVE_CUTIN_CONFIG_V264.maxActive===3&&LIVE_CUTIN_CONFIG_V264.dedupeMs===1000&&LIVE_CUTIN_CONFIG_V264.minDurationMs>=1500&&LIVE_CUTIN_CONFIG_V264.maxDurationMs<=2500&&events.every(Boolean)};
 }
 
 const F1_LAP_MIN_V260=3;
@@ -2855,6 +2932,7 @@ function setPassStateV208(vehicle,next,targetId='',reason=''){
     if(next==='PASS_COMPLETED')vehicle.passCompletedCount=(Number(vehicle.passCompletedCount)||0)+1;
     if(next==='PASS_COMPLETED')vehicle.spectatorPassFlashUntilV252=(Number(simClockV192.simTimeMs)||0)+1400;
     if(next==='PASS_FAILED')vehicle.passFailedCount=(Number(vehicle.passFailedCount)||0)+1;
+    enqueueLiveCutinV264(vehicle,next,targetId);
   }
   if(targetId)vehicle.battleTargetId=String(targetId);
   vehicle.battleSpeedBiasKph=battleBiasKphV208(vehicle,vehicle.battleState);
@@ -4195,6 +4273,7 @@ function resetRaceCommentaryV219(){
   commentaryStateV219.sequence=0;
   commentaryReadV226.followTail=true;commentaryReadV226.unread=0;commentaryReadV226.lastTextAt=new Map();
   resetRaceNarrativeV263();
+  resetLiveCutinsV264();
   bindCommentaryReadabilityV226();
   for(const vehicle of raceMotionV189.vehicles)commentaryStateV219.vehicle.set(String(vehicle.id),commentaryVehicleStateV219(vehicle));
   const track=activeRaceSnapshotV187?.track;
@@ -6291,6 +6370,11 @@ window.mwsF1GetRaceNarrativeTemplatesV263=function(){return NARRATIVE_TEMPLATES_
 window.mwsF1GetTechnicalCommentaryV263=function(){return narrativeStateV263.technicalLog.map(row=>({...row}))};
 window.mwsF1QaRaceNarrativeEngineV263=qaRaceNarrativeEngineV263;
 window.__mwsF1RacingV263=VERSION263;
+window.mwsF1EnqueueLiveCutinV264=enqueueLiveCutinV264;
+window.mwsF1ResetLiveCutinsV264=resetLiveCutinsV264;
+window.mwsF1QaLiveCutinV264=qaLiveCutinV264;
+window.mwsF1GetLiveCutinStateV264=function(){return {active:liveCutinStateV264.active.size,queued:liveCutinStateV264.queue.length,sequence:liveCutinStateV264.sequence}};
+window.__mwsF1RacingV264=VERSION264;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
