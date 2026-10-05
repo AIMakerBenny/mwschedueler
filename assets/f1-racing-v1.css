@@ -797,3 +797,24 @@ body.f1-racing-immersive #f1RacingWorkspaceRecoveryE{min-height:calc(100vh - 170
 @keyframes f1PodiumRevealV265{to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes f1WinnerGlowV265{0%{box-shadow:0 0 0 0 rgba(255,210,75,0)}45%{box-shadow:0 0 32px 5px rgba(255,210,75,.30)}100%{box-shadow:0 0 22px 2px rgba(255,210,75,.16)}}
 @media (prefers-reduced-motion:reduce){.f1-racing-podium-card-v265,.f1-racing-podium-card-v265.p1::after{animation:none!important;opacity:1!important;transform:none!important}}
+
+
+/* Phase 266: F1 technical circuit selection cards */
+.f1-racing-track-options-v186{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.f1-racing-track-card-v266{min-height:250px;justify-content:flex-start;gap:9px;padding:12px;border-radius:10px;overflow:hidden;position:relative}
+.f1-racing-track-card-top-v266{display:flex;width:100%;align-items:flex-start;justify-content:space-between;gap:10px}
+.f1-racing-track-card-code-v266{flex:0 0 auto;color:#8ea0b7;font:850 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.14em}
+.f1-racing-track-card-silhouette-v266{width:100%;height:92px;padding:11px 14px;border-radius:7px;background:linear-gradient(180deg,rgba(15,23,42,.52),rgba(2,6,23,.12))}
+.f1-racing-track-card-silhouette-v266 svg{width:100%;height:100%;overflow:visible}
+.f1-racing-track-card-silhouette-v266 path{fill:none;stroke:#8fa0b5;stroke-width:5.2;stroke-linecap:square;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.92}
+.f1-racing-track-card-v266.selected .f1-racing-track-card-silhouette-v266 path{stroke:#f1f5f9;stroke-width:5.6}
+.f1-racing-track-card-character-v266{display:grid;gap:3px;width:100%}
+.f1-racing-track-card-character-v266 b{color:#e5edf7;font-size:11px}
+.f1-racing-track-card-character-v266 small{color:#758397;font-size:9px;line-height:1.45}
+.f1-racing-track-card-tech-v266{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;border-top:1px solid #222b38;border-bottom:1px solid #222b38;background:#070b11}
+.f1-racing-track-card-tech-v266>span{display:grid;gap:3px;padding:8px 7px;border-right:1px solid #222b38}
+.f1-racing-track-card-tech-v266>span:last-child{border-right:0}
+.f1-racing-track-card-tech-v266 small{color:#637086;font:750 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.11em}
+.f1-racing-track-card-tech-v266 b{color:#e8eef7;font:850 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-track-card-v266[data-f1-speed-tier-v266="HIGH"] .f1-racing-track-card-tech-v266>span:nth-child(2) b{letter-spacing:.08em}
+@media(max-width:900px){.f1-racing-track-options-v186{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}}
