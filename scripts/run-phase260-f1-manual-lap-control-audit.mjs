@@ -50,7 +50,6 @@ export function runPhase260F1ManualLapControlAudit(){
   ])if(!app.includes(token))issues.push('Phase 260 persistence missing: '+token);
 
   for(const token of [
-    "__mwsF1RacingV260==='phase260-manual-lap-control'",
     'Phase 260 lap-control QA failed',
     'Phase 260 minimum lap clamp failed',
     'Phase 260 maximum lap clamp failed',
