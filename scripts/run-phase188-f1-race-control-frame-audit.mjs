@@ -41,7 +41,8 @@ export function runPhase188F1RaceControlFrameAudit(){
   const timingIdentitySuperseded=js.includes("const VERSION251='phase251-live-timing-driver-identity';");
   if(timingIdentitySuperseded&&!js.includes('bindTimingIdentityImagesV251(list)'))issues.push('Phase 251 timing identity binding missing from Phase 188 Race Control render');
 
-  if(!js.includes("if(!setScreenStateV185('RACE'))return false;\n  renderRaceControlV188();"))issues.push('Explicit race start does not render Race Control from the active snapshot');
+  const confirmStartBody=js.match(/function confirmRaceStartRecoveryM\(\)\{([\s\S]*?)\n\}/)?.[1]||'';
+  if(!confirmStartBody.includes("if(!setScreenStateV185('RACE'))return false;")||!confirmStartBody.includes('renderRaceControlV188();'))issues.push('Explicit race start does not render Race Control from the active snapshot');
 
   for(const token of [
     '.f1-racing-race-control-v188{',
