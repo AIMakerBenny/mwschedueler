@@ -1933,6 +1933,7 @@ function buildEngineQaSnapshotV240(trackId,{drivers=6,laps=1,runIndex=0,gridMode
 function cleanupEngineQaV240(){
   engineQaV240.active=false;
   resetRaceMotionV189();
+  resetLiveCutinsV264();
   activeRaceSnapshotV187=null;activeRaceResultRecoveryG=null;finishCounterRecoveryG=0;
   setScreenStateV185('SETUP',{force:true});
   renderTrackChoicesV186();updateTrackFoundationStatusV182();renderTrackMapV183();syncSetupActionV187();
