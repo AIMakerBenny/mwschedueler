@@ -261,6 +261,7 @@ import {runPhase262F1RaceMomentumAudit} from './run-phase262-f1-race-momentum-au
 import {runPhase263F1RaceNarrativeEngineAudit} from './run-phase263-f1-race-narrative-engine-audit.mjs';
 import {runPhase264F1LiveOvertakeCutinAudit} from './run-phase264-f1-live-overtake-cutin-audit.mjs';
 import {runPhase265F1GrandPrixPodiumAudit} from './run-phase265-f1-grand-prix-podium-audit.mjs';
+import {runPhase266F1TrackCardCircuitRedesignAudit} from './run-phase266-f1-track-card-circuit-redesign-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2523,5 +2524,10 @@ export function runPhase265FullIntegrationAudit(){
  const issues=[...previous.issues,...current.issues.map(x=>'Phase 265: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 265: '+x)];
  return {phase:265,previous,current,issues,warnings,pass:issues.length===0};
 }
-export function runCurrentFullIntegrationAudit(){return runPhase265FullIntegrationAudit();}
+export function runPhase266FullIntegrationAudit(){
+ const previous=runPhase265FullIntegrationAudit(),current=runPhase266F1TrackCardCircuitRedesignAudit();
+ const issues=[...previous.issues,...current.issues.map(x=>'Phase 266: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 266: '+x)];
+ return {phase:266,previous,current,issues,warnings,pass:issues.length===0};
+}
+export function runCurrentFullIntegrationAudit(){return runPhase266FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
