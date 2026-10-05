@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase269Ready=false;
+  let phase271Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase269Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV269==='phase269-lateral-velocity-acceleration-smoothing'","Phase 269 runtime readiness"));
-    if(phase269Ready)break;
+    phase271Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV271==='phase271-track-boundary-wall-riding-fix'","Phase 271 runtime readiness"));
+    if(phase271Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v269=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v271=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase269Ready)throw new Error('Phase 269 runtime did not propagate to Recovery H browser');
+  if(!phase271Ready)throw new Error('Phase 271 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -182,6 +182,10 @@ try{
     const cornerQa270=window.mwsF1QaCornerDynamicsV270?.();
     assert(cornerQa270?.allPass===true&&cornerQa270?.exitsRecover===true&&cornerQa270?.lineTransitions===true,'Phase 270 corner dynamics QA failed: '+JSON.stringify(cornerQa270));
     assert(cornerQa270.samples.every(row=>Number(row.exitTarget)>=Number(row.apexTarget)-1),'Phase 270 exit acceleration did not recover after apex: '+JSON.stringify(cornerQa270.samples));
+
+    const boundaryQa271=window.mwsF1QaTrackBoundaryV271?.();
+    assert(boundaryQa271?.allPass===true&&boundaryQa271?.liveInside===true,'Phase 271 track boundary QA failed: '+JSON.stringify(boundaryQa271));
+    assert(Number(boundaryQa271?.beyond?.speedFactor)<Number(boundaryQa271?.center?.speedFactor),'Phase 271 off-track penalty missing: '+JSON.stringify(boundaryQa271));
 
     const trackCardQa266=window.mwsF1QaTrackCardsV266?.();
     assert(trackCardQa266?.allPass===true&&Number(trackCardQa266?.trackCount)===7&&trackCardQa266?.mapped===true&&Number(trackCardQa266?.distinctPaths)===7&&trackCardQa266?.hasTechnicalFields===true,'Phase 266 track card QA failed: '+JSON.stringify(trackCardQa266));
