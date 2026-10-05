@@ -128,7 +128,6 @@ function buildCornerPhases(track,geometry){
   const phases=geometry.corners.map(function(corner){
     const turnInProgress=normalizeProgress(corner.startProgress);
     const apexProgress=normalizeProgress(corner.apexProgress);
-    const exitProgress=normalizeProgress(corner.endProgress);
     const apexKph=targetKphAtProgress(track,apexProgress);
     const candidates=[0.03,0.05,0.08].map(offset=>targetKphAtProgress(track,turnInProgress-offset));
     const approachKph=Math.max(apexKph+20,...candidates);
@@ -136,7 +135,10 @@ function buildCornerPhases(track,geometry){
     const brakingDistanceMeters=Math.max(0,(v0*v0-v1*v1)/(2*decel));
     const turnInDistanceMeters=Number(corner.startProgress)*length;
     const apexDistanceMeters=Number(corner.apexProgress)*length;
-    const exitDistanceMeters=Number(corner.endProgress)*length;
+    const detectedExitDistanceMeters=Number(corner.endProgress)*length;
+    const exitExtensionMeters=Math.max(30,Math.min(90,Number(corner.lengthMeters||40)*.35));
+    const exitDistanceMeters=detectedExitDistanceMeters+exitExtensionMeters;
+    const exitProgress=normalizeProgress(exitDistanceMeters/length);
     const brakingPointDistanceMeters=turnInDistanceMeters-brakingDistanceMeters;
     const approachDistanceMeters=brakingPointDistanceMeters-lead;
     const brakingProgress=normalizeProgress(brakingPointDistanceMeters/length);
@@ -152,6 +154,8 @@ function buildCornerPhases(track,geometry){
       brakingPointDistanceMeters,
       turnInDistanceMeters,
       apexDistanceMeters,
+      detectedExitDistanceMeters,
+      exitExtensionMeters,
       exitDistanceMeters,
       referenceApproachKph:approachKph,
       referenceApexKph:apexKph,
