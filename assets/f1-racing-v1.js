@@ -3654,9 +3654,7 @@ function idealRacingLineOffsetV270(vehicle,usable,phaseInfo){
   }
   if(phaseInfo.phase==='APEX')return inside;
   if(phaseInfo.phase==='EXIT'){
-    const apexWindow=Math.max(5,Number(corner.lengthMeters||40)*.18);
-    const exitStart=Math.min(exit,apex+apexWindow);
-    const t=smoothstepV270((here-exitStart)/Math.max(1,exit-exitStart));
+    const t=smoothstepV270((here-apex)/Math.max(1,exit-apex));
     return inside+(exitOutside-inside)*t;
   }
   return 0;
@@ -3689,10 +3687,11 @@ function phaseSpeedTargetV270(vehicle,targetData,phaseInfo=getCornerPhaseAtProgr
     Number(apexProfileV270?.targetKph)||target
   );
   if(phaseInfo.phase==='APEX')return Math.max(target,apex);
+  if(phaseInfo.phase==='TURN_IN'&&corner.cornerClass==='hairpin')return Math.max(target,CORNER_DYNAMICS_V270.hairpinMinApexKph);
+  if(phaseInfo.phase==='TURN_IN'&&corner.cornerClass==='slow')return Math.max(target,CORNER_DYNAMICS_V270.slowMinApexKph);
   if(phaseInfo.phase!=='EXIT')return target;
   const {here}=alignedCornerDistanceV270(corner,vehicle?.progress);
-  const apexWindow=Math.max(5,Number(corner.lengthMeters||40)*.18);
-  const exitStart=Math.min(Number(corner.exitDistanceMeters),Number(corner.apexDistanceMeters)+apexWindow);
+  const exitStart=Number(corner.apexDistanceMeters);
   const ratio=smoothstepV270((here-exitStart)/Math.max(1,Number(corner.exitDistanceMeters)-exitStart));
   const lookAheadProgress=((Number(vehicle?.progress)||0)+CORNER_DYNAMICS_V270.exitLookAheadMeters/Math.max(1,Number(track.lengthMeters)||1))%1;
   const lookAhead=typeof window.mwsF1SpeedTargetAtProgressV195==='function'?window.mwsF1SpeedTargetAtProgressV195(raceGeometryV193,lookAheadProgress):null;
