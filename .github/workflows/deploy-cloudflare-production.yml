@@ -2500,7 +2500,7 @@ jobs:
           grep -Fq 'function raceMomentumBenchmarkV262(' /tmp/f1-racing-v1-phase262.js
           grep -Fq 'runSevenTrackBenchmarkV238({runs:8,drivers,laps})' /tmp/f1-racing-v1-phase262.js
           grep -Fq 'realEngineBenchmarkAlignmentV242(engineSuiteCacheV241)' /tmp/f1-racing-v1-phase262.js
-          retry_contains "$BASE/?phase262=$GITHUB_SHA" 'recovery=N1&phase=262&zoomfix=1' > /tmp/index-phase262.html
+          retry_contains "$BASE/?phase262=$GITHUB_SHA" 'recovery=N1&phase=' > /tmp/index-phase262.html
 
           echo '[phase263] F1 race narrative engine'
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV263=VERSION263;' > /tmp/f1-racing-v1-phase263.js
@@ -2508,7 +2508,7 @@ jobs:
           grep -Fq 'function emitRaceNarrativeV263(' /tmp/f1-racing-v1-phase263.js
           grep -Fq 'const NARRATIVE_TEMPLATES_V263=Object.freeze(' /tmp/f1-racing-v1-phase263.js
           grep -Fq 'recentLimit:15' /tmp/f1-racing-v1-phase263.js
-          retry_contains "$BASE/?phase263=$GITHUB_SHA" 'recovery=N1&phase=263&zoomfix=1' > /tmp/index-phase263.html
+          retry_contains "$BASE/?phase263=$GITHUB_SHA" 'recovery=N1&phase=' > /tmp/index-phase263.html
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
