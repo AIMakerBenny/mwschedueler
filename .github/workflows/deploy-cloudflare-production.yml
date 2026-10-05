@@ -190,6 +190,7 @@ jobs:
           node --check scripts/run-phase245-f1-zoom-marker-audit.mjs
           node --check scripts/run-phase246-f1-track-presentation-audit.mjs
           node --check scripts/run-phase247-f1-playback-speed-audit.mjs
+          node --check scripts/run-phase248-f1-lap-timing-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
