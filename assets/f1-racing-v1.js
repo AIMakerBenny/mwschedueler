@@ -106,6 +106,7 @@ const VERSION276='phase276-live-conversation-stack-ui';
 const VERSION277='phase277-character-dialogue-engine';
 const VERSION278='phase278-micro-battle-events';
 const VERSION279='phase279-expanded-dialogue-pool';
+const VERSION280='phase280-event-dialogue-coverage';
 const TRACK_BOUNDARY_V271=Object.freeze({
   carHalfWidthMeters:.85,safetyMarginMeters:.20,edgeStartRatio:.90,
   edgeMinSpeedFactor:.90,offTrackSpeedFactor:.76
@@ -5579,7 +5580,7 @@ const MICRO_DIALOGUE_ROLE_MAP_V279=Object.freeze({
   PASS_SUCCESS:['WINNER','PASSED'],PASS_FAIL:['ATTACKER_FAIL','DEFENDER_SUCCESS'],COUNTER_ATTACK:['REATTACKER','DEFENDER'],
   FRONT_CAR_MISTAKE:['MISTAKE_DRIVER','CHASER'],REAR_CAR_MISTAKE:['MISTAKE_DRIVER','DEFENDER'],
   CORNER_EXIT_ADVANTAGE:['CHASER','DEFENDER'],LEADER_PRESSURE_MISTAKE:['MISTAKE_DRIVER','CHASER'],
-  BURST_ACTIVATION:['BURST_DRIVER','DEFENDER'],BURST_SUCCESS:['WINNER','PASSED'],BURST_FAIL:['BURST_FAIL','DEFENDER'],
+  BURST_ACTIVATION:['BURST_DRIVER','DEFENDER'],BURST_SUCCESS:['WINNER','PASSED'],BURST_FAIL:['BURST_FAIL','DEFENDER'],BURST_END:['SPECIAL','DEFENDER'],
   PODIUM_BATTLE:['PODIUM','DEFENDER'],LAST_PLACE_BATTLE:['SPECIAL','DEFENDER'],FINAL_LAP:['FINAL_LAP','SPECIAL'],
   THREE_CAR_BATTLE:['THREE_WAY','DEFENDER']
 });
@@ -5588,7 +5589,7 @@ function emitMicroBattleDialogueV279(event,actor,target){
   const out=[];
   out.push(pushCharacterDialogueLineV277(roles[0],actor,target,event,'left'));
   if(target&&roles[1])out.push(pushCharacterDialogueLineV277(roles[1],target,actor,event,'right'));
-  return out.filter(Boolean);
+  const filtered=out.filter(Boolean);if(typeof recordDialogueCoverageV280==='function')recordDialogueCoverageV280(event,roles,filtered);return filtered;
 }
 function qaExpandedDialoguePoolV279(){
   const stats=dialoguePoolCountV279();
@@ -5598,6 +5599,35 @@ function qaExpandedDialoguePoolV279(){
   const microCoverage=['GAP_1_5','GAP_1_0','GAP_0_6','SLIPSTREAM','ATTACK_LINE','DEFENCE_LINE','FAKE','BRAKING_DUEL','CORNER_ENTRY_DUEL','SIDE_BY_SIDE','EDGES_AHEAD','RE_ATTACK','PASS_SUCCESS','PASS_FAIL','COUNTER_ATTACK','FRONT_CAR_MISTAKE','REAR_CAR_MISTAKE','CORNER_EXIT_ADVANTAGE','LEADER_PRESSURE_MISTAKE','BURST_ACTIVATION','BURST_SUCCESS','BURST_FAIL','PODIUM_BATTLE','LAST_PLACE_BATTLE','FINAL_LAP','THREE_CAR_BATTLE'].every(event=>Array.isArray(MICRO_DIALOGUE_ROLE_MAP_V279[event]));
   return {stats,categoryCount:categoryNames.length,uniqueCount:unique.size,coverage,microCoverage,recentLimit:DIALOGUE_RECENT_TEXT_LIMIT_V279,
     allPass:stats.total>=300&&categoryNames.length>=13&&unique.size>=300&&coverage&&microCoverage&&DIALOGUE_RECENT_TEXT_LIMIT_V279>=30};
+}
+
+
+const dialogueCoverageStateV280={attempted:0,emitted:0,byEvent:new Map(),last:null};
+function recordDialogueCoverageV280(event,roles,output){
+  const key=String(event||'');const emittedCount=Array.isArray(output)?output.length:(output?1:0);
+  dialogueCoverageStateV280.attempted+=1;dialogueCoverageStateV280.emitted+=emittedCount;
+  const row=dialogueCoverageStateV280.byEvent.get(key)||{attempted:0,emitted:0};
+  row.attempted+=1;row.emitted+=emittedCount;dialogueCoverageStateV280.byEvent.set(key,row);
+  dialogueCoverageStateV280.last={event:key,roles:[...(roles||[])],emitted:emittedCount,simTimeMs:Number(simClockV192.simTimeMs)||0};
+  return emittedCount;
+}
+function resetDialogueCoverageV280(){dialogueCoverageStateV280.attempted=0;dialogueCoverageStateV280.emitted=0;dialogueCoverageStateV280.byEvent=new Map();dialogueCoverageStateV280.last=null;return true}
+function getDialogueCoverageV280(){
+  const mapped=MICRO_BATTLE_EVENTS_V278.map(event=>{
+    const roles=MICRO_DIALOGUE_ROLE_MAP_V279[event]||[];
+    return {event,mapped:roles.length>0,roles:[...roles],pools:roles.map(role=>characterDialoguePoolV279(role).length)};
+  });
+  return {attempted:dialogueCoverageStateV280.attempted,emitted:dialogueCoverageStateV280.emitted,last:dialogueCoverageStateV280.last?{...dialogueCoverageStateV280.last}:null,
+    runtime:Object.fromEntries([...dialogueCoverageStateV280.byEvent.entries()].map(([event,row])=>[event,{...row}])),mapped};
+}
+function qaEventDialogueCoverageV280(){
+  const rows=getDialogueCoverageV280().mapped;
+  const unmapped=rows.filter(row=>!row.mapped),emptyPools=rows.filter(row=>row.roles.some((role,index)=>Number(row.pools[index])<=0));
+  const roleNames=[...new Set(rows.flatMap(row=>row.roles))];
+  const allCatalogMapped=rows.length===MICRO_BATTLE_EVENTS_V278.length&&unmapped.length===0;
+  const allPoolsReady=emptyPools.length===0&&roleNames.length>=10;
+  return {catalogCount:MICRO_BATTLE_EVENTS_V278.length,mappedCount:rows.filter(row=>row.mapped).length,unmapped:unmapped.map(row=>row.event),emptyPools:emptyPools.map(row=>row.event),roleCount:roleNames.length,allCatalogMapped,allPoolsReady,
+    allPass:MICRO_BATTLE_EVENTS_V278.length>=27&&allCatalogMapped&&allPoolsReady};
 }
 
 const commentaryStateV219={
@@ -5785,6 +5815,7 @@ function resetRaceCommentaryV219(){
   resetRaceNarrativeV263();
   resetLiveCutinsV264();
   resetCharacterDialogueV277();
+  resetDialogueCoverageV280();
   bindCommentaryReadabilityV226();
   for(const vehicle of raceMotionV189.vehicles)commentaryStateV219.vehicle.set(String(vehicle.id),commentaryVehicleStateV219(vehicle));
   const track=activeRaceSnapshotV187?.track;
@@ -7671,6 +7702,8 @@ window.mwsF1GetMicroBattleEventsV278=getMicroBattleEventsV278;
 window.mwsF1QaMicroBattleEventsV278=qaMicroBattleEventsV278;
 window.mwsF1DialoguePoolStatsV279=dialoguePoolCountV279;
 window.mwsF1QaExpandedDialoguePoolV279=qaExpandedDialoguePoolV279;
+window.mwsF1GetDialogueCoverageV280=getDialogueCoverageV280;
+window.mwsF1QaEventDialogueCoverageV280=qaEventDialogueCoverageV280;
 window.mwsF1GetLeaderPressureFieldV274=function(){return {...leaderPressureFieldV274,history:leaderPressureFieldV274.history.map(row=>({...row}))}};
 window.mwsF1GetStartingGridRevealStateV273=function(){return {...gridRevealStateV273,timers:gridRevealStateV273.timers.length}};
 window.mwsF1CancelRaceRecoveryC=cancelRaceToSetupRecoveryC;
@@ -7996,6 +8029,7 @@ window.__mwsF1RacingV276=VERSION276;
 window.__mwsF1RacingV277=VERSION277;
 window.__mwsF1RacingV278=VERSION278;
 window.__mwsF1RacingV279=VERSION279;
+window.__mwsF1RacingV280=VERSION280;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
