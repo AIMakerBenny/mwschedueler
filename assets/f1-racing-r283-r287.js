@@ -2,7 +2,10 @@
 'use strict';
 const VERSION283='phase283-f1-r08-general-overtake-defence';
 const GENERAL_BATTLE_CONFIG_V283=Object.freeze({maxGapMeters:34,attackGapMeters:24,defendGapMeters:26,minClosingKph:.8,attackBiasBaseKph:.55,attackBiasPressureKph:.85,maxPatchedBiasKph:2.4,defendPressure:.22});
+const VERSION284='phase284-f1-r09-track-ranking-overlay';
+const TRACK_RANKING_CONFIG_V284=Object.freeze({maxRows:6,refreshMs:140});
 const runtimeState={rafId:0,frames:0,activeFrames:0,lastApplied:0};
+const rankingStateV284={lastRenderAt:0,renderCount:0};
 function screenState(){return String(window.mwsF1GetScreenStateV185?.()||'')}
 function paused(){return document.getElementById('f1RacingPauseV192')?.getAttribute('aria-pressed')==='true'}
 function liveStandings(){try{return window.mwsF1ComputeRaceStandingsV191?.()||[]}catch(_){return []}}
@@ -20,8 +23,42 @@ function patchGeneralBattleV283(){
  if(applied){runtimeState.activeFrames+=1;runtimeState.lastApplied=applied}return applied;
 }
 function qaGeneralOvertakeDefenceV283(){const c=GENERAL_BATTLE_CONFIG_V283,publicApi=typeof window.mwsF1ComputeRaceStandingsV191==='function'&&typeof window.mwsF1GetActiveRaceSnapshotV187==='function',safeguards=c.maxPatchedBiasKph<=2.4&&c.attackBiasBaseKph>0&&c.minClosingKph>0,widerEngagement=c.maxGapMeters>26&&c.attackGapMeters>18&&c.defendGapMeters>22&&c.defendPressure<.24;return {version:VERSION283,config:{...c},publicApi,safeguards,widerEngagement,runtime:{...runtimeState},allPass:publicApi&&safeguards&&widerEngagement}}
-function loop(){patchGeneralBattleV283();runtimeState.rafId=requestAnimationFrame(loop)}
+
+function ensureTrackRankingV284(){
+ const stage=document.querySelector('#f1RacingWorkspaceRecoveryE .f1-racing-race-map-stage-v188')||document.querySelector('#f1RacingViewRaceV185 .f1-racing-race-map-stage-v188');
+ if(!stage)return null;
+ let root=document.getElementById('f1RacingTrackRankingV284');
+ if(!root){root=document.createElement('aside');root.id='f1RacingTrackRankingV284';root.className='f1-racing-track-ranking-v284';root.setAttribute('aria-label','트랙 실시간 순위');root.innerHTML='<header><span>LIVE RANK</span><small>TOP '+TRACK_RANKING_CONFIG_V284.maxRows+'</small></header><div data-f1-track-ranking-list-v284></div>';stage.appendChild(root)}
+ return root;
+}
+function formatIntervalV284(row){if(Number(row?.position)===1)return 'LEADER';const v=Number(row?.intervalSeconds);return Number.isFinite(v)?'+'+Math.max(0,v).toFixed(3):'--'}
+function syncTrackRankingV284(force=false){
+ const root=ensureTrackRankingV284();if(!root)return false;
+ root.hidden=screenState()!=='RACE';if(root.hidden&&!force)return false;
+ const now=performance.now();if(!force&&now-rankingStateV284.lastRenderAt<TRACK_RANKING_CONFIG_V284.refreshMs)return true;
+ rankingStateV284.lastRenderAt=now;rankingStateV284.renderCount+=1;
+ const list=root.querySelector('[data-f1-track-ranking-list-v284]');if(!list)return false;
+ const standings=liveStandings().slice(0,TRACK_RANKING_CONFIG_V284.maxRows);
+ list.replaceChildren(...standings.map(row=>{
+   const item=document.createElement('div');item.className='f1-racing-track-ranking-row-v284';item.dataset.position=String(row.position||0);
+   const pos=document.createElement('b');pos.textContent='P'+String(row.position||0);
+   const driver=document.createElement('span');driver.className='driver';driver.textContent=String(row.vehicle?.driver?.name||row.vehicle?.driver?.displayName||row.vehicle?.driver?.code||'DRIVER');
+   const gap=document.createElement('small');gap.textContent=formatIntervalV284(row);
+   const color=typeof window.mwsF1DriverColorV216==='function'?window.mwsF1DriverColorV216(row.vehicle?.driver,Number(row.position||1)-1):'#94a3b8';
+   item.style.setProperty('--rank-driver-color-v284',String(color||'#94a3b8'));item.append(pos,driver,gap);return item;
+ }));
+ return true;
+}
+function qaTrackRankingOverlayV284(){
+ const root=ensureTrackRankingV284(),api=typeof window.mwsF1ComputeRaceStandingsV191==='function';
+ const header=Boolean(root?.querySelector('header')),list=Boolean(root?.querySelector('[data-f1-track-ranking-list-v284]'));
+ const cfg=TRACK_RANKING_CONFIG_V284;
+ return {version:VERSION284,api,header,list,maxRows:cfg.maxRows,refreshMs:cfg.refreshMs,renderCount:rankingStateV284.renderCount,allPass:Boolean(root)&&api&&header&&list&&cfg.maxRows>=5&&cfg.maxRows<=8&&cfg.refreshMs>=100};
+}
+
+function loop(){patchGeneralBattleV283();syncTrackRankingV284();runtimeState.rafId=requestAnimationFrame(loop)}
 function boot(){if(!runtimeState.rafId)runtimeState.rafId=requestAnimationFrame(loop)}
 window.mwsF1PatchGeneralBattleV283=patchGeneralBattleV283;window.mwsF1QaGeneralOvertakeDefenceV283=qaGeneralOvertakeDefenceV283;window.__mwsF1RacingV283=VERSION283;
+window.mwsF1SyncTrackRankingV284=syncTrackRankingV284;window.mwsF1QaTrackRankingOverlayV284=qaTrackRankingOverlayV284;window.__mwsF1RacingV284=VERSION284;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

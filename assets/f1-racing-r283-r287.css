@@ -1,0 +1,27 @@
+/* Phase 284: compact track ranking overlay */
+.f1-racing-track-ranking-v284{
+  position:absolute;left:12px;top:12px;z-index:16;width:min(218px,34%);
+  border:1px solid rgba(120,139,166,.38);border-radius:9px;overflow:hidden;
+  background:rgba(5,9,15,.86);box-shadow:0 12px 28px rgba(0,0,0,.28);
+  backdrop-filter:blur(7px);pointer-events:none
+}
+.f1-racing-track-ranking-v284[hidden]{display:none!important}
+.f1-racing-track-ranking-v284 header{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:6px 8px;border-bottom:1px solid rgba(120,139,166,.22);
+  color:#dce7f5;font:900 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.12em
+}
+.f1-racing-track-ranking-v284 header small{color:#718198;font:800 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-track-ranking-row-v284{
+  position:relative;display:grid;grid-template-columns:32px minmax(0,1fr) 58px;align-items:center;gap:6px;
+  min-height:27px;padding:0 7px;border-bottom:1px solid rgba(120,139,166,.12);
+  color:#d8e3ef;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace
+}
+.f1-racing-track-ranking-row-v284:last-child{border-bottom:0}
+.f1-racing-track-ranking-row-v284:before{content:"";position:absolute;left:0;top:5px;bottom:5px;width:2px;border-radius:2px;background:var(--rank-driver-color-v284,#94a3b8)}
+.f1-racing-track-ranking-row-v284 b{color:#f4f7fb;font-size:9px}
+.f1-racing-track-ranking-row-v284 .driver{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f1-racing-track-ranking-row-v284 small{text-align:right;color:#8fa0b5;font-size:7px;font-variant-numeric:tabular-nums}
+.f1-racing-track-ranking-row-v284[data-position="1"]{background:rgba(223,189,74,.09)}
+.f1-racing-track-ranking-row-v284[data-position="1"] b{color:#f2d56b}
+@media(max-width:900px){.f1-racing-track-ranking-v284{width:min(190px,42%)}}
