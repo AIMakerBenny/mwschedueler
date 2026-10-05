@@ -128,21 +128,22 @@ try{
   }
   if(!phase282Ready)throw new Error('Phase 282 runtime did not propagate to Recovery H browser');
 
-  let phase286Ready=false;
+  let phase287Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase286Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV286==='phase286-f1-r11-auto-camera-jitter-suppression'","Phase 286 runtime readiness"));
-    if(phase286Ready)break;
+    phase287Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV287==='phase287-f1-r12-compact-race-shell-sidebar-hide'","Phase 287 runtime readiness"));
+    if(phase287Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v286=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v287=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1200);
   }
-  if(!phase286Ready)throw new Error('Phase 286 runtime did not propagate to Recovery H browser');
-  const extensionQa286=await evaluate(cdp,"(()=>({r08:window.mwsF1QaGeneralOvertakeDefenceV283?.(),r09:window.mwsF1QaTrackRankingOverlayV284?.(),r10:window.mwsF1QaZoomLinkedMarkerScaleV285?.(),r11:window.mwsF1QaAutoCameraJitterSuppressionV286?.()}))()","Phase 283-286 extension QA");
-  if(extensionQa286?.r08?.allPass!==true)throw new Error('Phase 283 general battle live QA failed: '+JSON.stringify(extensionQa286?.r08));
-  if(extensionQa286?.r09?.allPass!==true)throw new Error('Phase 284 track ranking live QA failed: '+JSON.stringify(extensionQa286?.r09));
-  if(extensionQa286?.r10?.allPass!==true)throw new Error('Phase 285 zoom marker live QA failed: '+JSON.stringify(extensionQa286?.r10));
-  if(extensionQa286?.r11?.allPass!==true)throw new Error('Phase 286 auto camera jitter live QA failed: '+JSON.stringify(extensionQa286?.r11));
+  if(!phase287Ready)throw new Error('Phase 287 runtime did not propagate to Recovery H browser');
+  const extensionQa287=await evaluate(cdp,"(()=>({r08:window.mwsF1QaGeneralOvertakeDefenceV283?.(),r09:window.mwsF1QaTrackRankingOverlayV284?.(),r10:window.mwsF1QaZoomLinkedMarkerScaleV285?.(),r11:window.mwsF1QaAutoCameraJitterSuppressionV286?.(),r12:window.mwsF1QaRaceCompactShellV287?.()}))()","Phase 283-287 extension QA");
+  if(extensionQa287?.r08?.allPass!==true)throw new Error('Phase 283 general battle live QA failed: '+JSON.stringify(extensionQa287?.r08));
+  if(extensionQa287?.r09?.allPass!==true)throw new Error('Phase 284 track ranking live QA failed: '+JSON.stringify(extensionQa287?.r09));
+  if(extensionQa287?.r10?.allPass!==true)throw new Error('Phase 285 zoom marker live QA failed: '+JSON.stringify(extensionQa287?.r10));
+  if(extensionQa287?.r11?.allPass!==true)throw new Error('Phase 286 auto camera jitter live QA failed: '+JSON.stringify(extensionQa287?.r11));
+  if(extensionQa287?.r12?.allPass!==true)throw new Error('Phase 287 compact race shell live QA failed: '+JSON.stringify(extensionQa287?.r12));
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));

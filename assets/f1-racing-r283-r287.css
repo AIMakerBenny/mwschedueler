@@ -25,3 +25,36 @@
 .f1-racing-track-ranking-row-v284[data-position="1"]{background:rgba(223,189,74,.09)}
 .f1-racing-track-ranking-row-v284[data-position="1"] b{color:#f2d56b}
 @media(max-width:900px){.f1-racing-track-ranking-v284{width:min(190px,42%)}}
+
+
+/* Phase 287: compact race shell and automatic app chrome hide */
+body.f1-racing-r12-compact-v287 .app{display:block!important;width:100%!important;min-height:100vh!important}
+body.f1-racing-r12-compact-v287 .sidebar,
+body.f1-racing-r12-compact-v287 #mobileNavToggle,
+body.f1-racing-r12-compact-v287 #mobileNavBackdrop,
+body.f1-racing-r12-compact-v287 .main>.topbar{display:none!important}
+body.f1-racing-r12-compact-v287 .main{width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
+body.f1-racing-r12-compact-v287 #gameF1Racing{margin:0!important;padding:0!important;max-width:none!important}
+body.f1-racing-r12-compact-v287 #gameF1Racing>.f1-racing-head-v180{display:none!important}
+body.f1-racing-r12-compact-v287 #f1RacingShellV180{width:100%!important;max-width:none!important;margin:0!important;border-radius:0!important}
+body.f1-racing-r12-compact-v287 #f1RacingViewRaceV185{padding:6px 8px 10px!important}
+body.f1-racing-r12-compact-v287 .f1-racing-race-header-v188{
+  grid-template-columns:minmax(180px,1fr) auto auto;gap:8px;padding:6px 8px;border-radius:7px
+}
+body.f1-racing-r12-compact-v287 .f1-racing-race-header-v188 .f1-racing-panel-kicker-v181{display:none}
+body.f1-racing-r12-compact-v287 .f1-racing-race-header-v188 strong{margin-top:0;font-size:14px}
+body.f1-racing-r12-compact-v287 .f1-racing-race-status-v188 span{min-width:72px;padding:4px 7px}
+body.f1-racing-r12-compact-v287 .f1-racing-race-controls-v188{gap:3px;flex-wrap:wrap;justify-content:flex-end}
+body.f1-racing-r12-compact-v287 .f1-racing-race-controls-v188 button{min-height:30px!important;padding:5px 8px!important}
+body.f1-racing-r12-compact-v287 .f1-racing-race-headline-v255{gap:4px;margin:4px 0}
+body.f1-racing-r12-compact-v287 .f1-racing-race-headline-v255>span{padding:4px 6px}
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceToolbarRecoveryE{margin-top:4px;padding:4px 6px;border-radius:6px}
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceToolbarRecoveryE button{padding:4px 6px!important;font-size:8px!important}
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceRecoveryE{margin-top:4px;gap:6px}
+body.f1-racing-r12-compact-v287 .f1-racing-panel-title-v188{min-height:29px;padding:5px 7px}
+body.f1-racing-r12-compact-v287 .f1-racing-panel-title-v188 span{font-size:9px}
+body.f1-racing-r12-compact-v287 .f1-racing-panel-title-v188 small{font-size:8px}
+@media(max-width:1280px){
+  body.f1-racing-r12-compact-v287 .f1-racing-race-header-v188{grid-template-columns:1fr auto}
+  body.f1-racing-r12-compact-v287 .f1-racing-race-controls-v188{grid-column:1/-1}
+}

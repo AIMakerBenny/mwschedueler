@@ -5,6 +5,8 @@ const GENERAL_BATTLE_CONFIG_V283=Object.freeze({maxGapMeters:34,attackGapMeters:
 const VERSION284='phase284-f1-r09-track-ranking-overlay';
 const VERSION285='phase285-f1-r10-zoom-linked-marker-scale';
 const VERSION286='phase286-f1-r11-auto-camera-jitter-suppression';
+const VERSION287='phase287-f1-r12-compact-race-shell-sidebar-hide';
+const COMPACT_RACE_CONFIG_V287=Object.freeze({bodyClass:'f1-racing-r12-compact-v287',raceState:'RACE'});
 const AUTO_CAMERA_SMOOTH_CONFIG_V286=Object.freeze({startupMs:1600,startupAlpha:.07,normalAlpha:.16,zoomAlpha:.18,centerDeadband:2.4,zoomDeadband:.018,wheelBypassMs:260});
 const ZOOM_MARKER_CONFIG_V285=Object.freeze({exponent:.38,minScale:.54,maxScale:1});
 const TRACK_RANKING_CONFIG_V284=Object.freeze({maxRows:6,refreshMs:140});
@@ -144,11 +146,32 @@ function qaAutoCameraJitterSuppressionV286(){
  return {version:VERSION286,config:{...c},observerReady:Boolean(autoCameraObserverV286),wheelBound:Boolean(document.querySelector('.f1-racing-race-map-stage-v188')?.dataset.autoCameraSmoothWheelV286),allPass:c.startupMs>=1200&&c.startupAlpha<c.normalAlpha&&c.normalAlpha<=.2&&c.centerDeadband>=2&&c.zoomDeadband>0&&c.wheelBypassMs>=200};
 }
 
-function loop(){patchGeneralBattleV283();syncTrackRankingV284();syncZoomMarkerScaleV285();installAutoCameraSmoothingV286();runtimeState.rafId=requestAnimationFrame(loop)}
-function boot(){installZoomMarkerObserverV285();installAutoCameraSmoothingV286();if(!runtimeState.rafId)runtimeState.rafId=requestAnimationFrame(loop)}
+
+function syncRaceCompactShellV287(forcedState=null){
+ const state=forcedState===null?screenState():String(forcedState);
+ const active=state===COMPACT_RACE_CONFIG_V287.raceState;
+ document.body?.classList.toggle(COMPACT_RACE_CONFIG_V287.bodyClass,active);
+ const section=document.getElementById('gameF1Racing');if(section)section.dataset.compactRaceV287=active?'1':'0';
+ return active;
+}
+function qaRaceCompactShellV287(){
+ const body=document.body,section=document.getElementById('gameF1Racing'),sidebar=document.querySelector('.sidebar'),topbar=document.querySelector('.main>.topbar');
+ const current=screenState(),had=body?.classList.contains(COMPACT_RACE_CONFIG_V287.bodyClass);
+ syncRaceCompactShellV287('RACE');
+ const sidebarHidden=!sidebar||getComputedStyle(sidebar).display==='none';
+ const topbarHidden=!topbar||getComputedStyle(topbar).display==='none';
+ const active=Boolean(body?.classList.contains(COMPACT_RACE_CONFIG_V287.bodyClass))&&section?.dataset.compactRaceV287==='1';
+ syncRaceCompactShellV287(current);
+ if(had&&current!=='RACE')body?.classList.add(COMPACT_RACE_CONFIG_V287.bodyClass);
+ return {version:VERSION287,sidebarHidden,topbarHidden,active,restored:current==='RACE'?body?.classList.contains(COMPACT_RACE_CONFIG_V287.bodyClass):!body?.classList.contains(COMPACT_RACE_CONFIG_V287.bodyClass),allPass:sidebarHidden&&topbarHidden&&active};
+}
+
+function loop(){patchGeneralBattleV283();syncTrackRankingV284();syncZoomMarkerScaleV285();installAutoCameraSmoothingV286();syncRaceCompactShellV287();runtimeState.rafId=requestAnimationFrame(loop)}
+function boot(){installZoomMarkerObserverV285();installAutoCameraSmoothingV286();syncRaceCompactShellV287();if(!runtimeState.rafId)runtimeState.rafId=requestAnimationFrame(loop)}
 window.mwsF1PatchGeneralBattleV283=patchGeneralBattleV283;window.mwsF1QaGeneralOvertakeDefenceV283=qaGeneralOvertakeDefenceV283;window.__mwsF1RacingV283=VERSION283;
 window.mwsF1SyncTrackRankingV284=syncTrackRankingV284;window.mwsF1QaTrackRankingOverlayV284=qaTrackRankingOverlayV284;window.__mwsF1RacingV284=VERSION284;
 window.mwsF1ZoomMarkerScaleV285=zoomMarkerScaleV285;window.mwsF1SyncZoomMarkerScaleV285=syncZoomMarkerScaleV285;window.mwsF1QaZoomLinkedMarkerScaleV285=qaZoomLinkedMarkerScaleV285;window.__mwsF1RacingV285=VERSION285;
 window.mwsF1InstallAutoCameraSmoothingV286=installAutoCameraSmoothingV286;window.mwsF1QaAutoCameraJitterSuppressionV286=qaAutoCameraJitterSuppressionV286;window.__mwsF1RacingV286=VERSION286;
+window.mwsF1SyncRaceCompactShellV287=syncRaceCompactShellV287;window.mwsF1QaRaceCompactShellV287=qaRaceCompactShellV287;window.__mwsF1RacingV287=VERSION287;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
