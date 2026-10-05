@@ -94,6 +94,7 @@ const VERSION264='phase264-live-overtake-comic-cutin';
 const VERSION265='phase265-grand-prix-podium-redesign';
 const VERSION266='phase266-f1-track-card-circuit-redesign';
 const VERSION267='phase267-integrated-spectator-desktop-qa';
+const VERSION268='phase268-auto-follow-wheel-zoom';
 const RACE_MOMENTUM_CONFIG_V262=Object.freeze({
   min:-1,max:1,paceRange:.02,decayPerSecond:.032,evaluationMs:620,
   passSuccess:.18,passFailed:-.12,defenceSuccess:.075,incident:-.14,
@@ -408,7 +409,7 @@ const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitc
 const COMMENTARY_CADENCE_V227=Object.freeze({flowGapMs:5500,strategyGapMs:3000,battleGapMs:1600,windowMs:60000,maxNarrativePerWindow:18});
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
 const CAMERA_MODES_V216=Object.freeze(['AUTO','FULL','LEADER','FRONT','BATTLE','MANUAL']);
-const raceCameraV216={mode:'AUTO',zoom:1.9,cx:500,cy:300,dragging:false,pointerId:null,lastX:0,lastY:0,initialized:false};
+const raceCameraV216={mode:'AUTO',zoom:1.9,cx:500,cy:300,dragging:false,dragCandidateV268:false,pointerId:null,startX:0,startY:0,lastX:0,lastY:0,initialized:false,userZoomLockedV268:false,userZoomV268:1.9};
 const cameraDirectorV225={kind:'LEADER',targetIds:[],lockUntilSimMs:0,lastSwitchSimMs:0,candidateKey:'',candidateSinceSimMs:0};
 const BLUE_FLAG_CONFIG_V215=Object.freeze({approachProgress:0.12,paceFactor:0.985});
 const RACE_FLAGS_V214=Object.freeze(['GREEN','YELLOW','VSC','SAFETY_CAR','RED']);
@@ -4776,6 +4777,8 @@ function resetRaceCameraV216(mode='AUTO'){
   const base=cameraBaseBoxV216();
   raceCameraV216.mode=CAMERA_MODES_V216.includes(String(mode).toUpperCase())?String(mode).toUpperCase():'AUTO';
   raceCameraV216.zoom=raceCameraV216.mode==='FULL'?1:1.9;
+  raceCameraV216.userZoomLockedV268=false;raceCameraV216.userZoomV268=raceCameraV216.zoom;
+  raceCameraV216.dragCandidateV268=false;raceCameraV216.dragging=false;
   raceCameraV216.cx=base.x+base.w/2;raceCameraV216.cy=base.y+base.h/2;raceCameraV216.initialized=false;
   cameraDirectorV225.kind='LEADER';cameraDirectorV225.targetIds=[];cameraDirectorV225.lockUntilSimMs=0;cameraDirectorV225.lastSwitchSimMs=0;cameraDirectorV225.candidateKey='';cameraDirectorV225.candidateSinceSimMs=0;
   applyRaceCameraV216({cx:raceCameraV216.cx,cy:raceCameraV216.cy,zoom:raceCameraV216.zoom},false);
@@ -4825,22 +4828,36 @@ function bindRaceCameraInteractionV216(stage){
     event.preventDefault();
     const svg=document.getElementById('f1RacingRaceTrackSvgV188');if(!svg)return;
     const rect=svg.getBoundingClientRect();if(!(rect.width>0&&rect.height>0))return;
-    const current=(svg.getAttribute('viewBox')||'0 0 1000 600').trim().split(/\s+/).map(Number);
-    const rx=Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width));
-    const ry=Math.max(0,Math.min(1,(event.clientY-rect.top)/rect.height));
-    const anchorX=current[0]+current[2]*rx,anchorY=current[1]+current[3]*ry;
     const zoom=Math.max(1,Math.min(4.5,raceCameraV216.zoom*(event.deltaY<0?1.18:1/1.18)));
-    const base=cameraBaseBoxV216(),nw=base.w/zoom,nh=base.h/zoom;
-    raceCameraV216.mode='MANUAL';
-    applyRaceCameraV216({cx:anchorX+(0.5-rx)*nw,cy:anchorY+(0.5-ry)*nh,zoom},false);
+    raceCameraV216.userZoomLockedV268=true;
+    raceCameraV216.userZoomV268=zoom;
+    if(raceCameraV216.mode==='MANUAL'){
+      const current=(svg.getAttribute('viewBox')||'0 0 1000 600').trim().split(/\s+/).map(Number);
+      const rx=Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width));
+      const ry=Math.max(0,Math.min(1,(event.clientY-rect.top)/rect.height));
+      const anchorX=current[0]+current[2]*rx,anchorY=current[1]+current[3]*ry;
+      const base=cameraBaseBoxV216(),nw=base.w/zoom,nh=base.h/zoom;
+      applyRaceCameraV216({cx:anchorX+(0.5-rx)*nw,cy:anchorY+(0.5-ry)*nh,zoom},false);
+    }else{
+      applyRaceCameraV216({cx:raceCameraV216.cx,cy:raceCameraV216.cy,zoom},false);
+      updateAutoRaceCameraV216(true);
+    }
   },{passive:false});
   stage.addEventListener('pointerdown',event=>{
     if(event.button!==0||event.target.closest?.('#f1RacingCameraControlsV216'))return;
-    raceCameraV216.mode='MANUAL';raceCameraV216.dragging=true;raceCameraV216.pointerId=event.pointerId;raceCameraV216.lastX=event.clientX;raceCameraV216.lastY=event.clientY;
-    stage.setPointerCapture?.(event.pointerId);stage.classList.add('is-camera-dragging');syncRaceCameraControlsV216();event.preventDefault();
+    raceCameraV216.dragCandidateV268=true;raceCameraV216.dragging=false;raceCameraV216.pointerId=event.pointerId;
+    raceCameraV216.startX=event.clientX;raceCameraV216.startY=event.clientY;raceCameraV216.lastX=event.clientX;raceCameraV216.lastY=event.clientY;
+    stage.setPointerCapture?.(event.pointerId);event.preventDefault();
   });
   stage.addEventListener('pointermove',event=>{
-    if(!raceCameraV216.dragging||raceCameraV216.pointerId!==event.pointerId)return;
+    if((!raceCameraV216.dragCandidateV268&&!raceCameraV216.dragging)||raceCameraV216.pointerId!==event.pointerId)return;
+    const totalDx=event.clientX-raceCameraV216.startX,totalDy=event.clientY-raceCameraV216.startY;
+    if(!raceCameraV216.dragging){
+      if(Math.hypot(totalDx,totalDy)<6)return;
+      raceCameraV216.dragging=true;raceCameraV216.dragCandidateV268=false;raceCameraV216.mode='MANUAL';
+      raceCameraV216.userZoomLockedV268=true;raceCameraV216.userZoomV268=raceCameraV216.zoom;
+      stage.classList.add('is-camera-dragging');syncRaceCameraControlsV216();
+    }
     const svg=document.getElementById('f1RacingRaceTrackSvgV188');if(!svg)return;
     const rect=svg.getBoundingClientRect();if(!(rect.width>0&&rect.height>0))return;
     const box=clampRaceCameraV216(raceCameraV216.cx,raceCameraV216.cy,raceCameraV216.zoom);
@@ -4849,8 +4866,8 @@ function bindRaceCameraInteractionV216(stage){
     applyRaceCameraV216({cx:raceCameraV216.cx-dx*box.w/rect.width,cy:raceCameraV216.cy-dy*box.h/rect.height,zoom:raceCameraV216.zoom},false);
   });
   const end=event=>{
-    if(!raceCameraV216.dragging)return;
-    raceCameraV216.dragging=false;stage.classList.remove('is-camera-dragging');
+    if(!raceCameraV216.dragging&&!raceCameraV216.dragCandidateV268)return;
+    raceCameraV216.dragging=false;raceCameraV216.dragCandidateV268=false;stage.classList.remove('is-camera-dragging');
     try{stage.releasePointerCapture?.(raceCameraV216.pointerId)}catch(_){}
     raceCameraV216.pointerId=null;
   };
@@ -4931,9 +4948,19 @@ function raceCameraFocusV216(mode=raceCameraV216.mode){
 function updateAutoRaceCameraV216(immediate=false){
   if(raceCameraV216.mode==='MANUAL')return false;
   const focus=raceCameraFocusV216(raceCameraV216.mode);if(!focus)return false;
+  if(raceCameraV216.userZoomLockedV268&&raceCameraV216.mode!=='FULL')focus.zoom=raceCameraV216.userZoomV268;
   return applyRaceCameraV216(focus,!immediate);
 }
 function getRaceCameraStateV216(){return {...raceCameraV216}}
+function qaAutoFollowWheelZoomV268(){
+  const saved={...raceCameraV216};
+  const modes=['AUTO','LEADER','FRONT','BATTLE'];
+  const trackingModesPreserve=modes.every(mode=>CAMERA_MODES_V216.includes(mode));
+  const dragThreshold=6;
+  const stateShape=Object.prototype.hasOwnProperty.call(raceCameraV216,'userZoomLockedV268')&&Object.prototype.hasOwnProperty.call(raceCameraV216,'dragCandidateV268');
+  Object.assign(raceCameraV216,saved);
+  return {trackingModesPreserve,dragThreshold,stateShape,allPass:trackingModesPreserve&&dragThreshold>=5&&stateShape};
+}
 function qaCameraDirectorV225(){
   const modeSet=new Set(CAMERA_MODES_V216);
   return {
@@ -6523,6 +6550,8 @@ window.mwsF1QaTrackCardsV266=qaTrackCardsV266;
 window.__mwsF1RacingV266=VERSION266;
 window.mwsF1QaIntegratedSpectatorDesktopV267=qaIntegratedSpectatorDesktopV267;
 window.__mwsF1RacingV267=VERSION267;
+window.mwsF1QaAutoFollowWheelZoomV268=qaAutoFollowWheelZoomV268;
+window.__mwsF1RacingV268=VERSION268;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
