@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase277Ready=false;
+  let phase278Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase277Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV277==='phase277-character-dialogue-engine'","Phase 277 runtime readiness"));
-    if(phase277Ready)break;
+    phase278Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV278==='phase278-micro-battle-events'","Phase 278 runtime readiness"));
+    if(phase278Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v277=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v278=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase277Ready)throw new Error('Phase 277 runtime did not propagate to Recovery H browser');
+  if(!phase278Ready)throw new Error('Phase 278 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -280,6 +280,10 @@ try{
     manualStart.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='RACE','Explicit grid start click did not enter RACE');
     await raf();
+    const microQa278=window.mwsF1QaMicroBattleEventsV278?.();
+    assert(microQa278?.allPass===true,'Phase 278 micro battle QA failed: '+JSON.stringify(microQa278));
+    assert(microQa278?.coverage===true&&Number(microQa278?.eventCount)>=27,'Phase 278 event catalog incomplete: '+JSON.stringify(microQa278));
+    assert(microQa278?.thresholdCoverage===true&&Array.isArray(microQa278?.threshold)&&microQa278.threshold.length===3,'Phase 278 threshold detection failed: '+JSON.stringify(microQa278));
     const dialogueQa277=window.mwsF1QaCharacterDialogueEngineV277?.();
     assert(dialogueQa277?.allPass===true,'Phase 277 character dialogue QA failed: '+JSON.stringify(dialogueQa277));
     assert(dialogueQa277?.roleCoverage===true&&dialogueQa277?.poolsReady===true&&dialogueQa277?.nonRepeat===true,'Phase 277 event-role mapping incomplete: '+JSON.stringify(dialogueQa277));
