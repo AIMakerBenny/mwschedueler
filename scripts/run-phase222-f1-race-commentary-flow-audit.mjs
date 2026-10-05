@@ -13,7 +13,7 @@ export function runPhase222F1RaceCommentaryFlowAudit(){
     'function updateRaceNarrativeV222(force=false){',
     "current.pitRequested&&!previous.pitRequested",
     "current.tyreWear>=0.72&&previous.tyreWear<0.72",
-    "const battleStates=['SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','COUNTER_ATTACK'];",
+    "current.battleState!==previous.battleState",
     "now-Number(commentaryFlowV222.lastAmbientSimMs)>=12000",
     'updateRaceNarrativeV222(false);',
     'window.mwsF1QaRaceNarrativeV222=qaRaceNarrativeV222;',
