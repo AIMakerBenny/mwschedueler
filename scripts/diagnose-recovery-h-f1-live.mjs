@@ -712,7 +712,7 @@ try{
     assert(window.mwsF1GetScreenStateV185?.()==='FINISHING','Finish did not enter FINISHING');
     document.getElementById('f1RacingShowPodiumRecoveryG')?.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='PODIUM','Podium button failed');
-    const podiumCount=document.querySelectorAll('#f1RacingPodiumRowsRecoveryG .f1-racing-podium-place-recovery-g').length;
+    const podiumCount=document.querySelectorAll('#f1RacingPodiumRowsRecoveryG .f1-racing-podium-card-v265, #f1RacingPodiumRowsRecoveryG .f1-racing-podium-place-recovery-g').length;
     assert(podiumCount>=2,'Podium did not render expected drivers');
     document.getElementById('f1RacingPodiumResultRecoveryG')?.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='RESULT','Result button failed');
