@@ -54,6 +54,7 @@ function installFinalDesktopQaV292(){
  window.addEventListener('unhandledrejection',event=>push('rejection:'+String(event.reason||'')));
  return true;
 }
+function resetFinalDesktopErrorsV292(){desktopQaStateV292.errors=[];return true}
 function qaFinalDesktopV292(){
  const requiredApis={
   liveConversation:typeof window.mwsF1QaLiveConversationStackV276==='function',
@@ -98,7 +99,7 @@ function qaFinalRegressionV295(){
 
 function bootV291(){installFinishOverlayV291();installFinalDesktopQaV292()}
 window.mwsF1RenderFinishOverlayV291=renderFinishOverlayV291;window.mwsF1SyncFinishOverlayV291=syncFinishOverlayV291;window.mwsF1HideFinishOverlayV291=hideFinishOverlayV291;window.mwsF1QaFinishOverlayV291=qaFinishOverlayV291;window.__mwsF1RacingV291=VERSION291;
-window.mwsF1QaFinalDesktopV292=qaFinalDesktopV292;window.__mwsF1RacingV292=VERSION292;
+window.mwsF1QaFinalDesktopV292=qaFinalDesktopV292;window.mwsF1ResetFinalDesktopErrorsV292=resetFinalDesktopErrorsV292;window.__mwsF1RacingV292=VERSION292;
 window.mwsF1QaFinalRegressionV295=qaFinalRegressionV295;window.__mwsF1RacingV295=VERSION295;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootV291,{once:true});else bootV291();
 })();
