@@ -263,6 +263,7 @@ import {runPhase264F1LiveOvertakeCutinAudit} from './run-phase264-f1-live-overta
 import {runPhase265F1GrandPrixPodiumAudit} from './run-phase265-f1-grand-prix-podium-audit.mjs';
 import {runPhase266F1TrackCardCircuitRedesignAudit} from './run-phase266-f1-track-card-circuit-redesign-audit.mjs';
 import {runPhase267F1IntegratedSpectatorDesktopAudit} from './run-phase267-f1-integrated-spectator-desktop-audit.mjs';
+import {runPhase268F1AutoFollowWheelZoomAudit} from './run-phase268-f1-auto-follow-wheel-zoom-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2535,5 +2536,10 @@ export function runPhase267FullIntegrationAudit(){
  const issues=[...previous.issues,...current.issues.map(x=>'Phase 267: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 267: '+x)];
  return {phase:267,previous,current,issues,warnings,pass:issues.length===0};
 }
-export function runCurrentFullIntegrationAudit(){return runPhase267FullIntegrationAudit();}
+export function runPhase268FullIntegrationAudit(){
+ const previous=runPhase267FullIntegrationAudit(),current=runPhase268F1AutoFollowWheelZoomAudit();
+ const issues=[...previous.issues,...current.issues.map(x=>'Phase 268: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 268: '+x)];
+ return {phase:268,previous,current,issues,warnings,pass:issues.length===0};
+}
+export function runCurrentFullIntegrationAudit(){return runPhase268FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
