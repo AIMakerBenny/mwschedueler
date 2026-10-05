@@ -66,6 +66,8 @@ const VERSION236='phase236-track-aware-commentary';
 const VERSION237='phase237-race-result-telemetry';
 const VERSION238='phase238-seven-track-long-run-benchmark';
 const VERSION239='phase239-track-benchmark-alignment-gate';
+const VERSION240='phase240-accelerated-real-engine-runner';
+const engineQaV240={active:false};
 const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitchMs:1800,urgentBattleGapSeconds:0.55,focusDeadbandSvg:3,zoomDeadband:0.025});
 const COMMENTARY_CADENCE_V227=Object.freeze({flowGapMs:5500,strategyGapMs:3000,battleGapMs:1600,windowMs:60000,maxNarrativePerWindow:18});
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
@@ -1007,6 +1009,75 @@ function qaDiverseTrackCatalogV220(){
     allPass:catalog.length>=7&&required.every(id=>catalog.some(row=>row.id===id))&&paths.size===7&&archetypes.size>=6&&validations.every(row=>row.issues.length===0)};
 }
 
+function cloneTrackForEngineQaV240(track){
+  return Object.freeze({
+    id:String(track.id),name:String(track.name),archetype:String(track.archetype||'종합형'),
+    runtimeProfile:trackRuntimeProfileV234(track),lengthMeters:Number(track.lengthMeters)||0,
+    viewBox:Object.freeze([...(track.viewBox||[])]),path:String(track.path||''),
+    geometry:Object.freeze({...track.geometry}),
+    sectors:Object.freeze((track.sectors||[]).map(row=>Object.freeze({...row}))),
+    pit:Object.freeze({...track.pit}),
+    speedTraps:Object.freeze((track.speedTraps||[]).map(row=>Object.freeze({...row}))),
+    overtakeZones:Object.freeze((track.overtakeZones||[]).map(row=>Object.freeze({...row}))),
+    zones:Object.freeze((track.zones||[]).map(row=>Object.freeze({...row})))
+  });
+}
+function buildEngineQaSnapshotV240(trackId,{drivers=6,laps=1,runIndex=0}={}){
+  const track=window.mwsGetF1TrackV182?.(String(trackId||''));if(!track)return null;
+  const count=Math.max(2,Math.min(12,Math.floor(Number(drivers)||6)));
+  const totalLaps=Math.max(1,Math.min(5,Math.floor(Number(laps)||1)));
+  const rows=Array.from({length:count},(_,index)=>Object.freeze({
+    contactId:'phase240-driver-'+String(index+1),name:'QA Driver '+String(index+1),
+    image:'',labels:Object.freeze(['phase240','engine-qa']),gridPosition:index+1
+  }));
+  return Object.freeze({
+    createdAt:'phase240-fixed-field-run-'+String(Math.max(0,Math.floor(Number(runIndex)||0))),
+    trackId:String(track.id),totalLaps,
+    track:cloneTrackForEngineQaV240(track),drivers:Object.freeze(rows)
+  });
+}
+function cleanupEngineQaV240(){
+  engineQaV240.active=false;
+  resetRaceMotionV189();
+  activeRaceSnapshotV187=null;activeRaceResultRecoveryG=null;finishCounterRecoveryG=0;
+  setScreenStateV185('SETUP',{force:true});
+  renderTrackChoicesV186();updateTrackFoundationStatusV182();renderTrackMapV183();syncSetupActionV187();
+  return true;
+}
+function runAcceleratedEngineRaceV240(trackId,options={}){
+  if(f1ScreenStateV185!=='SETUP')return {trackId:String(trackId||''),completed:false,error:'requires-setup'};
+  const snapshot=buildEngineQaSnapshotV240(trackId,options);
+  if(!snapshot)return {trackId:String(trackId||''),completed:false,error:'track-not-found'};
+  const stepMs=Math.max(20,Math.min(100,Math.floor(Number(options.stepMs)||50)));
+  const maxSteps=Math.max(1000,Math.min(50000,Math.floor(Number(options.maxSteps)||16000)));
+  let steps=0,result=null,error='';
+  try{
+    engineQaV240.active=true;
+    resetRaceMotionV189();engineQaV240.active=true;
+    activeRaceResultRecoveryG=null;finishCounterRecoveryG=0;activeRaceSnapshotV187=snapshot;
+    setScreenStateV185('RACE',{force:true});
+    if(!renderRaceControlV188())throw new Error('render-race-control-failed');
+    if(!initializeRaceMotionV189(snapshot))throw new Error('initialize-race-motion-failed');
+    while(f1ScreenStateV185==='RACE'&&steps<maxSteps){
+      simulateRaceStepV192(stepMs);steps+=1;
+    }
+    result=activeRaceResultRecoveryG;
+    if(!result)error=steps>=maxSteps?'max-steps-exceeded':'race-result-missing';
+    return {
+      trackId:String(snapshot.trackId),trackName:String(snapshot.track.name),archetype:String(snapshot.track.runtimeProfile?.archetype||''),
+      completed:Boolean(result),steps,stepMs,simTimeMs:Number(result?.simTimeMs)||Number(simClockV192.simTimeMs)||0,
+      telemetry:result?.telemetry||null,error
+    };
+  }catch(err){
+    return {trackId:String(snapshot.trackId),trackName:String(snapshot.track.name),completed:false,steps,stepMs,simTimeMs:Number(simClockV192.simTimeMs)||0,telemetry:null,error:String(err?.message||err)};
+  }finally{
+    cleanupEngineQaV240();
+  }
+}
+function qaAcceleratedEngineRaceV240(){
+  const result=runAcceleratedEngineRaceV240('majoku-ring-v1',{drivers:4,laps:1,runIndex:0,stepMs:50,maxSteps:12000});
+  return {result,allPass:Boolean(result?.completed)&&Number(result?.steps)>0&&Number(result?.telemetry?.fieldAverageSpeedKph)>0&&Number(result?.telemetry?.averageLapMs)>0};
+}
 function trackBenchmarkRandomV238(seed){
   let state=(Number(seed)>>>0)||1;
   return ()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296};
@@ -3061,8 +3132,10 @@ function simulateRaceStepV192(stepMs){
     if(vehicle.finished)continue;
     simulateVehicleDynamicsV196(vehicle,stepMs);
   }
-  updateRaceCommentaryV219(false);
-  updateRaceNarrativeV222(false);
+  if(!engineQaV240.active){
+    updateRaceCommentaryV219(false);
+    updateRaceNarrativeV222(false);
+  }
   if(updateRaceLifecycleRecoveryG())return false;
   return true;
 }
@@ -4634,6 +4707,9 @@ window.__mwsF1RacingV238=VERSION238;
 window.mwsF1TrackBenchmarkAlignmentV239=trackBenchmarkAlignmentV239;
 window.mwsF1QaTrackBenchmarkAlignmentV239=qaTrackBenchmarkAlignmentV239;
 window.__mwsF1RacingV239=VERSION239;
+window.mwsF1RunAcceleratedEngineRaceV240=runAcceleratedEngineRaceV240;
+window.mwsF1QaAcceleratedEngineRaceV240=qaAcceleratedEngineRaceV240;
+window.__mwsF1RacingV240=VERSION240;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
