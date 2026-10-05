@@ -67,7 +67,9 @@ const VERSION237='phase237-race-result-telemetry';
 const VERSION238='phase238-seven-track-long-run-benchmark';
 const VERSION239='phase239-track-benchmark-alignment-gate';
 const VERSION240='phase240-accelerated-real-engine-runner';
+const VERSION241='phase241-seven-track-real-engine-suite';
 const engineQaV240={active:false};
+let engineSuiteCacheV241=null;
 const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitchMs:1800,urgentBattleGapSeconds:0.55,focusDeadbandSvg:3,zoomDeadband:0.025});
 const COMMENTARY_CADENCE_V227=Object.freeze({flowGapMs:5500,strategyGapMs:3000,battleGapMs:1600,windowMs:60000,maxNarrativePerWindow:18});
 const DRIVER_COLORS_V216=Object.freeze(['#43a5ff','#ff5f6d','#45d483','#ffbd45','#a77bff','#ff77c8','#44d7e8','#f07842','#8fd14f','#e05cff','#6dc4ff','#ffd166']);
@@ -1077,6 +1079,50 @@ function runAcceleratedEngineRaceV240(trackId,options={}){
 function qaAcceleratedEngineRaceV240(){
   const result=runAcceleratedEngineRaceV240('majoku-ring-v1',{drivers:4,laps:1,runIndex:0,stepMs:50,maxSteps:12000});
   return {result,allPass:Boolean(result?.completed)&&Number(result?.steps)>0&&Number(result?.telemetry?.fieldAverageSpeedKph)>0&&Number(result?.telemetry?.averageLapMs)>0};
+}
+function aggregateEngineTrackRunsV241(trackId,runs=[]){
+  const completed=runs.filter(row=>row?.completed&&row?.telemetry);
+  const avg=key=>completed.length?completed.reduce((sum,row)=>sum+Number(row.telemetry?.[key]||0),0)/completed.length:0;
+  return {
+    trackId:String(trackId),runs:runs.length,completedRuns:completed.length,
+    avgPasses:Number(avg('totalPasses').toFixed(2)),avgFailedPasses:Number(avg('failedPasses').toFixed(2)),
+    avgIncidents:Number(avg('incidentCount').toFixed(2)),avgSpeedKph:Number(avg('fieldAverageSpeedKph').toFixed(2)),
+    avgWinnerSpeedKph:Number(avg('winnerAverageSpeedKph').toFixed(2)),avgLapMs:Number(avg('averageLapMs').toFixed(1)),
+    maxSteps:runs.length?Math.max(...runs.map(row=>Number(row?.steps)||0)):0,
+    errors:runs.map(row=>String(row?.error||'')).filter(Boolean)
+  };
+}
+function runSevenTrackEngineSuiteV241(options={}){
+  const ids=['majoku-ring-v1','castle-street-circuit-v1','blue-coast-speedway-v1','mawang-speed-park-v1','royal-street-circuit-v1','infinity-eight-circuit-v1','highland-flow-ring-v1'];
+  const runsPerTrack=Math.max(1,Math.min(3,Math.floor(Number(options.runsPerTrack)||1)));
+  const drivers=Math.max(2,Math.min(8,Math.floor(Number(options.drivers)||4)));
+  const laps=Math.max(1,Math.min(3,Math.floor(Number(options.laps)||1)));
+  const stepMs=Math.max(20,Math.min(100,Math.floor(Number(options.stepMs)||60)));
+  const rows=[];
+  for(const trackId of ids){
+    const runs=[];
+    for(let runIndex=0;runIndex<runsPerTrack;runIndex++){
+      runs.push(runAcceleratedEngineRaceV240(trackId,{drivers,laps,runIndex,stepMs,maxSteps:Number(options.maxSteps)||14000}));
+    }
+    rows.push(aggregateEngineTrackRunsV241(trackId,runs));
+  }
+  const suite={
+    options:{runsPerTrack,drivers,laps,stepMs},rows,
+    totalRuns:rows.reduce((sum,row)=>sum+row.runs,0),
+    completedRuns:rows.reduce((sum,row)=>sum+row.completedRuns,0)
+  };
+  engineSuiteCacheV241=suite;
+  return suite;
+}
+function qaSevenTrackEngineSuiteV241(){
+  const suite=runSevenTrackEngineSuiteV241({runsPerTrack:1,drivers:4,laps:1,stepMs:60,maxSteps:14000});
+  const speeds=suite.rows.map(row=>row.avgSpeedKph),laps=suite.rows.map(row=>row.avgLapMs);
+  return {
+    suite,
+    speedSpread:speeds.length?Number((Math.max(...speeds)-Math.min(...speeds)).toFixed(2)):0,
+    lapSpread:laps.length?Number((Math.max(...laps)-Math.min(...laps)).toFixed(1)):0,
+    allPass:suite.rows.length===7&&suite.completedRuns===7&&suite.rows.every(row=>row.completedRuns===1&&row.avgSpeedKph>0&&row.avgLapMs>0&&!row.errors.length)
+  };
 }
 function trackBenchmarkRandomV238(seed){
   let state=(Number(seed)>>>0)||1;
@@ -4710,6 +4756,9 @@ window.__mwsF1RacingV239=VERSION239;
 window.mwsF1RunAcceleratedEngineRaceV240=runAcceleratedEngineRaceV240;
 window.mwsF1QaAcceleratedEngineRaceV240=qaAcceleratedEngineRaceV240;
 window.__mwsF1RacingV240=VERSION240;
+window.mwsF1RunSevenTrackEngineSuiteV241=runSevenTrackEngineSuiteV241;
+window.mwsF1QaSevenTrackEngineSuiteV241=qaSevenTrackEngineSuiteV241;
+window.__mwsF1RacingV241=VERSION241;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
