@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase261Ready=false;
+  let phase262Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase261Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV261==='phase261-immersive-fullscreen-spectator'","Phase 261 runtime readiness"));
-    if(phase261Ready)break;
+    phase262Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV262==='phase262-race-momentum-rebalance'","Phase 262 runtime readiness"));
+    if(phase262Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v261=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v262=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase261Ready)throw new Error('Phase 261 runtime did not propagate to Recovery H browser');
+  if(!phase262Ready)throw new Error('Phase 262 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -157,6 +157,9 @@ try{
     const selected=window.mwsF1GetSelectedContactIdsV181?.()||[];
     assert(selected.length>=2,'Participant selection did not reach 2 drivers');
     assert(String(window.mwsF1GetActiveTrackV182?.()?.id||'')===String(targetTrack.id),'Selected track not active');
+
+    const momentumQa262=window.mwsF1QaRaceMomentumV262?.();
+    assert(momentumQa262?.allPass===true&&momentumQa262?.deterministic===true&&Number(momentumQa262?.paceRange)>=.015&&Number(momentumQa262?.paceRange)<=.025,'Phase 262 momentum deterministic QA failed: '+JSON.stringify(momentumQa262));
 
     const lapQa260=window.mwsF1QaLapControlV260?.();
     assert(lapQa260?.allPass===true&&lapQa260?.low===3&&lapQa260?.high===99&&lapQa260?.direct===17,'Phase 260 lap-control QA failed: '+JSON.stringify(lapQa260));
@@ -728,6 +731,17 @@ try{
     const engineAlignmentQa242=window.mwsF1QaRealEngineBenchmarkAlignmentV242?.();
     assert(engineAlignmentQa242?.allPass===true&&Number(engineAlignmentQa242?.speedCorrelation)>=.7&&Number(engineAlignmentQa242?.uniqueActualSignatures)>=5&&Number(engineAlignmentQa242?.overtakeStress?.totalPasses)>=1,'Phase 242 real-engine benchmark alignment failed: '+JSON.stringify(engineAlignmentQa242));
 
+    const momentumBenchmark262=window.mwsF1QaRaceMomentumBenchmarkV262?.();
+    assert(momentumBenchmark262?.allPass===true,'Phase 262 momentum benchmark failed: '+JSON.stringify(momentumBenchmark262));
+    assert(Number(momentumBenchmark262?.trackCount)===7&&Number(momentumBenchmark262?.completedRuns)===7,'Phase 262 benchmark did not complete all 7 tracks: '+JSON.stringify(momentumBenchmark262));
+    assert(Boolean(momentumBenchmark262?.deterministicRepeat),'Phase 262 benchmark repeat was not deterministic');
+    assert(Math.abs(Number(momentumBenchmark262?.gridFinishCorrelation)||0)<.94,'Phase 262 grid-finish correlation remains too strong: '+JSON.stringify(momentumBenchmark262?.gridFinishCorrelation));
+    assert(Number(momentumBenchmark262?.p1Retention)<.9,'Phase 262 P1 retention remains too strong: '+JSON.stringify(momentumBenchmark262?.p1Retention));
+    assert(Number(momentumBenchmark262?.top3Variation)>.04,'Phase 262 Top3 variation too low: '+JSON.stringify(momentumBenchmark262?.top3Variation));
+    assert(Number(momentumBenchmark262?.averageOvertakes)>=1,'Phase 262 average overtakes too low: '+JSON.stringify(momentumBenchmark262?.averageOvertakes));
+    assert(Number(momentumBenchmark262?.abnormalGapRuns)<=2,'Phase 262 abnormal gap runs too high: '+JSON.stringify(momentumBenchmark262?.gapRows));
+    assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Phase 262 momentum benchmark did not restore Setup');
+
     const lapTimingQa248=window.mwsF1QaLapTimingV248?.(context.targetTrackId);
     assert(lapTimingQa248?.allPass===true&&lapTimingQa248?.rowPass===true,'Phase 248 multi-lap engine timing failed: '+JSON.stringify(lapTimingQa248));
     assert(lapTimingQa248?.domPass===true&&lapTimingQa248?.result?.timingDom?.every(row=>row.last&&!row.last.includes('--')&&row.best&&!row.best.includes('--')),'Phase 248 timing board still shows lap placeholders: '+JSON.stringify(lapTimingQa248?.result?.timingDom));
@@ -761,6 +775,15 @@ try{
       podiumCount,
       resultCount,
       newRacePreservedDrivers:afterNewRaceIds,
+      raceMomentumV262:{
+        gridFinishCorrelation:Number(momentumBenchmark262?.gridFinishCorrelation)||0,
+        averageOvertakes:Number(momentumBenchmark262?.averageOvertakes)||0,
+        p1Retention:Number(momentumBenchmark262?.p1Retention)||0,
+        top3Variation:Number(momentumBenchmark262?.top3Variation)||0,
+        abnormalGapRuns:Number(momentumBenchmark262?.abnormalGapRuns)||0,
+        deterministicRepeat:Boolean(momentumBenchmark262?.deterministicRepeat),
+        phase242Reference:momentumBenchmark262?.phase242Reference||null
+      },
       lapTimingV248:{rowPass:Boolean(lapTimingQa248?.rowPass),domPass:Boolean(lapTimingQa248?.domPass),rows:lapTimingQa248?.result?.lapTiming||[],timingDom:lapTimingQa248?.result?.timingDom||[]},
       finalState:window.mwsF1GetScreenStateV185?.(),
       errors
