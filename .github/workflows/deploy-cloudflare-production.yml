@@ -197,6 +197,7 @@ jobs:
           node --check scripts/run-phase252-f1-spectator-highlights-audit.mjs
           node --check scripts/run-phase253-f1-live-timing-status-audit.mjs
           node --check scripts/run-phase254-f1-live-marker-position-audit.mjs
+          node --check scripts/run-phase255-f1-race-headline-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -2421,6 +2422,16 @@ jobs:
           grep -Fq 'function syncRaceMarkerPositionV254(' /tmp/f1-racing-v1-phase254.js
           grep -Fq 'function qaRaceMarkerPositionV254(){' /tmp/f1-racing-v1-phase254.js
           grep -Fq '.car-position-tag-v254' /tmp/f1-racing-v1-phase254.css
+
+          echo '[phase255] F1 compact race headline summary'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV255=VERSION255;' > /tmp/f1-racing-v1-phase255.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '/* Phase 255: compact race headline summary */' > /tmp/f1-racing-v1-phase255.css
+          retry_contains "$BASE/?deploy=$GITHUB_SHA" 'id="f1RacingRaceHeadlineV255"' > /tmp/index-phase255.html
+          node --check /tmp/f1-racing-v1-phase255.js
+          grep -Fq 'function syncRaceHeadlineV255(){' /tmp/f1-racing-v1-phase255.js
+          grep -Fq 'function qaRaceHeadlineV255(){' /tmp/f1-racing-v1-phase255.js
+          grep -Fq '.f1-racing-race-headline-v255' /tmp/f1-racing-v1-phase255.css
+          grep -Fq 'data-f1-headline-fastest' /tmp/index-phase255.html
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
