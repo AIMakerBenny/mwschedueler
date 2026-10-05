@@ -385,6 +385,9 @@ try{
     const cameraStabilityQa=window.mwsF1QaCameraDirectorStabilityV229?.();
     assert(cameraStabilityQa?.allPass===true&&Number(cameraStabilityQa?.candidateHoldMs)>=500&&Number(cameraStabilityQa?.minSwitchMs)>=1500,'Phase 229 camera director stability QA failed: '+JSON.stringify(cameraStabilityQa));
     assert(document.querySelector('[data-f1-camera-mode="FRONT"]')?.textContent?.includes('상위권'),'Phase 225 front-group camera button missing');
+    const zoomMarkerQa245=window.mwsF1QaZoomAwareMarkerScaleV245?.();
+    assert(zoomMarkerQa245?.allPass===true&&Number(zoomMarkerQa245?.samples?.length)===5,'Phase 245 zoom-aware marker QA failed: '+JSON.stringify(zoomMarkerQa245));
+    assert(Number(window.mwsF1RaceMarkerScaleV245?.(4.5))<Number(window.mwsF1RaceMarkerScaleV245?.(2)),'Phase 245 marker scale does not shrink with zoom');
     const markerIdentityQa=window.mwsF1QaDriverMarkerIdentityV232?.();
     assert(markerIdentityQa?.allPass===true&&Number(markerIdentityQa?.liveMarkerCount)>=2&&Number(markerIdentityQa?.liveMarkerCount)===Number(markerIdentityQa?.liveNumberCount),'Phase 232 driver marker identity QA failed: '+JSON.stringify(markerIdentityQa));
     const markerNumberTexts=[...document.querySelectorAll('.f1-racing-race-vehicle-v189 .car-number-v232')].map(node=>String(node.textContent||'').trim());
