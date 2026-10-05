@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase262Ready=false;
+  let phase267Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase262Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV262==='phase262-race-momentum-rebalance'","Phase 262 runtime readiness"));
-    if(phase262Ready)break;
+    phase267Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV267==='phase267-integrated-spectator-desktop-qa'","Phase 267 runtime readiness"));
+    if(phase267Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v262=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v267=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase262Ready)throw new Error('Phase 262 runtime did not propagate to Recovery H browser');
+  if(!phase267Ready)throw new Error('Phase 267 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -172,6 +172,13 @@ try{
 
     const trackCardQa266=window.mwsF1QaTrackCardsV266?.();
     assert(trackCardQa266?.allPass===true&&Number(trackCardQa266?.trackCount)===7&&trackCardQa266?.mapped===true&&Number(trackCardQa266?.distinctPaths)===7&&trackCardQa266?.hasTechnicalFields===true,'Phase 266 track card QA failed: '+JSON.stringify(trackCardQa266));
+
+    const spectatorQa267=window.mwsF1QaIntegratedSpectatorDesktopV267?.();
+    assert(spectatorQa267?.allPass===true,'Phase 267 integrated spectator desktop QA failed: '+JSON.stringify(spectatorQa267));
+    assert(Array.isArray(spectatorQa267?.cases)&&spectatorQa267.cases.length===3,'Phase 267 race matrix missing: '+JSON.stringify(spectatorQa267?.cases));
+    assert(spectatorQa267.cases.some(row=>row.drivers===3&&row.laps===5&&row.completed),'Phase 267 3-driver 5-lap case failed');
+    assert(spectatorQa267.cases.some(row=>row.drivers===6&&row.laps===10&&row.completed),'Phase 267 6-driver 10-lap case failed');
+    assert(spectatorQa267.cases.some(row=>row.drivers>=10&&row.laps===20&&row.completed),'Phase 267 10+-driver 20-lap case failed');
     const trackCards266=Array.from(document.querySelectorAll('#f1RacingTrackOptionsV186 .f1-racing-track-card-v266'));
     assert(trackCards266.length===7,'Phase 266 expected 7 track cards, found '+trackCards266.length);
     assert(trackCards266.every(card=>card.querySelector('.f1-racing-track-card-silhouette-v266 path')),'Phase 266 circuit silhouette missing');
@@ -806,7 +813,48 @@ try{
     };
   })()`,'Recovery H interaction');
 
-  const result={phase:'recovery-h',name:'f1-live-browser-qa',baseline,interaction,pass:true};
+  await cdp.send('Emulation.setDeviceMetricsOverride',{width:2560,height:1440,deviceScaleFactor:1,mobile:false});
+  await sleep(250);
+  const qhd=await evaluate(cdp,`(async()=>{
+    const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    const assert=(condition,message)=>{if(!condition)throw new Error(message)};
+    document.body.dataset.resolution='qhd';
+    const context=window.__recoveryHContext||{};
+    assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Phase 267 QHD QA did not begin in Setup');
+    const selected=window.mwsF1GetSelectedContactIdsV181?.()||[];
+    if(selected.length<2){
+      for(const id of context.driverIds||[])if(!(window.mwsF1GetSelectedContactIdsV181?.()||[]).includes(id))window.mwsF1ToggleDriverV181?.(id);
+    }
+    window.mwsF1SetLapCountV260?.(5);
+    assert(window.mwsF1StartRaceFromSetupV187?.()===true,'Phase 267 QHD race preparation failed');
+    await new Promise(r=>setTimeout(r,1200));await raf();
+    document.getElementById('f1RacingGridStartRecoveryM')?.click();await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='RACE','Phase 267 QHD race did not start');
+    const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
+    assert(workspace,'Phase 267 QHD workspace missing');
+    const panels=Array.from(workspace.querySelectorAll('[data-f1-workspace-panel]')).filter(panel=>!panel.hidden&&getComputedStyle(panel).display!=='none');
+    const overlaps=[];
+    for(let i=0;i<panels.length;i++){
+      const a=panels[i].getBoundingClientRect();
+      for(let j=i+1;j<panels.length;j++){
+        const b=panels[j].getBoundingClientRect();
+        const width=Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left));
+        const height=Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
+        if(width*height>1)overlaps.push([panels[i].dataset.f1WorkspacePanel,panels[j].dataset.f1WorkspacePanel]);
+      }
+    }
+    const rect=workspace.getBoundingClientRect();
+    assert(rect.width>1800&&rect.height>500,'Phase 267 QHD workspace geometry too small: '+JSON.stringify({width:rect.width,height:rect.height}));
+    assert(overlaps.length===0,'Phase 267 QHD panel overlap: '+JSON.stringify(overlaps));
+    assert(document.querySelectorAll('.f1-racing-race-vehicle-v189').length>=2,'Phase 267 QHD race markers missing');
+    assert(document.getElementById('f1RacingRaceHeadlineV255'),'Phase 267 QHD race headline missing');
+    assert(document.getElementById('f1RacingCommentaryLogV188'),'Phase 267 QHD commentary missing');
+    document.getElementById('f1RacingRaceCancelRecoveryC')?.click();await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Phase 267 QHD cleanup failed');
+    return {width:Number(rect.width.toFixed(1)),height:Number(rect.height.toFixed(1)),panelCount:panels.length,overlaps,markers:true};
+  })()`,'Phase 267 QHD desktop QA');
+
+  const result={phase:'recovery-h',name:'f1-live-browser-qa',baseline,interaction,qhd,pass:true};
   console.log(JSON.stringify({recoveryHLiveBrowser:result},null,2));
 }finally{
   cdp?.close();
