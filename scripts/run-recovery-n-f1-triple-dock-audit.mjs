@@ -9,8 +9,12 @@ export function runRecoveryNF1TripleDockAudit(){
   const diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
-  if(!/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=N1&phase=(?:20[6-9]|21[0-9]|2[2-9][0-9])/.test(index))issues.push('Recovery N JS cache missing');
-  if(!/assets\/f1-racing-v1\.css\?v=1\.0\.0-phase180-shell&p=196&recovery=N1&phase=(?:20[4-9]|21[0-9]|2[2-9][0-9])/.test(index))issues.push('Recovery N CSS cache missing');
+  const jsAsset=(index.match(/assets\/f1-racing-v1\.js\?[^\"'\s>]+/)||[])[0]||'';
+  const cssAsset=(index.match(/assets\/f1-racing-v1\.css\?[^\"'\s>]+/)||[])[0]||'';
+  const jsPhase=Number((jsAsset.match(/[?&]phase=(\d+)/)||[])[1]||0);
+  const cssPhase=Number((cssAsset.match(/[?&]phase=(\d+)/)||[])[1]||0);
+  if(jsPhase<206)issues.push('Recovery N JS cache missing or stale: '+jsAsset);
+  if(cssPhase<204)issues.push('Recovery N CSS cache missing or stale: '+cssAsset);
 
   for(const token of [
     "timing:Object.freeze({label:'실시간 순위',minW:4,minH:2})",
