@@ -194,6 +194,7 @@ jobs:
           node --check scripts/run-phase249-f1-panel-removal-audit.mjs
           node --check scripts/run-phase250-f1-driver-profile-marker-audit.mjs
           node --check scripts/run-phase251-f1-live-timing-identity-audit.mjs
+          node --check scripts/run-phase252-f1-spectator-highlights-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -2392,6 +2393,16 @@ jobs:
           grep -Fq 'function timingAvatarV251(' /tmp/f1-racing-v1-phase251.js
           grep -Fq 'function qaLiveTimingIdentityV251(){' /tmp/f1-racing-v1-phase251.js
           grep -Fq '.f1-racing-driver-color-v251' /tmp/f1-racing-v1-phase251.css
+
+          echo '[phase252] F1 spectator race highlights'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV252=VERSION252;' > /tmp/f1-racing-v1-phase252.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '/* Phase 252: spectator battle, overtake, position-change and fastest-lap emphasis */' > /tmp/f1-racing-v1-phase252.css
+          node --check /tmp/f1-racing-v1-phase252.js
+          grep -Fq 'function syncSpectatorHighlightsV252(){' /tmp/f1-racing-v1-phase252.js
+          grep -Fq 'function qaSpectatorHighlightsV252(){' /tmp/f1-racing-v1-phase252.js
+          grep -Fq '.battle-pulse-v252' /tmp/f1-racing-v1-phase252.css
+          grep -Fq 'data-position-delta-v252' /tmp/f1-racing-v1-phase252.css
+          grep -Fq '.best.is-fastest-v252' /tmp/f1-racing-v1-phase252.css
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
