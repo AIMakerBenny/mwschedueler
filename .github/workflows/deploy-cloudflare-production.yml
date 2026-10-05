@@ -2539,7 +2539,8 @@ jobs:
           grep -Fq 'function qaTrackCardsV266(){' /tmp/f1-racing-v1-phase266.js
           retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-track-card-silhouette-v266 path' > /tmp/f1-racing-v1-phase266.css
           grep -Fq 'stroke-width:5.2' /tmp/f1-racing-v1-phase266.css
-          retry_contains "$BASE/?phase266=$GITHUB_SHA" 'recovery=N1&phase=266&zoomfix=1' > /tmp/index-phase266.html
+          retry_contains "$BASE/?phase266=$GITHUB_SHA" 'recovery=N1&phase=' > /tmp/index-phase266.html
+          grep -Eq 'recovery=N1&phase=(266|267)(&|")' /tmp/index-phase266.html
 
           echo '[phase267] F1 integrated spectator desktop QA'
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV267=VERSION267;' > /tmp/f1-racing-v1-phase267.js
