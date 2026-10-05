@@ -241,6 +241,7 @@ import {runPhase242F1RealEngineAlignmentAudit} from './run-phase242-f1-real-engi
 import {runPhase243F1FlowingCircuitAudit} from './run-phase243-f1-flowing-circuit-audit.mjs';
 import {runPhase244F1StartingGridAudit} from './run-phase244-f1-starting-grid-audit.mjs';
 import {runPhase245F1ZoomMarkerAudit} from './run-phase245-f1-zoom-marker-audit.mjs';
+import {runPhase246F1TrackPresentationAudit} from './run-phase246-f1-track-presentation-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2403,5 +2404,10 @@ export function runPhase245FullIntegrationAudit(){
  const issues=[...previous.issues,...current.issues.map(x=>'Phase 245: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 245: '+x)];
  return {phase:245,previous,current,issues,warnings,pass:issues.length===0};
 }
-export function runCurrentFullIntegrationAudit(){return runPhase245FullIntegrationAudit();}
+export function runPhase246FullIntegrationAudit(){
+ const previous=runPhase245FullIntegrationAudit(),current=runPhase246F1TrackPresentationAudit();
+ const issues=[...previous.issues,...current.issues.map(x=>'Phase 246: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 246: '+x)];
+ return {phase:246,previous,current,issues,warnings,pass:issues.length===0};
+}
+export function runCurrentFullIntegrationAudit(){return runPhase246FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
