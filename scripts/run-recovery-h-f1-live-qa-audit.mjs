@@ -19,6 +19,8 @@ export function runRecoveryHF1LiveQaAudit(){
     "window.mwsF1GetScreenStateV185?.()==='SETUP'",
     "window.mwsF1ForceFinishRecoveryG?.()===true",
     "window.__mwsF1RacingV292==='phase292-f1-r17-integrated-desktop-qa'",
+    "window.__mwsF1RacingV295==='phase295-f1-final-regression-gate'",
+    "window.mwsF1QaFinalRegressionV295?.()",
     "window.mwsF1QaFinalDesktopV292?.()",
     "f1RacingFinishOverlayV291",
     "window.mwsF1GetScreenStateV185?.()==='RACE'",
