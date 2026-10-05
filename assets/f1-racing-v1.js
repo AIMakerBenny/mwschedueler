@@ -1179,11 +1179,18 @@ function qaBattleLinksV256(){
   if(raceMotionV189.vehicles.length<2)return {allPass:false,reason:'need-live-field'};
   const attacker=raceMotionV189.vehicles[0],target=raceMotionV189.vehicles[1];
   if(!attacker.renderPointV216||!target.renderPointV216)return {allPass:false,reason:'need-render-points'};
-  const saved={battleState:attacker.battleState,battleTargetId:attacker.battleTargetId,targetState:target.battleState,targetTargetId:target.battleTargetId};
+  const saved={
+    battleState:attacker.battleState,battleTargetId:attacker.battleTargetId,
+    targetState:target.battleState,targetTargetId:target.battleTargetId,
+    attackerPoint:{...attacker.renderPointV216},targetPoint:{...target.renderPointV216}
+  };
   let observed={};
   try{
     attacker.battleState='SIDE_BY_SIDE';attacker.battleTargetId=String(target.id);
     target.battleState='FOLLOWING';target.battleTargetId='';
+    const baseX=Number(attacker.renderPointV216.x)||500,baseY=Number(attacker.renderPointV216.y)||300;
+    attacker.renderPointV216={x:baseX,y:baseY};
+    target.renderPointV216={x:baseX+72,y:baseY+18};
     const synced=syncBattleLinksV256();
     const group=document.querySelector('.f1-racing-battle-links-v256');
     const node=[...(group?.children||[])].find(child=>String(child.dataset?.attackerIdV256||'')===String(attacker.id));
@@ -1206,6 +1213,7 @@ function qaBattleLinksV256(){
   }finally{
     attacker.battleState=saved.battleState;attacker.battleTargetId=saved.battleTargetId;
     target.battleState=saved.targetState;target.battleTargetId=saved.targetTargetId;
+    attacker.renderPointV216=saved.attackerPoint;target.renderPointV216=saved.targetPoint;
     syncBattleLinksV256();
   }
   const allPass=observed.synced?.count===1&&observed.attackerId===String(attacker.id)&&observed.targetId===String(target.id)&&observed.state==='SIDE_BY_SIDE'&&observed.length>4&&observed.length<=BATTLE_LINK_MAX_LENGTH_V256+.5&&observed.arrowPoints.split(' ').length===3&&observed.arrowWidth>0&&observed.arrowHeight>0&&observed.lineAnimation.includes('f1BattleLinkFlowV256');
