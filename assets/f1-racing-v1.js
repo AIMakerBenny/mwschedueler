@@ -5167,7 +5167,7 @@ function raceCameraFocusV216(mode=raceCameraV216.mode){
 function updateAutoRaceCameraV216(immediate=false){
   if(raceCameraV216.mode==='MANUAL')return false;
   const focus=raceCameraFocusV216(raceCameraV216.mode);if(!focus)return false;
-  if(raceCameraV216.userZoomLockedV268&&raceCameraV216.mode!=='FULL')focus.zoom=raceCameraV216.userZoomV268;
+  if(raceCameraV216.userZoomLockedV268)focus.zoom=raceCameraV216.userZoomV268;
   return applyRaceCameraV216(focus,!immediate);
 }
 function getRaceCameraStateV216(){return {...raceCameraV216}}
