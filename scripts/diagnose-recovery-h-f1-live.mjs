@@ -348,6 +348,12 @@ try{
     manualStart.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='RACE','Explicit grid start click did not enter RACE');
     await raf();
+    window.mwsF1SyncTrackRankingV284?.(true);await raf();
+    const rankingQa302=window.mwsF1QaTrackRankingFlipStatusV302?.();
+    assert(rankingQa302?.allPass===true,'Phase 302 live ranking FLIP/status QA failed: '+JSON.stringify(rankingQa302));
+    const rankingRows302=[...document.querySelectorAll('#f1RacingTrackRankingV284 .f1-racing-track-ranking-row-v284')];
+    assert(rankingRows302.length>=2&&rankingRows302.every(row=>Boolean(row.dataset.driverId)&&Number(row.dataset.statusCount||0)<=2),'Phase 302 live ranking keyed/status rows invalid');
+    assert(new Set(rankingRows302.map(row=>row.dataset.driverId)).size===rankingRows302.length,'Phase 302 live ranking row keys are not unique');
     const cadenceQa281=window.mwsF1QaDialogueCadenceV281?.();
     assert(cadenceQa281?.allPass===true,'Phase 281 dialogue cadence QA failed: '+JSON.stringify(cadenceQa281));
     assert(cadenceQa281?.budgetBlocked===true&&Number(cadenceQa281?.config?.maxGroupsPerWindow)<=4,'Phase 281 dialogue window budget failed: '+JSON.stringify(cadenceQa281));
