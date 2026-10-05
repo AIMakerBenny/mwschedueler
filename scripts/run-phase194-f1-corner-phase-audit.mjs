@@ -22,6 +22,7 @@ export function runPhase194F1CornerPhaseAudit(){
     "root.__mwsF1TrackCornerMetaV194='brake-turn-apex-exit-v1';"
   ])if(!track.includes(token))issues.push('Phase 194 track corner metadata missing: '+token);
 
+  const phase270=geometry.includes("root.__mwsF1CornerDynamicsV270='direction-split-exit-recovery-v1';");
   for(const token of [
     'function targetKphAtProgress(track,progress){',
     'function classifyCornerBySpeed(apexKph){',
@@ -38,11 +39,11 @@ export function runPhase194F1CornerPhaseAudit(){
     'apexProgress,',
     'exitProgress,',
     'function cornerPhaseAtProgress(geometry,progress){',
-    "phase:'APPROACH'",
-    "phase:'BRAKING'",
-    "phase:'TURN_IN'",
-    "phase:'APEX'",
-    "phase:'EXIT'",
+    ...(phase270?["phase='APPROACH'"]:["phase:'APPROACH'"]),
+    ...(phase270?["phase='BRAKING'"]:["phase:'BRAKING'"]),
+    ...(phase270?["phase='TURN_IN'"]:["phase:'TURN_IN'"]),
+    ...(phase270?["phase='APEX'"]:["phase:'APEX'"]),
+    ...(phase270?["phase='EXIT'"]:["phase:'EXIT'"]),
     'root.mwsBuildF1CornerPhasesV194=buildCornerPhases;',
     'root.mwsF1CornerPhaseAtProgressV194=cornerPhaseAtProgress;',
     "root.__mwsF1TrackCornerPhasesV194='approach-brake-turn-apex-exit-v1';"
