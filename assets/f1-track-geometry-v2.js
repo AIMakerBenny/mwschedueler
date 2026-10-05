@@ -49,7 +49,26 @@ function detectCorners(track,samples){
     }
   }
   if(start>=0)groups.push([start,lastHot]);
-  return groups.filter(([a,b])=>b-a+1>=minSamples).map(function([a,b],idx){
+  const directional=[];
+  for(const [a,b] of groups){
+    let segStart=a;
+    let sign=Math.sign(Number(samples[a]?.curvatureRadPerMeter)||0)||1;
+    for(let i=a+1;i<=b;i++){
+      const curvature=Number(samples[i]?.curvatureRadPerMeter)||0;
+      const nextSign=Math.sign(curvature)||sign;
+      if(nextSign===sign||Math.abs(curvature)<threshold*1.05)continue;
+      const confirmA=Number(samples[Math.min(b,i+1)]?.curvatureRadPerMeter)||0;
+      const confirmed=Math.sign(confirmA)===nextSign||i===b;
+      const leftLength=i-segStart,rightLength=b-i+1;
+      if(confirmed&&leftLength>=minSamples&&rightLength>=minSamples){
+        directional.push([segStart,i-1]);
+        segStart=i;
+        sign=nextSign;
+      }
+    }
+    directional.push([segStart,b]);
+  }
+  return directional.filter(([a,b])=>b-a+1>=minSamples).map(function([a,b],idx){
     let apex=a;
     for(let i=a+1;i<=b;i++)if(Math.abs(samples[i].curvatureRadPerMeter)>Math.abs(samples[apex].curvatureRadPerMeter))apex=i;
     const signed=samples.slice(a,b+1).reduce((sum,s)=>sum+s.curvatureRadPerMeter,0);
@@ -163,6 +182,28 @@ function cornerPhaseAtProgress(geometry,progress){
   }
   return null;
 }
+function alignedDistanceForCornerV270(track,corner,progress){
+  const length=Math.max(1,Number(track?.lengthMeters)||1);
+  let here=normalizeProgress(progress)*length;
+  const start=Number(corner?.approachDistanceMeters);
+  if(Number.isFinite(start)){while(here<start)here+=length;while(here-length>=start)here-=length}
+  return here;
+}
+function exitRawLimitV270(track,geometry,sample,baseLimit,curveLimit,maxKph){
+  const phaseInfo=cornerPhaseAtProgress(geometry,sample?.progress);
+  if(phaseInfo?.phase!=='EXIT'||!phaseInfo.corner)return baseLimit;
+  const corner=phaseInfo.corner;
+  const here=alignedDistanceForCornerV270(track,corner,sample.progress);
+  const apexWindow=Math.max(5,Number(corner.lengthMeters||40)*.18);
+  const exitStart=Math.min(Number(corner.exitDistanceMeters),Number(corner.apexDistanceMeters)+apexWindow);
+  const ratio=clamp((here-exitStart)/Math.max(1,Number(corner.exitDistanceMeters)-exitStart),0,1);
+  const eased=ratio*ratio*(3-2*ratio);
+  const apex=Math.max(corner.cornerClass==='hairpin'?72:corner.cornerClass==='slow'?92:0,Number(corner.referenceApexKph)||baseLimit);
+  const afterProgress=normalizeProgress(Number(corner.exitProgress)+Math.max(.006,105/Math.max(1,Number(track.lengthMeters)||1)));
+  const nextTarget=Math.max(apex+24,targetKphAtProgress(track,afterProgress));
+  const recovery=apex+(nextTarget-apex)*eased;
+  return Math.min(maxKph,curveLimit,Math.max(baseLimit,recovery));
+}
 function buildSpeedProfile(track,geometry){
   if(!track||!geometry?.samples?.length)return {...geometry,speedProfile:[]};
   const samples=geometry.samples;
@@ -178,7 +219,8 @@ function buildSpeedProfile(track,geometry){
     const curveLimit=curvature>0.00001
       ?Math.min(maxKph,Math.max(70,Math.sqrt(25/curvature)*3.6))
       :maxKph;
-    return Math.min(maxKph,zoneLimit,curveLimit);
+    const baseLimit=Math.min(maxKph,zoneLimit,curveLimit);
+    return exitRawLimitV270(track,geometry,sample,baseLimit,curveLimit,maxKph);
   });
   const speed=raw.slice();
   for(let pass=0;pass<iterations;pass++){
@@ -256,4 +298,5 @@ root.__mwsF1TrackGeometryV193='svg-sampling-curvature-corners-v1';
 root.__mwsF1TrackCornerPhasesV194='approach-brake-turn-apex-exit-v1';
 root.__mwsF1SpeedProfileV195='backward-brake-forward-accel-v1';
 root.__mwsF1RecoveryL='curvature-weighted-speed-v1';
+root.__mwsF1CornerDynamicsV270='direction-split-exit-recovery-v1';
 })(typeof window!=='undefined'?window:globalThis);
