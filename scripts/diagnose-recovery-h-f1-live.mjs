@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase272Ready=false;
+  let phase273Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase272Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV272==='phase272-random-seeded-starting-grid'","Phase 272 runtime readiness"));
-    if(phase272Ready)break;
+    phase273Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV273==='phase273-starting-grid-card-shuffle-reveal'","Phase 273 runtime readiness"));
+    if(phase273Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v272=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v273=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase272Ready)throw new Error('Phase 272 runtime did not propagate to Recovery H browser');
+  if(!phase273Ready)throw new Error('Phase 273 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -244,6 +244,13 @@ try{
     const snapshot260=window.mwsF1GetActiveRaceSnapshotV187?.();
     assert(Number(snapshot260?.totalLaps)===17,'Phase 260 race snapshot did not retain custom laps: '+JSON.stringify(snapshot260?.totalLaps));
     assert(String(document.getElementById('f1RacingGridLapsRecoveryM')?.textContent||'').includes('17'),'Phase 260 grid lap count does not match snapshot');
+    const initialReveal273=window.mwsF1GetStartingGridRevealStateV273?.();
+    const initialStart273=document.getElementById('f1RacingGridStartRecoveryM');
+    if(initialReveal273?.revealing)assert(initialStart273?.disabled===true,'Phase 273 start button unlocked before reveal completion');
+    assert(await window.mwsF1WaitGridRevealV273?.(8000)===true,'Phase 273 reveal did not finish');
+    const revealQa273=window.mwsF1QaStartingGridRevealV273?.();
+    assert(revealQa273?.allPass===true,'Phase 273 starting grid reveal QA failed: '+JSON.stringify(revealQa273));
+    assert(initialStart273?.disabled===false&&getComputedStyle(initialStart273).visibility!=='hidden','Phase 273 start button did not unlock after reveal');
     const gridQa272=window.mwsF1QaRandomStartingGridV272?.();
     assert(gridQa272?.allPass===true,'Phase 272 random starting grid QA failed: '+JSON.stringify(gridQa272));
     const gridBefore272=window.mwsF1GetActiveRaceSnapshotV187?.();
@@ -254,6 +261,10 @@ try{
     const shuffle272=document.getElementById('f1RacingGridShuffleV272');
     assert(shuffle272,'Phase 272 reshuffle button missing');
     shuffle272.click();await raf();
+    const reshuffleReveal273=window.mwsF1GetStartingGridRevealStateV273?.();
+    assert(reshuffleReveal273?.revealing===true,'Phase 273 reshuffle did not start reveal animation');
+    assert(document.getElementById('f1RacingGridStartRecoveryM')?.disabled===true,'Phase 273 start button unlocked before reveal completion');
+    assert(await window.mwsF1WaitGridRevealV273?.(8000)===true,'Phase 273 reshuffle reveal did not finish');
     const gridAfter272=window.mwsF1GetActiveRaceSnapshotV187?.();
     const orderAfter272=(gridAfter272?.drivers||[]).map(row=>String(row.contactId));
     assert(String(gridAfter272?.createdAt)===String(gridBefore272?.createdAt),'Phase 272 reshuffle replaced race snapshot identity');
@@ -764,6 +775,7 @@ try{
     assert(window.mwsF1StartRaceFromSetupV187?.()===true,'Second race preparation failed');
     await sleep(1200);await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='GRID','Second race started before explicit grid click');
+    assert(await window.mwsF1WaitGridRevealV273?.(8000)===true,'Phase 273 second-race reveal did not finish');
     document.getElementById('f1RacingGridStartRecoveryM')?.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='RACE','Second explicit start did not reach RACE');
     const phase259NextRaceLayout=window.mwsF1GetWorkspaceLayoutRecoveryE?.();
@@ -787,6 +799,7 @@ try{
     document.getElementById('f1RacingResultNewRaceRecoveryG')?.click();
     await sleep(1200);await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='GRID','Same-settings new race auto-started before explicit click');
+    assert(await window.mwsF1WaitGridRevealV273?.(8000)===true,'Phase 273 same-settings reveal did not finish');
     document.getElementById('f1RacingGridStartRecoveryM')?.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='RACE','Same-settings explicit start did not reach RACE');
     const afterNewRaceIds=window.mwsF1GetSelectedContactIdsV181?.()||[];
@@ -879,6 +892,7 @@ try{
     window.mwsF1SetLapCountV260?.(5);
     assert(window.mwsF1StartRaceFromSetupV187?.()===true,'Phase 267 QHD race preparation failed');
     await new Promise(r=>setTimeout(r,1200));await raf();
+    assert(await window.mwsF1WaitGridRevealV273?.(8000)===true,'Phase 273 QHD reveal did not finish');
     document.getElementById('f1RacingGridStartRecoveryM')?.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='RACE','Phase 267 QHD race did not start');
     const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
