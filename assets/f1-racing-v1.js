@@ -82,6 +82,8 @@ const VERSION252='phase252-spectator-race-highlights';
 const VERSION253='phase253-live-timing-race-status';
 const VERSION254='phase254-live-marker-position-tag';
 const VERSION255='phase255-race-headline-summary';
+const VERSION256='phase256-live-battle-link';
+const BATTLE_LINK_MAX_LENGTH_V256=88;
 const F1_WORKSPACE_LAYOUT_VERSION_V249=6;
 const RACE_PLAYBACK_BASE_V247=2;
 const engineQaV240={active:false};
@@ -1095,6 +1097,118 @@ function qaSpectatorHighlightsV252(){
     syncSpectatorHighlightsV252();
   }
   const allPass=observed.rowBattle==='1'&&observed.rowAttempt==='1'&&observed.rowPass==='1'&&observed.markerBattle&&observed.markerAttempt&&observed.markerPass&&observed.bestFastest&&observed.fastestRow==='1'&&observed.up?.label==='▲3'&&observed.down?.label==='▼3'&&observed.positionLabel==='▲3'&&observed.positionTrend==='up'&&observed.battleAnimation.includes('f1BattlePulseV252')&&observed.overtakeAnimation.includes('f1OvertakePulseV252')&&observed.fastestAfter.includes('FL');
+  return {...observed,allPass};
+}
+
+function battleLinkSegmentV256(attacker,target){
+  const a=attacker?.renderPointV216,b=target?.renderPointV216;
+  if(!a||!b)return null;
+  const dx=Number(b.x)-Number(a.x),dy=Number(b.y)-Number(a.y);
+  const distance=Math.hypot(dx,dy);
+  if(!(distance>6))return null;
+  const ux=dx/distance,uy=dy/distance;
+  const startPad=Math.min(18,distance*.22),endPad=Math.min(20,distance*.22);
+  const available=Math.max(0,distance-startPad-endPad);
+  const length=Math.min(BATTLE_LINK_MAX_LENGTH_V256,available);
+  if(!(length>4))return null;
+  const x1=Number(a.x)+ux*startPad,y1=Number(a.y)+uy*startPad;
+  const x2=x1+ux*length,y2=y1+uy*length;
+  return {x1,y1,x2,y2,length,distance,ux,uy,clipped:available>BATTLE_LINK_MAX_LENGTH_V256};
+}
+function ensureBattleLinkLayerV256(){
+  const layer=document.getElementById('f1RacingRaceVehicleLayerV188');
+  if(!layer)return null;
+  let links=layer.querySelector(':scope > .f1-racing-battle-links-v256');
+  if(!links){
+    links=svgNodeV183('g',{class:'f1-racing-battle-links-v256','aria-hidden':'true'});
+    layer.insertBefore(links,layer.firstChild);
+  }
+  return links;
+}
+function syncBattleLinksV256(){
+  const group=ensureBattleLinkLayerV256();
+  if(!group)return {count:0,links:[]};
+  const byId=new Map(raceMotionV189.vehicles.map(vehicle=>[String(vehicle.id),vehicle]));
+  const activeKeys=new Set(),rows=[];
+  for(const attacker of raceMotionV189.vehicles){
+    const state=String(attacker?.battleState||'FOLLOWING');
+    const targetId=String(attacker?.battleTargetId||'');
+    if(!isBattleVisualStateV252(state)||!targetId)continue;
+    const target=byId.get(targetId);
+    if(!target||target===attacker)continue;
+    const pair=[String(attacker.id),String(target.id)].sort().join('::');
+    if(activeKeys.has(pair))continue;
+    const segment=battleLinkSegmentV256(attacker,target);
+    if(!segment)continue;
+    activeKeys.add(pair);
+    let node=[...group.children].find(child=>String(child.dataset?.battlePairV256||'')===pair);
+    if(!node){
+      node=svgNodeV183('g',{class:'f1-racing-battle-link-v256','data-battle-pair-v256':pair});
+      node.append(
+        svgNodeV183('line',{class:'battle-link-line-v256'}),
+        svgNodeV183('polygon',{class:'battle-link-arrow-v256'})
+      );
+      group.appendChild(node);
+    }
+    node.dataset.attackerIdV256=String(attacker.id);
+    node.dataset.targetIdV256=String(target.id);
+    node.dataset.battleStateV256=state;
+    node.dataset.clippedV256=segment.clipped?'1':'0';
+    node.style.setProperty('--battle-link-color-v256',String(attacker.driverColorV216||'#ffd166'));
+    const line=node.querySelector('.battle-link-line-v256');
+    if(line){
+      line.setAttribute('x1',segment.x1.toFixed(2));line.setAttribute('y1',segment.y1.toFixed(2));
+      line.setAttribute('x2',segment.x2.toFixed(2));line.setAttribute('y2',segment.y2.toFixed(2));
+    }
+    const scale=raceMarkerScaleV245(raceCameraV216.zoom);
+    const arrowLength=9*scale,arrowWidth=4.5*scale;
+    const bx=segment.x2-segment.ux*arrowLength,by=segment.y2-segment.uy*arrowLength;
+    const nx=-segment.uy,ny=segment.ux;
+    const p1=segment.x2.toFixed(2)+','+segment.y2.toFixed(2);
+    const p2=(bx+nx*arrowWidth).toFixed(2)+','+(by+ny*arrowWidth).toFixed(2);
+    const p3=(bx-nx*arrowWidth).toFixed(2)+','+(by-ny*arrowWidth).toFixed(2);
+    const arrow=node.querySelector('.battle-link-arrow-v256');
+    if(arrow)arrow.setAttribute('points',[p1,p2,p3].join(' '));
+    rows.push({pair,attackerId:String(attacker.id),targetId:String(target.id),state,length:Number(segment.length.toFixed(2)),clipped:segment.clipped});
+  }
+  [...group.children].forEach(node=>{if(!activeKeys.has(String(node.dataset?.battlePairV256||'')))node.remove()});
+  group.dataset.activeLinksV256=String(rows.length);
+  return {count:rows.length,links:rows};
+}
+function qaBattleLinksV256(){
+  if(raceMotionV189.vehicles.length<2)return {allPass:false,reason:'need-live-field'};
+  const attacker=raceMotionV189.vehicles[0],target=raceMotionV189.vehicles[1];
+  if(!attacker.renderPointV216||!target.renderPointV216)return {allPass:false,reason:'need-render-points'};
+  const saved={battleState:attacker.battleState,battleTargetId:attacker.battleTargetId,targetState:target.battleState,targetTargetId:target.battleTargetId};
+  let observed={};
+  try{
+    attacker.battleState='SIDE_BY_SIDE';attacker.battleTargetId=String(target.id);
+    target.battleState='FOLLOWING';target.battleTargetId='';
+    const synced=syncBattleLinksV256();
+    const group=document.querySelector('.f1-racing-battle-links-v256');
+    const node=[...(group?.children||[])].find(child=>String(child.dataset?.attackerIdV256||'')===String(attacker.id));
+    const line=node?.querySelector('.battle-link-line-v256'),arrow=node?.querySelector('.battle-link-arrow-v256');
+    const x1=Number(line?.getAttribute('x1')),y1=Number(line?.getAttribute('y1')),x2=Number(line?.getAttribute('x2')),y2=Number(line?.getAttribute('y2'));
+    const length=Math.hypot(x2-x1,y2-y1);
+    const arrowRect=arrow?.getBoundingClientRect();
+    observed={
+      synced,
+      pair:String(node?.dataset?.battlePairV256||''),
+      attackerId:String(node?.dataset?.attackerIdV256||''),
+      targetId:String(node?.dataset?.targetIdV256||''),
+      state:String(node?.dataset?.battleStateV256||''),
+      length:Number(length.toFixed(2)),
+      arrowPoints:String(arrow?.getAttribute('points')||''),
+      arrowWidth:Number(arrowRect?.width||0),
+      arrowHeight:Number(arrowRect?.height||0),
+      lineAnimation:String(line?getComputedStyle(line).animationName:'')
+    };
+  }finally{
+    attacker.battleState=saved.battleState;attacker.battleTargetId=saved.battleTargetId;
+    target.battleState=saved.targetState;target.battleTargetId=saved.targetTargetId;
+    syncBattleLinksV256();
+  }
+  const allPass=observed.synced?.count===1&&observed.attackerId===String(attacker.id)&&observed.targetId===String(target.id)&&observed.state==='SIDE_BY_SIDE'&&observed.length>4&&observed.length<=BATTLE_LINK_MAX_LENGTH_V256+.5&&observed.arrowPoints.split(' ').length===3&&observed.arrowWidth>0&&observed.arrowHeight>0&&observed.lineAnimation.includes('f1BattleLinkFlowV256');
   return {...observed,allPass};
 }
 
@@ -2538,6 +2652,7 @@ function syncRaceMarkerScaleV245(){
   }
   if(labelsChanged)layoutRaceVehicleLabelsV228(rendered);
   syncTrackAnnotationScaleV245();
+  syncBattleLinksV256();
   return scale;
 }
 function syncTrackAnnotationScaleV245(){
@@ -2958,6 +3073,7 @@ function renderRaceVehiclesV189(){
     syncVehicleSpectatorClassesV252(vehicle,marker);
     rendered.push({vehicle,marker,point});
   });
+  syncBattleLinksV256();
   layoutRaceVehicleLabelsV228(rendered);
   updateAutoRaceCameraV216(false);
   return true;
@@ -5449,6 +5565,9 @@ window.mwsF1RaceHeadlineStateV255=raceHeadlineStateV255;
 window.mwsF1SyncRaceHeadlineV255=syncRaceHeadlineV255;
 window.mwsF1QaRaceHeadlineV255=qaRaceHeadlineV255;
 window.__mwsF1RacingV255=VERSION255;
+window.mwsF1SyncBattleLinksV256=syncBattleLinksV256;
+window.mwsF1QaBattleLinksV256=qaBattleLinksV256;
+window.__mwsF1RacingV256=VERSION256;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
