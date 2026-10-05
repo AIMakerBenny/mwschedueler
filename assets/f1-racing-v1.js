@@ -99,11 +99,11 @@ const VERSION269='phase269-lateral-velocity-acceleration-smoothing';
 const VERSION270='phase270-f1-corner-line-exit-acceleration';
 const VERSION271='phase271-track-boundary-wall-riding-fix';
 const TRACK_BOUNDARY_V271=Object.freeze({
-  carHalfWidthMeters:1.0,safetyMarginMeters:.35,edgeStartRatio:.82,
+  carHalfWidthMeters:.85,safetyMarginMeters:.20,edgeStartRatio:.90,
   edgeMinSpeedFactor:.90,offTrackSpeedFactor:.76
 });
 const CORNER_DYNAMICS_V270=Object.freeze({
-  outsideFraction:.68,apexFraction:.76,exitOutsideFraction:.58,
+  outsideFraction:.62,apexFraction:.68,exitOutsideFraction:.55,
   exitAccelerationMultiplier:1.38,exitTargetLiftKph:24,exitLookAheadMeters:105,
   hairpinMinApexKph:72,slowMinApexKph:92,sCurveMinRecoveryKph:112
 });
@@ -3670,10 +3670,10 @@ function lineOffsetMetersV197(vehicle){
   const corner=phaseInfo?.corner;
   const direction=corner?.direction==='right'?-1:1;
   const mode=F1_LINE_MODES_V197.includes(vehicle?.racingLineMode)?vehicle.racingLineMode:'IDEAL';
-  if(mode==='ATTACK_INSIDE')return direction*usable*.68;
-  if(mode==='DEFENSIVE_INSIDE')return direction*usable*.52;
-  if(mode==='OUTSIDE')return -direction*usable*.68;
-  if(mode==='PIT_LINE')return -usable*.86;
+  if(mode==='ATTACK_INSIDE')return direction*usable*.62;
+  if(mode==='DEFENSIVE_INSIDE')return direction*usable*.50;
+  if(mode==='OUTSIDE')return -direction*usable*.62;
+  if(mode==='PIT_LINE')return -usable*.82;
   return idealRacingLineOffsetV270(vehicle,usable,phaseInfo);
 }
 function phaseSpeedTargetV270(vehicle,targetData,phaseInfo=getCornerPhaseAtProgressV194(vehicle?.progress)){
