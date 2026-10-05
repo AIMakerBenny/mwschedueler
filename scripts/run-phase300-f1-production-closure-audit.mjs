@@ -33,9 +33,10 @@ export function runPhase300F1ProductionClosureAudit(){
 
   for(const token of [
     "import {runPhase300F1ProductionClosureAudit} from './run-phase300-f1-production-closure-audit.mjs';",
-    'export function runPhase300FullIntegrationAudit()',
-    'runCurrentFullIntegrationAudit(){return runPhase300FullIntegrationAudit();}'
+    'export function runPhase300FullIntegrationAudit()'
   ])if(!cumulative.includes(token))issues.push('Phase 300 cumulative chain missing: '+token);
+  const currentMatch=cumulative.match(/runCurrentFullIntegrationAudit\(\)\{return runPhase(\d+)FullIntegrationAudit\(\);\}/);
+  if(!currentMatch||Number(currentMatch[1])<300)issues.push('Phase 300 cumulative current entrypoint is missing or regressed below Phase 300');
 
   if(cumulative.includes('\\nimport ')||cumulative.includes('};\\nexport function'))issues.push('Phase 300 cumulative audit contains literal \\n sequence');
 
