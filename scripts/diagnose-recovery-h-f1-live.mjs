@@ -466,7 +466,7 @@ try{
     // Phase 245: measure rendered sizes, not just the inverse-scale helper.
     window.mwsF1SetRaceCameraModeV216('FULL');await raf();
     const raceSvg245=document.getElementById('f1RacingRaceTrackSvgV188');
-    const sizeSelectors245=['.car-core','.car-number-v232','.car-label','.car-profile-ring-v250','.f1-racing-track-annotation-v183.pit circle','.f1-racing-track-annotation-v183.pit text','.f1-racing-track-indicator-v246 rect','.finish-label'];
+    const sizeSelectors245=['.car-ring','.car-number-v232','.car-label','.car-profile-embedded-v257','.f1-racing-track-annotation-v183.pit circle','.f1-racing-track-annotation-v183.pit text','.f1-racing-track-indicator-v246 rect','.finish-label'];
     const measure245=()=>sizeSelectors245.map(selector=>{
       const node=raceSvg245.querySelector(selector),rect=node?.getBoundingClientRect();
       assert(rect&&rect.width>0&&rect.height>0,'Phase 245 missing rendered marker: '+selector);
