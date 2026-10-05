@@ -102,6 +102,7 @@ const VERSION272='phase272-random-seeded-starting-grid';
 const VERSION273='phase273-starting-grid-card-shuffle-reveal';
 const VERSION274='phase274-field-compression-leader-pressure';
 const VERSION275='phase275-chase-burst';
+const VERSION276='phase276-live-conversation-stack-ui';
 const TRACK_BOUNDARY_V271=Object.freeze({
   carHalfWidthMeters:.85,safetyMarginMeters:.20,edgeStartRatio:.90,
   edgeMinSpeedFactor:.90,offTrackSpeedFactor:.76
@@ -5065,6 +5066,113 @@ function bindRaceLifecycleRecoveryG(){
   }
 }
 
+
+const LIVE_CONVERSATION_CONFIG_V276=Object.freeze({
+  maxVisible:5,minVisible:3,minDurationMs:3000,maxDurationMs:6000,baseDurationMs:3000,charDurationMs:55,
+  entryMs:260,exitMs:360,groupHoldMs:520
+});
+const liveConversationStateV276={entries:[],sequence:0,lastSide:'right',groupTimer:0,clearTimer:0,lastAppendAt:0,exiting:false};
+function liveConversationDurationV276(text=''){
+  const length=String(text||'').trim().length;
+  return Math.max(LIVE_CONVERSATION_CONFIG_V276.minDurationMs,Math.min(LIVE_CONVERSATION_CONFIG_V276.maxDurationMs,LIVE_CONVERSATION_CONFIG_V276.baseDurationMs+length*LIVE_CONVERSATION_CONFIG_V276.charDurationMs));
+}
+function clearLiveConversationTimersV276(){
+  if(liveConversationStateV276.groupTimer)clearTimeout(liveConversationStateV276.groupTimer);
+  if(liveConversationStateV276.clearTimer)clearTimeout(liveConversationStateV276.clearTimer);
+  liveConversationStateV276.groupTimer=0;liveConversationStateV276.clearTimer=0;
+}
+function resetLiveConversationV276(){
+  clearLiveConversationTimersV276();
+  liveConversationStateV276.entries=[];liveConversationStateV276.sequence=0;liveConversationStateV276.lastSide='right';liveConversationStateV276.lastAppendAt=0;liveConversationStateV276.exiting=false;
+  const root=document.getElementById('f1RacingConversationStackV276');
+  if(root){root.classList.remove('active','group-exit-v276');root.replaceChildren()}
+  return true;
+}
+function conversationSpeakerSideV276(requested=''){
+  const normalized=String(requested||'').toLowerCase();
+  if(normalized==='left'||normalized==='right'){
+    liveConversationStateV276.lastSide=normalized;return normalized;
+  }
+  const next=liveConversationStateV276.lastSide==='left'?'right':'left';
+  liveConversationStateV276.lastSide=next;return next;
+}
+function renderLiveConversationV276(){
+  const root=document.getElementById('f1RacingConversationStackV276');
+  if(!root)return false;
+  const rows=liveConversationStateV276.entries.slice(-LIVE_CONVERSATION_CONFIG_V276.maxVisible);
+  root.innerHTML=rows.map(row=>
+    '<article class="f1-racing-conversation-bubble-v276 '+row.side+'" data-conversation-id="'+row.id+'" data-conversation-side="'+row.side+'">'+
+      '<div class="speaker">['+escapeHtml(row.speaker)+']</div>'+
+      '<div class="text">'+escapeHtml(row.text)+'</div>'+
+    '</article>'
+  ).join('');
+  root.classList.toggle('active',rows.length>0);
+  root.classList.remove('group-exit-v276');
+  requestAnimationFrame(()=>{
+    root.querySelectorAll('.f1-racing-conversation-bubble-v276').forEach((node,index)=>{
+      node.style.setProperty('--conversation-index-v276',String(index));
+      node.classList.add('visible-v276');
+    });
+  });
+  return true;
+}
+function scheduleLiveConversationExitV276(durationMs){
+  clearLiveConversationTimersV276();
+  const root=document.getElementById('f1RacingConversationStackV276');
+  const delay=Math.max(LIVE_CONVERSATION_CONFIG_V276.minDurationMs,Math.min(LIVE_CONVERSATION_CONFIG_V276.maxDurationMs,Number(durationMs)||LIVE_CONVERSATION_CONFIG_V276.minDurationMs));
+  liveConversationStateV276.groupTimer=setTimeout(()=>{
+    liveConversationStateV276.groupTimer=0;liveConversationStateV276.exiting=true;
+    if(root)root.classList.add('group-exit-v276');
+    liveConversationStateV276.clearTimer=setTimeout(()=>{
+      liveConversationStateV276.clearTimer=0;liveConversationStateV276.entries=[];liveConversationStateV276.exiting=false;
+      if(root){root.classList.remove('active','group-exit-v276');root.replaceChildren()}
+    },LIVE_CONVERSATION_CONFIG_V276.exitMs+LIVE_CONVERSATION_CONFIG_V276.groupHoldMs);
+  },delay);
+  return delay;
+}
+function appendLiveConversationV276(speaker,text,options={}){
+  const root=document.getElementById('f1RacingConversationStackV276');
+  const cleanSpeaker=String(speaker||'DRIVER').trim(),cleanText=String(text||'').trim();
+  if(!root||!cleanText)return false;
+  const side=conversationSpeakerSideV276(options.side);
+  const durationMs=liveConversationDurationV276(cleanText);
+  const row={id:'conv-'+(++liveConversationStateV276.sequence),speaker:cleanSpeaker,text:cleanText,side,durationMs,simTimeMs:Number(simClockV192.simTimeMs)||0};
+  liveConversationStateV276.entries.push(row);
+  if(liveConversationStateV276.entries.length>LIVE_CONVERSATION_CONFIG_V276.maxVisible)liveConversationStateV276.entries.splice(0,liveConversationStateV276.entries.length-LIVE_CONVERSATION_CONFIG_V276.maxVisible);
+  liveConversationStateV276.lastAppendAt=performance.now?.()||Date.now();liveConversationStateV276.exiting=false;
+  renderLiveConversationV276();
+  scheduleLiveConversationExitV276(durationMs);
+  return row;
+}
+function getLiveConversationStateV276(){
+  return {entries:liveConversationStateV276.entries.map(row=>({...row})),sequence:liveConversationStateV276.sequence,lastSide:liveConversationStateV276.lastSide,
+    exiting:Boolean(liveConversationStateV276.exiting),groupTimerActive:Boolean(liveConversationStateV276.groupTimer),clearTimerActive:Boolean(liveConversationStateV276.clearTimer)};
+}
+function qaLiveConversationStackV276(){
+  const root=document.getElementById('f1RacingConversationStackV276');
+  if(!root)return {allPass:false,reason:'conversation-root-missing'};
+  resetLiveConversationV276();
+  const shortDuration=liveConversationDurationV276('짧은 대사');
+  const longDuration=liveConversationDurationV276('아주 긴 대사가 화면에 표시될 때 읽을 시간을 충분히 확보하기 위한 테스트 문장입니다. 조금 더 길게 이어집니다.');
+  const a=appendLiveConversationV276('QA A','첫 번째 메시지');
+  const b=appendLiveConversationV276('QA B','두 번째 메시지');
+  appendLiveConversationV276('QA C','세 번째 메시지');
+  appendLiveConversationV276('QA D','네 번째 메시지');
+  appendLiveConversationV276('QA E','다섯 번째 메시지');
+  appendLiveConversationV276('QA F','여섯 번째 메시지');
+  const nodes=Array.from(root.querySelectorAll('.f1-racing-conversation-bubble-v276'));
+  const sides=nodes.map(node=>String(node.dataset.conversationSide||''));
+  const alternating=sides.every((side,index)=>index===0||side!==sides[index-1]);
+  const countBound=nodes.length<=LIVE_CONVERSATION_CONFIG_V276.maxVisible&&nodes.length>=LIVE_CONVERSATION_CONFIG_V276.minVisible;
+  const bracketNames=nodes.every(node=>/^\[[^\]]+\]$/.test(String(node.querySelector('.speaker')?.textContent||'')));
+  const active=root.classList.contains('active');
+  const durationBound=shortDuration>=3000&&shortDuration<=6000&&longDuration>=shortDuration&&longDuration<=6000;
+  const result={shortDuration,longDuration,count:nodes.length,sides,alternating,countBound,bracketNames,active,first:a,second:b,config:{...LIVE_CONVERSATION_CONFIG_V276},
+    allPass:Boolean(a&&b)&&alternating&&countBound&&bracketNames&&active&&durationBound};
+  resetLiveConversationV276();
+  return result;
+}
+
 const commentaryStateV219={
   initialized:false,lastPollSimMs:-Infinity,lastLeaderId:'',lastFlag:'GREEN',lastLeaderLap:0,
   vehicle:new Map(),sequence:0
@@ -5917,6 +6025,7 @@ function renderRaceControlV188(){
   bindSimulationControlsV192();
   resetRaceCommentaryV219();
   resetCommentaryFlowV222();
+  resetLiveConversationV276();
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='레이스 관제';
   return true;
 }
@@ -7119,6 +7228,10 @@ window.mwsF1QaLeaderPressureV274=qaLeaderPressureV274;
 window.mwsF1UpdateChaseBurstV275=updateChaseBurstV275;
 window.mwsF1GetChaseBurstStatesV275=getChaseBurstStatesV275;
 window.mwsF1QaChaseBurstV275=qaChaseBurstV275;
+window.mwsF1AppendLiveConversationV276=appendLiveConversationV276;
+window.mwsF1ResetLiveConversationV276=resetLiveConversationV276;
+window.mwsF1GetLiveConversationStateV276=getLiveConversationStateV276;
+window.mwsF1QaLiveConversationStackV276=qaLiveConversationStackV276;
 window.mwsF1GetLeaderPressureFieldV274=function(){return {...leaderPressureFieldV274,history:leaderPressureFieldV274.history.map(row=>({...row}))}};
 window.mwsF1GetStartingGridRevealStateV273=function(){return {...gridRevealStateV273,timers:gridRevealStateV273.timers.length}};
 window.mwsF1CancelRaceRecoveryC=cancelRaceToSetupRecoveryC;
@@ -7440,6 +7553,7 @@ window.__mwsF1RacingV272=VERSION272;
 window.__mwsF1RacingV273=VERSION273;
 window.__mwsF1RacingV274=VERSION274;
 window.__mwsF1RacingV275=VERSION275;
+window.__mwsF1RacingV276=VERSION276;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
