@@ -4946,6 +4946,7 @@ function buildRaceResultRecoveryG(){
       image:String(vehicle.driver?.image||''),
       gridPosition:Number(vehicle.driver?.gridPosition)||index+1,
       passCompletedCount:Number(vehicle.passCompletedCount)||0,
+      pitStopCount:Number(vehicle.pitStopCount)||0,
       finishedAtSimMs:Number(vehicle.finishedAtSimMs)||simClockV192.simTimeMs,
       tyreCompound:String(vehicle.tyreCompound||'MEDIUM'),
       raceProgress:Number(vehicle.raceProgress)||0,
