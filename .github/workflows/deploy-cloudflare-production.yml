@@ -225,6 +225,20 @@ jobs:
           node --check scripts/run-phase280-f1-event-dialogue-coverage-audit.mjs
           node --check scripts/run-phase281-f1-dialogue-cadence-audit.mjs
           node --check scripts/run-phase282-f1-dialogue-long-run-desktop-audit.mjs
+          node --check scripts/run-phase283-f1-general-overtake-defence-audit.mjs
+          node --check scripts/run-phase284-f1-track-ranking-overlay-audit.mjs
+          node --check scripts/run-phase285-f1-zoom-linked-marker-scale-audit.mjs
+          node --check scripts/run-phase286-f1-auto-camera-jitter-audit.mjs
+          node --check scripts/run-phase287-f1-compact-race-shell-audit.mjs
+          node --check scripts/run-phase288-f1-layout-reset-viewport-fit-audit.mjs
+          node --check scripts/run-phase289-f1-prerace-screen-compression-audit.mjs
+          node --check scripts/run-phase290-f1-starting-grid-shuffle-smoothness-audit.mjs
+          node --check scripts/run-phase291-f1-finish-podium-result-overlay-audit.mjs
+          node --check scripts/run-phase292-f1-integrated-desktop-qa-audit.mjs
+          node --check scripts/run-phase293-f1-production-audit-gate.mjs
+          node --check assets/f1-racing-r283-r287.js
+          node --check assets/f1-racing-r288-r290.js
+          node --check assets/f1-racing-r291-r295.js
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
