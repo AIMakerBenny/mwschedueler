@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase276Ready=false;
+  let phase277Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase276Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV276==='phase276-live-conversation-stack-ui'","Phase 276 runtime readiness"));
-    if(phase276Ready)break;
+    phase277Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV277==='phase277-character-dialogue-engine'","Phase 277 runtime readiness"));
+    if(phase277Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v276=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v277=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase276Ready)throw new Error('Phase 276 runtime did not propagate to Recovery H browser');
+  if(!phase277Ready)throw new Error('Phase 277 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -280,6 +280,10 @@ try{
     manualStart.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='RACE','Explicit grid start click did not enter RACE');
     await raf();
+    const dialogueQa277=window.mwsF1QaCharacterDialogueEngineV277?.();
+    assert(dialogueQa277?.allPass===true,'Phase 277 character dialogue QA failed: '+JSON.stringify(dialogueQa277));
+    assert(dialogueQa277?.roleCoverage===true&&dialogueQa277?.poolsReady===true&&dialogueQa277?.nonRepeat===true,'Phase 277 event-role mapping incomplete: '+JSON.stringify(dialogueQa277));
+    assert(dialogueQa277?.bracketInfo===true&&String(dialogueQa277?.info||'').startsWith('['),'Phase 277 commentary bracket format failed: '+JSON.stringify(dialogueQa277));
     const conversationQa276=window.mwsF1QaLiveConversationStackV276?.();
     assert(conversationQa276?.allPass===true,'Phase 276 conversation stack QA failed: '+JSON.stringify(conversationQa276));
     assert(conversationQa276?.alternating===true&&conversationQa276?.sides?.length>=3,'Phase 276 conversation side alternation failed: '+JSON.stringify(conversationQa276));
