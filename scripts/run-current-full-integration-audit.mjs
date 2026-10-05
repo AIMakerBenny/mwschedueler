@@ -289,6 +289,7 @@ import {runPhase290F1StartingGridShuffleSmoothnessAudit} from './run-phase290-f1
 import {runPhase291F1FinishPodiumResultOverlayAudit} from './run-phase291-f1-finish-podium-result-overlay-audit.mjs';
 import {runPhase292F1IntegratedDesktopQaAudit} from './run-phase292-f1-integrated-desktop-qa-audit.mjs';
 import {runPhase293F1ProductionAuditGate} from './run-phase293-f1-production-audit-gate.mjs';
+import {runPhase294F1RecoveryHFinalOverlayAudit} from './run-phase294-f1-recovery-h-final-overlay-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2635,5 +2636,6 @@ export function runPhase290FullIntegrationAudit(){const previous=runPhase289Full
 export function runPhase291FullIntegrationAudit(){const previous=runPhase290FullIntegrationAudit(),current=runPhase291F1FinishPodiumResultOverlayAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 291: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 291: '+x)];return {phase:291,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase292FullIntegrationAudit(){const previous=runPhase291FullIntegrationAudit(),current=runPhase292F1IntegratedDesktopQaAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 292: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 292: '+x)];return {phase:292,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase293FullIntegrationAudit(){const previous=runPhase292FullIntegrationAudit(),current=runPhase293F1ProductionAuditGate();const issues=[...previous.issues,...current.issues.map(x=>'Phase 293: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 293: '+x)];return {phase:293,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase293FullIntegrationAudit();}
+export function runPhase294FullIntegrationAudit(){const previous=runPhase293FullIntegrationAudit(),current=runPhase294F1RecoveryHFinalOverlayAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 294: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 294: '+x)];return {phase:294,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase294FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
