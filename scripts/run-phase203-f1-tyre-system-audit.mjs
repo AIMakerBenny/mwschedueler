@@ -8,6 +8,7 @@ export function runPhase203F1TyreSystemAudit(){
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
   if(!index.includes('assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203'))issues.push('Phase 203 racing asset link missing');
+  const phase270=racing.includes("const VERSION270='phase270-f1-corner-line-exit-acceleration';");
   for(const token of [
     "const VERSION203='phase203-tyre-system';",
     "SOFT:Object.freeze({code:'S'",
@@ -24,7 +25,7 @@ export function runPhase203F1TyreSystemAudit(){
     "tyreCompound:'MEDIUM'",
     "const tyreCornerFactor=(phase==='TURN_IN'||phase==='APEX'||phase==='EXIT')?tyreGrip:1;",
     'let brakeBase=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20)*tyreGrip*incidentState.brakeFactor;',
-    "const tractionGrip=phase==='EXIT'?tyreGrip:1;",
+    ...(phase270?["const tractionGrip=phase==='EXIT'?Math.max(.92,tyreGrip):1;","const exitAcceleration=phase==='EXIT'?CORNER_DYNAMICS_V270.exitAccelerationMultiplier:1;"]:["const tractionGrip=phase==='EXIT'?tyreGrip:1;"]),
     'updateTyreSystemV203(vehicle,stepMs,phase);',
     "row.dataset.tyreWear=(Number(vehicle.tyreWear)||0).toFixed(3);",
     "if(tyre)tyre.textContent=tyreCompoundSpecV203(vehicle.tyreCompound).code;",
