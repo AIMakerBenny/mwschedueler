@@ -1053,6 +1053,7 @@ function syncSpectatorHighlightsV252(){
 function qaSpectatorHighlightsV252(){
   if(raceMotionV189.vehicles.length<2)return {allPass:false,reason:'need-live-field'};
   const first=raceMotionV189.vehicles[0],second=raceMotionV189.vehicles[1];
+  const firstRow=findTimingRowV190(first.id);
   const saved=[
     {vehicle:first,battleState:first.battleState,bestLapMs:first.bestLapMs,flash:first.spectatorPassFlashUntilV252},
     {vehicle:second,battleState:second.battleState,bestLapMs:second.bestLapMs,flash:second.spectatorPassFlashUntilV252}
@@ -1064,13 +1065,20 @@ function qaSpectatorHighlightsV252(){
     first.bestLapMs=60000;
     second.bestLapMs=62000;
     const synced=syncSpectatorHighlightsV252();
-    const row=findTimingRowV190(first.id),marker=first.marker,best=row?.querySelector('.best');
+    const row=firstRow,marker=first.marker,best=row?.querySelector('.best'),pos=row?.querySelector('.pos');
     const up=positionDeltaStateV252({driver:{gridPosition:5}},2),down=positionDeltaStateV252({driver:{gridPosition:1}},4);
+    syncPositionDeltaV252(row,{driver:{gridPosition:5}},2);
+    const halo=marker?.querySelector('.car-halo'),ring=marker?.querySelector('.car-ring');
     observed={
       synced,rowBattle:row?.dataset.battleVisualV252,rowAttempt:row?.dataset.overtakeAttemptV252,rowPass:row?.dataset.passFlashV252,
       markerBattle:Boolean(marker?.classList.contains('battle-pulse-v252')),markerAttempt:Boolean(marker?.classList.contains('overtake-attempt-v252')),
       markerPass:Boolean(marker?.classList.contains('pass-flash-v252')),bestFastest:Boolean(best?.classList.contains('is-fastest-v252')),
-      fastestRow:row?.dataset.fastestLapV252,up,down
+      fastestRow:row?.dataset.fastestLapV252,up,down,
+      positionLabel:String(pos?.dataset.positionDeltaV252||''),
+      positionTrend:String(pos?.dataset.positionTrendV252||''),
+      battleAnimation:String(halo?getComputedStyle(halo).animationName:''),
+      overtakeAnimation:String(ring?getComputedStyle(ring).animationName:''),
+      fastestAfter:String(best?getComputedStyle(best,'::after').content:'')
     };
   }finally{
     for(const item of saved){
@@ -1078,9 +1086,10 @@ function qaSpectatorHighlightsV252(){
       item.vehicle.bestLapMs=item.bestLapMs;
       item.vehicle.spectatorPassFlashUntilV252=item.flash;
     }
+    if(firstRow)syncPositionDeltaV252(firstRow,first,Number(first.position)||1);
     syncSpectatorHighlightsV252();
   }
-  const allPass=observed.rowBattle==='1'&&observed.rowAttempt==='1'&&observed.rowPass==='1'&&observed.markerBattle&&observed.markerAttempt&&observed.markerPass&&observed.bestFastest&&observed.fastestRow==='1'&&observed.up?.label==='▲3'&&observed.down?.label==='▼3';
+  const allPass=observed.rowBattle==='1'&&observed.rowAttempt==='1'&&observed.rowPass==='1'&&observed.markerBattle&&observed.markerAttempt&&observed.markerPass&&observed.bestFastest&&observed.fastestRow==='1'&&observed.up?.label==='▲3'&&observed.down?.label==='▼3'&&observed.positionLabel==='▲3'&&observed.positionTrend==='up'&&observed.battleAnimation.includes('f1BattlePulseV252')&&observed.overtakeAnimation.includes('f1OvertakePulseV252')&&observed.fastestAfter.includes('FL');
   return {...observed,allPass};
 }
 
