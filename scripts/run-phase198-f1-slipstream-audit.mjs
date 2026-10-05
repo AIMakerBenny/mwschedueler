@@ -17,7 +17,7 @@ export function runPhase198F1SlipstreamAudit(){
     'function updateSlipstreamStatesV198(){',
     'updateSlipstreamStatesV198();',
     'const dragRelief=Math.max(0,Number(vehicle.slipstreamDragReduction)||0);',
-    'const straightCapBase=(Number(track?.geometry?.maxStraightKph)||335)+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;',
+    'towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph',
     "row.dataset.slipstream=(Number(vehicle.slipstreamStrength)||0).toFixed(3);",
     'window.mwsF1ResolveSlipstreamV198=resolveSlipstreamV198;',
     'window.__mwsF1RacingV198=VERSION198;'
