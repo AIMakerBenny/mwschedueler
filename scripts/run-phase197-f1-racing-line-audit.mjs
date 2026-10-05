@@ -24,12 +24,22 @@ export function runPhase197F1RacingLineAudit(){
     "if(phaseInfo.phase==='APEX')",
     'function raceLinePointV197(path,progress,offsetMeters){',
     'function setVehicleRacingLineV197(driverId,mode){',
-    'vehicle.lateralOffsetMeters=lineOffsetMetersV197(vehicle)+(Number(vehicle.incidentLateralOffsetMeters)||0);',
-    'const point=raceLinePointV197(path,vehicle.progress,vehicle.lateralOffsetMeters);',
     "marker.dataset.lineMode=vehicle.racingLineMode||'IDEAL';",
     'window.mwsF1SetVehicleRacingLineV197=setVehicleRacingLineV197;',
     'window.__mwsF1RacingV197=VERSION197;'
   ])if(!racing.includes(token))issues.push('Phase 197 racing line runtime missing: '+token);
+
+  const phase258=racing.includes("const VERSION258='phase258-visual-lateral-smoothing';");
+  const renderTokens=phase258?[
+    'function physicalLateralOffsetV258(vehicle){',
+    'return lineOffsetMetersV197(vehicle)+(Number(vehicle?.incidentLateralOffsetMeters)||0);',
+    'const lateralStateV258=updateVisualLateralOffsetV258(vehicle,frameMs,false);',
+    'const point=raceLinePointV197(path,vehicle.progress,lateralStateV258.visual);'
+  ]:[
+    'vehicle.lateralOffsetMeters=lineOffsetMetersV197(vehicle)+(Number(vehicle.incidentLateralOffsetMeters)||0);',
+    'const point=raceLinePointV197(path,vehicle.progress,vehicle.lateralOffsetMeters);'
+  ];
+  for(const token of renderTokens)if(!racing.includes(token))issues.push('Phase 197 racing line render compatibility missing: '+token);
 
   for(const token of ['node --check scripts/run-phase197-f1-racing-line-audit.mjs',"echo '[phase197] F1 racing line and track width'"])if(!workflow.includes(token))issues.push('Phase 197 workflow verification missing: '+token);
   const syntax=spawnSync(process.execPath,['--check','assets/f1-racing-v1.js'],{encoding:'utf8'});
