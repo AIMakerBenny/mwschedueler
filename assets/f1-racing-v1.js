@@ -810,6 +810,7 @@ function applyImmersiveStateV261(active,reason='manual'){
     section.classList.add('f1-racing-immersive-active-v261');
     immersiveStateV261.active=true;
     immersiveStateV261.lastReason=String(reason||'manual');
+    applyWorkspaceLayoutRecoveryE();
     const button=document.getElementById('f1RacingImmersiveV261');
     if(button){button.setAttribute('aria-pressed','true');button.textContent='전체화면 종료'}
     showImmersiveNoticeV261();
@@ -5397,8 +5398,13 @@ function normalizeWorkspaceLayoutRecoveryE(raw){
   }
   const maxIds=Object.keys(result.panels).filter(id=>result.panels[id].maximized);
   maxIds.slice(1).forEach(id=>{result.panels[id].maximized=false});
-  let normalized=workspaceReflowRecoveryI(result);
+  let normalized=cloneWorkspaceLayoutRecoveryE(result);
   let overlaps=workspaceOverlapPairsRecoveryI(normalized);
+  const structuralIssues=rawIssues.filter(reason=>reason!=='legacy-version');
+  if(structuralIssues.length||overlaps.length){
+    normalized=workspaceReflowRecoveryI(result);
+    overlaps=workspaceOverlapPairsRecoveryI(normalized);
+  }
   if(overlaps.length){
     const fallback=cloneWorkspaceLayoutRecoveryE(F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E);
     fallback.version=F1_WORKSPACE_LAYOUT_VERSION_V249;
@@ -5463,6 +5469,17 @@ function checkpointWorkspaceUserDefaultV259(reason='interaction'){
   const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
   if(workspace&&saved)workspace.dataset.userDefaultReasonV259=String(reason||'interaction');
   return saved;
+}
+function qaWorkspaceExactRestoreV269(){
+  const sample={version:F1_WORKSPACE_LAYOUT_VERSION_V249,panels:{
+    track:{x:0,y:0,w:8,h:7,hidden:false,maximized:false,tabGroup:''},
+    timing:{x:8,y:0,w:4,h:3,hidden:false,maximized:false,tabGroup:''},
+    commentary:{x:8,y:3,w:4,h:4,hidden:false,maximized:false,tabGroup:''}
+  },activeTabs:{}};
+  const normalized=normalizeWorkspaceLayoutRecoveryE(sample);
+  const exact=workspaceLayoutSignatureV259(sample)===workspaceLayoutSignatureV259(normalized);
+  const overlaps=workspaceOverlapPairsRecoveryI(normalized);
+  return {exact,overlaps,signature:workspaceLayoutSignatureV259(normalized),allPass:exact&&overlaps.length===0};
 }
 function qaWorkspaceUserDefaultPersistenceV259(){
   if(!workspaceLayoutRecoveryE)readWorkspaceLayoutRecoveryE();
@@ -5593,7 +5610,10 @@ function applyWorkspaceLayoutRecoveryE(){
   }
   const usedRows=workspaceUsedRowsRecoveryK(workspaceLayoutRecoveryE);
   workspace.dataset.usedRows=String(usedRows);
-  if(window.matchMedia?.('(min-width:901px)').matches){
+  workspace.style.setProperty('--f1-workspace-used-rows',String(usedRows));
+  if(document.body.classList.contains('f1-racing-immersive')){
+    workspace.style.removeProperty('min-height');
+  }else if(window.matchMedia?.('(min-width:901px)').matches){
     const rowHeight=workspaceGridRowHeightRecoveryJ(workspace);
     const gap=parseFloat(getComputedStyle(workspace).gap)||0;
     workspace.style.setProperty('min-height',Math.ceil(usedRows*rowHeight+Math.max(0,usedRows-1)*gap)+'px','important');
@@ -6600,6 +6620,7 @@ window.__mwsF1RacingV267=VERSION267;
 window.mwsF1QaAutoFollowWheelZoomV268=qaAutoFollowWheelZoomV268;
 window.__mwsF1RacingV268=VERSION268;
 window.mwsF1QaLateralDynamicsV269=qaLateralDynamicsV269;
+window.mwsF1QaWorkspaceExactRestoreV269=qaWorkspaceExactRestoreV269;
 window.__mwsF1RacingV269=VERSION269;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
