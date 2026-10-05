@@ -191,6 +191,7 @@ jobs:
           node --check scripts/run-phase246-f1-track-presentation-audit.mjs
           node --check scripts/run-phase247-f1-playback-speed-audit.mjs
           node --check scripts/run-phase248-f1-lap-timing-audit.mjs
+          node --check scripts/run-phase249-f1-panel-removal-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -972,9 +973,14 @@ jobs:
           grep -Fq 'id="f1RacingTimingListV188"' /tmp/index.html
           grep -Fq 'id="f1RacingRaceTrackSvgV188"' /tmp/index.html
           grep -Fq 'id="f1RacingCommentaryLogV188"' /tmp/index.html
-          grep -Fq 'id="f1RacingTeamRadioV188"' /tmp/index.html
-          grep -Fq 'id="f1RacingSpeedTrapV188"' /tmp/index.html
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV188=VERSION188;' > /tmp/f1-racing-v1-phase188.js
+          if grep -Fq 'window.__mwsF1RacingV249=VERSION249;' /tmp/f1-racing-v1-phase188.js; then
+            ! grep -Fq 'id="f1RacingTeamRadioV188"' /tmp/index.html
+            ! grep -Fq 'id="f1RacingSpeedTrapV188"' /tmp/index.html
+          else
+            grep -Fq 'id="f1RacingTeamRadioV188"' /tmp/index.html
+            grep -Fq 'id="f1RacingSpeedTrapV188"' /tmp/index.html
+          fi
           retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-race-control-v188{' > /tmp/f1-racing-v1-phase188.css
           node --check /tmp/f1-racing-v1-phase188.js
           grep -Fq 'function renderRaceControlV188(){' /tmp/f1-racing-v1-phase188.js
@@ -2357,6 +2363,17 @@ jobs:
           grep -Fq "type.startsWith('image/')" src/cf-v120-friend.js
           grep -Fq "url.pathname==='/api/soop/categories'" src/cf-v120-friend.js
           grep -Fq "url.pathname==='/majoku-castle'||url.pathname==='/majoku-castle.html'" src/cf-v111-entry.js
+
+          echo '[phase249] F1 obsolete side panels removed with workspace migration'
+          ! grep -Fq 'id="f1RacingTeamRadioV188"' /tmp/index.html
+          ! grep -Fq 'id="f1RacingSpeedTrapV188"' /tmp/index.html
+          ! grep -Fq 'class="f1-racing-race-side-v188"' /tmp/index.html
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV249=VERSION249;' > /tmp/f1-racing-v1-phase249.js
+          node --check /tmp/f1-racing-v1-phase249.js
+          grep -Fq 'function qaWorkspacePanelMigrationV249(){' /tmp/f1-racing-v1-phase249.js
+          grep -Fq "reasons.push((id==='radio'||id==='speed'?'obsolete-panel:':'unknown-panel:')+id);" /tmp/f1-racing-v1-phase249.js
+          retry_contains "$BASE/assets/f1-track-v1.js?deploy=$GITHUB_SHA" 'speedTraps:Object.freeze(track.speedTraps.map' > /tmp/f1-track-v1-phase249.js
+          grep -Fq 'speedTraps:[' /tmp/f1-track-v1-phase249.js
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
