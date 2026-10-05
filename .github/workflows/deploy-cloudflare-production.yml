@@ -209,6 +209,7 @@ jobs:
           node --check scripts/run-phase264-f1-live-overtake-cutin-audit.mjs
           node --check scripts/run-phase265-f1-grand-prix-podium-audit.mjs
           node --check scripts/run-phase266-f1-track-card-circuit-redesign-audit.mjs
+          node --check scripts/run-phase267-f1-integrated-spectator-desktop-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -2539,6 +2540,13 @@ jobs:
           retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-track-card-silhouette-v266 path' > /tmp/f1-racing-v1-phase266.css
           grep -Fq 'stroke-width:5.2' /tmp/f1-racing-v1-phase266.css
           retry_contains "$BASE/?phase266=$GITHUB_SHA" 'recovery=N1&phase=266&zoomfix=1' > /tmp/index-phase266.html
+
+          echo '[phase267] F1 integrated spectator desktop QA'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV267=VERSION267;' > /tmp/f1-racing-v1-phase267.js
+          node --check /tmp/f1-racing-v1-phase267.js
+          grep -Fq 'function qaIntegratedSpectatorDesktopV267(){' /tmp/f1-racing-v1-phase267.js
+          grep -Fq "Object.freeze({id:'12x20'" /tmp/f1-racing-v1-phase267.js
+          retry_contains "$BASE/?phase267=$GITHUB_SHA" 'recovery=N1&phase=267&zoomfix=1' > /tmp/index-phase267.html
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
