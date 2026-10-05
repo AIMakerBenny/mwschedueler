@@ -103,6 +103,7 @@ const VERSION273='phase273-starting-grid-card-shuffle-reveal';
 const VERSION274='phase274-field-compression-leader-pressure';
 const VERSION275='phase275-chase-burst';
 const VERSION276='phase276-live-conversation-stack-ui';
+const VERSION277='phase277-character-dialogue-engine';
 const TRACK_BOUNDARY_V271=Object.freeze({
   carHalfWidthMeters:.85,safetyMarginMeters:.20,edgeStartRatio:.90,
   edgeMinSpeedFactor:.90,offTrackSpeedFactor:.76
@@ -181,6 +182,7 @@ function formatNarrativeV263(template,context={}){
   return String(template||'').replaceAll('{driver}',String(context.driver||'드라이버')).replaceAll('{target}',String(context.target||'앞차')).replaceAll('{position}',String(context.position||'순위')).replaceAll('{corner}',String(context.corner||'코너'));
 }
 function emitRaceNarrativeV263(event,vehicle,target,options={}){
+  if(typeof appendRaceInfoV277==='function')return appendRaceInfoV277(event,vehicle,target,options);
   const template=narrativeTemplateV263(event,vehicle,target);
   if(!template)return false;
   const text=formatNarrativeV263(template.text,{driver:vehicle?.driver?.name||options.driver||'드라이버',target:target?.driver?.name||options.target||'앞차',position:options.position||narrativePositionLabelV263(vehicle),corner:options.corner||narrativeCornerLabelV263(vehicle)});
@@ -2813,6 +2815,7 @@ function triggerDrivingIncidentV204(vehicle,type,severity=.7,forced=false){
   vehicle.lastIncidentType=key;
   vehicle.lastIncidentSimMs=simClockV192.simTimeMs;
   vehicle.lastIncidentForced=Boolean(forced);
+  emitCharacterDialogueEventV277('MISTAKE',vehicle,dialogueFollowerV277(vehicle),{cooldownMs:2200});
   return {type:key,severity:s,forced:Boolean(forced)};
 }
 function updateDrivingIncidentsV204(vehicle,stepMs,phase,controls={}){
@@ -3338,6 +3341,8 @@ function setPassStateV208(vehicle,next,targetId='',reason=''){
     if(next==='PASS_COMPLETED')vehicle.spectatorPassFlashUntilV252=(Number(simClockV192.simTimeMs)||0)+1400;
     if(next==='PASS_FAILED')vehicle.passFailedCount=(Number(vehicle.passFailedCount)||0)+1;
     enqueueLiveCutinV264(vehicle,next,targetId);
+    const dialogueTarget=raceMotionV189.vehicles.find(row=>String(row.id)===String(targetId||''))||null;
+    handlePassDialogueV277(vehicle,dialogueTarget,current,next);
   }
   if(targetId)vehicle.battleTargetId=String(targetId);
   vehicle.battleSpeedBiasKph=battleBiasKphV208(vehicle,vehicle.battleState);
@@ -3646,6 +3651,7 @@ function triggerLeaderPressureEventV274(vehicle,context,phase){
   if(!engineQaV240.active){
     const target=context.targetVehicle;
     emitRaceNarrativeV263('MISTAKE',vehicle,target,{cooldownMs:4200});
+    emitCharacterDialogueEventV277('MISTAKE',vehicle,target,{cooldownMs:2600});
   }
   return true;
 }
@@ -3784,6 +3790,7 @@ function triggerChaseBurstV275(vehicle,target,reason='chase'){
   vehicle.chaseBurstTargetIdV275=String(target?.id||'');
   vehicle.chaseBurstLastReasonV275=String(reason||'chase');
   vehicle.chaseBurstLastStartSimMsV275=now;
+  emitCharacterDialogueEventV277('BURST',vehicle,target,{cooldownMs:0});
   return true;
 }
 function chaseBurstEligibilityV275(vehicle,standing,target){
@@ -5173,6 +5180,164 @@ function qaLiveConversationStackV276(){
   return result;
 }
 
+
+const CHARACTER_DIALOGUE_EVENT_ROLES_V277=Object.freeze({
+  ATTACK:Object.freeze(['ATTACKER','DEFENDER']),
+  MISTAKE:Object.freeze(['MISTAKE_DRIVER','OPPORTUNIST']),
+  PASS_SUCCESS:Object.freeze(['WINNER','PASSED']),
+  PASS_FAILED:Object.freeze(['ATTACKER_FAIL','DEFENDER_SUCCESS']),
+  COUNTER_ATTACK:Object.freeze(['REATTACKER','DEFENDER']),
+  BURST:Object.freeze(['BURST_DRIVER','DEFENDER'])
+});
+const CHARACTER_DIALOGUE_POOL_V277=Object.freeze({
+  ATTACKER:Object.freeze(['빈틈 보인다. 들어간다.','지금이다. 옆으로 간다.','이번 코너에서 승부 본다.','라인 열렸다. 간다.']),
+  DEFENDER:Object.freeze(['여긴 못 지나간다.','안쪽은 내가 막는다.','쉽게는 안 내준다.','라인 지킨다.']),
+  MISTAKE_DRIVER:Object.freeze(['잠깐, 차가 흔들렸다.','잡았다. 아직 괜찮아.','실수했다. 바로 수습한다.','리듬 다시 잡는다.']),
+  OPPORTUNIST:Object.freeze(['봤다. 지금 붙는다.','빈틈 생겼다. 놓치지 않는다.','앞차 흔들렸다. 간다.','기회다. 거리를 줄인다.']),
+  WINNER:Object.freeze(['잡았다. 앞으로 간다.','통했다. 자리 가져간다.','넘었다. 이제 내 자리다.','좋아. 추월 끝냈다.']),
+  PASSED:Object.freeze(['아직 안 끝났다.','바로 다시 붙는다.','놓쳤다. 다시 간다.','다음 기회는 내가 잡는다.']),
+  ATTACKER_FAIL:Object.freeze(['막혔다. 다시 노린다.','이번엔 안 됐다. 다음 코너다.','한 번 더 간다.','아직 끝난 거 아니다.']),
+  DEFENDER_SUCCESS:Object.freeze(['막았다. 계속 간다.','자리 지켰다.','이번 건 내 거다.','라인 그대로 지킨다.']),
+  REATTACKER:Object.freeze(['바로 되받아간다.','이번엔 내가 다시 들어간다.','놓치자마자 다시 붙는다.','반격 간다.']),
+  BURST_DRIVER:Object.freeze(['지금 전부 쓴다.','잡으러 간다.','이번 기회는 놓치지 않는다.','한 번에 거리를 지운다.'])
+});
+const characterDialogueStateV277={counter:0,recentKeys:[],recentLimit:18,lastEventByPair:new Map(),history:[]};
+function resetCharacterDialogueV277(){
+  characterDialogueStateV277.counter=0;characterDialogueStateV277.recentKeys=[];characterDialogueStateV277.lastEventByPair=new Map();characterDialogueStateV277.history=[];
+  return true;
+}
+function characterDialogueSpeakerV277(vehicle){return String(vehicle?.driver?.name||'드라이버').trim()||'드라이버'}
+function dialogueFollowerV277(vehicle){
+  const standings=computeRaceStandingsV191();
+  const index=standings.findIndex(row=>row.vehicle===vehicle);
+  return index>=0?standings[index+1]?.vehicle||null:null;
+}
+function dialogueTemplateV277(role,vehicle,target,event){
+  const pool=CHARACTER_DIALOGUE_POOL_V277[String(role||'')]||[];
+  if(!pool.length)return null;
+  const seed=hashDriverV189([String(activeRaceSnapshotV187?.createdAt||'race'),String(event||''),String(role||''),String(vehicle?.id||''),String(target?.id||''),String(characterDialogueStateV277.counter++)].join('|'))||1;
+  const start=Math.abs(seed)%pool.length;
+  for(let offset=0;offset<pool.length;offset++){
+    const index=(start+offset)%pool.length,key=String(role)+':'+index;
+    if(!characterDialogueStateV277.recentKeys.includes(key)){
+      characterDialogueStateV277.recentKeys.push(key);
+      if(characterDialogueStateV277.recentKeys.length>characterDialogueStateV277.recentLimit)characterDialogueStateV277.recentKeys.shift();
+      return {key,text:pool[index]};
+    }
+  }
+  return {key:String(role)+':'+start,text:pool[start]};
+}
+function dialoguePairCooldownAllowsV277(event,vehicle,target,cooldownMs=1700){
+  const now=Number(simClockV192.simTimeMs)||0;
+  const key=[String(event||''),String(vehicle?.id||''),String(target?.id||'')].join('|');
+  const previous=Number(characterDialogueStateV277.lastEventByPair.get(key));
+  if(Number.isFinite(previous)&&now-previous<Math.max(0,Number(cooldownMs)||0))return false;
+  characterDialogueStateV277.lastEventByPair.set(key,now);return true;
+}
+function pushCharacterDialogueLineV277(role,vehicle,target,event,side){
+  if(!vehicle)return false;
+  const picked=dialogueTemplateV277(role,vehicle,target,event);if(!picked)return false;
+  const row=appendLiveConversationV276(characterDialogueSpeakerV277(vehicle),picked.text,{side});
+  if(!row)return false;
+  characterDialogueStateV277.history.push({event:String(event||''),role:String(role||''),speakerId:String(vehicle.id||''),speaker:characterDialogueSpeakerV277(vehicle),targetId:String(target?.id||''),text:picked.text,side:String(row.side||''),simTimeMs:Number(simClockV192.simTimeMs)||0});
+  if(characterDialogueStateV277.history.length>60)characterDialogueStateV277.history.splice(0,characterDialogueStateV277.history.length-60);
+  return row;
+}
+function emitCharacterDialogueEventV277(event,vehicle,target,options={}){
+  const type=String(event||'').toUpperCase();
+  if(engineQaV240.active||f1ScreenStateV185!=='RACE'||!vehicle||!CHARACTER_DIALOGUE_EVENT_ROLES_V277[type])return false;
+  const cooldownMs=Number.isFinite(Number(options.cooldownMs))?Number(options.cooldownMs):1700;
+  if(!dialoguePairCooldownAllowsV277(type,vehicle,target,cooldownMs))return false;
+  const roles=CHARACTER_DIALOGUE_EVENT_ROLES_V277[type];
+  const output=[];
+  if(type==='MISTAKE'){
+    output.push(pushCharacterDialogueLineV277('MISTAKE_DRIVER',vehicle,target,type,'left'));
+    const follower=target||dialogueFollowerV277(vehicle);
+    if(follower)output.push(pushCharacterDialogueLineV277('OPPORTUNIST',follower,vehicle,type,'right'));
+  }else{
+    const firstRole=roles[0],secondRole=roles[1];
+    output.push(pushCharacterDialogueLineV277(firstRole,vehicle,target,type,'left'));
+    if(target&&secondRole)output.push(pushCharacterDialogueLineV277(secondRole,target,vehicle,type,'right'));
+  }
+  return output.filter(Boolean);
+}
+function handlePassDialogueV277(vehicle,target,previousState,nextState){
+  const next=String(nextState||'');
+  if(next==='PULLING_OUT'&&previousState!==next)return emitCharacterDialogueEventV277('ATTACK',vehicle,target,{cooldownMs:2400});
+  if(next==='PASS_COMPLETED'&&previousState!==next)return emitCharacterDialogueEventV277('PASS_SUCCESS',vehicle,target,{cooldownMs:0});
+  if(next==='PASS_FAILED'&&previousState!==next)return emitCharacterDialogueEventV277('PASS_FAILED',vehicle,target,{cooldownMs:0});
+  if(next==='COUNTER_ATTACK'&&previousState!==next)return emitCharacterDialogueEventV277('COUNTER_ATTACK',vehicle,target,{cooldownMs:1800});
+  return false;
+}
+function raceInfoGapV277(vehicle,target){
+  const trackLength=Math.max(1,Number(activeRaceSnapshotV187?.track?.lengthMeters)||1);
+  if(vehicle&&target){
+    const meters=Math.max(0,(Number(target.raceProgress)||0)-(Number(vehicle.raceProgress)||0))*trackLength;
+    const speed=Math.max(80,Number(target.speedKph)||Number(vehicle.speedKph)||180);
+    return Math.max(0,meters/(speed/3.6));
+  }
+  return Math.max(0,Number(vehicle?.intervalSeconds)||0);
+}
+function raceInfoTextV277(event,vehicle,target,options={}){
+  const name=characterDialogueSpeakerV277(vehicle),targetName=characterDialogueSpeakerV277(target);
+  const prefix='['+name+'] ';
+  const gap=raceInfoGapV277(vehicle,target);
+  const position=narrativePositionLabelV263(vehicle);
+  const corner=narrativeCornerLabelV263(vehicle);
+  const map={
+    APPROACH:prefix+(target?'['+targetName+']와 '+gap.toFixed(2)+'초 차이로 접근 중입니다.':'앞차와의 격차를 줄이고 있습니다.'),
+    PRESSURE:prefix+(target?'['+targetName+'] 뒤에서 '+gap.toFixed(2)+'초 차이로 압박 중입니다.':'앞차를 압박 중입니다.'),
+    OPENING:prefix+(target?'['+targetName+']를 상대로 추월 가능 구간에 진입했습니다.':'추월 가능 구간에 진입했습니다.'),
+    ATTACK:prefix+(target?'['+targetName+']를 상대로 추월 시도를 시작했습니다.':'추월 시도를 시작했습니다.'),
+    SIDE_BY_SIDE:prefix+(target?'['+targetName+']와 나란히 주행 중입니다.':'나란히 주행 중입니다.'),
+    BRAKING:prefix+(target?'['+targetName+']와 '+corner+' 제동 구간에서 경쟁 중입니다.':corner+' 제동 구간에서 경쟁 중입니다.'),
+    CORNER_BATTLE:prefix+(target?'['+targetName+']와 '+corner+'에서 코너 경쟁 중입니다.':corner+'에서 코너 경쟁 중입니다.'),
+    DEFENCE:prefix+(target?'['+targetName+']의 추월 시도를 방어 중입니다.':'방어 주행 중입니다.'),
+    PASS_SUCCESS:prefix+(target?'['+targetName+']를 추월해 '+position+'로 올라섰습니다.':'추월에 성공해 '+position+'입니다.'),
+    PASS_FAILED:prefix+(target?'['+targetName+'] 추월 시도가 실패했습니다.':'추월 시도가 실패했습니다.'),
+    COUNTER_ATTACK:prefix+(target?'['+targetName+']를 상대로 재공격 중입니다.':'재공격 중입니다.'),
+    MISTAKE:prefix+'주행 실수가 발생해 차량을 수습 중입니다.',
+    RECOVERY:prefix+'주행을 정상화하고 페이스를 회복했습니다.',
+    FAST_LAP:prefix+'현재 개인 최고 랩을 기록했습니다.',
+    FINAL_LAP:'마지막 랩에 진입했습니다.',
+    LEADER_BATTLE:prefix+(target?'['+targetName+']와 선두 경쟁 중입니다.':'선두 경쟁 중입니다.'),
+    PIT_TACTIC:prefix+'피트 전략을 준비 중입니다.'
+  };
+  return map[String(event||'')]||prefix+(options.fallback||'경기 상황이 갱신됐습니다.');
+}
+function appendRaceInfoV277(event,vehicle,target,options={}){
+  const text=raceInfoTextV277(event,vehicle,target,options);
+  const type=options.type||(['PIT_TACTIC'].includes(event)?'strategy':['FINAL_LAP','PASS_SUCCESS','FAST_LAP'].includes(event)?'pass':'battle');
+  const signature='v277-info:'+String(event)+':'+String(vehicle?.id||'global')+':'+String(target?.id||'');
+  const cooldown=Number.isFinite(Number(options.cooldownMs))?Number(options.cooldownMs):1800;
+  return appendRaceCommentaryV222(text,type,signature,cooldown);
+}
+function qaCharacterDialogueEngineV277(){
+  const roles=Object.fromEntries(Object.entries(CHARACTER_DIALOGUE_EVENT_ROLES_V277).map(([event,rows])=>[event,[...rows]]));
+  const required=['ATTACK','MISTAKE','PASS_SUCCESS','PASS_FAILED','COUNTER_ATTACK'];
+  const roleCoverage=required.every(event=>Array.isArray(roles[event])&&roles[event].length===2);
+  const poolsReady=Object.values(roles).flat().every(role=>Array.isArray(CHARACTER_DIALOGUE_POOL_V277[role])&&CHARACTER_DIALOGUE_POOL_V277[role].length>=4);
+  const mockA={id:'qa-a',driver:{name:'QA A'},raceProgress:1,progress:.2,speedKph:240};
+  const mockB={id:'qa-b',driver:{name:'QA B'},raceProgress:1.002,progress:.202,speedKph:235};
+  const info=raceInfoTextV277('PASS_SUCCESS',mockA,mockB,{});
+  const bracketInfo=/^\[[^\]]+\]/.test(info)&&info.includes('[QA B]');
+  const a1=dialogueTemplateV277('ATTACKER',mockA,mockB,'ATTACK');
+  const a2=dialogueTemplateV277('ATTACKER',mockA,mockB,'ATTACK');
+  const nonRepeat=Boolean(a1&&a2&&a1.key!==a2.key);
+  const before=characterDialogueStateV277.history.length;
+  const previousScreen=f1ScreenStateV185;
+  let emitted=false;
+  try{
+    f1ScreenStateV185='RACE';
+    const rows=emitCharacterDialogueEventV277('ATTACK',raceMotionV189.vehicles[1]||mockA,raceMotionV189.vehicles[0]||mockB,{cooldownMs:0});
+    emitted=Array.isArray(rows)&&rows.length>=1;
+  }finally{
+    f1ScreenStateV185=previousScreen;
+    resetLiveConversationV276();
+  }
+  return {roles,roleCoverage,poolsReady,bracketInfo,info,nonRepeat,emitted,historyAdded:characterDialogueStateV277.history.length>=before,allPass:roleCoverage&&poolsReady&&bracketInfo&&nonRepeat&&emitted};
+}
+
 const commentaryStateV219={
   initialized:false,lastPollSimMs:-Infinity,lastLeaderId:'',lastFlag:'GREEN',lastLeaderLap:0,
   vehicle:new Map(),sequence:0
@@ -5357,6 +5522,7 @@ function resetRaceCommentaryV219(){
   commentaryReadV226.followTail=true;commentaryReadV226.unread=0;commentaryReadV226.lastTextAt=new Map();
   resetRaceNarrativeV263();
   resetLiveCutinsV264();
+  resetCharacterDialogueV277();
   bindCommentaryReadabilityV226();
   for(const vehicle of raceMotionV189.vehicles)commentaryStateV219.vehicle.set(String(vehicle.id),commentaryVehicleStateV219(vehicle));
   const track=activeRaceSnapshotV187?.track;
@@ -5379,7 +5545,7 @@ function updateRaceCommentaryV219(force=false){
   const standings=computeRaceStandingsV191();
   const leader=standings[0]?.vehicle||null;
   if(leader&&commentaryStateV219.lastLeaderId&&commentaryStateV219.lastLeaderId!==String(leader.id)){
-    const technical=(leader.driver?.name||'드라이버')+'가 선두로 올라섰습니다.';recordTechnicalCommentaryV263(technical,'LEAD_CHANGE');appendRaceCommentaryV219(technical,'lead');
+    const technical='['+(leader.driver?.name||'드라이버')+'] 선두로 올라섰습니다.';recordTechnicalCommentaryV263(technical,'LEAD_CHANGE');appendRaceCommentaryV219(technical,'lead');
   }
   if(leader){
     commentaryStateV219.lastLeaderId=String(leader.id);
@@ -5406,15 +5572,15 @@ function updateRaceCommentaryV219(force=false){
     }
     if(current.pitState!==previous.pitState){
       const pitEvent=pitCommentaryEventV230(previous.pitState,current.pitState);
-      if(pitEvent==='ENTRY')appendRaceCommentaryV219(name+'가 피트로 들어갑니다.','pit');
-      else if(pitEvent==='BOX')appendRaceCommentaryV219(name+'가 피트 스톱을 진행합니다.','pit');
-      else if(pitEvent==='RETURN')appendRaceCommentaryV219(name+'가 피트에서 트랙으로 복귀했습니다.','pit');
+      if(pitEvent==='ENTRY')appendRaceCommentaryV219('['+name+'] 피트로 들어갑니다.','pit');
+      else if(pitEvent==='BOX')appendRaceCommentaryV219('['+name+'] 피트 스톱을 진행합니다.','pit');
+      else if(pitEvent==='RETURN')appendRaceCommentaryV219('['+name+'] 피트에서 트랙으로 복귀했습니다.','pit');
     }
     if(current.incident&&current.incident!==previous.incident){
       const incidentText=incidentCommentaryTextV219(current.incident,name);if(incidentText){recordTechnicalCommentaryV263(incidentText,'MISTAKE');emitRaceNarrativeV263('MISTAKE',vehicle,null,{type:'battle',cooldownMs:0})}
     }
-    if(current.blueFlag&&!previous.blueFlag)appendRaceCommentaryV219(name+'에게 블루 플래그가 제시됐습니다. 선두권 차량에 길을 내줘야 합니다.','flag');
-    if(current.finished&&!previous.finished)appendRaceCommentaryV219(name+'가 '+current.finishPosition+'위로 결승선을 통과했습니다.','finish');
+    if(current.blueFlag&&!previous.blueFlag)appendRaceCommentaryV219('['+name+'] 블루 플래그가 제시됐습니다. 선두권 차량에 길을 내줘야 합니다.','flag');
+    if(current.finished&&!previous.finished)appendRaceCommentaryV219('['+name+'] '+current.finishPosition+'위로 결승선을 통과했습니다.','finish');
     commentaryStateV219.vehicle.set(id,current);
   }
   return true;
@@ -5490,7 +5656,7 @@ function updateRaceNarrativeV222(force=false){
       emitted=emitRaceNarrativeV263('PIT_TACTIC',vehicle,null,{type:'strategy',cooldownMs:1800})||emitted;
     }
     if(current.tyreWear>=0.72&&previous.tyreWear<0.72){
-      emitted=appendRaceCommentaryV222(name+'의 타이어 마모가 커졌습니다. 페이스 관리가 중요해집니다.','strategy','tyre-wear:'+id,30000)||emitted;
+      emitted=appendRaceCommentaryV222('['+name+'] 타이어 마모가 커졌습니다. 페이스 관리가 중요해집니다.','strategy','tyre-wear:'+id,30000)||emitted;
     }
     if(current.battleState!==previous.battleState){
       const target=byId.get(current.battleTargetId);
@@ -5517,11 +5683,11 @@ function updateRaceNarrativeV222(force=false){
       const leaderName=leader.vehicle?.driver?.name||'선두';
       const secondName=second.vehicle?.driver?.name||'2위';
       const message=gap<=1.5
-        ?leaderName+'와 '+secondName+'의 선두 경쟁이 '+gap.toFixed(3)+'초 차이로 매우 가깝습니다.'
-        :leaderName+'가 선두를 달리고 있으며 '+secondName+'와의 격차는 '+gap.toFixed(3)+'초입니다.';
+        ?'['+leaderName+'] ['+secondName+']와 선두 경쟁 중 · 격차 '+gap.toFixed(3)+'초'
+        :'['+leaderName+'] 선두 주행 중 · ['+secondName+']와 격차 '+gap.toFixed(3)+'초';
       emitted=appendRaceCommentaryV222(message,'flow','ambient-lead-gap',10000)||emitted;
     }else if(leader){
-      emitted=appendRaceCommentaryV222((leader.vehicle?.driver?.name||'선두')+'가 현재 레이스를 이끌고 있습니다.','flow','ambient-single-leader',10000)||emitted;
+      emitted=appendRaceCommentaryV222('['+(leader.vehicle?.driver?.name||'선두')+'] 현재 레이스 선두입니다.','flow','ambient-single-leader',10000)||emitted;
     }
   }
   return emitted;
@@ -7232,6 +7398,10 @@ window.mwsF1AppendLiveConversationV276=appendLiveConversationV276;
 window.mwsF1ResetLiveConversationV276=resetLiveConversationV276;
 window.mwsF1GetLiveConversationStateV276=getLiveConversationStateV276;
 window.mwsF1QaLiveConversationStackV276=qaLiveConversationStackV276;
+window.mwsF1EmitCharacterDialogueV277=emitCharacterDialogueEventV277;
+window.mwsF1GetCharacterDialogueHistoryV277=function(){return characterDialogueStateV277.history.map(row=>({...row}))};
+window.mwsF1RaceInfoTextV277=raceInfoTextV277;
+window.mwsF1QaCharacterDialogueEngineV277=qaCharacterDialogueEngineV277;
 window.mwsF1GetLeaderPressureFieldV274=function(){return {...leaderPressureFieldV274,history:leaderPressureFieldV274.history.map(row=>({...row}))}};
 window.mwsF1GetStartingGridRevealStateV273=function(){return {...gridRevealStateV273,timers:gridRevealStateV273.timers.length}};
 window.mwsF1CancelRaceRecoveryC=cancelRaceToSetupRecoveryC;
@@ -7554,6 +7724,7 @@ window.__mwsF1RacingV273=VERSION273;
 window.__mwsF1RacingV274=VERSION274;
 window.__mwsF1RacingV275=VERSION275;
 window.__mwsF1RacingV276=VERSION276;
+window.__mwsF1RacingV277=VERSION277;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
