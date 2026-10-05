@@ -100,6 +100,7 @@ const VERSION270='phase270-f1-corner-line-exit-acceleration';
 const VERSION271='phase271-track-boundary-wall-riding-fix';
 const VERSION272='phase272-random-seeded-starting-grid';
 const VERSION273='phase273-starting-grid-card-shuffle-reveal';
+const VERSION274='phase274-field-compression-leader-pressure';
 const TRACK_BOUNDARY_V271=Object.freeze({
   carHalfWidthMeters:.85,safetyMarginMeters:.20,edgeStartRatio:.90,
   edgeMinSpeedFactor:.90,offTrackSpeedFactor:.76
@@ -3529,6 +3530,217 @@ function qaRaceMomentumV262(){
   return {deterministic,paceRange:RACE_MOMENTUM_CONFIG_V262.paceRange,hiMultiplier,loMultiplier,events:[...RACE_MOMENTUM_EVENTS_V262],allPass:deterministic&&paceBound&&RACE_MOMENTUM_CONFIG_V262.paceRange>=.015&&RACE_MOMENTUM_CONFIG_V262.paceRange<=.025};
 }
 
+
+const LEADER_PRESSURE_CONFIG_V274=Object.freeze({
+  evaluationMs:850,tightFightGapSeconds:1.15,minLeadGapSeconds:1.6,strongLeadGapSeconds:5.5,
+  minLeadDurationMs:10000,fullLeadDurationMs:45000,fieldSplitStartSeconds:6,
+  groupFollowerMaxGapSeconds:5.5,groupPressureScale:.38,maxEventChance:.06,
+  cooldownMinMs:9500,cooldownMaxMs:15500,eventMinMs:480,eventMaxMs:1120,
+  lateRaceStart:.72,lateRaceMinFactor:.42
+});
+const LEADER_PRESSURE_EVENTS_V274=Object.freeze({
+  EARLY_BRAKING:Object.freeze({speedFactor:.965,lateralRatio:.015}),
+  LATE_TURN_IN:Object.freeze({speedFactor:.972,lateralRatio:.045}),
+  MISSED_APEX:Object.freeze({speedFactor:.958,lateralRatio:.055}),
+  STEERING_CORRECTION:Object.freeze({speedFactor:.979,lateralRatio:.035}),
+  SHORT_THROTTLE_LIFT:Object.freeze({speedFactor:.968,lateralRatio:.012})
+});
+const leaderPressureFieldV274={
+  leaderId:'',leaderSinceSimMs:0,lastEvaluationSimMs:0,eventCount:0,lastEvent:null,history:[]
+};
+function resetLeaderPressureFieldV274(){
+  leaderPressureFieldV274.leaderId='';
+  leaderPressureFieldV274.leaderSinceSimMs=Number(simClockV192.simTimeMs)||0;
+  leaderPressureFieldV274.lastEvaluationSimMs=0;
+  leaderPressureFieldV274.eventCount=0;
+  leaderPressureFieldV274.lastEvent=null;
+  leaderPressureFieldV274.history=[];
+  return true;
+}
+function nextLeaderPressureRandomV274(vehicle){
+  let state=(Number(vehicle?.leaderPressureRandomStateV274)>>>0)||1;
+  state^=state<<13;state^=state>>>17;state^=state<<5;state>>>=0;
+  vehicle.leaderPressureRandomStateV274=state||1;
+  return state/4294967296;
+}
+function leaderPressureRaceFractionV274(standings=computeRaceStandingsV191()){
+  const leader=standings?.[0]?.vehicle;
+  const total=Math.max(1,Number(activeRaceSnapshotV187?.totalLaps)||1);
+  return Math.max(0,Math.min(1,(Number(leader?.raceProgress)||0)/total));
+}
+function leaderPressureLargestSplitV274(standings=computeRaceStandingsV191()){
+  return (standings||[]).slice(1).reduce((max,row)=>Math.max(max,Number(row?.intervalSeconds)||0),0);
+}
+function leaderPressureScoreV274({
+  role='NONE',gapBehindSeconds=0,leadDurationMs=0,fieldSplitSeconds=0,raceFraction=0
+}={}){
+  const cfg=LEADER_PRESSURE_CONFIG_V274;
+  const normalizedRole=String(role||'NONE');
+  if(!['LEADER','GROUP_LEADER'].includes(normalizedRole))return {score:0,gapFactor:0,durationFactor:0,fieldFactor:0,lateFactor:1,roleScale:0,tightFight:false};
+  const gap=Math.max(0,Number(gapBehindSeconds)||0);
+  const tightFight=gap<=cfg.tightFightGapSeconds;
+  const gapFactor=tightFight?0:Math.max(0,Math.min(1,(gap-cfg.minLeadGapSeconds)/Math.max(.1,cfg.strongLeadGapSeconds-cfg.minLeadGapSeconds)));
+  const durationFactor=Math.max(0,Math.min(1,(Math.max(0,Number(leadDurationMs)||0)-cfg.minLeadDurationMs)/Math.max(1,cfg.fullLeadDurationMs-cfg.minLeadDurationMs)));
+  const fieldFactor=Math.max(.62,Math.min(1,.62+(Math.max(0,Number(fieldSplitSeconds)||0)/cfg.fieldSplitStartSeconds)*.38));
+  const fraction=Math.max(0,Math.min(1,Number(raceFraction)||0));
+  const lateT=fraction<=cfg.lateRaceStart?0:Math.min(1,(fraction-cfg.lateRaceStart)/Math.max(.01,1-cfg.lateRaceStart));
+  const lateFactor=1-lateT*(1-cfg.lateRaceMinFactor);
+  const roleScale=normalizedRole==='LEADER'?1:cfg.groupPressureScale;
+  const score=Math.max(0,Math.min(1,gapFactor*(.35+.65*durationFactor)*fieldFactor*lateFactor*roleScale));
+  return {score,gapFactor,durationFactor,fieldFactor,lateFactor,roleScale,tightFight};
+}
+function leaderPressureContextV274(vehicle,standings=computeRaceStandingsV191()){
+  const index=(standings||[]).findIndex(row=>row.vehicle===vehicle);
+  if(index<0)return {role:'NONE',score:0,gapBehindSeconds:0,leadDurationMs:0,fieldSplitSeconds:0,raceFraction:0};
+  const row=standings[index];
+  const follower=standings[index+1]||null;
+  const gapBehindSeconds=Math.max(0,Number(follower?.intervalSeconds)||0);
+  const fieldSplitSeconds=leaderPressureLargestSplitV274(standings);
+  const raceFraction=leaderPressureRaceFractionV274(standings);
+  let role='NONE';
+  if(index===0&&follower)role='LEADER';
+  else if(index>0&&follower&&Number(row?.intervalSeconds)>=LEADER_PRESSURE_CONFIG_V274.fieldSplitStartSeconds&&gapBehindSeconds<=LEADER_PRESSURE_CONFIG_V274.groupFollowerMaxGapSeconds)role='GROUP_LEADER';
+  const now=Number(simClockV192.simTimeMs)||0;
+  if(String(vehicle.leaderPressureRoleV274||'')!==role){
+    vehicle.leaderPressureRoleV274=role;
+    vehicle.leaderPressureRoleSinceSimMsV274=now;
+  }
+  const leadDurationMs=role==='LEADER'
+    ?Math.max(0,now-(Number(leaderPressureFieldV274.leaderSinceSimMs)||now))
+    :role==='GROUP_LEADER'
+      ?Math.max(0,now-(Number(vehicle.leaderPressureRoleSinceSimMsV274)||now))
+      :0;
+  const scored=leaderPressureScoreV274({role,gapBehindSeconds,leadDurationMs,fieldSplitSeconds,raceFraction});
+  return {role,gapBehindSeconds,leadDurationMs,fieldSplitSeconds,raceFraction,...scored,targetVehicle:follower?.vehicle||null};
+}
+function leaderPressureEventPoolV274(phase){
+  const p=String(phase||'STRAIGHT');
+  if(p==='BRAKING')return ['EARLY_BRAKING','STEERING_CORRECTION'];
+  if(p==='TURN_IN')return ['LATE_TURN_IN','STEERING_CORRECTION'];
+  if(p==='APEX')return ['MISSED_APEX','STEERING_CORRECTION'];
+  if(p==='EXIT')return ['SHORT_THROTTLE_LIFT','STEERING_CORRECTION'];
+  return ['SHORT_THROTTLE_LIFT','STEERING_CORRECTION'];
+}
+function triggerLeaderPressureEventV274(vehicle,context,phase){
+  if(!vehicle||!context||!(context.score>0))return false;
+  const now=Number(simClockV192.simTimeMs)||0;
+  const pool=leaderPressureEventPoolV274(phase);
+  const pick=Math.min(pool.length-1,Math.floor(nextLeaderPressureRandomV274(vehicle)*pool.length));
+  const event=pool[pick]||'STEERING_CORRECTION';
+  const duration=LEADER_PRESSURE_CONFIG_V274.eventMinMs+Math.floor(nextLeaderPressureRandomV274(vehicle)*(LEADER_PRESSURE_CONFIG_V274.eventMaxMs-LEADER_PRESSURE_CONFIG_V274.eventMinMs+1));
+  const cooldown=LEADER_PRESSURE_CONFIG_V274.cooldownMinMs+Math.floor(nextLeaderPressureRandomV274(vehicle)*(LEADER_PRESSURE_CONFIG_V274.cooldownMaxMs-LEADER_PRESSURE_CONFIG_V274.cooldownMinMs+1));
+  const direction=nextLeaderPressureRandomV274(vehicle)<.5?-1:1;
+  vehicle.leaderPressureEventV274=event;
+  vehicle.leaderPressureEventUntilV274=now+duration;
+  vehicle.leaderPressureCooldownUntilV274=now+duration+cooldown;
+  vehicle.leaderPressureDirectionV274=direction;
+  vehicle.leaderPressureTriggerScoreV274=context.score;
+  vehicle.leaderPressureEventCountV274=(Number(vehicle.leaderPressureEventCountV274)||0)+1;
+  leaderPressureFieldV274.eventCount+=1;
+  const row={event,vehicleId:String(vehicle.id||''),driver:String(vehicle.driver?.name||''),role:String(context.role),score:Number(context.score.toFixed(4)),gapBehindSeconds:Number(context.gapBehindSeconds.toFixed(3)),leadDurationMs:Math.round(context.leadDurationMs),raceFraction:Number(context.raceFraction.toFixed(3)),simTimeMs:now};
+  leaderPressureFieldV274.lastEvent=row;leaderPressureFieldV274.history.push(row);
+  if(leaderPressureFieldV274.history.length>24)leaderPressureFieldV274.history.splice(0,leaderPressureFieldV274.history.length-24);
+  if(!engineQaV240.active){
+    const target=context.targetVehicle;
+    emitRaceNarrativeV263('MISTAKE',vehicle,target,{cooldownMs:4200});
+  }
+  return true;
+}
+function leaderPressureEffectV274(vehicle,phase){
+  const now=Number(simClockV192.simTimeMs)||0;
+  const event=String(vehicle?.leaderPressureEventV274||'');
+  if(!event||now>=Number(vehicle?.leaderPressureEventUntilV274||0)){
+    if(vehicle){vehicle.leaderPressureEventV274='';vehicle.leaderPressureEventUntilV274=0}
+    return {event:'',speedFactor:1,lateralOffsetMeters:0};
+  }
+  const spec=LEADER_PRESSURE_EVENTS_V274[event]||LEADER_PRESSURE_EVENTS_V274.STEERING_CORRECTION;
+  const score=Math.max(0,Math.min(1,Number(vehicle?.leaderPressureTriggerScoreV274)||0));
+  const strength=.72+score*.28;
+  let phaseScale=1;
+  const p=String(phase||'STRAIGHT');
+  if(event==='EARLY_BRAKING'&&!['BRAKING','TURN_IN'].includes(p))phaseScale=.45;
+  if(event==='LATE_TURN_IN'&&!['TURN_IN','APEX'].includes(p))phaseScale=.55;
+  if(event==='MISSED_APEX'&&!['APEX','EXIT'].includes(p))phaseScale=.48;
+  const speedFactor=1-(1-Number(spec.speedFactor))*strength*phaseScale;
+  const limit=trackLateralLimitV271(vehicle);
+  const lateralOffsetMeters=limit*Number(spec.lateralRatio||0)*strength*phaseScale*(Number(vehicle?.leaderPressureDirectionV274)||1);
+  return {event,speedFactor:Math.max(.94,Math.min(1,speedFactor)),lateralOffsetMeters};
+}
+function updateFieldCompressionLeaderPressureV274(stepMs){
+  if(!(stepMs>0)||raceFlagStateV214.flag!=='GREEN'||!raceMotionV189.vehicles.length)return [];
+  const now=Number(simClockV192.simTimeMs)||0;
+  const standings=computeRaceStandingsV191();
+  const leader=standings[0]?.vehicle||null;
+  const leaderId=String(leader?.id||'');
+  if(leaderId!==leaderPressureFieldV274.leaderId){
+    leaderPressureFieldV274.leaderId=leaderId;
+    leaderPressureFieldV274.leaderSinceSimMs=now;
+  }
+  const rows=[];
+  for(const row of standings){
+    const vehicle=row.vehicle;
+    if(!vehicle||vehicle.finished||vehicle.pitState!=='TRACK')continue;
+    const context=leaderPressureContextV274(vehicle,standings);
+    vehicle.leaderPressureRoleV274=context.role;
+    vehicle.leaderPressureScoreV274=context.score;
+    vehicle.leaderPressureGapBehindSecondsV274=context.gapBehindSeconds;
+    vehicle.leaderPressureLeadDurationMsV274=context.leadDurationMs;
+    vehicle.leaderPressureFieldSplitSecondsV274=context.fieldSplitSeconds;
+    vehicle.leaderPressureRaceFractionV274=context.raceFraction;
+    if(now>=Number(vehicle.leaderPressureEventUntilV274||0)){
+      vehicle.leaderPressureEventV274='';
+      vehicle.leaderPressureEventUntilV274=0;
+    }
+    const onCooldown=now<Number(vehicle.leaderPressureCooldownUntilV274||0);
+    const hasActive=Boolean(vehicle.leaderPressureEventV274);
+    if(context.score>0&&!onCooldown&&!hasActive&&!activeDrivingIncidentV204(vehicle)){
+      const resistance=driverSkillNormV200(vehicle,'errorResistance');
+      const resistanceFactor=Math.max(.78,Math.min(1.16,1-resistance*.16));
+      const chance=Math.min(LEADER_PRESSURE_CONFIG_V274.maxEventChance,context.score*LEADER_PRESSURE_CONFIG_V274.maxEventChance*resistanceFactor);
+      vehicle.leaderPressureLastChanceV274=chance;
+      if(nextLeaderPressureRandomV274(vehicle)<chance){
+        const phase=getCornerPhaseAtProgressV194(vehicle.progress)?.phase||'STRAIGHT';
+        triggerLeaderPressureEventV274(vehicle,context,phase);
+      }
+    }else vehicle.leaderPressureLastChanceV274=0;
+    rows.push({vehicleId:String(vehicle.id||''),role:context.role,score:context.score,gapBehindSeconds:context.gapBehindSeconds,activeEvent:String(vehicle.leaderPressureEventV274||''),cooldownRemainingMs:Math.max(0,Number(vehicle.leaderPressureCooldownUntilV274||0)-now)});
+  }
+  leaderPressureFieldV274.lastEvaluationSimMs=now;
+  return rows;
+}
+function getLeaderPressureStatesV274(){
+  const now=Number(simClockV192.simTimeMs)||0;
+  return raceMotionV189.vehicles.map(vehicle=>({
+    id:String(vehicle.id||''),name:String(vehicle.driver?.name||''),role:String(vehicle.leaderPressureRoleV274||'NONE'),
+    score:Number((Number(vehicle.leaderPressureScoreV274)||0).toFixed(4)),
+    gapBehindSeconds:Number((Number(vehicle.leaderPressureGapBehindSecondsV274)||0).toFixed(3)),
+    leadDurationMs:Math.round(Number(vehicle.leaderPressureLeadDurationMsV274)||0),
+    activeEvent:String(vehicle.leaderPressureEventV274||''),
+    cooldownRemainingMs:Math.max(0,Math.round((Number(vehicle.leaderPressureCooldownUntilV274)||0)-now)),
+    speedFactor:Number((Number(vehicle.leaderPressureSpeedFactorV274)||1).toFixed(4)),
+    eventCount:Number(vehicle.leaderPressureEventCountV274)||0
+  }));
+}
+function qaLeaderPressureV274(){
+  const runaway=leaderPressureScoreV274({role:'LEADER',gapBehindSeconds:7,leadDurationMs:65000,fieldSplitSeconds:8,raceFraction:.45});
+  const close=leaderPressureScoreV274({role:'LEADER',gapBehindSeconds:.8,leadDurationMs:65000,fieldSplitSeconds:8,raceFraction:.45});
+  const late=leaderPressureScoreV274({role:'LEADER',gapBehindSeconds:7,leadDurationMs:65000,fieldSplitSeconds:8,raceFraction:.96});
+  const group=leaderPressureScoreV274({role:'GROUP_LEADER',gapBehindSeconds:4.8,leadDurationMs:65000,fieldSplitSeconds:8,raceFraction:.45});
+  const a={leaderPressureRandomStateV274:274001},b={leaderPressureRandomStateV274:274001};
+  const seqA=Array.from({length:8},()=>Number(nextLeaderPressureRandomV274(a).toFixed(8)));
+  const seqB=Array.from({length:8},()=>Number(nextLeaderPressureRandomV274(b).toFixed(8)));
+  const deterministic=JSON.stringify(seqA)===JSON.stringify(seqB);
+  const eventFactors=Object.entries(LEADER_PRESSURE_EVENTS_V274).map(([event,spec])=>({event,speedFactor:Number(spec.speedFactor),lateralRatio:Number(spec.lateralRatio)}));
+  const eventBounds=eventFactors.every(row=>row.speedFactor>=.94&&row.speedFactor<1&&row.lateralRatio>=0&&row.lateralRatio<=.06);
+  const eventSet=['EARLY_BRAKING','LATE_TURN_IN','MISSED_APEX','STEERING_CORRECTION','SHORT_THROTTLE_LIFT'].every(event=>Object.prototype.hasOwnProperty.call(LEADER_PRESSURE_EVENTS_V274,event));
+  const cooldownValid=LEADER_PRESSURE_CONFIG_V274.cooldownMinMs>=9000&&LEADER_PRESSURE_CONFIG_V274.cooldownMaxMs>LEADER_PRESSURE_CONFIG_V274.cooldownMinMs;
+  return {
+    runaway,close,late,group,deterministic,eventFactors,eventSet,cooldownValid,
+    maxEventChance:LEADER_PRESSURE_CONFIG_V274.maxEventChance,
+    allPass:close.score===0&&runaway.score>0&&late.score<runaway.score&&group.score>0&&group.score<runaway.score&&deterministic&&eventBounds&&eventSet&&cooldownValid&&LEADER_PRESSURE_CONFIG_V274.maxEventChance<=.06
+  };
+}
+
 function createRaceVehiclesV189(snapshot){
   const orderedDrivers=(snapshot?.drivers||[]).slice().sort((a,b)=>(Number(a.gridPosition)||999)-(Number(b.gridPosition)||999));
   const count=Math.max(1,orderedDrivers.length||0);
@@ -3537,6 +3749,7 @@ function createRaceVehiclesV189(snapshot){
     const driverProfile=createDriverProfileV200(driver,snapshot);
     const raceSeed=hashDriverV189(String(driver.contactId||driver.name)+'|'+String(snapshot?.createdAt||'race')+'|pace-noise');
     const momentumSeed=hashDriverV189(String(raceMomentumSeedV262(snapshot))+'|'+String(driver.contactId||driver.name)+'|momentum')||1;
+    const leaderPressureSeedV274=hashDriverV189(String(snapshot?.createdAt||'race')+'|'+String(driver.contactId||driver.name)+'|leader-pressure')||1;
     const startOffset=gridStartOffsetV272(index,count);
     const vehicle={
       id:String(driver.contactId),driver,gridPosition:Number(driver.gridPosition)||index+1,startOffset,progress:normalizedProgressV190(startOffset),travel:0,raceProgress:startOffset,raceDistanceMeters:0,currentLap:1,completedLaps:0,sector:'GRID',
@@ -3550,6 +3763,10 @@ function createRaceVehiclesV189(snapshot){
       raceMomentum:0,raceMomentumPaceMultiplierV262:1,momentumRandomStateV262:momentumSeed,momentumEvalMsV262:220+index*37,
       momentumLastPassCountV262:0,momentumLastFailedCountV262:0,momentumLastIncidentCountV262:0,momentumWasDefendingV262:false,
       momentumLastEventV262:'',momentumLastReasonV262:'',momentumEventCountV262:0,momentumEventHistoryV262:[],
+      leaderPressureRandomStateV274:leaderPressureSeedV274,leaderPressureRoleV274:'NONE',leaderPressureRoleSinceSimMsV274:0,
+      leaderPressureScoreV274:0,leaderPressureGapBehindSecondsV274:0,leaderPressureLeadDurationMsV274:0,leaderPressureFieldSplitSecondsV274:0,leaderPressureRaceFractionV274:0,
+      leaderPressureEventV274:'',leaderPressureEventUntilV274:0,leaderPressureCooldownUntilV274:0,leaderPressureDirectionV274:1,leaderPressureTriggerScoreV274:0,
+      leaderPressureLastChanceV274:0,leaderPressureSpeedFactorV274:1,leaderPressureLateralMetersV274:0,leaderPressureEventCountV274:0,
       batteryMJ:ENERGY_CONFIG_V201.usableCapacityMJ,energyTargetMJ:ENERGY_CONFIG_V201.usableCapacityMJ,energyDeployKW:0,energyRechargeKW:0,energyDeployMJ:0,energyHarvestMJ:0,energyHarvestLapMJ:0,energyLapNumber:1,boostActive:false,boostPowerKW:0,boostEnergyMJ:0,attackOpportunityScore:0,defenceThreatScore:0,powerUnitFactor:1,
       activeAeroMode:'CORNER',activeAeroTarget:'CORNER',activeAeroTransitionMs:0,overtakeZoneId:'',overtakeGapSeconds:Infinity,overtakeEligible:false,overtakeActive:false,overtakeRechargeAllowanceActive:false,
       tyreCompound:'MEDIUM',tyreStartRaceProgress:startOffset,tyreAgeLaps:0,tyreWear:0,tyreSurfaceTemp:.5,tyreCarcassTemp:.5,tyreGrip:TYRE_COMPOUNDS_V203.MEDIUM.gripBias,tyreThermalDeg:0,tyreGraining:0,tyreFlatSpot:0,tyreStrategyPressure:0,
@@ -4295,6 +4512,7 @@ function renderRaceVehiclesV189(frameMs=16.67){
 }
 function initializeRaceMotionV189(snapshot=activeRaceSnapshotV187){
   if(!snapshot)return false;
+  resetLeaderPressureFieldV274();
   raceMotionV189.vehicles=createRaceVehiclesV189(snapshot);
   raceMotionV189.snapshotCreatedAt=String(snapshot.createdAt||'');
   raceMotionV189.lastTimestamp=0;
@@ -4400,7 +4618,11 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const preBrake=preError<-1.5?Math.max(.08,Math.min(1,(-preError)/55)):0;
   const incidentState=updateDrivingIncidentsV204(vehicle,stepMs,phase,{throttle:preThrottle,brake:preBrake});
   maxTarget*=incidentState.speedFactor;
-  const rawBoundaryOffsetV271=lineOffsetMetersV197(vehicle)+(Number(vehicle?.incidentLateralOffsetMeters)||0);
+  const leaderPressureEffect=leaderPressureEffectV274(vehicle,phase);
+  vehicle.leaderPressureSpeedFactorV274=leaderPressureEffect.speedFactor;
+  vehicle.leaderPressureLateralMetersV274=leaderPressureEffect.lateralOffsetMeters;
+  maxTarget*=leaderPressureEffect.speedFactor;
+  const rawBoundaryOffsetV271=lineOffsetMetersV197(vehicle)+(Number(vehicle?.incidentLateralOffsetMeters)||0)+(Number(leaderPressureEffect.lateralOffsetMeters)||0);
   const boundaryStateV271=trackBoundaryStateV271(vehicle,rawBoundaryOffsetV271);
   vehicle.unclampedLateralOffsetMetersV271=rawBoundaryOffsetV271;
   vehicle.trackBoundaryRatioV271=boundaryStateV271.ratio;
@@ -5121,6 +5343,7 @@ function simulateRaceStepV192(stepMs){
       if(vehicle.racingLineMode==='ATTACK_INSIDE')vehicle.racingLineMode='IDEAL';
     }
   }
+  updateFieldCompressionLeaderPressureV274(stepMs);
   updatePitStrategiesV206(stepMs);
   for(const vehicle of raceMotionV189.vehicles){
     if(vehicle.finished)continue;
@@ -5174,6 +5397,7 @@ function resetRaceMotionV189(){
   pauseRaceMotionV189(false);raceMotionV189.vehicles=[];raceMotionV189.snapshotCreatedAt='';raceGeometryV193=null;
   simClockV192.paused=false;simClockV192.timeScale=1;simClockV192.simTimeMs=0;simClockV192.accumulatorMs=0;
   raceFlagStateV214={flag:'GREEN',reason:'',sinceSimMs:0};
+  resetLeaderPressureFieldV274();
   const layer=document.getElementById('f1RacingRaceVehicleLayerV188');if(layer)layer.replaceChildren();
   syncSimulationControlsV192();
 }
@@ -6751,6 +6975,11 @@ window.mwsF1RunStartingGridRevealV273=runStartingGridRevealV273;
 window.mwsF1WaitGridRevealV273=waitGridRevealV273;
 window.mwsF1ClearGridRevealV273=clearGridRevealV273;
 window.mwsF1QaStartingGridRevealV273=qaStartingGridRevealV273;
+window.mwsF1LeaderPressureScoreV274=leaderPressureScoreV274;
+window.mwsF1UpdateLeaderPressureV274=updateFieldCompressionLeaderPressureV274;
+window.mwsF1GetLeaderPressureStatesV274=getLeaderPressureStatesV274;
+window.mwsF1QaLeaderPressureV274=qaLeaderPressureV274;
+window.mwsF1GetLeaderPressureFieldV274=function(){return {...leaderPressureFieldV274,history:leaderPressureFieldV274.history.map(row=>({...row}))}};
 window.mwsF1GetStartingGridRevealStateV273=function(){return {...gridRevealStateV273,timers:gridRevealStateV273.timers.length}};
 window.mwsF1CancelRaceRecoveryC=cancelRaceToSetupRecoveryC;
 window.mwsF1RestoreSettingsRecoveryD=restoreF1SettingsRecoveryD;
@@ -7069,6 +7298,7 @@ window.mwsF1TrackBoundaryStateV271=trackBoundaryStateV271;
 window.__mwsF1RacingV271=VERSION271;
 window.__mwsF1RacingV272=VERSION272;
 window.__mwsF1RacingV273=VERSION273;
+window.__mwsF1RacingV274=VERSION274;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
