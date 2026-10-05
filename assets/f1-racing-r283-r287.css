@@ -58,3 +58,26 @@ body.f1-racing-r12-compact-v287 .f1-racing-panel-title-v188 small{font-size:8px}
   body.f1-racing-r12-compact-v287 .f1-racing-race-header-v188{grid-template-columns:1fr auto}
   body.f1-racing-r12-compact-v287 .f1-racing-race-controls-v188{grid-column:1/-1}
 }
+
+/* Phase 302: live ranking stable rows, max-2 status badges, FLIP movement */
+.f1-racing-track-ranking-row-v284{
+  grid-template-columns:32px minmax(0,1fr) 58px minmax(52px,auto);
+  will-change:transform;transform:translate3d(0,0,0)
+}
+.f1-racing-track-ranking-status-v302{display:flex;justify-content:flex-end;gap:3px;min-width:0}
+.f1-racing-track-ranking-status-v302 em{
+  min-width:0;padding:2px 4px;border:1px solid rgba(120,139,166,.3);border-radius:999px;
+  background:rgba(15,23,34,.88);color:#9aacbf;font:900 6px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  letter-spacing:.04em;white-space:nowrap;font-style:normal
+}
+.f1-racing-track-ranking-status-v302 em[data-rank-status="PIT"]{color:#f3d07a;border-color:rgba(243,208,122,.45)}
+.f1-racing-track-ranking-status-v302 em[data-rank-status="SIDE"]{color:#f0b3ff;border-color:rgba(240,179,255,.42)}
+.f1-racing-track-ranking-status-v302 em[data-rank-status="ATTACK"]{color:#ff9f8f;border-color:rgba(255,159,143,.4)}
+.f1-racing-track-ranking-status-v302 em[data-rank-status="DEFEND"]{color:#90c8ff;border-color:rgba(144,200,255,.42)}
+.f1-racing-track-ranking-status-v302 em[data-rank-status="BLUE"]{color:#8fb8ff;border-color:rgba(143,184,255,.42)}
+.f1-racing-track-ranking-row-v284.rank-up-v302{background:rgba(81,185,125,.12)}
+.f1-racing-track-ranking-row-v284.rank-down-v302{background:rgba(194,102,102,.08);opacity:.88}
+@media(max-width:1120px){
+ .f1-racing-track-ranking-row-v284{grid-template-columns:30px minmax(0,1fr) 54px}
+ .f1-racing-track-ranking-status-v302{display:none}
+}
