@@ -97,6 +97,11 @@ const VERSION267='phase267-integrated-spectator-desktop-qa';
 const VERSION268='phase268-auto-follow-wheel-zoom';
 const VERSION269='phase269-lateral-velocity-acceleration-smoothing';
 const VERSION270='phase270-f1-corner-line-exit-acceleration';
+const VERSION271='phase271-track-boundary-wall-riding-fix';
+const TRACK_BOUNDARY_V271=Object.freeze({
+  carHalfWidthMeters:1.0,safetyMarginMeters:.35,edgeStartRatio:.82,
+  edgeMinSpeedFactor:.90,offTrackSpeedFactor:.76
+});
 const CORNER_DYNAMICS_V270=Object.freeze({
   outsideFraction:.68,apexFraction:.76,exitOutsideFraction:.58,
   exitAccelerationMultiplier:1.38,exitTargetLiftKph:24,exitLookAheadMeters:105,
@@ -3693,8 +3698,35 @@ function phaseSpeedTargetV270(vehicle,targetData,phaseInfo=getCornerPhaseAtProgr
   return Math.max(target,recovered);
 }
 
+function trackLateralLimitV271(vehicle,track=activeRaceSnapshotV187?.track){
+  const width=Math.max(4,Number(track?.geometry?.trackWidthMeters)||14);
+  const margin=Math.max(0,Number(track?.geometry?.racingLineMarginMeters)||1.5);
+  const pit=String(vehicle?.racingLineMode||'')==='PIT_LINE'||String(vehicle?.pitState||'TRACK')!=='TRACK';
+  const footprint=pit?TRACK_BOUNDARY_V271.carHalfWidthMeters*.55:TRACK_BOUNDARY_V271.carHalfWidthMeters;
+  const safety=pit?TRACK_BOUNDARY_V271.safetyMarginMeters*.35:TRACK_BOUNDARY_V271.safetyMarginMeters;
+  return Math.max(.8,width/2-margin-footprint-safety);
+}
+function trackBoundaryStateV271(vehicle,rawOffset){
+  const limit=trackLateralLimitV271(vehicle);
+  const raw=Number(rawOffset)||0;
+  const ratio=Math.abs(raw)/Math.max(.01,limit);
+  const pit=String(vehicle?.racingLineMode||'')==='PIT_LINE'||String(vehicle?.pitState||'TRACK')!=='TRACK';
+  const offTrack=!pit&&ratio>1;
+  const edge=!pit&&ratio>TRACK_BOUNDARY_V271.edgeStartRatio;
+  const edgeT=edge?Math.max(0,Math.min(1,(ratio-TRACK_BOUNDARY_V271.edgeStartRatio)/(1-TRACK_BOUNDARY_V271.edgeStartRatio))):0;
+  const speedFactor=pit?1:offTrack?TRACK_BOUNDARY_V271.offTrackSpeedFactor:1-edgeT*(1-TRACK_BOUNDARY_V271.edgeMinSpeedFactor);
+  return {raw,limit,ratio,edge,offTrack,speedFactor,clamped:Math.max(-limit,Math.min(limit,raw))};
+}
 function physicalLateralOffsetV258(vehicle){
-  return lineOffsetMetersV197(vehicle)+(Number(vehicle?.incidentLateralOffsetMeters)||0);
+  const raw=lineOffsetMetersV197(vehicle)+(Number(vehicle?.incidentLateralOffsetMeters)||0);
+  const boundary=trackBoundaryStateV271(vehicle,raw);
+  if(vehicle){
+    vehicle.unclampedLateralOffsetMetersV271=raw;
+    vehicle.trackBoundaryRatioV271=boundary.ratio;
+    vehicle.trackBoundaryExceededV271=boundary.offTrack;
+    vehicle.trackBoundarySpeedFactorV271=boundary.speedFactor;
+  }
+  return boundary.clamped;
 }
 function visualLateralResponseV258(vehicle){
   if(activeDrivingIncidentV204(vehicle))return VISUAL_LATERAL_RESPONSE_V258.incident;
@@ -3749,6 +3781,9 @@ function updateVisualLateralOffsetV258(vehicle,frameMs=16.67,force=false){
   let velocity=Math.max(-maxSpeed,Math.min(maxSpeed,previousVelocity+acceleration*dt));
   let visual=previous+velocity*dt;
   if((delta>0&&visual>=target)||(delta<0&&visual<=target)||Math.abs(target-visual)<VISUAL_LATERAL_DYNAMICS_V269.snapMeters){visual=target;velocity=0}
+  const visualLimitV271=trackLateralLimitV271(vehicle);
+  visual=Math.max(-visualLimitV271,Math.min(visualLimitV271,visual));
+  if(Math.abs(visual)>=visualLimitV271-.001&&Math.sign(velocity)===Math.sign(visual))velocity=0;
   vehicle.visualLateralOffsetMeters=visual;vehicle.visualLateralVelocity=velocity;vehicle.visualLateralAccelerationV269=acceleration;
   const alpha=Math.abs(delta)>.0001?Math.max(0,Math.min(1,Math.abs((visual-previous)/delta))):1;
   return {target,rawTarget,visual,velocity,acceleration,alpha,response,maxSpeed};
@@ -3975,6 +4010,9 @@ function renderRaceVehiclesV189(frameMs=16.67){
     marker.dataset.visualLateralV258=Number(vehicle.visualLateralOffsetMeters||0).toFixed(3);
     marker.dataset.visualLateralVelocityV269=Number(vehicle.visualLateralVelocity||0).toFixed(3);
     marker.dataset.visualLateralAccelerationV269=Number(vehicle.visualLateralAccelerationV269||0).toFixed(3);
+    marker.dataset.trackBoundaryRatioV271=Number(vehicle.trackBoundaryRatioV271||0).toFixed(3);
+    marker.dataset.trackBoundaryExceededV271=vehicle.trackBoundaryExceededV271?'1':'0';
+    marker.dataset.trackBoundarySpeedFactorV271=Number(vehicle.trackBoundarySpeedFactorV271||1).toFixed(3);
     syncVehicleSpectatorClassesV252(vehicle,marker);
     rendered.push({vehicle,marker,point});
   });
@@ -4090,6 +4128,13 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const preBrake=preError<-1.5?Math.max(.08,Math.min(1,(-preError)/55)):0;
   const incidentState=updateDrivingIncidentsV204(vehicle,stepMs,phase,{throttle:preThrottle,brake:preBrake});
   maxTarget*=incidentState.speedFactor;
+  const rawBoundaryOffsetV271=lineOffsetMetersV197(vehicle)+(Number(vehicle?.incidentLateralOffsetMeters)||0);
+  const boundaryStateV271=trackBoundaryStateV271(vehicle,rawBoundaryOffsetV271);
+  vehicle.unclampedLateralOffsetMetersV271=rawBoundaryOffsetV271;
+  vehicle.trackBoundaryRatioV271=boundaryStateV271.ratio;
+  vehicle.trackBoundaryExceededV271=boundaryStateV271.offTrack;
+  vehicle.trackBoundarySpeedFactorV271=boundaryStateV271.speedFactor;
+  maxTarget*=boundaryStateV271.speedFactor;
   if(Number.isFinite(pitControl.speedCapKph))maxTarget=Math.min(maxTarget,pitControl.speedCapKph);
   const error=maxTarget-current;
   const accelBase=Math.max(0.5,Number(track?.geometry?.referenceAccelMps2)||8.5);
@@ -4131,6 +4176,24 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   syncVehicleRaceMetricsV190(vehicle,track);
   updatePitPostStepV205(vehicle,previousRaceProgress);
   return true;
+}
+
+function qaTrackBoundaryV271(){
+  const source=raceMotionV189.vehicles[0]||{racingLineMode:'IDEAL',pitState:'TRACK'};
+  const probe={...source,racingLineMode:'IDEAL',pitState:'TRACK',incidentLateralOffsetMeters:0};
+  const limit=trackLateralLimitV271(probe);
+  const center=trackBoundaryStateV271(probe,0);
+  const edge=trackBoundaryStateV271(probe,limit*.95);
+  const beyond=trackBoundaryStateV271(probe,limit*1.4);
+  probe.incidentLateralOffsetMeters=limit*3;
+  const clamped=physicalLateralOffsetV258(probe);
+  const live=raceMotionV189.vehicles.map(vehicle=>({
+    id:vehicle.id,visual:Math.abs(Number(vehicle.visualLateralOffsetMeters)||0),
+    limit:trackLateralLimitV271(vehicle),ratio:Number(vehicle.trackBoundaryRatioV271)||0,
+    factor:Number(vehicle.trackBoundarySpeedFactorV271)||1
+  }));
+  const liveInside=live.every(row=>row.visual<=row.limit+.02);
+  return {limit,center,edge,beyond,clamped,liveInside,live,allPass:limit>.7&&center.speedFactor===1&&edge.speedFactor<1&&edge.speedFactor>=TRACK_BOUNDARY_V271.edgeMinSpeedFactor-.01&&beyond.offTrack===true&&beyond.speedFactor===TRACK_BOUNDARY_V271.offTrackSpeedFactor&&Math.abs(clamped)<=limit+.001&&liveInside};
 }
 
 function qaCornerDynamicsV270(){
@@ -6714,6 +6777,9 @@ window.__mwsF1RacingV269=VERSION269;
 window.mwsF1QaCornerDynamicsV270=qaCornerDynamicsV270;
 window.mwsF1PhaseSpeedTargetV270=phaseSpeedTargetV270;
 window.__mwsF1RacingV270=VERSION270;
+window.mwsF1QaTrackBoundaryV271=qaTrackBoundaryV271;
+window.mwsF1TrackBoundaryStateV271=trackBoundaryStateV271;
+window.__mwsF1RacingV271=VERSION271;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
