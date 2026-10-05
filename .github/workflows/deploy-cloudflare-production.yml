@@ -238,6 +238,9 @@ jobs:
           node --check scripts/run-phase293-f1-production-audit-gate.mjs
           node --check scripts/run-phase294-f1-recovery-h-final-overlay-audit.mjs
           node --check scripts/run-phase295-f1-final-regression-gate.mjs
+          node --check scripts/run-phase296-f1-future-safe-cache-audit.mjs
+          node --check scripts/run-phase297-f1-late-chain-recheck-audit.mjs
+          node --check scripts/run-phase298-f1-production-workflow-recheck-audit.mjs
           node --check assets/f1-racing-r283-r287.js
           node --check assets/f1-racing-r288-r290.js
           node --check assets/f1-racing-r291-r295.js
