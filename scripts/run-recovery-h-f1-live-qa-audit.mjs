@@ -18,8 +18,11 @@ export function runRecoveryHF1LiveQaAudit(){
     "Workspace overlap after Commentary dock",
     "window.mwsF1GetScreenStateV185?.()==='SETUP'",
     "window.mwsF1ForceFinishRecoveryG?.()===true",
-    "window.mwsF1GetScreenStateV185?.()==='PODIUM'",
-    "window.mwsF1GetScreenStateV185?.()==='RESULT'",
+    "window.__mwsF1RacingV292==='phase292-f1-r17-integrated-desktop-qa'",
+    "window.mwsF1QaFinalDesktopV292?.()",
+    "f1RacingFinishOverlayV291",
+    "window.mwsF1GetScreenStateV185?.()==='RACE'",
+    "f1RacingFinishOverlayNewRaceV291",
     "RECOVERY_H_SCREENSHOT_JPEG_BASE64=",
     "recoveryHLiveBrowser"
   ])if(!diag.includes(token))issues.push('Recovery H live QA contract missing: '+token);
