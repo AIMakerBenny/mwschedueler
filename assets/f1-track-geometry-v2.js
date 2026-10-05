@@ -200,15 +200,15 @@ function exitRawLimitV270(track,geometry,sample,baseLimit,curveLimit,maxKph){
   if(phaseInfo?.phase!=='EXIT'||!phaseInfo.corner)return baseLimit;
   const corner=phaseInfo.corner;
   const here=alignedDistanceForCornerV270(track,corner,sample.progress);
-  const apexWindow=Math.max(5,Number(corner.lengthMeters||40)*.18);
-  const exitStart=Math.min(Number(corner.exitDistanceMeters),Number(corner.apexDistanceMeters)+apexWindow);
+  const exitStart=Number(corner.apexDistanceMeters);
   const ratio=clamp((here-exitStart)/Math.max(1,Number(corner.exitDistanceMeters)-exitStart),0,1);
   const eased=ratio*ratio*(3-2*ratio);
   const apex=Math.max(corner.cornerClass==='hairpin'?72:corner.cornerClass==='slow'?92:0,Number(corner.referenceApexKph)||baseLimit);
   const afterProgress=normalizeProgress(Number(corner.exitProgress)+Math.max(.006,105/Math.max(1,Number(track.lengthMeters)||1)));
   const nextTarget=Math.max(apex+24,targetKphAtProgress(track,afterProgress));
   const recovery=apex+(nextTarget-apex)*eased;
-  return Math.min(maxKph,curveLimit,Math.max(baseLimit,recovery));
+  const dynamicCurveCap=Math.min(maxKph,curveLimit+70*eased);
+  return Math.min(maxKph,dynamicCurveCap,Math.max(baseLimit,recovery));
 }
 function buildSpeedProfile(track,geometry){
   if(!track||!geometry?.samples?.length)return {...geometry,speedProfile:[]};
