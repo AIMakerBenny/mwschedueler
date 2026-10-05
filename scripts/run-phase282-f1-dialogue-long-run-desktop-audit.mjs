@@ -10,3 +10,5 @@ export function runPhase282F1DialogueLongRunDesktopAudit(){
  const result={phase:282,name:'f1-dialogue-long-run-desktop-qa',issues,warnings,pass:issues.length===0};console.log(JSON.stringify(result));if(issues.length)process.exitCode=1;return result;
 }
 if(import.meta.url==='file://'+process.argv[1])runPhase282F1DialogueLongRunDesktopAudit();
+
+// Phase 282 production retrigger after GitHub runner queue stall.
