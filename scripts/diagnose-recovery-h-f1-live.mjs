@@ -145,6 +145,23 @@ try{
   if(extensionQa287?.r11?.allPass!==true)throw new Error('Phase 286 auto camera jitter live QA failed: '+JSON.stringify(extensionQa287?.r11));
   if(extensionQa287?.r12?.allPass!==true)throw new Error('Phase 287 compact race shell live QA failed: '+JSON.stringify(extensionQa287?.r12));
 
+  let phase292Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    phase292Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV292==='phase292-f1-r17-integrated-desktop-qa'","Phase 292 runtime readiness"));
+    if(phase292Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v292=${Date.now()}-${attempt}`});
+    await refreshed;
+    await sleep(1200);
+  }
+  if(!phase292Ready)throw new Error('Phase 292 runtime did not propagate to Recovery H browser');
+  const extensionQa292=await evaluate(cdp,"(()=>({r13:window.mwsF1QaWorkspaceViewportFitV288?.(),r14:window.mwsF1QaPreraceCompactV289?.(),r15:window.mwsF1QaGridShuffleSmoothnessV290?.(),r16:window.mwsF1QaFinishOverlayV291?.(),r17:window.mwsF1QaFinalDesktopV292?.()}))()","Phase 288-292 final extension QA");
+  if(extensionQa292?.r13?.allPass!==true)throw new Error('Phase 288 workspace viewport live QA failed: '+JSON.stringify(extensionQa292?.r13));
+  if(extensionQa292?.r14?.allPass!==true)throw new Error('Phase 289 pre-race compact live QA failed: '+JSON.stringify(extensionQa292?.r14));
+  if(extensionQa292?.r15?.allPass!==true)throw new Error('Phase 290 grid shuffle live QA failed: '+JSON.stringify(extensionQa292?.r15));
+  if(extensionQa292?.r16?.allPass!==true)throw new Error('Phase 291 finish overlay live QA failed: '+JSON.stringify(extensionQa292?.r16));
+  if(extensionQa292?.r17?.allPass!==true)throw new Error('Phase 292 integrated desktop live QA failed: '+JSON.stringify(extensionQa292?.r17));
+
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
@@ -857,18 +874,19 @@ try{
     document.getElementById('f1RacingWorkspaceResetRecoveryE')?.click();await raf();
 
     assert(window.mwsF1ForceFinishRecoveryG?.()===true,'Force finish QA hook failed');
-    await raf();
-    assert(window.mwsF1GetScreenStateV185?.()==='FINISHING','Finish did not enter FINISHING');
-    document.getElementById('f1RacingShowPodiumRecoveryG')?.click();await raf();
-    assert(window.mwsF1GetScreenStateV185?.()==='PODIUM','Podium button failed');
-    const podiumCount=document.querySelectorAll('#f1RacingPodiumRowsRecoveryG .f1-racing-podium-card-v265, #f1RacingPodiumRowsRecoveryG .f1-racing-podium-place-recovery-g').length;
-    assert(podiumCount>=2,'Podium did not render expected drivers');
-    document.getElementById('f1RacingPodiumResultRecoveryG')?.click();await raf();
-    assert(window.mwsF1GetScreenStateV185?.()==='RESULT','Result button failed');
-    const resultCount=document.querySelectorAll('#f1RacingResultRowsRecoveryG .f1-racing-result-row-recovery-g').length;
-    assert(resultCount>=2,'Final result rows missing');
+    await sleep(140);await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='RACE','Phase 291 finish must keep the race screen active');
+    const finishOverlay291=document.getElementById('f1RacingFinishOverlayV291');
+    assert(finishOverlay291&&!finishOverlay291.hidden&&getComputedStyle(finishOverlay291).display!=='none','Phase 291 finish overlay is not visible');
+    assert(document.getElementById('f1RacingViewRaceV185')?.hidden===false,'Phase 291 race screen was hidden behind final result');
+    const podiumCount=document.querySelectorAll('#f1RacingFinishOverlayPodiumV291 .place').length;
+    assert(podiumCount>=2,'Phase 291 podium overlay did not render expected drivers');
+    const resultCount=document.querySelectorAll('#f1RacingFinishOverlayResultsV291 .row').length;
+    assert(resultCount>=2,'Phase 291 full result overlay rows missing');
+    const finalDesktopQa292=window.mwsF1QaFinalDesktopV292?.();
+    assert(finalDesktopQa292?.allPass===true,'Phase 292 final desktop QA failed after finish: '+JSON.stringify(finalDesktopQa292));
 
-    document.getElementById('f1RacingResultNewRaceRecoveryG')?.click();
+    document.getElementById('f1RacingFinishOverlayNewRaceV291')?.click();
     await sleep(1200);await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='GRID','Same-settings new race auto-started before explicit click');
     assert(await window.mwsF1WaitGridRevealV273?.(8000)===true,'Phase 273 same-settings reveal did not finish');
