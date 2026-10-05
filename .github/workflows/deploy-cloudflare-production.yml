@@ -210,6 +210,7 @@ jobs:
           node --check scripts/run-phase265-f1-grand-prix-podium-audit.mjs
           node --check scripts/run-phase266-f1-track-card-circuit-redesign-audit.mjs
           node --check scripts/run-phase267-f1-integrated-spectator-desktop-audit.mjs
+          node --check scripts/run-phase268-f1-auto-follow-wheel-zoom-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -2548,6 +2549,12 @@ jobs:
           grep -Fq 'function qaIntegratedSpectatorDesktopV267(){' /tmp/f1-racing-v1-phase267.js
           grep -Fq "Object.freeze({id:'12x20'" /tmp/f1-racing-v1-phase267.js
           retry_contains "$BASE/?phase267=$GITHUB_SHA" 'recovery=N1&phase=267&zoomfix=1' > /tmp/index-phase267.html
+
+          echo '[phase268] F1 auto-follow wheel zoom'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV268=VERSION268;' > /tmp/f1-racing-v1-phase268.js
+          node --check /tmp/f1-racing-v1-phase268.js
+          grep -Fq 'function qaAutoFollowWheelZoomV268(){' /tmp/f1-racing-v1-phase268.js
+          retry_contains "$BASE/?phase268=$GITHUB_SHA" 'recovery=N1&phase=' > /tmp/index-phase268.html
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
