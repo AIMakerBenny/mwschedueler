@@ -156,12 +156,12 @@ try{
   }
   if(!phase292Ready)throw new Error('Phase 292 runtime did not propagate to Recovery H browser');
   await evaluate(cdp,"window.mwsF1ResetFinalDesktopErrorsV292?.()","Phase 292 reset desktop error window");
-  const extensionQa292=await evaluate(cdp,"(()=>({r13:window.mwsF1QaWorkspaceViewportFitV288?.(),r14:window.mwsF1QaPreraceCompactV289?.(),r15:window.mwsF1QaGridShuffleSmoothnessV290?.(),r16:window.mwsF1QaFinishOverlayV291?.(),r17:window.mwsF1QaFinalDesktopV292?.()}))()","Phase 288-292 final extension QA");
+  const extensionQa292=await evaluate(cdp,"(()=>({r13:window.mwsF1QaWorkspaceViewportFitV288?.(),r14:window.mwsF1QaPreraceCompactV289?.(),r15:window.mwsF1QaGridShuffleSmoothnessV290?.(),r16:window.mwsF1QaFinishOverlayV291?.(),r17Ready:typeof window.mwsF1QaFinalDesktopV292==='function'}))()","Phase 288-292 final extension readiness");
   if(extensionQa292?.r13?.allPass!==true)throw new Error('Phase 288 workspace viewport live QA failed: '+JSON.stringify(extensionQa292?.r13));
   if(extensionQa292?.r14?.allPass!==true)throw new Error('Phase 289 pre-race compact live QA failed: '+JSON.stringify(extensionQa292?.r14));
   if(extensionQa292?.r15?.allPass!==true)throw new Error('Phase 290 grid shuffle live QA failed: '+JSON.stringify(extensionQa292?.r15));
   if(extensionQa292?.r16?.allPass!==true)throw new Error('Phase 291 finish overlay live QA failed: '+JSON.stringify(extensionQa292?.r16));
-  if(extensionQa292?.r17?.allPass!==true)throw new Error('Phase 292 integrated desktop live QA failed: '+JSON.stringify(extensionQa292?.r17));
+  if(extensionQa292?.r17Ready!==true)throw new Error('Phase 292 integrated desktop QA API missing before F1 render');
 
   let phase295Ready=false;
   for(let attempt=0;attempt<8;attempt++){
@@ -173,8 +173,8 @@ try{
     await sleep(1200);
   }
   if(!phase295Ready)throw new Error('Phase 295 runtime did not propagate to Recovery H browser');
-  const finalRuntimeQa295=await evaluate(cdp,"window.mwsF1QaFinalRegressionV295?.()","Phase 295 final runtime QA");
-  if(finalRuntimeQa295?.allPass!==true)throw new Error('Phase 295 final runtime QA failed: '+JSON.stringify(finalRuntimeQa295));
+  const finalRuntimeApi295=await evaluate(cdp,"typeof window.mwsF1QaFinalRegressionV295==='function'","Phase 295 final runtime API readiness");
+  if(finalRuntimeApi295!==true)throw new Error('Phase 295 final runtime QA API missing before F1 render');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -899,6 +899,8 @@ try{
     assert(resultCount>=2,'Phase 291 full result overlay rows missing');
     const finalDesktopQa292=window.mwsF1QaFinalDesktopV292?.();
     assert(finalDesktopQa292?.allPass===true,'Phase 292 final desktop QA failed after finish: '+JSON.stringify(finalDesktopQa292));
+    const finalRegressionQa295=window.mwsF1QaFinalRegressionV295?.();
+    assert(finalRegressionQa295?.allPass===true,'Phase 295 final regression QA failed after finish: '+JSON.stringify(finalRegressionQa295));
 
     document.getElementById('f1RacingFinishOverlayNewRaceV291')?.click();
     await sleep(1200);await raf();
