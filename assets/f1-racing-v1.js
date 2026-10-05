@@ -69,6 +69,7 @@ const VERSION239='phase239-track-benchmark-alignment-gate';
 const VERSION240='phase240-accelerated-real-engine-runner';
 const VERSION241='phase241-seven-track-real-engine-suite';
 const VERSION242='phase242-real-engine-benchmark-alignment';
+const VERSION243='phase243-flowing-circuit-redesign';
 const engineQaV240={active:false};
 let engineSuiteCacheV241=null;
 const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitchMs:1800,urgentBattleGapSeconds:0.55,focusDeadbandSvg:3,zoomDeadband:0.025});
@@ -1276,6 +1277,21 @@ function qaTrackRuntimeProfilesV234(){
   const rows=ids.map(id=>{const track=window.mwsGetF1TrackV182?.(id);const profile=track?trackRuntimeProfileV234(track):null;return {id,profile}});
   const signatures=new Set(rows.map(row=>row.profile?[row.profile.overtakeFactor,row.profile.incidentRiskFactor,row.profile.tyreStressFactor].join('|'):''));
   return {rows,uniqueProfiles:signatures.size,allPass:rows.length===7&&rows.every(row=>row.profile&&row.profile.archetype&&row.profile.overtakeFactor>0&&row.profile.incidentRiskFactor>0&&row.profile.tyreStressFactor>0)&&signatures.size>=5};
+}
+function qaTrackFlowDesignV243(){
+  const catalog=window.MWS_F1_TRACKS_V182?Object.values(window.MWS_F1_TRACKS_V182):[];
+  const rows=catalog.map(track=>{
+    const path=String(track?.path||'');
+    const curves=(path.match(/[CQ]/g)||[]).length;
+    const lines=(path.match(/L/g)||[]).length;
+    return {id:String(track?.id||''),curves,lines,pathLength:path.length};
+  });
+  const mini=document.querySelector('.f1-racing-track-card-silhouette-v233 path');
+  const miniStroke=mini?parseFloat(getComputedStyle(mini).strokeWidth)||0:0;
+  return {
+    rows,miniStroke,
+    allPass:rows.length===7&&rows.every(row=>row.curves>=6&&row.lines<=1&&row.pathLength>120)&&miniStroke>0&&miniStroke<=10&&window.__mwsF1TrackDesignV243==='flowing-circuit-redesign-v1'
+  };
 }
 function qaTrackSilhouetteCardsV233(){
   const catalog=getTrackCatalogV186();
@@ -4807,6 +4823,8 @@ window.__mwsF1RacingV241=VERSION241;
 window.mwsF1RealEngineBenchmarkAlignmentV242=realEngineBenchmarkAlignmentV242;
 window.mwsF1QaRealEngineBenchmarkAlignmentV242=qaRealEngineBenchmarkAlignmentV242;
 window.__mwsF1RacingV242=VERSION242;
+window.mwsF1QaTrackFlowDesignV243=qaTrackFlowDesignV243;
+window.__mwsF1RacingV243=VERSION243;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
