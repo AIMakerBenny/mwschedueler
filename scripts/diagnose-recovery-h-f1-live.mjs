@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase259Ready=false;
+  let phase260Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase259Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV259==='phase259-workspace-user-default-persistence'","Phase 259 runtime readiness"));
-    if(phase259Ready)break;
+    phase260Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV260==='phase260-manual-lap-control'","Phase 260 runtime readiness"));
+    if(phase260Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v259=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v260=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase259Ready)throw new Error('Phase 259 runtime did not propagate to Recovery H browser');
+  if(!phase260Ready)throw new Error('Phase 260 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -158,6 +158,27 @@ try{
     assert(selected.length>=2,'Participant selection did not reach 2 drivers');
     assert(String(window.mwsF1GetActiveTrackV182?.()?.id||'')===String(targetTrack.id),'Selected track not active');
 
+    const lapQa260=window.mwsF1QaLapControlV260?.();
+    assert(lapQa260?.allPass===true&&lapQa260?.low===3&&lapQa260?.high===99&&lapQa260?.direct===17,'Phase 260 lap-control QA failed: '+JSON.stringify(lapQa260));
+    const lapInput260=document.getElementById('f1RacingLapsInputV260');
+    const lapMinus260=document.getElementById('f1RacingLapsMinusV260');
+    const lapPlus260=document.getElementById('f1RacingLapsPlusV260');
+    const lapRestore260=document.getElementById('f1RacingLapsRestoreV260');
+    assert(lapInput260&&lapMinus260&&lapPlus260&&lapRestore260,'Phase 260 lap controls missing');
+    lapInput260.value='2';lapInput260.dispatchEvent(new Event('change',{bubbles:true}));await raf();
+    assert(Number(lapInput260.value)===3,'Phase 260 minimum lap clamp failed');
+    lapInput260.value='100';lapInput260.dispatchEvent(new Event('change',{bubbles:true}));await raf();
+    assert(Number(lapInput260.value)===99,'Phase 260 maximum lap clamp failed');
+    lapInput260.value='17';lapInput260.dispatchEvent(new Event('change',{bubbles:true}));await raf();
+    assert(Number(lapInput260.value)===17&&window.mwsF1GetRaceDraftV187?.().totalLaps===17,'Phase 260 direct lap input did not reach draft');
+    lapPlus260.click();await raf();assert(Number(lapInput260.value)===18,'Phase 260 plus button failed');
+    lapMinus260.click();await raf();assert(Number(lapInput260.value)===17,'Phase 260 minus button failed');
+    lapRestore260.click();await raf();
+    const recommended260=Number(window.mwsF1RecommendedLapsV260?.());
+    assert(Number(lapInput260.value)===recommended260&&window.mwsGetF1RacingSettingsRecoveryD?.()?.lapOverride===false,'Phase 260 recommended restore failed');
+    window.mwsF1SetLapCountV260?.(17);await raf();
+    assert(window.mwsGetF1RacingSettingsRecoveryD?.()?.lapOverride===true,'Phase 260 manual override persistence failed');
+
     const activeTrackModel=window.mwsF1GetActiveTrackV182?.();
     const threshold=Math.max(.00001,Number(activeTrackModel?.geometry?.cornerCurvatureThreshold)||.0018);
     const maxStraight=Number(activeTrackModel?.geometry?.maxStraightKph)||320;
@@ -185,6 +206,9 @@ try{
     await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='GRID','Race started before explicit grid start click');
     assert(Number(window.mwsF1GetSimulationClockV192?.().simTimeMs||0)===0,'Simulation advanced before explicit grid start click');
+    const snapshot260=window.mwsF1GetActiveRaceSnapshotV187?.();
+    assert(Number(snapshot260?.totalLaps)===17,'Phase 260 race snapshot did not retain custom laps: '+JSON.stringify(snapshot260?.totalLaps));
+    assert(String(document.getElementById('f1RacingGridLapsRecoveryM')?.textContent||'').includes('17'),'Phase 260 grid lap count does not match snapshot');
     const manualStart=document.getElementById('f1RacingGridStartRecoveryM');
     assert(manualStart,'Explicit grid start button missing');
     const gridLayoutQa244=window.mwsF1QaStartingGridLayoutV244?.();
@@ -194,6 +218,9 @@ try{
     assert(gridStage244&&gridStart244.right>=gridStage244.right-36&&gridStart244.top<=gridStage244.top+76,'Phase 244 race start button is not at grid top-right: '+JSON.stringify({stage:gridStage244,start:gridStart244}));
     manualStart.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='RACE','Explicit grid start click did not enter RACE');
+    await raf();
+    const headline260=window.mwsF1RaceHeadlineStateV255?.();
+    assert(Number(headline260?.total)===17&&Number(headline260?.remaining)===17,'Phase 260 headline remaining laps mismatch: '+JSON.stringify(headline260));
     await sleep(350);await raf();
     const playbackQa247=window.mwsF1QaRacePlaybackSpeedV247?.();
     assert(playbackQa247?.allPass===true&&Number(playbackQa247?.baseRate)===2,'Phase 247 playback mapping QA failed: '+JSON.stringify(playbackQa247));
