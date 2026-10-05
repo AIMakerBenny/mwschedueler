@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase267Ready=false;
+  let phase268Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase267Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV267==='phase267-integrated-spectator-desktop-qa'","Phase 267 runtime readiness"));
-    if(phase267Ready)break;
+    phase268Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV268==='phase268-auto-follow-wheel-zoom'","Phase 268 runtime readiness"));
+    if(phase268Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v267=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v268=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase267Ready)throw new Error('Phase 267 runtime did not propagate to Recovery H browser');
+  if(!phase268Ready)throw new Error('Phase 268 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -169,6 +169,9 @@ try{
 
     const podiumQa265=window.mwsF1QaPodiumV265?.();
     assert(podiumQa265?.allPass===true&&podiumQa265?.domReady===true&&podiumQa265?.singleSafe===true&&podiumQa265?.bestLap===true&&podiumQa265?.overtakes===true,'Phase 265 podium QA failed: '+JSON.stringify(podiumQa265));
+
+    const autoZoomQa268=window.mwsF1QaAutoFollowWheelZoomV268?.();
+    assert(autoZoomQa268?.allPass===true,'Phase 268 auto-follow wheel zoom QA failed: '+JSON.stringify(autoZoomQa268));
 
     const trackCardQa266=window.mwsF1QaTrackCardsV266?.();
     assert(trackCardQa266?.allPass===true&&Number(trackCardQa266?.trackCount)===7&&trackCardQa266?.mapped===true&&Number(trackCardQa266?.distinctPaths)===7&&trackCardQa266?.hasTechnicalFields===true,'Phase 266 track card QA failed: '+JSON.stringify(trackCardQa266));
@@ -566,10 +569,18 @@ try{
     });
     assert(finishLength245()/lineAtFull245>4.4,'Phase 245 finish line must retain track-relative geometry');
     window.mwsF1SetRaceCameraModeV216('AUTO');await raf();
+    const zoomBefore268=Number(window.mwsF1GetRaceCameraStateV216?.().zoom)||0;
     mapStage.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:-120,clientX:mapRect.left+mapRect.width/2,clientY:mapRect.top+mapRect.height/2}));
     await raf();
-    assert(window.mwsF1GetRaceCameraStateV216?.().mode==='MANUAL','Phase 216 wheel did not disable automatic camera');
-    assert(window.mwsF1SetRaceCameraModeV216?.('AUTO')===true,'Phase 216 auto camera restore failed');
+    const wheelState268=window.mwsF1GetRaceCameraStateV216?.();
+    assert(wheelState268?.mode==='AUTO'&&Number(wheelState268?.zoom)>zoomBefore268,'Phase 268 wheel zoom must keep AUTO: '+JSON.stringify(wheelState268));
+    const dragStartX=mapRect.left+mapRect.width*.5,dragStartY=mapRect.top+mapRect.height*.5;
+    mapStage.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,clientX:dragStartX,clientY:dragStartY,pointerId:268,buttons:1,button:0}));
+    mapStage.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,clientX:dragStartX+30,clientY:dragStartY+18,pointerId:268,buttons:1}));
+    mapStage.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,clientX:dragStartX+30,clientY:dragStartY+18,pointerId:268,buttons:0}));
+    await raf();
+    assert(window.mwsF1GetRaceCameraStateV216?.().mode==='MANUAL','Phase 268 drag did not enter MANUAL');
+    assert(window.mwsF1SetRaceCameraModeV216?.('AUTO')===true,'Phase 268 auto camera restore failed');
     pause.click();await raf();
     assert(window.mwsF1GetSimulationClockV192?.().paused===false,'Pause button did not resume simulation');
 
