@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase278Ready=false;
+  let phase279Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase278Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV278==='phase278-micro-battle-events'","Phase 278 runtime readiness"));
-    if(phase278Ready)break;
+    phase279Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV279==='phase279-expanded-dialogue-pool'","Phase 279 runtime readiness"));
+    if(phase279Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v278=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v279=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase278Ready)throw new Error('Phase 278 runtime did not propagate to Recovery H browser');
+  if(!phase279Ready)throw new Error('Phase 279 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -280,6 +280,10 @@ try{
     manualStart.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='RACE','Explicit grid start click did not enter RACE');
     await raf();
+    const dialoguePoolQa279=window.mwsF1QaExpandedDialoguePoolV279?.();
+    assert(dialoguePoolQa279?.allPass===true,'Phase 279 expanded dialogue pool QA failed: '+JSON.stringify(dialoguePoolQa279));
+    assert(Number(dialoguePoolQa279?.stats?.total)>=300&&Number(dialoguePoolQa279?.uniqueCount)>=300,'Phase 279 dialogue pool below 300: '+JSON.stringify(dialoguePoolQa279));
+    assert(dialoguePoolQa279?.microCoverage===true&&Number(dialoguePoolQa279?.categoryCount)>=13,'Phase 279 micro dialogue coverage incomplete: '+JSON.stringify(dialoguePoolQa279));
     const microQa278=window.mwsF1QaMicroBattleEventsV278?.();
     assert(microQa278?.allPass===true,'Phase 278 micro battle QA failed: '+JSON.stringify(microQa278));
     assert(microQa278?.coverage===true&&Number(microQa278?.eventCount)>=27,'Phase 278 event catalog incomplete: '+JSON.stringify(microQa278));
