@@ -14,12 +14,15 @@ if(!chrome)throw new Error('Recovery H live browser QA requires Chrome/Chromium'
 
 const profile=mkdtempSync(path.join(os.tmpdir(),'mws-recovery-h-'));
 const port=9444;
-const child=spawn(chrome,[
-  '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
-  '--disable-background-networking','--disable-default-apps','--disable-extensions',
-  `--remote-debugging-port=${port}`,`--user-data-dir=${profile}`,
-  '--window-size=1920,1080','about:blank'
-],{stdio:'ignore'});
+function launchChrome(){
+  return spawn(chrome,[
+    '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
+    '--disable-background-networking','--disable-default-apps','--disable-extensions',
+    `--remote-debugging-port=${port}`,`--user-data-dir=${profile}`,
+    '--window-size=1920,1080','about:blank'
+  ],{stdio:'ignore'});
+}
+let child=launchChrome();
 
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function json(url,init){
@@ -29,11 +32,29 @@ async function json(url,init){
 }
 async function waitDebugger(){
   let last;
-  for(let i=0;i<100;i++){
+  for(let i=0;i<120;i++){
     try{return await json(`http://127.0.0.1:${port}/json/version`)}
-    catch(error){last=error;await sleep(120)}
+    catch(error){last=error;await sleep(150)}
   }
   throw last||new Error('Chrome DevTools endpoint did not start');
+}
+async function debuggerPages(){
+  let last;
+  for(let attempt=0;attempt<3;attempt++){
+    try{
+      await waitDebugger();
+      const pages=await json(`http://127.0.0.1:${port}/json`);
+      if(Array.isArray(pages)&&pages.some(row=>row.type==='page'))return pages;
+      throw new Error('Chrome DevTools page list was empty');
+    }catch(error){
+      last=error;
+      if(attempt>=2)break;
+      try{child?.kill('SIGTERM')}catch(_){}
+      await sleep(350);
+      child=launchChrome();
+    }
+  }
+  throw last||new Error('Chrome DevTools endpoint did not stabilize');
 }
 class Cdp{
   constructor(url){this.nextId=1;this.pending=new Map();this.listeners=new Map();this.ws=new WebSocket(url)}
@@ -82,8 +103,7 @@ async function evaluate(cdp,expression,label){
 
 let cdp;
 try{
-  await waitDebugger();
-  const pages=await json(`http://127.0.0.1:${port}/json`);
+  const pages=await debuggerPages();
   const page=pages.find(row=>row.type==='page');
   if(!page?.webSocketDebuggerUrl)throw new Error('No debuggable Chrome page');
   cdp=new Cdp(page.webSocketDebuggerUrl);
