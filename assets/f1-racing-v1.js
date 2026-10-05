@@ -108,6 +108,7 @@ const VERSION278='phase278-micro-battle-events';
 const VERSION279='phase279-expanded-dialogue-pool';
 const VERSION280='phase280-event-dialogue-coverage';
 const VERSION281='phase281-dialogue-cadence-repeat-guard';
+const VERSION282='phase282-dialogue-long-run-desktop-qa';
 const TRACK_BOUNDARY_V271=Object.freeze({
   carHalfWidthMeters:.85,safetyMarginMeters:.20,edgeStartRatio:.90,
   edgeMinSpeedFactor:.90,offTrackSpeedFactor:.76
@@ -5667,6 +5668,38 @@ function qaDialogueCadenceV281(){
   return {first,duplicateBlocked,speakerGapReleased,budgetBlocked,criticalAllowed,config:{...DIALOGUE_CADENCE_CONFIG_V281},recentTextLimit:DIALOGUE_RECENT_TEXT_LIMIT_V279,allPass:first&&duplicateBlocked&&speakerGapReleased&&budgetBlocked&&criticalAllowed&&DIALOGUE_CADENCE_CONFIG_V281.maxGroupsPerWindow<=4&&DIALOGUE_RECENT_TEXT_LIMIT_V279>=40}
 }
 
+
+function qaDialogueLongRunDesktopV282(benchmarkInput=null){
+  const benchmark=benchmarkInput&&typeof benchmarkInput==='object'?benchmarkInput:qaRaceMomentumBenchmarkV262();
+  const micro=getMicroBattleEventsV278();
+  const pool=dialoguePoolCountV279();
+  const coverage=qaEventDialogueCoverageV280();
+  const cadence=getDialogueCadenceV281();
+  const conversation=getLiveConversationStateV276();
+  const desktopUi=Boolean(document.getElementById('f1RacingViewRaceV185')&&document.getElementById('f1RacingConversationStackV276'));
+  const bounded={
+    microHistory:micro.history.length<=120,
+    characterHistory:characterDialogueStateV277.history.length<=60,
+    conversationEntries:conversation.entries.length<=LIVE_CONVERSATION_CONFIG_V276.maxVisible,
+    recentDialogueText:dialogueRecentTextV279.length<=DIALOGUE_RECENT_TEXT_LIMIT_V279,
+    cadenceWindow:cadence.recentGroups<=DIALOGUE_CADENCE_CONFIG_V281.maxGroupsPerWindow
+  };
+  const ruleBounds={
+    burstUses:CHASE_BURST_CONFIG_V275.maxUsesPerRace<=2,
+    burstChance:CHASE_BURST_CONFIG_V275.activationChance<=.05,
+    leaderPressureChance:LEADER_PRESSURE_CONFIG_V274.maxEventChance<=.06
+  };
+  const benchmarkPass=Boolean(benchmark?.allPass)&&Number(benchmark?.trackCount)===7&&Number(benchmark?.completedRuns)===7;
+  const dialoguePass=Number(pool?.total)>=300&&coverage?.allPass===true&&MICRO_BATTLE_EVENTS_V278.length>=27;
+  const boundedPass=Object.values(bounded).every(Boolean),rulesPass=Object.values(ruleBounds).every(Boolean);
+  return {
+    benchmark:{allPass:Boolean(benchmark?.allPass),trackCount:Number(benchmark?.trackCount)||0,completedRuns:Number(benchmark?.completedRuns)||0,averageOvertakes:Number(benchmark?.averageOvertakes)||0,p1Retention:Number(benchmark?.p1Retention)||0,top3Variation:Number(benchmark?.top3Variation)||0,abnormalGapRuns:Number(benchmark?.abnormalGapRuns)||0},
+    dialogue:{poolTotal:Number(pool?.total)||0,microEventCount:MICRO_BATTLE_EVENTS_V278.length,coveragePass:Boolean(coverage?.allPass),cadence:{...cadence}},
+    bounded,ruleBounds,desktopUi,benchmarkPass,dialoguePass,boundedPass,rulesPass,
+    allPass:desktopUi&&benchmarkPass&&dialoguePass&&boundedPass&&rulesPass
+  };
+}
+
 const commentaryStateV219={
   initialized:false,lastPollSimMs:-Infinity,lastLeaderId:'',lastFlag:'GREEN',lastLeaderLap:0,
   vehicle:new Map(),sequence:0
@@ -7744,6 +7777,7 @@ window.mwsF1GetDialogueCoverageV280=getDialogueCoverageV280;
 window.mwsF1QaEventDialogueCoverageV280=qaEventDialogueCoverageV280;
 window.mwsF1GetDialogueCadenceV281=getDialogueCadenceV281;
 window.mwsF1QaDialogueCadenceV281=qaDialogueCadenceV281;
+window.mwsF1QaDialogueLongRunDesktopV282=qaDialogueLongRunDesktopV282;
 window.mwsF1GetLeaderPressureFieldV274=function(){return {...leaderPressureFieldV274,history:leaderPressureFieldV274.history.map(row=>({...row}))}};
 window.mwsF1GetStartingGridRevealStateV273=function(){return {...gridRevealStateV273,timers:gridRevealStateV273.timers.length}};
 window.mwsF1CancelRaceRecoveryC=cancelRaceToSetupRecoveryC;
@@ -8071,6 +8105,7 @@ window.__mwsF1RacingV278=VERSION278;
 window.__mwsF1RacingV279=VERSION279;
 window.__mwsF1RacingV280=VERSION280;
 window.__mwsF1RacingV281=VERSION281;
+window.__mwsF1RacingV282=VERSION282;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
