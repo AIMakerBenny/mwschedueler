@@ -68,6 +68,7 @@ const VERSION238='phase238-seven-track-long-run-benchmark';
 const VERSION239='phase239-track-benchmark-alignment-gate';
 const VERSION240='phase240-accelerated-real-engine-runner';
 const VERSION241='phase241-seven-track-real-engine-suite';
+const VERSION242='phase242-real-engine-benchmark-alignment';
 const engineQaV240={active:false};
 let engineSuiteCacheV241=null;
 const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitchMs:1800,urgentBattleGapSeconds:0.55,focusDeadbandSvg:3,zoomDeadband:0.025});
@@ -1124,6 +1125,35 @@ function qaSevenTrackEngineSuiteV241(){
     allPass:suite.rows.length===7&&suite.completedRuns===7&&suite.rows.every(row=>row.completedRuns===1&&row.avgSpeedKph>0&&row.avgLapMs>0&&!row.errors.length)
   };
 }
+function realEngineBenchmarkAlignmentV242(suite=engineSuiteCacheV241){
+  const actual=suite?.rows?.length===7?suite:runSevenTrackEngineSuiteV241({runsPerTrack:1,drivers:4,laps:1,stepMs:60,maxSteps:14000});
+  const expected=runSevenTrackBenchmarkV238({runs:24,drivers:Number(actual.options?.drivers)||4,laps:Number(actual.options?.laps)||1});
+  const expectedById=new Map(expected.map(row=>[String(row.trackId),row]));
+  const rows=actual.rows.map(row=>{
+    const model=expectedById.get(String(row.trackId))||{};
+    return {
+      ...row,
+      modelSpeedKph:Number(model.avgSpeedKph)||0,modelLapMs:Number(model.avgLapMs)||0,
+      modelPasses:Number(model.avgPasses)||0,modelIncidents:Number(model.avgIncidents)||0
+    };
+  });
+  const speedCorrelation=pearsonV239(rows,'modelSpeedKph','avgSpeedKph');
+  const lapCorrelation=pearsonV239(rows,'modelLapMs','avgLapMs');
+  const speedValues=rows.map(row=>Number(row.avgSpeedKph)||0),lapValues=rows.map(row=>Number(row.avgLapMs)||0);
+  const speedSpread=speedValues.length?Math.max(...speedValues)-Math.min(...speedValues):0;
+  const lapSpread=lapValues.length?Math.max(...lapValues)-Math.min(...lapValues):0;
+  const uniqueActualSignatures=new Set(rows.map(row=>[row.avgSpeedKph,row.avgLapMs,row.avgPasses,row.avgIncidents].join('|'))).size;
+  const totalPasses=rows.reduce((sum,row)=>sum+Number(row.avgPasses||0),0);
+  const totalIncidents=rows.reduce((sum,row)=>sum+Number(row.avgIncidents||0),0);
+  return {
+    rows,
+    speedCorrelation:Number(speedCorrelation.toFixed(3)),lapCorrelation:Number(lapCorrelation.toFixed(3)),
+    speedSpread:Number(speedSpread.toFixed(2)),lapSpread:Number(lapSpread.toFixed(1)),
+    uniqueActualSignatures,totalPasses:Number(totalPasses.toFixed(2)),totalIncidents:Number(totalIncidents.toFixed(2)),
+    allPass:rows.length===7&&actual.completedRuns===actual.totalRuns&&speedCorrelation>=.5&&lapCorrelation>=.5&&speedSpread>=8&&lapSpread>=3000&&uniqueActualSignatures>=5
+  };
+}
+function qaRealEngineBenchmarkAlignmentV242(){return realEngineBenchmarkAlignmentV242(engineSuiteCacheV241)}
 function trackBenchmarkRandomV238(seed){
   let state=(Number(seed)>>>0)||1;
   return ()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296};
@@ -4759,6 +4789,9 @@ window.__mwsF1RacingV240=VERSION240;
 window.mwsF1RunSevenTrackEngineSuiteV241=runSevenTrackEngineSuiteV241;
 window.mwsF1QaSevenTrackEngineSuiteV241=qaSevenTrackEngineSuiteV241;
 window.__mwsF1RacingV241=VERSION241;
+window.mwsF1RealEngineBenchmarkAlignmentV242=realEngineBenchmarkAlignmentV242;
+window.mwsF1QaRealEngineBenchmarkAlignmentV242=qaRealEngineBenchmarkAlignmentV242;
+window.__mwsF1RacingV242=VERSION242;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
