@@ -46,7 +46,7 @@ function defaultMiniGames(){
     rps:{players:[]},
     pachinko:{players:[]},
     multiDraw:{players:[],targetCount:8},
-    f1Racing:{selectedDriverIds:[],selectedTrackId:'majoku-ring-v1',totalLaps:10,lapOverride:false,workspaceLayout:{}}
+    f1Racing:{selectedDriverIds:[],selectedTrackId:'majoku-ring-v1',totalLaps:10,workspaceLayout:{}}
   };
 }
 function normalizeMiniGameData(){
