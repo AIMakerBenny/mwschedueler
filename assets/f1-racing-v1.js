@@ -107,6 +107,7 @@ const VERSION277='phase277-character-dialogue-engine';
 const VERSION278='phase278-micro-battle-events';
 const VERSION279='phase279-expanded-dialogue-pool';
 const VERSION280='phase280-event-dialogue-coverage';
+const VERSION281='phase281-dialogue-cadence-repeat-guard';
 const TRACK_BOUNDARY_V271=Object.freeze({
   carHalfWidthMeters:.85,safetyMarginMeters:.20,edgeStartRatio:.90,
   edgeMinSpeedFactor:.90,offTrackSpeedFactor:.76
@@ -5402,6 +5403,8 @@ function pushCharacterDialogueLineV277(role,vehicle,target,event,side){
 function emitCharacterDialogueEventV277(event,vehicle,target,options={}){
   const type=String(event||'').toUpperCase();
   if(engineQaV240.active||f1ScreenStateV185!=='RACE'||!vehicle||!CHARACTER_DIALOGUE_EVENT_ROLES_V277[type])return false;
+  const criticalDialogue=['PASS_SUCCESS','PASS_FAILED'].includes(type);
+  if(typeof dialogueCadenceAllowsV281==='function'&&!dialogueCadenceAllowsV281(type,vehicle,target,{critical:criticalDialogue}))return false;
   const cooldownMs=Number.isFinite(Number(options.cooldownMs))?Number(options.cooldownMs):1700;
   if(!dialoguePairCooldownAllowsV277(type,vehicle,target,cooldownMs))return false;
   const roles=CHARACTER_DIALOGUE_EVENT_ROLES_V277[type];
@@ -5415,7 +5418,7 @@ function emitCharacterDialogueEventV277(event,vehicle,target,options={}){
     output.push(pushCharacterDialogueLineV277(firstRole,vehicle,target,type,'left'));
     if(target&&secondRole)output.push(pushCharacterDialogueLineV277(secondRole,target,vehicle,type,'right'));
   }
-  return output.filter(Boolean);
+  const filtered=output.filter(Boolean);if(filtered.length&&typeof recordDialogueCadenceV281==='function')recordDialogueCadenceV281(type,vehicle,target);return filtered;
 }
 function handlePassDialogueV277(vehicle,target,previousState,nextState){
   const next=String(nextState||'');
@@ -5586,10 +5589,12 @@ const MICRO_DIALOGUE_ROLE_MAP_V279=Object.freeze({
 });
 function emitMicroBattleDialogueV279(event,actor,target){
   const roles=MICRO_DIALOGUE_ROLE_MAP_V279[String(event||'')];if(!roles||!actor)return null;
+  const critical=['PASS_SUCCESS','PASS_FAIL','BURST_SUCCESS','BURST_FAIL','FINAL_LAP'].includes(String(event||''));
+  if(typeof dialogueCadenceAllowsV281==='function'&&!dialogueCadenceAllowsV281(event,actor,target,{critical}))return [];
   const out=[];
   out.push(pushCharacterDialogueLineV277(roles[0],actor,target,event,'left'));
   if(target&&roles[1])out.push(pushCharacterDialogueLineV277(roles[1],target,actor,event,'right'));
-  const filtered=out.filter(Boolean);if(typeof recordDialogueCoverageV280==='function')recordDialogueCoverageV280(event,roles,filtered);return filtered;
+  const filtered=out.filter(Boolean);if(filtered.length&&typeof recordDialogueCadenceV281==='function')recordDialogueCadenceV281(event,actor,target);if(typeof recordDialogueCoverageV280==='function')recordDialogueCoverageV280(event,roles,filtered);return filtered;
 }
 function qaExpandedDialoguePoolV279(){
   const stats=dialoguePoolCountV279();
@@ -5628,6 +5633,38 @@ function qaEventDialogueCoverageV280(){
   const allPoolsReady=emptyPools.length===0&&roleNames.length>=10;
   return {catalogCount:MICRO_BATTLE_EVENTS_V278.length,mappedCount:rows.filter(row=>row.mapped).length,unmapped:unmapped.map(row=>row.event),emptyPools:emptyPools.map(row=>row.event),roleCount:roleNames.length,allCatalogMapped,allPoolsReady,
     allPass:MICRO_BATTLE_EVENTS_V278.length>=27&&allCatalogMapped&&allPoolsReady};
+}
+
+
+const DIALOGUE_CADENCE_CONFIG_V281=Object.freeze({windowMs:8000,maxGroupsPerWindow:4,speakerGapMs:700,pairGapMs:1500,criticalPairGapMs:250});
+const dialogueCadenceStateV281={recentGroupTimes:[],lastPairAt:new Map(),lastSpeakerAt:new Map(),emitted:0,suppressed:0,lastReason:''};
+function resetDialogueCadenceV281(){dialogueCadenceStateV281.recentGroupTimes=[];dialogueCadenceStateV281.lastPairAt=new Map();dialogueCadenceStateV281.lastSpeakerAt=new Map();dialogueCadenceStateV281.emitted=0;dialogueCadenceStateV281.suppressed=0;dialogueCadenceStateV281.lastReason='';return true}
+function trimDialogueCadenceWindowV281(now=Number(simClockV192.simTimeMs)||0){const min=now-DIALOGUE_CADENCE_CONFIG_V281.windowMs;dialogueCadenceStateV281.recentGroupTimes=dialogueCadenceStateV281.recentGroupTimes.filter(v=>Number(v)>=min);return dialogueCadenceStateV281.recentGroupTimes.length}
+function dialogueCadenceKeyV281(event,vehicle,target){return [String(event||''),String(vehicle?.id||''),String(target?.id||'')].join('|')}
+function dialogueCadenceAllowsV281(event,vehicle,target,{critical=false}={}){
+  const now=Number(simClockV192.simTimeMs)||0,key=dialogueCadenceKeyV281(event,vehicle,target),speaker=String(vehicle?.id||'');
+  trimDialogueCadenceWindowV281(now);
+  const pairGap=critical?DIALOGUE_CADENCE_CONFIG_V281.criticalPairGapMs:DIALOGUE_CADENCE_CONFIG_V281.pairGapMs;
+  const lastPair=Number(dialogueCadenceStateV281.lastPairAt.get(key));
+  if(Number.isFinite(lastPair)&&now-lastPair<pairGap){dialogueCadenceStateV281.suppressed+=1;dialogueCadenceStateV281.lastReason='pair-gap';return false}
+  const lastSpeaker=Number(dialogueCadenceStateV281.lastSpeakerAt.get(speaker));
+  if(!critical&&speaker&&Number.isFinite(lastSpeaker)&&now-lastSpeaker<DIALOGUE_CADENCE_CONFIG_V281.speakerGapMs){dialogueCadenceStateV281.suppressed+=1;dialogueCadenceStateV281.lastReason='speaker-gap';return false}
+  if(!critical&&dialogueCadenceStateV281.recentGroupTimes.length>=DIALOGUE_CADENCE_CONFIG_V281.maxGroupsPerWindow){dialogueCadenceStateV281.suppressed+=1;dialogueCadenceStateV281.lastReason='window-budget';return false}
+  dialogueCadenceStateV281.lastReason='';return true
+}
+function recordDialogueCadenceV281(event,vehicle,target){const now=Number(simClockV192.simTimeMs)||0,key=dialogueCadenceKeyV281(event,vehicle,target),speaker=String(vehicle?.id||'');dialogueCadenceStateV281.lastPairAt.set(key,now);if(speaker)dialogueCadenceStateV281.lastSpeakerAt.set(speaker,now);dialogueCadenceStateV281.recentGroupTimes.push(now);trimDialogueCadenceWindowV281(now);dialogueCadenceStateV281.emitted+=1;return true}
+function getDialogueCadenceV281(){const now=Number(simClockV192.simTimeMs)||0;trimDialogueCadenceWindowV281(now);return {recentGroups:dialogueCadenceStateV281.recentGroupTimes.length,emitted:dialogueCadenceStateV281.emitted,suppressed:dialogueCadenceStateV281.suppressed,lastReason:dialogueCadenceStateV281.lastReason,config:{...DIALOGUE_CADENCE_CONFIG_V281},recentTextCount:dialogueRecentTextV279.length,recentTextLimit:DIALOGUE_RECENT_TEXT_LIMIT_V279}}
+function qaDialogueCadenceV281(){
+  const oldTime=simClockV192.simTimeMs;resetDialogueCadenceV281();
+  const a={id:'qa-a'},b={id:'qa-b'},c={id:'qa-c'},d={id:'qa-d'},e={id:'qa-e'};
+  simClockV192.simTimeMs=1000;const first=dialogueCadenceAllowsV281('CHASE',a,b);if(first)recordDialogueCadenceV281('CHASE',a,b);
+  const duplicateBlocked=!dialogueCadenceAllowsV281('CHASE',a,b);
+  simClockV192.simTimeMs=1800;const speakerGapReleased=dialogueCadenceAllowsV281('CHASE2',a,c);if(speakerGapReleased)recordDialogueCadenceV281('CHASE2',a,c);
+  simClockV192.simTimeMs=2700;for(const [event,v,t] of [['E2',b,c],['E3',c,d]]){if(dialogueCadenceAllowsV281(event,v,t))recordDialogueCadenceV281(event,v,t)}
+  const budgetBlocked=!dialogueCadenceAllowsV281('E5',d,e);
+  const criticalAllowed=dialogueCadenceAllowsV281('PASS_SUCCESS',e,a,{critical:true});
+  simClockV192.simTimeMs=oldTime;resetDialogueCadenceV281();
+  return {first,duplicateBlocked,speakerGapReleased,budgetBlocked,criticalAllowed,config:{...DIALOGUE_CADENCE_CONFIG_V281},recentTextLimit:DIALOGUE_RECENT_TEXT_LIMIT_V279,allPass:first&&duplicateBlocked&&speakerGapReleased&&budgetBlocked&&criticalAllowed&&DIALOGUE_CADENCE_CONFIG_V281.maxGroupsPerWindow<=4&&DIALOGUE_RECENT_TEXT_LIMIT_V279>=40}
 }
 
 const commentaryStateV219={
@@ -5816,6 +5853,7 @@ function resetRaceCommentaryV219(){
   resetLiveCutinsV264();
   resetCharacterDialogueV277();
   resetDialogueCoverageV280();
+  resetDialogueCadenceV281();
   bindCommentaryReadabilityV226();
   for(const vehicle of raceMotionV189.vehicles)commentaryStateV219.vehicle.set(String(vehicle.id),commentaryVehicleStateV219(vehicle));
   const track=activeRaceSnapshotV187?.track;
@@ -7704,6 +7742,8 @@ window.mwsF1DialoguePoolStatsV279=dialoguePoolCountV279;
 window.mwsF1QaExpandedDialoguePoolV279=qaExpandedDialoguePoolV279;
 window.mwsF1GetDialogueCoverageV280=getDialogueCoverageV280;
 window.mwsF1QaEventDialogueCoverageV280=qaEventDialogueCoverageV280;
+window.mwsF1GetDialogueCadenceV281=getDialogueCadenceV281;
+window.mwsF1QaDialogueCadenceV281=qaDialogueCadenceV281;
 window.mwsF1GetLeaderPressureFieldV274=function(){return {...leaderPressureFieldV274,history:leaderPressureFieldV274.history.map(row=>({...row}))}};
 window.mwsF1GetStartingGridRevealStateV273=function(){return {...gridRevealStateV273,timers:gridRevealStateV273.timers.length}};
 window.mwsF1CancelRaceRecoveryC=cancelRaceToSetupRecoveryC;
@@ -8030,6 +8070,7 @@ window.__mwsF1RacingV277=VERSION277;
 window.__mwsF1RacingV278=VERSION278;
 window.__mwsF1RacingV279=VERSION279;
 window.__mwsF1RacingV280=VERSION280;
+window.__mwsF1RacingV281=VERSION281;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
