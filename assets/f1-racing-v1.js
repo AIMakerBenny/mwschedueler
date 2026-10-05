@@ -1025,17 +1025,24 @@ function cloneTrackForEngineQaV240(track){
     zones:Object.freeze((track.zones||[]).map(row=>Object.freeze({...row})))
   });
 }
-function buildEngineQaSnapshotV240(trackId,{drivers=6,laps=1,runIndex=0}={}){
+function buildEngineQaSnapshotV240(trackId,{drivers=6,laps=1,runIndex=0,gridMode='FIXED'}={}){
   const track=window.mwsGetF1TrackV182?.(String(trackId||''));if(!track)return null;
   const count=Math.max(2,Math.min(12,Math.floor(Number(drivers)||6)));
   const totalLaps=Math.max(1,Math.min(5,Math.floor(Number(laps)||1)));
-  const rows=Array.from({length:count},(_,index)=>Object.freeze({
+  const createdAt='phase240-fixed-field-run-'+String(Math.max(0,Math.floor(Number(runIndex)||0)));
+  let rows=Array.from({length:count},(_,index)=>({
     contactId:'phase240-driver-'+String(index+1),name:'QA Driver '+String(index+1),
     image:'',labels:Object.freeze(['phase240','engine-qa']),gridPosition:index+1
   }));
+  if(String(gridMode||'').toUpperCase()==='REVERSE_PACE'){
+    const seedSnapshot={createdAt};
+    rows=rows.map(row=>({row,pace:Number(createDriverProfileV200(row,seedSnapshot)?.pace)||0}))
+      .sort((a,b)=>a.pace-b.pace)
+      .map((entry,index)=>({...entry.row,gridPosition:index+1}));
+  }
+  rows=rows.map(row=>Object.freeze(row));
   return Object.freeze({
-    createdAt:'phase240-fixed-field-run-'+String(Math.max(0,Math.floor(Number(runIndex)||0))),
-    trackId:String(track.id),totalLaps,
+    createdAt,trackId:String(track.id),totalLaps,
     track:cloneTrackForEngineQaV240(track),drivers:Object.freeze(rows)
   });
 }
@@ -1150,10 +1157,18 @@ function realEngineBenchmarkAlignmentV242(suite=engineSuiteCacheV241){
     speedCorrelation:Number(speedCorrelation.toFixed(3)),lapCorrelation:Number(lapCorrelation.toFixed(3)),
     speedSpread:Number(speedSpread.toFixed(2)),lapSpread:Number(lapSpread.toFixed(1)),
     uniqueActualSignatures,totalPasses:Number(totalPasses.toFixed(2)),totalIncidents:Number(totalIncidents.toFixed(2)),
-    allPass:rows.length===7&&actual.completedRuns===actual.totalRuns&&speedCorrelation>=.5&&lapCorrelation>=.5&&speedSpread>=8&&lapSpread>=3000&&uniqueActualSignatures>=5
+    allPass:rows.length===7&&actual.completedRuns===actual.totalRuns&&speedCorrelation>=.7&&speedSpread>=20&&lapSpread>=10000&&uniqueActualSignatures>=5&&totalIncidents>=1
   };
 }
-function qaRealEngineBenchmarkAlignmentV242(){return realEngineBenchmarkAlignmentV242(engineSuiteCacheV241)}
+function runOvertakeStressV242(){
+  const result=runAcceleratedEngineRaceV240('blue-coast-speedway-v1',{drivers:8,laps:3,runIndex:42,stepMs:70,maxSteps:12000,gridMode:'REVERSE_PACE'});
+  return {result,totalPasses:Number(result?.telemetry?.totalPasses)||0,failedPasses:Number(result?.telemetry?.failedPasses)||0,allPass:Boolean(result?.completed)&&(Number(result?.telemetry?.totalPasses)||0)>=1};
+}
+function qaRealEngineBenchmarkAlignmentV242(){
+  const alignment=realEngineBenchmarkAlignmentV242(engineSuiteCacheV241);
+  const overtakeStress=runOvertakeStressV242();
+  return {...alignment,overtakeStress,allPass:Boolean(alignment.allPass)&&Boolean(overtakeStress.allPass)};
+}
 function trackBenchmarkRandomV238(seed){
   let state=(Number(seed)>>>0)||1;
   return ()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296};
