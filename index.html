@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>마왕 스케줄러</title>
 <link rel="stylesheet" href="assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171-searchtab172-drag174-workspace176-splitquick177">
-<link rel="stylesheet" href="assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196&recovery=N1&phase=271&zoomfix=1&spectatorqa=2&boundary=2">
+<link rel="stylesheet" href="assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196&recovery=N1&phase=272&zoomfix=1&spectatorqa=2&boundary=2&gridrandom=1">
 
 <style id="mws-cloud-access-style">
 body.mws-gated .app{pointer-events:none;user-select:none;filter:blur(5px);opacity:.36}
@@ -1136,14 +1136,17 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
             </div>
             <div class="f1-racing-grid-actions-v244">
               <button type="button" class="secondary" id="f1RacingGridCancelRecoveryM">설정으로 돌아가기</button>
+              <button type="button" class="secondary" id="f1RacingGridShuffleV272">다시 섞기</button>
               <button type="button" class="primary" id="f1RacingGridStartRecoveryM">경기 시작</button>
             </div>
           </header>
           <div class="f1-racing-grid-brief-v244">
-            <span>RACE READY</span>
-            <strong>출발 대기</strong>
-            <p>차량은 아직 움직이지 않습니다. 우측 상단의 경기 시작 버튼을 누르면 레이스가 시작됩니다.</p>
+            <span>RANDOM STARTING GRID</span>
+            <strong>스타팅 그리드 확정</strong>
+            <p>참가자 순서는 무작위로 확정됩니다. 경기 시작 전에는 다시 섞을 수 있으며, 경기 시작 후에는 고정됩니다.</p>
+            <small id="f1RacingGridShuffleRoundV272">셔플 0회</small>
           </div>
+          <div id="f1RacingGridListV272" class="f1-racing-grid-list-v272" aria-live="polite" aria-label="스타팅 그리드 순서"></div>
         </div>
       </section>
       <section id="f1RacingViewRaceV185" class="f1-racing-view-v185 f1-racing-race-control-v188" data-f1-view="RACE" hidden>
@@ -1963,7 +1966,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD"></script>
 <script src="assets/f1-track-v1.js?v=1.0.0-phase197-line-meta-recoveryA-tracks7&phase=243"></script>
 <script src="assets/f1-track-geometry-v2.js?v=1.0.0-phase195-speed-profile&recovery=L1&phase=270&exitrecovery=3"></script>
-<script src="assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=N1&phase=271&zoomfix=1&spectatorqa=2"></script>
+<script src="assets/f1-racing-v1.js?v=1.0.0-phase180-shell&p=203&recovery=N1&phase=272&zoomfix=1&spectatorqa=2&gridrandom=1"></script>
 <script src="assets/wardogs-data-v1.js?v=1.0.0-phase120-webview130-zoom138-unassigned168"></script>
 <script src="assets/wardogs-media-v1.js?v=1.0.0-phase121-backup126-webview130"></script>
 <script src="assets/wardogs-manager-v1.js?v=1.0.0-phase127-touchfix-webview130-frame140-frame144-frames150-aperture152-assault166-medic165-recon163-support166-driver161-pilot166-unassigned168"></script>
