@@ -693,3 +693,14 @@
 .f1-racing-race-headline-v255 [data-f1-headline-fastest]{color:#d8b4fe}
 .f1-racing-race-headline-v255 [data-f1-headline-battles]:not(:empty){color:#ffd98a}
 @media(max-width:900px){.f1-racing-race-headline-v255{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Phase 256: active battle target link on the live track */
+@keyframes f1BattleLinkFlowV256{to{stroke-dashoffset:-22}}
+.f1-racing-battle-links-v256{pointer-events:none}
+.f1-racing-battle-link-v256 .battle-link-line-v256{stroke:var(--battle-link-color-v256,#ffd166);stroke-width:2;stroke-linecap:round;stroke-dasharray:7 5;opacity:.72;vector-effect:non-scaling-stroke;animation:f1BattleLinkFlowV256 .72s linear infinite;filter:drop-shadow(0 0 2px rgba(255,220,120,.45))}
+.f1-racing-battle-link-v256 .battle-link-arrow-v256{fill:#ffe29a;opacity:.94;filter:drop-shadow(0 0 2px rgba(255,216,96,.7))}
+.f1-racing-battle-link-v256[data-battle-state-v256="SIDE_BY_SIDE"] .battle-link-line-v256,
+.f1-racing-battle-link-v256[data-battle-state-v256="BRAKING_DUEL"] .battle-link-line-v256,
+.f1-racing-battle-link-v256[data-battle-state-v256="CORNER_BATTLE"] .battle-link-line-v256{opacity:.95;stroke-width:2.5}
+@media(prefers-reduced-motion:reduce){.f1-racing-battle-link-v256 .battle-link-line-v256{animation:none}}
