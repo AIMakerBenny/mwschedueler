@@ -96,6 +96,12 @@ const VERSION266='phase266-f1-track-card-circuit-redesign';
 const VERSION267='phase267-integrated-spectator-desktop-qa';
 const VERSION268='phase268-auto-follow-wheel-zoom';
 const VERSION269='phase269-lateral-velocity-acceleration-smoothing';
+const VERSION270='phase270-f1-corner-line-exit-acceleration';
+const CORNER_DYNAMICS_V270=Object.freeze({
+  outsideFraction:.68,apexFraction:.76,exitOutsideFraction:.58,
+  exitAccelerationMultiplier:1.38,exitTargetLiftKph:24,exitLookAheadMeters:105,
+  hairpinMinApexKph:72,slowMinApexKph:92,sCurveMinRecoveryKph:112
+});
 const RACE_MOMENTUM_CONFIG_V262=Object.freeze({
   min:-1,max:1,paceRange:.02,decayPerSecond:.032,evaluationMs:620,
   passSuccess:.18,passFailed:-.12,defenceSuccess:.075,incident:-.14,
@@ -3609,6 +3615,47 @@ function qaDriverLabelCollisionV228(){
   const assigned=liveLabels.filter(label=>label.dataset.labelSlotV228!==undefined).length;
   return {syntheticCount:placements.length,syntheticOverlapPairs,liveLabels:liveLabels.length,assigned,allPass:placements.length===10&&syntheticOverlapPairs===0};
 }
+function alignedCornerDistanceV270(corner,progress){
+  const length=Math.max(1,Number(activeRaceSnapshotV187?.track?.lengthMeters)||Number(raceGeometryV193?.lengthMeters)||1);
+  let here=((Number(progress)||0)%1+1)%1*length;
+  const start=Number(corner?.approachDistanceMeters);
+  const end=Number(corner?.exitDistanceMeters);
+  if(!Number.isFinite(start)||!Number.isFinite(end))return {here,length};
+  while(here<start)here+=length;
+  while(here-length>=start)here-=length;
+  return {here,length};
+}
+function smoothstepV270(value){
+  const t=Math.max(0,Math.min(1,Number(value)||0));
+  return t*t*(3-2*t);
+}
+function idealRacingLineOffsetV270(vehicle,usable,phaseInfo){
+  if(!phaseInfo?.corner)return 0;
+  const corner=phaseInfo.corner;
+  const direction=corner.direction==='right'?-1:1;
+  const aligned=alignedCornerDistanceV270(corner,vehicle?.progress);
+  const here=aligned.here;
+  const brake=Number(corner.brakingPointDistanceMeters);
+  const turnIn=Number(corner.turnInDistanceMeters);
+  const apex=Number(corner.apexDistanceMeters);
+  const exit=Number(corner.exitDistanceMeters);
+  const outside=-direction*usable*CORNER_DYNAMICS_V270.outsideFraction;
+  const inside=direction*usable*CORNER_DYNAMICS_V270.apexFraction;
+  const exitOutside=-direction*usable*CORNER_DYNAMICS_V270.exitOutsideFraction;
+  if(phaseInfo.phase==='APPROACH'||phaseInfo.phase==='BRAKING')return outside;
+  if(phaseInfo.phase==='TURN_IN'){
+    const t=smoothstepV270((here-turnIn)/Math.max(1,apex-turnIn));
+    return outside+(inside-outside)*t;
+  }
+  if(phaseInfo.phase==='APEX')return inside;
+  if(phaseInfo.phase==='EXIT'){
+    const apexWindow=Math.max(5,Number(corner.lengthMeters||40)*.18);
+    const exitStart=Math.min(exit,apex+apexWindow);
+    const t=smoothstepV270((here-exitStart)/Math.max(1,exit-exitStart));
+    return inside+(exitOutside-inside)*t;
+  }
+  return 0;
+}
 function lineOffsetMetersV197(vehicle){
   const track=activeRaceSnapshotV187?.track;
   const width=Math.max(4,Number(track?.geometry?.trackWidthMeters)||14);
@@ -3618,17 +3665,34 @@ function lineOffsetMetersV197(vehicle){
   const corner=phaseInfo?.corner;
   const direction=corner?.direction==='right'?-1:1;
   const mode=F1_LINE_MODES_V197.includes(vehicle?.racingLineMode)?vehicle.racingLineMode:'IDEAL';
-  if(mode==='ATTACK_INSIDE')return direction*usable*.72;
-  if(mode==='DEFENSIVE_INSIDE')return direction*usable*.55;
-  if(mode==='OUTSIDE')return -direction*usable*.72;
-  if(mode==='PIT_LINE')return -usable*.9;
-  if(!phaseInfo)return 0;
-  if(phaseInfo.phase==='APPROACH'||phaseInfo.phase==='BRAKING')return -direction*usable*.62;
-  if(phaseInfo.phase==='TURN_IN')return -direction*usable*.18;
-  if(phaseInfo.phase==='APEX')return direction*usable*.72;
-  if(phaseInfo.phase==='EXIT')return -direction*usable*.42;
-  return 0;
+  if(mode==='ATTACK_INSIDE')return direction*usable*.68;
+  if(mode==='DEFENSIVE_INSIDE')return direction*usable*.52;
+  if(mode==='OUTSIDE')return -direction*usable*.68;
+  if(mode==='PIT_LINE')return -usable*.86;
+  return idealRacingLineOffsetV270(vehicle,usable,phaseInfo);
 }
+function phaseSpeedTargetV270(vehicle,targetData,phaseInfo=getCornerPhaseAtProgressV194(vehicle?.progress)){
+  const track=activeRaceSnapshotV187?.track;
+  let target=Math.max(60,Number(targetData?.targetKph)||250);
+  if(!track||!phaseInfo?.corner)return target;
+  const corner=phaseInfo.corner;
+  const apex=Math.max(
+    corner.cornerClass==='hairpin'?CORNER_DYNAMICS_V270.hairpinMinApexKph:corner.cornerClass==='slow'?CORNER_DYNAMICS_V270.slowMinApexKph:0,
+    Number(corner.referenceApexKph)||target
+  );
+  if(phaseInfo.phase==='APEX')return Math.max(target,apex);
+  if(phaseInfo.phase!=='EXIT')return target;
+  const {here}=alignedCornerDistanceV270(corner,vehicle?.progress);
+  const apexWindow=Math.max(5,Number(corner.lengthMeters||40)*.18);
+  const exitStart=Math.min(Number(corner.exitDistanceMeters),Number(corner.apexDistanceMeters)+apexWindow);
+  const ratio=smoothstepV270((here-exitStart)/Math.max(1,Number(corner.exitDistanceMeters)-exitStart));
+  const lookAheadProgress=((Number(vehicle?.progress)||0)+CORNER_DYNAMICS_V270.exitLookAheadMeters/Math.max(1,Number(track.lengthMeters)||1))%1;
+  const lookAhead=typeof window.mwsF1SpeedTargetAtProgressV195==='function'?window.mwsF1SpeedTargetAtProgressV195(raceGeometryV193,lookAheadProgress):null;
+  const lookAheadTarget=Math.max(apex+CORNER_DYNAMICS_V270.exitTargetLiftKph,Number(lookAhead?.targetKph)||target);
+  const recovered=apex+(lookAheadTarget-apex)*ratio;
+  return Math.max(target,recovered);
+}
+
 function physicalLateralOffsetV258(vehicle){
   return lineOffsetMetersV197(vehicle)+(Number(vehicle?.incidentLateralOffsetMeters)||0);
 }
@@ -3994,8 +4058,9 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
     return true;
   }
   const targetData=getSpeedTargetAtProgressV195(vehicle.progress);
-  const baseTarget=Math.max(60,Number(targetData?.targetKph)||250);
-  const phase=getCornerPhaseAtProgressV194(vehicle.progress)?.phase||'STRAIGHT';
+  const phaseInfoV270=getCornerPhaseAtProgressV194(vehicle.progress);
+  const phase=phaseInfoV270?.phase||'STRAIGHT';
+  const baseTarget=phaseSpeedTargetV270(vehicle,targetData,phaseInfoV270);
   const tyreGrip=Math.max(TYRE_CONFIG_V203.minGrip,Math.min(TYRE_CONFIG_V203.maxGrip,Number(vehicle.tyreGrip)||1));
   const tyreCornerFactor=(phase==='TURN_IN'||phase==='APEX'||phase==='EXIT')?tyreGrip:1;
   updateActiveAeroAndOvertakeV202(vehicle,stepMs);
@@ -4034,8 +4099,9 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
     throttle=Math.max(.08,Math.min(1,error/45))*incidentState.throttleFactor;
     const dragRelief=Math.max(0,Number(vehicle.slipstreamDragReduction)||0);
     const highSpeedFade=Math.max(.35,1-current/520+dragRelief*.45);
-    const tractionGrip=phase==='EXIT'?tyreGrip:1;
-    accelMps2=accelBase*throttle*highSpeedFade*tractionGrip;
+    const tractionGrip=phase==='EXIT'?Math.max(.92,tyreGrip):1;
+    const exitAcceleration=phase==='EXIT'?CORNER_DYNAMICS_V270.exitAccelerationMultiplier:1;
+    accelMps2=accelBase*throttle*highSpeedFade*tractionGrip*exitAcceleration;
   }else if(error<-1.5){
     brake=Math.max(.08,Math.min(1,(-error)/55));
     accelMps2=-brakeBase*brake;
@@ -4065,6 +4131,29 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   syncVehicleRaceMetricsV190(vehicle,track);
   updatePitPostStepV205(vehicle,previousRaceProgress);
   return true;
+}
+
+function qaCornerDynamicsV270(){
+  const phases=getCornerPhasesV194();
+  const track=activeRaceSnapshotV187?.track;
+  if(!track||!phases.length)return {allPass:false,reason:'need-live-corner-geometry'};
+  const samples=[];
+  for(const corner of phases.slice(0,Math.min(8,phases.length))){
+    const length=Math.max(1,Number(track.lengthMeters)||1);
+    const apexProgress=((Number(corner.apexDistanceMeters)||0)/length+1)%1;
+    const exitProbeDistance=Number(corner.apexDistanceMeters)+Math.max(8,(Number(corner.exitDistanceMeters)-Number(corner.apexDistanceMeters))*.72);
+    const exitProgress=((exitProbeDistance/length)%1+1)%1;
+    const probe={progress:apexProgress,racingLineMode:'IDEAL'};
+    const apexTarget=phaseSpeedTargetV270(probe,getSpeedTargetAtProgressV195(apexProgress),{corner,phase:'APEX'});
+    probe.progress=exitProgress;
+    const exitTarget=phaseSpeedTargetV270(probe,getSpeedTargetAtProgressV195(exitProgress),{corner,phase:'EXIT'});
+    const apexLine=idealRacingLineOffsetV270({progress:apexProgress},Math.max(1,(Number(track.geometry?.trackWidthMeters)||14)/2-(Number(track.geometry?.racingLineMarginMeters)||1.5)),{corner,phase:'APEX'});
+    const exitLine=idealRacingLineOffsetV270({progress:exitProgress},Math.max(1,(Number(track.geometry?.trackWidthMeters)||14)/2-(Number(track.geometry?.racingLineMarginMeters)||1.5)),{corner,phase:'EXIT'});
+    samples.push({id:corner.id,class:corner.cornerClass,apexTarget,exitTarget,apexLine,exitLine});
+  }
+  const exitsRecover=samples.every(row=>row.exitTarget>=row.apexTarget-1);
+  const lineTransitions=samples.every(row=>Math.sign(row.apexLine)!==Math.sign(row.exitLine)||Math.abs(row.exitLine)<.08);
+  return {samples,exitsRecover,lineTransitions,allPass:samples.length>0&&exitsRecover&&lineTransitions&&CORNER_DYNAMICS_V270.exitAccelerationMultiplier>1};
 }
 
 function markRaceFinishersRecoveryG(){
@@ -6622,6 +6711,9 @@ window.__mwsF1RacingV268=VERSION268;
 window.mwsF1QaLateralDynamicsV269=qaLateralDynamicsV269;
 window.mwsF1QaWorkspaceExactRestoreV269=qaWorkspaceExactRestoreV269;
 window.__mwsF1RacingV269=VERSION269;
+window.mwsF1QaCornerDynamicsV270=qaCornerDynamicsV270;
+window.mwsF1PhaseSpeedTargetV270=phaseSpeedTargetV270;
+window.__mwsF1RacingV270=VERSION270;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
