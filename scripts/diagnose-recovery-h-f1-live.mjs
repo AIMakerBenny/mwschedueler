@@ -176,6 +176,11 @@ try{
     assert(Number(window.mwsF1GetSimulationClockV192?.().simTimeMs||0)===0,'Simulation advanced before explicit grid start click');
     const manualStart=document.getElementById('f1RacingGridStartRecoveryM');
     assert(manualStart,'Explicit grid start button missing');
+    const gridLayoutQa244=window.mwsF1QaStartingGridLayoutV244?.();
+    assert(gridLayoutQa244?.allPass===true,'Phase 244 starting grid structure QA failed: '+JSON.stringify(gridLayoutQa244));
+    const gridStage244=document.querySelector('.f1-racing-grid-stage-v244')?.getBoundingClientRect();
+    const gridStart244=manualStart.getBoundingClientRect();
+    assert(gridStage244&&gridStart244.right>=gridStage244.right-36&&gridStart244.top<=gridStage244.top+76,'Phase 244 race start button is not at grid top-right: '+JSON.stringify({stage:gridStage244,start:gridStart244}));
     manualStart.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='RACE','Explicit grid start click did not enter RACE');
     await sleep(350);await raf();
