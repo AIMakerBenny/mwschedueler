@@ -371,7 +371,7 @@ jobs:
           const watchedContactRows=rows.filter(row=>['제갈통','김부각º'].some(name=>String(row?.name||'').includes(name)));
           console.log(JSON.stringify({duplicateContactNameAudit:duplicateNameGroups,watchedContactRows:watchedContactRows.map(row=>({id:String(row?.id||''),name:String(row?.name||''),image:String(row?.image||''),pendingSetup:Boolean(row?.pendingSetup),labels:Array.isArray(row?.labels)?row.labels:[]}))}));
           const {execFileSync}=require('child_process');
-          const readJson=url=>JSON.parse(execFileSync('curl',['-fsSL','--max-time','20',url],{encoding:'utf8'}));
+          const readJson=url=>JSON.parse(execFileSync('curl',['-fsSL','--retry','3','--retry-delay','2','--retry-all-errors','--max-time','20',url],{encoding:'utf8'}));
           const readVersionSequence=[];
           for(let pass=0;pass<2;pass++){
             const manifestRead=readJson('https://mawang-scheduler.majoku.workers.dev/api/manifest?readStability='+process.env.GITHUB_SHA+'-'+pass);
