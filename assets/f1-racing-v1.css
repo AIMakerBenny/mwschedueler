@@ -704,3 +704,16 @@
 .f1-racing-battle-link-v256[data-battle-state-v256="BRAKING_DUEL"] .battle-link-line-v256,
 .f1-racing-battle-link-v256[data-battle-state-v256="CORNER_BATTLE"] .battle-link-line-v256{opacity:.95;stroke-width:2.5}
 @media(prefers-reduced-motion:reduce){.f1-racing-battle-link-v256 .battle-link-line-v256{animation:none}}
+
+
+/* Phase 260: manual race lap control */
+.f1-racing-lap-control-v260{display:grid;grid-template-columns:minmax(150px,1fr) auto auto;align-items:center;gap:12px;margin:10px 0;padding:12px 14px;border:1px solid #283446;border-radius:10px;background:linear-gradient(135deg,rgba(12,18,28,.96),rgba(7,11,17,.96))}
+.f1-racing-lap-copy-v260{display:flex;flex-direction:column;gap:2px;min-width:0}
+.f1-racing-lap-copy-v260 strong{color:#edf4fc;font-size:14px}
+.f1-racing-lap-copy-v260 small,.f1-racing-lap-mode-v260{color:#8393a7;font:800 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-lap-stepper-v260{display:flex;align-items:center;gap:6px}
+.f1-racing-lap-stepper-v260 input{width:76px;height:34px;border:1px solid #3a4b62;border-radius:7px;background:#080d14;color:#f4f7fb;text-align:center;font:950 15px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;outline:none}
+.f1-racing-lap-stepper-v260 input:focus{border-color:#76a8e6;box-shadow:0 0 0 2px rgba(118,168,230,.14)}
+.f1-racing-lap-stepper-v260 button{min-width:34px}
+.f1-racing-lap-mode-v260{justify-self:end;white-space:nowrap}
+@media(max-width:900px){.f1-racing-lap-control-v260{grid-template-columns:1fr}.f1-racing-lap-stepper-v260{flex-wrap:wrap}.f1-racing-lap-mode-v260{justify-self:start}}
