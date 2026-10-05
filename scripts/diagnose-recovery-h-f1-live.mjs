@@ -551,7 +551,7 @@ try{
     const lateralSmoothingQa258=window.mwsF1QaVisualLateralSmoothingV258?.();
     assert(lateralSmoothingQa258?.allPass===true&&lateralSmoothingQa258?.smoothStart===true&&lateralSmoothingQa258?.converging===true&&lateralSmoothingQa258?.physicsIsolated===true,'Phase 258 visual lateral smoothing QA failed: '+JSON.stringify(lateralSmoothingQa258));
     const lateralDomQa258=window.mwsF1QaVisualLateralDomV258?.();
-    assert(lateralDomQa258?.allPass===true&&String(lateralDomQa258?.startTransform||'')!==String(lateralDomQa258?.firstTransform||'')&&String(lateralDomQa258?.firstTransform||'')!==String(lateralDomQa258?.laterTransform||''),'Phase 258 visual lateral DOM QA failed: '+JSON.stringify(lateralDomQa258));
+    assert(lateralDomQa258?.allPass===true&&lateralDomQa258?.noFirstFrameSnap===true&&lateralDomQa258?.convergesOverTime===true&&lateralDomQa258?.laterRenderMoved===true,'Phase 258 visual lateral DOM QA failed: '+JSON.stringify(lateralDomQa258));
     const workspaceUserDefaultQa259=window.mwsF1QaWorkspaceUserDefaultPersistenceV259?.();
     assert(workspaceUserDefaultQa259?.allPass===true&&workspaceUserDefaultQa259?.persistedSignature===workspaceUserDefaultQa259?.expected&&workspaceUserDefaultQa259?.preservedAfterOtherSetting===workspaceUserDefaultQa259?.expected&&workspaceUserDefaultQa259?.restoredSignature===workspaceUserDefaultQa259?.expected,'Phase 259 workspace user-default persistence QA failed: '+JSON.stringify(workspaceUserDefaultQa259));
     const markerNumberTexts=[...document.querySelectorAll('.f1-racing-race-vehicle-v189 .car-number-v232')].map(node=>String(node.textContent||'').trim());
