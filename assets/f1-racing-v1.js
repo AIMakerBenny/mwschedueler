@@ -1784,6 +1784,7 @@ function raceMomentumBenchmarkV262(options={}){
   const laps=Math.max(2,Math.min(3,Math.floor(Number(options.laps)||3)));
   const stepMs=Math.max(50,Math.min(90,Math.floor(Number(options.stepMs)||80)));
   const model=runSevenTrackBenchmarkV238({runs:8,drivers,laps});
+  const alignmentReference=realEngineBenchmarkAlignmentV242(engineSuiteCacheV241);
   const runs=trackIds.map((trackId,index)=>runAcceleratedEngineRaceV240(trackId,{drivers,laps,runIndex:26200+index,stepMs,maxSteps:30000,gridMode:'FIXED'}));
   const completed=runs.filter(row=>row?.completed&&Array.isArray(row.resultRows)&&row.resultRows.length===drivers);
   const pairs=completed.flatMap(row=>row.resultRows.map(result=>({grid:Number(result.gridPosition),finish:Number(result.position)})));
@@ -1820,8 +1821,9 @@ function raceMomentumBenchmarkV262(options={}){
     top3Variation:Number(top3Variation.toFixed(3)),
     abnormalGapRuns,gapRows,deterministicRepeat,
     modelReference:{trackCount:model.length,averagePasses:Number(modelAvgPasses.toFixed(2))},
+    phase242Reference:{rowCount:Number(alignmentReference?.rows?.length)||0,speedCorrelation:Number(alignmentReference?.speedCorrelation)||0,uniqueActualSignatures:Number(alignmentReference?.uniqueActualSignatures)||0},
     runs:completed.map(row=>({trackId:row.trackId,totalPasses:Number(row.telemetry?.totalPasses)||0,resultRows:row.resultRows.map(x=>({gridPosition:x.gridPosition,position:x.position,finishedAtSimMs:x.finishedAtSimMs}))})),
-    allPass:completed.length===7&&deterministicRepeat&&Math.abs(gridFinishCorrelation)<.94&&p1Retention<.9&&top3Variation>.04&&averageOvertakes>=1&&abnormalGapRuns<=2&&model.length===7
+    allPass:completed.length===7&&deterministicRepeat&&Math.abs(gridFinishCorrelation)<.94&&p1Retention<.9&&top3Variation>.04&&averageOvertakes>=1&&abnormalGapRuns<=2&&model.length===7&&Number(alignmentReference?.rows?.length)===7
   };
 }
 function qaRaceMomentumBenchmarkV262(){
