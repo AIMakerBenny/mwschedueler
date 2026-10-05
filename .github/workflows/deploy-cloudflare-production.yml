@@ -222,6 +222,7 @@ jobs:
           node --check scripts/run-phase277-f1-character-dialogue-engine-audit.mjs
           node --check scripts/run-phase278-f1-micro-battle-events-audit.mjs
           node --check scripts/run-phase279-f1-expanded-dialogue-pool-audit.mjs
+          node --check scripts/run-phase280-f1-event-dialogue-coverage-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
