@@ -167,6 +167,9 @@ try{
     const cutinQa264=window.mwsF1QaLiveCutinV264?.();
     assert(cutinQa264?.allPass===true&&cutinQa264?.layerReady===true&&Number(cutinQa264?.maxActive)===3&&Number(cutinQa264?.dedupeMs)===1000,'Phase 264 LIVE cut-in QA failed: '+JSON.stringify(cutinQa264));
 
+    const podiumQa265=window.mwsF1QaPodiumV265?.();
+    assert(podiumQa265?.allPass===true&&podiumQa265?.domReady===true&&podiumQa265?.singleSafe===true&&podiumQa265?.bestLap===true&&podiumQa265?.overtakes===true,'Phase 265 podium QA failed: '+JSON.stringify(podiumQa265));
+
     const lapQa260=window.mwsF1QaLapControlV260?.();
     assert(lapQa260?.allPass===true&&lapQa260?.low===3&&lapQa260?.high===99&&lapQa260?.direct===17,'Phase 260 lap-control QA failed: '+JSON.stringify(lapQa260));
     const lapInput260=document.getElementById('f1RacingLapsInputV260');
