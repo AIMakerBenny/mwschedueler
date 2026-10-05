@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase257Ready=false;
+  let phase258Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase257Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV257==='phase257-embedded-driver-profile-marker'","Phase 257 runtime readiness"));
-    if(phase257Ready)break;
+    phase258Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV258==='phase258-visual-lateral-smoothing'","Phase 258 runtime readiness"));
+    if(phase258Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v257=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v258=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase257Ready)throw new Error('Phase 257 runtime did not propagate to Recovery H browser');
+  if(!phase258Ready)throw new Error('Phase 258 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -451,6 +451,10 @@ try{
       initials:String(profileInitials257?.textContent||'').trim()
     }:null;
     assert(profileCenters257&&profileCenters257.ringW>0&&profileCenters257.visualW>0&&profileCenters257.dx<2&&profileCenters257.dy<2&&!profileConnector257&&!profileCore257,'Phase 257 embedded driver profile geometry invalid: '+JSON.stringify(profileCenters257));
+    const lateralSmoothingQa258=window.mwsF1QaVisualLateralSmoothingV258?.();
+    assert(lateralSmoothingQa258?.allPass===true&&lateralSmoothingQa258?.smoothStart===true&&lateralSmoothingQa258?.converging===true&&lateralSmoothingQa258?.physicsIsolated===true,'Phase 258 visual lateral smoothing QA failed: '+JSON.stringify(lateralSmoothingQa258));
+    const lateralDomQa258=window.mwsF1QaVisualLateralDomV258?.();
+    assert(lateralDomQa258?.allPass===true&&String(lateralDomQa258?.startTransform||'')!==String(lateralDomQa258?.firstTransform||'')&&String(lateralDomQa258?.firstTransform||'')!==String(lateralDomQa258?.laterTransform||''),'Phase 258 visual lateral DOM QA failed: '+JSON.stringify(lateralDomQa258));
     const markerNumberTexts=[...document.querySelectorAll('.f1-racing-race-vehicle-v189 .car-number-v232')].map(node=>String(node.textContent||'').trim());
     assert(markerNumberTexts.length>=2&&new Set(markerNumberTexts).size===markerNumberTexts.length,'Phase 232 driver marker numbers are not unique: '+JSON.stringify(markerNumberTexts));
     const labelCollisionQa=window.mwsF1QaDriverLabelCollisionV228?.();
