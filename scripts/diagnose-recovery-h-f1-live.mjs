@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase268Ready=false;
+  let phase269Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase268Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV268==='phase268-auto-follow-wheel-zoom'","Phase 268 runtime readiness"));
-    if(phase268Ready)break;
+    phase269Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV269==='phase269-lateral-velocity-acceleration-smoothing'","Phase 269 runtime readiness"));
+    if(phase269Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v268=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v269=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase268Ready)throw new Error('Phase 268 runtime did not propagate to Recovery H browser');
+  if(!phase269Ready)throw new Error('Phase 269 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -172,6 +172,9 @@ try{
 
     const autoZoomQa268=window.mwsF1QaAutoFollowWheelZoomV268?.();
     assert(autoZoomQa268?.allPass===true,'Phase 268 auto-follow wheel zoom QA failed: '+JSON.stringify(autoZoomQa268));
+
+    const lateralQa269=window.mwsF1QaLateralDynamicsV269?.();
+    assert(lateralQa269?.allPass===true&&Number(lateralQa269?.maxVelocity)<=3.02&&Number(lateralQa269?.maxAcceleration)<=7.52,'Phase 269 lateral dynamics QA failed: '+JSON.stringify(lateralQa269));
 
     const trackCardQa266=window.mwsF1QaTrackCardsV266?.();
     assert(trackCardQa266?.allPass===true&&Number(trackCardQa266?.trackCount)===7&&trackCardQa266?.mapped===true&&Number(trackCardQa266?.distinctPaths)===7&&trackCardQa266?.hasTechnicalFields===true,'Phase 266 track card QA failed: '+JSON.stringify(trackCardQa266));
