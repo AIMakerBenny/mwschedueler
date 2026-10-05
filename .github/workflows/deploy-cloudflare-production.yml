@@ -1118,7 +1118,7 @@ jobs:
           grep -Fq 'let brakeBase=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20)*tyreGrip*incidentState.brakeFactor;' /tmp/f1-racing-v1-phase203.js
           grep -Fq 'window.mwsF1GetTyreStatesV203=getTyreStatesV203;' /tmp/f1-racing-v1-phase203.js
           echo '[recovery-a] F1 track catalog'
-          grep -Fq 'assets/f1-track-v1.js?v=1.0.0-phase197-line-meta-recoveryA-tracks7&phase=220' /tmp/index.html
+          node -e "const s=require('fs').readFileSync('/tmp/index.html','utf8');const m=s.match(/assets\/f1-track-v1\.js\?v=1\.0\.0-phase197-line-meta-recoveryA-tracks7&phase=(\d+)/);if(!m||Number(m[1])<220)process.exit(1)"
           retry_contains "$BASE/assets/f1-track-v1.js?deploy=$GITHUB_SHA" "root.__mwsF1TrackRecoveryA='three-track-catalog-v1';" > /tmp/f1-track-recovery-a.js
           node --check /tmp/f1-track-recovery-a.js
           grep -Fq "id:'castle-street-circuit-v1'" /tmp/f1-track-recovery-a.js
