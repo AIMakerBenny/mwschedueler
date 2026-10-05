@@ -8,3 +8,23 @@ body.f1-racing-r12-compact-v287 #f1RacingWorkspaceRecoveryE.f1-racing-workspace-
 body.f1-racing-r12-compact-v287 #f1RacingWorkspaceRecoveryE.f1-racing-workspace-fit-v288.has-maximized{
   min-height:0!important
 }
+
+/* Phase 289 / F1-R14: compact pre-race screens around essential race information and the starting grid */
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-stage-v244{padding:8px 10px 12px!important;min-height:0!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-header-v244{padding:7px 9px!important;gap:8px!important;align-items:center!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-heading-v244 .f1-racing-panel-kicker-v181{display:none!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-heading-v244 strong{margin:0!important;font-size:15px!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-meta-recovery-m{margin-top:3px!important;gap:8px!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-actions-v244{gap:4px!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-actions-v244 button{min-height:30px!important;padding:5px 8px!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-brief-v244{display:flex!important;align-items:center!important;gap:8px!important;margin:6px 0!important;padding:5px 8px!important;min-height:0!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-brief-v244>span,
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-brief-v244>p{display:none!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-brief-v244>strong{font-size:10px!important;margin:0!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 #f1RacingGridShuffleRoundV272{margin-left:auto!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 #f1RacingGridListV272{margin-top:4px!important;gap:6px!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewTransitionV185 .f1-racing-transition-stage-v187{min-height:220px!important;padding:20px!important;gap:7px!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewTransitionV185 .f1-racing-transition-kicker-v187,
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewTransitionV185 .f1-racing-transition-stage-v187>i,
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewTransitionV185 .f1-racing-transition-stage-v187>b{display:none!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewTransitionV185 .f1-racing-transition-stage-v187>strong{font-size:20px!important;margin:0!important}
