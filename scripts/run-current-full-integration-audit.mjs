@@ -258,6 +258,7 @@ import {runPhase259F1WorkspaceUserDefaultAudit} from './run-phase259-f1-workspac
 import {runPhase260F1ManualLapControlAudit} from './run-phase260-f1-manual-lap-control-audit.mjs';
 import {runPhase261F1ImmersiveFullscreenAudit} from './run-phase261-f1-immersive-fullscreen-audit.mjs';
 import {runPhase262F1RaceMomentumAudit} from './run-phase262-f1-race-momentum-audit.mjs';
+import {runPhase263F1RaceNarrativeEngineAudit} from './run-phase263-f1-race-narrative-engine-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2505,5 +2506,10 @@ export function runPhase262FullIntegrationAudit(){
  const issues=[...previous.issues,...current.issues.map(x=>'Phase 262: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 262: '+x)];
  return {phase:262,previous,current,issues,warnings,pass:issues.length===0};
 }
-export function runCurrentFullIntegrationAudit(){return runPhase262FullIntegrationAudit();}
+export function runPhase263FullIntegrationAudit(){
+ const previous=runPhase262FullIntegrationAudit(),current=runPhase263F1RaceNarrativeEngineAudit();
+ const issues=[...previous.issues,...current.issues.map(x=>'Phase 263: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 263: '+x)];
+ return {phase:263,previous,current,issues,warnings,pass:issues.length===0};
+}
+export function runCurrentFullIntegrationAudit(){return runPhase263FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
