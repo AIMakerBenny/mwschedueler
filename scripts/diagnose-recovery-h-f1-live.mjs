@@ -590,6 +590,12 @@ try{
     const engineAlignmentQa242=window.mwsF1QaRealEngineBenchmarkAlignmentV242?.();
     assert(engineAlignmentQa242?.allPass===true&&Number(engineAlignmentQa242?.speedCorrelation)>=.7&&Number(engineAlignmentQa242?.uniqueActualSignatures)>=5&&Number(engineAlignmentQa242?.overtakeStress?.totalPasses)>=1,'Phase 242 real-engine benchmark alignment failed: '+JSON.stringify(engineAlignmentQa242));
 
+    const lapTimingQa248=window.mwsF1QaLapTimingV248?.(context.targetTrackId);
+    assert(lapTimingQa248?.allPass===true&&lapTimingQa248?.rowPass===true,'Phase 248 multi-lap engine timing failed: '+JSON.stringify(lapTimingQa248));
+    assert(lapTimingQa248?.domPass===true&&lapTimingQa248?.result?.timingDom?.every(row=>row.last&&!row.last.includes('--')&&row.best&&!row.best.includes('--')),'Phase 248 timing board still shows lap placeholders: '+JSON.stringify(lapTimingQa248?.result?.timingDom));
+    assert(lapTimingQa248?.result?.lapTiming?.every(row=>Number(row.timedCompletedLaps)===3&&row.lapTimesMs?.length===3),'Phase 248 did not commit all three actual engine laps: '+JSON.stringify(lapTimingQa248?.result?.lapTiming));
+    assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Phase 248 engine timing QA did not restore Setup');
+
     const errors=[...(window.__recoveryHErrors||[])];
     assert(errors.length===0,'Browser errors during Recovery H: '+errors.join(' | '));
 
@@ -613,6 +619,7 @@ try{
       podiumCount,
       resultCount,
       newRacePreservedDrivers:afterNewRaceIds,
+      lapTimingV248:{rowPass:Boolean(lapTimingQa248?.rowPass),domPass:Boolean(lapTimingQa248?.domPass),rows:lapTimingQa248?.result?.lapTiming||[],timingDom:lapTimingQa248?.result?.timingDom||[]},
       finalState:window.mwsF1GetScreenStateV185?.(),
       errors
     };
