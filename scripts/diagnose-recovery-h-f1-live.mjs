@@ -517,6 +517,11 @@ try{
     const avatarRect251=firstTimingAvatar251?.getBoundingClientRect(),stripRect251=firstTimingStrip251?.getBoundingClientRect();
     assert(avatarRect251&&avatarRect251.width>=18&&avatarRect251.width<=28&&avatarRect251.height>=18&&avatarRect251.height<=28,'Phase 251 timing avatar geometry invalid: '+JSON.stringify(avatarRect251?{w:avatarRect251.width,h:avatarRect251.height}:null));
     assert(stripRect251&&stripRect251.width>=2&&stripRect251.width<=6&&stripRect251.height>=18,'Phase 251 driver color strip geometry invalid: '+JSON.stringify(stripRect251?{w:stripRect251.width,h:stripRect251.height}:null));
+    const spectatorQa252=window.mwsF1QaSpectatorHighlightsV252?.();
+    assert(spectatorQa252?.allPass===true,'Phase 252 spectator highlight QA failed: '+JSON.stringify(spectatorQa252));
+    assert(spectatorQa252?.markerBattle===true&&String(spectatorQa252?.battleAnimation||'').includes('f1BattlePulseV252'),'Phase 252 battle marker pulse was not rendered: '+JSON.stringify(spectatorQa252));
+    assert(spectatorQa252?.positionLabel==='▲3'&&spectatorQa252?.positionTrend==='up','Phase 252 position change indicator missing: '+JSON.stringify(spectatorQa252));
+    assert(spectatorQa252?.bestFastest===true&&String(spectatorQa252?.fastestAfter||'').includes('FL'),'Phase 252 fastest lap indicator missing: '+JSON.stringify(spectatorQa252));
     assert(document.querySelector('[data-f1-workspace-panel="timing"] [data-f1-panel-drag="timing"]')?.textContent?.includes('실시간 순위'),'Phase 218 timing panel is not Korean');
     assert(document.querySelector('[data-f1-workspace-panel="track"] [data-f1-panel-drag="track"]')?.textContent?.includes('트랙 맵'),'Phase 218 track panel is not Korean');
     assert(document.querySelector('[data-f1-workspace-panel="commentary"] [data-f1-panel-drag="commentary"]')?.textContent?.includes('경기 해설'),'Phase 218 commentary panel is not Korean');
@@ -636,6 +641,7 @@ try{
       zoomMarkerGeometryV245:{zoom:zoomState245.zoom,before:sizesAtFull245,after:sizesAtZoom245},
       profileMarkerV250:profileMarkerQa250||null,
       timingIdentityV251:timingIdentityQa251||null,
+      spectatorHighlightsV252:spectatorQa252||null,
       persistenceVersion:Number(persisted?.version)||0,
       malformedRepairReasons:repaired?.before||[],
       workspaceMigrationV249:migrationQa249||null,
