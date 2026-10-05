@@ -46,7 +46,7 @@ function defaultMiniGames(){
     rps:{players:[]},
     pachinko:{players:[]},
     multiDraw:{players:[],targetCount:8},
-    f1Racing:{selectedDriverIds:[],selectedTrackId:'majoku-ring-v1',totalLaps:10,workspaceLayout:{}}
+    f1Racing:{selectedDriverIds:[],selectedTrackId:'majoku-ring-v1',totalLaps:10,lapOverride:false,workspaceLayout:{}}
   };
 }
 function normalizeMiniGameData(){
@@ -73,7 +73,8 @@ function normalizeMiniGameData(){
   if(!Array.isArray(f1.selectedDriverIds))f1.selectedDriverIds=[];
   f1.selectedDriverIds=[...new Set(f1.selectedDriverIds.map(x=>String(x||'')).filter(Boolean))];
   f1.selectedTrackId=String(f1.selectedTrackId||'majoku-ring-v1');
-  f1.totalLaps=Math.max(1,Math.min(200,Math.floor(Number(f1.totalLaps)||10)));
+  f1.totalLaps=Math.max(3,Math.min(99,Math.floor(Number(f1.totalLaps)||10)));
+  f1.lapOverride=Boolean(f1.lapOverride);
   if(!f1.workspaceLayout||typeof f1.workspaceLayout!=='object'||Array.isArray(f1.workspaceLayout))f1.workspaceLayout={};
 
   delete data.miniGames.roulette;
@@ -635,6 +636,7 @@ function mwsGetF1RacingSettingsRecoveryD(){
     selectedDriverIds:[...f1.selectedDriverIds],
     selectedTrackId:String(f1.selectedTrackId||'majoku-ring-v1'),
     totalLaps:Number(f1.totalLaps)||10,
+    lapOverride:Boolean(f1.lapOverride),
     workspaceLayout:typeof structuredClone==='function'?structuredClone(f1.workspaceLayout||{}):JSON.parse(JSON.stringify(f1.workspaceLayout||{}))
   };
 }
@@ -646,7 +648,8 @@ function mwsSaveF1RacingSettingsRecoveryD(patch={}){
     f1.selectedDriverIds=[...new Set(ids.map(x=>String(x||'')).filter(Boolean))];
   }
   if(Object.prototype.hasOwnProperty.call(patch,'selectedTrackId'))f1.selectedTrackId=String(patch.selectedTrackId||'majoku-ring-v1');
-  if(Object.prototype.hasOwnProperty.call(patch,'totalLaps'))f1.totalLaps=Math.max(1,Math.min(200,Math.floor(Number(patch.totalLaps)||10)));
+  if(Object.prototype.hasOwnProperty.call(patch,'totalLaps'))f1.totalLaps=Math.max(3,Math.min(99,Math.floor(Number(patch.totalLaps)||10)));
+  if(Object.prototype.hasOwnProperty.call(patch,'lapOverride'))f1.lapOverride=Boolean(patch.lapOverride);
   if(Object.prototype.hasOwnProperty.call(patch,'workspaceLayout')){
     const layout=patch.workspaceLayout;
     f1.workspaceLayout=layout&&typeof layout==='object'&&!Array.isArray(layout)
