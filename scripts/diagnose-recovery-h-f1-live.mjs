@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase275Ready=false;
+  let phase276Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase275Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV275==='phase275-chase-burst'","Phase 275 runtime readiness"));
-    if(phase275Ready)break;
+    phase276Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV276==='phase276-live-conversation-stack-ui'","Phase 276 runtime readiness"));
+    if(phase276Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v275=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v276=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase275Ready)throw new Error('Phase 275 runtime did not propagate to Recovery H browser');
+  if(!phase276Ready)throw new Error('Phase 276 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -280,6 +280,10 @@ try{
     manualStart.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='RACE','Explicit grid start click did not enter RACE');
     await raf();
+    const conversationQa276=window.mwsF1QaLiveConversationStackV276?.();
+    assert(conversationQa276?.allPass===true,'Phase 276 conversation stack QA failed: '+JSON.stringify(conversationQa276));
+    assert(conversationQa276?.alternating===true&&conversationQa276?.sides?.length>=3,'Phase 276 conversation side alternation failed: '+JSON.stringify(conversationQa276));
+    assert(Number(conversationQa276?.shortDuration)>=3000&&Number(conversationQa276?.longDuration)<=6000&&Number(conversationQa276?.longDuration)>=Number(conversationQa276?.shortDuration),'Phase 276 conversation duration bounds failed: '+JSON.stringify(conversationQa276));
     const headline260=window.mwsF1RaceHeadlineStateV255?.();
     assert(Number(headline260?.total)===17&&Number(headline260?.remaining)===17,'Phase 260 headline remaining laps mismatch: '+JSON.stringify(headline260));
 
