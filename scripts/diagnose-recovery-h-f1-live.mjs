@@ -713,10 +713,18 @@ try{
     const zoomState245=window.mwsF1GetRaceCameraStateV216();
     assert(zoomState245.mode==='FULL'&&zoomState245.zoom===4.5,'Phase 245 wheel zoom did not reach clamped maximum while preserving automatic mode');
     const sizesAtZoom245=measure245();
+    const zoomMarkerQa285=window.mwsF1QaZoomLinkedMarkerScaleV285?.();
+    const expectedDriverRatio245=Number(zoomMarkerQa285?.screenRatios?.at(-1))||1;
     sizesAtZoom245.forEach((row,index)=>{
       const ratio=row.width/sizesAtFull245[index].width;
-      assert(ratio>.85&&ratio<1.12,'Phase 245 rendered marker enlarged or became unreadable: '+JSON.stringify({row,ratio}));
+      const driverMarker=index<4;
+      if(driverMarker){
+        assert(ratio>expectedDriverRatio245*.88&&ratio<expectedDriverRatio245*1.12,'Phase 285 zoom-linked driver marker scale mismatch: '+JSON.stringify({row,ratio,expectedDriverRatio245}));
+      }else{
+        assert(ratio>.85&&ratio<1.12,'Phase 245 track annotation screen-size regression: '+JSON.stringify({row,ratio}));
+      }
     });
+    assert(zoomMarkerQa285?.allPass===true&&expectedDriverRatio245>2,'Phase 285 zoom marker QA unavailable or invalid: '+JSON.stringify(zoomMarkerQa285));
     assert(finishLength245()/lineAtFull245>4.4,'Phase 245 finish line must retain track-relative geometry');
     window.mwsF1SetRaceCameraModeV216('AUTO');await raf();
     for(let zoomOut268=0;zoomOut268<3&&Number(window.mwsF1GetRaceCameraStateV216?.().zoom)>=4.2;zoomOut268++){
