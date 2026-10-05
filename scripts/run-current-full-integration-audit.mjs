@@ -282,7 +282,7 @@ import {runPhase283F1GeneralOvertakeDefenceAudit} from './run-phase283-f1-genera
 import {runPhase284F1TrackRankingOverlayAudit} from './run-phase284-f1-track-ranking-overlay-audit.mjs';
 import {runPhase285F1ZoomLinkedMarkerScaleAudit} from './run-phase285-f1-zoom-linked-marker-scale-audit.mjs';
 import {runPhase286F1AutoCameraJitterAudit} from './run-phase286-f1-auto-camera-jitter-audit.mjs';
-import {runPhase287F1CompactRaceShellAudit} from './run-phase287-f1-compact-race-shell-audit.mjs';
+import {runPhase287F1CompactRaceShellAudit} from './run-phase287-f1-compact-race-shell-audit.mjs';\nimport {runPhase288F1LayoutResetViewportFitAudit} from './run-phase288-f1-layout-reset-viewport-fit-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2623,5 +2623,5 @@ export function runPhase284FullIntegrationAudit(){const previous=runPhase283Full
 export function runPhase285FullIntegrationAudit(){const previous=runPhase284FullIntegrationAudit(),current=runPhase285F1ZoomLinkedMarkerScaleAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 285: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 285: '+x)];return {phase:285,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase286FullIntegrationAudit(){const previous=runPhase285FullIntegrationAudit(),current=runPhase286F1AutoCameraJitterAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 286: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 286: '+x)];return {phase:286,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase287FullIntegrationAudit(){const previous=runPhase286FullIntegrationAudit(),current=runPhase287F1CompactRaceShellAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 287: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 287: '+x)];return {phase:287,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase287FullIntegrationAudit();}
+export function runPhase288FullIntegrationAudit(){const previous=runPhase287FullIntegrationAudit(),current=runPhase288F1LayoutResetViewportFitAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 288: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 288: '+x)];return {phase:288,previous,current,issues,warnings,pass:issues.length===0};}\nexport function runCurrentFullIntegrationAudit(){return runPhase288FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
