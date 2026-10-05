@@ -176,6 +176,9 @@ try{
     const lateralQa269=window.mwsF1QaLateralDynamicsV269?.();
     assert(lateralQa269?.allPass===true&&Number(lateralQa269?.maxVelocity)<=3.02&&Number(lateralQa269?.maxAcceleration)<=7.52,'Phase 269 lateral dynamics QA failed: '+JSON.stringify(lateralQa269));
 
+    const workspaceExactQa269=window.mwsF1QaWorkspaceExactRestoreV269?.();
+    assert(workspaceExactQa269?.allPass===true&&workspaceExactQa269?.exact===true,'Phase 269 exact workspace restore failed: '+JSON.stringify(workspaceExactQa269));
+
     const trackCardQa266=window.mwsF1QaTrackCardsV266?.();
     assert(trackCardQa266?.allPass===true&&Number(trackCardQa266?.trackCount)===7&&trackCardQa266?.mapped===true&&Number(trackCardQa266?.distinctPaths)===7&&trackCardQa266?.hasTechnicalFields===true,'Phase 266 track card QA failed: '+JSON.stringify(trackCardQa266));
 
@@ -268,6 +271,13 @@ try{
     assert(String(notice261?.textContent||'').includes('ESC'),'Phase 261 ESC notice missing');
     const layoutDuring261=window.mwsF1WorkspaceLayoutSignatureV259?.(window.mwsF1GetWorkspaceLayoutRecoveryE?.());
     assert(layoutDuring261===layoutBefore261,'Phase 261 immersive layout signature changed during entry');
+    const immersiveSection268=document.getElementById('gameF1Racing')?.getBoundingClientRect();
+    const immersiveRace268=document.getElementById('f1RacingViewRaceV185')?.getBoundingClientRect();
+    const immersiveWorkspace268=document.getElementById('f1RacingWorkspaceRecoveryE')?.getBoundingClientRect();
+    assert(immersiveSection268&&immersiveSection268.top>=-1&&immersiveSection268.bottom<=innerHeight+2,'Phase 268 fullscreen section clipped: '+JSON.stringify(immersiveSection268));
+    assert(immersiveRace268&&immersiveRace268.top>=-1&&immersiveRace268.bottom<=innerHeight+2,'Phase 268 fullscreen race view clipped: '+JSON.stringify(immersiveRace268));
+    assert(immersiveWorkspace268&&immersiveWorkspace268.height>300&&immersiveWorkspace268.bottom<=innerHeight+2,'Phase 268 fullscreen workspace clipped: '+JSON.stringify(immersiveWorkspace268));
+    assert(getComputedStyle(document.getElementById('gameF1Racing')).overflow==='hidden','Phase 268 fullscreen section still scroll-clips its workspace');
     await window.mwsF1ExitImmersiveV261?.({reason:'recovery-h-qa'});
     await raf();
     const layoutAfter261=window.mwsF1WorkspaceLayoutSignatureV259?.(window.mwsF1GetWorkspaceLayoutRecoveryE?.());
