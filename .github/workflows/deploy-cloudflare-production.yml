@@ -199,6 +199,7 @@ jobs:
           node --check scripts/run-phase254-f1-live-marker-position-audit.mjs
           node --check scripts/run-phase255-f1-race-headline-audit.mjs
           node --check scripts/run-phase256-f1-battle-link-audit.mjs
+          node --check scripts/run-phase257-f1-embedded-profile-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -2382,13 +2383,13 @@ jobs:
           retry_contains "$BASE/assets/f1-track-v1.js?deploy=$GITHUB_SHA" 'speedTraps:Object.freeze(track.speedTraps.map' > /tmp/f1-track-v1-phase249.js
           grep -Fq 'speedTraps:[' /tmp/f1-track-v1-phase249.js
 
-          echo '[phase250] F1 driver profile portrait markers'
+          echo '[phase250] F1 driver profile marker compatibility'
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV250=VERSION250;' > /tmp/f1-racing-v1-phase250.js
-          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.car-profile-connector-v250' > /tmp/f1-racing-v1-phase250.css
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.car-profile-image-v257' > /tmp/f1-racing-v1-phase250.css
           node --check /tmp/f1-racing-v1-phase250.js
           grep -Fq 'function syncDriverProfileMarkerV250(' /tmp/f1-racing-v1-phase250.js
           grep -Fq 'function qaDriverProfileMarkersV250(){' /tmp/f1-racing-v1-phase250.js
-          grep -Fq '.car-profile-ring-v250' /tmp/f1-racing-v1-phase250.css
+          grep -Fq '.car-profile-initials-v257' /tmp/f1-racing-v1-phase250.css
 
           echo '[phase251] F1 Live Timing driver identity'
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV251=VERSION251;' > /tmp/f1-racing-v1-phase251.js
@@ -2442,6 +2443,15 @@ jobs:
           grep -Fq 'function qaBattleLinksV256(){' /tmp/f1-racing-v1-phase256.js
           grep -Fq '.battle-link-line-v256' /tmp/f1-racing-v1-phase256.css
           grep -Fq '.battle-link-arrow-v256' /tmp/f1-racing-v1-phase256.css
+
+          echo '[phase257] F1 embedded driver profile markers'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV257=VERSION257;' > /tmp/f1-racing-v1-phase257.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '/* Phase 257: driver portrait embedded directly inside live vehicle marker */' > /tmp/f1-racing-v1-phase257.css
+          node --check /tmp/f1-racing-v1-phase257.js
+          grep -Fq 'function syncEmbeddedDriverMarkerV257(' /tmp/f1-racing-v1-phase257.js
+          grep -Fq 'function qaEmbeddedDriverProfilesV257(){' /tmp/f1-racing-v1-phase257.js
+          ! grep -Fq "class:'car-profile-connector-v250'" /tmp/f1-racing-v1-phase257.js
+          grep -Fq '.car-profile-image-v257' /tmp/f1-racing-v1-phase257.css
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
