@@ -8,7 +8,7 @@ export function runPhase268F1AutoFollowWheelZoomAudit(){
   "const VERSION268='phase268-auto-follow-wheel-zoom';",
   'userZoomLockedV268:false',
   'dragCandidateV268:false',
-  "if(raceCameraV216.userZoomLockedV268&&raceCameraV216.mode!=='FULL')focus.zoom=raceCameraV216.userZoomV268;",
+  'if(raceCameraV216.userZoomLockedV268)focus.zoom=raceCameraV216.userZoomV268;',
   'Math.hypot(totalDx,totalDy)<6',
   "raceCameraV216.mode='MANUAL'",
   'function qaAutoFollowWheelZoomV268(){',
