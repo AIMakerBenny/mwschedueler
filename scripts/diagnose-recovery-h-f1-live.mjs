@@ -170,6 +170,13 @@ try{
     const podiumQa265=window.mwsF1QaPodiumV265?.();
     assert(podiumQa265?.allPass===true&&podiumQa265?.domReady===true&&podiumQa265?.singleSafe===true&&podiumQa265?.bestLap===true&&podiumQa265?.overtakes===true,'Phase 265 podium QA failed: '+JSON.stringify(podiumQa265));
 
+    const trackCardQa266=window.mwsF1QaTrackCardsV266?.();
+    assert(trackCardQa266?.allPass===true&&Number(trackCardQa266?.trackCount)===7&&trackCardQa266?.mapped===true&&Number(trackCardQa266?.distinctPaths)===7&&trackCardQa266?.hasTechnicalFields===true,'Phase 266 track card QA failed: '+JSON.stringify(trackCardQa266));
+    const trackCards266=Array.from(document.querySelectorAll('#f1RacingTrackOptionsV186 .f1-racing-track-card-v266'));
+    assert(trackCards266.length===7,'Phase 266 expected 7 track cards, found '+trackCards266.length);
+    assert(trackCards266.every(card=>card.querySelector('.f1-racing-track-card-silhouette-v266 path')),'Phase 266 circuit silhouette missing');
+    assert(trackCards266.every(card=>['LOW','MID','HIGH'].includes(String(card.dataset.f1SpeedTierV266||''))),'Phase 266 speed tier badge data missing');
+
     const lapQa260=window.mwsF1QaLapControlV260?.();
     assert(lapQa260?.allPass===true&&lapQa260?.low===3&&lapQa260?.high===99&&lapQa260?.direct===17,'Phase 260 lap-control QA failed: '+JSON.stringify(lapQa260));
     const lapInput260=document.getElementById('f1RacingLapsInputV260');
