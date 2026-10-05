@@ -215,6 +215,7 @@ jobs:
           node --check scripts/run-phase270-f1-corner-dynamics-audit.mjs
           node --check scripts/run-phase271-f1-track-boundary-audit.mjs
           node --check scripts/run-phase272-f1-random-starting-grid-audit.mjs
+          node --check scripts/run-phase273-f1-starting-grid-card-reveal-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
