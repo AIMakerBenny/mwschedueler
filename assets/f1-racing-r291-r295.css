@@ -1,0 +1,30 @@
+/* Phase 291 / F1-R16: keep the race screen visible and present podium + full results as one overlay */
+#f1RacingViewRaceV185{position:relative}
+.f1-racing-finish-overlay-v291{position:absolute;inset:0;z-index:95;display:grid;place-items:center;padding:14px;background:rgba(2,5,10,.78);backdrop-filter:blur(7px);overflow:auto}
+.f1-racing-finish-overlay-v291[hidden]{display:none!important}
+.f1-racing-finish-overlay-panel-v291{width:min(1080px,96%);max-height:calc(100% - 10px);display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid #303b4b;border-radius:10px;background:linear-gradient(180deg,rgba(12,17,24,.98),rgba(5,8,13,.98));box-shadow:0 24px 70px rgba(0,0,0,.55)}
+.f1-racing-finish-overlay-panel-v291>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:8px;border-bottom:1px solid #202936}
+.f1-racing-finish-overlay-panel-v291>header>div:first-child{min-width:0;display:flex;flex-direction:column;gap:3px}
+.f1-racing-finish-overlay-panel-v291>header span{color:#708098;font:900 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.16em}
+.f1-racing-finish-overlay-panel-v291>header strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f8fafc;font:950 17px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-finish-overlay-panel-v291>header small{color:#8c9cb2;font:800 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-finish-overlay-panel-v291 .actions{display:flex;gap:5px;flex:0 0 auto}
+.f1-racing-finish-overlay-panel-v291 .actions button{min-height:31px;padding:5px 9px}
+.f1-racing-finish-podium-v291{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.f1-racing-finish-podium-v291 .place{display:grid;grid-template-columns:36px 44px minmax(0,1fr) auto;align-items:center;gap:8px;min-width:0;padding:8px 9px;border:1px solid #283342;border-radius:7px;background:#0a0f16}
+.f1-racing-finish-podium-v291 .place.p1{border-color:#74652e;background:linear-gradient(180deg,rgba(104,83,24,.24),#0a0f16)}
+.f1-racing-finish-podium-v291 .place>b{color:#f3f6fa;font:950 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-finish-podium-v291 .place img,.f1-racing-finish-podium-v291 .fallback{width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid #39475a;background:#111925;display:grid;place-items:center;color:#cad5e3;font-size:9px;font-weight:900}
+.f1-racing-finish-podium-v291 .place>div{min-width:0}
+.f1-racing-finish-podium-v291 .place strong,.f1-racing-finish-podium-v291 .place small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f1-racing-finish-podium-v291 .place strong{color:#f8fafc;font-size:11px}
+.f1-racing-finish-podium-v291 .place small{margin-top:2px;color:#7f8da1;font-size:8px}
+.f1-racing-finish-podium-v291 .place>span{color:#9cacbf;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap}
+.f1-racing-finish-result-head-v291,.f1-racing-finish-results-v291 .row{display:grid;grid-template-columns:52px minmax(160px,1fr) 70px 100px 82px 100px;align-items:center;gap:7px}
+.f1-racing-finish-result-head-v291{padding:0 8px;color:#637289;font:900 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.1em}
+.f1-racing-finish-results-v291{display:grid;gap:3px;min-height:0;max-height:38vh;overflow:auto}
+.f1-racing-finish-results-v291 .row{min-height:36px;padding:5px 8px;border:1px solid #202835;background:#080c12}
+.f1-racing-finish-results-v291 .row>b{color:#eef3f9;font:950 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-finish-results-v291 .row>strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f8fafc;font-size:10px}
+.f1-racing-finish-results-v291 .row>span,.f1-racing-finish-results-v291 .row>time{color:#8797ab;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+@media(max-width:1000px){.f1-racing-finish-podium-v291{grid-template-columns:1fr}.f1-racing-finish-podium-v291 .place{grid-template-columns:34px 40px minmax(0,1fr) auto}.f1-racing-finish-result-head-v291,.f1-racing-finish-results-v291 .row{grid-template-columns:46px minmax(120px,1fr) 58px 86px 70px 90px}}
