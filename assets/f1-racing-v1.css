@@ -253,6 +253,14 @@
 .f1-racing-timing-row-v188 .driver{min-width:0;display:flex;align-items:baseline;gap:8px}
 .f1-racing-timing-row-v188 .driver b{font-size:11px;color:#f8fafc}
 .f1-racing-timing-row-v188 .driver small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#778398;font:600 9px var(--font)}
+.f1-racing-timing-row-v188 .driver{align-items:center;gap:6px}
+.f1-racing-driver-color-v251{flex:0 0 3px;width:3px;height:24px;border-radius:999px;background:var(--f1-driver-color,#64748b);box-shadow:0 0 8px color-mix(in srgb,var(--f1-driver-color,#64748b) 35%,transparent)}
+.f1-racing-timing-avatar-v251{position:relative;display:grid;place-items:center;flex:0 0 22px;width:22px;height:22px;border-radius:50%;overflow:hidden;border:1px solid color-mix(in srgb,var(--f1-driver-color,#94a3b8) 72%,#fff 8%);background:#111722;color:#dbe4f0;font:900 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-timing-avatar-v251 img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#111722}
+.f1-racing-timing-avatar-v251.has-loaded-image .f1-racing-timing-avatar-fallback-v251{visibility:hidden}
+.f1-racing-timing-avatar-fallback-v251{display:block;line-height:1}
+.f1-racing-driver-copy-v251{display:grid;min-width:0;line-height:1.05}
+.f1-racing-driver-copy-v251 b,.f1-racing-driver-copy-v251 small{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .f1-racing-timing-row-v188.podium:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
 .f1-racing-timing-row-v188.p1:before{background:#d8b74d}
 .f1-racing-timing-row-v188.p2:before{background:#aab3c2}
