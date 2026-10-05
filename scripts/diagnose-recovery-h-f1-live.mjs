@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase280Ready=false;
+  let phase281Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase280Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV280==='phase280-event-dialogue-coverage'","Phase 280 runtime readiness"));
-    if(phase280Ready)break;
+    phase281Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV281==='phase281-dialogue-cadence-repeat-guard'","Phase 281 runtime readiness"));
+    if(phase281Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v280=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v281=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase280Ready)throw new Error('Phase 280 runtime did not propagate to Recovery H browser');
+  if(!phase281Ready)throw new Error('Phase 281 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -280,6 +280,10 @@ try{
     manualStart.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='RACE','Explicit grid start click did not enter RACE');
     await raf();
+    const cadenceQa281=window.mwsF1QaDialogueCadenceV281?.();
+    assert(cadenceQa281?.allPass===true,'Phase 281 dialogue cadence QA failed: '+JSON.stringify(cadenceQa281));
+    assert(cadenceQa281?.budgetBlocked===true&&Number(cadenceQa281?.config?.maxGroupsPerWindow)<=4,'Phase 281 dialogue window budget failed: '+JSON.stringify(cadenceQa281));
+    assert(cadenceQa281?.criticalAllowed===true&&cadenceQa281?.duplicateBlocked===true,'Phase 281 critical dialogue priority failed: '+JSON.stringify(cadenceQa281));
     const coverageQa280=window.mwsF1QaEventDialogueCoverageV280?.();
     assert(coverageQa280?.allPass===true,'Phase 280 event-dialogue coverage QA failed: '+JSON.stringify(coverageQa280));
     assert(Array.isArray(coverageQa280?.unmapped)&&coverageQa280.unmapped.length===0&&coverageQa280?.allCatalogMapped===true,'Phase 280 unmapped micro event found: '+JSON.stringify(coverageQa280));
