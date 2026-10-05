@@ -527,6 +527,13 @@ try{
     const timingTyre253=timingPanel?.querySelector('[data-f1-status-tyre-v253]');
     const timingTyreRect253=timingTyre253?.getBoundingClientRect();
     assert(timingTyreRect253&&timingTyreRect253.width>20&&timingTyreRect253.height>=12,'Phase 253 timing tyre badge geometry invalid: '+JSON.stringify(timingTyreRect253?{w:timingTyreRect253.width,h:timingTyreRect253.height}:null));
+    const markerPositionQa254=window.mwsF1QaRaceMarkerPositionV254?.();
+    assert(markerPositionQa254?.allPass===true&&Number(markerPositionQa254?.count)>=2,'Phase 254 live marker position QA failed: '+JSON.stringify(markerPositionQa254));
+    const markerPositionTag254=document.querySelector('.f1-racing-race-vehicle-v189 .car-position-tag-v254');
+    const markerPositionBox254=markerPositionTag254?.querySelector('.car-position-box-v254');
+    const markerPositionText254=markerPositionTag254?.querySelector('.car-position-text-v254');
+    const markerPositionRect254=markerPositionBox254?.getBoundingClientRect();
+    assert(markerPositionRect254&&markerPositionRect254.width>=8&&markerPositionRect254.height>=5&&/^P\d+$/.test(String(markerPositionText254?.textContent||'')),'Phase 254 marker position tag geometry invalid: '+JSON.stringify(markerPositionRect254?{w:markerPositionRect254.width,h:markerPositionRect254.height,text:markerPositionText254?.textContent}:null));
     assert(document.querySelector('[data-f1-workspace-panel="timing"] [data-f1-panel-drag="timing"]')?.textContent?.includes('실시간 순위'),'Phase 218 timing panel is not Korean');
     assert(document.querySelector('[data-f1-workspace-panel="track"] [data-f1-panel-drag="track"]')?.textContent?.includes('트랙 맵'),'Phase 218 track panel is not Korean');
     assert(document.querySelector('[data-f1-workspace-panel="commentary"] [data-f1-panel-drag="commentary"]')?.textContent?.includes('경기 해설'),'Phase 218 commentary panel is not Korean');
