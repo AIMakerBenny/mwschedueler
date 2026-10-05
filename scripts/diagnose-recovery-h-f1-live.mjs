@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase274Ready=false;
+  let phase275Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase274Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV274==='phase274-field-compression-leader-pressure'","Phase 274 runtime readiness"));
-    if(phase274Ready)break;
+    phase275Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV275==='phase275-chase-burst'","Phase 275 runtime readiness"));
+    if(phase275Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v274=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v275=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase274Ready)throw new Error('Phase 274 runtime did not propagate to Recovery H browser');
+  if(!phase275Ready)throw new Error('Phase 275 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -283,6 +283,10 @@ try{
     const headline260=window.mwsF1RaceHeadlineStateV255?.();
     assert(Number(headline260?.total)===17&&Number(headline260?.remaining)===17,'Phase 260 headline remaining laps mismatch: '+JSON.stringify(headline260));
 
+    const burstQa275=window.mwsF1QaChaseBurstV275?.();
+    assert(burstQa275?.allPass===true,'Phase 275 chase burst QA failed: '+JSON.stringify(burstQa275));
+    assert(burstQa275?.eligible?.eligible===true&&burstQa275?.leader?.eligible===false&&burstQa275?.pit?.eligible===false&&burstQa275?.incident?.eligible===false&&burstQa275?.exhausted?.eligible===false,'Phase 275 burst eligibility invalid: '+JSON.stringify(burstQa275));
+    assert(Number(burstQa275?.config?.maxUsesPerRace)<=2&&Number(burstQa275?.config?.activationChance)<=.05,'Phase 275 burst bounds too aggressive: '+JSON.stringify(burstQa275?.config));
     const pressureQa274=window.mwsF1QaLeaderPressureV274?.();
     assert(pressureQa274?.allPass===true,'Phase 274 leader pressure QA failed: '+JSON.stringify(pressureQa274));
     assert(Number(pressureQa274?.close?.score)===0&&Number(pressureQa274?.runaway?.score)>0,'Phase 274 tight-fight suppression missing: '+JSON.stringify(pressureQa274));
@@ -827,6 +831,7 @@ try{
 
     const momentumBenchmark262=window.mwsF1QaRaceMomentumBenchmarkV262?.();
     assert(momentumBenchmark262?.allPass===true,'Phase 262 momentum benchmark failed: '+JSON.stringify(momentumBenchmark262));
+    assert(momentumBenchmark262?.allPass===true&&Number(momentumBenchmark262?.trackCount)===7&&Number(momentumBenchmark262?.completedRuns)===7,'Phase 275 long-run benchmark failed: '+JSON.stringify(momentumBenchmark262));
     assert(Number(momentumBenchmark262?.trackCount)===7&&Number(momentumBenchmark262?.completedRuns)===7,'Phase 262 benchmark did not complete all 7 tracks: '+JSON.stringify(momentumBenchmark262));
     assert(Boolean(momentumBenchmark262?.deterministicRepeat),'Phase 262 benchmark repeat was not deterministic');
     assert(Math.abs(Number(momentumBenchmark262?.gridFinishCorrelation)||0)<.94,'Phase 262 grid-finish correlation remains too strong: '+JSON.stringify(momentumBenchmark262?.gridFinishCorrelation));
