@@ -85,6 +85,7 @@ const VERSION255='phase255-race-headline-summary';
 const VERSION256='phase256-live-battle-link';
 const VERSION257='phase257-embedded-driver-profile-marker';
 const VERSION258='phase258-visual-lateral-smoothing';
+const VERSION259='phase259-workspace-user-default-persistence';
 const VISUAL_LATERAL_RESPONSE_V258=Object.freeze({normal:7.5,attack:8.8,pit:9.8,incident:12.5});
 const BATTLE_LINK_MAX_LENGTH_V256=88;
 const F1_WORKSPACE_LAYOUT_VERSION_V249=6;
@@ -566,6 +567,7 @@ function confirmRaceStartRecoveryM(){
   if(f1ScreenStateV185!=='GRID'||!activeRaceSnapshotV187)return false;
   if(raceMotionV189.running)return false;
   if(!setScreenStateV185('RACE'))return false;
+  restoreWorkspaceUserDefaultV259('race-start');
   renderRaceControlV188();
   const started=startRaceMotionV189();
   if(!started){
@@ -594,6 +596,7 @@ function bindManualRaceStartRecoveryM(){
 
 function cancelRaceToSetupRecoveryC(){
   if(!['TRANSITION','GRID','RACE'].includes(f1ScreenStateV185))return false;
+  if(f1ScreenStateV185==='RACE'&&workspaceLayoutRecoveryE)checkpointWorkspaceUserDefaultV259('cancel-race');
   if(raceTransitionTimerV187){
     clearTimeout(raceTransitionTimerV187);
     raceTransitionTimerV187=0;
@@ -3535,6 +3538,7 @@ function showResultRecoveryG(){
   return true;
 }
 function returnToSetupRecoveryG(){
+  if(workspaceLayoutRecoveryE)checkpointWorkspaceUserDefaultV259('return-to-setup');
   if(raceTransitionTimerV187){clearTimeout(raceTransitionTimerV187);raceTransitionTimerV187=0}
   resetRaceMotionV189();
   activeRaceSnapshotV187=null;
@@ -4417,6 +4421,8 @@ const F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E=Object.freeze({
 });
 let workspaceLayoutRecoveryE=null;
 let workspacePointerRecoveryE=null;
+let workspaceUserDefaultV259=null;
+let workspaceUserDefaultRevisionV259=0;
 
 function cloneWorkspaceLayoutRecoveryE(layout){
   return JSON.parse(JSON.stringify(layout));
@@ -4671,14 +4677,107 @@ function normalizeWorkspaceLayoutRecoveryE(raw){
   workspaceRepairReportRecoveryK={repaired:rawIssues.length>0,reasons:[...new Set(rawIssues)],version:F1_WORKSPACE_LAYOUT_VERSION_V249,overlapCount:overlaps.length};
   return normalized;
 }
+function workspaceLayoutSignatureV259(layout){
+  if(!layout?.panels)return '';
+  const panels={};
+  for(const id of Object.keys(F1_WORKSPACE_PANEL_META_RECOVERY_E).sort()){
+    const row=layout.panels[id]||{};
+    panels[id]={
+      x:Number(row.x)||0,y:Number(row.y)||0,w:Number(row.w)||0,h:Number(row.h)||0,
+      hidden:Boolean(row.hidden),maximized:Boolean(row.maximized),tabGroup:String(row.tabGroup||'')
+    };
+  }
+  const activeTabs={};
+  for(const key of Object.keys(layout.activeTabs||{}).sort())activeTabs[key]=String(layout.activeTabs[key]||'');
+  return JSON.stringify({version:Number(layout.version)||0,panels,activeTabs});
+}
 function readWorkspaceLayoutRecoveryE(){
   const saved=readPersistedF1SettingsRecoveryD()?.workspaceLayout;
   workspaceLayoutRecoveryE=normalizeWorkspaceLayoutRecoveryE(saved);
+  workspaceUserDefaultV259=cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE);
   return workspaceLayoutRecoveryE;
 }
 function persistWorkspaceLayoutRecoveryE(){
   if(!workspaceLayoutRecoveryE)return false;
-  return persistF1SettingsRecoveryD({workspaceLayout:cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE)});
+  const saved=persistF1SettingsRecoveryD({workspaceLayout:cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE)});
+  if(saved){
+    workspaceUserDefaultV259=cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE);
+    workspaceUserDefaultRevisionV259+=1;
+    const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
+    if(workspace){
+      workspace.dataset.userDefaultV259='saved';
+      workspace.dataset.userDefaultRevisionV259=String(workspaceUserDefaultRevisionV259);
+    }
+  }
+  return saved;
+}
+function restoreWorkspaceUserDefaultV259(reason='lifecycle'){
+  const saved=readPersistedF1SettingsRecoveryD()?.workspaceLayout;
+  workspaceLayoutRecoveryE=normalizeWorkspaceLayoutRecoveryE(saved);
+  workspaceUserDefaultV259=cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE);
+  applyWorkspaceLayoutRecoveryE();
+  const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
+  if(workspace){
+    workspace.dataset.userDefaultV259='restored';
+    workspace.dataset.userDefaultReasonV259=String(reason||'lifecycle');
+    workspace.dataset.userDefaultSignatureV259=workspaceLayoutSignatureV259(workspaceUserDefaultV259);
+  }
+  return cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE);
+}
+function checkpointWorkspaceUserDefaultV259(reason='interaction'){
+  if(!workspaceLayoutRecoveryE)return false;
+  const saved=persistWorkspaceLayoutRecoveryE();
+  const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
+  if(workspace&&saved)workspace.dataset.userDefaultReasonV259=String(reason||'interaction');
+  return saved;
+}
+function qaWorkspaceUserDefaultPersistenceV259(){
+  if(!workspaceLayoutRecoveryE)readWorkspaceLayoutRecoveryE();
+  const originalRuntime=cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE);
+  const originalPersisted=cloneWorkspaceLayoutRecoveryE(readPersistedF1SettingsRecoveryD()?.workspaceLayout||{});
+  const originalTrack=String(activeTrackId||'majoku-ring-v1');
+  const custom=normalizeWorkspaceLayoutRecoveryE({
+    version:F1_WORKSPACE_LAYOUT_VERSION_V249,
+    panels:{
+      track:{x:0,y:0,w:7,h:8,hidden:false,maximized:false,tabGroup:''},
+      timing:{x:7,y:0,w:5,h:3,hidden:false,maximized:false,tabGroup:''},
+      commentary:{x:7,y:3,w:5,h:5,hidden:false,maximized:false,tabGroup:''}
+    },
+    activeTabs:{}
+  });
+  let observed={};
+  try{
+    workspaceLayoutRecoveryE=cloneWorkspaceLayoutRecoveryE(custom);
+    applyWorkspaceLayoutRecoveryE();
+    const saveOk=checkpointWorkspaceUserDefaultV259('qa-manual-layout');
+    const expected=workspaceLayoutSignatureV259(custom);
+    const persistedAfterLayout=readPersistedF1SettingsRecoveryD()?.workspaceLayout;
+    const persistedSignature=workspaceLayoutSignatureV259(normalizeWorkspaceLayoutRecoveryE(persistedAfterLayout));
+    const otherSettingSaveOk=persistF1SettingsRecoveryD({selectedTrackId:originalTrack});
+    const persistedAfterOtherSetting=readPersistedF1SettingsRecoveryD()?.workspaceLayout;
+    const preservedAfterOtherSetting=workspaceLayoutSignatureV259(normalizeWorkspaceLayoutRecoveryE(persistedAfterOtherSetting));
+    workspaceLayoutRecoveryE=normalizeWorkspaceLayoutRecoveryE(F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E);
+    applyWorkspaceLayoutRecoveryE();
+    const restored=restoreWorkspaceUserDefaultV259('qa-next-race');
+    const restoredSignature=workspaceLayoutSignatureV259(restored);
+    const domRows={};
+    for(const id of Object.keys(F1_WORKSPACE_PANEL_META_RECOVERY_E)){
+      const panel=workspacePanelRecoveryE(id);
+      domRows[id]=panel?{
+        gridColumn:String(panel.style.gridColumn||''),
+        gridRow:String(panel.style.gridRow||''),
+        hidden:Boolean(panel.hidden)
+      }:null;
+    }
+    observed={saveOk,otherSettingSaveOk,expected,persistedSignature,preservedAfterOtherSetting,restoredSignature,domRows,revision:workspaceUserDefaultRevisionV259};
+    observed.allPass=Boolean(saveOk&&otherSettingSaveOk&&expected&&persistedSignature===expected&&preservedAfterOtherSetting===expected&&restoredSignature===expected&&domRows.track&&domRows.timing&&domRows.commentary);
+  }finally{
+    if(typeof window.mwsSaveF1RacingSettingsRecoveryD==='function')window.mwsSaveF1RacingSettingsRecoveryD({workspaceLayout:originalPersisted,selectedTrackId:originalTrack});
+    workspaceLayoutRecoveryE=normalizeWorkspaceLayoutRecoveryE(originalRuntime);
+    workspaceUserDefaultV259=cloneWorkspaceLayoutRecoveryE(workspaceLayoutRecoveryE);
+    applyWorkspaceLayoutRecoveryE();
+  }
+  return observed;
 }
 function workspacePanelRecoveryE(id){
   return document.querySelector('#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="'+id+'"]');
@@ -5714,6 +5813,12 @@ window.mwsF1UpdateVisualLateralOffsetV258=updateVisualLateralOffsetV258;
 window.mwsF1QaVisualLateralSmoothingV258=qaVisualLateralSmoothingV258;
 window.mwsF1QaVisualLateralDomV258=qaVisualLateralDomV258;
 window.__mwsF1RacingV258=VERSION258;
+window.mwsF1WorkspaceLayoutSignatureV259=workspaceLayoutSignatureV259;
+window.mwsF1RestoreWorkspaceUserDefaultV259=restoreWorkspaceUserDefaultV259;
+window.mwsF1CheckpointWorkspaceUserDefaultV259=checkpointWorkspaceUserDefaultV259;
+window.mwsF1GetWorkspaceUserDefaultV259=function(){return workspaceUserDefaultV259?cloneWorkspaceLayoutRecoveryE(workspaceUserDefaultV259):null};
+window.mwsF1QaWorkspaceUserDefaultPersistenceV259=qaWorkspaceUserDefaultPersistenceV259;
+window.__mwsF1RacingV259=VERSION259;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
