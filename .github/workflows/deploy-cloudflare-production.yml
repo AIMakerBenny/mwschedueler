@@ -203,6 +203,7 @@ jobs:
           node --check scripts/run-phase258-f1-visual-lateral-smoothing-audit.mjs
           node --check scripts/run-phase259-f1-workspace-user-default-audit.mjs
           node --check scripts/run-phase260-f1-manual-lap-control-audit.mjs
+          node --check scripts/run-phase261-f1-immersive-fullscreen-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -2480,6 +2481,15 @@ jobs:
           grep -Fq 'function qaLapControlV260(){' /tmp/f1-racing-v1-phase260.js
           retry_contains "$BASE/?phase260=$GITHUB_SHA" 'id="f1RacingLapsInputV260"' > /tmp/index-phase260.html
           grep -Fq 'id="f1RacingLapsRestoreV260"' /tmp/index-phase260.html
+
+          echo '[phase261] F1 immersive fullscreen spectator mode'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV261=VERSION261;' > /tmp/f1-racing-v1-phase261.js
+          node --check /tmp/f1-racing-v1-phase261.js
+          grep -Fq 'async function enterF1ImmersiveV261(){' /tmp/f1-racing-v1-phase261.js
+          grep -Fq 'requestFullscreen' /tmp/f1-racing-v1-phase261.js
+          grep -Fq "restoreWorkspaceUserDefaultV259('immersive-exit')" /tmp/f1-racing-v1-phase261.js
+          retry_contains "$BASE/?phase261=$GITHUB_SHA" 'id="f1RacingImmersiveV261"' > /tmp/index-phase261.html
+          grep -Fq '전체화면을 취소하시려면 ESC를 누르세요' /tmp/index-phase261.html
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
