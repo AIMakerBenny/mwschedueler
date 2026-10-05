@@ -674,3 +674,12 @@
 .f1-racing-driver-state-v253 [data-f1-status-pit-v253]{border-color:#4f7aa3;color:#9ed0ff}
 .f1-racing-driver-state-v253 [data-f1-status-battle-v253]{border-color:#9a6f2b;color:#ffd98a}
 @media(max-width:1100px){.f1-racing-driver-state-v253{display:none}}
+
+
+/* Phase 254: live position tag attached to each track vehicle marker */
+.f1-racing-race-vehicle-v189 .car-position-tag-v254{pointer-events:none}
+.f1-racing-race-vehicle-v189 .car-position-box-v254{fill:#091019;fill-opacity:.95;stroke:var(--f1-driver-color,#94a3b8);stroke-width:1.5}
+.f1-racing-race-vehicle-v189 .car-position-text-v254{fill:#eef4fb;font:900 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#020305;stroke-width:1;dominant-baseline:auto}
+.f1-racing-race-vehicle-v189.top-three-v254 .car-position-box-v254{stroke-width:2}
+.f1-racing-race-vehicle-v189.leader-position-v254 .car-position-box-v254{fill:#211b08;stroke:#e8cf76}
+.f1-racing-race-vehicle-v189.leader-position-v254 .car-position-text-v254{fill:#ffe98c}
