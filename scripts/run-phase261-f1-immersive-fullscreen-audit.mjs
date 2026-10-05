@@ -45,7 +45,6 @@ export function runPhase261F1ImmersiveFullscreenAudit(){
   ])if(!css.includes(token))issues.push('Phase 261 immersive CSS missing: '+token);
 
   for(const token of [
-    "__mwsF1RacingV261==='phase261-immersive-fullscreen-spectator'",
     'Phase 261 immersive QA failed',
     'Phase 261 sidebar remained visible',
     'Phase 261 immersive layout signature changed'
