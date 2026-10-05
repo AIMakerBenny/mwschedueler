@@ -298,6 +298,7 @@ import {runPhase299F1RecoveryHContractRecheckAudit} from './run-phase299-f1-reco
 import {runPhase300F1ProductionClosureAudit} from './run-phase300-f1-production-closure-audit.mjs';
 import {runPhase301F1SpecClosureAudit} from './run-phase301-f1-spec-closure-audit.mjs';
 import {runPhase302F1LiveRankingFlipStatusAudit} from './run-phase302-f1-live-ranking-flip-status-audit.mjs';
+import {runPhase303F1FeedbackStabilizationAudit} from './run-phase303-f1-feedback-stabilization-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2653,5 +2654,6 @@ export function runPhase299FullIntegrationAudit(){const previous=runPhase298Full
 export function runPhase300FullIntegrationAudit(){const previous=runPhase299FullIntegrationAudit(),current=runPhase300F1ProductionClosureAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 300: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 300: '+x)];return {phase:300,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase301FullIntegrationAudit(){const previous=runPhase300FullIntegrationAudit(),current=runPhase301F1SpecClosureAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 301: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 301: '+x)];return {phase:301,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase302FullIntegrationAudit(){const previous=runPhase301FullIntegrationAudit(),current=runPhase302F1LiveRankingFlipStatusAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 302: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 302: '+x)];return {phase:302,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase302FullIntegrationAudit();}
+export function runPhase303FullIntegrationAudit(){const previous=runPhase302FullIntegrationAudit(),current=runPhase303F1FeedbackStabilizationAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 303: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 303: '+x)];return {phase:303,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase303FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
