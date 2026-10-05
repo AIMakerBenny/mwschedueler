@@ -251,6 +251,7 @@ import {runPhase252F1SpectatorHighlightsAudit} from './run-phase252-f1-spectator
 import {runPhase253F1LiveTimingStatusAudit} from './run-phase253-f1-live-timing-status-audit.mjs';
 import {runPhase254F1LiveMarkerPositionAudit} from './run-phase254-f1-live-marker-position-audit.mjs';
 import {runPhase255F1RaceHeadlineAudit} from './run-phase255-f1-race-headline-audit.mjs';
+import {runPhase256F1BattleLinkAudit} from './run-phase256-f1-battle-link-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2463,5 +2464,10 @@ export function runPhase255FullIntegrationAudit(){
  const issues=[...previous.issues,...current.issues.map(x=>'Phase 255: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 255: '+x)];
  return {phase:255,previous,current,issues,warnings,pass:issues.length===0};
 }
-export function runCurrentFullIntegrationAudit(){return runPhase255FullIntegrationAudit();}
+export function runPhase256FullIntegrationAudit(){
+ const previous=runPhase255FullIntegrationAudit(),current=runPhase256F1BattleLinkAudit();
+ const issues=[...previous.issues,...current.issues.map(x=>'Phase 256: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 256: '+x)];
+ return {phase:256,previous,current,issues,warnings,pass:issues.length===0};
+}
+export function runCurrentFullIntegrationAudit(){return runPhase256FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
