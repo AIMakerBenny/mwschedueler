@@ -91,6 +91,7 @@ const VERSION261='phase261-immersive-fullscreen-spectator';
 const VERSION262='phase262-race-momentum-rebalance';
 const VERSION263='phase263-race-narrative-engine';
 const VERSION264='phase264-live-overtake-comic-cutin';
+const VERSION265='phase265-grand-prix-podium-redesign';
 const RACE_MOMENTUM_CONFIG_V262=Object.freeze({
   min:-1,max:1,paceRange:.02,decayPerSecond:.032,evaluationMs:620,
   passSuccess:.18,passFailed:-.12,defenceSuccess:.075,incident:-.14,
@@ -252,6 +253,50 @@ function qaLiveCutinV264(){
   const states=['PULLING_OUT','SIDE_BY_SIDE','COUNTER_ATTACK','PASS_COMPLETED'];
   const events=states.map(state=>liveCutinEventV264(state));
   return {layerReady:Boolean(liveCutinLayerV264()),maxActive:LIVE_CUTIN_CONFIG_V264.maxActive,dedupeMs:LIVE_CUTIN_CONFIG_V264.dedupeMs,minDurationMs:LIVE_CUTIN_CONFIG_V264.minDurationMs,maxDurationMs:LIVE_CUTIN_CONFIG_V264.maxDurationMs,states,events,active:liveCutinStateV264.active.size,queued:liveCutinStateV264.queue.length,allPass:Boolean(liveCutinLayerV264())&&LIVE_CUTIN_CONFIG_V264.maxActive===3&&LIVE_CUTIN_CONFIG_V264.dedupeMs===1000&&LIVE_CUTIN_CONFIG_V264.minDurationMs>=1500&&LIVE_CUTIN_CONFIG_V264.maxDurationMs<=2500&&events.every(Boolean)};
+}
+
+
+function podiumMovementV265(row){
+  const grid=Math.max(1,Number(row?.gridPosition)||1),finish=Math.max(1,Number(row?.position)||1),delta=grid-finish;
+  return {grid,finish,delta,label:delta>0?'▲'+delta:delta<0?'▼'+Math.abs(delta):'–'};
+}
+function podiumAvatarHtmlV265(row){
+  const image=String(row?.image||'').trim(),name=String(row?.name||'Driver');
+  return image
+    ?'<img class="f1-racing-podium-avatar-v265" src="'+escapeHtml(image)+'" alt="'+escapeHtml(name)+'">'
+    :'<span class="f1-racing-podium-avatar-v265 fallback">'+escapeHtml(initials(name))+'</span>';
+}
+function podiumCardHtmlV265(row,index){
+  const place=index+1,movement=podiumMovementV265(row),best=Number(row?.bestLapMs)||0,overtakes=Number(row?.passCompletedCount)||0;
+  const medal=place===1?'WINNER':place===2?'P2':'P3';
+  return '<article class="f1-racing-podium-card-v265 p'+place+'" data-podium-place-v265="'+place+'">'+
+    '<div class="f1-racing-podium-place-v265">P'+place+'</div>'+
+    podiumAvatarHtmlV265(row)+
+    '<span class="f1-racing-podium-medal-v265">'+medal+'</span>'+
+    '<strong>'+escapeHtml(row?.name||'Driver')+'</strong>'+
+    '<div class="f1-racing-podium-grid-v265"><span>START P'+String(movement.grid).padStart(2,'0')+'</span><span>FINISH P'+String(movement.finish).padStart(2,'0')+'</span><b>'+movement.label+'</b></div>'+
+    '<div class="f1-racing-podium-stats-v265"><span>BEST LAP <b>'+escapeHtml(formatLapTimeV248(best))+'</b></span><span>OVERTAKES <b>'+overtakes+'</b></span></div>'+
+  '</article>';
+}
+function renderPodiumTrackV265(){
+  const svg=document.getElementById('f1RacingPodiumTrackSilhouetteV265'),path=document.getElementById('f1RacingPodiumTrackPathV265');
+  const track=activeRaceSnapshotV187?.track;
+  if(!svg||!path||!track)return false;
+  const viewBox=Array.isArray(track.viewBox)&&track.viewBox.length===4?track.viewBox:[0,0,1000,600];
+  svg.setAttribute('viewBox',viewBox.map(value=>Number(value)||0).join(' '));
+  path.setAttribute('d',String(track.path||''));
+  return Boolean(track.path);
+}
+function qaPodiumV265(){
+  const synthetic=[
+    {position:1,gridPosition:3,name:'Winner',image:'',bestLapMs:81482,passCompletedCount:3},
+    {position:2,gridPosition:1,name:'Second',image:'',bestLapMs:82001,passCompletedCount:1},
+    {position:3,gridPosition:5,name:'Third',image:'',bestLapMs:82500,passCompletedCount:4}
+  ];
+  const cards=synthetic.map(podiumCardHtmlV265);
+  const single=podiumCardHtmlV265(synthetic[0],0);
+  const domReady=Boolean(document.getElementById('f1RacingPodiumRowsRecoveryG')&&document.getElementById('f1RacingPodiumTrackNameV265')&&document.getElementById('f1RacingPodiumMetaV265')&&document.getElementById('f1RacingPodiumTrackSilhouetteV265')&&document.getElementById('f1RacingPodiumReplayV265'));
+  return {domReady,cards:cards.length,singleSafe:single.includes('WINNER')&&single.includes('START P03')&&single.includes('FINISH P01')&&single.includes('▲2'),bestLap:cards[0].includes('1:21.482'),overtakes:cards[0].includes('OVERTAKES <b>3</b>'),allPass:domReady&&cards.length===3&&single.includes('WINNER')&&single.includes('▲2')&&cards[0].includes('1:21.482')&&cards[0].includes('OVERTAKES <b>3</b>')};
 }
 
 const F1_LAP_MIN_V260=3;
@@ -3960,7 +4005,9 @@ function buildRaceResultRecoveryG(){
       position:Number(vehicle.finishPosition)||index+1,
       contactId:String(vehicle.id||''),
       name:String(vehicle.driver?.name||'Driver'),
+      image:String(vehicle.driver?.image||''),
       gridPosition:Number(vehicle.driver?.gridPosition)||index+1,
+      passCompletedCount:Number(vehicle.passCompletedCount)||0,
       finishedAtSimMs:Number(vehicle.finishedAtSimMs)||simClockV192.simTimeMs,
       tyreCompound:String(vehicle.tyreCompound||'MEDIUM'),
       raceProgress:Number(vehicle.raceProgress)||0,
@@ -3996,10 +4043,13 @@ function renderFinishingRecoveryG(){
 function renderPodiumRecoveryG(){
   const box=document.getElementById('f1RacingPodiumRowsRecoveryG');
   if(!box)return false;
-  const rows=(activeRaceResultRecoveryG?.rows||[]).slice(0,3);
-  box.innerHTML=rows.length?rows.map((row,index)=>
-    '<div class="f1-racing-podium-place-recovery-g p'+(index+1)+'"><span>P'+(index+1)+'</span><strong>'+escapeHtml(row.name)+'</strong><small>GRID P'+String(row.gridPosition).padStart(2,'0')+'</small></div>'
-  ).join(''):'<div class="f1-racing-lifecycle-empty-recovery-g">Podium 결과가 없습니다.</div>';
+  const result=activeRaceResultRecoveryG,rows=(result?.rows||[]).slice(0,3);
+  const title=document.getElementById('f1RacingPodiumTrackNameV265'),meta=document.getElementById('f1RacingPodiumMetaV265');
+  if(title)title.textContent=result?.trackName||'GRAND PRIX';
+  if(meta)meta.textContent=result?(result.totalLaps+' LAPS · '+result.rows.length+' DRIVERS'):'-- LAPS · -- DRIVERS';
+  renderPodiumTrackV265();
+  box.dataset.podiumCountV265=String(rows.length);
+  box.innerHTML=rows.length?rows.map(podiumCardHtmlV265).join(''):'<div class="f1-racing-lifecycle-empty-recovery-g">Podium 결과가 없습니다.</div>';
   return true;
 }
 function renderResultRecoveryG(){
@@ -4080,6 +4130,7 @@ function bindRaceLifecycleRecoveryG(){
     f1RacingShowPodiumRecoveryG:showPodiumRecoveryG,
     f1RacingFinishingResultRecoveryG:showResultRecoveryG,
     f1RacingPodiumResultRecoveryG:showResultRecoveryG,
+    f1RacingPodiumReplayV265:newRaceSameSettingsRecoveryG,
     f1RacingPodiumSetupRecoveryG:returnToSetupRecoveryG,
     f1RacingResultNewRaceRecoveryG:newRaceSameSettingsRecoveryG,
     f1RacingResultSetupRecoveryG:returnToSetupRecoveryG
@@ -6375,6 +6426,10 @@ window.mwsF1ResetLiveCutinsV264=resetLiveCutinsV264;
 window.mwsF1QaLiveCutinV264=qaLiveCutinV264;
 window.mwsF1GetLiveCutinStateV264=function(){return {active:liveCutinStateV264.active.size,queued:liveCutinStateV264.queue.length,sequence:liveCutinStateV264.sequence}};
 window.__mwsF1RacingV264=VERSION264;
+window.mwsF1PodiumMovementV265=podiumMovementV265;
+window.mwsF1RenderPodiumV265=renderPodiumRecoveryG;
+window.mwsF1QaPodiumV265=qaPodiumV265;
+window.__mwsF1RacingV265=VERSION265;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
