@@ -92,6 +92,7 @@ const VERSION262='phase262-race-momentum-rebalance';
 const VERSION263='phase263-race-narrative-engine';
 const VERSION264='phase264-live-overtake-comic-cutin';
 const VERSION265='phase265-grand-prix-podium-redesign';
+const VERSION266='phase266-f1-track-card-circuit-redesign';
 const RACE_MOMENTUM_CONFIG_V262=Object.freeze({
   min:-1,max:1,paceRange:.02,decayPerSecond:.032,evaluationMs:620,
   passSuccess:.18,passFailed:-.12,defenceSuccess:.075,incident:-.14,
@@ -297,6 +298,50 @@ function qaPodiumV265(){
   const single=podiumCardHtmlV265(synthetic[0],0);
   const domReady=Boolean(document.getElementById('f1RacingPodiumRowsRecoveryG')&&document.getElementById('f1RacingPodiumTrackNameV265')&&document.getElementById('f1RacingPodiumMetaV265')&&document.getElementById('f1RacingPodiumTrackSilhouetteV265')&&document.getElementById('f1RacingPodiumReplayV265'));
   return {domReady,cards:cards.length,singleSafe:single.includes('WINNER')&&single.includes('START P03')&&single.includes('FINISH P01')&&single.includes('▲2'),bestLap:cards[0].includes('1:21.482'),overtakes:cards[0].includes('OVERTAKES <b>3</b>'),allPass:domReady&&cards.length===3&&single.includes('WINNER')&&single.includes('▲2')&&cards[0].includes('1:21.482')&&cards[0].includes('OVERTAKES <b>3</b>')};
+}
+
+
+const TRACK_CARD_CHARACTER_V266=Object.freeze({
+  'majoku-ring-v1':Object.freeze({label:'BALANCED',description:'균형형',detail:'직선과 중속 코너가 고르게 섞인 올라운드 서킷'}),
+  'castle-street-circuit-v1':Object.freeze({label:'TECHNICAL',description:'기술형',detail:'연속 코너와 제동 정확도가 중요한 테크니컬 레이아웃'}),
+  'blue-coast-speedway-v1':Object.freeze({label:'HIGH-SPEED FLOW',description:'고속 플로우',detail:'긴 호흡의 고속 코너와 흐름을 유지하는 주행이 핵심'}),
+  'mawang-speed-park-v1':Object.freeze({label:'LONG STRAIGHT',description:'긴 직선',detail:'긴 직선과 강한 제동 구간에서 추월이 발생하기 쉬움'}),
+  'royal-street-circuit-v1':Object.freeze({label:'NARROW STREET',description:'좁은 시가지',detail:'폭이 좁고 복잡한 코너가 이어지는 시가지형 서킷'}),
+  'infinity-eight-circuit-v1':Object.freeze({label:'CROSSOVER',description:'교차 구조',detail:'8자 교차 흐름과 방향 전환이 반복되는 독특한 레이아웃'}),
+  'highland-flow-ring-v1':Object.freeze({label:'SWEEPING',description:'스위핑 고속',detail:'큰 반경 코너를 연속으로 연결하는 고속 리듬형 서킷'})
+});
+function trackSpeedTierV266(profile={}){
+  const value=Number(profile?.maxStraightKph)||0;
+  return value>=335?'HIGH':value>=310?'MID':'LOW';
+}
+function trackCardCharacterV266(track={}){
+  return TRACK_CARD_CHARACTER_V266[String(track?.id||'')]||Object.freeze({label:'CIRCUIT',description:String(track?.archetype||'종합형'),detail:'트랙 데이터 기반 레이아웃'});
+}
+function trackCardHtmlV266(track,selected=false){
+  const viewBox=(Array.isArray(track?.viewBox)?track.viewBox:[0,0,1000,600]).map(value=>Number(value)||0).join(' ');
+  const character=trackCardCharacterV266(track);
+  const speedTier=trackSpeedTierV266(track?.profile||{});
+  const overtakes=Math.max(0,Number(track?.profile?.overtakeZones)||0);
+  return '<button type="button" class="f1-racing-track-card-v186 f1-racing-track-card-v266 '+(selected?'selected':'')+'" data-f1-track-id="'+escapeHtml(track?.id||'')+'" data-f1-speed-tier-v266="'+speedTier+'" aria-pressed="'+(selected?'true':'false')+'">'+
+    '<span class="f1-racing-track-card-top-v266"><span class="f1-racing-track-card-title-v186">'+escapeHtml(track?.name||'Track')+'</span><span class="f1-racing-track-card-code-v266">'+escapeHtml(character.label)+'</span></span>'+
+    '<span class="f1-racing-track-card-silhouette-v233 f1-racing-track-card-silhouette-v266"><svg viewBox="'+escapeHtml(viewBox)+'" aria-hidden="true" focusable="false"><path d="'+escapeHtml(track?.path||'')+'"></path></svg></span>'+
+    '<span class="f1-racing-track-card-character-v266"><b>'+escapeHtml(character.description)+'</b><small>'+escapeHtml(character.detail)+'</small></span>'+
+    '<span class="f1-racing-track-card-tech-v266">'+
+      '<span><small>LENGTH</small><b>'+((Number(track?.lengthMeters)||0)/1000).toFixed(3)+' KM</b></span>'+
+      '<span><small>TOP SPEED</small><b>'+speedTier+'</b></span>'+
+      '<span><small>OVERTAKE</small><b>'+overtakes+' PTS</b></span>'+
+    '</span>'+
+  '</button>';
+}
+function qaTrackCardsV266(){
+  const tracks=getTrackCatalogV186();
+  const cards=tracks.map(track=>trackCardHtmlV266(track,track.id===activeTrackId));
+  const expectedIds=Object.keys(TRACK_CARD_CHARACTER_V266);
+  const mapped=expectedIds.every(id=>tracks.some(track=>track.id===id));
+  const distinctPaths=new Set(tracks.map(track=>String(track.path||''))).size;
+  const tiers=tracks.map(track=>trackSpeedTierV266(track.profile));
+  const domCards=document.querySelectorAll('#f1RacingTrackOptionsV186 .f1-racing-track-card-v266').length;
+  return {trackCount:tracks.length,mapped,distinctPaths,tiers,domCards,hasTechnicalFields:cards.every(card=>card.includes('LENGTH')&&card.includes('TOP SPEED')&&card.includes('OVERTAKE')),allPass:tracks.length===7&&mapped&&distinctPaths===7&&cards.length===7&&cards.every(card=>card.includes('f1-racing-track-card-silhouette-v266'))&&cards.every(card=>card.includes('data-f1-speed-tier-v266'))&&cards.every(card=>card.includes('LENGTH')&&card.includes('TOP SPEED')&&card.includes('OVERTAKE'))&&(domCards===0||domCards===7)};
 }
 
 const F1_LAP_MIN_V260=3;
@@ -681,18 +726,7 @@ function renderTrackChoicesV186(){
   if(!box)return;
   const tracks=getTrackCatalogV186();
   if(count)count.textContent=tracks.length+'개 트랙';
-  box.innerHTML=tracks.map(track=>{
-    const selected=track.id===activeTrackId;
-    const viewBox=track.viewBox.map(value=>Number(value)||0).join(' ');
-    return '<button type="button" class="f1-racing-track-card-v186 '+(selected?'selected':'')+'" data-f1-track-id="'+escapeHtml(track.id)+'" aria-pressed="'+(selected?'true':'false')+'">'+
-      '<span class="f1-racing-track-card-silhouette-v233"><svg viewBox="'+escapeHtml(viewBox)+'" aria-hidden="true" focusable="false"><path d="'+escapeHtml(track.path)+'"></path></svg></span>'+
-      '<span class="f1-racing-track-card-title-v186">'+escapeHtml(track.name)+'</span>'+
-      '<span class="f1-racing-track-card-type-v223">'+escapeHtml(track.archetype)+'</span>'+
-      '<span class="f1-racing-track-card-meta-v186">'+(track.lengthMeters/1000).toFixed(3)+' km · 최고속도 성향 '+Math.round(track.profile.maxStraightKph)+' km/h · 폭 '+track.profile.widthMeters.toFixed(1)+' m</span>'+
-      '<span class="f1-racing-track-card-meta-v186">'+trackCornerMixLabelV223(track.profile)+' · 추월 구간 '+track.profile.overtakeZones+'개</span>'+
-      '<span class="f1-racing-track-card-profile-v223">예상 추월 난이도 <b>'+track.profile.overtakeDifficulty+'</b><small>내부 트랙 데이터 기준</small></span>'+
-      '</button>';
-  }).join('');
+  box.innerHTML=tracks.map(track=>trackCardHtmlV266(track,track.id===activeTrackId)).join('');
   box.querySelectorAll('[data-f1-track-id]').forEach(button=>button.addEventListener('click',()=>selectTrackV186(button.dataset.f1TrackId)));
 }
 function showImmersiveNoticeV261(){
@@ -6430,6 +6464,10 @@ window.mwsF1PodiumMovementV265=podiumMovementV265;
 window.mwsF1RenderPodiumV265=renderPodiumRecoveryG;
 window.mwsF1QaPodiumV265=qaPodiumV265;
 window.__mwsF1RacingV265=VERSION265;
+window.mwsF1TrackSpeedTierV266=trackSpeedTierV266;
+window.mwsF1TrackCardCharacterV266=trackCardCharacterV266;
+window.mwsF1QaTrackCardsV266=qaTrackCardsV266;
+window.__mwsF1RacingV266=VERSION266;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
