@@ -101,6 +101,7 @@ const VERSION271='phase271-track-boundary-wall-riding-fix';
 const VERSION272='phase272-random-seeded-starting-grid';
 const VERSION273='phase273-starting-grid-card-shuffle-reveal';
 const VERSION274='phase274-field-compression-leader-pressure';
+const VERSION275='phase275-chase-burst';
 const TRACK_BOUNDARY_V271=Object.freeze({
   carHalfWidthMeters:.85,safetyMarginMeters:.20,edgeStartRatio:.90,
   edgeMinSpeedFactor:.90,offTrackSpeedFactor:.76
@@ -3332,6 +3333,7 @@ function setPassStateV208(vehicle,next,targetId='',reason=''){
   if(current!==next){
     vehicle.battleState=next;vehicle.battleStateMs=0;vehicle.battleReason=String(reason||'');
     if(next==='PASS_COMPLETED')vehicle.passCompletedCount=(Number(vehicle.passCompletedCount)||0)+1;
+    if(next==='PASS_COMPLETED')endChaseBurstV275(vehicle,'pass-completed');
     if(next==='PASS_COMPLETED')vehicle.spectatorPassFlashUntilV252=(Number(simClockV192.simTimeMs)||0)+1400;
     if(next==='PASS_FAILED')vehicle.passFailedCount=(Number(vehicle.passFailedCount)||0)+1;
     enqueueLiveCutinV264(vehicle,next,targetId);
@@ -3741,6 +3743,131 @@ function qaLeaderPressureV274(){
   };
 }
 
+
+const CHASE_BURST_CONFIG_V275=Object.freeze({
+  maxUsesPerRace:2,evaluationMs:900,activationChance:.045,
+  durationMinMs:4000,durationMaxMs:8000,cooldownMs:12500,
+  targetSpeedBonusKph:7,accelMultiplier:1.055,exitAccelMultiplier:1.035,
+  battleBiasBonusKph:.85
+});
+const CHASE_BURST_ELIGIBLE_STATES_V275=Object.freeze(['CLOSING','TOWING','PREPARING_ATTACK','PULLING_OUT','PASS_FAILED']);
+function nextChaseBurstRandomV275(vehicle){
+  let state=(Number(vehicle?.chaseBurstRandomStateV275)>>>0)||1;
+  state^=state<<13;state^=state>>>17;state^=state<<5;state>>>=0;
+  vehicle.chaseBurstRandomStateV275=state||1;
+  return state/4294967296;
+}
+function isChaseBurstActiveV275(vehicle){
+  return Boolean(vehicle&&String(vehicle.chaseBurstStateV275||'')==='ACTIVE'&&(Number(vehicle.chaseBurstUntilV275)||0)>(Number(simClockV192.simTimeMs)||0));
+}
+function endChaseBurstV275(vehicle,reason='expired'){
+  if(!vehicle)return false;
+  const wasActive=String(vehicle.chaseBurstStateV275||'')==='ACTIVE';
+  vehicle.chaseBurstStateV275='IDLE';
+  vehicle.chaseBurstUntilV275=0;
+  vehicle.chaseBurstLastEndReasonV275=String(reason||'expired');
+  vehicle.chaseBurstSpeedBonusKphV275=0;
+  vehicle.chaseBurstAccelMultiplierV275=1;
+  vehicle.chaseBurstExitMultiplierV275=1;
+  return wasActive;
+}
+function triggerChaseBurstV275(vehicle,target,reason='chase'){
+  if(!vehicle||isChaseBurstActiveV275(vehicle))return false;
+  const now=Number(simClockV192.simTimeMs)||0;
+  const span=Math.max(0,CHASE_BURST_CONFIG_V275.durationMaxMs-CHASE_BURST_CONFIG_V275.durationMinMs);
+  const duration=CHASE_BURST_CONFIG_V275.durationMinMs+Math.floor(nextChaseBurstRandomV275(vehicle)*(span+1));
+  vehicle.chaseBurstStateV275='ACTIVE';
+  vehicle.chaseBurstUntilV275=now+duration;
+  vehicle.chaseBurstCooldownUntilV275=now+duration+CHASE_BURST_CONFIG_V275.cooldownMs;
+  vehicle.chaseBurstUsesV275=(Number(vehicle.chaseBurstUsesV275)||0)+1;
+  vehicle.chaseBurstTargetIdV275=String(target?.id||'');
+  vehicle.chaseBurstLastReasonV275=String(reason||'chase');
+  vehicle.chaseBurstLastStartSimMsV275=now;
+  return true;
+}
+function chaseBurstEligibilityV275(vehicle,standing,target){
+  const now=Number(simClockV192.simTimeMs)||0;
+  const state=String(vehicle?.battleState||'FOLLOWING');
+  const gap=Math.max(0,Number(vehicle?.trafficGapMeters));
+  const eligiblePosition=Number(standing?.position)>1;
+  const onTrack=String(vehicle?.pitState||'TRACK')==='TRACK'&&!vehicle?.pitRequested;
+  const safe=!vehicle?.finished&&!activeDrivingIncidentV204(vehicle)&&!vehicle?.trackBoundaryExceededV271;
+  const closeEnough=Number.isFinite(gap)&&gap<=Math.max(12,Number(PASS_CONFIG_V208.followGapMeters)||36);
+  const chasing=Boolean(target)&&CHASE_BURST_ELIGIBLE_STATES_V275.includes(state);
+  const usesAvailable=(Number(vehicle?.chaseBurstUsesV275)||0)<CHASE_BURST_CONFIG_V275.maxUsesPerRace;
+  const cooldownReady=now>=Number(vehicle?.chaseBurstCooldownUntilV275||0);
+  const green=raceFlagStateV214.flag==='GREEN';
+  return {eligible:eligiblePosition&&onTrack&&safe&&closeEnough&&chasing&&usesAvailable&&cooldownReady&&green,
+    eligiblePosition,onTrack,safe,closeEnough,chasing,usesAvailable,cooldownReady,green,gap,state,targetId:String(target?.id||'')};
+}
+function updateChaseBurstV275(stepMs){
+  if(!(stepMs>0)||!raceMotionV189.vehicles.length)return [];
+  const now=Number(simClockV192.simTimeMs)||0;
+  const standings=computeRaceStandingsV191();
+  const byId=new Map(raceMotionV189.vehicles.map(v=>[String(v.id),v]));
+  const rows=[];
+  for(const standing of standings){
+    const vehicle=standing.vehicle;
+    if(!vehicle)continue;
+    if(isChaseBurstActiveV275(vehicle)){
+      const target=byId.get(String(vehicle.chaseBurstTargetIdV275||vehicle.battleTargetId||''))||null;
+      if(!target||String(target.pitState||'TRACK')!=='TRACK')endChaseBurstV275(vehicle,'target-lost');
+      else if(Number(vehicle.raceProgress)>Number(target.raceProgress)+PASS_CONFIG_V208.passMarginMeters/Math.max(1,Number(activeRaceSnapshotV187?.track?.lengthMeters)||1))endChaseBurstV275(vehicle,'pass-completed');
+      else if(activeDrivingIncidentV204(vehicle)||String(vehicle.pitState||'TRACK')!=='TRACK'||vehicle.trackBoundaryExceededV271)endChaseBurstV275(vehicle,'safety-cancel');
+      else if(now>=Number(vehicle.chaseBurstUntilV275||0))endChaseBurstV275(vehicle,'expired');
+    }
+    vehicle.chaseBurstEvalMsV275=Math.max(0,(Number(vehicle.chaseBurstEvalMsV275)||0)-stepMs);
+    if(!isChaseBurstActiveV275(vehicle)&&vehicle.chaseBurstEvalMsV275<=0){
+      vehicle.chaseBurstEvalMsV275=CHASE_BURST_CONFIG_V275.evaluationMs;
+      const target=byId.get(String(vehicle.battleTargetId||vehicle.trafficCarAheadId||''))||null;
+      const eligibility=chaseBurstEligibilityV275(vehicle,standing,target);
+      vehicle.chaseBurstEligibleV275=eligibility.eligible;
+      vehicle.chaseBurstGapMetersV275=eligibility.gap;
+      if(eligibility.eligible&&nextChaseBurstRandomV275(vehicle)<CHASE_BURST_CONFIG_V275.activationChance){
+        triggerChaseBurstV275(vehicle,target,'eligible-chase');
+      }
+    }
+    rows.push({id:String(vehicle.id||''),position:Number(standing.position)||0,active:isChaseBurstActiveV275(vehicle),uses:Number(vehicle.chaseBurstUsesV275)||0,
+      gapMeters:Number.isFinite(Number(vehicle.chaseBurstGapMetersV275))?Number(vehicle.chaseBurstGapMetersV275):null,state:String(vehicle.chaseBurstStateV275||'IDLE'),
+      targetId:String(vehicle.chaseBurstTargetIdV275||''),endReason:String(vehicle.chaseBurstLastEndReasonV275||'')});
+  }
+  return rows;
+}
+function chaseBurstEffectV275(vehicle,phase){
+  if(!isChaseBurstActiveV275(vehicle))return {active:false,targetSpeedBonusKph:0,accelMultiplier:1,exitMultiplier:1,battleBiasBonusKph:0};
+  const exit=String(phase||'')==='EXIT';
+  return {active:true,targetSpeedBonusKph:CHASE_BURST_CONFIG_V275.targetSpeedBonusKph,
+    accelMultiplier:CHASE_BURST_CONFIG_V275.accelMultiplier,
+    exitMultiplier:exit?CHASE_BURST_CONFIG_V275.exitAccelMultiplier:1,
+    battleBiasBonusKph:CHASE_BURST_CONFIG_V275.battleBiasBonusKph};
+}
+function getChaseBurstStatesV275(){
+  const now=Number(simClockV192.simTimeMs)||0;
+  return raceMotionV189.vehicles.map(vehicle=>({
+    id:String(vehicle.id||''),name:String(vehicle.driver?.name||''),active:isChaseBurstActiveV275(vehicle),
+    uses:Number(vehicle.chaseBurstUsesV275)||0,maxUses:CHASE_BURST_CONFIG_V275.maxUsesPerRace,
+    remainingMs:Math.max(0,Math.round((Number(vehicle.chaseBurstUntilV275)||0)-now)),
+    cooldownRemainingMs:Math.max(0,Math.round((Number(vehicle.chaseBurstCooldownUntilV275)||0)-now)),
+    targetId:String(vehicle.chaseBurstTargetIdV275||''),lastEndReason:String(vehicle.chaseBurstLastEndReasonV275||'')
+  }));
+}
+function qaChaseBurstV275(){
+  const base={id:'burst-qa',finished:false,pitState:'TRACK',pitRequested:false,trackBoundaryExceededV271:false,battleState:'TOWING',
+    trafficGapMeters:18,chaseBurstUsesV275:0,chaseBurstCooldownUntilV275:0,chaseBurstRandomStateV275:275001,lockupActiveMs:0,understeerActiveMs:0,oversteerActiveMs:0};
+  const target={id:'target-qa',pitState:'TRACK',raceProgress:1.01};
+  const eligible=chaseBurstEligibilityV275(base,{position:2},target);
+  const leader=chaseBurstEligibilityV275({...base},{position:1},target);
+  const pit=chaseBurstEligibilityV275({...base,pitState:'PIT_LANE'},{position:2},target);
+  const incident=chaseBurstEligibilityV275({...base,lockupActiveMs:1000},{position:2},target);
+  const exhausted=chaseBurstEligibilityV275({...base,chaseBurstUsesV275:CHASE_BURST_CONFIG_V275.maxUsesPerRace},{position:2},target);
+  const a={chaseBurstRandomStateV275:275001},b={chaseBurstRandomStateV275:275001};
+  const seqA=Array.from({length:10},()=>Number(nextChaseBurstRandomV275(a).toFixed(9)));
+  const seqB=Array.from({length:10},()=>Number(nextChaseBurstRandomV275(b).toFixed(9)));
+  const effect=(()=>{const old=simClockV192.simTimeMs;simClockV192.simTimeMs=1000;const v={chaseBurstStateV275:'ACTIVE',chaseBurstUntilV275:5000};const x=chaseBurstEffectV275(v,'EXIT');simClockV192.simTimeMs=old;return x})();
+  return {eligible,leader,pit,incident,exhausted,effect,deterministic:JSON.stringify(seqA)===JSON.stringify(seqB),config:{...CHASE_BURST_CONFIG_V275},
+    allPass:eligible.eligible&&!leader.eligible&&!pit.eligible&&!incident.eligible&&!exhausted.eligible&&effect.active&&effect.targetSpeedBonusKph>0&&effect.accelMultiplier>1&&effect.exitMultiplier>1&&JSON.stringify(seqA)===JSON.stringify(seqB)&&CHASE_BURST_CONFIG_V275.maxUsesPerRace<=2&&CHASE_BURST_CONFIG_V275.activationChance<=.05};
+}
+
 function createRaceVehiclesV189(snapshot){
   const orderedDrivers=(snapshot?.drivers||[]).slice().sort((a,b)=>(Number(a.gridPosition)||999)-(Number(b.gridPosition)||999));
   const count=Math.max(1,orderedDrivers.length||0);
@@ -3750,6 +3877,7 @@ function createRaceVehiclesV189(snapshot){
     const raceSeed=hashDriverV189(String(driver.contactId||driver.name)+'|'+String(snapshot?.createdAt||'race')+'|pace-noise');
     const momentumSeed=hashDriverV189(String(raceMomentumSeedV262(snapshot))+'|'+String(driver.contactId||driver.name)+'|momentum')||1;
     const leaderPressureSeedV274=hashDriverV189(String(snapshot?.createdAt||'race')+'|'+String(driver.contactId||driver.name)+'|leader-pressure')||1;
+    const chaseBurstSeedV275=hashDriverV189(String(snapshot?.createdAt||'race')+'|'+String(driver.contactId||driver.name)+'|chase-burst')||1;
     const startOffset=gridStartOffsetV272(index,count);
     const vehicle={
       id:String(driver.contactId),driver,gridPosition:Number(driver.gridPosition)||index+1,startOffset,progress:normalizedProgressV190(startOffset),travel:0,raceProgress:startOffset,raceDistanceMeters:0,currentLap:1,completedLaps:0,sector:'GRID',
@@ -3767,6 +3895,9 @@ function createRaceVehiclesV189(snapshot){
       leaderPressureScoreV274:0,leaderPressureGapBehindSecondsV274:0,leaderPressureLeadDurationMsV274:0,leaderPressureFieldSplitSecondsV274:0,leaderPressureRaceFractionV274:0,
       leaderPressureEventV274:'',leaderPressureEventUntilV274:0,leaderPressureCooldownUntilV274:0,leaderPressureDirectionV274:1,leaderPressureTriggerScoreV274:0,
       leaderPressureLastChanceV274:0,leaderPressureSpeedFactorV274:1,leaderPressureLateralMetersV274:0,leaderPressureEventCountV274:0,
+      chaseBurstRandomStateV275:chaseBurstSeedV275,chaseBurstStateV275:'IDLE',chaseBurstEvalMsV275:450+index*53,chaseBurstUntilV275:0,chaseBurstCooldownUntilV275:0,
+      chaseBurstUsesV275:0,chaseBurstTargetIdV275:'',chaseBurstLastReasonV275:'',chaseBurstLastEndReasonV275:'',chaseBurstLastStartSimMsV275:0,
+      chaseBurstEligibleV275:false,chaseBurstGapMetersV275:Infinity,chaseBurstSpeedBonusKphV275:0,chaseBurstAccelMultiplierV275:1,chaseBurstExitMultiplierV275:1,
       batteryMJ:ENERGY_CONFIG_V201.usableCapacityMJ,energyTargetMJ:ENERGY_CONFIG_V201.usableCapacityMJ,energyDeployKW:0,energyRechargeKW:0,energyDeployMJ:0,energyHarvestMJ:0,energyHarvestLapMJ:0,energyLapNumber:1,boostActive:false,boostPowerKW:0,boostEnergyMJ:0,attackOpportunityScore:0,defenceThreatScore:0,powerUnitFactor:1,
       activeAeroMode:'CORNER',activeAeroTarget:'CORNER',activeAeroTransitionMs:0,overtakeZoneId:'',overtakeGapSeconds:Infinity,overtakeEligible:false,overtakeActive:false,overtakeRechargeAllowanceActive:false,
       tyreCompound:'MEDIUM',tyreStartRaceProgress:startOffset,tyreAgeLaps:0,tyreWear:0,tyreSurfaceTemp:.5,tyreCarcassTemp:.5,tyreGrip:TYRE_COMPOUNDS_V203.MEDIUM.gripBias,tyreThermalDeg:0,tyreGraining:0,tyreFlatSpot:0,tyreStrategyPressure:0,
@@ -4622,6 +4753,11 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   vehicle.leaderPressureSpeedFactorV274=leaderPressureEffect.speedFactor;
   vehicle.leaderPressureLateralMetersV274=leaderPressureEffect.lateralOffsetMeters;
   maxTarget*=leaderPressureEffect.speedFactor;
+  const chaseBurstEffect=chaseBurstEffectV275(vehicle,phase);
+  vehicle.chaseBurstSpeedBonusKphV275=chaseBurstEffect.targetSpeedBonusKph;
+  vehicle.chaseBurstAccelMultiplierV275=chaseBurstEffect.accelMultiplier;
+  vehicle.chaseBurstExitMultiplierV275=chaseBurstEffect.exitMultiplier;
+  maxTarget+=chaseBurstEffect.targetSpeedBonusKph+chaseBurstEffect.battleBiasBonusKph;
   const rawBoundaryOffsetV271=lineOffsetMetersV197(vehicle)+(Number(vehicle?.incidentLateralOffsetMeters)||0)+(Number(leaderPressureEffect.lateralOffsetMeters)||0);
   const boundaryStateV271=trackBoundaryStateV271(vehicle,rawBoundaryOffsetV271);
   vehicle.unclampedLateralOffsetMetersV271=rawBoundaryOffsetV271;
@@ -4631,7 +4767,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   maxTarget*=boundaryStateV271.speedFactor;
   if(Number.isFinite(pitControl.speedCapKph))maxTarget=Math.min(maxTarget,pitControl.speedCapKph);
   const error=maxTarget-current;
-  const accelBase=Math.max(0.5,Number(track?.geometry?.referenceAccelMps2)||8.5);
+  const accelBase=Math.max(0.5,Number(track?.geometry?.referenceAccelMps2)||8.5)*Math.max(1,Number(chaseBurstEffect.accelMultiplier)||1);
   let brakeBase=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20)*tyreGrip*incidentState.brakeFactor;
   let throttle=0,brake=0,accelMps2=0;
   if(error>1.5){
@@ -4639,7 +4775,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
     const dragRelief=Math.max(0,Number(vehicle.slipstreamDragReduction)||0);
     const highSpeedFade=Math.max(.35,1-current/520+dragRelief*.45);
     const tractionGrip=phase==='EXIT'?Math.max(.92,tyreGrip):1;
-    const exitAcceleration=phase==='EXIT'?CORNER_DYNAMICS_V270.exitAccelerationMultiplier:1;
+    const exitAcceleration=(phase==='EXIT'?CORNER_DYNAMICS_V270.exitAccelerationMultiplier:1)*Math.max(1,Number(chaseBurstEffect.exitMultiplier)||1);
     accelMps2=accelBase*throttle*highSpeedFade*tractionGrip*exitAcceleration;
   }else if(error<-1.5){
     brake=Math.max(.08,Math.min(1,(-error)/55));
@@ -4653,7 +4789,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   if(accelMps2>0)accelMps2*=energyState.powerUnitFactor;
   const dt=stepMs/1000;
   const nextMps=Math.max(0,current/3.6+accelMps2*dt);
-  const straightCapBase=(Number(track?.geometry?.maxStraightKph)||335)+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph;
+  const straightCapBase=(Number(track?.geometry?.maxStraightKph)||335)+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph+Math.max(0,Number(chaseBurstEffect.targetSpeedBonusKph)||0);
   const straightCap=Number.isFinite(pitControl.speedCapKph)?Math.min(straightCapBase,pitControl.speedCapKph):straightCapBase;
   const nextKph=Math.max(0,Math.min(straightCap,nextMps*3.6));
   const avgMps=((current+nextKph)/2)/3.6;
@@ -5344,6 +5480,7 @@ function simulateRaceStepV192(stepMs){
     }
   }
   updateFieldCompressionLeaderPressureV274(stepMs);
+  updateChaseBurstV275(stepMs);
   updatePitStrategiesV206(stepMs);
   for(const vehicle of raceMotionV189.vehicles){
     if(vehicle.finished)continue;
@@ -6979,6 +7116,9 @@ window.mwsF1LeaderPressureScoreV274=leaderPressureScoreV274;
 window.mwsF1UpdateLeaderPressureV274=updateFieldCompressionLeaderPressureV274;
 window.mwsF1GetLeaderPressureStatesV274=getLeaderPressureStatesV274;
 window.mwsF1QaLeaderPressureV274=qaLeaderPressureV274;
+window.mwsF1UpdateChaseBurstV275=updateChaseBurstV275;
+window.mwsF1GetChaseBurstStatesV275=getChaseBurstStatesV275;
+window.mwsF1QaChaseBurstV275=qaChaseBurstV275;
 window.mwsF1GetLeaderPressureFieldV274=function(){return {...leaderPressureFieldV274,history:leaderPressureFieldV274.history.map(row=>({...row}))}};
 window.mwsF1GetStartingGridRevealStateV273=function(){return {...gridRevealStateV273,timers:gridRevealStateV273.timers.length}};
 window.mwsF1CancelRaceRecoveryC=cancelRaceToSetupRecoveryC;
@@ -7299,6 +7439,7 @@ window.__mwsF1RacingV271=VERSION271;
 window.__mwsF1RacingV272=VERSION272;
 window.__mwsF1RacingV273=VERSION273;
 window.__mwsF1RacingV274=VERSION274;
+window.__mwsF1RacingV275=VERSION275;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
