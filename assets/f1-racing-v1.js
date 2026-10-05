@@ -74,6 +74,7 @@ const VERSION244='phase244-starting-grid-top-actions';
 const VERSION245='phase245-zoom-aware-marker-scale';
 const VERSION246='phase246-clean-track-indicators';
 const VERSION247='phase247-rebased-race-playback';
+const VERSION248='phase248-live-lap-sector-timing';
 const RACE_PLAYBACK_BASE_V247=2;
 const engineQaV240={active:false};
 let engineSuiteCacheV241=null;
@@ -634,6 +635,87 @@ function syncVehicleRaceMetricsV190(vehicle,track=activeRaceSnapshotV187?.track)
   vehicle.sector=raceProgress<0?'GRID':sectorForProgressV190(track,vehicle.progress);
   return vehicle;
 }
+function formatLapTimeV248(ms){
+  const value=Number(ms);
+  if(!(value>0))return '--:--.---';
+  const total=Math.max(0,Math.round(value)),minutes=Math.floor(total/60000),seconds=Math.floor((total%60000)/1000),millis=total%1000;
+  return String(minutes)+':'+String(seconds).padStart(2,'0')+'.'+String(millis).padStart(3,'0');
+}
+function formatSectorTimeV248(ms){
+  const value=Number(ms);
+  if(!(value>0))return '--.---';
+  const total=Math.max(0,Math.round(value)),seconds=Math.floor(total/1000),millis=total%1000;
+  return String(seconds)+'.'+String(millis).padStart(3,'0');
+}
+function crossingSimTimeV248(previousProgress,currentProgress,targetProgress,stepMs){
+  const previous=Number(previousProgress)||0,current=Number(currentProgress)||0,target=Number(targetProgress)||0,step=Math.max(0,Number(stepMs)||0);
+  const span=current-previous,fraction=span>0?Math.max(0,Math.min(1,(target-previous)/span)):1;
+  return Math.max(0,(Number(simClockV192.simTimeMs)||0)-step+step*fraction);
+}
+function resetLapSectorTimingV248(vehicle,startSimMs){
+  vehicle.sectorTimesMs={S1:0,S2:0,S3:0};
+  vehicle.sectorStartSimMs=Number(startSimMs)||0;
+  vehicle.timingSector='S1';
+}
+function updateLapTimingV248(vehicle,previousRaceProgress,stepMs,track=activeRaceSnapshotV187?.track){
+  if(!vehicle||!track)return false;
+  const previous=Number(previousRaceProgress)||0,current=Number(vehicle.raceProgress)||0;
+  if(!(current>previous))return false;
+  let changed=false;
+  if(!vehicle.lapTimingArmed){
+    if(previous<0&&current>=0){
+      const startMs=crossingSimTimeV248(previous,current,0,stepMs);
+      vehicle.lapTimingArmed=true;vehicle.lapStartSimMs=startMs;resetLapSectorTimingV248(vehicle,startMs);changed=true;
+    }else if(previous>=0){
+      const startMs=Math.max(0,(Number(simClockV192.simTimeMs)||0)-Math.max(0,Number(stepMs)||0));
+      vehicle.lapTimingArmed=true;vehicle.lapStartSimMs=startMs;resetLapSectorTimingV248(vehicle,startMs);changed=true;
+    }
+  }
+  if(!vehicle.lapTimingArmed)return changed;
+  const sectors=(Array.isArray(track.sectors)?track.sectors:[]).slice().sort((a,b)=>Number(a.end)-Number(b.end));
+  if(!sectors.length)return changed;
+  const firstLap=Math.max(0,Math.floor(Math.max(0,previous)));
+  const lastLap=Math.max(firstLap,Math.floor(Math.max(0,current)));
+  const epsilon=1e-9;
+  for(let lapIndex=firstLap;lapIndex<=lastLap;lapIndex++){
+    for(let sectorIndex=0;sectorIndex<sectors.length;sectorIndex++){
+      const sector=sectors[sectorIndex],end=Math.max(0,Math.min(1,Number(sector.end)||0)),target=lapIndex+end;
+      if(target<=previous+epsilon||target>current+epsilon)continue;
+      const crossingMs=crossingSimTimeV248(previous,current,target,stepMs);
+      const id=String(sector.id||('S'+(sectorIndex+1))).toUpperCase();
+      const sectorStart=Number(vehicle.sectorStartSimMs);
+      if(Number.isFinite(sectorStart)&&crossingMs>sectorStart)vehicle.sectorTimesMs[id]=crossingMs-sectorStart;
+      if(end>=1-epsilon){
+        const lapStart=Number(vehicle.lapStartSimMs);
+        const lapMs=Number.isFinite(lapStart)?crossingMs-lapStart:0;
+        if(lapMs>1000){
+          vehicle.lastLapMs=lapMs;
+          vehicle.bestLapMs=vehicle.bestLapMs>0?Math.min(Number(vehicle.bestLapMs),lapMs):lapMs;
+          vehicle.lapDurationMs=lapMs;
+          vehicle.lapTimesMs=Array.isArray(vehicle.lapTimesMs)?vehicle.lapTimesMs:[];
+          vehicle.lapTimesMs.push(lapMs);
+          vehicle.timedCompletedLaps=vehicle.lapTimesMs.length;
+        }
+        vehicle.lapStartSimMs=crossingMs;
+        resetLapSectorTimingV248(vehicle,crossingMs);
+      }else{
+        vehicle.sectorStartSimMs=crossingMs;
+        vehicle.timingSector=String(sectors[sectorIndex+1]?.id||'S3').toUpperCase();
+      }
+      changed=true;
+    }
+  }
+  return changed;
+}
+function getLapTimingStatesV248(){
+  return raceMotionV189.vehicles.map(vehicle=>({
+    id:String(vehicle.id||''),name:String(vehicle.driver?.name||''),armed:Boolean(vehicle.lapTimingArmed),
+    lastLapMs:Number(vehicle.lastLapMs)||0,bestLapMs:Number(vehicle.bestLapMs)||0,
+    lapTimesMs:(vehicle.lapTimesMs||[]).map(value=>Number(value)||0),
+    sectorTimesMs:{S1:Number(vehicle.sectorTimesMs?.S1)||0,S2:Number(vehicle.sectorTimesMs?.S2)||0,S3:Number(vehicle.sectorTimesMs?.S3)||0},
+    timedCompletedLaps:Number(vehicle.timedCompletedLaps)||0
+  }));
+}
 function findTimingRowV190(driverId){
   return Array.from(document.querySelectorAll('#f1RacingTimingListV188 [data-f1-driver-id]')).find(function(row){return String(row.dataset.f1DriverId)===String(driverId)})||null;
 }
@@ -655,6 +737,13 @@ function updateRaceProgressHudV190(){
     const gear=row.querySelector('.gear');if(gear)gear.textContent=String(vehicle.gear||1);
     const rpm=row.querySelector('.rpm');if(rpm)rpm.textContent=String(Math.round(vehicle.rpm||0));
     const speed=row.querySelector('.speed');if(speed)speed.textContent=String(Math.round(vehicle.speedKph||0));
+    const last=row.querySelector('.last');if(last)last.textContent=formatLapTimeV248(vehicle.lastLapMs);
+    const best=row.querySelector('.best');if(best)best.textContent=formatLapTimeV248(vehicle.bestLapMs);
+    const s1=row.querySelector('.s1');if(s1)s1.textContent=formatSectorTimeV248(vehicle.sectorTimesMs?.S1);
+    const s2=row.querySelector('.s2');if(s2)s2.textContent=formatSectorTimeV248(vehicle.sectorTimesMs?.S2);
+    const s3=row.querySelector('.s3');if(s3)s3.textContent=formatSectorTimeV248(vehicle.sectorTimesMs?.S3);
+    row.dataset.lastLapMs=String(Math.round(Number(vehicle.lastLapMs)||0));row.dataset.bestLapMs=String(Math.round(Number(vehicle.bestLapMs)||0));
+    row.dataset.timedLaps=String(Number(vehicle.timedCompletedLaps)||0);
     row.dataset.throttle=(Number(vehicle.throttle)||0).toFixed(2);
     row.dataset.brake=(Number(vehicle.brake)||0).toFixed(2);
     row.dataset.targetSpeed=String(Math.round(vehicle.targetSpeedKph||0));
@@ -1095,10 +1184,15 @@ function runAcceleratedEngineRaceV240(trackId,options={}){
     }
     result=activeRaceResultRecoveryG;
     if(!result)error=steps>=maxSteps?'max-steps-exceeded':'race-result-missing';
+    const lapTiming=getLapTimingStatesV248();
+    const timingDom=lapTiming.map(row=>{
+      const timingRow=findTimingRowV190(row.id);
+      return {id:row.id,last:String(timingRow?.querySelector('.last')?.textContent||''),best:String(timingRow?.querySelector('.best')?.textContent||''),s1:String(timingRow?.querySelector('.s1')?.textContent||''),s2:String(timingRow?.querySelector('.s2')?.textContent||''),s3:String(timingRow?.querySelector('.s3')?.textContent||'')};
+    });
     return {
       trackId:String(snapshot.trackId),trackName:String(snapshot.track.name),archetype:String(snapshot.track.runtimeProfile?.archetype||''),
       completed:Boolean(result),steps,stepMs,simTimeMs:Number(result?.simTimeMs)||Number(simClockV192.simTimeMs)||0,
-      telemetry:result?.telemetry||null,error
+      telemetry:result?.telemetry||null,lapTiming,timingDom,error
     };
   }catch(err){
     return {trackId:String(snapshot.trackId),trackName:String(snapshot.track.name),completed:false,steps,stepMs,simTimeMs:Number(simClockV192.simTimeMs)||0,telemetry:null,error:String(err?.message||err)};
@@ -1109,6 +1203,13 @@ function runAcceleratedEngineRaceV240(trackId,options={}){
 function qaAcceleratedEngineRaceV240(){
   const result=runAcceleratedEngineRaceV240('majoku-ring-v1',{drivers:4,laps:1,runIndex:0,stepMs:50,maxSteps:12000});
   return {result,allPass:Boolean(result?.completed)&&Number(result?.steps)>0&&Number(result?.telemetry?.fieldAverageSpeedKph)>0&&Number(result?.telemetry?.averageLapMs)>0};
+}
+function qaLapTimingV248(trackId='majoku-ring-v1'){
+  const result=runAcceleratedEngineRaceV240(trackId,{drivers:3,laps:3,runIndex:248,stepMs:50,maxSteps:22000});
+  const rows=Array.isArray(result?.lapTiming)?result.lapTiming:[],dom=Array.isArray(result?.timingDom)?result.timingDom:[];
+  const rowPass=rows.length===3&&rows.every(row=>row.timedCompletedLaps===3&&row.lapTimesMs.length===3&&row.lapTimesMs.every(ms=>ms>1000)&&row.lastLapMs>0&&row.bestLapMs>0&&row.bestLapMs<=row.lastLapMs&&Object.values(row.sectorTimesMs||{}).every(ms=>ms===0));
+  const domPass=dom.length===3&&dom.every(row=>row.last&&!row.last.includes('--')&&row.best&&!row.best.includes('--')&&row.s1==='--.---'&&row.s2==='--.---'&&row.s3==='--.---');
+  return {result,rowPass,domPass,allPass:Boolean(result?.completed)&&rowPass&&domPass};
 }
 function aggregateEngineTrackRunsV241(trackId,runs=[]){
   const completed=runs.filter(row=>row?.completed&&row?.telemetry);
@@ -2203,7 +2304,8 @@ function createRaceVehiclesV189(snapshot){
     const startOffset=-(index*Math.min(.0045,.045/count));
     const vehicle={
       id:String(driver.contactId),driver,startOffset,progress:normalizedProgressV190(startOffset),travel:0,raceProgress:startOffset,raceDistanceMeters:0,currentLap:1,completedLaps:0,sector:'GRID',
-      lapDurationMs:21000,
+      lapDurationMs:21000,lapTimingArmed:startOffset>=0,lapStartSimMs:startOffset>=0?0:null,lastLapMs:0,bestLapMs:0,lapTimesMs:[],
+      sectorTimesMs:{S1:0,S2:0,S3:0},sectorStartSimMs:startOffset>=0?0:null,timingSector:startOffset>=0?'S1':'GRID',timedCompletedLaps:0,
       speedKph:0,targetSpeedKph:0,throttle:0,brake:0,accelerationMps2:0,gear:1,rpm:8500,
       racingLineMode:'IDEAL',lateralOffsetMeters:0,
       carAheadId:null,gapToCarAheadMeters:Infinity,slipstreamStrength:0,slipstreamDragReduction:0,slipstreamGapEffect:0,slipstreamAlignmentEffect:0,slipstreamLateralEffect:0,slipstreamStraightEffect:0,
@@ -2748,7 +2850,8 @@ function buildRaceResultRecoveryG(){
       gridPosition:Number(vehicle.driver?.gridPosition)||index+1,
       finishedAtSimMs:Number(vehicle.finishedAtSimMs)||simClockV192.simTimeMs,
       tyreCompound:String(vehicle.tyreCompound||'MEDIUM'),
-      raceProgress:Number(vehicle.raceProgress)||0
+      raceProgress:Number(vehicle.raceProgress)||0,
+      lastLapMs:Number(vehicle.lastLapMs)||0,bestLapMs:Number(vehicle.bestLapMs)||0,lapTimesMs:Object.freeze([...(vehicle.lapTimesMs||[])])
     }));
   return Object.freeze({
     trackId:String(snapshot.trackId||''),
@@ -3291,7 +3394,9 @@ function simulateRaceStepV192(stepMs){
   updatePitStrategiesV206(stepMs);
   for(const vehicle of raceMotionV189.vehicles){
     if(vehicle.finished)continue;
+    const previousRaceProgressV248=Number(vehicle.raceProgress)||0;
     simulateVehicleDynamicsV196(vehicle,stepMs);
+    updateLapTimingV248(vehicle,previousRaceProgressV248,stepMs,activeRaceSnapshotV187?.track);
   }
   if(!engineQaV240.active){
     updateRaceCommentaryV219(false);
@@ -4935,6 +5040,10 @@ window.__mwsF1RacingV246=VERSION246;
 window.mwsF1SimulationPlaybackRateV247=simulationPlaybackRateV247;
 window.mwsF1QaRacePlaybackSpeedV247=qaRacePlaybackSpeedV247;
 window.__mwsF1RacingV247=VERSION247;
+window.mwsF1FormatLapTimeV248=formatLapTimeV248;
+window.mwsF1GetLapTimingStatesV248=getLapTimingStatesV248;
+window.mwsF1QaLapTimingV248=qaLapTimingV248;
+window.__mwsF1RacingV248=VERSION248;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
