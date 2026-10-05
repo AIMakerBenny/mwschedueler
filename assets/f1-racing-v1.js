@@ -383,7 +383,7 @@ function qaIntegratedSpectatorDesktopV267(){
     autoCamera:typeof setRaceCameraModeV216==='function',
     commentary:typeof appendRaceCommentaryV222==='function',
     podium:typeof renderPodiumRecoveryG==='function',
-    pit:typeof updatePitStateV205==='function',
+    pit:typeof qaPitCycleV205==='function'&&typeof requestPitStopV205==='function',
     overtake:typeof nextPassStateV208==='function',
     fastestLap:typeof syncSpectatorHighlightsV252==='function',
     raceCompletion:typeof finishRaceRecoveryG==='function'
