@@ -97,6 +97,17 @@ try{
   await loaded;
   await sleep(1800);
 
+  let phase256Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    phase256Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV256==='phase256-live-battle-link'","Phase 256 runtime readiness"));
+    if(phase256Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v256=${Date.now()}-${attempt}`});
+    await refreshed;
+    await sleep(1400);
+  }
+  if(!phase256Ready)throw new Error('Phase 256 runtime did not propagate to Recovery H browser');
+
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
