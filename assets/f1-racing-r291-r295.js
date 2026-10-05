@@ -44,7 +44,52 @@ function installFinishOverlayV291(){
  queueMicrotask(syncFinishOverlayV291);return true;
 }
 function qaFinishOverlayV291(){const root=ensureFinishOverlayV291(),podium=root?.querySelector('#f1RacingFinishOverlayPodiumV291'),results=root?.querySelector('#f1RacingFinishOverlayResultsV291'),newRace=root?.querySelector('#f1RacingFinishOverlayNewRaceV291'),setup=root?.querySelector('#f1RacingFinishOverlaySetupV291');const api=typeof window.mwsF1SetScreenStateV185==='function'&&typeof window.mwsF1GetRaceResultRecoveryG==='function'&&typeof window.mwsF1NewRaceSameSettingsRecoveryG==='function'&&typeof window.mwsF1ReturnToSetupRecoveryG==='function';return {version:VERSION291,installed:finishOverlayStateV291.installed,api,root:Boolean(root),podium:Boolean(podium),results:Boolean(results),actions:Boolean(newRace&&setup),active:finishOverlayStateV291.active,renderCount:finishOverlayStateV291.renderCount,allPass:Boolean(root&&podium&&results&&newRace&&setup)&&api&&finishOverlayStateV291.installed}}
-function bootV291(){installFinishOverlayV291()}
+
+const VERSION292='phase292-f1-r17-integrated-desktop-qa';
+const desktopQaStateV292={installed:false,errors:[],errorLimit:20};
+function installFinalDesktopQaV292(){
+ if(desktopQaStateV292.installed)return true;desktopQaStateV292.installed=true;
+ const push=value=>{desktopQaStateV292.errors.push(String(value||''));if(desktopQaStateV292.errors.length>desktopQaStateV292.errorLimit)desktopQaStateV292.errors.splice(0,desktopQaStateV292.errors.length-desktopQaStateV292.errorLimit)};
+ window.addEventListener('error',event=>push('error:'+String(event.message||event.error||'')));
+ window.addEventListener('unhandledrejection',event=>push('rejection:'+String(event.reason||'')));
+ return true;
+}
+function qaFinalDesktopV292(){
+ const requiredApis={
+  liveConversation:typeof window.mwsF1QaLiveConversationStackV276==='function',
+  dialogueCadence:typeof window.mwsF1QaDialogueCadenceV281==='function',
+  pause:typeof window.mwsF1ToggleSimulationPauseV192==='function',
+  markerZoom:typeof window.mwsF1QaZoomLinkedMarkerScaleV285==='function',
+  cameraJitter:typeof window.mwsF1QaAutoCameraJitterSuppressionV286==='function',
+  liveRanking:typeof window.mwsF1QaTrackRankingOverlayV284==='function',
+  layoutReset:typeof window.mwsF1QaWorkspaceViewportFitV288==='function',
+  compactRace:typeof window.mwsF1QaRaceCompactShellV287==='function',
+  prerace:typeof window.mwsF1QaPreraceCompactV289==='function',
+  shuffle:typeof window.mwsF1QaGridShuffleSmoothnessV290==='function',
+  finishOverlay:typeof window.mwsF1QaFinishOverlayV291==='function'
+ };
+ const qa={
+  layoutReset:window.mwsF1QaWorkspaceViewportFitV288?.()||null,
+  compactRace:window.mwsF1QaRaceCompactShellV287?.()||null,
+  prerace:window.mwsF1QaPreraceCompactV289?.()||null,
+  shuffle:window.mwsF1QaGridShuffleSmoothnessV290?.()||null,
+  finishOverlay:window.mwsF1QaFinishOverlayV291?.()||null
+ };
+ const dom={
+  race:Boolean(document.getElementById('f1RacingViewRaceV185')),
+  workspace:Boolean(document.getElementById('f1RacingWorkspaceRecoveryE')),
+  liveConversation:Boolean(document.getElementById('f1RacingConversationStackV276')),
+  liveRanking:Boolean(document.getElementById('f1RacingTrackRankingV284')),
+  finishOverlay:Boolean(document.getElementById('f1RacingFinishOverlayV291')),
+  grid:Boolean(document.getElementById('f1RacingViewGridV185'))
+ };
+ const qaPass=Object.values(qa).every(row=>row?.allPass===true);
+ const apiPass=Object.values(requiredApis).every(Boolean),domPass=Object.values(dom).every(Boolean),errors=[...desktopQaStateV292.errors];
+ return {version:VERSION292,viewport:{width:window.innerWidth,height:window.innerHeight,desktop:window.innerWidth>=1024},requiredApis,qa,dom,errors,apiPass,qaPass,domPass,allPass:desktopQaStateV292.installed&&apiPass&&qaPass&&domPass&&errors.length===0};
+}
+
+function bootV291(){installFinishOverlayV291();installFinalDesktopQaV292()}
 window.mwsF1RenderFinishOverlayV291=renderFinishOverlayV291;window.mwsF1SyncFinishOverlayV291=syncFinishOverlayV291;window.mwsF1HideFinishOverlayV291=hideFinishOverlayV291;window.mwsF1QaFinishOverlayV291=qaFinishOverlayV291;window.__mwsF1RacingV291=VERSION291;
+window.mwsF1QaFinalDesktopV292=qaFinalDesktopV292;window.__mwsF1RacingV292=VERSION292;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootV291,{once:true});else bootV291();
 })();
