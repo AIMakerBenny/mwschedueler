@@ -43,7 +43,6 @@ export function runPhase260F1ManualLapControlAudit(){
   if(!css.includes('.f1-racing-lap-control-v260'))issues.push('Phase 260 lap-control CSS missing');
 
   for(const token of [
-    "lapOverride:false",
     'f1.totalLaps=Math.max(3,Math.min(99',
     'f1.lapOverride=Boolean(f1.lapOverride);',
     'lapOverride:Boolean(f1.lapOverride)',
