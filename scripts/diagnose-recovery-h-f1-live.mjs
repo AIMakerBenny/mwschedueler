@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase256Ready=false;
+  let phase257Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase256Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV256==='phase256-live-battle-link'","Phase 256 runtime readiness"));
-    if(phase256Ready)break;
+    phase257Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV257==='phase257-embedded-driver-profile-marker'","Phase 257 runtime readiness"));
+    if(phase257Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v256=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v257=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase256Ready)throw new Error('Phase 256 runtime did not propagate to Recovery H browser');
+  if(!phase257Ready)throw new Error('Phase 257 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -431,13 +431,20 @@ try{
     assert(markerIdentityQa?.allPass===true&&Number(markerIdentityQa?.liveMarkerCount)>=2&&Number(markerIdentityQa?.liveMarkerCount)===Number(markerIdentityQa?.liveNumberCount),'Phase 232 driver marker identity QA failed: '+JSON.stringify(markerIdentityQa));
     const profileMarkerQa250=window.mwsF1QaDriverProfileMarkersV250?.();
     assert(profileMarkerQa250?.allPass===true&&Number(profileMarkerQa250?.markerCount)>=2,'Phase 250 driver profile marker QA failed: '+JSON.stringify(profileMarkerQa250));
-    const firstProfileMarker250=document.querySelector('.f1-racing-race-vehicle-v189');
-    const profileRing250=firstProfileMarker250?.querySelector('.car-profile-ring-v250');
-    const profileConnector250=firstProfileMarker250?.querySelector('.car-profile-connector-v250');
-    const profileCore250=firstProfileMarker250?.querySelector('.car-core');
-    const profileRect250=profileRing250?.getBoundingClientRect(),coreRect250=profileCore250?.getBoundingClientRect(),connectorRect250=profileConnector250?.getBoundingClientRect();
-    assert(profileRect250&&coreRect250&&profileRect250.bottom<coreRect250.top,'Phase 250 profile portrait is not positioned above vehicle bead');
-    assert(connectorRect250&&connectorRect250.height>0,'Phase 250 profile connector has no rendered height');
+    const embeddedProfileQa257=window.mwsF1QaEmbeddedDriverProfilesV257?.();
+    assert(embeddedProfileQa257?.allPass===true&&Number(embeddedProfileQa257?.markerCount)>=2&&Number(embeddedProfileQa257?.legacyConnectors)===0,'Phase 257 embedded driver profile QA failed: '+JSON.stringify(embeddedProfileQa257));
+    const firstProfileMarker257=document.querySelector('.f1-racing-race-vehicle-v189');
+    const profileRing257=firstProfileMarker257?.querySelector('.car-ring');
+    const profileImage257=firstProfileMarker257?.querySelector('.car-profile-image-v257');
+    const profileConnector257=firstProfileMarker257?.querySelector('.car-profile-connector-v250');
+    const profileCore257=firstProfileMarker257?.querySelector('.car-core');
+    const profileRect257=profileRing257?.getBoundingClientRect(),imageRect257=profileImage257?.getBoundingClientRect();
+    const profileCenters257=profileRect257&&imageRect257?{
+      dx:Math.abs((profileRect257.left+profileRect257.width/2)-(imageRect257.left+imageRect257.width/2)),
+      dy:Math.abs((profileRect257.top+profileRect257.height/2)-(imageRect257.top+imageRect257.height/2)),
+      ringW:profileRect257.width,imageW:imageRect257.width
+    }:null;
+    assert(profileCenters257&&profileCenters257.ringW>0&&profileCenters257.imageW>0&&profileCenters257.dx<2&&profileCenters257.dy<2&&!profileConnector257&&!profileCore257,'Phase 257 embedded driver profile geometry invalid: '+JSON.stringify(profileCenters257));
     const markerNumberTexts=[...document.querySelectorAll('.f1-racing-race-vehicle-v189 .car-number-v232')].map(node=>String(node.textContent||'').trim());
     assert(markerNumberTexts.length>=2&&new Set(markerNumberTexts).size===markerNumberTexts.length,'Phase 232 driver marker numbers are not unique: '+JSON.stringify(markerNumberTexts));
     const labelCollisionQa=window.mwsF1QaDriverLabelCollisionV228?.();
