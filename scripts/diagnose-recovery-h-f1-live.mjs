@@ -164,6 +164,9 @@ try{
     const narrativeQa263=window.mwsF1QaRaceNarrativeEngineV263?.();
     assert(narrativeQa263?.allPass===true&&Number(narrativeQa263?.templateCount)>=120&&Number(narrativeQa263?.eventCount)>=16&&Number(narrativeQa263?.recentLimit)>=10&&Number(narrativeQa263?.recentLimit)<=15,'Phase 263 narrative engine QA failed: '+JSON.stringify(narrativeQa263));
 
+    const cutinQa264=window.mwsF1QaLiveCutinV264?.();
+    assert(cutinQa264?.allPass===true&&cutinQa264?.layerReady===true&&Number(cutinQa264?.maxActive)===3&&Number(cutinQa264?.dedupeMs)===1000,'Phase 264 LIVE cut-in QA failed: '+JSON.stringify(cutinQa264));
+
     const lapQa260=window.mwsF1QaLapControlV260?.();
     assert(lapQa260?.allPass===true&&lapQa260?.low===3&&lapQa260?.high===99&&lapQa260?.direct===17,'Phase 260 lap-control QA failed: '+JSON.stringify(lapQa260));
     const lapInput260=document.getElementById('f1RacingLapsInputV260');
