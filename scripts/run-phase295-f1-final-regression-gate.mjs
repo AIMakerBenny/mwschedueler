@@ -30,9 +30,10 @@ export function runPhase295F1FinalRegressionGate(){
 
   for(const token of [
     "import {runPhase295F1FinalRegressionGate} from './run-phase295-f1-final-regression-gate.mjs';",
-    'export function runPhase295FullIntegrationAudit()',
-    'runCurrentFullIntegrationAudit(){return runPhase295FullIntegrationAudit();}'
+    'export function runPhase295FullIntegrationAudit()'
   ])if(!cumulative.includes(token))issues.push('Phase 295 cumulative chain missing: '+token);
+  const currentMatch=cumulative.match(/runCurrentFullIntegrationAudit\(\)\{return runPhase(\d+)FullIntegrationAudit\(\);\}/);
+  if(!currentMatch||Number(currentMatch[1])<295)issues.push('Phase 295 cumulative current entrypoint is missing or regressed below Phase 295');
 
   if(cumulative.includes('\\nimport ')||cumulative.includes('};\\nexport function'))issues.push('Cumulative audit contains literal \\n sequence');
 
