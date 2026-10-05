@@ -17,13 +17,15 @@ export function runPhase188F1RaceControlFrameAudit(){
     'id="f1RacingRaceTrackSvgV188"',
     'id="f1RacingRaceVehicleLayerV188"',
     'id="f1RacingCommentaryLogV188"',
-    'id="f1RacingTeamRadioV188"',
-    'id="f1RacingSpeedTrapV188"',
     '실시간 순위',
-    '경기 해설',
-    '팀 라디오',
-    '스피드 트랩'
+    '경기 해설'
   ])if(!index.includes(token))issues.push('Phase 188 Race Control UI missing: '+token);
+  const obsoletePanelsSuperseded=js.includes("const VERSION249='phase249-remove-obsolete-race-panels';");
+  if(obsoletePanelsSuperseded){
+    for(const token of ['id="f1RacingTeamRadioV188"','id="f1RacingSpeedTrapV188"'])if(index.includes(token))issues.push('Phase 249 superseded Phase 188 placeholder remains: '+token);
+  }else{
+    for(const token of ['id="f1RacingTeamRadioV188"','id="f1RacingSpeedTrapV188"','팀 라디오','스피드 트랩'])if(!index.includes(token))issues.push('Phase 188 legacy Race Control UI missing: '+token);
+  }
 
   for(const token of [
     "const VERSION188='phase188-race-control-frame';",
