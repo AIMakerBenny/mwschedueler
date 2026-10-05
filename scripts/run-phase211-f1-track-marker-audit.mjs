@@ -10,7 +10,7 @@ export function runPhase211F1TrackMarkerAudit(){
   for(const token of [
     "const VERSION211='phase211-track-marker-integration';",
     'function renderTrackMarkersV211(layer,path,track,scope=\'race\'){',
-    "'추월 감지 '+(index+1)",
+    "addStartFinishLineRecoveryB(layer,path,track,scope)",
     "renderTrackMarkersV211(annotations,path,snapshot.track,'race')",
     'window.mwsF1QaTrackMarkersV211=qaTrackMarkersV211;',
     'window.__mwsF1RacingV211=VERSION211;'
