@@ -522,6 +522,11 @@ try{
     assert(spectatorQa252?.markerBattle===true&&String(spectatorQa252?.battleAnimation||'').includes('f1BattlePulseV252'),'Phase 252 battle marker pulse was not rendered: '+JSON.stringify(spectatorQa252));
     assert(spectatorQa252?.positionLabel==='▲3'&&spectatorQa252?.positionTrend==='up','Phase 252 position change indicator missing: '+JSON.stringify(spectatorQa252));
     assert(spectatorQa252?.bestFastest===true&&String(spectatorQa252?.fastestAfter||'').includes('FL'),'Phase 252 fastest lap indicator missing: '+JSON.stringify(spectatorQa252));
+    const timingStatusQa253=window.mwsF1QaLiveTimingStatusV253?.();
+    assert(timingStatusQa253?.allPass===true,'Phase 253 Live Timing status QA failed: '+JSON.stringify(timingStatusQa253));
+    const timingTyre253=timingPanel?.querySelector('[data-f1-status-tyre-v253]');
+    const timingTyreRect253=timingTyre253?.getBoundingClientRect();
+    assert(timingTyreRect253&&timingTyreRect253.width>20&&timingTyreRect253.height>=12,'Phase 253 timing tyre badge geometry invalid: '+JSON.stringify(timingTyreRect253?{w:timingTyreRect253.width,h:timingTyreRect253.height}:null));
     assert(document.querySelector('[data-f1-workspace-panel="timing"] [data-f1-panel-drag="timing"]')?.textContent?.includes('실시간 순위'),'Phase 218 timing panel is not Korean');
     assert(document.querySelector('[data-f1-workspace-panel="track"] [data-f1-panel-drag="track"]')?.textContent?.includes('트랙 맵'),'Phase 218 track panel is not Korean');
     assert(document.querySelector('[data-f1-workspace-panel="commentary"] [data-f1-panel-drag="commentary"]')?.textContent?.includes('경기 해설'),'Phase 218 commentary panel is not Korean');
