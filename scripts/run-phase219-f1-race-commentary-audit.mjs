@@ -14,7 +14,7 @@ export function runPhase219F1RaceCommentaryAudit(){
     'function updateRaceCommentaryV219(force=false){',
     "경기가 시작됐습니다.",
     "appendRaceCommentaryV219(",
-    "appendRaceCommentaryV219(name+'가 '+(target?.driver?.name||'앞차')+'를 추월했습니다.','pass');",
+    "current.passCompleted>previous.passCompleted",
     "appendRaceCommentaryV219(name+'가 피트로 들어갑니다.','pit');",
     "appendRaceCommentaryV219(name+'에게 블루 플래그가 제시됐습니다. 선두권 차량에 길을 내줘야 합니다.','flag');",
     'updateRaceCommentaryV219(false);',
