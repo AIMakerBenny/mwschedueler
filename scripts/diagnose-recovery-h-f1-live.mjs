@@ -179,14 +179,6 @@ try{
     const workspaceExactQa269=window.mwsF1QaWorkspaceExactRestoreV269?.();
     assert(workspaceExactQa269?.allPass===true&&workspaceExactQa269?.exact===true,'Phase 269 exact workspace restore failed: '+JSON.stringify(workspaceExactQa269));
 
-    const cornerQa270=window.mwsF1QaCornerDynamicsV270?.();
-    assert(cornerQa270?.allPass===true&&cornerQa270?.exitsRecover===true&&cornerQa270?.lineTransitions===true,'Phase 270 corner dynamics QA failed: '+JSON.stringify(cornerQa270));
-    assert(cornerQa270.samples.every(row=>Number(row.exitTarget)>=Number(row.apexTarget)-1),'Phase 270 exit acceleration did not recover after apex: '+JSON.stringify(cornerQa270.samples));
-
-    const boundaryQa271=window.mwsF1QaTrackBoundaryV271?.();
-    assert(boundaryQa271?.allPass===true&&boundaryQa271?.liveInside===true,'Phase 271 track boundary QA failed: '+JSON.stringify(boundaryQa271));
-    assert(Number(boundaryQa271?.beyond?.speedFactor)<Number(boundaryQa271?.center?.speedFactor),'Phase 271 off-track penalty missing: '+JSON.stringify(boundaryQa271));
-
     const trackCardQa266=window.mwsF1QaTrackCardsV266?.();
     assert(trackCardQa266?.allPass===true&&Number(trackCardQa266?.trackCount)===7&&trackCardQa266?.mapped===true&&Number(trackCardQa266?.distinctPaths)===7&&trackCardQa266?.hasTechnicalFields===true,'Phase 266 track card QA failed: '+JSON.stringify(trackCardQa266));
 
@@ -264,6 +256,14 @@ try{
     await raf();
     const headline260=window.mwsF1RaceHeadlineStateV255?.();
     assert(Number(headline260?.total)===17&&Number(headline260?.remaining)===17,'Phase 260 headline remaining laps mismatch: '+JSON.stringify(headline260));
+
+    const cornerQa270=window.mwsF1QaCornerDynamicsV270?.();
+    assert(cornerQa270?.allPass===true&&cornerQa270?.exitsRecover===true&&cornerQa270?.lineTransitions===true,'Phase 270 corner dynamics QA failed: '+JSON.stringify(cornerQa270));
+    assert(cornerQa270.samples.every(row=>Number(row.exitTarget)>=Number(row.apexTarget)-1),'Phase 270 exit acceleration did not recover after apex: '+JSON.stringify(cornerQa270.samples));
+
+    const boundaryQa271=window.mwsF1QaTrackBoundaryV271?.();
+    assert(boundaryQa271?.allPass===true&&boundaryQa271?.liveInside===true,'Phase 271 track boundary QA failed: '+JSON.stringify(boundaryQa271));
+    assert(Number(boundaryQa271?.beyond?.speedFactor)<Number(boundaryQa271?.center?.speedFactor),'Phase 271 off-track penalty missing: '+JSON.stringify(boundaryQa271));
 
     const immersiveQa261=window.mwsF1QaImmersiveV261?.();
     assert(immersiveQa261?.allPass===true,'Phase 261 immersive QA failed: '+JSON.stringify(immersiveQa261));
