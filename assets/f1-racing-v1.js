@@ -79,6 +79,7 @@ const VERSION249='phase249-remove-obsolete-race-panels';
 const VERSION250='phase250-driver-profile-marker';
 const VERSION251='phase251-live-timing-driver-identity';
 const VERSION252='phase252-spectator-race-highlights';
+const VERSION253='phase253-live-timing-race-status';
 const F1_WORKSPACE_LAYOUT_VERSION_V249=6;
 const RACE_PLAYBACK_BASE_V247=2;
 const engineQaV240={active:false};
@@ -806,6 +807,7 @@ function updateRaceProgressHudV190(){
     row.dataset.tyreGrip=(Number(vehicle.tyreGrip)||1).toFixed(3);
     row.dataset.tyreStrategy=(Number(vehicle.tyreStrategyPressure)||0).toFixed(3);
     const tyre=row.querySelector('.tyre');if(tyre)tyre.textContent=tyreCompoundSpecV203(vehicle.tyreCompound).code;
+    syncLiveTimingStatusV253(row,vehicle);
   }
   updateRaceStandingsV191();
   syncSpectatorHighlightsV252();
@@ -1090,6 +1092,56 @@ function qaSpectatorHighlightsV252(){
     syncSpectatorHighlightsV252();
   }
   const allPass=observed.rowBattle==='1'&&observed.rowAttempt==='1'&&observed.rowPass==='1'&&observed.markerBattle&&observed.markerAttempt&&observed.markerPass&&observed.bestFastest&&observed.fastestRow==='1'&&observed.up?.label==='▲3'&&observed.down?.label==='▼3'&&observed.positionLabel==='▲3'&&observed.positionTrend==='up'&&observed.battleAnimation.includes('f1BattlePulseV252')&&observed.overtakeAnimation.includes('f1OvertakePulseV252')&&observed.fastestAfter.includes('FL');
+  return {...observed,allPass};
+}
+
+function timingTyreLabelV253(vehicle){
+  const spec=tyreCompoundSpecV203(vehicle?.tyreCompound);
+  const wear=Math.max(0,Math.min(1,Number(vehicle?.tyreWear)||0));
+  return spec.code+' '+Math.round((1-wear)*100)+'%';
+}
+function timingPitLabelV253(vehicle){
+  const state=String(vehicle?.pitState||'TRACK');
+  if(state==='PIT_BOX')return '피트 스톱';
+  if(state==='PIT_LANE'||state==='PIT_ENTRY'||state==='PIT_EXIT')return '피트';
+  if(vehicle?.pitRequested)return '피트 예정';
+  return '';
+}
+function timingBattleLabelV253(vehicle){
+  const state=String(vehicle?.battleState||'FOLLOWING');
+  if(['SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK'].includes(state))return '배틀';
+  if(['PREPARING_ATTACK','PULLING_OUT'].includes(state))return '공격';
+  if(vehicle?.defenceActive)return '방어';
+  if(vehicle?.blueFlag)return '블루';
+  return '';
+}
+function syncLiveTimingStatusV253(row,vehicle){
+  if(!row||!vehicle)return null;
+  const tyre=row.querySelector('[data-f1-status-tyre-v253]');
+  const pit=row.querySelector('[data-f1-status-pit-v253]');
+  const battle=row.querySelector('[data-f1-status-battle-v253]');
+  const tyreText=timingTyreLabelV253(vehicle),pitText=timingPitLabelV253(vehicle),battleText=timingBattleLabelV253(vehicle);
+  if(tyre){tyre.textContent=tyreText;tyre.dataset.compound=String(vehicle.tyreCompound||'MEDIUM')}
+  if(pit){pit.textContent=pitText||'피트';pit.hidden=!pitText}
+  if(battle){battle.textContent=battleText||'배틀';battle.hidden=!battleText}
+  row.dataset.statusPitV253=pitText?'1':'0';
+  row.dataset.statusBattleV253=battleText?'1':'0';
+  return {tyre:tyreText,pit:pitText,battle:battleText};
+}
+function qaLiveTimingStatusV253(){
+  const vehicle=raceMotionV189.vehicles[0],row=vehicle?findTimingRowV190(vehicle.id):null;
+  if(!vehicle||!row)return {allPass:false,reason:'need-live-field'};
+  const saved={tyreCompound:vehicle.tyreCompound,tyreWear:vehicle.tyreWear,pitState:vehicle.pitState,pitRequested:vehicle.pitRequested,battleState:vehicle.battleState,defenceActive:vehicle.defenceActive,blueFlag:vehicle.blueFlag};
+  let observed={};
+  try{
+    vehicle.tyreCompound='SOFT';vehicle.tyreWear=.23;vehicle.pitState='PIT_BOX';vehicle.pitRequested=true;vehicle.battleState='SIDE_BY_SIDE';vehicle.defenceActive=false;vehicle.blueFlag=false;
+    const state=syncLiveTimingStatusV253(row,vehicle);
+    const tyre=row.querySelector('[data-f1-status-tyre-v253]'),pit=row.querySelector('[data-f1-status-pit-v253]'),battle=row.querySelector('[data-f1-status-battle-v253]');
+    observed={state,tyre:String(tyre?.textContent||''),pit:String(pit?.textContent||''),battle:String(battle?.textContent||''),pitHidden:Boolean(pit?.hidden),battleHidden:Boolean(battle?.hidden)};
+  }finally{
+    Object.assign(vehicle,saved);syncLiveTimingStatusV253(row,vehicle);
+  }
+  const allPass=observed.tyre==='S 77%'&&observed.pit==='피트 스톱'&&observed.battle==='배틀'&&!observed.pitHidden&&!observed.battleHidden;
   return {...observed,allPass};
 }
 
@@ -3934,7 +3986,7 @@ function timingRowV188(driver,index){
   const driverColor=driverColorV216(index);
   return '<div class="f1-racing-timing-row-v188'+podium+'" data-f1-driver-id="'+escapeHtml(driver.contactId)+'" data-driver-color="'+driverColor+'" style="--f1-driver-color:'+driverColor+'">'+
     '<span class="pos">P'+String(pos).padStart(2,'0')+'</span>'+
-    '<span class="driver"><i class="f1-racing-driver-color-v251" aria-hidden="true"></i>'+timingAvatarV251(driver)+'<span class="f1-racing-driver-copy-v251"><b>'+escapeHtml(driverCodeV188(driver))+'</b><small>'+escapeHtml(driver.name)+'</small></span><em data-f1-current-sector>그리드</em></span>'+
+    '<span class="driver"><i class="f1-racing-driver-color-v251" aria-hidden="true"></i>'+timingAvatarV251(driver)+'<span class="f1-racing-driver-copy-v251"><b>'+escapeHtml(driverCodeV188(driver))+'</b><small>'+escapeHtml(driver.name)+'</small></span><span class="f1-racing-driver-state-v253"><i data-f1-status-tyre-v253>M 100%</i><i data-f1-status-pit-v253 hidden>피트</i><i data-f1-status-battle-v253 hidden>배틀</i></span><em data-f1-current-sector>그리드</em></span>'+
     '<span class="gear">--</span><span class="rpm">----</span><span class="speed">---</span><span class="last">--:--.---</span><span class="best">--:--.---</span><span class="gap" data-f1-gap>'+(pos===1?'선두':'--.---')+'</span><span class="interval" data-f1-interval>--</span><span class="tyre">--</span><span class="s1">--.---</span><span class="s2">--.---</span><span class="s3">--.---</span>'+
     '</div>';
 }
@@ -5287,6 +5339,9 @@ window.__mwsF1RacingV251=VERSION251;
 window.mwsF1SyncSpectatorHighlightsV252=syncSpectatorHighlightsV252;
 window.mwsF1QaSpectatorHighlightsV252=qaSpectatorHighlightsV252;
 window.__mwsF1RacingV252=VERSION252;
+window.mwsF1SyncLiveTimingStatusV253=syncLiveTimingStatusV253;
+window.mwsF1QaLiveTimingStatusV253=qaLiveTimingStatusV253;
+window.__mwsF1RacingV253=VERSION253;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
