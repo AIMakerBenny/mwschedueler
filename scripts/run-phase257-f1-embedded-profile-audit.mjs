@@ -18,7 +18,7 @@ export function runPhase257F1EmbeddedProfileAudit(){
     "class:'car-profile-image-v257'",
     "class:'car-profile-initials-v257'",
     "class:'car-number-badge-v257'",
-    'marker.querySelector('.car-profile-v250')?.remove();',
+    "marker.querySelector('.car-profile-v250')?.remove();",
     'function qaEmbeddedDriverProfilesV257(){',
     'window.mwsF1QaEmbeddedDriverProfilesV257=qaEmbeddedDriverProfilesV257;',
     'window.__mwsF1RacingV257=VERSION257;'
