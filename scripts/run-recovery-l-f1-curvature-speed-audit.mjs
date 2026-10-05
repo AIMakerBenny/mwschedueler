@@ -8,6 +8,7 @@ export function runRecoveryLF1CurvatureSpeedAudit(){
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
 
   if(!index.includes('assets/f1-track-geometry-v2.js?v=1.0.0-phase195-speed-profile&recovery=L1'))issues.push('Recovery L geometry cache missing');
+  const phase270=geometry.includes("root.__mwsF1CornerDynamicsV270='direction-split-exit-recovery-v1';");
   for(const token of [
     'function curvatureSeverityRecoveryL(track,curvature){',
     'const soft=threshold*.45;',
@@ -15,7 +16,7 @@ export function runRecoveryLF1CurvatureSpeedAudit(){
     'function curvatureWeightedZoneLimitRecoveryL(track,sample,maxKph){',
     "if(type==='straight')return maxKph;",
     'const zoneLimit=curvatureWeightedZoneLimitRecoveryL(track,sample,maxKph);',
-    'return Math.min(maxKph,zoneLimit,curveLimit);',
+    ...(phase270?['const baseLimit=Math.min(maxKph,zoneLimit,curveLimit);','return exitRawLimitV270(track,geometry,sample,baseLimit,curveLimit,maxKph);']:['return Math.min(maxKph,zoneLimit,curveLimit);']),
     'root.mwsF1CurvatureSeverityRecoveryL=curvatureSeverityRecoveryL;',
     "root.__mwsF1RecoveryL='curvature-weighted-speed-v1';"
   ])if(!geometry.includes(token))issues.push('Recovery L engine missing: '+token);
