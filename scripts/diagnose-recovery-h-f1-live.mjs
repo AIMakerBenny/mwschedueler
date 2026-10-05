@@ -523,6 +523,8 @@ try{
     const engineSuiteQa241=window.mwsF1QaSevenTrackEngineSuiteV241?.();
     assert(engineSuiteQa241?.allPass===true&&Number(engineSuiteQa241?.suite?.rows?.length)===7&&Number(engineSuiteQa241?.suite?.completedRuns)===7,'Phase 241 seven-track real-engine suite failed: '+JSON.stringify(engineSuiteQa241));
     assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Phase 241 engine suite did not restore Setup');
+    const engineAlignmentQa242=window.mwsF1QaRealEngineBenchmarkAlignmentV242?.();
+    assert(engineAlignmentQa242?.allPass===true&&Number(engineAlignmentQa242?.speedCorrelation)>=.5&&Number(engineAlignmentQa242?.lapCorrelation)>=.5&&Number(engineAlignmentQa242?.uniqueActualSignatures)>=5,'Phase 242 real-engine benchmark alignment failed: '+JSON.stringify(engineAlignmentQa242));
 
     const errors=[...(window.__recoveryHErrors||[])];
     assert(errors.length===0,'Browser errors during Recovery H: '+errors.join(' | '));
