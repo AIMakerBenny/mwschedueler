@@ -6300,3 +6300,11 @@ body:not([data-device-mode="mobile"]):not([data-resolution="mobile"]) #calendar.
 @media(max-width:700px){
   .event-datetime-quick-grid-v177{grid-template-columns:minmax(0,1fr)}
 }
+
+/* Phase 303: clean compact category rail when unpinned */
+body:not(.sidebar-pinned) .sidebar:not(:hover){
+  border-right-color:transparent!important;
+  box-shadow:none!important
+}
+body:not(.sidebar-pinned) .sidebar:not(:hover)::before,
+body:not(.sidebar-pinned) .sidebar:not(:hover)::after{display:none!important}
