@@ -192,6 +192,7 @@ jobs:
           node --check scripts/run-phase247-f1-playback-speed-audit.mjs
           node --check scripts/run-phase248-f1-lap-timing-audit.mjs
           node --check scripts/run-phase249-f1-panel-removal-audit.mjs
+          node --check scripts/run-phase250-f1-driver-profile-marker-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -2374,6 +2375,14 @@ jobs:
           grep -Fq "reasons.push((id==='radio'||id==='speed'?'obsolete-panel:':'unknown-panel:')+id);" /tmp/f1-racing-v1-phase249.js
           retry_contains "$BASE/assets/f1-track-v1.js?deploy=$GITHUB_SHA" 'speedTraps:Object.freeze(track.speedTraps.map' > /tmp/f1-track-v1-phase249.js
           grep -Fq 'speedTraps:[' /tmp/f1-track-v1-phase249.js
+
+          echo '[phase250] F1 driver profile portrait markers'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV250=VERSION250;' > /tmp/f1-racing-v1-phase250.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.car-profile-connector-v250' > /tmp/f1-racing-v1-phase250.css
+          node --check /tmp/f1-racing-v1-phase250.js
+          grep -Fq 'function syncDriverProfileMarkerV250(' /tmp/f1-racing-v1-phase250.js
+          grep -Fq 'function qaDriverProfileMarkersV250(){' /tmp/f1-racing-v1-phase250.js
+          grep -Fq '.car-profile-ring-v250' /tmp/f1-racing-v1-phase250.css
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
