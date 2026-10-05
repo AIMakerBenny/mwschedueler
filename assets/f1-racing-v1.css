@@ -618,3 +618,8 @@
 .f1-racing-grid-brief-v244>strong{display:block;margin-top:8px;color:#e8eef8;font-size:18px}
 .f1-racing-grid-brief-v244>p{margin:8px 0 0;color:#8190a3;font-size:11px;line-height:1.6}
 @media(max-width:720px){.f1-racing-grid-header-v244{flex-direction:column}.f1-racing-grid-actions-v244{width:100%}.f1-racing-grid-actions-v244 button{flex:1}}
+
+/* Phase 246: clean circuit annotations */
+.f1-racing-track-indicator-v246 line{stroke:#5f9ee8;stroke-width:2;stroke-linecap:round;opacity:.82}
+.f1-racing-track-indicator-v246 rect{fill:rgba(9,14,21,.94);stroke:#395a80;stroke-width:1.5}
+.f1-racing-track-indicator-v246 text{fill:#d8e8fb;font:900 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#05070a;stroke-width:2;dominant-baseline:middle}
