@@ -264,6 +264,7 @@ import {runPhase265F1GrandPrixPodiumAudit} from './run-phase265-f1-grand-prix-po
 import {runPhase266F1TrackCardCircuitRedesignAudit} from './run-phase266-f1-track-card-circuit-redesign-audit.mjs';
 import {runPhase267F1IntegratedSpectatorDesktopAudit} from './run-phase267-f1-integrated-spectator-desktop-audit.mjs';
 import {runPhase268F1AutoFollowWheelZoomAudit} from './run-phase268-f1-auto-follow-wheel-zoom-audit.mjs';
+import {runPhase269F1LateralWorkspaceStabilityAudit} from './run-phase269-f1-lateral-workspace-stability-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2541,5 +2542,10 @@ export function runPhase268FullIntegrationAudit(){
  const issues=[...previous.issues,...current.issues.map(x=>'Phase 268: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 268: '+x)];
  return {phase:268,previous,current,issues,warnings,pass:issues.length===0};
 }
-export function runCurrentFullIntegrationAudit(){return runPhase268FullIntegrationAudit();}
+export function runPhase269FullIntegrationAudit(){
+ const previous=runPhase268FullIntegrationAudit(),current=runPhase269F1LateralWorkspaceStabilityAudit();
+ const issues=[...previous.issues,...current.issues.map(x=>'Phase 269: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 269: '+x)];
+ return {phase:269,previous,current,issues,warnings,pass:issues.length===0};
+}
+export function runCurrentFullIntegrationAudit(){return runPhase269FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
