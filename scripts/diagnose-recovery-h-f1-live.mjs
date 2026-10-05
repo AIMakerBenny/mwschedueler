@@ -489,6 +489,10 @@ try{
     assert(compactLayout?.panels?.timing?.x===8&&compactLayout?.panels?.timing?.y===0&&compactLayout?.panels?.timing?.w===4,'Phase 217 timing default layout mismatch: '+JSON.stringify(compactLayout?.panels?.timing));
     assert(compactLayout?.panels?.commentary?.x===8&&compactLayout?.panels?.commentary?.y===3&&compactLayout?.panels?.commentary?.w===4,'Phase 217 commentary default layout mismatch: '+JSON.stringify(compactLayout?.panels?.commentary));
     assert(!document.querySelector('[data-f1-workspace-panel="radio"],[data-f1-workspace-panel="speed"]'),'Phase 217 obsolete Team Radio or Speed Trap panel remains in workspace');
+    assert(!document.getElementById('f1RacingTeamRadioV188')&&!document.getElementById('f1RacingSpeedTrapV188')&&!document.querySelector('.f1-racing-race-side-v188'),'Phase 249 obsolete static race panels remain');
+    const migrationQa249=window.mwsF1QaWorkspacePanelMigrationV249?.();
+    assert(migrationQa249?.allPass===true&&Number(migrationQa249?.version)===6,'Phase 249 saved layout migration failed: '+JSON.stringify(migrationQa249));
+    assert(migrationQa249?.reasons?.includes('obsolete-panel:radio')&&migrationQa249?.reasons?.includes('obsolete-panel:speed'),'Phase 249 migration did not identify obsolete panel keys: '+JSON.stringify(migrationQa249));
     assertNoDomOverlap('after compact default');
     const raceHeaderRect=document.querySelector('#f1RacingViewRaceV185 .f1-racing-race-header-v188')?.getBoundingClientRect();
     assert(raceHeaderRect&&raceHeaderRect.height<=46,'Phase 224 race header is not compact: '+String(raceHeaderRect?.height));
@@ -533,7 +537,7 @@ try{
     document.getElementById('f1RacingWorkspaceResetRecoveryE')?.click();await raf();
     assertNoDomOverlap('after reset');
     const persisted=window.mwsGetF1RacingSettingsRecoveryD?.()?.workspaceLayout;
-    assert(Number(persisted?.version)>=5,'Workspace layout did not persist as repaired schema');
+    assert(Number(persisted?.version)>=6,'Workspace layout did not persist as repaired schema');
     const malformed={version:3,panels:{
       timing:{x:0,y:0,w:12,h:3,hidden:false,maximized:false,tabGroup:''},
       track:{x:0,y:0,w:7,h:6,hidden:false,maximized:false,tabGroup:''},
@@ -544,6 +548,8 @@ try{
     const repaired=window.mwsF1AuditWorkspaceLayoutRecoveryK?.(malformed);
     assert(repaired&&repaired.overlaps.length===0,'Malformed saved layout was not repaired');
     assert(repaired.repaired===true,'Malformed saved layout repair was not reported');
+    assert(Number(repaired?.layout?.version)===6&&!repaired?.layout?.panels?.radio&&!repaired?.layout?.panels?.speed,'Phase 249 repaired layout retained obsolete panels: '+JSON.stringify(repaired));
+    assert(repaired?.before?.includes('obsolete-panel:radio')&&repaired?.before?.includes('obsolete-panel:speed'),'Phase 249 repaired layout did not report obsolete panel migration: '+JSON.stringify(repaired?.before));
 
     document.getElementById('f1RacingRaceCancelRecoveryC')?.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Race cancel did not return to Setup');
@@ -614,6 +620,7 @@ try{
       zoomMarkerGeometryV245:{zoom:zoomState245.zoom,before:sizesAtFull245,after:sizesAtZoom245},
       persistenceVersion:Number(persisted?.version)||0,
       malformedRepairReasons:repaired?.before||[],
+      workspaceMigrationV249:migrationQa249||null,
       finalDomOverlapPairs:domOverlapPairs(),
       cancelPreservedDrivers:afterCancelIds,
       podiumCount,
