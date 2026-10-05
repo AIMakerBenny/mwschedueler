@@ -165,6 +165,8 @@ function buildCornerPhases(track,geometry){
 function cornerPhaseAtProgress(geometry,progress){
   const lapLength=Math.max(1,Number(geometry?.lengthMeters)||1);
   const baseDistance=normalizeProgress(progress)*lapLength;
+  const candidates=[];
+  const priority={APPROACH:1,EXIT:2,BRAKING:3,TURN_IN:4,APEX:5};
   for(const corner of geometry?.cornerPhases||[]){
     const start=Number(corner.approachDistanceMeters);
     const end=Number(corner.exitDistanceMeters);
@@ -173,14 +175,18 @@ function cornerPhaseAtProgress(geometry,progress){
     while(here<start)here+=lapLength;
     while(here-lapLength>=start)here-=lapLength;
     if(here>end)continue;
-    if(here<Number(corner.brakingPointDistanceMeters))return {corner,phase:'APPROACH'};
-    if(here<Number(corner.turnInDistanceMeters))return {corner,phase:'BRAKING'};
-    if(here<Number(corner.apexDistanceMeters))return {corner,phase:'TURN_IN'};
-    const apexWindowMeters=Math.max(5,Number(corner.lengthMeters||40)*0.18);
-    if(here<Math.min(end,Number(corner.apexDistanceMeters)+apexWindowMeters))return {corner,phase:'APEX'};
-    return {corner,phase:'EXIT'};
+    let phase='EXIT';
+    if(here<Number(corner.brakingPointDistanceMeters))phase='APPROACH';
+    else if(here<Number(corner.turnInDistanceMeters))phase='BRAKING';
+    else if(here<Number(corner.apexDistanceMeters))phase='TURN_IN';
+    else{
+      const apexWindowMeters=Math.max(5,Number(corner.lengthMeters||40)*0.18);
+      if(here<Math.min(end,Number(corner.apexDistanceMeters)+apexWindowMeters))phase='APEX';
+    }
+    candidates.push({corner,phase,here,priority:priority[phase]||0});
   }
-  return null;
+  candidates.sort((a,b)=>b.priority-a.priority||Number(b.corner.startProgress)-Number(a.corner.startProgress));
+  return candidates[0]||null;
 }
 function alignedDistanceForCornerV270(track,corner,progress){
   const length=Math.max(1,Number(track?.lengthMeters)||1);
