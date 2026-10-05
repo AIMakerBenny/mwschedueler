@@ -71,6 +71,7 @@ const VERSION241='phase241-seven-track-real-engine-suite';
 const VERSION242='phase242-real-engine-benchmark-alignment';
 const VERSION243='phase243-flowing-circuit-redesign';
 const VERSION244='phase244-starting-grid-top-actions';
+const VERSION245='phase245-zoom-aware-marker-scale';
 const engineQaV240={active:false};
 let engineSuiteCacheV241=null;
 const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitchMs:1800,urgentBattleGapSeconds:0.55,focusDeadbandSvg:3,zoomDeadband:0.025});
@@ -2221,6 +2222,22 @@ function driverNumberV232(vehicle,index=0){
   const grid=Number(vehicle?.driver?.gridPosition);
   return String(Number.isFinite(grid)&&grid>0?Math.floor(grid):Math.max(1,Number(index)+1));
 }
+function raceMarkerScaleV245(zoom=raceCameraV216.zoom){
+  const z=Math.max(1,Number(zoom)||1);
+  return Math.max(.22,Math.min(1,1/Math.pow(z,1.06)));
+}
+function raceMarkerTransformV245(point,zoom=raceCameraV216.zoom){
+  const scale=raceMarkerScaleV245(zoom);
+  return 'translate('+Number(point?.x||0).toFixed(2)+' '+Number(point?.y||0).toFixed(2)+') scale('+scale.toFixed(4)+')';
+}
+function syncRaceMarkerScaleV245(){
+  for(const vehicle of raceMotionV189.vehicles){
+    if(!vehicle?.marker||!vehicle?.renderPointV216)continue;
+    vehicle.marker.setAttribute('transform',raceMarkerTransformV245(vehicle.renderPointV216,raceCameraV216.zoom));
+    vehicle.marker.dataset.cameraScaleV245=raceMarkerScaleV245(raceCameraV216.zoom).toFixed(4);
+  }
+  return raceMarkerScaleV245(raceCameraV216.zoom);
+}
 function ensureRaceVehicleMarkerV189(vehicle,index){
   const layer=document.getElementById('f1RacingRaceVehicleLayerV188');
   if(!layer)return null;
@@ -2467,7 +2484,8 @@ function renderRaceVehiclesV189(){
     vehicle.lateralOffsetMeters=lineOffsetMetersV197(vehicle)+(Number(vehicle.incidentLateralOffsetMeters)||0);
     const point=raceLinePointV197(path,vehicle.progress,vehicle.lateralOffsetMeters);if(!point)return;
     vehicle.renderPointV216={x:Number(point.x),y:Number(point.y)};
-    marker.setAttribute('transform','translate('+point.x.toFixed(2)+' '+point.y.toFixed(2)+')');
+    marker.setAttribute('transform',raceMarkerTransformV245(point,raceCameraV216.zoom));
+    marker.dataset.cameraScaleV245=raceMarkerScaleV245(raceCameraV216.zoom).toFixed(4);
     marker.dataset.lineMode=vehicle.racingLineMode||'IDEAL';
     marker.dataset.cornerPhase=getCornerPhaseAtProgressV194(vehicle.progress)?.phase||'STRAIGHT';
     marker.dataset.incident=activeDrivingIncidentV204(vehicle)||'';
@@ -3367,6 +3385,7 @@ function applyRaceCameraV216(target={},smooth=false){
   raceCameraV216.initialized=true;
   const box=clampRaceCameraV216(raceCameraV216.cx,raceCameraV216.cy,raceCameraV216.zoom);
   svg.setAttribute('viewBox',[box.cx-box.w/2,box.cy-box.h/2,box.w,box.h].map(value=>Number(value).toFixed(3)).join(' '));
+  syncRaceMarkerScaleV245();
   syncRaceCameraControlsV216();
   return true;
 }
@@ -3549,6 +3568,15 @@ function qaCameraDirectorStabilityV229(){
     candidateHoldMs:cfg.candidateHoldMs,minSwitchMs:cfg.minSwitchMs,urgentBattleGapSeconds:cfg.urgentBattleGapSeconds,
     focusDeadbandSvg:cfg.focusDeadbandSvg,zoomDeadband:cfg.zoomDeadband,director:{...cameraDirectorV225},
     allPass:cfg.candidateHoldMs>=500&&cfg.minSwitchMs>=1500&&cfg.urgentBattleGapSeconds<0.7&&cfg.focusDeadbandSvg>0&&cfg.zoomDeadband>0
+  };
+}
+function qaZoomAwareMarkerScaleV245(){
+  const samples=[1,1.5,2,3,4.5].map(zoom=>({zoom,scale:raceMarkerScaleV245(zoom)}));
+  const screenRatios=samples.map(row=>row.zoom*row.scale);
+  const live=[...document.querySelectorAll('.f1-racing-race-vehicle-v189')].map(marker=>Number(marker.dataset.cameraScaleV245)||0);
+  return {
+    samples,screenRatios,liveCount:live.length,liveScales:live,
+    allPass:samples[0].scale===1&&samples.every((row,index)=>index===0||row.scale<samples[index-1].scale)&&Math.max(...screenRatios)-Math.min(...screenRatios)<.12&&(!live.length||live.every(scale=>scale>0&&scale<=1))
   };
 }
 function qaDriverMarkerIdentityV232(){
@@ -4836,6 +4864,9 @@ window.mwsF1QaTrackFlowDesignV243=qaTrackFlowDesignV243;
 window.__mwsF1RacingV243=VERSION243;
 window.mwsF1QaStartingGridLayoutV244=qaStartingGridLayoutV244;
 window.__mwsF1RacingV244=VERSION244;
+window.mwsF1RaceMarkerScaleV245=raceMarkerScaleV245;
+window.mwsF1QaZoomAwareMarkerScaleV245=qaZoomAwareMarkerScaleV245;
+window.__mwsF1RacingV245=VERSION245;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
