@@ -155,6 +155,7 @@ try{
     await sleep(1200);
   }
   if(!phase292Ready)throw new Error('Phase 292 runtime did not propagate to Recovery H browser');
+  await evaluate(cdp,"window.mwsF1ResetFinalDesktopErrorsV292?.()","Phase 292 reset desktop error window");
   const extensionQa292=await evaluate(cdp,"(()=>({r13:window.mwsF1QaWorkspaceViewportFitV288?.(),r14:window.mwsF1QaPreraceCompactV289?.(),r15:window.mwsF1QaGridShuffleSmoothnessV290?.(),r16:window.mwsF1QaFinishOverlayV291?.(),r17:window.mwsF1QaFinalDesktopV292?.()}))()","Phase 288-292 final extension QA");
   if(extensionQa292?.r13?.allPass!==true)throw new Error('Phase 288 workspace viewport live QA failed: '+JSON.stringify(extensionQa292?.r13));
   if(extensionQa292?.r14?.allPass!==true)throw new Error('Phase 289 pre-race compact live QA failed: '+JSON.stringify(extensionQa292?.r14));
