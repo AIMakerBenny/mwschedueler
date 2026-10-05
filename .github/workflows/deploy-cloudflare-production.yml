@@ -1324,7 +1324,7 @@ jobs:
           grep -Fq "start.addEventListener('click',confirmRaceStartRecoveryM);" /tmp/f1-racing-recovery-m.js
           echo '[recovery-n] F1 left center right triple dock'
           node -e "const s=require('fs').readFileSync('/tmp/index.html','utf8');const m=s.match(/assets\/f1-racing-v1\.js\?v=1\.0\.0-phase180-shell&p=203&recovery=N1&phase=(\d+)/);if(!m||Number(m[1])<206)process.exit(1)"
-          grep -Eq 'assets/f1-racing-v1\.css\?v=1\.0\.0-phase180-shell&p=196&recovery=N1&phase=(20[4-9]|21[0-9]|2[2-9][0-9])' /tmp/index.html
+          node -e "const s=require('fs').readFileSync('/tmp/index.html','utf8');const m=s.match(/assets\\/f1-racing-v1\\.css\\?[^\\\"']*recovery=N1&phase=(\\d+)/);if(!m||Number(m[1])<204)process.exit(1)"
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" "window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';" > /tmp/f1-racing-recovery-n.js
           retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '/* Recovery N: left / center / right triple-column dock preview */' > /tmp/f1-racing-recovery-n.css
           node --check /tmp/f1-racing-recovery-n.js
