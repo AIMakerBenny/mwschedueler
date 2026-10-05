@@ -3790,8 +3790,7 @@ function updateVisualLateralOffsetV258(vehicle,frameMs=16.67,force=false){
 }
 function qaLateralDynamicsV269(){
   const cfg=VISUAL_LATERAL_DYNAMICS_V269;
-  const source=raceMotionV189.vehicles[0];
-  if(!source)return {config:cfg,allPass:cfg.normalMaxSpeed<=2.5&&cfg.attackMaxSpeed<=3.2&&cfg.maxAcceleration<=8&&cfg.lineModeHoldMs>=350};
+  const source=raceMotionV189.vehicles[0]||{id:'qa-lateral-v269',progress:.25,raceProgress:.25,incident:null};
   const savedTime=simClockV192.simTimeMs;
   const probe={...source,racingLineMode:'ATTACK_INSIDE',pitState:'TRACK',incidentLateralOffsetMeters:0,visualLateralOffsetMeters:0,visualLateralVelocity:0,visualLateralInitializedV258:true,committedVisualTargetV269:0,visualLineModeV269:'ATTACK_INSIDE',pendingVisualLineModeV269:'',visualLineModeHoldUntilV269:0};
   let maxVelocity=0,maxAcceleration=0;
