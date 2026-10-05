@@ -93,6 +93,7 @@ const VERSION263='phase263-race-narrative-engine';
 const VERSION264='phase264-live-overtake-comic-cutin';
 const VERSION265='phase265-grand-prix-podium-redesign';
 const VERSION266='phase266-f1-track-card-circuit-redesign';
+const VERSION267='phase267-integrated-spectator-desktop-qa';
 const RACE_MOMENTUM_CONFIG_V262=Object.freeze({
   min:-1,max:1,paceRange:.02,decayPerSecond:.032,evaluationMs:620,
   passSuccess:.18,passFailed:-.12,defenceSuccess:.075,incident:-.14,
@@ -342,6 +343,57 @@ function qaTrackCardsV266(){
   const tiers=tracks.map(track=>trackSpeedTierV266(track.profile));
   const domCards=document.querySelectorAll('#f1RacingTrackOptionsV186 .f1-racing-track-card-v266').length;
   return {trackCount:tracks.length,mapped,distinctPaths,tiers,domCards,hasTechnicalFields:cards.every(card=>card.includes('LENGTH')&&card.includes('TOP SPEED')&&card.includes('OVERTAKE')),allPass:tracks.length===7&&mapped&&distinctPaths===7&&cards.length===7&&cards.every(card=>card.includes('f1-racing-track-card-silhouette-v266'))&&cards.every(card=>card.includes('data-f1-speed-tier-v266'))&&cards.every(card=>card.includes('LENGTH')&&card.includes('TOP SPEED')&&card.includes('OVERTAKE'))&&(domCards===0||domCards===7)};
+}
+
+
+const SPECTATOR_QA_CASES_V267=Object.freeze([
+  Object.freeze({id:'3x5',trackId:'majoku-ring-v1',drivers:3,laps:5,stepMs:100,maxSteps:26000}),
+  Object.freeze({id:'6x10',trackId:'blue-coast-speedway-v1',drivers:6,laps:10,stepMs:100,maxSteps:36000}),
+  Object.freeze({id:'12x20',trackId:'highland-flow-ring-v1',drivers:12,laps:20,stepMs:100,maxSteps:50000})
+]);
+function spectatorQaCaseV267(spec,index){
+  const started=typeof performance!=='undefined'?performance.now():Date.now();
+  const result=runAcceleratedEngineRaceV240(spec.trackId,{drivers:spec.drivers,laps:spec.laps,runIndex:26700+index,stepMs:spec.stepMs,maxSteps:spec.maxSteps,gridMode:'FIXED'});
+  const ended=typeof performance!=='undefined'?performance.now():Date.now();
+  const rows=Array.isArray(result?.resultRows)?result.resultRows:[];
+  const timing=Array.isArray(result?.lapTiming)?result.lapTiming:[];
+  return {
+    id:spec.id,trackId:spec.trackId,drivers:spec.drivers,laps:spec.laps,
+    completed:Boolean(result?.completed),resultRows:rows.length,timingRows:timing.length,
+    allFinished:rows.length===spec.drivers&&rows.every(row=>Number(row?.position)>=1),
+    timedLaps:timing.length===spec.drivers&&timing.every(row=>Number(row?.timedCompletedLaps)===spec.laps&&Array.isArray(row?.lapTimesMs)&&row.lapTimesMs.length===spec.laps),
+    totalPasses:Number(result?.telemetry?.totalPasses)||0,
+    fieldAverageSpeedKph:Number(result?.telemetry?.fieldAverageSpeedKph)||0,
+    steps:Number(result?.steps)||0,durationMs:Math.max(0,Math.round(ended-started)),
+    error:String(result?.error||'')
+  };
+}
+function qaIntegratedSpectatorDesktopV267(){
+  const cases=SPECTATOR_QA_CASES_V267.map(spectatorQaCaseV267);
+  const workspaceClean=Boolean(document.getElementById('f1RacingWorkspaceRecoveryE'));
+  const featureChecks={
+    embeddedProfiles:typeof syncEmbeddedDriverMarkerV257==='function',
+    positionBadges:typeof syncRaceMarkerPositionV254==='function',
+    battleLinks:typeof syncBattleLinksV256==='function',
+    lateralSmoothing:typeof updateVisualLateralOffsetV258==='function',
+    workspacePersistence:typeof restoreWorkspaceUserDefaultV259==='function',
+    customLaps:typeof setLapCountV260==='function',
+    fullscreen:typeof enterF1ImmersiveV261==='function',
+    liveCutin:typeof enqueueLiveCutinV264==='function',
+    autoCamera:typeof setRaceCameraModeV216==='function',
+    commentary:typeof appendRaceCommentaryV222==='function',
+    podium:typeof renderPodiumRecoveryG==='function',
+    pit:typeof updatePitStateV205==='function',
+    overtake:typeof nextPassStateV208==='function',
+    fastestLap:typeof syncSpectatorHighlightsV252==='function',
+    raceCompletion:typeof finishRaceRecoveryG==='function'
+  };
+  const cutinClean=liveCutinStateV264.active.size===0&&liveCutinStateV264.queue.length===0&&liveCutinLayerV264()?.children.length===0;
+  const noEngineResidue=f1ScreenStateV185==='SETUP'&&!engineQaV240.active&&raceMotionV189.vehicles.length===0;
+  return {
+    cases,featureChecks,workspaceClean,cutinClean,noEngineResidue,
+    allPass:cases.length===3&&cases.every(row=>row.completed&&row.allFinished&&row.timedLaps&&row.fieldAverageSpeedKph>0&&!row.error)&&Object.values(featureChecks).every(Boolean)&&workspaceClean&&cutinClean&&noEngineResidue
+  };
 }
 
 const F1_LAP_MIN_V260=3;
@@ -1860,7 +1912,7 @@ function cloneTrackForEngineQaV240(track){
 function buildEngineQaSnapshotV240(trackId,{drivers=6,laps=1,runIndex=0,gridMode='FIXED'}={}){
   const track=window.mwsGetF1TrackV182?.(String(trackId||''));if(!track)return null;
   const count=Math.max(2,Math.min(12,Math.floor(Number(drivers)||6)));
-  const totalLaps=Math.max(1,Math.min(5,Math.floor(Number(laps)||1)));
+  const totalLaps=Math.max(1,Math.min(20,Math.floor(Number(laps)||1)));
   const createdAt='phase240-fixed-field-run-'+String(Math.max(0,Math.floor(Number(runIndex)||0)));
   let rows=Array.from({length:count},(_,index)=>({
     contactId:'phase240-driver-'+String(index+1),name:'QA Driver '+String(index+1),
@@ -6468,6 +6520,8 @@ window.mwsF1TrackSpeedTierV266=trackSpeedTierV266;
 window.mwsF1TrackCardCharacterV266=trackCardCharacterV266;
 window.mwsF1QaTrackCardsV266=qaTrackCardsV266;
 window.__mwsF1RacingV266=VERSION266;
+window.mwsF1QaIntegratedSpectatorDesktopV267=qaIntegratedSpectatorDesktopV267;
+window.__mwsF1RacingV267=VERSION267;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
