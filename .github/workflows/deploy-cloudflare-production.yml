@@ -243,6 +243,7 @@ jobs:
           node --check scripts/run-phase298-f1-production-workflow-recheck-audit.mjs
           node --check scripts/run-phase299-f1-recovery-h-contract-recheck-audit.mjs
           node --check scripts/run-phase300-f1-production-closure-audit.mjs
+          node --check scripts/run-phase301-f1-spec-closure-audit.mjs
           node --check assets/f1-racing-r283-r287.js
           node --check assets/f1-racing-r288-r290.js
           node --check assets/f1-racing-r291-r295.js
