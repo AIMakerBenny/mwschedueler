@@ -196,6 +196,7 @@ jobs:
           node --check scripts/run-phase251-f1-live-timing-identity-audit.mjs
           node --check scripts/run-phase252-f1-spectator-highlights-audit.mjs
           node --check scripts/run-phase253-f1-live-timing-status-audit.mjs
+          node --check scripts/run-phase254-f1-live-marker-position-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -2412,6 +2413,14 @@ jobs:
           grep -Fq 'function syncLiveTimingStatusV253(' /tmp/f1-racing-v1-phase253.js
           grep -Fq 'function qaLiveTimingStatusV253(){' /tmp/f1-racing-v1-phase253.js
           grep -Fq '.f1-racing-driver-state-v253' /tmp/f1-racing-v1-phase253.css
+
+          echo '[phase254] F1 live marker position tags'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV254=VERSION254;' > /tmp/f1-racing-v1-phase254.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '/* Phase 254: live position tag attached to each track vehicle marker */' > /tmp/f1-racing-v1-phase254.css
+          node --check /tmp/f1-racing-v1-phase254.js
+          grep -Fq 'function syncRaceMarkerPositionV254(' /tmp/f1-racing-v1-phase254.js
+          grep -Fq 'function qaRaceMarkerPositionV254(){' /tmp/f1-racing-v1-phase254.js
+          grep -Fq '.car-position-tag-v254' /tmp/f1-racing-v1-phase254.css
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
