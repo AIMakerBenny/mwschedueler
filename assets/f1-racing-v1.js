@@ -73,6 +73,8 @@ const VERSION243='phase243-flowing-circuit-redesign';
 const VERSION244='phase244-starting-grid-top-actions';
 const VERSION245='phase245-zoom-aware-marker-scale';
 const VERSION246='phase246-clean-track-indicators';
+const VERSION247='phase247-rebased-race-playback';
+const RACE_PLAYBACK_BASE_V247=2;
 const engineQaV240={active:false};
 let engineSuiteCacheV241=null;
 const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitchMs:1800,urgentBattleGapSeconds:0.55,focusDeadbandSvg:3,zoomDeadband:0.025});
@@ -145,8 +147,16 @@ const simClockV192={
   simTimeMs:0,
   accumulatorMs:0,
   fixedStepMs:20,
-  maxStepsPerFrame:12
+  maxStepsPerFrame:32
 };
+function simulationPlaybackRateV247(scale=simClockV192.timeScale){
+  const uiScale=Number(scale);
+  return RACE_PLAYBACK_BASE_V247*([1,2,4].includes(uiScale)?uiScale:1);
+}
+function qaRacePlaybackSpeedV247(){
+  const rates=[1,2,4].map(scale=>({scale,effective:simulationPlaybackRateV247(scale)}));
+  return {baseRate:RACE_PLAYBACK_BASE_V247,rates,maxStepsPerFrame:simClockV192.maxStepsPerFrame,allPass:RACE_PLAYBACK_BASE_V247===2&&rates.map(row=>row.effective).join(',')==='2,4,8'&&simClockV192.maxStepsPerFrame>=20};
+}
 let raceFlagStateV214={flag:'GREEN',reason:'',sinceSimMs:0};
 function raceFlagSpeedFactorV214(flag=raceFlagStateV214.flag){
   return RACE_FLAG_SPEED_V214[String(flag||'GREEN')]??1;
@@ -3296,7 +3306,7 @@ function raceFrameV189(timestamp){
   const delta=Math.min(50,Math.max(0,timestamp-raceMotionV189.lastTimestamp));
   raceMotionV189.lastTimestamp=timestamp;
   if(!simClockV192.paused){
-    simClockV192.accumulatorMs+=delta*simClockV192.timeScale;
+    simClockV192.accumulatorMs+=delta*simulationPlaybackRateV247();
     let steps=0;
     while(simClockV192.accumulatorMs>=simClockV192.fixedStepMs&&steps<simClockV192.maxStepsPerFrame){
       const continued=simulateRaceStepV192(simClockV192.fixedStepMs);
@@ -4744,7 +4754,7 @@ window.mwsF1UpdateRaceStandingsV191=updateRaceStandingsV191;
 window.mwsF1FormatRaceDeltaV191=formatRaceDeltaV191;
 window.mwsF1SetSimulationTimeScaleV192=setSimulationTimeScaleV192;
 window.mwsF1ToggleSimulationPauseV192=toggleSimulationPauseV192;
-window.mwsF1GetSimulationClockV192=function(){return {...simClockV192}};
+window.mwsF1GetSimulationClockV192=function(){return {...simClockV192,effectiveTimeScale:simulationPlaybackRateV247()}};
 window.mwsF1SimulateRaceStepV192=simulateRaceStepV192;
 window.mwsF1RefreshRaceGeometryV193=refreshRaceGeometryV193;
 window.mwsF1GetRaceGeometryV193=getRaceGeometryV193;
@@ -4922,6 +4932,9 @@ window.mwsF1QaZoomAwareMarkerScaleV245=qaZoomAwareMarkerScaleV245;
 window.__mwsF1RacingV245=VERSION245;
 window.mwsF1QaTrackPresentationV246=qaTrackPresentationV246;
 window.__mwsF1RacingV246=VERSION246;
+window.mwsF1SimulationPlaybackRateV247=simulationPlaybackRateV247;
+window.mwsF1QaRacePlaybackSpeedV247=qaRacePlaybackSpeedV247;
+window.__mwsF1RacingV247=VERSION247;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
