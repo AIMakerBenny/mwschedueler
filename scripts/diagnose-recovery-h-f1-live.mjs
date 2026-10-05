@@ -418,6 +418,15 @@ try{
     assert(Number(window.mwsF1RaceMarkerScaleV245?.(4.5))<Number(window.mwsF1RaceMarkerScaleV245?.(2)),'Phase 245 marker scale does not shrink with zoom');
     const markerIdentityQa=window.mwsF1QaDriverMarkerIdentityV232?.();
     assert(markerIdentityQa?.allPass===true&&Number(markerIdentityQa?.liveMarkerCount)>=2&&Number(markerIdentityQa?.liveMarkerCount)===Number(markerIdentityQa?.liveNumberCount),'Phase 232 driver marker identity QA failed: '+JSON.stringify(markerIdentityQa));
+    const profileMarkerQa250=window.mwsF1QaDriverProfileMarkersV250?.();
+    assert(profileMarkerQa250?.allPass===true&&Number(profileMarkerQa250?.markerCount)>=2,'Phase 250 driver profile marker QA failed: '+JSON.stringify(profileMarkerQa250));
+    const firstProfileMarker250=document.querySelector('.f1-racing-race-vehicle-v189');
+    const profileRing250=firstProfileMarker250?.querySelector('.car-profile-ring-v250');
+    const profileConnector250=firstProfileMarker250?.querySelector('.car-profile-connector-v250');
+    const profileCore250=firstProfileMarker250?.querySelector('.car-core');
+    const profileRect250=profileRing250?.getBoundingClientRect(),coreRect250=profileCore250?.getBoundingClientRect(),connectorRect250=profileConnector250?.getBoundingClientRect();
+    assert(profileRect250&&coreRect250&&profileRect250.bottom<coreRect250.top,'Phase 250 profile portrait is not positioned above vehicle bead');
+    assert(connectorRect250&&connectorRect250.height>0,'Phase 250 profile connector has no rendered height');
     const markerNumberTexts=[...document.querySelectorAll('.f1-racing-race-vehicle-v189 .car-number-v232')].map(node=>String(node.textContent||'').trim());
     assert(markerNumberTexts.length>=2&&new Set(markerNumberTexts).size===markerNumberTexts.length,'Phase 232 driver marker numbers are not unique: '+JSON.stringify(markerNumberTexts));
     const labelCollisionQa=window.mwsF1QaDriverLabelCollisionV228?.();
@@ -433,7 +442,7 @@ try{
     // Phase 245: measure rendered sizes, not just the inverse-scale helper.
     window.mwsF1SetRaceCameraModeV216('FULL');await raf();
     const raceSvg245=document.getElementById('f1RacingRaceTrackSvgV188');
-    const sizeSelectors245=['.car-core','.car-number-v232','.car-label','.f1-racing-track-annotation-v183.pit circle','.f1-racing-track-annotation-v183.pit text','.f1-racing-track-indicator-v246 rect','.finish-label'];
+    const sizeSelectors245=['.car-core','.car-number-v232','.car-label','.car-profile-ring-v250','.f1-racing-track-annotation-v183.pit circle','.f1-racing-track-annotation-v183.pit text','.f1-racing-track-indicator-v246 rect','.finish-label'];
     const measure245=()=>sizeSelectors245.map(selector=>{
       const node=raceSvg245.querySelector(selector),rect=node?.getBoundingClientRect();
       assert(rect&&rect.width>0&&rect.height>0,'Phase 245 missing rendered marker: '+selector);
@@ -618,6 +627,7 @@ try{
       overlapPairsAfterDock:window.mwsF1WorkspaceOverlapPairsRecoveryI?.()||[],
       compactDefault:true,
       zoomMarkerGeometryV245:{zoom:zoomState245.zoom,before:sizesAtFull245,after:sizesAtZoom245},
+      profileMarkerV250:profileMarkerQa250||null,
       persistenceVersion:Number(persisted?.version)||0,
       malformedRepairReasons:repaired?.before||[],
       workspaceMigrationV249:migrationQa249||null,
