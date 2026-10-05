@@ -286,6 +286,7 @@ import {runPhase287F1CompactRaceShellAudit} from './run-phase287-f1-compact-race
 import {runPhase288F1LayoutResetViewportFitAudit} from './run-phase288-f1-layout-reset-viewport-fit-audit.mjs';
 import {runPhase289F1PreraceScreenCompressionAudit} from './run-phase289-f1-prerace-screen-compression-audit.mjs';
 import {runPhase290F1StartingGridShuffleSmoothnessAudit} from './run-phase290-f1-starting-grid-shuffle-smoothness-audit.mjs';
+import {runPhase291F1FinishPodiumResultOverlayAudit} from './run-phase291-f1-finish-podium-result-overlay-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2629,5 +2630,6 @@ export function runPhase287FullIntegrationAudit(){const previous=runPhase286Full
 export function runPhase288FullIntegrationAudit(){const previous=runPhase287FullIntegrationAudit(),current=runPhase288F1LayoutResetViewportFitAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 288: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 288: '+x)];return {phase:288,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase289FullIntegrationAudit(){const previous=runPhase288FullIntegrationAudit(),current=runPhase289F1PreraceScreenCompressionAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 289: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 289: '+x)];return {phase:289,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase290FullIntegrationAudit(){const previous=runPhase289FullIntegrationAudit(),current=runPhase290F1StartingGridShuffleSmoothnessAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 290: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 290: '+x)];return {phase:290,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase290FullIntegrationAudit();}
+export function runPhase291FullIntegrationAudit(){const previous=runPhase290FullIntegrationAudit(),current=runPhase291F1FinishPodiumResultOverlayAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 291: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 291: '+x)];return {phase:291,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase291FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
