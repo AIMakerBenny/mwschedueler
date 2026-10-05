@@ -128,19 +128,20 @@ try{
   }
   if(!phase282Ready)throw new Error('Phase 282 runtime did not propagate to Recovery H browser');
 
-  let phase284Ready=false;
+  let phase285Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase284Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV284==='phase284-f1-r09-track-ranking-overlay'","Phase 284 runtime readiness"));
-    if(phase284Ready)break;
+    phase285Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV285==='phase285-f1-r10-zoom-linked-marker-scale'","Phase 285 runtime readiness"));
+    if(phase285Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v284=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v285=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1200);
   }
-  if(!phase284Ready)throw new Error('Phase 284 runtime did not propagate to Recovery H browser');
-  const extensionQa284=await evaluate(cdp,"(()=>({r08:window.mwsF1QaGeneralOvertakeDefenceV283?.(),r09:window.mwsF1QaTrackRankingOverlayV284?.()}))()","Phase 283-284 extension QA");
-  if(extensionQa284?.r08?.allPass!==true)throw new Error('Phase 283 general battle live QA failed: '+JSON.stringify(extensionQa284?.r08));
-  if(extensionQa284?.r09?.allPass!==true)throw new Error('Phase 284 track ranking live QA failed: '+JSON.stringify(extensionQa284?.r09));
+  if(!phase285Ready)throw new Error('Phase 285 runtime did not propagate to Recovery H browser');
+  const extensionQa285=await evaluate(cdp,"(()=>({r08:window.mwsF1QaGeneralOvertakeDefenceV283?.(),r09:window.mwsF1QaTrackRankingOverlayV284?.(),r10:window.mwsF1QaZoomLinkedMarkerScaleV285?.()}))()","Phase 283-285 extension QA");
+  if(extensionQa285?.r08?.allPass!==true)throw new Error('Phase 283 general battle live QA failed: '+JSON.stringify(extensionQa285?.r08));
+  if(extensionQa285?.r09?.allPass!==true)throw new Error('Phase 284 track ranking live QA failed: '+JSON.stringify(extensionQa285?.r09));
+  if(extensionQa285?.r10?.allPass!==true)throw new Error('Phase 285 zoom marker live QA failed: '+JSON.stringify(extensionQa285?.r10));
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));

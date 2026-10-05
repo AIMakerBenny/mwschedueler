@@ -3,6 +3,8 @@
 const VERSION283='phase283-f1-r08-general-overtake-defence';
 const GENERAL_BATTLE_CONFIG_V283=Object.freeze({maxGapMeters:34,attackGapMeters:24,defendGapMeters:26,minClosingKph:.8,attackBiasBaseKph:.55,attackBiasPressureKph:.85,maxPatchedBiasKph:2.4,defendPressure:.22});
 const VERSION284='phase284-f1-r09-track-ranking-overlay';
+const VERSION285='phase285-f1-r10-zoom-linked-marker-scale';
+const ZOOM_MARKER_CONFIG_V285=Object.freeze({exponent:.38,minScale:.54,maxScale:1});
 const TRACK_RANKING_CONFIG_V284=Object.freeze({maxRows:6,refreshMs:140});
 const runtimeState={rafId:0,frames:0,activeFrames:0,lastApplied:0};
 const rankingStateV284={lastRenderAt:0,renderCount:0};
@@ -56,9 +58,46 @@ function qaTrackRankingOverlayV284(){
  return {version:VERSION284,api,header,list,maxRows:cfg.maxRows,refreshMs:cfg.refreshMs,renderCount:rankingStateV284.renderCount,allPass:Boolean(root)&&api&&header&&list&&cfg.maxRows>=5&&cfg.maxRows<=8&&cfg.refreshMs>=100};
 }
 
-function loop(){patchGeneralBattleV283();syncTrackRankingV284();runtimeState.rafId=requestAnimationFrame(loop)}
-function boot(){if(!runtimeState.rafId)runtimeState.rafId=requestAnimationFrame(loop)}
+
+function zoomMarkerScaleV285(zoom){
+ const z=Math.max(1,Number(zoom)||1);
+ return Math.max(ZOOM_MARKER_CONFIG_V285.minScale,Math.min(ZOOM_MARKER_CONFIG_V285.maxScale,1/Math.pow(z,ZOOM_MARKER_CONFIG_V285.exponent)));
+}
+function applyZoomMarkerScaleV285(marker,zoom){
+ if(!marker)return false;
+ const transform=String(marker.getAttribute('transform')||'');
+ const match=transform.match(/^(translate\([^)]*\))\s+scale\(([-+0-9.eE]+)\)$/);
+ if(!match)return false;
+ const desired=zoomMarkerScaleV285(zoom),current=Number(match[2]);
+ if(Number.isFinite(current)&&Math.abs(current-desired)<.0005){marker.dataset.zoomScaleV285=desired.toFixed(4);return true}
+ marker.setAttribute('transform',match[1]+' scale('+desired.toFixed(4)+')');
+ marker.dataset.zoomScaleV285=desired.toFixed(4);
+ return true;
+}
+function syncZoomMarkerScaleV285(){
+ const camera=window.mwsF1GetRaceCameraStateV216?.(),zoom=Math.max(1,Number(camera?.zoom)||1);
+ let count=0;for(const marker of document.querySelectorAll('.f1-racing-race-vehicle-v189'))if(applyZoomMarkerScaleV285(marker,zoom))count+=1;
+ return {zoom,scale:zoomMarkerScaleV285(zoom),count};
+}
+let zoomObserverV285=null;
+function installZoomMarkerObserverV285(){
+ const layer=document.getElementById('f1RacingRaceVehicleLayerV188');if(!layer)return false;
+ if(zoomObserverV285)return true;
+ zoomObserverV285=new MutationObserver(()=>syncZoomMarkerScaleV285());
+ zoomObserverV285.observe(layer,{subtree:true,attributes:true,attributeFilter:['transform'],childList:true});
+ syncZoomMarkerScaleV285();return true;
+}
+function qaZoomLinkedMarkerScaleV285(){
+ const samples=[1,1.5,2,3,4.5].map(zoom=>({zoom,scale:zoomMarkerScaleV285(zoom)}));
+ const screen=samples.map(row=>row.zoom*row.scale);
+ const increasing=screen.every((value,index)=>index===0||value>screen[index-1]);
+ return {version:VERSION285,samples,screenRatios:screen,increasing,observerReady:Boolean(zoomObserverV285),allPass:samples[0].scale===1&&increasing&&screen.at(-1)>2&&samples.at(-1).scale>=ZOOM_MARKER_CONFIG_V285.minScale};
+}
+
+function loop(){patchGeneralBattleV283();syncTrackRankingV284();syncZoomMarkerScaleV285();runtimeState.rafId=requestAnimationFrame(loop)}
+function boot(){installZoomMarkerObserverV285();if(!runtimeState.rafId)runtimeState.rafId=requestAnimationFrame(loop)}
 window.mwsF1PatchGeneralBattleV283=patchGeneralBattleV283;window.mwsF1QaGeneralOvertakeDefenceV283=qaGeneralOvertakeDefenceV283;window.__mwsF1RacingV283=VERSION283;
 window.mwsF1SyncTrackRankingV284=syncTrackRankingV284;window.mwsF1QaTrackRankingOverlayV284=qaTrackRankingOverlayV284;window.__mwsF1RacingV284=VERSION284;
+window.mwsF1ZoomMarkerScaleV285=zoomMarkerScaleV285;window.mwsF1SyncZoomMarkerScaleV285=syncZoomMarkerScaleV285;window.mwsF1QaZoomLinkedMarkerScaleV285=qaZoomLinkedMarkerScaleV285;window.__mwsF1RacingV285=VERSION285;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
