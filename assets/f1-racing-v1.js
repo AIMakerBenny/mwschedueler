@@ -2783,6 +2783,11 @@ function syncEmbeddedDriverMarkerV257(marker,vehicle){
     defs.appendChild(clip);
     marker.insertBefore(defs,marker.firstChild);
   }
+  if(!marker.querySelector('.car-pass-flash-halo-v257')){
+    const passHalo=svgNodeV183('circle',{class:'car-pass-flash-halo-v257',cx:0,cy:0,r:15});
+    const ringAnchor=marker.querySelector('.car-ring');
+    if(ringAnchor)marker.insertBefore(passHalo,ringAnchor);else marker.appendChild(passHalo);
+  }
   let profile=marker.querySelector('.car-profile-embedded-v257');
   if(!profile){
     profile=svgNodeV183('g',{class:'car-profile-embedded-v257','aria-hidden':'true'});
