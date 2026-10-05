@@ -206,6 +206,7 @@ jobs:
           node --check scripts/run-phase261-f1-immersive-fullscreen-audit.mjs
           node --check scripts/run-phase262-f1-race-momentum-audit.mjs
           node --check scripts/run-phase263-f1-race-narrative-engine-audit.mjs
+          node --check scripts/run-phase264-f1-live-overtake-cutin-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -2509,6 +2510,14 @@ jobs:
           grep -Fq 'const NARRATIVE_TEMPLATES_V263=Object.freeze(' /tmp/f1-racing-v1-phase263.js
           grep -Fq 'recentLimit:15' /tmp/f1-racing-v1-phase263.js
           retry_contains "$BASE/?phase263=$GITHUB_SHA" 'recovery=N1&phase=' > /tmp/index-phase263.html
+
+          echo '[phase264] F1 LIVE overtake comic cut-ins'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV264=VERSION264;' > /tmp/f1-racing-v1-phase264.js
+          node --check /tmp/f1-racing-v1-phase264.js
+          grep -Fq 'function enqueueLiveCutinV264(' /tmp/f1-racing-v1-phase264.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-live-cutin-v264.is-visible' > /tmp/f1-racing-v1-phase264.css
+          retry_contains "$BASE/?phase264=$GITHUB_SHA" 'id="f1RacingLiveCutinLayerV264"' > /tmp/index-phase264.html
+          grep -Fq 'recovery=N1&phase=' /tmp/index-phase264.html
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
