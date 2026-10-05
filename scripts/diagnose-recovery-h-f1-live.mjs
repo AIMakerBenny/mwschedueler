@@ -436,15 +436,21 @@ try{
     const firstProfileMarker257=document.querySelector('.f1-racing-race-vehicle-v189');
     const profileRing257=firstProfileMarker257?.querySelector('.car-ring');
     const profileImage257=firstProfileMarker257?.querySelector('.car-profile-image-v257');
+    const profileFallback257=firstProfileMarker257?.querySelector('.car-profile-fallback-bg-v257');
+    const profileInitials257=firstProfileMarker257?.querySelector('.car-profile-initials-v257');
     const profileConnector257=firstProfileMarker257?.querySelector('.car-profile-connector-v250');
     const profileCore257=firstProfileMarker257?.querySelector('.car-core');
-    const profileRect257=profileRing257?.getBoundingClientRect(),imageRect257=profileImage257?.getBoundingClientRect();
-    const profileCenters257=profileRect257&&imageRect257?{
-      dx:Math.abs((profileRect257.left+profileRect257.width/2)-(imageRect257.left+imageRect257.width/2)),
-      dy:Math.abs((profileRect257.top+profileRect257.height/2)-(imageRect257.top+imageRect257.height/2)),
-      ringW:profileRect257.width,imageW:imageRect257.width
+    const profileRect257=profileRing257?.getBoundingClientRect();
+    const imageRect257=profileImage257?.getBoundingClientRect();
+    const fallbackRect257=profileFallback257?.getBoundingClientRect();
+    const visibleProfileRect257=imageRect257&&imageRect257.width>0?imageRect257:fallbackRect257;
+    const profileCenters257=profileRect257&&visibleProfileRect257?{
+      dx:Math.abs((profileRect257.left+profileRect257.width/2)-(visibleProfileRect257.left+visibleProfileRect257.width/2)),
+      dy:Math.abs((profileRect257.top+profileRect257.height/2)-(visibleProfileRect257.top+visibleProfileRect257.height/2)),
+      ringW:profileRect257.width,visualW:visibleProfileRect257.width,
+      initials:String(profileInitials257?.textContent||'').trim()
     }:null;
-    assert(profileCenters257&&profileCenters257.ringW>0&&profileCenters257.imageW>0&&profileCenters257.dx<2&&profileCenters257.dy<2&&!profileConnector257&&!profileCore257,'Phase 257 embedded driver profile geometry invalid: '+JSON.stringify(profileCenters257));
+    assert(profileCenters257&&profileCenters257.ringW>0&&profileCenters257.visualW>0&&profileCenters257.dx<2&&profileCenters257.dy<2&&!profileConnector257&&!profileCore257,'Phase 257 embedded driver profile geometry invalid: '+JSON.stringify(profileCenters257));
     const markerNumberTexts=[...document.querySelectorAll('.f1-racing-race-vehicle-v189 .car-number-v232')].map(node=>String(node.textContent||'').trim());
     assert(markerNumberTexts.length>=2&&new Set(markerNumberTexts).size===markerNumberTexts.length,'Phase 232 driver marker numbers are not unique: '+JSON.stringify(markerNumberTexts));
     const labelCollisionQa=window.mwsF1QaDriverLabelCollisionV228?.();
