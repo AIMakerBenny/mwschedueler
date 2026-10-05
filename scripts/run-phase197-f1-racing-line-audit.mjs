@@ -30,9 +30,10 @@ export function runPhase197F1RacingLineAudit(){
   ])if(!racing.includes(token))issues.push('Phase 197 racing line runtime missing: '+token);
 
   const phase258=racing.includes("const VERSION258='phase258-visual-lateral-smoothing';");
+  const phase271=racing.includes("const VERSION271='phase271-track-boundary-wall-riding-fix';");
   const renderTokens=phase258?[
     'function physicalLateralOffsetV258(vehicle){',
-    'return lineOffsetMetersV197(vehicle)+(Number(vehicle?.incidentLateralOffsetMeters)||0);',
+    ...(phase271?['const boundary=trackBoundaryStateV271(vehicle,raw);','return boundary.clamped;']:['return lineOffsetMetersV197(vehicle)+(Number(vehicle?.incidentLateralOffsetMeters)||0);']),
     'const lateralStateV258=updateVisualLateralOffsetV258(vehicle,frameMs,false);',
     'const point=raceLinePointV197(path,vehicle.progress,lateralStateV258.visual);'
   ]:[
