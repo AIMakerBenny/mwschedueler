@@ -8,7 +8,7 @@ export function runPhase271F1TrackBoundaryAudit(){
   const live=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
   const phases=[...index.matchAll(/recovery=N1&phase=(\d+)/g)].map(m=>Number(m[1]));
   if(!phases.some(v=>v>=271))issues.push('Phase 271 asset cache missing');
-  if(!index.includes('f1-track-geometry-v2.js?v=1.0.0-phase195-speed-profile&recovery=L1&phase=270'))issues.push('Phase 270 geometry cache bust missing');
+  if(!index.includes('f1-track-geometry-v2.js?v=1.0.0-phase195-speed-profile&recovery=L1&phase=270&exitrecovery=3'))issues.push('Phase 270 geometry cache bust missing');
 
   for(const token of [
     "const VERSION271='phase271-track-boundary-wall-riding-fix';",
