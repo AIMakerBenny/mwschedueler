@@ -18,7 +18,7 @@ const MAJOKU_RING=freezeTrack({
   archetype:'종합 밸런스형',
   country:'Mawang',
   viewBox:[0,0,1000,600],
-  path:'M 205 430 C 125 385 105 305 145 225 C 195 125 320 95 410 145 C 485 188 545 175 610 115 C 690 42 830 70 875 165 C 925 270 855 355 760 370 C 675 383 645 425 605 490 C 558 566 438 555 385 500 C 330 444 270 468 205 430 Z',
+  path:'M 170 395 C 120 350 120 250 175 185 C 240 110 350 105 425 155 C 490 198 555 190 620 125 C 700 48 825 72 870 170 C 910 260 865 345 785 382 C 710 418 665 405 620 470 C 565 548 455 535 395 480 C 330 420 245 452 170 395 Z',
   lengthMeters:5280,
   startFinish:0,
   geometry:{sampleMeters:20,cornerCurvatureThreshold:0.0018,minCornerLengthMeters:40,mergeGapMeters:20,trackWidthMeters:14,visualTrackWidthSvg:26,racingLineMarginMeters:1.5,referenceBrakeDecelMps2:20,approachLeadMeters:80,apexWindowMeters:30,referenceAccelMps2:8.5,maxStraightKph:335,speedProfileIterations:6,direction:'clockwise'},
@@ -45,7 +45,7 @@ const CASTLE_STREET_CIRCUIT=freezeTrack({
   archetype:'테크니컬 스트리트형',
   country:'Mawang',
   viewBox:[0,0,1000,600],
-  path:'M 155 410 C 105 350 112 245 180 190 C 235 145 305 155 350 205 L 430 295 C 470 338 525 330 555 282 L 635 150 C 675 88 780 82 835 135 C 902 200 885 300 825 350 C 770 397 700 390 650 430 L 555 510 C 485 565 365 550 310 485 C 268 438 220 454 155 410 Z',
+  path:'M 145 405 C 112 348 118 262 170 210 C 225 155 300 160 350 208 C 395 250 435 312 485 320 C 535 328 565 270 600 205 C 640 130 690 88 770 100 C 850 112 900 178 888 255 C 878 325 820 365 755 383 C 690 402 650 455 585 495 C 510 542 405 535 345 478 C 285 422 210 455 145 405 Z',
   lengthMeters:4675,
   startFinish:0,
   geometry:{sampleMeters:18,cornerCurvatureThreshold:0.0020,minCornerLengthMeters:32,mergeGapMeters:18,trackWidthMeters:12,visualTrackWidthSvg:24,racingLineMarginMeters:1.3,referenceBrakeDecelMps2:20,approachLeadMeters:72,apexWindowMeters:26,referenceAccelMps2:8.2,maxStraightKph:318,speedProfileIterations:6,direction:'clockwise'},
@@ -72,7 +72,7 @@ const BLUE_COAST_SPEEDWAY=freezeTrack({
   archetype:'고속 스피드형',
   country:'Mawang',
   viewBox:[0,0,1000,600],
-  path:'M 145 335 C 145 195 265 105 430 105 C 560 105 625 145 700 128 C 808 103 895 175 895 285 C 895 410 790 475 680 460 C 590 448 535 505 430 505 C 265 505 145 450 145 335 Z',
+  path:'M 135 330 C 135 200 245 118 390 105 C 520 93 585 122 675 115 C 795 105 890 175 900 280 C 910 392 825 455 720 458 C 630 462 575 438 520 475 C 450 522 335 518 245 475 C 165 435 135 390 135 330 Z',
   lengthMeters:6120,
   startFinish:0,
   geometry:{sampleMeters:22,cornerCurvatureThreshold:0.00135,minCornerLengthMeters:48,mergeGapMeters:24,trackWidthMeters:15,visualTrackWidthSvg:28,racingLineMarginMeters:1.6,referenceBrakeDecelMps2:20,approachLeadMeters:88,apexWindowMeters:34,referenceAccelMps2:8.7,maxStraightKph:348,speedProfileIterations:7,direction:'clockwise'},
@@ -99,7 +99,7 @@ const MAWANG_SPEED_PARK=freezeTrack({
   archetype:'초고속 직선·시케인형',
   country:'Mawang',
   viewBox:[0,0,1000,600],
-  path:'M 120 330 L 390 330 L 445 285 L 500 335 L 555 285 L 620 330 L 875 330 C 925 330 930 245 875 220 L 715 145 C 650 115 590 125 540 170 L 465 235 L 365 205 L 240 150 C 170 120 110 175 120 245 L 145 285 C 155 305 145 325 120 330 Z',
+  path:'M 120 335 C 225 335 320 335 410 332 C 438 330 454 315 466 295 C 478 275 492 274 505 296 C 518 318 535 330 565 330 C 680 330 790 330 885 325 C 925 323 942 280 925 245 C 908 210 870 190 820 170 C 745 140 690 110 620 125 C 570 136 530 175 488 210 C 445 245 405 245 355 220 C 300 192 245 160 185 175 C 128 190 105 236 116 278 C 122 302 128 320 120 335 Z',
   lengthMeters:5920,
   startFinish:0,
   geometry:{sampleMeters:20,cornerCurvatureThreshold:0.00145,minCornerLengthMeters:34,mergeGapMeters:20,trackWidthMeters:14,visualTrackWidthSvg:26,racingLineMarginMeters:1.5,referenceBrakeDecelMps2:21,approachLeadMeters:92,apexWindowMeters:30,referenceAccelMps2:8.9,maxStraightKph:355,speedProfileIterations:7,direction:'clockwise'},
@@ -126,7 +126,7 @@ const ROYAL_STREET_CIRCUIT=freezeTrack({
   archetype:'초저속·연속 코너 스트리트형',
   country:'Mawang',
   viewBox:[0,0,1000,600],
-  path:'M 170 480 L 170 360 L 245 325 L 190 270 L 260 205 L 350 235 L 390 155 L 500 170 L 535 250 L 620 215 L 690 275 L 645 345 L 735 390 L 820 350 L 850 430 L 780 500 L 650 480 L 585 525 L 455 500 L 360 535 L 265 500 L 170 480 Z',
+  path:'M 155 470 C 150 420 150 372 182 340 C 215 308 225 290 205 266 C 185 242 195 214 225 192 C 265 162 315 176 352 205 C 382 228 405 208 420 170 C 438 126 500 120 535 150 C 565 176 565 220 585 242 C 605 264 637 252 665 230 C 700 203 748 212 770 248 C 795 290 770 330 740 355 C 710 380 728 410 778 426 C 824 442 842 478 815 505 C 785 535 720 520 675 493 C 632 468 605 495 565 515 C 510 542 445 522 405 500 C 360 475 320 510 270 505 C 220 500 170 495 155 470 Z',
   lengthMeters:3480,
   startFinish:0,
   geometry:{sampleMeters:14,cornerCurvatureThreshold:0.0023,minCornerLengthMeters:24,mergeGapMeters:14,trackWidthMeters:10,visualTrackWidthSvg:20,racingLineMarginMeters:1.0,referenceBrakeDecelMps2:19,approachLeadMeters:55,apexWindowMeters:20,referenceAccelMps2:7.6,maxStraightKph:286,speedProfileIterations:7,direction:'clockwise'},
@@ -154,7 +154,7 @@ const INFINITY_EIGHT_CIRCUIT=freezeTrack({
   archetype:'8자 교차·복합 코너형',
   country:'Mawang',
   viewBox:[0,0,1000,600],
-  path:'M 120 300 C 150 115 350 95 500 300 C 650 505 850 485 885 300 C 850 115 650 95 500 300 C 350 505 150 485 120 300 Z',
+  path:'M 120 300 C 145 155 270 100 385 150 C 438 173 470 228 500 285 C 535 218 575 160 635 135 C 750 88 865 150 890 285 C 910 405 820 490 705 475 C 610 462 555 390 500 315 C 445 392 390 468 295 482 C 180 498 95 420 120 300 Z',
   lengthMeters:5780,
   startFinish:0,
   geometry:{sampleMeters:18,cornerCurvatureThreshold:0.0017,minCornerLengthMeters:36,mergeGapMeters:18,trackWidthMeters:13,visualTrackWidthSvg:24,racingLineMarginMeters:1.35,referenceBrakeDecelMps2:20,approachLeadMeters:78,apexWindowMeters:28,referenceAccelMps2:8.4,maxStraightKph:332,speedProfileIterations:7,direction:'clockwise'},
@@ -180,7 +180,7 @@ const HIGHLAND_FLOW_RING=freezeTrack({
   archetype:'고속 연속 코너 플로잉형',
   country:'Mawang',
   viewBox:[0,0,1000,600],
-  path:'M 135 420 C 95 310 155 175 290 150 C 390 130 430 215 500 220 C 570 225 610 115 735 135 C 875 160 920 280 850 370 C 785 455 685 410 620 455 C 545 510 455 535 350 490 C 265 455 190 500 135 420 Z',
+  path:'M 140 420 C 105 330 135 215 230 165 C 315 120 400 150 450 210 C 490 258 530 250 565 195 C 610 125 690 100 770 135 C 855 170 905 255 875 335 C 850 400 795 430 730 420 C 675 412 645 435 610 475 C 560 532 485 545 410 510 C 340 478 270 465 215 485 C 180 498 155 470 140 420 Z',
   lengthMeters:5885,
   startFinish:0,
   geometry:{sampleMeters:19,cornerCurvatureThreshold:0.0015,minCornerLengthMeters:44,mergeGapMeters:21,trackWidthMeters:14,visualTrackWidthSvg:27,racingLineMarginMeters:1.55,referenceBrakeDecelMps2:20,approachLeadMeters:85,apexWindowMeters:32,referenceAccelMps2:8.7,maxStraightKph:342,speedProfileIterations:7,direction:'clockwise'},
@@ -255,4 +255,5 @@ root.__mwsF1TrackSpeedProfileMetaV195='backward-brake-forward-accel-v1';
 root.__mwsF1TrackRacingLineMetaV197='track-width-line-offset-v1';
 root.__mwsF1TrackMarkersV211='full-track-markers-v1';
 root.__mwsF1TrackCatalogV220='seven-diverse-tracks-v1';
+root.__mwsF1TrackDesignV243='flowing-circuit-redesign-v1';
 })(typeof window!=='undefined'?window:globalThis);
