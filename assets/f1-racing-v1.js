@@ -98,6 +98,7 @@ const VERSION268='phase268-auto-follow-wheel-zoom';
 const VERSION269='phase269-lateral-velocity-acceleration-smoothing';
 const VERSION270='phase270-f1-corner-line-exit-acceleration';
 const VERSION271='phase271-track-boundary-wall-riding-fix';
+const VERSION272='phase272-random-seeded-starting-grid';
 const TRACK_BOUNDARY_V271=Object.freeze({
   carHalfWidthMeters:.85,safetyMarginMeters:.20,edgeStartRatio:.90,
   edgeMinSpeedFactor:.90,offTrackSpeedFactor:.76
@@ -974,7 +975,7 @@ function buildRaceSnapshotV187(){
   const drivers=draft.selectedDriverIds.map((id,index)=>cloneDriverForRaceV187(byId.get(String(id)),index)).filter(row=>row.contactId);
   const track=window.mwsGetF1TrackV182?.(draft.selectedTrackId);
   if(drivers.length<2||!track)return null;
-  return Object.freeze({
+  const baseSnapshot=Object.freeze({
     createdAt:new Date().toISOString(),
     trackId:String(track.id),
     totalLaps:draft.totalLaps,
@@ -995,6 +996,7 @@ function buildRaceSnapshotV187(){
     }),
     drivers:Object.freeze(drivers)
   });
+  return snapshotWithStartingGridV272(baseSnapshot,0);
 }
 function syncSetupActionV187(){
   const button=document.getElementById('f1RacingProceedV187');
@@ -1020,6 +1022,7 @@ function populateGridRecoveryM(snapshot){
   if(track)track.textContent=String(snapshot?.track?.name||'TRACK').toUpperCase();
   if(drivers)drivers.textContent='드라이버 '+(snapshot?.drivers?.length||0)+'명';
   if(laps)laps.textContent=(Number(snapshot?.totalLaps)||DEFAULT_TOTAL_LAPS_V190)+'랩';
+  renderStartingGridV272(snapshot);
 }
 function startRaceFromSetupV187(){
   if(f1ScreenStateV185!=='SETUP')return false;
@@ -1070,6 +1073,11 @@ function bindManualRaceStartRecoveryM(){
     start.dataset.f1ManualStartBound='1';
     start.addEventListener('click',confirmRaceStartRecoveryM);
   }
+  const shuffle=document.getElementById('f1RacingGridShuffleV272');
+  if(shuffle&&!shuffle.dataset.f1GridShuffleBound){
+    shuffle.dataset.f1GridShuffleBound='1';
+    shuffle.addEventListener('click',reshuffleStartingGridV272);
+  }
 }
 
 function cancelRaceToSetupRecoveryC(){
@@ -1110,6 +1118,107 @@ function hashDriverV189(value=''){
   for(const ch of String(value)){hash^=ch.charCodeAt(0);hash=Math.imul(hash,16777619)}
   return hash>>>0;
 }
+
+function gridSeedV272(snapshot,round=0){
+  return hashDriverV189([
+    String(snapshot?.createdAt||'race'),
+    String(snapshot?.trackId||snapshot?.track?.id||'track'),
+    (snapshot?.drivers||[]).map(driver=>String(driver?.contactId||driver?.name||'')).join(','),
+    String(Math.max(0,Number(round)||0))
+  ].join('|'))||1;
+}
+function seededShuffleDriversV272(snapshot,round=0){
+  const source=(snapshot?.drivers||[]).map(driver=>({...driver}));
+  if(source.length<2)return source.map((driver,index)=>Object.freeze({...driver,gridPosition:index+1}));
+  let state=gridSeedV272(snapshot,round)>>>0;
+  const random=()=>{
+    state^=state<<13;state^=state>>>17;state^=state<<5;state>>>=0;
+    return state/4294967296;
+  };
+  const rows=source.slice();
+  for(let i=rows.length-1;i>0;i--){
+    const j=Math.floor(random()*(i+1));
+    [rows[i],rows[j]]=[rows[j],rows[i]];
+  }
+  const original=source.map(driver=>String(driver.contactId)).join('|');
+  if(rows.map(driver=>String(driver.contactId)).join('|')===original){
+    const shift=1+(gridSeedV272(snapshot,round)%Math.max(1,rows.length-1));
+    rows.push(...rows.splice(0,shift));
+  }
+  return rows.map((driver,index)=>Object.freeze({...driver,gridPosition:index+1}));
+}
+function snapshotWithStartingGridV272(snapshot,round=0,previousOrder=[]){
+  const nextDrivers=seededShuffleDriversV272(snapshot,round).slice();
+  const before=(previousOrder||[]).map(String).join('|');
+  if(nextDrivers.length>1&&before&&nextDrivers.map(driver=>String(driver.contactId)).join('|')===before){
+    nextDrivers.push(nextDrivers.shift());
+    for(let i=0;i<nextDrivers.length;i++)nextDrivers[i]=Object.freeze({...nextDrivers[i],gridPosition:i+1});
+  }
+  return Object.freeze({
+    ...snapshot,
+    gridSeedV272:gridSeedV272(snapshot,round),
+    gridShuffleRoundV272:Math.max(0,Number(round)||0),
+    drivers:Object.freeze(nextDrivers)
+  });
+}
+function gridStartOffsetV272(index,count){
+  return -(Math.max(0,Number(index)||0)*Math.min(.0045,.045/Math.max(1,Number(count)||1)));
+}
+function gridAvatarMarkupV272(driver){
+  const name=String(driver?.name||'Driver'),src=String(driver?.image||'').trim();
+  if(src)return '<img class="f1-racing-grid-avatar-v272" loading="lazy" decoding="async" src="'+escapeHtml(src)+'" alt="'+escapeHtml(name)+'">';
+  return '<span class="f1-racing-grid-avatar-v272 fallback">'+escapeHtml(initials(name))+'</span>';
+}
+function renderStartingGridV272(snapshot=activeRaceSnapshotV187){
+  const list=document.getElementById('f1RacingGridListV272');
+  const round=document.getElementById('f1RacingGridShuffleRoundV272');
+  if(!list)return false;
+  const drivers=(snapshot?.drivers||[]).slice().sort((a,b)=>(Number(a.gridPosition)||999)-(Number(b.gridPosition)||999));
+  list.innerHTML=drivers.map((driver,index)=>{
+    const position=Number(driver.gridPosition)||index+1;
+    const podium=position<=3?' top-three':'';
+    return '<article class="f1-racing-grid-card-v272'+podium+'" data-f1-grid-position="'+position+'" data-f1-grid-driver-id="'+escapeHtml(driver.contactId)+'">'+
+      '<span class="f1-racing-grid-position-v272">P'+String(position).padStart(2,'0')+'</span>'+
+      gridAvatarMarkupV272(driver)+
+      '<span class="f1-racing-grid-driver-v272"><strong>'+escapeHtml(driver.name)+'</strong><small>START '+String(position).padStart(2,'0')+'</small></span>'+
+      '</article>';
+  }).join('');
+  if(round)round.textContent='셔플 '+(Number(snapshot?.gridShuffleRoundV272)||0)+'회';
+  return drivers.length>0;
+}
+function reshuffleStartingGridV272(){
+  if(f1ScreenStateV185!=='GRID'||raceMotionV189.running||!activeRaceSnapshotV187)return false;
+  const previousOrder=(activeRaceSnapshotV187.drivers||[]).map(driver=>String(driver.contactId));
+  const nextRound=(Number(activeRaceSnapshotV187.gridShuffleRoundV272)||0)+1;
+  activeRaceSnapshotV187=snapshotWithStartingGridV272(activeRaceSnapshotV187,nextRound,previousOrder);
+  populateGridRecoveryM(activeRaceSnapshotV187);
+  return true;
+}
+function qaRandomStartingGridV272(){
+  const sample=Object.freeze({
+    createdAt:'2026-10-06T00:00:00.000Z',trackId:'qa-track',
+    drivers:Object.freeze([
+      Object.freeze({contactId:'a',name:'A',gridPosition:1}),
+      Object.freeze({contactId:'b',name:'B',gridPosition:2}),
+      Object.freeze({contactId:'c',name:'C',gridPosition:3}),
+      Object.freeze({contactId:'d',name:'D',gridPosition:4})
+    ])
+  });
+  const first=snapshotWithStartingGridV272(sample,0);
+  const repeat=snapshotWithStartingGridV272(sample,0);
+  const second=snapshotWithStartingGridV272(sample,1,first.drivers.map(row=>row.contactId));
+  const firstIds=first.drivers.map(row=>row.contactId),repeatIds=repeat.drivers.map(row=>row.contactId),secondIds=second.drivers.map(row=>row.contactId);
+  const positions=first.drivers.map(row=>Number(row.gridPosition));
+  const offsets=first.drivers.map((row,index)=>gridStartOffsetV272(index,first.drivers.length));
+  const deterministic=JSON.stringify(firstIds)===JSON.stringify(repeatIds);
+  const permutation=[...firstIds].sort().join('|')==='a|b|c|d';
+  const roundChanges=JSON.stringify(firstIds)!==JSON.stringify(secondIds);
+  const positionSequence=positions.every((value,index)=>value===index+1);
+  const engineOffsets=offsets[0]===0&&offsets.slice(1).every((value,index)=>value<offsets[index]);
+  const domReady=Boolean(document.getElementById('f1RacingGridListV272')&&document.getElementById('f1RacingGridShuffleV272'));
+  return {firstIds,secondIds,deterministic,permutation,roundChanges,positionSequence,engineOffsets,domReady,allPass:deterministic&&permutation&&roundChanges&&positionSequence&&engineOffsets&&domReady};
+}
+
 function normalizedProgressV190(value){
   return ((Number(value)||0)%1+1)%1;
 }
@@ -3276,15 +3385,16 @@ function qaRaceMomentumV262(){
 }
 
 function createRaceVehiclesV189(snapshot){
-  const count=Math.max(1,snapshot?.drivers?.length||0);
-  return (snapshot?.drivers||[]).map(function(driver,index){
+  const orderedDrivers=(snapshot?.drivers||[]).slice().sort((a,b)=>(Number(a.gridPosition)||999)-(Number(b.gridPosition)||999));
+  const count=Math.max(1,orderedDrivers.length||0);
+  return orderedDrivers.map(function(driver,index){
     const hash=hashDriverV189(driver.contactId||driver.name);
     const driverProfile=createDriverProfileV200(driver,snapshot);
     const raceSeed=hashDriverV189(String(driver.contactId||driver.name)+'|'+String(snapshot?.createdAt||'race')+'|pace-noise');
     const momentumSeed=hashDriverV189(String(raceMomentumSeedV262(snapshot))+'|'+String(driver.contactId||driver.name)+'|momentum')||1;
-    const startOffset=-(index*Math.min(.0045,.045/count));
+    const startOffset=gridStartOffsetV272(index,count);
     const vehicle={
-      id:String(driver.contactId),driver,startOffset,progress:normalizedProgressV190(startOffset),travel:0,raceProgress:startOffset,raceDistanceMeters:0,currentLap:1,completedLaps:0,sector:'GRID',
+      id:String(driver.contactId),driver,gridPosition:Number(driver.gridPosition)||index+1,startOffset,progress:normalizedProgressV190(startOffset),travel:0,raceProgress:startOffset,raceDistanceMeters:0,currentLap:1,completedLaps:0,sector:'GRID',
       lapDurationMs:21000,lapTimingArmed:startOffset>=0,lapStartSimMs:startOffset>=0?0:null,lastLapMs:0,bestLapMs:0,lapTimesMs:[],
       sectorTimesMs:{S1:0,S2:0,S3:0},sectorStartSimMs:startOffset>=0?0:null,timingSector:startOffset>=0?'S1':'GRID',timedCompletedLaps:0,
       speedKph:0,targetSpeedKph:0,throttle:0,brake:0,accelerationMps2:0,gear:1,rpm:8500,
@@ -6488,6 +6598,10 @@ window.mwsF1BuildRaceSnapshotV187=buildRaceSnapshotV187;
 window.mwsF1StartRaceFromSetupV187=startRaceFromSetupV187;
 window.mwsF1ConfirmRaceStartRecoveryM=confirmRaceStartRecoveryM;
 window.mwsF1GetActiveRaceSnapshotV187=getActiveRaceSnapshotV187;
+window.mwsF1ShuffleStartingGridV272=reshuffleStartingGridV272;
+window.mwsF1RenderStartingGridV272=renderStartingGridV272;
+window.mwsF1GridStartOffsetV272=gridStartOffsetV272;
+window.mwsF1QaRandomStartingGridV272=qaRandomStartingGridV272;
 window.mwsF1CancelRaceRecoveryC=cancelRaceToSetupRecoveryC;
 window.mwsF1RestoreSettingsRecoveryD=restoreF1SettingsRecoveryD;
 window.mwsF1PersistSettingsRecoveryD=persistF1SettingsRecoveryD;
@@ -6803,6 +6917,7 @@ window.__mwsF1RacingV270=VERSION270;
 window.mwsF1QaTrackBoundaryV271=qaTrackBoundaryV271;
 window.mwsF1TrackBoundaryStateV271=trackBoundaryStateV271;
 window.__mwsF1RacingV271=VERSION271;
+window.__mwsF1RacingV272=VERSION272;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
