@@ -1011,7 +1011,7 @@ jobs:
           retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '#f1RacingRaceControlsV192 button{' > /tmp/f1-racing-v1-phase192.css
           node --check /tmp/f1-racing-v1-phase192.js
           grep -Fq 'function simulateRaceStepV192(stepMs){' /tmp/f1-racing-v1-phase192.js
-          grep -Fq 'simClockV192.accumulatorMs+=delta*simClockV192.timeScale;' /tmp/f1-racing-v1-phase192.js
+          (grep -Fq 'simClockV192.accumulatorMs+=delta*simClockV192.timeScale;' /tmp/f1-racing-v1-phase192.js || grep -Fq 'simClockV192.accumulatorMs+=delta*simulationPlaybackRateV247();' /tmp/f1-racing-v1-phase192.js)
           grep -Fq 'window.mwsF1SetSimulationTimeScaleV192=setSimulationTimeScaleV192;' /tmp/f1-racing-v1-phase192.js
           echo '[phase193] F1 track geometry sampling and curvature'
           grep -Fq 'assets/f1-track-geometry-v2.js?v=' /tmp/index.html
