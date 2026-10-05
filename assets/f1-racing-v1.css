@@ -283,15 +283,14 @@
 .f1-racing-race-vehicle-v189 .car-core{fill:var(--f1-driver-color,#60a5fa)}
 .f1-racing-race-vehicle-v189 .car-number-v232{fill:#fff;font:900 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#020305;stroke-width:1.5;dominant-baseline:middle}
 .f1-racing-race-vehicle-v189 .car-label{fill:#f8fafc;font:900 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#020305;stroke-width:4;stroke-linejoin:round}
-/* Phase 250: profile portrait tethered above each live vehicle marker */
-.f1-racing-race-vehicle-v189 .car-profile-v250{pointer-events:none}
-.f1-racing-race-vehicle-v189 .car-profile-connector-v250{stroke:var(--f1-driver-color,#94a3b8);stroke-width:2;stroke-linecap:round;opacity:.82}
-.f1-racing-race-vehicle-v189 .car-profile-halo-v250{fill:var(--f1-driver-color,#60a5fa);fill-opacity:.16;stroke:none}
-.f1-racing-race-vehicle-v189 .car-profile-ring-v250{fill:#0b1018;stroke:var(--f1-driver-color,#e2e8f0);stroke-width:2.5}
-.f1-racing-race-vehicle-v189 .car-profile-image-v250{pointer-events:none}
-.f1-racing-race-vehicle-v189 .car-profile-initials-v250{fill:#f8fafc;font:900 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#020305;stroke-width:1.2;dominant-baseline:middle}
-.f1-racing-race-vehicle-v189.leader .car-profile-ring-v250{stroke-width:3.5;filter:drop-shadow(0 0 3px var(--f1-driver-color,#e8cf76))}
-
+/* Phase 257: driver portrait embedded directly inside live vehicle marker */
+.f1-racing-race-vehicle-v189 .car-profile-embedded-v257{pointer-events:none}
+.f1-racing-race-vehicle-v189 .car-profile-image-v257{pointer-events:none}
+.f1-racing-race-vehicle-v189 .car-profile-fallback-bg-v257{fill:#0b1018}
+.f1-racing-race-vehicle-v189 .car-profile-initials-v257{fill:#f8fafc;font:900 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#020305;stroke-width:1.2;dominant-baseline:middle}
+.f1-racing-race-vehicle-v189 .car-number-badge-v257{fill:#05080d;stroke:var(--f1-driver-color,#94a3b8);stroke-width:1.3}
+.f1-racing-race-vehicle-v189 .car-number-v232{font-size:5.6px;stroke-width:1.1}
+.f1-racing-race-vehicle-v189.leader .car-ring{stroke-width:4;filter:drop-shadow(0 0 4px var(--f1-driver-color,#e8cf76))}
 /* Phase 190: race distance, lap and sector telemetry */
 .f1-racing-timing-row-v188 .driver em[data-f1-current-sector]{flex:0 0 auto;margin-left:auto;padding:2px 5px;border:1px solid #2d3745;border-radius:4px;color:#8ea0b8;background:#0b1017;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-style:normal;letter-spacing:.06em}
 .f1-racing-timing-row-v188[data-sector="S1"] .driver em[data-f1-current-sector]{color:#9ac5ff}
@@ -644,8 +643,8 @@
 @keyframes f1PassFlashV252{0%{opacity:.25;transform:scale(.9)}45%{opacity:1;transform:scale(1.32)}100%{opacity:.38;transform:scale(1)}}
 .f1-racing-race-vehicle-v189.battle-pulse-v252 .car-halo{transform-box:fill-box;transform-origin:center;animation:f1BattlePulseV252 .78s ease-in-out infinite}
 .f1-racing-race-vehicle-v189.overtake-attempt-v252 .car-ring{stroke:#fff3c4;animation:f1OvertakePulseV252 .7s ease-in-out infinite}
-.f1-racing-race-vehicle-v189.pass-flash-v252 .car-profile-halo-v250{transform-box:fill-box;transform-origin:center;animation:f1PassFlashV252 .6s ease-out infinite}
-.f1-racing-race-vehicle-v189.fastest-lap-v252 .car-profile-ring-v250{stroke:#c084fc;filter:drop-shadow(0 0 5px rgba(192,132,252,.9))}
+.f1-racing-race-vehicle-v189.pass-flash-v252 .car-halo{transform-box:fill-box;transform-origin:center;animation:f1PassFlashV252 .6s ease-out infinite}
+.f1-racing-race-vehicle-v189.fastest-lap-v252 .car-ring{stroke:#c084fc;filter:drop-shadow(0 0 5px rgba(192,132,252,.9))}
 .f1-racing-timing-row-v188 .pos{display:grid;place-items:center;align-content:center;line-height:1.05}
 .f1-racing-timing-row-v188 .pos::after{content:attr(data-position-delta-v252);display:block;min-height:8px;margin-top:1px;font:900 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:0}
 .f1-racing-timing-row-v188 .pos[data-position-trend-v252="up"]::after{color:#70d99a}
@@ -659,7 +658,7 @@
 @media(prefers-reduced-motion:reduce){
   .f1-racing-race-vehicle-v189.battle-pulse-v252 .car-halo,
   .f1-racing-race-vehicle-v189.overtake-attempt-v252 .car-ring,
-  .f1-racing-race-vehicle-v189.pass-flash-v252 .car-profile-halo-v250,
+  .f1-racing-race-vehicle-v189.pass-flash-v252 .car-halo,
   .f1-racing-timing-row-v188[data-battle-visual-v252="1"] .f1-racing-driver-color-v251{animation:none}
 }
 
