@@ -683,3 +683,13 @@
 .f1-racing-race-vehicle-v189.top-three-v254 .car-position-box-v254{stroke-width:2}
 .f1-racing-race-vehicle-v189.leader-position-v254 .car-position-box-v254{fill:#211b08;stroke:#e8cf76}
 .f1-racing-race-vehicle-v189.leader-position-v254 .car-position-text-v254{fill:#ffe98c}
+
+
+/* Phase 255: compact race headline summary */
+.f1-racing-race-headline-v255{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:6px 0 8px}
+.f1-racing-race-headline-v255>span{display:flex;align-items:baseline;justify-content:center;gap:5px;min-width:0;padding:5px 8px;border:1px solid #252f3d;border-radius:7px;background:#0a0f15;color:#738196;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.05em;white-space:nowrap}
+.f1-racing-race-headline-v255 b{overflow:hidden;text-overflow:ellipsis;color:#e5edf7;font-size:10px;letter-spacing:0}
+.f1-racing-race-headline-v255 small{overflow:hidden;text-overflow:ellipsis;color:#8c9cb0;font:700 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-race-headline-v255 [data-f1-headline-fastest]{color:#d8b4fe}
+.f1-racing-race-headline-v255 [data-f1-headline-battles]:not(:empty){color:#ffd98a}
+@media(max-width:900px){.f1-racing-race-headline-v255{grid-template-columns:repeat(2,minmax(0,1fr))}}
