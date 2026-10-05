@@ -292,6 +292,7 @@ import {runPhase293F1ProductionAuditGate} from './run-phase293-f1-production-aud
 import {runPhase294F1RecoveryHFinalOverlayAudit} from './run-phase294-f1-recovery-h-final-overlay-audit.mjs';
 import {runPhase295F1FinalRegressionGate} from './run-phase295-f1-final-regression-gate.mjs';
 import {runPhase296F1FutureSafeCacheAudit} from './run-phase296-f1-future-safe-cache-audit.mjs';
+import {runPhase297F1LateChainRecheckAudit} from './run-phase297-f1-late-chain-recheck-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2641,5 +2642,6 @@ export function runPhase293FullIntegrationAudit(){const previous=runPhase292Full
 export function runPhase294FullIntegrationAudit(){const previous=runPhase293FullIntegrationAudit(),current=runPhase294F1RecoveryHFinalOverlayAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 294: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 294: '+x)];return {phase:294,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase295FullIntegrationAudit(){const previous=runPhase294FullIntegrationAudit(),current=runPhase295F1FinalRegressionGate();const issues=[...previous.issues,...current.issues.map(x=>'Phase 295: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 295: '+x)];return {phase:295,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase296FullIntegrationAudit(){const previous=runPhase295FullIntegrationAudit(),current=runPhase296F1FutureSafeCacheAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 296: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 296: '+x)];return {phase:296,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase296FullIntegrationAudit();}
+export function runPhase297FullIntegrationAudit(){const previous=runPhase296FullIntegrationAudit(),current=runPhase297F1LateChainRecheckAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 297: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 297: '+x)];return {phase:297,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase297FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
