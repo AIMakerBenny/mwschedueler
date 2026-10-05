@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase258Ready=false;
+  let phase259Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase258Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV258==='phase258-visual-lateral-smoothing'","Phase 258 runtime readiness"));
-    if(phase258Ready)break;
+    phase259Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV259==='phase259-workspace-user-default-persistence'","Phase 259 runtime readiness"));
+    if(phase259Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v258=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v259=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase258Ready)throw new Error('Phase 258 runtime did not propagate to Recovery H browser');
+  if(!phase259Ready)throw new Error('Phase 259 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -455,6 +455,8 @@ try{
     assert(lateralSmoothingQa258?.allPass===true&&lateralSmoothingQa258?.smoothStart===true&&lateralSmoothingQa258?.converging===true&&lateralSmoothingQa258?.physicsIsolated===true,'Phase 258 visual lateral smoothing QA failed: '+JSON.stringify(lateralSmoothingQa258));
     const lateralDomQa258=window.mwsF1QaVisualLateralDomV258?.();
     assert(lateralDomQa258?.allPass===true&&String(lateralDomQa258?.startTransform||'')!==String(lateralDomQa258?.firstTransform||'')&&String(lateralDomQa258?.firstTransform||'')!==String(lateralDomQa258?.laterTransform||''),'Phase 258 visual lateral DOM QA failed: '+JSON.stringify(lateralDomQa258));
+    const workspaceUserDefaultQa259=window.mwsF1QaWorkspaceUserDefaultPersistenceV259?.();
+    assert(workspaceUserDefaultQa259?.allPass===true&&workspaceUserDefaultQa259?.persistedSignature===workspaceUserDefaultQa259?.expected&&workspaceUserDefaultQa259?.preservedAfterOtherSetting===workspaceUserDefaultQa259?.expected&&workspaceUserDefaultQa259?.restoredSignature===workspaceUserDefaultQa259?.expected,'Phase 259 workspace user-default persistence QA failed: '+JSON.stringify(workspaceUserDefaultQa259));
     const markerNumberTexts=[...document.querySelectorAll('.f1-racing-race-vehicle-v189 .car-number-v232')].map(node=>String(node.textContent||'').trim());
     assert(markerNumberTexts.length>=2&&new Set(markerNumberTexts).size===markerNumberTexts.length,'Phase 232 driver marker numbers are not unique: '+JSON.stringify(markerNumberTexts));
     const labelCollisionQa=window.mwsF1QaDriverLabelCollisionV228?.();
@@ -621,6 +623,14 @@ try{
     assert(Number(repaired?.layout?.version)===6&&!repaired?.layout?.panels?.radio&&!repaired?.layout?.panels?.speed,'Phase 249 repaired layout retained obsolete panels: '+JSON.stringify(repaired));
     assert(repaired?.before?.includes('obsolete-panel:radio')&&repaired?.before?.includes('obsolete-panel:speed'),'Phase 249 repaired layout did not report obsolete panel migration: '+JSON.stringify(repaired?.before));
 
+    assert(window.mwsF1ResizeSplitRecoveryJ?.('track',-1,0)===true,'Phase 259 could not create manual workspace layout');
+    await raf();
+    const phase259ManualLayout=window.mwsF1GetWorkspaceLayoutRecoveryE?.();
+    const phase259ManualSignature=window.mwsF1WorkspaceLayoutSignatureV259?.(phase259ManualLayout);
+    const phase259PersistedBeforeRace=window.mwsGetF1RacingSettingsRecoveryD?.()?.workspaceLayout;
+    const phase259PersistedSignature=window.mwsF1WorkspaceLayoutSignatureV259?.(phase259PersistedBeforeRace);
+    assert(Boolean(phase259ManualSignature)&&phase259PersistedSignature===phase259ManualSignature,'Phase 259 manual workspace was not auto-saved: '+JSON.stringify({phase259ManualLayout,phase259PersistedBeforeRace}));
+
     document.getElementById('f1RacingRaceCancelRecoveryC')?.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Race cancel did not return to Setup');
     const afterCancelIds=window.mwsF1GetSelectedContactIdsV181?.()||[];
@@ -632,6 +642,11 @@ try{
     assert(window.mwsF1GetScreenStateV185?.()==='GRID','Second race started before explicit grid click');
     document.getElementById('f1RacingGridStartRecoveryM')?.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='RACE','Second explicit start did not reach RACE');
+    const phase259NextRaceLayout=window.mwsF1GetWorkspaceLayoutRecoveryE?.();
+    const phase259NextRaceSignature=window.mwsF1WorkspaceLayoutSignatureV259?.(phase259NextRaceLayout);
+    assert(phase259NextRaceSignature===phase259ManualSignature,'Phase 259 next-race workspace layout changed: '+JSON.stringify({expected:phase259ManualLayout,actual:phase259NextRaceLayout}));
+    assert(document.getElementById('f1RacingWorkspaceRecoveryE')?.dataset?.userDefaultReasonV259==='race-start','Phase 259 race-start restore marker missing');
+    document.getElementById('f1RacingWorkspaceResetRecoveryE')?.click();await raf();
 
     assert(window.mwsF1ForceFinishRecoveryG?.()===true,'Force finish QA hook failed');
     await raf();
