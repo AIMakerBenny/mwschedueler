@@ -367,8 +367,11 @@ try{
     assert(trackProfileQa?.allPass===true&&Number(trackProfileQa?.trackCount)>=7,'Phase 223 track profile UI data failed: '+JSON.stringify(trackProfileQa));
     const markerQa=window.mwsF1QaTrackMarkersV211?.();
     assert(markerQa?.trackCount>=3&&markerQa?.allPass===true,'Phase 211 marker integration failed: '+JSON.stringify(markerQa));
+    const trackPresentationQa246=window.mwsF1QaTrackPresentationV246?.();
+    assert(trackPresentationQa246?.allPass===true,'Phase 246 track presentation QA failed: '+JSON.stringify(trackPresentationQa246));
     const raceMarkerText=String(document.getElementById('f1RacingRaceAnnotationsRecoveryB')?.textContent||'');
-    assert(raceMarkerText.includes('출발 / 결승선')&&raceMarkerText.includes('피트 진입')&&raceMarkerText.includes('피트 출구')&&raceMarkerText.includes('추월 감지 1'),'Phase 211 Race Control markers incomplete: '+raceMarkerText);
+    assert(raceMarkerText.includes('출발 / 결승선')&&raceMarkerText.includes('피트 진입')&&raceMarkerText.includes('피트 출구'),'Phase 246 essential Race Control markers incomplete: '+raceMarkerText);
+    assert(!raceMarkerText.includes('ST1')&&!raceMarkerText.includes('ST2')&&!raceMarkerText.includes('추월 감지'),'Phase 246 obsolete track marker labels still visible: '+raceMarkerText);
     const flipQa=window.mwsF1QaLiveTimingFlipV212?.();
     assert(flipQa?.allPass===true&&Number(flipQa?.domRows)>=2,'Phase 212 FLIP live timing QA failed: '+JSON.stringify(flipQa));
     const topThreeQa=window.mwsF1QaTopThreePresentationV213?.();
