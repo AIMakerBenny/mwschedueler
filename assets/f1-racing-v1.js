@@ -99,6 +99,7 @@ const VERSION269='phase269-lateral-velocity-acceleration-smoothing';
 const VERSION270='phase270-f1-corner-line-exit-acceleration';
 const VERSION271='phase271-track-boundary-wall-riding-fix';
 const VERSION272='phase272-random-seeded-starting-grid';
+const VERSION273='phase273-starting-grid-card-shuffle-reveal';
 const TRACK_BOUNDARY_V271=Object.freeze({
   carHalfWidthMeters:.85,safetyMarginMeters:.20,edgeStartRatio:.90,
   edgeMinSpeedFactor:.90,offTrackSpeedFactor:.76
@@ -1037,8 +1038,9 @@ function startRaceFromSetupV187(){
   if(raceTransitionTimerV187)clearTimeout(raceTransitionTimerV187);
   raceTransitionTimerV187=window.setTimeout(function(){
     raceTransitionTimerV187=0;
-    populateGridRecoveryM(snapshot);
     setScreenStateV185('GRID');
+    populateGridRecoveryM(snapshot);
+    runStartingGridRevealV273(snapshot);
     const chip=document.getElementById('f1RacingPhaseChipV180');
     if(chip)chip.textContent='스타팅 그리드';
   },900);
@@ -1046,6 +1048,7 @@ function startRaceFromSetupV187(){
 }
 function confirmRaceStartRecoveryM(){
   if(f1ScreenStateV185!=='GRID'||!activeRaceSnapshotV187)return false;
+  if(gridRevealStateV273.revealing)return false;
   if(raceMotionV189.running)return false;
   if(!setScreenStateV185('RACE'))return false;
   restoreWorkspaceUserDefaultV259('race-start');
@@ -1082,6 +1085,7 @@ function bindManualRaceStartRecoveryM(){
 
 function cancelRaceToSetupRecoveryC(){
   if(!['TRANSITION','GRID','RACE'].includes(f1ScreenStateV185))return false;
+  clearGridRevealV273({unlock:false});
   if(f1ScreenStateV185==='RACE'&&workspaceLayoutRecoveryE)checkpointWorkspaceUserDefaultV259('cancel-race');
   if(raceTransitionTimerV187){
     clearTimeout(raceTransitionTimerV187);
@@ -1192,6 +1196,7 @@ function reshuffleStartingGridV272(){
   const nextRound=(Number(activeRaceSnapshotV187.gridShuffleRoundV272)||0)+1;
   activeRaceSnapshotV187=snapshotWithStartingGridV272(activeRaceSnapshotV187,nextRound,previousOrder);
   populateGridRecoveryM(activeRaceSnapshotV187);
+  runStartingGridRevealV273(activeRaceSnapshotV187,{reshuffle:true});
   return true;
 }
 function qaRandomStartingGridV272(){
@@ -1217,6 +1222,146 @@ function qaRandomStartingGridV272(){
   const engineOffsets=offsets[0]===0&&offsets.slice(1).every((value,index)=>value<offsets[index]);
   const domReady=Boolean(document.getElementById('f1RacingGridListV272')&&document.getElementById('f1RacingGridShuffleV272'));
   return {firstIds,secondIds,deterministic,permutation,roundChanges,positionSequence,engineOffsets,domReady,allPass:deterministic&&permutation&&roundChanges&&positionSequence&&engineOffsets&&domReady};
+}
+
+
+const GRID_REVEAL_CONFIG_V273=Object.freeze({
+  shuffleDurationMs:620,shuffleBursts:7,topThreeIntervalMs:190,regularIntervalMs:95,
+  minRegularIntervalMs:60,landingDurationMs:430,finishHoldMs:260,maxShuffleCards:8
+});
+const gridRevealStateV273={token:0,timers:[],revealing:false,completed:true,lastDriverCount:0,lastRound:0,lastDurationMs:0};
+function clearGridRevealTimersV273(){
+  for(const timer of gridRevealStateV273.timers)clearTimeout(timer);
+  gridRevealStateV273.timers=[];
+}
+function setGridRevealControlsV273(ready){
+  const start=document.getElementById('f1RacingGridStartRecoveryM');
+  const shuffle=document.getElementById('f1RacingGridShuffleV272');
+  if(start){start.disabled=!ready;start.classList.toggle('grid-reveal-locked-v273',!ready)}
+  if(shuffle)shuffle.disabled=!ready;
+  return ready;
+}
+function clearGridRevealV273(options={}){
+  gridRevealStateV273.token++;
+  clearGridRevealTimersV273();
+  gridRevealStateV273.revealing=false;
+  gridRevealStateV273.completed=true;
+  const stage=document.getElementById('f1RacingGridShuffleStageV273');
+  if(stage){stage.classList.remove('active','shuffle-fast-v273');stage.replaceChildren();stage.hidden=true}
+  document.querySelectorAll('#f1RacingGridListV272 .f1-racing-grid-card-v272').forEach(card=>card.classList.remove('grid-card-hidden-v273','grid-card-land-v273','grid-card-flash-v273'));
+  if(options.unlock!==false)setGridRevealControlsV273(true);
+  return true;
+}
+function gridRevealIntervalV273(index,count){
+  if(index<3)return GRID_REVEAL_CONFIG_V273.topThreeIntervalMs;
+  const compression=Math.max(0,count-10)*3;
+  return Math.max(GRID_REVEAL_CONFIG_V273.minRegularIntervalMs,GRID_REVEAL_CONFIG_V273.regularIntervalMs-compression);
+}
+function buildShuffleStackV273(snapshot){
+  const stage=document.getElementById('f1RacingGridShuffleStageV273');
+  if(!stage)return false;
+  const drivers=(snapshot?.drivers||[]).slice(0,GRID_REVEAL_CONFIG_V273.maxShuffleCards);
+  stage.replaceChildren();
+  stage.innerHTML=drivers.map((driver,index)=>{
+    const rotate=((index%5)-2)*2.4;
+    return '<div class="f1-racing-shuffle-card-v273" style="--shuffle-i:'+index+';--shuffle-rotate:'+rotate+'deg">'+
+      gridAvatarMarkupV272(driver)+
+      '<span><strong>'+escapeHtml(driver.name)+'</strong><small>GRID CARD</small></span>'+
+      '</div>';
+  }).join('');
+  stage.hidden=false;stage.classList.add('active');
+  requestAnimationFrame(()=>stage.classList.add('shuffle-fast-v273'));
+  return true;
+}
+function positionGridFlyOriginsV273(){
+  const list=document.getElementById('f1RacingGridListV272');
+  if(!list)return false;
+  const listRect=list.getBoundingClientRect();
+  const centerX=listRect.left+listRect.width/2;
+  const centerY=Math.max(listRect.top+26,Math.min(listRect.bottom-26,listRect.top+24));
+  list.querySelectorAll('.f1-racing-grid-card-v272').forEach(card=>{
+    const rect=card.getBoundingClientRect();
+    card.style.setProperty('--grid-fly-x-v273',(centerX-(rect.left+rect.width/2)).toFixed(1)+'px');
+    card.style.setProperty('--grid-fly-y-v273',(centerY-(rect.top+rect.height/2)).toFixed(1)+'px');
+  });
+  return true;
+}
+function finishGridRevealV273(token){
+  if(token!==gridRevealStateV273.token)return false;
+  gridRevealStateV273.revealing=false;gridRevealStateV273.completed=true;
+  const stage=document.getElementById('f1RacingGridShuffleStageV273');
+  if(stage){stage.classList.remove('active','shuffle-fast-v273');stage.replaceChildren();stage.hidden=true}
+  const status=document.getElementById('f1RacingGridRevealStatusV273');
+  if(status)status.textContent='스타팅 그리드 확정';
+  setGridRevealControlsV273(true);
+  return true;
+}
+function runStartingGridRevealV273(snapshot=activeRaceSnapshotV187,options={}){
+  if(f1ScreenStateV185!=='GRID'||!snapshot)return false;
+  clearGridRevealV273({unlock:false});
+  const token=gridRevealStateV273.token;
+  const cards=Array.from(document.querySelectorAll('#f1RacingGridListV272 .f1-racing-grid-card-v272'));
+  gridRevealStateV273.revealing=true;gridRevealStateV273.completed=false;gridRevealStateV273.lastDriverCount=cards.length;
+  gridRevealStateV273.lastRound=Number(snapshot?.gridShuffleRoundV272)||0;
+  setGridRevealControlsV273(false);
+  const status=document.getElementById('f1RacingGridRevealStatusV273');
+  if(status)status.textContent=options.reshuffle?'카드 다시 섞는 중':'카드 셔플 중';
+  cards.forEach(card=>{card.classList.add('grid-card-hidden-v273');card.classList.remove('grid-card-land-v273','grid-card-flash-v273')});
+  positionGridFlyOriginsV273();
+  buildShuffleStackV273(snapshot);
+  let elapsed=GRID_REVEAL_CONFIG_V273.shuffleDurationMs;
+  const stageTimer=setTimeout(()=>{
+    if(token!==gridRevealStateV273.token)return;
+    const stage=document.getElementById('f1RacingGridShuffleStageV273');
+    if(stage)stage.classList.remove('shuffle-fast-v273');
+  },Math.max(0,GRID_REVEAL_CONFIG_V273.shuffleDurationMs-90));
+  gridRevealStateV273.timers.push(stageTimer);
+  cards.forEach((card,index)=>{
+    elapsed+=gridRevealIntervalV273(index,cards.length);
+    const timer=setTimeout(()=>{
+      if(token!==gridRevealStateV273.token)return;
+      card.classList.remove('grid-card-hidden-v273');
+      card.classList.add('grid-card-land-v273','grid-card-flash-v273');
+      card.dataset.f1RevealIndexV273=String(index);
+      const position=Number(card.dataset.f1GridPosition)||index+1;
+      if(status)status.textContent='P'+String(position).padStart(2,'0')+' '+String(card.querySelector('.f1-racing-grid-driver-v272 strong')?.textContent||'')+' 배치';
+      const cleanup=setTimeout(()=>{card.classList.remove('grid-card-land-v273','grid-card-flash-v273')},GRID_REVEAL_CONFIG_V273.landingDurationMs);
+      gridRevealStateV273.timers.push(cleanup);
+    },elapsed);
+    gridRevealStateV273.timers.push(timer);
+  });
+  const total=elapsed+GRID_REVEAL_CONFIG_V273.landingDurationMs+GRID_REVEAL_CONFIG_V273.finishHoldMs;
+  gridRevealStateV273.lastDurationMs=total;
+  const finish=setTimeout(()=>finishGridRevealV273(token),total);
+  gridRevealStateV273.timers.push(finish);
+  return true;
+}
+function waitGridRevealV273(timeoutMs=8000){
+  const started=Date.now();
+  return new Promise(resolve=>{
+    const poll=()=>{
+      if(!gridRevealStateV273.revealing)return resolve(true);
+      if(Date.now()-started>=Math.max(500,Number(timeoutMs)||8000))return resolve(false);
+      setTimeout(poll,35);
+    };
+    poll();
+  });
+}
+function qaStartingGridRevealV273(){
+  const list=document.getElementById('f1RacingGridListV272');
+  const stage=document.getElementById('f1RacingGridShuffleStageV273');
+  const status=document.getElementById('f1RacingGridRevealStatusV273');
+  const cards=Array.from(list?.querySelectorAll('.f1-racing-grid-card-v272')||[]);
+  const topThree=cards.filter(card=>(Number(card.dataset.f1GridPosition)||99)<=3);
+  const start=document.getElementById('f1RacingGridStartRecoveryM');
+  const shuffle=document.getElementById('f1RacingGridShuffleV272');
+  const intervals=[0,1,2,3,10,20].map(index=>gridRevealIntervalV273(index,24));
+  const compressed=intervals[3]>=intervals[4]&&intervals[4]>=intervals[5]&&intervals[5]>=GRID_REVEAL_CONFIG_V273.minRegularIntervalMs;
+  return {
+    domReady:Boolean(list&&stage&&status&&start&&shuffle),cardCount:cards.length,topThreeCount:topThree.length,
+    config:{...GRID_REVEAL_CONFIG_V273},compressed,lastDurationMs:gridRevealStateV273.lastDurationMs,
+    allPass:Boolean(list&&stage&&status&&start&&shuffle)&&cards.length>=2&&topThree.length===Math.min(3,cards.length)&&compressed&&GRID_REVEAL_CONFIG_V273.shuffleBursts>=5
+  };
 }
 
 function normalizedProgressV190(value){
@@ -6602,6 +6747,11 @@ window.mwsF1ShuffleStartingGridV272=reshuffleStartingGridV272;
 window.mwsF1RenderStartingGridV272=renderStartingGridV272;
 window.mwsF1GridStartOffsetV272=gridStartOffsetV272;
 window.mwsF1QaRandomStartingGridV272=qaRandomStartingGridV272;
+window.mwsF1RunStartingGridRevealV273=runStartingGridRevealV273;
+window.mwsF1WaitGridRevealV273=waitGridRevealV273;
+window.mwsF1ClearGridRevealV273=clearGridRevealV273;
+window.mwsF1QaStartingGridRevealV273=qaStartingGridRevealV273;
+window.mwsF1GetStartingGridRevealStateV273=function(){return {...gridRevealStateV273,timers:gridRevealStateV273.timers.length}};
 window.mwsF1CancelRaceRecoveryC=cancelRaceToSetupRecoveryC;
 window.mwsF1RestoreSettingsRecoveryD=restoreF1SettingsRecoveryD;
 window.mwsF1PersistSettingsRecoveryD=persistF1SettingsRecoveryD;
@@ -6918,6 +7068,7 @@ window.mwsF1QaTrackBoundaryV271=qaTrackBoundaryV271;
 window.mwsF1TrackBoundaryStateV271=trackBoundaryStateV271;
 window.__mwsF1RacingV271=VERSION271;
 window.__mwsF1RacingV272=VERSION272;
+window.__mwsF1RacingV273=VERSION273;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
