@@ -87,6 +87,7 @@ const VERSION257='phase257-embedded-driver-profile-marker';
 const VERSION258='phase258-visual-lateral-smoothing';
 const VERSION259='phase259-workspace-user-default-persistence';
 const VERSION260='phase260-manual-lap-control';
+const VERSION261='phase261-immersive-fullscreen-spectator';
 const F1_LAP_MIN_V260=3;
 const F1_LAP_MAX_V260=99;
 const VISUAL_LATERAL_RESPONSE_V258=Object.freeze({normal:7.5,attack:8.8,pit:9.8,incident:12.5});
@@ -154,6 +155,8 @@ const selectedIds=[];
 let activeTrackId='majoku-ring-v1';
 let selectedTotalLapsRecoveryD=DEFAULT_TOTAL_LAPS_V190;
 let lapOverrideActiveV260=false;
+let immersiveStateV261={active:false,noticeTimer:0,layoutSignature:'',lastReason:'',fullscreenRequested:false};
+let immersiveExitInFlightV261=false;
 let persistenceRestoredRecoveryD=false;
 const previewStateV184={running:false,progress:0,lastTimestamp:0,rafId:0,lapDurationMs:18000};
 let activeRaceSnapshotV187=null;
@@ -390,6 +393,7 @@ function setScreenStateV185(next,options={}){
   const force=options&&options.force===true;
   if(!F1_STATES_V185.includes(target))return false;
   if(!force&&target!==f1ScreenStateV185&&!canTransitionF1V185(target))return false;
+  if(target!=='RACE'&&immersiveStateV261.active)void exitF1ImmersiveV261({reason:'screen-change'});
   f1ScreenStateV185=target;
   applyScreenStateV185();
   return true;
@@ -480,6 +484,106 @@ function renderTrackChoicesV186(){
   }).join('');
   box.querySelectorAll('[data-f1-track-id]').forEach(button=>button.addEventListener('click',()=>selectTrackV186(button.dataset.f1TrackId)));
 }
+function showImmersiveNoticeV261(){
+  const notice=document.getElementById('f1RacingImmersiveNoticeV261');
+  if(!notice)return false;
+  if(immersiveStateV261.noticeTimer)clearTimeout(immersiveStateV261.noticeTimer);
+  notice.hidden=false;
+  notice.classList.remove('is-hiding');
+  notice.classList.add('is-visible');
+  immersiveStateV261.noticeTimer=setTimeout(()=>{
+    notice.classList.add('is-hiding');
+    setTimeout(()=>{notice.classList.remove('is-visible','is-hiding');notice.hidden=true},260);
+  },1800);
+  return true;
+}
+function applyImmersiveStateV261(active,reason='manual'){
+  const next=Boolean(active);
+  const body=document.body;
+  const section=document.getElementById('gameF1Racing');
+  if(!body||!section)return false;
+  if(next){
+    if(!immersiveStateV261.layoutSignature&&workspaceLayoutRecoveryE){
+      immersiveStateV261.layoutSignature=workspaceLayoutSignatureV259(workspaceLayoutRecoveryE);
+    }
+    body.classList.add('f1-racing-immersive');
+    section.classList.add('f1-racing-immersive-active-v261');
+    immersiveStateV261.active=true;
+    immersiveStateV261.lastReason=String(reason||'manual');
+    const button=document.getElementById('f1RacingImmersiveV261');
+    if(button){button.setAttribute('aria-pressed','true');button.textContent='전체화면 종료'}
+    showImmersiveNoticeV261();
+    return true;
+  }
+  body.classList.remove('f1-racing-immersive');
+  section.classList.remove('f1-racing-immersive-active-v261');
+  immersiveStateV261.active=false;
+  immersiveStateV261.lastReason=String(reason||'manual');
+  const button=document.getElementById('f1RacingImmersiveV261');
+  if(button){button.setAttribute('aria-pressed','false');button.textContent='전체화면으로 보기'}
+  if(workspaceLayoutRecoveryE)restoreWorkspaceUserDefaultV259('immersive-exit');
+  return true;
+}
+async function enterF1ImmersiveV261(){
+  if(f1ScreenStateV185!=='RACE')return {ok:false,reason:'race-not-active',immersive:false,fullscreen:false};
+  applyImmersiveStateV261(true,'enter');
+  let fullscreen=false,error='';
+  immersiveStateV261.fullscreenRequested=false;
+  try{
+    const root=document.documentElement;
+    if(!document.fullscreenElement&&typeof root?.requestFullscreen==='function'){
+      immersiveStateV261.fullscreenRequested=true;
+      await root.requestFullscreen();
+    }
+    fullscreen=Boolean(document.fullscreenElement);
+  }catch(err){error=String(err?.message||err||'fullscreen-unavailable')}
+  return {ok:true,immersive:immersiveStateV261.active,fullscreen,error,fullscreenRequested:immersiveStateV261.fullscreenRequested};
+}
+async function exitF1ImmersiveV261(options={}){
+  if(immersiveExitInFlightV261)return {ok:true,immersive:immersiveStateV261.active,fullscreen:Boolean(document.fullscreenElement)};
+  immersiveExitInFlightV261=true;
+  try{
+    if(!options.skipFullscreenExit&&document.fullscreenElement&&typeof document.exitFullscreen==='function'){
+      try{await document.exitFullscreen()}catch(_){}
+    }
+    applyImmersiveStateV261(false,options.reason||'exit');
+    return {ok:true,immersive:false,fullscreen:Boolean(document.fullscreenElement)};
+  }finally{immersiveExitInFlightV261=false}
+}
+function bindImmersiveControlV261(){
+  const button=document.getElementById('f1RacingImmersiveV261');
+  if(button&&!button.dataset.f1ImmersiveBound){
+    button.dataset.f1ImmersiveBound='1';
+    button.addEventListener('click',()=>{void (immersiveStateV261.active?exitF1ImmersiveV261():enterF1ImmersiveV261())});
+  }
+  if(!document.documentElement.dataset.f1ImmersiveEventsV261){
+    document.documentElement.dataset.f1ImmersiveEventsV261='1';
+    document.addEventListener('fullscreenchange',()=>{
+      if(!document.fullscreenElement&&immersiveStateV261.active&&!immersiveExitInFlightV261){
+        void exitF1ImmersiveV261({skipFullscreenExit:true,reason:'fullscreen-change'});
+      }
+    });
+    window.addEventListener('keydown',event=>{
+      if(event.key==='Escape'&&immersiveStateV261.active){
+        void exitF1ImmersiveV261({reason:'escape'});
+      }
+    },true);
+  }
+  return Boolean(button);
+}
+function qaImmersiveV261(){
+  if(!workspaceLayoutRecoveryE)readWorkspaceLayoutRecoveryE();
+  const before=workspaceLayoutSignatureV259(workspaceLayoutRecoveryE);
+  const button=document.getElementById('f1RacingImmersiveV261');
+  const notice=document.getElementById('f1RacingImmersiveNoticeV261');
+  applyImmersiveStateV261(true,'qa');
+  const activeClass=document.body.classList.contains('f1-racing-immersive')&&document.getElementById('gameF1Racing')?.classList.contains('f1-racing-immersive-active-v261');
+  applyImmersiveStateV261(false,'qa');
+  const after=workspaceLayoutSignatureV259(workspaceLayoutRecoveryE);
+  const restored=!document.body.classList.contains('f1-racing-immersive');
+  return {before,after,activeClass,restored,button:Boolean(button),notice:Boolean(notice),allPass:Boolean(before)&&before===after&&activeClass&&restored&&Boolean(button)&&Boolean(notice)};
+}
+
 function clampLapCountV260(value,fallback=DEFAULT_TOTAL_LAPS_V190){
   const parsed=Math.floor(Number(value));
   const fallbackParsed=Math.floor(Number(fallback));
@@ -5399,6 +5503,7 @@ function render(){
   renderSelected();
   renderTrackChoicesV186();
   bindLapControlV260();
+  bindImmersiveControlV261();
   bindRaceProceedV187();
   bindManualRaceStartRecoveryM();
   bindRaceCancelRecoveryC();
@@ -5892,6 +5997,12 @@ window.mwsF1RestoreRecommendedLapsV260=restoreRecommendedLapsV260;
 window.mwsF1SyncLapControlV260=syncLapControlV260;
 window.mwsF1QaLapControlV260=qaLapControlV260;
 window.__mwsF1RacingV260=VERSION260;
+window.mwsF1EnterImmersiveV261=enterF1ImmersiveV261;
+window.mwsF1ExitImmersiveV261=exitF1ImmersiveV261;
+window.mwsF1ApplyImmersiveStateV261=applyImmersiveStateV261;
+window.mwsF1QaImmersiveV261=qaImmersiveV261;
+window.mwsF1GetImmersiveStateV261=function(){return {...immersiveStateV261,fullscreen:Boolean(document.fullscreenElement)}};
+window.__mwsF1RacingV261=VERSION261;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
