@@ -32,11 +32,14 @@ export function runPhase188F1RaceControlFrameAudit(){
     'function driverCodeV188(driver){',
     'function timingRowV188(driver,index){',
     'function renderRaceControlV188(){',
-    "if(list)list.innerHTML=snapshot.drivers.map(timingRowV188).join('');",
+    "snapshot.drivers.map(timingRowV188).join('')",
     "if(path)path.setAttribute('d',snapshot.track.path||'');",
     'window.mwsF1RenderRaceControlV188=renderRaceControlV188;',
     'window.__mwsF1RacingV188=VERSION188;'
   ])if(!js.includes(token))issues.push('Phase 188 runtime missing: '+token);
+
+  const timingIdentitySuperseded=js.includes("const VERSION251='phase251-live-timing-driver-identity';");
+  if(timingIdentitySuperseded&&!js.includes('bindTimingIdentityImagesV251(list)'))issues.push('Phase 251 timing identity binding missing from Phase 188 Race Control render');
 
   if(!js.includes("if(!setScreenStateV185('RACE'))return false;\n  renderRaceControlV188();"))issues.push('Explicit race start does not render Race Control from the active snapshot');
 
