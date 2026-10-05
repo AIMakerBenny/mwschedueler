@@ -510,6 +510,13 @@ try{
     const rpmCell=timingPanel?.querySelector('.f1-racing-timing-row-v188 .rpm');
     assert(gearCell&&getComputedStyle(gearCell).display==='none','Phase 224 compact timing gear column still visible');
     assert(rpmCell&&getComputedStyle(rpmCell).display==='none','Phase 224 compact timing RPM column still visible');
+    const timingIdentityQa251=window.mwsF1QaLiveTimingIdentityV251?.();
+    assert(timingIdentityQa251?.allPass===true&&Number(timingIdentityQa251?.rowCount)>=2&&Number(timingIdentityQa251?.uniqueColors)>=2,'Phase 251 Live Timing identity QA failed: '+JSON.stringify(timingIdentityQa251));
+    const firstTimingAvatar251=timingPanel?.querySelector('.f1-racing-timing-avatar-v251');
+    const firstTimingStrip251=timingPanel?.querySelector('.f1-racing-driver-color-v251');
+    const avatarRect251=firstTimingAvatar251?.getBoundingClientRect(),stripRect251=firstTimingStrip251?.getBoundingClientRect();
+    assert(avatarRect251&&avatarRect251.width>=18&&avatarRect251.width<=28&&avatarRect251.height>=18&&avatarRect251.height<=28,'Phase 251 timing avatar geometry invalid: '+JSON.stringify(avatarRect251?{w:avatarRect251.width,h:avatarRect251.height}:null));
+    assert(stripRect251&&stripRect251.width>=2&&stripRect251.width<=6&&stripRect251.height>=18,'Phase 251 driver color strip geometry invalid: '+JSON.stringify(stripRect251?{w:stripRect251.width,h:stripRect251.height}:null));
     assert(document.querySelector('[data-f1-workspace-panel="timing"] [data-f1-panel-drag="timing"]')?.textContent?.includes('실시간 순위'),'Phase 218 timing panel is not Korean');
     assert(document.querySelector('[data-f1-workspace-panel="track"] [data-f1-panel-drag="track"]')?.textContent?.includes('트랙 맵'),'Phase 218 track panel is not Korean');
     assert(document.querySelector('[data-f1-workspace-panel="commentary"] [data-f1-panel-drag="commentary"]')?.textContent?.includes('경기 해설'),'Phase 218 commentary panel is not Korean');
@@ -628,6 +635,7 @@ try{
       compactDefault:true,
       zoomMarkerGeometryV245:{zoom:zoomState245.zoom,before:sizesAtFull245,after:sizesAtZoom245},
       profileMarkerV250:profileMarkerQa250||null,
+      timingIdentityV251:timingIdentityQa251||null,
       persistenceVersion:Number(persisted?.version)||0,
       malformedRepairReasons:repaired?.before||[],
       workspaceMigrationV249:migrationQa249||null,
