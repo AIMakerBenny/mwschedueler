@@ -86,6 +86,9 @@ const VERSION256='phase256-live-battle-link';
 const VERSION257='phase257-embedded-driver-profile-marker';
 const VERSION258='phase258-visual-lateral-smoothing';
 const VERSION259='phase259-workspace-user-default-persistence';
+const VERSION260='phase260-manual-lap-control';
+const F1_LAP_MIN_V260=3;
+const F1_LAP_MAX_V260=99;
 const VISUAL_LATERAL_RESPONSE_V258=Object.freeze({normal:7.5,attack:8.8,pit:9.8,incident:12.5});
 const BATTLE_LINK_MAX_LENGTH_V256=88;
 const F1_WORKSPACE_LAYOUT_VERSION_V249=6;
@@ -150,6 +153,7 @@ let f1ScreenStateV185='SETUP';
 const selectedIds=[];
 let activeTrackId='majoku-ring-v1';
 let selectedTotalLapsRecoveryD=DEFAULT_TOTAL_LAPS_V190;
+let lapOverrideActiveV260=false;
 let persistenceRestoredRecoveryD=false;
 const previewStateV184={running:false,progress:0,lastTimestamp:0,rafId:0,lapDurationMs:18000};
 let activeRaceSnapshotV187=null;
@@ -447,10 +451,12 @@ function selectTrackV186(trackId){
   const id=String(trackId||'');
   if(!window.mwsGetF1TrackV182?.(id))return false;
   activeTrackId=id;
+  if(!lapOverrideActiveV260)selectedTotalLapsRecoveryD=recommendedLapsV260(window.mwsGetF1TrackV182?.(id));
   persistF1SettingsRecoveryD();
   renderTrackChoicesV186();
   updateTrackFoundationStatusV182();
   renderTrackMapV183();
+  syncLapControlV260();
   syncSetupActionV187();
   return true;
 }
@@ -474,6 +480,62 @@ function renderTrackChoicesV186(){
   }).join('');
   box.querySelectorAll('[data-f1-track-id]').forEach(button=>button.addEventListener('click',()=>selectTrackV186(button.dataset.f1TrackId)));
 }
+function clampLapCountV260(value,fallback=DEFAULT_TOTAL_LAPS_V190){
+  const parsed=Math.floor(Number(value));
+  const fallbackParsed=Math.floor(Number(fallback));
+  const base=Number.isFinite(parsed)?parsed:(Number.isFinite(fallbackParsed)?fallbackParsed:DEFAULT_TOTAL_LAPS_V190);
+  return Math.max(F1_LAP_MIN_V260,Math.min(F1_LAP_MAX_V260,base));
+}
+function recommendedLapsV260(track=getActiveTrack()){
+  const configured=Number(track?.recommendedLaps);
+  return clampLapCountV260(Number.isFinite(configured)?configured:DEFAULT_TOTAL_LAPS_V190,DEFAULT_TOTAL_LAPS_V190);
+}
+function syncLapControlV260(){
+  const recommended=recommendedLapsV260();
+  if(!lapOverrideActiveV260)selectedTotalLapsRecoveryD=recommended;
+  selectedTotalLapsRecoveryD=clampLapCountV260(selectedTotalLapsRecoveryD,recommended);
+  const input=document.getElementById('f1RacingLapsInputV260');
+  const recommendedNode=document.getElementById('f1RacingLapsRecommendedV260');
+  const mode=document.getElementById('f1RacingLapsModeV260');
+  if(input){input.min=String(F1_LAP_MIN_V260);input.max=String(F1_LAP_MAX_V260);input.value=String(selectedTotalLapsRecoveryD)}
+  if(recommendedNode)recommendedNode.textContent='권장 '+recommended+'랩';
+  if(mode)mode.textContent=lapOverrideActiveV260?'사용자 설정':'권장값 사용 중';
+  return {value:selectedTotalLapsRecoveryD,recommended,override:lapOverrideActiveV260};
+}
+function setLapCountV260(value,options={}){
+  const recommended=recommendedLapsV260();
+  selectedTotalLapsRecoveryD=clampLapCountV260(value,recommended);
+  lapOverrideActiveV260=options.manual!==false;
+  if(options.persist!==false)persistF1SettingsRecoveryD({lapOverride:lapOverrideActiveV260});
+  syncLapControlV260();
+  syncSetupActionV187();
+  return selectedTotalLapsRecoveryD;
+}
+function restoreRecommendedLapsV260(options={}){
+  return setLapCountV260(recommendedLapsV260(),{manual:false,persist:options.persist!==false});
+}
+function bindLapControlV260(){
+  const input=document.getElementById('f1RacingLapsInputV260');
+  const minus=document.getElementById('f1RacingLapsMinusV260');
+  const plus=document.getElementById('f1RacingLapsPlusV260');
+  const restore=document.getElementById('f1RacingLapsRestoreV260');
+  if(input&&!input.dataset.f1LapBound){
+    input.dataset.f1LapBound='1';
+    input.addEventListener('change',()=>setLapCountV260(input.value));
+    input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();setLapCountV260(input.value);input.blur()}});
+  }
+  if(minus&&!minus.dataset.f1LapBound){minus.dataset.f1LapBound='1';minus.addEventListener('click',()=>setLapCountV260(selectedTotalLapsRecoveryD-1))}
+  if(plus&&!plus.dataset.f1LapBound){plus.dataset.f1LapBound='1';plus.addEventListener('click',()=>setLapCountV260(selectedTotalLapsRecoveryD+1))}
+  if(restore&&!restore.dataset.f1LapBound){restore.dataset.f1LapBound='1';restore.addEventListener('click',()=>restoreRecommendedLapsV260())}
+  return syncLapControlV260();
+}
+function qaLapControlV260(){
+  const recommended=recommendedLapsV260();
+  const low=clampLapCountV260(2,recommended),high=clampLapCountV260(100,recommended),direct=clampLapCountV260(17,recommended);
+  const domReady=Boolean(document.getElementById('f1RacingLapsInputV260')&&document.getElementById('f1RacingLapsMinusV260')&&document.getElementById('f1RacingLapsPlusV260')&&document.getElementById('f1RacingLapsRestoreV260'));
+  return {recommended,low,high,direct,current:selectedTotalLapsRecoveryD,override:lapOverrideActiveV260,domReady,allPass:recommended>=3&&recommended<=99&&low===3&&high===99&&direct===17&&domReady};
+}
+
 function getRaceDraftV187(){
   return Object.freeze({
     selectedDriverIds:Object.freeze(selectedIds.slice()),
@@ -524,7 +586,7 @@ function syncSetupActionV187(){
   const hint=document.getElementById('f1RacingSetupHintV187');
   const track=getActiveTrack();
   const ready=selectedIds.length>=2&&Boolean(track);
-  if(summary)summary.textContent='드라이버 '+selectedIds.length+'명 · '+(track?.name||'트랙 미선택');
+  if(summary)summary.textContent='드라이버 '+selectedIds.length+'명 · '+(track?.name||'트랙 미선택')+' · '+selectedTotalLapsRecoveryD+'랩';
   if(hint)hint.textContent=ready?'준비가 완료되었습니다. 경기 진행 후 스타팅 그리드에서 경기 시작을 눌러야 출발합니다.':'드라이버를 2명 이상 선택하고 트랙을 선택해 주세요.';
   if(button)button.disabled=!ready;
   return ready;
@@ -5307,7 +5369,9 @@ function restoreF1SettingsRecoveryD(force=false){
   selectedIds.splice(0,selectedIds.length,...restoredIds);
   const restoredTrack=String(settings.selectedTrackId||'majoku-ring-v1');
   activeTrackId=window.mwsGetF1TrackV182?.(restoredTrack)?restoredTrack:'majoku-ring-v1';
-  selectedTotalLapsRecoveryD=Math.max(1,Math.min(200,Math.floor(Number(settings.totalLaps)||DEFAULT_TOTAL_LAPS_V190)));
+  lapOverrideActiveV260=Boolean(settings.lapOverride);
+  const recommendedV260=recommendedLapsV260(window.mwsGetF1TrackV182?.(activeTrackId));
+  selectedTotalLapsRecoveryD=lapOverrideActiveV260?clampLapCountV260(settings.totalLaps,recommendedV260):recommendedV260;
   persistenceRestoredRecoveryD=true;
   return true;
 }
@@ -5317,6 +5381,7 @@ function persistF1SettingsRecoveryD(extra={}){
     selectedDriverIds:selectedIds.slice(),
     selectedTrackId:String(activeTrackId||'majoku-ring-v1'),
     totalLaps:selectedTotalLapsRecoveryD,
+    lapOverride:lapOverrideActiveV260,
     ...extra
   })?.ok);
 }
@@ -5333,6 +5398,7 @@ function render(){
   renderContacts();
   renderSelected();
   renderTrackChoicesV186();
+  bindLapControlV260();
   bindRaceProceedV187();
   bindManualRaceStartRecoveryM();
   bindRaceCancelRecoveryC();
@@ -5819,6 +5885,13 @@ window.mwsF1CheckpointWorkspaceUserDefaultV259=checkpointWorkspaceUserDefaultV25
 window.mwsF1GetWorkspaceUserDefaultV259=function(){return workspaceUserDefaultV259?cloneWorkspaceLayoutRecoveryE(workspaceUserDefaultV259):null};
 window.mwsF1QaWorkspaceUserDefaultPersistenceV259=qaWorkspaceUserDefaultPersistenceV259;
 window.__mwsF1RacingV259=VERSION259;
+window.mwsF1ClampLapCountV260=clampLapCountV260;
+window.mwsF1RecommendedLapsV260=recommendedLapsV260;
+window.mwsF1SetLapCountV260=setLapCountV260;
+window.mwsF1RestoreRecommendedLapsV260=restoreRecommendedLapsV260;
+window.mwsF1SyncLapControlV260=syncLapControlV260;
+window.mwsF1QaLapControlV260=qaLapControlV260;
+window.__mwsF1RacingV260=VERSION260;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
