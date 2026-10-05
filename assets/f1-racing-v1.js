@@ -70,6 +70,7 @@ const VERSION240='phase240-accelerated-real-engine-runner';
 const VERSION241='phase241-seven-track-real-engine-suite';
 const VERSION242='phase242-real-engine-benchmark-alignment';
 const VERSION243='phase243-flowing-circuit-redesign';
+const VERSION244='phase244-starting-grid-top-actions';
 const engineQaV240={active:false};
 let engineSuiteCacheV241=null;
 const CAMERA_DIRECTOR_STABILITY_V229=Object.freeze({candidateHoldMs:700,minSwitchMs:1800,urgentBattleGapSeconds:0.55,focusDeadbandSvg:3,zoomDeadband:0.025});
@@ -546,6 +547,14 @@ function confirmRaceStartRecoveryM(){
   const chip=document.getElementById('f1RacingPhaseChipV180');
   if(chip)chip.textContent='레이스 관제';
   return true;
+}
+function qaStartingGridLayoutV244(){
+  const section=document.getElementById('f1RacingViewGridV185');
+  const header=section?.querySelector('.f1-racing-grid-header-v244');
+  const actions=section?.querySelector('.f1-racing-grid-actions-v244');
+  const start=document.getElementById('f1RacingGridStartRecoveryM');
+  const cancel=document.getElementById('f1RacingGridCancelRecoveryM');
+  return {hasSection:Boolean(section),hasHeader:Boolean(header),hasActions:Boolean(actions),startInActions:Boolean(start&&actions?.contains(start)),cancelInActions:Boolean(cancel&&actions?.contains(cancel)),allPass:Boolean(section&&header&&actions&&start&&cancel&&actions.contains(start)&&actions.contains(cancel))};
 }
 function bindManualRaceStartRecoveryM(){
   const start=document.getElementById('f1RacingGridStartRecoveryM');
@@ -4825,6 +4834,8 @@ window.mwsF1QaRealEngineBenchmarkAlignmentV242=qaRealEngineBenchmarkAlignmentV24
 window.__mwsF1RacingV242=VERSION242;
 window.mwsF1QaTrackFlowDesignV243=qaTrackFlowDesignV243;
 window.__mwsF1RacingV243=VERSION243;
+window.mwsF1QaStartingGridLayoutV244=qaStartingGridLayoutV244;
+window.__mwsF1RacingV244=VERSION244;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
