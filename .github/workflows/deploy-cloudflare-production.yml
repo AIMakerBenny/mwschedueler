@@ -205,6 +205,7 @@ jobs:
           node --check scripts/run-phase260-f1-manual-lap-control-audit.mjs
           node --check scripts/run-phase261-f1-immersive-fullscreen-audit.mjs
           node --check scripts/run-phase262-f1-race-momentum-audit.mjs
+          node --check scripts/run-phase263-f1-race-narrative-engine-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -2500,6 +2501,14 @@ jobs:
           grep -Fq 'runSevenTrackBenchmarkV238({runs:8,drivers,laps})' /tmp/f1-racing-v1-phase262.js
           grep -Fq 'realEngineBenchmarkAlignmentV242(engineSuiteCacheV241)' /tmp/f1-racing-v1-phase262.js
           retry_contains "$BASE/?phase262=$GITHUB_SHA" 'recovery=N1&phase=262&zoomfix=1' > /tmp/index-phase262.html
+
+          echo '[phase263] F1 race narrative engine'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV263=VERSION263;' > /tmp/f1-racing-v1-phase263.js
+          node --check /tmp/f1-racing-v1-phase263.js
+          grep -Fq 'function emitRaceNarrativeV263(' /tmp/f1-racing-v1-phase263.js
+          grep -Fq 'const NARRATIVE_TEMPLATES_V263=Object.freeze(' /tmp/f1-racing-v1-phase263.js
+          grep -Fq 'recentLimit:15' /tmp/f1-racing-v1-phase263.js
+          retry_contains "$BASE/?phase263=$GITHUB_SHA" 'recovery=N1&phase=263&zoomfix=1' > /tmp/index-phase263.html
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
