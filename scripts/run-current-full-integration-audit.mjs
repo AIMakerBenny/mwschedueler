@@ -278,6 +278,7 @@ import {runPhase279F1ExpandedDialoguePoolAudit} from './run-phase279-f1-expanded
 import {runPhase280F1EventDialogueCoverageAudit} from './run-phase280-f1-event-dialogue-coverage-audit.mjs';
 import {runPhase281F1DialogueCadenceAudit} from './run-phase281-f1-dialogue-cadence-audit.mjs';
 import {runPhase282F1DialogueLongRunDesktopAudit} from './run-phase282-f1-dialogue-long-run-desktop-audit.mjs';
+import {runPhase283F1GeneralOvertakeDefenceAudit} from './run-phase283-f1-general-overtake-defence-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2613,5 +2614,6 @@ export function runPhase279FullIntegrationAudit(){
 export function runPhase280FullIntegrationAudit(){const previous=runPhase279FullIntegrationAudit(),current=runPhase280F1EventDialogueCoverageAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 280: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 280: '+x)];return {phase:280,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase281FullIntegrationAudit(){const previous=runPhase280FullIntegrationAudit(),current=runPhase281F1DialogueCadenceAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 281: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 281: '+x)];return {phase:281,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase282FullIntegrationAudit(){const previous=runPhase281FullIntegrationAudit(),current=runPhase282F1DialogueLongRunDesktopAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 282: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 282: '+x)];return {phase:282,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase282FullIntegrationAudit();}
+export function runPhase283FullIntegrationAudit(){const previous=runPhase282FullIntegrationAudit(),current=runPhase283F1GeneralOvertakeDefenceAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 283: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 283: '+x)];return {phase:283,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase283FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
