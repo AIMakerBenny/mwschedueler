@@ -208,6 +208,7 @@ jobs:
           node --check scripts/run-phase263-f1-race-narrative-engine-audit.mjs
           node --check scripts/run-phase264-f1-live-overtake-cutin-audit.mjs
           node --check scripts/run-phase265-f1-grand-prix-podium-audit.mjs
+          node --check scripts/run-phase266-f1-track-card-circuit-redesign-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -2529,6 +2530,15 @@ jobs:
           retry_contains "$BASE/?phase265=$GITHUB_SHA" 'id="f1RacingPodiumTrackSilhouetteV265"' > /tmp/index-phase265.html
           grep -Fq 'id="f1RacingPodiumReplayV265"' /tmp/index-phase265.html
           grep -Fq 'recovery=N1&phase=' /tmp/index-phase265.html
+
+          echo '[phase266] F1 technical circuit selection cards'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV266=VERSION266;' > /tmp/f1-racing-v1-phase266.js
+          node --check /tmp/f1-racing-v1-phase266.js
+          grep -Fq 'function trackCardHtmlV266(' /tmp/f1-racing-v1-phase266.js
+          grep -Fq 'function qaTrackCardsV266(){' /tmp/f1-racing-v1-phase266.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-track-card-silhouette-v266 path' > /tmp/f1-racing-v1-phase266.css
+          grep -Fq 'stroke-width:5.2' /tmp/f1-racing-v1-phase266.css
+          retry_contains "$BASE/?phase266=$GITHUB_SHA" 'recovery=N1&phase=266&zoomfix=1' > /tmp/index-phase266.html
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
