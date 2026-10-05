@@ -878,3 +878,17 @@ body.f1-racing-immersive #f1RacingWorkspaceRecoveryE .f1-racing-workspace-panel-
  .f1-racing-grid-card-v272.grid-card-land-v273,
  .f1-racing-grid-card-v272.grid-card-flash-v273{animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
+
+
+/* Phase 276: LIVE conversation stack */
+.f1-racing-conversation-stack-v276{position:absolute;left:14px;bottom:14px;z-index:18;display:flex;flex-direction:column;justify-content:flex-end;gap:7px;width:min(390px,44%);max-height:52%;padding:6px;pointer-events:none;opacity:0;transform:translateX(-18px);transition:opacity .26s ease,transform .32s cubic-bezier(.2,.8,.2,1)}
+.f1-racing-conversation-stack-v276.active{opacity:1;transform:translateX(0)}
+.f1-racing-conversation-stack-v276.group-exit-v276{opacity:0;transform:translateX(-48px)}
+.f1-racing-conversation-bubble-v276{display:flex;flex-direction:column;gap:3px;max-width:84%;padding:8px 10px;border:1px solid rgba(133,153,180,.38);border-radius:12px;background:rgba(7,12,19,.90);box-shadow:0 8px 24px rgba(0,0,0,.30);backdrop-filter:blur(8px);opacity:0;transform:translateY(14px) scale(.97);transition:opacity .22s ease,transform .30s cubic-bezier(.2,.9,.25,1);word-break:keep-all}
+.f1-racing-conversation-bubble-v276.visible-v276{opacity:1;transform:translateY(0) scale(1)}
+.f1-racing-conversation-bubble-v276.left{align-self:flex-start;border-bottom-left-radius:4px}
+.f1-racing-conversation-bubble-v276.right{align-self:flex-end;border-bottom-right-radius:4px;background:rgba(15,24,36,.92)}
+.f1-racing-conversation-bubble-v276 .speaker{color:#c9d7e8;font:900 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.02em}
+.f1-racing-conversation-bubble-v276 .text{color:#f2f6fb;font-size:12px;font-weight:720;line-height:1.42;text-shadow:0 1px 2px rgba(0,0,0,.45)}
+@media(max-width:900px){.f1-racing-conversation-stack-v276{width:min(330px,56%);left:10px;bottom:10px}.f1-racing-conversation-bubble-v276{max-width:92%;font-size:11px}}
+@media(prefers-reduced-motion:reduce){.f1-racing-conversation-stack-v276,.f1-racing-conversation-bubble-v276{transition-duration:.01ms!important}}
