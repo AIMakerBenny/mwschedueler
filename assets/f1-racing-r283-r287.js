@@ -4,6 +4,8 @@ const VERSION283='phase283-f1-r08-general-overtake-defence';
 const GENERAL_BATTLE_CONFIG_V283=Object.freeze({maxGapMeters:34,attackGapMeters:24,defendGapMeters:26,minClosingKph:.8,attackBiasBaseKph:.55,attackBiasPressureKph:.85,maxPatchedBiasKph:2.4,defendPressure:.22});
 const VERSION284='phase284-f1-r09-track-ranking-overlay';
 const VERSION285='phase285-f1-r10-zoom-linked-marker-scale';
+const VERSION286='phase286-f1-r11-auto-camera-jitter-suppression';
+const AUTO_CAMERA_SMOOTH_CONFIG_V286=Object.freeze({startupMs:1600,startupAlpha:.07,normalAlpha:.16,zoomAlpha:.18,centerDeadband:2.4,zoomDeadband:.018,wheelBypassMs:260});
 const ZOOM_MARKER_CONFIG_V285=Object.freeze({exponent:.38,minScale:.54,maxScale:1});
 const TRACK_RANKING_CONFIG_V284=Object.freeze({maxRows:6,refreshMs:140});
 const runtimeState={rafId:0,frames:0,activeFrames:0,lastApplied:0};
@@ -80,6 +82,8 @@ function syncZoomMarkerScaleV285(){
  return {zoom,scale:zoomMarkerScaleV285(zoom),count};
 }
 let zoomObserverV285=null;
+const autoCameraVisualStateV286={initialized:false,lastBox:null,lastApplied:'',raceStartedAt:0,lastWheelAt:-Infinity,lastMode:''};
+let autoCameraObserverV286=null;
 function installZoomMarkerObserverV285(){
  const layer=document.getElementById('f1RacingRaceVehicleLayerV188');if(!layer)return false;
  if(zoomObserverV285)return true;
@@ -94,10 +98,57 @@ function qaZoomLinkedMarkerScaleV285(){
  return {version:VERSION285,samples,screenRatios:screen,increasing,observerReady:Boolean(zoomObserverV285),allPass:samples[0].scale===1&&increasing&&screen.at(-1)>2&&samples.at(-1).scale>=ZOOM_MARKER_CONFIG_V285.minScale};
 }
 
-function loop(){patchGeneralBattleV283();syncTrackRankingV284();syncZoomMarkerScaleV285();runtimeState.rafId=requestAnimationFrame(loop)}
-function boot(){installZoomMarkerObserverV285();if(!runtimeState.rafId)runtimeState.rafId=requestAnimationFrame(loop)}
+
+function parseViewBoxV286(value){
+ const rows=String(value||'').trim().split(/\s+/).map(Number);
+ return rows.length===4&&rows.every(Number.isFinite)?{x:rows[0],y:rows[1],w:rows[2],h:rows[3]}:null;
+}
+function viewBoxTextV286(box){return [box.x,box.y,box.w,box.h].map(v=>Number(v).toFixed(3)).join(' ')}
+function smoothAutoCameraBoxV286(raw){
+ const mode=String(window.mwsF1GetRaceCameraStateV216?.()?.mode||'');
+ const now=performance.now(),cfg=AUTO_CAMERA_SMOOTH_CONFIG_V286;
+ if(mode!=='AUTO'||now-autoCameraVisualStateV286.lastWheelAt<=cfg.wheelBypassMs||!autoCameraVisualStateV286.initialized||autoCameraVisualStateV286.lastMode!==mode){
+   autoCameraVisualStateV286.initialized=true;autoCameraVisualStateV286.lastBox={...raw};autoCameraVisualStateV286.lastMode=mode;
+   if(screenState()==='RACE'&&!autoCameraVisualStateV286.raceStartedAt)autoCameraVisualStateV286.raceStartedAt=now;
+   return {...raw};
+ }
+ const prev=autoCameraVisualStateV286.lastBox||raw,startup=now-autoCameraVisualStateV286.raceStartedAt<cfg.startupMs,alpha=startup?cfg.startupAlpha:cfg.normalAlpha;
+ const prevCx=prev.x+prev.w/2,prevCy=prev.y+prev.h/2,rawCx=raw.x+raw.w/2,rawCy=raw.y+raw.h/2;
+ const dx=rawCx-prevCx,dy=rawCy-prevCy,dw=raw.w-prev.w,dh=raw.h-prev.h;
+ const cx=Math.hypot(dx,dy)<=cfg.centerDeadband?prevCx:prevCx+dx*alpha;
+ const zoomDelta=Math.max(Math.abs(dw)/Math.max(1,prev.w),Math.abs(dh)/Math.max(1,prev.h));
+ const zoomAlpha=zoomDelta<=cfg.zoomDeadband?0:cfg.zoomAlpha;
+ const w=zoomAlpha?prev.w+dw*zoomAlpha:prev.w,h=zoomAlpha?prev.h+dh*zoomAlpha:prev.h;
+ const next={x:cx-w/2,y:(Math.hypot(dx,dy)<=cfg.centerDeadband?prevCy:prevCy+dy*alpha)-h/2,w,h};
+ autoCameraVisualStateV286.lastBox=next;return next;
+}
+function installAutoCameraSmoothingV286(){
+ const svg=document.getElementById('f1RacingRaceTrackSvgV188'),stage=svg?.closest('.f1-racing-race-map-stage-v188');
+ if(!svg||!stage)return false;
+ if(!stage.dataset.autoCameraSmoothWheelV286){stage.dataset.autoCameraSmoothWheelV286='1';stage.addEventListener('wheel',()=>{autoCameraVisualStateV286.lastWheelAt=performance.now()},{capture:true,passive:true})}
+ if(autoCameraObserverV286)return true;
+ autoCameraObserverV286=new MutationObserver(()=>{
+   const rawText=String(svg.getAttribute('viewBox')||'');
+   if(rawText===autoCameraVisualStateV286.lastApplied)return;
+   const raw=parseViewBoxV286(rawText);if(!raw)return;
+   if(screenState()!=='RACE'){autoCameraVisualStateV286.initialized=false;autoCameraVisualStateV286.raceStartedAt=0;autoCameraVisualStateV286.lastBox={...raw};return}
+   const camera=window.mwsF1GetRaceCameraStateV216?.();if(String(camera?.mode||'')!=='AUTO'){autoCameraVisualStateV286.initialized=false;autoCameraVisualStateV286.lastBox={...raw};autoCameraVisualStateV286.lastMode=String(camera?.mode||'');return}
+   const next=smoothAutoCameraBoxV286(raw),text=viewBoxTextV286(next);
+   autoCameraVisualStateV286.lastApplied=text;if(text!==rawText)svg.setAttribute('viewBox',text);
+ });
+ autoCameraObserverV286.observe(svg,{attributes:true,attributeFilter:['viewBox']});
+ return true;
+}
+function qaAutoCameraJitterSuppressionV286(){
+ const c=AUTO_CAMERA_SMOOTH_CONFIG_V286;
+ return {version:VERSION286,config:{...c},observerReady:Boolean(autoCameraObserverV286),wheelBound:Boolean(document.querySelector('.f1-racing-race-map-stage-v188')?.dataset.autoCameraSmoothWheelV286),allPass:c.startupMs>=1200&&c.startupAlpha<c.normalAlpha&&c.normalAlpha<=.2&&c.centerDeadband>=2&&c.zoomDeadband>0&&c.wheelBypassMs>=200};
+}
+
+function loop(){patchGeneralBattleV283();syncTrackRankingV284();syncZoomMarkerScaleV285();installAutoCameraSmoothingV286();runtimeState.rafId=requestAnimationFrame(loop)}
+function boot(){installZoomMarkerObserverV285();installAutoCameraSmoothingV286();if(!runtimeState.rafId)runtimeState.rafId=requestAnimationFrame(loop)}
 window.mwsF1PatchGeneralBattleV283=patchGeneralBattleV283;window.mwsF1QaGeneralOvertakeDefenceV283=qaGeneralOvertakeDefenceV283;window.__mwsF1RacingV283=VERSION283;
 window.mwsF1SyncTrackRankingV284=syncTrackRankingV284;window.mwsF1QaTrackRankingOverlayV284=qaTrackRankingOverlayV284;window.__mwsF1RacingV284=VERSION284;
 window.mwsF1ZoomMarkerScaleV285=zoomMarkerScaleV285;window.mwsF1SyncZoomMarkerScaleV285=syncZoomMarkerScaleV285;window.mwsF1QaZoomLinkedMarkerScaleV285=qaZoomLinkedMarkerScaleV285;window.__mwsF1RacingV285=VERSION285;
+window.mwsF1InstallAutoCameraSmoothingV286=installAutoCameraSmoothingV286;window.mwsF1QaAutoCameraJitterSuppressionV286=qaAutoCameraJitterSuppressionV286;window.__mwsF1RacingV286=VERSION286;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
