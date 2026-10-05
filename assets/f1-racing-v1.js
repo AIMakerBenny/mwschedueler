@@ -105,6 +105,7 @@ const VERSION275='phase275-chase-burst';
 const VERSION276='phase276-live-conversation-stack-ui';
 const VERSION277='phase277-character-dialogue-engine';
 const VERSION278='phase278-micro-battle-events';
+const VERSION279='phase279-expanded-dialogue-pool';
 const TRACK_BOUNDARY_V271=Object.freeze({
   carHalfWidthMeters:.85,safetyMarginMeters:.20,edgeStartRatio:.90,
   edgeMinSpeedFactor:.90,offTrackSpeedFactor:.76
@@ -5244,6 +5245,10 @@ function microBattleCanRecordV278(event,actor,target,cooldownMs=900){
   microBattleStateV278.signatureAt.set(key,now);return true;
 }
 function emitMicroBattleDialogueV278(event,actor,target){
+  if(typeof emitMicroBattleDialogueV279==='function'){
+    const expanded=emitMicroBattleDialogueV279(event,actor,target);
+    if(expanded!==null)return expanded;
+  }
   const mapped=MICRO_BATTLE_DIALOGUE_MAP_V278[String(event||'')];
   if(!mapped||!actor)return false;
   const cooldown=['PASS_SUCCESS','PASS_FAIL','BURST_SUCCESS','BURST_FAIL'].includes(String(event))?0:1900;
@@ -5352,6 +5357,7 @@ const CHARACTER_DIALOGUE_POOL_V277=Object.freeze({
 const characterDialogueStateV277={counter:0,recentKeys:[],recentLimit:18,lastEventByPair:new Map(),history:[]};
 function resetCharacterDialogueV277(){
   characterDialogueStateV277.counter=0;characterDialogueStateV277.recentKeys=[];characterDialogueStateV277.lastEventByPair=new Map();characterDialogueStateV277.history=[];
+  if(typeof dialogueRecentTextV279!=='undefined')dialogueRecentTextV279.splice(0);
   return true;
 }
 function characterDialogueSpeakerV277(vehicle){return String(vehicle?.driver?.name||'드라이버').trim()||'드라이버'}
@@ -5361,15 +5367,16 @@ function dialogueFollowerV277(vehicle){
   return index>=0?standings[index+1]?.vehicle||null:null;
 }
 function dialogueTemplateV277(role,vehicle,target,event){
-  const pool=CHARACTER_DIALOGUE_POOL_V277[String(role||'')]||[];
+  const pool=typeof characterDialoguePoolV279==='function'?characterDialoguePoolV279(role):(CHARACTER_DIALOGUE_POOL_V277[String(role||'')]||[]);
   if(!pool.length)return null;
   const seed=hashDriverV189([String(activeRaceSnapshotV187?.createdAt||'race'),String(event||''),String(role||''),String(vehicle?.id||''),String(target?.id||''),String(characterDialogueStateV277.counter++)].join('|'))||1;
   const start=Math.abs(seed)%pool.length;
   for(let offset=0;offset<pool.length;offset++){
     const index=(start+offset)%pool.length,key=String(role)+':'+index;
-    if(!characterDialogueStateV277.recentKeys.includes(key)){
+    if(!characterDialogueStateV277.recentKeys.includes(key)&&!dialogueRecentTextV279.includes(pool[index])){
       characterDialogueStateV277.recentKeys.push(key);
       if(characterDialogueStateV277.recentKeys.length>characterDialogueStateV277.recentLimit)characterDialogueStateV277.recentKeys.shift();
+      rememberDialogueTextV279(pool[index]);
       return {key,text:pool[index]};
     }
   }
@@ -5484,6 +5491,113 @@ function qaCharacterDialogueEngineV277(){
     resetLiveConversationV276();
   }
   return {roles,roleCoverage,poolsReady,bracketInfo,info,nonRepeat,emitted,historyAdded:characterDialogueStateV277.history.length>=before,allPass:roleCoverage&&poolsReady&&bracketInfo&&nonRepeat&&emitted};
+}
+
+
+function buildDialogueVariantsV279(stems,tails){
+  const out=[];
+  for(const stem of stems)for(const tail of tails)out.push(String(stem)+String(tail));
+  return Object.freeze([...new Set(out)]);
+}
+const DIALOGUE_POOL_CATEGORIES_V279=Object.freeze({
+  ATTACKER:buildDialogueVariantsV279(
+    ['빈틈 보인다. ','지금 붙는다. ','이번 코너다. ','안쪽 열린다. ','브레이크 늦춘다. ','옆으로 간다. ','라인 바꾼다. ','여기서 승부다. '],
+    ['간다.','놓치지 않는다.','끝까지 밀어본다.','이번엔 들어간다.']
+  ),
+  DEFENDER:buildDialogueVariantsV279(
+    ['안쪽 지킨다. ','라인 닫는다. ','여긴 내 자리다. ','바로 막는다. ','쉽게 안 준다. ','출구 먼저 잡는다. ','브레이크 포인트 지킨다. ','옆은 허용 안 한다. '],
+    ['버틴다.','계속 막는다.','자리 지킨다.','끝까지 간다.']
+  ),
+  CHASER:buildDialogueVariantsV279(
+    ['거리 줄인다. ','앞차 보인다. ','슬립스트림 잡았다. ','조금만 더 붙는다. ','출구가 좋다. ','페이스 올라온다. ','바로 뒤까지 왔다. ','이번 랩에 따라붙는다. '],
+    ['계속 간다.','기회 본다.','압박한다.','놓치지 않는다.']
+  ),
+  MISTAKE_DRIVER:buildDialogueVariantsV279(
+    ['차가 흔들렸다. ','조금 밀렸다. ','브레이크가 길었다. ','에이펙스 놓쳤다. ','출구가 흔들렸다. ','라인 벗어났다. ','잠깐 리듬 깨졌다. ','조향이 늦었다. '],
+    ['바로 잡는다.','수습한다.','다시 집중한다.','다음 코너에서 회복한다.']
+  ),
+  WINNER:buildDialogueVariantsV279(
+    ['넘었다. ','앞에 섰다. ','자리 가져왔다. ','추월 끝냈다. ','라인 선점했다. ','출구에서 앞섰다. ','제동에서 이겼다. ','결국 지나갔다. '],
+    ['계속 간다.','이제 앞만 본다.','격차 만든다.','다음 차 본다.']
+  ),
+  ATTACKER_FAIL:buildDialogueVariantsV279(
+    ['막혔다. ','이번엔 안 됐다. ','문이 닫혔다. ','라인이 없었다. ','출구에서 밀렸다. ','제동 싸움 놓쳤다. ','옆까지 갔는데 부족했다. ','한 번 접는다. '],
+    ['다시 노린다.','다음 코너 본다.','아직 끝 아니다.','다시 붙는다.']
+  ),
+  REATTACKER:buildDialogueVariantsV279(
+    ['바로 반격한다. ','다시 옆으로 간다. ','놓치자마자 붙는다. ','한 번 더 들어간다. ','스위치백 간다. ','출구에서 되받는다. ','다시 라인 바꾼다. ','이번엔 반대로 간다. '],
+    ['바로 간다.','이번엔 잡는다.','끝까지 붙는다.','다시 승부다.']
+  ),
+  BURST_DRIVER:buildDialogueVariantsV279(
+    ['지금 전부 쓴다. ','추격 올린다. ','한 번에 붙는다. ','이번 기회에 간다. ','출구에서 밀어붙인다. ','가속 다 쓴다. ','앞차까지 단숨에 간다. ','지금이 타이밍이다. '],
+    ['잡으러 간다.','거리 지운다.','놓치지 않는다.','이번에 끝낸다.']
+  ),
+  BURST_FAIL:buildDialogueVariantsV279(
+    ['추격이 끝났다. ','이번 부스트는 여기까지다. ','거리를 다 못 지웠다. ','앞차가 버텼다. ','타이밍이 조금 늦었다. ','기회가 닫혔다. ','가속을 다 썼다. ','이번엔 닿지 않았다. '],
+    ['다시 준비한다.','다음 기회 본다.','페이스 유지한다.','아직 포기 안 한다.']
+  ),
+  FINAL_LAP:buildDialogueVariantsV279(
+    ['마지막 랩이다. ','이제 한 바퀴 남았다. ','체커드까지 간다. ','마지막 기회다. ','끝까지 밀어붙인다. ','마지막 코너까지 본다. ','이제 계산 없다. ','한 바퀴에 다 건다. '],
+    ['끝까지 간다.','지금 승부 본다.','실수 없이 간다.','전부 쓴다.']
+  ),
+  THREE_WAY:buildDialogueVariantsV279(
+    ['셋이 붙었다. ','앞뒤 다 가깝다. ','양쪽 다 신경 써야 한다. ','세 대가 한 번에 들어간다. ','라인 하나에 셋이다. ','뒤도 바로 붙었다. ','앞차만 볼 상황 아니다. ','세 대가 동시에 싸운다. '],
+    ['자리 지킨다.','먼저 빠져나간다.','한 번에 정리한다.','틈부터 찾는다.']
+  ),
+  PODIUM:buildDialogueVariantsV279(
+    ['포디엄 자리다. ','상위권 싸움이다. ','P3 안쪽이 보인다. ','포디엄 놓칠 수 없다. ','앞 세 자리 싸움이다. ','상위권 격차가 없다. ','한 자리 차이다. ','포디엄까지 바로 앞이다. '],
+    ['지금 붙는다.','끝까지 지킨다.','이번에 올라간다.','절대 놓치지 않는다.']
+  ),
+  SPECIAL:buildDialogueVariantsV279(
+    ['상황이 바뀐다. ','앞에서 움직임이 있다. ','라인이 갑자기 열린다. ','트랙 흐름이 달라진다. ','예상 못한 틈이다. ','지금 판이 바뀐다. ','기회가 하나 생겼다. ','이번 구간이 중요하다. '],
+    ['바로 대응한다.','흐름 탄다.','놓치지 않는다.','차분히 간다.']
+  )
+});
+const DIALOGUE_ROLE_ALIASES_V279=Object.freeze({
+  PASSED:'ATTACKER_FAIL',DEFENDER_SUCCESS:'DEFENDER',OPPORTUNIST:'CHASER'
+});
+const dialogueRecentTextV279=[];
+const DIALOGUE_RECENT_TEXT_LIMIT_V279=40;
+function characterDialoguePoolV279(role){
+  const key=DIALOGUE_ROLE_ALIASES_V279[String(role||'')]||String(role||'');
+  return DIALOGUE_POOL_CATEGORIES_V279[key]||CHARACTER_DIALOGUE_POOL_V277[String(role||'')]||[];
+}
+function rememberDialogueTextV279(text){
+  const value=String(text||'');if(!value)return false;
+  dialogueRecentTextV279.push(value);if(dialogueRecentTextV279.length>DIALOGUE_RECENT_TEXT_LIMIT_V279)dialogueRecentTextV279.splice(0,dialogueRecentTextV279.length-DIALOGUE_RECENT_TEXT_LIMIT_V279);
+  return true;
+}
+function dialoguePoolCountV279(){
+  const categories=Object.entries(DIALOGUE_POOL_CATEGORIES_V279).map(([category,lines])=>({category,count:lines.length}));
+  return {categories,total:categories.reduce((sum,row)=>sum+row.count,0),recentLimit:DIALOGUE_RECENT_TEXT_LIMIT_V279};
+}
+const MICRO_DIALOGUE_ROLE_MAP_V279=Object.freeze({
+  GAP_1_5:['CHASER','DEFENDER'],GAP_1_0:['CHASER','DEFENDER'],GAP_0_6:['CHASER','DEFENDER'],
+  SLIPSTREAM:['CHASER','DEFENDER'],ATTACK_LINE:['ATTACKER','DEFENDER'],DEFENCE_LINE:['DEFENDER','ATTACKER'],
+  FAKE:['ATTACKER','DEFENDER'],BRAKING_DUEL:['ATTACKER','DEFENDER'],CORNER_ENTRY_DUEL:['ATTACKER','DEFENDER'],
+  SIDE_BY_SIDE:['ATTACKER','DEFENDER'],EDGES_AHEAD:['ATTACKER','DEFENDER'],RE_ATTACK:['REATTACKER','DEFENDER'],
+  PASS_SUCCESS:['WINNER','PASSED'],PASS_FAIL:['ATTACKER_FAIL','DEFENDER_SUCCESS'],COUNTER_ATTACK:['REATTACKER','DEFENDER'],
+  FRONT_CAR_MISTAKE:['MISTAKE_DRIVER','CHASER'],REAR_CAR_MISTAKE:['MISTAKE_DRIVER','DEFENDER'],
+  CORNER_EXIT_ADVANTAGE:['CHASER','DEFENDER'],LEADER_PRESSURE_MISTAKE:['MISTAKE_DRIVER','CHASER'],
+  BURST_ACTIVATION:['BURST_DRIVER','DEFENDER'],BURST_SUCCESS:['WINNER','PASSED'],BURST_FAIL:['BURST_FAIL','DEFENDER'],
+  PODIUM_BATTLE:['PODIUM','DEFENDER'],LAST_PLACE_BATTLE:['SPECIAL','DEFENDER'],FINAL_LAP:['FINAL_LAP','SPECIAL'],
+  THREE_CAR_BATTLE:['THREE_WAY','DEFENDER']
+});
+function emitMicroBattleDialogueV279(event,actor,target){
+  const roles=MICRO_DIALOGUE_ROLE_MAP_V279[String(event||'')];if(!roles||!actor)return null;
+  const out=[];
+  out.push(pushCharacterDialogueLineV277(roles[0],actor,target,event,'left'));
+  if(target&&roles[1])out.push(pushCharacterDialogueLineV277(roles[1],target,actor,event,'right'));
+  return out.filter(Boolean);
+}
+function qaExpandedDialoguePoolV279(){
+  const stats=dialoguePoolCountV279();
+  const categoryNames=Object.keys(DIALOGUE_POOL_CATEGORIES_V279);
+  const unique=new Set(Object.values(DIALOGUE_POOL_CATEGORIES_V279).flat());
+  const coverage=['ATTACKER','DEFENDER','CHASER','MISTAKE_DRIVER','WINNER','ATTACKER_FAIL','REATTACKER','BURST_DRIVER','BURST_FAIL','FINAL_LAP','THREE_WAY','PODIUM','SPECIAL'].every(key=>categoryNames.includes(key));
+  const microCoverage=['GAP_1_5','GAP_1_0','GAP_0_6','SLIPSTREAM','ATTACK_LINE','DEFENCE_LINE','FAKE','BRAKING_DUEL','CORNER_ENTRY_DUEL','SIDE_BY_SIDE','EDGES_AHEAD','RE_ATTACK','PASS_SUCCESS','PASS_FAIL','COUNTER_ATTACK','FRONT_CAR_MISTAKE','REAR_CAR_MISTAKE','CORNER_EXIT_ADVANTAGE','LEADER_PRESSURE_MISTAKE','BURST_ACTIVATION','BURST_SUCCESS','BURST_FAIL','PODIUM_BATTLE','LAST_PLACE_BATTLE','FINAL_LAP','THREE_CAR_BATTLE'].every(event=>Array.isArray(MICRO_DIALOGUE_ROLE_MAP_V279[event]));
+  return {stats,categoryCount:categoryNames.length,uniqueCount:unique.size,coverage,microCoverage,recentLimit:DIALOGUE_RECENT_TEXT_LIMIT_V279,
+    allPass:stats.total>=300&&categoryNames.length>=13&&unique.size>=300&&coverage&&microCoverage&&DIALOGUE_RECENT_TEXT_LIMIT_V279>=30};
 }
 
 const commentaryStateV219={
@@ -7555,6 +7669,8 @@ window.mwsF1QaCharacterDialogueEngineV277=qaCharacterDialogueEngineV277;
 window.mwsF1UpdateMicroBattleEventsV278=updateMicroBattleEventsV278;
 window.mwsF1GetMicroBattleEventsV278=getMicroBattleEventsV278;
 window.mwsF1QaMicroBattleEventsV278=qaMicroBattleEventsV278;
+window.mwsF1DialoguePoolStatsV279=dialoguePoolCountV279;
+window.mwsF1QaExpandedDialoguePoolV279=qaExpandedDialoguePoolV279;
 window.mwsF1GetLeaderPressureFieldV274=function(){return {...leaderPressureFieldV274,history:leaderPressureFieldV274.history.map(row=>({...row}))}};
 window.mwsF1GetStartingGridRevealStateV273=function(){return {...gridRevealStateV273,timers:gridRevealStateV273.timers.length}};
 window.mwsF1CancelRaceRecoveryC=cancelRaceToSetupRecoveryC;
@@ -7879,6 +7995,7 @@ window.__mwsF1RacingV275=VERSION275;
 window.__mwsF1RacingV276=VERSION276;
 window.__mwsF1RacingV277=VERSION277;
 window.__mwsF1RacingV278=VERSION278;
+window.__mwsF1RacingV279=VERSION279;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
