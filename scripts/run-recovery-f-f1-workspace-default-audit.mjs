@@ -13,7 +13,6 @@ export function runRecoveryFF1WorkspaceDefaultAudit(){
   for(const token of ['순위 · 격차 · 텔레메트리','실시간 이벤트 피드'])if(!index.includes(token))issues.push('Recovery F HTML label missing: '+token);
 
   for(const token of [
-    'version:5,',
     "track:Object.freeze({x:0,y:0,w:8,h:8",
     "timing:Object.freeze({x:8,y:0,w:4,h:3",
     "commentary:Object.freeze({x:8,y:3,w:4,h:5",
@@ -23,6 +22,7 @@ export function runRecoveryFF1WorkspaceDefaultAudit(){
     "for(const [group,id] of Object.entries(defaults.activeTabs||{})){",
     "window.__mwsF1RecoveryF='race-workspace-default-redesign-v1';"
   ])if(!racing.includes(token))issues.push('Recovery F default workspace missing: '+token);
+  if(!racing.includes('version:5,')&&!racing.includes('version:F1_WORKSPACE_LAYOUT_VERSION_V249,'))issues.push('Recovery F default workspace schema version missing');
 
   for(const token of [
     '/* Recovery F: dense race-control default presentation */',
