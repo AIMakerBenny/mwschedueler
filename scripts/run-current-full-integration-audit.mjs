@@ -253,6 +253,7 @@ import {runPhase254F1LiveMarkerPositionAudit} from './run-phase254-f1-live-marke
 import {runPhase255F1RaceHeadlineAudit} from './run-phase255-f1-race-headline-audit.mjs';
 import {runPhase256F1BattleLinkAudit} from './run-phase256-f1-battle-link-audit.mjs';
 import {runPhase257F1EmbeddedProfileAudit} from './run-phase257-f1-embedded-profile-audit.mjs';
+import {runPhase258F1VisualLateralSmoothingAudit} from './run-phase258-f1-visual-lateral-smoothing-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2475,5 +2476,10 @@ export function runPhase257FullIntegrationAudit(){
  const issues=[...previous.issues,...current.issues.map(x=>'Phase 257: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 257: '+x)];
  return {phase:257,previous,current,issues,warnings,pass:issues.length===0};
 }
-export function runCurrentFullIntegrationAudit(){return runPhase257FullIntegrationAudit();}
+export function runPhase258FullIntegrationAudit(){
+ const previous=runPhase257FullIntegrationAudit(),current=runPhase258F1VisualLateralSmoothingAudit();
+ const issues=[...previous.issues,...current.issues.map(x=>'Phase 258: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 258: '+x)];
+ return {phase:258,previous,current,issues,warnings,pass:issues.length===0};
+}
+export function runCurrentFullIntegrationAudit(){return runPhase258FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
