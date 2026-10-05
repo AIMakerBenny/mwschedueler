@@ -46,7 +46,33 @@ function qaWorkspaceViewportFitV288(){
  const liveBlank=live?Math.max(0,live.available-workspace.getBoundingClientRect().height):0;
  return {version:VERSION288,config:{...WORKSPACE_FIT_CONFIG_V288,targetViewports:[...WORKSPACE_FIT_CONFIG_V288.targetViewports]},samples,samplePass,installed:fitStateV288.installed,resetHooks:fitStateV288.resetHooks,liveBlankPx:liveBlank,allPass:samplePass&&fitStateV288.installed&&(!live||liveBlank<=2)};
 }
-function bootV288(){installWorkspaceViewportFitV288()}
+function bootV288(){installWorkspaceViewportFitV288();installPreraceCompactV289()}
+
+const VERSION289='phase289-f1-r14-prerace-screen-compression';
+const PRERACE_COMPACT_CONFIG_V289=Object.freeze({states:Object.freeze(['TRANSITION','GRID']),bodyClass:'f1-racing-r14-prerace-compact-v289'});
+const preraceStateV289={installed:false,syncCount:0,lastState:''};
+function syncPreraceCompactV289(forcedState=null){
+ const state=forcedState===null?screenStateV288():String(forcedState),active=PRERACE_COMPACT_CONFIG_V289.states.includes(state);
+ document.body?.classList.toggle(PRERACE_COMPACT_CONFIG_V289.bodyClass,active);
+ const grid=document.getElementById('f1RacingViewGridV185'),transition=document.getElementById('f1RacingViewTransitionV185');
+ if(grid)grid.dataset.preraceCompactV289=active&&state==='GRID'?'1':'0';
+ if(transition)transition.dataset.preraceCompactV289=active&&state==='TRANSITION'?'1':'0';
+ preraceStateV289.lastState=state;preraceStateV289.syncCount+=1;return active;
+}
+function installPreraceCompactV289(){
+ if(preraceStateV289.installed)return true;preraceStateV289.installed=true;
+ const shell=document.getElementById('f1RacingShellV180');
+ if(shell)new MutationObserver(()=>syncPreraceCompactV289()).observe(shell,{subtree:true,attributes:true,attributeFilter:['hidden']});
+ syncPreraceCompactV289();return true;
+}
+function qaPreraceCompactV289(){
+ const grid=document.getElementById('f1RacingViewGridV185'),transition=document.getElementById('f1RacingViewTransitionV185');
+ const original=screenStateV288(),gridActive=syncPreraceCompactV289('GRID'),gridClass=document.body?.classList.contains(PRERACE_COMPACT_CONFIG_V289.bodyClass),transitionActive=syncPreraceCompactV289('TRANSITION'),transitionClass=document.body?.classList.contains(PRERACE_COMPACT_CONFIG_V289.bodyClass),raceInactive=!syncPreraceCompactV289('RACE');
+ syncPreraceCompactV289(original);
+ return {version:VERSION289,states:[...PRERACE_COMPACT_CONFIG_V289.states],installed:preraceStateV289.installed,gridReady:Boolean(grid),transitionReady:Boolean(transition),gridActive,gridClass,transitionActive,transitionClass,raceInactive,allPass:Boolean(grid&&transition)&&gridActive&&gridClass&&transitionActive&&transitionClass&&raceInactive};
+}
+
 window.mwsF1ApplyWorkspaceViewportFitV288=applyWorkspaceViewportFitV288;window.mwsF1QaWorkspaceViewportFitV288=qaWorkspaceViewportFitV288;window.__mwsF1RacingV288=VERSION288;
+window.mwsF1SyncPreraceCompactV289=syncPreraceCompactV289;window.mwsF1QaPreraceCompactV289=qaPreraceCompactV289;window.__mwsF1RacingV289=VERSION289;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootV288,{once:true});else bootV288();
 })();
