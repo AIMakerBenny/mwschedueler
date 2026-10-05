@@ -211,6 +211,7 @@ jobs:
           node --check scripts/run-phase266-f1-track-card-circuit-redesign-audit.mjs
           node --check scripts/run-phase267-f1-integrated-spectator-desktop-audit.mjs
           node --check scripts/run-phase268-f1-auto-follow-wheel-zoom-audit.mjs
+          node --check scripts/run-phase269-f1-lateral-workspace-stability-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -2555,6 +2556,14 @@ jobs:
           node --check /tmp/f1-racing-v1-phase268.js
           grep -Fq 'function qaAutoFollowWheelZoomV268(){' /tmp/f1-racing-v1-phase268.js
           retry_contains "$BASE/?phase268=$GITHUB_SHA" 'recovery=N1&phase=' > /tmp/index-phase268.html
+
+          echo '[phase269] F1 lateral and workspace stability'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV269=VERSION269;' > /tmp/f1-racing-v1-phase269.js
+          node --check /tmp/f1-racing-v1-phase269.js
+          grep -Fq 'function qaLateralDynamicsV269(){' /tmp/f1-racing-v1-phase269.js
+          grep -Fq 'function qaWorkspaceExactRestoreV269(){' /tmp/f1-racing-v1-phase269.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" 'Phase 268: fullscreen viewport fit repair' > /tmp/f1-racing-v1-phase269.css
+          retry_contains "$BASE/?phase269=$GITHUB_SHA" 'recovery=N1&phase=' > /tmp/index-phase269.html
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
