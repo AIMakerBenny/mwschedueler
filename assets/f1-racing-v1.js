@@ -3095,6 +3095,13 @@ function updatePassStateMachineV208(stepMs){
     if(vehicle.finished||String(vehicle.pitState||'TRACK')!=='TRACK'){
       vehicle.battleSpeedBiasKph=0;continue;
     }
+    if(!boundaryOvertakeEligibleV271(vehicle)){
+      vehicle.battleSpeedBiasKph=Math.min(0,Number(vehicle.battleSpeedBiasKph)||0);
+      if(['PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK'].includes(String(vehicle.battleState||''))){
+        vehicle.battleState='PASS_FAILED';vehicle.battleStateMs=0;vehicle.racingLineMode='IDEAL';
+      }
+      continue;
+    }
     let target=byId.get(String(vehicle.battleTargetId||''))||null;
     const currentStanding=standings.find(row=>row.vehicle===vehicle);
     const immediateAhead=currentStanding&&currentStanding.position>1?standings[currentStanding.position-2]?.vehicle:null;
@@ -3719,6 +3726,11 @@ function trackBoundaryStateV271(vehicle,rawOffset){
   const speedFactor=pit?1:offTrack?TRACK_BOUNDARY_V271.offTrackSpeedFactor:1-edgeT*(1-TRACK_BOUNDARY_V271.edgeMinSpeedFactor);
   return {raw,limit,ratio,edge,offTrack,speedFactor,clamped:Math.max(-limit,Math.min(limit,raw))};
 }
+function boundaryOvertakeEligibleV271(vehicle){
+  if(!vehicle)return false;
+  const ratio=Number(vehicle.trackBoundaryRatioV271)||0;
+  return !vehicle.trackBoundaryExceededV271&&ratio<.985;
+}
 function physicalLateralOffsetV258(vehicle){
   const raw=lineOffsetMetersV197(vehicle)+(Number(vehicle?.incidentLateralOffsetMeters)||0);
   const boundary=trackBoundaryStateV271(vehicle,raw);
@@ -4194,7 +4206,13 @@ function qaTrackBoundaryV271(){
     factor:Number(vehicle.trackBoundarySpeedFactorV271)||1
   }));
   const liveInside=live.every(row=>row.visual<=row.limit+.02);
-  return {limit,center,edge,beyond,clamped,liveInside,live,allPass:limit>.7&&center.speedFactor===1&&edge.speedFactor<1&&edge.speedFactor>=TRACK_BOUNDARY_V271.edgeMinSpeedFactor-.01&&beyond.offTrack===true&&beyond.speedFactor===TRACK_BOUNDARY_V271.offTrackSpeedFactor&&Math.abs(clamped)<=limit+.001&&liveInside};
+  const eligibleProbe={trackBoundaryRatioV271:.50,trackBoundaryExceededV271:false};
+  const offTrackProbe={trackBoundaryRatioV271:1.05,trackBoundaryExceededV271:true};
+  const edgeProbe={trackBoundaryRatioV271:.99,trackBoundaryExceededV271:false};
+  const overtakeEligible=boundaryOvertakeEligibleV271(eligibleProbe);
+  const offTrackBlocked=!boundaryOvertakeEligibleV271(offTrackProbe);
+  const edgeBlocked=!boundaryOvertakeEligibleV271(edgeProbe);
+  return {limit,center,edge,beyond,clamped,liveInside,live,overtakeEligible,offTrackBlocked,edgeBlocked,allPass:limit>.7&&center.speedFactor===1&&edge.speedFactor<1&&edge.speedFactor>=TRACK_BOUNDARY_V271.edgeMinSpeedFactor-.01&&beyond.offTrack===true&&beyond.speedFactor===TRACK_BOUNDARY_V271.offTrackSpeedFactor&&Math.abs(clamped)<=limit+.001&&liveInside&&overtakeEligible&&offTrackBlocked&&edgeBlocked};
 }
 
 function qaCornerDynamicsV270(){
