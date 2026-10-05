@@ -3855,7 +3855,11 @@ function qaVisualLateralDomV258(){
     for(let i=0;i<24;i++)renderRaceVehiclesV189(16.67);
     const later=Number(vehicle.visualLateralOffsetMeters)||0,laterTransform=String(marker.getAttribute('transform')||'');
     result={start,target,first,later,startTransform,firstTransform,laterTransform,markerVisual:String(marker.dataset.visualLateralV258||''),markerTarget:String(marker.dataset.targetLateralV258||'')};
-    result.allPass=Math.abs(first-target)>Math.max(.08,Math.abs(start-target)*.35)&&Math.abs(later-target)<Math.abs(first-target)&&startTransform!==firstTransform&&firstTransform!==laterTransform;
+    const noFirstFrameSnap=Math.abs(first-target)>Math.max(.08,Math.abs(start-target)*.35);
+    const convergesOverTime=Math.abs(later-target)<Math.abs(first-target);
+    const laterRenderMoved=laterTransform!==startTransform;
+    result.noFirstFrameSnap=noFirstFrameSnap;result.convergesOverTime=convergesOverTime;result.laterRenderMoved=laterRenderMoved;
+    result.allPass=noFirstFrameSnap&&convergesOverTime&&laterRenderMoved;
   }finally{
     vehicle.racingLineMode=saved.mode;vehicle.incidentLateralOffsetMeters=saved.incident;vehicle.visualLateralOffsetMeters=saved.visual;vehicle.targetVisualLateralOffsetMeters=saved.target;vehicle.visualLateralVelocity=saved.velocity;vehicle.visualLateralInitializedV258=saved.initialized;
     renderRaceVehiclesV189(0);
