@@ -40,7 +40,7 @@ function dockLiveCutinV303(){
 }
 function layoutShuffleCardsV303(){
  const cards=[...document.querySelectorAll('#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273')],count=cards.length;if(!count)return false;
- const spacing=count<=1?0:Math.min(58,392/Math.max(1,count-1)),center=(count-1)/2;
+ const spacing=count<=1?0:(count<=4?96:Math.min(64,448/Math.max(1,count-1))),center=(count-1)/2;
  cards.forEach((card,index)=>{const d=index-center;card.style.setProperty('--v303-x',(d*spacing).toFixed(1)+'px');card.style.setProperty('--v303-y',(Math.abs(d)*4).toFixed(1)+'px');card.style.setProperty('--v303-r',Math.max(-12,Math.min(12,d*3.2)).toFixed(1)+'deg')});
  return true;
 }
