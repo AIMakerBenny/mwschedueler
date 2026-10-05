@@ -272,6 +272,7 @@ import {runPhase273F1StartingGridCardRevealAudit} from './run-phase273-f1-starti
 import {runPhase274F1FieldCompressionLeaderPressureAudit} from './run-phase274-f1-field-compression-leader-pressure-audit.mjs';
 import {runPhase275F1ChaseBurstAudit} from './run-phase275-f1-chase-burst-audit.mjs';
 import {runPhase276F1LiveConversationStackAudit} from './run-phase276-f1-live-conversation-stack-audit.mjs';
+import {runPhase277F1CharacterDialogueEngineAudit} from './run-phase277-f1-character-dialogue-engine-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2589,5 +2590,10 @@ export function runPhase276FullIntegrationAudit(){
  const issues=[...previous.issues,...current.issues.map(x=>'Phase 276: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 276: '+x)];
  return {phase:276,previous,current,issues,warnings,pass:issues.length===0};
 }
-export function runCurrentFullIntegrationAudit(){return runPhase276FullIntegrationAudit();}
+export function runPhase277FullIntegrationAudit(){
+ const previous=runPhase276FullIntegrationAudit(),current=runPhase277F1CharacterDialogueEngineAudit();
+ const issues=[...previous.issues,...current.issues.map(x=>'Phase 277: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 277: '+x)];
+ return {phase:277,previous,current,issues,warnings,pass:issues.length===0};
+}
+export function runCurrentFullIntegrationAudit(){return runPhase277FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
