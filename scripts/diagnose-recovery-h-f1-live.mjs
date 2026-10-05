@@ -533,7 +533,7 @@ try{
     const markerPositionBox254=markerPositionTag254?.querySelector('.car-position-box-v254');
     const markerPositionText254=markerPositionTag254?.querySelector('.car-position-text-v254');
     const markerPositionRect254=markerPositionBox254?.getBoundingClientRect();
-    assert(markerPositionRect254&&markerPositionRect254.width>=8&&markerPositionRect254.height>=5&&/^P\d+$/.test(String(markerPositionText254?.textContent||'')),'Phase 254 marker position tag geometry invalid: '+JSON.stringify(markerPositionRect254?{w:markerPositionRect254.width,h:markerPositionRect254.height,text:markerPositionText254?.textContent}:null));
+    assert(markerPositionRect254&&markerPositionRect254.width>=8&&markerPositionRect254.height>=5&&/^P\\d+$/.test(String(markerPositionText254?.textContent||'')),'Phase 254 marker position tag geometry invalid: '+JSON.stringify(markerPositionRect254?{w:markerPositionRect254.width,h:markerPositionRect254.height,text:markerPositionText254?.textContent}:null));
     assert(document.querySelector('[data-f1-workspace-panel="timing"] [data-f1-panel-drag="timing"]')?.textContent?.includes('실시간 순위'),'Phase 218 timing panel is not Korean');
     assert(document.querySelector('[data-f1-workspace-panel="track"] [data-f1-panel-drag="track"]')?.textContent?.includes('트랙 맵'),'Phase 218 track panel is not Korean');
     assert(document.querySelector('[data-f1-workspace-panel="commentary"] [data-f1-panel-drag="commentary"]')?.textContent?.includes('경기 해설'),'Phase 218 commentary panel is not Korean');
