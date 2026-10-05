@@ -738,3 +738,25 @@ body.f1-racing-immersive #f1RacingShellV180{width:100%!important;max-width:none!
 body.f1-racing-immersive #f1RacingViewRaceV185{min-height:100vh!important;padding:10px 12px 16px!important}
 body.f1-racing-immersive #f1RacingWorkspaceToolbarRecoveryE{position:sticky;top:0;z-index:40;background:rgba(5,8,13,.94);backdrop-filter:blur(10px)}
 body.f1-racing-immersive #f1RacingWorkspaceRecoveryE{min-height:calc(100vh - 170px)}
+
+
+/* Phase 264: LIVE comic overtake cut-ins */
+.f1-racing-race-map-stage-v188{position:relative}
+.f1-racing-live-cutin-layer-v264{position:absolute;left:14px;bottom:14px;z-index:18;display:flex;flex-direction:column-reverse;gap:8px;width:min(360px,46%);pointer-events:none;overflow:visible}
+.f1-racing-live-cutin-v264{position:relative;min-height:96px;padding:9px 11px 11px;border:1px solid color-mix(in srgb,var(--cutin-driver-color) 60%,#fff 12%);border-left:4px solid var(--cutin-driver-color);border-radius:8px;background:linear-gradient(125deg,rgba(5,8,13,.96),rgba(14,19,29,.94));box-shadow:0 14px 32px rgba(0,0,0,.34);overflow:hidden;opacity:0;transform:translateX(-110%) scale(.98);transition:transform .3s cubic-bezier(.2,.86,.24,1),opacity .22s ease}
+.f1-racing-live-cutin-v264.is-visible{opacity:1;transform:translateX(0) scale(1);animation:f1LiveCutinShakeV264 .34s ease-out 1}
+.f1-racing-live-cutin-v264.is-leaving{opacity:0;transform:translateX(-110%) scale(.98)}
+.f1-racing-live-cutin-v264 header{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;text-transform:uppercase}
+.f1-racing-live-cutin-v264 header strong{font-size:12px;letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f1-racing-live-cutin-v264 header span{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:900;letter-spacing:.12em}
+.f1-racing-live-cutin-v264 header i{width:7px;height:7px;border-radius:50%;background:#ff3b4f;box-shadow:0 0 0 4px rgba(255,59,79,.16)}
+.f1-racing-live-cutin-body-v264{position:relative;z-index:2;display:grid;grid-template-columns:58px 1fr;align-items:center;gap:10px}
+.f1-racing-live-cutin-avatar-v264{position:relative;z-index:3;width:58px;height:58px;border-radius:50%;object-fit:cover;border:2px solid var(--cutin-driver-color);background:#121927;box-shadow:0 0 0 4px rgba(255,255,255,.04)}
+.f1-racing-live-cutin-avatar-v264.fallback{display:grid;place-items:center;font-size:18px;font-weight:900}
+.f1-racing-live-cutin-body-v264 p{position:relative;z-index:3;margin:0;font-size:13px;font-weight:850;line-height:1.35;text-shadow:0 2px 10px #000}
+.f1-racing-live-cutin-speed-v264{position:absolute;inset:-20%;background:repeating-linear-gradient(165deg,transparent 0 12px,rgba(255,255,255,.09) 13px 14px,transparent 15px 24px);transform:translateX(-25%);opacity:.55;animation:f1LiveCutinSpeedV264 .8s linear infinite}
+.f1-racing-live-cutin-burst-v264{position:absolute;left:20px;top:50%;width:115px;height:115px;transform:translate(-50%,-50%);background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.18) 0 2deg,transparent 2deg 13deg);border-radius:50%;opacity:.62;animation:f1LiveCutinBurstV264 1.2s linear infinite}
+@keyframes f1LiveCutinSpeedV264{to{transform:translateX(20%)}}
+@keyframes f1LiveCutinBurstV264{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes f1LiveCutinShakeV264{0%{translate:-5px 0}35%{translate:4px 0}70%{translate:-2px 0}100%{translate:0 0}}
+@media (prefers-reduced-motion:reduce){.f1-racing-live-cutin-v264,.f1-racing-live-cutin-speed-v264,.f1-racing-live-cutin-burst-v264{animation:none!important;transition:none!important}}
