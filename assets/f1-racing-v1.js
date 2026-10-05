@@ -5070,7 +5070,7 @@ function bindRaceCameraInteractionV216(stage){
     if(event.button!==0||event.target.closest?.('#f1RacingCameraControlsV216'))return;
     raceCameraV216.dragCandidateV268=true;raceCameraV216.dragging=false;raceCameraV216.pointerId=event.pointerId;
     raceCameraV216.startX=event.clientX;raceCameraV216.startY=event.clientY;raceCameraV216.lastX=event.clientX;raceCameraV216.lastY=event.clientY;
-    stage.setPointerCapture?.(event.pointerId);event.preventDefault();
+    try{stage.setPointerCapture?.(event.pointerId)}catch(_){}event.preventDefault();
   });
   stage.addEventListener('pointermove',event=>{
     if((!raceCameraV216.dragCandidateV268&&!raceCameraV216.dragging)||raceCameraV216.pointerId!==event.pointerId)return;
