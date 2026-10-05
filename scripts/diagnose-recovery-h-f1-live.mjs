@@ -540,6 +540,9 @@ try{
     const raceHeadlineRect255=raceHeadline255?.getBoundingClientRect();
     const raceHeadlineCells255=raceHeadline255?.querySelectorAll(':scope > span')?.length||0;
     assert(raceHeadlineRect255&&raceHeadlineRect255.width>200&&raceHeadlineRect255.height>0&&raceHeadlineCells255===4,'Phase 255 race headline geometry invalid: '+JSON.stringify(raceHeadlineRect255?{w:raceHeadlineRect255.width,h:raceHeadlineRect255.height,cells:raceHeadlineCells255}:null));
+    const battleLinkQa256=window.mwsF1QaBattleLinksV256?.();
+    assert(battleLinkQa256?.allPass===true,'Phase 256 battle link QA failed: '+JSON.stringify(battleLinkQa256));
+    assert(Number(battleLinkQa256?.length)>4&&Number(battleLinkQa256?.length)<=88.5&&Number(battleLinkQa256?.arrowWidth)>0&&Number(battleLinkQa256?.arrowHeight)>0&&String(battleLinkQa256?.lineAnimation||'').includes('f1BattleLinkFlowV256'),'Phase 256 battle link rendering invalid: '+JSON.stringify(battleLinkQa256));
     assert(document.querySelector('[data-f1-workspace-panel="timing"] [data-f1-panel-drag="timing"]')?.textContent?.includes('실시간 순위'),'Phase 218 timing panel is not Korean');
     assert(document.querySelector('[data-f1-workspace-panel="track"] [data-f1-panel-drag="track"]')?.textContent?.includes('트랙 맵'),'Phase 218 track panel is not Korean');
     assert(document.querySelector('[data-f1-workspace-panel="commentary"] [data-f1-panel-drag="commentary"]')?.textContent?.includes('경기 해설'),'Phase 218 commentary panel is not Korean');
