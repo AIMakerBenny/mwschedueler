@@ -582,7 +582,7 @@ try{
     for(let step245=0;step245<12;step245++)mapStage.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:-120,clientX:mapRect.left+mapRect.width/2,clientY:mapRect.top+mapRect.height/2}));
     await raf();
     const zoomState245=window.mwsF1GetRaceCameraStateV216();
-    assert(zoomState245.mode==='MANUAL'&&zoomState245.zoom===4.5,'Phase 245 wheel zoom did not reach clamped maximum');
+    assert(zoomState245.mode==='FULL'&&zoomState245.zoom===4.5,'Phase 245 wheel zoom did not reach clamped maximum while preserving automatic mode');
     const sizesAtZoom245=measure245();
     sizesAtZoom245.forEach((row,index)=>{
       const ratio=row.width/sizesAtFull245[index].width;
