@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase281Ready=false;
+  let phase282Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase281Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV281==='phase281-dialogue-cadence-repeat-guard'","Phase 281 runtime readiness"));
-    if(phase281Ready)break;
+    phase282Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV282==='phase282-dialogue-long-run-desktop-qa'","Phase 282 runtime readiness"));
+    if(phase282Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v281=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v282=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase281Ready)throw new Error('Phase 281 runtime did not propagate to Recovery H browser');
+  if(!phase282Ready)throw new Error('Phase 282 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -856,6 +856,11 @@ try{
     const momentumBenchmark262=window.mwsF1QaRaceMomentumBenchmarkV262?.();
     assert(momentumBenchmark262?.allPass===true,'Phase 262 momentum benchmark failed: '+JSON.stringify(momentumBenchmark262));
     assert(momentumBenchmark262?.allPass===true&&Number(momentumBenchmark262?.trackCount)===7&&Number(momentumBenchmark262?.completedRuns)===7,'Phase 275 long-run benchmark failed: '+JSON.stringify(momentumBenchmark262));
+    const longRunQa282=window.mwsF1QaDialogueLongRunDesktopV282?.(momentumBenchmark262);
+    assert(longRunQa282?.allPass===true,'Phase 282 integrated long-run QA failed: '+JSON.stringify(longRunQa282));
+    assert(longRunQa282?.benchmarkPass===true&&Number(longRunQa282?.benchmark?.trackCount)===7&&Number(longRunQa282?.benchmark?.completedRuns)===7,'Phase 282 seven-track benchmark failed: '+JSON.stringify(longRunQa282));
+    assert(longRunQa282?.boundedPass===true&&Object.values(longRunQa282?.bounded||{}).every(Boolean),'Phase 282 dialogue memory bounds failed: '+JSON.stringify(longRunQa282));
+    assert(longRunQa282?.desktopUi===true&&longRunQa282?.dialoguePass===true&&longRunQa282?.rulesPass===true,'Phase 282 desktop dialogue integration failed: '+JSON.stringify(longRunQa282));
     assert(Number(momentumBenchmark262?.trackCount)===7&&Number(momentumBenchmark262?.completedRuns)===7,'Phase 262 benchmark did not complete all 7 tracks: '+JSON.stringify(momentumBenchmark262));
     assert(Boolean(momentumBenchmark262?.deterministicRepeat),'Phase 262 benchmark repeat was not deterministic');
     assert(Math.abs(Number(momentumBenchmark262?.gridFinishCorrelation)||0)<.94,'Phase 262 grid-finish correlation remains too strong: '+JSON.stringify(momentumBenchmark262?.gridFinishCorrelation));
