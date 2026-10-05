@@ -195,6 +195,7 @@ jobs:
           node --check scripts/run-phase250-f1-driver-profile-marker-audit.mjs
           node --check scripts/run-phase251-f1-live-timing-identity-audit.mjs
           node --check scripts/run-phase252-f1-spectator-highlights-audit.mjs
+          node --check scripts/run-phase253-f1-live-timing-status-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -2403,6 +2404,14 @@ jobs:
           grep -Fq '.battle-pulse-v252' /tmp/f1-racing-v1-phase252.css
           grep -Fq 'data-position-delta-v252' /tmp/f1-racing-v1-phase252.css
           grep -Fq '.best.is-fastest-v252' /tmp/f1-racing-v1-phase252.css
+
+          echo '[phase253] F1 Live Timing race status badges'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV253=VERSION253;' > /tmp/f1-racing-v1-phase253.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '/* Phase 253: compact Live Timing race status badges */' > /tmp/f1-racing-v1-phase253.css
+          node --check /tmp/f1-racing-v1-phase253.js
+          grep -Fq 'function syncLiveTimingStatusV253(' /tmp/f1-racing-v1-phase253.js
+          grep -Fq 'function qaLiveTimingStatusV253(){' /tmp/f1-racing-v1-phase253.js
+          grep -Fq '.f1-racing-driver-state-v253' /tmp/f1-racing-v1-phase253.css
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
