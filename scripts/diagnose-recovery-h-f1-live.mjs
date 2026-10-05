@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase271Ready=false;
+  let phase272Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase271Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV271==='phase271-track-boundary-wall-riding-fix'","Phase 271 runtime readiness"));
-    if(phase271Ready)break;
+    phase272Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV272==='phase272-random-seeded-starting-grid'","Phase 272 runtime readiness"));
+    if(phase272Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v271=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v272=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase271Ready)throw new Error('Phase 271 runtime did not propagate to Recovery H browser');
+  if(!phase272Ready)throw new Error('Phase 272 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -244,6 +244,21 @@ try{
     const snapshot260=window.mwsF1GetActiveRaceSnapshotV187?.();
     assert(Number(snapshot260?.totalLaps)===17,'Phase 260 race snapshot did not retain custom laps: '+JSON.stringify(snapshot260?.totalLaps));
     assert(String(document.getElementById('f1RacingGridLapsRecoveryM')?.textContent||'').includes('17'),'Phase 260 grid lap count does not match snapshot');
+    const gridQa272=window.mwsF1QaRandomStartingGridV272?.();
+    assert(gridQa272?.allPass===true,'Phase 272 random starting grid QA failed: '+JSON.stringify(gridQa272));
+    const gridBefore272=window.mwsF1GetActiveRaceSnapshotV187?.();
+    const orderBefore272=(gridBefore272?.drivers||[]).map(row=>String(row.contactId));
+    assert((gridBefore272?.drivers||[]).every((row,index)=>Number(row.gridPosition)===index+1),'Phase 272 gridPosition sequence invalid: '+JSON.stringify(gridBefore272?.drivers));
+    const offsetRows272=(gridBefore272?.drivers||[]).map((row,index)=>window.mwsF1GridStartOffsetV272?.(index,gridBefore272.drivers.length));
+    assert(offsetRows272[0]===0&&offsetRows272.slice(1).every((value,index)=>Number(value)<Number(offsetRows272[index])),'Phase 272 engine start offsets invalid: '+JSON.stringify(offsetRows272));
+    const shuffle272=document.getElementById('f1RacingGridShuffleV272');
+    assert(shuffle272,'Phase 272 reshuffle button missing');
+    shuffle272.click();await raf();
+    const gridAfter272=window.mwsF1GetActiveRaceSnapshotV187?.();
+    const orderAfter272=(gridAfter272?.drivers||[]).map(row=>String(row.contactId));
+    assert(String(gridAfter272?.createdAt)===String(gridBefore272?.createdAt),'Phase 272 reshuffle replaced race snapshot identity');
+    assert(JSON.stringify(orderAfter272)!==JSON.stringify(orderBefore272),'Phase 272 reshuffle did not change grid order');
+    assert(document.querySelectorAll('#f1RacingGridListV272 [data-f1-grid-position]').length===(gridAfter272?.drivers||[]).length,'Phase 272 grid DOM count mismatch');
     const manualStart=document.getElementById('f1RacingGridStartRecoveryM');
     assert(manualStart,'Explicit grid start button missing');
     const gridLayoutQa244=window.mwsF1QaStartingGridLayoutV244?.();
