@@ -38,6 +38,12 @@ function dockLiveCutinV303(){
  if(layer.parentElement!==commentary)commentary.insertBefore(layer,log);
  layer.classList.add('docked-v303');layer.setAttribute('aria-label','LIVE 경기 컷인');return true;
 }
+function layoutShuffleCardsV303(){
+ const cards=[...document.querySelectorAll('#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273')],count=cards.length;if(!count)return false;
+ const spacing=count<=1?0:Math.min(58,392/Math.max(1,count-1)),center=(count-1)/2;
+ cards.forEach((card,index)=>{const d=index-center;card.style.setProperty('--v303-x',(d*spacing).toFixed(1)+'px');card.style.setProperty('--v303-y',(Math.abs(d)*4).toFixed(1)+'px');card.style.setProperty('--v303-r',Math.max(-12,Math.min(12,d*3.2)).toFixed(1)+'deg')});
+ return true;
+}
 function suppressDuplicateTrackRankV303(){const root=document.getElementById('f1RacingTrackRankingV284');if(root){root.hidden=true;root.setAttribute('aria-hidden','true')}return true}
 function qaFeedbackUiV303(){
  const conversation=document.getElementById('f1RacingConversationStackV276'),cutin=document.getElementById('f1RacingLiveCutinLayerV264'),commentary=document.querySelector('#f1RacingViewRaceV185 .f1-racing-commentary-v188'),rank=document.getElementById('f1RacingTrackRankingV284');
@@ -45,7 +51,7 @@ function qaFeedbackUiV303(){
  const ratios=cards.map(card=>{const r=card.getBoundingClientRect();return r.width>0?r.height/r.width:0});
  return {version:VERSION303,conversationHidden:Boolean(conversation)&&getComputedStyle(conversation).display==='none',cutinDocked:Boolean(cutin&&commentary&&cutin.parentElement===commentary),duplicateRankHidden:!rank||getComputedStyle(rank).display==='none',thoughtObserver:Boolean(thoughtStateV303.observer),thoughtShown:thoughtStateV303.shown,cardRatios:ratios,verticalCards:!ratios.length||ratios.every(r=>r>=1.3),allPass:Boolean(conversation&&cutin&&commentary)&&getComputedStyle(conversation).display==='none'&&cutin.parentElement===commentary&&(!rank||getComputedStyle(rank).display==='none')&&Boolean(thoughtStateV303.observer)&&(!ratios.length||ratios.every(r=>r>=1.3))};
 }
-function syncV303(){installThoughtBridgeV303();dockLiveCutinV303();suppressDuplicateTrackRankV303()}
+function syncV303(){installThoughtBridgeV303();dockLiveCutinV303();suppressDuplicateTrackRankV303();layoutShuffleCardsV303()}
 function bootV303(){syncV303();const root=document.getElementById('gameF1Racing');if(root)new MutationObserver(syncV303).observe(root,{childList:true,subtree:true});}
 window.mwsF1ShowDriverThoughtV303=showDriverThoughtV303;window.mwsF1DockLiveCutinV303=dockLiveCutinV303;window.mwsF1QaFeedbackUiV303=qaFeedbackUiV303;window.__mwsF1FeedbackUiV303=VERSION303;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootV303,{once:true});else bootV303();
