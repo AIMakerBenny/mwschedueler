@@ -236,6 +236,7 @@ jobs:
           node --check scripts/run-phase291-f1-finish-podium-result-overlay-audit.mjs
           node --check scripts/run-phase292-f1-integrated-desktop-qa-audit.mjs
           node --check scripts/run-phase293-f1-production-audit-gate.mjs
+          node --check scripts/run-phase294-f1-recovery-h-final-overlay-audit.mjs
           node --check assets/f1-racing-r283-r287.js
           node --check assets/f1-racing-r288-r290.js
           node --check assets/f1-racing-r291-r295.js
