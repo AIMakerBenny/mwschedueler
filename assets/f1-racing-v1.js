@@ -75,6 +75,8 @@ const VERSION245='phase245-zoom-aware-marker-scale';
 const VERSION246='phase246-clean-track-indicators';
 const VERSION247='phase247-rebased-race-playback';
 const VERSION248='phase248-live-lap-sector-timing';
+const VERSION249='phase249-remove-obsolete-race-panels';
+const F1_WORKSPACE_LAYOUT_VERSION_V249=6;
 const RACE_PLAYBACK_BASE_V247=2;
 const engineQaV240={active:false};
 let engineSuiteCacheV241=null;
@@ -3786,7 +3788,7 @@ const F1_WORKSPACE_PANEL_META_RECOVERY_E=Object.freeze({
   commentary:Object.freeze({label:'경기 해설',minW:3,minH:3})
 });
 const F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E=Object.freeze({
-  version:5,
+  version:F1_WORKSPACE_LAYOUT_VERSION_V249,
   panels:Object.freeze({
     track:Object.freeze({x:0,y:0,w:8,h:8,hidden:false,maximized:false,tabGroup:''}),
     timing:Object.freeze({x:8,y:0,w:4,h:3,hidden:false,maximized:false,tabGroup:''}),
@@ -3926,14 +3928,19 @@ function workspaceOverlapPairsRecoveryI(layout=workspaceLayoutRecoveryE){
 }
 
 
-let workspaceRepairReportRecoveryK={repaired:false,reasons:[],version:5};
+let workspaceRepairReportRecoveryK={repaired:false,reasons:[],version:F1_WORKSPACE_LAYOUT_VERSION_V249};
 
 function workspaceRawIssuesRecoveryK(raw){
   const reasons=[];
   const candidate=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:null;
   if(!candidate){reasons.push('missing-layout');return reasons}
-  if(Number(candidate.version)<5)reasons.push('legacy-version');
+  if(Number(candidate.version)<F1_WORKSPACE_LAYOUT_VERSION_V249)reasons.push('legacy-version');
   const panels=candidate.panels&&typeof candidate.panels==='object'?candidate.panels:{};
+  const knownIds=new Set(Object.keys(F1_WORKSPACE_PANEL_META_RECOVERY_E));
+  for(const id of Object.keys(panels)){
+    if(knownIds.has(id))continue;
+    reasons.push((id==='radio'||id==='speed'?'obsolete-panel:':'unknown-panel:')+id);
+  }
   const rects=[];
   for(const id of Object.keys(F1_WORKSPACE_PANEL_META_RECOVERY_E)){
     const row=panels[id];
@@ -4009,7 +4016,7 @@ function normalizeWorkspaceLayoutRecoveryE(raw){
   const candidate=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
   const rawIssues=workspaceRawIssuesRecoveryK(candidate);
   const source=Number(candidate.version)>=5?candidate:{};
-  const result={version:5,panels:{},activeTabs:{}};
+  const result={version:F1_WORKSPACE_LAYOUT_VERSION_V249,panels:{},activeTabs:{}};
   for(const id of Object.keys(F1_WORKSPACE_PANEL_META_RECOVERY_E)){
     const base=defaults.panels[id];
     const row=source.panels?.[id]&&typeof source.panels[id]==='object'?source.panels[id]:{};
@@ -4036,13 +4043,13 @@ function normalizeWorkspaceLayoutRecoveryE(raw){
   let overlaps=workspaceOverlapPairsRecoveryI(normalized);
   if(overlaps.length){
     const fallback=cloneWorkspaceLayoutRecoveryE(F1_WORKSPACE_DEFAULT_LAYOUT_RECOVERY_E);
-    fallback.version=5;
+    fallback.version=F1_WORKSPACE_LAYOUT_VERSION_V249;
     normalized=workspaceReflowRecoveryI(fallback);
     overlaps=workspaceOverlapPairsRecoveryI(normalized);
     rawIssues.push('fallback-default-layout');
   }
-  normalized.version=5;
-  workspaceRepairReportRecoveryK={repaired:rawIssues.length>0,reasons:[...new Set(rawIssues)],version:5,overlapCount:overlaps.length};
+  normalized.version=F1_WORKSPACE_LAYOUT_VERSION_V249;
+  workspaceRepairReportRecoveryK={repaired:rawIssues.length>0,reasons:[...new Set(rawIssues)],version:F1_WORKSPACE_LAYOUT_VERSION_V249,overlapCount:overlaps.length};
   return normalized;
 }
 function readWorkspaceLayoutRecoveryE(){
@@ -4505,13 +4512,11 @@ function installF1WorkspaceRecoveryE(){
     const legacyGrid=race.querySelector('.f1-racing-race-grid-v188');
     const track=legacyGrid?.querySelector('.f1-racing-race-map-v188');
     const commentary=legacyGrid?.querySelector('.f1-racing-commentary-v188');
-    const side=legacyGrid?.querySelector('.f1-racing-race-side-v188');
     const pairs=[['timing',timing],['track',track],['commentary',commentary]];
     for(const [id,panel] of pairs){
       if(panel){workspace.appendChild(panel);addWorkspacePanelChromeRecoveryE(panel,id)}
     }
     if(legacyGrid)legacyGrid.hidden=true;
-    if(side)side.hidden=true;
 
     toolbar.addEventListener('click',event=>{
       const toggle=event.target.closest('[data-f1-workspace-toggle]');
@@ -4551,6 +4556,22 @@ function qaCompactWorkspaceV217(){
   const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
   const removed=workspace?!workspace.querySelector('[data-f1-workspace-panel="radio"],[data-f1-workspace-panel="speed"]'):true;
   return {version:Number(layout.version)||0,panelIds,expectedDefault:expected,obsoletePanelsRemoved:removed,allPass:Number(layout.version)>=5&&panelIds.length===3&&panelIds.includes('track')&&panelIds.includes('timing')&&panelIds.includes('commentary')&&removed};
+}
+function qaWorkspacePanelMigrationV249(){
+  const legacy={version:5,panels:{
+    track:{x:0,y:0,w:7,h:8,hidden:false,maximized:false,tabGroup:''},
+    timing:{x:7,y:0,w:5,h:3,hidden:false,maximized:false,tabGroup:''},
+    commentary:{x:7,y:3,w:5,h:5,hidden:false,maximized:false,tabGroup:''},
+    radio:{x:0,y:8,w:6,h:3,hidden:false,maximized:false,tabGroup:''},
+    speed:{x:6,y:8,w:6,h:3,hidden:false,maximized:false,tabGroup:''}
+  },activeTabs:{}};
+  const audit=workspaceAuditLayoutRecoveryK(legacy);
+  const keys=Object.keys(audit.layout?.panels||{}).sort();
+  const reasons=Array.isArray(audit.before)?audit.before:[];
+  const geometryPreserved=audit.layout?.panels?.track?.w===7&&audit.layout?.panels?.timing?.x===7&&audit.layout?.panels?.commentary?.x===7;
+  const obsoleteRemoved=!keys.includes('radio')&&!keys.includes('speed')&&keys.join(',')==='commentary,timing,track';
+  const reasonsPresent=reasons.includes('legacy-version')&&reasons.includes('obsolete-panel:radio')&&reasons.includes('obsolete-panel:speed');
+  return {version:Number(audit.layout?.version)||0,keys,reasons,geometryPreserved,obsoleteRemoved,overlaps:audit.overlaps||[],allPass:Number(audit.layout?.version)===F1_WORKSPACE_LAYOUT_VERSION_V249&&obsoleteRemoved&&reasonsPresent&&geometryPreserved&&(audit.overlaps||[]).length===0};
 }
 function readPersistedF1SettingsRecoveryD(){
   return typeof window.mwsGetF1RacingSettingsRecoveryD==='function'
@@ -5044,6 +5065,8 @@ window.mwsF1FormatLapTimeV248=formatLapTimeV248;
 window.mwsF1GetLapTimingStatesV248=getLapTimingStatesV248;
 window.mwsF1QaLapTimingV248=qaLapTimingV248;
 window.__mwsF1RacingV248=VERSION248;
+window.mwsF1QaWorkspacePanelMigrationV249=qaWorkspacePanelMigrationV249;
+window.__mwsF1RacingV249=VERSION249;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
