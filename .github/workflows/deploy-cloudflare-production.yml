@@ -198,6 +198,7 @@ jobs:
           node --check scripts/run-phase253-f1-live-timing-status-audit.mjs
           node --check scripts/run-phase254-f1-live-marker-position-audit.mjs
           node --check scripts/run-phase255-f1-race-headline-audit.mjs
+          node --check scripts/run-phase256-f1-battle-link-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -2432,6 +2433,15 @@ jobs:
           grep -Fq 'function qaRaceHeadlineV255(){' /tmp/f1-racing-v1-phase255.js
           grep -Fq '.f1-racing-race-headline-v255' /tmp/f1-racing-v1-phase255.css
           grep -Fq 'data-f1-headline-fastest' /tmp/index-phase255.html
+
+          echo '[phase256] F1 live battle target links'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV256=VERSION256;' > /tmp/f1-racing-v1-phase256.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '/* Phase 256: active battle target link on the live track */' > /tmp/f1-racing-v1-phase256.css
+          node --check /tmp/f1-racing-v1-phase256.js
+          grep -Fq 'function syncBattleLinksV256(){' /tmp/f1-racing-v1-phase256.js
+          grep -Fq 'function qaBattleLinksV256(){' /tmp/f1-racing-v1-phase256.js
+          grep -Fq '.battle-link-line-v256' /tmp/f1-racing-v1-phase256.css
+          grep -Fq '.battle-link-arrow-v256' /tmp/f1-racing-v1-phase256.css
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
