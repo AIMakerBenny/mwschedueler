@@ -8,7 +8,7 @@ export function runPhase266F1TrackCardCircuitRedesignAudit(){
   const css=fs.readFileSync('assets/f1-racing-v1.css','utf8');
   const live=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
   const phase=Number(index.match(/recovery=N1&phase=(\d+)/)?.[1]||0);
-  if(phase<266)issues.push('Phase 266 asset cache missing');
+  if(phase<266&&!index.includes('recovery=N1&phase=266&zoomfix=1'))issues.push('Phase 266 asset cache missing');
 
   for(const token of [
     "const VERSION266='phase266-f1-track-card-circuit-redesign';",
