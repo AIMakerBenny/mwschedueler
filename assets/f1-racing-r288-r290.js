@@ -46,7 +46,7 @@ function qaWorkspaceViewportFitV288(){
  const liveBlank=live?Math.max(0,live.available-workspace.getBoundingClientRect().height):0;
  return {version:VERSION288,config:{...WORKSPACE_FIT_CONFIG_V288,targetViewports:[...WORKSPACE_FIT_CONFIG_V288.targetViewports]},samples,samplePass,installed:fitStateV288.installed,resetHooks:fitStateV288.resetHooks,liveBlankPx:liveBlank,allPass:samplePass&&fitStateV288.installed&&(!live||liveBlank<=2)};
 }
-function bootV288(){installWorkspaceViewportFitV288();installPreraceCompactV289()}
+function bootV288(){installWorkspaceViewportFitV288();installPreraceCompactV289();installGridShuffleSmoothnessV290()}
 
 const VERSION289='phase289-f1-r14-prerace-screen-compression';
 const PRERACE_COMPACT_CONFIG_V289=Object.freeze({states:Object.freeze(['TRANSITION','GRID']),bodyClass:'f1-racing-r14-prerace-compact-v289'});
@@ -73,6 +73,33 @@ function qaPreraceCompactV289(){
 }
 
 window.mwsF1ApplyWorkspaceViewportFitV288=applyWorkspaceViewportFitV288;window.mwsF1QaWorkspaceViewportFitV288=qaWorkspaceViewportFitV288;window.__mwsF1RacingV288=VERSION288;
+
+const VERSION290='phase290-f1-r15-starting-grid-shuffle-smoothness';
+const SHUFFLE_VISUAL_CONFIG_V290=Object.freeze({shuffleCycles:3,shuffleCycleMs:180,landingMs:460,maxStackCards:8,transformOnly:true});
+const shuffleStateV290={installed:false,clicks:0,lastRoundText:''};
+function syncGridShuffleSmoothnessV290(){
+ const view=document.getElementById('f1RacingViewGridV185'),stage=document.getElementById('f1RacingGridShuffleStageV273'),list=document.getElementById('f1RacingGridListV272');
+ if(view)view.classList.add('f1-racing-grid-smooth-v290');
+ if(stage)stage.dataset.shuffleCyclesV290=String(SHUFFLE_VISUAL_CONFIG_V290.shuffleCycles);
+ if(list)list.dataset.transformShuffleV290='1';
+ const round=document.getElementById('f1RacingGridShuffleRoundV272');shuffleStateV290.lastRoundText=String(round?.textContent||'');
+ return Boolean(view&&stage&&list);
+}
+function installGridShuffleSmoothnessV290(){
+ if(shuffleStateV290.installed)return true;shuffleStateV290.installed=true;
+ const shuffle=document.getElementById('f1RacingGridShuffleV272');
+ if(shuffle)shuffle.addEventListener('click',()=>{shuffleStateV290.clicks+=1;requestAnimationFrame(()=>requestAnimationFrame(syncGridShuffleSmoothnessV290))},{capture:true});
+ const list=document.getElementById('f1RacingGridListV272');
+ if(list)new MutationObserver(()=>syncGridShuffleSmoothnessV290()).observe(list,{childList:true});
+ syncGridShuffleSmoothnessV290();return true;
+}
+function qaGridShuffleSmoothnessV290(){
+ const ready=syncGridShuffleSmoothnessV290(),view=document.getElementById('f1RacingViewGridV185'),stage=document.getElementById('f1RacingGridShuffleStageV273'),start=document.getElementById('f1RacingGridStartRecoveryM'),shuffle=document.getElementById('f1RacingGridShuffleV272');
+ const configPass=SHUFFLE_VISUAL_CONFIG_V290.shuffleCycles>=2&&SHUFFLE_VISUAL_CONFIG_V290.shuffleCycles<=3&&SHUFFLE_VISUAL_CONFIG_V290.shuffleCycleMs>=140&&SHUFFLE_VISUAL_CONFIG_V290.shuffleCycleMs<=240&&SHUFFLE_VISUAL_CONFIG_V290.transformOnly===true;
+ return {version:VERSION290,config:{...SHUFFLE_VISUAL_CONFIG_V290},installed:shuffleStateV290.installed,ready,viewClass:Boolean(view?.classList.contains('f1-racing-grid-smooth-v290')),stageReady:Boolean(stage),startReady:Boolean(start),shuffleReady:Boolean(shuffle),allPass:ready&&configPass&&Boolean(start&&shuffle)};
+}
+
 window.mwsF1SyncPreraceCompactV289=syncPreraceCompactV289;window.mwsF1QaPreraceCompactV289=qaPreraceCompactV289;window.__mwsF1RacingV289=VERSION289;
+window.mwsF1SyncGridShuffleSmoothnessV290=syncGridShuffleSmoothnessV290;window.mwsF1QaGridShuffleSmoothnessV290=qaGridShuffleSmoothnessV290;window.__mwsF1RacingV290=VERSION290;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootV288,{once:true});else bootV288();
 })();
