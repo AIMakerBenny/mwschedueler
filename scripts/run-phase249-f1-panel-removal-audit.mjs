@@ -33,7 +33,7 @@ export function runPhase249F1PanelRemovalAudit(){
     'window.__mwsF1RacingV249=VERSION249;'
   ])if(!racing.includes(token))issues.push('Phase 249 workspace migration runtime missing: '+token);
 
-  if(!tracks.includes('speedTraps:Object.freeze(track.speedTraps.map'))||!tracks.includes('speedTraps:[')){
+  if(!tracks.includes('speedTraps:Object.freeze(track.speedTraps.map')||!tracks.includes('speedTraps:[')){
     issues.push('Internal speed trap calculation data was removed');
   }
 
