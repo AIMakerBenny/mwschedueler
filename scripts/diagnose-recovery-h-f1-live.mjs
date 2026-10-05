@@ -262,7 +262,7 @@ try{
     assert(cornerQa270.samples.every(row=>Number(row.exitTarget)>=Number(row.apexTarget)-1),'Phase 270 exit acceleration did not recover after apex: '+JSON.stringify(cornerQa270.samples));
 
     const boundaryQa271=window.mwsF1QaTrackBoundaryV271?.();
-    assert(boundaryQa271?.allPass===true&&boundaryQa271?.liveInside===true,'Phase 271 track boundary QA failed: '+JSON.stringify(boundaryQa271));
+    assert(boundaryQa271?.allPass===true&&boundaryQa271?.liveInside===true&&boundaryQa271?.offTrackBlocked===true&&boundaryQa271?.edgeBlocked===true,'Phase 271 track boundary QA failed: '+JSON.stringify(boundaryQa271));
     assert(Number(boundaryQa271?.beyond?.speedFactor)<Number(boundaryQa271?.center?.speedFactor),'Phase 271 off-track penalty missing: '+JSON.stringify(boundaryQa271));
 
     const immersiveQa261=window.mwsF1QaImmersiveV261?.();
