@@ -9,7 +9,8 @@ export function runPhase220F1DiverseTrackCatalogAudit(){
   const racing=fs.readFileSync('assets/f1-racing-v1.js','utf8');
   const phase=Number(index.match(/recovery=N1&phase=(\d+)/)?.[1]||0);
   if(phase<220)issues.push('Phase 220 asset cache missing');
-  if(!index.includes('recoveryA-tracks7&phase=220'))issues.push('Seven-track cache revision missing');
+  const trackPhase=Number(index.match(/recoveryA-tracks7&phase=(\d+)/)?.[1]||0);
+  if(trackPhase<220)issues.push('Seven-track cache revision missing');
   const sandbox={};vm.createContext(sandbox);
   try{vm.runInContext(trackSource,sandbox,{filename:'assets/f1-track-v1.js'})}catch(error){issues.push('Track runtime evaluation failed: '+String(error))}
   const tracks=sandbox.MWS_F1_TRACKS_V182||{};
