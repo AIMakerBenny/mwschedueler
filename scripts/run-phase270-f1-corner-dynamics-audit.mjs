@@ -26,6 +26,8 @@ export function runPhase270F1CornerDynamicsAudit(){
     'const directional=[];',
     'confirmed&&leftLength>=minSamples&&rightLength>=minSamples',
     'function exitRawLimitV270(',
+    'exitExtensionMeters',
+    'detectedExitDistanceMeters',
     "phaseInfo?.phase!=='EXIT'",
     "root.__mwsF1CornerDynamicsV270='direction-split-exit-recovery-v1';"
   ])if(!geometry.includes(token))issues.push('Phase 270 geometry missing: '+token);
