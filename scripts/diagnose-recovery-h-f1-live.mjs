@@ -176,6 +176,17 @@ try{
   const finalRuntimeApi295=await evaluate(cdp,"typeof window.mwsF1QaFinalRegressionV295==='function'","Phase 295 final runtime API readiness");
   if(finalRuntimeApi295!==true)throw new Error('Phase 295 final runtime QA API missing before F1 render');
 
+  let phase303Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    phase303Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV303==='phase303-f1-feedback-stabilization'&&window.__mwsF1FeedbackUiV303==='phase303-f1-feedback-ui-stabilization'","Phase 303 runtime readiness"));
+    if(phase303Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v303=${Date.now()}-${attempt}`});
+    await refreshed;
+    await sleep(1200);
+  }
+  if(!phase303Ready)throw new Error('Phase 303 runtime did not propagate to Recovery H browser');
+
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
@@ -329,6 +340,12 @@ try{
     const shuffle272=document.getElementById('f1RacingGridShuffleV272');
     assert(shuffle272,'Phase 272 reshuffle button missing');
     shuffle272.click();await raf();
+    const tradeCards303=[...document.querySelectorAll('#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273')];
+    const tradeRects303=tradeCards303.map(card=>card.getBoundingClientRect());
+    assert(tradeRects303.length>=2,'Phase 303 shuffle trade cards missing');
+    assert(tradeRects303.every(rect=>rect.width>0&&rect.height/rect.width>=1.3),'Phase 303 shuffle cards are not trade-card proportion: '+JSON.stringify(tradeRects303.map(r=>({w:r.width,h:r.height,ratio:r.height/Math.max(1,r.width)}))));
+    const tradeCenters303=tradeRects303.map(r=>r.left+r.width/2);
+    assert(Math.max(...tradeCenters303)-Math.min(...tradeCenters303)>=80,'Phase 303 shuffle cards remain clumped: '+JSON.stringify(tradeCenters303));
     const reshuffleReveal273=window.mwsF1GetStartingGridRevealStateV273?.();
     assert(reshuffleReveal273?.revealing===true,'Phase 273 reshuffle did not start reveal animation');
     assert(document.getElementById('f1RacingGridStartRecoveryM')?.disabled===true,'Phase 273 start button unlocked before reveal completion');
@@ -354,6 +371,22 @@ try{
     const rankingRows302=[...document.querySelectorAll('#f1RacingTrackRankingV284 .f1-racing-track-ranking-row-v284')];
     assert(rankingRows302.length>=2&&rankingRows302.every(row=>Boolean(row.dataset.driverId)&&Number(row.dataset.statusCount||0)<=2),'Phase 302 live ranking keyed/status rows invalid');
     assert(new Set(rankingRows302.map(row=>row.dataset.driverId)).size===rankingRows302.length,'Phase 302 live ranking row keys are not unique');
+    const feedbackQa303=window.mwsF1QaFeedbackUiV303?.();
+    assert(feedbackQa303?.allPass===true,'Phase 303 feedback UI QA failed: '+JSON.stringify(feedbackQa303));
+    const duplicateRank303=document.getElementById('f1RacingTrackRankingV284');
+    assert(!duplicateRank303||getComputedStyle(duplicateRank303).display==='none','Phase 303 duplicate LIVE RANK still covers the track');
+    const conversation303=document.getElementById('f1RacingConversationStackV276');
+    assert(conversation303&&getComputedStyle(conversation303).display==='none','Phase 303 legacy conversation feed still visible');
+    const cutin303=document.getElementById('f1RacingLiveCutinLayerV264');
+    assert(cutin303?.parentElement?.classList.contains('f1-racing-commentary-v188'),'Phase 303 LIVE cut-in still overlaps the track map');
+    const variabilityQa303=window.mwsF1QaGameVariabilityV303?.();
+    assert(variabilityQa303?.allPass===true&&Number(variabilityQa303?.config?.liveCadenceMs)<=2600&&Number(variabilityQa303?.config?.maxTotalBiasKph)>=4.5,'Phase 303 race variability QA failed: '+JSON.stringify(variabilityQa303));
+    const thoughtSpeaker303=String(contacts[0]?.name||'Recovery H Alpha');
+    window.mwsF1AppendLiveConversationV276?.(thoughtSpeaker303,'지금 간다');
+    await sleep(180);await raf();
+    const thoughtMarker303=[...document.querySelectorAll('.f1-racing-race-vehicle-v189')].find(marker=>marker.querySelector('.f1-racing-driver-thought-v303'));
+    assert(thoughtMarker303,'Phase 303 racer thought bubble did not attach to a track marker');
+    assert(String(thoughtMarker303.querySelector('.thought-text-v303')?.textContent||'').includes('지금 간다'),'Phase 303 racer thought bubble text missing');
     const cadenceQa281=window.mwsF1QaDialogueCadenceV281?.();
     assert(cadenceQa281?.allPass===true,'Phase 281 dialogue cadence QA failed: '+JSON.stringify(cadenceQa281));
     assert(cadenceQa281?.budgetBlocked===true&&Number(cadenceQa281?.config?.maxGroupsPerWindow)<=4,'Phase 281 dialogue window budget failed: '+JSON.stringify(cadenceQa281));
