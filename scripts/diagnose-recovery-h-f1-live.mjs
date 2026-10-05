@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase260Ready=false;
+  let phase261Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase260Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV260==='phase260-manual-lap-control'","Phase 260 runtime readiness"));
-    if(phase260Ready)break;
+    phase261Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV261==='phase261-immersive-fullscreen-spectator'","Phase 261 runtime readiness"));
+    if(phase261Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v260=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v261=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase260Ready)throw new Error('Phase 260 runtime did not propagate to Recovery H browser');
+  if(!phase261Ready)throw new Error('Phase 261 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -221,6 +221,26 @@ try{
     await raf();
     const headline260=window.mwsF1RaceHeadlineStateV255?.();
     assert(Number(headline260?.total)===17&&Number(headline260?.remaining)===17,'Phase 260 headline remaining laps mismatch: '+JSON.stringify(headline260));
+
+    const immersiveQa261=window.mwsF1QaImmersiveV261?.();
+    assert(immersiveQa261?.allPass===true,'Phase 261 immersive QA failed: '+JSON.stringify(immersiveQa261));
+    const layoutBefore261=window.mwsF1WorkspaceLayoutSignatureV259?.(window.mwsF1GetWorkspaceLayoutRecoveryE?.());
+    const immersiveEnter261=await window.mwsF1EnterImmersiveV261?.();
+    await raf();
+    assert(immersiveEnter261?.ok===true&&document.body.classList.contains('f1-racing-immersive'),'Phase 261 immersive entry failed: '+JSON.stringify(immersiveEnter261));
+    const sidebar261=document.querySelector('.sidebar');
+    const topbar261=document.querySelector('.main>.topbar');
+    assert(!sidebar261||getComputedStyle(sidebar261).display==='none','Phase 261 sidebar remained visible');
+    assert(!topbar261||getComputedStyle(topbar261).display==='none','Phase 261 topbar remained visible');
+    const notice261=document.getElementById('f1RacingImmersiveNoticeV261');
+    assert(String(notice261?.textContent||'').includes('ESC'),'Phase 261 ESC notice missing');
+    const layoutDuring261=window.mwsF1WorkspaceLayoutSignatureV259?.(window.mwsF1GetWorkspaceLayoutRecoveryE?.());
+    assert(layoutDuring261===layoutBefore261,'Phase 261 immersive layout signature changed during entry');
+    await window.mwsF1ExitImmersiveV261?.({reason:'recovery-h-qa'});
+    await raf();
+    const layoutAfter261=window.mwsF1WorkspaceLayoutSignatureV259?.(window.mwsF1GetWorkspaceLayoutRecoveryE?.());
+    assert(!document.body.classList.contains('f1-racing-immersive')&&layoutAfter261===layoutBefore261,'Phase 261 immersive layout signature changed after exit');
+
     await sleep(350);await raf();
     const playbackQa247=window.mwsF1QaRacePlaybackSpeedV247?.();
     assert(playbackQa247?.allPass===true&&Number(playbackQa247?.baseRate)===2,'Phase 247 playback mapping QA failed: '+JSON.stringify(playbackQa247));
