@@ -818,3 +818,22 @@ body.f1-racing-immersive #f1RacingWorkspaceRecoveryE{min-height:calc(100vh - 170
 .f1-racing-track-card-tech-v266 b{color:#e8eef7;font:850 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 .f1-racing-track-card-v266[data-f1-speed-tier-v266="HIGH"] .f1-racing-track-card-tech-v266>span:nth-child(2) b{letter-spacing:.08em}
 @media(max-width:900px){.f1-racing-track-options-v186{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}}
+
+
+/* Phase 268: fullscreen viewport fit repair */
+body.f1-racing-immersive,
+body.f1-racing-immersive .app,
+body.f1-racing-immersive .main,
+body.f1-racing-immersive #gameF1Racing,
+body.f1-racing-immersive #f1RacingShellV180{height:100dvh!important;min-height:0!important}
+body.f1-racing-immersive #gameF1Racing{overflow:hidden!important}
+body.f1-racing-immersive #f1RacingShellV180{display:flex!important;flex-direction:column!important;overflow:hidden!important}
+body.f1-racing-immersive #f1RacingViewRaceV185{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;height:auto!important;min-height:0!important;overflow:hidden!important}
+body.f1-racing-immersive #f1RacingViewRaceV185>.f1-racing-race-header-v188,
+body.f1-racing-immersive #f1RacingWorkspaceToolbarRecoveryE{flex:0 0 auto!important}
+body.f1-racing-immersive #f1RacingWorkspaceRecoveryE{
+  flex:1 1 auto!important;height:auto!important;min-height:0!important;overflow:hidden!important;
+  grid-template-rows:repeat(var(--f1-workspace-used-rows,10),minmax(0,1fr))!important;
+  grid-auto-rows:minmax(0,1fr)!important
+}
+body.f1-racing-immersive #f1RacingWorkspaceRecoveryE .f1-racing-workspace-panel-recovery-e{min-height:0!important}
