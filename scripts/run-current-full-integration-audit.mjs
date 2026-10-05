@@ -267,6 +267,7 @@ import {runPhase268F1AutoFollowWheelZoomAudit} from './run-phase268-f1-auto-foll
 import {runPhase269F1LateralWorkspaceStabilityAudit} from './run-phase269-f1-lateral-workspace-stability-audit.mjs';
 import {runPhase270F1CornerDynamicsAudit} from './run-phase270-f1-corner-dynamics-audit.mjs';
 import {runPhase271F1TrackBoundaryAudit} from './run-phase271-f1-track-boundary-audit.mjs';
+import {runPhase272F1RandomStartingGridAudit} from './run-phase272-f1-random-starting-grid-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2559,5 +2560,10 @@ export function runPhase271FullIntegrationAudit(){
  const issues=[...previous.issues,...current.issues.map(x=>'Phase 271: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 271: '+x)];
  return {phase:271,previous,current,issues,warnings,pass:issues.length===0};
 }
-export function runCurrentFullIntegrationAudit(){return runPhase271FullIntegrationAudit();}
+export function runPhase272FullIntegrationAudit(){
+ const previous=runPhase271FullIntegrationAudit(),current=runPhase272F1RandomStartingGridAudit();
+ const issues=[...previous.issues,...current.issues.map(x=>'Phase 272: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 272: '+x)];
+ return {phase:272,previous,current,issues,warnings,pass:issues.length===0};
+}
+export function runCurrentFullIntegrationAudit(){return runPhase272FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
