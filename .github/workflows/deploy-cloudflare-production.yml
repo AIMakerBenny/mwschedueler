@@ -219,6 +219,7 @@ jobs:
           node --check scripts/run-phase274-f1-field-compression-leader-pressure-audit.mjs
           node --check scripts/run-phase275-f1-chase-burst-audit.mjs
           node --check scripts/run-phase276-f1-live-conversation-stack-audit.mjs
+          node --check scripts/run-phase277-f1-character-dialogue-engine-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
