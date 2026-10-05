@@ -517,6 +517,10 @@ try{
     document.getElementById('f1RacingRaceCancelRecoveryC')?.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Final cancel did not return to Setup');
 
+    const engineQa240=window.mwsF1QaAcceleratedEngineRaceV240?.();
+    assert(engineQa240?.allPass===true&&engineQa240?.result?.completed===true&&Number(engineQa240?.result?.telemetry?.fieldAverageSpeedKph)>0,'Phase 240 accelerated real-engine QA failed: '+JSON.stringify(engineQa240));
+    assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Phase 240 engine QA did not restore Setup');
+
     const errors=[...(window.__recoveryHErrors||[])];
     assert(errors.length===0,'Browser errors during Recovery H: '+errors.join(' | '));
 
