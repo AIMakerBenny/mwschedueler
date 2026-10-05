@@ -95,6 +95,7 @@ const VERSION265='phase265-grand-prix-podium-redesign';
 const VERSION266='phase266-f1-track-card-circuit-redesign';
 const VERSION267='phase267-integrated-spectator-desktop-qa';
 const VERSION268='phase268-auto-follow-wheel-zoom';
+const VERSION269='phase269-lateral-velocity-acceleration-smoothing';
 const RACE_MOMENTUM_CONFIG_V262=Object.freeze({
   min:-1,max:1,paceRange:.02,decayPerSecond:.032,evaluationMs:620,
   passSuccess:.18,passFailed:-.12,defenceSuccess:.075,incident:-.14,
@@ -400,6 +401,7 @@ function qaIntegratedSpectatorDesktopV267(){
 const F1_LAP_MIN_V260=3;
 const F1_LAP_MAX_V260=99;
 const VISUAL_LATERAL_RESPONSE_V258=Object.freeze({normal:7.5,attack:8.8,pit:9.8,incident:12.5});
+const VISUAL_LATERAL_DYNAMICS_V269=Object.freeze({normalMaxSpeed:2.4,attackMaxSpeed:3.0,pitMaxSpeed:3.4,incidentMaxSpeed:3.8,maxAcceleration:7.5,targetGain:2.15,lineModeHoldMs:420,snapMeters:.018});
 const BATTLE_LINK_MAX_LENGTH_V256=88;
 const F1_WORKSPACE_LAYOUT_VERSION_V249=6;
 const RACE_PLAYBACK_BASE_V247=2;
@@ -3635,27 +3637,70 @@ function visualLateralResponseV258(vehicle){
   if(['ATTACK_INSIDE','DEFENSIVE_INSIDE','OUTSIDE'].includes(String(vehicle?.racingLineMode||'')))return VISUAL_LATERAL_RESPONSE_V258.attack;
   return VISUAL_LATERAL_RESPONSE_V258.normal;
 }
+function visualLateralMaxSpeedV269(vehicle){
+  if(activeDrivingIncidentV204(vehicle))return VISUAL_LATERAL_DYNAMICS_V269.incidentMaxSpeed;
+  if(String(vehicle?.racingLineMode||'')==='PIT_LINE'||String(vehicle?.pitState||'TRACK')!=='TRACK')return VISUAL_LATERAL_DYNAMICS_V269.pitMaxSpeed;
+  if(['ATTACK_INSIDE','DEFENSIVE_INSIDE','OUTSIDE'].includes(String(vehicle?.racingLineMode||'')))return VISUAL_LATERAL_DYNAMICS_V269.attackMaxSpeed;
+  return VISUAL_LATERAL_DYNAMICS_V269.normalMaxSpeed;
+}
+function committedVisualTargetV269(vehicle,rawTarget,force=false){
+  const mode=String(vehicle?.racingLineMode||'IDEAL'),now=Number(simClockV192.simTimeMs)||0;
+  const emergency=Boolean(activeDrivingIncidentV204(vehicle))||mode==='PIT_LINE'||String(vehicle?.pitState||'TRACK')!=='TRACK';
+  if(force||!Number.isFinite(Number(vehicle.committedVisualTargetV269))){
+    vehicle.committedVisualTargetV269=rawTarget;vehicle.visualLineModeV269=mode;vehicle.pendingVisualLineModeV269='';vehicle.visualLineModeHoldUntilV269=now+VISUAL_LATERAL_DYNAMICS_V269.lineModeHoldMs;
+    return rawTarget;
+  }
+  if(!emergency&&mode!==String(vehicle.visualLineModeV269||mode)){
+    if(String(vehicle.pendingVisualLineModeV269||'')!==mode){
+      vehicle.pendingVisualLineModeV269=mode;vehicle.visualLineModeHoldUntilV269=now+VISUAL_LATERAL_DYNAMICS_V269.lineModeHoldMs;
+    }
+    if(now<Number(vehicle.visualLineModeHoldUntilV269||0))return Number(vehicle.committedVisualTargetV269)||0;
+    vehicle.visualLineModeV269=mode;vehicle.pendingVisualLineModeV269='';
+  }else if(emergency){
+    vehicle.visualLineModeV269=mode;vehicle.pendingVisualLineModeV269='';
+  }
+  vehicle.committedVisualTargetV269=rawTarget;
+  return rawTarget;
+}
 function updateVisualLateralOffsetV258(vehicle,frameMs=16.67,force=false){
-  if(!vehicle)return {target:0,visual:0,velocity:0,alpha:1,response:VISUAL_LATERAL_RESPONSE_V258.normal};
-  const target=physicalLateralOffsetV258(vehicle);
-  vehicle.lateralOffsetMeters=target;
+  if(!vehicle)return {target:0,rawTarget:0,visual:0,velocity:0,acceleration:0,alpha:1,response:VISUAL_LATERAL_RESPONSE_V258.normal};
+  const rawTarget=physicalLateralOffsetV258(vehicle);
+  const target=committedVisualTargetV269(vehicle,rawTarget,force);
+  vehicle.lateralOffsetMeters=rawTarget;
   vehicle.targetVisualLateralOffsetMeters=target;
   const dt=Math.max(0,Math.min(80,Number(frameMs)||0))/1000;
   const response=visualLateralResponseV258(vehicle);
   const previous=Number.isFinite(Number(vehicle.visualLateralOffsetMeters))?Number(vehicle.visualLateralOffsetMeters):target;
+  const previousVelocity=Number.isFinite(Number(vehicle.visualLateralVelocity))?Number(vehicle.visualLateralVelocity):0;
   if(force||vehicle.visualLateralInitializedV258!==true||dt<=0){
-    vehicle.visualLateralOffsetMeters=target;
-    vehicle.visualLateralVelocity=0;
-    vehicle.visualLateralInitializedV258=true;
-    return {target,visual:target,velocity:0,alpha:1,response};
+    vehicle.visualLateralOffsetMeters=target;vehicle.visualLateralVelocity=0;vehicle.visualLateralAccelerationV269=0;vehicle.visualLateralInitializedV258=true;
+    return {target,rawTarget,visual:target,velocity:0,acceleration:0,alpha:1,response};
   }
-  const alpha=1-Math.exp(-response*dt);
-  let visual=previous+(target-previous)*alpha;
-  if(Math.abs(target-visual)<.012)visual=target;
-  const velocity=dt>0?(visual-previous)/dt:0;
-  vehicle.visualLateralOffsetMeters=visual;
-  vehicle.visualLateralVelocity=velocity;
-  return {target,visual,velocity,alpha,response};
+  const maxSpeed=visualLateralMaxSpeedV269(vehicle);
+  const delta=target-previous;
+  const desiredVelocity=Math.max(-maxSpeed,Math.min(maxSpeed,delta*VISUAL_LATERAL_DYNAMICS_V269.targetGain));
+  const requestedAcceleration=(desiredVelocity-previousVelocity)/Math.max(.001,dt);
+  const acceleration=Math.max(-VISUAL_LATERAL_DYNAMICS_V269.maxAcceleration,Math.min(VISUAL_LATERAL_DYNAMICS_V269.maxAcceleration,requestedAcceleration));
+  let velocity=Math.max(-maxSpeed,Math.min(maxSpeed,previousVelocity+acceleration*dt));
+  let visual=previous+velocity*dt;
+  if((delta>0&&visual>=target)||(delta<0&&visual<=target)||Math.abs(target-visual)<VISUAL_LATERAL_DYNAMICS_V269.snapMeters){visual=target;velocity=0}
+  vehicle.visualLateralOffsetMeters=visual;vehicle.visualLateralVelocity=velocity;vehicle.visualLateralAccelerationV269=acceleration;
+  const alpha=Math.abs(delta)>.0001?Math.max(0,Math.min(1,Math.abs((visual-previous)/delta))):1;
+  return {target,rawTarget,visual,velocity,acceleration,alpha,response,maxSpeed};
+}
+function qaLateralDynamicsV269(){
+  const cfg=VISUAL_LATERAL_DYNAMICS_V269;
+  const source=raceMotionV189.vehicles[0];
+  if(!source)return {config:cfg,allPass:cfg.normalMaxSpeed<=2.5&&cfg.attackMaxSpeed<=3.2&&cfg.maxAcceleration<=8&&cfg.lineModeHoldMs>=350};
+  const savedTime=simClockV192.simTimeMs;
+  const probe={...source,racingLineMode:'ATTACK_INSIDE',pitState:'TRACK',incidentLateralOffsetMeters:0,visualLateralOffsetMeters:0,visualLateralVelocity:0,visualLateralInitializedV258:true,committedVisualTargetV269:0,visualLineModeV269:'ATTACK_INSIDE',pendingVisualLineModeV269:'',visualLineModeHoldUntilV269:0};
+  let maxVelocity=0,maxAcceleration=0;
+  for(let i=0;i<120;i++){simClockV192.simTimeMs+=16.67;const state=updateVisualLateralOffsetV258(probe,16.67,false);maxVelocity=Math.max(maxVelocity,Math.abs(state.velocity));maxAcceleration=Math.max(maxAcceleration,Math.abs(state.acceleration))}
+  const beforeReverse=probe.visualLateralOffsetMeters;probe.racingLineMode='OUTSIDE';simClockV192.simTimeMs+=16.67;
+  const held=updateVisualLateralOffsetV258(probe,16.67,false);
+  for(let i=0;i<40;i++){simClockV192.simTimeMs+=16.67;updateVisualLateralOffsetV258(probe,16.67,false)}
+  const afterReverse=probe.visualLateralOffsetMeters;simClockV192.simTimeMs=savedTime;
+  return {config:cfg,maxVelocity,maxAcceleration,beforeReverse,heldTarget:held.target,afterReverse,holdWorked:Math.abs(held.target-beforeReverse)<Math.abs(physicalLateralOffsetV258(probe)-beforeReverse),allPass:maxVelocity<=cfg.attackMaxSpeed+.02&&maxAcceleration<=cfg.maxAcceleration+.02&&cfg.lineModeHoldMs>=350};
 }
 function qaVisualLateralSmoothingV258(){
   const source=raceMotionV189.vehicles[0];
@@ -6552,6 +6597,8 @@ window.mwsF1QaIntegratedSpectatorDesktopV267=qaIntegratedSpectatorDesktopV267;
 window.__mwsF1RacingV267=VERSION267;
 window.mwsF1QaAutoFollowWheelZoomV268=qaAutoFollowWheelZoomV268;
 window.__mwsF1RacingV268=VERSION268;
+window.mwsF1QaLateralDynamicsV269=qaLateralDynamicsV269;
+window.__mwsF1RacingV269=VERSION269;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
