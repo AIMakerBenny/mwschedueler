@@ -83,6 +83,7 @@ const VERSION253='phase253-live-timing-race-status';
 const VERSION254='phase254-live-marker-position-tag';
 const VERSION255='phase255-race-headline-summary';
 const VERSION256='phase256-live-battle-link';
+const VERSION257='phase257-embedded-driver-profile-marker';
 const BATTLE_LINK_MAX_LENGTH_V256=88;
 const F1_WORKSPACE_LAYOUT_VERSION_V249=6;
 const RACE_PLAYBACK_BASE_V247=2;
@@ -2770,42 +2771,58 @@ function qaRaceHeadlineV255(){
   return {...observed,allPass};
 }
 
-function syncDriverProfileMarkerV250(marker,vehicle){
+function syncEmbeddedDriverMarkerV257(marker,vehicle){
   if(!marker||!vehicle)return false;
   const safeKey=String(vehicle.id||'driver').replace(/[^a-zA-Z0-9_-]/g,'_');
-  let group=marker.querySelector('.car-profile-v250');
-  if(!group){
-    group=svgNodeV183('g',{class:'car-profile-v250','aria-hidden':'true'});
-    const clipId='f1RaceProfileClipV250_'+safeKey;
-    const defs=svgNodeV183('defs');
-    const clip=svgNodeV183('clipPath',{id:clipId});
-    clip.appendChild(svgNodeV183('circle',{cx:0,cy:-31,r:10}));
+  marker.querySelector('.car-profile-v250')?.remove();
+  let defs=marker.querySelector('defs[data-f1-profile-defs-v257]');
+  if(!defs){
+    defs=svgNodeV183('defs',{'data-f1-profile-defs-v257':'1'});
+    const clip=svgNodeV183('clipPath',{id:'f1RaceProfileClipV257_'+safeKey});
+    clip.appendChild(svgNodeV183('circle',{cx:0,cy:0,r:8.6}));
     defs.appendChild(clip);
-    const connector=svgNodeV183('line',{class:'car-profile-connector-v250',x1:0,y1:-10,x2:0,y2:-20});
-    const halo=svgNodeV183('circle',{class:'car-profile-halo-v250',cx:0,cy:-31,r:13});
-    const ring=svgNodeV183('circle',{class:'car-profile-ring-v250',cx:0,cy:-31,r:11});
-    const image=svgNodeV183('image',{class:'car-profile-image-v250',x:-10,y:-41,width:20,height:20,preserveAspectRatio:'xMidYMid slice','clip-path':'url(#'+clipId+')'});
-    const fallback=svgNodeV183('text',{class:'car-profile-initials-v250',x:0,y:-27.5,'text-anchor':'middle'});
-    group.append(defs,connector,halo,ring,image,fallback);
-    marker.insertBefore(group,marker.firstChild);
+    marker.insertBefore(defs,marker.firstChild);
+  }
+  let profile=marker.querySelector('.car-profile-embedded-v257');
+  if(!profile){
+    profile=svgNodeV183('g',{class:'car-profile-embedded-v257','aria-hidden':'true'});
+    const fallbackBg=svgNodeV183('circle',{class:'car-profile-fallback-bg-v257',cx:0,cy:0,r:8.6});
+    const image=svgNodeV183('image',{class:'car-profile-image-v257',x:-8.6,y:-8.6,width:17.2,height:17.2,preserveAspectRatio:'xMidYMid slice','clip-path':'url(#f1RaceProfileClipV257_'+safeKey+')'});
+    const fallback=svgNodeV183('text',{class:'car-profile-initials-v257',x:0,y:2.8,'text-anchor':'middle'});
+    profile.append(fallbackBg,image,fallback);
+    const ring=marker.querySelector('.car-ring');
+    if(ring?.nextSibling)marker.insertBefore(profile,ring.nextSibling);else marker.appendChild(profile);
   }
   const src=String(vehicle.driver?.image||'').trim();
-  const image=group.querySelector('.car-profile-image-v250');
-  const fallback=group.querySelector('.car-profile-initials-v250');
+  const image=profile.querySelector('.car-profile-image-v257');
+  const fallback=profile.querySelector('.car-profile-initials-v257');
+  const fallbackBg=profile.querySelector('.car-profile-fallback-bg-v257');
   if(fallback)fallback.textContent=driverProfileInitialsV250(vehicle.driver);
+  const showFallback=()=>{if(image)image.style.display='none';if(fallback)fallback.style.display='';if(fallbackBg)fallbackBg.style.display='';marker.dataset.profileImageLoadedV257='0'};
+  const showImage=()=>{if(image)image.style.display='';if(fallback)fallback.style.display='none';if(fallbackBg)fallbackBg.style.display='none';marker.dataset.profileImageLoadedV257='1'};
   if(image){
-    image.setAttribute('href',src||'');
-    image.style.display=src?'':'none';
-    if(!image.dataset.f1ProfileBound){
-      image.dataset.f1ProfileBound='1';
-      image.addEventListener('load',()=>{image.style.display='';if(fallback)fallback.style.display='none';marker.dataset.profileImageLoadedV250='1'});
-      image.addEventListener('error',()=>{image.style.display='none';if(fallback)fallback.style.display='';marker.dataset.profileImageLoadedV250='0'});
+    if(image.getAttribute('href')!==src)image.setAttribute('href',src||'');
+    if(!image.dataset.f1ProfileBoundV257){
+      image.dataset.f1ProfileBoundV257='1';
+      image.addEventListener('load',showImage);
+      image.addEventListener('error',showFallback);
     }
   }
-  if(fallback)fallback.style.display=src?'none':'';
-  marker.dataset.profileHasImageV250=src?'1':'0';
-  marker.dataset.profileImageLoadedV250=src?'pending':'0';
+  if(src){
+    marker.dataset.profileHasImageV257='1';
+    if(marker.dataset.profileImageLoadedV257!=='1')marker.dataset.profileImageLoadedV257='pending';
+    if(fallback)fallback.style.display='none';
+    if(fallbackBg)fallbackBg.style.display='none';
+    if(image)image.style.display='';
+  }else{
+    marker.dataset.profileHasImageV257='0';
+    showFallback();
+  }
+  marker.dataset.profileLayoutV257='embedded';
   return true;
+}
+function syncDriverProfileMarkerV250(marker,vehicle){
+  return syncEmbeddedDriverMarkerV257(marker,vehicle);
 }
 function ensureRaceVehicleMarkerV189(vehicle,index){
   const layer=document.getElementById('f1RacingRaceVehicleLayerV188');
@@ -2816,12 +2833,15 @@ function ensureRaceVehicleMarkerV189(vehicle,index){
   if(!marker){
     marker=svgNodeV183('g',{id:safeId,class:'f1-racing-race-vehicle-v189','data-driver-id':vehicle.id,'data-grid':index+1,'data-driver-color':color});
     marker.style.setProperty('--f1-driver-color',color);
-    marker.append(svgNodeV183('circle',{class:'car-halo',cx:0,cy:0,r:18}),svgNodeV183('circle',{class:'car-ring',cx:0,cy:0,r:10}),svgNodeV183('circle',{class:'car-core',cx:0,cy:0,r:7}));
-    const number=svgNodeV183('text',{class:'car-number-v232',x:0,y:2.7,'text-anchor':'middle'});number.textContent=driverNumberV232(vehicle,index);marker.appendChild(number);
+    marker.append(svgNodeV183('circle',{class:'car-halo',cx:0,cy:0,r:18}),svgNodeV183('circle',{class:'car-ring',cx:0,cy:0,r:11}));
+    const numberBadge=svgNodeV183('circle',{class:'car-number-badge-v257',cx:10,cy:-10,r:5.2});marker.appendChild(numberBadge);
+    const number=svgNodeV183('text',{class:'car-number-v232',x:10,y:-7.9,'text-anchor':'middle'});number.textContent=driverNumberV232(vehicle,index);marker.appendChild(number);
     const label=svgNodeV183('text',{class:'car-label',x:15,y:-12});label.textContent=driverCodeV188(vehicle.driver);marker.appendChild(label);layer.appendChild(marker);
   }else{
     marker.dataset.driverColor=color;marker.style.setProperty('--f1-driver-color',color);
-    const number=marker.querySelector('.car-number-v232');if(number)number.textContent=driverNumberV232(vehicle,index);
+    marker.querySelector('.car-core')?.remove();
+    if(!marker.querySelector('.car-number-badge-v257'))marker.appendChild(svgNodeV183('circle',{class:'car-number-badge-v257',cx:10,cy:-10,r:5.2}));
+    const number=marker.querySelector('.car-number-v232');if(number){number.textContent=driverNumberV232(vehicle,index);number.setAttribute('x','10');number.setAttribute('y','-7.9')}
   }
   syncDriverProfileMarkerV250(marker,vehicle);
   syncRaceMarkerPositionV254(marker,Number(vehicle.position)||Number(vehicle.driver?.gridPosition)||index+1);
@@ -2831,14 +2851,28 @@ function ensureRaceVehicleMarkerV189(vehicle,index){
 function qaDriverProfileMarkersV250(){
   const markers=[...document.querySelectorAll('.f1-racing-race-vehicle-v189')];
   const rows=markers.map(marker=>{
+    const embedded=marker.querySelector('.car-profile-embedded-v257');
+    const image=marker.querySelector('.car-profile-image-v257');
+    const fallback=marker.querySelector('.car-profile-initials-v257');
+    const ring=marker.querySelector('.car-ring');
     const connector=marker.querySelector('.car-profile-connector-v250');
-    const ring=marker.querySelector('.car-profile-ring-v250');
-    const image=marker.querySelector('.car-profile-image-v250');
-    const fallback=marker.querySelector('.car-profile-initials-v250');
-    const hasImage=marker.dataset.profileHasImageV250==='1';
-    return {id:String(marker.dataset.driverId||''),hasImage,connector:Boolean(connector),ring:Boolean(ring),image:Boolean(image),fallback:Boolean(fallback),fallbackText:String(fallback?.textContent||'').trim()};
+    return {id:String(marker.dataset.driverId||''),embedded:Boolean(embedded),image:Boolean(image),fallback:Boolean(fallback),ring:Boolean(ring),connector:Boolean(connector),fallbackText:String(fallback?.textContent||'').trim(),layout:String(marker.dataset.profileLayoutV257||'')};
   });
-  return {markerCount:markers.length,rows,allPass:markers.length>0&&rows.every(row=>row.connector&&row.ring&&row.image&&row.fallback&&row.fallbackText.length>0)};
+  return {markerCount:markers.length,rows,allPass:markers.length>0&&rows.every(row=>row.embedded&&row.image&&row.fallback&&row.ring&&!row.connector&&row.fallbackText.length>0&&row.layout==='embedded')};
+}
+function qaEmbeddedDriverProfilesV257(){
+  const markers=[...document.querySelectorAll('.f1-racing-race-vehicle-v189')];
+  const rows=markers.map(marker=>{
+    const ring=marker.querySelector('.car-ring')?.getBoundingClientRect();
+    const image=marker.querySelector('.car-profile-image-v257')?.getBoundingClientRect();
+    const connector=marker.querySelector('.car-profile-connector-v250');
+    const legacyGroup=marker.querySelector('.car-profile-v250');
+    const number=marker.querySelector('.car-number-v232')?.getBoundingClientRect();
+    const core=marker.querySelector('.car-core');
+    const centered=Boolean(ring&&image&&Math.abs((ring.left+ring.width/2)-(image.left+image.width/2))<2&&Math.abs((ring.top+ring.height/2)-(image.top+image.height/2))<2);
+    return {id:String(marker.dataset.driverId||''),centered,ringW:Number(ring?.width||0),imageW:Number(image?.width||0),connector:Boolean(connector),legacyGroup:Boolean(legacyGroup),core:Boolean(core),numberOutside:Boolean(number&&ring&&(number.left>=ring.left+ring.width*.55||number.top<=ring.top+ring.height*.15))};
+  });
+  return {markerCount:markers.length,rows,legacyConnectors:document.querySelectorAll('.car-profile-connector-v250').length,allPass:markers.length>0&&rows.every(row=>row.centered&&row.ringW>0&&row.imageW>0&&!row.connector&&!row.legacyGroup&&!row.core&&row.numberOutside)};
 }
 function rectOverlapAreaV228(a,b){
   const w=Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left));
@@ -5576,6 +5610,9 @@ window.__mwsF1RacingV255=VERSION255;
 window.mwsF1SyncBattleLinksV256=syncBattleLinksV256;
 window.mwsF1QaBattleLinksV256=qaBattleLinksV256;
 window.__mwsF1RacingV256=VERSION256;
+window.mwsF1SyncEmbeddedDriverMarkerV257=syncEmbeddedDriverMarkerV257;
+window.mwsF1QaEmbeddedDriverProfilesV257=qaEmbeddedDriverProfilesV257;
+window.__mwsF1RacingV257=VERSION257;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
