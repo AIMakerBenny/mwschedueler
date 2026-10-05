@@ -2232,12 +2232,26 @@ function raceMarkerTransformV245(point,zoom=raceCameraV216.zoom){
   return 'translate('+Number(point?.x||0).toFixed(2)+' '+Number(point?.y||0).toFixed(2)+') scale('+scale.toFixed(4)+')';
 }
 function syncRaceMarkerScaleV245(){
+  const scale=raceMarkerScaleV245(raceCameraV216.zoom),scaleText=scale.toFixed(4),rendered=[];
+  let labelsChanged=false;
   for(const vehicle of raceMotionV189.vehicles){
     if(!vehicle?.marker||!vehicle?.renderPointV216)continue;
+    labelsChanged=labelsChanged||vehicle.marker.dataset.cameraScaleV245!==scaleText;
     vehicle.marker.setAttribute('transform',raceMarkerTransformV245(vehicle.renderPointV216,raceCameraV216.zoom));
-    vehicle.marker.dataset.cameraScaleV245=raceMarkerScaleV245(raceCameraV216.zoom).toFixed(4);
+    vehicle.marker.dataset.cameraScaleV245=scaleText;
+    rendered.push({vehicle,marker:vehicle.marker,point:vehicle.renderPointV216});
   }
-  return raceMarkerScaleV245(raceCameraV216.zoom);
+  if(labelsChanged)layoutRaceVehicleLabelsV228(rendered);
+  syncTrackAnnotationScaleV245();
+  return scale;
+}
+function syncTrackAnnotationScaleV245(){
+  const scale=raceMarkerScaleV245(raceCameraV216.zoom).toFixed(4);
+  for(const node of document.querySelectorAll('#f1RacingRaceAnnotationsRecoveryB [data-zoom-anchor-x]')){
+    const x=Number(node.dataset.zoomAnchorX),y=Number(node.dataset.zoomAnchorY);
+    node.setAttribute('transform','translate('+x+' '+y+') scale('+scale+') translate('+(-x)+' '+(-y)+')');
+    node.dataset.cameraScaleV245=scale;
+  }
 }
 function ensureRaceVehicleMarkerV189(vehicle,index){
   const layer=document.getElementById('f1RacingRaceVehicleLayerV188');
@@ -2263,12 +2277,12 @@ function rectOverlapAreaV228(a,b){
   const h=Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
   return w*h;
 }
-function labelCandidateRectV228(point,label,dx,dy,anchor){
+function labelCandidateRectV228(point,label,dx,dy,anchor,scale=1){
   const chars=Math.max(1,String(label?.textContent||'DRV').length);
-  const width=Math.max(30,Math.min(78,chars*8.5+10)),height=17;
-  const gx=Number(point?.x||0)+dx,gy=Number(point?.y||0)+dy;
+  const width=Math.max(30,Math.min(78,chars*8.5+10))*scale,height=17*scale;
+  const gx=Number(point?.x||0)+dx*scale,gy=Number(point?.y||0)+dy*scale;
   const left=anchor==='start'?gx:anchor==='end'?gx-width:gx-width/2;
-  return {left,right:left+width,top:gy-height+4,bottom:gy+4,x:dx,y:dy,anchor,width,height};
+  return {left,right:left+width,top:gy-height+4*scale,bottom:gy+4*scale,x:dx,y:dy,anchor,width,height};
 }
 function layoutRaceVehicleLabelsV228(rendered=[]){
   const occupied=[],placements=[];
@@ -2276,18 +2290,20 @@ function layoutRaceVehicleLabelsV228(rendered=[]){
   const radii=[24,36,50,66,84];
   for(const entry of rendered){
     const label=entry?.marker?.querySelector?.('.car-label');if(!label)continue;
+    const scale=Number(entry.marker.dataset.cameraScaleV245)||1;
     let best=null,bestScore=Infinity,bestSlot=-1,slot=0;
     for(const radius of radii){
       for(const angle of angles){
         const cos=Math.cos(angle),sin=Math.sin(angle);
         const anchor=cos<-.28?'end':cos>.28?'start':'middle';
-        const candidate=labelCandidateRectV228(entry.point,label,cos*radius,sin*radius,anchor);
+        const candidate=labelCandidateRectV228(entry.point,label,cos*radius,sin*radius,anchor,scale);
         let score=radius*.02;
-        for(const rect of occupied)score+=rectOverlapAreaV228(candidate,rect)*20;
+        for(const rect of occupied)score+=rectOverlapAreaV228(candidate,rect)*20/(scale*scale);
         for(const other of rendered){
           if(other===entry)continue;
           const px=Number(other?.point?.x),py=Number(other?.point?.y);
-          if(px>=candidate.left-8&&px<=candidate.right+8&&py>=candidate.top-8&&py<=candidate.bottom+8)score+=500;
+          const padding=8*(Number(other?.marker?.dataset.cameraScaleV245)||1);
+          if(px>=candidate.left-padding&&px<=candidate.right+padding&&py>=candidate.top-padding&&py<=candidate.bottom+padding)score+=500;
         }
         if(score<bestScore){bestScore=score;best=candidate;bestSlot=slot}
         slot+=1;
@@ -4504,6 +4520,7 @@ function pointAtProgressV183(path,progress){
 function addTrackAnnotationV183(layer,path,kind,label,progress){
   const point=pointAtProgressV183(path,progress);
   const group=svgNodeV183('g',{class:'f1-racing-track-annotation-v183 '+kind,'data-kind':kind,'data-progress':progress});
+  group.dataset.zoomAnchorX=String(point.x);group.dataset.zoomAnchorY=String(point.y);
   const circle=svgNodeV183('circle',{cx:point.x,cy:point.y,r:kind==='start'?9:7});
   const textNode=svgNodeV183('text',{x:point.x+12,y:point.y-10});
   textNode.textContent=label;
@@ -4556,6 +4573,7 @@ function addStartFinishLineRecoveryB(layer,path,track,scope='setup'){
     'text-anchor':'middle'
   });
   label.textContent='출발 / 결승선';
+  label.dataset.zoomAnchorX=label.getAttribute('x');label.dataset.zoomAnchorY=label.getAttribute('y');
   group.append(underlay,stripe,label);
   layer.appendChild(group);
   return group;
@@ -4585,6 +4603,7 @@ function trackIndicatorGeometryV246(path,progress,index=0){
 function addTrackIndicatorV246(layer,path,label,progress,index=0){
   const geometry=trackIndicatorGeometryV246(path,progress,index);if(!geometry)return null;
   const group=svgNodeV183('g',{class:'f1-racing-track-indicator-v246 sector','data-kind':'sector-indicator','data-progress':progress});
+  group.dataset.zoomAnchorX=String(geometry.a.x);group.dataset.zoomAnchorY=String(geometry.a.y);
   const line=svgNodeV183('line',{x1:geometry.a.x,y1:geometry.a.y,x2:geometry.b.x,y2:geometry.b.y});
   const rect=svgNodeV183('rect',{x:geometry.b.x-18,y:geometry.b.y-11,width:36,height:18,rx:5,ry:5});
   const textNode=svgNodeV183('text',{x:geometry.b.x,y:geometry.b.y+2,'text-anchor':'middle'});
@@ -4600,6 +4619,7 @@ function renderTrackMarkersV211(layer,path,track,scope='race'){
     addTrackAnnotationV183(layer,path,'pit','피트 진입',track.pit.entry);
     addTrackAnnotationV183(layer,path,'pit','피트 출구',track.pit.exit);
   }
+  if(scope==='race')syncTrackAnnotationScaleV245();
   return true;
 }
 function qaTrackPresentationV246(){

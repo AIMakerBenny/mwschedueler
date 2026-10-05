@@ -405,6 +405,30 @@ try{
     const mapStage=document.querySelector('#f1RacingWorkspaceRecoveryE .f1-racing-race-map-stage-v188');
     assert(mapStage,'Phase 216 race map stage missing');
     const mapRect=mapStage.getBoundingClientRect();
+    // Phase 245: measure rendered sizes, not just the inverse-scale helper.
+    window.mwsF1SetRaceCameraModeV216('FULL');await raf();
+    const raceSvg245=document.getElementById('f1RacingRaceTrackSvgV188');
+    const sizeSelectors245=['.car-core','.car-number-v232','.car-label','.f1-racing-track-annotation-v183.pit circle','.f1-racing-track-annotation-v183.pit text','.f1-racing-track-indicator-v246 rect','.finish-label'];
+    const measure245=()=>sizeSelectors245.map(selector=>{
+      const node=raceSvg245.querySelector(selector),rect=node?.getBoundingClientRect();
+      assert(rect&&rect.width>0&&rect.height>0,'Phase 245 missing rendered marker: '+selector);
+      return {selector,width:rect.width,height:rect.height};
+    });
+    const sizesAtFull245=measure245();
+    const finishLine245=raceSvg245.querySelector('.finish-underlay');
+    const finishLength245=()=>{const box=finishLine245.getBoundingClientRect();return Math.hypot(box.width,box.height)};
+    const lineAtFull245=finishLength245();
+    for(let step245=0;step245<12;step245++)mapStage.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:-120,clientX:mapRect.left+mapRect.width/2,clientY:mapRect.top+mapRect.height/2}));
+    await raf();
+    const zoomState245=window.mwsF1GetRaceCameraStateV216();
+    assert(zoomState245.mode==='MANUAL'&&zoomState245.zoom===4.5,'Phase 245 wheel zoom did not reach clamped maximum');
+    const sizesAtZoom245=measure245();
+    sizesAtZoom245.forEach((row,index)=>{
+      const ratio=row.width/sizesAtFull245[index].width;
+      assert(ratio>.85&&ratio<1.12,'Phase 245 rendered marker enlarged or became unreadable: '+JSON.stringify({row,ratio}));
+    });
+    assert(finishLength245()/lineAtFull245>4.4,'Phase 245 finish line must retain track-relative geometry');
+    window.mwsF1SetRaceCameraModeV216('AUTO');await raf();
     mapStage.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:-120,clientX:mapRect.left+mapRect.width/2,clientY:mapRect.top+mapRect.height/2}));
     await raf();
     assert(window.mwsF1GetRaceCameraStateV216?.().mode==='MANUAL','Phase 216 wheel did not disable automatic camera');
@@ -556,6 +580,7 @@ try{
       dockedCommentary:docked,
       overlapPairsAfterDock:window.mwsF1WorkspaceOverlapPairsRecoveryI?.()||[],
       compactDefault:true,
+      zoomMarkerGeometryV245:{zoom:zoomState245.zoom,before:sizesAtFull245,after:sizesAtZoom245},
       persistenceVersion:Number(persisted?.version)||0,
       malformedRepairReasons:repaired?.before||[],
       finalDomOverlapPairs:domOverlapPairs(),
