@@ -88,8 +88,17 @@ function qaFinalDesktopV292(){
  return {version:VERSION292,viewport:{width:window.innerWidth,height:window.innerHeight,desktop:window.innerWidth>=1024},requiredApis,qa,dom,errors,apiPass,qaPass,domPass,allPass:desktopQaStateV292.installed&&apiPass&&qaPass&&domPass&&errors.length===0};
 }
 
+
+const VERSION295='phase295-f1-final-regression-gate';
+function qaFinalRegressionV295(){
+ const desktop=window.mwsF1QaFinalDesktopV292?.()||null;
+ const overlay=window.mwsF1QaFinishOverlayV291?.()||null;
+ return {version:VERSION295,desktop,overlay,allPass:desktop?.allPass===true&&overlay?.allPass===true};
+}
+
 function bootV291(){installFinishOverlayV291();installFinalDesktopQaV292()}
 window.mwsF1RenderFinishOverlayV291=renderFinishOverlayV291;window.mwsF1SyncFinishOverlayV291=syncFinishOverlayV291;window.mwsF1HideFinishOverlayV291=hideFinishOverlayV291;window.mwsF1QaFinishOverlayV291=qaFinishOverlayV291;window.__mwsF1RacingV291=VERSION291;
 window.mwsF1QaFinalDesktopV292=qaFinalDesktopV292;window.__mwsF1RacingV292=VERSION292;
+window.mwsF1QaFinalRegressionV295=qaFinalRegressionV295;window.__mwsF1RacingV295=VERSION295;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootV291,{once:true});else bootV291();
 })();
