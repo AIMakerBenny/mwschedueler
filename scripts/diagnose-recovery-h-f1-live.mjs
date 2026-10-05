@@ -590,11 +590,15 @@ try{
     });
     assert(finishLength245()/lineAtFull245>4.4,'Phase 245 finish line must retain track-relative geometry');
     window.mwsF1SetRaceCameraModeV216('AUTO');await raf();
+    for(let zoomOut268=0;zoomOut268<3&&Number(window.mwsF1GetRaceCameraStateV216?.().zoom)>=4.2;zoomOut268++){
+      mapStage.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:120,clientX:mapRect.left+mapRect.width/2,clientY:mapRect.top+mapRect.height/2}));
+      await raf();
+    }
     const zoomBefore268=Number(window.mwsF1GetRaceCameraStateV216?.().zoom)||0;
     mapStage.dispatchEvent(new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:-120,clientX:mapRect.left+mapRect.width/2,clientY:mapRect.top+mapRect.height/2}));
     await raf();
     const wheelState268=window.mwsF1GetRaceCameraStateV216?.();
-    assert(wheelState268?.mode==='AUTO'&&Number(wheelState268?.zoom)>zoomBefore268,'Phase 268 wheel zoom must keep AUTO: '+JSON.stringify(wheelState268));
+    assert(wheelState268?.mode==='AUTO'&&Number(wheelState268?.zoom)>zoomBefore268,'Phase 268 wheel zoom must keep AUTO: '+JSON.stringify({zoomBefore268,wheelState268}));
     const dragStartX=mapRect.left+mapRect.width*.5,dragStartY=mapRect.top+mapRect.height*.5;
     mapStage.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,clientX:dragStartX,clientY:dragStartY,pointerId:268,buttons:1,button:0}));
     mapStage.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,clientX:dragStartX+30,clientY:dragStartY+18,pointerId:268,buttons:1}));
