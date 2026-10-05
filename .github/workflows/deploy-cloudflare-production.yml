@@ -213,6 +213,7 @@ jobs:
           node --check scripts/run-phase268-f1-auto-follow-wheel-zoom-audit.mjs
           node --check scripts/run-phase269-f1-lateral-workspace-stability-audit.mjs
           node --check scripts/run-phase270-f1-corner-dynamics-audit.mjs
+          node --check scripts/run-phase271-f1-track-boundary-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -2573,6 +2574,14 @@ jobs:
           retry_contains "$BASE/assets/f1-track-geometry-v2.js?deploy=$GITHUB_SHA" "root.__mwsF1CornerDynamicsV270='direction-split-exit-recovery-v1';" > /tmp/f1-track-geometry-phase270.js
           node --check /tmp/f1-track-geometry-phase270.js
           retry_contains "$BASE/?phase270=$GITHUB_SHA" 'recovery=N1&phase=' > /tmp/index-phase270.html
+
+          echo '[phase271] F1 track boundary and wall riding fix'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV271=VERSION271;' > /tmp/f1-racing-v1-phase271.js
+          node --check /tmp/f1-racing-v1-phase271.js
+          grep -Fq 'function trackBoundaryStateV271(' /tmp/f1-racing-v1-phase271.js
+          grep -Fq 'maxTarget*=boundaryStateV271.speedFactor;' /tmp/f1-racing-v1-phase271.js
+          retry_contains "$BASE/?phase271=$GITHUB_SHA" 'recovery=N1&phase=271&zoomfix=1&spectatorqa=2' > /tmp/index-phase271.html
+          grep -Fq 'recovery=L1&phase=270' /tmp/index-phase271.html
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
