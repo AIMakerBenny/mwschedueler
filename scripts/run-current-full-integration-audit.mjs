@@ -296,6 +296,7 @@ import {runPhase297F1LateChainRecheckAudit} from './run-phase297-f1-late-chain-r
 import {runPhase298F1ProductionWorkflowRecheckAudit} from './run-phase298-f1-production-workflow-recheck-audit.mjs';
 import {runPhase299F1RecoveryHContractRecheckAudit} from './run-phase299-f1-recovery-h-contract-recheck-audit.mjs';
 import {runPhase300F1ProductionClosureAudit} from './run-phase300-f1-production-closure-audit.mjs';
+import {runPhase301F1SpecClosureAudit} from './run-phase301-f1-spec-closure-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2649,5 +2650,6 @@ export function runPhase297FullIntegrationAudit(){const previous=runPhase296Full
 export function runPhase298FullIntegrationAudit(){const previous=runPhase297FullIntegrationAudit(),current=runPhase298F1ProductionWorkflowRecheckAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 298: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 298: '+x)];return {phase:298,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase299FullIntegrationAudit(){const previous=runPhase298FullIntegrationAudit(),current=runPhase299F1RecoveryHContractRecheckAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 299: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 299: '+x)];return {phase:299,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase300FullIntegrationAudit(){const previous=runPhase299FullIntegrationAudit(),current=runPhase300F1ProductionClosureAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 300: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 300: '+x)];return {phase:300,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase300FullIntegrationAudit();}
+export function runPhase301FullIntegrationAudit(){const previous=runPhase300FullIntegrationAudit(),current=runPhase301F1SpecClosureAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 301: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 301: '+x)];return {phase:301,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase301FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
