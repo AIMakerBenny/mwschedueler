@@ -2864,15 +2864,22 @@ function qaEmbeddedDriverProfilesV257(){
   const markers=[...document.querySelectorAll('.f1-racing-race-vehicle-v189')];
   const rows=markers.map(marker=>{
     const ring=marker.querySelector('.car-ring')?.getBoundingClientRect();
-    const image=marker.querySelector('.car-profile-image-v257')?.getBoundingClientRect();
+    const imageNode=marker.querySelector('.car-profile-image-v257');
+    const fallbackBgNode=marker.querySelector('.car-profile-fallback-bg-v257');
+    const fallbackNode=marker.querySelector('.car-profile-initials-v257');
+    const image=imageNode?.getBoundingClientRect();
+    const fallbackBg=fallbackBgNode?.getBoundingClientRect();
     const connector=marker.querySelector('.car-profile-connector-v250');
     const legacyGroup=marker.querySelector('.car-profile-v250');
     const number=marker.querySelector('.car-number-v232')?.getBoundingClientRect();
     const core=marker.querySelector('.car-core');
-    const centered=Boolean(ring&&image&&Math.abs((ring.left+ring.width/2)-(image.left+image.width/2))<2&&Math.abs((ring.top+ring.height/2)-(image.top+image.height/2))<2);
-    return {id:String(marker.dataset.driverId||''),centered,ringW:Number(ring?.width||0),imageW:Number(image?.width||0),connector:Boolean(connector),legacyGroup:Boolean(legacyGroup),core:Boolean(core),numberOutside:Boolean(number&&ring&&(number.left>=ring.left+ring.width*.55||number.top<=ring.top+ring.height*.15))};
+    const hasImage=marker.dataset.profileHasImageV257==='1';
+    const visual=hasImage&&image&&image.width>0?image:fallbackBg;
+    const centered=Boolean(ring&&visual&&visual.width>0&&Math.abs((ring.left+ring.width/2)-(visual.left+visual.width/2))<2&&Math.abs((ring.top+ring.height/2)-(visual.top+visual.height/2))<2);
+    const fallbackOk=hasImage||Boolean(fallbackNode&&String(fallbackNode.textContent||'').trim()&&fallbackBg&&fallbackBg.width>0);
+    return {id:String(marker.dataset.driverId||''),hasImage,centered,ringW:Number(ring?.width||0),visualW:Number(visual?.width||0),connector:Boolean(connector),legacyGroup:Boolean(legacyGroup),core:Boolean(core),fallbackOk,numberOutside:Boolean(number&&ring&&(number.left>=ring.left+ring.width*.55||number.top<=ring.top+ring.height*.15))};
   });
-  return {markerCount:markers.length,rows,legacyConnectors:document.querySelectorAll('.car-profile-connector-v250').length,allPass:markers.length>0&&rows.every(row=>row.centered&&row.ringW>0&&row.imageW>0&&!row.connector&&!row.legacyGroup&&!row.core&&row.numberOutside)};
+  return {markerCount:markers.length,rows,legacyConnectors:document.querySelectorAll('.car-profile-connector-v250').length,allPass:markers.length>0&&rows.every(row=>row.centered&&row.ringW>0&&row.visualW>0&&!row.connector&&!row.legacyGroup&&!row.core&&row.fallbackOk&&row.numberOutside)};
 }
 function rectOverlapAreaV228(a,b){
   const w=Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left));
