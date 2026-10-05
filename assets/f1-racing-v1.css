@@ -275,6 +275,14 @@
 .f1-racing-race-vehicle-v189 .car-core{fill:var(--f1-driver-color,#60a5fa)}
 .f1-racing-race-vehicle-v189 .car-number-v232{fill:#fff;font:900 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#020305;stroke-width:1.5;dominant-baseline:middle}
 .f1-racing-race-vehicle-v189 .car-label{fill:#f8fafc;font:900 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#020305;stroke-width:4;stroke-linejoin:round}
+/* Phase 250: profile portrait tethered above each live vehicle marker */
+.f1-racing-race-vehicle-v189 .car-profile-v250{pointer-events:none}
+.f1-racing-race-vehicle-v189 .car-profile-connector-v250{stroke:var(--f1-driver-color,#94a3b8);stroke-width:2;stroke-linecap:round;opacity:.82}
+.f1-racing-race-vehicle-v189 .car-profile-halo-v250{fill:var(--f1-driver-color,#60a5fa);fill-opacity:.16;stroke:none}
+.f1-racing-race-vehicle-v189 .car-profile-ring-v250{fill:#0b1018;stroke:var(--f1-driver-color,#e2e8f0);stroke-width:2.5}
+.f1-racing-race-vehicle-v189 .car-profile-image-v250{pointer-events:none}
+.f1-racing-race-vehicle-v189 .car-profile-initials-v250{fill:#f8fafc;font:900 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#020305;stroke-width:1.2;dominant-baseline:middle}
+.f1-racing-race-vehicle-v189.leader .car-profile-ring-v250{stroke-width:3.5;filter:drop-shadow(0 0 3px var(--f1-driver-color,#e8cf76))}
 
 /* Phase 190: race distance, lap and sector telemetry */
 .f1-racing-timing-row-v188 .driver em[data-f1-current-sector]{flex:0 0 auto;margin-left:auto;padding:2px 5px;border:1px solid #2d3745;border-radius:4px;color:#8ea0b8;background:#0b1017;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-style:normal;letter-spacing:.06em}
