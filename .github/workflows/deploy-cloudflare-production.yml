@@ -202,6 +202,7 @@ jobs:
           node --check scripts/run-phase257-f1-embedded-profile-audit.mjs
           node --check scripts/run-phase258-f1-visual-lateral-smoothing-audit.mjs
           node --check scripts/run-phase259-f1-workspace-user-default-audit.mjs
+          node --check scripts/run-phase260-f1-manual-lap-control-audit.mjs
           node --check scripts/run-recovery-l-f1-curvature-speed-audit.mjs
           node --check scripts/run-recovery-m-f1-explicit-start-audit.mjs
           node --check scripts/run-recovery-n-f1-triple-dock-audit.mjs
@@ -2470,6 +2471,15 @@ jobs:
           grep -Fq 'function checkpointWorkspaceUserDefaultV259(' /tmp/f1-racing-v1-phase259.js
           grep -Fq 'function qaWorkspaceUserDefaultPersistenceV259(){' /tmp/f1-racing-v1-phase259.js
           grep -Fq "restoreWorkspaceUserDefaultV259('race-start');" /tmp/f1-racing-v1-phase259.js
+
+          echo '[phase260] F1 manual lap control'
+          retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV260=VERSION260;' > /tmp/f1-racing-v1-phase260.js
+          node --check /tmp/f1-racing-v1-phase260.js
+          grep -Fq 'function recommendedLapsV260(' /tmp/f1-racing-v1-phase260.js
+          grep -Fq 'function setLapCountV260(' /tmp/f1-racing-v1-phase260.js
+          grep -Fq 'function qaLapControlV260(){' /tmp/f1-racing-v1-phase260.js
+          retry_contains "$BASE/?phase260=$GITHUB_SHA" 'id="f1RacingLapsInputV260"' > /tmp/index-phase260.html
+          grep -Fq 'id="f1RacingLapsRestoreV260"' /tmp/index-phase260.html
 
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
