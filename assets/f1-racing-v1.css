@@ -602,3 +602,19 @@
 .f1-racing-commentary-entry-v219[data-commentary-priority="low"] .message{color:#8e9aad}
 .f1-racing-commentary-unread-v226{position:absolute;right:10px;bottom:10px;z-index:12;min-height:26px;padding:4px 8px;border:1px solid #53657e;border-radius:999px;background:rgba(12,20,31,.94);color:#eef5ff;font-size:9px;font-weight:850;box-shadow:0 6px 18px rgba(0,0,0,.32);cursor:pointer}
 .f1-racing-commentary-unread-v226[hidden]{display:none!important}
+
+/* Phase 244: compact starting grid with top-right race actions */
+.f1-racing-grid-ready-recovery-m{padding:10px}
+.f1-racing-grid-stage-v244{min-height:520px;border:1px solid #232c38;border-radius:10px;background:linear-gradient(180deg,#080c12,#05080c);overflow:hidden}
+.f1-racing-grid-header-v244{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:16px 18px;border-bottom:1px solid #202935;background:linear-gradient(180deg,rgba(17,24,34,.96),rgba(9,13,19,.96))}
+.f1-racing-grid-heading-v244{min-width:0;display:flex;flex-direction:column;gap:5px}
+.f1-racing-grid-heading-v244>strong{color:#f8fafc;font:950 21px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.04em}
+.f1-racing-grid-meta-recovery-m{display:flex;gap:7px;flex-wrap:wrap}
+.f1-racing-grid-meta-recovery-m span{padding:4px 7px;border:1px solid #263140;border-radius:999px;background:#0a1018;color:#91a2b8;font:800 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-grid-actions-v244{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex:0 0 auto}
+.f1-racing-grid-actions-v244 button{min-height:32px;padding:6px 12px}
+.f1-racing-grid-brief-v244{width:min(620px,calc(100% - 36px));margin:28px auto;padding:22px;border:1px solid #1e2733;border-radius:10px;background:radial-gradient(circle at 50% 0,rgba(59,83,115,.16),rgba(7,10,15,.95) 62%);text-align:center}
+.f1-racing-grid-brief-v244>span{color:#64748b;font:900 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.18em}
+.f1-racing-grid-brief-v244>strong{display:block;margin-top:8px;color:#e8eef8;font-size:18px}
+.f1-racing-grid-brief-v244>p{margin:8px 0 0;color:#8190a3;font-size:11px;line-height:1.6}
+@media(max-width:720px){.f1-racing-grid-header-v244{flex-direction:column}.f1-racing-grid-actions-v244{width:100%}.f1-racing-grid-actions-v244 button{flex:1}}
