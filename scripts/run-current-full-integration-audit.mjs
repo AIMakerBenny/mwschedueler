@@ -276,6 +276,7 @@ import {runPhase277F1CharacterDialogueEngineAudit} from './run-phase277-f1-chara
 import {runPhase278F1MicroBattleEventsAudit} from './run-phase278-f1-micro-battle-events-audit.mjs';
 import {runPhase279F1ExpandedDialoguePoolAudit} from './run-phase279-f1-expanded-dialogue-pool-audit.mjs';
 import {runPhase280F1EventDialogueCoverageAudit} from './run-phase280-f1-event-dialogue-coverage-audit.mjs';
+import {runPhase281F1DialogueCadenceAudit} from './run-phase281-f1-dialogue-cadence-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2609,5 +2610,6 @@ export function runPhase279FullIntegrationAudit(){
  return {phase:279,previous,current,issues,warnings,pass:issues.length===0};
 }
 export function runPhase280FullIntegrationAudit(){const previous=runPhase279FullIntegrationAudit(),current=runPhase280F1EventDialogueCoverageAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 280: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 280: '+x)];return {phase:280,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase280FullIntegrationAudit();}
+export function runPhase281FullIntegrationAudit(){const previous=runPhase280FullIntegrationAudit(),current=runPhase281F1DialogueCadenceAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 281: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 281: '+x)];return {phase:281,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase281FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
