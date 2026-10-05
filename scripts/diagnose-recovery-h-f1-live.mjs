@@ -162,6 +162,19 @@ try{
   if(extensionQa292?.r16?.allPass!==true)throw new Error('Phase 291 finish overlay live QA failed: '+JSON.stringify(extensionQa292?.r16));
   if(extensionQa292?.r17?.allPass!==true)throw new Error('Phase 292 integrated desktop live QA failed: '+JSON.stringify(extensionQa292?.r17));
 
+  let phase295Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    phase295Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV295==='phase295-f1-final-regression-gate'","Phase 295 runtime readiness"));
+    if(phase295Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v295=${Date.now()}-${attempt}`});
+    await refreshed;
+    await sleep(1200);
+  }
+  if(!phase295Ready)throw new Error('Phase 295 runtime did not propagate to Recovery H browser');
+  const finalRuntimeQa295=await evaluate(cdp,"window.mwsF1QaFinalRegressionV295?.()","Phase 295 final runtime QA");
+  if(finalRuntimeQa295?.allPass!==true)throw new Error('Phase 295 final runtime QA failed: '+JSON.stringify(finalRuntimeQa295));
+
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
