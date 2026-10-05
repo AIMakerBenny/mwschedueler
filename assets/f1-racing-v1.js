@@ -104,6 +104,7 @@ const VERSION274='phase274-field-compression-leader-pressure';
 const VERSION275='phase275-chase-burst';
 const VERSION276='phase276-live-conversation-stack-ui';
 const VERSION277='phase277-character-dialogue-engine';
+const VERSION278='phase278-micro-battle-events';
 const TRACK_BOUNDARY_V271=Object.freeze({
   carHalfWidthMeters:.85,safetyMarginMeters:.20,edgeStartRatio:.90,
   edgeMinSpeedFactor:.90,offTrackSpeedFactor:.76
@@ -4653,6 +4654,7 @@ function initializeRaceMotionV189(snapshot=activeRaceSnapshotV187){
   if(!snapshot)return false;
   resetLeaderPressureFieldV274();
   raceMotionV189.vehicles=createRaceVehiclesV189(snapshot);
+  resetMicroBattleEventsV278();
   raceMotionV189.snapshotCreatedAt=String(snapshot.createdAt||'');
   raceMotionV189.lastTimestamp=0;
   raceMotionV189.hudAccumulatorMs=0;
@@ -5180,6 +5182,152 @@ function qaLiveConversationStackV276(){
   return result;
 }
 
+
+
+const MICRO_BATTLE_EVENTS_V278=Object.freeze([
+  'GAP_1_5','GAP_1_0','GAP_0_6','SLIPSTREAM','ATTACK_LINE','DEFENCE_LINE','FAKE',
+  'BRAKING_DUEL','CORNER_ENTRY_DUEL','SIDE_BY_SIDE','EDGES_AHEAD','RE_ATTACK',
+  'PASS_SUCCESS','PASS_FAIL','COUNTER_ATTACK','FRONT_CAR_MISTAKE','REAR_CAR_MISTAKE',
+  'CORNER_EXIT_ADVANTAGE','LEADER_PRESSURE_MISTAKE','BURST_ACTIVATION','BURST_SUCCESS',
+  'BURST_FAIL','BURST_END','PODIUM_BATTLE','LAST_PLACE_BATTLE','FINAL_LAP','THREE_CAR_BATTLE'
+]);
+const MICRO_BATTLE_DIALOGUE_MAP_V278=Object.freeze({
+  GAP_1_5:'ATTACK',GAP_1_0:'ATTACK',GAP_0_6:'ATTACK',SLIPSTREAM:'ATTACK',
+  ATTACK_LINE:'ATTACK',FAKE:'ATTACK',BRAKING_DUEL:'ATTACK',CORNER_ENTRY_DUEL:'ATTACK',
+  SIDE_BY_SIDE:'ATTACK',EDGES_AHEAD:'ATTACK',RE_ATTACK:'COUNTER_ATTACK',
+  PASS_SUCCESS:'PASS_SUCCESS',PASS_FAIL:'PASS_FAILED',COUNTER_ATTACK:'COUNTER_ATTACK',
+  FRONT_CAR_MISTAKE:'MISTAKE',REAR_CAR_MISTAKE:'MISTAKE',CORNER_EXIT_ADVANTAGE:'ATTACK',
+  LEADER_PRESSURE_MISTAKE:'MISTAKE',BURST_ACTIVATION:'BURST',BURST_SUCCESS:'PASS_SUCCESS',
+  BURST_FAIL:'PASS_FAILED',PODIUM_BATTLE:'ATTACK',LAST_PLACE_BATTLE:'ATTACK',
+  FINAL_LAP:'ATTACK',THREE_CAR_BATTLE:'ATTACK'
+});
+const microBattleStateV278={vehicle:new Map(),history:[],counts:new Map(),signatureAt:new Map(),sequence:0};
+function microBattleGapSecondsV278(vehicle,target){
+  if(!vehicle||!target)return Infinity;
+  const length=Math.max(1,Number(activeRaceSnapshotV187?.track?.lengthMeters)||1);
+  const meters=Math.max(0,(Number(target.raceProgress)||0)-(Number(vehicle.raceProgress)||0))*length;
+  const speed=Math.max(70,Number(target.speedKph)||Number(vehicle.speedKph)||180);
+  return Math.max(0,meters/(speed/3.6));
+}
+function microBattleVehicleStateV278(vehicle,standings=computeRaceStandingsV191()){
+  const index=standings.findIndex(row=>row.vehicle===vehicle),ahead=index>0?standings[index-1]?.vehicle||null:null,follower=index>=0?standings[index+1]?.vehicle||null:null;
+  const phase=getCornerPhaseAtProgressV194(vehicle?.progress)?.phase||'STRAIGHT';
+  const activeIncident=activeDrivingIncidentV204(vehicle);
+  const rawAheadMeters=ahead?((Number(ahead.raceProgress)||0)-(Number(vehicle.raceProgress)||0))*Math.max(1,Number(activeRaceSnapshotV187?.track?.lengthMeters)||1):Infinity;
+  return {
+    id:String(vehicle?.id||''),position:index>=0?index+1:0,aheadId:String(ahead?.id||''),followerId:String(follower?.id||''),
+    gapAheadSeconds:microBattleGapSecondsV278(vehicle,ahead),gapBehindSeconds:microBattleGapSecondsV278(follower,vehicle),
+    rawAheadMeters:Number.isFinite(rawAheadMeters)?rawAheadMeters:Infinity,
+    slipstream:Number(vehicle?.slipstreamStrength)||0,line:String(vehicle?.racingLineMode||'IDEAL'),
+    defence:Boolean(vehicle?.defenceActive),battle:String(vehicle?.battleState||'FOLLOWING'),phase,
+    passCompleted:Number(vehicle?.passCompletedCount)||0,passFailed:Number(vehicle?.passFailedCount)||0,
+    incident:String(activeIncident||''),incidentCount:(Number(vehicle?.lockupCount)||0)+(Number(vehicle?.understeerCount)||0)+(Number(vehicle?.oversteerCount)||0),
+    pressureCount:Number(vehicle?.leaderPressureEventCountV274)||0,burstActive:isChaseBurstActiveV275(vehicle),
+    burstUses:Number(vehicle?.chaseBurstUsesV275)||0,burstEndReason:String(vehicle?.chaseBurstLastEndReasonV275||''),
+    currentLap:Number(vehicle?.currentLap)||1,totalLaps:Math.max(1,Number(activeRaceSnapshotV187?.totalLaps)||1),
+    finished:Boolean(vehicle?.finished),speedKph:Number(vehicle?.speedKph)||0,
+    ahead,follower
+  };
+}
+function microBattleThresholdCrossingsV278(previous,current){
+  const out=[];
+  const pg=Number(previous?.gapAheadSeconds),cg=Number(current?.gapAheadSeconds);
+  for(const [limit,event] of [[1.5,'GAP_1_5'],[1.0,'GAP_1_0'],[.6,'GAP_0_6']]){
+    if(Number.isFinite(cg)&&cg<=limit&&(!Number.isFinite(pg)||pg>limit))out.push(event);
+  }
+  return out;
+}
+function microBattleCanRecordV278(event,actor,target,cooldownMs=900){
+  const now=Number(simClockV192.simTimeMs)||0,key=[String(event),String(actor?.id||''),String(target?.id||'')].join('|');
+  const previous=Number(microBattleStateV278.signatureAt.get(key));
+  if(Number.isFinite(previous)&&now-previous<Math.max(0,Number(cooldownMs)||0))return false;
+  microBattleStateV278.signatureAt.set(key,now);return true;
+}
+function emitMicroBattleDialogueV278(event,actor,target){
+  const mapped=MICRO_BATTLE_DIALOGUE_MAP_V278[String(event||'')];
+  if(!mapped||!actor)return false;
+  const cooldown=['PASS_SUCCESS','PASS_FAIL','BURST_SUCCESS','BURST_FAIL'].includes(String(event))?0:1900;
+  return emitCharacterDialogueEventV277(mapped,actor,target,{cooldownMs:cooldown});
+}
+function recordMicroBattleEventV278(event,actor,target,meta={}){
+  const type=String(event||'').toUpperCase();if(!MICRO_BATTLE_EVENTS_V278.includes(type)||!actor)return false;
+  if(!microBattleCanRecordV278(type,actor,target,meta.cooldownMs))return false;
+  const row={id:++microBattleStateV278.sequence,event:type,actorId:String(actor.id||''),actor:characterDialogueSpeakerV277(actor),
+    targetId:String(target?.id||''),target:target?characterDialogueSpeakerV277(target):'',simTimeMs:Number(simClockV192.simTimeMs)||0,
+    lap:Number(actor.currentLap)||1,phase:String(getCornerPhaseAtProgressV194(actor.progress)?.phase||'STRAIGHT'),
+    meta:{...meta}};
+  microBattleStateV278.history.push(row);if(microBattleStateV278.history.length>120)microBattleStateV278.history.splice(0,microBattleStateV278.history.length-120);
+  microBattleStateV278.counts.set(type,(Number(microBattleStateV278.counts.get(type))||0)+1);
+  if(!engineQaV240.active)emitMicroBattleDialogueV278(type,actor,target);
+  return row;
+}
+function updateMicroBattleEventsV278(stepMs){
+  if(!(stepMs>0)||raceFlagStateV214.flag!=='GREEN'||!raceMotionV189.vehicles.length)return [];
+  const standings=computeRaceStandingsV191(),rows=[];
+  for(const standing of standings){
+    const vehicle=standing.vehicle;if(!vehicle||vehicle.finished||String(vehicle.pitState||'TRACK')!=='TRACK')continue;
+    const current=microBattleVehicleStateV278(vehicle,standings);
+    const previous=microBattleStateV278.vehicle.get(String(vehicle.id))||current;
+    const ahead=current.ahead,follower=current.follower;
+    for(const event of microBattleThresholdCrossingsV278(previous,current))recordMicroBattleEventV278(event,vehicle,ahead,{gapSeconds:current.gapAheadSeconds,cooldownMs:2600});
+    if(current.slipstream>=.28&&Number(previous.slipstream)<.28)recordMicroBattleEventV278('SLIPSTREAM',vehicle,ahead,{strength:current.slipstream,cooldownMs:3200});
+    if(current.line==='ATTACK_INSIDE'&&previous.line!=='ATTACK_INSIDE')recordMicroBattleEventV278('ATTACK_LINE',vehicle,ahead,{cooldownMs:2400});
+    if(current.defence&&!previous.defence)recordMicroBattleEventV278('DEFENCE_LINE',vehicle,follower,{cooldownMs:2600});
+    if(['ATTACK_INSIDE','OUTSIDE'].includes(current.line)&&['ATTACK_INSIDE','OUTSIDE'].includes(previous.line)&&current.line!==previous.line&&['PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE'].includes(current.battle))recordMicroBattleEventV278('FAKE',vehicle,ahead,{from:previous.line,to:current.line,cooldownMs:3000});
+    if(current.battle==='BRAKING_DUEL'&&previous.battle!=='BRAKING_DUEL')recordMicroBattleEventV278('BRAKING_DUEL',vehicle,ahead,{cooldownMs:2400});
+    if(['TURN_IN','APEX'].includes(current.phase)&&!['TURN_IN','APEX'].includes(previous.phase)&&['BRAKING_DUEL','CORNER_BATTLE','SIDE_BY_SIDE'].includes(current.battle))recordMicroBattleEventV278('CORNER_ENTRY_DUEL',vehicle,ahead,{cooldownMs:2400});
+    if(current.battle==='SIDE_BY_SIDE'&&previous.battle!=='SIDE_BY_SIDE')recordMicroBattleEventV278('SIDE_BY_SIDE',vehicle,ahead,{cooldownMs:2200});
+    if(current.battle==='SIDE_BY_SIDE'&&Math.abs(Number(current.rawAheadMeters))<=2.2&&Math.abs(Number(previous.rawAheadMeters))>2.2)recordMicroBattleEventV278('EDGES_AHEAD',vehicle,ahead,{meters:current.rawAheadMeters,cooldownMs:2200});
+    if(current.battle==='COUNTER_ATTACK'&&previous.battle!=='COUNTER_ATTACK')recordMicroBattleEventV278('RE_ATTACK',vehicle,ahead,{cooldownMs:2200});
+    if(current.passCompleted>previous.passCompleted)recordMicroBattleEventV278('PASS_SUCCESS',vehicle,ahead,{cooldownMs:0});
+    if(current.passFailed>previous.passFailed)recordMicroBattleEventV278('PASS_FAIL',vehicle,ahead,{cooldownMs:0});
+    if(current.battle==='COUNTER_ATTACK'&&previous.battle!==current.battle)recordMicroBattleEventV278('COUNTER_ATTACK',vehicle,ahead,{cooldownMs:2200});
+    if(current.incidentCount>previous.incidentCount)recordMicroBattleEventV278('REAR_CAR_MISTAKE',vehicle,ahead,{incident:current.incident,cooldownMs:2400});
+    if(ahead){
+      const aheadNow=microBattleVehicleStateV278(ahead,standings),aheadPrev=microBattleStateV278.vehicle.get(String(ahead.id))||aheadNow;
+      if(aheadNow.incidentCount>aheadPrev.incidentCount)recordMicroBattleEventV278('FRONT_CAR_MISTAKE',ahead,vehicle,{incident:aheadNow.incident,cooldownMs:2400});
+    }
+    const closing=(Number(vehicle.speedKph)||0)-(Number(ahead?.speedKph)||0);
+    if(current.phase==='EXIT'&&previous.phase!=='EXIT'&&ahead&&current.gapAheadSeconds<=1.6&&closing>=5)recordMicroBattleEventV278('CORNER_EXIT_ADVANTAGE',vehicle,ahead,{closingKph:closing,cooldownMs:2600});
+    if(current.pressureCount>previous.pressureCount)recordMicroBattleEventV278('LEADER_PRESSURE_MISTAKE',vehicle,follower,{cooldownMs:2600});
+    if(current.burstActive&&!previous.burstActive)recordMicroBattleEventV278('BURST_ACTIVATION',vehicle,ahead,{cooldownMs:0});
+    if(!current.burstActive&&previous.burstActive){
+      if(current.burstEndReason==='pass-completed')recordMicroBattleEventV278('BURST_SUCCESS',vehicle,ahead,{cooldownMs:0});
+      else recordMicroBattleEventV278('BURST_FAIL',vehicle,ahead,{reason:current.burstEndReason,cooldownMs:0});
+      recordMicroBattleEventV278('BURST_END',vehicle,ahead,{reason:current.burstEndReason,cooldownMs:0});
+    }
+    const closeFront=current.gapAheadSeconds<=1.4,closeBack=current.gapBehindSeconds<=1.4;
+    if(current.position<=3&&(closeFront||closeBack)&&!(previous.position<=3&&(Number(previous.gapAheadSeconds)<=1.4||Number(previous.gapBehindSeconds)<=1.4)))recordMicroBattleEventV278('PODIUM_BATTLE',vehicle,ahead||follower,{cooldownMs:3600});
+    if(current.position===standings.length&&closeFront&&!(previous.position===standings.length&&Number(previous.gapAheadSeconds)<=1.4))recordMicroBattleEventV278('LAST_PLACE_BATTLE',vehicle,ahead,{cooldownMs:3600});
+    if(current.currentLap>=current.totalLaps&&Number(previous.currentLap)<current.totalLaps)recordMicroBattleEventV278('FINAL_LAP',vehicle,ahead,{cooldownMs:0});
+    if(ahead&&follower&&closeFront&&closeBack&&!(Number(previous.gapAheadSeconds)<=1.4&&Number(previous.gapBehindSeconds)<=1.4))recordMicroBattleEventV278('THREE_CAR_BATTLE',vehicle,ahead,{thirdId:String(follower.id||''),cooldownMs:3600});
+    microBattleStateV278.vehicle.set(String(vehicle.id),{...current,ahead:null,follower:null});
+    rows.push({id:String(vehicle.id||''),gapAheadSeconds:current.gapAheadSeconds,battle:current.battle,phase:current.phase});
+  }
+  return rows;
+}
+function resetMicroBattleEventsV278(){
+  microBattleStateV278.vehicle=new Map();microBattleStateV278.history=[];microBattleStateV278.counts=new Map();microBattleStateV278.signatureAt=new Map();microBattleStateV278.sequence=0;
+  const standings=computeRaceStandingsV191();
+  for(const row of standings){
+    const state=microBattleVehicleStateV278(row.vehicle,standings);microBattleStateV278.vehicle.set(String(row.vehicle.id),{...state,ahead:null,follower:null});
+  }
+  return true;
+}
+function getMicroBattleEventsV278(){
+  return {catalog:[...MICRO_BATTLE_EVENTS_V278],history:microBattleStateV278.history.map(row=>({...row,meta:{...row.meta}})),
+    counts:Object.fromEntries(MICRO_BATTLE_EVENTS_V278.map(event=>[event,Number(microBattleStateV278.counts.get(event))||0]))};
+}
+function qaMicroBattleEventsV278(){
+  const required=['GAP_1_5','GAP_1_0','GAP_0_6','SLIPSTREAM','ATTACK_LINE','DEFENCE_LINE','FAKE','BRAKING_DUEL','CORNER_ENTRY_DUEL','SIDE_BY_SIDE','EDGES_AHEAD','RE_ATTACK','PASS_SUCCESS','PASS_FAIL','COUNTER_ATTACK','FRONT_CAR_MISTAKE','REAR_CAR_MISTAKE','CORNER_EXIT_ADVANTAGE','LEADER_PRESSURE_MISTAKE','BURST_ACTIVATION','BURST_SUCCESS','BURST_FAIL','BURST_END','PODIUM_BATTLE','LAST_PLACE_BATTLE','FINAL_LAP','THREE_CAR_BATTLE'];
+  const threshold=microBattleThresholdCrossingsV278({gapAheadSeconds:1.8},{gapAheadSeconds:.55});
+  const mapped=Object.keys(MICRO_BATTLE_DIALOGUE_MAP_V278).filter(event=>MICRO_BATTLE_EVENTS_V278.includes(event));
+  const coverage=required.every(event=>MICRO_BATTLE_EVENTS_V278.includes(event));
+  const thresholdCoverage=['GAP_1_5','GAP_1_0','GAP_0_6'].every(event=>threshold.includes(event));
+  const bounded=microBattleStateV278.history.length<=120;
+  return {eventCount:MICRO_BATTLE_EVENTS_V278.length,requiredCount:required.length,coverage,threshold,thresholdCoverage,mappedCount:mapped.length,bounded,
+    allPass:coverage&&thresholdCoverage&&MICRO_BATTLE_EVENTS_V278.length>=27&&mapped.length>=22&&bounded};
+}
 
 const CHARACTER_DIALOGUE_EVENT_ROLES_V277=Object.freeze({
   ATTACK:Object.freeze(['ATTACKER','DEFENDER']),
@@ -5762,6 +5910,7 @@ function simulateRaceStepV192(stepMs){
     simulateVehicleDynamicsV196(vehicle,stepMs);
     updateLapTimingV248(vehicle,previousRaceProgressV248,stepMs,activeRaceSnapshotV187?.track);
   }
+  updateMicroBattleEventsV278(stepMs);
   if(!engineQaV240.active){
     updateRaceCommentaryV219(false);
     updateRaceNarrativeV222(false);
@@ -5809,6 +5958,7 @@ function resetRaceMotionV189(){
   simClockV192.paused=false;simClockV192.timeScale=1;simClockV192.simTimeMs=0;simClockV192.accumulatorMs=0;
   raceFlagStateV214={flag:'GREEN',reason:'',sinceSimMs:0};
   resetLeaderPressureFieldV274();
+  resetMicroBattleEventsV278();
   const layer=document.getElementById('f1RacingRaceVehicleLayerV188');if(layer)layer.replaceChildren();
   syncSimulationControlsV192();
 }
@@ -7402,6 +7552,9 @@ window.mwsF1EmitCharacterDialogueV277=emitCharacterDialogueEventV277;
 window.mwsF1GetCharacterDialogueHistoryV277=function(){return characterDialogueStateV277.history.map(row=>({...row}))};
 window.mwsF1RaceInfoTextV277=raceInfoTextV277;
 window.mwsF1QaCharacterDialogueEngineV277=qaCharacterDialogueEngineV277;
+window.mwsF1UpdateMicroBattleEventsV278=updateMicroBattleEventsV278;
+window.mwsF1GetMicroBattleEventsV278=getMicroBattleEventsV278;
+window.mwsF1QaMicroBattleEventsV278=qaMicroBattleEventsV278;
 window.mwsF1GetLeaderPressureFieldV274=function(){return {...leaderPressureFieldV274,history:leaderPressureFieldV274.history.map(row=>({...row}))}};
 window.mwsF1GetStartingGridRevealStateV273=function(){return {...gridRevealStateV273,timers:gridRevealStateV273.timers.length}};
 window.mwsF1CancelRaceRecoveryC=cancelRaceToSetupRecoveryC;
@@ -7725,6 +7878,7 @@ window.__mwsF1RacingV274=VERSION274;
 window.__mwsF1RacingV275=VERSION275;
 window.__mwsF1RacingV276=VERSION276;
 window.__mwsF1RacingV277=VERSION277;
+window.__mwsF1RacingV278=VERSION278;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
