@@ -80,6 +80,7 @@ const VERSION250='phase250-driver-profile-marker';
 const VERSION251='phase251-live-timing-driver-identity';
 const VERSION252='phase252-spectator-race-highlights';
 const VERSION253='phase253-live-timing-race-status';
+const VERSION254='phase254-live-marker-position-tag';
 const F1_WORKSPACE_LAYOUT_VERSION_V249=6;
 const RACE_PLAYBACK_BASE_V247=2;
 const engineQaV240={active:false};
@@ -970,7 +971,7 @@ function updateRaceStandingsV191(){
     const interval=row.querySelector('[data-f1-interval]');if(interval)interval.textContent=standing.position===1?'--':formatRaceDeltaV191(standing.intervalProgress,standing.intervalSeconds,false);
     row.classList.remove('podium','p1','p2','p3');
     if(standing.position<=3)row.classList.add('podium','p'+standing.position);
-    if(vehicle.marker)vehicle.marker.classList.toggle('leader',standing.position===1);
+    if(vehicle.marker){vehicle.marker.classList.toggle('leader',standing.position===1);syncRaceMarkerPositionV254(vehicle.marker,standing.position)}
   }
   applyTopThreePresentationV213(standings);
   applyLiveTimingFlipV212(standings);
@@ -2548,6 +2549,37 @@ function syncTrackAnnotationScaleV245(){
 function driverProfileInitialsV250(driver){
   return initials(driver?.name||driverCodeV188(driver)||'?').slice(0,2);
 }
+function syncRaceMarkerPositionV254(marker,position){
+  if(!marker)return null;
+  let group=marker.querySelector('.car-position-tag-v254');
+  if(!group){
+    group=svgNodeV183('g',{class:'car-position-tag-v254','aria-hidden':'true'});
+    const box=svgNodeV183('rect',{class:'car-position-box-v254',x:-24,y:12,width:22,height:13,rx:4,ry:4});
+    const textNode=svgNodeV183('text',{class:'car-position-text-v254',x:-13,y:21.2,'text-anchor':'middle'});
+    group.append(box,textNode);
+    marker.appendChild(group);
+  }
+  const value=Math.max(1,Number(position)||1);
+  const label='P'+value;
+  const textNode=group.querySelector('.car-position-text-v254');
+  if(textNode)textNode.textContent=label;
+  marker.dataset.livePositionV254=String(value);
+  marker.classList.toggle('top-three-v254',value<=3);
+  marker.classList.toggle('leader-position-v254',value===1);
+  return {position:value,label};
+}
+function qaRaceMarkerPositionV254(){
+  const standings=computeRaceStandingsV191();
+  const rows=standings.map(standing=>{
+    const marker=standing.vehicle?.marker;
+    const state=syncRaceMarkerPositionV254(marker,standing.position);
+    const tag=marker?.querySelector('.car-position-tag-v254');
+    const textNode=marker?.querySelector('.car-position-text-v254');
+    return {id:String(standing.vehicle?.id||''),position:standing.position,state,tag:Boolean(tag),text:String(textNode?.textContent||''),dataset:String(marker?.dataset.livePositionV254||'')};
+  });
+  return {count:rows.length,rows,allPass:rows.length>0&&rows.every(row=>row.tag&&row.text==='P'+row.position&&row.dataset===String(row.position))};
+}
+
 function syncDriverProfileMarkerV250(marker,vehicle){
   if(!marker||!vehicle)return false;
   const safeKey=String(vehicle.id||'driver').replace(/[^a-zA-Z0-9_-]/g,'_');
@@ -2602,6 +2634,7 @@ function ensureRaceVehicleMarkerV189(vehicle,index){
     const number=marker.querySelector('.car-number-v232');if(number)number.textContent=driverNumberV232(vehicle,index);
   }
   syncDriverProfileMarkerV250(marker,vehicle);
+  syncRaceMarkerPositionV254(marker,Number(vehicle.position)||Number(vehicle.driver?.gridPosition)||index+1);
   marker.dataset.driverNumberV232=driverNumberV232(vehicle,index);
   vehicle.marker=marker;vehicle.driverColorV216=color;return marker;
 }
@@ -5342,6 +5375,9 @@ window.__mwsF1RacingV252=VERSION252;
 window.mwsF1SyncLiveTimingStatusV253=syncLiveTimingStatusV253;
 window.mwsF1QaLiveTimingStatusV253=qaLiveTimingStatusV253;
 window.__mwsF1RacingV253=VERSION253;
+window.mwsF1SyncRaceMarkerPositionV254=syncRaceMarkerPositionV254;
+window.mwsF1QaRaceMarkerPositionV254=qaRaceMarkerPositionV254;
+window.__mwsF1RacingV254=VERSION254;
 window.__mwsF1RecoveryM='explicit-grid-start-v1';
 window.__mwsF1RecoveryN='left-center-right-triple-dock-v1';
 window.__mwsF1RecoveryB='start-finish-line-v1';
