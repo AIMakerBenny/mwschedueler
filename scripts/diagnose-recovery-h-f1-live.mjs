@@ -352,6 +352,10 @@ try{
     assert(trackRuntimeProfileQa?.allPass===true&&Number(trackRuntimeProfileQa?.uniqueProfiles)>=5,'Phase 234 track runtime profile QA failed: '+JSON.stringify(trackRuntimeProfileQa));
     const activeSnapshotProfile=window.mwsF1GetActiveRaceSnapshotV187?.()?.track?.runtimeProfile;
     assert(activeSnapshotProfile&&Number(activeSnapshotProfile.overtakeFactor)>0&&String(activeSnapshotProfile.archetype||''),'Phase 234 active race snapshot profile missing: '+JSON.stringify(activeSnapshotProfile));
+    const trackFlowQa243=window.mwsF1QaTrackFlowDesignV243?.();
+    assert(trackFlowQa243?.allPass===true&&Number(trackFlowQa243?.rows?.length)===7&&Number(trackFlowQa243?.miniStroke)<=10,'Phase 243 flowing circuit QA failed: '+JSON.stringify(trackFlowQa243));
+    const angularTracks243=(trackFlowQa243?.rows||[]).filter(row=>Number(row.lines)>1||Number(row.curves)<6);
+    assert(angularTracks243.length===0,'Phase 243 angular track paths remain: '+JSON.stringify(angularTracks243));
     const trackSilhouetteQa=window.mwsF1QaTrackSilhouetteCardsV233?.();
     assert(trackSilhouetteQa?.allPass===true&&Number(trackSilhouetteQa?.trackCount)>=7&&Number(trackSilhouetteQa?.uniqueCardPaths)===Number(trackSilhouetteQa?.trackCount),'Phase 233 track silhouette card QA failed: '+JSON.stringify(trackSilhouetteQa));
     const trackProfileQa=window.mwsF1QaTrackProfileUiV223?.();
