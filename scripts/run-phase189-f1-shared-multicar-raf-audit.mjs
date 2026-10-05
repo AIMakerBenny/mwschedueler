@@ -14,7 +14,7 @@ export function runPhase189F1SharedMultiCarRafAudit(){
     'const raceMotionV189={',
     'function createRaceVehiclesV189(snapshot){',
     'function ensureRaceVehicleMarkerV189(vehicle,index){',
-    'function renderRaceVehiclesV189(){',
+    'function renderRaceVehiclesV189(',
     'function initializeRaceMotionV189(snapshot=activeRaceSnapshotV187){',
     'function raceFrameV189(timestamp){',
     'for(const vehicle of raceMotionV189.vehicles)',
