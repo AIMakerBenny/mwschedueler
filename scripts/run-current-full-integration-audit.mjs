@@ -282,7 +282,8 @@ import {runPhase283F1GeneralOvertakeDefenceAudit} from './run-phase283-f1-genera
 import {runPhase284F1TrackRankingOverlayAudit} from './run-phase284-f1-track-ranking-overlay-audit.mjs';
 import {runPhase285F1ZoomLinkedMarkerScaleAudit} from './run-phase285-f1-zoom-linked-marker-scale-audit.mjs';
 import {runPhase286F1AutoCameraJitterAudit} from './run-phase286-f1-auto-camera-jitter-audit.mjs';
-import {runPhase287F1CompactRaceShellAudit} from './run-phase287-f1-compact-race-shell-audit.mjs';\nimport {runPhase288F1LayoutResetViewportFitAudit} from './run-phase288-f1-layout-reset-viewport-fit-audit.mjs';
+import {runPhase287F1CompactRaceShellAudit} from './run-phase287-f1-compact-race-shell-audit.mjs';
+import {runPhase288F1LayoutResetViewportFitAudit} from './run-phase288-f1-layout-reset-viewport-fit-audit.mjs';
 import {runPhase289F1PreraceScreenCompressionAudit} from './run-phase289-f1-prerace-screen-compression-audit.mjs';
 import {runPhase290F1StartingGridShuffleSmoothnessAudit} from './run-phase290-f1-starting-grid-shuffle-smoothness-audit.mjs';
 
