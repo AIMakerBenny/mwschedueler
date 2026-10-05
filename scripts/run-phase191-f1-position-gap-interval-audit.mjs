@@ -37,7 +37,10 @@ export function runPhase191F1PositionGapIntervalAudit(){
     'window.__mwsF1RacingV191=VERSION191;'
   ])if(!js.includes(token))issues.push('Phase 191 standings runtime missing: '+token);
 
-  if(!js.includes('updateRaceStandingsV191();\n  return true;'))issues.push('Standings are not connected to the 100 ms telemetry refresh');
+  const hudStart=js.indexOf('function updateRaceProgressHudV190(){');
+  const hudEnd=hudStart>=0?js.indexOf('\nfunction ',hudStart+1):-1;
+  const hudBody=hudStart>=0?js.slice(hudStart,hudEnd>hudStart?hudEnd:js.length):'';
+  if(!hudBody.includes('updateRaceStandingsV191();'))issues.push('Standings are not connected to the 100 ms telemetry refresh');
   if(js.includes('f1RacingTimingListV188.appendChild')||js.includes('f1RacingTimingListV188.prepend'))warnings.push('Phase 191 should compute official ranking without introducing the Phase 192 row-reorder animation early');
 
   for(const token of [
