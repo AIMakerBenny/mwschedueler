@@ -97,16 +97,16 @@ try{
   await loaded;
   await sleep(1800);
 
-  let phase279Ready=false;
+  let phase280Ready=false;
   for(let attempt=0;attempt<8;attempt++){
-    phase279Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV279==='phase279-expanded-dialogue-pool'","Phase 279 runtime readiness"));
-    if(phase279Ready)break;
+    phase280Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV280==='phase280-event-dialogue-coverage'","Phase 280 runtime readiness"));
+    if(phase280Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v279=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v280=${Date.now()}-${attempt}`});
     await refreshed;
     await sleep(1400);
   }
-  if(!phase279Ready)throw new Error('Phase 279 runtime did not propagate to Recovery H browser');
+  if(!phase280Ready)throw new Error('Phase 280 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -280,6 +280,10 @@ try{
     manualStart.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='RACE','Explicit grid start click did not enter RACE');
     await raf();
+    const coverageQa280=window.mwsF1QaEventDialogueCoverageV280?.();
+    assert(coverageQa280?.allPass===true,'Phase 280 event-dialogue coverage QA failed: '+JSON.stringify(coverageQa280));
+    assert(Array.isArray(coverageQa280?.unmapped)&&coverageQa280.unmapped.length===0&&coverageQa280?.allCatalogMapped===true,'Phase 280 unmapped micro event found: '+JSON.stringify(coverageQa280));
+    assert(Array.isArray(coverageQa280?.emptyPools)&&coverageQa280.emptyPools.length===0&&coverageQa280?.allPoolsReady===true,'Phase 280 empty dialogue pool found: '+JSON.stringify(coverageQa280));
     const dialoguePoolQa279=window.mwsF1QaExpandedDialoguePoolV279?.();
     assert(dialoguePoolQa279?.allPass===true,'Phase 279 expanded dialogue pool QA failed: '+JSON.stringify(dialoguePoolQa279));
     assert(Number(dialoguePoolQa279?.stats?.total)>=300&&Number(dialoguePoolQa279?.uniqueCount)>=300,'Phase 279 dialogue pool below 300: '+JSON.stringify(dialoguePoolQa279));
