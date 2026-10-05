@@ -3908,6 +3908,8 @@ function renderRaceVehiclesV189(frameMs=16.67){
     marker.dataset.physicalLateralV258=Number(vehicle.lateralOffsetMeters||0).toFixed(3);
     marker.dataset.targetLateralV258=Number(vehicle.targetVisualLateralOffsetMeters||0).toFixed(3);
     marker.dataset.visualLateralV258=Number(vehicle.visualLateralOffsetMeters||0).toFixed(3);
+    marker.dataset.visualLateralVelocityV269=Number(vehicle.visualLateralVelocity||0).toFixed(3);
+    marker.dataset.visualLateralAccelerationV269=Number(vehicle.visualLateralAccelerationV269||0).toFixed(3);
     syncVehicleSpectatorClassesV252(vehicle,marker);
     rendered.push({vehicle,marker,point});
   });
