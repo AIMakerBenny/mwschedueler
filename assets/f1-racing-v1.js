@@ -3681,9 +3681,12 @@ function phaseSpeedTargetV270(vehicle,targetData,phaseInfo=getCornerPhaseAtProgr
   let target=Math.max(60,Number(targetData?.targetKph)||250);
   if(!track||!phaseInfo?.corner)return target;
   const corner=phaseInfo.corner;
+  const apexProfileV270=typeof window.mwsF1SpeedTargetAtProgressV195==='function'
+    ?window.mwsF1SpeedTargetAtProgressV195(raceGeometryV193,Number(corner.apexProgress)||0):null;
   const apex=Math.max(
     corner.cornerClass==='hairpin'?CORNER_DYNAMICS_V270.hairpinMinApexKph:corner.cornerClass==='slow'?CORNER_DYNAMICS_V270.slowMinApexKph:0,
-    Number(corner.referenceApexKph)||target
+    Number(corner.referenceApexKph)||0,
+    Number(apexProfileV270?.targetKph)||target
   );
   if(phaseInfo.phase==='APEX')return Math.max(target,apex);
   if(phaseInfo.phase!=='EXIT')return target;
@@ -4203,7 +4206,7 @@ function qaCornerDynamicsV270(){
   for(const corner of phases.slice(0,Math.min(8,phases.length))){
     const length=Math.max(1,Number(track.lengthMeters)||1);
     const apexProgress=((Number(corner.apexDistanceMeters)||0)/length+1)%1;
-    const exitProbeDistance=Number(corner.apexDistanceMeters)+Math.max(8,(Number(corner.exitDistanceMeters)-Number(corner.apexDistanceMeters))*.72);
+    const exitProbeDistance=Number(corner.apexDistanceMeters)+Math.max(8,(Number(corner.exitDistanceMeters)-Number(corner.apexDistanceMeters))*.94);
     const exitProgress=((exitProbeDistance/length)%1+1)%1;
     const probe={progress:apexProgress,racingLineMode:'IDEAL'};
     const apexTarget=phaseSpeedTargetV270(probe,getSpeedTargetAtProgressV195(apexProgress),{corner,phase:'APEX'});
