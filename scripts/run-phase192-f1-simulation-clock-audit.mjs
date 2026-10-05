@@ -25,13 +25,15 @@ export function runPhase192F1SimulationClockAudit(){
     'function toggleSimulationPauseV192(force){',
     'function bindSimulationControlsV192(){',
     'function simulateRaceStepV192(stepMs){',
-    'simClockV192.accumulatorMs+=delta*simClockV192.timeScale;',
     'while(simClockV192.accumulatorMs>=simClockV192.fixedStepMs',
     'renderRaceVehiclesV189();',
     'window.mwsF1SetSimulationTimeScaleV192=setSimulationTimeScaleV192;',
     'window.mwsF1ToggleSimulationPauseV192=toggleSimulationPauseV192;',
     'window.__mwsF1RacingV192=VERSION192;'
   ])if(!js.includes(token))issues.push('Phase 192 simulation clock runtime missing: '+token);
+  const accumulatorLegacy='simClockV192.accumulatorMs+=delta*simClockV192.timeScale;';
+  const accumulatorRebased='simClockV192.accumulatorMs+=delta*simulationPlaybackRateV247();';
+  if(!js.includes(accumulatorLegacy)&&!js.includes(accumulatorRebased))issues.push('Phase 192 simulation clock accumulator no longer advances from render delta');
 
   const frameStart=js.indexOf('function raceFrameV189(timestamp){');
   const frameEnd=js.indexOf('function startRaceMotionV189(){',frameStart);
