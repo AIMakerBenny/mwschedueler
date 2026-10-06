@@ -27,9 +27,15 @@ export function runPhase319F1UiSpacingBattleAudit(){
  if(!Object.values(spacing).every(Number.isFinite)||spacing.normal<65||spacing.blocked<90||spacing.battle<14||spacing.physical<18||spacing.blocked<=spacing.normal||spacing.battle>=spacing.normal){
   issues.push('Phase 319 spacing thresholds regressed: '+JSON.stringify(spacing));
  }
- const haloRadius=Number(core.match(/class:'car-halo'[^}]*r:([0-9.]+)/)?.[1]);
- const ringRadius=Number(core.match(/class:'car-ring'[^}]*r:([0-9.]+)/)?.[1]);
- const profileWidth=Number(core.match(/class:'car-profile-image-v257'[^}]*width:([0-9.]+)/)?.[1]);
+ const markerStart=core.indexOf('function ensureRaceVehicleMarkerV189(');
+ const markerEnd=core.indexOf('function qaDriverProfileMarkersV250(',markerStart);
+ const markerSource=markerStart>=0&&markerEnd>markerStart?core.slice(markerStart,markerEnd):'';
+ const profileStart=core.indexOf('function syncEmbeddedDriverMarkerV257(');
+ const profileEnd=core.indexOf('function syncDriverProfileMarkerV250(',profileStart);
+ const profileSource=profileStart>=0&&profileEnd>profileStart?core.slice(profileStart,profileEnd):'';
+ const haloRadius=Number(markerSource.match(/class:'car-halo'[^}]*,r:([0-9.]+)/)?.[1]);
+ const ringRadius=Number(markerSource.match(/class:'car-ring'[^}]*,r:([0-9.]+)/)?.[1]);
+ const profileWidth=Number(profileSource.match(/class:'car-profile-image-v257'[^}]*width:([0-9.]+)/)?.[1]);
  if(![haloRadius,ringRadius,profileWidth].every(Number.isFinite)||haloRadius<26||ringRadius<17||profileWidth<28){
   issues.push('Phase 319 marker readability geometry regressed: '+JSON.stringify({haloRadius,ringRadius,profileWidth}));
  }
