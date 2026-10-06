@@ -337,6 +337,7 @@ import {runPhase338F1BestLapOverlayAudit} from './run-phase338-f1-best-lap-overl
 import {runPhase339F1LivePresenceAudit} from './run-phase339-f1-live-presence-audit.mjs';
 import {runPhase340F1WorkspaceFillViewportAudit} from './run-phase340-f1-workspace-fill-viewport-audit.mjs';
 import {runPhase341F1DialogueWallClockAudit} from './run-phase341-f1-dialogue-wall-clock-audit.mjs';
+import {runPhase342F1SpectatorAspectFitAudit} from './run-phase342-f1-spectator-aspect-fit-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2731,5 +2732,6 @@ export function runPhase338FullIntegrationAudit(){const previous=runPhase337Full
 export function runPhase339FullIntegrationAudit(){const previous=runPhase338FullIntegrationAudit(),current=runPhase339F1LivePresenceAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 339: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 339: '+x)];return {phase:339,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase340FullIntegrationAudit(){const previous=runPhase339FullIntegrationAudit(),current=runPhase340F1WorkspaceFillViewportAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 340: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 340: '+x)];return {phase:340,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase341FullIntegrationAudit(){const previous=runPhase340FullIntegrationAudit(),current=runPhase341F1DialogueWallClockAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 341: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 341: '+x)];return {phase:341,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase341FullIntegrationAudit();}
+export function runPhase342FullIntegrationAudit(){const previous=runPhase341FullIntegrationAudit(),current=runPhase342F1SpectatorAspectFitAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 342: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 342: '+x)];return {phase:342,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase342FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
