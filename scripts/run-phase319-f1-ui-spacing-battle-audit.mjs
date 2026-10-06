@@ -12,15 +12,27 @@ export function runPhase319F1UiSpacingBattleAudit(){
   "const VERSION319='phase319-f1-ui-spacing-battle-isolation';",
   "const BATTLE_ACTIVE_STATES_V319=Object.freeze([",
   "const RACE_SPACING_CONFIG_V319=Object.freeze({",
-  "normalDisplayGapMeters:52","blockedDisplayGapMeters:72",
   "function buildBattleLocksV319(","function battlePairBlockedV319(",
   "vehicle.battleBlockedV319=blocked","function battleQueueSpeedControlV319(",
   "function buildVisualSpacingPlanV319(","spacingPlanV319=buildVisualSpacingPlanV319()",
   "marker.dataset.visualSpacingGapMetersV319",
   "function qaUiSpacingBattleV319(){","window.mwsF1QaUiSpacingBattleV319=qaUiSpacingBattleV319;",
-  "return Math.max(.22,Math.min(1,1/z));",
-  "r:22","r:13.5","width:21.2,height:21.2"
+  "return Math.max(.22,Math.min(1,1/z));"
  ])if(!core.includes(token))issues.push('Phase 319 core missing: '+token);
+ const spacingStart=core.indexOf('const RACE_SPACING_CONFIG_V319=Object.freeze({');
+ const spacingEnd=core.indexOf('});',spacingStart);
+ const spacingSource=spacingStart>=0&&spacingEnd>spacingStart?core.slice(spacingStart,spacingEnd+3):'';
+ const readSpacing=key=>Number(spacingSource.match(new RegExp(key+':([0-9.]+)'))?.[1]);
+ const spacing={normal:readSpacing('normalDisplayGapMeters'),blocked:readSpacing('blockedDisplayGapMeters'),battle:readSpacing('battleDisplayGapMeters'),physical:readSpacing('physicalFollowGapMeters')};
+ if(!Object.values(spacing).every(Number.isFinite)||spacing.normal<65||spacing.blocked<90||spacing.battle<14||spacing.physical<18||spacing.blocked<=spacing.normal||spacing.battle>=spacing.normal){
+  issues.push('Phase 319 spacing thresholds regressed: '+JSON.stringify(spacing));
+ }
+ const haloRadius=Number(core.match(/class:'car-halo'[^}]*r:([0-9.]+)/)?.[1]);
+ const ringRadius=Number(core.match(/class:'car-ring'[^}]*r:([0-9.]+)/)?.[1]);
+ const profileWidth=Number(core.match(/class:'car-profile-image-v257'[^}]*width:([0-9.]+)/)?.[1]);
+ if(![haloRadius,ringRadius,profileWidth].every(Number.isFinite)||haloRadius<26||ringRadius<17||profileWidth<28){
+  issues.push('Phase 319 marker readability geometry regressed: '+JSON.stringify({haloRadius,ringRadius,profileWidth}));
+ }
  for(const token of [
   "const ZOOM_MARKER_CONFIG_V285=Object.freeze({exponent:1,minScale:.22,maxScale:1});",
   "spread<.03","window.__mwsF1RacingMarkerV319='phase319-marker-screen-size-lock';"
