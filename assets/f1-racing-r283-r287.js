@@ -9,7 +9,7 @@ const VERSION287='phase287-f1-r12-compact-race-shell-sidebar-hide';
 const VERSION302='phase302-f1-live-ranking-flip-status';
 const COMPACT_RACE_CONFIG_V287=Object.freeze({bodyClass:'f1-racing-r12-compact-v287',raceState:'RACE'});
 const AUTO_CAMERA_SMOOTH_CONFIG_V286=Object.freeze({startupMs:1600,startupAlpha:.07,normalAlpha:.16,zoomAlpha:.18,centerDeadband:2.4,zoomDeadband:.018,wheelBypassMs:260});
-const ZOOM_MARKER_CONFIG_V285=Object.freeze({exponent:.38,minScale:.54,maxScale:1});
+const ZOOM_MARKER_CONFIG_V285=Object.freeze({exponent:1,minScale:.22,maxScale:1});
 const TRACK_RANKING_CONFIG_V284=Object.freeze({maxRows:6,refreshMs:140});
 const runtimeState={rafId:0,frames:0,activeFrames:0,lastApplied:0};
 const rankingStateV284={lastRenderAt:0,renderCount:0,nodes:new Map(),lastPositions:new Map(),flipCount:0,statusRenderCount:0};
@@ -158,14 +158,14 @@ function installZoomMarkerObserverV285(){
  zoomObserverV285.observe(layer,{subtree:true,attributes:true,attributeFilter:['transform'],childList:true});
  syncZoomMarkerScaleV285();return true;
 }
+
 function qaZoomLinkedMarkerScaleV285(){
  const samples=[1,1.5,2,3,4.5].map(zoom=>({zoom,scale:zoomMarkerScaleV285(zoom)}));
- const screen=samples.map(row=>row.zoom*row.scale);
- const increasing=screen.every((value,index)=>index===0||value>screen[index-1]);
- return {version:VERSION285,samples,screenRatios:screen,increasing,observerReady:Boolean(zoomObserverV285),allPass:samples[0].scale===1&&increasing&&screen.at(-1)>2&&samples.at(-1).scale>=ZOOM_MARKER_CONFIG_V285.minScale};
+ const screenRatios=samples.map(row=>row.zoom*row.scale);
+ const spread=Math.max(...screenRatios)-Math.min(...screenRatios);
+ const marker=document.querySelector('.f1-racing-race-vehicle-v189');
+ return {version:VERSION285,config:{...ZOOM_MARKER_CONFIG_V285},samples,screenRatios,spread,markerReady:Boolean(marker),allPass:samples[0].scale===1&&spread<.03&&samples.at(-1).scale>=.22&&samples.at(-1).scale<.24};
 }
-
-
 function parseViewBoxV286(value){
  const rows=String(value||'').trim().split(/\s+/).map(Number);
  return rows.length===4&&rows.every(Number.isFinite)?{x:rows[0],y:rows[1],w:rows[2],h:rows[3]}:null;
@@ -237,6 +237,7 @@ window.mwsF1PatchGeneralBattleV283=patchGeneralBattleV283;window.mwsF1QaGeneralO
 window.mwsF1SyncTrackRankingV284=syncTrackRankingV284;window.mwsF1QaTrackRankingOverlayV284=qaTrackRankingOverlayV284;window.__mwsF1RacingV284=VERSION284;
 window.mwsF1QaTrackRankingFlipStatusV302=qaTrackRankingFlipStatusV302;window.__mwsF1RacingV302=VERSION302;
 window.mwsF1ZoomMarkerScaleV285=zoomMarkerScaleV285;window.mwsF1SyncZoomMarkerScaleV285=syncZoomMarkerScaleV285;window.mwsF1QaZoomLinkedMarkerScaleV285=qaZoomLinkedMarkerScaleV285;window.__mwsF1RacingV285=VERSION285;
+window.__mwsF1RacingMarkerV319='phase319-marker-screen-size-lock';
 window.mwsF1InstallAutoCameraSmoothingV286=installAutoCameraSmoothingV286;window.mwsF1QaAutoCameraJitterSuppressionV286=qaAutoCameraJitterSuppressionV286;window.__mwsF1RacingV286=VERSION286;
 window.mwsF1SyncRaceCompactShellV287=syncRaceCompactShellV287;window.mwsF1QaRaceCompactShellV287=qaRaceCompactShellV287;window.__mwsF1RacingV287=VERSION287;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();

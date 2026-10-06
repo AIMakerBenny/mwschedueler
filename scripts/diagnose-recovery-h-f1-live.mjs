@@ -283,6 +283,16 @@ try{
   }
   if(!phase315Ready)throw new Error('Phase 315 runtime did not propagate to Recovery H browser');
 
+  let phase319Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    phase319Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV319==='phase319-f1-ui-spacing-battle-isolation'&&window.__mwsF1RacingMarkerV319==='phase319-marker-screen-size-lock'&&typeof window.mwsF1QaUiSpacingBattleV319==='function'","Phase 319 runtime readiness"));
+    if(phase319Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v319=${Date.now()}-${attempt}`});
+    await refreshed;await sleep(1200);
+  }
+  if(!phase319Ready)throw new Error('Phase 319 runtime did not propagate to Recovery H browser');
+
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
@@ -433,6 +443,11 @@ try{
     assert(gachaStage313&&gachaDock313&&gachaReveal313,'Phase 313 Gacha starting grid DOM missing');
     assert(gachaDock313.querySelectorAll('.f1-grid-gacha-dock-item-v313').length===(snapshot260?.drivers||[]).length,'Phase 313 right-side P-grid list count mismatch');
     assert(Boolean(gachaReveal313.firstElementChild),'Phase 313 center Gacha reveal card missing');
+    const gachaCard319=gachaReveal313.querySelector('.gacha-card'),gachaImage319=gachaReveal313.querySelector('.gacha-card-image img'),gachaInfo319=gachaReveal313.querySelector('.gacha-card-info');
+    const gachaRevealRect319=gachaReveal313.getBoundingClientRect(),gachaCardRect319=gachaCard319?.getBoundingClientRect(),gachaInfoRect319=gachaInfo319?.getBoundingClientRect();
+    assert(gachaCardRect319&&gachaCardRect319.width<=gachaRevealRect319.width+2&&gachaCardRect319.height<=gachaRevealRect319.height+2&&gachaCardRect319.bottom<=gachaRevealRect319.bottom+2,'Phase 319 Gacha card overflows reveal viewport: '+JSON.stringify({reveal:gachaRevealRect319,card:gachaCardRect319}));
+    assert(gachaImage319&&getComputedStyle(gachaImage319).objectFit==='contain','Phase 319 Gacha portrait must use contain fit');
+    assert(gachaInfoRect319&&gachaInfoRect319.height>=50&&gachaInfoRect319.bottom<=gachaCardRect319.bottom+2,'Phase 319 Gacha card info is clipped: '+JSON.stringify({info:gachaInfoRect319,card:gachaCardRect319}));
     assert(initialStart273?.disabled===false&&getComputedStyle(initialStart273).visibility!=='hidden','Phase 273 start button did not unlock after reveal');
     const gridQa272=window.mwsF1QaRandomStartingGridV272?.();
     assert(gridQa272?.allPass===true,'Phase 272 random starting grid QA failed: '+JSON.stringify(gridQa272));
@@ -567,6 +582,11 @@ try{
     assert(phase309Qa?.allPass===true,'Phase 309 viewport/marker/overtake QA failed: '+JSON.stringify(phase309Qa));
     assert(phase309Qa?.labelFixed===true&&phase309Qa?.tagFixed===true,'Phase 309 marker labels are not fixed under the orb: '+JSON.stringify(phase309Qa));
     assert(phase309Qa?.viewportFit===true&&phase309Qa?.defaultHeightOk===true,'Phase 309 reset workspace does not fit current viewport: '+JSON.stringify(phase309Qa));
+    const uiSpacingBattle319=window.mwsF1QaUiSpacingBattleV319?.();
+    assert(uiSpacingBattle319?.allPass===true,'Phase 319 UI spacing and battle isolation QA failed: '+JSON.stringify(uiSpacingBattle319));
+    assert(uiSpacingBattle319?.thirdBlocked===true&&Number(uiSpacingBattle319?.visual?.blockedGap)>=Number(uiSpacingBattle319?.config?.blockedDisplayGapMeters)-.1,'Phase 319 third-car battle isolation failed: '+JSON.stringify(uiSpacingBattle319));
+    const liveMarkers319=[...document.querySelectorAll('.f1-racing-race-vehicle-v189')];
+    assert(liveMarkers319.length>=2&&liveMarkers319.every(node=>Number(node.dataset.cameraScaleV245)>0),'Phase 319 live marker readability state missing');
     const cadenceQa281=window.mwsF1QaDialogueCadenceV281?.();
     assert(cadenceQa281?.allPass===true,'Phase 281 dialogue cadence QA failed: '+JSON.stringify(cadenceQa281));
     assert(cadenceQa281?.budgetBlocked===true&&Number(cadenceQa281?.config?.maxGroupsPerWindow)<=2&&Number(cadenceQa281?.config?.speakerGapMs)>=4000,'Phase 281 dialogue window budget failed: '+JSON.stringify(cadenceQa281));
@@ -1004,7 +1024,7 @@ try{
         assert(ratio>.85&&ratio<1.12,'Phase 245 track annotation screen-size regression: '+JSON.stringify({row,ratio}));
       }
     });
-    assert(zoomMarkerQa285?.allPass===true&&expectedDriverRatio245>2,'Phase 285 zoom marker QA unavailable or invalid: '+JSON.stringify(zoomMarkerQa285));
+    assert(zoomMarkerQa285?.allPass===true&&expectedDriverRatio245>.94&&expectedDriverRatio245<1.06,'Phase 319 marker screen-size lock unavailable or invalid: '+JSON.stringify(zoomMarkerQa285));
     assert(finishLength245()/lineAtFull245>4.4,'Phase 245 finish line must retain track-relative geometry');
     window.mwsF1SetRaceCameraModeV216('AUTO');await raf();
     for(let zoomOut268=0;zoomOut268<3&&Number(window.mwsF1GetRaceCameraStateV216?.().zoom)>=4.2;zoomOut268++){
