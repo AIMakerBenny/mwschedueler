@@ -133,6 +133,7 @@ const VERSION339='phase339-f1-live-presence-glow';
 const VERSION343='phase343-f1-corner-tyre-dynamics';
 const VERSION344='phase344-f1-staggered-pit-strategy';
 const VERSION345='phase345-f1-competition-fast-race';
+const VERSION346='phase346-f1-race-dynamics-correction';
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
 const GAME_VARIABILITY_CONFIG_V303=Object.freeze({evaluationMs:650,maxGapMeters:84,attackGapMeters:36,baseBonusKph:1.1,pressureBonusKph:3.2,midfieldBonusKph:.8,failedPassBonusKph:.4,maxFailedPassBonusKph:1.6,momentumBonusKph:1.55,maxTotalBiasKph:14,positionCatchupMaxPct:.045,positionCatchupExponent:1.35,leaderHoldMs:12000,leaderCloseGapSeconds:1.75,leaderClosePenaltyKph:.9,liveCadenceMs:10000});
@@ -152,7 +153,7 @@ const CORNER_DYNAMICS_V343=Object.freeze({
   turnInFactor:Object.freeze({hairpin:.82,slow:.87,medium:.92,fast:.96,sCurve:.93}),
   apexFactor:Object.freeze({hairpin:.84,slow:.89,medium:.94,fast:.975,sCurve:.95}),
   minimumApexKph:Object.freeze({hairpin:96,slow:118,medium:158,fast:220,sCurve:172}),
-  compoundCornerFactor:Object.freeze({SOFT:1.045,MEDIUM:1,HARD:.965}),
+  compoundCornerFactor:Object.freeze({SOFT:1.075,MEDIUM:1,HARD:.94}),
   exitAccelerationMultiplier:1.46,exitLookAheadMeters:125
 });
 const TYRE_DYNAMICS_V343=Object.freeze({
@@ -166,8 +167,8 @@ const PIT_STAGGER_V344=Object.freeze({
   criticalThermalDeg:.74
 });
 const RACE_COMPETITION_V345=Object.freeze({
-  NORMAL:Object.freeze({variability:1.36,attackGap:1.24,overtakeReleaseClosingKph:3.2,momentumThreshold:.46,p2ChallengeKph:4.2,leaderPressureKph:2.15,leaderHoldMs:6500}),
-  FAST:Object.freeze({variability:2.20,attackGap:1.60,overtakeReleaseClosingKph:1.8,momentumThreshold:.35,p2ChallengeKph:7.0,leaderPressureKph:3.8,leaderHoldMs:3200}),
+  NORMAL:Object.freeze({variability:1.62,attackGap:1.42,overtakeReleaseClosingKph:2.7,momentumThreshold:.42,p2ChallengeKph:7.0,leaderPressureKph:4.2,leaderHoldMs:3500}),
+  FAST:Object.freeze({variability:2.65,attackGap:1.92,overtakeReleaseClosingKph:1.35,momentumThreshold:.29,p2ChallengeKph:10.5,leaderPressureKph:5.8,leaderHoldMs:1800}),
   fastLaps:3
 });
 const RACE_MOMENTUM_CONFIG_V262=Object.freeze({
@@ -5116,7 +5117,7 @@ function smoothstepV270(value){
 function idealRacingLineOffsetV343(vehicle,usable,phaseInfo){
   if(!phaseInfo?.corner)return 0;
   const corner=phaseInfo.corner;
-  const insideSign=corner.direction==='right'?1:-1;
+  const insideSign=corner.direction==='right'?-1:1;
   const aligned=alignedCornerDistanceV270(corner,vehicle?.progress);
   const here=aligned.here;
   const turnIn=Number(corner.turnInDistanceMeters);
@@ -5215,22 +5216,32 @@ function phaseSpeedTargetV343(vehicle,targetData,phaseInfo=getCornerPhaseAtProgr
   const track=activeRaceSnapshotV187?.track;
   const raw=Math.max(60,Number(targetData?.targetKph)||250);
   if(!track||!phaseInfo?.corner)return raw;
-  const corner=phaseInfo.corner,key=cornerClassV343(corner),minApex=CORNER_DYNAMICS_V343.minimumApexKph[key]||150;
-  const phase=String(phaseInfo.phase||'STRAIGHT');
+  const corner=phaseInfo.corner,key=cornerClassV343(corner),compound=compoundCornerPaceFactorV343(vehicle);
+  const minApex=CORNER_DYNAMICS_V343.minimumApexKph[key]||150,phase=String(phaseInfo.phase||'STRAIGHT');
+  const aligned=alignedCornerDistanceV270(corner,vehicle?.progress),here=Number(aligned.here)||0;
+  const brake=Math.min(Number(corner.brakingPointDistanceMeters)||Number(corner.turnInDistanceMeters)||here,Number(corner.turnInDistanceMeters)||here);
+  const turnIn=Number(corner.turnInDistanceMeters)||brake;
+  const apex=Number(corner.apexDistanceMeters)||turnIn;
+  const exit=Number(corner.exitDistanceMeters)||apex;
+  const brakingTarget=Math.max(minApex,raw*(CORNER_DYNAMICS_V343.brakingFactor[key]||1))*compound;
+  const turnInTarget=Math.max(minApex,raw*(CORNER_DYNAMICS_V343.turnInFactor[key]||1))*compound;
+  const apexTarget=Math.max(minApex,raw*(CORNER_DYNAMICS_V343.apexFactor[key]||1))*compound;
   if(phase==='APPROACH')return raw;
-  const factorMap=phase==='BRAKING'?CORNER_DYNAMICS_V343.brakingFactor:phase==='TURN_IN'?CORNER_DYNAMICS_V343.turnInFactor:CORNER_DYNAMICS_V343.apexFactor;
-  if(phase==='BRAKING'||phase==='TURN_IN'||phase==='APEX'){
-    const target=Math.max(minApex,raw*(factorMap[key]||1));
-    return target*compoundCornerPaceFactorV343(vehicle);
+  if(phase==='BRAKING'){
+    const ratio=smoothstepV270((here-brake)/Math.max(1,turnIn-brake));
+    return raw+(brakingTarget-raw)*ratio;
   }
+  if(phase==='TURN_IN'){
+    const ratio=smoothstepV270((here-turnIn)/Math.max(1,apex-turnIn));
+    return turnInTarget+(apexTarget-turnInTarget)*ratio;
+  }
+  if(phase==='APEX')return apexTarget;
   if(phase!=='EXIT')return raw;
-  const aligned=alignedCornerDistanceV270(corner,vehicle?.progress),apex=Number(corner.apexDistanceMeters),exit=Number(corner.exitDistanceMeters);
-  const ratio=smoothstepV270((aligned.here-apex)/Math.max(1,exit-apex));
+  const ratio=smoothstepV270((here-apex)/Math.max(1,exit-apex));
   const lookProgress=((Number(vehicle?.progress)||0)+CORNER_DYNAMICS_V343.exitLookAheadMeters/Math.max(1,Number(track.lengthMeters)||1))%1;
   const ahead=typeof window.mwsF1SpeedTargetAtProgressV195==='function'?window.mwsF1SpeedTargetAtProgressV195(raceGeometryV193,lookProgress):null;
   const exitTarget=Math.max(raw,Number(ahead?.targetKph)||raw);
-  const apexBase=Math.max(minApex,raw*(CORNER_DYNAMICS_V343.apexFactor[key]||1))*compoundCornerPaceFactorV343(vehicle);
-  return apexBase+(exitTarget-apexBase)*ratio;
+  return apexTarget+(exitTarget-apexTarget)*ratio;
 }
 
 function trackLateralLimitV271(vehicle,track=activeRaceSnapshotV187?.track){
@@ -7345,7 +7356,7 @@ function activeRaceModeV345(){
 }
 function raceFormBiasV345(vehicle,snapshot=activeRaceSnapshotV187){
   const mode=String(snapshot?.raceMode||'NORMAL').toUpperCase()==='FAST'?'FAST':'NORMAL';
-  const amplitude=mode==='FAST'?.035:.022;
+  const amplitude=mode==='FAST'?.065:.040;
   const seed=hashDriverV189([String(snapshot?.createdAt||'race'),String(snapshot?.trackId||snapshot?.track?.id||'track'),String(vehicle?.id||vehicle?.driver?.contactId||vehicle?.driver?.name||'driver'),'race-form-v345'].join('|'));
   const unit=(seed%2001)/1000-1;
   return Math.max(-amplitude,Math.min(amplitude,unit*amplitude));
@@ -7354,11 +7365,12 @@ function raceCompetitionConfigV345(){
   return RACE_COMPETITION_V345[activeRaceModeV345()]||RACE_COMPETITION_V345.NORMAL;
 }
 function frontChallengeBonusV345(index,gapMeters){
-  if(index!==1)return 0;
+  const rankWeight=index===1?1:index===2?.68:index===3?.38:0;
+  if(rankWeight<=0)return 0;
   const cfg=raceCompetitionConfigV345();
   const gap=Math.max(0,Number(gapMeters)||0);
   const proximity=clamp01V198(1-gap/Math.max(1,GAME_VARIABILITY_CONFIG_V303.maxGapMeters));
-  return cfg.p2ChallengeKph*(.46+.54*proximity);
+  return cfg.p2ChallengeKph*rankWeight*(.46+.54*proximity);
 }
 function gameVariabilityEligibleV303(vehicle){
   return Boolean(vehicle&&!vehicle.finished&&!vehicle.blueFlag&&!vehicle.trackBoundaryExceededV271&&String(vehicle.pitState||'TRACK')==='TRACK'&&!vehicle.pitRequested);
@@ -7567,6 +7579,7 @@ window.__mwsF1RacingV339=VERSION339;
 window.__mwsF1RacingV343=VERSION343;
 window.__mwsF1RacingV344=VERSION344;
 window.__mwsF1RacingV345=VERSION345;
+window.__mwsF1RacingV346=VERSION346;
 window.mwsF1QaCornerTyreDynamicsV343=function(){
   const corner={direction:'right',cornerClass:'slow',turnInDistanceMeters:100,apexDistanceMeters:150,exitDistanceMeters:220};
   const phases=['BRAKING','TURN_IN','APEX','EXIT'];
@@ -7586,8 +7599,19 @@ window.mwsF1QaCompetitionFastRaceV345=function(){
   const normal=RACE_COMPETITION_V345.NORMAL,fast=RACE_COMPETITION_V345.FAST;
   const formProbe=[1,2,3,4].map(index=>raceFormBiasV345({id:'qa-form-'+index},{createdAt:'qa-race',trackId:'qa-track',raceMode:'NORMAL'}));
   return {version:VERSION345,normal,fast,fastLaps:RACE_COMPETITION_V345.fastLaps,buttonReady:Boolean(document.getElementById('f1RacingFastRaceV345')),formProbe,
-    allPass:fast.variability>normal.variability&&normal.variability>1&&fast.attackGap>normal.attackGap&&normal.p2ChallengeKph>=4&&fast.p2ChallengeKph>normal.p2ChallengeKph&&normal.leaderPressureKph>=2&&formProbe.every(v=>Math.abs(v)<=.0221)&&new Set(formProbe.map(v=>v.toFixed(4))).size>1&&RACE_COMPETITION_V345.fastLaps===3&&Boolean(document.getElementById('f1RacingFastRaceV345'))};
+    allPass:fast.variability>normal.variability&&normal.variability>1&&fast.attackGap>normal.attackGap&&normal.p2ChallengeKph>=6&&fast.p2ChallengeKph>normal.p2ChallengeKph&&normal.leaderPressureKph>=4&&formProbe.every(v=>Math.abs(v)<=.0401)&&new Set(formProbe.map(v=>v.toFixed(4))).size>1&&RACE_COMPETITION_V345.fastLaps===3&&Boolean(document.getElementById('f1RacingFastRaceV345'))};
 };
+window.mwsF1QaRaceDynamicsCorrectionV346=function(){
+  const usable=5;
+  const right={direction:'right',cornerClass:'slow',brakingPointDistanceMeters:80,turnInDistanceMeters:110,apexDistanceMeters:150,exitDistanceMeters:220};
+  const offsets=['BRAKING','TURN_IN','APEX','EXIT'].map((phase,index)=>idealRacingLineOffsetV343({progress:.10+index*.01},usable,{phase,corner:right}));
+  const linePass=offsets[0]>0&&offsets[2]<0&&offsets[3]>0;
+  const normal=RACE_COMPETITION_V345.NORMAL,fast=RACE_COMPETITION_V345.FAST;
+  const front=[1,2,3,4].map(index=>frontChallengeBonusV345(index,12));
+  return {version:VERSION346,offsets,linePass,front,normal,fast,
+    allPass:linePass&&front[0]>front[1]&&front[1]>front[2]&&front[2]>front[3]&&front[3]===0&&normal.variability>=1.5&&normal.p2ChallengeKph>=6&&fast.variability>normal.variability};
+};
+
 
 function qaUiVisibilitySpacingV324(){
   const marker=document.querySelector('.f1-racing-race-vehicle-v189');
