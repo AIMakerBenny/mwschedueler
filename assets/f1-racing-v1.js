@@ -3993,7 +3993,8 @@ function updateTrafficAndDefenceV207(){
     const gapMeters=Math.max(0,(Number(ahead.raceProgress)-Number(vehicle.raceProgress))*length);
     const closingRateKph=(Number(vehicle.speedKph)||0)-(Number(ahead.speedKph)||0);
     const trackFactor=trackOvertakeFactorV235();
-    const followingGap=TRAFFIC_CONFIG_V207.followingGapMeters*(.9+.1*trackFactor);
+    const battleGapFactorV345=raceBattleGapFactorV345();
+    const followingGap=TRAFFIC_CONFIG_V207.followingGapMeters*(.9+.1*trackFactor)*battleGapFactorV345;
     const gapFactor=clamp01V198(1-gapMeters/followingGap);
     const closingFactor=clamp01V198((closingRateKph+4)/(TRAFFIC_CONFIG_V207.strongClosingKph+4));
     const pressure=clamp01V198(gapFactor*(.35+.65*closingFactor));
@@ -4001,13 +4002,13 @@ function updateTrafficAndDefenceV207(){
     let state='CLEAR';
     if(gapMeters<=followingGap)state='FOLLOWING';
     if(gapMeters<=followingGap&&Number(vehicle.slipstreamStrength)>.08)state='TOWING';
-    if(gapMeters<=TRAFFIC_CONFIG_V207.pressureGapMeters*trackFactor&&closingRateKph>=TRAFFIC_CONFIG_V207.minClosingKph)state='PRESSURE';
+    if(gapMeters<=TRAFFIC_CONFIG_V207.pressureGapMeters*trackFactor*battleGapFactorV345&&closingRateKph>=TRAFFIC_CONFIG_V207.minClosingKph)state='PRESSURE';
     vehicle.trafficState=state;
     const battle=trafficBattlePhaseV207(vehicle);
-    if(state==='PRESSURE'&&gapMeters<=TRAFFIC_CONFIG_V207.attackGapMeters*trackFactor&&battle.open){
+    if(state==='PRESSURE'&&gapMeters<=TRAFFIC_CONFIG_V207.attackGapMeters*trackFactor*battleGapFactorV345&&battle.open){
       vehicle.trafficLineIntent='ATTACK_INSIDE';vehicle.racingLineMode='ATTACK_INSIDE';
     }
-    if(pressure>=.24&&gapMeters<=TRAFFIC_CONFIG_V207.defendGapMeters){
+    if(pressure>=.24&&gapMeters<=TRAFFIC_CONFIG_V207.defendGapMeters*battleGapFactorV345){
       ahead.trafficThreatFromId=String(vehicle.id);ahead.defenceActive=true;ahead.trafficState='DEFENDING';
       const aheadBattle=trafficBattlePhaseV207(ahead);
       if(aheadBattle.open&&!ahead.pitRequested){ahead.trafficLineIntent='DEFENSIVE_INSIDE';ahead.racingLineMode='DEFENSIVE_INSIDE'}
