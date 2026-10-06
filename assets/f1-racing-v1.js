@@ -3416,6 +3416,11 @@ function wornTyreIncidentMultiplierV344(vehicle,phase){
   const t=clamp01V198((wear-TYRE_DYNAMICS_V344.wornIncidentStart)/span);
   return 1+t*(TYRE_DYNAMICS_V344.maxWornIncidentMultiplier-1);
 }
+function startingTyreCompoundV344(driver,index=0,snapshot=activeRaceSnapshotV187){
+  const seed=hashDriverV189(String(driver?.contactId||driver?.name||'driver')+'|'+String(snapshot?.createdAt||'race')+'|start-tyre-v344')+Math.max(0,Number(index)||0);
+  const bucket=((seed%10)+10)%10;
+  return bucket<4?'SOFT':bucket<8?'MEDIUM':'HARD';
+}
 function tyreCornerLoadV203(phase){
   if(phase==='TURN_IN'||phase==='APEX')return 1;
   if(phase==='EXIT')return .75;
@@ -4771,7 +4776,12 @@ function createRaceVehiclesV189(snapshot){
       finished:false,finishPosition:0,finishedAtSimMs:0,
       marker:null
     };
-    vehicle.pitRemainingThresholdV344=pitRemainingThresholdV344(vehicle,'MEDIUM');
+    const startingCompoundV344=startingTyreCompoundV344(driver,index,snapshot);
+    vehicle.tyreCompound=startingCompoundV344;
+    vehicle.tyreGrip=tyreCompoundSpecV203(startingCompoundV344).gripBias;
+    vehicle.pitTargetCompound=startingCompoundV344;
+    vehicle.strategyTargetCompound=startingCompoundV344;
+    vehicle.pitRemainingThresholdV344=pitRemainingThresholdV344(vehicle,startingCompoundV344);
     vehicle.pitWearAuthorizedV344=false;
     vehicle.tyreIncidentChanceV344=0;
     vehicle.tyreIncidentMultiplierV344=1;
