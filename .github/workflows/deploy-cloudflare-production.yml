@@ -286,6 +286,7 @@ jobs:
           node --check scripts/run-phase339-f1-live-presence-audit.mjs
           node --check scripts/run-phase340-f1-workspace-fill-viewport-audit.mjs
           node --check scripts/run-phase341-f1-dialogue-wall-clock-audit.mjs
+          node --check scripts/run-phase342-f1-spectator-aspect-fit-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
