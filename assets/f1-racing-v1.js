@@ -5711,6 +5711,21 @@ function rpmForSpeedAndGearV196(speedKph,gear){
   return Math.round(8500+t*3500);
 }
 
+function activeRaceModeV346(snapshot=activeRaceSnapshotV187){
+  return String(snapshot?.raceMode||'NORMAL').toUpperCase()==='FAST'?'FAST':'NORMAL';
+}
+function raceBattleTuningV345(snapshot=activeRaceSnapshotV187){
+  return activeRaceModeV346(snapshot)==='FAST'?RACE_BATTLE_CONFIG_V345.fast:RACE_BATTLE_CONFIG_V345.normal;
+}
+function raceBattleGapFactorV345(snapshot=activeRaceSnapshotV187){
+  return Math.max(1,Number(raceBattleTuningV345(snapshot).gapFactor)||1);
+}
+function qaBattleIntensityV345(){
+  const normal=raceBattleTuningV345({raceMode:'NORMAL'}),fast=raceBattleTuningV345({raceMode:'FAST'});
+  return {version:VERSION345,normal:{...normal},fast:{...fast},
+    allPass:normal.gapFactor>1&&normal.biasMultiplier>1&&normal.chaseChance>CHASE_BURST_CONFIG_V275.activationChance&&fast.gapFactor>normal.gapFactor&&fast.biasMultiplier>normal.biasMultiplier&&fast.chaseChance>normal.chaseChance&&fast.maxBiasKph>normal.maxBiasKph};
+}
+
 function battleQueueSpeedControlV319(vehicle){
   if(!vehicle||String(vehicle.pitState||'TRACK')!=='TRACK')return {active:false,capKph:Infinity,gapMeters:Infinity,reason:''};
   const ahead=raceMotionV189.vehicles.find(row=>String(row.id)===String(vehicle.trafficCarAheadId||''))||null;
