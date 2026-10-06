@@ -12,10 +12,12 @@ export function runPhase310F1FinalSpecClosureAudit(){
  const r309=fs.readFileSync('assets/f1-racing-r309.js','utf8');
  const diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
 
+ const dialogueRecentLimit310=Number(core.match(/const DIALOGUE_RECENT_TEXT_LIMIT_V279=(\d+);/)?.[1]||0);
+
  const criteria={
   dialogueChain:core.includes("const VERSION277='phase277-character-dialogue-engine';")&&core.includes('handlePassDialogueV277(')&&diag.includes('Phase 277 character dialogue QA failed'),
   dialogueDensity:core.includes('maxGroupsPerWindow:2')&&r308.includes('globalGapMs:6800,speakerGapMs:12000')&&diag.includes('legacy track speech bubble still visible'),
-  repetitionReduced:core.includes('const DIALOGUE_RECENT_TEXT_LIMIT_V279=96;')&&diag.includes('duplicateBlocked===true')&&diag.includes('uniqueCount)>=300'),
+  repetitionReduced:dialogueRecentLimit310>=96&&diag.includes('duplicateBlocked===true')&&diag.includes('uniqueCount)>=300'),
   toneDiversity:core.includes('const DIALOGUE_DIRECT_LINES_V308=Object.freeze({')&&diag.includes('roleCoverage===true')&&diag.includes('categoryCount)>=13'),
   lowerRightDialogue:r308.includes("root.id='f1RacingDialogueHudV308'")&&r308css.includes('right:16px')&&diag.includes('driver HUD lower-right geometry failed'),
   announcerLive:core.includes('all.length>=256&&uniqueTexts.size===all.length')&&r307.includes('@keyframes f1LiveMergeCopyV307')&&diag.includes('LIVE phrase library QA failed')&&diag.includes('LIVE entrance effect missing'),
