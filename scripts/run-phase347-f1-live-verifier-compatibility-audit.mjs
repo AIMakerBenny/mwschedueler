@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+// Production retrigger after Fast Race verifier compatibility
 export function runPhase347F1LiveVerifierCompatibilityAudit(){
  const issues=[],warnings=[];
  const wf=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
