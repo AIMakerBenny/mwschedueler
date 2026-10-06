@@ -3806,6 +3806,8 @@ function pitStrategyContextV206(vehicle){
   const thermalDeg=clamp01V198(vehicle?.tyreThermalDeg);
   const graining=clamp01V198(vehicle?.tyreGraining);
   const wear=clamp01V198(vehicle?.tyreWear);
+  const remainingTyre=Math.max(0,1-wear);
+  const pitRemainingThreshold=Number(vehicle?.pitRemainingThresholdV344)||pitRemainingThresholdV344(vehicle);
   const tyreNeed=clamp01V198(pressure*.52+gripLoss*.25+flatSpot*.18+thermalDeg*.12+graining*.08+wear*.08);
   const management=driverSkillNormV200(vehicle,'tyreManagement');
   const racecraft=driverSkillNormV200(vehicle,'racecraft');
@@ -3815,7 +3817,7 @@ function pitStrategyContextV206(vehicle){
     gapAhead,gapBehind,aheadId:String(ahead?.id||''),behindId:String(behind?.id||''),
     rivalAheadPitting:pitRivalCommittedV206(ahead,currentLap),
     rivalBehindPitting:pitRivalCommittedV206(behind,currentLap),
-    pressure,grip,gripLoss,flatSpot,thermalDeg,graining,wear,tyreNeed,management,racecraft,pitLossSeconds
+    pressure,grip,gripLoss,flatSpot,thermalDeg,graining,wear,remainingTyre,pitRemainingThreshold,tyreNeed,management,racecraft,pitLossSeconds
   };
 }
 function compactPitStrategyContextV206(context){
@@ -3826,6 +3828,7 @@ function compactPitStrategyContextV206(context){
     gapBehind:Number.isFinite(context.gapBehind)?Number(context.gapBehind.toFixed(3)):null,
     rivalAheadPitting:Boolean(context.rivalAheadPitting),rivalBehindPitting:Boolean(context.rivalBehindPitting),
     pressure:Number(context.pressure.toFixed(3)),grip:Number(context.grip.toFixed(3)),
+    wear:Number(context.wear.toFixed(3)),remainingTyre:Number(context.remainingTyre.toFixed(3)),pitRemainingThreshold:Number(context.pitRemainingThreshold.toFixed(3)),
     tyreNeed:Number(context.tyreNeed.toFixed(3)),management:Number(context.management.toFixed(3)),
     racecraft:Number(context.racecraft.toFixed(3)),pitLossSeconds:Number(context.pitLossSeconds.toFixed(2))
   };
@@ -3893,6 +3896,14 @@ function evaluatePitStrategyV206(vehicle,options={}){
   }else{
     decision='NONE';reason='HOLD_CURRENT_STRATEGY';score=.28+context.tyreNeed*.18;
   }
+
+  const criticalTyreExceptionV344=context.grip<=.835||context.flatSpot>=.48||context.thermalDeg>=.78;
+  const wearAuthorizedV344=context.remainingTyre<TYRE_DYNAMICS_V344.pitRemainingMax&&context.remainingTyre<=context.pitRemainingThreshold;
+  if(['BOX_NOW','UNDERCUT','COVER_UNDERCUT'].includes(decision)&&!wearAuthorizedV344&&!criticalTyreExceptionV344){
+    decision='GO_LONG';reason='TYRE_REMAINING_ABOVE_THRESHOLD';score=Math.max(.50,Math.min(.78,.58+(context.pitRemainingThreshold-context.remainingTyre)*.2));
+  }
+  vehicle.pitWearAuthorizedV344=wearAuthorizedV344;
+  vehicle.pitRemainingThresholdV344=context.pitRemainingThreshold;
 
   recordPitStrategyDecisionV206(vehicle,decision,reason,score,compound,context);
   const shouldPit=decision==='BOX_NOW'||decision==='UNDERCUT'||decision==='COVER_UNDERCUT';
