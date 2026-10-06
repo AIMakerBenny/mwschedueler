@@ -1,0 +1,127 @@
+/* Phase 332: readable LIVE cut-ins */
+#f1RacingViewRaceV185 #f1RacingLiveCutinLayerV264.track-docked-v308{
+  width:min(470px,50%)!important;
+  max-width:470px!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264{
+  min-height:86px!important;
+  padding:9px 12px 10px!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264 header{
+  margin-bottom:7px!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264 header strong{
+  font-size:13px!important;
+  line-height:1.15!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264 header span{
+  font-size:11px!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-body-v264{
+  grid-template-columns:52px minmax(0,1fr)!important;
+  gap:10px!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-avatar-v264{
+  width:52px!important;
+  height:52px!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-body-v264 p{
+  font-size:13px!important;
+  line-height:1.48!important;
+  font-weight:820!important;
+  letter-spacing:-.01em!important;
+  word-break:keep-all!important;
+}
+
+/* Phase 333: starting-grid Gacha follows the current viewport */
+#f1RacingViewGridV185{
+  max-height:calc(100dvh - 12px)!important;
+  overflow:hidden!important;
+}
+#f1RacingViewGridV185 .f1-racing-grid-stage-v244{
+  display:flex!important;
+  flex-direction:column!important;
+  min-height:0!important;
+  max-height:calc(100dvh - 24px)!important;
+  overflow:hidden!important;
+}
+#f1RacingViewGridV185 #f1RacingGridListV272.f1-racing-grid-gacha-active-v313{
+  flex:0 1 auto!important;
+  min-height:var(--f1-grid-stage-h-v333,420px)!important;
+  height:var(--f1-grid-stage-h-v333,420px)!important;
+  max-height:var(--f1-grid-stage-h-v333,420px)!important;
+  overflow:hidden!important;
+}
+#f1RacingGridGachaStageV313.f1-racing-grid-gacha-stage-v313{
+  height:var(--f1-grid-stage-h-v333,420px)!important;
+  min-height:var(--f1-grid-stage-h-v333,420px)!important;
+  max-height:var(--f1-grid-stage-h-v333,420px)!important;
+  grid-template-columns:minmax(0,1fr) var(--f1-grid-dock-w-v333,280px)!important;
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-main-v313{
+  height:100%!important;
+  min-height:0!important;
+  padding:clamp(36px,6vh,48px) clamp(12px,2vw,20px) clamp(12px,2vh,20px)!important;
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313{
+  width:var(--f1-grid-card-w-v333,230px)!important;
+  height:var(--f1-grid-card-h-v333,320px)!important;
+  min-width:var(--f1-grid-card-w-v333,230px)!important;
+  min-height:var(--f1-grid-card-h-v333,320px)!important;
+  max-width:var(--f1-grid-card-w-v333,230px)!important;
+  max-height:var(--f1-grid-card-h-v333,320px)!important;
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-host-v323{
+  width:var(--f1-grid-card-w-v333,230px)!important;
+  height:var(--f1-grid-card-h-v333,320px)!important;
+  min-width:var(--f1-grid-card-w-v333,230px)!important;
+  min-height:var(--f1-grid-card-h-v333,320px)!important;
+  max-width:var(--f1-grid-card-w-v333,230px)!important;
+  max-height:var(--f1-grid-card-h-v333,320px)!important;
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-host-v323>.gacha-card.f1-grid-gacha-card-v324{
+  width:var(--f1-grid-card-w-v333,230px)!important;
+  height:var(--f1-grid-card-h-v333,320px)!important;
+  max-width:var(--f1-grid-card-w-v333,230px)!important;
+  max-height:var(--f1-grid-card-h-v333,320px)!important;
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-v324 .gacha-card-info{
+  flex:0 0 var(--f1-grid-card-info-h-v333,72px)!important;
+  height:var(--f1-grid-card-info-h-v333,72px)!important;
+  min-height:var(--f1-grid-card-info-h-v333,72px)!important;
+  max-height:var(--f1-grid-card-info-h-v333,72px)!important;
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-v324 .gacha-card-name{
+  font-size:clamp(14px,2vh,18px)!important;
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-v313{
+  min-height:0!important;
+  overflow:hidden!important;
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-list-v313{
+  min-height:0!important;
+  max-height:calc(var(--f1-grid-stage-h-v333,420px) - 60px)!important;
+  flex:1 1 auto!important;
+}
+@media(max-height:680px){
+  #f1RacingViewGridV185 .f1-racing-grid-header-v244{
+    padding:5px 8px!important;
+  }
+  #f1RacingViewGridV185 .f1-racing-grid-actions-v244 button{
+    min-height:27px!important;
+    padding:4px 7px!important;
+    font-size:10px!important;
+  }
+  #f1RacingViewGridV185 .f1-racing-grid-brief-v244{
+    margin:4px 0!important;
+    padding:4px 7px!important;
+  }
+}
+@media(max-width:1100px){
+  #f1RacingViewRaceV185 #f1RacingLiveCutinLayerV264.track-docked-v308{
+    width:min(430px,54%)!important;
+  }
+  #f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-body-v264 p{
+    font-size:12px!important;
+  }
+}
