@@ -33,7 +33,8 @@ export function runPhase307F1LiveSessionMergeExpandedCopyAudit(){
   const lead=(racing.match(new RegExp(event+':Object\\.freeze\\(\\{[\\s\\S]*?lead:Object\\.freeze\\(\\[([\\s\\S]*?)\\]\\),'))||[])[1]||'';
   if(!lead)warnings.push('Could not statically isolate '+event+' lead block');
  }
- const liveCadence=Number(racing.match(/liveCadenceMs:(\\d+)/)?.[1]||0);\n if(liveCadence<6200)issues.push('Phase 307 Phase 303 auxiliary LIVE cadence was not reduced');
+ const liveCadence=Number(racing.match(/liveCadenceMs:(\\d+)/)?.[1]||0);
+ if(liveCadence<6200)issues.push('Phase 307 Phase 303 auxiliary LIVE cadence was not reduced');
  if(!racing.includes('all.length>=256&&uniqueTexts.size===all.length'))issues.push('Phase 307 256+ unique copy QA missing');
 
  for(const token of [
