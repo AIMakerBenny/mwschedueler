@@ -130,6 +130,10 @@ const VERSION336='phase336-f1-pit-status-only';
 const VERSION337='phase337-f1-commentary-semantic-dedupe';
 const VERSION338='phase338-f1-best-lap-overlay';
 const VERSION339='phase339-f1-live-presence-glow';
+const VERSION343='phase343-f1-corner-racing-model';
+const VERSION344='phase344-f1-tyre-wear-pit-strategy';
+const VERSION345='phase345-f1-battle-intensity';
+const VERSION346='phase346-f1-fast-race-three-lap';
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
 const GAME_VARIABILITY_CONFIG_V303=Object.freeze({evaluationMs:650,maxGapMeters:84,attackGapMeters:36,baseBonusKph:1.1,pressureBonusKph:3.2,midfieldBonusKph:.8,failedPassBonusKph:.4,maxFailedPassBonusKph:1.6,momentumBonusKph:1.55,maxTotalBiasKph:14,positionCatchupMaxPct:.045,positionCatchupExponent:1.35,leaderHoldMs:12000,leaderCloseGapSeconds:1.75,leaderClosePenaltyKph:.9,liveCadenceMs:10000});
@@ -143,6 +147,26 @@ const CORNER_DYNAMICS_V270=Object.freeze({
   exitAccelerationMultiplier:1.38,exitTargetLiftKph:24,exitLookAheadMeters:105,
   hairpinMinApexKph:72,slowMinApexKph:92,sCurveMinRecoveryKph:112
 });
+const CORNER_RACE_CONFIG_V343=Object.freeze({
+  apexFloorKph:Object.freeze({hairpin:108,slow:145,medium:190,fast:232}),
+  turnInReserveKph:Object.freeze({hairpin:6,slow:8,medium:10,fast:12}),
+  exitLiftKph:Object.freeze({hairpin:36,slow:42,medium:50,fast:58}),
+  brakingEaseExponent:1.16
+});
+const TYRE_DYNAMICS_V344=Object.freeze({
+  wearScale:Object.freeze({SOFT:1.42,MEDIUM:1.30,HARD:1.18}),
+  cornerSpeedFactor:Object.freeze({SOFT:1.055,MEDIUM:1.000,HARD:.950}),
+  pitRemainingMax:.40,
+  pitRemainingRange:Object.freeze({SOFT:Object.freeze([.28,.38]),MEDIUM:Object.freeze([.22,.34]),HARD:Object.freeze([.16,.28])}),
+  wornIncidentStart:.30,
+  wornIncidentFull:.82,
+  maxWornIncidentMultiplier:3.4
+});
+const RACE_BATTLE_CONFIG_V345=Object.freeze({
+  normal:Object.freeze({gapFactor:1.18,biasMultiplier:1.20,maxBiasKph:18,releaseClosingKph:2.4,stateHoldFactor:.82,chaseChance:.075,chaseMaxUses:3}),
+  fast:Object.freeze({gapFactor:1.58,biasMultiplier:1.90,maxBiasKph:30,releaseClosingKph:.8,stateHoldFactor:.56,chaseChance:.18,chaseMaxUses:6})
+});
+const FAST_RACE_CONFIG_V346=Object.freeze({laps:3,mode:'FAST',label:'패스트 레이스 3랩'});
 const RACE_MOMENTUM_CONFIG_V262=Object.freeze({
   min:-1,max:1,paceRange:.02,decayPerSecond:.032,evaluationMs:620,
   passSuccess:.18,passFailed:-.12,defenceSuccess:.075,incident:-.14,
@@ -946,6 +970,7 @@ const selectedIds=[];
 let activeTrackId='majoku-ring-v1';
 let selectedTotalLapsRecoveryD=DEFAULT_TOTAL_LAPS_V190;
 let lapOverrideActiveV260=false;
+let nextRaceModeV346='NORMAL';
 let immersiveStateV261={active:false,noticeTimer:0,layoutSignature:'',lastReason:'',fullscreenRequested:false};
 let immersiveExitInFlightV261=false;
 let persistenceRestoredRecoveryD=false;
