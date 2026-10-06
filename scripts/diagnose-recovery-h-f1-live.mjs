@@ -741,6 +741,29 @@ try{
     const layout305=window.mwsF1GetWorkspaceLayoutRecoveryE?.();
     assert(Number(layout305?.panels?.track?.w)>=7&&Number(layout305?.panels?.timing?.w)>=5,'Phase 305 default panel proportions not stabilized: '+JSON.stringify(layout305));
 
+    const frameDeltas311=[];
+    await new Promise(resolve=>{
+      let previous=performance.now(),frames=0;
+      const tick=now=>{
+        if(frames>0)frameDeltas311.push(now-previous);
+        previous=now;frames+=1;
+        if(frames>=72)resolve();else requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+    const sortedFrames311=[...frameDeltas311].sort((a,b)=>a-b);
+    const framePacing311={
+      samples:sortedFrames311.length,
+      averageMs:Number((sortedFrames311.reduce((sum,value)=>sum+value,0)/Math.max(1,sortedFrames311.length)).toFixed(2)),
+      p95Ms:Number((sortedFrames311[Math.min(sortedFrames311.length-1,Math.floor(sortedFrames311.length*.95))]||0).toFixed(2)),
+      maxMs:Number((sortedFrames311.at(-1)||0).toFixed(2)),
+      liveCards:document.querySelectorAll('#f1RacingLiveCutinLayerV264 .f1-racing-live-cutin-v264').length,
+      dialogueCards:document.querySelectorAll('#f1RacingDialogueHudV308 .f1-racing-dialogue-card-v308').length
+    };
+    assert(framePacing311.samples>=60,'Phase 311 frame pacing sample count too low: '+JSON.stringify(framePacing311));
+    assert(framePacing311.p95Ms<=90&&framePacing311.maxMs<=350,'Phase 311 frame pacing regression: '+JSON.stringify(framePacing311));
+    assert(framePacing311.liveCards<=1&&framePacing311.dialogueCards<=1,'Phase 311 overlay DOM bound regression: '+JSON.stringify(framePacing311));
+
     const pause=document.getElementById('f1RacingPauseV192');
     assert(pause,'Pause button missing');
     pause.click();await raf();
@@ -1185,6 +1208,7 @@ try{
       manualStartGate:true,
       centerTripleDock:centerDocked,
       pausedAndResumed:true,
+      phase311FramePacing:framePacing311,
       phase204Incident:{type:forcedIncident?.type||'',lockupActiveMs:Number(incidentAfter?.lockupActiveMs)||0,flatSpot:Number(incidentAfter?.tyreFlatSpot)||0},
       phase205Pit:{states:pitCycle?.states||[],laneSpeedCapKph:Number(pitCycle?.laneSpeedCapKph)||0,compound:pitAfter?.compound||'',warmupFactor:Number(pitAfter?.tyreWarmupFactor)||0},
       phase206Strategy:{decision:strategyQa?.decision||'',reason:strategyQa?.reason||'',pitRequested:Boolean(strategyQa?.pitRequested),targetCompound:strategyQa?.targetCompound||'',context:strategyQa?.context||{}},
