@@ -12,13 +12,15 @@ export function runPhase308F1TrackOverlayHudFrequencyDiversityAudit(){
  for(const token of [
   "const VERSION308='phase308-track-overlay-hud-frequency-diversity';",
   'const DIALOGUE_DIRECT_LINES_V308=Object.freeze({',
-  'const DIALOGUE_RECENT_TEXT_LIMIT_V279=96;',
   'windowMs:12000,maxGroupsPerWindow:2,speakerGapMs:4800,pairGapMs:7000,criticalPairGapMs:1800',
   'liveCadenceMs:10000',
   'dedupeMs:7000,globalCadenceMs:9000,mergeWindowMs:10000',
   'minDurationMs:6000,maxDurationMs:8200,mergeDurationMs:7600',
   'const LIVE_CUTIN_EXTRA_V308=Object.freeze({'
  ])if(!core.includes(token))issues.push('Phase 308 core policy missing: '+token);
+
+ const recentLimit308=Number(core.match(/const DIALOGUE_RECENT_TEXT_LIMIT_V279=(\d+);/)?.[1]||0);
+ if(recentLimit308<96)issues.push('Phase 308 dialogue repetition guard regressed below 96: '+recentLimit308);
 
  for(const token of [
   "const VERSION308='phase308-track-overlay-hud-frequency-diversity';",
