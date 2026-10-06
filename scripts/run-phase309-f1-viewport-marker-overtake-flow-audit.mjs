@@ -30,13 +30,22 @@ export function runPhase309F1ViewportMarkerOvertakeFlowAudit(){
   'window.__mwsF1RacingV309=VERSION309;'
  ])if(!core.includes(token))issues.push('Phase 309 core missing: '+token);
 
- for(const token of [
-  "label.dataset.labelSlotV228='fixed-below-v309'",
-  "label.setAttribute('x','0')",
-  "label.setAttribute('y',String(y))",
-  "x:-14,y:27,width:28,height:13",
-  "x:0,y:36.2,'text-anchor':'middle'"
- ])if(!core.includes(token))issues.push('Phase 309 fixed marker geometry missing: '+token);
+ const labelStart=core.indexOf('function layoutRaceVehicleLabelsV228(');
+ const labelEnd=core.indexOf('function countLabelOverlapsV228(',labelStart);
+ const positionStart=core.indexOf('function syncRaceMarkerPositionV254(');
+ const positionEnd=core.indexOf('function qaRaceMarkerPositionV254(',positionStart);
+ const labelSource=labelStart>=0&&labelEnd>labelStart?core.slice(labelStart,labelEnd):'';
+ const positionSource=positionStart>=0&&positionEnd>positionStart?core.slice(positionStart,positionEnd):'';
+ for(const token of ["label.dataset.labelSlotV228='fixed-below-v309'","label.setAttribute('x','0')","label.setAttribute('y',String(y))","label.setAttribute('text-anchor','middle')"]){
+  if(!labelSource.includes(token))issues.push('Phase 309 marker label structure missing: '+token);
+ }
+ const labelY=Number(labelSource.match(/const y=([0-9.]+)/)?.[1]);
+ const ringRadius=Number(core.match(/class:'car-ring'[^}]*r:([0-9.]+)/)?.[1]);
+ const positionBoxY=Number(positionSource.match(/class:'car-position-box-v254'[^}]*y:([0-9.]+)/)?.[1]);
+ const positionTextY=Number(positionSource.match(/class:'car-position-text-v254'[^}]*y:([0-9.]+)/)?.[1]);
+ if(![labelY,ringRadius,positionBoxY,positionTextY].every(Number.isFinite)||!(labelY>ringRadius&&positionBoxY>labelY&&positionTextY>positionBoxY)){
+  issues.push('Phase 309 marker label/order geometry relation invalid: '+JSON.stringify({ringRadius,labelY,positionBoxY,positionTextY}));
+ }
 
  for(const token of [
   'defaultMaxHeightPx:640',
