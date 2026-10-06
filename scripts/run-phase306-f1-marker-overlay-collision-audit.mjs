@@ -10,6 +10,7 @@ export function runPhase306F1MarkerOverlayCollisionAudit(){
   "const VERSION306='phase306-f1-marker-overlay-collision-avoidance';",
   'function layoutThoughtsV306(bounds){',
   'function layoutPositionTagsV306(bounds){',
+  "const candidates=[[0,0],[-36,0],[36,0],[0,36]",
   'function chooseOffsetV306(',
   'function overlapCountV306(',
   'window.mwsF1LayoutMarkerOverlaysV306=layoutV306;',

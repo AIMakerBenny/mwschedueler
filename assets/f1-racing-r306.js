@@ -40,15 +40,26 @@ function layoutPositionTagsV306(bounds){
  nodes.forEach(node=>{node.style.setProperty('--v306-tag-x','0px');node.style.setProperty('--v306-tag-y','0px')});
  nodes.sort((a,b)=>positionV306(a)-positionV306(b));
  const placed=[],rows=[];
- const candidates=[[0,0],[-30,0],[30,0],[-30,18],[30,18],[0,24],[-48,12],[48,12]];
+ const candidates=[[0,0],[-36,0],[36,0],[0,36],[-36,36],[36,36],[-54,18],[54,18],[0,-36],[-54,-18],[54,-18],[-72,36],[72,36]];
  for(const node of nodes){
-  const base=node.getBoundingClientRect();
-  const choice=chooseOffsetV306(base,bounds,placed,candidates,4);
-  node.style.setProperty('--v306-tag-x',choice.dx+'px');
-  node.style.setProperty('--v306-tag-y',choice.dy+'px');
-  node.dataset.v306Shift=choice.dx+','+choice.dy;
-  placed.push(choice.rect);
-  rows.push({position:positionV306(node),dx:choice.dx,dy:choice.dy});
+  let selected=null;
+  for(const [dx,dy] of candidates){
+   node.style.setProperty('--v306-tag-x',dx+'px');
+   node.style.setProperty('--v306-tag-y',dy+'px');
+   const actual=node.getBoundingClientRect();
+   if(!insideV306(actual,bounds,2))continue;
+   if(placed.some(other=>intersectsV306(actual,other,3)))continue;
+   selected={dx,dy,rect:actual};break;
+  }
+  if(!selected){
+   const [dx,dy]=candidates.at(-1);
+   node.style.setProperty('--v306-tag-x',dx+'px');
+   node.style.setProperty('--v306-tag-y',dy+'px');
+   selected={dx,dy,rect:node.getBoundingClientRect()};
+  }
+  node.dataset.v306Shift=selected.dx+','+selected.dy;
+  placed.push(selected.rect);
+  rows.push({position:positionV306(node),dx:selected.dx,dy:selected.dy});
  }
  return rows;
 }
