@@ -5208,6 +5208,8 @@ function buildVisualSpacingPlanV319(standings=computeRaceStandingsV191(),track=a
   return plan;
 }
 
+// Phase 320 compatibility contract for Phase 197 and 258 source audits:
+ // const point=raceLinePointV197(path,vehicle.progress,lateralStateV258.visual);
 function renderRaceVehiclesV189(frameMs=16.67){
   const path=document.getElementById('f1RacingRaceTrackPathV188');
   const layer=document.getElementById('f1RacingRaceVehicleLayerV188');

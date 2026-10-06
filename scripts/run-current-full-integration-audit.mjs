@@ -315,6 +315,7 @@ import {runPhase316F1FeedbackProductionClosureAudit} from './run-phase316-f1-fee
 import {runPhase317F1FutureSafeClosureAudit} from './run-phase317-f1-future-safe-closure-audit.mjs';
 import {runPhase318F1ForwardCompatibleAuditChain} from './run-phase318-f1-forward-compatible-audit-chain.mjs';
 import {runPhase319F1UiSpacingBattleAudit} from './run-phase319-f1-ui-spacing-battle-audit.mjs';
+import {runPhase320F1UiSpacingCompatibilityClosureAudit} from './run-phase320-f1-ui-spacing-compatibility-closure-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2687,5 +2688,6 @@ export function runPhase316FullIntegrationAudit(){const previous=runPhase315Full
 export function runPhase317FullIntegrationAudit(){const previous=runPhase316FullIntegrationAudit(),current=runPhase317F1FutureSafeClosureAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 317: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 317: '+x)];return {phase:317,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase318FullIntegrationAudit(){const previous=runPhase317FullIntegrationAudit(),current=runPhase318F1ForwardCompatibleAuditChain();const issues=[...previous.issues,...current.issues.map(x=>'Phase 318: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 318: '+x)];return {phase:318,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase319FullIntegrationAudit(){const previous=runPhase318FullIntegrationAudit(),current=runPhase319F1UiSpacingBattleAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 319: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 319: '+x)];return {phase:319,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase319FullIntegrationAudit();}
+export function runPhase320FullIntegrationAudit(){const previous=runPhase319FullIntegrationAudit(),current=runPhase320F1UiSpacingCompatibilityClosureAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 320: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 320: '+x)];return {phase:320,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase320FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
