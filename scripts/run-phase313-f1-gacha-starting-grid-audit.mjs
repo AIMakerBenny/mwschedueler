@@ -10,9 +10,6 @@ export function runPhase313F1GachaStartingGridAudit(){
   "const VERSION313='phase313-f1-gacha-starting-grid';",
   'const GRID_GACHA_CONFIG_V313=Object.freeze({',
   'function runStartingGridGachaRevealV313(',
-  "typeof window.multiDrawCardHTML==='function'",
-  "kicker:'STARTING GRID'",
-  "orderLabel:'P'+String(position).padStart(2,'0')",
   "stage.id='f1RacingGridGachaStageV313'",
   "setGridRevealControlsV273(false)",
   'const runStartingGridRevealLegacyV273=runStartingGridRevealV273;',
@@ -20,6 +17,12 @@ export function runPhase313F1GachaStartingGridAudit(){
   'window.mwsF1QaGachaStartingGridV313=qaGachaStartingGridV313;',
   'window.__mwsF1RacingV313=VERSION313;'
  ])if(!core.includes(token))issues.push('Phase 313 core missing: '+token);
+ const cardStart=core.indexOf('function gridGachaCardHtmlV313(');
+ const cardEnd=core.indexOf('function gridGachaDockItemV313(',cardStart);
+ const cardSource=cardStart>=0&&cardEnd>cardStart?core.slice(cardStart,cardEnd):'';
+ if(!cardSource.includes("sharedAvailable=typeof window.multiDrawCardHTML==='function'")||!cardSource.includes('window.multiDrawCardHTML(player)'))issues.push('Phase 313 real Gacha style reuse missing');
+ if(!/positionText='P'\+String\(position\)\.padStart\(2,'0'\)/.test(cardSource))issues.push('Phase 313 Pxx position label generation missing');
+ if(!cardSource.includes('gacha-card-kicker')||!cardSource.includes('STARTING GRID')||!cardSource.includes('gacha-card-desc')||!cardSource.includes('+positionText+'))issues.push('Phase 313 Starting Grid card content structure missing');
  for(const token of [
   '#f1RacingGridListV272.f1-racing-grid-gacha-active-v313',
   '.f1-racing-grid-gacha-stage-v313',
