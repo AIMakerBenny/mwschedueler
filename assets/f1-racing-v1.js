@@ -7433,7 +7433,8 @@ function applyGameVariabilityV303(stepMs){
     const requested=(catchup.bonusKph+(inBattleRange?GAME_VARIABILITY_CONFIG_V303.baseBonusKph+pressure*GAME_VARIABILITY_CONFIG_V303.pressureBonusKph+failed:0)+midfield+momentum)*competitionV345.variability;
     follower.positionCatchupPctV314=catchup.pct;
     follower.positionCatchupBonusKphV314=catchup.bonusKph;
-    follower.variabilitySpeedBiasKphV309=Math.min(GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph,requested);
+    const variabilityCapV345=GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph*(activeRaceModeV345()==='FAST'?1.45:1.15);
+    follower.variabilitySpeedBiasKphV309=Math.min(variabilityCapV345,requested);
     follower.variabilityBiasUntilV309=now+OVERTAKE_FLOW_CONFIG_V309.variabilityHoldMs;
     follower.battleSpeedBiasKph=combinedBattleBiasV309(follower,String(follower.battleState||'FOLLOWING'),now);
     if(gapMeters<=GAME_VARIABILITY_CONFIG_V303.attackGapMeters*competitionV345.attackGap&&!follower.pitRequested){
@@ -7446,7 +7447,7 @@ function applyGameVariabilityV303(stepMs){
   const leader=standings[0]?.vehicle,p2=standings[1];
   const leaderHold=Number(leader?.leaderPressureLeadDurationMsV274)||0,gapSeconds=Math.max(0,Number(p2?.intervalSeconds)||0);
   if(gameVariabilityEligibleV303(leader)&&leaderHold>=GAME_VARIABILITY_CONFIG_V303.leaderHoldMs&&gapSeconds<=GAME_VARIABILITY_CONFIG_V303.leaderCloseGapSeconds){
-    leader.variabilitySpeedBiasKphV309=-Math.min(GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph,GAME_VARIABILITY_CONFIG_V303.leaderClosePenaltyKph);
+    leader.variabilitySpeedBiasKphV309=-Math.min(GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph,GAME_VARIABILITY_CONFIG_V303.leaderClosePenaltyKph*(activeRaceModeV345()==='FAST'?1.8:1.25));
     leader.variabilityBiasUntilV309=now+OVERTAKE_FLOW_CONFIG_V309.variabilityHoldMs;
     leader.battleSpeedBiasKph=combinedBattleBiasV309(leader,String(leader.battleState||'FOLLOWING'),now);
     gameVariabilityStateV303.leaderPressureApplications+=1;
