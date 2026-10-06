@@ -103,13 +103,14 @@
   max-height:calc(100dvh - 8px)!important;
   align-content:stretch!important;
 }
-#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="track"],
-#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="commentary"]{
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="track"]:not([hidden]),
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="commentary"]:not([hidden]){
   display:flex!important;
   flex-direction:column!important;
   min-height:0!important;
   overflow:hidden!important;
 }
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel][hidden]{display:none!important}
 #f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="track"] .f1-racing-race-map-stage-v188{
   flex:1 1 auto!important;
   height:auto!important;
