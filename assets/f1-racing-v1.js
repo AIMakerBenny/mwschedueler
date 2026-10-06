@@ -2871,7 +2871,7 @@ function cloneTrackForEngineQaV240(track){
     zones:Object.freeze((track.zones||[]).map(row=>Object.freeze({...row})))
   });
 }
-function buildEngineQaSnapshotV240(trackId,{drivers=6,laps=1,runIndex=0,gridMode='FIXED'}={}){
+function buildEngineQaSnapshotV240(trackId,{drivers=6,laps=1,runIndex=0,gridMode='FIXED',raceMode='NORMAL'}={}){
   const track=window.mwsGetF1TrackV182?.(String(trackId||''));if(!track)return null;
   const count=Math.max(2,Math.min(12,Math.floor(Number(drivers)||6)));
   const totalLaps=Math.max(1,Math.min(20,Math.floor(Number(laps)||1)));
@@ -2888,7 +2888,7 @@ function buildEngineQaSnapshotV240(trackId,{drivers=6,laps=1,runIndex=0,gridMode
   }
   rows=rows.map(row=>Object.freeze(row));
   return Object.freeze({
-    createdAt,trackId:String(track.id),totalLaps,
+    createdAt,trackId:String(track.id),totalLaps,raceMode:String(raceMode||'NORMAL').toUpperCase()==='FAST'?'FAST':'NORMAL',
     track:cloneTrackForEngineQaV240(track),drivers:Object.freeze(rows)
   });
 }
