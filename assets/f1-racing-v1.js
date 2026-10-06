@@ -3381,6 +3381,35 @@ function tyreCompoundSpecV203(compound){
   const key=String(compound||'MEDIUM').toUpperCase();
   return TYRE_COMPOUNDS_V203[key]||TYRE_COMPOUNDS_V203.MEDIUM;
 }
+function tyreCompoundKeyV344(compound){
+  const key=String(compound||'MEDIUM').toUpperCase();
+  return Object.prototype.hasOwnProperty.call(TYRE_COMPOUNDS_V203,key)?key:'MEDIUM';
+}
+function tyreCornerSpeedFactorV344(compound,phase){
+  if(!['BRAKING','TURN_IN','APEX','EXIT'].includes(String(phase||'')))return 1;
+  const key=tyreCompoundKeyV344(compound),base=Number(TYRE_DYNAMICS_V344.cornerSpeedFactor[key])||1;
+  return phase==='BRAKING'?1+(base-1)*.55:base;
+}
+function effectiveTyreWearPerLapV344(compound){
+  const key=tyreCompoundKeyV344(compound);
+  return Number(tyreCompoundSpecV203(key).wearPerLap)*(Number(TYRE_DYNAMICS_V344.wearScale[key])||1);
+}
+function pitRemainingThresholdV344(vehicle,compound=vehicle?.tyreCompound){
+  const key=tyreCompoundKeyV344(compound),range=TYRE_DYNAMICS_V344.pitRemainingRange[key]||TYRE_DYNAMICS_V344.pitRemainingRange.MEDIUM;
+  const low=Number(range[0]),high=Number(range[1]);
+  const seed=hashDriverV189(String(vehicle?.id||vehicle?.driver?.name||'driver')+'|'+key+'|'+String(Number(vehicle?.pitStopCount)||0)+'|pit-v344');
+  const unit=(seed%10000)/9999;
+  const management=Math.max(-1,Math.min(1,driverSkillNormV200(vehicle,'tyreManagement')));
+  const threshold=low+(high-low)*unit-management*.025;
+  return Math.max(.12,Math.min(TYRE_DYNAMICS_V344.pitRemainingMax-.005,threshold));
+}
+function wornTyreIncidentMultiplierV344(vehicle,phase){
+  if(!['TURN_IN','APEX','EXIT'].includes(String(phase||'')))return 1;
+  const wear=clamp01V198(vehicle?.tyreWear);
+  const span=Math.max(.01,TYRE_DYNAMICS_V344.wornIncidentFull-TYRE_DYNAMICS_V344.wornIncidentStart);
+  const t=clamp01V198((wear-TYRE_DYNAMICS_V344.wornIncidentStart)/span);
+  return 1+t*(TYRE_DYNAMICS_V344.maxWornIncidentMultiplier-1);
+}
 function tyreCornerLoadV203(phase){
   if(phase==='TURN_IN'||phase==='APEX')return 1;
   if(phase==='EXIT')return .75;
@@ -3404,6 +3433,7 @@ function setVehicleTyreCompoundV203(driverId,compound){
   vehicle.tyreGraining=0;
   vehicle.tyreFlatSpot=0;
   vehicle.tyreStrategyPressure=0;
+  vehicle.pitRemainingThresholdV344=pitRemainingThresholdV344(vehicle,key);
   return true;
 }
 function updateTyreSystemV203(vehicle,stepMs,phase){
@@ -3437,7 +3467,9 @@ function updateTyreSystemV203(vehicle,stepMs,phase){
   const coldStress=Math.max(0,(spec.idealSurface-.12)-surface);
   const grainingGain=coldStress*cornerLoad*lapFraction*2.4*managementWearFactor;
   const flatSpotGain=(Number(vehicle.lockupActiveMs)||0)>0?clamp01V198(vehicle.lockupSeverity)*lapFraction*1.6:0;
-  const wearGain=spec.wearPerLap*lapFraction*managementWearFactor*(1+thermalStress*.8+dirtyHeat*.18);
+  const trackWearFactor=Math.max(.82,Math.min(1.35,Number(activeTrackRuntimeProfileV235()?.tyreStressFactor)||1));
+  const compoundWearScale=Number(TYRE_DYNAMICS_V344.wearScale[tyreCompoundKeyV344(vehicle.tyreCompound)])||1;
+  const wearGain=spec.wearPerLap*compoundWearScale*trackWearFactor*lapFraction*managementWearFactor*(1+thermalStress*.8+dirtyHeat*.18);
 
   vehicle.tyreWear=Math.max(0,Math.min(1,(Number(vehicle.tyreWear)||0)+wearGain));
   vehicle.tyreThermalDeg=Math.max(0,Math.min(1,(Number(vehicle.tyreThermalDeg)||0)+thermalDegGain));
@@ -3448,7 +3480,7 @@ function updateTyreSystemV203(vehicle,stepMs,phase){
   vehicle.tyreAgeLaps=Math.max(0,(Number(vehicle.raceProgress)||0)-(Number(vehicle.tyreStartRaceProgress)||0));
 
   const tempGrip=Math.max(.88,1-tempError*.42);
-  const wearGrip=Math.max(.84,1-vehicle.tyreWear*.15);
+  const wearGrip=Math.max(.80,1-vehicle.tyreWear*.19);
   const damageGrip=Math.max(.88,1-vehicle.tyreThermalDeg*.06-vehicle.tyreGraining*.05-vehicle.tyreFlatSpot*.10);
   const warmupFactor=Math.max(PIT_CONFIG_V205.minWarmupGrip,Math.min(1,Number(vehicle.tyreWarmupFactor)||1));
   vehicle.tyreGrip=Math.max(TYRE_CONFIG_V203.minGrip,Math.min(TYRE_CONFIG_V203.maxGrip,spec.gripBias*tempGrip*wearGrip*damageGrip*warmupFactor));
@@ -3462,7 +3494,9 @@ function getTyreStatesV203(){
     surfaceTemp:Number(vehicle.tyreSurfaceTemp)||0,carcassTemp:Number(vehicle.tyreCarcassTemp)||0,
     grip:Number(vehicle.tyreGrip)||1,thermalDeg:Number(vehicle.tyreThermalDeg)||0,
     graining:Number(vehicle.tyreGraining)||0,flatSpot:Number(vehicle.tyreFlatSpot)||0,
-    strategyPressure:Number(vehicle.tyreStrategyPressure)||0
+    strategyPressure:Number(vehicle.tyreStrategyPressure)||0,
+    remaining:Math.max(0,1-(Number(vehicle.tyreWear)||0)),
+    pitRemainingThreshold:Number(vehicle.pitRemainingThresholdV344)||pitRemainingThresholdV344(vehicle)
   }));
 }
 
