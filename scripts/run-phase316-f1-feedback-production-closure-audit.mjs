@@ -38,9 +38,10 @@ export function runPhase316F1FeedbackProductionClosureAudit(){
  ])if(!core.includes(token))issues.push('Phase 316 diversity diagnostics missing: '+token);
  for(const token of [
   "import {runPhase316F1FeedbackProductionClosureAudit} from './run-phase316-f1-feedback-production-closure-audit.mjs';",
-  'export function runPhase316FullIntegrationAudit()',
-  'runCurrentFullIntegrationAudit(){return runPhase316FullIntegrationAudit();'
+  'export function runPhase316FullIntegrationAudit()'
  ])if(!current.includes(token))issues.push('Phase 316 cumulative chain missing: '+token);
+ const currentPhase316=Number(current.match(/runCurrentFullIntegrationAudit\(\)\{return runPhase(\d+)FullIntegrationAudit\(\);?\}/)?.[1]||0);
+ if(currentPhase316<316)issues.push('Phase 316 cumulative chain regressed below Phase 316: '+currentPhase316);
  for(const file of ['assets/f1-racing-v1.js','assets/f1-racing-r308.js','scripts/diagnose-recovery-h-f1-live.mjs','scripts/run-current-full-integration-audit.mjs','scripts/run-phase316-f1-feedback-production-closure-audit.mjs']){
   const run=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});if(run.status!==0)issues.push(file+' syntax failed: '+String(run.stderr||run.stdout||'').trim());
  }

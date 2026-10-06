@@ -8,7 +8,9 @@ export function runPhase317F1FutureSafeClosureAudit(){
  const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
  for(const token of ["gachaSupersedesShuffle=base.includes","Phase 313 Gacha starting grid QA failed","Phase 313 P-grid dock is not on the right side"])if(!p303.includes(token))issues.push('Phase 317 Phase303 future-safe closure missing: '+token);
  for(const token of ["const currentPhase=Number(current.match(","if(currentPhase<312)"])if(!p312.includes(token))issues.push('Phase 317 Phase312 future-safe closure missing: '+token);
- for(const token of ["import {runPhase317F1FutureSafeClosureAudit} from './run-phase317-f1-future-safe-closure-audit.mjs';","export function runPhase317FullIntegrationAudit()","runCurrentFullIntegrationAudit(){return runPhase317FullIntegrationAudit();"])if(!current.includes(token))issues.push('Phase 317 cumulative chain missing: '+token);
+ for(const token of ["import {runPhase317F1FutureSafeClosureAudit} from './run-phase317-f1-future-safe-closure-audit.mjs';","export function runPhase317FullIntegrationAudit()"])if(!current.includes(token))issues.push('Phase 317 cumulative chain missing: '+token);
+ const currentPhase317=Number(current.match(/runCurrentFullIntegrationAudit\(\)\{return runPhase(\d+)FullIntegrationAudit\(\);?\}/)?.[1]||0);
+ if(currentPhase317<317)issues.push('Phase 317 cumulative chain regressed below Phase 317: '+currentPhase317);
  if(!workflow.includes('node --check scripts/run-phase317-f1-future-safe-closure-audit.mjs'))issues.push('Phase 317 workflow syntax check missing');
  for(const file of ['scripts/run-phase303-f1-feedback-stabilization-audit.mjs','scripts/run-phase312-f1-final-production-closure-audit.mjs','scripts/run-current-full-integration-audit.mjs','scripts/run-phase317-f1-future-safe-closure-audit.mjs']){
   const run=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});if(run.status!==0)issues.push(file+' syntax failed: '+String(run.stderr||run.stdout||'').trim());
