@@ -253,6 +253,36 @@ try{
   }
   if(!phase309Ready)throw new Error('Phase 309 runtime did not propagate to Recovery H browser');
 
+  let phase313Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    phase313Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV313==='phase313-f1-gacha-starting-grid'&&typeof window.mwsF1QaGachaStartingGridV313==='function'","Phase 313 runtime readiness"));
+    if(phase313Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v313=${Date.now()}-${attempt}`});
+    await refreshed;await sleep(1200);
+  }
+  if(!phase313Ready)throw new Error('Phase 313 runtime did not propagate to Recovery H browser');
+
+  let phase314Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    phase314Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV314==='phase314-f1-race-dynamics-rebalance'&&typeof window.mwsF1QaRaceDynamicsV314==='function'","Phase 314 runtime readiness"));
+    if(phase314Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v314=${Date.now()}-${attempt}`});
+    await refreshed;await sleep(1200);
+  }
+  if(!phase314Ready)throw new Error('Phase 314 runtime did not propagate to Recovery H browser');
+
+  let phase315Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    phase315Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV315==='phase315-f1-live-participant-dialogue-diversity'&&window.__mwsF1RacingHudV315==='phase315-dialogue-semantic-diversity'&&typeof window.mwsF1QaLiveDiversityV315==='function'&&typeof window.mwsF1QaDialogueSemanticV315==='function'","Phase 315 runtime readiness"));
+    if(phase315Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v315=${Date.now()}-${attempt}`});
+    await refreshed;await sleep(1200);
+  }
+  if(!phase315Ready)throw new Error('Phase 315 runtime did not propagate to Recovery H browser');
+
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
@@ -395,6 +425,14 @@ try{
     assert(await window.mwsF1WaitGridRevealV273?.(8000)===true,'Phase 273 reveal did not finish');
     const revealQa273=window.mwsF1QaStartingGridRevealV273?.();
     assert(revealQa273?.allPass===true,'Phase 273 starting grid reveal QA failed: '+JSON.stringify(revealQa273));
+    const gachaQa313=window.mwsF1QaGachaStartingGridV313?.();
+    assert(gachaQa313?.allPass===true&&gachaQa313?.gachaRenderer===true,'Phase 313 Gacha starting grid QA failed: '+JSON.stringify(gachaQa313));
+    const gachaStage313=document.getElementById('f1RacingGridGachaStageV313');
+    const gachaDock313=document.getElementById('f1GridGachaDockListV313');
+    const gachaReveal313=document.getElementById('f1GridGachaRevealV313');
+    assert(gachaStage313&&gachaDock313&&gachaReveal313,'Phase 313 Gacha starting grid DOM missing');
+    assert(gachaDock313.querySelectorAll('.f1-grid-gacha-dock-item-v313').length===(snapshot260?.drivers||[]).length,'Phase 313 right-side P-grid list count mismatch');
+    assert(Boolean(gachaReveal313.firstElementChild),'Phase 313 center Gacha reveal card missing');
     assert(initialStart273?.disabled===false&&getComputedStyle(initialStart273).visibility!=='hidden','Phase 273 start button did not unlock after reveal');
     const gridQa272=window.mwsF1QaRandomStartingGridV272?.();
     assert(gridQa272?.allPass===true,'Phase 272 random starting grid QA failed: '+JSON.stringify(gridQa272));
@@ -406,16 +444,20 @@ try{
     const shuffle272=document.getElementById('f1RacingGridShuffleV272');
     assert(shuffle272,'Phase 272 reshuffle button missing');
     shuffle272.click();await raf();
-    const tradeCards303=[...document.querySelectorAll('#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273')];
-    const tradeRects303=tradeCards303.map(card=>card.getBoundingClientRect());
-    assert(tradeRects303.length>=2,'Phase 303 shuffle trade cards missing');
-    assert(tradeRects303.every(rect=>rect.width>0&&rect.height/rect.width>=1.3),'Phase 303 shuffle cards are not trade-card proportion: '+JSON.stringify(tradeRects303.map(r=>({w:r.width,h:r.height,ratio:r.height/Math.max(1,r.width)}))));
-    const tradeCenters303=tradeRects303.map(r=>r.left+r.width/2);
-    assert(Math.max(...tradeCenters303)-Math.min(...tradeCenters303)>=80,'Phase 303 shuffle cards remain clumped: '+JSON.stringify(tradeCenters303));
+    const reshuffleGachaStage313=document.getElementById('f1RacingGridGachaStageV313');
+    const reshuffleGachaDock313=document.getElementById('f1GridGachaDockListV313');
+    assert(reshuffleGachaStage313&&reshuffleGachaDock313,'Phase 313 reshuffle did not open Gacha stage');
+    const reshuffleStageRect313=reshuffleGachaStage313.getBoundingClientRect();
+    const reshuffleDockRect313=reshuffleGachaDock313.closest('.f1-grid-gacha-dock-v313')?.getBoundingClientRect();
+    assert(reshuffleStageRect313.width>300&&reshuffleStageRect313.height>250,'Phase 313 Gacha stage geometry invalid: '+JSON.stringify(reshuffleStageRect313));
+    assert(reshuffleDockRect313&&reshuffleDockRect313.left>reshuffleStageRect313.left+reshuffleStageRect313.width*.50,'Phase 313 P-grid dock is not on the right side');
     const reshuffleReveal273=window.mwsF1GetStartingGridRevealStateV273?.();
     assert(reshuffleReveal273?.revealing===true,'Phase 273 reshuffle did not start reveal animation');
     assert(document.getElementById('f1RacingGridStartRecoveryM')?.disabled===true,'Phase 273 start button unlocked before reveal completion');
     assert(await window.mwsF1WaitGridRevealV273?.(8000)===true,'Phase 273 reshuffle reveal did not finish');
+    const reshuffleDockItems313=[...document.querySelectorAll('#f1GridGachaDockListV313 .f1-grid-gacha-dock-item-v313')];
+    assert(reshuffleDockItems313.length===(window.mwsF1GetActiveRaceSnapshotV187?.()?.drivers||[]).length,'Phase 313 reshuffle P-grid dock incomplete');
+    assert(reshuffleDockItems313.every((node,index)=>String(node.querySelector('b')?.textContent||'')==='P'+String(index+1).padStart(2,'0')),'Phase 313 P-grid labels are not sequential');
     const gridAfter272=window.mwsF1GetActiveRaceSnapshotV187?.();
     const orderAfter272=(gridAfter272?.drivers||[]).map(row=>String(row.contactId));
     assert(String(gridAfter272?.createdAt)===String(gridBefore272?.createdAt),'Phase 272 reshuffle replaced race snapshot identity');
@@ -447,8 +489,18 @@ try{
     assert(cutin303?.parentElement?.classList.contains('f1-racing-race-map-stage-v188'),'Phase 303 LIVE cut-in still overlaps the track map');
     const variabilityQa303=window.mwsF1QaGameVariabilityV303?.();
     assert(variabilityQa303?.allPass===true&&Number(variabilityQa303?.config?.liveCadenceMs)>=8500&&Number(variabilityQa303?.config?.liveCadenceMs)<=12000&&Number(variabilityQa303?.config?.maxTotalBiasKph)>=4.5,'Phase 303 race variability QA failed: '+JSON.stringify(variabilityQa303));
+    const dynamicsQa314=window.mwsF1QaRaceDynamicsV314?.();
+    assert(dynamicsQa314?.allPass===true,'Phase 314 race dynamics QA failed: '+JSON.stringify(dynamicsQa314));
+    assert(Number(dynamicsQa314?.tyreWear?.SOFT)>=.10&&Number(dynamicsQa314?.tyreWear?.MEDIUM)>=.08&&Number(dynamicsQa314?.tyreWear?.HARD)>=.06,'Phase 314 tyre wear acceleration not active: '+JSON.stringify(dynamicsQa314?.tyreWear));
+    const catchup314=dynamicsQa314?.catchup||[];
+    assert(catchup314.length>=4&&Number(catchup314.at(-1)?.pct)>Number(catchup314[0]?.pct)&&Number(dynamicsQa314?.variability?.positionCatchupMaxPct)>=.04,'Phase 314 rear position percentage catch-up bonus invalid: '+JSON.stringify(catchup314));
+    const frontPressure314=dynamicsQa314?.front||[];
+    assert(frontPressure314.length>=4&&Number(frontPressure314[0]?.rankScore)>Number(frontPressure314[1]?.rankScore)&&Number(frontPressure314[1]?.rankScore)>=Number(frontPressure314[2]?.rankScore),'Phase 314 front-position mistake pressure gradient invalid: '+JSON.stringify(frontPressure314));
     const livePolicy307=window.mwsF1QaLiveCutinPolicyV307?.();
     assert(livePolicy307?.allPass===true&&Number(livePolicy307?.templateCount)>=256&&Number(livePolicy307?.uniqueTemplateCount)>=256,'Phase 307 LIVE phrase library QA failed: '+JSON.stringify(livePolicy307));
+    const liveDiversity315=window.mwsF1QaLiveDiversityV315?.();
+    assert(liveDiversity315?.allPass===true&&Number(liveDiversity315?.statusTemplates)>=16,'Phase 315 LIVE participant diversity QA failed: '+JSON.stringify(liveDiversity315));
+    assert(Number(liveDiversity315?.config?.recentDriverLimit)>=5&&Number(liveDiversity315?.config?.rearCoverageWeight)>0,'Phase 315 LIVE coverage weighting missing: '+JSON.stringify(liveDiversity315?.config));
     assert(Number(livePolicy307?.config?.maxActive)===1&&Number(livePolicy307?.config?.globalCadenceMs)>=5000&&Number(livePolicy307?.config?.minDurationMs)>=4500,'Phase 307 LIVE frequency or duration policy failed: '+JSON.stringify(livePolicy307));
     window.mwsF1ToggleSimulationPauseV192?.(true);
     window.mwsF1ResetLiveCutinsV264?.();
@@ -499,6 +551,9 @@ try{
     assert(overlayQa308?.allPass===true,'Phase 308 track overlay HUD QA failed: '+JSON.stringify(overlayQa308));
     const overlayState308=window.mwsF1GetTrackOverlayStateV308?.();
     assert(Number(overlayState308?.config?.globalGapMs)>=6000&&Number(overlayState308?.config?.speakerGapMs)>=10000,'Phase 308 dialogue HUD frequency guard too loose: '+JSON.stringify(overlayState308));
+    const dialogueSemantic315=window.mwsF1QaDialogueSemanticV315?.();
+    assert(dialogueSemantic315?.allPass===true&&Number(dialogueSemantic315?.unique)>=4,'Phase 315 dialogue semantic diversity QA failed: '+JSON.stringify(dialogueSemantic315));
+    assert(Number(dialogueSemantic315?.config?.semanticWindow)>=2&&Number(dialogueSemantic315?.config?.recentSpeakerLimit)>=5,'Phase 315 dialogue semantic/speaker guard missing: '+JSON.stringify(dialogueSemantic315));
     window.mwsF1LayoutMarkerOverlaysV306?.();await raf();
     const thoughtMarker303=[...document.querySelectorAll('.f1-racing-race-vehicle-v189')].find(marker=>marker.querySelector('.f1-racing-driver-thought-v303'));
     assert(thoughtMarker303,'Phase 303 racer thought bubble did not attach to a track marker');
