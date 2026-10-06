@@ -41,8 +41,8 @@ export function runPhase309F1ViewportMarkerOvertakeFlowAudit(){
  }
  const labelY=Number(labelSource.match(/const y=([0-9.]+)/)?.[1]);
  const ringRadius=Number(core.match(/class:'car-ring'[^}]*r:([0-9.]+)/)?.[1]);
- const positionBoxY=Number(positionSource.match(/class:'car-position-box-v254'[^}]*y:([0-9.]+)/)?.[1]);
- const positionTextY=Number(positionSource.match(/class:'car-position-text-v254'[^}]*y:([0-9.]+)/)?.[1]);
+ const positionBoxY=Number(positionSource.match(/class:'car-position-box-v254'[^}]*,y:([0-9.]+)/)?.[1]);
+ const positionTextY=Number(positionSource.match(/class:'car-position-text-v254'[^}]*,y:([0-9.]+)/)?.[1]);
  if(![labelY,ringRadius,positionBoxY,positionTextY].every(Number.isFinite)||!(labelY>ringRadius&&positionBoxY>labelY&&positionTextY>positionBoxY)){
   issues.push('Phase 309 marker label/order geometry relation invalid: '+JSON.stringify({ringRadius,labelY,positionBoxY,positionTextY}));
  }
