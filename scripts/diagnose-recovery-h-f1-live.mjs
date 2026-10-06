@@ -543,8 +543,8 @@ try{
     const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]').getBoundingClientRect();
     const coverage=(timing.width*timing.height+track.width*track.height+commentary.width*commentary.height)/Math.max(1,wr.width*wr.height);
     assert(wr.width>1000&&wr.height>500,'Workspace geometry too small');
-    assert(track.width>wr.width*.60&&track.width<wr.width*.72,'Track Map width is not the expected left two-thirds: '+track.width+'/'+wr.width);
-    assert(timing.width>wr.width*.28&&timing.width<wr.width*.40,'Live Timing width is not the expected right third: '+timing.width+'/'+wr.width);
+    assert(track.width>wr.width*.54&&track.width<wr.width*.62,'Track Map width is not the expected Phase 305 7/12 share: '+track.width+'/'+wr.width);
+    assert(timing.width>wr.width*.38&&timing.width<wr.width*.46,'Live Timing width is not the expected Phase 305 5/12 share: '+timing.width+'/'+wr.width);
     assert(track.width*track.height>commentary.width*commentary.height*2,'Track Map is not dominant in default layout');
     assert(coverage>.78,'Workspace visible coverage too low: '+coverage.toFixed(3));
 
