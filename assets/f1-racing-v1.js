@@ -166,8 +166,8 @@ const PIT_STAGGER_V344=Object.freeze({
   criticalThermalDeg:.74
 });
 const RACE_COMPETITION_V345=Object.freeze({
-  NORMAL:Object.freeze({variability:1.32,attackGap:1.20,overtakeReleaseClosingKph:3.4,momentumThreshold:.48}),
-  FAST:Object.freeze({variability:2.20,attackGap:1.55,overtakeReleaseClosingKph:2.0,momentumThreshold:.37}),
+  NORMAL:Object.freeze({variability:1.36,attackGap:1.24,overtakeReleaseClosingKph:3.2,momentumThreshold:.46,p2ChallengeKph:4.2,leaderPressureKph:2.15,leaderHoldMs:6500}),
+  FAST:Object.freeze({variability:2.20,attackGap:1.60,overtakeReleaseClosingKph:1.8,momentumThreshold:.35,p2ChallengeKph:7.0,leaderPressureKph:3.8,leaderHoldMs:3200}),
   fastLaps:3
 });
 const RACE_MOMENTUM_CONFIG_V262=Object.freeze({
@@ -7343,6 +7343,13 @@ function activeRaceModeV345(){
 function raceCompetitionConfigV345(){
   return RACE_COMPETITION_V345[activeRaceModeV345()]||RACE_COMPETITION_V345.NORMAL;
 }
+function frontChallengeBonusV345(index,gapMeters){
+  if(index!==1)return 0;
+  const cfg=raceCompetitionConfigV345();
+  const gap=Math.max(0,Number(gapMeters)||0);
+  const proximity=clamp01V198(1-gap/Math.max(1,GAME_VARIABILITY_CONFIG_V303.maxGapMeters));
+  return cfg.p2ChallengeKph*(.46+.54*proximity);
+}
 function gameVariabilityEligibleV303(vehicle){
   return Boolean(vehicle&&!vehicle.finished&&!vehicle.blueFlag&&!vehicle.trackBoundaryExceededV271&&String(vehicle.pitState||'TRACK')==='TRACK'&&!vehicle.pitRequested);
 }
@@ -7430,7 +7437,8 @@ function applyGameVariabilityV303(stepMs){
     const failed=inBattleRange?Math.min(GAME_VARIABILITY_CONFIG_V303.maxFailedPassBonusKph,(Number(follower.passFailedCount)||0)*GAME_VARIABILITY_CONFIG_V303.failedPassBonusKph):0;
     const midfield=i>=4&&i<=14?GAME_VARIABILITY_CONFIG_V303.midfieldBonusKph:0;
     const momentum=gameVariabilityMomentumV303(follower,now)>competitionV345.momentumThreshold?GAME_VARIABILITY_CONFIG_V303.momentumBonusKph:0;
-    const requested=(catchup.bonusKph+(inBattleRange?GAME_VARIABILITY_CONFIG_V303.baseBonusKph+pressure*GAME_VARIABILITY_CONFIG_V303.pressureBonusKph+failed:0)+midfield+momentum)*competitionV345.variability;
+    const frontChallenge=frontChallengeBonusV345(i,gapMeters);
+    const requested=(catchup.bonusKph+(inBattleRange?GAME_VARIABILITY_CONFIG_V303.baseBonusKph+pressure*GAME_VARIABILITY_CONFIG_V303.pressureBonusKph+failed:0)+midfield+momentum)*competitionV345.variability+frontChallenge;
     follower.positionCatchupPctV314=catchup.pct;
     follower.positionCatchupBonusKphV314=catchup.bonusKph;
     const variabilityCapV345=GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph*(activeRaceModeV345()==='FAST'?1.45:1.15);
@@ -7446,8 +7454,8 @@ function applyGameVariabilityV303(stepMs){
   }
   const leader=standings[0]?.vehicle,p2=standings[1];
   const leaderHold=Number(leader?.leaderPressureLeadDurationMsV274)||0,gapSeconds=Math.max(0,Number(p2?.intervalSeconds)||0);
-  if(gameVariabilityEligibleV303(leader)&&leaderHold>=GAME_VARIABILITY_CONFIG_V303.leaderHoldMs&&gapSeconds<=GAME_VARIABILITY_CONFIG_V303.leaderCloseGapSeconds){
-    leader.variabilitySpeedBiasKphV309=-Math.min(GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph,GAME_VARIABILITY_CONFIG_V303.leaderClosePenaltyKph*(activeRaceModeV345()==='FAST'?1.8:1.25));
+  if(gameVariabilityEligibleV303(leader)&&leaderHold>=competitionV345.leaderHoldMs&&gapSeconds<=GAME_VARIABILITY_CONFIG_V303.leaderCloseGapSeconds*1.35){
+    leader.variabilitySpeedBiasKphV309=-Math.min(GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph,competitionV345.leaderPressureKph);
     leader.variabilityBiasUntilV309=now+OVERTAKE_FLOW_CONFIG_V309.variabilityHoldMs;
     leader.battleSpeedBiasKph=combinedBattleBiasV309(leader,String(leader.battleState||'FOLLOWING'),now);
     gameVariabilityStateV303.leaderPressureApplications+=1;
@@ -7567,7 +7575,7 @@ window.mwsF1QaStaggeredPitStrategyV344=function(){
 window.mwsF1QaCompetitionFastRaceV345=function(){
   const normal=RACE_COMPETITION_V345.NORMAL,fast=RACE_COMPETITION_V345.FAST;
   return {version:VERSION345,normal,fast,fastLaps:RACE_COMPETITION_V345.fastLaps,buttonReady:Boolean(document.getElementById('f1RacingFastRaceV345')),
-    allPass:fast.variability>normal.variability&&normal.variability>1&&fast.attackGap>normal.attackGap&&RACE_COMPETITION_V345.fastLaps===3&&Boolean(document.getElementById('f1RacingFastRaceV345'))};
+    allPass:fast.variability>normal.variability&&normal.variability>1&&fast.attackGap>normal.attackGap&&normal.p2ChallengeKph>=4&&fast.p2ChallengeKph>normal.p2ChallengeKph&&normal.leaderPressureKph>=2&&RACE_COMPETITION_V345.fastLaps===3&&Boolean(document.getElementById('f1RacingFastRaceV345'))};
 };
 
 function qaUiVisibilitySpacingV324(){
