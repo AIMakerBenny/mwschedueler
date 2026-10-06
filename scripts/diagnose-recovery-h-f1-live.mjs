@@ -1541,7 +1541,26 @@ try{
     return {width:Number(rect.width.toFixed(1)),height:Number(rect.height.toFixed(1)),panelCount:panels.length,overlaps,markers:true};
   })()`,'Phase 267 QHD desktop QA');
 
-  const result={phase:'recovery-h',name:'f1-live-browser-qa',baseline,interaction,qhd,pass:true};
+  const raceDynamics=await evaluate(cdp,`(()=>{
+    const assert=(condition,message)=>{if(!condition)throw new Error(message)};
+    assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Phase 345-346 engine QA requires Setup');
+    const trackId=(window.mwsF1GetTrackCatalogV186?.()||[]).some(row=>String(row.id)==='mawang-speed-park-v1')?'mawang-speed-park-v1':String((window.mwsF1GetTrackCatalogV186?.()||[])[0]?.id||'');
+    assert(trackId,'Phase 345-346 engine QA track unavailable');
+    const normal=window.mwsF1RunAcceleratedEngineRaceV240?.(trackId,{drivers:9,laps:8,runIndex:34501,stepMs:100,maxSteps:30000,gridMode:'FIXED',raceMode:'NORMAL'});
+    assert(normal?.completed===true,'Phase 345 normal race engine run failed: '+JSON.stringify(normal));
+    const normalMoved=(normal.resultRows||[]).filter(row=>Number(row.position)!==Number(row.gridPosition)).length;
+    const normalPasses=Number(normal?.telemetry?.totalPasses)||0;
+    assert(normalMoved>=2&&normalPasses>=3,'Phase 345 normal race remains too static: '+JSON.stringify({normalMoved,normalPasses,rows:normal.resultRows}));
+    const fast=window.mwsF1RunAcceleratedEngineRaceV240?.(trackId,{drivers:9,laps:3,runIndex:34601,stepMs:100,maxSteps:18000,gridMode:'FIXED',raceMode:'FAST'});
+    assert(fast?.completed===true,'Phase 346 fast race engine run failed: '+JSON.stringify(fast));
+    const fastMoved=(fast.resultRows||[]).filter(row=>Number(row.position)!==Number(row.gridPosition)).length;
+    const fastPasses=Number(fast?.telemetry?.totalPasses)||0;
+    assert(fastMoved>=3&&fastPasses>=4,'Phase 346 fast race variability too low: '+JSON.stringify({fastMoved,fastPasses,rows:fast.resultRows}));
+    assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Phase 345-346 engine QA cleanup failed');
+    return {trackId,normal:{passes:normalPasses,moved:normalMoved,simTimeMs:normal.simTimeMs},fast:{passes:fastPasses,moved:fastMoved,simTimeMs:fast.simTimeMs}};
+  })()`,'Phase 345-346 race dynamics engine QA');
+
+  const result={phase:'recovery-h',name:'f1-live-browser-qa',baseline,interaction,qhd,raceDynamics,pass:true};
   console.log(JSON.stringify({recoveryHLiveBrowser:result},null,2));
 }finally{
   cdp?.close();
