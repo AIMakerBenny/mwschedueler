@@ -36,8 +36,9 @@ export function runPhase267F1IntegratedSpectatorDesktopAudit(){
     'window.__mwsF1RacingV267=VERSION267;'
   ])if(!racing.includes(token))issues.push('Phase 267 runtime missing: '+token);
 
-  if(!racing.includes('const totalLaps=Math.max(1,Math.min(20,Math.floor(Number(laps)||1)));'))
-    issues.push('Phase 267 accelerated engine does not support 20-lap QA');
+  const legacyLapSupport=racing.includes('const totalLaps=Math.max(1,Math.min(20,Math.floor(Number(laps)||1)));');
+  const extendedLapSupport=racing.includes('const requestedLaps=Math.max(1,Math.min(20,Math.floor(Number(laps)||1)));')&&racing.includes("const totalLaps=normalizedRaceMode==='FAST'?RACE_COMPETITION_V345.fastLaps:requestedLaps;");
+  if(!legacyLapSupport&&!extendedLapSupport)issues.push('Phase 267 accelerated engine does not support 20-lap QA');
 
   const runtimeReadinessMatch=live.match(/window\.__mwsF1RacingV(\d+)===['"]phase\d+[^'"]*['"]/);
   const runtimeReadinessPhase=Number(runtimeReadinessMatch?.[1]||0);
