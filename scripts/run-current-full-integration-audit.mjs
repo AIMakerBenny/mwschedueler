@@ -324,6 +324,7 @@ import {runPhase325F1SupersededAuditCompatibility} from './run-phase325-f1-super
 import {runPhase326F1GachaImageFallbackQaAudit} from './run-phase326-f1-gacha-image-fallback-qa-audit.mjs';
 import {runPhase327F1LabelTagSeparationCompatibilityAudit} from './run-phase327-f1-label-tag-separation-compatibility-audit.mjs';
 import {runPhase328F1TrainHeadwayOvertakeReleaseAudit} from './run-phase328-f1-train-headway-overtake-release-audit.mjs';
+import {runPhase329F1FutureSafeAuditCleanup} from './run-phase329-f1-future-safe-audit-cleanup.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2705,5 +2706,6 @@ export function runPhase325FullIntegrationAudit(){const previous=runPhase324Full
 export function runPhase326FullIntegrationAudit(){const previous=runPhase325FullIntegrationAudit(),current=runPhase326F1GachaImageFallbackQaAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 326: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 326: '+x)];return {phase:326,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase327FullIntegrationAudit(){const previous=runPhase326FullIntegrationAudit(),current=runPhase327F1LabelTagSeparationCompatibilityAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 327: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 327: '+x)];return {phase:327,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase328FullIntegrationAudit(){const previous=runPhase327FullIntegrationAudit(),current=runPhase328F1TrainHeadwayOvertakeReleaseAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 328: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 328: '+x)];return {phase:328,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase328FullIntegrationAudit();}
+export function runPhase329FullIntegrationAudit(){const previous=runPhase328FullIntegrationAudit(),current=runPhase329F1FutureSafeAuditCleanup();const issues=[...previous.issues,...current.issues.map(x=>'Phase 329: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 329: '+x)];return {phase:329,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase329FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
