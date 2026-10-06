@@ -1,0 +1,30 @@
+/* Phase 342: keep the live race console from stretching into an ultra-wide letterbox */
+body.f1-racing-r12-compact-v287 #f1RacingViewRaceV185{
+  width:min(100%,var(--f1-race-fit-width-v342,100%))!important;
+  max-width:var(--f1-race-fit-width-v342,100%)!important;
+  margin-inline:auto!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+}
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceRecoveryE{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+}
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceRecoveryE .f1-racing-workspace-panel-recovery-e{
+  min-width:0!important;
+  max-width:100%!important;
+}
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceRecoveryE .f1-racing-race-map-stage-v188,
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceRecoveryE .f1-racing-commentary-log-v188,
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceRecoveryE .f1-racing-live-timing-v188{
+  min-width:0!important;
+  max-width:100%!important;
+}
+body.f1-racing-r12-compact-v287 #f1RacingViewRaceV185[data-f1-aspect-fit-v342="capped"]{
+  border-left:1px solid rgba(98,116,142,.18);
+  border-right:1px solid rgba(98,116,142,.18);
+  box-shadow:-20px 0 42px rgba(0,0,0,.16),20px 0 42px rgba(0,0,0,.16);
+}
