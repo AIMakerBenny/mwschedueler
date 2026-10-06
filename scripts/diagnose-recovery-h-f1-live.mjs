@@ -198,6 +198,17 @@ try{
   }
   if(!phase304Ready)throw new Error('Phase 304 runtime did not propagate to Recovery H browser');
 
+  let phase305Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    phase305Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV305==='phase305-f1-workspace-ui-stability'&&typeof window.mwsF1QaWorkspaceUiV305==='function'","Phase 305 runtime readiness"));
+    if(phase305Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v305=${Date.now()}-${attempt}`});
+    await refreshed;
+    await sleep(1200);
+  }
+  if(!phase305Ready)throw new Error('Phase 305 runtime did not propagate to Recovery H browser');
+
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
@@ -561,6 +572,32 @@ try{
   const shot=await cdp.send('Page.captureScreenshot',{format:'jpeg',quality:58,fromSurface:true,captureBeyondViewport:false});
   console.log('RECOVERY_H_SCREENSHOT_JPEG_BASE64='+String(shot.data||''));
 
+  const phase305ViewportMatrix=[];
+  for(const viewport of [
+    {label:'2k-100',width:2560,height:1440},
+    {label:'2k-150-equivalent',width:1707,height:960},
+    {label:'fhd-100',width:1920,height:1080},
+    {label:'compact-desktop',width:1366,height:768}
+  ]){
+    await cdp.send('Emulation.setDeviceMetricsOverride',{width:viewport.width,height:viewport.height,deviceScaleFactor:1,mobile:false});
+    await sleep(260);
+    const row=await evaluate(cdp,`(()=>{
+      window.mwsF1SyncWorkspaceUiV305?.();
+      const report=window.mwsF1WorkspaceUiReportV305?.()||{};
+      const root=document.getElementById('f1RacingWorkspaceRecoveryE');
+      const wr=root?.getBoundingClientRect();
+      const visible=[...root?.querySelectorAll('[data-f1-workspace-panel]')||[]].filter(p=>!p.hidden&&getComputedStyle(p).display!=='none');
+      const panelOverflow=visible.filter(p=>p.scrollWidth>p.clientWidth+2||p.scrollHeight>p.clientHeight+2&&p.dataset.f1WorkspacePanel==='track').map(p=>p.dataset.f1WorkspacePanel);
+      return {...report,viewport:{width:innerWidth,height:innerHeight},workspaceBottom:wr?.bottom||0,panelOverflow};
+    })()`,'Phase 305 viewport '+viewport.label);
+    phase305ViewportMatrix.push({label:viewport.label,...row});
+    if(row?.allPass!==true)throw new Error('Phase 305 viewport layout failed '+viewport.label+': '+JSON.stringify(row));
+    if(Number(row?.workspaceBottom)>Number(row?.viewport?.height)+3)throw new Error('Phase 305 workspace bottom clipping '+viewport.label+': '+JSON.stringify(row));
+    if(Array.isArray(row?.panelOverflow)&&row.panelOverflow.length)throw new Error('Phase 305 panel overflow '+viewport.label+': '+JSON.stringify(row));
+  }
+  await cdp.send('Emulation.setDeviceMetricsOverride',{width:1920,height:1080,deviceScaleFactor:1,mobile:false});
+  await sleep(260);
+
   const interaction=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
@@ -590,6 +627,16 @@ try{
       return pairs;
     };
     assertNoDomOverlap('baseline');
+    const phase305Qa=window.mwsF1QaWorkspaceUiV305?.();
+    assert(phase305Qa?.allPass===true,'Phase 305 workspace UI QA failed: '+JSON.stringify(phase305Qa));
+    const timingPanel305=document.querySelector('[data-f1-workspace-panel="timing"]');
+    const trackPanel305=document.querySelector('[data-f1-workspace-panel="track"]');
+    assert(timingPanel305&&trackPanel305,'Phase 305 primary panels missing');
+    assert(timingPanel305.scrollWidth<=timingPanel305.clientWidth+2,'Phase 305 timing panel horizontal overflow');
+    const timingDensity305=String(timingPanel305.dataset.f1TimingDensityV305||'');
+    assert(['wide','standard','compact','micro'].includes(timingDensity305),'Phase 305 timing density missing');
+    const layout305=window.mwsF1GetWorkspaceLayoutRecoveryE?.();
+    assert(Number(layout305?.panels?.track?.w)>=7&&Number(layout305?.panels?.timing?.w)>=5,'Phase 305 default panel proportions not stabilized: '+JSON.stringify(layout305));
 
     const pause=document.getElementById('f1RacingPauseV192');
     assert(pause,'Pause button missing');
@@ -988,6 +1035,9 @@ try{
     const engineSuiteQa241=window.mwsF1QaSevenTrackEngineSuiteV241?.();
     assert(engineSuiteQa241?.allPass===true&&Number(engineSuiteQa241?.suite?.rows?.length)===7&&Number(engineSuiteQa241?.suite?.completedRuns)===7,'Phase 241 seven-track real-engine suite failed: '+JSON.stringify(engineSuiteQa241));
     assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Phase 241 engine suite did not restore Setup');
+    const phase305Final=window.mwsF1QaWorkspaceUiV305?.();
+    assert(phase305Final?.allPass===true,'Phase 305 final workspace UI QA failed: '+JSON.stringify(phase305Final));
+
     const engineAlignmentQa242=window.mwsF1QaRealEngineBenchmarkAlignmentV242?.();
     assert(engineAlignmentQa242?.allPass===true&&Number(engineAlignmentQa242?.speedCorrelation)>=.7&&Number(engineAlignmentQa242?.uniqueActualSignatures)>=5&&Number(engineAlignmentQa242?.overtakeStress?.totalPasses)>=1,'Phase 242 real-engine benchmark alignment failed: '+JSON.stringify(engineAlignmentQa242));
 
