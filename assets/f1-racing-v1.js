@@ -7439,6 +7439,7 @@ function applyGameVariabilityV303(stepMs){
   if(now-gameVariabilityStateV303.lastEvalSimMs<GAME_VARIABILITY_CONFIG_V303.evaluationMs)return [];
   gameVariabilityStateV303.lastEvalSimMs=now;
   const standings=computeRaceStandingsV191(),trackLength=Math.max(1,Number(activeRaceSnapshotV187?.track?.lengthMeters)||1),rows=[];
+  const battleTuneV345=raceBattleTuningV345(),battleRangeV345=GAME_VARIABILITY_CONFIG_V303.maxGapMeters*Math.max(1,Number(battleTuneV345.gapFactor)||1);
   const currentOrder=standings.map(row=>String(row.vehicle?.id||''));
   if(gameVariabilityStateV303.lastOrder.length===currentOrder.length&&gameVariabilityStateV303.lastOrder.some((id,index)=>id!==currentOrder[index]))gameVariabilityStateV303.positionChanges+=1;
   for(let i=1;i<standings.length;i++){
@@ -7452,18 +7453,18 @@ function applyGameVariabilityV303(stepMs){
     }
     const gapMeters=Math.max(0,(Number(ahead.raceProgress||0)-Number(follower.raceProgress||0))*trackLength);
     const catchup=positionCatchupBonusV314(follower,i+1,standings.length);
-    const inBattleRange=gapMeters<=GAME_VARIABILITY_CONFIG_V303.maxGapMeters;
-    const pressure=inBattleRange?Math.max(0,Math.min(1,1-gapMeters/GAME_VARIABILITY_CONFIG_V303.maxGapMeters)):0;
+    const inBattleRange=gapMeters<=battleRangeV345;
+    const pressure=inBattleRange?Math.max(0,Math.min(1,1-gapMeters/battleRangeV345)):0;
     const failed=inBattleRange?Math.min(GAME_VARIABILITY_CONFIG_V303.maxFailedPassBonusKph,(Number(follower.passFailedCount)||0)*GAME_VARIABILITY_CONFIG_V303.failedPassBonusKph):0;
     const midfield=i>=4&&i<=14?GAME_VARIABILITY_CONFIG_V303.midfieldBonusKph:0;
     const momentum=gameVariabilityMomentumV303(follower,now)>.52?GAME_VARIABILITY_CONFIG_V303.momentumBonusKph:0;
-    const requested=catchup.bonusKph+(inBattleRange?GAME_VARIABILITY_CONFIG_V303.baseBonusKph+pressure*GAME_VARIABILITY_CONFIG_V303.pressureBonusKph+failed:0)+midfield+momentum;
+    const requested=(catchup.bonusKph+(inBattleRange?GAME_VARIABILITY_CONFIG_V303.baseBonusKph+pressure*GAME_VARIABILITY_CONFIG_V303.pressureBonusKph+failed:0)+midfield+momentum)*Math.max(1,Number(battleTuneV345.biasMultiplier)||1);
     follower.positionCatchupPctV314=catchup.pct;
     follower.positionCatchupBonusKphV314=catchup.bonusKph;
-    follower.variabilitySpeedBiasKphV309=Math.min(GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph,requested);
+    follower.variabilitySpeedBiasKphV309=Math.min(Math.max(GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph,Number(battleTuneV345.maxBiasKph)||0),requested);
     follower.variabilityBiasUntilV309=now+OVERTAKE_FLOW_CONFIG_V309.variabilityHoldMs;
     follower.battleSpeedBiasKph=combinedBattleBiasV309(follower,String(follower.battleState||'FOLLOWING'),now);
-    if(gapMeters<=GAME_VARIABILITY_CONFIG_V303.attackGapMeters&&!follower.pitRequested){
+    if(gapMeters<=GAME_VARIABILITY_CONFIG_V303.attackGapMeters*Math.max(1,Number(battleTuneV345.gapFactor)||1)&&!follower.pitRequested){
       const phase=getCornerPhaseAtProgressV194(follower.progress)?.phase||'STRAIGHT';
       if(['STRAIGHT','APPROACH','BRAKING'].includes(phase))follower.racingLineMode='ATTACK_INSIDE';
     }
@@ -7473,7 +7474,7 @@ function applyGameVariabilityV303(stepMs){
   const leader=standings[0]?.vehicle,p2=standings[1];
   const leaderHold=Number(leader?.leaderPressureLeadDurationMsV274)||0,gapSeconds=Math.max(0,Number(p2?.intervalSeconds)||0);
   if(gameVariabilityEligibleV303(leader)&&leaderHold>=GAME_VARIABILITY_CONFIG_V303.leaderHoldMs&&gapSeconds<=GAME_VARIABILITY_CONFIG_V303.leaderCloseGapSeconds){
-    leader.variabilitySpeedBiasKphV309=-Math.min(GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph,GAME_VARIABILITY_CONFIG_V303.leaderClosePenaltyKph);
+    leader.variabilitySpeedBiasKphV309=-Math.min(Math.max(GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph,Number(battleTuneV345.maxBiasKph)||0),GAME_VARIABILITY_CONFIG_V303.leaderClosePenaltyKph*Math.max(1,Number(battleTuneV345.biasMultiplier)||1));
     leader.variabilityBiasUntilV309=now+OVERTAKE_FLOW_CONFIG_V309.variabilityHoldMs;
     leader.battleSpeedBiasKph=combinedBattleBiasV309(leader,String(leader.battleState||'FOLLOWING'),now);
     gameVariabilityStateV303.leaderPressureApplications+=1;
