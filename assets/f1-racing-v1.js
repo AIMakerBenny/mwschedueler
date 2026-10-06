@@ -115,6 +115,7 @@ const VERSION308='phase308-track-overlay-hud-frequency-diversity';
 const VERSION309='phase309-viewport-marker-overtake-flow';
 const VERSION313='phase313-f1-gacha-starting-grid';
 const VERSION314='phase314-f1-race-dynamics-rebalance';
+const VERSION315='phase315-f1-live-participant-dialogue-diversity';
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
 const GAME_VARIABILITY_CONFIG_V303=Object.freeze({evaluationMs:650,maxGapMeters:84,attackGapMeters:36,baseBonusKph:1.1,pressureBonusKph:3.2,midfieldBonusKph:.8,failedPassBonusKph:.4,maxFailedPassBonusKph:1.6,momentumBonusKph:1.55,maxTotalBiasKph:14,positionCatchupMaxPct:.045,positionCatchupExponent:1.35,leaderHoldMs:12000,leaderCloseGapSeconds:1.75,leaderClosePenaltyKph:.9,liveCadenceMs:10000});
@@ -391,6 +392,29 @@ function buildLiveCutinLibraryV307(){
  return Object.freeze(out);
 }
 const LIVE_CUTIN_LIBRARY_V307=buildLiveCutinLibraryV307();
+const LIVE_DIVERSITY_CONFIG_V315=Object.freeze({recentDriverLimit:6,semanticWindow:3,exposureWeight:2.3,rearCoverageWeight:1.2});
+const LIVE_CUTIN_STATUS_V315=Object.freeze([
+ '전열을 다시 정리합니다. {driver}가 {position}에서 다음 승부를 준비합니다.',
+ '{driver}가 트래픽 흐름을 읽으며 페이스를 조금씩 끌어올립니다.',
+ '후미에서도 싸움은 계속됩니다. {driver}가 앞차와의 간격을 줄이기 시작합니다.',
+ '{driver}가 타이어를 지키면서도 직선에서 속도를 잃지 않습니다.',
+ '조용히 기회를 모으는 {driver}. 아직 레이스는 끝나지 않았습니다.',
+ '{driver}가 {corner}을 안정적으로 통과하며 다음 구간을 노립니다.',
+ '중위권 흐름이 바뀝니다. {driver}가 주변 차량과의 간격을 다시 계산합니다.',
+ '{driver}가 무리하지 않고 리듬을 유지합니다. 다음 공격 지점을 기다립니다.',
+ '페이스가 살아납니다. {driver}가 앞쪽 그룹을 다시 시야에 넣습니다.',
+ '{driver}가 긴 호흡으로 추격을 이어갑니다. 작은 차이가 쌓이고 있습니다.',
+ '순위표 아래쪽에서도 움직임이 있습니다. {driver}가 속도를 끌어올립니다.',
+ '{driver}가 깨끗한 공기를 찾으며 주행 라인을 바꿔 봅니다.',
+ '지금은 인내의 구간입니다. {driver}가 타이밍을 기다립니다.',
+ '{driver}의 랩이 안정됩니다. 앞차와의 싸움을 다시 준비합니다.',
+ '{driver}가 {position}에서 레이스 흐름을 놓치지 않고 있습니다.',
+ '한 번의 좋은 출구가 필요합니다. {driver}가 {corner}을 향합니다.',
+ '앞선 그룹만 볼 때가 아닙니다. {driver}도 꾸준히 거리를 좁힙니다.',
+ '{driver}가 속도와 타이어 사이에서 균형을 잡으며 추격합니다.',
+ '레이스 중반의 작은 변화입니다. {driver}가 조금씩 앞으로 다가갑니다.',
+ '{driver}가 다음 직선을 위해 차를 정돈합니다. 아직 기회가 남아 있습니다.'
+ ].map((text,index)=>Object.freeze({id:'RACE_STATUS-v315-'+index,text})));
 const LIVE_CUTIN_CONFIG_V264=Object.freeze({
  maxActive:1,queueLimit:1,dedupeMs:7000,globalCadenceMs:9000,mergeWindowMs:10000,
  minDurationMs:6000,maxDurationMs:8200,mergeDurationMs:7600,exitMs:320,
@@ -398,12 +422,37 @@ const LIVE_CUTIN_CONFIG_V264=Object.freeze({
 });
 const liveCutinStateV264={
  queue:[],active:new Map(),lastDriverAt:new Map(),timers:new Map(),sequence:0,lastGlobalAt:-Infinity,
- recentTemplateIds:[],pairRecent:new Map(),messageCounter:0,mergeCount:0,droppedCount:0
+ recentTemplateIds:[],pairRecent:new Map(),messageCounter:0,mergeCount:0,droppedCount:0,
+ driverExposure:new Map(),recentDriverIds:[],recentSemanticKeys:[]
 };
 function liveCutinEventV264(state){
- return ({PULLING_OUT:'ATTACK',SIDE_BY_SIDE:'SIDE_BY_SIDE',COUNTER_ATTACK:'COUNTER_ATTACK',PASS_COMPLETED:'PASS_SUCCESS'})[String(state||'')]||'';
+ return ({FOLLOWING:'RACE_STATUS',CLOSING:'RACE_STATUS',TOWING:'RACE_STATUS',PREPARING_ATTACK:'ATTACK',PULLING_OUT:'ATTACK',SIDE_BY_SIDE:'SIDE_BY_SIDE',COUNTER_ATTACK:'COUNTER_ATTACK',PASS_COMPLETED:'PASS_SUCCESS'})[String(state||'')]||'';
 }
-function liveCutinPriorityV307(event){return ({ATTACK:1,SIDE_BY_SIDE:2,COUNTER_ATTACK:3,PASS_SUCCESS:4})[String(event||'')]||0}
+function liveCutinPriorityV307(event){return ({RACE_STATUS:.5,ATTACK:1,SIDE_BY_SIDE:2,COUNTER_ATTACK:3,PASS_SUCCESS:4})[String(event||'')]||0}
+function liveSemanticKeyV315(event,text=''){
+ const e=String(event||''),t=String(text||'');
+ if(e==='PASS_SUCCESS'||/추월|넘어섰|순위가 뒤집|앞에 섭/.test(t))return 'PASS';
+ if(e==='SIDE_BY_SIDE'||/나란히|병렬|바퀴 하나/.test(t))return 'SIDE_BY_SIDE';
+ if(/브레이크|제동|브레이킹/.test(t))return 'BRAKING';
+ if(/타이어|그립/.test(t))return 'TYRE';
+ if(/라인|공간|빈틈|안쪽|바깥/.test(t))return 'LINE';
+ if(/간격|거리|붙었|좁힙|다가갑/.test(t))return 'GAP';
+ if(/페이스|속도|가속|직선/.test(t))return 'PACE';
+ if(/압박|수비|방어/.test(t))return 'PRESSURE';
+ return e||'STATUS';
+}
+function rememberLiveDriverV315(driverId){
+ const id=String(driverId||'');if(!id)return;
+ liveCutinStateV264.driverExposure.set(id,(Number(liveCutinStateV264.driverExposure.get(id))||0)+1);
+ liveCutinStateV264.recentDriverIds.push(id);
+ if(liveCutinStateV264.recentDriverIds.length>LIVE_DIVERSITY_CONFIG_V315.recentDriverLimit)liveCutinStateV264.recentDriverIds.splice(0,liveCutinStateV264.recentDriverIds.length-LIVE_DIVERSITY_CONFIG_V315.recentDriverLimit);
+}
+function rememberLiveSemanticV315(event,text){
+ const key=liveSemanticKeyV315(event,text);liveCutinStateV264.recentSemanticKeys.push(key);
+ const limit=Math.max(6,LIVE_DIVERSITY_CONFIG_V315.semanticWindow*3);
+ if(liveCutinStateV264.recentSemanticKeys.length>limit)liveCutinStateV264.recentSemanticKeys.splice(0,liveCutinStateV264.recentSemanticKeys.length-limit);
+ return key;
+}
 function liveCutinSessionKeyV307(vehicle,target){
  const ids=[String(vehicle?.id||''),String(target?.id||'')].filter(Boolean).sort();
  return ids.join('::')||String(vehicle?.id||'unknown');
@@ -418,11 +467,12 @@ function rememberLiveTemplateV307(templateId,sessionKey){
  liveCutinStateV264.pairRecent.set(sessionKey,pair);
 }
 function liveCutinMessageStateV307(event,vehicle,target,commit=true){
- const pool=LIVE_CUTIN_LIBRARY_V307[String(event||'')]||[];
+ const eventKey=String(event||''),pool=eventKey==='RACE_STATUS'?LIVE_CUTIN_STATUS_V315:(LIVE_CUTIN_LIBRARY_V307[eventKey]||[]);
  const sessionKey=liveCutinSessionKeyV307(vehicle,target);
  const recent=new Set(liveCutinStateV264.recentTemplateIds),pairRecent=new Set(liveCutinStateV264.pairRecent.get(sessionKey)||[]);
- let candidates=pool.filter(row=>!recent.has(row.id)&&!pairRecent.has(row.id));
- if(!candidates.length)candidates=pool.filter(row=>!pairRecent.has(row.id));
+ const semanticRecent=new Set(liveCutinStateV264.recentSemanticKeys.slice(-LIVE_DIVERSITY_CONFIG_V315.semanticWindow));
+ let candidates=pool.filter(row=>!recent.has(row.id)&&!pairRecent.has(row.id)&&!semanticRecent.has(liveSemanticKeyV315(eventKey,row.text)));
+ if(!candidates.length)candidates=pool.filter(row=>!pairRecent.has(row.id)&&!semanticRecent.has(liveSemanticKeyV315(eventKey,row.text)));
  if(!candidates.length)candidates=pool.filter(row=>!recent.has(row.id));
  if(!candidates.length)candidates=pool;
  const counter=Number(liveCutinStateV264.messageCounter)||0;
@@ -435,8 +485,8 @@ function liveCutinMessageStateV307(event,vehicle,target,commit=true){
   driver:vehicle?.driver?.name||'드라이버',target:target?.driver?.name||'앞차',
   position:narrativePositionLabelV263(vehicle),corner:narrativeCornerLabelV263(vehicle)
  });
- if(commit){liveCutinStateV264.messageCounter+=1;rememberLiveTemplateV307(template.id,sessionKey)}
- return {message,templateId:template.id,sessionKey};
+ if(commit){liveCutinStateV264.messageCounter+=1;rememberLiveTemplateV307(template.id,sessionKey);rememberLiveSemanticV315(eventKey,template.text)}
+ return {message,templateId:template.id,sessionKey,semanticKey:liveSemanticKeyV315(eventKey,template.text)};
 }
 function liveCutinMessageV264(event,vehicle,target){return liveCutinMessageStateV307(event,vehicle,target,false).message}
 function liveCutinLayerV264(){return document.getElementById('f1RacingLiveCutinLayerV264')}
@@ -526,8 +576,8 @@ function enqueueLiveCutinV264(vehicle,state,targetId=''){
   const copy=liveCutinMessageStateV307(event,vehicle,target,true);
   const item={event,state:String(state),driverId:key,driverName:String(vehicle.driver?.name||'드라이버'),image:String(vehicle.driver?.image||''),color:String(vehicle.driverColorV216||'#ffd166'),targetId:String(target?.id||''),message:copy.message,templateId:copy.templateId,sessionKey,simTimeMs:now,lastUpdateSimMs:now};
   liveCutinStateV264.lastDriverAt.set(key,now);liveCutinStateV264.lastGlobalAt=now;
-  if(existing.kind==='active')return updateLiveCutinV307(existing.entry,item);
-  Object.assign(existing.entry,item,{mergedCount:(Number(existing.entry.mergedCount)||1)+1});liveCutinStateV264.mergeCount+=1;return true;
+  if(existing.kind==='active'){const updated=updateLiveCutinV307(existing.entry,item);if(updated)rememberLiveDriverV315(key);return updated}
+  Object.assign(existing.entry,item,{mergedCount:(Number(existing.entry.mergedCount)||1)+1});liveCutinStateV264.mergeCount+=1;rememberLiveDriverV315(key);return true;
  }
  const previous=Number(liveCutinStateV264.lastDriverAt.get(key));
  if(Number.isFinite(previous)&&now-previous<LIVE_CUTIN_CONFIG_V264.dedupeMs){liveCutinStateV264.droppedCount+=1;return false}
@@ -536,16 +586,17 @@ function enqueueLiveCutinV264(vehicle,state,targetId=''){
  liveCutinStateV264.lastDriverAt.set(key,now);liveCutinStateV264.lastGlobalAt=now;
  const id='v264-'+(++liveCutinStateV264.sequence)+'-'+key;
  const item={id,event,state:String(state),driverId:key,driverName:String(vehicle.driver?.name||'드라이버'),image:String(vehicle.driver?.image||''),color:String(vehicle.driverColorV216||'#ffd166'),targetId:String(target?.id||''),message:copy.message,templateId:copy.templateId,sessionKey,simTimeMs:now,lastUpdateSimMs:now,mergedCount:1};
- if(liveCutinStateV264.active.size<LIVE_CUTIN_CONFIG_V264.maxActive){showLiveCutinV264(item);return true}
- if(liveCutinStateV264.queue.length<LIVE_CUTIN_CONFIG_V264.queueLimit){liveCutinStateV264.queue.push(item);return true}
+ if(liveCutinStateV264.active.size<LIVE_CUTIN_CONFIG_V264.maxActive){const shown=showLiveCutinV264(item);if(shown)rememberLiveDriverV315(key);return shown}
+ if(liveCutinStateV264.queue.length<LIVE_CUTIN_CONFIG_V264.queueLimit){liveCutinStateV264.queue.push(item);rememberLiveDriverV315(key);return true}
  const queued=liveCutinStateV264.queue[0];
- if(liveCutinPriorityV307(event)>liveCutinPriorityV307(queued?.event)){liveCutinStateV264.queue[0]=item;return true}
+ if(liveCutinPriorityV307(event)>liveCutinPriorityV307(queued?.event)){liveCutinStateV264.queue[0]=item;rememberLiveDriverV315(key);return true}
  liveCutinStateV264.droppedCount+=1;return false;
 }
 function resetLiveCutinsV264(){
  for(const id of [...liveCutinStateV264.timers.keys()])clearLiveCutinTimerV264(id);
  liveCutinStateV264.queue=[];liveCutinStateV264.active.clear();liveCutinStateV264.lastDriverAt=new Map();liveCutinStateV264.sequence=0;
  liveCutinStateV264.lastGlobalAt=-Infinity;liveCutinStateV264.recentTemplateIds=[];liveCutinStateV264.pairRecent=new Map();liveCutinStateV264.messageCounter=0;liveCutinStateV264.mergeCount=0;liveCutinStateV264.droppedCount=0;
+ liveCutinStateV264.driverExposure=new Map();liveCutinStateV264.recentDriverIds=[];liveCutinStateV264.recentSemanticKeys=[];
  const layer=liveCutinLayerV264();if(layer){layer.innerHTML='';layer.dataset.activeCutinsV264='0'}
  return true;
 }
@@ -6568,6 +6619,30 @@ function gameVariabilityMomentumV303(vehicle,now){
   const seed=hashDriverV189(String(vehicle?.id||'driver')+'|v303|'+bucket);
   return ((seed%1000)/999);
 }
+function liveCandidateScoreV315(row,index,standings,moverId=''){
+  const vehicle=row?.vehicle;if(!vehicle)return -Infinity;
+  const id=String(vehicle.id||''),exposure=Number(liveCutinStateV264.driverExposure.get(id))||0;
+  const recent=liveCutinStateV264.recentDriverIds,reverseIndex=[...recent].reverse().indexOf(id);
+  const recentPenalty=reverseIndex===0?3.2:reverseIndex===1?2.2:reverseIndex>=0?1.0:0;
+  const gap=Math.max(0,Number(row?.intervalSeconds)||99),closeness=Math.max(0,1-Math.min(3,gap)/3)*2.4;
+  const active=['PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK'].includes(String(vehicle.battleState||''))?1.5:0;
+  const coverage=LIVE_DIVERSITY_CONFIG_V315.exposureWeight/(1+exposure);
+  const rearRatio=index/Math.max(1,standings.length-1);
+  const rearCoverage=rearRatio*LIVE_DIVERSITY_CONFIG_V315.rearCoverageWeight;
+  const moverBonus=id===String(moverId||'')?4.2:0;
+  return moverBonus+closeness+active+coverage+rearCoverage-recentPenalty;
+}
+function chooseLiveCandidateV315(standings,mover){
+  const moverId=String(mover?.vehicle?.id||'');
+  const rows=standings.slice(1).map((row,offset)=>({row,index:offset+1,score:liveCandidateScoreV315(row,offset+1,standings,moverId)}));
+  rows.sort((a,b)=>b.score-a.score);
+  return rows[0]?.row||mover||standings[1]||null;
+}
+function liveStateForCandidateV315(vehicle,isMover){
+  if(isMover)return 'PASS_COMPLETED';
+  const state=String(vehicle?.battleState||'FOLLOWING');
+  return ['PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','COUNTER_ATTACK'].includes(state)?state:'FOLLOWING';
+}
 function emitGameLiveV303(standings,now){
   if(engineQaV240.active||now-gameVariabilityStateV303.lastLiveSimMs<GAME_VARIABILITY_CONFIG_V303.liveCadenceMs||standings.length<2)return false;
   const currentOrder=standings.map(row=>String(row.vehicle?.id||''));
@@ -6578,20 +6653,15 @@ function emitGameLiveV303(standings,now){
       if(previous>i){mover=standings[i];break}
     }
   }
-  const candidate=mover||standings.slice(1,Math.min(8,standings.length)).find(row=>Number(row.intervalSeconds)<1.55)||standings[1];
-  const vehicle=candidate?.vehicle;
+  const candidate=chooseLiveCandidateV315(standings,mover),vehicle=candidate?.vehicle;
   if(!vehicle)return false;
-  const index=standings.findIndex(row=>row.vehicle===vehicle);
-  const target=index>0?standings[index-1]?.vehicle:null;
-  const state=mover?'PASS_COMPLETED':(['PULLING_OUT','SIDE_BY_SIDE','COUNTER_ATTACK'].includes(String(vehicle.battleState||''))?String(vehicle.battleState):'PULLING_OUT');
-  enqueueLiveCutinV264(vehicle,state,String(target?.id||''));
-  const driver=String(vehicle.driver?.name||'드라이버'),ahead=String(target?.driver?.name||'앞차');
-  const text=mover
-    ?driver+'가 순위를 끌어올립니다! '+ahead+'를 넘어섰습니다!'
-    :driver+'가 '+ahead+' 바로 뒤까지 붙었습니다. 순위 변화 가능성이 커집니다!';
-  appendRaceCommentaryV222(text,'battle','v303-live:'+String(vehicle.id)+':'+String(Math.floor(now/GAME_VARIABILITY_CONFIG_V303.liveCadenceMs)),500);
-  gameVariabilityStateV303.lastLiveSimMs=now;gameVariabilityStateV303.liveEmits+=1;
-  return true;
+  const index=standings.findIndex(row=>row.vehicle===vehicle),target=index>0?standings[index-1]?.vehicle:null;
+  const isMover=Boolean(mover&&mover.vehicle===vehicle),state=liveStateForCandidateV315(vehicle,isMover),event=liveCutinEventV264(state);
+  const preview=liveCutinMessageStateV307(event,vehicle,target,false);
+  const shown=enqueueLiveCutinV264(vehicle,state,String(target?.id||''));
+  if(shown)appendRaceCommentaryV222(preview.message,'battle','v315-live:'+String(vehicle.id)+':'+String(event)+':'+String(Math.floor(now/GAME_VARIABILITY_CONFIG_V303.liveCadenceMs)),1200);
+  gameVariabilityStateV303.lastLiveSimMs=now;gameVariabilityStateV303.liveEmits+=shown?1:0;
+  return shown;
 }
 function positionCatchupPercentV314(position,count){
   const total=Math.max(2,Number(count)||2),pos=Math.max(1,Math.min(total,Number(position)||1));
@@ -6646,6 +6716,16 @@ function applyGameVariabilityV303(stepMs){
   gameVariabilityStateV303.lastOrder=currentOrder;
   return rows;
 }
+function qaLiveDiversityV315(){
+  const semantic=LIVE_CUTIN_STATUS_V315.map(row=>liveSemanticKeyV315('RACE_STATUS',row.text));
+  const uniqueSemantic=new Set(semantic);
+  return {version:VERSION315,statusTemplates:LIVE_CUTIN_STATUS_V315.length,semanticGroups:uniqueSemantic.size,config:{...LIVE_DIVERSITY_CONFIG_V315},
+    state:{recentDriverIds:[...liveCutinStateV264.recentDriverIds],recentSemanticKeys:[...liveCutinStateV264.recentSemanticKeys],exposureEntries:liveCutinStateV264.driverExposure.size},
+    allPass:LIVE_CUTIN_STATUS_V315.length>=16&&LIVE_DIVERSITY_CONFIG_V315.recentDriverLimit>=5&&LIVE_DIVERSITY_CONFIG_V315.semanticWindow>=2};
+}
+window.mwsF1QaLiveDiversityV315=qaLiveDiversityV315;
+window.__mwsF1RacingV315=VERSION315;
+
 function qaGameVariabilityV303(){
   const c=GAME_VARIABILITY_CONFIG_V303;
   const synthetic={id:'qa',passFailedCount:3},m0=gameVariabilityMomentumV303(synthetic,0),m1=gameVariabilityMomentumV303(synthetic,5000);

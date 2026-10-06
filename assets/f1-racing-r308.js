@@ -1,8 +1,9 @@
 (()=>{
 'use strict';
 const VERSION308='phase308-track-overlay-hud-frequency-diversity';
-const HUD_CONFIG_V308=Object.freeze({globalGapMs:6800,speakerGapMs:12000,durationMs:4800,maxText:48,recentLimit:24});
-const stateV308={installed:false,observer:null,rootObserver:null,lastConversationId:'',lastGlobalSimMs:-Infinity,lastSpeakerAt:new Map(),recentTexts:[],hudShown:0,hudSuppressed:0,liveDockCount:0,timer:0};
+const VERSION315HUD='phase315-dialogue-semantic-diversity';
+const HUD_CONFIG_V308=Object.freeze({globalGapMs:6800,speakerGapMs:12000,durationMs:4800,maxText:48,recentLimit:24,semanticWindow:2,semanticHistoryLimit:12,recentSpeakerLimit:6});
+const stateV308={installed:false,observer:null,rootObserver:null,lastConversationId:'',lastGlobalSimMs:-Infinity,lastSpeakerAt:new Map(),recentTexts:[],recentSemantic:[],recentSpeakers:[],hudShown:0,hudSuppressed:0,liveDockCount:0,timer:0};
 
 function escV308(value=''){return String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 function stageV308(){return document.querySelector('#f1RacingViewRaceV185 .f1-racing-race-map-stage-v188')}
@@ -29,10 +30,25 @@ function dockLiveV308(){
  layer.classList.remove('docked-v303');layer.classList.add('track-docked-v308');layer.setAttribute('aria-label','트랙 LIVE 컷인');
  return true;
 }
+function dialogueSemanticKeyV315(text=''){
+ const t=String(text||'');
+ if(/추월|넘어|순위|앞에 섰/.test(t))return 'PASS';
+ if(/브레이크|제동|코너 진입/.test(t))return 'BRAKING';
+ if(/타이어|그립|마모/.test(t))return 'TYRE';
+ if(/실수|흔들|미끄|수습/.test(t))return 'MISTAKE';
+ if(/라인|빈틈|공간|안쪽|바깥/.test(t))return 'LINE';
+ if(/거리|간격|붙|좁히/.test(t))return 'GAP';
+ if(/압박|방어|수비/.test(t))return 'PRESSURE';
+ if(/페이스|속도|가속|직선/.test(t))return 'PACE';
+ return 'GENERIC';
+}
 function hudCanShowV308(speaker,text){
  const now=Number(window.mwsF1GetSimulationClockV192?.()?.simTimeMs)||0,clean=trimTextV308(text),name=normalizeSpeakerV308(speaker);
  if(!clean||!name)return false;
  if(stateV308.recentTexts.includes(clean)){stateV308.hudSuppressed+=1;return false}
+ const semantic=dialogueSemanticKeyV315(clean);
+ if(semantic!=='GENERIC'&&stateV308.recentSemantic.slice(-HUD_CONFIG_V308.semanticWindow).includes(semantic)){stateV308.hudSuppressed+=1;return false}
+ if(stateV308.recentSpeakers.slice(-2).includes(name)){stateV308.hudSuppressed+=1;return false}
  if(Number.isFinite(stateV308.lastGlobalSimMs)&&now-stateV308.lastGlobalSimMs<HUD_CONFIG_V308.globalGapMs){stateV308.hudSuppressed+=1;return false}
  const last=Number(stateV308.lastSpeakerAt.get(name));
  if(Number.isFinite(last)&&now-last<HUD_CONFIG_V308.speakerGapMs){stateV308.hudSuppressed+=1;return false}
@@ -47,6 +63,8 @@ function showHudV308(speaker,text){
  const now=Number(window.mwsF1GetSimulationClockV192?.()?.simTimeMs)||0;
  stateV308.lastGlobalSimMs=now;stateV308.lastSpeakerAt.set(name,now);stateV308.recentTexts.push(clean);
  if(stateV308.recentTexts.length>HUD_CONFIG_V308.recentLimit)stateV308.recentTexts.splice(0,stateV308.recentTexts.length-HUD_CONFIG_V308.recentLimit);
+ stateV308.recentSemantic.push(dialogueSemanticKeyV315(clean));if(stateV308.recentSemantic.length>HUD_CONFIG_V308.semanticHistoryLimit)stateV308.recentSemantic.splice(0,stateV308.recentSemantic.length-HUD_CONFIG_V308.semanticHistoryLimit);
+ stateV308.recentSpeakers.push(name);if(stateV308.recentSpeakers.length>HUD_CONFIG_V308.recentSpeakerLimit)stateV308.recentSpeakers.splice(0,stateV308.recentSpeakers.length-HUD_CONFIG_V308.recentSpeakerLimit);
  stateV308.hudShown+=1;return true;
 }
 function clearExpiredHudV308(){
@@ -88,7 +106,9 @@ function qaV308(){
 window.mwsF1SyncTrackOverlaysV308=syncV308;
 window.mwsF1ShowDialogueHudV308=showHudV308;
 window.mwsF1QaTrackOverlayHudV308=qaV308;
-window.mwsF1GetTrackOverlayStateV308=function(){return {config:{...HUD_CONFIG_V308},lastConversationId:stateV308.lastConversationId,lastGlobalSimMs:stateV308.lastGlobalSimMs,recentTexts:[...stateV308.recentTexts],hudShown:stateV308.hudShown,hudSuppressed:stateV308.hudSuppressed,liveDockCount:stateV308.liveDockCount}};
+window.mwsF1GetTrackOverlayStateV308=function(){return {config:{...HUD_CONFIG_V308},lastConversationId:stateV308.lastConversationId,lastGlobalSimMs:stateV308.lastGlobalSimMs,recentTexts:[...stateV308.recentTexts],recentSemantic:[...stateV308.recentSemantic],recentSpeakers:[...stateV308.recentSpeakers],hudShown:stateV308.hudShown,hudSuppressed:stateV308.hudSuppressed,liveDockCount:stateV308.liveDockCount}};
+window.mwsF1QaDialogueSemanticV315=function(){const samples=['추월 기회가 열립니다','브레이크를 늦춥니다','타이어를 관리합니다','페이스를 올립니다'];const keys=samples.map(dialogueSemanticKeyV315);return {version:VERSION315HUD,keys,unique:new Set(keys).size,config:{...HUD_CONFIG_V308},allPass:new Set(keys).size===samples.length&&HUD_CONFIG_V308.semanticWindow>=2&&HUD_CONFIG_V308.recentSpeakerLimit>=5}};
+window.__mwsF1RacingHudV315=VERSION315HUD;
 window.__mwsF1RacingV308=VERSION308;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installV308,{once:true});else installV308();
 })();
