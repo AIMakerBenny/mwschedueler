@@ -317,6 +317,7 @@ import {runPhase318F1ForwardCompatibleAuditChain} from './run-phase318-f1-forwar
 import {runPhase319F1UiSpacingBattleAudit} from './run-phase319-f1-ui-spacing-battle-audit.mjs';
 import {runPhase320F1UiSpacingCompatibilityClosureAudit} from './run-phase320-f1-ui-spacing-compatibility-closure-audit.mjs';
 import {runPhase321F1GachaContainmentAudit} from './run-phase321-f1-gacha-containment-audit.mjs';
+import {runPhase322F1GachaAuditCompatibilityAudit} from './run-phase322-f1-gacha-audit-compatibility-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2691,5 +2692,6 @@ export function runPhase318FullIntegrationAudit(){const previous=runPhase317Full
 export function runPhase319FullIntegrationAudit(){const previous=runPhase318FullIntegrationAudit(),current=runPhase319F1UiSpacingBattleAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 319: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 319: '+x)];return {phase:319,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase320FullIntegrationAudit(){const previous=runPhase319FullIntegrationAudit(),current=runPhase320F1UiSpacingCompatibilityClosureAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 320: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 320: '+x)];return {phase:320,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase321FullIntegrationAudit(){const previous=runPhase320FullIntegrationAudit(),current=runPhase321F1GachaContainmentAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 321: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 321: '+x)];return {phase:321,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase321FullIntegrationAudit();}
+export function runPhase322FullIntegrationAudit(){const previous=runPhase321FullIntegrationAudit(),current=runPhase322F1GachaAuditCompatibilityAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 322: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 322: '+x)];return {phase:322,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase322FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();

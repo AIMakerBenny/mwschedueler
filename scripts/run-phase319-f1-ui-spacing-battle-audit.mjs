@@ -35,10 +35,13 @@ export function runPhase319F1UiSpacingBattleAudit(){
   'assets/f1-racing-r283-r287.js?phase=302&phase319=1'
  ])if(!index.includes(token))issues.push('Phase 319 index/cache missing: '+token);
  for(const token of [
-  'Phase 319 runtime readiness','Phase 319 Gacha card overflows reveal viewport',
-  'Phase 319 Gacha portrait must use contain fit','Phase 319 marker screen-size lock unavailable or invalid',
+  'Phase 319 runtime readiness','Phase 319 marker screen-size lock unavailable or invalid',
   'Phase 319 UI spacing and battle isolation QA failed','Phase 319 third-car battle isolation failed'
  ])if(!diag.includes(token))issues.push('Phase 319 Recovery H missing: '+token);
+ const gachaOverflowCheck=diag.includes('Phase 319 Gacha card overflows reveal viewport')||diag.includes('Phase 321 Gacha card overflows reveal viewport');
+ const gachaContainCheck=diag.includes('Phase 319 Gacha portrait must use contain fit')||diag.includes('Phase 321 Gacha portrait must use contain fit');
+ if(!gachaOverflowCheck)issues.push('Phase 319/321 Gacha overflow Recovery H check missing');
+ if(!gachaContainCheck)issues.push('Phase 319/321 Gacha contain Recovery H check missing');
  for(const file of ['assets/f1-racing-v1.js','assets/f1-racing-r283-r287.js','scripts/diagnose-recovery-h-f1-live.mjs','scripts/run-phase319-f1-ui-spacing-battle-audit.mjs']){
   const run=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});
   if(run.status!==0)issues.push(file+' syntax failed: '+String(run.stderr||run.stdout||'').trim());
