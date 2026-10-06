@@ -2,14 +2,17 @@
 'use strict';
 // phase290-production-retrigger
 const VERSION288='phase288-f1-r13-layout-reset-viewport-fit';
-const WORKSPACE_FIT_CONFIG_V288=Object.freeze({minHeightPx:420,bottomGapPx:8,minRowPx:42,targetViewports:Object.freeze([768,1080,1440])});
+const WORKSPACE_FIT_CONFIG_V288=Object.freeze({minHeightPx:300,bottomGapPx:8,minRowPx:34,defaultMaxHeightPx:640,targetViewports:Object.freeze([720,768,900,1080,1440])});
 const fitStateV288={installed:false,applyCount:0,lastSignature:'',resetHooks:0};
 function screenStateV288(){return String(window.mwsF1GetScreenStateV185?.()||'')}
 function computeWorkspaceFitV288(viewportHeight,top,usedRows,gap){
- const rows=Math.max(1,Number(usedRows)||10),g=Math.max(0,Number(gap)||0),available=Math.max(WORKSPACE_FIT_CONFIG_V288.minHeightPx,Math.floor((Number(viewportHeight)||0)-(Number(top)||0)-WORKSPACE_FIT_CONFIG_V288.bottomGapPx));
- const rowHeight=Math.max(WORKSPACE_FIT_CONFIG_V288.minRowPx,(available-Math.max(0,rows-1)*g)/rows);
- const height=Math.ceil(rowHeight*rows+Math.max(0,rows-1)*g);
- return {rows,gap:g,available,rowHeight,height,blankPx:Math.max(0,available-height)};
+ const rows=Math.max(1,Number(usedRows)||10),g=Math.max(0,Number(gap)||0);
+ const viewport=Math.max(320,Number(viewportHeight)||0),available=Math.max(0,Math.floor(viewport-(Number(top)||0)-WORKSPACE_FIT_CONFIG_V288.bottomGapPx));
+ const minRequired=rows*WORKSPACE_FIT_CONFIG_V288.minRowPx+Math.max(0,rows-1)*g;
+ const target=rows<=10?Math.min(available,WORKSPACE_FIT_CONFIG_V288.defaultMaxHeightPx):available;
+ const height=Math.max(Math.min(available,WORKSPACE_FIT_CONFIG_V288.minHeightPx),Math.min(available,Math.max(minRequired,target)));
+ const rowHeight=Math.max(1,(height-Math.max(0,rows-1)*g)/rows);
+ return {rows,gap:g,available,rowHeight,height,blankPx:Math.max(0,available-height),fitsViewport:height<=available+1};
 }
 function clearWorkspaceViewportFitV288(){
  const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');if(!workspace)return false;
@@ -41,7 +44,7 @@ function installWorkspaceViewportFitV288(){
 }
 function qaWorkspaceViewportFitV288(){
  const samples=WORKSPACE_FIT_CONFIG_V288.targetViewports.map(viewport=>computeWorkspaceFitV288(viewport,150,10,5));
- const samplePass=samples.every(row=>row.blankPx<=1&&row.height>=WORKSPACE_FIT_CONFIG_V288.minHeightPx&&row.rowHeight>=WORKSPACE_FIT_CONFIG_V288.minRowPx);
+ const samplePass=samples.every(row=>row.fitsViewport&&row.height<=row.available+1&&row.height<=WORKSPACE_FIT_CONFIG_V288.defaultMaxHeightPx+1&&row.rowHeight>0);
  const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
  const live=screenStateV288()==='RACE'?applyWorkspaceViewportFitV288():null;
  const liveBlank=live?Math.max(0,live.available-workspace.getBoundingClientRect().height):0;

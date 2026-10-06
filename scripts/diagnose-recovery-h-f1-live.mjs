@@ -242,6 +242,17 @@ try{
   }
   if(!phase308Ready)throw new Error('Phase 308 runtime did not propagate to Recovery H browser');
 
+  let phase309Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    phase309Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV309==='phase309-viewport-marker-overtake-flow'&&window.__mwsF1RacingUiV309==='phase309-viewport-marker-overtake-flow-ui'&&typeof window.mwsF1QaViewportMarkerOvertakeV309==='function'","Phase 309 runtime readiness"));
+    if(phase309Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v309=${Date.now()}-${attempt}`});
+    await refreshed;
+    await sleep(1200);
+  }
+  if(!phase309Ready)throw new Error('Phase 309 runtime did not propagate to Recovery H browser');
+
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
@@ -496,7 +507,11 @@ try{
     assert(markerCollisionQa306?.allPass===true,'Phase 306 marker overlay collision QA failed: '+JSON.stringify(markerCollisionQa306));
     assert(Number(markerCollisionQa306?.thoughtOverlap?.nodes)===0,'Phase 306 two-racer thought collision scenario was not exercised: legacy SVG thoughts must be retired by Phase 308 '+JSON.stringify(markerCollisionQa306));
     assert(Number(markerCollisionQa306?.thoughtOverlap?.count)===0,'Phase 306 racer thought bubbles still overlap: '+JSON.stringify(markerCollisionQa306));
-    assert(Number(markerCollisionQa306?.tagOverlap?.count)===0,'Phase 306 race position badges still overlap: '+JSON.stringify(markerCollisionQa306));
+    assert(markerCollisionQa306?.fixedMarkerModeV309===true,'Phase 309 fixed marker mode was not honored by Phase 306: '+JSON.stringify(markerCollisionQa306));
+    const phase309Qa=window.mwsF1QaViewportMarkerOvertakeV309?.();
+    assert(phase309Qa?.allPass===true,'Phase 309 viewport/marker/overtake QA failed: '+JSON.stringify(phase309Qa));
+    assert(phase309Qa?.labelFixed===true&&phase309Qa?.tagFixed===true,'Phase 309 marker labels are not fixed under the orb: '+JSON.stringify(phase309Qa));
+    assert(phase309Qa?.viewportFit===true&&phase309Qa?.defaultHeightOk===true,'Phase 309 reset workspace does not fit current viewport: '+JSON.stringify(phase309Qa));
     const cadenceQa281=window.mwsF1QaDialogueCadenceV281?.();
     assert(cadenceQa281?.allPass===true,'Phase 281 dialogue cadence QA failed: '+JSON.stringify(cadenceQa281));
     assert(cadenceQa281?.budgetBlocked===true&&Number(cadenceQa281?.config?.maxGroupsPerWindow)<=2&&Number(cadenceQa281?.config?.speakerGapMs)>=4000,'Phase 281 dialogue window budget failed: '+JSON.stringify(cadenceQa281));
@@ -871,7 +886,7 @@ try{
     const markerNumberTexts=[...document.querySelectorAll('.f1-racing-race-vehicle-v189 .car-number-v232')].map(node=>String(node.textContent||'').trim());
     assert(markerNumberTexts.length>=2&&new Set(markerNumberTexts).size===markerNumberTexts.length,'Phase 232 driver marker numbers are not unique: '+JSON.stringify(markerNumberTexts));
     const labelCollisionQa=window.mwsF1QaDriverLabelCollisionV228?.();
-    assert(labelCollisionQa?.allPass===true&&Number(labelCollisionQa?.syntheticOverlapPairs)===0,'Phase 228 driver label collision QA failed: '+JSON.stringify(labelCollisionQa));
+    assert(labelCollisionQa?.allPass===true&&labelCollisionQa?.fixedBelowV309===true&&labelCollisionQa?.overlapAllowedV309===true,'Phase 228 driver label fixed-below QA failed after Phase 309: '+JSON.stringify(labelCollisionQa));
     const cameraQa=window.mwsF1QaDriverMarkerCameraV216?.();
     assert(cameraQa?.allPass===true&&Number(cameraQa?.paletteCount)>=8,'Phase 216 marker/camera QA failed: '+JSON.stringify(cameraQa));
     const markerColors=Array.from(document.querySelectorAll('.f1-racing-race-vehicle-v189')).map(node=>node.style.getPropertyValue('--f1-driver-color')).filter(Boolean);
@@ -1010,6 +1025,11 @@ try{
     assert(document.getElementById('f1RacingPauseV192')?.textContent==='일시정지','Phase 218 pause control is not Korean');
 
     document.getElementById('f1RacingWorkspaceResetRecoveryE')?.click();await raf();
+    window.mwsF1SyncViewportMarkerOvertakeV309?.();await raf();
+    const resetWorkspace309=document.getElementById('f1RacingWorkspaceRecoveryE'),resetRect309=resetWorkspace309?.getBoundingClientRect();
+    const viewport309=Math.max(1,Number(window.visualViewport?.height)||window.innerHeight||document.documentElement.clientHeight||1);
+    assert(resetRect309&&resetRect309.bottom<=viewport309+2,'Phase 309 reset workspace extends below viewport: '+JSON.stringify(resetRect309?{top:resetRect309.top,bottom:resetRect309.bottom,height:resetRect309.height,viewport:viewport309}:null));
+    assert(Number(resetWorkspace309?.dataset?.usedRows||0)>10||resetRect309.height<=642,'Phase 309 default reset workspace remains too tall: '+JSON.stringify(resetRect309?{height:resetRect309.height,usedRows:resetWorkspace309?.dataset?.usedRows}:null));
     const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]');
     const title=commentary?.querySelector('[data-f1-panel-drag="commentary"]');
     assert(title,'Commentary drag handle missing');
@@ -1143,6 +1163,9 @@ try{
     assert(Number(momentumBenchmark262?.p1Retention)<.9,'Phase 262 P1 retention remains too strong: '+JSON.stringify(momentumBenchmark262?.p1Retention));
     assert(Number(momentumBenchmark262?.top3Variation)>.04,'Phase 262 Top3 variation too low: '+JSON.stringify(momentumBenchmark262?.top3Variation));
     assert(Number(momentumBenchmark262?.averageOvertakes)>=1,'Phase 262 average overtakes too low: '+JSON.stringify(momentumBenchmark262?.averageOvertakes));
+    assert(Number(momentumBenchmark262?.averageUniquePassPairs)>=1,'Phase 309 unique pass opponents too low: '+JSON.stringify(momentumBenchmark262?.averageUniquePassPairs));
+    assert(Number(momentumBenchmark262?.averageOrderChanges)>=1,'Phase 309 actual order changes too low: '+JSON.stringify(momentumBenchmark262?.averageOrderChanges));
+    assert(Number(momentumBenchmark262?.averageDriversMovedFromGrid)>=1,'Phase 309 finish-order movement too low: '+JSON.stringify(momentumBenchmark262?.averageDriversMovedFromGrid));
     assert(Number(momentumBenchmark262?.abnormalGapRuns)<=2,'Phase 262 abnormal gap runs too high: '+JSON.stringify(momentumBenchmark262?.gapRows));
     assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Phase 262 momentum benchmark did not restore Setup');
 
@@ -1182,6 +1205,9 @@ try{
       raceMomentumV262:{
         gridFinishCorrelation:Number(momentumBenchmark262?.gridFinishCorrelation)||0,
         averageOvertakes:Number(momentumBenchmark262?.averageOvertakes)||0,
+        averageUniquePassPairs:Number(momentumBenchmark262?.averageUniquePassPairs)||0,
+        averageOrderChanges:Number(momentumBenchmark262?.averageOrderChanges)||0,
+        averageDriversMovedFromGrid:Number(momentumBenchmark262?.averageDriversMovedFromGrid)||0,
         p1Retention:Number(momentumBenchmark262?.p1Retention)||0,
         top3Variation:Number(momentumBenchmark262?.top3Variation)||0,
         abnormalGapRuns:Number(momentumBenchmark262?.abnormalGapRuns)||0,

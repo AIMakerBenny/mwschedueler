@@ -62,6 +62,7 @@ function layoutThoughtsV306(bounds){
 function layoutPositionTagsV306(bounds){
  const nodes=[...document.querySelectorAll('.car-position-tag-v254')].filter(node=>node.isConnected);
  nodes.forEach(node=>{node.style.setProperty('--v306-tag-x','0px');node.style.setProperty('--v306-tag-y','0px')});
+ if(window.__mwsF1FixedMarkerLabelsV309===true){return nodes.map(node=>{node.dataset.v306Shift='0,0';return {position:positionV306(node),dx:0,dy:0,fixedBelowV309:true}})}
  nodes.sort((a,b)=>positionV306(a)-positionV306(b));
  const placed=[],rows=[];
  const candidates=[[0,0],[-36,0],[36,0],[0,36],[-36,36],[36,36],[-54,18],[54,18],[0,-36],[-54,-18],[54,-18],[-72,36],[72,36]];
@@ -99,7 +100,8 @@ function layoutV306(){
  const thoughts=layoutThoughtsV306(bounds),tags=layoutPositionTagsV306(bounds);
  stateV306.layoutCount+=1;
  const report={version:VERSION306,thoughts,tags,thoughtOverlap:overlapCountV306('.f1-racing-driver-thought-v303',1),tagOverlap:overlapCountV306('.car-position-tag-v254',0)};
- report.allPass=report.thoughtOverlap.count===0&&report.tagOverlap.count===0;
+ report.fixedMarkerModeV309=window.__mwsF1FixedMarkerLabelsV309===true;
+ report.allPass=report.thoughtOverlap.count===0&&(report.fixedMarkerModeV309||report.tagOverlap.count===0);
  stateV306.lastReport=report;return report;
 }
 function scheduleV306(){requestAnimationFrame(()=>requestAnimationFrame(layoutV306))}

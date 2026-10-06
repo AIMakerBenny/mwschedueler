@@ -1,0 +1,22 @@
+/* Phase 309: viewport-fit reset, fixed below-marker identity/rank */
+#f1RacingViewRaceV185 .f1-racing-race-vehicle-v189 .car-label{
+  text-anchor:middle!important;
+  paint-order:stroke fill;
+  stroke:#05070a;
+  stroke-width:3px;
+  stroke-linejoin:round;
+  pointer-events:none
+}
+#f1RacingViewRaceV185 .car-position-tag-v254{
+  transform:none!important;
+  transition:none!important;
+  pointer-events:none
+}
+#f1RacingViewRaceV185 .car-position-text-v254{
+  paint-order:stroke fill;
+  stroke:#05070a;
+  stroke-width:2px
+}
+#f1RacingWorkspaceRecoveryE.f1-racing-workspace-fit-v288{
+  max-height:calc(100dvh - 8px)!important
+}
