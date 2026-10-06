@@ -828,10 +828,11 @@ try{
     const cadenceQa=window.mwsF1QaCommentaryCadenceV227?.();
     assert(cadenceFirst===true&&cadenceSecond===false&&cadenceAfter-cadenceBefore===1,'Phase 227 cadence gate did not suppress same-tick flow spam: '+JSON.stringify({cadenceFirst,cadenceSecond,cadenceBefore,cadenceAfter,cadenceQa}));
     assert(cadenceQa?.allPass===true&&Number(cadenceQa?.suppressed)>=1&&Number(cadenceQa?.maxNarrativePerWindow)===18,'Phase 227 cadence QA failed: '+JSON.stringify(cadenceQa));
-    for(let i=0;i<20;i++)window.mwsF1AppendRaceCommentaryV222?.('QA 흐름 '+i,'flow','qa-flow-'+i,0);
+    for(let i=0;i<64;i++)window.mwsF1AppendRaceCommentaryV219?.('QA 읽기 테스트 '+String.fromCharCode(0xAC00+i),'info');
     const commentaryLog=document.getElementById('f1RacingCommentaryLogV188');
+    assert(commentaryLog&&commentaryLog.scrollHeight>commentaryLog.clientHeight+4,'Phase 226 unread QA could not create a genuinely scrollable commentary panel');
     commentaryLog.scrollTop=0;commentaryLog.dispatchEvent(new Event('scroll'));await raf();
-    window.mwsF1AppendRaceCommentaryV222?.('QA 읽지 않은 해설','flow','qa-unread',0);await raf();
+    window.mwsF1AppendRaceCommentaryV219?.('QA 읽지 않은 해설 별도','info');await raf();
     const unreadQa=window.mwsF1QaCommentaryReadabilityV226?.();
     assert(Number(unreadQa?.unread)>=1,'Phase 226 unread commentary counter did not increment: '+JSON.stringify(unreadQa));
     document.getElementById('f1RacingCommentaryUnreadV226')?.click();await raf();
