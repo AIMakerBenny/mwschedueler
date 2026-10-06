@@ -329,6 +329,7 @@ import {runPhase330F1VisualSpacingContinuityAudit} from './run-phase330-f1-visua
 import {runPhase331F1NaturalDialogueExpansionAudit} from './run-phase331-f1-natural-dialogue-expansion-audit.mjs';
 import {runPhase332F1LiveReadabilityVarietyAudit} from './run-phase332-f1-live-readability-variety-audit.mjs';
 import {runPhase333F1GachaResponsiveViewportAudit} from './run-phase333-f1-gacha-responsive-viewport-audit.mjs';
+import {runPhase334F1DialogueAuditCompatibility} from './run-phase334-f1-dialogue-audit-compatibility.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2715,5 +2716,6 @@ export function runPhase330FullIntegrationAudit(){const previous=runPhase329Full
 export function runPhase331FullIntegrationAudit(){const previous=runPhase330FullIntegrationAudit(),current=runPhase331F1NaturalDialogueExpansionAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 331: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 331: '+x)];return {phase:331,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase332FullIntegrationAudit(){const previous=runPhase331FullIntegrationAudit(),current=runPhase332F1LiveReadabilityVarietyAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 332: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 332: '+x)];return {phase:332,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase333FullIntegrationAudit(){const previous=runPhase332FullIntegrationAudit(),current=runPhase333F1GachaResponsiveViewportAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 333: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 333: '+x)];return {phase:333,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase333FullIntegrationAudit();}
+export function runPhase334FullIntegrationAudit(){const previous=runPhase333FullIntegrationAudit(),current=runPhase334F1DialogueAuditCompatibility();const issues=[...previous.issues,...current.issues.map(x=>'Phase 334: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 334: '+x)];return {phase:334,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase334FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
