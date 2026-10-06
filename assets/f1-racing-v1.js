@@ -1447,10 +1447,12 @@ function qaLapControlV260(){
 }
 
 function getRaceDraftV187(){
+  const mode=String(nextRaceModeV346||'NORMAL').toUpperCase()==='FAST'?'FAST':'NORMAL';
   return Object.freeze({
     selectedDriverIds:Object.freeze(selectedIds.slice()),
     selectedTrackId:String(activeTrackId||''),
-    totalLaps:selectedTotalLapsRecoveryD
+    totalLaps:mode==='FAST'?FAST_RACE_CONFIG_V346.laps:selectedTotalLapsRecoveryD,
+    raceMode:mode
   });
 }
 function cloneDriverForRaceV187(row,index){
@@ -1472,6 +1474,7 @@ function buildRaceSnapshotV187(){
     createdAt:new Date().toISOString(),
     trackId:String(track.id),
     totalLaps:draft.totalLaps,
+    raceMode:String(draft.raceMode||'NORMAL'),
     track:Object.freeze({
       id:String(track.id),
       name:String(track.name),
@@ -1493,6 +1496,7 @@ function buildRaceSnapshotV187(){
 }
 function syncSetupActionV187(){
   const button=document.getElementById('f1RacingProceedV187');
+  const fastButton=document.getElementById('f1RacingFastRaceV346');
   const summary=document.getElementById('f1RacingSetupSummaryV187');
   const hint=document.getElementById('f1RacingSetupHintV187');
   const track=getActiveTrack();
@@ -1500,6 +1504,7 @@ function syncSetupActionV187(){
   if(summary)summary.textContent='드라이버 '+selectedIds.length+'명 · '+(track?.name||'트랙 미선택')+' · '+selectedTotalLapsRecoveryD+'랩';
   if(hint)hint.textContent=ready?'준비가 완료되었습니다. 경기 진행 후 스타팅 그리드에서 경기 시작을 눌러야 출발합니다.':'드라이버를 2명 이상 선택하고 트랙을 선택해 주세요.';
   if(button)button.disabled=!ready;
+  if(fastButton)fastButton.disabled=!ready;
   return ready;
 }
 function populateTransitionV187(snapshot){
@@ -1521,6 +1526,7 @@ function startRaceFromSetupV187(){
   if(f1ScreenStateV185!=='SETUP')return false;
   const snapshot=buildRaceSnapshotV187();
   if(!snapshot)return false;
+  nextRaceModeV346='NORMAL';
   resetRaceMotionV189();
   activeRaceResultRecoveryG=null;
   finishCounterRecoveryG=0;
@@ -8079,11 +8085,23 @@ function renderRaceControlV188(){
   const chip=document.getElementById('f1RacingPhaseChipV180');if(chip)chip.textContent='레이스 관제';
   return true;
 }
+function startFastRaceV346(){
+  if(f1ScreenStateV185!=='SETUP')return false;
+  nextRaceModeV346='FAST';
+  const started=startRaceFromSetupV187();
+  if(!started)nextRaceModeV346='NORMAL';
+  return started;
+}
 function bindRaceProceedV187(){
   const button=document.getElementById('f1RacingProceedV187');
   if(button&&!button.dataset.f1Bound){
     button.dataset.f1Bound='1';
     button.addEventListener('click',startRaceFromSetupV187);
+  }
+  const fastButton=document.getElementById('f1RacingFastRaceV346');
+  if(fastButton&&!fastButton.dataset.f1FastBound){
+    fastButton.dataset.f1FastBound='1';
+    fastButton.addEventListener('click',startFastRaceV346);
   }
   syncSetupActionV187();
 }
