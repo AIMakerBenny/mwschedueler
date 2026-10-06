@@ -325,6 +325,10 @@ import {runPhase326F1GachaImageFallbackQaAudit} from './run-phase326-f1-gacha-im
 import {runPhase327F1LabelTagSeparationCompatibilityAudit} from './run-phase327-f1-label-tag-separation-compatibility-audit.mjs';
 import {runPhase328F1TrainHeadwayOvertakeReleaseAudit} from './run-phase328-f1-train-headway-overtake-release-audit.mjs';
 import {runPhase329F1FutureSafeAuditCleanup} from './run-phase329-f1-future-safe-audit-cleanup.mjs';
+import {runPhase330F1VisualSpacingContinuityAudit} from './run-phase330-f1-visual-spacing-continuity-audit.mjs';
+import {runPhase331F1NaturalDialogueExpansionAudit} from './run-phase331-f1-natural-dialogue-expansion-audit.mjs';
+import {runPhase332F1LiveReadabilityVarietyAudit} from './run-phase332-f1-live-readability-variety-audit.mjs';
+import {runPhase333F1GachaResponsiveViewportAudit} from './run-phase333-f1-gacha-responsive-viewport-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2707,5 +2711,9 @@ export function runPhase326FullIntegrationAudit(){const previous=runPhase325Full
 export function runPhase327FullIntegrationAudit(){const previous=runPhase326FullIntegrationAudit(),current=runPhase327F1LabelTagSeparationCompatibilityAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 327: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 327: '+x)];return {phase:327,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase328FullIntegrationAudit(){const previous=runPhase327FullIntegrationAudit(),current=runPhase328F1TrainHeadwayOvertakeReleaseAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 328: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 328: '+x)];return {phase:328,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase329FullIntegrationAudit(){const previous=runPhase328FullIntegrationAudit(),current=runPhase329F1FutureSafeAuditCleanup();const issues=[...previous.issues,...current.issues.map(x=>'Phase 329: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 329: '+x)];return {phase:329,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase329FullIntegrationAudit();}
+export function runPhase330FullIntegrationAudit(){const previous=runPhase329FullIntegrationAudit(),current=runPhase330F1VisualSpacingContinuityAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 330: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 330: '+x)];return {phase:330,previous,current,issues,warnings,pass:issues.length===0};}
+export function runPhase331FullIntegrationAudit(){const previous=runPhase330FullIntegrationAudit(),current=runPhase331F1NaturalDialogueExpansionAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 331: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 331: '+x)];return {phase:331,previous,current,issues,warnings,pass:issues.length===0};}
+export function runPhase332FullIntegrationAudit(){const previous=runPhase331FullIntegrationAudit(),current=runPhase332F1LiveReadabilityVarietyAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 332: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 332: '+x)];return {phase:332,previous,current,issues,warnings,pass:issues.length===0};}
+export function runPhase333FullIntegrationAudit(){const previous=runPhase332FullIntegrationAudit(),current=runPhase333F1GachaResponsiveViewportAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 333: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 333: '+x)];return {phase:333,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase333FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
