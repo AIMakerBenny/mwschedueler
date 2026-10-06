@@ -342,6 +342,7 @@ import {runPhase343F1CornerTyreDynamicsAudit} from './run-phase343-f1-corner-tyr
 import {runPhase344F1StaggeredPitStrategyAudit} from './run-phase344-f1-staggered-pit-strategy-audit.mjs';
 import {runPhase345F1CompetitionFastRaceAudit} from './run-phase345-f1-competition-fast-race-audit.mjs';
 import {runPhase346F1RaceDynamicsCorrectionAudit} from './run-phase346-f1-race-dynamics-correction-audit.mjs';
+import {runPhase347F1LiveVerifierCompatibilityAudit} from './run-phase347-f1-live-verifier-compatibility-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2741,5 +2742,6 @@ export function runPhase343FullIntegrationAudit(){const previous=runPhase342Full
 export function runPhase344FullIntegrationAudit(){const previous=runPhase343FullIntegrationAudit(),current=runPhase344F1StaggeredPitStrategyAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 344: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 344: '+x)];return {phase:344,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase345FullIntegrationAudit(){const previous=runPhase344FullIntegrationAudit(),current=runPhase345F1CompetitionFastRaceAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 345: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 345: '+x)];return {phase:345,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase346FullIntegrationAudit(){const previous=runPhase345FullIntegrationAudit(),current=runPhase346F1RaceDynamicsCorrectionAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 346: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 346: '+x)];return {phase:346,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase346FullIntegrationAudit();}
+export function runPhase347FullIntegrationAudit(){const previous=runPhase346FullIntegrationAudit(),current=runPhase347F1LiveVerifierCompatibilityAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 347: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 347: '+x)];return {phase:347,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase347FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
