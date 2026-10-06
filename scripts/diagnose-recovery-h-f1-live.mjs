@@ -332,7 +332,7 @@ try{
   if(!phase332Ready)throw new Error('Phase 332 runtime did not propagate to Recovery H browser');
   if(!phase333Ready)throw new Error('Phase 333 runtime did not propagate to Recovery H browser');
 
-  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase339Ready=false,phase340Ready=false,phase341Ready=false,phase342Ready=false,phase343Ready=false,phase344Ready=false,phase345Ready=false,phase346Ready=false;
+  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase339Ready=false,phase340Ready=false,phase341Ready=false,phase342Ready=false,phase343Ready=false,phase344Ready=false,phase345Ready=false,phase346Ready=false,phase348Ready=false;
   for(let attempt=0;attempt<8;attempt++){
     const readiness=await evaluate(cdp,`({
       p335:window.__mwsF1RacingV335==='phase335-f1-actual-track-spacing'&&typeof window.mwsF1QaActualTrackSpacingV335==='function',
@@ -346,13 +346,14 @@ try{
       p343:window.__mwsF1RacingV343==='phase343-f1-corner-tyre-dynamics'&&typeof window.mwsF1QaCornerTyreDynamicsV343==='function',
       p344:window.__mwsF1RacingV344==='phase344-f1-staggered-pit-strategy'&&typeof window.mwsF1QaStaggeredPitStrategyV344==='function',
       p345:window.__mwsF1RacingV345==='phase345-f1-competition-fast-race'&&typeof window.mwsF1QaCompetitionFastRaceV345==='function',
-      p346:window.__mwsF1RacingV346==='phase346-f1-race-dynamics-correction'&&typeof window.mwsF1QaRaceDynamicsCorrectionV346==='function'
+      p346:window.__mwsF1RacingV346==='phase346-f1-race-dynamics-correction'&&typeof window.mwsF1QaRaceDynamicsCorrectionV346==='function',
+      p348:window.__mwsF1RacingV348==='phase348-f1-dynamics-playtest-qa'&&typeof window.mwsF1QaDynamicsContractV348==='function'&&typeof window.mwsF1QaDynamicsPlaytestV348==='function'
     })`,"Phase 335-346 runtime readiness");
     phase335Ready=Boolean(readiness?.p335);phase336Ready=Boolean(readiness?.p336);phase337Ready=Boolean(readiness?.p337);
-    phase338Ready=Boolean(readiness?.p338);phase339Ready=Boolean(readiness?.p339);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);phase342Ready=Boolean(readiness?.p342);phase343Ready=Boolean(readiness?.p343);phase344Ready=Boolean(readiness?.p344);phase345Ready=Boolean(readiness?.p345);phase346Ready=Boolean(readiness?.p346);
-    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase339Ready&&phase340Ready&&phase341Ready&&phase342Ready&&phase343Ready&&phase344Ready&&phase345Ready&&phase346Ready)break;
+    phase338Ready=Boolean(readiness?.p338);phase339Ready=Boolean(readiness?.p339);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);phase342Ready=Boolean(readiness?.p342);phase343Ready=Boolean(readiness?.p343);phase344Ready=Boolean(readiness?.p344);phase345Ready=Boolean(readiness?.p345);phase346Ready=Boolean(readiness?.p346);phase348Ready=Boolean(readiness?.p348);
+    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase339Ready&&phase340Ready&&phase341Ready&&phase342Ready&&phase343Ready&&phase344Ready&&phase345Ready&&phase346Ready&&phase348Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v346=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v348=${Date.now()}-${attempt}`});
     await refreshed;await sleep(1200);
   }
   if(!phase335Ready)throw new Error('Phase 335 runtime did not propagate to Recovery H browser');
@@ -367,6 +368,7 @@ try{
   if(!phase344Ready)throw new Error('Phase 344 runtime did not propagate to Recovery H browser');
   if(!phase345Ready)throw new Error('Phase 345 runtime did not propagate to Recovery H browser');
   if(!phase346Ready)throw new Error('Phase 346 runtime did not propagate to Recovery H browser');
+  if(!phase348Ready)throw new Error('Phase 348 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -1296,6 +1298,8 @@ try{
     assert(fast345?.allPass===true,'Phase 345 fast race and competition QA failed: '+JSON.stringify(fast345));
     const dynamics346=window.mwsF1QaRaceDynamicsCorrectionV346?.();
     assert(dynamics346?.allPass===true,'Phase 346 corrected racing line and competition QA failed: '+JSON.stringify(dynamics346));
+    const dynamicsContract348=window.mwsF1QaDynamicsContractV348?.();
+    assert(dynamicsContract348?.allPass===true,'Phase 348 dynamics contract QA failed: '+JSON.stringify(dynamicsContract348));
     const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]');
     const title=commentary?.querySelector('[data-f1-panel-drag="commentary"]');
     assert(title,'Commentary drag handle missing');
@@ -1403,6 +1407,10 @@ try{
     document.getElementById('f1RacingRaceCancelRecoveryC')?.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Final cancel did not return to Setup');
 
+    const dynamicsPlaytest348=window.mwsF1QaDynamicsPlaytestV348?.();
+    assert(dynamicsPlaytest348?.allPass===true,'Phase 348 real dynamics playtest QA failed: '+JSON.stringify(dynamicsPlaytest348));
+    assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Phase 348 playtest did not restore Setup');
+
     const engineQa240=window.mwsF1QaAcceleratedEngineRaceV240?.();
     assert(engineQa240?.allPass===true&&engineQa240?.result?.completed===true&&Number(engineQa240?.result?.telemetry?.fieldAverageSpeedKph)>0,'Phase 240 accelerated real-engine QA failed: '+JSON.stringify(engineQa240));
     assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Phase 240 engine QA did not restore Setup');
@@ -1469,6 +1477,7 @@ try{
       podiumCount,
       resultCount,
       newRacePreservedDrivers:afterNewRaceIds,
+      dynamicsPlaytestV348:dynamicsPlaytest348||null,
       raceMomentumV262:{
         gridFinishCorrelation:Number(momentumBenchmark262?.gridFinishCorrelation)||0,
         averageOvertakes:Number(momentumBenchmark262?.averageOvertakes)||0,
