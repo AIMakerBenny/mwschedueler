@@ -293,6 +293,7 @@ jobs:
           node --check scripts/run-phase346-f1-race-dynamics-correction-audit.mjs
           node --check scripts/run-phase347-f1-live-verifier-compatibility-audit.mjs
           node --check scripts/run-phase348-f1-dynamics-playtest-qa-audit.mjs
+          node --check scripts/run-phase349-f1-strict-pit-staggering-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
@@ -1080,6 +1081,10 @@ jobs:
           grep -Fq "window.__mwsF1RacingV348=VERSION348;" /tmp/f1-racing-v1-phase187.js
           grep -Fq "const exitAcceleration=(phase==='EXIT'?CORNER_DYNAMICS_V343.exitAccelerationMultiplier:1)" /tmp/f1-racing-v1-phase187.js
           grep -Fq "function qaDynamicsPlaytestV348(){" /tmp/f1-racing-v1-phase187.js
+          echo '[phase349] F1 strict 40 percent pit guard and first-stop staggering'
+          grep -Fq "window.__mwsF1RacingV349=VERSION349;" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "const safeTyre=pitRemainingGuardV349(context);" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "const firstPitLaps=" /tmp/f1-racing-v1-phase187.js
           grep -Fq "if(!setScreenStateV185('TRANSITION'))return false;" /tmp/f1-racing-v1-phase187.js
           grep -Fq 'window.mwsF1StartRaceFromSetupV187=startRaceFromSetupV187;' /tmp/f1-racing-v1-phase187.js
           echo '[phase188] F1 Race Control base frame'
