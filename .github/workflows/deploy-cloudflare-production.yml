@@ -291,6 +291,7 @@ jobs:
           node --check scripts/run-phase344-f1-staggered-pit-strategy-audit.mjs
           node --check scripts/run-phase345-f1-competition-fast-race-audit.mjs
           node --check scripts/run-phase346-f1-race-dynamics-correction-audit.mjs
+          node --check scripts/run-phase347-f1-live-verifier-compatibility-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
