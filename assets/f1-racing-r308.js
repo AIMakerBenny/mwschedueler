@@ -2,8 +2,9 @@
 'use strict';
 const VERSION308='phase308-track-overlay-hud-frequency-diversity';
 const VERSION315HUD='phase315-dialogue-semantic-diversity';
+const VERSION341HUD='phase341-dialogue-wall-clock-lifetime';
 const HUD_CONFIG_V308=Object.freeze({globalGapMs:6800,speakerGapMs:12000,durationMs:4800,maxText:48,recentLimit:24,semanticWindow:2,semanticHistoryLimit:12,recentSpeakerLimit:6});
-const stateV308={installed:false,observer:null,rootObserver:null,lastConversationId:'',lastGlobalSimMs:-Infinity,lastSpeakerAt:new Map(),recentTexts:[],recentSemantic:[],recentSpeakers:[],hudShown:0,hudSuppressed:0,liveDockCount:0,timer:0};
+const stateV308={installed:false,observer:null,rootObserver:null,lastConversationId:'',lastGlobalWallMs:-Infinity,lastSpeakerAt:new Map(),recentTexts:[],recentSemantic:[],recentSpeakers:[],hudShown:0,hudSuppressed:0,liveDockCount:0,timer:0};
 
 function escV308(value=''){return String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 function stageV308(){return document.querySelector('#f1RacingViewRaceV185 .f1-racing-race-map-stage-v188')}
@@ -43,13 +44,13 @@ function dialogueSemanticKeyV315(text=''){
  return 'GENERIC';
 }
 function hudCanShowV308(speaker,text){
- const now=Number(window.mwsF1GetSimulationClockV192?.()?.simTimeMs)||0,clean=trimTextV308(text),name=normalizeSpeakerV308(speaker);
+ const now=Date.now(),clean=trimTextV308(text),name=normalizeSpeakerV308(speaker);
  if(!clean||!name)return false;
  if(stateV308.recentTexts.includes(clean)){stateV308.hudSuppressed+=1;return false}
  const semantic=dialogueSemanticKeyV315(clean);
  if(semantic!=='GENERIC'&&stateV308.recentSemantic.slice(-HUD_CONFIG_V308.semanticWindow).includes(semantic)){stateV308.hudSuppressed+=1;return false}
  if(stateV308.recentSpeakers.slice(-2).includes(name)){stateV308.hudSuppressed+=1;return false}
- if(Number.isFinite(stateV308.lastGlobalSimMs)&&now-stateV308.lastGlobalSimMs<HUD_CONFIG_V308.globalGapMs){stateV308.hudSuppressed+=1;return false}
+ if(Number.isFinite(stateV308.lastGlobalWallMs)&&now-stateV308.lastGlobalWallMs<HUD_CONFIG_V308.globalGapMs){stateV308.hudSuppressed+=1;return false}
  const last=Number(stateV308.lastSpeakerAt.get(name));
  if(Number.isFinite(last)&&now-last<HUD_CONFIG_V308.speakerGapMs){stateV308.hudSuppressed+=1;return false}
  return true;
@@ -60,8 +61,8 @@ function showHudV308(speaker,text){
  const avatar=image?'<img class="f1-racing-dialogue-avatar-v308" src="'+escV308(image)+'" alt="">':'<span class="f1-racing-dialogue-avatar-v308 fallback">'+escV308(initialsV308(name))+'</span>';
  root.innerHTML='<article class="f1-racing-dialogue-card-v308" style="--dialogue-driver-v308:'+escV308(color)+'"><div class="f1-racing-dialogue-profile-v308">'+avatar+'</div><div class="f1-racing-dialogue-copy-v308"><strong>'+escV308(name)+'</strong><p>“'+escV308(clean)+'”</p></div></article>';
  root.classList.remove('leaving-v308');requestAnimationFrame(()=>root.classList.add('visible-v308'));
- const now=Number(window.mwsF1GetSimulationClockV192?.()?.simTimeMs)||0;
- stateV308.lastGlobalSimMs=now;stateV308.lastSpeakerAt.set(name,now);stateV308.recentTexts.push(clean);
+ const now=Date.now();
+ stateV308.lastGlobalWallMs=now;stateV308.lastSpeakerAt.set(name,now);stateV308.recentTexts.push(clean);
  if(stateV308.recentTexts.length>HUD_CONFIG_V308.recentLimit)stateV308.recentTexts.splice(0,stateV308.recentTexts.length-HUD_CONFIG_V308.recentLimit);
  stateV308.recentSemantic.push(dialogueSemanticKeyV315(clean));if(stateV308.recentSemantic.length>HUD_CONFIG_V308.semanticHistoryLimit)stateV308.recentSemantic.splice(0,stateV308.recentSemantic.length-HUD_CONFIG_V308.semanticHistoryLimit);
  stateV308.recentSpeakers.push(name);if(stateV308.recentSpeakers.length>HUD_CONFIG_V308.recentSpeakerLimit)stateV308.recentSpeakers.splice(0,stateV308.recentSpeakers.length-HUD_CONFIG_V308.recentSpeakerLimit);
@@ -69,8 +70,8 @@ function showHudV308(speaker,text){
 }
 function clearExpiredHudV308(){
  const root=document.getElementById('f1RacingDialogueHudV308');if(!root||!root.classList.contains('visible-v308'))return false;
- const now=Number(window.mwsF1GetSimulationClockV192?.()?.simTimeMs)||0;
- if(!Number.isFinite(stateV308.lastGlobalSimMs)||now-stateV308.lastGlobalSimMs<HUD_CONFIG_V308.durationMs)return false;
+ const now=Date.now();
+ if(!Number.isFinite(stateV308.lastGlobalWallMs)||now-stateV308.lastGlobalWallMs<HUD_CONFIG_V308.durationMs)return false;
  root.classList.add('leaving-v308');root.classList.remove('visible-v308');setTimeout(()=>{if(!root.classList.contains('visible-v308'))root.replaceChildren();root.classList.remove('leaving-v308')},240);return true;
 }
 function syncConversationV308(){
@@ -106,9 +107,15 @@ function qaV308(){
 window.mwsF1SyncTrackOverlaysV308=syncV308;
 window.mwsF1ShowDialogueHudV308=showHudV308;
 window.mwsF1QaTrackOverlayHudV308=qaV308;
-window.mwsF1GetTrackOverlayStateV308=function(){return {config:{...HUD_CONFIG_V308},lastConversationId:stateV308.lastConversationId,lastGlobalSimMs:stateV308.lastGlobalSimMs,recentTexts:[...stateV308.recentTexts],recentSemantic:[...stateV308.recentSemantic],recentSpeakers:[...stateV308.recentSpeakers],hudShown:stateV308.hudShown,hudSuppressed:stateV308.hudSuppressed,liveDockCount:stateV308.liveDockCount}};
+window.mwsF1GetTrackOverlayStateV308=function(){return {config:{...HUD_CONFIG_V308},lastConversationId:stateV308.lastConversationId,lastGlobalWallMs:stateV308.lastGlobalWallMs,recentTexts:[...stateV308.recentTexts],recentSemantic:[...stateV308.recentSemantic],recentSpeakers:[...stateV308.recentSpeakers],hudShown:stateV308.hudShown,hudSuppressed:stateV308.hudSuppressed,liveDockCount:stateV308.liveDockCount}};
 window.mwsF1QaDialogueSemanticV315=function(){const samples=['추월 기회가 열립니다','브레이크를 늦춥니다','타이어를 관리합니다','페이스를 올립니다'];const keys=samples.map(dialogueSemanticKeyV315);return {version:VERSION315HUD,keys,unique:new Set(keys).size,config:{...HUD_CONFIG_V308},allPass:new Set(keys).size===samples.length&&HUD_CONFIG_V308.semanticWindow>=2&&HUD_CONFIG_V308.recentSpeakerLimit>=5}};
+window.mwsF1QaDialogueWallClockV341=function(){
+ const before=stateV308.lastGlobalWallMs,now=Date.now();
+ const independent=!String(hudCanShowV308).includes('simTimeMs')&&!String(clearExpiredHudV308).includes('simTimeMs')&&!String(showHudV308).includes('simTimeMs');
+ return {version:VERSION341HUD,durationMs:HUD_CONFIG_V308.durationMs,globalGapMs:HUD_CONFIG_V308.globalGapMs,before,now,independent,allPass:independent&&HUD_CONFIG_V308.durationMs>=4500&&HUD_CONFIG_V308.globalGapMs>=6000};
+};
 window.__mwsF1RacingHudV315=VERSION315HUD;
+window.__mwsF1RacingHudV341=VERSION341HUD;
 window.__mwsF1RacingV308=VERSION308;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installV308,{once:true});else installV308();
 })();
