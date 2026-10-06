@@ -460,7 +460,8 @@ try{
     const gachaRevealRect319=gachaReveal313.getBoundingClientRect(),gachaHostRect323=gachaHost323?.getBoundingClientRect(),gachaCardRect319=gachaCard319?.getBoundingClientRect(),gachaInfoRect319=gachaInfo319?.getBoundingClientRect();
     assert(gachaHost323&&gachaHostRect323&&gachaHostRect323.width<=gachaRevealRect319.width+2&&gachaHostRect323.height<=gachaRevealRect319.height+2&&gachaHostRect323.bottom<=gachaRevealRect319.bottom+2,'Phase 323 Gacha host overflows reveal viewport: '+JSON.stringify({reveal:gachaRevealRect319,host:gachaHostRect323,html:gachaReveal313.innerHTML.slice(0,180)}));
     assert(gachaCard319&&gachaCardRect319&&gachaCardRect319.width<=gachaHostRect323.width+2&&gachaCardRect319.height<=gachaHostRect323.height+2,'Phase 321 Gacha card overflows reveal viewport: '+JSON.stringify({host:gachaHostRect323,card:gachaCardRect319,className:gachaCard319?.className}));
-    assert(gachaImage319&&getComputedStyle(gachaImage319).objectFit==='contain','Phase 321 Gacha portrait must use contain fit');
+    const gachaInitials326=gachaCard319?.querySelector('.gacha-card-initials');
+    assert((gachaImage319&&getComputedStyle(gachaImage319).objectFit==='contain')||Boolean(gachaInitials326),'Phase 321 Gacha portrait must use contain fit');
     assert(gachaInfoRect319&&gachaInfoRect319.height>=50&&gachaInfoRect319.bottom<=gachaCardRect319.bottom+2,'Phase 321 Gacha card info is clipped: '+JSON.stringify({info:gachaInfoRect319,card:gachaCardRect319}));
     assert(typeof window.multiDrawCardHTML==='function'&&gachaHost323?.dataset?.gachaRendererV323==='shared'&&Boolean(gachaHost323.querySelector('.gacha-card')),'Phase 321 F1 grid did not reuse the real Gacha card renderer');
     assert(gachaHost323?.dataset?.gachaRendererV324==='deterministic'&&gachaCard319?.classList.contains('f1-grid-gacha-card-v324'),'Phase 324 deterministic Gacha card shell missing');

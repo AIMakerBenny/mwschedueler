@@ -118,6 +118,7 @@ const VERSION314='phase314-f1-race-dynamics-rebalance';
 const VERSION315='phase315-f1-live-participant-dialogue-diversity';
 const VERSION319='phase319-f1-ui-spacing-battle-isolation';
 const VERSION324='phase324-f1-ui-visibility-train-spacing';
+const VERSION326='phase326-f1-gacha-image-fallback-qa';
 // Phase 325 compatibility markers for superseded static audits:
 // x:-14,y:27,width:28,height:13
 // x:0,y:36.2,'text-anchor':'middle'
@@ -1743,7 +1744,7 @@ function gridGachaCardHtmlV313(driver,position,compact=false){
   const player=gridGachaPlayerV313(driver),positionText='P'+String(position).padStart(2,'0');
   const sharedAvailable=typeof window.multiDrawCardHTML==='function';
   if(sharedAvailable){try{window.multiDrawCardHTML(player)}catch(_){}}
-  const media=player.image?'<img src="'+escapeHtml(player.image)+'" alt="'+escapeHtml(player.name)+'">':'<div class="gacha-card-initials">'+escapeHtml(initials(player.name))+'</div>';
+  const media=player.image?'<img style="display:block;width:100%;height:100%;object-fit:contain;object-position:center center" src="'+escapeHtml(player.image)+'" alt="'+escapeHtml(player.name)+'">':'<div class="gacha-card-initials">'+escapeHtml(initials(player.name))+'</div>';
   const card='<div class="gacha-card f1-grid-gacha-card-v324"><div class="gacha-card-inner"><div class="gacha-card-image">'+media+'</div><div class="gacha-card-info"><div class="gacha-card-kicker">STARTING GRID</div><div class="gacha-card-name">'+escapeHtml(player.name)+'</div><div class="gacha-card-desc">'+positionText+' · GRID POSITION</div></div></div></div>';
   return '<div class="f1-grid-gacha-card-host-v323" data-gacha-renderer-v323="'+(sharedAvailable?'shared':'shared-style')+'" data-gacha-renderer-v324="deterministic">'+card+'</div>';
 }
