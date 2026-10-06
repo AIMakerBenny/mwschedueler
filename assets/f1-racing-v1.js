@@ -125,6 +125,10 @@ const VERSION330='phase330-f1-visual-spacing-continuity';
 const VERSION331='phase331-f1-natural-dialogue-expansion';
 const VERSION332='phase332-f1-live-readability-variety';
 const VERSION333='phase333-f1-gacha-responsive-viewport';
+const VERSION335='phase335-f1-actual-track-spacing';
+const VERSION336='phase336-f1-pit-status-only';
+const VERSION337='phase337-f1-commentary-semantic-dedupe';
+const VERSION338='phase338-f1-best-lap-overlay';
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
 const GAME_VARIABILITY_CONFIG_V303=Object.freeze({evaluationMs:650,maxGapMeters:84,attackGapMeters:36,baseBonusKph:1.1,pressureBonusKph:3.2,midfieldBonusKph:.8,failedPassBonusKph:.4,maxFailedPassBonusKph:1.6,momentumBonusKph:1.55,maxTotalBiasKph:14,positionCatchupMaxPct:.045,positionCatchupExponent:1.35,leaderHoldMs:12000,leaderCloseGapSeconds:1.75,leaderClosePenaltyKph:.9,liveCadenceMs:10000});
@@ -2624,9 +2628,7 @@ function timingTyreLabelV253(vehicle){
 }
 function timingPitLabelV253(vehicle){
   const state=String(vehicle?.pitState||'TRACK');
-  if(state==='PIT_BOX')return '피트 스톱';
-  if(state==='PIT_LANE'||state==='PIT_ENTRY'||state==='PIT_EXIT')return '피트';
-  if(vehicle?.pitRequested)return '피트 예정';
+  if(['PIT_ENTRY','PIT_LANE','PIT_BOX','PIT_EXIT'].includes(state)||vehicle?.pitRequested)return '피트';
   return '';
 }
 function timingBattleLabelV253(vehicle){
@@ -2663,7 +2665,7 @@ function qaLiveTimingStatusV253(){
   }finally{
     Object.assign(vehicle,saved);syncLiveTimingStatusV253(row,vehicle);
   }
-  const allPass=observed.tyre==='S 77%'&&observed.pit==='피트 스톱'&&observed.battle==='배틀'&&!observed.pitHidden&&!observed.battleHidden;
+  const allPass=observed.tyre==='S 77%'&&observed.pit==='피트'&&observed.battle==='배틀'&&!observed.pitHidden&&!observed.battleHidden;
   return {...observed,allPass};
 }
 
@@ -4755,6 +4757,51 @@ function qaRaceMarkerPositionV254(){
   return {count:rows.length,rows,allPass:rows.length>0&&rows.every(row=>row.tag&&row.text==='P'+row.position&&row.dataset===String(row.position))};
 }
 
+
+const bestLapOverlayStateV338={lastFastestMs:0,lastFastestId:'',newUntilWallMs:0,version:0};
+function ensureBestLapOverlayV338(){
+  const stage=document.querySelector('#f1RacingViewRaceV185 .f1-racing-race-map-stage-v188');if(!stage)return null;
+  let root=document.getElementById('f1RacingBestLapOverlayV338');
+  if(root)return root;
+  root=document.createElement('aside');root.id='f1RacingBestLapOverlayV338';root.className='f1-racing-best-lap-v338';root.hidden=true;
+  root.innerHTML='<div class="f1-best-lap-kicker-v338"><span>BEST LAP</span><em data-f1-best-lap-new-v338>NEW</em></div><div class="f1-best-lap-main-v338"><span class="f1-best-lap-avatar-v338" data-f1-best-lap-avatar-v338></span><span class="f1-best-lap-copy-v338"><strong data-f1-best-lap-driver-v338>--</strong><b data-f1-best-lap-time-v338>--:--.---</b></span></div>';
+  stage.appendChild(root);return root;
+}
+function bestLapAvatarV338(root,vehicle){
+  const slot=root?.querySelector('[data-f1-best-lap-avatar-v338]');if(!slot)return false;
+  const name=String(vehicle?.driver?.name||'Driver'),image=String(vehicle?.driver?.image||'').trim();
+  slot.replaceChildren();
+  if(image){const img=document.createElement('img');img.src=image;img.alt='';slot.appendChild(img)}
+  else slot.textContent=initials(name);
+  return true;
+}
+function syncBestLapOverlayV338(state=raceHeadlineStateV255()){
+  const root=ensureBestLapOverlayV338();if(!root)return null;
+  const fastestMs=Number(state?.fastestMs)||0,fastestId=String(state?.fastestId||'');
+  if(!(fastestMs>0)||!fastestId){root.hidden=true;return {visible:false,fastestMs:0,fastestId:''}}
+  const vehicle=raceMotionV189.vehicles.find(row=>String(row.id)===fastestId)||null;
+  const isNew=!(bestLapOverlayStateV338.lastFastestMs>0)||fastestMs<bestLapOverlayStateV338.lastFastestMs-.5||fastestId!==bestLapOverlayStateV338.lastFastestId&&Math.abs(fastestMs-bestLapOverlayStateV338.lastFastestMs)>.5;
+  bestLapOverlayStateV338.lastFastestMs=fastestMs;bestLapOverlayStateV338.lastFastestId=fastestId;
+  root.hidden=false;root.querySelector('[data-f1-best-lap-driver-v338]').textContent=String(vehicle?.driver?.name||state.fastestDriver||'--');
+  root.querySelector('[data-f1-best-lap-time-v338]').textContent=formatLapTimeV248(fastestMs);bestLapAvatarV338(root,vehicle);
+  if(isNew){
+    const version=++bestLapOverlayStateV338.version;bestLapOverlayStateV338.newUntilWallMs=Date.now()+3600;
+    root.classList.remove('is-new-v338');void root.offsetWidth;root.classList.add('is-new-v338');
+    setTimeout(()=>{if(version===bestLapOverlayStateV338.version)root.classList.remove('is-new-v338')},3800);
+  }
+  root.dataset.fastestIdV338=fastestId;root.dataset.fastestMsV338=String(Math.round(fastestMs));
+  return {visible:true,fastestMs,fastestId,isNew};
+}
+function resetBestLapOverlayV338(){
+  bestLapOverlayStateV338.lastFastestMs=0;bestLapOverlayStateV338.lastFastestId='';bestLapOverlayStateV338.newUntilWallMs=0;bestLapOverlayStateV338.version+=1;
+  const root=document.getElementById('f1RacingBestLapOverlayV338');if(root){root.hidden=true;root.classList.remove('is-new-v338');root.removeAttribute('data-fastest-id-v338')}
+  return true;
+}
+function qaBestLapOverlayV338(){
+  const root=ensureBestLapOverlayV338();
+  return {version:VERSION338,rootReady:Boolean(root),hasNew:Boolean(root?.querySelector('[data-f1-best-lap-new-v338]')),hasAvatar:Boolean(root?.querySelector('[data-f1-best-lap-avatar-v338]')),allPass:Boolean(root&&root.querySelector('[data-f1-best-lap-new-v338]')&&root.querySelector('[data-f1-best-lap-avatar-v338]'))};
+}
+
 function raceHeadlineStateV255(){
   const standings=computeRaceStandingsV191();
   const leader=standings[0]?.vehicle||null;
@@ -4771,6 +4818,7 @@ function raceHeadlineStateV255(){
     remaining,
     total,
     fastestMs:Number(fastest.fastestMs)||0,
+    fastestId,
     fastestDriver:String(fastestVehicle?.driver?.name||'--'),
     battles
   };
@@ -4793,6 +4841,7 @@ function syncRaceHeadlineV255(){
   root.dataset.remaining=String(state.remaining);
   root.dataset.fastestMs=String(Math.round(state.fastestMs));
   root.dataset.battles=String(state.battles);
+  syncBestLapOverlayV338(state);
   return state;
 }
 function qaRaceHeadlineV255(){
@@ -5411,12 +5460,14 @@ function renderRaceVehiclesV189(frameMs=16.67){
   raceMotionV189.vehicles.forEach(function(vehicle,index){
     const marker=vehicle.marker||ensureRaceVehicleMarkerV189(vehicle,index);if(!marker)return;
     const lateralStateV258=updateVisualLateralOffsetV258(vehicle,frameMs,false);
-    const targetDisplayRaceProgressV319=spacingPlanV319.has(String(vehicle.id))?spacingPlanV319.get(String(vehicle.id)):Number(vehicle.raceProgress)||0;
+    const plannedDisplayRaceProgressV319=spacingPlanV319.has(String(vehicle.id))?spacingPlanV319.get(String(vehicle.id)):Number(vehicle.raceProgress)||0;
     const trackLengthV330=Math.max(1,Number(activeRaceSnapshotV187?.track?.lengthMeters)||1);
     const actualRaceProgressV330=Number(vehicle.raceProgress)||0;
-    const targetShiftMetersV330=Math.max(0,(actualRaceProgressV330-targetDisplayRaceProgressV319)*trackLengthV330);
+    const targetShiftMetersV330=0;
     const smoothShiftMetersV330=smoothVisualSpacingShiftV330(vehicle,targetShiftMetersV330,frameMs);
     const displayRaceProgressV319=actualRaceProgressV330-smoothShiftMetersV330/trackLengthV330;
+    vehicle.visualSpacingPlannedShiftMetersV335=Math.max(0,(actualRaceProgressV330-plannedDisplayRaceProgressV319)*trackLengthV330);
+    vehicle.visualSpacingModeV335='ACTUAL_RACE_PROGRESS';
     const displayProgressV319=normalizedProgressV190(displayRaceProgressV319);
     const point=raceLinePointV197(path,displayProgressV319,lateralStateV258.visual);if(!point)return;
     vehicle.renderPointV216={x:Number(point.x),y:Number(point.y)};
@@ -5433,6 +5484,8 @@ function renderRaceVehiclesV189(frameMs=16.67){
     marker.dataset.visualSpacingShiftMetersV319=Number(vehicle.visualSpacingShiftMetersV319||0).toFixed(1);
     marker.dataset.visualSpacingTargetShiftMetersV330=Number(vehicle.visualSpacingTargetShiftMetersV330||0).toFixed(1);
     marker.dataset.visualSpacingSmoothedShiftMetersV330=Number(vehicle.visualSpacingSmoothedShiftMetersV330||0).toFixed(1);
+    marker.dataset.visualSpacingPlannedShiftMetersV335=Number(vehicle.visualSpacingPlannedShiftMetersV335||0).toFixed(1);
+    marker.dataset.visualSpacingModeV335=String(vehicle.visualSpacingModeV335||'ACTUAL_RACE_PROGRESS');
     marker.dataset.visualSpacingGapMetersV319=Number(vehicle.visualSpacingGapMetersV319||0).toFixed(1);
     marker.dataset.visualSpacingBattlePairV319=vehicle.visualSpacingBattlePairV319?'1':'0';
     marker.dataset.physicalLateralV258=Number(vehicle.lateralOffsetMeters||0).toFixed(3);
@@ -6747,6 +6800,31 @@ const commentaryStateV219={
   vehicle:new Map(),sequence:0
 };
 const commentaryReadV226={followTail:true,unread:0,lastTextAt:new Map(),bound:false};
+const COMMENTARY_SEMANTIC_CONFIG_V337=Object.freeze({defaultWallGapMs:4200,mistakeWallGapMs:8500,openingWallGapMs:5200,exactWallGapMs:7000});
+const commentarySemanticV337={lastByKey:new Map(),suppressed:0};
+function commentarySemanticKeyV337(text,type='info'){
+  const value=String(text||'').replace(/\[[^\]]+\]/g,'[]').replace(/\d+(?:\.\d+)?(?:초|랩|위|%|km\/h)?/g,'#').replace(/\s+/g,' ').trim();
+  const kind=String(type||'info');
+  if(kind==='pit'||/피트/.test(value))return 'PIT';
+  if(/주행 실수|차량을 수습|언더스티어|오버스티어|타이어를 잠갔/.test(value))return 'MISTAKE';
+  if(/추월 가능 구간|추월 기회/.test(value))return 'OPENING';
+  if(/압박 중|압박을 시작|간격을 지웁/.test(value))return 'PRESSURE';
+  if(/선두로 올라섰|레이스 선두/.test(value))return 'LEAD';
+  return kind.toUpperCase()+':'+value;
+}
+function commentarySemanticGapV337(key){
+  if(key==='MISTAKE')return COMMENTARY_SEMANTIC_CONFIG_V337.mistakeWallGapMs;
+  if(key==='OPENING'||key==='PRESSURE')return COMMENTARY_SEMANTIC_CONFIG_V337.openingWallGapMs;
+  return COMMENTARY_SEMANTIC_CONFIG_V337.defaultWallGapMs;
+}
+function commentarySemanticAllowsV337(text,type='info'){
+  const key=commentarySemanticKeyV337(text,type);
+  if(key==='PIT'){commentarySemanticV337.suppressed+=1;return false}
+  if(['FLAG','FINISH','LEAD','PASS','START'].includes(String(type||'').toUpperCase()))return true;
+  const now=Date.now(),previous=Number(commentarySemanticV337.lastByKey.get(key));
+  if(Number.isFinite(previous)&&now-previous<commentarySemanticGapV337(key)){commentarySemanticV337.suppressed+=1;return false}
+  commentarySemanticV337.lastByKey.set(key,now);return true;
+}
 const commentaryCadenceV227={
   lastByType:new Map(),recentNarrativeTimes:[],emitted:0,suppressed:0
 };
@@ -6834,9 +6912,10 @@ function appendRaceCommentaryV219(message,type='info'){
   const text=String(message||'').trim();
   if(!log||!text)return false;
   bindCommentaryReadabilityV226();
-  const now=Number(simClockV192.simTimeMs)||0;
+  if(!commentarySemanticAllowsV337(text,type))return false;
+  const now=Date.now();
   const duplicateAt=Number(commentaryReadV226.lastTextAt.get(text));
-  if(Number.isFinite(duplicateAt)&&now-duplicateAt<1800)return false;
+  if(Number.isFinite(duplicateAt)&&now-duplicateAt<COMMENTARY_SEMANTIC_CONFIG_V337.exactWallGapMs)return false;
   commentaryReadV226.lastTextAt.set(text,now);
   const priority=commentaryPriorityV226(type);
   log.querySelector('.f1-racing-commentary-empty-v188')?.remove();
@@ -6924,6 +7003,7 @@ function resetRaceCommentaryV219(){
   commentaryStateV219.vehicle=new Map();
   commentaryStateV219.sequence=0;
   commentaryReadV226.followTail=true;commentaryReadV226.unread=0;commentaryReadV226.lastTextAt=new Map();
+  commentarySemanticV337.lastByKey=new Map();commentarySemanticV337.suppressed=0;
   resetRaceNarrativeV263();
   resetLiveCutinsV264();
   resetCharacterDialogueV277();
@@ -6978,9 +7058,7 @@ function updateRaceCommentaryV219(force=false){
     }
     if(current.pitState!==previous.pitState){
       const pitEvent=pitCommentaryEventV230(previous.pitState,current.pitState);
-      if(pitEvent==='ENTRY')appendRaceCommentaryV219('['+name+'] 피트로 들어갑니다.','pit');
-      else if(pitEvent==='BOX')appendRaceCommentaryV219('['+name+'] 피트 스톱을 진행합니다.','pit');
-      else if(pitEvent==='RETURN')appendRaceCommentaryV219('['+name+'] 피트에서 트랙으로 복귀했습니다.','pit');
+      if(pitEvent==='ENTRY'||pitEvent==='BOX'||pitEvent==='RETURN')recordTechnicalCommentaryV263(name+' pit state '+pitEvent,'PIT_STATUS');
     }
     if(current.incident&&current.incident!==previous.incident){
       const incidentText=incidentCommentaryTextV219(current.incident,name);if(incidentText){recordTechnicalCommentaryV263(incidentText,'MISTAKE');emitRaceNarrativeV263('MISTAKE',vehicle,null,{type:'battle',cooldownMs:0})}
@@ -7057,9 +7135,8 @@ function updateRaceNarrativeV222(force=false){
     const previous=commentaryFlowV222.vehicle.get(id)||commentaryFlowVehicleStateV222(vehicle);
     const current=commentaryFlowVehicleStateV222(vehicle);
     if(current.pitRequested&&!previous.pitRequested){
-      const target=current.strategyTargetCompound?current.strategyTargetCompound+' 타이어':'새 타이어';
-      recordTechnicalCommentaryV263(name+'가 '+target+' 교체를 위한 피트 전략을 준비합니다.','PIT_TACTIC');
-      emitted=emitRaceNarrativeV263('PIT_TACTIC',vehicle,null,{type:'strategy',cooldownMs:1800})||emitted;
+      const target=current.strategyTargetCompound?current.strategyTargetCompound+' tyre':'tyre';
+      recordTechnicalCommentaryV263(name+' pit request '+target,'PIT_STATUS');
     }
     if(current.tyreWear>=0.72&&previous.tyreWear<0.72){
       emitted=appendRaceCommentaryV222('['+name+'] 타이어 마모가 커졌습니다. 페이스 관리가 중요해집니다.','strategy','tyre-wear:'+id,30000)||emitted;
@@ -7296,6 +7373,24 @@ function qaVisualSpacingContinuityV330(){
     allPass:approachMonotonic&&releaseMonotonic&&noTeleport&&approach[0]>18&&release[0]<68&&VISUAL_SPACING_SMOOTH_V330.approachMs>=300&&VISUAL_SPACING_SMOOTH_V330.releaseMs>=400};
 }
 
+
+function qaActualTrackSpacingV335(){
+  const sample={id:'qa335',raceProgress:1.123,visualSpacingSmoothedShiftMetersV330:0};
+  const actual=Number(sample.raceProgress)||0,targetShift=0,display=actual-smoothVisualSpacingShiftV330(sample,targetShift,16.67)/5000;
+  return {version:VERSION335,actual,display,shift:sample.visualSpacingSmoothedShiftMetersV330,mode:'ACTUAL_RACE_PROGRESS',allPass:Math.abs(display-actual)<1e-9&&sample.visualSpacingSmoothedShiftMetersV330===0};
+}
+function qaPitStatusOnlyV336(){
+  const rows=['PIT_ENTRY','PIT_LANE','PIT_BOX','PIT_EXIT'].map(pitState=>({pitState,label:timingPitLabelV253({pitState,pitRequested:false})}));
+  const track=timingPitLabelV253({pitState:'TRACK',pitRequested:false}),requested=timingPitLabelV253({pitState:'TRACK',pitRequested:true});
+  return {version:VERSION336,rows,track,requested,allPass:rows.every(row=>row.label==='피트')&&track===''&&requested==='피트'};
+}
+function qaCommentarySemanticDedupeV337(){
+  const a=commentarySemanticKeyV337('[A] 주행 실수가 발생해 차량을 수습 중입니다.','battle');
+  const b=commentarySemanticKeyV337('[B] 주행 실수가 발생해 차량을 수습 중입니다.','battle');
+  const pit=commentarySemanticKeyV337('[A] 피트로 들어갑니다.','pit');
+  return {version:VERSION337,a,b,pit,config:{...COMMENTARY_SEMANTIC_CONFIG_V337},allPass:a==='MISTAKE'&&b==='MISTAKE'&&pit==='PIT'&&COMMENTARY_SEMANTIC_CONFIG_V337.mistakeWallGapMs>=8000};
+}
+
 function qaTrainHeadwayOvertakeReleaseV328(){
   const cfg=RACE_SPACING_CONFIG_V319;
   const rows=[
@@ -7307,8 +7402,16 @@ function qaTrainHeadwayOvertakeReleaseV328(){
 }
 window.mwsF1QaTrainHeadwayOvertakeReleaseV328=qaTrainHeadwayOvertakeReleaseV328;
 window.mwsF1QaVisualSpacingContinuityV330=qaVisualSpacingContinuityV330;
+window.mwsF1QaActualTrackSpacingV335=qaActualTrackSpacingV335;
+window.mwsF1QaPitStatusOnlyV336=qaPitStatusOnlyV336;
+window.mwsF1QaCommentarySemanticDedupeV337=qaCommentarySemanticDedupeV337;
+window.mwsF1QaBestLapOverlayV338=qaBestLapOverlayV338;
 window.__mwsF1RacingV328=VERSION328;
 window.__mwsF1RacingV330=VERSION330;
+window.__mwsF1RacingV335=VERSION335;
+window.__mwsF1RacingV336=VERSION336;
+window.__mwsF1RacingV337=VERSION337;
+window.__mwsF1RacingV338=VERSION338;
 
 function qaUiVisibilitySpacingV324(){
   const marker=document.querySelector('.f1-racing-race-vehicle-v189');
@@ -7425,6 +7528,7 @@ function resetRaceMotionV189(){
   raceFlagStateV214={flag:'GREEN',reason:'',sinceSimMs:0};
   resetLeaderPressureFieldV274();
   resetMicroBattleEventsV278();
+  resetBestLapOverlayV338();
   const layer=document.getElementById('f1RacingRaceVehicleLayerV188');if(layer)layer.replaceChildren();
   syncSimulationControlsV192();
 }
