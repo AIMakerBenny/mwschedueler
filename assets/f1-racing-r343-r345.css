@@ -1,0 +1,24 @@
+/* Phase 345: explicit 3-lap high-variance race entry */
+.f1-racing-start-actions-v345{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.f1-racing-fast-race-v345{
+  border-color:#7c3aed!important;
+  background:linear-gradient(135deg,rgba(91,33,182,.92),rgba(124,58,237,.88))!important;
+  color:#fff!important;
+  box-shadow:0 0 0 1px rgba(167,139,250,.16),0 8px 22px rgba(76,29,149,.24);
+  font-weight:900!important;
+}
+.f1-racing-fast-race-v345:hover:not(:disabled){
+  border-color:#a78bfa!important;
+  box-shadow:0 0 0 1px rgba(196,181,253,.24),0 0 18px rgba(139,92,246,.28);
+}
+.f1-racing-fast-race-v345:disabled{opacity:.42!important;box-shadow:none!important}
+@media(max-width:760px){
+  .f1-racing-start-actions-v345{width:100%;justify-content:stretch}
+  .f1-racing-start-actions-v345>button{flex:1 1 180px}
+}
