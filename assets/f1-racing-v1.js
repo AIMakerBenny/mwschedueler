@@ -111,7 +111,8 @@ const VERSION281='phase281-dialogue-cadence-repeat-guard';
 const VERSION282='phase282-dialogue-long-run-desktop-qa';
 const VERSION303='phase303-f1-feedback-stabilization';
 const VERSION307='phase307-live-session-merge-expanded-copy';
-const GAME_VARIABILITY_CONFIG_V303=Object.freeze({evaluationMs:650,maxGapMeters:72,attackGapMeters:30,baseBonusKph:.85,pressureBonusKph:2.4,midfieldBonusKph:.65,failedPassBonusKph:.32,maxFailedPassBonusKph:1.15,momentumBonusKph:1.35,maxTotalBiasKph:5.2,leaderHoldMs:12000,leaderCloseGapSeconds:1.65,leaderClosePenaltyKph:.72,liveCadenceMs:6200});
+const VERSION308='phase308-track-overlay-hud-frequency-diversity';
+const GAME_VARIABILITY_CONFIG_V303=Object.freeze({evaluationMs:650,maxGapMeters:72,attackGapMeters:30,baseBonusKph:.85,pressureBonusKph:2.4,midfieldBonusKph:.65,failedPassBonusKph:.32,maxFailedPassBonusKph:1.15,momentumBonusKph:1.35,maxTotalBiasKph:5.2,leaderHoldMs:12000,leaderCloseGapSeconds:1.65,leaderClosePenaltyKph:.72,liveCadenceMs:10000});
 const gameVariabilityStateV303={lastEvalSimMs:-Infinity,lastLiveSimMs:-Infinity,lastOrder:[],positionChanges:0,boostApplications:0,leaderPressureApplications:0,liveEmits:0};
 const TRACK_BOUNDARY_V271=Object.freeze({
   carHalfWidthMeters:.85,safetyMarginMeters:.20,edgeStartRatio:.90,
@@ -301,18 +302,94 @@ const LIVE_CUTIN_TEXT_PARTS_V307=Object.freeze({
   ])
  })
 });
+const LIVE_CUTIN_EXTRA_V308=Object.freeze({
+ ATTACK:Object.freeze([
+  '{driver}가 직선 끝에서 차를 한쪽으로 꺼냅니다. {target}도 바로 수비 준비에 들어갑니다.',
+  '{driver}, 이번에는 코너보다 제동점에서 먼저 승부를 겁니다.',
+  '{target}의 출구가 조금 느렸습니다. {driver}가 그 틈을 바로 물고 늘어집니다.',
+  '{driver}가 슬립스트림에서 빠져나옵니다. 이제 진짜 추월 시도입니다.',
+  '간격이 충분히 줄었습니다. {driver}가 {target}에게 선택을 강요합니다.',
+  '{driver}가 안쪽을 한번 보여주고 다시 라인을 바꿉니다. 페이크가 섞인 공격입니다.',
+  '{corner} 앞에서 {driver}가 더 늦은 제동을 준비합니다.',
+  '{driver}가 바깥쪽 공간을 남겨 둔 채 출구 우위를 노립니다.',
+  '속도 차이가 생겼습니다. {driver}가 그대로 {target} 옆을 향합니다.',
+  '{driver}는 서두르지 않습니다. 다음 제동 구간까지 압박을 유지합니다.',
+  '{target}가 수비 위치를 잡기도 전에 {driver}가 움직임을 시작합니다.',
+  '{driver}가 두 번의 방향 변화로 {target}의 수비 라인을 흔듭니다.',
+  '이번 공격은 단순한 접근이 아닙니다. {driver}가 확실히 자리를 노립니다.',
+  '{position} 근처의 싸움이 뜨거워집니다. {driver}가 먼저 승부수를 던집니다.',
+  '{driver}가 코너 진입보다 출구 가속을 노리는 라인을 선택합니다.',
+  '{driver}가 앞차의 흔들림을 읽었습니다. {target}에게 쉴 틈이 없습니다.'
+ ]),
+ SIDE_BY_SIDE:Object.freeze([
+  '{driver}와 {target}가 차 한 대 폭도 남기지 않고 함께 들어갑니다.',
+  '두 대가 같은 제동점에서 브레이크를 밟습니다. 먼저 물러설 차가 없습니다.',
+  '{corner}에서 {driver}는 안쪽, {target}는 바깥쪽을 고수합니다.',
+  '핸들 하나 차이입니다. {driver}와 {target}가 그대로 나란히 갑니다.',
+  '두 차의 앞바퀴가 거의 같은 선에 있습니다. 승부는 출구에서 갈립니다.',
+  '{driver}가 옆자리를 확보했지만 {target}도 문을 닫지 못했습니다.',
+  '바깥쪽의 {target}, 안쪽의 {driver}. 서로 다른 라인으로 같은 출구를 노립니다.',
+  '브레이킹은 끝났지만 승부는 아닙니다. 두 대가 코너 중간까지 나란히 갑니다.',
+  '{driver}와 {target}가 서로의 공간을 정확히 한 차 폭씩만 남깁니다.',
+  '직선에서 시작된 싸움이 {corner}까지 이어집니다. 아직 앞차가 정해지지 않았습니다.',
+  '{driver}가 반 차 정도 앞서지만 {target}가 출구 라인을 지키고 있습니다.',
+  '두 대가 동시에 가속 페달을 엽니다. 이제 견인력 싸움입니다.',
+  '{position} 자리를 두고 휠 투 휠이 길어지고 있습니다.',
+  '{driver}가 안쪽을 잡았고 {target}는 더 넓은 출구 각을 노립니다.',
+  '누가 먼저 라인을 접느냐의 싸움입니다. 둘 다 쉽게 양보하지 않습니다.',
+  '접촉 없이 끝까지 붙어 갑니다. 굉장히 팽팽한 병렬 주행입니다.'
+ ]),
+ COUNTER_ATTACK:Object.freeze([
+  '{target}가 추월 직후 바로 슬립스트림을 되찾습니다. 반격이 시작됩니다.',
+  '{driver}가 앞섰지만 안심할 수 없습니다. {target}가 다시 옆으로 나옵니다.',
+  '{target}가 스위치백으로 라인을 바꿉니다. 자리를 바로 되찾으려 합니다.',
+  '한 번 순위가 바뀌었지만 싸움은 끝나지 않았습니다. {target}가 다시 붙습니다.',
+  '{target}가 출구 가속을 이용해 {driver}의 뒤를 단숨에 좁힙니다.',
+  '{driver}가 문을 닫기 전에 {target}가 반대쪽 공간을 파고듭니다.',
+  '{target}가 다음 제동 구간을 노립니다. 추월 직후 곧바로 2차전입니다.',
+  '{driver}가 앞에 섰지만 {target}의 압박이 바로 돌아왔습니다.',
+  '이번에는 {target}가 안쪽을 노립니다. 역할이 완전히 뒤바뀌었습니다.',
+  '{target}가 한 템포 늦게 브레이크를 떼며 재공격을 준비합니다.',
+  '앞서 간 {driver}에게 숨 돌릴 시간이 없습니다. {target}가 즉시 따라붙습니다.',
+  '{target}가 레이싱 라인 대신 짧은 거리를 선택합니다. 반격 의도가 분명합니다.',
+  '{driver}의 추월이 완전히 굳어지기 전에 {target}가 다시 승부를 겁니다.',
+  '{target}가 코너 하나를 버리고 다음 코너를 위한 위치를 잡습니다.',
+  '순위는 바뀌었지만 간격은 없습니다. {target}가 바로 재도전에 들어갑니다.',
+  '{target}가 더 좋은 출구 속도를 만들었습니다. {driver}가 이번에는 수비해야 합니다.'
+ ]),
+ PASS_SUCCESS:Object.freeze([
+  '{driver}가 제동에서 우위를 만들고 {target}보다 먼저 코너를 빠져나옵니다.',
+  '{driver}가 바깥쪽 라인을 끝까지 살려 추월을 완성합니다.',
+  '긴 휠 투 휠 끝에 {driver}가 {target} 앞에 차를 세웠습니다.',
+  '{driver}가 슬립스트림부터 제동까지 완벽하게 이어 추월에 성공합니다.',
+  '{target}가 끝까지 버텼지만 출구 가속에서 {driver}가 앞섭니다.',
+  '{driver}가 한 번의 페이크 뒤 반대쪽으로 들어가 자리를 가져갑니다.',
+  '{corner}에서 승부가 갈렸습니다. {driver}가 새로운 {position}를 확보합니다.',
+  '{driver}가 안쪽을 지키며 추월을 마무리합니다. 이제 {target}가 뒤를 쫓습니다.',
+  '두 대의 긴 싸움이 끝납니다. 이번 승자는 {driver}입니다.',
+  '{driver}가 아주 작은 속도 차이를 실제 순위 변화로 바꿨습니다.',
+  '추월이 확정됩니다. {driver}가 {target}보다 한 자리 앞에 섭니다.',
+  '{driver}가 코너 진입이 아니라 출구에서 승부를 끝냈습니다.',
+  '{target}의 수비가 무너진 순간 {driver}가 정확히 공간을 차지했습니다.',
+  '{driver}가 무리한 접촉 없이 깔끔하게 {target}을 넘어섭니다.',
+  '여러 차례의 시도 끝에 {driver}가 드디어 {position}를 손에 넣습니다.',
+  '{driver}가 라인 선택과 가속을 모두 맞췄습니다. 추월 성공입니다.'
+ ])
+});
 function buildLiveCutinLibraryV307(){
  const out={};
  for(const [event,parts] of Object.entries(LIVE_CUTIN_TEXT_PARTS_V307)){
-  out[event]=Object.freeze(parts.lead.flatMap((lead,i)=>parts.action.map((action,j)=>Object.freeze({id:event+'-'+i+'-'+j,text:lead+' '+action}))));
+  const generated=parts.lead.flatMap((lead,i)=>parts.action.map((action,j)=>Object.freeze({id:event+'-'+i+'-'+j,text:lead+' '+action})));
+  const extra=(LIVE_CUTIN_EXTRA_V308[event]||[]).map((text,index)=>Object.freeze({id:event+'-direct-v308-'+index,text}));
+  out[event]=Object.freeze([...generated,...extra]);
  }
  return Object.freeze(out);
 }
 const LIVE_CUTIN_LIBRARY_V307=buildLiveCutinLibraryV307();
 const LIVE_CUTIN_CONFIG_V264=Object.freeze({
- maxActive:1,queueLimit:1,dedupeMs:2800,globalCadenceMs:5200,mergeWindowMs:7200,
- minDurationMs:4800,maxDurationMs:6800,mergeDurationMs:6200,exitMs:320,
- recentLimit:32,pairRecentLimit:12
+ maxActive:1,queueLimit:1,dedupeMs:7000,globalCadenceMs:9000,mergeWindowMs:10000,
+ minDurationMs:6000,maxDurationMs:8200,mergeDurationMs:7600,exitMs:320,
+ recentLimit:48,pairRecentLimit:20
 });
 const liveCutinStateV264={
  queue:[],active:new Map(),lastDriverAt:new Map(),timers:new Map(),sequence:0,lastGlobalAt:-Infinity,
@@ -5761,11 +5838,28 @@ const DIALOGUE_POOL_CATEGORIES_V279=Object.freeze({
 const DIALOGUE_ROLE_ALIASES_V279=Object.freeze({
   PASSED:'ATTACKER_FAIL',DEFENDER_SUCCESS:'DEFENDER',OPPORTUNIST:'CHASER'
 });
+const DIALOGUE_DIRECT_LINES_V308=Object.freeze({
+ ATTACKER:Object.freeze(['브레이크를 조금 더 늦춰본다.','저쪽이 안쪽을 막으면 출구를 노린다.','이번에는 바로 들어가지 않고 한번 흔든다.','앞차 타이어가 밀린다. 다음 코너가 기회다.','직선 속도는 내가 조금 더 좋다.','한 코너 뒤까지 계산하고 들어간다.','바깥쪽도 충분히 열려 있다.','지금은 붙어만 있으면 된다.']),
+ DEFENDER:Object.freeze(['안쪽은 막고 출구 속도만 챙긴다.','괜히 반응하지 말고 내 라인 간다.','뒤차가 급해질 때까지 기다린다.','브레이크는 평소대로. 실수만 안 하면 된다.','한 번 보여준다고 바로 길을 줄 생각 없다.','출구에서 거리를 다시 벌린다.','라인보다 견인력을 우선한다.','뒤에서 뭘 하든 코너 하나씩 막아낸다.']),
+ CHASER:Object.freeze(['앞차 출구가 조금씩 느려진다.','직선에서 공기 저항을 제대로 줄이고 있다.','조금만 더 붙으면 브레이킹 싸움이 된다.','페이스 차이는 있다. 서두를 필요 없다.','이번 랩은 앞차 움직임부터 본다.','타이어 온도 좋다. 계속 압박 가능하다.','코너 두 개만 더 잘 나오면 바로 사정권이다.','앞차가 수비하면 오히려 다음 출구가 열린다.']),
+ MISTAKE_DRIVER:Object.freeze(['앞이 잠깐 잠겼다. 큰 손실은 아니다.','뒤가 살짝 흐른다. 스로틀을 정리한다.','진입이 깊었다. 출구만 살려보자.','연석을 너무 많이 탔다. 다음에는 줄인다.','브레이크 밸런스가 조금 이상하다.','타이어가 한 번 미끄러졌다. 바로 온도 확인한다.','라인을 놓쳤지만 트랙 밖으로 나가진 않았다.','한 코너 잃었다. 다음 구간에서 되찾는다.']),
+ WINNER:Object.freeze(['이번 건 출구에서 결정났다.','수비 라인을 읽은 게 맞았다.','브레이킹보다 가속이 더 좋았다.','한 번만 제대로 열리면 충분했다.','접촉 없이 자리 가져왔다.','계획한 라인이 그대로 먹혔다.','이제 바로 앞차 페이스를 본다.','추월은 끝. 타이어부터 다시 관리한다.']),
+ ATTACKER_FAIL:Object.freeze(['너무 깊게 들어가면 둘 다 손해다. 이번엔 접는다.','공간이 닫혔다. 다음 직선까지 기다린다.','앞차가 예상보다 일찍 막았다.','출구 각이 안 나왔다. 다시 정렬한다.','한 번 보여준 걸로 충분하다. 다음엔 반대로 간다.','타이어를 쓰면서까지 억지로 들어갈 상황은 아니다.','반 차까지 갔지만 완전히 옆에 서진 못했다.','이번 시도는 실패. 그래도 간격은 그대로다.']),
+ REATTACKER:Object.freeze(['앞서 갔다고 끝난 건 아니다. 바로 붙는다.','다음 코너는 내가 안쪽을 먼저 잡는다.','추월당한 직후가 가장 좋은 반격 타이밍이다.','슬립스트림만 다시 잡으면 된다.','이번엔 먼저 라인을 보여주지 않는다.','출구 속도는 내가 더 좋다. 바로 되받아간다.','상대가 수비 자세 잡기 전에 한번 더 간다.','한 자리 내줬지만 레이스 전체를 내준 건 아니다.']),
+ BURST_DRIVER:Object.freeze(['지금 타이어 상태면 몇 코너는 더 밀어붙일 수 있다.','이번 구간만큼은 연료보다 위치가 중요하다.','앞차가 방어하기 전에 속도를 먼저 만든다.','한 번에 잡으려 하지 말고 출구마다 줄인다.','여기서 만든 속도 차이를 직선까지 가져간다.','지금이 레이스에서 가장 좋은 공격 구간이다.','차가 가볍다. 페이스를 올릴 수 있다.','지금은 관리보다 공격이다.']),
+ BURST_FAIL:Object.freeze(['속도는 냈지만 앞차도 같이 빨랐다.','타이어만 너무 쓰기 전에 다시 관리한다.','이번 구간에서는 충분히 가까워지지 못했다.','공격 페이스는 여기까지. 간격부터 유지한다.','예상보다 수비가 강했다.','가속은 좋았지만 추월 거리까지는 못 갔다.','다음 랩을 위해 온도를 다시 맞춘다.','한 번 실패했다고 흐름까지 끊을 필요는 없다.']),
+ FINAL_LAP:Object.freeze(['이제 남은 건 한 바퀴뿐이다. 계산 끝.','마지막 랩에서는 작은 간격도 전부 의미가 있다.','타이어 남은 만큼 다 쓴다.','마지막 제동까지 집중한다.','앞차가 보이면 한 번은 기회가 온다.','뒤차와 거리가 없으면 수비부터 확실히 한다.','체커드 전 마지막 직선까지 포기 없다.','이제 다음 랩은 없다.']),
+ THREE_WAY:Object.freeze(['앞차만 보고 들어가면 뒤차에게 당한다.','세 대가 붙었으니 출구 위치가 더 중요하다.','두 대 사이에 끼지 않도록 공간을 만든다.','지금은 한 자리보다 사고 없이 빠져나오는 게 먼저다.','앞에서 싸우는 동안 뒤쪽 기회도 열린다.','라인 하나를 세 대가 나눠 쓸 수는 없다.','누군가 먼저 브레이크를 포기해야 한다.','세 대 중 가장 좋은 출구를 만드는 차가 이긴다.']),
+ PODIUM:Object.freeze(['포디엄 싸움이면 위험 계산도 달라진다.','한 자리 차이지만 결과표에서는 크게 보인다.','앞차 실수 하나면 바로 시상대다.','여기서 무리하면 포디엄 자체를 잃을 수도 있다.','상위권은 작은 속도 차이도 바로 순위로 이어진다.','남은 랩과 타이어를 같이 봐야 한다.','지금 잡으면 끝까지 지킬 수 있다.','시상대가 보이면 집중력이 달라진다.']),
+ SPECIAL:Object.freeze(['예상과 다른 흐름이다. 먼저 상황부터 읽는다.','앞에서 싸우기 시작하면 뒤쪽에도 기회가 생긴다.','트랙 상태가 달라졌다. 평소 라인만 고집할 필요 없다.','지금은 순위보다 깨끗한 출구가 중요하다.','한 번의 선택으로 다음 두 코너가 바뀔 수 있다.','앞쪽 움직임이 커졌다. 거리를 조금 둔다.','상황이 복잡할수록 기본 라인이 안전하다.','지금은 공격보다 다음 장면을 준비한다.'])
+});
 const dialogueRecentTextV279=[];
-const DIALOGUE_RECENT_TEXT_LIMIT_V279=40;
+const DIALOGUE_RECENT_TEXT_LIMIT_V279=96;
 function characterDialoguePoolV279(role){
   const key=DIALOGUE_ROLE_ALIASES_V279[String(role||'')]||String(role||'');
-  return DIALOGUE_POOL_CATEGORIES_V279[key]||CHARACTER_DIALOGUE_POOL_V277[String(role||'')]||[];
+  const generated=DIALOGUE_POOL_CATEGORIES_V279[key]||CHARACTER_DIALOGUE_POOL_V277[String(role||'')]||[];
+  const direct=DIALOGUE_DIRECT_LINES_V308[key]||[];
+  return [...generated,...direct];
 }
 function rememberDialogueTextV279(text){
   const value=String(text||'');if(!value)return false;
@@ -5804,7 +5898,7 @@ function qaExpandedDialoguePoolV279(){
   const coverage=['ATTACKER','DEFENDER','CHASER','MISTAKE_DRIVER','WINNER','ATTACKER_FAIL','REATTACKER','BURST_DRIVER','BURST_FAIL','FINAL_LAP','THREE_WAY','PODIUM','SPECIAL'].every(key=>categoryNames.includes(key));
   const microCoverage=['GAP_1_5','GAP_1_0','GAP_0_6','SLIPSTREAM','ATTACK_LINE','DEFENCE_LINE','FAKE','BRAKING_DUEL','CORNER_ENTRY_DUEL','SIDE_BY_SIDE','EDGES_AHEAD','RE_ATTACK','PASS_SUCCESS','PASS_FAIL','COUNTER_ATTACK','FRONT_CAR_MISTAKE','REAR_CAR_MISTAKE','CORNER_EXIT_ADVANTAGE','LEADER_PRESSURE_MISTAKE','BURST_ACTIVATION','BURST_SUCCESS','BURST_FAIL','PODIUM_BATTLE','LAST_PLACE_BATTLE','FINAL_LAP','THREE_CAR_BATTLE'].every(event=>Array.isArray(MICRO_DIALOGUE_ROLE_MAP_V279[event]));
   return {stats,categoryCount:categoryNames.length,uniqueCount:unique.size,coverage,microCoverage,recentLimit:DIALOGUE_RECENT_TEXT_LIMIT_V279,
-    allPass:stats.total>=300&&categoryNames.length>=13&&unique.size>=300&&coverage&&microCoverage&&DIALOGUE_RECENT_TEXT_LIMIT_V279>=30};
+    allPass:stats.total>=400&&categoryNames.length>=13&&unique.size>=400&&coverage&&microCoverage&&DIALOGUE_RECENT_TEXT_LIMIT_V279>=80};
 }
 
 
@@ -5837,11 +5931,11 @@ function qaEventDialogueCoverageV280(){
 }
 
 
-const DIALOGUE_CADENCE_CONFIG_V281=Object.freeze({windowMs:8000,maxGroupsPerWindow:4,speakerGapMs:700,pairGapMs:1500,criticalPairGapMs:250});
+const DIALOGUE_CADENCE_CONFIG_V281=Object.freeze({windowMs:12000,maxGroupsPerWindow:2,speakerGapMs:4800,pairGapMs:7000,criticalPairGapMs:1800});
 const dialogueCadenceStateV281={recentGroupTimes:[],lastPairAt:new Map(),lastSpeakerAt:new Map(),emitted:0,suppressed:0,lastReason:''};
 function resetDialogueCadenceV281(){dialogueCadenceStateV281.recentGroupTimes=[];dialogueCadenceStateV281.lastPairAt=new Map();dialogueCadenceStateV281.lastSpeakerAt=new Map();dialogueCadenceStateV281.emitted=0;dialogueCadenceStateV281.suppressed=0;dialogueCadenceStateV281.lastReason='';return true}
 function trimDialogueCadenceWindowV281(now=Number(simClockV192.simTimeMs)||0){const min=now-DIALOGUE_CADENCE_CONFIG_V281.windowMs;dialogueCadenceStateV281.recentGroupTimes=dialogueCadenceStateV281.recentGroupTimes.filter(v=>Number(v)>=min);return dialogueCadenceStateV281.recentGroupTimes.length}
-function dialogueCadenceKeyV281(event,vehicle,target){return [String(event||''),String(vehicle?.id||''),String(target?.id||'')].join('|')}
+function dialogueCadenceKeyV281(event,vehicle,target){const pair=[String(vehicle?.id||''),String(target?.id||'')].filter(Boolean).sort();return pair.join('|')||String(event||'global')}
 function dialogueCadenceAllowsV281(event,vehicle,target,{critical=false}={}){
   const now=Number(simClockV192.simTimeMs)||0,key=dialogueCadenceKeyV281(event,vehicle,target),speaker=String(vehicle?.id||'');
   trimDialogueCadenceWindowV281(now);
@@ -5859,13 +5953,14 @@ function qaDialogueCadenceV281(){
   const oldTime=simClockV192.simTimeMs;resetDialogueCadenceV281();
   const a={id:'qa-a'},b={id:'qa-b'},c={id:'qa-c'},d={id:'qa-d'},e={id:'qa-e'};
   simClockV192.simTimeMs=1000;const first=dialogueCadenceAllowsV281('CHASE',a,b);if(first)recordDialogueCadenceV281('CHASE',a,b);
-  const duplicateBlocked=!dialogueCadenceAllowsV281('CHASE',a,b);
-  simClockV192.simTimeMs=1800;const speakerGapReleased=dialogueCadenceAllowsV281('CHASE2',a,c);if(speakerGapReleased)recordDialogueCadenceV281('CHASE2',a,c);
-  simClockV192.simTimeMs=2700;for(const [event,v,t] of [['E2',b,c],['E3',c,d]]){if(dialogueCadenceAllowsV281(event,v,t))recordDialogueCadenceV281(event,v,t)}
-  const budgetBlocked=!dialogueCadenceAllowsV281('E5',d,e);
-  const criticalAllowed=dialogueCadenceAllowsV281('PASS_SUCCESS',e,a,{critical:true});
+  const duplicateBlocked=!dialogueCadenceAllowsV281('CHASE2',a,b);
+  simClockV192.simTimeMs=3000;const speakerGapBlocked=!dialogueCadenceAllowsV281('CHASE3',a,c);
+  simClockV192.simTimeMs=6000;const speakerGapReleased=dialogueCadenceAllowsV281('CHASE4',a,c);if(speakerGapReleased)recordDialogueCadenceV281('CHASE4',a,c);
+  simClockV192.simTimeMs=6800;const budgetBlocked=!dialogueCadenceAllowsV281('E5',d,e);
+  const criticalAllowed=dialogueCadenceAllowsV281('PASS_SUCCESS',e,b,{critical:true});
   simClockV192.simTimeMs=oldTime;resetDialogueCadenceV281();
-  return {first,duplicateBlocked,speakerGapReleased,budgetBlocked,criticalAllowed,config:{...DIALOGUE_CADENCE_CONFIG_V281},recentTextLimit:DIALOGUE_RECENT_TEXT_LIMIT_V279,allPass:first&&duplicateBlocked&&speakerGapReleased&&budgetBlocked&&criticalAllowed&&DIALOGUE_CADENCE_CONFIG_V281.maxGroupsPerWindow<=4&&DIALOGUE_RECENT_TEXT_LIMIT_V279>=40}
+  return {first,duplicateBlocked,speakerGapBlocked,speakerGapReleased,budgetBlocked,criticalAllowed,config:{...DIALOGUE_CADENCE_CONFIG_V281},recentTextLimit:DIALOGUE_RECENT_TEXT_LIMIT_V279,
+    allPass:first&&duplicateBlocked&&speakerGapBlocked&&speakerGapReleased&&budgetBlocked&&criticalAllowed&&DIALOGUE_CADENCE_CONFIG_V281.maxGroupsPerWindow<=2&&DIALOGUE_CADENCE_CONFIG_V281.speakerGapMs>=4000&&DIALOGUE_RECENT_TEXT_LIMIT_V279>=80}
 }
 
 
@@ -5890,7 +5985,7 @@ function qaDialogueLongRunDesktopV282(benchmarkInput=null){
     leaderPressureChance:LEADER_PRESSURE_CONFIG_V274.maxEventChance<=.06
   };
   const benchmarkPass=Boolean(benchmark?.allPass)&&Number(benchmark?.trackCount)===7&&Number(benchmark?.completedRuns)===7;
-  const dialoguePass=Number(pool?.total)>=300&&coverage?.allPass===true&&MICRO_BATTLE_EVENTS_V278.length>=27;
+  const dialoguePass=Number(pool?.total)>=400&&coverage?.allPass===true&&MICRO_BATTLE_EVENTS_V278.length>=27;
   const boundedPass=Object.values(bounded).every(Boolean),rulesPass=Object.values(ruleBounds).every(Boolean);
   return {
     benchmark:{allPass:Boolean(benchmark?.allPass),trackCount:Number(benchmark?.trackCount)||0,completedRuns:Number(benchmark?.completedRuns)||0,averageOvertakes:Number(benchmark?.averageOvertakes)||0,p1Retention:Number(benchmark?.p1Retention)||0,top3Variation:Number(benchmark?.top3Variation)||0,abnormalGapRuns:Number(benchmark?.abnormalGapRuns)||0},
@@ -6367,7 +6462,7 @@ function qaGameVariabilityV303(){
   const c=GAME_VARIABILITY_CONFIG_V303;
   const synthetic={id:'qa',passFailedCount:3},m0=gameVariabilityMomentumV303(synthetic,0),m1=gameVariabilityMomentumV303(synthetic,5000);
   return {version:VERSION303,config:{...c},state:{...gameVariabilityStateV303,lastOrder:[...gameVariabilityStateV303.lastOrder]},momentumSamples:[m0,m1],
-    allPass:c.maxGapMeters>=60&&c.attackGapMeters>=24&&c.maxTotalBiasKph>=4.5&&c.leaderClosePenaltyKph>0&&c.liveCadenceMs>=5000&&c.liveCadenceMs<=8000&&m0>=0&&m0<=1&&m1>=0&&m1<=1};
+    allPass:c.maxGapMeters>=60&&c.attackGapMeters>=24&&c.maxTotalBiasKph>=4.5&&c.leaderClosePenaltyKph>0&&c.liveCadenceMs>=8500&&c.liveCadenceMs<=12000&&m0>=0&&m0<=1&&m1>=0&&m1<=1};
 }
 
 function simulateRaceStepV192(stepMs){

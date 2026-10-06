@@ -231,6 +231,17 @@ try{
   }
   if(!phase307Ready)throw new Error('Phase 307 runtime did not propagate to Recovery H browser');
 
+  let phase308Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    phase308Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV308==='phase308-track-overlay-hud-frequency-diversity'&&typeof window.mwsF1QaTrackOverlayHudV308==='function'","Phase 308 runtime readiness"));
+    if(phase308Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v308=${Date.now()}-${attempt}`});
+    await refreshed;
+    await sleep(1200);
+  }
+  if(!phase308Ready)throw new Error('Phase 308 runtime did not propagate to Recovery H browser');
+
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
@@ -422,9 +433,9 @@ try{
     const conversation303=document.getElementById('f1RacingConversationStackV276');
     assert(conversation303&&getComputedStyle(conversation303).display==='none','Phase 303 legacy conversation feed still visible');
     const cutin303=document.getElementById('f1RacingLiveCutinLayerV264');
-    assert(cutin303?.parentElement?.classList.contains('f1-racing-commentary-v188'),'Phase 303 LIVE cut-in still overlaps the track map');
+    assert(cutin303?.parentElement?.classList.contains('f1-racing-race-map-stage-v188'),'Phase 303 LIVE cut-in still overlaps the track map');
     const variabilityQa303=window.mwsF1QaGameVariabilityV303?.();
-    assert(variabilityQa303?.allPass===true&&Number(variabilityQa303?.config?.liveCadenceMs)>=5000&&Number(variabilityQa303?.config?.liveCadenceMs)<=8000&&Number(variabilityQa303?.config?.maxTotalBiasKph)>=4.5,'Phase 303 race variability QA failed: '+JSON.stringify(variabilityQa303));
+    assert(variabilityQa303?.allPass===true&&Number(variabilityQa303?.config?.liveCadenceMs)>=8500&&Number(variabilityQa303?.config?.liveCadenceMs)<=12000&&Number(variabilityQa303?.config?.maxTotalBiasKph)>=4.5,'Phase 303 race variability QA failed: '+JSON.stringify(variabilityQa303));
     const livePolicy307=window.mwsF1QaLiveCutinPolicyV307?.();
     assert(livePolicy307?.allPass===true&&Number(livePolicy307?.templateCount)>=256&&Number(livePolicy307?.uniqueTemplateCount)>=256,'Phase 307 LIVE phrase library QA failed: '+JSON.stringify(livePolicy307));
     assert(Number(livePolicy307?.config?.maxActive)===1&&Number(livePolicy307?.config?.globalCadenceMs)>=5000&&Number(livePolicy307?.config?.minDurationMs)>=4500,'Phase 307 LIVE frequency or duration policy failed: '+JSON.stringify(livePolicy307));
@@ -446,6 +457,14 @@ try{
     assert(String(liveCards307[0]?.querySelector('[data-f1-live-merge-count-v307]')?.textContent||'').includes('4'),'Phase 307 merged LIVE badge missing');
     const mergedMessage307=String(liveCards307[0]?.querySelector('p')?.textContent||'');
     assert(mergedMessage307&&String(mergedLive307?.activeEntries?.[0]?.event)==='PASS_SUCCESS','Phase 307 merged LIVE did not reach final pass state: '+JSON.stringify(mergedLive307));
+    window.mwsF1SyncTrackOverlaysV308?.();await raf();
+    const liveStage308=document.querySelector('#f1RacingViewRaceV185 .f1-racing-race-map-stage-v188');
+    const liveLayer308=document.getElementById('f1RacingLiveCutinLayerV264');
+    const liveCard308=liveLayer308?.querySelector('.f1-racing-live-cutin-v264');
+    assert(liveStage308&&liveLayer308?.parentElement===liveStage308&&liveLayer308.classList.contains('track-docked-v308'),'Phase 308 LIVE is not docked to track lower-left');
+    const liveStageRect308=liveStage308.getBoundingClientRect(),liveRect308=liveLayer308.getBoundingClientRect();
+    assert(liveRect308.left<=liveStageRect308.left+Math.max(40,liveStageRect308.width*.12)&&liveRect308.bottom>=liveStageRect308.bottom-Math.max(50,liveStageRect308.height*.18),'Phase 308 LIVE lower-left geometry failed: '+JSON.stringify({stage:{left:liveStageRect308.left,bottom:liveStageRect308.bottom,width:liveStageRect308.width,height:liveStageRect308.height},live:{left:liveRect308.left,bottom:liveRect308.bottom}}));
+    assert(String(getComputedStyle(liveCard308).animationName||'').includes('f1LiveTrackEnterV308'),'Phase 308 LIVE entrance effect missing');
     await sleep(3000);
     assert(document.querySelectorAll('#f1RacingLiveCutinLayerV264 .f1-racing-live-cutin-v264').length===1,'Phase 307 LIVE card did not remain visible long enough');
     window.mwsF1ResetLiveCutinsV264?.();
@@ -456,18 +475,31 @@ try{
     await sleep(80);
     window.mwsF1AppendLiveConversationV276?.(thoughtSpeaker306,'추월한다');
     await sleep(180);await raf();
+    window.mwsF1SyncTrackOverlaysV308?.();await raf();
+    const dialogueHud308=document.getElementById('f1RacingDialogueHudV308');
+    const dialogueCard308=dialogueHud308?.querySelector('.f1-racing-dialogue-card-v308');
+    const dialogueStage308=document.querySelector('#f1RacingViewRaceV185 .f1-racing-race-map-stage-v188');
+    assert(dialogueHud308&&dialogueCard308&&dialogueHud308.parentElement===dialogueStage308,'Phase 308 driver profile HUD missing from track lower-right');
+    assert(Boolean(dialogueCard308.querySelector('.f1-racing-dialogue-avatar-v308')),'Phase 308 driver profile avatar missing');
+    const hudRect308=dialogueHud308.getBoundingClientRect(),hudStageRect308=dialogueStage308.getBoundingClientRect();
+    assert(hudRect308.right>=hudStageRect308.right-Math.max(50,hudStageRect308.width*.12)&&hudRect308.bottom>=hudStageRect308.bottom-Math.max(50,hudStageRect308.height*.18),'Phase 308 driver HUD lower-right geometry failed');
+    assert([...document.querySelectorAll('.f1-racing-driver-thought-v303')].every(node=>getComputedStyle(node).display==='none'),'Phase 308 legacy track speech bubble still visible');
+    const overlayQa308=window.mwsF1QaTrackOverlayHudV308?.();
+    assert(overlayQa308?.allPass===true,'Phase 308 track overlay HUD QA failed: '+JSON.stringify(overlayQa308));
+    const overlayState308=window.mwsF1GetTrackOverlayStateV308?.();
+    assert(Number(overlayState308?.config?.globalGapMs)>=6000&&Number(overlayState308?.config?.speakerGapMs)>=10000,'Phase 308 dialogue HUD frequency guard too loose: '+JSON.stringify(overlayState308));
     window.mwsF1LayoutMarkerOverlaysV306?.();await raf();
     const thoughtMarker303=[...document.querySelectorAll('.f1-racing-race-vehicle-v189')].find(marker=>marker.querySelector('.f1-racing-driver-thought-v303'));
     assert(thoughtMarker303,'Phase 303 racer thought bubble did not attach to a track marker');
     assert([...document.querySelectorAll('.thought-text-v303')].some(node=>String(node.textContent||'').includes('지금 간다')),'Phase 303 racer thought bubble text missing');
     const markerCollisionQa306=window.mwsF1QaMarkerOverlayCollisionV306?.();
     assert(markerCollisionQa306?.allPass===true,'Phase 306 marker overlay collision QA failed: '+JSON.stringify(markerCollisionQa306));
-    assert(Number(markerCollisionQa306?.thoughtOverlap?.nodes)>=2,'Phase 306 two-racer thought collision scenario was not exercised: '+JSON.stringify(markerCollisionQa306));
+    assert(Number(markerCollisionQa306?.thoughtOverlap?.nodes)===0,'Phase 306 two-racer thought collision scenario was not exercised: legacy SVG thoughts must be retired by Phase 308 '+JSON.stringify(markerCollisionQa306));
     assert(Number(markerCollisionQa306?.thoughtOverlap?.count)===0,'Phase 306 racer thought bubbles still overlap: '+JSON.stringify(markerCollisionQa306));
     assert(Number(markerCollisionQa306?.tagOverlap?.count)===0,'Phase 306 race position badges still overlap: '+JSON.stringify(markerCollisionQa306));
     const cadenceQa281=window.mwsF1QaDialogueCadenceV281?.();
     assert(cadenceQa281?.allPass===true,'Phase 281 dialogue cadence QA failed: '+JSON.stringify(cadenceQa281));
-    assert(cadenceQa281?.budgetBlocked===true&&Number(cadenceQa281?.config?.maxGroupsPerWindow)<=4,'Phase 281 dialogue window budget failed: '+JSON.stringify(cadenceQa281));
+    assert(cadenceQa281?.budgetBlocked===true&&Number(cadenceQa281?.config?.maxGroupsPerWindow)<=2&&Number(cadenceQa281?.config?.speakerGapMs)>=4000,'Phase 281 dialogue window budget failed: '+JSON.stringify(cadenceQa281));
     assert(cadenceQa281?.criticalAllowed===true&&cadenceQa281?.duplicateBlocked===true,'Phase 281 critical dialogue priority failed: '+JSON.stringify(cadenceQa281));
     const coverageQa280=window.mwsF1QaEventDialogueCoverageV280?.();
     assert(coverageQa280?.allPass===true,'Phase 280 event-dialogue coverage QA failed: '+JSON.stringify(coverageQa280));
@@ -475,7 +507,7 @@ try{
     assert(Array.isArray(coverageQa280?.emptyPools)&&coverageQa280.emptyPools.length===0&&coverageQa280?.allPoolsReady===true,'Phase 280 empty dialogue pool found: '+JSON.stringify(coverageQa280));
     const dialoguePoolQa279=window.mwsF1QaExpandedDialoguePoolV279?.();
     assert(dialoguePoolQa279?.allPass===true,'Phase 279 expanded dialogue pool QA failed: '+JSON.stringify(dialoguePoolQa279));
-    assert(Number(dialoguePoolQa279?.stats?.total)>=300&&Number(dialoguePoolQa279?.uniqueCount)>=300,'Phase 279 dialogue pool below 300: '+JSON.stringify(dialoguePoolQa279));
+    assert(Number(dialoguePoolQa279?.stats?.total)>=400&&Number(dialoguePoolQa279?.uniqueCount)>=300,'Phase 279 dialogue pool below 300: '+JSON.stringify(dialoguePoolQa279));
     assert(dialoguePoolQa279?.microCoverage===true&&Number(dialoguePoolQa279?.categoryCount)>=13,'Phase 279 micro dialogue coverage incomplete: '+JSON.stringify(dialoguePoolQa279));
     const microQa278=window.mwsF1QaMicroBattleEventsV278?.();
     assert(microQa278?.allPass===true,'Phase 278 micro battle QA failed: '+JSON.stringify(microQa278));

@@ -33,6 +33,7 @@ function installThoughtBridgeV303(){
  thoughtStateV303.observer=new MutationObserver(()=>queueMicrotask(sync));thoughtStateV303.observer.observe(root,{childList:true,subtree:true,characterData:true});sync();return true;
 }
 function dockLiveCutinV303(){
+ if(window.__mwsF1LiveTrackDockV308===true)return true;
  const layer=document.getElementById('f1RacingLiveCutinLayerV264'),commentary=document.querySelector('#f1RacingViewRaceV185 .f1-racing-commentary-v188'),log=document.getElementById('f1RacingCommentaryLogV188');
  if(!layer||!commentary||!log)return false;
  if(layer.parentElement!==commentary)commentary.insertBefore(layer,log);
@@ -46,10 +47,12 @@ function layoutShuffleCardsV303(){
 }
 function suppressDuplicateTrackRankV303(){const root=document.getElementById('f1RacingTrackRankingV284');if(root){root.hidden=true;root.setAttribute('aria-hidden','true')}return true}
 function qaFeedbackUiV303(){
- const conversation=document.getElementById('f1RacingConversationStackV276'),cutin=document.getElementById('f1RacingLiveCutinLayerV264'),commentary=document.querySelector('#f1RacingViewRaceV185 .f1-racing-commentary-v188'),rank=document.getElementById('f1RacingTrackRankingV284');
+ const conversation=document.getElementById('f1RacingConversationStackV276'),cutin=document.getElementById('f1RacingLiveCutinLayerV264'),commentary=document.querySelector('#f1RacingViewRaceV185 .f1-racing-commentary-v188'),stage=document.querySelector('#f1RacingViewRaceV185 .f1-racing-race-map-stage-v188'),rank=document.getElementById('f1RacingTrackRankingV284');
  const cards=[...document.querySelectorAll('#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273')];
  const ratios=cards.map(card=>{const r=card.getBoundingClientRect();return r.width>0?r.height/r.width:0});
- return {version:VERSION303,conversationHidden:Boolean(conversation)&&getComputedStyle(conversation).display==='none',cutinDocked:Boolean(cutin&&commentary&&cutin.parentElement===commentary),duplicateRankHidden:!rank||getComputedStyle(rank).display==='none',thoughtObserver:Boolean(thoughtStateV303.observer),thoughtShown:thoughtStateV303.shown,cardRatios:ratios,verticalCards:!ratios.length||ratios.every(r=>r>=1.3),allPass:Boolean(conversation&&cutin&&commentary)&&getComputedStyle(conversation).display==='none'&&cutin.parentElement===commentary&&(!rank||getComputedStyle(rank).display==='none')&&Boolean(thoughtStateV303.observer)&&(!ratios.length||ratios.every(r=>r>=1.3))};
+ const trackDock=window.__mwsF1LiveTrackDockV308===true;
+ const cutinDocked=Boolean(cutin)&&(trackDock?Boolean(stage&&cutin.parentElement===stage):Boolean(commentary&&cutin.parentElement===commentary));
+ return {version:VERSION303,conversationHidden:Boolean(conversation)&&getComputedStyle(conversation).display==='none',cutinDocked,trackDock,duplicateRankHidden:!rank||getComputedStyle(rank).display==='none',thoughtObserver:Boolean(thoughtStateV303.observer),thoughtShown:thoughtStateV303.shown,cardRatios:ratios,verticalCards:!ratios.length||ratios.every(r=>r>=1.3),allPass:Boolean(conversation&&cutin)&&getComputedStyle(conversation).display==='none'&&cutinDocked&&(!rank||getComputedStyle(rank).display==='none')&&Boolean(thoughtStateV303.observer)&&(!ratios.length||ratios.every(r=>r>=1.3))};
 }
 function syncV303(){installThoughtBridgeV303();dockLiveCutinV303();suppressDuplicateTrackRankV303();layoutShuffleCardsV303()}
 function bootV303(){syncV303();const root=document.getElementById('gameF1Racing');if(root)new MutationObserver(syncV303).observe(root,{childList:true,subtree:true});}
