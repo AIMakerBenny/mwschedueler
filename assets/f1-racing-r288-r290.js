@@ -2,6 +2,7 @@
 'use strict';
 // phase290-production-retrigger
 const VERSION288='phase288-f1-r13-layout-reset-viewport-fit';
+const VERSION340='phase340-f1-workspace-fill-viewport';
 const WORKSPACE_FIT_CONFIG_V288=Object.freeze({minHeightPx:300,bottomGapPx:8,minRowPx:34,defaultMaxHeightPx:640,targetViewports:Object.freeze([720,768,900,1080,1440])});
 const fitStateV288={installed:false,applyCount:0,lastSignature:'',resetHooks:0};
 function screenStateV288(){return String(window.mwsF1GetScreenStateV185?.()||'')}
@@ -9,10 +10,10 @@ function computeWorkspaceFitV288(viewportHeight,top,usedRows,gap){
  const rows=Math.max(1,Number(usedRows)||10),g=Math.max(0,Number(gap)||0);
  const viewport=Math.max(320,Number(viewportHeight)||0),available=Math.max(0,Math.floor(viewport-(Number(top)||0)-WORKSPACE_FIT_CONFIG_V288.bottomGapPx));
  const minRequired=rows*WORKSPACE_FIT_CONFIG_V288.minRowPx+Math.max(0,rows-1)*g;
- const target=rows<=10?Math.min(available,WORKSPACE_FIT_CONFIG_V288.defaultMaxHeightPx):available;
+ const target=available;
  const height=Math.max(Math.min(available,WORKSPACE_FIT_CONFIG_V288.minHeightPx),Math.min(available,Math.max(minRequired,target)));
  const rowHeight=Math.max(1,(height-Math.max(0,rows-1)*g)/rows);
- return {rows,gap:g,available,rowHeight,height,blankPx:Math.max(0,available-height),fitsViewport:height<=available+1};
+ return {rows,gap:g,available,rowHeight,height,blankPx:Math.max(0,available-height),fitsViewport:height<=available+1,fillViewport:true};
 }
 function clearWorkspaceViewportFitV288(){
  const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');if(!workspace)return false;
@@ -44,14 +45,14 @@ function installWorkspaceViewportFitV288(){
 }
 function qaWorkspaceViewportFitV288(){
  const samples=WORKSPACE_FIT_CONFIG_V288.targetViewports.map(viewport=>computeWorkspaceFitV288(viewport,150,10,5));
- const samplePass=samples.every(row=>row.fitsViewport&&row.height<=row.available+1&&row.height<=WORKSPACE_FIT_CONFIG_V288.defaultMaxHeightPx+1&&row.rowHeight>0);
+ const samplePass=samples.every(row=>row.fitsViewport&&row.height<=row.available+1&&row.blankPx<=1&&row.rowHeight>0);
  const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
  const live=screenStateV288()==='RACE'?applyWorkspaceViewportFitV288():null;
  const liveRect=workspace?.getBoundingClientRect(),viewport=Math.max(1,Number(window.visualViewport?.height)||window.innerHeight||document.documentElement.clientHeight||1);
  const liveBlank=live&&liveRect?Math.max(0,live.available-liveRect.height):0;
  const liveFits=!live||Boolean(liveRect&&liveRect.bottom<=viewport+2&&liveRect.height<=live.available+1);
- const liveDefaultHeight=!live||Number(workspace?.dataset?.usedRows||0)>10||Number(liveRect?.height||0)<=WORKSPACE_FIT_CONFIG_V288.defaultMaxHeightPx+2;
- return {version:VERSION288,config:{...WORKSPACE_FIT_CONFIG_V288,targetViewports:[...WORKSPACE_FIT_CONFIG_V288.targetViewports]},samples,samplePass,installed:fitStateV288.installed,resetHooks:fitStateV288.resetHooks,liveBlankPx:liveBlank,liveFits,liveDefaultHeight,allPass:samplePass&&fitStateV288.installed&&liveFits&&liveDefaultHeight};
+ const liveDefaultHeight=!live||liveBlank<=2;
+ return {version:VERSION288,fillVersion:VERSION340,config:{...WORKSPACE_FIT_CONFIG_V288,targetViewports:[...WORKSPACE_FIT_CONFIG_V288.targetViewports]},samples,samplePass,installed:fitStateV288.installed,resetHooks:fitStateV288.resetHooks,liveBlankPx:liveBlank,liveFits,liveDefaultHeight,fillViewport:Boolean(live?.fillViewport),allPass:samplePass&&fitStateV288.installed&&liveFits&&liveDefaultHeight};
 }
 function bootV288(){installWorkspaceViewportFitV288();installPreraceCompactV289();installGridShuffleSmoothnessV290()}
 
@@ -79,7 +80,9 @@ function qaPreraceCompactV289(){
  return {version:VERSION289,states:[...PRERACE_COMPACT_CONFIG_V289.states],installed:preraceStateV289.installed,gridReady:Boolean(grid),transitionReady:Boolean(transition),gridActive,gridClass,transitionActive,transitionClass,raceInactive,allPass:Boolean(grid&&transition)&&gridActive&&gridClass&&transitionActive&&transitionClass&&raceInactive};
 }
 
-window.mwsF1ApplyWorkspaceViewportFitV288=applyWorkspaceViewportFitV288;window.mwsF1QaWorkspaceViewportFitV288=qaWorkspaceViewportFitV288;window.__mwsF1RacingV288=VERSION288;
+window.mwsF1ApplyWorkspaceViewportFitV288=applyWorkspaceViewportFitV288;window.mwsF1QaWorkspaceViewportFitV288=qaWorkspaceViewportFitV288;window.mwsF1QaWorkspaceFillViewportV340=qaWorkspaceViewportFitV288;
+window.__mwsF1RacingV288=VERSION288;
+window.__mwsF1RacingV340=VERSION340;
 
 const VERSION290='phase290-f1-r15-starting-grid-shuffle-smoothness';
 const SHUFFLE_VISUAL_CONFIG_V290=Object.freeze({shuffleCycles:3,shuffleCycleMs:180,landingMs:460,maxStackCards:8,transformOnly:true});
