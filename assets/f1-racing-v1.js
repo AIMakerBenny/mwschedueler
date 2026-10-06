@@ -119,6 +119,7 @@ const VERSION315='phase315-f1-live-participant-dialogue-diversity';
 const VERSION319='phase319-f1-ui-spacing-battle-isolation';
 const VERSION324='phase324-f1-ui-visibility-train-spacing';
 const VERSION326='phase326-f1-gacha-image-fallback-qa';
+const VERSION327='phase327-f1-label-tag-separation-compatibility';
 // Phase 325 compatibility markers for superseded static audits:
 // x:-14,y:27,width:28,height:13
 // x:0,y:36.2,'text-anchor':'middle'
@@ -4796,7 +4797,7 @@ function layoutRaceVehicleLabelsV228(rendered=[]){
   for(const entry of rendered){
     const label=entry?.marker?.querySelector?.('.car-label');if(!label)continue;
     const scale=Number(entry.marker.dataset.cameraScaleV245)||1;
-    const y=29;
+    const y=22;
     label.setAttribute('x','0');label.setAttribute('y',String(y));label.setAttribute('text-anchor','middle');
     label.dataset.labelSlotV228='fixed-below-v309';label.dataset.labelCollisionScoreV228='0';
     placements.push({left:Number(entry?.point?.x||0),right:Number(entry?.point?.x||0),top:Number(entry?.point?.y||0)+y*scale,bottom:Number(entry?.point?.y||0)+y*scale,x:0,y,anchor:'middle',width:0,height:0,driverId:String(entry.vehicle?.id||''),score:0,fixedBelowV309:true});
