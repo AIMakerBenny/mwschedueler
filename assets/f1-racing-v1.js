@@ -121,6 +121,10 @@ const VERSION324='phase324-f1-ui-visibility-train-spacing';
 const VERSION326='phase326-f1-gacha-image-fallback-qa';
 const VERSION327='phase327-f1-label-tag-separation-compatibility';
 const VERSION328='phase328-f1-train-headway-overtake-release';
+const VERSION330='phase330-f1-visual-spacing-continuity';
+const VERSION331='phase331-f1-natural-dialogue-expansion';
+const VERSION332='phase332-f1-live-readability-variety';
+const VERSION333='phase333-f1-gacha-responsive-viewport';
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
 const GAME_VARIABILITY_CONFIG_V303=Object.freeze({evaluationMs:650,maxGapMeters:84,attackGapMeters:36,baseBonusKph:1.1,pressureBonusKph:3.2,midfieldBonusKph:.8,failedPassBonusKph:.4,maxFailedPassBonusKph:1.6,momentumBonusKph:1.55,maxTotalBiasKph:14,positionCatchupMaxPct:.045,positionCatchupExponent:1.35,leaderHoldMs:12000,leaderCloseGapSeconds:1.75,leaderClosePenaltyKph:.9,liveCadenceMs:10000});
@@ -387,17 +391,99 @@ const LIVE_CUTIN_EXTRA_V308=Object.freeze({
   '{driver}가 라인 선택과 가속을 모두 맞췄습니다. 추월 성공입니다.'
  ])
 });
+const LIVE_CUTIN_NATURAL_V332=Object.freeze({
+ ATTACK:Object.freeze([
+  '{driver}가 {target}의 뒤에서 속도를 그대로 이어갑니다. 이번 직선이 첫 번째 기회가 될 수 있습니다.',
+  '{target}가 코너 출구에서 살짝 밀렸습니다. {driver}가 바로 간격을 줄입니다.',
+  '{driver}가 아직 라인을 정하지 않았습니다. {target}의 움직임을 끝까지 보고 있습니다.',
+  '{driver}가 한 번 안쪽을 보여준 뒤 다시 바깥쪽으로 차를 옮깁니다.',
+  '{corner}을 앞두고 {driver}의 속도가 더 좋습니다. {target}가 수비를 준비합니다.',
+  '{driver}가 서두르지 않고 제동 구간까지 압박을 이어갑니다.',
+  '앞차와의 간격이 빠르게 줄어듭니다. {driver}가 이번에는 실제 공격 거리까지 들어왔습니다.',
+  '{driver}가 출구에서 만든 속도 차이를 그대로 직선에 가져갑니다.',
+  '{target}가 라인을 바꾸자 {driver}도 바로 반대쪽 공간을 확인합니다.',
+  '{driver}가 브레이크를 늦추기보다 더 좋은 출구를 노리는 모습입니다.',
+  '{position} 근처의 흐름이 달라집니다. {driver}가 본격적으로 압박을 시작합니다.',
+  '{driver}가 한 코너를 더 기다리며 {target}의 수비 패턴을 읽습니다.'
+ ]),
+ SIDE_BY_SIDE:Object.freeze([
+  '{driver}와 {target}가 같은 속도로 코너에 들어갑니다. 아직 어느 쪽도 앞이라고 하기 어렵습니다.',
+  '두 대가 나란히 달립니다. 이번에는 출구 가속에서 순서가 갈릴 가능성이 큽니다.',
+  '{driver}가 안쪽을 잡았지만 {target}도 바깥쪽에서 충분한 공간을 확보했습니다.',
+  '반 차이도 나지 않습니다. {driver}와 {target}가 그대로 다음 방향 전환을 맞습니다.',
+  '{corner} 한가운데까지 두 대가 함께 들어왔습니다. 접촉 없이 팽팽한 싸움입니다.',
+  '{driver}와 {target} 모두 라인을 포기하지 않습니다. 승부가 한 코너 더 이어질 수 있습니다.',
+  '두 대의 앞바퀴가 거의 같은 선에 있습니다. 지금은 작은 가속 차이가 중요합니다.',
+  '{driver}가 조금 앞서지만 {target}가 더 넓은 출구를 준비하고 있습니다.',
+  '직선에서 시작된 싸움이 코너 안쪽까지 이어집니다. 아직 결과가 나지 않았습니다.',
+  '{position}를 두고 두 대가 완전히 붙었습니다. 어느 쪽도 먼저 물러서지 않습니다.',
+  '{driver}가 옆자리를 확보했습니다. 이제 {target}도 평소 라인을 그대로 쓰기 어렵습니다.',
+  '두 드라이버가 서로 한 차 폭씩만 남기고 달립니다. 굉장히 깔끔한 휠 투 휠입니다.'
+ ]),
+ COUNTER_ATTACK:Object.freeze([
+  '{driver}가 앞에 섰지만 {target}가 바로 슬립스트림을 다시 잡습니다.',
+  '{target}가 추월 직후 간격을 거의 내주지 않았습니다. 반격 준비가 빠릅니다.',
+  '순위는 바뀌었지만 싸움은 끝나지 않았습니다. {target}가 다시 속도를 올립니다.',
+  '{target}가 다음 제동 구간을 보고 라인을 천천히 바꿉니다.',
+  '{driver}가 숨을 돌리기 전에 {target}가 다시 공격 거리로 들어왔습니다.',
+  '{target}가 출구에서 더 좋은 가속을 만들었습니다. 이번에는 {driver}가 수비해야 합니다.',
+  '{target}가 바로 안쪽으로 가지 않고 한 번 더 움직임을 숨깁니다.',
+  '한 번 내준 자리를 곧바로 되찾으려는 {target}. 두 번째 승부가 시작됩니다.',
+  '{target}가 코너 하나를 포기하고 다음 직선을 위한 위치를 선택합니다.',
+  '{driver}의 추월이 완전히 굳기 전에 {target}가 다시 간격을 지웁니다.',
+  '{target}가 반대쪽 라인을 택합니다. 첫 번째 싸움과는 다른 그림입니다.',
+  '추월 직후의 짧은 틈을 {target}가 놓치지 않습니다. 바로 재공격입니다.'
+ ]),
+ PASS_SUCCESS:Object.freeze([
+  '{driver}가 좋은 출구 속도를 끝까지 유지하며 {target} 앞에 완전히 섭니다.',
+  '{driver}가 한 번의 방향 전환으로 공간을 만든 뒤 추월을 마무리합니다.',
+  '{corner}에서 길게 이어진 싸움 끝에 {driver}가 {position}를 확보합니다.',
+  '{target}가 끝까지 버텼지만 마지막 가속에서 {driver}가 조금 더 빨랐습니다.',
+  '{driver}가 접촉 없이 깔끔하게 앞에 섰습니다. 이제 간격을 만드는 단계입니다.',
+  '한동안 이어진 압박이 드디어 결과로 이어집니다. {driver}가 한 자리 올라갑니다.',
+  '{driver}가 제동에서 무리하지 않고 출구를 살려 추월을 완성했습니다.',
+  '작은 속도 차이를 끝까지 유지한 {driver}가 결국 {target}을 넘어섭니다.',
+  '{driver}가 상대의 수비 라인을 읽고 반대쪽 공간으로 빠져나왔습니다.',
+  '순위표가 바뀝니다. {driver}가 이제 {target} 앞에서 레이스를 이어갑니다.',
+  '{driver}가 한 번의 기회를 놓치지 않았습니다. 공격이 정확하게 끝났습니다.',
+  '이번 승부는 출구에서 갈렸습니다. {driver}가 더 빠르게 다음 직선으로 나갑니다.'
+ ]),
+ RACE_STATUS:Object.freeze([
+  '{driver}가 잠시 공격을 멈추고 타이어 온도를 다시 맞추고 있습니다.',
+  '{driver}의 랩타임이 조금씩 안정됩니다. 앞차와의 간격도 크게 변하지 않습니다.',
+  '{driver}가 {corner}을 깔끔하게 통과했습니다. 다음 직선에서 다시 속도를 붙입니다.',
+  '중위권 흐름이 잠시 정리됩니다. {driver}도 자신의 페이스를 다시 찾습니다.',
+  '{driver}가 무리하지 않고 앞차의 움직임을 계속 관찰하고 있습니다.',
+  '직선에서는 {driver}가 조금 더 빠릅니다. 코너에서 그 차이를 얼마나 지킬지가 관건입니다.',
+  '{driver}가 한동안 같은 간격을 유지합니다. 타이밍을 기다리는 모습입니다.',
+  '뒤쪽 그룹도 조용하지 않습니다. {driver}가 조금씩 앞으로 따라붙고 있습니다.',
+  '{driver}의 타이어가 안정되면서 페이스도 다시 살아나는 모습입니다.',
+  '{position}의 {driver}, 지금은 공격보다 리듬 유지에 집중하고 있습니다.',
+  '{driver}가 깨끗한 공기를 찾으면서 주행 라인을 조금씩 조정합니다.',
+  '앞차가 보이기 시작합니다. {driver}가 서두르지 않고 간격을 줄입니다.',
+  '{driver}가 코너 진입을 안정적으로 가져가며 출구 속도를 챙깁니다.',
+  '레이스 흐름이 잠시 잔잔해졌습니다. {driver}는 다음 싸움을 준비합니다.',
+  '{driver}가 직전 랩보다 조금 더 좋은 리듬을 보여줍니다.',
+  '지금은 작은 실수를 줄이는 구간입니다. {driver}가 차를 안정적으로 관리합니다.',
+  '{driver}가 앞쪽 그룹의 페이스를 따라가며 기회를 기다립니다.',
+  '{corner}을 지난 {driver}가 다음 제동 구간까지 차분하게 속도를 올립니다.',
+  '{driver}가 타이어를 아끼면서도 앞차와의 거리를 놓치지 않습니다.',
+  '아직 큰 움직임은 없지만 {driver}의 페이스가 조금씩 좋아지고 있습니다.'
+ ])
+});
+
 function buildLiveCutinLibraryV307(){
  const out={};
  for(const [event,parts] of Object.entries(LIVE_CUTIN_TEXT_PARTS_V307)){
   const generated=parts.lead.flatMap((lead,i)=>parts.action.map((action,j)=>Object.freeze({id:event+'-'+i+'-'+j,text:lead+' '+action})));
   const extra=(LIVE_CUTIN_EXTRA_V308[event]||[]).map((text,index)=>Object.freeze({id:event+'-direct-v308-'+index,text}));
-  out[event]=Object.freeze([...generated,...extra]);
+  const natural=(LIVE_CUTIN_NATURAL_V332[event]||[]).map((text,index)=>Object.freeze({id:event+'-natural-v332-'+index,text}));
+  out[event]=Object.freeze([...generated,...extra,...natural]);
  }
  return Object.freeze(out);
 }
 const LIVE_CUTIN_LIBRARY_V307=buildLiveCutinLibraryV307();
-const LIVE_DIVERSITY_CONFIG_V315=Object.freeze({recentDriverLimit:6,semanticWindow:3,exposureWeight:2.3,rearCoverageWeight:1.2});
+const LIVE_DIVERSITY_CONFIG_V315=Object.freeze({recentDriverLimit:8,semanticWindow:5,exposureWeight:2.3,rearCoverageWeight:1.2});
 const LIVE_CUTIN_STATUS_V315=Object.freeze([
  '전열을 다시 정리합니다. {driver}가 {position}에서 다음 승부를 준비합니다.',
  '{driver}가 트래픽 흐름을 읽으며 페이스를 조금씩 끌어올립니다.',
@@ -472,7 +558,7 @@ function rememberLiveTemplateV307(templateId,sessionKey){
  liveCutinStateV264.pairRecent.set(sessionKey,pair);
 }
 function liveCutinMessageStateV307(event,vehicle,target,commit=true){
- const eventKey=String(event||''),pool=eventKey==='RACE_STATUS'?LIVE_CUTIN_STATUS_V315:(LIVE_CUTIN_LIBRARY_V307[eventKey]||[]);
+ const eventKey=String(event||''),pool=eventKey==='RACE_STATUS'?[...LIVE_CUTIN_STATUS_V315,...LIVE_CUTIN_NATURAL_V332.RACE_STATUS.map((text,index)=>Object.freeze({id:'RACE_STATUS-natural-v332-'+index,text}))]:(LIVE_CUTIN_LIBRARY_V307[eventKey]||[]);
  const sessionKey=liveCutinSessionKeyV307(vehicle,target);
  const recent=new Set(liveCutinStateV264.recentTemplateIds),pairRecent=new Set(liveCutinStateV264.pairRecent.get(sessionKey)||[]);
  const semanticRecent=new Set(liveCutinStateV264.recentSemanticKeys.slice(-LIVE_DIVERSITY_CONFIG_V315.semanticWindow));
@@ -611,6 +697,14 @@ function qaLiveCutinV264(){
  return {layerReady:Boolean(liveCutinLayerV264()),maxActive:LIVE_CUTIN_CONFIG_V264.maxActive,dedupeMs:LIVE_CUTIN_CONFIG_V264.dedupeMs,minDurationMs:LIVE_CUTIN_CONFIG_V264.minDurationMs,maxDurationMs:LIVE_CUTIN_CONFIG_V264.maxDurationMs,states,events,active:liveCutinStateV264.active.size,queued:liveCutinStateV264.queue.length,
   allPass:Boolean(liveCutinLayerV264())&&LIVE_CUTIN_CONFIG_V264.maxActive===1&&LIVE_CUTIN_CONFIG_V264.dedupeMs>=2500&&LIVE_CUTIN_CONFIG_V264.minDurationMs>=4500&&LIVE_CUTIN_CONFIG_V264.maxDurationMs>=6000&&events.every(Boolean)};
 }
+function qaLiveReadabilityVarietyV332(){
+  const eventCounts=Object.fromEntries(Object.entries(LIVE_CUTIN_LIBRARY_V307).map(([event,pool])=>[event,pool.length]));
+  const statusCount=LIVE_CUTIN_STATUS_V315.length+LIVE_CUTIN_NATURAL_V332.RACE_STATUS.length;
+  const naturalCounts=Object.fromEntries(Object.entries(LIVE_CUTIN_NATURAL_V332).map(([event,pool])=>[event,pool.length]));
+  return {version:VERSION332,eventCounts,statusCount,naturalCounts,semanticWindow:LIVE_DIVERSITY_CONFIG_V315.semanticWindow,recentDriverLimit:LIVE_DIVERSITY_CONFIG_V315.recentDriverLimit,
+    allPass:Object.values(eventCounts).every(count=>count>=90)&&statusCount>=36&&Object.values(naturalCounts).every(count=>count>=12)&&LIVE_DIVERSITY_CONFIG_V315.semanticWindow>=4&&LIVE_DIVERSITY_CONFIG_V315.recentDriverLimit>=7};
+}
+
 function qaLiveCutinPolicyV307(){
  const counts=Object.fromEntries(Object.entries(LIVE_CUTIN_LIBRARY_V307).map(([event,pool])=>[event,pool.length]));
  const all=[...Object.values(LIVE_CUTIN_LIBRARY_V307).flat()];
@@ -790,6 +884,12 @@ const RACE_SPACING_CONFIG_V319=Object.freeze({
   overtakeReleaseClosingKph:4.5,
   emergencyGapMeters:12,
   emergencySpeedMarginKph:8
+});
+const VISUAL_SPACING_SMOOTH_V330=Object.freeze({
+  approachMs:420,
+  releaseMs:560,
+  maxStepMetersPerSecond:185,
+  snapMeters:.28
 });
 const SPECTATOR_BATTLE_STATES_V252=Object.freeze(['PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK']);
 const SPECTATOR_OVERTAKE_STATES_V252=Object.freeze(['PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK']);
@@ -1746,6 +1846,66 @@ function gridGachaDockItemV313(driver,position){
   const avatar=image?'<img src="'+escapeHtml(image)+'" alt="">':'<span class="fallback">'+escapeHtml(initials(name))+'</span>';
   return '<article class="f1-grid-gacha-dock-item-v313" data-f1-gacha-position-v313="'+position+'"><b>P'+String(position).padStart(2,'0')+'</b><span class="avatar">'+avatar+'</span><span class="meta"><strong>'+escapeHtml(name)+'</strong><small>START '+String(position).padStart(2,'0')+'</small></span></article>';
 }
+const GRID_GACHA_VIEWPORT_CONFIG_V333=Object.freeze({
+ minStageHeight:300,maxStageHeight:420,minCardHeight:220,maxCardHeight:320,minCardWidth:160,maxCardWidth:230,minDockWidth:210,maxDockWidth:280,bottomGap:12
+});
+let gridGachaResizeObserverV333=null,gridGachaResizeRafV333=0,gridGachaResizeBoundV333=false;
+function gridGachaViewportMetricsV333(width,height,listTop=0){
+  const w=Math.max(360,Number(width)||0),h=Math.max(360,Number(height)||0),top=Math.max(0,Number(listTop)||0);
+  const availableHeight=Math.max(GRID_GACHA_VIEWPORT_CONFIG_V333.minStageHeight,h-top-GRID_GACHA_VIEWPORT_CONFIG_V333.bottomGap);
+  const stageHeight=Math.max(GRID_GACHA_VIEWPORT_CONFIG_V333.minStageHeight,Math.min(GRID_GACHA_VIEWPORT_CONFIG_V333.maxStageHeight,Math.floor(availableHeight)));
+  const dockWidth=Math.max(GRID_GACHA_VIEWPORT_CONFIG_V333.minDockWidth,Math.min(GRID_GACHA_VIEWPORT_CONFIG_V333.maxDockWidth,Math.round(w*.27)));
+  const cardHeight=Math.max(GRID_GACHA_VIEWPORT_CONFIG_V333.minCardHeight,Math.min(GRID_GACHA_VIEWPORT_CONFIG_V333.maxCardHeight,stageHeight-88));
+  const widthByHeight=Math.round(cardHeight*.71875);
+  const widthBySpace=Math.max(GRID_GACHA_VIEWPORT_CONFIG_V333.minCardWidth,w-dockWidth-88);
+  const cardWidth=Math.max(GRID_GACHA_VIEWPORT_CONFIG_V333.minCardWidth,Math.min(GRID_GACHA_VIEWPORT_CONFIG_V333.maxCardWidth,widthByHeight,widthBySpace));
+  const infoHeight=Math.max(56,Math.min(72,Math.round(cardHeight*.225)));
+  return {width:w,height:h,listTop:top,availableHeight,stageHeight,dockWidth,cardWidth,cardHeight,infoHeight};
+}
+function syncGridGachaViewportV333(){
+  const list=document.getElementById('f1RacingGridListV272'),stage=document.getElementById('f1RacingGridGachaStageV313');
+  if(!list||!stage)return null;
+  const rect=list.getBoundingClientRect(),width=Math.max(360,Math.floor(list.clientWidth||rect.width||window.innerWidth||0));
+  const metrics=gridGachaViewportMetricsV333(width,window.innerHeight||720,rect.top);
+  list.style.setProperty('--f1-grid-stage-h-v333',metrics.stageHeight+'px');
+  list.style.setProperty('--f1-grid-dock-w-v333',metrics.dockWidth+'px');
+  list.style.setProperty('--f1-grid-card-w-v333',metrics.cardWidth+'px');
+  list.style.setProperty('--f1-grid-card-h-v333',metrics.cardHeight+'px');
+  list.style.setProperty('--f1-grid-card-info-h-v333',metrics.infoHeight+'px');
+  list.dataset.gachaResponsiveV333='1';
+  list.dataset.gachaStageHeightV333=String(metrics.stageHeight);
+  stage.dataset.gachaResponsiveV333='1';
+  return metrics;
+}
+function scheduleGridGachaViewportV333(){
+  if(gridGachaResizeRafV333)cancelAnimationFrame(gridGachaResizeRafV333);
+  gridGachaResizeRafV333=requestAnimationFrame(()=>{gridGachaResizeRafV333=0;syncGridGachaViewportV333()});
+}
+function bindGridGachaViewportV333(){
+  const list=document.getElementById('f1RacingGridListV272');
+  if(!list)return false;
+  if(!gridGachaResizeBoundV333){
+    gridGachaResizeBoundV333=true;
+    window.addEventListener('resize',scheduleGridGachaViewportV333,{passive:true});
+  }
+  if(typeof ResizeObserver==='function'){
+    gridGachaResizeObserverV333?.disconnect();
+    gridGachaResizeObserverV333=new ResizeObserver(scheduleGridGachaViewportV333);
+    gridGachaResizeObserverV333.observe(list);
+  }
+  syncGridGachaViewportV333();
+  return true;
+}
+function qaGridGachaViewportV333(){
+  const roomy=gridGachaViewportMetricsV333(1180,900,210);
+  const medium=gridGachaViewportMetricsV333(920,650,210);
+  const short=gridGachaViewportMetricsV333(920,540,210);
+  const live=syncGridGachaViewportV333();
+  const shrinks=short.stageHeight<roomy.stageHeight&&short.cardHeight<roomy.cardHeight;
+  const bounded=[roomy,medium,short].every(row=>row.stageHeight>=GRID_GACHA_VIEWPORT_CONFIG_V333.minStageHeight&&row.stageHeight<=GRID_GACHA_VIEWPORT_CONFIG_V333.maxStageHeight&&row.cardHeight>=GRID_GACHA_VIEWPORT_CONFIG_V333.minCardHeight&&row.cardHeight<=GRID_GACHA_VIEWPORT_CONFIG_V333.maxCardHeight&&row.cardWidth>=GRID_GACHA_VIEWPORT_CONFIG_V333.minCardWidth&&row.cardWidth<=GRID_GACHA_VIEWPORT_CONFIG_V333.maxCardWidth);
+  return {version:VERSION333,roomy,medium,short,live,bounded,shrinks,allPass:bounded&&shrinks};
+}
+
 function buildStartingGridGachaStageV313(snapshot){
   const list=document.getElementById('f1RacingGridListV272');
   if(!list)return null;
@@ -1765,6 +1925,9 @@ function buildStartingGridGachaStageV313(snapshot){
       '<div id="f1GridGachaDockListV313" class="f1-grid-gacha-dock-list-v313"></div>'+
     '</aside>';
   list.appendChild(stage);
+  bindGridGachaViewportV333();
+  syncGridGachaViewportV333();
+  requestAnimationFrame(syncGridGachaViewportV333);
   return stage;
 }
 function finishStartingGridGachaV313(token){
@@ -1841,7 +2004,10 @@ const runStartingGridRevealLegacyV273=runStartingGridRevealV273;
 runStartingGridRevealV273=runStartingGridGachaRevealV313;
 window.mwsF1RunStartingGridGachaRevealV313=runStartingGridGachaRevealV313;
 window.mwsF1QaGachaStartingGridV313=qaGachaStartingGridV313;
+window.mwsF1SyncGridGachaViewportV333=syncGridGachaViewportV333;
+window.mwsF1QaGridGachaViewportV333=qaGridGachaViewportV333;
 window.__mwsF1RacingV313=VERSION313;
+window.__mwsF1RacingV333=VERSION333;
 
 function normalizedProgressV190(value){
   return ((Number(value)||0)%1+1)%1;
@@ -5209,11 +5375,29 @@ function buildVisualSpacingPlanV319(standings=computeRaceStandingsV191(),track=a
     const displayRaceProgress=previousDisplay-displayGap/length;
     plan.set(String(vehicle.id),displayRaceProgress);
     vehicle.visualSpacingShiftMetersV319=Math.max(0,(actual-displayRaceProgress)*length);
+    vehicle.visualSpacingTargetShiftMetersV330=vehicle.visualSpacingShiftMetersV319;
     vehicle.visualSpacingGapMetersV319=displayGap;
     vehicle.visualSpacingBattlePairV319=activePair;
     previousDisplay=displayRaceProgress;
   }
   return plan;
+}
+function smoothVisualSpacingShiftV330(vehicle,targetShiftMeters,frameMs=16.67){
+  if(!vehicle)return 0;
+  const target=Math.max(0,Number(targetShiftMeters)||0);
+  let current=Number(vehicle.visualSpacingSmoothedShiftMetersV330);
+  if(!Number.isFinite(current))current=target;
+  const dt=Math.max(1,Math.min(100,Number(frameMs)||16.67));
+  const duration=target>current?VISUAL_SPACING_SMOOTH_V330.approachMs:VISUAL_SPACING_SMOOTH_V330.releaseMs;
+  const alpha=1-Math.exp(-dt/Math.max(1,duration));
+  let next=current+(target-current)*alpha;
+  const maxStep=VISUAL_SPACING_SMOOTH_V330.maxStepMetersPerSecond*(dt/1000);
+  const delta=next-current;
+  if(Math.abs(delta)>maxStep)next=current+Math.sign(delta)*maxStep;
+  if(Math.abs(target-next)<=VISUAL_SPACING_SMOOTH_V330.snapMeters)next=target;
+  vehicle.visualSpacingTargetShiftMetersV330=target;
+  vehicle.visualSpacingSmoothedShiftMetersV330=Math.max(0,next);
+  return vehicle.visualSpacingSmoothedShiftMetersV330;
 }
 
 // Phase 320 compatibility contract for Phase 197 and 258 source audits:
@@ -5227,7 +5411,12 @@ function renderRaceVehiclesV189(frameMs=16.67){
   raceMotionV189.vehicles.forEach(function(vehicle,index){
     const marker=vehicle.marker||ensureRaceVehicleMarkerV189(vehicle,index);if(!marker)return;
     const lateralStateV258=updateVisualLateralOffsetV258(vehicle,frameMs,false);
-    const displayRaceProgressV319=spacingPlanV319.has(String(vehicle.id))?spacingPlanV319.get(String(vehicle.id)):Number(vehicle.raceProgress)||0;
+    const targetDisplayRaceProgressV319=spacingPlanV319.has(String(vehicle.id))?spacingPlanV319.get(String(vehicle.id)):Number(vehicle.raceProgress)||0;
+    const trackLengthV330=Math.max(1,Number(activeRaceSnapshotV187?.track?.lengthMeters)||1);
+    const actualRaceProgressV330=Number(vehicle.raceProgress)||0;
+    const targetShiftMetersV330=Math.max(0,(actualRaceProgressV330-targetDisplayRaceProgressV319)*trackLengthV330);
+    const smoothShiftMetersV330=smoothVisualSpacingShiftV330(vehicle,targetShiftMetersV330,frameMs);
+    const displayRaceProgressV319=actualRaceProgressV330-smoothShiftMetersV330/trackLengthV330;
     const displayProgressV319=normalizedProgressV190(displayRaceProgressV319);
     const point=raceLinePointV197(path,displayProgressV319,lateralStateV258.visual);if(!point)return;
     vehicle.renderPointV216={x:Number(point.x),y:Number(point.y)};
@@ -5242,6 +5431,8 @@ function renderRaceVehiclesV189(frameMs=16.67){
     marker.dataset.battleState=String(vehicle.battleState||'FOLLOWING');
     marker.dataset.battleBlockedV319=vehicle.battleBlockedV319?'1':'0';
     marker.dataset.visualSpacingShiftMetersV319=Number(vehicle.visualSpacingShiftMetersV319||0).toFixed(1);
+    marker.dataset.visualSpacingTargetShiftMetersV330=Number(vehicle.visualSpacingTargetShiftMetersV330||0).toFixed(1);
+    marker.dataset.visualSpacingSmoothedShiftMetersV330=Number(vehicle.visualSpacingSmoothedShiftMetersV330||0).toFixed(1);
     marker.dataset.visualSpacingGapMetersV319=Number(vehicle.visualSpacingGapMetersV319||0).toFixed(1);
     marker.dataset.visualSpacingBattlePairV319=vehicle.visualSpacingBattlePairV319?'1':'0';
     marker.dataset.physicalLateralV258=Number(vehicle.lateralOffsetMeters||0).toFixed(3);
@@ -6213,13 +6404,199 @@ const DIALOGUE_DIRECT_LINES_V308=Object.freeze({
  PODIUM:Object.freeze(['포디엄 싸움이면 위험 계산도 달라진다.','한 자리 차이지만 결과표에서는 크게 보인다.','앞차 실수 하나면 바로 시상대다.','여기서 무리하면 포디엄 자체를 잃을 수도 있다.','상위권은 작은 속도 차이도 바로 순위로 이어진다.','남은 랩과 타이어를 같이 봐야 한다.','지금 잡으면 끝까지 지킬 수 있다.','시상대가 보이면 집중력이 달라진다.']),
  SPECIAL:Object.freeze(['예상과 다른 흐름이다. 먼저 상황부터 읽는다.','앞에서 싸우기 시작하면 뒤쪽에도 기회가 생긴다.','트랙 상태가 달라졌다. 평소 라인만 고집할 필요 없다.','지금은 순위보다 깨끗한 출구가 중요하다.','한 번의 선택으로 다음 두 코너가 바뀔 수 있다.','앞쪽 움직임이 커졌다. 거리를 조금 둔다.','상황이 복잡할수록 기본 라인이 안전하다.','지금은 공격보다 다음 장면을 준비한다.'])
 });
+const DIALOGUE_NATURAL_LINES_V331=Object.freeze({
+ ATTACKER:Object.freeze([
+  '앞차가 출구에서 조금 밀렸네. 이번 직선에서 한번 붙어보자.',
+  '지금 바로 들어가기보다 다음 제동 구간까지 압박해보자.',
+  '안쪽이 닫히면 바깥쪽 출구를 노리면 돼.',
+  '속도 차이가 생겼다. 이번에는 라인을 한번 바꿔보자.',
+  '앞차가 수비 쪽으로 움직이네. 반대쪽 공간을 봐야겠다.',
+  '조금만 더 가까워지면 충분히 승부를 걸 수 있겠다.',
+  '이번 코너는 무리하지 말고 출구에서 속도를 만들어보자.',
+  '브레이크를 한 박자 늦추면 옆까지 갈 수 있겠다.',
+  '직선 끝까지 붙어 있다가 마지막 순간에 방향을 정하자.',
+  '앞차가 타이어를 아끼는 것 같다. 지금이 압박할 타이밍이다.',
+  '한 번 흔들어보고 반응을 보자. 바로 들어갈 필요는 없다.',
+  '여기서 만든 속도 차이를 다음 코너까지 그대로 가져가보자.'
+ ]),
+ DEFENDER:Object.freeze([
+  '뒤차가 많이 가까워졌네. 평소 라인 유지하면서 출구만 깔끔하게 가져가자.',
+  '급하게 반응할 필요 없어. 브레이크 포인트만 정확히 맞추자.',
+  '안쪽을 너무 일찍 내주지 말고 코너 하나씩 차분하게 가자.',
+  '뒤에서 압박해도 내 페이스부터 유지하면 된다.',
+  '이번 코너는 진입보다 출구 속도를 챙기는 게 낫겠다.',
+  '뒤차가 움직이면 그때 보고 대응하자. 먼저 흔들릴 필요 없다.',
+  '라인 하나만 확실히 잡고 실수 없이 빠져나가자.',
+  '지금은 무리한 방어보다 좋은 출구를 만드는 게 더 중요하다.',
+  '브레이크를 늦추기보다 차를 안정적으로 세우는 쪽이 낫다.',
+  '다음 직선까지 간격만 유지하면 다시 숨을 돌릴 수 있다.',
+  '뒤차가 급해질수록 내가 침착하면 된다.',
+  '코너 중간에서 공간을 잃지 않도록 차만 정확히 놓자.'
+ ]),
+ CHASER:Object.freeze([
+  '앞차가 조금씩 커진다. 페이스 차이는 확실히 있는 것 같다.',
+  '출구가 계속 좋다. 두 코너만 더 이 흐름을 이어가보자.',
+  '슬립스트림이 잡히기 시작했다. 이제 서두를 필요 없다.',
+  '한 번에 붙으려 하지 말고 직선마다 조금씩 줄이면 된다.',
+  '앞차가 수비하면 오히려 다음 코너 출구가 열릴 수도 있다.',
+  '지금 간격이면 다음 랩에는 충분히 사정권에 들어가겠다.',
+  '타이어 상태가 괜찮다. 이 페이스 그대로 압박해보자.',
+  '브레이킹보다 출구에서 차이가 난다. 그쪽을 계속 살려보자.',
+  '앞차가 흔들릴 때까지 거리를 유지하면서 기다리자.',
+  '조금만 더 붙으면 상대도 수비를 의식할 수밖에 없다.',
+  '이번 랩은 공격보다 움직임을 읽는 데 써도 괜찮겠다.',
+  '속도는 충분하다. 실수 없이 따라가면 기회가 온다.'
+ ]),
+ MISTAKE_DRIVER:Object.freeze([
+  '진입이 조금 깊었다. 다음 코너에서 바로 리듬을 되찾자.',
+  '출구에서 살짝 밀렸네. 스로틀만 정리하면 괜찮다.',
+  '브레이크를 조금 늦게 잡았다. 큰 손실은 아니야.',
+  '연석을 너무 많이 탔다. 다음에는 차를 조금 덜 올리자.',
+  '뒤가 한번 흔들렸다. 타이어 온도부터 다시 맞추자.',
+  '에이펙스를 놓쳤지만 트랙 안에는 남아 있다. 바로 이어가자.',
+  '한 코너 정도 손해 봤다. 다음 직선에서 조금씩 되찾으면 된다.',
+  '조향이 늦었다. 다음 코너는 조금 일찍 차를 세워보자.',
+  '앞바퀴가 잠깐 밀렸다. 브레이크 밸런스를 조금 조심해야겠다.',
+  '출구 각이 안 좋았다. 다음 구간은 무리하지 말자.',
+  '차가 순간적으로 가벼워졌다. 다시 안정시키고 간다.',
+  '실수는 끝났다. 이제 다음 코너만 보면 된다.'
+ ]),
+ WINNER:Object.freeze([
+  '좋아, 이번 추월은 출구에서 제대로 끝냈다.',
+  '수비 라인을 잘 읽었다. 이제 바로 앞차 페이스를 보자.',
+  '접촉 없이 깔끔하게 넘어왔다. 타이어부터 다시 정리하자.',
+  '한 번 열린 공간을 제대로 살렸다. 이제 간격을 만들어보자.',
+  '브레이킹보다 가속이 좋았다. 이 흐름을 계속 가져가자.',
+  '생각한 라인이 그대로 맞았다. 다음 상대까지 바로 이어가자.',
+  '오래 기다린 보람이 있네. 이제 뒤를 떼어내는 게 중요하다.',
+  '추월은 끝났다. 다음 코너부터는 다시 평소 리듬으로 돌아가자.',
+  '상대가 수비에 들어간 순간 반대쪽이 열렸다. 잘 풀렸다.',
+  '이번에는 무리하지 않고도 앞에 섰다. 좋은 흐름이다.',
+  '속도 차이를 제대로 순위로 바꿨다. 이제 앞쪽을 보자.',
+  '한 자리 올렸다. 여기서부터는 페이스를 안정시키면 된다.'
+ ]),
+ ATTACKER_FAIL:Object.freeze([
+  '공간이 생각보다 빨리 닫혔다. 다음 직선까지 다시 기다리자.',
+  '옆까지는 갔는데 출구 각이 안 나왔다. 한번 정리하고 다시 붙자.',
+  '이번에는 너무 깊게 들어가면 둘 다 손해였다. 잘 접었다.',
+  '앞차가 반응이 빨랐다. 다음에는 반대쪽을 먼저 보여줘야겠다.',
+  '반 차까지 갔지만 완전히 옆에 서진 못했다. 아직 기회는 있다.',
+  '브레이킹 싸움은 졌지만 간격은 그대로다. 다시 만들면 된다.',
+  '이번 코너는 문이 닫혔다. 다음 구간에서 다시 속도를 만들자.',
+  '타이어를 더 쓰면서 억지로 들어갈 상황은 아니었다.',
+  '한 번 보여준 걸로 충분하다. 상대도 이제 수비를 의식할 거다.',
+  '출구에서 밀렸네. 다음에는 진입보다 가속을 먼저 챙기자.',
+  '이번 시도는 여기까지. 페이스 자체는 나쁘지 않다.',
+  '조금 성급했다. 다음에는 한 코너 더 기다려보자.'
+ ]),
+ REATTACKER:Object.freeze([
+  '앞서 갔다고 끝난 건 아니지. 바로 슬립스트림부터 다시 잡자.',
+  '다음 코너는 반대쪽 라인을 한번 노려보자.',
+  '추월당한 직후가 오히려 반격하기 좋은 타이밍이다.',
+  '출구 속도는 아직 괜찮다. 바로 다시 붙을 수 있다.',
+  '상대가 수비 자세를 잡기 전에 한번 더 움직여보자.',
+  '한 자리 내줬지만 간격은 없다. 바로 다음 기회를 보자.',
+  '이번에는 먼저 방향을 보여주지 말고 끝까지 기다리자.',
+  '상대가 앞에 섰지만 타이어를 많이 썼을 수도 있다.',
+  '직선 하나만 잘 나오면 다시 옆까지 갈 수 있다.',
+  '이번 반격은 제동보다 출구를 노리는 쪽이 낫겠다.',
+  '조금 떨어졌다가 다시 속도를 붙이는 것도 방법이다.',
+  '싸움은 아직 안 끝났다. 다음 두 코너를 묶어서 보자.'
+ ]),
+ BURST_DRIVER:Object.freeze([
+  '지금 차가 가볍다. 몇 코너 정도는 페이스를 더 올릴 수 있겠다.',
+  '이번 구간은 관리보다 위치가 더 중요하다. 조금 밀어붙여보자.',
+  '앞차가 수비하기 전에 먼저 속도 차이를 만들어야겠다.',
+  '한 번에 잡으려 하지 말고 출구마다 조금씩 줄이자.',
+  '지금 타이어면 공격 페이스를 조금 더 써도 괜찮다.',
+  '여기서 만든 가속을 직선 끝까지 그대로 가져가보자.',
+  '지금이 이번 랩에서 가장 좋은 공격 구간이다.',
+  '앞차가 흔들리기 전에 내가 먼저 리듬을 올리자.',
+  '조금 더 밀어도 차가 버텨준다. 기회를 만들어보자.',
+  '이번에는 연료보다 순위가 우선이다. 짧게 강하게 가자.',
+  '페이스를 올릴 수 있을 때 확실히 간격을 줄여두자.',
+  '다음 코너까지는 공격 모드로 가도 되겠다.'
+ ]),
+ BURST_FAIL:Object.freeze([
+  '속도는 올렸는데 앞차도 같이 빨랐다. 다시 리듬을 정리하자.',
+  '타이어만 더 쓰기 전에 이번 공격은 여기서 멈추자.',
+  '생각보다 간격이 안 줄었다. 다음 랩을 준비하는 게 낫겠다.',
+  '가속은 좋았지만 추월 거리까지는 못 갔다.',
+  '앞차 수비가 예상보다 단단했다. 다른 구간을 노려보자.',
+  '이번에는 타이밍이 조금 늦었다. 다음 기회는 더 일찍 보자.',
+  '페이스를 썼지만 성과가 크지 않았다. 온도부터 다시 맞추자.',
+  '한 번 실패했다고 흐름까지 끊긴 건 아니다.',
+  '이번 구간은 앞차가 더 잘 빠져나갔다. 다음 코너를 보자.',
+  '공격 페이스는 여기까지. 간격을 유지하면서 다시 준비하자.',
+  '조금 무리했다. 다음에는 타이어를 남겨두고 들어가자.',
+  '이번 시도는 끝났지만 아직 충분히 따라갈 수 있다.'
+ ]),
+ FINAL_LAP:Object.freeze([
+  '이제 한 바퀴 남았다. 남은 타이어는 전부 써도 된다.',
+  '마지막 랩이다. 작은 간격 하나도 놓치면 안 된다.',
+  '이제 다음 기회는 없다. 보이는 순간 바로 판단하자.',
+  '마지막 제동 구간까지 집중하면 된다.',
+  '앞차가 보이면 한 번쯤은 기회가 온다. 끝까지 붙어가자.',
+  '뒤차와 간격이 없네. 공격보다 수비가 먼저일 수도 있다.',
+  '체커드까지 몇 코너 안 남았다. 실수만 하지 말자.',
+  '마지막 직선까지 포기할 이유가 없다.',
+  '타이어 상태 계산은 끝났다. 이제 남은 만큼 다 쓰자.',
+  '이번 랩은 평소보다 조금 더 과감하게 가도 된다.',
+  '끝까지 리듬만 유지하면 결과가 따라올 거다.',
+  '한 바퀴 안에서 할 수 있는 건 전부 해보자.'
+ ]),
+ THREE_WAY:Object.freeze([
+  '셋이 붙었네. 앞차만 보다가 뒤를 내주지 않게 조심하자.',
+  '세 대가 한꺼번에 들어가면 출구 위치가 더 중요하다.',
+  '두 대 사이에 끼지 않도록 공간을 조금 남겨두자.',
+  '지금은 한 자리보다 사고 없이 빠져나오는 게 먼저다.',
+  '앞에서 둘이 싸우면 뒤쪽에도 분명 기회가 생긴다.',
+  '세 대가 같은 라인을 쓸 수는 없다. 누군가는 다른 길을 택해야 한다.',
+  '앞뒤를 같이 봐야 한다. 한쪽만 신경 쓰면 바로 빈틈이 난다.',
+  '이번 코너는 진입보다 출구에서 세 대의 순서가 갈릴 것 같다.',
+  '누가 먼저 브레이크를 포기하느냐보다 누가 더 잘 빠져나오느냐가 중요하다.',
+  '지금은 라인을 넓게 쓰는 쪽이 오히려 유리할 수도 있다.',
+  '세 대가 붙으면 작은 실수 하나가 두 자리 손해로 이어질 수 있다.',
+  '복잡할수록 차를 안정적으로 놓는 게 먼저다.'
+ ]),
+ PODIUM:Object.freeze([
+  '포디엄이 바로 앞이다. 여기서는 작은 차이도 크게 느껴진다.',
+  '한 자리만 더 올라가면 시상대다. 그래도 무리할 필요는 없다.',
+  '앞차 실수 하나면 바로 기회가 온다. 끝까지 압박해보자.',
+  '여기서 실수하면 포디엄 자체를 놓칠 수 있다. 계산하면서 가자.',
+  '상위권은 속도 차이가 작아도 순위 변화는 크게 보인다.',
+  '남은 랩과 타이어를 같이 봐야 한다. 지금 다 쓸 필요는 없다.',
+  '이번에 잡으면 끝까지 지킬 수 있을 만큼 랩이 남았다.',
+  '시상대가 보이니 집중력이 더 올라간다.',
+  '앞차도 긴장할 시점이다. 내가 먼저 흔들릴 필요는 없다.',
+  '포디엄 싸움이면 공격 한 번의 가치가 훨씬 커진다.',
+  '지금은 빠른 것보다 실수 없는 게 더 중요할 수도 있다.',
+  '한 자리 차이지만 결승에서는 완전히 다른 결과다.'
+ ]),
+ SPECIAL:Object.freeze([
+  '앞쪽 흐름이 갑자기 바뀌었다. 먼저 상황부터 읽어보자.',
+  '앞에서 싸우기 시작하면 뒤쪽에도 자연스럽게 기회가 생긴다.',
+  '트랙 상태가 달라졌다. 평소 라인만 고집할 필요는 없다.',
+  '지금은 순위보다 깨끗한 출구 하나가 더 중요해 보인다.',
+  '한 번의 선택이 다음 두 코너까지 이어질 수 있다.',
+  '앞쪽 움직임이 커졌다. 거리를 조금 두고 보는 것도 괜찮겠다.',
+  '상황이 복잡할수록 기본적인 주행이 가장 안전하다.',
+  '지금은 공격보다 다음 장면을 준비하는 편이 낫다.',
+  '갑자기 공간이 열렸다. 서두르지 말고 제대로 확인하자.',
+  '주변 차들이 서로 신경 쓰는 동안 내 페이스를 챙길 수 있다.',
+  '이런 상황에서는 한 코너보다 한 랩 전체를 보는 게 낫다.',
+  '흐름이 바뀌고 있다. 지금부터 판단이 더 중요해진다.'
+ ])
+});
+
 const dialogueRecentTextV279=[];
-const DIALOGUE_RECENT_TEXT_LIMIT_V279=96;
+const DIALOGUE_RECENT_TEXT_LIMIT_V279=160;
 function characterDialoguePoolV279(role){
   const key=DIALOGUE_ROLE_ALIASES_V279[String(role||'')]||String(role||'');
-  const generated=DIALOGUE_POOL_CATEGORIES_V279[key]||CHARACTER_DIALOGUE_POOL_V277[String(role||'')]||[];
+  const natural=DIALOGUE_NATURAL_LINES_V331[key]||[];
   const direct=DIALOGUE_DIRECT_LINES_V308[key]||[];
-  return [...generated,...direct];
+  if(natural.length||direct.length)return [...natural,...direct];
+  return [...(DIALOGUE_POOL_CATEGORIES_V279[key]||CHARACTER_DIALOGUE_POOL_V277[String(role||'')]||[])];
 }
 function rememberDialogueTextV279(text){
   const value=String(text||'');if(!value)return false;
@@ -6261,6 +6638,16 @@ function qaExpandedDialoguePoolV279(){
     allPass:stats.total>=400&&categoryNames.length>=13&&unique.size>=400&&coverage&&microCoverage&&DIALOGUE_RECENT_TEXT_LIMIT_V279>=80};
 }
 
+
+function qaNaturalDialogueV331(){
+  const roles=['ATTACKER','DEFENDER','CHASER','MISTAKE_DRIVER','WINNER','ATTACKER_FAIL','REATTACKER','BURST_DRIVER','BURST_FAIL','FINAL_LAP','THREE_WAY','PODIUM','SPECIAL'];
+  const rows=roles.map(role=>({role,count:characterDialoguePoolV279(role).length}));
+  const runtimeLines=roles.flatMap(role=>characterDialoguePoolV279(role));
+  const banned=['자리 지킨다','자리 막는다','바로 막는다','계속 막는다','여긴 내 자리다'];
+  const bannedHits=banned.filter(text=>runtimeLines.some(line=>String(line).includes(text)));
+  return {version:VERSION331,rows,total:runtimeLines.length,unique:new Set(runtimeLines).size,recentLimit:DIALOGUE_RECENT_TEXT_LIMIT_V279,bannedHits,
+    allPass:rows.every(row=>row.count>=20)&&runtimeLines.length>=250&&new Set(runtimeLines).size>=240&&DIALOGUE_RECENT_TEXT_LIMIT_V279>=140&&bannedHits.length===0};
+}
 
 const dialogueCoverageStateV280={attempted:0,emitted:0,byEvent:new Map(),last:null};
 function recordDialogueCoverageV280(event,roles,output){
@@ -6868,7 +7255,12 @@ function qaLiveDiversityV315(){
     allPass:LIVE_CUTIN_STATUS_V315.length>=16&&LIVE_DIVERSITY_CONFIG_V315.recentDriverLimit>=5&&LIVE_DIVERSITY_CONFIG_V315.semanticWindow>=2};
 }
 window.mwsF1QaLiveDiversityV315=qaLiveDiversityV315;
+window.mwsF1QaLiveReadabilityVarietyV332=qaLiveReadabilityVarietyV332;
 window.__mwsF1RacingV315=VERSION315;
+window.__mwsF1RacingV332=VERSION332;
+
+window.mwsF1QaNaturalDialogueV331=qaNaturalDialogueV331;
+window.__mwsF1RacingV331=VERSION331;
 
 function qaGameVariabilityV303(){
   const c=GAME_VARIABILITY_CONFIG_V303;
@@ -6890,6 +7282,20 @@ window.mwsF1QaRaceDynamicsV314=qaRaceDynamicsV314;
 window.__mwsF1RacingV314=VERSION314;
 
 
+function qaVisualSpacingContinuityV330(){
+  const approachProbe={visualSpacingSmoothedShiftMetersV330:68};
+  const approach=[];
+  for(let i=0;i<12;i++)approach.push(smoothVisualSpacingShiftV330(approachProbe,18,16.67));
+  const releaseProbe={visualSpacingSmoothedShiftMetersV330:18};
+  const release=[];
+  for(let i=0;i<12;i++)release.push(smoothVisualSpacingShiftV330(releaseProbe,68,16.67));
+  const approachMonotonic=approach.every((value,index)=>index===0||value<=approach[index-1]+.001);
+  const releaseMonotonic=release.every((value,index)=>index===0||value>=release[index-1]-.001);
+  const noTeleport=Math.abs(approach[0]-68)<12&&Math.abs(release[0]-18)<12;
+  return {version:VERSION330,config:{...VISUAL_SPACING_SMOOTH_V330},approach,release,approachMonotonic,releaseMonotonic,noTeleport,
+    allPass:approachMonotonic&&releaseMonotonic&&noTeleport&&approach[0]>18&&release[0]<68&&VISUAL_SPACING_SMOOTH_V330.approachMs>=300&&VISUAL_SPACING_SMOOTH_V330.releaseMs>=400};
+}
+
 function qaTrainHeadwayOvertakeReleaseV328(){
   const cfg=RACE_SPACING_CONFIG_V319;
   const rows=[
@@ -6900,7 +7306,9 @@ function qaTrainHeadwayOvertakeReleaseV328(){
   return {version:VERSION328,config:{...cfg},rows,allPass:rows.every(row=>row.result===row.expected)&&cfg.blockedDisplayGapMeters>cfg.normalDisplayGapMeters&&cfg.battleDisplayGapMeters<cfg.normalDisplayGapMeters};
 }
 window.mwsF1QaTrainHeadwayOvertakeReleaseV328=qaTrainHeadwayOvertakeReleaseV328;
+window.mwsF1QaVisualSpacingContinuityV330=qaVisualSpacingContinuityV330;
 window.__mwsF1RacingV328=VERSION328;
+window.__mwsF1RacingV330=VERSION330;
 
 function qaUiVisibilitySpacingV324(){
   const marker=document.querySelector('.f1-racing-race-vehicle-v189');
