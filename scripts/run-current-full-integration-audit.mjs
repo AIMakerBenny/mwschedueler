@@ -330,6 +330,13 @@ import {runPhase331F1NaturalDialogueExpansionAudit} from './run-phase331-f1-natu
 import {runPhase332F1LiveReadabilityVarietyAudit} from './run-phase332-f1-live-readability-variety-audit.mjs';
 import {runPhase333F1GachaResponsiveViewportAudit} from './run-phase333-f1-gacha-responsive-viewport-audit.mjs';
 import {runPhase334F1DialogueAuditCompatibility} from './run-phase334-f1-dialogue-audit-compatibility.mjs';
+import {runPhase335F1ActualTrackSpacingAudit} from './run-phase335-f1-actual-track-spacing-audit.mjs';
+import {runPhase336F1PitStatusOnlyAudit} from './run-phase336-f1-pit-status-only-audit.mjs';
+import {runPhase337F1CommentarySemanticDedupeAudit} from './run-phase337-f1-commentary-semantic-dedupe-audit.mjs';
+import {runPhase338F1BestLapOverlayAudit} from './run-phase338-f1-best-lap-overlay-audit.mjs';
+import {runPhase339F1LivePresenceAudit} from './run-phase339-f1-live-presence-audit.mjs';
+import {runPhase340F1WorkspaceFillViewportAudit} from './run-phase340-f1-workspace-fill-viewport-audit.mjs';
+import {runPhase341F1DialogueWallClockAudit} from './run-phase341-f1-dialogue-wall-clock-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2717,5 +2724,12 @@ export function runPhase331FullIntegrationAudit(){const previous=runPhase330Full
 export function runPhase332FullIntegrationAudit(){const previous=runPhase331FullIntegrationAudit(),current=runPhase332F1LiveReadabilityVarietyAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 332: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 332: '+x)];return {phase:332,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase333FullIntegrationAudit(){const previous=runPhase332FullIntegrationAudit(),current=runPhase333F1GachaResponsiveViewportAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 333: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 333: '+x)];return {phase:333,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase334FullIntegrationAudit(){const previous=runPhase333FullIntegrationAudit(),current=runPhase334F1DialogueAuditCompatibility();const issues=[...previous.issues,...current.issues.map(x=>'Phase 334: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 334: '+x)];return {phase:334,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase334FullIntegrationAudit();}
+export function runPhase335FullIntegrationAudit(){const previous=runPhase334FullIntegrationAudit(),current=runPhase335F1ActualTrackSpacingAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 335: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 335: '+x)];return {phase:335,previous,current,issues,warnings,pass:issues.length===0};}
+export function runPhase336FullIntegrationAudit(){const previous=runPhase335FullIntegrationAudit(),current=runPhase336F1PitStatusOnlyAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 336: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 336: '+x)];return {phase:336,previous,current,issues,warnings,pass:issues.length===0};}
+export function runPhase337FullIntegrationAudit(){const previous=runPhase336FullIntegrationAudit(),current=runPhase337F1CommentarySemanticDedupeAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 337: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 337: '+x)];return {phase:337,previous,current,issues,warnings,pass:issues.length===0};}
+export function runPhase338FullIntegrationAudit(){const previous=runPhase337FullIntegrationAudit(),current=runPhase338F1BestLapOverlayAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 338: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 338: '+x)];return {phase:338,previous,current,issues,warnings,pass:issues.length===0};}
+export function runPhase339FullIntegrationAudit(){const previous=runPhase338FullIntegrationAudit(),current=runPhase339F1LivePresenceAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 339: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 339: '+x)];return {phase:339,previous,current,issues,warnings,pass:issues.length===0};}
+export function runPhase340FullIntegrationAudit(){const previous=runPhase339FullIntegrationAudit(),current=runPhase340F1WorkspaceFillViewportAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 340: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 340: '+x)];return {phase:340,previous,current,issues,warnings,pass:issues.length===0};}
+export function runPhase341FullIntegrationAudit(){const previous=runPhase340FullIntegrationAudit(),current=runPhase341F1DialogueWallClockAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 341: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 341: '+x)];return {phase:341,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase341FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
