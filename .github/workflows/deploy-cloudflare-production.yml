@@ -278,6 +278,7 @@ jobs:
           node --check scripts/run-phase331-f1-natural-dialogue-expansion-audit.mjs
           node --check scripts/run-phase332-f1-live-readability-variety-audit.mjs
           node --check scripts/run-phase333-f1-gacha-responsive-viewport-audit.mjs
+          node --check scripts/run-phase334-f1-dialogue-audit-compatibility.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
