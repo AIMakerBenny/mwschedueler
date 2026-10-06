@@ -4173,13 +4173,15 @@ function updatePassStateMachineV208(stepMs){
     const signedGapMeters=(Number(target.raceProgress)-Number(vehicle.raceProgress))*length;
     const passed=signedGapMeters<-PASS_CONFIG_V208.passMarginMeters;
     const gapMeters=Math.abs(signedGapMeters);
+    const battleTuneV345=raceBattleTuningV345();
+    const effectiveGapMetersV345=gapMeters/Math.max(1,Number(battleTuneV345.gapFactor)||1);
     const phase=getCornerPhaseAtProgressV194(vehicle.progress)?.phase||'STRAIGHT';
     const ctx={
-      gapMeters,closingRateKph:(Number(vehicle.speedKph)||0)-(Number(target.speedKph)||0),
+      gapMeters:effectiveGapMetersV345,closingRateKph:(Number(vehicle.speedKph)||0)-(Number(target.speedKph)||0),
       slipstreamStrength:Number(vehicle.slipstreamStrength)||0,phase,passed,
       counterAttack:String(vehicle.battleState||'')==='SWITCHBACK'&&(Number(vehicle.speedKph)||0)>(Number(target.speedKph)||0)
     };
-    const hold=(Number(vehicle.battleStateMs)||0)<PASS_CONFIG_V208.stateHoldMs;
+    const hold=(Number(vehicle.battleStateMs)||0)<PASS_CONFIG_V208.stateHoldMs*Math.max(.35,Number(battleTuneV345.stateHoldFactor)||1);
     let next=hold?String(vehicle.battleState||'FOLLOWING'):nextPassStateV208(String(vehicle.battleState||'FOLLOWING'),ctx);
     const pairKey=battlePairKeyV319(vehicle.id,target.id);
     let blocked=battlePairBlockedV319(vehicle,target,isolationV319.locks);
@@ -4199,7 +4201,7 @@ function updatePassStateMachineV208(stepMs){
       vehicle.racingLineMode='IDEAL';
       vehicle.variabilitySpeedBiasKphV309=0;vehicle.variabilityBiasUntilV309=0;
     }
-    setPassStateV208(vehicle,next,target.id,'gap='+gapMeters.toFixed(1)+';phase='+phase+(blocked?';battle-blocked=1':''));
+    setPassStateV208(vehicle,next,target.id,'gap='+gapMeters.toFixed(1)+';effective='+effectiveGapMetersV345.toFixed(1)+';phase='+phase+(blocked?';battle-blocked=1':''));
     if(blocked){
       vehicle.battleSpeedBiasKph=Math.min(0,Number(vehicle.battleSpeedBiasKph)||0);
       vehicle.racingLineMode='IDEAL';
