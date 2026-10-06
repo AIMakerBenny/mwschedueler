@@ -269,6 +269,7 @@ jobs:
           node --check scripts/run-phase322-f1-gacha-audit-compatibility-audit.mjs
           node --check scripts/run-phase323-f1-gacha-host-audit.mjs
           node --check scripts/run-phase324-f1-ui-visibility-train-spacing-audit.mjs
+          node --check scripts/run-phase325-f1-superseded-audit-compatibility.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js

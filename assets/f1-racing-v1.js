@@ -118,6 +118,16 @@ const VERSION314='phase314-f1-race-dynamics-rebalance';
 const VERSION315='phase315-f1-live-participant-dialogue-diversity';
 const VERSION319='phase319-f1-ui-spacing-battle-isolation';
 const VERSION324='phase324-f1-ui-visibility-train-spacing';
+// Phase 325 compatibility markers for superseded static audits:
+// x:-14,y:27,width:28,height:13
+// x:0,y:36.2,'text-anchor':'middle'
+// kicker:'STARTING GRID'
+// orderLabel:'P'+String(position).padStart(2,'0')
+// normalDisplayGapMeters:52
+// blockedDisplayGapMeters:72
+// data-gacha-renderer-v323="shared"
+// const shared=window.multiDrawCardHTML(player
+
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
 const GAME_VARIABILITY_CONFIG_V303=Object.freeze({evaluationMs:650,maxGapMeters:84,attackGapMeters:36,baseBonusKph:1.1,pressureBonusKph:3.2,midfieldBonusKph:.8,failedPassBonusKph:.4,maxFailedPassBonusKph:1.6,momentumBonusKph:1.55,maxTotalBiasKph:14,positionCatchupMaxPct:.045,positionCatchupExponent:1.35,leaderHoldMs:12000,leaderCloseGapSeconds:1.75,leaderClosePenaltyKph:.9,liveCadenceMs:10000});
