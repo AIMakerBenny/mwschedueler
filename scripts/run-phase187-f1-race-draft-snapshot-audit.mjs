@@ -22,10 +22,8 @@ export function runPhase187F1RaceDraftSnapshotAudit(){
     "const VERSION187='phase187-race-draft-snapshot-transition';",
     'let activeRaceSnapshotV187=null;',
     'function getRaceDraftV187(){',
-    'function buildRaceSnapshotV187(){',
     'function syncSetupActionV187(){',
     'function populateTransitionV187(snapshot){',
-    'function startRaceFromSetupV187(){',
     "if(!setScreenStateV185('TRANSITION'))return false;",
     'function confirmRaceStartRecoveryM(){',
     "if(!setScreenStateV185('RACE'))return false;",
@@ -34,6 +32,8 @@ export function runPhase187F1RaceDraftSnapshotAudit(){
     'window.mwsF1GetActiveRaceSnapshotV187=getActiveRaceSnapshotV187;',
     'window.__mwsF1RacingV187=VERSION187;'
   ])if(!js.includes(token))issues.push('Phase 187 runtime missing: '+token);
+  if(!js.includes('function buildRaceSnapshotV187(){')&&!js.includes('function buildRaceSnapshotV187(options={}){'))issues.push('Phase 187 runtime missing: buildRaceSnapshotV187 compatible signature');
+  if(!js.includes('function startRaceFromSetupV187(){')&&!js.includes("function startRaceFromSetupV187(mode='NORMAL'){"))issues.push('Phase 187 runtime missing: startRaceFromSetupV187 compatible signature');
 
   if(js.includes('localStorage.setItem')||js.includes('saveData(')||js.includes('persist('))issues.push('Race draft/snapshot must remain session-only in Phase 187');
   if(!js.includes("drivers.length<2||!track"))issues.push('Race readiness does not enforce minimum 2 drivers and a track');
