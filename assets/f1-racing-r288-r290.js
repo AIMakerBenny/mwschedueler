@@ -47,8 +47,11 @@ function qaWorkspaceViewportFitV288(){
  const samplePass=samples.every(row=>row.fitsViewport&&row.height<=row.available+1&&row.height<=WORKSPACE_FIT_CONFIG_V288.defaultMaxHeightPx+1&&row.rowHeight>0);
  const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');
  const live=screenStateV288()==='RACE'?applyWorkspaceViewportFitV288():null;
- const liveBlank=live?Math.max(0,live.available-workspace.getBoundingClientRect().height):0;
- return {version:VERSION288,config:{...WORKSPACE_FIT_CONFIG_V288,targetViewports:[...WORKSPACE_FIT_CONFIG_V288.targetViewports]},samples,samplePass,installed:fitStateV288.installed,resetHooks:fitStateV288.resetHooks,liveBlankPx:liveBlank,allPass:samplePass&&fitStateV288.installed&&(!live||liveBlank<=2)};
+ const liveRect=workspace?.getBoundingClientRect(),viewport=Math.max(1,Number(window.visualViewport?.height)||window.innerHeight||document.documentElement.clientHeight||1);
+ const liveBlank=live&&liveRect?Math.max(0,live.available-liveRect.height):0;
+ const liveFits=!live||Boolean(liveRect&&liveRect.bottom<=viewport+2&&liveRect.height<=live.available+1);
+ const liveDefaultHeight=!live||Number(workspace?.dataset?.usedRows||0)>10||Number(liveRect?.height||0)<=WORKSPACE_FIT_CONFIG_V288.defaultMaxHeightPx+2;
+ return {version:VERSION288,config:{...WORKSPACE_FIT_CONFIG_V288,targetViewports:[...WORKSPACE_FIT_CONFIG_V288.targetViewports]},samples,samplePass,installed:fitStateV288.installed,resetHooks:fitStateV288.resetHooks,liveBlankPx:liveBlank,liveFits,liveDefaultHeight,allPass:samplePass&&fitStateV288.installed&&liveFits&&liveDefaultHeight};
 }
 function bootV288(){installWorkspaceViewportFitV288();installPreraceCompactV289();installGridShuffleSmoothnessV290()}
 
