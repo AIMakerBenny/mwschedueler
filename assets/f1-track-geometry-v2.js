@@ -2,6 +2,13 @@
 'use strict';
 
 function clamp(value,min,max){return Math.min(max,Math.max(min,value))}
+const CORNER_GEOMETRY_CONFIG_V343=Object.freeze({
+  brakeDecelByClass:Object.freeze({hairpin:17.5,slow:18.8,medium:20.5,fast:22.5}),
+  severityCurvatureSpan:2.6
+});
+function visualTurnDirectionV343(signedTurn){
+  return Number(signedTurn)>=0?'right':'left';
+}
 function signedTurnAngle(ax,ay,bx,by){
   const dot=ax*bx+ay*by;
   const cross=ax*by-ay*bx;
@@ -80,7 +87,7 @@ function detectCorners(track,samples){
       startProgress:samples[a].progress,
       apexProgress:samples[apex].progress,
       endProgress:samples[b].progress,
-      direction:signed>=0?'left':'right',
+      direction:visualTurnDirectionV343(signed),
       peakCurvature:Math.abs(samples[apex].curvatureRadPerMeter),
       lengthMeters:(b-a+1)*spacing
     };
@@ -129,10 +136,16 @@ function buildCornerPhases(track,geometry){
     const turnInProgress=normalizeProgress(corner.startProgress);
     const apexProgress=normalizeProgress(corner.apexProgress);
     const apexKph=targetKphAtProgress(track,apexProgress);
+    const cornerClass=classifyCornerBySpeed(apexKph);
     const candidates=[0.03,0.05,0.08].map(offset=>targetKphAtProgress(track,turnInProgress-offset));
     const approachKph=Math.max(apexKph+20,...candidates);
+    const classDecel=Number(CORNER_GEOMETRY_CONFIG_V343.brakeDecelByClass[cornerClass])||decel;
+    const effectiveDecel=Math.max(1,Math.min(decel*1.18,classDecel));
     const v0=approachKph/3.6,v1=apexKph/3.6;
-    const brakingDistanceMeters=Math.max(0,(v0*v0-v1*v1)/(2*decel));
+    const brakingDistanceMeters=Math.max(0,(v0*v0-v1*v1)/(2*effectiveDecel));
+    const threshold=Math.max(0.00001,Number(track?.geometry?.cornerCurvatureThreshold)||0.0018);
+    const curvatureRatio=clamp((Number(corner.peakCurvature)||threshold)/threshold,0,CORNER_GEOMETRY_CONFIG_V343.severityCurvatureSpan);
+    const cornerSeverityV343=clamp(.28+.34*(curvatureRatio/CORNER_GEOMETRY_CONFIG_V343.severityCurvatureSpan)+.38*(1-clamp((apexKph-90)/180,0,1)),.28,1);
     const turnInDistanceMeters=Number(corner.startProgress)*length;
     const apexDistanceMeters=Number(corner.apexProgress)*length;
     const detectedExitDistanceMeters=Number(corner.endProgress)*length;
@@ -159,9 +172,10 @@ function buildCornerPhases(track,geometry){
       exitDistanceMeters,
       referenceApproachKph:approachKph,
       referenceApexKph:apexKph,
-      referenceBrakeDecelMps2:decel,
+      referenceBrakeDecelMps2:effectiveDecel,
       brakingDistanceMeters,
-      cornerClass:classifyCornerBySpeed(apexKph)
+      cornerSeverityV343,
+      cornerClass
     };
   });
   return {...geometry,cornerPhases:phases};
@@ -304,9 +318,12 @@ root.mwsBuildF1SpeedProfileV195=buildSpeedProfile;
 root.mwsF1SpeedTargetAtProgressV195=speedTargetAtProgress;
 root.mwsF1CurvatureSeverityRecoveryL=curvatureSeverityRecoveryL;
 root.mwsF1CurvatureWeightedZoneLimitRecoveryL=curvatureWeightedZoneLimitRecoveryL;
+root.mwsF1VisualTurnDirectionV343=visualTurnDirectionV343;
+root.mwsF1CornerGeometryConfigV343=CORNER_GEOMETRY_CONFIG_V343;
 root.__mwsF1TrackGeometryV193='svg-sampling-curvature-corners-v1';
 root.__mwsF1TrackCornerPhasesV194='approach-brake-turn-apex-exit-v1';
 root.__mwsF1SpeedProfileV195='backward-brake-forward-accel-v1';
 root.__mwsF1RecoveryL='curvature-weighted-speed-v1';
 root.__mwsF1CornerDynamicsV270='direction-split-exit-recovery-v1';
+root.__mwsF1CornerGeometryV343='svg-y-down-out-in-out-v1';
 })(typeof window!=='undefined'?window:globalThis);
