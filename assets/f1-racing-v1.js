@@ -3561,14 +3561,18 @@ function updateDrivingIncidentsV204(vehicle,stepMs,phase,controls={}){
     const overRisk=(phase==='EXIT'||phase==='TURN_IN')
       ?clamp01V198(Math.max(0,throttle-.55)*1.35+gripLoss*.35+aggression*.12):0;
     const resistanceFactor=Math.max(.45,1-errorResistance*.5);
+    const wornMultiplierV344=wornTyreIncidentMultiplierV344(vehicle,phase);
+    const wornCornerRiskV344=clamp01V198(Math.max(0,(Number(vehicle.tyreWear)||0)-TYRE_DYNAMICS_V344.wornIncidentStart)*1.25);
     const candidates=[
       {type:'LOCK_UP',risk:lockRisk,rate:.045},
-      {type:'UNDERSTEER',risk:underRisk,rate:.055},
-      {type:'OVERSTEER',risk:overRisk,rate:.050}
+      {type:'UNDERSTEER',risk:clamp01V198(underRisk+wornCornerRiskV344*.24),rate:.055},
+      {type:'OVERSTEER',risk:clamp01V198(overRisk+wornCornerRiskV344*.18),rate:.050}
     ].filter(row=>row.risk>0).sort((a,b)=>b.risk-a.risk);
     if(candidates.length){
       const pick=candidates[0];
-      const chance=pick.risk*pick.rate*evalSeconds*resistanceFactor*trackIncidentRiskFactorV235();
+      const chance=pick.risk*pick.rate*evalSeconds*resistanceFactor*trackIncidentRiskFactorV235()*wornMultiplierV344;
+      vehicle.tyreIncidentChanceV344=chance;
+      vehicle.tyreIncidentMultiplierV344=wornMultiplierV344;
       if(nextDriverRandomV200(vehicle)<chance)triggerDrivingIncidentV204(vehicle,pick.type,pick.risk,false);
     }
   }
