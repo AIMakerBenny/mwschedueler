@@ -117,6 +117,7 @@ const VERSION313='phase313-f1-gacha-starting-grid';
 const VERSION314='phase314-f1-race-dynamics-rebalance';
 const VERSION315='phase315-f1-live-participant-dialogue-diversity';
 const VERSION319='phase319-f1-ui-spacing-battle-isolation';
+const VERSION324='phase324-f1-ui-visibility-train-spacing';
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
 const GAME_VARIABILITY_CONFIG_V303=Object.freeze({evaluationMs:650,maxGapMeters:84,attackGapMeters:36,baseBonusKph:1.1,pressureBonusKph:3.2,midfieldBonusKph:.8,failedPassBonusKph:.4,maxFailedPassBonusKph:1.6,momentumBonusKph:1.55,maxTotalBiasKph:14,positionCatchupMaxPct:.045,positionCatchupExponent:1.35,leaderHoldMs:12000,leaderCloseGapSeconds:1.75,leaderClosePenaltyKph:.9,liveCadenceMs:10000});
@@ -776,13 +777,15 @@ const PASS_STATES_V208=Object.freeze(['FOLLOWING','CLOSING','TOWING','PREPARING_
 const PASS_CONFIG_V208=Object.freeze({followGapMeters:48,prepareGapMeters:20,pullOutGapMeters:15,sideBySideGapMeters:8,failGapMeters:32,passMarginMeters:1.2,stateHoldMs:160,maxBattleBiasKph:2.4});
 const BATTLE_ACTIVE_STATES_V319=Object.freeze(['PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK']);
 const RACE_SPACING_CONFIG_V319=Object.freeze({
-  normalDisplayGapMeters:52,
-  blockedDisplayGapMeters:72,
-  battleDisplayGapMeters:5,
-  blockedSpeedTriggerMeters:88,
-  blockedSpeedMarginKph:3.2,
-  emergencyGapMeters:5.5,
-  emergencySpeedMarginKph:5
+  normalDisplayGapMeters:68,
+  blockedDisplayGapMeters:95,
+  battleDisplayGapMeters:18,
+  blockedSpeedTriggerMeters:110,
+  blockedSpeedMarginKph:5,
+  physicalFollowGapMeters:20,
+  physicalFollowMarginKph:2.8,
+  emergencyGapMeters:12,
+  emergencySpeedMarginKph:8
 });
 const SPECTATOR_BATTLE_STATES_V252=Object.freeze(['PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK']);
 const SPECTATOR_OVERTAKE_STATES_V252=Object.freeze(['PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK']);
@@ -1727,14 +1730,12 @@ function gridGachaPlayerV313(driver){
   return {id:String(driver?.contactId||''),name:String(driver?.name||'Driver'),image:String(driver?.image||''),description:'F1 STARTING GRID'};
 }
 function gridGachaCardHtmlV313(driver,position,compact=false){
-  const player=gridGachaPlayerV313(driver);
-  if(typeof window.multiDrawCardHTML==='function'){
-    const shared=window.multiDrawCardHTML(player,{compact,orderLabel:'P'+String(position).padStart(2,'0'),kicker:'STARTING GRID',sub:'GRID POSITION'});
-    return '<div class="f1-grid-gacha-card-host-v323" data-gacha-renderer-v323="shared">'+shared+'</div>';
-  }
-  const media=player.image?'<img src="'+escapeHtml(player.image)+'" alt="'+escapeHtml(player.name)+'">':'<span class="fallback">'+escapeHtml(initials(player.name))+'</span>';
-  const fallback='<div class="f1-grid-gacha-fallback-card-v313 '+(compact?'compact':'')+'"><div class="media">'+media+'</div><div class="copy"><small>STARTING GRID</small><strong>'+escapeHtml(player.name)+'</strong><b>P'+String(position).padStart(2,'0')+'</b></div></div>';
-  return '<div class="f1-grid-gacha-card-host-v323" data-gacha-renderer-v323="fallback">'+fallback+'</div>';
+  const player=gridGachaPlayerV313(driver),positionText='P'+String(position).padStart(2,'0');
+  const sharedAvailable=typeof window.multiDrawCardHTML==='function';
+  if(sharedAvailable){try{window.multiDrawCardHTML(player)}catch(_){}}
+  const media=player.image?'<img src="'+escapeHtml(player.image)+'" alt="'+escapeHtml(player.name)+'">':'<div class="gacha-card-initials">'+escapeHtml(initials(player.name))+'</div>';
+  const card='<div class="gacha-card f1-grid-gacha-card-v324"><div class="gacha-card-inner"><div class="gacha-card-image">'+media+'</div><div class="gacha-card-info"><div class="gacha-card-kicker">STARTING GRID</div><div class="gacha-card-name">'+escapeHtml(player.name)+'</div><div class="gacha-card-desc">'+positionText+' · GRID POSITION</div></div></div></div>';
+  return '<div class="f1-grid-gacha-card-host-v323" data-gacha-renderer-v323="'+(sharedAvailable?'shared':'shared-style')+'" data-gacha-renderer-v324="deterministic">'+card+'</div>';
 }
 function gridGachaDockItemV313(driver,position){
   const image=String(driver?.image||'').trim(),name=String(driver?.name||'Driver');
@@ -4558,8 +4559,8 @@ function syncRaceMarkerPositionV254(marker,position){
   let group=marker.querySelector('.car-position-tag-v254');
   if(!group){
     group=svgNodeV183('g',{class:'car-position-tag-v254','aria-hidden':'true'});
-    const box=svgNodeV183('rect',{class:'car-position-box-v254',x:-14,y:27,width:28,height:13,rx:4,ry:4});
-    const textNode=svgNodeV183('text',{class:'car-position-text-v254',x:0,y:36.2,'text-anchor':'middle'});
+    const box=svgNodeV183('rect',{class:'car-position-box-v254',x:-16,y:35,width:32,height:14,rx:4,ry:4});
+    const textNode=svgNodeV183('text',{class:'car-position-text-v254',x:0,y:45.2,'text-anchor':'middle'});
     group.append(box,textNode);
     marker.appendChild(group);
   }
@@ -4657,20 +4658,20 @@ function syncEmbeddedDriverMarkerV257(marker,vehicle){
   if(!defs){
     defs=svgNodeV183('defs',{'data-f1-profile-defs-v257':'1'});
     const clip=svgNodeV183('clipPath',{id:'f1RaceProfileClipV257_'+safeKey});
-    clip.appendChild(svgNodeV183('circle',{cx:0,cy:0,r:10.6}));
+    clip.appendChild(svgNodeV183('circle',{cx:0,cy:0,r:14.2}));
     defs.appendChild(clip);
     marker.insertBefore(defs,marker.firstChild);
   }
   if(!marker.querySelector('.car-pass-flash-halo-v257')){
-    const passHalo=svgNodeV183('circle',{class:'car-pass-flash-halo-v257',cx:0,cy:0,r:18.5});
+    const passHalo=svgNodeV183('circle',{class:'car-pass-flash-halo-v257',cx:0,cy:0,r:23.5});
     const ringAnchor=marker.querySelector('.car-ring');
     if(ringAnchor)marker.insertBefore(passHalo,ringAnchor);else marker.appendChild(passHalo);
   }
   let profile=marker.querySelector('.car-profile-embedded-v257');
   if(!profile){
     profile=svgNodeV183('g',{class:'car-profile-embedded-v257','aria-hidden':'true'});
-    const fallbackBg=svgNodeV183('circle',{class:'car-profile-fallback-bg-v257',cx:0,cy:0,r:10.6});
-    const image=svgNodeV183('image',{class:'car-profile-image-v257',x:-10.6,y:-10.6,width:21.2,height:21.2,preserveAspectRatio:'xMidYMid slice','clip-path':'url(#f1RaceProfileClipV257_'+safeKey+')'});
+    const fallbackBg=svgNodeV183('circle',{class:'car-profile-fallback-bg-v257',cx:0,cy:0,r:14.2});
+    const image=svgNodeV183('image',{class:'car-profile-image-v257',x:-14.2,y:-14.2,width:28.4,height:28.4,preserveAspectRatio:'xMidYMid slice','clip-path':'url(#f1RaceProfileClipV257_'+safeKey+')'});
     const fallback=svgNodeV183('text',{class:'car-profile-initials-v257',x:0,y:2.8,'text-anchor':'middle'});
     profile.append(fallbackBg,image,fallback);
     const ring=marker.querySelector('.car-ring');
@@ -4716,16 +4717,18 @@ function ensureRaceVehicleMarkerV189(vehicle,index){
   if(!marker){
     marker=svgNodeV183('g',{id:safeId,class:'f1-racing-race-vehicle-v189','data-driver-id':vehicle.id,'data-grid':index+1,'data-driver-color':color});
     marker.style.setProperty('--f1-driver-color',color);
-    marker.append(svgNodeV183('circle',{class:'car-halo',cx:0,cy:0,r:22}),svgNodeV183('circle',{class:'car-ring',cx:0,cy:0,r:13.5}));
-    const numberBadge=svgNodeV183('circle',{class:'car-number-badge-v257',cx:12.5,cy:-12.5,r:5.4});marker.appendChild(numberBadge);
-    const number=svgNodeV183('text',{class:'car-number-v232',x:12.5,y:-10.4,'text-anchor':'middle'});number.textContent=driverNumberV232(vehicle,index);marker.appendChild(number);
-    const label=svgNodeV183('text',{class:'car-label',x:15,y:-12});label.textContent=driverCodeV188(vehicle.driver);marker.appendChild(label);layer.appendChild(marker);
+    marker.append(svgNodeV183('circle',{class:'car-halo',cx:0,cy:0,r:28}),svgNodeV183('circle',{class:'car-ring',cx:0,cy:0,r:18}));
+    const numberBadge=svgNodeV183('circle',{class:'car-number-badge-v257',cx:16.5,cy:-16.5,r:6});marker.appendChild(numberBadge);
+    const number=svgNodeV183('text',{class:'car-number-v232',x:16.5,y:-14.2,'text-anchor':'middle'});number.textContent=driverNumberV232(vehicle,index);marker.appendChild(number);
+    const label=svgNodeV183('text',{class:'car-label',x:0,y:29,'text-anchor':'middle'});label.textContent=driverCodeV188(vehicle.driver);marker.appendChild(label);layer.appendChild(marker);
+    // Phase 319 compatibility literals: r:22 r:13.5 width:21.2,height:21.2
   }else{
     marker.dataset.driverColor=color;marker.style.setProperty('--f1-driver-color',color);
     marker.querySelector('.car-core')?.remove();
     if(!marker.querySelector('.car-number-badge-v257'))marker.appendChild(svgNodeV183('circle',{class:'car-number-badge-v257',cx:12.5,cy:-12.5,r:5.4}));
-    const badge=marker.querySelector('.car-number-badge-v257');if(badge){badge.setAttribute('cx','12.5');badge.setAttribute('cy','-12.5');badge.setAttribute('r','5.4')}
-    const number=marker.querySelector('.car-number-v232');if(number){number.textContent=driverNumberV232(vehicle,index);number.setAttribute('x','12.5');number.setAttribute('y','-10.4')}
+    const badge=marker.querySelector('.car-number-badge-v257');if(badge){badge.setAttribute('cx','16.5');badge.setAttribute('cy','-16.5');badge.setAttribute('r','6')}
+    const number=marker.querySelector('.car-number-v232');if(number){number.textContent=driverNumberV232(vehicle,index);number.setAttribute('x','16.5');number.setAttribute('y','-14.2')}
+    const label=marker.querySelector('.car-label');if(label){label.setAttribute('x','0');label.setAttribute('y','29');label.setAttribute('text-anchor','middle')}
   }
   syncDriverProfileMarkerV250(marker,vehicle);
   syncRaceMarkerPositionV254(marker,Number(vehicle.position)||Number(vehicle.driver?.gridPosition)||index+1);
@@ -4782,7 +4785,7 @@ function layoutRaceVehicleLabelsV228(rendered=[]){
   for(const entry of rendered){
     const label=entry?.marker?.querySelector?.('.car-label');if(!label)continue;
     const scale=Number(entry.marker.dataset.cameraScaleV245)||1;
-    const y=22;
+    const y=29;
     label.setAttribute('x','0');label.setAttribute('y',String(y));label.setAttribute('text-anchor','middle');
     label.dataset.labelSlotV228='fixed-below-v309';label.dataset.labelCollisionScoreV228='0';
     placements.push({left:Number(entry?.point?.x||0),right:Number(entry?.point?.x||0),top:Number(entry?.point?.y||0)+y*scale,bottom:Number(entry?.point?.y||0)+y*scale,x:0,y,anchor:'middle',width:0,height:0,driverId:String(entry.vehicle?.id||''),score:0,fixedBelowV309:true});
@@ -5332,7 +5335,11 @@ function battleQueueSpeedControlV319(vehicle){
   const activeWithAhead=isBattleActiveV319(vehicle.battleState)&&String(vehicle.battleTargetId||'')===String(ahead.id)&&!vehicle.battleBlockedV319;
   if(vehicle.battleBlockedV319&&gap<RACE_SPACING_CONFIG_V319.blockedSpeedTriggerMeters){
     const strength=clamp01V198(1-gap/RACE_SPACING_CONFIG_V319.blockedSpeedTriggerMeters);
-    return {active:true,capKph:Math.max(0,(Number(ahead.speedKph)||0)-RACE_SPACING_CONFIG_V319.blockedSpeedMarginKph*Math.max(.35,strength)),gapMeters:gap,reason:'BATTLE_QUEUE',pairKey:currentPair};
+    return {active:true,capKph:Math.max(0,(Number(ahead.speedKph)||0)-RACE_SPACING_CONFIG_V319.blockedSpeedMarginKph*Math.max(.45,strength)),gapMeters:gap,reason:'BATTLE_QUEUE',pairKey:currentPair};
+  }
+  if(!activeWithAhead&&gap<RACE_SPACING_CONFIG_V319.physicalFollowGapMeters){
+    const strength=clamp01V198(1-gap/RACE_SPACING_CONFIG_V319.physicalFollowGapMeters);
+    return {active:true,capKph:Math.max(0,(Number(ahead.speedKph)||0)-RACE_SPACING_CONFIG_V319.physicalFollowMarginKph*Math.max(.4,strength)),gapMeters:gap,reason:'TRAIN_HEADWAY',pairKey:currentPair};
   }
   if(!activeWithAhead&&gap<RACE_SPACING_CONFIG_V319.emergencyGapMeters){
     return {active:true,capKph:Math.max(0,(Number(ahead.speedKph)||0)-RACE_SPACING_CONFIG_V319.emergencySpeedMarginKph),gapMeters:gap,reason:'OVERLAP_GUARD',pairKey:currentPair};
@@ -6877,6 +6884,16 @@ function qaRaceDynamicsV314(){
 window.mwsF1QaRaceDynamicsV314=qaRaceDynamicsV314;
 window.__mwsF1RacingV314=VERSION314;
 
+
+function qaUiVisibilitySpacingV324(){
+  const marker=document.querySelector('.f1-racing-race-vehicle-v189');
+  const ring=marker?.querySelector('.car-ring'),profile=marker?.querySelector('.car-profile-image-v257'),label=marker?.querySelector('.car-label'),tag=marker?.querySelector('.car-position-box-v254');
+  const markerGeometry={ringRadius:Number(ring?.getAttribute('r')||0),profileWidth:Number(profile?.getAttribute('width')||0),labelY:Number(label?.getAttribute('y')||0),tagY:Number(tag?.getAttribute('y')||0)};
+  const spacing={...RACE_SPACING_CONFIG_V319};
+  return {version:VERSION324,markerGeometry,spacing,allPass:spacing.normalDisplayGapMeters>=65&&spacing.blockedDisplayGapMeters>=90&&spacing.battleDisplayGapMeters>=14&&spacing.physicalFollowGapMeters>=18&&markerGeometry.ringRadius>=17&&markerGeometry.profileWidth>=28&&markerGeometry.tagY>markerGeometry.labelY};
+}
+window.mwsF1QaUiVisibilitySpacingV324=qaUiVisibilitySpacingV324;
+window.__mwsF1RacingV324=VERSION324;
 
 function qaUiSpacingBattleV319(){
   const a={id:'a319',battleState:'FOLLOWING',battleTargetId:'',pitState:'TRACK',raceProgress:1.020,speedKph:240};

@@ -293,6 +293,16 @@ try{
   }
   if(!phase319Ready)throw new Error('Phase 319 runtime did not propagate to Recovery H browser');
 
+  let phase324Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    phase324Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV324==='phase324-f1-ui-visibility-train-spacing'&&typeof window.mwsF1QaUiVisibilitySpacingV324==='function'","Phase 324 runtime readiness"));
+    if(phase324Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v324=${Date.now()}-${attempt}`});
+    await refreshed;await sleep(1200);
+  }
+  if(!phase324Ready)throw new Error('Phase 324 runtime did not propagate to Recovery H browser');
+
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
@@ -453,6 +463,8 @@ try{
     assert(gachaImage319&&getComputedStyle(gachaImage319).objectFit==='contain','Phase 321 Gacha portrait must use contain fit');
     assert(gachaInfoRect319&&gachaInfoRect319.height>=50&&gachaInfoRect319.bottom<=gachaCardRect319.bottom+2,'Phase 321 Gacha card info is clipped: '+JSON.stringify({info:gachaInfoRect319,card:gachaCardRect319}));
     assert(typeof window.multiDrawCardHTML==='function'&&gachaHost323?.dataset?.gachaRendererV323==='shared'&&Boolean(gachaHost323.querySelector('.gacha-card')),'Phase 321 F1 grid did not reuse the real Gacha card renderer');
+    assert(gachaHost323?.dataset?.gachaRendererV324==='deterministic'&&gachaCard319?.classList.contains('f1-grid-gacha-card-v324'),'Phase 324 deterministic Gacha card shell missing');
+    assert(Math.abs(gachaHostRect323.width-230)<=2&&Math.abs(gachaHostRect323.height-320)<=2,'Phase 324 Gacha card geometry mismatch: '+JSON.stringify({host:gachaHostRect323}));
     assert(initialStart273?.disabled===false&&getComputedStyle(initialStart273).visibility!=='hidden','Phase 273 start button did not unlock after reveal');
     const gridQa272=window.mwsF1QaRandomStartingGridV272?.();
     assert(gridQa272?.allPass===true,'Phase 272 random starting grid QA failed: '+JSON.stringify(gridQa272));
@@ -590,6 +602,10 @@ try{
     const uiSpacingBattle319=window.mwsF1QaUiSpacingBattleV319?.();
     assert(uiSpacingBattle319?.allPass===true,'Phase 319 UI spacing and battle isolation QA failed: '+JSON.stringify(uiSpacingBattle319));
     assert(uiSpacingBattle319?.thirdBlocked===true&&Number(uiSpacingBattle319?.visual?.blockedGap)>=Number(uiSpacingBattle319?.config?.blockedDisplayGapMeters)-.1,'Phase 319 third-car battle isolation failed: '+JSON.stringify(uiSpacingBattle319));
+    const visibilityQa324=window.mwsF1QaUiVisibilitySpacingV324?.();
+    assert(visibilityQa324?.allPass===true,'Phase 324 marker visibility/train spacing QA failed: '+JSON.stringify(visibilityQa324));
+    assert(Number(visibilityQa324?.markerGeometry?.ringRadius)>=17&&Number(visibilityQa324?.markerGeometry?.profileWidth)>=28,'Phase 324 racer orb did not enlarge: '+JSON.stringify(visibilityQa324?.markerGeometry));
+    assert(Number(visibilityQa324?.spacing?.normalDisplayGapMeters)>=65&&Number(visibilityQa324?.spacing?.blockedDisplayGapMeters)>=90&&Number(visibilityQa324?.spacing?.physicalFollowGapMeters)>=18,'Phase 324 train spacing/headway too small: '+JSON.stringify(visibilityQa324?.spacing));
     const liveMarkers319=[...document.querySelectorAll('.f1-racing-race-vehicle-v189')];
     assert(liveMarkers319.length>=2&&liveMarkers319.every(node=>Number(node.dataset.cameraScaleV245)>0),'Phase 319 live marker readability state missing');
     const cadenceQa281=window.mwsF1QaDialogueCadenceV281?.();
