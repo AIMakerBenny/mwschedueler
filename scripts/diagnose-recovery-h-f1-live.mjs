@@ -332,7 +332,7 @@ try{
   if(!phase332Ready)throw new Error('Phase 332 runtime did not propagate to Recovery H browser');
   if(!phase333Ready)throw new Error('Phase 333 runtime did not propagate to Recovery H browser');
 
-  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase339Ready=false,phase340Ready=false,phase341Ready=false,phase342Ready=false;
+  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase339Ready=false,phase340Ready=false,phase341Ready=false,phase342Ready=false,phase343Ready=false,phase344Ready=false,phase345Ready=false;
   for(let attempt=0;attempt<8;attempt++){
     const readiness=await evaluate(cdp,`({
       p335:window.__mwsF1RacingV335==='phase335-f1-actual-track-spacing'&&typeof window.mwsF1QaActualTrackSpacingV335==='function',
@@ -342,13 +342,16 @@ try{
       p339:window.__mwsF1RacingV339==='phase339-f1-live-presence-glow',
       p340:window.__mwsF1RacingV340==='phase340-f1-workspace-fill-viewport'&&typeof window.mwsF1QaWorkspaceFillViewportV340==='function',
       p341:window.__mwsF1RacingHudV341==='phase341-dialogue-wall-clock-lifetime'&&typeof window.mwsF1QaDialogueWallClockV341==='function',
-      p342:window.__mwsF1RacingV342==='phase342-f1-spectator-aspect-fit'&&typeof window.mwsF1QaSpectatorAspectFitV342==='function'
-    })`,"Phase 335-342 runtime readiness");
+      p342:window.__mwsF1RacingV342==='phase342-f1-spectator-aspect-fit'&&typeof window.mwsF1QaSpectatorAspectFitV342==='function',
+      p343:window.__mwsF1RacingV343==='phase343-f1-corner-tyre-dynamics'&&typeof window.mwsF1QaCornerTyreDynamicsV343==='function',
+      p344:window.__mwsF1RacingV344==='phase344-f1-staggered-pit-strategy'&&typeof window.mwsF1QaStaggeredPitStrategyV344==='function',
+      p345:window.__mwsF1RacingV345==='phase345-f1-competition-fast-race'&&typeof window.mwsF1QaCompetitionFastRaceV345==='function'
+    })`,"Phase 335-345 runtime readiness");
     phase335Ready=Boolean(readiness?.p335);phase336Ready=Boolean(readiness?.p336);phase337Ready=Boolean(readiness?.p337);
-    phase338Ready=Boolean(readiness?.p338);phase339Ready=Boolean(readiness?.p339);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);phase342Ready=Boolean(readiness?.p342);
-    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase339Ready&&phase340Ready&&phase341Ready&&phase342Ready)break;
+    phase338Ready=Boolean(readiness?.p338);phase339Ready=Boolean(readiness?.p339);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);phase342Ready=Boolean(readiness?.p342);phase343Ready=Boolean(readiness?.p343);phase344Ready=Boolean(readiness?.p344);phase345Ready=Boolean(readiness?.p345);
+    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase339Ready&&phase340Ready&&phase341Ready&&phase342Ready&&phase343Ready&&phase344Ready&&phase345Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v342=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v345=${Date.now()}-${attempt}`});
     await refreshed;await sleep(1200);
   }
   if(!phase335Ready)throw new Error('Phase 335 runtime did not propagate to Recovery H browser');
@@ -359,6 +362,9 @@ try{
   if(!phase340Ready)throw new Error('Phase 340 runtime did not propagate to Recovery H browser');
   if(!phase341Ready)throw new Error('Phase 341 runtime did not propagate to Recovery H browser');
   if(!phase342Ready)throw new Error('Phase 342 runtime did not propagate to Recovery H browser');
+  if(!phase343Ready)throw new Error('Phase 343 runtime did not propagate to Recovery H browser');
+  if(!phase344Ready)throw new Error('Phase 344 runtime did not propagate to Recovery H browser');
+  if(!phase345Ready)throw new Error('Phase 345 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -1280,6 +1286,12 @@ try{
     const viewportWidth342=Math.max(1,Number(window.visualViewport?.width)||window.innerWidth||document.documentElement.clientWidth||1);
     assert(raceRect342&&raceRect342.left>=-2&&raceRect342.right<=viewportWidth342+2,'Phase 342 race console overflows viewport width: '+JSON.stringify({race:raceRect342,viewportWidth342}));
     assert(document.documentElement.scrollWidth<=viewportWidth342+3,'Phase 342 page has horizontal overflow: '+JSON.stringify({scrollWidth:document.documentElement.scrollWidth,viewportWidth342}));
+    const cornerTyre343=window.mwsF1QaCornerTyreDynamicsV343?.();
+    assert(cornerTyre343?.allPass===true,'Phase 343 corner and tyre dynamics QA failed: '+JSON.stringify(cornerTyre343));
+    const pit344=window.mwsF1QaStaggeredPitStrategyV344?.();
+    assert(pit344?.allPass===true,'Phase 344 staggered pit strategy QA failed: '+JSON.stringify(pit344));
+    const fast345=window.mwsF1QaCompetitionFastRaceV345?.();
+    assert(fast345?.allPass===true,'Phase 345 fast race and competition QA failed: '+JSON.stringify(fast345));
     const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]');
     const title=commentary?.querySelector('[data-f1-panel-drag="commentary"]');
     assert(title,'Commentary drag handle missing');
