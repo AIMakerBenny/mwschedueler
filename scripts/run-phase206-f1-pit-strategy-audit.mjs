@@ -22,7 +22,6 @@ export function runPhase206F1PitStrategyAudit(){
     "decision='OVERCUT';reason='RIVAL_PIT_STAY_OUT';",
     "decision='UNDERCUT';reason='ATTACK_CAR_AHEAD';",
     "decision='GO_LONG';reason='TYRE_MANAGEMENT_MARGIN';",
-    "const shouldPit=decision==='BOX_NOW'||decision==='UNDERCUT'||decision==='COVER_UNDERCUT';",
     'requested=requestPitStopV205(vehicle.id,compound,decision);',
     'function updatePitStrategiesV206(stepMs){',
     'updatePitStrategiesV206(stepMs);',
@@ -32,6 +31,9 @@ export function runPhase206F1PitStrategyAudit(){
     'window.mwsF1QaPitStrategyV206=qaPitStrategyV206;',
     'window.__mwsF1RacingV206=VERSION206;'
   ])if(!racing.includes(token))issues.push('Phase 206 runtime missing: '+token);
+  const legacyShouldPit="const shouldPit=decision==='BOX_NOW'||decision==='UNDERCUT'||decision==='COVER_UNDERCUT';";
+  const tyreAwareShouldPit="const shouldPit=(decision==='BOX_NOW'||decision==='UNDERCUT'||decision==='COVER_UNDERCUT')&&(wearReady||criticalTyre)&&!safeTyre;";
+  if(!racing.includes(legacyShouldPit)&&!racing.includes(tyreAwareShouldPit))issues.push('Phase 206 runtime missing: compatible shouldPit decision gate');
 
   for(const token of [
     "mwsF1QaPitStrategyV206?.(strategyDriver,'BOX_NOW')",
