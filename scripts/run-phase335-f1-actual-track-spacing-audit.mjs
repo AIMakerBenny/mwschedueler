@@ -11,7 +11,7 @@ export function runPhase335F1ActualTrackSpacingAudit(){
   "window.mwsF1QaActualTrackSpacingV335=qaActualTrackSpacingV335;",
   "window.__mwsF1RacingV335=VERSION335;"
  ])if(!core.includes(token))issues.push('Phase 335 core missing: '+token);
- const renderStart=core.indexOf('function renderRaceVehiclesV189('),renderEnd=core.indexOf('function updateRaceCameraV216(',renderStart),render=renderStart>=0&&renderEnd>renderStart?core.slice(renderStart,renderEnd):'';
+ const renderStart=core.indexOf('function renderRaceVehiclesV189('),renderEnd=core.indexOf('function initializeRaceMotionV189(',renderStart),render=renderStart>=0&&renderEnd>renderStart?core.slice(renderStart,renderEnd):'';
  if(!render.includes('const displayRaceProgressV319=actualRaceProgressV330-smoothShiftMetersV330/trackLengthV330;'))issues.push('Phase 335 renderer is not anchored to actual race progress');
  if(render.includes('const targetShiftMetersV330=Math.max(0,'))issues.push('Phase 335 legacy presentation spacing still drives the renderer');
  for(const token of ['Phase 335 runtime did not propagate to Recovery H browser','Phase 335 actual track spacing QA failed','Phase 335 live markers are still presentation-spaced instead of actual race progress'])if(!diag.includes(token))issues.push('Phase 335 Recovery H missing: '+token);
