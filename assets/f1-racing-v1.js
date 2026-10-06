@@ -6108,7 +6108,9 @@ function returnToSetupRecoveryG(){
   return true;
 }
 function newRaceSameSettingsRecoveryG(){
+  const previousMode=activeRaceModeV346(activeRaceSnapshotV187);
   returnToSetupRecoveryG();
+  nextRaceModeV346=previousMode;
   return startRaceFromSetupV187();
 }
 function bindRaceLifecycleRecoveryG(){
