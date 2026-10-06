@@ -1071,7 +1071,9 @@ jobs:
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV187=VERSION187;' > /tmp/f1-racing-v1-phase187.js
           retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-setup-action-v187{' > /tmp/f1-racing-v1-phase187.css
           node --check /tmp/f1-racing-v1-phase187.js
-          grep -Fq 'function buildRaceSnapshotV187(){' /tmp/f1-racing-v1-phase187.js
+          grep -Eq 'function buildRaceSnapshotV187\([^)]*\)\{' /tmp/f1-racing-v1-phase187.js
+          grep -Fq "const raceMode=String(options?.raceMode||'NORMAL')" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "const requestedLaps=raceMode==='FAST'?RACE_COMPETITION_V345.fastLaps:draft.totalLaps;" /tmp/f1-racing-v1-phase187.js
           grep -Fq "if(!setScreenStateV185('TRANSITION'))return false;" /tmp/f1-racing-v1-phase187.js
           grep -Fq 'window.mwsF1StartRaceFromSetupV187=startRaceFromSetupV187;' /tmp/f1-racing-v1-phase187.js
           echo '[phase188] F1 Race Control base frame'
