@@ -209,6 +209,17 @@ try{
   }
   if(!phase305Ready)throw new Error('Phase 305 runtime did not propagate to Recovery H browser');
 
+  let phase306Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    phase306Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV306==='phase306-f1-marker-overlay-collision-avoidance'&&typeof window.mwsF1QaMarkerOverlayCollisionV306==='function'","Phase 306 runtime readiness"));
+    if(phase306Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v306=${Date.now()}-${attempt}`});
+    await refreshed;
+    await sleep(1200);
+  }
+  if(!phase306Ready)throw new Error('Phase 306 runtime did not propagate to Recovery H browser');
+
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
@@ -404,11 +415,20 @@ try{
     const variabilityQa303=window.mwsF1QaGameVariabilityV303?.();
     assert(variabilityQa303?.allPass===true&&Number(variabilityQa303?.config?.liveCadenceMs)<=2600&&Number(variabilityQa303?.config?.maxTotalBiasKph)>=4.5,'Phase 303 race variability QA failed: '+JSON.stringify(variabilityQa303));
     const thoughtSpeaker303=String(contacts[0]?.name||'Recovery H Alpha');
+    const thoughtSpeaker306=String(contacts[1]?.name||'Recovery H Bravo');
     window.mwsF1AppendLiveConversationV276?.(thoughtSpeaker303,'지금 간다');
+    await sleep(80);
+    window.mwsF1AppendLiveConversationV276?.(thoughtSpeaker306,'추월한다');
     await sleep(180);await raf();
+    window.mwsF1LayoutMarkerOverlaysV306?.();await raf();
     const thoughtMarker303=[...document.querySelectorAll('.f1-racing-race-vehicle-v189')].find(marker=>marker.querySelector('.f1-racing-driver-thought-v303'));
     assert(thoughtMarker303,'Phase 303 racer thought bubble did not attach to a track marker');
-    assert(String(thoughtMarker303.querySelector('.thought-text-v303')?.textContent||'').includes('지금 간다'),'Phase 303 racer thought bubble text missing');
+    assert([...document.querySelectorAll('.thought-text-v303')].some(node=>String(node.textContent||'').includes('지금 간다')),'Phase 303 racer thought bubble text missing');
+    const markerCollisionQa306=window.mwsF1QaMarkerOverlayCollisionV306?.();
+    assert(markerCollisionQa306?.allPass===true,'Phase 306 marker overlay collision QA failed: '+JSON.stringify(markerCollisionQa306));
+    assert(Number(markerCollisionQa306?.thoughtOverlap?.nodes)>=2,'Phase 306 two-racer thought collision scenario was not exercised: '+JSON.stringify(markerCollisionQa306));
+    assert(Number(markerCollisionQa306?.thoughtOverlap?.count)===0,'Phase 306 racer thought bubbles still overlap: '+JSON.stringify(markerCollisionQa306));
+    assert(Number(markerCollisionQa306?.tagOverlap?.count)===0,'Phase 306 race position badges still overlap: '+JSON.stringify(markerCollisionQa306));
     const cadenceQa281=window.mwsF1QaDialogueCadenceV281?.();
     assert(cadenceQa281?.allPass===true,'Phase 281 dialogue cadence QA failed: '+JSON.stringify(cadenceQa281));
     assert(cadenceQa281?.budgetBlocked===true&&Number(cadenceQa281?.config?.maxGroupsPerWindow)<=4,'Phase 281 dialogue window budget failed: '+JSON.stringify(cadenceQa281));

@@ -301,6 +301,7 @@ import {runPhase302F1LiveRankingFlipStatusAudit} from './run-phase302-f1-live-ra
 import {runPhase303F1FeedbackStabilizationAudit} from './run-phase303-f1-feedback-stabilization-audit.mjs';
 import {runPhase304F1FinishResultClosureAudit} from './run-phase304-f1-finish-result-closure-audit.mjs';
 import {runPhase305F1WorkspaceUiStabilityAudit} from './run-phase305-f1-workspace-ui-stability-audit.mjs';
+import {runPhase306F1MarkerOverlayCollisionAudit} from './run-phase306-f1-marker-overlay-collision-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2659,5 +2660,6 @@ export function runPhase302FullIntegrationAudit(){const previous=runPhase301Full
 export function runPhase303FullIntegrationAudit(){const previous=runPhase302FullIntegrationAudit(),current=runPhase303F1FeedbackStabilizationAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 303: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 303: '+x)];return {phase:303,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase304FullIntegrationAudit(){const previous=runPhase303FullIntegrationAudit(),current=runPhase304F1FinishResultClosureAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 304: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 304: '+x)];return {phase:304,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase305FullIntegrationAudit(){const previous=runPhase304FullIntegrationAudit(),current=runPhase305F1WorkspaceUiStabilityAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 305: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 305: '+x)];return {phase:305,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase305FullIntegrationAudit();}
+export function runPhase306FullIntegrationAudit(){const previous=runPhase305FullIntegrationAudit(),current=runPhase306F1MarkerOverlayCollisionAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 306: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 306: '+x)];return {phase:306,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase306FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
