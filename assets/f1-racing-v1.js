@@ -3540,9 +3540,9 @@ function updateDrivingIncidentsV204(vehicle,stepMs,phase,controls={}){
       ?clamp01V198(Math.max(0,throttle-.55)*1.16+gripLoss*.28+wearRisk*.38+aggression*.10):0;
     const resistanceFactor=Math.max(.45,1-errorResistance*.5);
     const candidates=[
-      {type:'LOCK_UP',risk:lockRisk,rate:.045},
-      {type:'UNDERSTEER',risk:underRisk,rate:.055},
-      {type:'OVERSTEER',risk:overRisk,rate:.050}
+      {type:'LOCK_UP',risk:lockRisk,rate:.018},
+      {type:'UNDERSTEER',risk:underRisk,rate:.022},
+      {type:'OVERSTEER',risk:overRisk,rate:.020}
     ].filter(row=>row.risk>0).sort((a,b)=>b.risk-a.risk);
     if(candidates.length){
       const pick=candidates[0];
