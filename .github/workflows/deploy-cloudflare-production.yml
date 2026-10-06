@@ -261,6 +261,7 @@ jobs:
           node --check scripts/run-phase314-f1-race-dynamics-rebalance-audit.mjs
           node --check scripts/run-phase315-f1-live-participant-dialogue-diversity-audit.mjs
           node --check scripts/run-phase316-f1-feedback-production-closure-audit.mjs
+          node --check scripts/run-phase317-f1-future-safe-closure-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js

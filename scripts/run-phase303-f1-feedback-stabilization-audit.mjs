@@ -51,14 +51,18 @@ export function runPhase303F1FeedbackStabilizationAudit(){
 
   for(const token of [
     'Phase 303 runtime readiness',
-    'Phase 303 shuffle cards are not trade-card proportion',
-    'Phase 303 shuffle cards remain clumped',
     'Phase 303 duplicate LIVE RANK still covers the track',
     'Phase 303 legacy conversation feed still visible',
     'Phase 303 LIVE cut-in still overlaps the track map',
     'Phase 303 race variability QA failed',
     'Phase 303 racer thought bubble did not attach to a track marker'
   ])if(!diag.includes(token))issues.push('Phase 303 Recovery H check missing: '+token);
+  const gachaSupersedesShuffle=base.includes("const VERSION313='phase313-f1-gacha-starting-grid';");
+  if(gachaSupersedesShuffle){
+    for(const token of ['Phase 313 Gacha starting grid QA failed','Phase 313 P-grid dock is not on the right side'])if(!diag.includes(token))issues.push('Phase 303 future-safe Gacha replacement check missing: '+token);
+  }else{
+    for(const token of ['Phase 303 shuffle cards are not trade-card proportion','Phase 303 shuffle cards remain clumped'])if(!diag.includes(token))issues.push('Phase 303 shuffle Recovery H check missing: '+token);
+  }
 
   for(const file of ['assets/f1-racing-v1.js','assets/f1-racing-r303.js','scripts/diagnose-recovery-h-f1-live.mjs']){
     const run=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});

@@ -14,9 +14,10 @@ export function runPhase312F1FinalProductionClosureAudit(){
 
  for(const token of [
   'runPhase312F1FinalProductionClosureAudit',
-  'runPhase312FullIntegrationAudit()',
-  'return runPhase312FullIntegrationAudit()'
+  'runPhase312FullIntegrationAudit()'
  ])if(!current.includes(token))issues.push('Phase 312 cumulative closure missing: '+token);
+ const currentPhase=Number(current.match(/runCurrentFullIntegrationAudit\(\)\{return runPhase(\d+)FullIntegrationAudit\(\);?\}/)?.[1]||0);
+ if(currentPhase<312)issues.push('Phase 312 cumulative closure regressed below Phase 312: '+currentPhase);
 
  for(const token of [
   'node --check scripts/run-phase312-f1-final-production-closure-audit.mjs',

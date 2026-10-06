@@ -312,6 +312,7 @@ import {runPhase313F1GachaStartingGridAudit} from './run-phase313-f1-gacha-start
 import {runPhase314F1RaceDynamicsRebalanceAudit} from './run-phase314-f1-race-dynamics-rebalance-audit.mjs';
 import {runPhase315F1LiveParticipantDialogueDiversityAudit} from './run-phase315-f1-live-participant-dialogue-diversity-audit.mjs';
 import {runPhase316F1FeedbackProductionClosureAudit} from './run-phase316-f1-feedback-production-closure-audit.mjs';
+import {runPhase317F1FutureSafeClosureAudit} from './run-phase317-f1-future-safe-closure-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2681,5 +2682,6 @@ export function runPhase313FullIntegrationAudit(){const previous=runPhase312Full
 export function runPhase314FullIntegrationAudit(){const previous=runPhase313FullIntegrationAudit(),current=runPhase314F1RaceDynamicsRebalanceAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 314: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 314: '+x)];return {phase:314,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase315FullIntegrationAudit(){const previous=runPhase314FullIntegrationAudit(),current=runPhase315F1LiveParticipantDialogueDiversityAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 315: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 315: '+x)];return {phase:315,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase316FullIntegrationAudit(){const previous=runPhase315FullIntegrationAudit(),current=runPhase316F1FeedbackProductionClosureAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 316: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 316: '+x)];return {phase:316,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase316FullIntegrationAudit();}
+export function runPhase317FullIntegrationAudit(){const previous=runPhase316FullIntegrationAudit(),current=runPhase317F1FutureSafeClosureAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 317: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 317: '+x)];return {phase:317,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase317FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
