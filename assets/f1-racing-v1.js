@@ -4798,8 +4798,18 @@ function resetBestLapOverlayV338(){
   return true;
 }
 function qaBestLapOverlayV338(){
-  const root=ensureBestLapOverlayV338();
-  return {version:VERSION338,rootReady:Boolean(root),hasNew:Boolean(root?.querySelector('[data-f1-best-lap-new-v338]')),hasAvatar:Boolean(root?.querySelector('[data-f1-best-lap-avatar-v338]')),allPass:Boolean(root&&root.querySelector('[data-f1-best-lap-new-v338]')&&root.querySelector('[data-f1-best-lap-avatar-v338]'))};
+  const root=ensureBestLapOverlayV338(),vehicle=raceMotionV189.vehicles[0]||null;
+  const saved={lastFastestMs:bestLapOverlayStateV338.lastFastestMs,lastFastestId:bestLapOverlayStateV338.lastFastestId,newUntilWallMs:bestLapOverlayStateV338.newUntilWallMs,version:bestLapOverlayStateV338.version};
+  let observed={visible:false,time:'',driver:'',newClass:false};
+  if(root&&vehicle){
+    bestLapOverlayStateV338.lastFastestMs=0;bestLapOverlayStateV338.lastFastestId='';
+    syncBestLapOverlayV338({fastestMs:60000,fastestId:String(vehicle.id),fastestDriver:String(vehicle.driver?.name||'QA')});
+    observed={visible:!root.hidden,time:String(root.querySelector('[data-f1-best-lap-time-v338]')?.textContent||''),driver:String(root.querySelector('[data-f1-best-lap-driver-v338]')?.textContent||''),newClass:root.classList.contains('is-new-v338')};
+    resetBestLapOverlayV338();
+    Object.assign(bestLapOverlayStateV338,saved);
+  }
+  const hasNew=Boolean(root?.querySelector('[data-f1-best-lap-new-v338]')),hasAvatar=Boolean(root?.querySelector('[data-f1-best-lap-avatar-v338]'));
+  return {version:VERSION338,rootReady:Boolean(root),hasNew,hasAvatar,observed,allPass:Boolean(root&&hasNew&&hasAvatar&&(!vehicle||(observed.visible&&observed.time==='1:00.000'&&observed.newClass)))};
 }
 
 function raceHeadlineStateV255(){
@@ -7406,6 +7416,7 @@ window.mwsF1QaActualTrackSpacingV335=qaActualTrackSpacingV335;
 window.mwsF1QaPitStatusOnlyV336=qaPitStatusOnlyV336;
 window.mwsF1QaCommentarySemanticDedupeV337=qaCommentarySemanticDedupeV337;
 window.mwsF1QaBestLapOverlayV338=qaBestLapOverlayV338;
+window.mwsF1SyncBestLapOverlayV338=syncBestLapOverlayV338;
 window.__mwsF1RacingV328=VERSION328;
 window.__mwsF1RacingV330=VERSION330;
 window.__mwsF1RacingV335=VERSION335;
