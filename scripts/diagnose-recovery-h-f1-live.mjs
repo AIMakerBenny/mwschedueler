@@ -313,6 +313,25 @@ try{
   }
   if(!phase328Ready)throw new Error('Phase 328 runtime did not propagate to Recovery H browser');
 
+  let phase330Ready=false,phase331Ready=false,phase332Ready=false,phase333Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    const readiness=await evaluate(cdp,`({
+      p330:window.__mwsF1RacingV330==='phase330-f1-visual-spacing-continuity'&&typeof window.mwsF1QaVisualSpacingContinuityV330==='function',
+      p331:window.__mwsF1RacingV331==='phase331-f1-natural-dialogue-expansion'&&typeof window.mwsF1QaNaturalDialogueV331==='function',
+      p332:window.__mwsF1RacingV332==='phase332-f1-live-readability-variety'&&typeof window.mwsF1QaLiveReadabilityVarietyV332==='function',
+      p333:window.__mwsF1RacingV333==='phase333-f1-gacha-responsive-viewport'&&typeof window.mwsF1QaGridGachaViewportV333==='function'
+    })`,"Phase 330-333 runtime readiness");
+    phase330Ready=Boolean(readiness?.p330);phase331Ready=Boolean(readiness?.p331);phase332Ready=Boolean(readiness?.p332);phase333Ready=Boolean(readiness?.p333);
+    if(phase330Ready&&phase331Ready&&phase332Ready&&phase333Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v333=${Date.now()}-${attempt}`});
+    await refreshed;await sleep(1200);
+  }
+  if(!phase330Ready)throw new Error('Phase 330 runtime did not propagate to Recovery H browser');
+  if(!phase331Ready)throw new Error('Phase 331 runtime did not propagate to Recovery H browser');
+  if(!phase332Ready)throw new Error('Phase 332 runtime did not propagate to Recovery H browser');
+  if(!phase333Ready)throw new Error('Phase 333 runtime did not propagate to Recovery H browser');
+
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
@@ -475,7 +494,14 @@ try{
     assert(gachaInfoRect319&&gachaInfoRect319.height>=50&&gachaInfoRect319.bottom<=gachaCardRect319.bottom+2,'Phase 321 Gacha card info is clipped: '+JSON.stringify({info:gachaInfoRect319,card:gachaCardRect319}));
     assert(typeof window.multiDrawCardHTML==='function'&&gachaHost323?.dataset?.gachaRendererV323==='shared'&&Boolean(gachaHost323.querySelector('.gacha-card')),'Phase 321 F1 grid did not reuse the real Gacha card renderer');
     assert(gachaHost323?.dataset?.gachaRendererV324==='deterministic'&&gachaCard319?.classList.contains('f1-grid-gacha-card-v324'),'Phase 324 deterministic Gacha card shell missing');
-    assert(Math.abs(gachaHostRect323.width-230)<=2&&Math.abs(gachaHostRect323.height-320)<=2,'Phase 324 Gacha card geometry mismatch: '+JSON.stringify({host:gachaHostRect323}));
+    assert(gachaHostRect323.width>=158&&gachaHostRect323.width<=232&&gachaHostRect323.height>=218&&gachaHostRect323.height<=322,'Phase 324 Gacha card geometry mismatch: '+JSON.stringify({host:gachaHostRect323}));
+    const responsiveQa333=window.mwsF1QaGridGachaViewportV333?.();
+    assert(responsiveQa333?.allPass===true,'Phase 333 responsive Gacha viewport QA failed: '+JSON.stringify(responsiveQa333));
+    const gachaListRect333=document.getElementById('f1RacingGridListV272')?.getBoundingClientRect();
+    const gachaStageRect333=document.getElementById('f1RacingGridGachaStageV313')?.getBoundingClientRect();
+    const expectedStageH333=gachaListRect333?Math.max(300,Math.min(420,Math.floor(window.innerHeight-gachaListRect333.top-12))):0;
+    assert(document.getElementById('f1RacingGridListV272')?.dataset?.gachaResponsiveV333==='1','Phase 333 responsive Gacha marker missing');
+    assert(gachaStageRect333&&Math.abs(gachaStageRect333.height-expectedStageH333)<=3,'Phase 333 Gacha stage did not fit current viewport: '+JSON.stringify({stage:gachaStageRect333,expectedStageH333,innerHeight:window.innerHeight,list:gachaListRect333}));
     assert(initialStart273?.disabled===false&&getComputedStyle(initialStart273).visibility!=='hidden','Phase 273 start button did not unlock after reveal');
     const gridQa272=window.mwsF1QaRandomStartingGridV272?.();
     assert(gridQa272?.allPass===true,'Phase 272 random starting grid QA failed: '+JSON.stringify(gridQa272));
@@ -620,6 +646,25 @@ try{
     const trainRelease328=window.mwsF1QaTrainHeadwayOvertakeReleaseV328?.();
     assert(trainRelease328?.allPass===true,'Phase 328 train headway/overtake release QA failed: '+JSON.stringify(trainRelease328));
     assert(Number(trainRelease328?.config?.overtakeReleaseClosingKph)>=3&&Number(trainRelease328?.config?.overtakeReleaseClosingKph)<=6,'Phase 328 overtake release threshold invalid: '+JSON.stringify(trainRelease328?.config));
+    const spacingContinuity330=window.mwsF1QaVisualSpacingContinuityV330?.();
+    assert(spacingContinuity330?.allPass===true,'Phase 330 visual spacing continuity QA failed: '+JSON.stringify(spacingContinuity330));
+    assert(spacingContinuity330?.noTeleport===true&&Number(spacingContinuity330?.config?.approachMs)>=300&&Number(spacingContinuity330?.config?.releaseMs)>=400,'Phase 330 spacing transition is too abrupt: '+JSON.stringify(spacingContinuity330));
+    const naturalDialogue331=window.mwsF1QaNaturalDialogueV331?.();
+    assert(naturalDialogue331?.allPass===true,'Phase 331 natural dialogue QA failed: '+JSON.stringify(naturalDialogue331));
+    assert(Array.isArray(naturalDialogue331?.bannedHits)&&naturalDialogue331.bannedHits.length===0&&Number(naturalDialogue331?.unique)>=240,'Phase 331 dialogue variety/naturalness regression: '+JSON.stringify(naturalDialogue331));
+    const liveVariety332=window.mwsF1QaLiveReadabilityVarietyV332?.();
+    assert(liveVariety332?.allPass===true,'Phase 332 LIVE variety QA failed: '+JSON.stringify(liveVariety332));
+    const liveLayer332=document.getElementById('f1RacingLiveCutinLayerV264');
+    let liveFontSize332=0;
+    if(liveLayer332){
+      const probe332=document.createElement('article');
+      probe332.className='f1-racing-live-cutin-v264';
+      probe332.innerHTML='<div class="f1-racing-live-cutin-body-v264"><span class="f1-racing-live-cutin-avatar-v264 fallback">Q</span><p>LIVE readability probe</p></div>';
+      liveLayer332.appendChild(probe332);
+      liveFontSize332=parseFloat(getComputedStyle(probe332.querySelector('p')).fontSize)||0;
+      probe332.remove();
+    }
+    assert(liveFontSize332>=12,'Phase 332 LIVE copy is still too small: '+liveFontSize332);
     const liveMarkers319=[...document.querySelectorAll('.f1-racing-race-vehicle-v189')];
     assert(liveMarkers319.length>=2&&liveMarkers319.every(node=>Number(node.dataset.cameraScaleV245)>0),'Phase 319 live marker readability state missing');
     const cadenceQa281=window.mwsF1QaDialogueCadenceV281?.();
