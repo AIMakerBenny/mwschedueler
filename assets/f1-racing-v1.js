@@ -4759,6 +4759,10 @@ function createRaceVehiclesV189(snapshot){
       finished:false,finishPosition:0,finishedAtSimMs:0,
       marker:null
     };
+    vehicle.pitRemainingThresholdV344=pitRemainingThresholdV344(vehicle,'MEDIUM');
+    vehicle.pitWearAuthorizedV344=false;
+    vehicle.tyreIncidentChanceV344=0;
+    vehicle.tyreIncidentMultiplierV344=1;
     return syncVehicleRaceMetricsV190(vehicle,snapshot.track);
   });
 }
