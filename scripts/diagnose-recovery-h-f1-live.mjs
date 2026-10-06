@@ -332,19 +332,20 @@ try{
   if(!phase332Ready)throw new Error('Phase 332 runtime did not propagate to Recovery H browser');
   if(!phase333Ready)throw new Error('Phase 333 runtime did not propagate to Recovery H browser');
 
-  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase340Ready=false,phase341Ready=false;
+  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase339Ready=false,phase340Ready=false,phase341Ready=false;
   for(let attempt=0;attempt<8;attempt++){
     const readiness=await evaluate(cdp,`({
       p335:window.__mwsF1RacingV335==='phase335-f1-actual-track-spacing'&&typeof window.mwsF1QaActualTrackSpacingV335==='function',
       p336:window.__mwsF1RacingV336==='phase336-f1-pit-status-only'&&typeof window.mwsF1QaPitStatusOnlyV336==='function',
       p337:window.__mwsF1RacingV337==='phase337-f1-commentary-semantic-dedupe'&&typeof window.mwsF1QaCommentarySemanticDedupeV337==='function',
       p338:window.__mwsF1RacingV338==='phase338-f1-best-lap-overlay'&&typeof window.mwsF1QaBestLapOverlayV338==='function',
+      p339:window.__mwsF1RacingV339==='phase339-f1-live-presence-glow',
       p340:window.__mwsF1RacingV340==='phase340-f1-workspace-fill-viewport'&&typeof window.mwsF1QaWorkspaceFillViewportV340==='function',
       p341:window.__mwsF1RacingHudV341==='phase341-dialogue-wall-clock-lifetime'&&typeof window.mwsF1QaDialogueWallClockV341==='function'
     })`,"Phase 335-341 runtime readiness");
     phase335Ready=Boolean(readiness?.p335);phase336Ready=Boolean(readiness?.p336);phase337Ready=Boolean(readiness?.p337);
-    phase338Ready=Boolean(readiness?.p338);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);
-    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase340Ready&&phase341Ready)break;
+    phase338Ready=Boolean(readiness?.p338);phase339Ready=Boolean(readiness?.p339);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);
+    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase339Ready&&phase340Ready&&phase341Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
     await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v341=${Date.now()}-${attempt}`});
     await refreshed;await sleep(1200);
@@ -353,6 +354,7 @@ try{
   if(!phase336Ready)throw new Error('Phase 336 runtime did not propagate to Recovery H browser');
   if(!phase337Ready)throw new Error('Phase 337 runtime did not propagate to Recovery H browser');
   if(!phase338Ready)throw new Error('Phase 338 runtime did not propagate to Recovery H browser');
+  if(!phase339Ready)throw new Error('Phase 339 runtime did not propagate to Recovery H browser');
   if(!phase340Ready)throw new Error('Phase 340 runtime did not propagate to Recovery H browser');
   if(!phase341Ready)throw new Error('Phase 341 runtime did not propagate to Recovery H browser');
 
