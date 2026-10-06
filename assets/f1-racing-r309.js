@@ -39,11 +39,13 @@ function qaV309(){
  const wr=workspace?.getBoundingClientRect();
  const viewport=Math.max(1,Number(window.visualViewport?.height)||window.innerHeight||document.documentElement.clientHeight||1);
  const viewportFit=!wr||String(window.mwsF1GetScreenStateV185?.()||'')!=='RACE'||wr.bottom<=viewport+2;
- const expectedHeight=!wr?0:Math.max(0,Math.floor(viewport-wr.top-8));
+ const raceRect=document.getElementById('f1RacingViewRaceV185')?.getBoundingClientRect();
+ const trailingOverhead=!wr?0:Math.max(0,Number(raceRect?.bottom||0)-Number(wr.bottom||0));
+ const expectedHeight=!wr?0:Math.max(0,Math.floor(viewport-wr.top-trailingOverhead-8));
  const fillViewportOk=!wr||String(window.mwsF1GetScreenStateV185?.()||'')!=='RACE'||Math.abs(wr.height-expectedHeight)<=4;
  const defaultHeightOk=fillViewportOk;
  const overtake=window.mwsF1QaOvertakeFlowV309?.()||null;
- return {version:VERSION309,installed:stateV309.installed,workspace:Boolean(workspace),stage:Boolean(stage),labelCount:labels.length,tagCount:tags.length,labelFixed,tagFixed,viewportFit,fillViewportOk,defaultHeightOk,workspaceRect:wr?{top:wr.top,bottom:wr.bottom,height:wr.height,viewport,expectedHeight}:null,fit,overtake,allPass:Boolean(workspace&&stage)&&labelFixed&&tagFixed&&viewportFit&&fillViewportOk&&overtake?.allPass===true};
+ return {version:VERSION309,installed:stateV309.installed,workspace:Boolean(workspace),stage:Boolean(stage),labelCount:labels.length,tagCount:tags.length,labelFixed,tagFixed,viewportFit,fillViewportOk,defaultHeightOk,workspaceRect:wr?{top:wr.top,bottom:wr.bottom,height:wr.height,viewport,expectedHeight,trailingOverhead}:null,fit,overtake,allPass:Boolean(workspace&&stage)&&labelFixed&&tagFixed&&viewportFit&&fillViewportOk&&overtake?.allPass===true};
 }
 function installV309(){
  if(stateV309.installed)return true;
