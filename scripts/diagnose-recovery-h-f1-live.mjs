@@ -360,6 +360,25 @@ try{
   if(!phase341Ready)throw new Error('Phase 341 runtime did not propagate to Recovery H browser');
   if(!phase342Ready)throw new Error('Phase 342 runtime did not propagate to Recovery H browser');
 
+  let phase343Ready=false,phase344Ready=false,phase345Ready=false,phase346Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    const readiness=await evaluate(cdp,`({
+      p343:window.__mwsF1RacingV343==='phase343-f1-corner-racing-model'&&window.__mwsF1CornerGeometryV343==='svg-y-down-out-in-out-v1'&&typeof window.mwsF1QaRaceCornerModelV343==='function',
+      p344:window.__mwsF1RacingV344==='phase344-f1-tyre-wear-pit-strategy'&&typeof window.mwsF1QaTyreWearPitStrategyV344==='function',
+      p345:window.__mwsF1RacingV345==='phase345-f1-battle-intensity'&&typeof window.mwsF1QaBattleIntensityV345==='function',
+      p346:window.__mwsF1RacingV346==='phase346-f1-fast-race-three-lap'&&typeof window.mwsF1QaFastRaceV346==='function'
+    })`,"Phase 343-346 runtime readiness");
+    phase343Ready=Boolean(readiness?.p343);phase344Ready=Boolean(readiness?.p344);phase345Ready=Boolean(readiness?.p345);phase346Ready=Boolean(readiness?.p346);
+    if(phase343Ready&&phase344Ready&&phase345Ready&&phase346Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v346=${Date.now()}-${attempt}`});
+    await refreshed;await sleep(1200);
+  }
+  if(!phase343Ready)throw new Error('Phase 343 runtime did not propagate to Recovery H browser');
+  if(!phase344Ready)throw new Error('Phase 344 runtime did not propagate to Recovery H browser');
+  if(!phase345Ready)throw new Error('Phase 345 runtime did not propagate to Recovery H browser');
+  if(!phase346Ready)throw new Error('Phase 346 runtime did not propagate to Recovery H browser');
+
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
@@ -409,6 +428,15 @@ try{
     const selected=window.mwsF1GetSelectedContactIdsV181?.()||[];
     assert(selected.length>=2,'Participant selection did not reach 2 drivers');
     assert(String(window.mwsF1GetActiveTrackV182?.()?.id||'')===String(targetTrack.id),'Selected track not active');
+
+    const cornerQa343=window.mwsF1QaRaceCornerModelV343?.();
+    assert(cornerQa343?.allPass===true&&cornerQa343?.directionRight===true&&cornerQa343?.directionLeft===true,'Phase 343 corner racing model QA failed: '+JSON.stringify(cornerQa343));
+    const tyreQa344=window.mwsF1QaTyreWearPitStrategyV344?.();
+    assert(tyreQa344?.allPass===true&&Number(tyreQa344?.pitRemainingMax)===.4&&Number(tyreQa344?.wear?.SOFT)>Number(tyreQa344?.wear?.MEDIUM)&&Number(tyreQa344?.wear?.MEDIUM)>Number(tyreQa344?.wear?.HARD),'Phase 344 tyre wear and pit strategy QA failed: '+JSON.stringify(tyreQa344));
+    const battleQa345=window.mwsF1QaBattleIntensityV345?.();
+    assert(battleQa345?.allPass===true&&Number(battleQa345?.normal?.gapFactor)>1&&Number(battleQa345?.fast?.gapFactor)>Number(battleQa345?.normal?.gapFactor),'Phase 345 battle intensity QA failed: '+JSON.stringify(battleQa345));
+    const fastQa346=window.mwsF1QaFastRaceV346?.();
+    assert(fastQa346?.allPass===true&&Number(fastQa346?.laps)===3&&fastQa346?.mode==='FAST'&&fastQa346?.buttonReady===true,'Phase 346 fast race QA failed: '+JSON.stringify(fastQa346));
 
     const momentumQa262=window.mwsF1QaRaceMomentumV262?.();
     assert(momentumQa262?.allPass===true&&momentumQa262?.deterministic===true&&Number(momentumQa262?.paceRange)>=.015&&Number(momentumQa262?.paceRange)<=.025,'Phase 262 momentum deterministic QA failed: '+JSON.stringify(momentumQa262));
