@@ -318,6 +318,7 @@ import {runPhase319F1UiSpacingBattleAudit} from './run-phase319-f1-ui-spacing-ba
 import {runPhase320F1UiSpacingCompatibilityClosureAudit} from './run-phase320-f1-ui-spacing-compatibility-closure-audit.mjs';
 import {runPhase321F1GachaContainmentAudit} from './run-phase321-f1-gacha-containment-audit.mjs';
 import {runPhase322F1GachaAuditCompatibilityAudit} from './run-phase322-f1-gacha-audit-compatibility-audit.mjs';
+import {runPhase323F1GachaHostAudit} from './run-phase323-f1-gacha-host-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2693,5 +2694,6 @@ export function runPhase319FullIntegrationAudit(){const previous=runPhase318Full
 export function runPhase320FullIntegrationAudit(){const previous=runPhase319FullIntegrationAudit(),current=runPhase320F1UiSpacingCompatibilityClosureAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 320: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 320: '+x)];return {phase:320,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase321FullIntegrationAudit(){const previous=runPhase320FullIntegrationAudit(),current=runPhase321F1GachaContainmentAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 321: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 321: '+x)];return {phase:321,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase322FullIntegrationAudit(){const previous=runPhase321FullIntegrationAudit(),current=runPhase322F1GachaAuditCompatibilityAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 322: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 322: '+x)];return {phase:322,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase322FullIntegrationAudit();}
+export function runPhase323FullIntegrationAudit(){const previous=runPhase322FullIntegrationAudit(),current=runPhase323F1GachaHostAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 323: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 323: '+x)];return {phase:323,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase323FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();

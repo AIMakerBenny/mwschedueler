@@ -1729,10 +1729,12 @@ function gridGachaPlayerV313(driver){
 function gridGachaCardHtmlV313(driver,position,compact=false){
   const player=gridGachaPlayerV313(driver);
   if(typeof window.multiDrawCardHTML==='function'){
-    return window.multiDrawCardHTML(player,{compact,orderLabel:'P'+String(position).padStart(2,'0'),kicker:'STARTING GRID',sub:'GRID POSITION'});
+    const shared=window.multiDrawCardHTML(player,{compact,orderLabel:'P'+String(position).padStart(2,'0'),kicker:'STARTING GRID',sub:'GRID POSITION'});
+    return '<div class="f1-grid-gacha-card-host-v323" data-gacha-renderer-v323="shared">'+shared+'</div>';
   }
   const media=player.image?'<img src="'+escapeHtml(player.image)+'" alt="'+escapeHtml(player.name)+'">':'<span class="fallback">'+escapeHtml(initials(player.name))+'</span>';
-  return '<div class="f1-grid-gacha-fallback-card-v313 '+(compact?'compact':'')+'"><div class="media">'+media+'</div><div class="copy"><small>STARTING GRID</small><strong>'+escapeHtml(player.name)+'</strong><b>P'+String(position).padStart(2,'0')+'</b></div></div>';
+  const fallback='<div class="f1-grid-gacha-fallback-card-v313 '+(compact?'compact':'')+'"><div class="media">'+media+'</div><div class="copy"><small>STARTING GRID</small><strong>'+escapeHtml(player.name)+'</strong><b>P'+String(position).padStart(2,'0')+'</b></div></div>';
+  return '<div class="f1-grid-gacha-card-host-v323" data-gacha-renderer-v323="fallback">'+fallback+'</div>';
 }
 function gridGachaDockItemV313(driver,position){
   const image=String(driver?.image||'').trim(),name=String(driver?.name||'Driver');
