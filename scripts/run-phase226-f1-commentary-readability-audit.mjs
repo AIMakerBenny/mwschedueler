@@ -12,12 +12,16 @@ export function runPhase226F1CommentaryReadabilityAudit(){
     'const commentaryReadV226={followTail:true,unread:0,lastTextAt:new Map(),bound:false};',
     'function commentaryPriorityV226(type){',
     'function bindCommentaryReadabilityV226(){',
-    'if(Number.isFinite(duplicateAt)&&now-duplicateAt<1800)return false;',
     "if(commentaryReadV226.followTail||priority==='critical'){",
     "badge.textContent='새 해설 '+commentaryReadV226.unread+'개';",
     'window.mwsF1QaCommentaryReadabilityV226=qaCommentaryReadabilityV226;',
     'window.__mwsF1RacingV226=VERSION226;'
   ])if(!racing.includes(token))issues.push('Phase 226 commentary readability missing: '+token);
+
+  const duplicateGuard=racing.match(/COMMENTARY_SEMANTIC_CONFIG_V337=Object\.freeze\(\{defaultWallGapMs:\d+,mistakeWallGapMs:\d+,openingWallGapMs:\d+,exactWallGapMs:(\d+)\}/);
+  const exactWallGapMs=Number(duplicateGuard?.[1]||0);
+  if(exactWallGapMs<1800)issues.push('Phase 226 duplicate commentary guard regressed below 1800ms: '+exactWallGapMs);
+  if(!racing.includes('if(Number.isFinite(duplicateAt)&&now-duplicateAt<COMMENTARY_SEMANTIC_CONFIG_V337.exactWallGapMs)return false;'))issues.push('Phase 226 future-safe duplicate commentary guard missing');
   for(const token of ['/* Phase 226: commentary readability */','.f1-racing-commentary-unread-v226{','data-commentary-priority="critical"'])
     if(!css.includes(token))issues.push('Phase 226 CSS missing: '+token);
   const syntax=spawnSync(process.execPath,['--check','assets/f1-racing-v1.js'],{encoding:'utf8'});if(syntax.status!==0)issues.push('F1 JS syntax failed');
