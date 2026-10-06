@@ -1264,10 +1264,13 @@ try{
     const resetWorkspace309=document.getElementById('f1RacingWorkspaceRecoveryE'),resetRect309=resetWorkspace309?.getBoundingClientRect();
     const viewport309=Math.max(1,Number(window.visualViewport?.height)||window.innerHeight||document.documentElement.clientHeight||1);
     assert(resetRect309&&resetRect309.bottom<=viewport309+2,'Phase 309 reset workspace extends below viewport: '+JSON.stringify(resetRect309?{top:resetRect309.top,bottom:resetRect309.bottom,height:resetRect309.height,viewport:viewport309}:null));
-    const expectedWorkspaceHeight340=Math.max(0,Math.floor(viewport309-Number(resetRect309?.top||0)-8));
+    const resetRaceRect340=document.getElementById('f1RacingViewRaceV185')?.getBoundingClientRect();
+    const trailingOverhead340=Math.max(0,Number(resetRaceRect340?.bottom||0)-Number(resetRect309?.bottom||0));
+    const expectedWorkspaceHeight340=Math.max(0,Math.floor(viewport309-Number(resetRect309?.top||0)-trailingOverhead340-8));
     const workspaceFill340=window.mwsF1QaWorkspaceFillViewportV340?.();
     assert(workspaceFill340?.allPass===true&&Number(workspaceFill340?.liveBlankPx)<=2,'Phase 340 viewport-fill QA failed: '+JSON.stringify(workspaceFill340));
-    assert(resetRect309&&Math.abs(resetRect309.height-expectedWorkspaceHeight340)<=4,'Phase 340 workspace did not fill current viewport: '+JSON.stringify({height:resetRect309?.height,expectedWorkspaceHeight340,top:resetRect309?.top,viewport309}));
+    assert(resetRect309&&Math.abs(resetRect309.height-expectedWorkspaceHeight340)<=4,'Phase 340 workspace did not fill current viewport: '+JSON.stringify({height:resetRect309?.height,expectedWorkspaceHeight340,trailingOverhead340,top:resetRect309?.top,viewport309}));
+    assert(resetRaceRect340&&resetRaceRect340.bottom<=viewport309+2,'Phase 340 race view exceeds current viewport: '+JSON.stringify({race:resetRaceRect340,viewport309,trailingOverhead340}));
     const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]');
     const title=commentary?.querySelector('[data-f1-panel-drag="commentary"]');
     assert(title,'Commentary drag handle missing');
