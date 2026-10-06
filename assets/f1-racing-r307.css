@@ -1,0 +1,10 @@
+/* Phase 307: quieter, merged and longer-lived LIVE panel */
+.f1-racing-live-cutin-v264 header span [data-f1-live-merge-count-v307]{
+ display:inline-flex;align-items:center;justify-content:center;min-width:18px;margin-left:4px;padding:1px 4px;
+ border:1px solid rgba(255,255,255,.22);border-radius:999px;font-style:normal;font-size:7px;line-height:1.2;letter-spacing:.03em;
+ background:rgba(255,255,255,.08);color:#f4f8ff
+}
+.f1-racing-live-cutin-v264 header span [data-f1-live-merge-count-v307][hidden]{display:none!important}
+.f1-racing-live-cutin-v264.is-merged-v307{box-shadow:0 0 0 1px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 45%,transparent),0 8px 22px rgba(0,0,0,.28)}
+.f1-racing-live-cutin-v264.is-merged-v307 .f1-racing-live-cutin-body-v264 p{animation:f1LiveMergeCopyV307 .28s ease-out}
+@keyframes f1LiveMergeCopyV307{0%{opacity:.35;transform:translateY(3px)}100%{opacity:1;transform:none}}

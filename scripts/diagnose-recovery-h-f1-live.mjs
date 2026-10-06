@@ -220,6 +220,17 @@ try{
   }
   if(!phase306Ready)throw new Error('Phase 306 runtime did not propagate to Recovery H browser');
 
+  let phase307Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    phase307Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV307==='phase307-live-session-merge-expanded-copy'&&typeof window.mwsF1QaLiveCutinPolicyV307==='function'","Phase 307 runtime readiness"));
+    if(phase307Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v307=${Date.now()}-${attempt}`});
+    await refreshed;
+    await sleep(1200);
+  }
+  if(!phase307Ready)throw new Error('Phase 307 runtime did not propagate to Recovery H browser');
+
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
@@ -277,7 +288,7 @@ try{
     assert(narrativeQa263?.allPass===true&&Number(narrativeQa263?.templateCount)>=120&&Number(narrativeQa263?.eventCount)>=16&&Number(narrativeQa263?.recentLimit)>=10&&Number(narrativeQa263?.recentLimit)<=15,'Phase 263 narrative engine QA failed: '+JSON.stringify(narrativeQa263));
 
     const cutinQa264=window.mwsF1QaLiveCutinV264?.();
-    assert(cutinQa264?.allPass===true&&cutinQa264?.layerReady===true&&Number(cutinQa264?.maxActive)===3&&Number(cutinQa264?.dedupeMs)===1000,'Phase 264 LIVE cut-in QA failed: '+JSON.stringify(cutinQa264));
+    assert(cutinQa264?.allPass===true&&cutinQa264?.layerReady===true&&Number(cutinQa264?.maxActive)>=1&&Number(cutinQa264?.dedupeMs)>=1000,'Phase 264 LIVE cut-in QA failed: '+JSON.stringify(cutinQa264));
 
     const podiumQa265=window.mwsF1QaPodiumV265?.();
     assert(podiumQa265?.allPass===true&&podiumQa265?.domReady===true&&podiumQa265?.singleSafe===true&&podiumQa265?.bestLap===true&&podiumQa265?.overtakes===true,'Phase 265 podium QA failed: '+JSON.stringify(podiumQa265));
@@ -413,7 +424,32 @@ try{
     const cutin303=document.getElementById('f1RacingLiveCutinLayerV264');
     assert(cutin303?.parentElement?.classList.contains('f1-racing-commentary-v188'),'Phase 303 LIVE cut-in still overlaps the track map');
     const variabilityQa303=window.mwsF1QaGameVariabilityV303?.();
-    assert(variabilityQa303?.allPass===true&&Number(variabilityQa303?.config?.liveCadenceMs)<=2600&&Number(variabilityQa303?.config?.maxTotalBiasKph)>=4.5,'Phase 303 race variability QA failed: '+JSON.stringify(variabilityQa303));
+    assert(variabilityQa303?.allPass===true&&Number(variabilityQa303?.config?.liveCadenceMs)>=5000&&Number(variabilityQa303?.config?.liveCadenceMs)<=8000&&Number(variabilityQa303?.config?.maxTotalBiasKph)>=4.5,'Phase 303 race variability QA failed: '+JSON.stringify(variabilityQa303));
+    const livePolicy307=window.mwsF1QaLiveCutinPolicyV307?.();
+    assert(livePolicy307?.allPass===true&&Number(livePolicy307?.templateCount)>=256&&Number(livePolicy307?.uniqueTemplateCount)>=256,'Phase 307 LIVE phrase library QA failed: '+JSON.stringify(livePolicy307));
+    assert(Number(livePolicy307?.config?.maxActive)===1&&Number(livePolicy307?.config?.globalCadenceMs)>=5000&&Number(livePolicy307?.config?.minDurationMs)>=4500,'Phase 307 LIVE frequency or duration policy failed: '+JSON.stringify(livePolicy307));
+    window.mwsF1ToggleSimulationPauseV192?.(true);
+    window.mwsF1ResetLiveCutinsV264?.();
+    const liveStandings307=window.mwsF1ComputeRaceStandingsV191?.()||[];
+    const liveDriver307=liveStandings307[1]?.vehicle||liveStandings307[0]?.vehicle;
+    const liveTarget307=liveStandings307[0]?.vehicle===liveDriver307?liveStandings307[1]?.vehicle:liveStandings307[0]?.vehicle;
+    assert(liveDriver307&&liveTarget307,'Phase 307 LIVE merge test drivers missing');
+    for(const state307 of ['PULLING_OUT','SIDE_BY_SIDE','COUNTER_ATTACK','PASS_COMPLETED']){
+      window.mwsF1EnqueueLiveCutinV264?.(liveDriver307,state307,String(liveTarget307.id||''));
+      await sleep(70);
+    }
+    await raf();
+    const mergedLive307=window.mwsF1GetLiveCutinStateV264?.();
+    const liveCards307=[...document.querySelectorAll('#f1RacingLiveCutinLayerV264 .f1-racing-live-cutin-v264')];
+    assert(Number(mergedLive307?.active)===1&&Number(mergedLive307?.queued)===0&&liveCards307.length===1,'Phase 307 consecutive LIVE events were not merged: '+JSON.stringify(mergedLive307));
+    assert(Number(mergedLive307?.activeEntries?.[0]?.mergedCount)>=4&&Number(mergedLive307?.mergeCount)>=3,'Phase 307 merge counter did not advance: '+JSON.stringify(mergedLive307));
+    assert(String(liveCards307[0]?.querySelector('[data-f1-live-merge-count-v307]')?.textContent||'').includes('4'),'Phase 307 merged LIVE badge missing');
+    const mergedMessage307=String(liveCards307[0]?.querySelector('p')?.textContent||'');
+    assert(mergedMessage307&&String(mergedLive307?.activeEntries?.[0]?.event)==='PASS_SUCCESS','Phase 307 merged LIVE did not reach final pass state: '+JSON.stringify(mergedLive307));
+    await sleep(3000);
+    assert(document.querySelectorAll('#f1RacingLiveCutinLayerV264 .f1-racing-live-cutin-v264').length===1,'Phase 307 LIVE card did not remain visible long enough');
+    window.mwsF1ResetLiveCutinsV264?.();
+    window.mwsF1ToggleSimulationPauseV192?.(false);
     const thoughtSpeaker303=String(contacts[0]?.name||'Recovery H Alpha');
     const thoughtSpeaker306=String(contacts[1]?.name||'Recovery H Bravo');
     window.mwsF1AppendLiveConversationV276?.(thoughtSpeaker303,'지금 간다');

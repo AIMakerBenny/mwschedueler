@@ -251,6 +251,7 @@ jobs:
           node --check assets/f1-racing-r305.js
           node --check scripts/run-phase306-f1-marker-overlay-collision-audit.mjs
           node --check assets/f1-racing-r306.js
+          node --check scripts/run-phase307-f1-live-session-merge-expanded-copy-audit.mjs
           node --check assets/f1-racing-r303.js
           node --check assets/f1-racing-r283-r287.js
           node --check assets/f1-racing-r288-r290.js

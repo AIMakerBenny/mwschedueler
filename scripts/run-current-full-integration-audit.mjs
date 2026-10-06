@@ -302,6 +302,7 @@ import {runPhase303F1FeedbackStabilizationAudit} from './run-phase303-f1-feedbac
 import {runPhase304F1FinishResultClosureAudit} from './run-phase304-f1-finish-result-closure-audit.mjs';
 import {runPhase305F1WorkspaceUiStabilityAudit} from './run-phase305-f1-workspace-ui-stability-audit.mjs';
 import {runPhase306F1MarkerOverlayCollisionAudit} from './run-phase306-f1-marker-overlay-collision-audit.mjs';
+import {runPhase307F1LiveSessionMergeExpandedCopyAudit} from './run-phase307-f1-live-session-merge-expanded-copy-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2661,5 +2662,6 @@ export function runPhase303FullIntegrationAudit(){const previous=runPhase302Full
 export function runPhase304FullIntegrationAudit(){const previous=runPhase303FullIntegrationAudit(),current=runPhase304F1FinishResultClosureAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 304: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 304: '+x)];return {phase:304,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase305FullIntegrationAudit(){const previous=runPhase304FullIntegrationAudit(),current=runPhase305F1WorkspaceUiStabilityAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 305: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 305: '+x)];return {phase:305,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase306FullIntegrationAudit(){const previous=runPhase305FullIntegrationAudit(),current=runPhase306F1MarkerOverlayCollisionAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 306: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 306: '+x)];return {phase:306,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase306FullIntegrationAudit();}
+export function runPhase307FullIntegrationAudit(){const previous=runPhase306FullIntegrationAudit(),current=runPhase307F1LiveSessionMergeExpandedCopyAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 307: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 307: '+x)];return {phase:307,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase307FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
