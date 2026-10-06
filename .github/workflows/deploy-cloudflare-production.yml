@@ -256,6 +256,7 @@ jobs:
           node --check scripts/run-phase309-f1-viewport-marker-overtake-flow-audit.mjs
           node --check scripts/run-phase310-f1-final-spec-closure-audit.mjs
           node --check scripts/run-phase311-f1-long-run-performance-audit.mjs
+          node --check scripts/run-phase312-f1-final-production-closure-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
