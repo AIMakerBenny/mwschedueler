@@ -332,7 +332,7 @@ try{
   if(!phase332Ready)throw new Error('Phase 332 runtime did not propagate to Recovery H browser');
   if(!phase333Ready)throw new Error('Phase 333 runtime did not propagate to Recovery H browser');
 
-  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase339Ready=false,phase340Ready=false,phase341Ready=false;
+  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase339Ready=false,phase340Ready=false,phase341Ready=false,phase342Ready=false;
   for(let attempt=0;attempt<8;attempt++){
     const readiness=await evaluate(cdp,`({
       p335:window.__mwsF1RacingV335==='phase335-f1-actual-track-spacing'&&typeof window.mwsF1QaActualTrackSpacingV335==='function',
@@ -341,13 +341,14 @@ try{
       p338:window.__mwsF1RacingV338==='phase338-f1-best-lap-overlay'&&typeof window.mwsF1QaBestLapOverlayV338==='function',
       p339:window.__mwsF1RacingV339==='phase339-f1-live-presence-glow',
       p340:window.__mwsF1RacingV340==='phase340-f1-workspace-fill-viewport'&&typeof window.mwsF1QaWorkspaceFillViewportV340==='function',
-      p341:window.__mwsF1RacingHudV341==='phase341-dialogue-wall-clock-lifetime'&&typeof window.mwsF1QaDialogueWallClockV341==='function'
-    })`,"Phase 335-341 runtime readiness");
+      p341:window.__mwsF1RacingHudV341==='phase341-dialogue-wall-clock-lifetime'&&typeof window.mwsF1QaDialogueWallClockV341==='function',
+      p342:window.__mwsF1RacingV342==='phase342-f1-spectator-aspect-fit'&&typeof window.mwsF1QaSpectatorAspectFitV342==='function'
+    })`,"Phase 335-342 runtime readiness");
     phase335Ready=Boolean(readiness?.p335);phase336Ready=Boolean(readiness?.p336);phase337Ready=Boolean(readiness?.p337);
-    phase338Ready=Boolean(readiness?.p338);phase339Ready=Boolean(readiness?.p339);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);
-    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase339Ready&&phase340Ready&&phase341Ready)break;
+    phase338Ready=Boolean(readiness?.p338);phase339Ready=Boolean(readiness?.p339);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);phase342Ready=Boolean(readiness?.p342);
+    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase339Ready&&phase340Ready&&phase341Ready&&phase342Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v341=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v342=${Date.now()}-${attempt}`});
     await refreshed;await sleep(1200);
   }
   if(!phase335Ready)throw new Error('Phase 335 runtime did not propagate to Recovery H browser');
@@ -357,6 +358,7 @@ try{
   if(!phase339Ready)throw new Error('Phase 339 runtime did not propagate to Recovery H browser');
   if(!phase340Ready)throw new Error('Phase 340 runtime did not propagate to Recovery H browser');
   if(!phase341Ready)throw new Error('Phase 341 runtime did not propagate to Recovery H browser');
+  if(!phase342Ready)throw new Error('Phase 342 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -1272,6 +1274,12 @@ try{
     assert(workspaceFill340?.allPass===true&&Number(workspaceFill340?.liveBlankPx)<=2,'Phase 340 viewport-fill QA failed: '+JSON.stringify(workspaceFill340));
     assert(resetRect309&&Math.abs(resetRect309.height-expectedWorkspaceHeight340)<=4,'Phase 340 workspace did not fill current viewport: '+JSON.stringify({height:resetRect309?.height,expectedWorkspaceHeight340,trailingOverhead340,top:resetRect309?.top,viewport309}));
     assert(resetRaceRect340&&resetRaceRect340.bottom<=viewport309+2,'Phase 340 race view exceeds current viewport: '+JSON.stringify({race:resetRaceRect340,viewport309,trailingOverhead340}));
+    const aspectFit342=window.mwsF1QaSpectatorAspectFitV342?.();
+    assert(aspectFit342?.allPass===true,'Phase 342 spectator aspect-fit QA failed: '+JSON.stringify(aspectFit342));
+    const raceRect342=document.getElementById('f1RacingViewRaceV185')?.getBoundingClientRect();
+    const viewportWidth342=Math.max(1,Number(window.visualViewport?.width)||window.innerWidth||document.documentElement.clientWidth||1);
+    assert(raceRect342&&raceRect342.left>=-2&&raceRect342.right<=viewportWidth342+2,'Phase 342 race console overflows viewport width: '+JSON.stringify({race:raceRect342,viewportWidth342}));
+    assert(document.documentElement.scrollWidth<=viewportWidth342+3,'Phase 342 page has horizontal overflow: '+JSON.stringify({scrollWidth:document.documentElement.scrollWidth,viewportWidth342}));
     const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]');
     const title=commentary?.querySelector('[data-f1-panel-drag="commentary"]');
     assert(title,'Commentary drag handle missing');
