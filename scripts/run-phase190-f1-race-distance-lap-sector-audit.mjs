@@ -13,7 +13,6 @@ export function runPhase190F1RaceDistanceLapSectorAudit(){
   for(const token of [
     "const VERSION190='phase190-race-distance-lap-sector';",
     'const DEFAULT_TOTAL_LAPS_V190=10;',
-    'totalLaps:draft.totalLaps,',
     'function normalizedProgressV190(value){',
     'function sectorForProgressV190(track,progress){',
     'function syncVehicleRaceMetricsV190(vehicle,track=activeRaceSnapshotV187?.track){',
@@ -26,6 +25,7 @@ export function runPhase190F1RaceDistanceLapSectorAudit(){
     'window.mwsF1SyncVehicleRaceMetricsV190=syncVehicleRaceMetricsV190;',
     'window.__mwsF1RacingV190=VERSION190;'
   ])if(!js.includes(token))issues.push('Phase 190 telemetry runtime missing: '+token);
+  if(!js.includes('totalLaps:draft.totalLaps,')&&!js.includes('totalLaps:requestedLaps,'))issues.push('Phase 190 telemetry runtime missing: compatible total laps snapshot field');
 
   if(!js.includes('syncVehicleRaceMetricsV190(vehicle,track)')&&!js.includes('syncVehicleRaceMetricsV190(vehicle)'))issues.push('Race simulation does not update race distance/lap/sector telemetry');
   if(!js.includes('data-f1-current-sector'))issues.push('Timing row current-sector badge missing');
