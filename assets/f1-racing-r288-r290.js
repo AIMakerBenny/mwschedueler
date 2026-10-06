@@ -3,7 +3,9 @@
 // phase290-production-retrigger
 const VERSION288='phase288-f1-r13-layout-reset-viewport-fit';
 const VERSION340='phase340-f1-workspace-fill-viewport';
+const VERSION342='phase342-f1-spectator-aspect-fit';
 const WORKSPACE_FIT_CONFIG_V288=Object.freeze({minHeightPx:300,bottomGapPx:8,minRowPx:34,defaultMaxHeightPx:640,targetViewports:Object.freeze([720,768,900,1080,1440])});
+const SPECTATOR_ASPECT_CONFIG_V342=Object.freeze({maxAspect:2.55,minWidthPx:720,sideGapPx:0});
 const fitStateV288={installed:false,applyCount:0,lastSignature:'',resetHooks:0};
 function screenStateV288(){return String(window.mwsF1GetScreenStateV185?.()||'')}
 function computeWorkspaceFitV288(viewportHeight,top,usedRows,gap,trailingOverhead=0){
@@ -14,6 +16,24 @@ function computeWorkspaceFitV288(viewportHeight,top,usedRows,gap,trailingOverhea
  const height=Math.max(Math.min(available,WORKSPACE_FIT_CONFIG_V288.minHeightPx),Math.min(available,Math.max(minRequired,target)));
  const rowHeight=Math.max(1,(height-Math.max(0,rows-1)*g)/rows);
  return {rows,gap:g,trailingOverhead:tail,available,rowHeight,height,blankPx:Math.max(0,available-height),fitsViewport:height<=available+1,fillViewport:true};
+}
+function computeSpectatorViewportFitV342(viewportWidth,viewportHeight,top=0){
+ const width=Math.max(320,Number(viewportWidth)||0),height=Math.max(320,Number(viewportHeight)||0),offset=Math.max(0,Number(top)||0);
+ const availableHeight=Math.max(1,height-offset-WORKSPACE_FIT_CONFIG_V288.bottomGapPx);
+ const aspectCap=Math.max(SPECTATOR_ASPECT_CONFIG_V342.minWidthPx,Math.floor(availableHeight*SPECTATOR_ASPECT_CONFIG_V342.maxAspect));
+ const targetWidth=Math.max(1,Math.min(width,aspectCap));
+ return {viewportWidth:width,viewportHeight:height,top:offset,availableHeight,targetWidth,aspect:targetWidth/availableHeight,capped:targetWidth<width-1,sideBlankPx:Math.max(0,width-targetWidth)};
+}
+function applySpectatorViewportFitV342(){
+ const race=document.getElementById('f1RacingViewRaceV185');if(!race)return null;
+ if(screenStateV288()!=='RACE'){race.style.removeProperty('--f1-race-fit-width-v342');race.removeAttribute('data-f1-aspect-fit-v342');return null}
+ const viewportWidth=Math.max(1,Number(window.visualViewport?.width)||window.innerWidth||document.documentElement.clientWidth||1);
+ const viewportHeight=Math.max(1,Number(window.visualViewport?.height)||window.innerHeight||document.documentElement.clientHeight||1);
+ const rect=race.getBoundingClientRect(),fit=computeSpectatorViewportFitV342(viewportWidth,viewportHeight,Math.max(0,rect.top));
+ race.style.setProperty('--f1-race-fit-width-v342',fit.targetWidth+'px');
+ race.dataset.f1AspectFitV342=fit.capped?'capped':'full';
+ race.dataset.f1AspectV342=fit.aspect.toFixed(3);
+ return fit;
 }
 function clearWorkspaceViewportFitV288(){
  const workspace=document.getElementById('f1RacingWorkspaceRecoveryE');if(!workspace)return false;
@@ -35,7 +55,7 @@ function applyWorkspaceViewportFitV288(){
  workspace.classList.add('f1-racing-workspace-fit-v288');workspace.dataset.v288Fit=signature;
  fitStateV288.lastSignature=signature;fitStateV288.applyCount+=1;return fit;
 }
-function scheduleWorkspaceFitV288(){requestAnimationFrame(()=>requestAnimationFrame(applyWorkspaceViewportFitV288))}
+function scheduleWorkspaceFitV288(){requestAnimationFrame(()=>requestAnimationFrame(()=>{applyWorkspaceViewportFitV288();applySpectatorViewportFitV342()}))}
 function installWorkspaceViewportFitV288(){
  if(fitStateV288.installed)return true;fitStateV288.installed=true;
  const workspace=document.getElementById('f1RacingWorkspaceRecoveryE'),reset=document.getElementById('f1RacingWorkspaceResetRecoveryE'),race=document.getElementById('f1RacingViewRaceV185');
@@ -82,9 +102,23 @@ function qaPreraceCompactV289(){
  return {version:VERSION289,states:[...PRERACE_COMPACT_CONFIG_V289.states],installed:preraceStateV289.installed,gridReady:Boolean(grid),transitionReady:Boolean(transition),gridActive,gridClass,transitionActive,transitionClass,raceInactive,allPass:Boolean(grid&&transition)&&gridActive&&gridClass&&transitionActive&&transitionClass&&raceInactive};
 }
 
+function qaSpectatorAspectFitV342(){
+ const samples=[
+  computeSpectatorViewportFitV342(1920,1080,0),
+  computeSpectatorViewportFitV342(2048,615,0),
+  computeSpectatorViewportFitV342(2560,720,0)
+ ];
+ const normal=samples[0],ultra=samples[1],wide=samples[2],live=screenStateV288()==='RACE'?applySpectatorViewportFitV342():null;
+ const race=document.getElementById('f1RacingViewRaceV185'),rect=race?.getBoundingClientRect(),viewportWidth=Math.max(1,Number(window.visualViewport?.width)||window.innerWidth||document.documentElement.clientWidth||1);
+ const liveFits=!live||Boolean(rect&&rect.width<=live.targetWidth+3&&rect.right<=viewportWidth+2&&rect.left>=-2);
+ return {version:VERSION342,config:{...SPECTATOR_ASPECT_CONFIG_V342},samples,live,liveFits,
+  allPass:normal.capped===false&&ultra.capped===true&&wide.capped===true&&ultra.aspect<=SPECTATOR_ASPECT_CONFIG_V342.maxAspect+.01&&wide.aspect<=SPECTATOR_ASPECT_CONFIG_V342.maxAspect+.01&&liveFits};
+}
 window.mwsF1ApplyWorkspaceViewportFitV288=applyWorkspaceViewportFitV288;window.mwsF1QaWorkspaceViewportFitV288=qaWorkspaceViewportFitV288;window.mwsF1QaWorkspaceFillViewportV340=qaWorkspaceViewportFitV288;
+window.mwsF1ApplySpectatorViewportFitV342=applySpectatorViewportFitV342;window.mwsF1QaSpectatorAspectFitV342=qaSpectatorAspectFitV342;
 window.__mwsF1RacingV288=VERSION288;
 window.__mwsF1RacingV340=VERSION340;
+window.__mwsF1RacingV342=VERSION342;
 
 const VERSION290='phase290-f1-r15-starting-grid-shuffle-smoothness';
 const SHUFFLE_VISUAL_CONFIG_V290=Object.freeze({shuffleCycles:3,shuffleCycleMs:180,landingMs:460,maxStackCards:8,transformOnly:true});
