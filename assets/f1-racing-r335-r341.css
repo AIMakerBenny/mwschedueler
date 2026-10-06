@@ -1,0 +1,138 @@
+/* Phase 339: stronger LIVE broadcast presence */
+#f1RacingViewRaceV185 #f1RacingLiveCutinLayerV264.track-docked-v308{
+  width:min(520px,54%)!important;
+  max-width:520px!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264{
+  position:relative!important;
+  overflow:hidden!important;
+  border:1px solid color-mix(in srgb,var(--cutin-driver-color,#ffd166) 78%,#ffffff 8%)!important;
+  background:
+    linear-gradient(110deg,color-mix(in srgb,var(--cutin-driver-color,#ffd166) 10%,rgba(5,9,15,.97)),rgba(5,9,15,.95) 42%,rgba(8,13,20,.94))!important;
+  box-shadow:
+    0 14px 34px rgba(0,0,0,.52),
+    0 0 0 1px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 34%,transparent),
+    0 0 20px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 34%,transparent),
+    0 0 44px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 18%,transparent)!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264::before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:4px;
+  background:var(--cutin-driver-color,#ffd166);
+  box-shadow:0 0 12px var(--cutin-driver-color,#ffd166),0 0 24px var(--cutin-driver-color,#ffd166);
+  opacity:.95;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264::after{
+  content:"";
+  position:absolute;
+  top:-45%;
+  left:-28%;
+  width:34%;
+  height:190%;
+  pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
+  transform:rotate(13deg) translateX(-150%);
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264.is-visible{
+  animation:f1LiveTrackEnterV308 .42s cubic-bezier(.16,.86,.24,1) both,f1LiveGlowV339 2.4s ease-in-out infinite!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264.is-visible::after{
+  animation:f1LiveSweepV339 3.2s ease-in-out infinite;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264 header span{
+  color:#fff!important;
+  text-shadow:0 0 8px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 88%,transparent);
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264 header span i{
+  box-shadow:0 0 7px #ff365e,0 0 14px #ff365e;
+}
+@keyframes f1LiveGlowV339{
+  0%,100%{box-shadow:0 14px 34px rgba(0,0,0,.52),0 0 0 1px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 30%,transparent),0 0 16px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 26%,transparent),0 0 34px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 12%,transparent)}
+  50%{box-shadow:0 14px 34px rgba(0,0,0,.52),0 0 0 1px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 72%,transparent),0 0 28px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 50%,transparent),0 0 58px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 22%,transparent)}
+}
+@keyframes f1LiveSweepV339{
+  0%,62%{transform:rotate(13deg) translateX(-170%);opacity:0}
+  72%{opacity:1}
+  90%,100%{transform:rotate(13deg) translateX(520%);opacity:0}
+}
+
+/* Phase 338: persistent top-right BEST LAP card */
+#f1RacingBestLapOverlayV338.f1-racing-best-lap-v338{
+  position:absolute;
+  top:16px;
+  right:16px;
+  z-index:25;
+  width:min(268px,36%);
+  padding:10px 12px;
+  border:1px solid rgba(192,132,252,.62);
+  border-radius:12px;
+  background:linear-gradient(135deg,rgba(18,10,28,.94),rgba(7,10,16,.94));
+  box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 18px rgba(192,132,252,.2);
+  backdrop-filter:blur(10px);
+  pointer-events:none;
+}
+#f1RacingBestLapOverlayV338[hidden]{display:none!important}
+.f1-best-lap-kicker-v338{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+.f1-best-lap-kicker-v338 span{color:#d8b4fe;font:950 9px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.18em}
+.f1-best-lap-kicker-v338 em{
+  opacity:.34;padding:3px 6px;border:1px solid rgba(244,114,182,.55);border-radius:999px;color:#f9a8d4;
+  font:950 8px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.12em
+}
+.f1-best-lap-main-v338{display:grid;grid-template-columns:42px minmax(0,1fr);gap:10px;align-items:center}
+.f1-best-lap-avatar-v338{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;overflow:hidden;border:2px solid #c084fc;background:#171024;color:#f3e8ff;font:900 11px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;box-shadow:0 0 0 3px rgba(192,132,252,.12)}
+.f1-best-lap-avatar-v338 img{display:block;width:100%;height:100%;object-fit:cover}
+.f1-best-lap-copy-v338{min-width:0;display:grid;gap:3px}
+.f1-best-lap-copy-v338 strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f8fafc;font-size:12px}
+.f1-best-lap-copy-v338 b{color:#e9d5ff;font:950 18px/1.08 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+#f1RacingBestLapOverlayV338.is-new-v338{
+  animation:f1BestLapPopV338 .7s cubic-bezier(.17,.88,.28,1.18) both,f1BestLapAuraV338 1.25s ease-in-out 3;
+}
+#f1RacingBestLapOverlayV338.is-new-v338 .f1-best-lap-kicker-v338 em{
+  opacity:1;background:#f472b6;color:#1b0a18;border-color:#f9a8d4;box-shadow:0 0 12px rgba(244,114,182,.78);
+  animation:f1BestLapNewV338 .68s ease-in-out infinite alternate
+}
+@keyframes f1BestLapPopV338{0%{opacity:0;transform:translate3d(18px,-8px,0) scale(.92)}55%{opacity:1;transform:translate3d(-2px,1px,0) scale(1.04)}100%{opacity:1;transform:none}}
+@keyframes f1BestLapAuraV338{0%,100%{box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 14px rgba(192,132,252,.22)}50%{box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 30px rgba(192,132,252,.68),0 0 54px rgba(244,114,182,.22)}}
+@keyframes f1BestLapNewV338{from{transform:scale(.96)}to{transform:scale(1.08)}}
+
+/* Phase 340: use the available vertical viewport instead of a fixed short letterbox */
+#f1RacingWorkspaceRecoveryE.f1-racing-workspace-fit-v288{
+  margin-bottom:0!important;
+  max-height:calc(100dvh - 8px)!important;
+  align-content:stretch!important;
+}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="track"],
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="commentary"]{
+  display:flex!important;
+  flex-direction:column!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="track"] .f1-racing-race-map-stage-v188{
+  flex:1 1 auto!important;
+  height:auto!important;
+  min-height:0!important;
+}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="commentary"] .f1-racing-commentary-log-v188{
+  flex:1 1 auto!important;
+  height:auto!important;
+  min-height:0!important;
+}
+
+/* Phase 341: dialogue HUD stays readable for wall-clock time even at 2x/4x */
+#f1RacingDialogueHudV308.f1-racing-dialogue-hud-v308{
+  transition-duration:.22s,.30s!important;
+}
+
+@media(max-width:1100px){
+  #f1RacingViewRaceV185 #f1RacingLiveCutinLayerV264.track-docked-v308{width:min(470px,58%)!important}
+  #f1RacingBestLapOverlayV338.f1-racing-best-lap-v338{top:10px;right:10px;width:min(238px,40%)}
+}
+@media(prefers-reduced-motion:reduce){
+  #f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264.is-visible,
+  #f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264.is-visible::after,
+  #f1RacingBestLapOverlayV338.is-new-v338,
+  #f1RacingBestLapOverlayV338.is-new-v338 .f1-best-lap-kicker-v338 em{animation:none!important}
+}
