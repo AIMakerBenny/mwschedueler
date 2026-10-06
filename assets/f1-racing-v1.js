@@ -7559,6 +7559,37 @@ function qaCommentarySemanticDedupeV337(){
   return {version:VERSION337,a,b,pit,config:{...COMMENTARY_SEMANTIC_CONFIG_V337},allPass:a==='MISTAKE'&&b==='MISTAKE'&&pit==='PIT'&&COMMENTARY_SEMANTIC_CONFIG_V337.mistakeWallGapMs>=8000};
 }
 
+function qaTyreWearPitStrategyV344(){
+  const wear={
+    SOFT:effectiveTyreWearPerLapV344('SOFT'),
+    MEDIUM:effectiveTyreWearPerLapV344('MEDIUM'),
+    HARD:effectiveTyreWearPerLapV344('HARD')
+  };
+  const corner={
+    SOFT:tyreCornerSpeedFactorV344('SOFT','APEX'),
+    MEDIUM:tyreCornerSpeedFactorV344('MEDIUM','APEX'),
+    HARD:tyreCornerSpeedFactorV344('HARD','APEX')
+  };
+  const probes=[
+    {id:'tyre-a',driverProfile:{tyreManagement:42},pitStopCount:0},
+    {id:'tyre-b',driverProfile:{tyreManagement:75},pitStopCount:0},
+    {id:'tyre-c',driverProfile:{tyreManagement:94},pitStopCount:0}
+  ].map(vehicle=>pitRemainingThresholdV344(vehicle,'MEDIUM'));
+  const varied=new Set(probes.map(value=>value.toFixed(4))).size>1;
+  const allBelowForty=probes.every(value=>value<TYRE_DYNAMICS_V344.pitRemainingMax);
+  const worn={tyreWear:.15},fresh=wornTyreIncidentMultiplierV344(worn,'APEX');
+  worn.tyreWear=.85;const wornMultiplier=wornTyreIncidentMultiplierV344(worn,'APEX');
+  return {version:VERSION344,wear,corner,thresholds:probes,pitRemainingMax:TYRE_DYNAMICS_V344.pitRemainingMax,fresh,wornMultiplier,varied,
+    allPass:wear.SOFT>wear.MEDIUM&&wear.MEDIUM>wear.HARD&&wear.SOFT>TYRE_COMPOUNDS_V203.SOFT.wearPerLap&&wear.MEDIUM>TYRE_COMPOUNDS_V203.MEDIUM.wearPerLap&&corner.SOFT>corner.MEDIUM&&corner.MEDIUM>corner.HARD&&allBelowForty&&varied&&wornMultiplier>fresh};
+}
+function qaFastRaceV346(){
+  const button=document.getElementById('f1RacingFastRaceV346');
+  const normal=raceBattleTuningV345({raceMode:'NORMAL'}),fast=raceBattleTuningV345({raceMode:'FAST'});
+  const basePlayback=simulationPlaybackRateV247(1);
+  return {version:VERSION346,laps:FAST_RACE_CONFIG_V346.laps,mode:FAST_RACE_CONFIG_V346.mode,buttonReady:Boolean(button),basePlayback,normal:{...normal},fast:{...fast},
+    allPass:FAST_RACE_CONFIG_V346.laps===3&&FAST_RACE_CONFIG_V346.mode==='FAST'&&Boolean(button)&&basePlayback===RACE_PLAYBACK_BASE_V247&&fast.gapFactor>normal.gapFactor&&fast.biasMultiplier>normal.biasMultiplier&&fast.maxBiasKph>normal.maxBiasKph};
+}
+
 function qaTrainHeadwayOvertakeReleaseV328(){
   const cfg=RACE_SPACING_CONFIG_V319;
   const rows=[
@@ -7575,6 +7606,10 @@ window.mwsF1QaPitStatusOnlyV336=qaPitStatusOnlyV336;
 window.mwsF1QaCommentarySemanticDedupeV337=qaCommentarySemanticDedupeV337;
 window.mwsF1QaBestLapOverlayV338=qaBestLapOverlayV338;
 window.mwsF1SyncBestLapOverlayV338=syncBestLapOverlayV338;
+window.mwsF1QaRaceCornerModelV343=qaRaceCornerModelV343;
+window.mwsF1QaTyreWearPitStrategyV344=qaTyreWearPitStrategyV344;
+window.mwsF1QaBattleIntensityV345=qaBattleIntensityV345;
+window.mwsF1QaFastRaceV346=qaFastRaceV346;
 window.__mwsF1RacingV328=VERSION328;
 window.__mwsF1RacingV330=VERSION330;
 window.__mwsF1RacingV335=VERSION335;
@@ -7582,6 +7617,10 @@ window.__mwsF1RacingV336=VERSION336;
 window.__mwsF1RacingV337=VERSION337;
 window.__mwsF1RacingV338=VERSION338;
 window.__mwsF1RacingV339=VERSION339;
+window.__mwsF1RacingV343=VERSION343;
+window.__mwsF1RacingV344=VERSION344;
+window.__mwsF1RacingV345=VERSION345;
+window.__mwsF1RacingV346=VERSION346;
 
 function qaUiVisibilitySpacingV324(){
   const marker=document.querySelector('.f1-racing-race-vehicle-v189');
