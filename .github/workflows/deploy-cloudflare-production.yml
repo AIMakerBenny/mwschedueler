@@ -265,6 +265,7 @@ jobs:
           node --check scripts/run-phase318-f1-forward-compatible-audit-chain.mjs
           node --check scripts/run-phase319-f1-ui-spacing-battle-audit.mjs
           node --check scripts/run-phase320-f1-ui-spacing-compatibility-closure-audit.mjs
+          node --check scripts/run-phase321-f1-gacha-containment-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js

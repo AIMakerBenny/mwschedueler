@@ -7836,6 +7836,7 @@ function multiDrawCardHTML(player){
   const media=player.image?`<img src="${esc(player.image)}" alt="${esc(player.name)}">`:`<div class="gacha-card-initials">${esc(initials(player.name))}</div>`;
   return `<div class="gacha-card"><div class="gacha-card-inner"><div class="gacha-card-image">${media}</div><div class="gacha-card-info"><div class="gacha-card-kicker">SELECTED CARD</div><div class="gacha-card-name">${esc(player.name)}</div><div class="gacha-card-desc">${esc(player.description||'MAWANG RANDOM SELECT')}</div></div></div></div>`
 }
+window.multiDrawCardHTML=multiDrawCardHTML;
 function renderMultiDraw(){
   normalizeMiniGameData();renderMiniContactPalette('multiDraw');const arr=multiDrawPlayers(),rt=miniGameRuntime.multiDraw,target=Math.max(1,Math.min(arr.length||1,Number(data.miniGames.multiDraw.targetCount)||8));
   if(arr.length&&target!==data.miniGames.multiDraw.targetCount)data.miniGames.multiDraw.targetCount=target;

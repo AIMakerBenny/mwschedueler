@@ -443,11 +443,14 @@ try{
     assert(gachaStage313&&gachaDock313&&gachaReveal313,'Phase 313 Gacha starting grid DOM missing');
     assert(gachaDock313.querySelectorAll('.f1-grid-gacha-dock-item-v313').length===(snapshot260?.drivers||[]).length,'Phase 313 right-side P-grid list count mismatch');
     assert(Boolean(gachaReveal313.firstElementChild),'Phase 313 center Gacha reveal card missing');
-    const gachaCard319=gachaReveal313.querySelector('.gacha-card'),gachaImage319=gachaReveal313.querySelector('.gacha-card-image img'),gachaInfo319=gachaReveal313.querySelector('.gacha-card-info');
+    const gachaCard319=gachaReveal313.querySelector('.gacha-card')||gachaReveal313.querySelector('.f1-grid-gacha-fallback-card-v313');
+    const gachaImage319=gachaCard319?.querySelector('.gacha-card-image img')||gachaCard319?.querySelector('.media img');
+    const gachaInfo319=gachaCard319?.querySelector('.gacha-card-info')||gachaCard319?.querySelector('.copy');
     const gachaRevealRect319=gachaReveal313.getBoundingClientRect(),gachaCardRect319=gachaCard319?.getBoundingClientRect(),gachaInfoRect319=gachaInfo319?.getBoundingClientRect();
-    assert(gachaCardRect319&&gachaCardRect319.width<=gachaRevealRect319.width+2&&gachaCardRect319.height<=gachaRevealRect319.height+2&&gachaCardRect319.bottom<=gachaRevealRect319.bottom+2,'Phase 319 Gacha card overflows reveal viewport: '+JSON.stringify({reveal:gachaRevealRect319,card:gachaCardRect319}));
-    assert(gachaImage319&&getComputedStyle(gachaImage319).objectFit==='contain','Phase 319 Gacha portrait must use contain fit');
-    assert(gachaInfoRect319&&gachaInfoRect319.height>=50&&gachaInfoRect319.bottom<=gachaCardRect319.bottom+2,'Phase 319 Gacha card info is clipped: '+JSON.stringify({info:gachaInfoRect319,card:gachaCardRect319}));
+    assert(gachaCard319&&gachaCardRect319&&gachaCardRect319.width<=gachaRevealRect319.width+2&&gachaCardRect319.height<=gachaRevealRect319.height+2&&gachaCardRect319.bottom<=gachaRevealRect319.bottom+2,'Phase 321 Gacha card overflows reveal viewport: '+JSON.stringify({reveal:gachaRevealRect319,card:gachaCardRect319,className:gachaCard319?.className}));
+    assert(gachaImage319&&getComputedStyle(gachaImage319).objectFit==='contain','Phase 321 Gacha portrait must use contain fit');
+    assert(gachaInfoRect319&&gachaInfoRect319.height>=50&&gachaInfoRect319.bottom<=gachaCardRect319.bottom+2,'Phase 321 Gacha card info is clipped: '+JSON.stringify({info:gachaInfoRect319,card:gachaCardRect319}));
+    assert(typeof window.multiDrawCardHTML==='function'&&Boolean(gachaReveal313.querySelector('.gacha-card')),'Phase 321 F1 grid did not reuse the real Gacha card renderer');
     assert(initialStart273?.disabled===false&&getComputedStyle(initialStart273).visibility!=='hidden','Phase 273 start button did not unlock after reveal');
     const gridQa272=window.mwsF1QaRandomStartingGridV272?.();
     assert(gridQa272?.allPass===true,'Phase 272 random starting grid QA failed: '+JSON.stringify(gridQa272));

@@ -32,3 +32,18 @@
  #f1RacingGridGachaStageV313.f1-racing-grid-gacha-stage-v313{max-height:none}
  #f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313{width:min(210px,60%)!important;height:274px!important;max-height:274px!important}
 }
+/* Phase 321: fallback-safe F1 Gacha containment */
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313>.f1-grid-gacha-fallback-card-v313{
+ position:relative!important;inset:auto!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
+ min-width:0!important;min-height:0!important;box-sizing:border-box!important;overflow:hidden!important
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313>.f1-grid-gacha-fallback-card-v313 .media{
+ flex:1 1 auto!important;min-height:0!important;height:auto!important;overflow:hidden!important
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313>.f1-grid-gacha-fallback-card-v313 .media img{
+ display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
+ object-fit:contain!important;object-position:center center!important
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313>.f1-grid-gacha-fallback-card-v313 .copy{
+ flex:0 0 68px!important;min-height:68px!important;box-sizing:border-box!important;padding:8px 10px!important
+}
