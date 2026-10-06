@@ -129,6 +129,7 @@ const VERSION335='phase335-f1-actual-track-spacing';
 const VERSION336='phase336-f1-pit-status-only';
 const VERSION337='phase337-f1-commentary-semantic-dedupe';
 const VERSION338='phase338-f1-best-lap-overlay';
+const VERSION339='phase339-f1-live-presence-glow';
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
 const GAME_VARIABILITY_CONFIG_V303=Object.freeze({evaluationMs:650,maxGapMeters:84,attackGapMeters:36,baseBonusKph:1.1,pressureBonusKph:3.2,midfieldBonusKph:.8,failedPassBonusKph:.4,maxFailedPassBonusKph:1.6,momentumBonusKph:1.55,maxTotalBiasKph:14,positionCatchupMaxPct:.045,positionCatchupExponent:1.35,leaderHoldMs:12000,leaderCloseGapSeconds:1.75,leaderClosePenaltyKph:.9,liveCadenceMs:10000});
@@ -7423,6 +7424,7 @@ window.__mwsF1RacingV335=VERSION335;
 window.__mwsF1RacingV336=VERSION336;
 window.__mwsF1RacingV337=VERSION337;
 window.__mwsF1RacingV338=VERSION338;
+window.__mwsF1RacingV339=VERSION339;
 
 function qaUiVisibilitySpacingV324(){
   const marker=document.querySelector('.f1-racing-race-vehicle-v189');
