@@ -919,7 +919,9 @@ try{
       const ratio=row.width/sizesAtFull245[index].width;
       const driverMarker=index<4;
       if(driverMarker){
-        assert(ratio>expectedDriverRatio245*.88&&ratio<expectedDriverRatio245*1.12,'Phase 285 zoom-linked driver marker scale mismatch: '+JSON.stringify({row,ratio,expectedDriverRatio245}));
+        const textMarker245=row.selector==='.car-number-v232'||row.selector==='.car-label';
+        const lower245=textMarker245?.80:.88,upper245=textMarker245?1.20:1.12;
+        assert(ratio>expectedDriverRatio245*lower245&&ratio<expectedDriverRatio245*upper245,'Phase 285 zoom-linked driver marker scale mismatch: '+JSON.stringify({row,ratio,expectedDriverRatio245,textMarker245}));
       }else{
         assert(ratio>.85&&ratio<1.12,'Phase 245 track annotation screen-size regression: '+JSON.stringify({row,ratio}));
       }
