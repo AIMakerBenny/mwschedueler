@@ -5744,6 +5744,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const baseTarget=phaseSpeedTargetV343(vehicle,targetData,phaseInfoV270);
   const tyreGrip=Math.max(TYRE_CONFIG_V203.minGrip,Math.min(TYRE_CONFIG_V203.maxGrip,Number(vehicle.tyreGrip)||1));
   const tyreCornerFactor=(phase==='TURN_IN'||phase==='APEX'||phase==='EXIT')?tyreGrip:1;
+  const tyreCompoundCornerFactorV344=tyreCornerSpeedFactorV344(vehicle.tyreCompound,phase);
   updateActiveAeroAndOvertakeV202(vehicle,stepMs);
   updateDriverPaceStateV200(vehicle,stepMs);
   updateRaceMomentumV262(vehicle,stepMs,phase);
@@ -5762,7 +5763,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const rawAeroGrip=Math.max(.85,Math.min(1,Number(vehicle.aeroGripMultiplier)||1));
   const dirtyAirRecovery=Math.max(0,racecraftNorm)*.08;
   const aeroGripMultiplier=Math.min(1,rawAeroGrip+(1-rawAeroGrip)*dirtyAirRecovery);
-  let maxTarget=baseTarget*driverPaceMultiplier*aeroGripMultiplier*tyreCornerFactor+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph+(Number(vehicle.battleSpeedBiasKph)||0);
+  let maxTarget=baseTarget*driverPaceMultiplier*aeroGripMultiplier*tyreCornerFactor*tyreCompoundCornerFactorV344+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph+(Number(vehicle.battleSpeedBiasKph)||0);
   maxTarget*=raceFlagSpeedFactorV214();
   if(vehicle.blueFlag)maxTarget*=BLUE_FLAG_CONFIG_V215.paceFactor;
   const current=Math.max(0,Number(vehicle.speedKph)||0);
