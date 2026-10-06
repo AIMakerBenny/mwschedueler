@@ -8,6 +8,7 @@ export function runPhase304F1FinishResultClosureAudit(){
  const patch=fs.readFileSync('assets/f1-racing-r291-r295.js','utf8');
  const css=fs.readFileSync('assets/f1-racing-r291-r295.css','utf8');
  const diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
+ const legacyGate=fs.readFileSync('scripts/run-phase295-f1-final-regression-gate.mjs','utf8');
 
  for(const token of [
   "const VERSION304='phase304-f1-finish-result-closure';",
@@ -26,6 +27,8 @@ export function runPhase304F1FinishResultClosureAudit(){
   '.f1-racing-finish-podium-v291 .winner-tag-v304{',
   '@keyframes f1WinnerSweepV304'
  ])if(!css.includes(token))issues.push('Phase 304 result CSS missing: '+token);
+
+ if(!legacyGate.includes("Number(cacheMatch[1])<295"))issues.push('Phase 295 cache gate is not future-safe');
 
  for(const token of [
   'assets/f1-racing-r291-r295.css?phase=304',

@@ -23,10 +23,10 @@ export function runPhase295F1FinalRegressionGate(){
     'window.__mwsF1RacingV295=VERSION295;'
   ])if(!patch.includes(token))issues.push('Phase 295 runtime marker missing: '+token);
 
-  for(const token of [
-    'assets/f1-racing-r291-r295.js?phase=295',
-    'assets/f1-racing-r291-r295.css?phase=295'
-  ])if(!index.includes(token))issues.push('Phase 295 cache-bust missing: '+token);
+  for(const ext of ['js','css']){
+    const cacheMatch=index.match(new RegExp('assets/f1-racing-r291-r295\\.'+ext+'\\?phase=(\\d+)'));
+    if(!cacheMatch||Number(cacheMatch[1])<295)issues.push('Phase 295 cache-bust missing or regressed below 295 for '+ext);
+  }
 
   for(const token of [
     "import {runPhase295F1FinalRegressionGate} from './run-phase295-f1-final-regression-gate.mjs';",
