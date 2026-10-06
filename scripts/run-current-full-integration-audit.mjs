@@ -299,6 +299,7 @@ import {runPhase300F1ProductionClosureAudit} from './run-phase300-f1-production-
 import {runPhase301F1SpecClosureAudit} from './run-phase301-f1-spec-closure-audit.mjs';
 import {runPhase302F1LiveRankingFlipStatusAudit} from './run-phase302-f1-live-ranking-flip-status-audit.mjs';
 import {runPhase303F1FeedbackStabilizationAudit} from './run-phase303-f1-feedback-stabilization-audit.mjs';
+import {runPhase304F1FinishResultClosureAudit} from './run-phase304-f1-finish-result-closure-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2655,5 +2656,6 @@ export function runPhase300FullIntegrationAudit(){const previous=runPhase299Full
 export function runPhase301FullIntegrationAudit(){const previous=runPhase300FullIntegrationAudit(),current=runPhase301F1SpecClosureAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 301: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 301: '+x)];return {phase:301,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase302FullIntegrationAudit(){const previous=runPhase301FullIntegrationAudit(),current=runPhase302F1LiveRankingFlipStatusAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 302: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 302: '+x)];return {phase:302,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase303FullIntegrationAudit(){const previous=runPhase302FullIntegrationAudit(),current=runPhase303F1FeedbackStabilizationAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 303: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 303: '+x)];return {phase:303,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase303FullIntegrationAudit();}
+export function runPhase304FullIntegrationAudit(){const previous=runPhase303FullIntegrationAudit(),current=runPhase304F1FinishResultClosureAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 304: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 304: '+x)];return {phase:304,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase304FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();

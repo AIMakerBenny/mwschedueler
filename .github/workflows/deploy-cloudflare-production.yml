@@ -246,6 +246,7 @@ jobs:
           node --check scripts/run-phase301-f1-spec-closure-audit.mjs
           node --check scripts/run-phase302-f1-live-ranking-flip-status-audit.mjs
           node --check scripts/run-phase303-f1-feedback-stabilization-audit.mjs
+          node --check scripts/run-phase304-f1-finish-result-closure-audit.mjs
           node --check assets/f1-racing-r303.js
           node --check assets/f1-racing-r283-r287.js
           node --check assets/f1-racing-r288-r290.js

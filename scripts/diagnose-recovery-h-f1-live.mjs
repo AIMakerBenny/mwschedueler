@@ -187,6 +187,17 @@ try{
   }
   if(!phase303Ready)throw new Error('Phase 303 runtime did not propagate to Recovery H browser');
 
+  let phase304Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    phase304Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV304==='phase304-f1-finish-result-closure'&&typeof window.mwsF1QaFinishResultClosureV304==='function'","Phase 304 runtime readiness"));
+    if(phase304Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v304=${Date.now()}-${attempt}`});
+    await refreshed;
+    await sleep(1200);
+  }
+  if(!phase304Ready)throw new Error('Phase 304 runtime did not propagate to Recovery H browser');
+
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
@@ -942,8 +953,17 @@ try{
     assert(document.getElementById('f1RacingViewRaceV185')?.hidden===false,'Phase 291 race screen was hidden behind final result');
     const podiumCount=document.querySelectorAll('#f1RacingFinishOverlayPodiumV291 .place').length;
     assert(podiumCount>=2,'Phase 291 podium overlay did not render expected drivers');
-    const resultCount=document.querySelectorAll('#f1RacingFinishOverlayResultsV291 .row').length;
+    const resultRows304=[...document.querySelectorAll('#f1RacingFinishOverlayResultsV291 .row')];
+    const resultCount=resultRows304.length;
     assert(resultCount>=2,'Phase 291 full result overlay rows missing');
+    const resultHeaders304=[...document.querySelectorAll('.f1-racing-finish-result-head-v291>span')].map(node=>String(node.textContent||'').trim());
+    assert(resultHeaders304.join('|')==='POS|DRIVER|START|MOVE|PIT|BEST LAP|OVERTAKES|TIME','Phase 304 final result headers incomplete: '+JSON.stringify(resultHeaders304));
+    assert(resultRows304.every(row=>row.hasAttribute('data-result-delta-v304')&&row.hasAttribute('data-pit-stops-v304')&&row.querySelector('.movement-v304')&&row.querySelector('.pit-v304')),'Phase 304 result rows missing movement or PIT data');
+    assert(resultRows304[0]?.classList.contains('winner-v304'),'Phase 304 P1 result winner emphasis missing');
+    const podiumWinner304=document.querySelector('#f1RacingFinishOverlayPodiumV291 .place.winner-v304');
+    assert(podiumWinner304&&podiumWinner304.querySelector('.winner-tag-v304'),'Phase 304 podium winner emphasis missing');
+    const resultClosureQa304=window.mwsF1QaFinishResultClosureV304?.();
+    assert(resultClosureQa304?.allPass===true,'Phase 304 finish result closure QA failed: '+JSON.stringify(resultClosureQa304));
     const finalDesktopQa292=window.mwsF1QaFinalDesktopV292?.();
     assert(finalDesktopQa292?.allPass===true,'Phase 292 final desktop QA failed after finish: '+JSON.stringify(finalDesktopQa292));
     const finalRegressionQa295=window.mwsF1QaFinalRegressionV295?.();
