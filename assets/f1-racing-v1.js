@@ -120,6 +120,7 @@ const VERSION319='phase319-f1-ui-spacing-battle-isolation';
 const VERSION324='phase324-f1-ui-visibility-train-spacing';
 const VERSION326='phase326-f1-gacha-image-fallback-qa';
 const VERSION327='phase327-f1-label-tag-separation-compatibility';
+const VERSION328='phase328-f1-train-headway-overtake-release';
 // Phase 325 compatibility markers for superseded static audits:
 // x:-14,y:27,width:28,height:13
 // x:0,y:36.2,'text-anchor':'middle'
@@ -796,6 +797,7 @@ const RACE_SPACING_CONFIG_V319=Object.freeze({
   blockedSpeedMarginKph:5,
   physicalFollowGapMeters:20,
   physicalFollowMarginKph:2.8,
+  overtakeReleaseClosingKph:4.5,
   emergencyGapMeters:12,
   emergencySpeedMarginKph:8
 });
@@ -5349,9 +5351,11 @@ function battleQueueSpeedControlV319(vehicle){
     const strength=clamp01V198(1-gap/RACE_SPACING_CONFIG_V319.blockedSpeedTriggerMeters);
     return {active:true,capKph:Math.max(0,(Number(ahead.speedKph)||0)-RACE_SPACING_CONFIG_V319.blockedSpeedMarginKph*Math.max(.45,strength)),gapMeters:gap,reason:'BATTLE_QUEUE',pairKey:currentPair};
   }
-  if(!activeWithAhead&&gap<RACE_SPACING_CONFIG_V319.physicalFollowGapMeters){
+  const closingKph=(Number(vehicle.speedKph)||0)-(Number(ahead.speedKph)||0);
+  const overtakeOpportunity=closingKph>=RACE_SPACING_CONFIG_V319.overtakeReleaseClosingKph&&boundaryOvertakeEligibleV271(vehicle);
+  if(!activeWithAhead&&!overtakeOpportunity&&gap<RACE_SPACING_CONFIG_V319.physicalFollowGapMeters){
     const strength=clamp01V198(1-gap/RACE_SPACING_CONFIG_V319.physicalFollowGapMeters);
-    return {active:true,capKph:Math.max(0,(Number(ahead.speedKph)||0)-RACE_SPACING_CONFIG_V319.physicalFollowMarginKph*Math.max(.4,strength)),gapMeters:gap,reason:'TRAIN_HEADWAY',pairKey:currentPair};
+    return {active:true,capKph:Math.max(0,(Number(ahead.speedKph)||0)-RACE_SPACING_CONFIG_V319.physicalFollowMarginKph*Math.max(.4,strength)),gapMeters:gap,reason:'TRAIN_HEADWAY',pairKey:currentPair,closingKph};
   }
   if(!activeWithAhead&&gap<RACE_SPACING_CONFIG_V319.emergencyGapMeters){
     return {active:true,capKph:Math.max(0,(Number(ahead.speedKph)||0)-RACE_SPACING_CONFIG_V319.emergencySpeedMarginKph),gapMeters:gap,reason:'OVERLAP_GUARD',pairKey:currentPair};
@@ -6896,6 +6900,18 @@ function qaRaceDynamicsV314(){
 window.mwsF1QaRaceDynamicsV314=qaRaceDynamicsV314;
 window.__mwsF1RacingV314=VERSION314;
 
+
+function qaTrainHeadwayOvertakeReleaseV328(){
+  const cfg=RACE_SPACING_CONFIG_V319;
+  const rows=[
+    {gap:15,closing:1,expected:'TRAIN_HEADWAY'},
+    {gap:15,closing:6,expected:'OVERTAKE_RELEASE'},
+    {gap:26,closing:1,expected:'FREE'}
+  ].map(row=>({...row,result:row.gap<cfg.physicalFollowGapMeters?(row.closing>=cfg.overtakeReleaseClosingKph?'OVERTAKE_RELEASE':'TRAIN_HEADWAY'):'FREE'}));
+  return {version:VERSION328,config:{...cfg},rows,allPass:rows.every(row=>row.result===row.expected)&&cfg.blockedDisplayGapMeters>cfg.normalDisplayGapMeters&&cfg.battleDisplayGapMeters<cfg.normalDisplayGapMeters};
+}
+window.mwsF1QaTrainHeadwayOvertakeReleaseV328=qaTrainHeadwayOvertakeReleaseV328;
+window.__mwsF1RacingV328=VERSION328;
 
 function qaUiVisibilitySpacingV324(){
   const marker=document.querySelector('.f1-racing-race-vehicle-v189');

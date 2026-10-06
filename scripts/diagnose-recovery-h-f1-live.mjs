@@ -303,6 +303,16 @@ try{
   }
   if(!phase324Ready)throw new Error('Phase 324 runtime did not propagate to Recovery H browser');
 
+  let phase328Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    phase328Ready=Boolean(await evaluate(cdp,"window.__mwsF1RacingV328==='phase328-f1-train-headway-overtake-release'&&typeof window.mwsF1QaTrainHeadwayOvertakeReleaseV328==='function'","Phase 328 runtime readiness"));
+    if(phase328Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v328=${Date.now()}-${attempt}`});
+    await refreshed;await sleep(1200);
+  }
+  if(!phase328Ready)throw new Error('Phase 328 runtime did not propagate to Recovery H browser');
+
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
@@ -607,6 +617,9 @@ try{
     assert(visibilityQa324?.allPass===true,'Phase 324 marker visibility/train spacing QA failed: '+JSON.stringify(visibilityQa324));
     assert(Number(visibilityQa324?.markerGeometry?.ringRadius)>=17&&Number(visibilityQa324?.markerGeometry?.profileWidth)>=28,'Phase 324 racer orb did not enlarge: '+JSON.stringify(visibilityQa324?.markerGeometry));
     assert(Number(visibilityQa324?.spacing?.normalDisplayGapMeters)>=65&&Number(visibilityQa324?.spacing?.blockedDisplayGapMeters)>=90&&Number(visibilityQa324?.spacing?.physicalFollowGapMeters)>=18,'Phase 324 train spacing/headway too small: '+JSON.stringify(visibilityQa324?.spacing));
+    const trainRelease328=window.mwsF1QaTrainHeadwayOvertakeReleaseV328?.();
+    assert(trainRelease328?.allPass===true,'Phase 328 train headway/overtake release QA failed: '+JSON.stringify(trainRelease328));
+    assert(Number(trainRelease328?.config?.overtakeReleaseClosingKph)>=3&&Number(trainRelease328?.config?.overtakeReleaseClosingKph)<=6,'Phase 328 overtake release threshold invalid: '+JSON.stringify(trainRelease328?.config));
     const liveMarkers319=[...document.querySelectorAll('.f1-racing-race-vehicle-v189')];
     assert(liveMarkers319.length>=2&&liveMarkers319.every(node=>Number(node.dataset.cameraScaleV245)>0),'Phase 319 live marker readability state missing');
     const cadenceQa281=window.mwsF1QaDialogueCadenceV281?.();
