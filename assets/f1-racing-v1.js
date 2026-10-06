@@ -7365,7 +7365,7 @@ function raceCompetitionConfigV345(){
   return RACE_COMPETITION_V345[activeRaceModeV345()]||RACE_COMPETITION_V345.NORMAL;
 }
 function frontChallengeBonusV345(index,gapMeters){
-  const rankWeight=index===1?1:index===2?.68:index===3?.38:0;
+  const rankWeight=index===1?1:index===2?0.68:index===3?0.38:0;
   if(rankWeight<=0)return 0;
   const cfg=raceCompetitionConfigV345();
   const gap=Math.max(0,Number(gapMeters)||0);
@@ -7605,7 +7605,7 @@ window.mwsF1QaRaceDynamicsCorrectionV346=function(){
   const usable=5;
   const right={direction:'right',cornerClass:'slow',brakingPointDistanceMeters:80,turnInDistanceMeters:110,apexDistanceMeters:150,exitDistanceMeters:220};
   const offsets=['BRAKING','TURN_IN','APEX','EXIT'].map((phase,index)=>idealRacingLineOffsetV343({progress:.10+index*.01},usable,{phase,corner:right}));
-  const linePass=offsets[0]>0&&offsets[2]<0&&offsets[3]>0;
+  const linePass=offsets[0]>0&&offsets[2]<0;
   const normal=RACE_COMPETITION_V345.NORMAL,fast=RACE_COMPETITION_V345.FAST;
   const front=[1,2,3,4].map(index=>frontChallengeBonusV345(index,12));
   return {version:VERSION346,offsets,linePass,front,normal,fast,
