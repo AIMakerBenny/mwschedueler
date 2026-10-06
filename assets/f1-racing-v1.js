@@ -4639,9 +4639,11 @@ function chaseBurstEligibilityV275(vehicle,standing,target){
   const eligiblePosition=Number(standing?.position)>1;
   const onTrack=String(vehicle?.pitState||'TRACK')==='TRACK'&&!vehicle?.pitRequested;
   const safe=!vehicle?.finished&&!activeDrivingIncidentV204(vehicle)&&!vehicle?.trackBoundaryExceededV271;
-  const closeEnough=Number.isFinite(gap)&&gap<=Math.max(12,Number(PASS_CONFIG_V208.followGapMeters)||36);
+  const tuneV345=raceBattleTuningV345();
+  const closeEnough=Number.isFinite(gap)&&gap<=Math.max(12,(Number(PASS_CONFIG_V208.followGapMeters)||36)*Math.max(1,Number(tuneV345.gapFactor)||1));
   const chasing=Boolean(target)&&CHASE_BURST_ELIGIBLE_STATES_V275.includes(state);
-  const usesAvailable=(Number(vehicle?.chaseBurstUsesV275)||0)<CHASE_BURST_CONFIG_V275.maxUsesPerRace;
+  const maxUsesV345=activeRaceModeV346()==='FAST'?Math.max(CHASE_BURST_CONFIG_V275.maxUsesPerRace,Number(tuneV345.chaseMaxUses)||0):CHASE_BURST_CONFIG_V275.maxUsesPerRace;
+  const usesAvailable=(Number(vehicle?.chaseBurstUsesV275)||0)<maxUsesV345;
   const cooldownReady=now>=Number(vehicle?.chaseBurstCooldownUntilV275||0);
   const green=raceFlagStateV214.flag==='GREEN';
   return {eligible:eligiblePosition&&onTrack&&safe&&closeEnough&&chasing&&usesAvailable&&cooldownReady&&green,
@@ -4670,7 +4672,8 @@ function updateChaseBurstV275(stepMs){
       const eligibility=chaseBurstEligibilityV275(vehicle,standing,target);
       vehicle.chaseBurstEligibleV275=eligibility.eligible;
       vehicle.chaseBurstGapMetersV275=eligibility.gap;
-      if(eligibility.eligible&&nextChaseBurstRandomV275(vehicle)<CHASE_BURST_CONFIG_V275.activationChance){
+      const activationChanceV345=Math.max(CHASE_BURST_CONFIG_V275.activationChance,Number(raceBattleTuningV345().chaseChance)||0);
+      if(eligibility.eligible&&nextChaseBurstRandomV275(vehicle)<activationChanceV345){
         triggerChaseBurstV275(vehicle,target,'eligible-chase');
       }
     }
