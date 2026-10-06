@@ -332,6 +332,30 @@ try{
   if(!phase332Ready)throw new Error('Phase 332 runtime did not propagate to Recovery H browser');
   if(!phase333Ready)throw new Error('Phase 333 runtime did not propagate to Recovery H browser');
 
+  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase340Ready=false,phase341Ready=false;
+  for(let attempt=0;attempt<8;attempt++){
+    const readiness=await evaluate(cdp,`({
+      p335:window.__mwsF1RacingV335==='phase335-f1-actual-track-spacing'&&typeof window.mwsF1QaActualTrackSpacingV335==='function',
+      p336:window.__mwsF1RacingV336==='phase336-f1-pit-status-only'&&typeof window.mwsF1QaPitStatusOnlyV336==='function',
+      p337:window.__mwsF1RacingV337==='phase337-f1-commentary-semantic-dedupe'&&typeof window.mwsF1QaCommentarySemanticDedupeV337==='function',
+      p338:window.__mwsF1RacingV338==='phase338-f1-best-lap-overlay'&&typeof window.mwsF1QaBestLapOverlayV338==='function',
+      p340:window.__mwsF1RacingV340==='phase340-f1-workspace-fill-viewport'&&typeof window.mwsF1QaWorkspaceFillViewportV340==='function',
+      p341:window.__mwsF1RacingHudV341==='phase341-dialogue-wall-clock-lifetime'&&typeof window.mwsF1QaDialogueWallClockV341==='function'
+    })`,"Phase 335-341 runtime readiness");
+    phase335Ready=Boolean(readiness?.p335);phase336Ready=Boolean(readiness?.p336);phase337Ready=Boolean(readiness?.p337);
+    phase338Ready=Boolean(readiness?.p338);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);
+    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase340Ready&&phase341Ready)break;
+    const refreshed=cdp.once('Page.loadEventFired',30000);
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v341=${Date.now()}-${attempt}`});
+    await refreshed;await sleep(1200);
+  }
+  if(!phase335Ready)throw new Error('Phase 335 runtime did not propagate to Recovery H browser');
+  if(!phase336Ready)throw new Error('Phase 336 runtime did not propagate to Recovery H browser');
+  if(!phase337Ready)throw new Error('Phase 337 runtime did not propagate to Recovery H browser');
+  if(!phase338Ready)throw new Error('Phase 338 runtime did not propagate to Recovery H browser');
+  if(!phase340Ready)throw new Error('Phase 340 runtime did not propagate to Recovery H browser');
+  if(!phase341Ready)throw new Error('Phase 341 runtime did not propagate to Recovery H browser');
+
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
@@ -665,7 +689,36 @@ try{
       probe332.remove();
     }
     assert(liveFontSize332>=12,'Phase 332 LIVE copy is still too small: '+liveFontSize332);
+
+    const actualSpacing335=window.mwsF1QaActualTrackSpacingV335?.();
+    assert(actualSpacing335?.allPass===true,'Phase 335 actual track spacing QA failed: '+JSON.stringify(actualSpacing335));
+    const pitStatus336=window.mwsF1QaPitStatusOnlyV336?.();
+    assert(pitStatus336?.allPass===true&&pitStatus336?.rows?.every(row=>row.label==='피트'),'Phase 336 pit status-only QA failed: '+JSON.stringify(pitStatus336));
+    const semanticDedupe337=window.mwsF1QaCommentarySemanticDedupeV337?.();
+    assert(semanticDedupe337?.allPass===true&&semanticDedupe337?.pit==='PIT','Phase 337 commentary semantic dedupe QA failed: '+JSON.stringify(semanticDedupe337));
+    const pitVisibleAttempt336=window.mwsF1AppendRaceCommentaryV219?.('[QA] 피트로 들어갑니다.','pit');
+    assert(pitVisibleAttempt336===false,'Phase 336 pit commentary leaked into visible event log');
+    const bestLap338=window.mwsF1QaBestLapOverlayV338?.();
+    assert(bestLap338?.allPass===true,'Phase 338 BEST LAP overlay QA failed: '+JSON.stringify(bestLap338));
+    const liveLayer339=document.getElementById('f1RacingLiveCutinLayerV264');
+    let liveGlow339={border:0,shadow:'',animations:''};
+    if(liveLayer339){
+      const probe339=document.createElement('article');
+      probe339.className='f1-racing-live-cutin-v264 is-visible';
+      probe339.style.setProperty('--cutin-driver-color','#ffd166');
+      probe339.innerHTML='<header><strong>QA</strong><span><i></i> LIVE</span></header><div class="f1-racing-live-cutin-body-v264"><span class="f1-racing-live-cutin-avatar-v264 fallback">Q</span><p>LIVE glow probe</p></div>';
+      liveLayer339.appendChild(probe339);
+      const style339=getComputedStyle(probe339);
+      liveGlow339={border:parseFloat(style339.borderTopWidth)||0,shadow:String(style339.boxShadow||''),animations:String(style339.animationName||'')};
+      probe339.remove();
+    }
+    assert(liveGlow339.border>=1&&liveGlow339.shadow&&liveGlow339.shadow!=='none'&&liveGlow339.animations.includes('f1LiveGlowV339'),'Phase 339 LIVE visual presence effect missing: '+JSON.stringify(liveGlow339));
+    const dialogueWall341=window.mwsF1QaDialogueWallClockV341?.();
+    assert(dialogueWall341?.allPass===true&&dialogueWall341?.independent===true,'Phase 341 dialogue HUD is still tied to race playback speed: '+JSON.stringify(dialogueWall341));
+
     const liveMarkers319=[...document.querySelectorAll('.f1-racing-race-vehicle-v189')];
+    assert(liveMarkers319.length>=2&&liveMarkers319.every(node=>node.dataset.visualSpacingModeV335==='ACTUAL_RACE_PROGRESS'&&Math.abs(Number(node.dataset.visualSpacingTargetShiftMetersV330)||0)<.05),'Phase 335 live markers are still presentation-spaced instead of actual race progress');
+
     assert(liveMarkers319.length>=2&&liveMarkers319.every(node=>Number(node.dataset.cameraScaleV245)>0),'Phase 319 live marker readability state missing');
     const cadenceQa281=window.mwsF1QaDialogueCadenceV281?.();
     assert(cadenceQa281?.allPass===true,'Phase 281 dialogue cadence QA failed: '+JSON.stringify(cadenceQa281));
@@ -1209,7 +1262,10 @@ try{
     const resetWorkspace309=document.getElementById('f1RacingWorkspaceRecoveryE'),resetRect309=resetWorkspace309?.getBoundingClientRect();
     const viewport309=Math.max(1,Number(window.visualViewport?.height)||window.innerHeight||document.documentElement.clientHeight||1);
     assert(resetRect309&&resetRect309.bottom<=viewport309+2,'Phase 309 reset workspace extends below viewport: '+JSON.stringify(resetRect309?{top:resetRect309.top,bottom:resetRect309.bottom,height:resetRect309.height,viewport:viewport309}:null));
-    assert(Number(resetWorkspace309?.dataset?.usedRows||0)>10||resetRect309.height<=642,'Phase 309 default reset workspace remains too tall: '+JSON.stringify(resetRect309?{height:resetRect309.height,usedRows:resetWorkspace309?.dataset?.usedRows}:null));
+    const expectedWorkspaceHeight340=Math.max(0,Math.floor(viewport309-Number(resetRect309?.top||0)-8));
+    const workspaceFill340=window.mwsF1QaWorkspaceFillViewportV340?.();
+    assert(workspaceFill340?.allPass===true&&Number(workspaceFill340?.liveBlankPx)<=2,'Phase 340 viewport-fill QA failed: '+JSON.stringify(workspaceFill340));
+    assert(resetRect309&&Math.abs(resetRect309.height-expectedWorkspaceHeight340)<=4,'Phase 340 workspace did not fill current viewport: '+JSON.stringify({height:resetRect309?.height,expectedWorkspaceHeight340,top:resetRect309?.top,viewport309}));
     const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]');
     const title=commentary?.querySelector('[data-f1-panel-drag="commentary"]');
     assert(title,'Commentary drag handle missing');
