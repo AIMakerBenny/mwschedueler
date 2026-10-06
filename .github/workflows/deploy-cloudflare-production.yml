@@ -287,6 +287,10 @@ jobs:
           node --check scripts/run-phase340-f1-workspace-fill-viewport-audit.mjs
           node --check scripts/run-phase341-f1-dialogue-wall-clock-audit.mjs
           node --check scripts/run-phase342-f1-spectator-aspect-fit-audit.mjs
+          node --check scripts/run-phase343-f1-corner-racing-model-audit.mjs
+          node --check scripts/run-phase344-f1-tyre-wear-pit-strategy-audit.mjs
+          node --check scripts/run-phase345-f1-battle-intensity-audit.mjs
+          node --check scripts/run-phase346-f1-fast-race-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
