@@ -35,7 +35,7 @@ export function runPhase306F1MarkerOverlayCollisionAudit(){
   'Phase 306 marker overlay collision QA failed',
   'Phase 306 two-racer thought collision scenario was not exercised',
   'Phase 306 racer thought bubbles still overlap',
-  'Phase 306 race position badges still overlap'
+  'Phase 309 fixed marker mode was not honored by Phase 306'
  ])if(!diag.includes(token))issues.push('Phase 306 Recovery H QA missing: '+token);
  const syntax=spawnSync(process.execPath,['--check','assets/f1-racing-r306.js'],{encoding:'utf8'});
  if(syntax.status!==0)issues.push('Phase 306 JS syntax failed: '+String(syntax.stderr||syntax.stdout||'').trim());

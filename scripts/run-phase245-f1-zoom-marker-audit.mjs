@@ -6,7 +6,8 @@ export function runPhase245F1ZoomMarkerAudit(){
  const phase=Number(index.match(/recovery=N1&phase=(\d+)/)?.[1]||0);if(phase<245)issues.push('Phase 245 asset cache missing');
  for(const token of ["const VERSION245='phase245-zoom-aware-marker-scale';",'function raceMarkerScaleV245(','function syncRaceMarkerScaleV245(){','raceMarkerTransformV245(point,raceCameraV216.zoom)','syncRaceMarkerScaleV245();','function qaZoomAwareMarkerScaleV245(){','window.mwsF1QaZoomAwareMarkerScaleV245=qaZoomAwareMarkerScaleV245;','window.__mwsF1RacingV245=VERSION245;'])if(!racing.includes(token))issues.push('Phase 245 runtime missing: '+token);
  const syntax=spawnSync(process.execPath,['--check','assets/f1-racing-v1.js'],{encoding:'utf8'});if(syntax.status!==0)issues.push('F1 JS syntax failed');
- for(const token of ['function syncTrackAnnotationScaleV245(){','syncTrackAnnotationScaleV245();','group.dataset.zoomAnchorX','label.dataset.zoomAnchorX','anchor,scale);'])if(!racing.includes(token))issues.push('Phase 245 annotation/label scaling missing: '+token);
+ for(const token of ['function syncTrackAnnotationScaleV245(){','syncTrackAnnotationScaleV245();','group.dataset.zoomAnchorX','label.dataset.zoomAnchorX'])if(!racing.includes(token))issues.push('Phase 245 annotation/label scaling missing: '+token);
+ if(!racing.includes("label.setAttribute('text-anchor','middle')")&&!racing.includes('anchor,scale);'))issues.push('Phase 245/309 label scaling anchor missing');
  const live=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
  if(!live.includes('sizesAtZoom245')||!live.includes('lineAtFull245'))issues.push('Phase 245 rendered zoom geometry QA is not connected');
  try{
