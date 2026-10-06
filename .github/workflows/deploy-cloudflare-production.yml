@@ -279,6 +279,13 @@ jobs:
           node --check scripts/run-phase332-f1-live-readability-variety-audit.mjs
           node --check scripts/run-phase333-f1-gacha-responsive-viewport-audit.mjs
           node --check scripts/run-phase334-f1-dialogue-audit-compatibility.mjs
+          node --check scripts/run-phase335-f1-actual-track-spacing-audit.mjs
+          node --check scripts/run-phase336-f1-pit-status-only-audit.mjs
+          node --check scripts/run-phase337-f1-commentary-semantic-dedupe-audit.mjs
+          node --check scripts/run-phase338-f1-best-lap-overlay-audit.mjs
+          node --check scripts/run-phase339-f1-live-presence-audit.mjs
+          node --check scripts/run-phase340-f1-workspace-fill-viewport-audit.mjs
+          node --check scripts/run-phase341-f1-dialogue-wall-clock-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
