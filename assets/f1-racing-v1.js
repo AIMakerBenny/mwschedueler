@@ -113,6 +113,7 @@ const VERSION303='phase303-f1-feedback-stabilization';
 const VERSION307='phase307-live-session-merge-expanded-copy';
 const VERSION308='phase308-track-overlay-hud-frequency-diversity';
 const VERSION309='phase309-viewport-marker-overtake-flow';
+const VERSION313='phase313-f1-gacha-starting-grid';
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
 const GAME_VARIABILITY_CONFIG_V303=Object.freeze({evaluationMs:650,maxGapMeters:84,attackGapMeters:36,baseBonusKph:1.1,pressureBonusKph:3.2,midfieldBonusKph:.8,failedPassBonusKph:.4,maxFailedPassBonusKph:1.6,momentumBonusKph:1.55,maxTotalBiasKph:6.8,leaderHoldMs:12000,leaderCloseGapSeconds:1.75,leaderClosePenaltyKph:.9,liveCadenceMs:10000});
@@ -1652,6 +1653,123 @@ function qaStartingGridRevealV273(){
     allPass:Boolean(list&&stage&&status&&start&&shuffle)&&cards.length>=2&&topThree.length===Math.min(3,cards.length)&&compressed&&GRID_REVEAL_CONFIG_V273.shuffleBursts>=5
   };
 }
+
+
+const GRID_GACHA_CONFIG_V313=Object.freeze({
+  firstRevealDelayMs:420,revealIntervalMs:560,revealPulseMs:360,finishHoldMs:520
+});
+function gridGachaPlayerV313(driver){
+  return {id:String(driver?.contactId||''),name:String(driver?.name||'Driver'),image:String(driver?.image||''),description:'F1 STARTING GRID'};
+}
+function gridGachaCardHtmlV313(driver,position,compact=false){
+  const player=gridGachaPlayerV313(driver);
+  if(typeof window.multiDrawCardHTML==='function'){
+    return window.multiDrawCardHTML(player,{compact,orderLabel:'P'+String(position).padStart(2,'0'),kicker:'STARTING GRID',sub:'GRID POSITION'});
+  }
+  const media=player.image?'<img src="'+escapeHtml(player.image)+'" alt="'+escapeHtml(player.name)+'">':'<span class="fallback">'+escapeHtml(initials(player.name))+'</span>';
+  return '<div class="f1-grid-gacha-fallback-card-v313 '+(compact?'compact':'')+'"><div class="media">'+media+'</div><div class="copy"><small>STARTING GRID</small><strong>'+escapeHtml(player.name)+'</strong><b>P'+String(position).padStart(2,'0')+'</b></div></div>';
+}
+function gridGachaDockItemV313(driver,position){
+  const image=String(driver?.image||'').trim(),name=String(driver?.name||'Driver');
+  const avatar=image?'<img src="'+escapeHtml(image)+'" alt="">':'<span class="fallback">'+escapeHtml(initials(name))+'</span>';
+  return '<article class="f1-grid-gacha-dock-item-v313" data-f1-gacha-position-v313="'+position+'"><b>P'+String(position).padStart(2,'0')+'</b><span class="avatar">'+avatar+'</span><span class="meta"><strong>'+escapeHtml(name)+'</strong><small>START '+String(position).padStart(2,'0')+'</small></span></article>';
+}
+function buildStartingGridGachaStageV313(snapshot){
+  const list=document.getElementById('f1RacingGridListV272');
+  if(!list)return null;
+  list.classList.add('f1-racing-grid-gacha-active-v313');
+  list.querySelector('#f1RacingGridGachaStageV313')?.remove();
+  const stage=document.createElement('section');
+  stage.id='f1RacingGridGachaStageV313';
+  stage.className='f1-racing-grid-gacha-stage-v313';
+  stage.innerHTML=
+    '<div class="f1-grid-gacha-main-v313">'+
+      '<div class="f1-grid-gacha-brand-v313"><strong>MAWANG</strong><small>RANDOM GACHA STARTING GRID</small></div>'+
+      '<div class="f1-grid-gacha-caption-v313" id="f1GridGachaCaptionV313">STARTING GRID DRAW</div>'+
+      '<div class="f1-grid-gacha-reveal-v313" id="f1GridGachaRevealV313"></div>'+
+    '</div>'+
+    '<aside class="f1-grid-gacha-dock-v313">'+
+      '<header><span>STARTING GRID</span><strong id="f1GridGachaDockCountV313">0 / '+String(snapshot?.drivers?.length||0)+'</strong></header>'+
+      '<div id="f1GridGachaDockListV313" class="f1-grid-gacha-dock-list-v313"></div>'+
+    '</aside>';
+  list.appendChild(stage);
+  return stage;
+}
+function finishStartingGridGachaV313(token){
+  if(token!==gridRevealStateV273.token)return false;
+  gridRevealStateV273.revealing=false;gridRevealStateV273.completed=true;
+  const status=document.getElementById('f1RacingGridRevealStatusV273');
+  if(status)status.textContent='스타팅 그리드 확정 완료';
+  const caption=document.getElementById('f1GridGachaCaptionV313');
+  if(caption)caption.textContent='GRID LOCKED · 경기 시작 준비 완료';
+  const shuffle=document.getElementById('f1RacingGridShuffleV272');
+  if(shuffle)shuffle.textContent='가챠 다시 뽑기';
+  const round=document.getElementById('f1RacingGridShuffleRoundV272');
+  if(round)round.textContent='GACHA ROUND '+String((Number(activeRaceSnapshotV187?.gridShuffleRoundV272)||0)+1);
+  setGridRevealControlsV273(true);
+  return true;
+}
+function runStartingGridGachaRevealV313(snapshot=activeRaceSnapshotV187,options={}){
+  if(f1ScreenStateV185!=='GRID'||!snapshot)return false;
+  clearGridRevealV273({unlock:false});
+  const token=gridRevealStateV273.token;
+  const drivers=(snapshot?.drivers||[]).slice().sort((a,b)=>(Number(a.gridPosition)||999)-(Number(b.gridPosition)||999));
+  const stage=buildStartingGridGachaStageV313(snapshot);
+  if(!stage||!drivers.length)return false;
+  gridRevealStateV273.revealing=true;gridRevealStateV273.completed=false;
+  gridRevealStateV273.lastDriverCount=drivers.length;
+  gridRevealStateV273.lastRound=Number(snapshot?.gridShuffleRoundV272)||0;
+  setGridRevealControlsV273(false);
+  const legacyShuffle=document.getElementById('f1RacingGridShuffleStageV273');
+  if(legacyShuffle){legacyShuffle.classList.remove('active','shuffle-fast-v273');legacyShuffle.replaceChildren();legacyShuffle.hidden=true}
+  const status=document.getElementById('f1RacingGridRevealStatusV273');
+  if(status)status.textContent=options.reshuffle?'가챠 그리드 다시 추첨 중':'가챠 스타팅 그리드 추첨 중';
+  const reveal=document.getElementById('f1GridGachaRevealV313');
+  const dock=document.getElementById('f1GridGachaDockListV313');
+  const count=document.getElementById('f1GridGachaDockCountV313');
+  const caption=document.getElementById('f1GridGachaCaptionV313');
+  let elapsed=GRID_GACHA_CONFIG_V313.firstRevealDelayMs;
+  drivers.forEach((driver,index)=>{
+    const position=Number(driver.gridPosition)||index+1;
+    const timer=setTimeout(()=>{
+      if(token!==gridRevealStateV273.token)return;
+      if(reveal){
+        reveal.classList.remove('is-pulsing');
+        reveal.innerHTML=gridGachaCardHtmlV313(driver,position,false);
+        requestAnimationFrame(()=>reveal.classList.add('is-pulsing'));
+      }
+      if(dock){
+        dock.insertAdjacentHTML('beforeend',gridGachaDockItemV313(driver,position));
+        dock.lastElementChild?.scrollIntoView?.({block:'nearest',behavior:'smooth'});
+      }
+      if(count)count.textContent=String(position)+' / '+String(drivers.length);
+      if(caption)caption.textContent='P'+String(position).padStart(2,'0')+' · '+String(driver.name||'Driver');
+      if(status)status.textContent='P'+String(position).padStart(2,'0')+' '+String(driver.name||'Driver')+' 배정';
+    },elapsed);
+    gridRevealStateV273.timers.push(timer);
+    elapsed+=GRID_GACHA_CONFIG_V313.revealIntervalMs;
+  });
+  gridRevealStateV273.lastDurationMs=elapsed+GRID_GACHA_CONFIG_V313.finishHoldMs;
+  const finish=setTimeout(()=>finishStartingGridGachaV313(token),gridRevealStateV273.lastDurationMs);
+  gridRevealStateV273.timers.push(finish);
+  return true;
+}
+function qaGachaStartingGridV313(){
+  const list=document.getElementById('f1RacingGridListV272');
+  const stage=document.getElementById('f1RacingGridGachaStageV313');
+  const legacyCards=[...document.querySelectorAll('#f1RacingGridListV272 .f1-racing-grid-card-v272')];
+  return {
+    version:VERSION313,gachaRenderer:typeof window.multiDrawCardHTML==='function',
+    legacyGridPreserved:legacyCards.length>=2,stageReady:Boolean(stage),
+    config:{...GRID_GACHA_CONFIG_V313},
+    allPass:Boolean(list)&&legacyCards.length>=2&&GRID_GACHA_CONFIG_V313.revealIntervalMs>=400
+  };
+}
+const runStartingGridRevealLegacyV273=runStartingGridRevealV273;
+runStartingGridRevealV273=runStartingGridGachaRevealV313;
+window.mwsF1RunStartingGridGachaRevealV313=runStartingGridGachaRevealV313;
+window.mwsF1QaGachaStartingGridV313=qaGachaStartingGridV313;
+window.__mwsF1RacingV313=VERSION313;
 
 function normalizedProgressV190(value){
   return ((Number(value)||0)%1+1)%1;
