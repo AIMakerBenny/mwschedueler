@@ -4425,7 +4425,6 @@ function leaderPressureContextV274(vehicle,standings=computeRaceStandingsV191())
   const rankPressure=frontRankPressureV314(index,(standings||[]).length);
   if(role==='NONE'&&rankPressure.rankScore>0)role='FRONT_RUNNER';
   const now=Number(simClockV192.simTimeMs)||0;
-  const competitionV345=raceCompetitionConfigV345();
   if(String(vehicle.leaderPressureRoleV274||'')!==role){
     vehicle.leaderPressureRoleV274=role;
     vehicle.leaderPressureRoleSinceSimMsV274=now;
@@ -7409,6 +7408,7 @@ function positionCatchupBonusV314(vehicle,position,count){
 function applyGameVariabilityV303(stepMs){
   if(!(stepMs>0)||raceFlagStateV214.flag!=='GREEN'||!raceMotionV189.vehicles.length)return [];
   const now=Number(simClockV192.simTimeMs)||0;
+  const competitionV345=raceCompetitionConfigV345();
   if(now-gameVariabilityStateV303.lastEvalSimMs<GAME_VARIABILITY_CONFIG_V303.evaluationMs)return [];
   gameVariabilityStateV303.lastEvalSimMs=now;
   const standings=computeRaceStandingsV191(),trackLength=Math.max(1,Number(activeRaceSnapshotV187?.track?.lengthMeters)||1),rows=[];
