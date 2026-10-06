@@ -5078,6 +5078,55 @@ function smoothstepV270(value){
   const t=Math.max(0,Math.min(1,Number(value)||0));
   return t*t*(3-2*t);
 }
+function cornerClassV343(corner){
+  const key=String(corner?.cornerClass||'medium').toLowerCase();
+  return Object.prototype.hasOwnProperty.call(CORNER_RACE_CONFIG_V343.apexFloorKph,key)?key:'medium';
+}
+function cornerApexTargetV343(corner,targetData={}){
+  const key=cornerClassV343(corner);
+  const floor=Number(CORNER_RACE_CONFIG_V343.apexFloorKph[key])||170;
+  const reference=Math.max(1,Number(corner?.referenceApexKph)||Number(targetData?.targetKph)||floor);
+  const profile=Math.max(1,Number(targetData?.targetKph)||reference);
+  return Math.max(floor,Math.min(reference*1.10,Math.max(reference,profile*.96)));
+}
+function phaseSpeedTargetV343(vehicle,targetData,phaseInfo=getCornerPhaseAtProgressV194(vehicle?.progress)){
+  const base=phaseSpeedTargetV270(vehicle,targetData,phaseInfo);
+  if(!phaseInfo?.corner)return base;
+  const corner=phaseInfo.corner,key=cornerClassV343(corner);
+  const apex=cornerApexTargetV343(corner,targetData);
+  const reserve=Number(CORNER_RACE_CONFIG_V343.turnInReserveKph[key])||8;
+  const {here}=alignedCornerDistanceV270(corner,vehicle?.progress);
+  const brake=Number(corner.brakingPointDistanceMeters);
+  const turnIn=Number(corner.turnInDistanceMeters);
+  const apexDistance=Number(corner.apexDistanceMeters);
+  const approach=Math.max(apex+reserve+18,Number(corner.referenceApproachKph)||Number(targetData?.targetKph)||base);
+  if(phaseInfo.phase==='APPROACH')return Math.max(base,approach);
+  if(phaseInfo.phase==='BRAKING'){
+    const raw=Math.max(0,Math.min(1,(here-brake)/Math.max(1,turnIn-brake)));
+    const eased=Math.pow(smoothstepV270(raw),CORNER_RACE_CONFIG_V343.brakingEaseExponent);
+    return approach+((apex+reserve)-approach)*eased;
+  }
+  if(phaseInfo.phase==='TURN_IN'){
+    const t=smoothstepV270((here-turnIn)/Math.max(1,apexDistance-turnIn));
+    return (apex+reserve)+(apex-(apex+reserve))*t;
+  }
+  if(phaseInfo.phase==='APEX')return apex;
+  if(phaseInfo.phase==='EXIT'){
+    const exitLift=Number(CORNER_RACE_CONFIG_V343.exitLiftKph[key])||42;
+    return Math.max(apex,Math.min(base,apex+exitLift+Math.max(0,base-apex)*.72));
+  }
+  return base;
+}
+function qaRaceCornerModelV343(){
+  const floors=CORNER_RACE_CONFIG_V343.apexFloorKph;
+  const directionRight=window.mwsF1VisualTurnDirectionV343?.(.01)==='right';
+  const directionLeft=window.mwsF1VisualTurnDirectionV343?.(-.01)==='left';
+  const classOrder=floors.hairpin<floors.slow&&floors.slow<floors.medium&&floors.medium<floors.fast;
+  const phases=getCornerPhasesV194();
+  const liveDirections=phases.length?phases.every(row=>row.direction==='left'||row.direction==='right'):true;
+  return {version:VERSION343,floors:{...floors},directionRight,directionLeft,classOrder,liveCornerCount:phases.length,liveDirections,
+    allPass:directionRight&&directionLeft&&classOrder&&floors.hairpin>=100&&floors.fast<=250&&liveDirections};
+}
 function idealRacingLineOffsetV270(vehicle,usable,phaseInfo){
   if(!phaseInfo?.corner)return 0;
   const corner=phaseInfo.corner;
@@ -5643,7 +5692,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const targetData=getSpeedTargetAtProgressV195(vehicle.progress);
   const phaseInfoV270=getCornerPhaseAtProgressV194(vehicle.progress);
   const phase=phaseInfoV270?.phase||'STRAIGHT';
-  const baseTarget=phaseSpeedTargetV270(vehicle,targetData,phaseInfoV270);
+  const baseTarget=phaseSpeedTargetV343(vehicle,targetData,phaseInfoV270);
   const tyreGrip=Math.max(TYRE_CONFIG_V203.minGrip,Math.min(TYRE_CONFIG_V203.maxGrip,Number(vehicle.tyreGrip)||1));
   const tyreCornerFactor=(phase==='TURN_IN'||phase==='APEX'||phase==='EXIT')?tyreGrip:1;
   updateActiveAeroAndOvertakeV202(vehicle,stepMs);
