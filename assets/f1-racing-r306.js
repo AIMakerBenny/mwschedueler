@@ -23,15 +23,39 @@ function layoutThoughtsV306(bounds){
  nodes.forEach(node=>{node.style.setProperty('--v306-thought-x','0px');node.style.setProperty('--v306-thought-y','0px')});
  nodes.sort((a,b)=>positionV306(a)-positionV306(b));
  const placed=[],rows=[];
- const candidates=[[0,0],[-76,-12],[76,-12],[-76,-58],[76,-58],[0,-78],[-116,-32],[116,-32],[0,42]];
+ const candidates=[[0,0],[-76,-16],[76,-16],[-92,-64],[92,-64],[0,-92],[-132,-38],[132,-38],[-110,46],[110,46],[0,58]];
  for(const node of nodes){
-  const base=node.getBoundingClientRect();
-  const choice=chooseOffsetV306(base,bounds,placed,candidates,8);
-  node.style.setProperty('--v306-thought-x',choice.dx+'px');
-  node.style.setProperty('--v306-thought-y',choice.dy+'px');
-  node.dataset.v306Shift=choice.dx+','+choice.dy;
-  placed.push(choice.rect);
-  rows.push({position:positionV306(node),dx:choice.dx,dy:choice.dy});
+  let selected=null;
+  for(const [dx,dy] of candidates){
+   node.style.setProperty('--v306-thought-x',dx+'px');
+   node.style.setProperty('--v306-thought-y',dy+'px');
+   const actual=node.getBoundingClientRect();
+   if(!insideV306(actual,bounds,3))continue;
+   if(placed.some(other=>intersectsV306(actual,other,8)))continue;
+   selected={dx,dy,rect:actual};break;
+  }
+  if(!selected){
+   let best=null;
+   for(const [dx,dy] of candidates){
+    node.style.setProperty('--v306-thought-x',dx+'px');
+    node.style.setProperty('--v306-thought-y',dy+'px');
+    const actual=node.getBoundingClientRect();
+    const overlapArea=placed.reduce((sum,other)=>{
+     const w=Math.max(0,Math.min(actual.right,other.right)-Math.max(actual.left,other.left));
+     const h=Math.max(0,Math.min(actual.bottom,other.bottom)-Math.max(actual.top,other.top));
+     return sum+w*h;
+    },0);
+    const penalty=insideV306(actual,bounds,1)?0:100000;
+    const score=overlapArea+penalty;
+    if(!best||score<best.score)best={dx,dy,rect:actual,score};
+   }
+   selected=best;
+  }
+  node.style.setProperty('--v306-thought-x',selected.dx+'px');
+  node.style.setProperty('--v306-thought-y',selected.dy+'px');
+  node.dataset.v306Shift=selected.dx+','+selected.dy;
+  placed.push(selected.rect);
+  rows.push({position:positionV306(node),dx:selected.dx,dy:selected.dy});
  }
  return rows;
 }

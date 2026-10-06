@@ -9,6 +9,7 @@ export function runPhase306F1MarkerOverlayCollisionAudit(){
  for(const token of [
   "const VERSION306='phase306-f1-marker-overlay-collision-avoidance';",
   'function layoutThoughtsV306(bounds){',
+  "const candidates=[[0,0],[-76,-16],[76,-16]",
   'function layoutPositionTagsV306(bounds){',
   "const candidates=[[0,0],[-36,0],[36,0],[0,36]",
   'function chooseOffsetV306(',
@@ -22,7 +23,8 @@ export function runPhase306F1MarkerOverlayCollisionAudit(){
   '--v306-thought-y',
   '--v306-tag-x',
   '--v306-tag-y',
-  '.car-position-tag-v254{'
+  '.car-position-tag-v254{',
+  'transition:none!important'
  ])if(!css.includes(token))issues.push('Phase 306 CSS missing: '+token);
  for(const token of [
   'assets/f1-racing-r306.css?phase=306',

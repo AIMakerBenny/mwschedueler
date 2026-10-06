@@ -2,7 +2,7 @@
 .f1-racing-driver-thought-v303{
  --v306-thought-x:0px;--v306-thought-y:0px;
  transform:translate(var(--v306-thought-x),calc(var(--v306-thought-y) + 5px)) scale(.94)!important;
- transition:opacity .18s ease,transform .22s cubic-bezier(.2,.85,.25,1)!important
+ transition:opacity .18s ease!important
 }
 .f1-racing-driver-thought-v303.show-v303{
  transform:translate(var(--v306-thought-x),var(--v306-thought-y)) scale(1)!important
@@ -10,7 +10,7 @@
 .car-position-tag-v254{
  --v306-tag-x:0px;--v306-tag-y:0px;
  transform:translate(var(--v306-tag-x),var(--v306-tag-y));
- transition:transform .14s ease-out
+ transition:none!important
 }
 @media(prefers-reduced-motion:reduce){
  .f1-racing-driver-thought-v303,.car-position-tag-v254{transition:none!important}
