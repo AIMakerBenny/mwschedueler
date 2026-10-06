@@ -5738,7 +5738,8 @@ function battleQueueSpeedControlV319(vehicle){
     return {active:true,capKph:Math.max(0,(Number(ahead.speedKph)||0)-RACE_SPACING_CONFIG_V319.blockedSpeedMarginKph*Math.max(.45,strength)),gapMeters:gap,reason:'BATTLE_QUEUE',pairKey:currentPair};
   }
   const closingKph=(Number(vehicle.speedKph)||0)-(Number(ahead.speedKph)||0);
-  const overtakeOpportunity=closingKph>=RACE_SPACING_CONFIG_V319.overtakeReleaseClosingKph&&boundaryOvertakeEligibleV271(vehicle);
+  const releaseClosingKphV345=Math.max(.2,Number(raceBattleTuningV345().releaseClosingKph)||RACE_SPACING_CONFIG_V319.overtakeReleaseClosingKph);
+  const overtakeOpportunity=closingKph>=releaseClosingKphV345&&boundaryOvertakeEligibleV271(vehicle);
   if(!activeWithAhead&&!overtakeOpportunity&&gap<RACE_SPACING_CONFIG_V319.physicalFollowGapMeters){
     const strength=clamp01V198(1-gap/RACE_SPACING_CONFIG_V319.physicalFollowGapMeters);
     return {active:true,capKph:Math.max(0,(Number(ahead.speedKph)||0)-RACE_SPACING_CONFIG_V319.physicalFollowMarginKph*Math.max(.4,strength)),gapMeters:gap,reason:'TRAIN_HEADWAY',pairKey:currentPair,closingKph};
