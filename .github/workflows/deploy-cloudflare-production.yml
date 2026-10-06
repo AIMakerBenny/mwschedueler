@@ -274,6 +274,10 @@ jobs:
           node --check scripts/run-phase327-f1-label-tag-separation-compatibility-audit.mjs
           node --check scripts/run-phase328-f1-train-headway-overtake-release-audit.mjs
           node --check scripts/run-phase329-f1-future-safe-audit-cleanup.mjs
+          node --check scripts/run-phase330-f1-visual-spacing-continuity-audit.mjs
+          node --check scripts/run-phase331-f1-natural-dialogue-expansion-audit.mjs
+          node --check scripts/run-phase332-f1-live-readability-variety-audit.mjs
+          node --check scripts/run-phase333-f1-gacha-responsive-viewport-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
