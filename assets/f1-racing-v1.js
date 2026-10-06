@@ -4744,6 +4744,7 @@ function createRaceVehiclesV189(snapshot){
       marker:null
     };
     vehicle.tyreGrip=tyreCompoundSpecV203(vehicle.tyreCompound).gripBias;
+    vehicle.raceFormBiasV345=raceFormBiasV345(vehicle,snapshot);
     return syncVehicleRaceMetricsV190(vehicle,snapshot.track);
   });
 }
@@ -5740,11 +5741,13 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const rawDriverPaceMultiplier=driverTargetMultiplierV200(vehicle,phase);
   const longRunPaceMultiplier=longRunPaceCorrectionV209(vehicle);
   const momentumPaceMultiplier=raceMomentumPaceMultiplierV262(vehicle);
-  const driverPaceMultiplier=rawDriverPaceMultiplier*longRunPaceMultiplier*momentumPaceMultiplier;
+  const raceFormMultiplierV345=1+(Number(vehicle.raceFormBiasV345)||0);
+  const driverPaceMultiplier=rawDriverPaceMultiplier*longRunPaceMultiplier*momentumPaceMultiplier*raceFormMultiplierV345;
   vehicle.rawDriverPaceMultiplier=rawDriverPaceMultiplier;
   vehicle.longRunPaceMultiplier=longRunPaceMultiplier;
   vehicle.longRunPaceBias=longRunPaceBiasV209(vehicle);
   vehicle.raceMomentumPaceMultiplierV262=momentumPaceMultiplier;
+  vehicle.raceFormMultiplierV345=raceFormMultiplierV345;
   vehicle.driverPaceMultiplier=driverPaceMultiplier;
   const racecraftNorm=driverSkillNormV200(vehicle,'racecraft');
   const aggressionNorm=driverSkillNormV200(vehicle,'aggression');
@@ -7340,6 +7343,13 @@ function qaRaceNarrativeV222(){
 function activeRaceModeV345(){
   return String(activeRaceSnapshotV187?.raceMode||'NORMAL').toUpperCase()==='FAST'?'FAST':'NORMAL';
 }
+function raceFormBiasV345(vehicle,snapshot=activeRaceSnapshotV187){
+  const mode=String(snapshot?.raceMode||'NORMAL').toUpperCase()==='FAST'?'FAST':'NORMAL';
+  const amplitude=mode==='FAST'?.035:.022;
+  const seed=hashDriverV189([String(snapshot?.createdAt||'race'),String(snapshot?.trackId||snapshot?.track?.id||'track'),String(vehicle?.id||vehicle?.driver?.contactId||vehicle?.driver?.name||'driver'),'race-form-v345'].join('|'));
+  const unit=(seed%2001)/1000-1;
+  return Math.max(-amplitude,Math.min(amplitude,unit*amplitude));
+}
 function raceCompetitionConfigV345(){
   return RACE_COMPETITION_V345[activeRaceModeV345()]||RACE_COMPETITION_V345.NORMAL;
 }
@@ -7574,8 +7584,9 @@ window.mwsF1QaStaggeredPitStrategyV344=function(){
 };
 window.mwsF1QaCompetitionFastRaceV345=function(){
   const normal=RACE_COMPETITION_V345.NORMAL,fast=RACE_COMPETITION_V345.FAST;
-  return {version:VERSION345,normal,fast,fastLaps:RACE_COMPETITION_V345.fastLaps,buttonReady:Boolean(document.getElementById('f1RacingFastRaceV345')),
-    allPass:fast.variability>normal.variability&&normal.variability>1&&fast.attackGap>normal.attackGap&&normal.p2ChallengeKph>=4&&fast.p2ChallengeKph>normal.p2ChallengeKph&&normal.leaderPressureKph>=2&&RACE_COMPETITION_V345.fastLaps===3&&Boolean(document.getElementById('f1RacingFastRaceV345'))};
+  const formProbe=[1,2,3,4].map(index=>raceFormBiasV345({id:'qa-form-'+index},{createdAt:'qa-race',trackId:'qa-track',raceMode:'NORMAL'}));
+  return {version:VERSION345,normal,fast,fastLaps:RACE_COMPETITION_V345.fastLaps,buttonReady:Boolean(document.getElementById('f1RacingFastRaceV345')),formProbe,
+    allPass:fast.variability>normal.variability&&normal.variability>1&&fast.attackGap>normal.attackGap&&normal.p2ChallengeKph>=4&&fast.p2ChallengeKph>normal.p2ChallengeKph&&normal.leaderPressureKph>=2&&formProbe.every(v=>Math.abs(v)<=.0221)&&new Set(formProbe.map(v=>v.toFixed(4))).size>1&&RACE_COMPETITION_V345.fastLaps===3&&Boolean(document.getElementById('f1RacingFastRaceV345'))};
 };
 
 function qaUiVisibilitySpacingV324(){
