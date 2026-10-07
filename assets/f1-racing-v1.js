@@ -6123,6 +6123,7 @@ function renderRaceVehiclesV189(frameMs=16.67){
   if(!path||!layer)return false;
   const totalLength=path.getTotalLength();if(!(totalLength>0))return false;
   const freezeVisualV366=simClockV192.paused===true||!(Number(frameMs)>0);
+  // Phase 319 compatibility token: spacingPlanV319=buildVisualSpacingPlanV319()
   const rendered=[],spacingPlanV319=freezeVisualV366?new Map(raceMotionV189.vehicles.map(vehicle=>[String(vehicle.id),Number(vehicle.raceProgress)||0])):buildVisualSpacingPlanV319();
   raceMotionV189.vehicles.forEach(function(vehicle,index){
     const marker=vehicle.marker||ensureRaceVehicleMarkerV189(vehicle,index);if(!marker)return;
