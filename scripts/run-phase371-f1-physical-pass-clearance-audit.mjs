@@ -13,7 +13,7 @@ export function runPhase371F1PhysicalPassClearanceAudit(){
   if(/\b(?:raceProgress|progress)\s*=/.test(functionSource))issues.push('Phase 371 illegally changes race progress');
   if(!diag.includes('Phase 371 physical pass clearance QA failed')||!diag.includes('physicalPassV371:physicalPass371||null'))issues.push('Recovery H Phase 371 QA not wired');
   if(!workflow.includes("echo '[phase371] F1 real physical pass clearance'")||!workflow.includes('node --check scripts/run-phase371-f1-physical-pass-clearance-audit.mjs'))issues.push('Production workflow Phase 371 missing');
-  if(!cumulative.includes('runPhase371F1PhysicalPassClearanceAudit')||!cumulative.includes('return runPhase371FullIntegrationAudit();'))issues.push('Cumulative Phase 371 audit missing');
+  if(!cumulative.includes('runPhase371F1PhysicalPassClearanceAudit')||!cumulative.includes('export function runPhase371FullIntegrationAudit()'))issues.push('Cumulative Phase 371 audit missing');
   for(const path of ['assets/f1-racing-v1.js','scripts/diagnose-recovery-h-f1-live.mjs', 'scripts/run-phase371-f1-physical-pass-clearance-audit.mjs']){
     const run=spawnSync(process.execPath,['--check',path],{encoding:'utf8'});
     if(run.status!==0)issues.push('Syntax error: '+path+' '+String(run.stderr||run.stdout).slice(0,800));
