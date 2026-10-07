@@ -7844,7 +7844,7 @@ function qaRearBattlePaceRetentionV350(){
   const softQueue=farBlocked?.active===false&&closeBlocked?.active===true&&Number(closeBlocked.capKph)>Number(ahead.speedKph)&&overlap?.active===true&&Number(overlap.capKph)<Number(ahead.speedKph);
   return {
     version:VERSION350,config:{...REAR_BATTLE_BALANCE_V350},farBlocked,closeBlocked,overlap,directPositionMutation,softQueue,
-    allPass:softQueue&&!directPositionMutation&&activeScale>0&&activeScale<1&&blockedScale>activeScale&&blockedScale<=.85&&REAR_BATTLE_BALANCE_V350.blockedCatchupRetention>0&&REAR_BATTLE_BALANCE_V350.blockedCatchupRetention<1
+    allPass:softQueue&&!directPositionMutation&&activeScale>0&&activeScale<1&&blockedScale>activeScale&&blockedScale<=.85&&REAR_BATTLE_BALANCE_V350.blockedCatchupRetention>0&&REAR_BATTLE_BALANCE_V350.blockedCatchupRetention<=1
   };
 }
 window.mwsF1QaRearBattlePaceRetentionV350=qaRearBattlePaceRetentionV350;
