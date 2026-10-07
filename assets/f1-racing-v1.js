@@ -264,9 +264,9 @@ const NATURAL_HEADWAY_V365=Object.freeze({
   apexTimeGapSeconds:.48,
   exitTimeGapSeconds:.40,
   softStartMultiplier:1.35,
-  blockedMultiplier:1.12,
-  approachAllowanceKph:1.8,
-  closeMarginKph:4.8,
+  blockedMultiplier:1.08,
+  approachAllowanceKph:2.6,
+  closeMarginKph:3.5,
   emergencyGapMeters:4.5,
   emergencyMarginKph:5.5,
   fastReleaseGapMultiplier:1.12,
@@ -6380,7 +6380,7 @@ function naturalRaceSpacingControlV365(vehicle){
   let natural=null;
   if(gap<desiredGap){
     const severity=clamp01V198((desiredGap-gap)/Math.max(1,desiredGap));
-    const margin=Math.min(7.5,.8+NATURAL_HEADWAY_V365.closeMarginKph*severity+Math.max(0,closingKph)*.12);
+    const margin=Math.min(5.5,.65+NATURAL_HEADWAY_V365.closeMarginKph*severity+Math.max(0,closingKph)*.09);
     natural={active:true,capKph:Math.max(0,aheadSpeed-margin),gapMeters:gap,desiredGapMeters:desiredGap,reason:'NATURAL_HEADWAY_BRAKE_V365',closingKph,phase,severity};
   }else if(gap<softStart&&closingKph>.2){
     const ratio=clamp01V198((gap-desiredGap)/Math.max(1,softStart-desiredGap));
