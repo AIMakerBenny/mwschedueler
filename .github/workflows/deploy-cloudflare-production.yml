@@ -300,6 +300,7 @@ jobs:
           node --check scripts/run-phase353-f1-corner-complex-recovery-audit.mjs
           node --check scripts/run-phase354-f1-field-spread-cap-balance-audit.mjs
           node --check scripts/run-phase355-f1-rear-pace-balance-audit.mjs
+          node --check scripts/run-phase356-f1-field-pace-retention-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
@@ -1117,6 +1118,10 @@ jobs:
           grep -Fq "window.__mwsF1RacingV355=VERSION355;" /tmp/f1-racing-v1-phase187.js
           grep -Fq "positionCatchupMaxPct:.050" /tmp/f1-racing-v1-phase187.js
           grep -Fq "function qaRearPaceBalanceV355(){" /tmp/f1-racing-v1-phase187.js
+          echo '[phase356] F1 field pace retention without position forcing'
+          grep -Fq "window.__mwsF1RacingV356=VERSION356;" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "function fieldPaceRetentionMultiplierV356(vehicle){" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "fieldPaceRetentionMultiplierV356Value" /tmp/f1-racing-v1-phase187.js
           grep -Fq "if(!setScreenStateV185('TRANSITION'))return false;" /tmp/f1-racing-v1-phase187.js
           grep -Fq 'window.mwsF1StartRaceFromSetupV187=startRaceFromSetupV187;' /tmp/f1-racing-v1-phase187.js
           echo '[phase188] F1 Race Control base frame'
