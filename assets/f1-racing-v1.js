@@ -278,6 +278,7 @@ const NATURAL_HEADWAY_V365=Object.freeze({
   cornerClosingReleaseKph:.65,
   cornerPaceReleaseKph:.35,
   cornerSlipstreamRelease:.04,
+  stateEntryClosingKph:1.25,
   cornerOnly:true
 });
 const naturalHeadwayTelemetryV365={calls:0,active:0,cornerActive:0,emergency:0,minGapMeters:Infinity,maxTargetGapMeters:0,last:null};
@@ -6423,8 +6424,8 @@ function naturalRaceSpacingControlV365(vehicle,freeTargetKph=NaN){
   let natural=null;
   if(gap<desiredGap){
     const severity=clamp01V198((desiredGap-gap)/Math.max(1,desiredGap));
-    const margin=Math.min(5.5,.65+NATURAL_HEADWAY_V365.closeMarginKph*severity+Math.max(0,closingKph)*.09);
-    natural={active:true,capKph:Math.max(0,aheadSpeed-margin),gapMeters:gap,desiredGapMeters:desiredGap,reason:'NATURAL_HEADWAY_BRAKE_V365',closingKph,phase,severity};
+    const approachCap=Math.max(0,aheadSpeed+NATURAL_HEADWAY_V365.stateEntryClosingKph);
+    natural={active:true,capKph:approachCap,gapMeters:gap,desiredGapMeters:desiredGap,reason:'NATURAL_HEADWAY_APPROACH_V365',closingKph,phase,severity};
   }else if(gap<softStart&&closingKph>.2){
     const ratio=clamp01V198((gap-desiredGap)/Math.max(1,softStart-desiredGap));
     const allowance=NATURAL_HEADWAY_V365.approachAllowanceKph*ratio;
@@ -8801,13 +8802,14 @@ function qaNaturalLongitudinalHeadwayV365(){
   const cornerOnlyHeadway=attackReleaseSource.includes("phase==='TURN_IN'||phase==='APEX'||phase==='EXIT'")&&attackReleaseSource.includes('OPEN_RACE_FLOW_V365');
   const cornerClosingRelease=attackReleaseSource.includes('CORNER_CLOSING_RELEASE_V365')&&attackReleaseSource.includes('cornerClosingReleaseKph');
   const cornerPaceRelease=attackReleaseSource.includes('CORNER_PACE_RELEASE_V365')&&attackReleaseSource.includes('cornerPaceReleaseKph')&&attackReleaseSource.includes('cornerSlipstreamRelease');
+  const stateEntryClosing=attackReleaseSource.includes('NATURAL_HEADWAY_APPROACH_V365')&&attackReleaseSource.includes('stateEntryClosingKph');
   const source=attackReleaseSource+String(naturalHeadwayTargetV365)+String(updateVisualLateralOffsetV258)+String(raceLinePointV197);
   const directPositionMutation=/\b(?:raceProgress|progress)\s*=/.test(source);
   const lateralRuntimeClean=!String(updateVisualLateralOffsetV258).includes('updateCornerLaneOccupancyV361')&&!String(updateVisualLateralOffsetV258).includes('applyFourLaneOffsetV360');
   const markerRuntimeClean=!String(raceMarkerTransformV245).includes('markerDensityScaleV361')&&!String(raceMarkerTransformV245).includes('markerBandScaleV363');
   const presentationRestored=String(raceLinePointV197).includes('TRACK_PRESENTATION_V365.visualWidthScale')&&String(offsetTrackPathDataV360).includes('TRACK_PRESENTATION_V365.visualWidthScale');
-  return {version:VERSION365,config:{...NATURAL_HEADWAY_V365},trackPresentation:{...TRACK_PRESENTATION_V365},straightTargets:straightTargets.map(v=>Number(v.toFixed(2))),apexTarget:Number(apexTarget.toFixed(2)),attackApproachRelease,naturalAttackRelease,cornerOnlyHeadway,cornerClosingRelease,cornerPaceRelease,directPositionMutation,lateralRuntimeClean,markerRuntimeClean,presentationRestored,telemetry:naturalHeadwayTelemetrySnapshotV365(),
-    allPass:straightTargets[0]<straightTargets[1]&&straightTargets[1]<straightTargets[2]&&apexTarget>straightTargets[1]&&attackApproachRelease&&naturalAttackRelease&&cornerOnlyHeadway&&cornerClosingRelease&&cornerPaceRelease&&!directPositionMutation&&lateralRuntimeClean&&markerRuntimeClean&&presentationRestored&&TRACK_PRESENTATION_V365.trackStrokeWidth===58};
+  return {version:VERSION365,config:{...NATURAL_HEADWAY_V365},trackPresentation:{...TRACK_PRESENTATION_V365},straightTargets:straightTargets.map(v=>Number(v.toFixed(2))),apexTarget:Number(apexTarget.toFixed(2)),attackApproachRelease,naturalAttackRelease,cornerOnlyHeadway,cornerClosingRelease,cornerPaceRelease,stateEntryClosing,directPositionMutation,lateralRuntimeClean,markerRuntimeClean,presentationRestored,telemetry:naturalHeadwayTelemetrySnapshotV365(),
+    allPass:straightTargets[0]<straightTargets[1]&&straightTargets[1]<straightTargets[2]&&apexTarget>straightTargets[1]&&attackApproachRelease&&naturalAttackRelease&&cornerOnlyHeadway&&cornerClosingRelease&&cornerPaceRelease&&stateEntryClosing&&!directPositionMutation&&lateralRuntimeClean&&markerRuntimeClean&&presentationRestored&&TRACK_PRESENTATION_V365.trackStrokeWidth===58};
 }
 window.mwsF1QaNaturalLongitudinalHeadwayV365=qaNaturalLongitudinalHeadwayV365;
 window.mwsF1GetNaturalHeadwayTelemetryV365=naturalHeadwayTelemetrySnapshotV365;
