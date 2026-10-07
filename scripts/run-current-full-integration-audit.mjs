@@ -367,6 +367,7 @@ import {runPhase368F1InteractionSnapshotShadowAudit} from './run-phase368-f1-int
 import {runPhase369F1PitInteractionIsolationAudit} from './run-phase369-f1-pit-interaction-isolation-audit.mjs';
 import {runPhase370F1CornerTrainSeparationPauseLockAudit} from './run-phase370-f1-corner-train-separation-pause-lock-audit.mjs';
 import {runPhase371F1PhysicalPassClearanceAudit} from './run-phase371-f1-physical-pass-clearance-audit.mjs';
+import {runPhase372F1RearLongRunPaceRetentionAudit} from './run-phase372-f1-rear-long-run-pace-retention-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2791,5 +2792,6 @@ export function runPhase368FullIntegrationAudit(){const previous=runPhase367Full
 export function runPhase369FullIntegrationAudit(){const previous=runPhase368FullIntegrationAudit(),current=runPhase369F1PitInteractionIsolationAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 369: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 369: '+x)];return {phase:369,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase370FullIntegrationAudit(){const previous=runPhase369FullIntegrationAudit(),current=runPhase370F1CornerTrainSeparationPauseLockAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 370: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 370: '+x)];return {phase:370,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase371FullIntegrationAudit(){const previous=runPhase370FullIntegrationAudit(),current=runPhase371F1PhysicalPassClearanceAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 371: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 371: '+x)];return {phase:371,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase371FullIntegrationAudit();}
+export function runPhase372FullIntegrationAudit(){const previous=runPhase371FullIntegrationAudit(),current=runPhase372F1RearLongRunPaceRetentionAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 372: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 372: '+x)];return {phase:372,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase372FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();

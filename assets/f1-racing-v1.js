@@ -157,6 +157,7 @@ const VERSION368='phase368-f1-interaction-snapshot-shadow';
 const VERSION369='phase369-f1-pit-interaction-isolation';
 const VERSION370='phase370-f1-corner-train-separation-pause-lock';
 const VERSION371='phase371-f1-physical-pass-clearance';
+const VERSION372='phase372-f1-rear-long-run-pace-retention';
 const interactionSnapshotStateV368={snapshot:null,builds:0,lastSimTimeMs:0};
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
@@ -215,6 +216,7 @@ const CORNER_DRIVING_V351=Object.freeze({
 });
 const CORNER_BRAKE_RELEASE_V358=Object.freeze({coastDecelMps2:.55,clearBoundaryFactor:.99,minRecoveryTargetGainKph:2.5});
 const NATURAL_RACE_PACE_V359=Object.freeze({rankedBoostScale:.80,catchupBoostScale:.08,fastModeScale:.35,cornerRecoveryCoastDecelMps2:.08,maxNormalFinishSpreadSeconds:43.5});
+const LONG_RUN_REAR_PACE_V372=Object.freeze({normalMaxBoost:.0018,fastModeScale:.55});
 const FOUR_LANE_TRACK_V360=Object.freeze({
   laneCount:4,
   laneFractions:Object.freeze([-.66,-.22,.22,.66]),
@@ -6989,6 +6991,11 @@ function naturalRacePaceMultiplierV359(vehicle,mode=activeRaceModeV345()){
   return 1+(rankedBoost+catchupBoost)*modeScale;
 }
 
+function longRunRearPaceMultiplierV372(vehicle,mode=activeRaceModeV345()){
+  const normalizedRearRank=clamp01V198((Math.max(0,Number(vehicle?.rankedFieldPaceBoostV357)||0))/Math.max(.000001,FIELD_SPREAD_BALANCE_V352.rankedRearPaceMax));
+  const raceScale=String(mode||'NORMAL').toUpperCase()==='FAST'?LONG_RUN_REAR_PACE_V372.fastModeScale:1;
+  return 1+normalizedRearRank*LONG_RUN_REAR_PACE_V372.normalMaxBoost*raceScale;
+}
 function fieldPaceRetentionMultiplierV356(vehicle){
   const pct=clamp01V198(Number(vehicle?.positionCatchupPctV314)||0);
   return 1+pct*FIELD_SPREAD_BALANCE_V352.paceRetentionScale;
@@ -7018,7 +7025,8 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const fieldPaceRetentionMultiplierV356Value=fieldPaceRetentionMultiplierV356(vehicle);
   const rankedFieldPaceMultiplierV357Value=rankedFieldPaceMultiplierV357(vehicle);
   const naturalRacePaceMultiplierV359Value=naturalRacePaceMultiplierV359(vehicle);
-  const driverPaceMultiplier=rawDriverPaceMultiplier*longRunPaceMultiplier*momentumPaceMultiplier*raceFormMultiplierV345*fieldPaceRetentionMultiplierV356Value*rankedFieldPaceMultiplierV357Value*naturalRacePaceMultiplierV359Value;
+  const longRunRearPaceMultiplierV372Value=longRunRearPaceMultiplierV372(vehicle);
+  const driverPaceMultiplier=rawDriverPaceMultiplier*longRunPaceMultiplier*momentumPaceMultiplier*raceFormMultiplierV345*fieldPaceRetentionMultiplierV356Value*rankedFieldPaceMultiplierV357Value*naturalRacePaceMultiplierV359Value*longRunRearPaceMultiplierV372Value;
   vehicle.rawDriverPaceMultiplier=rawDriverPaceMultiplier;
   vehicle.longRunPaceMultiplier=longRunPaceMultiplier;
   vehicle.longRunPaceBias=longRunPaceBiasV209(vehicle);
@@ -7027,6 +7035,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   vehicle.fieldPaceRetentionMultiplierV356=fieldPaceRetentionMultiplierV356Value;
   vehicle.rankedFieldPaceMultiplierV357=rankedFieldPaceMultiplierV357Value;
   vehicle.naturalRacePaceMultiplierV359=naturalRacePaceMultiplierV359Value;
+  vehicle.longRunRearPaceMultiplierV372=longRunRearPaceMultiplierV372Value;
   vehicle.driverPaceMultiplier=driverPaceMultiplier;
   const racecraftNorm=driverSkillNormV200(vehicle,'racecraft');
   const aggressionNorm=driverSkillNormV200(vehicle,'aggression');
@@ -9402,6 +9411,23 @@ function qaPhysicalPassClearanceV371(){
 }
 window.mwsF1QaPhysicalPassClearanceV371=qaPhysicalPassClearanceV371;
 window.__mwsF1RacingV371=VERSION371;
+
+function qaLongRunRearPaceV372(){
+  const maxBoost=FIELD_SPREAD_BALANCE_V352.rankedRearPaceMax;
+  const leader={rankedFieldPaceBoostV357:0};
+  const mid={rankedFieldPaceBoostV357:maxBoost*.5};
+  const rear={rankedFieldPaceBoostV357:maxBoost};
+  const normal=[leader,mid,rear].map(v=>longRunRearPaceMultiplierV372(v,'NORMAL'));
+  const fast=[leader,mid,rear].map(v=>longRunRearPaceMultiplierV372(v,'FAST'));
+  const monotonic=normal[0]===1&&normal[0]<normal[1]&&normal[1]<normal[2];
+  const fastConservative=fast[0]===1&&fast[2]>fast[1]&&fast[2]<normal[2];
+  const bounded=normal[2]<=1.002&&Number.isFinite(normal[2]);
+  const integrated=String(simulateVehicleDynamicsV196).includes('*longRunRearPaceMultiplierV372Value')&&String(simulateVehicleDynamicsV196).includes('vehicle.longRunRearPaceMultiplierV372=longRunRearPaceMultiplierV372Value;');
+  const directPositionMutation=/\b(?:raceProgress|progress)\s*=/.test(String(longRunRearPaceMultiplierV372));
+  return {version:VERSION372,config:{...LONG_RUN_REAR_PACE_V372},normal,fast,monotonic,fastConservative,bounded,integrated,directPositionMutation,allPass:monotonic&&fastConservative&&bounded&&integrated&&!directPositionMutation};
+}
+window.mwsF1QaLongRunRearPaceV372=qaLongRunRearPaceV372;
+window.__mwsF1RacingV372=VERSION372;
 
 function qaUiVisibilitySpacingV324(){
   const marker=document.querySelector('.f1-racing-race-vehicle-v189');
