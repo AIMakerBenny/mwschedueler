@@ -11,7 +11,7 @@ export function runPhase373F1FinishSpreadDiagnosticsAudit(){
   if(/\b(?:raceProgress|progress)\s*=/.test(source))issues.push('Phase 373 mutates race physics');
   if(!diag.includes('Phase 373 field spread diagnostics QA failed')||!diag.includes('fieldSpreadDiagnosticsV373:spreadDiagnostics373||null'))issues.push('Recovery H diagnostics integration missing');
   if(!workflow.includes("echo '[phase373] F1 finish spread pit and incident diagnostics'")||!workflow.includes('node --check scripts/run-phase373-f1-finish-spread-diagnostics-audit.mjs'))issues.push('Production workflow Phase 373 missing');
-  if(!cumulative.includes('runPhase373F1FinishSpreadDiagnosticsAudit')||!cumulative.includes('return runPhase373FullIntegrationAudit();'))issues.push('Cumulative Phase 373 audit missing');
+  if(!cumulative.includes('runPhase373F1FinishSpreadDiagnosticsAudit')||!cumulative.includes('export function runPhase373FullIntegrationAudit()'))issues.push('Cumulative Phase 373 audit missing');
   for(const file of ['assets/f1-racing-v1.js','scripts/diagnose-recovery-h-f1-live.mjs','scripts/run-phase373-f1-finish-spread-diagnostics-audit.mjs']){
     const check=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});
     if(check.status!==0)issues.push('Syntax error: '+file+' '+String(check.stderr||check.stdout||'').slice(0,800));

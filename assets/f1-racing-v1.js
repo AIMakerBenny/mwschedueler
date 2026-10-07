@@ -159,6 +159,7 @@ const VERSION370='phase370-f1-corner-train-separation-pause-lock';
 const VERSION371='phase371-f1-physical-pass-clearance';
 const VERSION372='phase372-f1-rear-long-run-pace-retention';
 const VERSION373='phase373-f1-finish-spread-diagnostics';
+const VERSION374='phase374-f1-final-stint-pit-economics';
 const interactionSnapshotStateV368={snapshot:null,builds:0,lastSimTimeMs:0};
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
@@ -187,6 +188,7 @@ const TYRE_DYNAMICS_V343=Object.freeze({
   incidentWearStart:.42,incidentWearScale:.58,
   pitSafeRemainingRatio:.40
 });
+const FINAL_STINT_PIT_ECONOMICS_V374=Object.freeze({maxEvaluationLaps:3.1,criticalRemaining:.14,criticalFlatSpot:.85,criticalThermalDeg:.92,gripLossSecPerLap:10,wearLossSecPerLap:4,flatSpotLossSecPerLap:3,thermalLossSecPerLap:2});
 const PIT_STAGGER_V344=Object.freeze({
   minWearToConsider:.60,maxWearThreshold:.78,thresholdSpread:.18,
   hardExtra:.03,softReduction:.02,criticalGrip:.845,criticalFlatSpot:.48,
@@ -4304,6 +4306,22 @@ function recordPitStrategyDecisionV206(vehicle,decision,reason,score,compound,co
   }
   return next;
 }
+function finalStintPitEconomicsV374(vehicle,context){
+  const cfg=FINAL_STINT_PIT_ECONOMICS_V374;
+  const remaining=Math.max(0,Number(context?.remainingLaps)||0);
+  const worn=Math.max(0,Number(context?.wear)||0);
+  const grip=Math.max(TYRE_CONFIG_V203.minGrip,Math.min(TYRE_CONFIG_V203.maxGrip,Number(context?.grip)||1));
+  const flatSpot=clamp01V198(context?.flatSpot);
+  const thermalDeg=clamp01V198(context?.thermalDeg);
+  const tyreRemaining=Math.max(0,Number(context?.tyreRemaining)||0);
+  const severeDamage=tyreRemaining<cfg.criticalRemaining||flatSpot>=cfg.criticalFlatSpot||thermalDeg>=cfg.criticalThermalDeg;
+  const estimatePerLap=Math.max(0,1-grip)*cfg.gripLossSecPerLap+worn*cfg.wearLossSecPerLap+flatSpot*cfg.flatSpotLossSecPerLap+thermalDeg*cfg.thermalLossSecPerLap;
+  const projectedBenefitSeconds=remaining*estimatePerLap;
+  const pitLossSeconds=Math.max(0,Number(context?.pitLossSeconds)||0);
+  const secondStop=(Number(vehicle?.pitStopCount)||0)>=1;
+  const avoid=secondStop&&remaining<=cfg.maxEvaluationLaps&&!severeDamage&&projectedBenefitSeconds<pitLossSeconds;
+  return {avoid,secondStop,severeDamage,remainingLaps:remaining,pitLossSeconds,projectedBenefitSeconds};
+}
 function evaluatePitStrategyV206(vehicle,options={}){
   if(!vehicle||vehicle.finished)return null;
   const context=pitStrategyContextV206(vehicle);
@@ -4315,6 +4333,7 @@ function evaluatePitStrategyV206(vehicle,options={}){
   const criticalTyre=pitCriticalTyreStateV344(context);
   const wearReady=context.wear>=context.pitWearThreshold;
   const safeTyre=pitRemainingGuardV349(context);
+  const finalStintEconomicsV374=finalStintPitEconomicsV374(vehicle,context);
   let decision='NONE',reason='WAIT_FOR_WINDOW',score=.08;
 
   if(String(vehicle.pitState||'TRACK')!=='TRACK'||vehicle.pitRequested){
@@ -4325,6 +4344,8 @@ function evaluatePitStrategyV206(vehicle,options={}){
     decision='GO_LONG';reason='POST_STOP_WARMUP';score=.72;
   }else if(safeTyre){
     decision='GO_LONG';reason='TYRE_REMAINING_ABOVE_40';score=.76;
+  }else if(finalStintEconomicsV374.avoid){
+    decision='GO_LONG';reason='FINAL_STINT_PIT_COST_HIGH_V374';score=.86;
   }else if(!wearReady&&!criticalTyre){
     decision='GO_LONG';reason='PERSONAL_WEAR_THRESHOLD_NOT_REACHED';score=.70;
   }else if(Number(vehicle.strategyHoldUntilLap)>currentLap){
@@ -9460,6 +9481,24 @@ function qaFieldSpreadDiagnosticsV373(){
 }
 window.mwsF1QaFieldSpreadDiagnosticsV373=qaFieldSpreadDiagnosticsV373;
 window.__mwsF1RacingV373=VERSION373;
+
+function qaFinalStintPitEconomicsV374(){
+  const input={remainingLaps:2.25,pitLossSeconds:22,wear:.62,grip:.83,flatSpot:.12,thermalDeg:.24,tyreRemaining:.38};
+  const normal=finalStintPitEconomicsV374({pitStopCount:1},input);
+  const first=finalStintPitEconomicsV374({pitStopCount:0},input);
+  const far=finalStintPitEconomicsV374({pitStopCount:1},{...input,remainingLaps:4});
+  const severeWear=finalStintPitEconomicsV374({pitStopCount:1},{...input,tyreRemaining:.12});
+  const severeDamage=finalStintPitEconomicsV374({pitStopCount:1},{...input,flatSpot:.91});
+  const poorReturn=normal.avoid===true&&normal.projectedBenefitSeconds<normal.pitLossSeconds;
+  const preservesFirstStop=first.avoid===false;
+  const preservesEarlySecondStop=far.avoid===false;
+  const preservesCriticalStops=severeWear.avoid===false&&severeDamage.avoid===false;
+  const integrated=String(evaluatePitStrategyV206).includes('finalStintPitEconomicsV374(vehicle,context)')&&String(evaluatePitStrategyV206).includes('FINAL_STINT_PIT_COST_HIGH_V374');
+  const noProgressMutation=!/\b(?:raceProgress|progress)\s*=/.test(String(finalStintPitEconomicsV374));
+  return {version:VERSION374,config:{...FINAL_STINT_PIT_ECONOMICS_V374},normal,first,far,severeWear,severeDamage,poorReturn,preservesFirstStop,preservesEarlySecondStop,preservesCriticalStops,integrated,noProgressMutation,allPass:poorReturn&&preservesFirstStop&&preservesEarlySecondStop&&preservesCriticalStops&&integrated&&noProgressMutation};
+}
+window.mwsF1QaFinalStintPitEconomicsV374=qaFinalStintPitEconomicsV374;
+window.__mwsF1RacingV374=VERSION374;
 
 function qaUiVisibilitySpacingV324(){
   const marker=document.querySelector('.f1-racing-race-vehicle-v189');
