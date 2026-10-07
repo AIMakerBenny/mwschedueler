@@ -6503,7 +6503,7 @@ function visualPassSeparationV366(vehicle,ahead){
   const lateralMeters=Math.abs(vehicleVisual-aheadVisual);
   const vehicleIntent=lineOffsetMetersV197(vehicle);
   const aheadIntent=lineOffsetMetersV197(ahead);
-  const intendedLateralMeters=Math.abs(Number(vehicleIntent)||0-(Number(aheadIntent)||0));
+  const intendedLateralMeters=Math.abs((Number(vehicleIntent)||0)-(Number(aheadIntent)||0));
   const requiredMeters=Math.max(1.6,TRACK_BOUNDARY_V271.carHalfWidthMeters*2+TRACK_BOUNDARY_V271.safetyMarginMeters*2+FOLLOWING_STABILITY_V366.lateralSafetyBufferMeters);
   const state=String(vehicle?.battleState||'FOLLOWING');
   const committed=['PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK'].includes(state);
