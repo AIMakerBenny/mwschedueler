@@ -306,6 +306,7 @@ jobs:
           node --check scripts/run-phase359-f1-natural-race-pace-polish-audit.mjs
           node --check scripts/run-phase360-f1-four-lane-long-corner-flow-audit.mjs
           node --check scripts/run-phase361-f1-corner-lane-occupancy-pit-hud-audit.mjs
+          node --check scripts/run-phase362-f1-visible-corner-lane-separation-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
@@ -1149,6 +1150,12 @@ jobs:
           grep -Fq "function renderPitHudV361(" /tmp/f1-racing-v1-phase187.js
           grep -Fq "vehicle.lateralOffsetMeters=physicalTarget;" /tmp/f1-racing-v1-phase187.js
           retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '.f1-racing-pit-hud-v361' > /tmp/f1-racing-v1-phase361.css
+          echo '[phase362] F1 visible corner lane separation'
+          grep -Fq "window.__mwsF1RacingV362=VERSION362;" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "const VISIBLE_CORNER_SEPARATION_V362=Object.freeze({" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "nearPressureV362" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "laneTarget+nudge" /tmp/f1-racing-v1-phase187.js
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" 'stroke-width:150' > /tmp/f1-racing-v1-phase362.css
           grep -Fq "function updateRankedFieldPaceRetentionV357(){" /tmp/f1-racing-v1-phase187.js
           grep -Fq "updateRankedFieldPaceRetentionV357();" /tmp/f1-racing-v1-phase187.js
           grep -Fq "rankedFieldPaceMultiplierV357Value" /tmp/f1-racing-v1-phase187.js

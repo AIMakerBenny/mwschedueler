@@ -912,3 +912,8 @@ body.f1-racing-immersive #f1RacingWorkspaceRecoveryE .f1-racing-workspace-panel-
 .pit-meta-v361{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:9px;color:#c8d5e5}.pit-meta-v361 strong{color:#fff}.pit-tyres-v361{display:inline-flex;align-items:center;gap:4px;font-weight:900}.pit-tyres-v361 i{font-style:normal;color:#eef5ff}.pit-tyres-v361 em{font-style:normal;color:#7dd3fc}
 .f1-racing-pit-more-v361{align-self:flex-end;padding:4px 8px;border-radius:999px;background:rgba(6,11,18,.9);border:1px solid rgba(255,255,255,.16);font-size:9px;font-weight:900}
 @media(max-width:900px){.f1-racing-pit-hud-v361{right:10px;bottom:96px;width:min(270px,54%)}.f1-racing-pit-card-v361{grid-template-columns:34px minmax(0,1fr);padding:6px 8px}.pit-avatar-v361{width:32px;height:32px}}
+
+
+/* Phase 362: visibly separated four-lane race course */
+#f1RacingRaceTrackGlowV188{stroke-width:150}
+.f1-racing-race-lane-guide-v360{stroke:rgba(226,232,240,.46);stroke-width:1.25}
