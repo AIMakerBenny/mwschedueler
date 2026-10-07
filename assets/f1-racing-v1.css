@@ -899,3 +899,16 @@ body.f1-racing-immersive #f1RacingWorkspaceRecoveryE .f1-racing-workspace-panel-
 #f1RacingRaceTrackPathV188{stroke:rgba(226,232,240,.18);stroke-width:1.35;vector-effect:non-scaling-stroke}
 .f1-racing-race-lane-guides-v360{pointer-events:none}
 .f1-racing-race-lane-guide-v360{fill:none;stroke:rgba(226,232,240,.36);stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+
+
+/* Phase 361: corner occupancy readability and PIT IN HUD */
+.f1-racing-pit-hud-v361{position:absolute;right:14px;bottom:116px;z-index:21;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;width:min(310px,42%);max-height:58%;pointer-events:none;opacity:0;transform:translateY(8px);transition:opacity .2s ease,transform .24s ease}
+.f1-racing-pit-hud-v361.active{opacity:1;transform:translateY(0)}
+.f1-racing-pit-card-v361{display:grid;grid-template-columns:42px minmax(0,1fr);align-items:center;gap:9px;padding:7px 9px;border:1px solid color-mix(in srgb,var(--pit-driver-color) 50%,#fff 10%);border-left:3px solid var(--pit-driver-color);border-radius:10px;background:rgba(6,11,18,.93);box-shadow:0 8px 20px rgba(0,0,0,.32);backdrop-filter:blur(8px)}
+.pit-avatar-v361{width:38px;height:38px;border-radius:50%;overflow:hidden;border:2px solid var(--pit-driver-color);background:#111a27;display:grid;place-items:center;font-size:11px;font-weight:900}
+.pit-avatar-v361 img{width:100%;height:100%;object-fit:cover;display:block}
+.pit-copy-v361{min-width:0;display:grid;gap:4px}
+.pit-head-v361{display:flex;align-items:center;justify-content:space-between;gap:7px}.pit-head-v361 strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}.pit-head-v361 b{flex:none;color:#ffd166;font-size:10px;letter-spacing:.08em}
+.pit-meta-v361{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:9px;color:#c8d5e5}.pit-meta-v361 strong{color:#fff}.pit-tyres-v361{display:inline-flex;align-items:center;gap:4px;font-weight:900}.pit-tyres-v361 i{font-style:normal;color:#eef5ff}.pit-tyres-v361 em{font-style:normal;color:#7dd3fc}
+.f1-racing-pit-more-v361{align-self:flex-end;padding:4px 8px;border-radius:999px;background:rgba(6,11,18,.9);border:1px solid rgba(255,255,255,.16);font-size:9px;font-weight:900}
+@media(max-width:900px){.f1-racing-pit-hud-v361{right:10px;bottom:96px;width:min(270px,54%)}.f1-racing-pit-card-v361{grid-template-columns:34px minmax(0,1fr);padding:6px 8px}.pit-avatar-v361{width:32px;height:32px}}
