@@ -285,8 +285,8 @@ const NATURAL_HEADWAY_V365=Object.freeze({
 const naturalHeadwayTelemetryV365={calls:0,active:0,cornerActive:0,emergency:0,minGapMeters:Infinity,maxTargetGapMeters:0,last:null};
 const FOLLOWING_STABILITY_V366=Object.freeze({
   softStartMultiplier:1.12,
-  underGapMinMarginKph:.35,
-  underGapMaxMarginKph:6.5,
+  underGapMinMarginKph:0,
+  underGapMaxMarginKph:4.0,
   prepareBufferMeters:1.25,
   pullOutBufferMeters:1.25,
   pullOutHoldExtraMeters:1.5,
