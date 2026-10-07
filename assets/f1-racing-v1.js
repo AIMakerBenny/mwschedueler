@@ -196,7 +196,7 @@ const REAR_BATTLE_BALANCE_V350=Object.freeze({
   farClosingAllowanceKph:1.4,closeClosingAllowanceKph:.55,overlapSpeedMarginKph:1.1,
   blockedCatchupRetention:1.00
 });
-const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.0065,fastFormAmplitude:.024,maxFinishSpreadSeconds:48,normalCatchupCapMultiplier:1.25,fastCatchupCapMultiplier:1.45,paceRetentionScale:.08,rankedRearPaceMax:.005,rankedRearPaceExponent:1.20});
+const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.009,fastFormAmplitude:.024,maxFinishSpreadSeconds:48,normalCatchupCapMultiplier:1.25,fastCatchupCapMultiplier:1.45,paceRetentionScale:.08,rankedRearPaceMax:.005,rankedRearPaceExponent:1.20});
 const CORNER_DRIVING_V351=Object.freeze({
   speedEnvelope:Object.freeze({
     hairpin:Object.freeze({min:75,max:120,entryRetention:.30,brakeScale:1.05,recoveryLead:.34,exitAccel:1.18}),
