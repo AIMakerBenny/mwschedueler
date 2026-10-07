@@ -5445,10 +5445,10 @@ function laneBandClusterV364(vehicle,phaseInfo,laneIndex){
   while(queue.length){
     const current=queue.shift(),id=String(current?.id||'');if(seen.has(id))continue;
     seen.add(id);group.push(current);
-    const progress=Number(current?.raceProgress)||0;
+    const currentRaceValueV364=Number(current?.raceProgress)||0;
     for(const peer of byId.values()){
       const peerId=String(peer?.id||'');if(seen.has(peerId))continue;
-      const gap=Math.abs((Number(peer?.raceProgress)||0)-progress)*length;
+      const gap=Math.abs((Number(peer?.raceProgress)||0)-currentRaceValueV364)*length;
       if(gap<=LANE_BAND_CROWDING_V363.sameLaneScanMeters)queue.push(peer);
     }
   }
