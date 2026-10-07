@@ -296,6 +296,7 @@ jobs:
           node --check scripts/run-phase349-f1-strict-pit-staggering-audit.mjs
           node --check scripts/run-phase350-f1-rear-battle-pace-retention-audit.mjs
           node --check scripts/run-phase351-f1-physics-corner-brake-release-audit.mjs
+          node --check scripts/run-phase352-f1-field-spread-pace-balance-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
@@ -1097,6 +1098,10 @@ jobs:
           grep -Fq "function cornerDrivingPlanV351(" /tmp/f1-racing-v1-phase187.js
           grep -Fq "function cornerTargetAtDistanceV351(" /tmp/f1-racing-v1-phase187.js
           grep -Fq "cornerRecoveryActiveV351" /tmp/f1-racing-v1-phase187.js
+          echo '[phase352] F1 field spread pace balance without forced position compression'
+          grep -Fq "window.__mwsF1RacingV352=VERSION352;" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "normalFormAmplitude:.025,fastFormAmplitude:.040,maxFinishSpreadSeconds:48" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "blockedCatchupRetention:1.00" /tmp/f1-racing-v1-phase187.js
           grep -Fq "if(!setScreenStateV185('TRANSITION'))return false;" /tmp/f1-racing-v1-phase187.js
           grep -Fq 'window.mwsF1StartRaceFromSetupV187=startRaceFromSetupV187;' /tmp/f1-racing-v1-phase187.js
           echo '[phase188] F1 Race Control base frame'
