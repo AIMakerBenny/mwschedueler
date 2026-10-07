@@ -303,6 +303,7 @@ jobs:
           node --check scripts/run-phase356-f1-field-pace-retention-audit.mjs
           node --check scripts/run-phase357-f1-ranked-field-pace-retention-audit.mjs
           node --check scripts/run-phase358-f1-corner-speed-brake-release-calibration-audit.mjs
+          node --check scripts/run-phase359-f1-natural-race-pace-polish-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
@@ -1130,6 +1131,10 @@ jobs:
           grep -Fq "window.__mwsF1RacingV358=VERSION358;" /tmp/f1-racing-v1-phase187.js
           grep -Fq "const delta=Math.max(0,(Number(entryKph)||0)-apexTarget);" /tmp/f1-racing-v1-phase187.js
           grep -Fq "vehicle.cornerBrakeReleasedV358=true;" /tmp/f1-racing-v1-phase187.js
+          echo '[phase359] F1 natural rear pace retention and corner recovery coast polish'
+          grep -Fq "window.__mwsF1RacingV359=VERSION359;" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "function naturalRacePaceMultiplierV359(vehicle" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "cornerRecoveryCoastDecelMps2:.08" /tmp/f1-racing-v1-phase187.js
           grep -Fq "function updateRankedFieldPaceRetentionV357(){" /tmp/f1-racing-v1-phase187.js
           grep -Fq "updateRankedFieldPaceRetentionV357();" /tmp/f1-racing-v1-phase187.js
           grep -Fq "rankedFieldPaceMultiplierV357Value" /tmp/f1-racing-v1-phase187.js
