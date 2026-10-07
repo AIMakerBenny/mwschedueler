@@ -5966,11 +5966,11 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const accelBase=Math.max(0.5,Number(track?.geometry?.referenceAccelMps2)||8.5)*Math.max(1,Number(chaseBurstEffect.accelMultiplier)||1);
   let brakeBase=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20)*tyreGrip*incidentState.brakeFactor;
   let throttle=0,brake=0,accelMps2=0;
+  const cornerRecoveryV351=Boolean(vehicle.cornerRecoveryActiveV351);
   if(error>1.5){
     throttle=Math.max(.08,Math.min(1,error/45))*incidentState.throttleFactor;
     const dragRelief=Math.max(0,Number(vehicle.slipstreamDragReduction)||0);
     const highSpeedFade=Math.max(.35,1-current/520+dragRelief*.45);
-    const cornerRecoveryV351=Boolean(vehicle.cornerRecoveryActiveV351);
     const tractionGrip=(phase==='EXIT'||cornerRecoveryV351)?Math.max(.92,tyreGrip):1;
     const cornerSpecV351=CORNER_DRIVING_V351.speedEnvelope[String(vehicle.cornerDrivingClassV351||'medium')]||CORNER_DRIVING_V351.speedEnvelope.medium;
     const underSpeedRecoveryV353=cornerUnderSpeedRecoveryV353(vehicle,phase,current,maxTarget,spacingControlV319,incidentState,leaderPressureEffect);
