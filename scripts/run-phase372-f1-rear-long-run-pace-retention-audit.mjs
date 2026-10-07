@@ -11,7 +11,7 @@ export function runPhase372F1RearLongRunPaceRetentionAudit(){
   if(/\b(?:raceProgress|progress)\s*=/.test(source))issues.push('Phase 372 directly mutates race position');
   if(!diag.includes('Phase 372 long-run rear pace QA failed')||!diag.includes('rearPaceV372:rearPace372||null')||!diag.includes('Phase 359 normal field spread still excessive'))issues.push('Recovery H Phase 372 real pace regression missing');
   if(!workflow.includes("echo '[phase372] F1 rear long-run pace retention'")||!workflow.includes('node --check scripts/run-phase372-f1-rear-long-run-pace-retention-audit.mjs'))issues.push('Production workflow Phase 372 missing');
-  if(!cumulative.includes('runPhase372F1RearLongRunPaceRetentionAudit')||!cumulative.includes('return runPhase372FullIntegrationAudit();'))issues.push('Cumulative Phase 372 audit missing');
+  if(!cumulative.includes('runPhase372F1RearLongRunPaceRetentionAudit')||!cumulative.includes('export function runPhase372FullIntegrationAudit()'))issues.push('Cumulative Phase 372 audit missing');
   for(const path of ['assets/f1-racing-v1.js','scripts/diagnose-recovery-h-f1-live.mjs','scripts/run-phase372-f1-rear-long-run-pace-retention-audit.mjs']){
     const check=spawnSync(process.execPath,['--check',path],{encoding:'utf8'});
     if(check.status!==0)issues.push('Syntax error: '+path+' '+String(check.stderr||check.stdout||'').slice(0,800));
