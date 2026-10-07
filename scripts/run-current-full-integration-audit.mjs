@@ -370,6 +370,7 @@ import {runPhase371F1PhysicalPassClearanceAudit} from './run-phase371-f1-physica
 import {runPhase372F1RearLongRunPaceRetentionAudit} from './run-phase372-f1-rear-long-run-pace-retention-audit.mjs';
 import {runPhase373F1FinishSpreadDiagnosticsAudit} from './run-phase373-f1-finish-spread-diagnostics-audit.mjs';
 import {runPhase374F1FinalStintPitEconomicsAudit} from './run-phase374-f1-final-stint-pit-economics-audit.mjs';
+import {runPhase375F1AngleCornerPhysicsAudit} from './run-phase375-f1-angle-corner-physics-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2797,5 +2798,6 @@ export function runPhase371FullIntegrationAudit(){const previous=runPhase370Full
 export function runPhase372FullIntegrationAudit(){const previous=runPhase371FullIntegrationAudit(),current=runPhase372F1RearLongRunPaceRetentionAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 372: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 372: '+x)];return {phase:372,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase373FullIntegrationAudit(){const previous=runPhase372FullIntegrationAudit(),current=runPhase373F1FinishSpreadDiagnosticsAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 373: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 373: '+x)];return {phase:373,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase374FullIntegrationAudit(){const previous=runPhase373FullIntegrationAudit(),current=runPhase374F1FinalStintPitEconomicsAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 374: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 374: '+x)];return {phase:374,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase374FullIntegrationAudit();}
+export function runPhase375FullIntegrationAudit(){const previous=runPhase374FullIntegrationAudit(),current=runPhase375F1AngleCornerPhysicsAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 375: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 375: '+x)];return {phase:375,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase375FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();

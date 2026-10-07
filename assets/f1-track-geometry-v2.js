@@ -82,7 +82,9 @@ function detectCorners(track,samples){
       endProgress:samples[b].progress,
       direction:signed>=0?'left':'right',
       peakCurvature:Math.abs(samples[apex].curvatureRadPerMeter),
-      lengthMeters:(b-a+1)*spacing
+      lengthMeters:(b-a+1)*spacing,
+       turnAngleDegrees:samples.slice(a,b+1).reduce((sum,s)=>sum+Math.abs(Number(s.turnAngleRad)||0),0)*180/Math.PI,
+       radiusMeters:1/Math.max(.00001,Math.abs(Number(samples[apex].curvatureRadPerMeter)||0))
     };
   });
 }
@@ -160,6 +162,7 @@ function buildCornerPhases(track,geometry){
       referenceApproachKph:approachKph,
       referenceApexKph:apexKph,
       referenceBrakeDecelMps2:decel,
+       angleSeverity:clamp((Number(corner.turnAngleDegrees||0)-18)/145,0,1),
       brakingDistanceMeters,
       cornerClass:classifyCornerBySpeed(apexKph)
     };

@@ -319,6 +319,8 @@ jobs:
           node --check scripts/run-phase372-f1-rear-long-run-pace-retention-audit.mjs
           node --check scripts/run-phase373-f1-finish-spread-diagnostics-audit.mjs
           node --check scripts/run-phase374-f1-final-stint-pit-economics-audit.mjs
+          node --check scripts/run-phase375-f1-angle-corner-physics-audit.mjs
+          node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
@@ -1200,6 +1202,9 @@ jobs:
           grep -Fq "function trackInteractionEligibleV369(" /tmp/f1-racing-v1-phase187.js
           grep -Fq "function clearPitInteractionStateV369(" /tmp/f1-racing-v1-phase187.js
           grep -Fq "clearPitInteractionStateV369(vehicle,raceMotionV189.vehicles,'PIT_ENTRY')" /tmp/f1-racing-v1-phase187.js
+          echo '[phase375] F1 corner angle and pre-brake exit acceleration'
+          grep -Fq "window.__mwsF1RacingV375=VERSION375;" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "function cornerDrivingPlanV375(" /tmp/f1-racing-v1-phase187.js
           echo '[phase374] F1 final stint pit economy and tyre safety'
           grep -Fq "window.__mwsF1RacingV374=VERSION374;" /tmp/f1-racing-v1-phase187.js
           grep -Fq "function finalStintPitEconomicsV374(" /tmp/f1-racing-v1-phase187.js
