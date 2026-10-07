@@ -6569,7 +6569,7 @@ function naturalRaceSpacingControlV366(vehicle,freeTargetKph=NaN){
   if(gap<controlledGap){
     const emergency=gap<emergencyThreshold;
     const capKph=emergency?followingOpeningCapV366(aheadSpeed,gap,controlledGap,true):aheadSpeed;
-    result={active:true,capKph,gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,reason:emergency?'FOLLOWING_EMERGENCY_V366':'FOLLOWING_GAP_HOLD_V366',closingKph,phase,passSeparation};
+    result={active:true,capKph,gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,reason:emergency?'FOLLOWING_EMERGENCY_V366':'FOLLOWING_GAP_OPEN_V366',closingKph,phase,passSeparation};
     followingStabilityTelemetryV366.active+=1;
     if(emergency)followingStabilityTelemetryV366.emergency+=1;
   }else{
