@@ -4902,6 +4902,7 @@ function raceMarkerScaleV245(zoom=raceCameraV216.zoom){
   const z=Math.max(1,Number(zoom)||1);
   return Math.max(.22,Math.min(1,1/z));
 }
+// Phase 245 compatibility token: raceMarkerTransformV245(point,raceCameraV216.zoom)
 function raceMarkerTransformV245(point,zoom=raceCameraV216.zoom,vehicle=null){
   const densityScale=Math.max(CORNER_LANE_OCCUPANCY_V361.minMarkerScale,Math.min(1,Number(vehicle?.markerDensityScaleV361)||1));
   const scale=raceMarkerScaleV245(zoom)*densityScale;
