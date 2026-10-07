@@ -291,7 +291,8 @@ const FOLLOWING_STABILITY_V366=Object.freeze({
   pullOutBufferMeters:1.25,
   pullOutHoldExtraMeters:1.5,
   lateralSafetyBufferMeters:.35,
-  minClosingKph:.25
+  minClosingKph:.25,
+  pullOutReleaseHoldMs:900
 });
 const followingStabilityTelemetryV366={calls:0,active:0,emergency:0,lateralRelease:0,minGapMeters:Infinity,last:null};
 const CORNER_COMPLEX_RECOVERY_V353=Object.freeze({
@@ -6500,10 +6501,16 @@ function visualPassSeparationV366(vehicle,ahead){
   const vehicleVisual=Number(vehicle?.visualLateralOffsetMeters)||0;
   const aheadVisual=Number(ahead?.visualLateralOffsetMeters)||0;
   const lateralMeters=Math.abs(vehicleVisual-aheadVisual);
+  const vehicleIntent=lineOffsetMetersV197(vehicle);
+  const aheadIntent=lineOffsetMetersV197(ahead);
+  const intendedLateralMeters=Math.abs(Number(vehicleIntent)||0-(Number(aheadIntent)||0));
   const requiredMeters=Math.max(1.6,TRACK_BOUNDARY_V271.carHalfWidthMeters*2+TRACK_BOUNDARY_V271.safetyMarginMeters*2+FOLLOWING_STABILITY_V366.lateralSafetyBufferMeters);
   const state=String(vehicle?.battleState||'FOLLOWING');
   const committed=['PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK'].includes(state);
-  return {released:committed&&lateralMeters>=requiredMeters,lateralMeters,requiredMeters,state,committed};
+  const stateMs=Math.max(0,Number(vehicle?.battleStateMs)||0);
+  const visualReady=committed&&lateralMeters>=requiredMeters;
+  const timedPullOutReady=committed&&stateMs>=FOLLOWING_STABILITY_V366.pullOutReleaseHoldMs;
+  return {released:visualReady||timedPullOutReady,lateralMeters,intendedLateralMeters,requiredMeters,state,stateMs,committed,visualReady,timedPullOutReady};
 }
 function stagedHeadwayTargetV366(vehicle,desiredGap,passSeparation){
   const normal=Math.max(NATURAL_HEADWAY_V365.minGapMeters,Number(desiredGap)||NATURAL_HEADWAY_V365.minGapMeters);
