@@ -256,7 +256,7 @@ const laneBandStabilityStateV364={assignments:0,reassignments:0,preservedRaceOrd
 const TRACK_PRESENTATION_V365=Object.freeze({visualWidthScale:FOUR_LANE_TRACK_V360.visualWidthScale,trackStrokeWidth:58});
 const NATURAL_HEADWAY_V365=Object.freeze({
   minGapMeters:8.5,
-  maxGapMeters:28,
+  maxGapMeters:27,
   baseGapMeters:4.5,
   straightTimeGapSeconds:.24,
   brakingTimeGapSeconds:.34,
