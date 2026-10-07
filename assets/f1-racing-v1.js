@@ -292,6 +292,7 @@ const FOLLOWING_STABILITY_V366=Object.freeze({
   pullOutHoldExtraMeters:1.5,
   lateralSafetyBufferMeters:.35,
   minClosingKph:.25,
+  cornerGuardActivationMeters:12,
   pullOutReleaseHoldMs:420
 });
 const followingStabilityTelemetryV366={calls:0,active:0,emergency:0,lateralRelease:0,minGapMeters:Infinity,last:null};
@@ -6566,18 +6567,19 @@ function naturalRaceSpacingControlV366(vehicle,freeTargetKph=NaN){
     return base;
   }
   let result=null;
-  if(gap<controlledGap){
+  const guardGap=Math.min(controlledGap,FOLLOWING_STABILITY_V366.cornerGuardActivationMeters);
+  if(gap<guardGap){
     const emergency=gap<emergencyThreshold;
-    const capKph=emergency?followingOpeningCapV366(aheadSpeed,gap,controlledGap,true):aheadSpeed;
-    result={active:true,capKph,gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,reason:emergency?'FOLLOWING_EMERGENCY_V366':'FOLLOWING_GAP_OPEN_V366',closingKph,phase,passSeparation};
+    const capKph=emergency?followingOpeningCapV366(aheadSpeed,gap,guardGap,true):aheadSpeed;
+    result={active:true,capKph,gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,guardGapMeters:guardGap,reason:emergency?'FOLLOWING_EMERGENCY_V366':'FOLLOWING_GAP_OPEN_V366',closingKph,phase,passSeparation};
     followingStabilityTelemetryV366.active+=1;
     if(emergency)followingStabilityTelemetryV366.emergency+=1;
   }else{
-    const softStart=controlledGap*FOLLOWING_STABILITY_V366.softStartMultiplier;
+    const softStart=guardGap*FOLLOWING_STABILITY_V366.softStartMultiplier;
     if(gap<softStart&&closingKph>FOLLOWING_STABILITY_V366.minClosingKph){
-      const ratio=clamp01V198((gap-controlledGap)/Math.max(1,softStart-controlledGap));
+      const ratio=clamp01V198((gap-guardGap)/Math.max(1,softStart-guardGap));
       const allowance=NATURAL_HEADWAY_V365.approachAllowanceKph*ratio;
-      result={active:true,capKph:aheadSpeed+allowance,gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,reason:'FOLLOWING_LIFT_V366',closingKph,phase,passSeparation};
+      result={active:true,capKph:aheadSpeed+allowance,gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,guardGapMeters:guardGap,reason:'FOLLOWING_LIFT_V366',closingKph,phase,passSeparation};
       followingStabilityTelemetryV366.active+=1;
     }
   }
