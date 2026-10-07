@@ -90,15 +90,19 @@ export function runPhase367F1InteractionDependencyAudit(){
   const cameraBody=bodyBetween(core,'function selectAutoCameraTargetV225(','function raceCameraFocusV216(');
 
   const migrationHazards={
-    battleLinkMissingPitGuard:!battleLinkBody.includes('pitState'),
-    slipstreamMissingPitFilter:!slipstreamBody.includes('pitState'),
+    battleLinkMissingPitGuard:!battleLinkBody.includes('trackInteractionEligibleV369'),
+    slipstreamMissingPitFilter:!slipstreamBody.includes('trackInteractionEligibleV369'),
     trafficUsesOfficialAdjacentStandings:trafficBody.includes('standings[index-1].vehicle')&&trafficBody.includes("String(ahead.pitState||'TRACK')!=='TRACK'"),
     pitExitRestoresPreviousLine:pitExitBody.includes('pitPreviousRacingLineMode'),
     liveMoverMapsToPassCompleted:liveBody.includes("if(isMover)return 'PASS_COMPLETED'"),
     microBattleUsesOfficialStandings:microBody.includes('computeRaceStandingsV191()'),
     cameraBattleUsesIntervalOnly:cameraBody.includes('intervalSeconds')&&!cameraBody.includes('battleState')
   };
-  if(!Object.values(migrationHazards).every(Boolean))issues.push('Phase 367 known migration hazard no longer matches inspected baseline: '+JSON.stringify(migrationHazards));
+  const phase369Present=core.includes("const VERSION369='phase369-f1-pit-interaction-isolation';");
+  const migrationHazardsExpected=phase369Present
+    ?(!migrationHazards.battleLinkMissingPitGuard&&!migrationHazards.slipstreamMissingPitFilter&&!migrationHazards.trafficUsesOfficialAdjacentStandings&&migrationHazards.pitExitRestoresPreviousLine&&migrationHazards.liveMoverMapsToPassCompleted&&migrationHazards.microBattleUsesOfficialStandings&&migrationHazards.cameraBattleUsesIntervalOnly)
+    :Object.values(migrationHazards).every(Boolean);
+  if(!migrationHazardsExpected)issues.push('Phase 367 known migration hazard state unexpected: '+JSON.stringify({phase369Present,migrationHazards}));
 
   const historicalContracts={
     phase319ExclusiveIsolation:phase319.includes('buildBattleLocksV319')&&phase319.includes('battlePairBlockedV319')&&phase319.includes('third-car battle isolation'),

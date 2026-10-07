@@ -154,6 +154,7 @@ const VERSION364='phase364-f1-stable-lane-band-slot-transition';
 const VERSION365='phase365-f1-natural-longitudinal-headway';
 const VERSION366='phase366-f1-following-pause-stability';
 const VERSION368='phase368-f1-interaction-snapshot-shadow';
+const VERSION369='phase369-f1-pit-interaction-isolation';
 const interactionSnapshotStateV368={snapshot:null,builds:0,lastSimTimeMs:0};
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
@@ -2555,6 +2556,114 @@ function qaInteractionSnapshotV368(){
 window.mwsF1GetInteractionSnapshotV368=getInteractionSnapshotV368;
 window.mwsF1QaInteractionSnapshotV368=qaInteractionSnapshotV368;
 window.__mwsF1RacingV368=VERSION368;
+
+function trackInteractionEligibleV369(vehicle){
+  return Boolean(vehicle)&&!Boolean(vehicle.finished)&&String(vehicle.pitState||'TRACK')==='TRACK';
+}
+function trackInteractionVehiclesV369(vehicles=raceMotionV189.vehicles,track=activeRaceSnapshotV187?.track){
+  const list=Array.isArray(vehicles)?vehicles:[];
+  const snapshot=buildInteractionSnapshotV368(list,track);
+  const byId=new Map(list.map(vehicle=>[String(vehicle?.id||''),vehicle]));
+  return snapshot.trackInteractionOrder.map(id=>byId.get(String(id))).filter(trackInteractionEligibleV369);
+}
+function clearAeroWakeV369(vehicle){
+  if(!vehicle)return false;
+  vehicle.carAheadId=null;vehicle.gapToCarAheadMeters=Infinity;
+  vehicle.slipstreamStrength=0;vehicle.slipstreamDragReduction=0;
+  vehicle.slipstreamGapEffect=0;vehicle.slipstreamAlignmentEffect=0;vehicle.slipstreamLateralEffect=0;vehicle.slipstreamStraightEffect=0;
+  vehicle.dirtyAirStrength=0;vehicle.aeroGripMultiplier=1;vehicle.understeerRisk=0;vehicle.slideRisk=0;vehicle.dirtyAirTyreHeatLoad=0;
+  return true;
+}
+function clearTrafficReferenceV369(vehicle,reason='PIT_ENTRY'){
+  if(!vehicle)return false;
+  vehicle.trafficState='CLEAR';vehicle.trafficCarAheadId='';vehicle.trafficGapMeters=Infinity;
+  vehicle.trafficClosingRateKph=0;vehicle.trafficPressure=0;vehicle.trafficThreatFromId='';
+  vehicle.defenceActive=false;vehicle.trafficLineIntent='IDEAL';
+  vehicle.battleState='FOLLOWING';vehicle.battleTargetId='';vehicle.battleStateMs=0;
+  vehicle.battleReason=String(reason||'PIT_ENTRY');vehicle.battleSpeedBiasKph=0;vehicle.battleBlockedV319=false;
+  vehicle.overtakeEligible=false;vehicle.overtakeActive=false;vehicle.overtakeGapSeconds=Infinity;
+  vehicle.attackOpportunityScore=0;vehicle.defenceThreatScore=0;
+  clearAeroWakeV369(vehicle);
+  return true;
+}
+function clearBattleLinksForVehicleV369(driverId){
+  const key=String(driverId||'');
+  const group=document.querySelector('.f1-racing-battle-links-v256');
+  if(!group||!key)return 0;
+  let removed=0;
+  [...group.children].forEach(node=>{
+    const attacker=String(node.dataset?.attackerIdV256||''),target=String(node.dataset?.targetIdV256||'');
+    if(attacker===key||target===key){node.remove();removed+=1}
+  });
+  group.dataset.activeLinksV256=String(group.children.length);
+  return removed;
+}
+function clearPitInteractionStateV369(vehicle,vehicles=raceMotionV189.vehicles,reason='PIT_ENTRY'){
+  if(!vehicle)return {cleared:false,inboundBattleTargets:0,inboundTrafficTargets:0,inboundAeroTargets:0,removedLinks:0};
+  const key=String(vehicle.id||'');
+  clearTrafficReferenceV369(vehicle,reason);
+  vehicle.pitPreviousRacingLineMode='IDEAL';
+  vehicle.chaseBurstTargetIdV275='';
+  let inboundBattleTargets=0,inboundTrafficTargets=0,inboundAeroTargets=0;
+  for(const other of Array.isArray(vehicles)?vehicles:[]){
+    if(!other||other===vehicle)continue;
+    if(String(other.battleTargetId||'')===key){
+      other.battleState='FOLLOWING';other.battleTargetId='';other.battleStateMs=0;other.battleReason='TARGET_'+String(reason||'PIT_ENTRY');
+      other.battleSpeedBiasKph=0;other.battleBlockedV319=false;inboundBattleTargets+=1;
+    }
+    if(String(other.trafficCarAheadId||'')===key){
+      other.trafficState='CLEAR';other.trafficCarAheadId='';other.trafficGapMeters=Infinity;other.trafficClosingRateKph=0;other.trafficPressure=0;
+      other.trafficLineIntent='IDEAL';inboundTrafficTargets+=1;
+    }
+    if(String(other.trafficThreatFromId||'')===key){
+      other.trafficThreatFromId='';other.defenceActive=false;
+    }
+    if(String(other.carAheadId||'')===key){
+      clearAeroWakeV369(other);inboundAeroTargets+=1;
+    }
+    if(String(other.chaseBurstTargetIdV275||'')===key){
+      other.chaseBurstTargetIdV275='';other.chaseBurstLastEndReasonV275='TARGET_'+String(reason||'PIT_ENTRY');
+    }
+  }
+  const removedLinks=clearBattleLinksForVehicleV369(key);
+  return {cleared:true,id:key,inboundBattleTargets,inboundTrafficTargets,inboundAeroTargets,removedLinks};
+}
+function qaPitInteractionIsolationV369(){
+  const synthetic=[
+    {id:'v369-leader',raceProgress:2,progress:0,speedKph:250,pitState:'TRACK',finished:false,driver:{gridPosition:1}},
+    {id:'v369-pit',raceProgress:1.95,progress:.95,speedKph:80,pitState:'PIT_ENTRY',finished:false,driver:{gridPosition:2},
+      battleState:'SIDE_BY_SIDE',battleTargetId:'v369-leader',battleStateMs:900,battleReason:'QA',battleSpeedBiasKph:3,battleBlockedV319:true,
+      trafficState:'PRESSURE',trafficCarAheadId:'v369-leader',trafficGapMeters:8,trafficClosingRateKph:12,trafficPressure:.9,trafficThreatFromId:'v369-follower',defenceActive:true,trafficLineIntent:'ATTACK_INSIDE',
+      carAheadId:'v369-leader',gapToCarAheadMeters:8,slipstreamStrength:.8,slipstreamDragReduction:.1,dirtyAirStrength:.7,aeroGripMultiplier:.9,understeerRisk:.4,slideRisk:.2,dirtyAirTyreHeatLoad:.3,
+      pitPreviousRacingLineMode:'ATTACK_INSIDE',chaseBurstTargetIdV275:'v369-leader'},
+    {id:'v369-follower',raceProgress:1.90,progress:.90,speedKph:248,pitState:'TRACK',finished:false,driver:{gridPosition:3},
+      battleState:'PULLING_OUT',battleTargetId:'v369-pit',battleStateMs:500,battleReason:'QA',battleSpeedBiasKph:2,battleBlockedV319:true,
+      trafficState:'PRESSURE',trafficCarAheadId:'v369-pit',trafficGapMeters:7,trafficClosingRateKph:10,trafficPressure:.8,trafficThreatFromId:'v369-pit',defenceActive:true,trafficLineIntent:'ATTACK_INSIDE',
+      carAheadId:'v369-pit',gapToCarAheadMeters:7,slipstreamStrength:.7,slipstreamDragReduction:.09,dirtyAirStrength:.6,aeroGripMultiplier:.92,understeerRisk:.3,slideRisk:.2,dirtyAirTyreHeatLoad:.2,
+      chaseBurstTargetIdV275:'v369-pit'},
+    {id:'v369-finished',raceProgress:1.85,progress:.85,speedKph:0,pitState:'TRACK',finished:true,driver:{gridPosition:4}}
+  ];
+  const trackVehicles=trackInteractionVehiclesV369(synthetic,{lengthMeters:5000});
+  const trackIds=trackVehicles.map(vehicle=>String(vehicle.id));
+  const filtersPitAndFinished=JSON.stringify(trackIds)===JSON.stringify(['v369-leader','v369-follower']);
+  const cleanup=clearPitInteractionStateV369(synthetic[1],synthetic,'QA_PIT_ENTRY');
+  const pit=synthetic[1],follower=synthetic[2];
+  const pitCleared=pit.battleTargetId===''&&pit.battleState==='FOLLOWING'&&pit.trafficCarAheadId===''&&pit.carAheadId===null&&pit.slipstreamStrength===0&&pit.dirtyAirStrength===0&&pit.pitPreviousRacingLineMode==='IDEAL';
+  const inboundCleared=follower.battleTargetId===''&&follower.battleState==='FOLLOWING'&&follower.trafficCarAheadId===''&&follower.carAheadId===null&&follower.trafficThreatFromId===''&&follower.defenceActive===false&&follower.chaseBurstTargetIdV275==='';
+  const slipSource=String(resolveSlipstreamV198),dirtySource=String(resolveDirtyAirV199),trafficSource=String(updateTrafficAndDefenceV207),pitSource=String(updatePitPostStepV205),linkSource=String(syncBattleLinksV256);
+  const slipGuard=slipSource.includes('trackInteractionEligibleV369(vehicle)')&&slipSource.includes('trackInteractionEligibleV369(candidate)');
+  const dirtyGuard=dirtySource.includes('trackInteractionEligibleV369(vehicle)')&&dirtySource.includes('trackInteractionEligibleV369(ahead)');
+  const trafficTrackOrder=trafficSource.includes('trackInteractionVehiclesV369');
+  const pitEntryCleanup=pitSource.includes("clearPitInteractionStateV369(vehicle,raceMotionV189.vehicles,'PIT_ENTRY')");
+  const battleLinkGuard=linkSource.includes('trackInteractionEligibleV369(attacker)')&&linkSource.includes('trackInteractionEligibleV369(target)');
+  return {version:VERSION369,trackIds,filtersPitAndFinished,cleanup,pitCleared,inboundCleared,slipGuard,dirtyGuard,trafficTrackOrder,pitEntryCleanup,battleLinkGuard,
+    allPass:filtersPitAndFinished&&pitCleared&&inboundCleared&&slipGuard&&dirtyGuard&&trafficTrackOrder&&pitEntryCleanup&&battleLinkGuard};
+}
+window.mwsF1TrackInteractionEligibleV369=trackInteractionEligibleV369;
+window.mwsF1ClearPitInteractionStateV369=clearPitInteractionStateV369;
+window.mwsF1QaPitInteractionIsolationV369=qaPitInteractionIsolationV369;
+window.__mwsF1RacingV369=VERSION369;
+
 function resetRaceOrderFlowV309(vehicles=raceMotionV189.vehicles){
   raceOrderFlowStateV309.lastOrder=(vehicles||[]).slice().sort((a,b)=>Number(b.raceProgress||0)-Number(a.raceProgress||0)).map(v=>String(v.id||''));
   raceOrderFlowStateV309.orderChanges=0;raceOrderFlowStateV309.changedDrivers=0;
@@ -2650,8 +2759,7 @@ function qaLiveTimingFlipV212(){
 }
 function updateRaceStandingsV191(){
   const standings=computeRaceStandingsV191();
-  for(const standing of standings){
-    const vehicle=standing.vehicle;
+  for(const vehicle of raceMotionV189.vehicles){
     vehicle.position=standing.position;
     vehicle.gapProgress=standing.gapProgress;
     vehicle.intervalProgress=standing.intervalProgress;
@@ -2823,9 +2931,9 @@ function syncBattleLinksV256(){
   for(const attacker of raceMotionV189.vehicles){
     const state=String(attacker?.battleState||'FOLLOWING');
     const targetId=String(attacker?.battleTargetId||'');
-    if(!isBattleVisualStateV252(state)||!targetId)continue;
+    if(!trackInteractionEligibleV369(attacker)||!isBattleVisualStateV252(state)||!targetId)continue;
     const target=byId.get(targetId);
-    if(!target||target===attacker)continue;
+    if(!target||target===attacker||!trackInteractionEligibleV369(target))continue;
     const pair=[String(attacker.id),String(target.id)].sort().join('::');
     if(activeKeys.has(pair))continue;
     const segment=battleLinkSegmentV256(attacker,target);
@@ -3965,6 +4073,7 @@ function updatePitPostStepV205(vehicle,previousRaceProgress){
   const current=Number(vehicle.raceProgress)||0;
   if(vehicle.pitState==='TRACK'&&vehicle.pitRequested&&passedTrackProgressV205(previousRaceProgress,current,pit.entry)){
     vehicle.pitState='PIT_ENTRY';
+    clearPitInteractionStateV369(vehicle,raceMotionV189.vehicles,'PIT_ENTRY');
     vehicle.pitEntryRaceProgress=current;
     vehicle.pitServiced=false;
     vehicle.pitHudEnteredAtV361=Number(simClockV192.simTimeMs)||0;
@@ -4302,16 +4411,15 @@ function trafficBattlePhaseV207(vehicle){
 function updateTrafficAndDefenceV207(){
   const track=activeRaceSnapshotV187?.track;
   const length=Math.max(1,Number(track?.lengthMeters)||1);
-  const standings=computeRaceStandingsV191();
+  const trackVehicles=trackInteractionVehiclesV369(raceMotionV189.vehicles,track);
   for(const standing of standings){
     const vehicle=standing.vehicle;
     vehicle.trafficState='CLEAR';vehicle.trafficCarAheadId='';vehicle.trafficGapMeters=Infinity;vehicle.trafficClosingRateKph=0;vehicle.trafficPressure=0;vehicle.trafficThreatFromId='';vehicle.defenceActive=false;vehicle.trafficLineIntent='IDEAL';
     if(String(vehicle.pitState||'TRACK')==='TRACK'&&!vehicle.pitRequested&&['ATTACK_INSIDE','DEFENSIVE_INSIDE'].includes(vehicle.racingLineMode))vehicle.racingLineMode='IDEAL';
   }
-  for(let index=1;index<standings.length;index++){
-    const vehicle=standings[index].vehicle,ahead=standings[index-1].vehicle;
-    if(!vehicle||!ahead||vehicle.finished||ahead.finished)continue;
-    if(String(vehicle.pitState||'TRACK')!=='TRACK'||String(ahead.pitState||'TRACK')!=='TRACK')continue;
+  for(let index=1;index<trackVehicles.length;index++){
+    const vehicle=trackVehicles[index],ahead=trackVehicles[index-1];
+    if(!vehicle||!ahead)continue;
     const gapMeters=Math.max(0,(Number(ahead.raceProgress)-Number(vehicle.raceProgress))*length);
     const closingRateKph=(Number(vehicle.speedKph)||0)-(Number(ahead.speedKph)||0);
     const trackFactor=trackOvertakeFactorV235();
@@ -6107,10 +6215,14 @@ function resolveSlipstreamV198(vehicle,vehicles=raceMotionV189.vehicles){
   if(!vehicle||!track){
     return {carAhead:null,gapMeters:Infinity,strength:0,dragReduction:0,gapEffect:0,alignmentEffect:0,lateralEffect:0,straightEffect:0};
   }
+  if(!trackInteractionEligibleV369(vehicle)){
+    clearAeroWakeV369(vehicle);
+    return {carAhead:null,gapMeters:Infinity,strength:0,dragReduction:0,gapEffect:0,alignmentEffect:0,lateralEffect:0,straightEffect:0};
+  }
   const length=Math.max(1,Number(track.lengthMeters)||1);
   let ahead=null,gapMeters=Infinity;
   for(const candidate of vehicles||[]){
-    if(!candidate||candidate===vehicle)continue;
+    if(!candidate||candidate===vehicle||!trackInteractionEligibleV369(candidate))continue;
     const delta=(Number(candidate.raceProgress)||0)-(Number(vehicle.raceProgress)||0);
     if(!(delta>0))continue;
     const meters=delta*length;
@@ -6163,7 +6275,12 @@ function resolveDirtyAirV199(vehicle,vehicles=raceMotionV189.vehicles){
   if(!vehicle||!track){
     return {carAhead:null,gapMeters:Infinity,strength:0,aeroGripMultiplier:1,understeerRisk:0,slideRisk:0,tyreHeatLoad:0};
   }
-  const ahead=(vehicles||[]).find(v=>String(v?.id||'')===String(vehicle.carAheadId||''))||null;
+  if(!trackInteractionEligibleV369(vehicle)){
+    clearAeroWakeV369(vehicle);
+    return {carAhead:null,gapMeters:Infinity,strength:0,aeroGripMultiplier:1,understeerRisk:0,slideRisk:0,tyreHeatLoad:0};
+  }
+  let ahead=(vehicles||[]).find(v=>String(v?.id||'')===String(vehicle.carAheadId||''))||null;
+  if(ahead&&!trackInteractionEligibleV369(ahead)){vehicle.carAheadId=null;vehicle.gapToCarAheadMeters=Infinity;ahead=null}
   const gapMeters=Math.max(0,Number(vehicle.gapToCarAheadMeters)||Infinity);
   const phase=getCornerPhaseAtProgressV194(vehicle.progress)?.phase||'STRAIGHT';
   const phaseWeight=phase==='BRAKING'?.35:phase==='TURN_IN'?.8:phase==='APEX'?1:phase==='EXIT'?.65:phase==='APPROACH'?.12:0;
