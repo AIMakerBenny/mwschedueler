@@ -10,7 +10,7 @@ export function runPhase370F1CornerTrainSeparationPauseLockAudit(){
     "const VERSION370='phase370-f1-corner-train-separation-pause-lock';",
     'const CORNER_TRAIN_GUARD_V370=Object.freeze({',
     'function strictPassSeparationV370(',
-    'released=base.visualReady===true',
+    'released=base.visualReady===true||physicalIntentReady',
     'function stagedHeadwayTargetV370(',
     'function followingOpeningCapV370(',
     'function naturalRaceSpacingControlV370(',
@@ -31,7 +31,7 @@ export function runPhase370F1CornerTrainSeparationPauseLockAudit(){
   const strictStart=core.indexOf('function strictPassSeparationV370(');
   const strictEnd=core.indexOf('function stagedHeadwayTargetV370(',strictStart);
   const strictSource=strictStart>=0&&strictEnd>strictStart?core.slice(strictStart,strictEnd):'';
-  if(!strictSource.includes('released=base.visualReady===true'))issues.push('Phase 370 timed-only release remains');
+  if(!strictSource.includes('physicalIntentReady')||!strictSource.includes('released=base.visualReady===true||physicalIntentReady'))issues.push('Phase 370 lateral/physical release gate missing');
   if(!core.includes('renderRaceVehiclesV189(simClockV192.paused?0:delta);'))issues.push('Phase 370 resume zero-delta freeze missing');
   for(const token of ['Phase 370 runtime did not propagate to Recovery H browser','Phase 370 corner train separation/pause lock QA failed','cornerTrainV370:cornerTrain370||null'])if(!diag.includes(token))issues.push('Phase 370 Recovery H missing: '+token);
   for(const token of ['node --check scripts/run-phase370-f1-corner-train-separation-pause-lock-audit.mjs','[phase370] F1 corner train separation and pause lock','window.__mwsF1RacingV370=VERSION370;'])if(!workflow.includes(token))issues.push('Phase 370 workflow missing: '+token);

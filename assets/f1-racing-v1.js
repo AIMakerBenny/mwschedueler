@@ -6860,8 +6860,9 @@ function resetFollowingStabilityTelemetryV366(){
 
 function strictPassSeparationV370(vehicle,ahead){
   const base=visualPassSeparationV366(vehicle,ahead);
-  const released=base.visualReady===true;
-  return {...base,released,timedReleaseIgnoredV370:Boolean(base.timedPullOutReady&&!base.visualReady)};
+  const physicalIntentReady=base.committed===true&&Number(base.intendedLateralMeters)>=Number(base.requiredMeters);
+  const released=base.visualReady===true||physicalIntentReady;
+  return {...base,physicalIntentReady,released,timedReleaseIgnoredV370:Boolean(base.timedPullOutReady&&!base.visualReady&&!physicalIntentReady)};
 }
 function stagedHeadwayTargetV370(vehicle,desiredGap,passSeparation){
   const normal=Math.max(NATURAL_HEADWAY_V365.minGapMeters,Number(desiredGap)||NATURAL_HEADWAY_V365.minGapMeters);
@@ -9355,7 +9356,7 @@ function qaCornerTrainSeparationPauseLockV370(){
   const strictRelease=timedSeparation.released===false&&timedSeparation.timedReleaseIgnoredV370===true&&lateralSeparation.released===true;
   const stagedSpacing=followingTarget===20&&closingTarget>=CORNER_TRAIN_GUARD_V370.closingGuardMeters&&preparingTarget>=CORNER_TRAIN_GUARD_V370.preparingGuardMeters&&pullingTarget>=CORNER_TRAIN_GUARD_V370.pullOutGuardMeters;
   const underGapOpens=underGapCap<200&&emergencyCap<underGapCap;
-  const noTimedRelease=controllerSource.includes('strictPassSeparationV370')&&String(strictPassSeparationV370).includes('released=base.visualReady===true');
+  const noTimedRelease=controllerSource.includes('strictPassSeparationV370')&&String(strictPassSeparationV370).includes('physicalIntentReady')&&String(strictPassSeparationV370).includes('released=base.visualReady===true||physicalIntentReady');
   const pauseLocked=renderSource.includes('freezeVisualV366')&&renderSource.includes('if(!freezeVisualV366)updateAutoRaceCameraV216(false)')&&frameSource.includes('renderRaceVehiclesV189(simClockV192.paused?0:delta);')&&pauseSource.includes('raceMotionV189.lastTimestamp=0');
   const directProgressMutation=/\b(?:raceProgress|progress)\s*=/.test(controllerSource);
   return {version:VERSION370,config:{...CORNER_TRAIN_GUARD_V370},timedSeparation,lateralSeparation,targets:{followingTarget,closingTarget,preparingTarget,pullingTarget},caps:{underGapCap:Number(underGapCap.toFixed(2)),emergencyCap:Number(emergencyCap.toFixed(2))},strictRelease,stagedSpacing,underGapOpens,noTimedRelease,pauseLocked,directProgressMutation,telemetry:cornerTrainGuardTelemetrySnapshotV370(),allPass:strictRelease&&stagedSpacing&&underGapOpens&&noTimedRelease&&pauseLocked&&!directProgressMutation};
