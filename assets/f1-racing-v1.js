@@ -2759,7 +2759,8 @@ function qaLiveTimingFlipV212(){
 }
 function updateRaceStandingsV191(){
   const standings=computeRaceStandingsV191();
-  for(const vehicle of raceMotionV189.vehicles){
+  for(const standing of standings){
+    const vehicle=standing.vehicle;
     vehicle.position=standing.position;
     vehicle.gapProgress=standing.gapProgress;
     vehicle.intervalProgress=standing.intervalProgress;
@@ -4412,8 +4413,7 @@ function updateTrafficAndDefenceV207(){
   const track=activeRaceSnapshotV187?.track;
   const length=Math.max(1,Number(track?.lengthMeters)||1);
   const trackVehicles=trackInteractionVehiclesV369(raceMotionV189.vehicles,track);
-  for(const standing of standings){
-    const vehicle=standing.vehicle;
+  for(const vehicle of raceMotionV189.vehicles){
     vehicle.trafficState='CLEAR';vehicle.trafficCarAheadId='';vehicle.trafficGapMeters=Infinity;vehicle.trafficClosingRateKph=0;vehicle.trafficPressure=0;vehicle.trafficThreatFromId='';vehicle.defenceActive=false;vehicle.trafficLineIntent='IDEAL';
     if(String(vehicle.pitState||'TRACK')==='TRACK'&&!vehicle.pitRequested&&['ATTACK_INSIDE','DEFENSIVE_INSIDE'].includes(vehicle.racingLineMode))vehicle.racingLineMode='IDEAL';
   }

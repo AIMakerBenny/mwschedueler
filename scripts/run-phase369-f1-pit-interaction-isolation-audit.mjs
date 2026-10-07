@@ -40,6 +40,9 @@ export function runPhase369F1PitInteractionIsolationAudit(){
   if(!slip.includes('trackInteractionEligibleV369(vehicle)')||!slip.includes('trackInteractionEligibleV369(candidate)'))issues.push('Phase 369 slipstream pit/finished eligibility guard missing');
   if(!dirty.includes('trackInteractionEligibleV369(vehicle)')||!dirty.includes('trackInteractionEligibleV369(ahead)'))issues.push('Phase 369 dirty-air pit/finished eligibility guard missing');
   if(!traffic.includes('trackInteractionVehiclesV369(raceMotionV189.vehicles,track)')||traffic.includes('standings[index-1].vehicle'))issues.push('Phase 369 traffic still depends on official adjacent standings');
+  if(!traffic.includes('for(const vehicle of raceMotionV189.vehicles)')||traffic.includes('for(const standing of standings)'))issues.push('Phase 369 traffic reset loop has stale standings iterator');
+  const standingsBody=bodyBetween(core,'function updateRaceStandingsV191(','function positionDeltaStateV252(');
+  if(!standingsBody.includes('for(const standing of standings)')||!standingsBody.includes('const vehicle=standing.vehicle;'))issues.push('Phase 369 accidentally changed official standings renderer loop');
   if(!pit.includes("clearPitInteractionStateV369(vehicle,raceMotionV189.vehicles,'PIT_ENTRY')"))issues.push('Phase 369 PIT_ENTRY immediate cleanup missing');
   if(!links.includes('trackInteractionEligibleV369(attacker)')||!links.includes('trackInteractionEligibleV369(target)'))issues.push('Phase 369 battle-link pit/finished guard missing');
   for(const token of ['battleTargetId','trafficCarAheadId','carAheadId','trafficThreatFromId','chaseBurstTargetIdV275','clearBattleLinksForVehicleV369'])if(!cleanup.includes(token))issues.push('Phase 369 cleanup missing dependency: '+token);
