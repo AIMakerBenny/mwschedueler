@@ -156,6 +156,7 @@ const VERSION366='phase366-f1-following-pause-stability';
 const VERSION368='phase368-f1-interaction-snapshot-shadow';
 const VERSION369='phase369-f1-pit-interaction-isolation';
 const VERSION370='phase370-f1-corner-train-separation-pause-lock';
+const VERSION371='phase371-f1-physical-pass-clearance';
 const interactionSnapshotStateV368={snapshot:null,builds:0,lastSimTimeMs:0};
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
@@ -6888,6 +6889,14 @@ function followingOpeningCapV370(aheadSpeed,gapMeters,targetGap,emergency=false)
   if(emergency)margin=maxMargin;
   return Math.max(0,(Number(aheadSpeed)||0)-margin);
 }
+function overtakeSpacingClearanceV371(vehicle,ahead,passSeparation){
+  const committed=['PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK'].includes(String(vehicle?.battleState||''));
+  const samePair=String(vehicle?.battleTargetId||'')===String(ahead?.id||'')&&String(ahead?.id||'')!=='';
+  const measured=passSeparation?.visualReady===true;
+  const physicallyCommitted=passSeparation?.physicalIntentReady===true&&Number(passSeparation?.stateMs)>=FOLLOWING_STABILITY_V366.pullOutReleaseHoldMs;
+  const active=Boolean(committed&&samePair&&!vehicle?.battleBlockedV319&&passSeparation?.committed===true&&passSeparation?.released===true&&(measured||physicallyCommitted));
+  return {active,measured,physicallyCommitted,samePair};
+}
 function naturalRaceSpacingControlV370(vehicle,freeTargetKph=NaN){
   const base=naturalRaceSpacingControlV366(vehicle,freeTargetKph);
   if(!vehicle||String(vehicle.pitState||'TRACK')!=='TRACK')return base;
@@ -6904,6 +6913,12 @@ function naturalRaceSpacingControlV370(vehicle,freeTargetKph=NaN){
   if(passSeparation.timedReleaseIgnoredV370)cornerTrainGuardTelemetryV370.timedReleaseRejected+=1;
   if(passSeparation.released){
     cornerTrainGuardTelemetryV370.strictLateralRelease+=1;
+    const passClearanceV371=overtakeSpacingClearanceV371(vehicle,ahead,passSeparation);
+    if(passClearanceV371.active){
+      // A real committed side-by-side pass must not inherit the Phase 365 same-lane emergency speed cap.
+      const passing={active:false,capKph:Infinity,gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,phase,passSeparation,passClearanceV371,reason:'PHYSICAL_PASS_CLEARANCE_V371'};
+      cornerTrainGuardTelemetryV370.last=passing;return passing;
+    }
     cornerTrainGuardTelemetryV370.last={...base,gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,phase,passSeparation,release:'STRICT_LATERAL_RELEASE_V370'};
     return base;
   }
@@ -9364,6 +9379,29 @@ function qaCornerTrainSeparationPauseLockV370(){
 window.mwsF1QaCornerTrainSeparationPauseLockV370=qaCornerTrainSeparationPauseLockV370;
 window.mwsF1GetCornerTrainGuardTelemetryV370=cornerTrainGuardTelemetrySnapshotV370;
 window.__mwsF1RacingV370=VERSION370;
+
+function qaPhysicalPassClearanceV371(){
+  const ahead={id:'qa371-ahead'};
+  const passer={id:'qa371-passer',battleState:'SIDE_BY_SIDE',battleTargetId:ahead.id,battleBlockedV319:false};
+  const measured={released:true,committed:true,visualReady:true,physicalIntentReady:false,stateMs:160};
+  const physical={...measured,visualReady:false,physicalIntentReady:true,stateMs:FOLLOWING_STABILITY_V366.pullOutReleaseHoldMs};
+  const uncommitted={...measured,committed:false};
+  const timedOnly={...measured,visualReady:false,physicalIntentReady:false,stateMs:2000};
+  const allowMeasured=overtakeSpacingClearanceV371(passer,ahead,measured).active;
+  const allowPhysical=overtakeSpacingClearanceV371(passer,ahead,physical).active;
+  const rejectUncommitted=!overtakeSpacingClearanceV371(passer,ahead,uncommitted).active;
+  const rejectTimedOnly=!overtakeSpacingClearanceV371(passer,ahead,timedOnly).active;
+  const rejectBlocked=!overtakeSpacingClearanceV371({...passer,battleBlockedV319:true},ahead,measured).active;
+  const rejectWrongPair=!overtakeSpacingClearanceV371({...passer,battleTargetId:'other'},ahead,measured).active;
+  const rejectFollowing=!overtakeSpacingClearanceV371({...passer,battleState:'FOLLOWING'},ahead,measured).active;
+  const rejectPremature=!overtakeSpacingClearanceV371(passer,ahead,{...physical,stateMs:FOLLOWING_STABILITY_V366.pullOutReleaseHoldMs-1}).active;
+  const source=String(naturalRaceSpacingControlV370);
+  const integrated=source.includes('overtakeSpacingClearanceV371(vehicle,ahead,passSeparation)')&&source.includes('PHYSICAL_PASS_CLEARANCE_V371')&&source.includes('capKph:Infinity');
+  const noForcedProgress=!/\b(?:raceProgress|progress)\s*=/.test(String(overtakeSpacingClearanceV371));
+  return {version:VERSION371,allowMeasured,allowPhysical,rejectUncommitted,rejectTimedOnly,rejectBlocked,rejectWrongPair,rejectFollowing,rejectPremature,integrated,noForcedProgress,allPass:allowMeasured&&allowPhysical&&rejectUncommitted&&rejectTimedOnly&&rejectBlocked&&rejectWrongPair&&rejectFollowing&&rejectPremature&&integrated&&noForcedProgress};
+}
+window.mwsF1QaPhysicalPassClearanceV371=qaPhysicalPassClearanceV371;
+window.__mwsF1RacingV371=VERSION371;
 
 function qaUiVisibilitySpacingV324(){
   const marker=document.querySelector('.f1-racing-race-vehicle-v189');
