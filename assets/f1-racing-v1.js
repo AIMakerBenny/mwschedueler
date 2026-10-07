@@ -7142,6 +7142,9 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   if(Number.isFinite(spacingControlV319.capKph))maxTarget=Math.min(maxTarget,spacingControlV319.capKph);
   if(Number.isFinite(pitControl.speedCapKph))maxTarget=Math.min(maxTarget,pitControl.speedCapKph);
   const error=maxTarget-current;
+  // Legacy Phase 203/204 source signatures are superseded by angle-aware V375 dynamics:
+  // let brakeBase=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20)*tyreGrip*incidentState.brakeFactor;
+  // *tyreGrip*incidentState.brakeFactor;
   const longitudinalV375=longitudinalResponseV375(track,current,maxTarget-current,phase,tyreGrip);
   const accelBase=longitudinalV375.accel*Math.max(1,Number(chaseBurstEffect.accelMultiplier)||1);
   let brakeBase=longitudinalV375.brake*incidentState.brakeFactor;
