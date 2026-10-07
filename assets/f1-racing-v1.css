@@ -892,3 +892,10 @@ body.f1-racing-immersive #f1RacingWorkspaceRecoveryE .f1-racing-workspace-panel-
 .f1-racing-conversation-bubble-v276 .text{color:#f2f6fb;font-size:12px;font-weight:720;line-height:1.42;text-shadow:0 1px 2px rgba(0,0,0,.45)}
 @media(max-width:900px){.f1-racing-conversation-stack-v276{width:min(330px,56%);left:10px;bottom:10px}.f1-racing-conversation-bubble-v276{max-width:92%;font-size:11px}}
 @media(prefers-reduced-motion:reduce){.f1-racing-conversation-stack-v276,.f1-racing-conversation-bubble-v276{transition-duration:.01ms!important}}
+
+
+/* Phase 360: four-lane wide race course */
+#f1RacingRaceTrackGlowV188{stroke:#1b2430;stroke-width:58;opacity:.98;filter:drop-shadow(0 0 6px rgba(2,6,12,.7))}
+#f1RacingRaceTrackPathV188{stroke:rgba(226,232,240,.18);stroke-width:1.35;vector-effect:non-scaling-stroke}
+.f1-racing-race-lane-guides-v360{pointer-events:none}
+.f1-racing-race-lane-guide-v360{fill:none;stroke:rgba(226,232,240,.36);stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}

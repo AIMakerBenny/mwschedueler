@@ -355,6 +355,7 @@ import {runPhase356F1FieldPaceRetentionAudit} from './run-phase356-f1-field-pace
 import {runPhase357F1RankedFieldPaceRetentionAudit} from './run-phase357-f1-ranked-field-pace-retention-audit.mjs';
 import {runPhase358F1CornerSpeedBrakeReleaseCalibrationAudit} from './run-phase358-f1-corner-speed-brake-release-calibration-audit.mjs';
 import {runPhase359F1NaturalRacePacePolishAudit} from './run-phase359-f1-natural-race-pace-polish-audit.mjs';
+import {runPhase360F1FourLaneLongCornerFlowAudit} from './run-phase360-f1-four-lane-long-corner-flow-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2767,5 +2768,6 @@ export function runPhase356FullIntegrationAudit(){const previous=runPhase355Full
 export function runPhase357FullIntegrationAudit(){const previous=runPhase356FullIntegrationAudit(),current=runPhase357F1RankedFieldPaceRetentionAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 357: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 357: '+x)];return {phase:357,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase358FullIntegrationAudit(){const previous=runPhase357FullIntegrationAudit(),current=runPhase358F1CornerSpeedBrakeReleaseCalibrationAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 358: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 358: '+x)];return {phase:358,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase359FullIntegrationAudit(){const previous=runPhase358FullIntegrationAudit(),current=runPhase359F1NaturalRacePacePolishAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 359: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 359: '+x)];return {phase:359,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase359FullIntegrationAudit();}
+export function runPhase360FullIntegrationAudit(){const previous=runPhase359FullIntegrationAudit(),current=runPhase360F1FourLaneLongCornerFlowAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 360: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 360: '+x)];return {phase:360,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase360FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
