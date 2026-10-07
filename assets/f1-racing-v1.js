@@ -188,7 +188,7 @@ const TYRE_DYNAMICS_V343=Object.freeze({
   incidentWearStart:.42,incidentWearScale:.58,
   pitSafeRemainingRatio:.40
 });
-const FINAL_STINT_PIT_ECONOMICS_V374=Object.freeze({maxEvaluationLaps:3.1,criticalRemaining:.14,criticalFlatSpot:.85,criticalThermalDeg:.92,gripLossSecPerLap:10,wearLossSecPerLap:4,flatSpotLossSecPerLap:3,thermalLossSecPerLap:2});
+const FINAL_STINT_PIT_ECONOMICS_V374=Object.freeze({maxEvaluationLaps:3.1,criticalRemaining:.14,criticalFlatSpot:.85,criticalThermalDeg:.92,criticalThermalRemaining:.22,gripLossSecPerLap:12});
 const PIT_STAGGER_V344=Object.freeze({
   minWearToConsider:.60,maxWearThreshold:.78,thresholdSpread:.18,
   hardExtra:.03,softReduction:.02,criticalGrip:.845,criticalFlatSpot:.48,
@@ -4314,8 +4314,9 @@ function finalStintPitEconomicsV374(vehicle,context){
   const flatSpot=clamp01V198(context?.flatSpot);
   const thermalDeg=clamp01V198(context?.thermalDeg);
   const tyreRemaining=Math.max(0,Number(context?.tyreRemaining)||0);
-  const severeDamage=tyreRemaining<cfg.criticalRemaining||flatSpot>=cfg.criticalFlatSpot||thermalDeg>=cfg.criticalThermalDeg;
-  const estimatePerLap=Math.max(0,1-grip)*cfg.gripLossSecPerLap+worn*cfg.wearLossSecPerLap+flatSpot*cfg.flatSpotLossSecPerLap+thermalDeg*cfg.thermalLossSecPerLap;
+  const severeDamage=tyreRemaining<cfg.criticalRemaining||flatSpot>=cfg.criticalFlatSpot||(thermalDeg>=cfg.criticalThermalDeg&&tyreRemaining<cfg.criticalThermalRemaining);
+  // Wear and thermal effects already reduce tyre grip. Do not count them twice when predicting lap-time gain.
+  const estimatePerLap=Math.max(0,1-grip)*cfg.gripLossSecPerLap;
   const projectedBenefitSeconds=remaining*estimatePerLap;
   const pitLossSeconds=Math.max(0,Number(context?.pitLossSeconds)||0);
   const secondStop=(Number(vehicle?.pitStopCount)||0)>=1;
@@ -4384,7 +4385,7 @@ function evaluatePitStrategyV206(vehicle,options={}){
       vehicle.strategyPitRequestedAtLap=currentLap;
       vehicle.strategyPitRequestedAtSimMs=simClockV192.simTimeMs;
       vehicle.pitRequestHistoryV348=Array.isArray(vehicle.pitRequestHistoryV348)?vehicle.pitRequestHistoryV348:[];
-      vehicle.pitRequestHistoryV348.push({lap:currentLap,simTimeMs:Number(simClockV192.simTimeMs)||0,decision:String(decision),compound:String(compound),wear:Number(context.wear),tyreRemaining:Number(context.tyreRemaining),wearThreshold:Number(context.pitWearThreshold),criticalTyre:Boolean(criticalTyre)});
+      vehicle.pitRequestHistoryV348.push({lap:currentLap,simTimeMs:Number(simClockV192.simTimeMs)||0,decision:String(decision),compound:String(compound),wear:Number(context.wear),tyreRemaining:Number(context.tyreRemaining),wearThreshold:Number(context.pitWearThreshold),criticalTyre:Boolean(criticalTyre),remainingLaps:Number(context.remainingLaps),grip:Number(context.grip),flatSpot:Number(context.flatSpot),thermalDeg:Number(context.thermalDeg),pitLossSeconds:Number(context.pitLossSeconds),projectedBenefitSeconds:Number(finalStintEconomicsV374.projectedBenefitSeconds),lateSecondStopAvoid:Boolean(finalStintEconomicsV374.avoid)});
     }
   }
   return {
@@ -8997,6 +8998,7 @@ function finishSpreadBreakdownV373(result){
       finishAtSec:Number((Number(row.finishedAtSimMs)/1000).toFixed(3)),
       pitStops:Number(state.pitStopCount)||0,incidentCount:Number(state.incidentCount)||0,
       pitLaps:(state.pitRequestHistoryV348||[]).map(pit=>Number(pit.lap)||0),
+      pitDecisions:(state.pitRequestHistoryV348||[]).map(pit=>({lap:Number(pit.lap)||0,remainingLaps:Number(pit.remainingLaps)||0,grip:Number(pit.grip)||0,flatSpot:Number(pit.flatSpot)||0,thermalDeg:Number(pit.thermalDeg)||0,tyreRemaining:Number(pit.tyreRemaining)||0,pitLossSeconds:Number(pit.pitLossSeconds)||0,projectedBenefitSeconds:Number(pit.projectedBenefitSeconds)||0})),
       lapTimesSec:lapTimes.map(ms=>Number((Number(ms)/1000).toFixed(3))),
       totalLapSec:Number((lapTimes.reduce((sum,ms)=>sum+(Number(ms)||0),0)/1000).toFixed(3))
     };
@@ -9489,13 +9491,16 @@ function qaFinalStintPitEconomicsV374(){
   const far=finalStintPitEconomicsV374({pitStopCount:1},{...input,remainingLaps:4});
   const severeWear=finalStintPitEconomicsV374({pitStopCount:1},{...input,tyreRemaining:.12});
   const severeDamage=finalStintPitEconomicsV374({pitStopCount:1},{...input,flatSpot:.91});
+  const saturatedThermal=finalStintPitEconomicsV374({pitStopCount:1},{...input,thermalDeg:1});
+  const criticalThermal=finalStintPitEconomicsV374({pitStopCount:1},{...input,thermalDeg:1,tyreRemaining:.18});
   const poorReturn=normal.avoid===true&&normal.projectedBenefitSeconds<normal.pitLossSeconds;
   const preservesFirstStop=first.avoid===false;
   const preservesEarlySecondStop=far.avoid===false;
-  const preservesCriticalStops=severeWear.avoid===false&&severeDamage.avoid===false;
+  const preservesCriticalStops=severeWear.avoid===false&&severeDamage.avoid===false&&criticalThermal.avoid===false;
+  const normalThermalDoesNotForceStop=saturatedThermal.avoid===true;
   const integrated=String(evaluatePitStrategyV206).includes('finalStintPitEconomicsV374(vehicle,context)')&&String(evaluatePitStrategyV206).includes('FINAL_STINT_PIT_COST_HIGH_V374');
   const noProgressMutation=!/\b(?:raceProgress|progress)\s*=/.test(String(finalStintPitEconomicsV374));
-  return {version:VERSION374,config:{...FINAL_STINT_PIT_ECONOMICS_V374},normal,first,far,severeWear,severeDamage,poorReturn,preservesFirstStop,preservesEarlySecondStop,preservesCriticalStops,integrated,noProgressMutation,allPass:poorReturn&&preservesFirstStop&&preservesEarlySecondStop&&preservesCriticalStops&&integrated&&noProgressMutation};
+  return {version:VERSION374,config:{...FINAL_STINT_PIT_ECONOMICS_V374},normal,first,far,severeWear,severeDamage,saturatedThermal,criticalThermal,poorReturn,preservesFirstStop,preservesEarlySecondStop,preservesCriticalStops,normalThermalDoesNotForceStop,integrated,noProgressMutation,allPass:poorReturn&&preservesFirstStop&&preservesEarlySecondStop&&preservesCriticalStops&&normalThermalDoesNotForceStop&&integrated&&noProgressMutation};
 }
 window.mwsF1QaFinalStintPitEconomicsV374=qaFinalStintPitEconomicsV374;
 window.__mwsF1RacingV374=VERSION374;
