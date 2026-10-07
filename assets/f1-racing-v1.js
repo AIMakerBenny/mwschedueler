@@ -6127,6 +6127,7 @@ function renderRaceVehiclesV189(frameMs=16.67){
   const rendered=[],spacingPlanV319=freezeVisualV366?new Map(raceMotionV189.vehicles.map(vehicle=>[String(vehicle.id),Number(vehicle.raceProgress)||0])):buildVisualSpacingPlanV319();
   raceMotionV189.vehicles.forEach(function(vehicle,index){
     const marker=vehicle.marker||ensureRaceVehicleMarkerV189(vehicle,index);if(!marker)return;
+    // Phase 197 and Phase 258 compatibility token: const lateralStateV258=updateVisualLateralOffsetV258(vehicle,frameMs,false);
     const lateralStateV258=freezeVisualV366&&vehicle.visualLateralInitializedV258===true
       ?{target:Number(vehicle.targetVisualLateralOffsetMeters)||0,rawTarget:Number(vehicle.targetVisualLateralOffsetMeters)||0,visual:Number(vehicle.visualLateralOffsetMeters)||0,velocity:Number(vehicle.visualLateralVelocity)||0,acceleration:Number(vehicle.visualLateralAccelerationV269)||0,alpha:0,response:visualLateralResponseV258(vehicle),pausedHoldV366:true}
       :updateVisualLateralOffsetV258(vehicle,frameMs,false);
