@@ -196,7 +196,7 @@ const REAR_BATTLE_BALANCE_V350=Object.freeze({
   farClosingAllowanceKph:1.4,closeClosingAllowanceKph:.55,overlapSpeedMarginKph:1.1,
   blockedCatchupRetention:1.00
 });
-const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.009,fastFormAmplitude:.024,maxFinishSpreadSeconds:48,normalCatchupCapMultiplier:1.25,fastCatchupCapMultiplier:1.45,paceRetentionScale:.08,rankedRearPaceMax:.005,rankedRearPaceExponent:1.20});
+const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.0065,fastFormAmplitude:.024,maxFinishSpreadSeconds:48,normalCatchupCapMultiplier:1.25,fastCatchupCapMultiplier:1.45,paceRetentionScale:.08,rankedRearPaceMax:.005,rankedRearPaceExponent:1.20});
 const CORNER_DRIVING_V351=Object.freeze({
   speedEnvelope:Object.freeze({
     hairpin:Object.freeze({min:75,max:120,entryRetention:.30,brakeScale:1.05,recoveryLead:.34,exitAccel:1.18}),
@@ -284,9 +284,9 @@ const NATURAL_HEADWAY_V365=Object.freeze({
 });
 const naturalHeadwayTelemetryV365={calls:0,active:0,cornerActive:0,emergency:0,minGapMeters:Infinity,maxTargetGapMeters:0,last:null};
 const FOLLOWING_STABILITY_V366=Object.freeze({
-  softStartMultiplier:1.13,
-  underGapMinMarginKph:.30,
-  underGapMaxMarginKph:4.0,
+  softStartMultiplier:1.16,
+  underGapMinMarginKph:.35,
+  underGapMaxMarginKph:6.5,
   prepareBufferMeters:1.25,
   pullOutBufferMeters:1.25,
   pullOutHoldExtraMeters:1.5,
