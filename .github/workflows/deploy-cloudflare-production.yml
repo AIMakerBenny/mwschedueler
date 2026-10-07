@@ -311,6 +311,7 @@ jobs:
           node --check scripts/run-phase364-f1-stable-lane-band-slot-transition-audit.mjs
           node --check scripts/run-phase365-f1-natural-longitudinal-headway-audit.mjs
           node --check scripts/run-phase366-f1-following-pause-stability-audit.mjs
+          node --check scripts/run-phase367-f1-interaction-dependency-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
