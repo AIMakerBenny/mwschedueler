@@ -294,6 +294,7 @@ jobs:
           node --check scripts/run-phase347-f1-live-verifier-compatibility-audit.mjs
           node --check scripts/run-phase348-f1-dynamics-playtest-qa-audit.mjs
           node --check scripts/run-phase349-f1-strict-pit-staggering-audit.mjs
+          node --check scripts/run-phase350-f1-rear-battle-pace-retention-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
@@ -1085,6 +1086,11 @@ jobs:
           grep -Fq "window.__mwsF1RacingV349=VERSION349;" /tmp/f1-racing-v1-phase187.js
           grep -Fq "const safeTyre=pitRemainingGuardV349(context);" /tmp/f1-racing-v1-phase187.js
           grep -Fq "const firstPitLaps=" /tmp/f1-racing-v1-phase187.js
+          echo '[phase350] F1 rear battle pace retention without forced spacing'
+          grep -Fq "window.__mwsF1RacingV350=VERSION350;" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "function battleQueueSpeedControlV350(vehicle){" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "const spacingControlV319=battleQueueSpeedControlV350(vehicle);" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "retainedCatchupV350:true" /tmp/f1-racing-v1-phase187.js
           grep -Fq "if(!setScreenStateV185('TRANSITION'))return false;" /tmp/f1-racing-v1-phase187.js
           grep -Fq 'window.mwsF1StartRaceFromSetupV187=startRaceFromSetupV187;' /tmp/f1-racing-v1-phase187.js
           echo '[phase188] F1 Race Control base frame'

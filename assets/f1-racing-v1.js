@@ -136,6 +136,7 @@ const VERSION345='phase345-f1-competition-fast-race';
 const VERSION346='phase346-f1-race-dynamics-correction';
 const VERSION348='phase348-f1-dynamics-playtest-qa';
 const VERSION349='phase349-f1-strict-pit-staggering';
+const VERSION350='phase350-f1-rear-battle-pace-retention';
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
 const GAME_VARIABILITY_CONFIG_V303=Object.freeze({evaluationMs:650,maxGapMeters:84,attackGapMeters:36,baseBonusKph:1.1,pressureBonusKph:3.2,midfieldBonusKph:.8,failedPassBonusKph:.4,maxFailedPassBonusKph:1.6,momentumBonusKph:1.55,maxTotalBiasKph:14,positionCatchupMaxPct:.045,positionCatchupExponent:1.35,leaderHoldMs:12000,leaderCloseGapSeconds:1.75,leaderClosePenaltyKph:.9,liveCadenceMs:10000});
@@ -172,6 +173,12 @@ const RACE_COMPETITION_V345=Object.freeze({
   NORMAL:Object.freeze({variability:1.62,attackGap:1.42,overtakeReleaseClosingKph:2.7,momentumThreshold:.42,p2ChallengeKph:7.0,leaderPressureKph:4.2,leaderHoldMs:3500}),
   FAST:Object.freeze({variability:2.65,attackGap:1.92,overtakeReleaseClosingKph:1.35,momentumThreshold:.29,p2ChallengeKph:10.5,leaderPressureKph:5.8,leaderHoldMs:1800}),
   fastLaps:3
+});
+const REAR_BATTLE_BALANCE_V350=Object.freeze({
+  activeBattleDirtyAirScale:.68,blockedBattleDirtyAirScale:.78,
+  blockedControlMeters:14,trainControlMeters:9,overlapGuardMeters:3.4,
+  farClosingAllowanceKph:1.2,closeClosingAllowanceKph:.35,overlapSpeedMarginKph:1.1,
+  blockedCatchupRetention:.55
 });
 const RACE_MOMENTUM_CONFIG_V262=Object.freeze({
   min:-1,max:1,paceRange:.02,decayPerSecond:.032,evaluationMs:620,
@@ -2934,7 +2941,7 @@ function runAcceleratedEngineRaceV240(trackId,options={}){
       return {id:row.id,last:String(timingRow?.querySelector('.last')?.textContent||''),best:String(timingRow?.querySelector('.best')?.textContent||''),s1:String(timingRow?.querySelector('.s1')?.textContent||''),s2:String(timingRow?.querySelector('.s2')?.textContent||''),s3:String(timingRow?.querySelector('.s3')?.textContent||'')};
     });
     const finalVehicleStates=raceMotionV189.vehicles.map(vehicle=>({
-      id:String(vehicle.id||''),gridPosition:Number(vehicle.gridPosition)||0,finishPosition:Number(vehicle.finishPosition)||0,
+      id:String(vehicle.id||''),gridPosition:Number(vehicle.gridPosition)||0,finishPosition:Number(vehicle.finishPosition)||0,finishedAtSimMs:Number(vehicle.finishedAtSimMs)||0,
       tyreCompound:String(vehicle.tyreCompound||'MEDIUM'),tyreWear:Number(vehicle.tyreWear)||0,tyreRemaining:Math.max(0,1-(Number(vehicle.tyreWear)||0)),
       pitStopCount:Number(vehicle.pitStopCount)||0,pitLastStopLap:Number(vehicle.pitLastStopLap)||0,
       incidentCount:(Number(vehicle.lockupCount)||0)+(Number(vehicle.understeerCount)||0)+(Number(vehicle.oversteerCount)||0),
@@ -5538,7 +5545,9 @@ function resolveDirtyAirV199(vehicle,vehicles=raceMotionV189.vehicles){
   const gapEffect=clamp01V198(1-(gapMeters-cfg.minGapMeters)/(cfg.maxGapMeters-cfg.minGapMeters));
   const curvature=Math.abs(Number(hereSample?.curvatureRadPerMeter)||0);
   const curvatureEffect=clamp01V198(curvature/0.0022);
-  const strength=clamp01V198(gapEffect*alignmentEffect*lateralEffect*phaseWeight*Math.max(.25,curvatureEffect));
+  const rawStrength=clamp01V198(gapEffect*alignmentEffect*lateralEffect*phaseWeight*Math.max(.25,curvatureEffect));
+  const battleDirtyAirScaleV350=vehicle.battleBlockedV319?REAR_BATTLE_BALANCE_V350.blockedBattleDirtyAirScale:(isBattleActiveV319(vehicle.battleState)?REAR_BATTLE_BALANCE_V350.activeBattleDirtyAirScale:1);
+  const strength=clamp01V198(rawStrength*battleDirtyAirScaleV350);
   const aeroGripMultiplier=1-strength*cfg.maxCornerGripLoss;
   const understeerRisk=strength*cfg.maxUndersteerRisk;
   const slideRisk=strength*cfg.maxSlideRisk;
@@ -5747,6 +5756,30 @@ function battleQueueSpeedControlV319(vehicle){
   }
   return {active:false,capKph:Infinity,gapMeters:gap,reason:''};
 }
+
+function battleQueueSpeedControlV350(vehicle){
+  if(!vehicle||String(vehicle.pitState||'TRACK')!=='TRACK')return {active:false,capKph:Infinity,gapMeters:Infinity,reason:''};
+  const ahead=raceMotionV189.vehicles.find(row=>String(row.id)===String(vehicle.trafficCarAheadId||''))||null;
+  const gap=Math.max(0,Number(vehicle.trafficGapMeters));
+  if(!ahead||!Number.isFinite(gap))return {active:false,capKph:Infinity,gapMeters:gap,reason:''};
+  const aheadSpeed=Math.max(0,Number(ahead.speedKph)||0);
+  const activeWithAhead=isBattleActiveV319(vehicle.battleState)&&String(vehicle.battleTargetId||'')===String(ahead.id)&&!vehicle.battleBlockedV319;
+  if(activeWithAhead)return {active:false,capKph:Infinity,gapMeters:gap,reason:'ACTIVE_BATTLE'};
+  const closingKph=(Number(vehicle.speedKph)||0)-aheadSpeed;
+  const overtakeOpportunity=closingKph>=Math.min(RACE_SPACING_CONFIG_V319.overtakeReleaseClosingKph,raceCompetitionConfigV345().overtakeReleaseClosingKph)&&boundaryOvertakeEligibleV271(vehicle);
+  if(gap<REAR_BATTLE_BALANCE_V350.overlapGuardMeters){
+    return {active:true,capKph:Math.max(0,aheadSpeed-REAR_BATTLE_BALANCE_V350.overlapSpeedMarginKph),gapMeters:gap,reason:'OVERLAP_GUARD_V350',closingKph};
+  }
+  if(vehicle.battleBlockedV319&&gap<REAR_BATTLE_BALANCE_V350.blockedControlMeters){
+    const allowance=gap>REAR_BATTLE_BALANCE_V350.trainControlMeters?REAR_BATTLE_BALANCE_V350.farClosingAllowanceKph:REAR_BATTLE_BALANCE_V350.closeClosingAllowanceKph;
+    return {active:true,capKph:aheadSpeed+allowance,gapMeters:gap,reason:'BATTLE_QUEUE_SOFT_V350',closingKph};
+  }
+  if(!overtakeOpportunity&&gap<REAR_BATTLE_BALANCE_V350.trainControlMeters){
+    return {active:true,capKph:aheadSpeed+REAR_BATTLE_BALANCE_V350.closeClosingAllowanceKph,gapMeters:gap,reason:'TRAIN_HEADWAY_SOFT_V350',closingKph};
+  }
+  return {active:false,capKph:Infinity,gapMeters:gap,reason:''};
+}
+
 function simulateVehicleDynamicsV196(vehicle,stepMs){
   const track=activeRaceSnapshotV187?.track;
   if(!vehicle||!track||!(stepMs>0))return false;
@@ -5807,7 +5840,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   vehicle.trackBoundaryExceededV271=boundaryStateV271.offTrack;
   vehicle.trackBoundarySpeedFactorV271=boundaryStateV271.speedFactor;
   maxTarget*=boundaryStateV271.speedFactor;
-  const spacingControlV319=battleQueueSpeedControlV319(vehicle);
+  const spacingControlV319=battleQueueSpeedControlV350(vehicle);
   vehicle.battleQueueControlV319=spacingControlV319.reason;
   vehicle.battleQueueSpeedCapKphV319=Number.isFinite(spacingControlV319.capKph)?spacingControlV319.capKph:0;
   if(Number.isFinite(spacingControlV319.capKph))maxTarget=Math.min(maxTarget,spacingControlV319.capKph);
@@ -7463,9 +7496,13 @@ function applyGameVariabilityV303(stepMs){
     const follower=standings[i]?.vehicle,ahead=standings[i-1]?.vehicle;
     if(!gameVariabilityEligibleV303(follower)||!gameVariabilityEligibleV303(ahead))continue;
     if(follower.battleBlockedV319){
-      follower.positionCatchupPctV314=0;follower.positionCatchupBonusKphV314=0;
-      follower.variabilitySpeedBiasKphV309=0;follower.variabilityBiasUntilV309=0;follower.battleSpeedBiasKph=Math.min(0,Number(follower.battleSpeedBiasKph)||0);
-      rows.push({id:String(follower.id),position:i+1,gapMeters:Number(Math.max(0,(Number(ahead.raceProgress||0)-Number(follower.raceProgress||0))*trackLength).toFixed(2)),catchupPct:0,biasKph:Number(follower.battleSpeedBiasKph.toFixed(2)),battleBlockedV319:true});
+      const blockedCatchup=positionCatchupBonusV314(follower,i+1,standings.length);
+      const retainedBonus=blockedCatchup.bonusKph*REAR_BATTLE_BALANCE_V350.blockedCatchupRetention*competitionV345.variability;
+      const variabilityCapV345=GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph*(activeRaceModeV345()==='FAST'?1.45:1.15);
+      follower.positionCatchupPctV314=blockedCatchup.pct;follower.positionCatchupBonusKphV314=blockedCatchup.bonusKph;
+      follower.variabilitySpeedBiasKphV309=Math.min(variabilityCapV345,retainedBonus);follower.variabilityBiasUntilV309=now+OVERTAKE_FLOW_CONFIG_V309.variabilityHoldMs;
+      follower.battleSpeedBiasKph=combinedBattleBiasV309(follower,String(follower.battleState||'FOLLOWING'),now);
+      rows.push({id:String(follower.id),position:i+1,gapMeters:Number(Math.max(0,(Number(ahead.raceProgress||0)-Number(follower.raceProgress||0))*trackLength).toFixed(2)),catchupPct:Number((blockedCatchup.pct*100).toFixed(2)),biasKph:Number(follower.battleSpeedBiasKph.toFixed(2)),battleBlockedV319:true,retainedCatchupV350:true});
       continue;
     }
     const gapMeters=Math.max(0,(Number(ahead.raceProgress||0)-Number(follower.raceProgress||0))*trackLength);
@@ -7664,6 +7701,8 @@ function qaDynamicsPlaytestV348(){
   const pitRequests=(normal.finalVehicleStates||[]).flatMap(vehicle=>(vehicle.pitRequestHistoryV348||[]).map(row=>({id:vehicle.id,...row})));
   const pitRequestLaps=[...new Set(pitRequests.map(row=>Number(row.lap)||0).filter(Boolean))].sort((a,b)=>a-b);
   const unsafePitRequests=pitRequests.filter(row=>Number(row.tyreRemaining)>=TYRE_DYNAMICS_V343.pitSafeRemainingRatio);
+  const finishSpreadSeconds=result=>{const times=(result?.resultRows||[]).map(row=>Number(row.finishedAtSimMs)||0).filter(v=>v>0);return times.length>=2?(Math.max(...times)-Math.min(...times))/1000:0};
+  const normalFinishSpreadSeconds=finishSpreadSeconds(normal),fastFinishSpreadSeconds=finishSpreadSeconds(fast);
   const normalPassRate=(Number(normal.telemetry?.totalPasses)||0)/Math.max(1,Number(normal.totalLaps)||10);
   const fastPassRate=(Number(fast.telemetry?.totalPasses)||0)/Math.max(1,Number(fast.totalLaps)||3);
   const normalOrderRate=(Number(normal.telemetry?.orderChanges)||0)/Math.max(1,Number(normal.totalLaps)||10);
@@ -7676,8 +7715,8 @@ function qaDynamicsPlaytestV348(){
   const pitDistributed=pitRequests.length>=2&&pitRequestLaps.length>=2&&firstPitByDriver.length>=2&&firstPitLaps.length>=2;
   return {
     version:VERSION348,
-    normal:{completed:Boolean(normal.completed),laps:Number(normal.totalLaps)||0,passes:Number(normal.telemetry?.totalPasses)||0,orderChanges:Number(normal.telemetry?.orderChanges)||0,driversMovedFromGrid:Number(normal.telemetry?.driversMovedFromGrid)||0,pitStops:Number(normal.telemetry?.pitStops)||0,incidents:Number(normal.telemetry?.incidentCount)||0,passRate:Number(normalPassRate.toFixed(3)),orderChangeRate:Number(normalOrderRate.toFixed(3))},
-    fast:{completed:Boolean(fast.completed),laps:Number(fast.totalLaps)||0,passes:Number(fast.telemetry?.totalPasses)||0,orderChanges:Number(fast.telemetry?.orderChanges)||0,driversMovedFromGrid:Number(fast.telemetry?.driversMovedFromGrid)||0,pitStops:Number(fast.telemetry?.pitStops)||0,incidents:Number(fast.telemetry?.incidentCount)||0,passRate:Number(fastPassRate.toFixed(3)),orderChangeRate:Number(fastOrderRate.toFixed(3))},
+    normal:{completed:Boolean(normal.completed),laps:Number(normal.totalLaps)||0,passes:Number(normal.telemetry?.totalPasses)||0,orderChanges:Number(normal.telemetry?.orderChanges)||0,driversMovedFromGrid:Number(normal.telemetry?.driversMovedFromGrid)||0,pitStops:Number(normal.telemetry?.pitStops)||0,incidents:Number(normal.telemetry?.incidentCount)||0,passRate:Number(normalPassRate.toFixed(3)),orderChangeRate:Number(normalOrderRate.toFixed(3)),finishSpreadSeconds:Number(normalFinishSpreadSeconds.toFixed(3))},
+    fast:{completed:Boolean(fast.completed),laps:Number(fast.totalLaps)||0,passes:Number(fast.telemetry?.totalPasses)||0,orderChanges:Number(fast.telemetry?.orderChanges)||0,driversMovedFromGrid:Number(fast.telemetry?.driversMovedFromGrid)||0,pitStops:Number(fast.telemetry?.pitStops)||0,incidents:Number(fast.telemetry?.incidentCount)||0,passRate:Number(fastPassRate.toFixed(3)),orderChangeRate:Number(fastOrderRate.toFixed(3)),finishSpreadSeconds:Number(fastFinishSpreadSeconds.toFixed(3))},
     pitRequests,pitRequestLaps,firstPitByDriver,firstPitLaps,unsafePitRequests,pitDistributed,fastStronger,normalCompetitive,fastCompetitive,
     allPass:Boolean(normal.completed)&&Boolean(fast.completed)&&Number(normal.totalLaps)===10&&Number(fast.totalLaps)===RACE_COMPETITION_V345.fastLaps&&pitDistributed&&unsafePitRequests.length===0&&normalCompetitive&&fastCompetitive&&fastStronger
   };
@@ -7697,6 +7736,30 @@ function qaStrictPitStaggeringV349(){
 }
 window.mwsF1QaStrictPitStaggeringV349=qaStrictPitStaggeringV349;
 window.__mwsF1RacingV349=VERSION349;
+
+
+function qaRearBattlePaceRetentionV350(){
+  const savedVehicles=raceMotionV189.vehicles;
+  const ahead={id:'v350-ahead',pitState:'TRACK',speedKph:250,raceProgress:1.02};
+  const follower={id:'v350-follower',pitState:'TRACK',speedKph:252,raceProgress:1.01,trafficCarAheadId:ahead.id,trafficGapMeters:80,battleBlockedV319:true,battleState:'CLOSING',battleTargetId:ahead.id,trackBoundaryExceededV271:false};
+  let farBlocked,closeBlocked,overlap;
+  try{
+    raceMotionV189.vehicles=[ahead,follower];
+    farBlocked=battleQueueSpeedControlV350(follower);
+    follower.trafficGapMeters=10;closeBlocked=battleQueueSpeedControlV350(follower);
+    follower.trafficGapMeters=2.5;overlap=battleQueueSpeedControlV350(follower);
+  }finally{raceMotionV189.vehicles=savedVehicles}
+  const activeScale=REAR_BATTLE_BALANCE_V350.activeBattleDirtyAirScale,blockedScale=REAR_BATTLE_BALANCE_V350.blockedBattleDirtyAirScale;
+  const source=String(battleQueueSpeedControlV350);
+  const directPositionMutation=/\b(?:raceProgress|progress)\s*=/.test(source);
+  const softQueue=farBlocked?.active===false&&closeBlocked?.active===true&&Number(closeBlocked.capKph)>Number(ahead.speedKph)&&overlap?.active===true&&Number(overlap.capKph)<Number(ahead.speedKph);
+  return {
+    version:VERSION350,config:{...REAR_BATTLE_BALANCE_V350},farBlocked,closeBlocked,overlap,directPositionMutation,softQueue,
+    allPass:softQueue&&!directPositionMutation&&activeScale>0&&activeScale<1&&blockedScale>activeScale&&blockedScale<=.85&&REAR_BATTLE_BALANCE_V350.blockedCatchupRetention>0&&REAR_BATTLE_BALANCE_V350.blockedCatchupRetention<1
+  };
+}
+window.mwsF1QaRearBattlePaceRetentionV350=qaRearBattlePaceRetentionV350;
+window.__mwsF1RacingV350=VERSION350;
 
 function qaUiVisibilitySpacingV324(){
   const marker=document.querySelector('.f1-racing-race-vehicle-v189');
