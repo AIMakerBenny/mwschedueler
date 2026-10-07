@@ -43,7 +43,7 @@ export function runPhase366F1FollowingPauseStabilityAudit(){
   if(lateralSource.includes('updateCornerLaneOccupancyV361')||lateralSource.includes('applyFourLaneOffsetV360'))issues.push('Phase 366 re-enabled forced lateral dispersion');
 
   const renderStart=core.indexOf('function renderRaceVehiclesV189(');
-  const renderEnd=core.indexOf('function updatePitHudV361(',renderStart);
+  const renderEnd=core.indexOf('function recordScreenCrowdingV363(',renderStart);
   const renderSource=renderStart>=0&&renderEnd>renderStart?core.slice(renderStart,renderEnd):'';
   if(!renderSource.includes('freezeVisualV366')||!renderSource.includes('if(!freezeVisualV366)updateAutoRaceCameraV216(false)'))issues.push('Phase 366 pause render freeze missing');
 
