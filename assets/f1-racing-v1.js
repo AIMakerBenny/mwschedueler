@@ -6355,6 +6355,7 @@ function naturalRaceSpacingControlV365(vehicle){
   const targetIsAhead=String(vehicle.battleTargetId||'')===String(ahead.id);
   const activeWithAhead=isBattleActiveV319(vehicle.battleState)&&targetIsAhead&&!vehicle.battleBlockedV319;
   const approachStateV365=['CLOSING','TOWING'].includes(String(vehicle.battleState||''));
+  const closingCandidateV365=targetIsAhead&&!vehicle.battleBlockedV319&&closingKph>1&&gap<=PASS_CONFIG_V208.followGapMeters;
   const approachAttackIntentV365=targetIsAhead&&approachStateV365&&!vehicle.battleBlockedV319&&gap<=PASS_CONFIG_V208.followGapMeters;
   const overtakeOpportunity=closingKph>=Math.min(RACE_SPACING_CONFIG_V319.overtakeReleaseClosingKph,raceCompetitionConfigV345().overtakeReleaseClosingKph)&&boundaryOvertakeEligibleV271(vehicle);
   naturalHeadwayTelemetryV365.calls+=1;
@@ -6364,8 +6365,8 @@ function naturalRaceSpacingControlV365(vehicle){
     const result={active:true,capKph:Math.max(0,aheadSpeed-NATURAL_HEADWAY_V365.emergencyMarginKph),gapMeters:gap,desiredGapMeters:desiredGap,reason:'NATURAL_EMERGENCY_V365',closingKph,phase};
     naturalHeadwayTelemetryV365.active+=1;naturalHeadwayTelemetryV365.emergency+=1;naturalHeadwayTelemetryV365.last=result;return result;
   }
-  if(activeWithAhead||approachAttackIntentV365||overtakeOpportunity){
-    const release=activeWithAhead?'ACTIVE_BATTLE':approachAttackIntentV365?'APPROACH_ATTACK':'OVERTAKE_RELEASE';
+  if(activeWithAhead||approachAttackIntentV365||closingCandidateV365||overtakeOpportunity){
+    const release=activeWithAhead?'ACTIVE_BATTLE':approachAttackIntentV365?'APPROACH_ATTACK':closingCandidateV365?'CLOSING_CANDIDATE':'OVERTAKE_RELEASE';
     naturalHeadwayTelemetryV365.last={...legacy,desiredGapMeters:desiredGap,phase,release};
     return legacy;
   }
@@ -8744,7 +8745,7 @@ function qaNaturalLongitudinalHeadwayV365(){
   const straightTargets=[naturalHeadwayTargetV365(low,lowAhead,straight),naturalHeadwayTargetV365(mid,midAhead,straight),naturalHeadwayTargetV365(high,highAhead,straight)];
   const apexTarget=naturalHeadwayTargetV365(mid,midAhead,apex);
   const attackReleaseSource=String(naturalRaceSpacingControlV365);
-  const attackApproachRelease=attackReleaseSource.includes("['CLOSING','TOWING']")&&attackReleaseSource.includes("APPROACH_ATTACK");
+  const attackApproachRelease=attackReleaseSource.includes("['CLOSING','TOWING']")&&attackReleaseSource.includes("APPROACH_ATTACK")&&attackReleaseSource.includes('CLOSING_CANDIDATE');
   const source=attackReleaseSource+String(naturalHeadwayTargetV365)+String(updateVisualLateralOffsetV258)+String(raceLinePointV197);
   const directPositionMutation=/\b(?:raceProgress|progress)\s*=/.test(source);
   const lateralRuntimeClean=!String(updateVisualLateralOffsetV258).includes('updateCornerLaneOccupancyV361')&&!String(updateVisualLateralOffsetV258).includes('applyFourLaneOffsetV360');
