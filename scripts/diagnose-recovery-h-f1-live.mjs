@@ -332,7 +332,7 @@ try{
   if(!phase332Ready)throw new Error('Phase 332 runtime did not propagate to Recovery H browser');
   if(!phase333Ready)throw new Error('Phase 333 runtime did not propagate to Recovery H browser');
 
-  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase339Ready=false,phase340Ready=false,phase341Ready=false,phase342Ready=false,phase343Ready=false,phase344Ready=false,phase345Ready=false,phase346Ready=false,phase348Ready=false,phase349Ready=false,phase350Ready=false,phase351Ready=false,phase352Ready=false,phase353Ready=false,phase354Ready=false,phase355Ready=false,phase356Ready=false,phase357Ready=false,phase358Ready=false,phase359Ready=false,phase360Ready=false,phase361Ready=false,phase362Ready=false;
+  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase339Ready=false,phase340Ready=false,phase341Ready=false,phase342Ready=false,phase343Ready=false,phase344Ready=false,phase345Ready=false,phase346Ready=false,phase348Ready=false,phase349Ready=false,phase350Ready=false,phase351Ready=false,phase352Ready=false,phase353Ready=false,phase354Ready=false,phase355Ready=false,phase356Ready=false,phase357Ready=false,phase358Ready=false,phase359Ready=false,phase360Ready=false,phase361Ready=false,phase362Ready=false,phase363Ready=false;
   for(let attempt=0;attempt<8;attempt++){
     const readiness=await evaluate(cdp,`({
       p335:window.__mwsF1RacingV335==='phase335-f1-actual-track-spacing'&&typeof window.mwsF1QaActualTrackSpacingV335==='function',
@@ -361,11 +361,12 @@ try{
       p359:window.__mwsF1RacingV359==='phase359-f1-natural-race-pace-polish'&&typeof window.mwsF1QaNaturalRacePacePolishV359==='function',
       p360:window.__mwsF1RacingV360==='phase360-f1-four-lane-long-corner-flow'&&typeof window.mwsF1QaFourLaneTrackV360==='function',
       p361:window.__mwsF1RacingV361==='phase361-f1-corner-lane-occupancy-pit-hud'&&typeof window.mwsF1QaCornerLaneOccupancyV361==='function'&&typeof window.mwsF1QaPitHudV361==='function',
-      p362:window.__mwsF1RacingV362==='phase362-f1-visible-corner-lane-separation'&&typeof window.mwsF1QaVisibleCornerLaneSeparationV362==='function'
+      p362:window.__mwsF1RacingV362==='phase362-f1-visible-corner-lane-separation'&&typeof window.mwsF1QaVisibleCornerLaneSeparationV362==='function',
+      p363:window.__mwsF1RacingV363==='phase363-f1-lane-band-crowding-guard'&&typeof window.mwsF1QaLaneBandCrowdingGuardV363==='function'&&typeof window.mwsF1GetScreenCrowdingV363==='function'
     })`,"Phase 335-346 runtime readiness");
     phase335Ready=Boolean(readiness?.p335);phase336Ready=Boolean(readiness?.p336);phase337Ready=Boolean(readiness?.p337);
-    phase338Ready=Boolean(readiness?.p338);phase339Ready=Boolean(readiness?.p339);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);phase342Ready=Boolean(readiness?.p342);phase343Ready=Boolean(readiness?.p343);phase344Ready=Boolean(readiness?.p344);phase345Ready=Boolean(readiness?.p345);phase346Ready=Boolean(readiness?.p346);phase348Ready=Boolean(readiness?.p348);phase349Ready=Boolean(readiness?.p349);phase350Ready=Boolean(readiness?.p350);phase351Ready=Boolean(readiness?.p351);phase352Ready=Boolean(readiness?.p352);phase353Ready=Boolean(readiness?.p353);phase354Ready=Boolean(readiness?.p354);phase355Ready=Boolean(readiness?.p355);phase356Ready=Boolean(readiness?.p356);phase357Ready=Boolean(readiness?.p357);phase358Ready=Boolean(readiness?.p358);phase359Ready=Boolean(readiness?.p359);phase360Ready=Boolean(readiness?.p360);phase361Ready=Boolean(readiness?.p361);phase362Ready=Boolean(readiness?.p362);
-    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase339Ready&&phase340Ready&&phase341Ready&&phase342Ready&&phase343Ready&&phase344Ready&&phase345Ready&&phase346Ready&&phase348Ready&&phase349Ready&&phase350Ready&&phase351Ready&&phase352Ready&&phase353Ready&&phase354Ready&&phase355Ready&&phase356Ready&&phase357Ready&&phase358Ready&&phase359Ready&&phase360Ready&&phase361Ready&&phase362Ready)break;
+    phase338Ready=Boolean(readiness?.p338);phase339Ready=Boolean(readiness?.p339);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);phase342Ready=Boolean(readiness?.p342);phase343Ready=Boolean(readiness?.p343);phase344Ready=Boolean(readiness?.p344);phase345Ready=Boolean(readiness?.p345);phase346Ready=Boolean(readiness?.p346);phase348Ready=Boolean(readiness?.p348);phase349Ready=Boolean(readiness?.p349);phase350Ready=Boolean(readiness?.p350);phase351Ready=Boolean(readiness?.p351);phase352Ready=Boolean(readiness?.p352);phase353Ready=Boolean(readiness?.p353);phase354Ready=Boolean(readiness?.p354);phase355Ready=Boolean(readiness?.p355);phase356Ready=Boolean(readiness?.p356);phase357Ready=Boolean(readiness?.p357);phase358Ready=Boolean(readiness?.p358);phase359Ready=Boolean(readiness?.p359);phase360Ready=Boolean(readiness?.p360);phase361Ready=Boolean(readiness?.p361);phase362Ready=Boolean(readiness?.p362);phase363Ready=Boolean(readiness?.p363);
+    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase339Ready&&phase340Ready&&phase341Ready&&phase342Ready&&phase343Ready&&phase344Ready&&phase345Ready&&phase346Ready&&phase348Ready&&phase349Ready&&phase350Ready&&phase351Ready&&phase352Ready&&phase353Ready&&phase354Ready&&phase355Ready&&phase356Ready&&phase357Ready&&phase358Ready&&phase359Ready&&phase360Ready&&phase361Ready&&phase362Ready&&phase363Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
     await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v358=${Date.now()}-${attempt}`});
     await refreshed;await sleep(1200);
@@ -397,6 +398,7 @@ try{
   if(!phase360Ready)throw new Error('Phase 360 runtime did not propagate to Recovery H browser');
   if(!phase361Ready)throw new Error('Phase 361 runtime did not propagate to Recovery H browser');
   if(!phase362Ready)throw new Error('Phase 362 runtime did not propagate to Recovery H browser');
+  if(!phase363Ready)throw new Error('Phase 363 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -1360,6 +1362,9 @@ try{
     assert(pitHud361?.allPass===true&&pitHud361?.stacked===true,'Phase 361 PIT HUD QA failed: '+JSON.stringify(pitHud361));
     const laneSeparation362=window.mwsF1QaVisibleCornerLaneSeparationV362?.();
     assert(laneSeparation362?.allPass===true&&Number(laneSeparation362?.denseGapSvg)>=30,'Phase 362 visible lane separation QA failed: '+JSON.stringify(laneSeparation362));
+    const laneBand363=window.mwsF1QaLaneBandCrowdingGuardV363?.();
+    assert(laneBand363?.allPass===true&&Number(laneBand363?.pairBandGapSvg)>Number(laneBand363?.pairMarkerDiameter),'Phase 363 lane band crowding guard QA failed: '+JSON.stringify(laneBand363));
+    const screenCrowding363=window.mwsF1GetScreenCrowdingV363?.();
     const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]');
     const title=commentary?.querySelector('[data-f1-panel-drag="commentary"]');
     assert(title,'Commentary drag handle missing');
@@ -1556,6 +1561,8 @@ try{
       cornerLaneV361:cornerLane361||null,
       pitHudV361:pitHud361||null,
       laneSeparationV362:laneSeparation362||null,
+      laneBandV363:laneBand363||null,
+      screenCrowdingV363:screenCrowding363||null,
       dynamicsPlaytestV348:dynamicsPlaytest348||null,
       raceMomentumV262:{
         gridFinishCorrelation:Number(momentumBenchmark262?.gridFinishCorrelation)||0,
