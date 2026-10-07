@@ -276,6 +276,8 @@ const NATURAL_HEADWAY_V365=Object.freeze({
   attackReleaseGapMeters:48,
   attackSlipstreamRelease:.08,
   cornerClosingReleaseKph:.65,
+  cornerPaceReleaseKph:.35,
+  cornerSlipstreamRelease:.04,
   cornerOnly:true
 });
 const naturalHeadwayTelemetryV365={calls:0,active:0,cornerActive:0,emergency:0,minGapMeters:Infinity,maxTargetGapMeters:0,last:null};
@@ -6389,6 +6391,10 @@ function naturalRaceSpacingControlV365(vehicle,freeTargetKph=NaN){
   }
   const cornerHeadwayPhaseV365=phase==='TURN_IN'||phase==='APEX'||phase==='EXIT';
   const cornerClosingReleaseV365=cornerHeadwayPhaseV365&&!vehicle.battleBlockedV319&&gap<=PASS_CONFIG_V208.followGapMeters&&closingKph>=NATURAL_HEADWAY_V365.cornerClosingReleaseKph&&boundaryOvertakeEligibleV271(vehicle);
+  const cornerPaceReleaseV365=cornerHeadwayPhaseV365&&!vehicle.battleBlockedV319&&gap<=PASS_CONFIG_V208.followGapMeters*1.15&&boundaryOvertakeEligibleV271(vehicle)&&(
+    freePaceAdvantageV365>=NATURAL_HEADWAY_V365.cornerPaceReleaseKph||
+    Number(vehicle.slipstreamStrength||0)>=NATURAL_HEADWAY_V365.cornerSlipstreamRelease
+  );
   if(!cornerHeadwayPhaseV365){
     const release={...legacy,desiredGapMeters:desiredGap,phase,release:'OPEN_RACE_FLOW_V365'};
     naturalHeadwayTelemetryV365.last=release;return legacy;
@@ -6399,6 +6405,10 @@ function naturalRaceSpacingControlV365(vehicle,freeTargetKph=NaN){
   }
   if(cornerClosingReleaseV365){
     const release={active:false,capKph:Infinity,gapMeters:gap,desiredGapMeters:desiredGap,reason:'CORNER_CLOSING_RELEASE_V365',closingKph,phase};
+    naturalHeadwayTelemetryV365.last=release;return release;
+  }
+  if(cornerPaceReleaseV365){
+    const release={active:false,capKph:Infinity,gapMeters:gap,desiredGapMeters:desiredGap,reason:'CORNER_PACE_RELEASE_V365',closingKph,phase,freePaceAdvantageKph:freePaceAdvantageV365};
     naturalHeadwayTelemetryV365.last=release;return release;
   }
   if(genuineClosingReleaseV365){
@@ -8790,13 +8800,14 @@ function qaNaturalLongitudinalHeadwayV365(){
   const naturalAttackRelease=attackReleaseSource.includes('NATURAL_ATTACK_RELEASE_V365')&&attackReleaseSource.includes('freePaceAdvantageV365')&&attackReleaseSource.includes('battleOpenV365')&&attackReleaseSource.includes('attackSlipstreamRelease');
   const cornerOnlyHeadway=attackReleaseSource.includes("phase==='TURN_IN'||phase==='APEX'||phase==='EXIT'")&&attackReleaseSource.includes('OPEN_RACE_FLOW_V365');
   const cornerClosingRelease=attackReleaseSource.includes('CORNER_CLOSING_RELEASE_V365')&&attackReleaseSource.includes('cornerClosingReleaseKph');
+  const cornerPaceRelease=attackReleaseSource.includes('CORNER_PACE_RELEASE_V365')&&attackReleaseSource.includes('cornerPaceReleaseKph')&&attackReleaseSource.includes('cornerSlipstreamRelease');
   const source=attackReleaseSource+String(naturalHeadwayTargetV365)+String(updateVisualLateralOffsetV258)+String(raceLinePointV197);
   const directPositionMutation=/\b(?:raceProgress|progress)\s*=/.test(source);
   const lateralRuntimeClean=!String(updateVisualLateralOffsetV258).includes('updateCornerLaneOccupancyV361')&&!String(updateVisualLateralOffsetV258).includes('applyFourLaneOffsetV360');
   const markerRuntimeClean=!String(raceMarkerTransformV245).includes('markerDensityScaleV361')&&!String(raceMarkerTransformV245).includes('markerBandScaleV363');
   const presentationRestored=String(raceLinePointV197).includes('TRACK_PRESENTATION_V365.visualWidthScale')&&String(offsetTrackPathDataV360).includes('TRACK_PRESENTATION_V365.visualWidthScale');
-  return {version:VERSION365,config:{...NATURAL_HEADWAY_V365},trackPresentation:{...TRACK_PRESENTATION_V365},straightTargets:straightTargets.map(v=>Number(v.toFixed(2))),apexTarget:Number(apexTarget.toFixed(2)),attackApproachRelease,naturalAttackRelease,cornerOnlyHeadway,cornerClosingRelease,directPositionMutation,lateralRuntimeClean,markerRuntimeClean,presentationRestored,telemetry:naturalHeadwayTelemetrySnapshotV365(),
-    allPass:straightTargets[0]<straightTargets[1]&&straightTargets[1]<straightTargets[2]&&apexTarget>straightTargets[1]&&attackApproachRelease&&naturalAttackRelease&&cornerOnlyHeadway&&cornerClosingRelease&&!directPositionMutation&&lateralRuntimeClean&&markerRuntimeClean&&presentationRestored&&TRACK_PRESENTATION_V365.trackStrokeWidth===58};
+  return {version:VERSION365,config:{...NATURAL_HEADWAY_V365},trackPresentation:{...TRACK_PRESENTATION_V365},straightTargets:straightTargets.map(v=>Number(v.toFixed(2))),apexTarget:Number(apexTarget.toFixed(2)),attackApproachRelease,naturalAttackRelease,cornerOnlyHeadway,cornerClosingRelease,cornerPaceRelease,directPositionMutation,lateralRuntimeClean,markerRuntimeClean,presentationRestored,telemetry:naturalHeadwayTelemetrySnapshotV365(),
+    allPass:straightTargets[0]<straightTargets[1]&&straightTargets[1]<straightTargets[2]&&apexTarget>straightTargets[1]&&attackApproachRelease&&naturalAttackRelease&&cornerOnlyHeadway&&cornerClosingRelease&&cornerPaceRelease&&!directPositionMutation&&lateralRuntimeClean&&markerRuntimeClean&&presentationRestored&&TRACK_PRESENTATION_V365.trackStrokeWidth===58};
 }
 window.mwsF1QaNaturalLongitudinalHeadwayV365=qaNaturalLongitudinalHeadwayV365;
 window.mwsF1GetNaturalHeadwayTelemetryV365=naturalHeadwayTelemetrySnapshotV365;
