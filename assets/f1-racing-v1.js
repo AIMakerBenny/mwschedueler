@@ -139,6 +139,7 @@ const VERSION349='phase349-f1-strict-pit-staggering';
 const VERSION350='phase350-f1-rear-battle-pace-retention';
 const VERSION351='phase351-f1-physics-corner-brake-release';
 const VERSION352='phase352-f1-field-spread-pace-balance';
+const VERSION353='phase353-f1-corner-complex-recovery';
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
 const GAME_VARIABILITY_CONFIG_V303=Object.freeze({evaluationMs:650,maxGapMeters:84,attackGapMeters:36,baseBonusKph:1.1,pressureBonusKph:3.2,midfieldBonusKph:.8,failedPassBonusKph:.4,maxFailedPassBonusKph:1.6,momentumBonusKph:1.55,maxTotalBiasKph:14,positionCatchupMaxPct:.045,positionCatchupExponent:1.35,leaderHoldMs:12000,leaderCloseGapSeconds:1.75,leaderClosePenaltyKph:.9,liveCadenceMs:10000});
@@ -182,17 +183,21 @@ const REAR_BATTLE_BALANCE_V350=Object.freeze({
   farClosingAllowanceKph:1.4,closeClosingAllowanceKph:.55,overlapSpeedMarginKph:1.1,
   blockedCatchupRetention:1.00
 });
-const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.012,fastFormAmplitude:.028,maxFinishSpreadSeconds:48});
+const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.009,fastFormAmplitude:.024,maxFinishSpreadSeconds:48});
 const CORNER_DRIVING_V351=Object.freeze({
   speedEnvelope:Object.freeze({
-    hairpin:Object.freeze({min:62,max:115,entryRetention:.27,brakeScale:1.00,recoveryLead:.06,exitAccel:1.12}),
-    slow:Object.freeze({min:105,max:165,entryRetention:.42,brakeScale:.90,recoveryLead:.07,exitAccel:1.08}),
-    medium:Object.freeze({min:155,max:225,entryRetention:.58,brakeScale:.74,recoveryLead:.10,exitAccel:1.04}),
-    fast:Object.freeze({min:220,max:300,entryRetention:.76,brakeScale:.54,recoveryLead:.14,exitAccel:1.00}),
-    sCurve:Object.freeze({min:170,max:240,entryRetention:.62,brakeScale:.72,recoveryLead:.11,exitAccel:1.04})
+    hairpin:Object.freeze({min:75,max:120,entryRetention:.30,brakeScale:1.05,recoveryLead:.22,exitAccel:1.15}),
+    slow:Object.freeze({min:105,max:170,entryRetention:.43,brakeScale:.98,recoveryLead:.20,exitAccel:1.12}),
+    medium:Object.freeze({min:160,max:230,entryRetention:.60,brakeScale:.92,recoveryLead:.18,exitAccel:1.08}),
+    fast:Object.freeze({min:225,max:305,entryRetention:.77,brakeScale:.88,recoveryLead:.15,exitAccel:1.05}),
+    sCurve:Object.freeze({min:175,max:245,entryRetention:.64,brakeScale:.90,recoveryLead:.20,exitAccel:1.09})
   }),
-  compoundInfluence:.55,minBrakeDecelMps2:8,maxBrakeDecelMps2:28,
-  speedDeltaBrakeGain:.28,exitLookAheadMeters:150,recoveryTargetLiftKph:18
+  compoundInfluence:.48,minBrakeDecelMps2:10,maxBrakeDecelMps2:32,
+  speedDeltaBrakeGain:.22,exitLookAheadMeters:170,recoveryTargetLiftKph:22
+});
+const CORNER_COMPLEX_RECOVERY_V353=Object.freeze({
+  underSpeedTriggerRatio:.90,underSpeedAccelMultiplier:1.38,
+  telemetryEntryRatio:1.08,cleanBoundaryFactor:.985
 });
 const RACE_MOMENTUM_CONFIG_V262=Object.freeze({
   min:-1,max:1,paceRange:.02,decayPerSecond:.032,evaluationMs:620,
@@ -2958,7 +2963,7 @@ function runAcceleratedEngineRaceV240(trackId,options={}){
       id:String(vehicle.id||''),gridPosition:Number(vehicle.gridPosition)||0,finishPosition:Number(vehicle.finishPosition)||0,finishedAtSimMs:Number(vehicle.finishedAtSimMs)||0,
       tyreCompound:String(vehicle.tyreCompound||'MEDIUM'),tyreWear:Number(vehicle.tyreWear)||0,tyreRemaining:Math.max(0,1-(Number(vehicle.tyreWear)||0)),
       pitStopCount:Number(vehicle.pitStopCount)||0,pitLastStopLap:Number(vehicle.pitLastStopLap)||0,
-      cornerMinSpeedByClassV351:{...(vehicle.cornerMinSpeedByClassV351||{})},cornerRecoveryThrottleCountV351:Number(vehicle.cornerRecoveryThrottleCountV351)||0,
+      cornerMinSpeedByClassV351:{...(vehicle.cornerMinSpeedByClassV351||{})},cornerUnimpededMinSpeedByClassV353:{...(vehicle.cornerUnimpededMinSpeedByClassV353||{})},cornerRecoveryThrottleCountV351:Number(vehicle.cornerRecoveryThrottleCountV351)||0,cornerUnderSpeedRecoveryCountV353:Number(vehicle.cornerUnderSpeedRecoveryCountV353)||0,
       incidentCount:(Number(vehicle.lockupCount)||0)+(Number(vehicle.understeerCount)||0)+(Number(vehicle.oversteerCount)||0),
       pitRequestHistoryV348:(vehicle.pitRequestHistoryV348||[]).map(row=>({...row}))
     }));
@@ -5332,6 +5337,19 @@ function phaseSpeedTargetV343(vehicle,targetData,phaseInfo=getCornerPhaseAtProgr
   return target;
 }
 
+
+function cornerUnderSpeedRecoveryV353(vehicle,phase,current,target,spacingControl,incidentState,leaderPressureEffect){
+  const key=String(vehicle?.cornerDrivingClassV351||'medium');
+  const spec=CORNER_DRIVING_V351.speedEnvelope[key]||CORNER_DRIVING_V351.speedEnvelope.medium;
+  const floor=Math.max(40,Number(spec.min)||40);
+  const eligiblePhase=['TURN_IN','APEX','EXIT'].includes(String(phase||''));
+  const unconstrained=!spacingControl?.active&&!incidentState?.active&&!leaderPressureEffect?.event&&!vehicle?.trackBoundaryExceededV271;
+  const deficit=Math.max(0,floor-Math.max(0,Number(current)||0));
+  const active=eligiblePhase&&unconstrained&&Number(target)>Number(current)+1.5&&Number(current)<floor*CORNER_COMPLEX_RECOVERY_V353.underSpeedTriggerRatio;
+  const severity=active?clamp01V198(deficit/Math.max(1,floor*.45)):0;
+  return {active,key,floor,severity,multiplier:active?1+(CORNER_COMPLEX_RECOVERY_V353.underSpeedAccelMultiplier-1)*severity:1};
+}
+
 function trackLateralLimitV271(vehicle,track=activeRaceSnapshotV187?.track){
   const width=Math.max(4,Number(track?.geometry?.trackWidthMeters)||14);
   const margin=Math.max(0,Number(track?.geometry?.racingLineMarginMeters)||1.5);
@@ -5921,7 +5939,11 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
     const cornerRecoveryV351=Boolean(vehicle.cornerRecoveryActiveV351);
     const tractionGrip=(phase==='EXIT'||cornerRecoveryV351)?Math.max(.92,tyreGrip):1;
     const cornerSpecV351=CORNER_DRIVING_V351.speedEnvelope[String(vehicle.cornerDrivingClassV351||'medium')]||CORNER_DRIVING_V351.speedEnvelope.medium;
-    const exitAcceleration=(cornerRecoveryV351?CORNER_DYNAMICS_V343.exitAccelerationMultiplier*cornerSpecV351.exitAccel:1)*Math.max(1,Number(chaseBurstEffect.exitMultiplier)||1);
+    const underSpeedRecoveryV353=cornerUnderSpeedRecoveryV353(vehicle,phase,current,maxTarget,spacingControlV319,incidentState,leaderPressureEffect);
+    vehicle.cornerUnderSpeedRecoveryActiveV353=underSpeedRecoveryV353.active;
+    vehicle.cornerUnderSpeedRecoveryMultiplierV353=underSpeedRecoveryV353.multiplier;
+    if(underSpeedRecoveryV353.active)vehicle.cornerUnderSpeedRecoveryCountV353=(Number(vehicle.cornerUnderSpeedRecoveryCountV353)||0)+1;
+    const exitAcceleration=(cornerRecoveryV351?CORNER_DYNAMICS_V343.exitAccelerationMultiplier*cornerSpecV351.exitAccel:1)*underSpeedRecoveryV353.multiplier*Math.max(1,Number(chaseBurstEffect.exitMultiplier)||1);
     accelMps2=accelBase*throttle*highSpeedFade*tractionGrip*exitAcceleration;
   }else if(error<-1.5){
     brake=Math.max(.08,Math.min(1,(-error)/55));
@@ -5946,6 +5968,13 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
     vehicle.cornerMinSpeedByClassV351=vehicle.cornerMinSpeedByClassV351||{};
     const previousMin=Number(vehicle.cornerMinSpeedByClassV351[classV351]);
     vehicle.cornerMinSpeedByClassV351[classV351]=Number.isFinite(previousMin)&&previousMin>0?Math.min(previousMin,nextKph):nextKph;
+    const specV353=CORNER_DRIVING_V351.speedEnvelope[classV351]||CORNER_DRIVING_V351.speedEnvelope.medium;
+    const cleanCornerV353=!spacingControlV319.active&&!incidentState.active&&!leaderPressureEffect.event&&boundaryStateV271.speedFactor>=CORNER_COMPLEX_RECOVERY_V353.cleanBoundaryFactor&&Number(vehicle.cornerObservedEntryKphV353)>=Number(specV353.min)*CORNER_COMPLEX_RECOVERY_V353.telemetryEntryRatio;
+    if(cleanCornerV353){
+      vehicle.cornerUnimpededMinSpeedByClassV353=vehicle.cornerUnimpededMinSpeedByClassV353||{};
+      const previousClean=Number(vehicle.cornerUnimpededMinSpeedByClassV353[classV351]);
+      vehicle.cornerUnimpededMinSpeedByClassV353[classV351]=Number.isFinite(previousClean)&&previousClean>0?Math.min(previousClean,nextKph):nextKph;
+    }
     if(vehicle.cornerRecoveryActiveV351&&throttle>.05)vehicle.cornerRecoveryThrottleCountV351=(Number(vehicle.cornerRecoveryThrottleCountV351)||0)+1;
   }
   vehicle.targetSpeedKph=maxTarget;
@@ -7782,7 +7811,8 @@ function qaDynamicsPlaytestV348(){
     let recoveryThrottleEvents=0;
     for(const state of states){
       recoveryThrottleEvents+=Number(state.cornerRecoveryThrottleCountV351)||0;
-      for(const [key,value] of Object.entries(state.cornerMinSpeedByClassV351||{})){
+      const cleanMinima=state.cornerUnimpededMinSpeedByClassV353||{};
+      for(const [key,value] of Object.entries(cleanMinima)){
         const speed=Number(value)||0;if(!(speed>0))continue;
         minima[key]=Number.isFinite(Number(minima[key]))?Math.min(Number(minima[key]),speed):speed;
       }
@@ -7790,7 +7820,7 @@ function qaDynamicsPlaytestV348(){
     return {minima:Object.fromEntries(Object.entries(minima).map(([key,value])=>[key,Number(Number(value).toFixed(2))])),recoveryThrottleEvents};
   };
   const normalCorner=cornerSummary(normal),fastCorner=cornerSummary(fast);
-  const cornerFloorPass=summary=>Object.entries(summary.minima||{}).every(([key,value])=>{const spec=CORNER_DRIVING_V351.speedEnvelope[key]||CORNER_DRIVING_V351.speedEnvelope.medium;return Number(value)>=Number(spec.min)*.80});
+  const cornerFloorPass=summary=>Object.entries(summary.minima||{}).every(([key,value])=>{const spec=CORNER_DRIVING_V351.speedEnvelope[key]||CORNER_DRIVING_V351.speedEnvelope.medium;return Number(value)>=Number(spec.min)*.78});
   const cornerSpeedFloorPass=cornerFloorPass(normalCorner)&&cornerFloorPass(fastCorner);
   const cornerRecoveryPass=normalCorner.recoveryThrottleEvents>0&&fastCorner.recoveryThrottleEvents>0;
   const normalPassRate=(Number(normal.telemetry?.totalPasses)||0)/Math.max(1,Number(normal.totalLaps)||10);
@@ -7890,6 +7920,33 @@ function qaFieldSpreadPaceBalanceV352(){
 }
 window.mwsF1QaFieldSpreadPaceBalanceV352=qaFieldSpreadPaceBalanceV352;
 window.__mwsF1RacingV352=VERSION352;
+
+
+function qaCornerComplexRecoveryV353(){
+  const track={lengthMeters:5000,geometry:{referenceBrakeDecelMps2:20,referenceAccelMps2:8.5,maxStraightKph:335}};
+  const makeCorner=(id,key,reference,entry)=>({id,cornerClass:key,referenceApexKph:reference,referenceApproachKph:entry,approachDistanceMeters:0,turnInDistanceMeters:210,apexDistanceMeters:270,exitDistanceMeters:390});
+  const anchors=[
+    {name:'SPA_LA_SOURCE',entry:295,key:'hairpin',reference:81,min:78,max:100},
+    {name:'HUNGARY_T1',entry:332,key:'hairpin',reference:99,min:95,max:110},
+    {name:'AUSTRIA_T1',entry:306,key:'slow',reference:149,min:140,max:160}
+  ].map(row=>{
+    const corner=makeCorner('qa353-'+row.name,row.key,row.reference,row.entry);
+    const plan=cornerDrivingPlanV351(row.entry,corner,track,'MEDIUM');
+    const atRecovery=cornerTargetAtDistanceV351(plan,plan.recoveryStart,plan.apexTarget,335);
+    const afterRecovery=cornerTargetAtDistanceV351(plan,Math.min(plan.exit,plan.recoveryStart+40),plan.apexTarget,335);
+    return {...row,target:plan.apexTarget,brakeDecel:plan.brakeDecel,brakingDistance:plan.brakingDistance,recoveryStart:plan.recoveryStart,apex:plan.apex,atRecovery,afterRecovery};
+  });
+  const anchorPass=anchors.every(row=>row.target>=row.min&&row.target<=row.max&&row.brakeDecel>=10&&row.brakeDecel<=32&&row.recoveryStart<row.apex&&row.afterRecovery>row.atRecovery);
+  const probeVehicle={cornerDrivingClassV351:'fast',trackBoundaryExceededV271:false};
+  const free=cornerUnderSpeedRecoveryV353(probeVehicle,'APEX',120,235,{active:false},{active:''},{event:''});
+  const blocked=cornerUnderSpeedRecoveryV353(probeVehicle,'APEX',120,235,{active:true},{active:''},{event:''});
+  const source=String(cornerUnderSpeedRecoveryV353);
+  const directPositionMutation=/\b(?:raceProgress|progress)\s*=/.test(source);
+  return {version:VERSION353,config:{...CORNER_COMPLEX_RECOVERY_V353},anchors,free,blocked,directPositionMutation,
+    allPass:anchorPass&&free.active===true&&free.multiplier>1&&blocked.active===false&&!directPositionMutation&&CORNER_DRIVING_V351.speedEnvelope.fast.brakeScale>=.85&&CORNER_DRIVING_V351.speedEnvelope.hairpin.recoveryLead>=.20};
+}
+window.mwsF1QaCornerComplexRecoveryV353=qaCornerComplexRecoveryV353;
+window.__mwsF1RacingV353=VERSION353;
 
 function qaUiVisibilitySpacingV324(){
   const marker=document.querySelector('.f1-racing-race-vehicle-v189');

@@ -9,7 +9,6 @@ export function runPhase351F1PhysicsCornerBrakeReleaseAudit(){
   for(const token of [
     "const VERSION351='phase351-f1-physics-corner-brake-release';",
     "const CORNER_DRIVING_V351=Object.freeze({",
-    "hairpin:Object.freeze({min:62,max:115,entryRetention:.27",
     "function cornerApexTargetV351(",
     "function cornerDrivingPlanV351(",
     "function cornerTargetAtDistanceV351(",
@@ -21,6 +20,9 @@ export function runPhase351F1PhysicsCornerBrakeReleaseAudit(){
     "window.mwsF1QaPhysicsCornerBrakeReleaseV351=qaPhysicsCornerBrakeReleaseV351;",
     "window.__mwsF1RacingV351=VERSION351;"
   ])if(!core.includes(token))issues.push('Phase 351 core missing: '+token);
+  const legacyEnvelope=core.includes("hairpin:Object.freeze({min:62,max:115,entryRetention:.27");
+  const revisedEnvelope=core.includes("hairpin:Object.freeze({min:75,max:120,entryRetention:.30");
+  if(!legacyEnvelope&&!revisedEnvelope)issues.push('Phase 351 corner speed envelope missing or unsupported');
   const targetStart=core.indexOf('function phaseSpeedTargetV343(');
   const targetEnd=core.indexOf('function trackLateralLimitV271(',targetStart);
   const targetBody=targetStart>=0&&targetEnd>targetStart?core.slice(targetStart,targetEnd):'';

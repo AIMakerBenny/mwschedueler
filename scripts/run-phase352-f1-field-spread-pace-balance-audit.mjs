@@ -4,7 +4,6 @@ export function runPhase352F1FieldSpreadPaceBalanceAudit(){
  const issues=[],warnings=[],core=fs.readFileSync('assets/f1-racing-v1.js','utf8'),diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8'),workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
  for(const token of [
   "const VERSION352='phase352-f1-field-spread-pace-balance';",
-  "const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.012,fastFormAmplitude:.028,maxFinishSpreadSeconds:48});",
   "activeBattleDirtyAirScale:.44,blockedBattleDirtyAirScale:.52",
   "blockedCatchupRetention:1.00",
   "const amplitude=mode==='FAST'?FIELD_SPREAD_BALANCE_V352.fastFormAmplitude:FIELD_SPREAD_BALANCE_V352.normalFormAmplitude;",
@@ -12,6 +11,9 @@ export function runPhase352F1FieldSpreadPaceBalanceAudit(){
   "window.mwsF1QaFieldSpreadPaceBalanceV352=qaFieldSpreadPaceBalanceV352;",
   "window.__mwsF1RacingV352=VERSION352;"
  ])if(!core.includes(token))issues.push('Phase 352 core missing: '+token);
+ const legacySpread=core.includes("normalFormAmplitude:.012,fastFormAmplitude:.028,maxFinishSpreadSeconds:48");
+ const revisedSpread=core.includes("normalFormAmplitude:.009,fastFormAmplitude:.024,maxFinishSpreadSeconds:48");
+ if(!legacySpread&&!revisedSpread)issues.push('Phase 352 field spread config missing or unsupported');
  const v350Start=core.indexOf('function battleQueueSpeedControlV350('),v350End=core.indexOf('function simulateVehicleDynamicsV196(',v350Start);
  const v350Body=v350Start>=0&&v350End>v350Start?core.slice(v350Start,v350End):'';
  if(/\b(?:raceProgress|progress)\s*=/.test(v350Body))issues.push('Phase 352 balance regressed into direct position forcing');

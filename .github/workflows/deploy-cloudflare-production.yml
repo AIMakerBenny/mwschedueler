@@ -297,6 +297,7 @@ jobs:
           node --check scripts/run-phase350-f1-rear-battle-pace-retention-audit.mjs
           node --check scripts/run-phase351-f1-physics-corner-brake-release-audit.mjs
           node --check scripts/run-phase352-f1-field-spread-pace-balance-audit.mjs
+          node --check scripts/run-phase353-f1-corner-complex-recovery-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
@@ -1100,8 +1101,12 @@ jobs:
           grep -Fq "cornerRecoveryActiveV351" /tmp/f1-racing-v1-phase187.js
           echo '[phase352] F1 field spread pace balance without forced position compression'
           grep -Fq "window.__mwsF1RacingV352=VERSION352;" /tmp/f1-racing-v1-phase187.js
-          grep -Fq "normalFormAmplitude:.012,fastFormAmplitude:.028,maxFinishSpreadSeconds:48" /tmp/f1-racing-v1-phase187.js
+          if ! grep -Fq "normalFormAmplitude:.012,fastFormAmplitude:.028,maxFinishSpreadSeconds:48" /tmp/f1-racing-v1-phase187.js && ! grep -Fq "normalFormAmplitude:.009,fastFormAmplitude:.024,maxFinishSpreadSeconds:48" /tmp/f1-racing-v1-phase187.js; then echo 'Phase 352 field spread config missing'; exit 1; fi
           grep -Fq "blockedCatchupRetention:1.00" /tmp/f1-racing-v1-phase187.js
+          echo '[phase353] F1 corner complex recovery and real braking envelope'
+          grep -Fq "window.__mwsF1RacingV353=VERSION353;" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "function cornerUnderSpeedRecoveryV353(" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "cornerUnimpededMinSpeedByClassV353" /tmp/f1-racing-v1-phase187.js
           grep -Fq "if(!setScreenStateV185('TRANSITION'))return false;" /tmp/f1-racing-v1-phase187.js
           grep -Fq 'window.mwsF1StartRaceFromSetupV187=startRaceFromSetupV187;' /tmp/f1-racing-v1-phase187.js
           echo '[phase188] F1 Race Control base frame'
