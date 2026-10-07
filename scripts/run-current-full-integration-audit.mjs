@@ -352,6 +352,7 @@ import {runPhase353F1CornerComplexRecoveryAudit} from './run-phase353-f1-corner-
 import {runPhase354F1FieldSpreadCapBalanceAudit} from './run-phase354-f1-field-spread-cap-balance-audit.mjs';
 import {runPhase355F1RearPaceBalanceAudit} from './run-phase355-f1-rear-pace-balance-audit.mjs';
 import {runPhase356F1FieldPaceRetentionAudit} from './run-phase356-f1-field-pace-retention-audit.mjs';
+import {runPhase357F1RankedFieldPaceRetentionAudit} from './run-phase357-f1-ranked-field-pace-retention-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2761,5 +2762,6 @@ export function runPhase353FullIntegrationAudit(){const previous=runPhase352Full
 export function runPhase354FullIntegrationAudit(){const previous=runPhase353FullIntegrationAudit(),current=runPhase354F1FieldSpreadCapBalanceAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 354: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 354: '+x)];return {phase:354,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase355FullIntegrationAudit(){const previous=runPhase354FullIntegrationAudit(),current=runPhase355F1RearPaceBalanceAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 355: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 355: '+x)];return {phase:355,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase356FullIntegrationAudit(){const previous=runPhase355FullIntegrationAudit(),current=runPhase356F1FieldPaceRetentionAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 356: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 356: '+x)];return {phase:356,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase356FullIntegrationAudit();}
+export function runPhase357FullIntegrationAudit(){const previous=runPhase356FullIntegrationAudit(),current=runPhase357F1RankedFieldPaceRetentionAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 357: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 357: '+x)];return {phase:357,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase357FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();

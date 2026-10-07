@@ -143,6 +143,7 @@ const VERSION353='phase353-f1-corner-complex-recovery';
 const VERSION354='phase354-f1-field-spread-cap-balance';
 const VERSION355='phase355-f1-rear-pace-balance';
 const VERSION356='phase356-f1-field-pace-retention';
+const VERSION357='phase357-f1-ranked-field-pace-retention';
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
 const GAME_VARIABILITY_CONFIG_V303=Object.freeze({evaluationMs:650,maxGapMeters:84,attackGapMeters:36,baseBonusKph:1.1,pressureBonusKph:3.2,midfieldBonusKph:.8,failedPassBonusKph:.4,maxFailedPassBonusKph:1.6,momentumBonusKph:1.55,maxTotalBiasKph:14,positionCatchupMaxPct:.050,positionCatchupExponent:1.35,leaderHoldMs:12000,leaderCloseGapSeconds:1.75,leaderClosePenaltyKph:.9,liveCadenceMs:10000});
@@ -186,7 +187,7 @@ const REAR_BATTLE_BALANCE_V350=Object.freeze({
   farClosingAllowanceKph:1.4,closeClosingAllowanceKph:.55,overlapSpeedMarginKph:1.1,
   blockedCatchupRetention:1.00
 });
-const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.009,fastFormAmplitude:.024,maxFinishSpreadSeconds:48,normalCatchupCapMultiplier:1.25,fastCatchupCapMultiplier:1.45,paceRetentionScale:.08});
+const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.009,fastFormAmplitude:.024,maxFinishSpreadSeconds:48,normalCatchupCapMultiplier:1.25,fastCatchupCapMultiplier:1.45,paceRetentionScale:.08,rankedRearPaceMax:.005,rankedRearPaceExponent:1.20});
 const CORNER_DRIVING_V351=Object.freeze({
   speedEnvelope:Object.freeze({
     hairpin:Object.freeze({min:75,max:120,entryRetention:.30,brakeScale:1.05,recoveryLead:.22,exitAccel:1.15}),
@@ -5866,6 +5867,26 @@ function battleQueueSpeedControlV350(vehicle){
   return {active:false,capKph:Infinity,gapMeters:gap,reason:''};
 }
 
+
+function updateRankedFieldPaceRetentionV357(){
+  const standings=computeRaceStandingsV191();
+  const count=Math.max(1,standings.length);
+  const denom=Math.max(1,count-1);
+  for(let index=0;index<standings.length;index++){
+    const vehicle=standings[index]?.vehicle;
+    if(!vehicle)continue;
+    const rankRatio=index/denom;
+    const boost=FIELD_SPREAD_BALANCE_V352.rankedRearPaceMax*Math.pow(rankRatio,FIELD_SPREAD_BALANCE_V352.rankedRearPaceExponent);
+    vehicle.rankedFieldPaceBoostV357=Math.max(0,boost);
+    vehicle.rankedFieldPaceMultiplierV357=1+Math.max(0,boost);
+    vehicle.rankedFieldPaceRankV357=index+1;
+  }
+  return standings.map((row,index)=>({id:String(row.vehicle?.id||''),rank:index+1,boost:Number(row.vehicle?.rankedFieldPaceBoostV357)||0}));
+}
+function rankedFieldPaceMultiplierV357(vehicle){
+  return Math.max(1,Number(vehicle?.rankedFieldPaceMultiplierV357)||1);
+}
+
 function fieldPaceRetentionMultiplierV356(vehicle){
   const pct=clamp01V198(Number(vehicle?.positionCatchupPctV314)||0);
   return 1+pct*FIELD_SPREAD_BALANCE_V352.paceRetentionScale;
@@ -5893,13 +5914,15 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const momentumPaceMultiplier=raceMomentumPaceMultiplierV262(vehicle);
   const raceFormMultiplierV345=1+(Number(vehicle.raceFormBiasV345)||0);
   const fieldPaceRetentionMultiplierV356Value=fieldPaceRetentionMultiplierV356(vehicle);
-  const driverPaceMultiplier=rawDriverPaceMultiplier*longRunPaceMultiplier*momentumPaceMultiplier*raceFormMultiplierV345*fieldPaceRetentionMultiplierV356Value;
+  const rankedFieldPaceMultiplierV357Value=rankedFieldPaceMultiplierV357(vehicle);
+  const driverPaceMultiplier=rawDriverPaceMultiplier*longRunPaceMultiplier*momentumPaceMultiplier*raceFormMultiplierV345*fieldPaceRetentionMultiplierV356Value*rankedFieldPaceMultiplierV357Value;
   vehicle.rawDriverPaceMultiplier=rawDriverPaceMultiplier;
   vehicle.longRunPaceMultiplier=longRunPaceMultiplier;
   vehicle.longRunPaceBias=longRunPaceBiasV209(vehicle);
   vehicle.raceMomentumPaceMultiplierV262=momentumPaceMultiplier;
   vehicle.raceFormMultiplierV345=raceFormMultiplierV345;
   vehicle.fieldPaceRetentionMultiplierV356=fieldPaceRetentionMultiplierV356Value;
+  vehicle.rankedFieldPaceMultiplierV357=rankedFieldPaceMultiplierV357Value;
   vehicle.driverPaceMultiplier=driverPaceMultiplier;
   const racecraftNorm=driverSkillNormV200(vehicle,'racecraft');
   const aggressionNorm=driverSkillNormV200(vehicle,'aggression');
@@ -7997,6 +8020,25 @@ function qaFieldPaceRetentionV356(){
 window.mwsF1QaFieldPaceRetentionV356=qaFieldPaceRetentionV356;
 window.__mwsF1RacingV356=VERSION356;
 
+
+function qaRankedFieldPaceRetentionV357(){
+  const synthetic=[0,1,2,3,4].map(index=>({id:'v357-'+index,raceProgress:1-index*.001,finished:false,pitState:'TRACK'}));
+  const saved=raceMotionV189.vehicles;
+  let rows=[];
+  try{
+    raceMotionV189.vehicles=synthetic;
+    rows=updateRankedFieldPaceRetentionV357();
+  }finally{raceMotionV189.vehicles=saved}
+  const boosts=rows.map(row=>Number(row.boost)||0);
+  const monotonic=boosts.every((value,index)=>index===0||value>=boosts[index-1]);
+  const source=String(updateRankedFieldPaceRetentionV357)+String(rankedFieldPaceMultiplierV357);
+  const directPositionMutation=/\b(?:raceProgress|progress)\s*=/.test(source);
+  return {version:VERSION357,config:{...FIELD_SPREAD_BALANCE_V352},rows,directPositionMutation,
+    allPass:rows.length===5&&boosts[0]===0&&monotonic&&boosts[boosts.length-1]>0&&boosts[boosts.length-1]<=.0051&&!directPositionMutation};
+}
+window.mwsF1QaRankedFieldPaceRetentionV357=qaRankedFieldPaceRetentionV357;
+window.__mwsF1RacingV357=VERSION357;
+
 function qaUiVisibilitySpacingV324(){
   const marker=document.querySelector('.f1-racing-race-vehicle-v189');
   const ring=marker?.querySelector('.car-ring'),profile=marker?.querySelector('.car-profile-image-v257'),label=marker?.querySelector('.car-label'),tag=marker?.querySelector('.car-position-box-v254');
@@ -8039,6 +8081,7 @@ function simulateRaceStepV192(stepMs){
     updateTrafficAndDefenceV207();
     updatePassStateMachineV208(stepMs);
     applyGameVariabilityV303(stepMs);
+    updateRankedFieldPaceRetentionV357();
     for(const vehicle of raceMotionV189.vehicles){
       if(vehicle.blueFlag){
         vehicle.defenceActive=false;
