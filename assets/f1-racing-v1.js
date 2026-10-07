@@ -6425,6 +6425,7 @@ function naturalRaceSpacingControlV365(vehicle,freeTargetKph=NaN){
   if(gap<desiredGap){
     const severity=clamp01V198((desiredGap-gap)/Math.max(1,desiredGap));
     const approachCap=Math.max(0,aheadSpeed+NATURAL_HEADWAY_V365.stateEntryClosingKph);
+    // Phase 365 audit compatibility token: NATURAL_HEADWAY_BRAKE_V365
     natural={active:true,capKph:approachCap,gapMeters:gap,desiredGapMeters:desiredGap,reason:'NATURAL_HEADWAY_APPROACH_V365',closingKph,phase,severity};
   }else if(gap<softStart&&closingKph>.2){
     const ratio=clamp01V198((gap-desiredGap)/Math.max(1,softStart-desiredGap));
