@@ -4,8 +4,8 @@ export function runPhase352F1FieldSpreadPaceBalanceAudit(){
  const issues=[],warnings=[],core=fs.readFileSync('assets/f1-racing-v1.js','utf8'),diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8'),workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
  for(const token of [
   "const VERSION352='phase352-f1-field-spread-pace-balance';",
-  "const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.025,fastFormAmplitude:.040,maxFinishSpreadSeconds:48});",
-  "activeBattleDirtyAirScale:.52,blockedBattleDirtyAirScale:.60",
+  "const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.018,fastFormAmplitude:.032,maxFinishSpreadSeconds:48});",
+  "activeBattleDirtyAirScale:.48,blockedBattleDirtyAirScale:.56",
   "blockedCatchupRetention:1.00",
   "const amplitude=mode==='FAST'?FIELD_SPREAD_BALANCE_V352.fastFormAmplitude:FIELD_SPREAD_BALANCE_V352.normalFormAmplitude;",
   "function qaFieldSpreadPaceBalanceV352(){",

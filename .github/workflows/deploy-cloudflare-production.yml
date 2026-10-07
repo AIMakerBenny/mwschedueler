@@ -1100,7 +1100,7 @@ jobs:
           grep -Fq "cornerRecoveryActiveV351" /tmp/f1-racing-v1-phase187.js
           echo '[phase352] F1 field spread pace balance without forced position compression'
           grep -Fq "window.__mwsF1RacingV352=VERSION352;" /tmp/f1-racing-v1-phase187.js
-          grep -Fq "normalFormAmplitude:.025,fastFormAmplitude:.040,maxFinishSpreadSeconds:48" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "normalFormAmplitude:.018,fastFormAmplitude:.032,maxFinishSpreadSeconds:48" /tmp/f1-racing-v1-phase187.js
           grep -Fq "blockedCatchupRetention:1.00" /tmp/f1-racing-v1-phase187.js
           grep -Fq "if(!setScreenStateV185('TRANSITION'))return false;" /tmp/f1-racing-v1-phase187.js
           grep -Fq 'window.mwsF1StartRaceFromSetupV187=startRaceFromSetupV187;' /tmp/f1-racing-v1-phase187.js

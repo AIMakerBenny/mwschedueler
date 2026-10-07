@@ -177,12 +177,12 @@ const RACE_COMPETITION_V345=Object.freeze({
   fastLaps:3
 });
 const REAR_BATTLE_BALANCE_V350=Object.freeze({
-  activeBattleDirtyAirScale:.52,blockedBattleDirtyAirScale:.60,
+  activeBattleDirtyAirScale:.48,blockedBattleDirtyAirScale:.56,
   blockedControlMeters:12,trainControlMeters:8,overlapGuardMeters:3.4,
   farClosingAllowanceKph:1.4,closeClosingAllowanceKph:.55,overlapSpeedMarginKph:1.1,
   blockedCatchupRetention:1.00
 });
-const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.025,fastFormAmplitude:.040,maxFinishSpreadSeconds:48});
+const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.018,fastFormAmplitude:.032,maxFinishSpreadSeconds:48});
 const CORNER_DRIVING_V351=Object.freeze({
   speedEnvelope:Object.freeze({
     hairpin:Object.freeze({min:62,max:115,entryRetention:.27,brakeScale:1.00,recoveryLead:.06,exitAccel:1.12}),
@@ -5258,6 +5258,7 @@ function cornerEntrySpeedV351(vehicle,corner,raw){
   const id=String(corner?.id||corner?.apexProgress||corner?.apexDistanceMeters||'corner');
   if(String(vehicle?.cornerPlanIdV351||'')!==id){
     vehicle.cornerPlanIdV351=id;
+    vehicle.cornerObservedEntryKphV353=Math.max(0,Number(vehicle?.speedKph)||0);
     vehicle.cornerEntryKphV351=Math.max(80,Number(vehicle?.speedKph)||0,Number(corner?.referenceApproachKph)||0,Number(raw)||0);
   }else if((Number(vehicle?.cornerEntryKphV351)||0)<1){
     vehicle.cornerEntryKphV351=Math.max(80,Number(vehicle?.speedKph)||0,Number(corner?.referenceApproachKph)||0,Number(raw)||0);
@@ -5940,7 +5941,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const avgMps=((current+nextKph)/2)/3.6;
   const distanceMeters=avgMps*dt;
   vehicle.speedKph=nextKph;
-  if(phaseInfoV270?.corner&&String(vehicle.pitState||'TRACK')==='TRACK'&&nextKph>0){
+  if(phaseInfoV270?.corner&&String(vehicle.pitState||'TRACK')==='TRACK'&&Number(vehicle.cornerObservedEntryKphV353)>=80&&nextKph>0){
     const classV351=cornerClassV343(phaseInfoV270.corner);
     vehicle.cornerMinSpeedByClassV351=vehicle.cornerMinSpeedByClassV351||{};
     const previousMin=Number(vehicle.cornerMinSpeedByClassV351[classV351]);
@@ -7789,7 +7790,8 @@ function qaDynamicsPlaytestV348(){
     return {minima:Object.fromEntries(Object.entries(minima).map(([key,value])=>[key,Number(Number(value).toFixed(2))])),recoveryThrottleEvents};
   };
   const normalCorner=cornerSummary(normal),fastCorner=cornerSummary(fast);
-  const cornerSpeedFloorPass=Object.values(normalCorner.minima).every(value=>Number(value)>=45)&&Object.values(fastCorner.minima).every(value=>Number(value)>=45);
+  const cornerFloorPass=summary=>Object.entries(summary.minima||{}).every(([key,value])=>{const spec=CORNER_DRIVING_V351.speedEnvelope[key]||CORNER_DRIVING_V351.speedEnvelope.medium;return Number(value)>=Number(spec.min)*.80});
+  const cornerSpeedFloorPass=cornerFloorPass(normalCorner)&&cornerFloorPass(fastCorner);
   const cornerRecoveryPass=normalCorner.recoveryThrottleEvents>0&&fastCorner.recoveryThrottleEvents>0;
   const normalPassRate=(Number(normal.telemetry?.totalPasses)||0)/Math.max(1,Number(normal.totalLaps)||10);
   const fastPassRate=(Number(fast.telemetry?.totalPasses)||0)/Math.max(1,Number(fast.totalLaps)||3);
