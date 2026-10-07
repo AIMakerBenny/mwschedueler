@@ -8968,10 +8968,10 @@ function finishSpreadBreakdownV373(result){
   const valid=rows.filter(row=>Number(row.finishedAtSimMs)>0).sort((a,b)=>Number(a.finishedAtSimMs)-Number(b.finishedAtSimMs));
   const first=Number(valid[0]?.finishedAtSimMs)||0;
   return valid.map((row,index)=>{
-    const state=states.get(String(row.id||''))||{};
+    const state=states.get(String(row.contactId||row.id||''))||{};
     const lapTimes=Array.isArray(row.lapTimesMs)?row.lapTimesMs:[];
     return {
-      id:String(row.id||''),finishPosition:index+1,gridPosition:Number(state.gridPosition)||0,
+      id:String(row.contactId||row.id||''),finishPosition:index+1,gridPosition:Number(state.gridPosition)||0,
       behindWinnerSec:Number(((Number(row.finishedAtSimMs)-first)/1000).toFixed(3)),
       finishAtSec:Number((Number(row.finishedAtSimMs)/1000).toFixed(3)),
       pitStops:Number(state.pitStopCount)||0,incidentCount:Number(state.incidentCount)||0,
