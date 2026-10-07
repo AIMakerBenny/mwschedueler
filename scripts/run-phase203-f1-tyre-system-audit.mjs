@@ -25,13 +25,16 @@ export function runPhase203F1TyreSystemAudit(){
     "tyreCompound:'MEDIUM'",
     "const tyreCornerFactor=(phase==='TURN_IN'||phase==='APEX'||phase==='EXIT')?tyreGrip:1;",
     'let brakeBase=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20)*tyreGrip*incidentState.brakeFactor;',
-    ...(phase270?["const tractionGrip=phase==='EXIT'?Math.max(.92,tyreGrip):1;","CORNER_DYNAMICS_V270.exitAccelerationMultiplier"]:["const tractionGrip=phase==='EXIT'?tyreGrip:1;"]),
+    ...(phase270?["CORNER_DYNAMICS_V270.exitAccelerationMultiplier"]:[]),
     'updateTyreSystemV203(vehicle,stepMs,phase);',
     "row.dataset.tyreWear=(Number(vehicle.tyreWear)||0).toFixed(3);",
     "if(tyre)tyre.textContent=tyreCompoundSpecV203(vehicle.tyreCompound).code;",
     'window.mwsF1GetTyreStatesV203=getTyreStatesV203;',
     'window.__mwsF1RacingV203=VERSION203;'
   ])if(!racing.includes(token))issues.push('Phase 203 tyre runtime missing: '+token);
+  const legacyTraction=racing.includes("const tractionGrip=phase==='EXIT'?Math.max(.92,tyreGrip):1;")||racing.includes("const tractionGrip=phase==='EXIT'?tyreGrip:1;");
+  const physicsTraction=racing.includes("const tractionGrip=(phase==='EXIT'||cornerRecoveryV351)?Math.max(.92,tyreGrip):1;");
+  if(!legacyTraction&&!physicsTraction)issues.push('Phase 203 tyre traction integration missing or unsupported');
 
   for(const token of ['node --check scripts/run-phase203-f1-tyre-system-audit.mjs',"echo '[phase203] F1 tyre system'"])if(!workflow.includes(token))issues.push('Phase 203 workflow verification missing: '+token);
   const syntax=spawnSync(process.execPath,['--check','assets/f1-racing-v1.js'],{encoding:'utf8'});
