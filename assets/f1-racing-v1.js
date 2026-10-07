@@ -274,7 +274,8 @@ const NATURAL_HEADWAY_V365=Object.freeze({
   genuineClosingReleaseMeters:96,
   paceAdvantageReleaseKph:1.2,
   attackReleaseGapMeters:48,
-  attackSlipstreamRelease:.08
+  attackSlipstreamRelease:.08,
+  cornerOnly:true
 });
 const naturalHeadwayTelemetryV365={calls:0,active:0,cornerActive:0,emergency:0,minGapMeters:Infinity,maxTargetGapMeters:0,last:null};
 const CORNER_COMPLEX_RECOVERY_V353=Object.freeze({
@@ -6367,7 +6368,7 @@ function naturalRaceSpacingControlV365(vehicle,freeTargetKph=NaN){
   const closingCandidateV365=targetIsAhead&&!vehicle.battleBlockedV319&&closingKph>1&&gap<=PASS_CONFIG_V208.followGapMeters;
   const approachAttackIntentV365=targetIsAhead&&approachStateV365&&!vehicle.battleBlockedV319&&gap<=PASS_CONFIG_V208.followGapMeters;
   const overtakeOpportunity=closingKph>=Math.min(RACE_SPACING_CONFIG_V319.overtakeReleaseClosingKph,raceCompetitionConfigV345().overtakeReleaseClosingKph)&&boundaryOvertakeEligibleV271(vehicle);
-  const genuineClosingReleaseV365=!vehicle.battleBlockedV319&&gap<=NATURAL_HEADWAY_V365.genuineClosingReleaseMeters&&closingKph>=NATURAL_HEADWAY_V365.fastReleaseClosingKph&&boundaryOvertakeEligibleV271(vehicle);
+  const genuineClosingReleaseV365=battleOpenV365&&!vehicle.battleBlockedV319&&gap<=NATURAL_HEADWAY_V365.genuineClosingReleaseMeters&&closingKph>=NATURAL_HEADWAY_V365.fastReleaseClosingKph&&boundaryOvertakeEligibleV271(vehicle);
   const fastApproachReleaseV365=activeRaceModeV345()==='FAST'&&!vehicle.battleBlockedV319&&gap<=PASS_CONFIG_V208.followGapMeters*NATURAL_HEADWAY_V365.fastReleaseGapMultiplier&&closingKph>=NATURAL_HEADWAY_V365.fastReleaseClosingKph&&boundaryOvertakeEligibleV271(vehicle);
   const naturalAttackReleaseV365=!vehicle.battleBlockedV319&&battleOpenV365&&gap<=NATURAL_HEADWAY_V365.attackReleaseGapMeters&&boundaryOvertakeEligibleV271(vehicle)&&(
     freePaceAdvantageV365>=NATURAL_HEADWAY_V365.paceAdvantageReleaseKph||
@@ -6384,6 +6385,11 @@ function naturalRaceSpacingControlV365(vehicle,freeTargetKph=NaN){
   if(gap<NATURAL_HEADWAY_V365.emergencyGapMeters){
     const result={active:true,capKph:Math.max(0,aheadSpeed-NATURAL_HEADWAY_V365.emergencyMarginKph),gapMeters:gap,desiredGapMeters:desiredGap,reason:'NATURAL_EMERGENCY_V365',closingKph,phase};
     naturalHeadwayTelemetryV365.active+=1;naturalHeadwayTelemetryV365.emergency+=1;naturalHeadwayTelemetryV365.last=result;return result;
+  }
+  const cornerHeadwayPhaseV365=phase==='TURN_IN'||phase==='APEX'||phase==='EXIT';
+  if(!cornerHeadwayPhaseV365){
+    const release={...legacy,desiredGapMeters:desiredGap,phase,release:'OPEN_RACE_FLOW_V365'};
+    naturalHeadwayTelemetryV365.last=release;return legacy;
   }
   if(naturalAttackReleaseV365){
     const release={active:false,capKph:Infinity,gapMeters:gap,desiredGapMeters:desiredGap,reason:'NATURAL_ATTACK_RELEASE_V365',closingKph,phase,freePaceAdvantageKph:freePaceAdvantageV365};
@@ -8776,13 +8782,14 @@ function qaNaturalLongitudinalHeadwayV365(){
   const attackReleaseSource=String(naturalRaceSpacingControlV365);
   const attackApproachRelease=attackReleaseSource.includes("['CLOSING','TOWING']")&&attackReleaseSource.includes("APPROACH_ATTACK")&&attackReleaseSource.includes('CLOSING_CANDIDATE')&&attackReleaseSource.includes('GENUINE_CLOSING_RELEASE')&&attackReleaseSource.includes('FAST_LEGACY_COMPETITION');
   const naturalAttackRelease=attackReleaseSource.includes('NATURAL_ATTACK_RELEASE_V365')&&attackReleaseSource.includes('freePaceAdvantageV365')&&attackReleaseSource.includes('battleOpenV365')&&attackReleaseSource.includes('attackSlipstreamRelease');
+  const cornerOnlyHeadway=attackReleaseSource.includes("phase==='TURN_IN'||phase==='APEX'||phase==='EXIT'")&&attackReleaseSource.includes('OPEN_RACE_FLOW_V365');
   const source=attackReleaseSource+String(naturalHeadwayTargetV365)+String(updateVisualLateralOffsetV258)+String(raceLinePointV197);
   const directPositionMutation=/\b(?:raceProgress|progress)\s*=/.test(source);
   const lateralRuntimeClean=!String(updateVisualLateralOffsetV258).includes('updateCornerLaneOccupancyV361')&&!String(updateVisualLateralOffsetV258).includes('applyFourLaneOffsetV360');
   const markerRuntimeClean=!String(raceMarkerTransformV245).includes('markerDensityScaleV361')&&!String(raceMarkerTransformV245).includes('markerBandScaleV363');
   const presentationRestored=String(raceLinePointV197).includes('TRACK_PRESENTATION_V365.visualWidthScale')&&String(offsetTrackPathDataV360).includes('TRACK_PRESENTATION_V365.visualWidthScale');
-  return {version:VERSION365,config:{...NATURAL_HEADWAY_V365},trackPresentation:{...TRACK_PRESENTATION_V365},straightTargets:straightTargets.map(v=>Number(v.toFixed(2))),apexTarget:Number(apexTarget.toFixed(2)),attackApproachRelease,naturalAttackRelease,directPositionMutation,lateralRuntimeClean,markerRuntimeClean,presentationRestored,telemetry:naturalHeadwayTelemetrySnapshotV365(),
-    allPass:straightTargets[0]<straightTargets[1]&&straightTargets[1]<straightTargets[2]&&apexTarget>straightTargets[1]&&attackApproachRelease&&naturalAttackRelease&&!directPositionMutation&&lateralRuntimeClean&&markerRuntimeClean&&presentationRestored&&TRACK_PRESENTATION_V365.trackStrokeWidth===58};
+  return {version:VERSION365,config:{...NATURAL_HEADWAY_V365},trackPresentation:{...TRACK_PRESENTATION_V365},straightTargets:straightTargets.map(v=>Number(v.toFixed(2))),apexTarget:Number(apexTarget.toFixed(2)),attackApproachRelease,naturalAttackRelease,cornerOnlyHeadway,directPositionMutation,lateralRuntimeClean,markerRuntimeClean,presentationRestored,telemetry:naturalHeadwayTelemetrySnapshotV365(),
+    allPass:straightTargets[0]<straightTargets[1]&&straightTargets[1]<straightTargets[2]&&apexTarget>straightTargets[1]&&attackApproachRelease&&naturalAttackRelease&&cornerOnlyHeadway&&!directPositionMutation&&lateralRuntimeClean&&markerRuntimeClean&&presentationRestored&&TRACK_PRESENTATION_V365.trackStrokeWidth===58};
 }
 window.mwsF1QaNaturalLongitudinalHeadwayV365=qaNaturalLongitudinalHeadwayV365;
 window.mwsF1GetNaturalHeadwayTelemetryV365=naturalHeadwayTelemetrySnapshotV365;
