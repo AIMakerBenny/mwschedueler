@@ -332,7 +332,7 @@ try{
   if(!phase332Ready)throw new Error('Phase 332 runtime did not propagate to Recovery H browser');
   if(!phase333Ready)throw new Error('Phase 333 runtime did not propagate to Recovery H browser');
 
-  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase339Ready=false,phase340Ready=false,phase341Ready=false,phase342Ready=false,phase343Ready=false,phase344Ready=false,phase345Ready=false,phase346Ready=false,phase348Ready=false,phase349Ready=false,phase350Ready=false,phase351Ready=false,phase352Ready=false,phase353Ready=false,phase354Ready=false,phase355Ready=false,phase356Ready=false,phase357Ready=false;
+  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase339Ready=false,phase340Ready=false,phase341Ready=false,phase342Ready=false,phase343Ready=false,phase344Ready=false,phase345Ready=false,phase346Ready=false,phase348Ready=false,phase349Ready=false,phase350Ready=false,phase351Ready=false,phase352Ready=false,phase353Ready=false,phase354Ready=false,phase355Ready=false,phase356Ready=false,phase357Ready=false,phase358Ready=false;
   for(let attempt=0;attempt<8;attempt++){
     const readiness=await evaluate(cdp,`({
       p335:window.__mwsF1RacingV335==='phase335-f1-actual-track-spacing'&&typeof window.mwsF1QaActualTrackSpacingV335==='function',
@@ -356,13 +356,14 @@ try{
       p354:window.__mwsF1RacingV354==='phase354-f1-field-spread-cap-balance'&&typeof window.mwsF1QaFieldSpreadCapBalanceV354==='function',
       p355:window.__mwsF1RacingV355==='phase355-f1-rear-pace-balance'&&typeof window.mwsF1QaRearPaceBalanceV355==='function',
       p356:window.__mwsF1RacingV356==='phase356-f1-field-pace-retention'&&typeof window.mwsF1QaFieldPaceRetentionV356==='function',
-      p357:window.__mwsF1RacingV357==='phase357-f1-ranked-field-pace-retention'&&typeof window.mwsF1QaRankedFieldPaceRetentionV357==='function'
+      p357:window.__mwsF1RacingV357==='phase357-f1-ranked-field-pace-retention'&&typeof window.mwsF1QaRankedFieldPaceRetentionV357==='function',
+      p358:window.__mwsF1RacingV358==='phase358-f1-corner-speed-brake-release-calibration'&&typeof window.mwsF1QaCornerSpeedBrakeReleaseCalibrationV358==='function'
     })`,"Phase 335-346 runtime readiness");
     phase335Ready=Boolean(readiness?.p335);phase336Ready=Boolean(readiness?.p336);phase337Ready=Boolean(readiness?.p337);
-    phase338Ready=Boolean(readiness?.p338);phase339Ready=Boolean(readiness?.p339);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);phase342Ready=Boolean(readiness?.p342);phase343Ready=Boolean(readiness?.p343);phase344Ready=Boolean(readiness?.p344);phase345Ready=Boolean(readiness?.p345);phase346Ready=Boolean(readiness?.p346);phase348Ready=Boolean(readiness?.p348);phase349Ready=Boolean(readiness?.p349);phase350Ready=Boolean(readiness?.p350);phase351Ready=Boolean(readiness?.p351);phase352Ready=Boolean(readiness?.p352);phase353Ready=Boolean(readiness?.p353);phase354Ready=Boolean(readiness?.p354);phase355Ready=Boolean(readiness?.p355);phase356Ready=Boolean(readiness?.p356);phase357Ready=Boolean(readiness?.p357);
-    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase339Ready&&phase340Ready&&phase341Ready&&phase342Ready&&phase343Ready&&phase344Ready&&phase345Ready&&phase346Ready&&phase348Ready&&phase349Ready&&phase350Ready&&phase351Ready&&phase352Ready&&phase353Ready&&phase354Ready&&phase355Ready&&phase356Ready&&phase357Ready)break;
+    phase338Ready=Boolean(readiness?.p338);phase339Ready=Boolean(readiness?.p339);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);phase342Ready=Boolean(readiness?.p342);phase343Ready=Boolean(readiness?.p343);phase344Ready=Boolean(readiness?.p344);phase345Ready=Boolean(readiness?.p345);phase346Ready=Boolean(readiness?.p346);phase348Ready=Boolean(readiness?.p348);phase349Ready=Boolean(readiness?.p349);phase350Ready=Boolean(readiness?.p350);phase351Ready=Boolean(readiness?.p351);phase352Ready=Boolean(readiness?.p352);phase353Ready=Boolean(readiness?.p353);phase354Ready=Boolean(readiness?.p354);phase355Ready=Boolean(readiness?.p355);phase356Ready=Boolean(readiness?.p356);phase357Ready=Boolean(readiness?.p357);phase358Ready=Boolean(readiness?.p358);
+    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase339Ready&&phase340Ready&&phase341Ready&&phase342Ready&&phase343Ready&&phase344Ready&&phase345Ready&&phase346Ready&&phase348Ready&&phase349Ready&&phase350Ready&&phase351Ready&&phase352Ready&&phase353Ready&&phase354Ready&&phase355Ready&&phase356Ready&&phase357Ready&&phase358Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v357=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v358=${Date.now()}-${attempt}`});
     await refreshed;await sleep(1200);
   }
   if(!phase335Ready)throw new Error('Phase 335 runtime did not propagate to Recovery H browser');
@@ -387,6 +388,7 @@ try{
   if(!phase355Ready)throw new Error('Phase 355 runtime did not propagate to Recovery H browser');
   if(!phase356Ready)throw new Error('Phase 356 runtime did not propagate to Recovery H browser');
   if(!phase357Ready)throw new Error('Phase 357 runtime did not propagate to Recovery H browser');
+  if(!phase358Ready)throw new Error('Phase 358 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -1336,6 +1338,8 @@ try{
     assert(fieldPace356?.allPass===true,'Phase 356 field pace retention QA failed: '+JSON.stringify(fieldPace356));
     const rankedPace357=window.mwsF1QaRankedFieldPaceRetentionV357?.();
     assert(rankedPace357?.allPass===true,'Phase 357 ranked field pace retention QA failed: '+JSON.stringify(rankedPace357));
+    const cornerBrake358=window.mwsF1QaCornerSpeedBrakeReleaseCalibrationV358?.();
+    assert(cornerBrake358?.allPass===true,'Phase 358 corner speed/brake release calibration QA failed: '+JSON.stringify(cornerBrake358));
     const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]');
     const title=commentary?.querySelector('[data-f1-panel-drag="commentary"]');
     assert(title,'Commentary drag handle missing');
@@ -1524,6 +1528,7 @@ try{
       rearPaceV355:rearPace355||null,
       fieldPaceV356:fieldPace356||null,
       rankedPaceV357:rankedPace357||null,
+      cornerBrakeV358:cornerBrake358||null,
       dynamicsPlaytestV348:dynamicsPlaytest348||null,
       raceMomentumV262:{
         gridFinishCorrelation:Number(momentumBenchmark262?.gridFinishCorrelation)||0,

@@ -302,6 +302,7 @@ jobs:
           node --check scripts/run-phase355-f1-rear-pace-balance-audit.mjs
           node --check scripts/run-phase356-f1-field-pace-retention-audit.mjs
           node --check scripts/run-phase357-f1-ranked-field-pace-retention-audit.mjs
+          node --check scripts/run-phase358-f1-corner-speed-brake-release-calibration-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
@@ -1125,6 +1126,10 @@ jobs:
           grep -Fq "fieldPaceRetentionMultiplierV356Value" /tmp/f1-racing-v1-phase187.js
           echo '[phase357] F1 ranked field pace retention without position forcing'
           grep -Fq "window.__mwsF1RacingV357=VERSION357;" /tmp/f1-racing-v1-phase187.js
+          echo '[phase358] F1 entry-speed braking and apex brake-release calibration'
+          grep -Fq "window.__mwsF1RacingV358=VERSION358;" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "const delta=Math.max(0,(Number(entryKph)||0)-apexTarget);" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "vehicle.cornerBrakeReleasedV358=true;" /tmp/f1-racing-v1-phase187.js
           grep -Fq "function updateRankedFieldPaceRetentionV357(){" /tmp/f1-racing-v1-phase187.js
           grep -Fq "updateRankedFieldPaceRetentionV357();" /tmp/f1-racing-v1-phase187.js
           grep -Fq "rankedFieldPaceMultiplierV357Value" /tmp/f1-racing-v1-phase187.js
