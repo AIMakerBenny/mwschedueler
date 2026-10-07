@@ -696,9 +696,18 @@ try{
     assert(dialogueSemantic315?.allPass===true&&Number(dialogueSemantic315?.unique)>=4,'Phase 315 dialogue semantic diversity QA failed: '+JSON.stringify(dialogueSemantic315));
     assert(Number(dialogueSemantic315?.config?.semanticWindow)>=2&&Number(dialogueSemantic315?.config?.recentSpeakerLimit)>=5,'Phase 315 dialogue semantic/speaker guard missing: '+JSON.stringify(dialogueSemantic315));
     window.mwsF1LayoutMarkerOverlaysV306?.();await raf();
+    let thoughtTextReady303=false;
+    for(let attempt303=0;attempt303<10;attempt303++){
+      const markerReady303=[...document.querySelectorAll('.f1-racing-race-vehicle-v189')].some(marker=>marker.querySelector('.f1-racing-driver-thought-v303'));
+      const textReady303=[...document.querySelectorAll('.thought-text-v303')].some(node=>String(node.textContent||'').includes('지금 간다'));
+      thoughtTextReady303=markerReady303&&textReady303;
+      if(thoughtTextReady303)break;
+      window.mwsF1LayoutMarkerOverlaysV306?.();
+      await sleep(120);await raf();
+    }
     const thoughtMarker303=[...document.querySelectorAll('.f1-racing-race-vehicle-v189')].find(marker=>marker.querySelector('.f1-racing-driver-thought-v303'));
     assert(thoughtMarker303,'Phase 303 racer thought bubble did not attach to a track marker');
-    assert([...document.querySelectorAll('.thought-text-v303')].some(node=>String(node.textContent||'').includes('지금 간다')),'Phase 303 racer thought bubble text missing');
+    assert(thoughtTextReady303,'Phase 303 racer thought bubble text missing');
     const markerCollisionQa306=window.mwsF1QaMarkerOverlayCollisionV306?.();
     assert(markerCollisionQa306?.allPass===true,'Phase 306 marker overlay collision QA failed: '+JSON.stringify(markerCollisionQa306));
     assert(Number(markerCollisionQa306?.thoughtOverlap?.nodes)===0,'Phase 306 two-racer thought collision scenario was not exercised: legacy SVG thoughts must be retired by Phase 308 '+JSON.stringify(markerCollisionQa306));
