@@ -177,12 +177,12 @@ const RACE_COMPETITION_V345=Object.freeze({
   fastLaps:3
 });
 const REAR_BATTLE_BALANCE_V350=Object.freeze({
-  activeBattleDirtyAirScale:.48,blockedBattleDirtyAirScale:.56,
+  activeBattleDirtyAirScale:.44,blockedBattleDirtyAirScale:.52,
   blockedControlMeters:12,trainControlMeters:8,overlapGuardMeters:3.4,
   farClosingAllowanceKph:1.4,closeClosingAllowanceKph:.55,overlapSpeedMarginKph:1.1,
   blockedCatchupRetention:1.00
 });
-const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.018,fastFormAmplitude:.032,maxFinishSpreadSeconds:48});
+const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.012,fastFormAmplitude:.028,maxFinishSpreadSeconds:48});
 const CORNER_DRIVING_V351=Object.freeze({
   speedEnvelope:Object.freeze({
     hairpin:Object.freeze({min:62,max:115,entryRetention:.27,brakeScale:1.00,recoveryLead:.06,exitAccel:1.12}),
@@ -5941,7 +5941,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const avgMps=((current+nextKph)/2)/3.6;
   const distanceMeters=avgMps*dt;
   vehicle.speedKph=nextKph;
-  if(phaseInfoV270?.corner&&String(vehicle.pitState||'TRACK')==='TRACK'&&Number(vehicle.cornerObservedEntryKphV353)>=80&&nextKph>0){
+  if(phaseInfoV270?.corner&&String(vehicle.pitState||'TRACK')==='TRACK'&&Number(vehicle.pitWarmupRemainingLaps||0)<=.001&&Number(vehicle.cornerObservedEntryKphV353)>=80&&nextKph>0){
     const classV351=cornerClassV343(phaseInfoV270.corner);
     vehicle.cornerMinSpeedByClassV351=vehicle.cornerMinSpeedByClassV351||{};
     const previousMin=Number(vehicle.cornerMinSpeedByClassV351[classV351]);
