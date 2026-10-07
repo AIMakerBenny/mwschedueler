@@ -29,6 +29,9 @@ export function runPhase360F1FourLaneLongCornerFlowAudit(){
   const end=core.indexOf('function setVehicleRacingLineV197(',start);
   const source=start>=0&&end>start?core.slice(start,end):'';
   if(/\b(?:raceProgress|progress)\s*=/.test(source))issues.push('Phase 360 lane system directly mutates vehicle progress');
+  const lineStart=core.indexOf('function lineOffsetMetersV197('),lineEnd=core.indexOf('function phaseSpeedTargetV270(',lineStart),lineSource=lineStart>=0&&lineEnd>lineStart?core.slice(lineStart,lineEnd):'';
+  if(lineSource.includes('applyFourLaneOffsetV360')||lineSource.includes('FOUR_LANE_TRACK_V360'))issues.push('Phase 360 visual lanes leaked into physical racing-line logic');
+  if(!core.includes('const physicalTarget=physicalLateralOffsetV258(vehicle);'))issues.push('Phase 360 visual lane target is not isolated after physical lateral calculation');
   for(const token of [
     '#f1RacingRaceTrackGlowV188{stroke:#1b2430;stroke-width:58',
     '.f1-racing-race-lane-guides-v360{pointer-events:none}',
