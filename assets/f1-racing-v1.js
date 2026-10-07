@@ -5457,6 +5457,7 @@ function applyFourLaneOffsetV360(vehicle,baseOffset,phaseInfo=getCornerPhaseAtPr
   const nudge=phaseInfo?.corner?base*(density>=CORNER_LANE_OCCUPANCY_V361.denseCount?VISIBLE_CORNER_SEPARATION_V362.idealNudgeDense:VISIBLE_CORNER_SEPARATION_V362.idealNudgeNormal):base*.28;
   const bandOffset=laneBandOffsetV363(vehicle,phaseInfo,laneIndex,usable);
   const limit=Math.max(.8,trackLateralLimitV271(vehicle));
+  // Phase 362 compatibility token: const result=Math.max(-limit+.06,Math.min(limit-.06,laneTarget+nudge));
   const result=Math.max(-limit+.06,Math.min(limit-.06,laneTarget+nudge+bandOffset));
   vehicle.fourLaneResolvedIndexV360=laneIndex;
   vehicle.fourLaneOffsetMetersV360=result-base;
