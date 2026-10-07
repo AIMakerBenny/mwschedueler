@@ -292,7 +292,7 @@ const FOLLOWING_STABILITY_V366=Object.freeze({
   pullOutHoldExtraMeters:1.5,
   lateralSafetyBufferMeters:.35,
   minClosingKph:.25,
-  pullOutReleaseHoldMs:900
+  pullOutReleaseHoldMs:420
 });
 const followingStabilityTelemetryV366={calls:0,active:0,emergency:0,lateralRelease:0,minGapMeters:Infinity,last:null};
 const CORNER_COMPLEX_RECOVERY_V353=Object.freeze({
