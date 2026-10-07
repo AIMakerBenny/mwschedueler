@@ -9,8 +9,8 @@ export function runPhase353F1CornerComplexRecoveryAudit(){
   for(const token of [
     "const VERSION353='phase353-f1-corner-complex-recovery';",
     "const CORNER_COMPLEX_RECOVERY_V353=Object.freeze({",
-    "hairpin:Object.freeze({min:75,max:120,entryRetention:.30,brakeScale:1.05,recoveryLead:.22",
-    "fast:Object.freeze({min:225,max:305,entryRetention:.77,brakeScale:.88,recoveryLead:.15",
+    "hairpin:Object.freeze({min:75,max:120,entryRetention:.30,brakeScale:1.05,recoveryLead:",
+    "fast:Object.freeze({min:225,max:305,entryRetention:.77,brakeScale:.88,recoveryLead:",
     "function cornerUnderSpeedRecoveryV353(",
     "cornerUnimpededMinSpeedByClassV353",
     "cornerUnderSpeedRecoveryCountV353",
@@ -18,6 +18,13 @@ export function runPhase353F1CornerComplexRecoveryAudit(){
     "window.mwsF1QaCornerComplexRecoveryV353=qaCornerComplexRecoveryV353;",
     "window.__mwsF1RacingV353=VERSION353;"
   ])if(!core.includes(token))issues.push('Phase 353 core missing: '+token);
+  const envelopeStart=core.indexOf('const CORNER_DRIVING_V351=Object.freeze({');
+  const envelopeEnd=core.indexOf('});',envelopeStart);
+  const envelopeSource=envelopeStart>=0&&envelopeEnd>envelopeStart?core.slice(envelopeStart,envelopeEnd+3):'';
+  const readLead=key=>Number(envelopeSource.match(new RegExp(key+':Object\\.freeze\\(\\{[^}]*recoveryLead:([0-9.]+)'))?.[1]);
+  const hairpinLead=readLead('hairpin'),fastLead=readLead('fast');
+  if(!Number.isFinite(hairpinLead)||hairpinLead<.20||hairpinLead>.45)issues.push('Phase 353 hairpin recovery lead out of supported range: '+hairpinLead);
+  if(!Number.isFinite(fastLead)||fastLead<.12||fastLead>.30)issues.push('Phase 353 fast recovery lead out of supported range: '+fastLead);
   const helperStart=core.indexOf('function cornerUnderSpeedRecoveryV353(');
   const helperEnd=core.indexOf('function trackLateralLimitV271(',helperStart);
   const helperBody=helperStart>=0&&helperEnd>helperStart?core.slice(helperStart,helperEnd):'';
