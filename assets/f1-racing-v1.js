@@ -150,6 +150,7 @@ const VERSION360='phase360-f1-four-lane-long-corner-flow';
 const VERSION361='phase361-f1-corner-lane-occupancy-pit-hud';
 const VERSION362='phase362-f1-visible-corner-lane-separation';
 const VERSION363='phase363-f1-lane-band-crowding-guard';
+const VERSION364='phase364-f1-stable-lane-band-slot-transition';
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
 const GAME_VARIABILITY_CONFIG_V303=Object.freeze({evaluationMs:650,maxGapMeters:84,attackGapMeters:36,baseBonusKph:1.1,pressureBonusKph:3.2,midfieldBonusKph:.8,failedPassBonusKph:.4,maxFailedPassBonusKph:1.6,momentumBonusKph:1.55,maxTotalBiasKph:14,positionCatchupMaxPct:.050,positionCatchupExponent:1.35,leaderHoldMs:12000,leaderCloseGapSeconds:1.75,leaderClosePenaltyKph:.9,liveCadenceMs:10000});
@@ -249,6 +250,8 @@ const LANE_BAND_CROWDING_V363=Object.freeze({
   overlapThresholdRatio:.94
 });
 const screenCrowdingStateV363={samples:0,denseSamples:0,currentOverlapPairs:0,maxOverlapPairs:0,minScreenDistance:Infinity,latest:null};
+const LANE_BAND_SLOT_STABILITY_V364=Object.freeze({lockMs:1200,releaseGraceMs:520,visualOrderEpsilonMeters:.08});
+const laneBandStabilityStateV364={assignments:0,reassignments:0,preservedRaceOrderChanges:0,currentStableOverlapPairs:0,maxStableOverlapPairs:0,minStableScreenDistance:Infinity,last:null};
 const CORNER_COMPLEX_RECOVERY_V353=Object.freeze({
   underSpeedTriggerRatio:.90,underSpeedAccelMultiplier:1.38,
   telemetryEntryRatio:1.08,cleanBoundaryFactor:.985
@@ -4878,7 +4881,7 @@ function createRaceVehiclesV189(snapshot){
       lapDurationMs:21000,lapTimingArmed:startOffset>=0,lapStartSimMs:startOffset>=0?0:null,lastLapMs:0,bestLapMs:0,lapTimesMs:[],
       sectorTimesMs:{S1:0,S2:0,S3:0},sectorStartSimMs:startOffset>=0?0:null,timingSector:startOffset>=0?'S1':'GRID',timedCompletedLaps:0,
       speedKph:0,targetSpeedKph:0,throttle:0,brake:0,accelerationMps2:0,gear:1,rpm:8500,
-      racingLineMode:'IDEAL',lateralOffsetMeters:0,targetVisualLateralOffsetMeters:0,visualLateralOffsetMeters:0,visualLateralVelocity:0,visualLateralInitializedV258:false,fourLaneEnabledV360:true,visualLaneIndexV360:index%FOUR_LANE_TRACK_V360.laneCount,fourLaneOffsetMetersV360:0,fourLaneResolvedIndexV360:index%FOUR_LANE_TRACK_V360.laneCount,cornerLaneLockIdV361:'',cornerLaneLockIndexV361:index%FOUR_LANE_TRACK_V360.laneCount,cornerLaneDensityV361:1,cornerLaneSpreadScaleV361:1,markerDensityScaleV361:1,cornerLaneNextEvalMsV361:0,laneBandSlotV363:0,laneBandPeerCountV363:1,laneBandOffsetMetersV363:0,markerBandScaleV363:1,
+      racingLineMode:'IDEAL',lateralOffsetMeters:0,targetVisualLateralOffsetMeters:0,visualLateralOffsetMeters:0,visualLateralVelocity:0,visualLateralInitializedV258:false,fourLaneEnabledV360:true,visualLaneIndexV360:index%FOUR_LANE_TRACK_V360.laneCount,fourLaneOffsetMetersV360:0,fourLaneResolvedIndexV360:index%FOUR_LANE_TRACK_V360.laneCount,cornerLaneLockIdV361:'',cornerLaneLockIndexV361:index%FOUR_LANE_TRACK_V360.laneCount,cornerLaneDensityV361:1,cornerLaneSpreadScaleV361:1,markerDensityScaleV361:1,cornerLaneNextEvalMsV361:0,laneBandSlotV363:0,laneBandPeerCountV363:1,laneBandOffsetMetersV363:0,markerBandScaleV363:1,laneBandLockedSlotV364:0,laneBandGroupKeyV364:'',laneBandContextV364:'',laneBandSlotLockedUntilV364:0,laneBandRaceOrderSignatureV364:'',laneBandSlotChangesV364:0,
       carAheadId:null,gapToCarAheadMeters:Infinity,slipstreamStrength:0,slipstreamDragReduction:0,slipstreamGapEffect:0,slipstreamAlignmentEffect:0,slipstreamLateralEffect:0,slipstreamStraightEffect:0,
       dirtyAirStrength:0,aeroGripMultiplier:1,understeerRisk:0,slideRisk:0,dirtyAirTyreHeatLoad:0,
       driverProfile,driverRandomState:raceSeed||1,paceNoise:0,nextPaceNoiseMs:0,driverPaceMultiplier:1,rawDriverPaceMultiplier:1,longRunPaceMultiplier:1,longRunPaceBias:0,
@@ -5419,23 +5422,94 @@ function updateCornerLaneOccupancyV361(vehicle,phaseInfo=getCornerPhaseAtProgres
   vehicle.visualLaneIndexV360=Number(vehicle.cornerLaneLockIndexV361)||0;
   return {lane:Number(vehicle.visualLaneIndexV360)||0,density:Number(vehicle.cornerLaneDensityV361)||1,spreadScale:Number(vehicle.cornerLaneSpreadScaleV361)||1,markerScale:Number(vehicle.markerDensityScaleV361)||1,locked:true};
 }
-function laneBandOffsetV363(vehicle,phaseInfo,laneIndex,usable){
-  if(!vehicle||!phaseInfo?.corner||String(vehicle?.racingLineMode||'IDEAL')!=='IDEAL'){
-    if(vehicle){vehicle.laneBandSlotV363=0;vehicle.laneBandPeerCountV363=1;vehicle.laneBandOffsetMetersV363=0;vehicle.markerBandScaleV363=1}
-    return 0;
-  }
-  const track=activeRaceSnapshotV187?.track,length=Math.max(1,Number(track?.lengthMeters)||1),selfProgress=Number(vehicle.raceProgress)||0;
-  const peers=cornerLanePeersV361(vehicle,phaseInfo).filter(peer=>{
+function laneBandSlotValuesV364(count){
+  const n=Math.max(1,Math.floor(Number(count)||1));
+  if(n===1)return [0];
+  return Array.from({length:n},(_,index)=>-1+(2*index)/(n-1));
+}
+function laneBandContextV364(phaseInfo,laneIndex){
+  return String(phaseInfo?.corner?.id||'')+'|'+String(Number(laneIndex)||0);
+}
+function laneBandClusterV364(vehicle,phaseInfo,laneIndex){
+  if(!vehicle||!phaseInfo?.corner)return vehicle?[vehicle]:[];
+  const track=activeRaceSnapshotV187?.track,length=Math.max(1,Number(track?.lengthMeters)||1),cornerId=String(phaseInfo.corner.id||'');
+  const candidates=raceMotionV189.vehicles.filter(peer=>{
+    if(!peer||peer.finished||String(peer.pitState||'TRACK')!=='TRACK')return false;
+    const peerPhase=getCornerPhaseAtProgressV194(peer.progress);
+    if(String(peerPhase?.corner?.id||'')!==cornerId)return false;
     const peerLane=((Math.round(Number(peer?.cornerLaneLockIndexV361??peer?.visualLaneIndexV360)||0)%FOUR_LANE_TRACK_V360.laneCount)+FOUR_LANE_TRACK_V360.laneCount)%FOUR_LANE_TRACK_V360.laneCount;
-    const gap=Math.abs((Number(peer?.raceProgress)||0)-selfProgress)*length;
-    return peerLane===laneIndex&&gap<=LANE_BAND_CROWDING_V363.sameLaneScanMeters;
+    return peerLane===laneIndex;
   });
-  const group=[vehicle,...peers].sort((a,b)=>{
+  if(!candidates.some(peer=>String(peer.id||'')===String(vehicle.id||'')))candidates.push(vehicle);
+  const byId=new Map(candidates.map(peer=>[String(peer.id||''),peer])),seen=new Set(),queue=[vehicle],group=[];
+  while(queue.length){
+    const current=queue.shift(),id=String(current?.id||'');if(seen.has(id))continue;
+    seen.add(id);group.push(current);
+    const progress=Number(current?.raceProgress)||0;
+    for(const peer of byId.values()){
+      const peerId=String(peer?.id||'');if(seen.has(peerId))continue;
+      const gap=Math.abs((Number(peer?.raceProgress)||0)-progress)*length;
+      if(gap<=LANE_BAND_CROWDING_V363.sameLaneScanMeters)queue.push(peer);
+    }
+  }
+  return group;
+}
+function laneBandGroupKeyV364(group,phaseInfo,laneIndex){
+  return laneBandContextV364(phaseInfo,laneIndex)+'|'+group.map(row=>String(row?.id||'')).sort().join(',');
+}
+function assignStableLaneBandSlotsV364(group,phaseInfo,laneIndex,now=Number(simClockV192.simTimeMs)||0){
+  const members=[...(group||[])].filter(Boolean);if(!members.length)return {groupKey:'',slots:new Map(),preserved:false};
+  const context=laneBandContextV364(phaseInfo,laneIndex),groupKey=laneBandGroupKeyV364(members,phaseInfo,laneIndex);
+  const raceOrder=members.slice().sort((a,b)=>{
     const delta=(Number(b?.raceProgress)||0)-(Number(a?.raceProgress)||0);
     return Math.abs(delta)>.0000001?delta:String(a?.id||'').localeCompare(String(b?.id||''));
+  }).map(row=>String(row?.id||'')).join('>');
+  const fullyLocked=members.every(row=>String(row?.laneBandGroupKeyV364||'')===groupKey&&String(row?.laneBandContextV364||'')===context&&Number(row?.laneBandSlotLockedUntilV364||0)>=now&&Number.isFinite(Number(row?.laneBandLockedSlotV364)));
+  if(fullyLocked){
+    const previous=String(members[0]?.laneBandRaceOrderSignatureV364||'');
+    if(previous&&previous!==raceOrder){
+      laneBandStabilityStateV364.preservedRaceOrderChanges+=1;
+      for(const row of members)row.laneBandRaceOrderSignatureV364=raceOrder;
+    }
+    const slots=new Map(members.map(row=>[String(row.id||''),Number(row.laneBandLockedSlotV364)||0]));
+    return {groupKey,slots,preserved:true};
+  }
+  const previousGroupKey=String(members[0]?.laneBandGroupKeyV364||'');
+  const ordered=members.slice().sort((a,b)=>{
+    const aOld=String(a?.laneBandContextV364||'')===context&&Number.isFinite(Number(a?.laneBandLockedSlotV364));
+    const bOld=String(b?.laneBandContextV364||'')===context&&Number.isFinite(Number(b?.laneBandLockedSlotV364));
+    if(aOld&&bOld&&Math.abs(Number(a.laneBandLockedSlotV364)-Number(b.laneBandLockedSlotV364))>.0001)return Number(a.laneBandLockedSlotV364)-Number(b.laneBandLockedSlotV364);
+    const av=Number(a?.visualLateralOffsetMeters)||0,bv=Number(b?.visualLateralOffsetMeters)||0;
+    if(Math.abs(av-bv)>LANE_BAND_SLOT_STABILITY_V364.visualOrderEpsilonMeters)return av-bv;
+    return String(a?.id||'').localeCompare(String(b?.id||''));
   });
-  const count=group.length,index=Math.max(0,group.findIndex(row=>String(row?.id||'')===String(vehicle?.id||'')));
-  const slot=count<=1?0:(-1+(2*index)/(count-1));
+  const values=laneBandSlotValuesV364(ordered.length),slots=new Map();
+  ordered.forEach((row,index)=>{
+    const next=Number(values[index])||0,previous=Number(row?.laneBandLockedSlotV364)||0;
+    if(Math.abs(previous-next)>.001)row.laneBandSlotChangesV364=(Number(row.laneBandSlotChangesV364)||0)+1;
+    row.laneBandLockedSlotV364=next;row.laneBandGroupKeyV364=groupKey;row.laneBandContextV364=context;
+    row.laneBandSlotLockedUntilV364=now+LANE_BAND_SLOT_STABILITY_V364.lockMs;row.laneBandRaceOrderSignatureV364=raceOrder;
+    slots.set(String(row.id||''),next);
+  });
+  laneBandStabilityStateV364.assignments+=1;if(previousGroupKey&&previousGroupKey!==groupKey)laneBandStabilityStateV364.reassignments+=1;
+  laneBandStabilityStateV364.last={groupKey,context,count:members.length,raceOrder,slots:Object.fromEntries(slots)};
+  return {groupKey,slots,preserved:false};
+}
+function resetLaneBandStabilityTelemetryV364(){
+  screenCrowdingStateV363.samples=0;screenCrowdingStateV363.denseSamples=0;screenCrowdingStateV363.currentOverlapPairs=0;screenCrowdingStateV363.maxOverlapPairs=0;screenCrowdingStateV363.minScreenDistance=Infinity;screenCrowdingStateV363.latest=null;
+  laneBandStabilityStateV364.assignments=0;laneBandStabilityStateV364.reassignments=0;laneBandStabilityStateV364.preservedRaceOrderChanges=0;laneBandStabilityStateV364.currentStableOverlapPairs=0;laneBandStabilityStateV364.maxStableOverlapPairs=0;laneBandStabilityStateV364.minStableScreenDistance=Infinity;laneBandStabilityStateV364.last=null;
+  return true;
+}
+function laneBandOffsetV363(vehicle,phaseInfo,laneIndex,usable){
+  if(!vehicle||!phaseInfo?.corner||String(vehicle?.racingLineMode||'IDEAL')!=='IDEAL'){
+    if(vehicle){
+      vehicle.laneBandSlotV363=0;vehicle.laneBandPeerCountV363=1;vehicle.laneBandOffsetMetersV363=0;vehicle.markerBandScaleV363=1;
+      if(!phaseInfo?.corner){vehicle.laneBandGroupKeyV364='';vehicle.laneBandContextV364='';vehicle.laneBandSlotLockedUntilV364=0;vehicle.laneBandLockedSlotV364=0}
+    }
+    return 0;
+  }
+  const group=laneBandClusterV364(vehicle,phaseInfo,laneIndex),assignment=assignStableLaneBandSlotsV364(group,phaseInfo,laneIndex),count=Math.max(1,group.length);
+  const slot=Number(assignment.slots.get(String(vehicle.id||''))??vehicle.laneBandLockedSlotV364)||0;
   const laneGapFraction=Math.min(...FOUR_LANE_TRACK_V360.laneFractions.slice(1).map((value,i)=>Math.abs(Number(value)-Number(FOUR_LANE_TRACK_V360.laneFractions[i]))));
   const halfGapMeters=Math.max(.35,laneGapFraction*Math.max(1,Number(usable)||1)*LANE_BAND_CROWDING_V363.bandHalfGapRatio);
   const offset=slot*halfGapMeters;
@@ -6048,6 +6122,8 @@ function renderRaceVehiclesV189(frameMs=16.67){
     marker.dataset.laneBandPeerCountV363=String(Number(vehicle.laneBandPeerCountV363)||1);
     marker.dataset.laneBandOffsetMetersV363=Number(vehicle.laneBandOffsetMetersV363||0).toFixed(3);
     marker.dataset.markerBandScaleV363=Number(vehicle.markerBandScaleV363||1).toFixed(3);
+    marker.dataset.laneBandLockedSlotV364=Number(vehicle.laneBandLockedSlotV364||0).toFixed(3);
+    marker.dataset.laneBandSlotChangesV364=String(Number(vehicle.laneBandSlotChangesV364)||0);
     marker.dataset.trackBoundaryRatioV271=Number(vehicle.trackBoundaryRatioV271||0).toFixed(3);
     marker.dataset.trackBoundaryExceededV271=vehicle.trackBoundaryExceededV271?'1':'0';
     marker.dataset.trackBoundarySpeedFactorV271=Number(vehicle.trackBoundarySpeedFactorV271||1).toFixed(3);
@@ -6077,16 +6153,24 @@ function recordScreenCrowdingV363(rendered=[]){
       const threshold=18*(aScale+bScale)*LANE_BAND_CROWDING_V363.overlapThresholdRatio;
       minDistance=Math.min(minDistance,screenDistance);
       if(screenDistance<threshold){overlaps++;pairs.push({a:String(a.vehicle?.id||''),b:String(b.vehicle?.id||''),distance:Number(screenDistance.toFixed(2)),threshold:Number(threshold.toFixed(2))})}
+      const sameStableGroup=String(a?.vehicle?.laneBandGroupKeyV364||'')&&String(a?.vehicle?.laneBandGroupKeyV364||'')===String(b?.vehicle?.laneBandGroupKeyV364||'');
+      const lockedNow=sameStableGroup&&Number(a?.vehicle?.laneBandSlotLockedUntilV364||0)>=(Number(simClockV192.simTimeMs)||0)&&Number(b?.vehicle?.laneBandSlotLockedUntilV364||0)>=(Number(simClockV192.simTimeMs)||0);
+      if(lockedNow){
+        laneBandStabilityStateV364.minStableScreenDistance=Math.min(laneBandStabilityStateV364.minStableScreenDistance,screenDistance);
+        if(screenDistance<threshold)laneBandStabilityStateV364.currentStableOverlapPairs+=1;
+      }
     }
   }
   screenCrowdingStateV363.samples+=1;if(dense)screenCrowdingStateV363.denseSamples+=1;
+  laneBandStabilityStateV364.maxStableOverlapPairs=Math.max(laneBandStabilityStateV364.maxStableOverlapPairs,laneBandStabilityStateV364.currentStableOverlapPairs);
   screenCrowdingStateV363.currentOverlapPairs=overlaps;screenCrowdingStateV363.maxOverlapPairs=Math.max(screenCrowdingStateV363.maxOverlapPairs,overlaps);
+  laneBandStabilityStateV364.currentStableOverlapPairs=0;
   if(Number.isFinite(minDistance))screenCrowdingStateV363.minScreenDistance=Math.min(screenCrowdingStateV363.minScreenDistance,minDistance);
   screenCrowdingStateV363.latest={overlaps,minDistance:Number.isFinite(minDistance)?Number(minDistance.toFixed(2)):null,pairs:pairs.slice(0,8)};
   return screenCrowdingStateV363.latest;
 }
 function screenCrowdingTelemetryV363(){
-  return {version:VERSION363,samples:screenCrowdingStateV363.samples,denseSamples:screenCrowdingStateV363.denseSamples,currentOverlapPairs:screenCrowdingStateV363.currentOverlapPairs,maxOverlapPairs:screenCrowdingStateV363.maxOverlapPairs,minScreenDistance:Number.isFinite(screenCrowdingStateV363.minScreenDistance)?Number(screenCrowdingStateV363.minScreenDistance.toFixed(2)):null,latest:screenCrowdingStateV363.latest};
+  return {version:VERSION363,samples:screenCrowdingStateV363.samples,denseSamples:screenCrowdingStateV363.denseSamples,currentOverlapPairs:screenCrowdingStateV363.currentOverlapPairs,maxOverlapPairs:screenCrowdingStateV363.maxOverlapPairs,minScreenDistance:Number.isFinite(screenCrowdingStateV363.minScreenDistance)?Number(screenCrowdingStateV363.minScreenDistance.toFixed(2)):null,latest:screenCrowdingStateV363.latest,stability:{...laneBandStabilityStateV364,minStableScreenDistance:Number.isFinite(laneBandStabilityStateV364.minStableScreenDistance)?Number(laneBandStabilityStateV364.minStableScreenDistance.toFixed(2)):null}};
 }
 function longCornerClusterTelemetryV360(){
   const track=activeRaceSnapshotV187?.track;
@@ -6114,6 +6198,7 @@ function longCornerClusterTelemetryV360(){
 function initializeRaceMotionV189(snapshot=activeRaceSnapshotV187){
   if(!snapshot)return false;
   resetLeaderPressureFieldV274();
+  resetLaneBandStabilityTelemetryV364();
   raceMotionV189.vehicles=createRaceVehiclesV189(snapshot);
   resetRaceOrderFlowV309(raceMotionV189.vehicles);
   resetMicroBattleEventsV278();
@@ -8548,6 +8633,23 @@ function qaLaneBandCrowdingGuardV363(){
 window.mwsF1QaLaneBandCrowdingGuardV363=qaLaneBandCrowdingGuardV363;
 window.mwsF1GetScreenCrowdingV363=screenCrowdingTelemetryV363;
 window.__mwsF1RacingV363=VERSION363;
+
+function qaLaneBandSlotStabilityV364(){
+  const phaseInfo={corner:{id:'QA-V364-CORNER'}},laneIndex=1,now=5000;
+  const a={id:'a-v364',raceProgress:.510,visualLateralOffsetMeters:-2,laneBandLockedSlotV364:0,laneBandGroupKeyV364:'',laneBandContextV364:'',laneBandSlotLockedUntilV364:0,laneBandSlotChangesV364:0};
+  const b={id:'b-v364',raceProgress:.500,visualLateralOffsetMeters:2,laneBandLockedSlotV364:0,laneBandGroupKeyV364:'',laneBandContextV364:'',laneBandSlotLockedUntilV364:0,laneBandSlotChangesV364:0};
+  const first=assignStableLaneBandSlotsV364([a,b],phaseInfo,laneIndex,now),aFirst=Number(first.slots.get(a.id)),bFirst=Number(first.slots.get(b.id));
+  a.raceProgress=.490;b.raceProgress=.520;
+  const second=assignStableLaneBandSlotsV364([a,b],phaseInfo,laneIndex,now+100),aSecond=Number(second.slots.get(a.id)),bSecond=Number(second.slots.get(b.id));
+  const preserved=aFirst===aSecond&&bFirst===bSecond&&aFirst<bFirst&&second.preserved===true;
+  const source=String(assignStableLaneBandSlotsV364)+String(laneBandClusterV364)+String(laneBandOffsetV363);
+  const directProgressMutation=/\b(?:raceProgress|progress)\s*=/.test(source);
+  const physicsIsolated=!String(lineOffsetMetersV197).includes('V364')&&!String(lineOffsetMetersV197).includes('laneBandLockedSlotV364');
+  return {version:VERSION364,config:{...LANE_BAND_SLOT_STABILITY_V364},first:{a:aFirst,b:bFirst},afterPass:{a:aSecond,b:bSecond},preserved,directProgressMutation,physicsIsolated,telemetry:screenCrowdingTelemetryV363(),
+    allPass:preserved&&!directProgressMutation&&physicsIsolated&&LANE_BAND_SLOT_STABILITY_V364.lockMs>=900};
+}
+window.mwsF1QaLaneBandSlotStabilityV364=qaLaneBandSlotStabilityV364;
+window.__mwsF1RacingV364=VERSION364;
 
 function qaUiVisibilitySpacingV324(){
   const marker=document.querySelector('.f1-racing-race-vehicle-v189');

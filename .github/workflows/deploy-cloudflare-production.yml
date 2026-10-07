@@ -308,6 +308,7 @@ jobs:
           node --check scripts/run-phase361-f1-corner-lane-occupancy-pit-hud-audit.mjs
           node --check scripts/run-phase362-f1-visible-corner-lane-separation-audit.mjs
           node --check scripts/run-phase363-f1-lane-band-crowding-guard-audit.mjs
+          node --check scripts/run-phase364-f1-stable-lane-band-slot-transition-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
@@ -1162,6 +1163,11 @@ jobs:
           grep -Fq "function laneBandOffsetV363(" /tmp/f1-racing-v1-phase187.js
           grep -Fq "function recordScreenCrowdingV363(" /tmp/f1-racing-v1-phase187.js
           grep -Fq "marker.dataset.laneBandSlotV363" /tmp/f1-racing-v1-phase187.js
+          echo '[phase364] F1 stable lane-band slot transition'
+          grep -Fq "window.__mwsF1RacingV364=VERSION364;" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "function assignStableLaneBandSlotsV364(" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "function laneBandClusterV364(" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "marker.dataset.laneBandLockedSlotV364" /tmp/f1-racing-v1-phase187.js
           grep -Fq "function updateRankedFieldPaceRetentionV357(){" /tmp/f1-racing-v1-phase187.js
           grep -Fq "updateRankedFieldPaceRetentionV357();" /tmp/f1-racing-v1-phase187.js
           grep -Fq "rankedFieldPaceMultiplierV357Value" /tmp/f1-racing-v1-phase187.js
