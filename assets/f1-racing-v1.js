@@ -6530,7 +6530,8 @@ function stagedHeadwayTargetV366(vehicle,desiredGap,passSeparation){
 function followingOpeningCapV366(aheadSpeed,gapMeters,targetGap,emergency=false){
   const target=Math.max(1,Number(targetGap)||1),gap=Math.max(0,Number(gapMeters)||0);
   const severity=clamp01V198((target-gap)/target);
-  let margin=FOLLOWING_STABILITY_V366.underGapMinMarginKph+(FOLLOWING_STABILITY_V366.underGapMaxMarginKph-FOLLOWING_STABILITY_V366.underGapMinMarginKph)*severity;
+  const shapedSeverity=severity*severity;
+  let margin=FOLLOWING_STABILITY_V366.underGapMinMarginKph+(FOLLOWING_STABILITY_V366.underGapMaxMarginKph-FOLLOWING_STABILITY_V366.underGapMinMarginKph)*shapedSeverity;
   if(emergency)margin=FOLLOWING_STABILITY_V366.underGapMaxMarginKph;
   return Math.max(0,(Number(aheadSpeed)||0)-margin);
 }
@@ -6542,6 +6543,7 @@ function naturalRaceSpacingControlV366(vehicle,freeTargetKph=NaN){
   if(!ahead||!Number.isFinite(gap))return base;
   const aheadSpeed=Math.max(0,Number(ahead.speedKph)||0),currentSpeed=Math.max(0,Number(vehicle.speedKph)||0),closingKph=currentSpeed-aheadSpeed;
   const phaseInfo=getCornerPhaseAtProgressV194(vehicle.progress);
+  const phase=String(phaseInfo?.phase||'STRAIGHT');
   const desiredGap=naturalHeadwayTargetV365(vehicle,ahead,phaseInfo);
   const passSeparation=visualPassSeparationV366(vehicle,ahead);
   const controlledGap=stagedHeadwayTargetV366(vehicle,desiredGap,passSeparation);
@@ -6552,12 +6554,22 @@ function naturalRaceSpacingControlV366(vehicle,freeTargetKph=NaN){
     followingStabilityTelemetryV366.last={...base,reason:String(base?.reason||'PASS_LATERAL_RELEASE_V366'),gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,passSeparation};
     return base;
   }
+  const cornerGuardV366=phase==='TURN_IN'||phase==='APEX'||phase==='EXIT';
+  const brakingDangerV366=phase==='BRAKING'&&gap<NATURAL_HEADWAY_V365.minGapMeters;
   const emergencyThreshold=Math.max(NATURAL_HEADWAY_V365.emergencyGapMeters,Math.min(PASS_CONFIG_V208.sideBySideGapMeters,controlledGap*.55));
+  if(!cornerGuardV366&&!brakingDangerV366){
+    if(gap<emergencyThreshold&&!passSeparation.committed){
+      const emergency={active:true,capKph:followingOpeningCapV366(aheadSpeed,gap,controlledGap,true),gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,reason:'FOLLOWING_EMERGENCY_V366',closingKph,phase,passSeparation};
+      followingStabilityTelemetryV366.active+=1;followingStabilityTelemetryV366.emergency+=1;followingStabilityTelemetryV366.last=emergency;return emergency;
+    }
+    followingStabilityTelemetryV366.last={...base,gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,phase,passSeparation,release:'OPEN_FLOW_V366'};
+    return base;
+  }
   let result=null;
   if(gap<controlledGap){
     const emergency=gap<emergencyThreshold;
     const capKph=followingOpeningCapV366(aheadSpeed,gap,controlledGap,emergency);
-    result={active:true,capKph,gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,reason:emergency?'FOLLOWING_EMERGENCY_V366':'FOLLOWING_GAP_OPEN_V366',closingKph,phase:String(phaseInfo?.phase||'STRAIGHT'),passSeparation};
+    result={active:true,capKph,gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,reason:emergency?'FOLLOWING_EMERGENCY_V366':'FOLLOWING_GAP_OPEN_V366',closingKph,phase,passSeparation};
     followingStabilityTelemetryV366.active+=1;
     if(emergency)followingStabilityTelemetryV366.emergency+=1;
   }else{
@@ -6565,7 +6577,7 @@ function naturalRaceSpacingControlV366(vehicle,freeTargetKph=NaN){
     if(gap<softStart&&closingKph>FOLLOWING_STABILITY_V366.minClosingKph){
       const ratio=clamp01V198((gap-controlledGap)/Math.max(1,softStart-controlledGap));
       const allowance=NATURAL_HEADWAY_V365.approachAllowanceKph*ratio;
-      result={active:true,capKph:aheadSpeed+allowance,gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,reason:'FOLLOWING_LIFT_V366',closingKph,phase:String(phaseInfo?.phase||'STRAIGHT'),passSeparation};
+      result={active:true,capKph:aheadSpeed+allowance,gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,reason:'FOLLOWING_LIFT_V366',closingKph,phase,passSeparation};
       followingStabilityTelemetryV366.active+=1;
     }
   }
