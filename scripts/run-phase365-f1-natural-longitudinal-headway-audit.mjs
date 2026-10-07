@@ -16,6 +16,8 @@ export function runPhase365F1NaturalLongitudinalHeadwayAudit(){
     'NATURAL_HEADWAY_BRAKE_V365',
     'NATURAL_HEADWAY_LIFT_V365',
     'NATURAL_EMERGENCY_V365',
+    'fastReleaseGapMultiplier:1.12',
+    "'FAST_APPROACH_RELEASE'",
     'const spacingControlV319=naturalRaceSpacingControlV365(vehicle);',
     'const rawTarget=physicalTarget;',
     '*TRACK_PRESENTATION_V365.visualWidthScale;',
