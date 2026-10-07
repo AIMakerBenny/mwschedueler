@@ -230,14 +230,14 @@ const CORNER_LANE_OCCUPANCY_V361=Object.freeze({
 });
 const PIT_HUD_V361=Object.freeze({maxVisible:6,bottomOffsetPx:116});
 const VISIBLE_CORNER_SEPARATION_V362=Object.freeze({
-  visualWidthScale:5.8,
-  trackStrokeWidth:150,
+  visualWidthScale:8.0,
+  trackStrokeWidth:210,
   laneVisualMultiplier:1.10,
   idealNudgeNormal:.18,
   idealNudgeDense:.10,
   nearLaneMeters:42,
   nearLanePenalty:48,
-  minimumDenseLaneGapSvg:30
+  minimumDenseLaneGapSvg:38
 });
 const CORNER_COMPLEX_RECOVERY_V353=Object.freeze({
   underSpeedTriggerRatio:.90,underSpeedAccelMultiplier:1.38,

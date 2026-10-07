@@ -1155,7 +1155,7 @@ jobs:
           grep -Fq "const VISIBLE_CORNER_SEPARATION_V362=Object.freeze({" /tmp/f1-racing-v1-phase187.js
           grep -Fq "nearPressureV362" /tmp/f1-racing-v1-phase187.js
           grep -Fq "laneTarget+nudge" /tmp/f1-racing-v1-phase187.js
-          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" 'stroke-width:150' > /tmp/f1-racing-v1-phase362.css
+          retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" 'stroke-width:210' > /tmp/f1-racing-v1-phase362.css
           grep -Fq "function updateRankedFieldPaceRetentionV357(){" /tmp/f1-racing-v1-phase187.js
           grep -Fq "updateRankedFieldPaceRetentionV357();" /tmp/f1-racing-v1-phase187.js
           grep -Fq "rankedFieldPaceMultiplierV357Value" /tmp/f1-racing-v1-phase187.js

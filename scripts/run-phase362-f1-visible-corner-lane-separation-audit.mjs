@@ -10,8 +10,8 @@ export function runPhase362F1VisibleCornerLaneSeparationAudit(){
   for(const token of [
     "const VERSION362='phase362-f1-visible-corner-lane-separation';",
     'const VISIBLE_CORNER_SEPARATION_V362=Object.freeze({',
-    'visualWidthScale:5.8',
-    'trackStrokeWidth:150',
+    'visualWidthScale:8.0',
+    'trackStrokeWidth:210',
     'laneVisualMultiplier:1.10',
     'nearLaneMeters:42',
     'nearLanePenalty:48',
@@ -27,9 +27,9 @@ export function runPhase362F1VisibleCornerLaneSeparationAudit(){
   if(/\b(?:raceProgress|progress)\s*=/.test(chooseSource))issues.push('Phase 362 proximity lane selection mutates progress');
   const lineStart=core.indexOf('function lineOffsetMetersV197('),lineEnd=core.indexOf('function phaseSpeedTargetV270(',lineStart),lineSource=lineStart>=0&&lineEnd>lineStart?core.slice(lineStart,lineEnd):'';
   if(lineSource.includes('V362')||lineSource.includes('VISIBLE_CORNER_SEPARATION_V362'))issues.push('Phase 362 leaked into physical racing line');
-  for(const token of ['#f1RacingRaceTrackGlowV188{stroke-width:150}', '.f1-racing-race-lane-guide-v360{stroke:rgba(226,232,240,.46);stroke-width:1.25}'])if(!css.includes(token))issues.push('Phase 362 CSS missing: '+token);
+  for(const token of ['#f1RacingRaceTrackGlowV188{stroke-width:210}', '.f1-racing-race-lane-guide-v360{stroke:rgba(226,232,240,.46);stroke-width:1.25}'])if(!css.includes(token))issues.push('Phase 362 CSS missing: '+token);
   for(const token of ['Phase 362 runtime did not propagate to Recovery H browser','Phase 362 visible lane separation QA failed','laneSeparationV362:laneSeparation362||null'])if(!diag.includes(token))issues.push('Phase 362 Recovery H missing: '+token);
-  for(const token of ['node --check scripts/run-phase362-f1-visible-corner-lane-separation-audit.mjs','[phase362] F1 visible corner lane separation','window.__mwsF1RacingV362=VERSION362;','stroke-width:150'])if(!workflow.includes(token))issues.push('Phase 362 workflow missing: '+token);
+  for(const token of ['node --check scripts/run-phase362-f1-visible-corner-lane-separation-audit.mjs','[phase362] F1 visible corner lane separation','window.__mwsF1RacingV362=VERSION362;','stroke-width:210'])if(!workflow.includes(token))issues.push('Phase 362 workflow missing: '+token);
   for(const file of ['assets/f1-racing-v1.js','scripts/diagnose-recovery-h-f1-live.mjs','scripts/run-phase362-f1-visible-corner-lane-separation-audit.mjs']){
     const run=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});
     if(run.status!==0)issues.push(file+' syntax failed: '+String(run.stderr||run.stdout||'').trim());
