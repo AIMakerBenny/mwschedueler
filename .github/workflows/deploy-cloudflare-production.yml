@@ -314,6 +314,7 @@ jobs:
           node --check scripts/run-phase367-f1-interaction-dependency-audit.mjs
           node --check scripts/run-phase368-f1-interaction-snapshot-shadow-audit.mjs
           node --check scripts/run-phase369-f1-pit-interaction-isolation-audit.mjs
+          node --check scripts/run-phase370-f1-corner-train-separation-pause-lock-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
@@ -1195,6 +1196,12 @@ jobs:
           grep -Fq "function trackInteractionEligibleV369(" /tmp/f1-racing-v1-phase187.js
           grep -Fq "function clearPitInteractionStateV369(" /tmp/f1-racing-v1-phase187.js
           grep -Fq "clearPitInteractionStateV369(vehicle,raceMotionV189.vehicles,'PIT_ENTRY')" /tmp/f1-racing-v1-phase187.js
+          echo '[phase370] F1 corner train separation and pause lock'
+          grep -Fq "window.__mwsF1RacingV370=VERSION370;" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "function naturalRaceSpacingControlV370(" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "released=base.visualReady===true" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "CORNER_TRAIN_GUARD_V370" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "renderRaceVehiclesV189(simClockV192.paused?0:delta);" /tmp/f1-racing-v1-phase187.js
           grep -Fq "function updateRankedFieldPaceRetentionV357(){" /tmp/f1-racing-v1-phase187.js
           grep -Fq "updateRankedFieldPaceRetentionV357();" /tmp/f1-racing-v1-phase187.js
           grep -Fq "rankedFieldPaceMultiplierV357Value" /tmp/f1-racing-v1-phase187.js

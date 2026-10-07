@@ -365,6 +365,7 @@ import {runPhase366F1FollowingPauseStabilityAudit} from './run-phase366-f1-follo
 import {runPhase367F1InteractionDependencyAudit} from './run-phase367-f1-interaction-dependency-audit.mjs';
 import {runPhase368F1InteractionSnapshotShadowAudit} from './run-phase368-f1-interaction-snapshot-shadow-audit.mjs';
 import {runPhase369F1PitInteractionIsolationAudit} from './run-phase369-f1-pit-interaction-isolation-audit.mjs';
+import {runPhase370F1CornerTrainSeparationPauseLockAudit} from './run-phase370-f1-corner-train-separation-pause-lock-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2787,5 +2788,6 @@ export function runPhase366FullIntegrationAudit(){const previous=runPhase365Full
 export function runPhase367FullIntegrationAudit(){const previous=runPhase366FullIntegrationAudit(),current=runPhase367F1InteractionDependencyAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 367: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 367: '+x)];return {phase:367,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase368FullIntegrationAudit(){const previous=runPhase367FullIntegrationAudit(),current=runPhase368F1InteractionSnapshotShadowAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 368: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 368: '+x)];return {phase:368,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase369FullIntegrationAudit(){const previous=runPhase368FullIntegrationAudit(),current=runPhase369F1PitInteractionIsolationAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 369: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 369: '+x)];return {phase:369,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase369FullIntegrationAudit();}
+export function runPhase370FullIntegrationAudit(){const previous=runPhase369FullIntegrationAudit(),current=runPhase370F1CornerTrainSeparationPauseLockAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 370: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 370: '+x)];return {phase:370,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase370FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();

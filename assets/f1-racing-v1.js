@@ -155,6 +155,7 @@ const VERSION365='phase365-f1-natural-longitudinal-headway';
 const VERSION366='phase366-f1-following-pause-stability';
 const VERSION368='phase368-f1-interaction-snapshot-shadow';
 const VERSION369='phase369-f1-pit-interaction-isolation';
+const VERSION370='phase370-f1-corner-train-separation-pause-lock';
 const interactionSnapshotStateV368={snapshot:null,builds:0,lastSimTimeMs:0};
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
@@ -299,6 +300,20 @@ const FOLLOWING_STABILITY_V366=Object.freeze({
   pullOutReleaseHoldMs:420
 });
 const followingStabilityTelemetryV366={calls:0,active:0,emergency:0,lateralRelease:0,minGapMeters:Infinity,last:null};
+const CORNER_TRAIN_GUARD_V370=Object.freeze({
+  maxGuardMeters:24,
+  closingGuardMeters:18,
+  preparingGuardMeters:15,
+  pullOutGuardMeters:13.5,
+  emergencyGapMeters:10,
+  emergencyRatio:.62,
+  underGapMinMarginKph:.15,
+  underGapMaxMarginKph:7,
+  softStartMultiplier:1.08,
+  minClosingKph:.15,
+  softClosingAllowanceKph:.45
+});
+const cornerTrainGuardTelemetryV370={calls:0,active:0,emergency:0,strictLateralRelease:0,timedReleaseRejected:0,minGapMeters:Infinity,last:null};
 const CORNER_COMPLEX_RECOVERY_V353=Object.freeze({
   underSpeedTriggerRatio:.90,underSpeedAccelMultiplier:1.38,
   telemetryEntryRatio:1.08,cleanBoundaryFactor:.985
@@ -6498,6 +6513,7 @@ function initializeRaceMotionV189(snapshot=activeRaceSnapshotV187){
   resetLaneBandStabilityTelemetryV364();
   resetNaturalHeadwayTelemetryV365();
   resetFollowingStabilityTelemetryV366();
+  resetCornerTrainGuardTelemetryV370();
   raceMotionV189.vehicles=createRaceVehiclesV189(snapshot);
   resetInteractionSnapshotV368();
   updateInteractionSnapshotShadowV368();
@@ -6842,6 +6858,95 @@ function resetFollowingStabilityTelemetryV366(){
   followingStabilityTelemetryV366.calls=0;followingStabilityTelemetryV366.active=0;followingStabilityTelemetryV366.emergency=0;followingStabilityTelemetryV366.lateralRelease=0;followingStabilityTelemetryV366.minGapMeters=Infinity;followingStabilityTelemetryV366.last=null;return true;
 }
 
+function strictPassSeparationV370(vehicle,ahead){
+  const base=visualPassSeparationV366(vehicle,ahead);
+  const released=base.visualReady===true;
+  return {...base,released,timedReleaseIgnoredV370:Boolean(base.timedPullOutReady&&!base.visualReady)};
+}
+function stagedHeadwayTargetV370(vehicle,desiredGap,passSeparation){
+  const normal=Math.max(NATURAL_HEADWAY_V365.minGapMeters,Number(desiredGap)||NATURAL_HEADWAY_V365.minGapMeters);
+  if(!vehicle||vehicle.battleBlockedV319||passSeparation?.released)return normal;
+  const state=String(vehicle.battleState||'FOLLOWING');
+  if(['PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK'].includes(state)){
+    return Math.min(normal,Math.max(NATURAL_HEADWAY_V365.minGapMeters,CORNER_TRAIN_GUARD_V370.pullOutGuardMeters));
+  }
+  if(state==='PREPARING_ATTACK'){
+    return Math.min(normal,Math.max(NATURAL_HEADWAY_V365.minGapMeters,CORNER_TRAIN_GUARD_V370.preparingGuardMeters));
+  }
+  if(['CLOSING','TOWING'].includes(state)||Boolean(vehicle.naturalHeadwayAttackIntentV365)){
+    return Math.min(normal,Math.max(NATURAL_HEADWAY_V365.minGapMeters,CORNER_TRAIN_GUARD_V370.closingGuardMeters));
+  }
+  return normal;
+}
+function followingOpeningCapV370(aheadSpeed,gapMeters,targetGap,emergency=false){
+  const target=Math.max(1,Number(targetGap)||1),gap=Math.max(0,Number(gapMeters)||0);
+  const severity=clamp01V198((target-gap)/target);
+  const shaped=Math.max(.02,severity*severity);
+  const maxMargin=CORNER_TRAIN_GUARD_V370.underGapMaxMarginKph;
+  let margin=CORNER_TRAIN_GUARD_V370.underGapMinMarginKph+(maxMargin-CORNER_TRAIN_GUARD_V370.underGapMinMarginKph)*shaped;
+  if(emergency)margin=maxMargin;
+  return Math.max(0,(Number(aheadSpeed)||0)-margin);
+}
+function naturalRaceSpacingControlV370(vehicle,freeTargetKph=NaN){
+  const base=naturalRaceSpacingControlV366(vehicle,freeTargetKph);
+  if(!vehicle||String(vehicle.pitState||'TRACK')!=='TRACK')return base;
+  const ahead=raceMotionV189.vehicles.find(row=>String(row.id)===String(vehicle.trafficCarAheadId||''))||null;
+  const gap=Math.max(0,Number(vehicle.trafficGapMeters));
+  if(!ahead||!Number.isFinite(gap))return base;
+  const aheadSpeed=Math.max(0,Number(ahead.speedKph)||0),currentSpeed=Math.max(0,Number(vehicle.speedKph)||0),closingKph=currentSpeed-aheadSpeed;
+  const phaseInfo=getCornerPhaseAtProgressV194(vehicle.progress),phase=String(phaseInfo?.phase||'STRAIGHT');
+  const desiredGap=naturalHeadwayTargetV365(vehicle,ahead,phaseInfo);
+  const passSeparation=strictPassSeparationV370(vehicle,ahead);
+  const controlledGap=stagedHeadwayTargetV370(vehicle,desiredGap,passSeparation);
+  cornerTrainGuardTelemetryV370.calls+=1;
+  cornerTrainGuardTelemetryV370.minGapMeters=Math.min(cornerTrainGuardTelemetryV370.minGapMeters,gap);
+  if(passSeparation.timedReleaseIgnoredV370)cornerTrainGuardTelemetryV370.timedReleaseRejected+=1;
+  if(passSeparation.released){
+    cornerTrainGuardTelemetryV370.strictLateralRelease+=1;
+    cornerTrainGuardTelemetryV370.last={...base,gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,phase,passSeparation,release:'STRICT_LATERAL_RELEASE_V370'};
+    return base;
+  }
+  const emergencyThreshold=Math.max(CORNER_TRAIN_GUARD_V370.emergencyGapMeters,Math.min(CORNER_TRAIN_GUARD_V370.pullOutGuardMeters,controlledGap*CORNER_TRAIN_GUARD_V370.emergencyRatio));
+  const cornerGuard=['BRAKING','TURN_IN','APEX','EXIT'].includes(phase);
+  if(!cornerGuard){
+    if(gap<emergencyThreshold){
+      const emergency={active:true,capKph:followingOpeningCapV370(aheadSpeed,gap,Math.max(controlledGap,emergencyThreshold),true),gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,reason:'TRAIN_EMERGENCY_V370',closingKph,phase,passSeparation};
+      cornerTrainGuardTelemetryV370.active+=1;cornerTrainGuardTelemetryV370.emergency+=1;cornerTrainGuardTelemetryV370.last=emergency;return emergency;
+    }
+    cornerTrainGuardTelemetryV370.last={...base,gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,phase,passSeparation,release:'OPEN_FLOW_V370'};
+    return base;
+  }
+  const guardGap=Math.min(controlledGap,CORNER_TRAIN_GUARD_V370.maxGuardMeters);
+  let result=null;
+  if(gap<guardGap){
+    const emergency=gap<emergencyThreshold;
+    result={active:true,capKph:followingOpeningCapV370(aheadSpeed,gap,guardGap,emergency),gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,guardGapMeters:guardGap,reason:emergency?'TRAIN_EMERGENCY_V370':'CORNER_TRAIN_GUARD_V370',closingKph,phase,passSeparation};
+    cornerTrainGuardTelemetryV370.active+=1;
+    if(emergency)cornerTrainGuardTelemetryV370.emergency+=1;
+  }else{
+    const softStart=guardGap*CORNER_TRAIN_GUARD_V370.softStartMultiplier;
+    if(gap<softStart&&closingKph>CORNER_TRAIN_GUARD_V370.minClosingKph){
+      const ratio=clamp01V198((gap-guardGap)/Math.max(.1,softStart-guardGap));
+      const allowance=CORNER_TRAIN_GUARD_V370.softClosingAllowanceKph*ratio;
+      result={active:true,capKph:aheadSpeed+allowance,gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,guardGapMeters:guardGap,reason:'CORNER_TRAIN_LIFT_V370',closingKph,phase,passSeparation};
+      cornerTrainGuardTelemetryV370.active+=1;
+    }
+  }
+  if(result?.active){
+    if(base?.active&&Number.isFinite(Number(base.capKph))&&Number(base.capKph)<Number(result.capKph))result={...result,capKph:Number(base.capKph),baseReason:String(base.reason||'')};
+    cornerTrainGuardTelemetryV370.last=result;
+    return result;
+  }
+  cornerTrainGuardTelemetryV370.last={...base,gapMeters:gap,desiredGapMeters:desiredGap,controlledGapMeters:controlledGap,guardGapMeters:guardGap,phase,passSeparation};
+  return base;
+}
+function cornerTrainGuardTelemetrySnapshotV370(){
+  return {version:VERSION370,calls:cornerTrainGuardTelemetryV370.calls,active:cornerTrainGuardTelemetryV370.active,emergency:cornerTrainGuardTelemetryV370.emergency,strictLateralRelease:cornerTrainGuardTelemetryV370.strictLateralRelease,timedReleaseRejected:cornerTrainGuardTelemetryV370.timedReleaseRejected,minGapMeters:Number.isFinite(cornerTrainGuardTelemetryV370.minGapMeters)?Number(cornerTrainGuardTelemetryV370.minGapMeters.toFixed(2)):null,last:cornerTrainGuardTelemetryV370.last};
+}
+function resetCornerTrainGuardTelemetryV370(){
+  cornerTrainGuardTelemetryV370.calls=0;cornerTrainGuardTelemetryV370.active=0;cornerTrainGuardTelemetryV370.emergency=0;cornerTrainGuardTelemetryV370.strictLateralRelease=0;cornerTrainGuardTelemetryV370.timedReleaseRejected=0;cornerTrainGuardTelemetryV370.minGapMeters=Infinity;cornerTrainGuardTelemetryV370.last=null;return true;
+}
+
 function updateRankedFieldPaceRetentionV357(){
   const standings=computeRaceStandingsV191();
   const count=Math.max(1,standings.length);
@@ -6940,7 +7045,8 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   maxTarget*=boundaryStateV271.speedFactor;
   // Phase 350 compatibility token: const spacingControlV319=battleQueueSpeedControlV350(vehicle);
   // Phase 365 compatibility token: const spacingControlV319=naturalRaceSpacingControlV365(vehicle);
-  const spacingControlV319=naturalRaceSpacingControlV366(vehicle,maxTarget);
+  // Phase 366 compatibility token: const spacingControlV319=naturalRaceSpacingControlV366(vehicle,maxTarget);
+  const spacingControlV319=naturalRaceSpacingControlV370(vehicle,maxTarget);
   vehicle.battleQueueControlV319=spacingControlV319.reason;
   vehicle.battleQueueSpeedCapKphV319=Number.isFinite(spacingControlV319.capKph)?spacingControlV319.capKph:0;
   if(Number.isFinite(spacingControlV319.capKph))maxTarget=Math.min(maxTarget,spacingControlV319.capKph);
@@ -9232,6 +9338,31 @@ function qaFollowingPauseStabilityV366(){
 window.mwsF1QaFollowingPauseStabilityV366=qaFollowingPauseStabilityV366;
 window.mwsF1GetFollowingStabilityTelemetryV366=followingStabilityTelemetrySnapshotV366;
 window.__mwsF1RacingV366=VERSION366;
+
+function qaCornerTrainSeparationPauseLockV370(){
+  const ahead={id:'qa370-ahead',speedKph:200,visualLateralOffsetMeters:0,racingLineMode:'IDEAL',pitState:'TRACK'};
+  const timedOnly={id:'qa370-timed',battleState:'PULLING_OUT',battleStateMs:1000,visualLateralOffsetMeters:0,racingLineMode:'IDEAL',pitState:'TRACK',battleBlockedV319:false,naturalHeadwayAttackIntentV365:true};
+  const lateral={...timedOnly,id:'qa370-lateral',visualLateralOffsetMeters:3.2,battleStateMs:120};
+  const timedSeparation=strictPassSeparationV370(timedOnly,ahead);
+  const lateralSeparation=strictPassSeparationV370(lateral,ahead);
+  const followingTarget=stagedHeadwayTargetV370({battleState:'FOLLOWING',battleBlockedV319:false,naturalHeadwayAttackIntentV365:false},20,{released:false});
+  const closingTarget=stagedHeadwayTargetV370({battleState:'CLOSING',battleBlockedV319:false,naturalHeadwayAttackIntentV365:true},20,{released:false});
+  const preparingTarget=stagedHeadwayTargetV370({battleState:'PREPARING_ATTACK',battleBlockedV319:false,naturalHeadwayAttackIntentV365:true},20,{released:false});
+  const pullingTarget=stagedHeadwayTargetV370({battleState:'PULLING_OUT',battleBlockedV319:false,naturalHeadwayAttackIntentV365:true},20,{released:false});
+  const underGapCap=followingOpeningCapV370(200,9,18,false);
+  const emergencyCap=followingOpeningCapV370(200,5,18,true);
+  const controllerSource=String(naturalRaceSpacingControlV370),renderSource=String(renderRaceVehiclesV189),frameSource=String(raceFrameV189),pauseSource=String(toggleSimulationPauseV192);
+  const strictRelease=timedSeparation.released===false&&timedSeparation.timedReleaseIgnoredV370===true&&lateralSeparation.released===true;
+  const stagedSpacing=followingTarget===20&&closingTarget>=CORNER_TRAIN_GUARD_V370.closingGuardMeters&&preparingTarget>=CORNER_TRAIN_GUARD_V370.preparingGuardMeters&&pullingTarget>=CORNER_TRAIN_GUARD_V370.pullOutGuardMeters;
+  const underGapOpens=underGapCap<200&&emergencyCap<underGapCap;
+  const noTimedRelease=controllerSource.includes('strictPassSeparationV370')&&String(strictPassSeparationV370).includes('released=base.visualReady===true');
+  const pauseLocked=renderSource.includes('freezeVisualV366')&&renderSource.includes('if(!freezeVisualV366)updateAutoRaceCameraV216(false)')&&frameSource.includes('renderRaceVehiclesV189(simClockV192.paused?0:delta);')&&pauseSource.includes('raceMotionV189.lastTimestamp=0');
+  const directProgressMutation=/\b(?:raceProgress|progress)\s*=/.test(controllerSource);
+  return {version:VERSION370,config:{...CORNER_TRAIN_GUARD_V370},timedSeparation,lateralSeparation,targets:{followingTarget,closingTarget,preparingTarget,pullingTarget},caps:{underGapCap:Number(underGapCap.toFixed(2)),emergencyCap:Number(emergencyCap.toFixed(2))},strictRelease,stagedSpacing,underGapOpens,noTimedRelease,pauseLocked,directProgressMutation,telemetry:cornerTrainGuardTelemetrySnapshotV370(),allPass:strictRelease&&stagedSpacing&&underGapOpens&&noTimedRelease&&pauseLocked&&!directProgressMutation};
+}
+window.mwsF1QaCornerTrainSeparationPauseLockV370=qaCornerTrainSeparationPauseLockV370;
+window.mwsF1GetCornerTrainGuardTelemetryV370=cornerTrainGuardTelemetrySnapshotV370;
+window.__mwsF1RacingV370=VERSION370;
 
 function qaUiVisibilitySpacingV324(){
   const marker=document.querySelector('.f1-racing-race-vehicle-v189');
