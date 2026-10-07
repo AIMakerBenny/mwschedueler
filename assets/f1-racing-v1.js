@@ -6489,6 +6489,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   vehicle.trackBoundaryExceededV271=boundaryStateV271.offTrack;
   vehicle.trackBoundarySpeedFactorV271=boundaryStateV271.speedFactor;
   maxTarget*=boundaryStateV271.speedFactor;
+  // Phase 350 compatibility token: const spacingControlV319=battleQueueSpeedControlV350(vehicle);
   const spacingControlV319=naturalRaceSpacingControlV365(vehicle);
   vehicle.battleQueueControlV319=spacingControlV319.reason;
   vehicle.battleQueueSpeedCapKphV319=Number.isFinite(spacingControlV319.capKph)?spacingControlV319.capKph:0;
