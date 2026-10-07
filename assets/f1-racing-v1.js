@@ -225,7 +225,7 @@ const LONG_RUN_REAR_PACE_V372=Object.freeze({normalMaxBoost:.0018,fastModeScale:
 const MULTICAR_CORRIDOR_V376=Object.freeze({
   maxStraightAbreast:3,maxCornerAbreast:2,minimumSideClearanceMeters:2.65,
   sameLineMinGapMeters:9.0,approachControlGapMeters:20.0,nearGroupMeters:14,
-  tripleAttackMaxGapMeters:35,thirdPartyOpportunityPct:44,thirdAttackHoldMs:2600,fastAttackClosingKph:2
+  tripleAttackMaxGapMeters:35,thirdPartyOpportunityPct:56,thirdAttackHoldMs:2600,fastAttackClosingKph:2,catchupAttackBoostKph:13,followingCatchupBoostKph:8
 });
 const CORNER_PHYSICS_V375=Object.freeze({
   lateralGripMps2:32,minLateralGripMps2:25,angleBrakeWeight:.09,brakeLeadMeters:12,
@@ -4666,6 +4666,19 @@ function thirdCarOpportunityV376(vehicle,target,locks,phase,gapMeters,peers=race
     gapMeters<=MULTICAR_CORRIDOR_V376.tripleAttackMaxGapMeters&&gapMeters>=0&&safe&&(sticky||lucky));
   return {active,busyTarget,available,nearCount:near.length,clear,approaching,lucky,sticky,outer};
 }
+function competitivePaceAdvantageV376(vehicle,peers=raceMotionV189.vehicles){
+  if(!vehicle||vehicle.finished||vehicle.pitRequested||String(vehicle.pitState||'TRACK')!=='TRACK'||vehicle.trackBoundaryExceededV271)return 0;
+  const ahead=peers.find(row=>String(row?.id||'')===String(vehicle.trafficCarAheadId||''))||null;
+  if(!ahead||ahead.finished||String(ahead.pitState||'TRACK')!=='TRACK')return 0;
+  const gap=Math.max(0,Number(vehicle.trafficGapMeters));
+  if(!Number.isFinite(gap)||gap>78)return 0;
+  const pressure=clamp01V198((78-gap)/70);
+  const state=String(vehicle.battleState||'FOLLOWING');
+  const attack=['PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK'].includes(state)||vehicle.tripleBreakawayActiveV376===true;
+  const targetBias=attack?MULTICAR_CORRIDOR_V376.catchupAttackBoostKph:MULTICAR_CORRIDOR_V376.followingCatchupBoostKph;
+  if(vehicle.battleBlockedV319&&!vehicle.tripleBreakawayActiveV376)return targetBias*pressure*.24;
+  return targetBias*pressure;
+}
 function rapidPassStateV376(current,next,ctx){
   const open=['STRAIGHT','APPROACH','BRAKING'].includes(String(ctx?.phase||''));
   const gap=Math.max(0,Number(ctx?.gapMeters)||0),closing=Number(ctx?.closingRateKph)||0;
@@ -6142,7 +6155,7 @@ function visualLateralResponseV258(vehicle){
 function visualLateralMaxSpeedV269(vehicle){
   if(activeDrivingIncidentV204(vehicle))return VISUAL_LATERAL_DYNAMICS_V269.incidentMaxSpeed;
   if(String(vehicle?.racingLineMode||'')==='PIT_LINE'||String(vehicle?.pitState||'TRACK')!=='TRACK')return VISUAL_LATERAL_DYNAMICS_V269.pitMaxSpeed;
-  if(['ATTACK_INSIDE','DEFENSIVE_INSIDE','OUTSIDE'].includes(String(vehicle?.racingLineMode||'')))return VISUAL_LATERAL_DYNAMICS_V269.attackMaxSpeed;
+  if(['ATTACK_INSIDE','DEFENSIVE_INSIDE','OUTSIDE'].includes(String(vehicle?.racingLineMode||'')))return VISUAL_LATERAL_DYNAMICS_V269.attackMaxSpeed*(isBattleActiveV319(vehicle.battleState)?1.22:1);
   return VISUAL_LATERAL_DYNAMICS_V269.normalMaxSpeed;
 }
 function committedVisualTargetV269(vehicle,rawTarget,force=false){
@@ -7193,6 +7206,9 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   vehicle.chaseBurstAccelMultiplierV275=chaseBurstEffect.accelMultiplier;
   vehicle.chaseBurstExitMultiplierV275=chaseBurstEffect.exitMultiplier;
   maxTarget+=chaseBurstEffect.targetSpeedBonusKph+chaseBurstEffect.battleBiasBonusKph;
+  const competitivePaceV376=competitivePaceAdvantageV376(vehicle);
+  maxTarget+=competitivePaceV376;
+  vehicle.competitivePaceBoostKphV376=competitivePaceV376;
   const rawBoundaryOffsetV271=lineOffsetMetersV197(vehicle)+(Number(vehicle?.incidentLateralOffsetMeters)||0)+(Number(leaderPressureEffect.lateralOffsetMeters)||0);
   const boundaryStateV271=trackBoundaryStateV271(vehicle,rawBoundaryOffsetV271);
   vehicle.unclampedLateralOffsetMetersV271=rawBoundaryOffsetV271;
@@ -9656,6 +9672,7 @@ function qaMulticarCorridorV376(){
   const fourth={id:'D',raceProgress:1.5002,racingLineMode:'OUTSIDE',pitState:'TRACK'};
   const crowded=thirdCarOpportunityV376(vehicle,target,locks,'STRAIGHT',9,[...nearby,fourth],track);
   const alone=thirdCarOpportunityV376(vehicle,target,new Map(),'STRAIGHT',9,nearby,track);
+  const competitive=competitivePaceAdvantageV376({...vehicle,battleState:'PULLING_OUT',trafficCarAheadId:target.id,trafficGapMeters:15},[vehicle,target,partner]);
   const rapid=rapidPassStateV376('FOLLOWING','CLOSING',{gapMeters:16,closingRateKph:12,phase:'STRAIGHT'});
   const slow=rapidPassStateV376('FOLLOWING','CLOSING',{gapMeters:16,closingRateKph:.2,phase:'STRAIGHT'});
   const same={...vehicle,visualLateralOffsetMeters:0,racingLineMode:'IDEAL'};
@@ -9667,9 +9684,9 @@ function qaMulticarCorridorV376(){
   const realPairSeparation=Math.abs(lateralOpportunityV376({...vehicle,racingLineMode:'ATTACK_INSIDE'},track,'ATTACK_INSIDE')-lateralOpportunityV376(target,track));
   const integrated=String(updatePassStateMachineV208).includes('thirdCarOpportunityV376(')&&String(simulateVehicleDynamicsV196).includes('physicalProximityControlV376(');
   const noForcedPosition=!/\b(?:raceProgress|progress)\s*=/.test(String(thirdCarOpportunityV376)+String(physicalProximityControlV376));
-  return {version:VERSION376,open,corner,crowded,alone,rapid,slow,safety,separated,capacity,realPairSeparation,integrated,noForcedPosition,
+  return {version:VERSION376,open,corner,crowded,alone,rapid,slow,competitive,safety,separated,capacity,realPairSeparation,integrated,noForcedPosition,
     allPass:open.active&&!corner.active&&!crowded.active&&!alone.active&&rapid==='PREPARING_ATTACK'&&slow==='CLOSING'&&
-      safety.active&&!separated.active&&capacity[0]===3&&capacity[1]===2&&realPairSeparation>=MULTICAR_CORRIDOR_V376.minimumSideClearanceMeters&&integrated&&noForcedPosition};
+      safety.active&&!separated.active&&capacity[0]===3&&capacity[1]===2&&realPairSeparation>=MULTICAR_CORRIDOR_V376.minimumSideClearanceMeters&&competitive>8&&integrated&&noForcedPosition};
 }
 window.mwsF1QaMulticarCorridorV376=qaMulticarCorridorV376;
 window.__mwsF1RacingV376=VERSION376;
