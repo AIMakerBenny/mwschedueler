@@ -5962,7 +5962,8 @@ function cornerDrivingPlanV375(plan,corner,vehicle,track){
   const latitude=CORNER_PHYSICS_V375.lateralGripMps2*tyreGrip*tyreFactor;
   const curvatureLimit=peak>.0001?Math.sqrt(latitude/peak)*3.6:Number(plan.spec?.max)||250;
   const apexTarget=Math.min(plan.apexTarget,Math.max(Number(plan.spec?.min)||75,
-    Math.min(Number(plan.spec?.max)||305,curvatureLimit*(1-CORNER_PHYSICS_V375.angleBrakeWeight*severity))));
+    Math.min(Number(plan.spec?.max)||305,curvatureLimit*(1-CORNER_PHYSICS_V375.angleBrakeWeight*severity),
+      (Number(plan.spec?.max)||305)-severity*((Number(plan.spec?.max)||305)-(Number(plan.spec?.min)||75))*.72)));
   const approachSpeed=Math.max(apexTarget,Number(plan.entryKph)||apexTarget)/3.6;
   const apexSpeed=apexTarget/3.6;
   const baseBrake=Math.max(CORNER_PHYSICS_V375.minBrakeMps2,Math.min(CORNER_PHYSICS_V375.maxBrakeMps2,(Number(track?.geometry?.referenceBrakeDecelMps2)||20)*CORNER_PHYSICS_V375.referenceBrakeGain));
