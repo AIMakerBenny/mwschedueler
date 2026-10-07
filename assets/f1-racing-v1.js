@@ -162,6 +162,7 @@ const VERSION373='phase373-f1-finish-spread-diagnostics';
 const VERSION374='phase374-f1-final-stint-pit-economics';
 const VERSION375='phase375-f1-curvature-prebrake-apex-throttle';
 const VERSION376='phase376-f1-multicar-corridor-proximity';
+const VERSION377='phase377-f1-actual-marker-overlap-monitor';
 const interactionSnapshotStateV368={snapshot:null,builds:0,lastSimTimeMs:0};
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
@@ -222,6 +223,8 @@ const CORNER_DRIVING_V351=Object.freeze({
 const CORNER_BRAKE_RELEASE_V358=Object.freeze({coastDecelMps2:.55,clearBoundaryFactor:.99,minRecoveryTargetGainKph:2.5});
 const NATURAL_RACE_PACE_V359=Object.freeze({rankedBoostScale:.80,catchupBoostScale:.08,fastModeScale:.35,cornerRecoveryCoastDecelMps2:.08,maxNormalFinishSpreadSeconds:43.5});
 const LONG_RUN_REAR_PACE_V372=Object.freeze({normalMaxBoost:.0018,fastModeScale:.55});
+const MARKER_OVERLAP_MONITOR_V377=Object.freeze({maxZoom:4.5,ringRadiusSvg:18,clearanceMultiplier:1.03});
+const markerOverlapStateV377={samples:0,maxZoomOverlaps:0,currentZoomOverlaps:0,peakMaxZoomOverlaps:0,peakCurrentZoomOverlaps:0,minMeasuredDistanceSvg:Infinity,latest:null};
 const MULTICAR_CORRIDOR_V376=Object.freeze({
   maxStraightAbreast:3,maxCornerAbreast:2,minimumSideClearanceMeters:2.65,
   sameLineMinGapMeters:9.0,approachControlGapMeters:20.0,nearGroupMeters:14,
@@ -6584,8 +6587,47 @@ function renderRaceVehiclesV189(frameMs=16.67){
   syncBattleLinksV256();
   layoutRaceVehicleLabelsV228(rendered);
   if(!freezeVisualV366)recordScreenCrowdingV363(rendered);
+  if(!freezeVisualV366)recordActualMarkerOverlapsV377(rendered);
   if(!freezeVisualV366)updateAutoRaceCameraV216(false);
   return true;
+}
+function measureActualMarkerOverlapsV377(rendered=[],zoom=MARKER_OVERLAP_MONITOR_V377.maxZoom){
+  const pairs=[],radius=MARKER_OVERLAP_MONITOR_V377.ringRadiusSvg*raceMarkerScaleV245(zoom);
+  const limit=2*radius*MARKER_OVERLAP_MONITOR_V377.clearanceMultiplier;
+  let closest=Infinity,total=0;
+  for(let i=0;i<rendered.length;i++){
+    const a=rendered[i];
+    for(let j=i+1;j<rendered.length;j++){
+      const b=rendered[j];
+      const distance=Math.hypot(Number(a?.point?.x)-Number(b?.point?.x),Number(a?.point?.y)-Number(b?.point?.y));
+      if(!Number.isFinite(distance))continue;
+      closest=Math.min(closest,distance);
+      if(distance<limit){
+        total++;
+        if(pairs.length<8)pairs.push({a:String(a?.vehicle?.id||''),b:String(b?.vehicle?.id||''),distanceSvg:Number(distance.toFixed(2)),minimumSvg:Number(limit.toFixed(2))});
+      }
+    }
+  }
+  return {zoom:Number(zoom),pairs:total,minimumCenterSvg:Number(limit.toFixed(3)),closestSvg:Number.isFinite(closest)?Number(closest.toFixed(3)):null,examples:pairs};
+}
+function recordActualMarkerOverlapsV377(rendered=[]){
+  const atMax=measureActualMarkerOverlapsV377(rendered,MARKER_OVERLAP_MONITOR_V377.maxZoom);
+  const atCurrent=measureActualMarkerOverlapsV377(rendered,raceCameraV216.zoom);
+  markerOverlapStateV377.samples++;
+  markerOverlapStateV377.maxZoomOverlaps=atMax.pairs;
+  markerOverlapStateV377.currentZoomOverlaps=atCurrent.pairs;
+  markerOverlapStateV377.peakMaxZoomOverlaps=Math.max(markerOverlapStateV377.peakMaxZoomOverlaps,atMax.pairs);
+  markerOverlapStateV377.peakCurrentZoomOverlaps=Math.max(markerOverlapStateV377.peakCurrentZoomOverlaps,atCurrent.pairs);
+  if(atMax.closestSvg!==null)markerOverlapStateV377.minMeasuredDistanceSvg=Math.min(markerOverlapStateV377.minMeasuredDistanceSvg,atMax.closestSvg);
+  markerOverlapStateV377.latest={atMax,atCurrent};
+  return markerOverlapStateV377.latest;
+}
+function markerOverlapReportV377(){
+  return {version:VERSION377,samples:markerOverlapStateV377.samples,maxZoomOverlaps:markerOverlapStateV377.maxZoomOverlaps,
+    currentZoomOverlaps:markerOverlapStateV377.currentZoomOverlaps,peakMaxZoomOverlaps:markerOverlapStateV377.peakMaxZoomOverlaps,
+    peakCurrentZoomOverlaps:markerOverlapStateV377.peakCurrentZoomOverlaps,
+    minMeasuredDistanceSvg:Number.isFinite(markerOverlapStateV377.minMeasuredDistanceSvg)?Number(markerOverlapStateV377.minMeasuredDistanceSvg.toFixed(3)):null,
+    latest:markerOverlapStateV377.latest};
 }
 function recordScreenCrowdingV363(rendered=[]){
   const zoom=Math.max(1,Number(raceCameraV216.zoom)||1),pairs=[];
@@ -9690,6 +9732,23 @@ function qaMulticarCorridorV376(){
 }
 window.mwsF1QaMulticarCorridorV376=qaMulticarCorridorV376;
 window.__mwsF1RacingV376=VERSION376;
+
+function qaActualMarkerOverlapsV377(){
+  const radius=MARKER_OVERLAP_MONITOR_V377.ringRadiusSvg*raceMarkerScaleV245(MARKER_OVERLAP_MONITOR_V377.maxZoom);
+  const isolated=[{point:{x:0,y:0},vehicle:{id:'A'}},{point:{x:radius*4,y:0},vehicle:{id:'B'}}];
+  const overlapping=[isolated[0],{point:{x:radius,y:0},vehicle:{id:'B'}}];
+  const clear=measureActualMarkerOverlapsV377(isolated,MARKER_OVERLAP_MONITOR_V377.maxZoom);
+  const close=measureActualMarkerOverlapsV377(overlapping,MARKER_OVERLAP_MONITOR_V377.maxZoom);
+  const tighterAtMax=measureActualMarkerOverlapsV377(isolated,1.5);
+  const telemetry=markerOverlapReportV377();
+  const integrated=String(renderRaceVehiclesV189).includes('recordActualMarkerOverlapsV377(rendered)');
+  const noProgressMutation=!/\b(?:raceProgress|progress)\s*=/.test(String(measureActualMarkerOverlapsV377)+String(recordActualMarkerOverlapsV377));
+  return {version:VERSION377,clear,close,tighterAtMax,telemetry,integrated,noProgressMutation,
+    allPass:clear.pairs===0&&close.pairs===1&&tighterAtMax.pairs===1&&integrated&&noProgressMutation};
+}
+window.mwsF1QaActualMarkerOverlapsV377=qaActualMarkerOverlapsV377;
+window.mwsF1GetActualMarkerOverlapsV377=markerOverlapReportV377;
+window.__mwsF1RacingV377=VERSION377;
 
 function qaUiVisibilitySpacingV324(){
   const marker=document.querySelector('.f1-racing-race-vehicle-v189');
