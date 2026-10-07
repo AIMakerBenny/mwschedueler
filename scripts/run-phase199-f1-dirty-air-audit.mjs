@@ -13,7 +13,6 @@ export function runPhase199F1DirtyAirAudit(){
     'const DIRTY_AIR_CONFIG_V199=Object.freeze({',
     'function resolveDirtyAirV199(vehicle,vehicles=raceMotionV189.vehicles){',
     "const phaseWeight=phase==='BRAKING'?.35:phase==='TURN_IN'?.8:phase==='APEX'?1:phase==='EXIT'?.65:phase==='APPROACH'?.12:0;",
-    'const strength=clamp01V198(gapEffect*alignmentEffect*lateralEffect*phaseWeight*Math.max(.25,curvatureEffect));',
     'vehicle.aeroGripMultiplier=aeroGripMultiplier;',
     'vehicle.understeerRisk=understeerRisk;',
     'vehicle.slideRisk=slideRisk;',
@@ -27,6 +26,9 @@ export function runPhase199F1DirtyAirAudit(){
     'window.mwsF1ResolveDirtyAirV199=resolveDirtyAirV199;',
     'window.__mwsF1RacingV199=VERSION199;'
   ])if(!racing.includes(token))issues.push('Phase 199 dirty air runtime missing: '+token);
+  const legacyStrength=racing.includes('const strength=clamp01V198(gapEffect*alignmentEffect*lateralEffect*phaseWeight*Math.max(.25,curvatureEffect));');
+  const balancedStrength=racing.includes('const rawStrength=clamp01V198(gapEffect*alignmentEffect*lateralEffect*phaseWeight*Math.max(.25,curvatureEffect));')&&racing.includes('const strength=clamp01V198(rawStrength*battleDirtyAirScaleV350);');
+  if(!legacyStrength&&!balancedStrength)issues.push('Phase 199 dirty air strength calculation missing or unsupported');
 
   for(const token of ['node --check scripts/run-phase199-f1-dirty-air-audit.mjs',"echo '[phase199] F1 dirty air corner grip'"])if(!workflow.includes(token))issues.push('Phase 199 workflow verification missing: '+token);
   const syntax=spawnSync(process.execPath,['--check','assets/f1-racing-v1.js'],{encoding:'utf8'});

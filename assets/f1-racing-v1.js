@@ -137,6 +137,7 @@ const VERSION346='phase346-f1-race-dynamics-correction';
 const VERSION348='phase348-f1-dynamics-playtest-qa';
 const VERSION349='phase349-f1-strict-pit-staggering';
 const VERSION350='phase350-f1-rear-battle-pace-retention';
+const VERSION351='phase351-f1-physics-corner-brake-release';
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
 const GAME_VARIABILITY_CONFIG_V303=Object.freeze({evaluationMs:650,maxGapMeters:84,attackGapMeters:36,baseBonusKph:1.1,pressureBonusKph:3.2,midfieldBonusKph:.8,failedPassBonusKph:.4,maxFailedPassBonusKph:1.6,momentumBonusKph:1.55,maxTotalBiasKph:14,positionCatchupMaxPct:.045,positionCatchupExponent:1.35,leaderHoldMs:12000,leaderCloseGapSeconds:1.75,leaderClosePenaltyKph:.9,liveCadenceMs:10000});
@@ -179,6 +180,17 @@ const REAR_BATTLE_BALANCE_V350=Object.freeze({
   blockedControlMeters:14,trainControlMeters:9,overlapGuardMeters:3.4,
   farClosingAllowanceKph:1.2,closeClosingAllowanceKph:.35,overlapSpeedMarginKph:1.1,
   blockedCatchupRetention:.55
+});
+const CORNER_DRIVING_V351=Object.freeze({
+  speedEnvelope:Object.freeze({
+    hairpin:Object.freeze({min:62,max:115,entryRetention:.27,brakeScale:1.00,recoveryLead:.06,exitAccel:1.12}),
+    slow:Object.freeze({min:105,max:165,entryRetention:.42,brakeScale:.90,recoveryLead:.07,exitAccel:1.08}),
+    medium:Object.freeze({min:155,max:225,entryRetention:.58,brakeScale:.74,recoveryLead:.10,exitAccel:1.04}),
+    fast:Object.freeze({min:220,max:300,entryRetention:.76,brakeScale:.54,recoveryLead:.14,exitAccel:1.00}),
+    sCurve:Object.freeze({min:170,max:240,entryRetention:.62,brakeScale:.72,recoveryLead:.11,exitAccel:1.04})
+  }),
+  compoundInfluence:.55,minBrakeDecelMps2:8,maxBrakeDecelMps2:28,
+  speedDeltaBrakeGain:.28,exitLookAheadMeters:150,recoveryTargetLiftKph:18
 });
 const RACE_MOMENTUM_CONFIG_V262=Object.freeze({
   min:-1,max:1,paceRange:.02,decayPerSecond:.032,evaluationMs:620,
@@ -2944,6 +2956,7 @@ function runAcceleratedEngineRaceV240(trackId,options={}){
       id:String(vehicle.id||''),gridPosition:Number(vehicle.gridPosition)||0,finishPosition:Number(vehicle.finishPosition)||0,finishedAtSimMs:Number(vehicle.finishedAtSimMs)||0,
       tyreCompound:String(vehicle.tyreCompound||'MEDIUM'),tyreWear:Number(vehicle.tyreWear)||0,tyreRemaining:Math.max(0,1-(Number(vehicle.tyreWear)||0)),
       pitStopCount:Number(vehicle.pitStopCount)||0,pitLastStopLap:Number(vehicle.pitLastStopLap)||0,
+      cornerMinSpeedByClassV351:{...(vehicle.cornerMinSpeedByClassV351||{})},cornerRecoveryThrottleCountV351:Number(vehicle.cornerRecoveryThrottleCountV351)||0,
       incidentCount:(Number(vehicle.lockupCount)||0)+(Number(vehicle.understeerCount)||0)+(Number(vehicle.oversteerCount)||0),
       pitRequestHistoryV348:(vehicle.pitRequestHistoryV348||[]).map(row=>({...row}))
     }));
@@ -5235,36 +5248,85 @@ function compoundCornerPaceFactorV343(vehicle){
   const key=String(vehicle?.tyreCompound||'MEDIUM').toUpperCase();
   return CORNER_DYNAMICS_V343.compoundCornerFactor[key]||1;
 }
+function cornerSpeedSpecV351(corner){
+  const key=cornerClassV343(corner);
+  return {key,spec:CORNER_DRIVING_V351.speedEnvelope[key]||CORNER_DRIVING_V351.speedEnvelope.medium};
+}
+function cornerEntrySpeedV351(vehicle,corner,raw){
+  const id=String(corner?.id||corner?.apexProgress||corner?.apexDistanceMeters||'corner');
+  if(String(vehicle?.cornerPlanIdV351||'')!==id){
+    vehicle.cornerPlanIdV351=id;
+    vehicle.cornerEntryKphV351=Math.max(80,Number(vehicle?.speedKph)||0,Number(corner?.referenceApproachKph)||0,Number(raw)||0);
+  }else if((Number(vehicle?.cornerEntryKphV351)||0)<1){
+    vehicle.cornerEntryKphV351=Math.max(80,Number(vehicle?.speedKph)||0,Number(corner?.referenceApproachKph)||0,Number(raw)||0);
+  }
+  return Math.max(80,Number(vehicle?.cornerEntryKphV351)||0);
+}
+function cornerApexTargetV351(entryKph,corner,compound='MEDIUM'){
+  const {spec}=cornerSpeedSpecV351(corner);
+  const reference=Math.max(spec.min,Math.min(spec.max,Number(corner?.referenceApexKph)||spec.min));
+  const retained=Math.max(spec.min,Math.min(spec.max,Math.max(0,Number(entryKph)||0)*spec.entryRetention));
+  const compoundRaw=CORNER_DYNAMICS_V343.compoundCornerFactor[String(compound||'MEDIUM').toUpperCase()]||1;
+  const compound=1+(compoundRaw-1)*CORNER_DRIVING_V351.compoundInfluence;
+  return Math.max(spec.min,Math.min(spec.max,Math.max(reference,retained)*compound));
+}
+function cornerDrivingPlanV351(entryKph,corner,track=activeRaceSnapshotV187?.track,compound='MEDIUM'){
+  const {key,spec}=cornerSpeedSpecV351(corner);
+  const turnIn=Number(corner?.turnInDistanceMeters)||0;
+  const apex=Math.max(turnIn+1,Number(corner?.apexDistanceMeters)||turnIn+1);
+  const exit=Math.max(apex+1,Number(corner?.exitDistanceMeters)||apex+1);
+  const approach=Number.isFinite(Number(corner?.approachDistanceMeters))?Number(corner.approachDistanceMeters):turnIn-100;
+  const apexTarget=cornerApexTargetV351(entryKph,corner,compound);
+  const delta=Math.max(0,Number(entryKph)||0-apexTarget);
+  const deltaRatio=Math.max(0,Math.min(1,delta/250));
+  const baseBrake=Math.max(CORNER_DRIVING_V351.minBrakeDecelMps2,Number(track?.geometry?.referenceBrakeDecelMps2)||20);
+  const brakeDecel=Math.max(CORNER_DRIVING_V351.minBrakeDecelMps2,Math.min(CORNER_DRIVING_V351.maxBrakeDecelMps2,baseBrake*spec.brakeScale*(.82+CORNER_DRIVING_V351.speedDeltaBrakeGain*deltaRatio)));
+  const v0=Math.max(apexTarget,Number(entryKph)||apexTarget)/3.6,v1=apexTarget/3.6;
+  const brakingDistance=Math.max(0,(v0*v0-v1*v1)/(2*Math.max(1,brakeDecel)));
+  const dynamicBrakeStart=Math.max(approach,turnIn-brakingDistance);
+  const recoveryStart=Math.max(turnIn,apex-(apex-turnIn)*spec.recoveryLead);
+  const accel=Math.max(.5,Number(track?.geometry?.referenceAccelMps2)||8.5)*spec.exitAccel;
+  return {key,spec,entryKph:Number(entryKph)||0,apexTarget,turnIn,apex,exit,approach,dynamicBrakeStart,recoveryStart,brakeDecel,accel,brakingDistance};
+}
+function cornerTargetAtDistanceV351(plan,here,raw,exitTarget){
+  const p=plan||{},position=Number(here)||0,rawKph=Math.max(40,Number(raw)||0);
+  if(position<Number(p.dynamicBrakeStart))return rawKph;
+  if(position<=Number(p.recoveryStart)){
+    const remaining=Math.max(0,Number(p.recoveryStart)-position);
+    const apexMps=Math.max(1,Number(p.apexTarget)||1)/3.6;
+    const allowed=Math.sqrt(Math.max(0,apexMps*apexMps+2*Math.max(1,Number(p.brakeDecel)||1)*remaining))*3.6;
+    return Math.max(Number(p.apexTarget)||40,Math.min(Math.max(rawKph,Number(p.entryKph)||rawKph),allowed));
+  }
+  const distance=Math.max(0,position-Number(p.recoveryStart));
+  const apexMps=Math.max(1,Number(p.apexTarget)||1)/3.6;
+  const recovered=Math.sqrt(Math.max(0,apexMps*apexMps+2*Math.max(.5,Number(p.accel)||.5)*distance))*3.6;
+  const cap=Math.max(Number(p.apexTarget)||40,CORNER_DRIVING_V351.recoveryTargetLiftKph+(Number(p.apexTarget)||40),Number(exitTarget)||rawKph,rawKph);
+  return Math.min(cap,recovered);
+}
 function phaseSpeedTargetV343(vehicle,targetData,phaseInfo=getCornerPhaseAtProgressV194(vehicle?.progress)){
   const track=activeRaceSnapshotV187?.track;
   const raw=Math.max(60,Number(targetData?.targetKph)||250);
-  if(!track||!phaseInfo?.corner)return raw;
-  const corner=phaseInfo.corner,key=cornerClassV343(corner),compound=compoundCornerPaceFactorV343(vehicle);
-  const minApex=CORNER_DYNAMICS_V343.minimumApexKph[key]||150,phase=String(phaseInfo.phase||'STRAIGHT');
+  if(!track||!phaseInfo?.corner){
+    if(vehicle)vehicle.cornerRecoveryActiveV351=false;
+    return raw;
+  }
+  const corner=phaseInfo.corner;
   const aligned=alignedCornerDistanceV270(corner,vehicle?.progress),here=Number(aligned.here)||0;
-  const brake=Math.min(Number(corner.brakingPointDistanceMeters)||Number(corner.turnInDistanceMeters)||here,Number(corner.turnInDistanceMeters)||here);
-  const turnIn=Number(corner.turnInDistanceMeters)||brake;
-  const apex=Number(corner.apexDistanceMeters)||turnIn;
-  const exit=Number(corner.exitDistanceMeters)||apex;
-  const brakingTarget=Math.max(minApex,raw*(CORNER_DYNAMICS_V343.brakingFactor[key]||1))*compound;
-  const turnInTarget=Math.max(minApex,raw*(CORNER_DYNAMICS_V343.turnInFactor[key]||1))*compound;
-  const apexTarget=Math.max(minApex,raw*(CORNER_DYNAMICS_V343.apexFactor[key]||1))*compound;
-  if(phase==='APPROACH')return raw;
-  if(phase==='BRAKING'){
-    const ratio=smoothstepV270((here-brake)/Math.max(1,turnIn-brake));
-    return raw+(brakingTarget-raw)*ratio;
-  }
-  if(phase==='TURN_IN'){
-    const ratio=smoothstepV270((here-turnIn)/Math.max(1,apex-turnIn));
-    return turnInTarget+(apexTarget-turnInTarget)*ratio;
-  }
-  if(phase==='APEX')return apexTarget;
-  if(phase!=='EXIT')return raw;
-  const ratio=smoothstepV270((here-apex)/Math.max(1,exit-apex));
-  const lookProgress=((Number(vehicle?.progress)||0)+CORNER_DYNAMICS_V343.exitLookAheadMeters/Math.max(1,Number(track.lengthMeters)||1))%1;
+  const entryKph=cornerEntrySpeedV351(vehicle,corner,raw);
+  const plan=cornerDrivingPlanV351(entryKph,corner,track,String(vehicle?.tyreCompound||'MEDIUM'));
+  const lookProgress=((Number(vehicle?.progress)||0)+CORNER_DRIVING_V351.exitLookAheadMeters/Math.max(1,Number(track.lengthMeters)||1))%1;
   const ahead=typeof window.mwsF1SpeedTargetAtProgressV195==='function'?window.mwsF1SpeedTargetAtProgressV195(raceGeometryV193,lookProgress):null;
-  const exitTarget=Math.max(raw,Number(ahead?.targetKph)||raw);
-  return apexTarget+(exitTarget-apexTarget)*ratio;
+  const exitTarget=Math.min(Number(track?.geometry?.maxStraightKph)||335,Math.max(raw,Number(ahead?.targetKph)||raw));
+  const target=cornerTargetAtDistanceV351(plan,here,raw,exitTarget);
+  if(vehicle){
+    vehicle.cornerRecoveryActiveV351=here>=plan.recoveryStart&&here<=plan.exit;
+    vehicle.cornerDrivingClassV351=plan.key;
+    vehicle.cornerApexTargetKphV351=plan.apexTarget;
+    vehicle.cornerDynamicBrakeStartV351=plan.dynamicBrakeStart;
+    vehicle.cornerRecoveryStartV351=plan.recoveryStart;
+    vehicle.cornerBrakeDecelMps2V351=plan.brakeDecel;
+  }
+  return target;
 }
 
 function trackLateralLimitV271(vehicle,track=activeRaceSnapshotV187?.track){
@@ -5853,8 +5915,10 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
     throttle=Math.max(.08,Math.min(1,error/45))*incidentState.throttleFactor;
     const dragRelief=Math.max(0,Number(vehicle.slipstreamDragReduction)||0);
     const highSpeedFade=Math.max(.35,1-current/520+dragRelief*.45);
-    const tractionGrip=phase==='EXIT'?Math.max(.92,tyreGrip):1;
-    const exitAcceleration=(phase==='EXIT'?CORNER_DYNAMICS_V343.exitAccelerationMultiplier:1)*Math.max(1,Number(chaseBurstEffect.exitMultiplier)||1);
+    const cornerRecoveryV351=Boolean(vehicle.cornerRecoveryActiveV351);
+    const tractionGrip=(phase==='EXIT'||cornerRecoveryV351)?Math.max(.92,tyreGrip):1;
+    const cornerSpecV351=CORNER_DRIVING_V351.speedEnvelope[String(vehicle.cornerDrivingClassV351||'medium')]||CORNER_DRIVING_V351.speedEnvelope.medium;
+    const exitAcceleration=(cornerRecoveryV351?CORNER_DYNAMICS_V343.exitAccelerationMultiplier*cornerSpecV351.exitAccel:1)*Math.max(1,Number(chaseBurstEffect.exitMultiplier)||1);
     accelMps2=accelBase*throttle*highSpeedFade*tractionGrip*exitAcceleration;
   }else if(error<-1.5){
     brake=Math.max(.08,Math.min(1,(-error)/55));
@@ -5874,6 +5938,13 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const avgMps=((current+nextKph)/2)/3.6;
   const distanceMeters=avgMps*dt;
   vehicle.speedKph=nextKph;
+  if(phaseInfoV270?.corner&&String(vehicle.pitState||'TRACK')==='TRACK'&&nextKph>0){
+    const classV351=cornerClassV343(phaseInfoV270.corner);
+    vehicle.cornerMinSpeedByClassV351=vehicle.cornerMinSpeedByClassV351||{};
+    const previousMin=Number(vehicle.cornerMinSpeedByClassV351[classV351]);
+    vehicle.cornerMinSpeedByClassV351[classV351]=Number.isFinite(previousMin)&&previousMin>0?Math.min(previousMin,nextKph):nextKph;
+    if(vehicle.cornerRecoveryActiveV351&&throttle>.05)vehicle.cornerRecoveryThrottleCountV351=(Number(vehicle.cornerRecoveryThrottleCountV351)||0)+1;
+  }
   vehicle.targetSpeedKph=maxTarget;
   vehicle.throttle=throttle;
   vehicle.brake=brake;
@@ -7760,6 +7831,30 @@ function qaRearBattlePaceRetentionV350(){
 }
 window.mwsF1QaRearBattlePaceRetentionV350=qaRearBattlePaceRetentionV350;
 window.__mwsF1RacingV350=VERSION350;
+
+
+function qaPhysicsCornerBrakeReleaseV351(){
+  const track={lengthMeters:5000,geometry:{referenceBrakeDecelMps2:20,referenceAccelMps2:8.5,maxStraightKph:335}};
+  const makeCorner=(key,referenceApexKph)=>({id:'qa351-'+key,cornerClass:key,referenceApexKph,referenceApproachKph:330,approachDistanceMeters:0,turnInDistanceMeters:210,apexDistanceMeters:270,exitDistanceMeters:380});
+  const refs={hairpin:82,slow:132,medium:185,fast:250,sCurve:195};
+  const rows=Object.entries(refs).map(([key,reference])=>{
+    const corner=makeCorner(key,reference),plan=cornerDrivingPlanV351(330,corner,track,'MEDIUM');
+    const before=cornerTargetAtDistanceV351(plan,plan.dynamicBrakeStart,330,335);
+    const turnIn=cornerTargetAtDistanceV351(plan,plan.turnIn,250,335);
+    const minimum=cornerTargetAtDistanceV351(plan,plan.recoveryStart,plan.apexTarget,335);
+    const recovery=cornerTargetAtDistanceV351(plan,Math.min(plan.exit,plan.recoveryStart+35),plan.apexTarget,335);
+    return {key,apexTarget:plan.apexTarget,brakeDecel:plan.brakeDecel,dynamicBrakeStart:plan.dynamicBrakeStart,recoveryStart:plan.recoveryStart,before,turnIn,minimum,recovery};
+  });
+  const byKey=Object.fromEntries(rows.map(row=>[row.key,row]));
+  const entrySensitivity=[220,270,330].map(entry=>({entry,apex:cornerApexTargetV351(entry,makeCorner('hairpin',72),'MEDIUM')}));
+  const ranges=rows.every(row=>{const spec=CORNER_DRIVING_V351.speedEnvelope[row.key];return row.apexTarget>=spec.min-.01&&row.apexTarget<=spec.max+.01});
+  const brakingShape=rows.every(row=>row.before>=row.turnIn-.1&&row.turnIn>=row.minimum-.1&&row.recovery>row.minimum+2);
+  const classOrder=byKey.hairpin.apexTarget<byKey.slow.apexTarget&&byKey.slow.apexTarget<byKey.medium.apexTarget&&byKey.medium.apexTarget<byKey.fast.apexTarget;
+  const entryResponsive=entrySensitivity[0].apex<=entrySensitivity[1].apex&&entrySensitivity[1].apex<=entrySensitivity[2].apex;
+  return {version:VERSION351,rows,entrySensitivity,ranges,brakingShape,classOrder,entryResponsive,allPass:ranges&&brakingShape&&classOrder&&entryResponsive&&byKey.hairpin.apexTarget>=62&&byKey.fast.apexTarget>=220};
+}
+window.mwsF1QaPhysicsCornerBrakeReleaseV351=qaPhysicsCornerBrakeReleaseV351;
+window.__mwsF1RacingV351=VERSION351;
 
 function qaUiVisibilitySpacingV324(){
   const marker=document.querySelector('.f1-racing-race-vehicle-v189');

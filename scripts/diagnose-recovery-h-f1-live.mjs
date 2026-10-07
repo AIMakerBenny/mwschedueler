@@ -332,7 +332,7 @@ try{
   if(!phase332Ready)throw new Error('Phase 332 runtime did not propagate to Recovery H browser');
   if(!phase333Ready)throw new Error('Phase 333 runtime did not propagate to Recovery H browser');
 
-  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase339Ready=false,phase340Ready=false,phase341Ready=false,phase342Ready=false,phase343Ready=false,phase344Ready=false,phase345Ready=false,phase346Ready=false,phase348Ready=false,phase349Ready=false,phase350Ready=false;
+  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase339Ready=false,phase340Ready=false,phase341Ready=false,phase342Ready=false,phase343Ready=false,phase344Ready=false,phase345Ready=false,phase346Ready=false,phase348Ready=false,phase349Ready=false,phase350Ready=false,phase351Ready=false;
   for(let attempt=0;attempt<8;attempt++){
     const readiness=await evaluate(cdp,`({
       p335:window.__mwsF1RacingV335==='phase335-f1-actual-track-spacing'&&typeof window.mwsF1QaActualTrackSpacingV335==='function',
@@ -349,13 +349,14 @@ try{
       p346:window.__mwsF1RacingV346==='phase346-f1-race-dynamics-correction'&&typeof window.mwsF1QaRaceDynamicsCorrectionV346==='function',
       p348:window.__mwsF1RacingV348==='phase348-f1-dynamics-playtest-qa'&&typeof window.mwsF1QaDynamicsContractV348==='function'&&typeof window.mwsF1QaDynamicsPlaytestV348==='function',
       p349:window.__mwsF1RacingV349==='phase349-f1-strict-pit-staggering'&&typeof window.mwsF1QaStrictPitStaggeringV349==='function',
-      p350:window.__mwsF1RacingV350==='phase350-f1-rear-battle-pace-retention'&&typeof window.mwsF1QaRearBattlePaceRetentionV350==='function'
+      p350:window.__mwsF1RacingV350==='phase350-f1-rear-battle-pace-retention'&&typeof window.mwsF1QaRearBattlePaceRetentionV350==='function',
+      p351:window.__mwsF1RacingV351==='phase351-f1-physics-corner-brake-release'&&typeof window.mwsF1QaPhysicsCornerBrakeReleaseV351==='function'
     })`,"Phase 335-346 runtime readiness");
     phase335Ready=Boolean(readiness?.p335);phase336Ready=Boolean(readiness?.p336);phase337Ready=Boolean(readiness?.p337);
-    phase338Ready=Boolean(readiness?.p338);phase339Ready=Boolean(readiness?.p339);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);phase342Ready=Boolean(readiness?.p342);phase343Ready=Boolean(readiness?.p343);phase344Ready=Boolean(readiness?.p344);phase345Ready=Boolean(readiness?.p345);phase346Ready=Boolean(readiness?.p346);phase348Ready=Boolean(readiness?.p348);phase349Ready=Boolean(readiness?.p349);phase350Ready=Boolean(readiness?.p350);
-    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase339Ready&&phase340Ready&&phase341Ready&&phase342Ready&&phase343Ready&&phase344Ready&&phase345Ready&&phase346Ready&&phase348Ready&&phase349Ready&&phase350Ready)break;
+    phase338Ready=Boolean(readiness?.p338);phase339Ready=Boolean(readiness?.p339);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);phase342Ready=Boolean(readiness?.p342);phase343Ready=Boolean(readiness?.p343);phase344Ready=Boolean(readiness?.p344);phase345Ready=Boolean(readiness?.p345);phase346Ready=Boolean(readiness?.p346);phase348Ready=Boolean(readiness?.p348);phase349Ready=Boolean(readiness?.p349);phase350Ready=Boolean(readiness?.p350);phase351Ready=Boolean(readiness?.p351);
+    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase339Ready&&phase340Ready&&phase341Ready&&phase342Ready&&phase343Ready&&phase344Ready&&phase345Ready&&phase346Ready&&phase348Ready&&phase349Ready&&phase350Ready&&phase351Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v350=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v351=${Date.now()}-${attempt}`});
     await refreshed;await sleep(1200);
   }
   if(!phase335Ready)throw new Error('Phase 335 runtime did not propagate to Recovery H browser');
@@ -373,6 +374,7 @@ try{
   if(!phase348Ready)throw new Error('Phase 348 runtime did not propagate to Recovery H browser');
   if(!phase349Ready)throw new Error('Phase 349 runtime did not propagate to Recovery H browser');
   if(!phase350Ready)throw new Error('Phase 350 runtime did not propagate to Recovery H browser');
+  if(!phase351Ready)throw new Error('Phase 351 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -1308,6 +1310,8 @@ try{
     assert(pitGuard349?.allPass===true,'Phase 349 strict pit staggering contract QA failed: '+JSON.stringify(pitGuard349));
     const rearBattle350=window.mwsF1QaRearBattlePaceRetentionV350?.();
     assert(rearBattle350?.allPass===true,'Phase 350 rear battle pace retention QA failed: '+JSON.stringify(rearBattle350));
+    const cornerDriving351=window.mwsF1QaPhysicsCornerBrakeReleaseV351?.();
+    assert(cornerDriving351?.allPass===true,'Phase 351 physics corner brake/release QA failed: '+JSON.stringify(cornerDriving351));
     const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]');
     const title=commentary?.querySelector('[data-f1-panel-drag="commentary"]');
     assert(title,'Commentary drag handle missing');
@@ -1417,6 +1421,7 @@ try{
 
     const dynamicsPlaytest348=window.mwsF1QaDynamicsPlaytestV348?.();
     assert(dynamicsPlaytest348?.allPass===true,'Phase 348 real dynamics playtest QA failed: '+JSON.stringify(dynamicsPlaytest348));
+    assert(Number(dynamicsPlaytest348?.normal?.finishSpreadSeconds)<=48,'Phase 350 field spread remains excessive: '+JSON.stringify(dynamicsPlaytest348?.normal));
     assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Phase 348 playtest did not restore Setup');
 
     const engineQa240=window.mwsF1QaAcceleratedEngineRaceV240?.();
@@ -1487,6 +1492,7 @@ try{
       newRacePreservedDrivers:afterNewRaceIds,
       pitGuardV349:pitGuard349||null,
       rearBattleV350:rearBattle350||null,
+      cornerDrivingV351:cornerDriving351||null,
       dynamicsPlaytestV348:dynamicsPlaytest348||null,
       raceMomentumV262:{
         gridFinishCorrelation:Number(momentumBenchmark262?.gridFinishCorrelation)||0,
