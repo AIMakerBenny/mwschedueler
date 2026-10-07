@@ -695,9 +695,6 @@ try{
     const dialogueSemantic315=window.mwsF1QaDialogueSemanticV315?.();
     assert(dialogueSemantic315?.allPass===true&&Number(dialogueSemantic315?.unique)>=4,'Phase 315 dialogue semantic diversity QA failed: '+JSON.stringify(dialogueSemantic315));
     assert(Number(dialogueSemantic315?.config?.semanticWindow)>=2&&Number(dialogueSemantic315?.config?.recentSpeakerLimit)>=5,'Phase 315 dialogue semantic/speaker guard missing: '+JSON.stringify(dialogueSemantic315));
-    const thoughtStandings303=window.mwsF1ComputeRaceStandingsV191?.()||[];
-    const thoughtDriver303=thoughtStandings303.find(row=>row?.vehicle?.driver)?.vehicle?.driver||null;
-    const thoughtSpeaker303=String(thoughtDriver303?.name||thoughtDriver303?.displayName||thoughtDriver303?.code||'').trim();
     assert(thoughtSpeaker303,'Phase 303 thought probe driver missing');
     assert(window.mwsF1ShowDriverThoughtV303?.(thoughtSpeaker303,'지금 간다')===true,'Phase 303 thought probe invocation failed');
     window.mwsF1LayoutMarkerOverlaysV306?.();await raf();
