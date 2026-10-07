@@ -6373,8 +6373,12 @@ function naturalRaceSpacingControlV365(vehicle){
     const result={active:true,capKph:Math.max(0,aheadSpeed-NATURAL_HEADWAY_V365.emergencyMarginKph),gapMeters:gap,desiredGapMeters:desiredGap,reason:'NATURAL_EMERGENCY_V365',closingKph,phase};
     naturalHeadwayTelemetryV365.active+=1;naturalHeadwayTelemetryV365.emergency+=1;naturalHeadwayTelemetryV365.last=result;return result;
   }
-  if(activeWithAhead||approachAttackIntentV365||closingCandidateV365||genuineClosingReleaseV365||fastApproachReleaseV365||overtakeOpportunity){
-    const release=activeWithAhead?'ACTIVE_BATTLE':approachAttackIntentV365?'APPROACH_ATTACK':closingCandidateV365?'CLOSING_CANDIDATE':genuineClosingReleaseV365?'GENUINE_CLOSING_RELEASE':fastApproachReleaseV365?'FAST_APPROACH_RELEASE':'OVERTAKE_RELEASE';
+  if(genuineClosingReleaseV365){
+    const release={active:false,capKph:Infinity,gapMeters:gap,desiredGapMeters:desiredGap,reason:'GENUINE_CLOSING_RELEASE',closingKph,phase};
+    naturalHeadwayTelemetryV365.last=release;return release;
+  }
+  if(activeWithAhead||approachAttackIntentV365||closingCandidateV365||fastApproachReleaseV365||overtakeOpportunity){
+    const release=activeWithAhead?'ACTIVE_BATTLE':approachAttackIntentV365?'APPROACH_ATTACK':closingCandidateV365?'CLOSING_CANDIDATE':fastApproachReleaseV365?'FAST_APPROACH_RELEASE':'OVERTAKE_RELEASE';
     naturalHeadwayTelemetryV365.last={...legacy,desiredGapMeters:desiredGap,phase,release};
     return legacy;
   }
