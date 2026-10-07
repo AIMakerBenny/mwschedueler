@@ -332,7 +332,7 @@ try{
   if(!phase332Ready)throw new Error('Phase 332 runtime did not propagate to Recovery H browser');
   if(!phase333Ready)throw new Error('Phase 333 runtime did not propagate to Recovery H browser');
 
-  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase339Ready=false,phase340Ready=false,phase341Ready=false,phase342Ready=false,phase343Ready=false,phase344Ready=false,phase345Ready=false,phase346Ready=false,phase348Ready=false,phase349Ready=false,phase350Ready=false,phase351Ready=false,phase352Ready=false,phase353Ready=false,phase354Ready=false,phase355Ready=false,phase356Ready=false,phase357Ready=false,phase358Ready=false,phase359Ready=false,phase360Ready=false,phase361Ready=false,phase362Ready=false,phase363Ready=false,phase364Ready=false,phase365Ready=false,phase366Ready=false;
+  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase339Ready=false,phase340Ready=false,phase341Ready=false,phase342Ready=false,phase343Ready=false,phase344Ready=false,phase345Ready=false,phase346Ready=false,phase348Ready=false,phase349Ready=false,phase350Ready=false,phase351Ready=false,phase352Ready=false,phase353Ready=false,phase354Ready=false,phase355Ready=false,phase356Ready=false,phase357Ready=false,phase358Ready=false,phase359Ready=false,phase360Ready=false,phase361Ready=false,phase362Ready=false,phase363Ready=false,phase364Ready=false,phase365Ready=false,phase366Ready=false,phase368Ready=false;
   for(let attempt=0;attempt<8;attempt++){
     const readiness=await evaluate(cdp,`({
       p335:window.__mwsF1RacingV335==='phase335-f1-actual-track-spacing'&&typeof window.mwsF1QaActualTrackSpacingV335==='function',
@@ -365,11 +365,12 @@ try{
       p363:window.__mwsF1RacingV363==='phase363-f1-lane-band-crowding-guard'&&typeof window.mwsF1QaLaneBandCrowdingGuardV363==='function'&&typeof window.mwsF1GetScreenCrowdingV363==='function',
       p364:window.__mwsF1RacingV364==='phase364-f1-stable-lane-band-slot-transition'&&typeof window.mwsF1QaLaneBandSlotStabilityV364==='function',
       p365:window.__mwsF1RacingV365==='phase365-f1-natural-longitudinal-headway'&&typeof window.mwsF1QaNaturalLongitudinalHeadwayV365==='function'&&typeof window.mwsF1GetNaturalHeadwayTelemetryV365==='function',
-      p366:window.__mwsF1RacingV366==='phase366-f1-following-pause-stability'&&typeof window.mwsF1QaFollowingPauseStabilityV366==='function'&&typeof window.mwsF1GetFollowingStabilityTelemetryV366==='function'
+      p366:window.__mwsF1RacingV366==='phase366-f1-following-pause-stability'&&typeof window.mwsF1QaFollowingPauseStabilityV366==='function'&&typeof window.mwsF1GetFollowingStabilityTelemetryV366==='function',
+      p368:window.__mwsF1RacingV368==='phase368-f1-interaction-snapshot-shadow'&&typeof window.mwsF1QaInteractionSnapshotV368==='function'&&typeof window.mwsF1GetInteractionSnapshotV368==='function'
     })`,"Phase 335-346 runtime readiness");
     phase335Ready=Boolean(readiness?.p335);phase336Ready=Boolean(readiness?.p336);phase337Ready=Boolean(readiness?.p337);
-    phase338Ready=Boolean(readiness?.p338);phase339Ready=Boolean(readiness?.p339);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);phase342Ready=Boolean(readiness?.p342);phase343Ready=Boolean(readiness?.p343);phase344Ready=Boolean(readiness?.p344);phase345Ready=Boolean(readiness?.p345);phase346Ready=Boolean(readiness?.p346);phase348Ready=Boolean(readiness?.p348);phase349Ready=Boolean(readiness?.p349);phase350Ready=Boolean(readiness?.p350);phase351Ready=Boolean(readiness?.p351);phase352Ready=Boolean(readiness?.p352);phase353Ready=Boolean(readiness?.p353);phase354Ready=Boolean(readiness?.p354);phase355Ready=Boolean(readiness?.p355);phase356Ready=Boolean(readiness?.p356);phase357Ready=Boolean(readiness?.p357);phase358Ready=Boolean(readiness?.p358);phase359Ready=Boolean(readiness?.p359);phase360Ready=Boolean(readiness?.p360);phase361Ready=Boolean(readiness?.p361);phase362Ready=Boolean(readiness?.p362);phase363Ready=Boolean(readiness?.p363);phase364Ready=Boolean(readiness?.p364);phase365Ready=Boolean(readiness?.p365);phase366Ready=Boolean(readiness?.p366);
-    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase339Ready&&phase340Ready&&phase341Ready&&phase342Ready&&phase343Ready&&phase344Ready&&phase345Ready&&phase346Ready&&phase348Ready&&phase349Ready&&phase350Ready&&phase351Ready&&phase352Ready&&phase353Ready&&phase354Ready&&phase355Ready&&phase356Ready&&phase357Ready&&phase358Ready&&phase359Ready&&phase360Ready&&phase361Ready&&phase362Ready&&phase363Ready&&phase364Ready&&phase365Ready&&phase366Ready)break;
+    phase338Ready=Boolean(readiness?.p338);phase339Ready=Boolean(readiness?.p339);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);phase342Ready=Boolean(readiness?.p342);phase343Ready=Boolean(readiness?.p343);phase344Ready=Boolean(readiness?.p344);phase345Ready=Boolean(readiness?.p345);phase346Ready=Boolean(readiness?.p346);phase348Ready=Boolean(readiness?.p348);phase349Ready=Boolean(readiness?.p349);phase350Ready=Boolean(readiness?.p350);phase351Ready=Boolean(readiness?.p351);phase352Ready=Boolean(readiness?.p352);phase353Ready=Boolean(readiness?.p353);phase354Ready=Boolean(readiness?.p354);phase355Ready=Boolean(readiness?.p355);phase356Ready=Boolean(readiness?.p356);phase357Ready=Boolean(readiness?.p357);phase358Ready=Boolean(readiness?.p358);phase359Ready=Boolean(readiness?.p359);phase360Ready=Boolean(readiness?.p360);phase361Ready=Boolean(readiness?.p361);phase362Ready=Boolean(readiness?.p362);phase363Ready=Boolean(readiness?.p363);phase364Ready=Boolean(readiness?.p364);phase365Ready=Boolean(readiness?.p365);phase366Ready=Boolean(readiness?.p366);phase368Ready=Boolean(readiness?.p368);
+    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase339Ready&&phase340Ready&&phase341Ready&&phase342Ready&&phase343Ready&&phase344Ready&&phase345Ready&&phase346Ready&&phase348Ready&&phase349Ready&&phase350Ready&&phase351Ready&&phase352Ready&&phase353Ready&&phase354Ready&&phase355Ready&&phase356Ready&&phase357Ready&&phase358Ready&&phase359Ready&&phase360Ready&&phase361Ready&&phase362Ready&&phase363Ready&&phase364Ready&&phase365Ready&&phase366Ready&&phase368Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
     await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v358=${Date.now()}-${attempt}`});
     await refreshed;await sleep(1200);
@@ -405,6 +406,7 @@ try{
   if(!phase364Ready)throw new Error('Phase 364 runtime did not propagate to Recovery H browser');
   if(!phase365Ready)throw new Error('Phase 365 runtime did not propagate to Recovery H browser');
   if(!phase366Ready)throw new Error('Phase 366 runtime did not propagate to Recovery H browser');
+  if(!phase368Ready)throw new Error('Phase 368 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -1386,6 +1388,8 @@ try{
     assert(naturalHeadway365?.allPass===true&&naturalHeadway365?.lateralRuntimeClean===true&&naturalHeadway365?.presentationRestored===true,'Phase 365 natural longitudinal headway QA failed: '+JSON.stringify(naturalHeadway365));
     const followingPause366=window.mwsF1QaFollowingPauseStabilityV366?.();
     assert(followingPause366?.allPass===true&&followingPause366?.releaseGuard===true&&followingPause366?.underGapOpens===true&&followingPause366?.pauseRenderFreeze===true&&followingPause366?.resumeFirstFrameStable===true,'Phase 366 following/pause stability QA failed: '+JSON.stringify(followingPause366));
+    const interactionSnapshot368=window.mwsF1QaInteractionSnapshotV368?.();
+    assert(interactionSnapshot368?.allPass===true&&interactionSnapshot368?.pitExcluded===true&&interactionSnapshot368?.finishedExcluded===true&&interactionSnapshot368?.neighborSkipsPit===true&&interactionSnapshot368?.shadowOnlyNoVehicleMutation===true,'Phase 368 interaction snapshot shadow QA failed: '+JSON.stringify(interactionSnapshot368));
     assert(laneStability364?.allPass===true&&laneStability364?.preserved===true,'Phase 364 lane band slot stability QA failed: '+JSON.stringify(laneStability364));
     if(Number(screenCrowding363?.denseSamples)>0)assert(Number(screenCrowding363?.stability?.maxStableOverlapPairs||0)===0,'Phase 364 stable lane band overlap remained: '+JSON.stringify(screenCrowding363));
     const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]');
@@ -1589,6 +1593,7 @@ try{
       laneStabilityV364:laneStability364||null,
       naturalHeadwayV365:naturalHeadway365||null,
       followingPauseV366:followingPause366||null,
+      interactionSnapshotV368:interactionSnapshot368||null,
       dynamicsPlaytestV348:dynamicsPlaytest348||null,
       raceMomentumV262:{
         gridFinishCorrelation:Number(momentumBenchmark262?.gridFinishCorrelation)||0,

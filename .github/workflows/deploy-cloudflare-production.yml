@@ -312,6 +312,7 @@ jobs:
           node --check scripts/run-phase365-f1-natural-longitudinal-headway-audit.mjs
           node --check scripts/run-phase366-f1-following-pause-stability-audit.mjs
           node --check scripts/run-phase367-f1-interaction-dependency-audit.mjs
+          node --check scripts/run-phase368-f1-interaction-snapshot-shadow-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
@@ -1183,6 +1184,11 @@ jobs:
           grep -Fq "FOLLOWING_GAP_OPEN_V366" /tmp/f1-racing-v1-phase187.js
           grep -Fq "pausedHoldV366:true" /tmp/f1-racing-v1-phase187.js
           grep -Fq "renderRaceVehiclesV189(simClockV192.paused?0:delta);" /tmp/f1-racing-v1-phase187.js
+          echo '[phase368] F1 interaction snapshot shadow'
+          grep -Fq "window.__mwsF1RacingV368=VERSION368;" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "function buildInteractionSnapshotV368(" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "trackInteractionOrder" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "updateInteractionSnapshotShadowV368();" /tmp/f1-racing-v1-phase187.js
           grep -Fq "function updateRankedFieldPaceRetentionV357(){" /tmp/f1-racing-v1-phase187.js
           grep -Fq "updateRankedFieldPaceRetentionV357();" /tmp/f1-racing-v1-phase187.js
           grep -Fq "rankedFieldPaceMultiplierV357Value" /tmp/f1-racing-v1-phase187.js
