@@ -6296,7 +6296,6 @@ function battleQueueSpeedControlV319(vehicle){
   }
   const closingKph=(Number(vehicle.speedKph)||0)-(Number(ahead.speedKph)||0);
   const overtakeOpportunity=closingKph>=Math.min(RACE_SPACING_CONFIG_V319.overtakeReleaseClosingKph,raceCompetitionConfigV345().overtakeReleaseClosingKph)&&boundaryOvertakeEligibleV271(vehicle);
-  const genuineClosingReleaseV365=!vehicle.battleBlockedV319&&gap<=PASS_CONFIG_V208.followGapMeters*1.10&&closingKph>=.35&&boundaryOvertakeEligibleV271(vehicle);
   if(!activeWithAhead&&!overtakeOpportunity&&gap<RACE_SPACING_CONFIG_V319.physicalFollowGapMeters){
     const strength=clamp01V198(1-gap/RACE_SPACING_CONFIG_V319.physicalFollowGapMeters);
     return {active:true,capKph:Math.max(0,(Number(ahead.speedKph)||0)-RACE_SPACING_CONFIG_V319.physicalFollowMarginKph*Math.max(.4,strength)),gapMeters:gap,reason:'TRAIN_HEADWAY',pairKey:currentPair,closingKph};
@@ -6361,6 +6360,7 @@ function naturalRaceSpacingControlV365(vehicle){
   const closingCandidateV365=targetIsAhead&&!vehicle.battleBlockedV319&&closingKph>1&&gap<=PASS_CONFIG_V208.followGapMeters;
   const approachAttackIntentV365=targetIsAhead&&approachStateV365&&!vehicle.battleBlockedV319&&gap<=PASS_CONFIG_V208.followGapMeters;
   const overtakeOpportunity=closingKph>=Math.min(RACE_SPACING_CONFIG_V319.overtakeReleaseClosingKph,raceCompetitionConfigV345().overtakeReleaseClosingKph)&&boundaryOvertakeEligibleV271(vehicle);
+  const genuineClosingReleaseV365=!vehicle.battleBlockedV319&&gap<=PASS_CONFIG_V208.followGapMeters*1.10&&closingKph>=.35&&boundaryOvertakeEligibleV271(vehicle);
   const fastApproachReleaseV365=activeRaceModeV345()==='FAST'&&!vehicle.battleBlockedV319&&gap<=PASS_CONFIG_V208.followGapMeters*NATURAL_HEADWAY_V365.fastReleaseGapMultiplier&&closingKph>=NATURAL_HEADWAY_V365.fastReleaseClosingKph&&boundaryOvertakeEligibleV271(vehicle);
   naturalHeadwayTelemetryV365.calls+=1;
   naturalHeadwayTelemetryV365.minGapMeters=Math.min(naturalHeadwayTelemetryV365.minGapMeters,gap);
