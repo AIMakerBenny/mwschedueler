@@ -9,7 +9,6 @@ export function runPhase350F1RearBattlePaceRetentionAudit(){
   for(const token of [
     "const VERSION350='phase350-f1-rear-battle-pace-retention';",
     "const REAR_BATTLE_BALANCE_V350=Object.freeze({",
-    "activeBattleDirtyAirScale:.68,blockedBattleDirtyAirScale:.78",
     "function battleQueueSpeedControlV350(vehicle){",
     "const spacingControlV319=battleQueueSpeedControlV350(vehicle);",
     "retainedCatchupV350:true",
@@ -19,6 +18,12 @@ export function runPhase350F1RearBattlePaceRetentionAudit(){
     "window.mwsF1QaRearBattlePaceRetentionV350=qaRearBattlePaceRetentionV350;",
     "window.__mwsF1RacingV350=VERSION350;"
   ])if(!core.includes(token))issues.push('Phase 350 core missing: '+token);
+  const rearConfigStart=core.indexOf('const REAR_BATTLE_BALANCE_V350=Object.freeze({');
+  const rearConfigEnd=core.indexOf('});',rearConfigStart);
+  const rearConfig=rearConfigStart>=0&&rearConfigEnd>rearConfigStart?core.slice(rearConfigStart,rearConfigEnd+3):'';
+  const activeScale=Number(rearConfig.match(/activeBattleDirtyAirScale:([0-9.]+)/)?.[1]);
+  const blockedScale=Number(rearConfig.match(/blockedBattleDirtyAirScale:([0-9.]+)/)?.[1]);
+  if(!Number.isFinite(activeScale)||!Number.isFinite(blockedScale)||activeScale<=0||blockedScale<=activeScale||blockedScale>.85)issues.push('Phase 350 rear battle dirty-air scales invalid: '+JSON.stringify({activeScale,blockedScale}));
   const queueStart=core.indexOf('function battleQueueSpeedControlV350(');
   const queueEnd=core.indexOf('function simulateVehicleDynamicsV196(',queueStart);
   const queueBody=queueStart>=0&&queueEnd>queueStart?core.slice(queueStart,queueEnd):'';

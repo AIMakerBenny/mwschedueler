@@ -29,9 +29,9 @@ export function runPhase351F1PhysicsCornerBrakeReleaseAudit(){
   for(const token of [
     "Phase 351 runtime did not propagate to Recovery H browser",
     "Phase 351 physics corner brake/release QA failed",
-    "Phase 350 field spread remains excessive",
     "cornerDrivingV351:cornerDriving351||null"
   ])if(!diag.includes(token))issues.push('Phase 351 Recovery H missing: '+token);
+  if(!diag.includes("Phase 350 field spread remains excessive")&&!diag.includes("Phase 352 field spread remains excessive"))issues.push("Phase 351/352 field spread Recovery H gate missing");
   for(const token of [
     "node --check scripts/run-phase351-f1-physics-corner-brake-release-audit.mjs",
     "[phase351] F1 physics corner braking, apex release, and exit acceleration",
