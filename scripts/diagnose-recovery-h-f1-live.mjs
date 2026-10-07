@@ -332,7 +332,7 @@ try{
   if(!phase332Ready)throw new Error('Phase 332 runtime did not propagate to Recovery H browser');
   if(!phase333Ready)throw new Error('Phase 333 runtime did not propagate to Recovery H browser');
 
-  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase339Ready=false,phase340Ready=false,phase341Ready=false,phase342Ready=false,phase343Ready=false,phase344Ready=false,phase345Ready=false,phase346Ready=false,phase348Ready=false,phase349Ready=false,phase350Ready=false,phase351Ready=false,phase352Ready=false,phase353Ready=false;
+  let phase335Ready=false,phase336Ready=false,phase337Ready=false,phase338Ready=false,phase339Ready=false,phase340Ready=false,phase341Ready=false,phase342Ready=false,phase343Ready=false,phase344Ready=false,phase345Ready=false,phase346Ready=false,phase348Ready=false,phase349Ready=false,phase350Ready=false,phase351Ready=false,phase352Ready=false,phase353Ready=false,phase354Ready=false;
   for(let attempt=0;attempt<8;attempt++){
     const readiness=await evaluate(cdp,`({
       p335:window.__mwsF1RacingV335==='phase335-f1-actual-track-spacing'&&typeof window.mwsF1QaActualTrackSpacingV335==='function',
@@ -352,13 +352,14 @@ try{
       p350:window.__mwsF1RacingV350==='phase350-f1-rear-battle-pace-retention'&&typeof window.mwsF1QaRearBattlePaceRetentionV350==='function',
       p351:window.__mwsF1RacingV351==='phase351-f1-physics-corner-brake-release'&&typeof window.mwsF1QaPhysicsCornerBrakeReleaseV351==='function',
       p352:window.__mwsF1RacingV352==='phase352-f1-field-spread-pace-balance'&&typeof window.mwsF1QaFieldSpreadPaceBalanceV352==='function',
-      p353:window.__mwsF1RacingV353==='phase353-f1-corner-complex-recovery'&&typeof window.mwsF1QaCornerComplexRecoveryV353==='function'
+      p353:window.__mwsF1RacingV353==='phase353-f1-corner-complex-recovery'&&typeof window.mwsF1QaCornerComplexRecoveryV353==='function',
+      p354:window.__mwsF1RacingV354==='phase354-f1-field-spread-cap-balance'&&typeof window.mwsF1QaFieldSpreadCapBalanceV354==='function'
     })`,"Phase 335-346 runtime readiness");
     phase335Ready=Boolean(readiness?.p335);phase336Ready=Boolean(readiness?.p336);phase337Ready=Boolean(readiness?.p337);
-    phase338Ready=Boolean(readiness?.p338);phase339Ready=Boolean(readiness?.p339);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);phase342Ready=Boolean(readiness?.p342);phase343Ready=Boolean(readiness?.p343);phase344Ready=Boolean(readiness?.p344);phase345Ready=Boolean(readiness?.p345);phase346Ready=Boolean(readiness?.p346);phase348Ready=Boolean(readiness?.p348);phase349Ready=Boolean(readiness?.p349);phase350Ready=Boolean(readiness?.p350);phase351Ready=Boolean(readiness?.p351);phase352Ready=Boolean(readiness?.p352);phase353Ready=Boolean(readiness?.p353);
-    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase339Ready&&phase340Ready&&phase341Ready&&phase342Ready&&phase343Ready&&phase344Ready&&phase345Ready&&phase346Ready&&phase348Ready&&phase349Ready&&phase350Ready&&phase351Ready&&phase352Ready&&phase353Ready)break;
+    phase338Ready=Boolean(readiness?.p338);phase339Ready=Boolean(readiness?.p339);phase340Ready=Boolean(readiness?.p340);phase341Ready=Boolean(readiness?.p341);phase342Ready=Boolean(readiness?.p342);phase343Ready=Boolean(readiness?.p343);phase344Ready=Boolean(readiness?.p344);phase345Ready=Boolean(readiness?.p345);phase346Ready=Boolean(readiness?.p346);phase348Ready=Boolean(readiness?.p348);phase349Ready=Boolean(readiness?.p349);phase350Ready=Boolean(readiness?.p350);phase351Ready=Boolean(readiness?.p351);phase352Ready=Boolean(readiness?.p352);phase353Ready=Boolean(readiness?.p353);phase354Ready=Boolean(readiness?.p354);
+    if(phase335Ready&&phase336Ready&&phase337Ready&&phase338Ready&&phase339Ready&&phase340Ready&&phase341Ready&&phase342Ready&&phase343Ready&&phase344Ready&&phase345Ready&&phase346Ready&&phase348Ready&&phase349Ready&&phase350Ready&&phase351Ready&&phase352Ready&&phase353Ready&&phase354Ready)break;
     const refreshed=cdp.once('Page.loadEventFired',30000);
-    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v353=${Date.now()}-${attempt}`});
+    await cdp.send('Page.navigate',{url:`${BASE}/?recovery-h-f1-v354=${Date.now()}-${attempt}`});
     await refreshed;await sleep(1200);
   }
   if(!phase335Ready)throw new Error('Phase 335 runtime did not propagate to Recovery H browser');
@@ -379,6 +380,7 @@ try{
   if(!phase351Ready)throw new Error('Phase 351 runtime did not propagate to Recovery H browser');
   if(!phase352Ready)throw new Error('Phase 352 runtime did not propagate to Recovery H browser');
   if(!phase353Ready)throw new Error('Phase 353 runtime did not propagate to Recovery H browser');
+  if(!phase354Ready)throw new Error('Phase 354 runtime did not propagate to Recovery H browser');
 
   const baseline=await evaluate(cdp,`(async()=>{
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -1320,6 +1322,8 @@ try{
     assert(fieldBalance352?.allPass===true,'Phase 352 field spread pace balance QA failed: '+JSON.stringify(fieldBalance352));
     const cornerComplex353=window.mwsF1QaCornerComplexRecoveryV353?.();
     assert(cornerComplex353?.allPass===true,'Phase 353 corner complex recovery QA failed: '+JSON.stringify(cornerComplex353));
+    const fieldCap354=window.mwsF1QaFieldSpreadCapBalanceV354?.();
+    assert(fieldCap354?.allPass===true,'Phase 354 field spread cap balance QA failed: '+JSON.stringify(fieldCap354));
     const commentary=document.querySelector('[data-f1-workspace-panel="commentary"]');
     const title=commentary?.querySelector('[data-f1-panel-drag="commentary"]');
     assert(title,'Commentary drag handle missing');
@@ -1504,6 +1508,7 @@ try{
       cornerDrivingV351:cornerDriving351||null,
       fieldBalanceV352:fieldBalance352||null,
       cornerComplexV353:cornerComplex353||null,
+      fieldCapV354:fieldCap354||null,
       dynamicsPlaytestV348:dynamicsPlaytest348||null,
       raceMomentumV262:{
         gridFinishCorrelation:Number(momentumBenchmark262?.gridFinishCorrelation)||0,

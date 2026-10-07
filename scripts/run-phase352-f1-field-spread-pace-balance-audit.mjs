@@ -14,6 +14,7 @@ export function runPhase352F1FieldSpreadPaceBalanceAudit(){
  const legacySpread=core.includes("normalFormAmplitude:.012,fastFormAmplitude:.028,maxFinishSpreadSeconds:48");
  const revisedSpread=core.includes("normalFormAmplitude:.009,fastFormAmplitude:.024,maxFinishSpreadSeconds:48");
  if(!legacySpread&&!revisedSpread)issues.push('Phase 352 field spread config missing or unsupported');
+ if(core.includes("normalCatchupCapMultiplier:")&&!core.includes("function fieldSpreadCatchupCapMultiplierV354("))issues.push('Phase 352 extended catchup cap config is not connected');
  const v350Start=core.indexOf('function battleQueueSpeedControlV350('),v350End=core.indexOf('function simulateVehicleDynamicsV196(',v350Start);
  const v350Body=v350Start>=0&&v350End>v350Start?core.slice(v350Start,v350End):'';
  if(/\b(?:raceProgress|progress)\s*=/.test(v350Body))issues.push('Phase 352 balance regressed into direct position forcing');

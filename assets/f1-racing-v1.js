@@ -140,6 +140,7 @@ const VERSION350='phase350-f1-rear-battle-pace-retention';
 const VERSION351='phase351-f1-physics-corner-brake-release';
 const VERSION352='phase352-f1-field-spread-pace-balance';
 const VERSION353='phase353-f1-corner-complex-recovery';
+const VERSION354='phase354-f1-field-spread-cap-balance';
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
 const GAME_VARIABILITY_CONFIG_V303=Object.freeze({evaluationMs:650,maxGapMeters:84,attackGapMeters:36,baseBonusKph:1.1,pressureBonusKph:3.2,midfieldBonusKph:.8,failedPassBonusKph:.4,maxFailedPassBonusKph:1.6,momentumBonusKph:1.55,maxTotalBiasKph:14,positionCatchupMaxPct:.045,positionCatchupExponent:1.35,leaderHoldMs:12000,leaderCloseGapSeconds:1.75,leaderClosePenaltyKph:.9,liveCadenceMs:10000});
@@ -183,7 +184,7 @@ const REAR_BATTLE_BALANCE_V350=Object.freeze({
   farClosingAllowanceKph:1.4,closeClosingAllowanceKph:.55,overlapSpeedMarginKph:1.1,
   blockedCatchupRetention:1.00
 });
-const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.009,fastFormAmplitude:.024,maxFinishSpreadSeconds:48});
+const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.009,fastFormAmplitude:.024,maxFinishSpreadSeconds:48,normalCatchupCapMultiplier:1.25,fastCatchupCapMultiplier:1.45});
 const CORNER_DRIVING_V351=Object.freeze({
   speedEnvelope:Object.freeze({
     hairpin:Object.freeze({min:75,max:120,entryRetention:.30,brakeScale:1.05,recoveryLead:.22,exitAccel:1.15}),
@@ -7586,6 +7587,9 @@ function positionCatchupBonusV314(vehicle,position,count){
   const speed=Math.max(120,Math.min(340,Number(vehicle?.speedKph)||220));
   return {pct,bonusKph:speed*pct};
 }
+function fieldSpreadCatchupCapMultiplierV354(){
+  return activeRaceModeV345()==='FAST'?FIELD_SPREAD_BALANCE_V352.fastCatchupCapMultiplier:FIELD_SPREAD_BALANCE_V352.normalCatchupCapMultiplier;
+}
 function applyGameVariabilityV303(stepMs){
   if(!(stepMs>0)||raceFlagStateV214.flag!=='GREEN'||!raceMotionV189.vehicles.length)return [];
   const now=Number(simClockV192.simTimeMs)||0;
@@ -7601,7 +7605,7 @@ function applyGameVariabilityV303(stepMs){
     if(follower.battleBlockedV319){
       const blockedCatchup=positionCatchupBonusV314(follower,i+1,standings.length);
       const retainedBonus=blockedCatchup.bonusKph*REAR_BATTLE_BALANCE_V350.blockedCatchupRetention*competitionV345.variability;
-      const variabilityCapV345=GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph*(activeRaceModeV345()==='FAST'?1.45:1.15);
+      const variabilityCapV345=GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph*fieldSpreadCatchupCapMultiplierV354();
       follower.positionCatchupPctV314=blockedCatchup.pct;follower.positionCatchupBonusKphV314=blockedCatchup.bonusKph;
       follower.variabilitySpeedBiasKphV309=Math.min(variabilityCapV345,retainedBonus);follower.variabilityBiasUntilV309=now+OVERTAKE_FLOW_CONFIG_V309.variabilityHoldMs;
       follower.battleSpeedBiasKph=combinedBattleBiasV309(follower,String(follower.battleState||'FOLLOWING'),now);
@@ -7619,7 +7623,7 @@ function applyGameVariabilityV303(stepMs){
     const requested=(catchup.bonusKph+(inBattleRange?GAME_VARIABILITY_CONFIG_V303.baseBonusKph+pressure*GAME_VARIABILITY_CONFIG_V303.pressureBonusKph+failed:0)+midfield+momentum)*competitionV345.variability+frontChallenge;
     follower.positionCatchupPctV314=catchup.pct;
     follower.positionCatchupBonusKphV314=catchup.bonusKph;
-    const variabilityCapV345=GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph*(activeRaceModeV345()==='FAST'?1.45:1.15);
+    const variabilityCapV345=GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph*fieldSpreadCatchupCapMultiplierV354();
     follower.variabilitySpeedBiasKphV309=Math.min(variabilityCapV345,requested);
     follower.variabilityBiasUntilV309=now+OVERTAKE_FLOW_CONFIG_V309.variabilityHoldMs;
     follower.battleSpeedBiasKph=combinedBattleBiasV309(follower,String(follower.battleState||'FOLLOWING'),now);
@@ -7947,6 +7951,18 @@ function qaCornerComplexRecoveryV353(){
 }
 window.mwsF1QaCornerComplexRecoveryV353=qaCornerComplexRecoveryV353;
 window.__mwsF1RacingV353=VERSION353;
+
+
+function qaFieldSpreadCapBalanceV354(){
+  const normal=FIELD_SPREAD_BALANCE_V352.normalCatchupCapMultiplier,fast=FIELD_SPREAD_BALANCE_V352.fastCatchupCapMultiplier;
+  const normalCap=GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph*normal,fastCap=GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph*fast;
+  const source=String(fieldSpreadCatchupCapMultiplierV354);
+  const directPositionMutation=/\b(?:raceProgress|progress)\s*=/.test(source);
+  return {version:VERSION354,normal,fast,normalCap,fastCap,directPositionMutation,
+    allPass:normal>1.15&&normal<=1.35&&fast>=normal&&fast<=1.50&&normalCap>16&&fastCap>normalCap&&!directPositionMutation&&FIELD_SPREAD_BALANCE_V352.maxFinishSpreadSeconds===48};
+}
+window.mwsF1QaFieldSpreadCapBalanceV354=qaFieldSpreadCapBalanceV354;
+window.__mwsF1RacingV354=VERSION354;
 
 function qaUiVisibilitySpacingV324(){
   const marker=document.querySelector('.f1-racing-race-vehicle-v189');
