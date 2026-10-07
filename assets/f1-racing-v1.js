@@ -5863,9 +5863,11 @@ function qaVisualLateralSmoothingV258(){
 function qaVisualLateralDomV258(){
   const vehicle=raceMotionV189.vehicles[0],marker=vehicle?.marker;
   if(!vehicle||!marker)return {allPass:false,reason:'need-live-marker'};
-  const saved={mode:vehicle.racingLineMode,incident:vehicle.incidentLateralOffsetMeters,visual:vehicle.visualLateralOffsetMeters,target:vehicle.targetVisualLateralOffsetMeters,velocity:vehicle.visualLateralVelocity,initialized:vehicle.visualLateralInitializedV258};
+  const saved={mode:vehicle.racingLineMode,incident:vehicle.incidentLateralOffsetMeters,visual:vehicle.visualLateralOffsetMeters,target:vehicle.targetVisualLateralOffsetMeters,velocity:vehicle.visualLateralVelocity,initialized:vehicle.visualLateralInitializedV258,paused:simClockV192.paused};
   let result={};
   try{
+    // Phase 366 QA isolation: exercise lateral smoothing independent of the user pause freeze.
+    simClockV192.paused=false;
     vehicle.incidentLateralOffsetMeters=0;
     vehicle.racingLineMode='ATTACK_INSIDE';
     updateVisualLateralOffsetV258(vehicle,0,true);
@@ -5885,6 +5887,7 @@ function qaVisualLateralDomV258(){
     result.allPass=noFirstFrameSnap&&convergesOverTime&&laterRenderMoved;
   }finally{
     vehicle.racingLineMode=saved.mode;vehicle.incidentLateralOffsetMeters=saved.incident;vehicle.visualLateralOffsetMeters=saved.visual;vehicle.targetVisualLateralOffsetMeters=saved.target;vehicle.visualLateralVelocity=saved.velocity;vehicle.visualLateralInitializedV258=saved.initialized;
+    simClockV192.paused=saved.paused;
     renderRaceVehiclesV189(0);
   }
   return result;
