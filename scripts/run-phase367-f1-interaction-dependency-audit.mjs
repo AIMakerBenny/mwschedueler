@@ -102,7 +102,7 @@ export function runPhase367F1InteractionDependencyAudit(){
 
   const historicalContracts={
     phase319ExclusiveIsolation:phase319.includes('buildBattleLocksV319')&&phase319.includes('battlePairBlockedV319')&&phase319.includes('third-car battle isolation'),
-    phase350RearBalance:phase350.includes('battleQueueSpeedControlV350')&&phase350.includes('battleBlockedV319'),
+    phase350RearBalance:phase350.includes('battleQueueSpeedControlV350')&&phase350.includes('REAR_BATTLE_BALANCE_V350')&&phase350.includes('retainedCatchupV350:true'),
     phase365NaturalHeadway:phase365.includes('naturalRaceSpacingControlV365')&&phase365.includes('naturalHeadwayAttackIntentV365'),
     phase366PauseFreeze:phase366.includes('freezeVisualV366')&&phase366.includes('pause changed live marker transforms')
   };
