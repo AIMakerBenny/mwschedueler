@@ -310,6 +310,7 @@ jobs:
           node --check scripts/run-phase363-f1-lane-band-crowding-guard-audit.mjs
           node --check scripts/run-phase364-f1-stable-lane-band-slot-transition-audit.mjs
           node --check scripts/run-phase365-f1-natural-longitudinal-headway-audit.mjs
+          node --check scripts/run-phase366-f1-following-pause-stability-audit.mjs
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
           node --check assets/f1-racing-r303.js
@@ -1175,6 +1176,12 @@ jobs:
           grep -Fq "const rawTarget=physicalTarget;" /tmp/f1-racing-v1-phase187.js
           grep -Fq "TRACK_PRESENTATION_V365.visualWidthScale" /tmp/f1-racing-v1-phase187.js
           retry_contains "$BASE/assets/f1-racing-v1.css?deploy=$GITHUB_SHA" '/* Phase 365: restore normal track presentation, keep 4 guide lines */' > /tmp/f1-racing-v1-phase365.css
+          echo '[phase366] F1 following and pause stability'
+          grep -Fq "window.__mwsF1RacingV366=VERSION366;" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "function naturalRaceSpacingControlV366(" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "FOLLOWING_GAP_OPEN_V366" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "pausedHoldV366:true" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "renderRaceVehiclesV189(simClockV192.paused?0:delta);" /tmp/f1-racing-v1-phase187.js
           grep -Fq "function updateRankedFieldPaceRetentionV357(){" /tmp/f1-racing-v1-phase187.js
           grep -Fq "updateRankedFieldPaceRetentionV357();" /tmp/f1-racing-v1-phase187.js
           grep -Fq "rankedFieldPaceMultiplierV357Value" /tmp/f1-racing-v1-phase187.js
