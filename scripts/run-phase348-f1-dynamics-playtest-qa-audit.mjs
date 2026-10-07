@@ -11,12 +11,14 @@ export function runPhase348F1DynamicsPlaytestQaAudit(){
     "gridMode='FIXED',raceMode='NORMAL'",
     "const totalLaps=normalizedRaceMode==='FAST'?RACE_COMPETITION_V345.fastLaps:requestedLaps;",
     "pitRequestHistoryV348:[]",
-    "const exitAcceleration=(phase==='EXIT'?CORNER_DYNAMICS_V343.exitAccelerationMultiplier:1)",
     "function qaDynamicsContractV348(){",
     "function qaDynamicsPlaytestV348(){",
     "window.mwsF1QaDynamicsPlaytestV348=qaDynamicsPlaytestV348;",
     "window.__mwsF1RacingV348=VERSION348;"
   ])if(!core.includes(token))issues.push('Phase 348 core missing: '+token);
+  const legacyExitAcceleration=core.includes("const exitAcceleration=(phase==='EXIT'?CORNER_DYNAMICS_V343.exitAccelerationMultiplier:1)");
+  const physicsExitAcceleration=core.includes("const exitAcceleration=(cornerRecoveryV351?CORNER_DYNAMICS_V343.exitAccelerationMultiplier*cornerSpecV351.exitAccel:1)");
+  if(!legacyExitAcceleration&&!physicsExitAcceleration)issues.push('Phase 348 exit acceleration integration missing or unsupported');
   if(core.includes("const exitAcceleration=(phase==='EXIT'?CORNER_DYNAMICS_V270.exitAccelerationMultiplier:1)"))issues.push('Phase 348 actual exit acceleration still uses obsolete Phase 270 multiplier');
   for(const token of [
     "Phase 348 runtime did not propagate to Recovery H browser",

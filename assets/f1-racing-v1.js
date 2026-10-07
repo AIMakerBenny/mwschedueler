@@ -5267,8 +5267,8 @@ function cornerApexTargetV351(entryKph,corner,compound='MEDIUM'){
   const reference=Math.max(spec.min,Math.min(spec.max,Number(corner?.referenceApexKph)||spec.min));
   const retained=Math.max(spec.min,Math.min(spec.max,Math.max(0,Number(entryKph)||0)*spec.entryRetention));
   const compoundRaw=CORNER_DYNAMICS_V343.compoundCornerFactor[String(compound||'MEDIUM').toUpperCase()]||1;
-  const compound=1+(compoundRaw-1)*CORNER_DRIVING_V351.compoundInfluence;
-  return Math.max(spec.min,Math.min(spec.max,Math.max(reference,retained)*compound));
+  const compoundFactorV351=1+(compoundRaw-1)*CORNER_DRIVING_V351.compoundInfluence;
+  return Math.max(spec.min,Math.min(spec.max,Math.max(reference,retained)*compoundFactorV351));
 }
 function cornerDrivingPlanV351(entryKph,corner,track=activeRaceSnapshotV187?.track,compound='MEDIUM'){
   const {key,spec}=cornerSpeedSpecV351(corner);

@@ -1081,7 +1081,7 @@ jobs:
           grep -Fq "const requestedLaps=raceMode==='FAST'?RACE_COMPETITION_V345.fastLaps:draft.totalLaps;" /tmp/f1-racing-v1-phase187.js
           echo '[phase348] F1 corner exit integration and real dynamics playtest QA'
           grep -Fq "window.__mwsF1RacingV348=VERSION348;" /tmp/f1-racing-v1-phase187.js
-          grep -Fq "const exitAcceleration=(phase==='EXIT'?CORNER_DYNAMICS_V343.exitAccelerationMultiplier:1)" /tmp/f1-racing-v1-phase187.js
+          if ! grep -Fq "const exitAcceleration=(phase==='EXIT'?CORNER_DYNAMICS_V343.exitAccelerationMultiplier:1)" /tmp/f1-racing-v1-phase187.js && ! grep -Fq "const exitAcceleration=(cornerRecoveryV351?CORNER_DYNAMICS_V343.exitAccelerationMultiplier*cornerSpecV351.exitAccel:1)" /tmp/f1-racing-v1-phase187.js; then echo 'Phase 348/351 exit acceleration integration missing'; exit 1; fi
           grep -Fq "function qaDynamicsPlaytestV348(){" /tmp/f1-racing-v1-phase187.js
           echo '[phase349] F1 strict 40 percent pit guard and first-stop staggering'
           grep -Fq "window.__mwsF1RacingV349=VERSION349;" /tmp/f1-racing-v1-phase187.js

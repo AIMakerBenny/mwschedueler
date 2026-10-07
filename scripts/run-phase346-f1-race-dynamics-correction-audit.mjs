@@ -10,14 +10,14 @@ export function runPhase346F1RaceDynamicsCorrectionAudit(){
     "const VERSION346='phase346-f1-race-dynamics-correction';",
     "const insideSign=corner.direction==='right'?-1:1;",
     'function phaseSpeedTargetV343(',
-    "if(phase==='BRAKING'){",
-    "if(phase==='TURN_IN'){",
-    "if(phase==='APEX')return apexTarget;",
     "const amplitude=mode==='FAST'?.065:.040;",
     'const rankWeight=index===1?1:index===2?0.68:index===3?0.38:0;',
     'window.mwsF1QaRaceDynamicsCorrectionV346=',
     'window.__mwsF1RacingV346=VERSION346;'
   ]) if(!core.includes(token)) issues.push('Phase 346 core missing: '+token);
+  const legacyCornerPhases=core.includes("if(phase==='BRAKING'){")&&core.includes("if(phase==='TURN_IN'){")&&core.includes("if(phase==='APEX')return apexTarget;");
+  const physicsCornerPhases=core.includes('function cornerDrivingPlanV351(')&&core.includes('cornerTargetAtDistanceV351(plan,here,raw,exitTarget)');
+  if(!legacyCornerPhases&&!physicsCornerPhases)issues.push('Phase 346 corner phase speed correction missing or unsupported');
 
   for(const token of [
     'Phase 346 runtime did not propagate to Recovery H browser',
