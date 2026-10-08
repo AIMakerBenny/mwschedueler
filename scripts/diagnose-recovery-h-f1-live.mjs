@@ -1572,6 +1572,8 @@ try{
     document.getElementById('f1RacingRaceCancelRecoveryC')?.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Final cancel did not return to Setup');
 
+    const compoundRaces395=window.mwsF1QaControlledCompoundRaceV395?.();
+    assert(compoundRaces395?.allPass===true,'Phase 395 controlled S/M/H races Chromium QA failed: '+JSON.stringify(compoundRaces395));
     const dynamicsPlaytest348=window.mwsF1QaDynamicsPlaytestV348?.();
     assert(dynamicsPlaytest348?.allPass===true,'Phase 348 real dynamics playtest QA failed: '+JSON.stringify(dynamicsPlaytest348));
     assert(Number(dynamicsPlaytest348?.normal?.finishSpreadSeconds)<=Number(window.FIELD_SPREAD_BALANCE_V352?.maxFinishSpreadSeconds||48),'Phase 352 field spread remains excessive: '+JSON.stringify(dynamicsPlaytest348?.normal));
@@ -1679,6 +1681,7 @@ try{
       tacticalPitV391:tacticalPit391||null,
       lateStintPitV393:lateStint393||null,
       liveGridV394:window.__mwsF1LatestGridQaV394||null,
+      compoundRacesV395:compoundRaces395||null,
       overlapMonitorV377:overlapMonitor377||null,
       behaviorTelemetryV380:behaviorTelemetry380||null,
       neighborBrakingV381:neighborBraking381||null,
