@@ -1845,13 +1845,44 @@ function snapshotWithStartingGridV272(snapshot,round=0,previousOrder=[]){
     drivers:Object.freeze(nextDrivers)
   });
 }
+function gridStartSpacingMetersV394(track=activeRaceSnapshotV187?.track){
+  const length=Math.max(1,Number(track?.lengthMeters)||4500);
+  const legacy=Math.max(65,Math.min(85,length*.018));
+  const path=document.getElementById('f1RacingRaceTrackPathV188');
+  const pathLength=Number(path?.getTotalLength?.())||0;
+  if(engineQaV240.active||pathLength<=100)return legacy;
+  const clearance=liveCameraClearanceMetersV386(track);
+  // Never compress beneath the real ring clearance and established safety headway.
+  return Math.max(46,clearance*1.12,Math.min(legacy,clearance*1.20));
+}
+function qaLiveGridSpacingV394(){
+  const track=activeRaceSnapshotV187?.track;
+  const vehicles=raceMotionV189.vehicles.slice().sort((a,b)=>Number(a.gridPosition)-Number(b.gridPosition));
+  const length=Math.max(1,Number(track?.lengthMeters)||4500);
+  const gaps=vehicles.slice(1).map((v,i)=>(Number(vehicles[i].startOffset)-Number(v.startOffset))*length);
+  const rendered=vehicles.filter(v=>v.renderPointV216&&v.marker).map(v=>({vehicle:v,point:v.renderPointV216}));
+  const current=measureActualMarkerOverlapsV377(rendered,raceCameraV216.zoom);
+  const maximum=measureActualMarkerOverlapsV377(rendered,MARKER_OVERLAP_MONITOR_V377.maxZoom);
+  const legacy=Math.max(65,Math.min(85,length*.018));
+  const spacing=gaps.length?gaps.reduce((sum,x)=>sum+x,0)/gaps.length:0;
+  const equalSpacing=gaps.length>0&&gaps.every(x=>Math.abs(x-spacing)<.005);
+  const noWarp=!/\b(?:raceProgress|progress|travel|finishPosition)\s*=/.test(String(gridStartSpacingMetersV394)+String(qaLiveGridSpacingV394));
+  return {version:'phase394-live-grid-physical-clearance',cars:vehicles.length,legacyMeters:legacy,
+    spacingMeters:Number(spacing.toFixed(3)),gapsMeters:gaps.map(x=>Number(x.toFixed(3))),
+    requiredClearanceMeters:Number(liveCameraClearanceMetersV386(track).toFixed(3)),
+    actualRenderCars:rendered.length,current,maximum,equalSpacing,noWarp,
+    allPass:vehicles.length>=2&&rendered.length===vehicles.length&&equalSpacing&&current.pairs===0&&maximum.pairs===0&&noWarp};
+}
+window.mwsF1QaLiveGridSpacingV394=qaLiveGridSpacingV394;
+window.__mwsF1RacingV394='phase394-live-grid-physical-clearance';
+
 function gridStartOffsetV272(index,count){
   // Headless benchmarks have no live camera marker clearance to reserve.
   if(engineQaV240.active)return -(Math.max(0,Number(index)||0)*Math.min(.008,.08/Math.max(1,Number(count)||1)));
   // The actual starting grid must clear unchanged SVG car rings at live camera zoom.
   // Space real race positions only before the race begins; never alter live order.
   const length=Math.max(1,Number(activeRaceSnapshotV187?.track?.lengthMeters)||4500);
-  const stepMeters=Math.max(65,Math.min(85,length*.018));
+  const stepMeters=gridStartSpacingMetersV394(activeRaceSnapshotV187?.track);
   return -(Math.max(0,Number(index)||0)*stepMeters/length);
 }
 function gridAvatarMarkupV272(driver){

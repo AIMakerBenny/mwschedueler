@@ -640,6 +640,8 @@ try{
     manualStart.click();await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='RACE','Explicit grid start click did not enter RACE');
     await raf();
+    const liveGrid394=window.mwsF1QaLiveGridSpacingV394?.();
+    assert(liveGrid394?.allPass===true,'Phase 394 actual starting grid marker clearance Chromium QA failed: '+JSON.stringify(liveGrid394));
     window.mwsF1SyncTrackRankingV284?.(true);await raf();
     const rankingQa302=window.mwsF1QaTrackRankingFlipStatusV302?.();
     assert(rankingQa302?.allPass===true,'Phase 302 live ranking FLIP/status QA failed: '+JSON.stringify(rankingQa302));
@@ -1675,6 +1677,7 @@ try{
       thirdPartyRetryV387:thirdRetry387||null,
       tacticalPitV391:tacticalPit391||null,
       lateStintPitV393:lateStint393||null,
+      liveGridV394:liveGrid394||null,
       overlapMonitorV377:overlapMonitor377||null,
       behaviorTelemetryV380:behaviorTelemetry380||null,
       neighborBrakingV381:neighborBraking381||null,

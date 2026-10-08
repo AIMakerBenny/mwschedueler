@@ -1,3 +1,4 @@
+import {runPhase394F1LiveGridClearanceAudit} from './run-phase394-f1-live-grid-clearance-audit.mjs';
 import {runPhase393F1LateStintPitAudit} from './run-phase393-f1-late-stint-pit-audit.mjs';
 import {runPhase391F1TacticalPitAudit} from './run-phase391-f1-tactical-pit-audit.mjs';
 import {runPhase1MobileShellAudit} from './run-phase1-mobile-shell-audit.mjs';
@@ -2827,5 +2828,6 @@ export function runPhase386FullIntegrationAudit(){const previous=runPhase385Full
 export function runPhase387FullIntegrationAudit(){const previous=runPhase386FullIntegrationAudit(),current=runPhase387F1ThirdPartyRetryAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 387: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 387: '+x)];return {phase:387,previous,current,issues,warnings,pass:!issues.length};}
 export function runPhase391FullIntegrationAudit(){const previous=runPhase387FullIntegrationAudit(),current=runPhase391F1TacticalPitAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 391: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 391: '+x)];return {phase:391,previous,current,issues,warnings,pass:!issues.length};}
 export function runPhase393FullIntegrationAudit(){const previous=runPhase391FullIntegrationAudit(),current=runPhase393F1LateStintPitAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 393: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 393: '+x)];return {phase:393,previous,current,issues,warnings,pass:!issues.length};}
-export function runCurrentFullIntegrationAudit(){return runPhase393FullIntegrationAudit();}
+export function runPhase394FullIntegrationAudit(){const previous=runPhase393FullIntegrationAudit(),current=runPhase394F1LiveGridClearanceAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 394: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 394: '+x)];return {phase:394,previous,current,issues,warnings,pass:!issues.length};}
+export function runCurrentFullIntegrationAudit(){return runPhase394FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
