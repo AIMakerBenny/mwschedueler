@@ -4645,6 +4645,7 @@ function setPassStateV208(vehicle,next,targetId='',reason=''){
     if(next==='PASS_COMPLETED')endChaseBurstV275(vehicle,'pass-completed');
     if(next==='PASS_COMPLETED')behaviorTelemetryV380.passes++;
     if(next==='PASS_COMPLETED')vehicle.spectatorPassFlashUntilV252=(Number(simClockV192.simTimeMs)||0)+1400;
+    if(next==='PASS_COMPLETED')vehicle.safePassExitUntilV386=(Number(simClockV192.simTimeMs)||0)+6500;
     if(next==='PASS_FAILED')vehicle.passFailedCount=(Number(vehicle.passFailedCount)||0)+1;
     enqueueLiveCutinV264(vehicle,next,targetId);
     const dialogueTarget=raceMotionV189.vehicles.find(row=>String(row.id)===String(targetId||''))||null;
@@ -4738,16 +4739,21 @@ function thirdCarOpportunityV376(vehicle,target,locks,phase,gapMeters,peers=race
 }
 function competitivePaceAdvantageV376(vehicle,peers=raceMotionV189.vehicles){
   if(!vehicle||vehicle.finished||vehicle.pitRequested||String(vehicle.pitState||'TRACK')!=='TRACK'||vehicle.trackBoundaryExceededV271)return 0;
+  // Retain a brief physical acceleration opportunity after a verified pass,
+  // so overtaking does not immediately collapse when the target switches.
+  // Collision envelopes still cap the resulting speed on occupied corridors.
+  const passExitRemaining=Math.max(0,(Number(vehicle.safePassExitUntilV386)||0)-(Number(simClockV192.simTimeMs)||0));
+  const passExitBonusKph=10*Math.min(1,passExitRemaining/6500);
   const ahead=peers.find(row=>String(row?.id||'')===String(vehicle.trafficCarAheadId||''))||null;
-  if(!ahead||ahead.finished||String(ahead.pitState||'TRACK')!=='TRACK')return 0;
+  if(!ahead||ahead.finished||String(ahead.pitState||'TRACK')!=='TRACK')return passExitBonusKph;
   const gap=Math.max(0,Number(vehicle.trafficGapMeters));
-  if(!Number.isFinite(gap)||gap>78)return 0;
+  if(!Number.isFinite(gap)||gap>78)return passExitBonusKph;
   const pressure=clamp01V198((78-gap)/70);
   const state=String(vehicle.battleState||'FOLLOWING');
   const attack=['PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK'].includes(state)||vehicle.tripleBreakawayActiveV376===true;
   const targetBias=attack?MULTICAR_CORRIDOR_V376.catchupAttackBoostKph:MULTICAR_CORRIDOR_V376.followingCatchupBoostKph;
   if(vehicle.battleBlockedV319&&!vehicle.tripleBreakawayActiveV376)return targetBias*pressure*.24;
-  return targetBias*pressure;
+  return targetBias*pressure+passExitBonusKph;
 }
 function rapidPassStateV376(current,next,ctx){
   const open=['STRAIGHT','APPROACH','BRAKING'].includes(String(ctx?.phase||''));
