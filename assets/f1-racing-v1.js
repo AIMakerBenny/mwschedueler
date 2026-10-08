@@ -166,6 +166,7 @@ const VERSION377='phase377-f1-actual-marker-overlap-monitor';
 const VERSION378='phase378-f1-projected-safe-following';
 const VERSION379='phase379-f1-preemptive-pass-corridor';
 const VERSION380='phase380-seven-behavior-baseline-telemetry';
+const VERSION381='phase381-neighbor-braking-safety';
 const interactionSnapshotStateV368={snapshot:null,builds:0,lastSimTimeMs:0};
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
@@ -4727,6 +4728,33 @@ function physicalProximityControlV376(vehicle,ahead,track=activeRaceSnapshotV187
   const capKph=Math.max(0,(Number(ahead.speedKph)||0)+closingAllowance);
   return {active:true,capKph,gap,intended,visual,sameCorridor,safeGap,controlStart,reason:deficit>0?'PROXIMITY_EMERGENCY_V376':'PROXIMITY_APPROACH_V376'};
 }
+
+const NEIGHBOR_BRAKING_V381=Object.freeze({scanMeters:155,brakeMps2:27,reactionSeconds:.85,leadMeters:16,extraSafetyMeters:5,underGapBrakeKph:16});
+function neighborBrakingPairV381(vehicle,peer,track){
+  if(!vehicle||!peer||vehicle===peer||vehicle.finished||peer.finished||
+    String(vehicle.pitState||'TRACK')!=='TRACK'||String(peer.pitState||'TRACK')!=='TRACK')return {active:false};
+  const length=Math.max(1,Number(track?.lengthMeters)||4500);
+  const gap=(Number(peer.raceProgress)-Number(vehicle.raceProgress))*length;
+  if(gap<=0||gap>NEIGHBOR_BRAKING_V381.scanMeters)return {active:false,gap};
+  const actual=Math.abs((Number(vehicle.visualLateralOffsetMeters)||0)-(Number(peer.visualLateralOffsetMeters)||0));
+  const intended=Math.abs(lineOffsetMetersV197(vehicle)-lineOffsetMetersV197(peer));
+  if(Math.min(actual,intended)>=MULTICAR_CORRIDOR_V376.minimumSideClearanceMeters)return {active:false,gap,reason:'PASS_CLEAR'};
+  const safe=Math.max(MULTICAR_CORRIDOR_V376.sameLineMinGapMeters,projectedSafeGapMetersV378(track)+NEIGHBOR_BRAKING_V381.extraSafetyMeters);
+  const v=Math.max(0,Number(vehicle.speedKph)||0)/3.6,u=Math.max(0,Number(peer.speedKph)||0)/3.6;
+  const closing=Math.max(0,v-u);
+  const braking=Math.max(0,(v*v-u*u)/(2*NEIGHBOR_BRAKING_V381.brakeMps2));
+  const start=safe+NEIGHBOR_BRAKING_V381.leadMeters+braking+closing*NEIGHBOR_BRAKING_V381.reactionSeconds;
+  if(gap>=start||(!closing&&gap>=safe))return {active:false,gap,safe,start};
+  const deficit=Math.max(0,safe-gap);
+  const allowance=deficit>0?-NEIGHBOR_BRAKING_V381.underGapBrakeKph-Math.min(24,deficit*1.5):Math.min(18,Math.max(0,(gap-safe)*.24));
+  return {active:true,peerId:String(peer.id),gap,safe,start,capKph:Math.max(0,(Number(peer.speedKph)||0)+allowance),reason:deficit>0?'EMERGENCY_V381':'PREDICTED_V381'};
+}
+function neighborBrakingSafetyV381(vehicle,track,peers=raceMotionV189.vehicles){
+  let result={active:false,capKph:Infinity};
+  for(const peer of peers||[]){const candidate=neighborBrakingPairV381(vehicle,peer,track);if(candidate.active&&(!result.active||candidate.capKph<result.capKph))result=candidate}
+  return result;
+}
+
 function earlyPassWindowV379(gapMeters,safeGapMeters,closingRateKph){
   const gap=Math.max(0,Number(gapMeters)||0),safeGap=Math.max(1,Number(safeGapMeters)||1);
   const closing=Math.max(0,Number(closingRateKph)||0);
@@ -7365,11 +7393,14 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const spacingControlV319=naturalRaceSpacingControlV370(vehicle,maxTarget);
   const aheadV376=raceMotionV189.vehicles.find(peer=>String(peer.id||'')===String(vehicle.trafficCarAheadId||''))||null;
   const proximityV376=physicalProximityControlV376(vehicle,aheadV376,track);
+  const neighborSafetyV381=neighborBrakingSafetyV381(vehicle,track);
+  vehicle.neighborSafetyV381=neighborSafetyV381;
   vehicle.proximityV376=proximityV376;
   vehicle.battleQueueControlV319=spacingControlV319.reason;
   vehicle.battleQueueSpeedCapKphV319=Number.isFinite(spacingControlV319.capKph)?spacingControlV319.capKph:0;
   if(Number.isFinite(spacingControlV319.capKph))maxTarget=Math.min(maxTarget,spacingControlV319.capKph);
   if(proximityV376.active)maxTarget=Math.min(maxTarget,proximityV376.capKph);
+  if(neighborSafetyV381.active)maxTarget=Math.min(maxTarget,neighborSafetyV381.capKph);
   if(Number.isFinite(pitControl.speedCapKph))maxTarget=Math.min(maxTarget,pitControl.speedCapKph);
   const error=maxTarget-current;
   // Legacy Phase 203/204 source signatures are superseded by angle-aware V375 dynamics:
@@ -7393,7 +7424,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
     const exitAcceleration=(cornerRecoveryV351?CORNER_DYNAMICS_V343.exitAccelerationMultiplier*cornerSpecV351.exitAccel:1)*underSpeedRecoveryV353.multiplier*Math.max(1,Number(chaseBurstEffect.exitMultiplier)||1);
     accelMps2=accelBase*throttle*highSpeedFade*tractionGrip*exitAcceleration;
   }else if(error<-1.5){
-    const clearRecoveryV358=cornerRecoveryV351&&!spacingControlV319.active&&!incidentState.active&&!leaderPressureEffect.event&&boundaryStateV271.speedFactor>=CORNER_BRAKE_RELEASE_V358.clearBoundaryFactor;
+    const clearRecoveryV358=cornerRecoveryV351&&!spacingControlV319.active&&!proximityV376.active&&!neighborSafetyV381.active&&!incidentState.active&&!leaderPressureEffect.event&&boundaryStateV271.speedFactor>=CORNER_BRAKE_RELEASE_V358.clearBoundaryFactor;
     if(clearRecoveryV358){
       brake=0;
       throttle=0;
@@ -9871,6 +9902,21 @@ function qaProjectedSafeFollowingV378(){
 }
 window.mwsF1QaProjectedSafeFollowingV378=qaProjectedSafeFollowingV378;
 window.__mwsF1RacingV378=VERSION378;
+
+
+function qaNeighborBrakingV381(){
+ const track={id:'qa381',lengthMeters:4500,geometry:{trackWidthMeters:14,racingLineMarginMeters:1.5}};
+ const v={id:'C',raceProgress:1.2,speedKph:270,visualLateralOffsetMeters:0,racingLineMode:'IDEAL',pitState:'TRACK'};
+ const p={id:'B',raceProgress:1.2+20/4500,speedKph:190,visualLateralOffsetMeters:0,racingLineMode:'IDEAL',pitState:'TRACK'};
+ const far={...p,id:'F',raceProgress:1.2+180/4500};
+ const second={...p,id:'A',raceProgress:1.2+45/4500,speedKph:230};
+ const near=neighborBrakingSafetyV381(v,track,[far,second,p]);
+ const wide=neighborBrakingPairV381({...v,racingLineMode:'OUTSIDE',visualLateralOffsetMeters:-5},{...p,racingLineMode:'ATTACK_INSIDE',visualLateralOffsetMeters:5},track);
+ const integrated=String(simulateVehicleDynamicsV196).includes('neighborBrakingSafetyV381(')&&String(simulateVehicleDynamicsV196).includes('!neighborSafetyV381.active');
+ return {version:VERSION381,near,wide,integrated,allPass:near.active&&near.peerId==='B'&&!wide.active&&near.capKph<p.speedKph&&integrated};
+}
+window.mwsF1QaNeighborBrakingV381=qaNeighborBrakingV381;
+window.__mwsF1RacingV381=VERSION381;
 
 function qaPreemptivePassCorridorV379(){
   const safeGap=25;
