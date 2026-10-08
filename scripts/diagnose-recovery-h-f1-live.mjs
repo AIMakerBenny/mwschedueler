@@ -1418,6 +1418,8 @@ try{
     assert(preemptivePass379?.allPass===true,'Phase 379 preemptive pass QA failed: '+JSON.stringify(preemptivePass379));
     const projectedSafe378=window.mwsF1QaProjectedSafeFollowingV378?.();
     assert(projectedSafe378?.allPass===true,'Phase 378 projected safe following QA failed: '+JSON.stringify(projectedSafe378));
+    const passLine383=window.mwsF1QaCommittedPassLineV383?.();
+    assert(passLine383?.allPass===true,'Phase 383 committed pass-line QA failed: '+JSON.stringify(passLine383));
     const cornerRetiming382=window.mwsF1QaCornerRetimingV382?.();
     assert(cornerRetiming382?.allPass===true,'Phase 382 corner retiming QA failed: '+JSON.stringify(cornerRetiming382));
     const neighborBraking381=window.mwsF1QaNeighborBrakingV381?.();
@@ -1656,6 +1658,7 @@ try{
       behaviorTelemetryV380:behaviorTelemetry380||null,
       neighborBrakingV381:neighborBraking381||null,
       cornerRetimingV382:cornerRetiming382||null,
+      committedPassLineV383:passLine383||null,
       projectedSafeFollowingV378:projectedSafe378||null,
       preemptivePassV379:preemptivePass379||null,
       dynamicsPlaytestV348:dynamicsPlaytest348||null,

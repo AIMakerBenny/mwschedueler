@@ -378,6 +378,7 @@ import {runPhase379F1PreemptivePassCorridorAudit} from './run-phase379-f1-preemp
 import {runPhase380F1BehaviorTelemetryAudit} from './run-phase380-f1-behavior-telemetry-audit.mjs';
 import {runPhase381F1NeighborBrakingAudit} from './run-phase381-f1-neighbor-braking-audit.mjs';
 import {runPhase382F1CornerRetimingAudit} from './run-phase382-f1-corner-retiming-audit.mjs';
+import {runPhase383F1CommittedPassLineAudit} from './run-phase383-f1-committed-pass-line-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2813,5 +2814,6 @@ export function runPhase379FullIntegrationAudit(){const previous=runPhase378Full
 export function runPhase380FullIntegrationAudit(){const previous=runPhase379FullIntegrationAudit(),current=runPhase380F1BehaviorTelemetryAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 380: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 380: '+x)];return {phase:380,previous,current,issues,warnings,pass:!issues.length};}
 export function runPhase381FullIntegrationAudit(){const previous=runPhase380FullIntegrationAudit(),current=runPhase381F1NeighborBrakingAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 381: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 381: '+x)];return {phase:381,previous,current,issues,warnings,pass:!issues.length};}
 export function runPhase382FullIntegrationAudit(){const previous=runPhase381FullIntegrationAudit(),current=runPhase382F1CornerRetimingAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 382: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 382: '+x)];return {phase:382,previous,current,issues,warnings,pass:!issues.length};}
-export function runCurrentFullIntegrationAudit(){return runPhase382FullIntegrationAudit();}
+export function runPhase383FullIntegrationAudit(){const previous=runPhase382FullIntegrationAudit(),current=runPhase383F1CommittedPassLineAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 383: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 383: '+x)];return {phase:383,previous,current,issues,warnings,pass:!issues.length};}
+export function runCurrentFullIntegrationAudit(){return runPhase383FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();

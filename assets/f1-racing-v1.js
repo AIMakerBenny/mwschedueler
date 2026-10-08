@@ -168,6 +168,7 @@ const VERSION379='phase379-f1-preemptive-pass-corridor';
 const VERSION380='phase380-seven-behavior-baseline-telemetry';
 const VERSION381='phase381-neighbor-braking-safety';
 const VERSION382='phase382-angle-braking-midcorner-acceleration';
+const VERSION383='phase383-committed-pass-line-capacity';
 const interactionSnapshotStateV368={snapshot:null,builds:0,lastSimTimeMs:0};
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
@@ -4473,13 +4474,50 @@ function trafficBattlePhaseV207(vehicle){
   const phase=getCornerPhaseAtProgressV194(vehicle?.progress)?.phase||'STRAIGHT';
   return {phase,open:phase==='STRAIGHT'||phase==='APPROACH'||phase==='BRAKING'};
 }
+
+const PASS_LINE_COMMIT_V383=Object.freeze({nearMeters:21,minimumSeparationMeters:2.65});
+function committedPassLineV383(vehicle){
+ return Boolean(vehicle&&isBattleActiveV319(vehicle.battleState)&&
+ ['ATTACK_INSIDE','DEFENSIVE_INSIDE','OUTSIDE'].includes(String(vehicle.racingLineMode||''))&&
+ String(vehicle.pitState||'TRACK')==='TRACK'&&!vehicle.pitRequested);
+}
+function validateThirdLaneV383(vehicle,target,phase,peers=raceMotionV189.vehicles,track=activeRaceSnapshotV187?.track){
+ if(!vehicle||!target)return {available:false,reason:'NO_TARGET'};
+ const length=Math.max(1,Number(track?.lengthMeters)||4500),capacity=availableParallelCapacityV376(phase,track);
+ if(capacity<3)return {available:false,reason:'NARROW_CORNER',capacity};
+ const group=(peers||[]).filter(p=>p&&p!==vehicle&&!p.finished&&
+ String(p.pitState||'TRACK')==='TRACK'&&Math.abs((Number(p.raceProgress)-Number(target.raceProgress))*length)<=PASS_LINE_COMMIT_V383.nearMeters);
+ const proposed=lateralOpportunityV376(vehicle,track,'OUTSIDE');
+ const corridorFree=group.every(p=>Math.abs(lateralOpportunityV376(p,track)-proposed)>=PASS_LINE_COMMIT_V383.minimumSeparationMeters);
+ return {available:group.length<capacity&&corridorFree,capacity,group:group.length,corridorFree,proposed,
+ reason:group.length>=capacity?'FULL':corridorFree?'AVAILABLE':'OCCUPIED'};
+}
+function qaCommittedPassLineV383(){
+ const committed={battleState:'SIDE_BY_SIDE',racingLineMode:'ATTACK_INSIDE',pitState:'TRACK'};
+ const idle={...committed,battleState:'FOLLOWING'},pit={...committed,pitState:'PIT'};
+ const track={lengthMeters:4500,geometry:{trackWidthMeters:14,racingLineMarginMeters:1.5}};
+ const a={id:'A',raceProgress:1.23,racingLineMode:'IDEAL',pitState:'TRACK'};
+ const b={id:'B',raceProgress:1.231,racingLineMode:'ATTACK_INSIDE',pitState:'TRACK'};
+ const c={id:'C',raceProgress:1.229,racingLineMode:'OUTSIDE',pitState:'TRACK'};
+ const open=validateThirdLaneV383(c,a,'STRAIGHT',[a,b,c],track);
+ const corner=validateThirdLaneV383(c,a,'APEX',[a,b,c],track);
+ const full=validateThirdLaneV383(c,a,'STRAIGHT',[a,b,c,{...b,id:'D',racingLineMode:'DEFENSIVE_INSIDE'}],track);
+ const integrated=String(updateTrafficAndDefenceV207).includes('!committedPassLineV383(vehicle)')&&
+ String(updatePassStateMachineV208).includes('validateThirdLaneV383(');
+ return {version:VERSION383,open,corner,full,integrated,
+ allPass:committedPassLineV383(committed)&&!committedPassLineV383(idle)&&
+ !committedPassLineV383(pit)&&!corner.available&&!full.available&&integrated};
+}
+window.mwsF1QaCommittedPassLineV383=qaCommittedPassLineV383;
+window.__mwsF1RacingV383=VERSION383;
+
 function updateTrafficAndDefenceV207(){
   const track=activeRaceSnapshotV187?.track;
   const length=Math.max(1,Number(track?.lengthMeters)||1);
   const trackVehicles=trackInteractionVehiclesV369(raceMotionV189.vehicles,track);
   for(const vehicle of raceMotionV189.vehicles){
     vehicle.trafficState='CLEAR';vehicle.trafficCarAheadId='';vehicle.trafficGapMeters=Infinity;vehicle.trafficClosingRateKph=0;vehicle.trafficPressure=0;vehicle.trafficThreatFromId='';vehicle.defenceActive=false;vehicle.trafficLineIntent='IDEAL';
-    if(String(vehicle.pitState||'TRACK')==='TRACK'&&!vehicle.pitRequested&&['ATTACK_INSIDE','DEFENSIVE_INSIDE'].includes(vehicle.racingLineMode))vehicle.racingLineMode='IDEAL';
+    if(String(vehicle.pitState||'TRACK')==='TRACK'&&!vehicle.pitRequested&&!committedPassLineV383(vehicle)&&['ATTACK_INSIDE','DEFENSIVE_INSIDE'].includes(vehicle.racingLineMode))vehicle.racingLineMode='IDEAL';
   }
   for(let index=1;index<trackVehicles.length;index++){
     const vehicle=trackVehicles[index],ahead=trackVehicles[index-1];
@@ -4499,12 +4537,12 @@ function updateTrafficAndDefenceV207(){
     vehicle.trafficState=state;
     const battle=trafficBattlePhaseV207(vehicle);
     if(state==='PRESSURE'&&gapMeters<=TRAFFIC_CONFIG_V207.attackGapMeters*trackFactor&&battle.open){
-      vehicle.trafficLineIntent='ATTACK_INSIDE';vehicle.racingLineMode='ATTACK_INSIDE';
+      vehicle.trafficLineIntent='ATTACK_INSIDE';if(!committedPassLineV383(vehicle))vehicle.racingLineMode='ATTACK_INSIDE';
     }
     if(pressure>=.24&&gapMeters<=TRAFFIC_CONFIG_V207.defendGapMeters){
       ahead.trafficThreatFromId=String(vehicle.id);ahead.defenceActive=true;ahead.trafficState='DEFENDING';
       const aheadBattle=trafficBattlePhaseV207(ahead);
-      if(aheadBattle.open&&!ahead.pitRequested){ahead.trafficLineIntent='DEFENSIVE_INSIDE';ahead.racingLineMode='DEFENSIVE_INSIDE'}
+      if(aheadBattle.open&&!ahead.pitRequested){ahead.trafficLineIntent='DEFENSIVE_INSIDE';if(!committedPassLineV383(ahead))ahead.racingLineMode='DEFENSIVE_INSIDE'}
     }
   }
   return getTrafficStatesV207();
@@ -4817,7 +4855,8 @@ function updatePassStateMachineV208(stepMs){
     const pairKey=battlePairKeyV319(vehicle.id,target.id);
     let blocked=battlePairBlockedV319(vehicle,target,isolationV319.locks);
     const thirdWindowV376=thirdCarOpportunityV376(vehicle,target,isolationV319.locks,phase,gapMeters);
-    if(blocked&&thirdWindowV376.active){blocked=false;next='PULLING_OUT';vehicle.tripleBreakawayTargetIdV376=String(target.id);vehicle.tripleBreakawayUntilV376=Number(simClockV192.simTimeMs)+MULTICAR_CORRIDOR_V376.thirdAttackHoldMs;}
+    const thirdCapacityV383=validateThirdLaneV383(vehicle,target,phase);
+    if(blocked&&thirdWindowV376.active&&thirdCapacityV383.available){blocked=false;next='PULLING_OUT';vehicle.tripleBreakawayTargetIdV376=String(target.id);vehicle.tripleBreakawayUntilV376=Number(simClockV192.simTimeMs)+MULTICAR_CORRIDOR_V376.thirdAttackHoldMs;}
     if(!blocked&&isBattleActiveV319(next)){
       const vehicleLock=isolationV319.locks.get(String(vehicle.id)),targetLock=isolationV319.locks.get(String(target.id));
       if(!thirdWindowV376.active&&((vehicleLock&&vehicleLock!==pairKey)||(targetLock&&targetLock!==pairKey)))blocked=true;
