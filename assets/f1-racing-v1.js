@@ -4880,8 +4880,11 @@ function physicalClosureEnvelopeV386(vehicle,track,peers=raceMotionV189.vehicles
   // Existing close-following control handles ordinary 10-30 km/h closing in a pass window.
   // The extra envelope engages for high-differential closing or genuinely short same-corridor clearance.
   if(closing*3.6<38&&gap>Math.max(10,safe*.75))continue;
-  const usable=Math.max(0,gap-safe-closing*.42);
-  const capKph=3.6*Math.sqrt(lead*lead+44*usable);
+  // Reserve both reaction travel and relative-speed closing distance before braking.
+  // This constrains speed without moving cars, altering ranking, or resizing markers.
+  const reactionTravel=v*.25+closing*.90;
+  const usable=Math.max(0,gap-safe-reactionTravel);
+  const capKph=3.6*Math.sqrt(lead*lead+36*usable);
   if(capKph<v*3.6+.5&&capKph<best.capKph)best={active:true,capKph,peerId:String(peer.id),gap,reason:'PREDICTED_PHYSICAL_CLOSURE_V386'};
  }
  return best;
