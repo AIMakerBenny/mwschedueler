@@ -12,7 +12,7 @@ export function runPhase262F1RaceMomentumAudit(){
   for(const token of [
     "const VERSION262='phase262-race-momentum-rebalance';",
     'const RACE_MOMENTUM_CONFIG_V262=Object.freeze({',
-    'paceRange:.02',
+    'paceRange:.035',
     'function raceMomentumSeedV262(',
     'function nextMomentumRandomV262(',
     'function raceMomentumPaceMultiplierV262(',
