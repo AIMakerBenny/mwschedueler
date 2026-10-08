@@ -1444,6 +1444,8 @@ try{
     assert(thirdRetry387?.allPass===true,'Phase 387 third-party retry Chromium QA failed: '+JSON.stringify(thirdRetry387));
     const tyreThermal389=window.mwsF1QaTyreThermalAndTractionV389?.();
     assert(tyreThermal389?.allPass===true,'Phase 389 tyre thermal and traction Chromium QA failed: '+JSON.stringify(tyreThermal389));
+    const fastPhysical390=window.mwsF1QaFastPhysicalChallengeV390?.();
+    assert(fastPhysical390?.allPass===true,'Phase 390 fast physical challenge Chromium QA failed: '+JSON.stringify(fastPhysical390));
     const multicar376=window.mwsF1QaMulticarCorridorV376?.();
     assert(multicar376?.allPass===true,'Phase 376 three-wide bypass and physical proximity QA failed: '+JSON.stringify(multicar376));
     const cornerPhysics375=window.mwsF1QaCornerPhysicsV375?.();
@@ -1672,6 +1674,7 @@ try{
       multicarV376:multicar376||null,
       thirdPartyRetryV387:thirdRetry387||null,
       tyreThermalV389:tyreThermal389||null,
+      fastPhysicalV390:fastPhysical390||null,
       overlapMonitorV377:overlapMonitor377||null,
       behaviorTelemetryV380:behaviorTelemetry380||null,
       neighborBrakingV381:neighborBraking381||null,

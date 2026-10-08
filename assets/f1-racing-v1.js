@@ -236,6 +236,8 @@ const MARKER_OVERLAP_MONITOR_V377=Object.freeze({maxZoom:4.5,ringRadiusSvg:18,cl
 const markerOverlapStateV377={samples:0,maxZoomOverlaps:0,currentZoomOverlaps:0,peakMaxZoomOverlaps:0,peakCurrentZoomOverlaps:0,minMeasuredDistanceSvg:Infinity,latest:null};
 const PROJECTED_SAFE_GAP_V378=Object.freeze({minMeters:10,maxMeters:40,marginMultiplier:1.14,lookAheadMeters:15,relativeBrakeReactionSeconds:.55,maxClosingAllowanceKph:3.2,underGapBrakeKph:12,underGapBrakePerMeterKph:2.8});
 const projectedGapCacheV378={path:null,key:'',value:PROJECTED_SAFE_GAP_V378.minMeters};
+const FAST_PHYSICAL_CHALLENGE_V390=Object.freeze({closeGapMeters:35,attackMomentumMultiplier:1.22});
+function fastPhysicalChallengeV390(mode,gap,blocked){return String(mode)==='FAST'&&Number(gap)>=0&&Number(gap)<=FAST_PHYSICAL_CHALLENGE_V390.closeGapMeters&&!blocked?FAST_PHYSICAL_CHALLENGE_V390.attackMomentumMultiplier:1;}
 const MULTICAR_CORRIDOR_V376=Object.freeze({
   maxStraightAbreast:3,maxCornerAbreast:2,minimumSideClearanceMeters:2.65,
   sameLineMinGapMeters:9.0,approachControlGapMeters:20.0,nearGroupMeters:14,
@@ -4825,6 +4827,21 @@ function qaTyreThermalAndTractionV389(){
 window.mwsF1QaTyreThermalAndTractionV389=qaTyreThermalAndTractionV389;
 window.__mwsF1RacingV389='phase389-tyre-thermal-traction';
 
+function qaFastPhysicalChallengeV390(){
+ const fast=fastPhysicalChallengeV390('FAST',18,false);
+ const normal=fastPhysicalChallengeV390('NORMAL',18,false);
+ const blocked=fastPhysicalChallengeV390('FAST',18,true);
+ const far=fastPhysicalChallengeV390('FAST',80,false);
+ const integrated=String(competitivePaceAdvantageV376).includes('fastPhysicalChallengeV390(activeRaceModeV345(),gap,vehicle.battleBlockedV319)');
+ const telemetry=String(buildRaceTelemetryV237).includes('physicalOnTrackPasses,passStateCompletions');
+ const noWarp=!/\b(?:raceProgress|progress|travel|finishPosition)\s*=/.test(String(fastPhysicalChallengeV390)+String(competitivePaceAdvantageV376));
+ return {version:'phase390-fast-physical-challenge',fast,normal,blocked,far,integrated,telemetry,noWarp,
+ allPass:fast>normal&&normal===1&&blocked===1&&far===1&&integrated&&telemetry&&noWarp};
+}
+window.mwsF1QaFastPhysicalChallengeV390=qaFastPhysicalChallengeV390;
+window.__mwsF1RacingV390='phase390-fast-physical-challenge';
+
+
 
 function competitivePaceAdvantageV376(vehicle,peers=raceMotionV189.vehicles){
   if(!vehicle||vehicle.finished||vehicle.pitRequested||String(vehicle.pitState||'TRACK')!=='TRACK'||vehicle.trackBoundaryExceededV271)return 0;
@@ -4840,7 +4857,8 @@ function competitivePaceAdvantageV376(vehicle,peers=raceMotionV189.vehicles){
   const pressure=clamp01V198((78-gap)/70);
   const state=String(vehicle.battleState||'FOLLOWING');
   const attack=['PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK'].includes(state)||vehicle.tripleBreakawayActiveV376===true;
-  const targetBias=attack?MULTICAR_CORRIDOR_V376.catchupAttackBoostKph:MULTICAR_CORRIDOR_V376.followingCatchupBoostKph;
+  const fastPhysicalFactorV390=fastPhysicalChallengeV390(activeRaceModeV345(),gap,vehicle.battleBlockedV319);
+  const targetBias=(attack?MULTICAR_CORRIDOR_V376.catchupAttackBoostKph:MULTICAR_CORRIDOR_V376.followingCatchupBoostKph)*fastPhysicalFactorV390;
   if(vehicle.battleBlockedV319&&!vehicle.tripleBreakawayActiveV376)return targetBias*pressure*.24;
   return targetBias*pressure+passExitBonusKph;
 }
@@ -8063,9 +8081,11 @@ function buildRaceTelemetryV237(snapshot=activeRaceSnapshotV187,vehicles=raceMot
   const averageLapMs=avgFinishMs/laps;
   const pitStops=vehicles.reduce((sum,vehicle)=>sum+(Number(vehicle.pitStopCount)||0),0);
   const uniquePassPairs=vehicles.reduce((sum,vehicle)=>sum+new Set((vehicle.passTargetHistoryV309||[]).map(String)).size,0);
+  const physicalOnTrackPasses=vehicles.reduce((sum,vehicle)=>sum+(Number(vehicle.physicalOnTrackPassesV386)||0),0);
+  const passStateCompletions=vehicles.reduce((sum,vehicle)=>sum+(Number(vehicle.passCompletedCount)||0),0);
   const driversMovedFromGrid=vehicles.filter(vehicle=>Number(vehicle.finishPosition)>0&&Number(vehicle.gridPosition)>0&&Number(vehicle.finishPosition)!==Number(vehicle.gridPosition)).length;
   return Object.freeze({
-    drivers:vehicles.length,totalPasses,failedPasses,uniquePassPairs,orderChanges:Number(raceOrderFlowStateV309.orderChanges)||0,changedDrivers:Number(raceOrderFlowStateV309.changedDrivers)||0,driversMovedFromGrid,incidentCount,lockups,understeer,oversteer,pitStops,
+    drivers:vehicles.length,totalPasses,physicalOnTrackPasses,passStateCompletions,failedPasses,uniquePassPairs,orderChanges:Number(raceOrderFlowStateV309.orderChanges)||0,changedDrivers:Number(raceOrderFlowStateV309.changedDrivers)||0,driversMovedFromGrid,incidentCount,lockups,understeer,oversteer,pitStops,
     fieldAverageSpeedKph:Number(fieldAverageSpeedKph.toFixed(2)),
     winnerAverageSpeedKph:Number(winnerAverageSpeedKph.toFixed(2)),
     averageLapMs:Number(averageLapMs.toFixed(1)),

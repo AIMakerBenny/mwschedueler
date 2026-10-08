@@ -1,3 +1,4 @@
+import {runPhase390F1PhysicalChallengeAudit} from './run-phase390-f1-physical-challenge-audit.mjs';
 import {runPhase389F1TyreThermalAudit} from './run-phase389-f1-tyre-thermal-audit.mjs';
 import {runPhase1MobileShellAudit} from './run-phase1-mobile-shell-audit.mjs';
 import {runPhase2StartupReadinessAudit} from './run-phase2-startup-readiness-audit.mjs';
@@ -2825,5 +2826,6 @@ export function runPhase385FullIntegrationAudit(){const previous=runPhase384Full
 export function runPhase386FullIntegrationAudit(){const previous=runPhase385FullIntegrationAudit(),current=runPhase386F1LiveQualityAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 386: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 386: '+x)];return {phase:386,previous,current,issues,warnings,pass:!issues.length};}
 export function runPhase387FullIntegrationAudit(){const previous=runPhase386FullIntegrationAudit(),current=runPhase387F1ThirdPartyRetryAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 387: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 387: '+x)];return {phase:387,previous,current,issues,warnings,pass:!issues.length};}
 export function runPhase389FullIntegrationAudit(){const previous=runPhase387FullIntegrationAudit(),current=runPhase389F1TyreThermalAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 389: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 389: '+x)];return {phase:389,previous,current,issues,warnings,pass:!issues.length};}
-export function runCurrentFullIntegrationAudit(){return runPhase389FullIntegrationAudit();}
+export function runPhase390FullIntegrationAudit(){const previous=runPhase389FullIntegrationAudit(),current=runPhase390F1PhysicalChallengeAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 390: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 390: '+x)];return {phase:390,previous,current,issues,warnings,pass:!issues.length};}
+export function runCurrentFullIntegrationAudit(){return runPhase390FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
