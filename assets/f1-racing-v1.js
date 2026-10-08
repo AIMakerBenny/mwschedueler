@@ -169,6 +169,7 @@ const VERSION380='phase380-seven-behavior-baseline-telemetry';
 const VERSION381='phase381-neighbor-braking-safety';
 const VERSION382='phase382-angle-braking-midcorner-acceleration';
 const VERSION383='phase383-committed-pass-line-capacity';
+const VERSION384='phase384-safe-third-party-and-pit-rejoin';
 const interactionSnapshotStateV368={snapshot:null,builds:0,lastSimTimeMs:0};
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
@@ -4815,6 +4816,38 @@ function earlyLateralPassV378(vehicle,target,context={}){
   const active=Boolean(open&&nearEnough&&candidate&&windowV379.closingEnough&&!vehicle.battleBlockedV319);
   return {active,phase,gap,safeGap,approachGap,closing,candidate,open};
 }
+
+const PIT_REJOIN_SAFETY_V384=Object.freeze({scanMeters:110,mergeGapMeters:23,closingReactionSeconds:.55,minimumExitCapKph:45});
+function pitRejoinSafetyV384(vehicle,track=activeRaceSnapshotV187?.track,peers=raceMotionV189.vehicles){
+ if(!vehicle||String(vehicle.pitState||'')!=='PIT_EXIT')return {active:false,reason:'NOT_REJOINING'};
+ const len=Math.max(1,Number(track?.lengthMeters)||4500);
+ let closest=null;
+ for(const peer of peers||[]){
+   if(!peer||peer===vehicle||peer.finished||String(peer.pitState||'TRACK')!=='TRACK')continue;
+   const signed=(Number(peer.raceProgress)-Number(vehicle.raceProgress))*len;
+   if(signed<0||signed>PIT_REJOIN_SAFETY_V384.scanMeters)continue;
+   if(!closest||signed<closest.gap)closest={gap:signed,peerId:String(peer.id),speedKph:Number(peer.speedKph)||0};
+ }
+ if(!closest)return {active:false,reason:'CLEAR'};
+ const approachSpeed=Math.max(0,Number(vehicle.speedKph)||0);
+ const reaction= Math.max(0,(approachSpeed-closest.speedKph)/3.6)*PIT_REJOIN_SAFETY_V384.closingReactionSeconds;
+ if(closest.gap>PIT_REJOIN_SAFETY_V384.mergeGapMeters+reaction)return {active:false,reason:'DISTANCE',...closest};
+ return {active:true,reason:'MERGE_TRAFFIC_V384',...closest,
+   capKph:Math.max(PIT_REJOIN_SAFETY_V384.minimumExitCapKph,Math.min(approachSpeed,closest.speedKph+Math.max(0,(closest.gap-PIT_REJOIN_SAFETY_V384.mergeGapMeters)*.4)))};
+}
+function qaSafeThirdPartyPitV384(){
+ const track={lengthMeters:4500},p={id:'pit',pitState:'PIT_EXIT',raceProgress:1.2,speedKph:110};
+ const near={id:'ahead',pitState:'TRACK',raceProgress:1.2+12/4500,speedKph:85};
+ const far={...near,id:'far',raceProgress:1.2+135/4500};
+ const brake=pitRejoinSafetyV384(p,track,[p,far,near]),clear=pitRejoinSafetyV384(p,track,[p,far]);
+ const integrated=String(simulateVehicleDynamicsV196).includes('pitRejoinSafetyV384(')&&
+  String(updatePassStateMachineV208).includes('safeThirdV384');
+ return {version:VERSION384,brake,clear,integrated,
+   allPass:brake.active&&brake.peerId==='ahead'&&brake.capKph<=p.speedKph&&!clear.active&&integrated};
+}
+window.mwsF1QaSafeThirdPartyPitV384=qaSafeThirdPartyPitV384;
+window.__mwsF1RacingV384=VERSION384;
+
 function updatePassStateMachineV208(stepMs){
   const track=activeRaceSnapshotV187?.track;
   if(!track)return [];
@@ -4856,11 +4889,12 @@ function updatePassStateMachineV208(stepMs){
     let blocked=battlePairBlockedV319(vehicle,target,isolationV319.locks);
     const thirdWindowV376=thirdCarOpportunityV376(vehicle,target,isolationV319.locks,phase,gapMeters);
     const thirdCapacityV383=validateThirdLaneV383(vehicle,target,phase);
-    if(blocked&&thirdWindowV376.active&&thirdCapacityV383.available){blocked=false;next='PULLING_OUT';vehicle.tripleBreakawayTargetIdV376=String(target.id);vehicle.tripleBreakawayUntilV376=Number(simClockV192.simTimeMs)+MULTICAR_CORRIDOR_V376.thirdAttackHoldMs;}
+    const safeThirdV384=thirdWindowV376.active&&thirdCapacityV383.available;
+    if(blocked&&safeThirdV384){blocked=false;next='PULLING_OUT';vehicle.tripleBreakawayTargetIdV376=String(target.id);vehicle.tripleBreakawayUntilV376=Number(simClockV192.simTimeMs)+MULTICAR_CORRIDOR_V376.thirdAttackHoldMs;}
     if(!blocked&&isBattleActiveV319(next)){
       const vehicleLock=isolationV319.locks.get(String(vehicle.id)),targetLock=isolationV319.locks.get(String(target.id));
-      if(!thirdWindowV376.active&&((vehicleLock&&vehicleLock!==pairKey)||(targetLock&&targetLock!==pairKey)))blocked=true;
-      else if(!thirdWindowV376.active){
+      if(!safeThirdV384&&((vehicleLock&&vehicleLock!==pairKey)||(targetLock&&targetLock!==pairKey)))blocked=true;
+      else if(!safeThirdV384){
         isolationV319.locks.set(String(vehicle.id),pairKey);
         isolationV319.locks.set(String(target.id),pairKey);
         if(!isolationV319.pairs.some(row=>row.pairKey===pairKey))isolationV319.pairs.push({pairKey,attackerId:String(vehicle.id),targetId:String(target.id)});
@@ -4882,7 +4916,7 @@ function updatePassStateMachineV208(stepMs){
     if(['PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE'].includes(next)&&!vehicle.pitRequested)vehicle.racingLineMode='ATTACK_INSIDE';
     if(next==='SWITCHBACK'||next==='COUNTER_ATTACK')vehicle.racingLineMode='OUTSIDE';
     if(next==='PASS_COMPLETED'||next==='PASS_FAILED')vehicle.racingLineMode='IDEAL';
-    if(thirdWindowV376.active){vehicle.racingLineMode='OUTSIDE';vehicle.tripleBreakawayActiveV376=true;}
+    if(safeThirdV384){vehicle.racingLineMode='OUTSIDE';vehicle.tripleBreakawayActiveV376=true;}
     else vehicle.tripleBreakawayActiveV376=false;
   }
   return getPassStatesV208();
@@ -7471,6 +7505,8 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const aheadV376=raceMotionV189.vehicles.find(peer=>String(peer.id||'')===String(vehicle.trafficCarAheadId||''))||null;
   const proximityV376=physicalProximityControlV376(vehicle,aheadV376,track);
   const neighborSafetyV381=neighborBrakingSafetyV381(vehicle,track);
+  const pitRejoinV384=pitRejoinSafetyV384(vehicle,track);
+  vehicle.pitRejoinV384=pitRejoinV384;
   vehicle.neighborSafetyV381=neighborSafetyV381;
   vehicle.proximityV376=proximityV376;
   vehicle.battleQueueControlV319=spacingControlV319.reason;
@@ -7478,6 +7514,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   if(Number.isFinite(spacingControlV319.capKph))maxTarget=Math.min(maxTarget,spacingControlV319.capKph);
   if(proximityV376.active)maxTarget=Math.min(maxTarget,proximityV376.capKph);
   if(neighborSafetyV381.active)maxTarget=Math.min(maxTarget,neighborSafetyV381.capKph);
+  if(pitRejoinV384.active)maxTarget=Math.min(maxTarget,pitRejoinV384.capKph);
   if(Number.isFinite(pitControl.speedCapKph))maxTarget=Math.min(maxTarget,pitControl.speedCapKph);
   const error=maxTarget-current;
   // Legacy Phase 203/204 source signatures are superseded by angle-aware V375 dynamics:
