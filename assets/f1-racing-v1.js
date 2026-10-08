@@ -217,7 +217,7 @@ const REAR_BATTLE_BALANCE_V350=Object.freeze({
   farClosingAllowanceKph:1.4,closeClosingAllowanceKph:.55,overlapSpeedMarginKph:1.1,
   blockedCatchupRetention:1.00
 });
-const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.009,fastFormAmplitude:.024,maxFinishSpreadSeconds:48,normalCatchupCapMultiplier:1.25,fastCatchupCapMultiplier:1.45,paceRetentionScale:.08,rankedRearPaceMax:.005,rankedRearPaceExponent:1.20});
+const FIELD_SPREAD_BALANCE_V352=Object.freeze({normalFormAmplitude:.012,fastFormAmplitude:.028,maxFinishSpreadSeconds:48,normalCatchupCapMultiplier:1.25,fastCatchupCapMultiplier:1.45,paceRetentionScale:.08,rankedRearPaceMax:.005,rankedRearPaceExponent:1.20});
 const CORNER_DRIVING_V351=Object.freeze({
   speedEnvelope:Object.freeze({
     hairpin:Object.freeze({min:75,max:120,entryRetention:.30,brakeScale:1.05,recoveryLead:.34,exitAccel:1.18}),
@@ -239,7 +239,7 @@ const projectedGapCacheV378={path:null,key:'',value:PROJECTED_SAFE_GAP_V378.minM
 const MULTICAR_CORRIDOR_V376=Object.freeze({
   maxStraightAbreast:3,maxCornerAbreast:2,minimumSideClearanceMeters:2.65,
   sameLineMinGapMeters:9.0,approachControlGapMeters:20.0,nearGroupMeters:14,
-  tripleAttackMaxGapMeters:35,thirdPartyOpportunityPct:56,thirdAttackHoldMs:2600,fastAttackClosingKph:2,catchupAttackBoostKph:13,followingCatchupBoostKph:8
+  tripleAttackMaxGapMeters:35,thirdPartyOpportunityPct:56,thirdAttackHoldMs:2600,fastAttackClosingKph:2,catchupAttackBoostKph:19,followingCatchupBoostKph:11
 });
 const CORNER_PHYSICS_V375=Object.freeze({
   lateralGripMps2:32,minLateralGripMps2:25,angleBrakeWeight:.09,brakeLeadMeters:12,
