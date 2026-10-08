@@ -4825,6 +4825,7 @@ function physicalProximityControlV376(vehicle,ahead,track=activeRaceSnapshotV187
   const sameCorridor=Math.min(intended,visual)<MULTICAR_CORRIDOR_V376.minimumSideClearanceMeters;
   const safeGap=Math.max(MULTICAR_CORRIDOR_V376.sameLineMinGapMeters,projectedSafeGapMetersV378(track));
   const relativeClosingMps=Math.max(0,((Number(vehicle.speedKph)||0)-(Number(ahead.speedKph)||0))/3.6);
+  if(relativeClosingMps<1.5&&gap>Math.max(12,Math.min(24,safeGap*.55)))return {active:false,capKph:Infinity,gap,intended,visual,sameCorridor,safeGap,reason:'MATCHED_PACE_V386'};
   const requiredBrakingDistance=relativeClosingMps*relativeClosingMps/(2*20);
   const controlStart=Math.max(MULTICAR_CORRIDOR_V376.approachControlGapMeters,
     safeGap+PROJECTED_SAFE_GAP_V378.lookAheadMeters+requiredBrakingDistance+relativeClosingMps*PROJECTED_SAFE_GAP_V378.relativeBrakeReactionSeconds);
