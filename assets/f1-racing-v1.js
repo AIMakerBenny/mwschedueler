@@ -4385,6 +4385,34 @@ function finalStintPitEconomicsV374(vehicle,context){
   const avoid=secondStop&&remaining<=cfg.maxEvaluationLaps&&!severeDamage&&projectedBenefitSeconds<pitLossSeconds;
   return {avoid,secondStop,severeDamage,remainingLaps:remaining,pitLossSeconds,projectedBenefitSeconds};
 }
+
+const TACTICAL_PIT_VALUE_V391=Object.freeze({deferUntilWear:.79,criticalRemaining:.22,minimumBenefitToCost:.60});
+function tacticalPitValueV391(context,criticalTyre,economics){
+  const gain=Math.max(0,Number(economics?.projectedBenefitSeconds)||0);
+  const loss=Math.max(0,Number(context?.pitLossSeconds)||0);
+  const remaining=Math.max(0,Number(context?.tyreRemaining)||0);
+  const wear=Math.max(0,Number(context?.wear)||0);
+  const urgent=Boolean(criticalTyre)||wear>=TACTICAL_PIT_VALUE_V391.deferUntilWear||
+    remaining<=TACTICAL_PIT_VALUE_V391.criticalRemaining;
+  const worthwhile=loss<=0||gain>=loss*TACTICAL_PIT_VALUE_V391.minimumBenefitToCost;
+  return {approve:urgent||worthwhile,urgent,worthwhile,projectedGain:gain,loss,remaining,wear};
+}
+function qaTacticalPitValueV391(){
+  const sample={pitLossSeconds:28.12,tyreRemaining:.37,wear:.63};
+  const econ={projectedBenefitSeconds:8.5};
+  const early=tacticalPitValueV391(sample,false,econ);
+  const later=tacticalPitValueV391({...sample,tyreRemaining:.17,wear:.83},false,econ);
+  const damage=tacticalPitValueV391(sample,true,econ);
+  const valuable=tacticalPitValueV391(sample,false,{projectedBenefitSeconds:20});
+  const integrated=String(evaluatePitStrategyV206).includes('tacticalPitValueV391(context,criticalTyre,finalStintEconomicsV374)');
+  const safeGuard=String(evaluatePitStrategyV206).includes('!safeTyre');
+  const noWarp=!/\b(?:raceProgress|progress|finishPosition|travel)\s*=/.test(String(tacticalPitValueV391));
+  return {version:'phase391-tactical-pit-economics',early,later,damage,valuable,integrated,safeGuard,noWarp,
+    allPass:!early.approve&&later.approve&&damage.approve&&valuable.approve&&integrated&&safeGuard&&noWarp};
+}
+window.mwsF1QaTacticalPitValueV391=qaTacticalPitValueV391;
+window.__mwsF1RacingV391='phase391-tactical-pit-economics';
+
 function evaluatePitStrategyV206(vehicle,options={}){
   if(!vehicle||vehicle.finished)return null;
   const context=pitStrategyContextV206(vehicle);
@@ -4397,6 +4425,7 @@ function evaluatePitStrategyV206(vehicle,options={}){
   const wearReady=context.wear>=context.pitWearThreshold;
   const safeTyre=pitRemainingGuardV349(context);
   const finalStintEconomicsV374=finalStintPitEconomicsV374(vehicle,context);
+  const tacticalV391=tacticalPitValueV391(context,criticalTyre,finalStintEconomicsV374);
   let decision='NONE',reason='WAIT_FOR_WINDOW',score=.08;
 
   if(String(vehicle.pitState||'TRACK')!=='TRACK'||vehicle.pitRequested){
@@ -4422,15 +4451,17 @@ function evaluatePitStrategyV206(vehicle,options={}){
     decision='BOX_NOW';reason='TYRE_STATE_CRITICAL';
     score=Math.max(.86,Math.min(1,context.tyreNeed+.22));
   }else if(context.rivalBehindPitting&&context.gapBehind<=cfg.coverGapSeconds&&context.tyreNeed>=.30&&context.wear>=cfg.tacticalMinWear){
-    decision='COVER_UNDERCUT';reason='COVER_RIVAL_PIT';
-    score=Math.min(1,.66+(1-context.gapBehind/cfg.coverGapSeconds)*.18+context.tyreNeed*.18);
+    decision=tacticalV391.approve?'COVER_UNDERCUT':'GO_LONG';
+    reason=tacticalV391.approve?'COVER_RIVAL_PIT':'COVER_PIT_VALUE_INSUFFICIENT_V391';
+    score=tacticalV391.approve?Math.min(1,.66+(1-context.gapBehind/cfg.coverGapSeconds)*.18+context.tyreNeed*.18):.73;
   }else if(context.rivalAheadPitting&&context.gapAhead<=cfg.overcutGapSeconds&&context.pressure<.39&&context.grip>.91&&context.management>-.30){
     decision='OVERCUT';reason='RIVAL_PIT_STAY_OUT';
     score=Math.min(1,.61+(1-context.gapAhead/cfg.overcutGapSeconds)*.16+Math.max(0,context.management)*.12);
     vehicle.strategyHoldUntilLap=currentLap+1;
   }else if(Number.isFinite(context.gapAhead)&&context.gapAhead<=cfg.undercutGapSeconds&&context.tyreNeed>=cfg.normalPressure&&context.wear>=cfg.tacticalMinWear&&context.remainingLaps>2.2){
-    decision='UNDERCUT';reason='ATTACK_CAR_AHEAD';
-    score=Math.min(1,.60+(1-context.gapAhead/cfg.undercutGapSeconds)*.20+context.tyreNeed*.14+Math.max(0,context.racecraft)*.06);
+    decision=tacticalV391.approve?'UNDERCUT':'GO_LONG';
+    reason=tacticalV391.approve?'ATTACK_CAR_AHEAD':'UNDERCUT_PIT_VALUE_INSUFFICIENT_V391';
+    score=tacticalV391.approve?Math.min(1,.60+(1-context.gapAhead/cfg.undercutGapSeconds)*.20+context.tyreNeed*.14+Math.max(0,context.racecraft)*.06):.73;
   }else if(context.pressure<.33&&context.grip>.925&&context.management>.05&&context.remainingLaps>2.5){
     decision='GO_LONG';reason='TYRE_MANAGEMENT_MARGIN';
     score=Math.min(.85,.52+Math.max(0,context.management)*.22+(1-context.pressure)*.10);
@@ -4447,7 +4478,7 @@ function evaluatePitStrategyV206(vehicle,options={}){
       vehicle.strategyPitRequestedAtLap=currentLap;
       vehicle.strategyPitRequestedAtSimMs=simClockV192.simTimeMs;
       vehicle.pitRequestHistoryV348=Array.isArray(vehicle.pitRequestHistoryV348)?vehicle.pitRequestHistoryV348:[];
-      vehicle.pitRequestHistoryV348.push({lap:currentLap,simTimeMs:Number(simClockV192.simTimeMs)||0,decision:String(decision),compound:String(compound),wear:Number(context.wear),tyreRemaining:Number(context.tyreRemaining),wearThreshold:Number(context.pitWearThreshold),criticalTyre:Boolean(criticalTyre),remainingLaps:Number(context.remainingLaps),grip:Number(context.grip),flatSpot:Number(context.flatSpot),thermalDeg:Number(context.thermalDeg),pitLossSeconds:Number(context.pitLossSeconds),projectedBenefitSeconds:Number(finalStintEconomicsV374.projectedBenefitSeconds),lateSecondStopAvoid:Boolean(finalStintEconomicsV374.avoid)});
+      vehicle.pitRequestHistoryV348.push({lap:currentLap,simTimeMs:Number(simClockV192.simTimeMs)||0,decision:String(decision),compound:String(compound),wear:Number(context.wear),tyreRemaining:Number(context.tyreRemaining),wearThreshold:Number(context.pitWearThreshold),criticalTyre:Boolean(criticalTyre),remainingLaps:Number(context.remainingLaps),grip:Number(context.grip),flatSpot:Number(context.flatSpot),thermalDeg:Number(context.thermalDeg),pitLossSeconds:Number(context.pitLossSeconds),projectedBenefitSeconds:Number(finalStintEconomicsV374.projectedBenefitSeconds),tacticalPitValueApprovedV391:Boolean(tacticalV391.approve),lateSecondStopAvoid:Boolean(finalStintEconomicsV374.avoid)});
     }
   }
   return {
