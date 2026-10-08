@@ -1137,7 +1137,7 @@ const INCIDENT_CONFIG_V204=Object.freeze({
 });
 const TYRE_COMPOUNDS_V203=Object.freeze({SOFT:Object.freeze({code:'S',gripBias:1.01,wearPerLap:0.115,heatFactor:1.10,idealSurface:0.60}),MEDIUM:Object.freeze({code:'M',gripBias:1.00,wearPerLap:0.090,heatFactor:1.00,idealSurface:0.56}),HARD:Object.freeze({code:'H',gripBias:0.99,wearPerLap:0.068,heatFactor:0.90,idealSurface:0.52})});
 const TYRE_CONFIG_V203=Object.freeze({ambientSurface:0.42,ambientCarcass:0.44,minGrip:0.82,maxGrip:1.03});
-const TYRE_THERMAL_BALANCE_V388=Object.freeze({heatGainPerSecond:.065,ambientRecoveryPerSecond:.16,fastFormAmplitudeCap:.0165,fastRearPaceScale:.85});
+const TYRE_THERMAL_BALANCE_V388=Object.freeze({heatGainPerSecond:.065,ambientRecoveryPerSecond:.16,fastFormAmplitudeCap:.0165,fastRearPaceScale:.85,fastFrontChallengeScale:1.75});
 const DEFAULT_TOTAL_LAPS_V190=10;
 const F1_LINE_MODES_V197=Object.freeze(['IDEAL','ATTACK_INSIDE','DEFENSIVE_INSIDE','OUTSIDE','PIT_LINE']);
 const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
@@ -9509,7 +9509,8 @@ function frontChallengeBonusV345(index,gapMeters){
   const cfg=raceCompetitionConfigV345();
   const gap=Math.max(0,Number(gapMeters)||0);
   const proximity=clamp01V198(1-gap/Math.max(1,GAME_VARIABILITY_CONFIG_V303.maxGapMeters));
-  return cfg.p2ChallengeKph*rankWeight*(.46+.54*proximity);
+  const fastPhysicalChallenge=activeRaceModeV345()==='FAST'?TYRE_THERMAL_BALANCE_V388.fastFrontChallengeScale:1;
+   return cfg.p2ChallengeKph*rankWeight*(.46+.54*proximity)*fastPhysicalChallenge;
 }
 function gameVariabilityEligibleV303(vehicle){
   return Boolean(vehicle&&!vehicle.finished&&!vehicle.blueFlag&&!vehicle.trackBoundaryExceededV271&&String(vehicle.pitState||'TRACK')==='TRACK'&&!vehicle.pitRequested);
