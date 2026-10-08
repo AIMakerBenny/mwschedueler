@@ -174,7 +174,7 @@ const VERSION385='phase385-safe-acceleration-release';
 const VERSION386='phase386-live-only-overlap-gate';
 const interactionSnapshotStateV368={snapshot:null,builds:0,lastSimTimeMs:0};
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
-const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
+const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0,onTrackPassesV386:0,lastOnTrackV386:new Map()};
 const GAME_VARIABILITY_CONFIG_V303=Object.freeze({evaluationMs:650,maxGapMeters:84,attackGapMeters:36,baseBonusKph:1.1,pressureBonusKph:3.2,midfieldBonusKph:.8,failedPassBonusKph:.4,maxFailedPassBonusKph:1.6,momentumBonusKph:1.55,maxTotalBiasKph:14,positionCatchupMaxPct:.050,positionCatchupExponent:1.35,leaderHoldMs:12000,leaderCloseGapSeconds:1.75,leaderClosePenaltyKph:.9,liveCadenceMs:10000});
 const gameVariabilityStateV303={lastEvalSimMs:-Infinity,lastLiveSimMs:-Infinity,lastOrder:[],positionChanges:0,boostApplications:0,leaderPressureApplications:0,liveEmits:0};
 const TRACK_BOUNDARY_V271=Object.freeze({
@@ -207,7 +207,7 @@ const PIT_STAGGER_V344=Object.freeze({
   criticalThermalDeg:.74
 });
 const RACE_COMPETITION_V345=Object.freeze({
-  NORMAL:Object.freeze({variability:1.62,attackGap:1.42,overtakeReleaseClosingKph:2.7,momentumThreshold:.42,p2ChallengeKph:7.0,leaderPressureKph:4.2,leaderHoldMs:3500}),
+  NORMAL:Object.freeze({variability:1.97,attackGap:1.53,overtakeReleaseClosingKph:2.3,momentumThreshold:.38,p2ChallengeKph:8.6,leaderPressureKph:4.9,leaderHoldMs:3100}),
   FAST:Object.freeze({variability:2.65,attackGap:1.92,overtakeReleaseClosingKph:1.35,momentumThreshold:.29,p2ChallengeKph:10.5,leaderPressureKph:5.8,leaderHoldMs:1800}),
   fastLaps:3
 });
@@ -2715,10 +2715,28 @@ window.__mwsF1RacingV369=VERSION369;
 function resetRaceOrderFlowV309(vehicles=raceMotionV189.vehicles){
   raceOrderFlowStateV309.lastOrder=(vehicles||[]).slice().sort((a,b)=>Number(b.raceProgress||0)-Number(a.raceProgress||0)).map(v=>String(v.id||''));
   raceOrderFlowStateV309.orderChanges=0;raceOrderFlowStateV309.changedDrivers=0;
+  raceOrderFlowStateV309.onTrackPassesV386=0;
+  raceOrderFlowStateV309.lastOnTrackV386=new Map((vehicles||[]).map(v=>[String(v.id),String(v.pitState||'TRACK')==='TRACK'&&!v.finished]));
   return {...raceOrderFlowStateV309,lastOrder:[...raceOrderFlowStateV309.lastOrder]};
 }
 function recordRaceOrderFlowV309(){
   const order=computeRaceStandingsV191().map(row=>String(row.vehicle?.id||''));
+  const oldOrder=raceOrderFlowStateV309.lastOrder;
+  const previousOnTrack=raceOrderFlowStateV309.lastOnTrackV386;
+  const byId=new Map(raceMotionV189.vehicles.map(v=>[String(v.id),v]));
+  const indexNow=new Map(order.map((id,index)=>[id,index]));
+  for(let place=0;place<order.length;place++){
+    const id=order[place],oldPosition=oldOrder.indexOf(id),vehicle=byId.get(id);
+    if(oldPosition<=place||!vehicle||String(vehicle.pitState||'TRACK')!=='TRACK'||vehicle.finished||previousOnTrack.get(id)!==true)continue;
+    for(let prev=0;prev<oldPosition;prev++){
+      const otherId=oldOrder[prev],other=byId.get(otherId);
+      if(indexNow.get(otherId)<=place||!other||String(other.pitState||'TRACK')!=='TRACK'||other.finished||previousOnTrack.get(otherId)!==true)continue;
+      // Both cars were on track on both samples. This is an actual longitudinal crossing, never a forced standing change.
+      raceOrderFlowStateV309.onTrackPassesV386++;
+      vehicle.physicalOnTrackPassesV386=(Number(vehicle.physicalOnTrackPassesV386)||0)+1;
+    }
+  }
+  raceOrderFlowStateV309.lastOnTrackV386=new Map(raceMotionV189.vehicles.map(v=>[String(v.id),String(v.pitState||'TRACK')==='TRACK'&&!v.finished]));
   if(raceOrderFlowStateV309.lastOrder.length===order.length&&order.length){
     let moved=0;for(let i=0;i<order.length;i++)if(order[i]!==raceOrderFlowStateV309.lastOrder[i])moved+=1;
     if(moved>0){raceOrderFlowStateV309.orderChanges+=1;raceOrderFlowStateV309.changedDrivers+=moved}
@@ -7696,6 +7714,9 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   if(neighborSafetyV381.active)maxTarget=Math.min(maxTarget,neighborSafetyV381.capKph);
   if(physicalClosureV386.active)maxTarget=Math.min(maxTarget,physicalClosureV386.capKph);
   if(pitRejoinV384.active)maxTarget=Math.min(maxTarget,pitRejoinV384.capKph);
+  const clearFastV386=String(vehicle.cornerDrivingClassV351)==='fast'&&phaseInfoV270?.corner&&!vehicle.pitRequested&&String(vehicle.pitState||'TRACK')==='TRACK'&&
+    !spacingControlV319.active&&!proximityV376.active&&!neighborSafetyV381.active&&!physicalClosureV386.active&&!pitRejoinV384.active&&!incidentState.active&&!leaderPressureEffect.event&&boundaryStateV271.speedFactor>=.985;
+  if(clearFastV386)maxTarget=Math.max(maxTarget,CORNER_DRIVING_V351.speedEnvelope.fast.min*.82);
   if(Number.isFinite(pitControl.speedCapKph))maxTarget=Math.min(maxTarget,pitControl.speedCapKph);
   const error=maxTarget-current;
   // Legacy Phase 203/204 source signatures are superseded by angle-aware V375 dynamics:
@@ -7855,7 +7876,7 @@ function buildRaceTelemetryV237(snapshot=activeRaceSnapshotV187,vehicles=raceMot
   const length=Math.max(1,Number(snapshot.track?.lengthMeters)||1);
   const completed=vehicles.filter(vehicle=>Number(vehicle.finishedAtSimMs)>0);
   const finishTimes=completed.map(vehicle=>Math.max(1,Number(vehicle.finishedAtSimMs)||0));
-  const totalPasses=vehicles.reduce((sum,vehicle)=>sum+(Number(vehicle.passCompletedCount)||0),0);
+  const totalPasses=vehicles.reduce((sum,vehicle)=>sum+Math.max(Number(vehicle.passCompletedCount)||0,Number(vehicle.physicalOnTrackPassesV386)||0),0);
   const failedPasses=vehicles.reduce((sum,vehicle)=>sum+(Number(vehicle.passFailedCount)||0),0);
   const lockups=vehicles.reduce((sum,vehicle)=>sum+(Number(vehicle.lockupCount)||0),0);
   const understeer=vehicles.reduce((sum,vehicle)=>sum+(Number(vehicle.understeerCount)||0),0);
