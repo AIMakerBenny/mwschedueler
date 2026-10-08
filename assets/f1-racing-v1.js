@@ -4744,7 +4744,7 @@ function rapidPassStateV376(current,next,ctx){
 const RACE_FINAL_QA_V386=Object.freeze({maxZoom:4.5,minLiveFrames:4,localCurveSamples:36,chordSamples:18,geometryMargin:1.18});
 const liveOnlyQualityV386={liveDynamics:0,syntheticDynamics:0,liveFrames:0,syntheticFrames:0,
   liveOverlapFrames:0,peakMaxZoomPairs:0,peakCurrentZoomPairs:0,minCenterSvg:Infinity,
-  safetyBrakingSamples:0,cleanAccelerationSamples:0};
+  safetyBrakingSamples:0,cleanAccelerationSamples:0,overlapSnapshots:[]};
 function recordQualityDynamicsV386(vehicle,proximity,spacing){
  const t=liveOnlyQualityV386;
  if(engineQaV240.active){t.syntheticDynamics++;return}
@@ -4752,11 +4752,16 @@ function recordQualityDynamicsV386(vehicle,proximity,spacing){
  if(proximity?.active||spacing?.active||vehicle?.neighborSafetyV381?.active)t.safetyBrakingSamples++;
  else if(Number(vehicle?.accelerationMps2)>0)t.cleanAccelerationSamples++;
 }
-function recordQualityFrameV386(atMax,atCurrent){
+function recordQualityFrameV386(atMax,atCurrent,rendered=[]){
  const t=liveOnlyQualityV386;
  if(engineQaV240.active){t.syntheticFrames++;return}
  t.liveFrames++;
- if(Number(atMax?.pairs)>0)t.liveOverlapFrames++;
+ if(Number(atMax?.pairs)>0){
+  t.liveOverlapFrames++;
+  const subjects=(atMax.examples||[]).flatMap(p=>[p.a,p.b]);
+  const rows=(rendered||[]).filter(row=>subjects.includes(String(row.vehicle?.id))).map(row=>({id:String(row.vehicle?.id),progress:Number(row.vehicle?.raceProgress)||0,speed:Number(row.vehicle?.speedKph)||0,line:String(row.vehicle?.racingLineMode||''),battle:String(row.vehicle?.battleState||''),lateral:Number(row.vehicle?.visualLateralOffsetMeters)||0,point:row.point?{x:Number(row.point.x),y:Number(row.point.y)}:null}));
+  t.overlapSnapshots.push({ms:Number(simClockV192.simTimeMs)||0,examples:atMax.examples||[],rows});if(t.overlapSnapshots.length>20)t.overlapSnapshots.shift();
+ }
  t.peakMaxZoomPairs=Math.max(t.peakMaxZoomPairs,Number(atMax?.pairs)||0);
  t.peakCurrentZoomPairs=Math.max(t.peakCurrentZoomPairs,Number(atCurrent?.pairs)||0);
  if(Number.isFinite(Number(atMax?.closestSvg)))t.minCenterSvg=Math.min(t.minCenterSvg,Number(atMax.closestSvg));
@@ -4785,7 +4790,8 @@ function finalLiveQualityReportV386(){
  liveFrames:t.liveFrames,syntheticFrames:t.syntheticFrames,liveOverlapFrames:t.liveOverlapFrames,
  peakMaxZoomPairs:t.peakMaxZoomPairs,peakCurrentZoomPairs:t.peakCurrentZoomPairs,
  minCenterSvg:Number.isFinite(t.minCenterSvg)?t.minCenterSvg:null,
- safetyBrakingSamples:t.safetyBrakingSamples,cleanAccelerationSamples:t.cleanAccelerationSamples};
+ safetyBrakingSamples:t.safetyBrakingSamples,cleanAccelerationSamples:t.cleanAccelerationSamples,
+ overlapSnapshots:t.overlapSnapshots.slice()};
 }
 function qaFinalLiveQualityV386(){
  const report=finalLiveQualityReportV386();
@@ -6875,7 +6881,7 @@ function recordActualMarkerOverlapsV377(rendered=[]){
   markerOverlapStateV377.peakCurrentZoomOverlaps=Math.max(markerOverlapStateV377.peakCurrentZoomOverlaps,atCurrent.pairs);
   if(atMax.closestSvg!==null)markerOverlapStateV377.minMeasuredDistanceSvg=Math.min(markerOverlapStateV377.minMeasuredDistanceSvg,atMax.closestSvg);
   markerOverlapStateV377.latest={atMax,atCurrent};
-  recordQualityFrameV386(atMax,atCurrent);
+  recordQualityFrameV386(atMax,atCurrent,rendered);
   recordBehaviorFrameV380(rendered,atMax);
   return markerOverlapStateV377.latest;
 }
