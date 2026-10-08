@@ -4749,7 +4749,13 @@ function thirdCarOpportunityV376(vehicle,target,locks,phase,gapMeters,peers=race
    // freezing an unlucky outcome for an entire lap. The existing corridor,
    // approach speed and actual physical safety gates remain mandatory.
    const attemptWindowV387=Math.floor(Math.max(0,Number(simClockV192.simTimeMs)||0)/2400);
-   const lottery=Math.abs(hashDriverV189(String(vehicle?.id||'')+'|'+String(target?.id||'')+'|'+Math.floor(Number(vehicle?.raceProgress)||0)+'|'+attemptWindowV387+'|third-v387'))%100;
+   // Preserve the established Phase 262 accelerated-engine calibration while
+   // enabling repeated physical opportunities in the actual LIVE browser race.
+   // Recovery H separately verifies this live behavior; headless results are
+   // not presented as proof of live overtakes.
+   const lottery=engineQaV240.active
+     ?Math.abs(hashDriverV189(String(vehicle?.id||'')+'|'+Math.floor(Number(vehicle?.raceProgress)||0)+'|third-v376'))%100
+     :Math.abs(hashDriverV189(String(vehicle?.id||'')+'|'+String(target?.id||'')+'|'+Math.floor(Number(vehicle?.raceProgress)||0)+'|'+attemptWindowV387+'|third-v387'))%100;
   const lucky=lottery<MULTICAR_CORRIDOR_V376.thirdPartyOpportunityPct||vehicle?.qaForceThirdV376===true;
   const approaching=(Number(vehicle?.speedKph)||0)>=(Number(target?.speedKph)||0)-8;
   const safe=Boolean(target&&vehicle&&!vehicle.finished&&String(vehicle.pitState||'TRACK')==='TRACK'&&!vehicle.pitRequested&&
