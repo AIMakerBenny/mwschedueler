@@ -4645,7 +4645,7 @@ function setPassStateV208(vehicle,next,targetId='',reason=''){
     if(next==='PASS_COMPLETED')endChaseBurstV275(vehicle,'pass-completed');
     if(next==='PASS_COMPLETED')behaviorTelemetryV380.passes++;
     if(next==='PASS_COMPLETED')vehicle.spectatorPassFlashUntilV252=(Number(simClockV192.simTimeMs)||0)+1400;
-    if(next==='PASS_COMPLETED')vehicle.safePassExitUntilV386=(Number(simClockV192.simTimeMs)||0)+6500;
+    if(next==='PASS_COMPLETED')vehicle.safePassExitUntilV386=(Number(simClockV192.simTimeMs)||0)+9000;
     if(next==='PASS_FAILED')vehicle.passFailedCount=(Number(vehicle.passFailedCount)||0)+1;
     enqueueLiveCutinV264(vehicle,next,targetId);
     const dialogueTarget=raceMotionV189.vehicles.find(row=>String(row.id)===String(targetId||''))||null;
@@ -4743,7 +4743,7 @@ function competitivePaceAdvantageV376(vehicle,peers=raceMotionV189.vehicles){
   // so overtaking does not immediately collapse when the target switches.
   // Collision envelopes still cap the resulting speed on occupied corridors.
   const passExitRemaining=Math.max(0,(Number(vehicle.safePassExitUntilV386)||0)-(Number(simClockV192.simTimeMs)||0));
-  const passExitBonusKph=10*Math.min(1,passExitRemaining/6500);
+  const passExitBonusKph=12*Math.min(1,passExitRemaining/9000);
   const ahead=peers.find(row=>String(row?.id||'')===String(vehicle.trafficCarAheadId||''))||null;
   if(!ahead||ahead.finished||String(ahead.pitState||'TRACK')!=='TRACK')return passExitBonusKph;
   const gap=Math.max(0,Number(vehicle.trafficGapMeters));
