@@ -324,6 +324,7 @@ jobs:
           node --check scripts/run-phase377-f1-marker-overlap-monitor-audit.mjs
           node --check scripts/run-phase378-f1-projected-safe-following-audit.mjs
           node --check scripts/run-phase379-f1-preemptive-pass-corridor-audit.mjs
+          node --check scripts/run-phase380-f1-behavior-telemetry-audit.mjs
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
@@ -1206,6 +1207,8 @@ jobs:
           grep -Fq "function trackInteractionEligibleV369(" /tmp/f1-racing-v1-phase187.js
           grep -Fq "function clearPitInteractionStateV369(" /tmp/f1-racing-v1-phase187.js
           grep -Fq "clearPitInteractionStateV369(vehicle,raceMotionV189.vehicles,'PIT_ENTRY')" /tmp/f1-racing-v1-phase187.js
+          echo '[phase380] baseline race physics and marker telemetry'
+          grep -Fq 'window.__mwsF1RacingV380=VERSION380;' /tmp/f1-racing-v1-phase187.js
           echo '[phase379] F1 early safe corridor preemptive pass'
           grep -Fq "window.__mwsF1RacingV379=VERSION379;" /tmp/f1-racing-v1-phase187.js
           echo '[phase378] F1 projected marker footprint safe physical headway'

@@ -1418,6 +1418,8 @@ try{
     assert(preemptivePass379?.allPass===true,'Phase 379 preemptive pass QA failed: '+JSON.stringify(preemptivePass379));
     const projectedSafe378=window.mwsF1QaProjectedSafeFollowingV378?.();
     assert(projectedSafe378?.allPass===true,'Phase 378 projected safe following QA failed: '+JSON.stringify(projectedSafe378));
+    const behaviorTelemetry380=window.mwsF1QaBehaviorTelemetryV380?.();
+    assert(behaviorTelemetry380?.allPass===true,'Phase 380 telemetry QA failed: '+JSON.stringify(behaviorTelemetry380));
     const overlapMonitor377=window.mwsF1QaActualMarkerOverlapsV377?.();
     assert(overlapMonitor377?.allPass===true,'Phase 377 visible marker overlap detector QA failed: '+JSON.stringify(overlapMonitor377));
     const multicar376=window.mwsF1QaMulticarCorridorV376?.();
@@ -1647,6 +1649,7 @@ try{
       cornerPhysicsV375:cornerPhysics375||null,
       multicarV376:multicar376||null,
       overlapMonitorV377:overlapMonitor377||null,
+      behaviorTelemetryV380:behaviorTelemetry380||null,
       projectedSafeFollowingV378:projectedSafe378||null,
       preemptivePassV379:preemptivePass379||null,
       dynamicsPlaytestV348:dynamicsPlaytest348||null,

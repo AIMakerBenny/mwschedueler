@@ -165,6 +165,7 @@ const VERSION376='phase376-f1-multicar-corridor-proximity';
 const VERSION377='phase377-f1-actual-marker-overlap-monitor';
 const VERSION378='phase378-f1-projected-safe-following';
 const VERSION379='phase379-f1-preemptive-pass-corridor';
+const VERSION380='phase380-seven-behavior-baseline-telemetry';
 const interactionSnapshotStateV368={snapshot:null,builds:0,lastSimTimeMs:0};
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
@@ -4581,6 +4582,7 @@ function setPassStateV208(vehicle,next,targetId='',reason=''){
       if(target){const history=Array.isArray(vehicle.passTargetHistoryV309)?vehicle.passTargetHistoryV309:[];if(!history.includes(target))history.push(target);vehicle.passTargetHistoryV309=history}
     }
     if(next==='PASS_COMPLETED')endChaseBurstV275(vehicle,'pass-completed');
+    if(next==='PASS_COMPLETED')behaviorTelemetryV380.passes++;
     if(next==='PASS_COMPLETED')vehicle.spectatorPassFlashUntilV252=(Number(simClockV192.simTimeMs)||0)+1400;
     if(next==='PASS_FAILED')vehicle.passFailedCount=(Number(vehicle.passFailedCount)||0)+1;
     enqueueLiveCutinV264(vehicle,next,targetId);
@@ -6664,6 +6666,7 @@ function recordActualMarkerOverlapsV377(rendered=[]){
   markerOverlapStateV377.peakCurrentZoomOverlaps=Math.max(markerOverlapStateV377.peakCurrentZoomOverlaps,atCurrent.pairs);
   if(atMax.closestSvg!==null)markerOverlapStateV377.minMeasuredDistanceSvg=Math.min(markerOverlapStateV377.minMeasuredDistanceSvg,atMax.closestSvg);
   markerOverlapStateV377.latest={atMax,atCurrent};
+  recordBehaviorFrameV380(rendered,atMax);
   return markerOverlapStateV377.latest;
 }
 function markerOverlapReportV377(){
@@ -6673,6 +6676,60 @@ function markerOverlapReportV377(){
     minMeasuredDistanceSvg:Number.isFinite(markerOverlapStateV377.minMeasuredDistanceSvg)?Number(markerOverlapStateV377.minMeasuredDistanceSvg.toFixed(3)):null,
     latest:markerOverlapStateV377.latest};
 }
+
+const behaviorTelemetryV380={physicsSamples:0,frames:0,passes:0,proximity:0,spacing:0,braking:0,accelerating:0,overlapFrames:0,peakOverlaps:0,minPhysicalGap:Infinity,events:[],overlaps:[]};
+function behaviorStoreV380(field,event){const rows=behaviorTelemetryV380[field];rows.push(event);if(rows.length>64)rows.shift();}
+function recordBehaviorPhysicsV380(vehicle,phase,proximity,spacing){
+  const t=behaviorTelemetryV380;t.physicsSamples++;
+  if(proximity?.active)t.proximity++;
+  if(spacing?.active)t.spacing++;
+  if(Number(vehicle.brake)>.05)t.braking++;
+  if(Number(vehicle.accelerationMps2)>.05)t.accelerating++;
+  if(t.physicsSamples%30===0||proximity?.active)behaviorStoreV380('events',{
+    ms:Number(simClockV192.simTimeMs)||0,id:String(vehicle.id),phase:String(phase),speed:Number(vehicle.speedKph)||0,
+    target:Number(vehicle.targetSpeedKph)||0,acceleration:Number(vehicle.accelerationMps2)||0,
+    brake:Number(vehicle.brake)||0,throttle:Number(vehicle.throttle)||0,
+    gap:Number.isFinite(proximity?.gap)?proximity.gap:null,
+    proximityCap:proximity?.active?proximity.capKph:null,
+    spacingCap:spacing?.active?spacing.capKph:null,
+    cornerClass:String(vehicle.cornerDrivingClassV351||''),
+    apexSpeed:Number(vehicle.cornerApexTargetKphV351)||0,
+    brakingStart:Number(vehicle.cornerDynamicBrakeStartV351)||0,
+    throttleStart:Number(vehicle.cornerRecoveryStartV351)||0
+  });
+}
+function recordBehaviorFrameV380(rendered,maxReport){
+  const t=behaviorTelemetryV380;t.frames++;
+  const count=Number(maxReport?.pairs)||0;if(count){t.overlapFrames++;behaviorStoreV380('overlaps',{ms:Number(simClockV192.simTimeMs)||0,count,examples:maxReport.examples||[]})}
+  t.peakOverlaps=Math.max(t.peakOverlaps,count);
+  const length=Math.max(1,Number(activeRaceSnapshotV187?.track?.lengthMeters)||1);
+  for(let i=0;i<rendered.length;i++)for(let j=i+1;j<rendered.length;j++){
+    const a=rendered[i].vehicle,b=rendered[j].vehicle;
+    if(a.finished||b.finished||a.pitState!=='TRACK'||b.pitState!=='TRACK')continue;
+    const along=Math.abs((Number(a.raceProgress)-Number(b.raceProgress))*length);
+    if(along>140)continue;
+    const lateral=Math.abs((Number(a.visualLateralOffsetMeters)||0)-(Number(b.visualLateralOffsetMeters)||0));
+    t.minPhysicalGap=Math.min(t.minPhysicalGap,Math.hypot(along,lateral));
+  }
+}
+function behaviorReportV380(){
+  const t=behaviorTelemetryV380;return {version:VERSION380,physicsSamples:t.physicsSamples,frames:t.frames,
+    passes:t.passes,proximity:t.proximity,spacing:t.spacing,braking:t.braking,accelerating:t.accelerating,
+    overlapFrames:t.overlapFrames,peakOverlaps:t.peakOverlaps,minPhysicalGap:Number.isFinite(t.minPhysicalGap)?t.minPhysicalGap:null,
+    events:t.events.slice(),overlaps:t.overlaps.slice()};
+}
+function qaBehaviorTelemetryV380(){
+  const report=behaviorReportV380();
+  const connected=String(simulateVehicleDynamicsV196).includes('recordBehaviorPhysicsV380(')&&
+    String(recordActualMarkerOverlapsV377).includes('recordBehaviorFrameV380(')&&
+    String(setPassStateV208).includes('behaviorTelemetryV380.passes++');
+  const bounded=report.events.length<=64&&report.overlaps.length<=64;
+  return {version:VERSION380,connected,bounded,report,allPass:connected&&bounded};
+}
+window.mwsF1GetBehaviorTelemetryV380=behaviorReportV380;
+window.mwsF1QaBehaviorTelemetryV380=qaBehaviorTelemetryV380;
+window.__mwsF1RacingV380=VERSION380;
+
 function recordScreenCrowdingV363(rendered=[]){
   const zoom=Math.max(1,Number(raceCameraV216.zoom)||1),pairs=[];
   let minDistance=Infinity,overlaps=0,dense=false;
@@ -7384,6 +7441,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   vehicle.throttle=throttle;
   vehicle.brake=brake;
   vehicle.accelerationMps2=accelMps2;
+  recordBehaviorPhysicsV380(vehicle,phase,proximityV376,spacingControlV319);
   vehicle.gear=gearForSpeedV196(nextKph);
   vehicle.rpm=rpmForSpeedAndGearV196(nextKph,vehicle.gear);
   updateTyreSystemV203(vehicle,stepMs,phase);

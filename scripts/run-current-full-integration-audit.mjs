@@ -375,6 +375,7 @@ import {runPhase376F1MulticarCorridorAudit} from './run-phase376-f1-multicar-cor
 import {runPhase377F1MarkerOverlapMonitorAudit} from './run-phase377-f1-marker-overlap-monitor-audit.mjs';
 import {runPhase378F1ProjectedSafeFollowingAudit} from './run-phase378-f1-projected-safe-following-audit.mjs';
 import {runPhase379F1PreemptivePassCorridorAudit} from './run-phase379-f1-preemptive-pass-corridor-audit.mjs';
+import {runPhase380F1BehaviorTelemetryAudit} from './run-phase380-f1-behavior-telemetry-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2807,5 +2808,6 @@ export function runPhase376FullIntegrationAudit(){const previous=runPhase375Full
 export function runPhase377FullIntegrationAudit(){const previous=runPhase376FullIntegrationAudit(),current=runPhase377F1MarkerOverlapMonitorAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 377: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 377: '+x)];return {phase:377,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase378FullIntegrationAudit(){const previous=runPhase377FullIntegrationAudit(),current=runPhase378F1ProjectedSafeFollowingAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 378: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 378: '+x)];return {phase:378,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase379FullIntegrationAudit(){const previous=runPhase378FullIntegrationAudit(),current=runPhase379F1PreemptivePassCorridorAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 379: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 379: '+x)];return {phase:379,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase379FullIntegrationAudit();}
+export function runPhase380FullIntegrationAudit(){const previous=runPhase379FullIntegrationAudit(),current=runPhase380F1BehaviorTelemetryAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 380: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 380: '+x)];return {phase:380,previous,current,issues,warnings,pass:!issues.length};}
+export function runCurrentFullIntegrationAudit(){return runPhase380FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
