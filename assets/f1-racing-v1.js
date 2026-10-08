@@ -1860,6 +1860,44 @@ function gridStartOffsetV272(index,count){
   const stepMeters=Math.max(65,Math.min(85,length*.018));
   return -(Math.max(0,Number(index)||0)*stepMeters/length);
 }
+
+function gridStartGeometryV393(stepMeters,count,zoom=1.9){
+ const track=activeRaceSnapshotV187?.track,path=document.getElementById('f1RacingRaceTrackPathV188');
+ const length=Math.max(1,Number(track?.lengthMeters)||4500),svgLength=Number(path?.getTotalLength?.())||0;
+ if(!(svgLength>0)||!(Number(stepMeters)>0))return {available:false,reason:'NO_TRACK_PATH'};
+ const steps=Math.max(2,Math.min(24,Math.floor(Number(count)||8)));
+ const points=Array.from({length:steps},(_,index)=>raceLinePointV197(path,-index*stepMeters/length,0));
+ if(points.some(p=>!p||!Number.isFinite(p.x)||!Number.isFinite(p.y)))return {available:false,reason:'INVALID_GRID_POINT'};
+ const needed=2*MARKER_OVERLAP_MONITOR_V377.ringRadiusSvg*raceMarkerScaleV245(zoom)*
+   MARKER_OVERLAP_MONITOR_V377.clearanceMultiplier;
+ let closest=Infinity,overlaps=0,closePair=null;
+ for(let i=0;i<points.length;i++)for(let j=i+1;j<points.length;j++){
+   const distance=Math.hypot(points[i].x-points[j].x,points[i].y-points[j].y);
+   if(distance<closest){closest=distance;closePair=[i+1,j+1]}
+   if(distance<needed)overlaps++;
+ }
+ return {available:true,stepMeters:Number(stepMeters),count:steps,zoom:Number(zoom),neededSvg:Number(needed.toFixed(3)),
+   closestSvg:Number(closest.toFixed(3)),overlaps,closestPair:closePair};
+}
+function qaGridStartGeometryV393(){
+ const track=activeRaceSnapshotV187?.track,length=Math.max(1,Number(track?.lengthMeters)||4500);
+ const oldStep=Math.max(65,Math.min(85,length*.018));
+ const currentZoom=Math.max(1,Number(raceCameraV216.zoom)||1.9);
+ const baseline={current:gridStartGeometryV393(oldStep,8,currentZoom),max:gridStartGeometryV393(oldStep,8,4.5)};
+ const steps=[28,36,44,52,60,68,76,84,96,112,136];
+ const candidates=steps.map(step=>({step,current:gridStartGeometryV393(step,8,currentZoom),max:gridStartGeometryV393(step,8,4.5)}));
+ const clear=candidates.filter(row=>row.current.available&&row.current.overlaps===0&&row.max.overlaps===0);
+ const recommendation=clear.length?clear[0].step:null;
+ const noCoordinateEdit=!/\b(?:raceProgress|progress|travel|finishPosition)\s*=/.test(String(gridStartGeometryV393));
+ const deterministic=JSON.stringify(gridStartGeometryV393(oldStep,8,currentZoom))===JSON.stringify(baseline.current);
+ const available=baseline.current.available&&baseline.max.available;
+ return {version:'phase393-real-grid-projection-observer',trackId:String(track?.id||''),currentZoom,
+   oldStepMeters:Number(oldStep.toFixed(3)),baseline,candidates,recommendation,
+   available,deterministic,noCoordinateEdit,allPass:available&&deterministic&&noCoordinateEdit};
+}
+window.mwsF1QaGridStartGeometryV393=qaGridStartGeometryV393;
+window.__mwsF1RacingV393='phase393-real-grid-projection-observer';
+
 function gridAvatarMarkupV272(driver){
   const name=String(driver?.name||'Driver'),src=String(driver?.image||'').trim();
   if(src)return '<img class="f1-racing-grid-avatar-v272" loading="lazy" decoding="async" src="'+escapeHtml(src)+'" alt="'+escapeHtml(name)+'">';

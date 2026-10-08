@@ -1440,6 +1440,8 @@ try{
     assert(behaviorTelemetry380?.allPass===true,'Phase 380 telemetry QA failed: '+JSON.stringify(behaviorTelemetry380));
     const overlapMonitor377=window.mwsF1QaActualMarkerOverlapsV377?.();
     assert(overlapMonitor377?.allPass===true,'Phase 377 visible marker overlap detector QA failed: '+JSON.stringify(overlapMonitor377));
+    const gridGeometry393=window.mwsF1QaGridStartGeometryV393?.();
+    assert(gridGeometry393?.allPass===true,'Phase 393 actual start grid SVG projection QA failed: '+JSON.stringify(gridGeometry393));
     const tyreCooling392=window.mwsF1QaTyreCoolingV392?.();
     assert(tyreCooling392?.allPass===true,'Phase 392 tyre airflow cooling Chromium QA failed: '+JSON.stringify(tyreCooling392));
     const tacticalPit391=window.mwsF1QaTacticalPitValueV391?.();
@@ -1675,6 +1677,7 @@ try{
       thirdPartyRetryV387:thirdRetry387||null,
       tacticalPitV391:tacticalPit391||null,
       tyreCoolingV392:tyreCooling392||null,
+      gridGeometryV393:gridGeometry393||null,
       overlapMonitorV377:overlapMonitor377||null,
       behaviorTelemetryV380:behaviorTelemetry380||null,
       neighborBrakingV381:neighborBraking381||null,
