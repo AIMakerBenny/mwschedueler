@@ -239,7 +239,7 @@ const projectedGapCacheV378={path:null,key:'',value:PROJECTED_SAFE_GAP_V378.minM
 const MULTICAR_CORRIDOR_V376=Object.freeze({
   maxStraightAbreast:3,maxCornerAbreast:2,minimumSideClearanceMeters:2.65,
   sameLineMinGapMeters:9.0,approachControlGapMeters:20.0,nearGroupMeters:14,
-  tripleAttackMaxGapMeters:35,thirdPartyOpportunityPct:56,thirdAttackHoldMs:2600,fastAttackClosingKph:2,catchupAttackBoostKph:19,followingCatchupBoostKph:11
+  tripleAttackMaxGapMeters:35,thirdPartyOpportunityPct:56,thirdAttackHoldMs:2600,fastAttackClosingKph:2,catchupAttackBoostKph:30,followingCatchupBoostKph:14
 });
 const CORNER_PHYSICS_V375=Object.freeze({
   lateralGripMps2:32,minLateralGripMps2:25,angleBrakeWeight:.09,brakeLeadMeters:12,
