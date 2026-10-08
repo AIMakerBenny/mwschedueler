@@ -3900,7 +3900,7 @@ function updateTyreSystemV203(vehicle,stepMs,phase){
   // Preserve baseline tyre feel near the ideal range; activate extra airflow cooling only as the surface overheats.
   const airflowCoolingV392=tyreSurfaceCoolingV392(speedKph);
   const coolingExcessV392=Math.max(0,surface-(spec.idealSurface+.06));
-  const coolingBlendV392=Math.min(1,coolingExcessV392/.16);
+  const coolingBlendV392=Math.min(1,coolingExcessV392/.70);
   surface+=(TYRE_CONFIG_V203.ambientSurface-surface)*dt*(.035+(airflowCoolingV392-.035)*coolingBlendV392);
   surface=Math.max(0,Math.min(1,surface));
   carcass+=(surface-carcass)*dt*.075;
