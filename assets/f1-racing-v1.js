@@ -1137,7 +1137,6 @@ const INCIDENT_CONFIG_V204=Object.freeze({
 });
 const TYRE_COMPOUNDS_V203=Object.freeze({SOFT:Object.freeze({code:'S',gripBias:1.01,wearPerLap:0.115,heatFactor:1.10,idealSurface:0.60}),MEDIUM:Object.freeze({code:'M',gripBias:1.00,wearPerLap:0.090,heatFactor:1.00,idealSurface:0.56}),HARD:Object.freeze({code:'H',gripBias:0.99,wearPerLap:0.068,heatFactor:0.90,idealSurface:0.52})});
 const TYRE_CONFIG_V203=Object.freeze({ambientSurface:0.42,ambientCarcass:0.44,minGrip:0.82,maxGrip:1.03});
-const TYRE_THERMAL_BALANCE_V388=Object.freeze({heatGainPerSecond:.065,ambientRecoveryPerSecond:.16,fastFormAmplitudeCap:.0165,fastRearPaceScale:.85,fastFrontChallengeScale:1.75,fastCompetitionCapScale:1.40});
 const DEFAULT_TOTAL_LAPS_V190=10;
 const F1_LINE_MODES_V197=Object.freeze(['IDEAL','ATTACK_INSIDE','DEFENSIVE_INSIDE','OUTSIDE','PIT_LINE']);
 const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
@@ -3890,8 +3889,8 @@ function updateTyreSystemV203(vehicle,stepMs,phase){
   let surface=Math.max(0,Math.min(1,Number(vehicle.tyreSurfaceTemp)||.5));
   let carcass=Math.max(0,Math.min(1,Number(vehicle.tyreCarcassTemp)||.5));
   const heatInput=(brakeLoad*.34+throttleLoad*.13+cornerLoad*.22+dirtyHeat*.18)*spec.heatFactor;
-  surface+=heatInput*dt*TYRE_THERMAL_BALANCE_V388.heatGainPerSecond;
-  surface+=(TYRE_CONFIG_V203.ambientSurface-surface)*dt*TYRE_THERMAL_BALANCE_V388.ambientRecoveryPerSecond;
+  surface+=heatInput*dt*.18;
+  surface+=(TYRE_CONFIG_V203.ambientSurface-surface)*dt*.035;
   surface=Math.max(0,Math.min(1,surface));
   carcass+=(surface-carcass)*dt*.075;
   carcass+=(TYRE_CONFIG_V203.ambientCarcass-carcass)*dt*.012;
@@ -3924,40 +3923,6 @@ function updateTyreSystemV203(vehicle,stepMs,phase){
   vehicle.tyreStrategyPressure=clamp01V198(vehicle.tyreWear*.55+vehicle.tyreThermalDeg*.20+vehicle.tyreGraining*.15+vehicle.tyreFlatSpot*.35);
   return {compound:vehicle.tyreCompound,ageLaps:vehicle.tyreAgeLaps,wear:vehicle.tyreWear,surfaceTemp:surface,carcassTemp:carcass,grip:vehicle.tyreGrip,thermalDeg:vehicle.tyreThermalDeg,graining:vehicle.tyreGraining,flatSpot:vehicle.tyreFlatSpot,strategyPressure:vehicle.tyreStrategyPressure};
 }
-
-function qaTyreThermalBalanceV388(){
- const track=activeRaceSnapshotV187?.track;
- if(!track)return {version:'phase388-tyre-thermal-balance',reason:'NO_ACTIVE_TRACK',allPass:false};
- const length=Math.max(1,Number(track.lengthMeters)||4500),speedKph=225,dtMs=100;
- const count=Math.ceil(4*length/(speedKph/3.6*dtMs/1000));
- const cycle=['STRAIGHT','STRAIGHT','APPROACH','BRAKING','TURN_IN','APEX','EXIT'],states=[];
- for(const compound of ['SOFT','MEDIUM','HARD']){
-  const v={id:'qa388-'+compound,driverProfile:{tyreManagement:75},tyreCompound:compound,
-   raceProgress:0,tyreStartRaceProgress:0,speedKph,tyreWear:0,tyreAgeLaps:0,
-   tyreSurfaceTemp:.5,tyreCarcassTemp:.5,tyreGrip:1,tyreThermalDeg:0,
-   tyreGraining:0,tyreFlatSpot:0,tyreWarmupFactor:1,tyreStrategyPressure:0,
-   lockupActiveMs:0,dirtyAirTyreHeatLoad:0,brake:0,throttle:.85};
-  for(let i=0;i<count;i++){
-   const phase=cycle[Math.floor(i/60)%cycle.length];
-   v.brake=phase==='BRAKING'?.80:phase==='TURN_IN'?.25:.05;
-   v.throttle=phase==='BRAKING'?0:phase==='EXIT'?.95:phase==='STRAIGHT'?.85:.50;
-   updateTyreSystemV203(v,dtMs,phase);
-   v.raceProgress+=speedKph/3.6*(dtMs/1000)/length;
-  }
-  states.push({compound,wear:v.tyreWear,remaining:1-v.tyreWear,grip:v.tyreGrip,
-   thermalDeg:v.tyreThermalDeg,surfaceTemp:v.tyreSurfaceTemp,laps:v.raceProgress,
-   apexKph:cornerApexTargetV351(300,{cornerClass:'medium',referenceApexKph:190},compound)});
- }
- const [s,m,h]=states;
- const wearOrder=s.wear>m.wear&&m.wear>h.wear;
- const cornerOrder=s.apexKph>m.apexKph&&m.apexKph>h.apexKph;
- const unsaturated=states.every(x=>x.thermalDeg<.9&&x.grip>.82&&x.surfaceTemp<.85&&x.laps>=4);
- return {version:'phase388-tyre-thermal-balance',states,wearOrder,cornerOrder,unsaturated,
-  allPass:wearOrder&&cornerOrder&&unsaturated};
-}
-window.mwsF1QaTyreThermalBalanceV388=qaTyreThermalBalanceV388;
-window.__mwsF1RacingV388='phase388-tyre-thermal-balance';
-
 function getTyreStatesV203(){
   return raceMotionV189.vehicles.map(vehicle=>({
     id:vehicle.id,name:vehicle.driver?.name||'',compound:vehicle.tyreCompound,
@@ -7728,9 +7693,7 @@ function naturalRacePaceMultiplierV359(vehicle,mode=activeRaceModeV345()){
   const rankedBoost=Math.max(0,Number(vehicle?.rankedFieldPaceBoostV357)||0)*NATURAL_RACE_PACE_V359.rankedBoostScale;
   const catchupBoost=clamp01V198(Number(vehicle?.positionCatchupPctV314)||0)*NATURAL_RACE_PACE_V359.catchupBoostScale;
   const modeScale=String(mode||'NORMAL').toUpperCase()==='FAST'?NATURAL_RACE_PACE_V359.fastModeScale:1;
-  const liveScale=String(mode||'NORMAL').toUpperCase()==='FAST'
-    ?Math.max(modeScale,TYRE_THERMAL_BALANCE_V388.fastRearPaceScale):modeScale;
-   return 1+(rankedBoost+catchupBoost)*liveScale;
+  return 1+(rankedBoost+catchupBoost)*modeScale;
 }
 
 function longRunRearPaceMultiplierV372(vehicle,mode=activeRaceModeV345()){
@@ -9492,13 +9455,10 @@ function activeRaceModeV345(){
 }
 function raceFormBiasV345(vehicle,snapshot=activeRaceSnapshotV187){
   const mode=String(snapshot?.raceMode||'NORMAL').toUpperCase()==='FAST'?'FAST':'NORMAL';
-  // A short three-lap race must not spread the field before any physical attack
-   // can develop. Keep distinct driver form without widening the FAST grid train.
-   const amplitude=mode==='FAST'?FIELD_SPREAD_BALANCE_V352.fastFormAmplitude:FIELD_SPREAD_BALANCE_V352.normalFormAmplitude;
-   const effectiveAmplitude=mode==='FAST'?Math.min(amplitude,TYRE_THERMAL_BALANCE_V388.fastFormAmplitudeCap):amplitude;
+  const amplitude=mode==='FAST'?FIELD_SPREAD_BALANCE_V352.fastFormAmplitude:FIELD_SPREAD_BALANCE_V352.normalFormAmplitude;
   const seed=hashDriverV189([String(snapshot?.createdAt||'race'),String(snapshot?.trackId||snapshot?.track?.id||'track'),String(vehicle?.id||vehicle?.driver?.contactId||vehicle?.driver?.name||'driver'),'race-form-v345'].join('|'));
   const unit=(seed%2001)/1000-1;
-  return Math.max(-effectiveAmplitude,Math.min(effectiveAmplitude,unit*effectiveAmplitude));
+  return Math.max(-amplitude,Math.min(amplitude,unit*amplitude));
 }
 function raceCompetitionConfigV345(){
   return RACE_COMPETITION_V345[activeRaceModeV345()]||RACE_COMPETITION_V345.NORMAL;
@@ -9509,8 +9469,7 @@ function frontChallengeBonusV345(index,gapMeters){
   const cfg=raceCompetitionConfigV345();
   const gap=Math.max(0,Number(gapMeters)||0);
   const proximity=clamp01V198(1-gap/Math.max(1,GAME_VARIABILITY_CONFIG_V303.maxGapMeters));
-  const fastPhysicalChallenge=activeRaceModeV345()==='FAST'?TYRE_THERMAL_BALANCE_V388.fastFrontChallengeScale:1;
-   return cfg.p2ChallengeKph*rankWeight*(.46+.54*proximity)*fastPhysicalChallenge;
+  return cfg.p2ChallengeKph*rankWeight*(.46+.54*proximity);
 }
 function gameVariabilityEligibleV303(vehicle){
   return Boolean(vehicle&&!vehicle.finished&&!vehicle.blueFlag&&!vehicle.trackBoundaryExceededV271&&String(vehicle.pitState||'TRACK')==='TRACK'&&!vehicle.pitRequested);
@@ -9612,10 +9571,6 @@ function applyGameVariabilityV303(stepMs){
     follower.positionCatchupBonusKphV314=catchup.bonusKph;
     const variabilityCapV345=GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph*fieldSpreadCatchupCapMultiplierV354();
     follower.variabilitySpeedBiasKphV309=Math.min(variabilityCapV345,requested);
-     // FAST has only three laps; give a real closing-speed opportunity when
-     // a challenger is already requesting one. Never modify race coordinates.
-     if(activeRaceModeV345()==='FAST')follower.variabilitySpeedBiasKphV309=
-       Math.min(variabilityCapV345*TYRE_THERMAL_BALANCE_V388.fastCompetitionCapScale,requested);
     follower.variabilityBiasUntilV309=now+OVERTAKE_FLOW_CONFIG_V309.variabilityHoldMs;
     follower.battleSpeedBiasKph=combinedBattleBiasV309(follower,String(follower.battleState||'FOLLOWING'),now);
     if(gapMeters<=GAME_VARIABILITY_CONFIG_V303.attackGapMeters*competitionV345.attackGap&&!follower.pitRequested){
@@ -9815,9 +9770,7 @@ function finishSpreadBreakdownV373(result){
 function qaDynamicsPlaytestV348(){
   if(f1ScreenStateV185!=='SETUP')return {version:VERSION348,allPass:false,reason:'requires-setup'};
   const normal=runAcceleratedEngineRaceV240('majoku-ring-v1',{drivers:8,laps:10,runIndex:348,stepMs:80,maxSteps:50000,raceMode:'NORMAL'});
-  // FAST must test a seeded Gacha-style starting order, rather than a fixed
-  // QA driver index order that can lock every naturally quicker car in front.
-  const fast=runAcceleratedEngineRaceV240('majoku-ring-v1',{drivers:8,laps:3,runIndex:348,stepMs:80,maxSteps:30000,raceMode:'FAST',gridMode:'SEEDED_SHUFFLE'});
+  const fast=runAcceleratedEngineRaceV240('majoku-ring-v1',{drivers:8,laps:3,runIndex:348,stepMs:80,maxSteps:30000,raceMode:'FAST'});
   const pitRequests=(normal.finalVehicleStates||[]).flatMap(vehicle=>(vehicle.pitRequestHistoryV348||[]).map(row=>({id:vehicle.id,...row})));
   const pitRequestLaps=[...new Set(pitRequests.map(row=>Number(row.lap)||0).filter(Boolean))].sort((a,b)=>a-b);
   const unsafePitRequests=pitRequests.filter(row=>Number(row.tyreRemaining)>=TYRE_DYNAMICS_V343.pitSafeRemainingRatio);

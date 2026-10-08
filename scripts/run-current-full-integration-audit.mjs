@@ -383,7 +383,6 @@ import {runPhase384F1SafeThirdPartyPitAudit} from './run-phase384-f1-safe-third-
 import {runPhase385F1SafePaceReleaseAudit} from './run-phase385-f1-safe-pace-release-audit.mjs';
 import {runPhase386F1LiveQualityAudit} from './run-phase386-f1-live-quality-audit.mjs';
 import {runPhase387F1ThirdPartyRetryAudit} from './run-phase387-f1-third-party-retry-audit.mjs';
-import {runPhase388F1TyreThermalAudit} from './run-phase388-f1-tyre-thermal-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2824,6 +2823,5 @@ export function runPhase384FullIntegrationAudit(){const previous=runPhase383Full
 export function runPhase385FullIntegrationAudit(){const previous=runPhase384FullIntegrationAudit(),current=runPhase385F1SafePaceReleaseAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 385: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 385: '+x)];return {phase:385,previous,current,issues,warnings,pass:!issues.length};}
 export function runPhase386FullIntegrationAudit(){const previous=runPhase385FullIntegrationAudit(),current=runPhase386F1LiveQualityAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 386: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 386: '+x)];return {phase:386,previous,current,issues,warnings,pass:!issues.length};}
 export function runPhase387FullIntegrationAudit(){const previous=runPhase386FullIntegrationAudit(),current=runPhase387F1ThirdPartyRetryAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 387: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 387: '+x)];return {phase:387,previous,current,issues,warnings,pass:!issues.length};}
-export function runPhase388FullIntegrationAudit(){const previous=runPhase387FullIntegrationAudit(),current=runPhase388F1TyreThermalAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 388: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 388: '+x)];return {phase:388,previous,current,issues,warnings,pass:!issues.length};}
-export function runCurrentFullIntegrationAudit(){return runPhase388FullIntegrationAudit();}
+export function runCurrentFullIntegrationAudit(){return runPhase387FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
