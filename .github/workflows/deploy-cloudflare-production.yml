@@ -322,6 +322,7 @@ jobs:
           node --check scripts/run-phase375-f1-angle-corner-physics-audit.mjs
           node --check scripts/run-phase376-f1-multicar-corridor-audit.mjs
           node --check scripts/run-phase377-f1-marker-overlap-monitor-audit.mjs
+          node --check scripts/run-phase378-f1-projected-safe-following-audit.mjs
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
@@ -1204,6 +1205,9 @@ jobs:
           grep -Fq "function trackInteractionEligibleV369(" /tmp/f1-racing-v1-phase187.js
           grep -Fq "function clearPitInteractionStateV369(" /tmp/f1-racing-v1-phase187.js
           grep -Fq "clearPitInteractionStateV369(vehicle,raceMotionV189.vehicles,'PIT_ENTRY')" /tmp/f1-racing-v1-phase187.js
+          echo '[phase378] F1 projected marker footprint safe physical headway'
+          grep -Fq "window.__mwsF1RacingV378=VERSION378;" /tmp/f1-racing-v1-phase187.js
+          grep -Fq "function projectedSafeGapMetersV378(" /tmp/f1-racing-v1-phase187.js
           echo '[phase377] F1 actual visible marble center-distance overlap monitor'
           grep -Fq "window.__mwsF1RacingV377=VERSION377;" /tmp/f1-racing-v1-phase187.js
           grep -Fq "function measureActualMarkerOverlapsV377(" /tmp/f1-racing-v1-phase187.js
