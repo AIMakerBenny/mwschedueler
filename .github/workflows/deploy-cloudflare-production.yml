@@ -329,6 +329,7 @@ jobs:
           node --check scripts/run-phase382-f1-corner-retiming-audit.mjs
           node --check scripts/run-phase383-f1-committed-pass-line-audit.mjs
           node --check scripts/run-phase384-f1-safe-third-party-pit-audit.mjs
+          node --check scripts/run-phase385-f1-safe-pace-release-audit.mjs
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
@@ -1211,6 +1212,8 @@ jobs:
           grep -Fq "function trackInteractionEligibleV369(" /tmp/f1-racing-v1-phase187.js
           grep -Fq "function clearPitInteractionStateV369(" /tmp/f1-racing-v1-phase187.js
           grep -Fq "clearPitInteractionStateV369(vehicle,raceMotionV189.vehicles,'PIT_ENTRY')" /tmp/f1-racing-v1-phase187.js
+          echo '[phase385] safety limited traction recovery'
+          grep -Fq 'window.__mwsF1RacingV385=VERSION385;' /tmp/f1-racing-v1-phase187.js
           echo '[phase384] safe third party lock and pit lane rejoin'
           grep -Fq 'window.__mwsF1RacingV384=VERSION384;' /tmp/f1-racing-v1-phase187.js
           echo '[phase383] stable overtaking lane and 3-wide entry limit'

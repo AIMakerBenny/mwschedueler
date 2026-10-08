@@ -170,6 +170,7 @@ const VERSION381='phase381-neighbor-braking-safety';
 const VERSION382='phase382-angle-braking-midcorner-acceleration';
 const VERSION383='phase383-committed-pass-line-capacity';
 const VERSION384='phase384-safe-third-party-and-pit-rejoin';
+const VERSION385='phase385-safe-acceleration-release';
 const interactionSnapshotStateV368={snapshot:null,builds:0,lastSimTimeMs:0};
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
@@ -7417,6 +7418,36 @@ function fieldPaceRetentionMultiplierV356(vehicle){
   const pct=clamp01V198(Number(vehicle?.positionCatchupPctV314)||0);
   return 1+pct*FIELD_SPREAD_BALANCE_V352.paceRetentionScale;
 }
+
+const PACE_RELEASE_V385=Object.freeze({releaseMs:2500,maxAccelerationBoost:.12,minimumTrafficSpeedKph:60});
+function safePaceReleaseV385(vehicle,ms,safety,phase){
+ const unsafe=Boolean(safety?.spacing?.active||safety?.proximity?.active||safety?.neighbor?.active||
+ safety?.pitRejoin?.active||safety?.incident?.active||safety?.boundaryOffTrack);
+ if(unsafe){vehicle.lastSafetyHoldMsV385=ms;vehicle.safetyHoldStepsV385=(Number(vehicle.safetyHoldStepsV385)||0)+1;
+   return {active:false,multiplier:1,reason:'SAFETY'};}
+ const elapsed=ms-(Number(vehicle.lastSafetyHoldMsV385)||0);
+ if(!(Number(vehicle.lastSafetyHoldMsV385)>0&&elapsed>=0&&elapsed<PACE_RELEASE_V385.releaseMs&&
+   ['STRAIGHT','APPROACH','EXIT'].includes(String(phase))&&Number(vehicle.speedKph)>=PACE_RELEASE_V385.minimumTrafficSpeedKph))
+   return {active:false,multiplier:1,reason:'NORMAL'};
+ const ratio=1-elapsed/PACE_RELEASE_V385.releaseMs;
+ const multiplier=1+PACE_RELEASE_V385.maxAccelerationBoost*Math.max(0,Math.min(1,ratio));
+ vehicle.safetyReleaseStepsV385=(Number(vehicle.safetyReleaseStepsV385)||0)+1;
+ return {active:true,multiplier,reason:'CLEAR_ACCELERATION_V385',elapsed};
+}
+function qaSafePaceReleaseV385(){
+ const v={id:'v385',speedKph:170};
+ const held=safePaceReleaseV385(v,1000,{neighbor:{active:true}},'STRAIGHT');
+ const released=safePaceReleaseV385(v,1200,{},'EXIT');
+ const blocked=safePaceReleaseV385(v,1250,{pitRejoin:{active:true}},'EXIT');
+ const expired=safePaceReleaseV385(v,4500,{},'STRAIGHT');
+ const integrated=String(simulateVehicleDynamicsV196).includes('safePaceReleaseV385(')&&String(simulateVehicleDynamicsV196).includes('paceReleaseV385.multiplier');
+ return {version:VERSION385,held,released,blocked,expired,integrated,
+ allPass:held.multiplier===1&&released.multiplier>1&&blocked.multiplier===1&&
+ expired.multiplier===1&&integrated};
+}
+window.mwsF1QaSafePaceReleaseV385=qaSafePaceReleaseV385;
+window.__mwsF1RacingV385=VERSION385;
+
 function longitudinalResponseV375(track,currentKph,errorKph,phase,tyreGrip=1){
   const cfg=CORNER_PHYSICS_V375,refAccel=Math.max(1,Number(track?.geometry?.referenceAccelMps2)||8.5);
   const refBrake=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20);
@@ -7521,7 +7552,8 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   // let brakeBase=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20)*tyreGrip*incidentState.brakeFactor;
   // *tyreGrip*incidentState.brakeFactor;
   const longitudinalV375=longitudinalResponseV375(track,current,maxTarget-current,phase,tyreGrip);
-  const accelBase=longitudinalV375.accel*Math.max(1,Number(chaseBurstEffect.accelMultiplier)||1);
+  const paceReleaseV385=safePaceReleaseV385(vehicle,Number(simClockV192.simTimeMs)||0,{spacing:spacingControlV319,proximity:proximityV376,neighbor:neighborSafetyV381,pitRejoin:pitRejoinV384,incident:incidentState,boundaryOffTrack:boundaryStateV271.offTrack},phase);
+  const accelBase=longitudinalV375.accel*Math.max(1,Number(chaseBurstEffect.accelMultiplier)||1)*paceReleaseV385.multiplier;
   let brakeBase=longitudinalV375.brake*incidentState.brakeFactor;
   let throttle=0,brake=0,accelMps2=0;
   const cornerRecoveryV351=Boolean(vehicle.cornerRecoveryActiveV351);
