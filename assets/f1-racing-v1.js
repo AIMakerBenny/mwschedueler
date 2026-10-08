@@ -1137,7 +1137,7 @@ const INCIDENT_CONFIG_V204=Object.freeze({
 });
 const TYRE_COMPOUNDS_V203=Object.freeze({SOFT:Object.freeze({code:'S',gripBias:1.01,wearPerLap:0.115,heatFactor:1.10,idealSurface:0.60}),MEDIUM:Object.freeze({code:'M',gripBias:1.00,wearPerLap:0.090,heatFactor:1.00,idealSurface:0.56}),HARD:Object.freeze({code:'H',gripBias:0.99,wearPerLap:0.068,heatFactor:0.90,idealSurface:0.52})});
 const TYRE_CONFIG_V203=Object.freeze({ambientSurface:0.42,ambientCarcass:0.44,minGrip:0.82,maxGrip:1.03});
-const TYRE_THERMAL_BALANCE_V388=Object.freeze({heatGainPerSecond:.065,ambientRecoveryPerSecond:.16});
+const TYRE_THERMAL_BALANCE_V388=Object.freeze({heatGainPerSecond:.065,ambientRecoveryPerSecond:.16,fastFormAmplitudeCap:.0165,fastRearPaceScale:.85});
 const DEFAULT_TOTAL_LAPS_V190=10;
 const F1_LINE_MODES_V197=Object.freeze(['IDEAL','ATTACK_INSIDE','DEFENSIVE_INSIDE','OUTSIDE','PIT_LINE']);
 const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
@@ -7728,7 +7728,9 @@ function naturalRacePaceMultiplierV359(vehicle,mode=activeRaceModeV345()){
   const rankedBoost=Math.max(0,Number(vehicle?.rankedFieldPaceBoostV357)||0)*NATURAL_RACE_PACE_V359.rankedBoostScale;
   const catchupBoost=clamp01V198(Number(vehicle?.positionCatchupPctV314)||0)*NATURAL_RACE_PACE_V359.catchupBoostScale;
   const modeScale=String(mode||'NORMAL').toUpperCase()==='FAST'?NATURAL_RACE_PACE_V359.fastModeScale:1;
-  return 1+(rankedBoost+catchupBoost)*modeScale;
+  const liveScale=String(mode||'NORMAL').toUpperCase()==='FAST'
+    ?Math.max(modeScale,TYRE_THERMAL_BALANCE_V388.fastRearPaceScale):modeScale;
+   return 1+(rankedBoost+catchupBoost)*liveScale;
 }
 
 function longRunRearPaceMultiplierV372(vehicle,mode=activeRaceModeV345()){
@@ -9490,7 +9492,9 @@ function activeRaceModeV345(){
 }
 function raceFormBiasV345(vehicle,snapshot=activeRaceSnapshotV187){
   const mode=String(snapshot?.raceMode||'NORMAL').toUpperCase()==='FAST'?'FAST':'NORMAL';
-  const amplitude=mode==='FAST'?FIELD_SPREAD_BALANCE_V352.fastFormAmplitude:FIELD_SPREAD_BALANCE_V352.normalFormAmplitude;
+  // A short three-lap race must not spread the field before any physical attack
+   // can develop. Keep distinct driver form without widening the FAST grid train.
+   const amplitude=mode==='FAST'?Math.min(FIELD_SPREAD_BALANCE_V352.fastFormAmplitude,TYRE_THERMAL_BALANCE_V388.fastFormAmplitudeCap):FIELD_SPREAD_BALANCE_V352.normalFormAmplitude;
   const seed=hashDriverV189([String(snapshot?.createdAt||'race'),String(snapshot?.trackId||snapshot?.track?.id||'track'),String(vehicle?.id||vehicle?.driver?.contactId||vehicle?.driver?.name||'driver'),'race-form-v345'].join('|'));
   const unit=(seed%2001)/1000-1;
   return Math.max(-amplitude,Math.min(amplitude,unit*amplitude));
