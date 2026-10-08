@@ -28,7 +28,15 @@ export function runPhase206F1PitStrategyAudit(){
     'window.mwsF1GetPitStrategyStatesV206=getPitStrategyStatesV206;',
     'window.mwsF1QaPitStrategyV206=qaPitStrategyV206;',
     'window.__mwsF1RacingV206=VERSION206;'
-  ])if(!racing.includes(token))issues.push('Phase 206 runtime missing: '+token);
+  ])if(!racing.includes(token)){
+    const tacticalCover=token==="decision='COVER_UNDERCUT';reason='COVER_RIVAL_PIT';"&&
+      racing.includes("decision=tacticalV391.approve?'COVER_UNDERCUT':'GO_LONG';")&&
+      racing.includes("reason=tacticalV391.approve?'COVER_RIVAL_PIT':'COVER_PIT_VALUE_INSUFFICIENT_V391';");
+    const tacticalUndercut=token==="decision='UNDERCUT';reason='ATTACK_CAR_AHEAD';"&&
+      racing.includes("decision=tacticalV391.approve?'UNDERCUT':'GO_LONG';")&&
+      racing.includes("reason=tacticalV391.approve?'ATTACK_CAR_AHEAD':'UNDERCUT_PIT_VALUE_INSUFFICIENT_V391';");
+    if(!tacticalCover&&!tacticalUndercut)issues.push('Phase 206 runtime missing: '+token);
+  }
   // Accept the original Phase 206 branches or the Phase 391 economic approval
   // branches, but require both the real decisions and their exact reasons.
   for(const [oldBranch,newBranch] of [
