@@ -9,7 +9,8 @@ export function runPhase394F1LiveGridClearanceAudit(){
     'measureActualMarkerOverlapsV377(rendered,MARKER_OVERLAP_MONITOR_V377.maxZoom)'])
     if(!core.includes(token))issues.push('missing runtime '+token);
   if(!diag.includes('Phase 394 actual starting grid marker clearance Chromium QA failed')||
-    !diag.includes('liveGridV394:liveGrid394||null'))issues.push('missing Chromium test');
+    !diag.includes('window.__mwsF1LatestGridQaV394=liveGrid394')||
+    !diag.includes('liveGridV394:window.__mwsF1LatestGridQaV394||null'))issues.push('missing Chromium test');
   if(!cum.includes('runPhase394F1LiveGridClearanceAudit()')||
     !cum.includes('runPhase394FullIntegrationAudit()'))issues.push('missing cumulative audit');
   if(!core.includes("if(engineQaV240.active)return -(Math.max(0,Number(index)||0)*Math.min(.008,.08/Math.max(1,Number(count)||1)));"))
