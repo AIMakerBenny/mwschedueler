@@ -5,7 +5,7 @@ export function runPhase386F1LiveQualityAudit(){
  diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8'),
  wf=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8'),
  cum=fs.readFileSync('scripts/run-current-full-integration-audit.mjs','utf8');
- for(const x of ["const VERSION386='phase386-live-only-overlap-gate';",'function recordQualityDynamicsV386(','function recordQualityFrameV386(','function localCurveClearanceMetersV386(','window.mwsF1QaFinalLiveQualityV386=qaFinalLiveQualityV386;','recordQualityFrameV386(atMax,atCurrent);','const curveMeters=localCurveClearanceMetersV386(track,path,ringDiameterSvg);'])if(!core.includes(x))issues.push('missing '+x);
+ for(const x of ["const VERSION386='phase386-live-only-overlap-gate';",'function recordQualityDynamicsV386(','function recordQualityFrameV386(','function localCurveClearanceMetersV386(','window.mwsF1QaFinalLiveQualityV386=qaFinalLiveQualityV386;','recordQualityFrameV386(atMax,atCurrent,rendered);','const curveMeters=localCurveClearanceMetersV386(track,path,ringDiameterSvg);'])if(!core.includes(x))issues.push('missing '+x);
  if(!diag.includes('Phase 386 actual LIVE maximum-zoom marker overlap remains')||!diag.includes('finalLiveQualityV386:finalLive386||null'))issues.push('strict Chromium LIVE quality gate missing');
  if(!wf.includes("echo '[phase386]")||!cum.includes('runPhase386FullIntegrationAudit'))issues.push('audit integration missing');
  if(!core.includes('report.peakMaxZoomPairs===0'))issues.push('zero-overlap criterion absent');
