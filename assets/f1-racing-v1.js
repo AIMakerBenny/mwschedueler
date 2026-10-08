@@ -4843,7 +4843,7 @@ function physicalProximityControlV376(vehicle,ahead,track=activeRaceSnapshotV187
   return {active:true,capKph,gap,intended,visual,sameCorridor,safeGap,controlStart,reason:deficit>0?'PROXIMITY_EMERGENCY_V376':'PROXIMITY_APPROACH_V376'};
 }
 
-const NEIGHBOR_BRAKING_V381=Object.freeze({scanMeters:155,brakeMps2:27,reactionSeconds:.85,leadMeters:16,extraSafetyMeters:5,underGapBrakeKph:16});
+const NEIGHBOR_BRAKING_V381=Object.freeze({scanMeters:310,brakeMps2:24,reactionSeconds:1.15,leadMeters:36,extraSafetyMeters:9,underGapBrakeKph:20});
 function neighborBrakingPairV381(vehicle,peer,track){
   if(!vehicle||!peer||vehicle===peer||vehicle.finished||peer.finished||
     String(vehicle.pitState||'TRACK')!=='TRACK'||String(peer.pitState||'TRACK')!=='TRACK')return {active:false};
@@ -10190,8 +10190,8 @@ window.mwsF1QaUiSpacingBattleV319=qaUiSpacingBattleV319;
 window.__mwsF1RacingV319=VERSION319;
 
 
-const EMERGENCY_BYPASS_V386=Object.freeze({scanMeters:170,minimumSpeedKph:125,slowCarMaxKph:90,
- closingKph:88,brakeMps2:34,brakeMarginMeters:95,clearanceMeters:2.65,sideScanMeters:31,holdMs:2500});
+const EMERGENCY_BYPASS_V386=Object.freeze({scanMeters:315,minimumSpeedKph:125,slowCarMaxKph:90,
+ closingKph:88,brakeMps2:27,brakeMarginMeters:145,clearanceMeters:2.65,sideScanMeters:44,holdMs:2500});
 function emergencyLaneChoiceV386(vehicle,track,peers=raceMotionV189.vehicles){
  if(!vehicle||vehicle.finished||String(vehicle.pitState||'TRACK')!=='TRACK'||(vehicle.pitRequested&&String(vehicle.racingLineMode)==='PIT_LINE'))return {active:false,reason:'INELIGIBLE'};
  const len=Math.max(1,Number(track?.lengthMeters)||4500),ownKph=Number(vehicle.speedKph)||0;
