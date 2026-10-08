@@ -3897,7 +3897,11 @@ function updateTyreSystemV203(vehicle,stepMs,phase){
   const heatInput=(brakeLoad*.34+throttleLoad*.13+cornerLoad*.22+dirtyHeat*.18)*spec.heatFactor;
   surface+=heatInput*dt*.18;
   // Airflow removes heat during motion instead of leaving every compound permanently overheated.
-  surface+=(TYRE_CONFIG_V203.ambientSurface-surface)*dt*tyreSurfaceCoolingV392(speedKph);
+  // Preserve baseline tyre feel near the ideal range; activate extra airflow cooling only as the surface overheats.
+  const airflowCoolingV392=tyreSurfaceCoolingV392(speedKph);
+  const coolingExcessV392=Math.max(0,surface-(spec.idealSurface+.06));
+  const coolingBlendV392=Math.min(1,coolingExcessV392/.16);
+  surface+=(TYRE_CONFIG_V203.ambientSurface-surface)*dt*(.035+(airflowCoolingV392-.035)*coolingBlendV392);
   surface=Math.max(0,Math.min(1,surface));
   carcass+=(surface-carcass)*dt*.075;
   carcass+=(TYRE_CONFIG_V203.ambientCarcass-carcass)*dt*.012;
