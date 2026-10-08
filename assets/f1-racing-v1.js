@@ -4882,6 +4882,33 @@ function qaPhysicalClosureV386(){
 }
 window.mwsF1QaPhysicalClosureV386=qaPhysicalClosureV386;
 
+
+// Physical speed continuity protects actual track motion from one-step speed resets.
+// Legitimate PIT_BOX and finished state transitions are excluded.
+function enforceTrackSpeedContinuityV386(vehicle,stepMs){
+ if(!vehicle||vehicle.finished||String(vehicle.pitState||'TRACK')!=='TRACK')return {corrected:false,reason:'INELIGIBLE'};
+ const prior=Number(vehicle.lastTrackPhysicsSpeedKphV386);
+ if(!Number.isFinite(prior)||prior<45)return {corrected:false,reason:'NO_PREVIOUS_SPEED'};
+ const current=Math.max(0,Number(vehicle.speedKph)||0);
+ const maximumDropKph=39*Math.max(0,Number(stepMs)||0)/1000*3.6+1.5;
+ if(current>=prior-maximumDropKph)return {corrected:false,reason:'CONTINUOUS'};
+ const capped=Math.max(0,prior-maximumDropKph);
+ vehicle.speedKph=capped;
+ vehicle.speedContinuityCorrectionsV386=(Number(vehicle.speedContinuityCorrectionsV386)||0)+1;
+ return {corrected:true,from:current,to:capped,prior,maximumDropKph,reason:'UNPHYSICAL_TRACK_SPEED_RESET'};
+}
+function qaPhysicalSpeedContinuityV386(){
+ const stuck={pitState:'TRACK',speedKph:0,lastTrackPhysicsSpeedKphV386:270};
+ const detected=enforceTrackSpeedContinuityV386(stuck,20);
+ const ordinary=enforceTrackSpeedContinuityV386({pitState:'TRACK',speedKph:268,lastTrackPhysicsSpeedKphV386:270},20);
+ const box=enforceTrackSpeedContinuityV386({pitState:'PIT_BOX',speedKph:0,lastTrackPhysicsSpeedKphV386:270},20);
+ const finished=enforceTrackSpeedContinuityV386({pitState:'TRACK',speedKph:0,finished:true,lastTrackPhysicsSpeedKphV386:270},20);
+ const integrated=String(simulateVehicleDynamicsV196).includes('enforceTrackSpeedContinuityV386(vehicle,stepMs)');
+ const noWarp=!/\b(?:raceProgress|progress|travel)\s*=/.test(String(enforceTrackSpeedContinuityV386));
+ return {detected,ordinary,box,finished,integrated,noWarp,allPass:detected.corrected&&stuck.speedKph>260&&!ordinary.corrected&&!box.corrected&&!finished.corrected&&integrated&&noWarp};
+}
+window.mwsF1QaPhysicalSpeedContinuityV386=qaPhysicalSpeedContinuityV386;
+
 const NEIGHBOR_BRAKING_V381=Object.freeze({scanMeters:310,brakeMps2:24,reactionSeconds:1.15,leadMeters:36,extraSafetyMeters:9,underGapBrakeKph:20});
 function neighborBrakingPairV381(vehicle,peer,track){
   if(!vehicle||!peer||vehicle===peer||vehicle.finished||peer.finished||
@@ -7580,10 +7607,11 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const previousRaceProgress=Number(vehicle.raceProgress)||0;
   const pitControl=updatePitPreStepV205(vehicle,stepMs);
   if(pitControl.stationary){
-    vehicle.speedKph=0;vehicle.targetSpeedKph=0;vehicle.throttle=0;vehicle.brake=1;vehicle.accelerationMps2=0;vehicle.gear=1;vehicle.rpm=8500;
+    vehicle.speedKph=0;vehicle.lastTrackPhysicsSpeedKphV386=0;vehicle.targetSpeedKph=0;vehicle.throttle=0;vehicle.brake=1;vehicle.accelerationMps2=0;vehicle.gear=1;vehicle.rpm=8500;
     return true;
   }
-  const targetData=getSpeedTargetAtProgressV195(vehicle.progress);
+  if(!engineQaV240.active)enforceTrackSpeedContinuityV386(vehicle,stepMs);
+   const targetData=getSpeedTargetAtProgressV195(vehicle.progress);
   const phaseInfoV270=getCornerPhaseAtProgressV194(vehicle.progress);
   const phase=phaseInfoV270?.phase||'STRAIGHT';
   const baseTarget=phaseSpeedTargetV343(vehicle,targetData,phaseInfoV270);
@@ -7718,6 +7746,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const avgMps=((current+nextKph)/2)/3.6;
   const distanceMeters=avgMps*dt;
   vehicle.speedKph=nextKph;
+   vehicle.lastTrackPhysicsSpeedKphV386=nextKph;
   if(phaseInfoV270?.corner&&String(vehicle.pitState||'TRACK')==='TRACK'&&Number(vehicle.pitWarmupRemainingLaps||0)<=.001&&Number(vehicle.cornerObservedEntryKphV353)>=80&&nextKph>0){
     const classV351=cornerClassV343(phaseInfoV270.corner);
     vehicle.cornerMinSpeedByClassV351=vehicle.cornerMinSpeedByClassV351||{};
