@@ -1440,6 +1440,8 @@ try{
     assert(behaviorTelemetry380?.allPass===true,'Phase 380 telemetry QA failed: '+JSON.stringify(behaviorTelemetry380));
     const overlapMonitor377=window.mwsF1QaActualMarkerOverlapsV377?.();
     assert(overlapMonitor377?.allPass===true,'Phase 377 visible marker overlap detector QA failed: '+JSON.stringify(overlapMonitor377));
+    const tyreBalance388=window.mwsF1QaTyreThermalBalanceV388?.();
+    assert(tyreBalance388?.allPass===true,'Phase 388 compound thermal Chromium QA failed: '+JSON.stringify(tyreBalance388));
     const thirdRetry387=window.mwsF1QaThirdPartyRetryV387?.();
     assert(thirdRetry387?.allPass===true,'Phase 387 third-party retry Chromium QA failed: '+JSON.stringify(thirdRetry387));
     const multicar376=window.mwsF1QaMulticarCorridorV376?.();
@@ -1567,6 +1569,8 @@ try{
 
     const dynamicsPlaytest348=window.mwsF1QaDynamicsPlaytestV348?.();
     assert(dynamicsPlaytest348?.allPass===true,'Phase 348 real dynamics playtest QA failed: '+JSON.stringify(dynamicsPlaytest348));
+    const earlyHeatV388=(dynamicsPlaytest348.firstPitByDriver||[]).filter(x=>Number(x.first?.lap)<=4&&Number(x.first?.thermalDeg)>=.95);
+    assert(earlyHeatV388.length===0,'Phase 388 ten-lap early thermal saturation: '+JSON.stringify(earlyHeatV388));
     assert(Number(dynamicsPlaytest348?.normal?.finishSpreadSeconds)<=Number(window.FIELD_SPREAD_BALANCE_V352?.maxFinishSpreadSeconds||48),'Phase 352 field spread remains excessive: '+JSON.stringify(dynamicsPlaytest348?.normal));
     assert(dynamicsPlaytest348?.cornerSpeedFloorPass===true&&dynamicsPlaytest348?.cornerRecoveryPass===true,'Phase 351 real corner speed/recovery telemetry failed: '+JSON.stringify({normal:dynamicsPlaytest348?.normal?.corner,fast:dynamicsPlaytest348?.fast?.corner}));
     assert(Number(dynamicsPlaytest348?.normal?.finishSpreadSeconds)<=Number(naturalPace359?.config?.maxNormalFinishSpreadSeconds||43.5),'Phase 359 normal field spread still excessive: '+JSON.stringify(dynamicsPlaytest348?.normal));
@@ -1669,6 +1673,7 @@ try{
       cornerPhysicsV375:cornerPhysics375||null,
       multicarV376:multicar376||null,
       thirdPartyRetryV387:thirdRetry387||null,
+      tyreBalanceV388:tyreBalance388||null,
       overlapMonitorV377:overlapMonitor377||null,
       behaviorTelemetryV380:behaviorTelemetry380||null,
       neighborBrakingV381:neighborBraking381||null,

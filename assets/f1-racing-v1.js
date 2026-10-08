@@ -1137,6 +1137,7 @@ const INCIDENT_CONFIG_V204=Object.freeze({
 });
 const TYRE_COMPOUNDS_V203=Object.freeze({SOFT:Object.freeze({code:'S',gripBias:1.01,wearPerLap:0.115,heatFactor:1.10,idealSurface:0.60}),MEDIUM:Object.freeze({code:'M',gripBias:1.00,wearPerLap:0.090,heatFactor:1.00,idealSurface:0.56}),HARD:Object.freeze({code:'H',gripBias:0.99,wearPerLap:0.068,heatFactor:0.90,idealSurface:0.52})});
 const TYRE_CONFIG_V203=Object.freeze({ambientSurface:0.42,ambientCarcass:0.44,minGrip:0.82,maxGrip:1.03});
+const TYRE_THERMAL_BALANCE_V388=Object.freeze({heatGainPerSecond:.065,ambientRecoveryPerSecond:.16});
 const DEFAULT_TOTAL_LAPS_V190=10;
 const F1_LINE_MODES_V197=Object.freeze(['IDEAL','ATTACK_INSIDE','DEFENSIVE_INSIDE','OUTSIDE','PIT_LINE']);
 const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
@@ -3889,8 +3890,8 @@ function updateTyreSystemV203(vehicle,stepMs,phase){
   let surface=Math.max(0,Math.min(1,Number(vehicle.tyreSurfaceTemp)||.5));
   let carcass=Math.max(0,Math.min(1,Number(vehicle.tyreCarcassTemp)||.5));
   const heatInput=(brakeLoad*.34+throttleLoad*.13+cornerLoad*.22+dirtyHeat*.18)*spec.heatFactor;
-  surface+=heatInput*dt*.18;
-  surface+=(TYRE_CONFIG_V203.ambientSurface-surface)*dt*.035;
+  surface+=heatInput*dt*TYRE_THERMAL_BALANCE_V388.heatGainPerSecond;
+  surface+=(TYRE_CONFIG_V203.ambientSurface-surface)*dt*TYRE_THERMAL_BALANCE_V388.ambientRecoveryPerSecond;
   surface=Math.max(0,Math.min(1,surface));
   carcass+=(surface-carcass)*dt*.075;
   carcass+=(TYRE_CONFIG_V203.ambientCarcass-carcass)*dt*.012;
@@ -3923,6 +3924,40 @@ function updateTyreSystemV203(vehicle,stepMs,phase){
   vehicle.tyreStrategyPressure=clamp01V198(vehicle.tyreWear*.55+vehicle.tyreThermalDeg*.20+vehicle.tyreGraining*.15+vehicle.tyreFlatSpot*.35);
   return {compound:vehicle.tyreCompound,ageLaps:vehicle.tyreAgeLaps,wear:vehicle.tyreWear,surfaceTemp:surface,carcassTemp:carcass,grip:vehicle.tyreGrip,thermalDeg:vehicle.tyreThermalDeg,graining:vehicle.tyreGraining,flatSpot:vehicle.tyreFlatSpot,strategyPressure:vehicle.tyreStrategyPressure};
 }
+
+function qaTyreThermalBalanceV388(){
+ const track=activeRaceSnapshotV187?.track;
+ if(!track)return {version:'phase388-tyre-thermal-balance',reason:'NO_ACTIVE_TRACK',allPass:false};
+ const length=Math.max(1,Number(track.lengthMeters)||4500),speedKph=225,dtMs=100;
+ const count=Math.ceil(4*length/(speedKph/3.6*dtMs/1000));
+ const cycle=['STRAIGHT','STRAIGHT','APPROACH','BRAKING','TURN_IN','APEX','EXIT'],states=[];
+ for(const compound of ['SOFT','MEDIUM','HARD']){
+  const v={id:'qa388-'+compound,driverProfile:{tyreManagement:75},tyreCompound:compound,
+   raceProgress:0,tyreStartRaceProgress:0,speedKph,tyreWear:0,tyreAgeLaps:0,
+   tyreSurfaceTemp:.5,tyreCarcassTemp:.5,tyreGrip:1,tyreThermalDeg:0,
+   tyreGraining:0,tyreFlatSpot:0,tyreWarmupFactor:1,tyreStrategyPressure:0,
+   lockupActiveMs:0,dirtyAirTyreHeatLoad:0,brake:0,throttle:.85};
+  for(let i=0;i<count;i++){
+   const phase=cycle[Math.floor(i/60)%cycle.length];
+   v.brake=phase==='BRAKING'?.80:phase==='TURN_IN'?.25:.05;
+   v.throttle=phase==='BRAKING'?0:phase==='EXIT'?.95:phase==='STRAIGHT'?.85:.50;
+   updateTyreSystemV203(v,dtMs,phase);
+   v.raceProgress+=speedKph/3.6*(dtMs/1000)/length;
+  }
+  states.push({compound,wear:v.tyreWear,remaining:1-v.tyreWear,grip:v.tyreGrip,
+   thermalDeg:v.tyreThermalDeg,surfaceTemp:v.tyreSurfaceTemp,laps:v.raceProgress,
+   apexKph:cornerApexTargetV351(300,{cornerClass:'medium',referenceApexKph:190},compound)});
+ }
+ const [s,m,h]=states;
+ const wearOrder=s.wear>m.wear&&m.wear>h.wear;
+ const cornerOrder=s.apexKph>m.apexKph&&m.apexKph>h.apexKph;
+ const unsaturated=states.every(x=>x.thermalDeg<.9&&x.grip>.82&&x.surfaceTemp<.85&&x.laps>=4);
+ return {version:'phase388-tyre-thermal-balance',states,wearOrder,cornerOrder,unsaturated,
+  allPass:wearOrder&&cornerOrder&&unsaturated};
+}
+window.mwsF1QaTyreThermalBalanceV388=qaTyreThermalBalanceV388;
+window.__mwsF1RacingV388='phase388-tyre-thermal-balance';
+
 function getTyreStatesV203(){
   return raceMotionV189.vehicles.map(vehicle=>({
     id:vehicle.id,name:vehicle.driver?.name||'',compound:vehicle.tyreCompound,
