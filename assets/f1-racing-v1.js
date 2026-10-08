@@ -1846,7 +1846,11 @@ function snapshotWithStartingGridV272(snapshot,round=0,previousOrder=[]){
   });
 }
 function gridStartOffsetV272(index,count){
-  return -(Math.max(0,Number(index)||0)*Math.min(.008,.08/Math.max(1,Number(count)||1)));
+  // The actual starting grid must clear unchanged SVG car rings at live camera zoom.
+  // Space real race positions only before the race begins; never alter live order.
+  const length=Math.max(1,Number(activeRaceSnapshotV187?.track?.lengthMeters)||4500);
+  const stepMeters=Math.max(65,Math.min(85,length*.018));
+  return -(Math.max(0,Number(index)||0)*stepMeters/length);
 }
 function gridAvatarMarkupV272(driver){
   const name=String(driver?.name||'Driver'),src=String(driver?.image||'').trim();
@@ -4892,10 +4896,30 @@ function physicalProximityControlV376(vehicle,ahead,track=activeRaceSnapshotV187
   return {active:true,capKph,gap,intended,visual,sameCorridor,safeGap,controlStart,reason:deficit>0?'PROXIMITY_EMERGENCY_V376':'PROXIMITY_APPROACH_V376'};
 }
 
+const liveCameraClearanceCacheV386={path:null,key:'',value:0};
+function liveCameraClearanceMetersV386(track=activeRaceSnapshotV187?.track){
+ const path=document.getElementById('f1RacingRaceTrackPathV188');
+ const length=Math.max(1,Number(track?.lengthMeters)||4500);
+ // The rings are largest in SVG units at low camera zoom. Reserve headway
+ // before a camera transition, without shrinking markers or moving vehicles.
+ const zoom=Math.max(1.35,Math.min(2.4,Number(raceCameraV216.zoom)||2.4));
+ const bucket=(Math.floor(zoom*10)/10).toFixed(1);
+ const key=String(track?.id||'')+'|'+length+'|'+bucket;
+ if(liveCameraClearanceCacheV386.path===path&&liveCameraClearanceCacheV386.key===key)return liveCameraClearanceCacheV386.value;
+ const pathLength=Number(path?.getTotalLength?.())||0;
+ const diameter=2*MARKER_OVERLAP_MONITOR_V377.ringRadiusSvg*raceMarkerScaleV245(Number(bucket))*MARKER_OVERLAP_MONITOR_V377.clearanceMultiplier;
+ const projected=pathLength>100?diameter*length/pathLength:0;
+ const curved=localCurveClearanceMetersV386(track,path,diameter);
+ const safe=Math.max(projectedSafeGapMetersV378(track)+5,Math.min(105,Math.max(projected*1.18,curved*1.10)));
+ liveCameraClearanceCacheV386.path=path;
+ liveCameraClearanceCacheV386.key=key;
+ liveCameraClearanceCacheV386.value=safe;
+ return safe;
+}
 function physicalClosureEnvelopeV386(vehicle,track,peers=raceMotionV189.vehicles){
  if(!vehicle||vehicle.finished||vehicle.pitState!=='TRACK')return {active:false,capKph:Infinity};
  const len=Math.max(1,Number(track?.lengthMeters)||4500),v=Math.max(0,Number(vehicle.speedKph)||0)/3.6;
- const baseSafe=projectedSafeGapMetersV378(track)+5;
+ const baseSafe=liveCameraClearanceMetersV386(track);
  let best={active:false,capKph:Infinity};
  for(const peer of peers||[]){
   if(!peer||peer===vehicle||peer.finished||peer.pitState!=='TRACK')continue;
@@ -4925,7 +4949,7 @@ function physicalClosureEnvelopeV386(vehicle,track,peers=raceMotionV189.vehicles
   // Reserve upstream room for a controllable deceleration, not a hard position clamp.
   const braking=extremeClosure?18:22;
   let capKph=3.6*Math.sqrt(lead*lead+2*braking*usable);
-  if(slowObstacle&&gap<safe)capKph=Math.min(capKph,Math.max(0,lead*3.6-Math.min(24,(safe-gap)*1.15)));
+  if(gap<safe)capKph=Math.min(capKph,Math.max(0,lead*3.6-Math.min(slowObstacle?24:12,(safe-gap)*(slowObstacle?1.15:.6))));
   if(capKph<v*3.6+.5&&capKph<best.capKph)best={active:true,capKph,peerId:String(peer.id),gap,reason:'PREDICTED_PHYSICAL_CLOSURE_V386'};
  }
  return best;
