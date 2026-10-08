@@ -4931,6 +4931,8 @@ function physicalClosureEnvelopeV386(vehicle,track,peers=raceMotionV189.vehicles
   const leadSpeed=Math.max(0,Number(peer.speedKph)||0)/3.6;
   const lead=Math.max(0,leadSpeed+Math.max(-39,Math.min(0,Number(peer.accelerationMps2)||0))*.35);
   const closing=Math.max(0,v-lead);
+  // Stationary pairs cannot close the gap and must not trigger a brake cap.
+  if(v<.5&&lead<.5)continue;
   // The physical gap must also cover the unchanged marker diameter at
   // the live camera zoom. Reserve extra headway only around slow obstacles.
   const slowObstacle=lead*3.6<=115&&v*3.6>=30&&gap<=250;
