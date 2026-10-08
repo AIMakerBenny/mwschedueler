@@ -236,8 +236,6 @@ const MARKER_OVERLAP_MONITOR_V377=Object.freeze({maxZoom:4.5,ringRadiusSvg:18,cl
 const markerOverlapStateV377={samples:0,maxZoomOverlaps:0,currentZoomOverlaps:0,peakMaxZoomOverlaps:0,peakCurrentZoomOverlaps:0,minMeasuredDistanceSvg:Infinity,latest:null};
 const PROJECTED_SAFE_GAP_V378=Object.freeze({minMeters:10,maxMeters:40,marginMultiplier:1.14,lookAheadMeters:15,relativeBrakeReactionSeconds:.55,maxClosingAllowanceKph:3.2,underGapBrakeKph:12,underGapBrakePerMeterKph:2.8});
 const projectedGapCacheV378={path:null,key:'',value:PROJECTED_SAFE_GAP_V378.minMeters};
-const FAST_PHYSICAL_CHALLENGE_V390=Object.freeze({closeGapMeters:35,attackMomentumMultiplier:1.22});
-function fastPhysicalChallengeV390(mode,gap,blocked){return String(mode)==='FAST'&&Number(gap)>=0&&Number(gap)<=FAST_PHYSICAL_CHALLENGE_V390.closeGapMeters&&!blocked?FAST_PHYSICAL_CHALLENGE_V390.attackMomentumMultiplier:1;}
 const MULTICAR_CORRIDOR_V376=Object.freeze({
   maxStraightAbreast:3,maxCornerAbreast:2,minimumSideClearanceMeters:2.65,
   sameLineMinGapMeters:9.0,approachControlGapMeters:20.0,nearGroupMeters:14,
@@ -1138,8 +1136,6 @@ const INCIDENT_CONFIG_V204=Object.freeze({
   oversteerThrottleFactor:0.48
 });
 const TYRE_COMPOUNDS_V203=Object.freeze({SOFT:Object.freeze({code:'S',gripBias:1.01,wearPerLap:0.115,heatFactor:1.10,idealSurface:0.60}),MEDIUM:Object.freeze({code:'M',gripBias:1.00,wearPerLap:0.090,heatFactor:1.00,idealSurface:0.56}),HARD:Object.freeze({code:'H',gripBias:0.99,wearPerLap:0.068,heatFactor:0.90,idealSurface:0.52})});
-const TYRE_THERMAL_BALANCE_V389=Object.freeze({baselineCoolingPerSec:.14,airflowCoolingPerSec:.085,airflowReferenceKph:300,heatGainPerSec:.18});
-function tyreCoolingRateV389(speedKph){const kph=Math.max(0,Number(speedKph)||0);return TYRE_THERMAL_BALANCE_V389.baselineCoolingPerSec+TYRE_THERMAL_BALANCE_V389.airflowCoolingPerSec*Math.min(1,kph/TYRE_THERMAL_BALANCE_V389.airflowReferenceKph)}
 const TYRE_CONFIG_V203=Object.freeze({ambientSurface:0.42,ambientCarcass:0.44,minGrip:0.82,maxGrip:1.03});
 const DEFAULT_TOTAL_LAPS_V190=10;
 const F1_LINE_MODES_V197=Object.freeze(['IDEAL','ATTACK_INSIDE','DEFENSIVE_INSIDE','OUTSIDE','PIT_LINE']);
@@ -3893,10 +3889,8 @@ function updateTyreSystemV203(vehicle,stepMs,phase){
   let surface=Math.max(0,Math.min(1,Number(vehicle.tyreSurfaceTemp)||.5));
   let carcass=Math.max(0,Math.min(1,Number(vehicle.tyreCarcassTemp)||.5));
   const heatInput=(brakeLoad*.34+throttleLoad*.13+cornerLoad*.22+dirtyHeat*.18)*spec.heatFactor;
-  surface+=heatInput*dt*TYRE_THERMAL_BALANCE_V389.heatGainPerSec;
-  // Heat dissipates into moving air; braking and corner loads still add heat.
-  // Apply the same physical cooling model in live and accelerated races.
-  surface+=(TYRE_CONFIG_V203.ambientSurface-surface)*dt*tyreCoolingRateV389(speedKph);
+  surface+=heatInput*dt*.18;
+  surface+=(TYRE_CONFIG_V203.ambientSurface-surface)*dt*.035;
   surface=Math.max(0,Math.min(1,surface));
   carcass+=(surface-carcass)*dt*.075;
   carcass+=(TYRE_CONFIG_V203.ambientCarcass-carcass)*dt*.012;
@@ -4801,48 +4795,6 @@ function qaThirdPartyRetryV387(){
 window.mwsF1QaThirdPartyRetryV387=qaThirdPartyRetryV387;
 window.__mwsF1RacingV387='phase387-third-party-attempt-renewal';
 
-// Phase 389: heat dissipation and traction are observable without altering race
-// progress, rank, marker size, collision clearance, or the 40% pit guard.
-function qaTyreThermalAndTractionV389(){
-  const track={geometry:{referenceAccelMps2:8.5,referenceBrakeDecelMps2:20}};
-  const cooler=[0,100,200,300].map(speed=>({speed,rate:tyreCoolingRateV389(speed)}));
-  const compounds=['SOFT','MEDIUM','HARD'].map(compound=>{
-    const spec=tyreCompoundSpecV203(compound);
-    const exit=longitudinalResponseV375(track,145,80,'EXIT',1,compound);
-    const entry=longitudinalResponseV375(track,280,-80,'BRAKING',1,compound);
-    return {compound,accel:exit.accel,brake:entry.brake,wearPerLap:spec.wearPerLap};
-  });
-  const [soft,medium,hard]=compounds;
-  const coolsAtSpeed=cooler.every((row,index)=>index===0||row.rate>cooler[index-1].rate);
-  const tractionOrder=soft.accel>medium.accel&&medium.accel>hard.accel;
-  const brakingOrder=soft.brake>medium.brake&&medium.brake>hard.brake;
-  const wearOrder=soft.wearPerLap>medium.wearPerLap&&medium.wearPerLap>hard.wearPerLap;
-  const integrated=String(updateTyreSystemV203).includes('tyreCoolingRateV389(speedKph)')&&
-    String(simulateVehicleDynamicsV196).includes('tyreGrip,vehicle.tyreCompound');
-  const noPositionMutation=!/\b(?:raceProgress|progress|finishPosition|travel)\s*=/.test(
-    String(tyreCoolingRateV389)+String(longitudinalResponseV375));
-  return {version:'phase389-tyre-thermal-traction',cooler,compounds,coolsAtSpeed,tractionOrder,brakingOrder,wearOrder,integrated,noPositionMutation,
-    allPass:coolsAtSpeed&&tractionOrder&&brakingOrder&&wearOrder&&integrated&&noPositionMutation};
-}
-window.mwsF1QaTyreThermalAndTractionV389=qaTyreThermalAndTractionV389;
-window.__mwsF1RacingV389='phase389-tyre-thermal-traction';
-
-function qaFastPhysicalChallengeV390(){
- const fast=fastPhysicalChallengeV390('FAST',18,false);
- const normal=fastPhysicalChallengeV390('NORMAL',18,false);
- const blocked=fastPhysicalChallengeV390('FAST',18,true);
- const far=fastPhysicalChallengeV390('FAST',80,false);
- const integrated=String(competitivePaceAdvantageV376).includes('fastPhysicalChallengeV390(activeRaceModeV345(),gap,vehicle.battleBlockedV319)');
- const telemetry=String(buildRaceTelemetryV237).includes('physicalOnTrackPasses,passStateCompletions');
- const noWarp=!/\b(?:raceProgress|progress|travel|finishPosition)\s*=/.test(String(fastPhysicalChallengeV390)+String(competitivePaceAdvantageV376));
- return {version:'phase390-fast-physical-challenge',fast,normal,blocked,far,integrated,telemetry,noWarp,
- allPass:fast>normal&&normal===1&&blocked===1&&far===1&&integrated&&telemetry&&noWarp};
-}
-window.mwsF1QaFastPhysicalChallengeV390=qaFastPhysicalChallengeV390;
-window.__mwsF1RacingV390='phase390-fast-physical-challenge';
-
-
-
 function competitivePaceAdvantageV376(vehicle,peers=raceMotionV189.vehicles){
   if(!vehicle||vehicle.finished||vehicle.pitRequested||String(vehicle.pitState||'TRACK')!=='TRACK'||vehicle.trackBoundaryExceededV271)return 0;
   // Retain a brief physical acceleration opportunity after a verified pass,
@@ -4857,8 +4809,7 @@ function competitivePaceAdvantageV376(vehicle,peers=raceMotionV189.vehicles){
   const pressure=clamp01V198((78-gap)/70);
   const state=String(vehicle.battleState||'FOLLOWING');
   const attack=['PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK'].includes(state)||vehicle.tripleBreakawayActiveV376===true;
-  const fastPhysicalFactorV390=fastPhysicalChallengeV390(activeRaceModeV345(),gap,vehicle.battleBlockedV319);
-  const targetBias=(attack?MULTICAR_CORRIDOR_V376.catchupAttackBoostKph:MULTICAR_CORRIDOR_V376.followingCatchupBoostKph)*fastPhysicalFactorV390;
+  const targetBias=attack?MULTICAR_CORRIDOR_V376.catchupAttackBoostKph:MULTICAR_CORRIDOR_V376.followingCatchupBoostKph;
   if(vehicle.battleBlockedV319&&!vehicle.tripleBreakawayActiveV376)return targetBias*pressure*.24;
   return targetBias*pressure+passExitBonusKph;
 }
@@ -7784,16 +7735,11 @@ function qaSafePaceReleaseV385(){
 window.mwsF1QaSafePaceReleaseV385=qaSafePaceReleaseV385;
 window.__mwsF1RacingV385=VERSION385;
 
-function longitudinalResponseV375(track,currentKph,errorKph,phase,tyreGrip=1,compound='MEDIUM'){
+function longitudinalResponseV375(track,currentKph,errorKph,phase,tyreGrip=1){
   const cfg=CORNER_PHYSICS_V375,refAccel=Math.max(1,Number(track?.geometry?.referenceAccelMps2)||8.5);
   const refBrake=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20);
-  const tyre=String(compound||'MEDIUM').toUpperCase();
-  const tractionBias=tyre==='SOFT'?1.065:tyre==='HARD'?.945:1;
-  const brakeBias=tyre==='SOFT'?1.04:tyre==='HARD'?.96:1;
-  const inCorner=['TURN_IN','APEX','EXIT'].includes(String(phase));
-  const traction=inCorner?Math.max(.80,Math.min(1.08,Math.max(.82,Number(tyreGrip)||1)*tractionBias)):1;
-  const accel=Math.min(cfg.maxAccelMps2,refAccel*cfg.referenceAccelGain*traction);
-  const brake=Math.min(cfg.maxBrakeMps2,Math.max(cfg.minBrakeMps2,refBrake*cfg.referenceBrakeGain))*Math.max(.84,tyreGrip)*brakeBias;
+  const accel=Math.min(cfg.maxAccelMps2,refAccel*cfg.referenceAccelGain);
+  const brake=Math.min(cfg.maxBrakeMps2,Math.max(cfg.minBrakeMps2,refBrake*cfg.referenceBrakeGain))*Math.max(.84,tyreGrip);
   const throttle=Math.max(cfg.minThrottle,Math.min(1,Math.max(0,errorKph)/cfg.throttleResponseKph));
   const brakeDemand=Math.max(.08,Math.min(1,Math.max(0,-errorKph)/cfg.brakeResponseKph));
   const highSpeedFade=Math.max(.45,1-Math.max(0,currentKph)/610);
@@ -7913,7 +7859,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   // Legacy Phase 203/204 source signatures are superseded by angle-aware V375 dynamics:
   // let brakeBase=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20)*tyreGrip*incidentState.brakeFactor;
   // *tyreGrip*incidentState.brakeFactor;
-  const longitudinalV375=longitudinalResponseV375(track,current,maxTarget-current,phase,tyreGrip,vehicle.tyreCompound);
+  const longitudinalV375=longitudinalResponseV375(track,current,maxTarget-current,phase,tyreGrip);
   const paceReleaseV385=safePaceReleaseV385(vehicle,Number(simClockV192.simTimeMs)||0,{spacing:spacingControlV319,proximity:proximityV376,neighbor:neighborSafetyV381,closure:physicalClosureV386,pitRejoin:pitRejoinV384,incident:incidentState,boundaryOffTrack:boundaryStateV271.offTrack},phase);
   const accelBase=longitudinalV375.accel*Math.max(1,Number(chaseBurstEffect.accelMultiplier)||1)*paceReleaseV385.multiplier;
   let brakeBase=longitudinalV375.brake*incidentState.brakeFactor;
@@ -8081,11 +8027,9 @@ function buildRaceTelemetryV237(snapshot=activeRaceSnapshotV187,vehicles=raceMot
   const averageLapMs=avgFinishMs/laps;
   const pitStops=vehicles.reduce((sum,vehicle)=>sum+(Number(vehicle.pitStopCount)||0),0);
   const uniquePassPairs=vehicles.reduce((sum,vehicle)=>sum+new Set((vehicle.passTargetHistoryV309||[]).map(String)).size,0);
-  const physicalOnTrackPasses=vehicles.reduce((sum,vehicle)=>sum+(Number(vehicle.physicalOnTrackPassesV386)||0),0);
-  const passStateCompletions=vehicles.reduce((sum,vehicle)=>sum+(Number(vehicle.passCompletedCount)||0),0);
   const driversMovedFromGrid=vehicles.filter(vehicle=>Number(vehicle.finishPosition)>0&&Number(vehicle.gridPosition)>0&&Number(vehicle.finishPosition)!==Number(vehicle.gridPosition)).length;
   return Object.freeze({
-    drivers:vehicles.length,totalPasses,physicalOnTrackPasses,passStateCompletions,failedPasses,uniquePassPairs,orderChanges:Number(raceOrderFlowStateV309.orderChanges)||0,changedDrivers:Number(raceOrderFlowStateV309.changedDrivers)||0,driversMovedFromGrid,incidentCount,lockups,understeer,oversteer,pitStops,
+    drivers:vehicles.length,totalPasses,failedPasses,uniquePassPairs,orderChanges:Number(raceOrderFlowStateV309.orderChanges)||0,changedDrivers:Number(raceOrderFlowStateV309.changedDrivers)||0,driversMovedFromGrid,incidentCount,lockups,understeer,oversteer,pitStops,
     fieldAverageSpeedKph:Number(fieldAverageSpeedKph.toFixed(2)),
     winnerAverageSpeedKph:Number(winnerAverageSpeedKph.toFixed(2)),
     averageLapMs:Number(averageLapMs.toFixed(1)),
