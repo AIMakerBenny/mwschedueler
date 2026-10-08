@@ -9494,10 +9494,11 @@ function raceFormBiasV345(vehicle,snapshot=activeRaceSnapshotV187){
   const mode=String(snapshot?.raceMode||'NORMAL').toUpperCase()==='FAST'?'FAST':'NORMAL';
   // A short three-lap race must not spread the field before any physical attack
    // can develop. Keep distinct driver form without widening the FAST grid train.
-   const amplitude=mode==='FAST'?Math.min(FIELD_SPREAD_BALANCE_V352.fastFormAmplitude,TYRE_THERMAL_BALANCE_V388.fastFormAmplitudeCap):FIELD_SPREAD_BALANCE_V352.normalFormAmplitude;
+   const amplitude=mode==='FAST'?FIELD_SPREAD_BALANCE_V352.fastFormAmplitude:FIELD_SPREAD_BALANCE_V352.normalFormAmplitude;
+   const effectiveAmplitude=mode==='FAST'?Math.min(amplitude,TYRE_THERMAL_BALANCE_V388.fastFormAmplitudeCap):amplitude;
   const seed=hashDriverV189([String(snapshot?.createdAt||'race'),String(snapshot?.trackId||snapshot?.track?.id||'track'),String(vehicle?.id||vehicle?.driver?.contactId||vehicle?.driver?.name||'driver'),'race-form-v345'].join('|'));
   const unit=(seed%2001)/1000-1;
-  return Math.max(-amplitude,Math.min(amplitude,unit*amplitude));
+  return Math.max(-effectiveAmplitude,Math.min(effectiveAmplitude,unit*effectiveAmplitude));
 }
 function raceCompetitionConfigV345(){
   return RACE_COMPETITION_V345[activeRaceModeV345()]||RACE_COMPETITION_V345.NORMAL;
