@@ -4750,8 +4750,8 @@ function recordQualityDynamicsV386(vehicle,proximity,spacing){
  if(engineQaV240.active){t.syntheticDynamics++;return}
  t.liveDynamics++;
  if(proximity?.active||spacing?.active||vehicle?.neighborSafetyV381?.active||vehicle?.closureEnvelopeV386?.active)t.safetyBrakingSamples++;
- if(!engineQaV240.active){t.recentClosureSteps.push({ms:Number(simClockV192.simTimeMs)||0,id:String(vehicle?.id||''),progress:Number(vehicle?.raceProgress)||0,speed:Number(vehicle?.speedKph)||0,target:Number(vehicle?.targetSpeedKph)||0,brake:Number(vehicle?.brake)||0,accel:Number(vehicle?.accelerationMps2)||0,closure:vehicle?.closureEnvelopeV386||null,neighbor:vehicle?.neighborSafetyV381||null,proximity:vehicle?.proximityV376||null,line:String(vehicle?.racingLineMode||''),lateral:Number(vehicle?.visualLateralOffsetMeters)||0});if(t.recentClosureSteps.length>600)t.recentClosureSteps.splice(0,t.recentClosureSteps.length-600);}
  else if(Number(vehicle?.accelerationMps2)>0)t.cleanAccelerationSamples++;
+ if(!engineQaV240.active){t.recentClosureSteps.push({ms:Number(simClockV192.simTimeMs)||0,id:String(vehicle?.id||''),progress:Number(vehicle?.raceProgress)||0,speed:Number(vehicle?.speedKph)||0,target:Number(vehicle?.targetSpeedKph)||0,brake:Number(vehicle?.brake)||0,accel:Number(vehicle?.accelerationMps2)||0,closure:vehicle?.closureEnvelopeV386||null,neighbor:vehicle?.neighborSafetyV381||null,proximity:vehicle?.proximityV376||null,line:String(vehicle?.racingLineMode||''),lateral:Number(vehicle?.visualLateralOffsetMeters)||0});if(t.recentClosureSteps.length>600)t.recentClosureSteps.splice(0,t.recentClosureSteps.length-600);}
 }
 function recordQualityFrameV386(atMax,atCurrent,rendered=[]){
  const t=liveOnlyQualityV386;
@@ -7607,7 +7607,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const previousRaceProgress=Number(vehicle.raceProgress)||0;
   const pitControl=updatePitPreStepV205(vehicle,stepMs);
   if(pitControl.stationary){
-    vehicle.speedKph=0;vehicle.lastTrackPhysicsSpeedKphV386=0;vehicle.targetSpeedKph=0;vehicle.throttle=0;vehicle.brake=1;vehicle.accelerationMps2=0;vehicle.gear=1;vehicle.rpm=8500;
+    vehicle.speedKph=0;if(!engineQaV240.active)vehicle.lastTrackPhysicsSpeedKphV386=0;vehicle.targetSpeedKph=0;vehicle.throttle=0;vehicle.brake=1;vehicle.accelerationMps2=0;vehicle.gear=1;vehicle.rpm=8500;
     return true;
   }
   if(!engineQaV240.active)enforceTrackSpeedContinuityV386(vehicle,stepMs);
@@ -7746,7 +7746,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const avgMps=((current+nextKph)/2)/3.6;
   const distanceMeters=avgMps*dt;
   vehicle.speedKph=nextKph;
-   vehicle.lastTrackPhysicsSpeedKphV386=nextKph;
+   if(!engineQaV240.active)vehicle.lastTrackPhysicsSpeedKphV386=nextKph;
   if(phaseInfoV270?.corner&&String(vehicle.pitState||'TRACK')==='TRACK'&&Number(vehicle.pitWarmupRemainingLaps||0)<=.001&&Number(vehicle.cornerObservedEntryKphV353)>=80&&nextKph>0){
     const classV351=cornerClassV343(phaseInfoV270.corner);
     vehicle.cornerMinSpeedByClassV351=vehicle.cornerMinSpeedByClassV351||{};
