@@ -326,6 +326,7 @@ jobs:
           node --check scripts/run-phase379-f1-preemptive-pass-corridor-audit.mjs
           node --check scripts/run-phase380-f1-behavior-telemetry-audit.mjs
           node --check scripts/run-phase381-f1-neighbor-braking-audit.mjs
+          node --check scripts/run-phase382-f1-corner-retiming-audit.mjs
           node --check assets/f1-track-geometry-v2.js
           node --check assets/f1-racing-r309.js
           node --check assets/f1-racing-r308.js
@@ -1208,6 +1209,8 @@ jobs:
           grep -Fq "function trackInteractionEligibleV369(" /tmp/f1-racing-v1-phase187.js
           grep -Fq "function clearPitInteractionStateV369(" /tmp/f1-racing-v1-phase187.js
           grep -Fq "clearPitInteractionStateV369(vehicle,raceMotionV189.vehicles,'PIT_ENTRY')" /tmp/f1-racing-v1-phase187.js
+          echo '[phase382] angle aware braking and midcorner acceleration'
+          grep -Fq 'window.__mwsF1RacingV382=VERSION382;' /tmp/f1-racing-v1-phase187.js
           echo '[phase381] Physical predictive neighbor braking and safe recovery precedence'
           grep -Fq 'window.__mwsF1RacingV381=VERSION381;' /tmp/f1-racing-v1-phase187.js
           echo '[phase380] baseline race physics and marker telemetry'

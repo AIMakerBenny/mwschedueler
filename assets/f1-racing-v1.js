@@ -167,6 +167,7 @@ const VERSION378='phase378-f1-projected-safe-following';
 const VERSION379='phase379-f1-preemptive-pass-corridor';
 const VERSION380='phase380-seven-behavior-baseline-telemetry';
 const VERSION381='phase381-neighbor-braking-safety';
+const VERSION382='phase382-angle-braking-midcorner-acceleration';
 const interactionSnapshotStateV368={snapshot:null,builds:0,lastSimTimeMs:0};
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
@@ -6131,6 +6132,43 @@ function cornerDrivingPlanV375(plan,corner,vehicle,track){
   const accel=Math.max(8.5,(Number(track?.geometry?.referenceAccelMps2)||8.5)*CORNER_PHYSICS_V375.referenceAccelGain)*Number(plan.spec.exitAccel||1);
   return {...plan,apexTarget,brakeDecel,brakingDistance,dynamicBrakeStart:Math.min(plan.dynamicBrakeStart,brakeStart),recoveryStart,accel,turnAngleDegrees:angle,curvatureLimit};
 }
+
+const CORNER_RETIMING_V382=Object.freeze({minimumLeadMeters:7,angleLeadMeters:11,earlyThrottleFraction:.52,lateThrottleFraction:.67,minimumApexLeadMeters:8,minimumBrakeMeters:5});
+function cornerRetimingV382(plan,corner,vehicle){
+ const angle=Math.max(0,Number(corner?.turnAngleDegrees)||0),severity=clamp01V198((angle-22)/145);
+ const entry=Math.max(Number(plan.apexTarget)||75,Number(plan.entryKph)||250),apex=Math.max(75,Number(plan.apexTarget)||75);
+ const brake=Math.max(1,Number(plan.brakeDecel)||25);
+ const brakingDistance=Math.max(0,((entry/3.6)**2-(apex/3.6)**2)/(2*brake));
+ const turnIn=Number(plan.turnIn)||0,apexPosition=Math.max(turnIn+1,Number(plan.apex)||turnIn+1);
+ const approach=Number.isFinite(Number(plan.approach))?Number(plan.approach):turnIn-125;
+ const dynamicBrakeStart=Math.max(approach,Math.min(turnIn-CORNER_RETIMING_V382.minimumBrakeMeters,
+   turnIn-brakingDistance-CORNER_RETIMING_V382.minimumLeadMeters-CORNER_RETIMING_V382.angleLeadMeters*severity));
+ const recoveryFraction=CORNER_RETIMING_V382.earlyThrottleFraction+
+   (CORNER_RETIMING_V382.lateThrottleFraction-CORNER_RETIMING_V382.earlyThrottleFraction)*severity;
+ const recoveryStart=Math.min(apexPosition-CORNER_RETIMING_V382.minimumApexLeadMeters,
+   turnIn+(apexPosition-turnIn)*recoveryFraction);
+ return {...plan,dynamicBrakeStart,recoveryStart,retimedV382:true,brakingDistance,angleSeverityV382:severity};
+}
+function qaCornerRetimingV382(){
+ const track={geometry:{referenceBrakeDecelMps2:20,referenceAccelMps2:8.5}};
+ const spec=CORNER_DRIVING_V351.speedEnvelope.medium;
+ const base={entryKph:300,apexTarget:215,turnIn:500,apex:630,exit:730,
+ dynamicBrakeStart:410,recoveryStart:600,brakeDecel:20,accel:10,spec,approach:350};
+ const v={tyreGrip:1,tyreCompound:'MEDIUM'};
+ const shallow=cornerRetimingV382(cornerDrivingPlanV375(base,{turnAngleDegrees:35,peakCurvature:.0014},v,track),{turnAngleDegrees:35},v);
+ const hairpin=cornerRetimingV382(cornerDrivingPlanV375(base,{turnAngleDegrees:145,peakCurvature:.006},v,track),{turnAngleDegrees:145},v);
+ const early=cornerTargetAtDistanceV351(hairpin,hairpin.recoveryStart+12,210,260);
+ const at=cornerTargetAtDistanceV351(hairpin,hairpin.recoveryStart,hairpin.apexTarget,260);
+ const integrated=String(phaseSpeedTargetV343).includes('cornerRetimingV382(');
+ const noWarp=!/\b(?:raceProgress|progress)\s*=/.test(String(cornerRetimingV382));
+ return {version:VERSION382,shallow:{brake:shallow.dynamicBrakeStart,recovery:shallow.recoveryStart},hairpin:{brake:hairpin.dynamicBrakeStart,recovery:hairpin.recoveryStart},
+  early,at,integrated,noWarp,allPass:shallow.dynamicBrakeStart>base.approach-1&&
+  shallow.dynamicBrakeStart<shallow.turnIn&&hairpin.dynamicBrakeStart<=shallow.dynamicBrakeStart&&
+  hairpin.recoveryStart<hairpin.apex&&early>=at&&integrated&&noWarp};
+}
+window.mwsF1QaCornerRetimingV382=qaCornerRetimingV382;
+window.__mwsF1RacingV382=VERSION382;
+
 function cornerTargetAtDistanceV351(plan,here,raw,exitTarget){
   const p=plan||{},position=Number(here)||0,rawKph=Math.max(40,Number(raw)||0);
   if(position<Number(p.dynamicBrakeStart))return rawKph;
@@ -6157,7 +6195,7 @@ function phaseSpeedTargetV343(vehicle,targetData,phaseInfo=getCornerPhaseAtProgr
   const aligned=alignedCornerDistanceV270(corner,vehicle?.progress),here=Number(aligned.here)||0;
   const entryKph=cornerEntrySpeedV351(vehicle,corner,raw);
   const baselinePlanV351=cornerDrivingPlanV351(entryKph,corner,track,String(vehicle?.tyreCompound||'MEDIUM'));
-  const plan=cornerDrivingPlanV375(baselinePlanV351,corner,vehicle,track);
+  const plan=cornerRetimingV382(cornerDrivingPlanV375(baselinePlanV351,corner,vehicle,track),corner,vehicle);
   const lookProgress=((Number(vehicle?.progress)||0)+CORNER_DRIVING_V351.exitLookAheadMeters/Math.max(1,Number(track.lengthMeters)||1))%1;
   const ahead=typeof window.mwsF1SpeedTargetAtProgressV195==='function'?window.mwsF1SpeedTargetAtProgressV195(raceGeometryV193,lookProgress):null;
   const exitTarget=Math.min(Number(track?.geometry?.maxStraightKph)||335,Math.max(raw,Number(ahead?.targetKph)||raw));
@@ -7459,7 +7497,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
     const previousMin=Number(vehicle.cornerMinSpeedByClassV351[classV351]);
     vehicle.cornerMinSpeedByClassV351[classV351]=Number.isFinite(previousMin)&&previousMin>0?Math.min(previousMin,nextKph):nextKph;
     const specV353=CORNER_DRIVING_V351.speedEnvelope[classV351]||CORNER_DRIVING_V351.speedEnvelope.medium;
-    const cleanCornerV353=!spacingControlV319.active&&!proximityV376.active&&!incidentState.active&&!leaderPressureEffect.event&&boundaryStateV271.speedFactor>=CORNER_COMPLEX_RECOVERY_V353.cleanBoundaryFactor&&Number(vehicle.cornerObservedEntryKphV353)>=Number(specV353.min)*CORNER_COMPLEX_RECOVERY_V353.telemetryEntryRatio;
+    const cleanCornerV353=!spacingControlV319.active&&!proximityV376.active&&!neighborSafetyV381.active&&!incidentState.active&&!leaderPressureEffect.event&&boundaryStateV271.speedFactor>=CORNER_COMPLEX_RECOVERY_V353.cleanBoundaryFactor&&Number(vehicle.cornerObservedEntryKphV353)>=Number(specV353.min)*CORNER_COMPLEX_RECOVERY_V353.telemetryEntryRatio;
     if(cleanCornerV353){
       vehicle.cornerUnimpededMinSpeedByClassV353=vehicle.cornerUnimpededMinSpeedByClassV353||{};
       const previousClean=Number(vehicle.cornerUnimpededMinSpeedByClassV353[classV351]);

@@ -1418,6 +1418,8 @@ try{
     assert(preemptivePass379?.allPass===true,'Phase 379 preemptive pass QA failed: '+JSON.stringify(preemptivePass379));
     const projectedSafe378=window.mwsF1QaProjectedSafeFollowingV378?.();
     assert(projectedSafe378?.allPass===true,'Phase 378 projected safe following QA failed: '+JSON.stringify(projectedSafe378));
+    const cornerRetiming382=window.mwsF1QaCornerRetimingV382?.();
+    assert(cornerRetiming382?.allPass===true,'Phase 382 corner retiming QA failed: '+JSON.stringify(cornerRetiming382));
     const neighborBraking381=window.mwsF1QaNeighborBrakingV381?.();
     assert(neighborBraking381?.allPass===true,'Phase 381 neighbor braking QA failed: '+JSON.stringify(neighborBraking381));
     const behaviorTelemetry380=window.mwsF1QaBehaviorTelemetryV380?.();
@@ -1653,6 +1655,7 @@ try{
       overlapMonitorV377:overlapMonitor377||null,
       behaviorTelemetryV380:behaviorTelemetry380||null,
       neighborBrakingV381:neighborBraking381||null,
+      cornerRetimingV382:cornerRetiming382||null,
       projectedSafeFollowingV378:projectedSafe378||null,
       preemptivePassV379:preemptivePass379||null,
       dynamicsPlaytestV348:dynamicsPlaytest348||null,
