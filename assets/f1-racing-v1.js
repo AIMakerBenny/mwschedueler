@@ -6905,7 +6905,12 @@ function renderRaceVehiclesV189(frameMs=16.67){
   raceMotionV189.vehicles.forEach(function(vehicle,index){
     const marker=vehicle.marker||ensureRaceVehicleMarkerV189(vehicle,index);if(!marker)return;
     // Phase 197 and Phase 258 compatibility token: const lateralStateV258=updateVisualLateralOffsetV258(vehicle,frameMs,false);
-    const lateralStateV258=freezeVisualV366&&vehicle.visualLateralInitializedV258===true
+    // The simulation is authoritative for the true physical lane transition.
+    // Rendering must never move the car again or let a visual-only lane choice
+    // bypass the physics clearance rules. Preserve setup and pause fallback.
+    const lateralStateV258=vehicle.physicalLaneSimulationActiveV387===true
+      ?{target:Number(vehicle.targetVisualLateralOffsetMeters)||0,rawTarget:Number(vehicle.targetVisualLateralOffsetMeters)||0,visual:Number(vehicle.visualLateralOffsetMeters)||0,velocity:Number(vehicle.visualLateralVelocity)||0,acceleration:Number(vehicle.visualLateralAccelerationV269)||0,alpha:0,response:visualLateralResponseV258(vehicle),simulationOwnedV387:true,pausedHoldV366:freezeVisualV366}
+      :freezeVisualV366&&vehicle.visualLateralInitializedV258===true
       ?{target:Number(vehicle.targetVisualLateralOffsetMeters)||0,rawTarget:Number(vehicle.targetVisualLateralOffsetMeters)||0,visual:Number(vehicle.visualLateralOffsetMeters)||0,velocity:Number(vehicle.visualLateralVelocity)||0,acceleration:Number(vehicle.visualLateralAccelerationV269)||0,alpha:0,response:visualLateralResponseV258(vehicle),pausedHoldV366:true}
       :updateVisualLateralOffsetV258(vehicle,frameMs,false);
     const plannedDisplayRaceProgressV319=spacingPlanV319.has(String(vehicle.id))?spacingPlanV319.get(String(vehicle.id)):Number(vehicle.raceProgress)||0;
@@ -10423,6 +10428,13 @@ function simulateRaceStepV192(stepMs){
   updateFieldCompressionLeaderPressureV274(stepMs);
   updateChaseBurstV275(stepMs);
   updatePitStrategiesV206(stepMs);
+  // Genuine lateral car position advances in physics time, not the render loop.
+  // This keeps the LIVE browser and headless engine QA on the same trajectories.
+  for(const vehicle of raceMotionV189.vehicles){
+    if(vehicle.finished)continue;
+    updateVisualLateralOffsetV258(vehicle,stepMs,false);
+    vehicle.physicalLaneSimulationActiveV387=true;
+  }
   for(const vehicle of raceMotionV189.vehicles){
     if(vehicle.finished)continue;
     const previousRaceProgressV248=Number(vehicle.raceProgress)||0;
