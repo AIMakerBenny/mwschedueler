@@ -4859,7 +4859,9 @@ function physicalClosureEnvelopeV386(vehicle,track,peers=raceMotionV189.vehicles
   const leadSpeed=Math.max(0,Number(peer.speedKph)||0)/3.6;
   const lead=Math.max(0,leadSpeed+Math.max(-39,Math.min(0,Number(peer.accelerationMps2)||0))*.35);
   const closing=Math.max(0,v-lead);
-  if(closing<1.5&&gap>Math.max(12,Math.min(24,safe*.55)))continue;
+  // Existing close-following control handles ordinary 10-30 km/h closing in a pass window.
+  // The extra envelope engages for high-differential closing or genuinely short same-corridor clearance.
+  if(closing*3.6<38&&gap>Math.max(10,safe*.75))continue;
   const usable=Math.max(0,gap-safe-closing*.42);
   const capKph=3.6*Math.sqrt(lead*lead+44*usable);
   if(capKph<v*3.6+.5&&capKph<best.capKph)best={active:true,capKph,peerId:String(peer.id),gap,reason:'PREDICTED_PHYSICAL_CLOSURE_V386'};
@@ -4875,10 +4877,11 @@ function qaPhysicalClosureV386(){
  const far=physicalClosureEnvelopeV386(v,track,[{...p,raceProgress:1.2+600/4500}]);
  const stopped=physicalClosureEnvelopeV386({...v,speedKph:0},track,[{...p,speedKph:0,accelerationMps2:0,raceProgress:1.2+35/4500}]);
  const pit=physicalClosureEnvelopeV386(v,track,[{...p,pitState:'PIT_LANE'}]);
+ const normalPass=physicalClosureEnvelopeV386({...v,speedKph:240},track,[{...p,speedKph:224,accelerationMps2:0,raceProgress:1.2+55/4500}]);
  const integrated=String(simulateVehicleDynamicsV196).includes('physicalClosureEnvelopeV386(vehicle,track)')&&
   String(simulateVehicleDynamicsV196).includes('if(physicalClosureV386.active)maxTarget=Math.min(maxTarget,physicalClosureV386.capKph);');
  const noWarp=!/\b(?:raceProgress|progress)\s*=/.test(String(physicalClosureEnvelopeV386));
- return {close,far,stopped,pit,integrated,noWarp,allPass:close.active&&close.capKph<253&&!far.active&&!stopped.active&&!pit.active&&integrated&&noWarp};
+ return {close,far,stopped,pit,normalPass,integrated,noWarp,allPass:close.active&&close.capKph<253&&!far.active&&!stopped.active&&!pit.active&&!normalPass.active&&integrated&&noWarp};
 }
 window.mwsF1QaPhysicalClosureV386=qaPhysicalClosureV386;
 
