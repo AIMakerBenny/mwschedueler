@@ -207,7 +207,7 @@ const PIT_STAGGER_V344=Object.freeze({
   criticalThermalDeg:.74
 });
 const RACE_COMPETITION_V345=Object.freeze({
-  NORMAL:Object.freeze({variability:1.97,attackGap:1.53,overtakeReleaseClosingKph:2.3,momentumThreshold:.38,p2ChallengeKph:8.6,leaderPressureKph:4.9,leaderHoldMs:3100}),
+  NORMAL:Object.freeze({variability:2.35,attackGap:1.75,overtakeReleaseClosingKph:1.55,momentumThreshold:.32,p2ChallengeKph:10.8,leaderPressureKph:6.0,leaderHoldMs:2100}),
   FAST:Object.freeze({variability:2.65,attackGap:1.92,overtakeReleaseClosingKph:1.35,momentumThreshold:.29,p2ChallengeKph:10.5,leaderPressureKph:5.8,leaderHoldMs:1800}),
   fastLaps:3
 });
