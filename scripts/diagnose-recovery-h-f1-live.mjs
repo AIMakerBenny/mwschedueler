@@ -1418,6 +1418,8 @@ try{
     assert(preemptivePass379?.allPass===true,'Phase 379 preemptive pass QA failed: '+JSON.stringify(preemptivePass379));
     const projectedSafe378=window.mwsF1QaProjectedSafeFollowingV378?.();
     assert(projectedSafe378?.allPass===true,'Phase 378 projected safe following QA failed: '+JSON.stringify(projectedSafe378));
+    const emergencyAvoidance386=window.mwsF1QaEmergencyAvoidanceV386?.();
+    assert(emergencyAvoidance386?.allPass===true,'Phase 386 emergency obstacle bypass QA failed: '+JSON.stringify(emergencyAvoidance386));
     const finalLive386=window.mwsF1QaFinalLiveQualityV386?.();
     assert(finalLive386?.allPass===true,'Phase 386 actual LIVE maximum-zoom marker overlap remains: '+JSON.stringify(finalLive386));
     const paceRelease385=window.mwsF1QaSafePaceReleaseV385?.();
@@ -1668,6 +1670,7 @@ try{
       safeThirdPitV384:safeThirdPit384||null,
       paceReleaseV385:paceRelease385||null,
       finalLiveQualityV386:finalLive386||null,
+      emergencyAvoidanceV386:emergencyAvoidance386||null,
       projectedSafeFollowingV378:projectedSafe378||null,
       preemptivePassV379:preemptivePass379||null,
       dynamicsPlaytestV348:dynamicsPlaytest348||null,
