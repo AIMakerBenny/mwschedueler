@@ -9811,7 +9811,9 @@ function finishSpreadBreakdownV373(result){
 function qaDynamicsPlaytestV348(){
   if(f1ScreenStateV185!=='SETUP')return {version:VERSION348,allPass:false,reason:'requires-setup'};
   const normal=runAcceleratedEngineRaceV240('majoku-ring-v1',{drivers:8,laps:10,runIndex:348,stepMs:80,maxSteps:50000,raceMode:'NORMAL'});
-  const fast=runAcceleratedEngineRaceV240('majoku-ring-v1',{drivers:8,laps:3,runIndex:348,stepMs:80,maxSteps:30000,raceMode:'FAST'});
+  // FAST must test a seeded Gacha-style starting order, rather than a fixed
+  // QA driver index order that can lock every naturally quicker car in front.
+  const fast=runAcceleratedEngineRaceV240('majoku-ring-v1',{drivers:8,laps:3,runIndex:348,stepMs:80,maxSteps:30000,raceMode:'FAST',gridMode:'SEEDED_SHUFFLE'});
   const pitRequests=(normal.finalVehicleStates||[]).flatMap(vehicle=>(vehicle.pitRequestHistoryV348||[]).map(row=>({id:vehicle.id,...row})));
   const pitRequestLaps=[...new Set(pitRequests.map(row=>Number(row.lap)||0).filter(Boolean))].sort((a,b)=>a-b);
   const unsafePitRequests=pitRequests.filter(row=>Number(row.tyreRemaining)>=TYRE_DYNAMICS_V343.pitSafeRemainingRatio);
