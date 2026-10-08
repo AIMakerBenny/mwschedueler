@@ -5250,7 +5250,7 @@ const LEADER_PRESSURE_CONFIG_V274=Object.freeze({
   evaluationMs:850,tightFightGapSeconds:1.15,minLeadGapSeconds:1.6,strongLeadGapSeconds:5.5,
   minLeadDurationMs:10000,fullLeadDurationMs:45000,fieldSplitStartSeconds:6,
   groupFollowerMaxGapSeconds:5.5,groupPressureScale:.38,maxEventChance:.06,
-  frontFieldShare:.60,frontRankPressureScale:.88,
+  frontFieldShare:.60,frontRankPressureScale:.72,
   cooldownMinMs:9500,cooldownMaxMs:15500,eventMinMs:760,eventMaxMs:1680,
   lateRaceStart:.72,lateRaceMinFactor:.42
 });
