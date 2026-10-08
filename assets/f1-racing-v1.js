@@ -4759,7 +4759,7 @@ function recordQualityFrameV386(atMax,atCurrent,rendered=[]){
  if(Number(atMax?.pairs)>0){
   t.liveOverlapFrames++;
   const subjects=(atMax.examples||[]).flatMap(p=>[p.a,p.b]);
-  const rows=(rendered||[]).filter(row=>subjects.includes(String(row.vehicle?.id))).map(row=>({id:String(row.vehicle?.id),progress:Number(row.vehicle?.raceProgress)||0,speed:Number(row.vehicle?.speedKph)||0,line:String(row.vehicle?.racingLineMode||''),battle:String(row.vehicle?.battleState||''),lateral:Number(row.vehicle?.visualLateralOffsetMeters)||0,point:row.point?{x:Number(row.point.x),y:Number(row.point.y)}:null}));
+  const rows=(rendered||[]).filter(row=>subjects.includes(String(row.vehicle?.id))).map(row=>({id:String(row.vehicle?.id),progress:Number(row.vehicle?.raceProgress)||0,speed:Number(row.vehicle?.speedKph)||0,line:String(row.vehicle?.racingLineMode||''),battle:String(row.vehicle?.battleState||''),pitState:String(row.vehicle?.pitState||''),pitRequested:Boolean(row.vehicle?.pitRequested),finished:Boolean(row.vehicle?.finished),avoidanceMode:String(row.vehicle?.emergencyAvoidanceModeV386||''),avoidanceUntil:Number(row.vehicle?.emergencyAvoidanceUntilV386)||0,avoidancePlan:emergencyLaneChoiceV386(row.vehicle,activeRaceSnapshotV187?.track),lateral:Number(row.vehicle?.visualLateralOffsetMeters)||0,point:row.point?{x:Number(row.point.x),y:Number(row.point.y)}:null}));
   t.overlapSnapshots.push({ms:Number(simClockV192.simTimeMs)||0,examples:atMax.examples||[],rows});if(t.overlapSnapshots.length>20)t.overlapSnapshots.shift();
  }
  t.peakMaxZoomPairs=Math.max(t.peakMaxZoomPairs,Number(atMax?.pairs)||0);
@@ -10193,7 +10193,7 @@ window.__mwsF1RacingV319=VERSION319;
 const EMERGENCY_BYPASS_V386=Object.freeze({scanMeters:170,minimumSpeedKph:125,slowCarMaxKph:90,
  closingKph:88,brakeMps2:34,brakeMarginMeters:95,clearanceMeters:2.65,sideScanMeters:31,holdMs:2500});
 function emergencyLaneChoiceV386(vehicle,track,peers=raceMotionV189.vehicles){
- if(!vehicle||vehicle.finished||vehicle.pitRequested||String(vehicle.pitState||'TRACK')!=='TRACK')return {active:false,reason:'INELIGIBLE'};
+ if(!vehicle||vehicle.finished||String(vehicle.pitState||'TRACK')!=='TRACK'||(vehicle.pitRequested&&String(vehicle.racingLineMode)==='PIT_LINE'))return {active:false,reason:'INELIGIBLE'};
  const len=Math.max(1,Number(track?.lengthMeters)||4500),ownKph=Number(vehicle.speedKph)||0;
  if(ownKph<EMERGENCY_BYPASS_V386.minimumSpeedKph)return {active:false,reason:'SPEED'};
  let ahead=null;
@@ -10227,7 +10227,7 @@ function applyEmergencyAvoidanceV386(track=activeRaceSnapshotV187?.track){
  if(!track)return 0;
  let count=0;
  for(const vehicle of raceMotionV189.vehicles){
-   if(vehicle.finished||String(vehicle.pitState||'TRACK')!=='TRACK'||vehicle.pitRequested)continue;
+   if(vehicle.finished||String(vehicle.pitState||'TRACK')!=='TRACK'||(vehicle.pitRequested&&String(vehicle.racingLineMode)==='PIT_LINE'))continue;
    const plan=emergencyLaneChoiceV386(vehicle,track);
    const now=Number(simClockV192.simTimeMs)||0;
    if(plan.active){
