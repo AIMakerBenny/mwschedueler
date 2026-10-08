@@ -4903,9 +4903,10 @@ function physicalClosureEnvelopeV386(vehicle,track,peers=raceMotionV189.vehicles
   const extremeClosure=closing*3.6>=88&&v*3.6>=125&&lead*3.6<=115;
   // Safely reduce target speed before the distance needed to brake runs out.
   // The existing physical acceleration/braking integrator enforces this cap.
-  const reactionTravel=extremeClosure?v*.40+closing*.65:closing*.42;
+  const reactionTravel=extremeClosure?v*.45+closing*1.10:closing*.42;
   const usable=Math.max(0,gap-safe-reactionTravel);
-  const braking=extremeClosure?23:22;
+  // Reserve upstream room for a controllable deceleration, not a hard position clamp.
+  const braking=extremeClosure?18:22;
   const capKph=3.6*Math.sqrt(lead*lead+2*braking*usable);
   if(capKph<v*3.6+.5&&capKph<best.capKph)best={active:true,capKph,peerId:String(peer.id),gap,reason:'PREDICTED_PHYSICAL_CLOSURE_V386'};
  }
