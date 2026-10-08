@@ -4745,7 +4745,11 @@ function thirdCarOpportunityV376(vehicle,target,locks,phase,gapMeters,peers=race
   const clear=near.every(peer=>Math.abs(outer-lateralOpportunityV376(peer,track))>=MULTICAR_CORRIDOR_V376.minimumSideClearanceMeters);
   const sameTarget=String(vehicle?.tripleBreakawayTargetIdV376||'')===String(target?.id||'')&&String(target?.id||'')!=='';
   const sticky=sameTarget&&Number(simClockV192.simTimeMs)<Number(vehicle?.tripleBreakawayUntilV376||0);
-  const lottery=Math.abs(hashDriverV189(String(vehicle?.id||'')+'|'+Math.floor(Number(vehicle?.raceProgress)||0)+'|third-v376'))%100;
+  // Re-evaluate a safe third-car opportunity by simulation-time window instead of
+   // freezing an unlucky outcome for an entire lap. The existing corridor,
+   // approach speed and actual physical safety gates remain mandatory.
+   const attemptWindowV387=Math.floor(Math.max(0,Number(simClockV192.simTimeMs)||0)/2400);
+   const lottery=Math.abs(hashDriverV189(String(vehicle?.id||'')+'|'+String(target?.id||'')+'|'+Math.floor(Number(vehicle?.raceProgress)||0)+'|'+attemptWindowV387+'|third-v387'))%100;
   const lucky=lottery<MULTICAR_CORRIDOR_V376.thirdPartyOpportunityPct||vehicle?.qaForceThirdV376===true;
   const approaching=(Number(vehicle?.speedKph)||0)>=(Number(target?.speedKph)||0)-8;
   const safe=Boolean(target&&vehicle&&!vehicle.finished&&String(vehicle.pitState||'TRACK')==='TRACK'&&!vehicle.pitRequested&&
@@ -4754,6 +4758,35 @@ function thirdCarOpportunityV376(vehicle,target,locks,phase,gapMeters,peers=race
     gapMeters<=MULTICAR_CORRIDOR_V376.tripleAttackMaxGapMeters&&gapMeters>=0&&safe&&(sticky||lucky));
   return {active,busyTarget,available,nearCount:near.length,clear,approaching,lucky,sticky,outer};
 }
+
+// Phase 387: verify that third-party opportunities are re-evaluated in race
+// simulation time, without manufacturing a pass or changing any vehicle position.
+function qaThirdPartyRetryV387(){
+ const saved=simClockV192.simTimeMs;
+ const track={id:'qa387',lengthMeters:4500,geometry:{trackWidthMeters:14,racingLineMarginMeters:1.5}};
+ const a={id:'A387',raceProgress:1.5005,speedKph:240,racingLineMode:'ATTACK_INSIDE',pitState:'TRACK'};
+ const b={id:'B387',raceProgress:1.5,speedKph:242,racingLineMode:'DEFENSIVE_INSIDE',pitState:'TRACK'};
+ const c={id:'C387',raceProgress:1.498,speedKph:252,racingLineMode:'IDEAL',pitState:'TRACK'};
+ const peers=[a,b,c],locks=new Map([['A387','A387|B387'],['B387','A387|B387']]);
+ let windows=[],blocked=null,forced=null;
+ try{
+  for(let i=0;i<32;i++){
+   simClockV192.simTimeMs=i*2400;
+   windows.push(thirdCarOpportunityV376(c,b,locks,'STRAIGHT',9,peers,track));
+  }
+  simClockV192.simTimeMs=0;
+  blocked=thirdCarOpportunityV376(c,b,locks,'APEX',9,peers,track);
+  forced=thirdCarOpportunityV376({...c,qaForceThirdV376:true},b,locks,'STRAIGHT',9,peers,track);
+ }finally{simClockV192.simTimeMs=saved}
+ const open=windows.filter(row=>row.active).length,closed=windows.length-open;
+ const noWarp=!/\b(?:raceProgress|progress|travel|finishPosition)\s*=/.test(String(thirdCarOpportunityV376)+String(qaThirdPartyRetryV387));
+ return {version:'phase387-third-party-attempt-renewal',windows:windows.length,open,closed,
+  corridorBlockedInCorner:!blocked?.active,forceTestPassesGates:Boolean(forced?.active),noWarp,
+  allPass:open>0&&closed>0&&!blocked?.active&&Boolean(forced?.active)&&noWarp};
+}
+window.mwsF1QaThirdPartyRetryV387=qaThirdPartyRetryV387;
+window.__mwsF1RacingV387='phase387-third-party-attempt-renewal';
+
 function competitivePaceAdvantageV376(vehicle,peers=raceMotionV189.vehicles){
   if(!vehicle||vehicle.finished||vehicle.pitRequested||String(vehicle.pitState||'TRACK')!=='TRACK'||vehicle.trackBoundaryExceededV271)return 0;
   // Retain a brief physical acceleration opportunity after a verified pass,

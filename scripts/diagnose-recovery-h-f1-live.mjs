@@ -1440,6 +1440,8 @@ try{
     assert(behaviorTelemetry380?.allPass===true,'Phase 380 telemetry QA failed: '+JSON.stringify(behaviorTelemetry380));
     const overlapMonitor377=window.mwsF1QaActualMarkerOverlapsV377?.();
     assert(overlapMonitor377?.allPass===true,'Phase 377 visible marker overlap detector QA failed: '+JSON.stringify(overlapMonitor377));
+    const thirdRetry387=window.mwsF1QaThirdPartyRetryV387?.();
+    assert(thirdRetry387?.allPass===true,'Phase 387 third-party retry Chromium QA failed: '+JSON.stringify(thirdRetry387));
     const multicar376=window.mwsF1QaMulticarCorridorV376?.();
     assert(multicar376?.allPass===true,'Phase 376 three-wide bypass and physical proximity QA failed: '+JSON.stringify(multicar376));
     const cornerPhysics375=window.mwsF1QaCornerPhysicsV375?.();
@@ -1666,6 +1668,7 @@ try{
       finalPitV374:finalPit374||null,
       cornerPhysicsV375:cornerPhysics375||null,
       multicarV376:multicar376||null,
+      thirdPartyRetryV387:thirdRetry387||null,
       overlapMonitorV377:overlapMonitor377||null,
       behaviorTelemetryV380:behaviorTelemetry380||null,
       neighborBrakingV381:neighborBraking381||null,
