@@ -4744,12 +4744,13 @@ function rapidPassStateV376(current,next,ctx){
 const RACE_FINAL_QA_V386=Object.freeze({maxZoom:4.5,minLiveFrames:4,localCurveSamples:36,chordSamples:18,geometryMargin:1.18});
 const liveOnlyQualityV386={liveDynamics:0,syntheticDynamics:0,liveFrames:0,syntheticFrames:0,
   liveOverlapFrames:0,peakMaxZoomPairs:0,peakCurrentZoomPairs:0,minCenterSvg:Infinity,
-  safetyBrakingSamples:0,cleanAccelerationSamples:0,overlapSnapshots:[]};
+  safetyBrakingSamples:0,cleanAccelerationSamples:0,overlapSnapshots:[],recentClosureSteps:[]};
 function recordQualityDynamicsV386(vehicle,proximity,spacing){
  const t=liveOnlyQualityV386;
  if(engineQaV240.active){t.syntheticDynamics++;return}
  t.liveDynamics++;
- if(proximity?.active||spacing?.active||vehicle?.neighborSafetyV381?.active)t.safetyBrakingSamples++;
+ if(proximity?.active||spacing?.active||vehicle?.neighborSafetyV381?.active||vehicle?.closureEnvelopeV386?.active)t.safetyBrakingSamples++;
+ if(!engineQaV240.active){t.recentClosureSteps.push({ms:Number(simClockV192.simTimeMs)||0,id:String(vehicle?.id||''),progress:Number(vehicle?.raceProgress)||0,speed:Number(vehicle?.speedKph)||0,target:Number(vehicle?.targetSpeedKph)||0,brake:Number(vehicle?.brake)||0,accel:Number(vehicle?.accelerationMps2)||0,closure:vehicle?.closureEnvelopeV386||null,neighbor:vehicle?.neighborSafetyV381||null,proximity:vehicle?.proximityV376||null,line:String(vehicle?.racingLineMode||''),lateral:Number(vehicle?.visualLateralOffsetMeters)||0});if(t.recentClosureSteps.length>600)t.recentClosureSteps.splice(0,t.recentClosureSteps.length-600);}
  else if(Number(vehicle?.accelerationMps2)>0)t.cleanAccelerationSamples++;
 }
 function recordQualityFrameV386(atMax,atCurrent,rendered=[]){
@@ -4760,7 +4761,7 @@ function recordQualityFrameV386(atMax,atCurrent,rendered=[]){
   t.liveOverlapFrames++;
   const subjects=(atMax.examples||[]).flatMap(p=>[p.a,p.b]);
   const rows=(rendered||[]).filter(row=>subjects.includes(String(row.vehicle?.id))).map(row=>({id:String(row.vehicle?.id),progress:Number(row.vehicle?.raceProgress)||0,speed:Number(row.vehicle?.speedKph)||0,line:String(row.vehicle?.racingLineMode||''),battle:String(row.vehicle?.battleState||''),pitState:String(row.vehicle?.pitState||''),pitRequested:Boolean(row.vehicle?.pitRequested),finished:Boolean(row.vehicle?.finished),avoidanceMode:String(row.vehicle?.emergencyAvoidanceModeV386||''),avoidanceUntil:Number(row.vehicle?.emergencyAvoidanceUntilV386)||0,avoidancePlan:emergencyLaneChoiceV386(row.vehicle,activeRaceSnapshotV187?.track),lateral:Number(row.vehicle?.visualLateralOffsetMeters)||0,point:row.point?{x:Number(row.point.x),y:Number(row.point.y)}:null}));
-  t.overlapSnapshots.push({ms:Number(simClockV192.simTimeMs)||0,examples:atMax.examples||[],rows});if(t.overlapSnapshots.length>20)t.overlapSnapshots.shift();
+  t.overlapSnapshots.push({ms:Number(simClockV192.simTimeMs)||0,examples:atMax.examples||[],rows,trace:t.liveOverlapFrames===1?t.recentClosureSteps.filter(z=>subjects.includes(z.id)).slice(-160):[]});if(t.overlapSnapshots.length>20)t.overlapSnapshots.shift();
  }
  t.peakMaxZoomPairs=Math.max(t.peakMaxZoomPairs,Number(atMax?.pairs)||0);
  t.peakCurrentZoomPairs=Math.max(t.peakCurrentZoomPairs,Number(atCurrent?.pairs)||0);
@@ -7655,6 +7656,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const pitRejoinV384=pitRejoinSafetyV384(vehicle,track);
   vehicle.pitRejoinV384=pitRejoinV384;
   vehicle.neighborSafetyV381=neighborSafetyV381;
+  vehicle.closureEnvelopeV386=physicalClosureV386;
   vehicle.proximityV376=proximityV376;
   vehicle.battleQueueControlV319=spacingControlV319.reason;
   vehicle.battleQueueSpeedCapKphV319=Number.isFinite(spacingControlV319.capKph)?spacingControlV319.capKph:0;
