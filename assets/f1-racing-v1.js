@@ -4843,6 +4843,44 @@ function physicalProximityControlV376(vehicle,ahead,track=activeRaceSnapshotV187
   return {active:true,capKph,gap,intended,visual,sameCorridor,safeGap,controlStart,reason:deficit>0?'PROXIMITY_EMERGENCY_V376':'PROXIMITY_APPROACH_V376'};
 }
 
+function physicalClosureEnvelopeV386(vehicle,track,peers=raceMotionV189.vehicles){
+ if(!vehicle||vehicle.finished||vehicle.pitState!=='TRACK')return {active:false,capKph:Infinity};
+ const len=Math.max(1,Number(track?.lengthMeters)||4500),v=Math.max(0,Number(vehicle.speedKph)||0)/3.6;
+ const safe=projectedSafeGapMetersV378(track)+5;
+ let best={active:false,capKph:Infinity};
+ for(const peer of peers||[]){
+  if(!peer||peer===vehicle||peer.finished||peer.pitState!=='TRACK')continue;
+  const gap=(Number(peer.raceProgress)-Number(vehicle.raceProgress))*len;
+  if(!(gap>0&&gap<=450))continue;
+  const actual=Math.abs((Number(vehicle.visualLateralOffsetMeters)||0)-(Number(peer.visualLateralOffsetMeters)||0));
+  const intent=Math.abs(lineOffsetMetersV197(vehicle)-lineOffsetMetersV197(peer));
+  if(Math.min(actual,intent)>=MULTICAR_CORRIDOR_V376.minimumSideClearanceMeters)continue;
+  const leadSpeed=Math.max(0,Number(peer.speedKph)||0)/3.6;
+  const lead=Math.max(0,leadSpeed+Math.max(-39,Math.min(0,Number(peer.accelerationMps2)||0))*.35);
+  const closing=Math.max(0,v-lead);
+  if(closing<1.5&&gap>Math.max(12,Math.min(24,safe*.55)))continue;
+  const usable=Math.max(0,gap-safe-closing*.42);
+  const capKph=3.6*Math.sqrt(lead*lead+44*usable);
+  if(capKph<v*3.6+.5&&capKph<best.capKph)best={active:true,capKph,peerId:String(peer.id),gap,reason:'PREDICTED_PHYSICAL_CLOSURE_V386'};
+ }
+ return best;
+}
+
+function qaPhysicalClosureV386(){
+ const track={id:'qa386',lengthMeters:4500,geometry:{trackWidthMeters:14,racingLineMarginMeters:1.5}};
+ const v={id:'follower',raceProgress:1.2,speedKph:253,visualLateralOffsetMeters:0,racingLineMode:'IDEAL',pitState:'TRACK'};
+ const p={id:'leader',raceProgress:1.2+65/4500,speedKph:7,visualLateralOffsetMeters:0,racingLineMode:'IDEAL',pitState:'TRACK',accelerationMps2:-20};
+ const close=physicalClosureEnvelopeV386(v,track,[v,p]);
+ const far=physicalClosureEnvelopeV386(v,track,[{...p,raceProgress:1.2+600/4500}]);
+ const stopped=physicalClosureEnvelopeV386({...v,speedKph:0},track,[{...p,speedKph:0,accelerationMps2:0,raceProgress:1.2+35/4500}]);
+ const pit=physicalClosureEnvelopeV386(v,track,[{...p,pitState:'PIT_LANE'}]);
+ const integrated=String(simulateVehicleDynamicsV196).includes('physicalClosureEnvelopeV386(vehicle,track)')&&
+  String(simulateVehicleDynamicsV196).includes('if(physicalClosureV386.active)maxTarget=Math.min(maxTarget,physicalClosureV386.capKph);');
+ const noWarp=!/\b(?:raceProgress|progress)\s*=/.test(String(physicalClosureEnvelopeV386));
+ return {close,far,stopped,pit,integrated,noWarp,allPass:close.active&&close.capKph<253&&!far.active&&!stopped.active&&!pit.active&&integrated&&noWarp};
+}
+window.mwsF1QaPhysicalClosureV386=qaPhysicalClosureV386;
+
 const NEIGHBOR_BRAKING_V381=Object.freeze({scanMeters:310,brakeMps2:24,reactionSeconds:1.15,leadMeters:36,extraSafetyMeters:9,underGapBrakeKph:20});
 function neighborBrakingPairV381(vehicle,peer,track){
   if(!vehicle||!peer||vehicle===peer||vehicle.finished||peer.finished||
@@ -7498,7 +7536,7 @@ function fieldPaceRetentionMultiplierV356(vehicle){
 
 const PACE_RELEASE_V385=Object.freeze({releaseMs:2500,maxAccelerationBoost:.12,minimumTrafficSpeedKph:60});
 function safePaceReleaseV385(vehicle,ms,safety,phase){
- const unsafe=Boolean(safety?.spacing?.active||safety?.proximity?.active||safety?.neighbor?.active||
+ const unsafe=Boolean(safety?.spacing?.active||safety?.proximity?.active||safety?.neighbor?.active||safety?.closure?.active||
  safety?.pitRejoin?.active||safety?.incident?.active||safety?.boundaryOffTrack);
  if(unsafe){vehicle.lastSafetyHoldMsV385=ms;vehicle.safetyHoldStepsV385=(Number(vehicle.safetyHoldStepsV385)||0)+1;
    return {active:false,multiplier:1,reason:'SAFETY'};}
@@ -7613,6 +7651,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const aheadV376=raceMotionV189.vehicles.find(peer=>String(peer.id||'')===String(vehicle.trafficCarAheadId||''))||null;
   const proximityV376=physicalProximityControlV376(vehicle,aheadV376,track);
   const neighborSafetyV381=neighborBrakingSafetyV381(vehicle,track);
+  const physicalClosureV386=physicalClosureEnvelopeV386(vehicle,track);
   const pitRejoinV384=pitRejoinSafetyV384(vehicle,track);
   vehicle.pitRejoinV384=pitRejoinV384;
   vehicle.neighborSafetyV381=neighborSafetyV381;
@@ -7622,6 +7661,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   if(Number.isFinite(spacingControlV319.capKph))maxTarget=Math.min(maxTarget,spacingControlV319.capKph);
   if(proximityV376.active)maxTarget=Math.min(maxTarget,proximityV376.capKph);
   if(neighborSafetyV381.active)maxTarget=Math.min(maxTarget,neighborSafetyV381.capKph);
+  if(physicalClosureV386.active)maxTarget=Math.min(maxTarget,physicalClosureV386.capKph);
   if(pitRejoinV384.active)maxTarget=Math.min(maxTarget,pitRejoinV384.capKph);
   if(Number.isFinite(pitControl.speedCapKph))maxTarget=Math.min(maxTarget,pitControl.speedCapKph);
   const error=maxTarget-current;
@@ -7629,7 +7669,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   // let brakeBase=Math.max(1,Number(track?.geometry?.referenceBrakeDecelMps2)||20)*tyreGrip*incidentState.brakeFactor;
   // *tyreGrip*incidentState.brakeFactor;
   const longitudinalV375=longitudinalResponseV375(track,current,maxTarget-current,phase,tyreGrip);
-  const paceReleaseV385=safePaceReleaseV385(vehicle,Number(simClockV192.simTimeMs)||0,{spacing:spacingControlV319,proximity:proximityV376,neighbor:neighborSafetyV381,pitRejoin:pitRejoinV384,incident:incidentState,boundaryOffTrack:boundaryStateV271.offTrack},phase);
+  const paceReleaseV385=safePaceReleaseV385(vehicle,Number(simClockV192.simTimeMs)||0,{spacing:spacingControlV319,proximity:proximityV376,neighbor:neighborSafetyV381,closure:physicalClosureV386,pitRejoin:pitRejoinV384,incident:incidentState,boundaryOffTrack:boundaryStateV271.offTrack},phase);
   const accelBase=longitudinalV375.accel*Math.max(1,Number(chaseBurstEffect.accelMultiplier)||1)*paceReleaseV385.multiplier;
   let brakeBase=longitudinalV375.brake*incidentState.brakeFactor;
   let throttle=0,brake=0,accelMps2=0;
@@ -7647,7 +7687,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
     const exitAcceleration=(cornerRecoveryV351?CORNER_DYNAMICS_V343.exitAccelerationMultiplier*cornerSpecV351.exitAccel:1)*underSpeedRecoveryV353.multiplier*Math.max(1,Number(chaseBurstEffect.exitMultiplier)||1);
     accelMps2=accelBase*throttle*highSpeedFade*tractionGrip*exitAcceleration;
   }else if(error<-1.5){
-    const clearRecoveryV358=cornerRecoveryV351&&!spacingControlV319.active&&!proximityV376.active&&!neighborSafetyV381.active&&!incidentState.active&&!leaderPressureEffect.event&&boundaryStateV271.speedFactor>=CORNER_BRAKE_RELEASE_V358.clearBoundaryFactor;
+    const clearRecoveryV358=cornerRecoveryV351&&!spacingControlV319.active&&!proximityV376.active&&!neighborSafetyV381.active&&!physicalClosureV386.active&&!incidentState.active&&!leaderPressureEffect.event&&boundaryStateV271.speedFactor>=CORNER_BRAKE_RELEASE_V358.clearBoundaryFactor;
     if(clearRecoveryV358){
       brake=0;
       throttle=0;
@@ -7682,7 +7722,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
     const previousMin=Number(vehicle.cornerMinSpeedByClassV351[classV351]);
     vehicle.cornerMinSpeedByClassV351[classV351]=Number.isFinite(previousMin)&&previousMin>0?Math.min(previousMin,nextKph):nextKph;
     const specV353=CORNER_DRIVING_V351.speedEnvelope[classV351]||CORNER_DRIVING_V351.speedEnvelope.medium;
-    const cleanCornerV353=!spacingControlV319.active&&!proximityV376.active&&!neighborSafetyV381.active&&!incidentState.active&&!leaderPressureEffect.event&&boundaryStateV271.speedFactor>=CORNER_COMPLEX_RECOVERY_V353.cleanBoundaryFactor&&Number(vehicle.cornerObservedEntryKphV353)>=Number(specV353.min)*CORNER_COMPLEX_RECOVERY_V353.telemetryEntryRatio;
+    const cleanCornerV353=!spacingControlV319.active&&!proximityV376.active&&!neighborSafetyV381.active&&!physicalClosureV386.active&&!incidentState.active&&!leaderPressureEffect.event&&boundaryStateV271.speedFactor>=CORNER_COMPLEX_RECOVERY_V353.cleanBoundaryFactor&&Number(vehicle.cornerObservedEntryKphV353)>=Number(specV353.min)*CORNER_COMPLEX_RECOVERY_V353.telemetryEntryRatio;
     if(cleanCornerV353){
       vehicle.cornerUnimpededMinSpeedByClassV353=vehicle.cornerUnimpededMinSpeedByClassV353||{};
       const previousClean=Number(vehicle.cornerUnimpededMinSpeedByClassV353[classV351]);

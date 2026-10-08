@@ -1418,6 +1418,8 @@ try{
     assert(preemptivePass379?.allPass===true,'Phase 379 preemptive pass QA failed: '+JSON.stringify(preemptivePass379));
     const projectedSafe378=window.mwsF1QaProjectedSafeFollowingV378?.();
     assert(projectedSafe378?.allPass===true,'Phase 378 projected safe following QA failed: '+JSON.stringify(projectedSafe378));
+    const physicalClosure386=window.mwsF1QaPhysicalClosureV386?.();
+    assert(physicalClosure386?.allPass===true,'Phase 386 physical closure envelope QA failed: '+JSON.stringify(physicalClosure386));
     const emergencyAvoidance386=window.mwsF1QaEmergencyAvoidanceV386?.();
     assert(emergencyAvoidance386?.allPass===true,'Phase 386 emergency obstacle bypass QA failed: '+JSON.stringify(emergencyAvoidance386));
     const finalLive386=window.mwsF1QaFinalLiveQualityV386?.();

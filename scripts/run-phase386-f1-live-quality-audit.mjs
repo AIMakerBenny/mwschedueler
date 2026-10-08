@@ -10,6 +10,8 @@ export function runPhase386F1LiveQualityAudit(){
  if(!wf.includes("echo '[phase386]")||!cum.includes('runPhase386FullIntegrationAudit'))issues.push('audit integration missing');
  if(!core.includes('report.peakMaxZoomPairs===0'))issues.push('zero-overlap criterion absent');
  if(!core.includes('function emergencyLaneChoiceV386(')||!core.includes('applyEmergencyAvoidanceV386();'))issues.push('emergency slow-obstacle avoidance missing');
+ if(!core.includes('function physicalClosureEnvelopeV386(')||!core.includes('if(physicalClosureV386.active)maxTarget=Math.min(maxTarget,physicalClosureV386.capKph);'))issues.push('actual longitudinal closure cap not integrated');
+ if(!diag.includes('Phase 386 physical closure envelope QA failed'))issues.push('high-speed closure Chromium regression missing');
  if(!diag.includes('Phase 386 emergency obstacle bypass QA failed'))issues.push('slow-obstacle browser QA missing');
  for(const p of ['assets/f1-racing-v1.js','scripts/diagnose-recovery-h-f1-live.mjs','scripts/run-phase386-f1-live-quality-audit.mjs']){const r=spawnSync(process.execPath,['--check',p],{encoding:'utf8'});if(r.status!==0)issues.push('syntax '+p+' '+String(r.stderr).slice(0,500))}
  const result={phase:386,name:'f1-live-only-zero-overlap-quality-gate',issues,warnings,pass:!issues.length};console.log(JSON.stringify(result));if(issues.length)process.exitCode=1;return result;
