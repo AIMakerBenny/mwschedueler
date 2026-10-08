@@ -171,6 +171,7 @@ const VERSION382='phase382-angle-braking-midcorner-acceleration';
 const VERSION383='phase383-committed-pass-line-capacity';
 const VERSION384='phase384-safe-third-party-and-pit-rejoin';
 const VERSION385='phase385-safe-acceleration-release';
+const VERSION386='phase386-live-only-overlap-gate';
 const interactionSnapshotStateV368={snapshot:null,builds:0,lastSimTimeMs:0};
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
@@ -1845,7 +1846,7 @@ function snapshotWithStartingGridV272(snapshot,round=0,previousOrder=[]){
   });
 }
 function gridStartOffsetV272(index,count){
-  return -(Math.max(0,Number(index)||0)*Math.min(.0065,.065/Math.max(1,Number(count)||1)));
+  return -(Math.max(0,Number(index)||0)*Math.min(.008,.08/Math.max(1,Number(count)||1)));
 }
 function gridAvatarMarkupV272(driver){
   const name=String(driver?.name||'Driver'),src=String(driver?.image||'').trim();
@@ -4739,6 +4740,70 @@ function rapidPassStateV376(current,next,ctx){
   if(next==='PREPARING_ATTACK'&&gap<=15)return 'PULLING_OUT';
   return next;
 }
+
+const RACE_FINAL_QA_V386=Object.freeze({maxZoom:4.5,minLiveFrames:4,localCurveSamples:36,chordSamples:18,geometryMargin:1.18});
+const liveOnlyQualityV386={liveDynamics:0,syntheticDynamics:0,liveFrames:0,syntheticFrames:0,
+  liveOverlapFrames:0,peakMaxZoomPairs:0,peakCurrentZoomPairs:0,minCenterSvg:Infinity,
+  safetyBrakingSamples:0,cleanAccelerationSamples:0};
+function recordQualityDynamicsV386(vehicle,proximity,spacing){
+ const t=liveOnlyQualityV386;
+ if(engineQaV240.active){t.syntheticDynamics++;return}
+ t.liveDynamics++;
+ if(proximity?.active||spacing?.active||vehicle?.neighborSafetyV381?.active)t.safetyBrakingSamples++;
+ else if(Number(vehicle?.accelerationMps2)>0)t.cleanAccelerationSamples++;
+}
+function recordQualityFrameV386(atMax,atCurrent){
+ const t=liveOnlyQualityV386;
+ if(engineQaV240.active){t.syntheticFrames++;return}
+ t.liveFrames++;
+ if(Number(atMax?.pairs)>0)t.liveOverlapFrames++;
+ t.peakMaxZoomPairs=Math.max(t.peakMaxZoomPairs,Number(atMax?.pairs)||0);
+ t.peakCurrentZoomPairs=Math.max(t.peakCurrentZoomPairs,Number(atCurrent?.pairs)||0);
+ if(Number.isFinite(Number(atMax?.closestSvg)))t.minCenterSvg=Math.min(t.minCenterSvg,Number(atMax.closestSvg));
+}
+function localCurveClearanceMetersV386(track,path,ringDiameterSvg){
+ if(!path?.getPointAtLength||!path?.getTotalLength)return 0;
+ const svgLength=Number(path.getTotalLength())||0;
+ if(svgLength<100||!(ringDiameterSvg>0))return 0;
+ let worstArc=ringDiameterSvg;
+ const samples=RACE_FINAL_QA_V386.localCurveSamples;
+ for(let i=0;i<samples;i++){
+   const start=svgLength*i/samples,p=path.getPointAtLength(start);
+   let step=ringDiameterSvg;
+   for(let j=0;j<RACE_FINAL_QA_V386.chordSamples;j++){
+     const q=path.getPointAtLength((start+step)%svgLength);
+     if(Math.hypot(Number(p.x)-Number(q.x),Number(p.y)-Number(q.y))>=ringDiameterSvg)break;
+     step+=ringDiameterSvg*.13;
+   }
+   worstArc=Math.max(worstArc,step);
+ }
+ return worstArc*(Math.max(1,Number(track?.lengthMeters)||4500)/svgLength)*RACE_FINAL_QA_V386.geometryMargin;
+}
+function finalLiveQualityReportV386(){
+ const t=liveOnlyQualityV386;
+ return {version:VERSION386,liveDynamics:t.liveDynamics,syntheticDynamics:t.syntheticDynamics,
+ liveFrames:t.liveFrames,syntheticFrames:t.syntheticFrames,liveOverlapFrames:t.liveOverlapFrames,
+ peakMaxZoomPairs:t.peakMaxZoomPairs,peakCurrentZoomPairs:t.peakCurrentZoomPairs,
+ minCenterSvg:Number.isFinite(t.minCenterSvg)?t.minCenterSvg:null,
+ safetyBrakingSamples:t.safetyBrakingSamples,cleanAccelerationSamples:t.cleanAccelerationSamples};
+}
+function qaFinalLiveQualityV386(){
+ const report=finalLiveQualityReportV386();
+ const integrated=String(recordActualMarkerOverlapsV377).includes('recordQualityFrameV386(')&&
+ String(recordBehaviorPhysicsV380).includes('recordQualityDynamicsV386(')&&
+ String(projectedSafeGapMetersV378).includes('localCurveClearanceMetersV386(');
+ const isolated={lengthMeters:4500};
+ const trackPath=document.getElementById('f1RacingRaceTrackPathV188');
+ const curveClearance=localCurveClearanceMetersV386(isolated,trackPath,8.24);
+ const noWarp=!/\b(?:raceProgress|progress)\s*=/.test(String(localCurveClearanceMetersV386));
+ const measured=report.liveFrames>=RACE_FINAL_QA_V386.minLiveFrames;
+ return {version:VERSION386,integrated,noWarp,measured,curveClearance,report,
+ allPass:integrated&&noWarp&&measured&&report.peakMaxZoomPairs===0};
+}
+window.mwsF1GetFinalLiveQualityV386=finalLiveQualityReportV386;
+window.mwsF1QaFinalLiveQualityV386=qaFinalLiveQualityV386;
+window.__mwsF1RacingV386=VERSION386;
+
 function projectedSafeGapMetersV378(track=activeRaceSnapshotV187?.track){
   const cfg=PROJECTED_SAFE_GAP_V378,length=Math.max(1,Number(track?.lengthMeters)||4500);
   const path=document.getElementById('f1RacingRaceTrackPathV188');
@@ -4747,7 +4812,8 @@ function projectedSafeGapMetersV378(track=activeRaceSnapshotV187?.track){
   const lengthSvg=Number(path?.getTotalLength?.())||0;
   const ringDiameterSvg=2*MARKER_OVERLAP_MONITOR_V377.ringRadiusSvg*raceMarkerScaleV245(MARKER_OVERLAP_MONITOR_V377.maxZoom)*MARKER_OVERLAP_MONITOR_V377.clearanceMultiplier;
   const projectedMeters=lengthSvg>100?ringDiameterSvg*length/lengthSvg:cfg.minMeters;
-  const result=Math.max(cfg.minMeters,Math.min(cfg.maxMeters,projectedMeters*cfg.marginMultiplier));
+  const curveMeters=localCurveClearanceMetersV386(track,path,ringDiameterSvg);
+  const result=Math.max(cfg.minMeters,Math.min(cfg.maxMeters,Math.max(projectedMeters*cfg.marginMultiplier,curveMeters)));
   projectedGapCacheV378.path=path;projectedGapCacheV378.key=key;projectedGapCacheV378.value=result;
   return result;
 }
@@ -6806,6 +6872,7 @@ function recordActualMarkerOverlapsV377(rendered=[]){
   markerOverlapStateV377.peakCurrentZoomOverlaps=Math.max(markerOverlapStateV377.peakCurrentZoomOverlaps,atCurrent.pairs);
   if(atMax.closestSvg!==null)markerOverlapStateV377.minMeasuredDistanceSvg=Math.min(markerOverlapStateV377.minMeasuredDistanceSvg,atMax.closestSvg);
   markerOverlapStateV377.latest={atMax,atCurrent};
+  recordQualityFrameV386(atMax,atCurrent);
   recordBehaviorFrameV380(rendered,atMax);
   return markerOverlapStateV377.latest;
 }
@@ -6820,6 +6887,7 @@ function markerOverlapReportV377(){
 const behaviorTelemetryV380={physicsSamples:0,frames:0,passes:0,proximity:0,spacing:0,braking:0,accelerating:0,overlapFrames:0,peakOverlaps:0,minPhysicalGap:Infinity,events:[],overlaps:[]};
 function behaviorStoreV380(field,event){const rows=behaviorTelemetryV380[field];rows.push(event);if(rows.length>64)rows.shift();}
 function recordBehaviorPhysicsV380(vehicle,phase,proximity,spacing){
+  recordQualityDynamicsV386(vehicle,proximity,spacing);
   const t=behaviorTelemetryV380;t.physicsSamples++;
   if(proximity?.active)t.proximity++;
   if(spacing?.active)t.spacing++;
