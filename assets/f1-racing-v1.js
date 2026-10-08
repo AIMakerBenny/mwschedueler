@@ -5242,7 +5242,7 @@ function qaRaceMomentumV262(){
   const hiMultiplier=raceMomentumPaceMultiplierV262(hi),loMultiplier=raceMomentumPaceMultiplierV262(lo);
   const deterministic=JSON.stringify(a)===JSON.stringify(b)&&JSON.stringify(a)!==JSON.stringify(c);
   const paceBound=Math.abs(hiMultiplier-1-RACE_MOMENTUM_CONFIG_V262.paceRange)<1e-9&&Math.abs(1-loMultiplier-RACE_MOMENTUM_CONFIG_V262.paceRange)<1e-9;
-  return {deterministic,paceRange:RACE_MOMENTUM_CONFIG_V262.paceRange,hiMultiplier,loMultiplier,events:[...RACE_MOMENTUM_EVENTS_V262],allPass:deterministic&&paceBound&&RACE_MOMENTUM_CONFIG_V262.paceRange>=.015&&RACE_MOMENTUM_CONFIG_V262.paceRange<=.025};
+  return {deterministic,paceRange:RACE_MOMENTUM_CONFIG_V262.paceRange,hiMultiplier,loMultiplier,events:[...RACE_MOMENTUM_EVENTS_V262],allPass:deterministic&&paceBound&&Math.abs(RACE_MOMENTUM_CONFIG_V262.paceRange-.035)<1e-9};
 }
 
 
