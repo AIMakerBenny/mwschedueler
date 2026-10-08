@@ -352,7 +352,7 @@ const CORNER_COMPLEX_RECOVERY_V353=Object.freeze({
   telemetryEntryRatio:1.08,cleanBoundaryFactor:.985
 });
 const RACE_MOMENTUM_CONFIG_V262=Object.freeze({
-  min:-1,max:1,paceRange:.02,decayPerSecond:.032,evaluationMs:620,
+  min:-1,max:1,paceRange:.035,decayPerSecond:.032,evaluationMs:620,
   passSuccess:.18,passFailed:-.12,defenceSuccess:.075,incident:-.14,
   excellentExit:.055,lateBraking:.045,hesitation:-.05,minorCorrection:-.038,
   rhythmGain:.04,pressureLoss:-.045,tyrePositive:.025,tyreNegative:-.03
