@@ -164,6 +164,7 @@ const VERSION375='phase375-f1-curvature-prebrake-apex-throttle';
 const VERSION376='phase376-f1-multicar-corridor-proximity';
 const VERSION377='phase377-f1-actual-marker-overlap-monitor';
 const VERSION378='phase378-f1-projected-safe-following';
+const VERSION379='phase379-f1-preemptive-pass-corridor';
 const interactionSnapshotStateV368={snapshot:null,builds:0,lastSimTimeMs:0};
 const OVERTAKE_FLOW_CONFIG_V309=Object.freeze({variabilityHoldMs:920,targetRefreshStates:Object.freeze(['FOLLOWING','CLOSING','TOWING','PASS_COMPLETED','PASS_FAILED'])});
 const raceOrderFlowStateV309={lastOrder:[],orderChanges:0,changedDrivers:0};
@@ -4724,6 +4725,12 @@ function physicalProximityControlV376(vehicle,ahead,track=activeRaceSnapshotV187
   const capKph=Math.max(0,(Number(ahead.speedKph)||0)+closingAllowance);
   return {active:true,capKph,gap,intended,visual,sameCorridor,safeGap,controlStart,reason:deficit>0?'PROXIMITY_EMERGENCY_V376':'PROXIMITY_APPROACH_V376'};
 }
+function earlyPassWindowV379(gapMeters,safeGapMeters,closingRateKph){
+  const gap=Math.max(0,Number(gapMeters)||0),safeGap=Math.max(1,Number(safeGapMeters)||1);
+  const closing=Math.max(0,Number(closingRateKph)||0);
+  const lookAhead=Math.max(42,Math.min(105,safeGap+55+closing*.8));
+  return {lookAhead,closeEnough:gap<=lookAhead,headwayProtected:gap>=Math.max(3,safeGap*.45),closingEnough:closing>=.65};
+}
 function earlyLateralPassV378(vehicle,target,context={}){
   if(!vehicle||!target||vehicle.pitRequested||target.pitRequested||vehicle.finished||target.finished||
       String(vehicle.pitState||'TRACK')!=='TRACK'||String(target.pitState||'TRACK')!=='TRACK'||vehicle.trackBoundaryExceededV271)
@@ -4731,11 +4738,12 @@ function earlyLateralPassV378(vehicle,target,context={}){
   const phase=String(context.phase||''),gap=Math.max(0,Number(context.gapMeters)||0),closing=Number(context.closingRateKph)||0;
   const safeGap=projectedSafeGapMetersV378();
   const open=['STRAIGHT','APPROACH','BRAKING'].includes(phase);
-  const approachGap=Math.max(PASS_CONFIG_V208.pullOutGapMeters,Math.min(68,safeGap+25));
-  const nearEnough=gap<=approachGap&&gap>=Math.max(3,safeGap*.40);
+  const windowV379=earlyPassWindowV379(gap,safeGap,closing);
+  const approachGap=Math.max(PASS_CONFIG_V208.pullOutGapMeters,windowV379.lookAhead);
+  const nearEnough=windowV379.closeEnough&&windowV379.headwayProtected;
   const state=String(vehicle.battleState||'FOLLOWING');
   const candidate=['FOLLOWING','CLOSING','TOWING','PREPARING_ATTACK'].includes(state);
-  const active=Boolean(open&&nearEnough&&candidate&&closing>=1.5&&!vehicle.battleBlockedV319);
+  const active=Boolean(open&&nearEnough&&candidate&&windowV379.closingEnough&&!vehicle.battleBlockedV319);
   return {active,phase,gap,safeGap,approachGap,closing,candidate,open};
 }
 function updatePassStateMachineV208(stepMs){
@@ -9805,6 +9813,21 @@ function qaProjectedSafeFollowingV378(){
 }
 window.mwsF1QaProjectedSafeFollowingV378=qaProjectedSafeFollowingV378;
 window.__mwsF1RacingV378=VERSION378;
+
+function qaPreemptivePassCorridorV379(){
+  const safeGap=25;
+  const far=earlyPassWindowV379(105,safeGap,8);
+  const near=earlyPassWindowV379(55,safeGap,8);
+  const unsafe=earlyPassWindowV379(4,safeGap,8);
+  const staticCar=earlyPassWindowV379(55,safeGap,0);
+  const continuity=near.closeEnough&&near.headwayProtected&&near.closingEnough&&!unsafe.headwayProtected&&!staticCar.closingEnough&&!far.closeEnough;
+  const prebrake=earlyLateralPassV378({id:'qa379',battleState:'CLOSING',battleBlockedV319:false,pitState:'TRACK'}, {id:'ahead379',pitState:'TRACK'}, {phase:'BRAKING',gapMeters:55,closingRateKph:8});
+  const apexBlocked=earlyLateralPassV378({id:'qa379',battleState:'CLOSING',battleBlockedV319:false,pitState:'TRACK'}, {id:'ahead379',pitState:'TRACK'}, {phase:'APEX',gapMeters:55,closingRateKph:8});
+  const noProgressMutation=!/\b(?:raceProgress|progress)\s*=/.test(String(earlyPassWindowV379));
+  return {version:VERSION379,safeGap,far,near,unsafe,staticCar,continuity,prebrake,apexBlocked,noProgressMutation,allPass:continuity&&prebrake.active&&!apexBlocked.active&&noProgressMutation};
+}
+window.mwsF1QaPreemptivePassCorridorV379=qaPreemptivePassCorridorV379;
+window.__mwsF1RacingV379=VERSION379;
 
 function qaUiVisibilitySpacingV324(){
   const marker=document.querySelector('.f1-racing-race-vehicle-v189');

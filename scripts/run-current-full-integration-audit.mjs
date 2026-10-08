@@ -374,6 +374,7 @@ import {runPhase375F1AngleCornerPhysicsAudit} from './run-phase375-f1-angle-corn
 import {runPhase376F1MulticarCorridorAudit} from './run-phase376-f1-multicar-corridor-audit.mjs';
 import {runPhase377F1MarkerOverlapMonitorAudit} from './run-phase377-f1-marker-overlap-monitor-audit.mjs';
 import {runPhase378F1ProjectedSafeFollowingAudit} from './run-phase378-f1-projected-safe-following-audit.mjs';
+import {runPhase379F1PreemptivePassCorridorAudit} from './run-phase379-f1-preemptive-pass-corridor-audit.mjs';
 
 export function runPhase2FullIntegrationAudit(){
   const results=[runPhase1MobileShellAudit(),runPhase2StartupReadinessAudit()];
@@ -2805,5 +2806,6 @@ export function runPhase375FullIntegrationAudit(){const previous=runPhase374Full
 export function runPhase376FullIntegrationAudit(){const previous=runPhase375FullIntegrationAudit(),current=runPhase376F1MulticarCorridorAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 376: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 376: '+x)];return {phase:376,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase377FullIntegrationAudit(){const previous=runPhase376FullIntegrationAudit(),current=runPhase377F1MarkerOverlapMonitorAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 377: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 377: '+x)];return {phase:377,previous,current,issues,warnings,pass:issues.length===0};}
 export function runPhase378FullIntegrationAudit(){const previous=runPhase377FullIntegrationAudit(),current=runPhase378F1ProjectedSafeFollowingAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 378: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 378: '+x)];return {phase:378,previous,current,issues,warnings,pass:issues.length===0};}
-export function runCurrentFullIntegrationAudit(){return runPhase378FullIntegrationAudit();}
+export function runPhase379FullIntegrationAudit(){const previous=runPhase378FullIntegrationAudit(),current=runPhase379F1PreemptivePassCorridorAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 379: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 379: '+x)];return {phase:379,previous,current,issues,warnings,pass:issues.length===0};}
+export function runCurrentFullIntegrationAudit(){return runPhase379FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();
