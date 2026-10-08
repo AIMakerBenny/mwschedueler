@@ -7717,6 +7717,20 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   if(neighborSafetyV381.active)maxTarget=Math.min(maxTarget,neighborSafetyV381.capKph);
   if(physicalClosureV386.active)maxTarget=Math.min(maxTarget,physicalClosureV386.capKph);
   if(pitRejoinV384.active)maxTarget=Math.min(maxTarget,pitRejoinV384.capKph);
+  // A frame becomes "unimpeded" only if the entire observed corner has stayed
+  // free of traffic and safety intervention. The old per-frame test mislabeled
+  // a car recovering from previous neighbor braking as an unimpeded fast corner.
+  const observedCornerIdV386=String(phaseInfoV270?.corner?.id||'');
+  if(String(vehicle.observedCornerIdV386||'')!==observedCornerIdV386){
+    vehicle.observedCornerIdV386=observedCornerIdV386;
+    vehicle.cornerIntervenedV386=false;
+  }
+  if(phaseInfoV270?.corner&&(spacingControlV319.active||proximityV376.active||
+    neighborSafetyV381.active||physicalClosureV386.active||pitRejoinV384.active||
+    incidentState.active||leaderPressureEffect.event||vehicle.pitRequested||
+    boundaryStateV271.speedFactor<CORNER_COMPLEX_RECOVERY_V353.cleanBoundaryFactor)){
+    vehicle.cornerIntervenedV386=true;
+  }
   const clearFastV386=String(vehicle.cornerDrivingClassV351)==='fast'&&phaseInfoV270?.corner&&!vehicle.pitRequested&&String(vehicle.pitState||'TRACK')==='TRACK'&&
     !spacingControlV319.active&&!proximityV376.active&&!neighborSafetyV381.active&&!physicalClosureV386.active&&!pitRejoinV384.active&&!incidentState.active&&!leaderPressureEffect.event&&boundaryStateV271.speedFactor>=.985;
   if(clearFastV386)maxTarget=Math.max(maxTarget,CORNER_DRIVING_V351.speedEnvelope.fast.min*.82);
@@ -7780,7 +7794,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
     const previousMin=Number(vehicle.cornerMinSpeedByClassV351[classV351]);
     vehicle.cornerMinSpeedByClassV351[classV351]=Number.isFinite(previousMin)&&previousMin>0?Math.min(previousMin,nextKph):nextKph;
     const specV353=CORNER_DRIVING_V351.speedEnvelope[classV351]||CORNER_DRIVING_V351.speedEnvelope.medium;
-    const cleanCornerV353=!spacingControlV319.active&&!proximityV376.active&&!neighborSafetyV381.active&&!physicalClosureV386.active&&!incidentState.active&&!leaderPressureEffect.event&&boundaryStateV271.speedFactor>=CORNER_COMPLEX_RECOVERY_V353.cleanBoundaryFactor&&Number(vehicle.cornerObservedEntryKphV353)>=Number(specV353.min)*CORNER_COMPLEX_RECOVERY_V353.telemetryEntryRatio;
+    const cleanCornerV353=!vehicle.cornerIntervenedV386&&!spacingControlV319.active&&!proximityV376.active&&!neighborSafetyV381.active&&!physicalClosureV386.active&&!incidentState.active&&!leaderPressureEffect.event&&boundaryStateV271.speedFactor>=CORNER_COMPLEX_RECOVERY_V353.cleanBoundaryFactor&&Number(vehicle.cornerObservedEntryKphV353)>=Number(specV353.min)*CORNER_COMPLEX_RECOVERY_V353.telemetryEntryRatio;
     if(cleanCornerV353){
       vehicle.cornerUnimpededMinSpeedByClassV353=vehicle.cornerUnimpededMinSpeedByClassV353||{};
       const previousClean=Number(vehicle.cornerUnimpededMinSpeedByClassV353[classV351]);
