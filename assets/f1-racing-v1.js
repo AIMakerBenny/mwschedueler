@@ -1136,6 +1136,12 @@ const INCIDENT_CONFIG_V204=Object.freeze({
   oversteerThrottleFactor:0.48
 });
 const TYRE_COMPOUNDS_V203=Object.freeze({SOFT:Object.freeze({code:'S',gripBias:1.01,wearPerLap:0.115,heatFactor:1.10,idealSurface:0.60}),MEDIUM:Object.freeze({code:'M',gripBias:1.00,wearPerLap:0.090,heatFactor:1.00,idealSurface:0.56}),HARD:Object.freeze({code:'H',gripBias:0.99,wearPerLap:0.068,heatFactor:0.90,idealSurface:0.52})});
+const TYRE_SURFACE_COOLING_V392=Object.freeze({baselinePerSecond:.14,airflowPerSecond:.085,referenceSpeedKph:300});
+function tyreSurfaceCoolingV392(speedKph){
+  const speed=Math.max(0,Number(speedKph)||0);
+  return TYRE_SURFACE_COOLING_V392.baselinePerSecond+
+    TYRE_SURFACE_COOLING_V392.airflowPerSecond*Math.min(1,speed/TYRE_SURFACE_COOLING_V392.referenceSpeedKph);
+}
 const TYRE_CONFIG_V203=Object.freeze({ambientSurface:0.42,ambientCarcass:0.44,minGrip:0.82,maxGrip:1.03});
 const DEFAULT_TOTAL_LAPS_V190=10;
 const F1_LINE_MODES_V197=Object.freeze(['IDEAL','ATTACK_INSIDE','DEFENSIVE_INSIDE','OUTSIDE','PIT_LINE']);
@@ -3890,7 +3896,8 @@ function updateTyreSystemV203(vehicle,stepMs,phase){
   let carcass=Math.max(0,Math.min(1,Number(vehicle.tyreCarcassTemp)||.5));
   const heatInput=(brakeLoad*.34+throttleLoad*.13+cornerLoad*.22+dirtyHeat*.18)*spec.heatFactor;
   surface+=heatInput*dt*.18;
-  surface+=(TYRE_CONFIG_V203.ambientSurface-surface)*dt*.035;
+  // Airflow removes heat during motion instead of leaving every compound permanently overheated.
+  surface+=(TYRE_CONFIG_V203.ambientSurface-surface)*dt*tyreSurfaceCoolingV392(speedKph);
   surface=Math.max(0,Math.min(1,surface));
   carcass+=(surface-carcass)*dt*.075;
   carcass+=(TYRE_CONFIG_V203.ambientCarcass-carcass)*dt*.012;
@@ -4478,7 +4485,7 @@ function evaluatePitStrategyV206(vehicle,options={}){
       vehicle.strategyPitRequestedAtLap=currentLap;
       vehicle.strategyPitRequestedAtSimMs=simClockV192.simTimeMs;
       vehicle.pitRequestHistoryV348=Array.isArray(vehicle.pitRequestHistoryV348)?vehicle.pitRequestHistoryV348:[];
-      vehicle.pitRequestHistoryV348.push({lap:currentLap,simTimeMs:Number(simClockV192.simTimeMs)||0,decision:String(decision),compound:String(compound),wear:Number(context.wear),tyreRemaining:Number(context.tyreRemaining),wearThreshold:Number(context.pitWearThreshold),criticalTyre:Boolean(criticalTyre),remainingLaps:Number(context.remainingLaps),grip:Number(context.grip),flatSpot:Number(context.flatSpot),thermalDeg:Number(context.thermalDeg),pitLossSeconds:Number(context.pitLossSeconds),projectedBenefitSeconds:Number(finalStintEconomicsV374.projectedBenefitSeconds),tacticalPitValueApprovedV391:Boolean(tacticalV391.approve),lateSecondStopAvoid:Boolean(finalStintEconomicsV374.avoid)});
+      vehicle.pitRequestHistoryV348.push({lap:currentLap,simTimeMs:Number(simClockV192.simTimeMs)||0,decision:String(decision),compound:String(compound),wear:Number(context.wear),tyreRemaining:Number(context.tyreRemaining),wearThreshold:Number(context.pitWearThreshold),criticalTyre:Boolean(criticalTyre),remainingLaps:Number(context.remainingLaps),grip:Number(context.grip),flatSpot:Number(context.flatSpot),thermalDeg:Number(context.thermalDeg),surfaceTemp:Number(vehicle.tyreSurfaceTemp)||0,carcassTemp:Number(vehicle.tyreCarcassTemp)||0,pitLossSeconds:Number(context.pitLossSeconds),projectedBenefitSeconds:Number(finalStintEconomicsV374.projectedBenefitSeconds),tacticalPitValueApprovedV391:Boolean(tacticalV391.approve),lateSecondStopAvoid:Boolean(finalStintEconomicsV374.avoid)});
     }
   }
   return {
@@ -4825,6 +4832,35 @@ function qaThirdPartyRetryV387(){
 }
 window.mwsF1QaThirdPartyRetryV387=qaThirdPartyRetryV387;
 window.__mwsF1RacingV387='phase387-third-party-attempt-renewal';
+
+function qaTyreCoolingV392(){
+ const speeds=[0,100,200,300,400];
+ const cooling=speeds.map(speed=>({speed,rate:tyreSurfaceCoolingV392(speed)}));
+ const moderateLoad=compound=>{
+   const spec=tyreCompoundSpecV203(compound);
+   let surface=.5;
+   for(let i=0;i<200;i++){
+     const heatInput=(.20*.34+.50*.13+.75*.22+.10*.18)*spec.heatFactor;
+     surface+=heatInput*.1*.18;
+     surface+=(TYRE_CONFIG_V203.ambientSurface-surface)*.1*tyreSurfaceCoolingV392(220);
+     surface=Math.max(0,Math.min(1,surface));
+   }
+   return {compound,surface:Number(surface.toFixed(6)),wearPerLap:spec.wearPerLap};
+ };
+ const compounds=['SOFT','MEDIUM','HARD'].map(moderateLoad);
+ const airflowIncreases=cooling.slice(1).every((row,i)=>row.rate>=cooling[i].rate);
+ const stableAtTop=cooling[4].rate===cooling[3].rate;
+ const finiteHeat=compounds.every(row=>row.surface>.48&&row.surface<1);
+ const heatOrder=compounds[0].surface>compounds[1].surface&&compounds[1].surface>compounds[2].surface;
+ const wearOrder=compounds[0].wearPerLap>compounds[1].wearPerLap&&compounds[1].wearPerLap>compounds[2].wearPerLap;
+ const integrated=String(updateTyreSystemV203).includes('tyreSurfaceCoolingV392(speedKph)');
+ const noWarp=!/\b(?:raceProgress|progress|travel|finishPosition)\s*=/.test(String(tyreSurfaceCoolingV392));
+ return {version:'phase392-airflow-thermal-recovery',cooling,compounds,airflowIncreases,stableAtTop,finiteHeat,heatOrder,wearOrder,integrated,noWarp,
+   allPass:airflowIncreases&&stableAtTop&&finiteHeat&&heatOrder&&wearOrder&&integrated&&noWarp};
+}
+window.mwsF1QaTyreCoolingV392=qaTyreCoolingV392;
+window.__mwsF1RacingV392='phase392-airflow-thermal-recovery';
+
 
 function competitivePaceAdvantageV376(vehicle,peers=raceMotionV189.vehicles){
   if(!vehicle||vehicle.finished||vehicle.pitRequested||String(vehicle.pitState||'TRACK')!=='TRACK'||vehicle.trackBoundaryExceededV271)return 0;
