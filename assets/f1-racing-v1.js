@@ -1137,7 +1137,7 @@ const INCIDENT_CONFIG_V204=Object.freeze({
 });
 const TYRE_COMPOUNDS_V203=Object.freeze({SOFT:Object.freeze({code:'S',gripBias:1.01,wearPerLap:0.115,heatFactor:1.10,idealSurface:0.60}),MEDIUM:Object.freeze({code:'M',gripBias:1.00,wearPerLap:0.090,heatFactor:1.00,idealSurface:0.56}),HARD:Object.freeze({code:'H',gripBias:0.99,wearPerLap:0.068,heatFactor:0.90,idealSurface:0.52})});
 const TYRE_CONFIG_V203=Object.freeze({ambientSurface:0.42,ambientCarcass:0.44,minGrip:0.82,maxGrip:1.03});
-const TYRE_THERMAL_BALANCE_V388=Object.freeze({heatGainPerSecond:.065,ambientRecoveryPerSecond:.16,fastFormAmplitudeCap:.0165,fastRearPaceScale:.85,fastFrontChallengeScale:1.75});
+const TYRE_THERMAL_BALANCE_V388=Object.freeze({heatGainPerSecond:.065,ambientRecoveryPerSecond:.16,fastFormAmplitudeCap:.0165,fastRearPaceScale:.85,fastFrontChallengeScale:1.75,fastCompetitionCapScale:1.40});
 const DEFAULT_TOTAL_LAPS_V190=10;
 const F1_LINE_MODES_V197=Object.freeze(['IDEAL','ATTACK_INSIDE','DEFENSIVE_INSIDE','OUTSIDE','PIT_LINE']);
 const F1_STATES_V185=Object.freeze(['SETUP','TRANSITION','GRID','RACE','FINISHING','PODIUM','RESULT']);
@@ -9612,6 +9612,10 @@ function applyGameVariabilityV303(stepMs){
     follower.positionCatchupBonusKphV314=catchup.bonusKph;
     const variabilityCapV345=GAME_VARIABILITY_CONFIG_V303.maxTotalBiasKph*fieldSpreadCatchupCapMultiplierV354();
     follower.variabilitySpeedBiasKphV309=Math.min(variabilityCapV345,requested);
+     // FAST has only three laps; give a real closing-speed opportunity when
+     // a challenger is already requesting one. Never modify race coordinates.
+     if(activeRaceModeV345()==='FAST')follower.variabilitySpeedBiasKphV309=
+       Math.min(variabilityCapV345*TYRE_THERMAL_BALANCE_V388.fastCompetitionCapScale,requested);
     follower.variabilityBiasUntilV309=now+OVERTAKE_FLOW_CONFIG_V309.variabilityHoldMs;
     follower.battleSpeedBiasKph=combinedBattleBiasV309(follower,String(follower.battleState||'FOLLOWING'),now);
     if(gapMeters<=GAME_VARIABILITY_CONFIG_V303.attackGapMeters*competitionV345.attackGap&&!follower.pitRequested){
