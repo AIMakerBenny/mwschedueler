@@ -7371,7 +7371,7 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
     const previousMin=Number(vehicle.cornerMinSpeedByClassV351[classV351]);
     vehicle.cornerMinSpeedByClassV351[classV351]=Number.isFinite(previousMin)&&previousMin>0?Math.min(previousMin,nextKph):nextKph;
     const specV353=CORNER_DRIVING_V351.speedEnvelope[classV351]||CORNER_DRIVING_V351.speedEnvelope.medium;
-    const cleanCornerV353=!spacingControlV319.active&&!incidentState.active&&!leaderPressureEffect.event&&boundaryStateV271.speedFactor>=CORNER_COMPLEX_RECOVERY_V353.cleanBoundaryFactor&&Number(vehicle.cornerObservedEntryKphV353)>=Number(specV353.min)*CORNER_COMPLEX_RECOVERY_V353.telemetryEntryRatio;
+    const cleanCornerV353=!spacingControlV319.active&&!proximityV376.active&&!incidentState.active&&!leaderPressureEffect.event&&boundaryStateV271.speedFactor>=CORNER_COMPLEX_RECOVERY_V353.cleanBoundaryFactor&&Number(vehicle.cornerObservedEntryKphV353)>=Number(specV353.min)*CORNER_COMPLEX_RECOVERY_V353.telemetryEntryRatio;
     if(cleanCornerV353){
       vehicle.cornerUnimpededMinSpeedByClassV353=vehicle.cornerUnimpededMinSpeedByClassV353||{};
       const previousClean=Number(vehicle.cornerUnimpededMinSpeedByClassV353[classV351]);
