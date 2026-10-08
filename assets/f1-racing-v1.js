@@ -4776,7 +4776,9 @@ function qaThirdPartyRetryV387(){
   }
   simClockV192.simTimeMs=0;
   blocked=thirdCarOpportunityV376(c,b,locks,'APEX',9,peers,track);
-  forced=thirdCarOpportunityV376({...c,qaForceThirdV376:true},b,locks,'STRAIGHT',9,peers,track);
+  c.qaForceThirdV376=true;
+  forced=thirdCarOpportunityV376(c,b,locks,'STRAIGHT',9,peers,track);
+  c.qaForceThirdV376=false;
  }finally{simClockV192.simTimeMs=saved}
  const open=windows.filter(row=>row.active).length,closed=windows.length-open;
  const noWarp=!/\b(?:raceProgress|progress|travel|finishPosition)\s*=/.test(String(thirdCarOpportunityV376)+String(qaThirdPartyRetryV387));
