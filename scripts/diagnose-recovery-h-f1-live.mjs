@@ -481,7 +481,7 @@ try{
     assert(String(window.mwsF1GetActiveTrackV182?.()?.id||'')===String(targetTrack.id),'Selected track not active');
 
     const momentumQa262=window.mwsF1QaRaceMomentumV262?.();
-    assert(momentumQa262?.allPass===true&&momentumQa262?.deterministic===true&&Number(momentumQa262?.paceRange)>=.015&&Number(momentumQa262?.paceRange)<=.025,'Phase 262 momentum deterministic QA failed: '+JSON.stringify(momentumQa262));
+    assert(momentumQa262?.allPass===true&&momentumQa262?.deterministic===true&&Math.abs(Number(momentumQa262?.paceRange)-.035)<1e-9,'Phase 262 momentum deterministic QA failed: '+JSON.stringify(momentumQa262));
 
     const narrativeQa263=window.mwsF1QaRaceNarrativeEngineV263?.();
     assert(narrativeQa263?.allPass===true&&Number(narrativeQa263?.templateCount)>=120&&Number(narrativeQa263?.eventCount)>=16&&Number(narrativeQa263?.recentLimit)>=10&&Number(narrativeQa263?.recentLimit)<=15,'Phase 263 narrative engine QA failed: '+JSON.stringify(narrativeQa263));
