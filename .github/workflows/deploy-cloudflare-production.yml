@@ -1540,9 +1540,14 @@ jobs:
           retry_contains "$BASE/assets/f1-racing-v1.js?deploy=$GITHUB_SHA" 'window.__mwsF1RacingV206=VERSION206;' > /tmp/f1-racing-phase206.js
           node --check /tmp/f1-racing-phase206.js
           grep -Fq 'function evaluatePitStrategyV206(vehicle,options={}){' /tmp/f1-racing-phase206.js
-          grep -Fq "decision='UNDERCUT';reason='ATTACK_CAR_AHEAD';" /tmp/f1-racing-phase206.js
+          if ! grep -Fq "decision='UNDERCUT';reason='ATTACK_CAR_AHEAD';" /tmp/f1-racing-phase206.js && ! grep -Fq "decision=tacticalV391.approve?'UNDERCUT':'GO_LONG';" /tmp/f1-racing-phase206.js; then echo 'Phase 206/391 UNDERCUT branch missing'; exit 1; fi
           grep -Fq "decision='OVERCUT';reason='RIVAL_PIT_STAY_OUT';" /tmp/f1-racing-phase206.js
-          grep -Fq "decision='COVER_UNDERCUT';reason='COVER_RIVAL_PIT';" /tmp/f1-racing-phase206.js
+          if ! grep -Fq "decision='COVER_UNDERCUT';reason='COVER_RIVAL_PIT';" /tmp/f1-racing-phase206.js && ! grep -Fq "decision=tacticalV391.approve?'COVER_UNDERCUT':'GO_LONG';" /tmp/f1-racing-phase206.js; then echo 'Phase 206/391 COVER branch missing'; exit 1; fi
+          if grep -Fq "decision=tacticalV391.approve?'UNDERCUT':'GO_LONG';" /tmp/f1-racing-phase206.js; then
+            grep -Fq "reason=tacticalV391.approve?'ATTACK_CAR_AHEAD':'UNDERCUT_PIT_VALUE_INSUFFICIENT_V391';" /tmp/f1-racing-phase206.js
+            grep -Fq "reason=tacticalV391.approve?'COVER_RIVAL_PIT':'COVER_PIT_VALUE_INSUFFICIENT_V391';" /tmp/f1-racing-phase206.js
+            grep -Fq 'const tacticalV391=tacticalPitValueV391(context,criticalTyre,finalStintEconomicsV374);' /tmp/f1-racing-phase206.js
+          fi
           grep -Fq 'requested=requestPitStopV205(vehicle.id,compound,decision);' /tmp/f1-racing-phase206.js
           grep -Fq 'window.mwsF1GetPitStrategyStatesV206=getPitStrategyStatesV206;' /tmp/f1-racing-phase206.js
           echo '[recovery-l] F1 curvature weighted corner speed'
