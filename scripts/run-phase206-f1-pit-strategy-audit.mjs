@@ -18,9 +18,7 @@ export function runPhase206F1PitStrategyAudit(){
     'function pitStrategyContextV206(vehicle){',
     'function evaluatePitStrategyV206(vehicle,options={}){',
     "decision='BOX_NOW';reason='TYRE_STATE_CRITICAL';",
-    "decision='COVER_UNDERCUT';reason='COVER_RIVAL_PIT';",
     "decision='OVERCUT';reason='RIVAL_PIT_STAY_OUT';",
-    "decision='UNDERCUT';reason='ATTACK_CAR_AHEAD';",
     "decision='GO_LONG';reason='TYRE_MANAGEMENT_MARGIN';",
     'requested=requestPitStopV205(vehicle.id,compound,decision);',
     'function updatePitStrategiesV206(stepMs){',
@@ -31,6 +29,17 @@ export function runPhase206F1PitStrategyAudit(){
     'window.mwsF1QaPitStrategyV206=qaPitStrategyV206;',
     'window.__mwsF1RacingV206=VERSION206;'
   ])if(!racing.includes(token))issues.push('Phase 206 runtime missing: '+token);
+  // Accept the original Phase 206 branches or the Phase 391 economic approval
+  // branches, but require both the real decisions and their exact reasons.
+  for(const [oldBranch,newBranch] of [
+    ["decision='COVER_UNDERCUT';reason='COVER_RIVAL_PIT';", "decision=tacticalV391.approve?'COVER_UNDERCUT':'GO_LONG';"],
+    ["decision='UNDERCUT';reason='ATTACK_CAR_AHEAD';", "decision=tacticalV391.approve?'UNDERCUT':'GO_LONG';"]
+  ])if(!racing.includes(oldBranch)&&!racing.includes(newBranch))issues.push('Phase 206 strategy branch missing: '+oldBranch);
+  if(racing.includes("decision=tacticalV391.approve?'COVER_UNDERCUT':'GO_LONG';")&&
+     (!racing.includes("reason=tacticalV391.approve?'COVER_RIVAL_PIT':'COVER_PIT_VALUE_INSUFFICIENT_V391';")||
+      !racing.includes("reason=tacticalV391.approve?'ATTACK_CAR_AHEAD':'UNDERCUT_PIT_VALUE_INSUFFICIENT_V391';")||
+      !racing.includes('const tacticalV391=tacticalPitValueV391(context,criticalTyre,finalStintEconomicsV374);')))
+    issues.push('Phase 391 guarded strategy must retain exact reasons and real economics');
   const legacyShouldPit="const shouldPit=decision==='BOX_NOW'||decision==='UNDERCUT'||decision==='COVER_UNDERCUT';";
   const tyreAwareShouldPit="const shouldPit=(decision==='BOX_NOW'||decision==='UNDERCUT'||decision==='COVER_UNDERCUT')&&(wearReady||criticalTyre)&&!safeTyre;";
   if(!racing.includes(legacyShouldPit)&&!racing.includes(tyreAwareShouldPit))issues.push('Phase 206 runtime missing: compatible shouldPit decision gate');
