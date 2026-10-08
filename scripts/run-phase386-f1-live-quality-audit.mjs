@@ -8,7 +8,7 @@ export function runPhase386F1LiveQualityAudit(){
  for(const x of ["const VERSION386='phase386-live-only-overlap-gate';",'function recordQualityDynamicsV386(','function recordQualityFrameV386(','function localCurveClearanceMetersV386(','window.mwsF1QaFinalLiveQualityV386=qaFinalLiveQualityV386;','recordQualityFrameV386(atMax,atCurrent,rendered);','const curveMeters=localCurveClearanceMetersV386(track,path,ringDiameterSvg);'])if(!core.includes(x))issues.push('missing '+x);
  if(!diag.includes('Phase 386 actual LIVE maximum-zoom marker overlap remains')||!diag.includes('finalLiveQualityV386:finalLive386||null'))issues.push('strict Chromium LIVE quality gate missing');
  if(!wf.includes("echo '[phase386]")||!cum.includes('runPhase386FullIntegrationAudit'))issues.push('audit integration missing');
- if(!core.includes('report.peakMaxZoomPairs===0'))issues.push('zero-overlap criterion absent');
+ if(!core.includes('report.peakMaxZoomPairs===0')||!core.includes('report.peakCurrentZoomPairs===0'))issues.push('strict zero-overlap at max and live zoom is absent');
  if(!core.includes('function emergencyLaneChoiceV386(')||!core.includes('applyEmergencyAvoidanceV386();'))issues.push('emergency slow-obstacle avoidance missing');
  if(!core.includes('function physicalClosureEnvelopeV386(')||!core.includes('if(physicalClosureV386.active)maxTarget=Math.min(maxTarget,physicalClosureV386.capKph);'))issues.push('actual longitudinal closure cap not integrated');
  if(!core.includes('function enforceTrackSpeedContinuityV386(')||!core.includes('enforceTrackSpeedContinuityV386(vehicle,stepMs)'))issues.push('track speed continuity not integrated');
