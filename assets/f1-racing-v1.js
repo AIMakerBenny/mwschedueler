@@ -4849,6 +4849,8 @@ function neighborBrakingPairV381(vehicle,peer,track){
   const safe=Math.max(MULTICAR_CORRIDOR_V376.sameLineMinGapMeters,projectedSafeGapMetersV378(track)+NEIGHBOR_BRAKING_V381.extraSafetyMeters);
   const v=Math.max(0,Number(vehicle.speedKph)||0)/3.6,u=Math.max(0,Number(peer.speedKph)||0)/3.6;
   const closing=Math.max(0,v-u);
+  // Preserve a standing start or matched-pace train: braking with no closing speed would lock the grid indefinitely.
+  if(closing<1.5&&gap>Math.max(12,Math.min(24,safe*.55)))return {active:false,gap,safe,reason:'NO_CLOSING_V386'};
   const braking=Math.max(0,(v*v-u*u)/(2*NEIGHBOR_BRAKING_V381.brakeMps2));
   const start=safe+NEIGHBOR_BRAKING_V381.leadMeters+braking+closing*NEIGHBOR_BRAKING_V381.reactionSeconds;
   if(gap>=start||(!closing&&gap>=safe))return {active:false,gap,safe,start};
@@ -10125,9 +10127,10 @@ function qaNeighborBrakingV381(){
  const far={...p,id:'F',raceProgress:1.2+180/4500};
  const second={...p,id:'A',raceProgress:1.2+45/4500,speedKph:230};
  const near=neighborBrakingSafetyV381(v,track,[far,second,p]);
+ const launch=neighborBrakingPairV381({...v,speedKph:0},{...p,speedKph:0,raceProgress:v.raceProgress+35/4500},track);
  const wide=neighborBrakingPairV381({...v,racingLineMode:'OUTSIDE',visualLateralOffsetMeters:-5},{...p,racingLineMode:'ATTACK_INSIDE',visualLateralOffsetMeters:5},track);
  const integrated=String(simulateVehicleDynamicsV196).includes('neighborBrakingSafetyV381(')&&String(simulateVehicleDynamicsV196).includes('!neighborSafetyV381.active');
- return {version:VERSION381,near,wide,integrated,allPass:near.active&&near.peerId==='B'&&!wide.active&&near.capKph<p.speedKph&&integrated};
+ return {version:VERSION381,near,wide,launch,integrated,allPass:near.active&&near.peerId==='B'&&!wide.active&&!launch.active&&near.capKph<p.speedKph&&integrated};
 }
 window.mwsF1QaNeighborBrakingV381=qaNeighborBrakingV381;
 window.__mwsF1RacingV381=VERSION381;
