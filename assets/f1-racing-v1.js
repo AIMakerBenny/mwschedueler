@@ -3314,6 +3314,17 @@ function buildEngineQaSnapshotV240(trackId,{drivers=6,laps=1,runIndex=0,gridMode
     contactId:'phase240-driver-'+String(index+1),name:'QA Driver '+String(index+1),
     image:'',labels:Object.freeze(['phase240','engine-qa']),gridPosition:index+1
   }));
+  if(String(gridMode||'').toUpperCase()==='SEEDED_SHUFFLE'){
+    // Real race physics decides the finish. Only QA grid slots are shuffled.
+    let seed=hashDriverV189([String(track.id),String(runIndex),'phase262-grid'].join('|'))||1;
+    const positions=rows.map((_,index)=>index+1);
+    for(let index=positions.length-1;index>0;index--){
+      seed=(Math.imul(seed,1664525)+1013904223)>>>0;
+      const pick=seed%(index+1);
+      [positions[index],positions[pick]]=[positions[pick],positions[index]];
+    }
+    rows=rows.map((row,index)=>({...row,gridPosition:positions[index]}));
+  }
   if(String(gridMode||'').toUpperCase()==='REVERSE_PACE'){
     const seedSnapshot={createdAt};
     rows=rows.map(row=>({row,pace:Number(createDriverProfileV200(row,seedSnapshot)?.pace)||0}))
@@ -3479,7 +3490,7 @@ function raceMomentumBenchmarkV262(options={}){
   const stepMs=Math.max(50,Math.min(90,Math.floor(Number(options.stepMs)||80)));
   const model=runSevenTrackBenchmarkV238({runs:8,drivers,laps});
   const alignmentReference=realEngineBenchmarkAlignmentV242(engineSuiteCacheV241);
-  const runs=trackIds.map((trackId,index)=>runAcceleratedEngineRaceV240(trackId,{drivers,laps,runIndex:26200+index,stepMs,maxSteps:30000,gridMode:'FIXED'}));
+  const runs=trackIds.map((trackId,index)=>runAcceleratedEngineRaceV240(trackId,{drivers,laps,runIndex:26200+index,stepMs,maxSteps:30000,gridMode:'SEEDED_SHUFFLE'}));
   const completed=runs.filter(row=>row?.completed&&Array.isArray(row.resultRows)&&row.resultRows.length===drivers);
   const pairs=completed.flatMap(row=>row.resultRows.map(result=>({grid:Number(result.gridPosition),finish:Number(result.position)})));
   const gridFinishCorrelation=pearsonV239(pairs,'grid','finish');
@@ -4890,9 +4901,12 @@ function physicalClosureEnvelopeV386(vehicle,track,peers=raceMotionV189.vehicles
   // for an extreme high-speed approach to a slower car in the same corridor.
   // Neither race progress, ranking, lateral offset nor marker size is modified.
   const extremeClosure=closing*3.6>=88&&v*3.6>=125&&lead*3.6<=115;
-  const reactionTravel=extremeClosure?v*.25+closing*.90:closing*.42;
+  // Safely reduce target speed before the distance needed to brake runs out.
+  // The existing physical acceleration/braking integrator enforces this cap.
+  const reactionTravel=extremeClosure?v*.40+closing*.65:closing*.42;
   const usable=Math.max(0,gap-safe-reactionTravel);
-  const capKph=3.6*Math.sqrt(lead*lead+(extremeClosure?36:44)*usable);
+  const braking=extremeClosure?23:22;
+  const capKph=3.6*Math.sqrt(lead*lead+2*braking*usable);
   if(capKph<v*3.6+.5&&capKph<best.capKph)best={active:true,capKph,peerId:String(peer.id),gap,reason:'PREDICTED_PHYSICAL_CLOSURE_V386'};
  }
  return best;
