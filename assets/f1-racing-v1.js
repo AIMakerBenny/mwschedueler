@@ -4413,6 +4413,44 @@ function qaTacticalPitValueV391(){
 window.mwsF1QaTacticalPitValueV391=qaTacticalPitValueV391;
 window.__mwsF1RacingV391='phase391-tactical-pit-economics';
 
+
+function lateStintPitDeferralV393(vehicle,context,economics){
+  const remaining=Math.max(0,Number(context?.remainingLaps)||0);
+  const wear=Math.max(0,Number(context?.wear)||0);
+  const compound=String(vehicle?.tyreCompound||'MEDIUM').toUpperCase();
+  const spec=tyreCompoundSpecV203(compound);
+  const nominal=Math.max(.001,spec.wearPerLap*(TYRE_DYNAMICS_V343.wearMultiplier[compound]||1));
+  const age=Math.max(0,Number(vehicle?.tyreAgeLaps)||0);
+  const observed=age>=1?wear/age:0;
+  const projectedWear=wear+remaining*Math.max(nominal*.62,observed*1.18);
+  const damage=Boolean(economics?.severeDamage)||Number(context?.flatSpot)>=PIT_STAGGER_V344.criticalFlatSpot||
+    Number(context?.thermalDeg)>=PIT_STAGGER_V344.criticalThermalDeg||
+    Number(context?.grip)<=TYRE_CONFIG_V203.minGrip+.005;
+  const gain=Math.max(0,Number(economics?.projectedBenefitSeconds)||0);
+  const loss=Math.max(0,Number(context?.pitLossSeconds)||0);
+  const uneconomic=loss>0&&gain<loss*TACTICAL_PIT_VALUE_V391.minimumBenefitToCost;
+  const defer=remaining>0&&remaining<=FINAL_STINT_PIT_ECONOMICS_V374.maxEvaluationLaps&&
+    !damage&&projectedWear<=.94&&uneconomic;
+  return {defer,remaining,projectedWear,observedWearPerLap:observed,damage,uneconomic,gain,loss};
+}
+function qaLateStintPitDeferralV393(){
+  const vehicle={tyreCompound:'SOFT',tyreAgeLaps:6.5};
+  const context={remainingLaps:2.53,wear:.6126,tyreRemaining:.3874,grip:.839,flatSpot:0,thermalDeg:.22,pitLossSeconds:28.12};
+  const economy={projectedBenefitSeconds:4.89,severeDamage:false};
+  const sensible=lateStintPitDeferralV393(vehicle,context,economy);
+  const severe=lateStintPitDeferralV393(vehicle,{...context,flatSpot:.75},economy);
+  const worn=lateStintPitDeferralV393(vehicle,{...context,wear:.82,tyreRemaining:.18},economy);
+  const valuable=lateStintPitDeferralV393(vehicle,context,{...economy,projectedBenefitSeconds:26});
+  const early=lateStintPitDeferralV393(vehicle,{...context,remainingLaps:4.5},economy);
+  const integrated=String(evaluatePitStrategyV206).includes('lateStintPitDeferralV393(vehicle,context,finalStintEconomicsV374)')&&
+    String(evaluatePitStrategyV206).includes('FINAL_STINT_LIVE_WEAR_ECONOMY_V393');
+  const noWarp=!/\b(?:raceProgress|progress|travel|finishPosition)\s*=/.test(String(lateStintPitDeferralV393));
+  return {version:'phase393-late-stint-wear-economics',sensible,severe,worn,valuable,early,integrated,noWarp,
+    allPass:sensible.defer&&!severe.defer&&!worn.defer&&!valuable.defer&&!early.defer&&integrated&&noWarp};
+}
+window.mwsF1QaLateStintPitDeferralV393=qaLateStintPitDeferralV393;
+window.__mwsF1RacingV393='phase393-late-stint-wear-economics';
+
 function evaluatePitStrategyV206(vehicle,options={}){
   if(!vehicle||vehicle.finished)return null;
   const context=pitStrategyContextV206(vehicle);
@@ -4426,6 +4464,7 @@ function evaluatePitStrategyV206(vehicle,options={}){
   const safeTyre=pitRemainingGuardV349(context);
   const finalStintEconomicsV374=finalStintPitEconomicsV374(vehicle,context);
   const tacticalV391=tacticalPitValueV391(context,criticalTyre,finalStintEconomicsV374);
+  const lateStintPitV393=lateStintPitDeferralV393(vehicle,context,finalStintEconomicsV374);
   let decision='NONE',reason='WAIT_FOR_WINDOW',score=.08;
 
   if(String(vehicle.pitState||'TRACK')!=='TRACK'||vehicle.pitRequested){
@@ -4438,6 +4477,8 @@ function evaluatePitStrategyV206(vehicle,options={}){
     decision='GO_LONG';reason='TYRE_REMAINING_ABOVE_40';score=.76;
   }else if(finalStintEconomicsV374.avoid){
     decision='GO_LONG';reason='FINAL_STINT_PIT_COST_HIGH_V374';score=.86;
+  }else if(lateStintPitV393.defer){
+    decision='GO_LONG';reason='FINAL_STINT_LIVE_WEAR_ECONOMY_V393';score=.84;
   }else if(!wearReady&&!criticalTyre){
     decision='GO_LONG';reason='PERSONAL_WEAR_THRESHOLD_NOT_REACHED';score=.70;
   }else if(Number(vehicle.strategyHoldUntilLap)>currentLap){
