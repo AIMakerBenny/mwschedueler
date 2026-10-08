@@ -4840,7 +4840,7 @@ function qaFinalLiveQualityV386(){
  const noWarp=!/\b(?:raceProgress|progress)\s*=/.test(String(localCurveClearanceMetersV386));
  const measured=report.liveFrames>=RACE_FINAL_QA_V386.minLiveFrames;
  return {version:VERSION386,integrated,noWarp,measured,curveClearance,report,
- allPass:integrated&&noWarp&&measured&&report.peakMaxZoomPairs===0};
+ allPass:integrated&&noWarp&&measured&&report.peakMaxZoomPairs===0&&report.peakCurrentZoomPairs===0};
 }
 window.mwsF1GetFinalLiveQualityV386=finalLiveQualityReportV386;
 window.mwsF1QaFinalLiveQualityV386=qaFinalLiveQualityV386;
@@ -4882,7 +4882,7 @@ function physicalProximityControlV376(vehicle,ahead,track=activeRaceSnapshotV187
 function physicalClosureEnvelopeV386(vehicle,track,peers=raceMotionV189.vehicles){
  if(!vehicle||vehicle.finished||vehicle.pitState!=='TRACK')return {active:false,capKph:Infinity};
  const len=Math.max(1,Number(track?.lengthMeters)||4500),v=Math.max(0,Number(vehicle.speedKph)||0)/3.6;
- const safe=projectedSafeGapMetersV378(track)+5;
+ const baseSafe=projectedSafeGapMetersV378(track)+5;
  let best={active:false,capKph:Infinity};
  for(const peer of peers||[]){
   if(!peer||peer===vehicle||peer.finished||peer.pitState!=='TRACK')continue;
@@ -4894,9 +4894,13 @@ function physicalClosureEnvelopeV386(vehicle,track,peers=raceMotionV189.vehicles
   const leadSpeed=Math.max(0,Number(peer.speedKph)||0)/3.6;
   const lead=Math.max(0,leadSpeed+Math.max(-39,Math.min(0,Number(peer.accelerationMps2)||0))*.35);
   const closing=Math.max(0,v-lead);
+  // The physical gap must also cover the unchanged marker diameter at
+  // the live camera zoom. Reserve extra headway only around slow obstacles.
+  const slowObstacle=lead*3.6<=115&&v*3.6>=30&&gap<=250;
+  const safe=baseSafe+(slowObstacle?16:0);
   // Existing close-following control handles ordinary 10-30 km/h closing in a pass window.
   // The extra envelope engages for high-differential closing or genuinely short same-corridor clearance.
-  if(closing*3.6<38&&gap>Math.max(10,safe*.75))continue;
+  if(closing*3.6<38&&gap>Math.max(10,slowObstacle?safe:safe*.75))continue;
   // Preserve normal battle pace. Reserve stronger reaction/braking distance only
   // for an extreme high-speed approach to a slower car in the same corridor.
   // Neither race progress, ranking, lateral offset nor marker size is modified.
@@ -4907,7 +4911,8 @@ function physicalClosureEnvelopeV386(vehicle,track,peers=raceMotionV189.vehicles
   const usable=Math.max(0,gap-safe-reactionTravel);
   // Reserve upstream room for a controllable deceleration, not a hard position clamp.
   const braking=extremeClosure?18:22;
-  const capKph=3.6*Math.sqrt(lead*lead+2*braking*usable);
+  let capKph=3.6*Math.sqrt(lead*lead+2*braking*usable);
+  if(slowObstacle&&gap<safe)capKph=Math.min(capKph,Math.max(0,lead*3.6-Math.min(24,(safe-gap)*1.15)));
   if(capKph<v*3.6+.5&&capKph<best.capKph)best={active:true,capKph,peerId:String(peer.id),gap,reason:'PREDICTED_PHYSICAL_CLOSURE_V386'};
  }
  return best;
