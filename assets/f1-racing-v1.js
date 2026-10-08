@@ -1846,6 +1846,8 @@ function snapshotWithStartingGridV272(snapshot,round=0,previousOrder=[]){
   });
 }
 function gridStartOffsetV272(index,count){
+  // Headless benchmarks have no live camera marker clearance to reserve.
+  if(engineQaV240.active)return -(Math.max(0,Number(index)||0)*Math.min(.008,.08/Math.max(1,Number(count)||1)));
   // The actual starting grid must clear unchanged SVG car rings at live camera zoom.
   // Space real race positions only before the race begins; never alter live order.
   const length=Math.max(1,Number(activeRaceSnapshotV187?.track?.lengthMeters)||4500);
@@ -4919,7 +4921,8 @@ function liveCameraClearanceMetersV386(track=activeRaceSnapshotV187?.track){
 function physicalClosureEnvelopeV386(vehicle,track,peers=raceMotionV189.vehicles){
  if(!vehicle||vehicle.finished||vehicle.pitState!=='TRACK')return {active:false,capKph:Infinity};
  const len=Math.max(1,Number(track?.lengthMeters)||4500),v=Math.max(0,Number(vehicle.speedKph)||0)/3.6;
- const baseSafe=liveCameraClearanceMetersV386(track);
+ // A headless benchmark has no viewer zoom: preserve its original physical safety envelope.
+ const baseSafe=engineQaV240.active?projectedSafeGapMetersV378(track)+5:liveCameraClearanceMetersV386(track);
  let best={active:false,capKph:Infinity};
  for(const peer of peers||[]){
   if(!peer||peer===vehicle||peer.finished||peer.pitState!=='TRACK')continue;
