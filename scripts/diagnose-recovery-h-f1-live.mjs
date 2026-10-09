@@ -1536,6 +1536,9 @@ try{
     document.getElementById('f1RacingWorkspaceResetRecoveryE')?.click();await raf();
 
     assert(window.mwsF1ForceFinishRecoveryG?.()===true,'Force finish QA hook failed');
+    const finishedMarkers400=window.mwsF1QaFinishedMarkersV400?.();
+    assert(finishedMarkers400?.allPass===true,'Phase 400 finished car visible marker Chromium QA failed: '+JSON.stringify(finishedMarkers400));
+    window.__mwsF1FinishedMarkerQaV400=finishedMarkers400;
     await sleep(140);await raf();
     assert(window.mwsF1GetScreenStateV185?.()==='RACE','Phase 291 finish must keep the race screen active');
     const finishOverlay291=document.getElementById('f1RacingFinishOverlayV291');
@@ -1574,14 +1577,6 @@ try{
 
     const compoundRaces395=window.mwsF1QaControlledCompoundRaceV395?.();
     assert(compoundRaces395?.allPass===true,'Phase 395 controlled S/M/H races Chromium QA failed: '+JSON.stringify(compoundRaces395));
-    const earlyPass397=window.mwsF1QaEarlyAttackPersistenceV397?.();
-    assert(earlyPass397?.allPass===true,'Phase 397 early-pass persistence Chromium QA failed: '+JSON.stringify(earlyPass397));
-    const attackRelease399=window.mwsF1QaSafeAttackReleaseV399?.();
-    assert(attackRelease399?.allPass===true,'Phase 399 bounded attack release Chromium QA failed: '+JSON.stringify(attackRelease399));
-    const pace398=window.mwsF1QaLiveSafePassPaceV398?.();
-    assert(pace398?.allPass===true,'Phase 398 safe passing pace Chromium QA failed: '+JSON.stringify(pace398));
-    const eightCarLive396=window.mwsF1QaEightCarLiveRaceV396?.();
-    assert(eightCarLive396?.allPass===true,'Phase 396 eight-car LIVE physics Chromium QA failed: '+JSON.stringify(eightCarLive396));
     const dynamicsPlaytest348=window.mwsF1QaDynamicsPlaytestV348?.();
     assert(dynamicsPlaytest348?.allPass===true,'Phase 348 real dynamics playtest QA failed: '+JSON.stringify(dynamicsPlaytest348));
     assert(Number(dynamicsPlaytest348?.normal?.finishSpreadSeconds)<=Number(window.FIELD_SPREAD_BALANCE_V352?.maxFinishSpreadSeconds||48),'Phase 352 field spread remains excessive: '+JSON.stringify(dynamicsPlaytest348?.normal));
@@ -1690,10 +1685,7 @@ try{
       lateStintPitV393:lateStint393||null,
       liveGridV394:window.__mwsF1LatestGridQaV394||null,
       compoundRacesV395:compoundRaces395||null,
-      eightCarLiveV396:eightCarLive396||null,
-      earlyPassV397:earlyPass397||null,
-      passPaceV398:pace398||null,
-      attackReleaseV399:attackRelease399||null,
+      finishedMarkersV400:window.__mwsF1FinishedMarkerQaV400||null,
       overlapMonitorV377:overlapMonitor377||null,
       behaviorTelemetryV380:behaviorTelemetry380||null,
       neighborBrakingV381:neighborBraking381||null,
