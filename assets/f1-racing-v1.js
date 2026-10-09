@@ -9901,6 +9901,82 @@ function qaControlledCompoundRaceV395(){
 window.mwsF1QaControlledCompoundRaceV395=qaControlledCompoundRaceV395;
 window.__mwsF1RacingV395='phase395-controlled-tyre-races';
 
+
+function qaEightCarLiveRaceV396(){
+  if(f1ScreenStateV185!=='SETUP')return {version:'phase396-eight-car-actual-live',allPass:false,error:'requires-setup'};
+  const trackId='majoku-ring-v1',stepMs=80,maxSteps=12000;
+  const snapshot=buildEngineQaSnapshotV240(trackId,{drivers:8,laps:3,runIndex:396,gridMode:'SEEDED_SHUFFLE',raceMode:'NORMAL'});
+  const overlaps=[],cornerSamples={},speedSeries=[];
+  let steps=0,frames=0,totalOverlapFrames=0,peakOverlapPairs=0,closestSvg=Infinity,start=null,finish=null,error='';
+  try{
+    if(!snapshot)throw new Error('missing-track');
+    resetRaceMotionV189();engineQaV240.active=false;
+    activeRaceSnapshotV187=snapshot;activeRaceResultRecoveryG=null;finishCounterRecoveryG=0;
+    if(!setScreenStateV185('RACE',{force:true})||!renderRaceControlV188()||!initializeRaceMotionV189(snapshot))
+      throw new Error('live-initialize-failed');
+    if(raceMotionV189.vehicles.length!==8)throw new Error('not-eight-vehicles');
+    const initial=qaLiveGridSpacingV394();
+    if(!initial.allPass)throw new Error('eight-car-start-overlap:'+JSON.stringify(initial));
+    start={cars:initial.cars,spacingMeters:initial.spacingMeters,zoom:initial.current.zoom,
+      currentPairs:initial.current.pairs,maximumPairs:initial.maximum.pairs};
+    while(f1ScreenStateV185==='RACE'&&steps<maxSteps){
+      simulateRaceStepV192(stepMs);steps++;
+      if(steps%10===0||f1ScreenStateV185!=='RACE'){
+        renderRaceVehiclesV189(16.67);frames++;
+        const rendered=raceMotionV189.vehicles.filter(v=>v.marker&&v.renderPointV216).map(vehicle=>({vehicle,point:vehicle.renderPointV216}));
+        const measured=measureActualMarkerOverlapsV377(rendered,MARKER_OVERLAP_MONITOR_V377.maxZoom);
+        peakOverlapPairs=Math.max(peakOverlapPairs,measured.pairs);
+        if(measured.closestSvg!==null)closestSvg=Math.min(closestSvg,measured.closestSvg);
+        if(measured.pairs>0){
+          totalOverlapFrames++;
+          if(overlaps.length<6)overlaps.push({simMs:simClockV192.simTimeMs,pairs:measured.pairs,examples:measured.examples});
+        }
+        if(frames%10===0){
+          const v=raceMotionV189.vehicles;
+          speedSeries.push({atSeconds:Number((simClockV192.simTimeMs/1000).toFixed(1)),
+            minKph:Math.round(Math.min(...v.map(x=>Number(x.speedKph)||0))),
+            maxKph:Math.round(Math.max(...v.map(x=>Number(x.speedKph)||0))),
+            completedPasses:v.reduce((sum,x)=>sum+(Number(x.passCompletedCount)||0),0)});
+        }
+        for(const vehicle of raceMotionV189.vehicles){
+          const cls=String(vehicle.cornerDrivingClassV351||'');
+          if(!cls)continue;
+          const row=cornerSamples[cls]||(cornerSamples[cls]={minKph:Infinity,maxKph:0,samples:0,braking:0,accelerating:0});
+          const speed=Number(vehicle.speedKph)||0;
+          row.samples++;row.minKph=Math.min(row.minKph,speed);row.maxKph=Math.max(row.maxKph,speed);
+          if(Number(vehicle.brake)>.10)row.braking++;
+          if(Number(vehicle.accelerationMps2)>.25)row.accelerating++;
+        }
+      }
+    }
+    const rows=(activeRaceResultRecoveryG?.rows||[]).map(r=>({grid:Number(r.gridPosition)||0,finish:Number(r.position)||0}));
+    const v=raceMotionV189.vehicles;
+    finish={completed:Boolean(activeRaceResultRecoveryG),cars:v.length,rows,
+      passes:v.reduce((sum,x)=>sum+(Number(x.passCompletedCount)||0),0),
+      movedFromGrid:rows.filter(r=>r.grid!==r.finish).length,
+      pitStops:v.reduce((sum,x)=>sum+(Number(x.pitStopCount)||0),0),
+      pitRequests:v.reduce((sum,x)=>sum+(x.pitRequestHistoryV348?.length||0),0),
+      finalStates:v.map(x=>({id:String(x.id),grid:Number(x.gridPosition)||0,position:Number(x.finishPosition)||0,
+        tyre:String(x.tyreCompound||''),wear:Number((Number(x.tyreWear)||0).toFixed(3)),
+        pitStops:Number(x.pitStopCount)||0,passes:Number(x.passCompletedCount)||0}))};
+  }catch(ex){error=String(ex?.message||ex)}
+  finally{cleanupEngineQaV240()}
+  const compactCorner=Object.fromEntries(Object.entries(cornerSamples).map(([k,v])=>[k,{
+    minKph:Number(Number(v.minKph===Infinity?0:v.minKph).toFixed(1)),maxKph:Number(v.maxKph.toFixed(1)),
+    samples:v.samples,braking:v.braking,accelerating:v.accelerating}]));
+  const noWarp=!/\b(?:raceProgress|progress|travel|finishPosition)\s*=/.test(String(qaEightCarLiveRaceV396));
+  const liveMotion=steps>500&&frames>=50&&Boolean(start)&&Boolean(finish?.completed)&&finish?.cars===8;
+  const competition=Boolean(finish&&finish.passes>=2&&finish.movedFromGrid>=2);
+  const noOverlaps=totalOverlapFrames===0&&peakOverlapPairs===0;
+  return {version:'phase396-eight-car-actual-live',mode:'live-physics-browser-synchronous',trackId,stepMs,steps,frames,
+    simulatedSeconds:Number((steps*stepMs/1000).toFixed(2)),start,finish,corner:compactCorner,
+    peakOverlapPairs,totalOverlapFrames,closestSvg:Number.isFinite(closestSvg)?Number(closestSvg.toFixed(3)):null,
+    overlapExamples:overlaps,speedSeries:speedSeries.slice(-16),liveMotion,competition,noOverlaps,noWarp,error,
+    allPass:liveMotion&&competition&&noOverlaps&&noWarp&&!error};
+}
+window.mwsF1QaEightCarLiveRaceV396=qaEightCarLiveRaceV396;
+window.__mwsF1RacingV396='phase396-eight-car-actual-live';
+
 function qaDynamicsPlaytestV348(){
   if(f1ScreenStateV185!=='SETUP')return {version:VERSION348,allPass:false,reason:'requires-setup'};
   const normal=runAcceleratedEngineRaceV240('majoku-ring-v1',{drivers:8,laps:10,runIndex:348,stepMs:80,maxSteps:50000,raceMode:'NORMAL'});
