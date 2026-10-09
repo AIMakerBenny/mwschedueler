@@ -1,0 +1,23 @@
+/* Phase 401: cinematic skill on the actual track map. */
+#f1SkillStageV401.f1-skill-stage-v401{position:absolute;inset:0;z-index:45;display:grid;place-items:center;pointer-events:none;overflow:hidden;background:radial-gradient(ellipse,rgba(24,15,60,.30),rgba(1,3,10,.58))}
+.f1-skill-bar-v401{position:relative;isolation:isolate;display:grid;grid-template-columns:clamp(66px,10vw,112px) minmax(0,1fr);gap:clamp(12px,3vw,28px);align-items:center;width:min(95%,880px);min-height:clamp(105px,20vh,200px);padding:clamp(12px,2vw,27px);border-block:3px solid #ffdc8a;background:linear-gradient(100deg,#070f22,#33215a,#070f22);box-shadow:0 0 48px #b48cff66,0 18px 40px #000c;animation:f1SkillEnterV401 .34s cubic-bezier(.15,.88,.23,1) both}
+.f1-skill-bar-v401[data-chain="1"]{border-color:#80dcff;background:linear-gradient(100deg,#051629,#105778,#051629);box-shadow:0 0 48px #31b6ff77,0 18px 40px #000c}
+.f1-skill-stripes-v401{position:absolute;inset:0;z-index:-1;opacity:.22;background:repeating-linear-gradient(112deg,transparent 0 18px,#fff 18px 20px,transparent 20px 36px);animation:f1SkillStreakV401 .6s linear infinite}
+.f1-skill-portrait-v401{aspect-ratio:1;border-radius:50%;overflow:hidden;border:3px solid #ffe5aa;background:#192139;display:grid;place-items:center;font-size:30px;font-weight:900;color:#fff;box-shadow:0 0 0 5px #ffffff14,0 0 25px #f5d57e77}
+.f1-skill-portrait-v401 img{width:100%;height:100%;object-fit:cover}
+.f1-skill-copy-v401{display:grid;gap:9px;min-width:0;word-break:keep-all}
+.f1-skill-copy-v401 small{color:#ffe2a2;font-size:clamp(9px,1vw,13px);letter-spacing:.17em;font-weight:950}
+.f1-skill-copy-v401 strong{color:#fff;font-size:clamp(20px,3vw,42px);font-weight:950;line-height:1.15;text-shadow:0 0 18px #ffecc077}
+.f1-skill-copy-v401 span{color:#dce7ff;font-size:clamp(11px,1.25vw,18px);font-weight:850}
+@keyframes f1SkillEnterV401{from{opacity:0;transform:translateX(-12%) scaleX(.6)}to{opacity:1;transform:none}}
+@keyframes f1SkillStreakV401{to{background-position:110px 0}}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-v313{padding:15px!important;background:#101d30}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-v313 header{font-size:12px;font-weight:900}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-list-v313{gap:8px;padding-top:12px}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-item-v313{grid-template-columns:43px 46px minmax(0,1fr);gap:11px;min-height:63px;padding:8px 10px;border-color:#37516f;background:#162842}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-item-v313>b{font-size:18px;color:#ffe5a7}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-item-v313 .avatar{width:44px;height:44px}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-item-v313 .meta strong{font-size:14px;line-height:1.3}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-item-v313 .meta small{font-size:10px;color:#b3c1d6}
+@media(max-width:790px){.f1-skill-bar-v401{width:99%;grid-template-columns:60px 1fr;gap:10px;padding:10px}}
+@media(prefers-reduced-motion:reduce){.f1-skill-bar-v401,.f1-skill-stripes-v401{animation:none!important}}

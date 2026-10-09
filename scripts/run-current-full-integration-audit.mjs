@@ -1,3 +1,4 @@
+import {runPhase401F1SkillAudit} from './run-phase401-f1-skill-audit.mjs';
 import {runPhase400F1FinishedMarkerAudit} from './run-phase400-f1-finished-marker-audit.mjs';
 import {runPhase395F1TyreRaceAudit} from './run-phase395-f1-tyre-race-audit.mjs';
 import {runPhase394F1LiveGridClearanceAudit} from './run-phase394-f1-live-grid-clearance-audit.mjs';
@@ -2833,5 +2834,6 @@ export function runPhase393FullIntegrationAudit(){const previous=runPhase391Full
 export function runPhase394FullIntegrationAudit(){const previous=runPhase393FullIntegrationAudit(),current=runPhase394F1LiveGridClearanceAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 394: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 394: '+x)];return {phase:394,previous,current,issues,warnings,pass:!issues.length};}
 export function runPhase395FullIntegrationAudit(){const previous=runPhase394FullIntegrationAudit(),current=runPhase395F1TyreRaceAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 395: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 395: '+x)];return {phase:395,previous,current,issues,warnings,pass:!issues.length};}
 export function runPhase400FullIntegrationAudit(){const previous=runPhase395FullIntegrationAudit(),current=runPhase400F1FinishedMarkerAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 400: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 400: '+x)];return {phase:400,previous,current,issues,warnings,pass:!issues.length};}
-export function runCurrentFullIntegrationAudit(){return runPhase400FullIntegrationAudit();}
+export function runPhase401FullIntegrationAudit(){const previous=runPhase400FullIntegrationAudit(),current=runPhase401F1SkillAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 401: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 401: '+x)];return {phase:401,previous,current,issues,warnings,pass:!issues.length};}
+export function runCurrentFullIntegrationAudit(){return runPhase401FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();

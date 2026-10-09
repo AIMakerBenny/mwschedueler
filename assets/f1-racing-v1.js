@@ -2102,7 +2102,7 @@ function gridGachaDockItemV313(driver,position){
   return '<article class="f1-grid-gacha-dock-item-v313" data-f1-gacha-position-v313="'+position+'"><b>P'+String(position).padStart(2,'0')+'</b><span class="avatar">'+avatar+'</span><span class="meta"><strong>'+escapeHtml(name)+'</strong><small>START '+String(position).padStart(2,'0')+'</small></span></article>';
 }
 const GRID_GACHA_VIEWPORT_CONFIG_V333=Object.freeze({
- minStageHeight:300,maxStageHeight:420,minCardHeight:220,maxCardHeight:320,minCardWidth:160,maxCardWidth:230,minDockWidth:210,maxDockWidth:280,bottomGap:12
+ minStageHeight:300,maxStageHeight:600,minCardHeight:220,maxCardHeight:455,minCardWidth:160,maxCardWidth:320,minDockWidth:240,maxDockWidth:350,bottomGap:12
 });
 let gridGachaResizeObserverV333=null,gridGachaResizeRafV333=0,gridGachaResizeBoundV333=false;
 function gridGachaViewportMetricsV333(width,height,listTop=0){
@@ -7383,6 +7383,7 @@ function setSimulationTimeScaleV192(scale){
   return true;
 }
 function toggleSimulationPauseV192(force){
+  if(specialStateV401.cinematic)return true;
   simClockV192.paused=typeof force==='boolean'?force:!simClockV192.paused;
   simClockV192.accumulatorMs=0;
   raceMotionV189.lastTimestamp=0;
@@ -7933,6 +7934,8 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   maxTarget+=chaseBurstEffect.targetSpeedBonusKph+chaseBurstEffect.battleBiasBonusKph;
   const competitivePaceV376=competitivePaceAdvantageV376(vehicle);
   maxTarget+=competitivePaceV376;
+  const specialEffectV401=specialEffectV401(vehicle);
+  maxTarget+=specialEffectV401.bonus;
   vehicle.competitivePaceBoostKphV376=competitivePaceV376;
   const rawBoundaryOffsetV271=lineOffsetMetersV197(vehicle)+(Number(vehicle?.incidentLateralOffsetMeters)||0)+(Number(leaderPressureEffect.lateralOffsetMeters)||0);
   const boundaryStateV271=trackBoundaryStateV271(vehicle,rawBoundaryOffsetV271);
@@ -8020,13 +8023,15 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
     throttle=.12*incidentState.throttleFactor;
     accelMps2=0;
   }
+  if(accelMps2>0)accelMps2*=specialEffectV401.accel;
   const propulsionThrottle=accelMps2>0?throttle:0;
   const energyState=updateEnergySystemV201(vehicle,stepMs,phase,propulsionThrottle,brake);
   if(accelMps2>0)accelMps2*=energyState.powerUnitFactor;
   const dt=stepMs/1000;
   const nextMps=Math.max(0,current/3.6+accelMps2*dt);
   const straightCapBase=(Number(track?.geometry?.maxStraightKph)||335)+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph+Math.max(0,Number(chaseBurstEffect.targetSpeedBonusKph)||0);
-  const straightCap=Number.isFinite(pitControl.speedCapKph)?Math.min(straightCapBase,pitControl.speedCapKph):straightCapBase;
+  const specialCapV401=straightCapBase+specialEffectV401.straight;
+  const straightCap=Number.isFinite(pitControl.speedCapKph)?Math.min(specialCapV401,pitControl.speedCapKph):specialCapV401;
   const nextKph=Math.max(0,Math.min(straightCap,nextMps*3.6));
   const avgMps=((current+nextKph)/2)/3.6;
   const distanceMeters=avgMps*dt;
@@ -10644,6 +10649,118 @@ function qaEmergencyAvoidanceV386(){
 }
 window.mwsF1QaEmergencyAvoidanceV386=qaEmergencyAvoidanceV386;
 
+
+// Phase 401: sequential ultimate-skill animations, ranked probability and physical boost.
+const SPECIAL_V401=Object.freeze({minDrivers:4,startMs:22000,cooldownMs:68000,personalMs:145000,sceneMs:1120,chainLimit:2,boostMinMs:6900,boostMaxMs:9200,boostKph:55,accel:1.65,straightKph:23});
+const SPECIAL_TITLES_V401=Object.freeze(['부스터 엔진 가동','한계 돌파 모드','풀스로틀 해방','추격 엔진 점화','초고속 주행 개시','전력 질주 승인','마지막 승부수','역전의 기어','최대 출력 개방','역습의 부스터','결정적 추격','초월 가속 발동','추월 특화 모드','승부의 가속','터보 드라이브','폭발적인 추진력']);
+const SPECIAL_LINES_V401=Object.freeze(['지금부터 따라잡는다!','앞을 막지 마라!','이번 코너가 기회다!','순위를 뒤집어 주지!','아직 승부는 끝나지 않았다!','이 속도를 견뎌 봐라!','끝까지 추격한다!','지금이 바로 그 순간!','시야 끝까지 전속력!','다음 직선은 내 차지다!','이대로 물러설 수 없다!','전속력으로 파고든다!']);
+const specialStateV401={token:0,cinematic:false,queue:[],index:0,timer:0,lastMs:-Infinity,events:0,chains:0,boosts:0,history:[]};
+function specialChanceV401(rank,count,seconds=1){
+ const rear=Math.max(0,Math.min(1,(rank-1)/Math.max(1,count-1)));
+ return 1-Math.exp(-(.0005+.0038*Math.pow(rear,1.5))*Math.max(0,seconds));
+}
+function specialEffectV401(vehicle){
+ const remain=(Number(vehicle?.specialUntilV401)||0)-(Number(simClockV192.simTimeMs)||0);
+ if(!vehicle||vehicle.finished||vehicle.pitState!=='TRACK'||remain<=0)return {active:false,bonus:0,accel:1,straight:0};
+ const fade=Math.max(0,Math.min(1,remain/1800));
+ return {active:true,bonus:SPECIAL_V401.boostKph*fade,accel:1+(SPECIAL_V401.accel-1)*fade,straight:SPECIAL_V401.straightKph*fade};
+}
+function resetSpecialV401(){
+ specialStateV401.token++;if(specialStateV401.timer)clearTimeout(specialStateV401.timer);
+ specialStateV401.timer=0;specialStateV401.cinematic=false;specialStateV401.queue=[];specialStateV401.index=0;
+ specialStateV401.lastMs=-Infinity;specialStateV401.events=0;specialStateV401.chains=0;specialStateV401.boosts=0;specialStateV401.history=[];
+ document.getElementById('f1SkillStageV401')?.remove();
+ const pause=document.getElementById('f1RacingPauseV192');if(pause)pause.disabled=false;
+}
+function specialPhraseV401(){
+ return {title:SPECIAL_TITLES_V401[Math.floor(Math.random()*SPECIAL_TITLES_V401.length)],
+  line:SPECIAL_LINES_V401[Math.floor(Math.random()*SPECIAL_LINES_V401.length)]};
+}
+function specialStageV401(){
+ const map=document.querySelector('#f1RacingViewRaceV185 .f1-racing-race-map-stage-v188');
+ if(!map)return null;
+ let stage=document.getElementById('f1SkillStageV401');
+ if(!stage){stage=document.createElement('div');stage.id='f1SkillStageV401';stage.className='f1-skill-stage-v401';map.append(stage);}
+ return stage;
+}
+function applySpecialV401(entry){
+ const v=entry?.vehicle;if(!v||v.finished||v.pitState!=='TRACK')return false;
+ const now=Number(simClockV192.simTimeMs)||0;
+ const duration=SPECIAL_V401.boostMinMs+Math.random()*(SPECIAL_V401.boostMaxMs-SPECIAL_V401.boostMinMs);
+ v.specialUntilV401=now+duration;v.specialLastMsV401=now;v.specialUsesV401=(Number(v.specialUsesV401)||0)+1;
+ specialStateV401.boosts++;specialStateV401.history.push({id:String(v.id),rank:entry.rank,chain:entry.chain,simMs:now,durationMs:Math.round(duration)});
+ if(specialStateV401.history.length>40)specialStateV401.history.shift();return true;
+}
+function playSpecialV401(token){
+ if(token!==specialStateV401.token||!specialStateV401.cinematic)return;
+ const entry=specialStateV401.queue[specialStateV401.index++],stage=specialStageV401();
+ if(!entry){
+  stage?.remove();specialStateV401.cinematic=false;specialStateV401.queue=[];
+  simClockV192.paused=false;simClockV192.accumulatorMs=0;raceMotionV189.lastTimestamp=0;
+  const pause=document.getElementById('f1RacingPauseV192');if(pause)pause.disabled=false;
+  syncSimulationControlsV192();return;
+ }
+ if(stage){
+  const name=String(entry.vehicle?.driver?.name||'드라이버'),url=String(entry.vehicle?.driver?.image||'').trim();
+  const avatar=url?'<img src="'+escapeHtml(url)+'" alt="">':'<span>'+escapeHtml(initials(name))+'</span>';
+  stage.innerHTML='<div class="f1-skill-bar-v401" data-chain="'+(entry.chain?'1':'0')+'"><div class="f1-skill-stripes-v401"></div>'+
+   '<div class="f1-skill-portrait-v401">'+avatar+'</div><div class="f1-skill-copy-v401"><small>'+
+   (entry.chain?'CHAIN BOOST':'SPECIAL BOOST')+' · P'+entry.rank+'</small><strong>'+escapeHtml(entry.phrase.title)+
+   '</strong><span>'+escapeHtml(name)+' · '+escapeHtml(entry.phrase.line)+'</span></div></div>';
+ }
+ specialStateV401.timer=setTimeout(()=>{if(token!==specialStateV401.token)return;applySpecialV401(entry);playSpecialV401(token)},SPECIAL_V401.sceneMs);
+}
+function startSpecialV401(driver,rank,standings){
+ if(specialStateV401.cinematic||!specialStageV401())return false;
+ const index=standings.findIndex(row=>row.vehicle===driver);if(index<0)return false;
+ const queue=[{vehicle:driver,rank,chain:false,phrase:specialPhraseV401()}];
+ const now=Number(simClockV192.simTimeMs)||0;
+ for(let i=index+1;i<standings.length&&queue.length<=SPECIAL_V401.chainLimit;i++){
+  const v=standings[i].vehicle;if(!v||v.finished||v.pitState!=='TRACK'||(Number(v.specialUsesV401)||0)>=2)continue;
+  if(now-(Number(v.specialLastMsV401)||-Infinity)<SPECIAL_V401.personalMs)continue;
+  if(Math.random()<.15+.43*i/Math.max(1,standings.length-1))queue.push({vehicle:v,rank:i+1,chain:true,phrase:specialPhraseV401()});
+ }
+ specialStateV401.queue=queue;specialStateV401.index=0;specialStateV401.cinematic=true;
+ specialStateV401.lastMs=now;specialStateV401.events++;specialStateV401.chains+=queue.length-1;
+ simClockV192.paused=true;simClockV192.accumulatorMs=0;raceMotionV189.lastTimestamp=0;
+ const pause=document.getElementById('f1RacingPauseV192');if(pause)pause.disabled=true;
+ syncSimulationControlsV192();playSpecialV401(++specialStateV401.token);return true;
+}
+function tickSpecialV401(stepMs){
+ if(engineQaV240.active||specialStateV401.cinematic||simClockV192.paused||!raceMotionV189.running||
+ f1ScreenStateV185!=='RACE'||raceFlagStateV214.flag!=='GREEN')return false;
+ const now=Number(simClockV192.simTimeMs)||0;
+ if(now<SPECIAL_V401.startMs||now-specialStateV401.lastMs<SPECIAL_V401.cooldownMs)return false;
+ const positions=computeRaceStandingsV191().filter(row=>row?.vehicle&&!row.vehicle.finished&&row.vehicle.pitState==='TRACK'&&!row.vehicle.pitRequested);
+ if(positions.length<SPECIAL_V401.minDrivers)return false;
+ if((Number(positions[0].vehicle.raceProgress)||0)/Math.max(1,Number(activeRaceSnapshotV187?.totalLaps)||1)>.91)return false;
+ for(let i=positions.length-1;i>=1;i--){
+  const v=positions[i].vehicle;
+  if((Number(v.specialUsesV401)||0)>=2||(Number(v.specialUntilV401)||0)>now||
+   now-(Number(v.specialLastMsV401)||-Infinity)<SPECIAL_V401.personalMs)continue;
+  if(Math.random()<specialChanceV401(i+1,positions.length,stepMs/1000))return startSpecialV401(v,i+1,positions);
+ }
+ return false;
+}
+function specialTelemetryV401(){
+ return {version:'phase401-ultimate-rank-boost',cinematic:specialStateV401.cinematic,
+  simMs:Number(simClockV192.simTimeMs)||0,events:specialStateV401.events,chains:specialStateV401.chains,
+  applied:specialStateV401.boosts,history:specialStateV401.history.slice(),
+  active:raceMotionV189.vehicles.filter(v=>specialEffectV401(v).active).map(v=>String(v.id))};
+}
+function qaSpecialV401(){
+ const probabilities=[1,3,5,7,9,11,12].map(rank=>specialChanceV401(rank,12));
+ const monotonic=probabilities.every((p,i)=>i===0||p>probabilities[i-1]);
+ const dynamics=String(simulateVehicleDynamicsV196).includes('specialEffectV401(vehicle)')&&
+ String(simulateRaceStepV192).includes('tickSpecialV401(stepMs)')&&String(resetRaceMotionV189).includes('resetSpecialV401()');
+ const noWarp=!/\b(?:raceProgress|progress|travel)\s*=/.test(String(startSpecialV401)+String(playSpecialV401)+String(applySpecialV401));
+ return {probabilities,monotonic,combinations:SPECIAL_TITLES_V401.length*SPECIAL_LINES_V401.length,
+  dynamics,noWarp,telemetry:specialTelemetryV401(),allPass:monotonic&&dynamics&&noWarp&&SPECIAL_TITLES_V401.length*SPECIAL_LINES_V401.length>=150};
+}
+window.__mwsF1RacingV401='phase401-ultimate-rank-boost';
+window.mwsF1GetSpecialTelemetryV401=specialTelemetryV401;
+window.mwsF1QaSpecialV401=qaSpecialV401;
+
 function simulateRaceStepV192(stepMs){
   if(simClockV192.paused||!(stepMs>0))return false;
   simClockV192.simTimeMs+=stepMs;
@@ -10694,6 +10811,7 @@ function simulateRaceStepV192(stepMs){
     updateRaceNarrativeV222(false);
   }
   if(updateRaceLifecycleRecoveryG())return false;
+  tickSpecialV401(stepMs);
   return true;
 }
 function raceFrameV189(timestamp){
@@ -10732,6 +10850,7 @@ function pauseRaceMotionV189(suspended=false){
   if(raceMotionV189.rafId)cancelAnimationFrame(raceMotionV189.rafId);raceMotionV189.rafId=0;return true;
 }
 function resetRaceMotionV189(){
+  resetSpecialV401();
   pauseRaceMotionV189(false);raceMotionV189.vehicles=[];raceMotionV189.snapshotCreatedAt='';raceGeometryV193=null;
   simClockV192.paused=false;simClockV192.timeScale=1;simClockV192.simTimeMs=0;simClockV192.accumulatorMs=0;
   raceFlagStateV214={flag:'GREEN',reason:'',sinceSimMs:0};
