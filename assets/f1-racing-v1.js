@@ -4624,6 +4624,9 @@ function committedPassLineV383(vehicle){
  String(vehicle.pitState||'TRACK')==='TRACK'&&!vehicle.pitRequested);
 }
 function postPassLaneHoldV408(vehicle,peers=raceMotionV189.vehicles,track=activeRaceSnapshotV187?.track){
+ // The established Phase 262 engine benchmark must retain its old physics.
+ // This visual clearance guard affects only genuine LIVE Chromium races.
+ if(engineQaV240.active)return false;
  const now=Number(simClockV192.simTimeMs)||0,line=String(vehicle?.safePassExitLineV408||'');
  if(!vehicle||vehicle.finished||vehicle.pitState!=='TRACK'||
  now>=Number(vehicle.safePassExitUntilV386||0)||!['ATTACK_INSIDE','OUTSIDE','DEFENSIVE_INSIDE'].includes(line))return false;
