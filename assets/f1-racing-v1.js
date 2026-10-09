@@ -5261,7 +5261,7 @@ function updatePassStateMachineV208(stepMs){
       gapMeters,closingRateKph:(Number(vehicle.speedKph)||0)-(Number(target.speedKph)||0),
       slipstreamStrength:Number(vehicle.slipstreamStrength)||0,phase,passed,
       specialLaneV406:Boolean(signedGapMeters>0&&specialEffectV401(vehicle).active&&
-        gapMeters<=Math.max(185,projectedSafeGapMetersV378()*2.25)),
+        gapMeters<=Math.max(235,projectedSafeGapMetersV378()*3)),
       attackIntentV365:Boolean(vehicle.naturalHeadwayAttackIntentV365),
       counterAttack:String(vehicle.battleState||'')==='SWITCHBACK'&&(Number(vehicle.speedKph)||0)>(Number(target.speedKph)||0)
     };
@@ -5273,9 +5273,9 @@ function updatePassStateMachineV208(stepMs){
     // collision envelope closes. No longitudinal or lateral position is assigned.
     const boostedLanePreparationV405=Boolean(signedGapMeters>0&&
       specialEffectV401(vehicle).active&&
-      ['STRAIGHT','APPROACH','BRAKING'].includes(phase)&&
+      ['STRAIGHT','APPROACH','BRAKING','EXIT'].includes(phase)&&
       gapMeters>=Math.max(24,projectedSafeGapMetersV378()*.55)&&
-      gapMeters<=Math.max(155,projectedSafeGapMetersV378()*2.25)&&
+      gapMeters<=Math.max(205,projectedSafeGapMetersV378()*2.65)&&
       boundaryOvertakeEligibleV271(vehicle)&&!vehicle.pitRequested&&!target.pitRequested);
     if(!hold&&boostedLanePreparationV405)next='PULLING_OUT';
     const pairKey=battlePairKeyV319(vehicle.id,target.id);
@@ -10663,7 +10663,7 @@ window.mwsF1QaEmergencyAvoidanceV386=qaEmergencyAvoidanceV386;
 
 
 // Phase 401: sequential ultimate-skill animations, ranked probability and physical boost.
-const SPECIAL_V401=Object.freeze({minDrivers:4,startMs:22000,cooldownMs:68000,personalMs:145000,sceneMs:1120,chainLimit:2,boostMinMs:6900,boostMaxMs:9200,boostKph:55,accel:1.65,straightKph:23});
+const SPECIAL_V401=Object.freeze({minDrivers:4,startMs:22000,cooldownMs:68000,personalMs:145000,sceneMs:1120,chainLimit:2,boostMinMs:10300,boostMaxMs:12200,boostKph:81,accel:1.93,straightKph:33});
 const SPECIAL_TITLES_V401=Object.freeze(['부스터 엔진 가동','한계 돌파 모드','풀스로틀 해방','추격 엔진 점화','초고속 주행 개시','전력 질주 승인','마지막 승부수','역전의 기어','최대 출력 개방','역습의 부스터','결정적 추격','초월 가속 발동','추월 특화 모드','승부의 가속','터보 드라이브','폭발적인 추진력']);
 const SPECIAL_LINES_V401=Object.freeze(['지금부터 따라잡는다!','앞을 막지 마라!','이번 코너가 기회다!','순위를 뒤집어 주지!','아직 승부는 끝나지 않았다!','이 속도를 견뎌 봐라!','끝까지 추격한다!','지금이 바로 그 순간!','시야 끝까지 전속력!','다음 직선은 내 차지다!','이대로 물러설 수 없다!','전속력으로 파고든다!']);
 const specialStateV401={token:0,cinematic:false,queue:[],index:0,timer:0,lastMs:-Infinity,events:0,chains:0,boosts:0,history:[]};
@@ -10675,7 +10675,16 @@ function specialEffectV401(vehicle){
  const remain=(Number(vehicle?.specialUntilV401)||0)-(Number(simClockV192.simTimeMs)||0);
  if(!vehicle||vehicle.finished||vehicle.pitState!=='TRACK'||remain<=0)return {active:false,bonus:0,accel:1,straight:0};
  const fade=Math.max(0,Math.min(1,remain/1800));
- return {active:true,bonus:SPECIAL_V401.boostKph*fade,accel:1+(SPECIAL_V401.accel-1)*fade,straight:SPECIAL_V401.straightKph*fade};
+ // Phase 407: rear chain users gain varied real thrust. A completed on-track
+ // pass progressively tapers the skill, limiting runaway leads without altering position.
+ const onTrackGains=Math.max(0,(Number(vehicle.physicalOnTrackPassesV386)||0)-(Number(vehicle.specialPassBaselineV407)||0));
+ const gainedScale=onTrackGains>=2?.24:onTrackGains===1?.55:1;
+ const chainScale=Math.max(1,Math.min(1.28,Number(vehicle.specialChainPowerV407)||1));
+ const phase=String(getCornerPhaseAtProgressV194(vehicle.progress)?.phase||'STRAIGHT');
+ const cornerFactor=['BRAKING','TURN_IN','APEX'].includes(phase)?.40:1;
+ const scale=fade*gainedScale*chainScale;
+ return {active:true,bonus:SPECIAL_V401.boostKph*scale*cornerFactor,
+  accel:1+(SPECIAL_V401.accel-1)*scale,straight:SPECIAL_V401.straightKph*scale};
 }
 function resetSpecialV401(){
  specialStateV401.token++;if(specialStateV401.timer)clearTimeout(specialStateV401.timer);
@@ -10700,6 +10709,8 @@ function applySpecialV401(entry){
  const now=Number(simClockV192.simTimeMs)||0;
  const duration=SPECIAL_V401.boostMinMs+Math.random()*(SPECIAL_V401.boostMaxMs-SPECIAL_V401.boostMinMs);
  v.specialUntilV401=now+duration;v.specialLastMsV401=now;v.specialUsesV401=(Number(v.specialUsesV401)||0)+1;
+ v.specialPassBaselineV407=Number(v.physicalOnTrackPassesV386)||0;
+ v.specialChainPowerV407=entry.chain?1.10+Math.random()*.18:1;
  specialStateV401.boosts++;specialStateV401.history.push({id:String(v.id),rank:entry.rank,chain:entry.chain,simMs:now,durationMs:Math.round(duration)});
  if(specialStateV401.history.length>40)specialStateV401.history.shift();return true;
 }

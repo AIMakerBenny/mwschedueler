@@ -1802,7 +1802,7 @@ try{
     const qa=window.mwsF1QaSpecialV401?.();
     assert(qa?.allPass===true,'Phase 401 skill contract failed: '+JSON.stringify(qa));
     window.mwsF1SetSimulationTimeScaleV192?.(4);
-    let samples=0,peakOverlap=0,peakCurrent=0,sceneObserved=false,peakActiveBoosts=0,orders=[];
+    let samples=0,peakOverlap=0,peakCurrent=0,sceneObserved=false,peakActiveBoosts=0,orders=[],boostDiagnostics=[];
     const initial=window.mwsF1GetRaceOrderFlowV309?.()||{};
     for(let i=0;i<24;i++){
       await sleep(1400);
@@ -1816,6 +1816,14 @@ try{
       const skill=window.mwsF1GetSpecialTelemetryV401?.()||{};
       sceneObserved ||=Boolean(skill.cinematic||document.querySelector('#f1SkillStageV401 .f1-skill-bar-v401'));
       peakActiveBoosts=Math.max(peakActiveBoosts,(skill.active||[]).length);
+      if((skill.active||[]).length){
+        const boostedIds=new Set(skill.active.map(String));
+        const passStates=window.mwsF1GetPassStatesV208?.()||[];
+        const behavior=window.mwsF1GetBehaviorTelemetryV380?.()||{};
+        boostDiagnostics.push({simMs:skill.simMs,active:skill.active,
+          passStates:passStates.filter(row=>boostedIds.has(String(row.id))),
+          dynamics:(behavior.events||[]).filter(row=>boostedIds.has(String(row.id))).slice(-7)});
+      }
       const order=window.mwsF1GetRaceOrderFlowV309?.()||{};
       orders.push({simMs:skill.simMs,orderChanges:order.orderChanges||0,onTrackPasses:order.onTrackPassesV386||0,skills:skill.events||0,chains:skill.chains||0,boosts:skill.applied||0});
       samples++;
@@ -1834,7 +1842,7 @@ try{
       latestOverlap:overlap.latest||null,qualityReport:quality,
       behavior:window.mwsF1GetBehaviorTelemetryV380?.()||{},
       gachaHeight:Math.round(stageRect.height),cardHeight:Math.round(cardRect.height),
-      dockWidth:Math.round(dockRect.width),orderListCount:orderRows.length,orders};
+      dockWidth:Math.round(dockRect.width),orderListCount:orderRows.length,orders,boostDiagnostics:boostDiagnostics.slice(-14)};
     assert(peakOverlap===0&&peakCurrent===0,'Phase 401 12-driver LIVE marker overlap: '+JSON.stringify(report));
     assert(Number(result.orderChanges)>0&&Number(result.onTrackPassesV386)>0,
       'Phase 401 12-driver true physical overtakes absent: '+JSON.stringify(report));
