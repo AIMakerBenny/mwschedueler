@@ -1,3 +1,4 @@
+import {runPhase399F1SafeAttackReleaseAudit} from './run-phase399-f1-safe-attack-release-audit.mjs';
 import {runPhase398F1SafePassPaceAudit} from './run-phase398-f1-safe-pass-pace-audit.mjs';
 import {runPhase397F1EarlyPassAudit} from './run-phase397-f1-early-pass-audit.mjs';
 import {runPhase396F1EightCarLiveAudit} from './run-phase396-f1-eight-car-live-audit.mjs';
@@ -2837,5 +2838,6 @@ export function runPhase395FullIntegrationAudit(){const previous=runPhase394Full
 export function runPhase396FullIntegrationAudit(){const previous=runPhase395FullIntegrationAudit(),current=runPhase396F1EightCarLiveAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 396: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 396: '+x)];return {phase:396,previous,current,issues,warnings,pass:!issues.length};}
 export function runPhase397FullIntegrationAudit(){const previous=runPhase396FullIntegrationAudit(),current=runPhase397F1EarlyPassAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 397: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 397: '+x)];return {phase:397,previous,current,issues,warnings,pass:!issues.length};}
 export function runPhase398FullIntegrationAudit(){const previous=runPhase397FullIntegrationAudit(),current=runPhase398F1SafePassPaceAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 398: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 398: '+x)];return {phase:398,previous,current,issues,warnings,pass:!issues.length};}
-export function runCurrentFullIntegrationAudit(){return runPhase398FullIntegrationAudit();}
+export function runPhase399FullIntegrationAudit(){const previous=runPhase398FullIntegrationAudit(),current=runPhase399F1SafeAttackReleaseAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 399: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 399: '+x)];return {phase:399,previous,current,issues,warnings,pass:!issues.length};}
+export function runCurrentFullIntegrationAudit(){return runPhase399FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();

@@ -1576,6 +1576,8 @@ try{
     assert(compoundRaces395?.allPass===true,'Phase 395 controlled S/M/H races Chromium QA failed: '+JSON.stringify(compoundRaces395));
     const earlyPass397=window.mwsF1QaEarlyAttackPersistenceV397?.();
     assert(earlyPass397?.allPass===true,'Phase 397 early-pass persistence Chromium QA failed: '+JSON.stringify(earlyPass397));
+    const attackRelease399=window.mwsF1QaSafeAttackReleaseV399?.();
+    assert(attackRelease399?.allPass===true,'Phase 399 bounded attack release Chromium QA failed: '+JSON.stringify(attackRelease399));
     const pace398=window.mwsF1QaLiveSafePassPaceV398?.();
     assert(pace398?.allPass===true,'Phase 398 safe passing pace Chromium QA failed: '+JSON.stringify(pace398));
     const eightCarLive396=window.mwsF1QaEightCarLiveRaceV396?.();
@@ -1691,6 +1693,7 @@ try{
       eightCarLiveV396:eightCarLive396||null,
       earlyPassV397:earlyPass397||null,
       passPaceV398:pace398||null,
+      attackReleaseV399:attackRelease399||null,
       overlapMonitorV377:overlapMonitor377||null,
       behaviorTelemetryV380:behaviorTelemetry380||null,
       neighborBrakingV381:neighborBraking381||null,

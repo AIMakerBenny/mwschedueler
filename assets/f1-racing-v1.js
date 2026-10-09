@@ -9933,6 +9933,7 @@ function qaEarlyAttackPersistenceV397(){
 window.mwsF1QaEarlyAttackPersistenceV397=qaEarlyAttackPersistenceV397;
 window.__mwsF1RacingV397='phase397-early-pass-commit';
 
+const LIVE_PASS_RELEASE_V399=Object.freeze({baseKph:9,gapGainKph:7,aggressionGainKph:3,maxKph:18});
 function liveSafePassPaceV398(vehicle,ahead,phase){
   if(engineQaV240.active||!vehicle||!ahead||vehicle===ahead||vehicle.finished||ahead.finished||
     vehicle.pitRequested||ahead.pitRequested||String(vehicle.pitState||'TRACK')!=='TRACK'||
@@ -9945,8 +9946,22 @@ function liveSafePassPaceV398(vehicle,ahead,phase){
   const separated=Math.abs((Number(vehicle.visualLateralOffsetMeters)||0)-(Number(ahead.visualLateralOffsetMeters)||0))>=MULTICAR_CORRIDOR_V376.minimumSideClearanceMeters;
   if(!allowed||!engaged||!separated||gap<0||gap>100)return 0;
   const aggression=Math.max(-1,Math.min(1,driverSkillNormV200(vehicle,'aggression')));
-  return Math.max(0,Math.min(11,5+(1-gap/100)*4+Math.max(0,aggression)*2));
+  return Math.max(0,Math.min(LIVE_PASS_RELEASE_V399.maxKph,
+    LIVE_PASS_RELEASE_V399.baseKph+(1-gap/100)*LIVE_PASS_RELEASE_V399.gapGainKph+
+    Math.max(0,aggression)*LIVE_PASS_RELEASE_V399.aggressionGainKph));
 }
+function qaSafeAttackReleaseV399(){
+ const source=String(liveSafePassPaceV398),cfg=LIVE_PASS_RELEASE_V399;
+ const guard=source.includes('vehicle.battleBlockedV319')&&source.includes('separated')&&source.includes("String(vehicle.pitState||'TRACK')!=='TRACK'");
+ const finite=[cfg.baseKph,cfg.gapGainKph,cfg.aggressionGainKph,cfg.maxKph].every(Number.isFinite);
+ const bounded=cfg.baseKph>=6&&cfg.maxKph<=18&&cfg.maxKph>cfg.baseKph;
+ const noWarp=!/\b(?:raceProgress|progress|finishPosition|travel)\s*=/.test(source);
+ return {version:'phase399-bounded-safe-attack-release',cfg,guard,finite,bounded,noWarp,
+   allPass:guard&&finite&&bounded&&noWarp};
+}
+window.mwsF1QaSafeAttackReleaseV399=qaSafeAttackReleaseV399;
+window.__mwsF1RacingV399='phase399-bounded-safe-attack-release';
+
 function qaLiveSafePassPaceV398(){
   const prev=engineQaV240.active;engineQaV240.active=false;
   const ahead={id:'a',raceProgress:1.2,pitState:'TRACK',visualLateralOffsetMeters:0};
