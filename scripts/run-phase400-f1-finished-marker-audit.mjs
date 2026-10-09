@@ -1,10 +1,11 @@
 import fs from 'node:fs';import {spawnSync} from 'node:child_process';
 export function runPhase400F1FinishedMarkerAudit(){
+ const issues=[],warnings=[];
  const index=fs.readFileSync('index.html','utf8');
  if(!index.includes('&finishedmarker400=1'))issues.push('Phase 400 asset cache version not updated');
  const core=fs.readFileSync('assets/f1-racing-v1.js','utf8'),
    diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8'),
-   cum=fs.readFileSync('scripts/run-current-full-integration-audit.mjs','utf8'),issues=[],warnings=[];
+   cum=fs.readFileSync('scripts/run-current-full-integration-audit.mjs','utf8');
  for(const token of ["if(vehicle.finished){marker.setAttribute('visibility','hidden')","function qaFinishedMarkersV400(){",
  'window.mwsF1QaFinishedMarkersV400=qaFinishedMarkersV400','marker.removeAttribute(\'visibility\')'])
    if(!core.includes(token))issues.push('missing runtime '+token);
