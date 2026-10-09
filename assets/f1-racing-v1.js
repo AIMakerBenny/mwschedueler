@@ -4623,6 +4623,16 @@ function committedPassLineV383(vehicle){
  ['ATTACK_INSIDE','DEFENSIVE_INSIDE','OUTSIDE'].includes(String(vehicle.racingLineMode||''))&&
  String(vehicle.pitState||'TRACK')==='TRACK'&&!vehicle.pitRequested);
 }
+function postPassLaneHoldV408(vehicle,peers=raceMotionV189.vehicles,track=activeRaceSnapshotV187?.track){
+ const now=Number(simClockV192.simTimeMs)||0,line=String(vehicle?.safePassExitLineV408||'');
+ if(!vehicle||vehicle.finished||vehicle.pitState!=='TRACK'||
+ now>=Number(vehicle.safePassExitUntilV386||0)||!['ATTACK_INSIDE','OUTSIDE','DEFENSIVE_INSIDE'].includes(line))return false;
+ const length=Math.max(1,Number(track?.lengthMeters)||4500);
+ const clearance=Math.max(68,Math.min(115,liveCameraClearanceMetersV386(track)+15));
+ return (peers||[]).some(peer=>peer&&peer!==vehicle&&!peer.finished&&peer.pitState==='TRACK'&&
+ Math.abs((Number(peer.raceProgress)-Number(vehicle.raceProgress))*length)<clearance);
+}
+
 function validateThirdLaneV383(vehicle,target,phase,peers=raceMotionV189.vehicles,track=activeRaceSnapshotV187?.track){
  if(!vehicle||!target)return {available:false,reason:'NO_TARGET'};
  const length=Math.max(1,Number(track?.lengthMeters)||4500),capacity=availableParallelCapacityV376(phase,track);
@@ -4659,7 +4669,7 @@ function updateTrafficAndDefenceV207(){
   const trackVehicles=trackInteractionVehiclesV369(raceMotionV189.vehicles,track);
   for(const vehicle of raceMotionV189.vehicles){
     vehicle.trafficState='CLEAR';vehicle.trafficCarAheadId='';vehicle.trafficGapMeters=Infinity;vehicle.trafficClosingRateKph=0;vehicle.trafficPressure=0;vehicle.trafficThreatFromId='';vehicle.defenceActive=false;vehicle.trafficLineIntent='IDEAL';
-    if(String(vehicle.pitState||'TRACK')==='TRACK'&&!vehicle.pitRequested&&!committedPassLineV383(vehicle)&&['ATTACK_INSIDE','DEFENSIVE_INSIDE'].includes(vehicle.racingLineMode))vehicle.racingLineMode='IDEAL';
+    if(String(vehicle.pitState||'TRACK')==='TRACK'&&!vehicle.pitRequested&&!committedPassLineV383(vehicle)&&!postPassLaneHoldV408(vehicle)&&['ATTACK_INSIDE','DEFENSIVE_INSIDE'].includes(vehicle.racingLineMode))vehicle.racingLineMode='IDEAL';
   }
   for(let index=1;index<trackVehicles.length;index++){
     const vehicle=trackVehicles[index],ahead=trackVehicles[index-1];
@@ -4766,7 +4776,11 @@ function setPassStateV208(vehicle,next,targetId='',reason=''){
     if(next==='PASS_COMPLETED')endChaseBurstV275(vehicle,'pass-completed');
     if(next==='PASS_COMPLETED')behaviorTelemetryV380.passes++;
     if(next==='PASS_COMPLETED')vehicle.spectatorPassFlashUntilV252=(Number(simClockV192.simTimeMs)||0)+1400;
-    if(next==='PASS_COMPLETED')vehicle.safePassExitUntilV386=(Number(simClockV192.simTimeMs)||0)+6500;
+    if(next==='PASS_COMPLETED'){
+      vehicle.safePassExitUntilV386=(Number(simClockV192.simTimeMs)||0)+6500;
+      vehicle.safePassExitLineV408=['ATTACK_INSIDE','OUTSIDE','DEFENSIVE_INSIDE'].includes(String(vehicle.racingLineMode||''))?String(vehicle.racingLineMode):String(vehicle.visualLineModeV269||'IDEAL');
+      vehicle.safePassExitTargetIdV408=String(targetId||'');
+    }
     if(next==='PASS_FAILED')vehicle.passFailedCount=(Number(vehicle.passFailedCount)||0)+1;
     enqueueLiveCutinV264(vehicle,next,targetId);
     const dialogueTarget=raceMotionV189.vehicles.find(row=>String(row.id)===String(targetId||''))||null;
@@ -5308,7 +5322,8 @@ function updatePassStateMachineV208(stepMs){
     }
     if(['PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE'].includes(next)&&!vehicle.pitRequested)vehicle.racingLineMode='ATTACK_INSIDE';
     if(next==='SWITCHBACK'||next==='COUNTER_ATTACK')vehicle.racingLineMode='OUTSIDE';
-    if(next==='PASS_COMPLETED'||next==='PASS_FAILED')vehicle.racingLineMode='IDEAL';
+    if(next==='PASS_COMPLETED'||next==='PASS_FAILED')vehicle.racingLineMode=postPassLaneHoldV408(vehicle)?String(vehicle.safePassExitLineV408):'IDEAL';
+    if(postPassLaneHoldV408(vehicle)&&!['PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK'].includes(next))vehicle.racingLineMode=String(vehicle.safePassExitLineV408);
     if(safeThirdV384){vehicle.racingLineMode='OUTSIDE';vehicle.tripleBreakawayActiveV376=true;}
     else vehicle.tripleBreakawayActiveV376=false;
   }
