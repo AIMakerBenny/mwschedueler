@@ -1,5 +1,7 @@
 import fs from 'node:fs';import {spawnSync} from 'node:child_process';
 export function runPhase400F1FinishedMarkerAudit(){
+ const index=fs.readFileSync('index.html','utf8');
+ if(!index.includes('&finishedmarker400=1'))issues.push('Phase 400 asset cache version not updated');
  const core=fs.readFileSync('assets/f1-racing-v1.js','utf8'),
    diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8'),
    cum=fs.readFileSync('scripts/run-current-full-integration-audit.mjs','utf8'),issues=[],warnings=[];
