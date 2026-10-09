@@ -7934,8 +7934,8 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   maxTarget+=chaseBurstEffect.targetSpeedBonusKph+chaseBurstEffect.battleBiasBonusKph;
   const competitivePaceV376=competitivePaceAdvantageV376(vehicle);
   maxTarget+=competitivePaceV376;
-  const specialEffectV401=specialEffectV401(vehicle);
-  maxTarget+=specialEffectV401.bonus;
+  const specialBoostV401=specialEffectV401(vehicle);
+  maxTarget+=specialBoostV401.bonus;
   vehicle.competitivePaceBoostKphV376=competitivePaceV376;
   const rawBoundaryOffsetV271=lineOffsetMetersV197(vehicle)+(Number(vehicle?.incidentLateralOffsetMeters)||0)+(Number(leaderPressureEffect.lateralOffsetMeters)||0);
   const boundaryStateV271=trackBoundaryStateV271(vehicle,rawBoundaryOffsetV271);
@@ -8023,14 +8023,14 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
     throttle=.12*incidentState.throttleFactor;
     accelMps2=0;
   }
-  if(accelMps2>0)accelMps2*=specialEffectV401.accel;
+  if(accelMps2>0)accelMps2*=specialBoostV401.accel;
   const propulsionThrottle=accelMps2>0?throttle:0;
   const energyState=updateEnergySystemV201(vehicle,stepMs,phase,propulsionThrottle,brake);
   if(accelMps2>0)accelMps2*=energyState.powerUnitFactor;
   const dt=stepMs/1000;
   const nextMps=Math.max(0,current/3.6+accelMps2*dt);
   const straightCapBase=(Number(track?.geometry?.maxStraightKph)||335)+towStrength*SLIPSTREAM_CONFIG_V198.maxTargetBonusKph+Math.max(0,Number(chaseBurstEffect.targetSpeedBonusKph)||0);
-  const specialCapV401=straightCapBase+specialEffectV401.straight;
+  const specialCapV401=straightCapBase+specialBoostV401.straight;
   const straightCap=Number.isFinite(pitControl.speedCapKph)?Math.min(specialCapV401,pitControl.speedCapKph):specialCapV401;
   const nextKph=Math.max(0,Math.min(straightCap,nextMps*3.6));
   const avgMps=((current+nextKph)/2)/3.6;

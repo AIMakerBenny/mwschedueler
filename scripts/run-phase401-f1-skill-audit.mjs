@@ -7,7 +7,7 @@ export function runPhase401F1SkillAudit(){
  test(js.includes('function specialChanceV401(')&&js.includes('Math.pow(rear,1.5)'),'rank-weighted probability missing');
  test(js.includes('function playSpecialV401(token)')&&js.includes('SPECIAL_V401.chainLimit'),'chain sequence missing');
  test(js.includes('simClockV192.paused=true')&&js.includes('simClockV192.paused=false'),'cinematic freeze missing');
- test(js.includes('maxTarget+=specialEffectV401.bonus')&&js.includes('accelMps2*=specialEffectV401.accel'),'real physical boost absent');
+ test(js.includes('maxTarget+=specialBoostV401.bonus')&&js.includes('accelMps2*=specialBoostV401.accel'),'real physical boost absent');
  test(js.includes('tickSpecialV401(stepMs)')&&js.includes('resetSpecialV401();'),'lifecycle integration missing');
  test(js.includes('if(physicalClosureV386.active)maxTarget=Math.min(maxTarget,physicalClosureV386.capKph);'),'collision protection removed');
  test(css.includes('#f1SkillStageV401')&&css.includes('.f1-grid-gacha-dock-item-v313'),'UI styling absent');
