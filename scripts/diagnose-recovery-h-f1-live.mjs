@@ -1826,6 +1826,9 @@ try{
       physicalOnTrackPasses:result.onTrackPassesV386||0,changedDrivers:result.changedDrivers||0,
       cinematicObserved:sceneObserved,peakActiveBoosts,skill,peakOverlap,peakCurrent,
       maxZoomOverlaps:overlap.peakMaxZoomOverlaps||0,qualityFrames:quality.liveFrames||0,
+      passStates:window.mwsF1GetPassStatesV208?.()||[],
+      latestOverlap:overlap.latest||null,qualityReport:quality,
+      behavior:window.mwsF1GetBehaviorTelemetryV380?.()||{},
       gachaHeight:Math.round(stageRect.height),cardHeight:Math.round(cardRect.height),
       dockWidth:Math.round(dockRect.width),orderListCount:orderRows.length,orders};
     assert(peakOverlap===0&&peakCurrent===0,'Phase 401 12-driver LIVE marker overlap: '+JSON.stringify(report));

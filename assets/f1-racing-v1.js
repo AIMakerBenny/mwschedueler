@@ -5266,6 +5266,15 @@ function updatePassStateMachineV208(stepMs){
     let next=hold?String(vehicle.battleState||'FOLLOWING'):rapidPassStateV376(String(vehicle.battleState||'FOLLOWING'),nextPassStateV208(String(vehicle.battleState||'FOLLOWING'),ctx),ctx);
     const earlyLateralV378=earlyLateralPassV378(vehicle,target,ctx);
     if(!hold&&earlyLateralV378.active)next='PULLING_OUT';
+    // Phase 405: a powered challenger commits to a real passing lane BEFORE the
+    // collision envelope closes. No longitudinal or lateral position is assigned.
+    const boostedLanePreparationV405=Boolean(signedGapMeters>0&&
+      specialEffectV401(vehicle).active&&
+      ['STRAIGHT','APPROACH','BRAKING'].includes(phase)&&
+      gapMeters>=Math.max(24,projectedSafeGapMetersV378()*.55)&&
+      gapMeters<=Math.max(155,projectedSafeGapMetersV378()*2.25)&&
+      boundaryOvertakeEligibleV271(vehicle)&&!vehicle.pitRequested&&!target.pitRequested);
+    if(!hold&&boostedLanePreparationV405)next='PULLING_OUT';
     const pairKey=battlePairKeyV319(vehicle.id,target.id);
     let blocked=battlePairBlockedV319(vehicle,target,isolationV319.locks);
     const thirdWindowV376=thirdCarOpportunityV376(vehicle,target,isolationV319.locks,phase,gapMeters);
