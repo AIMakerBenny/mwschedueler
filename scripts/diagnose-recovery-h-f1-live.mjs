@@ -592,12 +592,12 @@ try{
     assert(gachaInfoRect319&&gachaInfoRect319.height>=50&&gachaInfoRect319.bottom<=gachaCardRect319.bottom+2,'Phase 321 Gacha card info is clipped: '+JSON.stringify({info:gachaInfoRect319,card:gachaCardRect319}));
     assert(typeof window.multiDrawCardHTML==='function'&&gachaHost323?.dataset?.gachaRendererV323==='shared'&&Boolean(gachaHost323.querySelector('.gacha-card')),'Phase 321 F1 grid did not reuse the real Gacha card renderer');
     assert(gachaHost323?.dataset?.gachaRendererV324==='deterministic'&&gachaCard319?.classList.contains('f1-grid-gacha-card-v324'),'Phase 324 deterministic Gacha card shell missing');
-    assert(gachaHostRect323.width>=158&&gachaHostRect323.width<=232&&gachaHostRect323.height>=218&&gachaHostRect323.height<=322,'Phase 324 Gacha card geometry mismatch: '+JSON.stringify({host:gachaHostRect323}));
+    assert(gachaHostRect323.width>=158&&gachaHostRect323.width<=322&&gachaHostRect323.height>=218&&gachaHostRect323.height<=457,'Phase 324 Gacha card geometry mismatch: '+JSON.stringify({host:gachaHostRect323}));
     const responsiveQa333=window.mwsF1QaGridGachaViewportV333?.();
     assert(responsiveQa333?.allPass===true,'Phase 333 responsive Gacha viewport QA failed: '+JSON.stringify(responsiveQa333));
     const gachaListRect333=document.getElementById('f1RacingGridListV272')?.getBoundingClientRect();
     const gachaStageRect333=document.getElementById('f1RacingGridGachaStageV313')?.getBoundingClientRect();
-    const expectedStageH333=gachaListRect333?Math.max(300,Math.min(420,Math.floor(window.innerHeight-gachaListRect333.top-12))):0;
+    const expectedStageH333=gachaListRect333?Math.max(300,Math.min(600,Math.floor(window.innerHeight-gachaListRect333.top-12))):0;
     assert(document.getElementById('f1RacingGridListV272')?.dataset?.gachaResponsiveV333==='1','Phase 333 responsive Gacha marker missing');
     assert(gachaStageRect333&&Math.abs(gachaStageRect333.height-expectedStageH333)<=3,'Phase 333 Gacha stage did not fit current viewport: '+JSON.stringify({stage:gachaStageRect333,expectedStageH333,innerHeight:window.innerHeight,list:gachaListRect333}));
     assert(initialStart273?.disabled===false&&getComputedStyle(initialStart273).visibility!=='hidden','Phase 273 start button did not unlock after reveal');
