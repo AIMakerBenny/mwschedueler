@@ -1576,6 +1576,8 @@ try{
     assert(compoundRaces395?.allPass===true,'Phase 395 controlled S/M/H races Chromium QA failed: '+JSON.stringify(compoundRaces395));
     const earlyPass397=window.mwsF1QaEarlyAttackPersistenceV397?.();
     assert(earlyPass397?.allPass===true,'Phase 397 early-pass persistence Chromium QA failed: '+JSON.stringify(earlyPass397));
+    const pace398=window.mwsF1QaLiveSafePassPaceV398?.();
+    assert(pace398?.allPass===true,'Phase 398 safe passing pace Chromium QA failed: '+JSON.stringify(pace398));
     const eightCarLive396=window.mwsF1QaEightCarLiveRaceV396?.();
     assert(eightCarLive396?.allPass===true,'Phase 396 eight-car LIVE physics Chromium QA failed: '+JSON.stringify(eightCarLive396));
     const dynamicsPlaytest348=window.mwsF1QaDynamicsPlaytestV348?.();
@@ -1688,6 +1690,7 @@ try{
       compoundRacesV395:compoundRaces395||null,
       eightCarLiveV396:eightCarLive396||null,
       earlyPassV397:earlyPass397||null,
+      passPaceV398:pace398||null,
       overlapMonitorV377:overlapMonitor377||null,
       behaviorTelemetryV380:behaviorTelemetry380||null,
       neighborBrakingV381:neighborBraking381||null,

@@ -7925,6 +7925,10 @@ function simulateVehicleDynamicsV196(vehicle,stepMs){
   const competitivePaceV376=competitivePaceAdvantageV376(vehicle);
   maxTarget+=competitivePaceV376;
   vehicle.competitivePaceBoostKphV376=competitivePaceV376;
+  const aheadV398=raceMotionV189.vehicles.find(peer=>String(peer.id)===String(vehicle.trafficCarAheadId||''))||null;
+  const livePassPaceV398=liveSafePassPaceV398(vehicle,aheadV398,phase);
+  vehicle.livePassPaceKphV398=livePassPaceV398;
+  maxTarget+=livePassPaceV398;
   const rawBoundaryOffsetV271=lineOffsetMetersV197(vehicle)+(Number(vehicle?.incidentLateralOffsetMeters)||0)+(Number(leaderPressureEffect.lateralOffsetMeters)||0);
   const boundaryStateV271=trackBoundaryStateV271(vehicle,rawBoundaryOffsetV271);
   vehicle.unclampedLateralOffsetMetersV271=rawBoundaryOffsetV271;
@@ -9929,12 +9933,48 @@ function qaEarlyAttackPersistenceV397(){
 window.mwsF1QaEarlyAttackPersistenceV397=qaEarlyAttackPersistenceV397;
 window.__mwsF1RacingV397='phase397-early-pass-commit';
 
+function liveSafePassPaceV398(vehicle,ahead,phase){
+  if(engineQaV240.active||!vehicle||!ahead||vehicle===ahead||vehicle.finished||ahead.finished||
+    vehicle.pitRequested||ahead.pitRequested||String(vehicle.pitState||'TRACK')!=='TRACK'||
+    String(ahead.pitState||'TRACK')!=='TRACK'||vehicle.battleBlockedV319||vehicle.trackBoundaryExceededV271)
+    return 0;
+  const allowed=['STRAIGHT','APPROACH','EXIT'].includes(String(phase||''));
+  const engaged=['PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK']
+    .includes(String(vehicle.battleState||''));
+  const gap=(Number(ahead.raceProgress)-Number(vehicle.raceProgress))*Math.max(1,Number(activeRaceSnapshotV187?.track?.lengthMeters)||4500);
+  const separated=Math.abs((Number(vehicle.visualLateralOffsetMeters)||0)-(Number(ahead.visualLateralOffsetMeters)||0))>=MULTICAR_CORRIDOR_V376.minimumSideClearanceMeters;
+  if(!allowed||!engaged||!separated||gap<0||gap>100)return 0;
+  const aggression=Math.max(-1,Math.min(1,driverSkillNormV200(vehicle,'aggression')));
+  return Math.max(0,Math.min(11,5+(1-gap/100)*4+Math.max(0,aggression)*2));
+}
+function qaLiveSafePassPaceV398(){
+  const prev=engineQaV240.active;engineQaV240.active=false;
+  const ahead={id:'a',raceProgress:1.2,pitState:'TRACK',visualLateralOffsetMeters:0};
+  const v={id:'b',raceProgress:1.19,pitState:'TRACK',battleState:'PULLING_OUT',
+    visualLateralOffsetMeters:3.1,battleBlockedV319:false,trackBoundaryExceededV271:false,driverProfile:{aggression:75}};
+  let open=0,blocked=0,same=0,corner=0,far=0;
+  try{
+    open=liveSafePassPaceV398(v,ahead,'STRAIGHT');
+    blocked=liveSafePassPaceV398({...v,battleBlockedV319:true},ahead,'STRAIGHT');
+    same=liveSafePassPaceV398({...v,visualLateralOffsetMeters:0},ahead,'STRAIGHT');
+    corner=liveSafePassPaceV398(v,ahead,'APEX');
+    far=liveSafePassPaceV398({...v,raceProgress:1.15},ahead,'STRAIGHT');
+  }finally{engineQaV240.active=prev}
+  const integrated=String(simulateVehicleDynamicsV196).includes('liveSafePassPaceV398(vehicle,aheadV398,phase)')&&
+    String(simulateVehicleDynamicsV196).includes('vehicle.livePassPaceKphV398=livePassPaceV398;');
+  const noWarp=!/\b(?:raceProgress|progress|travel|finishPosition)\s*=/.test(String(liveSafePassPaceV398));
+  return {version:'phase398-safe-pass-pace',open,blocked,same,corner,far,integrated,noWarp,
+    allPass:open>0&&blocked===0&&same===0&&corner===0&&far===0&&integrated&&noWarp};
+}
+window.mwsF1QaLiveSafePassPaceV398=qaLiveSafePassPaceV398;
+window.__mwsF1RacingV398='phase398-safe-pass-pace';
+
 function qaEightCarLiveRaceV396(){
   if(f1ScreenStateV185!=='SETUP')return {version:'phase396-eight-car-actual-live',allPass:false,error:'requires-setup'};
   const trackId='majoku-ring-v1',stepMs=80,maxSteps=12000;
   const snapshot=buildEngineQaSnapshotV240(trackId,{drivers:8,laps:3,runIndex:396,gridMode:'SEEDED_SHUFFLE',raceMode:'NORMAL'});
   const overlaps=[],cornerSamples={},speedSeries=[],battleSamples={};
-  let blockingSamples=0,earlyCommitSamples=0,attackIntentSamples=0,minTrafficGapMeters=Infinity;
+  let blockingSamples=0,earlyCommitSamples=0,attackIntentSamples=0,minTrafficGapMeters=Infinity,boostSamples=0,boostMaxKph=0;
   let steps=0,frames=0,totalOverlapFrames=0,peakOverlapPairs=0,closestSvg=Infinity,start=null,finish=null,error='';
   try{
     if(!snapshot)throw new Error('missing-track');
@@ -9972,6 +10012,7 @@ function qaEightCarLiveRaceV396(){
           if(vehicle.battleBlockedV319)blockingSamples++;
           if(Number(vehicle.earlyApproachUntilV397)>Number(simClockV192.simTimeMs))earlyCommitSamples++;
           if(vehicle.naturalHeadwayAttackIntentV365)attackIntentSamples++;
+          if(Number(vehicle.livePassPaceKphV398)>0){boostSamples++;boostMaxKph=Math.max(boostMaxKph,Number(vehicle.livePassPaceKphV398));}
           if(Number.isFinite(Number(vehicle.trafficGapMeters)))minTrafficGapMeters=Math.min(minTrafficGapMeters,Number(vehicle.trafficGapMeters));
           const cls=String(vehicle.cornerDrivingClassV351||'');
           if(!cls)continue;
@@ -10007,7 +10048,8 @@ function qaEightCarLiveRaceV396(){
     simulatedSeconds:Number((steps*stepMs/1000).toFixed(2)),start,finish,corner:compactCorner,
     peakOverlapPairs,totalOverlapFrames,closestSvg:Number.isFinite(closestSvg)?Number(closestSvg.toFixed(3)):null,
     overlapExamples:overlaps,speedSeries:speedSeries.slice(-16),battleSamples,blockingSamples,earlyCommitSamples,
-    attackIntentSamples,minTrafficGapMeters:Number.isFinite(minTrafficGapMeters)?Number(minTrafficGapMeters.toFixed(2)):null,
+    attackIntentSamples,boostSamples,boostMaxKph:Number(boostMaxKph.toFixed(2)),
+    minTrafficGapMeters:Number.isFinite(minTrafficGapMeters)?Number(minTrafficGapMeters.toFixed(2)):null,
     liveMotion,competition,noOverlaps,noWarp,error,
     allPass:liveMotion&&competition&&noOverlaps&&noWarp&&!error};
 }
