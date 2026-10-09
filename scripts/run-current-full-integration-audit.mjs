@@ -1,3 +1,4 @@
+import {runPhase406F1PhysicalPassStateAudit} from './run-phase406-f1-physical-pass-audit.mjs';
 import {runPhase405F1BoostedPassAudit} from './run-phase405-f1-boosted-pass-audit.mjs';
 import {runPhase401F1SkillAudit} from './run-phase401-f1-skill-audit.mjs';
 import {runPhase400F1FinishedMarkerAudit} from './run-phase400-f1-finished-marker-audit.mjs';
@@ -2837,5 +2838,6 @@ export function runPhase395FullIntegrationAudit(){const previous=runPhase394Full
 export function runPhase400FullIntegrationAudit(){const previous=runPhase395FullIntegrationAudit(),current=runPhase400F1FinishedMarkerAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 400: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 400: '+x)];return {phase:400,previous,current,issues,warnings,pass:!issues.length};}
 export function runPhase401FullIntegrationAudit(){const previous=runPhase400FullIntegrationAudit(),current=runPhase401F1SkillAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 401: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 401: '+x)];return {phase:401,previous,current,issues,warnings,pass:!issues.length};}
 export function runPhase405FullIntegrationAudit(){const previous=runPhase401FullIntegrationAudit(),current=runPhase405F1BoostedPassAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 405: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 405: '+x)];return {phase:405,previous,current,issues,warnings,pass:!issues.length};}
-export function runCurrentFullIntegrationAudit(){return runPhase405FullIntegrationAudit();}
+export function runPhase406FullIntegrationAudit(){const previous=runPhase405FullIntegrationAudit(),current=runPhase406F1PhysicalPassStateAudit();const issues=[...previous.issues,...current.issues.map(x=>'Phase 406: '+x)],warnings=[...previous.warnings,...current.warnings.map(x=>'Phase 406: '+x)];return {phase:406,previous,current,issues,warnings,pass:!issues.length};}
+export function runCurrentFullIntegrationAudit(){return runPhase406FullIntegrationAudit();}
 if(import.meta.url==='file://'+process.argv[1])runCurrentFullIntegrationAudit();

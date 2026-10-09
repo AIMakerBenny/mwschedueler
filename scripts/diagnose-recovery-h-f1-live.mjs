@@ -1808,8 +1808,11 @@ try{
       await sleep(1400);
       if(window.mwsF1GetScreenStateV185?.()!=='RACE')break;
       const overlap=window.mwsF1GetActualMarkerOverlapsV377?.()||{};
-      peakOverlap=Math.max(peakOverlap,Number(overlap.peakMaxZoomOverlaps)||0);
-      peakCurrent=Math.max(peakCurrent,Number(overlap.peakCurrentZoomOverlaps)||0);
+      // Use LIVE-only frame telemetry: synthetic QA may leave stale peak counts
+      // in the raw, non-isolated marker overlap monitor.
+      const liveFrame=window.mwsF1GetFinalLiveQualityV386?.()||{};
+      peakOverlap=Math.max(peakOverlap,Number(liveFrame.peakMaxZoomPairs)||0);
+      peakCurrent=Math.max(peakCurrent,Number(liveFrame.peakCurrentZoomPairs)||0);
       const skill=window.mwsF1GetSpecialTelemetryV401?.()||{};
       sceneObserved ||=Boolean(skill.cinematic||document.querySelector('#f1SkillStageV401 .f1-skill-bar-v401'));
       peakActiveBoosts=Math.max(peakActiveBoosts,(skill.active||[]).length);
@@ -1825,7 +1828,8 @@ try{
       currentOrder:result.lastOrder||[],orderChanges:result.orderChanges||0,
       physicalOnTrackPasses:result.onTrackPassesV386||0,changedDrivers:result.changedDrivers||0,
       cinematicObserved:sceneObserved,peakActiveBoosts,skill,peakOverlap,peakCurrent,
-      maxZoomOverlaps:overlap.peakMaxZoomOverlaps||0,qualityFrames:quality.liveFrames||0,
+      maxZoomOverlaps:overlap.peakMaxZoomOverlaps||0,rawAccumulatedCurrentOverlaps:overlap.peakCurrentZoomOverlaps||0,
+      liveOnlyCurrentOverlaps:quality.peakCurrentZoomPairs||0,qualityFrames:quality.liveFrames||0,
       passStates:window.mwsF1GetPassStatesV208?.()||[],
       latestOverlap:overlap.latest||null,qualityReport:quality,
       behavior:window.mwsF1GetBehaviorTelemetryV380?.()||{},

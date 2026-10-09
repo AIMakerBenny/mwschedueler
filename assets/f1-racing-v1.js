@@ -4719,7 +4719,7 @@ function nextPassStateV208(current,ctx={}){
   const phase=String(ctx.phase||'STRAIGHT'),open=phase==='STRAIGHT'||phase==='APPROACH'||phase==='BRAKING';
   const passed=Boolean(ctx.passed),counter=Boolean(ctx.counterAttack);
   if(passed&&['PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK'].includes(state))return 'PASS_COMPLETED';
-  if(['PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK'].includes(state)&&gap>PASS_CONFIG_V208.failGapMeters)return 'PASS_FAILED';
+  if(['PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK'].includes(state)&&gap>PASS_CONFIG_V208.failGapMeters&&!ctx.specialLaneV406)return 'PASS_FAILED';
   if(state==='FOLLOWING')return (closing>1||attackIntent)&&gap<PASS_CONFIG_V208.followGapMeters?'CLOSING':'FOLLOWING';
   if(state==='CLOSING'){
     if(attackIntent&&gap<PASS_CONFIG_V208.prepareGapMeters&&open)return 'PREPARING_ATTACK';
@@ -5259,7 +5259,10 @@ function updatePassStateMachineV208(stepMs){
     const phase=getCornerPhaseAtProgressV194(vehicle.progress)?.phase||'STRAIGHT';
     const ctx={
       gapMeters,closingRateKph:(Number(vehicle.speedKph)||0)-(Number(target.speedKph)||0),
-      slipstreamStrength:Number(vehicle.slipstreamStrength)||0,phase,passed,attackIntentV365:Boolean(vehicle.naturalHeadwayAttackIntentV365),
+      slipstreamStrength:Number(vehicle.slipstreamStrength)||0,phase,passed,
+      specialLaneV406:Boolean(signedGapMeters>0&&specialEffectV401(vehicle).active&&
+        gapMeters<=Math.max(185,projectedSafeGapMetersV378()*2.25)),
+      attackIntentV365:Boolean(vehicle.naturalHeadwayAttackIntentV365),
       counterAttack:String(vehicle.battleState||'')==='SWITCHBACK'&&(Number(vehicle.speedKph)||0)>(Number(target.speedKph)||0)
     };
     const hold=(Number(vehicle.battleStateMs)||0)<PASS_CONFIG_V208.stateHoldMs;
