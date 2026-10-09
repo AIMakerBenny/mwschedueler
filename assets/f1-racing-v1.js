@@ -7100,6 +7100,10 @@ function renderRaceVehiclesV189(frameMs=16.67){
   const rendered=[],spacingPlanV319=freezeVisualV366?new Map(raceMotionV189.vehicles.map(vehicle=>[String(vehicle.id),Number(vehicle.raceProgress)||0])):buildVisualSpacingPlanV319();
   raceMotionV189.vehicles.forEach(function(vehicle,index){
     const marker=vehicle.marker||ensureRaceVehicleMarkerV189(vehicle,index);if(!marker)return;
+    // A classified finisher is no longer a moving on-track car. Keep the leader-board
+    // result but retire its SVG marker rather than stacking stationary cars at the line.
+    if(vehicle.finished){marker.setAttribute('visibility','hidden');marker.dataset.finishRetiredV397='1';return;}
+    marker.removeAttribute('visibility');delete marker.dataset.finishRetiredV397;
     // Phase 197 and Phase 258 compatibility token: const lateralStateV258=updateVisualLateralOffsetV258(vehicle,frameMs,false);
     // The simulation is authoritative for the true physical lane transition.
     // Rendering must never move the car again or let a visual-only lane choice
@@ -9923,7 +9927,7 @@ function qaEightCarLiveRaceV396(){
       simulateRaceStepV192(stepMs);steps++;
       if(steps%10===0||f1ScreenStateV185!=='RACE'){
         renderRaceVehiclesV189(16.67);frames++;
-        const rendered=raceMotionV189.vehicles.filter(v=>v.marker&&v.renderPointV216).map(vehicle=>({vehicle,point:vehicle.renderPointV216}));
+        const rendered=raceMotionV189.vehicles.filter(v=>!v.finished&&v.marker&&v.renderPointV216&&v.marker.getAttribute('visibility')!=='hidden').map(vehicle=>({vehicle,point:vehicle.renderPointV216}));
         const measured=measureActualMarkerOverlapsV377(rendered,MARKER_OVERLAP_MONITOR_V377.maxZoom);
         peakOverlapPairs=Math.max(peakOverlapPairs,measured.pairs);
         if(measured.closestSvg!==null)closestSvg=Math.min(closestSvg,measured.closestSvg);
@@ -9956,6 +9960,7 @@ function qaEightCarLiveRaceV396(){
       movedFromGrid:rows.filter(r=>r.grid!==r.finish).length,
       pitStops:v.reduce((sum,x)=>sum+(Number(x.pitStopCount)||0),0),
       pitRequests:v.reduce((sum,x)=>sum+(x.pitRequestHistoryV348?.length||0),0),
+      retiredFinishMarkers:v.filter(x=>x.finished&&x.marker?.getAttribute('visibility')==='hidden').length,
       finalStates:v.map(x=>({id:String(x.id),grid:Number(x.gridPosition)||0,position:Number(x.finishPosition)||0,
         tyre:String(x.tyreCompound||''),wear:Number((Number(x.tyreWear)||0).toFixed(3)),
         pitStops:Number(x.pitStopCount)||0,passes:Number(x.passCompletedCount)||0}))};
@@ -9967,7 +9972,7 @@ function qaEightCarLiveRaceV396(){
   const noWarp=!/\b(?:raceProgress|progress|travel|finishPosition)\s*=/.test(String(qaEightCarLiveRaceV396));
   const liveMotion=steps>500&&frames>=50&&Boolean(start)&&Boolean(finish?.completed)&&finish?.cars===8;
   const competition=Boolean(finish&&finish.passes>=2&&finish.movedFromGrid>=2);
-  const noOverlaps=totalOverlapFrames===0&&peakOverlapPairs===0;
+  const noOverlaps=totalOverlapFrames===0&&peakOverlapPairs===0&&finish?.retiredFinishMarkers===8;
   return {version:'phase396-eight-car-actual-live',mode:'live-physics-browser-synchronous',trackId,stepMs,steps,frames,
     simulatedSeconds:Number((steps*stepMs/1000).toFixed(2)),start,finish,corner:compactCorner,
     peakOverlapPairs,totalOverlapFrames,closestSvg:Number.isFinite(closestSvg)?Number(closestSvg.toFixed(3)):null,
