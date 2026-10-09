@@ -1758,7 +1758,86 @@ try{
     return {width:Number(rect.width.toFixed(1)),height:Number(rect.height.toFixed(1)),panelCount:panels.length,overlaps,markers:true};
   })()`,'Phase 267 QHD desktop QA');
 
-  const result={phase:'recovery-h',name:'f1-live-browser-qa',baseline,interaction,qhd,pass:true};
+  // Phase 401: genuine 12-driver LIVE race in Chromium, not an accelerated headless engine test.
+  const twelveDriverLive=await evaluate(cdp,`(async()=>{
+    const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+    const raf=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    const assert=(ok,description)=>{if(!ok)throw new Error(description)};
+    const names=['하린','서윤','도현','유진','지민','민서','채원','지후','나연','준서','수아','태민'];
+    const contacts=names.map((name,i)=>({id:'p401-real-live-'+i,name,image:'',labels:['12-DRIVER-LIVE-QA']}));
+    window.mwsGetF1ContactsV181=()=>contacts;
+    const section=document.getElementById('gameF1Racing');
+    document.querySelectorAll('.section').forEach(node=>node.classList.toggle('active',node===section));
+    assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Phase 401 expected setup before 12-driver test');
+    document.getElementById('f1RacingClearDriversV181')?.click();
+    window.mwsRenderF1RacingV180?.();
+    const tracks=window.mwsF1GetTrackCatalogV186?.()||[];
+    assert(tracks.length>=3,'Phase 401 tracks absent');
+    assert(window.mwsF1SelectTrackV186?.(tracks[0].id)===true,'Phase 401 track selection failed');
+    for(const driver of contacts)window.mwsF1ToggleDriverV181?.(driver.id);
+    const selected=window.mwsF1GetSelectedContactIdsV181?.()||[];
+    assert(selected.length===12,'Phase 401 12 drivers not selected: '+selected.length);
+    window.mwsF1SetLapCountV260?.(6);
+    assert(window.mwsF1StartRaceFromSetupV187?.()===true,'Phase 401 start setup failed');
+    await sleep(1100);await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='GRID','Phase 401 grid did not appear');
+    const gacha=window.mwsF1QaGridGachaViewportV333?.();
+    const stage=document.getElementById('f1RacingGridGachaStageV313');
+    const cardStage=document.getElementById('f1GridGachaRevealV313');
+    const stageRect=stage?.getBoundingClientRect();
+    const dockRect=stage?.querySelector('.f1-grid-gacha-dock-v313')?.getBoundingClientRect();
+    const cardRect=cardStage?.getBoundingClientRect();
+    assert(gacha?.allPass===true,'Phase 401 Gacha viewport regression');
+    assert(stageRect&&stageRect.height>=420&&cardRect&&cardRect.height>=300,
+      'Phase 401 expanded card layout below minimum: '+JSON.stringify({stage:stageRect?.height,card:cardRect?.height}));
+    assert(dockRect&&dockRect.width>=230,'Phase 401 right-hand order list too narrow');
+    const revealDone=await window.mwsF1WaitGridRevealV273?.(20000);
+    assert(revealDone===true,'Phase 401 12-driver card reveal incomplete');
+    const orderRows=document.querySelectorAll('#f1GridGachaDockListV313 .f1-grid-gacha-dock-item-v313');
+    assert(orderRows.length===12,'Phase 401 Gacha participant order list incomplete: '+orderRows.length);
+    document.getElementById('f1RacingGridStartRecoveryM')?.click();await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='RACE','Phase 401 12-driver race did not start');
+    const markers=document.querySelectorAll('.f1-racing-race-vehicle-v189');
+    assert(markers.length===12,'Phase 401 actual 12 physical markers absent: '+markers.length);
+    const qa=window.mwsF1QaSpecialV401?.();
+    assert(qa?.allPass===true,'Phase 401 skill contract failed: '+JSON.stringify(qa));
+    window.mwsF1SetSimulationTimeScaleV192?.(4);
+    let samples=0,peakOverlap=0,peakCurrent=0,sceneObserved=false,peakActiveBoosts=0,orders=[];
+    const initial=window.mwsF1GetRaceOrderFlowV309?.()||{};
+    for(let i=0;i<24;i++){
+      await sleep(1400);
+      if(window.mwsF1GetScreenStateV185?.()!=='RACE')break;
+      const overlap=window.mwsF1GetActualMarkerOverlapsV377?.()||{};
+      peakOverlap=Math.max(peakOverlap,Number(overlap.peakMaxZoomOverlaps)||0);
+      peakCurrent=Math.max(peakCurrent,Number(overlap.peakCurrentZoomOverlaps)||0);
+      const skill=window.mwsF1GetSpecialTelemetryV401?.()||{};
+      sceneObserved ||=Boolean(skill.cinematic||document.querySelector('#f1SkillStageV401 .f1-skill-bar-v401'));
+      peakActiveBoosts=Math.max(peakActiveBoosts,(skill.active||[]).length);
+      const order=window.mwsF1GetRaceOrderFlowV309?.()||{};
+      orders.push({simMs:skill.simMs,orderChanges:order.orderChanges||0,onTrackPasses:order.onTrackPassesV386||0,skills:skill.events||0,chains:skill.chains||0,boosts:skill.applied||0});
+      samples++;
+    }
+    const result=window.mwsF1GetRaceOrderFlowV309?.()||{};
+    const skill=window.mwsF1GetSpecialTelemetryV401?.()||{};
+    const overlap=window.mwsF1GetActualMarkerOverlapsV377?.()||{};
+    const quality=window.mwsF1GetFinalLiveQualityV386?.()||{};
+    const report={participants:12,samples,initialOrder:initial.lastOrder||[],
+      currentOrder:result.lastOrder||[],orderChanges:result.orderChanges||0,
+      physicalOnTrackPasses:result.onTrackPassesV386||0,changedDrivers:result.changedDrivers||0,
+      cinematicObserved:sceneObserved,peakActiveBoosts,skill,peakOverlap,peakCurrent,
+      maxZoomOverlaps:overlap.peakMaxZoomOverlaps||0,qualityFrames:quality.liveFrames||0,
+      gachaHeight:Math.round(stageRect.height),cardHeight:Math.round(cardRect.height),
+      dockWidth:Math.round(dockRect.width),orderListCount:orderRows.length,orders};
+    assert(peakOverlap===0&&peakCurrent===0,'Phase 401 12-driver LIVE marker overlap: '+JSON.stringify(report));
+    assert(Number(result.orderChanges)>0&&Number(result.onTrackPassesV386)>0,
+      'Phase 401 12-driver true physical overtakes absent: '+JSON.stringify(report));
+    document.getElementById('f1RacingRaceCancelRecoveryC')?.click();await raf();
+    assert(window.mwsF1GetScreenStateV185?.()==='SETUP','Phase 401 12-driver QA cleanup failed');
+    return report;
+  })()`,'Phase 401 twelve-driver real Chromium QA');
+  console.log(JSON.stringify({phase401TwelveDriverLive:twelveDriverLive},null,2));
+
+  const result={phase:'recovery-h',name:'f1-live-browser-qa',baseline,interaction,qhd,twelveDriverLive,pass:true};
   console.log(JSON.stringify({recoveryHLiveBrowser:result},null,2));
 }finally{
   cdp?.close();
