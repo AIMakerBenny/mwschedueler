@@ -11061,6 +11061,25 @@ function simulateUnifiedRaceStepV11(stepMs){
     cmds.push({v:nextV,ds,y:lane.y,vy:lane.vy,ay:lane.ay,acceleration,throttle,brake,target,ers,extraW,usedExtraW:extraUsedW,
       G,pit,drag,reason:'FREE',vPrev:row.v});
   }
+  // Shared lane reservation. Anticipate lateral convergence well before footprint contact.
+  // A trajectory is adjusted while still separated; no display-only displacement is used.
+  for(let i=0;i<rows.length;i++)for(let j=i+1;j<rows.length;j++){
+    const a=rows[i],b=rows[j],ca=cmds[i],cb=cmds[j];
+    if(!ca||!cb||a.pit!=='TRACK'||b.pit!=='TRACK')continue;
+    const near=Math.abs(a.s-b.s)<Math.max(110,Math.abs(a.v-b.v)*2+45);
+    if(!near)continue;
+    const delta=a.y-b.y,desiredDelta=ca.y-cb.y;
+    if(Math.abs(delta)<.25||Math.abs(delta)>7.5||Math.abs(desiredDelta)>=Math.abs(delta))continue;
+    const sign=Math.sign(delta),bound=Math.max(0,width/2-2.5);
+    if((ca.y-a.y)*sign<-.000001){
+      const outward=unifiedLateralV11(a,unifiedClampV11(a.y+sign*3.0,-bound,bound),dt,width);
+      ca.y=outward.y;ca.vy=outward.vy;ca.ay=outward.ay;
+    }
+    if((cb.y-b.y)*sign>.000001){
+      const outward=unifiedLateralV11(b,unifiedClampV11(b.y-sign*3.0,-bound,bound),dt,width);
+      cb.y=outward.y;cb.vy=outward.vy;cb.ay=outward.ay;
+    }
+  }
   // One central predicted-traffic constraint; the old V350–V386 caps are never called here.
   for(let i=0;i<rows.length;i++){
     const me=rows[i],cmd=cmds[i];if(!cmd||me.pit!=='TRACK')continue;
