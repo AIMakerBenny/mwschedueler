@@ -10908,6 +10908,13 @@ function unifiedChooseLaneV11(row,rows,now,width){
     }
     if(gap<20&&Math.abs(row.y-next.y)>2.7)state='SIDE_BY_SIDE';
   }
+  // Never merge towards a neighboring vehicle while longitudinal clearance is inadequate.
+  // Keep the *actual* alternate lane rather than masking an imminent contact by speed caps.
+  if(row.pit==='TRACK'&&!v.pitRequested&&Math.abs(row.y)>2.65){
+    const centerOccupied=rows.some(p=>p.id!==row.id&&!p.finished&&p.pit==='TRACK'&&
+      Math.abs(p.s-row.s)<Math.max(35,row.v*.55)&&Math.abs(p.y)<2.1);
+    if(centerOccupied&&Math.abs(target)<2.65){target=Math.sign(row.y)*allowed;state='EXIT_DUEL';}
+  }
   if(v.pitRequested||row.pit!=='TRACK'){target=unifiedClampV11(lineOffsetMetersV197(v),-allowed,allowed);state='PIT';}
   v.unifiedLaneTargetV11=target;v.unifiedAiStateV11=state;v.unifiedIntentUntilV11=now+.7;
   return target;
@@ -11081,8 +11088,10 @@ function simulateUnifiedRaceStepV11(stepMs){
     if(![ca.v,ca.ds,ca.y,ca.acceleration].every(Number.isFinite)){error='NONFINITE:'+a.id;break;}
     for(let j=i+1;j<rows.length;j++){
       const b=rows[j],cb=cmds[j];if(!cb||a.pit!=='TRACK'||b.pit!=='TRACK')continue;
-      const before=Math.hypot(a.s-b.s,a.y-b.y),after=Math.hypot(a.s+ca.ds-b.s-cb.ds,ca.y-cb.y);
-      if(Math.min(before,after)<5.5&&Math.abs(ca.y-cb.y)<2.6&&Math.abs(a.s+ca.ds-b.s-cb.ds)<5.5){
+      const x0=a.s-b.s,y0=a.y-b.y,dx=ca.ds-cb.ds,dy=ca.y-a.y-cb.y+b.y;
+      const t=unifiedClampV11(-(x0*dx+y0*dy)/Math.max(.000001,dx*dx+dy*dy),0,1);
+      const sweptX=x0+dx*t,sweptY=y0+dy*t;
+      if(Math.abs(sweptX)<5.5&&Math.abs(sweptY)<2.6){
         error='PHYSICAL_ENVELOPE:'+a.id+':'+b.id;break;
       }
     }
