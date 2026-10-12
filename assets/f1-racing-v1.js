@@ -10811,6 +10811,9 @@ const unifiedStateV11={trackKey:'',path:null,telemetry:{steps:0,collisionStops:0
   passCandidates:new Map(),rng:1,initialized:false};
 const unifiedClampV11=(x,lo,hi)=>Math.min(hi,Math.max(lo,Number.isFinite(x)?x:lo));
 function unifiedRandomV11(){let n=unifiedStateV11.rng|0;n^=n<<13;n^=n>>>17;n^=n<<5;unifiedStateV11.rng=n||1;return (n>>>0)/4294967296;}
+function unifiedRandomVehicleV11(v){
+  let n=Number(v.unifiedRngV11)||1;n|=0;n^=n<<13;n^=n>>>17;n^=n<<5;v.unifiedRngV11=n||1;return (n>>>0)/4294967296;
+}
 function unifiedRatingV11(v,key){return unifiedClampV11(((Number(v.driverProfile?.[key])||75)-75)/20,-1,1);}
 function unifiedTyreSpecV11(name){
   return ({SOFT:{grip:1.06,wear:.110,target:95,tau:8},MEDIUM:{grip:1,wear:.085,target:100,tau:12},HARD:{grip:.95,wear:.060,target:105,tau:16}})[String(name||'MEDIUM').toUpperCase()]||{grip:1,wear:.085,target:100,tau:12};
@@ -10850,13 +10853,14 @@ function unifiedInitV11(){
   for(const v of raceMotionV189.vehicles){
     const keyV11=String(v.id),seed=hashDriverV189(key+'|'+keyV11+'|model')||1;
     const spec=unifiedTyreSpecV11(v.tyreCompound);
+    v.unifiedRngV11=hashDriverV189(key+'|'+keyV11+'|rng')||1;
     v.unifiedTempCV11=spec.target-5;v.unifiedLastPitCountV11=Number(v.pitStopCount)||0;
     v.unifiedFormV11=1+((seed%1201)/1200*2-1)*.006;
     v.unifiedYV11=Number(v.lateralOffsetMeters)||0;v.unifiedVyV11=0;v.unifiedAyV11=0;
     v.unifiedAiAtV11=0;v.unifiedIntentUntilV11=0;v.unifiedLaneTargetV11=v.unifiedYV11;
     v.unifiedErrorUntilV11=0;v.unifiedErrorTypeV11='';v.unifiedErrorCooldownV11=0;
     v.unifiedPitEvalAtV11=.6+((seed>>>8)%190)/100;
-    v.unifiedNextSkillAtV11=-Math.log(Math.max(1e-9,unifiedRandomV11()));
+    v.unifiedNextSkillAtV11=-Math.log(Math.max(1e-9,unifiedRandomVehicleV11(v)));
     v.unifiedPreviousRankV11=0;v.unifiedAiStateV11='CRUISE';
     v.unifiedLastPassS=Number(v.raceProgress)*len;
   }
@@ -10891,7 +10895,9 @@ function unifiedChooseLaneV11(row,rows,now,width){
   let target=0,state='CRUISE';
   if(next){
     state='FOLLOW';
-    const gap=next.s-row.s,attack=gap<120&&(row.v>next.v-1.2||Number(v.specialUntilV401)>now);
+    const gap=next.s-row.s,aggression=unifiedRatingV11(v,'aggression'),skill=unifiedRatingV11(v,'racecraft');
+    const attack=gap<120+20*Math.max(0,aggression)+20*Math.max(0,skill)&&
+      (row.v>next.v-1.2-1.0*skill||Number(v.specialUntilV401)>now);
     if(attack){
       const candidate=[-allowed,allowed].map(y=>{
         let penalty=0;
@@ -10919,6 +10925,28 @@ function unifiedChooseLaneV11(row,rows,now,width){
   v.unifiedLaneTargetV11=target;v.unifiedAiStateV11=state;v.unifiedIntentUntilV11=now+.7;
   return target;
 }
+function unifiedDrivingErrorV11(row,rows,dt,now){
+  const v=row.ref;
+  const remain=(Number(v.unifiedErrorUntilV11)||0)-now;
+  if(remain>0)return String(v.unifiedErrorTypeV11||'');
+  if(now<Number(v.unifiedErrorCooldownV11)||now<1)return '';
+  const wear=unifiedClampV11((row.w-.60)/.40,0,1);
+  const closest=rows.filter(p=>p.id!==row.id&&p.pit==='TRACK'&&p.s<row.s&&row.s-p.s<row.v*1.2)
+    .sort((a,b)=>b.s-a.s)[0];
+  const pressure=closest?unifiedClampV11(1-(row.s-closest.s)/Math.max(1,row.v*1.2),0,1):0;
+  const attacking=['PLAN_ATTACK','SIDE_BY_SIDE'].includes(String(v.unifiedAiStateV11||''))?1:0;
+  const risk=unifiedClampV11(.004*(1+1.5*wear+.8*pressure+.6*attacking)*
+    (1-.25*unifiedRatingV11(v,'errorResistance')),.001,.025);
+  if(unifiedRandomVehicleV11(v)>=1-Math.exp(-risk*dt))return '';
+  const types=['LOCKUP','UNDERSTEER','EXIT_ERROR'],type=types[Math.floor(unifiedRandomVehicleV11(v)*types.length)];
+  const duration=type==='LOCKUP'?.25:type==='UNDERSTEER'?.6+unifiedRandomVehicleV11(v)*.4:.5+unifiedRandomVehicleV11(v)*.4;
+  v.unifiedErrorTypeV11=type;v.unifiedErrorUntilV11=now+duration;v.unifiedErrorCooldownV11=now+12;
+  v.lastIncidentType=type;v.lastIncidentSimMs=simClockV192.simTimeMs;
+  if(type==='LOCKUP')v.lockupCount=(Number(v.lockupCount)||0)+1;
+  if(type==='UNDERSTEER')v.understeerCount=(Number(v.understeerCount)||0)+1;
+  if(type==='EXIT_ERROR')v.oversteerCount=(Number(v.oversteerCount)||0)+1;
+  return type;
+}
 function unifiedLateralV11(row,target,dt,width){
   const bound=Math.max(0,width/2-1.5-UNIFIED_ENGINE_V11.physicalWidth/2);
   const dy=unifiedClampV11(target,-bound,bound)-row.y,desired=unifiedClampV11(dy*1.5,-2.5,2.5);
@@ -10934,7 +10962,9 @@ function unifiedCornerPlanV11(row,G,drag,baseThrust,nominal){
   let next=Math.max(0,nominal+35/3.6);
   for(let i=n;i>=0;i--){
     const at=row.s+i*step,k=Math.abs(unifiedPathSampleV11(at).k);
-    const apex=Math.sqrt(u*L/Math.max(k,.00001));
+    const errorGrip=String(row.ref.unifiedErrorTypeV11||'')==='UNDERSTEER'&&
+      Number(row.ref.unifiedErrorUntilV11)>simClockV192.simTimeMs/1000?.91:1;
+    const apex=Math.sqrt(u*L*errorGrip/Math.max(k,.00001));
     const limit=Math.min(nominal+35/3.6,apex);
     const b=32*(1+.05*unifiedRatingV11(row.ref,'braking'))*G;
     const aDrag=14/(nominal*nominal)*((row.v/nominal)**2)*nominal*nominal*(1-.10*drag.tow);
@@ -10944,7 +10974,7 @@ function unifiedCornerPlanV11(row,G,drag,baseThrust,nominal){
 }
 function unifiedPitV11(row,now,track){
   const v=row.ref;if(row.pit!=='TRACK'||v.pitRequested||now<(Number(v.unifiedPitEvalAtV11)||0))return;
-  v.unifiedPitEvalAtV11=now+1.5+unifiedRandomV11();
+  v.unifiedPitEvalAtV11=now+1.5+unifiedRandomVehicleV11(v);
   const wear=unifiedClampV11(Number(v.tyreWear)||0,0,1),remaining=Math.max(0,(Number(activeRaceSnapshotV187?.totalLaps)||10)-row.s/unifiedStateV11.path.len);
   if(wear<=.60||remaining<1.1)return; // exactly 40% remaining forbids an automatic stop
   const current=unifiedTyreSpecV11(v.tyreCompound);
@@ -10988,7 +11018,7 @@ function unifiedEnergyAndTyreV11(row,command,dt,track){
 function unifiedSpecialTickV11(rows,dt,now){
   if(specialStateV401.cinematic||raceFlagStateV214.flag!=='GREEN'||now<22||now-(Number(specialStateV401.lastMs)||-Infinity)/1000<55)return;
   const valid=rows.filter(p=>!p.finished&&p.pit==='TRACK'),count=valid.length;if(count<4)return;
-  const sorted=valid.slice().sort((a,b)=>b.s-a.s);let winner=null,earliest=dt;
+  const sorted=valid.slice().sort((a,b)=>b.s-a.s||a.id.localeCompare(b.id));let winner=null,earliest=dt;
   for(let i=0;i<sorted.length;i++){
     const p=sorted[i],v=p.ref,q=i/Math.max(1,count-1);
     if((Number(v.specialUsesV401)||0)>=2||now-(Number(v.specialLastMsV401)||-Infinity)/1000<145)continue;
@@ -11030,9 +11060,10 @@ function simulateUnifiedRaceStepV11(stepMs){
     const pit=pitControlV205(v),aero=unifiedAeroV11(row,rows),G=unifiedGripV11(v);
     if(now>=(Number(v.unifiedAiAtV11)||0)){
       unifiedChooseLaneV11(row,rows,now,width);
-      v.unifiedAiAtV11=now+.18+unifiedRandomV11()*.17;
+      v.unifiedAiAtV11=now+.18+unifiedRandomVehicleV11(v)*.17;
     }
     const lane=unifiedLateralV11(row,Number(v.unifiedLaneTargetV11)||0,dt,width);
+    const errorEvent=unifiedDrivingErrorV11(row,rows,dt,now);
     const turn=Math.abs(unifiedPathSampleV11(row.s).k),latDemand=row.v*row.v*turn;
     const L=28*G*(1-.06*aero.dirty*.35),latRatio=unifiedClampV11(latDemand/Math.max(.01,L),0,.98);
     const f=Math.sqrt(Math.max(.01,1-latRatio*latRatio)),D=14/(nominal*nominal),dragReduction=Math.min(.12,.1*aero.tow+(v.overtakeActive?.04:0));
@@ -11054,10 +11085,13 @@ function simulateUnifiedRaceStepV11(stepMs){
     const throttle=needed>=-drag?unifiedClampV11((needed+drag)/Math.max(.001,traction),0,1):0;
     const brake=needed< -drag?unifiedClampV11((-needed-drag)/Math.max(.001,32*(1+.05*unifiedRatingV11(v,'braking'))*G*f),0,1):0;
     const actualTraction=throttle*traction,actualBrake=brake*32*(1+.05*unifiedRatingV11(v,'braking'))*G*f;
-    const acceleration=actualTraction-actualBrake-drag;
-    const nextV=Math.max(0,row.v+acceleration*dt);
+    const effectiveTraction=errorEvent==='EXIT_ERROR'?actualTraction*.65:actualTraction;
+    const effectiveBrake=errorEvent==='LOCKUP'?actualBrake*.55:actualBrake;
+    const acceleration=effectiveTraction-effectiveBrake-drag;
+    const startDelay=.12+(.20*(1-unifiedRatingV11(v,'start'))/2);
+    const nextV=now<startDelay?0:Math.max(0,row.v+acceleration*dt);
     const ds=(row.v+nextV)*.5*dt;
-    const extraUsedW=throttle>0?Math.min(extraW,Math.max(0,actualTraction-A0*throttle)*800*Math.max(20,row.v)):0;
+    const extraUsedW=throttle>0?Math.min(extraW,Math.max(0,effectiveTraction-A0*throttle)*800*Math.max(20,row.v)):0;
     cmds.push({v:nextV,ds,y:lane.y,vy:lane.vy,ay:lane.ay,acceleration,throttle,brake,target,ers,extraW,usedExtraW:extraUsedW,
       G,pit,drag,reason:'FREE',vPrev:row.v});
   }
