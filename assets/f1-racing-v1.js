@@ -10878,7 +10878,7 @@ function unifiedSnapshotV11(){
   return raceMotionV189.vehicles.map(v=>Object.freeze({id:String(v.id),ref:v,finished:Boolean(v.finished),
     s:Number(v.raceProgress)*len,y:Number(v.unifiedYV11)||0,vy:Number(v.unifiedVyV11)||0,v:Math.max(0,(Number(v.speedKph)||0)/3.6),
     pit:String(v.pitState||'TRACK'),w:Number(v.tyreWear)||0,compound:String(v.tyreCompound||'MEDIUM'),E:Number(v.batteryMJ)||0,
-    mode:String(v.unifiedAiStateV11||'CRUISE'),boostUntil:Number(v.specialUntilV401)||0}));
+    mode:String(v.unifiedAiStateV11||'CRUISE'),boostUntil:Number(v.specialUntilV401)||0})).sort((a,b)=>a.id.localeCompare(b.id));
 }
 function unifiedAeroV11(row,rows){
   let tow=0,dirty=0;for(const p of rows){
