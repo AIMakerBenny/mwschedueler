@@ -31,7 +31,7 @@ const getCornerPhaseAtProgressV194=()=>({phase:'STRAIGHT',corner:null});
 const execute=String.raw`
 if(REVERSE)raceMotionV189.vehicles.reverse();
 let ticks=0;for(let i=0;i<ITERATIONS;i++){if(!simulateUnifiedRaceStepV11(20))break;ticks++;}
-const v=raceMotionV189.vehicles[0];v.tyreWear=.60;v.unifiedPitEvalAtV11=0;
+const v=raceMotionV189.vehicles.find(item=>item.id==='0');v.tyreWear=.60;v.unifiedPitEvalAtV11=0;
 unifiedPitV11(unifiedSnapshotV11().find(row=>row.id===String(v.id)),simClockV192.simTimeMs/1000,track);
 return {ticks,errors:unifiedStateV11.telemetry.invalid,passes:unifiedStateV11.telemetry.passes.length,pitCalls,
  states:raceMotionV189.vehicles.map(v=>({id:v.id,s:v.raceProgress,y:v.unifiedYV11,v:v.speedKph,e:v.batteryMJ,w:v.tyreWear}))
