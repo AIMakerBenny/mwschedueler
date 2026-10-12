@@ -10859,6 +10859,7 @@ function unifiedInitV11(){
     v.unifiedYV11=Number(v.lateralOffsetMeters)||0;v.unifiedVyV11=0;v.unifiedAyV11=0;
     v.unifiedAiAtV11=0;v.unifiedIntentUntilV11=0;v.unifiedLaneTargetV11=v.unifiedYV11;
     v.unifiedErrorUntilV11=0;v.unifiedErrorTypeV11='';v.unifiedErrorCooldownV11=0;
+    v.unifiedLastCornerV11='';v.unifiedBrakeErrorMetersV11=0;
     v.unifiedPitEvalAtV11=.6+((seed>>>8)%190)/100;
     v.unifiedNextSkillAtV11=-Math.log(Math.max(1e-9,unifiedRandomVehicleV11(v)));
     v.unifiedPreviousRankV11=0;v.unifiedAiStateV11='CRUISE';
@@ -10961,7 +10962,7 @@ function unifiedCornerPlanV11(row,G,drag,baseThrust,nominal){
   const look=Math.max(340,row.v*6+row.v*row.v/40),step=6,n=Math.ceil(look/step);
   let next=Math.max(0,nominal+35/3.6);
   for(let i=n;i>=0;i--){
-    const at=row.s+i*step,k=Math.abs(unifiedPathSampleV11(at).k);
+    const at=row.s+i*step-(Number(row.ref.unifiedBrakeErrorMetersV11)||0),k=Math.abs(unifiedPathSampleV11(at).k);
     const errorGrip=String(row.ref.unifiedErrorTypeV11||'')==='UNDERSTEER'&&
       Number(row.ref.unifiedErrorUntilV11)>simClockV192.simTimeMs/1000?.91:1;
     const apex=Math.sqrt(u*L*errorGrip/Math.max(k,.00001));
@@ -11006,7 +11007,7 @@ function unifiedEnergyAndTyreV11(row,command,dt,track){
   v.tyreSurfaceTemp=unifiedClampV11((v.unifiedTempCV11-50)/80,0,1);
   v.tyreCarcassTemp=unifiedClampV11((v.unifiedTempCV11-50)/80,0,1);
   v.tyreAgeLaps=Math.max(0,(Number(v.raceProgress)||0)-(Number(v.tyreStartRaceProgress)||0));
-  const requested=command.ers,used=Math.min(requested,Math.max(0,command.usedExtraW));
+  const requested=Math.max(0,Number(command.ers)||0),used=Math.min(requested,Math.max(0,command.usedExtraW),Math.max(0,row.E)*1000000/dt);
   const harvest=Math.min(120000,braking*command.v*UNIFIED_ENGINE_V11.mass*32*.6);
   const actualHarvest=Math.min(harvest*dt/1e6,4-Math.max(0,(Number(v.batteryMJ)||0)-used*dt/1e6));
   v.batteryMJ=unifiedClampV11((Number(v.batteryMJ)||0)-used*dt/1e6+actualHarvest,0,4);
@@ -11062,6 +11063,13 @@ function simulateUnifiedRaceStepV11(stepMs){
       unifiedChooseLaneV11(row,rows,now,width);
       v.unifiedAiAtV11=now+.18+unifiedRandomVehicleV11(v)*.17;
     }
+    const phaseInfo=getCornerPhaseAtProgressV194(v.progress);
+    const cornerId=String(phaseInfo?.corner?.id||'');
+    if(cornerId!==String(v.unifiedLastCornerV11||'')){
+      v.unifiedLastCornerV11=cornerId;
+      const uncertainty=.5+1.5*(1-unifiedRatingV11(v,'consistency'))/2;
+      v.unifiedBrakeErrorMetersV11=cornerId?(unifiedRandomVehicleV11(v)*2-1)*uncertainty:0;
+    }
     const lane=unifiedLateralV11(row,Number(v.unifiedLaneTargetV11)||0,dt,width);
     const errorEvent=unifiedDrivingErrorV11(row,rows,dt,now);
     const turn=Math.abs(unifiedPathSampleV11(row.s).k),latDemand=row.v*row.v*turn;
@@ -11071,7 +11079,8 @@ function simulateUnifiedRaceStepV11(stepMs){
     const form=Number(v.unifiedFormV11)||1,A0=14*(1+.025*unifiedRatingV11(v,'pace'))*form;
     const boostTime=(Number(v.specialUntilV401)||0)-simClockV192.simTimeMs;
     const skill=boostTime>0?300000*unifiedClampV11(boostTime/1500,0,1):0;
-    const ers=(row.E>0&&pit.state==='TRACK')?(v.unifiedAiStateV11==='PLAN_ATTACK'?160000:80000):0;
+    const availableErspower=Math.max(0,row.E)*1000000/dt;
+    const ers=(pit.state==='TRACK')?Math.min(availableErspower,v.unifiedAiStateV11==='PLAN_ATTACK'?160000:80000):0;
     const limit=nominal+35/3.6,soft=limit-15/3.6;
     const limitPower=800*limit*Math.max(0,D*(1-dragReduction)*limit*limit-A0);
     const blend=unifiedClampV11((row.v-soft)/(limit-soft),0,1);
