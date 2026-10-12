@@ -10844,7 +10844,7 @@ function unifiedInitV11(){
   });
   unifiedStateV11.path={samples,len,step:len/count};
   const physicalWidth=Number(track.geometry?.trackWidthMeters)||14,svgWidth=(Number(track.geometry?.visualTrackWidthSvg)||26)*TRACK_PRESENTATION_V365.visualWidthScale;
-  const displayRadius=16; // conservative existing unscaled marker ring; exact SVG geometry is also audited.
+  const displayRadius=MARKER_OVERLAP_MONITOR_V377.ringRadiusSvg*MARKER_OVERLAP_MONITOR_V377.clearanceMultiplier; // The real 1x ring envelope, not a guessed bead radius.
   const minimumDisplayLaneWidth=displayRadius*2*physicalWidth/Math.max(1,svgWidth);
   if(physicalWidth<minimumDisplayLaneWidth+UNIFIED_ENGINE_V11.physicalWidth){
     unifiedStateV11.telemetry.screenGeometryWarnings.push({track:String(track.id||track.name),physicalWidth,svgWidth,
@@ -11207,7 +11207,9 @@ function simulateUnifiedRaceStepV11(stepMs){
   return true;
 }
 window.mwsF1UnifiedV11Report=()=>({engine:'unified-v1.1',head:'11c2c357',...unifiedStateV11.telemetry,
-  seed:unifiedStateV11.rng,initialized:unifiedStateV11.initialized,notes:'Manual balance/visual QA pending; geometry warnings are not zero-overlap guarantees'});
+  seed:unifiedStateV11.rng,initialized:unifiedStateV11.initialized,
+  renderOverlaps:markerOverlapReportV377(),
+  notes:'Manual balance and real track/browser QA pending. Physical s/y and rendered overlap are distinct checks; geometry warnings are not proof of zero overlaps'});
 
 function simulateRaceStepV192(stepMs){
   if(UNIFIED_ENGINE_V11)return simulateUnifiedRaceStepV11(stepMs);
