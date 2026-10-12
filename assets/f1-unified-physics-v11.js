@@ -110,6 +110,41 @@ function proposeBatch(states,commands,environment,dt=C.dt){
  }
  return Object.freeze(out);
 }
+// Exactly 40% remaining is protected; race strategy cannot bypass this.
+function autoPitDecision(tyre,options){
+ const remaining=1-clamp(finite(tyre.wear,'wear'),0,1);
+ if(remaining>=C.tyreRemainingPitGuard)
+  return {request:false,reason:'REMAINING_AT_LEAST_40_PERCENT',remaining};
+ const stay=finite(options.stayTime,'stayTime');
+ const choices=(options.choices||[]).filter(row=>C.compounds[row.compound])
+  .map(row=>{
+   const drive=finite(row.newTyreTime,'newTyreTime');
+   const pit=finite(row.pitLoss,'pitLoss');
+   const traffic=finite(row.trafficLoss??0,'trafficLoss');
+   return {...row,total:drive+pit+traffic,gain:stay-drive-pit-traffic};
+  }).sort((a,b)=>a.total-b.total);
+ const best=choices[0];
+ const threshold=1+Math.max(0,finite(options.uncertaintyMargin??0,'uncertaintyMargin'));
+ return best&&best.gain>threshold
+  ?{request:true,compound:best.compound,gain:best.gain,remaining}
+  :{request:false,reason:'NO_NET_TIME_BENEFIT',remaining};
+}
+// Position changes are derived from continuous s, not battle-state callbacks.
+// Crossing candidates are separate from confirmed overtakes (0.5s hold).
+function crossingCandidates(previous,next,trackLength){
+ const ids=Object.keys(next).sort();
+ const crossings=[];
+ for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++){
+  const a=ids[i],b=ids[j],pa=previous[a],pb=previous[b],na=next[a],nb=next[b];
+  if(!pa||!pb||!na||!nb)continue;
+  const before=pa.s-pb.s,after=na.s-nb.s;
+  if(before===0||after===0||Math.sign(before)===Math.sign(after))continue;
+  if(Math.abs(before)>=trackLength||Math.abs(after)>=trackLength)continue;
+  crossings.push({ahead:after>0?a:b,behind:after>0?b:a,
+   fraction:clamp(Math.abs(before)/(Math.abs(before)+Math.abs(after)),0,1)});
+ }
+ return crossings;
+}
 function selfTest(){
  const mk=()=>({s:0,v:200/3.6,energyJ:4000000,form:1,
   ratings:{pace:75,braking:75,cornering:75,tyreManagement:75},
@@ -126,9 +161,9 @@ function selfTest(){
  energy:a.state.energyJ<4000000&&a.state.energyJ>=0,
  deterministic:JSON.stringify(x)===JSON.stringify(y),
  softFasterGrip:tyreGrip({...mk().tyre,compound:'SOFT'})>tyreGrip(mk().tyre),
- pitGuard:C.tyreRemainingPitGuard===.4
+ pitGuard:C.tyreRemainingPitGuard===.4,\n pitBoundary:!autoPitDecision({...mk().tyre,wear:.60},{stayTime:20,choices:[{compound:'SOFT',newTyreTime:1,pitLoss:1}]}).request && autoPitDecision({...mk().tyre,wear:.60001},{stayTime:20,choices:[{compound:'SOFT',newTyreTime:1,pitLoss:1}]}).request
  };
  return {checks,allPass:Object.values(checks).every(Boolean)};
 }
-root.MWSF1UnifiedV11=Object.freeze({constants:C,tyreGrip,powerEnvelope,forwardStep,proposeBatch,selfTest});
+root.MWSF1UnifiedV11=Object.freeze({constants:C,tyreGrip,powerEnvelope,forwardStep,proposeBatch,autoPitDecision,crossingCandidates,selfTest});
 })(typeof window!=='undefined'?window:globalThis);
