@@ -10910,10 +10910,10 @@ function unifiedChooseLaneV11(row,rows,now,width){
   }
   // Never merge towards a neighboring vehicle while longitudinal clearance is inadequate.
   // Keep the *actual* alternate lane rather than masking an imminent contact by speed caps.
-  if(row.pit==='TRACK'&&!v.pitRequested&&Math.abs(row.y)>2.65){
+  if(row.pit==='TRACK'&&!v.pitRequested&&Math.abs(row.y)>1.5){
     const centerOccupied=rows.some(p=>p.id!==row.id&&!p.finished&&p.pit==='TRACK'&&
-      Math.abs(p.s-row.s)<Math.max(35,row.v*.55)&&Math.abs(p.y)<2.1);
-    if(centerOccupied&&Math.abs(target)<2.65){target=Math.sign(row.y)*allowed;state='EXIT_DUEL';}
+      Math.abs(p.s-row.s)<Math.max(60,row.v*.9)&&Math.abs(p.y)<3.0);
+    if(centerOccupied&&Math.abs(target)<3.1){target=Math.sign(row.y)*allowed;state='EXIT_DUEL';}
   }
   if(v.pitRequested||row.pit!=='TRACK'){target=unifiedClampV11(lineOffsetMetersV197(v),-allowed,allowed);state='PIT';}
   v.unifiedLaneTargetV11=target;v.unifiedAiStateV11=state;v.unifiedIntentUntilV11=now+.7;
@@ -11067,7 +11067,7 @@ function simulateUnifiedRaceStepV11(stepMs){
     for(let j=0;j<rows.length;j++){
       const peer=rows[j],peerCmd=cmds[j];if(i===j||!peerCmd||peer.pit!=='TRACK')continue;
       const gap=peer.s-me.s,closing=me.v-peer.v,deltaY=Math.abs(cmd.y-peerCmd.y);
-      if(gap<=0||gap>220||deltaY>2.65)continue;
+      if(gap<=0||gap>220||deltaY>4.0)continue;
       const safe=5.2+.3+me.v*.08+Math.max(0,me.v*me.v/(2*Math.max(4,32*cmd.G*.7))-peer.v*peer.v/(2*Math.max(4,32*peerCmd.G)));
       const future=gap-closing*.9;
       if(future<safe+2){
