@@ -9,7 +9,7 @@ assert(start>0&&end>start&&src.includes('return simulateUnifiedRaceStepV11(stepM
 const engine=src.slice(start,end);
 function trial(reverse=false,iterations=6000){
 const setup=String.raw`
-const window={},TRACK_PRESENTATION_V365={visualWidthScale:1},simClockV192={paused:false,simTimeMs:0},engineQaV240={active:true};
+const window={},TRACK_PRESENTATION_V365={visualWidthScale:1},MARKER_OVERLAP_MONITOR_V377={ringRadiusSvg:18,clearanceMultiplier:1.03},simClockV192={paused:false,simTimeMs:0},engineQaV240={active:true};
 const track={id:'circle',lengthMeters:5280,geometry:{trackWidthMeters:14,visualTrackWidthSvg:26,maxStraightKph:335}},activeRaceSnapshotV187={track,createdAt:'smoke',totalLaps:10};
 const path={getTotalLength:()=>1000,getPointAtLength:n=>({x:500+160*Math.cos(n/1000*2*Math.PI),y:500+160*Math.sin(n/1000*2*Math.PI)})};
 const document={getElementById:k=>k==='f1RacingRaceTrackPathV188'?path:null};
