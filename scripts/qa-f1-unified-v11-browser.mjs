@@ -44,7 +44,7 @@ try{
   await page.waitForFunction(()=>window.mwsF1GetSimulationClockV192().simTimeMs>=30000);
   const read=()=>page.evaluate(()=>({clock:window.mwsF1GetSimulationClockV192().simTimeMs,
     state:window.mwsF1ComputeRaceStandingsV191().map(r=>({id:r.vehicle.id,s:r.vehicle.raceProgress,y:r.vehicle.unifiedYV11,
-      v:r.vehicle.speedKph,E:r.vehicle.batteryMJ,w:r.vehicle.tyreWear,T:r.vehicle.unifiedTempCV11,
+      v:r.vehicle.speedKph,E:r.vehicle.batteryMJ,w:r.vehicle.tyreWear,T:r.vehicle.unifiedTempCV11,heading:r.vehicle.unifiedHeadingV11,metric:r.vehicle.unifiedPathMetricV11,world:r.vehicle.unifiedWorldPoseV11,
       rng:r.vehicle.unifiedRngV11,ai:r.vehicle.unifiedAiAtV11,skill:r.vehicle.specialUntilV401,
       transform:r.vehicle.marker?.getAttribute('transform')}))}));
   await page.locator('#f1RacingPauseV192').click();
@@ -62,6 +62,19 @@ try{
       rings:window.mwsF1UnifiedV11Report().renderOverlaps})));
   }
   for(const layout of layouts){assert.equal(layout.markers,12);assert.deepEqual(layout.overlap,[]);assert.equal(layout.profile,true);}
+  const physical=()=>page.evaluate(()=>JSON.stringify(window.mwsF1ComputeRaceStandingsV191().map(r=>({id:r.vehicle.id,s:r.vehicle.raceProgress,y:r.vehicle.unifiedYV11,v:r.vehicle.speedKph,E:r.vehicle.batteryMJ,w:r.vehicle.tyreWear,heading:r.vehicle.unifiedHeadingV11}))));
+  const physicalBefore=await physical(),zooms=[];
+  for(const mode of ['FULL','CLEARANCE','BATTLE','AUTO']){
+    assert.equal(await page.evaluate(mode=>window.mwsF1SetRaceCameraModeV216(mode),mode),true);
+    await page.waitForTimeout(100);
+    zooms.push(await page.evaluate(()=>({camera:window.mwsF1GetRaceCameraStateV216(),fit:window.mwsF1UnifiedV11Report().screenFit})));
+    assert.equal(await physical(),physicalBefore,'Camera mode changed physical state');
+  }
+  assert.equal(zooms[0].camera.zoom,1);
+  assert.equal(zooms[1].camera.mode,'CLEARANCE');
+  if(zooms[1].fit.supported)assert.equal(zooms[1].fit.currentPairs,0,'Feasible clearance focus still overlaps');
+  else assert.equal(zooms[1].fit.minimumFeasibleZoom,null);
+  assert.equal(await page.locator('[data-f1-camera-mode="CLEARANCE"]').count(),1);
   if(process.env.MWS_QA_SCREENSHOT)await page.screenshot({path:process.env.MWS_QA_SCREENSHOT});
   await page.locator('#f1RacingPauseV192').click();
   await page.waitForFunction(t=>window.mwsF1GetSimulationClockV192().simTimeMs>t,before.clock);
@@ -95,7 +108,7 @@ try{
   assert.equal(await page.evaluate(()=>window.mwsF1GetScreenStateV185()),'SETUP');
   assert.equal(await page.evaluate(()=>window.mwsF1GetSelectedContactIdsV181().length),12);
   assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({result:'PASS',setup,layouts,pauseResume:true,legacyGuard:true,pit,finish,
+  console.log(JSON.stringify({result:'PASS',setup,layouts,zooms,pauseResume:true,legacyGuard:true,pit,finish,
     simulationSeconds:report.steps*.02,physicalStops:report.collisionStops,
     warning:'Short UI integration only. Ring geometry warnings are not a zero-overlap result.'},null,2));
 }finally{await browser?.close();server.close();}

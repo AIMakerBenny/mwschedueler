@@ -1,33 +1,7 @@
 // Run with: node scripts/qa-f1-unified-v11-smoke.mjs
 // Synthetic physics smoke only. This does not inspect Chromium visual overlaps.
-import fs from 'node:fs';
 import assert from 'node:assert/strict';
-const src=fs.readFileSync(new URL('../assets/f1-racing-v1.js',import.meta.url),'utf8');
-new Function(src);
-const start=src.indexOf('// Unified redesign v1.1.'),end=src.indexOf('function simulateRaceStepV192(stepMs){',start);
-assert(start>0&&end>start&&src.includes('return simulateUnifiedRaceStepV11(stepMs)'));
-const engine=src.slice(start,end);
-const setup=String.raw`
-const window={},TRACK_PRESENTATION_V365={visualWidthScale:1},MARKER_OVERLAP_MONITOR_V377={ringRadiusSvg:18,clearanceMultiplier:1.03},simClockV192={paused:false,simTimeMs:0},engineQaV240={active:true};
-const track={id:'circle',lengthMeters:5280,geometry:{trackWidthMeters:14,visualTrackWidthSvg:26,maxStraightKph:335}},activeRaceSnapshotV187={track,createdAt:'smoke',totalLaps:10};
-const path={getTotalLength:()=>1000,getPointAtLength:n=>({x:500+160*Math.cos(n/1000*2*Math.PI),y:500+160*Math.sin(n/1000*2*Math.PI)})};
-const document={getElementById:k=>k==='f1RacingRaceTrackPathV188'?path:null};
-const raceMotionV189={vehicles:Array.from({length:12},(_,i)=>({id:String(i),driver:{name:'D'+i},
- driverProfile:{pace:i===11?95:75,braking:75,cornering:75,tyreManagement:75,start:75,racecraft:75,aggression:75,errorResistance:75,consistency:75},
- raceProgress:-i*9/5280,startOffset:-i*9/5280,travel:0,speedKph:0,tyreCompound:i%3===0?'SOFT':'MEDIUM',
- tyreWear:0,batteryMJ:4,finished:false,pitState:'TRACK',pitStopCount:0}))};
-const hashDriverV189=str=>{let x=2166136261;for(const c of String(str))x=Math.imul(x^c.charCodeAt(0),16777619);return x>>>0;};
-const raceFlagStateV214={flag:'GREEN'},raceFlagSpeedFactorV214=()=>1,syncSimulationControlsV192=()=>true;
-const syncVehicleRaceMetricsV190=v=>{v.raceProgress=v.startOffset+v.travel;v.progress=((v.raceProgress%1)+1)%1;return v;};
-const updatePitPreStepV205=v=>{if(v.pitState==='PIT_BOX')v.pitBoxTimerMs=Math.max(0,(v.pitBoxTimerMs||0)-20);},pitControlV205=v=>({stationary:v.pitState==='PIT_BOX',speedCapKph:v.pitState==='PIT_BOX'?0:Infinity,state:v.pitState}),
- updatePitPostStepV205=()=>{},updateLapTimingV248=()=>{},activeTrackRuntimeProfileV235=()=>({tyreStressFactor:1});
-let pitCalls=0;const requestPitStopV205=()=>{pitCalls++;return false;};
-const gearForSpeedV196=()=>7,rpmForSpeedAndGearV196=()=>10000,updateInteractionSnapshotShadowV368=()=>{},
- recordRaceOrderFlowV309=()=>{},updateRaceCommentaryV219=()=>{},updateRaceNarrativeV222=()=>{},updateRaceLifecycleRecoveryG=()=>false;
-const specialStateV401={cinematic:false,lastMs:-Infinity},specialStageV401=()=>null,specialPhraseV401=()=>({}),playSpecialV401=()=>{};
-const lineOffsetMetersV197=()=>-4.5;
-const getCornerPhaseAtProgressV194=()=>({phase:'STRAIGHT',corner:null});
-`;
+import {src,engine,setup} from './f1-unified-v11-fixture.mjs';
 function scenario(body){return new Function(setup+engine+body)();}
 function trial(reverse=false,iterations=6000){
 const execute=String.raw`
@@ -105,11 +79,41 @@ const [a,b]=raceMotionV189.vehicles;a.raceProgress=10.1;b.raceProgress=10.2;
 a.unifiedFinishCrossingMsV11=12;b.unifiedFinishCrossingMsV11=16;simClockV192.simTimeMs=20;
 markRaceFinishersRecoveryG();return raceMotionV189.vehicles.map(v=>[v.finishPosition,v.finishedAtSimMs]);`)();
 assert.deepEqual(finishOrder,[[1,12],[2,16]],'Finish order used overshoot instead of crossing time');
+const geometry=scenario(`
+unifiedInitV11();const R=5280/(2*Math.PI),row={s:100,y:4,vy:0,v:30,ref:{}};
+const command={v:30,y:4};unifiedMotionV11(row,command,.02);
+const curvature=unifiedPathSampleV11(100).k;
+const close=unifiedBoxesOverlapV11({x:0,y:0,heading:0},{x:3.8,y:0,heading:Math.PI/2});
+const clear=unifiedBoxesOverlapV11({x:0,y:0,heading:0},{x:4.0,y:0,heading:Math.PI/2});
+return {curvature,expected:1/R,metric:command.metric,expectedMetric:1-4/R,path:command.pathDistance,close,clear};`);
+assert(Math.abs(geometry.curvature-geometry.expected)<1e-8,'Circle curvature was halved');
+assert(Math.abs(geometry.metric-geometry.expectedMetric)<2e-5,'Offset path length was ignored');
+assert.equal(geometry.path,.6);assert.equal(geometry.close,true);assert.equal(geometry.clear,false);
+const tunnel=scenario(`
+unifiedInitV11();unifiedWorldPoseV11=(s,y,h)=>({x:s,y,heading:h||0});
+unifiedStateV11.path.maxCenterRate=1;unifiedStateV11.path.maxNormalRate=0;
+const a={s:0,y:0,ref:{unifiedHeadingV11:0}},b={s:10,y:0,ref:{unifiedHeadingV11:Math.PI/2}};
+return unifiedSweptWorldV11(a,{ds:20,y:0,heading:0},b,{ds:0,y:0,heading:Math.PI/2});`);
+assert.equal(tunnel,true,'World swept contact tunneled through crossing vehicle');
+const screen=scenario(`
+const pair=d=>[{vehicle:{id:'a'},point:{x:0,y:0}},{vehicle:{id:'b'},point:{x:d,y:0}}];
+return [unifiedScreenFitV11(pair(20)),unifiedScreenFitV11(pair(3))];`);
+assert.equal(screen[0].supported,true);assert(Math.abs(screen[0].minimumFeasibleZoom-1.854)<1e-10);
+assert.equal(screen[1].supported,false);assert.equal(screen[1].minimumFeasibleZoom,null);
+const power=boost=>scenario(`
+raceMotionV189.vehicles=raceMotionV189.vehicles.slice(0,1);unifiedInitV11();
+const v=raceMotionV189.vehicles[0];v.speedKph=200;v.batteryMJ=0;
+simClockV192.simTimeMs=1000;v.specialUntilV401=${boost?11000:0};
+const accepted=simulateUnifiedRaceStepV11(20);
+return {accepted,v:v.speedKph,e:v.batteryMJ,actual:v.boostPowerKW};`);
+const basePower=power(false),skillPower=power(true);
+assert(basePower.accepted&&skillPower.accepted);assert(skillPower.v>basePower.v+.05,'Path planner suppressed skill acceleration');
+assert.equal(skillPower.e,0);assert(skillPower.actual>0,'Virtual power was not accounted');
 const a=trial(false),b=trial(true);
 assert.equal(a.ticks,6000);assert.equal(b.ticks,6000);assert.deepEqual(a.errors,[]);assert.deepEqual(b.errors,[]);
 assert.deepEqual(a.states,b.states,'Vehicle input order affected physical state');assert.equal(a.pitCalls,0);
 const long=trial(false,24000);
 assert.equal(long.ticks,24000);assert.deepEqual(long.errors,[]);assert(long.passes>0);
 for(const v of long.states){assert(v.e>=0&&v.e<=4);assert(v.w>=0&&v.w<=1);assert([v.s,v.y,v.v].every(Number.isFinite));}
-console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing'],
+console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power'],
  warning:'Not Chromium or a real-circuit balance/overlap verification'},null,2));
