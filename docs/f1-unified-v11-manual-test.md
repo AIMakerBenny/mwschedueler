@@ -189,3 +189,12 @@ window.mwsF1GetPitStrategyStatesV206()
 낮은 줌에서 기존 링 크기를 유지하며 가까운 모든 차량의 링 겹침을 0으로 만드는 것은 현재 표시 기하에서 불가능한 경우가 있다. 예를 들어 마조쿠 링은 14m 폭, SVG 표시 폭 42.9에서 1x 링 외곽 지름이 약 12.10m에 해당하지만, 차량 중심의 최대 횡차이는 9m다. 차량이나 링을 바꾸지 않으므로 전체 보기의 이 제약은 남는다. 새 카메라는 가능한 줌을 선택하거나 확대 한계를 알린다. 모든 줌에서 링 겹침 0을 보장하는 수정이라고 해석하지 않는다.
 
 전체 7개 트랙 완주·다중 시드 밸런스·최저 줌 병렬 링·7개 트랙별 복수 차량 피트 여정의 전체 검증 결과는 Not available. 사용자가 경기 밸런스와 추가 수치를 직접 시험한다. 대규모 경기 시험을 이번 두 단계의 완료조건으로 요구하지 않는다.
+
+
+## Unified v1.1 public legacy API ownership - 2026-10-13
+
+- Active race frame: `raceFrameV189 -> simulateRaceStepV192 -> simulateUnifiedRaceStepV11`. The older loop is bypassed, even though its source remains.
+- `mwsF1UpdateVisualLateralOffsetV258` is a read-only lateral snapshot in unified mode. It cannot integrate a second physical or display lane transition.
+- `mwsF1UpdatePassStateMachineV208` is a read-only current-state listing in unified mode. It cannot modify lanes, passing AI, biases, or timers.
+- Legacy lateral smoothing and V386 speed/emergency QA now return `Not available` and `allPass: null` when their legacy mechanisms are not running, instead of presenting source-string matches as active integration.
+- The smoke script includes a public-API no-mutation regression. Full Node, real-track and Chromium tests remain separate from isolated validation. Production has not been changed by this work.

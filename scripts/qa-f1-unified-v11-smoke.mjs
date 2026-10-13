@@ -364,11 +364,25 @@ assert.equal(pitOwnership.requested.calls,1);assert(pitOwnership.requested.reque
 assert.equal(pitOwnership.requested.compound,pitOwnership.recommendation.targetCompound);assert.equal(pitOwnership.requested.event.benefit,pitOwnership.recommendation.context.benefit);
 assert.equal(pitOwnership.safe.reason,'TYRE_REMAINING_AT_LEAST_40');assert.equal(pitOwnership.safeCalls,1);
 assert.equal(pitOwnership.late.reason,'TOO_LATE_TO_PIT');assert.equal(pitOwnership.noPit.reason,'NO_PIT_LANE');
+// Unified v1.1 ownership regression: old public APIs never double-step the field.
+const legacyVisualAdapterV258=src.slice(src.indexOf('function updateVisualLateralOffsetV258('),src.indexOf('function qaLateralDynamicsV269('));
+const legacyPassAdapterV208=src.slice(src.indexOf('function updatePassStateMachineV208('),src.indexOf('function qaPassStateMachineV208('));
+const legacyOwnershipV11=new Function(setup+engine+legacyVisualAdapterV258+legacyPassAdapterV208+`
+unifiedInitV11();const vehicle=raceMotionV189.vehicles[0];
+vehicle.unifiedYV11=1.25;vehicle.visualLateralOffsetMeters=1.25;vehicle.unifiedVyV11=.8;vehicle.unifiedAyV11=.1;
+const before=JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,rng:unifiedStateV11.rng});
+const visual=updateVisualLateralOffsetV258(vehicle,2500,true),passes=updatePassStateMachineV208(2500);
+return {unchanged:before===JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,rng:unifiedStateV11.rng}),visual,passCount:passes.length};`)();
+assert.equal(legacyOwnershipV11.unchanged,true,'Legacy public APIs mutated unified state');
+assert.equal(legacyOwnershipV11.visual.readOnly,true);
+assert.equal(legacyOwnershipV11.visual.simulationOwnedV11,true);
+assert.equal(legacyOwnershipV11.visual.visual,1.25);
+assert.equal(legacyOwnershipV11.passCount,12);
 const a=trial(false),b=trial(true);
 assert.equal(a.ticks,6000);assert.equal(b.ticks,6000);assert.deepEqual(a.errors,[]);assert.deepEqual(b.errors,[]);
 assert.deepEqual(a.states,b.states,'Vehicle input order affected physical state');assert.equal(a.pitCalls,0);
 const long=trial(false,24000);
 assert.equal(long.ticks,24000);assert.deepEqual(long.errors,[]);assert(long.passes>0);
 for(const v of long.states){assert(v.e>=0&&v.e<=4);assert(v.w>=0&&v.w<=1);assert([v.s,v.y,v.v].every(Number.isFinite));}
-console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane','active-model-contract','special-read-adapter','paused-special-telemetry','unavailable-race-context','energy-tyre-adapter-ownership','executed-work-ledger','lap-harvest-split','inactive-energy-telemetry','pit-strategy-ownership','pit-shared-recommendation','pit-query-before-init','pit-qa-readonly'],
+console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane','active-model-contract','special-read-adapter','paused-special-telemetry','unavailable-race-context','energy-tyre-adapter-ownership','executed-work-ledger','lap-harvest-split','inactive-energy-telemetry','pit-strategy-ownership','pit-shared-recommendation','pit-query-before-init','pit-qa-readonly','legacy-v258-v208-read-only'],
  warning:'Not Chromium or a real-circuit balance/overlap verification'},null,2));

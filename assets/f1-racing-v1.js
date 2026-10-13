@@ -5187,6 +5187,7 @@ function enforceTrackSpeedContinuityV386(vehicle,stepMs){
  return {corrected:true,from:current,to:capped,prior,maximumDropKph,reason:'UNPHYSICAL_TRACK_SPEED_RESET'};
 }
 function qaPhysicalSpeedContinuityV386(){
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_SPEED_CORRECTION_INACTIVE_IN_UNIFIED_V11',activeModel:'unified-v1.1',integrated:false,allPass:null};
  const stuck={pitState:'TRACK',speedKph:0,lastTrackPhysicsSpeedKphV386:270};
  const detected=enforceTrackSpeedContinuityV386(stuck,20);
  const ordinary=enforceTrackSpeedContinuityV386({pitState:'TRACK',speedKph:268,lastTrackPhysicsSpeedKphV386:270},20);
@@ -5280,6 +5281,9 @@ window.mwsF1QaSafeThirdPartyPitV384=qaSafeThirdPartyPitV384;
 window.__mwsF1RacingV384=VERSION384;
 
 function updatePassStateMachineV208(stepMs){
+  // Unified v1.1 owns passing AI and lateral intent; this legacy public
+  // entrypoint is a read-only compatibility view in unified mode.
+  if(UNIFIED_ENGINE_V11)return getPassStatesV208();
   const track=activeRaceSnapshotV187?.track;
   if(!track)return [];
   const length=Math.max(1,Number(track.lengthMeters)||1),standings=computeRaceStandingsV191();
@@ -6810,6 +6814,17 @@ function committedVisualTargetV269(vehicle,rawTarget,force=false){
   return rawTarget;
 }
 function updateVisualLateralOffsetV258(vehicle,frameMs=16.67,force=false){
+  // Unified v1.1 owns the physical lateral motion and its rendered position.
+  // External legacy callers must not run another lateral integration.
+  if(UNIFIED_ENGINE_V11){
+    const y=Number(vehicle?.unifiedYV11),shown=Number(vehicle?.visualLateralOffsetMeters);
+    const visual=Number.isFinite(y)?y:Number.isFinite(shown)?shown:0;
+    const target=Number(vehicle?.targetVisualLateralOffsetMeters);
+    const vy=Number(vehicle?.unifiedVyV11),ay=Number(vehicle?.unifiedAyV11);
+    return {target:Number.isFinite(target)?target:visual,rawTarget:visual,visual,
+      velocity:Number.isFinite(vy)?vy:0,acceleration:Number.isFinite(ay)?ay:0,
+      alpha:0,response:'UNIFIED_PHYSICS',simulationOwnedV11:true,readOnly:true};
+  }
   if(!vehicle)return {target:0,rawTarget:0,visual:0,velocity:0,acceleration:0,alpha:1,response:VISUAL_LATERAL_RESPONSE_V258.normal};
   const physicalTarget=physicalLateralOffsetV258(vehicle);
   const rawTarget=physicalTarget;
@@ -6846,6 +6861,7 @@ function updateVisualLateralOffsetV258(vehicle,frameMs=16.67,force=false){
   return {target,rawTarget,visual,velocity,acceleration,alpha,response,maxSpeed};
 }
 function qaLateralDynamicsV269(){
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_VISUAL_DYNAMICS_INACTIVE_IN_UNIFIED_V11',activeModel:'unified-v1.1',integrated:false,allPass:null};
   const cfg=VISUAL_LATERAL_DYNAMICS_V269;
   const source=raceMotionV189.vehicles[0]||{id:'qa-lateral-v269',progress:.25,raceProgress:.25,incident:null};
   const savedTime=simClockV192.simTimeMs;
@@ -6859,6 +6875,7 @@ function qaLateralDynamicsV269(){
   return {config:cfg,maxVelocity,maxAcceleration,beforeReverse,heldTarget:held.target,afterReverse,holdWorked:Math.abs(held.target-beforeReverse)<Math.abs(physicalLateralOffsetV258(probe)-beforeReverse),allPass:maxVelocity<=cfg.attackMaxSpeed+.02&&maxAcceleration<=cfg.maxAcceleration+.02&&cfg.lineModeHoldMs>=350};
 }
 function qaVisualLateralSmoothingV258(){
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_VISUAL_SMOOTHING_INACTIVE_IN_UNIFIED_V11',activeModel:'unified-v1.1',integrated:false,allPass:null};
   const source=raceMotionV189.vehicles[0];
   if(!source||!activeRaceSnapshotV187?.track)return {allPass:false,reason:'need-live-field'};
   const probe={...source,racingLineMode:'ATTACK_INSIDE',incidentLateralOffsetMeters:0,visualLateralOffsetMeters:0,targetVisualLateralOffsetMeters:0,visualLateralVelocity:0,visualLateralInitializedV258:true};
@@ -6881,6 +6898,7 @@ function qaVisualLateralSmoothingV258(){
   return {attackTarget,samples,first,beforeReverse,reverseTarget,reverseFirst,physicalBefore,physicalAfter,smoothStart,converging,noReverseSnap,physicsIsolated,allPass:targetAbs>.2&&smoothStart&&converging&&noReverseSnap&&physicsIsolated};
 }
 function qaVisualLateralDomV258(){
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_RENDER_SMOOTHING_INACTIVE_IN_UNIFIED_V11',activeModel:'unified-v1.1',integrated:false,allPass:null};
   const vehicle=raceMotionV189.vehicles[0],marker=vehicle?.marker;
   if(!vehicle||!marker)return {allPass:false,reason:'need-live-marker'};
   const saved={mode:vehicle.racingLineMode,incident:vehicle.incidentLateralOffsetMeters,visual:vehicle.visualLateralOffsetMeters,target:vehicle.targetVisualLateralOffsetMeters,velocity:vehicle.visualLateralVelocity,initialized:vehicle.visualLateralInitializedV258,paused:simClockV192.paused,simulationLane:vehicle.physicalLaneSimulationActiveV387};
@@ -10706,6 +10724,7 @@ function applyEmergencyAvoidanceV386(track=activeRaceSnapshotV187?.track){
  return count;
 }
 function qaEmergencyAvoidanceV386(){
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_EMERGENCY_AVOIDANCE_INACTIVE_IN_UNIFIED_V11',activeModel:'unified-v1.1',integrated:false,allPass:null};
  const track={lengthMeters:4500,geometry:{trackWidthMeters:14,racingLineMarginMeters:1.5}};
  const slow={id:'stalled',raceProgress:1.15,speedKph:8,pitState:'TRACK',racingLineMode:'IDEAL'};
  const fast={id:'approaching',raceProgress:1.13,speedKph:260,pitState:'TRACK',racingLineMode:'IDEAL'};
