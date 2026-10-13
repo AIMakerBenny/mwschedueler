@@ -9904,6 +9904,7 @@ window.mwsF1QaRaceDynamicsCorrectionV346=function(){
 
 
 function qaDynamicsContractV348(){
+  if(UNIFIED_ENGINE_V11)return unifiedDynamicsContractV11();
   const length=Math.max(1000,Number(activeRaceSnapshotV187?.track?.lengthMeters)||5000),usable=5;
   const makeCorner=direction=>({direction,cornerClass:'slow',approachDistanceMeters:length*.08,brakingPointDistanceMeters:length*.12,turnInDistanceMeters:length*.15,apexDistanceMeters:length*.20,exitDistanceMeters:length*.30});
   const lineProbe=corner=>[
@@ -10710,10 +10711,16 @@ const SPECIAL_TITLES_V401=Object.freeze(['부스터 엔진 가동','한계 돌�
 const SPECIAL_LINES_V401=Object.freeze(['지금부터 따라잡는다!','앞을 막지 마라!','이번 코너가 기회다!','순위를 뒤집어 주지!','아직 승부는 끝나지 않았다!','이 속도를 견뎌 봐라!','끝까지 추격한다!','지금이 바로 그 순간!','시야 끝까지 전속력!','다음 직선은 내 차지다!','이대로 물러설 수 없다!','전속력으로 파고든다!']);
 const specialStateV401={token:0,cinematic:false,queue:[],index:0,timer:0,lastMs:-Infinity,events:0,chains:0,boosts:0,history:[]};
 function specialChanceV401(rank,count,seconds=1){
+ if(UNIFIED_ENGINE_V11)return 1-Math.exp(-unifiedSpecialRateV11(rank,count)*Math.max(0,seconds));
  const rear=Math.max(0,Math.min(1,(rank-1)/Math.max(1,count-1)));
  return 1-Math.exp(-(.0005+.0038*Math.pow(rear,1.5))*Math.max(0,seconds));
 }
 function specialEffectV401(vehicle){
+ if(UNIFIED_ENGINE_V11){
+  const now=Number(simClockV192.simTimeMs)||0,power=unifiedSkillPowerV11(vehicle,now,String(vehicle?.pitState||'TRACK'));
+  return {active:power>0,bonus:0,accel:1,straight:0,powerKW:power/1000,
+   startsMs:Number(vehicle?.specialStartsV11)||0,remainingMs:Math.max(0,(Number(vehicle?.specialUntilV401)||0)-now)};
+ }
  const remain=(Number(vehicle?.specialUntilV401)||0)-(Number(simClockV192.simTimeMs)||0);
  if(!vehicle||vehicle.finished||vehicle.pitState!=='TRACK'||remain<=0||
   (UNIFIED_ENGINE_V11&&Number(vehicle.specialStartsV11)>simClockV192.simTimeMs))return {active:false,bonus:0,accel:1,straight:0};
@@ -10810,12 +10817,16 @@ function tickSpecialV401(stepMs){
  return false;
 }
 function specialTelemetryV401(){
- return {version:'phase401-ultimate-rank-boost',cinematic:specialStateV401.cinematic,
+ return {version:UNIFIED_ENGINE_V11?'unified-v1.1':'phase401-ultimate-rank-boost',cinematic:specialStateV401.cinematic,
   simMs:Number(simClockV192.simTimeMs)||0,events:specialStateV401.events,chains:specialStateV401.chains,
   applied:specialStateV401.boosts,history:specialStateV401.history.slice(),
-  active:raceMotionV189.vehicles.filter(v=>specialEffectV401(v).active).map(v=>String(v.id))};
+  active:raceMotionV189.vehicles.filter(v=>specialEffectV401(v).active).map(v=>String(v.id)),
+  power:UNIFIED_ENGINE_V11?raceMotionV189.vehicles.map(v=>({id:String(v.id),availableKW:specialEffectV401(v).powerKW,
+   executedKW:simClockV192.paused||specialStateV401.cinematic||!specialEffectV401(v).active?0:Math.max(0,Number(v.boostPowerKW)||0),
+   startsMs:Number(v.specialStartsV11)||0,untilMs:Number(v.specialUntilV401)||0})):[]};
 }
 function qaSpecialV401(){
+ if(UNIFIED_ENGINE_V11)return unifiedSpecialContractV11();
  const probabilities=[1,3,5,7,9,11,12].map(rank=>specialChanceV401(rank,12));
  const monotonic=probabilities.every((p,i)=>i===0||p>probabilities[i-1]);
  const dynamics=String(simulateVehicleDynamicsV196).includes('specialEffectV401(vehicle)')&&
@@ -11187,6 +11198,10 @@ function unifiedBeginErrorV11(v,type,now,forced=false){
   v[count]=(Number(v[count])||0)+1;
   return canonical;
 }
+function unifiedIncidentRateV11(v,wear,pressure=0,attacking=0){
+  const worn=unifiedClampV11((wear-.60)/.40,0,1);
+  return unifiedClampV11(.004*(1+1.5*worn+.8*pressure+.6*attacking)*(1-.25*unifiedRatingV11(v,'errorResistance')),.001,.025);
+}
 function unifiedDrivingErrorV11(row,rows,dt,now){
   const v=row.ref;
   if(row.finished||row.pit!=='TRACK'){
@@ -11198,13 +11213,11 @@ function unifiedDrivingErrorV11(row,rows,dt,now){
   const phase=getCornerPhaseAtProgressV194(v.progress)?.phase;
   const types=phase==='BRAKING'?['LOCKUP']:['TURN_IN','APEX'].includes(phase)?['UNDERSTEER']:phase==='EXIT'?['EXIT_ERROR']:[];
   if(!types.length)return '';
-  const wear=unifiedClampV11((row.w-.60)/.40,0,1);
   const closest=rows.filter(p=>p.id!==row.id&&!p.finished&&p.pit==='TRACK'&&unifiedGapV11(row,p)<0&&-unifiedGapV11(row,p)<row.v*1.2)
     .sort((a,b)=>unifiedGapV11(row,b)-unifiedGapV11(row,a))[0];
   const pressure=closest?unifiedClampV11(1+unifiedGapV11(row,closest)/Math.max(1,row.v*1.2),0,1):0;
   const attacking=['PLAN_ATTACK','SIDE_BY_SIDE'].includes(String(v.unifiedAiStateV11||''))?1:0;
-  const risk=unifiedClampV11(.004*(1+1.5*wear+.8*pressure+.6*attacking)*
-    (1-.25*unifiedRatingV11(v,'errorResistance')),.001,.025);
+  const risk=unifiedIncidentRateV11(v,row.w,pressure,attacking);
   if(unifiedRandomVehicleV11(v)>=1-Math.exp(-risk*dt))return '';
   return unifiedBeginErrorV11(v,types[0],now);
 }
@@ -11311,9 +11324,40 @@ function unifiedEnergyAndTyreV11(row,command,dt,track){
   v.boostPowerKW=Math.max(0,command.usedExtraW-used)/1000;v.boostActive=command.usedExtraW>0;
 }
 function unifiedSkillPowerV11(v,nowMs,pitState){
-  if(pitState!=='TRACK'||nowMs<(Number(v.specialStartsV11)||0))return 0;
+  if(!v||v.finished||pitState!=='TRACK'||nowMs<(Number(v.specialStartsV11)||0))return 0;
   const remaining=(Number(v.specialUntilV401)||0)-nowMs;
   return remaining>0?UNIFIED_ENGINE_V11.specialPower*unifiedClampV11(remaining/1500,0,1):0;
+}
+// Read-only contracts for the selected engine, not legacy source-string checks.
+function unifiedSpecialRateV11(rank,count){
+  return .0005+.0038*unifiedClampV11((rank-1)/Math.max(1,count-1),0,1)**1.5;
+}
+function unifiedSpecialContractV11(){
+  const probabilities=[1,3,5,7,9,11,12].map(rank=>specialChanceV401(rank,12));
+  const monotonic=probabilities.every((p,i)=>i===0||p>probabilities[i-1]);
+  const probe={finished:false,pitState:'TRACK',raceProgress:1,travel:.25,speedKph:200,unifiedYV11:2,batteryMJ:4,specialStartsV11:400,specialUntilV401:10400};
+  const before=JSON.stringify(probe),powers=[0,400,9650,10400].map(ms=>unifiedSkillPowerV11(probe,ms,'TRACK'));
+  const pit=unifiedSkillPowerV11(probe,400,'PIT_LANE'),finished=unifiedSkillPowerV11({...probe,finished:true},400,'TRACK');
+  const powerContract=powers[0]===0&&powers[1]===UNIFIED_ENGINE_V11.specialPower&&powers[2]===UNIFIED_ENGINE_V11.specialPower*.5&&powers[3]===0&&pit===0&&finished===0;
+  const noWarp=before===JSON.stringify(probe),combinations=SPECIAL_TITLES_V401.length*SPECIAL_LINES_V401.length;
+  return {engine:'unified-v1.1',scope:'read-only power contract; live motion and cinematic QA are separate',probabilities,monotonic,combinations,
+    powersKW:powers.map(p=>p/1000),durationMs:10000,fadeMs:1500,powerContract,dynamics:powerContract,noWarp,readOnly:noWarp,
+    telemetry:specialTelemetryV401(),allPass:monotonic&&combinations>=150&&powerContract&&noWarp};
+}
+function unifiedDynamicsContractV11(){
+  const length=Number(activeRaceSnapshotV187?.track?.lengthMeters)||0;
+  const corner=direction=>({direction,approachDistanceMeters:length*.08,turnInDistanceMeters:length*.15,apexDistanceMeters:length*.20,exitDistanceMeters:length*.30});
+  const line=direction=>['BRAKING','APEX','EXIT'].map((phase,i)=>idealRacingLineOffsetV343({progress:[.12,.20,.295][i]},1,{phase,corner:corner(direction)}));
+  const right=length>0?line('right'):null,left=length>0?line('left'):null;
+  const linePass=length>0?right[0]>0&&right[1]<0&&right[2]>0&&left[0]<0&&left[1]>0&&left[2]<0:null;
+  const tyres=Object.fromEntries(['SOFT','MEDIUM','HARD'].map(name=>[name,unifiedTyreSpecV11(name)]));
+  const compoundPass=tyres.SOFT.grip>tyres.MEDIUM.grip&&tyres.MEDIUM.grip>tyres.HARD.grip&&tyres.SOFT.wear>tyres.MEDIUM.wear&&tyres.MEDIUM.wear>tyres.HARD.wear;
+  const probe={driverProfile:{errorResistance:75},tyreCompound:'MEDIUM',unifiedTempCV11:100,pitState:'TRACK'};
+  const wearRiskSamples=[.20,.42,.60,.80,1].map(wear=>{const rate=unifiedIncidentRateV11(probe,wear);return {wear,risk:rate,ratePerSecond:rate,grip:unifiedGripV11({...probe,tyreWear:wear})};});
+  const wearRiskMonotonic=wearRiskSamples.every((r,i)=>i===0||r.risk>=wearRiskSamples[i-1].risk&&r.grip<=wearRiskSamples[i-1].grip);
+  return {engine:'unified-v1.1',version:'unified-v1.1',scope:'read-only model contract; race balance and live pit decisions are separate',
+    right,left,linePass,lineStatus:length>0?'checked':'Not available',tyres,compoundPass,effectiveWear:Object.fromEntries(Object.entries(tyres).map(([name,t])=>[name,t.wear])),
+    wearRiskSamples,wearRiskMonotonic,physics:UNIFIED_ENGINE_V11,modelPass:compoundPass&&wearRiskMonotonic,allPass:length>0?linePass&&compoundPass&&wearRiskMonotonic:null};
 }
 function unifiedSpecialTickV11(rows,dt,now){
   if(specialStateV401.cinematic||raceFlagStateV214.flag!=='GREEN'||now<22||now-(Number(specialStateV401.lastMs)||-Infinity)/1000<55)return;
@@ -11322,7 +11366,7 @@ function unifiedSpecialTickV11(rows,dt,now){
   for(let i=0;i<sorted.length;i++){
     const p=sorted[i],v=p.ref,q=i/Math.max(1,count-1);
     if((Number(v.specialUsesV401)||0)>=2||now-(Number(v.specialLastMsV401)||-Infinity)/1000<145)continue;
-    const rate=.0005+.0038*q**1.5,arrival=-Math.log(Math.max(1e-9,unifiedRandomV11()))/rate;
+    const rate=unifiedSpecialRateV11(i+1,count),arrival=-Math.log(Math.max(1e-9,unifiedRandomV11()))/rate;
     if(arrival<earliest){earliest=arrival;winner={p,i,q};}
   }
   if(!winner)return;
@@ -11552,7 +11596,7 @@ function simulateUnifiedRaceStepV11(stepMs){
   unifiedSpecialTickV11(finishedRows,dt,now);
   return true;
 }
-window.mwsF1UnifiedV11Report=()=>({engine:'unified-v1.1',revision:'corner-line-multicar-v11',...unifiedStateV11.telemetry,
+window.mwsF1UnifiedV11Report=()=>({engine:'unified-v1.1',revision:'active-contracts-v11',...unifiedStateV11.telemetry,
   seed:unifiedStateV11.rng,initialized:unifiedStateV11.initialized,
   lanes:raceMotionV189.vehicles.map(v=>({id:String(v.id),actual:Number(v.unifiedYV11)||0,ideal:Number(v.unifiedIdealLaneV11)||0,target:Number(v.unifiedLaneTargetV11)||0,state:String(v.unifiedAiStateV11||''),blocked:v.unifiedMergeBlockedV11||[]})),
   incidents:raceMotionV189.vehicles.map(v=>({id:String(v.id),active:unifiedIncidentNameV11(unifiedActiveErrorV11(v)),untilMs:(Number(v.unifiedErrorUntilV11)||0)*1000,sequence:Number(v.unifiedIncidentSequenceV11)||0,grip:unifiedGripV11(v),warmup:Number(v.tyreWarmupFactor)||1})),

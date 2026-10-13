@@ -107,6 +107,21 @@ try{
   assert.equal(incident.forced.type,'UNDERSTEER');assert.equal(incident.active,'UNDERSTEER');
   assert(incident.grip<incident.base);assert(incident.clockPreserved&&incident.physicalPreserved);
   assert.equal(incident.adapted.speedFactor,1);assert(incident.live.some(row=>JSON.stringify(row).includes('언더스티어')));
+  const contracts=await page.evaluate(()=>{
+    const physical=()=>JSON.stringify({clock:window.mwsF1GetSimulationClockV192(),vehicles:window.mwsF1ComputeRaceStandingsV191().map(r=>({id:r.vehicle.id,s:r.vehicle.raceProgress,y:r.vehicle.unifiedYV11,v:r.vehicle.speedKph,e:r.vehicle.batteryMJ,rng:r.vehicle.unifiedRngV11}))});
+    const before=physical(),special=window.mwsF1QaSpecialV401(),model=window.mwsF1QaDynamicsContractV348();
+    const exact=window.mwsF1QaWorkspaceExactRestoreV269(),layout=window.mwsF1QaWorkspaceUserDefaultPersistenceV259();
+    const v=window.mwsF1ComputeRaceStandingsV191()[0].vehicle,saved={...v},now=window.mwsF1GetSimulationClockV192().simTimeMs;
+    v.specialStartsV11=now;v.specialUntilV401=now+750;v.boostPowerKW=200;
+    const power=window.mwsF1GetSpecialTelemetryV401().power.find(p=>p.id===String(v.id));
+    for(const key of Object.keys(v))if(!(key in saved))delete v[key];Object.assign(v,saved);
+    return {special,model,exact,layout,power,unchanged:before===physical(),overlap:window.mwsF1WorkspaceOverlapPairsRecoveryI()};
+  });
+  assert(contracts.special.allPass&&contracts.model.allPass);assert.equal(contracts.special.engine,'unified-v1.1');
+  assert.deepEqual(contracts.special.powersKW,[0,300,150,0]);assert.deepEqual(contracts.model.effectiveWear,{SOFT:.11,MEDIUM:.085,HARD:.06});
+  assert(contracts.exact.allPass&&contracts.layout.allPass,JSON.stringify(contracts));
+  assert(contracts.unchanged);assert.deepEqual(contracts.overlap,[]);
+  assert.equal(contracts.power.availableKW,150);assert.equal(contracts.power.executedKW,0);
   // Explicit service fixture, separate from the preceding unmodified LIVE drive.
   const pit=await page.evaluate(()=>{
     const v=window.mwsF1ComputeRaceStandingsV191()[0].vehicle;
@@ -176,7 +191,7 @@ try{
   assert.equal(await page.evaluate(()=>window.mwsF1GetScreenStateV185()),'SETUP');
   assert.equal(await page.evaluate(()=>window.mwsF1GetSelectedContactIdsV181().length),12);
   assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({result:'PASS',setup,layouts,zooms,pauseResume:true,legacyGuard:true,incident,pit,pitJourney,finish,
+  console.log(JSON.stringify({result:'PASS',setup,layouts,zooms,pauseResume:true,legacyGuard:true,incident,contracts,pit,pitJourney,finish,
     simulationSeconds:report.steps*.02,physicalStops:report.collisionStops,
     warning:'Short UI integration only. Ring geometry warnings are not a zero-overlap result.'},null,2));
 }finally{await browser?.close();server.close();}

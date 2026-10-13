@@ -284,11 +284,32 @@ for(const row of rows)row.ref.unifiedHeadingV11=unifiedWorldPoseV11(100,0).headi
 const gap=unifiedLateralClearanceV11(rows[0],rows[1]);
 return {gap,target:unifiedChooseLaneV11(rows[0],rows,2,10),state:rows[0].ref.unifiedAiStateV11};`);
 assert(Math.abs(narrowThird.gap-2.3)<1e-10,JSON.stringify(narrowThird));assert.equal(narrowThird.target,0);assert.equal(narrowThird.state,'SIDE_BY_SIDE');
+const specialConstants=src.slice(src.indexOf('const SPECIAL_V401='),src.indexOf('const specialStateV401='));
+const specialReaders=src.slice(src.indexOf('function specialChanceV401('),src.indexOf('function resetSpecialV401(){'))+
+ src.slice(src.indexOf('function specialTelemetryV401(){'),src.indexOf('// Unified redesign v1.1.'));
+const dynamicsEntry=src.slice(src.indexOf('function qaDynamicsContractV348(){'),src.indexOf('function finishSpreadBreakdownV373('));
+const contracts=new Function(setup+engine+specialConstants+specialReaders+dynamicsEntry+`
+specialStateV401.history=[];specialStateV401.events=specialStateV401.chains=specialStateV401.boosts=0;
+const before=JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,rng:unifiedStateV11.rng});
+const special=qaSpecialV401(),model=qaDynamicsContractV348();
+const readonly=before===JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,rng:unifiedStateV11.rng});
+simClockV192.simTimeMs=1000;const v=raceMotionV189.vehicles[0];v.specialStartsV11=900;v.specialUntilV401=1750;
+v.specialChainPowerV407=1.28;v.physicalOnTrackPassesV386=9;v.specialPassBaselineV407=0;v.boostPowerKW=200;
+const fade=specialEffectV401(v);simClockV192.paused=true;const paused=specialTelemetryV401().power.find(p=>p.id===v.id);
+v.finished=true;simClockV192.paused=false;const finished=specialEffectV401(v),finishedPower=specialTelemetryV401().power.find(p=>p.id===v.id);
+return {special,model,readonly,fade,paused,finished,finishedPower};`)();
+assert(contracts.readonly&&contracts.special.allPass&&contracts.model.allPass);
+assert.deepEqual(contracts.special.powersKW,[0,300,150,0]);assert.equal(contracts.special.fadeMs,1500);
+assert.deepEqual(contracts.model.effectiveWear,{SOFT:.110,MEDIUM:.085,HARD:.060});
+assert.equal(contracts.fade.powerKW,150);assert.equal(contracts.fade.bonus,0);assert.equal(contracts.fade.accel,1);
+assert.equal(contracts.paused.availableKW,150);assert.equal(contracts.paused.executedKW,0);assert.equal(contracts.finished.active,false);assert.equal(contracts.finishedPower.executedKW,0);
+const beforeRaceContract=new Function(setup.replace("activeRaceSnapshotV187={track,createdAt:'smoke',totalLaps:10}", 'activeRaceSnapshotV187=null')+engine+`return unifiedDynamicsContractV11();`)();
+assert.equal(beforeRaceContract.lineStatus,'Not available');assert.equal(beforeRaceContract.linePass,null);assert.equal(beforeRaceContract.allPass,null);assert.equal(beforeRaceContract.modelPass,true);
 const a=trial(false),b=trial(true);
 assert.equal(a.ticks,6000);assert.equal(b.ticks,6000);assert.deepEqual(a.errors,[]);assert.deepEqual(b.errors,[]);
 assert.deepEqual(a.states,b.states,'Vehicle input order affected physical state');assert.equal(a.pitCalls,0);
 const long=trial(false,24000);
 assert.equal(long.ticks,24000);assert.deepEqual(long.errors,[]);assert(long.passes>0);
 for(const v of long.states){assert(v.e>=0&&v.e<=4);assert(v.w>=0&&v.w<=1);assert([v.s,v.y,v.v].every(Number.isFinite));}
-console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane'],
+console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane','active-model-contract','special-read-adapter','paused-special-telemetry','unavailable-race-context'],
  warning:'Not Chromium or a real-circuit balance/overlap verification'},null,2));
