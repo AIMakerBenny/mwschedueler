@@ -2687,7 +2687,7 @@ function clearPitInteractionStateV369(vehicle,vehicles=raceMotionV189.vehicles,r
   if(!vehicle)return {cleared:false,inboundBattleTargets:0,inboundTrafficTargets:0,inboundAeroTargets:0,removedLinks:0};
   const key=String(vehicle.id||'');
   clearTrafficReferenceV369(vehicle,reason);
-  vehicle.pitPreviousRacingLineMode='IDEAL';
+  if(!UNIFIED_ENGINE_V11)vehicle.pitPreviousRacingLineMode='IDEAL';
   vehicle.chaseBurstTargetIdV275='';
   let inboundBattleTargets=0,inboundTrafficTargets=0,inboundAeroTargets=0;
   for(const other of Array.isArray(vehicles)?vehicles:[]){
@@ -3752,6 +3752,11 @@ function estimatedGapSecondsV202(vehicle){
 }
 function updateActiveAeroAndOvertakeV202(vehicle,stepMs){
   if(!vehicle)return null;
+  if(UNIFIED_ENGINE_V11){
+    unifiedOvertakeStateV11(vehicle,activeRaceSnapshotV187?.track||{});
+    return {activeAeroMode:vehicle.activeAeroMode,activeAeroTarget:vehicle.activeAeroTarget,transitionMs:vehicle.activeAeroTransitionMs,
+      overtakeZoneId:vehicle.overtakeZoneId,gapSeconds:vehicle.overtakeGapSeconds,eligible:vehicle.overtakeEligible,overtakeActive:vehicle.overtakeActive};
+  }
   const cfg=ACTIVE_AERO_CONFIG_V202;
   const zone=trackZoneAtProgressV202(vehicle.progress);
   const requestedMode=zone?.type==='straight'?'STRAIGHT':'CORNER';
@@ -4120,13 +4125,13 @@ function pitControlV205(vehicle){
   return {stationary:false,speedCapKph:Infinity,state:'TRACK',limitKph:limit};
 }
 function enterPitBoxV205(vehicle){
-  if(!vehicle)return false;
+  if(!vehicle||UNIFIED_ENGINE_V11&&Number(vehicle.speedKph)!==0)return false;
   const racecraft=Math.max(-1,Math.min(1,driverSkillNormV200(vehicle,'racecraft')));
   const variation=(nextDriverRandomV200(vehicle)*2-1)*PIT_CONFIG_V205.boxVariationMs;
   vehicle.pitState='PIT_BOX';
   vehicle.pitBoxDurationMs=Math.max(1800,PIT_CONFIG_V205.boxStopMs-racecraft*180+variation);
   vehicle.pitBoxTimerMs=vehicle.pitBoxDurationMs;
-  vehicle.speedKph=0;vehicle.targetSpeedKph=0;vehicle.throttle=0;vehicle.brake=1;vehicle.accelerationMps2=0;
+  if(!UNIFIED_ENGINE_V11){vehicle.speedKph=0;vehicle.targetSpeedKph=0;vehicle.throttle=0;vehicle.brake=1;vehicle.accelerationMps2=0;}
   return true;
 }
 function completePitServiceV205(vehicle){
@@ -4153,7 +4158,7 @@ function completePitExitV205(vehicle){
   vehicle.pitLastStopLap=Math.max(1,Number(vehicle.currentLap)||1);
   vehicle.racingLineMode=F1_LINE_MODES_V197.includes(vehicle.pitPreviousRacingLineMode)?vehicle.pitPreviousRacingLineMode:'IDEAL';
   vehicle.pitPreviousRacingLineMode='IDEAL';
-  vehicle.pitStartCompoundV361='';vehicle.pitHudEnteredAtV361=0;
+  vehicle.pitStartCompoundV361='';vehicle.pitHudEnteredAtV361=0;delete vehicle.unifiedPitStopProgressV11;
   return true;
 }
 function updatePitWarmupV205(vehicle,previousRaceProgress){
@@ -4191,12 +4196,16 @@ function updatePitPostStepV205(vehicle,previousRaceProgress){
     vehicle.pitState='PIT_ENTRY';
     clearPitInteractionStateV369(vehicle,raceMotionV189.vehicles,'PIT_ENTRY');
     vehicle.pitEntryRaceProgress=current;
+    vehicle.unifiedPitStopProgressV11=nextAbsoluteProgressV205(current,pit.stop);
     vehicle.pitServiced=false;
     vehicle.pitHudEnteredAtV361=Number(simClockV192.simTimeMs)||0;
     if(!vehicle.pitStartCompoundV361)vehicle.pitStartCompoundV361=String(vehicle.tyreCompound||'MEDIUM').toUpperCase();
     vehicle.racingLineMode='PIT_LINE';
   }
-  if((vehicle.pitState==='PIT_ENTRY'||vehicle.pitState==='PIT_LANE')&&!vehicle.pitServiced&&passedTrackProgressV205(previousRaceProgress,current,pit.stop)){
+  if((vehicle.pitState==='PIT_ENTRY'||vehicle.pitState==='PIT_LANE')&&!vehicle.pitServiced&&(UNIFIED_ENGINE_V11?
+    Number.isFinite(vehicle.unifiedPitStopProgressV11)&&vehicle.speedKph===0&&
+      Math.abs((vehicle.unifiedPitStopProgressV11-current)*track.lengthMeters)<=.3:
+    passedTrackProgressV205(previousRaceProgress,current,pit.stop))){
     enterPitBoxV205(vehicle);
   }else if(vehicle.pitState==='PIT_LANE'&&vehicle.pitServiced&&passedTrackProgressV205(previousRaceProgress,current,pit.exit)){
     vehicle.pitState='PIT_EXIT';
@@ -10896,6 +10905,7 @@ function unifiedInitV11(){
     v.unifiedNextSkillAtV11=-Math.log(Math.max(1e-9,unifiedRandomVehicleV11(v)));
     v.unifiedPreviousRankV11=0;v.unifiedAiStateV11='CRUISE';
     v.unifiedLastPassS=Number(v.raceProgress)*len;
+    v.unifiedDetectionV11={};v.overtakeEligible=false;v.overtakeActive=false;v.overtakeGapSeconds=Infinity;
   }
   unifiedStateV11.initialized=true;
   return true;
@@ -11008,6 +11018,63 @@ function unifiedSweptContactV11(x,y,dx,dy,length=5.5,width=2.6){
   }
   return low<high;
 }
+// Gate times belong to actual committed crossings. No speed-derived gap fallback.
+function unifiedOvertakeStateV11(v,track,stepMs=0){
+  const progress=Number(v.raceProgress)||0;
+  const record=Object.values(v.unifiedDetectionV11||{}).find(r=>r.eligible&&progress>=r.detection&&progress<r.end);
+  const onTrack=String(v.pitState||'TRACK')==='TRACK'&&!v.finished;
+  v.overtakeEligible=Boolean(onTrack&&record);v.overtakeActive=Boolean(onTrack&&record&&progress>=record.start);
+  v.overtakeZoneId=record?.zone||'';v.overtakeGapSeconds=record?.gapSeconds??Infinity;
+  const p=((progress%1)+1)%1,straight=(track.zones||[]).some(z=>z.type==='straight'&&p>=z.start&&p<z.end);
+  const target=straight?'STRAIGHT':'CORNER';
+  if(v.activeAeroTarget!==target){v.activeAeroTarget=target;v.activeAeroTransitionMs=400;}
+  v.activeAeroTransitionMs=Math.max(0,(Number(v.activeAeroTransitionMs)||0)-stepMs);
+  if(v.activeAeroTransitionMs===0)v.activeAeroMode=target;
+}
+function unifiedDetectionCrossingsV11(rows,stepMs,track){
+  const events=[],clock=simClockV192.simTimeMs;
+  for(const row of rows){
+    const v=row.ref,previous=row.s/unifiedStateV11.path.len,current=Number(v.raceProgress)||0;
+    if(row.finished||row.pit!=='TRACK'||v.pitState!=='TRACK'||current<=previous)continue;
+    for(const zone of track.overtakeZones||[]){
+      if(![zone.detection,zone.start,zone.end].every(Number.isFinite))continue;
+      let absolute=Math.floor(previous-zone.detection)+1+zone.detection;
+      for(;absolute<=current+1e-12;absolute+=1){
+        if(absolute<0)continue;
+        events.push({v,zone,absolute,cycle:Math.round(absolute-zone.detection),
+          ms:clock-stepMs+stepMs*(absolute-previous)/(current-previous)});
+      }
+    }
+  }
+  events.sort((a,b)=>a.ms-b.ms||String(a.v.id).localeCompare(String(b.v.id)));
+  for(const e of events){
+    const {v,zone,absolute,cycle,ms}=e;
+    const earlier=raceMotionV189.vehicles.filter(p=>p!==v&&!p.finished&&p.pitState==='TRACK')
+      .map(p=>p.unifiedDetectionV11?.[zone.id]).filter(r=>r&&r.cycle===cycle&&r.ms<ms);
+    const gapSeconds=earlier.length?(ms-Math.max(...earlier.map(r=>r.ms)))/1000:Infinity;
+    const start=absolute+((zone.start-zone.detection+1)%1),end=start+((zone.end-zone.start+1)%1);
+    v.unifiedDetectionV11={...(v.unifiedDetectionV11||{}),[zone.id]:{zone:zone.id,cycle,ms,detection:absolute,start,end,gapSeconds,eligible:gapSeconds<=1}};
+  }
+  for(const v of raceMotionV189.vehicles)unifiedOvertakeStateV11(v,track);
+}
+function unifiedPitTargetV11(row,track,brakeDecel,cornerTarget){
+  const v=row.ref,pit=track.pit;if(!pit)return cornerTarget;
+  const forward=p=>((Number(p)-row.s/unifiedStateV11.path.len)%1+1)%1*unifiedStateV11.path.len;
+  const metric=Math.max(.2,Number(v.unifiedPathMetricV11)||1),decel=Math.max(.1,brakeDecel*.7);
+  let target=cornerTarget;
+  if(row.pit==='TRACK'&&v.pitRequested){
+    const distance=forward(pit.entry)*metric,limit=(Number(pit.speedLimitKph)||80)/3.6;
+    target=Math.min(target,Math.sqrt(limit*limit+2*decel*Math.max(0,distance-row.v*.25)));
+  }
+  if((row.pit==='PIT_ENTRY'||row.pit==='PIT_LANE')&&!v.pitServiced){
+    const absolute=Number.isFinite(v.unifiedPitStopProgressV11)?v.unifiedPitStopProgressV11:
+      row.s/unifiedStateV11.path.len+forward(pit.stop)/unifiedStateV11.path.len;
+    const distance=Math.max(0,(absolute*unifiedStateV11.path.len-row.s)*metric);
+    // Approach the box through finite braking; the adapter starts service only at rest.
+    target=Math.min(target,distance<=.08?0:Math.min(Math.sqrt(2*decel*Math.max(0,distance-row.v*.25)),distance/.5));
+  }
+  return target;
+}
 function unifiedAeroV11(row,rows){
   let tow=0,dirty=0;for(const p of rows){
     if(p.id===row.id||p.finished||p.pit!=='TRACK')continue;
@@ -11117,6 +11184,20 @@ function unifiedCornerPlanV11(row,G,aero,baseThrust,nominal,lateralAcceleration=
   }
   return Math.max(0,speeds[0]);
 }
+function unifiedPitLossV11(row,track){
+  const pit=track.pit;if(!pit)return Infinity;
+  const len=unifiedStateV11.path.len,normal=Math.max(28,row.v),limit=(Number(pit.speedLimitKph)||80)/3.6;
+  const laneDistance=((pit.exit-pit.entry+1)%1)*len,mergeDistance=.025*len;
+  const G=unifiedGripV11(row.ref),brake=Math.max(.1,32*G*.7),accel=Math.max(.1,14*G*.7),exit=Math.max(limit+35/3.6,140/3.6);
+  const rampDistance=(exit*exit-limit*limit)/(2*accel);
+  const mergeTime=mergeDistance<=rampDistance?(Math.sqrt(limit*limit+2*accel*mergeDistance)-limit)/accel:
+    (exit-limit)/accel+(mergeDistance-rampDistance)/exit;
+  const approach=Math.max(0,normal-limit)**2/(2*brake*normal);
+  const stopAndRestart=limit/(2*brake)+limit/(2*accel);
+  const box=Math.max(1.8,(Number(row.ref.pitBoxDurationMs)||2400)/1000);
+  const cold=(len/normal)*.55*(1/Math.sqrt(.9)-1);
+  return Math.max(0,approach+laneDistance/limit+stopAndRestart+box+mergeTime-(laneDistance+mergeDistance)/normal+cold);
+}
 function unifiedPitV11(row,now,track){
   const v=row.ref;if(row.pit!=='TRACK'||v.pitRequested||now<(Number(v.unifiedPitEvalAtV11)||0))return;
   v.unifiedPitEvalAtV11=now+1.5+unifiedRandomVehicleV11(v);
@@ -11125,14 +11206,14 @@ function unifiedPitV11(row,now,track){
   const current=unifiedTyreSpecV11(v.tyreCompound);
   const baseLap=Math.max(50,unifiedStateV11.path.len/Math.max(28,row.v));
   const stayLoss=baseLap*remaining*(1/Math.sqrt(Math.max(.5,unifiedGripV11(v)))-1);
-  const pitLoss=Math.max(23,Number(track.pit?.estimatedLossSeconds)||26);
+  const pitLoss=unifiedPitLossV11(row,track);
   const candidates=['SOFT','MEDIUM','HARD'].map(compound=>{
     const spec=unifiedTyreSpecV11(compound),endWear=spec.wear*remaining*1.1;
     const penalty=baseLap*remaining*(1/Math.sqrt(spec.grip)-1)+baseLap*remaining*.22*Math.max(0,endWear-.6);
     return {compound,benefit:stayLoss-penalty-pitLoss};
   }).sort((a,b)=>b.benefit-a.benefit);
   if(candidates[0]?.benefit>1.5&&requestPitStopV205(v.id,candidates[0].compound,'UNIFIED_V11_TIME_ADVANTAGE')){
-    unifiedStateV11.telemetry.pit.push({id:row.id,t:now,wear,benefit:candidates[0].benefit,compound:candidates[0].compound});
+    unifiedStateV11.telemetry.pit.push({id:row.id,t:now,wear,pitLossSeconds:pitLoss,benefit:candidates[0].benefit,compound:candidates[0].compound});
   }
 }
 function unifiedEnergyAndTyreV11(row,command,dt,track){
@@ -11203,6 +11284,7 @@ function simulateUnifiedRaceStepV11(stepMs){
   for(const v of raceMotionV189.vehicles){
     if(v.finished)continue;
     updatePitPreStepV205(v,stepMs);
+    unifiedOvertakeStateV11(v,track,stepMs);
     if((Number(v.pitStopCount)||0)!==(Number(v.unifiedLastPitCountV11)||0)){
       v.unifiedLastPitCountV11=Number(v.pitStopCount)||0;v.unifiedTempCV11=unifiedTyreSpecV11(v.tyreCompound).target-15;
     }
@@ -11240,10 +11322,15 @@ function simulateUnifiedRaceStepV11(stepMs){
     const request=Math.min(480000,skill+ers),extraW=request*(1-blend)+Math.min(request,limitPower)*blend;
     const traction=Math.max(0,Math.min(18*G*f,A0+extraW/(800*Math.max(20,row.v))));
     const nextCorner=unifiedCornerPlanV11(row,G,aero,A0,nominal,lane.ay,extraW);
-    const speedCap=Number.isFinite(pit.speedCapKph)?Math.min(nextCorner,pit.speedCapKph/3.6):nextCorner;
+    const pitTarget=unifiedPitTargetV11(row,track,32*G*f,nextCorner);
+    const speedCap=Number.isFinite(pit.speedCapKph)?Math.min(pitTarget,pit.speedCapKph/3.6):pitTarget;
     const flagFactor=raceFlagSpeedFactorV214();
     const target=Math.min(speedCap,nominal*flagFactor+35/3.6*(flagFactor===1?1:0));
-    const error=target-row.v,needed=unifiedClampV11(error/.25,-32*G*f,traction);
+    const error=target-row.v;
+    // Pit gates are finite stopping boundaries. Track the planned braking speed
+    // within the available force, rather than exponentially approaching zero.
+    const pitBraking=error<0&&(pit.state!=='TRACK'||v.pitRequested&&pitTarget<nextCorner);
+    const needed=unifiedClampV11(error/(pitBraking?dt:.25),-32*G*f,traction);
     const throttle=needed>=-drag?unifiedClampV11((needed+drag)/Math.max(.001,traction),0,1):0;
     const brake=needed< -drag?unifiedClampV11((-needed-drag)/Math.max(.001,32*(1+.05*unifiedRatingV11(v,'braking'))*G*f),0,1):0;
     const actualTraction=throttle*traction,actualBrake=brake*32*(1+.05*unifiedRatingV11(v,'braking'))*G*f;
@@ -11370,6 +11457,7 @@ function simulateUnifiedRaceStepV11(stepMs){
     v.battleState=String(v.unifiedAiStateV11||'CRUISE')==='PLAN_ATTACK'?'PREPARING':String(v.unifiedAiStateV11||'')==='SIDE_BY_SIDE'?'SIDE_BY_SIDE':'FOLLOWING';
     v.battleSpeedBiasKph=0;v.powerUnitFactor=1;v.longRunPaceMultiplier=1;v.raceMomentumPaceMultiplierV262=1;
   }
+  unifiedDetectionCrossingsV11(rows,stepMs,track);
   const finishedRows=unifiedSnapshotV11().filter(p=>p.pit==='TRACK'&&!p.finished);
   for(let i=0;i<finishedRows.length;i++)for(let j=i+1;j<finishedRows.length;j++){
     const a=finishedRows[i],b=finishedRows[j],oa=rows.find(x=>x.id===a.id),ob=rows.find(x=>x.id===b.id);
@@ -11395,8 +11483,9 @@ function simulateUnifiedRaceStepV11(stepMs){
   unifiedSpecialTickV11(finishedRows,dt,now);
   return true;
 }
-window.mwsF1UnifiedV11Report=()=>({engine:'unified-v1.1',revision:'world-footprint-v11',...unifiedStateV11.telemetry,
+window.mwsF1UnifiedV11Report=()=>({engine:'unified-v1.1',revision:'timing-gates-pit-v11',...unifiedStateV11.telemetry,
   seed:unifiedStateV11.rng,initialized:unifiedStateV11.initialized,
+  timingGates:raceMotionV189.vehicles.map(v=>({id:String(v.id),records:v.unifiedDetectionV11||{},eligible:Boolean(v.overtakeEligible),active:Boolean(v.overtakeActive),gapSeconds:Number.isFinite(v.overtakeGapSeconds)?v.overtakeGapSeconds:null})),
   worldGeometry:unifiedStateV11.path?{minimumForwardMetric:unifiedStateV11.path.minimumForwardMetric,scale:unifiedStateV11.path.scale}:null,
   renderOverlaps:markerOverlapReportV377(),
   screenFit:unifiedScreenFitV11(raceMotionV189.vehicles.filter(v=>!v.finished&&v.renderPointV216).map(vehicle=>({vehicle,point:vehicle.renderPointV216})),raceCameraV216.zoom),

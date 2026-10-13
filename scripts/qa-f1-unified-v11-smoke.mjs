@@ -109,11 +109,60 @@ return {accepted,v:v.speedKph,e:v.batteryMJ,actual:v.boostPowerKW};`);
 const basePower=power(false),skillPower=power(true);
 assert(basePower.accepted&&skillPower.accepted);assert(skillPower.v>basePower.v+.05,'Path planner suppressed skill acceleration');
 assert.equal(skillPower.e,0);assert(skillPower.actual>0,'Virtual power was not accounted');
+const gates=scenario(`
+raceMotionV189.vehicles=raceMotionV189.vehicles.slice(0,2);unifiedInitV11();
+track.overtakeZones=[{id:'wrap',detection:.992,start:.018,end:.094}];
+const [a,b]=raceMotionV189.vehicles;
+a.raceProgress=.993;b.raceProgress=.991;a.pitState=b.pitState='TRACK';
+simClockV192.simTimeMs=1000;
+unifiedDetectionCrossingsV11([{ref:a,s:.991*5280,pit:'TRACK'}],20,track);
+const first=a.unifiedDetectionV11.wrap;
+b.raceProgress=.993;simClockV192.simTimeMs=1500;
+unifiedDetectionCrossingsV11([{ref:b,s:.991*5280,pit:'TRACK'}],20,track);
+const recorded=b.unifiedDetectionV11.wrap,before=b.overtakeActive;
+b.raceProgress=1.03;unifiedOvertakeStateV11(b,track);const active=b.overtakeActive;
+b.speedKph=0;unifiedOvertakeStateV11(b,track);const noSpeedFallback=b.overtakeActive;
+b.pitState='PIT_ENTRY';unifiedOvertakeStateV11(b,track);const pit=b.overtakeActive;
+b.pitState='TRACK';b.raceProgress=1.095;unifiedOvertakeStateV11(b,track);const expired=b.overtakeEligible;
+b.raceProgress=2.03;unifiedOvertakeStateV11(b,track);const stale=b.overtakeActive;
+b.unifiedDetectionV11={};b.raceProgress=1.03;unifiedOvertakeStateV11(b,track);const noRecord=b.overtakeEligible;
+return {firstEligible:first.eligible,gap:recorded.gapSeconds,start:recorded.start,end:recorded.end,before,active,noSpeedFallback,pit,expired,stale,noRecord};`);
+assert.equal(gates.firstEligible,false);assert(Math.abs(gates.gap-.5)<1e-10);assert(Math.abs(gates.start-1.018)<1e-10);assert(Math.abs(gates.end-1.094)<1e-10);
+assert.equal(gates.before,false);assert.equal(gates.active,true);assert.equal(gates.noSpeedFallback,true);
+assert.equal(gates.pit,false);assert.equal(gates.expired,false);assert.equal(gates.stale,false);assert.equal(gates.noRecord,false);
+const pitPlan=scenario(`
+unifiedInitV11();track.pit={entry:.9,stop:.97,exit:.05,speedLimitKph:80};
+const v=raceMotionV189.vehicles[0];v.pitRequested=true;v.unifiedPathMetricV11=1;
+const entry=unifiedPitTargetV11({ref:v,pit:'TRACK',s:.89*5280,v:80},track,32,100);
+v.unifiedPitStopProgressV11=.97;
+const stop=unifiedPitTargetV11({ref:v,pit:'PIT_LANE',s:.97*5280-.05,v:.05},track,32,100);
+v.pitServiced=true;const release=unifiedPitTargetV11({ref:v,pit:'PIT_LANE',s:.97*5280,v:0},track,32,100);
+return {entry,stop,release};`);
+assert(pitPlan.entry<80&&pitPlan.entry>=80/3.6);assert.equal(pitPlan.stop,0);assert.equal(pitPlan.release,100);
+const pitLoss=scenario(`
+unifiedInitV11();const row=unifiedSnapshotV11()[0];row.v=60;track.pit={entry:.92,stop:.97,exit:.08,speedLimitKph:80};
+const normal=unifiedPitLossV11(row,track);track.pit.speedLimitKph=60;const slow=unifiedPitLossV11(row,track);
+track.pit.exit=.2;const long=unifiedPitLossV11(row,track);return {normal,slow,long};`);
+assert(Number.isFinite(pitLoss.normal)&&pitLoss.normal>0);assert(pitLoss.slow>pitLoss.normal);assert(pitLoss.long>pitLoss.slow);
+const gateOrder=reverse=>scenario(`
+raceMotionV189.vehicles=raceMotionV189.vehicles.slice(0,2);unifiedInitV11();
+track.overtakeZones=[{id:'g',detection:.1,start:.2,end:.3}];
+const [a,b]=raceMotionV189.vehicles;a.raceProgress=.101;b.raceProgress=.1005;simClockV192.simTimeMs=1000;
+const rows=[{ref:a,s:.099*5280,pit:'TRACK'},{ref:b,s:.099*5280,pit:'TRACK'}];
+if(${reverse})rows.reverse();unifiedDetectionCrossingsV11(rows,20,track);
+return raceMotionV189.vehicles.map(v=>v.unifiedDetectionV11.g);`);
+assert.deepEqual(gateOrder(false),gateOrder(true),'Crossing order depends on array order');
+const aeroAdapter=src.slice(src.indexOf('function updateActiveAeroAndOvertakeV202(vehicle,stepMs){'),src.indexOf('function getActiveAeroOvertakeStatesV202(){'));
+const adapterGate=new Function(setup+engine+aeroAdapter+`
+unifiedInitV11();const v=raceMotionV189.vehicles[0];v.raceProgress=.2;v.carAheadId='1';v.gapToCarAheadMeters=0;v.speedKph=300;
+track.overtakeZones=[{id:'g',detection:.1,start:.15,end:.3}];
+return updateActiveAeroAndOvertakeV202(v,1000).eligible;`)();
+assert.equal(adapterGate,false,'Exported adapter reactivated an estimated gap fallback');
 const a=trial(false),b=trial(true);
 assert.equal(a.ticks,6000);assert.equal(b.ticks,6000);assert.deepEqual(a.errors,[]);assert.deepEqual(b.errors,[]);
 assert.deepEqual(a.states,b.states,'Vehicle input order affected physical state');assert.equal(a.pitCalls,0);
 const long=trial(false,24000);
 assert.equal(long.ticks,24000);assert.deepEqual(long.errors,[]);assert(long.passes>0);
 for(const v of long.states){assert(v.e>=0&&v.e<=4);assert(v.w>=0&&v.w<=1);assert([v.s,v.y,v.v].every(Number.isFinite));}
-console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power'],
+console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order'],
  warning:'Not Chromium or a real-circuit balance/overlap verification'},null,2));

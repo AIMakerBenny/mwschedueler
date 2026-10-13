@@ -41,7 +41,8 @@ try{
   assert.equal(await page.evaluate(()=>window.mwsF1WaitGridRevealV273(20000)),true);
   await page.locator('#f1RacingGridStartRecoveryM').click();
   await page.waitForFunction(()=>window.mwsF1GetScreenStateV185()==='RACE');
-  await page.waitForFunction(()=>window.mwsF1GetSimulationClockV192().simTimeMs>=30000);
+  await page.waitForFunction(()=>window.mwsF1GetSimulationClockV192().simTimeMs>=30000||window.mwsF1UnifiedV11Report().invalid.length>0,null,{timeout:60000});
+  assert.deepEqual(await page.evaluate(()=>window.mwsF1UnifiedV11Report().invalid),[]);
   const read=()=>page.evaluate(()=>({clock:window.mwsF1GetSimulationClockV192().simTimeMs,
     state:window.mwsF1ComputeRaceStandingsV191().map(r=>({id:r.vehicle.id,s:r.vehicle.raceProgress,y:r.vehicle.unifiedYV11,
       v:r.vehicle.speedKph,E:r.vehicle.batteryMJ,w:r.vehicle.tyreWear,T:r.vehicle.unifiedTempCV11,heading:r.vehicle.unifiedHeadingV11,metric:r.vehicle.unifiedPathMetricV11,world:r.vehicle.unifiedWorldPoseV11,
@@ -98,6 +99,44 @@ try{
   });
   assert.deepEqual(pit.steps,[true,true]);assert.equal(pit.compound,'HARD');
   assert(pit.wear<.001);assert(pit.temp>=89&&pit.temp<=91);assert(pit.serviced&&pit.hud);assert.equal(pit.state,'PIT_LANE');
+  // Full pit journey from explicit, separated initial conditions, using real adapters.
+  const pitJourney=await page.evaluate(()=>{
+    const cars=window.mwsF1ComputeRaceStandingsV191().map(r=>r.vehicle),track=window.mwsGetF1TrackV182(window.mwsF1GetTrackCatalogV186()[0].id);
+    const saved=cars.map(v=>({v,state:{...v}})),v=cars[0],len=track.lengthMeters;
+    cars.forEach((car,i)=>{
+      car.startOffset=track.pit.entry-(400+i*120)/len;car.travel=0;car.raceProgress=car.startOffset;
+      car.progress=((car.raceProgress%1)+1)%1;car.speedKph=144;car.pitState='TRACK';car.pitRequested=false;
+      car.pitServiced=false;car.specialUsesV401=2;car.unifiedPitEvalAtV11=1e9;car.unifiedDetectionV11={};
+      car.unifiedYV11=0;car.unifiedVyV11=0;car.unifiedAyV11=0;car.unifiedAiAtV11=0;car.unifiedIntentUntilV11=0;
+      delete car.unifiedHeadingV11;delete car.unifiedPitStopProgressV11;
+    });
+    v.racingLineMode='OUTSIDE';
+    const requested=window.mwsF1RequestPitStopV205(v.id,'HARD','MANUAL_QA');
+    const events=[],count=v.pitStopCount;let previous=v.pitState,maxAcceleration=0,steps=0,boxDrift=0,boxStart=null,boxMoving=false;
+    window.mwsF1ToggleSimulationPauseV192(false);
+    for(let i=0;i<7000;i++){
+      const oldSpeed=v.speedKph,oldProgress=v.raceProgress;
+      if(!window.mwsF1SimulateRaceStepV192(20))break;
+      steps++;maxAcceleration=Math.max(maxAcceleration,Math.abs(v.speedKph-oldSpeed)/3.6/.02);
+      if(v.pitState!==previous){events.push({state:v.pitState,s:v.raceProgress,speed:v.speedKph,ms:window.mwsF1GetSimulationClockV192().simTimeMs});previous=v.pitState;}
+      if(v.pitState==='PIT_BOX'){
+        if(boxStart===null)boxStart=v.raceProgress;
+        boxDrift=Math.max(boxDrift,Math.abs(v.raceProgress-boxStart)*len);boxMoving ||= v.speedKph!==0;
+      }
+      if(v.pitStopCount>count&&v.pitState==='TRACK')break;
+    }
+    window.mwsF1ToggleSimulationPauseV192(true);
+    const result={requested,steps,events,maxAcceleration,boxDrift,boxMoving,serviced:v.pitStopCount===count+1,
+      compound:v.tyreCompound,restoredLine:v.racingLineMode,finalState:v.pitState,finalProgress:v.raceProgress,finalSpeed:v.speedKph,boxTarget:v.unifiedPitStopProgressV11,errors:window.mwsF1UnifiedV11Report().invalid};
+    // Restore test initialisation before checking existing finish/return flows.
+    for(const {v,state} of saved){for(const key of Object.keys(v))if(!(key in state))delete v[key];Object.assign(v,state);}
+    return result;
+  });
+  assert(pitJourney.requested&&pitJourney.serviced,JSON.stringify(pitJourney));assert.equal(pitJourney.finalState,'TRACK');
+  assert.deepEqual(pitJourney.events.map(e=>e.state),['PIT_ENTRY','PIT_LANE','PIT_BOX','PIT_LANE','PIT_EXIT','TRACK']);
+  assert(pitJourney.events[0].speed<=80+1e-6);
+  assert.equal(pitJourney.boxMoving,false);assert.equal(pitJourney.boxDrift,0);assert(pitJourney.maxAcceleration<40);
+  assert.equal(pitJourney.compound,'HARD');assert.equal(pitJourney.restoredLine,'OUTSIDE');assert.deepEqual(pitJourney.errors,[]);
   const report=await page.evaluate(()=>window.mwsF1UnifiedV11Report());
   assert.deepEqual(report.invalid,[]);assert(report.steps>0);
   assert.equal(await page.evaluate(()=>window.mwsF1ForceFinishRecoveryG()),true);
@@ -108,7 +147,7 @@ try{
   assert.equal(await page.evaluate(()=>window.mwsF1GetScreenStateV185()),'SETUP');
   assert.equal(await page.evaluate(()=>window.mwsF1GetSelectedContactIdsV181().length),12);
   assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({result:'PASS',setup,layouts,zooms,pauseResume:true,legacyGuard:true,pit,finish,
+  console.log(JSON.stringify({result:'PASS',setup,layouts,zooms,pauseResume:true,legacyGuard:true,pit,pitJourney,finish,
     simulationSeconds:report.steps*.02,physicalStops:report.collisionStops,
     warning:'Short UI integration only. Ring geometry warnings are not a zero-overlap result.'},null,2));
 }finally{await browser?.close();server.close();}
