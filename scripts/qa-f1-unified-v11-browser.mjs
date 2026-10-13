@@ -86,6 +86,27 @@ try{
     return {accepted:window.mwsF1SimulateVehicleDynamicsV196(v,20),unchanged:JSON.stringify(old)===JSON.stringify([v.travel,v.speedKph,v.unifiedYV11])};
   });
   assert.deepEqual(legacy,{accepted:false,unchanged:true});
+  const incident=await page.evaluate(()=>{
+    const v=window.mwsF1ComputeRaceStandingsV191()[0].vehicle,saved={...v};
+    v.unifiedErrorUntilV11=0;v.unifiedErrorTypeV11='';
+    const physical=JSON.stringify([v.travel,v.speedKph,v.unifiedYV11]),report=window.mwsF1UnifiedV11Report();
+    const base=report.incidents.find(r=>r.id===String(v.id)).grip;
+    const previousLog=window.mwsF1GetTechnicalCommentaryV263().length;
+    const forced=window.mwsF1ForceDrivingIncidentV204(v.id,'UNDERSTEER',.85);
+    const until=v.unifiedErrorUntilV11;
+    const adapted=window.mwsF1UpdateDrivingIncidentsV204(v,1000000,'STRAIGHT');
+    window.mwsF1UpdateRaceCommentaryV219(true);
+    const live=window.mwsF1GetTechnicalCommentaryV263().slice(previousLog);
+    const active=window.mwsF1GetDrivingIncidentStatesV204().find(r=>r.id===v.id).active;
+    const grip=window.mwsF1UnifiedV11Report().incidents.find(r=>r.id===String(v.id)).grip;
+    const result={forced,active,base,grip,adapted,clockPreserved:until===v.unifiedErrorUntilV11,
+      physicalPreserved:physical===JSON.stringify([v.travel,v.speedKph,v.unifiedYV11]),live};
+    for(const key of Object.keys(v))if(!(key in saved))delete v[key];Object.assign(v,saved);
+    return result;
+  });
+  assert.equal(incident.forced.type,'UNDERSTEER');assert.equal(incident.active,'UNDERSTEER');
+  assert(incident.grip<incident.base);assert(incident.clockPreserved&&incident.physicalPreserved);
+  assert.equal(incident.adapted.speedFactor,1);assert(incident.live.some(row=>JSON.stringify(row).includes('언더스티어')));
   // Explicit service fixture, separate from the preceding unmodified LIVE drive.
   const pit=await page.evaluate(()=>{
     const v=window.mwsF1ComputeRaceStandingsV191()[0].vehicle;
@@ -100,13 +121,18 @@ try{
   assert.deepEqual(pit.steps,[true,true]);assert.equal(pit.compound,'HARD');
   assert(pit.wear<.001);assert(pit.temp>=89&&pit.temp<=91);assert(pit.serviced&&pit.hud);assert.equal(pit.state,'PIT_LANE');
   // Full pit journey from explicit, separated initial conditions, using real adapters.
-  const pitJourney=await page.evaluate(()=>{
+  const pitJourney=await page.evaluate(initialState=>{
     const cars=window.mwsF1ComputeRaceStandingsV191().map(r=>r.vehicle),track=window.mwsGetF1TrackV182(window.mwsF1GetTrackCatalogV186()[0].id);
+    if(initialState==='FIXED')cars.sort((a,b)=>String(a.id).localeCompare(String(b.id)));
     const saved=cars.map(v=>({v,state:{...v}})),v=cars[0],len=track.lengthMeters;
     cars.forEach((car,i)=>{
       car.startOffset=track.pit.entry-(400+i*120)/len;car.travel=0;car.raceProgress=car.startOffset;
       car.progress=((car.raceProgress%1)+1)%1;car.speedKph=144;car.pitState='TRACK';car.pitRequested=false;
-      car.pitServiced=false;car.specialUsesV401=2;car.unifiedPitEvalAtV11=1e9;car.unifiedDetectionV11={};
+      car.pitServiced=false;
+      if(initialState==='FIXED'){car.tyreCompound='MEDIUM';car.tyreWear=.1;car.unifiedTempCV11=100;
+      car.tyreWarmupFactor=1;car.pitWarmupRemainingLaps=0;car.unifiedRngV11=(i+1)*7919;car.driverRandomState=(i+1)*104729;car.unifiedFormV11=1;
+      car.unifiedErrorUntilV11=0;car.unifiedErrorCooldownV11=0;car.unifiedErrorTypeV11='';}
+      car.specialUsesV401=2;car.unifiedPitEvalAtV11=1e9;car.unifiedDetectionV11={};
       car.unifiedYV11=0;car.unifiedVyV11=0;car.unifiedAyV11=0;car.unifiedAiAtV11=0;car.unifiedIntentUntilV11=0;
       delete car.unifiedHeadingV11;delete car.unifiedPitStopProgressV11;
     });
@@ -126,13 +152,13 @@ try{
       if(v.pitStopCount>count&&v.pitState==='TRACK')break;
     }
     window.mwsF1ToggleSimulationPauseV192(true);
-    const result={requested,steps,events,maxAcceleration,boxDrift,boxMoving,serviced:v.pitStopCount===count+1,
+    const result={initialState,requested,steps,events,maxAcceleration,boxDrift,boxMoving,serviced:v.pitStopCount===count+1,
       compound:v.tyreCompound,restoredLine:v.racingLineMode,finalState:v.pitState,finalProgress:v.raceProgress,finalSpeed:v.speedKph,boxTarget:v.unifiedPitStopProgressV11,errors:window.mwsF1UnifiedV11Report().invalid};
     // Restore test initialisation before checking existing finish/return flows.
     for(const {v,state} of saved){for(const key of Object.keys(v))if(!(key in state))delete v[key];Object.assign(v,state);}
     return result;
-  });
-  assert(pitJourney.requested&&pitJourney.serviced,JSON.stringify(pitJourney));assert.equal(pitJourney.finalState,'TRACK');
+  },process.env.MWS_QA_PIT_INITIAL_STATE||'FIXED');
+  assert(pitJourney.requested&&pitJourney.serviced,JSON.stringify(pitJourney));assert.equal(pitJourney.finalState,'TRACK',JSON.stringify(pitJourney));
   assert.deepEqual(pitJourney.events.map(e=>e.state),['PIT_ENTRY','PIT_LANE','PIT_BOX','PIT_LANE','PIT_EXIT','TRACK']);
   assert(pitJourney.events[0].speed<=80+1e-6);
   assert.equal(pitJourney.boxMoving,false);assert.equal(pitJourney.boxDrift,0);assert(pitJourney.maxAcceleration<40);
@@ -147,7 +173,7 @@ try{
   assert.equal(await page.evaluate(()=>window.mwsF1GetScreenStateV185()),'SETUP');
   assert.equal(await page.evaluate(()=>window.mwsF1GetSelectedContactIdsV181().length),12);
   assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({result:'PASS',setup,layouts,zooms,pauseResume:true,legacyGuard:true,pit,pitJourney,finish,
+  console.log(JSON.stringify({result:'PASS',setup,layouts,zooms,pauseResume:true,legacyGuard:true,incident,pit,pitJourney,finish,
     simulationSeconds:report.steps*.02,physicalStops:report.collisionStops,
     warning:'Short UI integration only. Ring geometry warnings are not a zero-overlap result.'},null,2));
 }finally{await browser?.close();server.close();}

@@ -31,13 +31,21 @@ let minimumMetric=Infinity;
 for(const sample of all)for(const y of [-bound,0,bound]){
  const p=unifiedPathSampleV11(sample.s);minimumMetric=Math.min(minimumMetric,(p.dx+y*p.dnx)*p.tx+(p.dy+y*p.dny)*p.ty);
 }
+let slowRotation=null;
+if(track.id==='majoku-ring-v1'){
+ const a={s:5115.50089654988,y:-2.260609965360307,v:.5712807520623883,ref:{unifiedHeadingV11:-2.759027228798836}};
+ const b={s:5121.056960367654,y:-3.7184049460479036,v:.22560219150729832,ref:{unifiedHeadingV11:-2.8206645264317998}};
+ const ca=unifiedMotionV11(a,{v:0,y:-2.258672007780926},.02),cb=unifiedMotionV11(b,{v:.19857458114995863,y:b.y},.02);
+ slowRotation={before:unifiedSweptWorldV11(a,{...ca,heading:ca.velocityHeading},b,{...cb,heading:cb.velocityHeading}),after:unifiedSweptWorldV11(a,ca,b,cb),delta:unifiedAngleV11(ca.heading-a.ref.unifiedHeadingV11)};
+}
 let ticks=0;for(let i=0;i<1500;i++){if(!simulateUnifiedRaceStepV11(20))break;ticks++;}
-return {track:track.id,ticks,minimumMetric,errors:unifiedStateV11.telemetry.invalid,steps:unifiedStateV11.telemetry.steps,
+return {track:track.id,ticks,minimumMetric,slowRotation,errors:unifiedStateV11.telemetry.invalid,steps:unifiedStateV11.telemetry.steps,
  states:raceMotionV189.vehicles.map(v=>({s:v.raceProgress,v:v.speedKph,y:v.unifiedYV11,heading:v.unifiedHeadingV11,J:v.unifiedPathMetricV11,
  x:v.unifiedWorldPoseV11?.x,z:v.unifiedWorldPoseV11?.y}))};`;
       return new Function('fixtureTrack','fixturePath',fixture+engine+body)(track,svgPath);
     },{track,fixture,engine});
-    console.log(JSON.stringify({track:result.track,ticks:result.ticks,minimumMetric:result.minimumMetric,errors:result.errors}));
+    console.log(JSON.stringify({track:result.track,ticks:result.ticks,minimumMetric:result.minimumMetric,slowRotation:result.slowRotation,errors:result.errors}));
+    if(result.slowRotation){assert.equal(result.slowRotation.before,true);assert.equal(result.slowRotation.after,false);}
     assert.equal(result.ticks,1500,result.track+' stopped early');assert.deepEqual(result.errors,[]);
     assert(result.minimumMetric>.2,result.track+' offset path is singular');
     for(const state of result.states)assert(Object.values(state).every(Number.isFinite));

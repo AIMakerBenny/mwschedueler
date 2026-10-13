@@ -158,11 +158,77 @@ unifiedInitV11();const v=raceMotionV189.vehicles[0];v.raceProgress=.2;v.carAhead
 track.overtakeZones=[{id:'g',detection:.1,start:.15,end:.3}];
 return updateActiveAeroAndOvertakeV202(v,1000).eligible;`)();
 assert.equal(adapterGate,false,'Exported adapter reactivated an estimated gap fallback');
+const gripEffects=scenario(`
+unifiedInitV11();const v=raceMotionV189.vehicles[0];v.tyreCompound='MEDIUM';v.tyreWear=0;v.unifiedTempCV11=100;
+v.tyreWarmupFactor=1;simClockV192.simTimeMs=2000;const warm=unifiedGripV11(v);
+v.tyreWarmupFactor=.9;const cold=unifiedGripV11(v);
+unifiedBeginErrorV11(v,'UNDERSTEER',2,true);const under=unifiedGripV11(v);
+const count=v.understeerCount,active=unifiedActiveErrorV11(v),name=unifiedIncidentNameV11(active);
+simClockV192.simTimeMs=4000;const expired=unifiedActiveErrorV11(v),recovered=unifiedGripV11(v);
+v.pitState='PIT_LANE';const reject=unifiedBeginErrorV11(v,'LOCK_UP',4,true);
+return {warm,cold,under,count,active,name,expired,recovered,reject};`);
+assert.equal(gripEffects.warm,1);assert.equal(gripEffects.cold,.9);assert.equal(gripEffects.under,.9*.91);
+assert.equal(gripEffects.count,1);assert.equal(gripEffects.name,'UNDERSTEER');assert.equal(gripEffects.expired,'');
+assert.equal(gripEffects.recovered,.9);assert.equal(gripEffects.reject,'');
+const phaseSetup=setup.replace("const getCornerPhaseAtProgressV194=()=>({phase:'STRAIGHT',corner:null});", "let qaPhase='STRAIGHT';const getCornerPhaseAtProgressV194=()=>({phase:qaPhase,corner:null});");
+const phaseErrors=new Function(phaseSetup+engine+`
+raceMotionV189.vehicles=raceMotionV189.vehicles.slice(0,1);unifiedInitV11();
+const v=raceMotionV189.vehicles[0],row=unifiedSnapshotV11()[0];row.v=50;unifiedRandomVehicleV11=()=>0;
+let result=[];for(const phase of ['STRAIGHT','BRAKING','TURN_IN','EXIT']){
+ qaPhase=phase;v.unifiedErrorUntilV11=0;v.unifiedErrorCooldownV11=0;simClockV192.simTimeMs=2000;
+ result.push(unifiedDrivingErrorV11(row,[row],.02,2));
+}
+row.pit='PIT_LANE';v.pitState='PIT_LANE';const pit=unifiedDrivingErrorV11(row,[row],.02,2);
+return {result,pit,sequence:v.unifiedIncidentSequenceV11};`)();
+assert.deepEqual(phaseErrors.result,['','LOCKUP','UNDERSTEER','EXIT_ERROR']);assert.equal(phaseErrors.pit,'');assert.equal(phaseErrors.sequence,3);
+const incidentAdapters=src.slice(src.indexOf('function activeDrivingIncidentV204(vehicle){'),src.indexOf('function getDrivingIncidentStatesV204(){'));
+const adapted=new Function(setup+engine+incidentAdapters+`
+unifiedInitV11();const v=raceMotionV189.vehicles[0];simClockV192.simTimeMs=1000;
+const forced=triggerDrivingIncidentV204(v,'LOCK_UP',.85,true),until=v.unifiedErrorUntilV11;
+const physical=[v.raceProgress,v.speedKph,v.unifiedYV11],state=updateDrivingIncidentsV204(v,1e6,'STRAIGHT');
+v.lockupActiveMs=99999;simClockV192.simTimeMs=2000;
+return {forced,until,unchanged:until===v.unifiedErrorUntilV11&&JSON.stringify(physical)===JSON.stringify([v.raceProgress,v.speedKph,v.unifiedYV11]),state,expired:activeDrivingIncidentV204(v),count:v.lockupCount};`)();
+assert.equal(adapted.forced.type,'LOCK_UP');assert.equal(adapted.count,1);assert.equal(adapted.unchanged,true);assert.equal(adapted.expired,'');
+assert.equal(adapted.state.active,'LOCK_UP');assert.equal(adapted.state.speedFactor,1);assert.equal(adapted.state.brakeFactor,1);
+const passAdapter=src.slice(src.indexOf('function commentaryPassTargetV230(vehicle,previous,byId){'),src.indexOf('function qaCommentaryEventOrderV230(){'));
+const actualTarget=new Function(setup+engine+passAdapter+`
+return commentaryPassTargetV230({id:'self',unifiedPassedIdV11:'actual',carAheadId:'next'}, {carAheadId:'wrong'},new Map([['actual',{id:'actual'}],['wrong',{id:'wrong'}],['next',{id:'next'}]])).id;`)();
+assert.equal(actualTarget,'actual');
+const frictionTrial=(warmup,braking)=>new Function((braking?setup.replace('raceFlagSpeedFactorV214=()=>1','raceFlagSpeedFactorV214=()=>.3'):setup)+engine+`
+raceMotionV189.vehicles=raceMotionV189.vehicles.slice(0,1);unifiedInitV11();
+const v=raceMotionV189.vehicles[0];v.tyreCompound='MEDIUM';v.tyreWear=0;v.unifiedTempCV11=100;v.tyreWarmupFactor=${warmup};
+v.speedKph=${braking?320:150};v.batteryMJ=0;simClockV192.simTimeMs=1000;v.specialUntilV401=11000;
+const accepted=simulateUnifiedRaceStepV11(20);return {accepted,v:v.speedKph,a:v.accelerationMps2};`)();
+const warmDrive=frictionTrial(1,false),coldDrive=frictionTrial(.9,false),warmBrake=frictionTrial(1,true),coldBrake=frictionTrial(.9,true);
+assert(warmDrive.accepted&&coldDrive.accepted&&warmBrake.accepted&&coldBrake.accepted);
+assert(coldDrive.v<warmDrive.v,'Cold tyre factor did not reach actual traction');
+assert(coldBrake.v>warmBrake.v&&warmBrake.a<0&&coldBrake.a<0,'Cold tyre factor did not reach actual braking');
+const commentaryAdapters=src.slice(src.indexOf('function commentaryVehicleStateV219(vehicle){'),src.indexOf('function pitCommentaryEventV230('))+
+ src.slice(src.indexOf('function incidentCommentaryTextV219(type,name){'),src.indexOf('function qaRaceCommentaryV219(){'));
+const shortEvents=new Function(setup.replace('updateRaceCommentaryV219=()=>{},','')+engine+incidentAdapters+commentaryAdapters+`
+raceMotionV189.vehicles=raceMotionV189.vehicles.slice(0,1);unifiedInitV11();const v=raceMotionV189.vehicles[0];
+const messages=[],recordTechnicalCommentaryV263=(text,type)=>messages.push({text,type}),emitRaceNarrativeV263=()=>{},appendRaceCommentaryV219=()=>{};
+const computeRaceStandingsV191=()=>[{vehicle:v}],commentaryStateV219={initialized:true,lastPollSimMs:0,lastLeaderId:'',lastLeaderLap:0,lastFlag:'GREEN',vehicle:new Map([[v.id,commentaryVehicleStateV219(v)]])};
+simClockV192.simTimeMs=2000;triggerDrivingIncidentV204(v,'LOCK_UP',.85,true);
+simClockV192.simTimeMs=2300;updateRaceCommentaryV219(true);
+simClockV192.simTimeMs=2400;triggerDrivingIncidentV204(v,'LOCK_UP',.85,true);
+simClockV192.simTimeMs=2700;updateRaceCommentaryV219(true);updateRaceCommentaryV219(true);
+return messages;`)();
+assert.equal(shortEvents.length,2,'Short or repeated incident was missed or emitted twice');
+assert(shortEvents.every(r=>r.type==='MISTAKE'&&r.text.includes('타이어를 잠갔')));
+const slowYaw=scenario(`
+unifiedInitV11();const v=raceMotionV189.vehicles[0],s=100,p=unifiedPathSampleV11(s),base=Math.atan2(p.ty,p.tx);
+v.unifiedHeadingV11=base+.06;
+const row={s,y:0,v:.571280752,ref:v},cmd={v:0,y:.001938,vy:.0969};unifiedMotionV11(row,cmd,.02);
+const end=unifiedPathSampleV11(s+cmd.ds),relative=cmd.heading-Math.atan2(end.ty,end.tx),delta=unifiedAngleV11(relative-.06);
+const stopped={s,y:0,v:0,ref:v},still=unifiedMotionV11(stopped,{v:0,y:0},.02);
+return {delta,bound:cmd.pathDistance/UNIFIED_ENGINE_V11.physicalLength,velocityDelta:Math.abs(cmd.velocityHeading-base),stationaryDelta:unifiedAngleV11(still.heading-v.unifiedHeadingV11)};`);
+assert(Math.abs(slowYaw.delta)<=slowYaw.bound+1e-12);assert(slowYaw.velocityDelta>.1);assert(Math.abs(slowYaw.stationaryDelta)<1e-12);
 const a=trial(false),b=trial(true);
 assert.equal(a.ticks,6000);assert.equal(b.ticks,6000);assert.deepEqual(a.errors,[]);assert.deepEqual(b.errors,[]);
 assert.deepEqual(a.states,b.states,'Vehicle input order affected physical state');assert.equal(a.pitCalls,0);
 const long=trial(false,24000);
 assert.equal(long.ticks,24000);assert.deepEqual(long.errors,[]);assert(long.passes>0);
 for(const v of long.states){assert(v.e>=0&&v.e<=4);assert(v.w>=0&&v.w<=1);assert([v.s,v.y,v.v].every(Number.isFinite));}
-console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order'],
+console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw'],
  warning:'Not Chromium or a real-circuit balance/overlap verification'},null,2));
