@@ -5,7 +5,10 @@ export const src=fs.readFileSync(new URL('../assets/f1-racing-v1.js',import.meta
 new Function(src);
 const start=src.indexOf('// Unified redesign v1.1.'),end=src.indexOf('function simulateRaceStepV192(stepMs){',start);
 assert(start>0&&end>start&&src.includes('return simulateUnifiedRaceStepV11(stepMs)'));
-export const engine=src.slice(start,end);
+// Reuse only the existing pure line geometry; legacy speed/cap functions are excluded.
+const lineConfig=src.slice(src.indexOf('const CORNER_DYNAMICS_V343='),src.indexOf('const TYRE_DYNAMICS_V343='));
+const lineGeometry=src.slice(src.indexOf('function alignedCornerDistanceV270('),src.indexOf('function idealRacingLineOffsetV270('));
+export const engine=lineConfig+lineGeometry+src.slice(start,end);
 export const setup=String.raw`
 const raceMarkerScaleV245=z=>Math.max(.22,Math.min(1,1/Math.max(1,z)));
 const window={},TRACK_PRESENTATION_V365={visualWidthScale:1},MARKER_OVERLAP_MONITOR_V377={ringRadiusSvg:18,clearanceMultiplier:1.03,maxZoom:4.5},simClockV192={paused:false,simTimeMs:0},engineQaV240={active:true};

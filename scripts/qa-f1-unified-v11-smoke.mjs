@@ -224,11 +224,71 @@ const end=unifiedPathSampleV11(s+cmd.ds),relative=cmd.heading-Math.atan2(end.ty,
 const stopped={s,y:0,v:0,ref:v},still=unifiedMotionV11(stopped,{v:0,y:0},.02);
 return {delta,bound:cmd.pathDistance/UNIFIED_ENGINE_V11.physicalLength,velocityDelta:Math.abs(cmd.velocityHeading-base),stationaryDelta:unifiedAngleV11(still.heading-v.unifiedHeadingV11)};`);
 assert(Math.abs(slowYaw.delta)<=slowYaw.bound+1e-12);assert(slowYaw.velocityDelta>.1);assert(Math.abs(slowYaw.stationaryDelta)<1e-12);
+const lineSetup=direction=>(direction==='right'?setup.replace('Math.sin(n/1000*2*Math.PI)','Math.sin(-n/1000*2*Math.PI)'):setup).replace("const getCornerPhaseAtProgressV194=()=>({phase:'STRAIGHT',corner:null});", `
+const lineCorner={direction:'${direction}',approachDistanceMeters:100,turnInDistanceMeters:300,apexDistanceMeters:600,exitDistanceMeters:900};
+const getCornerPhaseAtProgressV194=p=>{
+ const s=((p%1)+1)%1*5280;
+ return s<100||s>900?null:{corner:lineCorner,phase:s<300?'BRAKING':s<600?'TURN_IN':s<=600?'APEX':'EXIT'};
+};`);
+const lineTargets=direction=>new Function(lineSetup(direction)+engine+`
+unifiedInitV11();const row=unifiedSnapshotV11()[0];
+return [150,600,880].map(s=>unifiedIdealLaneV11(row,14,s));`)();
+const leftLine=lineTargets('left'),rightLine=lineTargets('right');
+assert(leftLine[0]<0&&leftLine[1]>0&&leftLine[2]<0,'Left corner did not use out-in-out');
+assert(rightLine[0]>0&&rightLine[1]<0&&rightLine[2]>0,'Right corner did not use out-in-out');
+for(let i=0;i<3;i++)assert(Math.abs(leftLine[i]+rightLine[i])<1e-12);
+const lineDrive=direction=>new Function(lineSetup(direction)+engine+`
+raceMotionV189.vehicles=raceMotionV189.vehicles.slice(0,1);track.geometry.maxStraightKph=72;unifiedInitV11();
+const v=raceMotionV189.vehicles[0];v.specialUsesV401=2;const observations=[];let maxDy=0,oldY=0;
+for(let i=0;i<2000;i++){
+ if(!simulateUnifiedRaceStepV11(20))break;
+ maxDy=Math.max(maxDy,Math.abs(v.unifiedYV11-oldY));oldY=v.unifiedYV11;
+ const at=v.raceProgress*5280;
+ if(observations.length===0&&at>=220||observations.length===1&&at>=600||observations.length===2&&at>=880)observations.push({s:at,y:v.unifiedYV11});
+ if(observations.length===3)break;
+}
+return {observations,maxDy,errors:unifiedStateV11.telemetry.invalid};`)();
+const leftMotion=lineDrive('left'),rightMotion=lineDrive('right');
+for(const motion of [leftMotion,rightMotion]){assert.deepEqual(motion.errors,[]);assert.equal(motion.observations.length,3);assert(motion.maxDy<=.05+1e-12,'Corner line teleported across lanes');}
+assert(leftMotion.observations[0].y<0&&leftMotion.observations[1].y>0&&leftMotion.observations[2].y<0,'Executed left line did not follow out-in-out');
+assert(rightMotion.observations[0].y>0&&rightMotion.observations[1].y<0&&rightMotion.observations[2].y>0,'Executed right line did not follow out-in-out');
+const mergeTargets=scenario(`
+raceMotionV189.vehicles=raceMotionV189.vehicles.slice(0,2);unifiedInitV11();
+const a={...unifiedSnapshotV11()[0],s:100,y:-4.5,v:40},b={...unifiedSnapshotV11()[1],s:120,y:0,v:40,pit:'PIT_BOX'};
+const blocked=unifiedMergeTargetV11(a,3,[a,b]);b.finished=true;
+const clear=unifiedMergeTargetV11(a,3,[a,b]);
+return {blocked,clear};`);
+assert.equal(mergeTargets.blocked.target,-4.5);assert.deepEqual(mergeTargets.blocked.blocked,['1']);assert.equal(mergeTargets.clear.target,3);
+const thirdCar=reverse=>scenario(`
+raceMotionV189.vehicles=raceMotionV189.vehicles.slice(0,3);
+const [me,a,b]=raceMotionV189.vehicles;
+me.startOffset=0;me.raceProgress=0;me.speedKph=216;me.driverProfile.pace=95;
+a.startOffset=30/5280;a.raceProgress=a.startOffset;a.speedKph=180;a.lateralOffsetMeters=-4.5;
+b.startOffset=35/5280;b.raceProgress=b.startOffset;b.speedKph=180;b.lateralOffsetMeters=4.5;
+if(${reverse})raceMotionV189.vehicles.reverse();unifiedInitV11();
+a.unifiedAiAtV11=b.unifiedAiAtV11=1e9;a.unifiedLaneTargetV11=-4.5;b.unifiedLaneTargetV11=4.5;a.batteryMJ=b.batteryMJ=0;
+simClockV192.simTimeMs=2000;
+const row=unifiedSnapshotV11().find(r=>r.id===me.id),target=unifiedChooseLaneV11(row,unifiedSnapshotV11(),2,14);
+let ticks=0;for(let i=0;i<600;i++){if(!simulateUnifiedRaceStepV11(20))break;ticks++;}
+return {target,ticks,passes:unifiedStateV11.telemetry.passes,errors:unifiedStateV11.telemetry.invalid,states:unifiedSnapshotV11().map(r=>({id:r.id,s:r.s,y:r.y,v:r.v}))};`);
+const thirdForward=thirdCar(false),thirdReverse=thirdCar(true);
+assert.equal(thirdForward.target,0);assert.equal(thirdForward.ticks,600);assert.deepEqual(thirdForward.errors,[]);
+assert(thirdForward.passes.some(p=>p.front==='0'&&p.passed==='1')&&thirdForward.passes.some(p=>p.front==='0'&&p.passed==='2'),'Third car did not pass both outer cars');
+assert.deepEqual(thirdForward,thirdReverse,'Third-car passage depends on input order');
+const narrowThird=scenario(`
+raceMotionV189.vehicles=raceMotionV189.vehicles.slice(0,3);track.geometry.trackWidthMeters=10;unifiedInitV11();
+const rows=unifiedSnapshotV11().map(row=>({...row}));rows[0].s=100;rows[0].v=50;rows[0].y=0;
+rows[1].s=110;rows[1].v=40;rows[1].y=-2.5;
+rows[2].s=120;rows[2].v=40;rows[2].y=2.5;
+for(const row of rows)row.ref.unifiedHeadingV11=unifiedWorldPoseV11(100,0).heading;
+const gap=unifiedLateralClearanceV11(rows[0],rows[1]);
+return {gap,target:unifiedChooseLaneV11(rows[0],rows,2,10),state:rows[0].ref.unifiedAiStateV11};`);
+assert(Math.abs(narrowThird.gap-2.3)<1e-10,JSON.stringify(narrowThird));assert.equal(narrowThird.target,0);assert.equal(narrowThird.state,'SIDE_BY_SIDE');
 const a=trial(false),b=trial(true);
 assert.equal(a.ticks,6000);assert.equal(b.ticks,6000);assert.deepEqual(a.errors,[]);assert.deepEqual(b.errors,[]);
 assert.deepEqual(a.states,b.states,'Vehicle input order affected physical state');assert.equal(a.pitCalls,0);
 const long=trial(false,24000);
 assert.equal(long.ticks,24000);assert.deepEqual(long.errors,[]);assert(long.passes>0);
 for(const v of long.states){assert(v.e>=0&&v.e<=4);assert(v.w>=0&&v.w<=1);assert([v.s,v.y,v.v].every(Number.isFinite));}
-console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw'],
+console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane'],
  warning:'Not Chromium or a real-circuit balance/overlap verification'},null,2));

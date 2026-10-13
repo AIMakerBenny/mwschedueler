@@ -164,6 +164,9 @@ try{
   assert.equal(pitJourney.boxMoving,false);assert.equal(pitJourney.boxDrift,0);assert(pitJourney.maxAcceleration<40);
   assert.equal(pitJourney.compound,'HARD');assert.equal(pitJourney.restoredLine,'OUTSIDE');assert.deepEqual(pitJourney.errors,[]);
   const report=await page.evaluate(()=>window.mwsF1UnifiedV11Report());
+  assert(report.worldGeometry.idealLineRange.some(v=>Math.abs(v)>.1),'Actual UI corner line geometry missing');
+  assert.equal(report.lanes.length,12);
+  for(const lane of report.lanes)assert([lane.actual,lane.ideal,lane.target].every(Number.isFinite));
   assert.deepEqual(report.invalid,[]);assert(report.steps>0);
   assert.equal(await page.evaluate(()=>window.mwsF1ForceFinishRecoveryG()),true);
   const finish=await page.evaluate(()=>({overlay:!!document.getElementById('f1RacingFinishOverlayV291'),

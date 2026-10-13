@@ -10868,7 +10868,10 @@ function unifiedInitV11(){
     const back=pts[(i-3+count)%count],ahead=pts[(i+3)%count];
     const dx1=p.x-back.x,dy1=p.y-back.y,dx2=ahead.x-p.x,dy2=ahead.y-p.y;
     const cross=dx1*dy2-dy1*dx2,dot=dx1*dx2+dy1*dy2;
-    return {...p,k:Math.atan2(cross,dot)/(3*len/count)};
+    const phaseInfo=getCornerPhaseAtProgressV194(i/count);
+    const idealUnit=phaseInfo?.corner&&['left','right'].includes(phaseInfo.corner.direction)?
+      idealRacingLineOffsetV343({progress:i/count},1,phaseInfo):0;
+    return {...p,k:Math.atan2(cross,dot)/(3*len/count),idealUnit:unifiedClampV11(idealUnit,-1,1)};
   });
   const scale=len/svgLen,spacing=len/count;
   for(let i=0;i<count;i++){
@@ -10884,7 +10887,7 @@ function unifiedInitV11(){
     const minimumNorm=Math.sqrt(Math.max(1e-9,(1+a.tx*b.tx+a.ty*b.ty)/2));
     maxNormalRate=Math.max(maxNormalRate,Math.hypot(b.tx-a.tx,b.ty-a.ty)/(spacing*minimumNorm));
   }
-  unifiedStateV11.path={samples,len,step:spacing,scale,maxCenterRate,maxNormalRate};
+  unifiedStateV11.path={samples,len,step:spacing,scale,maxCenterRate,maxNormalRate,idealLineRange:[Math.min(...samples.map(p=>p.idealUnit)),Math.max(...samples.map(p=>p.idealUnit))]};
   const allowedOffset=Math.max(0,(Number(track.geometry?.trackWidthMeters)||14)/2-2.5);
   let minimumForwardMetric=Infinity;
   for(const p of samples)for(const y of [-allowedOffset,allowedOffset]){
@@ -10911,7 +10914,7 @@ function unifiedInitV11(){
     v.unifiedFormV11=1+((seed%1201)/1200*2-1)*.006;
     v.unifiedYV11=Number(v.lateralOffsetMeters)||0;v.unifiedVyV11=0;v.unifiedAyV11=0;
     v.unifiedHeadingV11=unifiedWorldPoseV11(Number(v.raceProgress)*len,v.unifiedYV11).heading;
-    v.unifiedAiAtV11=0;v.unifiedIntentUntilV11=0;v.unifiedLaneTargetV11=v.unifiedYV11;
+    v.unifiedAiAtV11=0;v.unifiedIntentUntilV11=0;v.unifiedLaneTargetV11=v.unifiedYV11;v.unifiedIdealLaneV11=0;v.unifiedMergeBlockedV11=[];
     v.unifiedErrorUntilV11=0;v.unifiedErrorTypeV11='';v.unifiedErrorCooldownV11=0;
     v.unifiedLastCornerV11='';v.unifiedBrakeErrorMetersV11=0;
     v.unifiedPitEvalAtV11=.6+((seed>>>8)%190)/100;
@@ -10929,7 +10932,7 @@ function unifiedPathSampleV11(s){
   const vx=a.tx*(1-t)+b.tx*t,vy=a.ty*(1-t)+b.ty*t,norm=Math.max(1e-9,Math.hypot(vx,vy));
   const tx=vx/norm,ty=vy/norm,dtx=(b.tx-a.tx)/path.step,dty=(b.ty-a.ty)/path.step;
   const dot=tx*dtx+ty*dty,txPrime=(dtx-tx*dot)/norm,tyPrime=(dty-ty*dot)/norm;
-  return {k:a.k*(1-t)+b.k*t,x:a.x*(1-t)+b.x*t,y:a.y*(1-t)+b.y*t,tx,ty,
+  return {k:a.k*(1-t)+b.k*t,idealUnit:a.idealUnit*(1-t)+b.idealUnit*t,x:a.x*(1-t)+b.x*t,y:a.y*(1-t)+b.y*t,tx,ty,
     dx:(b.x-a.x)*path.scale/path.step,dy:(b.y-a.y)*path.scale/path.step,
     nx:-ty,ny:tx,dnx:-tyPrime,dny:txPrime};
 }
@@ -11105,22 +11108,48 @@ function unifiedAeroV11(row,rows){
   }
   return {tow,dirty};
 }
+function unifiedIdealLaneV11(row,width,s=row.s){
+  const allowed=Math.max(0,width/2-1.5-UNIFIED_ENGINE_V11.physicalWidth/2);
+  return s<0?0:unifiedPathSampleV11(s).idealUnit*allowed;
+}
+function unifiedLateralClearanceV11(row,peer){
+  const path=unifiedPathSampleV11(row.s),pose=unifiedWorldPoseV11(row.s,row.y,row.ref.unifiedHeadingV11);
+  const other=unifiedWorldPoseV11(peer.s,peer.y,peer.ref.unifiedHeadingV11);
+  return unifiedSupportV11(pose,path.nx,path.ny)+unifiedSupportV11(other,path.nx,path.ny);
+}
+function unifiedMergeTargetV11(row,target,rows){
+  const blocked=[];
+  for(const peer of rows){
+    if(peer.id===row.id||peer.finished)continue;
+    if(Math.abs(unifiedGapV11(row,peer))>=Math.max(60,row.v*.9))continue;
+    const initial=row.y-peer.y,desired=target-peer.y;
+    // Vehicles already sharing a longitudinal lane may follow its common line.
+    if(Math.abs(initial)<.25||Math.abs(desired)>=Math.abs(initial)&&initial*desired>0)continue;
+    const required=unifiedLateralClearanceV11(row,peer);
+    if(initial*desired<=0||Math.abs(desired)<required)blocked.push(peer.id);
+  }
+  return {target:blocked.length?row.y:target,blocked:blocked.sort()};
+}
 function unifiedChooseLaneV11(row,rows,now,width){
   const v=row.ref,allowed=Math.max(0,width/2-1.5-UNIFIED_ENGINE_V11.physicalWidth/2);
-  if(now<(Number(v.unifiedIntentUntilV11)||0))return unifiedClampV11(Number(v.unifiedLaneTargetV11)||0,-allowed,allowed);
+  const ideal=unifiedIdealLaneV11(row,width);v.unifiedIdealLaneV11=ideal;
+  if(row.pit==='TRACK'&&!v.pitRequested&&['PLAN_ATTACK','SIDE_BY_SIDE'].includes(v.unifiedAiStateV11)&&now<(Number(v.unifiedIntentUntilV11)||0)){
+    const held=unifiedMergeTargetV11(row,unifiedClampV11(Number(v.unifiedLaneTargetV11)||0,-allowed,allowed),rows);
+    v.unifiedMergeBlockedV11=held.blocked;v.unifiedLaneTargetV11=held.target;return held.target;
+  }
   const next=rows.filter(p=>p.id!==row.id&&!p.finished&&p.pit==='TRACK'&&unifiedGapV11(row,p)>0&&unifiedGapV11(row,p)<145).sort((a,b)=>unifiedGapV11(row,a)-unifiedGapV11(row,b))[0];
-  let target=0,state='CRUISE';
+  let target=ideal,state='CRUISE';
   if(next){
     state='FOLLOW';
     const gap=unifiedGapV11(row,next),aggression=unifiedRatingV11(v,'aggression'),skill=unifiedRatingV11(v,'racecraft');
     const attack=gap<120+20*Math.max(0,aggression)+20*Math.max(0,skill)&&
       (row.v>next.v-1.2-1.0*skill||unifiedSkillPowerV11(v,now*1000,row.pit)>0);
     if(attack){
-      const candidate=[-allowed,allowed].map(y=>{
-        let penalty=0;
+      const candidate=[...new Set([-allowed,0,allowed])].map(y=>{
+        let penalty=Math.abs(next.y-y)<unifiedLateralClearanceV11(row,next)?1000:0;
         for(const p of rows){if(p.id===row.id||p.finished||p.pit!=='TRACK')continue;
           const encounter=unifiedGapV11(row,p)+(p.v-row.v)*2.5;
-          if(Math.abs(encounter)<UNIFIED_ENGINE_V11.physicalLength+row.v*.10+5&&Math.abs(p.y-y)<2.8)penalty+=1000;
+          if(Math.abs(encounter)<UNIFIED_ENGINE_V11.physicalLength+row.v*.10+5&&Math.abs(p.y-y)<unifiedLateralClearanceV11(row,p))penalty+=1000;
         }
         const fromCurrent=Math.abs(y-row.y)/2.5;
         return {y,score:penalty+fromCurrent*.22+Math.abs(y)*.015};
@@ -11129,16 +11158,12 @@ function unifiedChooseLaneV11(row,rows,now,width){
         target=candidate[0].y;state='PLAN_ATTACK';
       }
     }
-    if(gap<20&&Math.abs(row.y-next.y)>2.7)state='SIDE_BY_SIDE';
+    if(gap<20&&Math.abs(row.y-next.y)>=unifiedLateralClearanceV11(row,next))state='SIDE_BY_SIDE';
   }
-  // Never merge towards a neighboring vehicle while longitudinal clearance is inadequate.
-  // Keep the *actual* alternate lane rather than masking an imminent contact by speed caps.
-  if(row.pit==='TRACK'&&!v.pitRequested&&Math.abs(row.y)>1.5){
-    const centerOccupied=rows.some(p=>p.id!==row.id&&!p.finished&&p.pit==='TRACK'&&
-      Math.abs(unifiedGapV11(row,p))<Math.max(60,row.v*.9)&&Math.abs(p.y)<3.0);
-    if(centerOccupied&&Math.abs(target)<3.1){target=Math.sign(row.y)*allowed;state='EXIT_DUEL';}
-  }
+  if(v.racingLineMode&&v.racingLineMode!=='IDEAL'&&state!=='PLAN_ATTACK'&&state!=='SIDE_BY_SIDE')target=unifiedClampV11(lineOffsetMetersV197(v),-allowed,allowed);
   if(v.pitRequested||row.pit!=='TRACK'){target=unifiedClampV11(lineOffsetMetersV197(v),-allowed,allowed);state='PIT';}
+  const merge=unifiedMergeTargetV11(row,target,rows);target=merge.target;v.unifiedMergeBlockedV11=merge.blocked;
+  if(merge.blocked.length&&state!=='PIT')state='EXIT_DUEL';
   v.unifiedLaneTargetV11=target;v.unifiedAiStateV11=state;v.unifiedIntentUntilV11=now+.7;
   return target;
 }
@@ -11196,9 +11221,14 @@ function unifiedLateralV11(row,target,dt,width){
 function unifiedCornerPlanV11(row,G,aero,baseThrust,nominal,lateralAcceleration=0,extraPower=0){
   const L=28*G*(1-.06*aero.dirty*.35),u=.94+.025*unifiedRatingV11(row.ref,'cornering');
   const look=Math.max(340,row.v*6+row.v*row.v/40),step=6,n=Math.ceil(look/step),top=nominal+35/3.6;
+  const freeLine=row.pit==='TRACK'&&!row.ref.pitRequested&&(!row.ref.racingLineMode||row.ref.racingLineMode==='IDEAL')&&['CRUISE','FOLLOW'].includes(row.ref.unifiedAiStateV11);
+  const allowed=Math.max(0,(Number(activeRaceSnapshotV187?.track?.geometry?.trackWidthMeters)||14)/2-2.5);
+  let plannedY=row.y;
   const samples=Array.from({length:n+1},(_,i)=>{
     const at=row.s+i*step-(Number(row.ref.unifiedBrakeErrorMetersV11)||0),p=unifiedPathSampleV11(at);
-    const y=row.y+((Number(row.ref.unifiedLaneTargetV11)||0)-row.y)*unifiedClampV11(i*step/Math.max(1,row.v*3),0,1);
+    const desired=freeLine&&at>=0?p.idealUnit*allowed:(Number(row.ref.unifiedLaneTargetV11)||0);
+    if(i>0)plannedY+=unifiedClampV11(desired-plannedY,-2.5*step/Math.max(20,row.v),2.5*step/Math.max(20,row.v));
+    const y=plannedY;
     const metric=Math.max(.2,1-p.k*y),k=Math.abs(p.k/metric);
     const steering=Math.abs(lateralAcceleration)*Math.max(0,1-i*step/Math.max(1,row.v*2));
     return {metric,k,steering,limit:Math.min(top,Math.sqrt(Math.max(.01,u*L-steering)/Math.max(k,.00001)))};
@@ -11522,11 +11552,12 @@ function simulateUnifiedRaceStepV11(stepMs){
   unifiedSpecialTickV11(finishedRows,dt,now);
   return true;
 }
-window.mwsF1UnifiedV11Report=()=>({engine:'unified-v1.1',revision:'incidents-warmup-v11',...unifiedStateV11.telemetry,
+window.mwsF1UnifiedV11Report=()=>({engine:'unified-v1.1',revision:'corner-line-multicar-v11',...unifiedStateV11.telemetry,
   seed:unifiedStateV11.rng,initialized:unifiedStateV11.initialized,
+  lanes:raceMotionV189.vehicles.map(v=>({id:String(v.id),actual:Number(v.unifiedYV11)||0,ideal:Number(v.unifiedIdealLaneV11)||0,target:Number(v.unifiedLaneTargetV11)||0,state:String(v.unifiedAiStateV11||''),blocked:v.unifiedMergeBlockedV11||[]})),
   incidents:raceMotionV189.vehicles.map(v=>({id:String(v.id),active:unifiedIncidentNameV11(unifiedActiveErrorV11(v)),untilMs:(Number(v.unifiedErrorUntilV11)||0)*1000,sequence:Number(v.unifiedIncidentSequenceV11)||0,grip:unifiedGripV11(v),warmup:Number(v.tyreWarmupFactor)||1})),
   timingGates:raceMotionV189.vehicles.map(v=>({id:String(v.id),records:v.unifiedDetectionV11||{},eligible:Boolean(v.overtakeEligible),active:Boolean(v.overtakeActive),gapSeconds:Number.isFinite(v.overtakeGapSeconds)?v.overtakeGapSeconds:null})),
-  worldGeometry:unifiedStateV11.path?{minimumForwardMetric:unifiedStateV11.path.minimumForwardMetric,scale:unifiedStateV11.path.scale}:null,
+  worldGeometry:unifiedStateV11.path?{minimumForwardMetric:unifiedStateV11.path.minimumForwardMetric,scale:unifiedStateV11.path.scale,idealLineRange:unifiedStateV11.path.idealLineRange}:null,
   renderOverlaps:markerOverlapReportV377(),
   screenFit:unifiedScreenFitV11(raceMotionV189.vehicles.filter(v=>!v.finished&&v.renderPointV216).map(vehicle=>({vehicle,point:vehicle.renderPointV216})),raceCameraV216.zoom),
   notes:'Full-circuit balance and all-zoom QA pending. Physical world footprints and rendered overlap are distinct checks; geometry warnings are not proof of zero overlaps'});
