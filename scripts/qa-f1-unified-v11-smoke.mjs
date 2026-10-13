@@ -335,11 +335,40 @@ assert.equal(systems.energy.deployedMJ,0);assert.equal(systems.energy.harvestedM
 assert.equal(systems.energyState.energyDeployKW,80);assert.equal(systems.energyState.energyHarvestMJ,.0024);
 assert.equal(systems.energyState.boostEnergyMJ,.0004);assert.equal(systems.tyreState.grip,systems.grip);assert.equal(systems.tyre.thermalDeg,null);
 for(const state of [systems.paused,systems.cinematic,systems.finished,systems.stationary,systems.stopped])assert(state.deployKW===0&&state.rechargeKW===0&&state.boostKW===0);
+const pitAdapters=src.slice(src.indexOf('function evaluatePitStrategyV206('),src.indexOf('function trafficBattlePhaseV207('))+
+ src.slice(src.indexOf('function qaPitCycleV205('),src.indexOf('function pitLossSecondsV206('));
+const pitSetup=setup.replace('const requestPitStopV205=()=>{pitCalls++;return false;};',
+ "const requestPitStopV205=(id,compound,reason)=>{pitCalls++;const v=raceMotionV189.vehicles.find(v=>v.id===id);v.pitRequested=true;v.pitTargetCompound=compound;v.pitRequestReason=reason;return true;};");
+const pitOwnership=new Function(pitSetup+engine+pitAdapters+`
+const beforeInit=JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,state:unifiedStateV11});
+const unavailable=evaluatePitStrategyV206(raceMotionV189.vehicles[0]);
+const initReadonly=beforeInit===JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,state:unifiedStateV11});
+unifiedInitV11();track.pit={entry:.9,exit:.1,speedLimitKph:80};
+const v=raceMotionV189.vehicles[0];v.raceProgress=3;v.speedKph=216;v.tyreWear=1;v.tyreWarmupFactor=.9;v.unifiedTempCV11=40;v.unifiedDamageV11=.6;
+const before=JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,rng:unifiedStateV11.rng,telemetry:unifiedStateV11.telemetry});
+const recommendation=evaluatePitStrategyV206(v),batch=updatePitStrategiesV206(1000000),states=getPitStrategyStatesV206();
+const strategyQa=qaPitStrategyV206(v.id),cycleQa=qaPitCycleV205(v.id,'HARD');
+const readonly=before===JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,rng:unifiedStateV11.rng,telemetry:unifiedStateV11.telemetry})&&pitCalls===0;
+const row=unifiedSnapshotV11().find(r=>r.id===v.id);unifiedPitV11(row,2,track);
+const requested={calls:pitCalls,requested:v.pitRequested,compound:v.pitTargetCompound,event:unifiedStateV11.telemetry.pit[0]};
+v.pitRequested=false;v.tyreWear=.60;v.unifiedPitEvalAtV11=0;
+const safe=evaluatePitStrategyV206(v);unifiedPitV11(unifiedSnapshotV11().find(r=>r.id===v.id),10,track);
+const safeCalls=pitCalls;
+v.tyreWear=1;v.raceProgress=9;const late=evaluatePitStrategyV206(v);
+v.raceProgress=3;delete track.pit;const noPit=evaluatePitStrategyV206(v);
+return {initReadonly,unavailable,recommendation,batchCount:batch.length,state:states[0],strategyQa,cycleQa,readonly,requested,safe,safeCalls,late,noPit};`)();
+assert(pitOwnership.initReadonly&&pitOwnership.readonly);assert.equal(pitOwnership.unavailable.available,false);assert.equal(pitOwnership.unavailable.context.benefit,null);
+assert.equal(pitOwnership.recommendation.decision,'BOX_NOW');assert(pitOwnership.recommendation.context.benefit>1.5);assert.equal(pitOwnership.batchCount,12);
+assert.deepEqual(pitOwnership.state.context,pitOwnership.recommendation.context);assert.equal(pitOwnership.cycleQa.allPass,null);assert.deepEqual(pitOwnership.cycleQa.states,['TRACK']);
+assert.equal(pitOwnership.requested.calls,1);assert(pitOwnership.requested.requested);
+assert.equal(pitOwnership.requested.compound,pitOwnership.recommendation.targetCompound);assert.equal(pitOwnership.requested.event.benefit,pitOwnership.recommendation.context.benefit);
+assert.equal(pitOwnership.safe.reason,'TYRE_REMAINING_AT_LEAST_40');assert.equal(pitOwnership.safeCalls,1);
+assert.equal(pitOwnership.late.reason,'TOO_LATE_TO_PIT');assert.equal(pitOwnership.noPit.reason,'NO_PIT_LANE');
 const a=trial(false),b=trial(true);
 assert.equal(a.ticks,6000);assert.equal(b.ticks,6000);assert.deepEqual(a.errors,[]);assert.deepEqual(b.errors,[]);
 assert.deepEqual(a.states,b.states,'Vehicle input order affected physical state');assert.equal(a.pitCalls,0);
 const long=trial(false,24000);
 assert.equal(long.ticks,24000);assert.deepEqual(long.errors,[]);assert(long.passes>0);
 for(const v of long.states){assert(v.e>=0&&v.e<=4);assert(v.w>=0&&v.w<=1);assert([v.s,v.y,v.v].every(Number.isFinite));}
-console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane','active-model-contract','special-read-adapter','paused-special-telemetry','unavailable-race-context','energy-tyre-adapter-ownership','executed-work-ledger','lap-harvest-split','inactive-energy-telemetry'],
+console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane','active-model-contract','special-read-adapter','paused-special-telemetry','unavailable-race-context','energy-tyre-adapter-ownership','executed-work-ledger','lap-harvest-split','inactive-energy-telemetry','pit-strategy-ownership','pit-shared-recommendation','pit-query-before-init','pit-qa-readonly'],
  warning:'Not Chromium or a real-circuit balance/overlap verification'},null,2));

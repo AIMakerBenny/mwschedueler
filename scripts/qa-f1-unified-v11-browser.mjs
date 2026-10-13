@@ -120,6 +120,18 @@ try{
   assert.equal(systems.energy.powerUnitFactor,1);assert.equal(systems.energy.deployedMJ,0);assert.equal(systems.energy.harvestedMJ,0);
   assert.equal(systems.energyState.energyDeployKW,0);assert.equal(systems.energyState.energyRechargeKW,0);assert.equal(systems.energyState.boostPowerKW,0);
   assert.equal(systems.tyreState.grip,systems.grip);
+  const pitStrategy=await page.evaluate(()=>{
+    const v=window.mwsF1ComputeRaceStandingsV191()[0].vehicle,saved={...v};
+    v.tyreWear=1;v.unifiedTempCV11=40;v.tyreWarmupFactor=.9;v.unifiedDamageV11=.6;
+    const physical=()=>JSON.stringify({vehicles:window.mwsF1ComputeRaceStandingsV191().map(r=>r.vehicle),clock:window.mwsF1GetSimulationClockV192()});
+    const before=physical(),evaluation=window.mwsF1EvaluatePitStrategyV206(v),batch=window.mwsF1UpdatePitStrategiesV206(1000000);
+    const state=window.mwsF1GetPitStrategyStatesV206().find(r=>r.id===v.id),strategyQa=window.mwsF1QaPitStrategyV206(v.id),cycleQa=window.mwsF1QaPitCycleV205(v.id,'HARD');
+    const unchanged=before===physical();
+    for(const key of Object.keys(v))if(!(key in saved))delete v[key];Object.assign(v,saved);
+    return {evaluation,state,batchCount:batch.length,strategyQa,cycleQa,unchanged};
+  });
+  assert(pitStrategy.unchanged&&pitStrategy.evaluation.readOnly&&pitStrategy.state.readOnly);assert.equal(pitStrategy.batchCount,12);
+  assert.deepEqual(pitStrategy.evaluation.context,pitStrategy.state.context);assert.equal(pitStrategy.strategyQa.allPass,null);assert.equal(pitStrategy.cycleQa.allPass,null);
   const contracts=await page.evaluate(()=>{
     const physical=()=>JSON.stringify({clock:window.mwsF1GetSimulationClockV192(),vehicles:window.mwsF1ComputeRaceStandingsV191().map(r=>({id:r.vehicle.id,s:r.vehicle.raceProgress,y:r.vehicle.unifiedYV11,v:r.vehicle.speedKph,e:r.vehicle.batteryMJ,rng:r.vehicle.unifiedRngV11}))});
     const before=physical(),special=window.mwsF1QaSpecialV401(),model=window.mwsF1QaDynamicsContractV348();
@@ -204,7 +216,7 @@ try{
   assert.equal(await page.evaluate(()=>window.mwsF1GetScreenStateV185()),'SETUP');
   assert.equal(await page.evaluate(()=>window.mwsF1GetSelectedContactIdsV181().length),12);
   assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({result:'PASS',setup,layouts,zooms,pauseResume:true,legacyGuard:true,incident,systems,contracts,pit,pitJourney,finish,
+  console.log(JSON.stringify({result:'PASS',setup,layouts,zooms,pauseResume:true,legacyGuard:true,incident,systems,pitStrategy,contracts,pit,pitJourney,finish,
     simulationSeconds:report.steps*.02,physicalStops:report.collisionStops,
     warning:'Short UI integration only. Ring geometry warnings are not a zero-overlap result.'},null,2));
 }finally{await browser?.close();server.close();}

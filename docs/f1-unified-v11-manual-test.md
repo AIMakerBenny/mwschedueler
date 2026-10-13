@@ -1,6 +1,6 @@
 # MWS F1 통합 v1.1 수동 시험
 
-공개된 구 에너지·타이어 갱신 API를 통합 상태 조회에 연결하고 실제 에너지 사용량의 진단 누락을 수정했다. 기본 물리·밸런스 수치는 유지한다. 이번 단계의 시작 개발 HEAD는 622ab78ac44a3f8cc964b0c6c0376efa91bb58a6이다. Production은 변경하지 않았다.
+구 피트 전략·QA API가 통합 엔진과 별도로 자동 피트를 요청하거나 피트 상태를 바꾸지 않도록 연결했다. 기존 통합 피트 수식과 물리·밸런스 수치는 유지한다. 이번 단계의 시작 개발 HEAD는 bd18e85db2dfc4b410e6a3b8a64d8b799cc781c3이다. Production은 변경하지 않았다.
 
 ## 직접 실행
 
@@ -148,7 +148,7 @@ node scripts/qa-f1-unified-v11-config.mjs
 
 Chromium 기본 UI의 FHD/QHD, 참가자·프로필, 정지/재개, 카메라, 실수 LIVE, 필살기 조회, 레이아웃 저장·보존·복원과 포디엄이 PASS다. FIXED 피트 여정은 56.32 시뮬레이션초에 HARD 교체·OUTSIDE 복귀를 완료했다. 진입 80km/h, 박스 속도 0과 위치 변화 0m, 최대 관측 가감속 26.32m/s², 물리 정지 0건이다. 이는 로컬 Public fixture의 기본 점검이며 Production 인증·클라우드 저장 및 Scheduler 전체 시나리오 검증 결과는 Not available이다. 해당 기능의 코드는 변경하지 않았다.
 
-## 이번 단계 - 에너지·타이어 공개 API의 상태 변경 책임
+## 이전 단계 - 에너지·타이어 공개 API의 상태 변경 책임
 
 - 정상 프레임의 simulateRaceStepV192는 기존대로 통합 엔진에 바로 전달된다. simulateVehicleDynamicsV196도 기존대로 통합 모드에서 물리 변경을 하지 않는다. 이번 감사에서는 별도로 공개된 mwsF1UpdateEnergySystemV201과 mwsF1UpdateTyreSystemV203이 구 배터리·마모 계산을 실행할 수 있음을 확인했다. 정상 주행에서 이 구 계산이 중복 실행된다는 의미는 아니다.
 - 두 공개 갱신 API는 통합 모드에서 읽기 전용 상태를 반환한다. 요청한 stepMs로 배터리·온도·마모·시계를 적분하지 않는다. engine은 unified-v1.1이고 readOnly는 true다. 에너지 API의 호출별 harvestedMJ/deployedMJ/boostEnergyMJ는 0이며 powerUnitFactor는 중립값 1이다. 실제 누적 기록은 energyHarvestMJ/energyDeployMJ/totalBoostEnergyMJ에서 읽는다.
@@ -167,6 +167,22 @@ window.mwsF1GetTyreStatesV203()
 622ab78과의 별도 12대·120초 비교에서는 새 진단 energyLapNumber/energyHarvestLapMJ/boostEnergyMJ를 제외한 전체 차량 상태, 난수와 엔진 주행 기록이 정확히 일치했다. 문법 검사, 기존 12대·480초 합성 회귀는 PASS이며 확정 추월 16회다. 실제 SVG 7개 트랙 각각 12대·30초도 물리 오류 없이 PASS다.
 
 Chromium에서는 실제 공개 API를 큰 stepMs로 호출하고 갱신 및 목록 조회 전후의 차량 전체 객체와 시계가 변하지 않는지 확인했다. FHD/QHD·프로필·참가자·카메라·정지/재개·실수 LIVE·필살기 조회·레이아웃 저장/복원·피트·포디엄이 PASS다. FIXED 피트 여정은 56.34 시뮬레이션초, 진입 80km/h, 박스 속도 0과 위치 변화 0m, HARD 교체·OUTSIDE 복귀, 최대 관측 가감속 26.34m/s², 물리 정지 0건이다. Production 인증·클라우드 저장·Scheduler 전체 시나리오 및 전체 경기 밸런스 결과는 Not available이다.
+
+## 이번 단계 - 피트 전략 공개 API의 상태 변경 책임
+
+- 정상 주행은 기존대로 unifiedPitV11에서 자동 피트를 판단한다. 별도로 공개된 구 evaluate/update 전략 API에는 다른 세대의 수식과 자동 요청 경로가 남아 있었다. 통합 모드의 mwsF1EvaluatePitStrategyV206/mwsF1UpdatePitStrategiesV206/mwsF1GetPitStrategyStatesV206은 이제 현재 통합 판단을 읽으며 요청·대기 타이머·차량 상태·난수를 변경하지 않는다.
+- 기존 통합 피트 수식을 순수 unifiedPitPlanV11로 옮겼다. 실제 자동 피트와 공개 진단이 같은 후보 타이어·피트 손실·예상 이득을 읽는다. .60 이하 마모 자동 피트 금지, 남은 랩 1.1 미만 금지, 이득 1.5초 초과 조건과 기존 재평가 시각·난수는 유지한다. 수동 피트 요청 버튼과 실제 서비스 흐름은 그대로다.
+- 통합 경로가 현재 경기의 초기화를 마치지 않았다면 available은 false, reason은 MODEL_NOT_INITIALIZED이며 비용·이득·남은 랩은 null이다. 조회를 위해 초기화하거나 이전 경기의 요청 이력을 섞지 않는다. 해당 예측은 Not available이다.
+- 구 피트 전략 점수와 마지막 평가 랩은 통합 모델이 계산하지 않으므로 score/lastLap은 null이다. context의 pitLossSeconds/benefit/candidates는 모델 예측이며 실제 경기에서 계측한 정차 손실이나 밸런스 결론이 아니다. history는 통합 엔진에서 확정된 자동 요청 기록의 복사본이다.
+- 구 mwsF1QaPitCycleV205는 통합 모드에서 실제 차량을 PIT_ENTRY/PIT_BOX 등으로 강제 전환하거나 즉시 서비스하지 않는다. 현재 상태만 반환한다. mwsF1QaPitStrategyV206도 구 가상 시나리오를 위해 차량의 진행률·마모를 덮어쓰지 않는다. 두 QA의 allPass는 null, status는 Not available이며 실제 여정 검증은 Chromium 스크립트에서 따로 수행한다.
+
+```js
+window.mwsF1GetPitStrategyStatesV206()
+```
+
+추가 합성 검증은 초기화 전 조회의 불변, 큰 stepMs의 전략 갱신과 두 QA 호출에서 차량·시계·난수·요청 수 불변, 이득이 있는 사례에서 조회와 실제 자동 요청의 타이어·이득 일치, 정확히 .60 마모의 자동 요청 금지, 막판 및 피트 없는 트랙의 보류를 확인했다. PASS다. 기본값 비교는 bd18e85의 12대·120초와 전체 차량 상태·난수·주행 기록이 정확히 일치했다.
+
+문법 검사, 12대·480초 합성 회귀는 PASS이며 확정 추월 16회다. 실제 SVG 7개 트랙 각각 12대·30초도 물리 오류 없이 PASS다. Chromium의 공개 피트 API 불변·FHD/QHD·프로필·참가자·카메라·정지/재개·LIVE·필살기 조회·레이아웃 저장/복원·포디엄과 실제 수동 피트 여정이 PASS다. FIXED 여정은 56.44 시뮬레이션초, 진입 80km/h, 박스 속도 0과 위치 변화 0m, HARD 교체·OUTSIDE 복귀, 최대 관측 가감속 26.21m/s², 물리 정지 0건이다. 전체 경기 밸런스와 Production 인증·클라우드 저장·Scheduler 전체 시나리오 검증 결과는 Not available이다.
 
 ## 남은 범위
 

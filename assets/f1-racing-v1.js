@@ -4307,6 +4307,10 @@ function qaPitHudV361(){
 function qaPitCycleV205(driverId,compound='SOFT'){
   const vehicle=raceMotionV189.vehicles.find(v=>String(v.id)===String(driverId||''))||raceMotionV189.vehicles[0];
   if(!vehicle)return null;
+  if(UNIFIED_ENGINE_V11)return {engine:'unified-v1.1',readOnly:true,scope:'current pit state only; live journey QA is separate',
+    states:[String(vehicle.pitState||'TRACK')],compound:vehicle.tyreCompound,stopCount:Number(vehicle.pitStopCount)||0,
+    warmupFactor:Number(vehicle.tyreWarmupFactor)||1,warmupRemainingLaps:Number(vehicle.pitWarmupRemainingLaps)||0,
+    allPass:null,status:'Not available'};
   const states=[];
   if(!requestPitStopV205(vehicle.id,compound,'QA'))return null;
   vehicle.pitState='PIT_ENTRY';vehicle.racingLineMode='PIT_LINE';states.push(vehicle.pitState);
@@ -4510,6 +4514,7 @@ window.__mwsF1RacingV393='phase393-late-stint-wear-economics';
 
 function evaluatePitStrategyV206(vehicle,options={}){
   if(!vehicle||vehicle.finished)return null;
+  if(UNIFIED_ENGINE_V11)return unifiedPitReadV11(vehicle);
   const context=pitStrategyContextV206(vehicle);
   const cfg=PIT_STRATEGY_CONFIG_V206;
   const compound=choosePitCompoundV206(vehicle,context.remainingLaps);
@@ -4586,6 +4591,7 @@ function evaluatePitStrategyV206(vehicle,options={}){
 }
 function updatePitStrategiesV206(stepMs){
   if(!(stepMs>0))return [];
+  if(UNIFIED_ENGINE_V11)return raceMotionV189.vehicles.filter(v=>v&&!v.finished).map(unifiedPitReadV11);
   const results=[];
   for(const vehicle of raceMotionV189.vehicles){
     if(!vehicle||vehicle.finished)continue;
@@ -4599,6 +4605,7 @@ function updatePitStrategiesV206(stepMs){
   return results;
 }
 function getPitStrategyStatesV206(){
+  if(UNIFIED_ENGINE_V11)return raceMotionV189.vehicles.map(unifiedPitReadV11);
   return raceMotionV189.vehicles.map(vehicle=>({
     id:vehicle.id,name:vehicle.driver?.name||'',decision:String(vehicle.strategyDecision||'NONE'),
     reason:String(vehicle.strategyReason||''),score:Number(vehicle.strategyScore)||0,
@@ -4612,6 +4619,7 @@ function getPitStrategyStatesV206(){
 function qaPitStrategyV206(driverId,scenario='BOX_NOW'){
   const vehicle=raceMotionV189.vehicles.find(v=>String(v.id)===String(driverId||''))||raceMotionV189.vehicles[0];
   if(!vehicle)return null;
+  if(UNIFIED_ENGINE_V11)return {...unifiedPitReadV11(vehicle),scope:'current strategy only; legacy hypothetical scenario not executed',allPass:null,status:'Not available'};
   const keys=[
     'raceProgress','currentLap','tyreWear','tyreGrip','tyreFlatSpot','tyreThermalDeg','tyreGraining','tyreStrategyPressure',
     'pitState','pitRequested','pitTargetCompound','pitRequestReason','pitPreviousRacingLineMode','pitStopCount','pitLastStopLap',
@@ -11309,12 +11317,15 @@ function unifiedPitLossV11(row,track){
   const cold=(len/normal)*.55*(1/Math.sqrt(.9)-1);
   return Math.max(0,approach+laneDistance/limit+stopAndRestart+box+mergeTime-(laneDistance+mergeDistance)/normal+cold);
 }
-function unifiedPitV11(row,now,track){
-  const v=row.ref;if(row.pit!=='TRACK'||v.pitRequested||now<(Number(v.unifiedPitEvalAtV11)||0))return;
-  v.unifiedPitEvalAtV11=now+1.5+unifiedRandomVehicleV11(v);
-  const wear=unifiedClampV11(Number(v.tyreWear)||0,0,1),remaining=Math.max(0,(Number(activeRaceSnapshotV187?.totalLaps)||10)-row.s/unifiedStateV11.path.len);
-  if(wear<=.60||remaining<1.1)return; // exactly 40% remaining forbids an automatic stop
-  const current=unifiedTyreSpecV11(v.tyreCompound);
+function unifiedPitPlanV11(row,track){
+  const v=row.ref,wear=unifiedClampV11(Number(v.tyreWear)||0,0,1),remaining=Math.max(0,(Number(activeRaceSnapshotV187?.totalLaps)||10)-row.s/unifiedStateV11.path.len);
+  const base={wear,remainingLaps:remaining,targetCompound:String(v.tyreCompound||'MEDIUM'),pitLossSeconds:null,benefit:null,candidates:[]};
+  if(row.finished)return {...base,decision:'NONE',reason:'FINISHED'};
+  if(row.pit!=='TRACK')return {...base,decision:'NONE',reason:'PIT_SEQUENCE_ACTIVE',targetCompound:String(v.pitTargetCompound||v.tyreCompound||'MEDIUM')};
+  if(v.pitRequested)return {...base,decision:'BOX_NOW',reason:'PIT_ALREADY_COMMITTED',targetCompound:String(v.pitTargetCompound||v.tyreCompound||'MEDIUM')};
+  if(wear<=.60)return {...base,decision:'GO_LONG',reason:'TYRE_REMAINING_AT_LEAST_40'};
+  if(remaining<1.1)return {...base,decision:'GO_LONG',reason:'TOO_LATE_TO_PIT'};
+  if(!track.pit)return {...base,decision:'GO_LONG',reason:'NO_PIT_LANE'};
   const baseLap=Math.max(50,unifiedStateV11.path.len/Math.max(28,row.v));
   const stayLoss=baseLap*remaining*(1/Math.sqrt(Math.max(.5,unifiedGripV11(v)))-1);
   const pitLoss=unifiedPitLossV11(row,track);
@@ -11323,8 +11334,30 @@ function unifiedPitV11(row,now,track){
     const penalty=baseLap*remaining*(1/Math.sqrt(spec.grip)-1)+baseLap*remaining*.22*Math.max(0,endWear-.6);
     return {compound,benefit:stayLoss-penalty-pitLoss};
   }).sort((a,b)=>b.benefit-a.benefit);
-  if(candidates[0]?.benefit>1.5&&requestPitStopV205(v.id,candidates[0].compound,'UNIFIED_V11_TIME_ADVANTAGE')){
-    unifiedStateV11.telemetry.pit.push({id:row.id,t:now,wear,pitLossSeconds:pitLoss,benefit:candidates[0].benefit,compound:candidates[0].compound});
+  const best=candidates[0],worthwhile=best?.benefit>1.5;
+  return {...base,decision:worthwhile?'BOX_NOW':'GO_LONG',reason:worthwhile?'UNIFIED_V11_TIME_ADVANTAGE':'PIT_VALUE_INSUFFICIENT',
+    targetCompound:best.compound,pitLossSeconds:pitLoss,benefit:best.benefit,candidates};
+}
+function unifiedPitReadV11(v){
+  if(!v)return null;
+  const track=activeRaceSnapshotV187?.track,key=String(activeRaceSnapshotV187?.createdAt||'')+'|'+String(track?.id||track?.name);
+  const ready=Boolean(track&&unifiedStateV11.initialized&&unifiedStateV11.path&&unifiedStateV11.trackKey===key);
+  const row=ready?{ref:v,id:String(v.id),s:(Number(v.raceProgress)||0)*unifiedStateV11.path.len,v:(Number(v.speedKph)||0)/3.6,
+    pit:String(v.pitState||'TRACK'),finished:Boolean(v.finished)}:null;
+  const context=ready?unifiedPitPlanV11(row,track):{decision:'NONE',reason:'MODEL_NOT_INITIALIZED',wear:Number(v.tyreWear)||0,
+    remainingLaps:null,targetCompound:String(v.pitTargetCompound||v.tyreCompound||'MEDIUM'),pitLossSeconds:null,benefit:null,candidates:[]};
+  const history=ready?unifiedStateV11.telemetry.pit.filter(p=>p.id===String(v.id)).map(p=>({...p})):[];
+  return {id:v.id,name:v.driver?.name||'',engine:'unified-v1.1',readOnly:true,available:ready,
+    decision:context.decision,reason:context.reason,score:null,targetCompound:context.targetCompound,
+    requested:Boolean(v.pitRequested),pitRequested:Boolean(v.pitRequested),pitRequestReason:String(v.pitRequestReason||''),
+    lastLap:null,lastSimMs:history.length?history[history.length-1].t*1000:null,holdUntilLap:0,context,history};
+}
+function unifiedPitV11(row,now,track){
+  const v=row.ref;if(row.pit!=='TRACK'||v.pitRequested||now<(Number(v.unifiedPitEvalAtV11)||0))return;
+  v.unifiedPitEvalAtV11=now+1.5+unifiedRandomVehicleV11(v);
+  const plan=unifiedPitPlanV11(row,track);
+  if(plan.decision==='BOX_NOW'&&requestPitStopV205(v.id,plan.targetCompound,'UNIFIED_V11_TIME_ADVANTAGE')){
+    unifiedStateV11.telemetry.pit.push({id:row.id,t:now,wear:plan.wear,pitLossSeconds:plan.pitLossSeconds,benefit:plan.benefit,compound:plan.targetCompound});
   }
 }
 function unifiedEnergyAndTyreV11(row,command,dt,track){
