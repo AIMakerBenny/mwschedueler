@@ -3814,6 +3814,7 @@ function syncEnergyLapV201(vehicle){
   return lap;
 }
 function updateEnergySystemV201(vehicle,stepMs,phase,throttle,brake){
+  if(UNIFIED_ENGINE_V11)return unifiedEnergyReadV11(vehicle);
   const cfg=ENERGY_CONFIG_V201;
   const dt=Math.max(0,Number(stepMs)||0)/1000;
   if(!vehicle||!(dt>0))return {deployKW:0,rechargeKW:0,boostKW:0,powerUnitFactor:1};
@@ -3867,6 +3868,11 @@ function updateEnergySystemV201(vehicle,stepMs,phase,throttle,brake){
   return {deployKW,rechargeKW,boostKW,powerUnitFactor,batteryMJ:battery,harvestedMJ,deployedMJ,boostEnergyMJ,attackOpportunityScore,defenceThreatScore};
 }
 function getEnergyStatesV201(){
+  if(UNIFIED_ENGINE_V11)return raceMotionV189.vehicles.map(vehicle=>{
+    const state=unifiedEnergyReadV11(vehicle);
+    return {id:vehicle.id,name:vehicle.driver?.name||'',...state,energyDeployKW:state.deployKW,energyRechargeKW:state.rechargeKW,
+      boostPowerKW:state.boostKW,boostActive:state.deployKW+state.boostKW>0,boostEnergyMJ:state.totalBoostEnergyMJ};
+  });
   return raceMotionV189.vehicles.map(vehicle=>({
     id:vehicle.id,name:vehicle.driver?.name||'',batteryMJ:Number(vehicle.batteryMJ)||0,
     energyTargetMJ:Number(vehicle.energyTargetMJ)||0,energyDeployKW:Number(vehicle.energyDeployKW)||0,
@@ -3910,6 +3916,7 @@ function setVehicleTyreCompoundV203(driverId,compound){
 }
 function updateTyreSystemV203(vehicle,stepMs,phase){
   if(!vehicle||!(stepMs>0))return null;
+  if(UNIFIED_ENGINE_V11)return unifiedTyreReadV11(vehicle);
   const dt=stepMs/1000;
   const spec=tyreCompoundSpecV203(vehicle.tyreCompound);
   const track=activeRaceSnapshotV187?.track;
@@ -3961,6 +3968,7 @@ function updateTyreSystemV203(vehicle,stepMs,phase){
   return {compound:vehicle.tyreCompound,ageLaps:vehicle.tyreAgeLaps,wear:vehicle.tyreWear,surfaceTemp:surface,carcassTemp:carcass,grip:vehicle.tyreGrip,thermalDeg:vehicle.tyreThermalDeg,graining:vehicle.tyreGraining,flatSpot:vehicle.tyreFlatSpot,strategyPressure:vehicle.tyreStrategyPressure};
 }
 function getTyreStatesV203(){
+  if(UNIFIED_ENGINE_V11)return raceMotionV189.vehicles.map(vehicle=>({id:vehicle.id,name:vehicle.driver?.name||'',...unifiedTyreReadV11(vehicle)}));
   return raceMotionV189.vehicles.map(vehicle=>({
     id:vehicle.id,name:vehicle.driver?.name||'',compound:vehicle.tyreCompound,
     ageLaps:Number(vehicle.tyreAgeLaps)||0,wear:Number(vehicle.tyreWear)||0,
@@ -10864,6 +10872,25 @@ function unifiedGripV11(v){
   const incident=unifiedActiveErrorV11(v)==='UNDERSTEER'?.91:1;
   return warmup*incident*spec.grip*Math.max(.88,1-.00025*outside*outside)*(1-.05*w-.22*h*h)*(1-.12*unifiedClampV11(Number(v.unifiedDamageV11)||0,0,1));
 }
+// Compatibility updates are reads in unified mode. Only a committed step spends energy or wears tyres.
+function unifiedEnergyReadV11(v){
+  const active=Boolean(v&&raceMotionV189.running&&!simClockV192.paused&&!specialStateV401.cinematic&&!v.finished&&v.pitState!=='PIT_BOX');
+  const deployKW=active?Math.max(0,Number(v.energyDeployKW)||0):0,rechargeKW=active?Math.max(0,Number(v.energyRechargeKW)||0):0;
+  const boostKW=active?Math.max(0,Number(v.boostPowerKW)||0):0;
+  return {engine:'unified-v1.1',readOnly:true,deployKW,rechargeKW,boostKW,powerUnitFactor:1,
+    batteryMJ:Number(v?.batteryMJ)||0,energyTargetMJ:UNIFIED_ENGINE_V11.ersCapacity,
+    harvestedMJ:0,deployedMJ:0,boostEnergyMJ:0,attackOpportunityScore:0,defenceThreatScore:0,
+    energyDeployMJ:Number(v?.energyDeployMJ)||0,energyHarvestMJ:Number(v?.energyHarvestMJ)||0,
+    energyHarvestLapMJ:Number(v?.energyHarvestLapMJ)||0,totalBoostEnergyMJ:Number(v?.boostEnergyMJ)||0};
+}
+function unifiedTyreReadV11(v){
+  if(!v)return null;
+  return {engine:'unified-v1.1',readOnly:true,compound:v.tyreCompound,
+    ageLaps:Math.max(0,(Number(v.raceProgress)||0)-(Number(v.tyreStartRaceProgress)||0)),wear:Number(v.tyreWear)||0,
+    surfaceTemp:Number(v.tyreSurfaceTemp)||0,carcassTemp:Number(v.tyreCarcassTemp)||0,grip:unifiedGripV11(v),
+    temperatureC:Number.isFinite(v.unifiedTempCV11)?v.unifiedTempCV11:null,warmup:Number(v.tyreWarmupFactor)||1,
+    damage:Number(v.unifiedDamageV11)||0,thermalDeg:null,graining:null,flatSpot:null,strategyPressure:null};
+}
 function unifiedResetV11(){
   unifiedStateV11.trackKey='';unifiedStateV11.path=null;unifiedStateV11.initialized=false;unifiedStateV11.rng=1;
   unifiedStateV11.passCandidates.clear();unifiedStateV11.telemetry={steps:0,collisionStops:0,screenGeometryWarnings:[],passes:[],rawCrossings:[],constraints:0,invalid:[],pit:[],skills:[]};
@@ -11324,7 +11351,14 @@ function unifiedEnergyAndTyreV11(row,command,dt,track){
   v.energyDeployKW=used/1000;v.energyRechargeKW=actualHarvest*1000/dt;v.energyTargetMJ=UNIFIED_ENGINE_V11.ersCapacity;
   v.energyDeployMJ=(Number(v.energyDeployMJ)||0)+used*dt/1e6;
   v.energyHarvestMJ=(Number(v.energyHarvestMJ)||0)+actualHarvest;
+  // Diagnostic totals use executed work, never a second deployment or legacy lap budget.
+  const previousProgress=row.s/Math.max(1,track.lengthMeters),progress=Number(v.raceProgress)||0;
+  const previousLap=Math.max(1,Math.floor(Math.max(0,previousProgress))+1),lap=Math.max(1,Math.floor(Math.max(0,progress))+1);
+  if(Number(v.energyLapNumber)!==lap){v.energyLapNumber=lap;v.energyHarvestLapMJ=0;}
+  const lapShare=lap>previousLap&&progress>previousProgress?unifiedClampV11((progress-(lap-1))/(progress-previousProgress),0,1):1;
+  v.energyHarvestLapMJ=(Number(v.energyHarvestLapMJ)||0)+actualHarvest*lapShare;
   v.boostPowerKW=Math.max(0,command.usedExtraW-used)/1000;v.boostActive=command.usedExtraW>0;
+  v.boostEnergyMJ=(Number(v.boostEnergyMJ)||0)+v.boostPowerKW*dt/1000;
 }
 function unifiedSkillPowerV11(v,nowMs,pitState){
   if(!v||v.finished||pitState!=='TRACK'||nowMs<(Number(v.specialStartsV11)||0))return 0;

@@ -107,6 +107,19 @@ try{
   assert.equal(incident.forced.type,'UNDERSTEER');assert.equal(incident.active,'UNDERSTEER');
   assert(incident.grip<incident.base);assert(incident.clockPreserved&&incident.physicalPreserved);
   assert.equal(incident.adapted.speedFactor,1);assert(incident.live.some(row=>JSON.stringify(row).includes('언더스티어')));
+  const systems=await page.evaluate(()=>{
+    const v=window.mwsF1ComputeRaceStandingsV191()[0].vehicle;
+    const before=JSON.stringify({v,clock:window.mwsF1GetSimulationClockV192()});
+    const energy=window.mwsF1UpdateEnergySystemV201(v,1000000,'APEX',1,1);
+    const tyre=window.mwsF1UpdateTyreSystemV203(v,1000000,'APEX');
+    const energyState=window.mwsF1GetEnergyStatesV201().find(r=>r.id===v.id),tyreState=window.mwsF1GetTyreStatesV203().find(r=>r.id===v.id);
+    const grip=window.mwsF1UnifiedV11Report().incidents.find(r=>r.id===String(v.id)).grip;
+    return {energy,tyre,energyState,tyreState,grip,unchanged:before===JSON.stringify({v,clock:window.mwsF1GetSimulationClockV192()})};
+  });
+  assert(systems.unchanged&&systems.energy.readOnly&&systems.tyre.readOnly);
+  assert.equal(systems.energy.powerUnitFactor,1);assert.equal(systems.energy.deployedMJ,0);assert.equal(systems.energy.harvestedMJ,0);
+  assert.equal(systems.energyState.energyDeployKW,0);assert.equal(systems.energyState.energyRechargeKW,0);assert.equal(systems.energyState.boostPowerKW,0);
+  assert.equal(systems.tyreState.grip,systems.grip);
   const contracts=await page.evaluate(()=>{
     const physical=()=>JSON.stringify({clock:window.mwsF1GetSimulationClockV192(),vehicles:window.mwsF1ComputeRaceStandingsV191().map(r=>({id:r.vehicle.id,s:r.vehicle.raceProgress,y:r.vehicle.unifiedYV11,v:r.vehicle.speedKph,e:r.vehicle.batteryMJ,rng:r.vehicle.unifiedRngV11}))});
     const before=physical(),special=window.mwsF1QaSpecialV401(),model=window.mwsF1QaDynamicsContractV348();
@@ -191,7 +204,7 @@ try{
   assert.equal(await page.evaluate(()=>window.mwsF1GetScreenStateV185()),'SETUP');
   assert.equal(await page.evaluate(()=>window.mwsF1GetSelectedContactIdsV181().length),12);
   assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({result:'PASS',setup,layouts,zooms,pauseResume:true,legacyGuard:true,incident,contracts,pit,pitJourney,finish,
+  console.log(JSON.stringify({result:'PASS',setup,layouts,zooms,pauseResume:true,legacyGuard:true,incident,systems,contracts,pit,pitJourney,finish,
     simulationSeconds:report.steps*.02,physicalStops:report.collisionStops,
     warning:'Short UI integration only. Ring geometry warnings are not a zero-overlap result.'},null,2));
 }finally{await browser?.close();server.close();}

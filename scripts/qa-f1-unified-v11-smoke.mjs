@@ -305,11 +305,41 @@ assert.equal(contracts.fade.powerKW,150);assert.equal(contracts.fade.bonus,0);as
 assert.equal(contracts.paused.availableKW,150);assert.equal(contracts.paused.executedKW,0);assert.equal(contracts.finished.active,false);assert.equal(contracts.finishedPower.executedKW,0);
 const beforeRaceContract=new Function(setup.replace("activeRaceSnapshotV187={track,createdAt:'smoke',totalLaps:10}", 'activeRaceSnapshotV187=null')+engine+`return unifiedDynamicsContractV11();`)();
 assert.equal(beforeRaceContract.lineStatus,'Not available');assert.equal(beforeRaceContract.linePass,null);assert.equal(beforeRaceContract.allPass,null);assert.equal(beforeRaceContract.modelPass,true);
+const systemAdapters=src.slice(src.indexOf('function updateEnergySystemV201('),src.indexOf('function tyreCompoundSpecV203('))+
+ src.slice(src.indexOf('function updateTyreSystemV203('),src.indexOf('function activeTrackRuntimeProfileV235('));
+const systems=new Function(setup+engine+systemAdapters+`
+unifiedInitV11();raceMotionV189.running=true;const v=raceMotionV189.vehicles[0];
+v.batteryMJ=1;v.tyreWarmupFactor=.9;v.tyreGrip=.5;
+const powerRow={...unifiedSnapshotV11()[0],v:50,E:1};
+unifiedEnergyAndTyreV11(powerRow,{ds:1,v:50,brake:0,actualBrake:0,ers:80000,usedExtraW:100000},.02,track);
+const powered={battery:v.batteryMJ,deployed:v.energyDeployMJ,boost:v.boostEnergyMJ};
+v.energyHarvestLapMJ=.5;v.energyLapNumber=1;v.raceProgress=1.0001;
+const brakeRow={...unifiedSnapshotV11()[0],s:.9999*5280,v:50,E:v.batteryMJ};
+unifiedEnergyAndTyreV11(brakeRow,{ds:1.056,v:49,brake:1,actualBrake:20,ers:0,usedExtraW:0},.02,track);
+const ledger={harvest:v.energyHarvestMJ,lap:v.energyLapNumber,lapHarvest:v.energyHarvestLapMJ,boost:v.boostEnergyMJ};
+v.energyDeployKW=80;v.energyRechargeKW=120;v.boostPowerKW=20;
+const before=JSON.stringify({v,clock:simClockV192,rng:unifiedStateV11.rng});
+const energy=updateEnergySystemV201(v,1000000,'APEX',1,1),tyre=updateTyreSystemV203(v,1000000,'APEX');
+const energyList=getEnergyStatesV201(),tyreList=getTyreStatesV203();
+const unchanged=before===JSON.stringify({v,clock:simClockV192,rng:unifiedStateV11.rng});
+simClockV192.paused=true;const paused=updateEnergySystemV201(v,1000000,'APEX',1,1);
+simClockV192.paused=false;specialStateV401.cinematic=true;const cinematic=getEnergyStatesV201()[0];
+specialStateV401.cinematic=false;v.finished=true;const finished=getEnergyStatesV201()[0];
+v.finished=false;v.pitState='PIT_BOX';const stationary=getEnergyStatesV201()[0];
+v.pitState='TRACK';raceMotionV189.running=false;const stopped=getEnergyStatesV201()[0];
+return {powered,ledger,energy,tyre,energyState:energyList[0],tyreState:tyreList[0],grip:unifiedGripV11(v),unchanged,paused,cinematic,finished,stationary,stopped};`)();
+assert.equal(systems.powered.battery,.9984);assert.equal(systems.powered.deployed,.0016);assert.equal(systems.powered.boost,.0004);
+assert.equal(systems.ledger.harvest,.0024);assert.equal(systems.ledger.lap,2);assert(Math.abs(systems.ledger.lapHarvest-.0012)<1e-12);assert.equal(systems.ledger.boost,.0004);
+assert(systems.unchanged&&systems.energy.readOnly&&systems.tyre.readOnly);
+assert.equal(systems.energy.deployedMJ,0);assert.equal(systems.energy.harvestedMJ,0);assert.equal(systems.energy.powerUnitFactor,1);
+assert.equal(systems.energyState.energyDeployKW,80);assert.equal(systems.energyState.energyHarvestMJ,.0024);
+assert.equal(systems.energyState.boostEnergyMJ,.0004);assert.equal(systems.tyreState.grip,systems.grip);assert.equal(systems.tyre.thermalDeg,null);
+for(const state of [systems.paused,systems.cinematic,systems.finished,systems.stationary,systems.stopped])assert(state.deployKW===0&&state.rechargeKW===0&&state.boostKW===0);
 const a=trial(false),b=trial(true);
 assert.equal(a.ticks,6000);assert.equal(b.ticks,6000);assert.deepEqual(a.errors,[]);assert.deepEqual(b.errors,[]);
 assert.deepEqual(a.states,b.states,'Vehicle input order affected physical state');assert.equal(a.pitCalls,0);
 const long=trial(false,24000);
 assert.equal(long.ticks,24000);assert.deepEqual(long.errors,[]);assert(long.passes>0);
 for(const v of long.states){assert(v.e>=0&&v.e<=4);assert(v.w>=0&&v.w<=1);assert([v.s,v.y,v.v].every(Number.isFinite));}
-console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane','active-model-contract','special-read-adapter','paused-special-telemetry','unavailable-race-context'],
+console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane','active-model-contract','special-read-adapter','paused-special-telemetry','unavailable-race-context','energy-tyre-adapter-ownership','executed-work-ledger','lap-harvest-split','inactive-energy-telemetry'],
  warning:'Not Chromium or a real-circuit balance/overlap verification'},null,2));

@@ -1,6 +1,6 @@
 # MWS F1 통합 v1.1 수동 시험
 
-통합 엔진의 물리 설정값과 실제 계산의 중복 숫자를 연결했다. 기본 물리·밸런스 수치는 유지한다. 이번 단계의 시작 개발 HEAD는 ba0b0a1c6602d5b089cbc14e7a3b9e42565fccba이다. Production은 변경하지 않았다.
+공개된 구 에너지·타이어 갱신 API를 통합 상태 조회에 연결하고 실제 에너지 사용량의 진단 누락을 수정했다. 기본 물리·밸런스 수치는 유지한다. 이번 단계의 시작 개발 HEAD는 622ab78ac44a3f8cc964b0c6c0376efa91bb58a6이다. Production은 변경하지 않았다.
 
 ## 직접 실행
 
@@ -125,7 +125,7 @@ Chromium에서는 실제 공개 QA API와 레이아웃 exact/persistence QA를 �
 
 문법·12대 480초 합성·7개 실제 SVG 트랙 각 30초·Chromium 기본 UI 및 피트 여정은 PASS다. 합성 확정 추월은 16회였다. 이번 FIXED 피트 여정은 56.64 시뮬레이션초에 HARD 교체·OUTSIDE 복귀를 완료했고, 박스 위치 변화와 물리 정지는 0건이었다.
 
-## 이번 단계 - 물리 설정 책임 통합
+## 이전 단계 - 물리 설정 책임 통합
 
 - UNIFIED_ENGINE_V11의 질량·구동 가속·제동·횡그립·트랙션·일반 및 공격 ERS 출력·추가 출력 상한을 실제 스텝과 미래 코너 계획에서 읽는다. 교통 제동과 피트 손실 추정도 같은 구동·제동 값을 읽는다. 회전 충돌의 이동 경계 반경도 고정 .15m 대신 설정된 clearance의 절반을 사용해 실제 차체 판정과 일치시킨다. 기본 숫자는 변경하지 않았다.
 - 공기 저항의 기준 가속은 기존 식 그대로 drive를 읽는다. 미래 계획과 실제 스텝에서 같은 기준을 사용한다. 온도 부하의 18도, 트랙 폭 기본값 14m, 저속 계산 기준 등 다른 의미의 숫자는 물리 가속 설정으로 치환하지 않는다.
@@ -139,7 +139,7 @@ window.mwsF1UnifiedV11Report().simulationStepMs
 ```
 
 ```sh
-node scripts/qa-f1-unified-v11-config.mjs --baseline=ba0b0a1c6602d5b089cbc14e7a3b9e42565fccba
+node scripts/qa-f1-unified-v11-config.mjs
 ```
 
 새 QA는 별도 격리 fixture에서만 설정을 바꿔 질량·구동·트랙션·횡그립·제동·일반/공격 ERS·필살기·추가 출력 상한이 실제 가감속과 에너지에 반영되는지 확인한다. 피트 손실 추정의 설정 반영, 용량 상한과 음수 회수 방지도 확인한다. 이 시험 값은 앱 소스에 적용하지 않는다. baseline 인자를 생략하면 수정 전 비교는 Not available로 표시한다.
@@ -147,6 +147,26 @@ node scripts/qa-f1-unified-v11-config.mjs --baseline=ba0b0a1c6602d5b089cbc14e7a3
 기본값의 수정 전 비교는 12대·120 시뮬레이션초에서 전체 차량 상태, 난수와 주행 기록이 정확히 일치했다. 문법 검사와 기존 12대·480초 합성 회귀는 PASS, 확정 추월 16회다. 실제 SVG 7개 트랙 각각 12대·30초도 PASS이며 물리 오류는 없었다.
 
 Chromium 기본 UI의 FHD/QHD, 참가자·프로필, 정지/재개, 카메라, 실수 LIVE, 필살기 조회, 레이아웃 저장·보존·복원과 포디엄이 PASS다. FIXED 피트 여정은 56.32 시뮬레이션초에 HARD 교체·OUTSIDE 복귀를 완료했다. 진입 80km/h, 박스 속도 0과 위치 변화 0m, 최대 관측 가감속 26.32m/s², 물리 정지 0건이다. 이는 로컬 Public fixture의 기본 점검이며 Production 인증·클라우드 저장 및 Scheduler 전체 시나리오 검증 결과는 Not available이다. 해당 기능의 코드는 변경하지 않았다.
+
+## 이번 단계 - 에너지·타이어 공개 API의 상태 변경 책임
+
+- 정상 프레임의 simulateRaceStepV192는 기존대로 통합 엔진에 바로 전달된다. simulateVehicleDynamicsV196도 기존대로 통합 모드에서 물리 변경을 하지 않는다. 이번 감사에서는 별도로 공개된 mwsF1UpdateEnergySystemV201과 mwsF1UpdateTyreSystemV203이 구 배터리·마모 계산을 실행할 수 있음을 확인했다. 정상 주행에서 이 구 계산이 중복 실행된다는 의미는 아니다.
+- 두 공개 갱신 API는 통합 모드에서 읽기 전용 상태를 반환한다. 요청한 stepMs로 배터리·온도·마모·시계를 적분하지 않는다. engine은 unified-v1.1이고 readOnly는 true다. 에너지 API의 호출별 harvestedMJ/deployedMJ/boostEnergyMJ는 0이며 powerUnitFactor는 중립값 1이다. 실제 누적 기록은 energyHarvestMJ/energyDeployMJ/totalBoostEnergyMJ에서 읽는다.
+- mwsF1GetEnergyStatesV201도 같은 통합 조회를 사용한다. 일시정지·필살기 컷인·종료·피트 박스 정차·주행 루프 중단 중에는 실행 출력과 회수 출력이 0이다. 저장된 누적 사용량과 배터리 잔량은 보존한다. 목록 API의 기존 boostEnergyMJ는 누적 실제 추가 출력 사용량이며, 통합 모델에서 ERS 외에 실제 사용된 필살기 출력의 적분량을 뜻한다.
+- mwsF1GetTyreStatesV203은 현재 그립 함수의 예열·온도·마모·언더스티어를 읽는다. 섭씨 temperatureC와 warmup/damage를 함께 반환한다. 통합 모델이 별도로 계산하지 않는 구 thermalDeg/graining/flatSpot/strategyPressure는 null이다. 해당 별도 모델 결과는 Not available이며 실제 계산값처럼 표시하지 않는다.
+- 통합 스텝이 실제 제동 회수량을 energyHarvestLapMJ에 누적하고 랩 경계에서 초기화한다. 경계를 넘는 스텝은 해당 스텝의 회수량을 진행거리 비율로 나눠 새 랩 몫을 기록한다. 스텝 안에서 출력이 일정하다는 현재 적분 모델의 진단 방식이다. 구 세대의 랩별 회수 제한을 실제 물리에 적용하지 않는다.
+- boostEnergyMJ는 실제 사용된 추가 출력 중 ERS 소비를 제외한 출력을 시간 적분해 누적한다. 이 진단 갱신은 충돌 검증 후 확정된 스텝에서만 수행한다. 새 에너지나 속도 보너스를 생성하지 않는다. 기존 타이어 교체·피트 서비스의 명시적 상태 변경 경로는 유지한다.
+
+```js
+window.mwsF1GetEnergyStatesV201()
+window.mwsF1GetTyreStatesV203()
+```
+
+추가 합성 검증: 실제 에너지 소비·회수·필살기 사용량의 MJ 단위 계산, 랩 경계 회수량 분할, 큰 stepMs의 공개 갱신 요청에서 모든 차량 상태·시계·난수 불변, 현재 그립 조회, 정지·컷인·종료·피트 박스·주행 중단 출력 0이 PASS다. 설정 연결 QA는 baseline 인자 없이 PASS다. 과거 전체 객체 baseline 비교는 새 진단 필드도 비교하므로 이번 단계 이전 커밋과는 그대로 일치하지 않는다.
+
+622ab78과의 별도 12대·120초 비교에서는 새 진단 energyLapNumber/energyHarvestLapMJ/boostEnergyMJ를 제외한 전체 차량 상태, 난수와 엔진 주행 기록이 정확히 일치했다. 문법 검사, 기존 12대·480초 합성 회귀는 PASS이며 확정 추월 16회다. 실제 SVG 7개 트랙 각각 12대·30초도 물리 오류 없이 PASS다.
+
+Chromium에서는 실제 공개 API를 큰 stepMs로 호출하고 갱신 및 목록 조회 전후의 차량 전체 객체와 시계가 변하지 않는지 확인했다. FHD/QHD·프로필·참가자·카메라·정지/재개·실수 LIVE·필살기 조회·레이아웃 저장/복원·피트·포디엄이 PASS다. FIXED 피트 여정은 56.34 시뮬레이션초, 진입 80km/h, 박스 속도 0과 위치 변화 0m, HARD 교체·OUTSIDE 복귀, 최대 관측 가감속 26.34m/s², 물리 정지 0건이다. Production 인증·클라우드 저장·Scheduler 전체 시나리오 및 전체 경기 밸런스 결과는 Not available이다.
 
 ## 남은 범위
 
