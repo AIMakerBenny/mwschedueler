@@ -1,6 +1,6 @@
 # MWS F1 통합 v1.1 수동 시험
 
-통합 엔진의 필살기 조회와 QA를 현재 모델에 맞추고 기존 레이아웃 저장·복원을 실제 UI에서 검증했다. 이번 단계의 시작 개발 HEAD는 c5ba7b332ee19635ccc90d62816728f911daa1fa이다. Production은 변경하지 않았다.
+통합 엔진의 물리 설정값과 실제 계산의 중복 숫자를 연결했다. 기본 물리·밸런스 수치는 유지한다. 이번 단계의 시작 개발 HEAD는 ba0b0a1c6602d5b089cbc14e7a3b9e42565fccba이다. Production은 변경하지 않았다.
 
 ## 직접 실행
 
@@ -104,7 +104,7 @@ MWS_CHROME_PATH=/path/to/chrome node scripts/qa-f1-unified-v11-browser.mjs
 
 수동 시험에서는 단독 주행과 추월 중 주행을 나누어 관찰한다. lanes의 ideal이 코너 기하 목표이고 target은 현재 AI·합류 판단을 거친 목표다. 실제 y는 actual로 확인한다. 여러 차량이 가까이 있을 때는 안전한 공간이 생길 때까지 실제 경로가 이상선과 다를 수 있다. 기존 미리보기 실행법과 UI는 그대로다.
 
-## 이번 단계 - 현재 모델 조회와 QA 연결
+## 이전 단계 - 현재 모델 조회와 QA 연결
 
 - specialEffectV401의 통합 분기는 실제 unifiedSkillPowerV11을 읽는다. 구 속도 보너스·가속 배율·연계 및 추월 후 출력 보정을 조회 결과에 섞지 않는다. 호환용 bonus/straight는 0, accel은 1이고 powerKW가 현재 가능한 물리 출력을 표시한다.
 - 필살기 조회는 통합 엔진과 같은 10초 지속·마지막 1.5초 페이드를 사용한다. 피트·종료 차량은 가용 출력 0이다. specialTelemetryV401의 power에는 가용 출력 availableKW와 실행 출력 executedKW를 나눈다. 일시정지·컷인·비활성 상태에서는 과거 출력 필드가 남아 있어도 실행 출력 0을 보고한다.
@@ -124,6 +124,29 @@ window.mwsF1GetSpecialTelemetryV401()
 Chromium에서는 실제 공개 QA API와 레이아웃 exact/persistence QA를 호출했다. 레이아웃 저장 성공, 다른 설정 저장 후 같은 배치 보존, 저장 배치 복원, 기존 배치로 되돌림, 패널 겹침 0, 차량·시계 불변이 PASS다. 레이아웃 구현은 변경하지 않았다. 저장 검증은 로컬 Public fixture의 F1 설정 저장·복원이며 Production 인증·클라우드 데이터 저장 검증은 아니다.
 
 문법·12대 480초 합성·7개 실제 SVG 트랙 각 30초·Chromium 기본 UI 및 피트 여정은 PASS다. 합성 확정 추월은 16회였다. 이번 FIXED 피트 여정은 56.64 시뮬레이션초에 HARD 교체·OUTSIDE 복귀를 완료했고, 박스 위치 변화와 물리 정지는 0건이었다.
+
+## 이번 단계 - 물리 설정 책임 통합
+
+- UNIFIED_ENGINE_V11의 질량·구동 가속·제동·횡그립·트랙션·일반 및 공격 ERS 출력·추가 출력 상한을 실제 스텝과 미래 코너 계획에서 읽는다. 교통 제동과 피트 손실 추정도 같은 구동·제동 값을 읽는다. 회전 충돌의 이동 경계 반경도 고정 .15m 대신 설정된 clearance의 절반을 사용해 실제 차체 판정과 일치시킨다. 기본 숫자는 변경하지 않았다.
+- 공기 저항의 기준 가속은 기존 식 그대로 drive를 읽는다. 미래 계획과 실제 스텝에서 같은 기준을 사용한다. 온도 부하의 18도, 트랙 폭 기본값 14m, 저속 계산 기준 등 다른 의미의 숫자는 물리 가속 설정으로 치환하지 않는다.
+- ERS 용량은 차량 초기화의 잔량 상한, 제동 회수 상한과 배터리 진단 목표에 공통으로 반영한다. 상한을 넘는 잔량을 외부 QA에서 넣어도 음수 회수량을 기록하지 않도록 회수 가능한 공간을 0 이상으로 제한한다. 용량을 높여도 기존 초기 잔량을 자동 충전하지 않는다.
+- mwsF1UnifiedV11Report의 physics는 실제 설정을 반환하고 simulationStepMs는 기존 시계의 고정 스텝을 반환한다. revision은 shared-physics-config-v11이다. dt .020은 기준 스텝 정보이며, 실제 적분은 전달된 stepMs를 사용한다. 기존 20ms 시계와 스텝 방식은 변경하지 않았다.
+- 설정의 단위는 mass kg, drive/brake/lateral/traction m/s², specialPower/additionalPower W, baseBoostKW/attackBoostKW kW, ersCapacity MJ다. 새로운 수치 조정 UI나 실시간 물리 설정 API는 추가하지 않았다.
+
+```js
+window.mwsF1UnifiedV11Report().physics
+window.mwsF1UnifiedV11Report().simulationStepMs
+```
+
+```sh
+node scripts/qa-f1-unified-v11-config.mjs --baseline=ba0b0a1c6602d5b089cbc14e7a3b9e42565fccba
+```
+
+새 QA는 별도 격리 fixture에서만 설정을 바꿔 질량·구동·트랙션·횡그립·제동·일반/공격 ERS·필살기·추가 출력 상한이 실제 가감속과 에너지에 반영되는지 확인한다. 피트 손실 추정의 설정 반영, 용량 상한과 음수 회수 방지도 확인한다. 이 시험 값은 앱 소스에 적용하지 않는다. baseline 인자를 생략하면 수정 전 비교는 Not available로 표시한다.
+
+기본값의 수정 전 비교는 12대·120 시뮬레이션초에서 전체 차량 상태, 난수와 주행 기록이 정확히 일치했다. 문법 검사와 기존 12대·480초 합성 회귀는 PASS, 확정 추월 16회다. 실제 SVG 7개 트랙 각각 12대·30초도 PASS이며 물리 오류는 없었다.
+
+Chromium 기본 UI의 FHD/QHD, 참가자·프로필, 정지/재개, 카메라, 실수 LIVE, 필살기 조회, 레이아웃 저장·보존·복원과 포디엄이 PASS다. FIXED 피트 여정은 56.32 시뮬레이션초에 HARD 교체·OUTSIDE 복귀를 완료했다. 진입 80km/h, 박스 속도 0과 위치 변화 0m, 최대 관측 가감속 26.32m/s², 물리 정지 0건이다. 이는 로컬 Public fixture의 기본 점검이며 Production 인증·클라우드 저장 및 Scheduler 전체 시나리오 검증 결과는 Not available이다. 해당 기능의 코드는 변경하지 않았다.
 
 ## 남은 범위
 
