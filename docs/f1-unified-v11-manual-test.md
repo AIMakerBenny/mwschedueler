@@ -281,3 +281,12 @@ The standalone `scripts/diagnose-recovery-h-f1-live.mjs` used historical `allPas
 - The existing competition regression now drives a four-car, two-pit-exit transition in both vehicle array orders; zero false reward, zero candidate leak, zero overlap and 40 committed 20ms steps are required.
 - A separate 120s active-engine observer records actual committed `PLAN_ATTACK`, `SIDE_BY_SIDE`, `EXIT_DUEL` and return-to-`FOLLOW` transitions. It distinguishes attack openings, blocked transitions, non-confirmed disengagement, repeated engagements with the *inferred nearest ahead* opponent, and physical confirmed passes.
 - The observer **does not** declare every disengagement a lost duel; no explicit authoritative target-aware attempt ledger exists yet. This is a deterministic QA observation, not a gameplay balance patch. Existing 480s confirmed-pass/crossing provenance checks remain enforced.
+
+
+## Unified v1.1 authoritative AI-target attempt ledger - 2026-10-16
+
+- An AI opponent ID is now captured directly at the moment `unifiedChooseLaneV11` selects the nearest eligible ahead car. Holding a prior committed attack preserves that opponent ID. The opponent is no longer reconstructed after the fact from car order.
+- A passive attempt observer runs **only after a successful physical step commit**. Its records include `START` (with exact target and repeat attempt number), `BLOCKED` (with blockers), `SIDE_BY_SIDE`, `DISENGAGED_UNCONFIRMED`, `TARGET_CHANGED`, `PIT_INTERRUPTED`, `SUCCESS`, and `UNATTRIBUTED_PASS`.
+- Only a confirmed physical overtake against the **currently active matching target** emits `SUCCESS`. A physical pass without that link is `UNATTRIBUTED_PASS` rather than an invented successful duel. A disengagement is not automatically a lost duel.
+- `window.mwsF1UnifiedV11Report().attackLedger` exposes a copied, read-only-style observation of active attempts and the 2,048 latest completed-step events. Reset clears counters and pending attempts. Rejected collision steps cannot append events.
+- Dedicated 120-second fixture testing runs both vehicle-array permutations, checks target-specific retry/blocked/disengaged events, confirms physical-pass classification, and unit-tests target-specific success plus atomic rejection. This is diagnostic-only; existing AI decisions, speed, overtaking thresholds and UI were not retuned.

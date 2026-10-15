@@ -11017,7 +11017,7 @@ const UNIFIED_ENGINE_V11=Object.freeze({dt:.020,mass:800,drive:14,brake:32,later
   followBase:5.5,physicalLength:5.2,physicalWidth:2,clearance:.30,ersCapacity:4,
   specialPower:300000,additionalPower:480000,baseBoostKW:80,attackBoostKW:160});
 const unifiedStateV11={trackKey:'',path:null,telemetry:{steps:0,collisionStops:0,screenGeometryWarnings:[],passes:[],rawCrossings:[],constraints:0,invalid:[],pit:[],skills:[]},
-  passCandidates:new Map(),rng:1,initialized:false};
+  passCandidates:new Map(),attempts:new Map(),attemptPrevious:new Map(),attemptCounts:new Map(),attemptHistory:[],attemptSequence:0,rng:1,initialized:false};
 const unifiedClampV11=(x,lo,hi)=>Math.min(hi,Math.max(lo,Number.isFinite(x)?x:lo));
 function unifiedRandomV11(){let n=unifiedStateV11.rng|0;n^=n<<13;n^=n>>>17;n^=n<<5;unifiedStateV11.rng=n||1;return (n>>>0)/4294967296;}
 function unifiedRandomVehicleV11(v){
@@ -11055,7 +11055,8 @@ function unifiedTyreReadV11(v){
 }
 function unifiedResetV11(){
   unifiedStateV11.trackKey='';unifiedStateV11.path=null;unifiedStateV11.initialized=false;unifiedStateV11.rng=1;
-  unifiedStateV11.passCandidates.clear();unifiedStateV11.telemetry={steps:0,collisionStops:0,screenGeometryWarnings:[],passes:[],rawCrossings:[],constraints:0,invalid:[],pit:[],skills:[]};
+  unifiedStateV11.passCandidates.clear();unifiedStateV11.attempts.clear();unifiedStateV11.attemptPrevious.clear();unifiedStateV11.attemptCounts.clear();unifiedStateV11.attemptHistory.length=0;unifiedStateV11.attemptSequence=0;
+  unifiedStateV11.telemetry={steps:0,collisionStops:0,screenGeometryWarnings:[],passes:[],rawCrossings:[],constraints:0,invalid:[],pit:[],skills:[]};
 }
 function unifiedInitV11(){
   const track=activeRaceSnapshotV187?.track,path=document.getElementById('f1RacingRaceTrackPathV188');
@@ -11117,7 +11118,7 @@ function unifiedInitV11(){
     v.unifiedFormV11=1+((seed%1201)/1200*2-1)*.006;
     v.unifiedYV11=Number(v.lateralOffsetMeters)||0;v.unifiedVyV11=0;v.unifiedAyV11=0;
     v.unifiedHeadingV11=unifiedWorldPoseV11(Number(v.raceProgress)*len,v.unifiedYV11).heading;
-    v.unifiedAiAtV11=0;v.unifiedIntentUntilV11=0;v.unifiedLaneTargetV11=v.unifiedYV11;v.unifiedIdealLaneV11=0;v.unifiedMergeBlockedV11=[];
+    v.unifiedAiAtV11=0;v.unifiedIntentUntilV11=0;v.unifiedAiTargetV11='';v.unifiedLaneTargetV11=v.unifiedYV11;v.unifiedIdealLaneV11=0;v.unifiedMergeBlockedV11=[];
     v.unifiedErrorUntilV11=0;v.unifiedErrorTypeV11='';v.unifiedErrorCooldownV11=0;
     v.unifiedLastCornerV11='';v.unifiedBrakeErrorMetersV11=0;
     v.unifiedPitEvalAtV11=.6+((seed>>>8)%190)/100;
@@ -11341,6 +11342,7 @@ function unifiedChooseLaneV11(row,rows,now,width){
     v.unifiedMergeBlockedV11=held.blocked;v.unifiedLaneTargetV11=held.target;return held.target;
   }
   const next=rows.filter(p=>p.id!==row.id&&!p.finished&&p.pit==='TRACK'&&unifiedGapV11(row,p)>0&&unifiedGapV11(row,p)<145).sort((a,b)=>unifiedGapV11(row,a)-unifiedGapV11(row,b))[0];
+  v.unifiedAiTargetV11=row.pit==='TRACK'&&!v.pitRequested&&next?String(next.id):'';
   let target=ideal,state='CRUISE';
   if(next){
     state='FOLLOW';
@@ -11369,6 +11371,54 @@ function unifiedChooseLaneV11(row,rows,now,width){
   if(merge.blocked.length&&state!=='PIT')state='EXIT_DUEL';
   v.unifiedLaneTargetV11=target;v.unifiedAiStateV11=state;v.unifiedIntentUntilV11=now+.7;
   return target;
+}
+// Target-aware diagnostics only. Called after physics commits; AI never reads them.
+function unifiedObserveAttackV11(nowMs,confirmedPasses=[]){
+  const state=unifiedStateV11;
+  const emit=(type,attempt,extra={})=>{
+    state.attemptHistory.push({ms:nowMs,type,attemptId:attempt.id,driver:attempt.driver,target:attempt.target,...extra});
+    if(state.attemptHistory.length>2048)state.attemptHistory.splice(0,state.attemptHistory.length-2048);
+  };
+  const newlySuccessful=new Set();
+  for(const pass of [...confirmedPasses].sort((a,b)=>String(a.front).localeCompare(String(b.front))||
+    String(a.passed).localeCompare(String(b.passed)))){
+    const id=String(pass.front),opponent=String(pass.passed),active=state.attempts.get(id);
+    if(active&&active.target===opponent){
+      emit('SUCCESS',active,{crossingMs:Math.round(pass.t*1000)});
+      state.attempts.delete(id);newlySuccessful.add(id+'|'+opponent);
+    }else{
+      // Never invent a link between an old disengagement and a later physical pass.
+      emit('UNATTRIBUTED_PASS',{id:null,driver:id,target:opponent},{crossingMs:Math.round(pass.t*1000)});
+    }
+  }
+  for(const v of [...raceMotionV189.vehicles].sort((a,b)=>String(a.id).localeCompare(String(b.id)))){
+    const driver=String(v.id),eligible=!v.finished&&String(v.pitState||'TRACK')==='TRACK';
+    const mode=eligible?String(v.unifiedAiStateV11||'CRUISE'):'PIT_OR_FINISHED';
+    const target=eligible?String(v.unifiedAiTargetV11||''):'';
+    const previous=state.attemptPrevious.get(driver)||{mode:'CRUISE',target:''};
+    let active=state.attempts.get(driver);
+    if(active&&(!eligible||target!==active.target||
+      !['PLAN_ATTACK','EXIT_DUEL','SIDE_BY_SIDE'].includes(mode))){
+      emit(!eligible?'PIT_INTERRUPTED':target!==active.target?'TARGET_CHANGED':'DISENGAGED_UNCONFIRMED',
+        active,{mode});
+      state.attempts.delete(driver);active=null;
+    }
+    if(!active&&eligible&&mode==='PLAN_ATTACK'&&target&&
+      (previous.mode!=='PLAN_ATTACK'||previous.target!==target)&&
+      !newlySuccessful.has(driver+'|'+target)){
+      const pair=driver+'|'+target,count=state.attemptCounts.get(pair)||0;
+      state.attemptCounts.set(pair,count+1);
+      active={id:++state.attemptSequence,driver,target,blocked:false,sideBySide:false};
+      state.attempts.set(driver,active);emit('START',active,{retry:count>0,attemptNumber:count+1});
+    }
+    if(active&&mode==='EXIT_DUEL'&&v.unifiedMergeBlockedV11?.length&&!active.blocked){
+      active.blocked=true;emit('BLOCKED',active,{blockedBy:[...v.unifiedMergeBlockedV11].map(String).sort()});
+    }
+    if(active&&mode==='SIDE_BY_SIDE'&&!active.sideBySide){
+      active.sideBySide=true;emit('SIDE_BY_SIDE',active);
+    }
+    state.attemptPrevious.set(driver,{mode,target});
+  }
 }
 function unifiedIncidentNameV11(type){
   return ({LOCKUP:'LOCK_UP',UNDERSTEER:'UNDERSTEER',EXIT_ERROR:'OVERSTEER'})[type]||'';
@@ -11809,12 +11859,14 @@ function simulateUnifiedRaceStepV11(stepMs){
       unifiedStateV11.telemetry.rawCrossings.push({t:now,pair:key,front:after>0?a.id:b.id});
     }
   }
+  const confirmedThisStep=[];
   for(const [key,c] of [...unifiedStateV11.passCandidates]){
     if(simClockV192.simTimeMs-c.at<500)continue;
     const a=finishedRows.find(x=>x.id===c.front),b=finishedRows.find(x=>x.id===(c.pair[0]===c.front?c.pair[1]:c.pair[0]));
-    if(a&&b&&beganOnTrack.get(a.id)&&beganOnTrack.get(b.id)&&a.s>b.s){unifiedStateV11.telemetry.passes.push({t:c.at/1000,front:c.front,passed:b.id});a.ref.passCompletedCount=(Number(a.ref.passCompletedCount)||0)+1;a.ref.unifiedPassedIdV11=b.id;}
+    if(a&&b&&beganOnTrack.get(a.id)&&beganOnTrack.get(b.id)&&a.s>b.s){const pass={t:c.at/1000,front:c.front,passed:b.id};unifiedStateV11.telemetry.passes.push(pass);confirmedThisStep.push(pass);a.ref.passCompletedCount=(Number(a.ref.passCompletedCount)||0)+1;a.ref.unifiedPassedIdV11=b.id;}
     unifiedStateV11.passCandidates.delete(key);
   }
+  unifiedObserveAttackV11(simClockV192.simTimeMs,confirmedThisStep);
   unifiedStateV11.telemetry.steps++;
   updateInteractionSnapshotShadowV368();
   recordRaceOrderFlowV309();
@@ -11827,6 +11879,9 @@ window.mwsF1UnifiedV11Report=()=>({engine:'unified-v1.1',revision:'shared-physic
   seed:unifiedStateV11.rng,initialized:unifiedStateV11.initialized,
   lanes:raceMotionV189.vehicles.map(v=>({id:String(v.id),actual:Number(v.unifiedYV11)||0,ideal:Number(v.unifiedIdealLaneV11)||0,target:Number(v.unifiedLaneTargetV11)||0,state:String(v.unifiedAiStateV11||''),blocked:v.unifiedMergeBlockedV11||[]})),
   incidents:raceMotionV189.vehicles.map(v=>({id:String(v.id),active:unifiedIncidentNameV11(unifiedActiveErrorV11(v)),untilMs:(Number(v.unifiedErrorUntilV11)||0)*1000,sequence:Number(v.unifiedIncidentSequenceV11)||0,grip:unifiedGripV11(v),warmup:Number(v.tyreWarmupFactor)||1})),
+  attackLedger:{active:[...unifiedStateV11.attempts.values()].map(x=>({...x})).sort((a,b)=>a.driver.localeCompare(b.driver)),
+    events:unifiedStateV11.attemptHistory.map(x=>({...x,blockedBy:x.blockedBy?[...x.blockedBy]:undefined})),
+    totalStarts:unifiedStateV11.attemptSequence},
   timingGates:raceMotionV189.vehicles.map(v=>({id:String(v.id),records:v.unifiedDetectionV11||{},eligible:Boolean(v.overtakeEligible),active:Boolean(v.overtakeActive),gapSeconds:Number.isFinite(v.overtakeGapSeconds)?v.overtakeGapSeconds:null})),
   worldGeometry:unifiedStateV11.path?{minimumForwardMetric:unifiedStateV11.path.minimumForwardMetric,scale:unifiedStateV11.path.scale,idealLineRange:unifiedStateV11.path.idealLineRange}:null,
   renderOverlaps:markerOverlapReportV377(),
