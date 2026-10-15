@@ -272,3 +272,12 @@ The standalone `scripts/diagnose-recovery-h-f1-live.mjs` used historical `allPas
 - The existing 480s synthetic smoke now matches every confirmed overtaking reward against an actual committed crossing of the same pair and same leading car, with a 20ms integration-window tolerance. It verifies the pass counters and prevents duplicate reward signatures.
 - A physical crossing need not result in a confirmed pass: the engine already requires 500ms of stable changed order. This check validates confirmed-pass provenance but does not claim all attempted overtakes are captured as explicit failure events.
 - Neither game physics, balance parameters, AI weights, participant selection, UI panels nor Production deployment are modified.
+
+
+## Unified v1.1 pit-exit pass ledger fix and active attack observation - 2026-10-15
+
+- Reproduced a real pass-accounting defect: when two `PIT_EXIT` cars switched to `TRACK` during `updatePitPostStepV205`, two previously queued candidate passes could be credited without a physical crossing. The replay had four real collidable bodies, no overlap and zero raw crossings, but two false rewards before the fix.
+- The active pass detection and pending-pass settlement now both require each car to have started the integration step on `TRACK`, in addition to still being on `TRACK` at the end. Pit-exit transitions no longer create or confirm an on-track overtake in the same step.
+- The existing competition regression now drives a four-car, two-pit-exit transition in both vehicle array orders; zero false reward, zero candidate leak, zero overlap and 40 committed 20ms steps are required.
+- A separate 120s active-engine observer records actual committed `PLAN_ATTACK`, `SIDE_BY_SIDE`, `EXIT_DUEL` and return-to-`FOLLOW` transitions. It distinguishes attack openings, blocked transitions, non-confirmed disengagement, repeated engagements with the *inferred nearest ahead* opponent, and physical confirmed passes.
+- The observer **does not** declare every disengagement a lost duel; no explicit authoritative target-aware attempt ledger exists yet. This is a deterministic QA observation, not a gameplay balance patch. Existing 480s confirmed-pass/crossing provenance checks remain enforced.

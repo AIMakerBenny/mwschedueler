@@ -11796,9 +11796,12 @@ function simulateUnifiedRaceStepV11(stepMs){
   }
   unifiedDetectionCrossingsV11(rows,stepMs,track);
   const finishedRows=unifiedSnapshotV11().filter(p=>p.pit==='TRACK'&&!p.finished);
+  // Exclude a pit entry/exit transition from the committed on-track pass ledger.
+  // An apparent order change at a pit merge is not an ordinary on-track overtake.
+  const beganOnTrack=new Map(rows.map(row=>[row.id,row.pit==='TRACK'&&!row.finished]));
   for(let i=0;i<finishedRows.length;i++)for(let j=i+1;j<finishedRows.length;j++){
     const a=finishedRows[i],b=finishedRows[j],oa=rows.find(x=>x.id===a.id),ob=rows.find(x=>x.id===b.id);
-    if(!oa||!ob)continue;
+    if(!oa||!ob||!beganOnTrack.get(a.id)||!beganOnTrack.get(b.id))continue;
     const before=oa.s-ob.s,after=a.s-b.s;
     if(before*after<0&&Math.abs(before)<len){
       const key=[a.id,b.id].sort().join('|');
@@ -11809,7 +11812,7 @@ function simulateUnifiedRaceStepV11(stepMs){
   for(const [key,c] of [...unifiedStateV11.passCandidates]){
     if(simClockV192.simTimeMs-c.at<500)continue;
     const a=finishedRows.find(x=>x.id===c.front),b=finishedRows.find(x=>x.id===(c.pair[0]===c.front?c.pair[1]:c.pair[0]));
-    if(a&&b&&a.s>b.s){unifiedStateV11.telemetry.passes.push({t:c.at/1000,front:c.front,passed:b.id});a.ref.passCompletedCount=(Number(a.ref.passCompletedCount)||0)+1;a.ref.unifiedPassedIdV11=b.id;}
+    if(a&&b&&beganOnTrack.get(a.id)&&beganOnTrack.get(b.id)&&a.s>b.s){unifiedStateV11.telemetry.passes.push({t:c.at/1000,front:c.front,passed:b.id});a.ref.passCompletedCount=(Number(a.ref.passCompletedCount)||0)+1;a.ref.unifiedPassedIdV11=b.id;}
     unifiedStateV11.passCandidates.delete(key);
   }
   unifiedStateV11.telemetry.steps++;

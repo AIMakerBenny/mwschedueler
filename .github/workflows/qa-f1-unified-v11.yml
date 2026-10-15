@@ -31,6 +31,8 @@ jobs:
         run: node scripts/qa-f1-unified-v11-smoke.mjs
       - name: Active multi-car and pit-exit pass exclusion
         run: node scripts/qa-f1-unified-v11-competition.mjs
+      - name: Active overtake attempt transition diagnostics
+        run: node scripts/qa-f1-unified-v11-attempts.mjs
       - name: Install browser QA dependencies
         run: |
           npm install --no-save --no-package-lock playwright
