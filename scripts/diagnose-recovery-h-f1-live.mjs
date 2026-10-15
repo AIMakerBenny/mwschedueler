@@ -657,8 +657,17 @@ try{
     assert(conversation303&&getComputedStyle(conversation303).display==='none','Phase 303 legacy conversation feed still visible');
     const cutin303=document.getElementById('f1RacingLiveCutinLayerV264');
     assert(cutin303?.parentElement?.classList.contains('f1-racing-race-map-stage-v188'),'Phase 303 LIVE cut-in still overlaps the track map');
+    // A disabled historical solver QA is not an active unified integration pass.
+    // Keep the observation as Not available; reject actual active-model failures.
+    const inactiveLegacyQasV11=new Set();
+    const isInactiveLegacyQaV11=report=>{
+      const inactive=Boolean(report?.status==='Not available'&&
+        report?.activeModel==='unified-v1.1'&&report?.integrated===false&&report?.allPass===null);
+      if(inactive)inactiveLegacyQasV11.add(String(report.reason||'legacy-qa-unavailable'));
+      return inactive;
+    };
     const variabilityQa303=window.mwsF1QaGameVariabilityV303?.();
-    assert(variabilityQa303?.allPass===true&&Number(variabilityQa303?.config?.liveCadenceMs)>=8500&&Number(variabilityQa303?.config?.liveCadenceMs)<=12000&&Number(variabilityQa303?.config?.maxTotalBiasKph)>=4.5,'Phase 303 race variability QA failed: '+JSON.stringify(variabilityQa303));
+    assert(isInactiveLegacyQaV11(variabilityQa303)||(variabilityQa303?.allPass===true&&Number(variabilityQa303?.config?.liveCadenceMs)>=8500&&Number(variabilityQa303?.config?.liveCadenceMs)<=12000&&Number(variabilityQa303?.config?.maxTotalBiasKph)>=4.5),'Phase 303 race variability QA failed: '+JSON.stringify(variabilityQa303));
     const dynamicsQa314=window.mwsF1QaRaceDynamicsV314?.();
     assert(dynamicsQa314?.allPass===true,'Phase 314 race dynamics QA failed: '+JSON.stringify(dynamicsQa314));
     assert(Number(dynamicsQa314?.tyreWear?.SOFT)>=.10&&Number(dynamicsQa314?.tyreWear?.MEDIUM)>=.08&&Number(dynamicsQa314?.tyreWear?.HARD)>=.06,'Phase 314 tyre wear acceleration not active: '+JSON.stringify(dynamicsQa314?.tyreWear));
@@ -812,9 +821,9 @@ try{
     assert(Number(dialoguePoolQa279?.stats?.total)>=400&&Number(dialoguePoolQa279?.uniqueCount)>=300,'Phase 279 dialogue pool below 300: '+JSON.stringify(dialoguePoolQa279));
     assert(dialoguePoolQa279?.microCoverage===true&&Number(dialoguePoolQa279?.categoryCount)>=13,'Phase 279 micro dialogue coverage incomplete: '+JSON.stringify(dialoguePoolQa279));
     const microQa278=window.mwsF1QaMicroBattleEventsV278?.();
-    assert(microQa278?.allPass===true,'Phase 278 micro battle QA failed: '+JSON.stringify(microQa278));
-    assert(microQa278?.coverage===true&&Number(microQa278?.eventCount)>=27,'Phase 278 event catalog incomplete: '+JSON.stringify(microQa278));
-    assert(microQa278?.thresholdCoverage===true&&Array.isArray(microQa278?.threshold)&&microQa278.threshold.length===3,'Phase 278 threshold detection failed: '+JSON.stringify(microQa278));
+    assert(isInactiveLegacyQaV11(microQa278)||(microQa278?.allPass===true),'Phase 278 micro battle QA failed: '+JSON.stringify(microQa278));
+    assert(isInactiveLegacyQaV11(microQa278)||(microQa278?.coverage===true&&Number(microQa278?.eventCount)>=27),'Phase 278 event catalog incomplete: '+JSON.stringify(microQa278));
+    assert(isInactiveLegacyQaV11(microQa278)||(microQa278?.thresholdCoverage===true&&Array.isArray(microQa278?.threshold)&&microQa278.threshold.length===3),'Phase 278 threshold detection failed: '+JSON.stringify(microQa278));
     const dialogueQa277=window.mwsF1QaCharacterDialogueEngineV277?.();
     assert(dialogueQa277?.allPass===true,'Phase 277 character dialogue QA failed: '+JSON.stringify(dialogueQa277));
     assert(dialogueQa277?.roleCoverage===true&&dialogueQa277?.poolsReady===true&&dialogueQa277?.nonRepeat===true,'Phase 277 event-role mapping incomplete: '+JSON.stringify(dialogueQa277));
@@ -827,15 +836,15 @@ try{
     assert(Number(headline260?.total)===17&&Number(headline260?.remaining)===17,'Phase 260 headline remaining laps mismatch: '+JSON.stringify(headline260));
 
     const burstQa275=window.mwsF1QaChaseBurstV275?.();
-    assert(burstQa275?.allPass===true,'Phase 275 chase burst QA failed: '+JSON.stringify(burstQa275));
-    assert(burstQa275?.eligible?.eligible===true&&burstQa275?.leader?.eligible===false&&burstQa275?.pit?.eligible===false&&burstQa275?.incident?.eligible===false&&burstQa275?.exhausted?.eligible===false,'Phase 275 burst eligibility invalid: '+JSON.stringify(burstQa275));
-    assert(Number(burstQa275?.config?.maxUsesPerRace)<=2&&Number(burstQa275?.config?.activationChance)<=.05,'Phase 275 burst bounds too aggressive: '+JSON.stringify(burstQa275?.config));
+    assert(isInactiveLegacyQaV11(burstQa275)||(burstQa275?.allPass===true),'Phase 275 chase burst QA failed: '+JSON.stringify(burstQa275));
+    assert(isInactiveLegacyQaV11(burstQa275)||(burstQa275?.eligible?.eligible===true&&burstQa275?.leader?.eligible===false&&burstQa275?.pit?.eligible===false&&burstQa275?.incident?.eligible===false&&burstQa275?.exhausted?.eligible===false),'Phase 275 burst eligibility invalid: '+JSON.stringify(burstQa275));
+    assert(isInactiveLegacyQaV11(burstQa275)||(Number(burstQa275?.config?.maxUsesPerRace)<=2&&Number(burstQa275?.config?.activationChance)<=.05),'Phase 275 burst bounds too aggressive: '+JSON.stringify(burstQa275?.config));
     const pressureQa274=window.mwsF1QaLeaderPressureV274?.();
-    assert(pressureQa274?.allPass===true,'Phase 274 leader pressure QA failed: '+JSON.stringify(pressureQa274));
-    assert(Number(pressureQa274?.close?.score)===0&&Number(pressureQa274?.runaway?.score)>0,'Phase 274 tight-fight suppression missing: '+JSON.stringify(pressureQa274));
-    assert(Number(pressureQa274?.late?.score)<Number(pressureQa274?.runaway?.score)&&Number(pressureQa274?.group?.score)<Number(pressureQa274?.runaway?.score),'Phase 274 late/group pressure scaling invalid: '+JSON.stringify(pressureQa274));
+    assert(isInactiveLegacyQaV11(pressureQa274)||(pressureQa274?.allPass===true),'Phase 274 leader pressure QA failed: '+JSON.stringify(pressureQa274));
+    assert(isInactiveLegacyQaV11(pressureQa274)||(Number(pressureQa274?.close?.score)===0&&Number(pressureQa274?.runaway?.score)>0),'Phase 274 tight-fight suppression missing: '+JSON.stringify(pressureQa274));
+    assert(isInactiveLegacyQaV11(pressureQa274)||(Number(pressureQa274?.late?.score)<Number(pressureQa274?.runaway?.score)&&Number(pressureQa274?.group?.score)<Number(pressureQa274?.runaway?.score)),'Phase 274 late/group pressure scaling invalid: '+JSON.stringify(pressureQa274));
     const pressureStates274=window.mwsF1GetLeaderPressureStatesV274?.()||[];
-    assert(pressureStates274.length>=2&&pressureStates274.every(row=>Number(row.speedFactor)>=.94&&Number(row.speedFactor)<=1&&Number(row.score)>=0&&Number(row.score)<=1),'Phase 274 pressure state invalid: '+JSON.stringify(pressureStates274));
+    assert(isInactiveLegacyQaV11(pressureQa274)||(pressureStates274.length>=2&&pressureStates274.every(row=>Number(row.speedFactor)>=.94&&Number(row.speedFactor)<=1&&Number(row.score)>=0&&Number(row.score)<=1)),'Phase 274 pressure state invalid: '+JSON.stringify(pressureStates274));
 
     const cornerQa270=window.mwsF1QaCornerDynamicsV270?.();
     assert(cornerQa270?.allPass===true&&cornerQa270?.exitsRecover===true&&cornerQa270?.lineTransitions===true,'Phase 270 corner dynamics QA failed: '+JSON.stringify(cornerQa270));
@@ -1097,10 +1106,10 @@ try{
     assert(['SOFT','MEDIUM','HARD'].includes(strategyQa?.targetCompound),'Phase 206 target compound invalid');
     assert(Number(strategyQa?.context?.pressure)>=.8&&Number(strategyQa?.context?.tyreNeed)>.5,'Phase 206 strategy did not expose tyre evidence');
     const trafficQa=window.mwsF1QaTrafficV207?.();
-    assert(trafficQa?.follower?.state==='PRESSURE','Phase 207 follower did not enter PRESSURE');
-    assert(Number(trafficQa?.follower?.gapMeters)<20&&Number(trafficQa?.follower?.closingRateKph)>0,'Phase 207 traffic gap or closing rate invalid');
-    assert(trafficQa?.follower?.lineIntent==='ATTACK_INSIDE','Phase 207 attacker did not choose inside line');
-    assert(trafficQa?.ahead?.defenceActive===true&&trafficQa?.ahead?.lineIntent==='DEFENSIVE_INSIDE','Phase 207 defender did not react to pressure');
+    assert(isInactiveLegacyQaV11(trafficQa)||(trafficQa?.follower?.state==='PRESSURE'),'Phase 207 follower did not enter PRESSURE');
+    assert(isInactiveLegacyQaV11(trafficQa)||(Number(trafficQa?.follower?.gapMeters)<20&&Number(trafficQa?.follower?.closingRateKph)>0),'Phase 207 traffic gap or closing rate invalid');
+    assert(isInactiveLegacyQaV11(trafficQa)||(trafficQa?.follower?.lineIntent==='ATTACK_INSIDE'),'Phase 207 attacker did not choose inside line');
+    assert(isInactiveLegacyQaV11(trafficQa)||(trafficQa?.ahead?.defenceActive===true&&trafficQa?.ahead?.lineIntent==='DEFENSIVE_INSIDE'),'Phase 207 defender did not react to pressure');
     const passQa=window.mwsF1QaPassStateMachineV208?.();
     const expectedPassSequence=['FOLLOWING','CLOSING','TOWING','PREPARING_ATTACK','PULLING_OUT','SIDE_BY_SIDE','BRAKING_DUEL','CORNER_BATTLE','SWITCHBACK','COUNTER_ATTACK','PASS_COMPLETED'];
     assert(JSON.stringify(passQa?.sequence)===JSON.stringify(expectedPassSequence),'Phase 208 pass state sequence mismatch: '+JSON.stringify(passQa?.sequence));
@@ -1197,9 +1206,9 @@ try{
     }:null;
     assert(profileCenters257&&profileCenters257.ringW>0&&profileCenters257.visualW>0&&profileCenters257.dx<2&&profileCenters257.dy<2&&!profileConnector257&&!profileCore257,'Phase 257 embedded driver profile geometry invalid: '+JSON.stringify(profileCenters257));
     const lateralSmoothingQa258=window.mwsF1QaVisualLateralSmoothingV258?.();
-    assert(lateralSmoothingQa258?.allPass===true&&lateralSmoothingQa258?.smoothStart===true&&lateralSmoothingQa258?.converging===true&&lateralSmoothingQa258?.physicsIsolated===true,'Phase 258 visual lateral smoothing QA failed: '+JSON.stringify(lateralSmoothingQa258));
+    assert(isInactiveLegacyQaV11(lateralSmoothingQa258)||(lateralSmoothingQa258?.allPass===true&&lateralSmoothingQa258?.smoothStart===true&&lateralSmoothingQa258?.converging===true&&lateralSmoothingQa258?.physicsIsolated===true),'Phase 258 visual lateral smoothing QA failed: '+JSON.stringify(lateralSmoothingQa258));
     const lateralDomQa258=window.mwsF1QaVisualLateralDomV258?.();
-    assert(lateralDomQa258?.allPass===true&&lateralDomQa258?.noFirstFrameSnap===true&&lateralDomQa258?.convergesOverTime===true&&lateralDomQa258?.laterRenderMoved===true,'Phase 258 visual lateral DOM QA failed: '+JSON.stringify(lateralDomQa258));
+    assert(isInactiveLegacyQaV11(lateralDomQa258)||(lateralDomQa258?.allPass===true&&lateralDomQa258?.noFirstFrameSnap===true&&lateralDomQa258?.convergesOverTime===true&&lateralDomQa258?.laterRenderMoved===true),'Phase 258 visual lateral DOM QA failed: '+JSON.stringify(lateralDomQa258));
     const workspaceUserDefaultQa259=window.mwsF1QaWorkspaceUserDefaultPersistenceV259?.();
     assert(workspaceUserDefaultQa259?.allPass===true&&workspaceUserDefaultQa259?.persistedSignature===workspaceUserDefaultQa259?.expected&&workspaceUserDefaultQa259?.preservedAfterOtherSetting===workspaceUserDefaultQa259?.expected&&workspaceUserDefaultQa259?.restoredSignature===workspaceUserDefaultQa259?.expected,'Phase 259 workspace user-default persistence QA failed: '+JSON.stringify(workspaceUserDefaultQa259));
     const markerNumberTexts=[...document.querySelectorAll('.f1-racing-race-vehicle-v189 .car-number-v232')].map(node=>String(node.textContent||'').trim());
@@ -1418,49 +1427,49 @@ try{
     const pitInteraction369=window.mwsF1QaPitInteractionIsolationV369?.();
     assert(pitInteraction369?.allPass===true&&pitInteraction369?.filtersPitAndFinished===true&&pitInteraction369?.pitCleared===true&&pitInteraction369?.inboundCleared===true&&pitInteraction369?.battleLinkGuard===true,'Phase 369 pit interaction isolation QA failed: '+JSON.stringify(pitInteraction369));
     const preemptivePass379=window.mwsF1QaPreemptivePassCorridorV379?.();
-    assert(preemptivePass379?.allPass===true,'Phase 379 preemptive pass QA failed: '+JSON.stringify(preemptivePass379));
+    assert(isInactiveLegacyQaV11(preemptivePass379)||(preemptivePass379?.allPass===true),'Phase 379 preemptive pass QA failed: '+JSON.stringify(preemptivePass379));
     const projectedSafe378=window.mwsF1QaProjectedSafeFollowingV378?.();
-    assert(projectedSafe378?.allPass===true,'Phase 378 projected safe following QA failed: '+JSON.stringify(projectedSafe378));
+    assert(isInactiveLegacyQaV11(projectedSafe378)||(projectedSafe378?.allPass===true),'Phase 378 projected safe following QA failed: '+JSON.stringify(projectedSafe378));
     const physicalContinuity386=window.mwsF1QaPhysicalSpeedContinuityV386?.();
-    assert(physicalContinuity386?.allPass===true,'Phase 386 unexpected track speed reset QA failed: '+JSON.stringify(physicalContinuity386));
+    assert(isInactiveLegacyQaV11(physicalContinuity386)||(physicalContinuity386?.allPass===true),'Phase 386 unexpected track speed reset QA failed: '+JSON.stringify(physicalContinuity386));
     const physicalClosure386=window.mwsF1QaPhysicalClosureV386?.();
-    assert(physicalClosure386?.allPass===true,'Phase 386 physical closure envelope QA failed: '+JSON.stringify(physicalClosure386));
+    assert(isInactiveLegacyQaV11(physicalClosure386)||(physicalClosure386?.allPass===true),'Phase 386 physical closure envelope QA failed: '+JSON.stringify(physicalClosure386));
     const emergencyAvoidance386=window.mwsF1QaEmergencyAvoidanceV386?.();
-    assert(emergencyAvoidance386?.allPass===true,'Phase 386 emergency obstacle bypass QA failed: '+JSON.stringify(emergencyAvoidance386));
+    assert(isInactiveLegacyQaV11(emergencyAvoidance386)||(emergencyAvoidance386?.allPass===true),'Phase 386 emergency obstacle bypass QA failed: '+JSON.stringify(emergencyAvoidance386));
     const finalLive386=window.mwsF1QaFinalLiveQualityV386?.();
     assert(finalLive386?.allPass===true,'Phase 386 actual LIVE maximum-zoom marker overlap remains: '+JSON.stringify(finalLive386));
     const paceRelease385=window.mwsF1QaSafePaceReleaseV385?.();
-    assert(paceRelease385?.allPass===true,'Phase 385 safe pace release QA failed: '+JSON.stringify(paceRelease385));
+    assert(isInactiveLegacyQaV11(paceRelease385)||(paceRelease385?.allPass===true),'Phase 385 safe pace release QA failed: '+JSON.stringify(paceRelease385));
     const safeThirdPit384=window.mwsF1QaSafeThirdPartyPitV384?.();
-    assert(safeThirdPit384?.allPass===true,'Phase 384 third-party and pit-merge QA failed: '+JSON.stringify(safeThirdPit384));
+    assert(isInactiveLegacyQaV11(safeThirdPit384)||(safeThirdPit384?.allPass===true),'Phase 384 third-party and pit-merge QA failed: '+JSON.stringify(safeThirdPit384));
     const passLine383=window.mwsF1QaCommittedPassLineV383?.();
-    assert(passLine383?.allPass===true,'Phase 383 committed pass-line QA failed: '+JSON.stringify(passLine383));
+    assert(isInactiveLegacyQaV11(passLine383)||(passLine383?.allPass===true),'Phase 383 committed pass-line QA failed: '+JSON.stringify(passLine383));
     const cornerRetiming382=window.mwsF1QaCornerRetimingV382?.();
-    assert(cornerRetiming382?.allPass===true,'Phase 382 corner retiming QA failed: '+JSON.stringify(cornerRetiming382));
+    assert(isInactiveLegacyQaV11(cornerRetiming382)||(cornerRetiming382?.allPass===true),'Phase 382 corner retiming QA failed: '+JSON.stringify(cornerRetiming382));
     const neighborBraking381=window.mwsF1QaNeighborBrakingV381?.();
-    assert(neighborBraking381?.allPass===true,'Phase 381 neighbor braking QA failed: '+JSON.stringify(neighborBraking381));
+    assert(isInactiveLegacyQaV11(neighborBraking381)||(neighborBraking381?.allPass===true),'Phase 381 neighbor braking QA failed: '+JSON.stringify(neighborBraking381));
     const behaviorTelemetry380=window.mwsF1QaBehaviorTelemetryV380?.();
     assert(behaviorTelemetry380?.allPass===true,'Phase 380 telemetry QA failed: '+JSON.stringify(behaviorTelemetry380));
     const overlapMonitor377=window.mwsF1QaActualMarkerOverlapsV377?.();
     assert(overlapMonitor377?.allPass===true,'Phase 377 visible marker overlap detector QA failed: '+JSON.stringify(overlapMonitor377));
     const lateStint393=window.mwsF1QaLateStintPitDeferralV393?.();
-    assert(lateStint393?.allPass===true,'Phase 393 late stint pit economics Chromium QA failed: '+JSON.stringify(lateStint393));
+    assert(isInactiveLegacyQaV11(lateStint393)||(lateStint393?.allPass===true),'Phase 393 late stint pit economics Chromium QA failed: '+JSON.stringify(lateStint393));
     const tacticalPit391=window.mwsF1QaTacticalPitValueV391?.();
-    assert(tacticalPit391?.allPass===true,'Phase 391 tactical pit economics Chromium QA failed: '+JSON.stringify(tacticalPit391));
+    assert(isInactiveLegacyQaV11(tacticalPit391)||(tacticalPit391?.allPass===true),'Phase 391 tactical pit economics Chromium QA failed: '+JSON.stringify(tacticalPit391));
     const thirdRetry387=window.mwsF1QaThirdPartyRetryV387?.();
     assert(thirdRetry387?.allPass===true,'Phase 387 third-party retry Chromium QA failed: '+JSON.stringify(thirdRetry387));
     const multicar376=window.mwsF1QaMulticarCorridorV376?.();
-    assert(multicar376?.allPass===true,'Phase 376 three-wide bypass and physical proximity QA failed: '+JSON.stringify(multicar376));
+    assert(isInactiveLegacyQaV11(multicar376)||(multicar376?.allPass===true),'Phase 376 three-wide bypass and physical proximity QA failed: '+JSON.stringify(multicar376));
     const cornerPhysics375=window.mwsF1QaCornerPhysicsV375?.();
-    assert(cornerPhysics375?.allPass===true,'Phase 375 angle-based F1 corner physics QA failed: '+JSON.stringify(cornerPhysics375));
+    assert(isInactiveLegacyQaV11(cornerPhysics375)||(cornerPhysics375?.allPass===true),'Phase 375 angle-based F1 corner physics QA failed: '+JSON.stringify(cornerPhysics375));
     const finalPit374=window.mwsF1QaFinalStintPitEconomicsV374?.();
-    assert(finalPit374?.allPass===true&&finalPit374?.preservesCriticalStops===true,'Phase 374 final stint pit economics QA failed: '+JSON.stringify(finalPit374));
+    assert(isInactiveLegacyQaV11(finalPit374)||(finalPit374?.allPass===true&&finalPit374?.preservesCriticalStops===true),'Phase 374 final stint pit economics QA failed: '+JSON.stringify(finalPit374));
     const spreadDiagnostics373=window.mwsF1QaFieldSpreadDiagnosticsV373?.();
     assert(spreadDiagnostics373?.allPass===true,'Phase 373 field spread diagnostics QA failed: '+JSON.stringify(spreadDiagnostics373));
     const rearPace372=window.mwsF1QaLongRunRearPaceV372?.();
-    assert(rearPace372?.allPass===true&&rearPace372?.monotonic===true&&rearPace372?.directPositionMutation===false,'Phase 372 long-run rear pace QA failed: '+JSON.stringify(rearPace372));
+    assert(isInactiveLegacyQaV11(rearPace372)||(rearPace372?.allPass===true&&rearPace372?.monotonic===true&&rearPace372?.directPositionMutation===false),'Phase 372 long-run rear pace QA failed: '+JSON.stringify(rearPace372));
     const physicalPass371=window.mwsF1QaPhysicalPassClearanceV371?.();
-    assert(physicalPass371?.allPass===true&&physicalPass371?.rejectTimedOnly===true&&physicalPass371?.rejectBlocked===true,'Phase 371 physical pass clearance QA failed: '+JSON.stringify(physicalPass371));
+    assert(isInactiveLegacyQaV11(physicalPass371)||(physicalPass371?.allPass===true&&physicalPass371?.rejectTimedOnly===true&&physicalPass371?.rejectBlocked===true),'Phase 371 physical pass clearance QA failed: '+JSON.stringify(physicalPass371));
     const cornerTrain370=window.mwsF1QaCornerTrainSeparationPauseLockV370?.();
     assert(cornerTrain370?.allPass===true&&cornerTrain370?.strictRelease===true&&cornerTrain370?.stagedSpacing===true&&cornerTrain370?.pauseLocked===true,'Phase 370 corner train separation/pause lock QA failed: '+JSON.stringify(cornerTrain370));
     assert(laneStability364?.allPass===true&&laneStability364?.preserved===true,'Phase 364 lane band slot stability QA failed: '+JSON.stringify(laneStability364));
@@ -1711,6 +1720,7 @@ try{
         phase242Reference:momentumBenchmark262?.phase242Reference||null
       },
       lapTimingV248:{rowPass:Boolean(lapTimingQa248?.rowPass),domPass:Boolean(lapTimingQa248?.domPass),rows:lapTimingQa248?.result?.lapTiming||[],timingDom:lapTimingQa248?.result?.timingDom||[]},
+      unavailableLegacyQAsV11:[...inactiveLegacyQasV11],
       finalState:window.mwsF1GetScreenStateV185?.(),
       errors
     };

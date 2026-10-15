@@ -25,6 +25,8 @@ jobs:
           node-version: '22'
       - name: Validate JavaScript syntax
         run: node --check assets/f1-racing-v1.js
+      - name: Recovery H legacy-QA classification contract
+        run: node scripts/qa-f1-unified-v11-diagnostic-classification.mjs
       - name: Unified synthetic regression smoke
         run: node scripts/qa-f1-unified-v11-smoke.mjs
       - name: Install browser QA dependencies

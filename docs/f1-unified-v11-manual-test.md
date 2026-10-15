@@ -243,3 +243,14 @@ The following historical phase-level integration QAs now report `status:'Not ava
 - The v1.1 smoke test invokes each guarded QA directly, making it impossible for these old source-string checks to report a false active-engine pass.
 - Active rendering, shared pit service, special cinematic and marker/UI QAs are intentionally not blanket-disabled. They need live observational evidence instead of legacy-path source-string heuristics.
 - This classification is not a substitute for finish-to-finish multi-seed balance validation or all-zoom marker overlap validation.
+
+
+## Recovery H legacy diagnostic compatibility - 2026-10-15
+
+The standalone `scripts/diagnose-recovery-h-f1-live.mjs` used historical `allPass === true` assertions even for legacy solvers already retired from the active unified path. These assertions could make the diagnostic fail for a healthy v1.1 run.
+
+- The pre-existing assertions are preserved for an active or legacy QA result, but a report with `status: Not available`, `activeModel: unified-v1.1`, `integrated: false`, and `allPass: null` is explicitly classified as an inactive historical QA instead of a failure.
+- All 34 affected assertions now use the same strict classifier. The diagnostic response exposes `unavailableLegacyQAsV11` listing the excluded reason codes.
+- Actual errors, missing results, failed current-model checks, DOM overlap assertions and live telemetry checks are not exempted.
+- A new Node contract test covers strict acceptance and rejection, verifies every guarded diagnostic assertion and runs in development-branch GitHub Actions.
+- This does not convert the old full Recovery H diagnostic into a verified unified browser QA. Continue to use `qa-f1-unified-v11-browser.mjs` and real SVG tests for v1.1.
