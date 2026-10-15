@@ -417,11 +417,39 @@ assert.equal(unifiedPublicV11.tow,unifiedPublicV11.expectedTow);
 assert.equal(unifiedPublicV11.dirty,unifiedPublicV11.expectedDirty);
 assert(unifiedPublicV11.readOnly&&unifiedPublicV11.flaggedLaneUnchanged);
 assert.equal(unifiedPublicV11.qaStatus,'Not available');assert.equal(unifiedPublicV11.qaPass,null);
+// Unified v1.1: legacy pressure, chase and variability APIs are read-only.
+const legacyPressurePartsV11=[
+  ['function updateFieldCompressionLeaderPressureV274(','const CHASE_BURST_CONFIG_V275='],
+  ['function updateChaseBurstV275(','function chaseBurstEffectV275('],
+  ['function getChaseBurstStatesV275(','function createRaceVehiclesV189('],
+  ['function applyGameVariabilityV303(','function qaLiveDiversityV315('],
+  ['function qaGameVariabilityV303(','function qaRaceDynamicsV314(']
+].map(([a,b])=>src.slice(src.indexOf(a),src.indexOf(b,src.indexOf(a)))).join('');
+const legacyPressureOwnershipV11=new Function(setup+engine+legacyPressurePartsV11+`
+const beforeInit=JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,rng:unifiedStateV11.rng});
+const initial=[updateFieldCompressionLeaderPressureV274(10000000),updateChaseBurstV275(10000000),applyGameVariabilityV303(10000000)];
+const initialClean=beforeInit===JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,rng:unifiedStateV11.rng});
+unifiedInitV11();
+const car=raceMotionV189.vehicles[0];
+car.leaderPressureEventV274='LEGACY';car.leaderPressureRandomStateV274=765;
+car.chaseBurstStateV275='ACTIVE';car.chaseBurstRandomStateV275=765;car.variabilitySpeedBiasKphV309=7;
+const before=JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,rng:unifiedStateV11.rng});
+const leader=updateFieldCompressionLeaderPressureV274(10000000),chase=updateChaseBurstV275(10000000),correction=applyGameVariabilityV303(10000000);
+const reports=[qaLeaderPressureV274(),qaChaseBurstV275(),qaGameVariabilityV303()];
+return {initialClean,initialSizes:initial.map(x=>x.length),
+  clean:before===JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,rng:unifiedStateV11.rng}),
+  sizes:[leader.length,chase.length,correction.length],
+  unavailable:leader[0].score===null&&chase[0].uses===null&&!leader[0].available&&!chase[0].available,
+  reports:reports.map(x=>[x.status,x.integrated,x.allPass])};`)();
+assert(legacyPressureOwnershipV11.initialClean&&legacyPressureOwnershipV11.clean&&legacyPressureOwnershipV11.unavailable);
+assert.deepEqual(legacyPressureOwnershipV11.initialSizes,[12,12,0]);
+assert.deepEqual(legacyPressureOwnershipV11.sizes,[12,12,0]);
+assert(legacyPressureOwnershipV11.reports.every(x=>x[0]==='Not available'&&x[1]===false&&x[2]===null));
 const a=trial(false),b=trial(true);
 assert.equal(a.ticks,6000);assert.equal(b.ticks,6000);assert.deepEqual(a.errors,[]);assert.deepEqual(b.errors,[]);
 assert.deepEqual(a.states,b.states,'Vehicle input order affected physical state');assert.equal(a.pitCalls,0);
 const long=trial(false,24000);
 assert.equal(long.ticks,24000);assert.deepEqual(long.errors,[]);assert(long.passes>0);
 for(const v of long.states){assert(v.e>=0&&v.e<=4);assert(v.w>=0&&v.w<=1);assert([v.s,v.y,v.v].every(Number.isFinite));}
-console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane','active-model-contract','special-read-adapter','paused-special-telemetry','unavailable-race-context','energy-tyre-adapter-ownership','executed-work-ledger','lap-harvest-split','inactive-energy-telemetry','pit-strategy-ownership','pit-shared-recommendation','pit-query-before-init','pit-qa-readonly','legacy-v258-v208-read-only','legacy-wake-pace-traffic-blueflag-readonly'],
+console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane','active-model-contract','special-read-adapter','paused-special-telemetry','unavailable-race-context','energy-tyre-adapter-ownership','executed-work-ledger','lap-harvest-split','inactive-energy-telemetry','pit-strategy-ownership','pit-shared-recommendation','pit-query-before-init','pit-qa-readonly','legacy-v258-v208-read-only','legacy-wake-pace-traffic-blueflag-readonly','legacy-pressure-chase-variability-readonly'],
  warning:'Not Chromium or a real-circuit balance/overlap verification'},null,2));

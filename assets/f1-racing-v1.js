@@ -5681,6 +5681,9 @@ function leaderPressureEffectV274(vehicle,phase){
   return {event,speedFactor:Math.max(.94,Math.min(1,speedFactor)),lateralOffsetMeters};
 }
 function updateFieldCompressionLeaderPressureV274(stepMs){
+  // Only the unified simulation owns performance/error events and RNG.
+  // Retain a read-only compatibility result for direct legacy API callers.
+  if(UNIFIED_ENGINE_V11)return getLeaderPressureStatesV274();
   if(!(stepMs>0)||raceFlagStateV214.flag!=='GREEN'||!raceMotionV189.vehicles.length)return [];
   const now=Number(simClockV192.simTimeMs)||0;
   const standings=computeRaceStandingsV191();
@@ -5725,6 +5728,12 @@ function updateFieldCompressionLeaderPressureV274(stepMs){
   return rows;
 }
 function getLeaderPressureStatesV274(){
+  if(UNIFIED_ENGINE_V11)return raceMotionV189.vehicles.map(vehicle=>({
+    id:String(vehicle.id||''),name:String(vehicle.driver?.name||''),
+    role:null,score:null,gapBehindSeconds:null,leadDurationMs:null,rankFactor:null,
+    activeEvent:null,cooldownRemainingMs:null,speedFactor:null,eventCount:null,
+    available:false,readOnly:true,activeModel:'unified-v1.1'
+  }));
   const now=Number(simClockV192.simTimeMs)||0;
   return raceMotionV189.vehicles.map(vehicle=>({
     id:String(vehicle.id||''),name:String(vehicle.driver?.name||''),role:String(vehicle.leaderPressureRoleV274||'NONE'),
@@ -5739,6 +5748,8 @@ function getLeaderPressureStatesV274(){
   }));
 }
 function qaLeaderPressureV274(){
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_LEADER_PRESSURE_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
   const runaway=leaderPressureScoreV274({role:'LEADER',gapBehindSeconds:7,leadDurationMs:65000,fieldSplitSeconds:8,raceFraction:.45});
   const close=leaderPressureScoreV274({role:'LEADER',gapBehindSeconds:.8,leadDurationMs:65000,fieldSplitSeconds:8,raceFraction:.45});
   const late=leaderPressureScoreV274({role:'LEADER',gapBehindSeconds:7,leadDurationMs:65000,fieldSplitSeconds:8,raceFraction:.96});
@@ -5817,6 +5828,8 @@ function chaseBurstEligibilityV275(vehicle,standing,target){
     eligiblePosition,onTrack,safe,closeEnough,chasing,usesAvailable,cooldownReady,green,gap,state,targetId:String(target?.id||'')};
 }
 function updateChaseBurstV275(stepMs){
+  // Do not advance legacy chase timers, RNG or duplicate boost events.
+  if(UNIFIED_ENGINE_V11)return getChaseBurstStatesV275();
   if(!(stepMs>0)||!raceMotionV189.vehicles.length)return [];
   const now=Number(simClockV192.simTimeMs)||0;
   const standings=computeRaceStandingsV191();
@@ -5858,6 +5871,12 @@ function chaseBurstEffectV275(vehicle,phase){
     battleBiasBonusKph:CHASE_BURST_CONFIG_V275.battleBiasBonusKph};
 }
 function getChaseBurstStatesV275(){
+  if(UNIFIED_ENGINE_V11)return raceMotionV189.vehicles.map(vehicle=>({
+    id:String(vehicle.id||''),name:String(vehicle.driver?.name||''),
+    active:null,uses:null,maxUses:null,remainingMs:null,
+    cooldownRemainingMs:null,targetId:null,lastEndReason:null,
+    available:false,readOnly:true,activeModel:'unified-v1.1'
+  }));
   const now=Number(simClockV192.simTimeMs)||0;
   return raceMotionV189.vehicles.map(vehicle=>({
     id:String(vehicle.id||''),name:String(vehicle.driver?.name||''),active:isChaseBurstActiveV275(vehicle),
@@ -5868,6 +5887,8 @@ function getChaseBurstStatesV275(){
   }));
 }
 function qaChaseBurstV275(){
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_CHASE_BURST_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
   const base={id:'burst-qa',finished:false,pitState:'TRACK',pitRequested:false,trackBoundaryExceededV271:false,battleState:'TOWING',
     trafficGapMeters:18,chaseBurstUsesV275:0,chaseBurstCooldownUntilV275:0,chaseBurstRandomStateV275:275001,lockupActiveMs:0,understeerActiveMs:0,oversteerActiveMs:0};
   const target={id:'target-qa',pitState:'TRACK',raceProgress:1.01};
@@ -9793,6 +9814,9 @@ function fieldSpreadCatchupCapMultiplierV354(){
   return activeRaceModeV345()==='FAST'?FIELD_SPREAD_BALANCE_V352.fastCatchupCapMultiplier:FIELD_SPREAD_BALANCE_V352.normalCatchupCapMultiplier;
 }
 function applyGameVariabilityV303(stepMs){
+  // The unified engine is responsible for real pace and passing opportunities.
+  // Never revive old catch-up speed biases or forced lane intent via this API.
+  if(UNIFIED_ENGINE_V11)return [];
   if(!(stepMs>0)||raceFlagStateV214.flag!=='GREEN'||!raceMotionV189.vehicles.length)return [];
   const now=Number(simClockV192.simTimeMs)||0;
   const competitionV345=raceCompetitionConfigV345();
@@ -9864,6 +9888,8 @@ window.mwsF1QaNaturalDialogueV331=qaNaturalDialogueV331;
 window.__mwsF1RacingV331=VERSION331;
 
 function qaGameVariabilityV303(){
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_VARIABILITY_CORRECTION_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
   const c=GAME_VARIABILITY_CONFIG_V303;
   const synthetic={id:'qa',passFailedCount:3},m0=gameVariabilityMomentumV303(synthetic,0),m1=gameVariabilityMomentumV303(synthetic,5000);
   return {version:VERSION303,config:{...c},state:{...gameVariabilityStateV303,lastOrder:[...gameVariabilityStateV303.lastOrder]},momentumSamples:[m0,m1],

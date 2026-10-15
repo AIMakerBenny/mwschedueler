@@ -210,3 +210,13 @@ window.mwsF1GetPitStrategyStatesV206()
 - `mwsF1UpdateBackmarkerBlueFlagsV215` calculates a non-mutating classification in unified mode, and cannot override the unified lane or battle bias. It does not itself apply a blue-flag manoeuvre.
 - `mwsF1QaTrafficV207` reports `Not available`, `integrated: false`, `allPass: null`; the legacy QA previously edited live vehicle positions and then attempted partial restoration.
 - The synthetic smoke adds pre-initialization null availability, true aero correspondence, no-state-mutation and no-legacy-random-advance regressions. Full Node CLI and Chromium QA remain separate verification requirements.
+
+
+## Unified v1.1 V274 / V275 / V303 legacy API ownership - 2026-10-15
+
+- `raceFrameV189 -> simulateRaceStepV192 -> simulateUnifiedRaceStepV11` bypasses the legacy racing loop. V274 leader pressure, V275 chase burst and V303 catch-up bias updates are only called from that bypassed loop under normal race-frame execution.
+- Direct legacy update calls now leave vehicle state, legacy and unified random streams, clock, timers, lateral intent and speed biases unchanged.
+- `mwsF1UpdateLeaderPressureV274` and `mwsF1UpdateChaseBurstV275` return compatibility lists reporting `available:false` and unavailable legacy-only metrics as null.
+- `mwsF1ApplyGameVariabilityV303` does not apply legacy catch-up or position bias and returns no legacy corrections in unified mode.
+- Corresponding V274/V275/V303 QAs indicate `status:'Not available'`, `integrated:false`, `allPass:null`, avoiding false pass claims from validating disabled legacy tuning rules.
+- The existing unified AI, actual pace/traction and special-skill cut-in remain unchanged. No complete-race tuning, Chromium validation or Cloudflare Production release is asserted.
