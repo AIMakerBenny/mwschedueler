@@ -230,3 +230,16 @@ window.mwsF1GetPitStrategyStatesV206()
 - `mwsF1QaMicroBattleEventsV278` reports `Not available`, `integrated:false`, `allPass:null` in unified mode rather than marking a static legacy event catalog as active integration.
 - Smoke adds an explicit invariant test for both vehicle state and all V278 event bookkeeping structures.
 - A new branch-specific GitHub Actions workflow attempts full Node smoke, short real-SVG tracks, and baseline Chromium UI regression without touching the Cloudflare Production deploy workflow. Check its actual run status before claiming tests passed.
+
+
+## Unified v1.1 legacy-only QA integration status - 2026-10-15
+
+The active `simulateRaceStepV192` immediately delegates to `simulateUnifiedRaceStepV11`. Checking for a function name in a bypassed legacy function body does **not** verify active integration.
+
+The following historical phase-level integration QAs now report `status:'Not available'`, `activeModel:'unified-v1.1'`, `integrated:false` and `allPass:null` while v1.1 is active: `qaTacticalPitValueV391`, `qaLateStintPitDeferralV393`, `qaCommittedPassLineV383`, `qaPhysicalClosureV386`, `qaSafeThirdPartyPitV384`, `qaCornerRetimingV382`, `qaSafePaceReleaseV385`, `qaPhysicalPassClearanceV371`, `qaFinalStintPitEconomicsV374`, `qaCornerPhysicsV375`, `qaMulticarCorridorV376`, `qaProjectedSafeFollowingV378`, `qaLongRunRearPaceV372`, `qaNeighborBrakingV381`, `qaPreemptivePassCorridorV379`.
+
+- The old implementation and historical QA source remain present for compatibility; only the active v1.1 report path is qualified.
+- Unified pit entry/service, physical collision handling, AI lanes, corners and tyre dynamics are not modified by this audit.
+- The v1.1 smoke test invokes each guarded QA directly, making it impossible for these old source-string checks to report a false active-engine pass.
+- Active rendering, shared pit service, special cinematic and marker/UI QAs are intentionally not blanket-disabled. They need live observational evidence instead of legacy-path source-string heuristics.
+- This classification is not a substitute for finish-to-finish multi-seed balance validation or all-zoom marker overlap validation.

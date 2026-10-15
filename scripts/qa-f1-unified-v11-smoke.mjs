@@ -464,11 +464,27 @@ assert.equal(microEventOwnershipV11.report.counts.PASS_SUCCESS,1);
 assert.equal(microEventOwnershipV11.qa.status,'Not available');
 assert.equal(microEventOwnershipV11.qa.integrated,false);
 assert.equal(microEventOwnershipV11.qa.allPass,null);
+// Distinguish legacy source-string unit tests from active unified integration.
+const legacyOnlyQAFunctionsV11=["qaTacticalPitValueV391","qaLateStintPitDeferralV393","qaCommittedPassLineV383","qaPhysicalClosureV386","qaSafeThirdPartyPitV384","qaCornerRetimingV382","qaSafePaceReleaseV385","qaPhysicalPassClearanceV371","qaFinalStintPitEconomicsV374","qaCornerPhysicsV375","qaMulticarCorridorV376","qaProjectedSafeFollowingV378","qaLongRunRearPaceV372","qaNeighborBrakingV381","qaPreemptivePassCorridorV379"];
+const legacyOnlyQASourceV11=legacyOnlyQAFunctionsV11.map(name=>{
+ const start=src.indexOf('function '+name+'(){'),end=src.indexOf('\\n}',start);
+ assert(start>=0&&end>start,'Missing or unterminated '+name);
+ return src.slice(start,end+2);
+}).join('\\n');
+const legacyOnlyQAResultsV11=new Function('UNIFIED_ENGINE_V11',
+  legacyOnlyQASourceV11+'\\nreturn ['+legacyOnlyQAFunctionsV11.map(name=>name+'()').join(',')+'];')(true);
+assert.equal(legacyOnlyQAResultsV11.length,legacyOnlyQAFunctionsV11.length);
+for(const row of legacyOnlyQAResultsV11){
+ assert.equal(row.status,'Not available');
+ assert.equal(row.activeModel,'unified-v1.1');
+ assert.equal(row.integrated,false);
+ assert.equal(row.allPass,null);
+}
 const a=trial(false),b=trial(true);
 assert.equal(a.ticks,6000);assert.equal(b.ticks,6000);assert.deepEqual(a.errors,[]);assert.deepEqual(b.errors,[]);
 assert.deepEqual(a.states,b.states,'Vehicle input order affected physical state');assert.equal(a.pitCalls,0);
 const long=trial(false,24000);
 assert.equal(long.ticks,24000);assert.deepEqual(long.errors,[]);assert(long.passes>0);
 for(const v of long.states){assert(v.e>=0&&v.e<=4);assert(v.w>=0&&v.w<=1);assert([v.s,v.y,v.v].every(Number.isFinite));}
-console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane','active-model-contract','special-read-adapter','paused-special-telemetry','unavailable-race-context','energy-tyre-adapter-ownership','executed-work-ledger','lap-harvest-split','inactive-energy-telemetry','pit-strategy-ownership','pit-shared-recommendation','pit-query-before-init','pit-qa-readonly','legacy-v258-v208-read-only','legacy-wake-pace-traffic-blueflag-readonly','legacy-pressure-chase-variability-readonly','legacy-micro-battle-v278-no-duplicate-live'],
+console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane','active-model-contract','special-read-adapter','paused-special-telemetry','unavailable-race-context','energy-tyre-adapter-ownership','executed-work-ledger','lap-harvest-split','inactive-energy-telemetry','pit-strategy-ownership','pit-shared-recommendation','pit-query-before-init','pit-qa-readonly','legacy-v258-v208-read-only','legacy-wake-pace-traffic-blueflag-readonly','legacy-pressure-chase-variability-readonly','legacy-micro-battle-v278-no-duplicate-live','legacy-solver-qa-active-engine-separation'],
  warning:'Not Chromium or a real-circuit balance/overlap verification'},null,2));

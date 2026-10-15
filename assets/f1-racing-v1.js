@@ -4466,6 +4466,10 @@ function tacticalPitValueV391(context,criticalTyre,economics){
   return {approve:urgent||worthwhile,urgent,worthwhile,projectedGain:gain,loss,remaining,wear};
 }
 function qaTacticalPitValueV391(){
+  // v1.1 owns this behaviour in its single physics/AI step; legacy source-string
+  // integration checks cannot establish that the old solver runs.
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_PIT_VALUE_RULE_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
   const sample={pitLossSeconds:28.12,tyreRemaining:.37,wear:.63};
   const econ={projectedBenefitSeconds:8.5};
   const early=tacticalPitValueV391(sample,false,econ);
@@ -4502,6 +4506,10 @@ function lateStintPitDeferralV393(vehicle,context,economics){
   return {defer,remaining,projectedWear,observedWearPerLap:observed,damage,uneconomic,gain,loss};
 }
 function qaLateStintPitDeferralV393(){
+  // v1.1 owns this behaviour in its single physics/AI step; legacy source-string
+  // integration checks cannot establish that the old solver runs.
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_LATE_STINT_PIT_RULE_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
   const vehicle={tyreCompound:'SOFT',tyreAgeLaps:6.5};
   const context={remainingLaps:2.53,wear:.6126,tyreRemaining:.3874,grip:.839,flatSpot:0,thermalDeg:.22,pitLossSeconds:28.12};
   const economy={projectedBenefitSeconds:4.89,severeDamage:false};
@@ -4688,6 +4696,10 @@ function validateThirdLaneV383(vehicle,target,phase,peers=raceMotionV189.vehicle
  reason:group.length>=capacity?'FULL':corridorFree?'AVAILABLE':'OCCUPIED'};
 }
 function qaCommittedPassLineV383(){
+  // v1.1 owns this behaviour in its single physics/AI step; legacy source-string
+  // integration checks cannot establish that the old solver runs.
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_PASS_LINE_STATE_MACHINE_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
  const committed={battleState:'SIDE_BY_SIDE',racingLineMode:'ATTACK_INSIDE',pitState:'TRACK'};
  const idle={...committed,battleState:'FOLLOWING'},pit={...committed,pitState:'PIT'};
  const track={lengthMeters:4500,geometry:{trackWidthMeters:14,racingLineMarginMeters:1.5}};
@@ -5169,6 +5181,10 @@ function physicalClosureEnvelopeV386(vehicle,track,peers=raceMotionV189.vehicles
 }
 
 function qaPhysicalClosureV386(){
+  // v1.1 owns this behaviour in its single physics/AI step; legacy source-string
+  // integration checks cannot establish that the old solver runs.
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_PHYSICAL_CLOSURE_CAP_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
  const track={id:'qa386',lengthMeters:4500,geometry:{trackWidthMeters:14,racingLineMarginMeters:1.5}};
  const v={id:'follower',raceProgress:1.2,speedKph:253,visualLateralOffsetMeters:0,racingLineMode:'IDEAL',pitState:'TRACK'};
  const p={id:'leader',raceProgress:1.2+65/4500,speedKph:7,visualLateralOffsetMeters:0,racingLineMode:'IDEAL',pitState:'TRACK',accelerationMps2:-20};
@@ -5281,6 +5297,10 @@ function pitRejoinSafetyV384(vehicle,track=activeRaceSnapshotV187?.track,peers=r
    capKph:Math.max(PIT_REJOIN_SAFETY_V384.minimumExitCapKph,Math.min(approachSpeed,closest.speedKph+Math.max(0,(closest.gap-PIT_REJOIN_SAFETY_V384.mergeGapMeters)*.4)))};
 }
 function qaSafeThirdPartyPitV384(){
+  // v1.1 owns this behaviour in its single physics/AI step; legacy source-string
+  // integration checks cannot establish that the old solver runs.
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_THIRD_PARTY_PIT_REJOIN_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
  const track={lengthMeters:4500},p={id:'pit',pitState:'PIT_EXIT',raceProgress:1.2,speedKph:110};
  const near={id:'ahead',pitState:'TRACK',raceProgress:1.2+12/4500,speedKph:85};
  const far={...near,id:'far',raceProgress:1.2+135/4500};
@@ -6705,6 +6725,10 @@ function cornerRetimingV382(plan,corner,vehicle){
  return {...plan,dynamicBrakeStart,recoveryStart,retimedV382:true,brakingDistance,angleSeverityV382:severity};
 }
 function qaCornerRetimingV382(){
+  // v1.1 owns this behaviour in its single physics/AI step; legacy source-string
+  // integration checks cannot establish that the old solver runs.
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_CORNER_RETIMING_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
  const track={geometry:{referenceBrakeDecelMps2:20,referenceAccelMps2:8.5}};
  const spec=CORNER_DRIVING_V351.speedEnvelope.medium;
  const base={entryKph:300,apexTarget:215,turnIn:500,apex:630,exit:730,
@@ -7988,6 +8012,10 @@ function safePaceReleaseV385(vehicle,ms,safety,phase){
  return {active:true,multiplier,reason:'CLEAR_ACCELERATION_V385',elapsed};
 }
 function qaSafePaceReleaseV385(){
+  // v1.1 owns this behaviour in its single physics/AI step; legacy source-string
+  // integration checks cannot establish that the old solver runs.
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_SAFE_PACE_RELEASE_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
  const v={id:'v385',speedKph:170};
  const held=safePaceReleaseV385(v,1000,{neighbor:{active:true}},'STRAIGHT');
  const released=safePaceReleaseV385(v,1200,{},'EXIT');
@@ -10519,6 +10547,10 @@ window.mwsF1GetCornerTrainGuardTelemetryV370=cornerTrainGuardTelemetrySnapshotV3
 window.__mwsF1RacingV370=VERSION370;
 
 function qaPhysicalPassClearanceV371(){
+  // v1.1 owns this behaviour in its single physics/AI step; legacy source-string
+  // integration checks cannot establish that the old solver runs.
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_PASS_CLEARANCE_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
   const ahead={id:'qa371-ahead'};
   const passer={id:'qa371-passer',battleState:'SIDE_BY_SIDE',battleTargetId:ahead.id,battleBlockedV319:false};
   const measured={released:true,committed:true,visualReady:true,physicalIntentReady:false,stateMs:160};
@@ -10542,6 +10574,10 @@ window.mwsF1QaPhysicalPassClearanceV371=qaPhysicalPassClearanceV371;
 window.__mwsF1RacingV371=VERSION371;
 
 function qaLongRunRearPaceV372(){
+  // v1.1 owns this behaviour in its single physics/AI step; legacy source-string
+  // integration checks cannot establish that the old solver runs.
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_REAR_PACE_CORRECTION_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
   const maxBoost=FIELD_SPREAD_BALANCE_V352.rankedRearPaceMax;
   const leader={rankedFieldPaceBoostV357:0};
   const mid={rankedFieldPaceBoostV357:maxBoost*.5};
@@ -10571,6 +10607,10 @@ window.mwsF1QaFieldSpreadDiagnosticsV373=qaFieldSpreadDiagnosticsV373;
 window.__mwsF1RacingV373=VERSION373;
 
 function qaFinalStintPitEconomicsV374(){
+  // v1.1 owns this behaviour in its single physics/AI step; legacy source-string
+  // integration checks cannot establish that the old solver runs.
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_FINAL_STINT_PIT_ECONOMICS_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
   const input={remainingLaps:2.25,pitLossSeconds:22,wear:.62,grip:.83,flatSpot:.12,thermalDeg:.24,tyreRemaining:.38};
   const normal=finalStintPitEconomicsV374({pitStopCount:1},input);
   const first=finalStintPitEconomicsV374({pitStopCount:0},input);
@@ -10592,6 +10632,10 @@ window.mwsF1QaFinalStintPitEconomicsV374=qaFinalStintPitEconomicsV374;
 window.__mwsF1RacingV374=VERSION374;
 
 function qaCornerPhysicsV375(){
+  // v1.1 owns this behaviour in its single physics/AI step; legacy source-string
+  // integration checks cannot establish that the old solver runs.
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_CORNER_DRIVING_PLAN_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
   const track={geometry:{referenceBrakeDecelMps2:20,referenceAccelMps2:8.5}};
   const spec=CORNER_DRIVING_V351.speedEnvelope.medium;
   const plan={entryKph:300,apexTarget:215,turnIn:500,apex:630,exit:730,dynamicBrakeStart:410,recoveryStart:580,brakeDecel:20,accel:10,spec};
@@ -10614,6 +10658,10 @@ window.mwsF1QaCornerPhysicsV375=qaCornerPhysicsV375;
 window.__mwsF1RacingV375=VERSION375;
 
 function qaMulticarCorridorV376(){
+  // v1.1 owns this behaviour in its single physics/AI step; legacy source-string
+  // integration checks cannot establish that the old solver runs.
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_MULTICAR_CORRIDOR_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
   const track={lengthMeters:4500,geometry:{trackWidthMeters:14,racingLineMarginMeters:1.5}};
   const target={id:'B',raceProgress:1.5,racingLineMode:'DEFENSIVE_INSIDE',speedKph:242,pitState:'TRACK'};
   const partner={id:'A',raceProgress:1.5005,racingLineMode:'ATTACK_INSIDE',speedKph:240,pitState:'TRACK'};
@@ -10662,6 +10710,10 @@ window.mwsF1GetActualMarkerOverlapsV377=markerOverlapReportV377;
 window.__mwsF1RacingV377=VERSION377;
 
 function qaProjectedSafeFollowingV378(){
+  // v1.1 owns this behaviour in its single physics/AI step; legacy source-string
+  // integration checks cannot establish that the old solver runs.
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_PROJECTED_GAP_CONTROL_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
   const track={id:'qa378',lengthMeters:4500,geometry:{trackWidthMeters:14,racingLineMarginMeters:1.5}};
   const ahead={id:'ahead378',pitState:'TRACK',raceProgress:1.20,speedKph:200,racingLineMode:'IDEAL',visualLateralOffsetMeters:0};
   const follower={id:'follower378',pitState:'TRACK',raceProgress:1.196,speedKph:250,racingLineMode:'IDEAL',visualLateralOffsetMeters:0};
@@ -10683,6 +10735,10 @@ window.__mwsF1RacingV378=VERSION378;
 
 
 function qaNeighborBrakingV381(){
+  // v1.1 owns this behaviour in its single physics/AI step; legacy source-string
+  // integration checks cannot establish that the old solver runs.
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_NEIGHBOR_BRAKING_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
  const track={id:'qa381',lengthMeters:4500,geometry:{trackWidthMeters:14,racingLineMarginMeters:1.5}};
  const v={id:'C',raceProgress:1.2,speedKph:270,visualLateralOffsetMeters:0,racingLineMode:'IDEAL',pitState:'TRACK'};
  const p={id:'B',raceProgress:1.2+20/4500,speedKph:190,visualLateralOffsetMeters:0,racingLineMode:'IDEAL',pitState:'TRACK'};
@@ -10698,6 +10754,10 @@ window.mwsF1QaNeighborBrakingV381=qaNeighborBrakingV381;
 window.__mwsF1RacingV381=VERSION381;
 
 function qaPreemptivePassCorridorV379(){
+  // v1.1 owns this behaviour in its single physics/AI step; legacy source-string
+  // integration checks cannot establish that the old solver runs.
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',reason:'LEGACY_PREEMPTIVE_PASS_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
   const safeGap=25;
   const far=earlyPassWindowV379(105,safeGap,8);
   const near=earlyPassWindowV379(55,safeGap,8);
