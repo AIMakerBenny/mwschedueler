@@ -29,6 +29,8 @@ jobs:
         run: node scripts/qa-f1-unified-v11-diagnostic-classification.mjs
       - name: Unified synthetic regression smoke
         run: node scripts/qa-f1-unified-v11-smoke.mjs
+      - name: Active multi-car and pit-exit pass exclusion
+        run: node scripts/qa-f1-unified-v11-competition.mjs
       - name: Install browser QA dependencies
         run: |
           npm install --no-save --no-package-lock playwright

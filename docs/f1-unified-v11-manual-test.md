@@ -263,3 +263,12 @@ The standalone `scripts/diagnose-recovery-h-f1-live.mjs` used historical `allPas
 - It also checks every eligible on-track pair with the current unified world-space rotated-body overlap predicate, counts actual checked pairs, and requires zero physical overlaps. Energy, wear and world coordinates must remain within valid bounds.
 - Unlike the retired V371/V375/V376/V378 source-string QA, these properties are measured on steps genuinely executed by `simulateUnifiedRaceStepV11`, using each real circuit's SVG geometry.
 - This is a short deterministic physics integration check, not a multi-seed full-race balance study, full-route pit test, or proof of zero profile-ring overlap at all camera zoom levels.
+
+
+## Unified v1.1 active competition and pit-exit contracts - 2026-10-15
+
+- The dedicated `qa-f1-unified-v11-competition.mjs` uses the real unified physics step with controlled three-car starts. A third car crossing a defended middle lane must be blocked, with all real-world bodies separate. It checks the same run with vehicle-array order reversed.
+- A controlled `PIT_EXIT` candidate is kept physically apart from TRACK cars, and its expired, deliberately seeded candidate must be discarded rather than counted as a committed pass. The pit transition is stubbed here; the separate Chromium UI test covers actual pit entry, service, exit and merge.
+- The existing 480s synthetic smoke now matches every confirmed overtaking reward against an actual committed crossing of the same pair and same leading car, with a 20ms integration-window tolerance. It verifies the pass counters and prevents duplicate reward signatures.
+- A physical crossing need not result in a confirmed pass: the engine already requires 500ms of stable changed order. This check validates confirmed-pass provenance but does not claim all attempted overtakes are captured as explicit failure events.
+- Neither game physics, balance parameters, AI weights, participant selection, UI panels nor Production deployment are modified.

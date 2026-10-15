@@ -9,7 +9,10 @@ if(REVERSE)raceMotionV189.vehicles.reverse();
 let ticks=0;for(let i=0;i<ITERATIONS;i++){if(!simulateUnifiedRaceStepV11(20))break;ticks++;}
 const v=raceMotionV189.vehicles.find(item=>item.id==='0');v.tyreWear=.60;v.unifiedPitEvalAtV11=0;
 unifiedPitV11(unifiedSnapshotV11().find(row=>row.id===String(v.id)),simClockV192.simTimeMs/1000,track);
-return {ticks,errors:unifiedStateV11.telemetry.invalid,passes:unifiedStateV11.telemetry.passes.length,pitCalls,
+return {ticks,errors:unifiedStateV11.telemetry.invalid,passes:unifiedStateV11.telemetry.passes.length,
+ rawCrossings:unifiedStateV11.telemetry.rawCrossings.map(x=>({...x})),
+ confirmedPasses:unifiedStateV11.telemetry.passes.map(x=>({...x})),
+ completedCounters:raceMotionV189.vehicles.reduce((sum,v)=>sum+(Number(v.passCompletedCount)||0),0),pitCalls,
  states:raceMotionV189.vehicles.map(v=>({id:v.id,s:v.raceProgress,y:v.unifiedYV11,v:v.speedKph,e:v.batteryMJ,w:v.tyreWear}))
   .sort((a,b)=>a.id.localeCompare(b.id))};
 `.replace('REVERSE',String(reverse)).replace('ITERATIONS',String(iterations));
@@ -485,6 +488,20 @@ assert.equal(a.ticks,6000);assert.equal(b.ticks,6000);assert.deepEqual(a.errors,
 assert.deepEqual(a.states,b.states,'Vehicle input order affected physical state');assert.equal(a.pitCalls,0);
 const long=trial(false,24000);
 assert.equal(long.ticks,24000);assert.deepEqual(long.errors,[]);assert(long.passes>0);
+assert.equal(long.confirmedPasses.length,long.passes);
+assert.equal(long.completedCounters,long.passes,'Vehicle counters differ from confirmed passes');
+assert(long.rawCrossings.length>=long.passes,'Confirmed overtakes exceed observed physical crossings');
+const awarded=new Set();
+for(const pass of long.confirmedPasses){
+ const pair=[String(pass.front),String(pass.passed)].sort().join('|');
+ const physical=long.rawCrossings.find(cross=>cross.pair===pair&&String(cross.front)===String(pass.front)&&
+   Math.abs(cross.t-pass.t)<=.021);
+ assert(physical,'Confirmed pass has no matching committed relative-position crossing: '+JSON.stringify(pass));
+ const signature=[pair,pass.front,pass.t].join('|');
+ assert(!awarded.has(signature),'Duplicate pass award for one crossing');
+ awarded.add(signature);
+}
+
 for(const v of long.states){assert(v.e>=0&&v.e<=4);assert(v.w>=0&&v.w<=1);assert([v.s,v.y,v.v].every(Number.isFinite));}
-console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane','active-model-contract','special-read-adapter','paused-special-telemetry','unavailable-race-context','energy-tyre-adapter-ownership','executed-work-ledger','lap-harvest-split','inactive-energy-telemetry','pit-strategy-ownership','pit-shared-recommendation','pit-query-before-init','pit-qa-readonly','legacy-v258-v208-read-only','legacy-wake-pace-traffic-blueflag-readonly','legacy-pressure-chase-variability-readonly','legacy-micro-battle-v278-no-duplicate-live','legacy-solver-qa-active-engine-separation'],
+console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane','active-model-contract','special-read-adapter','paused-special-telemetry','unavailable-race-context','energy-tyre-adapter-ownership','executed-work-ledger','lap-harvest-split','inactive-energy-telemetry','pit-strategy-ownership','pit-shared-recommendation','pit-query-before-init','pit-qa-readonly','legacy-v258-v208-read-only','legacy-wake-pace-traffic-blueflag-readonly','legacy-pressure-chase-variability-readonly','legacy-micro-battle-v278-no-duplicate-live','legacy-solver-qa-active-engine-separation','committed-pass-ledger-physical-origin'],
  warning:'Not Chromium or a real-circuit balance/overlap verification'},null,2));
