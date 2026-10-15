@@ -254,3 +254,12 @@ The standalone `scripts/diagnose-recovery-h-f1-live.mjs` used historical `allPas
 - Actual errors, missing results, failed current-model checks, DOM overlap assertions and live telemetry checks are not exempted.
 - A new Node contract test covers strict acceptance and rejection, verifies every guarded diagnostic assertion and runs in development-branch GitHub Actions.
 - This does not convert the old full Recovery H diagnostic into a verified unified browser QA. Continue to use `qa-f1-unified-v11-browser.mjs` and real SVG tests for v1.1.
+
+
+## Unified v1.1 active real-SVG physics invariants - 2026-10-15
+
+- The seven-track Chromium real-SVG regression now runs 12 cars for 30 simulated seconds per track in both normal and reversed vehicle-array order. All final physical states, including energy, tyres and unified RNG, must match exactly.
+- At each committed 20ms step, it rejects negative progress, nonfinite/negative path distance and path travel beyond the actual speed envelope plus a small lateral-movement allowance.
+- It also checks every eligible on-track pair with the current unified world-space rotated-body overlap predicate, counts actual checked pairs, and requires zero physical overlaps. Energy, wear and world coordinates must remain within valid bounds.
+- Unlike the retired V371/V375/V376/V378 source-string QA, these properties are measured on steps genuinely executed by `simulateUnifiedRaceStepV11`, using each real circuit's SVG geometry.
+- This is a short deterministic physics integration check, not a multi-seed full-race balance study, full-route pit test, or proof of zero profile-ring overlap at all camera zoom levels.
