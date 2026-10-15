@@ -198,3 +198,15 @@ window.mwsF1GetPitStrategyStatesV206()
 - `mwsF1UpdatePassStateMachineV208` is a read-only current-state listing in unified mode. It cannot modify lanes, passing AI, biases, or timers.
 - Legacy lateral smoothing and V386 speed/emergency QA now return `Not available` and `allPass: null` when their legacy mechanisms are not running, instead of presenting source-string matches as active integration.
 - The smoke script includes a public-API no-mutation regression. Full Node, real-track and Chromium tests remain separate from isolated validation. Production has not been changed by this work.
+
+
+## Unified v1.1 legacy wake, pace, traffic, blue-flag API audit - 2026-10-15
+
+- Active simulation still enters `simulateUnifiedRaceStepV11` before any old physics loop.
+- Public `mwsF1UpdateSlipstreamStatesV198` and `mwsF1UpdateDirtyAirStatesV199` now read the unified position-based `unifiedAeroV11` wake, with no mutation of vehicles, clock, or random state. Values are null and `available: false` before the unified simulation initializes.
+- Dirty-air `aeroGripMultiplier` is the unified lateral-acceleration factor. The old stand-alone `understeerRisk`, `slideRisk`, and `dirtyAirTyreHeatLoad` are not computed by the unified model and are null.
+- `mwsF1UpdateDriverPaceStateV200` cannot advance legacy pace noise or RNG in unified mode.
+- `mwsF1UpdateTrafficAndDefenceV207` returns its legacy compatibility state view without writing AI lane decisions. These older traffic fields are not authoritative unified physics telemetry.
+- `mwsF1UpdateBackmarkerBlueFlagsV215` calculates a non-mutating classification in unified mode, and cannot override the unified lane or battle bias. It does not itself apply a blue-flag manoeuvre.
+- `mwsF1QaTrafficV207` reports `Not available`, `integrated: false`, `allPass: null`; the legacy QA previously edited live vehicle positions and then attempted partial restoration.
+- The synthetic smoke adds pre-initialization null availability, true aero correspondence, no-state-mutation and no-legacy-random-advance regressions. Full Node CLI and Chromium QA remain separate verification requirements.

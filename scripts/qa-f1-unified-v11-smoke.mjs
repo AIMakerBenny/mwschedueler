@@ -378,11 +378,50 @@ assert.equal(legacyOwnershipV11.visual.readOnly,true);
 assert.equal(legacyOwnershipV11.visual.simulationOwnedV11,true);
 assert.equal(legacyOwnershipV11.visual.visual,1.25);
 assert.equal(legacyOwnershipV11.passCount,12);
+// Unified API audit: wake, pace, traffic and blue-flag legacy entrypoints are read-only.
+const publicV11Parts=[
+  ['function computeRaceStandingsV191(){','function interactionVehicleSnapshotV368('],
+  ['function classifyBackmarkerV215(','function qaBackmarkerBlueFlagV215(){'],
+  ['function updateSlipstreamStatesV198(){','function resolveDirtyAirV199('],
+  ['function updateDirtyAirStatesV199(){','function buildVisualSpacingPlanV319('],
+  ['function updateDriverPaceStateV200(','function driverTargetMultiplierV200('],
+  ['function updateTrafficAndDefenceV207(){','function nextPassStateV208(']
+].map(([a,b])=>src.slice(src.indexOf(a),src.indexOf(b,src.indexOf(a)))).join('');
+const unifiedPublicV11=new Function(setup+engine+
+  "const normalizedProgressV190=p=>((p%1)+1)%1,BLUE_FLAG_CONFIG_V215={approachProgress:.2};"+
+  publicV11Parts+`
+const before=JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,rng:unifiedStateV11.rng});
+const pre=updateSlipstreamStatesV198()[0],preDirty=updateDirtyAirStatesV199()[0];
+const preClean=before===JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,rng:unifiedStateV11.rng});
+unifiedInitV11();
+const vehicle=raceMotionV189.vehicles[1];vehicle.paceNoise=.3;
+vehicle.slipstreamStrength=99;vehicle.dirtyAirStrength=99;vehicle.racingLineMode='IDEAL';
+const frozen=JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,rng:unifiedStateV11.rng});
+const wake=updateSlipstreamStatesV198(),dirty=updateDirtyAirStatesV199();
+const traffic=updateTrafficAndDefenceV207(),flags=updateBackmarkerBlueFlagsV215();
+const pace=updateDriverPaceStateV200(vehicle,1000000),qa=qaTrafficV207();
+const invariant=frozen===JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,rng:unifiedStateV11.rng});
+const snapshot=unifiedSnapshotV11(),reference=unifiedAeroV11(snapshot[1],snapshot);
+return {preClean,preAvailable:pre.available,preDirtyAvailable:preDirty.available,
+  invariant,counts:[wake.length,dirty.length,traffic.length,flags.length],pace,
+  tow:wake[1].slipstreamStrength,expectedTow:reference.tow,
+  dirty:dirty[1].dirtyAirStrength,expectedDirty:reference.dirty,
+  readOnly:wake[1].readOnly&&dirty[1].readOnly&&flags[1].readOnly,
+  flaggedLaneUnchanged:vehicle.racingLineMode==='IDEAL',
+  qaStatus:qa.status,qaPass:qa.allPass};`)();
+assert(unifiedPublicV11.preClean&&unifiedPublicV11.invariant);
+assert.equal(unifiedPublicV11.preAvailable,false);assert.equal(unifiedPublicV11.preDirtyAvailable,false);
+assert.deepEqual(unifiedPublicV11.counts,[12,12,12,12]);
+assert.equal(unifiedPublicV11.pace,.3);
+assert.equal(unifiedPublicV11.tow,unifiedPublicV11.expectedTow);
+assert.equal(unifiedPublicV11.dirty,unifiedPublicV11.expectedDirty);
+assert(unifiedPublicV11.readOnly&&unifiedPublicV11.flaggedLaneUnchanged);
+assert.equal(unifiedPublicV11.qaStatus,'Not available');assert.equal(unifiedPublicV11.qaPass,null);
 const a=trial(false),b=trial(true);
 assert.equal(a.ticks,6000);assert.equal(b.ticks,6000);assert.deepEqual(a.errors,[]);assert.deepEqual(b.errors,[]);
 assert.deepEqual(a.states,b.states,'Vehicle input order affected physical state');assert.equal(a.pitCalls,0);
 const long=trial(false,24000);
 assert.equal(long.ticks,24000);assert.deepEqual(long.errors,[]);assert(long.passes>0);
 for(const v of long.states){assert(v.e>=0&&v.e<=4);assert(v.w>=0&&v.w<=1);assert([v.s,v.y,v.v].every(Number.isFinite));}
-console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane','active-model-contract','special-read-adapter','paused-special-telemetry','unavailable-race-context','energy-tyre-adapter-ownership','executed-work-ledger','lap-harvest-split','inactive-energy-telemetry','pit-strategy-ownership','pit-shared-recommendation','pit-query-before-init','pit-qa-readonly','legacy-v258-v208-read-only'],
+console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane','active-model-contract','special-read-adapter','paused-special-telemetry','unavailable-race-context','energy-tyre-adapter-ownership','executed-work-ledger','lap-harvest-split','inactive-energy-telemetry','pit-strategy-ownership','pit-shared-recommendation','pit-query-before-init','pit-qa-readonly','legacy-v258-v208-read-only','legacy-wake-pace-traffic-blueflag-readonly'],
  warning:'Not Chromium or a real-circuit balance/overlap verification'},null,2));

@@ -2466,6 +2466,11 @@ function classifyBackmarkerV215(leader,vehicle){
   return {backmarker,blueFlag,lapDeficit,leaderClosingProgress};
 }
 function updateBackmarkerBlueFlagsV215(){
+  // Classification is safe to inspect; lane and battle bias are simulation-owned.
+  if(UNIFIED_ENGINE_V11){
+    const leader=computeRaceStandingsV191()[0]?.vehicle||null;
+    return raceMotionV189.vehicles.map(vehicle=>({id:vehicle.id,...classifyBackmarkerV215(leader,vehicle),readOnly:true}));
+  }
   const standings=computeRaceStandingsV191();
   const leader=standings[0]?.vehicle||null;
   const rows=[];
@@ -3197,6 +3202,8 @@ function nextDriverRandomV200(vehicle){
   return draw.value;
 }
 function updateDriverPaceStateV200(vehicle,stepMs){
+  // Unified pace belongs to the single engine; this legacy call cannot advance RNG.
+  if(UNIFIED_ENGINE_V11)return Number(vehicle?.paceNoise)||0;
   if(!vehicle||!(stepMs>0))return 0;
   const dt=stepMs/1000;
   const consistency=Math.max(0,Math.min(1,(Number(vehicle.driverProfile?.consistency)||75)/100));
@@ -4700,6 +4707,8 @@ window.mwsF1QaCommittedPassLineV383=qaCommittedPassLineV383;
 window.__mwsF1RacingV383=VERSION383;
 
 function updateTrafficAndDefenceV207(){
+  // Unified lane choice owns race tactics; expose the old state view only.
+  if(UNIFIED_ENGINE_V11)return getTrafficStatesV207();
   const track=activeRaceSnapshotV187?.track;
   const length=Math.max(1,Number(track?.lengthMeters)||1);
   const trackVehicles=trackInteractionVehiclesV369(raceMotionV189.vehicles,track);
@@ -4739,6 +4748,10 @@ function getTrafficStatesV207(){
   return raceMotionV189.vehicles.map(vehicle=>({id:String(vehicle.id),state:String(vehicle.trafficState||'CLEAR'),carAheadId:String(vehicle.trafficCarAheadId||''),gapMeters:Number.isFinite(vehicle.trafficGapMeters)?Number(vehicle.trafficGapMeters):null,closingRateKph:Number(vehicle.trafficClosingRateKph)||0,pressure:Number(vehicle.trafficPressure)||0,threatFromId:String(vehicle.trafficThreatFromId||''),defenceActive:Boolean(vehicle.defenceActive),lineIntent:String(vehicle.trafficLineIntent||'IDEAL'),racingLineMode:String(vehicle.racingLineMode||'IDEAL')}));
 }
 function qaTrafficV207(){
+  // The legacy scenario overwrites live progress/speed; it is not unified QA.
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',
+    reason:'LEGACY_TRAFFIC_SCENARIO_INACTIVE_IN_UNIFIED_V11',activeModel:'unified-v1.1',
+    integrated:false,allPass:null};
   const track=activeRaceSnapshotV187?.track,vehicles=raceMotionV189.vehicles;
   if(!track||vehicles.length<2)return null;
   const standings=computeRaceStandingsV191(),ahead=standings[0]?.vehicle,follower=standings[1]?.vehicle;
@@ -7071,6 +7084,20 @@ function resolveSlipstreamV198(vehicle,vehicles=raceMotionV189.vehicles){
   return {carAhead:ahead,gapMeters,strength,dragReduction,gapEffect,alignmentEffect,lateralEffect,straightEffect};
 }
 function updateSlipstreamStatesV198(){
+  // Unified v1.1 computes tow from committed vehicle positions. Never mutate
+  // the legacy slipstream fields through this public compatibility entrypoint.
+  if(UNIFIED_ENGINE_V11){
+    if(!unifiedStateV11.initialized||!unifiedStateV11.path)return raceMotionV189.vehicles.map(v=>({
+      id:v.id,carAheadId:null,gapToCarAheadMeters:null,slipstreamStrength:null,available:false,readOnly:true}));
+    const rows=unifiedSnapshotV11();
+    return rows.map(row=>{
+      const ahead=rows.filter(p=>p.id!==row.id&&!p.finished&&p.pit==='TRACK')
+        .map(p=>({id:p.id,gap:unifiedGapV11(row,p)})).filter(p=>p.gap>0)
+        .sort((a,b)=>a.gap-b.gap)[0];
+      return {id:row.ref.id,carAheadId:ahead?.id||null,gapToCarAheadMeters:ahead?.gap??null,
+        slipstreamStrength:unifiedAeroV11(row,rows).tow,available:true,readOnly:true};
+    });
+  }
   for(const vehicle of raceMotionV189.vehicles)resolveSlipstreamV198(vehicle,raceMotionV189.vehicles);
   return raceMotionV189.vehicles.map(vehicle=>({id:vehicle.id,carAheadId:vehicle.carAheadId,gapToCarAheadMeters:vehicle.gapToCarAheadMeters,slipstreamStrength:vehicle.slipstreamStrength}));
 }
@@ -7119,6 +7146,18 @@ function resolveDirtyAirV199(vehicle,vehicles=raceMotionV189.vehicles){
   return {carAhead:ahead,gapMeters,strength,aeroGripMultiplier,understeerRisk,slideRisk,tyreHeatLoad,phase};
 }
 function updateDirtyAirStatesV199(){
+  // Read the unified wake calculation without reapplying legacy tyre or incident effects.
+  if(UNIFIED_ENGINE_V11){
+    if(!unifiedStateV11.initialized||!unifiedStateV11.path)return raceMotionV189.vehicles.map(v=>({
+      id:v.id,dirtyAirStrength:null,aeroGripMultiplier:null,understeerRisk:null,
+      slideRisk:null,dirtyAirTyreHeatLoad:null,available:false,readOnly:true}));
+    const rows=unifiedSnapshotV11();
+    return rows.map(row=>{
+      const dirty=unifiedAeroV11(row,rows).dirty;
+      return {id:row.ref.id,dirtyAirStrength:dirty,aeroGripMultiplier:1-.06*dirty*.35,
+        understeerRisk:null,slideRisk:null,dirtyAirTyreHeatLoad:null,available:true,readOnly:true};
+    });
+  }
   for(const vehicle of raceMotionV189.vehicles)resolveDirtyAirV199(vehicle,raceMotionV189.vehicles);
   return raceMotionV189.vehicles.map(vehicle=>({id:vehicle.id,dirtyAirStrength:vehicle.dirtyAirStrength,aeroGripMultiplier:vehicle.aeroGripMultiplier,understeerRisk:vehicle.understeerRisk,slideRisk:vehicle.slideRisk,dirtyAirTyreHeatLoad:vehicle.dirtyAirTyreHeatLoad}));
 }
