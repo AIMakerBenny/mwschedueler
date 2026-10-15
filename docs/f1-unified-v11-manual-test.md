@@ -220,3 +220,13 @@ window.mwsF1GetPitStrategyStatesV206()
 - `mwsF1ApplyGameVariabilityV303` does not apply legacy catch-up or position bias and returns no legacy corrections in unified mode.
 - Corresponding V274/V275/V303 QAs indicate `status:'Not available'`, `integrated:false`, `allPass:null`, avoiding false pass claims from validating disabled legacy tuning rules.
 - The existing unified AI, actual pace/traction and special-skill cut-in remain unchanged. No complete-race tuning, Chromium validation or Cloudflare Production release is asserted.
+
+
+## Unified v1.1 legacy micro-battle ownership and development QA - 2026-10-15
+
+- The V278 micro-battle updater is called by the bypassed legacy `simulateRaceStepV192` body. The active unified step already records actual passes, incidents and commentary separately; direct V278 calls must not generate synthetic second-pass events.
+- `mwsF1UpdateMicroBattleEventsV278` therefore returns an empty legacy-update list without mutating vehicle state, clock, RNG or micro-battle event maps under unified mode.
+- `mwsF1GetMicroBattleEventsV278` retains its catalog, history and count keys for UI compatibility, and labels the old event ledger `available:false`, `readOnly:true`. It is not the active unified LIVE history.
+- `mwsF1QaMicroBattleEventsV278` reports `Not available`, `integrated:false`, `allPass:null` in unified mode rather than marking a static legacy event catalog as active integration.
+- Smoke adds an explicit invariant test for both vehicle state and all V278 event bookkeeping structures.
+- A new branch-specific GitHub Actions workflow attempts full Node smoke, short real-SVG tracks, and baseline Chromium UI regression without touching the Cloudflare Production deploy workflow. Check its actual run status before claiming tests passed.

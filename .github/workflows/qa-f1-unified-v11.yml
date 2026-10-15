@@ -1,0 +1,37 @@
+name: F1 Unified v1.1 Development QA
+
+on:
+  push:
+    branches:
+      - f1-unified-redesign-v11-20261012
+
+permissions:
+  contents: read
+
+concurrency:
+  group: f1-unified-v11-dev-qa
+  cancel-in-progress: true
+
+jobs:
+  unified-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout development branch
+        uses: actions/checkout@v4
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate JavaScript syntax
+        run: node --check assets/f1-racing-v1.js
+      - name: Unified synthetic regression smoke
+        run: node scripts/qa-f1-unified-v11-smoke.mjs
+      - name: Install browser QA dependencies
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Short real-SVG track physics
+        run: node scripts/qa-f1-unified-v11-real-tracks.mjs
+      - name: Chromium FHD-QHD UI integration
+        run: node scripts/qa-f1-unified-v11-browser.mjs

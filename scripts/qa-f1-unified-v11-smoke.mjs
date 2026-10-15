@@ -445,11 +445,30 @@ assert(legacyPressureOwnershipV11.initialClean&&legacyPressureOwnershipV11.clean
 assert.deepEqual(legacyPressureOwnershipV11.initialSizes,[12,12,0]);
 assert.deepEqual(legacyPressureOwnershipV11.sizes,[12,12,0]);
 assert(legacyPressureOwnershipV11.reports.every(x=>x[0]==='Not available'&&x[1]===false&&x[2]===null));
+// Legacy micro-battle event generator cannot emit duplicate LIVE events in unified mode.
+const legacyMicroV278=src.slice(src.indexOf('function updateMicroBattleEventsV278('),src.indexOf('function resetMicroBattleEventsV278('))+
+  src.slice(src.indexOf('function getMicroBattleEventsV278('),src.indexOf('const CHARACTER_DIALOGUE_EVENT_ROLES_V277='));
+const microEventOwnershipV11=new Function(setup+engine+
+  "const MICRO_BATTLE_EVENTS_V278=['PASS_SUCCESS','ATTACK_LINE'],microBattleStateV278={vehicle:new Map([['0',{battle:'FOLLOWING'}]]),history:[{event:'TEST',meta:{value:1}}],counts:new Map([['PASS_SUCCESS',1]]),signatureAt:new Map([['k',5]]),sequence:7};"+
+  legacyMicroV278+`
+const snapshot=()=>JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,rng:unifiedStateV11.rng,
+ micro:{vehicles:[...microBattleStateV278.vehicle],history:microBattleStateV278.history,counts:[...microBattleStateV278.counts],signatures:[...microBattleStateV278.signatureAt],sequence:microBattleStateV278.sequence}});
+const before=snapshot(),events=updateMicroBattleEventsV278(100000),report=getMicroBattleEventsV278(),qa=qaMicroBattleEventsV278();
+return {unchanged:before===snapshot(),events,report,qa};`)();
+assert(microEventOwnershipV11.unchanged);
+assert.deepEqual(microEventOwnershipV11.events,[]);
+assert.equal(microEventOwnershipV11.report.available,false);
+assert.equal(microEventOwnershipV11.report.readOnly,true);
+assert.equal(microEventOwnershipV11.report.history.length,1);
+assert.equal(microEventOwnershipV11.report.counts.PASS_SUCCESS,1);
+assert.equal(microEventOwnershipV11.qa.status,'Not available');
+assert.equal(microEventOwnershipV11.qa.integrated,false);
+assert.equal(microEventOwnershipV11.qa.allPass,null);
 const a=trial(false),b=trial(true);
 assert.equal(a.ticks,6000);assert.equal(b.ticks,6000);assert.deepEqual(a.errors,[]);assert.deepEqual(b.errors,[]);
 assert.deepEqual(a.states,b.states,'Vehicle input order affected physical state');assert.equal(a.pitCalls,0);
 const long=trial(false,24000);
 assert.equal(long.ticks,24000);assert.deepEqual(long.errors,[]);assert(long.passes>0);
 for(const v of long.states){assert(v.e>=0&&v.e<=4);assert(v.w>=0&&v.w<=1);assert([v.s,v.y,v.v].every(Number.isFinite));}
-console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane','active-model-contract','special-read-adapter','paused-special-telemetry','unavailable-race-context','energy-tyre-adapter-ownership','executed-work-ledger','lap-harvest-split','inactive-energy-telemetry','pit-strategy-ownership','pit-shared-recommendation','pit-query-before-init','pit-qa-readonly','legacy-v258-v208-read-only','legacy-wake-pace-traffic-blueflag-readonly','legacy-pressure-chase-variability-readonly'],
+console.log(JSON.stringify({result:'PASS',syntheticSeconds:480,cars:12,passes:long.passes,regressions:['swept-contact','lapped-traffic','atomic-rejection','pause-resume','actual-energy','skill-timing','stationary-obstacle','cinematic-chain','finish-crossing','offset-length','world-rotation','world-swept','zoom-feasibility','planned-skill-power','timing-gate-wrap','pit-braking-plan','pit-loss-components','gate-order','warmup-friction','incident-expiry','phase-incidents','incident-adapter','pass-commentary-target','cold-traction-braking','expired-live-event','low-speed-yaw','out-in-out-target','out-in-out-motion','pit-merge-hold','third-car-pass','narrow-third-lane','active-model-contract','special-read-adapter','paused-special-telemetry','unavailable-race-context','energy-tyre-adapter-ownership','executed-work-ledger','lap-harvest-split','inactive-energy-telemetry','pit-strategy-ownership','pit-shared-recommendation','pit-query-before-init','pit-qa-readonly','legacy-v258-v208-read-only','legacy-wake-pace-traffic-blueflag-readonly','legacy-pressure-chase-variability-readonly','legacy-micro-battle-v278-no-duplicate-live'],
  warning:'Not Chromium or a real-circuit balance/overlap verification'},null,2));

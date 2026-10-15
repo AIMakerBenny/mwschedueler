@@ -8662,6 +8662,9 @@ function recordMicroBattleEventV278(event,actor,target,meta={}){
   return row;
 }
 function updateMicroBattleEventsV278(stepMs){
+  // Unified v1.1 records actual committed passing/incident events and runs its
+  // own LIVE commentary. Do not synthesize a second set of legacy V278 events.
+  if(UNIFIED_ENGINE_V11)return [];
   if(!(stepMs>0)||raceFlagStateV214.flag!=='GREEN'||!raceMotionV189.vehicles.length)return [];
   const standings=computeRaceStandingsV191(),rows=[];
   for(const standing of standings){
@@ -8715,10 +8718,17 @@ function resetMicroBattleEventsV278(){
   return true;
 }
 function getMicroBattleEventsV278(){
+  if(UNIFIED_ENGINE_V11)return {catalog:[...MICRO_BATTLE_EVENTS_V278],
+    history:microBattleStateV278.history.map(row=>({...row,meta:{...row.meta}})),
+    counts:Object.fromEntries(MICRO_BATTLE_EVENTS_V278.map(event=>[event,Number(microBattleStateV278.counts.get(event))||0])),
+    available:false,readOnly:true,activeModel:'unified-v1.1'};
   return {catalog:[...MICRO_BATTLE_EVENTS_V278],history:microBattleStateV278.history.map(row=>({...row,meta:{...row.meta}})),
     counts:Object.fromEntries(MICRO_BATTLE_EVENTS_V278.map(event=>[event,Number(microBattleStateV278.counts.get(event))||0]))};
 }
 function qaMicroBattleEventsV278(){
+  if(UNIFIED_ENGINE_V11)return {status:'Not available',
+    reason:'LEGACY_MICRO_BATTLE_EVENT_GENERATOR_INACTIVE_IN_UNIFIED_V11',
+    activeModel:'unified-v1.1',integrated:false,allPass:null};
   const required=['GAP_1_5','GAP_1_0','GAP_0_6','SLIPSTREAM','ATTACK_LINE','DEFENCE_LINE','FAKE','BRAKING_DUEL','CORNER_ENTRY_DUEL','SIDE_BY_SIDE','EDGES_AHEAD','RE_ATTACK','PASS_SUCCESS','PASS_FAIL','COUNTER_ATTACK','FRONT_CAR_MISTAKE','REAR_CAR_MISTAKE','CORNER_EXIT_ADVANTAGE','LEADER_PRESSURE_MISTAKE','BURST_ACTIVATION','BURST_SUCCESS','BURST_FAIL','BURST_END','PODIUM_BATTLE','LAST_PLACE_BATTLE','FINAL_LAP','THREE_CAR_BATTLE'];
   const threshold=microBattleThresholdCrossingsV278({gapAheadSeconds:1.8},{gapAheadSeconds:.55});
   const mapped=Object.keys(MICRO_BATTLE_DIALOGUE_MAP_V278).filter(event=>MICRO_BATTLE_EVENTS_V278.includes(event));
