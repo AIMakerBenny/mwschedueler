@@ -78,11 +78,11 @@ for(let i=0;i<1500;i++){
  }
  if(continuityErrors.length||physicalOverlaps.length)break;
 }
-return {track:track.id,reverse,ticks,maxStepPathMeters,checkedPairs,physicalOverlaps,continuityErrors,minimumMetric,slowRotation,lineRange:[Math.min(...all.map(p=>p.idealUnit)),Math.max(...all.map(p=>p.idealUnit))],errors:unifiedStateV11.telemetry.invalid,steps:unifiedStateV11.telemetry.steps,
+return {track:track.id,reverse:REVERSE,ticks,maxStepPathMeters,checkedPairs,physicalOverlaps,continuityErrors,minimumMetric,slowRotation,lineRange:[Math.min(...all.map(p=>p.idealUnit)),Math.max(...all.map(p=>p.idealUnit))],errors:unifiedStateV11.telemetry.invalid,steps:unifiedStateV11.telemetry.steps,
  states:raceMotionV189.vehicles.map(v=>({id:String(v.id),s:v.raceProgress,v:v.speedKph,y:v.unifiedYV11,heading:v.unifiedHeadingV11,J:v.unifiedPathMetricV11,
  x:v.unifiedWorldPoseV11?.x,z:v.unifiedWorldPoseV11?.y,E:v.batteryMJ,wear:v.tyreWear,rng:v.unifiedRngV11}))
  .sort((a,b)=>a.id.localeCompare(b.id))};`;
-      return new Function('fixtureTrack','fixturePath','fixtureCornerPhase',fixture+engine+body.replace('REVERSE',String(reverse)))(track,svgPath,phase);
+      return new Function('fixtureTrack','fixturePath','fixtureCornerPhase',fixture+engine+body.replaceAll('REVERSE',String(reverse)))(track,svgPath,phase);
     },{track,fixture,engine,reverse});
     console.log(JSON.stringify({track:result.track,reverse:result.reverse,ticks:result.ticks,checkedPairs:result.checkedPairs,
       physicalOverlaps:result.physicalOverlaps.length,continuityErrors:result.continuityErrors.length,
@@ -95,7 +95,7 @@ return {track:track.id,reverse,ticks,maxStepPathMeters,checkedPairs,physicalOver
     assert.deepEqual(result.continuityErrors,[],result.track+' discontinuous/unbounded committed physics');
     assert(result.lineRange.some(v=>Math.abs(v)>.1),result.track+' line geometry missing');
     assert(result.minimumMetric>.2,result.track+' offset path is singular');
-    for(const state of result.states)assert(Object.values(state).every(Number.isFinite));
+    for(const state of result.states)assert(Object.entries(state).every(([key,value])=>key==='id'||Number.isFinite(value)));
     scenarios.push(result);
     }
     assert.deepEqual(scenarios[0].states,scenarios[1].states,
