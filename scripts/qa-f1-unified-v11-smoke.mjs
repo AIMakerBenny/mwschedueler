@@ -467,12 +467,12 @@ assert.equal(microEventOwnershipV11.qa.allPass,null);
 // Distinguish legacy source-string unit tests from active unified integration.
 const legacyOnlyQAFunctionsV11=["qaTacticalPitValueV391","qaLateStintPitDeferralV393","qaCommittedPassLineV383","qaPhysicalClosureV386","qaSafeThirdPartyPitV384","qaCornerRetimingV382","qaSafePaceReleaseV385","qaPhysicalPassClearanceV371","qaFinalStintPitEconomicsV374","qaCornerPhysicsV375","qaMulticarCorridorV376","qaProjectedSafeFollowingV378","qaLongRunRearPaceV372","qaNeighborBrakingV381","qaPreemptivePassCorridorV379"];
 const legacyOnlyQASourceV11=legacyOnlyQAFunctionsV11.map(name=>{
- const start=src.indexOf('function '+name+'(){'),end=src.indexOf('\\n}',start);
+ const start=src.indexOf('function '+name+'(){'),end=src.indexOf('\n}',start);
  assert(start>=0&&end>start,'Missing or unterminated '+name);
  return src.slice(start,end+2);
-}).join('\\n');
+}).join('\n');
 const legacyOnlyQAResultsV11=new Function('UNIFIED_ENGINE_V11',
-  legacyOnlyQASourceV11+'\\nreturn ['+legacyOnlyQAFunctionsV11.map(name=>name+'()').join(',')+'];')(true);
+  legacyOnlyQASourceV11+'\nreturn ['+legacyOnlyQAFunctionsV11.map(name=>name+'()').join(',')+'];')(true);
 assert.equal(legacyOnlyQAResultsV11.length,legacyOnlyQAFunctionsV11.length);
 for(const row of legacyOnlyQAResultsV11){
  assert.equal(row.status,'Not available');
