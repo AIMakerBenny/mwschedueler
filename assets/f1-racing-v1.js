@@ -8480,8 +8480,10 @@ function returnToSetupRecoveryG(){
   return true;
 }
 function newRaceSameSettingsRecoveryG(){
-  returnToSetupRecoveryG();
-  return startRaceFromSetupV187();
+  // Preserve the completed race mode before returning to setup clears the snapshot.
+  const previousMode=String(activeRaceSnapshotV187?.raceMode||'NORMAL');
+  if(!returnToSetupRecoveryG())return false;
+  return startRaceFromSetupV187(previousMode);
 }
 function bindRaceLifecycleRecoveryG(){
   const handlers={

@@ -273,5 +273,94 @@ assert.equal(snapshots.committedClock,snapshots.candidateAt);
 assert(snapshots.isolated,'Public report mutation changed internal race diagnostic or vehicle state');
 cases.push('committed-crossing-time','public-diagnostic-snapshot-isolation');
 
+
+// Replay and explicit race reset regression. Use source functions and the v1.1
+// engine fixture, with only UI services stubbed. No physics tuning is involved.
+const replaySource=src.slice(src.indexOf('function newRaceSameSettingsRecoveryG(){'),
+  src.indexOf('function bindRaceLifecycleRecoveryG(){'));
+assert(replaySource.includes('function newRaceSameSettingsRecoveryG()'));
+const replayTrial=(mode,canReturn=true)=>new Function('mode','canReturn',String.raw`
+let activeRaceSnapshotV187={raceMode:mode,totalLaps:mode==='FAST'?3:10};
+const drivers=['D1','D2','D3'],trackId='circle';
+let returned=0,started=0;
+function returnToSetupRecoveryG(){
+ returned++;if(!canReturn)return false;
+ activeRaceSnapshotV187=null;return true;
+}
+function startRaceFromSetupV187(nextMode='NORMAL'){
+ started++;return {mode:nextMode,laps:nextMode==='FAST'?3:10,drivers:[...drivers],trackId};
+}
+`+replaySource+String.raw`
+return {result:newRaceSameSettingsRecoveryG(),returned,started};
+`)(mode,canReturn);
+const fastReplay=replayTrial('FAST'),normalReplay=replayTrial('NORMAL');
+assert.equal(fastReplay.result.mode,'FAST','FAST replay silently changed to NORMAL');
+assert.equal(fastReplay.result.laps,3);
+assert.equal(normalReplay.result.mode,'NORMAL');
+assert.equal(normalReplay.result.laps,10);
+for(const replay of [fastReplay,normalReplay]){
+ assert.deepEqual(replay.result.drivers,['D1','D2','D3']);
+ assert.equal(replay.result.trackId,'circle');
+ assert.equal(replay.returned,1);assert.equal(replay.started,1);
+}
+const declinedReplay=replayTrial('FAST',false);
+assert.equal(declinedReplay.result,false);assert.equal(declinedReplay.started,0);
+cases.push('fast-normal-replay-preserved','replay-reset-failure-no-start');
+
+const mutableSetup=setup.replace('const raceFlagStateV214=','let raceFlagStateV214=');
+assert.notEqual(mutableSetup,setup);
+const actualResetCode=src.slice(src.indexOf('function pauseRaceMotionV189('),
+  src.indexOf('function refreshRaceGeometryV193('));
+assert(actualResetCode.includes('function resetRaceMotionV189()'));
+const lifecycle=new Function(mutableSetup+engine+actualResetCode+String.raw`
+let raceGeometryV193={placeholder:true},specialResetCount=0;
+const resetSpecialV401=()=>{specialResetCount++;};
+const resetLeaderPressureFieldV274=()=>{},resetInteractionSnapshotV368=()=>{};
+const resetMicroBattleEventsV278=()=>{},resetBestLapOverlayV338=()=>{};
+const cancelAnimationFrame=()=>{};
+raceMotionV189.vehicles=raceMotionV189.vehicles.slice(0,3);
+const unmodifiedVehicles=raceMotionV189.vehicles.map(v=>({...v}));
+unifiedInitV11();
+const [a,b]=raceMotionV189.vehicles;
+a.unifiedAiStateV11='PLAN_ATTACK';a.unifiedAiTargetV11=String(b.id);
+unifiedObserveAttackV11(20);
+unifiedStateV11.passCandidates.set('0|1',{at:20,front:'0',pair:['0','1']});
+unifiedStateV11.telemetry.rawCrossings.push({t:.02,pair:'0|1',front:'0'});
+unifiedStateV11.telemetry.passes.push({t:.02,front:'0',passed:'1'});
+a.pitState='PIT_ENTRY';b.pitState='PIT_EXIT';
+simClockV192.simTimeMs=2000;simClockV192.accumulatorMs=15;
+raceMotionV189.running=true;
+pauseRaceMotionV189(true);
+const suspended={time:simClockV192.simTimeMs,
+ attempts:unifiedStateV11.attempts.size,pending:unifiedStateV11.passCandidates.size,
+ suspended:raceMotionV189.suspended};
+resetRaceMotionV189();
+const clean={time:simClockV192.simTimeMs,accum:simClockV192.accumulatorMs,
+ paused:simClockV192.paused,vehicles:raceMotionV189.vehicles.length,
+ attempts:unifiedStateV11.attempts.size,pending:unifiedStateV11.passCandidates.size,
+ events:unifiedStateV11.attemptHistory.length,sequence:unifiedStateV11.attemptSequence,
+ passes:unifiedStateV11.telemetry.passes.length,raw:unifiedStateV11.telemetry.rawCrossings.length,
+ trackKey:unifiedStateV11.trackKey,initialized:unifiedStateV11.initialized,
+ geometry:raceGeometryV193,suspended:raceMotionV189.suspended};
+raceMotionV189.vehicles=unmodifiedVehicles.map(v=>({...v}));
+activeRaceSnapshotV187.createdAt='next-race';
+const restarted=unifiedInitV11();
+return {suspended,clean,restarted,specialResetCount,
+ nextEvents:unifiedStateV11.attemptHistory.length,
+ nextAttempts:unifiedStateV11.attempts.size,
+ nextCandidates:unifiedStateV11.passCandidates.size,
+ nextSequence:unifiedStateV11.attemptSequence};
+`)();
+assert.deepEqual(lifecycle.suspended,{time:2000,attempts:1,pending:1,suspended:true});
+assert.deepEqual(lifecycle.clean,{time:0,accum:0,paused:false,vehicles:0,
+ attempts:0,pending:0,events:0,sequence:0,passes:0,raw:0,trackKey:'',
+ initialized:false,geometry:null,suspended:false});
+assert.equal(lifecycle.specialResetCount,1);
+assert(lifecycle.restarted);assert.equal(lifecycle.nextEvents,0);
+assert.equal(lifecycle.nextAttempts,0);assert.equal(lifecycle.nextCandidates,0);
+assert.equal(lifecycle.nextSequence,0);
+cases.push('suspend-preserves-pending-ledger','reset-clears-race-observation',
+ 'next-race-fresh-attack-ledger');
+
 console.log(JSON.stringify({result:'PASS',cases,orderIndependent:true,
  scope:'Actual 20ms engine commits with controlled AI and real post-step pit/finish adapters; full pit/UI journeys are covered separately.'},null,2));
