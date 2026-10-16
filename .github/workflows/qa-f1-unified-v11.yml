@@ -33,6 +33,8 @@ jobs:
         run: node scripts/qa-f1-unified-v11-competition.mjs
       - name: Overtake crossing ownership boundary regression
         run: node scripts/qa-f1-unified-v11-crossing-boundaries.mjs
+      - name: Committed crossing pit-finish and multi-pass boundaries
+        run: node scripts/qa-f1-unified-v11-crossing-engine.mjs
       - name: Active overtake attempt transition diagnostics
         run: node scripts/qa-f1-unified-v11-attempts.mjs
       - name: Install browser QA dependencies

@@ -11373,6 +11373,12 @@ function unifiedChooseLaneV11(row,rows,now,width){
   return target;
 }
 // Target-aware diagnostics only. Called after physics commits; AI never reads them.
+function unifiedRaceOnTrackV11(v){
+  // Finish flags are applied by the lifecycle adapter later in this same step.
+  // Use the committed finish-line position so the final step closes its ledger.
+  const finishAt=Math.max(1,Number(activeRaceSnapshotV187?.totalLaps)||10);
+  return Boolean(v&&!v.finished&&String(v.pitState||'TRACK')==='TRACK'&&Number(v.raceProgress)<finishAt);
+}
 function unifiedObserveAttackV11(nowMs,confirmedPasses=[],crossings=[]){
   const state=unifiedStateV11;
   const emit=(type,attempt,extra={})=>{
@@ -11400,15 +11406,16 @@ function unifiedObserveAttackV11(nowMs,confirmedPasses=[],crossings=[]){
       emit('UNATTRIBUTED_PASS',{id:null,driver:id,target:opponent},{crossingMs:Math.round(pass.t*1000)});
     }
   }
+  const onTrack=new Set(raceMotionV189.vehicles.filter(unifiedRaceOnTrackV11).map(v=>String(v.id)));
   for(const v of [...raceMotionV189.vehicles].sort((a,b)=>String(a.id).localeCompare(String(b.id)))){
-    const driver=String(v.id),eligible=!v.finished&&String(v.pitState||'TRACK')==='TRACK';
+    const driver=String(v.id),eligible=onTrack.has(driver);
     const mode=eligible?String(v.unifiedAiStateV11||'CRUISE'):'PIT_OR_FINISHED';
-    const target=eligible?String(v.unifiedAiTargetV11||''):'';
+    const selected=String(v.unifiedAiTargetV11||''),target=eligible&&onTrack.has(selected)?selected:'';
     const previous=state.attemptPrevious.get(driver)||{mode:'CRUISE',target:''};
     let active=state.attempts.get(driver);
     if(active&&(!eligible||target!==active.target||
       !['PLAN_ATTACK','EXIT_DUEL','SIDE_BY_SIDE'].includes(mode))){
-      emit(!eligible?'PIT_INTERRUPTED':target!==active.target?'TARGET_CHANGED':'DISENGAGED_UNCONFIRMED',
+      emit(!eligible||!onTrack.has(active.target)?'PIT_INTERRUPTED':target!==active.target?'TARGET_CHANGED':'DISENGAGED_UNCONFIRMED',
         active,{mode});
       state.attempts.delete(driver);active=null;
     }
@@ -11855,12 +11862,13 @@ function simulateUnifiedRaceStepV11(stepMs){
   }
   unifiedDetectionCrossingsV11(rows,stepMs,track);
   const finishedRows=unifiedSnapshotV11().filter(p=>p.pit==='TRACK'&&!p.finished);
+  const passRows=finishedRows.filter(p=>unifiedRaceOnTrackV11(p.ref));
   // Exclude a pit entry/exit transition from the committed on-track pass ledger.
   // An apparent order change at a pit merge is not an ordinary on-track overtake.
   const beganOnTrack=new Map(rows.map(row=>[row.id,row.pit==='TRACK'&&!row.finished]));
   const crossingThisStep=[];
-  for(let i=0;i<finishedRows.length;i++)for(let j=i+1;j<finishedRows.length;j++){
-    const a=finishedRows[i],b=finishedRows[j],oa=rows.find(x=>x.id===a.id),ob=rows.find(x=>x.id===b.id);
+  for(let i=0;i<passRows.length;i++)for(let j=i+1;j<passRows.length;j++){
+    const a=passRows[i],b=passRows[j],oa=rows.find(x=>x.id===a.id),ob=rows.find(x=>x.id===b.id);
     if(!oa||!ob||!beganOnTrack.get(a.id)||!beganOnTrack.get(b.id))continue;
     const before=oa.s-ob.s,after=a.s-b.s;
     if(before*after<0&&Math.abs(before)<len){
@@ -11879,10 +11887,15 @@ function simulateUnifiedRaceStepV11(stepMs){
   }
   const confirmedThisStep=[];
   for(const [key,c] of [...unifiedStateV11.passCandidates]){
+    const a=passRows.find(x=>x.id===c.front),b=passRows.find(x=>x.id===(c.pair[0]===c.front?c.pair[1]:c.pair[0]));
+    // The entire confirmation interval must remain a valid on-track lead.
+    // Invalidate on the first interruption, even when its deadline is later.
+    if(!a||!b||!beganOnTrack.get(a.id)||!beganOnTrack.get(b.id)||a.s<=b.s){
+      unifiedStateV11.passCandidates.delete(key);continue;
+    }
     if(simClockV192.simTimeMs-c.at<500)continue;
-    const a=finishedRows.find(x=>x.id===c.front),b=finishedRows.find(x=>x.id===(c.pair[0]===c.front?c.pair[1]:c.pair[0]));
-    if(a&&b&&beganOnTrack.get(a.id)&&beganOnTrack.get(b.id)&&a.s>b.s){const pass={t:c.at/1000,front:c.front,passed:b.id};unifiedStateV11.telemetry.passes.push(pass);
-      confirmedThisStep.push({...pass,crossingAttempt:c.crossingAttempt});a.ref.passCompletedCount=(Number(a.ref.passCompletedCount)||0)+1;a.ref.unifiedPassedIdV11=b.id;}
+    const pass={t:c.at/1000,front:c.front,passed:b.id};unifiedStateV11.telemetry.passes.push(pass);
+    confirmedThisStep.push({...pass,crossingAttempt:c.crossingAttempt});a.ref.passCompletedCount=(Number(a.ref.passCompletedCount)||0)+1;a.ref.unifiedPassedIdV11=b.id;
     unifiedStateV11.passCandidates.delete(key);
   }
   unifiedObserveAttackV11(simClockV192.simTimeMs,confirmedThisStep,crossingThisStep);
