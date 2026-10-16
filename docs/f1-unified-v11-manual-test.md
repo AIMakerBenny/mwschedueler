@@ -299,3 +299,10 @@ The standalone `scripts/diagnose-recovery-h-f1-live.mjs` used historical `allPas
 - At the existing 500ms pass confirmation, the stored crossing provenance determines `SUCCESS`, even if a newer target is active. Confirming an old crossing cannot delete a newer target's attempt. A physical pass without same-opponent crossing provenance stays `UNATTRIBUTED_PASS`.
 - `TARGET_CHANGED` and `DISENGAGED_UNCONFIRMED` indicate an interim AI state transition, not an immutable final failed-duel verdict. A subsequently confirmed earlier physical crossing can legitimately yield `SUCCESS` for that same historical attempt.
 - The telemetry `passes` result shape, physical collision checks, driver physics, AI tuning, tyre/pit balance and profile UI are unchanged. `attackLedger.events` now includes `CROSSING` and evidentially linked `SUCCESS` events. The 120s QA compares vehicle-array orders and each success against its original START and physical raw crossing.
+
+
+## Crossing-boundary attribution regression - 2026-10-16
+
+- Development QA now freezes one attack attempt at a physical crossing, switches the AI target, creates another attempt, then settles the original pass. The original attempt must receive the success while the newer attempt remains active.
+- Physical passes without a matching frozen attempt remain `UNATTRIBUTED_PASS`; target switches are `TARGET_CHANGED`, not invented failed overtakes. The scenario checks reversed vehicle-array ordering and unchanged vehicle physics and clock.
+- This is an isolated attribution contract, not an additional claim about actual full-race balance or all-zoom visual overlaps.
