@@ -11373,19 +11373,28 @@ function unifiedChooseLaneV11(row,rows,now,width){
   return target;
 }
 // Target-aware diagnostics only. Called after physics commits; AI never reads them.
-function unifiedObserveAttackV11(nowMs,confirmedPasses=[]){
+function unifiedObserveAttackV11(nowMs,confirmedPasses=[],crossings=[]){
   const state=unifiedStateV11;
   const emit=(type,attempt,extra={})=>{
     state.attemptHistory.push({ms:nowMs,type,attemptId:attempt.id,driver:attempt.driver,target:attempt.target,...extra});
     if(state.attemptHistory.length>2048)state.attemptHistory.splice(0,state.attemptHistory.length-2048);
   };
+  // Physical reversals freeze the active, exact-target attempt at the crossing
+  // boundary. A later AI target switch cannot erase this factual provenance.
+  for(const crossing of [...crossings].sort((a,b)=>a.ms-b.ms||
+    String(a.front).localeCompare(String(b.front)))){
+    if(crossing.attempt)emit('CROSSING',crossing.attempt,{crossingMs:crossing.ms});
+  }
   const newlySuccessful=new Set();
   for(const pass of [...confirmedPasses].sort((a,b)=>String(a.front).localeCompare(String(b.front))||
     String(a.passed).localeCompare(String(b.passed)))){
-    const id=String(pass.front),opponent=String(pass.passed),active=state.attempts.get(id);
-    if(active&&active.target===opponent){
-      emit('SUCCESS',active,{crossingMs:Math.round(pass.t*1000)});
-      state.attempts.delete(id);newlySuccessful.add(id+'|'+opponent);
+    const id=String(pass.front),opponent=String(pass.passed),captured=pass.crossingAttempt;
+    if(captured&&captured.driver===id&&captured.target===opponent){
+      emit('SUCCESS',captured,{crossingMs:Math.round(pass.t*1000)});
+      const active=state.attempts.get(id);
+      // Do not remove a newer attack created after this completed crossing.
+      if(active?.id===captured.id)state.attempts.delete(id);
+      newlySuccessful.add(id+'|'+opponent);
     }else{
       // Never invent a link between an old disengagement and a later physical pass.
       emit('UNATTRIBUTED_PASS',{id:null,driver:id,target:opponent},{crossingMs:Math.round(pass.t*1000)});
@@ -11849,24 +11858,34 @@ function simulateUnifiedRaceStepV11(stepMs){
   // Exclude a pit entry/exit transition from the committed on-track pass ledger.
   // An apparent order change at a pit merge is not an ordinary on-track overtake.
   const beganOnTrack=new Map(rows.map(row=>[row.id,row.pit==='TRACK'&&!row.finished]));
+  const crossingThisStep=[];
   for(let i=0;i<finishedRows.length;i++)for(let j=i+1;j<finishedRows.length;j++){
     const a=finishedRows[i],b=finishedRows[j],oa=rows.find(x=>x.id===a.id),ob=rows.find(x=>x.id===b.id);
     if(!oa||!ob||!beganOnTrack.get(a.id)||!beganOnTrack.get(b.id))continue;
     const before=oa.s-ob.s,after=a.s-b.s;
     if(before*after<0&&Math.abs(before)<len){
-      const key=[a.id,b.id].sort().join('|');
-      unifiedStateV11.passCandidates.set(key,{at:simClockV192.simTimeMs,front:after>0?a.id:b.id,pair:[a.id,b.id]});
-      unifiedStateV11.telemetry.rawCrossings.push({t:now,pair:key,front:after>0?a.id:b.id});
+      const key=[a.id,b.id].sort().join('|'),front=after>0?a.id:b.id,passed=after>0?b.id:a.id,
+        leader=after>0?a:b,active=unifiedStateV11.attempts.get(front);
+      // A provenance link is valid only if the AI really selected the crossed
+      // opponent before this committed physical reversal. No time-window guesses.
+      const crossingAttempt=active&&active.driver===front&&active.target===passed&&
+        String(leader.ref.unifiedAiTargetV11||'')===passed?
+        {id:active.id,driver:active.driver,target:active.target}:null;
+      const crossing={ms:simClockV192.simTimeMs,front,passed,attempt:crossingAttempt};
+      crossingThisStep.push(crossing);
+      unifiedStateV11.passCandidates.set(key,{at:simClockV192.simTimeMs,front,pair:[a.id,b.id],crossingAttempt});
+      unifiedStateV11.telemetry.rawCrossings.push({t:now,pair:key,front});
     }
   }
   const confirmedThisStep=[];
   for(const [key,c] of [...unifiedStateV11.passCandidates]){
     if(simClockV192.simTimeMs-c.at<500)continue;
     const a=finishedRows.find(x=>x.id===c.front),b=finishedRows.find(x=>x.id===(c.pair[0]===c.front?c.pair[1]:c.pair[0]));
-    if(a&&b&&beganOnTrack.get(a.id)&&beganOnTrack.get(b.id)&&a.s>b.s){const pass={t:c.at/1000,front:c.front,passed:b.id};unifiedStateV11.telemetry.passes.push(pass);confirmedThisStep.push(pass);a.ref.passCompletedCount=(Number(a.ref.passCompletedCount)||0)+1;a.ref.unifiedPassedIdV11=b.id;}
+    if(a&&b&&beganOnTrack.get(a.id)&&beganOnTrack.get(b.id)&&a.s>b.s){const pass={t:c.at/1000,front:c.front,passed:b.id};unifiedStateV11.telemetry.passes.push(pass);
+      confirmedThisStep.push({...pass,crossingAttempt:c.crossingAttempt});a.ref.passCompletedCount=(Number(a.ref.passCompletedCount)||0)+1;a.ref.unifiedPassedIdV11=b.id;}
     unifiedStateV11.passCandidates.delete(key);
   }
-  unifiedObserveAttackV11(simClockV192.simTimeMs,confirmedThisStep);
+  unifiedObserveAttackV11(simClockV192.simTimeMs,confirmedThisStep,crossingThisStep);
   unifiedStateV11.telemetry.steps++;
   updateInteractionSnapshotShadowV368();
   recordRaceOrderFlowV309();

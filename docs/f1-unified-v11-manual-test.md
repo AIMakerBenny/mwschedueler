@@ -290,3 +290,12 @@ The standalone `scripts/diagnose-recovery-h-f1-live.mjs` used historical `allPas
 - Only a confirmed physical overtake against the **currently active matching target** emits `SUCCESS`. A physical pass without that link is `UNATTRIBUTED_PASS` rather than an invented successful duel. A disengagement is not automatically a lost duel.
 - `window.mwsF1UnifiedV11Report().attackLedger` exposes a copied, read-only-style observation of active attempts and the 2,048 latest completed-step events. Reset clears counters and pending attempts. Rejected collision steps cannot append events.
 - Dedicated 120-second fixture testing runs both vehicle-array permutations, checks target-specific retry/blocked/disengaged events, confirms physical-pass classification, and unit-tests target-specific success plus atomic rejection. This is diagnostic-only; existing AI decisions, speed, overtaking thresholds and UI were not retuned.
+
+
+## Unified v1.1 confirmed-pass provenance at crossing boundary — 2026-10-16
+
+- Root cause: in 120s of live isolated simulation, driver 2 crossed driver 1 at 82.74s and driver 11 crossed driver 10 at 119.32s. Both AI targets changed during the existing 500ms crossing-confirmation hold, so looking up the *current* attempt at confirmation incorrectly produced `UNATTRIBUTED_PASS`.
+- On each accepted, physical on-track order reversal, the engine now stores an immutable copy of the exact currently active attack attempt only if the AI's selected target is the same actually crossed opponent. It also records a `CROSSING` event against that exact attempt ID. This is actual crossing-step evidence; there is no retrospective nearest-driver guess.
+- At the existing 500ms pass confirmation, the stored crossing provenance determines `SUCCESS`, even if a newer target is active. Confirming an old crossing cannot delete a newer target's attempt. A physical pass without same-opponent crossing provenance stays `UNATTRIBUTED_PASS`.
+- `TARGET_CHANGED` and `DISENGAGED_UNCONFIRMED` indicate an interim AI state transition, not an immutable final failed-duel verdict. A subsequently confirmed earlier physical crossing can legitimately yield `SUCCESS` for that same historical attempt.
+- The telemetry `passes` result shape, physical collision checks, driver physics, AI tuning, tyre/pit balance and profile UI are unchanged. `attackLedger.events` now includes `CROSSING` and evidentially linked `SUCCESS` events. The 120s QA compares vehicle-array orders and each success against its original START and physical raw crossing.
