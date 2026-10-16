@@ -11860,6 +11860,9 @@ function simulateUnifiedRaceStepV11(stepMs){
     v.battleState=String(v.unifiedAiStateV11||'CRUISE')==='PLAN_ATTACK'?'PREPARING':String(v.unifiedAiStateV11||'')==='SIDE_BY_SIDE'?'SIDE_BY_SIDE':'FOLLOWING';
     v.battleSpeedBiasKph=0;v.powerUnitFactor=1;v.longRunPaceMultiplier=1;v.raceMomentumPaceMultiplierV262=1;
   }
+  // Commit-only diagnostics: register the AI-selected attempt before freezing
+  // any crossing from this accepted 20ms step. Rejected steps never get here.
+  unifiedObserveAttackV11(simClockV192.simTimeMs);
   unifiedDetectionCrossingsV11(rows,stepMs,track);
   const finishedRows=unifiedSnapshotV11().filter(p=>p.pit==='TRACK'&&!p.finished);
   const passRows=finishedRows.filter(p=>unifiedRaceOnTrackV11(p.ref));
