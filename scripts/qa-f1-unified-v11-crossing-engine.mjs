@@ -29,6 +29,7 @@ const base=options.finish?10*len-(options.finishGap||3):options.lap?len-.5:100;
 const states=[[a,base,-3.5,200],[b,base+.3,3.5,180]];
 if(c)states.push([c,base+100,-3.5,180]);
 if(options.multi){states[1][1]=base+.03;states[1][3]=170;states[2]=[c,base+.06,0,150];}
+if(options.instant){states[1][1]=base+.03;states[1][3]=170;}
 for(const [v,s,y,speed] of states){
  v.raceProgress=v.startOffset=s/len;v.lateralOffsetMeters=y;v.speedKph=speed;
 }
@@ -80,6 +81,24 @@ assert.equal(base.final.passes.length,1,'A second step rewarded the same crossin
 assert.equal(base.final.cars[0].counter,1);
 assert.equal(base.final.events.filter(e=>e.type==='SUCCESS').length,1);
 cases.push('exact-500ms-once','pause-resume');
+
+// First committed 20ms step: the AI has selected an actual opponent,
+// but START did not exist before this very first physical crossing.
+const instant=checkOrder({instant:true},String.raw`
+step();const opening=read();until(1500);const waiting=read();
+until(1520);const confirmed=read();until(1560);return {opening,waiting,confirmed,final:read()};`);
+assert.equal(instant.opening.raw.length,1,'Initial commit did not cross');
+assert.equal(instant.opening.candidates[0][1].crossingAttempt?.target,'1',
+  'The selected first-step attack was not frozen at its crossing');
+assert.deepEqual(instant.opening.events.slice(0,2).map(e=>e.type),['START','CROSSING']);
+assert.equal(instant.waiting.passes.length,0);
+assert.equal(instant.confirmed.passes.length,1);
+assert.equal(instant.final.passes.length,1);
+assert.equal(instant.final.events.filter(e=>e.type==='SUCCESS').length,1);
+assert.equal(instant.final.events.filter(e=>e.type==='UNATTRIBUTED_PASS').length,0);
+assert.equal(instant.final.cars.find(v=>v.id==='0').counter,1);
+cases.push('first-committed-tick-start-and-crossing');
+
 
 for(const sameTarget of [false,true]){
  const switched=checkOrder({},String.raw`
