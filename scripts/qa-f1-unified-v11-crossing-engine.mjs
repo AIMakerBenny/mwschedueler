@@ -243,5 +243,35 @@ assert.deepEqual(ledger.reset,{active:[],events:[],totalStarts:0});
 assert.deepEqual(ledger.restarted,ledger.reset);assert.equal(ledger.pending,0);
 cases.push('report-copy-memory-bound-reset');
 
+
+// Verify the committed physical timestamp and ensure consumers cannot modify
+// race telemetry, lane decisions, timing-gate records, or overlap diagnostics.
+const snapshots=checkOrder({instant:true},String.raw`
+const overlap={samples:7,latest:{pair:['0','1'],distance:3}};
+const markerOverlapReportV377=()=>overlap,raceCameraV216={zoom:1};
+step();
+a.unifiedMergeBlockedV11=['1'];a.unifiedDetectionV11={zone:{eligible:true}};
+const candidate=[...unifiedStateV11.passCandidates][0]?.[1];
+const raw=unifiedStateV11.telemetry.rawCrossings[0];
+const crossing=unifiedStateV11.attemptHistory.find(e=>e.type==='CROSSING');
+const live=()=>JSON.stringify({
+  telemetry:unifiedStateV11.telemetry,blocked:a.unifiedMergeBlockedV11,
+  records:a.unifiedDetectionV11,range:unifiedStateV11.path.idealLineRange,overlap
+});
+const before=live(),report=window.mwsF1UnifiedV11Report();
+report.rawCrossings[0].front='mutated';
+report.passes.push({front:'fabricated',t:999});
+report.lanes.find(x=>x.id==='0').blocked.push('mutated');
+report.timingGates.find(x=>x.id==='0').records.zone.eligible=false;
+report.worldGeometry.idealLineRange[0]=123456;
+report.renderOverlaps.latest.pair.push('mutated');
+return {rawMs:Math.round(raw.t*1000),candidateAt:candidate.at,crossingMs:crossing.crossingMs,
+  isolated:before===live(),committedClock:simClockV192.simTimeMs};`);
+assert.equal(snapshots.rawMs,snapshots.candidateAt,'Raw crossing timestamp differs from committed physics time');
+assert.equal(snapshots.rawMs,snapshots.crossingMs,'Raw crossing timestamp disagrees with frozen attack event');
+assert.equal(snapshots.committedClock,snapshots.candidateAt);
+assert(snapshots.isolated,'Public report mutation changed internal race diagnostic or vehicle state');
+cases.push('committed-crossing-time','public-diagnostic-snapshot-isolation');
+
 console.log(JSON.stringify({result:'PASS',cases,orderIndependent:true,
  scope:'Actual 20ms engine commits with controlled AI and real post-step pit/finish adapters; full pit/UI journeys are covered separately.'},null,2));
