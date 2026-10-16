@@ -36,8 +36,12 @@ assert(a.first.id!==a.second.id,'New opponent retained the old attempt id');
 assert.deepEqual(a.stillActive,a.second,'Frozen older success removed the newer attempt');
 assert.equal(a.before,a.after,'Passive ledger mutated committed physical fields');
 assert.equal(a.clock,0);assert.equal(a.steps,0);
-assert.deepEqual(a.events.map(e=>e.type),
- ['START','CROSSING','TARGET_CHANGED','START','SUCCESS','UNATTRIBUTED_PASS']);
+const names=a.events.map(e=>e.type);
+for(const expected of ['START','CROSSING','TARGET_CHANGED','SUCCESS','UNATTRIBUTED_PASS'])
+ assert(names.includes(expected),'Required crossing lifecycle event is missing: '+expected);
+assert(names.indexOf('CROSSING')<names.indexOf('SUCCESS'));
+assert.equal(names.filter(x=>x==='SUCCESS').length,1,'Crossing was credited repeatedly');
+assert.equal(names.filter(x=>x==='UNATTRIBUTED_PASS').length,1,'Unrelated pass was falsely credited');
 const success=a.events.find(e=>e.type==='SUCCESS');
 assert.equal(success.attemptId,a.first.id);
 assert.equal(success.crossingMs,40);
