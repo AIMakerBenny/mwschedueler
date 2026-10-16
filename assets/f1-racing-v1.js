@@ -11885,7 +11885,7 @@ function simulateUnifiedRaceStepV11(stepMs){
       const crossing={ms:simClockV192.simTimeMs,front,passed,attempt:crossingAttempt};
       crossingThisStep.push(crossing);
       unifiedStateV11.passCandidates.set(key,{at:simClockV192.simTimeMs,front,pair:[a.id,b.id],crossingAttempt});
-      unifiedStateV11.telemetry.rawCrossings.push({t:now,pair:key,front});
+      unifiedStateV11.telemetry.rawCrossings.push({t:crossing.ms/1000,pair:key,front});
     }
   }
   const confirmedThisStep=[];
@@ -11910,16 +11910,22 @@ function simulateUnifiedRaceStepV11(stepMs){
   unifiedSpecialTickV11(finishedRows,dt,now);
   return true;
 }
-window.mwsF1UnifiedV11Report=()=>({engine:'unified-v1.1',revision:'shared-physics-config-v11',physics:UNIFIED_ENGINE_V11,simulationStepMs:simClockV192.fixedStepMs,...unifiedStateV11.telemetry,
+// Reports are passive snapshots: callers cannot edit live telemetry or vehicle state.
+function unifiedReportSnapshotV11(value){
+  if(Array.isArray(value))return value.map(unifiedReportSnapshotV11);
+  if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,unifiedReportSnapshotV11(item)]));
+  return value;
+}
+window.mwsF1UnifiedV11Report=()=>({engine:'unified-v1.1',revision:'shared-physics-config-v11',physics:UNIFIED_ENGINE_V11,simulationStepMs:simClockV192.fixedStepMs,...unifiedReportSnapshotV11(unifiedStateV11.telemetry),
   seed:unifiedStateV11.rng,initialized:unifiedStateV11.initialized,
-  lanes:raceMotionV189.vehicles.map(v=>({id:String(v.id),actual:Number(v.unifiedYV11)||0,ideal:Number(v.unifiedIdealLaneV11)||0,target:Number(v.unifiedLaneTargetV11)||0,state:String(v.unifiedAiStateV11||''),blocked:v.unifiedMergeBlockedV11||[]})),
+  lanes:raceMotionV189.vehicles.map(v=>({id:String(v.id),actual:Number(v.unifiedYV11)||0,ideal:Number(v.unifiedIdealLaneV11)||0,target:Number(v.unifiedLaneTargetV11)||0,state:String(v.unifiedAiStateV11||''),blocked:[...(v.unifiedMergeBlockedV11||[])]})),
   incidents:raceMotionV189.vehicles.map(v=>({id:String(v.id),active:unifiedIncidentNameV11(unifiedActiveErrorV11(v)),untilMs:(Number(v.unifiedErrorUntilV11)||0)*1000,sequence:Number(v.unifiedIncidentSequenceV11)||0,grip:unifiedGripV11(v),warmup:Number(v.tyreWarmupFactor)||1})),
   attackLedger:{active:[...unifiedStateV11.attempts.values()].map(x=>({...x})).sort((a,b)=>a.driver.localeCompare(b.driver)),
     events:unifiedStateV11.attemptHistory.map(x=>({...x,blockedBy:x.blockedBy?[...x.blockedBy]:undefined})),
     totalStarts:unifiedStateV11.attemptSequence},
-  timingGates:raceMotionV189.vehicles.map(v=>({id:String(v.id),records:v.unifiedDetectionV11||{},eligible:Boolean(v.overtakeEligible),active:Boolean(v.overtakeActive),gapSeconds:Number.isFinite(v.overtakeGapSeconds)?v.overtakeGapSeconds:null})),
-  worldGeometry:unifiedStateV11.path?{minimumForwardMetric:unifiedStateV11.path.minimumForwardMetric,scale:unifiedStateV11.path.scale,idealLineRange:unifiedStateV11.path.idealLineRange}:null,
-  renderOverlaps:markerOverlapReportV377(),
+  timingGates:raceMotionV189.vehicles.map(v=>({id:String(v.id),records:unifiedReportSnapshotV11(v.unifiedDetectionV11||{}),eligible:Boolean(v.overtakeEligible),active:Boolean(v.overtakeActive),gapSeconds:Number.isFinite(v.overtakeGapSeconds)?v.overtakeGapSeconds:null})),
+  worldGeometry:unifiedStateV11.path?{minimumForwardMetric:unifiedStateV11.path.minimumForwardMetric,scale:unifiedStateV11.path.scale,idealLineRange:[...unifiedStateV11.path.idealLineRange]}:null,
+  renderOverlaps:unifiedReportSnapshotV11(markerOverlapReportV377()),
   screenFit:unifiedScreenFitV11(raceMotionV189.vehicles.filter(v=>!v.finished&&v.renderPointV216).map(vehicle=>({vehicle,point:vehicle.renderPointV216})),raceCameraV216.zoom),
   notes:'Full-circuit balance and all-zoom QA pending. Physical world footprints and rendered overlap are distinct checks; geometry warnings are not proof of zero overlaps'});
 
