@@ -37,6 +37,8 @@ jobs:
         run: node scripts/qa-f1-unified-v11-crossing-engine.mjs
       - name: Active overtake attempt transition diagnostics
         run: node scripts/qa-f1-unified-v11-attempts.mjs
+      - name: R0 competition baseline accepted-step diagnostics
+        run: node scripts/qa-f1-v12-r0-baseline.mjs
       - name: Install browser QA dependencies
         run: |
           npm install --no-save --no-package-lock playwright
