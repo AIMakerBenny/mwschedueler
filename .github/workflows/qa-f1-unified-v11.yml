@@ -39,6 +39,8 @@ jobs:
         run: node scripts/qa-f1-unified-v11-attempts.mjs
       - name: R0 competition baseline accepted-step diagnostics
         run: node scripts/qa-f1-v12-r0-baseline.mjs
+      - name: R1 race-style energy and tyre policy regression
+        run: node scripts/qa-f1-v12-r1-strategies.mjs
       - name: Install browser QA dependencies
         run: |
           npm install --no-save --no-package-lock playwright

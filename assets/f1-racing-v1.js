@@ -11097,9 +11097,66 @@ function unifiedCompetitionRecordV12(nowMs,rows,commands){
    raceProgress:Number(v.raceProgress)||0,speedKph:Number(v.speedKph)||0,
    tyreWear:Number(v.tyreWear)||0,batteryMJ:Number(v.batteryMJ)||0,
    form:Number(v.unifiedFormV11)||1,pace:Number(v.driverProfile?.pace)||75,
+   style:String(v.unifiedStrategyV12||''),effort:Number(v.unifiedStrategyEffortV12)||1,
+   ersRequestKW:Number(v.unifiedStrategyErsKWV12)||0,
    mode:String(v.unifiedAiStateV11||''),pit:String(v.pitState||'TRACK'),
    blocked:Number(v.unifiedMergeBlockedV11?.length)||0}))});
  if(state.samples.length>480)state.samples.splice(1,state.samples.length-480);
+}
+
+// v1.2 R1: no new motion solver. Driver styles change only the demand on
+// existing thrust, ERS battery, and tyre wear. No rank- or gap-based rubber-band.
+const UNIFIED_STRATEGY_V12=Object.freeze({
+ names:Object.freeze(['FRONTRUNNER','BALANCED','CHASER','CLOSER']),
+ points:Object.freeze([0,.25,.55,.80,1]),
+ effort:Object.freeze({
+  FRONTRUNNER:Object.freeze([1.17,1.12,.98,.92,1.03]),
+  BALANCED:Object.freeze([1,1,1.01,1.02,1.05]),
+  CHASER:Object.freeze([.91,.94,1.03,1.13,1.13]),
+  CLOSER:Object.freeze([.86,.90,.98,1.15,1.23])
+ }),
+ ersKW:Object.freeze({
+  FRONTRUNNER:Object.freeze([105,95,40,35,100]),
+  BALANCED:Object.freeze([55,65,75,85,105]),
+  CHASER:Object.freeze([16,22,85,140,145]),
+  CLOSER:Object.freeze([8,18,50,125,155])
+ }),
+ maxEffort:1.23,minEffort:.80,effortToThrust:.13,effortToWear:.42
+});
+function unifiedStrategyStageV12(curve,progress){
+ const p=unifiedClampV11(progress,0,1),stages=UNIFIED_STRATEGY_V12.points;
+ for(let i=1;i<stages.length;i++)if(p<=stages[i]){
+  const t=(p-stages[i-1])/(stages[i]-stages[i-1]);
+  return curve[i-1]+t*(curve[i]-curve[i-1]);
+ }
+ return curve[curve.length-1];
+}
+function unifiedStrategyPlanV12(v,progress,pit='TRACK'){
+ const style=UNIFIED_STRATEGY_V12.effort[v?.unifiedStrategyV12]?
+  v.unifiedStrategyV12:'BALANCED';
+ const spec=UNIFIED_STRATEGY_V12;
+ const wear=unifiedClampV11(Number(v?.tyreWear)||0,0,1);
+ // Tyre conservation is earned through lower actual effort/wear, not free grip.
+ const reservePenalty=.28*unifiedClampV11((wear-.58)/.42,0,1);
+ const nominal=unifiedStrategyStageV12(spec.effort[style],progress);
+ const effort=unifiedClampV11(nominal-reservePenalty,spec.minEffort,spec.maxEffort);
+ const battery=unifiedClampV11(Number(v?.batteryMJ)||0,0,UNIFIED_ENGINE_V11.ersCapacity);
+ const maxKW=unifiedStrategyStageV12(spec.ersKW[style],progress);
+ const attacking=['PLAN_ATTACK','SIDE_BY_SIDE'].includes(String(v?.unifiedAiStateV11||''));
+ // An attack can spend stored energy, but never create energy.
+ const requestedKW=pit==='TRACK'&&battery>.02?
+  Math.min(UNIFIED_ENGINE_V11.attackBoostKW,Math.max(0,maxKW+(attacking?25:0))):0;
+ return {style,progress:unifiedClampV11(progress,0,1),effort,
+  thrustScale:1+spec.effortToThrust*(effort-1),
+  wearScale:1+spec.effortToWear*(effort-1),
+  ersKW:requestedKW,attacking,batteryMJ:battery,
+  tyreManagement:wear>.58?'CONSERVE':'NORMAL'};
+}
+function unifiedStrategyRosterV12(key,vehicles){
+ const ids=vehicles.map(v=>String(v.id)).sort((a,b)=>
+  hashDriverV189(key+'|'+a+'|race-strategy-v12')-
+  hashDriverV189(key+'|'+b+'|race-strategy-v12')||a.localeCompare(b));
+ return new Map(ids.map((id,i)=>[id,UNIFIED_STRATEGY_V12.names[i%4]]));
 }
 
 function unifiedResetV11(){
@@ -11159,8 +11216,11 @@ function unifiedInitV11(){
     unifiedStateV11.telemetry.screenGeometryWarnings.push({track:String(track.id||track.name),physicalWidth,svgWidth,
       screenEquivalentMarkerDiameterMeters:minimumDisplayLaneWidth,reason:'Display ring may make side-by-side overlap mathematically unavoidable at some zoom levels'});
   }
+  const strategiesV12=unifiedStrategyRosterV12(key,raceMotionV189.vehicles);
   for(const v of raceMotionV189.vehicles){
     const keyV11=String(v.id),seed=hashDriverV189(key+'|'+keyV11+'|model')||1;
+    v.unifiedStrategyV12=strategiesV12.get(keyV11)||'BALANCED';
+    v.unifiedStrategyEffortV12=1;v.unifiedStrategyErsKWV12=0;v.unifiedStrategyWearScaleV12=1;
     const spec=unifiedTyreSpecV11(v.tyreCompound);
     v.unifiedRngV11=hashDriverV189(key+'|'+keyV11+'|rng')||1;
     v.unifiedTempCV11=spec.target-5;v.unifiedLastPitCountV11=Number(v.pitStopCount)||0;
@@ -11640,9 +11700,10 @@ function unifiedEnergyAndTyreV11(row,command,dt,track){
   const target=spec.target+18*heatLoad,temp=Number(v.unifiedTempCV11)||spec.target-5;
   v.unifiedTempCV11=temp+(target-temp)*(1-Math.exp(-dt/spec.tau));
   const wearLoad=unifiedClampV11(.90+.15*lateral+.10*slip+.10*unifiedClampV11((temp-spec.target-10)/20,0,1),.9,1.25);
+  const strategyWear=unifiedClampV11(Number(v.unifiedStrategyWearScaleV12)||1,.86,1.10);
   const stress=unifiedClampV11(Number(activeTrackRuntimeProfileV235()?.tyreStressFactor)||1,.88,1.24);
   const distance=Math.max(0,command.pathDistance??command.ds),deltaWear=spec.wear*distance/Math.max(1,track.lengthMeters)*stress*
-     (1-.10*unifiedRatingV11(v,'tyreManagement'))*wearLoad;
+     (1-.10*unifiedRatingV11(v,'tyreManagement'))*wearLoad*strategyWear;
   v.tyreWear=unifiedClampV11((Number(v.tyreWear)||0)+deltaWear,0,1);
   v.tyreGrip=unifiedGripV11(v);
   v.tyreSurfaceTemp=unifiedClampV11((v.unifiedTempCV11-50)/80,0,1);
@@ -11766,10 +11827,12 @@ function simulateUnifiedRaceStepV11(stepMs){
     const L=UNIFIED_ENGINE_V11.lateral*G*(1-.06*aero.dirty*.35),latRatio=unifiedClampV11(latDemand/Math.max(.01,L),0,.98);
     const f=Math.sqrt(Math.max(.01,1-latRatio*latRatio)),D=UNIFIED_ENGINE_V11.drive/(nominal*nominal),dragReduction=Math.min(.12,.1*aero.tow+(v.overtakeActive?.04:0));
     const drag=D*(1-dragReduction)*row.v*row.v;
-    const form=Number(v.unifiedFormV11)||1,A0=UNIFIED_ENGINE_V11.drive*(1+.025*unifiedRatingV11(v,'pace'))*form;
+    const strategy=unifiedStrategyPlanV12(v,(Number(v.raceProgress)||0)/Math.max(1,Number(activeRaceSnapshotV187.totalLaps)||10),pit.state);
+    v.unifiedStrategyEffortV12=strategy.effort;v.unifiedStrategyErsKWV12=strategy.ersKW;v.unifiedStrategyWearScaleV12=strategy.wearScale;
+    const form=Number(v.unifiedFormV11)||1,A0=UNIFIED_ENGINE_V11.drive*(1+.025*unifiedRatingV11(v,'pace'))*form*strategy.thrustScale;
     const skill=unifiedSkillPowerV11(v,simClockV192.simTimeMs,pit.state);
     const availableErspower=Math.max(0,row.E)*1000000/dt;
-    const ers=(pit.state==='TRACK')?Math.min(availableErspower,(v.unifiedAiStateV11==='PLAN_ATTACK'?UNIFIED_ENGINE_V11.attackBoostKW:UNIFIED_ENGINE_V11.baseBoostKW)*1000):0;
+    const ers=(pit.state==='TRACK')?Math.min(availableErspower,strategy.ersKW*1000):0;
     const limit=nominal+35/3.6,soft=limit-15/3.6;
     const limitPower=UNIFIED_ENGINE_V11.mass*limit*Math.max(0,D*(1-dragReduction)*limit*limit-A0);
     const blend=unifiedClampV11((row.v-soft)/(limit-soft),0,1);
@@ -11968,6 +12031,18 @@ function unifiedReportSnapshotV11(value){
   if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,unifiedReportSnapshotV11(item)]));
   return value;
 }
+window.mwsF1StrategyV12Report=()=>unifiedReportSnapshotV11({
+  engine:'unified-v1.1',version:'v1.2-R1',readOnly:true,
+  styles:[...UNIFIED_STRATEGY_V12.names],
+  entrants:raceMotionV189.vehicles.map(v=>({
+   id:String(v.id),name:String(v.driver?.name||''),style:String(v.unifiedStrategyV12||''),
+   effort:Number(v.unifiedStrategyEffortV12)||1,ersRequestKW:Number(v.unifiedStrategyErsKWV12)||0,
+   wearScale:Number(v.unifiedStrategyWearScaleV12)||1,
+   batteryMJ:Number(v.batteryMJ)||0,tyreWear:Number(v.tyreWear)||0,
+   progress:Number(v.raceProgress)||0,rank:v.finishPosition||null
+  })).sort((a,b)=>a.id.localeCompare(b.id)),
+  notes:'No ranking force, gap compression, free energy, legacy extra controller or physics replacement'
+});
 window.mwsF1CompetitionBaselineV12=()=>unifiedReportSnapshotV11({
   ...(unifiedStateV11.competition||unifiedCompetitionNewV12()),
   engine:'unified-v1.1',scope:'committed physical steps, not full-race balance certification',
