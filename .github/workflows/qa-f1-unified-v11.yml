@@ -43,6 +43,8 @@ jobs:
         run: node scripts/qa-f1-v12-r1-strategies.mjs
       - name: R2 multicar predictive corridor and pit merge regression
         run: node scripts/qa-f1-v12-r2-corridors.mjs
+      - name: R3 pressure, fatigue and incident regression
+        run: node scripts/qa-f1-v12-r3-risk.mjs
       - name: Install browser QA dependencies
         run: |
           npm install --no-save --no-package-lock playwright

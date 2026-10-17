@@ -11060,7 +11060,7 @@ function unifiedCompetitionNewV12(){
  return {version:'v1.2-R0',sampleIntervalMs:5000,nextSampleMs:0,samples:[],
   leaderChanges:0,rankReorders:0,trafficConstrainedSteps:0,
   trafficByDriver:{},aiModeSteps:{},mergeBlockedSteps:0,
-  attemptEventCounts:{},previousLeader:'',previousOrder:[],lastRecordedMs:0};
+  attemptEventCounts:{},incidentEvents:[],incidentObserved:{},previousLeader:'',previousOrder:[],lastRecordedMs:0};
 }
 function unifiedCompetitionRecordV12(nowMs,rows,commands){
  const state=unifiedStateV11.competition;if(!state||!unifiedStateV11.path)return;
@@ -11069,6 +11069,16 @@ function unifiedCompetitionRecordV12(nowMs,rows,commands){
   const v=rows[i].ref,cmd=commands[i];if(!cmd)continue;
   const mode=String(v.unifiedAiStateV11||'CRUISE');
   state.aiModeSteps[mode]=(state.aiModeSteps[mode]||0)+1;
+  const id=String(v.id),sequence=Number(v.unifiedIncidentSequenceV11)||0;
+  if(sequence>(state.incidentObserved[id]||0)){
+   state.incidentEvents.push({simMs:nowMs,id,type:String(v.unifiedErrorTypeV11||''),
+    risk:Number(v.unifiedRiskContextV12?.riskPerSecond)||0,
+    pressure:Number(v.unifiedRiskContextV12?.pressure)||0,
+    stress:Number(v.unifiedRiskStressV12)||0,tyreWear:Number(v.tyreWear)||0,
+    style:String(v.unifiedStrategyV12||'')});
+   if(state.incidentEvents.length>300)state.incidentEvents.splice(0,state.incidentEvents.length-300);
+  }
+  state.incidentObserved[id]=sequence;
   if(v.unifiedMergeBlockedV11?.length)state.mergeBlockedSteps++;
   if(cmd.reason==='PREDICTED_TRAFFIC'){
    state.trafficConstrainedSteps++;
@@ -11100,6 +11110,9 @@ function unifiedCompetitionRecordV12(nowMs,rows,commands){
    style:String(v.unifiedStrategyV12||''),effort:Number(v.unifiedStrategyEffortV12)||1,
    ersRequestKW:Number(v.unifiedStrategyErsKWV12)||0,
    corridorCandidates:Number(v.unifiedCorridorCountV12)||0,
+   stress:Number(v.unifiedRiskStressV12)||0,
+   pressure:Number(v.unifiedRiskContextV12?.pressure)||0,
+   errorRiskPerSecond:Number(v.unifiedRiskContextV12?.riskPerSecond)||0,
    mode:String(v.unifiedAiStateV11||''),pit:String(v.pitState||'TRACK'),
    blocked:Number(v.unifiedMergeBlockedV11?.length)||0}))});
  if(state.samples.length>480)state.samples.splice(1,state.samples.length-480);
@@ -11236,6 +11249,7 @@ function unifiedInitV11(){
     v.unifiedNextSkillAtV11=-Math.log(Math.max(1e-9,unifiedRandomVehicleV11(v)));
     v.unifiedPreviousRankV11=0;v.unifiedAiStateV11='CRUISE';
     v.unifiedLastPassS=Number(v.raceProgress)*len;v.unifiedPassedIdV11='';v.unifiedIncidentSequenceV11=0;
+    v.unifiedRiskStressV12=0;v.unifiedRiskContextV12=null;
     v.unifiedDetectionV11={};v.overtakeEligible=false;v.overtakeActive=false;v.overtakeGapSeconds=Infinity;
   }
   unifiedStateV11.initialized=true;
@@ -11617,9 +11631,52 @@ function unifiedBeginErrorV11(v,type,now,forced=false){
   v[count]=(Number(v[count])||0)+1;
   return canonical;
 }
-function unifiedIncidentRateV11(v,wear,pressure=0,attacking=0){
+// R3: contextual driver pressure and cumulative effort load. The existing
+// incident physics remain authoritative; no ranked-driver penalty is applied.
+function unifiedPressureContextV12(row,rows){
+ const v=row.ref;let pursuit=0,traffic=0;
+ for(const other of rows){
+  if(other.id===row.id||other.finished||other.pit!=='TRACK')continue;
+  const gap=unifiedGapV11(row,other);
+  if(gap<0&&-gap<Math.max(20,row.v*1.6)){
+   const near=1-(-gap)/Math.max(20,row.v*1.6);
+   pursuit=Math.max(pursuit,near*(.75+.25*unifiedClampV11((other.v-row.v+2)/8,0,1)));
+  }else if(gap>0&&gap<Math.max(18,row.v*.9))
+   traffic=Math.max(traffic,1-gap/Math.max(18,row.v*.9));
+ }
+ const effort=unifiedClampV11(Number(v.unifiedStrategyEffortV12)||1,.8,1.23);
+ const tyre=unifiedTyreSpecV11(v.tyreCompound),temp=Number(v.unifiedTempCV11);
+ const heat=Number.isFinite(temp)?unifiedClampV11((Math.abs(temp-tyre.target)-10)/25,0,1):0;
+ const attacking=['PLAN_ATTACK','SIDE_BY_SIDE','EXIT_DUEL'].includes(String(v.unifiedAiStateV11||''))?1:0;
+ return {pressure:unifiedClampV11(.8*pursuit+.55*traffic,0,1),
+  pursuit,traffic,attacking,pushing:unifiedClampV11((effort-1)/.23,0,1),heat,
+  tyreWear:unifiedClampV11(Number(v.tyreWear)||0,0,1)};
+}
+function unifiedRiskUpdateV12(row,rows,dt){
+ const v=row.ref,ctx=unifiedPressureContextV12(row,rows);
+ if(row.finished||row.pit!=='TRACK'){
+  v.unifiedRiskStressV12=unifiedClampV11((Number(v.unifiedRiskStressV12)||0)-.04*dt,0,1);
+  v.unifiedRiskContextV12={...ctx,pressure:0,attacking:0,riskPerSecond:0,stress:v.unifiedRiskStressV12};
+  return v.unifiedRiskContextV12;
+ }
+ const prior=unifiedClampV11(Number(v.unifiedRiskStressV12)||0,0,1);
+ const build=.018*ctx.pushing+.012*ctx.attacking+.010*ctx.pressure+.008*ctx.heat;
+ const recover=.013*(1-ctx.pushing)*(1-.5*ctx.pressure);
+ const stress=unifiedClampV11(prior+(build-recover)*dt,0,1);
+ v.unifiedRiskStressV12=stress;
+ v.unifiedRiskContextV12={...ctx,stress,
+  riskPerSecond:unifiedIncidentRateV11(v,ctx.tyreWear,ctx.pressure,ctx.attacking,
+   {stress,pushing:ctx.pushing,heat:ctx.heat})};
+ return v.unifiedRiskContextV12;
+}
+
+function unifiedIncidentRateV11(v,wear,pressure=0,attacking=0,context={}){
   const worn=unifiedClampV11((wear-.60)/.40,0,1);
-  return unifiedClampV11(.004*(1+1.5*worn+.8*pressure+.6*attacking)*(1-.25*unifiedRatingV11(v,'errorResistance')),.001,.025);
+  const stress=unifiedClampV11(Number(context.stress)||0,0,1);
+  const pushing=unifiedClampV11(Number(context.pushing)||0,0,1);
+  const heat=unifiedClampV11(Number(context.heat)||0,0,1);
+  return unifiedClampV11(.004*(1+1.5*worn+.8*pressure+.6*attacking+.65*stress+.40*pushing+.45*heat)*
+   (1-.25*unifiedRatingV11(v,'errorResistance')),.001,.025);
 }
 function unifiedDrivingErrorV11(row,rows,dt,now){
   const v=row.ref;
@@ -11632,11 +11689,8 @@ function unifiedDrivingErrorV11(row,rows,dt,now){
   const phase=getCornerPhaseAtProgressV194(v.progress)?.phase;
   const types=phase==='BRAKING'?['LOCKUP']:['TURN_IN','APEX'].includes(phase)?['UNDERSTEER']:phase==='EXIT'?['EXIT_ERROR']:[];
   if(!types.length)return '';
-  const closest=rows.filter(p=>p.id!==row.id&&!p.finished&&p.pit==='TRACK'&&unifiedGapV11(row,p)<0&&-unifiedGapV11(row,p)<row.v*1.2)
-    .sort((a,b)=>unifiedGapV11(row,b)-unifiedGapV11(row,a))[0];
-  const pressure=closest?unifiedClampV11(1+unifiedGapV11(row,closest)/Math.max(1,row.v*1.2),0,1):0;
-  const attacking=['PLAN_ATTACK','SIDE_BY_SIDE'].includes(String(v.unifiedAiStateV11||''))?1:0;
-  const risk=unifiedIncidentRateV11(v,row.w,pressure,attacking);
+  const ctx=v.unifiedRiskContextV12||unifiedPressureContextV12(row,rows);
+  const risk=unifiedIncidentRateV11(v,row.w,ctx.pressure,ctx.attacking,ctx);
   if(unifiedRandomVehicleV11(v)>=1-Math.exp(-risk*dt))return '';
   return unifiedBeginErrorV11(v,types[0],now);
 }
@@ -11871,6 +11925,7 @@ function simulateUnifiedRaceStepV11(stepMs){
       v.unifiedBrakeErrorMetersV11=cornerId?(unifiedRandomVehicleV11(v)*2-1)*uncertainty:0;
     }
     const lane=unifiedLateralV11(row,Number(v.unifiedLaneTargetV11)||0,dt,width);
+    unifiedRiskUpdateV12(row,rows,dt);
     const errorEvent=unifiedDrivingErrorV11(row,rows,dt,simClockV192.simTimeMs/1000);
     const G=unifiedGripV11(v);
     const local=unifiedPathSampleV11(row.s),turn=local.k/Math.max(.2,1-local.k*row.y),latDemand=Math.abs(row.v*row.v*turn+lane.ay);
@@ -12081,6 +12136,17 @@ function unifiedReportSnapshotV11(value){
   if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,unifiedReportSnapshotV11(item)]));
   return value;
 }
+window.mwsF1RiskV12Report=()=>unifiedReportSnapshotV11({
+  version:'v1.2-R3',readOnly:true,
+  entrants:raceMotionV189.vehicles.map(v=>({
+   id:String(v.id),name:String(v.driver?.name||''),style:String(v.unifiedStrategyV12||''),
+   stress:Number(v.unifiedRiskStressV12)||0,context:v.unifiedRiskContextV12||null,
+   incidentCount:Number(v.unifiedIncidentSequenceV11)||0,incident:String(v.unifiedErrorTypeV11||''),
+   pit:String(v.pitState||'TRACK')
+  })).sort((a,b)=>a.id.localeCompare(b.id)),
+  events:unifiedStateV11.competition?.incidentEvents||[],
+  note:'Risk follows driving load and nearby cars, not position or a rank penalty.'
+});
 window.mwsF1StrategyV12Report=()=>unifiedReportSnapshotV11({
   engine:'unified-v1.1',version:'v1.2-R1',readOnly:true,
   styles:[...UNIFIED_STRATEGY_V12.names],
