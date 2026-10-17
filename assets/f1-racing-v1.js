@@ -11099,6 +11099,7 @@ function unifiedCompetitionRecordV12(nowMs,rows,commands){
    form:Number(v.unifiedFormV11)||1,pace:Number(v.driverProfile?.pace)||75,
    style:String(v.unifiedStrategyV12||''),effort:Number(v.unifiedStrategyEffortV12)||1,
    ersRequestKW:Number(v.unifiedStrategyErsKWV12)||0,
+   corridorCandidates:Number(v.unifiedCorridorCountV12)||0,
    mode:String(v.unifiedAiStateV11||''),pit:String(v.pitState||'TRACK'),
    blocked:Number(v.unifiedMergeBlockedV11?.length)||0}))});
  if(state.samples.length>480)state.samples.splice(1,state.samples.length-480);
@@ -11444,43 +11445,92 @@ function unifiedMergeTargetV11(row,target,rows){
   }
   return {target:blocked.length?row.y:target,blocked:blocked.sort()};
 }
-function unifiedChooseLaneV11(row,rows,now,width){
-  const v=row.ref,allowed=Math.max(0,width/2-1.5-UNIFIED_ENGINE_V11.physicalWidth/2);
-  const ideal=unifiedIdealLaneV11(row,width);v.unifiedIdealLaneV11=ideal;
-  if(row.pit==='TRACK'&&!v.pitRequested&&['PLAN_ATTACK','SIDE_BY_SIDE'].includes(v.unifiedAiStateV11)&&now<(Number(v.unifiedIntentUntilV11)||0)){
-    const held=unifiedMergeTargetV11(row,unifiedClampV11(Number(v.unifiedLaneTargetV11)||0,-allowed,allowed),rows);
-    v.unifiedMergeBlockedV11=held.blocked;v.unifiedLaneTargetV11=held.target;return held.target;
-  }
-  const next=rows.filter(p=>p.id!==row.id&&!p.finished&&p.pit==='TRACK'&&unifiedGapV11(row,p)>0&&unifiedGapV11(row,p)<145).sort((a,b)=>unifiedGapV11(row,a)-unifiedGapV11(row,b))[0];
-  v.unifiedAiTargetV11=row.pit==='TRACK'&&!v.pitRequested&&next?String(next.id):'';
-  let target=ideal,state='CRUISE';
-  if(next){
-    state='FOLLOW';
-    const gap=unifiedGapV11(row,next),aggression=unifiedRatingV11(v,'aggression'),skill=unifiedRatingV11(v,'racecraft');
-    const attack=gap<120+20*Math.max(0,aggression)+20*Math.max(0,skill)&&
-      (row.v>next.v-1.2-1.0*skill||unifiedSkillPowerV11(v,now*1000,row.pit)>0);
-    if(attack){
-      const candidate=[...new Set([-allowed,0,allowed])].map(y=>{
-        let penalty=Math.abs(next.y-y)<unifiedLateralClearanceV11(row,next)?1000:0;
-        for(const p of rows){if(p.id===row.id||p.finished||p.pit!=='TRACK')continue;
-          const encounter=unifiedGapV11(row,p)+(p.v-row.v)*2.5;
-          if(Math.abs(encounter)<UNIFIED_ENGINE_V11.physicalLength+row.v*.10+5&&Math.abs(p.y-y)<unifiedLateralClearanceV11(row,p))penalty+=1000;
-        }
-        const fromCurrent=Math.abs(y-row.y)/2.5;
-        return {y,score:penalty+fromCurrent*.22+Math.abs(y)*.015};
-      }).sort((a,b)=>a.score-b.score);
-      if(candidate[0]&&candidate[0].score<900&&gap>Math.max(8,row.v*.12)){
-        target=candidate[0].y;state='PLAN_ATTACK';
-      }
+// v1.2 R2: AI-only multi-car corridor planner. Do not modify committed
+// world trajectories here; the existing physical solver validates all moves.
+function unifiedAttackCorridorV12(row,opponent,rows,width){
+ const allowed=Math.max(0,width/2-1.5-UNIFIED_ENGINE_V11.physicalWidth/2);
+ if(allowed<.5)return {target:null,candidates:0,blocked:[],reason:'NARROW_TRACK'};
+ const clearance=unifiedLateralClearanceV11(row,opponent)+.25,gap=unifiedGapV11(row,opponent);
+ const sites=[-allowed,0,allowed,row.y,unifiedIdealLaneV11(row,width),
+  opponent.y-clearance,opponent.y+clearance];
+ for(let y=-allowed;y<=allowed;y+=.75)sites.push(y);
+ for(const p of rows){
+  if(p.id===row.id||p.finished||p.pit!=='TRACK')continue;
+  if(Math.abs(unifiedGapV11(row,p))>125)continue;
+  const lateral=unifiedLateralClearanceV11(row,p)+.25;
+  sites.push(p.y-lateral,p.y+lateral);
+ }
+ const options=[...new Set(sites.map(y=>Math.round(unifiedClampV11(y,-allowed,allowed)*100)/100))].sort((a,b)=>a-b);
+ const blocked=new Set();let winner=null;
+ for(const y of options){
+  if(Math.abs(y-opponent.y)<clearance-1e-7)continue;
+  const movingSeconds=Math.abs(y-row.y)/2.5,closingSpeed=Math.max(.5,row.v-opponent.v);
+  const arrivalSeconds=Math.max(.45,(gap-UNIFIED_ENGINE_V11.physicalLength-4)/closingSpeed);
+  if(gap<Math.max(9,row.v*.12)&&movingSeconds>.45)continue;
+  if(movingSeconds>Math.max(2.6,Math.min(4.5,arrivalSeconds)))continue;
+  // Preserve the physical merge guard, including vehicles changing pit lanes.
+  const merge=unifiedMergeTargetV11(row,y,rows);
+  if(merge.blocked.length){merge.blocked.forEach(id=>blocked.add(id));continue;}
+  let risky=false,pressure=0;
+  for(const p of rows){
+   if(p.id===row.id||p.finished||p.pit!=='TRACK')continue;
+   const g=unifiedGapV11(row,p);if(Math.abs(g)>150)continue;
+   const lateral=unifiedLateralClearanceV11(row,p)+.22;
+   for(const t of [.65,1.5,2.8,4]){
+    const mine=row.y+unifiedClampV11(y-row.y,-2.5*t,2.5*t);
+    const projectedGap=g+(p.v-row.v)*t;
+    const danger=Math.abs(projectedGap)<UNIFIED_ENGINE_V11.physicalLength+Math.max(1,row.v*.10);
+    if(danger&&Math.abs(mine-p.y)<lateral){
+     risky=true;blocked.add(p.id);break;
     }
-    if(gap<20&&Math.abs(row.y-next.y)>=unifiedLateralClearanceV11(row,next))state='SIDE_BY_SIDE';
+    if(projectedGap>0&&projectedGap<45&&Math.abs(mine-p.y)<lateral*1.25)pressure+=.5;
+   }
+   if(risky)break;
   }
-  if(v.racingLineMode&&v.racingLineMode!=='IDEAL'&&state!=='PLAN_ATTACK'&&state!=='SIDE_BY_SIDE')target=unifiedClampV11(lineOffsetMetersV197(v),-allowed,allowed);
-  if(v.pitRequested||row.pit!=='TRACK'){target=unifiedClampV11(lineOffsetMetersV197(v),-allowed,allowed);state='PIT';}
-  const merge=unifiedMergeTargetV11(row,target,rows);target=merge.target;v.unifiedMergeBlockedV11=merge.blocked;
-  if(merge.blocked.length&&state!=='PIT')state='EXIT_DUEL';
-  v.unifiedLaneTargetV11=target;v.unifiedAiStateV11=state;v.unifiedIntentUntilV11=now+.7;
-  return target;
+  if(risky)continue;
+  const score=Math.abs(y-row.y)*.24+Math.abs(y-unifiedIdealLaneV11(row,width))*.035+
+   pressure+.01*Math.abs(y);
+  if(!winner||score<winner.score-1e-8||Math.abs(score-winner.score)<1e-8&&y<winner.y)
+   winner={y,score};
+ }
+ return {target:winner?.y??null,candidates:options.length,
+  blocked:[...blocked].sort(),reason:winner?'CLEAR':'BLOCKED'};
+}
+
+function unifiedChooseLaneV11(row,rows,now,width){
+ const v=row.ref,allowed=Math.max(0,width/2-1.5-UNIFIED_ENGINE_V11.physicalWidth/2);
+ const ideal=unifiedIdealLaneV11(row,width);v.unifiedIdealLaneV11=ideal;
+ if(row.pit==='TRACK'&&!v.pitRequested&&['PLAN_ATTACK','SIDE_BY_SIDE'].includes(v.unifiedAiStateV11)&&now<(Number(v.unifiedIntentUntilV11)||0)){
+  const held=unifiedMergeTargetV11(row,unifiedClampV11(Number(v.unifiedLaneTargetV11)||0,-allowed,allowed),rows);
+  v.unifiedMergeBlockedV11=held.blocked;v.unifiedLaneTargetV11=held.target;return held.target;
+ }
+ const ahead=rows.filter(p=>p.id!==row.id&&!p.finished&&p.pit==='TRACK'&&unifiedGapV11(row,p)>0&&unifiedGapV11(row,p)<165)
+  .sort((a,b)=>unifiedGapV11(row,a)-unifiedGapV11(row,b)||a.id.localeCompare(b.id))[0];
+ v.unifiedAiTargetV11=row.pit==='TRACK'&&!v.pitRequested&&ahead?String(ahead.id):'';
+ let target=ideal,state='CRUISE',corridor=null;
+ if(ahead){
+  state='FOLLOW';
+  const gap=unifiedGapV11(row,ahead),aggression=unifiedRatingV11(v,'aggression'),skill=unifiedRatingV11(v,'racecraft');
+  const attack=gap<135+15*Math.max(0,aggression)+15*Math.max(0,skill)&&
+   (row.v>ahead.v-1.2-1.0*skill||unifiedSkillPowerV11(v,now*1000,row.pit)>0);
+  if(attack){
+   corridor=unifiedAttackCorridorV12(row,ahead,rows,width);
+   if(corridor.target!==null&&gap>Math.max(8,row.v*.12)){
+    target=corridor.target;state='PLAN_ATTACK';
+   }else if(corridor.blocked.length)state='EXIT_DUEL';
+  }
+  if(gap<20&&Math.abs(row.y-ahead.y)>=unifiedLateralClearanceV11(row,ahead))state='SIDE_BY_SIDE';
+ }
+ if(v.racingLineMode&&v.racingLineMode!=='IDEAL'&&state!=='PLAN_ATTACK'&&state!=='SIDE_BY_SIDE'&&state!=='EXIT_DUEL')
+  target=unifiedClampV11(lineOffsetMetersV197(v),-allowed,allowed);
+ if(v.pitRequested||row.pit!=='TRACK'){target=unifiedClampV11(lineOffsetMetersV197(v),-allowed,allowed);state='PIT';}
+ const merge=unifiedMergeTargetV11(row,target,rows);
+ const blocked=[...new Set([...merge.blocked,...(state==='EXIT_DUEL'?corridor?.blocked||[]:[])])].sort();
+ target=merge.target;v.unifiedMergeBlockedV11=blocked;
+ if(merge.blocked.length&&state!=='PIT')state='EXIT_DUEL';
+ v.unifiedLaneTargetV11=target;v.unifiedAiStateV11=state;v.unifiedIntentUntilV11=now+.7;
+ v.unifiedCorridorCountV12=corridor?.candidates||0;
+ return target;
 }
 // Target-aware diagnostics only. Called after physics commits; AI never reads them.
 function unifiedRaceOnTrackV11(v){
