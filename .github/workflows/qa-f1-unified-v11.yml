@@ -45,6 +45,8 @@ jobs:
         run: node scripts/qa-f1-v12-r2-corridors.mjs
       - name: R3 pressure, fatigue and incident regression
         run: node scripts/qa-f1-v12-r3-risk.mjs
+      - name: R4 sequential special and manual pause regression
+        run: node scripts/qa-f1-v12-r4-specials.mjs
       - name: Install browser QA dependencies
         run: |
           npm install --no-save --no-package-lock playwright

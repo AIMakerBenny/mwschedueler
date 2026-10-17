@@ -21,3 +21,49 @@
 #f1RacingGridGachaStageV313 .f1-grid-gacha-dock-item-v313 .meta small{font-size:10px;color:#b3c1d6}
 @media(max-width:790px){.f1-skill-bar-v401{width:99%;grid-template-columns:60px 1fr;gap:10px;padding:10px}}
 @media(prefers-reduced-motion:reduce){.f1-skill-bar-v401,.f1-skill-stripes-v401{animation:none!important}}
+
+/* R4: compact, non-blocking top-centre skill banner. */
+#f1SkillStageV401.f1-skill-stage-v401{
+ display:flex;align-items:flex-start;justify-content:center;
+ padding:clamp(8px,1.6vh,18px) 12px 0;
+ background:transparent;z-index:45;pointer-events:none
+}
+#f1SkillStageV401 .f1-skill-bar-v401{
+ width:min(88%,620px);min-height:70px;max-height:120px;
+ grid-template-columns:clamp(43px,4.5vw,60px) minmax(0,1fr);
+ gap:12px;padding:8px 14px;border-width:2px;border-radius:12px;
+ background:linear-gradient(100deg,#071327ed,#3b235de5,#061528eb);
+ box-shadow:0 6px 26px #000a,0 0 18px #ffcc7d69;
+ animation:f1SkillEnterV401 .3s cubic-bezier(.15,.88,.23,1) both
+}
+#f1SkillStageV401 .f1-skill-bar-v401[data-chain="1"]{
+ background:linear-gradient(100deg,#051629ef,#105778ec,#06152be8)
+}
+#f1SkillStageV401 .f1-skill-copy-v401{gap:3px}
+#f1SkillStageV401 .f1-skill-copy-v401 small{font-size:10px}
+#f1SkillStageV401 .f1-skill-copy-v401 strong{font-size:clamp(15px,2vw,25px)}
+#f1SkillStageV401 .f1-skill-copy-v401 span{font-size:clamp(10px,1vw,13px)}
+#f1SkillStageV401[data-paused="1"] *,
+.f1-racing-race-vehicle-v189[data-ultimate-paused-v12="1"] .f1-ultimate-flames-v12 *{
+ animation-play-state:paused!important
+}
+.f1-racing-race-vehicle-v189 .f1-ultimate-flames-v12{display:none;pointer-events:none}
+.f1-racing-race-vehicle-v189[data-ultimate-v12="1"] .f1-ultimate-flames-v12{display:inline}
+.f1-ultimate-flames-v12 .f1-ultimate-glow-v12{
+ fill:none;stroke:#ffb02b;stroke-width:3.3;opacity:.85;
+ filter:drop-shadow(0 0 5px #ff5c20);
+ animation:f1UltimatePulseV12 .55s ease-in-out infinite alternate
+}
+.f1-ultimate-flames-v12 .f1-ultimate-flame-v12{
+ fill:#ff862d;stroke:#ffcf5d;stroke-width:.7;
+ filter:drop-shadow(0 0 4px #ff5c21);
+ transform-box:fill-box;transform-origin:center;
+ animation:f1UltimateFlickerV12 .44s ease-in-out infinite alternate
+}
+.f1-ultimate-flames-v12 .f1-flame-right-v12,
+.f1-ultimate-flames-v12 .f1-flame-left-v12{animation-delay:-.18s}
+.f1-ultimate-flames-v12 .f1-flame-bottom-v12{animation-delay:-.29s}
+@keyframes f1UltimatePulseV12{to{stroke:#ffe98d;stroke-width:4.8;opacity:1;filter:drop-shadow(0 0 9px #ff7b19)}}
+@keyframes f1UltimateFlickerV12{to{fill:#ffd26e;transform:scale(1.08,.83);opacity:.86}}
+@media(max-width:790px){#f1SkillStageV401 .f1-skill-bar-v401{width:96%;padding:7px 9px;grid-template-columns:45px 1fr}}
+@media(prefers-reduced-motion:reduce){.f1-ultimate-flames-v12 *,#f1SkillStageV401 *{animation:none!important}}
