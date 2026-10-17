@@ -30,7 +30,8 @@ assert(normal.report.trafficConstrainedSteps>0);
 const start=normal.report.samples[0],finish=normal.report.samples.at(-1);
 assert(finish.leaderToP2Meters>=0);
 assert.equal(finish.vehicles.length,12);
-assert.equal(normal.report.confirmedPasses,finish.confirmedPasses);
+assert(normal.report.confirmedPasses>=finish.confirmedPasses,
+ 'Five-second diagnostic samples may precede a later confirmed crossing');
 const failed=new Function(setup+engine+String.raw`
 raceMotionV189.vehicles=raceMotionV189.vehicles.slice(0,2);
 const [a,b]=raceMotionV189.vehicles;b.raceProgress=1+3/5280;b.startOffset=b.raceProgress;
