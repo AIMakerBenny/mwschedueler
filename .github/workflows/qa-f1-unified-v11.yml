@@ -53,5 +53,17 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Short real-SVG track physics
         run: node scripts/qa-f1-unified-v11-real-tracks.mjs
+      - name: R5 real-SVG 7-track multiseed race competition
+        env:
+          MWS_R5_WINDOW_SECONDS: '90'
+          MWS_R5_SEEDS: '2'
+        run: node scripts/qa-f1-v12-r5-balance.mjs
+      - name: Upload R5 competition report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-v12-r5-balance
+          path: artifacts/f1-v12-r5-balance.json
+          if-no-files-found: warn
       - name: Chromium FHD-QHD UI integration
         run: node scripts/qa-f1-unified-v11-browser.mjs
