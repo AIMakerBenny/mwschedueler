@@ -11915,7 +11915,7 @@ function unifiedSpecialPresentationTickV12(frameMs){
 
 function unifiedSpecialTickV11(rows,dt,now){
  const st=specialStateV401;
- if(simClockV192.paused||st.cinematic||st.index<st.queue.length||
+ if(simClockV192.paused||st.cinematic||(Number(st.index)||0)<(st.queue?.length||0)||
   raceFlagStateV214.flag!=='GREEN'||now<22||(now-(Number(st.lastMs)||-Infinity)/1000)<55)return;
  const all=rows.filter(p=>!p.finished&&p.pit==='TRACK'&&!p.ref.pitRequested)
   .sort((a,b)=>b.s-a.s||a.id.localeCompare(b.id)),count=all.length;
