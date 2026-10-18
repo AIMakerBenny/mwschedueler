@@ -128,6 +128,7 @@ try{
   state=progress.state;ticks=progress.ticks;
  }
  const loopExitState=state;
+ await page.waitForTimeout(100); // let the overlay's MutationObserver settle
  const observation=await page.evaluate(()=>{
   const q=window.__mwsR5bQa,standings=window.mwsF1ComputeRaceStandingsV191(),
    result=window.mwsF1GetRaceResultRecoveryG(),report=window.mwsF1UnifiedV11Report(),
@@ -156,7 +157,7 @@ try{
    screenshotAvailable:true};
  });
  fs.mkdirSync('artifacts',{recursive:true});
- const output='artifacts/f1-v12-r5b-live-finish.json';
+ const output='artifacts/f1-v12-r5b2-live-finish.json';
  fs.writeFileSync(output,JSON.stringify({status:'DIAGNOSTIC',version:'v1.2-R5-b1',loopExitState,scope:'Full LIVE FAST with explicit pit QA',...observation,pageErrors},null,2));
  console.log(JSON.stringify({phase:'R5-b2-diagnosis',loopExitState,screenBeforeRender:observation.screenBeforeRender,screenAfterRender:observation.screenAfterRender,screen:observation.screen,
   transitions:observation.screenTransitions,atFinish:observation.terminalSnapshot,officialRows:observation.finishOrder?.length,finishEvents:observation.finishEvents.length,physics:observation.physical,clock:observation.simulatedSeconds}));
@@ -188,11 +189,63 @@ try{
  assert(observation.terminalSnapshot?.screen==='FINISHING'&&observation.terminalSnapshot?.domScreen==='FINISHING'&&
   observation.terminalSnapshot?.viewVisible===true&&observation.terminalSnapshot?.officialRows===12,
   'Natural FINISHING view and 12 official results were not present at accepted finish boundary');
- fs.writeFileSync(output,JSON.stringify({status:'PASS',version:'v1.2-R5-b1',scope:'One LIVE FAST 3-lap race, single real-SVG circuit; explicitly manual pit; not auto-strategy validation',loopExitState,
-  knownIssues:observation.screen!==loopExitState?['FINISHING view reverts to '+observation.screen+' after the accepted finish boundary. Post-finish UI state regression remains unresolved and requires R5-b2.']:[],...observation},null,2));
- console.log(JSON.stringify({status:'PASS',version:'R5-b1',track:observation.track,mode:observation.mode,
+ assert.equal(observation.screen,'FINISHING','A visual overlay must not force completed race back to RACE');
+ assert.equal(observation.screenQA.domScreen,'FINISHING');
+ assert(observation.screenQA.finishingVisible);
+ assert(!observation.screenTransitions.some(t=>t.from==='FINISHING'&&t.to==='RACE'),
+  'R5-b2 lifecycle regression: FINISHING -> RACE');
+ const overlayBefore=await page.evaluate(()=>{
+  const root=document.getElementById('f1RacingFinishOverlayV291');
+  return {host:root?.parentElement?.id,hidden:root?.hidden,active:root?.classList.contains('active'),
+   resultRows:root?.querySelectorAll('#f1RacingFinishOverlayResultsV291 .row')?.length,
+   podiumRows:root?.querySelectorAll('#f1RacingFinishOverlayPodiumV291 .place')?.length,
+   buttons:['f1RacingFinishOverlayPodiumV12','f1RacingFinishOverlayResultV12',
+    'f1RacingFinishOverlaySetupV291','f1RacingFinishOverlayNewRaceV291'].map(id=>Boolean(root?.querySelector('#'+id))),
+   state:window.mwsF1GetScreenStateV185()};
+ });
+ assert.deepEqual({host:overlayBefore.host,state:overlayBefore.state,resultRows:overlayBefore.resultRows,
+   podiumRows:overlayBefore.podiumRows,hidden:overlayBefore.hidden,active:overlayBefore.active},
+  {host:'gameF1Racing',state:'FINISHING',resultRows:12,podiumRows:3,hidden:false,active:true});
+ assert(overlayBefore.buttons.every(Boolean),'Finish overlay navigation is incomplete');
+ await page.locator('#f1RacingFinishOverlayPodiumV12').click();
+ await page.waitForFunction(()=>window.mwsF1GetScreenStateV185()==='PODIUM');
+ const podiumView=await page.evaluate(()=>({
+  visible:document.getElementById('f1RacingViewPodiumV185')?.hidden===false,
+  count:document.getElementById('f1RacingPodiumRowsRecoveryG')?.children.length,
+  overlayHidden:document.getElementById('f1RacingFinishOverlayV291')?.hidden===true,
+  finishRows:window.mwsF1GetRaceResultRecoveryG()?.rows?.length
+ }));
+ assert(podiumView.visible&&podiumView.count===3&&podiumView.overlayHidden&&podiumView.finishRows===12,
+  JSON.stringify({issue:'native podium view',podiumView}));
+ await page.locator('#f1RacingPodiumResultRecoveryG').click();
+ await page.waitForFunction(()=>window.mwsF1GetScreenStateV185()==='RESULT');
+ const resultView=await page.evaluate(()=>({
+  visible:document.getElementById('f1RacingViewResultV185')?.hidden===false,
+  count:document.getElementById('f1RacingResultRowsRecoveryG')?.children.length,
+  overlayHidden:document.getElementById('f1RacingFinishOverlayV291')?.hidden===true,
+  finalRows:window.mwsF1GetRaceResultRecoveryG()?.rows?.length
+ }));
+ assert(resultView.visible&&resultView.count===12&&resultView.overlayHidden&&resultView.finalRows===12,
+  JSON.stringify({issue:'native result view',resultView}));
+ await page.locator('#f1RacingResultSetupRecoveryG').click();
+ await page.waitForFunction(()=>window.mwsF1GetScreenStateV185()==='SETUP');
+ const setupView=await page.evaluate(()=>({
+  active:document.getElementById('f1RacingViewSetupV185')?.hidden===false,
+  contacts:window.mwsF1GetSelectedContactIdsV181().length,
+  result:window.mwsF1GetRaceResultRecoveryG(),
+  overlayHidden:document.getElementById('f1RacingFinishOverlayV291')?.hidden===true,
+  transitions:window.mwsF1ScreenTransitionsV12()
+ }));
+ assert(setupView.active&&setupView.contacts===12&&setupView.result===null&&setupView.overlayHidden);
+ assert.deepEqual(setupView.transitions.slice(-4).map(t=>t.to),['FINISHING','PODIUM','RESULT','SETUP']);
+ assert(!setupView.transitions.some(t=>t.from==='FINISHING'&&t.to==='RACE'));
+ const lifecycle={finish:overlayBefore,podium:podiumView,result:resultView,setup:{
+  active:setupView.active,contacts:setupView.contacts,overlayHidden:setupView.overlayHidden},
+  transitions:setupView.transitions};
+ fs.writeFileSync(output,JSON.stringify({status:'PASS',version:'v1.2-R5-b2',scope:'One LIVE FAST 3-lap race, single real-SVG circuit; explicit SOFT to HARD manual pit; complete overlay-podium-result-setup navigation; not auto-strategy validation',loopExitState,lifecycle,knownIssues:[],...observation},null,2));
+ console.log(JSON.stringify({status:'PASS',version:'R5-b2',track:observation.track,mode:observation.mode,
   simulatedSeconds:observation.simulatedSeconds,finishers:observation.finishOrder.length,
-  naturalFinishUi:observation.terminalSnapshot,postFinishStateMismatch:observation.screen!==loopExitState,
+  naturalFinishUi:observation.terminalSnapshot,postFinishStateMismatch:false,lifecycle:{podium:podiumView.count,result:resultView.count,setup:setupView.active},
   manualPit:chain,physical:observation.physical,pauseChecked:true,finishTop3:observation.finishOrder.slice(0,3),artifact:output}));
 }finally{
  if(browser)await browser.close();
