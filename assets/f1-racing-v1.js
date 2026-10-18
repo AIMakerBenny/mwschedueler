@@ -11055,12 +11055,20 @@ function unifiedRatingV11(v,key){return unifiedClampV11(((Number(v.driverProfile
 function unifiedTyreSpecV11(name){
   return ({SOFT:{grip:1.06,wear:.110,target:95,tau:8},MEDIUM:{grip:1,wear:.085,target:100,tau:12},HARD:{grip:.95,wear:.060,target:105,tau:16}})[String(name||'MEDIUM').toUpperCase()]||{grip:1,wear:.085,target:100,tau:12};
 }
+// v1.2 R5-b4: shared physical tyre degradation law. The high-wear fall-off
+// affects genuine cornering force; the pit strategy forecasts this SAME curve.
+// No score-only penalty, compulsory stop, artificial speed or rank change.
+function unifiedWearGripFactorV12(wear){
+  const w=unifiedClampV11(Number(wear)||0,0,1),pastService=unifiedClampV11((w-.6)/.4,0,1);
+  return Math.max(.34,1-.05*w-.58*pastService);
+}
 function unifiedGripV11(v){
-  const spec=unifiedTyreSpecV11(v.tyreCompound),temp=Number(v.unifiedTempCV11)||spec.target-5,w=unifiedClampV11(Number(v.tyreWear)||0,0,1);
-  const outside=Math.max(0,Math.abs(temp-spec.target)-10),h=unifiedClampV11((w-.6)/.4,0,1);
+  const spec=unifiedTyreSpecV11(v.tyreCompound),temp=Number(v.unifiedTempCV11)||spec.target-5;
+  const outside=Math.max(0,Math.abs(temp-spec.target)-10);
   const warmup=unifiedClampV11(Number.isFinite(Number(v.tyreWarmupFactor))?Number(v.tyreWarmupFactor):1,.9,1);
   const incident=unifiedActiveErrorV11(v)==='UNDERSTEER'?.91:1;
-  return warmup*incident*spec.grip*Math.max(.88,1-.00025*outside*outside)*(1-.05*w-.22*h*h)*(1-.12*unifiedClampV11(Number(v.unifiedDamageV11)||0,0,1));
+  return warmup*incident*spec.grip*Math.max(.88,1-.00025*outside*outside)*
+    unifiedWearGripFactorV12(v.tyreWear)*(1-.12*unifiedClampV11(Number(v.unifiedDamageV11)||0,0,1));
 }
 // Compatibility updates are reads in unified mode. Only a committed step spends energy or wears tyres.
 function unifiedEnergyReadV11(v){
@@ -11778,6 +11786,22 @@ function unifiedPitLossV11(row,track){
   const cold=(len/normal)*.55*(1/Math.sqrt(.9)-1);
   return Math.max(0,approach+laneDistance/limit+stopAndRestart+box+mergeTime-(laneDistance+mergeDistance)/normal+cold);
 }
+// v1.2 R5-b4: project the lap-by-lap deterioration of both stay-out and
+// replacement tyres rather than comparing current worn grip with a new
+// compound held unrealistically fresh for the entire remaining race.
+function unifiedPitForecastV12(compound,startWear,wearPerLap,laps,lapSeconds){
+  const spec=unifiedTyreSpecV11(compound),segments=Math.max(2,Math.ceil(laps*8));
+  let timeLoss=0;
+  for(let i=0;i<segments;i++){
+    const fraction=(i+.5)/segments;
+    const projectedWear=unifiedClampV11(startWear+wearPerLap*laps*fraction,0,1);
+    const projectedGrip=spec.grip*unifiedWearGripFactorV12(projectedWear);
+    // Corner-speed scaling uses the square root of the actual lateral grip.
+    // All candidates share the same reference lap and prediction law.
+    timeLoss+=lapSeconds*laps/segments*(1/Math.sqrt(projectedGrip)-1);
+  }
+  return timeLoss;
+}
 function unifiedPitPlanV11(row,track){
   const v=row.ref,wear=unifiedClampV11(Number(v.tyreWear)||0,0,1),remaining=Math.max(0,(Number(activeRaceSnapshotV187?.totalLaps)||10)-row.s/unifiedStateV11.path.len);
   const base={wear,remainingLaps:remaining,targetCompound:String(v.tyreCompound||'MEDIUM'),pitLossSeconds:null,benefit:null,candidates:[]};
@@ -11787,17 +11811,21 @@ function unifiedPitPlanV11(row,track){
   if(wear<=.60)return {...base,decision:'GO_LONG',reason:'TYRE_REMAINING_AT_LEAST_40'};
   if(remaining<1.1)return {...base,decision:'GO_LONG',reason:'TOO_LATE_TO_PIT'};
   if(!track.pit)return {...base,decision:'GO_LONG',reason:'NO_PIT_LANE'};
-  const baseLap=Math.max(50,unifiedStateV11.path.len/Math.max(28,row.v));
-  const stayLoss=baseLap*remaining*(1/Math.sqrt(Math.max(.5,unifiedGripV11(v)))-1);
+  const currentSpec=unifiedTyreSpecV11(v.tyreCompound);
+  const completedOnTyre=Math.max(.1,(Number(v.raceProgress)||0)-(Number(v.tyreStartRaceProgress)||0));
+  const rate=unifiedClampV11(wear/completedOnTyre,currentSpec.wear*.65,currentSpec.wear*1.55);
+  const baseLap=Math.max(50,Math.min(180,unifiedStateV11.path.len/Math.max(28,row.v)));
+  const stayLoss=unifiedPitForecastV12(v.tyreCompound,wear,rate,remaining,baseLap);
   const pitLoss=unifiedPitLossV11(row,track);
   const candidates=['SOFT','MEDIUM','HARD'].map(compound=>{
-    const spec=unifiedTyreSpecV11(compound),endWear=spec.wear*remaining*1.1;
-    const penalty=baseLap*remaining*(1/Math.sqrt(spec.grip)-1)+baseLap*remaining*.22*Math.max(0,endWear-.6);
-    return {compound,benefit:stayLoss-penalty-pitLoss};
+    const spec=unifiedTyreSpecV11(compound),replacementRate=rate*spec.wear/currentSpec.wear;
+    const penalty=unifiedPitForecastV12(compound,0,replacementRate,remaining,baseLap);
+    return {compound,benefit:stayLoss-penalty-pitLoss,projectedFinishWear:Math.min(1,replacementRate*remaining)};
   }).sort((a,b)=>b.benefit-a.benefit);
   const best=candidates[0],worthwhile=best?.benefit>1.5;
   return {...base,decision:worthwhile?'BOX_NOW':'GO_LONG',reason:worthwhile?'UNIFIED_V11_TIME_ADVANTAGE':'PIT_VALUE_INSUFFICIENT',
-    targetCompound:best.compound,pitLossSeconds:pitLoss,benefit:best.benefit,candidates};
+    targetCompound:best.compound,pitLossSeconds:pitLoss,benefit:best.benefit,candidates,
+    forecast:{model:'shared-physical-wear-v12',lapSeconds:baseLap,observedWearPerLap:rate,stayLossSeconds:stayLoss}};
 }
 function unifiedPitReadV11(v){
   if(!v)return null;
