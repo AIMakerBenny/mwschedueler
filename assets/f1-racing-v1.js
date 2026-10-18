@@ -11253,6 +11253,7 @@ function unifiedInitV11(){
     minimumForwardMetric=Math.min(minimumForwardMetric,(q.dx+y*q.dnx)*q.tx+(q.dy+y*q.dny)*q.ty);
   }
   unifiedStateV11.path.minimumForwardMetric=minimumForwardMetric;
+  unifiedPreparePitGripCurveV12(track); // geometry-owned, immutable during race strategy reads
   if(!(minimumForwardMetric>.2)){
     unifiedStateV11.telemetry.invalid.push({ms:simClockV192.simTimeMs,reason:'TRACK_OFFSET_FOLD',track:track.id,minimumForwardMetric});
     simClockV192.paused=true;syncSimulationControlsV192();return false;
@@ -11792,30 +11793,33 @@ function unifiedPitLossV11(row,track){
 // v1.2 R5-b6: geometry-derived curve, using EXACT existing SVG curvature
 // and the unified solver's physical lateral-acceleration ceiling. Straight
 // segments at their speed cap do not incur a fictitious tyre-grip penalty.
-function unifiedPitGripTimeRatioV12(grip,track){
+// Initialized once during SVG geometry setup. Public pit policy reads stay pure.
+function unifiedPreparePitGripCurveV12(track){
   const path=unifiedStateV11.path;
-  if(!path||!path.samples?.length)return 1;
+  if(!path?.samples?.length)return false;
   const cap=unifiedClampV11((Number(track?.geometry?.maxStraightKph)||320)/3.6,55,110);
-  const cacheKey=String(cap);
-  if(!path.pitGripCurveV12||path.pitGripCurveV12.key!==cacheKey){
-    const samples=path.samples,step=Math.max(1,Math.floor(samples.length/160));
-    const curves=[];
-    for(let i=0;i<=96;i++){
-      const g=.25+i*.01;
-      let lapWeight=0;
-      for(let j=0;j<samples.length;j+=step){
-        const curvature=Math.max(1e-8,Math.abs(Number(samples[j].k)||0));
-        const permitted=Math.min(cap,Math.sqrt(UNIFIED_ENGINE_V11.lateral*g/curvature));
-        lapWeight+=1/Math.max(10,permitted);
-      }
-      curves.push(lapWeight);
+  const samples=path.samples,step=Math.max(1,Math.floor(samples.length/160));
+  const curves=[];
+  for(let i=0;i<=96;i++){
+    const g=.25+i*.01;
+    let lapWeight=0;
+    for(let j=0;j<samples.length;j+=step){
+      const curvature=Math.max(1e-8,Math.abs(Number(samples[j].k)||0));
+      const permitted=Math.min(cap,Math.sqrt(UNIFIED_ENGINE_V11.lateral*g/curvature));
+      lapWeight+=1/Math.max(10,permitted);
     }
-    const baseline=curves[75]; // 0.25 + 75 * 0.01 = 1.0
-    path.pitGripCurveV12={key:cacheKey,values:curves.map(v=>v/baseline)};
+    curves.push(lapWeight);
   }
+  const baseline=curves[75]; // 0.25 + 75 * 0.01 = 1.0
+  path.pitGripCurveV12={values:curves.map(v=>v/baseline),cap};
+  return true;
+}
+function unifiedPitGripTimeRatioV12(grip,track){
+  const curve=unifiedStateV11.path?.pitGripCurveV12;
+  if(!curve)return 1;
   const idx=unifiedClampV11((Number(grip)-.25)*100,0,96);
   const lo=Math.floor(idx),hi=Math.min(96,lo+1),mix=idx-lo;
-  return path.pitGripCurveV12.values[lo]*(1-mix)+path.pitGripCurveV12.values[hi]*mix;
+  return curve.values[lo]*(1-mix)+curve.values[hi]*mix;
 }
 function unifiedPitReferenceLapV12(v,track,row){
   // Three latest completed official laps; median rejects one isolated slowdown.
