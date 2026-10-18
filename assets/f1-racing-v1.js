@@ -11789,16 +11789,53 @@ function unifiedPitLossV11(row,track){
 // v1.2 R5-b4: project the lap-by-lap deterioration of both stay-out and
 // replacement tyres rather than comparing current worn grip with a new
 // compound held unrealistically fresh for the entire remaining race.
-function unifiedPitForecastV12(compound,startWear,wearPerLap,laps,lapSeconds){
+// v1.2 R5-b6: geometry-derived curve, using EXACT existing SVG curvature
+// and the unified solver's physical lateral-acceleration ceiling. Straight
+// segments at their speed cap do not incur a fictitious tyre-grip penalty.
+function unifiedPitGripTimeRatioV12(grip,track){
+  const path=unifiedStateV11.path;
+  if(!path||!path.samples?.length)return 1;
+  const cap=unifiedClampV11((Number(track?.geometry?.maxStraightKph)||320)/3.6,55,110);
+  const cacheKey=String(cap);
+  if(!path.pitGripCurveV12||path.pitGripCurveV12.key!==cacheKey){
+    const samples=path.samples,step=Math.max(1,Math.floor(samples.length/160));
+    const curves=[];
+    for(let i=0;i<=96;i++){
+      const g=.25+i*.01;
+      let lapWeight=0;
+      for(let j=0;j<samples.length;j+=step){
+        const curvature=Math.max(1e-8,Math.abs(Number(samples[j].k)||0));
+        const permitted=Math.min(cap,Math.sqrt(UNIFIED_ENGINE_V11.lateral*g/curvature));
+        lapWeight+=1/Math.max(10,permitted);
+      }
+      curves.push(lapWeight);
+    }
+    const baseline=curves[75]; // 0.25 + 75 * 0.01 = 1.0
+    path.pitGripCurveV12={key:cacheKey,values:curves.map(v=>v/baseline)};
+  }
+  const idx=unifiedClampV11((Number(grip)-.25)*100,0,96);
+  const lo=Math.floor(idx),hi=Math.min(96,lo+1),mix=idx-lo;
+  return path.pitGripCurveV12.values[lo]*(1-mix)+path.pitGripCurveV12.values[hi]*mix;
+}
+function unifiedPitReferenceLapV12(v,track,row){
+  // Three latest completed official laps; median rejects one isolated slowdown.
+  // Never use the instantaneous pit-entry speed as an entire-lap average.
+  const completed=(v.lapTimesMs||[]).filter(ms=>Number.isFinite(ms)&&ms>10000&&ms<240000);
+  const recent=completed.slice(-3).map(ms=>ms/1000).sort((a,b)=>a-b);
+  if(recent.length)return recent[Math.floor(recent.length/2)];
+  const nominal=Math.max(28,(Number(track?.geometry?.maxStraightKph)||300)/3.6*.70);
+  return Math.max(35,Math.min(180,(Number(track?.lengthMeters)||unifiedStateV11.path.len)/nominal));
+}
+function unifiedPitForecastV12(compound,startWear,wearPerLap,laps,lapSeconds,track){
   const spec=unifiedTyreSpecV11(compound),segments=Math.max(2,Math.ceil(laps*8));
   let timeLoss=0;
   for(let i=0;i<segments;i++){
     const fraction=(i+.5)/segments;
     const projectedWear=unifiedClampV11(startWear+wearPerLap*laps*fraction,0,1);
     const projectedGrip=spec.grip*unifiedWearGripFactorV12(projectedWear);
-    // Corner-speed scaling uses the square root of the actual lateral grip.
-    // All candidates share the same reference lap and prediction law.
-    timeLoss+=lapSeconds*laps/segments*(1/Math.sqrt(projectedGrip)-1);
+    // This is a curvature-limited corner time model, not an assertion that
+    // an entire straight-lap slows down in proportion to 1/sqrt(grip).
+    timeLoss+=lapSeconds*laps/segments*(unifiedPitGripTimeRatioV12(projectedGrip,track)-1);
   }
   return timeLoss;
 }
@@ -11814,18 +11851,19 @@ function unifiedPitPlanV11(row,track){
   const currentSpec=unifiedTyreSpecV11(v.tyreCompound);
   const completedOnTyre=Math.max(.1,(Number(v.raceProgress)||0)-(Number(v.tyreStartRaceProgress)||0));
   const rate=unifiedClampV11(wear/completedOnTyre,currentSpec.wear*.65,currentSpec.wear*1.55);
-  const baseLap=Math.max(50,Math.min(180,unifiedStateV11.path.len/Math.max(28,row.v)));
-  const stayLoss=unifiedPitForecastV12(v.tyreCompound,wear,rate,remaining,baseLap);
+  const baseLap=unifiedPitReferenceLapV12(v,track,row);
+  const stayLoss=unifiedPitForecastV12(v.tyreCompound,wear,rate,remaining,baseLap,track);
   const pitLoss=unifiedPitLossV11(row,track);
   const candidates=['SOFT','MEDIUM','HARD'].map(compound=>{
     const spec=unifiedTyreSpecV11(compound),replacementRate=rate*spec.wear/currentSpec.wear;
-    const penalty=unifiedPitForecastV12(compound,0,replacementRate,remaining,baseLap);
+    const penalty=unifiedPitForecastV12(compound,0,replacementRate,remaining,baseLap,track);
     return {compound,benefit:stayLoss-penalty-pitLoss,projectedFinishWear:Math.min(1,replacementRate*remaining)};
   }).sort((a,b)=>b.benefit-a.benefit);
   const best=candidates[0],worthwhile=best?.benefit>1.5;
   return {...base,decision:worthwhile?'BOX_NOW':'GO_LONG',reason:worthwhile?'UNIFIED_V11_TIME_ADVANTAGE':'PIT_VALUE_INSUFFICIENT',
     targetCompound:best.compound,pitLossSeconds:pitLoss,benefit:best.benefit,candidates,
-    forecast:{model:'shared-physical-wear-v12',lapSeconds:baseLap,observedWearPerLap:rate,stayLossSeconds:stayLoss}};
+    forecast:{model:'svg-curvature-observed-lap-v12',lapSeconds:baseLap,observedWearPerLap:rate,stayLossSeconds:stayLoss,
+      cornerGripTimeRatioAtCurrentGrip:unifiedPitGripTimeRatioV12(unifiedGripV11(v),track)}};
 }
 function unifiedPitReadV11(v){
   if(!v)return null;
