@@ -39,11 +39,14 @@ const code=[
  " v.driverProfile.pace=config.seed===0?75:i===0?95:i===11?75:75+(i*7%9)-4;}",
  "unifiedInitV11();",
  "const grid=[...raceMotionV189.vehicles].sort((a,b)=>b.raceProgress-a.raceProgress);",
- "let ticks=0,checks=0,overlaps=[],continuity=[];",
+ "let ticks=0,checks=0,overlaps=[],continuity=[],firstPhysicalLapLimitCrossing=null;",
  "for(let i=0;i<config.maxTicks;i++){",
  " const prior=new Map(raceMotionV189.vehicles.map(v=>[String(v.id),{p:v.raceProgress,d:v.unifiedPathDistanceV11||0,v:v.speedKph||0}]));",
  " if(!simulateUnifiedRaceStepV11(20))break;",
  " ticks++;unifiedSpecialPresentationTickV12(2);",
+ " if(!firstPhysicalLapLimitCrossing){const crossed=raceMotionV189.vehicles.filter(v=>v.raceProgress>=config.laps);",
+ "  if(crossed.length){const orderAtCrossing=[...raceMotionV189.vehicles].sort((a,b)=>b.raceProgress-a.raceProgress||String(a.id).localeCompare(String(b.id)));",
+ "   firstPhysicalLapLimitCrossing={simMs:simClockV192.simTimeMs,firstId:String(crossed.sort((a,b)=>b.raceProgress-a.raceProgress)[0].id),order:orderAtCrossing.map(v=>String(v.id))};}}",
  " if(i%25!==0)continue;",
  " for(const v of raceMotionV189.vehicles){",
  "  const before=prior.get(String(v.id)),d=(v.unifiedPathDistanceV11||0)-before.d;",
@@ -72,6 +75,9 @@ const code=[
  " boostHistory:specialStateV401.history.map(e=>({rank:e.rank,chain:e.chain,id:e.id})),",
  " incidents:c.incidentEvents.length,maximumProgress:order[0].raceProgress,",
  " roleCounts:Object.fromEntries(['FRONTRUNNER','BALANCED','CHASER','CLOSER'].map(style=>[style,order.filter(v=>v.unifiedStrategyV12===style).length])),",
+ " firstPhysicalLapLimitCrossing,",
+ " sampleTrace:c.samples.map(t=>({simMs:t.simMs,leader:t.leader,second:t.second,gapMeters:t.leaderToP2Meters,lastGapMeters:t.leaderToLastMeters,confirmedPasses:t.confirmedPasses,trafficConstrainedSteps:t.trafficConstrainedSteps,",
+ "  vehicles:t.vehicles.map(v=>({id:v.id,rank:v.rank,progress:v.raceProgress,speedKph:v.speedKph,tyreWear:v.tyreWear,batteryMJ:v.batteryMJ,pace:v.pace,form:v.form,style:v.style,effort:v.effort,ersRequestKW:v.ersRequestKW,corridorCandidates:v.corridorCandidates,stress:v.stress,pressure:v.pressure,mode:v.mode,pit:v.pit}))})),",
  " physical:{overlaps,continuity,checks,stops:unifiedStateV11.telemetry.collisionStops,invalid:unifiedStateV11.telemetry.invalid},",
  " order:order.map(v=>String(v.id))};"
 ].join('\n');
@@ -84,8 +90,8 @@ try{
  await page.addScriptTag({content:fs.readFileSync(new URL('../assets/f1-track-geometry-v2.js',import.meta.url),'utf8')});
  const tracks=await page.evaluate(()=>Object.values(window.MWS_F1_TRACKS_V182));
  assert.equal(tracks.length,7);
- for(const track of tracks){
-  for(const mode of modes){
+ for(const track of tracks.filter(t=>!process.env.MWS_R5_TRACK_FILTER||t.id===process.env.MWS_R5_TRACK_FILTER)){
+  for(const mode of modes.filter(m=>!process.env.MWS_R5_MODE_FILTER||m.name===process.env.MWS_R5_MODE_FILTER)){
    for(let seed=0;seed<seedCount;seed++){
     const config={...mode,seed,maxTicks:nTicks};
     const value=await page.evaluate(({track,config,fixture,engine,special,code})=>{
@@ -103,6 +109,7 @@ try{
     assert(value.confirmedPasses<=value.rawCrossings);
     assert.equal(Object.values(value.roleCounts).reduce((a,b)=>a+b,0),12);
     assert(Number.isFinite(value.lastSampleGapMeters));
+    assert(value.sampleTrace.length>=2&&value.sampleTrace.every((s,i,a)=>s.vehicles.length===12&&(i===0||s.simMs>a[i-1].simMs)));
     results.push(value);
     console.log(JSON.stringify({track:value.track,mode:value.mode,seed,
      physicalPasses:value.confirmedPasses,leaderChanges:value.leaderChanges,
@@ -111,6 +118,7 @@ try{
   }
  }
 }finally{await browser.close();}
+assert(results.length>0,'R5 filters selected no tracks or modes');
 const sum={
  scenarios:results.length,modeSeedCount:seedCount,secondsPerScenario:seconds,
  totalPasses:results.reduce((a,b)=>a+b.confirmedPasses,0),
@@ -122,6 +130,7 @@ const sum={
  specialEvents:results.reduce((a,b)=>a+b.specialEvents,0),
  appliedBoosts:results.reduce((a,b)=>a+b.boosts,0),
  observationOnly:true,
+ sampleCadenceSeconds:5,
  knownLimits:['90-second windows are not finished races','Pit requests/stops are fixture stubs'],
  imbalanceWarnings:[]
 };
