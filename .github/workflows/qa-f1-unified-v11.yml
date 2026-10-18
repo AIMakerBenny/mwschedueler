@@ -63,6 +63,15 @@ jobs:
             artifacts/f1-v12-r5b2-live-finish.json
             artifacts/f1-v12-r5b2-finish.png
           if-no-files-found: warn
+      - name: R5-b3 genuine NORMAL 10-lap automatic pit economics
+        run: node scripts/qa-f1-v12-r5b3-normal-auto-pit.mjs
+      - name: Upload R5-b3 full race and automatic pit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-v12-r5b3-normal-auto-pit
+          path: artifacts/f1-v12-r5b3-normal-auto-pit.json
+          if-no-files-found: warn
       - name: Short real-SVG track physics
         run: node scripts/qa-f1-unified-v11-real-tracks.mjs
       - name: R5 real-SVG 7-track multiseed race competition
