@@ -1387,14 +1387,21 @@ function applyScreenStateV185(){
 function canTransitionF1V185(next){
   return F1_TRANSITIONS_V185[f1ScreenStateV185]?.includes(next)===true;
 }
+// v1.2 R5-b2: bounded passive screen transition diagnostics. Never controls a transition.
+const f1ScreenTransitionsV12=[];
 function setScreenStateV185(next,options={}){
   const target=String(next||'').toUpperCase();
-  const force=options&&options.force===true;
+  const force=options&&options.force===true,prior=f1ScreenStateV185;
   if(!F1_STATES_V185.includes(target))return false;
   if(!force&&target!==f1ScreenStateV185&&!canTransitionF1V185(target))return false;
   if(target!=='RACE'&&immersiveStateV261.active)void exitF1ImmersiveV261({reason:'screen-change'});
   f1ScreenStateV185=target;
   applyScreenStateV185();
+  if(prior!==target){
+    f1ScreenTransitionsV12.push({from:prior,to:target,ms:Number(simClockV192.simTimeMs)||0,
+      caller:String(new Error().stack||'').split('\\n').slice(2,5).join(' | ').slice(0,330)});
+    if(f1ScreenTransitionsV12.length>40)f1ScreenTransitionsV12.shift();
+  }
   return true;
 }
 function getScreenStateV185(){return f1ScreenStateV185}
@@ -13982,6 +13989,7 @@ window.mwsF1AuditWorkspaceLayoutRecoveryK=workspaceAuditLayoutRecoveryK;
 window.mwsF1GetWorkspaceRepairReportRecoveryK=function(){return {...workspaceRepairReportRecoveryK,reasons:[...(workspaceRepairReportRecoveryK.reasons||[])]}};
 window.mwsF1FinishRaceRecoveryG=finishRaceRecoveryG;
 window.mwsF1ForceFinishRecoveryG=function(){return finishRaceRecoveryG(true)};
+window.mwsF1ScreenTransitionsV12=()=>f1ScreenTransitionsV12.map(row=>({...row}));
 window.mwsF1ShowPodiumRecoveryG=showPodiumRecoveryG;
 window.mwsF1ShowResultRecoveryG=showResultRecoveryG;
 window.mwsF1ReturnToSetupRecoveryG=returnToSetupRecoveryG;
