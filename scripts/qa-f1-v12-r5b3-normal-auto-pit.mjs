@@ -16,7 +16,11 @@ catch(error){
 const port=Number(process.env.MWS_R5B3_PORT)||8783;
 const trackId=String(process.env.MWS_R5B3_TRACK||'castle-street-circuit-v1');
 const maxTicks=Math.max(30000,Math.min(85000,Number(process.env.MWS_R5B3_MAX_TICKS)||70000));
-const output='artifacts/f1-v12-r5b3-normal-auto-pit.json';
+const seedId=String(process.env.MWS_R5B3_SEED||'');
+const output=String(process.env.MWS_R5B3_OUTPUT||'artifacts/f1-v12-r5b3-normal-auto-pit.json');
+// A fixed setup timestamp seeds the app's existing random grid, driver profiles,
+// unified solver, pressure and special RNG. Restore Date immediately after setup.
+const seededIso=seedId?/^[1-9][0-9]*$/.test(seedId)?new Date(Date.UTC(2026,9,18,0,0,0,Number(seedId)*1000)).toISOString():(()=>{throw Error('MWS_R5B3_SEED must be a positive integer')})():null;
 const server=createF1PreviewServer();
 await new Promise(resolve=>server.listen(port,'127.0.0.1',resolve));
 let browser,observation=null;
@@ -30,7 +34,7 @@ try{
  await page.locator('#mwsModePublic').click();
  await page.locator('#mwsLoginSubmit').click();
  await page.waitForFunction(()=>document.getElementById('mwsAccessGate').classList.contains('hidden'));
- const initial=await page.evaluate(({trackId})=>{
+ const initial=await page.evaluate(({trackId,seededIso})=>{
   const contacts=Array.from({length:12},(_,i)=>({id:'r5b3-driver-'+i,name:'NORMAL Driver '+i,image:'',labels:['R5B3 NORMAL QA']}));
   window.mwsGetF1ContactsV181=()=>contacts;
   const section=document.getElementById('gameF1Racing');
@@ -39,14 +43,26 @@ try{
   window.mwsF1SelectTrackV186(trackId);
   for(const c of contacts)window.mwsF1ToggleDriverV181(c.id);
   window.mwsF1SetLapCountV260(10);
-  return {started:window.mwsF1StartRaceFromSetupV187('NORMAL'),
+  const OriginalDate=window.Date;
+  let started=false;
+  if(seededIso){
+   class SeededSetupDate extends OriginalDate{
+    constructor(...args){super(...(args.length?args:[seededIso]))}
+    static now(){return OriginalDate.parse(seededIso)}
+   }
+   window.Date=SeededSetupDate;
+  }
+  try{started=window.mwsF1StartRaceFromSetupV187('NORMAL')}
+  finally{window.Date=OriginalDate}
+  return {started,createdAt:window.mwsF1GetActiveRaceSnapshotV187()?.createdAt,
    tracks:window.mwsF1GetTrackCatalogV186().length,
    drivers:window.mwsF1GetSelectedContactIdsV181().length,
    laps:window.mwsF1GetActiveRaceSnapshotV187()?.totalLaps,
    mode:window.mwsF1GetActiveRaceSnapshotV187()?.raceMode,
    track:window.mwsF1GetActiveRaceSnapshotV187()?.trackId};
- },{trackId});
+ },{trackId,seededIso});
  assert(initial.started&&initial.drivers===12&&initial.tracks===7,JSON.stringify(initial));
+ if(seededIso)assert.equal(initial.createdAt,seededIso,'QA fixed setup seed was not applied');
  assert.deepEqual({track:initial.track,laps:initial.laps,mode:initial.mode},{track:trackId,laps:10,mode:'NORMAL'});
  await page.waitForFunction(()=>window.mwsF1GetScreenStateV185()==='GRID');
  assert.equal(await page.evaluate(()=>window.mwsF1WaitGridRevealV273(20000)),true);
@@ -169,7 +185,7 @@ try{
    tickCount:q.ticks};
  });
  fs.mkdirSync('artifacts',{recursive:true});
- fs.writeFileSync(output,JSON.stringify({status:'DIAGNOSTIC',...observation,pageErrors},null,2));
+ fs.writeFileSync(output,JSON.stringify({status:'DIAGNOSTIC',seedId,seededIso,setupCreatedAt:initial.createdAt,...observation,pageErrors},null,2));
  console.log(JSON.stringify({phase:'R5-b3',state:observation.state,seconds:observation.simulatedSeconds,
   officialFinishers:observation.finishedRows?.length,autoRequests:observation.pitRequests.length,
   actualStops:observation.finishedRows?.reduce((n,r)=>n+r.pits,0),softPeakWear:observation.strategySummary.peakWearByCompound.SOFT,
@@ -207,7 +223,7 @@ try{
  const warnings=[];
  if(observation.pitRequests.length===0)warnings.push('NO_AUTOMATIC_PIT_REQUEST_IN_TEN_LAPS: economics or wear threshold may make pit unattractive; do not claim tested automatic pit service');
  if(observation.strategySummary.peakWearByCompound.SOFT<=.60)warnings.push('SOFT_DID_NOT_REACH_STRATEGY_WEAR_THRESHOLD');
- fs.writeFileSync(output,JSON.stringify({status:'PASS',warnings,...observation,pageErrors},null,2));
+ fs.writeFileSync(output,JSON.stringify({status:'PASS',seedId,seededIso,setupCreatedAt:initial.createdAt,warnings,...observation,pageErrors},null,2));
  console.log(JSON.stringify({status:'PASS',stage:'R5-b3',track:trackId,mode:'NORMAL',
   finishers:observation.finishedRows.length,simulatedSeconds:observation.simulatedSeconds,
   autonomousRequests:observation.pitRequests.length,realPitStops:observation.finishedRows.reduce((n,r)=>n+r.pits,0),
@@ -215,7 +231,7 @@ try{
   warnings,artifact:output}));
 }catch(error){
  fs.mkdirSync('artifacts',{recursive:true});
- fs.writeFileSync(output,JSON.stringify({status:'FAIL',error:String(error?.stack||error),observation},null,2));
+ fs.writeFileSync(output,JSON.stringify({status:'FAIL',seedId,seededIso,error:String(error?.stack||error),observation},null,2));
  throw error;
 }finally{
  if(browser)await browser.close();
