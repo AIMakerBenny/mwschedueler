@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 concurrency:
   group: f1-unified-v11-dev-qa
@@ -89,3 +90,15 @@ jobs:
           if-no-files-found: warn
       - name: Chromium FHD-QHD UI integration
         run: node scripts/qa-f1-unified-v11-browser.mjs
+      - name: Publish verified development QA commit status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          QA_JOB_STATUS: ${{ job.status }}
+        run: |
+          if [ "$QA_JOB_STATUS" = "success" ]; then status=success; else status=failure; fi
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$status" \
+            -f context="MWS F1 Unified Development QA" \
+            -f description="Verified GitHub Actions full development QA job: $status"
+
