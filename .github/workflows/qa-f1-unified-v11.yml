@@ -65,5 +65,27 @@ jobs:
           name: f1-v12-r5-balance
           path: artifacts/f1-v12-r5-balance.json
           if-no-files-found: warn
+      - name: R5-a seed-stratified 5-second pace and lead-gap audit
+        run: node scripts/qa-f1-v12-r5a-cause.mjs
+      - name: R5-a extended FAST limited real-SVG pilot
+        env:
+          MWS_R5_WINDOW_SECONDS: '240'
+          MWS_R5_SEEDS: '2'
+          MWS_R5_TRACK_FILTER: 'castle-street-circuit-v1'
+          MWS_R5_MODE_FILTER: 'FAST'
+        run: |
+          node scripts/qa-f1-v12-r5-balance.mjs
+          mv artifacts/f1-v12-r5-balance.json artifacts/f1-v12-r5a-extended.json
+          MWS_R5A_INPUT=artifacts/f1-v12-r5a-extended.json MWS_R5A_OUTPUT=artifacts/f1-v12-r5a-extended-cause.json node scripts/qa-f1-v12-r5a-cause.mjs
+      - name: Upload R5-a cause and extended pilot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-v12-r5a-cause
+          path: |
+            artifacts/f1-v12-r5a-cause.json
+            artifacts/f1-v12-r5a-extended.json
+            artifacts/f1-v12-r5a-extended-cause.json
+          if-no-files-found: warn
       - name: Chromium FHD-QHD UI integration
         run: node scripts/qa-f1-unified-v11-browser.mjs
