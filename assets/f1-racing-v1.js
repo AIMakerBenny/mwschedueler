@@ -12138,7 +12138,10 @@ function simulateUnifiedRaceStepV11(stepMs){
       // 50m/s late in a real 10-lap race. This reserves braking distance in
       // the actual solver; no position/rank/heading/display displacement.
       const closing=Math.max(0,me.v-peerCmd.v);
-      const responseReserve=.35+Math.min(3.5,closing*.9+me.v*.018);
+      // Reserve only for an actually close same-corridor follower. Wider
+      // overtake lanes and upstream pursuit keep their original dynamics.
+      const responseReserve=gap<14&&deltaY<2.2&&closing>0?
+        .35+Math.min(2.6,closing*.9+me.v*.018):0;
       const footprint=Math.max(UNIFIED_ENGINE_V11.followBase,unifiedSupportV11(myPose,ax,ay)+unifiedSupportV11(peerPose,ax,ay))+.03+responseReserve;
       // Solve the next-state stopping-distance inequality, including this step's
       // travel and response time. A slow proportional response can run into a
