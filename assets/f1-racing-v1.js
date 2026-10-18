@@ -1399,7 +1399,7 @@ function setScreenStateV185(next,options={}){
   applyScreenStateV185();
   if(prior!==target){
     f1ScreenTransitionsV12.push({from:prior,to:target,ms:Number(simClockV192.simTimeMs)||0,
-      caller:String(new Error().stack||'').split('\\n').slice(2,5).join(' | ').slice(0,330)});
+      caller:String(new Error().stack||'').split(String.fromCharCode(10)).slice(2,5).join(' | ').slice(0,330)});
     if(f1ScreenTransitionsV12.length>40)f1ScreenTransitionsV12.shift();
   }
   return true;
