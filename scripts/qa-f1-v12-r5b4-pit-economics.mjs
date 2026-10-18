@@ -11,6 +11,7 @@ const test=new Function(setup+engine+`
   // A representative test-only corner/straight profile in the isolated synthetic track.
   // The LIVE benchmark always uses untouched genuine SVG curvature.
   unifiedStateV11.path.samples.forEach((p,i)=>{p.k=i%7<3?.012:.00003});
+  unifiedPreparePitGripCurveV12(track);
   const vehicle=raceMotionV189.vehicles[0];
   vehicle.lapTimesMs=[65000,70000,68000];
   vehicle.tyreCompound='SOFT';
