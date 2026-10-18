@@ -49,16 +49,17 @@ try{
   window.mwsF1PauseRaceMotionV189(false); // stop RAF only, do not change solver
   const snapshot=window.mwsF1GetActiveRaceSnapshotV187();
   const vehicles=window.mwsF1ComputeRaceStandingsV191().map(x=>x.vehicle);
-  window.__mwsR5bQa={tick:0,manualPitId,request:null,pitEvents:[],samples:[],lapEvents:[],continuity:[],pauseChecked:false,
+  const compoundInitialized=window.mwsF1SetVehicleTyreCompoundV203(manualPitId,'SOFT');
+  window.__mwsR5bQa={tick:0,manualPitId,compoundInitialized,request:null,pitEvents:[],samples:[],lapEvents:[],continuity:[],pauseChecked:false,
    pitPrevious:new Map(vehicles.map(v=>[String(v.id),String(v.pitState||'TRACK')])),pitStopInitial:new Map(vehicles.map(v=>[String(v.id),Number(v.pitStopCount)||0])),
    finishSeen:new Set(),finishEvents:[],countedPassesAtStart:window.mwsF1CompetitionBaselineV12().confirmedPasses};
   return {track:snapshot.trackId,laps:snapshot.totalLaps,mode:snapshot.raceMode,drivers:vehicles.length,
    markers:document.querySelectorAll('.f1-racing-race-vehicle-v189').length,
-   profile:window.mwsF1QaDriverProfileMarkersV250().allPass};
+   profile:window.mwsF1QaDriverProfileMarkersV250().allPass,compoundInitialized};
  },{trackId,manualPitId});
  assert.deepEqual({track:start.track,laps:start.laps,mode:start.mode,drivers:start.drivers},
   {track:trackId,laps:3,mode:'FAST',drivers:12});
- assert.equal(start.markers,12);assert(start.profile);
+ assert.equal(start.markers,12);assert(start.profile&&start.compoundInitialized);
  let state='RACE',ticks=0;
  while(state==='RACE'&&ticks<maxTicks){
   const progress=await page.evaluate((maxPerBatch)=>{
@@ -117,7 +118,8 @@ try{
      const view=document.getElementById('f1RacingViewFinishingV185');
      q.terminalSnapshot={screen:terminal,domScreen:document.getElementById('gameF1Racing')?.dataset.f1Screen||null,
       viewVisible:view?.hidden===false,officialRows:window.mwsF1GetRaceResultRecoveryG()?.rows?.length||0,
-      finishOverlay:!!document.getElementById('f1RacingFinishOverlayV291'),simMs:clock};
+      finishOverlay:!!document.getElementById('f1RacingFinishOverlayV291'),simMs:clock,
+      transitions:window.mwsF1ScreenTransitionsV12?.()||[]};
      break;
     }
    }
@@ -138,7 +140,7 @@ try{
    simulatedSeconds:clock.simTimeMs/1000,screen:window.mwsF1GetScreenStateV185(),screenBeforeRender,screenAfterRender,
    originalGrid:window.mwsF1GetActiveRaceSnapshotV187()?.drivers.map(v=>({id:v.contactId,grid:v.gridPosition})),
    manualPitRequest:q.request,pitEvents:q.pitEvents,finishEvents:q.finishEvents,continuity:q.continuity,terminalSnapshot:q.terminalSnapshot||null,
-   pauseChecked:q.pauseChecked,samples:q.samples,
+   pauseChecked:q.pauseChecked,samples:q.samples,screenTransitions:window.mwsF1ScreenTransitionsV12?.()||[],
    finalPitStates:pit,finishOrder:result?.rows?.map(r=>({id:r.contactId,rank:r.position,
      grid:r.gridPosition,pits:r.pitStopCount,finishedMs:r.finishedAtSimMs,lapTimesMs:r.lapTimesMs,bestLapMs:r.bestLapMs})),
    summary:result?.telemetry||null,
@@ -156,7 +158,8 @@ try{
  fs.mkdirSync('artifacts',{recursive:true});
  const output='artifacts/f1-v12-r5b-live-finish.json';
  fs.writeFileSync(output,JSON.stringify({status:'DIAGNOSTIC',version:'v1.2-R5-b1',loopExitState,scope:'Full LIVE FAST with explicit pit QA',...observation,pageErrors},null,2));
- console.log(JSON.stringify({phase:'R5-b1',loopExitState,screenBeforeRender:observation.screenBeforeRender,screenAfterRender:observation.screenAfterRender,screen:observation.screen,officialRows:observation.finishOrder?.length,finishEvents:observation.finishEvents.length,physics:observation.physical,clock:observation.simulatedSeconds}));
+ console.log(JSON.stringify({phase:'R5-b2-diagnosis',loopExitState,screenBeforeRender:observation.screenBeforeRender,screenAfterRender:observation.screenAfterRender,screen:observation.screen,
+  transitions:observation.screenTransitions,atFinish:observation.terminalSnapshot,officialRows:observation.finishOrder?.length,finishEvents:observation.finishEvents.length,physics:observation.physical,clock:observation.simulatedSeconds}));
  assert.deepEqual(pageErrors,[],JSON.stringify(pageErrors));
  assert.equal(loopExitState,'FINISHING','LIVE step failed to complete natural finish. '+JSON.stringify({
   loopExitState,screenBeforeRender:observation.screenBeforeRender,screenAfterRender:observation.screenAfterRender,ticks,clock:observation.simulatedSeconds,finished:observation.finishEvents.length,
@@ -168,6 +171,7 @@ try{
  assert(observation.finishOrder.every(r=>Array.isArray(r.lapTimesMs)&&r.lapTimesMs.length>=2),
   'Official completed finish missing lap timing');
  assert(observation.manualPitRequest,'Requested manual QA pit not accepted');
+ assert.equal(observation.manualPitRequest.from,'SOFT','R5-b2 explicit SOFT to HARD fixture not initialized');
  const target=observation.finishOrder.find(r=>r.id===manualPitId);
  assert.equal(target.pits,1,'Manual pit did not service exactly once');
  assert.equal(observation.finalPitStates.find(r=>String(r.id)===manualPitId).compound,'HARD');
