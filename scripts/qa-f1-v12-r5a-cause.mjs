@@ -73,7 +73,7 @@ const bySeed=Object.fromEntries([...new Set(report.results.map(r=>r.seed))].sort
 const byMode=Object.fromEntries([...new Set(report.results.map(r=>r.mode))].sort().map(k=>[k,group(report.results.filter(r=>r.mode===k))]));
 const byTrack=Object.fromEntries([...new Set(report.results.map(r=>r.track))].sort().map(k=>[k,group(report.results.filter(r=>r.track===k))]));
 const warnings=[];
-if(bySeed[0]?.gapsOver100m>bySeed[0]?.scenarios/2)warnings.push('Equal-pace seed already has widespread early lead separation; strong pole alone is insufficient as explanation.');
+if(bySeed[0]?.gapsOver100m>bySeed[0]?.scenarios/2)warnings.push('Equal-pace scenarios also exhibit lead separation; strong pole alone is insufficient as explanation.');
 if(scenarios.every(r=>r.observedPitStates.every(x=>x==='TRACK')))warnings.push('Pit telemetry is fixture-only; no integrated pit or pit strategy verified.');
 if(report.results.some(r=>r.mode==='NORMAL'&&r.maximumProgress<r.laps))warnings.push('At least one NORMAL case has not reached its full race lap target.');
 const result={version:'v1.2-R5-a',sourceVersion:report.version,observational:true,
