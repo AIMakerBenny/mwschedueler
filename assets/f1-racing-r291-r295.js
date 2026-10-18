@@ -11,11 +11,18 @@ function movementV291(row){const start=Math.max(1,Number(row?.gridPosition)||1),
 function movementDetailV304(row){const start=Math.max(1,Number(row?.gridPosition)||1),finish=Math.max(1,Number(row?.position)||1),delta=start-finish;return {start,finish,delta,direction:delta>0?'up':delta<0?'down':'same',label:delta>0?'▲ '+delta:delta<0?'▼ '+Math.abs(delta):'–'}}
 function avatarV291(row){const src=String(row?.image||'').trim(),name=String(row?.name||'Driver');return src?'<img src="'+escV291(src)+'" alt="'+escV291(name)+'">':'<span class="fallback">'+escV291(name.slice(0,2).toUpperCase())+'</span>'}
 function ensureFinishOverlayV291(){
- const race=document.getElementById('f1RacingViewRaceV185');if(!race)return null;
+ // Host outside view-specific screens so FINISHING remains authoritative.
+ const race=document.getElementById('gameF1Racing');if(!race)return null;
  let root=document.getElementById('f1RacingFinishOverlayV291');if(root)return root;
  root=document.createElement('section');root.id='f1RacingFinishOverlayV291';root.className='f1-racing-finish-overlay-v291';root.hidden=true;
- root.innerHTML='<div class="f1-racing-finish-overlay-panel-v291"><header><div><span>RACE FINISHED</span><strong id="f1RacingFinishOverlayTitleV291">FINAL RESULT</strong><small id="f1RacingFinishOverlayMetaV291"></small></div><div class="actions"><button type="button" class="secondary" id="f1RacingFinishOverlaySetupV291">설정으로 돌아가기</button><button type="button" class="primary" id="f1RacingFinishOverlayNewRaceV291">같은 설정으로 새 경기</button></div></header><div id="f1RacingFinishOverlayPodiumV291" class="f1-racing-finish-podium-v291"></div><div class="f1-racing-finish-result-head-v291"><span>POS</span><span>DRIVER</span><span>START</span><span>MOVE</span><span>PIT</span><span>BEST LAP</span><span>OVERTAKES</span><span>TIME</span></div><div id="f1RacingFinishOverlayResultsV291" class="f1-racing-finish-results-v291"></div></div>';
+ root.innerHTML='<div class="f1-racing-finish-overlay-panel-v291"><header><div><span>RACE FINISHED</span><strong id="f1RacingFinishOverlayTitleV291">FINAL RESULT</strong><small id="f1RacingFinishOverlayMetaV291"></small></div><div class="actions"><button type="button" class="secondary" id="f1RacingFinishOverlayPodiumV12">포디움 보기</button><button type="button" class="secondary" id="f1RacingFinishOverlayResultV12">전체 결과</button><button type="button" class="secondary" id="f1RacingFinishOverlaySetupV291">설정으로 돌아가기</button><button type="button" class="primary" id="f1RacingFinishOverlayNewRaceV291">같은 설정으로 새 경기</button></div></header><div id="f1RacingFinishOverlayPodiumV291" class="f1-racing-finish-podium-v291"></div><div class="f1-racing-finish-result-head-v291"><span>POS</span><span>DRIVER</span><span>START</span><span>MOVE</span><span>PIT</span><span>BEST LAP</span><span>OVERTAKES</span><span>TIME</span></div><div id="f1RacingFinishOverlayResultsV291" class="f1-racing-finish-results-v291"></div></div>';
  race.appendChild(root);
+ root.querySelector('#f1RacingFinishOverlayPodiumV12')?.addEventListener('click',()=>{
+  if(window.mwsF1ShowPodiumRecoveryG?.())hideFinishOverlayV291();
+ });
+ root.querySelector('#f1RacingFinishOverlayResultV12')?.addEventListener('click',()=>{
+  if(window.mwsF1ShowResultRecoveryG?.())hideFinishOverlayV291();
+ });
  root.querySelector('#f1RacingFinishOverlaySetupV291')?.addEventListener('click',()=>{hideFinishOverlayV291();window.mwsF1ReturnToSetupRecoveryG?.()});
  root.querySelector('#f1RacingFinishOverlayNewRaceV291')?.addEventListener('click',()=>{hideFinishOverlayV291();window.mwsF1NewRaceSameSettingsRecoveryG?.()});
  return root;
@@ -34,9 +41,11 @@ function renderFinishOverlayV291(result=raceResultV291()){
 function hideFinishOverlayV291(){const root=document.getElementById('f1RacingFinishOverlayV291');if(root){root.hidden=true;root.classList.remove('active')}document.body?.classList.remove('f1-racing-finish-overlay-active-v291');finishOverlayStateV291.active=false;return true}
 function syncFinishOverlayV291(){
  const state=screenStateV291(),result=raceResultV291();
- if(state==='FINISHING'&&result?.rows?.length){window.mwsF1SetScreenStateV185?.('RACE',{force:true});return renderFinishOverlayV291(result)}
- if(state==='RACE'&&result?.rows?.length&&finishOverlayStateV291.active)return renderFinishOverlayV291(result);
- if(!result||['SETUP','TRANSITION','GRID'].includes(state))hideFinishOverlayV291();return false;
+ // The official FINISHING -> PODIUM -> RESULT lifecycle must never be
+ // rewritten to RACE by a visual overlay. This was a R5-b1 finish-state bug.
+ if(state==='FINISHING'&&result?.rows?.length)return renderFinishOverlayV291(result);
+ if(finishOverlayStateV291.active)hideFinishOverlayV291();
+ return false;
 }
 function installFinishOverlayV291(){
  if(finishOverlayStateV291.installed)return true;finishOverlayStateV291.installed=true;ensureFinishOverlayV291();
@@ -44,7 +53,7 @@ function installFinishOverlayV291(){
  document.addEventListener('click',event=>{if(event.target.closest('#f1RacingRaceCancelRecoveryC,#f1RacingResultSetupRecoveryG,#f1RacingResultNewRaceRecoveryG'))queueMicrotask(hideFinishOverlayV291)},true);
  queueMicrotask(syncFinishOverlayV291);return true;
 }
-function qaFinishOverlayV291(){const root=ensureFinishOverlayV291(),podium=root?.querySelector('#f1RacingFinishOverlayPodiumV291'),results=root?.querySelector('#f1RacingFinishOverlayResultsV291'),newRace=root?.querySelector('#f1RacingFinishOverlayNewRaceV291'),setup=root?.querySelector('#f1RacingFinishOverlaySetupV291');const api=typeof window.mwsF1SetScreenStateV185==='function'&&typeof window.mwsF1GetRaceResultRecoveryG==='function'&&typeof window.mwsF1NewRaceSameSettingsRecoveryG==='function'&&typeof window.mwsF1ReturnToSetupRecoveryG==='function';return {version:VERSION291,installed:finishOverlayStateV291.installed,api,root:Boolean(root),podium:Boolean(podium),results:Boolean(results),actions:Boolean(newRace&&setup),active:finishOverlayStateV291.active,renderCount:finishOverlayStateV291.renderCount,allPass:Boolean(root&&podium&&results&&newRace&&setup)&&api&&finishOverlayStateV291.installed}}
+function qaFinishOverlayV291(){const root=ensureFinishOverlayV291(),podium=root?.querySelector('#f1RacingFinishOverlayPodiumV291'),results=root?.querySelector('#f1RacingFinishOverlayResultsV291'),newRace=root?.querySelector('#f1RacingFinishOverlayNewRaceV291'),setup=root?.querySelector('#f1RacingFinishOverlaySetupV291');const api=typeof window.mwsF1GetScreenStateV185==='function'&&typeof window.mwsF1GetRaceResultRecoveryG==='function'&&typeof window.mwsF1NewRaceSameSettingsRecoveryG==='function'&&typeof window.mwsF1ReturnToSetupRecoveryG==='function';return {version:VERSION291,installed:finishOverlayStateV291.installed,api,root:Boolean(root),podium:Boolean(podium),results:Boolean(results),actions:Boolean(newRace&&setup),active:finishOverlayStateV291.active,renderCount:finishOverlayStateV291.renderCount,allPass:Boolean(root&&podium&&results&&newRace&&setup)&&api&&finishOverlayStateV291.installed}}
 
 const VERSION304='phase304-f1-finish-result-closure';
 function qaFinishResultClosureV304(){
