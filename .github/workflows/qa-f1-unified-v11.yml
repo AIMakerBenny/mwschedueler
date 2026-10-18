@@ -59,7 +59,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: f1-v12-r5b2-live-finish
-          path: artifacts/f1-v12-r5b2-live-finish.json
+          path: |
+            artifacts/f1-v12-r5b2-live-finish.json
+            artifacts/f1-v12-r5b2-finish.png
           if-no-files-found: warn
       - name: Short real-SVG track physics
         run: node scripts/qa-f1-unified-v11-real-tracks.mjs
