@@ -3,17 +3,25 @@ import assert from 'node:assert/strict';
 import {setup,engine,src} from './f1-unified-v11-fixture.mjs';
 assert(src.includes('function unifiedWearGripFactorV12('));
 assert(src.includes('function unifiedPitForecastV12('));
+assert(src.includes('function unifiedPitGripTimeRatioV12('));
+assert(src.includes('function unifiedPitReferenceLapV12('));
 const test=new Function(setup+engine+`
   track.pit={entry:.94,stop:.99,exit:.07,speedLimitKph:80};
   if(!unifiedInitV11())throw Error('Unified physics fixture init failed');
+  // A representative test-only corner/straight profile in the isolated synthetic track.
+  // The LIVE benchmark always uses untouched genuine SVG curvature.
+  unifiedStateV11.path.samples.forEach((p,i)=>{p.k=i%7<3?.012:.00003});
   const vehicle=raceMotionV189.vehicles[0];
+  vehicle.lapTimesMs=[65000,70000,68000];
   vehicle.tyreCompound='SOFT';
   vehicle.tyreStartRaceProgress=0;
   vehicle.unifiedTempCV11=95;
   vehicle.tyreWarmupFactor=1;
   const grip=[0,.4,.60,.70,.8,.9,1].map(w=>({wear:w,factor:unifiedWearGripFactorV12(w),
     grip:unifiedGripV11({...vehicle,tyreWear:w})}));
-  const forecast=[.4,.6,.8,1].map(w=>unifiedPitForecastV12('SOFT',w,.115,3.5,85));
+  const forecast=[.4,.6,.8,1].map(w=>unifiedPitForecastV12('SOFT',w,.115,3.5,85,track));
+  const physicalCornerRatios=[.45,.70,1,1.06].map(g=>unifiedPitGripTimeRatioV12(g,track));
+  const referenceLap=unifiedPitReferenceLapV12(vehicle,track);
   const rows=[.59,.60,.61,.70,.80,.92].map(w=>{
     vehicle.tyreWear=w;vehicle.raceProgress=6.1;vehicle.speedKph=195;
     const row={ref:vehicle,id:vehicle.id,s:6.1*unifiedStateV11.path.len,
@@ -28,19 +36,22 @@ const test=new Function(setup+engine+`
   vehicle.tyreWear=.95;vehicle.tyreCompound='SOFT';
   const late=unifiedPitPlanV11({ref:vehicle,id:vehicle.id,s:9.2*unifiedStateV11.path.len,
     v:195/3.6,pit:'TRACK',finished:false},track);
-  return {grip,forecast,rows,hard,late};
+  return {grip,forecast,physicalCornerRatios,referenceLap,rows,hard,late};
 `)();
 assert(test.grip.every((v,i)=>v.factor>=.34&&v.factor<=1&&v.grip>0&&(i===0||v.factor<test.grip[i-1].factor)));
 assert(test.grip[6].factor<test.grip[3].factor*.7,'Worn tyre grip does not physically deteriorate');
 assert(test.forecast.every((x,i)=>Number.isFinite(x)&&(i===0||x>test.forecast[i-1])));
+assert.equal(test.referenceLap,68,'Real completed median lap ignored');
+assert(test.physicalCornerRatios[0]>test.physicalCornerRatios[1]&&test.physicalCornerRatios[1]>test.physicalCornerRatios[2]);
+assert(Math.abs(test.physicalCornerRatios[2]-1)<1e-9,'SVG curve normalized corner grip baseline wrong');
 assert(test.rows.filter(x=>x.wear<=.6).every(x=>x.plan.decision==='GO_LONG'&&x.plan.reason==='TYRE_REMAINING_AT_LEAST_40'));
 assert(test.rows.filter(x=>x.wear>.6).every(x=>Number.isFinite(x.plan.benefit)&&
- x.plan.candidates.length===3&&Number.isFinite(x.plan.pitLossSeconds)&&x.plan.forecast.model==='shared-physical-wear-v12'));
+ x.plan.candidates.length===3&&Number.isFinite(x.plan.pitLossSeconds)&&x.plan.forecast.model==='svg-curvature-observed-lap-v12'&&x.plan.forecast.lapSeconds===68));
 assert.equal(test.hard.decision,'GO_LONG');
 assert.equal(test.late.reason,'TOO_LATE_TO_PIT');
 assert(test.rows.filter(x=>x.wear>.6).some(x=>x.plan.decision==='BOX_NOW'),
  'Worn SOFT must have a genuinely favourable optional strategy in the representative scenario');
-console.log(JSON.stringify({status:'PASS',phase:'R5-b4',grip:test.grip,
+console.log(JSON.stringify({status:'PASS',phase:'R5-b4/R5-b6',grip:test.grip,physicalCornerRatios:test.physicalCornerRatios,referenceLap:test.referenceLap,
  candidates:test.rows.map(x=>({wear:x.wear,decision:x.plan.decision,reason:x.plan.reason,
  benefit:x.plan.benefit,loss:x.plan.pitLossSeconds,compound:x.plan.targetCompound})),
  noEarlyPit:true,noLatePit:true,pureForecast:true,
