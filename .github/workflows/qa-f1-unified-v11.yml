@@ -89,6 +89,15 @@ jobs:
             artifacts/f1-v12-r5a-extended.json
             artifacts/f1-v12-r5a-extended-cause.json
           if-no-files-found: warn
+      - name: R5-b1 real LIVE FAST finish and integrated pit journey
+        run: node scripts/qa-f1-v12-r5b-live-finish.mjs
+      - name: Upload R5-b1 actual race and pit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-v12-r5b-live-finish
+          path: artifacts/f1-v12-r5b-live-finish.json
+          if-no-files-found: warn
       - name: Chromium FHD-QHD UI integration
         run: node scripts/qa-f1-unified-v11-browser.mjs
       - name: Publish verified development QA commit status
