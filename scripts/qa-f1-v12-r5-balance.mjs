@@ -46,8 +46,8 @@ const code=[
  " ticks++;unifiedSpecialPresentationTickV12(2);",
  " if(!firstPhysicalLapLimitCrossing){const crossed=raceMotionV189.vehicles.filter(v=>v.raceProgress>=config.laps);",
  "  if(crossed.length){const orderAtCrossing=[...raceMotionV189.vehicles].sort((a,b)=>b.raceProgress-a.raceProgress||String(a.id).localeCompare(String(b.id)));",
- "   firstPhysicalLapLimitCrossing={simMs:simClockV192.simTimeMs,firstId:String(crossed.sort((a,b)=>b.raceProgress-a.raceProgress)[0].id),order:orderAtCrossing.map(v=>String(v.id))};}}",
- " if(i%25!==0)continue;",
+ "   firstPhysicalLapLimitCrossing={simMs:simClockV192.simTimeMs,firstId:String(crossed.sort((a,b)=>b.raceProgress-a.raceProgress)[0].id),order:orderAtCrossing.map(v=>String(v.id)),gapMeters:(orderAtCrossing[0].raceProgress-orderAtCrossing[1].raceProgress)*track.lengthMeters};}}",
+ " if(i%25!==0&&!(config.stopAtLapLimit&&firstPhysicalLapLimitCrossing))continue;",
  " for(const v of raceMotionV189.vehicles){",
  "  const before=prior.get(String(v.id)),d=(v.unifiedPathDistanceV11||0)-before.d;",
  "  const bound=Math.max(before.v,v.speedKph||0)/3.6*.02+.25;",
@@ -60,7 +60,7 @@ const code=[
  "  checks++;if(unifiedBoxesOverlapV11(x.unifiedWorldPoseV11,y.unifiedWorldPoseV11))",
  "   overlaps.push({tick:i,a:String(x.id),b:String(y.id)});",
  " }",
- " if(overlaps.length||continuity.length)break;",
+ " if(overlaps.length||continuity.length||(config.stopAtLapLimit&&firstPhysicalLapLimitCrossing))break;",
  "}",
  "const c=unifiedStateV11.competition,first=c.samples[0],last=c.samples.at(-1),",
  " order=[...raceMotionV189.vehicles].sort((a,b)=>b.raceProgress-a.raceProgress||String(a.id).localeCompare(String(b.id)));",
@@ -93,14 +93,17 @@ try{
  for(const track of tracks.filter(t=>!process.env.MWS_R5_TRACK_FILTER||t.id===process.env.MWS_R5_TRACK_FILTER)){
   for(const mode of modes.filter(m=>!process.env.MWS_R5_MODE_FILTER||m.name===process.env.MWS_R5_MODE_FILTER)){
    for(let seed=0;seed<seedCount;seed++){
-    const config={...mode,seed,maxTicks:nTicks};
+    const config={...mode,seed,maxTicks:nTicks,stopAtLapLimit:process.env.MWS_R5_STOP_AT_LAP_LIMIT==='1'};
     const value=await page.evaluate(({track,config,fixture,engine,special,code})=>{
      const svgPath=document.getElementById('fixture');svgPath.setAttribute('d',track.path);
      const geometry=window.mwsBuildF1CornerPhasesV194(track,window.mwsBuildF1TrackGeometryV193(track,svgPath));
      const phase=p=>window.mwsF1CornerPhaseAtProgressV194(geometry,p);
      return new Function('fixtureTrack','fixturePath','fixturePhase','config',fixture+engine+special+code)(track,svgPath,phase,config);
     },{track,config,fixture,engine,special,code});
-    assert.equal(value.ticks,nTicks,track.id+' '+mode.name+' '+seed+' physics stopped');
+    if(config.stopAtLapLimit){
+     assert(value.firstPhysicalLapLimitCrossing,'Target progress not reached within allotted window');
+     assert(value.ticks>0&&value.ticks<=nTicks,'Invalid bounded target-progress crossing');
+    }else assert.equal(value.ticks,nTicks,track.id+' '+mode.name+' '+seed+' physics stopped');
     assert.equal(value.physical.stops,0);
     assert.deepEqual(value.physical.invalid,[]);
     assert.deepEqual(value.physical.overlaps,[]);
@@ -120,7 +123,7 @@ try{
 }finally{await browser.close();}
 assert(results.length>0,'R5 filters selected no tracks or modes');
 const sum={
- scenarios:results.length,modeSeedCount:seedCount,secondsPerScenario:seconds,
+ scenarios:results.length,modeSeedCount:seedCount,secondsPerScenario:seconds,stopOnPhysicalLapLimit:process.env.MWS_R5_STOP_AT_LAP_LIMIT==='1',
  totalPasses:results.reduce((a,b)=>a+b.confirmedPasses,0),
  totalLeaderChanges:results.reduce((a,b)=>a+b.leaderChanges,0),
  zeroPassScenarios:results.filter(x=>x.confirmedPasses===0).length,
