@@ -12,7 +12,8 @@ Checks: all 12 drivers must have real finish crossing times, unique official fin
 ## Earlier failed CI runs and discovered issue
 - Run 39118406376 failed a strict post-finish state getter check despite recording 12 completed drivers, one full manual pit cycle and no physical collision.
 - Run 39119089949 confirmed the last real race step returned FINISHING, the official result included all 12 drivers and the result view existed. The subsequent screen-state getter returned RACE despite the completed-result DOM. Physical telemetry had collisionStops=0 and no invalid step, with 17 confirmed passes. This is a post-finish state consistency issue, distinct from the official finish/pit mechanics.
-- R5-b1's QA now asserts the actual live FINISHING transition and visible FINISHING DOM, separately records the stale getter as a known issue rather than equating it with a missing race finish. It does not silently alter application runtime state.
+- Run 39119924799 confirmed that the post-evaluation FINISHING DOM was no longer active. This is a real post-finish UI regression, not merely a stale read-only getter.
+- R5-b1 now asserts the FINISHING state, visible FINISHING DOM, and complete official results at the same accepted physics step when natural race completion occurs. The post-evaluation state reversion is explicitly flagged as an unresolved R5-b2 UI lifecycle issue. The QA does not change runtime state to fake success.
 
 ## Remaining work
 R5-b2 should separately resolve and regress the post-finish screen-state getter inconsistency, validate result -> podium -> setup controls, and extend full LIVE races to NORMAL mode and multiple physical tracks and seeds. R5-b1 cannot certify the natural automatic pit-strategy balance, a multi-track full-race distribution, all UI finish controls or NORMAL 10-lap completion. Those are Not available from this test.
