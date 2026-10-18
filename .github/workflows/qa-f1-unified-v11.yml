@@ -100,5 +100,6 @@ jobs:
           gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
             -f state="$status" \
             -f context="MWS F1 Unified Development QA" \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             -f description="Verified GitHub Actions full development QA job: $status"
 
