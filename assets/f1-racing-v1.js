@@ -12158,7 +12158,16 @@ function simulateUnifiedRaceStepV11(stepMs){
       const linear=.08+dt*.5;
       const safeNext=Math.max(0,-selfDecel*linear+Math.sqrt(Math.max(0,selfDecel*selfDecel*linear*linear+2*selfDecel*budget)));
       const physicallyReachable=Math.max(0,me.v-maximumDecel*dt);
-      const next=Math.max(physicallyReachable,safeNext);
+      let next=Math.max(physicallyReachable,safeNext);
+      // R5-b6: separately bound this exact 20ms swept step in a close shared
+      // corridor. The long-horizon stopping inequality above can otherwise
+      // admit 5.49m near-contact at steady high speed and tiny closing rates.
+      // The candidate only changes physically reachable braking acceleration.
+      if(gap>0&&gap<footprint+8&&deltaY<2.2){
+        const availableGap=gap+peerCmd.ds-footprint-.25;
+        const immediateMaxV=2*availableGap/dt-me.v;
+        next=Math.max(physicallyReachable,Math.min(next,immediateMaxV));
+      }
       if(cmd.v>next){
         cmd.v=next;cmd.ds=(me.v+next)*.5*dt;cmd.acceleration=(next-me.v)/dt;
         cmd.actualBrake=Math.max(0,-cmd.acceleration-cmd.drag);
