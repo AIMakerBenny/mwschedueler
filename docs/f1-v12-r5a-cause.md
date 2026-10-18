@@ -13,7 +13,7 @@ Source: GitHub Actions run 39025452643 artifact f1-v12-r5-balance, 28 real-SVG /
 ## New R5-a QA
 1. The 28-case 90-second run now writes 5-second accepted-step series. It observes leader/P2 gap and speeds, tyre wear, battery MJ, requested ERS kW, driving styles, AI mode, pressure, traffic constraints, physical passes and leader identity. No physics mutation.
 2. scripts/qa-f1-v12-r5a-cause.mjs groups results by seed, track and FAST/NORMAL mode, measures the first observed >100 m gap, and compares 0-30, 30-60, and 60+ second windows. These are time-window labels, NOT official race stages.
-3. A 240-second isolated pilot covers castle-street-circuit-v1 FAST for both original seeds. The first physical crossing of the 3-lap threshold is recorded as a PROVISIONAL physics observation. No official finish order or winner is inferred. Race lifecycle, pit and UI are still fixture stubs.
+3. An isolated pilot covers castle-street-circuit-v1 FAST for both original seeds, with a 240-second maximum window. It now stops at the first physical 3-lap threshold crossing and records the exact progress gap and order as PROVISIONAL physics observations. No official finish order or winner is inferred. Race lifecycle, pit and UI are still fixture stubs.
 4. GitHub Actions uploads f1-v12-r5a-cause with both audit output files and extended pilot evidence. Existing R5 artifact remains independently uploaded.
 5. Physical-world overlaps, invalid solver steps, discontinuities, stopped steps and pass-ledger consistency remain asserted by the existing R5 script during both runs. The 5-second snapshots are sampled post-commit and do not substitute for per-step full collision checks.
 
