@@ -118,14 +118,17 @@ try{
   },250);
   state=progress.state;ticks=progress.ticks;
  }
+ const loopExitState=state;
  const observation=await page.evaluate(()=>{
   const q=window.__mwsR5bQa,standings=window.mwsF1ComputeRaceStandingsV191(),
    result=window.mwsF1GetRaceResultRecoveryG(),report=window.mwsF1UnifiedV11Report(),
    clock=window.mwsF1GetSimulationClockV192(),pit=window.mwsF1GetPitStatesV205();
+  const screenBeforeRender=window.mwsF1GetScreenStateV185();
   window.mwsF1RenderRaceVehiclesV189(0);window.mwsF1RenderPitHudV361();
+  const screenAfterRender=window.mwsF1GetScreenStateV185();
   return {track:window.mwsF1GetActiveRaceSnapshotV187()?.trackId,mode:window.mwsF1GetActiveRaceSnapshotV187()?.raceMode,
    laps:window.mwsF1GetActiveRaceSnapshotV187()?.totalLaps,
-   simulatedSeconds:clock.simTimeMs/1000,screen:window.mwsF1GetScreenStateV185(),
+   simulatedSeconds:clock.simTimeMs/1000,screen:window.mwsF1GetScreenStateV185(),screenBeforeRender,screenAfterRender,
    originalGrid:window.mwsF1GetActiveRaceSnapshotV187()?.drivers.map(v=>({id:v.contactId,grid:v.gridPosition})),
    manualPitRequest:q.request,pitEvents:q.pitEvents,finishEvents:q.finishEvents,continuity:q.continuity,
    pauseChecked:q.pauseChecked,samples:q.samples,
@@ -141,9 +144,13 @@ try{
     finishing:!!document.getElementById('f1RacingViewFinishingV185')},
    screenshotAvailable:true};
  });
+ fs.mkdirSync('artifacts',{recursive:true});
+ const output='artifacts/f1-v12-r5b-live-finish.json';
+ fs.writeFileSync(output,JSON.stringify({status:'DIAGNOSTIC',version:'v1.2-R5-b1',loopExitState,scope:'Full LIVE FAST with explicit pit QA',...observation,pageErrors},null,2));
+ console.log(JSON.stringify({phase:'R5-b1',loopExitState,screenBeforeRender:observation.screenBeforeRender,screenAfterRender:observation.screenAfterRender,screen:observation.screen,officialRows:observation.finishOrder?.length,finishEvents:observation.finishEvents.length,physics:observation.physical,clock:observation.simulatedSeconds}));
  assert.deepEqual(pageErrors,[],JSON.stringify(pageErrors));
  assert.equal(observation.screen,'FINISHING','Natural finish did not fire. '+JSON.stringify({
-  ticks,clock:observation.simulatedSeconds,finished:observation.finishEvents.length,
+  loopExitState,screenBeforeRender:observation.screenBeforeRender,screenAfterRender:observation.screenAfterRender,ticks,clock:observation.simulatedSeconds,finished:observation.finishEvents.length,
   pitEvents:observation.pitEvents.slice(-8)}));
  assert.equal(observation.finishOrder.length,12);
  assert.equal(observation.finishEvents.length,12);
@@ -165,9 +172,7 @@ try{
  assert(observation.physical.confirmedPasses<=observation.physical.rawCrossings);
  assert(observation.pauseChecked&&observation.screenQA.profile&&observation.screenQA.markers===12);
  assert(observation.screenQA.finishOverlay);
- fs.mkdirSync('artifacts',{recursive:true});
- const output='artifacts/f1-v12-r5b-live-finish.json';
- fs.writeFileSync(output,JSON.stringify({status:'PASS',version:'v1.2-R5-b1',scope:'One LIVE FAST 3-lap race, single real-SVG circuit; explicitly manual pit; not auto-strategy validation',...observation},null,2));
+ fs.writeFileSync(output,JSON.stringify({status:'PASS',version:'v1.2-R5-b1',scope:'One LIVE FAST 3-lap race, single real-SVG circuit; explicitly manual pit; not auto-strategy validation',loopExitState,...observation},null,2));
  console.log(JSON.stringify({status:'PASS',version:'R5-b1',track:observation.track,mode:observation.mode,
   simulatedSeconds:observation.simulatedSeconds,finishers:observation.finishOrder.length,
   manualPit:chain,physical:observation.physical,pauseChecked:true,finishTop3:observation.finishOrder.slice(0,3),artifact:output}));
