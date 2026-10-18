@@ -74,6 +74,7 @@ jobs:
           MWS_R5_SEEDS: '2'
           MWS_R5_TRACK_FILTER: 'castle-street-circuit-v1'
           MWS_R5_MODE_FILTER: 'FAST'
+          MWS_R5_STOP_AT_LAP_LIMIT: '1'
         run: |
           node scripts/qa-f1-v12-r5-balance.mjs
           mv artifacts/f1-v12-r5-balance.json artifacts/f1-v12-r5a-extended.json
