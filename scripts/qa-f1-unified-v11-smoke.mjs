@@ -347,6 +347,8 @@ const beforeInit=JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClock
 const unavailable=evaluatePitStrategyV206(raceMotionV189.vehicles[0]);
 const initReadonly=beforeInit===JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,state:unifiedStateV11});
 unifiedInitV11();track.pit={entry:.9,exit:.1,speedLimitKph:80};
+// R5-b6: synthetic smoke must contain an actual tyre-limited corner to expect a voluntary pit.
+unifiedStateV11.path.samples.forEach((p,i)=>{p.k=i%7<3?.012:.00003});unifiedPreparePitGripCurveV12(track);
 const v=raceMotionV189.vehicles[0];v.raceProgress=3;v.speedKph=216;v.tyreWear=1;v.tyreWarmupFactor=.9;v.unifiedTempCV11=40;v.unifiedDamageV11=.6;
 const before=JSON.stringify({vehicles:raceMotionV189.vehicles,clock:simClockV192,rng:unifiedStateV11.rng,telemetry:unifiedStateV11.telemetry});
 const recommendation=evaluatePitStrategyV206(v),batch=updatePitStrategiesV206(1000000),states=getPitStrategyStatesV206();
