@@ -12133,7 +12133,13 @@ function simulateUnifiedRaceStepV11(stepMs){
       const peerStop=peerCmd.v*peerCmd.v/(2*peerDecel*peerMetric);
       const myPose=unifiedWorldPoseV11(me.s,me.y,me.ref.unifiedHeadingV11),peerPose=unifiedWorldPoseV11(peer.s,peer.y,peer.ref.unifiedHeadingV11);
       const ax=Math.cos(myPose.heading),ay=Math.sin(myPose.heading);
-      const footprint=Math.max(UNIFIED_ENGINE_V11.followBase,unifiedSupportV11(myPose,ax,ay)+unifiedSupportV11(peerPose,ax,ay))+.03;
+      // v1.2 R5-b6: early physical braking reserve for a closing follower.
+      // The prior near-zero reserve allowed a 5.49m envelope contact at
+      // 50m/s late in a real 10-lap race. This reserves braking distance in
+      // the actual solver; no position/rank/heading/display displacement.
+      const closing=Math.max(0,me.v-peerCmd.v);
+      const responseReserve=.35+Math.min(3.5,closing*.9+me.v*.018);
+      const footprint=Math.max(UNIFIED_ENGINE_V11.followBase,unifiedSupportV11(myPose,ax,ay)+unifiedSupportV11(peerPose,ax,ay))+.03+responseReserve;
       // Solve the next-state stopping-distance inequality, including this step's
       // travel and response time. A slow proportional response can run into a
       // stopped car despite starting from an entirely feasible braking distance.
