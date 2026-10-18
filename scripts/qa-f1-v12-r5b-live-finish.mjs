@@ -207,6 +207,7 @@ try{
    podiumRows:overlayBefore.podiumRows,hidden:overlayBefore.hidden,active:overlayBefore.active},
   {host:'gameF1Racing',state:'FINISHING',resultRows:12,podiumRows:3,hidden:false,active:true});
  assert(overlayBefore.buttons.every(Boolean),'Finish overlay navigation is incomplete');
+ await page.screenshot({path:'artifacts/f1-v12-r5b2-finish.png'});
  await page.locator('#f1RacingFinishOverlayPodiumV12').click();
  await page.waitForFunction(()=>window.mwsF1GetScreenStateV185()==='PODIUM');
  const podiumView=await page.evaluate(()=>({
