@@ -1,5 +1,5 @@
-/* Phase 291 / F1-R16: keep the race screen visible and present podium + full results as one overlay */
-#f1RacingViewRaceV185{position:relative}
+/* R5-b2: attach final result overlay to the F1 section rather than forcing its FINISHING view back to RACE. */
+#gameF1Racing{position:relative}
 .f1-racing-finish-overlay-v291{position:absolute;inset:0;z-index:95;display:grid;place-items:center;padding:14px;background:rgba(2,5,10,.78);backdrop-filter:blur(7px);overflow:auto}
 .f1-racing-finish-overlay-v291[hidden]{display:none!important}
 .f1-racing-finish-overlay-panel-v291{width:min(1080px,96%);max-height:calc(100% - 10px);display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid #303b4b;border-radius:10px;background:linear-gradient(180deg,rgba(12,17,24,.98),rgba(5,8,13,.98));box-shadow:0 24px 70px rgba(0,0,0,.55)}
@@ -39,3 +39,6 @@
 .f1-racing-finish-podium-v291 .winner-tag-v304{display:inline-flex;margin-right:5px;padding:2px 5px;border:1px solid #7e6b27;border-radius:3px;color:#f0cf65;background:#191507;font-style:normal;font-size:7px;letter-spacing:.09em}
 @keyframes f1WinnerSweepV304{0%{left:-28%;opacity:0}20%{opacity:1}100%{left:118%;opacity:0}}
 @media(max-width:1000px){.f1-racing-finish-podium-v291{grid-template-columns:1fr}.f1-racing-finish-podium-v291 .place{grid-template-columns:34px 40px minmax(0,1fr) auto}.f1-racing-finish-result-head-v291,.f1-racing-finish-results-v291 .row{grid-template-columns:42px minmax(110px,1fr) 52px 60px 42px 82px 62px 86px}}
+
+/* R5-b2: maintain readable navigation actions at desktop and smaller sizes. */
+.f1-racing-finish-overlay-panel-v291 .actions{flex-wrap:wrap;justify-content:flex-end}
