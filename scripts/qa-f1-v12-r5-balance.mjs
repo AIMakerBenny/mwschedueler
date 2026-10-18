@@ -131,7 +131,7 @@ const sum={
  appliedBoosts:results.reduce((a,b)=>a+b.boosts,0),
  observationOnly:true,
  sampleCadenceSeconds:5,
- knownLimits:['90-second windows are not finished races','Pit requests/stops are fixture stubs'],
+ knownLimits:[`${seconds}-second isolated windows are not finished races`,'Pit requests/stops are fixture stubs'],
  imbalanceWarnings:[]
 };
 if(sum.zeroPassScenarios>results.length*.4)sum.imbalanceWarnings.push('More than 40% of scenarios have zero confirmed passes');
