@@ -124,7 +124,9 @@ try{
      }
      if(current!==previous){
       q.pitTransitions.push({id,from:previous,to:current,time,lap:v.raceProgress,
-       compound:v.tyreCompound,stopCount:v.pitStopCount,wear:v.tyreWear,speedKph:v.speedKph});
+       compound:v.tyreCompound,stopCount:v.pitStopCount,wear:v.tyreWear,speedKph:v.speedKph,
+        pitEntryRaceProgress:Number.isFinite(v.pitEntryRaceProgress)?v.pitEntryRaceProgress:null,
+        pitSpeedLimitKph:Number(window.mwsF1GetActiveRaceSnapshotV187()?.track?.pit?.speedLimitKph)||80});
       q.lastPit.set(id,current);
      }
      if(v.finished&&!q.finished.has(id)){
@@ -223,8 +225,23 @@ try{
  const byId=new Map(observation.finishedRows.map(x=>[x.id,x]));
  for(const request of observation.pitRequests){
   const transitions=observation.pitTransitions.filter(x=>x.id===request.id);
-  assert.deepEqual(transitions.map(x=>x.to),['PIT_ENTRY','PIT_LANE','PIT_BOX','PIT_LANE','PIT_EXIT','TRACK'],
-   'Unfinished autonomous pit sequence '+request.id);
+  const sequence=transitions.map(x=>x.to);
+  const full=['PIT_ENTRY','PIT_LANE','PIT_BOX','PIT_LANE','PIT_EXIT','TRACK'];
+  // An entry already below the pit speed limit can advance through PIT_ENTRY
+  // between two sampled 20ms boundaries. The state machine records entry in
+  // pitEntryRaceProgress even if the QA never observes that transient state.
+  const immediate=['PIT_LANE','PIT_BOX','PIT_LANE','PIT_EXIT','TRACK'];
+  if(sequence.join('|')===immediate.join('|')){
+   const first=transitions[0];
+   assert.equal(first.from,'TRACK','Missing pit-entry origin '+request.id);
+   assert(Number.isFinite(first.pitEntryRaceProgress)&&
+    first.lap>=first.pitEntryRaceProgress&&first.lap-first.pitEntryRaceProgress<=.01,
+    'PIT_ENTRY skipped without a real entry boundary '+request.id);
+   assert(Number.isFinite(first.speedKph)&&first.speedKph<=first.pitSpeedLimitKph+2+1e-6,
+    'PIT_ENTRY skipped above pit-lane speed limit '+request.id);
+  }else{
+   assert.deepEqual(sequence,full,'Unfinished autonomous pit sequence '+request.id);
+  }
   assert.equal(byId.get(request.id)?.pits,1,'Auto pit must service exactly once');
   // Audit the same plan that triggered the autonomous request, not a post-request read.
   const audit=request.recordedPlan;
