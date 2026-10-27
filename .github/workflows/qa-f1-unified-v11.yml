@@ -54,6 +54,15 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright
           npx playwright install --with-deps chromium
+      - name: R5-b7 fixed-seed short Chromium replay diagnostic
+        run: node scripts/qa-f1-v12-r5b7-seed-replay.mjs
+      - name: Upload R5-b7 fixed-seed replay evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-v12-r5b7-seed-replay
+          path: artifacts/f1-v12-r5b7-seed-replay.json
+          if-no-files-found: warn
       - name: R5-b2 stable lifecycle and cross-compound integrated pit
         run: node scripts/qa-f1-v12-r5b-live-finish.mjs
       - name: Upload R5-b2 lifecycle and pit evidence
