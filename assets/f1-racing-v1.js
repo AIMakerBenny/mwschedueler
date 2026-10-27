@@ -11888,7 +11888,13 @@ function unifiedPitV11(row,now,track){
   v.unifiedPitEvalAtV11=now+1.5+unifiedRandomVehicleV11(v);
   const plan=unifiedPitPlanV11(row,track);
   if(plan.decision==='BOX_NOW'&&requestPitStopV205(v.id,plan.targetCompound,'UNIFIED_V11_TIME_ADVANTAGE')){
-    unifiedStateV11.telemetry.pit.push({id:row.id,t:now,wear:plan.wear,pitLossSeconds:plan.pitLossSeconds,benefit:plan.benefit,compound:plan.targetCompound});
+    // R5-b7: snapshot real decision-time candidate forecasts. Read-only telemetry.
+    // Forecasted benefit is not an observed causal time saving.
+    unifiedStateV11.telemetry.pit.push({id:row.id,t:now,wear:plan.wear,
+      fromCompound:String(v.tyreCompound||'MEDIUM'),remainingLaps:plan.remainingLaps,
+      pitLossSeconds:plan.pitLossSeconds,benefit:plan.benefit,compound:plan.targetCompound,
+      forecast:{...plan.forecast},candidates:plan.candidates.map(candidate=>({...candidate})),
+      benefitKind:'MODEL_ESTIMATE_NOT_OBSERVED_GAIN'});
   }
 }
 function unifiedEnergyAndTyreV11(row,command,dt,track){

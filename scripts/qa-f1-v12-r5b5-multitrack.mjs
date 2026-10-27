@@ -64,7 +64,11 @@ for(const [index,entry] of races.entries()){
   pitRate:requests.length/rows.length,
   pitPlanBenefits:requests.map(v=>({id:v.id,compound:initial[v.id],wear:v.wear,
     remainingLaps:v.remainingLaps,benefitSeconds:v.recordedPlan?.benefit,
-    modelPitLossSeconds:v.recordedPlan?.pitLossSeconds,target:v.to})),
+    modelPitLossSeconds:v.recordedPlan?.pitLossSeconds,target:v.to,
+    observedBenefitSeconds:null,benefitKind:v.recordedPlan?.benefitKind,
+    forecast:v.recordedPlan?.forecast,alternatives:v.recordedPlan?.candidates,
+    bestVsRunnerUpSeconds:v.recordedPlan?.candidates?.length===3?
+      v.recordedPlan.candidates[0].benefit-v.recordedPlan.candidates[1].benefit:null})),
   compounds,initialGrid:result.initialOrder,finishOrder:rows.map(v=>v.id),
   physicsFailures:result.physics.collisionStops+(result.physics.invalid?.length||0),
   state:result.state,sourceFile:output
@@ -114,3 +118,8 @@ assert.equal(totalStarts,72);
 assert(aggregated.every(row=>row.entrants===12&&row.laps===10&&row.physicsFailures===0&&
  row.state==='FINISHING'&&row.completedPitStops===row.pitRequests&&row.firstFinishSeconds>0));
 assert(aggregated.every(row=>row.pitPlanBenefits.every(b=>b.wear>.60&&b.remainingLaps>=1.1&&b.benefitSeconds>1.5)));
+assert(aggregated.every(row=>row.pitPlanBenefits.every(b=>b.benefitKind==='MODEL_ESTIMATE_NOT_OBSERVED_GAIN'&&
+ b.observedBenefitSeconds===null&&b.alternatives?.length===3&&b.alternatives[0].compound===b.target&&
+ Number.isFinite(b.bestVsRunnerUpSeconds)&&b.bestVsRunnerUpSeconds>=0&&
+ Number.isFinite(b.forecast?.lapSeconds)&&Number.isFinite(b.forecast?.stayLossSeconds))),
+ 'Missing decision-time tyre alternatives or mislabeled actual gain');

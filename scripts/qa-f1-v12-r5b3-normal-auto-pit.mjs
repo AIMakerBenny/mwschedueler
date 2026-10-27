@@ -216,6 +216,23 @@ try{
   assert.deepEqual(transitions.map(x=>x.to),['PIT_ENTRY','PIT_LANE','PIT_BOX','PIT_LANE','PIT_EXIT','TRACK'],
    'Unfinished autonomous pit sequence '+request.id);
   assert.equal(byId.get(request.id)?.pits,1,'Auto pit must service exactly once');
+  // Audit the same plan that triggered the autonomous request, not a post-request read.
+  const audit=request.recordedPlan;
+  assert.equal(audit?.benefitKind,'MODEL_ESTIMATE_NOT_OBSERVED_GAIN','Expected benefit mislabeled as observed gain');
+  assert.equal(audit?.fromCompound,request.from,'Compound does not match decision snapshot');
+  assert.equal(audit?.compound,request.to,'Selected target does not match recorded decision');
+  assert(Number.isFinite(audit?.remainingLaps)&&Number.isFinite(audit?.pitLossSeconds));
+  assert(Number.isFinite(audit?.forecast?.lapSeconds)&&Number.isFinite(audit?.forecast?.observedWearPerLap));
+  assert(Number.isFinite(audit?.forecast?.stayLossSeconds));
+  assert.equal(audit?.candidates?.length,3,'Missing decision-time SOFT/MEDIUM/HARD forecasts');
+  assert.deepEqual([...audit.candidates.map(c=>c.compound)].sort(),['HARD','MEDIUM','SOFT']);
+  assert(audit.candidates.every(c=>Number.isFinite(c.benefit)&&
+    Number.isFinite(c.projectedFinishWear)&&c.projectedFinishWear>=0&&c.projectedFinishWear<=1),
+    'Nonphysical candidate forecast');
+  assert(audit.candidates.every((c,i)=>i===0||audit.candidates[i-1].benefit>=c.benefit),
+    'Candidate alternatives are not sorted by projected time advantage');
+  assert.equal(audit.candidates[0].compound,request.to,'Chosen tyre was not the forecast leader');
+  assert(Math.abs(audit.candidates[0].benefit-audit.benefit)<1e-8,'Chosen benefit differs from top candidate');
   const service=transitions.find(x=>x.from==='PIT_BOX'&&x.to==='PIT_LANE');
   assert.equal(service?.compound,request.to,'Tyre change did not match autonomous pit selection');
  }
