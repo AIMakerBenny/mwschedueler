@@ -97,13 +97,51 @@ const benefitStats=predicted.length?{min:Math.min(...predicted.map(r=>r.benefitS
 if(rate>.85)warnings.push('HIGH_AUTO_PIT_RATE_GREATER_THAN_85_PERCENT');
 if(benefitStats&&benefitStats.max>90)warnings.push('FORECAST_BENEFIT_GREATER_THAN_90_SECONDS_CHECK_MODEL_CALIBRATION');
 if(aggregated.some(r=>r.pitRequests===0))warnings.push('NO_AUTONOMOUS_STOPS_ON_SOME_SCENARIOS');
+// R5-b7: observational evidence for every real completed Chromium race.
+// Neither the policy nor the physics is altered. Selected candidates were
+// captured at the original autonomous request boundary.
+const median=values=>{
+ if(!values.length)return null;
+ const ordered=[...values].sort((a,b)=>a-b);
+ const middle=Math.floor(ordered.length/2);
+ return ordered.length%2?ordered[middle]:(ordered[middle-1]+ordered[middle])/2;
+};
+const compoundAudit=aggregated.map(r=>{
+ const original=JSON.parse(fs.readFileSync(r.sourceFile,'utf8'));
+ const options=r.pitPlanBenefits;
+ const margins=options.map(p=>p.bestVsRunnerUpSeconds);
+ const predicted=options.map(p=>p.benefitSeconds);
+ const noStopDrifts=original.finishedRows.filter(v=>v.pits===0&&v.lapTimesMs?.length===10).map(v=>{
+   const early=median(v.lapTimesMs.slice(1,4));
+   const late=median(v.lapTimesMs.slice(7,10));
+   return {id:v.id,earlyMedianSeconds:early/1000,lateMedianSeconds:late/1000,
+     lateMinusEarlySeconds:(late-early)/1000,compound:r.compounds[v.compound]?v.compound:null};
+ });
+ return {track:r.track,seed:r.seed,drivers:r.entrants,stops:options.length,
+   chosenCompounds:Object.fromEntries(['SOFT','MEDIUM','HARD'].map(name=>[name,options.filter(p=>p.target===name).length])),
+   predictedBenefitSeconds:{median:median(predicted),max:predicted.length?Math.max(...predicted):null},
+   topVsRunnerUpSeconds:{median:median(margins),min:margins.length?Math.min(...margins):null,
+     nearTieUnderOneSecond:margins.filter(x=>x<1).length},
+   predictedFinishWearByChosenTyre:options.map(p=>({id:p.id,
+     chosen:p.target,finishWear:p.alternatives[0].projectedFinishWear,
+     referenceLapSeconds:p.forecast.lapSeconds,
+     forecastStayLossSeconds:p.forecast.stayLossSeconds})),
+   noPitDriverLateVsEarlyLapSeconds:{count:noStopDrifts.length,
+     median:median(noStopDrifts.map(v=>v.lateMinusEarlySeconds)),
+     samples:noStopDrifts},
+   interpretation:'Recorded decisions and lap changes are observational. No matched no-pit counterfactual; forecast benefit is not measured savings.'};
+});
+if(compoundAudit.some(r=>r.topVsRunnerUpSeconds.nearTieUnderOneSecond>0))
+ warnings.push('NEAR_TIED_COMPOUND_FORECAST_UNDER_ONE_SECOND_OBSERVED');
+if(compoundAudit.some(r=>r.predictedBenefitSeconds.max>30))
+ warnings.push('LARGE_FORECAST_BENEFIT_NOT_CAUSALLY_CALIBRATED');
 const summary={version:'v1.2-R5-b5',status:failures.length?'FAIL':'PASS',scope:
  'Three authentic SVG circuits, two fixed setup RNG seeds each, 12 drivers and NORMAL 10 laps; no manual pits or forced outcomes',
  runCount:aggregated.length,driversObserved:totalStarts,tracks:[...new Set(aggregated.map(x=>x.track))],
  seeds:[1,2],totalAutoStops:totalStops,autoPitRate:rate,benefitStats,
  passCount:aggregated.reduce((sum,x)=>sum+x.confirmedPasses,0),
  totalRealRaceSimSeconds:aggregated.reduce((sum,x)=>sum+x.simulatedSeconds,0),
- scenarios:aggregated,warnings,failures,
+ compoundAudit,scenarios:aggregated,warnings,failures,
  inferenceLimit:'Observational finish positions and pit decisions cannot identify the causal time gain from pitting. Predicted benefit is a model output, NOT measured lap-time gain. Counterfactual paired testing remains necessary.'
 };
 fs.writeFileSync(summaryPath,JSON.stringify(summary,null,2));
@@ -118,6 +156,11 @@ assert.equal(totalStarts,72);
 assert(aggregated.every(row=>row.entrants===12&&row.laps===10&&row.physicsFailures===0&&
  row.state==='FINISHING'&&row.completedPitStops===row.pitRequests&&row.firstFinishSeconds>0));
 assert(aggregated.every(row=>row.pitPlanBenefits.every(b=>b.wear>.60&&b.remainingLaps>=1.1&&b.benefitSeconds>1.5)));
+assert.equal(compoundAudit.length,6,'Missing completed Chromium compound audits');
+assert(compoundAudit.every(a=>a.drivers===12&&a.stops===Object.values(a.chosenCompounds).reduce((s,v)=>s+v,0)));
+assert(compoundAudit.every(a=>a.noPitDriverLateVsEarlyLapSeconds.count===a.drivers-a.stops),
+ 'Missing pit-free reference laps');
+assert(compoundAudit.every(a=>a.stops===0||Number.isFinite(a.topVsRunnerUpSeconds.median)));
 assert(aggregated.every(row=>row.pitPlanBenefits.every(b=>b.benefitKind==='MODEL_ESTIMATE_NOT_OBSERVED_GAIN'&&
  b.observedBenefitSeconds===null&&b.alternatives?.length===3&&b.alternatives[0].compound===b.target&&
  Number.isFinite(b.bestVsRunnerUpSeconds)&&b.bestVsRunnerUpSeconds>=0&&
