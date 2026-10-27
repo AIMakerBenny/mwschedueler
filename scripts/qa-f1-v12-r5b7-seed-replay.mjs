@@ -65,8 +65,18 @@ try{
      'Seeded startup mismatch '+JSON.stringify(initial));
     await page.waitForFunction(()=>window.mwsF1GetScreenStateV185()==='GRID');
     assert.equal(await page.evaluate(()=>window.mwsF1WaitGridRevealV273(20000)),true);
-    await page.locator('#f1RacingGridStartRecoveryM').click();
-    await page.waitForFunction(()=>window.mwsF1GetScreenStateV185()==='RACE');
+    // Dispatch the real GRID button synchronously and stop the auto RAF in
+    // the SAME browser task. Playwright locator.click awaited the next animation
+    // frame and created a nondeterministic 300-400ms unseeded simulation preroll.
+    const startClock=await page.evaluate(()=>{
+     const button=document.getElementById('f1RacingGridStartRecoveryM');
+     if(!button)throw Error('Missing official start button');
+     button.click();
+     window.mwsF1PauseRaceMotionV189(false);
+     return {state:window.mwsF1GetScreenStateV185(),ms:window.mwsF1GetSimulationClockV192().simTimeMs};
+    });
+    assert.equal(startClock.state,'RACE');
+    assert.equal(startClock.ms,0,'Race advanced before deterministic QA integrator');
     const trace=await page.evaluate((captures)=>{
      window.mwsF1PauseRaceMotionV189(false); // Same RAF pause as existing full race QA.
      const vehicles=window.mwsF1ComputeRaceStandingsV191().map(r=>r.vehicle);

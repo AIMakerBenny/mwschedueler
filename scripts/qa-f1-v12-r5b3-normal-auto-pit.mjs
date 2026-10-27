@@ -66,8 +66,18 @@ try{
  assert.deepEqual({track:initial.track,laps:initial.laps,mode:initial.mode},{track:trackId,laps:10,mode:'NORMAL'});
  await page.waitForFunction(()=>window.mwsF1GetScreenStateV185()==='GRID');
  assert.equal(await page.evaluate(()=>window.mwsF1WaitGridRevealV273(20000)),true);
- await page.locator('#f1RacingGridStartRecoveryM').click();
- await page.waitForFunction(()=>window.mwsF1GetScreenStateV185()==='RACE');
+ // Begin the genuine GRID race in one JS task and disable only RAF before
+ // its first callback. A separate Playwright click/wait previously allowed
+ // 300-400ms of scheduler-dependent pre-roll despite a fixed setup seed.
+ const startClock=await page.evaluate(()=>{
+  const button=document.getElementById('f1RacingGridStartRecoveryM');
+  if(!button)throw Error('Missing official start button');
+  button.click();
+  window.mwsF1PauseRaceMotionV189(false);
+  return {state:window.mwsF1GetScreenStateV185(),ms:window.mwsF1GetSimulationClockV192().simTimeMs};
+ });
+ assert.equal(startClock.state,'RACE');
+ assert.equal(startClock.ms,0,'Race advanced before 20ms QA stepping');
  const start=await page.evaluate(()=>{
   window.mwsF1PauseRaceMotionV189(false); // disables only RAF; public 20ms integrator is unchanged
   const vehicles=window.mwsF1ComputeRaceStandingsV191().map(r=>r.vehicle);
