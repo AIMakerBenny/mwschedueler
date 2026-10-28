@@ -171,3 +171,34 @@ jobs:
           name: f1-v12-r5b8-paired-pit
           path: artifacts/f1-v12-r5b8-paired-pit.json
           if-no-files-found: warn
+
+  # Focused REAL Royal Street seed 1 replay: preserving rejected physical steps
+  # instead of a 360-second loop that previously hid the collision details.
+  royal-street-contact-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - name: Checkout Royal Street QA
+        uses: actions/checkout@v4
+      - name: Setup Node 22 for Royal Street QA
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium for Royal Street QA
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: R5-b8 Royal Street first physical rejection
+        env:
+          MWS_R5B3_TRACK: royal-street-circuit-v1
+          MWS_R5B3_SEED: '1'
+          MWS_R5B3_PORT: '8876'
+          MWS_R5B3_OUTPUT: artifacts/f1-v12-r5b8-royal-contact.json
+        run: node scripts/qa-f1-v12-r5b3-normal-auto-pit.mjs
+      - name: Upload Royal Street first-contact evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-v12-r5b8-royal-contact
+          path: artifacts/f1-v12-r5b8-royal-contact.json
+          if-no-files-found: warn

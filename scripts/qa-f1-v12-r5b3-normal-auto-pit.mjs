@@ -92,7 +92,7 @@ try{
    ticks:0,startingCompounds,events:[],requests:[],strategySamples:[],pitTransitions:[],
    lastPit:new Map(vehicles.map(v=>[String(v.id),String(v.pitState||'TRACK')])),
    everRequested:new Set(),finishEvents:[],finished:new Set(),continuityErrors:[],
-   initialOrder:vehicles.map(v=>String(v.id)),finishBoundary:null,plannedPitViolations:[]};
+   initialOrder:vehicles.map(v=>String(v.id)),finishBoundary:null,rejectedStep:null,plannedPitViolations:[]};
   return {drivers:vehicles.length,compounds:startingCompounds,screen:window.mwsF1GetScreenStateV185(),
     profile:window.mwsF1QaDriverProfileMarkersV250().allPass};
  });
@@ -141,6 +141,15 @@ try{
        q.continuityErrors.push({id,tick:q.ticks,travel,bound,old:before.progress,newProgress:v.raceProgress});
      }
     }
+    // A rejected physical step must stop this test, rather than repeatedly
+    // invoking a paused engine until the six-minute subprocess timeout.
+    if(!accepted){
+     const p=window.mwsF1UnifiedV11Report();
+     q.rejectedStep={tick:q.ticks,simSeconds:time,clockPaused:window.mwsF1GetSimulationClockV192().paused,
+      collisions:p.collisionStops,invalid:p.invalid?.slice(-2)||[],
+      cars:active.map(v=>({id:String(v.id),progress:v.raceProgress,lane:v.unifiedYV11,
+       speedKph:v.speedKph,pitState:v.pitState,wear:v.tyreWear}))};
+    }
     if(q.ticks%250===0){
      const strategies=window.mwsF1GetPitStrategyStatesV206();
      const leader=active[0],second=active[1],len=window.mwsF1GetActiveRaceSnapshotV187().track.lengthMeters;
@@ -164,9 +173,13 @@ try{
      break;
     }
    }
-   return {tick:q.ticks,state:window.mwsF1GetScreenStateV185(),seconds:seconds()};
+   return {tick:q.ticks,state:window.mwsF1GetScreenStateV185(),seconds:seconds(),rejected:q.rejectedStep};
   },250);
   state=batch.state;ticks=batch.tick;
+  if(batch.rejected){
+   console.error(JSON.stringify({stage:'R5-b3-PHYSICAL_REJECTION',track:trackId,seedId,...batch.rejected}));
+   break;
+  }
   if(ticks%5000===0)console.log(JSON.stringify({stage:'R5-b3-progress',simSeconds:batch.seconds,ticks,state}));
  }
  await page.waitForTimeout(120);
@@ -181,7 +194,7 @@ try{
    state:window.mwsF1GetScreenStateV185(),domScreen:document.getElementById('gameF1Racing')?.dataset.f1Screen,
    initialOrder:q.initialOrder,startingCompounds:q.startingCompounds,
    pitRequests:q.requests,pitTransitions:q.pitTransitions,pitPlanViolations:q.plannedPitViolations,
-   finishBoundary:q.finishBoundary,finishEvents:q.finishEvents,continuityErrors:q.continuityErrors,
+   finishBoundary:q.finishBoundary,rejectedStep:q.rejectedStep,finishEvents:q.finishEvents,continuityErrors:q.continuityErrors,
    samples:q.strategySamples,screenTransitions:transitions,
    finishedRows:result?.rows?.map(r=>({id:r.contactId,position:r.position,gridPosition:r.gridPosition,
     pits:r.pitStopCount,compound:r.tyreCompound,finishMs:r.finishedAtSimMs,lapTimesMs:r.lapTimesMs,bestLapMs:r.bestLapMs})),
@@ -204,6 +217,7 @@ try{
   warning:observation.pitRequests.length?'':'NO_AUTOMATIC_PIT_ON_NORMAL_TEN_LAPS',
   phys:observation.physics.collisionStops,invalid:observation.physics.invalid?.length}));
  assert.deepEqual(pageErrors,[],'LIVE browser JS exceptions');
+ assert.equal(observation.rejectedStep,null,'REAL_PHYSICAL_REJECTION: '+JSON.stringify(observation.rejectedStep));
  assert.equal(observation.state,'FINISHING','Natural NORMAL finish missing or screen reverted');
  assert.equal(observation.domScreen,'FINISHING');
  assert(observation.view.finishingVisible&&observation.view.overlayVisible,'Official finishing view / result overlay must persist');
