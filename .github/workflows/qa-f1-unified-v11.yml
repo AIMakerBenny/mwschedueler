@@ -162,7 +162,7 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright
           npx playwright install --with-deps chromium
-      - name: R5-b8 paired full NORMAL race: natural pit versus no pit
+      - name: "R5-b8 paired full NORMAL race: natural pit versus no pit"
         run: node scripts/qa-f1-v12-r5b8-paired-pit.mjs
       - name: Upload R5-b8 paired race evidence
         if: always()
