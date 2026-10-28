@@ -143,7 +143,9 @@ try{
     }
     // A rejected physical step must stop this test, rather than repeatedly
     // invoking a paused engine until the six-minute subprocess timeout.
-    if(!accepted){
+    // A real physics rejection leaves the RACE screen active; normal finish
+    // transitions to FINISHING and may also return false from the integrator.
+    if(!accepted&&window.mwsF1GetScreenStateV185()!=='FINISHING'){
      const p=window.mwsF1UnifiedV11Report();
      q.rejectedStep={tick:q.ticks,simSeconds:time,clockPaused:window.mwsF1GetSimulationClockV192().paused,
       collisions:p.collisionStops,invalid:p.invalid?.slice(-2)||[],
