@@ -144,3 +144,30 @@ jobs:
             -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             -f description="Verified GitHub Actions full development QA job: $status"
 
+
+  # Parallel independent full-race counterfactual, avoids extending existing 35m CI job.
+  paired-pit-policy-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout paired QA
+        uses: actions/checkout@v4
+      - name: Setup Node 22 for paired QA
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate paired Chromium QA syntax
+        run: node --check scripts/qa-f1-v12-r5b8-paired-pit.mjs
+      - name: Install paired Chromium dependencies
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: R5-b8 paired full NORMAL race: natural pit versus no pit
+        run: node scripts/qa-f1-v12-r5b8-paired-pit.mjs
+      - name: Upload R5-b8 paired race evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-v12-r5b8-paired-pit
+          path: artifacts/f1-v12-r5b8-paired-pit.json
+          if-no-files-found: warn
