@@ -43,13 +43,21 @@ const tangent=Math.atan2(p.ty,p.tx);
 const follower={id:'f',s:s-8,y:-2.518,v:17,ref:{unifiedHeadingV11:tangent-.16}};
 const leader={id:'l',s,y:.244,v:18,ref:{unifiedHeadingV11:tangent}};
 const gap=unifiedGapV11(follower,leader);
+const fastFollower={...follower,v:48.007252530524006};
+const slowLeader={...leader,v:16.666666666666668};
 return {gap,offset:Math.abs(follower.y-leader.y),
  physicalWidth:unifiedTrafficCorridorWidthV12(follower,leader,gap),
- farWidth:unifiedTrafficCorridorWidthV12(follower,leader,30)};
+ farWidth:unifiedTrafficCorridorWidthV12(follower,leader,30),
+ fastClosing65m:unifiedTrafficCorridorWidthV12(fastFollower,slowLeader,65),
+ fastClosing120m:unifiedTrafficCorridorWidthV12(fastFollower,slowLeader,120)};
 `)();
 assert(yawed.offset>2.2&&yawed.physicalWidth>yawed.offset,
  'Oriented 5.2m physical body not protected above former 2.2m lane cutoff');
 assert.equal(yawed.farWidth,2.2,'Distant racing lanes were unnecessarily constrained');
+assert(yawed.fastClosing65m>yawed.offset,
+ 'Fast closing car approached pit-lane traffic before yaw-aware braking could respond');
+assert.equal(yawed.fastClosing120m,2.2,
+ 'Far-away fast car was prematurely constrained');
 const pure=new Function(setup+engine+String.raw`
 unifiedInitV11();const rows=unifiedSnapshotV11();
 const before=JSON.stringify(raceMotionV189.vehicles),rng=unifiedStateV11.rng;

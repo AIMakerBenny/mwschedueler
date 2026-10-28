@@ -11485,7 +11485,16 @@ function unifiedLateralClearanceV11(row,peer){
 // 2.2m shared-lane cutoff for close traffic. This is an AI braking constraint;
 // it does not displace vehicles or change positions, ranks or lane coordinates.
 function unifiedTrafficCorridorWidthV12(me,peer,gap){
-  if(!(gap>0&&gap<25))return 2.2;
+  if(!(gap>0))return 2.2;
+  // R5-b8: an on-track car at ~48m/s can close on a 16m/s pit-lane
+  // vehicle from >60m away. Switching to true yaw-aware clearance
+  // only inside 25m was later than physically available braking space.
+  // Extend the physical corridor check by attainable stopping distance,
+  // not by absolute lane width or an artificial speed/rank adjustment.
+  const brakingReserve=Math.max(8,UNIFIED_ENGINE_V11.brake*.5);
+  const approachSq=Math.max(0,me.v*me.v-peer.v*peer.v);
+  const lookahead=Math.min(120,Math.max(28,approachSq/(2*brakingReserve)+18));
+  if(gap>=lookahead)return 2.2;
   return Math.max(2.2,Math.min(4.1,unifiedLateralClearanceV11(me,peer)+.35));
 }
 function unifiedMergeTargetV11(row,target,rows){
