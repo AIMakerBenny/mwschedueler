@@ -11481,6 +11481,13 @@ function unifiedLateralClearanceV11(row,peer){
   const other=unifiedWorldPoseV11(peer.s,peer.y,peer.ref.unifiedHeadingV11);
   return unifiedSupportV11(pose,path.nx,path.ny)+unifiedSupportV11(other,path.nx,path.ny);
 }
+// R5-b8: Heading-dependent physical lateral envelopes replace the obsolete
+// 2.2m shared-lane cutoff for close traffic. This is an AI braking constraint;
+// it does not displace vehicles or change positions, ranks or lane coordinates.
+function unifiedTrafficCorridorWidthV12(me,peer,gap){
+  if(!(gap>0&&gap<25))return 2.2;
+  return Math.max(2.2,Math.min(4.1,unifiedLateralClearanceV11(me,peer)+.35));
+}
 function unifiedMergeTargetV11(row,target,rows){
   const blocked=[];
   for(const peer of rows){
@@ -12130,7 +12137,8 @@ function simulateUnifiedRaceStepV11(stepMs){
     for(let j=0;j<rows.length;j++){
       const peer=rows[j],peerCmd=cmds[j];if(i===j||!peerCmd)continue;
       const gap=unifiedGapV11(me,peer),deltaY=Math.abs(cmd.y-peerCmd.y);
-      if(gap<=0||deltaY>4.0)continue;
+      const physicalCorridor=unifiedTrafficCorridorWidthV12(me,peer,gap);
+      if(gap<=0||deltaY>Math.max(2.2,physicalCorridor))continue;
       const maximumDecel=cmd.brakeLimit+cmd.drag;
       const selfDecel=Math.max(.01,Math.min(UNIFIED_ENGINE_V11.brake*cmd.G*.7,cmd.brakeLimit));
       // The peer may recover lateral grip while slowing and then brake harder.
@@ -12146,7 +12154,7 @@ function simulateUnifiedRaceStepV11(stepMs){
       const closing=Math.max(0,me.v-peerCmd.v);
       // Reserve only for an actually close same-corridor follower. Wider
       // overtake lanes and upstream pursuit keep their original dynamics.
-      const responseReserve=gap<14&&deltaY<2.2&&closing>0?
+      const responseReserve=gap<14&&deltaY<physicalCorridor&&closing>0?
         .35+Math.min(2.6,closing*.9+me.v*.018):0;
       const footprint=Math.max(UNIFIED_ENGINE_V11.followBase,unifiedSupportV11(myPose,ax,ay)+unifiedSupportV11(peerPose,ax,ay))+.03+responseReserve;
       // Solve the next-state stopping-distance inequality, including this step's
@@ -12169,7 +12177,7 @@ function simulateUnifiedRaceStepV11(stepMs){
       // corridor. The long-horizon stopping inequality above can otherwise
       // admit 5.49m near-contact at steady high speed and tiny closing rates.
       // The candidate only changes physically reachable braking acceleration.
-      if(gap>0&&gap<footprint+8&&deltaY<2.2){
+      if(gap>0&&gap<footprint+8&&deltaY<physicalCorridor){
         const availableGap=gap+peerCmd.ds-footprint-.25;
         const immediateMaxV=2*availableGap/dt-me.v;
         next=Math.max(physicallyReachable,Math.min(next,immediateMaxV));

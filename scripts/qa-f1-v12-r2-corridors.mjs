@@ -34,6 +34,22 @@ assert.equal(result.narrow.target,null);
 assert(result.attempts>0);
 assert.equal((result.attackEvents.SUCCESS||0)+(result.attackEvents.UNATTRIBUTED_PASS||0),result.passes);
 assert(result.vehicles.every(v=>Number.isFinite(v.s)&&Number.isFinite(v.y)));
+// Oriented physical bodies can overlap at 2.76m lane-center separation.
+// This regression protects the geometric braking corridor without moving cars.
+const yawed=new Function(setup+engine+String.raw`
+unifiedInitV11();
+const s=unifiedStateV11.path.len*.42,p=unifiedPathSampleV11(s);
+const tangent=Math.atan2(p.ty,p.tx);
+const follower={id:'f',s:s-8,y:-2.518,v:17,ref:{unifiedHeadingV11:tangent-.16}};
+const leader={id:'l',s,y:.244,v:18,ref:{unifiedHeadingV11:tangent}};
+const gap=unifiedGapV11(follower,leader);
+return {gap,offset:Math.abs(follower.y-leader.y),
+ physicalWidth:unifiedTrafficCorridorWidthV12(follower,leader,gap),
+ farWidth:unifiedTrafficCorridorWidthV12(follower,leader,30)};
+`)();
+assert(yawed.offset>2.2&&yawed.physicalWidth>yawed.offset,
+ 'Oriented 5.2m physical body not protected above former 2.2m lane cutoff');
+assert.equal(yawed.farWidth,2.2,'Distant racing lanes were unnecessarily constrained');
 const pure=new Function(setup+engine+String.raw`
 unifiedInitV11();const rows=unifiedSnapshotV11();
 const before=JSON.stringify(raceMotionV189.vehicles),rng=unifiedStateV11.rng;
