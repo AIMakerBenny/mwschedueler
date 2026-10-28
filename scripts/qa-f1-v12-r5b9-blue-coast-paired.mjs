@@ -30,7 +30,10 @@ const patch=[
  "      if(!requestPitStopV205(v.id,window.__r5b9Compound,'QA_ONLY_PAIRED_PIT'))",
  "       throw Error('Actual pit lifecycle declined browser-only intervention');",
  "    }",
- "  }"
+ "  }",
+ "  // Test-only untreated control. It must remain no-pit after the real",
+ "  // autonomous planner is recalibrated to choose BOX_NOW.",
+ "  if(String(v.id)===window.__r5b9Target&&window.__r5b9Compound===null&&plan.decision==='BOX_NOW')return;"
 ].join('\n')+'\n';
 const server=createF1PreviewServer();
 await new Promise(resolve=>server.listen(8868,'127.0.0.1',resolve));
@@ -133,7 +136,7 @@ async function oneRace(compound){
   assert.equal(actual.collisionStops,0);
   assert.deepEqual(actual.invalid,[]);
   assert(actual.rows.every(r=>r.finishMs>0&&r.lapTimesMs?.length===10));
-  return {mode:compound||'NATURAL_NO_PIT',initial,...actual};
+  return {mode:compound||'QA_ONLY_NO_PIT_CONTROL',initial,...actual};
  }finally{await page.close();}
 }
 try{
@@ -142,8 +145,9 @@ try{
  const interventions=[];
  for(const compound of ['SOFT','MEDIUM','HARD'])interventions.push(await oneRace(compound));
  const b=baseline.rows.find(v=>v.id===target);
- assert.equal(b?.pits,0,'Baseline target auto-pitted');
- assert.equal(baseline.eligibility?.decision,'GO_LONG','Baseline did not decline pit');
+ assert.equal(b?.pits,0,'Browser-only no-pit control unexpectedly stopped');
+ assert(baseline.eligibility?.wear>.60&&baseline.eligibility?.remainingLaps>=1.1,
+  'No-pit control did not reach a real eligible high-wear decision');
  const comparisons=interventions.map(run=>{
   const v=run.rows.find(v=>v.id===target),event=run.forces[0];
   const cutoff=Math.min(baseline.eligibility.t,run.eligibility?.t||0);
@@ -162,7 +166,7 @@ try{
  });
  result={phase:'R5-b9',status:'DIAGNOSTIC',trackId,seed,target,
   firstEligibleModel:baseline.eligibility,comparisons,baseline,interventions,
-  interpretation:'Matched seed full-race policy experiment; differences include traffic and rival actions. No real-game physics, tyres or autonomous policy modified.'};
+  interpretation:'Browser-only no-pit control vs forced real SOFT/MEDIUM/HARD pit lifecycle. Traffic feedback remains; real engine physics unchanged. Separately calibrated real-game autonomous forecast is measured by its independent full-race QA.'};
  for(const q of comparisons){
   assert(q.gridMatch&&q.tyreMatch&&q.beforeDecisionSamples>=10&&q.firstMismatchTick===null,
    'Pre-intervention mismatch '+q.compound);

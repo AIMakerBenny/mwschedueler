@@ -51,6 +51,19 @@ const test=new Function(setup+engine+`
     v:195/3.6,pit:'TRACK',finished:false},track);
   return {grip,forecast,physicalCornerRatios,referenceLap,rows,hard,late,horizons};
 `)();
+// Straight-only geometry excludes the corner-only time model. The calibrated
+// accepted-lap loss must still capture high-wear traction/braking slowdown.
+const straightCalibration=new Function(setup+engine+`
+unifiedInitV11();
+unifiedStateV11.path.samples.forEach(p=>{p.k=.00000001});
+unifiedPreparePitGripCurveV12(track);
+return [.4,.6,.7,.9,1].map(w=>({wear:w,loss:unifiedPitForecastV12('SOFT',w,0,1,64,track)}));
+`)();
+assert(Math.abs(straightCalibration[0].loss)<1e-6&&Math.abs(straightCalibration[1].loss)<1e-6);
+assert(straightCalibration.every((x,i)=>i===0||x.loss>=straightCalibration[i-1].loss-1e-8));
+assert(straightCalibration[3].loss>12,'High wear must slow a full lap even without curvature');
+assert(Math.abs(straightCalibration[4].loss-32)<1e-5,
+ '100% wear forecast must match the observed 50% extra accepted-lap time');
 assert(test.grip.every((v,i)=>v.factor>=.34&&v.factor<=1&&v.grip>0&&(i===0||v.factor<test.grip[i-1].factor)));
 assert(test.grip[6].factor<test.grip[3].factor*.7,'Worn tyre grip does not physically deteriorate');
 assert(test.forecast.every((x,i)=>Number.isFinite(x)&&(i===0||x>test.forecast[i-1])));

@@ -11853,9 +11853,24 @@ function unifiedPitForecastV12(compound,startWear,wearPerLap,laps,lapSeconds,tra
     const fraction=(i+.5)/segments;
     const projectedWear=unifiedClampV11(startWear+wearPerLap*laps*fraction,0,1);
     const projectedGrip=spec.grip*unifiedWearGripFactorV12(projectedWear);
-    // This is a curvature-limited corner time model, not an assertion that
-    // an entire straight-lap slows down in proportion to 1/sqrt(grip).
-    timeLoss+=lapSeconds*laps/segments*(unifiedPitGripTimeRatioV12(projectedGrip,track)-1);
+    const projectedRatio=unifiedPitGripTimeRatioV12(projectedGrip,track);
+    // R5-b10: two fixed-seed Blue Coast no-pit 10-lap races observed
+    // ~95-99s at 100% wear vs ~63-64s before the 60% threshold.
+    // The geometry-only forecast misses grip-limited acceleration and braking.
+    // Forecast high-wear full-lap loss relative to a healthy tyre grows to
+    // 50% at 100% wear, matching those accepted race laps.
+    // Subtract the geometric component ALREADY counted to avoid double loss.
+    // This calibrates strategy only, never physical grip or car speed.
+    const beyond=unifiedClampV11((projectedWear-.6)/.4,0,1);
+    let missingGripLimitedTime=0;
+    if(beyond>0){
+      const atService=unifiedPitGripTimeRatioV12(
+        spec.grip*unifiedWearGripFactorV12(.6),track);
+      const alreadyGeometric=lapSeconds*(projectedRatio-atService);
+      const observedFullLapLoss=lapSeconds*.50*Math.pow(beyond,1.75);
+      missingGripLimitedTime=Math.max(0,observedFullLapLoss-alreadyGeometric);
+    }
+    timeLoss+=laps/segments*(lapSeconds*(projectedRatio-1)+missingGripLimitedTime);
   }
   return timeLoss;
 }
@@ -11883,7 +11898,8 @@ function unifiedPitPlanV11(row,track){
   return {...base,decision:worthwhile?'BOX_NOW':'GO_LONG',reason:worthwhile?'UNIFIED_V11_TIME_ADVANTAGE':'PIT_VALUE_INSUFFICIENT',
     targetCompound:best.compound,pitLossSeconds:pitLoss,benefit:best.benefit,candidates,
     forecast:{model:'svg-curvature-observed-lap-v12',lapSeconds:baseLap,observedWearPerLap:rate,stayLossSeconds:stayLoss,
-      cornerGripTimeRatioAtCurrentGrip:unifiedPitGripTimeRatioV12(unifiedGripV11(v),track)}};
+      cornerGripTimeRatioAtCurrentGrip:unifiedPitGripTimeRatioV12(unifiedGripV11(v),track),
+      calibration:'R5-b10 observed fixed-seed late-wear laps, not a causal time-saved measurement'}};
 }
 function unifiedPitReadV11(v){
   if(!v)return null;
