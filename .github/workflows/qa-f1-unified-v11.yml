@@ -202,3 +202,36 @@ jobs:
           name: f1-v12-r5b8-royal-contact
           path: artifacts/f1-v12-r5b8-royal-contact.json
           if-no-files-found: warn
+
+  # Blue Coast 10-lap counterfactual; read-only for the committed race engine.
+  blue-coast-pit-counterfactual-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [1, 2]
+    steps:
+      - name: Checkout Blue Coast QA
+        uses: actions/checkout@v4
+      - name: Setup Node 22 for Blue Coast QA
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Blue Coast QA syntax
+        run: node --check scripts/qa-f1-v12-r5b9-blue-coast-paired.mjs
+      - name: Install Chromium for Blue Coast QA
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: "R5-b9 Blue Coast 10-lap: no pit vs SOFT MEDIUM HARD"
+        env:
+          MWS_R5B9_SEED: ${{ matrix.seed }}
+        run: node scripts/qa-f1-v12-r5b9-blue-coast-paired.mjs
+      - name: Upload Blue Coast matched-race data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-v12-r5b9-blue-coast-seed${{ matrix.seed }}
+          path: artifacts/f1-v12-r5b9-blue-coast-seed${{ matrix.seed }}.json
+          if-no-files-found: warn
