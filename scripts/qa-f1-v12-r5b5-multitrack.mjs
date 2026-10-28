@@ -111,6 +111,41 @@ const compoundAudit=aggregated.map(r=>{
  const options=r.pitPlanBenefits;
  const margins=options.map(p=>p.bestVsRunnerUpSeconds);
  const predicted=options.map(p=>p.benefitSeconds);
+ // R5-b7 calibrated evidence: match real per-lap drift to decision-time
+ // pit forecasts only for drivers who actually stayed out. These are
+ // different units/horizons, so we never infer counterfactual time saved.
+ const noPitForecastAudit=original.finishedRows.filter(v=>v.pits===0&&v.lapTimesMs?.length===10).map(v=>{
+  const samples=original.samples.flatMap(sample=>sample.drivers.filter(d=>
+   d.id===v.id&&d.reason==='PIT_VALUE_INSUFFICIENT'&&d.wear>.60&&d.remainingLaps>=1.1&&
+   Number.isFinite(d.bestBenefit)&&Number.isFinite(d.predictedPitLoss)).map(d=>({...d,atSeconds:sample.simSeconds})));
+  const summarize=d=>d?{atSeconds:d.atSeconds,lap:d.lap,wear:d.wear,
+   remainingLaps:d.remainingLaps,predictedNetBenefitSeconds:d.bestBenefit,
+   predictedPitCostSeconds:d.predictedPitLoss,
+   predictedGrossRecoverySeconds:d.bestBenefit+d.predictedPitLoss,
+   proposedCompound:d.target}:null;
+  const early=median(v.lapTimesMs.slice(1,4)),late=median(v.lapTimesMs.slice(7,10));
+  return {id:v.id,startingCompound:original.startingCompounds[v.id],
+   finalWearAtLastSample:original.samples.reduce((last,point)=>{
+    const d=point.drivers.find(d=>d.id===v.id);
+    return d?d.wear:last;
+   },null),
+   firstEligible:summarize(samples[0]),lastEligible:summarize(samples.at(-1)),
+   eligibleSampleCount:samples.length,
+   actualEarlyLapMedianSeconds:early/1000,actualLateLapMedianSeconds:late/1000,
+   actualLateMinusEarlyPerLapSeconds:(late-early)/1000,
+   causalPitBenefitSeconds:null};
+ });
+ const eligible=noPitForecastAudit.filter(v=>v.firstEligible);
+ const noPitComparison={
+  eligibleDrivers:eligible.length,
+  predictedNegativeNetDrivers:eligible.filter(v=>v.firstEligible.predictedNetBenefitSeconds<=0).length,
+  firstForecastMedianNetBenefitSeconds:median(eligible.map(v=>v.firstEligible.predictedNetBenefitSeconds)),
+  firstForecastMedianPitCostSeconds:median(eligible.map(v=>v.firstEligible.predictedPitCostSeconds)),
+  firstForecastMedianGrossRecoverySeconds:median(eligible.map(v=>v.firstEligible.predictedGrossRecoverySeconds)),
+  actualLateMinusEarlyPerLapMedianSeconds:median(eligible.map(v=>v.actualLateMinusEarlyPerLapSeconds)),
+  perDriver:noPitForecastAudit,
+  evidenceLimit:'Observed lap drift is per lap; predicted pit net benefit covers all remaining laps and a modeled pit cost. These are not directly comparable nor causal.'
+ };
  const noStopDrifts=original.finishedRows.filter(v=>v.pits===0&&v.lapTimesMs?.length===10).map(v=>{
    const early=median(v.lapTimesMs.slice(1,4));
    const late=median(v.lapTimesMs.slice(7,10));
@@ -126,6 +161,7 @@ const compoundAudit=aggregated.map(r=>{
      chosen:p.target,finishWear:p.alternatives[0].projectedFinishWear,
      referenceLapSeconds:p.forecast.lapSeconds,
      forecastStayLossSeconds:p.forecast.stayLossSeconds})),
+   noPitHighWearForecastVsActual:noPitComparison,
    noPitDriverLateVsEarlyLapSeconds:{count:noStopDrifts.length,
      median:median(noStopDrifts.map(v=>v.lateMinusEarlySeconds)),
      samples:noStopDrifts},
@@ -135,6 +171,9 @@ if(compoundAudit.some(r=>r.topVsRunnerUpSeconds.nearTieUnderOneSecond>0))
  warnings.push('NEAR_TIED_COMPOUND_FORECAST_UNDER_ONE_SECOND_OBSERVED');
 if(compoundAudit.some(r=>r.predictedBenefitSeconds.max>30))
  warnings.push('LARGE_FORECAST_BENEFIT_NOT_CAUSALLY_CALIBRATED');
+if(compoundAudit.some(a=>a.noPitHighWearForecastVsActual.predictedNegativeNetDrivers>0&&
+ a.noPitHighWearForecastVsActual.actualLateMinusEarlyPerLapMedianSeconds>10))
+ warnings.push('NEGATIVE_PIT_FORECAST_WITH_OBSERVED_LATE_PACE_LOSS_REQUIRES_PAIRED_COUNTERFACTUAL');
 const summary={version:'v1.2-R5-b5',status:failures.length?'FAIL':'PASS',scope:
  'Three authentic SVG circuits, two fixed setup RNG seeds each, 12 drivers and NORMAL 10 laps; no manual pits or forced outcomes',
  runCount:aggregated.length,driversObserved:totalStarts,tracks:[...new Set(aggregated.map(x=>x.track))],
@@ -161,6 +200,19 @@ assert(compoundAudit.every(a=>a.drivers===12&&a.stops===Object.values(a.chosenCo
 assert(compoundAudit.every(a=>a.noPitDriverLateVsEarlyLapSeconds.count===a.drivers-a.stops),
  'Missing pit-free reference laps');
 assert(compoundAudit.every(a=>a.stops===0||Number.isFinite(a.topVsRunnerUpSeconds.median)));
+assert(compoundAudit.every(a=>{
+ const q=a.noPitHighWearForecastVsActual;
+ return q.perDriver.length===a.drivers-a.stops&&q.eligibleDrivers<=q.perDriver.length&&
+ q.predictedNegativeNetDrivers<=q.eligibleDrivers&&
+ q.perDriver.every(v=>v.causalPitBenefitSeconds===null&&
+  Number.isFinite(v.actualLateMinusEarlyPerLapSeconds)&&
+  (v.firstEligible===null||
+   (v.firstEligible.wear>.60&&v.firstEligible.remainingLaps>=1.1&&
+    Number.isFinite(v.firstEligible.predictedGrossRecoverySeconds)&&
+    Math.abs(v.firstEligible.predictedNetBenefitSeconds+
+      v.firstEligible.predictedPitCostSeconds-v.firstEligible.predictedGrossRecoverySeconds)<1e-8)));
+}), 'Incomplete or incorrectly labeled pit-free model-vs-observed audit');
+
 assert(aggregated.every(row=>row.pitPlanBenefits.every(b=>b.benefitKind==='MODEL_ESTIMATE_NOT_OBSERVED_GAIN'&&
  b.observedBenefitSeconds===null&&b.alternatives?.length===3&&b.alternatives[0].compound===b.target&&
  Number.isFinite(b.bestVsRunnerUpSeconds)&&b.bestVsRunnerUpSeconds>=0&&
