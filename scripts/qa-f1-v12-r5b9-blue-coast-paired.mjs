@@ -31,9 +31,10 @@ const patch=[
  "       throw Error('Actual pit lifecycle declined browser-only intervention');",
  "    }",
  "  }",
- "  // Test-only untreated control. It must remain no-pit after the real",
- "  // autonomous planner is recalibrated to choose BOX_NOW.",
- "  if(String(v.id)===window.__r5b9Target&&window.__r5b9Compound===null&&plan.decision==='BOX_NOW')return;"
+ "  // Only QA: avoid the REAL autonomous request overriding MEDIUM/HARD",
+ "  // with the planner default SOFT in the SAME accepted physics step.",
+ "  // Null compound is the intentionally no-pit control.",
+ "  if(String(v.id)===window.__r5b9Target)return;"
 ].join('\n')+'\n';
 const server=createF1PreviewServer();
 await new Promise(resolve=>server.listen(8868,'127.0.0.1',resolve));
@@ -109,11 +110,13 @@ async function oneRace(compound){
      for(const v of vehicles)if(v.pitRequested&&!q.requested.has(String(v.id))){
       q.requested.add(String(v.id));
       const p=window.mwsF1UnifiedV11Report().pit.find(p=>p.id===String(v.id))||null;
-      q.requests.push({id:String(v.id),t:window.mwsF1GetSimulationClockV192().simTimeMs/1000,plan:p});
+      q.requests.push({id:String(v.id),t:window.mwsF1GetSimulationClockV192().simTimeMs/1000,
+       targetCompound:v.pitTargetCompound,requestReason:v.pitRequestReason,plan:p});
      }
      if(q.ticks%250===0)q.samples.push({tick:q.ticks,
       simSeconds:window.mwsF1GetSimulationClockV192().simTimeMs/1000,
-      cars:vehicles.map(v=>({id:String(v.id),lap:v.raceProgress,wear:v.tyreWear,speedKph:v.speedKph}))
+      cars:vehicles.map(v=>({id:String(v.id),lap:v.raceProgress,wear:v.tyreWear,speedKph:v.speedKph,
+       compound:v.tyreCompound,pitState:v.pitState,pitTargetCompound:v.pitTargetCompound}))
        .sort((a,b)=>a.id.localeCompare(b.id))});
      if(!ok||window.mwsF1GetScreenStateV185()!=='RACE')break;
     }
@@ -123,10 +126,13 @@ async function oneRace(compound){
   }
   const actual=await page.evaluate(()=>{
    const q=window.__r5b9Record,r=window.mwsF1GetRaceResultRecoveryG(),
-    physics=window.mwsF1UnifiedV11Report();
+    physics=window.mwsF1UnifiedV11Report(),
+    tyres=new Map(window.mwsF1GetPitStatesV205().map(t=>[String(t.id),t]));
    return {screen:window.mwsF1GetScreenStateV185(),
     requests:q.requests,samples:q.samples,eligibility:window.__r5b9Eligibility,forces:window.__r5b9Forces||[],
     rows:(r?.rows||[]).map(v=>({id:v.contactId,rank:v.position,pits:v.pitStopCount,
+     installedCompound:tyres.get(String(v.contactId))?.compound,
+     finalPitTarget:tyres.get(String(v.contactId))?.targetCompound,
      finishMs:v.finishedAtSimMs,lapTimesMs:v.lapTimesMs})),
     invalid:physics.invalid,collisionStops:physics.collisionStops};
   });
@@ -158,6 +164,8 @@ try{
    beforeDecisionSamples:prior.length,firstMismatchTick:mismatch?.tick??null,
    decisionDeltaSeconds:Math.abs(baseline.eligibility.t-run.eligibility.t),
    interventionCount:run.forces.length,completedPitStops:v?.pits,
+   actualRequestedCompound:run.requests.find(x=>x.id===target)?.targetCompound??null,
+   finalInstalledCompound:v?.installedCompound??null,finalPitTarget:v?.finalPitTarget??null,
    modelBenefitSeconds:event?.modelBenefitSeconds??null,
    pairedFinishBenefitSeconds:(b.finishMs-v?.finishMs)/1000,
    baselineRank:b.rank,interventionRank:v?.rank,
@@ -172,9 +180,15 @@ try{
    'Pre-intervention mismatch '+q.compound);
   assert(q.decisionDeltaSeconds<=.04&&q.interventionCount===1&&q.completedPitStops===1,
    'Full real pit lifecycle or decision timing mismatch '+q.compound);
+  assert(q.actualRequestedCompound===q.compound&&q.finalPitTarget===q.compound&&
+   q.finalInstalledCompound===q.compound,
+   'TEST INVALID: pit selection was overwritten or wrong compound fitted '+JSON.stringify(q));
   assert(Number.isFinite(q.modelBenefitSeconds)&&Number.isFinite(q.pairedFinishBenefitSeconds),
    'Missing paired cost/forecast '+q.compound);
  }
+ // Compare actual completed races, never nominal requested compound labels.
+ assert(new Set(comparisons.map(x=>x.interventionFinishSeconds.toFixed(4))).size>=2,
+  'TEST INVALID: three compounds gave identical finish times');
  result.status='PASS';
 }catch(error){result.status='FAIL';result.error=String(error?.stack||error)}
 finally{
@@ -182,8 +196,10 @@ finally{
  await new Promise(resolve=>server.close(resolve));
  fs.mkdirSync('artifacts',{recursive:true});
  fs.writeFileSync(output,JSON.stringify(result,null,2));
- console.log(JSON.stringify({phase:'R5-b9',status:result.status,forecast:result.forecastedBenefitSeconds,
-  paired:result.pairedSimulatorBenefitSeconds,matchedSamples:result.matchedPreDecisionSamples,
-  mismatch:result.firstMismatchTick,error:result.error||null,artifact:output}));
+ console.log(JSON.stringify({phase:'R5-b9',seed,status:result.status,
+  comparisons:result.comparisons?.map(x=>({compound:x.compound,
+   fitted:x.finalInstalledCompound,forecast:x.modelBenefitSeconds,
+   observed:x.pairedFinishBenefitSeconds,rank:x.interventionRank})),
+  error:result.error||null,artifact:output}));
 }
 assert.equal(result.status,'PASS',result.error||'Paired Chromium comparison failed');
