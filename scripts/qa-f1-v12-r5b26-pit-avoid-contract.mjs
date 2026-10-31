@@ -40,6 +40,28 @@ assert(target.target<0,'Expected a true separate real steering target from pit y
 assert(Math.abs(target.target-good.peer.y)>=2.7+.45,
  'Selected lateral path must clear the real physical body reserve');
 assert.deepEqual(good,orig,'The AI planner must be read-only until physics accepts a command');
+// R5-b28: the fixed-seed Driver 9 missed its lateral escape because
+// Driver 0 had not transitioned from TRACK to PIT_LANE when braking began.
+const warned=fixture(230);
+warned.peer.pit='TRACK';
+warned.peer.ref={pitRequested:true};
+warned.peer.y=2.55;
+warned.me.y=3.33;
+const beforeWarned=structuredClone(warned);
+const warning=plan(warned.me,[warned.me,warned.peer],14);
+assert(warning&&warning.peer==='pit-0'&&warning.target<0,
+ 'A requested pit stop 230m ahead must enable early physical escape steering');
+assert.deepEqual(warned,beforeWarned,'Advance-warning AI may not warp physical state');
+const notRequested=fixture(230);
+notRequested.peer.pit='TRACK';
+notRequested.peer.ref={pitRequested:false};
+assert.equal(plan(notRequested.me,[notRequested.me,notRequested.peer],14),null,
+ 'Do not swerve early around an ordinary TRACK vehicle');
+const closePending=fixture(30);
+closePending.peer.pit='TRACK';
+closePending.peer.ref={pitRequested:true};
+assert.equal(plan(closePending.me,[closePending.me,closePending.peer],14),null,
+ 'Even with advance pit knowledge a physically late lane jump is forbidden');
 const late=fixture(30);
 assert.equal(plan(late.me,[late.me,late.peer],14),null,
  'Unsafe last-moment lane jump must leave original braking in control');
@@ -63,7 +85,9 @@ held.vehicle.unifiedPitAvoidTargetV12=target.target;
 assert.equal(plan(held.me,[held.me,held.peer],14)?.target,target.target,
  'Already steering on a physical pit-avoid route should hold its intent');
 console.log(JSON.stringify({phase:'R5-b26',status:'PASS',
- checks:['predictive clearance','physical read-only intent','late braking preserved',
+ checks:['predictive clearance','physical read-only intent',
+ 'pre-entry pit request detected','normal traffic unchanged','late pit-request merge rejected',
+ 'late braking preserved',
  'rear pit excluded','separated lane unaffected','pit entrants unchanged',
  'blocked merge rejected','ongoing physical steering preserved',
  'swept collision validation retained']}));
