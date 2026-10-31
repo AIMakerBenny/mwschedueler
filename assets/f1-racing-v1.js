@@ -12184,6 +12184,24 @@ function unifiedSpecialTickV11(rows,dt,now){
  st.events++;st.chains+=queue.length-1;
  unifiedStateV11.telemetry.skills.push({t:now,driver:String(win.p.id),rank:win.index+1,chain:queue.map(x=>String(x.vehicle.id))});
 }
+function unifiedReservationThreatV12(a,b,ca,cb){
+ const initial=a.y-b.y,ending=ca.y-cb.y;
+ if(Math.abs(initial)<.25||Math.abs(initial)>7.5||
+    Math.abs(ending)>=Math.abs(initial))return false;
+ const overlap=unifiedLateralClearanceV11(a,b)+.6;
+ if(Math.min(Math.abs(initial),Math.abs(ending))>overlap)return false;
+ const gap=unifiedGapV11(a,b);
+ const timeToLane=Math.min(4.5,Math.max(.5,
+  Math.max(Math.abs((Number(a.ref.unifiedLaneTargetV11)||a.y)-a.y),
+   Math.abs((Number(b.ref.unifiedLaneTargetV11)||b.y)-b.y))/2.5+.6));
+ const predicted=gap+(b.v-a.v)*timeToLane;
+ const longitudinalReserve=UNIFIED_ENGINE_V11.physicalLength+
+  UNIFIED_ENGINE_V11.clearance+3+Math.max(8,Math.max(a.v,b.v)*.3);
+ // If the sign changes, the cars would exchange longitudinal order during
+ // steering, so do NOT exempt them from the conventional lane reservation.
+ if(!Number.isFinite(predicted)||gap*predicted<=0)return true;
+ return Math.min(Math.abs(gap),Math.abs(predicted))<=longitudinalReserve;
+}
 function simulateUnifiedRaceStepV11(stepMs){
   if(simClockV192.paused||!(stepMs>0)||!unifiedInitV11())return false;
   const track=activeRaceSnapshotV187.track,dt=stepMs/1000,len=unifiedStateV11.path.len,now=simClockV192.simTimeMs/1000;
@@ -12260,6 +12278,10 @@ function simulateUnifiedRaceStepV11(stepMs){
       G,pit,drag,brakeLimit:UNIFIED_ENGINE_V11.brake*(1+.05*unifiedRatingV11(v,'braking'))*G*f*(errorEvent==='LOCKUP'?.55:1),actualBrake:effectiveBrake,reason:'FREE',vPrev:row.v});
     if(pit.stationary){const cmd=cmds[cmds.length-1];Object.assign(cmd,{v:0,ds:0,y:row.y,vy:0,ay:0,acceleration:0,throttle:0,brake:0,actualBrake:0,usedExtraW:0});}
   }
+  // R5-b38: reserve a shared lane only for a physically converging pair.
+  // Prior code reacted to a tiny lateral approach at >60m longitudinal gap
+  // or across several empty lane widths, cancelling a legitimate pit entry.
+  // This is an AI candidate guard, not a collision-solver exemption.
   // Shared lane reservation. Anticipate lateral convergence well before footprint contact.
   // A trajectory is adjusted while still separated; no display-only displacement is used.
   // R5-b37: record which accepted physical candidate was displaced by a
@@ -12270,9 +12292,8 @@ function simulateUnifiedRaceStepV11(stepMs){
     if(!ca||!cb||ca.pit.stationary||cb.pit.stationary)continue;
     const near=Math.abs(unifiedGapV11(a,b))<Math.max(110,Math.abs(a.v-b.v)*2+45);
     if(!near)continue;
-    const delta=a.y-b.y,desiredDelta=ca.y-cb.y;
-    if(Math.abs(delta)<.25||Math.abs(delta)>7.5||Math.abs(desiredDelta)>=Math.abs(delta))continue;
-    const sign=Math.sign(delta),bound=Math.max(0,width/2-2.5);
+    if(!unifiedReservationThreatV12(a,b,ca,cb))continue;
+    const delta=a.y-b.y,sign=Math.sign(delta),bound=Math.max(0,width/2-2.5);
     if((ca.y-a.y)*sign<-.000001){
       const outward=unifiedLateralV11(a,unifiedClampV11(a.y+sign*3.0,-bound,bound),dt,width);
       a.ref.unifiedReservationOverrideV12={peer:b.id,
