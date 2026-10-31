@@ -12192,8 +12192,10 @@ function unifiedReservationThreatV12(a,b,ca,cb){
  if(Math.min(Math.abs(initial),Math.abs(ending))>overlap)return false;
  const gap=unifiedGapV11(a,b);
  const timeToLane=Math.min(4.5,Math.max(.5,
-  Math.max(Math.abs((Number(a.ref.unifiedLaneTargetV11)||a.y)-a.y),
-   Math.abs((Number(b.ref.unifiedLaneTargetV11)||b.y)-b.y))/2.5+.6));
+  Math.max(Math.abs((Number.isFinite(a.ref.unifiedLaneTargetV11)?
+    a.ref.unifiedLaneTargetV11:a.y)-a.y),
+   Math.abs((Number.isFinite(b.ref.unifiedLaneTargetV11)?
+    b.ref.unifiedLaneTargetV11:b.y)-b.y))/2.5+.6));
  const predicted=gap+(b.v-a.v)*timeToLane;
  const longitudinalReserve=UNIFIED_ENGINE_V11.physicalLength+
   UNIFIED_ENGINE_V11.clearance+3+Math.max(8,Math.max(a.v,b.v)*.3);
