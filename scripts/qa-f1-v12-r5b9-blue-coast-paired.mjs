@@ -465,7 +465,22 @@ try{
  });
  const allDriver9=chainFrames.filter(f=>f.cars.some(c=>
   c.id==='r5b3-driver-9'&&c.pitAvoidPeer==='r5b3-driver-0'));
+ // R5-b30: diagnose whether the root Driver 9 now chooses the actual
+ // blocking pit car instead of sitting in a no-motion hold on Driver 1.
+ const driver9PitIntent=chainFrames.flatMap(frame=>frame.cars.filter(c=>
+  c.id==='r5b3-driver-9'&&c.pitAvoidPeer).map(c=>({
+   t:frame.t,pitAvoidPeer:c.pitAvoidPeer,pitAvoidTarget:c.pitAvoidTarget,
+   actualLateralMeters:c.lateralMeters,candidateLateralMeters:c.candidateLateralMeters,
+   toTargetMeters:Math.abs(c.pitAvoidTarget-c.lateralMeters),
+   speedKph:c.speedKph
+  })));
+ const driver9Peers=[...new Set(driver9PitIntent.map(x=>x.pitAvoidPeer))].map(peer=>({
+  peer,frames:driver9PitIntent.filter(x=>x.pitAvoidPeer===peer).length,
+  movingFrames:driver9PitIntent.filter(x=>x.pitAvoidPeer===peer&&x.toTargetMeters>.15).length
+ }));
  const pitAvoidance={
+  driver9Peers,
+  driver9FirstMotion:driver9PitIntent.find(x=>x.toTargetMeters>.15)||null,
   earlyDriver9Frames:earlyDriver9.length,
   firstEarlyDriver9:earlyDriver9.length?{t:earlyDriver9[0].t,
    driver:earlyDriver9[0].cars.find(c=>c.id==='r5b3-driver-9'),
@@ -662,7 +677,9 @@ finally{
    steeringTargetFrames:result.pitAvoidance.steeringTargetFrames,
    earlyDriver9Frames:result.pitAvoidance.earlyDriver9Frames,
    allDriver9Frames:result.pitAvoidance.allDriver9Frames,
-   firstEarlyDriver9:result.pitAvoidance.firstEarlyDriver9},
+   firstEarlyDriver9:result.pitAvoidance.firstEarlyDriver9,
+   driver9Peers:result.pitAvoidance.driver9Peers,
+   driver9FirstMotion:result.pitAvoidance.driver9FirstMotion},
   pairedResiduals:result.comparisons?.map(x=>({compound:x.compound,
    residual:x.signedModelResidualSeconds,
    grossRecovery:x.grossRecoveryLapSeconds,
