@@ -93,7 +93,8 @@ async function oneRace(compound){
     if(!window.mwsF1SetVehicleTyreCompoundV203(v.id,c))throw Error('Starting tyre fixture failed');
     tyres[String(v.id)]=c;
    }
-   window.__r5b9Record={ticks:0,requested:new Set(),requests:[],samples:[]};
+   window.__r5b9Record={ticks:0,requested:new Set(),requests:[],samples:[],
+    targetProgressTimes:[],targetPitEvents:[],targetLastState:'TRACK'};
    return {state:window.mwsF1GetScreenStateV185(),
     ms:window.mwsF1GetSimulationClockV192().simTimeMs,
     grid:cars.map(v=>String(v.id)),tyres};
@@ -107,6 +108,17 @@ async function oneRace(compound){
     for(let i=0;i<size;i++){
      const ok=window.mwsF1SimulateRaceStepV192(20);q.ticks++;
      const vehicles=window.mwsF1ComputeRaceStandingsV191().map(r=>r.vehicle);
+     const observed=vehicles.find(v=>String(v.id)==='r5b3-driver-3');
+     if(!observed)throw Error('Missing experiment vehicle');
+     const t=window.mwsF1GetSimulationClockV192().simTimeMs/1000;
+     const p=Number(observed.raceProgress),phase=String(observed.pitState||'TRACK');
+     if(q.ticks===1||q.ticks%10===0||phase!==q.targetLastState)
+      q.targetProgressTimes.push([p,t]);
+     if(phase!==q.targetLastState){
+      q.targetPitEvents.push({from:q.targetLastState,to:phase,seconds:t,
+       raceProgress:p,compound:observed.tyreCompound});
+      q.targetLastState=phase;
+     }
      for(const v of vehicles)if(v.pitRequested&&!q.requested.has(String(v.id))){
       q.requested.add(String(v.id));
       const p=window.mwsF1UnifiedV11Report().pit.find(p=>p.id===String(v.id))||null;
@@ -136,6 +148,7 @@ async function oneRace(compound){
    }));
    return {screen:window.mwsF1GetScreenStateV185(),incidentTotals,
     requests:q.requests,samples:q.samples,eligibility:window.__r5b9Eligibility,forces:window.__r5b9Forces||[],
+    targetProgressTimes:q.targetProgressTimes,targetPitEvents:q.targetPitEvents,
     rows:(r?.rows||[]).map(v=>({id:v.contactId,rank:v.position,pits:v.pitStopCount,
      installedCompound:tyres.get(String(v.contactId))?.compound,
      finalPitTarget:tyres.get(String(v.contactId))?.targetCompound,
@@ -160,6 +173,15 @@ try{
  assert.equal(b?.pits,0,'Browser-only no-pit control unexpectedly stopped');
  assert(baseline.eligibility?.wear>.60&&baseline.eligibility?.remainingLaps>=1.1,
   'No-pit control did not reach a real eligible high-wear decision');
+ const interpolate=(samples,progress)=>{
+  if(!Number.isFinite(progress))return null;
+  for(let i=1;i<samples.length;i++){
+   const [a,t0]=samples[i-1],[b,t1]=samples[i];
+   if(b>a&&a<=progress&&progress<=b)
+    return t0+(progress-a)*(t1-t0)/(b-a);
+  }
+  return null;
+ };
  const comparisons=interventions.map(run=>{
   const v=run.rows.find(v=>v.id===target),event=run.forces[0];
   const cutoff=Math.min(baseline.eligibility.t,run.eligibility?.t||0);
@@ -169,6 +191,16 @@ try{
   const incidentKeys=['lockupCount','understeerCount','oversteerCount'];
   const noPitIncidents=baseline.incidentTotals.find(x=>x.id===target);
   const pitIncidents=run.incidentTotals.find(x=>x.id===target);
+  const entered=run.targetPitEvents.find(e=>e.from==='TRACK'&&
+   (e.to==='PIT_ENTRY'||e.to==='PIT_LANE'));
+  const rejoined=run.targetPitEvents.find(e=>e.from==='PIT_EXIT'&&e.to==='TRACK');
+  const atRequest=interpolate(baseline.targetProgressTimes,run.eligibility?.lap);
+  const atRejoin=interpolate(baseline.targetProgressTimes,rejoined?.raceProgress);
+  const driverElapsed=rejoined?rejoined.seconds-run.eligibility.t:null;
+  const baselineElapsed=Number.isFinite(atRequest)&&Number.isFinite(atRejoin)?
+   atRejoin-atRequest:null;
+  const intervalOverhead=Number.isFinite(driverElapsed)&&Number.isFinite(baselineElapsed)?
+   driverElapsed-baselineElapsed:null;
   return {compound:run.mode,gridMatch:JSON.stringify(baseline.initial.grid)===JSON.stringify(run.initial.grid),
    tyreMatch:JSON.stringify(baseline.initial.tyres)===JSON.stringify(run.initial.tyres),
    beforeDecisionSamples:prior.length,firstMismatchTick:mismatch?.tick??null,
@@ -189,7 +221,15 @@ try{
    signedModelResidualSeconds:(b.finishMs-v.finishMs)/1000-(event?.modelBenefitSeconds??0),
    incidentTotals:{noPit:noPitIncidents,pit:pitIncidents,
     noPitMinusPit:Object.fromEntries(incidentKeys.map(key=>
-     [key,(noPitIncidents?.[key]??0)-(pitIncidents?.[key]??0)]))}};
+     [key,(noPitIncidents?.[key]??0)-(pitIncidents?.[key]??0)]))},
+   pitInterval:{entered:entered||null,rejoined:rejoined||null,
+    pitDriverElapsedSeconds:driverElapsed,
+    noPitSameDistanceSeconds:baselineElapsed,
+    matchedDistanceOverheadSeconds:intervalOverhead,
+    modelPitCostSeconds:baseline.eligibility?.pitLossSeconds??null,
+    observedMinusModelCostSeconds:Number.isFinite(intervalOverhead)?
+     intervalOverhead-baseline.eligibility.pitLossSeconds:null,
+    caveat:'Matched progress interval includes traffic and fresh-tyre recovery; not a pure pit-service cost'}};
  });
  result={phase:'R5-b9',status:'DIAGNOSTIC',trackId,seed,target,
   firstEligibleModel:baseline.eligibility,comparisons,baseline,interventions,
@@ -213,6 +253,10 @@ try{
   assert(q.incidentTotals.noPit&&q.incidentTotals.pit&&
    Object.values(q.incidentTotals.noPitMinusPit).every(Number.isFinite),
    'Missing actual on-vehicle incident evidence '+q.compound);
+  assert(q.pitInterval.entered&&q.pitInterval.rejoined&&
+   Number.isFinite(q.pitInterval.matchedDistanceOverheadSeconds)&&
+   Number.isFinite(q.pitInterval.modelPitCostSeconds),
+   'Missing observed matched-distance pit time '+q.compound);
  }
  // Compare actual completed races, never nominal requested compound labels.
  assert(new Set(comparisons.map(x=>x.interventionFinishSeconds.toFixed(4))).size>=2,
@@ -232,7 +276,9 @@ finally{
    residual:x.signedModelResidualSeconds,
    grossRecovery:x.grossRecoveryLapSeconds,
    pitCost:x.grossPitCostLapSeconds,
-   incidents:x.incidentTotals.noPitMinusPit})),
+   incidents:x.incidentTotals.noPitMinusPit,
+   pitSegment:x.pitInterval.matchedDistanceOverheadSeconds,
+   predictedPitCost:x.pitInterval.modelPitCostSeconds})),
   error:result.error||null,artifact:output}));
 }
 assert.equal(result.status,'PASS',result.error||'Paired Chromium comparison failed');
