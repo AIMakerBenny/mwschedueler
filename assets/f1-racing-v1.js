@@ -11660,6 +11660,9 @@ function unifiedPitAvoidanceV12(row,rows,width){
 function unifiedChooseLaneV11(row,rows,now,width){
  const v=row.ref,allowed=Math.max(0,width/2-1.5-UNIFIED_ENGINE_V11.physicalWidth/2);
  const ideal=unifiedIdealLaneV11(row,width);v.unifiedIdealLaneV11=ideal;
+ // R5-b36: read-only reporting of the last AI advisory pit-lane choice.
+ // The chassis still moves only through unifiedLateralV11 and the swept solver.
+ v.unifiedPitPartialV12=null;
  const pitAvoid=unifiedPitAvoidanceV12(row,rows,width);
  if(pitAvoid){
   v.unifiedPitAvoidPeerV12=pitAvoid.peer;
@@ -11701,6 +11704,10 @@ function unifiedChooseLaneV11(row,rows,now,width){
   unifiedMergeTargetV11(row,target,rows);
  const blocked=[...new Set([...merge.blocked,...(state==='EXIT_DUEL'?corridor?.blocked||[]:[])])].sort();
  target=merge.target;v.unifiedMergeBlockedV11=blocked;
+ if(state==='PIT'&&merge.partial)v.unifiedPitPartialV12={
+  partialTarget:merge.target,fullTarget:merge.requestedTarget,
+  fullTargetBlockedBy:merge.fullTargetBlockedBy?.slice()||[],
+  startLateral:row.y};
  if(merge.blocked.length&&state!=='PIT')state='EXIT_DUEL';
  v.unifiedLaneTargetV11=target;v.unifiedAiStateV11=state;v.unifiedIntentUntilV11=now+.7;
  v.unifiedCorridorCountV12=corridor?.candidates||0;
