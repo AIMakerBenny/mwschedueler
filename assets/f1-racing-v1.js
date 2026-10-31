@@ -11562,9 +11562,59 @@ function unifiedAttackCorridorV12(row,opponent,rows,width){
   blocked:[...blocked].sort(),reason:winner?'CLEAR':'BLOCKED'};
 }
 
+// R5-b26: anticipate a slow pit-lane car through a REAL lateral steering
+// target. The existing unified lateral dynamics, shared lane reservation,
+// swept-rectangle validation and traffic braking remain authoritative.
+// No position, speed, display offset, rank or collision bypass is applied.
+function unifiedPitAvoidanceV12(row,rows,width){
+ const v=row.ref;if(row.pit!=='TRACK'||v.pitRequested)return null;
+ const bound=Math.max(0,width/2-1.5-UNIFIED_ENGINE_V11.physicalWidth/2);
+ if(bound<1)return null;
+ let choice=null;
+ for(const peer of rows){
+  if(peer.id===row.id||peer.finished||!['PIT_ENTRY','PIT_LANE','PIT_BOX'].includes(peer.pit))continue;
+  const gap=unifiedGapV11(row,peer);
+  const closing=Math.max(0,row.v-peer.v);
+  const scan=Math.min(275,Math.max(140,closing*5+40));
+  if(!(gap>0&&gap<scan))continue;
+  const required=unifiedLateralClearanceV11(row,peer)+.45;
+  // Keep an already physically separated pit-avoid intent until the pit car
+  // is passed, otherwise the ideal-line controller can undo the manoeuvre.
+  const holding=String(v.unifiedPitAvoidPeerV12||'')===peer.id;
+  if(!holding&&Math.abs(row.y-peer.y)>=required+.15)continue;
+  const targets=holding?[Number(v.unifiedPitAvoidTargetV12)]:
+   [peer.y-required,peer.y+required].map(y=>unifiedClampV11(y,-bound,bound));
+  for(const candidate of targets){
+   if(!Number.isFinite(candidate)||Math.abs(candidate-peer.y)+1e-7<required)continue;
+   const travel=Math.abs(candidate-row.y)/2.5;
+   const timeToClose=closing>.5?(gap-UNIFIED_ENGINE_V11.physicalLength-3)/closing:Infinity;
+   // If the physical lane change is too late, keep normal follower braking.
+   if(!holding&&timeToClose<travel+.75)continue;
+   const merge=unifiedMergeTargetV11(row,candidate,rows);
+   if(merge.blocked.length)continue;
+   const merit=travel+(holding?-.5:0)+Math.abs(candidate-unifiedIdealLaneV11(row,width))*.02;
+   if(!choice||merit<choice.merit||merit===choice.merit&&gap<choice.gap)
+    choice={target:candidate,peer:peer.id,gap,merit};
+  }
+ }
+ return choice;
+}
 function unifiedChooseLaneV11(row,rows,now,width){
  const v=row.ref,allowed=Math.max(0,width/2-1.5-UNIFIED_ENGINE_V11.physicalWidth/2);
  const ideal=unifiedIdealLaneV11(row,width);v.unifiedIdealLaneV11=ideal;
+ const pitAvoid=unifiedPitAvoidanceV12(row,rows,width);
+ if(pitAvoid){
+  v.unifiedPitAvoidPeerV12=pitAvoid.peer;
+  v.unifiedPitAvoidTargetV12=pitAvoid.target;
+  v.unifiedLaneTargetV11=pitAvoid.target;
+  v.unifiedAiStateV11='PIT_AVOID';
+  v.unifiedMergeBlockedV11=[];
+  v.unifiedIntentUntilV11=now+.7;
+  v.unifiedAiTargetV11='';
+  return pitAvoid.target;
+ }
+ v.unifiedPitAvoidPeerV12='';
+ v.unifiedPitAvoidTargetV12=null;
  if(row.pit==='TRACK'&&!v.pitRequested&&['PLAN_ATTACK','SIDE_BY_SIDE'].includes(v.unifiedAiStateV11)&&now<(Number(v.unifiedIntentUntilV11)||0)){
   const held=unifiedMergeTargetV11(row,unifiedClampV11(Number(v.unifiedLaneTargetV11)||0,-allowed,allowed),rows);
   v.unifiedMergeBlockedV11=held.blocked;v.unifiedLaneTargetV11=held.target;return held.target;
