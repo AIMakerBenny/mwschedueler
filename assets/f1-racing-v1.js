@@ -12262,6 +12262,9 @@ function simulateUnifiedRaceStepV11(stepMs){
   }
   // Shared lane reservation. Anticipate lateral convergence well before footprint contact.
   // A trajectory is adjusted while still separated; no display-only displacement is used.
+  // R5-b37: record which accepted physical candidate was displaced by a
+  // reservation, rather than confusing an AI target with actual lane motion.
+  for(const row of rows)row.ref.unifiedReservationOverrideV12=null;
   for(let i=0;i<rows.length;i++)for(let j=i+1;j<rows.length;j++){
     const a=rows[i],b=rows[j],ca=cmds[i],cb=cmds[j];
     if(!ca||!cb||ca.pit.stationary||cb.pit.stationary)continue;
@@ -12272,10 +12275,16 @@ function simulateUnifiedRaceStepV11(stepMs){
     const sign=Math.sign(delta),bound=Math.max(0,width/2-2.5);
     if((ca.y-a.y)*sign<-.000001){
       const outward=unifiedLateralV11(a,unifiedClampV11(a.y+sign*3.0,-bound,bound),dt,width);
+      a.ref.unifiedReservationOverrideV12={peer:b.id,
+       separationMeters:Math.abs(delta),requiredClearanceMeters:unifiedLateralClearanceV11(a,b),
+       beforeMeters:ca.y,afterMeters:outward.y,gapMeters:Math.abs(unifiedGapV11(a,b))};
       ca.y=outward.y;ca.vy=outward.vy;ca.ay=outward.ay;
     }
     if((cb.y-b.y)*sign>.000001){
       const outward=unifiedLateralV11(b,unifiedClampV11(b.y-sign*3.0,-bound,bound),dt,width);
+      b.ref.unifiedReservationOverrideV12={peer:a.id,
+       separationMeters:Math.abs(delta),requiredClearanceMeters:unifiedLateralClearanceV11(b,a),
+       beforeMeters:cb.y,afterMeters:outward.y,gapMeters:Math.abs(unifiedGapV11(a,b))};
       cb.y=outward.y;cb.vy=outward.vy;cb.ay=outward.ay;
     }
   }
