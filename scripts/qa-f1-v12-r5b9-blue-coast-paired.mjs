@@ -63,8 +63,17 @@ const r5b17AcceptedPatch=[
  "     pit:String(accepted.pit?.state||'TRACK'),limiter:accepted.__r5b17Limiter||null",
  '    });',
  '   }',
+ '   // R5-b18: observe every accepted peer command every 0.1s near the slowdown.',
+ '   // Read-only: no car, lane, race state or solver output is changed.',
+ '   if(progress>=5.70&&progress<=6.18&&Math.round(simClockV192.simTimeMs/20)%5===0){',
+ '    window.__r5b9Record.peerChainFrames.push({t:simClockV192.simTimeMs/1000,progress,',
+ '     cars:rows.map((r,i)=>{const c=cmds[i];return {id:String(r.id),pit:r.pit,',
+ '      progress:r.s/len,speedKph:c?.v*3.6??null,targetKph:c?.target*3.6??null,',
+ '      baseKph:r.v*3.6,reason:c?.reason||null,limiter:c?.__r5b17Limiter||null,',
+ '      wear:r.w,brake:c?.brake??null};})});',
+ '   }',
  '  }'
-].join('\n')+'\n';
+].join('\\n')+'\\n';
 const server=createF1PreviewServer();
 await new Promise(resolve=>server.listen(8868,'127.0.0.1',resolve));
 let browser,result={phase:'R5-b9',status:'DIAGNOSTIC'};
@@ -131,7 +140,7 @@ async function oneRace(compound){
     tyres[String(v.id)]=c;
    }
    window.__r5b9Record={ticks:0,requested:new Set(),requests:[],samples:[],
-    targetProgressTimes:[],targetPitEvents:[],targetLastState:'TRACK',trafficWaveFrames:[],acceptedCauses:[]};
+    targetProgressTimes:[],targetPitEvents:[],targetLastState:'TRACK',trafficWaveFrames:[],acceptedCauses:[],peerChainFrames:[]};
    return {state:window.mwsF1GetScreenStateV185(),
     ms:window.mwsF1GetSimulationClockV192().simTimeMs,
     grid:cars.map(v=>String(v.id)),tyres};
@@ -209,7 +218,7 @@ async function oneRace(compound){
    return {screen:window.mwsF1GetScreenStateV185(),incidentTotals,
     requests:q.requests,samples:q.samples,eligibility:window.__r5b9Eligibility,forces:window.__r5b9Forces||[],
     targetProgressTimes:q.targetProgressTimes,targetPitEvents:q.targetPitEvents,
-     trafficWaveFrames:q.trafficWaveFrames,acceptedCauses:q.acceptedCauses,
+     trafficWaveFrames:q.trafficWaveFrames,acceptedCauses:q.acceptedCauses,peerChainFrames:q.peerChainFrames,
     rows:(r?.rows||[]).map(v=>({id:v.contactId,rank:v.position,pits:v.pitStopCount,
      installedCompound:tyres.get(String(v.contactId))?.compound,
      finalPitTarget:tyres.get(String(v.contactId))?.targetCompound,
@@ -286,6 +295,38 @@ try{
  assert(acceptedCauses.length>20&&acceptedCauses.every(x=>
   Number.isFinite(x.speedKph)&&Number.isFinite(x.priorKph)&&Number.isFinite(x.targetKph)),
   'R5-b17 accepted 20ms solver-command evidence missing or invalid');
+ // R5-b18: locate the immediate upstream peer of the observed constrained
+ // driver, and its accepted-state braking provenance in the SAME race.
+ const chainFrames=baseline.peerChainFrames||[];
+ const principalPeerId=rootCauseTelemetry.limitingPeers[0]?.peer.split(' [')[0]||null;
+ const principalPeerRows=chainFrames.map(f=>({t:f.t,progress:f.progress,
+  peer:f.cars.find(c=>c.id===principalPeerId)||null,
+  target:f.cars.find(c=>c.id===target)||null})).filter(f=>f.peer&&f.target);
+ const peerSlowRows=principalPeerRows.filter(f=>f.peer.pit==='TRACK'&&f.peer.speedKph<95);
+ const peerLimitingCounts=new Map();
+ for(const frame of peerSlowRows){
+  const peer=frame.peer;
+  const key=peer.reason==='PREDICTED_TRAFFIC'&&peer.limiter?
+   peer.limiter.peer+' ['+peer.limiter.peerState+']':String(peer.reason||'UNKNOWN');
+  peerLimitingCounts.set(key,(peerLimitingCounts.get(key)||0)+1);
+ }
+ const peerFirstSlow=peerSlowRows[0]||null;
+ const peerLowestSpeed=peerSlowRows.reduce((best,f)=>
+  !best||f.peer.speedKph<best.peer.speedKph?f:best,null);
+ const targetFirstSlow=principalPeerRows.find(f=>f.target.pit==='TRACK'&&f.target.speedKph<95)||null;
+ const tracedAtTargetStop=principalPeerRows.reduce((best,f)=>
+  !best||Math.abs(f.t-(rootCauseTelemetry.slowestAccepted?.t||0))<
+   Math.abs(best.t-(rootCauseTelemetry.slowestAccepted?.t||0))?f:best,null);
+ const peerChain={
+  sampleSeconds:.1,frames:chainFrames.length,principalPeerId,
+  peerSlowTrackSeconds:peerSlowRows.length*.1,
+  peerCauseCounts:[...peerLimitingCounts].sort((a,b)=>b[1]-a[1])
+   .map(([cause,frames])=>({cause,frames,seconds:frames*.1})),
+  peerFirstSlow,peerLowestSpeed,targetFirstSlow,tracedAtTargetStop,
+  caveat:'This is a same-run multi-car observational chain at 0.1s; classification identifies binding commands, not an independently isolated causal intervention.'
+ };
+ if(seed===2)assert(chainFrames.length>40&&principalPeerRows.length>30&&
+  principalPeerId==='r5b3-driver-10','R5-b18 seed2 main-track peer-chain evidence missing');
  const comparisons=interventions.map(run=>{
   const v=run.rows.find(v=>v.id===target),event=run.forces[0];
   const cutoff=Math.min(baseline.eligibility.t,run.eligibility?.t||0);
@@ -381,7 +422,7 @@ try{
     caveat:'All gaps include wear, traffic, incidents and tyre recovery. Prior laps establish a within-driver pace reference, NOT a causal estimate of traffic delay or mechanical pit cost'}};
  });
  result={phase:'R5-b9',status:'DIAGNOSTIC',trackId,seed,target,
-  firstEligibleModel:baseline.eligibility,trafficWave,rootCauseTelemetry,comparisons,baseline,interventions,
+  firstEligibleModel:baseline.eligibility,trafficWave,rootCauseTelemetry,peerChain,comparisons,baseline,interventions,
   interpretation:'Browser-only no-pit control vs forced real SOFT/MEDIUM/HARD pit lifecycle. Traffic feedback remains; real engine physics unchanged. Separately calibrated real-game autonomous forecast is measured by its independent full-race QA.'};
  for(const q of comparisons){
   assert(q.gridMatch&&q.tyreMatch&&q.beforeDecisionSamples>=10&&q.firstMismatchTick===null,
@@ -443,6 +484,14 @@ finally{
    lowTargetSlowSeconds:result.rootCauseTelemetry.lowTargetSlowSeconds,
    limitingPeers:result.rootCauseTelemetry.limitingPeers.slice(0,6),
    slowestAccepted:result.rootCauseTelemetry.slowestAccepted},
+  peerChain:result.peerChain&&{
+   frames:result.peerChain.frames,principalPeerId:result.peerChain.principalPeerId,
+   peerSlowTrackSeconds:result.peerChain.peerSlowTrackSeconds,
+   peerCauseCounts:result.peerChain.peerCauseCounts,
+   peerFirstSlow:result.peerChain.peerFirstSlow,
+   peerLowestSpeed:result.peerChain.peerLowestSpeed,
+   targetFirstSlow:result.peerChain.targetFirstSlow,
+   tracedAtTargetStop:result.peerChain.tracedAtTargetStop},
   pairedResiduals:result.comparisons?.map(x=>({compound:x.compound,
    residual:x.signedModelResidualSeconds,
    grossRecovery:x.grossRecoveryLapSeconds,
