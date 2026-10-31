@@ -94,7 +94,7 @@ async function oneRace(compound){
     tyres[String(v.id)]=c;
    }
    window.__r5b9Record={ticks:0,requested:new Set(),requests:[],samples:[],
-    targetProgressTimes:[],targetPitEvents:[],targetLastState:'TRACK'};
+    targetProgressTimes:[],targetPitEvents:[],targetLastState:'TRACK',trafficWaveFrames:[]};
    return {state:window.mwsF1GetScreenStateV185(),
     ms:window.mwsF1GetSimulationClockV192().simTimeMs,
     grid:cars.map(v=>String(v.id)),tyres};
@@ -118,6 +118,29 @@ async function oneRace(compound){
       q.targetPitEvents.push({from:q.targetLastState,to:phase,seconds:t,
        raceProgress:p,compound:observed.tyreCompound});
       q.targetLastState=phase;
+     }
+     // R5-b16 diagnostic: the no-pit target stopped on the MAIN track
+     // in Blue Coast seed 2 while a many-car pit wave crossed 5.97-6.08.
+     // Sample the existing accepted vehicle state at 0.2s intervals.
+     // No AI decisions, lane coordinates or vehicle speeds are changed.
+     if(window.__r5b9Compound===null&&q.ticks%10===0&&p>=5.88&&p<=6.14){
+      const near=vehicles.filter(v=>
+       Math.abs(Number(v.raceProgress)-p)<=.03).map(v=>({
+       id:String(v.id),deltaLaps:Number(v.raceProgress)-p,
+       speedKph:Number(v.speedKph),state:String(v.pitState||'TRACK'),
+       lateralMeters:Number.isFinite(Number(v.unifiedYV11))?
+        Number(v.unifiedYV11):null,
+       headingRadians:Number.isFinite(Number(v.unifiedHeadingV11))?
+        Number(v.unifiedHeadingV11):null
+      })).sort((a,b)=>a.deltaLaps-b.deltaLaps);
+      q.trafficWaveFrames.push({t,progress:p,speedKph:Number(observed.speedKph),
+       targetState:phase,lateralMeters:Number(observed.unifiedYV11)||0,
+       nearby:near,nearPitCount:near.filter(x=>x.state!=='TRACK').length,
+       nearbyTrackSlowCount:near.filter(x=>x.state==='TRACK'&&x.speedKph<95).length,
+       nearestTrackAhead:near.filter(x=>x.id!==String(observed.id)&&x.state==='TRACK'&&
+        x.deltaLaps>=0).sort((a,b)=>a.deltaLaps-b.deltaLaps)[0]||null,
+       nearestPitAhead:near.filter(x=>x.state!=='TRACK'&&
+        x.deltaLaps>=0).sort((a,b)=>a.deltaLaps-b.deltaLaps)[0]||null});
      }
      for(const v of vehicles)if(v.pitRequested&&!q.requested.has(String(v.id))){
       q.requested.add(String(v.id));
@@ -149,6 +172,7 @@ async function oneRace(compound){
    return {screen:window.mwsF1GetScreenStateV185(),incidentTotals,
     requests:q.requests,samples:q.samples,eligibility:window.__r5b9Eligibility,forces:window.__r5b9Forces||[],
     targetProgressTimes:q.targetProgressTimes,targetPitEvents:q.targetPitEvents,
+     trafficWaveFrames:q.trafficWaveFrames,
     rows:(r?.rows||[]).map(v=>({id:v.contactId,rank:v.position,pits:v.pitStopCount,
      installedCompound:tyres.get(String(v.contactId))?.compound,
      finalPitTarget:tyres.get(String(v.contactId))?.targetCompound,
@@ -182,6 +206,25 @@ try{
   }
   return null;
  };
+ const traffic=baseline.trafficWaveFrames;
+ const slowTraffic=traffic.filter(x=>x.targetState==='TRACK'&&x.speedKph<95);
+ const stationary=traffic.filter(x=>x.targetState==='TRACK'&&x.speedKph<5);
+ const pitWaveFrames=traffic.filter(x=>x.nearPitCount>=3&&x.nearbyTrackSlowCount>=2);
+ const busiestPit=traffic.reduce((best,x)=>
+  !best||x.nearPitCount>best.nearPitCount?x:best,null);
+ const slowest=traffic.reduce((best,x)=>!best||x.speedKph<best.speedKph?x:best,null);
+ const trafficWave={sampleCount:traffic.length,
+  trackUnder95Seconds:slowTraffic.length*.2,
+  trackUnder5Seconds:stationary.length*.2,
+  pitWaveConcurrentSeconds:pitWaveFrames.length*.2,
+  maxNearbyPitVehicles:busiestPit?.nearPitCount??0,
+  minTargetSpeedKph:slowest?.speedKph??null,
+  slowestSnapshot:slowest,pitWaveSnapshot:busiest,
+  keyCaveat:'Observed proximity and speeds do not establish which AI/physical constraint caused braking; diagnostic for pit-lane/main-track interaction.',
+  samplingSeconds:.2};
+ assert(traffic.length>20&&traffic.every(x=>Number.isFinite(x.speedKph)&&
+  x.nearby.some(y=>y.id===target)),
+  'Missing matched-accepted-step Blue Coast traffic wave telemetry');
  const comparisons=interventions.map(run=>{
   const v=run.rows.find(v=>v.id===target),event=run.forces[0];
   const cutoff=Math.min(baseline.eligibility.t,run.eligibility?.t||0);
@@ -277,7 +320,7 @@ try{
     caveat:'All gaps include wear, traffic, incidents and tyre recovery. Prior laps establish a within-driver pace reference, NOT a causal estimate of traffic delay or mechanical pit cost'}};
  });
  result={phase:'R5-b9',status:'DIAGNOSTIC',trackId,seed,target,
-  firstEligibleModel:baseline.eligibility,comparisons,baseline,interventions,
+  firstEligibleModel:baseline.eligibility,trafficWave,comparisons,baseline,interventions,
   interpretation:'Browser-only no-pit control vs forced real SOFT/MEDIUM/HARD pit lifecycle. Traffic feedback remains; real engine physics unchanged. Separately calibrated real-game autonomous forecast is measured by its independent full-race QA.'};
  for(const q of comparisons){
   assert(q.gridMatch&&q.tyreMatch&&q.beforeDecisionSamples>=10&&q.firstMismatchTick===null,
@@ -326,6 +369,12 @@ finally{
   comparisons:result.comparisons?.map(x=>({compound:x.compound,
    fitted:x.finalInstalledCompound,forecast:x.modelBenefitSeconds,
    observed:x.pairedFinishBenefitSeconds,rank:x.interventionRank})),
+  trafficWave:result.trafficWave&&{
+   under95Seconds:result.trafficWave.trackUnder95Seconds,
+   stoppedSeconds:result.trafficWave.trackUnder5Seconds,
+   pitWaveConcurrentSeconds:result.trafficWave.pitWaveConcurrentSeconds,
+   maxNearbyPitVehicles:result.trafficWave.maxNearbyPitVehicles,
+   minTargetSpeedKph:result.trafficWave.minTargetSpeedKph},
   pairedResiduals:result.comparisons?.map(x=>({compound:x.compound,
    residual:x.signedModelResidualSeconds,
    grossRecovery:x.grossRecoveryLapSeconds,
