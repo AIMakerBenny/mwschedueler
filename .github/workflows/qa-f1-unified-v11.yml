@@ -261,6 +261,17 @@ jobs:
           name: f1-v12-r5b25-pit-corridor-seed${{ matrix.seed }}
           path: artifacts/f1-v12-r5b25-pit-corridor-seed${{ matrix.seed }}.json
           if-no-files-found: warn
+      - name: R5-b27 prove collision-free physical pit avoidance and delayed-traffic improvement
+        env:
+          MWS_R5B9_SEED: ${{ matrix.seed }}
+        run: node scripts/qa-f1-v12-r5b27-active-pit-avoidance.mjs
+      - name: Upload R5-b27 pit-avoidance full-race evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-v12-r5b27-pit-avoidance-seed${{ matrix.seed }}
+          path: artifacts/f1-v12-r5b27-active-pit-avoidance-seed${{ matrix.seed }}.json
+          if-no-files-found: warn
       - name: Upload Blue Coast matched-race data
         if: always()
         uses: actions/upload-artifact@v4
