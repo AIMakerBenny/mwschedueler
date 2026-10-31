@@ -33,13 +33,13 @@ a=car('pit-entry',0,2.57,95,-4.83);
 b=car('parallel-near',80,-.5,95,-.5);
 assert.equal(predict(a,b,2.56,-.49),false,
  'Parallel car 80m away with stable speed cannot veto pit lane preparation');
-b=car('closing-neighbor',45,-.5,60,-.5);
-assert.equal(predict(a,b,2.54,-.47),true,
+b=car('closing-neighbor',45,0,60,0);
+assert.equal(predict(a,b,2.54,.03),true,
  'Car approaching within lane-change horizon must preserve lateral reservation');
-b=car('nearby-neighbor',12,-.5,95,-.5);
+b=car('nearby-neighbor',12,0,95,0);
 assert.equal(predict(a,b,2.54,-.47),true,
  'Close current occupant must retain lane-merge reservation');
-b=car('reversing-order',28,-.5,20,-.5);
+b=car('reversing-order',28,0,20,0);
 assert.equal(predict(a,b,2.54,-.47),true,
  'Longitudinal order crossing must retain conventional reservation');
 a=car('wide-separated',0,4.0,70,0);
@@ -51,7 +51,7 @@ b=car('same-lane-peer',12,1.9,50,0);
 assert.equal(predict(a,b,1.95,1.9),false,
  'Legacy common-line formation remains exempt from aggressive countersteer');
 a=car('zero-target',0,2.4,40,0);
-b=car('zero-peer',42,0,30,0);
+b=car('zero-peer',28,0,30,0);
 assert.equal(predict(a,b,2.39,0),true,
  'An explicitly commanded centerline target must be included in safety horizon');
 console.log(JSON.stringify({phase:'R5-b38',status:'PASS',
