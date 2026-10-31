@@ -347,7 +347,8 @@ try{
     const cars=new Map(f.cars.map(c=>[c.id,c]));
     const d3=cars.get('r5b3-driver-3'),d10=cars.get('r5b3-driver-10'),
      d9=cars.get('r5b3-driver-9'),d0=cars.get('r5b3-driver-0');
-    return d0?.pit==='PIT_LANE'&&d3?.limiter?.peer==='r5b3-driver-10'&&
+    return d0?.pit==='PIT_LANE'&&d3?.pit==='TRACK'&&d3.speedKph<95&&
+     d3?.limiter?.peer==='r5b3-driver-10'&&
      d10?.limiter?.peer==='r5b3-driver-9'&&d9?.limiter?.peer==='r5b3-driver-0';
    });
    if(!frame)return null;
