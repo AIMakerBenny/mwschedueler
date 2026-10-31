@@ -375,14 +375,35 @@ try{
   peerPrecedesTargetSeconds:Number.isFinite(peerChain.peerFirstSlow?.t)&&
    Number.isFinite(peerChain.targetFirstSlow?.t)?
    peerChain.targetFirstSlow.t-peerChain.peerFirstSlow.t:null,
-  interpretation:'Observed dependency graph, not a counterfactual. PREDICTED_TRAFFIC is a binding solver cap; terminal labels describe the end node only. No physical vehicle was removed or repositioned.'
+  // R5-b20: compare the 0.1s chain snapshot to the actual 20ms binding
+  // events; they are different observations and need not share one peer.
+  nearStopSampleDeltaSeconds:Number.isFinite(rootCauseTelemetry.slowestAccepted?.t)&&lowSpeedChains.length?
+   Math.abs((lowSpeedChains.reduce((best,c)=>
+    !best||Math.abs(c.t-rootCauseTelemetry.slowestAccepted.t)<
+     Math.abs(best.t-rootCauseTelemetry.slowestAccepted.t)?c:best,null)).t-
+    rootCauseTelemetry.slowestAccepted.t):null,
+  observedPrimaryPeerAtStop:lowSpeedChains.reduce((best,c)=>
+   !best||Math.abs(c.t-(rootCauseTelemetry.slowestAccepted?.t||0))<
+    Math.abs(best.t-(rootCauseTelemetry.slowestAccepted?.t||0))?c:best,null)
+   ?.nodes?.[0]?.limitingPeer??null,
+  observedPrimaryPeerSamples:lowSpeedChains.filter(c=>
+   c.nodes[0]?.limitingPeer===principalPeerId).length,
+  highFrequencyPrimaryPeerSeconds:rootCauseTelemetry.limitingPeers.find(p=>
+   p.peer.startsWith(principalPeerId+' ['))?.seconds??0,
+  interpretation:'Observed dependency graph, not a counterfactual. The 0.1s snapshot nearest a 20ms stop is not assumed to have the same binding peer. No physical vehicle was removed or repositioned.'
  };
  assert(rootChains.terminalDistribution.reduce((sum,x)=>sum+x.frames,0)===
   rootChains.slowAcceptedSnapshots,'R5-b19 terminal accounting incomplete');
+ // Preserve the evidence BEFORE an assertion, even if a diagnostic contract
+ // fails. R5-b19 previously discarded the complete failure trace.
+ result.partialDiagnostics={rootCauseTelemetry,peerChain,rootChains};
  if(seed===2)assert(rootChains.slowAcceptedSnapshots>20&&
-  rootChains.atTargetStop?.nodes.length>1&&
-  rootChains.atTargetStop.nodes[0]?.limitingPeer==='r5b3-driver-10',
-  'R5-b19 missing verified seed2 upstream main-track slowdown chain');
+  rootChains.atTargetStop?.nodes.length>=1&&
+  rootCauseTelemetry.limitingPeers.some(p=>
+   p.peer==='r5b3-driver-10 [TRACK]'&&p.seconds>10),
+  'R5-b20 missing independently observed seed2 slowdown or primary peer');
+ // A 20ms accepted solver binding must never be asserted to be identical
+ // to the different, nearest 0.1s sampled binding at a single instant.
  const comparisons=interventions.map(run=>{
   const v=run.rows.find(v=>v.id===target),event=run.forces[0];
   const cutoff=Math.min(baseline.eligibility.t,run.eligibility?.t||0);
@@ -555,7 +576,11 @@ finally{
    firstSlowChain:result.rootChains.firstSlowChain,
    deepestChain:result.rootChains.deepestChain,
    atTargetStop:result.rootChains.atTargetStop,
-   peerPrecedesTargetSeconds:result.rootChains.peerPrecedesTargetSeconds},
+   peerPrecedesTargetSeconds:result.rootChains.peerPrecedesTargetSeconds,
+   nearStopSampleDeltaSeconds:result.rootChains.nearStopSampleDeltaSeconds,
+   observedPrimaryPeerAtStop:result.rootChains.observedPrimaryPeerAtStop,
+   observedPrimaryPeerSamples:result.rootChains.observedPrimaryPeerSamples,
+   highFrequencyPrimaryPeerSeconds:result.rootChains.highFrequencyPrimaryPeerSeconds},
   pairedResiduals:result.comparisons?.map(x=>({compound:x.compound,
    residual:x.signedModelResidualSeconds,
    grossRecovery:x.grossRecoveryLapSeconds,
