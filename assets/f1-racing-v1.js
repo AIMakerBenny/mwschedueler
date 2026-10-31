@@ -11515,31 +11515,43 @@ function unifiedMergeTargetV11(row,target,rows){
 // stays clear throughout the entire lateral move at current accepted speeds.
 // The shared step solver and swept-world contact check remain unchanged.
 function unifiedPitMergeTargetV12(row,target,rows){
- const ordinary=unifiedMergeTargetV11(row,target,rows);
- if(!ordinary.blocked.length||Math.abs(target-row.y)<.05)return ordinary;
- // R5-b34: the old constant 2.5m/s merge time was optimistic when
- // a pit entrant was already slowing or steering away from the pit lane.
- // Use the real lateral velocity cap and account for turning around before
- // projecting another car's longitudinal occupancy.
- const direction=Math.sign(target-row.y);
- const lateralRate=Math.min(2.5,Math.max(0,Number(row.v)||0)*.25);
- const opposingVelocity=Math.max(0,-direction*(Number(row.vy)||0));
- const turnSeconds=opposingVelocity/4;
- const travelSeconds=Math.abs(target-row.y)/Math.max(.35,lateralRate)+.75+turnSeconds;
- const blockers=ordinary.blocked.filter(id=>{
-  const peer=rows.find(p=>p.id===id);
-  if(!peer)return true; // Unknown occupant: never remove protection.
-  const gap=unifiedGapV11(row,peer);
-  const after=gap+(peer.v-row.v)*travelSeconds;
-  const clearance=UNIFIED_ENGINE_V11.physicalLength+
-   UNIFIED_ENGINE_V11.clearance+3+
-   Math.max(8,Math.max(row.v,peer.v)*.3);
-  // A change of longitudinal ordering or a close pass during the lane
-  // transition must still obey the old reservation guard.
-  if(!Number.isFinite(after)||gap*after<=0)return true;
-  return Math.min(Math.abs(gap),Math.abs(after))<=clearance;
- });
- return {target:blockers.length?row.y:target,blocked:blockers};
+ const assess=candidate=>{
+  const ordinary=unifiedMergeTargetV11(row,candidate,rows);
+  if(!ordinary.blocked.length||Math.abs(candidate-row.y)<.05)return ordinary;
+  // R5-b34: determine actual lateral reachability before accepting a
+  // longer longitudinal crossing. Unknown peers always fail closed.
+  const direction=Math.sign(candidate-row.y);
+  const lateralRate=Math.min(2.5,Math.max(0,Number(row.v)||0)*.25);
+  const opposingVelocity=Math.max(0,-direction*(Number(row.vy)||0));
+  const travelSeconds=Math.abs(candidate-row.y)/Math.max(.35,lateralRate)+.75+opposingVelocity/4;
+  const blockers=ordinary.blocked.filter(id=>{
+   const peer=rows.find(p=>p.id===id);
+   if(!peer)return true;
+   const gap=unifiedGapV11(row,peer);
+   const after=gap+(peer.v-row.v)*travelSeconds;
+   const clearance=UNIFIED_ENGINE_V11.physicalLength+
+    UNIFIED_ENGINE_V11.clearance+3+
+    Math.max(8,Math.max(row.v,peer.v)*.3);
+   if(!Number.isFinite(after)||gap*after<=0)return true;
+   return Math.min(Math.abs(gap),Math.abs(after))<=clearance;
+  });
+  return {target:blockers.length?row.y:candidate,blocked:blockers};
+ };
+ const direct=assess(target);
+ if(!direct.blocked.length||Math.abs(target-row.y)<.45)return direct;
+ // R5-b35: a far pit-line target may be obstructed although a closer
+ // physical lane is available. Move only toward the true pit lane, and
+ // re-run BOTH ordinary merging and closing-distance safety on each
+ // intermediate candidate. No instant displacement is applied here.
+ for(const ratio of [.75,.5,.25]){
+  const candidate=row.y+(target-row.y)*ratio;
+  if(Math.abs(candidate-row.y)<.45)continue;
+  const partial=assess(candidate);
+  if(!partial.blocked.length&&Math.abs(partial.target-candidate)<1e-7)
+   return {target:candidate,blocked:[],partial:true,requestedTarget:target,
+    fullTargetBlockedBy:direct.blocked};
+ }
+ return direct;
 }
 // v1.2 R2: AI-only multi-car corridor planner. Do not modify committed
 // world trajectories here; the existing physical solver validates all moves.
