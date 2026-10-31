@@ -82,6 +82,7 @@ const r5b17AcceptedPatch=[
  '      commandedLaneTarget:Number.isFinite(r.ref.unifiedLaneTargetV11)?r.ref.unifiedLaneTargetV11:null,',
  '      blockedMergeIds:Array.isArray(r.ref.unifiedMergeBlockedV11)?r.ref.unifiedMergeBlockedV11.slice():[],',
  '      pitPartial:r.ref.unifiedPitPartialV12?{...r.ref.unifiedPitPartialV12}:null,',
+ '      laneReservationOverride:r.ref.unifiedReservationOverrideV12?{...r.ref.unifiedReservationOverrideV12}:null,',
  '      pitAvoidPeer:String(r.ref.unifiedPitAvoidPeerV12||""),',
  '      pitAvoidTarget:Number.isFinite(r.ref.unifiedPitAvoidTargetV12)?r.ref.unifiedPitAvoidTargetV12:null,',
  '      wear:r.w,brake:c?.brake??null};})});',
@@ -504,7 +505,20 @@ try{
    firstRequested:samples[0]||null,firstBlocked:blocked[0]||null,
    latestTrack:priorToEntry[priorToEntry.length-1]||null};
  });
+ const reservationOverrides=chainFrames.flatMap(frame=>frame.cars.filter(c=>
+  c.laneReservationOverride).map(c=>({t:frame.t,id:c.id,pit:c.pit,
+   intent:c.commandedLaneTarget,actual:c.lateralMeters,
+   ...c.laneReservationOverride})));
+ const pitReservationSummary=['r5b3-driver-0','r5b3-driver-1','r5b3-driver-9'].map(id=>{
+  const samples=reservationOverrides.filter(x=>x.id===id);
+  const far=samples.filter(x=>x.separationMeters>x.requiredClearanceMeters+.6);
+  const byPeer=[...new Set(samples.map(x=>x.peer))].map(peer=>({
+   peer,frames:samples.filter(x=>x.peer===peer).length}));
+  return {id,frames:samples.length,farSeparatedFrames:far.length,
+   first:samples[0]||null,firstFarSeparated:far[0]||null,byPeer};
+ });
  const pitAvoidance={
+  pitReservationSummary,
   pitEntryBottlenecks,
   driver9Peers,
   driver9FirstMotion:driver9PitIntent.find(x=>x.toTargetMeters>.15)||null,
@@ -707,7 +721,8 @@ finally{
    firstEarlyDriver9:result.pitAvoidance.firstEarlyDriver9,
    driver9Peers:result.pitAvoidance.driver9Peers,
    driver9FirstMotion:result.pitAvoidance.driver9FirstMotion,
-   pitEntryBottlenecks:result.pitAvoidance.pitEntryBottlenecks},
+   pitEntryBottlenecks:result.pitAvoidance.pitEntryBottlenecks,
+   pitReservationSummary:result.pitAvoidance.pitReservationSummary},
   pairedResiduals:result.comparisons?.map(x=>({compound:x.compound,
    residual:x.signedModelResidualSeconds,
    grossRecovery:x.grossRecoveryLapSeconds,
