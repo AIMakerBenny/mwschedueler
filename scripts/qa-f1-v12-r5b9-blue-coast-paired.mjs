@@ -128,7 +128,13 @@ async function oneRace(compound){
    const q=window.__r5b9Record,r=window.mwsF1GetRaceResultRecoveryG(),
     physics=window.mwsF1UnifiedV11Report(),
     tyres=new Map(window.mwsF1GetPitStatesV205().map(t=>[String(t.id),t]));
-   return {screen:window.mwsF1GetScreenStateV185(),
+   const incidentTotals=window.mwsF1ComputeRaceStandingsV191().map(row=>row.vehicle).map(v=>({
+    id:String(v.id),lockupCount:Number(v.lockupCount)||0,
+    understeerCount:Number(v.understeerCount)||0,
+    oversteerCount:Number(v.oversteerCount)||0,
+    damage:Number(v.unifiedDamageV11)||0
+   }));
+   return {screen:window.mwsF1GetScreenStateV185(),incidentTotals,
     requests:q.requests,samples:q.samples,eligibility:window.__r5b9Eligibility,forces:window.__r5b9Forces||[],
     rows:(r?.rows||[]).map(v=>({id:v.contactId,rank:v.position,pits:v.pitStopCount,
      installedCompound:tyres.get(String(v.contactId))?.compound,
@@ -159,6 +165,10 @@ try{
   const cutoff=Math.min(baseline.eligibility.t,run.eligibility?.t||0);
   const prior=baseline.samples.filter(z=>z.simSeconds<cutoff),lookup=new Map(run.samples.map(z=>[z.tick,z]));
   const mismatch=prior.find(z=>JSON.stringify(z.cars)!==JSON.stringify(lookup.get(z.tick)?.cars));
+  const lapDeltaSeconds=b.lapTimesMs.map((ms,i)=>(ms-v.lapTimesMs[i])/1000);
+  const incidentKeys=['lockupCount','understeerCount','oversteerCount'];
+  const noPitIncidents=baseline.incidentTotals.find(x=>x.id===target);
+  const pitIncidents=run.incidentTotals.find(x=>x.id===target);
   return {compound:run.mode,gridMatch:JSON.stringify(baseline.initial.grid)===JSON.stringify(run.initial.grid),
    tyreMatch:JSON.stringify(baseline.initial.tyres)===JSON.stringify(run.initial.tyres),
    beforeDecisionSamples:prior.length,firstMismatchTick:mismatch?.tick??null,
@@ -170,7 +180,16 @@ try{
    pairedFinishBenefitSeconds:(b.finishMs-v?.finishMs)/1000,
    baselineRank:b.rank,interventionRank:v?.rank,
    baselineFinishSeconds:b.finishMs/1000,interventionFinishSeconds:v?.finishMs/1000,
-   interventionLapTimesMs:v?.lapTimesMs};
+   interventionLapTimesMs:v?.lapTimesMs,
+   noPitLapTimesMs:b.lapTimesMs,
+   perLapBenefitSeconds:lapDeltaSeconds,
+   grossRecoveryLapSeconds:lapDeltaSeconds.reduce((sum,delta)=>sum+Math.max(0,delta),0),
+   grossPitCostLapSeconds:lapDeltaSeconds.reduce((sum,delta)=>sum+Math.min(0,delta),0),
+   perLapSumSeconds:lapDeltaSeconds.reduce((sum,delta)=>sum+delta,0),
+   signedModelResidualSeconds:(b.finishMs-v.finishMs)/1000-(event?.modelBenefitSeconds??0),
+   incidentTotals:{noPit:noPitIncidents,pit:pitIncidents,
+    noPitMinusPit:Object.fromEntries(incidentKeys.map(key=>
+     [key,(noPitIncidents?.[key]??0)-(pitIncidents?.[key]??0)]))}};
  });
  result={phase:'R5-b9',status:'DIAGNOSTIC',trackId,seed,target,
   firstEligibleModel:baseline.eligibility,comparisons,baseline,interventions,
@@ -185,6 +204,15 @@ try{
    'TEST INVALID: pit selection was overwritten or wrong compound fitted '+JSON.stringify(q));
   assert(Number.isFinite(q.modelBenefitSeconds)&&Number.isFinite(q.pairedFinishBenefitSeconds),
    'Missing paired cost/forecast '+q.compound);
+  assert(q.perLapBenefitSeconds.length===10&&q.perLapBenefitSeconds.every(Number.isFinite),
+   'Missing per-lap actual finish evidence '+q.compound);
+  assert(Math.abs(q.perLapSumSeconds-q.pairedFinishBenefitSeconds)<.05,
+   'Per-lap and full-race finish benefits do not reconcile '+q.compound);
+  assert(q.grossPitCostLapSeconds<0&&q.grossRecoveryLapSeconds>0,
+   'Actual pit-cost and post-pit recovery evidence incomplete '+q.compound);
+  assert(q.incidentTotals.noPit&&q.incidentTotals.pit&&
+   Object.values(q.incidentTotals.noPitMinusPit).every(Number.isFinite),
+   'Missing actual on-vehicle incident evidence '+q.compound);
  }
  // Compare actual completed races, never nominal requested compound labels.
  assert(new Set(comparisons.map(x=>x.interventionFinishSeconds.toFixed(4))).size>=2,
@@ -200,6 +228,11 @@ finally{
   comparisons:result.comparisons?.map(x=>({compound:x.compound,
    fitted:x.finalInstalledCompound,forecast:x.modelBenefitSeconds,
    observed:x.pairedFinishBenefitSeconds,rank:x.interventionRank})),
+  pairedResiduals:result.comparisons?.map(x=>({compound:x.compound,
+   residual:x.signedModelResidualSeconds,
+   grossRecovery:x.grossRecoveryLapSeconds,
+   pitCost:x.grossPitCostLapSeconds,
+   incidents:x.incidentTotals.noPitMinusPit})),
   error:result.error||null,artifact:output}));
 }
 assert.equal(result.status,'PASS',result.error||'Paired Chromium comparison failed');
