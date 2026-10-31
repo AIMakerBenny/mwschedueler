@@ -72,6 +72,10 @@ const r5b17AcceptedPatch=[
  '     cars:rows.map((r,i)=>{const c=cmds[i];return {id:String(r.id),pit:r.pit,',
  '      progress:r.s/len,speedKph:c?.v*3.6??null,targetKph:c?.target*3.6??null,',
  '      baseKph:r.v*3.6,reason:c?.reason||null,limiter:c?.__r5b17Limiter||null,',
+ '      // R5-b24: physical candidate lateral geometry, not rendered lane art.',
+ '      lateralMeters:r.y,candidateLateralMeters:c?.y??r.y,',
+ '      physicalHeadingRadians:c?.heading??null,',
+ '      worldEnd:c?unifiedWorldPoseV11(r.s+c.ds,c.y,c.heading):null,',
  '      wear:r.w,brake:c?.brake??null};})});',
  '   }',
  '  }'
@@ -336,6 +340,26 @@ try{
   peerCauseCounts:[...peerLimitingCounts].sort((a,b)=>b[1]-a[1])
    .map(([cause,frames])=>({cause,frames,seconds:frames*.1})),
   peerFirstSlow,peerLowestSpeed,targetFirstSlow,tracedAtTargetStop,
+  // Compare genuine accepted lateral positions at the identified pit cascade.
+  firstPitChainGeometry:(()=>{
+   const frame=chainFrames.find(f=>{
+    const cars=new Map(f.cars.map(c=>[c.id,c]));
+    const d3=cars.get('r5b3-driver-3'),d10=cars.get('r5b3-driver-10'),
+     d9=cars.get('r5b3-driver-9'),d0=cars.get('r5b3-driver-0');
+    return d0?.pit==='PIT_LANE'&&d3?.limiter?.peer==='r5b3-driver-10'&&
+     d10?.limiter?.peer==='r5b3-driver-9'&&d9?.limiter?.peer==='r5b3-driver-0';
+   });
+   if(!frame)return null;
+   const ids=['r5b3-driver-0','r5b3-driver-9','r5b3-driver-10','r5b3-driver-3'];
+   const cells=ids.map(id=>frame.cars.find(c=>c.id===id));
+   return {t:frame.t,cars:cells.map(c=>({id:c.id,pit:c.pit,
+    lateralMeters:c.lateralMeters,candidateLateralMeters:c.candidateLateralMeters,
+    worldEnd:c.worldEnd,headingRadians:c.physicalHeadingRadians,
+    speedKph:c.speedKph})),
+    links:cells.slice(1).map((c,i)=>({follower:c.id,leading:cells[i].id,
+     relativeLateralMeters:Math.abs(c.candidateLateralMeters-cells[i].candidateLateralMeters),
+     followerSpeedKph:c.speedKph,leaderSpeedKph:cells[i].speedKph}))};
+  })(),
   caveat:'This is a same-run multi-car observational chain at 0.1s; classification identifies binding commands, not an independently isolated causal intervention.'
  };
  if(seed===2)assert(chainFrames.length>40&&principalPeerRows.length>30&&
@@ -583,6 +607,7 @@ finally{
    upstreamLimitedSnapshots:result.peerChain.upstreamLimitedSnapshots,
    upstreamAttributedSnapshots:result.peerChain.upstreamAttributedSnapshots,
    upstreamSourceCounts:result.peerChain.upstreamSourceCounts,
+   firstPitChainGeometry:result.peerChain.firstPitChainGeometry,
    peerCauseCounts:result.peerChain.peerCauseCounts,
    peerFirstSlow:result.peerChain.peerFirstSlow,
    peerLowestSpeed:result.peerChain.peerLowestSpeed,
