@@ -73,7 +73,7 @@ const r5b17AcceptedPatch=[
  '      wear:r.w,brake:c?.brake??null};})});',
  '   }',
  '  }'
-].join('\\n')+'\\n';
+].join('\n')+'\n';
 const server=createF1PreviewServer();
 await new Promise(resolve=>server.listen(8868,'127.0.0.1',resolve));
 let browser,result={phase:'R5-b9',status:'DIAGNOSTIC'};
