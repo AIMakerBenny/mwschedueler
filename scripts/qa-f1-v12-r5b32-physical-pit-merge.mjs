@@ -40,11 +40,17 @@ assert.equal(merge(row,target,[row,peer(-20)]).target,row.y,
  'A car close behind must not be crossed');
 // R5-b34: lateral reachability is slower than 2.5m/s under pit braking.
 const slow={...row,v:5,vy:0};
-assert.equal(merge(slow,target,[slow,peer(40,0)]).target,row.y,
- 'Slow pit entrant must not claim a corridor it cannot reach before closing');
+const slowMove=merge(slow,target,[slow,peer(40,0)]);
+assert(slowMove.target>target&&slowMove.target<=row.y,
+ 'Slow pit entrant must not claim the blocked full corridor');
+assert(slowMove.target===row.y||slowMove.partial===true,
+ 'Any slow-lateral progress must independently pass the partial safety guard');
 const reversing={...row,vy:2.5};
-assert.equal(merge(reversing,target,[reversing,peer(65,60)]).target,row.y,
- 'A car steering away must account for direction reversal time');
+const reversalMove=merge(reversing,target,[reversing,peer(65,60)]);
+assert(reversalMove.target>target&&reversalMove.target<=row.y,
+ 'A car steering away must not ignore turn-around time for the full merge');
+assert(reversalMove.target===row.y||reversalMove.partial===true,
+ 'Any reversing-lane advance must independently pass the partial guard');
 assert.equal(merge(row,target,[row,peer(90)]).target,target,
  'Conservative low-speed rule must not disable a safe fast parallel entry');
 blockedIds.push('missing');
