@@ -77,6 +77,10 @@ const r5b17AcceptedPatch=[
  '      physicalHeadingRadians:c?.heading??null,',
  '      physicalEnvelopeWidthMeters:UNIFIED_ENGINE_V11.physicalWidth+UNIFIED_ENGINE_V11.clearance,',
  '      worldEnd:c?unifiedWorldPoseV11(r.s+c.ds,c.y,c.heading):null,',
+ '      // R5-b31: capture why requested pit entrants cannot physically move into the pit-side lane.',
+ '      requestedPit:Boolean(r.ref.pitRequested),racingLineMode:String(r.ref.racingLineMode||"IDEAL"),',
+ '      commandedLaneTarget:Number.isFinite(r.ref.unifiedLaneTargetV11)?r.ref.unifiedLaneTargetV11:null,',
+ '      blockedMergeIds:Array.isArray(r.ref.unifiedMergeBlockedV11)?r.ref.unifiedMergeBlockedV11.slice():[],',
  '      pitAvoidPeer:String(r.ref.unifiedPitAvoidPeerV12||""),',
  '      pitAvoidTarget:Number.isFinite(r.ref.unifiedPitAvoidTargetV12)?r.ref.unifiedPitAvoidTargetV12:null,',
  '      wear:r.w,brake:c?.brake??null};})});',
@@ -478,7 +482,25 @@ try{
   peer,frames:driver9PitIntent.filter(x=>x.pitAvoidPeer===peer).length,
   movingFrames:driver9PitIntent.filter(x=>x.pitAvoidPeer===peer&&x.toTargetMeters>.15).length
  }));
+ const pitEntryBottlenecks=['r5b3-driver-0','r5b3-driver-1'].map(id=>{
+  const samples=chainFrames.flatMap(frame=>frame.cars.filter(c=>
+   c.id===id&&c.requestedPit).map(c=>({t:frame.t,pit:c.pit,
+    lateralMeters:c.lateralMeters,commandedLaneTarget:c.commandedLaneTarget,
+    blockedMergeIds:c.blockedMergeIds,mode:c.racingLineMode,speedKph:c.speedKph})));
+  const blocked=samples.filter(x=>x.blockedMergeIds.length);
+  const priorToEntry=samples.filter(x=>x.pit==='TRACK');
+  const blockedBy=new Map();
+  for(const sample of blocked)for(const blocker of sample.blockedMergeIds)
+   blockedBy.set(blocker,(blockedBy.get(blocker)||0)+1);
+  return {id,frames:samples.length,preEntryFrames:priorToEntry.length,
+   preEntryBlockedFrames:priorToEntry.filter(x=>x.blockedMergeIds.length).length,
+   blockedFrames:blocked.length,blockedBy:[...blockedBy].sort((a,b)=>b[1]-a[1])
+    .map(([id,frames])=>({id,frames})),
+   firstRequested:samples[0]||null,firstBlocked:blocked[0]||null,
+   latestTrack:priorToEntry[priorToEntry.length-1]||null};
+ });
  const pitAvoidance={
+  pitEntryBottlenecks,
   driver9Peers,
   driver9FirstMotion:driver9PitIntent.find(x=>x.toTargetMeters>.15)||null,
   earlyDriver9Frames:earlyDriver9.length,
@@ -679,7 +701,8 @@ finally{
    allDriver9Frames:result.pitAvoidance.allDriver9Frames,
    firstEarlyDriver9:result.pitAvoidance.firstEarlyDriver9,
    driver9Peers:result.pitAvoidance.driver9Peers,
-   driver9FirstMotion:result.pitAvoidance.driver9FirstMotion},
+   driver9FirstMotion:result.pitAvoidance.driver9FirstMotion,
+   pitEntryBottlenecks:result.pitAvoidance.pitEntryBottlenecks},
   pairedResiduals:result.comparisons?.map(x=>({compound:x.compound,
    residual:x.signedModelResidualSeconds,
    grossRecovery:x.grossRecoveryLapSeconds,
