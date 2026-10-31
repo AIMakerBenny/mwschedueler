@@ -77,6 +77,8 @@ const r5b17AcceptedPatch=[
  '      physicalHeadingRadians:c?.heading??null,',
  '      physicalEnvelopeWidthMeters:UNIFIED_ENGINE_V11.physicalWidth+UNIFIED_ENGINE_V11.clearance,',
  '      worldEnd:c?unifiedWorldPoseV11(r.s+c.ds,c.y,c.heading):null,',
+ '      pitAvoidPeer:String(r.ref.unifiedPitAvoidPeerV12||""),',
+ '      pitAvoidTarget:Number.isFinite(r.ref.unifiedPitAvoidTargetV12)?r.ref.unifiedPitAvoidTargetV12:null,',
  '      wear:r.w,brake:c?.brake??null};})});',
  '   }',
  '  }'
@@ -365,11 +367,13 @@ try{
   })(),
   caveat:'This is a same-run multi-car observational chain at 0.1s; classification identifies binding commands, not an independently isolated causal intervention.'
  };
- if(seed===2)assert(chainFrames.length>40&&principalPeerRows.length>30&&
-  principalPeerId==='r5b3-driver-10','R5-b18 seed2 main-track peer-chain evidence missing');
- if(seed===2)assert(peerUpstreamLimited.length>20&&
+ if(seed===2)assert(chainFrames.length>40,
+  'R5-b27 missing seed2 accepted multi-car observations');
+ if(principalPeerId)assert(principalPeerRows.length>0,
+  'R5-b27 constrained target has no corresponding peer trace');
+ if(peerUpstreamLimited.length)assert(
   peerUpstreamAttributed.length===peerUpstreamLimited.length,
-  'R5-b22 missing full accepted-solver upstream attribution for Driver 10');
+  'R5-b27 missing accepted-solver upstream attribution when a peer is constrained');
  // R5-b19: classify *observed* accepted-step braking dependency chains.
  // A chain can end with a free speed target or a pit car; neither is by itself
  // a claim about the ultimate real-world cause of the slowdown.
@@ -440,13 +444,23 @@ try{
  // Preserve the evidence BEFORE an assertion, even if a diagnostic contract
  // fails. R5-b19 previously discarded the complete failure trace.
  result.partialDiagnostics={rootCauseTelemetry,peerChain,rootChains};
- if(seed===2)assert(rootChains.slowAcceptedSnapshots>20&&
-  rootChains.atTargetStop?.nodes.length>=1&&
-  rootCauseTelemetry.limitingPeers.some(p=>
-   p.peer==='r5b3-driver-10 [TRACK]'&&p.seconds>10),
-  'R5-b20 missing independently observed seed2 slowdown or primary peer');
+ // Do not require the historical main-track slowdown to recur after a fix.
+ if(rootChains.slowAcceptedSnapshots)assert(
+  rootChains.atTargetStop?.nodes.length>=1,
+  'R5-b27 missing dependency context for observed slowdown');
  // A 20ms accepted solver binding must never be asserted to be identical
  // to the different, nearest 0.1s sampled binding at a single instant.
+ // R5-b27: accepted physical steering intent, never a visual-only offset.
+ const avoidanceFrames=chainFrames.filter(f=>f.cars.some(c=>c.pitAvoidPeer));
+ const steeringFrames=chainFrames.filter(f=>f.cars.some(c=>
+  c.pit==='TRACK'&&c.pitAvoidPeer&&Number.isFinite(c.pitAvoidTarget)&&
+  Math.abs(c.pitAvoidTarget-c.lateralMeters)>.15));
+ const pitAvoidance={
+  frames:avoidanceFrames.length,seconds:avoidanceFrames.length*.1,
+  steeringTargetFrames:steeringFrames.length,first:steeringFrames[0]||avoidanceFrames[0]||null,
+  collisionStops:baseline.collisionStops,invalidSteps:baseline.invalid.length,
+  caveat:'Counts reflect accepted physical AI steering intent; no rank or collision override.'
+ };
  const comparisons=interventions.map(run=>{
   const v=run.rows.find(v=>v.id===target),event=run.forces[0];
   const cutoff=Math.min(baseline.eligibility.t,run.eligibility?.t||0);
@@ -542,7 +556,7 @@ try{
     caveat:'All gaps include wear, traffic, incidents and tyre recovery. Prior laps establish a within-driver pace reference, NOT a causal estimate of traffic delay or mechanical pit cost'}};
  });
  result={phase:'R5-b9',status:'DIAGNOSTIC',trackId,seed,target,
-  firstEligibleModel:baseline.eligibility,trafficWave,rootCauseTelemetry,peerChain,rootChains,comparisons,baseline,interventions,
+  firstEligibleModel:baseline.eligibility,trafficWave,rootCauseTelemetry,peerChain,rootChains,pitAvoidance,comparisons,baseline,interventions,
   interpretation:'Browser-only no-pit control vs forced real SOFT/MEDIUM/HARD pit lifecycle. Traffic feedback remains; real engine physics unchanged. Separately calibrated real-game autonomous forecast is measured by its independent full-race QA.'};
  for(const q of comparisons){
   assert(q.gridMatch&&q.tyreMatch&&q.beforeDecisionSamples>=10&&q.firstMismatchTick===null,
@@ -628,6 +642,9 @@ finally{
    observedPrimaryPeerAtStop:result.rootChains.observedPrimaryPeerAtStop,
    observedPrimaryPeerSamples:result.rootChains.observedPrimaryPeerSamples,
    highFrequencyPrimaryPeerSeconds:result.rootChains.highFrequencyPrimaryPeerSeconds},
+  pitAvoidance:result.pitAvoidance&&{frames:result.pitAvoidance.frames,
+   seconds:result.pitAvoidance.seconds,
+   steeringTargetFrames:result.pitAvoidance.steeringTargetFrames},
   pairedResiduals:result.comparisons?.map(x=>({compound:x.compound,
    residual:x.signedModelResidualSeconds,
    grossRecovery:x.grossRecoveryLapSeconds,
