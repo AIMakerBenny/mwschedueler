@@ -20,9 +20,11 @@ const audit={phase:'R5-b25',seed,status:'PASS',physicalCollisionStops:race.basel
  conclusion:'Not available - no pit terminal sampled in the observed target slowdown',
  recommendedChange:'Never bypass pit-lane collision constraints without demonstrated, separate world geometry'};
 
-if(seed===2){
- assert(topology&&topology.cars?.length===4&&topology.links?.length===3,
-  'R5-b24 real pit-to-track chain geometry missing');
+// R5-b27: a successful physical manoeuvre may eliminate the old four-car
+// cascade entirely. Audit real contacts only when actually observed.
+if(topology){
+ assert(topology.cars?.length===4&&topology.links?.length===3,
+  'Malformed pit-to-track chain geometry');
  assert(Number.isFinite(topology.t),'Missing physical chain timestamp');
  const ids=['r5b3-driver-0','r5b3-driver-9','r5b3-driver-10','r5b3-driver-3'];
  assert.deepEqual(topology.cars.map(x=>x.id),ids,
@@ -59,19 +61,22 @@ if(seed===2){
  const first=perLink[0];
  assert(first.fromState==='PIT_LANE'&&first.toState==='TRACK',
   'Missing the direct pit/main-track constraint boundary');
- assert(first.samePhysicalCorridor,
-  'The logged pit and track cars do not share an occupied lateral corridor; re-examine this diagnostic before classifying safety');
- assert(perLink.every(x=>x.samePhysicalCorridor),
-  'A chain member is laterally separated, requiring geometry-specific review');
- assert(audit.pitDependentSlowFrames>0,'Missing completed pit-cascade evidence');
+ // Report real separation without presupposing an overlap or demanding
+ // that the historic four-car traffic jam remain after active avoidance.
+ assert(perLink.every(x=>Number.isFinite(x.candidateWorldCenterDistanceMeters)),
+  'Missing candidate world center distance');
  audit.physicalChain={t:topology.t,links:perLink,
   lateralOverlapCount:perLink.filter(x=>x.samePhysicalCorridor).length,
   crossStatePairs:perLink.filter(x=>x.fromState!==x.toState).length};
- audit.conclusion='Observed pit-lane and track cars physically share lateral clearance in the current unified world coordinates';
- audit.recommendedChange='A naive pit-state traffic-brake exemption is UNSAFE without separate lane geometry plus swept-envelope QA';
+ audit.conclusion=first.samePhysicalCorridor?
+  'A real pit and track pair still shares a physical lateral corridor':
+  'The sampled pit and track pair is laterally clear in the candidate physics state';
+ audit.recommendedChange='Preserve the swept-world physical collision validator and the existing dynamic traffic brake';
 }else{
- assert(!topology||topology.cars?.length===4,
-  'Unexpected malformed optional physical pit geometry');
+ audit.conclusion=audit.pitDependentSlowFrames===0?
+  'Historic pit-terminated slowdown chain absent in this completed race':
+  'Not available - no matching four-car pit geometry was observed';
+ audit.recommendedChange='Never bypass the physical collision solver without separate world-space evidence';
 }
 const output='artifacts/f1-v12-r5b25-pit-corridor-seed'+seed+'.json';
 fs.writeFileSync(output,JSON.stringify(audit,null,2));
