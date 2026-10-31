@@ -60,10 +60,42 @@ assert.equal(merge(row,row.y,[row,peer(90)]).target,row.y,
 blockedIds.pop();
 assert.equal(merge(row,target,[row,peer(90)]).target,target,
  'Unblocked pit-side lane selection must preserve the normal target');
+// R5-b35: the full pit line is occupied, but an intermediate physical
+// lane can be reached without crossing an occupied longitudinal corridor.
+const progressive=new Function('env',`
+ const {unifiedMergeTargetV11,unifiedGapV11,UNIFIED_ENGINE_V11}=env;
+ ${helper}
+ return unifiedPitMergeTargetV12;
+`)({
+ unifiedMergeTargetV11:(car,attempt)=>attempt< -2?
+  {target:car.y,blocked:['near-pit-box']}:{target:attempt,blocked:[]},
+ unifiedGapV11:(a,b)=>b.s-a.s,
+ UNIFIED_ENGINE_V11:{physicalLength:5.2,clearance:.30}
+});
+const staged=progressive(row,target,[row,{id:'near-pit-box',s:12,v:70}]);
+assert(staged.partial===true,'Blocked full pit lane must select a vetted partial target');
+assert(staged.target> -2&&staged.target<row.y-.45,
+ 'Partial steering must make genuine progress without entering blocked lane');
+assert.deepEqual(staged.blocked,[],
+ 'Unobstructed intermediate target must be safe by ordinary reservation');
+const allBlocked=new Function('env',`
+ const {unifiedMergeTargetV11,unifiedGapV11,UNIFIED_ENGINE_V11}=env;
+ ${helper}
+ return unifiedPitMergeTargetV12;
+`)({
+ unifiedMergeTargetV11:(car,attempt)=>({target:car.y,blocked:['near-pit-box']}),
+ unifiedGapV11:(a,b)=>b.s-a.s,
+ UNIFIED_ENGINE_V11:{physicalLength:5.2,clearance:.30}
+});
+const blockedEntireWay=allBlocked(row,target,[row,{id:'near-pit-box',s:12,v:70}]);
+assert.equal(blockedEntireWay.target,row.y,
+ 'All partial trajectories blocked means no forced lane displacement');
+assert(blockedEntireWay.blocked.length>0,
+ 'Return original blocker when none of the physical candidates are safe');
 console.log(JSON.stringify({phase:'R5-b32',status:'PASS',
  checks:['distant same-speed physical clearance','normal lane target retained',
  'close vehicle blocked','closing trajectory blocked','rear contact protected',
  'unknown blocker fail-closed','multiple peers accounted','no displacement',
  'existing swept-world collision check retained',
  'slow lateral reachability guarded','counter-steering reversal time guarded',
- 'safe fast pit-side move retained']}));
+ 'safe fast pit-side move retained','partial physical merge allowed','blocked intermediate corridor rejected']}));
