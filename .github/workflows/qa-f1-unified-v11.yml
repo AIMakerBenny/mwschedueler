@@ -52,6 +52,8 @@ jobs:
         run: node scripts/qa-f1-v12-r5b26-pit-avoid-contract.mjs
       - name: R5-b32 physical pit merge safety and no-teleport contract
         run: node scripts/qa-f1-v12-r5b32-physical-pit-merge.mjs
+      - name: R5-b38 real shared-lane physical reservation risk contract
+        run: node scripts/qa-f1-v12-r5b38-reservation-physical-risk.mjs
       - name: R5-b4 physical tyre degradation and forecast contract
         run: node scripts/qa-f1-v12-r5b4-pit-economics.mjs
       - name: Install browser QA dependencies
@@ -286,6 +288,17 @@ jobs:
         with:
           name: f1-v12-r5b36-progressive-pit-seed${{ matrix.seed }}
           path: artifacts/f1-v12-r5b36-progressive-pit-seed${{ matrix.seed }}.json
+          if-no-files-found: warn
+      - name: R5-b37 independently reconcile accepted physical lane veto telemetry
+        env:
+          MWS_R5B9_SEED: ${{ matrix.seed }}
+        run: node scripts/qa-f1-v12-r5b37-reservation-audit.mjs
+      - name: Upload R5-b37 physical reservation overrides
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-v12-r5b37-reservation-audit-seed${{ matrix.seed }}
+          path: artifacts/f1-v12-r5b37-reservation-audit-seed${{ matrix.seed }}.json
           if-no-files-found: warn
       - name: R5-b27 prove collision-free physical pit avoidance and delayed-traffic improvement
         env:
