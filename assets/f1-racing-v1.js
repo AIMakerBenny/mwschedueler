@@ -11572,10 +11572,18 @@ function unifiedPitAvoidanceV12(row,rows,width){
  if(bound<1)return null;
  let choice=null;
  for(const peer of rows){
-  if(peer.id===row.id||peer.finished||!['PIT_ENTRY','PIT_LANE','PIT_BOX'].includes(peer.pit))continue;
+  // R5-b28: recognize a car with an accepted pit request BEFORE its TRACK
+  // -> PIT_ENTRY transition. Once the pit speed cap applies, its follower
+  // can have less lateral travel time than its physical chassis requires.
+  const approachingPit=peer.pit==='TRACK'&&Boolean(peer.ref?.pitRequested);
+  if(peer.id===row.id||peer.finished||
+    !(approachingPit||['PIT_ENTRY','PIT_LANE','PIT_BOX'].includes(peer.pit)))continue;
   const gap=unifiedGapV11(row,peer);
   const closing=Math.max(0,row.v-peer.v);
-  const scan=Math.min(275,Math.max(140,closing*5+40));
+  // Advance warning is for actual pending pit entries only, not arbitrary
+  // slow cars. A chosen lane still goes through all normal merge guards.
+  const scan=approachingPit?Math.max(275,Math.min(350,closing*6+80)):
+    Math.min(275,Math.max(140,closing*5+40));
   if(!(gap>0&&gap<scan))continue;
   const required=unifiedLateralClearanceV11(row,peer)+.45;
   // Keep an already physically separated pit-avoid intent until the pit car
