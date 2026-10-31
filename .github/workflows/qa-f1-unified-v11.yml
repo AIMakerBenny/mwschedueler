@@ -48,6 +48,8 @@ jobs:
         run: node scripts/qa-f1-v12-r3-risk.mjs
       - name: R4 sequential special and manual pause regression
         run: node scripts/qa-f1-v12-r4-specials.mjs
+      - name: R5-b26 real pit-avoidance planning and no-teleport contract
+        run: node scripts/qa-f1-v12-r5b26-pit-avoid-contract.mjs
       - name: R5-b4 physical tyre degradation and forecast contract
         run: node scripts/qa-f1-v12-r5b4-pit-economics.mjs
       - name: Install browser QA dependencies
