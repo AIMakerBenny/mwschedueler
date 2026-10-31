@@ -201,6 +201,38 @@ try{
    atRejoin-atRequest:null;
   const intervalOverhead=Number.isFinite(driverElapsed)&&Number.isFinite(baselineElapsed)?
    driverElapsed-baselineElapsed:null;
+  // R5-b15: compare the SAME driver, track segment and initial tyre in
+  // earlier accepted laps before this driver's high-wear decision. This
+  // measures a late-stint main-track slowdown, NOT its pure traffic cause.
+  // On a circuit the pit exit crosses the next lap, so keep phase relative
+  // to the specific pit-entry and rejoin progress and shift both together.
+  const referenceSegmentSeconds=[];
+  if(entered&&rejoined){
+   const beginFraction=entered.raceProgress-Math.floor(entered.raceProgress);
+   const endRelative=rejoined.raceProgress-Math.floor(entered.raceProgress);
+   for(const priorLap of [1,2,3]){
+    const begin=priorLap+beginFraction,end=priorLap+endRelative;
+    if(end>=run.eligibility.lap)continue;
+    const first=interpolate(baseline.targetProgressTimes,begin);
+    const last=interpolate(baseline.targetProgressTimes,end);
+    if(Number.isFinite(first)&&Number.isFinite(last)&&last>first)
+     referenceSegmentSeconds.push(last-first);
+   }
+  }
+  const sortedReference=[...referenceSegmentSeconds].sort((a,b)=>a-b);
+  const medianReference=sortedReference.length?
+   sortedReference[Math.floor(sortedReference.length/2)]:null;
+  const baselinePitLaneDistanceSeconds=entered&&rejoined?
+   interpolate(baseline.targetProgressTimes,rejoined.raceProgress)-
+   interpolate(baseline.targetProgressTimes,entered.raceProgress):null;
+  const pitDriverPitLaneDistanceSeconds=entered&&rejoined?
+   rejoined.seconds-entered.seconds:null;
+  const baselineSlowdownVsEarlier=Number.isFinite(medianReference)&&
+   Number.isFinite(baselinePitLaneDistanceSeconds)?
+   baselinePitLaneDistanceSeconds-medianReference:null;
+  const approachNoPit=entered?interpolate(baseline.targetProgressTimes,entered.raceProgress)-
+   atRequest:null;
+  const approachPit=entered?entered.seconds-run.eligibility.t:null;
   return {compound:run.mode,gridMatch:JSON.stringify(baseline.initial.grid)===JSON.stringify(run.initial.grid),
    tyreMatch:JSON.stringify(baseline.initial.tyres)===JSON.stringify(run.initial.tyres),
    beforeDecisionSamples:prior.length,firstMismatchTick:mismatch?.tick??null,
@@ -229,7 +261,20 @@ try{
     modelPitCostSeconds:baseline.eligibility?.pitLossSeconds??null,
     observedMinusModelCostSeconds:Number.isFinite(intervalOverhead)?
      intervalOverhead-baseline.eligibility.pitLossSeconds:null,
-    caveat:'Matched progress interval includes traffic and fresh-tyre recovery; not a pure pit-service cost'}};
+    requestToPitEntry:{noPitSameProgressSeconds:approachNoPit,
+     pitCarElapsedSeconds:approachPit,
+     deltaSeconds:Number.isFinite(approachNoPit)&&Number.isFinite(approachPit)?
+      approachPit-approachNoPit:null},
+    pitEntryToRejoin:{noPitSameProgressSeconds:baselinePitLaneDistanceSeconds,
+     pitCarElapsedSeconds:pitDriverPitLaneDistanceSeconds,
+     deltaSeconds:Number.isFinite(baselinePitLaneDistanceSeconds)&&
+      Number.isFinite(pitDriverPitLaneDistanceSeconds)?
+      pitDriverPitLaneDistanceSeconds-baselinePitLaneDistanceSeconds:null},
+    noPitEarlierSameSegmentSeconds:referenceSegmentSeconds,
+    noPitEarlierSegmentMedianSeconds:medianReference,
+    noPitCurrentSegmentExtraSeconds:baselineSlowdownVsEarlier,
+    modelResidualSeconds:(b.finishMs-v.finishMs)/1000-(event?.modelBenefitSeconds??0),
+    caveat:'All gaps include wear, traffic, incidents and tyre recovery. Prior laps establish a within-driver pace reference, NOT a causal estimate of traffic delay or mechanical pit cost'}};
  });
  result={phase:'R5-b9',status:'DIAGNOSTIC',trackId,seed,target,
   firstEligibleModel:baseline.eligibility,comparisons,baseline,interventions,
@@ -257,6 +302,15 @@ try{
    Number.isFinite(q.pitInterval.matchedDistanceOverheadSeconds)&&
    Number.isFinite(q.pitInterval.modelPitCostSeconds),
    'Missing observed matched-distance pit time '+q.compound);
+  assert(q.pitInterval.noPitEarlierSameSegmentSeconds.length>=2&&
+   Number.isFinite(q.pitInterval.noPitEarlierSegmentMedianSeconds)&&
+   Number.isFinite(q.pitInterval.noPitCurrentSegmentExtraSeconds),
+   'Missing early-lap same-distance pace reference '+q.compound);
+  const approach=q.pitInterval.requestToPitEntry.deltaSeconds;
+  const pitLane=q.pitInterval.pitEntryToRejoin.deltaSeconds;
+  assert(Number.isFinite(approach)&&Number.isFinite(pitLane)&&
+   Math.abs(approach+pitLane-q.pitInterval.matchedDistanceOverheadSeconds)<.1,
+   'Matched-distance pit loss must reconcile approach and pit-lane segments '+q.compound);
  }
  // Compare actual completed races, never nominal requested compound labels.
  assert(new Set(comparisons.map(x=>x.interventionFinishSeconds.toFixed(4))).size>=2,
@@ -278,7 +332,10 @@ finally{
    pitCost:x.grossPitCostLapSeconds,
    incidents:x.incidentTotals.noPitMinusPit,
    pitSegment:x.pitInterval.matchedDistanceOverheadSeconds,
-   predictedPitCost:x.pitInterval.modelPitCostSeconds})),
+   predictedPitCost:x.pitInterval.modelPitCostSeconds,
+   noPitCurrentSegmentExtraVsEarlier:x.pitInterval.noPitCurrentSegmentExtraSeconds,
+   approachSegment:x.pitInterval.requestToPitEntry.deltaSeconds,
+   pitLaneSegment:x.pitInterval.pitEntryToRejoin.deltaSeconds})),
   error:result.error||null,artifact:output}));
 }
 assert.equal(result.status,'PASS',result.error||'Paired Chromium comparison failed');
