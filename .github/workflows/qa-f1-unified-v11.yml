@@ -239,6 +239,17 @@ jobs:
           name: f1-v12-r5b21-chain-audit-seed${{ matrix.seed }}
           path: artifacts/f1-v12-r5b21-chain-audit-seed${{ matrix.seed }}.json
           if-no-files-found: warn
+      - name: R5-b23 audit binding upstream car and first slowdown onset
+        env:
+          MWS_R5B9_SEED: ${{ matrix.seed }}
+        run: node scripts/qa-f1-v12-r5b23-upstream-provenance.mjs
+      - name: Upload R5-b23 upstream braking-provenance audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-v12-r5b23-upstream-seed${{ matrix.seed }}
+          path: artifacts/f1-v12-r5b23-upstream-provenance-seed${{ matrix.seed }}.json
+          if-no-files-found: warn
       - name: Upload Blue Coast matched-race data
         if: always()
         uses: actions/upload-artifact@v4
