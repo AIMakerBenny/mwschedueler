@@ -81,6 +81,7 @@ const r5b17AcceptedPatch=[
  '      requestedPit:Boolean(r.ref.pitRequested),racingLineMode:String(r.ref.racingLineMode||"IDEAL"),',
  '      commandedLaneTarget:Number.isFinite(r.ref.unifiedLaneTargetV11)?r.ref.unifiedLaneTargetV11:null,',
  '      blockedMergeIds:Array.isArray(r.ref.unifiedMergeBlockedV11)?r.ref.unifiedMergeBlockedV11.slice():[],',
+ '      pitPartial:r.ref.unifiedPitPartialV12?{...r.ref.unifiedPitPartialV12}:null,',
  '      pitAvoidPeer:String(r.ref.unifiedPitAvoidPeerV12||""),',
  '      pitAvoidTarget:Number.isFinite(r.ref.unifiedPitAvoidTargetV12)?r.ref.unifiedPitAvoidTargetV12:null,',
  '      wear:r.w,brake:c?.brake??null};})});',
@@ -486,13 +487,17 @@ try{
   const samples=chainFrames.flatMap(frame=>frame.cars.filter(c=>
    c.id===id&&c.requestedPit).map(c=>({t:frame.t,pit:c.pit,
     lateralMeters:c.lateralMeters,commandedLaneTarget:c.commandedLaneTarget,
-    blockedMergeIds:c.blockedMergeIds,mode:c.racingLineMode,speedKph:c.speedKph})));
+    blockedMergeIds:c.blockedMergeIds,mode:c.racingLineMode,speedKph:c.speedKph,
+   pitPartial:c.pitPartial})));
   const blocked=samples.filter(x=>x.blockedMergeIds.length);
   const priorToEntry=samples.filter(x=>x.pit==='TRACK');
+  const partial=samples.filter(x=>x.pitPartial);
   const blockedBy=new Map();
   for(const sample of blocked)for(const blocker of sample.blockedMergeIds)
    blockedBy.set(blocker,(blockedBy.get(blocker)||0)+1);
-  return {id,frames:samples.length,preEntryFrames:priorToEntry.length,
+  return {id,frames:samples.length,
+   partialFrames:partial.length,preEntryPartialFrames:partial.filter(x=>x.pit==='TRACK').length,
+   firstPartial:partial[0]||null,preEntryFrames:priorToEntry.length,
    preEntryBlockedFrames:priorToEntry.filter(x=>x.blockedMergeIds.length).length,
    blockedFrames:blocked.length,blockedBy:[...blockedBy].sort((a,b)=>b[1]-a[1])
     .map(([id,frames])=>({id,frames})),
