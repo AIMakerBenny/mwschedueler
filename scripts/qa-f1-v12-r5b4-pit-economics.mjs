@@ -57,13 +57,23 @@ const straightCalibration=new Function(setup+engine+`
 unifiedInitV11();
 unifiedStateV11.path.samples.forEach(p=>{p.k=.00000001});
 unifiedPreparePitGripCurveV12(track);
-return [.4,.6,.7,.9,1].map(w=>({wear:w,loss:unifiedPitForecastV12('SOFT',w,0,1,64,track)}));
+const wear=[.4,.6,.7,.9,1].map(w=>({wear:w,loss:unifiedPitForecastV12('SOFT',w,0,1,64,track)}));
+const compounds=['SOFT','MEDIUM','HARD'].map(compound=>({
+ compound,loss:unifiedPitForecastV12(compound,0,.02,5,64,track)
+}));
+return {wear,compounds};
 `)();
-assert(Math.abs(straightCalibration[0].loss)<1e-6&&Math.abs(straightCalibration[1].loss)<1e-6);
-assert(straightCalibration.every((x,i)=>i===0||x.loss>=straightCalibration[i-1].loss-1e-8));
-assert(straightCalibration[3].loss>12,'High wear must slow a full lap even without curvature');
-assert(Math.abs(straightCalibration[4].loss-32)<1e-5,
- '100% wear forecast must match the observed 50% extra accepted-lap time');
+assert(straightCalibration.wear.every((x,i)=>i===0||
+ x.loss>=straightCalibration.wear[i-1].loss-1e-8));
+assert(straightCalibration.wear[3].loss-straightCalibration.wear[1].loss>12,
+ 'High wear must add longitudinal recovery loss above 60% wear');
+assert(Math.abs(straightCalibration.wear[4].loss-straightCalibration.wear[1].loss-32)<1e-5,
+ 'Full wear must increase forecast by 50% baseline lap relative to 60% wear');
+assert(straightCalibration.compounds.every((x,i)=>i===0||
+ x.loss>straightCalibration.compounds[i-1].loss),
+ 'Fresh-compound SOFT, MEDIUM, HARD forecast ordering lost on a straight');
+assert(straightCalibration.compounds[2].loss-straightCalibration.compounds[0].loss>1.5,
+ 'Physical longitudinal grip recovery must distinguish tyre compounds');
 assert(test.grip.every((v,i)=>v.factor>=.34&&v.factor<=1&&v.grip>0&&(i===0||v.factor<test.grip[i-1].factor)));
 assert(test.grip[6].factor<test.grip[3].factor*.7,'Worn tyre grip does not physically deteriorate');
 assert(test.forecast.every((x,i)=>Number.isFinite(x)&&(i===0||x>test.forecast[i-1])));
@@ -88,4 +98,5 @@ console.log(JSON.stringify({status:'PASS',phase:'R5-b4/R5-b6',grip:test.grip,phy
  candidates:test.rows.map(x=>({wear:x.wear,decision:x.plan.decision,reason:x.plan.reason,
  benefit:x.plan.benefit,loss:x.plan.pitLossSeconds,compound:x.plan.targetCompound})),
  noEarlyPit:true,noLatePit:true,pureForecast:true,
- notes:'This tests a representative real physics-model input; FULL NORMAL Chromium is the real outcomes test.'}));
+ straightCalibration,
+ notes:'Longitudinal traction/braking forecast calibrated from two Blue Coast seeds; genuine Chromium race QA is the authoritative validation.'}));
