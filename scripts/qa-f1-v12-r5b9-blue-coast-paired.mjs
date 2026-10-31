@@ -219,7 +219,7 @@ try{
   pitWaveConcurrentSeconds:pitWaveFrames.length*.2,
   maxNearbyPitVehicles:busiestPit?.nearPitCount??0,
   minTargetSpeedKph:slowest?.speedKph??null,
-  slowestSnapshot:slowest,pitWaveSnapshot:busiest,
+  slowestSnapshot:slowest,pitWaveSnapshot:busiestPit,
   keyCaveat:'Observed proximity and speeds do not establish which AI/physical constraint caused braking; diagnostic for pit-lane/main-track interaction.',
   samplingSeconds:.2};
  assert(traffic.length>20&&traffic.every(x=>Number.isFinite(x.speedKph)&&
