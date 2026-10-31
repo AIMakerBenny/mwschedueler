@@ -11510,6 +11510,29 @@ function unifiedMergeTargetV11(row,target,rows){
   }
   return {target:blocked.length?row.y:target,blocked:blocked.sort()};
 }
+// R5-b32: when a requested pit-entry car has time to reach its physical
+// pit line, allow a merge past distant cars only if longitudinal body space
+// stays clear throughout the entire lateral move at current accepted speeds.
+// The shared step solver and swept-world contact check remain unchanged.
+function unifiedPitMergeTargetV12(row,target,rows){
+ const ordinary=unifiedMergeTargetV11(row,target,rows);
+ if(!ordinary.blocked.length||Math.abs(target-row.y)<.05)return ordinary;
+ const travelSeconds=Math.abs(target-row.y)/2.5+.5;
+ const blockers=ordinary.blocked.filter(id=>{
+  const peer=rows.find(p=>p.id===id);
+  if(!peer)return true; // Unknown occupant: never remove protection.
+  const gap=unifiedGapV11(row,peer);
+  const after=gap+(peer.v-row.v)*travelSeconds;
+  const clearance=UNIFIED_ENGINE_V11.physicalLength+
+   UNIFIED_ENGINE_V11.clearance+3+
+   Math.max(8,Math.max(row.v,peer.v)*.3);
+  // A change of longitudinal ordering or a close pass during the lane
+  // transition must still obey the old reservation guard.
+  if(!Number.isFinite(after)||gap*after<=0)return true;
+  return Math.min(Math.abs(gap),Math.abs(after))<=clearance;
+ });
+ return {target:blockers.length?row.y:target,blocked:blockers};
+}
 // v1.2 R2: AI-only multi-car corridor planner. Do not modify committed
 // world trajectories here; the existing physical solver validates all moves.
 function unifiedAttackCorridorV12(row,opponent,rows,width){
@@ -11654,7 +11677,8 @@ function unifiedChooseLaneV11(row,rows,now,width){
  if(v.racingLineMode&&v.racingLineMode!=='IDEAL'&&state!=='PLAN_ATTACK'&&state!=='SIDE_BY_SIDE'&&state!=='EXIT_DUEL')
   target=unifiedClampV11(lineOffsetMetersV197(v),-allowed,allowed);
  if(v.pitRequested||row.pit!=='TRACK'){target=unifiedClampV11(lineOffsetMetersV197(v),-allowed,allowed);state='PIT';}
- const merge=unifiedMergeTargetV11(row,target,rows);
+ const merge=state==='PIT'?unifiedPitMergeTargetV12(row,target,rows):
+  unifiedMergeTargetV11(row,target,rows);
  const blocked=[...new Set([...merge.blocked,...(state==='EXIT_DUEL'?corridor?.blocked||[]:[])])].sort();
  target=merge.target;v.unifiedMergeBlockedV11=blocked;
  if(merge.blocked.length&&state!=='PIT')state='EXIT_DUEL';
