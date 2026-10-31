@@ -327,6 +327,62 @@ try{
  };
  if(seed===2)assert(chainFrames.length>40&&principalPeerRows.length>30&&
   principalPeerId==='r5b3-driver-10','R5-b18 seed2 main-track peer-chain evidence missing');
+ // R5-b19: classify *observed* accepted-step braking dependency chains.
+ // A chain can end with a free speed target or a pit car; neither is by itself
+ // a claim about the ultimate real-world cause of the slowdown.
+ const resolveChain=frame=>{
+  const byId=new Map(frame.cars.map(c=>[c.id,c]));
+  const nodes=[],seen=new Set();
+  let id=target,terminal='UNKNOWN';
+  for(let depth=0;depth<=frame.cars.length;depth++){
+   const car=byId.get(id);
+   if(!car){terminal='MISSING_PEER';break;}
+   if(seen.has(id)){terminal='CYCLE';break;}
+   seen.add(id);
+   nodes.push({id,pit:car.pit,reason:car.reason,
+    speedKph:car.speedKph,targetKph:car.targetKph,
+    wear:car.wear,limitingPeer:car.limiter?.peer||null});
+   if(car.reason!=='PREDICTED_TRAFFIC'||!car.limiter?.peer){
+    terminal=car.pit!=='TRACK'?'PIT_STATE':
+      car.targetKph<95?'LOW_SPEED_TARGET':'FREE_OR_NO_TRAFFIC_LIMIT';
+    break;
+   }
+   id=car.limiter.peer;
+  }
+  return {t:frame.t,targetSpeedKph:byId.get(target)?.speedKph??null,
+   terminal,depth:nodes.length,nodes};
+ };
+ const lowSpeedChains=chainFrames.filter(f=>{
+  const car=f.cars.find(c=>c.id===target);
+  return car?.pit==='TRACK'&&car.speedKph<95;
+ }).map(resolveChain);
+ const terminalCounts=new Map(),depthCounts=new Map();
+ for(const chain of lowSpeedChains){
+  terminalCounts.set(chain.terminal,(terminalCounts.get(chain.terminal)||0)+1);
+  depthCounts.set(chain.depth,(depthCounts.get(chain.depth)||0)+1);
+ }
+ const rootChains={
+  slowAcceptedSnapshots:lowSpeedChains.length,sampleSeconds:.1,
+  terminalDistribution:[...terminalCounts].sort((a,b)=>b[1]-a[1])
+   .map(([terminal,frames])=>({terminal,frames,seconds:frames*.1})),
+  chainDepthDistribution:[...depthCounts].sort((a,b)=>a[0]-b[0])
+   .map(([depth,frames])=>({depth,frames})),
+  firstSlowChain:lowSpeedChains[0]||null,
+  deepestChain:lowSpeedChains.reduce((best,c)=>!best||c.depth>best.depth?c:best,null),
+  atTargetStop:lowSpeedChains.reduce((best,c)=>
+   !best||Math.abs(c.t-(rootCauseTelemetry.slowestAccepted?.t||0))<
+    Math.abs(best.t-(rootCauseTelemetry.slowestAccepted?.t||0))?c:best,null),
+  peerPrecedesTargetSeconds:Number.isFinite(peerChain.peerFirstSlow?.t)&&
+   Number.isFinite(peerChain.targetFirstSlow?.t)?
+   peerChain.targetFirstSlow.t-peerChain.peerFirstSlow.t:null,
+  interpretation:'Observed dependency graph, not a counterfactual. PREDICTED_TRAFFIC is a binding solver cap; terminal labels describe the end node only. No physical vehicle was removed or repositioned.'
+ };
+ assert(rootChains.terminalDistribution.reduce((sum,x)=>sum+x.frames,0)===
+  rootChains.slowAcceptedSnapshots,'R5-b19 terminal accounting incomplete');
+ if(seed===2)assert(rootChains.slowAcceptedSnapshots>20&&
+  rootChains.atTargetStop?.nodes.length>1&&
+  rootChains.atTargetStop.nodes[0]?.limitingPeer==='r5b3-driver-10',
+  'R5-b19 missing verified seed2 upstream main-track slowdown chain');
  const comparisons=interventions.map(run=>{
   const v=run.rows.find(v=>v.id===target),event=run.forces[0];
   const cutoff=Math.min(baseline.eligibility.t,run.eligibility?.t||0);
@@ -422,7 +478,7 @@ try{
     caveat:'All gaps include wear, traffic, incidents and tyre recovery. Prior laps establish a within-driver pace reference, NOT a causal estimate of traffic delay or mechanical pit cost'}};
  });
  result={phase:'R5-b9',status:'DIAGNOSTIC',trackId,seed,target,
-  firstEligibleModel:baseline.eligibility,trafficWave,rootCauseTelemetry,peerChain,comparisons,baseline,interventions,
+  firstEligibleModel:baseline.eligibility,trafficWave,rootCauseTelemetry,peerChain,rootChains,comparisons,baseline,interventions,
   interpretation:'Browser-only no-pit control vs forced real SOFT/MEDIUM/HARD pit lifecycle. Traffic feedback remains; real engine physics unchanged. Separately calibrated real-game autonomous forecast is measured by its independent full-race QA.'};
  for(const q of comparisons){
   assert(q.gridMatch&&q.tyreMatch&&q.beforeDecisionSamples>=10&&q.firstMismatchTick===null,
@@ -492,6 +548,14 @@ finally{
    peerLowestSpeed:result.peerChain.peerLowestSpeed,
    targetFirstSlow:result.peerChain.targetFirstSlow,
    tracedAtTargetStop:result.peerChain.tracedAtTargetStop},
+  rootChains:result.rootChains&&{
+   slowAcceptedSnapshots:result.rootChains.slowAcceptedSnapshots,
+   terminalDistribution:result.rootChains.terminalDistribution,
+   chainDepthDistribution:result.rootChains.chainDepthDistribution,
+   firstSlowChain:result.rootChains.firstSlowChain,
+   deepestChain:result.rootChains.deepestChain,
+   atTargetStop:result.rootChains.atTargetStop,
+   peerPrecedesTargetSeconds:result.rootChains.peerPrecedesTargetSeconds},
   pairedResiduals:result.comparisons?.map(x=>({compound:x.compound,
    residual:x.signedModelResidualSeconds,
    grossRecovery:x.grossRecoveryLapSeconds,
