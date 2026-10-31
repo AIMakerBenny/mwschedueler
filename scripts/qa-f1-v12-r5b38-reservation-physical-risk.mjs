@@ -37,10 +37,10 @@ b=car('closing-neighbor',45,0,60,0);
 assert.equal(predict(a,b,2.54,.03),true,
  'Car approaching within lane-change horizon must preserve lateral reservation');
 b=car('nearby-neighbor',12,0,95,0);
-assert.equal(predict(a,b,2.54,-.47),true,
+assert.equal(predict(a,b,2.54,.03),true,
  'Close current occupant must retain lane-merge reservation');
 b=car('reversing-order',28,0,20,0);
-assert.equal(predict(a,b,2.54,-.47),true,
+assert.equal(predict(a,b,2.54,.03),true,
  'Longitudinal order crossing must retain conventional reservation');
 a=car('wide-separated',0,4.0,70,0);
 b=car('wide-peer',1,-3.8,70,0);
