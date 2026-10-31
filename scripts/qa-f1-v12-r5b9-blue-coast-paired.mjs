@@ -42,7 +42,7 @@ const r5b17AfterAnchor="cmd.reason='PREDICTED_TRAFFIC';changed=true;";
 const r5b17AcceptedAnchor='  unifiedCompetitionRecordV12(simClockV192.simTimeMs,rows,cmds);';
 const r5b17BeforePatch='\n        const __r5b17Before=cmd.v;';
 const r5b17AfterPatch=[
- 'if(window.__r5b17Capture&&String(me.id)===window.__r5b9Target){',
+ 'if(window.__r5b17Capture){',
  ' cmd.__r5b17Limiter={peer:String(peer.id),peerState:String(peer.pit),ownState:String(me.pit),',
  '  gapMeters:gap,lateralGapMeters:deltaY,corridorMeters:physicalCorridor,',
  '  footprintMeters:footprint,responseReserveMeters:responseReserve,budgetMeters:budget,',
@@ -63,6 +63,8 @@ const r5b17AcceptedPatch=[
  "     pit:String(accepted.pit?.state||'TRACK'),limiter:accepted.__r5b17Limiter||null",
  '    });',
  '   }',
+ '   // R5-b22: every vehicle now carries its own physically binding peer.',
+ '   // The browser-only probe does not alter candidate motion or solver commands.',
  '   // R5-b18: observe every accepted peer command every 0.1s near the slowdown.',
  '   // Read-only: no car, lane, race state or solver output is changed.',
  '   if(progress>=5.70&&progress<=6.18&&Math.round(simClockV192.simTimeMs/20)%5===0){',
@@ -317,9 +319,20 @@ try{
  const tracedAtTargetStop=principalPeerRows.reduce((best,f)=>
   !best||Math.abs(f.t-(rootCauseTelemetry.slowestAccepted?.t||0))<
    Math.abs(best.t-(rootCauseTelemetry.slowestAccepted?.t||0))?f:best,null);
+ const peerUpstreamLimited=peerSlowRows.filter(x=>x.peer.reason==='PREDICTED_TRAFFIC');
+ const peerUpstreamAttributed=peerUpstreamLimited.filter(x=>x.peer.limiter?.peer);
+ const peerUpstreamSourceCounts=new Map();
+ for(const x of peerUpstreamAttributed){
+  const key=x.peer.limiter.peer+' ['+x.peer.limiter.peerState+']';
+  peerUpstreamSourceCounts.set(key,(peerUpstreamSourceCounts.get(key)||0)+1);
+ }
  const peerChain={
   sampleSeconds:.1,frames:chainFrames.length,principalPeerId,
   peerSlowTrackSeconds:peerSlowRows.length*.1,
+  upstreamLimitedSnapshots:peerUpstreamLimited.length,
+  upstreamAttributedSnapshots:peerUpstreamAttributed.length,
+  upstreamSourceCounts:[...peerUpstreamSourceCounts].sort((a,b)=>b[1]-a[1])
+   .map(([source,frames])=>({source,frames,seconds:frames*.1})),
   peerCauseCounts:[...peerLimitingCounts].sort((a,b)=>b[1]-a[1])
    .map(([cause,frames])=>({cause,frames,seconds:frames*.1})),
   peerFirstSlow,peerLowestSpeed,targetFirstSlow,tracedAtTargetStop,
@@ -327,6 +340,9 @@ try{
  };
  if(seed===2)assert(chainFrames.length>40&&principalPeerRows.length>30&&
   principalPeerId==='r5b3-driver-10','R5-b18 seed2 main-track peer-chain evidence missing');
+ if(seed===2)assert(peerUpstreamLimited.length>20&&
+  peerUpstreamAttributed.length===peerUpstreamLimited.length,
+  'R5-b22 missing full accepted-solver upstream attribution for Driver 10');
  // R5-b19: classify *observed* accepted-step braking dependency chains.
  // A chain can end with a free speed target or a pit car; neither is by itself
  // a claim about the ultimate real-world cause of the slowdown.
@@ -564,6 +580,9 @@ finally{
   peerChain:result.peerChain&&{
    frames:result.peerChain.frames,principalPeerId:result.peerChain.principalPeerId,
    peerSlowTrackSeconds:result.peerChain.peerSlowTrackSeconds,
+   upstreamLimitedSnapshots:result.peerChain.upstreamLimitedSnapshots,
+   upstreamAttributedSnapshots:result.peerChain.upstreamAttributedSnapshots,
+   upstreamSourceCounts:result.peerChain.upstreamSourceCounts,
    peerCauseCounts:result.peerChain.peerCauseCounts,
    peerFirstSlow:result.peerChain.peerFirstSlow,
    peerLowestSpeed:result.peerChain.peerLowestSpeed,
