@@ -11854,6 +11854,11 @@ function unifiedPitForecastV12(compound,startWear,wearPerLap,laps,lapSeconds,tra
     const projectedWear=unifiedClampV11(startWear+wearPerLap*laps*fraction,0,1);
     const projectedGrip=spec.grip*unifiedWearGripFactorV12(projectedWear);
     const projectedRatio=unifiedPitGripTimeRatioV12(projectedGrip,track);
+    // R5-b12: in the real integrator, available traction and braking also
+    // scale with physical tyre grip. Calibrate that missing longitudinal
+    // recovery share from two matched Blue Coast compound races.
+    const longitudinalSeconds=lapSeconds*.15*
+      (1/Math.sqrt(Math.max(.2,projectedGrip))-1);
     // R5-b10: two fixed-seed Blue Coast no-pit 10-lap races observed
     // ~95-99s at 100% wear vs ~63-64s before the 60% threshold.
     // The geometry-only forecast misses grip-limited acceleration and braking.
@@ -11868,9 +11873,15 @@ function unifiedPitForecastV12(compound,startWear,wearPerLap,laps,lapSeconds,tra
         spec.grip*unifiedWearGripFactorV12(.6),track);
       const alreadyGeometric=lapSeconds*(projectedRatio-atService);
       const observedFullLapLoss=lapSeconds*.50*Math.pow(beyond,1.75);
-      missingGripLimitedTime=Math.max(0,observedFullLapLoss-alreadyGeometric);
+      const gripAtService=spec.grip*unifiedWearGripFactorV12(.6);
+      const accountedLongitudinal=lapSeconds*.15*
+        (1/Math.sqrt(Math.max(.2,projectedGrip))-
+         1/Math.sqrt(Math.max(.2,gripAtService)));
+      missingGripLimitedTime=Math.max(0,
+        observedFullLapLoss-alreadyGeometric-accountedLongitudinal);
     }
-    timeLoss+=laps/segments*(lapSeconds*(projectedRatio-1)+missingGripLimitedTime);
+    timeLoss+=laps/segments*(lapSeconds*(projectedRatio-1)+
+      longitudinalSeconds+missingGripLimitedTime);
   }
   return timeLoss;
 }
