@@ -455,7 +455,22 @@ try{
  const steeringFrames=chainFrames.filter(f=>f.cars.some(c=>
   c.pit==='TRACK'&&c.pitAvoidPeer&&Number.isFinite(c.pitAvoidTarget)&&
   Math.abs(c.pitAvoidTarget-c.lateralMeters)>.15));
+ // R5-b28: identify the specific driver at the head of the bad queue.
+ // Distinguish advance warnings while Driver 0 is still on TRACK from
+ // emergency avoidance after its pit-lane transition.
+ const earlyDriver9=chainFrames.filter(f=>{
+  const a=f.cars.find(c=>c.id==='r5b3-driver-9');
+  const p=f.cars.find(c=>c.id==='r5b3-driver-0');
+  return a?.pitAvoidPeer==='r5b3-driver-0'&&p?.pit==='TRACK';
+ });
+ const allDriver9=chainFrames.filter(f=>f.cars.some(c=>
+  c.id==='r5b3-driver-9'&&c.pitAvoidPeer==='r5b3-driver-0'));
  const pitAvoidance={
+  earlyDriver9Frames:earlyDriver9.length,
+  firstEarlyDriver9:earlyDriver9.length?{t:earlyDriver9[0].t,
+   driver:earlyDriver9[0].cars.find(c=>c.id==='r5b3-driver-9'),
+   pitCar:earlyDriver9[0].cars.find(c=>c.id==='r5b3-driver-0')}:null,
+  allDriver9Frames:allDriver9.length,
   frames:avoidanceFrames.length,seconds:avoidanceFrames.length*.1,
   steeringTargetFrames:steeringFrames.length,first:steeringFrames[0]||avoidanceFrames[0]||null,
   collisionStops:baseline.collisionStops,invalidSteps:baseline.invalid.length,
@@ -644,7 +659,10 @@ finally{
    highFrequencyPrimaryPeerSeconds:result.rootChains.highFrequencyPrimaryPeerSeconds},
   pitAvoidance:result.pitAvoidance&&{frames:result.pitAvoidance.frames,
    seconds:result.pitAvoidance.seconds,
-   steeringTargetFrames:result.pitAvoidance.steeringTargetFrames},
+   steeringTargetFrames:result.pitAvoidance.steeringTargetFrames,
+   earlyDriver9Frames:result.pitAvoidance.earlyDriver9Frames,
+   allDriver9Frames:result.pitAvoidance.allDriver9Frames,
+   firstEarlyDriver9:result.pitAvoidance.firstEarlyDriver9},
   pairedResiduals:result.comparisons?.map(x=>({compound:x.compound,
    residual:x.signedModelResidualSeconds,
    grossRecovery:x.grossRecoveryLapSeconds,
