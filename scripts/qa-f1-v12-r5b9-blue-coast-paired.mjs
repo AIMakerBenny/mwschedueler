@@ -36,6 +36,35 @@ const patch=[
  "  // Null compound is the intentionally no-pit control.",
  "  if(String(v.id)===window.__r5b9Target)return;"
 ].join('\n')+'\n';
+// R5-b17: QA-only probes of the final accepted unified solver command.
+const r5b17BeforeAnchor='if(cmd.v>next){';
+const r5b17AfterAnchor="cmd.reason='PREDICTED_TRAFFIC';changed=true;";
+const r5b17AcceptedAnchor='  unifiedCompetitionRecordV12(simClockV192.simTimeMs,rows,cmds);';
+const r5b17BeforePatch='\n        const __r5b17Before=cmd.v;';
+const r5b17AfterPatch=[
+ 'if(window.__r5b17Capture&&String(me.id)===window.__r5b9Target){',
+ ' cmd.__r5b17Limiter={peer:String(peer.id),peerState:String(peer.pit),ownState:String(me.pit),',
+ '  gapMeters:gap,lateralGapMeters:deltaY,corridorMeters:physicalCorridor,',
+ '  footprintMeters:footprint,responseReserveMeters:responseReserve,budgetMeters:budget,',
+ '  safeNextKph:safeNext*3.6,physicalFloorKph:physicallyReachable*3.6,',
+ '  beforeLimitKph:__r5b17Before*3.6,afterLimitKph:cmd.v*3.6,',
+ '  peerCandidateKph:peerCmd.v*3.6,solveIteration:solve};',
+ '}'
+].join('\n');
+const r5b17AcceptedPatch=[
+ '  if(window.__r5b17Capture&&window.__r5b9Record){',
+ '   const idx=rows.findIndex(r=>String(r.id)===window.__r5b9Target);',
+ '   const observed=rows[idx],accepted=cmds[idx],progress=observed?.s/len;',
+ '   if(accepted&&progress>=5.88&&progress<=6.14){',
+ '    window.__r5b9Record.acceptedCauses.push({',
+ '     t:simClockV192.simTimeMs/1000,progress,',
+ '     speedKph:accepted.v*3.6,priorKph:observed.v*3.6,targetKph:accepted.target*3.6,',
+ "     reason:accepted.reason,brake:accepted.brake,throttle:accepted.throttle,",
+ "     pit:String(accepted.pit?.state||'TRACK'),limiter:accepted.__r5b17Limiter||null",
+ '    });',
+ '   }',
+ '  }'
+].join('\n')+'\n';
 const server=createF1PreviewServer();
 await new Promise(resolve=>server.listen(8868,'127.0.0.1',resolve));
 let browser,result={phase:'R5-b9',status:'DIAGNOSTIC'};
@@ -47,12 +76,20 @@ async function oneRace(compound){
   await page.addInitScript(({target,compound})=>{
    window.__r5b9Target=target;window.__r5b9Compound=compound;
    window.__r5b9Eligibility=null;window.__r5b9Forces=[];
+   window.__r5b17Capture=compound===null;
   },{target,compound});
   await page.route('**/assets/f1-racing-v1.js*',async route=>{
    const upstream=await route.fetch(),js=await upstream.text();
    if(js.split(anchor).length!==2)throw Error('Pit model anchor missing or duplicated');
+   for(const [name,probe] of [['before',r5b17BeforeAnchor],['after',r5b17AfterAnchor],
+     ['accepted',r5b17AcceptedAnchor]])
+    if(js.split(probe).length!==2)throw Error('R5-b17 '+name+' engine anchor missing or duplicated');
    routeCount++;
-   await route.fulfill({response:upstream,body:js.replace(anchor,anchor+'\n'+patch)});
+   const instrumented=js.replace(anchor,anchor+'\n'+patch)
+    .replace(r5b17BeforeAnchor,r5b17BeforeAnchor+r5b17BeforePatch)
+    .replace(r5b17AfterAnchor,r5b17AfterAnchor+'\n'+r5b17AfterPatch)
+    .replace(r5b17AcceptedAnchor,r5b17AcceptedPatch+r5b17AcceptedAnchor);
+   await route.fulfill({response:upstream,body:instrumented});
   });
   await page.goto('http://127.0.0.1:8868/',{waitUntil:'load'});
   await page.waitForFunction(()=>typeof window.mwsF1UnifiedV11Report==='function');
@@ -94,7 +131,7 @@ async function oneRace(compound){
     tyres[String(v.id)]=c;
    }
    window.__r5b9Record={ticks:0,requested:new Set(),requests:[],samples:[],
-    targetProgressTimes:[],targetPitEvents:[],targetLastState:'TRACK',trafficWaveFrames:[]};
+    targetProgressTimes:[],targetPitEvents:[],targetLastState:'TRACK',trafficWaveFrames:[],acceptedCauses:[]};
    return {state:window.mwsF1GetScreenStateV185(),
     ms:window.mwsF1GetSimulationClockV192().simTimeMs,
     grid:cars.map(v=>String(v.id)),tyres};
@@ -172,7 +209,7 @@ async function oneRace(compound){
    return {screen:window.mwsF1GetScreenStateV185(),incidentTotals,
     requests:q.requests,samples:q.samples,eligibility:window.__r5b9Eligibility,forces:window.__r5b9Forces||[],
     targetProgressTimes:q.targetProgressTimes,targetPitEvents:q.targetPitEvents,
-     trafficWaveFrames:q.trafficWaveFrames,
+     trafficWaveFrames:q.trafficWaveFrames,acceptedCauses:q.acceptedCauses,
     rows:(r?.rows||[]).map(v=>({id:v.contactId,rank:v.position,pits:v.pitStopCount,
      installedCompound:tyres.get(String(v.contactId))?.compound,
      finalPitTarget:tyres.get(String(v.contactId))?.targetCompound,
@@ -225,6 +262,30 @@ try{
  assert(traffic.length>20&&traffic.every(x=>Number.isFinite(x.speedKph)&&
   x.nearby.some(y=>y.id===target)),
   'Missing matched-accepted-step Blue Coast traffic wave telemetry');
+ // R5-b17: attributed, ACCEPTED unified-solver commands at 20ms resolution.
+ // This records the actual binding peer when PREDICTED_TRAFFIC reduces speed,
+ // not merely vehicles that happen to be nearby in the separate 0.2s snapshot.
+ const acceptedCauses=baseline.acceptedCauses||[];
+ const slowAccepted=acceptedCauses.filter(x=>x.pit==='TRACK'&&x.speedKph<95);
+ const limitedSlow=slowAccepted.filter(x=>x.reason==='PREDICTED_TRAFFIC'&&x.limiter);
+ const peerCounts=new Map();
+ for(const frame of limitedSlow){
+  const key=frame.limiter.peer+' ['+frame.limiter.peerState+']';
+  peerCounts.set(key,(peerCounts.get(key)||0)+1);
+ }
+ const rootCauseTelemetry={
+  sampleSeconds:.02,acceptedSteps:acceptedCauses.length,slowTrackSeconds:slowAccepted.length*.02,
+  predictedTrafficLimitedSlowSeconds:limitedSlow.length*.02,
+  lowTargetSlowSeconds:slowAccepted.filter(x=>x.targetKph<95).length*.02,
+  unboundSlowSeconds:slowAccepted.filter(x=>x.reason!=='PREDICTED_TRAFFIC').length*.02,
+  limitingPeers:[...peerCounts].sort((a,b)=>b[1]-a[1]).map(([peer,steps])=>({peer,steps,seconds:steps*.02})),
+  firstConstrainedSlow:limitedSlow[0]||null,
+  slowestAccepted:slowAccepted.reduce((best,x)=>!best||x.speedKph<best.speedKph?x:best,null),
+  caveat:'Accepted solver command and last binding peer only; cause of that peer slowdown, tyre wear and other simultaneous limits remain separate questions.'
+ };
+ assert(acceptedCauses.length>20&&acceptedCauses.every(x=>
+  Number.isFinite(x.speedKph)&&Number.isFinite(x.priorKph)&&Number.isFinite(x.targetKph)),
+  'R5-b17 accepted 20ms solver-command evidence missing or invalid');
  const comparisons=interventions.map(run=>{
   const v=run.rows.find(v=>v.id===target),event=run.forces[0];
   const cutoff=Math.min(baseline.eligibility.t,run.eligibility?.t||0);
@@ -320,7 +381,7 @@ try{
     caveat:'All gaps include wear, traffic, incidents and tyre recovery. Prior laps establish a within-driver pace reference, NOT a causal estimate of traffic delay or mechanical pit cost'}};
  });
  result={phase:'R5-b9',status:'DIAGNOSTIC',trackId,seed,target,
-  firstEligibleModel:baseline.eligibility,trafficWave,comparisons,baseline,interventions,
+  firstEligibleModel:baseline.eligibility,trafficWave,rootCauseTelemetry,comparisons,baseline,interventions,
   interpretation:'Browser-only no-pit control vs forced real SOFT/MEDIUM/HARD pit lifecycle. Traffic feedback remains; real engine physics unchanged. Separately calibrated real-game autonomous forecast is measured by its independent full-race QA.'};
  for(const q of comparisons){
   assert(q.gridMatch&&q.tyreMatch&&q.beforeDecisionSamples>=10&&q.firstMismatchTick===null,
@@ -375,6 +436,13 @@ finally{
    pitWaveConcurrentSeconds:result.trafficWave.pitWaveConcurrentSeconds,
    maxNearbyPitVehicles:result.trafficWave.maxNearbyPitVehicles,
    minTargetSpeedKph:result.trafficWave.minTargetSpeedKph},
+  acceptedSolver:result.rootCauseTelemetry&&{
+   acceptedSteps:result.rootCauseTelemetry.acceptedSteps,
+   slowTrackSeconds:result.rootCauseTelemetry.slowTrackSeconds,
+   predictedTrafficLimitedSlowSeconds:result.rootCauseTelemetry.predictedTrafficLimitedSlowSeconds,
+   lowTargetSlowSeconds:result.rootCauseTelemetry.lowTargetSlowSeconds,
+   limitingPeers:result.rootCauseTelemetry.limitingPeers.slice(0,6),
+   slowestAccepted:result.rootCauseTelemetry.slowestAccepted},
   pairedResiduals:result.comparisons?.map(x=>({compound:x.compound,
    residual:x.signedModelResidualSeconds,
    grossRecovery:x.grossRecoveryLapSeconds,
