@@ -11517,7 +11517,15 @@ function unifiedMergeTargetV11(row,target,rows){
 function unifiedPitMergeTargetV12(row,target,rows){
  const ordinary=unifiedMergeTargetV11(row,target,rows);
  if(!ordinary.blocked.length||Math.abs(target-row.y)<.05)return ordinary;
- const travelSeconds=Math.abs(target-row.y)/2.5+.5;
+ // R5-b34: the old constant 2.5m/s merge time was optimistic when
+ // a pit entrant was already slowing or steering away from the pit lane.
+ // Use the real lateral velocity cap and account for turning around before
+ // projecting another car's longitudinal occupancy.
+ const direction=Math.sign(target-row.y);
+ const lateralRate=Math.min(2.5,Math.max(0,Number(row.v)||0)*.25);
+ const opposingVelocity=Math.max(0,-direction*(Number(row.vy)||0));
+ const turnSeconds=opposingVelocity/4;
+ const travelSeconds=Math.abs(target-row.y)/Math.max(.35,lateralRate)+.75+turnSeconds;
  const blockers=ordinary.blocked.filter(id=>{
   const peer=rows.find(p=>p.id===id);
   if(!peer)return true; // Unknown occupant: never remove protection.
