@@ -11589,7 +11589,14 @@ function unifiedPitAvoidanceV12(row,rows,width){
   // Keep an already physically separated pit-avoid intent until the pit car
   // is passed, otherwise the ideal-line controller can undo the manoeuvre.
   const holding=String(v.unifiedPitAvoidPeerV12||'')===peer.id;
-  if(!holding&&Math.abs(row.y-peer.y)>=required+.15)continue;
+  const separated=Math.abs(row.y-peer.y)>=required+.15;
+  if(!holding&&separated)continue;
+  // R5-b29: a stale hold on an already-separated, distant pit car
+  // prevented responding to the real pit car in the same incoming wave.
+  // Retain the lane while physically near that car, never drop a close
+  // collision-avoid manoeuvre merely because the lane target was reached.
+  const threatHorizon=Math.max(40,row.v*1.35);
+  if(holding&&separated&&gap>threatHorizon)continue;
   const targets=holding?[Number(v.unifiedPitAvoidTargetV12)]:
    [peer.y-required,peer.y+required].map(y=>unifiedClampV11(y,-bound,bound));
   for(const candidate of targets){
