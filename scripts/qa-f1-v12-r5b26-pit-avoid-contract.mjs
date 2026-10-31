@@ -84,10 +84,37 @@ held.vehicle.unifiedPitAvoidPeerV12='pit-0';
 held.vehicle.unifiedPitAvoidTargetV12=target.target;
 assert.equal(plan(held.me,[held.me,held.peer],14)?.target,target.target,
  'Already steering on a physical pit-avoid route should hold its intent');
+// R5-b30: replay the R5-b28 observed Driver 9 configuration with two
+// pit cars. The old algorithm held a completed "avoid" of pit-1 while the
+// approaching pit-0 at y=2.55 was the actual lane threat.
+const wave=fixture(120);
+wave.me.y=3.3;
+wave.vehicle.unifiedPitAvoidPeerV12='pit-1';
+wave.vehicle.unifiedPitAvoidTargetV12=3.3;
+const alreadySeparated={id:'pit-1',pit:'PIT_LANE',y:-.62,
+ s:160,v:22,finished:false};
+const beforeWave=structuredClone(wave);
+const retarget=plan(wave.me,[wave.me,alreadySeparated,wave.peer],14);
+assert.equal(retarget?.peer,'pit-0',
+ 'R5-b29 must release obsolete physically-clear pit-1 intent for nearby pit-0');
+assert(retarget.target<0&&
+ Math.abs(retarget.target-wave.peer.y)>=2.7+.45,
+ 'New imminent pit target must be a genuinely separated physical lane');
+assert.deepEqual(wave,beforeWave,'Retargeting must not modify accepted physics');
+alreadySeparated.s=65;
+const unsafeRetarget=plan(wave.me,[wave.me,alreadySeparated,wave.peer],14);
+assert.equal(unsafeRetarget?.peer,'pit-1',
+ 'R5-b29 must retain a close active avoidance route until it is safe to switch');
+alreadySeparated.s=160;
+obstructed=true;
+assert.equal(plan(wave.me,[wave.me,alreadySeparated,wave.peer],14),null,
+ 'R5-b30 must not bypass the lane reservation when a pit-wave path is blocked');
+obstructed=false;
 console.log(JSON.stringify({phase:'R5-b26',status:'PASS',
  checks:['predictive clearance','physical read-only intent',
  'pre-entry pit request detected','normal traffic unchanged','late pit-request merge rejected',
  'late braking preserved',
  'rear pit excluded','separated lane unaffected','pit entrants unchanged',
  'blocked merge rejected','ongoing physical steering preserved',
- 'swept collision validation retained']}));
+ 'swept collision validation retained','distant no-op pit hold released',
+ 'closely threatened hold preserved','multi-pit lane blocker respected']}));
