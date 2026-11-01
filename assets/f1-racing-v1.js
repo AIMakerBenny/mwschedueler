@@ -12184,25 +12184,14 @@ function unifiedSpecialTickV11(rows,dt,now){
  st.events++;st.chains+=queue.length-1;
  unifiedStateV11.telemetry.skills.push({t:now,driver:String(win.p.id),rank:win.index+1,chain:queue.map(x=>String(x.vehicle.id))});
 }
+// R5-b39: restore the last collision-free shared-lane reservation rule.
+// The wider R5-b38 physical-distance exemption caused a real 30.78s
+// Royal Street chassis overlap and interrupted every full-race QA job.
+// Keep a single predicate to make this safety invariant testable directly.
 function unifiedReservationThreatV12(a,b,ca,cb){
- const initial=a.y-b.y,ending=ca.y-cb.y;
- if(Math.abs(initial)<.25||Math.abs(initial)>7.5||
-    Math.abs(ending)>=Math.abs(initial))return false;
- const overlap=unifiedLateralClearanceV11(a,b)+.6;
- if(Math.min(Math.abs(initial),Math.abs(ending))>overlap)return false;
- const gap=unifiedGapV11(a,b);
- const timeToLane=Math.min(4.5,Math.max(.5,
-  Math.max(Math.abs((Number.isFinite(a.ref.unifiedLaneTargetV11)?
-    a.ref.unifiedLaneTargetV11:a.y)-a.y),
-   Math.abs((Number.isFinite(b.ref.unifiedLaneTargetV11)?
-    b.ref.unifiedLaneTargetV11:b.y)-b.y))/2.5+.6));
- const predicted=gap+(b.v-a.v)*timeToLane;
- const longitudinalReserve=UNIFIED_ENGINE_V11.physicalLength+
-  UNIFIED_ENGINE_V11.clearance+3+Math.max(8,Math.max(a.v,b.v)*.3);
- // If the sign changes, the cars would exchange longitudinal order during
- // steering, so do NOT exempt them from the conventional lane reservation.
- if(!Number.isFinite(predicted)||gap*predicted<=0)return true;
- return Math.min(Math.abs(gap),Math.abs(predicted))<=longitudinalReserve;
+ const initial=a.y-b.y,proposed=ca.y-cb.y;
+ return Math.abs(initial)>=.25&&Math.abs(initial)<=7.5&&
+  Math.abs(proposed)<Math.abs(initial);
 }
 function simulateUnifiedRaceStepV11(stepMs){
   if(simClockV192.paused||!(stepMs>0)||!unifiedInitV11())return false;
@@ -12280,10 +12269,8 @@ function simulateUnifiedRaceStepV11(stepMs){
       G,pit,drag,brakeLimit:UNIFIED_ENGINE_V11.brake*(1+.05*unifiedRatingV11(v,'braking'))*G*f*(errorEvent==='LOCKUP'?.55:1),actualBrake:effectiveBrake,reason:'FREE',vPrev:row.v});
     if(pit.stationary){const cmd=cmds[cmds.length-1];Object.assign(cmd,{v:0,ds:0,y:row.y,vy:0,ay:0,acceleration:0,throttle:0,brake:0,actualBrake:0,usedExtraW:0});}
   }
-  // R5-b38: reserve a shared lane only for a physically converging pair.
-  // Prior code reacted to a tiny lateral approach at >60m longitudinal gap
-  // or across several empty lane widths, cancelling a legitimate pit entry.
-  // This is an AI candidate guard, not a collision-solver exemption.
+  // R5-b39: the original pre-contact reservation is mandatory until
+  // a full physical replay proves a narrower alternative does not collide.
   // Shared lane reservation. Anticipate lateral convergence well before footprint contact.
   // A trajectory is adjusted while still separated; no display-only displacement is used.
   // R5-b37: record which accepted physical candidate was displaced by a
