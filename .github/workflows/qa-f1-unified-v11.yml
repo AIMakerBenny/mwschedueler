@@ -52,8 +52,10 @@ jobs:
         run: node scripts/qa-f1-v12-r5b26-pit-avoid-contract.mjs
       - name: R5-b32 physical pit merge safety and no-teleport contract
         run: node scripts/qa-f1-v12-r5b32-physical-pit-merge.mjs
-      - name: R5-b38 real shared-lane physical reservation risk contract
+      - name: R5-b39 reestablish pre-contact shared-lane chassis protection
         run: node scripts/qa-f1-v12-r5b38-reservation-physical-risk.mjs
+      - name: R5-b40 exhaustive physical lane-reservation invariant
+        run: node scripts/qa-f1-v12-r5b40-reservation-invariant.mjs
       - name: R5-b4 physical tyre degradation and forecast contract
         run: node scripts/qa-f1-v12-r5b4-pit-economics.mjs
       - name: Install browser QA dependencies
