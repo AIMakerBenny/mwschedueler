@@ -56,6 +56,8 @@ jobs:
         run: node scripts/qa-f1-v12-r5b38-reservation-physical-risk.mjs
       - name: R5-b40 exhaustive physical lane-reservation invariant
         run: node scripts/qa-f1-v12-r5b40-reservation-invariant.mjs
+      - name: R5-b43 early pit intent preserves physical collision protection
+        run: node scripts/qa-f1-v12-r5b43-pit-intent-contract.mjs
       - name: R5-b4 physical tyre degradation and forecast contract
         run: node scripts/qa-f1-v12-r5b4-pit-economics.mjs
       - name: Install browser QA dependencies
@@ -228,6 +230,8 @@ jobs:
           node-version: '22'
       - name: Validate Blue Coast QA syntax
         run: node --check scripts/qa-f1-v12-r5b9-blue-coast-paired.mjs
+      - name: R5-b43 confirm pit intent unit safety before full seed race
+        run: node scripts/qa-f1-v12-r5b43-pit-intent-contract.mjs
       # R5-b41: Seed 2 timed out before racing while apt mirrored Ubuntu
       # repositories stalled. Runner already has Chromium libraries; avoid
       # Playwright's optional font apt install and prove launch before racing.
