@@ -22,9 +22,29 @@ for(const [index,original] of base.cases.entries()){
    MWS_R5B3_REAL_20MS_PROBE:'1',MWS_R5B3_PORT:String(8990+index),
    MWS_R5B3_OUTPUT:output}
  });
- if(run.error||run.status!==0||!fs.existsSync(output))
+ // R5-b94: preserve failure evidence per seed even if a browser crashes or
+ // the original replay gate fails. This log is not proof of race completion.
+ const outputExists=fs.existsSync(output);
+ let outputStatus='MISSING';
+ if(outputExists){
+  try{outputStatus=JSON.parse(fs.readFileSync(output,'utf8')).status||'UNKNOWN'}
+  catch{outputStatus='UNREADABLE_JSON'}
+ }
+ const childFailed=!!run.error||run.status!==0||!outputExists||outputStatus!=='PASS';
+ const attempt={
+  phase:'R5-b94',seed,track:'majoku-ring-v1',mode:'NORMAL',laps:10,
+  real20msProbe:true,exitCode:run.status,signal:run.signal||null,
+  spawnError:run.error?String(run.error):null,
+  observedFile:output,observedFileExists:outputExists,
+  observedFileStatus:outputStatus,
+  outcome:childFailed?'CHILD_FAILED_OR_INCOMPLETE':'CHILD_REPORTED_PASS_NOT_YET_COMPARARED',
+  stdoutTail:String(run.stdout||'').slice(-5000),
+  stderrTail:String(run.stderr||'').slice(-5000)
+ };
+ fs.writeFileSync(dir+'/seed'+seed+'-replay-attempt.json',JSON.stringify(attempt,null,2));
+ if(childFailed)
   throw Error('Real-grid 20ms Majoku seed '+seed+' failed: '+
-   String(run.error||run.stderr||run.stdout).slice(-4000));
+   String(run.error||run.stderr||run.stdout||outputStatus).slice(-4000));
  const before=JSON.parse(fs.readFileSync(original.outcomeFile,'utf8')),
   after=JSON.parse(fs.readFileSync(output,'utf8'));
  assert.equal(before.status,'PASS');assert.equal(after.status,'PASS');
