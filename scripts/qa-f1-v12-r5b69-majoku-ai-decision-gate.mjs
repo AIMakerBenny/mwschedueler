@@ -20,7 +20,12 @@ for(const seed of [1,2]){
  assert(mode&&attack&&timing,'Missing matched 10-lap seed');
  assert.equal(mode.track,'majoku-ring-v1');
  assert.equal(mode.earlySamples,19);
- assert.equal(mode.startGapMeters,timing.openingPhysicalGridGapMeters);
+ // R5-b110: opening grid gap in earlier 90s diagnostic was recorded
+ // at millimetre display precision. Compare values at that resolution,
+ // rather than requiring a rounded display to equal a full-precision sample.
+ assert(Number.isFinite(mode.startGapMeters)&&Number.isFinite(timing.openingPhysicalGridGapMeters));
+ assert(Math.abs(mode.startGapMeters-timing.openingPhysicalGridGapMeters)<=.0005+1e-10,
+  'Matched opening physical gap differs beyond 0.001m rounding precision');
  assert.equal(attack.summary.sampledLeaderIdentityChanges,
   mode.frames.slice(1).filter((x,i)=>x.leaderId!==mode.frames[i].leaderId).length);
  assert(mode.secondPlaceAttackPlanSnapshots>=0&&mode.secondPlaceAttackPlanSnapshots<=19);
