@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
+import {normalizeMajokuScreenTransitions} from './lib/f1-r5b102-transitions.mjs';
 const read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
 const dir='artifacts/r5-b77-majoku/';
 const base=read('artifacts/r5-b49-majoku/summary.json');
@@ -48,16 +49,20 @@ for(const pair of replay.pairs){
  assert.equal(observed.physics.passes,baselineCase.passes);
  assert.equal(observed.finishedRows.reduce((n,r)=>n+r.pits,0),
   baselineCase.completedPitStops);
+ const fieldsBefore={...unprobed,
+  screenTransitions:normalizeMajokuScreenTransitions(unprobed.screenTransitions)};
+ const fieldsAfter={...observed,
+  screenTransitions:normalizeMajokuScreenTransitions(observed.screenTransitions)};
  const fieldHashes={};
  for(const key of keys){
-  assert.deepEqual(observed[key],unprobed[key],
+  assert.deepEqual(fieldsAfter[key],fieldsBefore[key],
    '20ms probe changed physical race outcome: '+key+' seed '+pair.seed);
-  const before=sha(unprobed[key]),after=sha(observed[key]);
+  const before=sha(fieldsBefore[key]),after=sha(fieldsAfter[key]);
   assert.equal(after,before,'Deterministic content changed: '+key);
   fieldHashes[key]=before;
  }
- const fingerprint=sha(keys.map(k=>[k,unprobed[k]]));
- assert.equal(fingerprint,sha(keys.map(k=>[k,observed[k]])));
+ const fingerprint=sha(keys.map(k=>[k,fieldsBefore[k]]));
+ assert.equal(fingerprint,sha(keys.map(k=>[k,fieldsAfter[k]])));
  assert(pair.physicsIdentical&&pair.finishIdentical&&pair.pitsIdentical);
  cases.push({seed:pair.seed,sourceWithoutProbe:pair.originalFile,
   sourceWithProbe:pair.observedFile,sha256:fingerprint,fieldHashes,

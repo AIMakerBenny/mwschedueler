@@ -3,6 +3,7 @@
 // seed-matched real-game results. Do not replace these with synthetic grids.
 import assert from 'node:assert/strict';
 import {findMajokuPhysicalFieldDifferences} from './lib/f1-r5b95-physical-compare.mjs';
+import {normalizeMajokuScreenTransitions} from './lib/f1-r5b102-transitions.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -70,7 +71,10 @@ for(const [index,original] of base.cases.entries()){
   'screenTransitions','tickCount','simulatedSeconds','view','pitPlanViolations'];
  // R5-b95: preserve the difference report before failing closed on any
  // modified or absent required physical result field.
- const differences=findMajokuPhysicalFieldDifferences(before,after,requiredEqual);
+ const differences=findMajokuPhysicalFieldDifferences(
+  {...before,screenTransitions:normalizeMajokuScreenTransitions(before.screenTransitions)},
+  {...after,screenTransitions:normalizeMajokuScreenTransitions(after.screenTransitions)},
+  requiredEqual);
  const comparison={
   phase:'R5-b95',track:'majoku-ring-v1',seed,comparisonFields:requiredEqual,
   status:differences.length?'PHYSICAL_MISMATCH':'PHYSICAL_FIELDS_IDENTICAL',

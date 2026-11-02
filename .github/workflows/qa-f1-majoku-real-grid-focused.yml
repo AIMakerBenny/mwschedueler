@@ -41,6 +41,7 @@ jobs:
           node --check scripts/qa-f1-v12-r5b96-ci-diagnostics.mjs
           node --test scripts/qa-f1-v12-r5b91-majoku-episode-contract.test.mjs
           node --test scripts/qa-f1-v12-r5b95-physical-compare.test.mjs
+          node --test scripts/qa-f1-v12-r5b102-transitions.test.mjs
           node scripts/qa-f1-v12-r5b48-single-track-access.mjs
       - name: Upload preflight SHA and runner success receipt
         run: |
@@ -92,11 +93,14 @@ jobs:
             scripts/qa-f1-v12-r5b95-physical-compare.test.mjs \
             scripts/qa-f1-v12-r5b96-ci-diagnostics.mjs \
             scripts/qa-f1-v12-r5b100-pinned-baseline.mjs \
-            scripts/qa-f1-v12-r5b101-majoku-physical-ledger.mjs
+            scripts/qa-f1-v12-r5b101-majoku-physical-ledger.mjs \
+            scripts/lib/f1-r5b102-transitions.mjs \
+            scripts/qa-f1-v12-r5b102-transitions.test.mjs
           do node --check "$f"; done
           node scripts/qa-f1-v12-r5b48-single-track-access.mjs
           node --test scripts/qa-f1-v12-r5b91-majoku-episode-contract.test.mjs
           node --test scripts/qa-f1-v12-r5b95-physical-compare.test.mjs
+          node --test scripts/qa-f1-v12-r5b102-transitions.test.mjs
       - name: Download original REAL Majoku 12-car 10-lap results
         uses: actions/download-artifact@v4
         with:
