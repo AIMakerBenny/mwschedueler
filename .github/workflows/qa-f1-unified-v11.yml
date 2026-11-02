@@ -228,10 +228,15 @@ jobs:
           node-version: '22'
       - name: Validate Blue Coast QA syntax
         run: node --check scripts/qa-f1-v12-r5b9-blue-coast-paired.mjs
-      - name: Install Chromium for Blue Coast QA
+      # R5-b41: Seed 2 timed out before racing while apt mirrored Ubuntu
+      # repositories stalled. Runner already has Chromium libraries; avoid
+      # Playwright's optional font apt install and prove launch before racing.
+      - name: R5-b41 install Chromium without OS package refresh
         run: |
           npm install --no-save --no-package-lock playwright
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
+      - name: R5-b41 verify headless Chromium launch
+        run: node --input-type=module -e 'import {chromium} from "playwright"; const browser=await chromium.launch({headless:true}); await browser.close();'
       - name: "R5-b9 Blue Coast 10-lap: no pit vs SOFT MEDIUM HARD"
         env:
           MWS_R5B9_SEED: ${{ matrix.seed }}
