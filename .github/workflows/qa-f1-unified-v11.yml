@@ -390,6 +390,8 @@ jobs:
           node --check scripts/qa-f1-v12-r5b51-majoku-matched-pace.mjs
           node --check scripts/qa-f1-v12-r5b53-majoku-matched-strategy.mjs
           node --check scripts/qa-f1-v12-r5b54-majoku-attribution.mjs
+          node --check scripts/qa-f1-v12-r5b56-majoku-pass-anatomy.mjs
+          node --check scripts/qa-f1-v12-r5b57-majoku-balance-decision.mjs
       - name: Install browser for Majoku-only 10-lap comparisons
         run: |
           npm install --no-save --no-package-lock playwright
@@ -406,11 +408,15 @@ jobs:
         run: node scripts/qa-f1-v12-r5b53-majoku-matched-strategy.mjs
       - name: R5-b54 reconcile measured natural, pace-only and strategy-only outcomes
         run: node scripts/qa-f1-v12-r5b54-majoku-attribution.mjs
+      - name: R5-b56 validate actual Majoku physical passes, lead changes and 100m streaks
+        run: node scripts/qa-f1-v12-r5b56-majoku-pass-anatomy.mjs
+      - name: R5-b57 issue no-speculation two-seed Majoku diagnosis
+        run: node scripts/qa-f1-v12-r5b57-majoku-balance-decision.mjs
       - name: Upload Majoku-only full race baseline and comparison data
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: f1-v12-r5b49-r5b54-majoku-fullrace
+          name: f1-v12-r5b49-r5b57-majoku-fullrace
           path: |
             artifacts/r5-b49-majoku/
             artifacts/r5-b51-majoku/
