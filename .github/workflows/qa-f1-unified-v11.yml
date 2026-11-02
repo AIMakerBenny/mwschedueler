@@ -436,10 +436,23 @@ jobs:
   # Deliberately not a substitute for the six authentic 10-lap browser races.
   majoku-short-window-qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      actions: read
     steps:
       - name: Checkout Majoku-only short-window physics QA
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify successful full-race evidence still matches unchanged physics
+        run: |
+          git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- \
+            assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js \
+            scripts/qa-f1-v12-r5b3-normal-auto-pit.mjs \
+            scripts/qa-f1-v12-r5b49-majoku-fullrace.mjs \
+            scripts/qa-f1-v12-r5b51-majoku-matched-pace.mjs \
+            scripts/qa-f1-v12-r5b53-majoku-matched-strategy.mjs
       - name: Setup Node 22 for Majoku physics
         uses: actions/setup-node@v4
         with:
@@ -450,6 +463,10 @@ jobs:
           node --check scripts/qa-f1-v12-r5b59-majoku-short-matched.mjs
           node --check scripts/qa-f1-v12-r5b60-majoku-window-attribution.mjs
           node --check scripts/qa-f1-v12-r5b66-majoku-traffic-attribution.mjs
+          node --check scripts/qa-f1-v12-r5b64-majoku-early-traffic.mjs
+          node --check scripts/qa-f1-v12-r5b67-majoku-chase-modes.mjs
+          node --check scripts/qa-f1-v12-r5b68-majoku-attack-outcomes.mjs
+          node --check scripts/qa-f1-v12-r5b69-majoku-ai-decision-gate.mjs
       - name: Install headless Chromium for Majoku-only physics
         run: |
           npm install --no-save --no-package-lock playwright
@@ -462,12 +479,33 @@ jobs:
         run: node scripts/qa-f1-v12-r5b60-majoku-window-attribution.mjs
       - name: R5-b66 verify real traffic constraints per physical vehicle
         run: node scripts/qa-f1-v12-r5b66-majoku-traffic-attribution.mjs
+      - name: Download historical successful real 10-lap Majoku evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: f1-v12-r5b49-r5b57-majoku-fullrace
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41460159785
+          github-token: ${{ github.token }}
+          path: artifacts
+      - name: R5-b64 measure genuine Majoku 0-90s lead gaps before pit
+        run: node scripts/qa-f1-v12-r5b64-majoku-early-traffic.mjs
+      - name: R5-b67 associate real top-three pursuit AI states with lead gaps
+        run: node scripts/qa-f1-v12-r5b67-majoku-chase-modes.mjs
+      - name: R5-b68 verify sampled close/faster pursuit against real 500ms passes
+        run: node scripts/qa-f1-v12-r5b68-majoku-attack-outcomes.mjs
+      - name: R5-b69 enforce no-speculation pursuit and physical safety decision gate
+        run: node scripts/qa-f1-v12-r5b69-majoku-ai-decision-gate.mjs
       - name: Upload Majoku 90s real-physics matched evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: f1-v12-r5b58-r5b60-majoku-window
-          path: artifacts/r5-b59-majoku/
+          name: f1-v12-r5b58-r5b69-majoku-ai-evidence
+          path: |
+            artifacts/r5-b59-majoku/
+            artifacts/r5-b53-majoku/chase-modes.json
+            artifacts/r5-b53-majoku/attack-outcomes.json
+            artifacts/r5-b53-majoku/ai-decision-gate.json
+            artifacts/r5-b53-majoku/early-traffic.json
           if-no-files-found: warn
 
   # R5-b63: fast validation of the already SUCCESSFUL real ten-lap browser
