@@ -58,6 +58,8 @@ jobs:
         run: node scripts/qa-f1-v12-r5b40-reservation-invariant.mjs
       - name: R5-b43 early pit intent preserves physical collision protection
         run: node scripts/qa-f1-v12-r5b43-pit-intent-contract.mjs
+      - name: R5-b48 one playable Majoku Ring and six locked WIP circuits
+        run: node scripts/qa-f1-v12-r5b48-single-track-access.mjs
       - name: R5-b4 physical tyre degradation and forecast contract
         run: node scripts/qa-f1-v12-r5b4-pit-economics.mjs
       - name: Install browser QA dependencies
