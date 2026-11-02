@@ -991,6 +991,7 @@ function trackCardCharacterV266(track={}){
 // remain available for internal geometry tests and incremental development.
 const F1_PUBLIC_TRACK_ID_V348='majoku-ring-v1';
 function isF1PublicTrackV348(trackId){return String(trackId||'')===F1_PUBLIC_TRACK_ID_V348}
+function isF1InternalQaV348(){return window.__MWS_F1_INTERNAL_QA_V348===true}
 function trackCardHtmlV266(track,selected=false){
   const available=isF1PublicTrackV348(track?.id);
   const active=available&&selected;
@@ -1466,7 +1467,7 @@ function getTrackCatalogV186(){
 }
 function selectTrackV186(trackId){
   const id=String(trackId||'');
-  if(!isF1PublicTrackV348(id)||!window.mwsGetF1TrackV182?.(id))return false;
+  if(!isF1PublicTrackV348(id)&&!isF1InternalQaV348()||!window.mwsGetF1TrackV182?.(id))return false;
   activeTrackId=id;
   if(!lapOverrideActiveV260)selectedTotalLapsRecoveryD=recommendedLapsV260(window.mwsGetF1TrackV182?.(id));
   persistF1SettingsRecoveryD();
@@ -1696,7 +1697,7 @@ function syncSetupActionV187(){
   const summary=document.getElementById('f1RacingSetupSummaryV187');
   const hint=document.getElementById('f1RacingSetupHintV187');
   const track=getActiveTrack();
-  const ready=selectedIds.length>=2&&Boolean(track)&&isF1PublicTrackV348(activeTrackId);
+  const ready=selectedIds.length>=2&&Boolean(track)&&(isF1PublicTrackV348(activeTrackId)||isF1InternalQaV348());
   if(summary)summary.textContent='드라이버 '+selectedIds.length+'명 · '+(track?.name||'트랙 미선택')+' · '+selectedTotalLapsRecoveryD+'랩';
   if(hint)hint.textContent=ready?'준비가 완료되었습니다. 경기 진행 후 스타팅 그리드에서 경기 시작을 눌러야 출발합니다.':'드라이버를 2명 이상 선택하고 트랙을 선택해 주세요.';
   if(button)button.disabled=!ready;
@@ -1719,7 +1720,7 @@ function populateGridRecoveryM(snapshot){
   renderStartingGridV272(snapshot);
 }
 function startRaceFromSetupV187(mode='NORMAL'){
-  if(f1ScreenStateV185!=='SETUP'||!isF1PublicTrackV348(activeTrackId))return false;
+  if(f1ScreenStateV185!=='SETUP'||!isF1PublicTrackV348(activeTrackId)&&!isF1InternalQaV348())return false;
   const raceMode=String(mode||'NORMAL').toUpperCase()==='FAST'?'FAST':'NORMAL';
   const snapshot=buildRaceSnapshotV187({raceMode});
   if(!snapshot)return false;
