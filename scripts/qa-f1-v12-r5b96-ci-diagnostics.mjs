@@ -27,8 +27,8 @@ for(const name of expected){
 }
 const allPresent=records.every(r=>r.exists&&r.readableJson);
 const requiredPass=new Map([
- ['seed1-replay-attempt.json','CHILD_REPORTED_PASS_NOT_YET_COMPARARED'],
- ['seed2-replay-attempt.json','CHILD_REPORTED_PASS_NOT_YET_COMPARARED'],
+ ['seed1-replay-attempt.json','OBSERVED_COMPARISON_PASSED'],
+ ['seed2-replay-attempt.json','OBSERVED_COMPARISON_PASSED'],
  ['seed1-physical-diff.json','PHYSICAL_FIELDS_IDENTICAL'],
  ['seed2-physical-diff.json','PHYSICAL_FIELDS_IDENTICAL'],
  ['seed1-observed10.json','PASS'],['seed2-observed10.json','PASS'],

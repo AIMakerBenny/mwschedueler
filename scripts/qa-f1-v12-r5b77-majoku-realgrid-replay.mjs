@@ -46,6 +46,7 @@ for(const [index,original] of base.cases.entries()){
  if(childFailed)
   throw Error('Real-grid 20ms Majoku seed '+seed+' failed: '+
    String(run.error||run.stderr||run.stdout||outputStatus).slice(-4000));
+ try{
  const before=JSON.parse(fs.readFileSync(original.outcomeFile,'utf8')),
   after=JSON.parse(fs.readFileSync(output,'utf8'));
  assert.equal(before.status,'PASS');assert.equal(after.status,'PASS');
@@ -105,6 +106,17 @@ for(const [index,original] of base.cases.entries()){
   realGridGap:p.firstGridGap,nearFaster:p.closeFasterFrames,
   prolongedFollow:p.streak400ms,
   physicsPasses:after.physics.passes}));
+ // R5-b98: child exit zero is not proof of a verified physical comparison.
+ attempt.outcome='OBSERVED_COMPARISON_PASSED';
+ attempt.comparisonVerified=true;
+ fs.writeFileSync(dir+'/seed'+seed+'-replay-attempt.json',JSON.stringify(attempt,null,2));
+ }catch(error){
+  attempt.outcome='INTEGRITY_VALIDATION_FAILED';
+  attempt.comparisonVerified=false;
+  attempt.validationError=String(error?.stack||error).slice(-6000);
+  fs.writeFileSync(dir+'/seed'+seed+'-replay-attempt.json',JSON.stringify(attempt,null,2));
+  throw error;
+ }
 }
 assert.equal(pairs.length,2);
 const summary={phase:'R5-b77',status:'PASS',track:'majoku-ring-v1',
