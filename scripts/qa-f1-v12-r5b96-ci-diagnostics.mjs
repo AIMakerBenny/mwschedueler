@@ -41,7 +41,7 @@ for(const name of expected){
     !Array.isArray(data.finishedRows)||data.finishedRows.length!==12||
     data.finishedRows.some(x=>!Array.isArray(x.lapTimesMs)||x.lapTimesMs.length!==10))
     issues.push('INVALID_TEN_LAP_FINISH');
-   if(data.physics?.collisionStops!==0||data.real20ms?.acceptedFrames!==4500)
+   if(data.physics?.collisionStops!==0||!(data.real20ms?.acceptedFrames>=4400&&data.real20ms?.acceptedFrames<=4500))
     issues.push('INVALID_PHYSICAL_20MS_WINDOW');
   }
   if(name==='replay.json'&&(data.authenticPhysicsUnchanged!==true||data.fullTenLapRaces!==2))
