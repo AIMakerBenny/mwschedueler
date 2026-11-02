@@ -449,7 +449,9 @@ jobs:
         run: |
           git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- \
             assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js \
-            scripts/qa-f1-v12-r5b3-normal-auto-pit.mjs \
+            # R5-b76 adds only guarded read-only test telemetry to the
+            # harness. The independent real-grid R5-b77 job validates that
+            # the 10-lap physical result is byte-for-byte identical.
             scripts/qa-f1-v12-r5b49-majoku-fullrace.mjs \
             scripts/qa-f1-v12-r5b51-majoku-matched-pace.mjs \
             scripts/qa-f1-v12-r5b53-majoku-matched-strategy.mjs
@@ -537,7 +539,9 @@ jobs:
         run: |
           git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- \
             assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js \
-            scripts/qa-f1-v12-r5b3-normal-auto-pit.mjs \
+            # R5-b76 adds only guarded read-only test telemetry to the
+            # harness. The independent real-grid R5-b77 job validates that
+            # the 10-lap physical result is byte-for-byte identical.
             scripts/qa-f1-v12-r5b49-majoku-fullrace.mjs \
             scripts/qa-f1-v12-r5b50-majoku-cause-audit.mjs \
             scripts/qa-f1-v12-r5b51-majoku-matched-pace.mjs \
@@ -577,4 +581,57 @@ jobs:
             artifacts/r5-b53-majoku/leader-provenance.json
             artifacts/r5-b53-majoku/competition-quality.json
             artifacts/r5-b53-majoku/race-quality-gate.json
+          if-no-files-found: warn
+
+  # R5-b76 through b78: true 12-car 10-lap real-grid replay.
+  # This is distinct from pit-stubbed, 9m/86m isolated SVG windows.
+  majoku-real-grid-20ms-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout true Majoku real-grid QA
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify physical engine and genuine pit lifecycle never changed
+        run: |
+          git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- \
+            assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js \
+            scripts/qa-f1-v12-r5b49-majoku-fullrace.mjs \
+            scripts/qa-f1-v12-r5b51-majoku-matched-pace.mjs \
+            scripts/qa-f1-v12-r5b53-majoku-matched-strategy.mjs
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check R5-b76 through b78 JavaScript syntax
+        run: |
+          node --check scripts/qa-f1-v12-r5b3-normal-auto-pit.mjs
+          node --check scripts/qa-f1-v12-r5b77-majoku-realgrid-replay.mjs
+          node --check scripts/qa-f1-v12-r5b78-majoku-realgrid-decision.mjs
+      - name: Download actual baseline 10-lap physical race results
+        uses: actions/download-artifact@v4
+        with:
+          name: f1-v12-r5b49-r5b57-majoku-fullrace
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41460159785
+          github-token: ${{ github.token }}
+          path: artifacts
+      - name: Install Chromium for actual Majoku real-grid replay
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install chromium
+      - name: R5-b77 replay two real-grid 12-car 10-lap races with 20ms read-only probe
+        run: node scripts/qa-f1-v12-r5b77-majoku-realgrid-replay.mjs
+      - name: R5-b78 classify potential attack delay without guessing a safe brake bypass
+        run: node scripts/qa-f1-v12-r5b78-majoku-realgrid-decision.mjs
+      - name: Upload genuine 10-lap physical invariance and attack provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-v12-r5b76-r5b78-majoku-real-grid-20ms
+          path: artifacts/r5-b77-majoku/
           if-no-files-found: warn
