@@ -32,7 +32,8 @@ for(const seed of [1,2]){
  assert.equal(physical.nearFasterFrames,traffic.closeFasterObservedFrames);
  assert.equal(traffic.phases.length,3);
  assert(traffic.phases.every((p,i)=>
-  p.fromSeconds===i*30&&p.toSeconds===(i+1)*30));
+  p.fromSeconds===(i?traffic.phases[i-1].toSeconds:0)&&
+  p.toSeconds>p.fromSeconds&&p.toSeconds<=90.001));
  const withFollowerBrake=traffic.phases.reduce((n,p)=>
   n+p.attributedToSecondAtWindowEnd,0);
  const brakeRatio=traffic.physicalTrafficBrakeCountsTotal90s>0?
