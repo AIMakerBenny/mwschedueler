@@ -369,3 +369,43 @@ jobs:
           name: f1-v12-r5b9-blue-coast-seed${{ matrix.seed }}
           path: artifacts/f1-v12-r5b9-blue-coast-seed${{ matrix.seed }}.json
           if-no-files-found: warn
+
+  # R5-b49/b50/b51: user-approved SINGLE released circuit only.
+  # This job intentionally does not develop or tune any WIP circuit.
+  majoku-fullrace-balance-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout Majoku-only balance diagnostics
+        uses: actions/checkout@v4
+      - name: Setup Node 22 for Majoku QA
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Majoku full-race audit scripts
+        run: |
+          node --check scripts/qa-f1-v12-r5b3-normal-auto-pit.mjs
+          node --check scripts/qa-f1-v12-r5b49-majoku-fullrace.mjs
+          node --check scripts/qa-f1-v12-r5b50-majoku-cause-audit.mjs
+          node --check scripts/qa-f1-v12-r5b51-majoku-matched-pace.mjs
+      - name: Install browser for Majoku-only 10-lap comparisons
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install chromium
+      - name: Verify Chromium launch
+        run: node --input-type=module -e 'import {chromium} from "playwright"; const browser=await chromium.launch({headless:true}); await browser.close();'
+      - name: R5-b49 two real 12-car 10-lap Majoku baselines
+        run: node scripts/qa-f1-v12-r5b49-majoku-fullrace.mjs
+      - name: R5-b50 actual pace, ERS, tyre and leader-gap provenance
+        run: node scripts/qa-f1-v12-r5b50-majoku-cause-audit.mjs
+      - name: R5-b51 matched full-race pace-only intervention
+        run: node scripts/qa-f1-v12-r5b51-majoku-matched-pace.mjs
+      - name: Upload Majoku-only full race baseline and comparison data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-v12-r5b49-r5b51-majoku-fullrace
+          path: |
+            artifacts/r5-b49-majoku/
+            artifacts/r5-b51-majoku/
+          if-no-files-found: warn
