@@ -449,9 +449,6 @@ jobs:
         run: |
           git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- \
             assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js \
-            # R5-b76 adds only guarded read-only test telemetry to the
-            # harness. The independent real-grid R5-b77 job validates that
-            # the 10-lap physical result is byte-for-byte identical.
             scripts/qa-f1-v12-r5b49-majoku-fullrace.mjs \
             scripts/qa-f1-v12-r5b51-majoku-matched-pace.mjs \
             scripts/qa-f1-v12-r5b53-majoku-matched-strategy.mjs
@@ -539,9 +536,6 @@ jobs:
         run: |
           git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- \
             assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js \
-            # R5-b76 adds only guarded read-only test telemetry to the
-            # harness. The independent real-grid R5-b77 job validates that
-            # the 10-lap physical result is byte-for-byte identical.
             scripts/qa-f1-v12-r5b49-majoku-fullrace.mjs \
             scripts/qa-f1-v12-r5b50-majoku-cause-audit.mjs \
             scripts/qa-f1-v12-r5b51-majoku-matched-pace.mjs \
