@@ -228,6 +228,7 @@ try{
  await page.waitForTimeout(120);
  observation=await page.evaluate(()=>{
   const q=window.__mwsR5b3,report=window.mwsF1UnifiedV11Report(),
+   competition=window.mwsF1CompetitionBaselineV12(),
    snapshot=window.mwsF1GetActiveRaceSnapshotV187(),result=window.mwsF1GetRaceResultRecoveryG(),
    statuses=window.mwsF1GetPitStatesV205(),
    transitions=window.mwsF1ScreenTransitionsV12();
@@ -246,7 +247,20 @@ try{
    finishedRows:result?.rows?.map(r=>({id:r.contactId,position:r.position,gridPosition:r.gridPosition,
     pits:r.pitStopCount,compound:r.tyreCompound,finishMs:r.finishedAtSimMs,lapTimesMs:r.lapTimesMs,bestLapMs:r.bestLapMs})),
    pitStates:statuses,physics:{collisionStops:report.collisionStops,invalid:report.invalid,
-    passes:report.passes?.length,rawCrossings:report.rawCrossings?.length,autoPitPlans:report.pit},
+    passes:report.passes?.length,rawCrossings:report.rawCrossings?.length,autoPitPlans:report.pit,
+    // R5-b55: confirmed post-500ms physical passes, never rank-swap estimates.
+    passEvents:(report.passes||[]).map(pass=>({t:pass.t,front:String(pass.front),passed:String(pass.passed)})),
+    rawCrossingEvents:(report.rawCrossings||[]).map(event=>({
+     t:event.t,pair:String(event.pair||''),front:String(event.front||'')}))},
+   acceptedCompetition:{
+    source:'real-committed-unified-v1.1',sampleIntervalMs:competition.sampleIntervalMs,
+    leaderChanges:competition.leaderChanges,rankReorders:competition.rankReorders,
+    trafficConstrainedSteps:competition.trafficConstrainedSteps,
+    trafficByDriver:competition.trafficByDriver,
+    aiModeSteps:competition.aiModeSteps,
+    samples:competition.samples,
+    confirmedPasses:competition.confirmedPasses,rawCrossings:competition.rawCrossings,
+    collisionStops:competition.collisionStops,invalidSteps:competition.invalidSteps},
    strategySummary:{sampleCount:q.strategySamples.length,
     reasonCounts:Object.fromEntries([...new Set(q.strategySamples.flatMap(x=>x.drivers.map(d=>d.reason)))].map(reason=>
      [reason,q.strategySamples.flatMap(x=>x.drivers).filter(d=>d.reason===reason).length])),
@@ -290,6 +304,21 @@ try{
  assert.equal(observation.finishBoundary?.state,'FINISHING');
  assert.equal(observation.finishBoundary?.officialRows,12);
  assert.equal(observation.physics.collisionStops,0);
+ assert.equal(observation.physics.passEvents.length,observation.physics.passes,
+  'Confirmed physical pass ledger does not reconcile');
+ assert.equal(observation.physics.rawCrossingEvents.length,observation.physics.rawCrossings,
+  'Raw crossing provenance does not reconcile');
+ assert.equal(observation.acceptedCompetition.confirmedPasses,observation.physics.passes,
+  'Committed sample pass count differs from physics ledger');
+ assert.equal(observation.acceptedCompetition.collisionStops,0);
+ assert.equal(observation.acceptedCompetition.invalidSteps,0);
+ assert(observation.acceptedCompetition.samples.length>20,
+  'Genuine 5-second competition samples are missing');
+ const trace=observation.physics.passEvents;
+ assert(trace.every(e=>Number.isFinite(e.t)&&e.t>=0&&e.front&&e.passed&&e.front!==e.passed),
+  'Invalid confirmed passing identities');
+ assert(trace.every((e,i)=>i===0||e.t>=trace[i-1].t),
+  'Confirmed physical passing ledger is not chronological');
  assert.deepEqual(observation.physics.invalid,[]);
  assert.deepEqual(observation.continuityErrors,[]);
  assert.deepEqual(observation.pitPlanViolations,[],'Incorrect voluntary pit decision');
