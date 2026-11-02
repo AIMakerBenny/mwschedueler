@@ -922,3 +922,34 @@ body.f1-racing-immersive #f1RacingWorkspaceRecoveryE .f1-racing-workspace-panel-
 /* Phase 365: restore normal track presentation, keep 4 guide lines */
 #f1RacingRaceTrackGlowV188{stroke-width:58}
 .f1-racing-race-lane-guide-v360{stroke:rgba(226,232,240,.34);stroke-width:1.15}
+
+
+/* R5-b48: one playable circuit, six visible WIP cards. Preserve all
+   original silhouettes and metadata without implying availability. */
+.f1-racing-track-card-v266.is-wip-v348,
+.f1-racing-track-card-v266.is-wip-v348:disabled,
+.f1-racing-track-card-v266.is-wip-v348:disabled:hover{
+  cursor:not-allowed;
+  background:#080b10;
+  border-color:#242d3b;
+  box-shadow:none;
+  opacity:1;
+}
+.f1-racing-track-card-v266.is-wip-v348 .f1-racing-track-card-top-v266,
+.f1-racing-track-card-v266.is-wip-v348 .f1-racing-track-card-character-v266,
+.f1-racing-track-card-v266.is-wip-v348 .f1-racing-track-card-tech-v266{opacity:.58}
+.f1-racing-track-card-v266.is-wip-v348 .f1-racing-track-card-silhouette-v266{
+  opacity:.35;filter:grayscale(1)
+}
+.f1-racing-track-wip-v348{
+  position:absolute;z-index:2;top:53px;left:15px;right:15px;
+  min-height:80px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:7px;text-align:center;
+  border:1px solid rgba(148,163,184,.28);border-radius:7px;
+  background:rgba(3,7,15,.86);pointer-events:none;
+}
+.f1-racing-track-wip-v348>span{
+  color:#c4d1df;font:900 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  letter-spacing:.14em
+}
+.f1-racing-track-wip-v348>small{font-size:10px;color:#93a3b8}
