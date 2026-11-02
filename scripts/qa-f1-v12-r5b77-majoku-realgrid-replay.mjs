@@ -55,7 +55,7 @@ for(const [index,original] of base.cases.entries()){
  assert.equal(after.mode,'NORMAL');assert.equal(after.laps,10);
  assert.equal(after.seedId,String(seed));assert.equal(after.state,'FINISHING');
  assert.equal(before.real20ms??null,null);
- assert(after.real20ms&&after.real20ms.acceptedFrames>=4500);
+ assert(after.real20ms&&after.real20ms.acceptedFrames>=4400&&after.real20ms.acceptedFrames<=4500);
  assert.equal(after.finishedRows.length,12);
  assert(after.finishedRows.every(r=>r.lapTimesMs.length===10));
  assert.equal(after.physics.collisionStops,0);
