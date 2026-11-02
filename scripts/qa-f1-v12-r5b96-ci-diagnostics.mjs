@@ -109,7 +109,7 @@ const result={
 const path=dir+'b96-ci-diagnostics.json';
 fs.writeFileSync(path,JSON.stringify(result,null,2));
 console.log(JSON.stringify({phase:'R5-b96',status:result.evidenceStatus,
- priorJobStepStatus,missingOrBad:unexpected.map(x=>x.name),
+ priorStepStatus,missingOrBad:unexpected.map(x=>({name:x.name,status:x.status,issues:x.issues||[],error:x.error||null})),
  file:path,githubRunConclusion:result.overallGitHubRunConclusion}));
 // If prior QA steps succeeded but expected evidence is absent or corrupt,
 // do not allow the focused QA job to pass.
