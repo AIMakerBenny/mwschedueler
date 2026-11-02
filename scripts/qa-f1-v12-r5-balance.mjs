@@ -22,6 +22,17 @@ assert(['NATURAL','EQUAL_PACE_75','BALANCED_STRATEGY'].includes(majokuVariant),
 if(majokuVariant!=='NATURAL')assert.equal(process.env.MWS_R5_TRACK_FILTER,
  'majoku-ring-v1','Counterfactual physics can run on Majoku Ring only');
 const reportPath=String(process.env.MWS_R5_REPORT_PATH||'artifacts/f1-v12-r5-balance.json');
+// R5-b74: separate the actual Majoku starting-grid clearance comparison
+// from the original 9m isolated test. Driver profiles and pits remain stubs.
+const gridGapMeters=Number(process.env.MWS_R5_GRID_GAP_METERS||9);
+assert(Number.isFinite(gridGapMeters)&&gridGapMeters>=9&&gridGapMeters<=90,
+ 'Invalid diagnostic starting-grid gap');
+if(gridGapMeters!==9){
+ assert.equal(process.env.MWS_R5_TRACK_FILTER,'majoku-ring-v1');
+ assert.equal(process.env.MWS_R5_MODE_FILTER,'NORMAL');
+ assert.equal(majokuVariant,'NATURAL');
+ assert.equal(process.env.MWS_R5_MAJOKU_20MS,'1');
+}
 const diagnose20ms=process.env.MWS_R5_MAJOKU_20MS==='1';
 if(diagnose20ms){
  assert.equal(process.env.MWS_R5_TRACK_FILTER,'majoku-ring-v1');
@@ -31,7 +42,7 @@ if(diagnose20ms){
 const fixture=setup
  .replace(/const track=\{[^\n]+/,"const track=fixtureTrack,activeRaceSnapshotV187={track,createdAt:'R5',totalLaps:10};")
  .replace(/const path=\{[^\n]+/,"const path=fixturePath;")
- .replaceAll('-i*9/5280','-i*9/track.lengthMeters')
+ .replaceAll('-i*9/5280','-i*config.gridGapMeters/track.lengthMeters')
  .replace("const getCornerPhaseAtProgressV194=()=>({phase:'STRAIGHT',corner:null});",
           'const getCornerPhaseAtProgressV194=p=>fixturePhase(p);')
  .replace("const specialStateV401={cinematic:false,lastMs:-Infinity},specialStageV401=()=>null,specialPhraseV401=()=>({}),playSpecialV401=()=>{};",
@@ -133,7 +144,8 @@ const code=[
  "const c=unifiedStateV11.competition,first=c.samples[0],last=c.samples.at(-1),",
  " order=[...raceMotionV189.vehicles].sort((a,b)=>b.raceProgress-a.raceProgress||String(a.id).localeCompare(String(b.id)));",
  "return {track:track.id,mode:config.name,laps:config.laps,seed:config.seed,",
- " variant:config.variant,profile:config.seed===0?'equal':'strong-pole',",
+ " variant:config.variant,gridGapMeters:config.gridGapMeters,",
+ " profile:config.seed===0?'equal':'strong-pole',",
  " seconds:simClockV192.simTimeMs/1000,ticks,openingLeader:String(grid[0].id),endingLeader:String(order[0].id),",
  " leaderChanges:c.leaderChanges,rankReorders:c.rankReorders,confirmedPasses:unifiedStateV11.telemetry.passes.length,",
  " rawCrossings:unifiedStateV11.telemetry.rawCrossings.length,attackEvents:c.attemptEventCounts,",
@@ -163,7 +175,7 @@ try{
  for(const track of tracks.filter(t=>!process.env.MWS_R5_TRACK_FILTER||t.id===process.env.MWS_R5_TRACK_FILTER)){
   for(const mode of modes.filter(m=>!process.env.MWS_R5_MODE_FILTER||m.name===process.env.MWS_R5_MODE_FILTER)){
    for(let seed=0;seed<seedCount;seed++){
-    const config={...mode,seed,variant:majokuVariant,diagnose20ms,maxTicks:nTicks,
+    const config={...mode,seed,variant:majokuVariant,diagnose20ms,gridGapMeters,maxTicks:nTicks,
      stopAtLapLimit:process.env.MWS_R5_STOP_AT_LAP_LIMIT==='1'};
     const value=await page.evaluate(({track,config,fixture,engine,special,code})=>{
      const svgPath=document.getElementById('fixture');svgPath.setAttribute('d',track.path);
@@ -175,6 +187,7 @@ try{
      assert(value.firstPhysicalLapLimitCrossing,'Target progress not reached within allotted window');
      assert(value.ticks>0&&value.ticks<=nTicks,'Invalid bounded target-progress crossing');
     }else assert.equal(value.ticks,nTicks,track.id+' '+mode.name+' '+seed+' physics stopped');
+    assert.equal(value.gridGapMeters,gridGapMeters);
     assert.equal(value.physical.stops,0);
     assert.deepEqual(value.physical.invalid,[]);
     assert.deepEqual(value.physical.overlaps,[]);
@@ -249,7 +262,7 @@ const sum={
 if(sum.zeroPassScenarios>results.length*.4)sum.imbalanceWarnings.push('More than 40% of scenarios have zero confirmed passes');
 if(sum.leadChangeScenarios===0)sum.imbalanceWarnings.push('No early-window leader changes');
 if(sum.largeLeadScenarios>results.length*.5)sum.imbalanceWarnings.push('More than half of leader gaps exceed 100m');
-const report={version:'v1.2-R5',variant:majokuVariant,
+const report={version:'v1.2-R5',variant:majokuVariant,gridGapMeters,
  probe20ms:diagnose20ms,sum,results};
 fs.mkdirSync('artifacts',{recursive:true});
 fs.writeFileSync(reportPath,JSON.stringify(report,null,2));
