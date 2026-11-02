@@ -245,6 +245,17 @@ jobs:
         env:
           MWS_R5B9_SEED: ${{ matrix.seed }}
         run: node scripts/qa-f1-v12-r5b9-blue-coast-paired.mjs
+      - name: R5-b44 validate real Blue Coast traffic-wave recovery and physics
+        env:
+          MWS_R5B9_SEED: ${{ matrix.seed }}
+        run: node scripts/qa-f1-v12-r5b44-blue-coast-wave-regression.mjs
+      - name: Upload R5-b44 accepted-solver wave evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-v12-r5b44-wave-seed${{ matrix.seed }}
+          path: artifacts/f1-v12-r5b44-wave-seed${{ matrix.seed }}.json
+          if-no-files-found: warn
       - name: R5-b21 verify accepted 20ms and 100ms slowdown-chain accounting
         env:
           MWS_R5B9_SEED: ${{ matrix.seed }}
