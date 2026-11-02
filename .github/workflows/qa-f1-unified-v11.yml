@@ -9,9 +9,12 @@ permissions:
   contents: read
   statuses: write
 
+# Preserve active long-running full-race QA when the user approves the next
+# development increment. Pending older commits may be superseded, but running
+# 10-lap evidence is not cancelled by a later push.
 concurrency:
   group: f1-unified-v11-dev-qa
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   unified-qa:
@@ -606,6 +609,8 @@ jobs:
           node --check scripts/qa-f1-v12-r5b3-normal-auto-pit.mjs
           node --check scripts/qa-f1-v12-r5b77-majoku-realgrid-replay.mjs
           node --check scripts/qa-f1-v12-r5b78-majoku-realgrid-decision.mjs
+          node --check scripts/qa-f1-v12-r5b80-majoku-realgrid-traffic.mjs
+          node --check scripts/qa-f1-v12-r5b81-majoku-chase-evidence-gate.mjs
       - name: Download actual baseline 10-lap physical race results
         uses: actions/download-artifact@v4
         with:
@@ -622,10 +627,14 @@ jobs:
         run: node scripts/qa-f1-v12-r5b77-majoku-realgrid-replay.mjs
       - name: R5-b78 classify potential attack delay without guessing a safe brake bypass
         run: node scripts/qa-f1-v12-r5b78-majoku-realgrid-decision.mjs
+      - name: R5-b80 attribute real-grid 5s traffic braking and close-faster following
+        run: node scripts/qa-f1-v12-r5b80-majoku-realgrid-traffic.mjs
+      - name: R5-b81 guard against false claims of a safe lane or unnecessary braking
+        run: node scripts/qa-f1-v12-r5b81-majoku-chase-evidence-gate.mjs
       - name: Upload genuine 10-lap physical invariance and attack provenance
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: f1-v12-r5b76-r5b78-majoku-real-grid-20ms
+          name: f1-v12-r5b76-r5b81-majoku-real-grid-20ms
           path: artifacts/r5-b77-majoku/
           if-no-files-found: warn
