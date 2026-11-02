@@ -96,7 +96,8 @@ jobs:
             scripts/qa-f1-v12-r5b101-majoku-physical-ledger.mjs \
             scripts/lib/f1-r5b102-transitions.mjs \
             scripts/qa-f1-v12-r5b102-transitions.test.mjs \
-            scripts/qa-f1-v12-r5b103-real-baseline-mutations.test.mjs
+            scripts/qa-f1-v12-r5b103-real-baseline-mutations.test.mjs \
+            scripts/qa-f1-v12-r5b104-full-physical-outcome-gate.mjs
           do node --check "$f"; done
           node scripts/qa-f1-v12-r5b48-single-track-access.mjs
           node --test scripts/qa-f1-v12-r5b91-majoku-episode-contract.test.mjs
@@ -136,6 +137,8 @@ jobs:
           node scripts/qa-f1-v12-r5b89-majoku-ai-evidence-gate.mjs
       - name: R5-b93 publish deterministic physical and advisory-only evidence receipt
         run: node scripts/qa-f1-v12-r5b93-majoku-evidence-receipt.mjs
+      - name: R5-b104 require complete normalized ten-lap game outcomes to match
+        run: node scripts/qa-f1-v12-r5b104-full-physical-outcome-gate.mjs
       - name: R5-b96 preserve an auditable per-file CI outcome manifest
         if: always()
         env:

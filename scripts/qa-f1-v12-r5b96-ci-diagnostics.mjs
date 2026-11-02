@@ -12,7 +12,9 @@ const expected=[
  'corridor-evidence.json','b85-episode-evidence.json',
  'b87-contiguous-episode-audit.json','b88-physical-fingerprints.json',
  'b89-live-ai-evidence-gate.json','b92-historical-baseline-provenance.json',
- 'b93-ci-evidence-receipt.json'
+ 'b93-ci-evidence-receipt.json',
+ 'b100-pinned-historical-baseline.json','b101-physical-pass-ledger.json',
+ 'b104-full-physical-outcome-gate.json'
 ];
 const records=[];
 for(const name of expected){
@@ -46,6 +48,17 @@ for(const name of expected){
    issues.push('PHYSICAL_REPLAY_NOT_VERIFIED');
   if(name==='b88-physical-fingerprints.json'&&data.physicalOutcomesIdentical!==true)
    issues.push('FINGERPRINTS_NOT_IDENTICAL');
+  if(name==='b100-pinned-historical-baseline.json'&&
+   data.certifiedHistoricalBaselineBytes!==true)
+   issues.push('BASELINE_BYTES_NOT_PINNED');
+  if(name==='b101-physical-pass-ledger.json'&&
+   data.inputArtifactPinnedByR5b100!==true)
+   issues.push('HISTORICAL_PHYSICAL_LEDGER_NOT_CERTIFIED');
+  if(name==='b104-full-physical-outcome-gate.json'&&
+   (data.completeFullJsonOutcomeIdentical!==true||
+    data.permissionToReduceSafetyBraking!==false||
+    data.permissionToBoostTrailingCars!==false))
+   issues.push('FULL_OUTCOME_NOT_PROVED');
   if(name==='b89-live-ai-evidence-gate.json'&&(
    data.liveAiBrakingReductionApproved!==false||data.rearCarBoostApproved!==false||
    data.sweptCollisionClearanceProven!==false||data.mergeReservationSafetyProven!==false))
@@ -70,7 +83,10 @@ const requiredPass=new Map([
  ['b88-physical-fingerprints.json','PASS'],
  ['b89-live-ai-evidence-gate.json','PASS'],
  ['b92-historical-baseline-provenance.json','PASS'],
- ['b93-ci-evidence-receipt.json','EVIDENCE_VERIFIED_WITHIN_JOB']
+ ['b93-ci-evidence-receipt.json','EVIDENCE_VERIFIED_WITHIN_JOB'],
+ ['b100-pinned-historical-baseline.json','PASS'],
+ ['b101-physical-pass-ledger.json','PASS'],
+ ['b104-full-physical-outcome-gate.json','PASS']
 ]);
 const unexpected=records.filter(r=>r.status!==requiredPass.get(r.name)||(r.issues?.length||0)>0);
 const allVerified=allPresent&&unexpected.length===0;
