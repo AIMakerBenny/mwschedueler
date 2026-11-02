@@ -51,7 +51,8 @@ jobs:
             scripts/qa-f1-v12-r5b91-majoku-episode-contract.test.mjs \
             scripts/lib/f1-r5b91-episode-guards.mjs \
             scripts/lib/f1-r5b95-physical-compare.mjs \
-            scripts/qa-f1-v12-r5b95-physical-compare.test.mjs
+            scripts/qa-f1-v12-r5b95-physical-compare.test.mjs \
+            scripts/qa-f1-v12-r5b96-ci-diagnostics.mjs
           do node --check "$f"; done
           node scripts/qa-f1-v12-r5b48-single-track-access.mjs
           node --test scripts/qa-f1-v12-r5b91-majoku-episode-contract.test.mjs
@@ -84,11 +85,16 @@ jobs:
           node scripts/qa-f1-v12-r5b89-majoku-ai-evidence-gate.mjs
       - name: R5-b93 publish deterministic physical and advisory-only evidence receipt
         run: node scripts/qa-f1-v12-r5b93-majoku-evidence-receipt.mjs
+      - name: R5-b96 preserve an auditable per-file CI outcome manifest
+        if: always()
+        env:
+          MWS_FOCUSED_QA_STEP_STATUS: ${{ job.status }}
+        run: node scripts/qa-f1-v12-r5b96-ci-diagnostics.mjs
       - name: Upload real-grid results, including failures
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: majoku-r5b93-focused-physical-20ms
+          name: majoku-r5b96-focused-physical-20ms
           path: |
             artifacts/r5-b77-majoku/
           if-no-files-found: warn
