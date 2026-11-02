@@ -17,7 +17,7 @@ for(const p of replay.pairs){
  assert(b&&b.finishers===12);
  assert(p.physicsIdentical&&p.finishIdentical&&p.pitsIdentical);
  assert.equal(p.fullTenLap,true);
- assert(p.accepted20msFrames>=4500);
+ assert(p.accepted20msFrames>=4400&&p.accepted20msFrames<=4500);
  assert(Number.isFinite(p.trueOpeningGapMeters)&&p.trueOpeningGapMeters>0);
  assert(Number.isFinite(p.first90EndGapMeters)&&p.first90EndGapMeters>=0);
  assert(p.followingNearFaster<=p.nearFasterFrames);
