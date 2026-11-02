@@ -987,12 +987,19 @@ function trackSpeedTierV266(profile={}){
 function trackCardCharacterV266(track={}){
   return TRACK_CARD_CHARACTER_V266[String(track?.id||'')]||Object.freeze({label:'CIRCUIT',description:String(track?.archetype||'종합형'),detail:'트랙 데이터 기반 레이아웃'});
 }
+// R5-b48: public one-track release gate. The other six track definitions
+// remain available for internal geometry tests and incremental development.
+const F1_PUBLIC_TRACK_ID_V348='majoku-ring-v1';
+function isF1PublicTrackV348(trackId){return String(trackId||'')===F1_PUBLIC_TRACK_ID_V348}
 function trackCardHtmlV266(track,selected=false){
+  const available=isF1PublicTrackV348(track?.id);
+  const active=available&&selected;
   const viewBox=(Array.isArray(track?.viewBox)?track.viewBox:[0,0,1000,600]).map(value=>Number(value)||0).join(' ');
   const character=trackCardCharacterV266(track);
   const speedTier=trackSpeedTierV266(track?.profile||{});
   const overtakes=Math.max(0,Number(track?.profile?.overtakeZones)||0);
-  return '<button type="button" class="f1-racing-track-card-v186 f1-racing-track-card-v266 '+(selected?'selected':'')+'" data-f1-track-id="'+escapeHtml(track?.id||'')+'" data-f1-speed-tier-v266="'+speedTier+'" aria-pressed="'+(selected?'true':'false')+'">'+
+  return '<button type="button" class="f1-racing-track-card-v186 f1-racing-track-card-v266 '+(active?'selected':'')+(available?'':' is-wip-v348')+'" data-f1-track-id="'+escapeHtml(track?.id||'')+'" data-f1-speed-tier-v266="'+speedTier+'" data-f1-access-v348="'+(available?'available':'wip')+'" aria-pressed="'+(active?'true':'false')+'" aria-disabled="'+(!available)+'"'+(available?'':' disabled')+'>'+
+    (available?'':'<span class="f1-racing-track-wip-v348"><span>WORK IN PROGRESS</span><small>제작 중 · 추후 공개</small></span>')+
     '<span class="f1-racing-track-card-top-v266"><span class="f1-racing-track-card-title-v186">'+escapeHtml(track?.name||'Track')+'</span><span class="f1-racing-track-card-code-v266">'+escapeHtml(character.label)+'</span></span>'+
     '<span class="f1-racing-track-card-silhouette-v233 f1-racing-track-card-silhouette-v266"><svg viewBox="'+escapeHtml(viewBox)+'" aria-hidden="true" focusable="false"><path d="'+escapeHtml(track?.path||'')+'"></path></svg></span>'+
     '<span class="f1-racing-track-card-character-v266"><b>'+escapeHtml(character.description)+'</b><small>'+escapeHtml(character.detail)+'</small></span>'+
@@ -1459,7 +1466,7 @@ function getTrackCatalogV186(){
 }
 function selectTrackV186(trackId){
   const id=String(trackId||'');
-  if(!window.mwsGetF1TrackV182?.(id))return false;
+  if(!isF1PublicTrackV348(id)||!window.mwsGetF1TrackV182?.(id))return false;
   activeTrackId=id;
   if(!lapOverrideActiveV260)selectedTotalLapsRecoveryD=recommendedLapsV260(window.mwsGetF1TrackV182?.(id));
   persistF1SettingsRecoveryD();
@@ -1475,9 +1482,9 @@ function renderTrackChoicesV186(){
   const count=document.getElementById('f1RacingTrackCountV186');
   if(!box)return;
   const tracks=getTrackCatalogV186();
-  if(count)count.textContent=tracks.length+'개 트랙';
+  if(count)count.textContent='1 / '+tracks.length+' 트랙 오픈';
   box.innerHTML=tracks.map(track=>trackCardHtmlV266(track,track.id===activeTrackId)).join('');
-  box.querySelectorAll('[data-f1-track-id]').forEach(button=>button.addEventListener('click',()=>selectTrackV186(button.dataset.f1TrackId)));
+  box.querySelectorAll('[data-f1-track-id]:not([disabled])').forEach(button=>button.addEventListener('click',()=>selectTrackV186(button.dataset.f1TrackId)));
 }
 function showImmersiveNoticeV261(){
   const notice=document.getElementById('f1RacingImmersiveNoticeV261');
@@ -1689,7 +1696,7 @@ function syncSetupActionV187(){
   const summary=document.getElementById('f1RacingSetupSummaryV187');
   const hint=document.getElementById('f1RacingSetupHintV187');
   const track=getActiveTrack();
-  const ready=selectedIds.length>=2&&Boolean(track);
+  const ready=selectedIds.length>=2&&Boolean(track)&&isF1PublicTrackV348(activeTrackId);
   if(summary)summary.textContent='드라이버 '+selectedIds.length+'명 · '+(track?.name||'트랙 미선택')+' · '+selectedTotalLapsRecoveryD+'랩';
   if(hint)hint.textContent=ready?'준비가 완료되었습니다. 경기 진행 후 스타팅 그리드에서 경기 시작을 눌러야 출발합니다.':'드라이버를 2명 이상 선택하고 트랙을 선택해 주세요.';
   if(button)button.disabled=!ready;
@@ -1712,7 +1719,7 @@ function populateGridRecoveryM(snapshot){
   renderStartingGridV272(snapshot);
 }
 function startRaceFromSetupV187(mode='NORMAL'){
-  if(f1ScreenStateV185!=='SETUP')return false;
+  if(f1ScreenStateV185!=='SETUP'||!isF1PublicTrackV348(activeTrackId))return false;
   const raceMode=String(mode||'NORMAL').toUpperCase()==='FAST'?'FAST':'NORMAL';
   const snapshot=buildRaceSnapshotV187({raceMode});
   if(!snapshot)return false;
@@ -13955,8 +13962,9 @@ function restoreF1SettingsRecoveryD(force=false){
   const restoredIds=(Array.isArray(settings.selectedDriverIds)?settings.selectedDriverIds:[])
     .map(String).filter(id=>validContactIds.has(id));
   selectedIds.splice(0,selectedIds.length,...restoredIds);
-  const restoredTrack=String(settings.selectedTrackId||'majoku-ring-v1');
-  activeTrackId=window.mwsGetF1TrackV182?.(restoredTrack)?restoredTrack:'majoku-ring-v1';
+  const restoredTrack=String(settings.selectedTrackId||F1_PUBLIC_TRACK_ID_V348);
+  activeTrackId=isF1PublicTrackV348(restoredTrack)&&window.mwsGetF1TrackV182?.(restoredTrack)
+    ?restoredTrack:F1_PUBLIC_TRACK_ID_V348;
   lapOverrideActiveV260=Boolean(settings.lapOverride);
   const recommendedV260=recommendedLapsV260(window.mwsGetF1TrackV182?.(activeTrackId));
   selectedTotalLapsRecoveryD=lapOverrideActiveV260?clampLapCountV260(settings.totalLaps,recommendedV260):recommendedV260;
