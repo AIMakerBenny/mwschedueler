@@ -422,3 +422,38 @@ jobs:
             artifacts/r5-b51-majoku/
             artifacts/r5-b53-majoku/
           if-no-files-found: warn
+
+  # R5-b58 to R5-b60: fast Majoku-only independent real-SVG observation.
+  # Deliberately not a substitute for the six authentic 10-lap browser races.
+  majoku-short-window-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout Majoku-only short-window physics QA
+        uses: actions/checkout@v4
+      - name: Setup Node 22 for Majoku physics
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check R5-b58 to b60 diagnostic syntax
+        run: |
+          node --check scripts/qa-f1-v12-r5-balance.mjs
+          node --check scripts/qa-f1-v12-r5b59-majoku-short-matched.mjs
+          node --check scripts/qa-f1-v12-r5b60-majoku-window-attribution.mjs
+      - name: Install headless Chromium for Majoku-only physics
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install chromium
+      - name: Verify Chromium can start
+        run: node --input-type=module -e 'import {chromium} from "playwright"; const b=await chromium.launch({headless:true}); await b.close();'
+      - name: R5-b59 three matched Majoku 90s physics variants
+        run: node scripts/qa-f1-v12-r5b59-majoku-short-matched.mjs
+      - name: R5-b60 verify real leader gap and passing effects without tuning
+        run: node scripts/qa-f1-v12-r5b60-majoku-window-attribution.mjs
+      - name: Upload Majoku 90s real-physics matched evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-v12-r5b58-r5b60-majoku-window
+          path: artifacts/r5-b59-majoku/
+          if-no-files-found: warn
