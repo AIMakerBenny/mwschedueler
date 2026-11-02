@@ -125,6 +125,15 @@ jobs:
           name: f1-v12-r5b45-competition-gate
           path: artifacts/f1-v12-r5b45-competition-gate.json
           if-no-files-found: warn
+      - name: R5-b46 trace 28 actual leader gaps by seed and SVG circuit
+        run: node scripts/qa-f1-v12-r5b46-lead-gap-cause-audit.mjs
+      - name: Upload R5-b46 accepted lead-gap provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-v12-r5b46-lead-gap
+          path: artifacts/f1-v12-r5b46-lead-gap-causes.json
+          if-no-files-found: warn
       - name: R5-a seed-stratified 5-second pace and lead-gap audit
         run: node scripts/qa-f1-v12-r5a-cause.mjs
       - name: R5-a extended FAST limited real-SVG pilot
