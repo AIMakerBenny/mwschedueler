@@ -43,7 +43,8 @@ async function oneRace(intervention){
     await route.fulfill({response:upstream,body:js.replace(anchor,patch+anchor)});
    });
   }
-  await page.goto('http://127.0.0.1:8868/',{waitUntil:'load'});
+  await page.addInitScript(()=>{window.__MWS_F1_INTERNAL_QA_V348=true});
+ await page.goto('http://127.0.0.1:8868/',{waitUntil:'load'});
   await page.waitForFunction(()=>typeof window.mwsF1UnifiedV11Report==='function');
   if(intervention)assert.equal(routeCount,1,'Experimental source interception absent');
   await page.waitForFunction(()=>document.getElementById('mwsLoginForm')?.dataset.mode==='admin');

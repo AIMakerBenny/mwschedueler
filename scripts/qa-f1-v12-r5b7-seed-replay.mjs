@@ -32,7 +32,8 @@ try{
    const pageErrors=[];
    page.on('pageerror',error=>pageErrors.push(error.message));
    try{
-    await page.goto('http://127.0.0.1:8857/',{waitUntil:'load'});
+    await page.addInitScript(()=>{window.__MWS_F1_INTERNAL_QA_V348=true});
+ await page.goto('http://127.0.0.1:8857/',{waitUntil:'load'});
     await page.waitForFunction(()=>typeof window.mwsF1UnifiedV11Report==='function');
     await page.waitForFunction(()=>document.getElementById('mwsLoginForm')?.dataset.mode==='admin');
     await page.locator('#mwsModePublic').click();

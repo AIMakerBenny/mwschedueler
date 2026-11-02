@@ -23,6 +23,7 @@ try{
  browser=await chromium.launch({headless:true,executablePath:process.env.MWS_CHROME_PATH||undefined,args:['--no-sandbox']});
  const page=await browser.newPage({viewport:{width:1920,height:1080}});
  const pageErrors=[];page.on('pageerror',error=>pageErrors.push(error.message));
+ await page.addInitScript(()=>{window.__MWS_F1_INTERNAL_QA_V348=true});
  await page.goto('http://127.0.0.1:'+port+'/',{waitUntil:'load'});
  await page.waitForFunction(()=>typeof window.mwsF1UnifiedV11Report==='function');
  await page.waitForFunction(()=>document.getElementById('mwsLoginForm')?.dataset.mode==='admin');

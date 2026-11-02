@@ -115,7 +115,8 @@ async function oneRace(compound){
     .replace(r5b17AcceptedAnchor,r5b17AcceptedPatch+r5b17AcceptedAnchor);
    await route.fulfill({response:upstream,body:instrumented});
   });
-  await page.goto('http://127.0.0.1:8868/',{waitUntil:'load'});
+  await page.addInitScript(()=>{window.__MWS_F1_INTERNAL_QA_V348=true});
+ await page.goto('http://127.0.0.1:8868/',{waitUntil:'load'});
   await page.waitForFunction(()=>typeof window.mwsF1UnifiedV11Report==='function');
   assert.equal(routeCount,1,'Browser-only telemetry route absent');
   await page.waitForFunction(()=>document.getElementById('mwsLoginForm')?.dataset.mode==='admin');
