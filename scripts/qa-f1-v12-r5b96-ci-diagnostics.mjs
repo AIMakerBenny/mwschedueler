@@ -20,7 +20,38 @@ for(const name of expected){
  if(!fs.existsSync(p)){records.push({name,exists:false,readableJson:false,status:null});continue}
  try{
   const data=JSON.parse(fs.readFileSync(p,'utf8'));
-  records.push({name,exists:true,readableJson:true,status:data.status??data.outcome??null});
+  // R5-b99: verify content, not only a self-reported status string.
+  const issues=[];
+  if(data.track!=='majoku-ring-v1')issues.push('WRONG_TRACK');
+  const seedMatch=/^seed([12])-/.exec(name);
+  if(seedMatch&&Number(data.seed??data.seedId)!==Number(seedMatch[1]))
+   issues.push('WRONG_SEED');
+  if(name.endsWith('-replay-attempt.json')&&(
+   data.comparisonVerified!==true||data.exitCode!==0||
+   data.observedFileStatus!=='PASS'||data.real20msProbe!==true))
+   issues.push('REPLAY_COMPARISON_NOT_PROVED');
+  if(name.endsWith('-physical-diff.json')&&(
+   !Array.isArray(data.differences)||data.differences.length!==0||
+   data.safeLaneProven!==false))
+   issues.push('PHYSICAL_DIFFERENCE_OR_FALSE_CLEARANCE');
+  if(name.endsWith('-observed10.json')){
+   if(data.mode!=='NORMAL'||data.laps!==10||data.state!=='FINISHING'||
+    !Array.isArray(data.finishedRows)||data.finishedRows.length!==12||
+    data.finishedRows.some(x=>!Array.isArray(x.lapTimesMs)||x.lapTimesMs.length!==10))
+    issues.push('INVALID_TEN_LAP_FINISH');
+   if(data.physics?.collisionStops!==0||data.real20ms?.acceptedFrames!==4500)
+    issues.push('INVALID_PHYSICAL_20MS_WINDOW');
+  }
+  if(name==='replay.json'&&(data.authenticPhysicsUnchanged!==true||data.fullTenLapRaces!==2))
+   issues.push('PHYSICAL_REPLAY_NOT_VERIFIED');
+  if(name==='b88-physical-fingerprints.json'&&data.physicalOutcomesIdentical!==true)
+   issues.push('FINGERPRINTS_NOT_IDENTICAL');
+  if(name==='b89-live-ai-evidence-gate.json'&&(
+   data.liveAiBrakingReductionApproved!==false||data.rearCarBoostApproved!==false||
+   data.sweptCollisionClearanceProven!==false||data.mergeReservationSafetyProven!==false))
+   issues.push('UNSAFE_AI_APPROVAL');
+  records.push({name,exists:true,readableJson:true,
+   status:data.status??data.outcome??null,issues});
  }catch(error){
   records.push({name,exists:true,readableJson:false,status:null,error:String(error)});
  }
@@ -41,7 +72,7 @@ const requiredPass=new Map([
  ['b92-historical-baseline-provenance.json','PASS'],
  ['b93-ci-evidence-receipt.json','EVIDENCE_VERIFIED_WITHIN_JOB']
 ]);
-const unexpected=records.filter(r=>r.status!==requiredPass.get(r.name));
+const unexpected=records.filter(r=>r.status!==requiredPass.get(r.name)||(r.issues?.length||0)>0);
 const allVerified=allPresent&&unexpected.length===0;
 const priorStepStatus=String(process.env.MWS_FOCUSED_QA_STEP_STATUS||'unknown').toLowerCase();
 const result={
