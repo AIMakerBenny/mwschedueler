@@ -1,0 +1,82 @@
+name: Majoku Ring focused genuine 20ms QA
+on:
+  push:
+    branches:
+      - f1-unified-redesign-v11-20261012
+    paths:
+      - '.github/workflows/qa-f1-majoku-real-grid-focused.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+
+# R5-b90 isolates genuine Majoku verification from historical multi-track QA.
+# A per-SHA group prevents an unrelated old pending run from blocking this one.
+# Not a proof that GitHub has allocated a runner.
+concurrency:
+  group: majoku-real-grid-focused-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  majoku-realgrid-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout actual development SHA with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify game engine and baseline 10-lap runner remain untouched
+        run: |
+          git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- \
+            assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js \
+            scripts/qa-f1-v12-r5b49-majoku-fullrace.mjs
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Focused QA syntax and single-track access regression
+        run: |
+          for f in scripts/qa-f1-v12-r5b3-normal-auto-pit.mjs \
+            scripts/qa-f1-v12-r5b77-majoku-realgrid-replay.mjs \
+            scripts/qa-f1-v12-r5b78-majoku-realgrid-decision.mjs \
+            scripts/qa-f1-v12-r5b80-majoku-realgrid-traffic.mjs \
+            scripts/qa-f1-v12-r5b81-majoku-chase-evidence-gate.mjs \
+            scripts/qa-f1-v12-r5b83-majoku-corridor-evidence.mjs \
+            scripts/qa-f1-v12-r5b85-majoku-400ms-episode-evidence.mjs \
+            scripts/qa-f1-v12-r5b87-majoku-frame-audit.mjs \
+            scripts/qa-f1-v12-r5b88-majoku-physical-fingerprint.mjs \
+            scripts/qa-f1-v12-r5b89-majoku-ai-evidence-gate.mjs
+          do node --check "$f"; done
+          node scripts/qa-f1-v12-r5b48-single-track-access.mjs
+      - name: Download original REAL Majoku 12-car 10-lap results
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41460159785
+          name: f1-v12-r5b49-r5b57-majoku-fullrace
+          github-token: ${{ github.token }}
+          path: artifacts
+      - name: Install browser for authentic physical replay
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install chromium
+      - name: Replay exact two seeded 12-car 10-lap Majoku races with 20ms probe
+        run: node scripts/qa-f1-v12-r5b77-majoku-realgrid-replay.mjs
+      - name: R5-b78 through b89 original outcome and FOLLOW evidence gates
+        run: |
+          node scripts/qa-f1-v12-r5b78-majoku-realgrid-decision.mjs
+          node scripts/qa-f1-v12-r5b80-majoku-realgrid-traffic.mjs
+          node scripts/qa-f1-v12-r5b81-majoku-chase-evidence-gate.mjs
+          node scripts/qa-f1-v12-r5b83-majoku-corridor-evidence.mjs
+          node scripts/qa-f1-v12-r5b85-majoku-400ms-episode-evidence.mjs
+          node scripts/qa-f1-v12-r5b87-majoku-frame-audit.mjs
+          node scripts/qa-f1-v12-r5b88-majoku-physical-fingerprint.mjs
+          node scripts/qa-f1-v12-r5b89-majoku-ai-evidence-gate.mjs
+      - name: Upload real-grid results, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: majoku-r5b90-focused-physical-20ms
+          path: |
+            artifacts/r5-b77-majoku/
+          if-no-files-found: warn
