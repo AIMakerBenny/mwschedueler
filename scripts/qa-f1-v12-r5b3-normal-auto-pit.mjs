@@ -21,6 +21,9 @@ const output=String(process.env.MWS_R5B3_OUTPUT||'artifacts/f1-v12-r5b3-normal-a
 // R5-b50/R5-b51: explicit browser-only matched pace experiment. Never
 // override live application code, standings, rank, collision or pit logic.
 const profileScenario=String(process.env.MWS_R5B3_PROFILE_SCENARIO||'NATURAL');
+const probeReal20ms=process.env.MWS_R5B3_REAL_20MS_PROBE==='1';
+if(probeReal20ms)assert(trackId==='majoku-ring-v1'&&profileScenario==='NATURAL',
+ 'R5-b76 20ms real-grid probe must be natural Majoku Ring only');
 assert(['NATURAL','EQUAL_PACE_75','EQUAL_STRATEGY_BALANCED'].includes(profileScenario));
 assert(profileScenario==='NATURAL'||trackId==='majoku-ring-v1',
  'Profile comparisons are strictly Majoku Ring only');
@@ -85,7 +88,7 @@ try{
  });
  assert.equal(startClock.state,'RACE');
  assert.equal(startClock.ms,0,'Race advanced before 20ms QA stepping');
- const start=await page.evaluate((scenario)=>{
+ const start=await page.evaluate(({scenario,probe})=>{
   window.mwsF1PauseRaceMotionV189(false); // disables only RAF; public 20ms integrator is unchanged
   const vehicles=window.mwsF1ComputeRaceStandingsV191().map(r=>r.vehicle);
   const startingCompounds={};
@@ -107,11 +110,16 @@ try{
    originalStrategies:{},appliedStrategies:{},strategyInterventionAtMs:null,
    events:[],requests:[],strategySamples:[],pitTransitions:[],
    lastPit:new Map(vehicles.map(v=>[String(v.id),String(v.pitState||'TRACK')])),
+   real20ms:probe?{acceptedFrames:0,frontFrames:0,closeFasterFrames:0,
+    followCloseFaster:0,planAttackCloseFaster:0,corridorCandidateFrames:0,
+    blockedFrames:0,streak400ms:0,maxStreakFrames:0,
+    lastPair:'',lastTick:-2,streak:0,examples:[],firstGridGap:null,
+    first90EndGap:null}:null,
    everRequested:new Set(),finishEvents:[],finished:new Set(),continuityErrors:[],
    initialOrder:vehicles.map(v=>String(v.id)),finishBoundary:null,rejectedStep:null,plannedPitViolations:[]};
   return {drivers:vehicles.length,compounds:startingCompounds,screen:window.mwsF1GetScreenStateV185(),
     profile:window.mwsF1QaDriverProfileMarkersV250().allPass};
- },profileScenario);
+ },{scenario:profileScenario,probe:probeReal20ms});
  assert(start.profile&&start.drivers===12&&start.screen==='RACE');
  let state='RACE',ticks=0;
  while(state==='RACE'&&ticks<maxTicks){
@@ -139,6 +147,41 @@ try{
      }
      if(q.profileScenario==='EQUAL_STRATEGY_BALANCED')
       q.strategyInterventionAtMs=window.mwsF1GetSimulationClockV192().simTimeMs;
+    }
+    // R5-b76: read-only top-pair telemetry after an accepted genuine 20ms
+    // physical step, with the original seeded start, driver profiles and pit.
+    if(q.real20ms&&accepted&&time<=90.001){
+     const p=q.real20ms,a=active[0],b=active[1];
+     p.acceptedFrames++;
+     const gap=(Number(a.raceProgress)-Number(b.raceProgress))*
+      window.mwsF1GetActiveRaceSnapshotV187().track.lengthMeters;
+     if(p.firstGridGap===null)p.firstGridGap=gap;
+     p.first90EndGap=gap;
+     if(!a.finished&&!b.finished&&
+      String(a.pitState||'TRACK')==='TRACK'&&String(b.pitState||'TRACK')){
+      p.frontFrames++;
+      const fast=(Number(b.speedKph)-Number(a.speedKph))/3.6>2;
+      if(gap>0&&gap<=70&&fast){
+       p.closeFasterFrames++;
+       const mode=String(b.unifiedAiStateV11||''),pair=String(a.id)+'|'+String(b.id);
+       if((Number(b.unifiedCorridorCountV12)||0)>0)p.corridorCandidateFrames++;
+       if((b.unifiedMergeBlockedV11?.length||0)>0)p.blockedFrames++;
+       if(mode==='PLAN_ATTACK')p.planAttackCloseFaster++;
+       if(mode==='FOLLOW'){
+        p.followCloseFaster++;
+        p.streak=(p.lastPair===pair&&p.lastTick===q.ticks-1)?p.streak+1:1;
+        p.lastPair=pair;p.lastTick=q.ticks;
+        p.maxStreakFrames=Math.max(p.maxStreakFrames,p.streak);
+        if(p.streak===20)p.streak400ms++;
+       }else{p.streak=0;p.lastTick=-2;}
+       if(p.examples.length<80&&(q.ticks%150===0||p.streak===20))
+        p.examples.push({ms:time*1000,leader:String(a.id),follower:String(b.id),
+         gapMeters:gap,relativeMps:(b.speedKph-a.speedKph)/3.6,
+         mode,candidates:Number(b.unifiedCorridorCountV12)||0,
+         mergeBlockers:b.unifiedMergeBlockedV11?.length||0,
+         nextDecisionInMs:Math.max(0,(Number(b.unifiedAiAtV11)||0)*1000-time*1000)});
+      }else{p.streak=0;p.lastTick=-2;}
+     }
     }
     for(const v of active){
      const id=String(v.id),previous=q.lastPit.get(id)||'TRACK',current=String(v.pitState||'TRACK');
@@ -236,7 +279,7 @@ try{
    mode:snapshot.raceMode,track:snapshot.trackId,laps:snapshot.totalLaps,
    simulatedSeconds:window.mwsF1GetSimulationClockV192().simTimeMs/1000,
    state:window.mwsF1GetScreenStateV185(),domScreen:document.getElementById('gameF1Racing')?.dataset.f1Screen,
-   profileScenario:q.profileScenario,
+   profileScenario:q.profileScenario,real20ms:q.real20ms,
    originalProfiles:q.originalProfiles,appliedProfiles:q.appliedProfiles,
    originalStrategies:q.originalStrategies,appliedStrategies:q.appliedStrategies,
    strategyInterventionAtMs:q.strategyInterventionAtMs,
@@ -284,6 +327,19 @@ try{
  assert(observation.view.finishingVisible&&observation.view.overlayVisible,'Official finishing view / result overlay must persist');
  assert.equal(observation.mode,'NORMAL');assert.equal(observation.laps,10);
  assert.equal(observation.profileScenario,profileScenario);
+ assert.equal(Boolean(observation.real20ms),probeReal20ms);
+ if(probeReal20ms){
+  const p=observation.real20ms;
+  assert(p.acceptedFrames>=4500&&p.acceptedFrames<=4501);
+  assert(p.frontFrames<=p.acceptedFrames);
+  assert(p.closeFasterFrames<=p.frontFrames);
+  assert(p.followCloseFaster<=p.closeFasterFrames);
+  assert(p.planAttackCloseFaster<=p.closeFasterFrames);
+  assert(p.corridorCandidateFrames<=p.closeFasterFrames);
+  assert(p.blockedFrames<=p.closeFasterFrames);
+  assert(p.streak400ms<=p.followCloseFaster&&p.maxStreakFrames<=p.followCloseFaster);
+  assert(p.examples.every(e=>e.ms>0&&e.ms<=90001&&e.leader!==e.follower));
+ }
  assert.equal(Object.keys(observation.originalProfiles).length,12);
  assert.equal(Object.keys(observation.appliedProfiles).length,12);
  assert.equal(Object.keys(observation.originalStrategies).length,12);
