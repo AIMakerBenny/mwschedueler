@@ -21,7 +21,7 @@ const output=String(process.env.MWS_R5B3_OUTPUT||'artifacts/f1-v12-r5b3-normal-a
 // R5-b50/R5-b51: explicit browser-only matched pace experiment. Never
 // override live application code, standings, rank, collision or pit logic.
 const profileScenario=String(process.env.MWS_R5B3_PROFILE_SCENARIO||'NATURAL');
-assert(['NATURAL','EQUAL_PACE_75'].includes(profileScenario));
+assert(['NATURAL','EQUAL_PACE_75','EQUAL_STRATEGY_BALANCED'].includes(profileScenario));
 assert(profileScenario==='NATURAL'||trackId==='majoku-ring-v1',
  'Profile comparisons are strictly Majoku Ring only');
 // A fixed setup timestamp seeds the app's existing random grid, driver profiles,
@@ -104,6 +104,7 @@ try{
   }
   window.__mwsR5b3={
    ticks:0,startingCompounds,originalProfiles,appliedProfiles,profileScenario:scenario,
+   originalStrategies:{},appliedStrategies:{},strategyInterventionAtMs:null,
    events:[],requests:[],strategySamples:[],pitTransitions:[],
    lastPit:new Map(vehicles.map(v=>[String(v.id),String(v.pitState||'TRACK')])),
    everRequested:new Set(),finishEvents:[],finished:new Set(),continuityErrors:[],
@@ -123,6 +124,22 @@ try{
       path:Number(v.unifiedPathDistanceV11)||0,speed:Number(v.speedKph)||0,finished:!!v.finished}]));
     const accepted=window.mwsF1SimulateRaceStepV192(20);q.ticks++;
     const active=standings().map(r=>r.vehicle),time=seconds(),totalLaps=window.mwsF1GetActiveRaceSnapshotV187().totalLaps;
+    // R5-b52: only after the first genuine 20ms solver acceptance, record
+    // assigned strategies for every scenario. Optional experimental balancing
+    // changes only style names in the browser harness, never game source.
+    if(accepted&&q.ticks===1){
+     for(const v of active){
+      const id=String(v.id),original=String(v.unifiedStrategyV12||'');
+      if(!['FRONTRUNNER','BALANCED','CHASER','CLOSER'].includes(original))
+       throw Error('No actual strategy assigned after first accepted step: '+id);
+      q.originalStrategies[id]=original;
+      if(q.profileScenario==='EQUAL_STRATEGY_BALANCED')
+       v.unifiedStrategyV12='BALANCED';
+      q.appliedStrategies[id]=String(v.unifiedStrategyV12);
+     }
+     if(q.profileScenario==='EQUAL_STRATEGY_BALANCED')
+      q.strategyInterventionAtMs=window.mwsF1GetSimulationClockV192().simTimeMs;
+    }
     for(const v of active){
      const id=String(v.id),previous=q.lastPit.get(id)||'TRACK',current=String(v.pitState||'TRACK');
      if(v.pitRequested&&!q.everRequested.has(id)){
@@ -220,6 +237,8 @@ try{
    state:window.mwsF1GetScreenStateV185(),domScreen:document.getElementById('gameF1Racing')?.dataset.f1Screen,
    profileScenario:q.profileScenario,
    originalProfiles:q.originalProfiles,appliedProfiles:q.appliedProfiles,
+   originalStrategies:q.originalStrategies,appliedStrategies:q.appliedStrategies,
+   strategyInterventionAtMs:q.strategyInterventionAtMs,
    initialOrder:q.initialOrder,startingCompounds:q.startingCompounds,
    pitRequests:q.requests,pitTransitions:q.pitTransitions,pitPlanViolations:q.plannedPitViolations,
    finishBoundary:q.finishBoundary,rejectedStep:q.rejectedStep,finishEvents:q.finishEvents,continuityErrors:q.continuityErrors,
@@ -253,6 +272,17 @@ try{
  assert.equal(observation.profileScenario,profileScenario);
  assert.equal(Object.keys(observation.originalProfiles).length,12);
  assert.equal(Object.keys(observation.appliedProfiles).length,12);
+ assert.equal(Object.keys(observation.originalStrategies).length,12);
+ assert.equal(Object.keys(observation.appliedStrategies).length,12);
+ if(profileScenario==='EQUAL_STRATEGY_BALANCED'){
+  assert.equal(observation.strategyInterventionAtMs,20);
+  assert(Object.values(observation.appliedStrategies).every(v=>v==='BALANCED'));
+  assert.deepEqual(observation.originalProfiles,observation.appliedProfiles,
+   'Strategy-only experiment mutated driver abilities');
+ }else{
+  assert.equal(observation.strategyInterventionAtMs,null);
+  assert.deepEqual(observation.originalStrategies,observation.appliedStrategies);
+ }
  assert.equal(observation.finishedRows?.length,12);assert.equal(observation.finishEvents.length,12);
  assert.deepEqual(observation.finishedRows.map(r=>r.position),Array.from({length:12},(_,i)=>i+1));
  assert(observation.finishedRows.every(r=>r.finishMs>0&&r.lapTimesMs.length===10),
