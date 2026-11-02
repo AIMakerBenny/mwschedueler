@@ -45,9 +45,14 @@ jobs:
             scripts/qa-f1-v12-r5b85-majoku-400ms-episode-evidence.mjs \
             scripts/qa-f1-v12-r5b87-majoku-frame-audit.mjs \
             scripts/qa-f1-v12-r5b88-majoku-physical-fingerprint.mjs \
-            scripts/qa-f1-v12-r5b89-majoku-ai-evidence-gate.mjs
+            scripts/qa-f1-v12-r5b89-majoku-ai-evidence-gate.mjs \
+            scripts/qa-f1-v12-r5b92-majoku-baseline-provenance.mjs \
+            scripts/qa-f1-v12-r5b93-majoku-evidence-receipt.mjs \
+            scripts/qa-f1-v12-r5b91-majoku-episode-contract.test.mjs \
+            scripts/lib/f1-r5b91-episode-guards.mjs
           do node --check "$f"; done
           node scripts/qa-f1-v12-r5b48-single-track-access.mjs
+          node --test scripts/qa-f1-v12-r5b91-majoku-episode-contract.test.mjs
       - name: Download original REAL Majoku 12-car 10-lap results
         uses: actions/download-artifact@v4
         with:
@@ -56,6 +61,8 @@ jobs:
           name: f1-v12-r5b49-r5b57-majoku-fullrace
           github-token: ${{ github.token }}
           path: artifacts
+      - name: R5-b92 confirm genuine 12-car 10-lap baseline artifact provenance
+        run: node scripts/qa-f1-v12-r5b92-majoku-baseline-provenance.mjs
       - name: Install browser for authentic physical replay
         run: |
           npm install --no-save --no-package-lock playwright
@@ -72,11 +79,13 @@ jobs:
           node scripts/qa-f1-v12-r5b87-majoku-frame-audit.mjs
           node scripts/qa-f1-v12-r5b88-majoku-physical-fingerprint.mjs
           node scripts/qa-f1-v12-r5b89-majoku-ai-evidence-gate.mjs
+      - name: R5-b93 publish deterministic physical and advisory-only evidence receipt
+        run: node scripts/qa-f1-v12-r5b93-majoku-evidence-receipt.mjs
       - name: Upload real-grid results, including failures
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: majoku-r5b90-focused-physical-20ms
+          name: majoku-r5b93-focused-physical-20ms
           path: |
             artifacts/r5-b77-majoku/
           if-no-files-found: warn
