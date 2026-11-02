@@ -115,6 +115,8 @@ try{
     blockedFrames:0,streak400ms:0,maxStreakFrames:0,
     followCandidateUnblockedFrames:0,followCandidateBlockedFrames:0,
     followWithoutCandidateFrames:0,attackPlannedUnblockedFrames:0,
+    candidateUnblocked400msEpisodes:0,candidateUnblockedLongestFrames:0,
+    candidateLastPair:'',candidateLastTick:-2,candidateStreak:0,
     corridorCandidatesNotClearance:true,
     lastPair:'',lastTick:-2,streak:0,examples:[],firstGridGap:null,
     first90EndGap:null,trafficWindows:[],lastTrafficByDriver:{},
@@ -180,20 +182,30 @@ try{
         if(!attemptedCandidates)p.followWithoutCandidateFrames++;
         else if(blocked)p.followCandidateBlockedFrames++;
         else p.followCandidateUnblockedFrames++;
+        if(attemptedCandidates&&!blocked){
+         p.candidateStreak=p.candidateLastPair===pair&&p.candidateLastTick===q.ticks-1?
+          p.candidateStreak+1:1;
+         p.candidateLastPair=pair;p.candidateLastTick=q.ticks;
+         p.candidateUnblockedLongestFrames=Math.max(p.candidateUnblockedLongestFrames,p.candidateStreak);
+         if(p.candidateStreak===20)p.candidateUnblocked400msEpisodes++;
+        }else{p.candidateStreak=0;p.candidateLastTick=-2;p.candidateLastPair='';}
         p.followCloseFaster++;
         p.streak=(p.lastPair===pair&&p.lastTick===q.ticks-1)?p.streak+1:1;
         p.lastPair=pair;p.lastTick=q.ticks;
         p.maxStreakFrames=Math.max(p.maxStreakFrames,p.streak);
         if(p.streak===20)p.streak400ms++;
-       }else{p.streak=0;p.lastTick=-2;}
+       }else{p.streak=0;p.lastTick=-2;
+        p.candidateStreak=0;p.candidateLastTick=-2;p.candidateLastPair='';}
        if(p.examples.length<80&&(q.ticks%150===0||p.streak===20))
         p.examples.push({ms:time*1000,leader:String(a.id),follower:String(b.id),
          gapMeters:gap,relativeMps:(b.speedKph-a.speedKph)/3.6,
          mode,candidates:Number(b.unifiedCorridorCountV12)||0,
          mergeBlockers:b.unifiedMergeBlockedV11?.length||0,
          nextDecisionInMs:Math.max(0,(Number(b.unifiedAiAtV11)||0)*1000-time*1000)});
-      }else{p.streak=0;p.lastTick=-2;p.lastPair='';}
-     }else{p.streak=0;p.lastTick=-2;p.lastPair='';}
+      }else{p.streak=0;p.lastTick=-2;p.lastPair='';
+       p.candidateStreak=0;p.candidateLastTick=-2;p.candidateLastPair='';}
+     }else{p.streak=0;p.lastTick=-2;p.lastPair='';
+      p.candidateStreak=0;p.candidateLastTick=-2;p.candidateLastPair='';}
     }
     for(const v of active){
      const id=String(v.id),previous=q.lastPit.get(id)||'TRACK',current=String(v.pitState||'TRACK');
@@ -379,6 +391,9 @@ try{
   assert(p.followCandidateUnblockedFrames<=p.corridorCandidateFrames);
   assert(p.followCandidateBlockedFrames<=p.blockedFrames);
   assert(p.attackPlannedUnblockedFrames<=p.planAttackCloseFaster);
+  assert(p.candidateUnblocked400msEpisodes<=p.streak400ms);
+  assert(p.candidateUnblockedLongestFrames<=p.followCandidateUnblockedFrames);
+  assert(p.candidateUnblocked400msEpisodes<=p.followCandidateUnblockedFrames);
   assert.equal(p.corridorCandidatesNotClearance,true);
   assert(p.examples.every(e=>e.ms>0&&e.ms<=90001&&e.leader!==e.follower));
   assert.equal(p.trafficWindows.length,18);
