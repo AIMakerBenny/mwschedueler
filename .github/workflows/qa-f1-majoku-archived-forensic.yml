@@ -1,0 +1,80 @@
+name: Majoku archived actual 10-lap evidence regression
+on:
+  push:
+    branches:
+      - f1-unified-redesign-v11-20261012
+    paths:
+      - '.github/workflows/qa-f1-majoku-archived-forensic.yml'
+      - 'scripts/qa-f1-v12-r5b111-majoku-archived-timepoints.mjs'
+      - 'scripts/qa-f1-v12-r5b81-majoku-chase-evidence-gate.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+
+# R5-b112. Re-inspect existing completed REAL 12-car, 10-lap browser
+# results. This is NOT a fresh physical race or a balance certification.
+# Independent concurrency avoids coupling to the long multi-track queue.
+concurrency:
+  group: majoku-archived-regression
+  cancel-in-progress: false
+jobs:
+  archived-real-race-diagnostics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout development branch at verified SHA
+        uses: actions/checkout@v4
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download real two-seed 10-lap historical baseline
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41460159785
+          name: f1-v12-r5b49-r5b57-majoku-fullrace
+          github-token: ${{ github.token }}
+          path: artifacts
+      - name: Download fully completed genuine 10-lap R5-b108 observation cases
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41533541432
+          name: majoku-r5b96-focused-physical-20ms
+          github-token: ${{ github.token }}
+          path: artifacts/r5-b77-majoku
+      - name: Validate source hashes and real physical overtake ledgers
+        run: |
+          node scripts/qa-f1-v12-r5b100-pinned-baseline.mjs
+          node scripts/qa-f1-v12-r5b101-majoku-physical-ledger.mjs
+          node scripts/qa-f1-v12-r5b92-majoku-baseline-provenance.mjs
+      - name: R5-b111 verify exact 86.5s and 90s evidence clock distinction
+        run: node scripts/qa-f1-v12-r5b111-majoku-archived-timepoints.mjs
+      - name: R5-b109 run corrected physical FOLLOW and traffic evidence gate
+        run: node scripts/qa-f1-v12-r5b81-majoku-chase-evidence-gate.mjs
+      - name: Run original safety-preserving corridor and episode evidence gates
+        run: |
+          node scripts/qa-f1-v12-r5b83-majoku-corridor-evidence.mjs
+          node scripts/qa-f1-v12-r5b85-majoku-400ms-episode-evidence.mjs
+          node scripts/qa-f1-v12-r5b87-majoku-frame-audit.mjs
+      - name: Independently hash complete original versus probed 10-lap physical outcomes
+        run: |
+          node scripts/qa-f1-v12-r5b88-majoku-physical-fingerprint.mjs
+          node scripts/qa-f1-v12-r5b89-majoku-ai-evidence-gate.mjs
+      - name: R5-b93 and b104 require physically identical entire ten-lap results
+        run: |
+          node scripts/qa-f1-v12-r5b93-majoku-evidence-receipt.mjs
+          node scripts/qa-f1-v12-r5b104-full-physical-outcome-gate.mjs
+      - name: Enforce fail-closed read-only physical evidence manifest
+        env:
+          MWS_FOCUSED_QA_STEP_STATUS: success
+        run: node scripts/qa-f1-v12-r5b96-ci-diagnostics.mjs
+      - name: Upload archived-data forensic findings, even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: majoku-r5b112-archived-realgrid-forensic
+          path: artifacts/r5-b77-majoku/
+          if-no-files-found: warn
