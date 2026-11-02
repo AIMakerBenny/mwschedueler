@@ -615,6 +615,7 @@ jobs:
           node --check scripts/qa-f1-v12-r5b85-majoku-400ms-episode-evidence.mjs
           node --check scripts/qa-f1-v12-r5b87-majoku-frame-audit.mjs
           node --check scripts/qa-f1-v12-r5b88-majoku-physical-fingerprint.mjs
+          node --check scripts/qa-f1-v12-r5b89-majoku-ai-evidence-gate.mjs
       - name: Download actual baseline 10-lap physical race results
         uses: actions/download-artifact@v4
         with:
@@ -641,12 +642,14 @@ jobs:
         run: node scripts/qa-f1-v12-r5b85-majoku-400ms-episode-evidence.mjs
       - name: R5-b87 require twenty real contiguous frames per 400ms FOLLOW witness
         run: node scripts/qa-f1-v12-r5b87-majoku-frame-audit.mjs
-      - name: R5-b88 verify read-only 20ms telemetry leaves physical outcomes byte-equivalent
+      - name: R5-b88 verify read-only 20ms telemetry leaves deterministic physical outcomes identical
         run: node scripts/qa-f1-v12-r5b88-majoku-physical-fingerprint.mjs
+      - name: R5-b89 hold live AI changes until swept-body and merge-reservation clearance is proved
+        run: node scripts/qa-f1-v12-r5b89-majoku-ai-evidence-gate.mjs
       - name: Upload genuine 10-lap physical invariance and attack provenance
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: f1-v12-r5b76-r5b88-majoku-real-grid-20ms
+          name: f1-v12-r5b76-r5b89-majoku-real-grid-20ms
           path: artifacts/r5-b77-majoku/
           if-no-files-found: warn

@@ -20,7 +20,7 @@ const keys=[
  'acceptedCompetition','samples','strategySummary','screenTransitions',
  'tickCount','simulatedSeconds','view','pitPlanViolations'
 ];
-const stable=x=>Array.isArray(x)?'['+x.map(stable).join(',')+']':
+const stable=x=>x===undefined?'[undefined]':Array.isArray(x)?'['+x.map(stable).join(',')+']':
  x!==null&&typeof x==='object'?
  '{'+Object.keys(x).sort().map(k=>JSON.stringify(k)+':'+stable(x[k])).join(',')+'}':
  JSON.stringify(x);
