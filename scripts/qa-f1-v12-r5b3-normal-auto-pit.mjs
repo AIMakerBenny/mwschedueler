@@ -116,6 +116,7 @@ try{
     followCandidateUnblockedFrames:0,followCandidateBlockedFrames:0,
     followWithoutCandidateFrames:0,attackPlannedUnblockedFrames:0,
     candidateUnblocked400msEpisodes:0,candidateUnblockedLongestFrames:0,
+    candidateUnblocked400msSamples:[],
     candidateLastPair:'',candidateLastTick:-2,candidateStreak:0,
     corridorCandidatesNotClearance:true,
     lastPair:'',lastTick:-2,streak:0,examples:[],firstGridGap:null,
@@ -187,7 +188,20 @@ try{
           p.candidateStreak+1:1;
          p.candidateLastPair=pair;p.candidateLastTick=q.ticks;
          p.candidateUnblockedLongestFrames=Math.max(p.candidateUnblockedLongestFrames,p.candidateStreak);
-         if(p.candidateStreak===20)p.candidateUnblocked400msEpisodes++;
+         if(p.candidateStreak===20){
+          p.candidateUnblocked400msEpisodes++;
+          // R5-b85: witness only. No reported merge blocker is not physical clearance.
+          p.candidateUnblocked400msSamples.push({
+           firstFrameTick:q.ticks-19,lastFrameTick:q.ticks,
+           physicsStepMs:20,consecutiveFrames:20,
+           leaderId:String(a.id),followerId:String(b.id),
+           endSimMs:Math.round(time*1000),gapMeters:gap,
+           relativeSpeedMps:(Number(b.speedKph)-Number(a.speedKph))/3.6,
+           aiState:mode,candidateCount:Number(b.unifiedCorridorCountV12)||0,
+           reportedMergeBlockers:b.unifiedMergeBlockedV11?.length||0,
+           sweptClearanceProven:false,mergeReservationClearanceProven:false
+          });
+         }
         }else{p.candidateStreak=0;p.candidateLastTick=-2;p.candidateLastPair='';}
         p.followCloseFaster++;
         p.streak=(p.lastPair===pair&&p.lastTick===q.ticks-1)?p.streak+1:1;
@@ -394,6 +408,11 @@ try{
   assert(p.candidateUnblocked400msEpisodes<=p.streak400ms);
   assert(p.candidateUnblockedLongestFrames<=p.followCandidateUnblockedFrames);
   assert(p.candidateUnblocked400msEpisodes<=p.followCandidateUnblockedFrames);
+  assert.equal(p.candidateUnblocked400msSamples.length,p.candidateUnblocked400msEpisodes);
+  assert(p.candidateUnblocked400msSamples.every(x=>x.consecutiveFrames===20&&
+   x.physicsStepMs===20&&x.lastFrameTick-x.firstFrameTick===19&&
+   x.aiState==='FOLLOW'&&x.candidateCount>0&&x.reportedMergeBlockers===0&&
+   x.sweptClearanceProven===false&&x.mergeReservationClearanceProven===false));
   assert.equal(p.corridorCandidatesNotClearance,true);
   assert(p.examples.every(e=>e.ms>0&&e.ms<=90001&&e.leader!==e.follower));
   assert.equal(p.trafficWindows.length,18);
