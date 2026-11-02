@@ -127,6 +127,15 @@ jobs:
           if-no-files-found: warn
       - name: R5-b46 trace 28 actual leader gaps by seed and SVG circuit
         run: node scripts/qa-f1-v12-r5b46-lead-gap-cause-audit.mjs
+      - name: R5-b47 guard against deteriorating leader runaway and physical overtakes
+        run: node scripts/qa-f1-v12-r5b47-leader-balance-regression.mjs
+      - name: Upload R5-b47 balance-regression verdict
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-v12-r5b47-balance
+          path: artifacts/f1-v12-r5b47-leader-balance.json
+          if-no-files-found: warn
       - name: Upload R5-b46 accepted lead-gap provenance
         if: always()
         uses: actions/upload-artifact@v4
