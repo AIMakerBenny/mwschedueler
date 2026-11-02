@@ -113,6 +113,9 @@ try{
    real20ms:probe?{acceptedFrames:0,frontFrames:0,closeFasterFrames:0,
     followCloseFaster:0,planAttackCloseFaster:0,corridorCandidateFrames:0,
     blockedFrames:0,streak400ms:0,maxStreakFrames:0,
+    followCandidateUnblockedFrames:0,followCandidateBlockedFrames:0,
+    followWithoutCandidateFrames:0,attackPlannedUnblockedFrames:0,
+    corridorCandidatesNotClearance:true,
     lastPair:'',lastTick:-2,streak:0,examples:[],firstGridGap:null,
     first90EndGap:null,trafficWindows:[],lastTrafficByDriver:{},
     lastTrafficTotal:0}:null,
@@ -165,10 +168,18 @@ try{
       if(gap>0&&gap<=70&&fast){
        p.closeFasterFrames++;
        const mode=String(b.unifiedAiStateV11||''),pair=String(a.id)+'|'+String(b.id);
-       if((Number(b.unifiedCorridorCountV12)||0)>0)p.corridorCandidateFrames++;
-       if((b.unifiedMergeBlockedV11?.length||0)>0)p.blockedFrames++;
-       if(mode==='PLAN_ATTACK')p.planAttackCloseFaster++;
+       const attemptedCandidates=(Number(b.unifiedCorridorCountV12)||0)>0;
+       const blocked=(b.unifiedMergeBlockedV11?.length||0)>0;
+       if(attemptedCandidates)p.corridorCandidateFrames++;
+       if(blocked)p.blockedFrames++;
+       if(mode==='PLAN_ATTACK'){
+        p.planAttackCloseFaster++;
+        if(!blocked)p.attackPlannedUnblockedFrames++;
+       }
        if(mode==='FOLLOW'){
+        if(!attemptedCandidates)p.followWithoutCandidateFrames++;
+        else if(blocked)p.followCandidateBlockedFrames++;
+        else p.followCandidateUnblockedFrames++;
         p.followCloseFaster++;
         p.streak=(p.lastPair===pair&&p.lastTick===q.ticks-1)?p.streak+1:1;
         p.lastPair=pair;p.lastTick=q.ticks;
@@ -181,8 +192,8 @@ try{
          mode,candidates:Number(b.unifiedCorridorCountV12)||0,
          mergeBlockers:b.unifiedMergeBlockedV11?.length||0,
          nextDecisionInMs:Math.max(0,(Number(b.unifiedAiAtV11)||0)*1000-time*1000)});
-      }else{p.streak=0;p.lastTick=-2;}
-     }
+      }else{p.streak=0;p.lastTick=-2;p.lastPair='';}
+     }else{p.streak=0;p.lastTick=-2;p.lastPair='';}
     }
     for(const v of active){
      const id=String(v.id),previous=q.lastPit.get(id)||'TRACK',current=String(v.pitState||'TRACK');
@@ -363,6 +374,12 @@ try{
   assert(p.corridorCandidateFrames<=p.closeFasterFrames);
   assert(p.blockedFrames<=p.closeFasterFrames);
   assert(p.streak400ms<=p.followCloseFaster&&p.maxStreakFrames<=p.followCloseFaster);
+  assert.equal(p.followCloseFaster,p.followCandidateUnblockedFrames+
+   p.followCandidateBlockedFrames+p.followWithoutCandidateFrames);
+  assert(p.followCandidateUnblockedFrames<=p.corridorCandidateFrames);
+  assert(p.followCandidateBlockedFrames<=p.blockedFrames);
+  assert(p.attackPlannedUnblockedFrames<=p.planAttackCloseFaster);
+  assert.equal(p.corridorCandidatesNotClearance,true);
   assert(p.examples.every(e=>e.ms>0&&e.ms<=90001&&e.leader!==e.follower));
   assert.equal(p.trafficWindows.length,18);
   assert(p.trafficWindows.every((w,i)=>{
