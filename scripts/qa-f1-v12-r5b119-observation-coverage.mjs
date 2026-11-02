@@ -26,8 +26,10 @@ for(const pair of replay.pairs){
  assert(Number.isInteger(p.lastManualSampleMs)&&p.lastManualSampleMs>=89960&&p.lastManualSampleMs<=90001);
  assert(Number.isInteger(p.clockGapEvents)&&p.clockGapEvents>=0);
  assert(Array.isArray(p.trafficWindows)&&p.trafficWindows.length>=17&&p.trafficWindows.length<=18);
- assert.equal(p.trafficWindows.length,observedTraffic.phases.reduce((n,x,i)=>
-  n+(i===0?0:0),0)+p.trafficWindows.length); // no fabricated traffic window count
+ const covered=p.trafficWindows.filter(w=>observedTraffic.phases.some(phase=>
+  w.endSeconds>phase.fromSeconds&&w.endSeconds<=phase.toSeconds));
+ assert.equal(covered.length,p.trafficWindows.length,
+  'Every traffic window must belong to one of the reported real clock phases');
  const observedManualMs=p.acceptedFrames*20;
  const apparentUnobservedClockMs=p.lastManualSampleMs-observedManualMs;
  assert(apparentUnobservedClockMs>=0);

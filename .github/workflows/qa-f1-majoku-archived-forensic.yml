@@ -6,6 +6,9 @@ on:
     paths:
       - '.github/workflows/qa-f1-majoku-archived-forensic.yml'
       - 'scripts/qa-f1-v12-r5b111-majoku-archived-timepoints.mjs'
+      - 'scripts/qa-f1-v12-r5b117-finish-rank-ledger.mjs'
+      - 'scripts/qa-f1-v12-r5b118-chase-state-attribution.mjs'
+      - 'scripts/qa-f1-v12-r5b119-observation-coverage.mjs'
       - 'scripts/qa-f1-v12-r5b81-majoku-chase-evidence-gate.mjs'
   workflow_dispatch:
 permissions:
@@ -41,7 +44,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           repository: AIMakerBenny/mwschedueler
-          run-id: 41533541432
+          run-id: 41547776746
           name: majoku-r5b96-focused-physical-20ms
           github-token: ${{ github.token }}
           path: artifacts/r5-b77-majoku
@@ -52,6 +55,12 @@ jobs:
           node scripts/qa-f1-v12-r5b92-majoku-baseline-provenance.mjs
       - name: R5-b111 verify exact 86.5s and 90s evidence clock distinction
         run: node scripts/qa-f1-v12-r5b111-majoku-archived-timepoints.mjs
+      - name: R5-b117 reconcile real 10-lap grid ranks and confirmed physical passing
+        run: node scripts/qa-f1-v12-r5b117-finish-rank-ledger.mjs
+      - name: R5-b118 trace top-pair attack state without inferring safe merging
+        run: node scripts/qa-f1-v12-r5b118-chase-state-attribution.mjs
+      - name: R5-b119 audit accepted 20ms observations against race clock and traffic windows
+        run: node scripts/qa-f1-v12-r5b119-observation-coverage.mjs
       - name: R5-b109 run corrected physical FOLLOW and traffic evidence gate
         run: node scripts/qa-f1-v12-r5b81-majoku-chase-evidence-gate.mjs
       - name: Run original safety-preserving corridor and episode evidence gates
@@ -75,6 +84,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: majoku-r5b112-archived-realgrid-forensic
+          name: majoku-r5b120-archived-realgrid-forensic
           path: artifacts/r5-b77-majoku/
           if-no-files-found: warn

@@ -44,8 +44,8 @@ for(const p of replay.pairs){
   lastWindowSeconds:last.endSeconds,finalProbeGapMeters:p.first90EndGapMeters}));
 }
 const result={phase:'R5-b111',status:'PASS',track:'majoku-ring-v1',
- provenance:'GitHub Actions run 41533541432 archived real 10-lap 20ms replay',
- sourceRunId:41533541432,sourceRunConclusion:'FAILURE_IN_DOWNSTREAM_EVIDENCE_GATE',
+ provenance:'GitHub Actions run 41547776746 successful real 10-lap 20ms replay',
+ sourceRunId:41547776746,sourceRunConclusion:'SUCCESS',
  fullTenLapRacesAlreadyReplayed:2,newChromiumRacesExecuted:0,
  readOnly:true,aiAdjustmentAuthorized:false,cases,
  warning:'This archived-data regression is not proof of fresh 10-lap QA success'};
