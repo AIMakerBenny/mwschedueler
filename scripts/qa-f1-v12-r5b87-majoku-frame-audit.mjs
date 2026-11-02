@@ -2,6 +2,7 @@
 // This is evidence of an advisory candidate, NOT a proved safe lane change.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {assertMajokuFollow400ms} from './lib/f1-r5b91-episode-guards.mjs';
 const dir='artifacts/r5-b77-majoku/';
 const read=p=>JSON.parse(fs.readFileSync(p,'utf8'));
 const replay=read(dir+'replay.json'),witness=read(dir+'b85-episode-evidence.json');
@@ -21,6 +22,7 @@ for(const pair of replay.pairs){
  let priorEnd=0;
  const episodes=[];
  for(const event of w.episodes){
+  assertMajokuFollow400ms(event,p.acceptedFrames);
   const frames=event.consecutive20msFrames;
   assert(Array.isArray(frames),'Missing per-frame proof, cannot promote last-frame observation');
   assert.equal(frames.length,20,'400ms must consist of twenty genuine 20ms steps');
