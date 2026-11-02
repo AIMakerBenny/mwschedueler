@@ -7,6 +7,8 @@ on:
       - '.github/workflows/qa-f1-majoku-real-grid-focused.yml'
       - 'scripts/qa-f1-v12-r5b77-majoku-realgrid-replay.mjs'
       - 'scripts/qa-f1-v12-r5b96-ci-diagnostics.mjs'
+      - 'scripts/qa-f1-v12-r5b1*.mjs'
+      - 'scripts/lib/f1-r5b1*.mjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -88,7 +90,8 @@ jobs:
             scripts/lib/f1-r5b91-episode-guards.mjs \
             scripts/lib/f1-r5b95-physical-compare.mjs \
             scripts/qa-f1-v12-r5b95-physical-compare.test.mjs \
-            scripts/qa-f1-v12-r5b96-ci-diagnostics.mjs
+            scripts/qa-f1-v12-r5b96-ci-diagnostics.mjs \
+            scripts/qa-f1-v12-r5b100-pinned-baseline.mjs
           do node --check "$f"; done
           node scripts/qa-f1-v12-r5b48-single-track-access.mjs
           node --test scripts/qa-f1-v12-r5b91-majoku-episode-contract.test.mjs
@@ -101,6 +104,8 @@ jobs:
           name: f1-v12-r5b49-r5b57-majoku-fullrace
           github-token: ${{ github.token }}
           path: artifacts
+      - name: R5-b100 pin downloaded historical real-grid artifact SHA-256
+        run: node scripts/qa-f1-v12-r5b100-pinned-baseline.mjs
       - name: R5-b92 confirm genuine 12-car 10-lap baseline artifact provenance
         run: node scripts/qa-f1-v12-r5b92-majoku-baseline-provenance.mjs
       - name: Install browser for authentic physical replay
