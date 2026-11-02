@@ -60,7 +60,9 @@ const safety={
   trackSource.includes('royal-street-circuit-v1')&&
   trackSource.includes('infinity-eight-circuit-v1')&&
   trackSource.includes('highland-flow-ring-v1')};
-assert(Object.values(safety).every(Boolean),'Public track lock or original physics safety guard changed');
+const failedSafetyGuards=Object.entries(safety).filter(([,ok])=>!ok).map(([name])=>name);
+assert.deepEqual(failedSafetyGuards,[],
+ 'Public track / physical safety contract mismatch: '+failedSafetyGuards.join(', '));
 const actionCandidates=[
  {priority:1,scope:'Majoku only',action:'Reproduce physical attack corridor decisions near genuine front pair',
   why:'Close/faster vehicle FOLLOW samples and attack options should be investigated with 20ms decisions',

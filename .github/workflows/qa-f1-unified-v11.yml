@@ -469,6 +469,7 @@ jobs:
           node --check scripts/qa-f1-v12-r5b67-majoku-chase-modes.mjs
           node --check scripts/qa-f1-v12-r5b68-majoku-attack-outcomes.mjs
           node --check scripts/qa-f1-v12-r5b69-majoku-ai-decision-gate.mjs
+          node --test scripts/qa-f1-v12-r5b114-public-track-access-runtime.test.mjs
           node --check scripts/qa-f1-v12-r5b71-majoku-20ms-controls.mjs
           node --check scripts/qa-f1-v12-r5b72-majoku-corridor-decision.mjs
           node --check scripts/qa-f1-v12-r5b75-majoku-grid-counterfactual.mjs
