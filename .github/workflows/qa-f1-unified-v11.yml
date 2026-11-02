@@ -449,6 +449,7 @@ jobs:
           node --check scripts/qa-f1-v12-r5-balance.mjs
           node --check scripts/qa-f1-v12-r5b59-majoku-short-matched.mjs
           node --check scripts/qa-f1-v12-r5b60-majoku-window-attribution.mjs
+          node --check scripts/qa-f1-v12-r5b66-majoku-traffic-attribution.mjs
       - name: Install headless Chromium for Majoku-only physics
         run: |
           npm install --no-save --no-package-lock playwright
@@ -459,6 +460,8 @@ jobs:
         run: node scripts/qa-f1-v12-r5b59-majoku-short-matched.mjs
       - name: R5-b60 verify real leader gap and passing effects without tuning
         run: node scripts/qa-f1-v12-r5b60-majoku-window-attribution.mjs
+      - name: R5-b66 verify real traffic constraints per physical vehicle
+        run: node scripts/qa-f1-v12-r5b66-majoku-traffic-attribution.mjs
       - name: Upload Majoku 90s real-physics matched evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -503,9 +506,12 @@ jobs:
           path: artifacts
       - name: Verify provenance analysis syntax
         run: |
+          node --check scripts/qa-f1-v12-r5b64-majoku-early-traffic.mjs
           node --check scripts/qa-f1-v12-r5b61-majoku-leader-provenance.mjs
           node --check scripts/qa-f1-v12-r5b62-majoku-competition-quality.mjs
           node --check scripts/qa-f1-v12-r5b63-majoku-race-quality-gate.mjs
+      - name: R5-b64 audit real 10-lap Majoku early race before pit
+        run: node scripts/qa-f1-v12-r5b64-majoku-early-traffic.mjs
       - name: R5-b61 separate pit and finishing reorders from physical leader passes
         run: node scripts/qa-f1-v12-r5b61-majoku-leader-provenance.mjs
       - name: R5-b62 verify 10-lap physical duels and real podium race quality
@@ -518,6 +524,7 @@ jobs:
         with:
           name: f1-v12-r5b61-r5b63-majoku-archived-lead-quality
           path: |
+            artifacts/r5-b53-majoku/early-traffic.json
             artifacts/r5-b53-majoku/leader-provenance.json
             artifacts/r5-b53-majoku/competition-quality.json
             artifacts/r5-b53-majoku/race-quality-gate.json
