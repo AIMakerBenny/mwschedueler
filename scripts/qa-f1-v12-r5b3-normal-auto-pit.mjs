@@ -18,6 +18,12 @@ const trackId=String(process.env.MWS_R5B3_TRACK||'castle-street-circuit-v1');
 const maxTicks=Math.max(30000,Math.min(85000,Number(process.env.MWS_R5B3_MAX_TICKS)||70000));
 const seedId=String(process.env.MWS_R5B3_SEED||'');
 const output=String(process.env.MWS_R5B3_OUTPUT||'artifacts/f1-v12-r5b3-normal-auto-pit.json');
+// R5-b50/R5-b51: explicit browser-only matched pace experiment. Never
+// override live application code, standings, rank, collision or pit logic.
+const profileScenario=String(process.env.MWS_R5B3_PROFILE_SCENARIO||'NATURAL');
+assert(['NATURAL','EQUAL_PACE_75'].includes(profileScenario));
+assert(profileScenario==='NATURAL'||trackId==='majoku-ring-v1',
+ 'Profile comparisons are strictly Majoku Ring only');
 // A fixed setup timestamp seeds the app's existing random grid, driver profiles,
 // unified solver, pressure and special RNG. Restore Date immediately after setup.
 const seededIso=seedId?/^[1-9][0-9]*$/.test(seedId)?new Date(Date.UTC(2026,9,18,0,0,0,Number(seedId)*1000)).toISOString():(()=>{throw Error('MWS_R5B3_SEED must be a positive integer')})():null;
@@ -79,10 +85,17 @@ try{
  });
  assert.equal(startClock.state,'RACE');
  assert.equal(startClock.ms,0,'Race advanced before 20ms QA stepping');
- const start=await page.evaluate(()=>{
+ const start=await page.evaluate((scenario)=>{
   window.mwsF1PauseRaceMotionV189(false); // disables only RAF; public 20ms integrator is unchanged
   const vehicles=window.mwsF1ComputeRaceStandingsV191().map(r=>r.vehicle);
   const startingCompounds={};
+  const originalProfiles=Object.fromEntries(vehicles.map(v=>[String(v.id),{...v.driverProfile}]));
+  if(scenario==='EQUAL_PACE_75')for(const v of vehicles){
+   // Browser-only, controlled intervention before the first accepted 20ms step.
+   // All other driver ratings, seeded grid, tyre physics and AI remain unchanged.
+   v.driverProfile=Object.freeze({...v.driverProfile,pace:75});
+  }
+  const appliedProfiles=Object.fromEntries(vehicles.map(v=>[String(v.id),{...v.driverProfile}]));
   for(const v of vehicles){
    const i=Number(String(v.id).split('-').at(-1));
    const compound=i<6?'SOFT':i<9?'MEDIUM':'HARD';
@@ -90,13 +103,14 @@ try{
    startingCompounds[String(v.id)]=compound;
   }
   window.__mwsR5b3={
-   ticks:0,startingCompounds,events:[],requests:[],strategySamples:[],pitTransitions:[],
+   ticks:0,startingCompounds,originalProfiles,appliedProfiles,profileScenario:scenario,
+   events:[],requests:[],strategySamples:[],pitTransitions:[],
    lastPit:new Map(vehicles.map(v=>[String(v.id),String(v.pitState||'TRACK')])),
    everRequested:new Set(),finishEvents:[],finished:new Set(),continuityErrors:[],
    initialOrder:vehicles.map(v=>String(v.id)),finishBoundary:null,rejectedStep:null,plannedPitViolations:[]};
   return {drivers:vehicles.length,compounds:startingCompounds,screen:window.mwsF1GetScreenStateV185(),
     profile:window.mwsF1QaDriverProfileMarkersV250().allPass};
- });
+ },profileScenario);
  assert(start.profile&&start.drivers===12&&start.screen==='RACE');
  let state='RACE',ticks=0;
  while(state==='RACE'&&ticks<maxTicks){
@@ -162,7 +176,16 @@ try{
       requests:q.requests.length,
       drivers:active.map(v=>{
        const st=strategies.find(x=>String(x.id)===String(v.id));
-       return {id:String(v.id),lap:v.raceProgress,wear:v.tyreWear,compound:v.tyreCompound,
+       return {id:String(v.id),lap:v.raceProgress,gridPosition:v.gridPosition,
+        speedKph:Number(v.speedKph)||0,
+        pace:Number(v.driverProfile?.pace)||75,
+        strategy:String(v.unifiedStrategyV12||''),
+        strategyEffort:Number(v.unifiedStrategyEffortV12)||1,
+        ersRequestKW:Number(v.unifiedStrategyErsKWV12)||0,
+        actualErsKW:Number(v.energyDeployKW)||0,
+        batteryMJ:Number(v.batteryMJ)||0,
+        aiState:String(v.unifiedAiStateV11||''),
+        wear:v.tyreWear,compound:v.tyreCompound,
         state:v.pitState,requested:!!v.pitRequested,reason:st?.reason||'',
         decision:st?.decision||'',remainingLaps:st?.context?.remainingLaps??null,
         bestBenefit:st?.context?.candidates?.[0]?.benefit??null,
@@ -195,6 +218,8 @@ try{
    mode:snapshot.raceMode,track:snapshot.trackId,laps:snapshot.totalLaps,
    simulatedSeconds:window.mwsF1GetSimulationClockV192().simTimeMs/1000,
    state:window.mwsF1GetScreenStateV185(),domScreen:document.getElementById('gameF1Racing')?.dataset.f1Screen,
+   profileScenario:q.profileScenario,
+   originalProfiles:q.originalProfiles,appliedProfiles:q.appliedProfiles,
    initialOrder:q.initialOrder,startingCompounds:q.startingCompounds,
    pitRequests:q.requests,pitTransitions:q.pitTransitions,pitPlanViolations:q.plannedPitViolations,
    finishBoundary:q.finishBoundary,rejectedStep:q.rejectedStep,finishEvents:q.finishEvents,continuityErrors:q.continuityErrors,
@@ -225,6 +250,9 @@ try{
  assert.equal(observation.domScreen,'FINISHING');
  assert(observation.view.finishingVisible&&observation.view.overlayVisible,'Official finishing view / result overlay must persist');
  assert.equal(observation.mode,'NORMAL');assert.equal(observation.laps,10);
+ assert.equal(observation.profileScenario,profileScenario);
+ assert.equal(Object.keys(observation.originalProfiles).length,12);
+ assert.equal(Object.keys(observation.appliedProfiles).length,12);
  assert.equal(observation.finishedRows?.length,12);assert.equal(observation.finishEvents.length,12);
  assert.deepEqual(observation.finishedRows.map(r=>r.position),Array.from({length:12},(_,i)=>i+1));
  assert(observation.finishedRows.every(r=>r.finishMs>0&&r.lapTimesMs.length===10),
