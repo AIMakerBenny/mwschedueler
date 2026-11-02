@@ -14,6 +14,14 @@ const seconds=Math.max(30,Math.min(240,Number(process.env.MWS_R5_WINDOW_SECONDS)
 const nTicks=Math.round(seconds*50);
 const seedCount=Math.max(2,Math.min(4,Number(process.env.MWS_R5_SEEDS)||2));
 const modes=[{name:'FAST',laps:3},{name:'NORMAL',laps:10}];
+// R5-b58: intentionally isolated short-window counterfactuals. The public
+// game and historical 7-track fixture remain unchanged by default.
+const majokuVariant=String(process.env.MWS_R5_MAJOKU_VARIANT||'NATURAL').toUpperCase();
+assert(['NATURAL','EQUAL_PACE_75','BALANCED_STRATEGY'].includes(majokuVariant),
+ 'Unknown Majoku-only physics test variant');
+if(majokuVariant!=='NATURAL')assert.equal(process.env.MWS_R5_TRACK_FILTER,
+ 'majoku-ring-v1','Counterfactual physics can run on Majoku Ring only');
+const reportPath=String(process.env.MWS_R5_REPORT_PATH||'artifacts/f1-v12-r5-balance.json');
 const fixture=setup
  .replace(/const track=\{[^\n]+/,"const track=fixtureTrack,activeRaceSnapshotV187={track,createdAt:'R5',totalLaps:10};")
  .replace(/const path=\{[^\n]+/,"const path=fixturePath;")
@@ -36,8 +44,11 @@ const code=[
  "activeRaceSnapshotV187.createdAt='R5-'+track.id+'-'+config.name+'-'+config.seed;",
  "activeRaceSnapshotV187.totalLaps=config.laps;",
  "for(const v of raceMotionV189.vehicles){const i=Number(v.id);",
- " v.driverProfile.pace=config.seed===0?75:i===0?95:i===11?75:75+(i*7%9)-4;}",
+ " v.driverProfile.pace=config.seed===0?75:i===0?95:i===11?75:75+(i*7%9)-4;"+
+ " if(config.variant==='EQUAL_PACE_75')v.driverProfile.pace=75;}",
  "unifiedInitV11();",
+ "if(config.variant==='BALANCED_STRATEGY')for(const v of raceMotionV189.vehicles)",
+ " v.unifiedStrategyV12='BALANCED';",
  "const grid=[...raceMotionV189.vehicles].sort((a,b)=>b.raceProgress-a.raceProgress);",
  "let ticks=0,checks=0,overlaps=[],continuity=[],firstPhysicalLapLimitCrossing=null;",
  "for(let i=0;i<config.maxTicks;i++){",
@@ -64,7 +75,8 @@ const code=[
  "}",
  "const c=unifiedStateV11.competition,first=c.samples[0],last=c.samples.at(-1),",
  " order=[...raceMotionV189.vehicles].sort((a,b)=>b.raceProgress-a.raceProgress||String(a.id).localeCompare(String(b.id)));",
- "return {track:track.id,mode:config.name,laps:config.laps,seed:config.seed,profile:config.seed===0?'equal':'strong-pole',",
+ "return {track:track.id,mode:config.name,laps:config.laps,seed:config.seed,",
+ " variant:config.variant,profile:config.seed===0?'equal':'strong-pole',",
  " seconds:simClockV192.simTimeMs/1000,ticks,openingLeader:String(grid[0].id),endingLeader:String(order[0].id),",
  " leaderChanges:c.leaderChanges,rankReorders:c.rankReorders,confirmedPasses:unifiedStateV11.telemetry.passes.length,",
  " rawCrossings:unifiedStateV11.telemetry.rawCrossings.length,attackEvents:c.attemptEventCounts,",
@@ -93,7 +105,8 @@ try{
  for(const track of tracks.filter(t=>!process.env.MWS_R5_TRACK_FILTER||t.id===process.env.MWS_R5_TRACK_FILTER)){
   for(const mode of modes.filter(m=>!process.env.MWS_R5_MODE_FILTER||m.name===process.env.MWS_R5_MODE_FILTER)){
    for(let seed=0;seed<seedCount;seed++){
-    const config={...mode,seed,maxTicks:nTicks,stopAtLapLimit:process.env.MWS_R5_STOP_AT_LAP_LIMIT==='1'};
+    const config={...mode,seed,variant:majokuVariant,maxTicks:nTicks,
+     stopAtLapLimit:process.env.MWS_R5_STOP_AT_LAP_LIMIT==='1'};
     const value=await page.evaluate(({track,config,fixture,engine,special,code})=>{
      const svgPath=document.getElementById('fixture');svgPath.setAttribute('d',track.path);
      const geometry=window.mwsBuildF1CornerPhasesV194(track,window.mwsBuildF1TrackGeometryV193(track,svgPath));
@@ -122,6 +135,17 @@ try{
  }
 }finally{await browser.close();}
 assert(results.length>0,'R5 filters selected no tracks or modes');
+assert(results.every(r=>r.variant===majokuVariant));
+if(majokuVariant!=='NATURAL'){
+ assert.equal(results.length,2*seedCount,'Only one Majoku Ring circuit with FAST and NORMAL permitted');
+ assert(results.every(r=>r.track==='majoku-ring-v1'));
+ for(const race of results)for(const sample of race.sampleTrace){
+  if(majokuVariant==='EQUAL_PACE_75')assert(sample.vehicles.every(v=>v.pace===75),
+   'Equal-pace intervention did not reach every vehicle');
+  if(majokuVariant==='BALANCED_STRATEGY')assert(sample.vehicles.every(v=>v.style==='BALANCED'),
+   'Balanced-only intervention did not reach every vehicle');
+ }
+}
 const sum={
  scenarios:results.length,modeSeedCount:seedCount,secondsPerScenario:seconds,stopOnPhysicalLapLimit:process.env.MWS_R5_STOP_AT_LAP_LIMIT==='1',
  totalPasses:results.reduce((a,b)=>a+b.confirmedPasses,0),
@@ -140,9 +164,9 @@ const sum={
 if(sum.zeroPassScenarios>results.length*.4)sum.imbalanceWarnings.push('More than 40% of scenarios have zero confirmed passes');
 if(sum.leadChangeScenarios===0)sum.imbalanceWarnings.push('No early-window leader changes');
 if(sum.largeLeadScenarios>results.length*.5)sum.imbalanceWarnings.push('More than half of leader gaps exceed 100m');
-const report={version:'v1.2-R5',sum,results};
+const report={version:'v1.2-R5',variant:majokuVariant,sum,results};
 fs.mkdirSync('artifacts',{recursive:true});
-fs.writeFileSync('artifacts/f1-v12-r5-balance.json',JSON.stringify(report,null,2));
+fs.writeFileSync(reportPath,JSON.stringify(report,null,2));
 if(process.env.GITHUB_STEP_SUMMARY){
  const lines=['## R5 real-SVG 7-track × FAST/NORMAL × multi-seed','Bounded windows only; pit stop fixture is stubbed.',
  '|Metric|Value|','|---|---:|',
