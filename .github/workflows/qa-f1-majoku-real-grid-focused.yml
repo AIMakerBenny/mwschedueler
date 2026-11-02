@@ -11,13 +11,47 @@ permissions:
   actions: read
 
 # R5-b90 isolates genuine Majoku verification from historical multi-track QA.
-# A per-SHA group prevents an unrelated old pending run from blocking this one.
-# Not a proof that GitHub has allocated a runner.
+# Keep any already-running genuine full-race QA uninterrupted.
+# Do not accumulate new pending independent runs for each diagnostic commit.
+# GitHub may supersede older pending runs; that is not a test failure.
 concurrency:
-  group: majoku-real-grid-focused-${{ github.sha }}
+  group: majoku-real-grid-focused-development
   cancel-in-progress: false
 jobs:
+  # R5-b97: distinguish runner scheduling from Chromium, 10-lap, or
+  # historical-artifact failures before allocating a long race runner.
+  majoku-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout development SHA
+        uses: actions/checkout@v4
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check core JS and read-only witness contracts
+        run: |
+          node --check scripts/qa-f1-v12-r5b3-normal-auto-pit.mjs
+          node --check scripts/qa-f1-v12-r5b77-majoku-realgrid-replay.mjs
+          node --check scripts/qa-f1-v12-r5b96-ci-diagnostics.mjs
+          node --test scripts/qa-f1-v12-r5b91-majoku-episode-contract.test.mjs
+          node --test scripts/qa-f1-v12-r5b95-physical-compare.test.mjs
+          node scripts/qa-f1-v12-r5b48-single-track-access.mjs
+      - name: Upload preflight SHA and runner success receipt
+        run: |
+          mkdir -p artifacts
+          node --input-type=module -e 'import fs from "node:fs"; fs.writeFileSync("artifacts/majoku-preflight.json",JSON.stringify({phase:"R5-b97",status:"PREFLIGHT_PASSED_ON_RUNNER",sha:process.env.GITHUB_SHA,runId:process.env.GITHUB_RUN_ID,physicalReplayCompleted:false,aiTuningAuthorized:false},null,2));'
+      - name: Upload preflight evidence when generated
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: majoku-r5b97-preflight
+          path: artifacts/majoku-preflight.json
+          if-no-files-found: warn
+
   majoku-realgrid-evidence:
+    needs: majoku-preflight
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
