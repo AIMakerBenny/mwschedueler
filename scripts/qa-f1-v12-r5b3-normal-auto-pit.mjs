@@ -116,7 +116,7 @@ try{
     followCandidateUnblockedFrames:0,followCandidateBlockedFrames:0,
     followWithoutCandidateFrames:0,attackPlannedUnblockedFrames:0,
     candidateUnblocked400msEpisodes:0,candidateUnblockedLongestFrames:0,
-    candidateUnblocked400msSamples:[],candidateFrameWindow:[],
+    candidateUnblocked400msSamples:[],candidateFrameWindow:[],lastManualSampleMs:0,clockGapEvents:0,
     candidateLastPair:'',candidateLastTick:-2,candidateStreak:0,
     corridorCandidatesNotClearance:true,
     lastPair:'',lastTick:-2,streak:0,examples:[],firstGridGap:null,
@@ -159,6 +159,14 @@ try{
     // physical step, with the original seeded start, driver profiles and pit.
     if(q.real20ms&&accepted&&time<=90.001){
      const p=q.real20ms,a=active[0],b=active[1];
+     const acceptedSimMs=Math.round(time*1000);
+     if(p.lastManualSampleMs&&acceptedSimMs-p.lastManualSampleMs>21){
+      p.clockGapEvents++;
+      p.streak=0;p.lastTick=-2;p.lastPair='';
+      p.candidateStreak=0;p.candidateLastTick=-2;p.candidateLastPair='';
+      p.candidateFrameWindow=[];
+     }
+     p.lastManualSampleMs=acceptedSimMs;
      p.acceptedFrames++;
      const gap=(Number(a.raceProgress)-Number(b.raceProgress))*
       window.mwsF1GetActiveRaceSnapshotV187().track.lengthMeters;
@@ -193,7 +201,8 @@ try{
           tick:q.ticks,leaderId:String(a.id),followerId:String(b.id),
           aiState:mode,candidateCount:Number(b.unifiedCorridorCountV12)||0,
           mergeBlockers:b.unifiedMergeBlockedV11?.length||0,
-          gapMeters:gap,relativeSpeedMps:(Number(b.speedKph)-Number(a.speedKph))/3.6
+          gapMeters:gap,relativeSpeedMps:(Number(b.speedKph)-Number(a.speedKph))/3.6,
+          simTimeMs:acceptedSimMs
          });
          if(p.candidateFrameWindow.length>20)p.candidateFrameWindow.shift();
          p.candidateUnblockedLongestFrames=Math.max(p.candidateUnblockedLongestFrames,p.candidateStreak);

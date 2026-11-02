@@ -41,7 +41,9 @@ for(const pair of replay.pairs){
   assert.equal(e.lastFrameTick-e.firstFrameTick,19);
   assert(e.firstFrameTick>=1&&e.lastFrameTick<=p.acceptedFrames);
   assert(e.lastFrameTick>lastTick);lastTick=e.lastFrameTick;
-  assert(Math.abs(e.endSimMs-e.lastFrameTick*20)<=20);
+  assert.equal(e.endSimMs,e.consecutive20msFrames?.[19]?.simTimeMs);
+  assert(e.consecutive20msFrames.every((f,i,frames)=>
+   !i||f.simTimeMs-frames[i-1].simTimeMs===20));
   assert(e.leaderId&&e.followerId&&e.leaderId!==e.followerId);
   assert(e.gapMeters>0&&e.gapMeters<=70);
   assert(e.relativeSpeedMps>2);

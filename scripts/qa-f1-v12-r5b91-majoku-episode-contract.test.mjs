@@ -9,7 +9,7 @@ const witness=()=>({
  candidateCount:1,reportedMergeBlockers:0,
  sweptClearanceProven:false,mergeReservationClearanceProven:false,
  consecutive20msFrames:Array.from({length:20},(_,i)=>({
-  tick:101+i,leaderId:'a',followerId:'b',aiState:'FOLLOW',
+  tick:101+i,simTimeMs:2020+i*20,leaderId:'a',followerId:'b',aiState:'FOLLOW',
   candidateCount:1,mergeBlockers:0,gapMeters:20,relativeSpeedMps:3
  }))
 });

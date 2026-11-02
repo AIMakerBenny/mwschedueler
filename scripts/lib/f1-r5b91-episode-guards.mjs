@@ -24,6 +24,9 @@ export function assertMajokuFollow400ms(event,acceptedFrames=4500){
   assert.equal(f.aiState,'FOLLOW','FOLLOW was interrupted');
   assert(Number.isInteger(f.candidateCount)&&f.candidateCount>0,'No route candidate');
   assert.equal(f.mergeBlockers,0,'Reported merge blocker');
+  assert(Number.isInteger(f.simTimeMs),'Missing physical simulation time');
+  if(i)assert.equal(f.simTimeMs-frames[i-1].simTimeMs,20,
+   'Clock progressed without an observed 20ms accepted step');
   assert(Number.isFinite(f.gapMeters)&&f.gapMeters>0&&f.gapMeters<=70,'Gap out of range');
   assert(Number.isFinite(f.relativeSpeedMps)&&f.relativeSpeedMps>2,'Follower not closing faster');
  }
@@ -32,6 +35,6 @@ export function assertMajokuFollow400ms(event,acceptedFrames=4500){
  assert.equal(last.mergeBlockers,event.reportedMergeBlockers);
  assert(Math.abs(last.gapMeters-event.gapMeters)<1e-9);
  assert(Math.abs(last.relativeSpeedMps-event.relativeSpeedMps)<1e-9);
- assert(Math.abs(event.endSimMs-event.lastFrameTick*20)<=20);
+ assert.equal(event.endSimMs,frames[19].simTimeMs);
  return true;
 }
