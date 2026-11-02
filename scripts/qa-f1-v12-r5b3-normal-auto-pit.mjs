@@ -116,7 +116,7 @@ try{
     followCandidateUnblockedFrames:0,followCandidateBlockedFrames:0,
     followWithoutCandidateFrames:0,attackPlannedUnblockedFrames:0,
     candidateUnblocked400msEpisodes:0,candidateUnblockedLongestFrames:0,
-    candidateUnblocked400msSamples:[],
+    candidateUnblocked400msSamples:[],candidateFrameWindow:[],
     candidateLastPair:'',candidateLastTick:-2,candidateStreak:0,
     corridorCandidatesNotClearance:true,
     lastPair:'',lastTick:-2,streak:0,examples:[],firstGridGap:null,
@@ -187,6 +187,15 @@ try{
          p.candidateStreak=p.candidateLastPair===pair&&p.candidateLastTick===q.ticks-1?
           p.candidateStreak+1:1;
          p.candidateLastPair=pair;p.candidateLastTick=q.ticks;
+         // R5-b86: record the last 20 genuine accepted steps, not only
+         // the final step of an alleged uninterrupted 400ms FOLLOW span.
+         p.candidateFrameWindow.push({
+          tick:q.ticks,leaderId:String(a.id),followerId:String(b.id),
+          aiState:mode,candidateCount:Number(b.unifiedCorridorCountV12)||0,
+          mergeBlockers:b.unifiedMergeBlockedV11?.length||0,
+          gapMeters:gap,relativeSpeedMps:(Number(b.speedKph)-Number(a.speedKph))/3.6
+         });
+         if(p.candidateFrameWindow.length>20)p.candidateFrameWindow.shift();
          p.candidateUnblockedLongestFrames=Math.max(p.candidateUnblockedLongestFrames,p.candidateStreak);
          if(p.candidateStreak===20){
           p.candidateUnblocked400msEpisodes++;
@@ -199,17 +208,18 @@ try{
            relativeSpeedMps:(Number(b.speedKph)-Number(a.speedKph))/3.6,
            aiState:mode,candidateCount:Number(b.unifiedCorridorCountV12)||0,
            reportedMergeBlockers:b.unifiedMergeBlockedV11?.length||0,
-           sweptClearanceProven:false,mergeReservationClearanceProven:false
+           sweptClearanceProven:false,mergeReservationClearanceProven:false,
+           consecutive20msFrames:p.candidateFrameWindow.map(frame=>({...frame}))
           });
          }
-        }else{p.candidateStreak=0;p.candidateLastTick=-2;p.candidateLastPair='';}
+        }else{p.candidateStreak=0;p.candidateLastTick=-2;p.candidateLastPair='';p.candidateFrameWindow=[];}
         p.followCloseFaster++;
         p.streak=(p.lastPair===pair&&p.lastTick===q.ticks-1)?p.streak+1:1;
         p.lastPair=pair;p.lastTick=q.ticks;
         p.maxStreakFrames=Math.max(p.maxStreakFrames,p.streak);
         if(p.streak===20)p.streak400ms++;
        }else{p.streak=0;p.lastTick=-2;
-        p.candidateStreak=0;p.candidateLastTick=-2;p.candidateLastPair='';}
+        p.candidateStreak=0;p.candidateLastTick=-2;p.candidateLastPair='';p.candidateFrameWindow=[];}
        if(p.examples.length<80&&(q.ticks%150===0||p.streak===20))
         p.examples.push({ms:time*1000,leader:String(a.id),follower:String(b.id),
          gapMeters:gap,relativeMps:(b.speedKph-a.speedKph)/3.6,
@@ -217,9 +227,9 @@ try{
          mergeBlockers:b.unifiedMergeBlockedV11?.length||0,
          nextDecisionInMs:Math.max(0,(Number(b.unifiedAiAtV11)||0)*1000-time*1000)});
       }else{p.streak=0;p.lastTick=-2;p.lastPair='';
-       p.candidateStreak=0;p.candidateLastTick=-2;p.candidateLastPair='';}
+       p.candidateStreak=0;p.candidateLastTick=-2;p.candidateLastPair='';p.candidateFrameWindow=[];}
      }else{p.streak=0;p.lastTick=-2;p.lastPair='';
-      p.candidateStreak=0;p.candidateLastTick=-2;p.candidateLastPair='';}
+      p.candidateStreak=0;p.candidateLastTick=-2;p.candidateLastPair='';p.candidateFrameWindow=[];}
     }
     for(const v of active){
      const id=String(v.id),previous=q.lastPit.get(id)||'TRACK',current=String(v.pitState||'TRACK');
@@ -409,6 +419,12 @@ try{
   assert(p.candidateUnblockedLongestFrames<=p.followCandidateUnblockedFrames);
   assert(p.candidateUnblocked400msEpisodes<=p.followCandidateUnblockedFrames);
   assert.equal(p.candidateUnblocked400msSamples.length,p.candidateUnblocked400msEpisodes);
+  assert(p.candidateUnblocked400msSamples.every(e=>Array.isArray(e.consecutive20msFrames)&&
+   e.consecutive20msFrames.length===20&&e.consecutive20msFrames.every((f,i)=>
+    f.tick===e.firstFrameTick+i&&f.leaderId===e.leaderId&&
+    f.followerId===e.followerId&&f.aiState==='FOLLOW'&&
+    f.candidateCount>0&&f.mergeBlockers===0&&
+    f.gapMeters>0&&f.gapMeters<=70&&f.relativeSpeedMps>2)));
   assert(p.candidateUnblocked400msSamples.every(x=>x.consecutiveFrames===20&&
    x.physicsStepMs===20&&x.lastFrameTick-x.firstFrameTick===19&&
    x.aiState==='FOLLOW'&&x.candidateCount>0&&x.reportedMergeBlockers===0&&
