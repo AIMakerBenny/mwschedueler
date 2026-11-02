@@ -466,3 +466,59 @@ jobs:
           name: f1-v12-r5b58-r5b60-majoku-window
           path: artifacts/r5-b59-majoku/
           if-no-files-found: warn
+
+  # R5-b63: fast validation of the already SUCCESSFUL real ten-lap browser
+  # artifact from run 41460159785. Refuse reuse if live physics or generating
+  # harness changed after its source SHA. This is NOT a current-HEAD race.
+  majoku-archived-evidence-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout and retain source commit history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Prove archived 10-lap data matches still-unchanged live physics and source harness
+        run: |
+          git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- \
+            assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js \
+            scripts/qa-f1-v12-r5b3-normal-auto-pit.mjs \
+            scripts/qa-f1-v12-r5b49-majoku-fullrace.mjs \
+            scripts/qa-f1-v12-r5b50-majoku-cause-audit.mjs \
+            scripts/qa-f1-v12-r5b51-majoku-matched-pace.mjs \
+            scripts/qa-f1-v12-r5b53-majoku-matched-strategy.mjs \
+            scripts/qa-f1-v12-r5b54-majoku-attribution.mjs \
+            scripts/qa-f1-v12-r5b56-majoku-pass-anatomy.mjs \
+            scripts/qa-f1-v12-r5b57-majoku-balance-decision.mjs
+      - name: Download genuine 10-lap race artifacts from successful Majoku job
+        uses: actions/download-artifact@v4
+        with:
+          name: f1-v12-r5b49-r5b57-majoku-fullrace
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41460159785
+          github-token: ${{ github.token }}
+          path: artifacts
+      - name: Verify provenance analysis syntax
+        run: |
+          node --check scripts/qa-f1-v12-r5b61-majoku-leader-provenance.mjs
+          node --check scripts/qa-f1-v12-r5b62-majoku-competition-quality.mjs
+          node --check scripts/qa-f1-v12-r5b63-majoku-race-quality-gate.mjs
+      - name: R5-b61 separate pit and finishing reorders from physical leader passes
+        run: node scripts/qa-f1-v12-r5b61-majoku-leader-provenance.mjs
+      - name: R5-b62 verify 10-lap physical duels and real podium race quality
+        run: node scripts/qa-f1-v12-r5b62-majoku-competition-quality.mjs
+      - name: R5-b63 guard against false leader-count and physical-pass regressions
+        run: node scripts/qa-f1-v12-r5b63-majoku-race-quality-gate.mjs
+      - name: Upload Majoku historical genuine-finish quality audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1-v12-r5b61-r5b63-majoku-archived-lead-quality
+          path: |
+            artifacts/r5-b53-majoku/leader-provenance.json
+            artifacts/r5-b53-majoku/competition-quality.json
+            artifacts/r5-b53-majoku/race-quality-gate.json
+          if-no-files-found: warn
