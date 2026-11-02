@@ -392,6 +392,9 @@ jobs:
           node --check scripts/qa-f1-v12-r5b54-majoku-attribution.mjs
           node --check scripts/qa-f1-v12-r5b56-majoku-pass-anatomy.mjs
           node --check scripts/qa-f1-v12-r5b57-majoku-balance-decision.mjs
+          node --check scripts/qa-f1-v12-r5b61-majoku-leader-provenance.mjs
+          node --check scripts/qa-f1-v12-r5b62-majoku-competition-quality.mjs
+          node --check scripts/qa-f1-v12-r5b63-majoku-race-quality-gate.mjs
       - name: Install browser for Majoku-only 10-lap comparisons
         run: |
           npm install --no-save --no-package-lock playwright
@@ -412,11 +415,17 @@ jobs:
         run: node scripts/qa-f1-v12-r5b56-majoku-pass-anatomy.mjs
       - name: R5-b57 issue no-speculation two-seed Majoku diagnosis
         run: node scripts/qa-f1-v12-r5b57-majoku-balance-decision.mjs
+      - name: R5-b61 separate confirmed leader-pass evidence from pit and finish reorders
+        run: node scripts/qa-f1-v12-r5b61-majoku-leader-provenance.mjs
+      - name: R5-b62 audit ten-lap genuine physical duels and podium involvement
+        run: node scripts/qa-f1-v12-r5b62-majoku-competition-quality.mjs
+      - name: R5-b63 enforce collision-free Majoku two-seed racing quality
+        run: node scripts/qa-f1-v12-r5b63-majoku-race-quality-gate.mjs
       - name: Upload Majoku-only full race baseline and comparison data
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: f1-v12-r5b49-r5b57-majoku-fullrace
+          name: f1-v12-r5b49-r5b63-majoku-fullrace
           path: |
             artifacts/r5-b49-majoku/
             artifacts/r5-b51-majoku/
