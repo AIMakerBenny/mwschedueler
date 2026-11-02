@@ -1,0 +1,70 @@
+name: Majoku archived short-window safety gate
+on:
+  push:
+    branches:
+      - f1-unified-redesign-v11-20261012
+    paths:
+      - '.github/workflows/qa-f1-majoku-short-evidence.yml'
+      - 'scripts/qa-f1-v12-r5b69-majoku-ai-decision-gate.mjs'
+      - 'scripts/qa-f1-v12-r5b114-public-track-access-runtime.test.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: majoku-short-evidence-dev
+  cancel-in-progress: false
+jobs:
+  archived-short-window-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout current development SHA
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify actual game physics and original historical runner unchanged
+        run: |
+          git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- \
+            assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js \
+            scripts/qa-f1-v12-r5b49-majoku-fullrace.mjs
+      - name: Test real public single-track selector and internal QA guard
+        run: |
+          node --test scripts/qa-f1-v12-r5b114-public-track-access-runtime.test.mjs
+          node scripts/qa-f1-v12-r5b48-single-track-access.mjs
+      - name: Download previous real short-window evidence without rerunning browser
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41543601309
+          name: f1-v12-r5b58-r5b75-majoku-ai-evidence
+          github-token: ${{ github.token }}
+          path: artifacts
+      - name: Download authentic historical two-seed ten-lap source races
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41460159785
+          name: f1-v12-r5b49-r5b57-majoku-fullrace
+          github-token: ${{ github.token }}
+          path: artifacts
+      - name: Validate historical baseline before interpreting pursuit
+        run: |
+          node scripts/qa-f1-v12-r5b100-pinned-baseline.mjs
+          node scripts/qa-f1-v12-r5b92-majoku-baseline-provenance.mjs
+      - name: R5-b113 current actual public-track and physical safety contract
+        run: node scripts/qa-f1-v12-r5b69-majoku-ai-decision-gate.mjs
+      - name: Verify no game code changes, no inferred safe overtake permissions
+        run: |
+          node --input-type=module -e 'import fs from "node:fs"; import assert from "node:assert/strict"; const a=JSON.parse(fs.readFileSync("artifacts/r5-b53-majoku/ai-decision-gate.json","utf8")); assert.equal(a.status,"PASS");assert.equal(a.automaticBalancePatch,false);assert.equal(a.balanceCertified,false);assert(a.decisions.every(x=>x.changeAuthorized===false));assert(Object.values(a.physicalGuardContracts).every(Boolean));console.log(JSON.stringify({phase:"R5-b115",status:"ARCHIVED_EVIDENCE_PASS",sourceRun:41543601309,fullRaceRerun:false,livePhysicsModified:false}));'
+      - name: Retain archived short-window QA evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: majoku-r5b115-archived-short-safety
+          path: artifacts/r5-b53-majoku/ai-decision-gate.json
+          if-no-files-found: warn
