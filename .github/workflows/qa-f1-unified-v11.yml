@@ -611,6 +611,7 @@ jobs:
           node --check scripts/qa-f1-v12-r5b78-majoku-realgrid-decision.mjs
           node --check scripts/qa-f1-v12-r5b80-majoku-realgrid-traffic.mjs
           node --check scripts/qa-f1-v12-r5b81-majoku-chase-evidence-gate.mjs
+          node --check scripts/qa-f1-v12-r5b83-majoku-corridor-evidence.mjs
       - name: Download actual baseline 10-lap physical race results
         uses: actions/download-artifact@v4
         with:
@@ -631,10 +632,12 @@ jobs:
         run: node scripts/qa-f1-v12-r5b80-majoku-realgrid-traffic.mjs
       - name: R5-b81 guard against false claims of a safe lane or unnecessary braking
         run: node scripts/qa-f1-v12-r5b81-majoku-chase-evidence-gate.mjs
+      - name: R5-b83 and b84 classify corridor candidates versus actual safe-looking follow
+        run: node scripts/qa-f1-v12-r5b83-majoku-corridor-evidence.mjs
       - name: Upload genuine 10-lap physical invariance and attack provenance
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: f1-v12-r5b76-r5b81-majoku-real-grid-20ms
+          name: f1-v12-r5b76-r5b84-majoku-real-grid-20ms
           path: artifacts/r5-b77-majoku/
           if-no-files-found: warn
