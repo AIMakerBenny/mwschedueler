@@ -114,7 +114,8 @@ try{
     followCloseFaster:0,planAttackCloseFaster:0,corridorCandidateFrames:0,
     blockedFrames:0,streak400ms:0,maxStreakFrames:0,
     lastPair:'',lastTick:-2,streak:0,examples:[],firstGridGap:null,
-    first90EndGap:null}:null,
+    first90EndGap:null,trafficWindows:[],lastTrafficByDriver:{},
+    lastTrafficTotal:0}:null,
    everRequested:new Set(),finishEvents:[],finished:new Set(),continuityErrors:[],
    initialOrder:vehicles.map(v=>String(v.id)),finishBoundary:null,rejectedStep:null,plannedPitViolations:[]};
   return {drivers:vehicles.length,compounds:startingCompounds,screen:window.mwsF1GetScreenStateV185(),
@@ -226,6 +227,30 @@ try{
       collisions:p.collisionStops,invalid:p.invalid?.slice(-2)||[],
       cars:active.map(v=>({id:String(v.id),progress:v.raceProgress,lane:v.unifiedYV11,
        speedKph:v.speedKph,pitState:v.pitState,wear:v.tyreWear}))};
+    }
+    if(q.real20ms&&accepted&&q.ticks%250===0&&time<=90.001){
+     const p=q.real20ms,competition=window.mwsF1CompetitionBaselineV12();
+     const total=Number(competition.trafficConstrainedSteps)||0;
+     const trafficByDriver=competition.trafficByDriver||{};
+     const current=Object.entries(trafficByDriver).map(([id,v])=>[id,Number(v)||0]);
+     const count=Object.fromEntries(current.map(([id,v])=>
+      [id,v-(Number(p.lastTrafficByDriver[id])||0)]));
+     const sum=Object.values(count).reduce((a,b)=>a+b,0);
+     const delta=total-p.lastTrafficTotal;
+     if(sum!==delta||delta<0||Object.values(count).some(v=>v<0))
+      throw Error('R5-b79 real-grid traffic attribution mismatch at '+time+' seconds');
+     const leader=active[0],second=active[1],lid=String(leader.id),sid=String(second.id);
+     p.trafficWindows.push({endSeconds:time,
+      leaderAtEnd:lid,secondAtEnd:sid,trafficStepsAll12:delta,
+      trafficStepsOfCurrentLeader:Number(count[lid])||0,
+      trafficStepsOfCurrentSecond:Number(count[sid])||0,
+      trafficStepsOfOthers:delta-(Number(count[lid])||0)-(Number(count[sid])||0),
+      leadGapMeters:(Number(leader.raceProgress)-Number(second.raceProgress))*
+       window.mwsF1GetActiveRaceSnapshotV187().track.lengthMeters,
+      leaderMode:String(leader.unifiedAiStateV11||''),
+      secondMode:String(second.unifiedAiStateV11||'')});
+     p.lastTrafficByDriver={...trafficByDriver};
+     p.lastTrafficTotal=total;
     }
     if(q.ticks%250===0){
      const strategies=window.mwsF1GetPitStrategyStatesV206();
@@ -339,6 +364,16 @@ try{
   assert(p.blockedFrames<=p.closeFasterFrames);
   assert(p.streak400ms<=p.followCloseFaster&&p.maxStreakFrames<=p.followCloseFaster);
   assert(p.examples.every(e=>e.ms>0&&e.ms<=90001&&e.leader!==e.follower));
+  assert.equal(p.trafficWindows.length,18);
+  assert(p.trafficWindows.every((w,i)=>{
+   const prev=i?p.trafficWindows[i-1].endSeconds:0;
+   return w.endSeconds>prev&&w.endSeconds<=90.001&&
+    w.trafficStepsAll12>=0&&w.trafficStepsOfOthers>=0&&
+    w.trafficStepsAll12===w.trafficStepsOfCurrentLeader+
+     w.trafficStepsOfCurrentSecond+w.trafficStepsOfOthers;
+  }));
+  assert.equal(p.trafficWindows.reduce((n,w)=>n+w.trafficStepsAll12,0),
+   p.lastTrafficTotal);
  }
  assert.equal(Object.keys(observation.originalProfiles).length,12);
  assert.equal(Object.keys(observation.appliedProfiles).length,12);
