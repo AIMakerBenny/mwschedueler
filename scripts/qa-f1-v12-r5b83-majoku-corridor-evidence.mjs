@@ -29,6 +29,9 @@ for(const race of replay.pairs){
  assert(p.attackPlannedUnblockedFrames<=p.planAttackCloseFaster);
  assert(p.streak400ms<=p.followCloseFaster);
  assert(p.maxStreakFrames<=p.followCloseFaster);
+ assert(p.candidateUnblocked400msEpisodes<=p.streak400ms);
+ assert(p.candidateUnblocked400msEpisodes<=p.followCandidateUnblockedFrames);
+ assert(p.candidateUnblockedLongestFrames<=p.followCandidateUnblockedFrames);
  assert.equal(p.corridorCandidatesNotClearance,true);
  assert.equal(sameSeed.closeFasterObservedFrames,p.closeFasterFrames);
  assert.equal(sameSeed.closeFasterFollowFrames,p.followCloseFaster);
@@ -43,6 +46,8 @@ for(const race of replay.pairs){
   plannedAttackNoReportedMergeBlock:p.attackPlannedUnblockedFrames,
   followingAll:p.followCloseFaster,
   sustained400msFollowingEpisodes:p.streak400ms,
+  sustained400msUnblockedCandidateFollowingEpisodes:p.candidateUnblocked400msEpisodes,
+  longestConsecutive20msUnblockedCandidateFollowFrames:p.candidateUnblockedLongestFrames,
   noConfirmedUnnecessaryBraking:true,
   meaning:'Reported merge blockers and attempted corridor candidates are advisory, not a full swept-body safety clearance'};
  cases.push(d);
@@ -50,7 +55,8 @@ for(const race of replay.pairs){
   follow:d.followingAll,withoutCandidate:d.followingWithNoCorridorCandidates,
   blockedCandidate:d.followingWithCandidatesButMergeBlocked,
   candidateWithoutReportedBlock:d.followingWithCandidatesNoReportedMergeBlock,
-  sustained:d.sustained400msFollowingEpisodes}));
+  sustained:d.sustained400msFollowingEpisodes,
+  persistentCandidateUnblocked:d.sustained400msUnblockedCandidateFollowingEpisodes}));
 }
 assert.deepEqual(cases.map(c=>c.seed),[1,2]);
 const result={phase:'R5-b83',status:'PASS',track:'majoku-ring-v1',
