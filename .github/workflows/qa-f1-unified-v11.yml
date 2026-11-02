@@ -467,6 +467,8 @@ jobs:
           node --check scripts/qa-f1-v12-r5b67-majoku-chase-modes.mjs
           node --check scripts/qa-f1-v12-r5b68-majoku-attack-outcomes.mjs
           node --check scripts/qa-f1-v12-r5b69-majoku-ai-decision-gate.mjs
+          node --check scripts/qa-f1-v12-r5b71-majoku-20ms-controls.mjs
+          node --check scripts/qa-f1-v12-r5b72-majoku-corridor-decision.mjs
       - name: Install headless Chromium for Majoku-only physics
         run: |
           npm install --no-save --no-package-lock playwright
@@ -495,13 +497,18 @@ jobs:
         run: node scripts/qa-f1-v12-r5b68-majoku-attack-outcomes.mjs
       - name: R5-b69 enforce no-speculation pursuit and physical safety decision gate
         run: node scripts/qa-f1-v12-r5b69-majoku-ai-decision-gate.mjs
+      - name: R5-b71 prove 20ms corridor diagnostic cannot alter actual physical results
+        run: node scripts/qa-f1-v12-r5b71-majoku-20ms-controls.mjs
+      - name: R5-b72 adjudicate evidence before changing live Majoku AI or physics
+        run: node scripts/qa-f1-v12-r5b72-majoku-corridor-decision.mjs
       - name: Upload Majoku 90s real-physics matched evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: f1-v12-r5b58-r5b69-majoku-ai-evidence
+          name: f1-v12-r5b58-r5b72-majoku-ai-evidence
           path: |
             artifacts/r5-b59-majoku/
+            artifacts/r5-b71-majoku/
             artifacts/r5-b53-majoku/chase-modes.json
             artifacts/r5-b53-majoku/attack-outcomes.json
             artifacts/r5-b53-majoku/ai-decision-gate.json
