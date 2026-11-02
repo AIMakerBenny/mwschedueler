@@ -2,6 +2,7 @@
 // observational 20ms front-pair probe. Compare with historical unprobed
 // seed-matched real-game results. Do not replace these with synthetic grids.
 import assert from 'node:assert/strict';
+import {findMajokuPhysicalFieldDifferences} from './lib/f1-r5b95-physical-compare.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -66,9 +67,19 @@ for(const [index,original] of base.cases.entries()){
   'finishEvents','pitRequests','pitTransitions','finishBoundary',
   'physics','acceptedCompetition','samples','strategySummary',
   'screenTransitions','tickCount','simulatedSeconds','view','pitPlanViolations'];
- for(const key of requiredEqual)
-  assert.deepEqual(after[key],before[key],
-   '20ms observation must not change genuine 10-lap outcome '+key+' seed '+seed);
+ // R5-b95: preserve the difference report before failing closed on any
+ // modified or absent required physical result field.
+ const differences=findMajokuPhysicalFieldDifferences(before,after,requiredEqual);
+ const comparison={
+  phase:'R5-b95',track:'majoku-ring-v1',seed,comparisonFields:requiredEqual,
+  status:differences.length?'PHYSICAL_MISMATCH':'PHYSICAL_FIELDS_IDENTICAL',
+  differences,baselineFile:original.outcomeFile,observedFile:output,
+  observed20msFrames:after.real20ms.acceptedFrames,
+  safeLaneProven:false
+ };
+ fs.writeFileSync(dir+'/seed'+seed+'-physical-diff.json',JSON.stringify(comparison,null,2));
+ assert.deepEqual(differences,[],
+  '20ms observation changed genuine 10-lap outcome seed '+seed);
  const p=after.real20ms;
  assert(p.closeFasterFrames<=p.frontFrames&&p.frontFrames<=p.acceptedFrames);
  assert(p.followCloseFaster<=p.closeFasterFrames);

@@ -49,10 +49,13 @@ jobs:
             scripts/qa-f1-v12-r5b92-majoku-baseline-provenance.mjs \
             scripts/qa-f1-v12-r5b93-majoku-evidence-receipt.mjs \
             scripts/qa-f1-v12-r5b91-majoku-episode-contract.test.mjs \
-            scripts/lib/f1-r5b91-episode-guards.mjs
+            scripts/lib/f1-r5b91-episode-guards.mjs \
+            scripts/lib/f1-r5b95-physical-compare.mjs \
+            scripts/qa-f1-v12-r5b95-physical-compare.test.mjs
           do node --check "$f"; done
           node scripts/qa-f1-v12-r5b48-single-track-access.mjs
           node --test scripts/qa-f1-v12-r5b91-majoku-episode-contract.test.mjs
+          node --test scripts/qa-f1-v12-r5b95-physical-compare.test.mjs
       - name: Download original REAL Majoku 12-car 10-lap results
         uses: actions/download-artifact@v4
         with:
