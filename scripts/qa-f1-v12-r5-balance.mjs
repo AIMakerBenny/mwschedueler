@@ -58,8 +58,10 @@ const code=[
  "const grid=[...raceMotionV189.vehicles].sort((a,b)=>b.raceProgress-a.raceProgress);",
  "let ticks=0,checks=0,overlaps=[],continuity=[],firstPhysicalLapLimitCrossing=null,trafficTimeline=[];",
  "const d20={frames:0,attackEligible:0,corridorClear:0,corridorBlocked:0,",
- " clearButFollow:0,clearButBrake:0,notYetClose:0,planner:0,brakeInAttack:0,examples:[]};",
- "let d20PrevTraffic={};",
+ " clearButFollow:0,clearButBrake:0,notYetClose:0,planner:0,brakeInAttack:0,examples:[],",
+ " closeFastClearFollow:0,closeFastClearBrake:0,stableFollowRuns400ms:0,",
+ " longestCloseFastFollowFrames:0,decisionDelayMsByExample:[]};",
+ "let d20PrevTraffic={},d20LastPair='',d20LastTick=-2,d20Streak=0;",
  "for(let i=0;i<config.maxTicks;i++){",
  " const prior=new Map(raceMotionV189.vehicles.map(v=>[String(v.id),{p:v.raceProgress,d:v.unifiedPathDistanceV11||0,v:v.speedKph||0}]));",
  " if(!simulateUnifiedRaceStepV11(20))break;",
@@ -85,13 +87,25 @@ const code=[
  "    if(clear)d20.corridorClear++;else d20.corridorBlocked++;",
  "    if(mode==='PLAN_ATTACK')d20.planner++;",
  "    if(clear&&mode==='FOLLOW')d20.clearButFollow++;",
+ "    const closeFast=gap<=70&&follower.v-leader.v>2;",
+ "    if(closeFast&&clear&&mode==='FOLLOW'){",
+ "     d20.closeFastClearFollow++;",
+ "     const pair=leader.id+'|'+follower.id;",
+ "     d20Streak=pair===d20LastPair&&i===d20LastTick+1?d20Streak+1:1;",
+ "     d20LastPair=pair;d20LastTick=i;",
+ "     d20.longestCloseFastFollowFrames=Math.max(d20.longestCloseFastFollowFrames,d20Streak);",
+ "     if(d20Streak===20)d20.stableFollowRuns400ms++;",
+ "    }else{d20Streak=0;d20LastTick=-2;}",
+ "    if(closeFast&&clear&&brakeCount>0)d20.closeFastClearBrake++;",
  "    if(gap<=Math.max(8,follower.v*.12))d20.notYetClose++;",
  "    if(brakeCount>0){d20.brakeInAttack++;if(clear)d20.clearButBrake++;}",
  "    if(d20.examples.length<50&&i%25===0&&(clear&&mode==='FOLLOW'||clear&&brakeCount>0))",
  "     d20.examples.push({ms:simClockV192.simTimeMs,leader:leader.id,follower:follower.id,",
  "      gapMeters:gap,relativeMps:follower.v-leader.v,mode,",
  "      corridorTarget:corridor.target,reason:corridor.reason,",
- "      brakeCount,blockedBy:corridor.blocked,options:corridor.candidates});",
+ "      brakeCount,blockedBy:corridor.blocked,options:corridor.candidates,",
+ "      nextDecisionInMs:Math.max(0,(Number(follower.ref.unifiedAiAtV11)||0)*1000-simClockV192.simTimeMs),",
+ "      closeFast});",
  "   }",
  "  }",
  " }",
@@ -176,6 +190,11 @@ try{
      assert(d.clearButFollow<=d.corridorClear&&d.clearButBrake<=d.corridorClear);
      assert(d.brakeInAttack<=d.attackEligible);
      assert(d.examples.length<=50);
+     assert(d.closeFastClearFollow<=d.clearButFollow);
+     assert(d.closeFastClearBrake<=d.clearButBrake);
+     assert(d.longestCloseFastFollowFrames<=d.closeFastClearFollow);
+     assert(d.stableFollowRuns400ms<=d.closeFastClearFollow);
+     assert(d.examples.every(e=>e.nextDecisionInMs>=0&&Number.isFinite(e.nextDecisionInMs)));
     }
     assert.equal(value.trafficTimeline.length,value.sampleTrace.length,
      'R5-b65 physical step 5-second traffic snapshots misaligned');
