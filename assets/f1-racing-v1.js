@@ -11657,6 +11657,16 @@ function unifiedPitAvoidanceV12(row,rows,width){
  }
  return choice;
 }
+// R5-b42: a confirmed pit request must steer toward the physical pit-side
+// lane immediately, even before the lifecycle switches its racingLineMode.
+// This selects only an AI target: merge guards, shared-lane reservations and
+// swept-world collision checks still decide every accepted chassis step.
+function unifiedPitLaneIntentV12(row,allowed){
+ const v=row.ref;
+ const early=row.pit==='TRACK'&&Boolean(v.pitRequested)&&v.racingLineMode!=='PIT_LINE';
+ const source=early?{...v,racingLineMode:'PIT_LINE'}:v;
+ return unifiedClampV11(lineOffsetMetersV197(source),-allowed,allowed);
+}
 function unifiedChooseLaneV11(row,rows,now,width){
  const v=row.ref,allowed=Math.max(0,width/2-1.5-UNIFIED_ENGINE_V11.physicalWidth/2);
  const ideal=unifiedIdealLaneV11(row,width);v.unifiedIdealLaneV11=ideal;
@@ -11699,7 +11709,7 @@ function unifiedChooseLaneV11(row,rows,now,width){
  }
  if(v.racingLineMode&&v.racingLineMode!=='IDEAL'&&state!=='PLAN_ATTACK'&&state!=='SIDE_BY_SIDE'&&state!=='EXIT_DUEL')
   target=unifiedClampV11(lineOffsetMetersV197(v),-allowed,allowed);
- if(v.pitRequested||row.pit!=='TRACK'){target=unifiedClampV11(lineOffsetMetersV197(v),-allowed,allowed);state='PIT';}
+ if(v.pitRequested||row.pit!=='TRACK'){target=unifiedPitLaneIntentV12(row,allowed);state='PIT';}
  const merge=state==='PIT'?unifiedPitMergeTargetV12(row,target,rows):
   unifiedMergeTargetV11(row,target,rows);
  const blocked=[...new Set([...merge.blocked,...(state==='EXIT_DUEL'?corridor?.blocked||[]:[])])].sort();
