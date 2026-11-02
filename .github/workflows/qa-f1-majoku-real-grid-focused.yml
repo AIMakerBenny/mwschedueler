@@ -5,6 +5,8 @@ on:
       - f1-unified-redesign-v11-20261012
     paths:
       - '.github/workflows/qa-f1-majoku-real-grid-focused.yml'
+      - 'scripts/qa-f1-v12-r5b77-majoku-realgrid-replay.mjs'
+      - 'scripts/qa-f1-v12-r5b96-ci-diagnostics.mjs'
   workflow_dispatch:
 permissions:
   contents: read
