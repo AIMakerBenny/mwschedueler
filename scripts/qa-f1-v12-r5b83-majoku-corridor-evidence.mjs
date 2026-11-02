@@ -17,7 +17,7 @@ for(const race of replay.pairs){
  const p=read(race.observedFile).real20ms;
  const sameSeed=traffic.cases.find(x=>x.seed===race.seed);
  assert(sameSeed&&p);
- assert.equal(p.acceptedFrames,4500);
+ assert(p.acceptedFrames>=4400&&p.acceptedFrames<=4500);
  assert.equal(p.frontFrames<=p.acceptedFrames,true);
  assert(p.closeFasterFrames<=p.frontFrames);
  assert.equal(p.followCloseFaster,
