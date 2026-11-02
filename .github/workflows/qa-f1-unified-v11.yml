@@ -374,7 +374,7 @@ jobs:
   # This job intentionally does not develop or tune any WIP circuit.
   majoku-fullrace-balance-qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 50
     steps:
       - name: Checkout Majoku-only balance diagnostics
         uses: actions/checkout@v4
@@ -388,6 +388,8 @@ jobs:
           node --check scripts/qa-f1-v12-r5b49-majoku-fullrace.mjs
           node --check scripts/qa-f1-v12-r5b50-majoku-cause-audit.mjs
           node --check scripts/qa-f1-v12-r5b51-majoku-matched-pace.mjs
+          node --check scripts/qa-f1-v12-r5b53-majoku-matched-strategy.mjs
+          node --check scripts/qa-f1-v12-r5b54-majoku-attribution.mjs
       - name: Install browser for Majoku-only 10-lap comparisons
         run: |
           npm install --no-save --no-package-lock playwright
@@ -400,12 +402,17 @@ jobs:
         run: node scripts/qa-f1-v12-r5b50-majoku-cause-audit.mjs
       - name: R5-b51 matched full-race pace-only intervention
         run: node scripts/qa-f1-v12-r5b51-majoku-matched-pace.mjs
+      - name: R5-b53 matched full-race strategy-only intervention
+        run: node scripts/qa-f1-v12-r5b53-majoku-matched-strategy.mjs
+      - name: R5-b54 reconcile measured natural, pace-only and strategy-only outcomes
+        run: node scripts/qa-f1-v12-r5b54-majoku-attribution.mjs
       - name: Upload Majoku-only full race baseline and comparison data
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: f1-v12-r5b49-r5b51-majoku-fullrace
+          name: f1-v12-r5b49-r5b54-majoku-fullrace
           path: |
             artifacts/r5-b49-majoku/
             artifacts/r5-b51-majoku/
+            artifacts/r5-b53-majoku/
           if-no-files-found: warn
