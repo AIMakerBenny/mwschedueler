@@ -49,7 +49,9 @@ const engine=fs.readFileSync('assets/f1-racing-v1.js','utf8');
 const trackSource=fs.readFileSync('assets/f1-track-v1.js','utf8');
 const safety={
  oneUnlockedCircuit:engine.includes("const F1_PUBLIC_TRACK_ID_V348='majoku-ring-v1'")&&
-  engine.includes("if(!isF1PublicTrackV348(id)||!window.mwsGetF1TrackV182?.(id))return false;"),
+  engine.includes("if(!isF1PublicTrackV348(id)&&!isF1InternalQaV348()||!window.mwsGetF1TrackV182?.(id))return false;")&&
+  engine.includes("function isF1InternalQaV348(){return window.__MWS_F1_INTERNAL_QA_V348===true}")&&
+  engine.includes("if(f1ScreenStateV185!=='SETUP'||!isF1PublicTrackV348(activeTrackId)&&!isF1InternalQaV348())return false;"),
  physicalCollisionCheckerPreserved:engine.includes('if(unifiedSweptWorldV11(a,ca,b,cb))'),
  sharedLaneReservationPreserved:engine.includes('function unifiedReservationThreatV12(a,b,ca,cb)'),
  normalTrafficConstraintPreserved:engine.includes("cmd.reason='PREDICTED_TRAFFIC'"),
