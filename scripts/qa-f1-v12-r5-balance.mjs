@@ -50,11 +50,14 @@ const code=[
  "if(config.variant==='BALANCED_STRATEGY')for(const v of raceMotionV189.vehicles)",
  " v.unifiedStrategyV12='BALANCED';",
  "const grid=[...raceMotionV189.vehicles].sort((a,b)=>b.raceProgress-a.raceProgress);",
- "let ticks=0,checks=0,overlaps=[],continuity=[],firstPhysicalLapLimitCrossing=null;",
+ "let ticks=0,checks=0,overlaps=[],continuity=[],firstPhysicalLapLimitCrossing=null,trafficTimeline=[];",
  "for(let i=0;i<config.maxTicks;i++){",
  " const prior=new Map(raceMotionV189.vehicles.map(v=>[String(v.id),{p:v.raceProgress,d:v.unifiedPathDistanceV11||0,v:v.speedKph||0}]));",
  " if(!simulateUnifiedRaceStepV11(20))break;",
  " ticks++;unifiedSpecialPresentationTickV12(2);",
+ " if(i%250===0){const c=unifiedStateV11.competition;",
+ "  trafficTimeline.push({simMs:simClockV192.simTimeMs,byDriver:{...c.trafficByDriver},total:c.trafficConstrainedSteps});",
+ " }",
  " if(!firstPhysicalLapLimitCrossing){const crossed=raceMotionV189.vehicles.filter(v=>v.raceProgress>=config.laps);",
  "  if(crossed.length){const orderAtCrossing=[...raceMotionV189.vehicles].sort((a,b)=>b.raceProgress-a.raceProgress||String(a.id).localeCompare(String(b.id)));",
  "   firstPhysicalLapLimitCrossing={simMs:simClockV192.simTimeMs,firstId:String(crossed.sort((a,b)=>b.raceProgress-a.raceProgress)[0].id),order:orderAtCrossing.map(v=>String(v.id)),gapMeters:(orderAtCrossing[0].raceProgress-orderAtCrossing[1].raceProgress)*track.lengthMeters};}}",
@@ -80,7 +83,7 @@ const code=[
  " seconds:simClockV192.simTimeMs/1000,ticks,openingLeader:String(grid[0].id),endingLeader:String(order[0].id),",
  " leaderChanges:c.leaderChanges,rankReorders:c.rankReorders,confirmedPasses:unifiedStateV11.telemetry.passes.length,",
  " rawCrossings:unifiedStateV11.telemetry.rawCrossings.length,attackEvents:c.attemptEventCounts,",
- " trafficConstrainedSteps:c.trafficConstrainedSteps,",
+ " trafficConstrainedSteps:c.trafficConstrainedSteps,trafficTimeline,",
  " initialGapMeters:first?.leaderToP2Meters??null,lastSampleGapMeters:last?.leaderToP2Meters??null,",
  " lastSampleFinalGapMeters:last?.leaderToLastMeters??null,",
  " specialEvents:specialStateV401.events,boosts:specialStateV401.boosts,",
@@ -125,6 +128,20 @@ try{
     assert(value.confirmedPasses<=value.rawCrossings);
     assert.equal(Object.values(value.roleCounts).reduce((a,b)=>a+b,0),12);
     assert(Number.isFinite(value.lastSampleGapMeters));
+    assert.equal(value.trafficTimeline.length,value.sampleTrace.length,
+     'R5-b65 physical step 5-second traffic snapshots misaligned');
+    for(let i=0;i<value.trafficTimeline.length;i++){
+     const trace=value.trafficTimeline[i],comp=value.sampleTrace[i];
+     assert.equal(trace.simMs,comp.simMs);
+     assert.equal(trace.total,comp.trafficConstrainedSteps);
+     assert.equal(Object.values(trace.byDriver).reduce((a,b)=>a+b,0),trace.total,
+      'Traffic constrained solver commands not attributed to vehicle IDs');
+     if(i>0){
+      assert(trace.total>=value.trafficTimeline[i-1].total);
+      for(const [id,count] of Object.entries(trace.byDriver))
+       assert(count>=Number(value.trafficTimeline[i-1].byDriver[id]||0));
+     }
+    }
     assert(value.sampleTrace.length>=2&&value.sampleTrace.every((s,i,a)=>s.vehicles.length===12&&(i===0||s.simMs>a[i-1].simMs)));
     results.push(value);
     console.log(JSON.stringify({track:value.track,mode:value.mode,seed,
