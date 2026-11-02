@@ -22,6 +22,12 @@ assert(['NATURAL','EQUAL_PACE_75','BALANCED_STRATEGY'].includes(majokuVariant),
 if(majokuVariant!=='NATURAL')assert.equal(process.env.MWS_R5_TRACK_FILTER,
  'majoku-ring-v1','Counterfactual physics can run on Majoku Ring only');
 const reportPath=String(process.env.MWS_R5_REPORT_PATH||'artifacts/f1-v12-r5-balance.json');
+const diagnose20ms=process.env.MWS_R5_MAJOKU_20MS==='1';
+if(diagnose20ms){
+ assert.equal(process.env.MWS_R5_TRACK_FILTER,'majoku-ring-v1');
+ assert.equal(process.env.MWS_R5_MODE_FILTER,'NORMAL');
+ assert.equal(majokuVariant,'NATURAL');
+}
 const fixture=setup
  .replace(/const track=\{[^\n]+/,"const track=fixtureTrack,activeRaceSnapshotV187={track,createdAt:'R5',totalLaps:10};")
  .replace(/const path=\{[^\n]+/,"const path=fixturePath;")
@@ -51,10 +57,44 @@ const code=[
  " v.unifiedStrategyV12='BALANCED';",
  "const grid=[...raceMotionV189.vehicles].sort((a,b)=>b.raceProgress-a.raceProgress);",
  "let ticks=0,checks=0,overlaps=[],continuity=[],firstPhysicalLapLimitCrossing=null,trafficTimeline=[];",
+ "const d20={frames:0,attackEligible:0,corridorClear:0,corridorBlocked:0,",
+ " clearButFollow:0,clearButBrake:0,notYetClose:0,planner:0,brakeInAttack:0,examples:[]};",
+ "let d20PrevTraffic={};",
  "for(let i=0;i<config.maxTicks;i++){",
  " const prior=new Map(raceMotionV189.vehicles.map(v=>[String(v.id),{p:v.raceProgress,d:v.unifiedPathDistanceV11||0,v:v.speedKph||0}]));",
  " if(!simulateUnifiedRaceStepV11(20))break;",
  " ticks++;unifiedSpecialPresentationTickV12(2);",
+ " if(config.diagnose20ms){",
+ "  const ordered=unifiedSnapshotV11().sort((a,b)=>b.s-a.s||a.id.localeCompare(b.id));",
+ "  const leader=ordered[0],follower=ordered[1],c=unifiedStateV11.competition;",
+ "  const prior=Number(d20PrevTraffic[follower.id]||0);",
+ "  const brakeCount=Number(c.trafficByDriver[follower.id]||0)-prior;",
+ "  d20PrevTraffic={...c.trafficByDriver};",
+ "  const gap=unifiedGapV11(follower,leader);",
+ "  if(follower.pit==='TRACK'&&leader.pit==='TRACK'&&gap>0&&gap<165){",
+ "   d20.frames++;",
+ "   const skill=unifiedRatingV11(follower.ref,'racecraft'),",
+ "     aggression=unifiedRatingV11(follower.ref,'aggression');",
+ "   const eligible=gap<135+15*Math.max(0,aggression)+15*Math.max(0,skill)&&",
+ "    (follower.v>leader.v-1.2-skill||unifiedSkillPowerV11(follower.ref,simClockV192.simTimeMs,follower.pit)>0);",
+ "   if(eligible){",
+ "    d20.attackEligible++;",
+ "    const corridor=unifiedAttackCorridorV12(follower,leader,ordered,Number(track.geometry?.trackWidthMeters)||14);",
+ "    const clear=corridor.target!==null;",
+ "    const mode=String(follower.ref.unifiedAiStateV11||'');",
+ "    if(clear)d20.corridorClear++;else d20.corridorBlocked++;",
+ "    if(mode==='PLAN_ATTACK')d20.planner++;",
+ "    if(clear&&mode==='FOLLOW')d20.clearButFollow++;",
+ "    if(gap<=Math.max(8,follower.v*.12))d20.notYetClose++;",
+ "    if(brakeCount>0){d20.brakeInAttack++;if(clear)d20.clearButBrake++;}",
+ "    if(d20.examples.length<50&&i%25===0&&(clear&&mode==='FOLLOW'||clear&&brakeCount>0))",
+ "     d20.examples.push({ms:simClockV192.simTimeMs,leader:leader.id,follower:follower.id,",
+ "      gapMeters:gap,relativeMps:follower.v-leader.v,mode,",
+ "      corridorTarget:corridor.target,reason:corridor.reason,",
+ "      brakeCount,blockedBy:corridor.blocked,options:corridor.candidates});",
+ "   }",
+ "  }",
+ " }",
  " if(i%250===0){const c=unifiedStateV11.competition;",
  "  trafficTimeline.push({simMs:simClockV192.simTimeMs,byDriver:{...c.trafficByDriver},total:c.trafficConstrainedSteps});",
  " }",
@@ -84,6 +124,7 @@ const code=[
  " leaderChanges:c.leaderChanges,rankReorders:c.rankReorders,confirmedPasses:unifiedStateV11.telemetry.passes.length,",
  " rawCrossings:unifiedStateV11.telemetry.rawCrossings.length,attackEvents:c.attemptEventCounts,",
  " trafficConstrainedSteps:c.trafficConstrainedSteps,trafficTimeline,",
+ " diagnostic20ms:config.diagnose20ms?d20:null,",
  " initialGapMeters:first?.leaderToP2Meters??null,lastSampleGapMeters:last?.leaderToP2Meters??null,",
  " lastSampleFinalGapMeters:last?.leaderToLastMeters??null,",
  " specialEvents:specialStateV401.events,boosts:specialStateV401.boosts,",
@@ -108,7 +149,7 @@ try{
  for(const track of tracks.filter(t=>!process.env.MWS_R5_TRACK_FILTER||t.id===process.env.MWS_R5_TRACK_FILTER)){
   for(const mode of modes.filter(m=>!process.env.MWS_R5_MODE_FILTER||m.name===process.env.MWS_R5_MODE_FILTER)){
    for(let seed=0;seed<seedCount;seed++){
-    const config={...mode,seed,variant:majokuVariant,maxTicks:nTicks,
+    const config={...mode,seed,variant:majokuVariant,diagnose20ms,maxTicks:nTicks,
      stopAtLapLimit:process.env.MWS_R5_STOP_AT_LAP_LIMIT==='1'};
     const value=await page.evaluate(({track,config,fixture,engine,special,code})=>{
      const svgPath=document.getElementById('fixture');svgPath.setAttribute('d',track.path);
@@ -128,6 +169,14 @@ try{
     assert(value.confirmedPasses<=value.rawCrossings);
     assert.equal(Object.values(value.roleCounts).reduce((a,b)=>a+b,0),12);
     assert(Number.isFinite(value.lastSampleGapMeters));
+    if(diagnose20ms){
+     const d=value.diagnostic20ms;
+     assert(d&&d.frames<=nTicks&&d.attackEligible<=d.frames);
+     assert.equal(d.corridorClear+d.corridorBlocked,d.attackEligible);
+     assert(d.clearButFollow<=d.corridorClear&&d.clearButBrake<=d.corridorClear);
+     assert(d.brakeInAttack<=d.attackEligible);
+     assert(d.examples.length<=50);
+    }
     assert.equal(value.trafficTimeline.length,value.sampleTrace.length,
      'R5-b65 physical step 5-second traffic snapshots misaligned');
     for(let i=0;i<value.trafficTimeline.length;i++){
@@ -181,7 +230,8 @@ const sum={
 if(sum.zeroPassScenarios>results.length*.4)sum.imbalanceWarnings.push('More than 40% of scenarios have zero confirmed passes');
 if(sum.leadChangeScenarios===0)sum.imbalanceWarnings.push('No early-window leader changes');
 if(sum.largeLeadScenarios>results.length*.5)sum.imbalanceWarnings.push('More than half of leader gaps exceed 100m');
-const report={version:'v1.2-R5',variant:majokuVariant,sum,results};
+const report={version:'v1.2-R5',variant:majokuVariant,
+ probe20ms:diagnose20ms,sum,results};
 fs.mkdirSync('artifacts',{recursive:true});
 fs.writeFileSync(reportPath,JSON.stringify(report,null,2));
 if(process.env.GITHUB_STEP_SUMMARY){
