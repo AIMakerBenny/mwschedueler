@@ -83,8 +83,10 @@ function corridorChoice(preferredLane=null){
  return ctx.unifiedAttackCorridorV12(me,ahead,[me,ahead],12,preferredLane);
 }
 test('R5-b180 favors an already committed safe attack side rather than flapping',()=>{
- const defaultSide=corridorChoice(),heldSide=corridorChoice(3);
- assert.ok(defaultSide.target<0);assert.ok(heldSide.target>0);
+ const defaultSide=corridorChoice(),heldSide=corridorChoice(-3);
+ // Current physically safe default is outside right; a previously committed
+ // left-side attack should select a safe left lane, not flip to that default.
+ assert.ok(defaultSide.target>0);assert.ok(heldSide.target<0);
  assert.ok(heldSide.candidates>0);assert.equal(heldSide.reason,'CLEAR');
 });
 
