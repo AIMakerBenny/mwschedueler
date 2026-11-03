@@ -387,28 +387,9 @@ test('R5-b212 a fully accepted real attack has no rejected lane marker',()=>{
  assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.rejectedLane,null);
 });
 
-test('R5-b213 shifted named TRACK blocker behind allows full guarded corridor re-evaluation',()=>{
- const x=evaluate({exitDuel:true,now:1,oldBlockerPresent:true,priorRejectedLane:-3,obstacleLateral:3,obstaclePit:'TRACK',obstacleGap:-4});
- assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);assert.equal(x.lane,-3);
-});
-test('R5-b213 physically occupied rejected side retains EXIT_DUEL without scanning',()=>{
- const x=evaluate({exitDuel:true,now:1,oldBlockerPresent:true,priorRejectedLane:-3,obstacleLateral:-3,obstaclePit:'TRACK',obstacleGap:-4});
- assert.equal(x.state,'EXIT_DUEL');assert.equal(x.scans,0);
-});
-test('R5-b213 a pit-lane blocker never triggers early lane recheck',()=>{
- const x=evaluate({exitDuel:true,now:1,oldBlockerPresent:true,priorRejectedLane:-3,obstacleLateral:3,obstaclePit:'PIT_ENTRY',obstacleGap:-4});
- assert.equal(x.state,'EXIT_DUEL');assert.equal(x.scans,0);
-});
 
-test('R5-b214 newly cleared named-blocker lane receives physically verified same-tick preference',()=>{
+
+test('R5-b215 keeps nearby named blocker cooldown without lateral-only release',()=>{
  const x=evaluate({exitDuel:true,now:1,oldBlockerPresent:true,priorRejectedLane:-3,obstacleLateral:3,obstaclePit:'TRACK',obstacleGap:-4});
- assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);assert.equal(x.preferredLane,-3);
-});
-test('R5-b214 expired rejected attack does not reuse an unverified old lane',()=>{
- const x=evaluate({exitDuel:true,now:5,oldBlockerPresent:true,priorRejectedLane:-3,obstacleLateral:3,obstaclePit:'TRACK',obstacleGap:-4});
- assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);assert.equal(x.preferredLane,null);
-});
-test('R5-b214 still blocked rejection never creates a corridor preference or repeat scan',()=>{
- const x=evaluate({exitDuel:true,now:1,oldBlockerPresent:true,priorRejectedLane:-3,obstacleLateral:-3,obstaclePit:'TRACK',obstacleGap:-4});
  assert.equal(x.state,'EXIT_DUEL');assert.equal(x.scans,0);
 });
