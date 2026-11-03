@@ -178,9 +178,9 @@ test('R5-b189 already separated car retains a feasible short safe lane adjustmen
  assert.ok(ready.target!==null);assert.ok(ready.target<0);assert.equal(ready.reason,'CLEAR');
 });
 
-test('R5-b190 ongoing close attack survives small relative-speed fluctuation at intent expiry',()=>{
+test('R5-b190 superseded by R5-b194: 42m tiny closing no longer sustains a 420s attack',()=>{
  const x=evaluate({now:5,opponentGap:42,followerSpeed:28.1,opponentSpeed:28});
- assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);
+ assert.equal(x.state,'FOLLOW');assert.equal(x.scans,0);
 });
 test('R5-b190 do not prolong a futile distant pursuit or large speed deficit',()=>{
  const far=evaluate({now:5,opponentGap:100,followerSpeed:28.1,opponentSpeed:28});
@@ -204,4 +204,13 @@ test('R5-b192 missing side-by-side hold target does not steer to artificial cent
 test('R5-b192 explicitly selected center target still remains a valid crossing hold',()=>{
  const x=evaluate({sideBySide:true,nearestChanged:true,opponentGap:-2,lateralY:-3,laneTarget:0});
  assert.equal(x.state,'SIDE_BY_SIDE');assert.equal(x.target,'ahead');assert.equal(x.lane,0);assert.equal(x.scans,0);
+});
+
+test('R5-b194 42m and only 0.1m/s closing is not a sustainable attack',()=>{
+ const x=evaluate({now:5,opponentGap:42,followerSpeed:28.1,opponentSpeed:28});
+ assert.equal(x.state,'FOLLOW');assert.equal(x.scans,0);
+});
+test('R5-b194 within 9m immediate physical contest allows small-speed continuity at intent expiry',()=>{
+ const x=evaluate({now:5,opponentGap:9,followerSpeed:27.95,opponentSpeed:28});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);
 });

@@ -11807,9 +11807,16 @@ function unifiedChooseLaneV11(row,rows,now,width){
   // 0.15m/s relative-pace fluctuation from breaking a physically safe pass
   // and restarting it on the next 20ms frame. Fresh attacks still require
   // the original higher closing threshold; pit and merge guards are intact.
+  // R5-b194: the R5-b190 hysteresis allowed a 0.1m/s chase at 42m
+  // to linger as an "attack" despite needing 420s to catch up. Restrict
+  // that exception to the immediate 10.5m physical contest area. At
+  // greater distance preserve the viable-closing requirement and always
+  // leave the unchanged physical merge/sweep checks authoritative.
+  const attackContactV12=UNIFIED_ENGINE_V11.physicalLength+
+    UNIFIED_ENGINE_V11.clearance+5;
   const existingCloseAttackV12=v.unifiedAiStateV11==='PLAN_ATTACK'&&
     String(v.unifiedAiTargetV11||'')===String(ahead.id)&&
-    gap<=45&&closingForAttackV12>=-.08;
+    gap<=attackContactV12&&closingForAttackV12>=-.08;
   const attack=gap<135+15*Math.max(0,aggression)+15*Math.max(0,skill)&&
     (closureViableV12||specialAttackV12||existingCloseAttackV12);
   if(attack){
