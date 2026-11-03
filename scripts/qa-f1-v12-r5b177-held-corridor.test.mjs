@@ -16,19 +16,19 @@ function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitD
  const me={id:'me',ref:v,pit:'TRACK',v:followerSpeed,y:lateralY};
  const target={id:'ahead',ref:{pitRequested:pitBoundTarget},pit:lost?'PIT_LANE':'TRACK',finished:false,v:opponentSpeed,y:0};
  const rows=nearestChanged?[me,{id:'new',pit:'TRACK',finished:false,v:28,y:0},target]:[me,target];
- let scans=0;
+ let scans=0,preferredLaneSeen=null;
  const ctx={UNIFIED_ENGINE_V11:{physicalWidth:2,physicalLength:5.2,clearance:.30},
   unifiedClampV11:(x,a,b)=>Math.min(b,Math.max(a,x)),
   unifiedIdealLaneV11:()=>0,unifiedPitAvoidanceV12:()=>null,
   unifiedGapV11:(a,b)=>b.id==='new'?18:b.id==='ahead'?opponentGap:0,
   unifiedMergeTargetV11:(row,y)=>blocked&&y===2?{target:row.y,blocked:['obstacle']}:{target:y,blocked:[]},
-  unifiedAttackCorridorV12:()=>{scans++;return {target:-3,candidates:4,blocked:[]}},
+  unifiedAttackCorridorV12:(row,peer,grid,width,preferredLane)=>{scans++;preferredLaneSeen=preferredLane;return {target:-3,candidates:4,blocked:[]}}, 
   unifiedRatingV11:()=>0,unifiedSkillPowerV11:()=>specialPower,unifiedLateralClearanceV11:()=>2.5,
   lineOffsetMetersV197:()=>0,unifiedPitLaneIntentV12:()=>3,
   unifiedPitMergeTargetV12:(row,y)=>({target:y,blocked:[]})};
  vm.runInNewContext(chooser,ctx);
  const lane=ctx.unifiedChooseLaneV11(me,rows,now,12);
- return {lane,state:v.unifiedAiStateV11,target:v.unifiedAiTargetV11,scans};
+ return {lane,state:v.unifiedAiStateV11,target:v.unifiedAiTargetV11,scans,preferredLane:preferredLaneSeen};
 }
 test('unblocked held attack remains unchanged',()=>{
  const x=evaluate();assert.equal(x.lane,2);assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,0);
@@ -158,4 +158,13 @@ test('R5-b187 stale side-by-side label at long gap resumes ordinary planning',()
 test('R5-b187 actual side-by-side adjacency retains the physically protected lane',()=>{
  const x=evaluate({sideBySide:true,opponentGap:7,lateralY:-3});
  assert.equal(x.state,'SIDE_BY_SIDE');assert.equal(x.lane,2);assert.equal(x.scans,0);
+});
+
+test('R5-b188 null or unset prior lane never turns into a fabricated center preference',()=>{
+ const unset=evaluate({now:5,laneTarget:null});
+ assert.equal(unset.state,'PLAN_ATTACK');assert.equal(unset.preferredLane,null);
+});
+test('R5-b188 a genuine finite prior attack lane is still preferred',()=>{
+ const existing=evaluate({now:5,laneTarget:-3});
+ assert.equal(existing.state,'PLAN_ATTACK');assert.equal(existing.preferredLane,-3);
 });
