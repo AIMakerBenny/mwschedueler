@@ -9,7 +9,7 @@ const sentinel=source.indexOf('// Target-aware diagnostics only.',start);
 const stop=source.lastIndexOf('}',sentinel);
 assert.ok(start>=0&&sentinel>start&&stop>start,'live unifiedChooseLaneV11 source must exist');
 const chooser=source.slice(start,stop+1);
-function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitDuel=false,sideBySide=false,now=1,followerSpeed=30,opponentSpeed=28,specialPower=0,opponentGap=42,lateralY=-2,laneTarget=2,pitBoundTarget=false,oldBlockerGone=false,oldBlockerPresent=false,noSafeCorridor=false,narrowCorridor=false,namedBlockedCorridor=false,priorExitGap=null,newOpponentGap=18}={}){
+function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitDuel=false,sideBySide=false,now=1,followerSpeed=30,opponentSpeed=28,specialPower=0,opponentGap=42,lateralY=-2,laneTarget=2,pitBoundTarget=false,oldBlockerGone=false,oldBlockerPresent=false,noSafeCorridor=false,narrowCorridor=false,namedBlockedCorridor=false,priorExitGap=null,newOpponentGap=18,blockPlannerTarget=false}={}){
  const v={id:'me',pitRequested:pit,pitState:'TRACK',racingLineMode:'IDEAL',
   unifiedAiStateV11:sideBySide?'SIDE_BY_SIDE':exitDuel?'EXIT_DUEL':'PLAN_ATTACK',unifiedAiTargetV11:'ahead',
   unifiedIntentUntilV11:4,unifiedLaneTargetV11:laneTarget,
@@ -24,7 +24,8 @@ function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitD
   unifiedClampV11:(x,a,b)=>Math.min(b,Math.max(a,x)),
   unifiedIdealLaneV11:()=>0,unifiedPitAvoidanceV12:()=>null,
   unifiedGapV11:(a,b)=>b.id==='new'?newOpponentGap:b.id==='ahead'?opponentGap:b.id==='obstacle'?4:0,
-  unifiedMergeTargetV11:(row,y)=>blocked&&y===2?{target:row.y,blocked:['obstacle']}:{target:y,blocked:[]},
+  unifiedMergeTargetV11:(row,y)=>(blocked&&y===2||blockPlannerTarget&&y===-3)?
+   {target:row.y,blocked:['obstacle']}:{target:y,blocked:[]},
   unifiedAttackCorridorV12:(row,peer,grid,width,preferredLane)=>{
    scans++;preferredLaneSeen=preferredLane;
    return narrowCorridor?{target:null,candidates:0,blocked:[],reason:'NARROW_TRACK'}:
@@ -37,7 +38,7 @@ function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitD
   unifiedPitMergeTargetV12:(row,y)=>({target:y,blocked:[]})};
  vm.runInNewContext(chooser,ctx);
  const lane=ctx.unifiedChooseLaneV11(me,rows,now,12);
- return {lane,state:v.unifiedAiStateV11,target:v.unifiedAiTargetV11,scans,preferredLane:preferredLaneSeen,blockedIDs:[...v.unifiedMergeBlockedV11]};
+ return {lane,state:v.unifiedAiStateV11,target:v.unifiedAiTargetV11,scans,preferredLane:preferredLaneSeen,blockedIDs:[...v.unifiedMergeBlockedV11],rejectedLane:v.unifiedRejectedAttackLaneV12};
 }
 test('unblocked held attack remains unchanged',()=>{
  const x=evaluate();assert.equal(x.lane,2);assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,0);
@@ -370,4 +371,18 @@ test('R5-b211 a distant slower follower still uses existing ideal-line guidance'
 test('R5-b211 a car without genuine lateral separation is not granted a passing-lane hold',()=>{
  const x=evaluate({now:5,opponentGap:14,lateralY:-1,laneTarget:2,followerSpeed:27,opponentSpeed:28});
  assert.equal(x.state,'FOLLOW');assert.equal(x.lane,0);
+});
+
+test('R5-b212 rejected real attack merge remembers its original physically blocked side',()=>{
+ const x=evaluate({now:5,blockPlannerTarget:true,lateralY:-2,followerSpeed:30,opponentSpeed:28});
+ assert.equal(x.state,'EXIT_DUEL');assert.equal(x.lane,-2);assert.equal(x.rejectedLane,-3);
+ assert.deepEqual(x.blockedIDs,['obstacle']);
+});
+test('R5-b212 no available attack corridor does not invent a rejected lane',()=>{
+ const x=evaluate({now:5,noSafeCorridor:true});
+ assert.equal(x.state,'EXIT_DUEL');assert.equal(x.rejectedLane,null);
+});
+test('R5-b212 a fully accepted real attack has no rejected lane marker',()=>{
+ const x=evaluate({now:5});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.rejectedLane,null);
 });

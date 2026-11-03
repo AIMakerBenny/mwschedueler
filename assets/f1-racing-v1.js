@@ -11946,6 +11946,12 @@ function unifiedChooseLaneV11(row,rows,now,width){
  // swept-body safety guards continue to govern all movement.
  if(state==='EXIT_DUEL'&&corridor?.target===null)
   target=row.y;
+ // R5-b212: remember the exact attack-side request BEFORE the normal
+ // merge guard rejects it. Rejected merges currently overwrite the held
+ // target with row.y, losing which lane was physically obstructed.
+ // This value is only diagnostic intent for a later recheck; it does not
+ // move the car and cannot override any lane or collision protection.
+ const requestedAttackLaneV12=state==='PLAN_ATTACK'?target:null;
  const merge=state==='PIT'?unifiedPitMergeTargetV12(row,target,rows):
   unifiedMergeTargetV11(row,target,rows);
  const blocked=[...new Set([...merge.blocked,...(state==='EXIT_DUEL'?corridor?.blocked||[]:[])])].sort();
@@ -11955,6 +11961,10 @@ function unifiedChooseLaneV11(row,rows,now,width){
   fullTargetBlockedBy:merge.fullTargetBlockedBy?.slice()||[],
   startLateral:row.y};
  if(merge.blocked.length&&state!=='PIT')state='EXIT_DUEL';
+ // Only a real merge rejection with an authored lane may record this.
+ // Null-corridor rejections and pit manoeuvres have no such target.
+ v.unifiedRejectedAttackLaneV12=state==='EXIT_DUEL'&&merge.blocked.length&&
+  Number.isFinite(requestedAttackLaneV12)?requestedAttackLaneV12:null;
  v.unifiedLaneTargetV11=target;v.unifiedAiStateV11=state;v.unifiedIntentUntilV11=now+.7;
  v.unifiedCorridorCountV12=corridor?.candidates||0;
  // R5-b205: remember only a real gap at an anonymous failed corridor.
