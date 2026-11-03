@@ -9,10 +9,11 @@ const sentinel=source.indexOf('// Target-aware diagnostics only.',start);
 const stop=source.lastIndexOf('}',sentinel);
 assert.ok(start>=0&&sentinel>start&&stop>start,'live unifiedChooseLaneV11 source must exist');
 const chooser=source.slice(start,stop+1);
-function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitDuel=false,sideBySide=false,now=1,followerSpeed=30,opponentSpeed=28,specialPower=0,opponentGap=42,lateralY=-2,laneTarget=2,pitBoundTarget=false,oldBlockerGone=false,oldBlockerPresent=false,noSafeCorridor=false,narrowCorridor=false,namedBlockedCorridor=false}={}){
+function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitDuel=false,sideBySide=false,now=1,followerSpeed=30,opponentSpeed=28,specialPower=0,opponentGap=42,lateralY=-2,laneTarget=2,pitBoundTarget=false,oldBlockerGone=false,oldBlockerPresent=false,noSafeCorridor=false,narrowCorridor=false,namedBlockedCorridor=false,priorExitGap=null}={}){
  const v={id:'me',pitRequested:pit,pitState:'TRACK',racingLineMode:'IDEAL',
   unifiedAiStateV11:sideBySide?'SIDE_BY_SIDE':exitDuel?'EXIT_DUEL':'PLAN_ATTACK',unifiedAiTargetV11:'ahead',
   unifiedIntentUntilV11:4,unifiedLaneTargetV11:laneTarget,
+  unifiedRejectedGapV12:priorExitGap,
   unifiedMergeBlockedV11:oldBlockerGone?['gone']:oldBlockerPresent?['obstacle']:[]};
  const me={id:'me',ref:v,pit:'TRACK',v:followerSpeed,y:lateralY};
  const target={id:'ahead',ref:{pitRequested:pitBoundTarget},pit:lost?'PIT_LANE':'TRACK',finished:false,v:opponentSpeed,y:0};
@@ -290,4 +291,17 @@ test('R5-b203 an unattributed unavailable pass holds current physical lane inste
 test('R5-b204 a rejected attack corridor blocked by another car keeps the current physical lane',()=>{
  const x=evaluate({now:5,namedBlockedCorridor:true,lateralY:-3,laneTarget:2});
  assert.equal(x.state,'EXIT_DUEL');assert.equal(x.lane,-3);assert.equal(x.scans,1);
+});
+
+test('R5-b205 anonymous rejected lane stays in EXIT_DUEL while longitudinal geometry is unchanged',()=>{
+ const x=evaluate({exitDuel:true,priorExitGap:8,opponentGap:10,now:1});
+ assert.equal(x.state,'EXIT_DUEL');assert.equal(x.scans,0);
+});
+test('R5-b205 anonymous rejected lane retries after a genuine chassis-length increase in gap',()=>{
+ const x=evaluate({exitDuel:true,priorExitGap:8,opponentGap:15,now:1});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);assert.equal(x.lane,-3);
+});
+test('R5-b205 an identified nearby blocker never gets the anonymous spacing release',()=>{
+ const x=evaluate({exitDuel:true,priorExitGap:8,opponentGap:15,now:1,oldBlockerPresent:true});
+ assert.equal(x.state,'EXIT_DUEL');assert.equal(x.scans,0);
 });

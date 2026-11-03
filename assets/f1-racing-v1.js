@@ -11755,7 +11755,16 @@ function unifiedChooseLaneV11(row,rows,now,width){
   const clearedBlockersV12=priorBlockersV12.length>0&&priorBlockersV12.every(id=>
     !rows.some(p=>String(p.id)===String(id)&&!p.finished&&
       Math.abs(unifiedGapV11(row,p))<125));
-  if(!clearedBlockersV12){
+  // R5-b205: a corridor previously rejected without an identifiable
+  // blocking car can be reconsidered before the normal cooldown only if
+  // the real longitudinal gap has widened by more than one chassis.
+  // This represents new physical geometry, not another 20ms retry of
+  // the same impossible manoeuvre. Named live blockers still hold.
+  const gapWidenedV12=priorBlockersV12.length===0&&
+   Number.isFinite(v.unifiedRejectedGapV12)&&
+   unifiedGapV11(row,ahead)-v.unifiedRejectedGapV12>
+    UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance;
+  if(!clearedBlockersV12&&!gapWidenedV12){
    v.unifiedMergeBlockedV11=rejectedHold.blocked;
    v.unifiedLaneTargetV11=rejectedHold.target;
    return rejectedHold.target;
@@ -11896,6 +11905,10 @@ function unifiedChooseLaneV11(row,rows,now,width){
  if(merge.blocked.length&&state!=='PIT')state='EXIT_DUEL';
  v.unifiedLaneTargetV11=target;v.unifiedAiStateV11=state;v.unifiedIntentUntilV11=now+.7;
  v.unifiedCorridorCountV12=corridor?.candidates||0;
+ // R5-b205: remember only a real gap at an anonymous failed corridor.
+ // Unnamed blockers never bypass the normal merge/swept-rectangle safety.
+ v.unifiedRejectedGapV12=state==='EXIT_DUEL'&&corridor?.target===null&&
+  blocked.length===0&&ahead?unifiedGapV11(row,ahead):null;
  return target;
 }
 // Target-aware diagnostics only. Called after physics commits; AI never reads them.
