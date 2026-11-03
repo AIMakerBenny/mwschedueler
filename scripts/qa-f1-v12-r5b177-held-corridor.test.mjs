@@ -65,3 +65,25 @@ test('R5-b179 positive closing and active special can each initiate a new attack
  assert.equal(closing.state,'PLAN_ATTACK');assert.equal(closing.scans,1);
  assert.equal(special.state,'PLAN_ATTACK');assert.equal(special.scans,1);
 });
+
+// R5-b180: exercise the real candidate scorer, not a simulated second engine.
+const corridorStart=source.indexOf('function unifiedAttackCorridorV12(');
+const corridorSentinel=source.indexOf('// R5-b26:',corridorStart);
+const corridorEnd=source.lastIndexOf('}',corridorSentinel);
+assert.ok(corridorStart>=0&&corridorEnd>corridorStart);
+const corridorSource=source.slice(corridorStart,corridorEnd+1);
+function corridorChoice(preferredLane=null){
+ const me={id:'me',ref:{},pit:'TRACK',y:0,v:30},ahead={id:'ahead',ref:{},pit:'TRACK',y:0,v:28,finished:false};
+ const ctx={UNIFIED_ENGINE_V11:{physicalLength:5.2,physicalWidth:2},
+  unifiedClampV11:(v,a,b)=>Math.max(a,Math.min(v,b)),
+  unifiedIdealLaneV11:()=>0,unifiedLateralClearanceV11:()=>2,
+  unifiedMergeTargetV11:(row,target)=>({target,blocked:[]}),
+  unifiedGapV11:()=>35};
+ vm.runInNewContext(corridorSource,ctx);
+ return ctx.unifiedAttackCorridorV12(me,ahead,[me,ahead],12,preferredLane);
+}
+test('R5-b180 favors an already committed safe attack side rather than flapping',()=>{
+ const defaultSide=corridorChoice(),heldSide=corridorChoice(3);
+ assert.ok(defaultSide.target<0);assert.ok(heldSide.target>0);
+ assert.ok(heldSide.candidates>0);assert.equal(heldSide.reason,'CLEAR');
+});

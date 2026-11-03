@@ -11563,7 +11563,7 @@ function unifiedPitMergeTargetV12(row,target,rows){
 }
 // v1.2 R2: AI-only multi-car corridor planner. Do not modify committed
 // world trajectories here; the existing physical solver validates all moves.
-function unifiedAttackCorridorV12(row,opponent,rows,width){
+function unifiedAttackCorridorV12(row,opponent,rows,width,preferredLane=null){
  const allowed=Math.max(0,width/2-1.5-UNIFIED_ENGINE_V11.physicalWidth/2);
  if(allowed<.5)return {target:null,candidates:0,blocked:[],reason:'NARROW_TRACK'};
  const clearance=unifiedLateralClearanceV11(row,opponent)+.25,gap=unifiedGapV11(row,opponent);
@@ -11604,8 +11604,13 @@ function unifiedAttackCorridorV12(row,opponent,rows,width){
    if(risky)break;
   }
   if(risky)continue;
+  // R5-b180: reuse a valid same-opponent attack side when two physically
+  // safe lanes score similarly. Every candidate must still pass the unchanged
+  // projected-sweep and merge checks above; this is selection, not motion.
+  const prior=Number(preferredLane);
+  const sideContinuity=preferredLane!==null&&Number.isFinite(prior)?Math.abs(y-prior)*.14:0;
   const score=Math.abs(y-row.y)*.24+Math.abs(y-unifiedIdealLaneV11(row,width))*.035+
-   pressure+.01*Math.abs(y);
+   pressure+.01*Math.abs(y)+sideContinuity;
   if(!winner||score<winner.score-1e-8||Math.abs(score-winner.score)<1e-8&&y<winner.y)
    winner={y,score};
  }
@@ -11721,6 +11726,13 @@ function unifiedChooseLaneV11(row,rows,now,width){
   // The original merge guard rejected this physical corridor. Preserve that
   // rejection and search for a different safe target on this very AI tick.
  }
+ // Preserve the original opponent identity before selecting the next one.
+ // Reuse lateral preference only for a continuous attack on that same car.
+ const previousOpponentV12=String(v.unifiedAiTargetV11||'');
+ const previousLaneV12=Number(v.unifiedLaneTargetV11);
+ const preferredAttackLaneV12=ahead&&String(ahead.id)===previousOpponentV12&&
+  ['PLAN_ATTACK','SIDE_BY_SIDE','EXIT_DUEL'].includes(String(v.unifiedAiStateV11||''))&&
+  Number.isFinite(previousLaneV12)?previousLaneV12:null;
  v.unifiedAiTargetV11=row.pit==='TRACK'&&!v.pitRequested&&ahead?String(ahead.id):'';
  let target=ideal,state='CRUISE',corridor=null;
  if(ahead){
@@ -11735,7 +11747,7 @@ function unifiedChooseLaneV11(row,rows,now,width){
    (closingForAttackV12>Math.max(.08,.18-.08*Math.max(0,skill))||
     unifiedSkillPowerV11(v,now*1000,row.pit)>0);
   if(attack){
-   corridor=unifiedAttackCorridorV12(row,ahead,rows,width);
+   corridor=unifiedAttackCorridorV12(row,ahead,rows,width,preferredAttackLaneV12);
    if(corridor.target!==null&&gap>Math.max(8,row.v*.12)){
     target=corridor.target;state='PLAN_ATTACK';
    }else if(corridor.blocked.length)state='EXIT_DUEL';
