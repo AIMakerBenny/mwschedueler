@@ -140,3 +140,13 @@ test('R5-b185 nearest actual racing car can be targeted when old opponent enters
  const x=evaluate({pitBoundTarget:true,nearestChanged:true});
  assert.equal(x.target,'new');assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);
 });
+
+test('R5-b186 stale planned pass exits to FOLLOW when opponent moves faster',()=>{
+ const x=evaluate({followerSpeed:27,opponentSpeed:28});
+ assert.equal(x.state,'FOLLOW');assert.equal(x.scans,0);
+});
+test('R5-b186 still-valid closure or active special keeps the existing safe held lane',()=>{
+ const ordinary=evaluate({followerSpeed:30,opponentSpeed:28});
+ const special=evaluate({followerSpeed:27,opponentSpeed:28,specialPower:300000});
+ for(const x of [ordinary,special]){assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.lane,2);assert.equal(x.scans,0);}
+});

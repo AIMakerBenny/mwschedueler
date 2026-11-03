@@ -11743,8 +11743,16 @@ function unifiedChooseLaneV11(row,rows,now,width){
   v.unifiedLaneTargetV11=rejectedHold.target;
   return rejectedHold.target;
  }
+ // R5-b186: never keep a stale planned pursuit at a sustained relative
+ // speed deficit. When the planned target pulls away, FOLLOW rather than
+ // blindly hold a target for the rest of its 700ms timer. True body adjacency
+ // and a genuinely active special retain their existing passing protection.
+ const heldPlanViableV12=v.unifiedAiStateV11!=='PLAN_ATTACK'||
+   row.v-ahead.v>=-.15||
+   unifiedSkillPowerV11(v,now*1000,row.pit)>0||
+   unifiedGapV11(row,ahead)<=UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance+2;
  if(row.pit==='TRACK'&&!v.pitRequested&&ahead&&String(ahead.id)===String(v.unifiedAiTargetV11||'')&&
-   ['PLAN_ATTACK','SIDE_BY_SIDE'].includes(v.unifiedAiStateV11)&&now<(Number(v.unifiedIntentUntilV11)||0)){
+   heldPlanViableV12&&['PLAN_ATTACK','SIDE_BY_SIDE'].includes(v.unifiedAiStateV11)&&now<(Number(v.unifiedIntentUntilV11)||0)){
   const held=unifiedMergeTargetV11(row,unifiedClampV11(Number(v.unifiedLaneTargetV11)||0,-allowed,allowed),rows);
   if(!held.blocked.length){
    v.unifiedMergeBlockedV11=[];v.unifiedLaneTargetV11=held.target;return held.target;
