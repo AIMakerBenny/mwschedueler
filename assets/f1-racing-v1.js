@@ -11846,7 +11846,14 @@ function unifiedChooseLaneV11(row,rows,now,width){
     (closureViableV12||specialAttackV12||existingCloseAttackV12||separatedExistingPassV12);
   if(attack){
    corridor=unifiedAttackCorridorV12(row,ahead,rows,width,preferredAttackLaneV12);
-   if(corridor.target!==null&&gap>Math.max(8,row.v*.12)){
+   // R5-b199: the broad 8m preparatory distance must not forbid an
+   // already laterally separated, physically safe short pass. The opponent
+   // still needs more than one chassis length of longitudinal clearance,
+   // and the selected path still passes the unchanged full merge solver.
+   const alreadySeparatedV12=Math.abs(row.y-ahead.y)>=unifiedLateralClearanceV11(row,ahead);
+   const closePhysicalPassV12=alreadySeparatedV12&&
+     gap>UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance;
+   if(corridor.target!==null&&(gap>Math.max(8,row.v*.12)||closePhysicalPassV12)){
     target=corridor.target;state='PLAN_ATTACK';
    }else if(corridor.blocked.length)state='EXIT_DUEL';
   }

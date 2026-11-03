@@ -245,3 +245,12 @@ test('R5-b198 do not grant old attack hysteresis to new opponent after target sw
  assert.equal(blocked.state,'FOLLOW');assert.equal(blocked.scans,0);
  assert.equal(other.state,'FOLLOW');assert.equal(other.target,'new');assert.equal(other.scans,0);
 });
+
+test('R5-b199 already separated 8m passing opportunity uses verified safe corridor',()=>{
+ const x=evaluate({now:5,opponentGap:8,lateralY:-3,followerSpeed:28.5,opponentSpeed:28});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);
+});
+test('R5-b199 unseparated near opponent is not forced into an unsafe passing plan',()=>{
+ const x=evaluate({now:5,opponentGap:8,lateralY:-1,followerSpeed:28.5,opponentSpeed:28});
+ assert.equal(x.state,'FOLLOW');assert.equal(x.scans,1);
+});
