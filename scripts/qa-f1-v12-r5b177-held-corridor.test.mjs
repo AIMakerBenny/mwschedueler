@@ -9,7 +9,7 @@ const sentinel=source.indexOf('// Target-aware diagnostics only.',start);
 const stop=source.lastIndexOf('}',sentinel);
 assert.ok(start>=0&&sentinel>start&&stop>start,'live unifiedChooseLaneV11 source must exist');
 const chooser=source.slice(start,stop+1);
-function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitDuel=false,sideBySide=false,now=1,followerSpeed=30,opponentSpeed=28,specialPower=0,opponentGap=42,lateralY=-2,laneTarget=2,pitBoundTarget=false,oldBlockerGone=false,oldBlockerPresent=false,noSafeCorridor=false,narrowCorridor=false}={}){
+function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitDuel=false,sideBySide=false,now=1,followerSpeed=30,opponentSpeed=28,specialPower=0,opponentGap=42,lateralY=-2,laneTarget=2,pitBoundTarget=false,oldBlockerGone=false,oldBlockerPresent=false,noSafeCorridor=false,narrowCorridor=false,namedBlockedCorridor=false}={}){
  const v={id:'me',pitRequested:pit,pitState:'TRACK',racingLineMode:'IDEAL',
   unifiedAiStateV11:sideBySide?'SIDE_BY_SIDE':exitDuel?'EXIT_DUEL':'PLAN_ATTACK',unifiedAiTargetV11:'ahead',
   unifiedIntentUntilV11:4,unifiedLaneTargetV11:laneTarget,
@@ -27,6 +27,7 @@ function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitD
   unifiedAttackCorridorV12:(row,peer,grid,width,preferredLane)=>{
    scans++;preferredLaneSeen=preferredLane;
    return narrowCorridor?{target:null,candidates:0,blocked:[],reason:'NARROW_TRACK'}:
+    namedBlockedCorridor?{target:null,candidates:4,blocked:['obstacle'],reason:'BLOCKED'}:
     noSafeCorridor?{target:null,candidates:4,blocked:[],reason:'BLOCKED'}:
     {target:-3,candidates:4,blocked:[],reason:'CLEAR'};
   }, 
@@ -283,5 +284,10 @@ test('R5-b201 genuinely narrow track does not invent a blocked duel or physical 
 });
 test('R5-b203 an unattributed unavailable pass holds current physical lane instead of returning into opponent',()=>{
  const x=evaluate({now:5,noSafeCorridor:true,lateralY:-3,laneTarget:2});
+ assert.equal(x.state,'EXIT_DUEL');assert.equal(x.lane,-3);assert.equal(x.scans,1);
+});
+
+test('R5-b204 a rejected attack corridor blocked by another car keeps the current physical lane',()=>{
+ const x=evaluate({now:5,namedBlockedCorridor:true,lateralY:-3,laneTarget:2});
  assert.equal(x.state,'EXIT_DUEL');assert.equal(x.lane,-3);assert.equal(x.scans,1);
 });

@@ -11878,12 +11878,12 @@ function unifiedChooseLaneV11(row,rows,now,width){
  if(v.racingLineMode&&v.racingLineMode!=='IDEAL'&&state!=='PLAN_ATTACK'&&state!=='SIDE_BY_SIDE'&&state!=='EXIT_DUEL')
   target=unifiedClampV11(lineOffsetMetersV197(v),-allowed,allowed);
  if(v.pitRequested||row.pit!=='TRACK'){target=unifiedPitLaneIntentV12(row,allowed);state='PIT';}
- // R5-b203: a corridor rejected without a named car blocker has no
- // accepted lateral attack destination. While EXIT_DUEL cools down,
- // steer on the actual current track position rather than the ideal line,
- // which may be the opponent's occupied lane. The original merge guard
- // and swept-body solver still authorize all subsequent physical motion.
- if(state==='EXIT_DUEL'&&corridor?.target===null&&!corridor.blocked.length)
+ // R5-b203/b204: a rejected attack with no accepted physical
+ // corridor must not steer back into the opponent's ideal line during
+ // EXIT_DUEL, whether or not a nearby blocker could be identified.
+ // Preserve the current chassis lane while the unchanged merge and
+ // swept-body safety guards continue to govern all movement.
+ if(state==='EXIT_DUEL'&&corridor?.target===null)
   target=row.y;
  const merge=state==='PIT'?unifiedPitMergeTargetV12(row,target,rows):
   unifiedMergeTargetV11(row,target,rows);
