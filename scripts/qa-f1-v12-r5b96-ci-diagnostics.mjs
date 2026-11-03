@@ -16,6 +16,13 @@ const expected=[
  'b100-pinned-historical-baseline.json','b101-physical-pass-ledger.json',
  'b104-full-physical-outcome-gate.json'
 ];
+// R5-b124: older archived races have no QA-only attempt ledger. Require
+// the new attempt artifacts only when a new observed race actually carries it.
+const attemptAware=[1,2].some(seed=>{
+ try{return Boolean(JSON.parse(fs.readFileSync(dir+'seed'+seed+'-observed10.json','utf8')).real20ms?.attackLedger)}
+ catch{return false}
+});
+if(attemptAware)expected.push('b122-attack-attribution.json','b123-attempt-lifecycle.json');
 const records=[];
 for(const name of expected){
  const p=dir+name;
@@ -46,6 +53,23 @@ for(const name of expected){
   }
   if(name==='replay.json'&&(data.authenticPhysicsUnchanged!==true||data.fullTenLapRaces!==2))
    issues.push('PHYSICAL_REPLAY_NOT_VERIFIED');
+  if(name.endsWith('-observed10.json')&&data.real20ms?.attackLedger){
+   const ledger=data.real20ms.attackLedger;
+   if(ledger.missingOverlap!==false||!Array.isArray(ledger.events)||
+    !Number.isInteger(ledger.totalStarts)||
+    ledger.events.filter(x=>x.type==='START').length!==ledger.totalStarts)
+    issues.push('INCOMPLETE_ATTACK_EVENT_PROVENANCE');
+  }
+  if(name==='b122-attack-attribution.json'&&(
+   data.liveAiTuningAuthorized!==false||
+   !Array.isArray(data.cases)||data.cases.length!==2||
+   data.cases.some(x=>x.physicalConfirmedPasses!==x.independentlyAccountedPhysicalPasses)))
+    issues.push('ATTEMPT_PHYSICAL_PASS_ATTRIBUTION_FAILED');
+  if(name==='b123-attempt-lifecycle.json'&&(
+   data.aiChangesApproved!==false||!Array.isArray(data.cases)||
+   data.cases.length!==2||
+   data.cases.some(x=>Object.values(x.outcomes||{}).reduce((a,b)=>a+b,0)!==x.attemptStarts)))
+    issues.push('ATTEMPT_LIFECYCLE_INVALID');
   if(name==='b88-physical-fingerprints.json'&&data.physicalOutcomesIdentical!==true)
    issues.push('FINGERPRINTS_NOT_IDENTICAL');
   if(name==='b100-pinned-historical-baseline.json'&&
@@ -88,6 +112,10 @@ const requiredPass=new Map([
  ['b101-physical-pass-ledger.json','PASS'],
  ['b104-full-physical-outcome-gate.json','PASS']
 ]);
+if(attemptAware){
+ requiredPass.set('b122-attack-attribution.json','PASS');
+ requiredPass.set('b123-attempt-lifecycle.json','PASS');
+}
 const unexpected=records.filter(r=>r.status!==requiredPass.get(r.name)||(r.issues?.length||0)>0);
 const allVerified=allPresent&&unexpected.length===0;
 const priorStepStatus=String(process.env.MWS_FOCUSED_QA_STEP_STATUS||'unknown').toLowerCase();
