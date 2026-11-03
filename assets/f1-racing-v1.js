@@ -11861,14 +11861,18 @@ function unifiedChooseLaneV11(row,rows,now,width){
     gap<=attackContactV12&&closingForAttackV12>=-.08;
   const attack=gap<135+15*Math.max(0,aggression)+15*Math.max(0,skill)&&
     (closureViableV12||specialAttackV12||existingCloseAttackV12||separatedExistingPassV12);
-  if(attack){
+  // R5-b206: do not request a new lateral attack corridor when the
+  // chassis is already inside the original minimum physical preparation
+  // distance. Let normal following/physical side-by-side handling work
+  // instead of recording an impossible fresh EXIT_DUEL. This does not
+  // change physics, speed or the pre-existing attack distance requirement.
+  const preparedToChangeLaneV12=gap>Math.max(8,row.v*.12);
+  if(attack&&preparedToChangeLaneV12){
    corridor=unifiedAttackCorridorV12(row,ahead,rows,width,preferredAttackLaneV12);
-   // R5-b202: undo the R5-b199 short-gap attack exception. Real 10-lap
-   // racing fell from 104 passes / 566 reorders at b198 to 95 / 539 at
-   // b199. Lateral separation alone is not sufficient preparation for a
-   // new near-contact turn; preserve the original 8m / speed-scaled
-   // minimum while all existing corridor and swept-body guards remain.
-   if(corridor.target!==null&&gap>Math.max(8,row.v*.12)){
+   // R5-b202/b206: the B199 unprepared near-pass exception is gone.
+   // The minimum distance is checked before this corridor scan, and the
+   // unchanged merge and swept-body guards authorize any selected path.
+   if(corridor.target!==null){
     target=corridor.target;state='PLAN_ATTACK';
    }else if(corridor.reason==='BLOCKED'||corridor.blocked.length)
     // R5-b201: even when no *named* blocker exists, a physically

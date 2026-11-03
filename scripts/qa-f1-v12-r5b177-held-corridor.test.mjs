@@ -253,17 +253,17 @@ test('R5-b198 do not grant old attack hysteresis to new opponent after target sw
  assert.equal(other.state,'FOLLOW');assert.equal(other.target,'new');assert.equal(other.scans,0);
 });
 
-test('R5-b202 near-contact 8m attack does not bypass original lateral-preparation floor',()=>{
+test('R5-b206 near-contact 8m attack does not scan impossible lateral corridor',()=>{
  const x=evaluate({now:5,opponentGap:8,lateralY:-3,followerSpeed:28.5,opponentSpeed:28});
- assert.equal(x.state,'FOLLOW');assert.equal(x.scans,1);
+ assert.equal(x.state,'FOLLOW');assert.equal(x.scans,0);
 });
 test('R5-b202 still permits a separated prepared attack just past the physical preparation floor',()=>{
  const x=evaluate({now:5,opponentGap:9,lateralY:-3,followerSpeed:28.5,opponentSpeed:28});
  assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);
 });
-test('R5-b199 unseparated near opponent is not forced into an unsafe passing plan',()=>{
+test('R5-b206 unseparated near opponent follows without unsafe corridor attempts',()=>{
  const x=evaluate({now:5,opponentGap:8,lateralY:-1,followerSpeed:28.5,opponentSpeed:28});
- assert.equal(x.state,'FOLLOW');assert.equal(x.scans,1);
+ assert.equal(x.state,'FOLLOW');assert.equal(x.scans,0);
 });
 
 test('R5-b200 authored same-lane no-op attack triggers safe corridor replanning',()=>{
@@ -304,4 +304,13 @@ test('R5-b205 anonymous rejected lane retries after a genuine chassis-length inc
 test('R5-b205 an identified nearby blocker never gets the anonymous spacing release',()=>{
  const x=evaluate({exitDuel:true,priorExitGap:8,opponentGap:15,now:1,oldBlockerPresent:true});
  assert.equal(x.state,'EXIT_DUEL');assert.equal(x.scans,0);
+});
+
+test('R5-b206 real physical side-by-side contact survives pre-attack distance check',()=>{
+ const x=evaluate({now:5,opponentGap:7,lateralY:-3,followerSpeed:28.5,opponentSpeed:28});
+ assert.equal(x.state,'SIDE_BY_SIDE');assert.equal(x.scans,0);
+});
+test('R5-b206 physically prepared but unavailable corridor still enters protected EXIT_DUEL',()=>{
+ const x=evaluate({now:5,opponentGap:9,lateralY:-3,followerSpeed:28.5,opponentSpeed:28,noSafeCorridor:true});
+ assert.equal(x.state,'EXIT_DUEL');assert.equal(x.scans,1);assert.equal(x.lane,-3);
 });
