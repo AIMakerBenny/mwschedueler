@@ -45,9 +45,11 @@ jobs:
           node --test scripts/qa-f1-v12-r5b95-physical-compare.test.mjs
           node --test scripts/qa-f1-v12-r5b102-transitions.test.mjs
           node --test scripts/qa-f1-v12-r5b137-attempt-context.test.mjs
+          node --test scripts/qa-f1-v12-r5b157-long-horizon.test.mjs
           node scripts/qa-f1-v12-r5b48-single-track-access.mjs
           node --test scripts/qa-f1-v12-r5b114-public-track-access-runtime.test.mjs
           node --test scripts/qa-f1-v12-r5b137-attempt-context.test.mjs
+          node --test scripts/qa-f1-v12-r5b157-long-horizon.test.mjs
       - name: Upload preflight SHA and runner success receipt
         run: |
           mkdir -p artifacts
@@ -122,6 +124,9 @@ jobs:
             scripts/qa-f1-v12-r5b153-gap-closure-vs-speed.mjs \
             scripts/qa-f1-v12-r5b154-opponent-attack-context.mjs \
             scripts/qa-f1-v12-r5b155-early-speed-vs-eventual-pass.mjs \
+            scripts/lib/f1-r5b157-long-horizon.mjs \
+            scripts/qa-f1-v12-r5b157-long-horizon.test.mjs \
+            scripts/qa-f1-v12-r5b159-long-horizon-follow-through.mjs \
             scripts/lib/f1-r5b137-attempt-context.mjs \
             scripts/qa-f1-v12-r5b137-attempt-context.test.mjs \
             scripts/qa-f1-v12-r5b122-attack-attribution.mjs \
@@ -132,6 +137,7 @@ jobs:
           node --test scripts/qa-f1-v12-r5b95-physical-compare.test.mjs
           node --test scripts/qa-f1-v12-r5b102-transitions.test.mjs
           node --test scripts/qa-f1-v12-r5b137-attempt-context.test.mjs
+          node --test scripts/qa-f1-v12-r5b157-long-horizon.test.mjs
       - name: Download original REAL Majoku 12-car 10-lap results
         uses: actions/download-artifact@v4
         with:
@@ -224,6 +230,10 @@ jobs:
         env:
           MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
         run: node scripts/qa-f1-v12-r5b155-early-speed-vs-eventual-pass.mjs
+      - name: R5-b159 test up to 70s real target and AI follow-through against exact frames
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
+        run: node scripts/qa-f1-v12-r5b159-long-horizon-follow-through.mjs
       - name: R5-b96 preserve an auditable per-file CI outcome manifest
         if: always()
         env:

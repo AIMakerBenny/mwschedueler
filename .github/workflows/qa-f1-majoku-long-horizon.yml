@@ -1,0 +1,61 @@
+name: Majoku long-horizon contract and authentic pass regression
+on:
+  push:
+    branches: [f1-unified-redesign-v11-20261012]
+    paths:
+      - '.github/workflows/qa-f1-majoku-long-horizon.yml'
+      - 'scripts/lib/f1-r5b157-long-horizon.mjs'
+      - 'scripts/qa-f1-v12-r5b157-long-horizon.test.mjs'
+      - 'scripts/qa-f1-v12-r5b159-long-horizon-follow-through.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  source-exact-long-horizon-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove race physics and locked track geometry unchanged
+        run: git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js
+      - name: Test genuine exact sampled frames versus unavailable future state
+        run: |
+          node --test scripts/qa-f1-v12-r5b157-long-horizon.test.mjs
+          node --check scripts/qa-f1-v12-r5b159-long-horizon-follow-through.mjs
+          node --check scripts/qa-f1-v12-r5b3-normal-auto-pit.mjs
+      - name: Download original certified 10-lap real Chromium evidence
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41569030098
+          name: majoku-r5b96-focused-physical-20ms
+          github-token: ${{ github.token }}
+          path: artifacts/r5-b77-majoku
+      - name: Verify original engine crossing and confirmed-pass data independently
+        run: |
+          node --input-type=module -e '
+            import assert from "node:assert/strict";
+            import fs from "node:fs";
+            const root="artifacts/r5-b77-majoku/";
+            const replay=JSON.parse(fs.readFileSync(root+"replay.json","utf8"));
+            const audit=JSON.parse(fs.readFileSync(root+"b155-early-speed-vs-eventual-pass.json","utf8"));
+            assert.equal(replay.status,"PASS");
+            assert.equal(replay.authenticPhysicsUnchanged,true);
+            assert.equal(audit.status,"PASS");
+            assert.equal(audit.aiChangesAuthorized,false);
+            for(const [seed,starts,success] of [[1,22,2],[2,18,1]]){
+              const c=audit.cases.find(x=>x.seed===seed);assert(c);
+              assert.equal(c.quickRetryStarts,starts);
+              assert.equal(c.outcomes.SUCCESS,success);
+              assert.equal(c.collisionStops,0);
+              assert(c.physicalCrossingDelaysSeconds.every(x=>x>0.2));
+            }
+            console.log(JSON.stringify({phase:"R5-b160",status:"ARCHIVED_PASS_INVARIANT",
+              sourceRun:41569030098,realRaces:2,newLongHorizonBrowserRaces:0}));
+          '

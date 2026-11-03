@@ -40,6 +40,11 @@ if(temporalAware)expected.push('b147-attack-time-series.json',
  'b151-attack-pair-concentration.json',
  'b153-gap-closure-vs-speed.json','b154-opponent-attack-context.json',
  'b155-early-speed-vs-eventual-pass.json');
+const longHorizonAware=[1,2].some(seed=>{
+ try{return Array.isArray(JSON.parse(fs.readFileSync(dir+'seed'+seed+'-observed10.json','utf8')).real20ms?.attackLedger?.longHorizonRetryAttempts)}
+ catch{return false}
+});
+if(longHorizonAware)expected.push('b159-long-horizon-follow-through.json');
 const records=[];
 for(const name of expected){
  const p=dir+name;
@@ -176,6 +181,24 @@ for(const name of expected){
     Object.values(c.outcomes).reduce((n,x)=>n+x,0)!==c.quickRetryStarts||
     c.outcomes.SUCCESS!==(c.seed===1?2:1))))
     issues.push('EARLY_APPROACH_CONFUSED_WITH_CONFIRMED_PASS');
+  if(name.endsWith('-observed10.json')&&data.real20ms?.attackLedger?.longHorizonRetryAttempts){
+   const l=data.real20ms.attackLedger,offsets=[0,1000,5000,10000,20000,40000,70000];
+   const retryCount=l.events.filter(x=>x.type==='START'&&x.retry===true).length;
+   if(l.longHorizonSweptClearanceProven!==false||
+    JSON.stringify(l.longHorizonOffsetsMs)!==JSON.stringify(offsets)||
+    l.longHorizonRetryAttempts.length!==retryCount||
+    l.longHorizonRetryAttempts.some(a=>offsets.some(o=>{
+     const t=a.samples?.[String(o)];
+     return !t||t.ms!==a.startMs+o||typeof t.available!=='boolean';
+    })))issues.push('LONG_HORIZON_RETRY_FRAMES_NOT_AUDITED');
+  }
+  if(name==='b159-long-horizon-follow-through.json'&&(
+   data.physicsModified!==false||data.aiBalancePatchAuthorized!==false||
+   data.safeSweptCorridorProven!==false||
+   !Array.isArray(data.cases)||data.cases.length!==2||
+   data.cases.some(c=>c.rapidRetries!==(c.seed===1?22:18)||
+    c.collisionStops!==0||Object.keys(c.timeline||{}).length!==6)))
+    issues.push('LONG_HORIZON_REPORT_UNVERIFIED');
   if(name==='b122-attack-attribution.json'&&(
    data.liveAiTuningAuthorized!==false||
    !Array.isArray(data.cases)||data.cases.length!==2||
@@ -247,6 +270,7 @@ if(temporalAware){
  requiredPass.set('b154-opponent-attack-context.json','PASS');
  requiredPass.set('b155-early-speed-vs-eventual-pass.json','PASS');
 }
+if(longHorizonAware)requiredPass.set('b159-long-horizon-follow-through.json','PASS');
 const unexpected=records.filter(r=>r.status!==requiredPass.get(r.name)||(r.issues?.length||0)>0);
 const allVerified=allPresent&&unexpected.length===0;
 const priorStepStatus=String(process.env.MWS_FOCUSED_QA_STEP_STATUS||'unknown').toLowerCase();
