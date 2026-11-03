@@ -1,0 +1,82 @@
+name: Majoku actual attack lifecycle evidence regression
+on:
+  push:
+    branches:
+      - f1-unified-redesign-v11-20261012
+    paths:
+      - '.github/workflows/qa-f1-majoku-attack-lifecycle.yml'
+      - 'scripts/qa-f1-v12-r5b12*.mjs'
+      - 'scripts/qa-f1-v12-r5b125-attack-ledger-contract.test.mjs'
+      - 'scripts/qa-f1-v12-r5b3-normal-auto-pit.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: majoku-real-attack-ledger-regression
+  cancel-in-progress: false
+jobs:
+  archived-real-attack-ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - name: Checkout exact proposed development SHA
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove browser engine and track source have not changed from real two-seed replay
+        run: |
+          git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- \
+            assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js
+      - name: Test real in-game START, crossing, success and abort event producer
+        run: node --test scripts/qa-f1-v12-r5b125-attack-ledger-contract.test.mjs
+      - name: Download actual full ten-lap attempt evidence, including original failed lifecycle assertion
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41550310758
+          name: majoku-r5b96-focused-physical-20ms
+          github-token: ${{ github.token }}
+          path: artifacts/r5-b77-majoku
+      - name: R5-b122 verify 500ms physical pass and exact-target attack linkage
+        run: node scripts/qa-f1-v12-r5b122-attack-attribution.mjs
+      - name: R5-b126 verify crossing preceded intermediate target change, then physical confirmation
+        run: node scripts/qa-f1-v12-r5b123-attempt-lifecycle.mjs
+      - name: Verify frozen original failure and repaired 2-seed classification
+        run: |
+          node --input-type=module -e '
+            import fs from "node:fs";
+            import assert from "node:assert/strict";
+            const path="artifacts/r5-b77-majoku/";
+            const a=JSON.parse(fs.readFileSync(path+"b122-attack-attribution.json","utf8"));
+            const b=JSON.parse(fs.readFileSync(path+"b123-attempt-lifecycle.json","utf8"));
+            assert.equal(a.status,"PASS");assert.equal(b.status,"PASS");
+            for(const [seed,attempts,success,physical,late] of [[1,219,31,46,23],[2,178,30,32,25]]){
+              const x=a.cases.find(v=>v.seed===seed),y=b.cases.find(v=>v.seed===seed);
+              assert(x&&y);
+              assert.equal(x.engineAttemptStarts,attempts);
+              assert.equal(x.exactTargetAttemptSuccesses,success);
+              assert.equal(x.physicalConfirmedPasses,physical);
+              assert.equal(y.attemptStarts,attempts);
+              assert.equal(y.outcomes.SUCCESS,success);
+              assert.equal(y.targetChangedAfterCrossingBeforeConfirmation,late);
+              assert.equal(y.outcomes.TARGET_CHANGED,(seed===1?40:12));
+            }
+            assert.equal(a.liveAiTuningAuthorized,false);
+            assert.equal(b.aiChangesApproved,false);
+            console.log(JSON.stringify({phase:"R5-b127",status:"ARCHIVED_REAL_EVIDENCE_PASS",
+              historicRunId:41550310758,newBrowserRaces:0,gamePhysicsChanged:false}));
+          '
+      - name: Upload evidence including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: majoku-r5b127-actual-attack-lifecycle
+          path: |
+            artifacts/r5-b77-majoku/b122-attack-attribution.json
+            artifacts/r5-b77-majoku/b123-attempt-lifecycle.json
+          if-no-files-found: warn
