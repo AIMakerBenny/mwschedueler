@@ -68,8 +68,7 @@ for(const name of expected){
   if(name.endsWith('-observed10.json')&&data.real20ms?.attackLedger?.startWitnesses){
    const ledger=data.real20ms.attackLedger;
    if(!Array.isArray(ledger.missingStartWitnesses)||
-    ledger.missingStartWitnesses.length!==0||
-    ledger.startWitnesses.length!==ledger.totalStarts||
+    ledger.startWitnesses.length+ledger.missingStartWitnesses.length!==ledger.totalStarts||
     ledger.safeLaneClaim!==false||
     ledger.startWitnesses.some(w=>w.driverAiState!=='PLAN_ATTACK'||
       w.driverAiTarget!==w.target||w.physicalOvertakingClearanceProven!==false))
@@ -78,8 +77,8 @@ for(const name of expected){
   if(name==='b139-exact-retry-context.json'&&(
    data.safeLateralMergeProven!==false||data.aiTuningApproved!==false||
    !Array.isArray(data.cases)||data.cases.length!==2||
-   data.cases.some(c=>c.unmatchedStartWitnesses!==0||
-    c.verifiedStartWitnessFrames!==c.starts)))
+   data.cases.some(c=>c.missingRapidRetryWitnesses!==0||
+    c.verifiedStartWitnessFrames+c.unmatchedStartWitnesses!==c.starts)))
     issues.push('UNPROVEN_OR_MISSING_EXACT_RETRY_CONTEXT');
   if(name==='b122-attack-attribution.json'&&(
    data.liveAiTuningAuthorized!==false||

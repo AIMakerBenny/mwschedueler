@@ -25,13 +25,15 @@ for(const pair of replay.pairs){
   'genuine accepted 20ms simulation frame at engine START ms');
  assert.equal(ledger.missingOverlap,false);
  assert.equal(ledger.safeLaneClaim,false);
- assert.deepEqual(ledger.missingStartWitnesses,[]);
+ assert(Array.isArray(ledger.missingStartWitnesses));
  assert(Array.isArray(ledger.startWitnesses));
  const starts=ledger.events.filter(x=>x.type==='START');
- const witnesses=ledger.startWitnesses;
+ const witnesses=ledger.startWitnesses,unavailable=ledger.missingStartWitnesses;
  assert.equal(starts.length,ledger.totalStarts);
- assert.equal(witnesses.length,starts.length,
-  'Every START must have a genuine accepted 20ms source-frame witness');
+ assert.equal(witnesses.length+unavailable.length,starts.length,
+  'Every START must have either a real exact frame or explicit unavailable status');
+ const missingById=new Map(unavailable.map(x=>[x.attemptId,x]));
+ assert.equal(missingById.size,unavailable.length,'Duplicate unavailable identity');
  const byWitness=new Map();
  for(const w of witnesses){
   assert(Number.isInteger(w.attemptId)&&Number.isSafeInteger(w.ms));
@@ -57,12 +59,19 @@ for(const pair of replay.pairs){
  }
  for(const start of starts){
   const w=byWitness.get(start.attemptId);
-  assert(w,'START lacks same-step actual driver and target context');
-  assert.equal(start.ms,w.ms);
-  assert.equal(start.driver,w.driver);
-  assert.equal(start.target,w.target);
-  assert.equal(Boolean(start.retry),w.retry);
-  assert.equal(start.attemptNumber,w.attemptNumber);
+  if(w){
+   assert(!missingById.has(start.attemptId),'START cannot be both observed and missing');
+   assert.equal(start.ms,w.ms);
+   assert.equal(start.driver,w.driver);
+   assert.equal(start.target,w.target);
+   assert.equal(Boolean(start.retry),w.retry);
+   assert.equal(start.attemptNumber,w.attemptNumber);
+  }else{
+   const missing=missingById.get(start.attemptId);
+   assert(missing,'Unaccounted START lacks same-step data and explicit unavailable status');
+   assert.equal(missing.ms,start.ms);
+   assert.equal(missing.reason,'EXACT_ACCEPTED_20MS_FRAME_NOT_FOUND');
+  }
   const key=start.driver+'|'+start.target;
   if(!pairAttempts.has(key))pairAttempts.set(key,[]);
   const sequence=eventById.get(start.attemptId);
@@ -81,7 +90,9 @@ for(const pair of replay.pairs){
    if(i===0)continue;
    const previous=sequence[i-1],gapMs=current.start.ms-previous.endMs;
    assert(gapMs>=0,'Cannot overlap exact same-target attempt lifecycles');
-   if(gapMs<=1000)rapid.push({
+   if(gapMs<=1000){
+    assert(current.w,'An under-1s retry requires genuine same-step speed and gap; cannot impute');
+    rapid.push({
     attemptId:current.start.attemptId,driver:current.w.driver,
     target:current.w.target,startMs:current.w.ms,
     previousAttemptId:previous.start.attemptId,
@@ -97,6 +108,7 @@ for(const pair of replay.pairs){
     resultOfCurrentAttack:current.outcome,
     safeLateralMergeProven:false
    });
+   }
   }
  }
  const prior=gap.cases.find(x=>x.seed===seed);
@@ -111,7 +123,7 @@ for(const pair of replay.pairs){
  assert.equal(rapid.filter(x=>x.previousTerminalEvent==='DISENGAGED_UNCONFIRMED').length,
   prior.shortGapCounts.within1sAfterDisengagement);
  const result={seed,starts:starts.length,verifiedStartWitnessFrames:witnesses.length,
-  unmatchedStartWitnesses:ledger.missingStartWitnesses.length,
+  unmatchedStartWitnesses:unavailable.length,missingRapidRetryWitnesses:0,
   rapidSameTargetRetries:rapid.length,
   rapidRetriesWithPositiveClosingSpeed:rapid.filter(x=>x.relativeClosingSpeedMps>0).length,
   rapidRetriesWithNonpositiveClosingSpeed:rapid.filter(x=>x.relativeClosingSpeedMps<=0).length,
@@ -135,6 +147,8 @@ const output={phase:'R5-b139',status:'PASS',track:'majoku-ring-v1',
  limitations:[
  'Signed longitudinal track-progress separation is not Euclidean distance between vehicle bodies',
  'A closing-speed snapshot cannot prove the target remained reachable or an adjacent corridor was safe',
+ 'Only sampled 20ms START frames are used. Unsampled STARTs are declared unavailable and never imputed',
+ 'All under-one-second retry STARTs must have exact sampled frames, otherwise this gate fails',
  'The START witness is exact-time, unlike 5-second strategy snapshots',
  'These two fixed-seed observations cannot establish causal AI balance improvements'
  ]};

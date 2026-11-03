@@ -172,7 +172,7 @@ jobs:
           node scripts/qa-f1-v12-r5b134-repeat-gap-sequences.mjs
           node scripts/qa-f1-v12-r5b135-retry-transition-matrix.mjs
           node scripts/qa-f1-v12-r5b136-rapid-retry-provenance.mjs
-      - name: R5-b139 verify exact accepted 20ms context for every attack START
+      - name: R5-b139 require exact 20ms context for all rapid retries and declare other missing starts
         run: node scripts/qa-f1-v12-r5b139-exact-retry-context.mjs
       - name: R5-b96 preserve an auditable per-file CI outcome manifest
         if: always()
