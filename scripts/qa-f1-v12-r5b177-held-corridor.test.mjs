@@ -177,3 +177,13 @@ test('R5-b189 already separated car retains a feasible short safe lane adjustmen
  const ready=corridorChoice(null,10,-2.5,29);
  assert.ok(ready.target!==null);assert.ok(ready.target<0);assert.equal(ready.reason,'CLEAR');
 });
+
+test('R5-b190 ongoing close attack survives small relative-speed fluctuation at intent expiry',()=>{
+ const x=evaluate({now:5,opponentGap:42,followerSpeed:28.1,opponentSpeed:28});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);
+});
+test('R5-b190 do not prolong a futile distant pursuit or large speed deficit',()=>{
+ const far=evaluate({now:5,opponentGap:100,followerSpeed:28.1,opponentSpeed:28});
+ const slow=evaluate({now:5,opponentGap:42,followerSpeed:27.5,opponentSpeed:28});
+ for(const x of [far,slow]){assert.equal(x.state,'FOLLOW');assert.equal(x.scans,0);}
+});

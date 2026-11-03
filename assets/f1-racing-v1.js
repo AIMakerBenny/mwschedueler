@@ -11795,8 +11795,16 @@ function unifiedChooseLaneV11(row,rows,now,width){
   const closureViableV12=closingForAttackV12>Math.max(.08,.18-.08*Math.max(0,skill))&&
     (gap<=60||gap/closingForAttackV12<=30);
   const specialAttackV12=unifiedSkillPowerV11(v,now*1000,row.pit)>0;
+  // R5-b190: an existing same-opponent attack has a small low-speed
+  // hysteresis band while already within 45m. This prevents a momentary
+  // 0.15m/s relative-pace fluctuation from breaking a physically safe pass
+  // and restarting it on the next 20ms frame. Fresh attacks still require
+  // the original higher closing threshold; pit and merge guards are intact.
+  const existingCloseAttackV12=v.unifiedAiStateV11==='PLAN_ATTACK'&&
+    String(v.unifiedAiTargetV11||'')===String(ahead.id)&&
+    gap<=45&&closingForAttackV12>=-.08;
   const attack=gap<135+15*Math.max(0,aggression)+15*Math.max(0,skill)&&
-    (closureViableV12||specialAttackV12);
+    (closureViableV12||specialAttackV12||existingCloseAttackV12);
   if(attack){
    corridor=unifiedAttackCorridorV12(row,ahead,rows,width,preferredAttackLaneV12);
    if(corridor.target!==null&&gap>Math.max(8,row.v*.12)){
