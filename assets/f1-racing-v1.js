@@ -11726,8 +11726,14 @@ function unifiedChooseLaneV11(row,rows,now,width){
  if(ahead){
   state='FOLLOW';
   const gap=unifiedGapV11(row,ahead),aggression=unifiedRatingV11(v,'aggression'),skill=unifiedRatingV11(v,'racecraft');
+  // R5-b179: begin a new attack only with measured positive longitudinal
+  // closure or an actually active special. The former negative-closing
+  // allowance repeatedly committed slower cars to unattainable pursuits.
+  // Existing committed attacks retain their R5-b177/R5-b178 intent window.
+  const closingForAttackV12=row.v-ahead.v;
   const attack=gap<135+15*Math.max(0,aggression)+15*Math.max(0,skill)&&
-   (row.v>ahead.v-1.2-1.0*skill||unifiedSkillPowerV11(v,now*1000,row.pit)>0);
+   (closingForAttackV12>Math.max(.08,.18-.08*Math.max(0,skill))||
+    unifiedSkillPowerV11(v,now*1000,row.pit)>0);
   if(attack){
    corridor=unifiedAttackCorridorV12(row,ahead,rows,width);
    if(corridor.target!==null&&gap>Math.max(8,row.v*.12)){
