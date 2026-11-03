@@ -29,7 +29,13 @@ const exactWitnessAware=[1,2].some(seed=>{
 });
 if(exactWitnessAware)expected.push('b139-exact-retry-context.json',
  'b141-rapid-attack-velocity-evidence.json',
- 'b143-rapid-attack-resource-context.json');
+ 'b143-rapid-attack-resource-context.json',
+ 'b145-relative-pace-resource-crosstab.json');
+const temporalAware=[1,2].some(seed=>{
+ try{return Array.isArray(JSON.parse(fs.readFileSync(dir+'seed'+seed+'-observed10.json','utf8')).real20ms?.attackLedger?.startTrajectories)}
+ catch{return false}
+});
+if(temporalAware)expected.push('b147-attack-time-series.json');
 const records=[];
 for(const name of expected){
  const p=dir+name;
@@ -98,6 +104,27 @@ for(const name of expected){
     c.resourceGroups.positiveClosing.count+
     c.resourceGroups.nonPositiveClosing.count!==c.quickRetryStarts)))
     issues.push('MISSING_REAL_START_TIME_TYRE_ENERGY_OR_AI_WITNESS');
+  if(name.endsWith('-observed10.json')&&data.real20ms?.attackLedger?.startTrajectories){
+   const ledger=data.real20ms.attackLedger;
+   if(ledger.trajectorySweptClearanceProven!==false||
+    JSON.stringify(ledger.trajectoryOffsetsMs)!=='[-200,-100,0,100,200]'||
+    ledger.startTrajectories.length!==ledger.totalStarts||
+    ledger.startTrajectories.some(w=>!w.offsetSamples||
+     [-200,-100,0,100,200].some(i=>!w.offsetSamples[String(i)]||
+      w.offsetSamples[String(i)].ms!==w.startMs+i)))
+     issues.push('UNPROVEN_OR_INCOMPLETE_20MS_TRAJECTORY_SOURCE');
+  }
+  if(name==='b145-relative-pace-resource-crosstab.json'&&(
+   data.liveAiModified!==false||data.causalAiFailureConfirmed!==false||
+   !Array.isArray(data.cases)||data.cases.length!==2||
+   data.cases.some(c=>c.quickRetryStarts!==c.cohorts.positiveClosing.total+
+    c.cohorts.nonPositiveClosing.total)))
+   issues.push('INCORRECT_RAPID_RESOURCE_CROSSTAB');
+  if(name==='b147-attack-time-series.json'&&(
+   data.safeLaneAndSweptClearanceProven!==false||data.aiPatchesApproved!==false||
+   !Array.isArray(data.cases)||data.cases.length!==2||
+   data.cases.some(c=>c.witnessRows.length!==c.quickRetries)))
+   issues.push('MISSING_OR_UNSAFE_REAL_TEMPORAL_WITNESSES');
   if(name==='b122-attack-attribution.json'&&(
    data.liveAiTuningAuthorized!==false||
    !Array.isArray(data.cases)||data.cases.length!==2||
@@ -158,7 +185,9 @@ if(exactWitnessAware){
  requiredPass.set('b139-exact-retry-context.json','PASS');
  requiredPass.set('b141-rapid-attack-velocity-evidence.json','PASS');
  requiredPass.set('b143-rapid-attack-resource-context.json','PASS');
+ requiredPass.set('b145-relative-pace-resource-crosstab.json','PASS');
 }
+if(temporalAware)requiredPass.set('b147-attack-time-series.json','PASS');
 const unexpected=records.filter(r=>r.status!==requiredPass.get(r.name)||(r.issues?.length||0)>0);
 const allVerified=allPresent&&unexpected.length===0;
 const priorStepStatus=String(process.env.MWS_FOCUSED_QA_STEP_STATUS||'unknown').toLowerCase();

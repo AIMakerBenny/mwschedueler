@@ -1,0 +1,77 @@
+name: Majoku quick-retry actual resource archived cross-check
+on:
+  push:
+    branches: [f1-unified-redesign-v11-20261012]
+    paths:
+      - '.github/workflows/qa-f1-majoku-rapid-resource-archived.yml'
+      - 'scripts/qa-f1-v12-r5b145-relative-pace-resource-crosstab.mjs'
+      - 'scripts/qa-f1-v12-r5b147-attack-time-series.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  archived-provenance-resource-analysis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify all physical gameplay engine and track files unchanged
+        run: git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js
+      - name: Syntax check new temporal source without claiming an archived race contains it
+        run: |
+          node --check scripts/qa-f1-v12-r5b145-relative-pace-resource-crosstab.mjs
+          node --check scripts/qa-f1-v12-r5b147-attack-time-series.mjs
+          node --check scripts/qa-f1-v12-r5b3-normal-auto-pit.mjs
+          node --test scripts/qa-f1-v12-r5b137-attempt-context.test.mjs
+      - name: Download already SUCCESS actual 10-lap R5-b143 resource-data evidence
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41564518303
+          name: majoku-r5b96-focused-physical-20ms
+          github-token: ${{ github.token }}
+          path: artifacts/r5-b77-majoku
+      - name: Recreate exact authentic attack and closing-speed source reports
+        run: |
+          for phase in 129-attack-pair-retries 130-temporal-attempt-cohorts 131-disengagement-context 132-attack-trends-receipt 133-first-vs-repeat-outcomes 134-repeat-gap-sequences 135-retry-transition-matrix 136-rapid-retry-provenance 139-exact-retry-context 141-rapid-attack-velocity-evidence
+          do node "scripts/qa-f1-v12-r5b$phase.mjs"; done
+      - name: R5-b145 independently verify actual relative pace and resource imbalance
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: 41564518303
+        run: node scripts/qa-f1-v12-r5b145-relative-pace-resource-crosstab.mjs
+      - name: Verify both actual 10-lap races have full resource witnesses for all 40 rapid retries
+        run: |
+          node --input-type=module -e '
+            import fs from "node:fs";
+            import assert from "node:assert/strict";
+            const path="artifacts/r5-b77-majoku/";
+            const report=JSON.parse(fs.readFileSync(path+"b145-relative-pace-resource-crosstab.json","utf8"));
+            assert.equal(report.status,"PASS");
+            assert.equal(report.liveAiModified,false);
+            assert.equal(report.causalAiFailureConfirmed,false);
+            assert.equal(report.sourceBrowserRun,41564518303);
+            for(const [seed,quick,positive,success] of [[1,22,5,2],[2,18,2,1]]){
+              const c=report.cases.find(x=>x.seed===seed);assert(c);
+              assert.equal(c.quickRetryStarts,quick);
+              assert.equal(c.cohorts.positiveClosing.total,positive);
+              assert.equal(c.cohorts.nonPositiveClosing.total,quick-positive);
+              assert.equal(c.rows.length,quick);
+              assert.equal(c.rows.filter(r=>r.success).length,success);
+              assert(c.rows.every(x=>x.safeLateralMergeProven===false));
+            }
+            console.log(JSON.stringify({phase:"R5-b148",status:"ARCHIVED_GENUINE_RESOURCE_PASS",
+             archivedRealRaces:2,newBrowserRaces:0,physicsChanged:false}));
+          '
+      - name: Upload audit even if underlying source checks fail
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: majoku-r5b148-archived-resource-cross-check
+          path: artifacts/r5-b77-majoku/b145-relative-pace-resource-crosstab.json
+          if-no-files-found: warn
