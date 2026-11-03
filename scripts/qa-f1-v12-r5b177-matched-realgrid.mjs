@@ -1,6 +1,7 @@
 // R5-b177: compare genuine current 10-lap browser races against frozen seed 1/2 races.
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
+import {evaluateMatchedRaceGate} from './lib/f1-r5b197-performance-gate.mjs';
 const load=path=>JSON.parse(fs.readFileSync(path,'utf8'));
 const attemptStats=d=>{
  const events=d.real20ms?.attackLedger?.events||[];
@@ -49,5 +50,9 @@ for(const seed of [1,2]){
  rows.push({seed,baseline:b,previousR5b189:p,modified:a,delta:diff(a,b),deltaVsR5b189:diff(a,p)});
 }
 fs.mkdirSync('artifacts/r5-b177-current',{recursive:true});
-fs.writeFileSync('artifacts/r5-b177-current/comparison.json',JSON.stringify({phase:'R5-b193',basis:'genuine same-seed Chromium 12-car ten-lap races: pinned original, verified R5-b189, current',referenceRunId:41584183003,rows,improvementNotAssumed:true},null,2));
-process.stdout.write(JSON.stringify(rows,null,2)+'\\n');
+// R5-b197: do not label the real race regression SUCCESS merely because
+// both Chromium runs finished safely. Preserve full evidence before failing.
+const performanceGate=evaluateMatchedRaceGate(rows);
+fs.writeFileSync('artifacts/r5-b177-current/comparison.json',JSON.stringify({phase:'R5-b197',basis:'genuine same-seed Chromium 12-car ten-lap races: pinned original, verified R5-b189, current',referenceRunId:41584183003,rows,performanceGate,improvementNotAssumed:true},null,2));
+process.stdout.write(JSON.stringify({rows,performanceGate},null,2)+'\\n');
+assert.ok(performanceGate.accepted,'genuine physical passing or ranking regressed versus R5-b189; see uploaded comparison.json');

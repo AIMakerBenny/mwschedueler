@@ -5,6 +5,8 @@ on:
     paths:
       - 'assets/f1-racing-v1.js'
       - 'scripts/qa-f1-v12-r5b177-*.mjs'
+      - 'scripts/qa-f1-v12-r5b197-*.mjs'
+      - 'scripts/lib/f1-r5b197-*.mjs'
       - '.github/workflows/qa-f1-majoku-r5b177-engine.yml'
   workflow_dispatch:
 permissions:
@@ -27,6 +29,10 @@ jobs:
           node --check assets/f1-racing-v1.js
           node --test scripts/qa-f1-v12-r5b177-held-corridor.test.mjs
           node scripts/qa-f1-v12-r5b48-single-track-access.mjs
+      - name: Require measured physical race non-regression against R5-b189
+        run: |
+          node --check scripts/qa-f1-v12-r5b177-matched-realgrid.mjs
+          node --test scripts/qa-f1-v12-r5b197-performance-gate.test.mjs
       - name: Install Chromium for unchanged genuine race runner
         run: |
           npm install --no-save --no-package-lock playwright
