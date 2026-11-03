@@ -8,7 +8,7 @@ const initial=read('b133-first-repeat-outcomes.json');
 const durations=read('b134-repeat-gap-sequences.json');
 const pairs=read('b129-attack-pair-retries.json');
 for(const x of [initial,durations,pairs])assert.equal(x.status,'PASS');
-const outcomes=['SUCCESS','DISENGAGED_UNCONFIRMED','TARGET_CHANGED','PIT_INTERRUPTED','ACTIVE'];
+const outcomes=['SUCCESS','DISENGAGED_UNCONFIRMED','TARGET_CHANGED','PIT_INTERRUPTED','ACTIVE_AT_RACE_FINISH'];
 const groupNames=['atMost1s','over1to2s','over2to5s','over5s'];
 const empty=()=>({attempts:0,outcomes:Object.fromEntries(outcomes.map(x=>[x,0])),
  prevOutcome:Object.fromEntries(outcomes.map(x=>[x,0])),
@@ -32,7 +32,7 @@ for(const seed of [1,2]){
   const ev=byId.get(s.attemptId);assert(ev?.length&&ev[0].type==='START');
   const kinds=new Set(ev.map(x=>x.type));
   const outcome=kinds.has('SUCCESS')?'SUCCESS':
-   outcomes.slice(1,-1).find(x=>kinds.has(x))||'ACTIVE';
+   outcomes.slice(1,-1).find(x=>kinds.has(x))||'ACTIVE_AT_RACE_FINISH';
   const key=s.driver+'|'+s.target;
   if(!byPair.has(key))byPair.set(key,[]);
   byPair.get(key).push({start:s.ms,end:ev.at(-1).ms,outcome,id:s.attemptId});
