@@ -11962,6 +11962,19 @@ function unifiedChooseLaneV11(row,rows,now,width){
     // NARROW_TRACK remains FOLLOW rather than inventing an attack.
     state='EXIT_DUEL';
   }
+  // R5-b222: allow an already-separated former attack to finish
+  // its last few metres of safe lateral crossing even if its 700ms
+  // attack intent has expired and its relative speed has become negative.
+  // This only holds the PHYSICAL current side at 7.5-9m after an
+  // already committed same-opponent PLAN_ATTACK; it never opens a
+  // fresh corridor, changes throttle or bypasses the merge guard.
+  const finishGapV12=UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance+2;
+  const finishingFormerAttackV12=state==='FOLLOW'&&
+   v.unifiedAiStateV11==='PLAN_ATTACK'&&previousOpponentV12===String(ahead.id)&&
+   gap>finishGapV12&&gap<=finishGapV12+1.5&&
+   Math.abs(row.y-ahead.y)>=unifiedLateralClearanceV11(row,ahead)&&
+   Math.abs(ideal-ahead.y)<unifiedLateralClearanceV11(row,ahead);
+  if(finishingFormerAttackV12)target=row.y;
   // R5-b183: lateral separation alone at 20m is not a real side-by-side
   // contest. Reuse the actual physical body length and safety clearance
   // before advancing this same AI state, while keeping the 20ms solver intact.

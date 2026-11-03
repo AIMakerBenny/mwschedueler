@@ -422,3 +422,20 @@ test('R5-b221 unseparated follower is not silently granted a physically clear la
  const x=evaluate({now:1,opponentGap:7,lateralY:-1,laneTarget:0,followerSpeed:30,opponentSpeed:28});
  assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.lane,0);assert.equal(x.scans,0);
 });
+
+test('R5-b222 expiring separated old attack retains physical side only at close crossing edge',()=>{
+ const x=evaluate({now:5,opponentGap:8.5,lateralY:-3,laneTarget:2,followerSpeed:27.5,opponentSpeed:28});
+ assert.equal(x.state,'FOLLOW');assert.equal(x.lane,-3);assert.equal(x.scans,0);
+});
+test('R5-b222 more distant slower former attack returns to normal FOLLOW lane',()=>{
+ const x=evaluate({now:5,opponentGap:12,lateralY:-3,laneTarget:2,followerSpeed:27.5,opponentSpeed:28});
+ assert.equal(x.state,'FOLLOW');assert.equal(x.lane,0);assert.equal(x.scans,0);
+});
+test('R5-b222 unseparated old attack cannot keep a passing lane without physical clearance',()=>{
+ const x=evaluate({now:5,opponentGap:8.5,lateralY:-1,laneTarget:2,followerSpeed:27.5,opponentSpeed:28});
+ assert.equal(x.state,'FOLLOW');assert.equal(x.lane,0);assert.equal(x.scans,0);
+});
+test('R5-b222 newly selected different opponent does not inherit previous attack lane',()=>{
+ const x=evaluate({now:5,nearestChanged:true,newOpponentGap:8.5,opponentGap:15,newOpponentY:0,lateralY:-3,laneTarget:2,followerSpeed:27.5,opponentSpeed:28});
+ assert.equal(x.target,'new');assert.equal(x.lane,0);
+});
