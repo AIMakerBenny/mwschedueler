@@ -196,3 +196,12 @@ test('R5-b191 valid held center-line target zero remains zero',()=>{
  const x=evaluate({laneTarget:0,lateralY:-2});
  assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.lane,0);assert.equal(x.scans,0);
 });
+
+test('R5-b192 missing side-by-side hold target does not steer to artificial center',()=>{
+ const x=evaluate({sideBySide:true,nearestChanged:true,opponentGap:-2,lateralY:-3,laneTarget:null});
+ assert.equal(x.state,'SIDE_BY_SIDE');assert.equal(x.target,'ahead');assert.equal(x.lane,-3);assert.equal(x.scans,0);
+});
+test('R5-b192 explicitly selected center target still remains a valid crossing hold',()=>{
+ const x=evaluate({sideBySide:true,nearestChanged:true,opponentGap:-2,lateralY:-3,laneTarget:0});
+ assert.equal(x.state,'SIDE_BY_SIDE');assert.equal(x.target,'ahead');assert.equal(x.lane,0);assert.equal(x.scans,0);
+});

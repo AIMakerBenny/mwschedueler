@@ -11728,7 +11728,11 @@ function unifiedChooseLaneV11(row,rows,now,width){
    UNIFIED_ENGINE_V11.clearance+1;
   const physicallySeparatedV12=Math.abs(row.y-crossingPeerV12.y)>=unifiedLateralClearanceV11(row,crossingPeerV12);
   if(nearCrossingV12&&physicallySeparatedV12){
-   const kept=unifiedMergeTargetV11(row,unifiedClampV11(Number(v.unifiedLaneTargetV11),-allowed,allowed),rows);
+   // R5-b192: null, NaN or an unset lane is not the center of the
+   // track. Keep the current lateral chassis position unless an actual
+   // numeric pass corridor is present, including a lawful target of zero.
+   const crossingLaneV12=Number.isFinite(v.unifiedLaneTargetV11)?v.unifiedLaneTargetV11:row.y;
+   const kept=unifiedMergeTargetV11(row,unifiedClampV11(crossingLaneV12,-allowed,allowed),rows);
    if(!kept.blocked.length){
     v.unifiedMergeBlockedV11=[];v.unifiedLaneTargetV11=kept.target;return kept.target;
    }
