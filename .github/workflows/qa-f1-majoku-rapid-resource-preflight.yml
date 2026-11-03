@@ -1,0 +1,48 @@
+name: Majoku actual rapid attack resource preflight
+on:
+  push:
+    branches: [f1-unified-redesign-v11-20261012]
+    paths:
+      - '.github/workflows/qa-f1-majoku-rapid-resource-preflight.yml'
+      - 'scripts/lib/f1-r5b137-attempt-context.mjs'
+      - 'scripts/qa-f1-v12-r5b137-attempt-context.test.mjs'
+      - 'scripts/qa-f1-v12-r5b141-rapid-attack-velocity-evidence.mjs'
+      - 'scripts/qa-f1-v12-r5b143-rapid-attack-resource-context.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  independently-audit-known-rapid-attacks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Assert game engine and track code did not change
+        run: git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js
+      - name: Validate resource witness semantics on exact physics frame
+        run: node --test scripts/qa-f1-v12-r5b137-attempt-context.test.mjs
+      - name: Download certified pre-resource telemetry Chromium race evidence
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41561198639
+          name: majoku-r5b96-focused-physical-20ms
+          github-token: ${{ github.token }}
+          path: artifacts/r5-b77-majoku
+      - name: Reconcile recorded event provenance and closing speed without running new race
+        run: |
+          for phase in 129-attack-pair-retries 130-temporal-attempt-cohorts 131-disengagement-context 132-attack-trends-receipt 133-first-vs-repeat-outcomes 134-repeat-gap-sequences 135-retry-transition-matrix 136-rapid-retry-provenance 139-exact-retry-context 141-rapid-attack-velocity-evidence
+          do node "scripts/qa-f1-v12-r5b$phase.mjs"; done
+      - name: Preserve original genuine first-20ms velocity audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: majoku-r5b144-existing-rapid-velocity-audit
+          path: artifacts/r5-b77-majoku/b141-rapid-attack-velocity-evidence.json
+          if-no-files-found: warn

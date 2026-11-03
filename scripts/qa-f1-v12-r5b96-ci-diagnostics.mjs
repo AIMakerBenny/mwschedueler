@@ -27,7 +27,9 @@ const exactWitnessAware=[1,2].some(seed=>{
  try{return Array.isArray(JSON.parse(fs.readFileSync(dir+'seed'+seed+'-observed10.json','utf8')).real20ms?.attackLedger?.startWitnesses)}
  catch{return false}
 });
-if(exactWitnessAware)expected.push('b139-exact-retry-context.json');
+if(exactWitnessAware)expected.push('b139-exact-retry-context.json',
+ 'b141-rapid-attack-velocity-evidence.json',
+ 'b143-rapid-attack-resource-context.json');
 const records=[];
 for(const name of expected){
  const p=dir+name;
@@ -80,6 +82,22 @@ for(const name of expected){
    data.cases.some(c=>c.missingRapidRetryWitnesses!==0||
     c.verifiedStartWitnessFrames+c.unmatchedStartWitnesses!==c.starts)))
     issues.push('UNPROVEN_OR_MISSING_EXACT_RETRY_CONTEXT');
+  if(name==='b141-rapid-attack-velocity-evidence.json'&&(
+   data.aiTuningAuthorized!==false||!Array.isArray(data.cases)||
+   data.cases.length!==2||
+   data.cases.some(c=>c.rapidRetryStarts!==
+    c.closingSpeedAtStart.positiveClosing.count+
+    c.closingSpeedAtStart.nonPositiveClosing.count)))
+    issues.push('UNVERIFIED_EXACT_CLOSING_SPEED_EVIDENCE');
+  if(name==='b143-rapid-attack-resource-context.json'&&(
+   data.physicsModified!==false||data.proposedAiPatchesAuthorized!==false||
+   data.safePassingLaneProven!==false||!Array.isArray(data.cases)||
+   data.cases.length!==2||
+   data.cases.some(c=>c.missingQuickRetryContext!==0||
+    c.exactTimeContextSamples!==c.quickRetryStarts||
+    c.resourceGroups.positiveClosing.count+
+    c.resourceGroups.nonPositiveClosing.count!==c.quickRetryStarts)))
+    issues.push('MISSING_REAL_START_TIME_TYRE_ENERGY_OR_AI_WITNESS');
   if(name==='b122-attack-attribution.json'&&(
    data.liveAiTuningAuthorized!==false||
    !Array.isArray(data.cases)||data.cases.length!==2||
@@ -136,7 +154,11 @@ if(attemptAware){
  requiredPass.set('b122-attack-attribution.json','PASS');
  requiredPass.set('b123-attempt-lifecycle.json','PASS');
 }
-if(exactWitnessAware)requiredPass.set('b139-exact-retry-context.json','PASS');
+if(exactWitnessAware){
+ requiredPass.set('b139-exact-retry-context.json','PASS');
+ requiredPass.set('b141-rapid-attack-velocity-evidence.json','PASS');
+ requiredPass.set('b143-rapid-attack-resource-context.json','PASS');
+}
 const unexpected=records.filter(r=>r.status!==requiredPass.get(r.name)||(r.issues?.length||0)>0);
 const allVerified=allPresent&&unexpected.length===0;
 const priorStepStatus=String(process.env.MWS_FOCUSED_QA_STEP_STATUS||'unknown').toLowerCase();
