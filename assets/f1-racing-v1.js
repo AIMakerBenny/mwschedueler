@@ -11734,7 +11734,8 @@ function unifiedChooseLaneV11(row,rows,now,width){
  // changes. Keep the original merge guard and physical solver authoritative.
  if(row.pit==='TRACK'&&!v.pitRequested&&ahead&&String(ahead.id)===String(v.unifiedAiTargetV11||'')&&
    v.unifiedAiStateV11==='EXIT_DUEL'&&now<(Number(v.unifiedIntentUntilV11)||0)){
-  const rejectedHold=unifiedMergeTargetV11(row,unifiedClampV11(Number(v.unifiedLaneTargetV11)||row.y,-allowed,allowed),rows);
+  const rejectedLaneV12=Number.isFinite(v.unifiedLaneTargetV11)?v.unifiedLaneTargetV11:row.y;
+  const rejectedHold=unifiedMergeTargetV11(row,unifiedClampV11(rejectedLaneV12,-allowed,allowed),rows);
   v.unifiedMergeBlockedV11=rejectedHold.blocked;
   v.unifiedLaneTargetV11=rejectedHold.target;
   return rejectedHold.target;
