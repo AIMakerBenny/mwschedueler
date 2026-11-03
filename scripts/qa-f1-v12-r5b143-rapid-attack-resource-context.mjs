@@ -4,6 +4,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const root='artifacts/r5-b77-majoku/';
 const read=name=>JSON.parse(fs.readFileSync(root+name,'utf8'));
+const sourceRunEnv=process.env.MWS_F1_RACE_ARTIFACT_RUN_ID;
+if(sourceRunEnv!==undefined)assert(/^[1-9][0-9]*$/.test(sourceRunEnv),
+ 'Invalid explicit original Chromium artifact run identifier');
+const sourceRunId=sourceRunEnv===undefined?null:Number(sourceRunEnv);
 const replay=read('replay.json');
 const speed=read('b141-rapid-attack-velocity-evidence.json');
 const exact=read('b139-exact-retry-context.json');
@@ -130,7 +134,7 @@ for(const pair of replay.pairs){
   observedDriverTyre:reportGroups.nonPositiveClosing.metrics.driverTyreWearFraction.observed}));
 }
 const output={phase:'R5-b143',status:'PASS',track:'majoku-ring-v1',
- actualSourceRun:41561198639,sourceRealRaces:2,
+ actualSourceRun:sourceRunId,sourceRealRaces:2,
  readOnly:true,physicsModified:false,
  allMeasurementsTakenAtSameAccepted20msStart:true,
  safePassingLaneProven:false,causalEnergyOrTyreDeficitProven:false,

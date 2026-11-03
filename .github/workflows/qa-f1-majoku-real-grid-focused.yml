@@ -177,8 +177,12 @@ jobs:
       - name: R5-b139 require exact 20ms context for all rapid retries and declare other missing starts
         run: node scripts/qa-f1-v12-r5b139-exact-retry-context.mjs
       - name: R5-b141 independently reconcile signed closing speed and final attack outcome
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
         run: node scripts/qa-f1-v12-r5b141-rapid-attack-velocity-evidence.mjs
       - name: R5-b143 require genuine same-step ERS tyre pace and strategy values for rapid retries
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
         run: node scripts/qa-f1-v12-r5b143-rapid-attack-resource-context.mjs
       - name: R5-b96 preserve an auditable per-file CI outcome manifest
         if: always()

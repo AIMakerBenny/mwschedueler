@@ -36,6 +36,8 @@ jobs:
           github-token: ${{ github.token }}
           path: artifacts/r5-b77-majoku
       - name: Reconcile recorded event provenance and closing speed without running new race
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: 41561198639
         run: |
           for phase in 129-attack-pair-retries 130-temporal-attempt-cohorts 131-disengagement-context 132-attack-trends-receipt 133-first-vs-repeat-outcomes 134-repeat-gap-sequences 135-retry-transition-matrix 136-rapid-retry-provenance 139-exact-retry-context 141-rapid-attack-velocity-evidence
           do node "scripts/qa-f1-v12-r5b$phase.mjs"; done

@@ -4,6 +4,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const dir='artifacts/r5-b77-majoku/';
 const read=name=>JSON.parse(fs.readFileSync(dir+name,'utf8'));
+const sourceRunEnv=process.env.MWS_F1_RACE_ARTIFACT_RUN_ID;
+if(sourceRunEnv!==undefined)assert(/^[1-9][0-9]*$/.test(sourceRunEnv),
+ 'Invalid explicit original Chromium artifact run identifier');
+const sourceRunId=sourceRunEnv===undefined?null:Number(sourceRunEnv);
 const replay=read('replay.json');
 const exact=read('b139-exact-retry-context.json');
 const previous=read('b136-retry-provenance.json');
@@ -88,7 +92,7 @@ for(const pair of replay.pairs){
   successesFromNonpositive:groups.nonPositiveClosing.physicalSuccesses}));
 }
 const result={phase:'R5-b141',status:'PASS',track:'majoku-ring-v1',
- sourceChromiumRun:41561198639,actualFullTenLapSeedCount:2,
+ sourceChromiumRun:sourceRunId,actualFullTenLapSeedCount:2,
  readOnly:true,gameEngineChanged:false,aiTuningAuthorized:false,
  causalEffectOfNegativeClosingSpeedNotProven:true,
  physicalCollisionClearanceNotProven:true,cases,
