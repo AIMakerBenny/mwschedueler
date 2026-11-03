@@ -4,8 +4,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 const source=fs.readFileSync('assets/f1-racing-v1.js','utf8');
-const match=source.match(/function unifiedChooseLaneV11\\(row,rows,now,width\\)\\{[\\s\\S]*?\\n\\}\\n(?=\\/\\/ Target-aware diagnostics)/);
-assert.ok(match,'live unifiedChooseLaneV11 source must exist');
+const start=source.indexOf('function unifiedChooseLaneV11(row,rows,now,width){');
+const sentinel=source.indexOf('// Target-aware diagnostics only.',start);
+const stop=source.lastIndexOf('}',sentinel);
+assert.ok(start>=0&&sentinel>start&&stop>start,'live unifiedChooseLaneV11 source must exist');
+const chooser=source.slice(start,stop+1);
 function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false}={}){
  const v={id:'me',pitRequested:pit,pitState:'TRACK',racingLineMode:'IDEAL',
   unifiedAiStateV11:'PLAN_ATTACK',unifiedAiTargetV11:'ahead',
@@ -23,7 +26,7 @@ function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false}={}){
   unifiedRatingV11:()=>0,unifiedSkillPowerV11:()=>0,unifiedLateralClearanceV11:()=>2.5,
   lineOffsetMetersV197:()=>0,unifiedPitLaneIntentV12:()=>3,
   unifiedPitMergeTargetV12:(row,y)=>({target:y,blocked:[]})};
- vm.runInNewContext(match[0],ctx);
+ vm.runInNewContext(chooser,ctx);
  const lane=ctx.unifiedChooseLaneV11(me,rows,1,12);
  return {lane,state:v.unifiedAiStateV11,target:v.unifiedAiTargetV11,scans};
 }
