@@ -46,10 +46,12 @@ jobs:
           node --test scripts/qa-f1-v12-r5b102-transitions.test.mjs
           node --test scripts/qa-f1-v12-r5b137-attempt-context.test.mjs
           node --test scripts/qa-f1-v12-r5b157-long-horizon.test.mjs
+          node --test scripts/qa-f1-v12-r5b165-terminal-witness.test.mjs
           node scripts/qa-f1-v12-r5b48-single-track-access.mjs
           node --test scripts/qa-f1-v12-r5b114-public-track-access-runtime.test.mjs
           node --test scripts/qa-f1-v12-r5b137-attempt-context.test.mjs
           node --test scripts/qa-f1-v12-r5b157-long-horizon.test.mjs
+          node --test scripts/qa-f1-v12-r5b165-terminal-witness.test.mjs
       - name: Upload preflight SHA and runner success receipt
         run: |
           mkdir -p artifacts
@@ -130,6 +132,9 @@ jobs:
             scripts/qa-f1-v12-r5b161-attack-terminal-censor.mjs \
             scripts/qa-f1-v12-r5b162-censored-chase-timeline.mjs \
             scripts/qa-f1-v12-r5b163-terminal-reasons-by-driver.mjs \
+            scripts/lib/f1-r5b165-terminal-witness.mjs \
+            scripts/qa-f1-v12-r5b165-terminal-witness.test.mjs \
+            scripts/qa-f1-v12-r5b167-terminal-physical-context.mjs \
             scripts/lib/f1-r5b137-attempt-context.mjs \
             scripts/qa-f1-v12-r5b137-attempt-context.test.mjs \
             scripts/qa-f1-v12-r5b122-attack-attribution.mjs \
@@ -141,6 +146,7 @@ jobs:
           node --test scripts/qa-f1-v12-r5b102-transitions.test.mjs
           node --test scripts/qa-f1-v12-r5b137-attempt-context.test.mjs
           node --test scripts/qa-f1-v12-r5b157-long-horizon.test.mjs
+          node --test scripts/qa-f1-v12-r5b165-terminal-witness.test.mjs
       - name: Download original REAL Majoku 12-car 10-lap results
         uses: actions/download-artifact@v4
         with:
@@ -249,6 +255,10 @@ jobs:
         env:
           MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
         run: node scripts/qa-f1-v12-r5b163-terminal-reasons-by-driver.mjs
+      - name: R5-b167 prove genuine terminal-20ms states, not approximate 5s strategy snapshots
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
+        run: node scripts/qa-f1-v12-r5b167-terminal-physical-context.mjs
       - name: R5-b96 preserve an auditable per-file CI outcome manifest
         if: always()
         env:

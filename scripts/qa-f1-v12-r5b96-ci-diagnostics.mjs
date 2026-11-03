@@ -47,6 +47,11 @@ const longHorizonAware=[1,2].some(seed=>{
 if(longHorizonAware)expected.push('b159-long-horizon-follow-through.json',
  'b161-attack-terminal-censor.json','b162-censored-chase-timeline.json',
  'b163-terminal-reasons-by-driver.json');
+const terminalWitnessAware=[1,2].some(seed=>{
+ try{return Array.isArray(JSON.parse(fs.readFileSync(dir+'seed'+seed+'-observed10.json','utf8')).real20ms?.attackLedger?.terminalEventWitnesses)}
+ catch{return false}
+});
+if(terminalWitnessAware)expected.push('b167-terminal-physical-context.json');
 const records=[];
 for(const name of expected){
  const p=dir+name;
@@ -223,6 +228,31 @@ for(const name of expected){
    data.cases.some(c=>c.rapidRepeatAttemptStarts!==(c.seed===1?22:18)||
     Object.values(c.terminalReasonCounts).reduce((n,x)=>n+x,0)!==c.rapidRepeatAttemptStarts)))
    issues.push('UNVERIFIED_TERMINAL_REASON_STATS');
+  if(name.endsWith('-observed10.json')&&data.real20ms?.attackLedger?.terminalEventWitnesses){
+   const l=data.real20ms.attackLedger;
+   const origins=new Map(l.events.filter(e=>e.type==='START').map(e=>[e.attemptId,e]));
+   const terminals=new Set(['SUCCESS','DISENGAGED_UNCONFIRMED','TARGET_CHANGED','PIT_INTERRUPTED']);
+   const expectedEvents=l.events.filter(e=>terminals.has(e.type)&&origins.get(e.attemptId)?.retry===true);
+   const offsets=[-1000,-200,-20,0];
+   if(l.terminalEventAiCausalityProven!==false||
+    JSON.stringify(l.terminalEventOffsetsMs)!==JSON.stringify(offsets)||
+    l.terminalEventWitnesses.length!==expectedEvents.length||
+    l.terminalEventWitnesses.some(t=>
+     t.engineOutcomeConfirmed!==(t.terminalType==='SUCCESS')||
+     offsets.some(o=>!t.offsetSamples?.[String(o)]||
+      t.offsetSamples[String(o)].ms!==t.terminalMs+o||
+      typeof t.offsetSamples[String(o)].available!=='boolean')))
+    issues.push('ENGINE_TERMINAL_20MS_SNAPSHOT_MISSING_OR_FABRICATED');
+  }
+  if(name==='b167-terminal-physical-context.json'&&(
+   data.enginePhysicsChanged!==false||data.causalBrakingFaultProven!==false||
+   data.safeLateralMergeProven!==false||
+   !Array.isArray(data.cases)||data.cases.length!==2||
+   data.cases.some(c=>c.quickRetries!==(c.seed===1?22:18)||
+    c.eventWitnesses!==c.engineTerminalEventsFromTrueRetries||
+    c.collisionStops!==0||
+    Object.values(c.terminalCategories).reduce((n,x)=>n+x.attempts,0)!==c.quickRetries)))
+    issues.push('UNVERIFIED_PRETERMINAL_PHYSICAL_CONTEXT');
   if(name==='b122-attack-attribution.json'&&(
    data.liveAiTuningAuthorized!==false||
    !Array.isArray(data.cases)||data.cases.length!==2||
@@ -300,6 +330,7 @@ if(longHorizonAware){
  requiredPass.set('b162-censored-chase-timeline.json','PASS');
  requiredPass.set('b163-terminal-reasons-by-driver.json','PASS');
 }
+if(terminalWitnessAware)requiredPass.set('b167-terminal-physical-context.json','PASS');
 const unexpected=records.filter(r=>r.status!==requiredPass.get(r.name)||(r.issues?.length||0)>0);
 const allVerified=allPresent&&unexpected.length===0;
 const priorStepStatus=String(process.env.MWS_FOCUSED_QA_STEP_STATUS||'unknown').toLowerCase();

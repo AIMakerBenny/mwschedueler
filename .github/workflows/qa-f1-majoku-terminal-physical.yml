@@ -1,0 +1,61 @@
+name: Majoku terminal event exact-20ms source contract
+on:
+  push:
+    branches: [f1-unified-redesign-v11-20261012]
+    paths:
+      - '.github/workflows/qa-f1-majoku-terminal-physical.yml'
+      - 'scripts/lib/f1-r5b165-terminal-witness.mjs'
+      - 'scripts/qa-f1-v12-r5b165-terminal-witness.test.mjs'
+      - 'scripts/qa-f1-v12-r5b167-terminal-physical-context.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  archived-engine-terminal-and-new-exact-witness-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: No change to game engine AI or locked track geometry
+        run: git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js
+      - name: Verify all terminal witness identities and missingness unit contracts
+        run: |
+          node --test scripts/qa-f1-v12-r5b165-terminal-witness.test.mjs
+          node --check scripts/qa-f1-v12-r5b167-terminal-physical-context.mjs
+          node --check scripts/qa-f1-v12-r5b3-normal-auto-pit.mjs
+      - name: Download certified actual prior two-seed 12-car 10-lap engine receipts
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41572854132
+          name: majoku-r5b96-focused-physical-20ms
+          github-token: ${{ github.token }}
+          path: artifacts/r5-b77-majoku
+      - name: Recheck genuine engine terminal types without claiming new frames were already in old artifact
+        run: |
+          node --input-type=module -e '
+            import assert from "node:assert/strict";
+            import fs from "node:fs";
+            const root="artifacts/r5-b77-majoku/";
+            for(const [seed,starts,retries,quick,successful] of [
+             [1,219,163,22,2],[2,178,120,18,1]]){
+              const race=JSON.parse(fs.readFileSync(root+"seed"+seed+"-observed10.json","utf8"));
+              const b=JSON.parse(fs.readFileSync(root+"b163-terminal-reasons-by-driver.json","utf8"));
+              const q=b.cases.find(x=>x.seed===seed);
+              assert.equal(race.status,"PASS");assert(q);
+              assert.equal(race.real20ms.attackLedger.totalStarts,starts);
+              assert.equal(race.real20ms.attackLedger.longHorizonRetryAttempts.length,retries);
+              assert.equal(q.rapidRepeatAttemptStarts,quick);
+              assert.equal(q.terminalReasonCounts.SUCCESS,successful);
+              assert.equal(q.collisionStops,0);
+            }
+            console.log(JSON.stringify({phase:"R5-b168",status:"ARCHIVED_EVENT_AND_NEW_CONTRACT_PASS",
+             sourceRun:41572854132,genuineRaceSeeds:2,newTerminalFramesInArchivedRun:false,
+             physicsModified:false}));
+          '
