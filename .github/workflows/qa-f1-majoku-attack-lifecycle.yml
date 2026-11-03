@@ -71,6 +71,8 @@ jobs:
             console.log(JSON.stringify({phase:"R5-b127",status:"ARCHIVED_REAL_EVIDENCE_PASS",
               historicRunId:41550310758,newBrowserRaces:0,gamePhysicsChanged:false}));
           '
+      - name: R5-b128 summarize verified intent-to-pass conversion and interruption evidence
+        run: node scripts/qa-f1-v12-r5b128-attack-quality-evidence.mjs
       - name: Upload evidence including failures
         if: always()
         uses: actions/upload-artifact@v4
@@ -79,4 +81,5 @@ jobs:
           path: |
             artifacts/r5-b77-majoku/b122-attack-attribution.json
             artifacts/r5-b77-majoku/b123-attempt-lifecycle.json
+            artifacts/r5-b77-majoku/b128-attack-quality-evidence.json
           if-no-files-found: warn
