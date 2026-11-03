@@ -9,7 +9,7 @@ const sentinel=source.indexOf('// Target-aware diagnostics only.',start);
 const stop=source.lastIndexOf('}',sentinel);
 assert.ok(start>=0&&sentinel>start&&stop>start,'live unifiedChooseLaneV11 source must exist');
 const chooser=source.slice(start,stop+1);
-function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitDuel=false,sideBySide=false,now=1,followerSpeed=30,opponentSpeed=28,specialPower=0,opponentGap=42,lateralY=-2,laneTarget=2,pitBoundTarget=false,oldBlockerGone=false,oldBlockerPresent=false,noSafeCorridor=false,narrowCorridor=false,namedBlockedCorridor=false,priorExitGap=null,newOpponentGap=18,blockPlannerTarget=false,priorRejectedLane=null,obstacleLateral=0,obstaclePit='PIT_LANE',obstacleGap=4}={}){
+function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitDuel=false,sideBySide=false,now=1,followerSpeed=30,opponentSpeed=28,specialPower=0,opponentGap=42,lateralY=-2,laneTarget=2,pitBoundTarget=false,oldBlockerGone=false,oldBlockerPresent=false,noSafeCorridor=false,narrowCorridor=false,namedBlockedCorridor=false,priorExitGap=null,newOpponentGap=18,newOpponentY=0,blockPlannerTarget=false,priorRejectedLane=null,obstacleLateral=0,obstaclePit='PIT_LANE',obstacleGap=4}={}){
  const v={id:'me',pitRequested:pit,pitState:'TRACK',racingLineMode:'IDEAL',
   unifiedAiStateV11:sideBySide?'SIDE_BY_SIDE':exitDuel?'EXIT_DUEL':'PLAN_ATTACK',unifiedAiTargetV11:'ahead',
   unifiedIntentUntilV11:4,unifiedLaneTargetV11:laneTarget,
@@ -17,7 +17,7 @@ function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitD
   unifiedMergeBlockedV11:oldBlockerGone?['gone']:oldBlockerPresent?['obstacle']:[]};
  const me={id:'me',ref:v,pit:'TRACK',v:followerSpeed,y:lateralY};
  const target={id:'ahead',ref:{pitRequested:pitBoundTarget},pit:lost?'PIT_LANE':'TRACK',finished:false,v:opponentSpeed,y:0};
- const rows=nearestChanged?[me,{id:'new',pit:'TRACK',finished:false,v:28,y:0},target]:[me,target];
+ const rows=nearestChanged?[me,{id:'new',pit:'TRACK',finished:false,v:28,y:newOpponentY},target]:[me,target];
  if(oldBlockerPresent)rows.push({id:'obstacle',ref:{pitRequested:false},pit:obstaclePit,finished:false,v:15,y:obstacleLateral});
  let scans=0,preferredLaneSeen=null;
  const ctx={UNIFIED_ENGINE_V11:{physicalWidth:2,physicalLength:5.2,clearance:.30},
@@ -361,4 +361,21 @@ test('R5-b217 measured original held lane remains untouched when merge permits',
 test('R5-b217 expired side-by-side has no invented short pass',()=>{
  const x=evaluate({sideBySide:true,now:5,opponentGap:8,lateralY:-3,laneTarget:-3,followerSpeed:27.8,opponentSpeed:28});
  assert.equal(x.state,'FOLLOW');assert.equal(x.scans,0);
+});
+
+test('R5-b218 active physical attack retains same rival inside a 2m three-car pack tie',()=>{
+ const x=evaluate({nearestChanged:true,newOpponentGap:18,opponentGap:19,newOpponentY:0,lateralY:-3,laneTarget:-3,now:1});
+ assert.equal(x.target,'ahead');assert.equal(x.lane,-3);assert.equal(x.scans,0);
+});
+test('R5-b218 a newly nearer car occupying the attack side must become the selected physical opponent',()=>{
+ const x=evaluate({nearestChanged:true,newOpponentGap:18,opponentGap:19,newOpponentY:-3,lateralY:-3,laneTarget:-3,now:1});
+ assert.equal(x.target,'new');
+});
+test('R5-b218 a former opponent 3m behind the nearest rival loses tie-window privilege',()=>{
+ const x=evaluate({nearestChanged:true,newOpponentGap:18,opponentGap:21,newOpponentY:0,lateralY:-3,laneTarget:-3,now:1});
+ assert.equal(x.target,'new');
+});
+test('R5-b218 expired attack cannot keep an obsolete opponent in a close traffic pack',()=>{
+ const x=evaluate({nearestChanged:true,newOpponentGap:18,opponentGap:19,newOpponentY:0,lateralY:-3,laneTarget:-3,now:5});
+ assert.equal(x.target,'new');
 });
