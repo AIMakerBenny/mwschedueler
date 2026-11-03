@@ -1,0 +1,45 @@
+name: Majoku archived actual 20ms retry witnesses
+on:
+  push:
+    branches: [f1-unified-redesign-v11-20261012]
+    paths:
+      - '.github/workflows/qa-f1-majoku-exact-retry-evidence.yml'
+      - 'scripts/qa-f1-v12-r5b139-exact-retry-context.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  exact-attack-retry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Assert production physics and track source unchanged
+        run: git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js
+      - name: Check exact-time measurement contract
+        run: node --test scripts/qa-f1-v12-r5b137-attempt-context.test.mjs
+      - name: Download finished real 10-lap races
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41560567935
+          name: majoku-r5b96-focused-physical-20ms
+          github-token: ${{ github.token }}
+          path: artifacts/r5-b77-majoku
+      - name: Reconstruct original provenance and rapid retry outcomes
+        run: |
+          for phase in 129-attack-pair-retries 130-temporal-attempt-cohorts 131-disengagement-context 132-attack-trends-receipt 133-first-vs-repeat-outcomes 134-repeat-gap-sequences 135-retry-transition-matrix 136-rapid-retry-provenance 139-exact-retry-context
+          do node "scripts/qa-f1-v12-r5b$phase.mjs"; done
+      - name: Retain actual rapid-retry physical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: majoku-r5b140-exact-retry-evidence
+          path: artifacts/r5-b77-majoku/b139-exact-retry-context.json
+          if-no-files-found: warn
