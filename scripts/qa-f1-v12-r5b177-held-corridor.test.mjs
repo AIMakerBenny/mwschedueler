@@ -281,3 +281,7 @@ test('R5-b201 genuinely narrow track does not invent a blocked duel or physical 
  const x=evaluate({now:5,narrowCorridor:true});
  assert.equal(x.state,'FOLLOW');assert.equal(x.scans,1);
 });
+test('R5-b203 an unattributed unavailable pass holds current physical lane instead of returning into opponent',()=>{
+ const x=evaluate({now:5,noSafeCorridor:true,lateralY:-3,laneTarget:2});
+ assert.equal(x.state,'EXIT_DUEL');assert.equal(x.lane,-3);assert.equal(x.scans,1);
+});
