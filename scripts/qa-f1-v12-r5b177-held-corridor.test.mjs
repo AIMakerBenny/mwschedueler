@@ -9,7 +9,7 @@ const sentinel=source.indexOf('// Target-aware diagnostics only.',start);
 const stop=source.lastIndexOf('}',sentinel);
 assert.ok(start>=0&&sentinel>start&&stop>start,'live unifiedChooseLaneV11 source must exist');
 const chooser=source.slice(start,stop+1);
-function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitDuel=false,sideBySide=false,now=1,followerSpeed=30,opponentSpeed=28,specialPower=0,opponentGap=42,lateralY=-2,laneTarget=2,pitBoundTarget=false,oldBlockerGone=false,oldBlockerPresent=false,noSafeCorridor=false,narrowCorridor=false,namedBlockedCorridor=false,priorExitGap=null}={}){
+function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitDuel=false,sideBySide=false,now=1,followerSpeed=30,opponentSpeed=28,specialPower=0,opponentGap=42,lateralY=-2,laneTarget=2,pitBoundTarget=false,oldBlockerGone=false,oldBlockerPresent=false,noSafeCorridor=false,narrowCorridor=false,namedBlockedCorridor=false,priorExitGap=null,newOpponentGap=18}={}){
  const v={id:'me',pitRequested:pit,pitState:'TRACK',racingLineMode:'IDEAL',
   unifiedAiStateV11:sideBySide?'SIDE_BY_SIDE':exitDuel?'EXIT_DUEL':'PLAN_ATTACK',unifiedAiTargetV11:'ahead',
   unifiedIntentUntilV11:4,unifiedLaneTargetV11:laneTarget,
@@ -23,7 +23,7 @@ function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitD
  const ctx={UNIFIED_ENGINE_V11:{physicalWidth:2,physicalLength:5.2,clearance:.30},
   unifiedClampV11:(x,a,b)=>Math.min(b,Math.max(a,x)),
   unifiedIdealLaneV11:()=>0,unifiedPitAvoidanceV12:()=>null,
-  unifiedGapV11:(a,b)=>b.id==='new'?18:b.id==='ahead'?opponentGap:b.id==='obstacle'?4:0,
+  unifiedGapV11:(a,b)=>b.id==='new'?newOpponentGap:b.id==='ahead'?opponentGap:b.id==='obstacle'?4:0,
   unifiedMergeTargetV11:(row,y)=>blocked&&y===2?{target:row.y,blocked:['obstacle']}:{target:y,blocked:[]},
   unifiedAttackCorridorV12:(row,peer,grid,width,preferredLane)=>{
    scans++;preferredLaneSeen=preferredLane;
@@ -313,4 +313,17 @@ test('R5-b206 real physical side-by-side contact survives pre-attack distance ch
 test('R5-b206 physically prepared but unavailable corridor still enters protected EXIT_DUEL',()=>{
  const x=evaluate({now:5,opponentGap:9,lateralY:-3,followerSpeed:28.5,opponentSpeed:28,noSafeCorridor:true});
  assert.equal(x.state,'EXIT_DUEL');assert.equal(x.scans,1);assert.equal(x.lane,-3);
+});
+
+test('R5-b207 existing same-opponent physically separated 8m pass retains validated side',()=>{
+ const x=evaluate({now:5,opponentGap:8,lateralY:-3,laneTarget:-3,followerSpeed:28.5,opponentSpeed:28});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);assert.equal(x.lane,-3);
+});
+test('R5-b207 absent previously authored lane does not create short-pass exemption',()=>{
+ const x=evaluate({now:5,opponentGap:8,lateralY:-3,laneTarget:null,followerSpeed:28.5,opponentSpeed:28});
+ assert.equal(x.state,'FOLLOW');assert.equal(x.scans,0);
+});
+test('R5-b207 a nearer new opponent does not inherit prior short-pass corridor',()=>{
+ const x=evaluate({now:5,nearestChanged:true,newOpponentGap:6,opponentGap:8,lateralY:-3,laneTarget:-3,followerSpeed:28.5,opponentSpeed:28});
+ assert.equal(x.target,'new');assert.equal(x.scans,0);
 });

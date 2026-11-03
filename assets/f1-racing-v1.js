@@ -11867,7 +11867,17 @@ function unifiedChooseLaneV11(row,rows,now,width){
   // instead of recording an impossible fresh EXIT_DUEL. This does not
   // change physics, speed or the pre-existing attack distance requirement.
   const preparedToChangeLaneV12=gap>Math.max(8,row.v*.12);
-  if(attack&&preparedToChangeLaneV12){
+  // R5-b207: retain an already physically separated, authored same-target
+  // pass in the close-contact region. This does not authorize a NEW lane
+  // merge nor a switch to another opponent. Every possible target still
+  // passes through the unchanged attack planner and swept-body solver.
+  const safelyCommittedShortPassV12=!preparedToChangeLaneV12&&
+   v.unifiedAiStateV11==='PLAN_ATTACK'&&previousOpponentV12===String(ahead.id)&&
+   Number.isFinite(previousLaneV12)&&
+   Math.abs(row.y-ahead.y)>=unifiedLateralClearanceV11(row,ahead)&&
+   Math.abs(previousLaneV12-ahead.y)>=unifiedLateralClearanceV11(row,ahead)&&
+   gap>UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance;
+  if(attack&&(preparedToChangeLaneV12||safelyCommittedShortPassV12)){
    corridor=unifiedAttackCorridorV12(row,ahead,rows,width,preferredAttackLaneV12);
    // R5-b202/b206: the B199 unprepared near-pass exception is gone.
    // The minimum distance is checked before this corridor scan, and the
