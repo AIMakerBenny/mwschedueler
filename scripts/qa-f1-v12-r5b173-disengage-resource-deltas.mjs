@@ -73,7 +73,7 @@ for(const seed of [1,2]){
   }
   const sign=(field,label,tol=1e-8)=>{
    const v=diffs[field];
-   if(v===null){group[label+'Unknown']++;return}
+   if(v===null){group[label+'Unknown']=(group[label+'Unknown']||0)+1;return}
    if(v>tol)group[label+'Rise']++;
    else if(v< -tol)group[label+'Fall']++;
    else group[label+'NoChange']++;
