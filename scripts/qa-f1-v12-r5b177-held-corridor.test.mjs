@@ -360,36 +360,20 @@ test('R5-b210 held side that remains laterally clear is not unnecessarily replan
  const x=evaluate({now:1,opponentGap:16,lateralY:-3,laneTarget:-3,followerSpeed:30,opponentSpeed:28});
  assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,0);assert.equal(x.lane,-3);
 });
-test('R5-b211 physically separated close FOLLOW holds its actual lane rather than merging onto the opponent',()=>{
- const x=evaluate({now:5,opponentGap:14,lateralY:-3,laneTarget:2,followerSpeed:27,opponentSpeed:28});
- assert.equal(x.state,'FOLLOW');assert.equal(x.lane,-3);assert.equal(x.scans,0);
-});
-test('R5-b211 a distant slower follower still uses existing ideal-line guidance',()=>{
- const x=evaluate({now:5,opponentGap:42,lateralY:-3,laneTarget:2,followerSpeed:27,opponentSpeed:28});
- assert.equal(x.state,'FOLLOW');assert.equal(x.lane,0);assert.equal(x.scans,0);
-});
-test('R5-b211 a car without genuine lateral separation is not granted a passing-lane hold',()=>{
- const x=evaluate({now:5,opponentGap:14,lateralY:-1,laneTarget:2,followerSpeed:27,opponentSpeed:28});
- assert.equal(x.state,'FOLLOW');assert.equal(x.lane,0);
-});
 
-test('R5-b212 rejected real attack merge remembers its original physically blocked side',()=>{
- const x=evaluate({now:5,blockPlannerTarget:true,lateralY:-2,followerSpeed:30,opponentSpeed:28});
- assert.equal(x.state,'EXIT_DUEL');assert.equal(x.lane,-2);assert.equal(x.rejectedLane,-3);
- assert.deepEqual(x.blockedIDs,['obstacle']);
-});
-test('R5-b212 no available attack corridor does not invent a rejected lane',()=>{
- const x=evaluate({now:5,noSafeCorridor:true});
- assert.equal(x.state,'EXIT_DUEL');assert.equal(x.rejectedLane,null);
-});
-test('R5-b212 a fully accepted real attack has no rejected lane marker',()=>{
- const x=evaluate({now:5});
- assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.rejectedLane,null);
-});
 
 
 
 test('R5-b215 keeps nearby named blocker cooldown without lateral-only release',()=>{
  const x=evaluate({exitDuel:true,now:1,oldBlockerPresent:true,priorRejectedLane:-3,obstacleLateral:3,obstaclePit:'TRACK',obstacleGap:-4});
  assert.equal(x.state,'EXIT_DUEL');assert.equal(x.scans,0);
+});
+
+test('R5-b216 restores standard slower follower ideal-lane choice',()=>{
+ const x=evaluate({now:5,opponentGap:14,lateralY:-3,followerSpeed:27,opponentSpeed:28});
+ assert.equal(x.state,'FOLLOW');assert.equal(x.lane,0);
+});
+test('R5-b216 ordinary rejected attack still respects original blocked-lane cooldown',()=>{
+ const x=evaluate({now:5,blockPlannerTarget:true,lateralY:-2,followerSpeed:30,opponentSpeed:28});
+ assert.equal(x.state,'EXIT_DUEL');assert.equal(x.lane,-2);assert.deepEqual(x.blockedIDs,['obstacle']);
 });
