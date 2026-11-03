@@ -251,8 +251,12 @@ test('R5-b198 do not grant old attack hysteresis to new opponent after target sw
  assert.equal(other.state,'FOLLOW');assert.equal(other.target,'new');assert.equal(other.scans,0);
 });
 
-test('R5-b199 already separated 8m passing opportunity uses verified safe corridor',()=>{
+test('R5-b202 near-contact 8m attack does not bypass original lateral-preparation floor',()=>{
  const x=evaluate({now:5,opponentGap:8,lateralY:-3,followerSpeed:28.5,opponentSpeed:28});
+ assert.equal(x.state,'FOLLOW');assert.equal(x.scans,1);
+});
+test('R5-b202 still permits a separated prepared attack just past the physical preparation floor',()=>{
+ const x=evaluate({now:5,opponentGap:9,lateralY:-3,followerSpeed:28.5,opponentSpeed:28});
  assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);
 });
 test('R5-b199 unseparated near opponent is not forced into an unsafe passing plan',()=>{

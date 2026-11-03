@@ -11854,14 +11854,12 @@ function unifiedChooseLaneV11(row,rows,now,width){
     (closureViableV12||specialAttackV12||existingCloseAttackV12||separatedExistingPassV12);
   if(attack){
    corridor=unifiedAttackCorridorV12(row,ahead,rows,width,preferredAttackLaneV12);
-   // R5-b199: the broad 8m preparatory distance must not forbid an
-   // already laterally separated, physically safe short pass. The opponent
-   // still needs more than one chassis length of longitudinal clearance,
-   // and the selected path still passes the unchanged full merge solver.
-   const alreadySeparatedV12=Math.abs(row.y-ahead.y)>=unifiedLateralClearanceV11(row,ahead);
-   const closePhysicalPassV12=alreadySeparatedV12&&
-     gap>UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance;
-   if(corridor.target!==null&&(gap>Math.max(8,row.v*.12)||closePhysicalPassV12)){
+   // R5-b202: undo the R5-b199 short-gap attack exception. Real 10-lap
+   // racing fell from 104 passes / 566 reorders at b198 to 95 / 539 at
+   // b199. Lateral separation alone is not sufficient preparation for a
+   // new near-contact turn; preserve the original 8m / speed-scaled
+   // minimum while all existing corridor and swept-body guards remain.
+   if(corridor.target!==null&&gap>Math.max(8,row.v*.12)){
     target=corridor.target;state='PLAN_ATTACK';
    }else if(corridor.reason==='BLOCKED'||corridor.blocked.length)
     // R5-b201: even when no *named* blocker exists, a physically
