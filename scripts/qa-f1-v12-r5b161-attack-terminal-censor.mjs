@@ -34,6 +34,7 @@ for(const seed of [1,2]){
  }
  const counts=Object.fromEntries(terminals.map(t=>[t,0]));
  const rows=[];let lateTargetChangePreserved=0,missingEndEvent=0;
+ let interruptedCrossingsWithoutConfirmation=0;
  for(const start of repeated){
   const events=byId.get(start.attemptId),tr=byTrace.get(start.attemptId);
   assert(events?.length&&events[0].type==='START');
@@ -49,9 +50,16 @@ for(const seed of [1,2]){
    lateTargetChangePreserved+=Number(observedChanges.some(e=>
     e.ms>=crossing.ms&&e.ms<success.ms));
   }else{
-   assert(!crossing,'CROSSING without confirmed terminal SUCCESS requires separate evaluation');
+   // A physical threshold crossing can be cancelled by a PIT or other
+   // terminal interruption before the 500ms success confirmation period.
+   // Engine SUCCESS, not CROSSING alone, is the only confirmed pass.
    terminal=events.find(e=>['DISENGAGED_UNCONFIRMED','TARGET_CHANGED','PIT_INTERRUPTED'].includes(e.type))||null;
    type=terminal?.type||'ACTIVE_AT_RACE_FINISH';
+   if(crossing){
+    assert(terminal,'Unconfirmed crossing must have a real terminating event');
+    assert(terminal.ms>=crossing.ms);
+    interruptedCrossingsWithoutConfirmation++;
+   }
   }
   counts[type]++;
   const endMs=terminal?.ms??null;
@@ -70,7 +78,9 @@ for(const seed of [1,2]){
   rows.push({attemptId:start.attemptId,driver:start.driver,target:start.target,
    startMs:start.ms,terminalType:type,terminalMs:endMs,
    durationMs:endMs===null?null:endMs-start.ms,
-   confirmedPhysicalCrossingMs:crossing?.ms??null,
+   physicalCrossingEventMs:crossing?.ms??null,
+   engineConfirmedPhysicalPass:type==='SUCCESS',
+   unconfirmedCrossingBeforeInterrupt:Boolean(crossing&&type!=='SUCCESS'),
    offsetStatus,safeLaneProven:false});
  }
  assert.equal(rows.length,repeated.length);
@@ -85,11 +95,13 @@ for(const seed of [1,2]){
  const c={seed,retryStarts:repeated.length,terminalCounts:counts,
   unresolvedTerminalEvents:missingEndEvent,
   lateTargetChangesAfterCrossingPreserved:lateTargetChangePreserved,
+  unconfirmedPhysicalCrossingsInterrupted:interruptedCrossingsWithoutConfirmation,
   quickRetries:quickIds.size,rows,physicalPasses:race.physics.passes,collisionStops:0};
  cases.push(c);
  console.log(JSON.stringify({phase:'R5-b161',status:'CASE_PASS',seed,
   retries:c.retryStarts,terminalCounts:counts,
-  preservedLateTargetChanges:lateTargetChangePreserved}));
+  preservedLateTargetChanges:lateTargetChangePreserved,
+  crossingInterrupts:interruptedCrossingsWithoutConfirmation}));
 }
 const out={phase:'R5-b161',status:'PASS',track:'majoku-ring-v1',
  sourceBrowserRun:process.env.MWS_F1_RACE_ARTIFACT_RUN_ID?
