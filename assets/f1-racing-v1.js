@@ -11863,7 +11863,12 @@ function unifiedChooseLaneV11(row,rows,now,width){
      gap>UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance;
    if(corridor.target!==null&&(gap>Math.max(8,row.v*.12)||closePhysicalPassV12)){
     target=corridor.target;state='PLAN_ATTACK';
-   }else if(corridor.blocked.length)state='EXIT_DUEL';
+   }else if(corridor.reason==='BLOCKED'||corridor.blocked.length)
+    // R5-b201: even when no *named* blocker exists, a physically
+    // unattainable corridor cannot be restarted as a fresh attack every
+    // 20ms. The existing EXIT_DUEL cooldown handles its missing lane.
+    // NARROW_TRACK remains FOLLOW rather than inventing an attack.
+    state='EXIT_DUEL';
   }
   // R5-b183: lateral separation alone at 20m is not a real side-by-side
   // contest. Reuse the actual physical body length and safety clearance
