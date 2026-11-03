@@ -9,18 +9,20 @@ const sentinel=source.indexOf('// Target-aware diagnostics only.',start);
 const stop=source.lastIndexOf('}',sentinel);
 assert.ok(start>=0&&sentinel>start&&stop>start,'live unifiedChooseLaneV11 source must exist');
 const chooser=source.slice(start,stop+1);
-function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitDuel=false,sideBySide=false,now=1,followerSpeed=30,opponentSpeed=28,specialPower=0,opponentGap=42,lateralY=-2,laneTarget=2,pitBoundTarget=false}={}){
+function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitDuel=false,sideBySide=false,now=1,followerSpeed=30,opponentSpeed=28,specialPower=0,opponentGap=42,lateralY=-2,laneTarget=2,pitBoundTarget=false,oldBlockerGone=false,oldBlockerPresent=false}={}){
  const v={id:'me',pitRequested:pit,pitState:'TRACK',racingLineMode:'IDEAL',
   unifiedAiStateV11:sideBySide?'SIDE_BY_SIDE':exitDuel?'EXIT_DUEL':'PLAN_ATTACK',unifiedAiTargetV11:'ahead',
-  unifiedIntentUntilV11:4,unifiedLaneTargetV11:laneTarget};
+  unifiedIntentUntilV11:4,unifiedLaneTargetV11:laneTarget,
+  unifiedMergeBlockedV11:oldBlockerGone?['gone']:oldBlockerPresent?['obstacle']:[]};
  const me={id:'me',ref:v,pit:'TRACK',v:followerSpeed,y:lateralY};
  const target={id:'ahead',ref:{pitRequested:pitBoundTarget},pit:lost?'PIT_LANE':'TRACK',finished:false,v:opponentSpeed,y:0};
  const rows=nearestChanged?[me,{id:'new',pit:'TRACK',finished:false,v:28,y:0},target]:[me,target];
+ if(oldBlockerPresent)rows.push({id:'obstacle',pit:'PIT_LANE',finished:false,v:15,y:0});
  let scans=0,preferredLaneSeen=null;
  const ctx={UNIFIED_ENGINE_V11:{physicalWidth:2,physicalLength:5.2,clearance:.30},
   unifiedClampV11:(x,a,b)=>Math.min(b,Math.max(a,x)),
   unifiedIdealLaneV11:()=>0,unifiedPitAvoidanceV12:()=>null,
-  unifiedGapV11:(a,b)=>b.id==='new'?18:b.id==='ahead'?opponentGap:0,
+  unifiedGapV11:(a,b)=>b.id==='new'?18:b.id==='ahead'?opponentGap:b.id==='obstacle'?4:0,
   unifiedMergeTargetV11:(row,y)=>blocked&&y===2?{target:row.y,blocked:['obstacle']}:{target:y,blocked:[]},
   unifiedAttackCorridorV12:(row,peer,grid,width,preferredLane)=>{scans++;preferredLaneSeen=preferredLane;return {target:-3,candidates:4,blocked:[]}}, 
   unifiedRatingV11:()=>0,unifiedSkillPowerV11:()=>specialPower,unifiedLateralClearanceV11:()=>2.5,
@@ -213,4 +215,13 @@ test('R5-b194 42m and only 0.1m/s closing is not a sustainable attack',()=>{
 test('R5-b194 within 9m immediate physical contest allows small-speed continuity at intent expiry',()=>{
  const x=evaluate({now:5,opponentGap:9,followerSpeed:27.95,opponentSpeed:28});
  assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);
+});
+
+test('R5-b195 vanished collision blocker immediately releases stale EXIT_DUEL to fresh safe scan',()=>{
+ const x=evaluate({exitDuel:true,oldBlockerGone:true});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);assert.equal(x.lane,-3);
+});
+test('R5-b195 still-physical blocker preserves existing EXIT_DUEL cooldown',()=>{
+ const x=evaluate({exitDuel:true,oldBlockerPresent:true});
+ assert.equal(x.state,'EXIT_DUEL');assert.equal(x.scans,0);assert.equal(x.lane,2);
 });

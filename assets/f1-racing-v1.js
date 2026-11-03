@@ -11747,9 +11747,19 @@ function unifiedChooseLaneV11(row,rows,now,width){
    v.unifiedAiStateV11==='EXIT_DUEL'&&now<(Number(v.unifiedIntentUntilV11)||0)){
   const rejectedLaneV12=Number.isFinite(v.unifiedLaneTargetV11)?v.unifiedLaneTargetV11:row.y;
   const rejectedHold=unifiedMergeTargetV11(row,unifiedClampV11(rejectedLaneV12,-allowed,allowed),rows);
-  v.unifiedMergeBlockedV11=rejectedHold.blocked;
-  v.unifiedLaneTargetV11=rejectedHold.target;
-  return rejectedHold.target;
+  // R5-b195: the original blocking traffic may have exited the active
+  // 125m collision horizon. Release only such obsolete EXIT_DUEL holds and
+  // re-enter the unchanged safe-corridor planner on this tick. A live blocker
+  // still holds the original 700ms cooling interval.
+  const priorBlockersV12=Array.isArray(v.unifiedMergeBlockedV11)?v.unifiedMergeBlockedV11:[];
+  const clearedBlockersV12=priorBlockersV12.length>0&&priorBlockersV12.every(id=>
+    !rows.some(p=>String(p.id)===String(id)&&!p.finished&&
+      Math.abs(unifiedGapV11(row,p))<125));
+  if(!clearedBlockersV12){
+   v.unifiedMergeBlockedV11=rejectedHold.blocked;
+   v.unifiedLaneTargetV11=rejectedHold.target;
+   return rejectedHold.target;
+  }
  }
  // R5-b186: never keep a stale planned pursuit at a sustained relative
  // speed deficit. When the planned target pulls away, FOLLOW rather than
