@@ -11766,9 +11766,16 @@ function unifiedChooseLaneV11(row,rows,now,width){
   // allowance repeatedly committed slower cars to unattainable pursuits.
   // Existing committed attacks retain their R5-b177/R5-b178 intent window.
   const closingForAttackV12=row.v-ahead.v;
+  // R5-b184: a distant 100m target with only 0.3m/s closure would take
+  // hundreds of seconds to catch at current relative pace. Keep FOLLOW
+  // rather than declaring an attack. At <=60m retain the existing near
+  // battle entry, and preserve the independently triggered special ability.
+  // This is AI selection only; it never adds power or bypasses collision guards.
+  const closureViableV12=closingForAttackV12>Math.max(.08,.18-.08*Math.max(0,skill))&&
+    (gap<=60||gap/closingForAttackV12<=30);
+  const specialAttackV12=unifiedSkillPowerV11(v,now*1000,row.pit)>0;
   const attack=gap<135+15*Math.max(0,aggression)+15*Math.max(0,skill)&&
-   (closingForAttackV12>Math.max(.08,.18-.08*Math.max(0,skill))||
-    unifiedSkillPowerV11(v,now*1000,row.pit)>0);
+    (closureViableV12||specialAttackV12);
   if(attack){
    corridor=unifiedAttackCorridorV12(row,ahead,rows,width,preferredAttackLaneV12);
    if(corridor.target!==null&&gap>Math.max(8,row.v*.12)){

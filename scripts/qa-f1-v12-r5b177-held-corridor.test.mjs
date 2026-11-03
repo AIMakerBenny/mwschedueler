@@ -120,3 +120,14 @@ test('R5-b183 true physical adjacency still permits side-by-side racing',()=>{
  const x=evaluate({now:5,opponentGap:7,lateralY:-3});
  assert.equal(x.state,'SIDE_BY_SIDE');assert.equal(x.target,'ahead');
 });
+
+test('R5-b184 slow approach at a distant target remains FOLLOW rather than speculative PLAN_ATTACK',()=>{
+ const x=evaluate({now:5,opponentGap:100,followerSpeed:30.5,opponentSpeed:30});
+ assert.equal(x.state,'FOLLOW');assert.equal(x.scans,0);
+});
+test('R5-b184 real distant closure, existing near duel, and special each remain eligible',()=>{
+ const closing=evaluate({now:5,opponentGap:100,followerSpeed:35,opponentSpeed:30});
+ const near=evaluate({now:5,opponentGap:42,followerSpeed:30,opponentSpeed:28});
+ const special=evaluate({now:5,opponentGap:100,followerSpeed:29,opponentSpeed:30,specialPower:300000});
+ for(const x of [closing,near,special]){assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);}
+});
