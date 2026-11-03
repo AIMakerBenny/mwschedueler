@@ -11769,7 +11769,15 @@ function unifiedChooseLaneV11(row,rows,now,width){
    // track. Keep the current lateral chassis position unless an actual
    // numeric pass corridor is present, including a lawful target of zero.
    const crossingLaneV12=Number.isFinite(v.unifiedLaneTargetV11)?v.unifiedLaneTargetV11:row.y;
-   const kept=unifiedMergeTargetV11(row,unifiedClampV11(crossingLaneV12,-allowed,allowed),rows);
+   // R5-b220: while the opponent is still AHEAD within body length,
+   // a once-authored crossing target can now coincide with its chassis.
+   // Hold our already-separated physical lane until the actual crossing
+   // instead of steering across its occupied lane. The original merge
+   // and swept-rectangle guards remain in control.
+   const occupiedCrossingLaneV12=signedGapV12>0&&
+    Math.abs(crossingLaneV12-crossingPeerV12.y)<unifiedLateralClearanceV11(row,crossingPeerV12);
+   const protectedCrossingLaneV12=occupiedCrossingLaneV12?row.y:crossingLaneV12;
+   const kept=unifiedMergeTargetV11(row,unifiedClampV11(protectedCrossingLaneV12,-allowed,allowed),rows);
    if(!kept.blocked.length){
     v.unifiedMergeBlockedV11=[];v.unifiedLaneTargetV11=kept.target;return kept.target;
    }

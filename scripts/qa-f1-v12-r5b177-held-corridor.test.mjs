@@ -396,3 +396,16 @@ test('R5-b219 extremely close physical contact retains nearest opponent and norm
  const x=evaluate({nearestChanged:true,newOpponentGap:6,newOpponentY:3,opponentGap:8,lateralY:-1,laneTarget:2,now:5});
  assert.equal(x.target,'new');
 });
+
+test('R5-b220 crossing side-by-side with rival still ahead holds actual safe lane instead of steering into rival',()=>{
+ const x=evaluate({sideBySide:true,now:1,opponentGap:2,lateralY:-3,laneTarget:0});
+ assert.equal(x.state,'SIDE_BY_SIDE');assert.equal(x.lane,-3);assert.equal(x.scans,0);
+});
+test('R5-b220 already passed rival behind retains pre-existing authored zero center target behavior',()=>{
+ const x=evaluate({sideBySide:true,now:1,opponentGap:-2,lateralY:-3,laneTarget:0});
+ assert.equal(x.state,'SIDE_BY_SIDE');assert.equal(x.lane,0);assert.equal(x.scans,0);
+});
+test('R5-b220 crossing ahead with a still-clear authored passing lane keeps it',()=>{
+ const x=evaluate({sideBySide:true,now:1,opponentGap:2,lateralY:-3,laneTarget:-3});
+ assert.equal(x.state,'SIDE_BY_SIDE');assert.equal(x.lane,-3);assert.equal(x.scans,0);
+});
