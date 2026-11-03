@@ -359,3 +359,15 @@ test('R5-b210 held side that remains laterally clear is not unnecessarily replan
  const x=evaluate({now:1,opponentGap:16,lateralY:-3,laneTarget:-3,followerSpeed:30,opponentSpeed:28});
  assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,0);assert.equal(x.lane,-3);
 });
+test('R5-b211 physically separated close FOLLOW holds its actual lane rather than merging onto the opponent',()=>{
+ const x=evaluate({now:5,opponentGap:14,lateralY:-3,laneTarget:2,followerSpeed:27,opponentSpeed:28});
+ assert.equal(x.state,'FOLLOW');assert.equal(x.lane,-3);assert.equal(x.scans,0);
+});
+test('R5-b211 a distant slower follower still uses existing ideal-line guidance',()=>{
+ const x=evaluate({now:5,opponentGap:42,lateralY:-3,laneTarget:2,followerSpeed:27,opponentSpeed:28});
+ assert.equal(x.state,'FOLLOW');assert.equal(x.lane,0);assert.equal(x.scans,0);
+});
+test('R5-b211 a car without genuine lateral separation is not granted a passing-lane hold',()=>{
+ const x=evaluate({now:5,opponentGap:14,lateralY:-1,laneTarget:2,followerSpeed:27,opponentSpeed:28});
+ assert.equal(x.state,'FOLLOW');assert.equal(x.lane,0);
+});

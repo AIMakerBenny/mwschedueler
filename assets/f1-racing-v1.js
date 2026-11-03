@@ -11917,6 +11917,18 @@ function unifiedChooseLaneV11(row,rows,now,width){
     // NARROW_TRACK remains FOLLOW rather than inventing an attack.
     state='EXIT_DUEL';
   }
+  // R5-b211: if an on-track FOLLOW car has ALREADY achieved a
+  // safe lateral separation near the same opponent, avoid steering it
+  // back onto that opponent's occupied ideal line before the physical
+  // gap clears. This is lane selection only and cannot override the
+  // unchanged merge, swept-body, traffic braking or pit safety solvers.
+  const lateralSeparationV12=unifiedLateralClearanceV11(row,ahead);
+  const closeSeparatedFollowV12=state==='FOLLOW'&&
+   gap>UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance&&
+   gap<=Math.max(18,row.v*.6)&&
+   Math.abs(row.y-ahead.y)>=lateralSeparationV12&&
+   Math.abs(ideal-ahead.y)<lateralSeparationV12;
+  if(closeSeparatedFollowV12)target=row.y;
   // R5-b183: lateral separation alone at 20m is not a real side-by-side
   // contest. Reuse the actual physical body length and safety clearance
   // before advancing this same AI state, while keeping the 20ms solver intact.
