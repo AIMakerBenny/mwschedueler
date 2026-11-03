@@ -234,3 +234,14 @@ test('R5-b196 unblocked ongoing PLAN_ATTACK still preserves valid same-opponent 
  const x=evaluate({now:5,laneTarget:-3});
  assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);assert.equal(x.preferredLane,-3);
 });
+
+test('R5-b198 existing laterally separate near pass survives small speed deficit',()=>{
+ const x=evaluate({now:5,opponentGap:18,followerSpeed:27.8,opponentSpeed:28,lateralY:-3});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.target,'ahead');assert.equal(x.scans,1);
+});
+test('R5-b198 do not grant old attack hysteresis to new opponent after target switch',()=>{
+ const blocked=evaluate({now:5,opponentGap:18,followerSpeed:27.8,opponentSpeed:28,lateralY:-1});
+ const other=evaluate({now:5,nearestChanged:true,opponentGap:42,followerSpeed:27.8,opponentSpeed:28,lateralY:-3});
+ assert.equal(blocked.state,'FOLLOW');assert.equal(blocked.scans,0);
+ assert.equal(other.state,'FOLLOW');assert.equal(other.target,'new');assert.equal(other.scans,0);
+});

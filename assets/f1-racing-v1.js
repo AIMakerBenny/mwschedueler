@@ -11765,7 +11765,11 @@ function unifiedChooseLaneV11(row,rows,now,width){
  // speed deficit. When the planned target pulls away, FOLLOW rather than
  // blindly hold a target for the rest of its 700ms timer. True body adjacency
  // and a genuinely active special retain their existing passing protection.
- const heldPlanViableV12=!ahead||v.unifiedAiStateV11!=='PLAN_ATTACK'||
+ const nearbySeparatedHoldV12=ahead&&v.unifiedAiStateV11==='PLAN_ATTACK'&&
+   String(v.unifiedAiTargetV11||'')===String(ahead.id)&&
+   unifiedGapV11(row,ahead)<=25&&row.v-ahead.v>=-.30&&
+   Math.abs(row.y-ahead.y)>=unifiedLateralClearanceV11(row,ahead);
+ const heldPlanViableV12=!ahead||v.unifiedAiStateV11!=='PLAN_ATTACK'||nearbySeparatedHoldV12||
    row.v-ahead.v>=-.15||
    unifiedSkillPowerV11(v,now*1000,row.pit)>0||
    unifiedGapV11(row,ahead)<=UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance+2;
@@ -11827,11 +11831,19 @@ function unifiedChooseLaneV11(row,rows,now,width){
   // leave the unchanged physical merge/sweep checks authoritative.
   const attackContactV12=UNIFIED_ENGINE_V11.physicalLength+
     UNIFIED_ENGINE_V11.clearance+5;
+  // R5-b198: the old selected opponent is captured before assigning
+  // v.unifiedAiTargetV11 to the newly nearest racer. Never mistake a
+  // different opponent for a continuing attack, even if already separated.
+  // Preserve the lateral safety and 700ms physics-authorized lane guard.
+  const separatedExistingPassV12=v.unifiedAiStateV11==='PLAN_ATTACK'&&
+    previousOpponentV12===String(ahead.id)&&gap<=25&&
+    closingForAttackV12>=-.30&&
+    Math.abs(row.y-ahead.y)>=unifiedLateralClearanceV11(row,ahead);
   const existingCloseAttackV12=v.unifiedAiStateV11==='PLAN_ATTACK'&&
-    String(v.unifiedAiTargetV11||'')===String(ahead.id)&&
+    previousOpponentV12===String(ahead.id)&&
     gap<=attackContactV12&&closingForAttackV12>=-.08;
   const attack=gap<135+15*Math.max(0,aggression)+15*Math.max(0,skill)&&
-    (closureViableV12||specialAttackV12||existingCloseAttackV12);
+    (closureViableV12||specialAttackV12||existingCloseAttackV12||separatedExistingPassV12);
   if(attack){
    corridor=unifiedAttackCorridorV12(row,ahead,rows,width,preferredAttackLaneV12);
    if(corridor.target!==null&&gap>Math.max(8,row.v*.12)){
