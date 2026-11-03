@@ -11739,6 +11739,11 @@ function unifiedChooseLaneV11(row,rows,now,width){
   }
  }
 
+ // R5-b214: local to this decision tick. Only a lane that has JUST
+ // passed the original merge clearance after a real named blocker moved
+ // may be reused as a side preference. Never reward an expired or
+ // still-rejected attack corridor.
+ let newlyClearedRejectedLaneV12=null;
  // R5-b178: an EXIT_DUEL is an already rejected lane, not a fresh
  // attack every 20ms. Honor the existing 700ms intent expiry before trying
  // the same opponent again; never preserve it if the opponent or pit state
@@ -11783,6 +11788,7 @@ function unifiedChooseLaneV11(row,rows,now,width){
   const physicallyReleasedV12=Boolean(releasedMergeV12&&
    !releasedMergeV12.blocked.length&&
    Math.abs(releasedMergeV12.target-releasedLaneV12)<1e-7);
+  if(physicallyReleasedV12)newlyClearedRejectedLaneV12=releasedLaneV12;
   if(!clearedBlockersV12&&!gapWidenedV12&&!physicallyReleasedV12){
    // R5-b208: holding today's current chassis lane can report no merge
    // obstacle despite the named car that rejected the previous attack
@@ -11853,9 +11859,13 @@ function unifiedChooseLaneV11(row,rows,now,width){
  // R5-b196: EXIT_DUEL means the previous lateral plan was rejected by
  // a physical merge. Never bias the subsequent newly-cleared plan toward
  // that rejected side; continuity is reserved for live safe attacks only.
- const preferredAttackLaneV12=ahead&&String(ahead.id)===previousOpponentV12&&
+ const originalSameTargetPreferenceV12=ahead&&String(ahead.id)===previousOpponentV12&&
   ['PLAN_ATTACK','SIDE_BY_SIDE'].includes(String(v.unifiedAiStateV11||''))&&
   Number.isFinite(previousLaneV12)?previousLaneV12:null;
+ // R5-b214: reuse only the lane explicitly verified clear this tick.
+ // All options still pass the unchanged projected safety and merge tests.
+ const preferredAttackLaneV12=Number.isFinite(newlyClearedRejectedLaneV12)?
+  newlyClearedRejectedLaneV12:originalSameTargetPreferenceV12;
  v.unifiedAiTargetV11=row.pit==='TRACK'&&!v.pitRequested&&ahead?String(ahead.id):'';
  let target=ideal,state='CRUISE',corridor=null;
  if(ahead){
