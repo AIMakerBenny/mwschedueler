@@ -254,3 +254,12 @@ test('R5-b199 unseparated near opponent is not forced into an unsafe passing pla
  const x=evaluate({now:5,opponentGap:8,lateralY:-1,followerSpeed:28.5,opponentSpeed:28});
  assert.equal(x.state,'FOLLOW');assert.equal(x.scans,1);
 });
+
+test('R5-b200 authored same-lane no-op attack triggers safe corridor replanning',()=>{
+ const x=evaluate({now:1,opponentGap:42,lateralY:-1,laneTarget:-1,followerSpeed:30,opponentSpeed:28});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);assert.equal(x.lane,-3);
+});
+test('R5-b200 actual separated car keeps its authored safe lane',()=>{
+ const x=evaluate({now:1,opponentGap:42,lateralY:-3,laneTarget:-3,followerSpeed:30,opponentSpeed:28});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,0);assert.equal(x.lane,-3);
+});

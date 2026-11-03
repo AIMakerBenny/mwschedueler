@@ -11785,7 +11785,15 @@ function unifiedChooseLaneV11(row,rows,now,width){
   // Stay on the actual physical lane; an authored 0 is still a valid center.
   const plannedLaneV12=Number.isFinite(v.unifiedLaneTargetV11)?v.unifiedLaneTargetV11:row.y;
   const held=unifiedMergeTargetV11(row,unifiedClampV11(plannedLaneV12,-allowed,allowed),rows);
-  if(!held.blocked.length){
+  // R5-b200: a valid authored PLAN_ATTACK target already at the
+  // current same-lane position is a no-op. Find a genuinely separated
+  // physical path now, but do not invent a prior lane when it was unset.
+  const authoredHeldLaneV12=Number.isFinite(v.unifiedLaneTargetV11);
+  const committedSideV12=Math.abs(row.y-ahead.y)>=unifiedLateralClearanceV11(row,ahead);
+  const actuallyMovingV12=Math.abs(held.target-row.y)>.20;
+  const invalidNoopAttackV12=v.unifiedAiStateV11==='PLAN_ATTACK'&&authoredHeldLaneV12&&
+    !committedSideV12&&!actuallyMovingV12;
+  if(!held.blocked.length&&!invalidNoopAttackV12){
    v.unifiedMergeBlockedV11=[];v.unifiedLaneTargetV11=held.target;return held.target;
   }
   // The original merge guard rejected this physical corridor. Preserve that
