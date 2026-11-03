@@ -11747,7 +11747,7 @@ function unifiedChooseLaneV11(row,rows,now,width){
  // speed deficit. When the planned target pulls away, FOLLOW rather than
  // blindly hold a target for the rest of its 700ms timer. True body adjacency
  // and a genuinely active special retain their existing passing protection.
- const heldPlanViableV12=v.unifiedAiStateV11!=='PLAN_ATTACK'||
+ const heldPlanViableV12=!ahead||v.unifiedAiStateV11!=='PLAN_ATTACK'||
    row.v-ahead.v>=-.15||
    unifiedSkillPowerV11(v,now*1000,row.pit)>0||
    unifiedGapV11(row,ahead)<=UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance+2;
