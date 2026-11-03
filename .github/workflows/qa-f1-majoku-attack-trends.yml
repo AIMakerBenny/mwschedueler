@@ -1,0 +1,68 @@
+name: Majoku attack recurrence and disengagement evidence
+on:
+  push:
+    branches:
+      - f1-unified-redesign-v11-20261012
+    paths:
+      - '.github/workflows/qa-f1-majoku-attack-trends.yml'
+      - 'scripts/qa-f1-v12-r5b129-attack-pair-retries.mjs'
+      - 'scripts/qa-f1-v12-r5b130-temporal-attempt-cohorts.mjs'
+      - 'scripts/qa-f1-v12-r5b131-disengagement-context.mjs'
+      - 'scripts/qa-f1-v12-r5b132-attack-trends-receipt.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: majoku-attack-trends-archived-qa
+  cancel-in-progress: false
+jobs:
+  validate-real-race-attack-trends:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact development commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove physically identical game engine and original track code
+        run: |
+          git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- \
+            assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js
+      - name: Check evidence scripts before running on authentic race bytes
+        run: |
+          node --check scripts/qa-f1-v12-r5b129-attack-pair-retries.mjs
+          node --check scripts/qa-f1-v12-r5b130-temporal-attempt-cohorts.mjs
+          node --check scripts/qa-f1-v12-r5b131-disengagement-context.mjs
+          node --check scripts/qa-f1-v12-r5b132-attack-trends-receipt.mjs
+      - name: Download successful genuine 12-car two-seed 10-lap browser evidence
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41553183438
+          name: majoku-r5b96-focused-physical-20ms
+          github-token: ${{ github.token }}
+          path: artifacts/r5-b77-majoku
+      - name: R5-b129 verify individual driver-target repeats and outcomes
+        run: node scripts/qa-f1-v12-r5b129-attack-pair-retries.mjs
+      - name: R5-b130 verify start-time cohorts rather than invented pass-time attribution
+        run: node scripts/qa-f1-v12-r5b130-temporal-attempt-cohorts.mjs
+      - name: R5-b131 verify independent reporting of FOLLOW cancellations and earlier blockers
+        run: node scripts/qa-f1-v12-r5b131-disengagement-context.mjs
+      - name: R5-b132 fail-closed proof of genuine two-seed trends and unchanged full physical outcomes
+        run: node scripts/qa-f1-v12-r5b132-attack-trends-receipt.mjs
+      - name: Upload full audit even after a failing step
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: majoku-r5b132-attack-trends-provenance
+          path: |
+            artifacts/r5-b77-majoku/b129-attack-pair-retries.json
+            artifacts/r5-b77-majoku/b130-temporal-cohorts.json
+            artifacts/r5-b77-majoku/b131-disengagement-context.json
+            artifacts/r5-b77-majoku/b132-trend-evidence-receipt.json
+          if-no-files-found: warn
