@@ -122,8 +122,30 @@ try{
     lastPair:'',lastTick:-2,streak:0,examples:[],firstGridGap:null,
     first90EndGap:null,trafficWindows:[],lastTrafficByDriver:{},
     lastTrafficTotal:0}:null,
+   // R5-b121: QA-only ledger. Never edits the live AI/physics state.
+   attemptQa:probe?{events:[],lastEventKey:null,totalStarts:0,
+    missingOverlap:false,probes:0}:null,
    everRequested:new Set(),finishEvents:[],finished:new Set(),continuityErrors:[],
    initialOrder:vehicles.map(v=>String(v.id)),finishBoundary:null,rejectedStep:null,plannedPitViolations:[]};
+  // R5-b121: sample the engine's existing bounded event ledger every 250
+  // manual accepted physics calls, retaining earlier entries even if the
+  // engine's 2,048-event ring eventually rolls over.
+  window.__mwsR5b121CopyAttemptLedger=probe?function(){
+   const q=window.__mwsR5b3,c=q.attemptQa;
+   const report=window.mwsF1UnifiedV11Report().attackLedger;
+   if(!report||!Array.isArray(report.events))throw Error('ATTACK_LEDGER_UNAVAILABLE');
+   const events=report.events;
+   let start=0;
+   if(c.lastEventKey!==null){
+    const i=events.findLastIndex(e=>JSON.stringify(e)===c.lastEventKey);
+    if(i<0){c.missingOverlap=true;throw Error('ATTACK_LEDGER_TRUNCATED_BETWEEN_SAMPLES')}
+    start=i+1;
+   }
+   c.events.push(...events.slice(start));
+   if(events.length)c.lastEventKey=JSON.stringify(events.at(-1));
+   c.totalStarts=report.totalStarts;
+   c.probes++;
+  }:null;
   return {drivers:vehicles.length,compounds:startingCompounds,screen:window.mwsF1GetScreenStateV185(),
     profile:window.mwsF1QaDriverProfileMarkersV250().allPass};
  },{scenario:profileScenario,probe:probeReal20ms});
@@ -309,6 +331,7 @@ try{
      p.lastTrafficTotal=total;
     }
     if(q.ticks%250===0){
+     window.__mwsR5b121CopyAttemptLedger?.();
      const strategies=window.mwsF1GetPitStrategyStatesV206();
      const leader=active[0],second=active[1],len=window.mwsF1GetActiveRaceSnapshotV187().track.lengthMeters;
      q.strategySamples.push({simSeconds:time,leader:String(leader.id),
@@ -351,6 +374,7 @@ try{
  }
  await page.waitForTimeout(120);
  observation=await page.evaluate(()=>{
+  window.__mwsR5b121CopyAttemptLedger?.();
   const q=window.__mwsR5b3,report=window.mwsF1UnifiedV11Report(),
    competition=window.mwsF1CompetitionBaselineV12(),
    snapshot=window.mwsF1GetActiveRaceSnapshotV187(),result=window.mwsF1GetRaceResultRecoveryG(),
@@ -360,7 +384,11 @@ try{
    mode:snapshot.raceMode,track:snapshot.trackId,laps:snapshot.totalLaps,
    simulatedSeconds:window.mwsF1GetSimulationClockV192().simTimeMs/1000,
    state:window.mwsF1GetScreenStateV185(),domScreen:document.getElementById('gameF1Racing')?.dataset.f1Screen,
-   profileScenario:q.profileScenario,real20ms:q.real20ms,
+   profileScenario:q.profileScenario,
+   real20ms:q.real20ms?{...q.real20ms,
+    attackLedger:{events:q.attemptQa.events,totalStarts:q.attemptQa.totalStarts,
+     missingOverlap:q.attemptQa.missingOverlap,probes:q.attemptQa.probes,
+     activeAtFinish:report.attackLedger.active}}:null,
    originalProfiles:q.originalProfiles,appliedProfiles:q.appliedProfiles,
    originalStrategies:q.originalStrategies,appliedStrategies:q.appliedStrategies,
    strategyInterventionAtMs:q.strategyInterventionAtMs,
