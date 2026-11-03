@@ -11775,7 +11775,12 @@ function unifiedChooseLaneV11(row,rows,now,width){
     target=corridor.target;state='PLAN_ATTACK';
    }else if(corridor.blocked.length)state='EXIT_DUEL';
   }
-  if(gap<20&&Math.abs(row.y-ahead.y)>=unifiedLateralClearanceV11(row,ahead))state='SIDE_BY_SIDE';
+  // R5-b183: lateral separation alone at 20m is not a real side-by-side
+  // contest. Reuse the actual physical body length and safety clearance
+  // before advancing this same AI state, while keeping the 20ms solver intact.
+  const sideBySideWindowV12=UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance+2;
+  if(gap<=sideBySideWindowV12&&Math.abs(row.y-ahead.y)>=unifiedLateralClearanceV11(row,ahead))
+   state='SIDE_BY_SIDE';
  }
  if(v.racingLineMode&&v.racingLineMode!=='IDEAL'&&state!=='PLAN_ATTACK'&&state!=='SIDE_BY_SIDE'&&state!=='EXIT_DUEL')
   target=unifiedClampV11(lineOffsetMetersV197(v),-allowed,allowed);

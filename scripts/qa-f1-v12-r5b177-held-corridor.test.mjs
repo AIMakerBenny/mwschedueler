@@ -111,3 +111,12 @@ test('R5-b182 rejected duel with unset target safely stays on its actual lane',(
  const x=evaluate({exitDuel:true,laneTarget:null,lateralY:-2});
  assert.equal(x.lane,-2);assert.equal(x.state,'EXIT_DUEL');assert.equal(x.scans,0);
 });
+
+test('R5-b183 lateral separation at 15m remains a planned attack, not side by side',()=>{
+ const x=evaluate({now:5,opponentGap:15,lateralY:-3});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.target,'ahead');
+});
+test('R5-b183 true physical adjacency still permits side-by-side racing',()=>{
+ const x=evaluate({now:5,opponentGap:7,lateralY:-3});
+ assert.equal(x.state,'SIDE_BY_SIDE');assert.equal(x.target,'ahead');
+});
