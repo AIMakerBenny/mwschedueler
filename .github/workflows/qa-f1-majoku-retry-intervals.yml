@@ -1,0 +1,75 @@
+name: Majoku genuine retry-interval evidence gate
+on:
+  push:
+    branches:
+      - f1-unified-redesign-v11-20261012
+    paths:
+      - '.github/workflows/qa-f1-majoku-retry-intervals.yml'
+      - 'scripts/qa-f1-v12-r5b133-first-vs-repeat-outcomes.mjs'
+      - 'scripts/qa-f1-v12-r5b134-repeat-gap-sequences.mjs'
+      - 'scripts/qa-f1-v12-r5b135-retry-transition-matrix.mjs'
+      - 'scripts/qa-f1-v12-r5b136-rapid-retry-provenance.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: majoku-actual-retry-intervals
+  cancel-in-progress: false
+jobs:
+  audited-two-seed-retry-intervals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - name: Checkout exact development SHA
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove source physical engine and six other WIP tracks unchanged
+        run: |
+          git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- \
+            assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js
+      - name: Check syntax of all read-only phases
+        run: |
+          for phase in 129-attack-pair-retries 130-temporal-attempt-cohorts \
+            131-disengagement-context 132-attack-trends-receipt \
+            133-first-vs-repeat-outcomes 134-repeat-gap-sequences \
+            135-retry-transition-matrix 136-rapid-retry-provenance
+          do node --check "scripts/qa-f1-v12-r5b$phase.mjs"; done
+      - name: Download completed actual 12-car two-seed 10-lap Chromium evidence
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41553183438
+          name: majoku-r5b96-focused-physical-20ms
+          github-token: ${{ github.token }}
+          path: artifacts/r5-b77-majoku
+      - name: R5-b129 through b132 independently recreate baseline trends
+        run: |
+          node scripts/qa-f1-v12-r5b129-attack-pair-retries.mjs
+          node scripts/qa-f1-v12-r5b130-temporal-attempt-cohorts.mjs
+          node scripts/qa-f1-v12-r5b131-disengagement-context.mjs
+          node scripts/qa-f1-v12-r5b132-attack-trends-receipt.mjs
+      - name: R5-b133 contrast real first attempts against retries
+        run: node scripts/qa-f1-v12-r5b133-first-vs-repeat-outcomes.mjs
+      - name: R5-b134 derive genuine same-target retry intervals
+        run: node scripts/qa-f1-v12-r5b134-repeat-gap-sequences.mjs
+      - name: R5-b135 verify subsequent attempt outcome counts by gap
+        run: node scripts/qa-f1-v12-r5b135-retry-transition-matrix.mjs
+      - name: R5-b136 require pinned two-seed physics and attempt evidence
+        run: node scripts/qa-f1-v12-r5b136-rapid-retry-provenance.mjs
+      - name: Upload complete interval reports even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: majoku-r5b136-verified-retry-intervals
+          path: |
+            artifacts/r5-b77-majoku/b133-first-repeat-outcomes.json
+            artifacts/r5-b77-majoku/b134-repeat-gap-sequences.json
+            artifacts/r5-b77-majoku/b135-retry-transition-matrix.json
+            artifacts/r5-b77-majoku/b136-retry-provenance.json
+          if-no-files-found: warn
