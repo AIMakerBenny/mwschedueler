@@ -37,7 +37,9 @@ const temporalAware=[1,2].some(seed=>{
 });
 if(temporalAware)expected.push('b147-attack-time-series.json',
  'b149-approach-recovery.json','b150-attack-transition-order.json',
- 'b151-attack-pair-concentration.json');
+ 'b151-attack-pair-concentration.json',
+ 'b153-gap-closure-vs-speed.json','b154-opponent-attack-context.json',
+ 'b155-early-speed-vs-eventual-pass.json');
 const records=[];
 for(const name of expected){
  const p=dir+name;
@@ -148,6 +150,32 @@ for(const name of expected){
    data.cases.some(x=>x.quickRetryStarts!==(x.seed===1?22:18)||
     x.perExactDriverTargetPair.reduce((n,y)=>n+y.starts,0)!==x.quickRetryStarts)))
    issues.push('ATTACK_PAIR_CONCENTRATION_INVALID');
+  if(name==='b153-gap-closure-vs-speed.json'&&(
+   data.gamePhysicsModified!==false||data.alternateLaneSafelyOpenProven!==false||
+   !Array.isArray(data.cases)||data.cases.length!==2||
+   data.cases.some(c=>c.recordedRapidRetryStarts!==(c.seed===1?22:18)||
+    c.groups.nonpositiveAtStart.gapShrank+
+    c.groups.positiveAtStart.gapShrank+
+    c.groups.nonpositiveAtStart.gapExpanded+
+    c.groups.positiveAtStart.gapExpanded+
+    c.groups.nonpositiveAtStart.gapEssentiallyUnchanged+
+    c.groups.positiveAtStart.gapEssentiallyUnchanged!==c.knownGapComparisons)))
+    issues.push('INCOMPLETE_ACTUAL_GAP_CLOSURE_AUDIT');
+  if(name==='b154-opponent-attack-context.json'&&(
+   data.safeSweptMergeProven!==false||data.aiBalanceCorrectionAuthorized!==false||
+   !Array.isArray(data.cases)||data.cases.length!==2||
+   data.cases.some(c=>c.quickRetryStarts!==(c.seed===1?22:18)||
+    c.groups.opponentAttackingAtStart.starts+
+    c.groups.opponentNotAttackingAtStart.starts!==c.quickRetryStarts)))
+    issues.push('INVALID_OPPONENT_AI_OBSERVATION');
+  if(name==='b155-early-speed-vs-eventual-pass.json'&&(
+   data.aiChangesAuthorized!==false||
+   data.physicalSweptCollisionClearanceProven!==false||
+   !Array.isArray(data.cases)||data.cases.length!==2||
+   data.cases.some(c=>c.quickRetryStarts!==(c.seed===1?22:18)||
+    Object.values(c.outcomes).reduce((n,x)=>n+x,0)!==c.quickRetryStarts||
+    c.outcomes.SUCCESS!==(c.seed===1?2:1))))
+    issues.push('EARLY_APPROACH_CONFUSED_WITH_CONFIRMED_PASS');
   if(name==='b122-attack-attribution.json'&&(
    data.liveAiTuningAuthorized!==false||
    !Array.isArray(data.cases)||data.cases.length!==2||
@@ -215,6 +243,9 @@ if(temporalAware){
  requiredPass.set('b149-approach-recovery.json','PASS');
  requiredPass.set('b150-attack-transition-order.json','PASS');
  requiredPass.set('b151-attack-pair-concentration.json','PASS');
+ requiredPass.set('b153-gap-closure-vs-speed.json','PASS');
+ requiredPass.set('b154-opponent-attack-context.json','PASS');
+ requiredPass.set('b155-early-speed-vs-eventual-pass.json','PASS');
 }
 const unexpected=records.filter(r=>r.status!==requiredPass.get(r.name)||(r.issues?.length||0)>0);
 const allVerified=allPresent&&unexpected.length===0;

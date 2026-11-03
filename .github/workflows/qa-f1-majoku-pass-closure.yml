@@ -1,0 +1,87 @@
+name: Majoku physical gap closure and eventual confirmed pass evidence
+on:
+  push:
+    branches: [f1-unified-redesign-v11-20261012]
+    paths:
+      - '.github/workflows/qa-f1-majoku-pass-closure.yml'
+      - 'scripts/qa-f1-v12-r5b153-gap-closure-vs-speed.mjs'
+      - 'scripts/qa-f1-v12-r5b154-opponent-attack-context.mjs'
+      - 'scripts/qa-f1-v12-r5b155-early-speed-vs-eventual-pass.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  real-two-seed-gap-and-physical-pass-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify source physical engine and locked track code have not changed
+        run: git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js
+      - name: Parse three new genuine browser evidence scripts
+        run: |
+          for phase in 153-gap-closure-vs-speed 154-opponent-attack-context 155-early-speed-vs-eventual-pass
+          do node --check "scripts/qa-f1-v12-r5b$phase.mjs"; done
+      - name: Download certified two original genuine 12-car 10-lap Chromium races
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41566401165
+          name: majoku-r5b96-focused-physical-20ms
+          github-token: ${{ github.token }}
+          path: artifacts/r5-b77-majoku
+      - name: Independently reconstruct true attack, resource and trajectory provenance
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: 41566401165
+        run: |
+          for phase in 129-attack-pair-retries 130-temporal-attempt-cohorts 131-disengagement-context 132-attack-trends-receipt 133-first-vs-repeat-outcomes 134-repeat-gap-sequences 135-retry-transition-matrix 136-rapid-retry-provenance 139-exact-retry-context 141-rapid-attack-velocity-evidence 143-rapid-attack-resource-context 145-relative-pace-resource-crosstab 147-attack-time-series 149-approach-recovery 150-attack-transition-order 151-attack-pair-concentration 153-gap-closure-vs-speed 154-opponent-attack-context 155-early-speed-vs-eventual-pass
+          do node "scripts/qa-f1-v12-r5b$phase.mjs"; done
+      - name: Pin actual two-seed quick-retry gap closure and opponent attack counts
+        run: |
+          node --input-type=module -e '
+            import assert from "node:assert/strict";
+            import fs from "node:fs";
+            const dir="artifacts/r5-b77-majoku/";
+            const gap=JSON.parse(fs.readFileSync(dir+"b153-gap-closure-vs-speed.json","utf8"));
+            const opponent=JSON.parse(fs.readFileSync(dir+"b154-opponent-attack-context.json","utf8"));
+            const physical=JSON.parse(fs.readFileSync(dir+"b155-early-speed-vs-eventual-pass.json","utf8"));
+            for(const r of [gap,opponent,physical])assert.equal(r.status,"PASS");
+            for(const [seed,total,shrink,expand,targetAttack,success] of [
+              [1,22,11,11,9,2],[2,18,7,11,4,1]]){
+              const a=gap.cases.find(x=>x.seed===seed);
+              const b=opponent.cases.find(x=>x.seed===seed);
+              const c=physical.cases.find(x=>x.seed===seed);
+              assert(a&&b&&c);
+              assert.equal(a.recordedRapidRetryStarts,total);
+              assert.equal(a.groups.nonpositiveAtStart.gapShrank+
+                a.groups.positiveAtStart.gapShrank,shrink);
+              assert.equal(a.groups.nonpositiveAtStart.gapExpanded+
+                a.groups.positiveAtStart.gapExpanded,expand);
+              assert.equal(b.groups.opponentAttackingAtStart.starts,targetAttack);
+              assert.equal(c.outcomes.SUCCESS,success);
+              assert.equal(c.quickRetryStarts,total);
+              assert.equal(c.collisionStops,0);
+              assert(c.physicalCrossingDelaysSeconds.every(n=>n>0.2));
+            }
+            assert.equal(gap.gamePhysicsModified,false);
+            assert.equal(opponent.safeSweptMergeProven,false);
+            assert.equal(physical.aiChangesAuthorized,false);
+            console.log(JSON.stringify({phase:"R5-b156",status:"ARCHIVED_GENUINE_PASS",
+              priorChromiumRun:41566401165,realRaces:2,newBrowserRaces:0,physicsUnchanged:true}));
+          '
+      - name: Publish physical trajectory, opponent, eventual pass evidence even if failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: majoku-r5b156-genuine-closure-physical-pass
+          path: |
+            artifacts/r5-b77-majoku/b153-gap-closure-vs-speed.json
+            artifacts/r5-b77-majoku/b154-opponent-attack-context.json
+            artifacts/r5-b77-majoku/b155-early-speed-vs-eventual-pass.json
+          if-no-files-found: warn
