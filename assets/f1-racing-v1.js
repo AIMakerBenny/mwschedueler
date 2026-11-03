@@ -11701,6 +11701,17 @@ function unifiedChooseLaneV11(row,rows,now,width){
  // solver remain the sole authority for accepting physical movement.
  const ahead=rows.filter(p=>p.id!==row.id&&!p.finished&&p.pit==='TRACK'&&unifiedGapV11(row,p)>0&&unifiedGapV11(row,p)<165)
   .sort((a,b)=>unifiedGapV11(row,a)-unifiedGapV11(row,b)||a.id.localeCompare(b.id))[0];
+ // R5-b178: an EXIT_DUEL is an already rejected lane, not a fresh
+ // attack every 20ms. Honor the existing 700ms intent expiry before trying
+ // the same opponent again; never preserve it if the opponent or pit state
+ // changes. Keep the original merge guard and physical solver authoritative.
+ if(row.pit==='TRACK'&&!v.pitRequested&&ahead&&String(ahead.id)===String(v.unifiedAiTargetV11||'')&&
+   v.unifiedAiStateV11==='EXIT_DUEL'&&now<(Number(v.unifiedIntentUntilV11)||0)){
+  const rejectedHold=unifiedMergeTargetV11(row,unifiedClampV11(Number(v.unifiedLaneTargetV11)||row.y,-allowed,allowed),rows);
+  v.unifiedMergeBlockedV11=rejectedHold.blocked;
+  v.unifiedLaneTargetV11=rejectedHold.target;
+  return rejectedHold.target;
+ }
  if(row.pit==='TRACK'&&!v.pitRequested&&ahead&&String(ahead.id)===String(v.unifiedAiTargetV11||'')&&
    ['PLAN_ATTACK','SIDE_BY_SIDE'].includes(v.unifiedAiStateV11)&&now<(Number(v.unifiedIntentUntilV11)||0)){
   const held=unifiedMergeTargetV11(row,unifiedClampV11(Number(v.unifiedLaneTargetV11)||0,-allowed,allowed),rows);

@@ -9,9 +9,9 @@ const sentinel=source.indexOf('// Target-aware diagnostics only.',start);
 const stop=source.lastIndexOf('}',sentinel);
 assert.ok(start>=0&&sentinel>start&&stop>start,'live unifiedChooseLaneV11 source must exist');
 const chooser=source.slice(start,stop+1);
-function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false}={}){
+function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitDuel=false,now=1}={}){
  const v={id:'me',pitRequested:pit,pitState:'TRACK',racingLineMode:'IDEAL',
-  unifiedAiStateV11:'PLAN_ATTACK',unifiedAiTargetV11:'ahead',
+  unifiedAiStateV11:exitDuel?'EXIT_DUEL':'PLAN_ATTACK',unifiedAiTargetV11:'ahead',
   unifiedIntentUntilV11:4,unifiedLaneTargetV11:2};
  const me={id:'me',ref:v,pit:'TRACK',v:30,y:-2};
  const target={id:'ahead',ref:{},pit:lost?'PIT_LANE':'TRACK',finished:false,v:28,y:0};
@@ -27,7 +27,7 @@ function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false}={}){
   lineOffsetMetersV197:()=>0,unifiedPitLaneIntentV12:()=>3,
   unifiedPitMergeTargetV12:(row,y)=>({target:y,blocked:[]})};
  vm.runInNewContext(chooser,ctx);
- const lane=ctx.unifiedChooseLaneV11(me,rows,1,12);
+ const lane=ctx.unifiedChooseLaneV11(me,rows,now,12);
  return {lane,state:v.unifiedAiStateV11,target:v.unifiedAiTargetV11,scans};
 }
 test('unblocked held attack remains unchanged',()=>{
@@ -44,4 +44,13 @@ test('pit-lane opponent is not held as an active attack',()=>{
 });
 test('new immediate opponent replaces stale held target',()=>{
  const x=evaluate({nearestChanged:true});assert.equal(x.target,'new');assert.equal(x.scans,1);
+});
+
+test('R5-b178 rejected duel does not immediately retry same opponent inside existing intent window',()=>{
+ const x=evaluate({exitDuel:true});assert.equal(x.state,'EXIT_DUEL');assert.equal(x.lane,2);assert.equal(x.scans,0);
+});
+test('R5-b178 expired duel retries and pit/target changes bypass stale hold',()=>{
+ const expired=evaluate({exitDuel:true,now:5}),pit=evaluate({exitDuel:true,pit:true}),changed=evaluate({exitDuel:true,nearestChanged:true});
+ assert.equal(expired.state,'PLAN_ATTACK');assert.equal(expired.scans,1);
+ assert.equal(pit.state,'PIT');assert.equal(changed.target,'new');assert.equal(changed.scans,1);
 });
