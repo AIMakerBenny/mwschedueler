@@ -11765,7 +11765,14 @@ function unifiedChooseLaneV11(row,rows,now,width){
    unifiedGapV11(row,ahead)-v.unifiedRejectedGapV12>
     UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance;
   if(!clearedBlockersV12&&!gapWidenedV12){
-   v.unifiedMergeBlockedV11=rejectedHold.blocked;
+   // R5-b208: holding today's current chassis lane can report no merge
+   // obstacle despite the named car that rejected the previous attack
+   // still being nearby. Preserve live blocker identity across the 20ms
+   // hold ticks so the old physically cleared blocker test stays useful.
+   const liveNamedBlockersV12=priorBlockersV12.filter(id=>rows.some(p=>
+    String(p.id)===String(id)&&!p.finished&&
+    Math.abs(unifiedGapV11(row,p))<125));
+   v.unifiedMergeBlockedV11=[...new Set([...liveNamedBlockersV12,...rejectedHold.blocked])].sort();
    v.unifiedLaneTargetV11=rejectedHold.target;
    return rejectedHold.target;
   }

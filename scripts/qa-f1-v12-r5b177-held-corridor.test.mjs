@@ -37,7 +37,7 @@ function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitD
   unifiedPitMergeTargetV12:(row,y)=>({target:y,blocked:[]})};
  vm.runInNewContext(chooser,ctx);
  const lane=ctx.unifiedChooseLaneV11(me,rows,now,12);
- return {lane,state:v.unifiedAiStateV11,target:v.unifiedAiTargetV11,scans,preferredLane:preferredLaneSeen};
+ return {lane,state:v.unifiedAiStateV11,target:v.unifiedAiTargetV11,scans,preferredLane:preferredLaneSeen,blockedIDs:[...v.unifiedMergeBlockedV11]};
 }
 test('unblocked held attack remains unchanged',()=>{
  const x=evaluate();assert.equal(x.lane,2);assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,0);
@@ -326,4 +326,12 @@ test('R5-b207 absent previously authored lane does not create short-pass exempti
 test('R5-b207 a nearer new opponent does not inherit prior short-pass corridor',()=>{
  const x=evaluate({now:5,nearestChanged:true,newOpponentGap:6,opponentGap:8,lateralY:-3,laneTarget:-3,followerSpeed:28.5,opponentSpeed:28});
  assert.equal(x.target,'new');assert.equal(x.scans,0);
+});
+test('R5-b208 an actual named blocker stays recorded across rejected hold',()=>{
+ const x=evaluate({exitDuel:true,oldBlockerPresent:true,now:1});
+ assert.equal(x.state,'EXIT_DUEL');assert.equal(x.scans,0);assert.deepEqual(x.blockedIDs,['obstacle']);
+});
+test('R5-b208 anonymous rejected hold keeps unnamed blocker state empty while unchanged',()=>{
+ const x=evaluate({exitDuel:true,priorExitGap:8,opponentGap:10,now:1});
+ assert.equal(x.state,'EXIT_DUEL');assert.deepEqual(x.blockedIDs,[]);
 });
