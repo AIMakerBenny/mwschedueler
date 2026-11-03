@@ -379,3 +379,20 @@ test('R5-b218 expired attack cannot keep an obsolete opponent in a close traffic
  const x=evaluate({nearestChanged:true,newOpponentGap:18,opponentGap:19,newOpponentY:0,lateralY:-3,laneTarget:-3,now:5});
  assert.equal(x.target,'new');
 });
+
+test('R5-b219 chooses the physically blocking car over a nearer safely separated one in a three-metre pack',()=>{
+ const x=evaluate({nearestChanged:true,newOpponentGap:14,newOpponentY:3,opponentGap:16,lateralY:-1,laneTarget:2,now:5});
+ assert.equal(x.target,'ahead');
+});
+test('R5-b219 does not skip the nearest vehicle when it occupies our lateral driving line',()=>{
+ const x=evaluate({nearestChanged:true,newOpponentGap:14,newOpponentY:-1,opponentGap:16,lateralY:-1,laneTarget:2,now:5});
+ assert.equal(x.target,'new');
+});
+test('R5-b219 does not prefer a trailing lane blocker outside the three-metre traffic pack',()=>{
+ const x=evaluate({nearestChanged:true,newOpponentGap:14,newOpponentY:3,opponentGap:18,lateralY:-1,laneTarget:2,now:5});
+ assert.equal(x.target,'new');
+});
+test('R5-b219 extremely close physical contact retains nearest opponent and normal safety decision',()=>{
+ const x=evaluate({nearestChanged:true,newOpponentGap:6,newOpponentY:3,opponentGap:8,lateralY:-1,laneTarget:2,now:5});
+ assert.equal(x.target,'new');
+});

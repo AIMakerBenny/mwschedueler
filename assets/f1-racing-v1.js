@@ -11720,6 +11720,23 @@ function unifiedChooseLaneV11(row,rows,now,width){
   !p.ref?.pitRequested&&unifiedGapV11(row,p)>0&&unifiedGapV11(row,p)<165)
   .sort((a,b)=>unifiedGapV11(row,a)-unifiedGapV11(row,b)||String(a.id).localeCompare(String(b.id)));
  let ahead=frontCarsV12[0];
+ // R5-b219: in a compact multi-car pack the closest front car can be
+ // safely on another lateral line. Select the physically blocking car
+ // in our current chassis lane only when both cars are within 3m of
+ // each other and well beyond the swept-body contact distance.
+ // All manoeuvres still pass the existing corridor and collision guards.
+ if(ahead&&frontCarsV12.length>1&&row.pit==='TRACK'&&!v.pitRequested){
+  const nearestGapV12=unifiedGapV11(row,ahead);
+  const nearestClearV12=Math.abs(row.y-ahead.y)>=unifiedLateralClearanceV11(row,ahead);
+  if(nearestClearV12&&nearestGapV12>UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance+2){
+   const laneBlockerV12=frontCarsV12.slice(1).find(p=>{
+    const gap=unifiedGapV11(row,p);
+    return gap-nearestGapV12<=3&&gap>UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance+2&&
+     Math.abs(row.y-p.y)<unifiedLateralClearanceV11(row,p);
+   });
+   if(laneBlockerV12)ahead=laneBlockerV12;
+  }
+ }
  if(ahead&&row.pit==='TRACK'&&!v.pitRequested&&
    v.unifiedAiStateV11==='PLAN_ATTACK'&&now<Number(v.unifiedIntentUntilV11||0)&&
    Number.isFinite(v.unifiedLaneTargetV11)){
