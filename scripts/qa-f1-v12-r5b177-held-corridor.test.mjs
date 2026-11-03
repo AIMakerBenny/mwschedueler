@@ -9,12 +9,12 @@ const sentinel=source.indexOf('// Target-aware diagnostics only.',start);
 const stop=source.lastIndexOf('}',sentinel);
 assert.ok(start>=0&&sentinel>start&&stop>start,'live unifiedChooseLaneV11 source must exist');
 const chooser=source.slice(start,stop+1);
-function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitDuel=false,sideBySide=false,now=1,followerSpeed=30,opponentSpeed=28,specialPower=0,opponentGap=42,lateralY=-2,laneTarget=2}={}){
+function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitDuel=false,sideBySide=false,now=1,followerSpeed=30,opponentSpeed=28,specialPower=0,opponentGap=42,lateralY=-2,laneTarget=2,pitBoundTarget=false}={}){
  const v={id:'me',pitRequested:pit,pitState:'TRACK',racingLineMode:'IDEAL',
   unifiedAiStateV11:sideBySide?'SIDE_BY_SIDE':exitDuel?'EXIT_DUEL':'PLAN_ATTACK',unifiedAiTargetV11:'ahead',
   unifiedIntentUntilV11:4,unifiedLaneTargetV11:laneTarget};
  const me={id:'me',ref:v,pit:'TRACK',v:followerSpeed,y:lateralY};
- const target={id:'ahead',ref:{},pit:lost?'PIT_LANE':'TRACK',finished:false,v:opponentSpeed,y:0};
+ const target={id:'ahead',ref:{pitRequested:pitBoundTarget},pit:lost?'PIT_LANE':'TRACK',finished:false,v:opponentSpeed,y:0};
  const rows=nearestChanged?[me,{id:'new',pit:'TRACK',finished:false,v:28,y:0},target]:[me,target];
  let scans=0;
  const ctx={UNIFIED_ENGINE_V11:{physicalWidth:2,physicalLength:5.2,clearance:.30},
@@ -130,4 +130,13 @@ test('R5-b184 real distant closure, existing near duel, and special each remain 
  const near=evaluate({now:5,opponentGap:42,followerSpeed:30,opponentSpeed:28});
  const special=evaluate({now:5,opponentGap:100,followerSpeed:29,opponentSpeed:30,specialPower:300000});
  for(const x of [closing,near,special]){assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);}
+});
+
+test('R5-b185 pending pit entry is never retained as an on-track attack opponent',()=>{
+ const x=evaluate({pitBoundTarget:true});
+ assert.equal(x.target,'');assert.equal(x.state,'CRUISE');assert.equal(x.scans,0);
+});
+test('R5-b185 nearest actual racing car can be targeted when old opponent enters pit',()=>{
+ const x=evaluate({pitBoundTarget:true,nearestChanged:true});
+ assert.equal(x.target,'new');assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);
 });

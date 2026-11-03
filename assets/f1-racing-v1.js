@@ -11704,7 +11704,10 @@ function unifiedChooseLaneV11(row,rows,now,width){
  // rather than spend the rest of its 700ms AI intent driving toward itself.
  // This affects lateral AI intent only; the shared reservation and swept-body
  // solver remain the sole authority for accepting physical movement.
- const ahead=rows.filter(p=>p.id!==row.id&&!p.finished&&p.pit==='TRACK'&&unifiedGapV11(row,p)>0&&unifiedGapV11(row,p)<165)
+ // R5-b185: a TRACK car with an accepted pit request is already leaving
+ // racing competition. Let the pit-avoidance path above and the existing
+ // shared traffic physics manage it; do not begin or hold a new duel with it.
+ const ahead=rows.filter(p=>p.id!==row.id&&!p.finished&&p.pit==='TRACK'&&!p.ref?.pitRequested&&unifiedGapV11(row,p)>0&&unifiedGapV11(row,p)<165)
   .sort((a,b)=>unifiedGapV11(row,a)-unifiedGapV11(row,b)||a.id.localeCompare(b.id))[0];
  // R5-b181: preserve a verified side-by-side pass through the physical
  // crossing boundary. The former target may move just behind this car on
