@@ -187,3 +187,12 @@ test('R5-b190 do not prolong a futile distant pursuit or large speed deficit',()
  const slow=evaluate({now:5,opponentGap:42,followerSpeed:27.5,opponentSpeed:28});
  for(const x of [far,slow]){assert.equal(x.state,'FOLLOW');assert.equal(x.scans,0);}
 });
+
+test('R5-b191 held plan with missing target defaults to actual chassis lane',()=>{
+ const x=evaluate({laneTarget:null,lateralY:-2});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.lane,-2);assert.equal(x.scans,0);
+});
+test('R5-b191 valid held center-line target zero remains zero',()=>{
+ const x=evaluate({laneTarget:0,lateralY:-2});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.lane,0);assert.equal(x.scans,0);
+});

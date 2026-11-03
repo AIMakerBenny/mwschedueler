@@ -11763,7 +11763,10 @@ function unifiedChooseLaneV11(row,rows,now,width){
    UNIFIED_ENGINE_V11.clearance+2;
  if(row.pit==='TRACK'&&!v.pitRequested&&ahead&&String(ahead.id)===String(v.unifiedAiTargetV11||'')&&
    heldPlanViableV12&&heldSideAdjacentV12&&['PLAN_ATTACK','SIDE_BY_SIDE'].includes(v.unifiedAiStateV11)&&now<(Number(v.unifiedIntentUntilV11)||0)){
-  const held=unifiedMergeTargetV11(row,unifiedClampV11(Number(v.unifiedLaneTargetV11)||0,-allowed,allowed),rows);
+  // R5-b191: undefined/NaN has no lawful previously committed lane.
+  // Stay on the actual physical lane; an authored 0 is still a valid center.
+  const plannedLaneV12=Number.isFinite(v.unifiedLaneTargetV11)?v.unifiedLaneTargetV11:row.y;
+  const held=unifiedMergeTargetV11(row,unifiedClampV11(plannedLaneV12,-allowed,allowed),rows);
   if(!held.blocked.length){
    v.unifiedMergeBlockedV11=[];v.unifiedLaneTargetV11=held.target;return held.target;
   }
