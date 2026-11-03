@@ -150,3 +150,12 @@ test('R5-b186 still-valid closure or active special keeps the existing safe held
  const special=evaluate({followerSpeed:27,opponentSpeed:28,specialPower:300000});
  for(const x of [ordinary,special]){assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.lane,2);assert.equal(x.scans,0);}
 });
+
+test('R5-b187 stale side-by-side label at long gap resumes ordinary planning',()=>{
+ const x=evaluate({sideBySide:true,opponentGap:42,lateralY:-3});
+ assert.equal(x.target,'ahead');assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);
+});
+test('R5-b187 actual side-by-side adjacency retains the physically protected lane',()=>{
+ const x=evaluate({sideBySide:true,opponentGap:7,lateralY:-3});
+ assert.equal(x.state,'SIDE_BY_SIDE');assert.equal(x.lane,2);assert.equal(x.scans,0);
+});

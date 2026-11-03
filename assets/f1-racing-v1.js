@@ -11751,8 +11751,14 @@ function unifiedChooseLaneV11(row,rows,now,width){
    row.v-ahead.v>=-.15||
    unifiedSkillPowerV11(v,now*1000,row.pit)>0||
    unifiedGapV11(row,ahead)<=UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance+2;
+ // R5-b187: SIDE_BY_SIDE is a physical adjacency state, never a durable
+ // 700ms label after the two chassis have separated longitudinally.
+ // Keep the previously checked physical crossing hold above unaffected.
+ const heldSideAdjacentV12=!ahead||v.unifiedAiStateV11!=='SIDE_BY_SIDE'||
+   Math.abs(unifiedGapV11(row,ahead))<=UNIFIED_ENGINE_V11.physicalLength+
+   UNIFIED_ENGINE_V11.clearance+2;
  if(row.pit==='TRACK'&&!v.pitRequested&&ahead&&String(ahead.id)===String(v.unifiedAiTargetV11||'')&&
-   heldPlanViableV12&&['PLAN_ATTACK','SIDE_BY_SIDE'].includes(v.unifiedAiStateV11)&&now<(Number(v.unifiedIntentUntilV11)||0)){
+   heldPlanViableV12&&heldSideAdjacentV12&&['PLAN_ATTACK','SIDE_BY_SIDE'].includes(v.unifiedAiStateV11)&&now<(Number(v.unifiedIntentUntilV11)||0)){
   const held=unifiedMergeTargetV11(row,unifiedClampV11(Number(v.unifiedLaneTargetV11)||0,-allowed,allowed),rows);
   if(!held.blocked.length){
    v.unifiedMergeBlockedV11=[];v.unifiedLaneTargetV11=held.target;return held.target;
