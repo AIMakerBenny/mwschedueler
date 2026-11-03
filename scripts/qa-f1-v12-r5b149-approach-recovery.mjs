@@ -58,13 +58,13 @@ for(const seed of [1,2]){
   if(e.relativeClosingSpeedMps<=0)g.negativeAtStart++;
   else g.positiveAtStart++;
   g.confirmedPasses+=Number(e.resultOfCurrentAttack==='SUCCESS');
-  const available=[-200,-100,0,100,200].every(o=>{
+  let available=true;
+  for(const o of [-200,-100,0,100,200]){
    const value=t[String(o)];
    assert(value&&value.ms===row.startMs+o);
    assert.equal(typeof value.available,'boolean');
-   if(!value.available)g.missingFramesByOffset[String(o)]++;
-   return value.available;
-  });
+   if(!value.available){g.missingFramesByOffset[String(o)]++;available=false}
+  }
   if(available)g.availableAtAllFiveOffsets++;
   else g.missingAnyOffset++;
   if(!pre.available||!post.available){
