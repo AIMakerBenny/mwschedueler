@@ -35,7 +35,9 @@ const temporalAware=[1,2].some(seed=>{
  try{return Array.isArray(JSON.parse(fs.readFileSync(dir+'seed'+seed+'-observed10.json','utf8')).real20ms?.attackLedger?.startTrajectories)}
  catch{return false}
 });
-if(temporalAware)expected.push('b147-attack-time-series.json');
+if(temporalAware)expected.push('b147-attack-time-series.json',
+ 'b149-approach-recovery.json','b150-attack-transition-order.json',
+ 'b151-attack-pair-concentration.json');
 const records=[];
 for(const name of expected){
  const p=dir+name;
@@ -125,6 +127,27 @@ for(const name of expected){
    !Array.isArray(data.cases)||data.cases.length!==2||
    data.cases.some(c=>c.witnessRows.length!==c.quickRetries)))
    issues.push('MISSING_OR_UNSAFE_REAL_TEMPORAL_WITNESSES');
+  if(name==='b149-approach-recovery.json'&&(
+   data.aiTuningApproved!==false||
+   data.sweptCollisionClearanceProven!==false||
+   !Array.isArray(data.cases)||data.cases.length!==2||
+   data.cases.some(x=>x.groups.nonpositiveStart.attempts+
+    x.groups.positiveStart.attempts!==(x.seed===1?22:18))))
+   issues.push('UNVERIFIED_APPROACH_RECOVERY');
+  if(name==='b150-attack-transition-order.json'&&(
+   data.safePassingCorridorProven!==false||
+   data.aiBrakingRelaxationAuthorized!==false||
+   !Array.isArray(data.cases)||data.cases.length!==2||
+   data.cases.some(x=>x.groups.nonpositiveStart.starts+
+    x.groups.positiveStart.starts!==(x.seed===1?22:18))))
+   issues.push('INCOMPLETE_START_TIME_CHANGE_ORDER');
+  if(name==='b151-attack-pair-concentration.json'&&(
+   data.aiBalanceModificationAuthorized!==false||
+   data.safeMergeClearanceProven!==false||
+   !Array.isArray(data.cases)||data.cases.length!==2||
+   data.cases.some(x=>x.quickRetryStarts!==(x.seed===1?22:18)||
+    x.perExactDriverTargetPair.reduce((n,y)=>n+y.starts,0)!==x.quickRetryStarts)))
+   issues.push('ATTACK_PAIR_CONCENTRATION_INVALID');
   if(name==='b122-attack-attribution.json'&&(
    data.liveAiTuningAuthorized!==false||
    !Array.isArray(data.cases)||data.cases.length!==2||
@@ -187,7 +210,12 @@ if(exactWitnessAware){
  requiredPass.set('b143-rapid-attack-resource-context.json','PASS');
  requiredPass.set('b145-relative-pace-resource-crosstab.json','PASS');
 }
-if(temporalAware)requiredPass.set('b147-attack-time-series.json','PASS');
+if(temporalAware){
+ requiredPass.set('b147-attack-time-series.json','PASS');
+ requiredPass.set('b149-approach-recovery.json','PASS');
+ requiredPass.set('b150-attack-transition-order.json','PASS');
+ requiredPass.set('b151-attack-pair-concentration.json','PASS');
+}
 const unexpected=records.filter(r=>r.status!==requiredPass.get(r.name)||(r.issues?.length||0)>0);
 const allVerified=allPresent&&unexpected.length===0;
 const priorStepStatus=String(process.env.MWS_FOCUSED_QA_STEP_STATUS||'unknown').toLowerCase();

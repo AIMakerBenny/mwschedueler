@@ -1,0 +1,84 @@
+name: Majoku genuine attack transition timing regression
+on:
+  push:
+    branches: [f1-unified-redesign-v11-20261012]
+    paths:
+      - '.github/workflows/qa-f1-majoku-attack-transition.yml'
+      - 'scripts/qa-f1-v12-r5b149-approach-recovery.mjs'
+      - 'scripts/qa-f1-v12-r5b150-attack-transition-order.mjs'
+      - 'scripts/qa-f1-v12-r5b151-attack-pair-concentration.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  genuine-two-seed-20ms-transition-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify game AI and physical engine unchanged
+        run: git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js
+      - name: Verify syntax of all three new stages
+        run: |
+          node --check scripts/qa-f1-v12-r5b149-approach-recovery.mjs
+          node --check scripts/qa-f1-v12-r5b150-attack-transition-order.mjs
+          node --check scripts/qa-f1-v12-r5b151-attack-pair-concentration.mjs
+      - name: Download certified authentic Chromium two-seed 10-lap race with all 20ms attack frames
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41566401165
+          name: majoku-r5b96-focused-physical-20ms
+          github-token: ${{ github.token }}
+          path: artifacts/r5-b77-majoku
+      - name: Recreate immutable browser physical and exact driver-target attack evidence
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: 41566401165
+        run: |
+          for phase in 129-attack-pair-retries 130-temporal-attempt-cohorts 131-disengagement-context 132-attack-trends-receipt 133-first-vs-repeat-outcomes 134-repeat-gap-sequences 135-retry-transition-matrix 136-rapid-retry-provenance 139-exact-retry-context 141-rapid-attack-velocity-evidence 143-rapid-attack-resource-context 145-relative-pace-resource-crosstab 147-attack-time-series 149-approach-recovery 150-attack-transition-order 151-attack-pair-concentration
+          do node "scripts/qa-f1-v12-r5b$phase.mjs"; done
+      - name: Enforce physical approach recovery counts from two true ten-lap seeds
+        run: |
+          node --input-type=module -e '
+            import fs from "node:fs";
+            import assert from "node:assert/strict";
+            const root="artifacts/r5-b77-majoku/";
+            const a=JSON.parse(fs.readFileSync(root+"b149-approach-recovery.json","utf8"));
+            const b=JSON.parse(fs.readFileSync(root+"b150-attack-transition-order.json","utf8"));
+            const c=JSON.parse(fs.readFileSync(root+"b151-attack-pair-concentration.json","utf8"));
+            for(const r of [a,b,c])assert.equal(r.status,"PASS");
+            for(const [seed,quick,nonpositive,improved,converted] of [
+              [1,22,17,16,3],[2,18,16,15,4]]){
+              const x=a.cases.find(y=>y.seed===seed);
+              const y=b.cases.find(y=>y.seed===seed);
+              const z=c.cases.find(y=>y.seed===seed);
+              assert(x&&y&&z);
+              assert.equal(x.groups.nonpositiveStart.attempts,nonpositive);
+              assert.equal(x.groups.nonpositiveStart.closingImproved,improved);
+              assert.equal(x.groups.nonpositiveStart.fromPreNonpositiveToPostPositive,converted);
+              assert.equal(y.groups.nonpositiveStart.changedToPositiveByPlus200ms,converted);
+              assert.equal(z.quickRetryStarts,quick);
+              assert.equal(z.collisionStops,0);
+            }
+            assert.equal(a.gamePhysicsChanged,false);
+            assert.equal(b.physicsChanged,false);
+            assert.equal(c.physicsChanged,false);
+            console.log(JSON.stringify({phase:"R5-b152",status:"ARCHIVED_REAL_CHROMIUM_PASS",
+             sourceRun:41566401165,originalTenLapRaces:2,newBrowserRaces:0}));
+          '
+      - name: Preserve audited real source evidence regardless of conclusion
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: majoku-r5b152-verified-attack-transition-timing
+          path: |
+            artifacts/r5-b77-majoku/b149-approach-recovery.json
+            artifacts/r5-b77-majoku/b150-attack-transition-order.json
+            artifacts/r5-b77-majoku/b151-attack-pair-concentration.json
+          if-no-files-found: warn

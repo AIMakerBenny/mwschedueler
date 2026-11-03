@@ -116,6 +116,9 @@ jobs:
             scripts/qa-f1-v12-r5b143-rapid-attack-resource-context.mjs \
             scripts/qa-f1-v12-r5b145-relative-pace-resource-crosstab.mjs \
             scripts/qa-f1-v12-r5b147-attack-time-series.mjs \
+            scripts/qa-f1-v12-r5b149-approach-recovery.mjs \
+            scripts/qa-f1-v12-r5b150-attack-transition-order.mjs \
+            scripts/qa-f1-v12-r5b151-attack-pair-concentration.mjs \
             scripts/lib/f1-r5b137-attempt-context.mjs \
             scripts/qa-f1-v12-r5b137-attempt-context.test.mjs \
             scripts/qa-f1-v12-r5b122-attack-attribution.mjs \
@@ -194,6 +197,18 @@ jobs:
         env:
           MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
         run: node scripts/qa-f1-v12-r5b147-attack-time-series.mjs
+      - name: R5-b149 prove approach speed improves or worsens on actual 20ms frames
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
+        run: node scripts/qa-f1-v12-r5b149-approach-recovery.mjs
+      - name: R5-b150 validate temporal order of ERS deployment and attack state
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
+        run: node scripts/qa-f1-v12-r5b150-attack-transition-order.mjs
+      - name: R5-b151 validate driver-target concentration and sample limits
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
+        run: node scripts/qa-f1-v12-r5b151-attack-pair-concentration.mjs
       - name: R5-b96 preserve an auditable per-file CI outcome manifest
         if: always()
         env:
