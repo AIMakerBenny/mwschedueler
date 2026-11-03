@@ -15,7 +15,20 @@ export function snapshotAttemptContextFrame(simTimeMs,trackLengthMeters,cars){
    aiTarget:String(v.unifiedAiTargetV11||''),
    pitState:String(v.pitState||'TRACK'),finished:Boolean(v.finished),
    reportedMergeBlockers:Array.isArray(v.unifiedMergeBlockedV11)?
-    v.unifiedMergeBlockedV11.map(String).sort():[]};
+    v.unifiedMergeBlockedV11.map(String).sort():[],
+   // R5-b142: exact-accepted-step tyre, ERS, profile and strategy data.
+   // Unknown or nonfinite inputs stay null, not fabricated zero readings.
+   tyreWearFraction:numeric(v.tyreWear),
+   tyreCompound:typeof v.tyreCompound==='string'?v.tyreCompound:null,
+   batteryMJ:numeric(v.batteryMJ),
+   energyDeployKW:numeric(v.energyDeployKW),
+   ersRequestKW:numeric(v.unifiedStrategyErsKWV12),
+   strategyEffort:numeric(v.unifiedStrategyEffortV12),
+   strategyName:typeof v.unifiedStrategyV12==='string'?v.unifiedStrategyV12:null,
+   driverPaceRating:numeric(v.driverProfile?.pace),
+   observedIncidentType:typeof v.unifiedErrorTypeV11==='string'?
+    v.unifiedErrorTypeV11:null,
+   reportedCorridorCandidates:numeric(v.unifiedCorridorCountV12)};
  });
  return {ms:simTimeMs,trackLengthMeters,cars:records};
 }
@@ -45,6 +58,27 @@ export function deriveExactAttackStartWitness(event,frame){
   driverLateralCoordinateUnit:driver.lateralUnit,
   targetLateralCoordinateUnit:target.lateralUnit,
   reportedMergeBlockers:driver.reportedMergeBlockers,
+  // Side-by-side fields share the SAME accepted physics timestamp.
+  driverTyreWearFraction:driver.tyreWearFraction,
+  targetTyreWearFraction:target.tyreWearFraction,
+  driverTyreCompound:driver.tyreCompound,
+  targetTyreCompound:target.tyreCompound,
+  driverBatteryMJ:driver.batteryMJ,
+  targetBatteryMJ:target.batteryMJ,
+  driverEnergyDeployKW:driver.energyDeployKW,
+  targetEnergyDeployKW:target.energyDeployKW,
+  driverErsRequestKW:driver.ersRequestKW,
+  targetErsRequestKW:target.ersRequestKW,
+  driverStrategyEffort:driver.strategyEffort,
+  targetStrategyEffort:target.strategyEffort,
+  driverStrategyName:driver.strategyName,
+  targetStrategyName:target.strategyName,
+  driverPaceRating:driver.driverPaceRating,
+  targetPaceRating:target.driverPaceRating,
+  driverObservedIncidentType:driver.observedIncidentType,
+  targetObservedIncidentType:target.observedIncidentType,
+  driverReportedCorridorCandidates:driver.reportedCorridorCandidates,
+  targetReportedCorridorCandidates:target.reportedCorridorCandidates,
   onTrackPair:true,
   metricType:'longitudinal circuit progress, not Euclidean or swept-body clearance',
   physicalOvertakingClearanceProven:false

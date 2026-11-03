@@ -40,3 +40,47 @@ test('R5-b137 rejects malformed field and duplicate driver IDs',()=>{
  const vehicles=cars();vehicles[1].id='d0';
  assert.throws(()=>snapshotAttemptContextFrame(2000,2000,vehicles),/INVALID_DRIVER_ID/);
 });
+
+test('R5-b142 records real same-step strategy, tyre, pace and ERS without zero imputation',()=>{
+ const v=cars();
+ v[0].tyreWear=.32;v[1].tyreWear=.67;
+ v[0].tyreCompound='SOFT';v[1].tyreCompound='HARD';
+ v[0].batteryMJ=2.5;v[1].batteryMJ=3.4;
+ v[0].energyDeployKW=0;v[1].energyDeployKW=120;
+ v[0].unifiedStrategyErsKWV12=50;v[1].unifiedStrategyErsKWV12=80;
+ v[0].unifiedStrategyEffortV12=.9;v[1].unifiedStrategyEffortV12=1.05;
+ v[0].unifiedStrategyV12='CHASER';v[1].unifiedStrategyV12='BALANCED';
+ v[0].driverProfile={pace:82};v[1].driverProfile={pace:67};
+ v[0].unifiedCorridorCountV12=0;v[1].unifiedCorridorCountV12=2;
+ const w=deriveExactAttackStartWitness(event,snapshotAttemptContextFrame(2000,2000,v));
+ assert.equal(w.driverTyreWearFraction,.32);
+ assert.equal(w.targetTyreWearFraction,.67);
+ assert.equal(w.driverTyreCompound,'SOFT');
+ assert.equal(w.targetTyreCompound,'HARD');
+ assert.equal(w.driverBatteryMJ,2.5);
+ assert.equal(w.targetBatteryMJ,3.4);
+ assert.equal(w.driverEnergyDeployKW,0);
+ assert.equal(w.targetEnergyDeployKW,120);
+ assert.equal(w.driverErsRequestKW,50);
+ assert.equal(w.driverStrategyEffort,.9);
+ assert.equal(w.targetStrategyEffort,1.05);
+ assert.equal(w.driverStrategyName,'CHASER');
+ assert.equal(w.targetStrategyName,'BALANCED');
+ assert.equal(w.driverPaceRating,82);
+ assert.equal(w.targetPaceRating,67);
+ assert.equal(w.driverReportedCorridorCandidates,0);
+ assert.equal(w.physicalOvertakingClearanceProven,false);
+});
+test('R5-b142 unknown tyre wear, ERS, battery and pace remain null, never estimated from delayed samples',()=>{
+ const v=cars();
+ v[0].batteryMJ=undefined;v[0].tyreWear=Number.NaN;
+ v[0].unifiedStrategyErsKWV12=Infinity;
+ v[0].driverProfile={pace:'82'};
+ const w=deriveExactAttackStartWitness(event,snapshotAttemptContextFrame(2000,2000,v));
+ assert.equal(w.driverBatteryMJ,null);
+ assert.equal(w.driverTyreWearFraction,null);
+ assert.equal(w.driverErsRequestKW,null);
+ assert.equal(w.driverPaceRating,null);
+ assert.equal(w.driverStrategyName,null);
+ assert.equal(w.driverTyreCompound,null);
+});
