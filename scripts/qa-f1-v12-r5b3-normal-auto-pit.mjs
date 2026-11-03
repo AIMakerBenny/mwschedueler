@@ -44,6 +44,9 @@ try{
   const source=fs.readFileSync('scripts/lib/f1-r5b137-attempt-context.mjs','utf8');
   await page.addInitScript({content:source.replace(/^export /gm,'')+
    '\nwindow.__mwsR5b137={snapshotAttemptContextFrame,deriveExactAttackStartWitness};'});
+  const longer=fs.readFileSync('scripts/lib/f1-r5b157-long-horizon.mjs','utf8');
+  await page.addInitScript({content:longer.replace(/^export /gm,'')+
+   '\nwindow.__mwsR5b157={LONG_HORIZON_OFFSETS_MS,makeLongHorizonAttempt,updateLongHorizonSamples};'});
  }
  await page.goto('http://127.0.0.1:'+port+'/',{waitUntil:'load'});
  await page.waitForFunction(()=>typeof window.mwsF1UnifiedV11Report==='function');
@@ -132,7 +135,8 @@ try{
    // R5-b121: QA-only ledger. Never edits the live AI/physics state.
    attemptQa:probe?{events:[],lastEventKey:null,totalStarts:0,
     missingOverlap:false,probes:0,frameHistory:[],
-    startWitnesses:[],missingWitnesses:[],startTrajectories:[]}:null,
+    startWitnesses:[],missingWitnesses:[],startTrajectories:[],
+    longHorizonRetryAttempts:[]}:null,
    everRequested:new Set(),finishEvents:[],finished:new Set(),continuityErrors:[],
    initialOrder:vehicles.map(v=>String(v.id)),finishBoundary:null,rejectedStep:null,plannedPitViolations:[]};
   // R5-b121: sample the engine's existing bounded event ledger every 250
@@ -161,6 +165,16 @@ try{
     }
     c.startWitnesses.push(window.__mwsR5b137.deriveExactAttackStartWitness(event,frame));
    }
+   // R5-b158: only genuine engine repeat STARTs are followed at specified
+   // offsets for up to 70 simulation seconds. The source uses the same
+   // 20ms ring. No live game API or physics step is patched.
+   for(const event of newlySeen){
+    if(event.type==='START'&&event.retry===true)
+     c.longHorizonRetryAttempts.push(window.__mwsR5b157.makeLongHorizonAttempt(event));
+   }
+   window.__mwsR5b157.updateLongHorizonSamples(c.longHorizonRetryAttempts,
+    c.frameHistory,c.frameHistory.at(-1)?.ms??0,
+    window.mwsF1GetScreenStateV185()==='FINISHING');
    // R5-b146: sample the SAME pair at precisely five accepted 20ms
    // timestamps around each engine START. Never extrapolate or interpolate.
    for(const event of newlySeen){
@@ -467,7 +481,11 @@ try{
      startTrajectories:q.attemptQa.startTrajectories,
      trajectoryOffsetsMs:[-200,-100,0,100,200],
      trajectorySource:'exact accepted 20ms simulation frames, missing values explicit',
-     trajectorySweptClearanceProven:false}}:null,
+     trajectorySweptClearanceProven:false,
+     longHorizonRetryAttempts:q.attemptQa.longHorizonRetryAttempts,
+     longHorizonOffsetsMs:[0,1000,5000,10000,20000,40000,70000],
+     longHorizonSource:'genuine accepted 20ms source frame or declared unavailable',
+     longHorizonSweptClearanceProven:false}}:null,
    originalProfiles:q.originalProfiles,appliedProfiles:q.appliedProfiles,
    originalStrategies:q.originalStrategies,appliedStrategies:q.appliedStrategies,
    strategyInterventionAtMs:q.strategyInterventionAtMs,
