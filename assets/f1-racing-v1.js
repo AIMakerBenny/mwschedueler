@@ -11706,6 +11706,28 @@ function unifiedChooseLaneV11(row,rows,now,width){
  // solver remain the sole authority for accepting physical movement.
  const ahead=rows.filter(p=>p.id!==row.id&&!p.finished&&p.pit==='TRACK'&&unifiedGapV11(row,p)>0&&unifiedGapV11(row,p)<165)
   .sort((a,b)=>unifiedGapV11(row,a)-unifiedGapV11(row,b)||a.id.localeCompare(b.id))[0];
+ // R5-b181: preserve a verified side-by-side pass through the physical
+ // crossing boundary. The former target may move just behind this car on
+ // one 20ms step; immediately selecting a different opponent at that instant
+ // can reverse the lane intent before the pass settles. Hold only while
+ // bodies remain longitudinally adjacent and laterally separated.
+ // A blocked merge, pit request, or elapsed intent cancels this preference.
+ const crossingPeerV12=rows.find(p=>p.id!==row.id&&String(p.id)===String(v.unifiedAiTargetV11||'')&&
+  !p.finished&&p.pit==='TRACK'&&!p.ref?.pitRequested);
+ if(row.pit==='TRACK'&&!v.pitRequested&&v.unifiedAiStateV11==='SIDE_BY_SIDE'&&
+   crossingPeerV12&&now<Number(v.unifiedIntentUntilV11||0)){
+  const signedGapV12=unifiedGapV11(row,crossingPeerV12);
+  const nearCrossingV12=Math.abs(signedGapV12)<=UNIFIED_ENGINE_V11.physicalLength+
+   UNIFIED_ENGINE_V11.clearance+1;
+  const physicallySeparatedV12=Math.abs(row.y-crossingPeerV12.y)>=unifiedLateralClearanceV11(row,crossingPeerV12);
+  if(nearCrossingV12&&physicallySeparatedV12){
+   const kept=unifiedMergeTargetV11(row,unifiedClampV11(Number(v.unifiedLaneTargetV11),-allowed,allowed),rows);
+   if(!kept.blocked.length){
+    v.unifiedMergeBlockedV11=[];v.unifiedLaneTargetV11=kept.target;return kept.target;
+   }
+  }
+ }
+
  // R5-b178: an EXIT_DUEL is an already rejected lane, not a fresh
  // attack every 20ms. Honor the existing 700ms intent expiry before trying
  // the same opponent again; never preserve it if the opponent or pit state

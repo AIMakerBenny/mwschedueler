@@ -9,18 +9,18 @@ const sentinel=source.indexOf('// Target-aware diagnostics only.',start);
 const stop=source.lastIndexOf('}',sentinel);
 assert.ok(start>=0&&sentinel>start&&stop>start,'live unifiedChooseLaneV11 source must exist');
 const chooser=source.slice(start,stop+1);
-function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitDuel=false,now=1,followerSpeed=30,opponentSpeed=28,specialPower=0}={}){
+function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitDuel=false,sideBySide=false,now=1,followerSpeed=30,opponentSpeed=28,specialPower=0,opponentGap=42,lateralY=-2}={}){
  const v={id:'me',pitRequested:pit,pitState:'TRACK',racingLineMode:'IDEAL',
-  unifiedAiStateV11:exitDuel?'EXIT_DUEL':'PLAN_ATTACK',unifiedAiTargetV11:'ahead',
+  unifiedAiStateV11:sideBySide?'SIDE_BY_SIDE':exitDuel?'EXIT_DUEL':'PLAN_ATTACK',unifiedAiTargetV11:'ahead',
   unifiedIntentUntilV11:4,unifiedLaneTargetV11:2};
- const me={id:'me',ref:v,pit:'TRACK',v:followerSpeed,y:-2};
+ const me={id:'me',ref:v,pit:'TRACK',v:followerSpeed,y:lateralY};
  const target={id:'ahead',ref:{},pit:lost?'PIT_LANE':'TRACK',finished:false,v:opponentSpeed,y:0};
  const rows=nearestChanged?[me,{id:'new',pit:'TRACK',finished:false,v:28,y:0},target]:[me,target];
  let scans=0;
  const ctx={UNIFIED_ENGINE_V11:{physicalWidth:2},
   unifiedClampV11:(x,a,b)=>Math.min(b,Math.max(a,x)),
   unifiedIdealLaneV11:()=>0,unifiedPitAvoidanceV12:()=>null,
-  unifiedGapV11:(a,b)=>b.id==='new'?18:b.id==='ahead'?42:0,
+  unifiedGapV11:(a,b)=>b.id==='new'?18:b.id==='ahead'?opponentGap:0,
   unifiedMergeTargetV11:(row,y)=>blocked&&y===2?{target:row.y,blocked:['obstacle']}:{target:y,blocked:[]},
   unifiedAttackCorridorV12:()=>{scans++;return {target:-3,candidates:4,blocked:[]}},
   unifiedRatingV11:()=>0,unifiedSkillPowerV11:()=>specialPower,unifiedLateralClearanceV11:()=>2.5,
@@ -86,4 +86,17 @@ test('R5-b180 favors an already committed safe attack side rather than flapping'
  const defaultSide=corridorChoice(),heldSide=corridorChoice(3);
  assert.ok(defaultSide.target<0);assert.ok(heldSide.target>0);
  assert.ok(heldSide.candidates>0);assert.equal(heldSide.reason,'CLEAR');
+});
+
+test('R5-b181 a physically separate side-by-side car keeps its current opponent through crossing',()=>{
+ const x=evaluate({sideBySide:true,nearestChanged:true,opponentGap:-2,lateralY:-3});
+ assert.equal(x.target,'ahead');assert.equal(x.state,'SIDE_BY_SIDE');assert.equal(x.scans,0);
+});
+test('R5-b181 does not keep an unsafe, unseparated or pit-bound crossing',()=>{
+ const unseparated=evaluate({sideBySide:true,nearestChanged:true,opponentGap:-2});
+ const blocked=evaluate({sideBySide:true,nearestChanged:true,opponentGap:-2,lateralY:-3,blocked:true});
+ const pit=evaluate({sideBySide:true,nearestChanged:true,opponentGap:-2,lateralY:-3,pit:true});
+ assert.equal(unseparated.target,'new');assert.equal(unseparated.scans,1);
+ assert.equal(blocked.target,'new');assert.equal(blocked.scans,1);
+ assert.equal(pit.state,'PIT');
 });
