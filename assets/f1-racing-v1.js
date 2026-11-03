@@ -11791,8 +11791,11 @@ function unifiedChooseLaneV11(row,rows,now,width){
  // Reuse lateral preference only for a continuous attack on that same car.
  const previousOpponentV12=String(v.unifiedAiTargetV11||'');
  const previousLaneV12=v.unifiedLaneTargetV11; // R5-b188: null is not an authored lane 0.
+ // R5-b196: EXIT_DUEL means the previous lateral plan was rejected by
+ // a physical merge. Never bias the subsequent newly-cleared plan toward
+ // that rejected side; continuity is reserved for live safe attacks only.
  const preferredAttackLaneV12=ahead&&String(ahead.id)===previousOpponentV12&&
-  ['PLAN_ATTACK','SIDE_BY_SIDE','EXIT_DUEL'].includes(String(v.unifiedAiStateV11||''))&&
+  ['PLAN_ATTACK','SIDE_BY_SIDE'].includes(String(v.unifiedAiStateV11||''))&&
   Number.isFinite(previousLaneV12)?previousLaneV12:null;
  v.unifiedAiTargetV11=row.pit==='TRACK'&&!v.pitRequested&&ahead?String(ahead.id):'';
  let target=ideal,state='CRUISE',corridor=null;

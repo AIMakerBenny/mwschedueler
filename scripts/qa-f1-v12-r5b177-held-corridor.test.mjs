@@ -225,3 +225,12 @@ test('R5-b195 still-physical blocker preserves existing EXIT_DUEL cooldown',()=>
  const x=evaluate({exitDuel:true,oldBlockerPresent:true});
  assert.equal(x.state,'EXIT_DUEL');assert.equal(x.scans,0);assert.equal(x.lane,2);
 });
+
+test('R5-b196 after vanished blocker an EXIT_DUEL plan does not prefer its rejected old corridor',()=>{
+ const x=evaluate({exitDuel:true,oldBlockerGone:true,laneTarget:-3});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);assert.equal(x.preferredLane,null);
+});
+test('R5-b196 unblocked ongoing PLAN_ATTACK still preserves valid same-opponent corridor',()=>{
+ const x=evaluate({now:5,laneTarget:-3});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);assert.equal(x.preferredLane,-3);
+});
