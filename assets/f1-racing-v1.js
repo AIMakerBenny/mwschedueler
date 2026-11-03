@@ -11764,7 +11764,26 @@ function unifiedChooseLaneV11(row,rows,now,width){
    Number.isFinite(v.unifiedRejectedGapV12)&&
    unifiedGapV11(row,ahead)-v.unifiedRejectedGapV12>
     UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance;
-  if(!clearedBlockersV12&&!gapWidenedV12){
+  // R5-b213: a recorded REAL rejected attack lane can be reconsidered
+  // before the cooldown only when every named TRACK blocker is outside
+  // that lane and the unchanged merge guard approves the actual move.
+  // This only opens a new scan through the full existing corridor planner.
+  // Pit-bound traffic and unknown blockers do not receive this release.
+  const rejectedSideV12=v.unifiedRejectedAttackLaneV12;
+  const namedTrackBlockersClearV12=Number.isFinite(rejectedSideV12)&&
+   priorBlockersV12.length>0&&priorBlockersV12.every(id=>{
+    const peer=rows.find(p=>String(p.id)===String(id)&&!p.finished);
+    return peer&&peer.pit==='TRACK'&&!peer.ref?.pitRequested&&
+     Math.abs(peer.y-rejectedSideV12)>=unifiedLateralClearanceV11(row,peer)+.25;
+   });
+  const releasedLaneV12=namedTrackBlockersClearV12?
+   unifiedClampV11(rejectedSideV12,-allowed,allowed):null;
+  const releasedMergeV12=namedTrackBlockersClearV12?
+   unifiedMergeTargetV11(row,releasedLaneV12,rows):null;
+  const physicallyReleasedV12=Boolean(releasedMergeV12&&
+   !releasedMergeV12.blocked.length&&
+   Math.abs(releasedMergeV12.target-releasedLaneV12)<1e-7);
+  if(!clearedBlockersV12&&!gapWidenedV12&&!physicallyReleasedV12){
    // R5-b208: holding today's current chassis lane can report no merge
    // obstacle despite the named car that rejected the previous attack
    // still being nearby. Preserve live blocker identity across the 20ms
