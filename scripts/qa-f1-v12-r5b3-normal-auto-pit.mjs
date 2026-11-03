@@ -132,7 +132,7 @@ try{
    // R5-b121: QA-only ledger. Never edits the live AI/physics state.
    attemptQa:probe?{events:[],lastEventKey:null,totalStarts:0,
     missingOverlap:false,probes:0,frameHistory:[],
-    startWitnesses:[],missingWitnesses:[]}:null,
+    startWitnesses:[],missingWitnesses:[],startTrajectories:[]}:null,
    everRequested:new Set(),finishEvents:[],finished:new Set(),continuityErrors:[],
    initialOrder:vehicles.map(v=>String(v.id)),finishBoundary:null,rejectedStep:null,plannedPitViolations:[]};
   // R5-b121: sample the engine's existing bounded event ledger every 250
@@ -161,6 +161,49 @@ try{
     }
     c.startWitnesses.push(window.__mwsR5b137.deriveExactAttackStartWitness(event,frame));
    }
+   // R5-b146: sample the SAME pair at precisely five accepted 20ms
+   // timestamps around each engine START. Never extrapolate or interpolate.
+   for(const event of newlySeen){
+    if(event.type==='START')c.startTrajectories.push({
+     attemptId:event.attemptId,startMs:event.ms,
+     driver:event.driver,target:event.target,offsetSamples:{}});
+   }
+   const acceptedThroughMs=c.frameHistory.at(-1)?.ms??0;
+   const raceFinished=window.mwsF1GetScreenStateV185()==='FINISHING';
+   for(const trajectory of c.startTrajectories){
+    for(const offset of [-200,-100,0,100,200]){
+     const key=String(offset),ms=trajectory.startMs+offset;
+     if(Object.hasOwn(trajectory.offsetSamples,key))continue;
+     if(ms>acceptedThroughMs&&!raceFinished)continue;
+     const frame=c.frameHistory.find(x=>x.ms===ms);
+     if(!frame){
+      trajectory.offsetSamples[key]={offsetMs:offset,ms,available:false,
+       reason:ms<0?'BEFORE_RACE_START':
+        ms>acceptedThroughMs?'AFTER_FINAL_ACCEPTED_STEP':
+        'NO_EXACT_20MS_SAMPLE'};
+      continue;
+     }
+     const a=frame.cars.find(v=>v.id===trajectory.driver);
+     const b=frame.cars.find(v=>v.id===trajectory.target);
+     if(!a||!b||a===b)throw Error('R5-b146 missing source driver-target pair');
+     trajectory.offsetSamples[key]={offsetMs:offset,ms,available:true,
+      driver:trajectory.driver,target:trajectory.target,
+      driverAiState:a.aiState,targetAiState:b.aiState,
+      driverAiTarget:a.aiTarget,
+      signedTargetAheadTrackMeters:a.progress===null||b.progress===null?
+       null:(b.progress-a.progress)*frame.trackLengthMeters,
+      relativeClosingSpeedMps:a.speedKph===null||b.speedKph===null?
+       null:(a.speedKph-b.speedKph)/3.6,
+      driverBatteryMJ:a.batteryMJ,targetBatteryMJ:b.batteryMJ,
+      driverEnergyDeployKW:a.energyDeployKW,targetEnergyDeployKW:b.energyDeployKW,
+      driverTyreWearFraction:a.tyreWearFraction,
+      targetTyreWearFraction:b.tyreWearFraction,
+      driverErsRequestKW:a.ersRequestKW,targetErsRequestKW:b.ersRequestKW,
+      driverStrategyEffort:a.strategyEffort,targetStrategyEffort:b.strategyEffort,
+      driverStrategyName:a.strategyName,targetStrategyName:b.strategyName,
+      sweptBodyClearanceProven:false,causalEffectProven:false};
+    }
+   }
    if(events.length)c.lastEventKey=JSON.stringify(events.at(-1));
    c.totalStarts=report.totalStarts;
    c.probes++;
@@ -187,7 +230,7 @@ try{
      const lengthMeters=window.mwsF1GetActiveRaceSnapshotV187().track.lengthMeters;
      c.frameHistory.push(window.__mwsR5b137.snapshotAttemptContextFrame(
       clockMs,lengthMeters,active));
-     if(c.frameHistory.length>270)c.frameHistory.shift();
+     if(c.frameHistory.length>320)c.frameHistory.shift();
     }
     // R5-b52: only after the first genuine 20ms solver acceptance, record
     // assigned strategies for every scenario. Optional experimental balancing
@@ -420,7 +463,11 @@ try{
      startWitnesses:q.attemptQa.startWitnesses,
      missingStartWitnesses:q.attemptQa.missingWitnesses,
      exactWitnessSource:'genuine accepted 20ms simulation frame at engine START ms',
-     safeLaneClaim:false}}:null,
+     safeLaneClaim:false,
+     startTrajectories:q.attemptQa.startTrajectories,
+     trajectoryOffsetsMs:[-200,-100,0,100,200],
+     trajectorySource:'exact accepted 20ms simulation frames, missing values explicit',
+     trajectorySweptClearanceProven:false}}:null,
    originalProfiles:q.originalProfiles,appliedProfiles:q.appliedProfiles,
    originalStrategies:q.originalStrategies,appliedStrategies:q.appliedStrategies,
    strategyInterventionAtMs:q.strategyInterventionAtMs,
