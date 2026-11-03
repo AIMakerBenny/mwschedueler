@@ -21,7 +21,11 @@ const rows=[];
 for(const seed of [1,2]){
  const before=load('artifacts/r5-b177-baseline/seed'+seed+'-observed10.json');
  const after=load('artifacts/r5-b177-current/seed'+seed+'-observed10.json');
- for(const d of [before,after]){
+ // R5-b193: the pinned pre-engine baseline alone cannot tell whether the
+ // latest AI work regressed from the last verified real-engine release.
+ // Compare all three fully observed same-seed Chromium 10-lap races.
+ const previous=load('artifacts/r5-b189-reference/seed'+seed+'-observed10.json');
+ for(const d of [before,previous,after]){
   assert.equal(d.track,'majoku-ring-v1');assert.equal(d.mode,'NORMAL');assert.equal(d.laps,10);
  }
  assert.equal(after.status,'PASS','real browser must pass');
@@ -34,9 +38,16 @@ for(const seed of [1,2]){
  assert.equal(after.finishedRows?.length,12,'all twelve cars must finish');
  const metrics=d=>({passes:d.physics?.passes,leaderChanges:d.acceptedCompetition?.leaderChanges,
   rankReorders:d.acceptedCompetition?.rankReorders,collisionStops:d.physics?.collisionStops,...attemptStats(d)});
- const b=metrics(before),a=metrics(after);
- rows.push({seed,baseline:b,modified:a,delta:Object.fromEntries(Object.keys(a).map(k=>[k,a[k]-b[k]]))});
+ const b=metrics(before),p=metrics(previous),a=metrics(after);
+ // Validate the latest physics and the comparator inputs independently;
+ // never invent missing race metrics or claim causal improvement from two seeds.
+ for(const [kind,m] of [['original',b],['R5-b189',p],['current',a]]){
+  for(const key of ['passes','leaderChanges','rankReorders','collisionStops','starts','disengaged','targetChanged','quickRetries'])
+   assert.ok(Number.isInteger(m[key])&&m[key]>=0,kind+' '+key+' must be a valid observed count');
+ }
+ const diff=(x,y)=>Object.fromEntries(Object.keys(x).map(k=>[k,x[k]-y[k]]));
+ rows.push({seed,baseline:b,previousR5b189:p,modified:a,delta:diff(a,b),deltaVsR5b189:diff(a,p)});
 }
 fs.mkdirSync('artifacts/r5-b177-current',{recursive:true});
-fs.writeFileSync('artifacts/r5-b177-current/comparison.json',JSON.stringify({phase:'R5-b177',basis:'two matched genuine Chromium 12-car ten-lap races, seeds 1 and 2',rows,improvementNotAssumed:true},null,2));
+fs.writeFileSync('artifacts/r5-b177-current/comparison.json',JSON.stringify({phase:'R5-b193',basis:'genuine same-seed Chromium 12-car ten-lap races: pinned original, verified R5-b189, current',referenceRunId:41584183003,rows,improvementNotAssumed:true},null,2));
 process.stdout.write(JSON.stringify(rows,null,2)+'\\n');

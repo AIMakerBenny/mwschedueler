@@ -39,6 +39,14 @@ jobs:
           name: majoku-r5b96-focused-physical-20ms
           github-token: ${{ github.token }}
           path: artifacts/r5-b177-baseline
+      - name: Download verified previous R5-b189 genuine engine race reference
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41584183003
+          name: majoku-r5b177-actual-engine-race-results
+          github-token: ${{ github.token }}
+          path: artifacts/r5-b189-reference
       - name: Run original real 20ms 12-car ten-lap Majoku race in seeds 1 and 2
         env:
           MWS_R5B3_TRACK: majoku-ring-v1
