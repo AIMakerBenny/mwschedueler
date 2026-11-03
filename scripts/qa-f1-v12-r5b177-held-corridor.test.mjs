@@ -409,3 +409,16 @@ test('R5-b220 crossing ahead with a still-clear authored passing lane keeps it',
  const x=evaluate({sideBySide:true,now:1,opponentGap:2,lateralY:-3,laneTarget:-3});
  assert.equal(x.state,'SIDE_BY_SIDE');assert.equal(x.lane,-3);assert.equal(x.scans,0);
 });
+
+test('R5-b221 final body-length attack avoids steering onto opponent occupied chassis lane',()=>{
+ const x=evaluate({now:1,opponentGap:7,lateralY:-3,laneTarget:0,followerSpeed:30,opponentSpeed:28});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.lane,-3);assert.equal(x.scans,0);
+});
+test('R5-b221 earlier still-distant approach preserves the previously legal authored target',()=>{
+ const x=evaluate({now:1,opponentGap:14,lateralY:-3,laneTarget:0,followerSpeed:30,opponentSpeed:28});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.lane,0);assert.equal(x.scans,0);
+});
+test('R5-b221 unseparated follower is not silently granted a physically clear lane',()=>{
+ const x=evaluate({now:1,opponentGap:7,lateralY:-1,laneTarget:0,followerSpeed:30,opponentSpeed:28});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.lane,0);assert.equal(x.scans,0);
+});

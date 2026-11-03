@@ -11846,6 +11846,25 @@ function unifiedChooseLaneV11(row,rows,now,width){
   // Stay on the actual physical lane; an authored 0 is still a valid center.
   const plannedLaneV12=Number.isFinite(v.unifiedLaneTargetV11)?v.unifiedLaneTargetV11:row.y;
   const held=unifiedMergeTargetV11(row,unifiedClampV11(plannedLaneV12,-allowed,allowed),rows);
+  // R5-b221: just before a true physical crossing, a held lane may now
+  // coincide with the opponent's chassis although our current chassis
+  // is safely separated. Keep that existing side without creating a
+  // new speculative lane change in the final body-length approach.
+  // All accepted movement still uses the original merge and sweep.
+  const heldGapNearV12=unifiedGapV11(row,ahead);
+  const impendingOccupiedHeldLaneV12=v.unifiedAiStateV11==='PLAN_ATTACK'&&
+   heldGapNearV12>0&&heldGapNearV12<=UNIFIED_ENGINE_V11.physicalLength+
+    UNIFIED_ENGINE_V11.clearance+2&&
+   Math.abs(row.y-ahead.y)>=unifiedLateralClearanceV11(row,ahead)&&
+   Math.abs(held.target-ahead.y)<unifiedLateralClearanceV11(row,ahead)&&
+   Math.abs(held.target-row.y)>.20;
+  if(impendingOccupiedHeldLaneV12){
+   const safeCurrentLaneV12=unifiedMergeTargetV11(row,row.y,rows);
+   if(!safeCurrentLaneV12.blocked.length){
+    v.unifiedMergeBlockedV11=[];v.unifiedLaneTargetV11=safeCurrentLaneV12.target;
+    return safeCurrentLaneV12.target;
+   }
+  }
   // R5-b200: a valid authored PLAN_ATTACK target already at the
   // current same-lane position is a no-op. Find a genuinely separated
   // physical path now, but do not invent a prior lane when it was unset.
