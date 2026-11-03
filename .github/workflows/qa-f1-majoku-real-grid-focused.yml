@@ -135,6 +135,9 @@ jobs:
             scripts/lib/f1-r5b165-terminal-witness.mjs \
             scripts/qa-f1-v12-r5b165-terminal-witness.test.mjs \
             scripts/qa-f1-v12-r5b167-terminal-physical-context.mjs \
+            scripts/qa-f1-v12-r5b169-terminal-cause-contrast.mjs \
+            scripts/qa-f1-v12-r5b170-preterminal-ai-transition.mjs \
+            scripts/qa-f1-v12-r5b171-terminal-source-coverage.mjs \
             scripts/lib/f1-r5b137-attempt-context.mjs \
             scripts/qa-f1-v12-r5b137-attempt-context.test.mjs \
             scripts/qa-f1-v12-r5b122-attack-attribution.mjs \
@@ -259,6 +262,18 @@ jobs:
         env:
           MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
         run: node scripts/qa-f1-v12-r5b167-terminal-physical-context.mjs
+      - name: R5-b169 audit actual terminal cause groups and exact source missingness
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
+        run: node scripts/qa-f1-v12-r5b169-terminal-cause-contrast.mjs
+      - name: R5-b170 separate before-terminal AI transition from terminal consequence
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
+        run: node scripts/qa-f1-v12-r5b170-preterminal-ai-transition.mjs
+      - name: R5-b171 verify all real terminal events and exact accepted frames
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
+        run: node scripts/qa-f1-v12-r5b171-terminal-source-coverage.mjs
       - name: R5-b96 preserve an auditable per-file CI outcome manifest
         if: always()
         env:

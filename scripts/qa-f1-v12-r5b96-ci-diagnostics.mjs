@@ -51,7 +51,10 @@ const terminalWitnessAware=[1,2].some(seed=>{
  try{return Array.isArray(JSON.parse(fs.readFileSync(dir+'seed'+seed+'-observed10.json','utf8')).real20ms?.attackLedger?.terminalEventWitnesses)}
  catch{return false}
 });
-if(terminalWitnessAware)expected.push('b167-terminal-physical-context.json');
+if(terminalWitnessAware)expected.push('b167-terminal-physical-context.json',
+ 'b169-terminal-cause-contrast.json',
+ 'b170-preterminal-ai-transition.json',
+ 'b171-terminal-source-coverage.json');
 const records=[];
 for(const name of expected){
  const p=dir+name;
@@ -253,6 +256,29 @@ for(const name of expected){
     c.collisionStops!==0||
     Object.values(c.terminalCategories).reduce((n,x)=>n+x.attempts,0)!==c.quickRetries)))
     issues.push('UNVERIFIED_PRETERMINAL_PHYSICAL_CONTEXT');
+  if(name==='b169-terminal-cause-contrast.json'&&(
+   data.physicsChanged!==false||data.aiPatchApproved!==false||
+   data.measuredAssociationNotCausation!==true||
+   !Array.isArray(data.cases)||data.cases.length!==2||
+   data.cases.some(c=>c.rapidQuickRetryAttempts!==(c.seed===1?22:18)||
+    Object.values(c.byTerminalReason).reduce((n,x)=>n+x.attempts,0)!==c.rapidQuickRetryAttempts)))
+    issues.push('TERMINAL_CAUSE_CONTRAST_NOT_PHYSICAL_SOURCE_GROUNDED');
+  if(name==='b170-preterminal-ai-transition.json'&&(
+   data.enginePhysicsChanged!==false||data.aiBrakingRelaxationApproved!==false||
+   data.last20msTransitionCanBeConsequenceNotCause!==true||
+   !Array.isArray(data.cases)||data.cases.length!==2||
+   data.cases.some(c=>c.quickRetries!==(c.seed===1?22:18)||
+    Object.values(c.byReason).reduce((n,x)=>n+x.attempts,0)!==c.quickRetries)))
+    issues.push('PRETERMINAL_AI_ORDER_MISSING_OR_CAUSALITY_ASSUMED');
+  if(name==='b171-terminal-source-coverage.json'&&(
+   data.physicalRaceChanged!==false||data.causalAiFaultProven!==false||
+   data.physicalClearanceProven!==false||
+   !Array.isArray(data.cases)||data.cases.length!==2||
+   data.cases.some(c=>c.rapidRetryStarts!==(c.seed===1?22:18)||
+    Object.values(c.rapidFinalTerminalCounts).reduce((n,x)=>n+x,0)!==c.rapidRetryStarts||
+    Object.values(c.certifiedTerminalSourceCoverage).some(x=>
+      x.actualSourceFrames+x.explicitUnavailableFrames!==c.totalTerminalEventsRecorded))))
+    issues.push('TERMINAL_SOURCE_EVENT_IDENTITY_OR_MISSINGNESS_UNVERIFIED');
   if(name==='b122-attack-attribution.json'&&(
    data.liveAiTuningAuthorized!==false||
    !Array.isArray(data.cases)||data.cases.length!==2||
@@ -330,7 +356,12 @@ if(longHorizonAware){
  requiredPass.set('b162-censored-chase-timeline.json','PASS');
  requiredPass.set('b163-terminal-reasons-by-driver.json','PASS');
 }
-if(terminalWitnessAware)requiredPass.set('b167-terminal-physical-context.json','PASS');
+if(terminalWitnessAware){
+ requiredPass.set('b167-terminal-physical-context.json','PASS');
+ requiredPass.set('b169-terminal-cause-contrast.json','PASS');
+ requiredPass.set('b170-preterminal-ai-transition.json','PASS');
+ requiredPass.set('b171-terminal-source-coverage.json','PASS');
+}
 const unexpected=records.filter(r=>r.status!==requiredPass.get(r.name)||(r.issues?.length||0)>0);
 const allVerified=allPresent&&unexpected.length===0;
 const priorStepStatus=String(process.env.MWS_FOCUSED_QA_STEP_STATUS||'unknown').toLowerCase();
