@@ -11694,12 +11694,22 @@ function unifiedChooseLaneV11(row,rows,now,width){
  }
  v.unifiedPitAvoidPeerV12='';
  v.unifiedPitAvoidTargetV12=null;
- if(row.pit==='TRACK'&&!v.pitRequested&&['PLAN_ATTACK','SIDE_BY_SIDE'].includes(v.unifiedAiStateV11)&&now<(Number(v.unifiedIntentUntilV11)||0)){
-  const held=unifiedMergeTargetV11(row,unifiedClampV11(Number(v.unifiedLaneTargetV11)||0,-allowed,allowed),rows);
-  v.unifiedMergeBlockedV11=held.blocked;v.unifiedLaneTargetV11=held.target;return held.target;
- }
+ // R5-b177: keep a held pass only while its selected opponent remains the
+ // nearest live on-track car. A blocked held merge must replan immediately
+ // rather than spend the rest of its 700ms AI intent driving toward itself.
+ // This affects lateral AI intent only; the shared reservation and swept-body
+ // solver remain the sole authority for accepting physical movement.
  const ahead=rows.filter(p=>p.id!==row.id&&!p.finished&&p.pit==='TRACK'&&unifiedGapV11(row,p)>0&&unifiedGapV11(row,p)<165)
   .sort((a,b)=>unifiedGapV11(row,a)-unifiedGapV11(row,b)||a.id.localeCompare(b.id))[0];
+ if(row.pit==='TRACK'&&!v.pitRequested&&ahead&&String(ahead.id)===String(v.unifiedAiTargetV11||'')&&
+   ['PLAN_ATTACK','SIDE_BY_SIDE'].includes(v.unifiedAiStateV11)&&now<(Number(v.unifiedIntentUntilV11)||0)){
+  const held=unifiedMergeTargetV11(row,unifiedClampV11(Number(v.unifiedLaneTargetV11)||0,-allowed,allowed),rows);
+  if(!held.blocked.length){
+   v.unifiedMergeBlockedV11=[];v.unifiedLaneTargetV11=held.target;return held.target;
+  }
+  // The original merge guard rejected this physical corridor. Preserve that
+  // rejection and search for a different safe target on this very AI tick.
+ }
  v.unifiedAiTargetV11=row.pit==='TRACK'&&!v.pitRequested&&ahead?String(ahead.id):'';
  let target=ideal,state='CRUISE',corridor=null;
  if(ahead){

@@ -1,0 +1,60 @@
+name: Majoku Ring R5-b177 actual engine racing regression
+on:
+  push:
+    branches: [f1-unified-redesign-v11-20261012]
+    paths:
+      - 'assets/f1-racing-v1.js'
+      - 'scripts/qa-f1-v12-r5b177-*.mjs'
+      - '.github/workflows/qa-f1-majoku-r5b177-engine.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: majoku-engine-r5b177-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  live-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax, physical single-track lock and deterministic AI intent decisions
+        run: |
+          node --check assets/f1-racing-v1.js
+          node --test scripts/qa-f1-v12-r5b177-held-corridor.test.mjs
+          node scripts/qa-f1-v12-r5b48-single-track-access.mjs
+      - name: Install Chromium for unchanged genuine race runner
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install chromium
+      - name: Download original identical-seed browser baseline
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41578206611
+          name: majoku-r5b96-focused-physical-20ms
+          github-token: ${{ github.token }}
+          path: artifacts/r5-b177-baseline
+      - name: Run original real 20ms 12-car ten-lap Majoku race in seeds 1 and 2
+        env:
+          MWS_R5B3_TRACK: majoku-ring-v1
+          MWS_R5B3_REAL_20MS_PROBE: '1'
+          MWS_R5B3_MAX_TICKS: '70000'
+        run: |
+          mkdir -p artifacts/r5-b177-current
+          for seed in 1 2; do
+            MWS_R5B3_SEED="$seed" MWS_R5B3_OUTPUT="artifacts/r5-b177-current/seed${seed}-observed10.json" node scripts/qa-f1-v12-r5b3-normal-auto-pit.mjs
+          done
+      - name: Compare true overtakes, attempts, order changes and physical safety
+        run: node scripts/qa-f1-v12-r5b177-matched-realgrid.mjs
+      - name: Keep actual results if the physical run fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: majoku-r5b177-actual-engine-race-results
+          path: artifacts/r5-b177-current/
+          if-no-files-found: warn
