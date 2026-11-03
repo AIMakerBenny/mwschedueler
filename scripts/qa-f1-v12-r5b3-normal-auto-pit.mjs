@@ -38,6 +38,13 @@ try{
  const page=await browser.newPage({viewport:{width:1920,height:1080}});
  const pageErrors=[];page.on('pageerror',e=>pageErrors.push(e.message));
  await page.addInitScript(()=>{window.__MWS_F1_INTERNAL_QA_V348=true});
+ // R5-b138: inject pure read-only QA snapshot functions. None can
+ // replace the production physics engine, AI decisions or input commands.
+ if(probeReal20ms){
+  const source=fs.readFileSync('scripts/lib/f1-r5b137-attempt-context.mjs','utf8');
+  await page.addInitScript({content:source.replace(/^export /gm,'')+
+   '\nwindow.__mwsR5b137={snapshotAttemptContextFrame,deriveExactAttackStartWitness};'});
+ }
  await page.goto('http://127.0.0.1:'+port+'/',{waitUntil:'load'});
  await page.waitForFunction(()=>typeof window.mwsF1UnifiedV11Report==='function');
  await page.waitForFunction(()=>document.getElementById('mwsLoginForm')?.dataset.mode==='admin');
@@ -124,7 +131,8 @@ try{
     lastTrafficTotal:0}:null,
    // R5-b121: QA-only ledger. Never edits the live AI/physics state.
    attemptQa:probe?{events:[],lastEventKey:null,totalStarts:0,
-    missingOverlap:false,probes:0}:null,
+    missingOverlap:false,probes:0,frameHistory:[],
+    startWitnesses:[],missingWitnesses:[]}:null,
    everRequested:new Set(),finishEvents:[],finished:new Set(),continuityErrors:[],
    initialOrder:vehicles.map(v=>String(v.id)),finishBoundary:null,rejectedStep:null,plannedPitViolations:[]};
   // R5-b121: sample the engine's existing bounded event ledger every 250
@@ -141,7 +149,18 @@ try{
     if(i<0){c.missingOverlap=true;throw Error('ATTACK_LEDGER_TRUNCATED_BETWEEN_SAMPLES')}
     start=i+1;
    }
-   c.events.push(...events.slice(start));
+   const newlySeen=events.slice(start);
+   c.events.push(...newlySeen);
+   for(const event of newlySeen){
+    if(event.type!=='START')continue;
+    const frame=c.frameHistory.find(x=>x.ms===event.ms);
+    if(!frame){
+     c.missingWitnesses.push({attemptId:event.attemptId,ms:event.ms,
+      reason:'EXACT_ACCEPTED_20MS_FRAME_NOT_FOUND'});
+     continue;
+    }
+    c.startWitnesses.push(window.__mwsR5b137.deriveExactAttackStartWitness(event,frame));
+   }
    if(events.length)c.lastEventKey=JSON.stringify(events.at(-1));
    c.totalStarts=report.totalStarts;
    c.probes++;
@@ -161,6 +180,15 @@ try{
       path:Number(v.unifiedPathDistanceV11)||0,speed:Number(v.speedKph)||0,finished:!!v.finished}]));
     const accepted=window.mwsF1SimulateRaceStepV192(20);q.ticks++;
     const active=standings().map(r=>r.vehicle),time=seconds(),totalLaps=window.mwsF1GetActiveRaceSnapshotV187().totalLaps;
+    // R5-b138: record each genuine committed 20ms frame, not a delayed
+    // five-second strategy sample. Keep only the latest 270 frames in memory.
+    if(accepted&&q.attemptQa){
+     const c=q.attemptQa,clockMs=window.mwsF1GetSimulationClockV192().simTimeMs;
+     const lengthMeters=window.mwsF1GetActiveRaceSnapshotV187().track.lengthMeters;
+     c.frameHistory.push(window.__mwsR5b137.snapshotAttemptContextFrame(
+      clockMs,lengthMeters,active));
+     if(c.frameHistory.length>270)c.frameHistory.shift();
+    }
     // R5-b52: only after the first genuine 20ms solver acceptance, record
     // assigned strategies for every scenario. Optional experimental balancing
     // changes only style names in the browser harness, never game source.
@@ -388,7 +416,11 @@ try{
    real20ms:q.real20ms?{...q.real20ms,
     attackLedger:{events:q.attemptQa.events,totalStarts:q.attemptQa.totalStarts,
      missingOverlap:q.attemptQa.missingOverlap,probes:q.attemptQa.probes,
-     activeAtFinish:report.attackLedger.active}}:null,
+     activeAtFinish:report.attackLedger.active,
+     startWitnesses:q.attemptQa.startWitnesses,
+     missingStartWitnesses:q.attemptQa.missingWitnesses,
+     exactWitnessSource:'genuine accepted 20ms simulation frame at engine START ms',
+     safeLaneClaim:false}}:null,
    originalProfiles:q.originalProfiles,appliedProfiles:q.appliedProfiles,
    originalStrategies:q.originalStrategies,appliedStrategies:q.appliedStrategies,
    strategyInterventionAtMs:q.strategyInterventionAtMs,
