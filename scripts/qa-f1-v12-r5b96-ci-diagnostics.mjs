@@ -54,7 +54,10 @@ const terminalWitnessAware=[1,2].some(seed=>{
 if(terminalWitnessAware)expected.push('b167-terminal-physical-context.json',
  'b169-terminal-cause-contrast.json',
  'b170-preterminal-ai-transition.json',
- 'b171-terminal-source-coverage.json');
+ 'b171-terminal-source-coverage.json',
+ 'b173-disengage-resource-deltas.json',
+ 'b174-resource-relative-at-minus20.json',
+ 'b175-disengage-resource-cross-check.json');
 const records=[];
 for(const name of expected){
  const p=dir+name;
@@ -279,6 +282,25 @@ for(const name of expected){
     Object.values(c.certifiedTerminalSourceCoverage).some(x=>
       x.actualSourceFrames+x.explicitUnavailableFrames!==c.totalTerminalEventsRecorded))))
     issues.push('TERMINAL_SOURCE_EVENT_IDENTITY_OR_MISSINGNESS_UNVERIFIED');
+  if(name==='b173-disengage-resource-deltas.json'&&(
+   data.gamePhysicsModified!==false||data.aiBalancePatchAuthorized!==false||
+   data.causalResourceFaultProven!==false||
+   !Array.isArray(data.cases)||data.cases.length!==2||
+   data.cases.some(c=>c.rapidSameTargetRetryStarts!==(c.seed===1?22:18)||
+    Object.values(c.byEndReason).reduce((n,g)=>n+g.attempts,0)!==c.rapidSameTargetRetryStarts)))
+    issues.push('PRETERMINAL_RESOURCE_DELTA_SOURCE_UNVERIFIED');
+  if(name==='b174-resource-relative-at-minus20.json'&&(
+   data.physicsModified!==false||data.causalAiResourceFaultProven!==false||
+   !Array.isArray(data.cases)||data.cases.length!==2||
+   data.cases.some(c=>c.rapidStarts!==(c.seed===1?22:18)||
+    Object.values(c.byOutcome).reduce((n,g)=>n+g.attempts,0)!==c.rapidStarts)))
+    issues.push('TERMINAL_RELATIVE_RESOURCE_SOURCE_UNVERIFIED');
+  if(name==='b175-disengage-resource-cross-check.json'&&(
+   data.physicsModified!==false||data.causalityProven!==false||
+   !Array.isArray(data.cases)||data.cases.length!==2||
+   data.cases.some(c=>c.quickRetries!==(c.seed===1?22:18)||
+    Object.values(c.byOriginalOutcome).reduce((n,g)=>n+g.attempts,0)!==c.quickRetries)))
+    issues.push('JOINT_RESOURCE_CASES_NOT_CROSSCHECKED');
   if(name==='b122-attack-attribution.json'&&(
    data.liveAiTuningAuthorized!==false||
    !Array.isArray(data.cases)||data.cases.length!==2||
@@ -361,6 +383,9 @@ if(terminalWitnessAware){
  requiredPass.set('b169-terminal-cause-contrast.json','PASS');
  requiredPass.set('b170-preterminal-ai-transition.json','PASS');
  requiredPass.set('b171-terminal-source-coverage.json','PASS');
+ requiredPass.set('b173-disengage-resource-deltas.json','PASS');
+ requiredPass.set('b174-resource-relative-at-minus20.json','PASS');
+ requiredPass.set('b175-disengage-resource-cross-check.json','PASS');
 }
 const unexpected=records.filter(r=>r.status!==requiredPass.get(r.name)||(r.issues?.length||0)>0);
 const allVerified=allPresent&&unexpected.length===0;

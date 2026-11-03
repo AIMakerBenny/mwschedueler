@@ -1,0 +1,92 @@
+name: Majoku genuine preterminal resource joint regression
+on:
+  push:
+    branches: [f1-unified-redesign-v11-20261012]
+    paths:
+      - '.github/workflows/qa-f1-majoku-resource-contrast.yml'
+      - 'scripts/qa-f1-v12-r5b173-disengage-resource-deltas.mjs'
+      - 'scripts/qa-f1-v12-r5b174-resource-relative-at-minus20.mjs'
+      - 'scripts/qa-f1-v12-r5b175-disengage-resource-cross-check.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  archived-true-two-seed-attack-resource-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve real physics, AI and six locked tracks
+        run: git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js
+      - name: Check three read-only resource scripts
+        run: |
+          for phase in 173-disengage-resource-deltas 174-resource-relative-at-minus20 175-disengage-resource-cross-check
+          do node --check "scripts/qa-f1-v12-r5b$phase.mjs"; done
+      - name: Download two authentic 12-car 10-lap Chromium races with exact terminal evidence
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41576022881
+          name: majoku-r5b96-focused-physical-20ms
+          github-token: ${{ github.token }}
+          path: artifacts/r5-b77-majoku
+      - name: R5-b173 test real relative power tyre speed and longitudinal gap changes
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: 41576022881
+        run: node scripts/qa-f1-v12-r5b173-disengage-resource-deltas.mjs
+      - name: R5-b174 compare same-frame opponent power, battery and tyre
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: 41576022881
+        run: node scripts/qa-f1-v12-r5b174-resource-relative-at-minus20.mjs
+      - name: R5-b175 independently cross-check signed resource groups and outcome
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: 41576022881
+        run: node scripts/qa-f1-v12-r5b175-disengage-resource-cross-check.mjs
+      - name: Require original verified outcomes and resource class totals
+        run: |
+          node --input-type=module -e '
+            import assert from "node:assert/strict";
+            import fs from "node:fs";
+            const dir="artifacts/r5-b77-majoku/";
+            const a=JSON.parse(fs.readFileSync(dir+"b173-disengage-resource-deltas.json","utf8"));
+            const b=JSON.parse(fs.readFileSync(dir+"b174-resource-relative-at-minus20.json","utf8"));
+            const c=JSON.parse(fs.readFileSync(dir+"b175-disengage-resource-cross-check.json","utf8"));
+            for(const r of [a,b,c])assert.equal(r.status,"PASS");
+            for(const [seed,disengage,target,success,lowerEnergy,worseTyres,neither,both] of [
+              [1,13,7,2,6,4,5,2],[2,15,2,1,4,7,5,2]]){
+              const aa=a.cases.find(x=>x.seed===seed);
+              const bb=b.cases.find(x=>x.seed===seed);
+              const cc=c.cases.find(x=>x.seed===seed);
+              assert(aa&&bb&&cc);
+              assert.equal(aa.byEndReason.DISENGAGED_UNCONFIRMED.attempts,disengage);
+              assert.equal(aa.byEndReason.TARGET_CHANGED.attempts,target);
+              assert.equal(bb.byOutcome.SUCCESS.attempts,success);
+              assert.equal(bb.byOutcome.DISENGAGED_UNCONFIRMED.driverEnergyLessThanTarget,lowerEnergy);
+              assert.equal(bb.byOutcome.DISENGAGED_UNCONFIRMED.tyresMoreWornThanTarget,worseTyres);
+              assert.equal(cc.byOriginalOutcome.DISENGAGED_UNCONFIRMED.byResourceClass.NEITHER.attempts,neither);
+              assert.equal(cc.byOriginalOutcome.DISENGAGED_UNCONFIRMED.byResourceClass.BOTH_DISADVANTAGES.attempts,both);
+              assert.equal(cc.collisionStops,0);
+            }
+            assert.equal(a.gamePhysicsModified,false);
+            assert.equal(b.causalAiResourceFaultProven,false);
+            assert.equal(c.causalityProven,false);
+            console.log(JSON.stringify({phase:"R5-b176",status:"ARCHIVED_GENUINE_RESOURCE_PASS",
+             actualSourceRun:41576022881,real10LapRaces:2,newBrowserRaces:0,
+             physicsChanged:false}));
+          '
+      - name: Save audit on pass or failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: majoku-r5b176-preterminal-resource-evidence
+          path: |
+            artifacts/r5-b77-majoku/b173-disengage-resource-deltas.json
+            artifacts/r5-b77-majoku/b174-resource-relative-at-minus20.json
+            artifacts/r5-b77-majoku/b175-disengage-resource-cross-check.json
+          if-no-files-found: warn

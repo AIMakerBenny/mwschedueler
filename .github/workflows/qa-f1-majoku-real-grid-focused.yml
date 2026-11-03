@@ -138,6 +138,9 @@ jobs:
             scripts/qa-f1-v12-r5b169-terminal-cause-contrast.mjs \
             scripts/qa-f1-v12-r5b170-preterminal-ai-transition.mjs \
             scripts/qa-f1-v12-r5b171-terminal-source-coverage.mjs \
+            scripts/qa-f1-v12-r5b173-disengage-resource-deltas.mjs \
+            scripts/qa-f1-v12-r5b174-resource-relative-at-minus20.mjs \
+            scripts/qa-f1-v12-r5b175-disengage-resource-cross-check.mjs \
             scripts/lib/f1-r5b137-attempt-context.mjs \
             scripts/qa-f1-v12-r5b137-attempt-context.test.mjs \
             scripts/qa-f1-v12-r5b122-attack-attribution.mjs \
@@ -274,6 +277,18 @@ jobs:
         env:
           MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
         run: node scripts/qa-f1-v12-r5b171-terminal-source-coverage.mjs
+      - name: R5-b173 genuine 180ms tyre energy ERS changes before terminal
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
+        run: node scripts/qa-f1-v12-r5b173-disengage-resource-deltas.mjs
+      - name: R5-b174 compare actual driver-target ERS battery and tyre at terminal minus 20ms
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
+        run: node scripts/qa-f1-v12-r5b174-resource-relative-at-minus20.mjs
+      - name: R5-b175 combine resource conditions and actual terminating speed
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
+        run: node scripts/qa-f1-v12-r5b175-disengage-resource-cross-check.mjs
       - name: R5-b96 preserve an auditable per-file CI outcome manifest
         if: always()
         env:
