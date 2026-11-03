@@ -17,7 +17,7 @@ function evaluate({blocked=false,pit=false,lost=false,nearestChanged=false,exitD
  const target={id:'ahead',ref:{},pit:lost?'PIT_LANE':'TRACK',finished:false,v:opponentSpeed,y:0};
  const rows=nearestChanged?[me,{id:'new',pit:'TRACK',finished:false,v:28,y:0},target]:[me,target];
  let scans=0;
- const ctx={UNIFIED_ENGINE_V11:{physicalWidth:2},
+ const ctx={UNIFIED_ENGINE_V11:{physicalWidth:2,physicalLength:5.2,clearance:.30},
   unifiedClampV11:(x,a,b)=>Math.min(b,Math.max(a,x)),
   unifiedIdealLaneV11:()=>0,unifiedPitAvoidanceV12:()=>null,
   unifiedGapV11:(a,b)=>b.id==='new'?18:b.id==='ahead'?opponentGap:0,
