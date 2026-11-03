@@ -1,0 +1,91 @@
+name: Majoku genuine attempt terminal-censored long-horizon regression
+on:
+  push:
+    branches: [f1-unified-redesign-v11-20261012]
+    paths:
+      - '.github/workflows/qa-f1-majoku-terminal-censor.yml'
+      - 'scripts/qa-f1-v12-r5b161-attack-terminal-censor.mjs'
+      - 'scripts/qa-f1-v12-r5b162-censored-chase-timeline.mjs'
+      - 'scripts/qa-f1-v12-r5b163-terminal-reasons-by-driver.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  genuine-chromium-attempt-terminal-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm physics, original AI and locked track source unchanged
+        run: git diff --exit-code b4a7c7547ee826d0d9cc91769cecdf162fcb93d5 HEAD -- assets/f1-racing-v1.js assets/f1-track-v1.js assets/f1-track-geometry-v2.js
+      - name: Validate each new event-censored longitudinal source script
+        run: |
+          for phase in 161-attack-terminal-censor 162-censored-chase-timeline 163-terminal-reasons-by-driver
+          do node --check "scripts/qa-f1-v12-r5b$phase.mjs"; done
+      - name: Download successful real Chromium 12-car two-seed 10-lap evidence with 70s long horizon
+        uses: actions/download-artifact@v4
+        with:
+          repository: AIMakerBenny/mwschedueler
+          run-id: 41570904022
+          name: majoku-r5b96-focused-physical-20ms
+          github-token: ${{ github.token }}
+          path: artifacts/r5-b77-majoku
+      - name: R5-b161 require actual engine event terminal timestamps
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: 41570904022
+        run: node scripts/qa-f1-v12-r5b161-attack-terminal-censor.mjs
+      - name: R5-b162 exclude physical frames after the original attempt terminated
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: 41570904022
+        run: node scripts/qa-f1-v12-r5b162-censored-chase-timeline.mjs
+      - name: R5-b163 prove non-random outcome counts and attack durations
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: 41570904022
+        run: node scripts/qa-f1-v12-r5b163-terminal-reasons-by-driver.mjs
+      - name: Pin original quick retry terminal results to authentic engine events
+        run: |
+          node --input-type=module -e '
+            import assert from "node:assert/strict";
+            import fs from "node:fs";
+            const root="artifacts/r5-b77-majoku/";
+            const end=JSON.parse(fs.readFileSync(root+"b163-terminal-reasons-by-driver.json","utf8"));
+            const censor=JSON.parse(fs.readFileSync(root+"b162-censored-chase-timeline.json","utf8"));
+            assert.equal(end.status,"PASS");
+            assert.equal(censor.status,"PASS");
+            for(const [seed,total,success,disengage,target,median,under1s,under10s] of [
+             [1,22,2,13,7,2.42,6,16],[2,18,1,15,2,3.7,5,15]]){
+              const e=end.cases.find(x=>x.seed===seed);
+              const c=censor.cases.find(x=>x.seed===seed);
+              assert(e&&c);
+              assert.equal(e.rapidRepeatAttemptStarts,total);
+              assert.equal(e.terminalReasonCounts.SUCCESS,success);
+              assert.equal(e.terminalReasonCounts.DISENGAGED_UNCONFIRMED,disengage);
+              assert.equal(e.terminalReasonCounts.TARGET_CHANGED,target);
+              assert.equal(e.medianTerminalDurationSeconds,median);
+              assert.equal(e.alreadyEndedByHorizonMs["1000"],under1s);
+              assert.equal(e.alreadyEndedByHorizonMs["10000"],under10s);
+              for(const row of c.rows)assert(Object.values(row.offsets).every(x=>
+               x.originalAttemptStillActive!==x.terminalAlreadyReached));
+              assert.equal(e.collisionStops,0);
+            }
+            assert.equal(end.physicsModified,false);
+            assert.equal(censor.gamePhysicsChanged,false);
+            console.log(JSON.stringify({phase:"R5-b164",status:"ARCHIVED_GENUINE_TERMINAL_PASS",
+              sourceRun:41570904022,realRaces:2,newBrowserRaces:0}));
+          '
+      - name: Preserve terminal-censored genuine physical reports even after failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: majoku-r5b164-genuine-terminal-censored-long-horizon
+          path: |
+            artifacts/r5-b77-majoku/b161-attack-terminal-censor.json
+            artifacts/r5-b77-majoku/b162-censored-chase-timeline.json
+            artifacts/r5-b77-majoku/b163-terminal-reasons-by-driver.json
+          if-no-files-found: warn

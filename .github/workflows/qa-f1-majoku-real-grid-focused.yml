@@ -127,6 +127,9 @@ jobs:
             scripts/lib/f1-r5b157-long-horizon.mjs \
             scripts/qa-f1-v12-r5b157-long-horizon.test.mjs \
             scripts/qa-f1-v12-r5b159-long-horizon-follow-through.mjs \
+            scripts/qa-f1-v12-r5b161-attack-terminal-censor.mjs \
+            scripts/qa-f1-v12-r5b162-censored-chase-timeline.mjs \
+            scripts/qa-f1-v12-r5b163-terminal-reasons-by-driver.mjs \
             scripts/lib/f1-r5b137-attempt-context.mjs \
             scripts/qa-f1-v12-r5b137-attempt-context.test.mjs \
             scripts/qa-f1-v12-r5b122-attack-attribution.mjs \
@@ -234,6 +237,18 @@ jobs:
         env:
           MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
         run: node scripts/qa-f1-v12-r5b159-long-horizon-follow-through.mjs
+      - name: R5-b161 require engine terminal boundary for each original attack
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
+        run: node scripts/qa-f1-v12-r5b161-attack-terminal-censor.mjs
+      - name: R5-b162 remove post-terminal pair sightings from original attack stats
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
+        run: node scripts/qa-f1-v12-r5b162-censored-chase-timeline.mjs
+      - name: R5-b163 verify genuine attempt lifetime and final result per driver
+        env:
+          MWS_F1_RACE_ARTIFACT_RUN_ID: ${{ github.run_id }}
+        run: node scripts/qa-f1-v12-r5b163-terminal-reasons-by-driver.mjs
       - name: R5-b96 preserve an auditable per-file CI outcome manifest
         if: always()
         env:
