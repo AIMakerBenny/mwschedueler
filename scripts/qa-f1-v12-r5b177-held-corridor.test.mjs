@@ -347,3 +347,15 @@ test('R5-b209 physically unseparated car cannot inherit short passing intent',()
  const x=evaluate({sideBySide:true,now:5,opponentGap:8,lateralY:-1,laneTarget:-1,followerSpeed:27.8,opponentSpeed:28});
  assert.equal(x.state,'FOLLOW');assert.equal(x.scans,0);
 });
+test('R5-b210 held lane newly occupied by near rival replans through actual safe-corridor solver',()=>{
+ const x=evaluate({now:1,opponentGap:16,lateralY:-3,laneTarget:0,followerSpeed:30,opponentSpeed:28});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);assert.equal(x.lane,-3);
+});
+test('R5-b210 remote legal zero lane remains authored and is not falsely overwritten',()=>{
+ const x=evaluate({now:1,opponentGap:42,lateralY:-3,laneTarget:0,followerSpeed:30,opponentSpeed:28});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,0);assert.equal(x.lane,0);
+});
+test('R5-b210 held side that remains laterally clear is not unnecessarily replanned',()=>{
+ const x=evaluate({now:1,opponentGap:16,lateralY:-3,laneTarget:-3,followerSpeed:30,opponentSpeed:28});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,0);assert.equal(x.lane,-3);
+});

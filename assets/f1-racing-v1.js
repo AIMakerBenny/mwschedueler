@@ -11809,7 +11809,19 @@ function unifiedChooseLaneV11(row,rows,now,width){
   const actuallyMovingV12=Math.abs(held.target-row.y)>.20;
   const invalidNoopAttackV12=v.unifiedAiStateV11==='PLAN_ATTACK'&&authoredHeldLaneV12&&
     !committedSideV12&&!actuallyMovingV12;
-  if(!held.blocked.length&&!invalidNoopAttackV12){
+  // R5-b210: a previously held target can become the rival's CURRENT
+  // lane after the rival moves. In the final short approach, do not
+  // blindly hold a physically converging lane just because the lateral
+  // merge is not yet blocked at the present longitudinal separation.
+  // A newly chosen alternative still passes the existing corridor safety
+  // projection, merge guard and swept-body solver before moving.
+  const holdGapV12=unifiedGapV11(row,ahead);
+  const heldLaneNowOccupiedV12=v.unifiedAiStateV11==='PLAN_ATTACK'&&
+   holdGapV12>UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance&&
+   holdGapV12<=Math.max(15,row.v*.6)&&
+   Math.abs(held.target-ahead.y)<unifiedLateralClearanceV11(row,ahead)&&
+   committedSideV12;
+  if(!held.blocked.length&&!invalidNoopAttackV12&&!heldLaneNowOccupiedV12){
    v.unifiedMergeBlockedV11=[];v.unifiedLaneTargetV11=held.target;return held.target;
   }
   // The original merge guard rejected this physical corridor. Preserve that
