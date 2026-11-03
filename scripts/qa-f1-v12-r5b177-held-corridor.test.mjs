@@ -335,3 +335,15 @@ test('R5-b208 anonymous rejected hold keeps unnamed blocker state empty while un
  const x=evaluate({exitDuel:true,priorExitGap:8,opponentGap:10,now:1});
  assert.equal(x.state,'EXIT_DUEL');assert.deepEqual(x.blockedIDs,[]);
 });
+test('R5-b209 a just-cleared real side-by-side pass keeps the safe lane for its same opponent',()=>{
+ const x=evaluate({sideBySide:true,now:5,opponentGap:8,lateralY:-3,laneTarget:-3,followerSpeed:27.8,opponentSpeed:28});
+ assert.equal(x.state,'PLAN_ATTACK');assert.equal(x.scans,1);assert.equal(x.lane,-3);
+});
+test('R5-b209 old side-by-side label cannot persist outside the physical crossing extension',()=>{
+ const x=evaluate({sideBySide:true,now:5,opponentGap:12,lateralY:-3,laneTarget:-3,followerSpeed:27.8,opponentSpeed:28});
+ assert.equal(x.state,'FOLLOW');assert.equal(x.scans,0);
+});
+test('R5-b209 physically unseparated car cannot inherit short passing intent',()=>{
+ const x=evaluate({sideBySide:true,now:5,opponentGap:8,lateralY:-1,laneTarget:-1,followerSpeed:27.8,opponentSpeed:28});
+ assert.equal(x.state,'FOLLOW');assert.equal(x.scans,0);
+});

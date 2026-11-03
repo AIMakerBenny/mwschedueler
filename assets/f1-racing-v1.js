@@ -11859,7 +11859,14 @@ function unifiedChooseLaneV11(row,rows,now,width){
   // v.unifiedAiTargetV11 to the newly nearest racer. Never mistake a
   // different opponent for a continuing attack, even if already separated.
   // Preserve the lateral safety and 700ms physics-authorized lane guard.
-  const separatedExistingPassV12=v.unifiedAiStateV11==='PLAN_ATTACK'&&
+  // R5-b209: when a previously proven side-by-side pass has just
+  // emerged from true chassis adjacency, keep its same-target safe-side
+  // intent for only another 2m. Do not preserve stale SIDE_BY_SIDE labels
+  // for distant opponents or reopen a previously invalid lateral lane.
+  const adjacencyCeilingV12=UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance+2;
+  const justClearedSideBySideV12=v.unifiedAiStateV11==='SIDE_BY_SIDE'&&
+   gap>adjacencyCeilingV12&&gap<=adjacencyCeilingV12+2;
+  const separatedExistingPassV12=(v.unifiedAiStateV11==='PLAN_ATTACK'||justClearedSideBySideV12)&&
     previousOpponentV12===String(ahead.id)&&gap<=25&&
     closingForAttackV12>=-.30&&
     Math.abs(row.y-ahead.y)>=unifiedLateralClearanceV11(row,ahead);
@@ -11879,8 +11886,8 @@ function unifiedChooseLaneV11(row,rows,now,width){
   // merge nor a switch to another opponent. Every possible target still
   // passes through the unchanged attack planner and swept-body solver.
   const safelyCommittedShortPassV12=!preparedToChangeLaneV12&&
-   v.unifiedAiStateV11==='PLAN_ATTACK'&&previousOpponentV12===String(ahead.id)&&
-   Number.isFinite(previousLaneV12)&&
+   (v.unifiedAiStateV11==='PLAN_ATTACK'||justClearedSideBySideV12)&&
+   previousOpponentV12===String(ahead.id)&&Number.isFinite(previousLaneV12)&&
    Math.abs(row.y-ahead.y)>=unifiedLateralClearanceV11(row,ahead)&&
    Math.abs(previousLaneV12-ahead.y)>=unifiedLateralClearanceV11(row,ahead)&&
    gap>UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance;
