@@ -23,6 +23,11 @@ const attemptAware=[1,2].some(seed=>{
  catch{return false}
 });
 if(attemptAware)expected.push('b122-attack-attribution.json','b123-attempt-lifecycle.json');
+const exactWitnessAware=[1,2].some(seed=>{
+ try{return Array.isArray(JSON.parse(fs.readFileSync(dir+'seed'+seed+'-observed10.json','utf8')).real20ms?.attackLedger?.startWitnesses)}
+ catch{return false}
+});
+if(exactWitnessAware)expected.push('b139-exact-retry-context.json');
 const records=[];
 for(const name of expected){
  const p=dir+name;
@@ -60,6 +65,22 @@ for(const name of expected){
     ledger.events.filter(x=>x.type==='START').length!==ledger.totalStarts)
     issues.push('INCOMPLETE_ATTACK_EVENT_PROVENANCE');
   }
+  if(name.endsWith('-observed10.json')&&data.real20ms?.attackLedger?.startWitnesses){
+   const ledger=data.real20ms.attackLedger;
+   if(!Array.isArray(ledger.missingStartWitnesses)||
+    ledger.missingStartWitnesses.length!==0||
+    ledger.startWitnesses.length!==ledger.totalStarts||
+    ledger.safeLaneClaim!==false||
+    ledger.startWitnesses.some(w=>w.driverAiState!=='PLAN_ATTACK'||
+      w.driverAiTarget!==w.target||w.physicalOvertakingClearanceProven!==false))
+    issues.push('MISSING_OR_UNSAFE_EXACT_START_WITNESS');
+  }
+  if(name==='b139-exact-retry-context.json'&&(
+   data.safeLateralMergeProven!==false||data.aiTuningApproved!==false||
+   !Array.isArray(data.cases)||data.cases.length!==2||
+   data.cases.some(c=>c.unmatchedStartWitnesses!==0||
+    c.verifiedStartWitnessFrames!==c.starts)))
+    issues.push('UNPROVEN_OR_MISSING_EXACT_RETRY_CONTEXT');
   if(name==='b122-attack-attribution.json'&&(
    data.liveAiTuningAuthorized!==false||
    !Array.isArray(data.cases)||data.cases.length!==2||
@@ -116,6 +137,7 @@ if(attemptAware){
  requiredPass.set('b122-attack-attribution.json','PASS');
  requiredPass.set('b123-attempt-lifecycle.json','PASS');
 }
+if(exactWitnessAware)requiredPass.set('b139-exact-retry-context.json','PASS');
 const unexpected=records.filter(r=>r.status!==requiredPass.get(r.name)||(r.issues?.length||0)>0);
 const allVerified=allPresent&&unexpected.length===0;
 const priorStepStatus=String(process.env.MWS_FOCUSED_QA_STEP_STATUS||'unknown').toLowerCase();

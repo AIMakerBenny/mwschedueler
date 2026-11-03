@@ -10,6 +10,7 @@ on:
       - 'scripts/qa-f1-v12-r5b1*.mjs'
       - 'scripts/qa-f1-v12-r5b3-normal-auto-pit.mjs'
       - 'scripts/lib/f1-r5b1*.mjs'
+      - 'scripts/qa-f1-v12-r5b137-attempt-context.test.mjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -43,8 +44,10 @@ jobs:
           node --test scripts/qa-f1-v12-r5b91-majoku-episode-contract.test.mjs
           node --test scripts/qa-f1-v12-r5b95-physical-compare.test.mjs
           node --test scripts/qa-f1-v12-r5b102-transitions.test.mjs
+          node --test scripts/qa-f1-v12-r5b137-attempt-context.test.mjs
           node scripts/qa-f1-v12-r5b48-single-track-access.mjs
           node --test scripts/qa-f1-v12-r5b114-public-track-access-runtime.test.mjs
+          node --test scripts/qa-f1-v12-r5b137-attempt-context.test.mjs
       - name: Upload preflight SHA and runner success receipt
         run: |
           mkdir -p artifacts
@@ -100,6 +103,17 @@ jobs:
             scripts/qa-f1-v12-r5b102-transitions.test.mjs \
             scripts/qa-f1-v12-r5b103-real-baseline-mutations.test.mjs \
             scripts/qa-f1-v12-r5b104-full-physical-outcome-gate.mjs \
+            scripts/qa-f1-v12-r5b129-attack-pair-retries.mjs \
+            scripts/qa-f1-v12-r5b130-temporal-attempt-cohorts.mjs \
+            scripts/qa-f1-v12-r5b131-disengagement-context.mjs \
+            scripts/qa-f1-v12-r5b132-attack-trends-receipt.mjs \
+            scripts/qa-f1-v12-r5b133-first-vs-repeat-outcomes.mjs \
+            scripts/qa-f1-v12-r5b134-repeat-gap-sequences.mjs \
+            scripts/qa-f1-v12-r5b135-retry-transition-matrix.mjs \
+            scripts/qa-f1-v12-r5b136-rapid-retry-provenance.mjs \
+            scripts/qa-f1-v12-r5b139-exact-retry-context.mjs \
+            scripts/lib/f1-r5b137-attempt-context.mjs \
+            scripts/qa-f1-v12-r5b137-attempt-context.test.mjs \
             scripts/qa-f1-v12-r5b122-attack-attribution.mjs \
             scripts/qa-f1-v12-r5b123-attempt-lifecycle.mjs
           do node --check "$f"; done
@@ -107,6 +121,7 @@ jobs:
           node --test scripts/qa-f1-v12-r5b91-majoku-episode-contract.test.mjs
           node --test scripts/qa-f1-v12-r5b95-physical-compare.test.mjs
           node --test scripts/qa-f1-v12-r5b102-transitions.test.mjs
+          node --test scripts/qa-f1-v12-r5b137-attempt-context.test.mjs
       - name: Download original REAL Majoku 12-car 10-lap results
         uses: actions/download-artifact@v4
         with:
@@ -147,6 +162,18 @@ jobs:
         run: node scripts/qa-f1-v12-r5b122-attack-attribution.mjs
       - name: R5-b123 adjudicate confirmed, interrupted, and open attempt lifecycles
         run: node scripts/qa-f1-v12-r5b123-attempt-lifecycle.mjs
+      - name: R5-b129 through b136 recheck true attempts and retry intervals
+        run: |
+          node scripts/qa-f1-v12-r5b129-attack-pair-retries.mjs
+          node scripts/qa-f1-v12-r5b130-temporal-attempt-cohorts.mjs
+          node scripts/qa-f1-v12-r5b131-disengagement-context.mjs
+          node scripts/qa-f1-v12-r5b132-attack-trends-receipt.mjs
+          node scripts/qa-f1-v12-r5b133-first-vs-repeat-outcomes.mjs
+          node scripts/qa-f1-v12-r5b134-repeat-gap-sequences.mjs
+          node scripts/qa-f1-v12-r5b135-retry-transition-matrix.mjs
+          node scripts/qa-f1-v12-r5b136-rapid-retry-provenance.mjs
+      - name: R5-b139 verify exact accepted 20ms context for every attack START
+        run: node scripts/qa-f1-v12-r5b139-exact-retry-context.mjs
       - name: R5-b96 preserve an auditable per-file CI outcome manifest
         if: always()
         env:
