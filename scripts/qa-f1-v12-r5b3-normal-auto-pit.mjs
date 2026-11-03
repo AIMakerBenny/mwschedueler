@@ -46,7 +46,10 @@ try{
    '\nwindow.__mwsR5b137={snapshotAttemptContextFrame,deriveExactAttackStartWitness};'});
   const longer=fs.readFileSync('scripts/lib/f1-r5b157-long-horizon.mjs','utf8');
   await page.addInitScript({content:longer.replace(/^export /gm,'')+
-   '\nwindow.__mwsR5b157={LONG_HORIZON_OFFSETS_MS,makeLongHorizonAttempt,updateLongHorizonSamples};'});
+   '\nwindow.__mwsR5b157={LONG_HORIZON_OFFSETS_MS,makeLongHorizonAttempt,updateLongHorizonSamples,exactLongHorizonPair};'});
+  const terminalSource=fs.readFileSync('scripts/lib/f1-r5b165-terminal-witness.mjs','utf8');
+  await page.addInitScript({content:terminalSource.replace(/^export /gm,'')+
+   '\nwindow.__mwsR5b165={TERMINAL_OFFSETS_MS,TERMINAL_EVENT_TYPES,makeAttemptTerminalWitness};'});
  }
  await page.goto('http://127.0.0.1:'+port+'/',{waitUntil:'load'});
  await page.waitForFunction(()=>typeof window.mwsF1UnifiedV11Report==='function');
@@ -136,7 +139,8 @@ try{
    attemptQa:probe?{events:[],lastEventKey:null,totalStarts:0,
     missingOverlap:false,probes:0,frameHistory:[],
     startWitnesses:[],missingWitnesses:[],startTrajectories:[],
-    longHorizonRetryAttempts:[]}:null,
+    longHorizonRetryAttempts:[],
+    startEventsById:new Map(),terminalEventWitnesses:[]}:null,
    everRequested:new Set(),finishEvents:[],finished:new Set(),continuityErrors:[],
    initialOrder:vehicles.map(v=>String(v.id)),finishBoundary:null,rejectedStep:null,plannedPitViolations:[]};
   // R5-b121: sample the engine's existing bounded event ledger every 250
@@ -155,6 +159,23 @@ try{
    }
    const newlySeen=events.slice(start);
    c.events.push(...newlySeen);
+   // R5-b166: retain the real START to attribute each later terminal event,
+   // even when a TARGET_CHANGED occurs after CROSSING but before SUCCESS.
+   for(const event of newlySeen){
+    if(event.type==='START'){
+     if(c.startEventsById.has(event.attemptId))throw Error('DUPLICATE_START_IDENTITIES');
+     c.startEventsById.set(event.attemptId,event);
+    }
+   }
+   for(const event of newlySeen){
+    if(!window.__mwsR5b165.TERMINAL_EVENT_TYPES.includes(event.type))continue;
+    const sourceStart=c.startEventsById.get(event.attemptId);
+    if(!sourceStart)throw Error('TERMINAL_EVENT_WITHOUT_OBSERVED_START');
+    if(sourceStart.retry===true){
+     c.terminalEventWitnesses.push(window.__mwsR5b165.makeAttemptTerminalWitness(
+      event,sourceStart,c.frameHistory,window.__mwsR5b157.exactLongHorizonPair));
+    }
+   }
    for(const event of newlySeen){
     if(event.type!=='START')continue;
     const frame=c.frameHistory.find(x=>x.ms===event.ms);
@@ -485,7 +506,11 @@ try{
      longHorizonRetryAttempts:q.attemptQa.longHorizonRetryAttempts,
      longHorizonOffsetsMs:[0,1000,5000,10000,20000,40000,70000],
      longHorizonSource:'genuine accepted 20ms source frame or declared unavailable',
-     longHorizonSweptClearanceProven:false}}:null,
+     longHorizonSweptClearanceProven:false,
+     terminalEventWitnesses:q.attemptQa.terminalEventWitnesses,
+     terminalEventOffsetsMs:[-1000,-200,-20,0],
+     terminalEventSource:'accepted 20ms browser source frame or explicit unavailable',
+     terminalEventAiCausalityProven:false}}:null,
    originalProfiles:q.originalProfiles,appliedProfiles:q.appliedProfiles,
    originalStrategies:q.originalStrategies,appliedStrategies:q.appliedStrategies,
    strategyInterventionAtMs:q.strategyInterventionAtMs,
