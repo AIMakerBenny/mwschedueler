@@ -48,11 +48,20 @@ test('physical pass without matching attack is UNATTRIBUTED_PASS not fabricated 
  assert.equal(f.state.attemptSequence,0);
 });
 test('changing target interrupts existing attempt rather than pretending success',()=>{
- const f=fixture();f.observe(20);f.a.unifiedAiTargetV11='a';
+ const f=fixture();f.observe(20);f.a.unifiedAiTargetV11='missing-target';
  f.observe(40);
  assert.equal(f.events().filter(e=>e.type==='TARGET_CHANGED').length,1);
  assert.equal(f.events().filter(e=>e.type==='SUCCESS').length,0);
  assert.equal(f.state.attempts.has('a'),false);
+});
+test('reported blocker is not physical clearance and does not end attempt',()=>{
+ const f=fixture();f.observe(20);
+ f.a.unifiedAiStateV11='EXIT_DUEL';
+ f.a.unifiedMergeBlockedV11=['b'];
+ f.observe(40);
+ assert.equal(f.events().filter(e=>e.type==='BLOCKED').length,1);
+ assert.equal(f.state.attempts.has('a'),true);
+ assert.equal(f.events().filter(e=>e.type==='SUCCESS').length,0);
 });
 test('pit transition interrupts target-specific attack',()=>{
  const f=fixture();f.observe(20);f.a.pitState='ENTRY';

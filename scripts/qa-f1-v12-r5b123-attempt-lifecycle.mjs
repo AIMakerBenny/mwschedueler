@@ -20,7 +20,8 @@ for(const pair of replay.pairs){
  const perAttempt=new Map(starts.map(e=>[e.attemptId,{
   id:e.attemptId,driver:e.driver,target:e.target,startMs:e.ms,
   retry:Boolean(e.retry),blocked:false,sideBySide:false,terminal:null,
-  terminalMs:null,passCrossingMs:null
+  terminalMs:null,passCrossingMs:null,observedCrossingMs:null,
+  targetChangedAfterCrossingBeforeConfirmation:false
  }]));
  assert.equal(perAttempt.size,starts.length);
  for(const e of ledger.events){
@@ -31,11 +32,30 @@ for(const pair of replay.pairs){
   assert(e.ms>=a.startMs);
   if(e.type==='BLOCKED')a.blocked=true;
   if(e.type==='SIDE_BY_SIDE')a.sideBySide=true;
+  if(e.type==='CROSSING'){
+   assert(Number.isInteger(e.crossingMs));
+   assert.equal(a.observedCrossingMs,null,'Duplicate physical CROSSING witness');
+   a.observedCrossingMs=e.crossingMs;
+  }
   if(terminal.includes(e.type)){
-   assert.equal(a.terminal,null,'One attempt recorded multiple terminal outcomes');
+   if(a.terminal!==null){
+    // The actual engine can change AI target during the 500ms physical
+    // confirmation window. The original frozen CROSSING remains valid.
+    // Only this precisely witnessed TARGET_CHANGED -> SUCCESS sequence
+    // may supersede an intermediate provisional terminal classification.
+    assert.equal(a.terminal,'TARGET_CHANGED','Unexpected earlier terminal');
+    assert.equal(e.type,'SUCCESS','Only physical SUCCESS may supersede target change');
+    assert(Number.isInteger(a.observedCrossingMs));
+    assert.equal(e.crossingMs,a.observedCrossingMs);
+    assert(a.observedCrossingMs<=a.terminalMs&&a.terminalMs<e.ms,
+     'Late success must follow a confirmed prior physical crossing');
+    a.targetChangedAfterCrossingBeforeConfirmation=true;
+   }
    a.terminal=e.type;a.terminalMs=e.ms;
    if(e.type==='SUCCESS'){
     assert(Number.isInteger(e.crossingMs));
+    assert.equal(e.crossingMs,a.observedCrossingMs,
+     'Successful attempt must match an actual frozen crossing');
     a.passCrossingMs=e.crossingMs;
    }
   }
@@ -71,6 +91,10 @@ for(const pair of replay.pairs){
   outcomes:byOutcome,
   attemptsWithBlockedObservation:lifecycle.filter(x=>x.blocked).length,
   attemptsWithSideBySideObservation:lifecycle.filter(x=>x.sideBySide).length,
+  targetChangedAfterCrossingBeforeConfirmation:lifecycle.filter(x=>
+   x.targetChangedAfterCrossingBeforeConfirmation).length,
+  targetChangedWithoutLaterSuccess:lifecycle.filter(x=>
+   x.terminal==='TARGET_CHANGED').length,
   meanElapsedStartToSuccessSeconds:successDurations.length?
     successDurations.reduce((n,x)=>n+x,0)/successDurations.length:null,
   drivers:byDriver,physicsPassCount:raw.physics.passes,
@@ -86,5 +110,6 @@ const result={phase:'R5-b123',status:'PASS',track:'majoku-ring-v1',
  notes:['START means a concrete driver-target intent, not a confirmed crossing',
   'Only exact physical SUCCESS events count as an attributed successful attempt',
   'An incomplete attempt at finish is not necessarily an AI fault',
-  'BLOCKED does not prove an alternate corridor could be safely entered']};
+  'BLOCKED does not prove an alternate corridor could be safely entered',
+  'An AI target may change after a physical crossing while the 500ms pass confirmation is still pending']};
 fs.writeFileSync(root+'b123-attempt-lifecycle.json',JSON.stringify(result,null,2));
