@@ -11583,7 +11583,11 @@ function unifiedAttackCorridorV12(row,opponent,rows,width,preferredLane=null){
   const movingSeconds=Math.abs(y-row.y)/2.5,closingSpeed=Math.max(.5,row.v-opponent.v);
   const arrivalSeconds=Math.max(.45,(gap-UNIFIED_ENGINE_V11.physicalLength-4)/closingSpeed);
   if(gap<Math.max(9,row.v*.12)&&movingSeconds>.45)continue;
-  if(movingSeconds>Math.max(2.6,Math.min(4.5,arrivalSeconds)))continue;
+  // R5-b189: cannot complete a 2.6s lateral shift when the physical
+  // front-to-front arrival is only 0.8s away. Reject impossible late merges
+  // before scoring. Drivers already alongside keep their short safe shifts;
+  // all accepted movement still goes through the unchanged swept solver.
+  if(movingSeconds>Math.min(4.5,arrivalSeconds))continue;
   // Preserve the physical merge guard, including vehicles changing pit lanes.
   const merge=unifiedMergeTargetV11(row,y,rows);
   if(merge.blocked.length){merge.blocked.forEach(id=>blocked.add(id));continue;}

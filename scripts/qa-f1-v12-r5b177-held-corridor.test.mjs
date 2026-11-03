@@ -72,13 +72,13 @@ const corridorSentinel=source.indexOf('// R5-b26:',corridorStart);
 const corridorEnd=source.lastIndexOf('}',corridorSentinel);
 assert.ok(corridorStart>=0&&corridorEnd>corridorStart);
 const corridorSource=source.slice(corridorStart,corridorEnd+1);
-function corridorChoice(preferredLane=null){
- const me={id:'me',ref:{},pit:'TRACK',y:0,v:30},ahead={id:'ahead',ref:{},pit:'TRACK',y:0,v:28,finished:false};
+function corridorChoice(preferredLane=null,gap=35,rowY=0,rivalSpeed=28){
+ const me={id:'me',ref:{},pit:'TRACK',y:rowY,v:30},ahead={id:'ahead',ref:{},pit:'TRACK',y:0,v:rivalSpeed,finished:false};
  const ctx={UNIFIED_ENGINE_V11:{physicalLength:5.2,physicalWidth:2},
   unifiedClampV11:(v,a,b)=>Math.max(a,Math.min(v,b)),
   unifiedIdealLaneV11:()=>0,unifiedLateralClearanceV11:()=>2,
   unifiedMergeTargetV11:(row,target)=>({target,blocked:[]}),
-  unifiedGapV11:()=>35};
+  unifiedGapV11:()=>gap};
  vm.runInNewContext(corridorSource,ctx);
  return ctx.unifiedAttackCorridorV12(me,ahead,[me,ahead],12,preferredLane);
 }
@@ -167,4 +167,13 @@ test('R5-b188 null or unset prior lane never turns into a fabricated center pref
 test('R5-b188 a genuine finite prior attack lane is still preferred',()=>{
  const existing=evaluate({now:5,laneTarget:-3});
  assert.equal(existing.state,'PLAN_ATTACK');assert.equal(existing.preferredLane,-3);
+});
+
+test('R5-b189 physically impossible final-second merge is rejected before planning',()=>{
+ const late=corridorChoice(null,10,0,29);
+ assert.equal(late.target,null);assert.equal(late.reason,'BLOCKED');
+});
+test('R5-b189 already separated car retains a feasible short safe lane adjustment',()=>{
+ const ready=corridorChoice(null,10,-2.5,29);
+ assert.ok(ready.target!==null);assert.ok(ready.target<0);assert.equal(ready.reason,'CLEAR');
 });
