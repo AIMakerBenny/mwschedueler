@@ -285,8 +285,15 @@ rows[1].s=110;rows[1].v=40;rows[1].y=-2.5;
 rows[2].s=120;rows[2].v=40;rows[2].y=2.5;
 for(const row of rows)row.ref.unifiedHeadingV11=unifiedWorldPoseV11(100,0).heading;
 const gap=unifiedLateralClearanceV11(rows[0],rows[1]);
-return {gap,target:unifiedChooseLaneV11(rows[0],rows,2,10),state:rows[0].ref.unifiedAiStateV11};`);
-assert(Math.abs(narrowThird.gap-2.3)<1e-10,JSON.stringify(narrowThird));assert.equal(narrowThird.target,0);assert.equal(narrowThird.state,'SIDE_BY_SIDE');
+const firstGap=unifiedGapV11(rows[0],rows[1]);
+const adjacencyLimit=UNIFIED_ENGINE_V11.physicalLength+UNIFIED_ENGINE_V11.clearance+2;
+return {gap,firstGap,adjacencyLimit,target:unifiedChooseLaneV11(rows[0],rows,2,10),state:rows[0].ref.unifiedAiStateV11};`);
+// R5-b223: 10m is beyond the body-adjacency window. Reject the unsafe
+// three-car attack instead of incorrectly asserting SIDE_BY_SIDE.
+assert(Math.abs(narrowThird.gap-2.3)<1e-10,JSON.stringify(narrowThird));
+assert(narrowThird.firstGap>narrowThird.adjacencyLimit,'A nonadjacent car was classified as overlapping chassis');
+assert.equal(narrowThird.target,0,'A narrow-track rejected attack must not force a lateral merge');
+assert.equal(narrowThird.state,'EXIT_DUEL','A blocked nonadjacent three-car corridor must safely reject the attack');
 const specialConstants=src.slice(src.indexOf('const SPECIAL_V401='),src.indexOf('const specialStateV401='));
 const specialReaders=src.slice(src.indexOf('function specialChanceV401('),src.indexOf('function resetSpecialV401(){'))+
  src.slice(src.indexOf('function specialTelemetryV401(){'),src.indexOf('// Unified redesign v1.1.'));

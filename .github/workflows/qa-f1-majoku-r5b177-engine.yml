@@ -4,6 +4,8 @@ on:
     branches: [f1-unified-redesign-v11-20261012]
     paths:
       - 'assets/f1-racing-v1.js'
+      - 'scripts/qa-f1-unified-v11-smoke.mjs'
+      - 'scripts/f1-unified-v11-fixture.mjs'
       - 'scripts/qa-f1-v12-r5b177-*.mjs'
       - 'scripts/qa-f1-v12-r5b197-*.mjs'
       - 'scripts/lib/f1-r5b197-*.mjs'
@@ -28,6 +30,7 @@ jobs:
         run: |
           node --check assets/f1-racing-v1.js
           node --test scripts/qa-f1-v12-r5b177-held-corridor.test.mjs
+          node scripts/qa-f1-unified-v11-smoke.mjs
           node scripts/qa-f1-v12-r5b48-single-track-access.mjs
       - name: Require measured physical race non-regression against R5-b189
         run: |
