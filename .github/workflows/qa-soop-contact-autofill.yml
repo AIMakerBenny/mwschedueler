@@ -9,6 +9,7 @@ on:
       - 'src/cf-v111-entry.js'
       - 'index.html'
       - 'scripts/qa-soop-contact-autofill-v1.test.mjs'
+      - 'scripts/qa-soop-contact-live-v1.mjs'
       - '.github/workflows/qa-soop-contact-autofill.yml'
   pull_request:
     branches:
@@ -30,3 +31,7 @@ jobs:
           node --check assets/soop-contact-autofill-v1.js
       - name: Station lookup and contact preservation tests
         run: node --test scripts/qa-soop-contact-autofill-v1.test.mjs
+      - name: Probe public SOOP station API and avatar
+        id: live_api_probe
+        continue-on-error: true
+        run: node scripts/qa-soop-contact-live-v1.mjs
