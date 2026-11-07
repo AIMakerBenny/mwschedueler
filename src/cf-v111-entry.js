@@ -1,4 +1,5 @@
 import authWorker from './cf-v120-friend.js';
+import {handleSoopContactRoute} from './soop-contact-autofill-v1.js';
 
 const APP_VERSION='1.4.0';
 const DISPLAY_VERSION='1.6.21';
@@ -173,6 +174,10 @@ async function serveAsset(env,request,path){
 export default {
   async fetch(request, env, ctx) {
     const url=new URL(request.url);
+
+    if(url.pathname==='/api/soop/contact-station'||url.pathname==='/api/soop/contact-avatar'){
+      return handleSoopContactRoute(request);
+    }
 
     if(request.method==='GET'&&(url.pathname==='/majoku-castle'||url.pathname==='/majoku-castle.html')){
       const response=await serveAsset(env,request,'/majoku-castle.html');
