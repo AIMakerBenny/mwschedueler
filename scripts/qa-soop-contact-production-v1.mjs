@@ -17,9 +17,16 @@ async function run(){
   assert.equal(asset.status,200,'Autofill asset not deployed');
   const js=await asset.text();
   assert.match(js,/SOOP 정보 가져오기/,'Autofill button code missing');
-  const station=await checked(BASE+'/api/soop/contact-station?id=kwakchunshik&smoke='+Date.now(),25000);
+  let station,data;
+  for(let attempt=1;attempt<=12;attempt++){
+    station=await checked(BASE+'/api/soop/contact-station?id=kwakchunshik&diagnostics=1&smoke='+Date.now(),25000);
+    data=await station.json().catch(()=>null);
+    console.log('Production lookup attempt',attempt,'HTTP',station.status,
+      'upstream',JSON.stringify(data?.upstreamAttempts||[]));
+    if(station.ok)break;
+    if(attempt<12)await new Promise(resolve=>setTimeout(resolve,10000));
+  }
   assert.equal(station.status,200,'Cloudflare station endpoint did not return 200');
-  const data=await station.json();
   assert.equal(data.ok,true);
   assert.equal(data.id,'kwakchunshik');
   assert(data.name&&data.name.trim(),'Nickname missing');
