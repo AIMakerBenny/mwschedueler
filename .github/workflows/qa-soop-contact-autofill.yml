@@ -1,0 +1,32 @@
+name: SOOP Contact Autofill QA
+on:
+  push:
+    branches:
+      - feat/soop-contact-autofill-20261107
+    paths:
+      - 'assets/soop-contact-autofill-v1.js'
+      - 'src/soop-contact-autofill-v1.js'
+      - 'src/cf-v111-entry.js'
+      - 'index.html'
+      - 'scripts/qa-soop-contact-autofill-v1.test.mjs'
+      - '.github/workflows/qa-soop-contact-autofill.yml'
+  pull_request:
+    branches:
+      - cloudflare-production
+  workflow_dispatch:
+jobs:
+  soop-contact-autofill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: |
+          node --check src/soop-contact-autofill-v1.js
+          node --check src/cf-v111-entry.js
+          node --check assets/soop-contact-autofill-v1.js
+      - name: Station lookup and contact preservation tests
+        run: node --test scripts/qa-soop-contact-autofill-v1.test.mjs
