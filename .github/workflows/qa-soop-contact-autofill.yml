@@ -10,6 +10,7 @@ on:
       - 'index.html'
       - 'scripts/qa-soop-contact-autofill-v1.test.mjs'
       - 'scripts/qa-soop-contact-live-v1.mjs'
+      - 'scripts/qa-soop-contact-production-v1.mjs'
       - '.github/workflows/qa-soop-contact-autofill.yml'
   pull_request:
     branches:
@@ -35,3 +36,5 @@ jobs:
         id: live_api_probe
         continue-on-error: true
         run: node scripts/qa-soop-contact-live-v1.mjs
+      - name: Verify deployed Cloudflare contact lookup and avatar
+        run: node scripts/qa-soop-contact-production-v1.mjs
