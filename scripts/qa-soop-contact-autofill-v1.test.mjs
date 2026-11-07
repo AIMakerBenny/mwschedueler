@@ -54,7 +54,7 @@ test('hostile image domains and non-https URLs never get fetched',async()=>{
     assert.equal(result.hasProfile,false);
     const avatarRes=await handleSoopContactRoute(new Request(AVATAR),fetcher);
     assert.equal(avatarRes.status,404);
-    assert.equal(count,4);
+    assert.equal(count,2);
   }
 });
 test('Cloudflare regional host fallback succeeds when first endpoint blocks',async()=>{
