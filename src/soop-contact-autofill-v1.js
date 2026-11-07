@@ -41,7 +41,7 @@ export function parseSoopStationResponse(root,id){
 async function getWithDeadline(fetchImpl,url,headers){
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),8000);
-  try{return await fetchImpl(url,{method:'GET',headers,redirect:'error',signal:controller.signal})}
+  try{return await fetchImpl(url,{method:'GET',headers,redirect:'manual',signal:controller.signal})}
   finally{clearTimeout(timer)}
 }
 async function lookupStation(id,fetchImpl){

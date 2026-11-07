@@ -71,6 +71,18 @@ test('Cloudflare regional host fallback succeeds when first endpoint blocks',asy
   assert(calls[0].includes('chapi.sooplive.co.kr'));
   assert(calls[1].includes('chapi.sooplive.com'));
 });
+test('Cloudflare fetch uses supported manual redirect and never follows 302s',async()=>{
+  let count=0,redirects=[];
+  const fetcher=async (url,options)=>{
+    count++;redirects.push(options.redirect);
+    if(count===1)return new Response('',{status:302,headers:{location:'https://example.org/blocked'}});
+    return stationResponse();
+  };
+  const res=await handleSoopContactRoute(new Request(API),fetcher);
+  assert.equal(res.status,200);
+  assert.equal(count,2);
+  assert.deepEqual(redirects,['manual','manual']);
+});
 test('failed fixed-host lookups expose only safe numeric diagnostics when asked',async()=>{
   const blocked=async()=>new Response('Forbidden',{status:403});
   const res=await handleSoopContactRoute(new Request(API+'&diagnostics=1'),blocked);
