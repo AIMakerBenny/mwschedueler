@@ -2,7 +2,7 @@
  * Fixed upstream hosts and a strict SOOP ID prevent arbitrary URL proxying.
  * No external profile image is stored until the user saves a contact.
  */
-const SOOP_API_HOSTS=['chapi.sooplive.com','chapi.afreecatv.com'];
+const SOOP_API_HOSTS=['chapi.sooplive.co.kr','chapi.sooplive.com','chapi.afreecatv.com','chapi.afreecatv.co.kr'];
 const CACHE_TTL_MS=60000;
 const MAX_IMAGE_BYTES=5*1024*1024;
 const stationCache=new Map();
@@ -50,6 +50,7 @@ async function lookupStation(id,fetchImpl){
   const key=id.toLowerCase(),hit=cacheable?stationCache.get(key):null;
   if(hit&&Date.now()-hit.at<CACHE_TTL_MS)return hit.data;
   let lastError=null;
+  const attempts=[];
   for(const host of SOOP_API_HOSTS){
     try{
       const url='https://'+host+'/api/'+encodeURIComponent(id)+'/station';
@@ -57,15 +58,17 @@ async function lookupStation(id,fetchImpl){
         accept:'application/json','referer':'https://www.sooplive.com/',
         'user-agent':'Mozilla/5.0 (compatible; MawangScheduler/1.0)'
       });
-      if(!response.ok){lastError=new Error('SOOP station HTTP '+response.status);continue}
+      if(!response.ok){attempts.push({host,status:response.status});lastError=new Error('SOOP station HTTP '+response.status);continue}
       const data=await response.json();
       const normalized=parseSoopStationResponse(data,id);
-      if(!normalized){lastError=new Error('SOOP station information is missing or malformed');continue}
+      if(!normalized){attempts.push({host,status:200,format:'invalid'});lastError=new Error('SOOP station information is missing or malformed');continue}
       if(cacheable)stationCache.set(key,{at:Date.now(),data:normalized});
       return normalized;
-    }catch(error){lastError=error}
+    }catch(error){attempts.push({host,status:0,error:error?.name==='AbortError'?'timeout':'network'});lastError=error}
   }
-  throw new Error(lastError?.message||'SOOP station request failed');
+  const failure=new Error(lastError?.message||'SOOP station request failed');
+  failure.attempts=attempts;
+  throw failure;
 }
 export async function handleSoopContactRoute(request,fetchImpl=globalThis.fetch){
   const url=new URL(request.url);
@@ -78,8 +81,10 @@ export async function handleSoopContactRoute(request,fetchImpl=globalThis.fetch)
   let station;
   try{station=await lookupStation(id,fetchImpl)}
   catch(error){
-    console.error('SOOP contact station lookup failed',String(error?.message||error));
-    return json({ok:false,error:'SOOP 방송국 정보를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.'},502);
+    console.error('SOOP contact station lookup failed',String(error?.message||error),error?.attempts||[]);
+    const details=url.searchParams.get('diagnostics')==='1'?
+      {upstreamAttempts:Array.isArray(error?.attempts)?error.attempts:[]}:{};
+    return json({ok:false,error:'SOOP 방송국 정보를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.',...details},502);
   }
   if(!isAvatar)return json({ok:true,id:station.id,name:station.name,
     stationUrl:station.stationUrl,hasProfile:station.hasProfile,
