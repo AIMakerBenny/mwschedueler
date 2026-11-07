@@ -54,8 +54,32 @@ test('hostile image domains and non-https URLs never get fetched',async()=>{
     assert.equal(result.hasProfile,false);
     const avatarRes=await handleSoopContactRoute(new Request(AVATAR),fetcher);
     assert.equal(avatarRes.status,404);
-    assert.equal(count,2);
+    assert.equal(count,4);
   }
+});
+test('Cloudflare regional host fallback succeeds when first endpoint blocks',async()=>{
+  const calls=[];
+  const fetcher=async url=>{
+    calls.push(String(url));
+    if(calls.length===1)return new Response('Forbidden',{status:403});
+    return stationResponse();
+  };
+  const res=await handleSoopContactRoute(new Request(API),fetcher);
+  assert.equal(res.status,200);
+  assert.equal((await res.json()).name,'곽춘식');
+  assert.equal(calls.length,2);
+  assert(calls[0].includes('chapi.sooplive.co.kr'));
+  assert(calls[1].includes('chapi.sooplive.com'));
+});
+test('failed fixed-host lookups expose only safe numeric diagnostics when asked',async()=>{
+  const blocked=async()=>new Response('Forbidden',{status:403});
+  const res=await handleSoopContactRoute(new Request(API+'&diagnostics=1'),blocked);
+  assert.equal(res.status,502);
+  const payload=await res.json();
+  assert.equal(payload.upstreamAttempts.length,4);
+  assert(payload.upstreamAttempts.every(x=>x.status===403));
+  const silent=await handleSoopContactRoute(new Request(API),blocked);
+  assert.equal((await silent.json()).upstreamAttempts,undefined);
 });
 test('malformed station and unsupported avatar MIME fail closed',async()=>{
   const badFetch=async()=>Response.json({station:{user_nick:''}});
