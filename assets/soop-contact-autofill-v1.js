@@ -15,6 +15,16 @@
   lookupButton.textContent='SOOP 정보 가져오기';
   lookupButton.title='SOOP 방송국 주소로 닉네임과 프로필 이미지를 불러옵니다';
   stationRow.insertBefore(lookupButton,visit);
+  stationRow.classList.add('mws-soop-autofill-row-v1');
+  const style=document.createElement('style');
+  style.id='mws-soop-autofill-style-v1';
+  style.textContent=`.contact-station-row-v55.mws-soop-autofill-row-v1{grid-template-columns:minmax(0,1fr) auto auto}
+    .mws-soop-autofill-row-v1 #ctSoopAutofillBtnV1{white-space:nowrap}
+    @media(max-width:760px){
+      .contact-station-row-v55.mws-soop-autofill-row-v1{grid-template-columns:minmax(0,1fr) auto}
+      .mws-soop-autofill-row-v1 #ctStationUrl{grid-column:1/-1}
+    }`;
+  document.head.appendChild(style);
 
   const feedback=document.createElement('div');
   feedback.id='ctSoopAutofillStatusV1';
