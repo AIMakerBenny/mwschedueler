@@ -28,8 +28,9 @@ const readCheck=`
   const buttons=[...scroll.querySelectorAll(':scope > button')];
   const sideRect=r(side),scrollRect=r(scroll),mainRect=r(main);
   const css=getComputedStyle(scroll);
-  const rightEdge=scrollRect.left+scroll.clientWidth-(parseFloat(css.paddingRight)||0);
-  const leftEdge=scrollRect.left+(parseFloat(css.paddingLeft)||0);
+  const scale=scrollRect.width/scroll.offsetWidth;
+  const rightEdge=scrollRect.left+(scroll.clientWidth-(parseFloat(css.paddingRight)||0))*scale;
+  const leftEdge=scrollRect.left+(parseFloat(css.paddingLeft)||0)*scale;
   const bad=buttons.map(b=>({id:b.dataset.tab,right:r(b).right,left:r(b).left}))
     .filter(b=>b.right>rightEdge+1||b.left<leftEdge-1);
   const iconOffsets=buttons.map(b=>{
