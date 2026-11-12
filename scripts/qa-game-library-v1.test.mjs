@@ -10,6 +10,7 @@ const client=load('assets/cloud-v1.1.js');
 const stage=load('assets/cloud-runtime-v130.js');
 const server=load('src/index.js');
 const entry=load('src/cf-v111-entry.js');
+const loader=load('assets/cloud-v1.1-loader.js');
 const keyValues=source=>{
   const match=/const CORE_KEYS\s*=\s*(\[[^\]\n]+\]);/.exec(source);
   assert(match,'CORE_KEYS missing');
@@ -70,4 +71,10 @@ test('legacy Steam serialization and manual serialization coexist without transf
   const manual={source:'manual',id:'manual:xyz',name:'와우 포에버',image:'',platform:'PC'};
   assert.deepEqual(JSON.parse(JSON.stringify(sandbox.api.serializeGame(manual))),manual);
   assert.equal(sandbox.api.serializeGame({name:'no id'}),null);
+});
+
+test('Steam performance cache marker remains while game-library cache is refreshed',()=>{
+  const marker='/assets/steam-game-v111.js?v=1.1.4-perf30&game-library-v1=1';
+  assert(loader.includes(marker),'runtime must retain Phase 30 marker');
+  assert.equal(loader.split(marker).length-1,2,'preload and runtime must use the same versioned URL');
 });
