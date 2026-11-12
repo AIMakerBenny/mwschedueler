@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 const load=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
-const client=load('assets/cloud-v5.5.js');
+const client=load('assets/cloud-v1.1.js');
+const stage=load('assets/cloud-runtime-v130.js');
+const legacy=load('assets/cloud-v5.5.js');
 const entry=load('src/cf-v111-entry.js');
 const server=load('src/index.js');
 const app=load('assets/app-core.js');
@@ -21,6 +23,17 @@ test('both client and server preserve calendar content groups',()=>{
   assert(serverKeys.includes('timezones'));
 });
 
+test('actual active core and v130 runtime both persist groups',()=>{
+  for(const source of [client,stage,legacy]){
+    const keys=/const CORE_KEYS=(\[[^\]\n]+\]);/.exec(source);
+    assert(keys&&vm.runInNewContext(keys[1]).includes('contentGroups'));
+  }
+  assert(entry.includes("url.pathname==='/assets/cloud-v1.1.js'"));
+  assert(entry.includes("url.pathname==='/assets/cloud-runtime-v130.js'"));
+  assert(entry.includes("url.pathname==='/assets/cloud-v5.5.js'"));
+  assert(entry.includes('cloud-v1.1-loader.js'));
+});
+
 test('live Cloudflare core loader includes content groups alongside existing achievements patch',()=>{
   const start=entry.indexOf('function normalizeCloudCore(js){');
   const end=entry.indexOf('\nfunction normalizeBossScript',start);
@@ -35,6 +48,10 @@ test('live Cloudflare core loader includes content groups alongside existing ach
   assert(resolved.includes('contentGroups'));
   assert(resolved.includes('achievementCards'),'previous achievement card patch must be retained');
   assert(patched.includes('function extractPart(part,src=data)'));
+  const patchedStage=sandbox.patch(stage);
+  const stageKeys=/const CORE_KEYS=(\[[^\]\n]+\]);/.exec(patchedStage);
+  assert(stageKeys);
+  assert(vm.runInNewContext(stageKeys[1]).includes('contentGroups'));
 });
 
 test('Cloudflare worker core externalizer keeps content groups without copying events',async()=>{
