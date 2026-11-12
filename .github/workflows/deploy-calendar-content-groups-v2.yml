@@ -88,7 +88,7 @@ jobs:
                 && grep -Fq 'assets/calendar-toolbar-v4.css?v=1' /tmp/group-index.html \
                 && grep -Fq 'assets/calendar-responsive-cards-v1.css?v=1' /tmp/group-index.html \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/cloud-v1.1-loader.js?check=$t" -o /tmp/game-loader.js \
-                && grep -Fq '1.1.5-game-library-v1' /tmp/game-loader.js \
+                && grep -Fq '1.1.4-perf30&game-library-v1=1' /tmp/game-loader.js \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/steam-game-v111.js?check=$t" -o /tmp/game-panel.js \
                 && grep -Fq 'gameManualFormV1' /tmp/game-panel.js \
                 && grep -Fq 'gameLibListV1' /tmp/game-panel.js \
