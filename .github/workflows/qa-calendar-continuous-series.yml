@@ -13,6 +13,7 @@ on:
       - 'index.html'
       - 'scripts/qa-calendar-continuous-series-v1.test.mjs'
       - 'scripts/qa-calendar-continuous-series-browser-v1.mjs'
+      - 'scripts/qa-calendar-content-groups-v2-browser.mjs'
       - '.github/workflows/qa-calendar-continuous-series.yml'
   pull_request:
     branches:
@@ -36,3 +37,5 @@ jobs:
         run: node --test scripts/qa-calendar-continuous-series-v1.test.mjs
       - name: Browser ribbon geometry at 1920px, 1366px and 850px
         run: node scripts/qa-calendar-continuous-series-browser-v1.mjs
+      - name: Browser group creation batch links edits and detach
+        run: node scripts/qa-calendar-content-groups-v2-browser.mjs
