@@ -16,7 +16,7 @@
   const EXTRA_PARTS=['wardogs'];
   const ALL_PARTS=[...CACHE_STORES,...EXTRA_PARTS];
   const PARTS_BY_TAB={dashboard:[],calendar:['clipboard'],contacts:['contactMeta'],posts:[],sniper:[],targets:[],memos:['notebook'],worldtime:[],wardogs:['wardogs'],gameLadder:['miniGames'],gameRps:['miniGames'],gamePachinko:['miniGames'],gameMultiDraw:['miniGames'],toolTier:['miniGames'],toolMatrix:['miniGames'],toolRelations:['miniGames'],export:['contactMeta','miniGames','notebook','clipboard','wardogs'],settings:['contactMeta']};
-  const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','achievementCards'];
+  const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','achievementCards','contentGroups'];
   const $=id=>document.getElementById(id);
   const clone=v=>{try{return structuredClone(v)}catch(_){return JSON.parse(JSON.stringify(v))}};
   const timeout=(promise,ms,label='요청')=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(`${label} 응답 시간이 초과되었습니다.`)),ms))]);
