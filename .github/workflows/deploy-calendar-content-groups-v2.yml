@@ -6,6 +6,9 @@ on:
     paths:
       - '.github/workflows/deploy-calendar-content-groups-v2.yml'
       - 'assets/calendar-responsive-cards-v1.css'
+      - 'assets/sidebar-rail-scrollbar-v1.css'
+      - 'scripts/qa-sidebar-rail-scrollbar-v1-browser.mjs'
+      - 'index.html'
       - 'scripts/qa-calendar-responsive-v1-browser.mjs'
       - 'assets/steam-game-v111.js'
       - 'assets/cloud-v1.1.js'
@@ -56,6 +59,7 @@ jobs:
           node scripts/qa-calendar-content-groups-v3-search-browser.mjs
           node scripts/qa-calendar-toolbar-v4-browser.mjs
           node scripts/qa-calendar-responsive-v1-browser.mjs
+          node scripts/qa-sidebar-rail-scrollbar-v1-browser.mjs
           node scripts/qa-game-library-v1-browser.mjs
           node --test scripts/qa-game-library-v1.test.mjs
           node scripts/qa-event-sidebar-tabs-v5-browser.mjs
@@ -87,6 +91,10 @@ jobs:
                 && grep -Fq 'assets/calendar-content-groups-v2.css?v=3' /tmp/group-index.html \
                 && grep -Fq 'assets/calendar-toolbar-v4.css?v=1' /tmp/group-index.html \
                 && grep -Fq 'assets/calendar-responsive-cards-v1.css?v=1' /tmp/group-index.html \
+                && grep -Fq 'assets/sidebar-rail-scrollbar-v1.css?v=1' /tmp/group-index.html \
+                && curl --fail --silent --show-error --max-time 15 "$base/assets/sidebar-rail-scrollbar-v1.css?check=$t" -o /tmp/sidebar-rail.css \
+                && grep -Fq 'scrollbar-gutter:stable' /tmp/sidebar-rail.css \
+                && grep -Fq 'grid-template-columns:72px' /tmp/sidebar-rail.css \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/cloud-v1.1-loader.js?check=$t" -o /tmp/game-loader.js \
                 && grep -Fq '1.1.4-perf30&game-library-v1=1' /tmp/game-loader.js \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/steam-game-v111.js?check=$t" -o /tmp/game-panel.js \
