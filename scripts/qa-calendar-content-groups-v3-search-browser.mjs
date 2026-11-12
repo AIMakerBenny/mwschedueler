@@ -125,7 +125,7 @@ try{
  for(const width of [1580,1140,850,560]){
   const run=spawnSync(chrome,[
     '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
-    '--disable-extensions','--no-first-run','--virtual-time-budget=1400',
+    '--disable-extensions','--no-first-run','--virtual-time-budget=4000',
     '--window-size='+width+',900','--dump-dom','file://'+file
   ],{encoding:'utf8',timeout:30000,maxBuffer:10*1024*1024});
   assert.equal(run.status,0,'Chrome failed '+width+' '+run.stderr.slice(-900));
