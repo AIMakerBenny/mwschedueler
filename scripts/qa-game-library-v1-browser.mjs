@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  for(let attempt=0;attempt<15&&$('gameManualSaveV1').disabled;attempt++)await next();
  window.FileReader=nativeReader;
  const fileStored=data.gameLibrary.some(item=>item.name==='직접 만든 이미지 게임'&&
-   item.platform==='웹'&&/^data:image\/(?:webp|jpeg|png);base64,/.test(item.image)&&item.image.length<95000);
+   item.platform==='웹'&&item.image.startsWith('data:image/')&&item.image.includes(';base64,')&&item.image.length<95000);
  document.body.dataset.mwsMode='public';
  $('gameLibAddToggleV1').click();
  const publicBlocked=$('gameManualFormV1').hidden;
