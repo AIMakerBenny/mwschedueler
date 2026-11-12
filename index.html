@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="assets/calendar-broadcast-duration-v1.css?v=1">
 <link rel="stylesheet" href="assets/calendar-continuous-series-v1.css?v=2">
 <link rel="stylesheet" href="assets/calendar-content-groups-v2.css?v=3">
+<link rel="stylesheet" href="assets/calendar-toolbar-v4.css?v=1">
 <link rel="stylesheet" href="assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196&recovery=N1&phase=303&zoomfix=1&spectatorqa=2&boundary=2&gridrandom=1&gridreveal=1&pressure=1&burst=1&conversation=1&dialogue=1&microbattle=1&dialoguepool=1&coverage=1&cadence=1&longrun=1&feedback=303">
 <link rel="stylesheet" href="assets/f1-racing-r283-r287.css?phase=302">
 <link rel="stylesheet" href="assets/f1-racing-r288-r290.css?phase=290">
@@ -267,12 +268,11 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 </section>
 
 <section id="calendar" class="section">
+      <div class="calendar-topbar-v4">
       <div class="calendar-view-tabs-v172" role="tablist" aria-label="캘린더 보기">
         <button type="button" class="secondary calendar-view-tab-v172 active" data-calendar-view-tab="month" role="tab" aria-selected="true">캘린더</button>
         <button type="button" class="secondary calendar-view-tab-v172" data-calendar-view-tab="search" role="tab" aria-selected="false">검색</button>
       </div>
-
-      <div id="calendarMonthPanelV172" class="calendar-view-panel-v172 active" data-calendar-view-panel="month">
         <div class="toolbar calendar-toolbar">
           <div class="row">
             <button class="secondary" id="prevMonth">이전</button>
@@ -291,9 +291,13 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
           </div>
         </div>
         <div class="calendar-group-toolbar-v2">
-          <button class="secondary" type="button" id="calendarGroupToggleV2" aria-pressed="false">연속 콘텐츠 그룹 선택</button>
-          <span class="muted small">제목·시간이 달라도 원하는 일정만 같은 그룹으로 연결할 수 있습니다.</span>
+          <button class="secondary" type="button" id="calendarGroupToggleV2" aria-pressed="false" title="여러 일정을 하나의 콘텐츠 그룹에 연결">그룹 묶기</button>
+          <button class="secondary" type="button" id="calendarGroupManageToggleV4" aria-expanded="false" aria-controls="calendarGroupManagerPanelV4">그룹 관리</button>
+          <button class="secondary" type="button" id="calendarUndoLastMoveV4" title="이 컴퓨터에서 마지막으로 이동한 일정 되돌리기" disabled>이동 취소</button>
         </div>
+      </div>
+      <div id="calendarMonthPanelV172" class="calendar-view-panel-v172 active" data-calendar-view-panel="month">
+        <div id="calendarMoveStatusV4" class="calendar-move-status-v4" aria-live="polite" hidden></div>
         <div class="calendar-group-panel-v2" id="calendarGroupPanelV2" hidden>
           <div class="calendar-group-panel-head-v2">
             <span id="calendarGroupCountV2">0개 일정 선택</span>
@@ -319,16 +323,35 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
             <label>그룹 색상 <input id="calendarGroupNewColorV2" type="color" value="#0f8c95"></label>
             <button class="secondary" type="button" id="calendarGroupCreateV2">그룹 만들기</button>
           </div>
-          <details class="calendar-group-details-v2">
-            <summary>기존 그룹 이름·색상 관리</summary>
+
+          <div class="muted small">그룹 선택 모드에서는 일정 카드를 클릭하면 여러 개를 선택할 수 있습니다. 방송 시간과 개별 제목은 바뀌지 않습니다.</div>
+        </div>
+        <div class="calendar-group-manager-panel-v4" id="calendarGroupManagerPanelV4" hidden>
+          <div class="calendar-group-panel-head-v2">
+            <span>콘텐츠 그룹 관리</span>
+            <button type="button" class="secondary small" id="calendarGroupManageCloseV4">닫기</button>
+          </div>
+          <div class="calendar-group-search-v3" data-group-search="manager">
+            <label for="calendarGroupManagerSearchV4">수정할 그룹 검색</label>
+            <div class="calendar-group-search-input-v3">
+              <input id="calendarGroupManagerSearchV4" type="search" autocomplete="off" placeholder="그룹 이름 입력" aria-controls="calendarGroupManagerResultsV4">
+            </div>
+            <div id="calendarGroupManagerCurrentV4" class="calendar-group-current-v3" aria-live="polite">현재 선택: 그룹 없음</div>
+            <div id="calendarGroupManagerQuickV4" class="calendar-group-quick-v3"></div>
+            <div id="calendarGroupManagerResultsV4" class="calendar-group-results-v3" role="group" aria-label="그룹 관리 검색 결과" hidden></div>
+            <p id="calendarGroupManagerHintV4" class="calendar-group-search-hint-v3"></p>
+            <select id="calendarGroupManageTargetV4" class="calendar-group-underlying-select-v3" aria-label="수정할 그룹"><option value="">그룹 없음</option></select>
+          </div>
+          <div class="calendar-group-edit-controls-v4">
+
             <div class="calendar-group-controls-v2">
               <label>그룹 이름 <input id="calendarGroupRenameV2" maxlength="64" placeholder="그룹 선택 후 이름 수정"></label>
               <label>그룹 색상 <input id="calendarGroupRecolorV2" type="color" value="#0f8c95"></label>
               <button class="secondary" type="button" id="calendarGroupUpdateV2">그룹 수정</button>
               <button class="danger" type="button" id="calendarGroupDeleteV2">그룹 삭제</button>
             </div>
-          </details>
-          <div class="muted small">그룹 선택 모드에서는 일정 카드를 클릭하면 여러 개를 선택할 수 있습니다. 방송 시간과 개별 제목은 바뀌지 않습니다.</div>
+          </div>
+          <p class="muted small calendar-group-manage-note-v4">그룹 이름과 색상만 변경됩니다. 연결된 방송의 제목, 시간, 참가자는 그대로 유지됩니다.</p>
         </div>
         <div class="calendar-head"><div style="color:#ef8b9c">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div style="color:#7da8f7">토</div></div>
         <div id="calendarGrid" class="calendar"></div>
@@ -2059,8 +2082,9 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 
 <script src="assets/calendar-broadcast-duration-v1.js?v=1"></script>
 <script src="assets/calendar-continuous-series-v1.js?v=2"></script>
-<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1"></script>
-<script src="assets/calendar-content-groups-v2.js?v=3"></script>
+<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1"></script>
+<script src="assets/calendar-content-groups-v2.js?v=4"></script>
+<script src="assets/calendar-move-guard-v4.js?v=1"></script>
 <script src="assets/soop-contact-autofill-v1.js?v=1"></script>
 <script src="assets/f1-track-v1.js?v=1.0.0-phase197-line-meta-recoveryA-tracks7&phase=243"></script>
 <script src="assets/f1-track-geometry-v2.js?v=1.0.0-phase195-speed-profile&recovery=L1&phase=270&exitrecovery=3"></script>
