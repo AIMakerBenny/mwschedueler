@@ -1890,7 +1890,7 @@ function renderCalendar(){
         const timePrefix=e.start==='TBD'?'':`${esc(e.start||'')} `;
         const label=e.restDay?'휴방':`${e.device?`[${e.device}] `:''}${timePrefix}${esc(e.title)}`;
         const participantSummary=e.restDay?'':calendarParticipantSummary(e);
-        return `<div class="mini-event ${e.restDay?'rest-event':''} ${groupColor?'calendar-content-group-event-v2':''}"
+        return `<div class="mini-event ${e.restDay?'rest-event':''} ${groupColor?'calendar-content-group-event-v2':''} ${e.restDay?'':'mws-steam-host-v111'}"
           draggable="false"
           data-evid="${e.id}"
           style="border-left:4px solid ${color};background:${rgba(color,.18)};--content-group-color:${color}"
@@ -1898,6 +1898,7 @@ function renderCalendar(){
           <button type="button" class="calendar-event-drag-handle-v4" draggable="true" aria-label="일정 이동 손잡이" title="여기를 드래그하면 날짜를 옮길 수 있습니다" onclick="event.preventDefault();event.stopPropagation()">⋮⋮</button>
           <span class="mini-event-main">${label}</span>
           ${participantSummary?`<span class="mini-event-people">${participantSummary}</span>`:''}
+          ${e.restDay?'':`<button type="button" class="mws-steam-slot-v111" data-event-id="${esc(e.id)}" aria-label="게임 추가" title="게임 추가">+</button>`}
         </div>`
       }).join('')}
     </div>`;
