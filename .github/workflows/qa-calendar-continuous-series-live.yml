@@ -1,0 +1,20 @@
+name: Calendar Continuous Series Live Smoke
+on:
+  push:
+    branches:
+      - qa/calendar-continuous-series-live-20261112
+  pull_request:
+    branches:
+      - cloudflare-production
+  workflow_dispatch:
+jobs:
+  live-calendar-series:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Cloudflare deployed calendar continuation
+        run: node scripts/qa-calendar-continuous-series-production-v1.mjs
