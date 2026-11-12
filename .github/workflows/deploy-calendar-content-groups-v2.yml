@@ -1,4 +1,4 @@
-name: Deploy Calendar UX V4 - Scoped Production
+name: Deploy Calendar UX V4 and Cloud Group Persistence - Scoped Production
 on:
   push:
     branches:
@@ -31,6 +31,9 @@ jobs:
           node --check assets/calendar-continuous-series-v1.js
           node --check assets/calendar-content-groups-v2.js
           node --check assets/calendar-move-guard-v4.js
+          node --check assets/cloud-v5.5.js
+          node --check src/index.js
+          node --check src/cf-v111-entry.js
           node --check assets/soop-contact-autofill-v1.js
       - name: Calendar content group, hover and duration regression
         run: |
@@ -40,6 +43,7 @@ jobs:
           node scripts/qa-calendar-content-groups-v2-browser.mjs
           node scripts/qa-calendar-content-groups-v3-search-browser.mjs
           node scripts/qa-calendar-toolbar-v4-browser.mjs
+          node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs
           node --test scripts/qa-soop-contact-autofill-v1.test.mjs
       - name: Install deployment dependencies
         run: npm install
@@ -76,6 +80,8 @@ jobs:
                 && grep -Fq 'grid.onpointermove=pointerPreview' /tmp/group-core.js \
                 && grep -Fq 'calendar-event-drag-handle-v4' /tmp/group-core.js \
                 && grep -Fq 'mwsCalendarMoveGuardV4?.recordMove' /tmp/group-core.js \
+                && curl --fail --silent --show-error --max-time 15 "$base/assets/cloud-v5.5.js?check=$t" -o /tmp/group-cloud.js \
+                && grep -Fq "'contentGroups','achievementCards'" /tmp/group-cloud.js \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-move-guard-v4.js?check=$t" -o /tmp/group-undo.js \
                 && grep -Fq 'undoLast' /tmp/group-undo.js \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-toolbar-v4.css?check=$t" -o /tmp/group-toolbar.css \
@@ -87,7 +93,7 @@ jobs:
             sleep 10
           done
           test "$ok" = 1
-          echo "CALENDAR_UX_V4_PRODUCTION_OK"
+          echo "CALENDAR_UX_V4_GROUP_PERSISTENCE_PRODUCTION_OK"
       - name: Publish scoped Cloudflare deployment result
         if: always()
         env:
