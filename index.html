@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="assets/calendar-content-groups-v2.css?v=3">
 <link rel="stylesheet" href="assets/event-sidebar-tabs-v5.css?v=1">
 <link rel="stylesheet" href="assets/calendar-toolbar-v4.css?v=1">
+<link rel="stylesheet" href="assets/calendar-responsive-cards-v1.css?v=1">
 <link rel="stylesheet" href="assets/f1-racing-v1.css?v=1.0.0-phase180-shell&p=196&recovery=N1&phase=303&zoomfix=1&spectatorqa=2&boundary=2&gridrandom=1&gridreveal=1&pressure=1&burst=1&conversation=1&dialogue=1&microbattle=1&dialoguepool=1&coverage=1&cadence=1&longrun=1&feedback=303">
 <link rel="stylesheet" href="assets/f1-racing-r283-r287.css?phase=302">
 <link rel="stylesheet" href="assets/f1-racing-r288-r290.css?phase=290">
@@ -354,8 +355,10 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
           </div>
           <p class="muted small calendar-group-manage-note-v4">그룹 이름과 색상만 변경됩니다. 연결된 방송의 제목, 시간, 참가자는 그대로 유지됩니다.</p>
         </div>
-        <div class="calendar-head"><div style="color:#ef8b9c">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div style="color:#7da8f7">토</div></div>
-        <div id="calendarGrid" class="calendar"></div>
+        <div class="calendar-responsive-scroll-v1" role="region" tabindex="0" aria-label="월별 캘린더 - 날짜가 좁을 경우 가로 스크롤 가능">
+          <div class="calendar-head"><div style="color:#ef8b9c">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div style="color:#7da8f7">토</div></div>
+          <div id="calendarGrid" class="calendar"></div>
+        </div>
 
         <div id="calendarCopyTray" class="calendar-copy-tray">
           <div class="calendar-copy-tray-head">
