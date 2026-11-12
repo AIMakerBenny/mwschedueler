@@ -18,6 +18,160 @@
     for(const group of groups())select.add(new Option(group.name,group.id));
     select.value=find(desired)?desired:'';
   }
+  /* Searchable picker for large content-group libraries. The original select remains
+   * the canonical form value, preserving existing save/edit behavior.
+   * Suggestions are ranked by linked event count, not guessed from schedule titles.
+   */
+  const pickers={
+    editor:{input:'evContentGroupSearchV3',select:'evContentGroupV2',
+      current:'evContentGroupCurrentV3',quick:'evContentGroupQuickV3',
+      results:'evContentGroupResultsV3',hint:'evContentGroupHintV3'},
+    panel:{input:'calendarGroupSearchPanelV3',select:'calendarGroupTargetV2',
+      current:'calendarGroupCurrentPanelV3',quick:'calendarGroupQuickPanelV3',
+      results:'calendarGroupResultsPanelV3',hint:'calendarGroupHintPanelV3'}
+  };
+  function normalizeSearch(value){
+    return String(value||'').normalize('NFKC').toLocaleLowerCase('ko-KR').replace(/\\s+/g,' ').trim();
+  }
+  function rankedGroups(query=''){
+    const key=normalizeSearch(query),count=new Map();
+    for(const event of Array.isArray(data.events)?data.events:[]){
+      const id=String(event?.contentGroupId||'');
+      if(id)count.set(id,(count.get(id)||0)+1);
+    }
+    return groups().filter(g=>normalizeSearch(g.name).includes(key))
+      .sort((a,b)=>(count.get(b.id)||0)-(count.get(a.id)||0)
+        ||a.name.localeCompare(b.name,'ko-KR'));
+  }
+  function selectGroupFromSearch(context,id){
+    const refs=pickers[context],select=$(refs.select);
+    if(!select)return;
+    options(select,id);
+    const input=$(refs.input);
+    if(input)input.value='';
+    if(context==='panel')redrawSelects(id);
+    else renderGroupSearch(context,false);
+  }
+  function makeGroupButton(group,context,variant){
+    const button=document.createElement('button');
+    button.type='button';
+    button.className='calendar-group-option-v3 '+(variant==='quick'?'calendar-group-option-quick-v3':'');
+    const choice=$(pickers[context].select)?.value||'';
+    const chosen=choice===group.id;
+    button.setAttribute('aria-pressed',chosen?'true':'false');
+    button.title=group.name;
+    const swatch=document.createElement('span');
+    swatch.className='calendar-group-color-dot-v3';
+    swatch.style.background=safeColor(group.color);
+    const name=document.createElement('span');
+    name.className='calendar-group-option-name-v3';
+    name.textContent=group.name;
+    const usage=data.events.filter(e=>e.contentGroupId===group.id).length;
+    button.append(swatch,name);
+    if(variant!=='quick'){
+      const suffix=document.createElement('span');
+      suffix.className='calendar-group-option-count-v3';
+      suffix.textContent=usage?usage+'개 일정':'미사용';
+      button.appendChild(suffix);
+    }
+    button.addEventListener('click',()=>selectGroupFromSearch(context,group.id));
+    return button;
+  }
+  function renderGroupSearch(context,showResults=false){
+    const ref=pickers[context];
+    if(!ref)return;
+    const input=$(ref.input),current=$(ref.current),
+      quick=$(ref.quick),results=$(ref.results),hint=$(ref.hint);
+    const select=$(ref.select);
+    if(!input||!current||!quick||!results||!select)return;
+    const chosen=find(select.value);
+    current.replaceChildren();
+    const currentMark=document.createElement('span');
+    currentMark.className='calendar-group-current-mark-v3';
+    if(chosen){
+      const swatch=document.createElement('span');
+      swatch.className='calendar-group-color-dot-v3';
+      swatch.style.background=safeColor(chosen.color);
+      currentMark.appendChild(swatch);
+    }
+    const name=document.createElement('span');
+    name.className='calendar-group-current-name-v3';
+    name.textContent=chosen?'현재 선택: '+chosen.name:'현재 선택: 그룹 없음';
+    name.title=chosen?.name||'그룹 없음';
+    currentMark.appendChild(name);
+    current.appendChild(currentMark);
+    if(chosen){
+      const clear=document.createElement('button');
+      clear.type='button';
+      clear.className='calendar-group-clear-v3';
+      clear.textContent='연결 해제';
+      clear.addEventListener('click',()=>selectGroupFromSearch(context,''));
+      current.appendChild(clear);
+    }
+    const query=input.value.trim();
+    const ordered=rankedGroups(query);
+    quick.replaceChildren();
+    if(!query){
+      const top=rankedGroups().slice(0,5);
+      if(top.length){
+        const heading=document.createElement('span');
+        heading.className='calendar-group-quick-label-v3';
+        heading.textContent='자주 사용';
+        quick.appendChild(heading);
+        top.forEach(g=>quick.appendChild(makeGroupButton(g,context,'quick')));
+      }
+    }
+    const open=Boolean(query)||showResults;
+    results.hidden=!open;
+    results.replaceChildren();
+    if(open){
+      if(ordered.length){
+        for(const group of ordered.slice(0,12)){
+          results.appendChild(makeGroupButton(group,context,'result'));
+        }
+      }else{
+        const empty=document.createElement('div');
+        empty.className='calendar-group-empty-v3';
+        empty.textContent=groups().length
+          ?'일치하는 그룹이 없습니다. 아래에서 새 그룹을 만들 수 있습니다.'
+          :'그룹이 없습니다. 아래에서 새 그룹을 만들어 주세요.';
+        results.appendChild(empty);
+      }
+    }
+    if(hint){
+      hint.textContent=groups().length===0
+        ?'아직 생성된 그룹이 없습니다. 새 콘텐츠 그룹 만들기를 눌러 주세요.'
+        :query
+          ?'검색 결과 '+ordered.length+'개'+(ordered.length>12?' · 먼저 12개를 표시합니다. 검색어를 더 입력해 주세요.':'')
+          :'총 '+groups().length+'개 그룹 · 자주 사용하는 그룹을 누르거나 검색하세요.';
+    }
+  }
+  function bindGroupPicker(context){
+    const ref=pickers[context],input=$(ref.input),select=$(ref.select);
+    if(!input||!select)return;
+    input.addEventListener('focus',()=>renderGroupSearch(context,true));
+    input.addEventListener('input',()=>renderGroupSearch(context,true));
+    input.addEventListener('keydown',event=>{
+      if(event.key==='Escape'){input.value='';input.blur();renderGroupSearch(context,false);return}
+      if(event.key==='ArrowDown'){
+        const first=$(ref.results)?.querySelector('button');
+        if(first){event.preventDefault();first.focus()}
+        return;
+      }
+      if(event.key==='Enter'){
+        const first=rankedGroups(input.value).at(0);
+        if(first){event.preventDefault();selectGroupFromSearch(context,first.id)}
+      }
+    });
+    select.addEventListener('change',()=>context==='panel'?
+      redrawSelects(select.value):renderGroupSearch(context,false));
+    document.addEventListener('pointerdown',event=>{
+      const box=input.closest('[data-group-search]');
+      if(box&&!box.contains(event.target)&&!input.value.trim())
+        $(ref.results).hidden=true;
+    });
+  }
+
   function updateSelectionUI(){
     const grid=$('calendarGrid'),section=$('calendar');
     section?.classList.toggle('calendar-group-select-active-v2',mode);
@@ -74,10 +228,14 @@
     if($('calendarGroupRenameV2'))$('calendarGroupRenameV2').value=chosen?.name||'';
     if($('calendarGroupRecolorV2'))$('calendarGroupRecolorV2').value=chosen?.color||'#0f8c95';
     updateSelectionUI();
+    renderGroupSearch('panel',false);
+    renderGroupSearch('editor',false);
   }
   function syncEditor(event){
     const sel=$('evContentGroupV2');
     options(sel,event?.contentGroupId||'');
+    if($('evContentGroupSearchV3'))$('evContentGroupSearchV3').value='';
+    renderGroupSearch('editor',false);
     const create=$('evContentGroupNewWrapV2');
     if(create)create.hidden=true;
     if($('evContentGroupNewNameV2'))$('evContentGroupNewNameV2').value='';
@@ -88,6 +246,8 @@
     saveData('콘텐츠 그룹 만들기');
     redrawSelects($('calendarGroupTargetV2')?.value);
     options($('evContentGroupV2'),g.id);
+    if($('evContentGroupSearchV3'))$('evContentGroupSearchV3').value='';
+    renderGroupSearch('editor',false);
     $('evContentGroupNewWrapV2').hidden=true;
     toast('콘텐츠 그룹',g.name+' 그룹을 만들었습니다');
   }
@@ -100,6 +260,7 @@
     }
     finish();
     saveData('콘텐츠 그룹 만들기'+(assigned.length?' 및 '+assigned.length+'개 일정 연결':''));
+    if($('calendarGroupSearchPanelV3'))$('calendarGroupSearchPanelV3').value='';
     redrawSelects(g.id);
     $('calendarGroupNewNameV2').value='';
     toast('콘텐츠 그룹',g.name+' 그룹을 만들었습니다'+(assigned.length?' · '+assigned.length+'개 일정 연결':''));
@@ -145,6 +306,8 @@
   }
   function init(){
     const toggleBtn=$('calendarGroupToggleV2');if(!toggleBtn)return;
+    bindGroupPicker('editor');
+    bindGroupPicker('panel');
     toggleBtn.addEventListener('click',toggle);
     $('calendarGroupCancelV2')?.addEventListener('click',finish);
     $('calendarGroupApplyV2')?.addEventListener('click',()=>applyToSelected(false));
@@ -165,7 +328,7 @@
   root.mwsCalendarContentGroupsV2=Object.freeze({
     init,groups,find,syncEditor,selectEvent,selectionActive:()=>mode,
     selectionCount:()=>selected.size,refreshCalendarSelection:updateSelectionUI,
-    newGroup:createGroup
+    newGroup:createGroup,rankedGroups,renderGroupSearch,selectGroupFromSearch
   });
   init();
 })(window);

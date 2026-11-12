@@ -14,6 +14,7 @@ on:
       - 'scripts/qa-calendar-continuous-series-v1.test.mjs'
       - 'scripts/qa-calendar-continuous-series-browser-v1.mjs'
       - 'scripts/qa-calendar-content-groups-v2-browser.mjs'
+      - 'scripts/qa-calendar-content-groups-v3-search-browser.mjs'
       - '.github/workflows/qa-calendar-continuous-series.yml'
   pull_request:
     branches:
@@ -39,3 +40,5 @@ jobs:
         run: node scripts/qa-calendar-continuous-series-browser-v1.mjs
       - name: Browser group creation batch links edits and detach
         run: node scripts/qa-calendar-content-groups-v2-browser.mjs
+      - name: Searchable group UI across 82 groups and four viewport sizes
+        run: node scripts/qa-calendar-content-groups-v3-search-browser.mjs
