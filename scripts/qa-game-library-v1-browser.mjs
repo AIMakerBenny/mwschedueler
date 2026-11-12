@@ -81,10 +81,9 @@ document.addEventListener('DOMContentLoaded',()=>{
  $('gameLibAddToggleV1').click();
  $('gameManualNameV1').value='직접 만든 이미지 게임';
  $('gameManualPlatformV1').value='웹';
- const canvas=document.createElement('canvas');canvas.width=32;canvas.height=20;
- canvas.getContext('2d').fillStyle='#25aacc';canvas.getContext('2d').fillRect(0,0,32,20);
- const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
- const file=new File([blob],'cover.png',{type:'image/png'});
+ const tinyPng='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9WlVUp8AAAAASUVORK5CYII=';
+ const tinyBytes=Uint8Array.from(atob(tinyPng),c=>c.charCodeAt(0));
+ const file=new File([tinyBytes],'cover.png',{type:'image/png'});
  const dt=new DataTransfer();dt.items.add(file);
  $('gameManualImageFileV1').files=dt.files;
  $('gameManualSaveV1').click();
