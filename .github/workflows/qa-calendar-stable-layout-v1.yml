@@ -1,0 +1,40 @@
+name: Calendar stable first-paint layout QA
+on:
+  pull_request:
+    branches:
+      - cloudflare-production
+    paths:
+      - 'assets/app-core.js'
+      - 'assets/steam-game-v111.js'
+      - 'assets/calendar-stable-layout-v1.css'
+      - 'index.html'
+      - 'scripts/qa-calendar-stable-layout-v1-browser.mjs'
+      - '.github/workflows/qa-calendar-stable-layout-v1.yml'
+  push:
+    branches:
+      - 'fix/calendar-stable-card-layout-v1-20261112'
+permissions:
+  contents: read
+jobs:
+  browser-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Syntax checks
+        run: |
+          node --check --input-type=commonjs < assets/app-core.js
+          node --check assets/steam-game-v111.js
+          node --check scripts/qa-calendar-stable-layout-v1-browser.mjs
+      - name: Compare geometry before and after Steam startup in Chromium
+        run: node scripts/qa-calendar-stable-layout-v1-browser.mjs
+      - name: Existing calendar and game regressions
+        run: |
+          node scripts/qa-calendar-responsive-v1-browser.mjs
+          node scripts/qa-calendar-continuous-series-browser-v1.mjs
+          node scripts/qa-calendar-toolbar-v4-browser.mjs
+          node scripts/qa-game-library-v1-browser.mjs
+          node scripts/qa-sidebar-rail-scrollbar-v1-browser.mjs

@@ -6,6 +6,9 @@ on:
     paths:
       - '.github/workflows/deploy-calendar-content-groups-v2.yml'
       - 'assets/calendar-responsive-cards-v1.css'
+      - 'assets/calendar-stable-layout-v1.css'
+      - 'assets/app-core.js'
+      - 'scripts/qa-calendar-stable-layout-v1-browser.mjs'
       - 'assets/sidebar-rail-scrollbar-v1.css'
       - 'scripts/qa-sidebar-rail-scrollbar-v1-browser.mjs'
       - 'index.html'
@@ -59,6 +62,7 @@ jobs:
           node scripts/qa-calendar-content-groups-v3-search-browser.mjs
           node scripts/qa-calendar-toolbar-v4-browser.mjs
           node scripts/qa-calendar-responsive-v1-browser.mjs
+          node scripts/qa-calendar-stable-layout-v1-browser.mjs
           node scripts/qa-sidebar-rail-scrollbar-v1-browser.mjs
           node scripts/qa-game-library-v1-browser.mjs
           node --test scripts/qa-game-library-v1.test.mjs
@@ -91,6 +95,9 @@ jobs:
                 && grep -Fq 'assets/calendar-content-groups-v2.css?v=3' /tmp/group-index.html \
                 && grep -Fq 'assets/calendar-toolbar-v4.css?v=1' /tmp/group-index.html \
                 && grep -Fq 'assets/calendar-responsive-cards-v1.css?v=1' /tmp/group-index.html \
+                && grep -Fq 'assets/calendar-stable-layout-v1.css?v=1' /tmp/group-index.html \
+                && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-stable-layout-v1.css?check=$t" -o /tmp/calendar-stable.css \
+                && grep -Fq 'grid-template-rows:2.8em 1.3em' /tmp/calendar-stable.css \
                 && grep -Fq 'assets/sidebar-rail-scrollbar-v1.css?v=1' /tmp/group-index.html \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/sidebar-rail-scrollbar-v1.css?check=$t" -o /tmp/sidebar-rail.css \
                 && grep -Fq 'scrollbar-gutter:stable' /tmp/sidebar-rail.css \
@@ -100,6 +107,7 @@ jobs:
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/steam-game-v111.js?check=$t" -o /tmp/game-panel.js \
                 && grep -Fq 'gameManualFormV1' /tmp/game-panel.js \
                 && grep -Fq 'gameLibListV1' /tmp/game-panel.js \
+                && grep -Fq '__mwsSteamSlotHandlersV1' /tmp/game-panel.js \
                 && grep -Fq 'class="calendar-responsive-scroll-v1"' /tmp/group-index.html \
                 && grep -Fq 'assets/calendar-move-guard-v4.js?v=1' /tmp/group-index.html \
                 && grep -Fq 'calendarGroupManageToggleV4' /tmp/group-index.html \
@@ -118,6 +126,7 @@ jobs:
                 && grep -Fq 'contentGroupId:document.getElementById' /tmp/group-core.js \
                 && grep -Fq 'grid.onpointermove=pointerPreview' /tmp/group-core.js \
                 && grep -Fq 'calendar-event-drag-handle-v4' /tmp/group-core.js \
+                && grep -Fq 'mws-steam-host-v111' /tmp/group-core.js \
                 && grep -Fq 'mwsCalendarMoveGuardV4?.recordMove' /tmp/group-core.js \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/cloud-v1.1.js?check=$t" -o /tmp/group-cloud.js \
                 && node -e "const s=require('fs').readFileSync('/tmp/group-cloud.js','utf8');const m=s.match(/const CORE_KEYS=\\[([^\\]]*)\\]/);if(!m||!m[1].includes('contentGroups')||!m[1].includes('gameLibrary'))process.exit(1)" \

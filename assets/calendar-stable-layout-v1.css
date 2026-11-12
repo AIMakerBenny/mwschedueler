@@ -1,0 +1,76 @@
+/* Calendar stable event layout v1.
+   Slot geometry is available before the asynchronously loaded Steam module
+   scans the calendar. Existing ribbon, drag and group data are untouched. */
+#calendar #calendarGrid .mini-event.mws-steam-host-v111{
+  position:relative!important;
+  padding-right:48px!important;
+  overflow:hidden!important;
+}
+/* The full-height game control occupies no grid track and cannot affect
+   intrinsic card height, including before the Steam runtime has initialized. */
+#calendar #calendarGrid .mini-event.mws-steam-host-v111>.mws-steam-slot-v111{
+  position:absolute!important;
+  right:3px!important;
+  top:3px!important;
+  bottom:3px!important;
+  left:auto!important;
+  box-sizing:border-box!important;
+  width:40px!important;
+  min-width:40px!important;
+  height:auto!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid color-mix(in srgb,var(--accent) 68%,var(--border))!important;
+  border-radius:7px!important;
+  background:color-mix(in srgb,var(--panel) 86%,#000)!important;
+  color:var(--text)!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  z-index:30!important;
+  font-size:22px!important;
+  font-weight:1000!important;
+  line-height:1!important;
+  overflow:hidden!important;
+  cursor:pointer!important;
+}
+#calendar #calendarGrid .mini-event.mws-steam-host-v111>.mws-steam-slot-v111 img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  display:block!important;
+}
+/* Reserve exact text rows even when a one-line title receives a game cover.
+   CSS Grid can no longer grow a week just because a title wraps later. */
+#calendar #calendarGrid .mini-event:not(.rest-event){
+  grid-template-rows:2.8em 1.3em!important;
+}
+#calendar #calendarGrid .mini-event:not(.rest-event) .mini-event-main{
+  max-height:2.8em;
+}
+#calendar #calendarGrid .mini-event:not(.rest-event) .mini-event-people{
+  max-height:1.3em;
+}
+@container mws-calendar-day (max-width:215px){
+  #calendar #calendarGrid .mini-event.mws-steam-host-v111:not(.rest-event){
+    grid-template-rows:28px 2.8em 1.3em!important;
+  }
+  /* On narrow dates the cover occupies its dedicated first-row cell.
+     This is the same compact geometry as calendar-responsive-cards-v1.css. */
+  #calendar #calendarGrid .mini-event.mws-steam-host-v111>.mws-steam-slot-v111{
+    position:static!important;
+    grid-column:2;
+    grid-row:1;
+    place-self:start end;
+    width:34px!important;
+    min-width:34px!important;
+    height:28px!important;
+    min-height:28px!important;
+    inset:auto!important;
+    margin:0!important;
+  }
+}
+/* Stabilize viewport width when the calendar creates a vertical page scrollbar. */
+@media (min-width:761px){
+  html{scrollbar-gutter:stable}
+}
