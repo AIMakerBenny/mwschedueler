@@ -60,6 +60,133 @@ function notice(title,message){
   try{alert(message)}catch(_){}
 }
 
+// The common picker merges explicitly registered manual games with Steam games
+// already used by schedules. No migration or rewrite of legacy events is needed.
+function gameKey(game){return isManualGame(game)?game.id:`steam:${game.appid}`;}
+function libraryEntries(){
+  const d=getData()||{},byKey=new Map();
+  for(const raw of Array.isArray(d.gameLibrary)?d.gameLibrary:[]){
+    const game=normalizeGame(raw);
+    if(game)byKey.set(gameKey(game),game);
+  }
+  for(const event of Array.isArray(d.events)?d.events:[]){
+    const game=normalizeGame(event?.steamGame);
+    if(game&&!isManualGame(game)&&!byKey.has(gameKey(game)))byKey.set(gameKey(game),game);
+  }
+  return [...byKey.values()].sort((a,b)=>{
+    const ap=isManualGame(a)?0:1,bp=isManualGame(b)?0:1;
+    return ap-bp||a.name.localeCompare(b.name,'ko');
+  });
+}
+function closeManualForm(){
+  manualEditId='';
+  const form=$('gameManualFormV1');
+  if(form)form.hidden=true;
+}
+function openManualForm(game){
+  if(document.body.dataset.mwsMode==='public'){
+    notice('게임 라이브러리','관리자 모드에서만 게임을 등록하거나 수정할 수 있습니다.');
+    return;
+  }
+  const form=$('gameManualFormV1');
+  if(!form)return;
+  const item=isManualGame(game)?normalizeGame(game):null;
+  manualEditId=item?.id||'';
+  form.hidden=false;
+  $('gameManualNameV1').value=item?.name||'';
+  $('gameManualPlatformV1').value=['PC','모바일','콘솔','웹','기타'].includes(item?.platform)?item.platform:'PC';
+  $('gameManualImageUrlV1').value=item?.image?.startsWith('https://')?item.image:'';
+  $('gameManualImageFileV1').value='';
+  $('gameManualSaveV1').textContent=item?'수정 저장':'라이브러리 저장';
+  $('gameManualNameV1').focus();
+}
+async function compressedGameImage(file){
+  if(!file)return '';
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('PNG, JPG, WebP 이미지만 등록할 수 있습니다.');
+  if(file.size>5*1024*1024)throw new Error('이미지는 5MB 이하만 등록할 수 있습니다.');
+  const bitmap=await createImageBitmap(file);
+  try{
+    const scale=Math.min(1,420/bitmap.width,240/bitmap.height);
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.max(1,Math.round(bitmap.width*scale));
+    canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+    canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
+    let output='';
+    for(const quality of [.7,.55,.4]){
+      output=canvas.toDataURL('image/webp',quality);
+      if(validImage(output))return output;
+    }
+    throw new Error('이미지 압축 크기가 너무 큽니다. 더 작은 파일을 선택하세요.');
+  }finally{bitmap.close?.();}
+}
+async function saveManualGameForm(){
+  if(document.body.dataset.mwsMode==='public')return;
+  const d=getData();
+  if(!d)return;
+  const name=String($('gameManualNameV1')?.value||'').trim().slice(0,100);
+  const platform=String($('gameManualPlatformV1')?.value||'PC').trim().slice(0,40);
+  const rawUrl=String($('gameManualImageUrlV1')?.value||'').trim();
+  const file=$('gameManualImageFileV1')?.files?.[0]||null;
+  if(!name){notice('게임 등록','게임 이름을 입력하세요.');return}
+  if(rawUrl&&!validImage(rawUrl)){notice('게임 등록','이미지는 HTTPS 주소를 입력해 주세요.');return}
+  const saveButton=$('gameManualSaveV1');
+  if(saveButton)saveButton.disabled=true;
+  try{
+    if(!Array.isArray(d.gameLibrary))d.gameLibrary=[];
+    const position=manualEditId?d.gameLibrary.findIndex(item=>item?.id===manualEditId):-1;
+    if(manualEditId&&position<0)throw new Error('수정할 게임이 라이브러리에 없습니다.');
+    const previous=position>=0?{...d.gameLibrary[position]}:null;
+    const image=file?await compressedGameImage(file):(rawUrl||previous?.image||'');
+    const item={source:'manual',id:manualEditId||`manual:${crypto.randomUUID()}`,name,platform,image};
+    const stored=normalizeGame(item);
+    if(!stored)throw new Error('게임 정보가 올바르지 않습니다.');
+    const before=Array.isArray(d.gameLibrary)?[...d.gameLibrary]:[];
+    if(position>=0)d.gameLibrary[position]=stored;
+    else d.gameLibrary.push(stored);
+    let saved=false;
+    try{saved=typeof saveData==='function'&&saveData(position>=0?'게임 라이브러리 수정':'게임 라이브러리 추가');}
+    catch(error){console.error('Game library persistence failed',error);}
+    if(!saved){
+      d.gameLibrary=before;
+      throw new Error('로컬 저장 실패. 게임 라이브러리를 원래 상태로 유지했습니다.');
+    }
+    panelDraftGame=stored;
+    closeManualForm();
+    renderPanelPreview();
+    markPanelSelected();
+    renderLibraryList();
+    notice('게임 라이브러리',`${name} 등록 정보가 저장되었습니다. 일정에 사용하려면 스케줄도 저장하세요.`);
+  }catch(error){notice('게임 등록 실패',error?.message||String(error));}
+  finally{if(saveButton)saveButton.disabled=false;}
+}
+function renderLibraryList(){
+  const box=$('gameLibListV1');
+  if(!box)return;
+  const term=String($('gameLibFilterV1')?.value||'').toLocaleLowerCase().trim();
+  const games=libraryEntries().filter(g=>(g.name+' '+(g.platform||'Steam')).toLocaleLowerCase().includes(term)).slice(0,80);
+  if(!games.length){box.innerHTML='<div class="mws-game-search-empty-v112">등록된 게임이 없습니다. 아래에서 직접 등록하거나 Steam 게임을 검색하세요.</div>';return;}
+  box.innerHTML=games.map(game=>{
+    const key=gameKey(game),manual=isManualGame(game);
+    const image=game.image?`<img src="${esc(game.image)}" alt="" loading="lazy">`:`<span class="mws-game-library-icon-v1">${esc(game.name.slice(0,1))}</span>`;
+    const selected=gameKey(normalizeGame(panelDraftGame)||{})===key;
+    return `<div class="mws-game-library-entry-v1">
+      <button type="button" class="mws-game-library-choose-v1 ${selected?'selected':''}" data-game-key="${esc(key)}" aria-label="${esc(game.name)} 선택">
+        ${image}<span><strong>${esc(game.name)}</strong><small>${manual?esc(game.platform):'Steam'}</small></span>
+      </button>
+      ${manual?`<button type="button" class="secondary mws-game-library-edit-v1" data-edit-key="${esc(key)}">수정</button>`:''}
+    </div>`;
+  }).join('');
+  box.querySelectorAll('[data-game-key]').forEach(button=>button.addEventListener('click',()=>{
+    const item=libraryEntries().find(game=>gameKey(game)===button.dataset.gameKey);
+    if(!item)return;
+    panelDraftGame=item;
+    renderPanelPreview();markPanelSelected();renderLibraryList();
+  }));
+  box.querySelectorAll('[data-edit-key]').forEach(button=>button.addEventListener('click',()=>{
+    const item=libraryEntries().find(game=>gameKey(game)===button.dataset.editKey);
+    if(item&&isManualGame(item))openManualForm(item);
+  }));
+}
 function installCss(){
   if($('mwsSteamGameStyleV111'))return;
   const style=document.createElement('style');
