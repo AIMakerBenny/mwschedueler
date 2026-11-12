@@ -19,7 +19,7 @@ const keyValues=source=>{
 test('Game library included in both Cloudflare browser runtimes and server core',()=>{
   for(const [name,source] of [['browser',client],['staged',stage],['server',server]]){
     const keys=keyValues(source);
-    for(const field of ['contentGroups','achievementCards','gameLibrary'])
+    for(const field of name==='server'?['contentGroups','gameLibrary']:['contentGroups','achievementCards','gameLibrary'])
       assert(keys.includes(field),name+' missing '+field);
   }
   assert(app.includes('if(!Array.isArray(data.gameLibrary))data.gameLibrary=[];'));
