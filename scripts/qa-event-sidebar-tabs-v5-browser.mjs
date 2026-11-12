@@ -49,6 +49,7 @@ const check=`
 (function(){
   const $=id=>document.getElementById(id);
   const sidebar=window.mwsEventSidebarTabsV5;
+  sidebar.init(); // Synthetic page scripts execute before DOMContentLoaded.
   const manager=window.mwsCalendarContentGroupsV2;
   const left=$('eventSeriesPaneV5').closest('.event-memo-panel');
   const center=document.querySelector('.event-info-panel');
