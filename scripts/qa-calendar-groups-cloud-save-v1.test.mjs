@@ -24,9 +24,10 @@ test('both client and server preserve calendar content groups',()=>{
 });
 
 test('actual active core and v130 runtime both persist groups',()=>{
-  assert(/const CORE_KEYS=\\[[^\\]]*'contentGroups'/.test(client));
-  assert(/const CORE_KEYS=\\[[^\\]]*'contentGroups'/.test(stage));
-  assert(/const CORE_KEYS=\\[[^\\]]*'contentGroups'/.test(legacy));
+  for(const source of [client,stage,legacy]){
+    const keys=/const CORE_KEYS=(\[[^\]\n]+\]);/.exec(source);
+    assert(keys&&vm.runInNewContext(keys[1]).includes('contentGroups'));
+  }
   assert(entry.includes("url.pathname==='/assets/cloud-v1.1.js'"));
   assert(entry.includes("url.pathname==='/assets/cloud-runtime-v130.js'"));
   assert(entry.includes("url.pathname==='/assets/cloud-v5.5.js'"));
@@ -48,7 +49,7 @@ test('live Cloudflare core loader includes content groups alongside existing ach
   assert(resolved.includes('achievementCards'),'previous achievement card patch must be retained');
   assert(patched.includes('function extractPart(part,src=data)'));
   const patchedStage=sandbox.patch(stage);
-  const stageKeys=/const CORE_KEYS=(\\[[^\\]\\n]+\\]);/.exec(patchedStage);
+  const stageKeys=/const CORE_KEYS=(\[[^\]\n]+\]);/.exec(patchedStage);
   assert(stageKeys);
   assert(vm.runInNewContext(stageKeys[1]).includes('contentGroups'));
 });
