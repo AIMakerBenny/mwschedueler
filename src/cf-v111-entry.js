@@ -47,6 +47,10 @@ function normalizeCloudCore(js){
     "const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','contentGroups','achievementCards'];"
   );
   out=out.replace(
+    "const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','achievementCards'];",
+    "const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','achievementCards','contentGroups'];"
+  );
+  out=out.replace(
     "function mergePart(part,value,target=data){const v=clone(value);if(part==='core'){Object.assign(target,v||{});return}",
     "function mergePart(part,value,target=data){const v=clone(value);if(part==='core'){const hadAchievements=Boolean(v&&typeof v==='object'&&Object.prototype.hasOwnProperty.call(v,'achievementCards'));Object.assign(target,v||{});if(!hadAchievements){const shadow=window.mwsLoadAchievementShadowV1621?.();if(Array.isArray(shadow)&&shadow.length)target.achievementCards=clone(shadow)}return}"
   );
