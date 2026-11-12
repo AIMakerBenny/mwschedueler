@@ -10,6 +10,10 @@ on:
       - 'assets/calendar-toolbar-v4.css'
       - 'assets/calendar-move-guard-v4.js'
       - 'scripts/qa-calendar-toolbar-v4-browser.mjs'
+      - 'scripts/qa-calendar-groups-cloud-save-v1.test.mjs'
+      - 'src/index.js'
+      - 'src/cf-v111-entry.js'
+      - 'assets/cloud-v5.5.js'
       - '.github/workflows/qa-calendar-toolbar-v4.yml'
   pull_request:
     branches:
@@ -38,6 +42,8 @@ jobs:
           node scripts/qa-calendar-content-groups-v3-search-browser.mjs
       - name: New compact header, group management and undo in real browser
         run: node scripts/qa-calendar-toolbar-v4-browser.mjs
+      - name: Cloudflare calendar content group persistence and runtime patch
+        run: node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs
       - name: Duration and SOOP regression
         run: |
           node --test scripts/qa-calendar-broadcast-duration-v1.test.mjs

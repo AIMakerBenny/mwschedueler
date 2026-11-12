@@ -19,7 +19,7 @@
     gamePachinko:['miniGames'],gameMultiDraw:['miniGames'],toolTier:['miniGames'],toolMatrix:['miniGames'],toolRelations:['miniGames'],
     export:['contactMeta','miniGames','notebook','clipboard'],settings:['contactMeta']
   };
-  const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones'];
+  const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','contentGroups'];
   const $=id=>document.getElementById(id);
   const clone=v=>{try{return structuredClone(v)}catch(_){return JSON.parse(JSON.stringify(v))}};
   const safeUserEmail=username=>`${String(username||'').trim().toLowerCase().replace(/[^a-z0-9._-]/g,'_')}@mws.local`;
