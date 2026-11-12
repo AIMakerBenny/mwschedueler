@@ -721,6 +721,22 @@ function formatTimeKorean(v){
   const ap=h<12?'오전':'오후',hh=h%12||12;
   return `${ap} ${String(hh).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
 }
+function updateEventBroadcastDurationPreviewV1(){
+  const target=document.getElementById('evBroadcastDurationValueV1');
+  if(!target)return;
+  const start=document.getElementById('evStart')?.value||'';
+  const end=document.getElementById('evEnd')?.value||'';
+  const duration=window.mwsCalendarBroadcastDurationV1;
+  const label=duration?.label(start,end)||'';
+  target.textContent=label||(start&&end&&start===end&&start!=='TBD'
+    ? '시작과 종료 시각이 같아 계산할 수 없습니다'
+    : '시작과 종료 시간을 지정하면 계산됩니다');
+  target.dataset.available=label?'true':'false';
+}
+window.updateEventBroadcastDurationPreviewV1=updateEventBroadcastDurationPreviewV1;
+['evStart','evEnd'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('change',updateEventBroadcastDurationPreviewV1);
+});
 function category(id){return data.categories.find(c=>c.id===id)}
 function contact(id){return data.contacts.find(c=>c.id===id)}
 function activeEvents(){return data.events}
@@ -1129,6 +1145,7 @@ function calendarPreviewHTML(e){
     <div class="event-meta"><span>${formatDateWeekday(e.date)}</span><span>하루 종일</span></div>`;
   }
   const people=eventParticipantRows(e);
+  const broadcastDuration=window.mwsCalendarBroadcastDurationV1?.label(e.start,e.end)||'';
   return `<div class="space" style="align-items:flex-start">
     <div class="calendar-preview-title">${esc(e.title)}</div>
     <div class="row">${deviceChip(e)}${cat?`<span class="chip" style="border-color:${color}">${esc(cat.name)}</span>`:''}</div>
@@ -1136,6 +1153,7 @@ function calendarPreviewHTML(e){
   <div class="event-meta">
     <span>${formatDateWeekday(e.date)}</span>
     ${e.start==='TBD'?'':`<span>${formatTimeKorean(e.start)}${e.end&&e.end!=='TBD'?` - ${formatTimeKorean(e.end)}`:''}</span>`}
+    ${broadcastDuration?`<span class="calendar-preview-broadcast-duration-v1">${esc(broadcastDuration)}</span>`:''}
   </div>
   <div class="reminder-section" style="margin-top:10px;padding-top:9px">
     <div class="reminder-label">참가자 ${people.length?`· ${people.length}명`:''}</div>
@@ -2273,6 +2291,7 @@ window.confirmWheelTime=()=>{
   const display=document.getElementById(target+'Display');
   const span=display?.querySelector('span');
   if(span)span.textContent=formatTimeKorean(raw);
+  if(target==='evStart'||target==='evEnd')updateEventBroadcastDurationPreviewV1();
   if(target==='worldBaseTime')renderWorldTime();
   document.getElementById('timePickerPopover').classList.remove('open');
 }
@@ -2281,6 +2300,7 @@ window.setTimeTBD=()=>{
   if(!target)return;
   document.getElementById(target).value='TBD';
   document.querySelector('#'+target+'Display span').textContent='미지정';
+  if(target==='evStart'||target==='evEnd')updateEventBroadcastDurationPreviewV1();
   document.getElementById('timePickerPopover').classList.remove('open');
 }
 document.querySelectorAll('.time-trigger').forEach(b=>b.onclick=()=>openTimePicker(b.dataset.timeTarget));
@@ -2334,6 +2354,7 @@ function applyQuickEventDateTimeV149(raw,{showError=false}={}){
   const startText=document.querySelector('#evStartDisplay span');
   if(dateText)dateText.textContent=formatDate(parsed.date);
   if(startText)startText.textContent=formatTimeKorean(parsed.time);
+  updateEventBroadcastDurationPreviewV1();
   if(typeof updateRepeatEditorUI==='function')updateRepeatEditorUI();
   const secondNotice=parsed.second!==null?' · 초 단위는 저장하지 않음':'';
   if(status)status.textContent=`시작 적용됨 · ${parsed.date} · ${formatTimeKorean(parsed.time)}${secondNotice}`;
@@ -2352,6 +2373,7 @@ function applyQuickEventEndTimeV177(raw,{showError=false}={}){
   if(endInput)endInput.value=parsed.time;
   const endText=document.querySelector('#evEndDisplay span');
   if(endText)endText.textContent=formatTimeKorean(parsed.time);
+  updateEventBroadcastDurationPreviewV1();
   const secondNotice=parsed.second!==null?' · 초 단위는 저장하지 않음':'';
   const dateNotice=parsed.sourceDate?' · 입력 날짜는 적용하지 않음':'';
   if(status)status.textContent=`종료 적용됨 · ${formatTimeKorean(parsed.time)}${dateNotice}${secondNotice}`;
@@ -2938,6 +2960,7 @@ function openEvent(id=null,date=null){
   if(e?.color){document.getElementById('evCategoryColor').value=e.color;document.getElementById('evCategoryColorSwatch').style.background=e.color;}
   const start=e?(e.start||'TBD'):'TBD',end=e?(e.end||'TBD'):'TBD';document.getElementById('evStart').value=start;document.querySelector('#evStartDisplay span').textContent=start==='TBD'?'미지정':formatTimeKorean(start);
   document.getElementById('evEnd').value=end;document.querySelector('#evEndDisplay span').textContent=end==='TBD'?'미지정':formatTimeKorean(end);
+  updateEventBroadcastDurationPreviewV1();
   const quickStartInput=document.getElementById('evDateTimeQuickStartV177');
   const quickEndInput=document.getElementById('evDateTimeQuickEndV177');
   const quickDateTimeStatus=document.getElementById('evDateTimeQuickStatusV149');
