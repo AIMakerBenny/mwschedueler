@@ -96,7 +96,7 @@ const check=`
  const staleBlocked=$('calendarUndoLastMoveV4').disabled&&
   move.undoLast()===false&&data.events[0].date==='2026-11-11';
  const overflow=document.documentElement.scrollWidth>document.documentElement.clientWidth+2;
- await twoFrames();
+ /* Reading getBoundingClientRect flushes layout without frame scheduling. */
  const ok=opened&&initialBulkHidden&&found&&selected&&changed&&otherUnchanged&&closed&&
   disabledBefore&&logged&&restored&&staleBlocked&&!overflow&&
   (window.innerWidth<1300||sameLine&&closeEnough);
