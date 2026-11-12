@@ -1,0 +1,17 @@
+name: Calendar Broadcast Duration Live Smoke
+on:
+  push:
+    branches:
+      - qa/calendar-broadcast-duration-live-20261112
+  workflow_dispatch:
+jobs:
+  live-calendar-duration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify deployed Cloudflare assets and 3h14 duration
+        run: node scripts/qa-calendar-broadcast-duration-production-v1.mjs
