@@ -44,7 +44,7 @@ function normalizeCloudCore(js){
      did not know this field, so dirty detection and /api/save silently ignored it. */
   out=out.replace(
     "const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','contentGroups'];",
-    "const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','achievementCards'];"
+    "const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','contentGroups','achievementCards'];"
   );
   out=out.replace(
     "function mergePart(part,value,target=data){const v=clone(value);if(part==='core'){Object.assign(target,v||{});return}",
