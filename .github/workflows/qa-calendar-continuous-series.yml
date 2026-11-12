@@ -9,6 +9,7 @@ on:
       - 'assets/app-core.js'
       - 'index.html'
       - 'scripts/qa-calendar-continuous-series-v1.test.mjs'
+      - 'scripts/qa-calendar-continuous-series-browser-v1.mjs'
       - '.github/workflows/qa-calendar-continuous-series.yml'
   pull_request:
     branches:
@@ -29,3 +30,5 @@ jobs:
           node --check --input-type=commonjs < assets/app-core.js
       - name: Streak calculations, week breaks and calendar UI regressions
         run: node --test scripts/qa-calendar-continuous-series-v1.test.mjs
+      - name: Browser ribbon geometry at 1920px, 1366px and 850px
+        run: node scripts/qa-calendar-continuous-series-browser-v1.mjs
