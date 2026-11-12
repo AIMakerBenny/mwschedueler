@@ -15,6 +15,8 @@ let panelSearchTimer=null;
 let scanTimer=null;
 let activeEditorEventId='';
 let eventModalWasOpen=false;
+let manualEditId='';
+
 
 function eventById(id){return getData()?.events?.find(event=>String(event?.id||'')===String(id||''))||null}
 function currentEditingEventId(){
@@ -166,6 +168,24 @@ function ensurePanel(){
       <div id="eventGameSearchStatusV112" class="mws-game-search-status-v112">게임 이름을 입력해 검색하세요.</div>
       <div id="eventGameResultsV112" class="mws-game-results-v112"><div class="mws-game-search-empty-v112">검색 결과가 여기에 표시됩니다.</div></div>
     </div>
+    
+    <section class="mws-game-library-v1" aria-label="게임 라이브러리">
+      <h4>게임 라이브러리</h4>
+      <input id="gameLibFilterV1" class="mws-game-library-search-v1" placeholder="등록한 게임 검색" aria-label="게임 라이브러리 검색" autocomplete="off">
+      <div id="gameLibListV1" class="mws-game-library-list-v1" aria-live="polite"></div>
+      <button type="button" id="gameLibAddToggleV1" class="secondary mws-game-library-add-v1">Steam 외 게임 직접 등록</button>
+      <div id="gameManualFormV1" class="mws-game-manual-form-v1" hidden>
+        <label>게임 이름 <input id="gameManualNameV1" maxlength="100" placeholder="예: 와우 포에버"></label>
+        <label>플랫폼 <select id="gameManualPlatformV1">
+          <option value="PC">PC</option><option value="모바일">모바일</option>
+          <option value="콘솔">콘솔</option><option value="웹">웹</option><option value="기타">기타</option>
+        </select></label>
+        <label>이미지 URL <input id="gameManualImageUrlV1" inputmode="url" placeholder="https://... (선택)"></label>
+        <label>또는 이미지 파일 <input id="gameManualImageFileV1" type="file" accept="image/png,image/jpeg,image/webp"></label>
+        <div class="mws-game-manual-hint-v1">이미지 URL 또는 파일을 선택할 수 있습니다. 파일은 작게 압축해 라이브러리에 보관하며, 기존 일정은 변경하지 않습니다.</div>
+        <div class="row"><button type="button" class="primary" id="gameManualSaveV1">라이브러리 저장</button><button type="button" class="secondary" id="gameManualCancelV1">취소</button></div>
+      </div>
+    </section>
     <div class="mws-game-panel-bottom-v112"><button type="button" class="secondary" id="eventGameRemoveV112">게임 연결 해제</button></div>`;
   info.insertAdjacentElement('afterend',panel);
 
@@ -182,6 +202,11 @@ function ensurePanel(){
     }
   });
   $('eventGameSearchBtnV112').addEventListener('click',()=>searchSteam(input.value));
+  $('gameLibFilterV1').addEventListener('input',renderLibraryList);
+  $('gameLibAddToggleV1').addEventListener('click',()=>openManualForm(null));
+  $('gameManualCancelV1').addEventListener('click',()=>closeManualForm());
+  $('gameManualSaveV1').addEventListener('click',saveManualGameForm);
+  renderLibraryList();
   $('eventGameRemoveV112').addEventListener('click',()=>{
     panelDraftGame=null;
     renderPanelPreview();
@@ -202,7 +227,10 @@ function renderPanelPreview(){
     return;
   }
   box.className='mws-game-preview-v112 has-game';
-  box.innerHTML=`<img class="mws-game-preview-image-v112" src="${esc(game.image)}" alt="${esc(game.name)}"><div class="mws-game-preview-copy-v112"><div class="mws-game-preview-name-v112">${esc(game.name)}</div><div class="mws-game-preview-app-v112">Steam App ${esc(game.appid)}</div><div class="mws-game-preview-actions-v112"><button type="button" class="secondary" id="eventGameOpenSteamV112">Steam 페이지 열기</button></div></div>`;
+  const image=game.image?`<img class="mws-game-preview-image-v112" src="${esc(game.image)}" alt="${esc(game.name)}">`:'';
+  const platform=isManualGame(game)?`직접 등록 · ${esc(game.platform)}`:`Steam App ${esc(game.appid)}`;
+  const link=isManualGame(game)?'':`<div class="mws-game-preview-actions-v112"><button type="button" class="secondary" id="eventGameOpenSteamV112">Steam 페이지 열기</button></div>`;
+  box.innerHTML=`${image}<div class="mws-game-preview-copy-v112"><div class="mws-game-preview-name-v112">${esc(game.name)}</div><div class="mws-game-preview-app-v112">${platform}</div>${link}</div>`;
   $('eventGameOpenSteamV112')?.addEventListener('click',()=>window.open(game.storeUrl,'_blank','noopener,noreferrer'));
 }
 
@@ -291,7 +319,9 @@ function syncEditorPanel(force=false){
     activeEditorEventId=id;
     panelDraftGame=normalizeGame(event?.steamGame);
     resetPanelSearch();
+    closeManualForm();
     renderPanelPreview();
+    renderLibraryList();
   }
 }
 
@@ -382,13 +412,13 @@ function ensureSlot(host,eventId){
   }
   button.dataset.eventId=String(eventId);
   const game=normalizeGame(event.steamGame);
-  const signature=game?`${game.appid}|${game.name}|${game.image}`:'empty';
+  const signature=game?`${game.id||game.appid}|${game.name}|${game.image}|${game.platform||''}`:'empty';
   button.classList.toggle('linked',!!game);
-  button.setAttribute('aria-label',game?`${game.name} 게임 수정`:'Steam 게임 추가');
-  button.title=game?`${game.name} - 게임 수정`:'Steam 게임 추가';
+  button.setAttribute('aria-label',game?`${game.name} 게임 수정`:'게임 추가');
+  button.title=game?`${game.name} - 게임 수정`:'게임 추가';
   if(button.dataset.mwsSteamSignature!==signature){
     button.dataset.mwsSteamSignature=signature;
-    button.innerHTML=game?`<img src="${esc(game.image)}" alt="">`:'+';
+    button.innerHTML=game?(game.image?`<img src="${esc(game.image)}" alt="">`:esc(game.name.slice(0,1))):'+';
   }
 }
 
@@ -401,6 +431,7 @@ function scan(){
     document.querySelectorAll('#upcomingDashboard .dashboard-upcoming-card[data-event-id]').forEach(node=>ensureSlot(node,node.dataset.eventId));
   }
   installSaveHook();
+  renderLibraryList();
   const modal=$('eventModal');
   const open=Boolean(modal?.classList.contains('open'));
   if(open&&!eventModalWasOpen)syncEditorPanel(true);
