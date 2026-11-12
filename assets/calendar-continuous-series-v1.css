@@ -21,8 +21,8 @@
   position:absolute;
   display:flex;
   align-items:center;
-  height:20px;
-  padding:0 10px;
+  height:12px;
+  padding:0;
   border:1px solid color-mix(in srgb,var(--series-color) 70%,white);
   border-radius:6px;
   background:linear-gradient(90deg,var(--series-color),color-mix(in srgb,var(--series-color) 82%,#101923));
@@ -30,7 +30,7 @@
   overflow:hidden;
   white-space:nowrap;
   color:#fff;
-  font-size:10px;
+  font-size:0;
   font-weight:800;
   line-height:1;
   letter-spacing:.01em;
@@ -55,3 +55,16 @@
 @media(prefers-reduced-motion:reduce){
   .calendar-continuous-ribbon-v1{animation:none!important;transition:none!important}
 }
+
+/* V2 explicitly assigned content groups: colored daily event cards without altering times or titles. */
+#calendarGrid .mini-event.calendar-content-group-event-v2{
+  outline:1px solid color-mix(in srgb,var(--content-group-color) 60%,transparent);
+  outline-offset:-1px;
+}
+#calendarGrid .mini-event.calendar-group-selected-v2{
+  outline:2px solid #f8fafc!important;
+  outline-offset:-2px;
+  box-shadow:inset 0 0 0 2px var(--accent),0 0 12px rgba(147,178,236,.4);
+}
+#calendar.calendar-group-select-active-v2 #calendarGrid .mini-event{cursor:crosshair!important}
+#calendar.calendar-group-select-active-v2 #calendarGrid .mini-event:hover{filter:brightness(1.22)}

@@ -3,13 +3,17 @@ on:
   push:
     branches:
       - feat/calendar-continuous-series-20261112
+      - feat/calendar-content-groups-v2-20261112
     paths:
       - 'assets/calendar-continuous-series-v1.js'
+      - 'assets/calendar-content-groups-v2.js'
+      - 'assets/calendar-content-groups-v2.css'
       - 'assets/calendar-continuous-series-v1.css'
       - 'assets/app-core.js'
       - 'index.html'
       - 'scripts/qa-calendar-continuous-series-v1.test.mjs'
       - 'scripts/qa-calendar-continuous-series-browser-v1.mjs'
+      - 'scripts/qa-calendar-content-groups-v2-browser.mjs'
       - '.github/workflows/qa-calendar-continuous-series.yml'
   pull_request:
     branches:
@@ -27,8 +31,11 @@ jobs:
       - name: Syntax check
         run: |
           node --check assets/calendar-continuous-series-v1.js
+          node --check assets/calendar-content-groups-v2.js
           node --check --input-type=commonjs < assets/app-core.js
       - name: Streak calculations, week breaks and calendar UI regressions
         run: node --test scripts/qa-calendar-continuous-series-v1.test.mjs
       - name: Browser ribbon geometry at 1920px, 1366px and 850px
         run: node scripts/qa-calendar-continuous-series-browser-v1.mjs
+      - name: Browser group creation batch links edits and detach
+        run: node scripts/qa-calendar-content-groups-v2-browser.mjs

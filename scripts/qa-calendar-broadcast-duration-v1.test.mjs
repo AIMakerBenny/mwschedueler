@@ -43,6 +43,7 @@ test('calendar hover actual template shows broadcast duration by the time, not o
   const section=core.slice(start,end);
   const context={
     window:{mwsCalendarBroadcastDurationV1:duration},
+    data:{contentGroups:[]},
     category:()=>null,
     deviceChip:()=>'<span>PC</span>',
     esc:value=>String(value),

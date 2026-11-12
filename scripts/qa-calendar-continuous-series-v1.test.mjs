@@ -3,98 +3,111 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 
-const fromRoot=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
-const js=fromRoot('assets/calendar-continuous-series-v1.js');
-const css=fromRoot('assets/calendar-continuous-series-v1.css');
-const html=fromRoot('index.html');
-const core=fromRoot('assets/app-core.js');
-const env={};
-vm.runInNewContext(js,env);
-const engine=env.mwsCalendarContinuousSeriesV1;
-const event=(date,title='와우 포에버',extra={})=>({
-  date,title,categoryId:'gaming',color:'#08b4ba',restDay:false,...extra
-});
-const series=dates=>dates.map(x=>event('2026-11-'+x));
-const monthDates=Array.from({length:42},(_,i)=>new Date(Date.UTC(2026,10,1+i)).toISOString().slice(0,10));
+const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const engineSource=read('assets/calendar-continuous-series-v1.js');
+const core=read('assets/app-core.js'),html=read('index.html');
+const managerSource=read('assets/calendar-content-groups-v2.js');
+const groups=[{id:'sbo',name:'SBO',color:'#7659a5'},
+  {id:'wow',name:'와우 포에버',color:'#0f8c95'}];
+const env={};vm.runInNewContext(engineSource,env);
+const calc=env.mwsCalendarContinuousSeriesV1;
+const e=(date,title,contentGroupId='',more={})=>({date,title,contentGroupId,restDay:false,categoryId:'stream',start:'15:00',end:'18:00',...more});
+const dates=Array.from({length:42},(_,i)=>new Date(Date.UTC(2026,9,1+i)).toISOString().slice(0,10));
 
-test('5-12 November daily WoW Forever gives one eight-day ribbon',()=>{
-  const events=series(['05','06','07','08','09','10','11','12']);
-  const result=engine.streaks(events);
-  assert.equal(result.length,1);
-  assert.equal(result[0].title,'와우 포에버');
-  assert.equal(result[0].start,'2026-11-05');
-  assert.equal(result[0].end,'2026-11-12');
-  assert.equal(result[0].totalDays,8);
-  assert.equal(result[0].color,'#08b4ba');
+test('same content group links different titles, start times and categories',()=>{
+  const events=[
+    e('2026-10-13','SBO 연습','sbo',{start:'15:00'}),
+    e('2026-10-14','SBO 연습경기','sbo',{start:'20:00',categoryId:'other'}),
+    e('2026-10-15','보성동 SBO 경기','sbo',{start:'09:30'}),
+    e('2026-10-14','다른 방송','')
+  ];
+  const runs=calc.streaks(events,groups);
+  assert.equal(runs.length,1);assert.equal(runs[0].totalDays,3);
+  assert.equal(runs[0].title,'SBO');assert.equal(runs[0].color,'#7659a5');
 });
-test('spans week boundary as joined 5-7 and 8-12 segments',()=>{
-  const days=series(['05','06','07','08','09','10','11','12']);
-  const weeks=engine.weekSegments(days,[],monthDates,()=>true);
-  const a=weeks[0][0],b=weeks[1][0];
-  assert.equal(a.startCol,4);
-  assert.equal(a.endCol,6);
-  assert.equal(a.totalDays,8);
-  assert.equal(a.continuesBefore,false);
-  assert.equal(a.continuesAfter,true);
-  assert.equal(b.startCol,0);
-  assert.equal(b.endCol,4);
-  assert.equal(b.continuesBefore,true);
-  assert.equal(b.continuesAfter,false);
+test('never infer a content group from matching title or category',()=>{
+  const events=[
+    e('2026-10-13','SBO 연습'),
+    e('2026-10-14','SBO 연습'),
+    e('2026-10-15','SBO 연습')
+  ];
+  assert.equal(calc.streaks(events,groups).length,0);
+  assert.equal(calc.streaks(events.map(x=>({...x,contentGroupId:'unknown'})),groups).length,0);
 });
-test('missing days, rest days, two-day stretches and unrelated titles are not joined',()=>{
-  const days=[...series(['05','06','07','09','10','11']),
-    event('2026-11-08','휴방',{restDay:true}),
-    event('2026-11-12','다른 게임')];
-  const found=engine.streaks(days);
-  assert.equal(found.length,2);
-  assert.equal(found[0].totalDays,3);
-  assert.equal(found[1].totalDays,3);
-  assert.equal(found[0].end,'2026-11-07');
-  assert.equal(found[1].start,'2026-11-09');
-  assert.equal(engine.streaks(series(['05','06'])).length,0);
+test('nonconsecutive SBO sessions keep group color, but never draw across gaps',()=>{
+  const events=[
+    e('2026-10-01','SBO 야구연습','sbo'),
+    e('2026-10-07','보성동','sbo'),
+    e('2026-10-13','SBO 연습과 모임','sbo'),
+    e('2026-10-14','SBO 야구','sbo'),
+    e('2026-10-15','경기','sbo'),
+    e('2026-10-16','연습경기','sbo')
+  ];
+  const runs=calc.streaks(events,groups);
+  assert.equal(runs.length,3);
+  assert.deepEqual(Array.from(runs.map(r=>r.totalDays)),[1,1,4]);
+  assert(runs.every(r=>r.color==='#7659a5'));
 });
-test('same-day duplicate events count only once',()=>{
-  const found=engine.streaks([...series(['05','06','07']),event('2026-11-07')]);
-  assert.equal(found.length,1);
-  assert.equal(found[0].totalDays,3);
+test('mixed content on the same date is not grouped, and duplicate group entries count once',()=>{
+  const events=[
+    e('2026-10-13','SBO A','sbo'),e('2026-10-13','SBO B','sbo'),
+    e('2026-10-14','SBO C','sbo'),
+    e('2026-10-13','다른 게임','wow'),
+    e('2026-10-14','다른 게임 2','')
+  ];
+  const runs=calc.streaks(events,groups);
+  assert.equal(runs.length,1);
+  assert.equal(runs[0].totalDays,2);
+  assert.equal(runs[0].key,'sbo');
 });
-test('same title on unrelated categories is kept separate',()=>{
-  const a=series(['05','06','07']);
-  const b=series(['06','07','08']).map(x=>({...x,categoryId:'special',color:'#a36aff'}));
-  const out=engine.streaks([...a,...b]);
-  assert.equal(out.length,2);
-  assert(out.some(x=>x.start==='2026-11-05'));
-  assert(out.some(x=>x.start==='2026-11-06'));
+test('rest day, invalid date, deleted group and a single assigned event are ignored',()=>{
+  assert.equal(calc.streaks([e('2026-10-13','SBO','sbo')],groups).length,0);
+  assert.equal(calc.streaks([e('2026-10-13','SBO','sbo',{restDay:true}),e('2026-10-14','SBO','sbo')],groups).length,0);
+  assert.equal(calc.streaks([e('2026-10-32','invalid','sbo'),e('2026-10-14','SBO','sbo')],groups).length,0);
+  assert.equal(calc.streaks([e('2026-10-13','SBO','sbo'),e('2026-10-14','SBO','sbo')],[]).length,0);
 });
-test('different spaces and casing normalize within the same series, never use raw HTML',()=>{
-  const r=engine.streaks([
-    event('2026-11-05','  와우   포에버 '),
-    event('2026-11-06','와우 포에버'),
-    event('2026-11-07','와우 포에버')
-  ]);
-  assert.equal(r.length,1);
-  assert.equal(r[0].title,'와우   포에버');
-  assert.equal(engine.streaks([event('2026-11-31','bad')]).length,0);
-});
-test('month boundary visible dates only and only 1 in-month segment',()=>{
-  const d=['2026-10-30','2026-10-31','2026-11-01'].map(x=>event(x));
-  const weeks=engine.weekSegments(d,[],monthDates,i=>monthDates[i].startsWith('2026-11-'));
+test('week boundaries split the visible bar into separate segments',()=>{
+  const series=['01','02','03','04','05','06','07','08','09','10'].map(day=>e('2026-10-'+day,'SBO '+day,'sbo'));
+  const weeks=calc.weekSegments(series,groups,dates,()=>true);
   assert.equal(weeks[0].length,1);
-  assert.equal(weeks[0][0].startCol,0);
-  assert.equal(weeks[0][0].continuesBefore,true);
+  assert.equal(weeks[1].length,1);
+  assert.equal(weeks[0][0].continuesAfter,true);
+  assert.equal(weeks[1][0].continuesBefore,true);
 });
-test('overlapping series occupy distinct ribbon lanes without hiding underlying events',()=>{
-  const a=series(['05','06','07']);
-  const b=['05','06','07'].map(day=>event('2026-11-'+day,'친구 합방',{categoryId:'other',color:'#7b61a9'}));
-  const weeks=engine.weekSegments([...a,...b],[],monthDates,()=>true);
-  assert.deepEqual([...weeks[0]].map(s=>s.lane).sort(),[0,1]);
+test('overlapping group ribbons use separate lanes',()=>{
+  const series=['13','14','15'].flatMap(day=>[
+    e('2026-10-'+day,'SBO '+day,'sbo'),
+    e('2026-10-'+day,'와우 포에버 '+day,'wow')]);
+  const weeks=calc.weekSegments(series,groups,dates,()=>true);
+  const active=weeks.find(w=>w.length===2);
+  assert(active);
+  assert.deepEqual(Array.from(active.map(x=>x.lane)).sort(),[0,1]);
 });
-test('UI assets are loaded and calendar hook does not replace daily cards',()=>{
-  assert(html.includes('assets/calendar-continuous-series-v1.js?v=1'));
-  assert(html.includes('assets/calendar-continuous-series-v1.css?v=1'));
-  assert(html.indexOf('assets/calendar-continuous-series-v1.js')<html.indexOf('assets/app-core.js'));
-  assert(core.includes('window.mwsCalendarContinuousSeriesV1?.render(grid,activeEvents(),data.categories);'));
-  assert(core.includes("grid.querySelectorAll('.mini-event')"));
-  assert(css.includes('pointer-events:none'));
-  assert(css.includes('.calendar-continuous-ribbon-v1'));
+test('content group manager persists explicit groups without modifying existing event fields',()=>{
+  const state={events:[e('2026-10-13','SBO 야구연습','',{id:'e1'})],contentGroups:[]};
+  const fakeWindow={mwsCalendarContinuousSeriesV1:calc,addEventListener(){}};
+  const context={data:state,window:fakeWindow,document:{getElementById:()=>null},toast(){},
+    crypto:{randomUUID:()=> 'some-uuid'}};
+  vm.runInNewContext(managerSource,context);
+  const g=fakeWindow.mwsCalendarContentGroupsV2.newGroup('SBO','#7659a5');
+  assert.equal(g.id,'some-uuid');assert.equal(state.contentGroups.length,1);
+  assert.equal(state.events[0].start,'15:00');
+  assert.equal(state.events[0].title,'SBO 야구연습');
+  assert.equal(fakeWindow.mwsCalendarContentGroupsV2.newGroup('SBO','#7659a5'),null);
+});
+test('UI integrates explicit group selection, groups survive saves, hover uses pointer delegation',()=>{
+  assert(html.includes('id="calendarGroupToggleV2"'));
+  assert(html.includes('id="calendarGroupApplyV2"'));
+  assert(html.includes('id="calendarGroupCreateV2"'));
+  assert(html.includes('id="evContentGroupV2"'));
+  assert(html.includes('assets/calendar-content-groups-v2.js?v=2'));
+  assert(html.indexOf('assets/app-core.js')<html.indexOf('assets/calendar-content-groups-v2.js'));
+  assert(core.includes("contentGroupId:document.getElementById('evContentGroupV2')?.value||''"));
+  assert(core.includes('window.mwsCalendarContentGroupsV2?.syncEditor(e)'));
+  assert(core.includes('window.mwsCalendarContentGroupsV2?.selectEvent(id)'));
+  assert(core.includes('window.mwsCalendarContinuousSeriesV1?.render(grid,activeEvents(),data.contentGroups)'));
+  assert(core.includes('grid.onpointermove=pointerPreview;'));
+  assert(core.includes('grid.onpointerover=pointerPreview;'));
+  assert(core.includes('if(lastCalendarPreviewPointerV2)'));
+  assert(core.includes('data.contentGroups=data.contentGroups.filter'));
 });
