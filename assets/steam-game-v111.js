@@ -20,20 +20,38 @@ function eventById(id){return getData()?.events?.find(event=>String(event?.id||'
 function currentEditingEventId(){
   try{return typeof editingEventId!=='undefined'?String(editingEventId||''):''}catch(_){return ''}
 }
+// Legacy Steam event objects keep their original serialized shape.
+function validImage(value){
+  const url=String(value||'').trim();
+  if(/^https:\/\/[^\s<>"']+$/i.test(url))return url;
+  if(url.length<=95000&&/^data:image\/(?:webp|jpeg|png);base64,[a-z0-9+/=]+$/i.test(url))return url;
+  return '';
+}
+function isManualGame(game){
+  return game?.source==='manual'&&String(game?.id||'').startsWith('manual:');
+}
 function normalizeGame(game){
+  if(isManualGame(game)){
+    const name=String(game.name||'').trim().slice(0,100);
+    if(!name)return null;
+    return {source:'manual',id:String(game.id).slice(0,100),name,
+      image:validImage(game.image),platform:String(game.platform||'기타').trim().slice(0,40)||'기타'};
+  }
   const appid=appIdOf(game);
   if(!/^\d{1,12}$/.test(appid))return null;
-  const rawImage=String(game?.image||game?.headerImage||'').trim();
+  const rawImage=validImage(game?.image||game?.headerImage||'');
   return {
     appid,
     name:String(game?.name||'').trim()||`Steam App ${appid}`,
-    image:/^https:\/\//i.test(rawImage)?rawImage:`https://cdn.cloudflare.steamstatic.com/steam/apps/${encodeURIComponent(appid)}/header.jpg`,
+    image:rawImage||`https://cdn.cloudflare.steamstatic.com/steam/apps/${encodeURIComponent(appid)}/header.jpg`,
     storeUrl:steamUrl(appid),
   };
 }
 function serializeGame(game){
   const g=normalizeGame(game);
-  return g?{appid:g.appid,name:g.name,image:g.image,storeUrl:g.storeUrl}:null;
+  if(!g)return null;
+  if(isManualGame(g))return {source:'manual',id:g.id,name:g.name,image:g.image,platform:g.platform};
+  return {appid:g.appid,name:g.name,image:g.image,storeUrl:g.storeUrl};
 }
 function notice(title,message){
   try{if(typeof toast==='function'){toast(title,message);return}}catch(_){}
