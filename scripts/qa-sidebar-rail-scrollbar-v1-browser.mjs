@@ -38,7 +38,7 @@ const readCheck=`
     return Math.abs((r(icon).left+r(icon).right)/2-(r(b).left+r(b).right)/2);
   });
   const active=scroll.querySelector('button.active');
-  const railWidthOk=pinned?Math.abs(sideRect.width-220)<3:Math.abs(sideRect.width-72)<3;
+  const railWidthOk=Math.abs(sideRect.width-(pinned?220:72)*parseFloat(document.body.style.zoom||1))<3;
   const gridMatch=Math.abs(mainRect.left-(pinned?220:72)*parseFloat(document.body.style.zoom||1))<3;
   const scrollFunctional=scroll.scrollHeight>scroll.clientHeight+2;
   scroll.scrollTop=100;
