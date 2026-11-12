@@ -103,12 +103,13 @@ const temp=mkdtempSync(path.join(os.tmpdir(),'mws-calendar-responsive-v1-'));
 try{
  const test=path.join(temp,'index.html');
  const widths=[[2560,1440,1],[2048,1140,1],[1920,1080,1],[1898,902,1],
-  [1366,768,1],[1366,768,1.25],[1898,902,1.1],[1092,768,1],[850,768,1]];
- for(const [width,height,zoom] of widths){
+  [1366,768,1],[1366,768,1.25],[1898,902,1.1],[1092,768,1],[850,768,1],
+  [1920,1080,1,'pinned'],[1366,768,1,'pinned'],[1366,768,1,'pinned',1.25]];
+ for(const [width,height,zoom,sidebar,dpr=1] of widths){
    writeFileSync(test,`<!doctype html><html lang="ko"><head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <style>${stylesheet}</style></head>
-    <body data-resolution="fhd" style="zoom:${zoom}">
+    <body data-resolution="fhd" class="${sidebar==='pinned'?'sidebar-pinned':''}" style="zoom:${zoom}">
      <div class="app"><aside class="sidebar"></aside><main class="main">
        <section id="calendar" class="section active">
         <div class="calendar-responsive-scroll-v1" role="region" tabindex="0">
@@ -120,7 +121,7 @@ try{
     </body></html>`);
    const run=spawnSync(chrome,[
     '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--no-first-run',
-    '--disable-background-networking','--virtual-time-budget=3500',
+    '--disable-background-networking','--virtual-time-budget=3500','--force-device-scale-factor='+dpr,
     '--window-size='+width+','+height,'--dump-dom','file://'+test
    ],{encoding:'utf8',timeout:30000,maxBuffer:15*1024*1024});
    assert.equal(run.status,0,'Chromium exited with error '+width+': '+run.stderr.slice(-1000));
@@ -128,6 +129,6 @@ try{
    assert(match,'Missing browser metrics '+width+' '+run.stdout.slice(-600));
    const result=JSON.parse(match[1]);
    assert(result.ok,'Calendar responsive QA failure '+width+' / '+zoom+': '+JSON.stringify(result));
-   console.log('CALENDAR_RESPONSIVE_V1_OK',width,height,'zoom',zoom,JSON.stringify(result));
+   console.log('CALENDAR_RESPONSIVE_V1_OK',width,height,'zoom',zoom,'sidebar',sidebar||'compact','DPR',dpr,JSON.stringify(result));
  }
 }finally{rmSync(temp,{recursive:true,force:true})}
