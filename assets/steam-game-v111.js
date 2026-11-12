@@ -104,6 +104,17 @@ async function compressedGameImage(file){
   if(!file)return '';
   if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('PNG, JPG, WebP 이미지만 등록할 수 있습니다.');
   if(file.size>5*1024*1024)throw new Error('이미지는 5MB 이하만 등록할 수 있습니다.');
+  // A small original image needs no browser decoding or transcoding.
+  // This also avoids waiting for GPU image decoders for tiny PNG files.
+  if(file.size<=65000){
+    const original=await new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=()=>resolve(String(reader.result||''));
+      reader.onerror=()=>reject(reader.error||new Error('이미지 읽기 실패'));
+      reader.readAsDataURL(file);
+    });
+    if(validImage(original))return original;
+  }
   const bitmap=await createImageBitmap(file);
   try{
     const scale=Math.min(1,420/bitmap.width,240/bitmap.height);
@@ -309,7 +320,7 @@ function ensurePanel(){
         </select></label>
         <label>이미지 URL <input id="gameManualImageUrlV1" inputmode="url" placeholder="https://... (선택)"></label>
         <label>또는 이미지 파일 <input id="gameManualImageFileV1" type="file" accept="image/png,image/jpeg,image/webp"></label>
-        <div class="mws-game-manual-hint-v1">이미지 URL 또는 파일을 선택할 수 있습니다. 파일은 작게 압축해 라이브러리에 보관하며, 기존 일정은 변경하지 않습니다.</div>
+        <div class="mws-game-manual-hint-v1">이미지 URL 또는 파일을 선택할 수 있습니다. 큰 이미지 파일은 압축해 라이브러리에 보관하며, 기존 일정은 변경하지 않습니다.</div>
         <div class="row"><button type="button" class="primary" id="gameManualSaveV1">라이브러리 저장</button><button type="button" class="secondary" id="gameManualCancelV1">취소</button></div>
       </div>
     </section>
