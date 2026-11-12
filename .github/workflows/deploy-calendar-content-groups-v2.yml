@@ -7,6 +7,13 @@ on:
       - '.github/workflows/deploy-calendar-content-groups-v2.yml'
       - 'assets/calendar-responsive-cards-v1.css'
       - 'scripts/qa-calendar-responsive-v1-browser.mjs'
+      - 'assets/steam-game-v111.js'
+      - 'assets/cloud-v1.1.js'
+      - 'assets/cloud-runtime-v130.js'
+      - 'assets/cloud-v1.1-loader.js'
+      - 'src/index.js'
+      - 'scripts/qa-game-library-v1.test.mjs'
+      - 'scripts/qa-game-library-v1-browser.mjs'
 
 permissions:
   contents: read
@@ -38,6 +45,8 @@ jobs:
           node --check src/index.js
           node --check src/cf-v111-entry.js
           node --check assets/soop-contact-autofill-v1.js
+          node --check assets/steam-game-v111.js
+          node --check assets/cloud-v1.1-loader.js
       - name: Calendar content group, hover and duration regression
         run: |
           node --test scripts/qa-calendar-continuous-series-v1.test.mjs
@@ -47,6 +56,8 @@ jobs:
           node scripts/qa-calendar-content-groups-v3-search-browser.mjs
           node scripts/qa-calendar-toolbar-v4-browser.mjs
           node scripts/qa-calendar-responsive-v1-browser.mjs
+          node scripts/qa-game-library-v1-browser.mjs
+          node --test scripts/qa-game-library-v1.test.mjs
           node scripts/qa-event-sidebar-tabs-v5-browser.mjs
           node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs
           node --test scripts/qa-soop-contact-autofill-v1.test.mjs
@@ -76,6 +87,11 @@ jobs:
                 && grep -Fq 'assets/calendar-content-groups-v2.css?v=3' /tmp/group-index.html \
                 && grep -Fq 'assets/calendar-toolbar-v4.css?v=1' /tmp/group-index.html \
                 && grep -Fq 'assets/calendar-responsive-cards-v1.css?v=1' /tmp/group-index.html \
+                && curl --fail --silent --show-error --max-time 15 "$base/assets/cloud-v1.1-loader.js?check=$t" -o /tmp/game-loader.js \
+                && grep -Fq '1.1.5-game-library-v1' /tmp/game-loader.js \
+                && curl --fail --silent --show-error --max-time 15 "$base/assets/steam-game-v111.js?check=$t" -o /tmp/game-panel.js \
+                && grep -Fq 'gameManualFormV1' /tmp/game-panel.js \
+                && grep -Fq 'gameLibListV1' /tmp/game-panel.js \
                 && grep -Fq 'class="calendar-responsive-scroll-v1"' /tmp/group-index.html \
                 && grep -Fq 'assets/calendar-move-guard-v4.js?v=1' /tmp/group-index.html \
                 && grep -Fq 'calendarGroupManageToggleV4' /tmp/group-index.html \
