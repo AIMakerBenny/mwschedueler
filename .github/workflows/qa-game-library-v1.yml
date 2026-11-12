@@ -1,0 +1,47 @@
+name: Calendar manual and Steam game library QA
+on:
+  pull_request:
+    branches:
+      - cloudflare-production
+    paths:
+      - 'assets/steam-game-v111.js'
+      - 'assets/app-core.js'
+      - 'assets/cloud-v1.1.js'
+      - 'assets/cloud-runtime-v130.js'
+      - 'assets/cloud-v1.1-loader.js'
+      - 'src/index.js'
+      - 'scripts/qa-game-library-v1*'
+      - '.github/workflows/qa-game-library-v1.yml'
+  push:
+    branches:
+      - 'feat/calendar-game-library-v1-20261112'
+permissions:
+  contents: read
+jobs:
+  game-library:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Syntax of game and cloud modules
+        run: |
+          node --check assets/steam-game-v111.js
+          node --check --input-type=commonjs < assets/app-core.js
+          # cloud-v1.1.js has a pre-existing legacy typo repaired by the Cloudflare edge loader.
+          # Check active patched code with qa-game-library-v1.test.mjs instead.
+          node --check assets/cloud-runtime-v130.js
+          node --check assets/cloud-v1.1-loader.js
+          node --check src/index.js
+      - name: Manual and Steam serialization plus Cloudflare core regression
+        run: |
+          node --test scripts/qa-game-library-v1.test.mjs
+          node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs
+      - name: Browser manual game registration and reuse
+        run: node scripts/qa-game-library-v1-browser.mjs
+      - name: Existing calendar editor regression
+        run: |
+          node scripts/qa-event-sidebar-tabs-v5-browser.mjs
+          node scripts/qa-calendar-responsive-v1-browser.mjs

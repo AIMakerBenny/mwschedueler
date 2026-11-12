@@ -2,7 +2,7 @@ const SUPABASE_URL = 'https://nysxcqlewzucbpoaymbg.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_H7VPUOVV6nN7QdaJKO3-lA_-SNrg4mW';
 const CACHE_SCHEMA_VERSION = 3;
 const PARTS = ['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook'];
-const CORE_KEYS = ['version','categories','dashboardNoticeUrl','selfContactId','timezones','contentGroups'];
+const CORE_KEYS = ['version','categories','dashboardNoticeUrl','selfContactId','timezones','contentGroups','gameLibrary'];
 
 let schemaPromise;
 

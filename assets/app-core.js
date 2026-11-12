@@ -360,7 +360,7 @@ let wheelScrollTimers={};
 function loadData(){
   const raw=localStorage.getItem('mawangSchedulerBeta');
   if(raw){try{return JSON.parse(raw)}catch(e){}}
-  return {version:52,categories:DEFAULT_CATEGORIES,contacts:[],posts:[],events:[],collaborations:[],memos:[],patchNotes:[],suggestions:[],targetList:[],contactTags:[],contactTagBanners:{},scheduleClipboard:[],favoriteFolders:[],achievementCards:[],postViewMode:'card',postCardColumns:4,textScale:100,resolutionMode:'fhd',selfContactId:'',sidebarPinned:true,dashboardUpcomingHidden:false,timezones:DEFAULT_TZS,theme:'neon',backgroundImage:'',backgroundDim:45,uiFrame:'classic',neoTransparency:10,miniGames:defaultMiniGames()};
+  return {version:52,categories:DEFAULT_CATEGORIES,contacts:[],posts:[],events:[],collaborations:[],memos:[],patchNotes:[],suggestions:[],targetList:[],contactTags:[],contactTagBanners:{},scheduleClipboard:[],favoriteFolders:[],achievementCards:[],gameLibrary:[],postViewMode:'card',postCardColumns:4,textScale:100,resolutionMode:'fhd',selfContactId:'',sidebarPinned:true,dashboardUpcomingHidden:false,timezones:DEFAULT_TZS,theme:'neon',backgroundImage:'',backgroundDim:45,uiFrame:'classic',neoTransparency:10,miniGames:defaultMiniGames()};
 }
 const AUTOSAVE_KEY='mawangSchedulerAutoBackups';
 
@@ -416,6 +416,8 @@ function normalizeDataShape(){
   if(!Array.isArray(data.posts))data.posts=[];
   if(!Array.isArray(data.events))data.events=[];
   if(!Array.isArray(data.contentGroups))data.contentGroups=[];
+  // Shared manual games. Existing event.steamGame snapshots are kept as-is.
+  if(!Array.isArray(data.gameLibrary))data.gameLibrary=[];
   {
     const groupIds=new Set();
     data.contentGroups=data.contentGroups.filter(g=>g&&typeof g==='object').map(g=>({
