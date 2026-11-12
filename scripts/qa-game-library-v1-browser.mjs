@@ -13,7 +13,7 @@ const core=load('assets/app-core.css');
 const steam=load('assets/steam-game-v111.js');
 const boot=`
 let editingEventId='e1';
-let saved=0,reasonHistory=[];
+let saved=0,reasonHistory=[],notices=[];
 const legacy={appid:'730',name:'Counter-Strike 2',image:'https://example.com/730.png',
  storeUrl:'https://store.steampowered.com/app/730/'};
 let data={events:[
@@ -21,7 +21,7 @@ let data={events:[
  {id:'e2',title:'방송 2',date:'2026-11-02',start:'21:00',end:'23:00',contentGroupId:'sbo',steamGame:{...legacy}}
 ],contentGroups:[{id:'wow',name:'와우 포에버',color:'#0f8c95'},{id:'sbo',name:'SBO',color:'#5533ff'}],gameLibrary:[]};
 function saveData(reason){saved++;reasonHistory.push(reason);window.dispatchEvent(new CustomEvent('mawang:datachange',{detail:{reason}}));return true;}
-function toast(){}
+function toast(...args){notices.push(args.join(':'));}
 function applyEventPayloadWithRepeat(payload,id){Object.assign(data.events.find(x=>x.id===id),payload);}
 document.getElementById('saveEventBtn').onclick=()=>{
  applyEventPayloadWithRepeat({title:'방송 1',date:'2026-11-01',start:'20:00',end:'22:00',contentGroupId:'wow'},editingEventId);
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  const dt=new DataTransfer();dt.items.add(file);
  $('gameManualImageFileV1').files=dt.files;
  $('gameManualSaveV1').click();
- await next();
+ for(let attempt=0;attempt<15&&$('gameManualSaveV1').disabled;attempt++)await next();
  const fileStored=data.gameLibrary.some(item=>item.name==='직접 만든 이미지 게임'&&
    item.platform==='웹'&&item.image.startsWith('data:image/webp;base64,')&&item.image.length<95000);
  document.body.dataset.mwsMode='public';
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  $('qa-result').textContent=JSON.stringify({ok,width:innerWidth,hasPanel,initialSteamListed,
   unchangedBefore,opened,added,librarySaved,notTouchEvents,gamePicked,filtered,linked,
   unchangedAfter,names,editOpened,edited,eventSnapshotRetained,fileStored,publicBlocked,noRootOverflow,
-  saves:saved,gameLibraryLength:data.gameLibrary.length});
+  saves:saved,gameLibraryLength:data.gameLibrary.length,notices,formHidden:$('gameManualFormV1').hidden});
 })().catch(error=>{$('qa-result').textContent=JSON.stringify({ok:false,error:String(error),stack:error.stack})});
 });
 `;
