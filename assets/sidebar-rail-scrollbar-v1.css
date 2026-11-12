@@ -1,0 +1,62 @@
+/* MWS Sidebar rail v1 - the menu scrollbar must not crop navigation tiles.
+   Desktop rail only; mobile drawer, pinned semantics and user data are unchanged. */
+@media (min-width:761px){
+  /* The previous 64px rail left less room than its 48px button after
+     sidebar padding and the real browser's navigation scrollbar. */
+  html body:not([data-resolution="mobile"]):not(.sidebar-pinned) .app{
+    grid-template-columns:72px minmax(0,1fr)!important;
+  }
+  html body:not([data-resolution="mobile"]):not(.sidebar-pinned) .app > .sidebar:not(:hover){
+    width:72px!important;
+    min-width:72px!important;
+    max-width:72px!important;
+  }
+
+  /* Reserve the scrollbar gutter before centering tiles. The scrollbar may
+     be wider under Windows display scaling and in Firefox. */
+  html body:not([data-resolution="mobile"]) .app > .sidebar .nav > .nav-scroll{
+    box-sizing:border-box!important;
+    width:100%!important;
+    min-width:0!important;
+    padding-right:2px!important;
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+    scrollbar-gutter:stable!important;
+    scrollbar-width:thin;
+  }
+  html body:not([data-resolution="mobile"]) .app > .sidebar .nav > .nav-scroll::-webkit-scrollbar{
+    width:5px;
+  }
+
+  /* 44px fits the 72px rail after both 8px sidebar paddings, a border and
+     a reserved 8px scrollbar gutter. Icon stays precisely centered. */
+  html body:not([data-resolution="mobile"]):not(.sidebar-pinned) .app > .sidebar:not(:hover) .nav .nav-scroll > button{
+    box-sizing:border-box!important;
+    width:44px!important;
+    min-width:44px!important;
+    max-width:44px!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+  html body:not([data-resolution="mobile"]):not(.sidebar-pinned) .app > .sidebar:not(:hover) .nav .nav-scroll > button > .nav-icon{
+    left:50%!important;
+    transform:translateX(-50%)!important;
+  }
+
+  /* The expanded and pinned menus also need to respect the scroll viewport
+     rather than the 204px fixed button width inherited from v3.0. */
+  html body:not([data-resolution="mobile"]):not(.sidebar-pinned) .app > .sidebar:hover .nav .nav-scroll > button,
+  html body:not([data-resolution="mobile"]).sidebar-pinned .app > .sidebar .nav .nav-scroll > button{
+    box-sizing:border-box!important;
+    width:calc(100% - 4px)!important;
+    min-width:0!important;
+    max-width:none!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+  html body:not([data-resolution="mobile"]):not(.sidebar-pinned) .app > .sidebar:hover .nav .nav-scroll > button > .nav-label,
+  html body:not([data-resolution="mobile"]).sidebar-pinned .app > .sidebar .nav .nav-scroll > button > .nav-label{
+    width:calc(100% - 58px)!important;
+    max-width:none!important;
+  }
+}
