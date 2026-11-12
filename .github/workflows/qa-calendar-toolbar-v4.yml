@@ -10,6 +10,9 @@ on:
       - 'assets/calendar-toolbar-v4.css'
       - 'assets/calendar-move-guard-v4.js'
       - 'scripts/qa-calendar-toolbar-v4-browser.mjs'
+      - 'assets/event-sidebar-tabs-v5.js'
+      - 'assets/event-sidebar-tabs-v5.css'
+      - 'scripts/qa-event-sidebar-tabs-v5-browser.mjs'
       - 'scripts/qa-calendar-groups-cloud-save-v1.test.mjs'
       - 'src/index.js'
       - 'src/cf-v111-entry.js'
@@ -44,6 +47,8 @@ jobs:
         run: node scripts/qa-calendar-toolbar-v4-browser.mjs
       - name: Cloudflare calendar content group persistence and runtime patch
         run: node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs
+      - name: Event editor Series and Memo tab UI at four widths
+        run: node scripts/qa-event-sidebar-tabs-v5-browser.mjs
       - name: Duration and SOOP regression
         run: |
           node --test scripts/qa-calendar-broadcast-duration-v1.test.mjs

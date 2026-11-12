@@ -270,6 +270,7 @@
     return find(($('calendarGroupManageTargetV4')||$('calendarGroupTargetV2'))?.value);
   }
   function syncEditor(event){
+    root.mwsEventSidebarTabsV5?.reset();
     const sel=$('evContentGroupV2');
     options(sel,event?.contentGroupId||'');
     if($('evContentGroupSearchV3'))$('evContentGroupSearchV3').value='';

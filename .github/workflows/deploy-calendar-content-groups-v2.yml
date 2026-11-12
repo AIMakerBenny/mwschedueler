@@ -1,4 +1,4 @@
-name: Deploy Calendar UX V4 and Cloud Group Persistence - Scoped Production
+name: Deploy Calendar Editor Sidebar V5 - Scoped Production
 on:
   push:
     branches:
@@ -30,6 +30,7 @@ jobs:
           node --check --input-type=commonjs < assets/app-core.js
           node --check assets/calendar-continuous-series-v1.js
           node --check assets/calendar-content-groups-v2.js
+          node --check assets/event-sidebar-tabs-v5.js
           node --check assets/calendar-move-guard-v4.js
           node --check assets/cloud-v5.5.js
           node --check src/index.js
@@ -43,6 +44,7 @@ jobs:
           node scripts/qa-calendar-content-groups-v2-browser.mjs
           node scripts/qa-calendar-content-groups-v3-search-browser.mjs
           node scripts/qa-calendar-toolbar-v4-browser.mjs
+          node scripts/qa-event-sidebar-tabs-v5-browser.mjs
           node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs
           node --test scripts/qa-soop-contact-autofill-v1.test.mjs
       - name: Install deployment dependencies
@@ -62,8 +64,8 @@ jobs:
           for i in $(seq 1 3); do
             t=$(date +%s)
             if curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/?scoped-calgroup-v2=$t" -o /tmp/group-index.html \
-                && grep -Fq 'calendar-content-groups-v2.js?v=4' /tmp/group-index.html \
-                && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/calendar-content-groups-v2.js?v=4&check=$t" -o /tmp/group-manager.js \
+                && grep -Fq 'calendar-content-groups-v2.js?v=5' /tmp/group-index.html \
+                && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/calendar-content-groups-v2.js?v=5&check=$t" -o /tmp/group-manager.js \
                 && grep -Fq 'mwsCalendarContentGroupsV2' /tmp/group-manager.js \
                 && grep -Fq 'renderGroupSearch' /tmp/group-manager.js \
                 && grep -Fq 'evContentGroupSearchV3' /tmp/group-index.html \
@@ -73,6 +75,14 @@ jobs:
                 && grep -Fq 'assets/calendar-move-guard-v4.js?v=1' /tmp/group-index.html \
                 && grep -Fq 'calendarGroupManageToggleV4' /tmp/group-index.html \
                 && grep -Fq 'calendarUndoLastMoveV4' /tmp/group-index.html \
+                && grep -Fq 'id="eventSeriesPaneV5"' /tmp/group-index.html \
+                && grep -Fq 'id="eventMemoPaneV5"' /tmp/group-index.html \
+                && grep -Fq 'assets/event-sidebar-tabs-v5.js?v=1' /tmp/group-index.html \
+                && grep -Fq 'assets/event-sidebar-tabs-v5.css?v=1' /tmp/group-index.html \
+                && curl --fail --silent --show-error --max-time 15 "$base/assets/event-sidebar-tabs-v5.js?check=$t" -o /tmp/event-sidebar-tabs-v5.js \
+                && grep -Fq 'mwsEventSidebarTabsV5' /tmp/event-sidebar-tabs-v5.js \
+                && curl --fail --silent --show-error --max-time 15 "$base/assets/event-sidebar-tabs-v5.css?check=$t" -o /tmp/event-sidebar-tabs-v5.css \
+                && grep -Fq '.event-side-tabpanel-v5' /tmp/event-sidebar-tabs-v5.css \
                 && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/calendar-content-groups-v2.css?v=3&check=$t" -o /tmp/group-style.css \
                 && grep -Fq '.calendar-group-search-v3' /tmp/group-style.css \
                 && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/app-core.js?check=$t" -o /tmp/group-core.js \
@@ -107,7 +117,7 @@ jobs:
             sleep 10
           done
           test "$ok" = 1
-          echo "CALENDAR_UX_V4_GROUP_PERSISTENCE_PRODUCTION_OK"
+          echo "EVENT_SIDEBAR_V5_PRODUCTION_OK"
       - name: Publish scoped Cloudflare deployment result
         if: always()
         env:
