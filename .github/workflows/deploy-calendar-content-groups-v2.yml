@@ -1,4 +1,4 @@
-name: Deploy Calendar Content Groups V2 - Scoped Production
+name: Deploy Calendar Content Groups UI - Scoped Production
 on:
   push:
     branches:
@@ -37,6 +37,7 @@ jobs:
           node --test scripts/qa-calendar-broadcast-duration-v1.test.mjs
           node scripts/qa-calendar-continuous-series-browser-v1.mjs
           node scripts/qa-calendar-content-groups-v2-browser.mjs
+          node scripts/qa-calendar-content-groups-v3-search-browser.mjs
           node --test scripts/qa-soop-contact-autofill-v1.test.mjs
       - name: Install deployment dependencies
         run: npm install
@@ -55,9 +56,15 @@ jobs:
           for i in $(seq 1 15); do
             t=$(date +%s)
             if curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/?scoped-calgroup-v2=$t" -o /tmp/group-index.html \
-                && grep -Fq 'calendar-content-groups-v2.js?v=2' /tmp/group-index.html \
-                && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/calendar-content-groups-v2.js?v=2&check=$t" -o /tmp/group-manager.js \
+                && grep -Fq 'calendar-content-groups-v2.js?v=3' /tmp/group-index.html \
+                && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/calendar-content-groups-v2.js?v=3&check=$t" -o /tmp/group-manager.js \
                 && grep -Fq 'mwsCalendarContentGroupsV2' /tmp/group-manager.js \
+                && grep -Fq 'renderGroupSearch' /tmp/group-manager.js \
+                && grep -Fq 'evContentGroupSearchV3' /tmp/group-index.html \
+                && grep -Fq 'calendarGroupSearchPanelV3' /tmp/group-index.html \
+                && grep -Fq 'assets/calendar-content-groups-v2.css?v=3' /tmp/group-index.html \
+                && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/calendar-content-groups-v2.css?v=3&check=$t" -o /tmp/group-style.css \
+                && grep -Fq '.calendar-group-search-v3' /tmp/group-style.css \
                 && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/app-core.js?check=$t" -o /tmp/group-core.js \
                 && grep -Fq 'contentGroupId:document.getElementById' /tmp/group-core.js \
                 && grep -Fq 'grid.onpointermove=pointerPreview' /tmp/group-core.js; then
@@ -68,7 +75,7 @@ jobs:
             sleep 10
           done
           test "$ok" = 1
-          echo "CALENDAR_CONTENT_GROUPS_PRODUCTION_OK"
+          echo "CALENDAR_GROUP_SEARCH_V3_PRODUCTION_OK"
       - name: Publish scoped Cloudflare deployment result
         if: always()
         env:
