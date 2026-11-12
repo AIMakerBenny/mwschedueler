@@ -1,0 +1,108 @@
+/* MWS calendar responsive cards v1.
+   The seven date columns share one horizontal viewport with their weekday header.
+   Card layout responds to actual day width, not screen size or OS scaling.
+   Only calendar presentation changes; events, group IDs and drag logic are untouched. */
+#calendar .calendar-responsive-scroll-v1{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+  scrollbar-gutter:stable;
+}
+#calendar .calendar-responsive-scroll-v1>.calendar-head,
+#calendar .calendar-responsive-scroll-v1>#calendarGrid{
+  width:100%;
+  min-width:1050px;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+}
+#calendar #calendarGrid .day{
+  min-width:0;
+  container-type:inline-size;
+  container-name:mws-calendar-day;
+}
+#calendar #calendarGrid .mini-event{
+  display:grid;
+  grid-template-columns:23px minmax(0,1fr);
+  grid-template-rows:auto auto;
+  column-gap:6px;
+  align-items:start;
+  min-width:0;
+  white-space:normal;
+}
+#calendar #calendarGrid .mini-event .calendar-event-drag-handle-v4{
+  grid-column:1;
+  grid-row:1 / span 2;
+  margin:0;
+}
+#calendar #calendarGrid .mini-event .mini-event-main{
+  grid-column:2;
+  grid-row:1;
+  min-width:0;
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  line-height:1.4;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#calendar #calendarGrid .mini-event .mini-event-people{
+  grid-column:2;
+  grid-row:2;
+  min-width:0;
+  margin-top:2px;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+#calendar #calendarGrid .mini-event.mws-steam-host-v111{
+  padding-right:48px!important;
+}
+/* For a narrow date column, give the game image its own top-row cell.
+   The event title and participant line then use the entire card width. */
+@container mws-calendar-day (max-width:215px){
+  #calendar #calendarGrid .mini-event.mws-steam-host-v111{
+    grid-template-columns:minmax(0,1fr) 34px;
+    grid-template-rows:28px auto auto;
+    gap:3px 5px;
+    padding:5px!important;
+  }
+  #calendar #calendarGrid .mini-event.mws-steam-host-v111 .calendar-event-drag-handle-v4{
+    grid-column:1;
+    grid-row:1;
+    align-self:start;
+    justify-self:start;
+  }
+  #calendar #calendarGrid .mini-event.mws-steam-host-v111 .mini-event-main{
+    grid-column:1 / -1;
+    grid-row:2;
+  }
+  #calendar #calendarGrid .mini-event.mws-steam-host-v111 .mini-event-people{
+    grid-column:1 / -1;
+    grid-row:3;
+  }
+  /* Override the Steam module's runtime-injected absolute positioning.
+     Extra selector specificity is intentional because that CSS is loaded later. */
+  #calendar #calendarGrid .mini-event.mws-steam-host-v111>.mws-steam-slot-v111{
+    position:static!important;
+    grid-column:2;
+    grid-row:1;
+    place-self:start end;
+    width:34px!important;
+    min-width:34px!important;
+    height:28px!important;
+    min-height:28px!important;
+    inset:auto!important;
+    margin:0!important;
+  }
+}
+/* Keyboard users can scroll the shared date grid when zoom or DPI requires it. */
+#calendar .calendar-responsive-scroll-v1:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
+@media(prefers-reduced-motion:reduce){
+  #calendar #calendarGrid .mini-event{transition:none}
+}
