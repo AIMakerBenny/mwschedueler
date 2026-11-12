@@ -80,8 +80,10 @@ jobs:
                 && grep -Fq 'grid.onpointermove=pointerPreview' /tmp/group-core.js \
                 && grep -Fq 'calendar-event-drag-handle-v4' /tmp/group-core.js \
                 && grep -Fq 'mwsCalendarMoveGuardV4?.recordMove' /tmp/group-core.js \
-                && curl --fail --silent --show-error --max-time 15 "$base/assets/cloud-v5.5.js?check=$t" -o /tmp/group-cloud.js \
+                && curl --fail --silent --show-error --max-time 15 "$base/assets/cloud-v1.1.js?check=$t" -o /tmp/group-cloud.js \
                 && node -e "const s=require('fs').readFileSync('/tmp/group-cloud.js','utf8');const m=s.match(/const CORE_KEYS=\\[([^\\]]*)\\]/);if(!m||!m[1].includes('contentGroups'))process.exit(1)" \
+                && curl --fail --silent --show-error --max-time 15 "$base/assets/cloud-runtime-v130.js?check=$t" -o /tmp/group-cloud-v130.js \
+                && node -e "const s=require('fs').readFileSync('/tmp/group-cloud-v130.js','utf8');const m=s.match(/const CORE_KEYS=\\[([^\\]]*)\\]/);if(!m||!m[1].includes('contentGroups'))process.exit(1)" \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-move-guard-v4.js?check=$t" -o /tmp/group-undo.js \
                 && grep -Fq 'undoLast' /tmp/group-undo.js \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-toolbar-v4.css?check=$t" -o /tmp/group-toolbar.css \
@@ -91,7 +93,7 @@ jobs:
             fi
             if [ "$i" = "1" ]; then
               echo "Live Cloudflare core fetch probe:"
-              curl -sS -L --max-time 15 -w 'HTTP %{http_code} ContentType %{content_type} Bytes %{size_download}\n' "$base/assets/cloud-v5.5.js?diagnostic=$t" -o /tmp/group-core-diagnostic.js || true
+              curl -sS -L --max-time 15 -w 'HTTP %{http_code} ContentType %{content_type} Bytes %{size_download}\n' "$base/assets/cloud-v1.1.js?diagnostic=$t" -o /tmp/group-core-diagnostic.js || true
               wc -c /tmp/group-core-diagnostic.js || true
               grep -m1 'CORE_KEYS' /tmp/group-core-diagnostic.js | cut -c1-260 || true
               head -c 180 /tmp/group-core-diagnostic.js || true
