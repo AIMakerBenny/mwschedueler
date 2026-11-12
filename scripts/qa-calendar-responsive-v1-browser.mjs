@@ -55,13 +55,11 @@ const days=dates.map((date,i)=>{
 }).join('');
 const headings=['일','월','화','수','목','금','토'].map(x=>'<div>'+x+'</div>').join('');
 const boot=`
-(async()=>{
+(()=>{
  const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
  const grid=$('#calendarGrid'),scroll=$('.calendar-responsive-scroll-v1');
  const events=${JSON.stringify(events)};
- const raf=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
  window.mwsCalendarContinuousSeriesV1.render(grid,events,[{id:'wow',name:'와우 포에버',color:'#0f8c95'}]);
- await raf();
  const cells=$$('#calendarGrid .day'),cards=$$('#calendarGrid .mini-event');
  const day=cells[2],card=day.querySelector('.mini-event'),main=card.querySelector('.mini-event-main');
  const handle=card.querySelector('.calendar-event-drag-handle-v4'),slot=card.querySelector('.mws-steam-slot-v111');
@@ -87,7 +85,6 @@ const boot=`
  const groupAligned=!!ribbon&&Math.abs(r(ribbon).left-(r(firstGroupCell).left+7))<=3;
  const beforeScroll=scroll.scrollLeft;
  scroll.scrollLeft=165;
- await raf();
  const scrollSync=Math.abs(r(cells[0]).left-r($('.calendar-head>div')).left)<2;
  const hadScroll=scroll.scrollWidth>scroll.clientWidth+2;
  const scrollbarWorks=!hadScroll||scroll.scrollLeft>beforeScroll;
