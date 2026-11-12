@@ -15,3 +15,238 @@
 .calendar-group-event-editor-v2{padding:10px;border:1px solid var(--border);border-radius:12px}
 .calendar-group-event-editor-v2>.muted{margin-top:6px;font-size:11px}
 @media(max-width:650px){.calendar-group-controls-v2 label,.calendar-group-controls-v2 #evContentGroupV2{min-width:0;width:100%}.calendar-group-controls-v2 button{flex:1}}
+
+/* V3: readable, full-width group search instead of a crowded narrow select. */
+.calendar-group-event-editor-v2{
+  display:flex!important;
+  flex-direction:column;
+  align-items:stretch;
+  gap:10px;
+  min-width:0!important;
+  width:100%;
+  padding:14px;
+}
+.calendar-group-event-editor-v2>label{
+  display:block;
+  color:var(--text);
+  font-size:14px!important;
+  font-weight:750;
+  line-height:1.6;
+  overflow-wrap:anywhere;
+  white-space:normal!important;
+}
+.calendar-group-event-editor-v2>.muted{
+  font-size:12px!important;
+  line-height:1.6;
+  overflow-wrap:anywhere;
+  white-space:normal;
+}
+.calendar-group-search-v3{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  padding:12px;
+  border:1px solid color-mix(in srgb,var(--accent) 24%,var(--border));
+  border-radius:12px;
+  background:color-mix(in srgb,var(--panel) 93%,var(--accent));
+}
+.calendar-group-search-v3>label{
+  font-size:13px!important;
+  font-weight:700;
+  line-height:1.45;
+  color:var(--text)!important;
+  overflow-wrap:anywhere;
+}
+.calendar-group-search-input-v3{width:100%;min-width:0;display:flex}
+.calendar-group-search-input-v3>input{
+  box-sizing:border-box;
+  flex:1;
+  display:block;
+  width:100%;
+  min-width:0;
+  max-width:none!important;
+  height:44px!important;
+  padding:11px 13px!important;
+  font-size:15px!important;
+  line-height:1.4!important;
+  color:var(--text)!important;
+  border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border))!important;
+  border-radius:10px!important;
+  background:var(--input-bg,#0d121c);
+}
+.calendar-group-search-input-v3>input::placeholder{
+  font-size:13px;
+  color:var(--muted);
+  opacity:.95;
+}
+.calendar-group-search-input-v3>input:focus-visible,
+.calendar-group-option-v3:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
+.calendar-group-underlying-select-v3{display:none!important}
+.calendar-group-current-v3{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  min-width:0;
+  gap:10px;
+  padding:9px 12px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  min-height:42px;
+  background:color-mix(in srgb,var(--panel) 82%,#101923);
+}
+.calendar-group-current-mark-v3{display:flex;gap:9px;align-items:center;min-width:0;flex:1}
+.calendar-group-current-name-v3{
+  display:block;
+  min-width:0;
+  color:var(--text);
+  font-size:14px;
+  font-weight:650;
+  overflow-wrap:anywhere;
+  white-space:normal;
+  line-height:1.5;
+}
+.calendar-group-color-dot-v3{
+  display:block;
+  flex:0 0 13px;
+  width:13px;
+  height:13px;
+  border-radius:4px;
+  border:1px solid rgba(255,255,255,.55);
+}
+.calendar-group-clear-v3{
+  min-height:31px;
+  padding:5px 10px;
+  font-size:12px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:transparent;
+  color:var(--text);
+  cursor:pointer;
+  white-space:nowrap;
+}
+.calendar-group-quick-v3{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+}
+.calendar-group-quick-label-v3{
+  color:var(--muted);
+  font-size:12px;
+  white-space:nowrap;
+  padding-right:3px;
+}
+.calendar-group-option-v3{
+  box-sizing:border-box;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:flex-start;
+  width:100%;
+  min-width:0;
+  min-height:39px;
+  margin:0;
+  padding:8px 11px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--panel);
+  color:var(--text);
+  font-weight:650;
+  font-size:13px!important;
+  line-height:1.5;
+  white-space:normal!important;
+  text-align:left;
+  cursor:pointer;
+}
+.calendar-group-option-v3[aria-pressed="true"]{
+  background:color-mix(in srgb,var(--accent) 16%,var(--panel));
+  border-color:var(--accent);
+}
+.calendar-group-option-v3:hover{border-color:var(--accent)}
+.calendar-group-option-name-v3{
+  min-width:0;
+  flex:1 1 auto;
+  overflow-wrap:anywhere;
+  white-space:normal;
+}
+.calendar-group-option-count-v3{
+  flex:0 0 auto;
+  font-size:11px;
+  color:var(--muted);
+  white-space:nowrap;
+}
+.calendar-group-option-quick-v3{
+  width:auto;
+  max-width:100%;
+  min-height:34px;
+  padding:6px 10px;
+  border-radius:999px;
+}
+.calendar-group-results-v3{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  max-height:238px;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  padding:4px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--panel);
+}
+.calendar-group-results-v3[hidden]{display:none!important}
+.calendar-group-empty-v3{
+  font-size:13px;
+  color:var(--muted);
+  padding:12px;
+  line-height:1.6;
+  overflow-wrap:anywhere;
+}
+.calendar-group-search-hint-v3{
+  margin:0!important;
+  color:var(--muted);
+  font-size:12px!important;
+  line-height:1.6;
+  overflow-wrap:anywhere;
+  white-space:normal;
+}
+.calendar-group-create-toggle-v3{
+  align-self:flex-start;
+  display:inline-flex;
+  align-items:center;
+  min-height:39px;
+  max-width:100%;
+  padding:8px 13px;
+  font-size:13px!important;
+  white-space:normal!important;
+  line-height:1.4;
+}
+.calendar-group-panel-v2>.calendar-group-controls-v2{
+  min-width:0;
+  width:100%;
+}
+.calendar-group-panel-v2 .calendar-group-search-v3{
+  flex:1 1 320px;
+  min-width:220px;
+  max-width:100%;
+}
+.calendar-group-panel-v2 .calendar-group-controls-v2 button{
+  white-space:normal;
+  line-height:1.4;
+}
+@media(max-width:760px){
+  .calendar-group-event-editor-v2{padding:12px}
+  .calendar-group-search-v3{padding:10px}
+  .calendar-group-panel-v2 .calendar-group-search-v3{min-width:0;flex-basis:100%}
+  .calendar-group-current-v3{align-items:flex-start}
+  .calendar-group-option-quick-v3{max-width:100%}
+}
