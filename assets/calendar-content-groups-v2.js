@@ -201,7 +201,10 @@
   }
   function toggle(){
     mode=!mode;
-    if(mode)closeManager();
+    if(mode){
+      root.setCalendarViewModeV172?.('month');
+      closeManager();
+    }
     if(!mode)selected.clear();
     updateSelectionUI();
     if(typeof hideCalendarEventPreview==='function')hideCalendarEventPreview();
@@ -252,7 +255,10 @@
     const box=$('calendarGroupManagerPanelV4'),button=$('calendarGroupManageToggleV4');
     if(!box)return;
     const opening=box.hidden;
-    if(opening)finish();
+    if(opening){
+      root.setCalendarViewModeV172?.('month');
+      finish();
+    }
     box.hidden=!opening;
     if(button)button.setAttribute('aria-expanded',opening?'true':'false');
     if(opening){
