@@ -5,6 +5,8 @@ on:
       - cloudflare-production
     paths:
       - '.github/workflows/deploy-calendar-content-groups-v2.yml'
+      - 'assets/calendar-responsive-cards-v1.css'
+      - 'scripts/qa-calendar-responsive-v1-browser.mjs'
 
 permissions:
   contents: read
@@ -44,6 +46,7 @@ jobs:
           node scripts/qa-calendar-content-groups-v2-browser.mjs
           node scripts/qa-calendar-content-groups-v3-search-browser.mjs
           node scripts/qa-calendar-toolbar-v4-browser.mjs
+          node scripts/qa-calendar-responsive-v1-browser.mjs
           node scripts/qa-event-sidebar-tabs-v5-browser.mjs
           node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs
           node --test scripts/qa-soop-contact-autofill-v1.test.mjs
@@ -72,6 +75,8 @@ jobs:
                 && grep -Fq 'calendarGroupSearchPanelV3' /tmp/group-index.html \
                 && grep -Fq 'assets/calendar-content-groups-v2.css?v=3' /tmp/group-index.html \
                 && grep -Fq 'assets/calendar-toolbar-v4.css?v=1' /tmp/group-index.html \
+                && grep -Fq 'assets/calendar-responsive-cards-v1.css?v=1' /tmp/group-index.html \
+                && grep -Fq 'class="calendar-responsive-scroll-v1"' /tmp/group-index.html \
                 && grep -Fq 'assets/calendar-move-guard-v4.js?v=1' /tmp/group-index.html \
                 && grep -Fq 'calendarGroupManageToggleV4' /tmp/group-index.html \
                 && grep -Fq 'calendarUndoLastMoveV4' /tmp/group-index.html \
@@ -96,6 +101,8 @@ jobs:
                 && node -e "const s=require('fs').readFileSync('/tmp/group-cloud-v130.js','utf8');const m=s.match(/const CORE_KEYS=\\[([^\\]]*)\\]/);if(!m||!m[1].includes('contentGroups'))process.exit(1)" \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-move-guard-v4.js?check=$t" -o /tmp/group-undo.js \
                 && grep -Fq 'undoLast' /tmp/group-undo.js \
+                && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-responsive-cards-v1.css?check=$t" -o /tmp/group-responsive.css \
+                && grep -Fq '@container mws-calendar-day' /tmp/group-responsive.css \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-toolbar-v4.css?check=$t" -o /tmp/group-toolbar.css \
                 && grep -Fq '.calendar-topbar-v4' /tmp/group-toolbar.css; then
               ok=1

@@ -1,0 +1,31 @@
+name: Calendar responsive card geometry QA
+on:
+  pull_request:
+    branches:
+      - cloudflare-production
+    paths:
+      - 'index.html'
+      - 'assets/calendar-responsive-cards-v1.css'
+      - 'scripts/qa-calendar-responsive-v1-browser.mjs'
+      - '.github/workflows/qa-calendar-responsive-v1.yml'
+  push:
+    branches:
+      - 'fix/calendar-responsive-cards-v1-20261112'
+permissions:
+  contents: read
+jobs:
+  browser-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Responsive calendar geometry in Chromium
+        run: node scripts/qa-calendar-responsive-v1-browser.mjs
+      - name: Existing calendar ribbon and drag handle regression
+        run: |
+          node scripts/qa-calendar-continuous-series-browser-v1.mjs
+          node scripts/qa-calendar-toolbar-v4-browser.mjs
+          node scripts/qa-calendar-content-groups-v3-search-browser.mjs
