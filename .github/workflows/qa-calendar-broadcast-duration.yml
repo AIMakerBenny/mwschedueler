@@ -1,0 +1,31 @@
+name: Calendar Broadcast Duration QA
+on:
+  push:
+    branches:
+      - feat/calendar-broadcast-duration-20261112
+    paths:
+      - 'assets/calendar-broadcast-duration-v1.js'
+      - 'assets/calendar-broadcast-duration-v1.css'
+      - 'assets/app-core.js'
+      - 'index.html'
+      - 'scripts/qa-calendar-broadcast-duration-v1.test.mjs'
+      - '.github/workflows/qa-calendar-broadcast-duration.yml'
+  pull_request:
+    branches:
+      - cloudflare-production
+  workflow_dispatch:
+jobs:
+  calendar-broadcast-duration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check assets/calendar-broadcast-duration-v1.js
+          node --check --input-type=commonjs < assets/app-core.js
+      - name: Duration math and calendar hover UI regression
+        run: node --test scripts/qa-calendar-broadcast-duration-v1.test.mjs
