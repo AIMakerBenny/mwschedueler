@@ -28,7 +28,10 @@
       results:'evContentGroupResultsV3',hint:'evContentGroupHintV3'},
     panel:{input:'calendarGroupSearchPanelV3',select:'calendarGroupTargetV2',
       current:'calendarGroupCurrentPanelV3',quick:'calendarGroupQuickPanelV3',
-      results:'calendarGroupResultsPanelV3',hint:'calendarGroupHintPanelV3'}
+      results:'calendarGroupResultsPanelV3',hint:'calendarGroupHintPanelV3'},
+    manager:{input:'calendarGroupManagerSearchV4',select:'calendarGroupManageTargetV4',
+      current:'calendarGroupManagerCurrentV4',quick:'calendarGroupManagerQuickV4',
+      results:'calendarGroupManagerResultsV4',hint:'calendarGroupManagerHintV4'}
   };
   function normalizeSearch(value){
     return String(value||'').normalize('NFKC').toLocaleLowerCase('ko-KR').replace(/\\s+/g,' ').trim();
@@ -50,6 +53,7 @@
     const input=$(refs.input);
     if(input)input.value='';
     if(context==='panel')redrawSelects(id);
+    else if(context==='manager')redrawSelects(undefined,id);
     else renderGroupSearch(context,false);
   }
   function makeGroupButton(group,context,variant){
@@ -163,8 +167,11 @@
         if(first){event.preventDefault();selectGroupFromSearch(context,first.id)}
       }
     });
-    select.addEventListener('change',()=>context==='panel'?
-      redrawSelects(select.value):renderGroupSearch(context,false));
+    select.addEventListener('change',()=>{
+      if(context==='panel')redrawSelects(select.value);
+      else if(context==='manager')redrawSelects(undefined,select.value);
+      else renderGroupSearch(context,false);
+    });
     document.addEventListener('pointerdown',event=>{
       const box=input.closest('[data-group-search]');
       if(box&&!box.contains(event.target)&&!input.value.trim())
@@ -185,13 +192,16 @@
       el.classList.toggle('calendar-group-selected-v2',isSelected);
       if(mode){el.setAttribute('aria-pressed',isSelected?'true':'false');el.setAttribute('role','button');el.tabIndex=0}
       else{el.removeAttribute('aria-pressed');el.removeAttribute('role');el.removeAttribute('tabindex')}
-      el.draggable=!mode;
+      el.draggable=false;
+      const handle=el.querySelector('.calendar-event-drag-handle-v4');
+      if(handle){handle.hidden=mode;handle.draggable=!mode;}
     });
     if($('calendarGroupApplyV2'))$('calendarGroupApplyV2').disabled=!selected.size;
     if($('calendarGroupClearV2'))$('calendarGroupClearV2').disabled=!selected.size;
   }
   function toggle(){
     mode=!mode;
+    if(mode)closeManager();
     if(!mode)selected.clear();
     updateSelectionUI();
     if(typeof hideCalendarEventPreview==='function')hideCalendarEventPreview();
@@ -220,16 +230,38 @@
     data.contentGroups.push(group);
     return group;
   }
-  function redrawSelects(preserve){
+  function redrawSelects(preserve,managerPreserve){
     options($('calendarGroupTargetV2'),preserve);
+    options($('calendarGroupManageTargetV4'),managerPreserve);
     options($('evContentGroupV2'),$('evContentGroupV2')?.value);
-    const manager=$('calendarGroupTargetV2');
+    const manager=$('calendarGroupManageTargetV4')||$('calendarGroupTargetV2');
     const chosen=find(manager?.value);
     if($('calendarGroupRenameV2'))$('calendarGroupRenameV2').value=chosen?.name||'';
     if($('calendarGroupRecolorV2'))$('calendarGroupRecolorV2').value=chosen?.color||'#0f8c95';
     updateSelectionUI();
     renderGroupSearch('panel',false);
+    renderGroupSearch('manager',false);
     renderGroupSearch('editor',false);
+  }
+  function closeManager(){
+    const box=$('calendarGroupManagerPanelV4'),button=$('calendarGroupManageToggleV4');
+    if(box)box.hidden=true;
+    if(button)button.setAttribute('aria-expanded','false');
+  }
+  function toggleManager(){
+    const box=$('calendarGroupManagerPanelV4'),button=$('calendarGroupManageToggleV4');
+    if(!box)return;
+    const opening=box.hidden;
+    if(opening)finish();
+    box.hidden=!opening;
+    if(button)button.setAttribute('aria-expanded',opening?'true':'false');
+    if(opening){
+      redrawSelects();
+      $('calendarGroupManagerSearchV4')?.focus();
+    }
+  }
+  function selectedManagedGroup(){
+    return find(($('calendarGroupManageTargetV4')||$('calendarGroupTargetV2'))?.value);
   }
   function syncEditor(event){
     const sel=$('evContentGroupV2');
@@ -281,7 +313,7 @@
     toast('콘텐츠 그룹',count+'개 일정 '+(clear?'연결을 해제했습니다':'연결했습니다'));
   }
   function updateGroup(){
-    const group=find($('calendarGroupTargetV2')?.value);
+    const group=selectedManagedGroup();
     if(!group){toast('콘텐츠 그룹','수정할 그룹을 선택해 주세요');return}
     const name=String($('calendarGroupRenameV2')?.value||'').trim();
     if(!name||name.length>64){toast('콘텐츠 그룹','이름을 1~64자로 지정해 주세요');return}
@@ -290,25 +322,28 @@
     }
     group.name=name;group.color=safeColor($('calendarGroupRecolorV2')?.value);
     saveData('콘텐츠 그룹 이름·색상 변경');
-    redrawSelects(group.id);
+    redrawSelects(undefined,group.id);
     toast('콘텐츠 그룹',name+' 그룹을 수정했습니다');
   }
   function deleteGroup(){
-    const group=find($('calendarGroupTargetV2')?.value);
+    const group=selectedManagedGroup();
     if(!group)return;
     const count=data.events.filter(e=>e.contentGroupId===group.id).length;
     if(!confirm(group.name+' 그룹을 삭제하시겠습니까? 연결된 '+count+'개 일정은 삭제되지 않고 그룹 연결만 해제됩니다.'))return;
     data.contentGroups=data.contentGroups.filter(g=>g.id!==group.id);
     for(const e of data.events)if(e.contentGroupId===group.id)e.contentGroupId='';
     saveData('콘텐츠 그룹 삭제');
-    redrawSelects('');
+    redrawSelects(undefined,'');
     toast('콘텐츠 그룹','그룹을 삭제했습니다. 일정은 유지됩니다');
   }
   function init(){
     const toggleBtn=$('calendarGroupToggleV2');if(!toggleBtn)return;
     bindGroupPicker('editor');
     bindGroupPicker('panel');
+    bindGroupPicker('manager');
     toggleBtn.addEventListener('click',toggle);
+    $('calendarGroupManageToggleV4')?.addEventListener('click',toggleManager);
+    $('calendarGroupManageCloseV4')?.addEventListener('click',closeManager);
     $('calendarGroupCancelV2')?.addEventListener('click',finish);
     $('calendarGroupApplyV2')?.addEventListener('click',()=>applyToSelected(false));
     $('calendarGroupClearV2')?.addEventListener('click',()=>applyToSelected(true));
