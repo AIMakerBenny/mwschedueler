@@ -543,10 +543,15 @@ function ensureSlot(host,eventId){
     button=document.createElement('button');
     button.type='button';
     button.className='mws-steam-slot-v111';
+    host.appendChild(button);
+  }
+  // The calendar now renders the button before this module boots, so attach
+  // handlers to both pre-rendered and dynamically created slots exactly once.
+  if(!button.__mwsSteamSlotHandlersV1){
+    button.__mwsSteamSlotHandlersV1=true;
     button.addEventListener('pointerdown',ev=>{ev.preventDefault();ev.stopPropagation()});
     button.addEventListener('mousedown',ev=>{ev.preventDefault();ev.stopPropagation()});
     button.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();openEditorAtGame(button.dataset.eventId)});
-    host.appendChild(button);
   }
   button.dataset.eventId=String(eventId);
   const game=normalizeGame(event.steamGame);
