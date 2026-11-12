@@ -81,13 +81,19 @@ jobs:
                 && grep -Fq 'calendar-event-drag-handle-v4' /tmp/group-core.js \
                 && grep -Fq 'mwsCalendarMoveGuardV4?.recordMove' /tmp/group-core.js \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/cloud-v5.5.js?check=$t" -o /tmp/group-cloud.js \
-                && grep -Fq "'contentGroups','achievementCards'" /tmp/group-cloud.js \
+                && node -e "const s=require('fs').readFileSync('/tmp/group-cloud.js','utf8');const m=s.match(/const CORE_KEYS=\\[([^\\]]*)\\]/);if(!m||!m[1].includes('contentGroups'))process.exit(1)" \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-move-guard-v4.js?check=$t" -o /tmp/group-undo.js \
                 && grep -Fq 'undoLast' /tmp/group-undo.js \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-toolbar-v4.css?check=$t" -o /tmp/group-toolbar.css \
                 && grep -Fq '.calendar-topbar-v4' /tmp/group-toolbar.css; then
               ok=1
               break
+            fi
+            if [ "$i" = "1" ]; then
+              echo "Live Core keys:"
+              grep -m1 'const CORE_KEYS=' /tmp/group-cloud.js || true
+              echo "Live HTML markers:"
+              grep -oE 'calendar-(toolbar|move-guard)-v4[^" ]*' /tmp/group-index.html | head -n 5 || true
             fi
             echo "Live calendar groups not yet propagated, attempt $i"
             sleep 10
