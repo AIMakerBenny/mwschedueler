@@ -1,0 +1,34 @@
+name: Calendar Continuous Series QA
+on:
+  push:
+    branches:
+      - feat/calendar-continuous-series-20261112
+    paths:
+      - 'assets/calendar-continuous-series-v1.js'
+      - 'assets/calendar-continuous-series-v1.css'
+      - 'assets/app-core.js'
+      - 'index.html'
+      - 'scripts/qa-calendar-continuous-series-v1.test.mjs'
+      - 'scripts/qa-calendar-continuous-series-browser-v1.mjs'
+      - '.github/workflows/qa-calendar-continuous-series.yml'
+  pull_request:
+    branches:
+      - cloudflare-production
+  workflow_dispatch:
+jobs:
+  calendar-series:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: |
+          node --check assets/calendar-continuous-series-v1.js
+          node --check --input-type=commonjs < assets/app-core.js
+      - name: Streak calculations, week breaks and calendar UI regressions
+        run: node --test scripts/qa-calendar-continuous-series-v1.test.mjs
+      - name: Browser ribbon geometry at 1920px, 1366px and 850px
+        run: node scripts/qa-calendar-continuous-series-browser-v1.mjs
