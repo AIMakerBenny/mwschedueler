@@ -1,0 +1,44 @@
+name: Calendar Toolbar V4 UX and Move Safety QA
+on:
+  push:
+    branches:
+      - feat/calendar-toolbar-group-management-drag-guard-20261112
+    paths:
+      - 'index.html'
+      - 'assets/app-core.js'
+      - 'assets/calendar-content-groups-v2.js'
+      - 'assets/calendar-toolbar-v4.css'
+      - 'assets/calendar-move-guard-v4.js'
+      - 'scripts/qa-calendar-toolbar-v4-browser.mjs'
+      - '.github/workflows/qa-calendar-toolbar-v4.yml'
+  pull_request:
+    branches:
+      - cloudflare-production
+  workflow_dispatch:
+
+jobs:
+  calendar-ux-v4:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax validation
+        run: |
+          node --check --input-type=commonjs < assets/app-core.js
+          node --check assets/calendar-content-groups-v2.js
+          node --check assets/calendar-move-guard-v4.js
+      - name: Connected calendar and existing group regression
+        run: |
+          node --test scripts/qa-calendar-continuous-series-v1.test.mjs
+          node scripts/qa-calendar-continuous-series-browser-v1.mjs
+          node scripts/qa-calendar-content-groups-v2-browser.mjs
+          node scripts/qa-calendar-content-groups-v3-search-browser.mjs
+      - name: New compact header, group management and undo in real browser
+        run: node scripts/qa-calendar-toolbar-v4-browser.mjs
+      - name: Duration and SOOP regression
+        run: |
+          node --test scripts/qa-calendar-broadcast-duration-v1.test.mjs
+          node --test scripts/qa-soop-contact-autofill-v1.test.mjs

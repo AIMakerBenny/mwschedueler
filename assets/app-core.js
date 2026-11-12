@@ -1791,7 +1791,11 @@ function clearCalendarPointerEventDragV174({suppressClick=false}={}){
   state.targetDay?.classList.remove('drag-over');
   state.targetTray?.classList.remove('drag-over');
   state.source?.classList.remove('mws-calendar-event-pointer-dragging-v174');
-  if(state.source?.isConnected)state.source.setAttribute('draggable',calendarPcDragEnabledV174()?'true':'false');
+  if(state.source?.isConnected){
+    state.source.setAttribute('draggable','false');
+    const handle=state.source.querySelector('.calendar-event-drag-handle-v4');
+    if(handle)handle.draggable=calendarPcDragEnabledV174();
+  }
   document.body.classList.remove('mws-calendar-event-pointer-active-v174');
   calendarDragPayload=null;
   if(suppressClick)calendarSuppressEventClickV174={id:state.id,until:performance.now()+450};
@@ -1843,9 +1847,11 @@ function endCalendarPointerEventDragV174(event){
   if(!date)return;
   const row=data.events.find(item=>String(item?.id||'')===id);
   if(!row||row.date===date)return;
+  const oldDate=row.date;
   row.date=date;
   saveData('일정 이동');
-  toast(row.restDay?'휴방':row.title,'선택한 날짜로 이동되었습니다');
+  window.mwsCalendarMoveGuardV4?.recordMove(row.id,oldDate,date,row.title);
+  toast(row.restDay?'휴방':row.title,'날짜가 이동됐습니다. 상단 이동 취소 버튼으로 되돌릴 수 있습니다.');
 }
 function cancelCalendarPointerEventDragV174(event){
   const state=calendarPointerEventDragV174;
@@ -1883,10 +1889,11 @@ function renderCalendar(){
         const label=e.restDay?'휴방':`${e.device?`[${e.device}] `:''}${timePrefix}${esc(e.title)}`;
         const participantSummary=e.restDay?'':calendarParticipantSummary(e);
         return `<div class="mini-event ${e.restDay?'rest-event':''} ${groupColor?'calendar-content-group-event-v2':''}"
-          draggable="true"
+          draggable="false"
           data-evid="${e.id}"
           style="border-left:4px solid ${color};background:${rgba(color,.18)};--content-group-color:${color}"
           onclick="handleCalendarMiniEventClick(event,'${e.id}')">
+          <button type="button" class="calendar-event-drag-handle-v4" draggable="true" aria-label="일정 이동 손잡이" title="여기를 드래그하면 날짜를 옮길 수 있습니다" onclick="event.preventDefault();event.stopPropagation()">⋮⋮</button>
           <span class="mini-event-main">${label}</span>
           ${participantSummary?`<span class="mini-event-people">${participantSummary}</span>`:''}
         </div>`
@@ -1933,16 +1940,30 @@ function renderCalendar(){
         ||String(e.dataTransfer.getData('text/plain')||'').replace(/^event:/,'');
       const ev=data.events.find(x=>x.id===eventId);
       if(ev){
-        ev.date=day.dataset.date;
+        const oldDate=ev.date,newDate=day.dataset.date;
         calendarDragPayload=null;
+        if(oldDate===newDate)return;
+        ev.date=newDate;
         saveData('일정 이동');
-        toast(ev.restDay?'휴방':ev.title,'선택한 날짜로 이동되었습니다');
+        window.mwsCalendarMoveGuardV4?.recordMove(ev.id,oldDate,newDate,ev.title);
+        toast(ev.restDay?'휴방':ev.title,'날짜가 이동됐습니다. 상단 이동 취소 버튼으로 되돌릴 수 있습니다.');
       }
     };
   });
   grid.querySelectorAll('.mini-event').forEach(el=>{
-    el.onpointerdown=e=>beginCalendarPointerEventDragV174(e,el);
+    const moveHandle=el.querySelector('.calendar-event-drag-handle-v4');
+    if(moveHandle){
+      moveHandle.onpointerdown=e=>{
+        e.stopPropagation();
+        beginCalendarPointerEventDragV174(e,el);
+      };
+      moveHandle.onkeydown=e=>e.stopPropagation();
+    }
+    el.onpointerdown=null;
     el.ondragstart=e=>{
+      if(!calendarPcDragEnabledV174()||!e.target?.closest?.('.calendar-event-drag-handle-v4')){
+        e.preventDefault();return;
+      }
       hideCalendarEventPreview();
       calendarDragPayload={type:'event',id:el.dataset.evid};
       document.body.classList.add('calendar-copy-source-dragging');

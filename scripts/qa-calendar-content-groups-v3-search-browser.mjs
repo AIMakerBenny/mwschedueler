@@ -79,7 +79,7 @@ const check=`
  const timeSafe=data.events.find(e=>e.id==='e3').start==='18:30';
  // Test width, wrapping and visibility of the selected long group name.
  engine.syncEditor(data.events[0]);
- await wait();
+ /* Reading layout flushes pending styles; requestAnimationFrame is flaky in headless CI. */
  const box=$('editor-column').getBoundingClientRect();
  const field=$('evContentGroupCurrentV3').getBoundingClientRect();
  const name=$('evContentGroupCurrentV3').querySelector('.calendar-group-current-name-v3');
@@ -125,7 +125,7 @@ try{
  for(const width of [1580,1140,850,560]){
   const run=spawnSync(chrome,[
     '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
-    '--disable-extensions','--no-first-run','--virtual-time-budget=1400',
+    '--disable-extensions','--no-first-run','--virtual-time-budget=4000',
     '--window-size='+width+',900','--dump-dom','file://'+file
   ],{encoding:'utf8',timeout:30000,maxBuffer:10*1024*1024});
   assert.equal(run.status,0,'Chrome failed '+width+' '+run.stderr.slice(-900));

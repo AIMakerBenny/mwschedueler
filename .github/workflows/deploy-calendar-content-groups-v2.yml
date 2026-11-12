@@ -1,4 +1,4 @@
-name: Deploy Calendar Content Groups UI - Scoped Production
+name: Deploy Calendar UX V4 - Scoped Production
 on:
   push:
     branches:
@@ -30,6 +30,7 @@ jobs:
           node --check --input-type=commonjs < assets/app-core.js
           node --check assets/calendar-continuous-series-v1.js
           node --check assets/calendar-content-groups-v2.js
+          node --check assets/calendar-move-guard-v4.js
           node --check assets/soop-contact-autofill-v1.js
       - name: Calendar content group, hover and duration regression
         run: |
@@ -38,6 +39,7 @@ jobs:
           node scripts/qa-calendar-continuous-series-browser-v1.mjs
           node scripts/qa-calendar-content-groups-v2-browser.mjs
           node scripts/qa-calendar-content-groups-v3-search-browser.mjs
+          node scripts/qa-calendar-toolbar-v4-browser.mjs
           node --test scripts/qa-soop-contact-autofill-v1.test.mjs
       - name: Install deployment dependencies
         run: npm install
@@ -56,18 +58,28 @@ jobs:
           for i in $(seq 1 15); do
             t=$(date +%s)
             if curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/?scoped-calgroup-v2=$t" -o /tmp/group-index.html \
-                && grep -Fq 'calendar-content-groups-v2.js?v=3' /tmp/group-index.html \
-                && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/calendar-content-groups-v2.js?v=3&check=$t" -o /tmp/group-manager.js \
+                && grep -Fq 'calendar-content-groups-v2.js?v=4' /tmp/group-index.html \
+                && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/calendar-content-groups-v2.js?v=4&check=$t" -o /tmp/group-manager.js \
                 && grep -Fq 'mwsCalendarContentGroupsV2' /tmp/group-manager.js \
                 && grep -Fq 'renderGroupSearch' /tmp/group-manager.js \
                 && grep -Fq 'evContentGroupSearchV3' /tmp/group-index.html \
                 && grep -Fq 'calendarGroupSearchPanelV3' /tmp/group-index.html \
                 && grep -Fq 'assets/calendar-content-groups-v2.css?v=3' /tmp/group-index.html \
+                && grep -Fq 'assets/calendar-toolbar-v4.css?v=1' /tmp/group-index.html \
+                && grep -Fq 'assets/calendar-move-guard-v4.js?v=1' /tmp/group-index.html \
+                && grep -Fq 'calendarGroupManageToggleV4' /tmp/group-index.html \
+                && grep -Fq 'calendarUndoLastMoveV4' /tmp/group-index.html \
                 && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/calendar-content-groups-v2.css?v=3&check=$t" -o /tmp/group-style.css \
                 && grep -Fq '.calendar-group-search-v3' /tmp/group-style.css \
                 && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/app-core.js?check=$t" -o /tmp/group-core.js \
                 && grep -Fq 'contentGroupId:document.getElementById' /tmp/group-core.js \
-                && grep -Fq 'grid.onpointermove=pointerPreview' /tmp/group-core.js; then
+                && grep -Fq 'grid.onpointermove=pointerPreview' /tmp/group-core.js \
+                && grep -Fq 'calendar-event-drag-handle-v4' /tmp/group-core.js \
+                && grep -Fq 'mwsCalendarMoveGuardV4?.recordMove' /tmp/group-core.js \
+                && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-move-guard-v4.js?check=$t" -o /tmp/group-undo.js \
+                && grep -Fq 'undoLast' /tmp/group-undo.js \
+                && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-toolbar-v4.css?check=$t" -o /tmp/group-toolbar.css \
+                && grep -Fq '.calendar-topbar-v4' /tmp/group-toolbar.css; then
               ok=1
               break
             fi
@@ -75,7 +87,7 @@ jobs:
             sleep 10
           done
           test "$ok" = 1
-          echo "CALENDAR_GROUP_SEARCH_V3_PRODUCTION_OK"
+          echo "CALENDAR_UX_V4_PRODUCTION_OK"
       - name: Publish scoped Cloudflare deployment result
         if: always()
         env:

@@ -4,10 +4,14 @@ on:
     branches:
       - feat/calendar-continuous-series-20261112
       - feat/calendar-content-groups-v2-20261112
+      - feat/calendar-toolbar-group-management-drag-guard-20261112
     paths:
       - 'assets/calendar-continuous-series-v1.js'
       - 'assets/calendar-content-groups-v2.js'
       - 'assets/calendar-content-groups-v2.css'
+      - 'assets/calendar-move-guard-v4.js'
+      - 'assets/calendar-toolbar-v4.css'
+      - 'scripts/qa-calendar-toolbar-v4-browser.mjs'
       - 'assets/calendar-continuous-series-v1.css'
       - 'assets/app-core.js'
       - 'index.html'
@@ -33,6 +37,7 @@ jobs:
         run: |
           node --check assets/calendar-continuous-series-v1.js
           node --check assets/calendar-content-groups-v2.js
+          node --check assets/calendar-move-guard-v4.js
           node --check --input-type=commonjs < assets/app-core.js
       - name: Streak calculations, week breaks and calendar UI regressions
         run: node --test scripts/qa-calendar-continuous-series-v1.test.mjs
@@ -42,3 +47,5 @@ jobs:
         run: node scripts/qa-calendar-content-groups-v2-browser.mjs
       - name: Searchable group UI across 82 groups and four viewport sizes
         run: node scripts/qa-calendar-content-groups-v3-search-browser.mjs
+      - name: Compact header independent group manager and safe date undo
+        run: node scripts/qa-calendar-toolbar-v4-browser.mjs
