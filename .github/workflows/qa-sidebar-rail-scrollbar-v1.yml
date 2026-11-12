@@ -1,0 +1,30 @@
+name: Sidebar rail scrollbar clipping QA
+on:
+  pull_request:
+    branches:
+      - cloudflare-production
+    paths:
+      - 'assets/sidebar-rail-scrollbar-v1.css'
+      - 'index.html'
+      - 'scripts/qa-sidebar-rail-scrollbar-v1-browser.mjs'
+      - '.github/workflows/qa-sidebar-rail-scrollbar-v1.yml'
+  push:
+    branches:
+      - 'fix/sidebar-rail-scrollbar-clipping-v1-20261112'
+permissions:
+  contents: read
+jobs:
+  sidebar-geometry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Desktop rail icon and scrollbar geometry
+        run: node scripts/qa-sidebar-rail-scrollbar-v1-browser.mjs
+      - name: Calendar and event editor layout regressions
+        run: |
+          node scripts/qa-calendar-responsive-v1-browser.mjs
+          node scripts/qa-event-sidebar-tabs-v5-browser.mjs
