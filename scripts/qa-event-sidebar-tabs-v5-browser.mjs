@@ -66,6 +66,11 @@ const check=`
   const selected=$('evContentGroupV2').value==='sbo';
   $('eventMemoTabV5').click();
   const memoVisible=$('eventSeriesPaneV5').hidden&&!$('eventMemoPaneV5').hidden;
+  const debugPane={seriesHidden:$('eventSeriesPaneV5').hidden,
+    memoHidden:$('eventMemoPaneV5').hidden,
+    memoTabSelected:$('eventMemoTabV5').getAttribute('aria-selected'),
+    seriesTabSelected:$('eventSeriesTabV5').getAttribute('aria-selected'),
+    current:sidebar.current()};
   $('evMemoTitle').value='방송 준비';
   $('evMemoContent').value='기존 메모와 일정은 유지';
   $('eventSeriesTabV5').click();
@@ -94,7 +99,7 @@ const check=`
      noSaveOnToggle&&columnsValid&&noOverflow;
   $('qa-result').textContent=JSON.stringify({ok,viewport:window.innerWidth,insideLeft,defaultSeries,
     existing,searchable,selected,memoVisible,groupRetained,memoRetained,
-    resets,formOpened,created,eventsUnchanged,noSaveOnToggle,columnsValid,noOverflow});
+    resets,formOpened,created,eventsUnchanged,noSaveOnToggle,columnsValid,noOverflow,debugPane});
 })();
 `;
 const tmp=mkdtempSync(path.join(os.tmpdir(),'mws-side-tabs-v5-'));
