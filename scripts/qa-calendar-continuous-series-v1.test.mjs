@@ -100,7 +100,7 @@ test('UI integrates explicit group selection, groups survive saves, hover uses p
   assert(html.includes('id="calendarGroupApplyV2"'));
   assert(html.includes('id="calendarGroupCreateV2"'));
   assert(html.includes('id="evContentGroupV2"'));
-  assert(html.includes('assets/calendar-content-groups-v2.js?v=3'));
+  assert(html.includes('assets/calendar-content-groups-v2.js?v=4'));
   assert(html.indexOf('assets/app-core.js')<html.indexOf('assets/calendar-content-groups-v2.js'));
   assert(core.includes("contentGroupId:document.getElementById('evContentGroupV2')?.value||''"));
   assert(core.includes('window.mwsCalendarContentGroupsV2?.syncEditor(e)'));
