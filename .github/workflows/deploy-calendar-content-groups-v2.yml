@@ -1,0 +1,70 @@
+name: Deploy Calendar Content Groups V2 - Scoped Production
+on:
+  push:
+    branches:
+      - cloudflare-production
+    paths:
+      - '.github/workflows/deploy-calendar-content-groups-v2.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: calendar-content-groups-v2-single-deploy
+  cancel-in-progress: false
+
+jobs:
+  scoped-calendar-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout production
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Calendar and existing feature syntax
+        run: |
+          node --check --input-type=commonjs < assets/app-core.js
+          node --check assets/calendar-continuous-series-v1.js
+          node --check assets/calendar-content-groups-v2.js
+          node --check assets/soop-contact-autofill-v1.js
+      - name: Calendar content group, hover and duration regression
+        run: |
+          node --test scripts/qa-calendar-continuous-series-v1.test.mjs
+          node --test scripts/qa-calendar-broadcast-duration-v1.test.mjs
+          node scripts/qa-calendar-continuous-series-browser-v1.mjs
+          node scripts/qa-calendar-content-groups-v2-browser.mjs
+          node --test scripts/qa-soop-contact-autofill-v1.test.mjs
+      - name: Install deployment dependencies
+        run: npm install
+      - name: Deploy identical Cloudflare Worker with production bindings
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+      - name: Verify live calendar group frontend was published
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://mawang-scheduler.majoku.workers.dev'
+          ok=0
+          for i in $(seq 1 15); do
+            t=$(date +%s)
+            if curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/?scoped-calgroup-v2=$t" -o /tmp/group-index.html \
+                && grep -Fq 'calendar-content-groups-v2.js?v=2' /tmp/group-index.html \
+                && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/calendar-content-groups-v2.js?v=2&check=$t" -o /tmp/group-manager.js \
+                && grep -Fq 'mwsCalendarContentGroupsV2' /tmp/group-manager.js \
+                && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/app-core.js?check=$t" -o /tmp/group-core.js \
+                && grep -Fq 'contentGroupId:document.getElementById' /tmp/group-core.js \
+                && grep -Fq 'grid.onpointermove=pointerPreview' /tmp/group-core.js; then
+              ok=1
+              break
+            fi
+            echo "Live calendar groups not yet propagated, attempt $i"
+            sleep 10
+          done
+          test "$ok" = 1
+          echo "CALENDAR_CONTENT_GROUPS_PRODUCTION_OK"
