@@ -1,0 +1,151 @@
+/* Event editor V5: use left pane for compact content series and memo tabs. */
+#eventModal .event-sidebar-tabs-enabled-v5{
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  overflow:hidden;
+  min-width:0;
+  padding:12px;
+}
+#eventModal .event-side-tablist-v5{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:5px;
+  flex:0 0 auto;
+  padding:4px;
+  margin:0 0 11px;
+  border:1px solid var(--border);
+  border-radius:11px;
+  background:var(--input);
+}
+#eventModal .event-side-tab-v5{
+  min-height:40px;
+  padding:8px 10px;
+  margin:0;
+  border:1px solid transparent;
+  border-radius:8px;
+  background:transparent;
+  color:var(--muted);
+  font-size:13px;
+  font-weight:800;
+  white-space:normal;
+  line-height:1.35;
+  cursor:pointer;
+}
+#eventModal .event-side-tab-v5.active,
+#eventModal .event-side-tab-v5[aria-selected="true"]{
+  color:var(--text);
+  background:color-mix(in srgb,var(--accent) 16%,var(--panel));
+  border-color:color-mix(in srgb,var(--accent) 60%,var(--border));
+}
+#eventModal .event-side-tab-v5:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
+#eventModal .event-side-tabpanel-v5{
+  display:flex;
+  flex-direction:column;
+  flex:1 1 auto;
+  min-height:0;
+  min-width:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+}
+#eventModal .event-side-tabpanel-v5[hidden]{display:none!important}
+#eventModal .event-series-title-v5{
+  font-size:14px;
+  font-weight:850;
+  color:var(--text);
+  line-height:1.4;
+  padding-top:2px;
+}
+#eventModal .event-series-intro-v5{
+  margin:5px 0 10px;
+  line-height:1.5;
+  font-size:11px;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+#eventModal .event-series-tabpanel-v5 .calendar-group-event-editor-v2{
+  flex:0 0 auto;
+  display:flex!important;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  padding:10px;
+  border-radius:10px;
+  gap:9px;
+}
+#eventModal .event-series-tabpanel-v5 .calendar-group-event-editor-v2>label{
+  display:none;
+}
+#eventModal .event-series-tabpanel-v5 .calendar-group-search-v3{
+  padding:9px;
+  max-width:100%;
+  min-width:0;
+  gap:8px;
+}
+#eventModal .event-series-tabpanel-v5 .calendar-group-current-v3{
+  padding:8px;
+  min-height:36px;
+}
+#eventModal .event-series-tabpanel-v5 .calendar-group-option-quick-v3{
+  max-width:100%;
+}
+#eventModal .event-series-tabpanel-v5 .calendar-group-search-input-v3>input{
+  height:39px!important;
+  min-height:39px!important;
+  font-size:13px!important;
+}
+#eventModal .event-series-tabpanel-v5 .calendar-group-quick-v3{
+  gap:6px;
+}
+#eventModal .event-series-tabpanel-v5 .calendar-group-option-v3{
+  font-size:12px!important;
+}
+#eventModal .event-series-tabpanel-v5 .calendar-group-search-hint-v3,
+#eventModal .event-series-tabpanel-v5 .calendar-group-event-editor-v2>.muted{
+  font-size:11px!important;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+#eventModal .event-series-tabpanel-v5 #evContentGroupNewWrapV2{
+  width:100%;
+  min-width:0;
+  align-items:center;
+  gap:5px;
+}
+#eventModal .event-series-tabpanel-v5 #evContentGroupNewNameV2{
+  min-width:0;
+  width:100%;
+  max-width:100%;
+  flex:1 1 140px;
+}
+#eventModal .event-memo-tabpanel-v5{
+  gap:0;
+}
+#eventModal .event-memo-tabpanel-v5 .event-memo-content-field{
+  flex:1 1 200px;
+  min-height:140px;
+  display:flex;
+  flex-direction:column;
+}
+#eventModal .event-memo-tabpanel-v5 #evMemoContent{
+  width:100%;
+  min-height:180px!important;
+  height:100%;
+  flex:1 1 180px;
+}
+#eventModal .event-memo-tabpanel-v5 .event-memo-library-box{
+  flex:0 0 auto;
+}
+#eventModal .event-memo-tabpanel-v5 .event-memo-help{
+  flex:0 0 auto;
+}
+@media(max-width:1050px){
+  #eventModal .event-side-tabpanel-v5{overflow-y:visible;min-height:0}
+  #eventModal .event-sidebar-tabs-enabled-v5{overflow:visible}
+  #eventModal .event-memo-tabpanel-v5 #evMemoContent{min-height:220px!important}
+}
