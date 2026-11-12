@@ -75,17 +75,32 @@ document.addEventListener('DOMContentLoaded',()=>{
  await next();
  const edited=data.gameLibrary.length===1&&data.gameLibrary[0].id===item.id&&
    data.gameLibrary[0].name==='와우 포에버 리마스터';
+
  const eventSnapshotRetained=data.events[0].steamGame.name==='와우 포에버';
+ // An actual browser file input must be compressed to a safe reusable image.
+ $('gameLibAddToggleV1').click();
+ $('gameManualNameV1').value='직접 만든 이미지 게임';
+ $('gameManualPlatformV1').value='웹';
+ const canvas=document.createElement('canvas');canvas.width=32;canvas.height=20;
+ canvas.getContext('2d').fillStyle='#25aacc';canvas.getContext('2d').fillRect(0,0,32,20);
+ const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+ const file=new File([blob],'cover.png',{type:'image/png'});
+ const dt=new DataTransfer();dt.items.add(file);
+ $('gameManualImageFileV1').files=dt.files;
+ $('gameManualSaveV1').click();
+ await next();
+ const fileStored=data.gameLibrary.some(item=>item.name==='직접 만든 이미지 게임'&&
+   item.platform==='웹'&&item.image.startsWith('data:image/webp;base64,')&&item.image.length<95000);
  document.body.dataset.mwsMode='public';
  $('gameLibAddToggleV1').click();
  const publicBlocked=$('gameManualFormV1').hidden;
  const noRootOverflow=document.documentElement.scrollWidth<=innerWidth+3;
  const ok=hasPanel&&initialSteamListed&&unchangedBefore&&opened&&added&&librarySaved&&
    notTouchEvents&&gamePicked&&filtered&&linked&&unchangedAfter&&names&&
-   editOpened&&edited&&eventSnapshotRetained&&publicBlocked&&noRootOverflow;
+   editOpened&&edited&&eventSnapshotRetained&&fileStored&&publicBlocked&&noRootOverflow;
  $('qa-result').textContent=JSON.stringify({ok,width:innerWidth,hasPanel,initialSteamListed,
   unchangedBefore,opened,added,librarySaved,notTouchEvents,gamePicked,filtered,linked,
-  unchangedAfter,names,editOpened,edited,eventSnapshotRetained,publicBlocked,noRootOverflow,
+  unchangedAfter,names,editOpened,edited,eventSnapshotRetained,fileStored,publicBlocked,noRootOverflow,
   saves:saved,gameLibraryLength:data.gameLibrary.length});
 })().catch(error=>{$('qa-result').textContent=JSON.stringify({ok:false,error:String(error),stack:error.stack})});
 });
