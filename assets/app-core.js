@@ -1872,6 +1872,7 @@ function renderCalendar(){
     </div>`;
   }
   const grid=document.getElementById('calendarGrid');grid.innerHTML=out;
+  window.mwsCalendarContinuousSeriesV1?.render(grid,activeEvents(),data.categories);
   initCalendarViewTabsV172();
   renderCalendarSearchResultsV172();
   grid.querySelectorAll('.day').forEach(day=>{
