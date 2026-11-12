@@ -79,7 +79,7 @@ const check=`
  const timeSafe=data.events.find(e=>e.id==='e3').start==='18:30';
  // Test width, wrapping and visibility of the selected long group name.
  engine.syncEditor(data.events[0]);
- await wait();
+ /* Reading layout flushes pending styles; requestAnimationFrame is flaky in headless CI. */
  const box=$('editor-column').getBoundingClientRect();
  const field=$('evContentGroupCurrentV3').getBoundingClientRect();
  const name=$('evContentGroupCurrentV3').querySelector('.calendar-group-current-name-v3');
