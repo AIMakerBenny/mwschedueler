@@ -6,7 +6,7 @@ import path from 'node:path';
 const load=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const manager=load('assets/calendar-content-groups-v2.js');
 const html=load('index.html');
-assert(html.includes('calendar-content-groups-v2.js?v=7-save-contract-bulk'));
+assert(html.includes('calendar-content-groups-v2.js?v=8-recovery-manager'));
 const chrome=['google-chrome','google-chrome-stable','chromium','chromium-browser']
   .map(x=>spawnSync('which',[x],{encoding:'utf8'})).find(x=>x.status===0)?.stdout.trim();
 assert(chrome,'Chromium unavailable');
