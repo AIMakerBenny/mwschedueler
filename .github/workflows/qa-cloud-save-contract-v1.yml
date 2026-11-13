@@ -38,6 +38,8 @@ jobs:
           node scripts/run-phase174-calendar-pointer-drag-audit.mjs
       - name: Full cumulative integration audit
         run: node scripts/run-current-full-integration-audit.mjs > /tmp/full-audit.log || { tail -n 9 /tmp/full-audit.log; exit 1; }
+      - name: Read-only live D1 core and event baseline
+        run: node scripts/qa-live-calendar-core-summary-v1.mjs
       - name: Existing Cloudflare and group recovery regressions
         run: |
           node --test scripts/qa-active-cloudflare-core-groups-v1.test.mjs
