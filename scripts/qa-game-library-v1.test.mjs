@@ -74,7 +74,7 @@ test('legacy Steam serialization and manual serialization coexist without transf
 });
 
 test('Steam performance cache marker remains while game-library cache is refreshed',()=>{
-  const marker='/assets/steam-game-v111.js?v=1.1.4-perf30&game-library-v1=1';
+  const marker='/assets/steam-game-v111.js?v=1.1.4-perf30&manual-game-readback-v2=1';
   assert(loader.includes(marker),'runtime must retain Phase 30 marker');
   assert.equal(loader.split(marker).length-1,2,'preload and runtime must use the same versioned URL');
 });

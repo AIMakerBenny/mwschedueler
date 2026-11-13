@@ -22,7 +22,7 @@
   const timeout=(promise,ms,label='요청')=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(`${label} 응답 시간이 초과되었습니다.`)),ms))]);
   const byteLen=v=>{try{return new TextEncoder().encode(typeof v==='string'?v:JSON.stringify(v??null)).byteLength}catch(_){return 0}};
 
-  let mode=null,manifest=null,cloudSaveTimer=0,cloudSaving=false,pendingSave=false,cacheDbPromise=null,wardogsCacheDbPromise=null,currentAdmin=null;
+  let mode=null,manifest=null,cloudSaveTimer=0,cloudSaving=false,pendingSave=false,cloudSaveBlocked=false,cacheDbPromise=null,wardogsCacheDbPromise=null,currentAdmin=null;
   const loadedParts=new Set(),baselineJson=new Map(),dirtyParts=new Set();
   let lazyBridgeInstalled=false;
   const metrics=window.__mwsV55NetworkMetrics={startedAt:new Date().toISOString(),backend:'cloudflare-d1-r2-auth',cacheSchemaVersion:CACHE_SCHEMA_VERSION,requests:[],cacheHits:0,cacheMisses:0,semanticResponseBytes:0,actualCloudflareResponseBytes:0,actualCloudflareRequestBytes:0};
@@ -84,16 +84,108 @@
 
   async function fetchManifest(){const started=performance.now(),m=await fetchJson('/api/manifest',{},'Cloudflare 버전 확인');metrics.semanticResponseBytes+=byteLen(m);metric('manifest',{bytes:byteLen(m),backend:m.backend,ms:Math.round(performance.now()-started)});return m}
   async function fetchPart(part){const started=performance.now(),row=await fetchJson(`/api/parts/${encodeURIComponent(part)}`,{},`${part} 불러오기`);metrics.semanticResponseBytes+=byteLen(row);metrics.cacheMisses++;metric('part-fetch',{part,version:Number(row.version)||0,bytes:byteLen(row),ms:Math.round(performance.now()-started)});return row}
-  async function loadPartWithCache(scope,part,serverManifest,{allowStale=true}={}){const wanted=Number(serverManifest?.parts?.[part])||0,cached=await getCachedPart(scope,part);if(cached&&wanted>0&&Number(cached.version)===wanted){metrics.cacheHits++;return{data:cached.data,version:wanted,source:'cache'}}if(!serverManifest&&cached&&allowStale){metrics.cacheHits++;return{data:cached.data,version:Number(cached.version)||0,source:'cache-offline'}}const row=await fetchPart(part);await putCachedPart(scope,part,row.version,row.data);return{data:row.data,version:Number(row.version)||0,source:'network'}}
-  async function hydrate(chosen){window.__mwsAppReadyV130=false;mode=chosen;loadedParts.clear();baselineJson.clear();dirtyParts.clear();const scope=chosen==='admin'?'admin':'public';let serverManifest=null,offline=false;try{serverManifest=await fetchManifest();manifest=serverManifest}catch(e){offline=true;manifest=null;console.warn('Manifest unavailable; IndexedDB fallback',e)}const next=freshSkeleton();let loadedCount=0;try{const results=await Promise.all(INITIAL_PARTS.map(async part=>[part,await loadPartWithCache(scope,part,serverManifest,{allowStale:true})]));for(const[part,row]of results){mergePart(part,row.data,next);loadedParts.add(part);baselineJson.set(part,JSON.stringify(row.data));loadedCount++}}catch(e){console.warn('Initial load failed; cached parts only',e)}if(loadedCount<INITIAL_PARTS.length){let allCached=true;for(const part of INITIAL_PARTS){if(loadedParts.has(part))continue;const cached=await getCachedPart(scope,part);if(!cached){allCached=false;break}mergePart(part,cached.data,next);loadedParts.add(part);baselineJson.set(part,JSON.stringify(cached.data))}if(!allCached)throw new Error('필수 데이터와 IndexedDB 캐시를 모두 불러오지 못했습니다.')}data=next;normalizeAndRender(offline?'IndexedDB 오프라인 캐시':'Cloudflare D1 데이터');try{localStorage.removeItem('mawangSchedulerBeta')}catch(_){}applyModeUi();hideGate();const st=$('syncStatusText');if(st)st.textContent=offline?'IndexedDB 캐시 사용 중':'Cloudflare D1 동기화';metric('hydrate-complete',{scope,offline,loaded:[...loadedParts]});window.__mwsAppReadyV130=Boolean(chosen==='admin'&&currentAdmin&&!offline&&loadedParts.has('core')&&manifest?.parts);try{window.dispatchEvent(new CustomEvent('mws:app-ready',{detail:{scope,online:!offline,adminReady:window.__mwsAppReadyV130}}))}catch(_){}}
+  async function loadPartWithCache(scope,part,serverManifest,{allowStale=true}={}){const wanted=Number(serverManifest?.parts?.[part])||0,cached=await getCachedPart(scope,part);if(cached&&wanted>0&&Number(cached.version)===wanted&&!(scope==='admin'&&(part==='core'||part==='events'))){metrics.cacheHits++;return{data:cached.data,version:wanted,source:'cache'}}if(!serverManifest&&cached&&allowStale){metrics.cacheHits++;return{data:cached.data,version:Number(cached.version)||0,source:'cache-offline'}}const row=await fetchPart(part);await putCachedPart(scope,part,row.version,row.data);return{data:row.data,version:Number(row.version)||0,source:'network'}}
+  async function hydrate(chosen){window.__mwsAppReadyV130=false;mode=chosen;loadedParts.clear();baselineJson.clear();dirtyParts.clear();const scope=chosen==='admin'?'admin':'public';let serverManifest=null,offline=false;try{serverManifest=await fetchManifest();manifest=serverManifest}catch(e){offline=true;manifest=null;console.warn('Manifest unavailable; IndexedDB fallback',e)}const next=freshSkeleton();let loadedCount=0;try{const results=await Promise.all(INITIAL_PARTS.map(async part=>[part,await loadPartWithCache(scope,part,serverManifest,{allowStale:true})]));for(const[part,row]of results){mergePart(part,row.data,next);loadedParts.add(part);baselineJson.set(part,JSON.stringify(row.data));loadedCount++}}catch(e){offline=true;console.warn('Initial load failed; cached parts only, writes disabled',e)}if(loadedCount<INITIAL_PARTS.length){let allCached=true;for(const part of INITIAL_PARTS){if(loadedParts.has(part))continue;const cached=await getCachedPart(scope,part);if(!cached){allCached=false;break}mergePart(part,cached.data,next);loadedParts.add(part);baselineJson.set(part,JSON.stringify(cached.data))}if(!allCached)throw new Error('필수 데이터와 IndexedDB 캐시를 모두 불러오지 못했습니다.')}data=next;normalizeAndRender(offline?'IndexedDB 오프라인 캐시':'Cloudflare D1 데이터');try{localStorage.removeItem('mawangSchedulerBeta')}catch(_){}applyModeUi();hideGate();const st=$('syncStatusText');if(st)st.textContent=offline?'IndexedDB 캐시 사용 중':'Cloudflare D1 동기화';metric('hydrate-complete',{scope,offline,loaded:[...loadedParts]});window.__mwsAppReadyV130=Boolean(chosen==='admin'&&currentAdmin&&!offline&&loadedParts.has('core')&&loadedParts.has('events')&&manifest?.parts);try{window.dispatchEvent(new CustomEvent('mws:app-ready',{detail:{scope,online:!offline,adminReady:window.__mwsAppReadyV130}}))}catch(_){}}
   async function ensurePartsForTab(tab){const extras=PARTS_BY_TAB[tab]||[];if(!extras.length)return true;const scope=mode==='admin'?'admin':'public';if(!manifest){try{manifest=await fetchManifest()}catch(_){}}let changed=false;for(const part of extras){if(loadedParts.has(part))continue;try{const row=await loadPartWithCache(scope,part,manifest,{allowStale:true});mergePart(part,row.data,data);loadedParts.add(part);baselineJson.set(part,JSON.stringify(row.data));changed=true}catch(e){console.error('Lazy part load failed',part,e)}}if(changed){normalizeAndRender(`${tab} lazy data`);try{window.dispatchEvent(new CustomEvent('mws:parts-loaded',{detail:{tab,parts:[...extras]}}))}catch(_){}}return true}
   window.mwsV55EnsureParts=ensurePartsForTab;window.mwsV55EnsureAllParts=()=>ensurePartsForTab('export');
   function installLazyTabBridge(){if(lazyBridgeInstalled||typeof window.setTab!=='function')return;lazyBridgeInstalled=true;const base=window.setTab;window.setTab=function(tab){const out=base.apply(this,arguments);Promise.resolve().then(()=>ensurePartsForTab(tab)).catch(()=>{});return out};try{setTab=window.setTab}catch(_){}const exportAll=$('exportAllBtn');if(exportAll&&!exportAll.dataset.v55Guard){exportAll.dataset.v55Guard='1';exportAll.addEventListener('click',e=>{if(loadedParts.size<ALL_PARTS.length){e.preventDefault();e.stopImmediatePropagation();ensurePartsForTab('export').then(()=>exportAll.click())}},true)}}
 
   function markDirty(){if(mode!=='admin')return[];const changed=[];for(const part of loadedParts){const current=JSON.stringify(extractPart(part));if(current!==baselineJson.get(part)){dirtyParts.add(part);changed.push(part)}else dirtyParts.delete(part)}return changed}
-  function queueCloudSave(){if(mode!=='admin')return;clearTimeout(cloudSaveTimer);markDirty();cloudSaveTimer=setTimeout(()=>writeCloudNow(false),650)}
+  function queueCloudSave(){if(mode!=='admin'||cloudSaveBlocked||window.__mwsAppReadyV130!==true)return;clearTimeout(cloudSaveTimer);markDirty();if(!dirtyParts.size)return;const st=$('syncStatusText');if(st)st.textContent='D1 저장 대기 중';cloudSaveTimer=setTimeout(()=>{void writeCloudNow(false)},650)}
   function mergeNormalizedResult(normalized){if(!normalized||typeof normalized!=='object')return;for(const[part,value]of Object.entries(normalized))if(loadedParts.has(part))mergePart(part,value,data)}
-  async function writeCloudNow(manual=false){if(mode!=='admin'||!currentAdmin)return false;if(cloudSaving){pendingSave=true;if(!manual)return false;const saveWaitUntil=Date.now()+65000;while(cloudSaving&&Date.now()<saveWaitUntil)await new Promise(resolve=>setTimeout(resolve,50));if(cloudSaving)return false}markDirty();if(!dirtyParts.size){if(manual){try{toast('SAVE','변경된 데이터가 없습니다.')}catch(_){}}return true}cloudSaving=true;const partsToSave=[...dirtyParts];if(manual)setManualSaveProgress(8,'PREP');try{const session=await fetchJson('/api/auth/session',{},'Admin 세션 확인');if(!session.authenticated)throw new Error('Admin 세션이 만료되었습니다.');const payload={},expectedVersions={};for(const part of partsToSave){payload[part]=extractPart(part);const expected=Number(manifest?.parts?.[part]);if(!Number.isInteger(expected)||expected<0)throw new Error('온라인 저장 버전을 확인할 수 없습니다. 다시 로그인 후 시도해 주세요: '+part);expectedVersions[part]=expected;}if(manual)setManualSaveProgress(28,'UPLOAD');const result=await fetchJson('/api/save',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({parts:payload,versions:expectedVersions}),timeout:60000},'Cloudflare 변경 데이터 저장');if(manual)setManualSaveProgress(88,'CACHE');const versions=result.versions||{},normalized=result.normalized||{};for(const part of partsToSave){const newVersion=Number(versions[part]);if(!Number.isInteger(newVersion)||newVersion<=expectedVersions[part]||!Object.prototype.hasOwnProperty.call(normalized,part))throw new Error('Cloudflare 저장 응답을 확인할 수 없습니다: '+part)}mergeNormalizedResult(normalized);if(manifest?.parts)for(const[part,version]of Object.entries(versions))manifest.parts[part]=Number(version)||manifest.parts[part];for(const part of partsToSave){const value=extractPart(part),version=Number(versions[part])||Number(manifest?.parts?.[part])||0;baselineJson.set(part,JSON.stringify(value));dirtyParts.delete(part);await putCachedPart('admin',part,version,value)}const st=$('syncStatusText');if(st)st.textContent='Cloudflare D1 저장 완료';if(manual)setManualSaveProgress(100,'SAVED');return true}catch(e){console.error('Cloudflare save failed',e);try{toast('온라인 저장 실패',e.message||String(e))}catch(_){}if(manual)setManualSaveProgress(0,'FAILED');return false}finally{cloudSaving=false;if(pendingSave){pendingSave=false;queueCloudSave()}}}
+  async function writeCloudNow(manual=false){
+    if(mode!=='admin'||!currentAdmin||window.__mwsAppReadyV130!==true){
+      const st=$('syncStatusText');if(st)st.textContent='관리자 온라인 데이터가 준비되지 않아 저장할 수 없습니다.';
+      return false;
+    }
+    if(manual)cloudSaveBlocked=false;
+    if(cloudSaveBlocked)return false;
+    if(cloudSaving){
+      pendingSave=true;
+      if(!manual)return false;
+      const deadline=Date.now()+65000;
+      while(cloudSaving&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,50));
+      if(cloudSaving)return false;
+    }
+    markDirty();
+    if(!dirtyParts.size){
+      if(manual){try{toast('SAVE','변경된 데이터가 없습니다.')}catch(_){}}
+      return true;
+    }
+    cloudSaving=true;
+    const partsToSave=[...dirtyParts];
+    if(manual)setManualSaveProgress(8,'PREP');
+    try{
+      const session=await fetchJson('/api/auth/session',{},'Admin 세션 확인');
+      if(!session.authenticated)throw new Error('Admin 세션이 만료되었습니다.');
+      const payload={},expectedVersions={},sentJson=new Map();
+      for(const part of partsToSave){
+        payload[part]=extractPart(part);
+        sentJson.set(part,JSON.stringify(payload[part]));
+        const expected=Number(manifest?.parts?.[part]);
+        if(!Number.isInteger(expected)||expected<0)throw new Error('온라인 저장 기준 버전이 없습니다: '+part);
+        expectedVersions[part]=expected;
+      }
+      if(manual)setManualSaveProgress(28,'UPLOAD');
+      const result=await fetchJson('/api/save',{
+        method:'POST',headers:{'content-type':'application/json'},
+        body:JSON.stringify({parts:payload,versions:expectedVersions}),timeout:60000
+      },'Cloudflare 변경 데이터 저장');
+      const versions=result?.versions||{},normalized=result?.normalized||{};
+      for(const part of partsToSave){
+        const next=Number(versions[part]);
+        if(!Number.isInteger(next)||next!==expectedVersions[part]+1||
+           !Object.prototype.hasOwnProperty.call(normalized,part))
+          throw new Error('서버 저장 응답에 버전 또는 데이터가 없습니다: '+part);
+      }
+      if(manual)setManualSaveProgress(80,'VERIFY');
+      // A 200 response alone is not proof. Confirm the authoritative D1 row on an
+      // uncached independent GET before advancing any client-side baseline.
+      const confirmed=new Map();
+      for(const part of partsToSave){
+        const row=await fetchJson('/api/parts/'+encodeURIComponent(part),{
+          cache:'no-store',headers:{'cache-control':'no-cache'}
+        },part+' D1 재조회');
+        if(Number(row?.version)!==Number(versions[part])||
+           JSON.stringify(row?.data)!==JSON.stringify(normalized[part])){
+          throw new Error('서버 저장 후 재조회 값이 다릅니다: '+part);
+        }
+        confirmed.set(part,row.data);
+      }
+      // Preserve edits made after the request snapshot. Never merge an older
+      // acknowledgement or cache value on top of newer in-memory edits.
+      for(const part of partsToSave){
+        const serverValue=confirmed.get(part);
+        const locallyChanged=JSON.stringify(extractPart(part))!==sentJson.get(part);
+        if(!locallyChanged)mergePart(part,serverValue,data);
+        baselineJson.set(part,JSON.stringify(serverValue));
+        manifest.parts[part]=Number(versions[part]);
+        await putCachedPart('admin',part,Number(versions[part]),serverValue);
+      }
+      markDirty();
+      cloudSaveBlocked=false;
+      const st=$('syncStatusText');
+      if(st)st.textContent=dirtyParts.size?'D1 저장 검증 완료 · 후속 변경 저장 대기':'Cloudflare D1 저장 및 재조회 완료';
+      if(manual)setManualSaveProgress(dirtyParts.size?90:100,dirtyParts.size?'PENDING':'SAVED');
+      return true;
+    }catch(e){
+      // A timed-out or conflicting request may already have committed: never
+      // discard local edits, silently retry against an unknown version, or
+      // claim success without a fresh authoritative server read.
+      cloudSaveBlocked=true;
+      const st=$('syncStatusText');if(st)st.textContent='온라인 저장 검증 실패 · 변경 내용을 유지 중';
+      console.error('Cloudflare save verification failed',e);
+      try{toast('온라인 저장 검증 실패','변경 내용을 유지 중입니다. 새로고침하지 말고 저장 상태를 확인하세요. '+(e.message||String(e)))}catch(_){}
+      if(manual)setManualSaveProgress(0,'FAILED');
+      return false;
+    }finally{
+      cloudSaving=false;
+      if(pendingSave||dirtyParts.size){
+        pendingSave=false;
+        if(!cloudSaveBlocked)queueCloudSave();
+      }
+    }
+  }
   window.mwsV55SaveNow=()=>writeCloudNow(true);
   function installSaveBridge(){const devicePersist=()=>{try{if(typeof mwsSaveDevicePrefs==='function')mwsSaveDevicePrefs(data)}catch(_){}if(mode==='admin')queueCloudSave();return true};try{persist=devicePersist;window.persist=devicePersist}catch(_){}const v55Save=function(reason='데이터 저장'){try{normalizeDataShape()}catch(_){try{normalizeMiniGameData()}catch(__){}}try{lastSyncReason=reason}catch(_){}try{if(typeof mwsSaveDevicePrefs==='function')mwsSaveDevicePrefs(data)}catch(_){}try{renderAll(reason)}catch(e){console.error('render after save',e)}try{window.dispatchEvent(new CustomEvent('mawang:datachange',{detail:{reason}}))}catch(_){}if(mode==='admin'){if(/^업적/.test(String(reason||''))){clearTimeout(cloudSaveTimer);markDirty();cloudSaveTimer=setTimeout(()=>writeCloudNow(false),0)}else queueCloudSave()}return true};try{saveData=v55Save;window.saveData=v55Save}catch(_){}}
 

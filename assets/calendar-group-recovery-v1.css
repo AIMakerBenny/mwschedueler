@@ -9,6 +9,8 @@
   background:color-mix(in srgb,var(--panel) 88%,var(--accent));
   min-width:0;
 }
+.calendar-group-recovery-v1:not([open]){display:block;padding:8px 12px}
+.calendar-group-recovery-v1 summary{cursor:pointer;font-size:12px;font-weight:750;color:var(--text)}
 .calendar-group-recovery-v1[hidden],.calendar-group-persist-status-v1[hidden]{display:none!important}
 .calendar-group-recovery-v1 h4{margin:0;font-size:14px;color:var(--text)}
 .calendar-group-recovery-v1 p{margin:0;font-size:12px;line-height:1.6;color:var(--muted)}

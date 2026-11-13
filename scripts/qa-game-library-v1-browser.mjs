@@ -22,6 +22,9 @@ let data={events:[
 ],contentGroups:[{id:'wow',name:'와우 포에버',color:'#0f8c95'},{id:'sbo',name:'SBO',color:'#5533ff'}],gameLibrary:[]};
 function saveData(reason){saved++;reasonHistory.push(reason);window.dispatchEvent(new CustomEvent('mawang:datachange',{detail:{reason}}));return true;}
 function toast(...args){notices.push(args.join(':'));}
+window.__mwsAppReadyV130=true;
+window.mwsV55SaveNow=async()=>true;
+window.fetch=async()=>({ok:true,json:async()=>({data:{gameLibrary:structuredClone(data.gameLibrary)}})});
 function applyEventPayloadWithRepeat(payload,id){Object.assign(data.events.find(x=>x.id===id),payload);}
 document.getElementById('saveEventBtn').onclick=()=>{
  applyEventPayloadWithRepeat({title:'방송 1',date:'2026-11-01',start:'20:00',end:'22:00',contentGroupId:'wow'},editingEventId);
@@ -40,7 +43,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  const initialSteamListed=$('gameLibListV1')?.textContent.includes('Counter-Strike 2');
  const unchangedBefore=JSON.stringify(data.events[1].steamGame)===JSON.stringify(legacy);
  $('gameLibAddToggleV1').click();
- const opened=!$('gameManualFormV1').hidden;
+ const opened=!$('gameManualFormV1').hidden&&$('gameManualModeTabV1').classList.contains('active')&&$('eventGameSteamSectionV1').hidden;
  $('gameManualNameV1').value='와우 포에버';
  $('gameManualPlatformV1').value='PC';
  $('gameManualImageUrlV1').value='https://example.com/wow.webp';

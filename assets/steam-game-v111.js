@@ -16,6 +16,7 @@ let scanTimer=null;
 let activeEditorEventId='';
 let eventModalWasOpen=false;
 let manualEditId='';
+let gameEntryMode='steam';
 
 
 function eventById(id){return getData()?.events?.find(event=>String(event?.id||'')===String(id||''))||null}
@@ -83,13 +84,25 @@ function closeManualForm(){
   const form=$('gameManualFormV1');
   if(form)form.hidden=true;
 }
+function setGameEntryMode(next){
+  gameEntryMode=next==='manual'?'manual':'steam';
+  const manual=gameEntryMode==='manual';
+  const steam=$('eventGameSteamSectionV1');
+  if(steam)steam.hidden=manual;
+  for(const [id,active] of [['gameSteamModeTabV1',!manual],['gameManualModeTabV1',manual]]){
+    const button=$(id);
+    if(button){button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));}
+  }
+  if(!manual)closeManualForm();
+}
 function openManualForm(game){
-  if(document.body.dataset.mwsMode==='public'){
+  if(document.body.dataset.mwsMode!=='admin'||window.__mwsAppReadyV130!==true){
     notice('게임 라이브러리','관리자 모드에서만 게임을 등록하거나 수정할 수 있습니다.');
     return;
   }
   const form=$('gameManualFormV1');
   if(!form)return;
+  setGameEntryMode('manual');
   const item=isManualGame(game)?normalizeGame(game):null;
   manualEditId=item?.id||'';
   form.hidden=false;
@@ -131,44 +144,57 @@ async function compressedGameImage(file){
   }finally{bitmap.close?.();}
 }
 async function saveManualGameForm(){
-  if(document.body.dataset.mwsMode==='public')return;
-  const d=getData();
-  if(!d)return;
+  if(document.body.dataset.mwsMode!=='admin'||window.__mwsAppReadyV130!==true){
+    notice('게임 등록','관리자 온라인 데이터 로딩 완료 후 등록해 주세요.');
+    return;
+  }
+  const d=getData();if(!d)return;
   const name=String($('gameManualNameV1')?.value||'').trim().slice(0,100);
   const platform=String($('gameManualPlatformV1')?.value||'PC').trim().slice(0,40);
   const rawUrl=String($('gameManualImageUrlV1')?.value||'').trim();
   const file=$('gameManualImageFileV1')?.files?.[0]||null;
-  if(!name){notice('게임 등록','게임 이름을 입력하세요.');return}
-  if(rawUrl&&!validImage(rawUrl)){notice('게임 등록','이미지는 HTTPS 주소를 입력해 주세요.');return}
-  const saveButton=$('gameManualSaveV1');
-  if(saveButton)saveButton.disabled=true;
+  if(!name){notice('게임 등록','게임 이름을 입력하세요.');return;}
+  if(rawUrl&&!validImage(rawUrl)){notice('게임 등록','이미지는 HTTPS 주소를 입력해 주세요.');return;}
+  const button=$('gameManualSaveV1');
+  if(button){button.disabled=true;button.textContent='D1 저장 및 재조회 중...';}
   try{
     if(!Array.isArray(d.gameLibrary))d.gameLibrary=[];
-    const position=manualEditId?d.gameLibrary.findIndex(item=>item?.id===manualEditId):-1;
-    if(manualEditId&&position<0)throw new Error('수정할 게임이 라이브러리에 없습니다.');
-    const previous=position>=0?{...d.gameLibrary[position]}:null;
+    const existing=manualEditId?d.gameLibrary.findIndex(game=>game?.id===manualEditId):-1;
+    if(manualEditId&&existing<0)throw new Error('수정할 게임이 라이브러리에 없습니다.');
+    const previous=existing>=0?d.gameLibrary[existing]:null;
     const image=file?await compressedGameImage(file):(rawUrl||previous?.image||'');
-    const item={source:'manual',id:manualEditId||`manual:${crypto.randomUUID()}`,name,platform,image};
-    const stored=normalizeGame(item);
+    const stored=normalizeGame({
+      source:'manual',id:manualEditId||'manual:'+crypto.randomUUID(),name,platform,image
+    });
     if(!stored)throw new Error('게임 정보가 올바르지 않습니다.');
-    const before=Array.isArray(d.gameLibrary)?[...d.gameLibrary]:[];
-    if(position>=0)d.gameLibrary[position]=stored;
+    // Preserve the ID for a retry; never duplicate a failed local attempt.
+    manualEditId=stored.id;
+    if(existing>=0)d.gameLibrary[existing]=stored;
     else d.gameLibrary.push(stored);
-    let saved=false;
-    try{saved=typeof saveData==='function'&&saveData(position>=0?'게임 라이브러리 수정':'게임 라이브러리 추가');}
-    catch(error){console.error('Game library persistence failed',error);}
-    if(!saved){
-      d.gameLibrary=before;
-      throw new Error('로컬 저장 실패. 게임 라이브러리를 원래 상태로 유지했습니다.');
-    }
+    if(typeof saveData!=='function'||!saveData(existing>=0?'게임 라이브러리 수정':'게임 라이브러리 추가'))
+      throw new Error('로컬 게임 정보 처리에 실패했습니다.');
+    if(typeof window.mwsV55SaveNow!=='function'||!(await window.mwsV55SaveNow()))
+      throw new Error('Cloudflare 온라인 저장을 확인하지 못했습니다. 입력 내용을 유지하고 있습니다.');
+    const response=await fetch('/api/parts/core',{
+      credentials:'same-origin',cache:'no-store',headers:{'cache-control':'no-cache'}
+    });
+    if(!response.ok)throw new Error('서버 게임 라이브러리 재조회 HTTP '+response.status);
+    const row=await response.json();
+    const remote=(Array.isArray(row?.data?.gameLibrary)?row.data.gameLibrary:[])
+      .find(game=>game?.id===stored.id);
+    if(!remote||remote.source!=='manual'||remote.name!==stored.name||
+       remote.platform!==stored.platform||remote.image!==stored.image)
+      throw new Error('서버에서 등록한 게임 또는 표지 이미지를 확인하지 못했습니다.');
     panelDraftGame=stored;
     closeManualForm();
-    renderPanelPreview();
-    markPanelSelected();
-    renderLibraryList();
-    notice('게임 라이브러리',`${name} 등록 정보가 저장되었습니다. 일정에 사용하려면 스케줄도 저장하세요.`);
-  }catch(error){notice('게임 등록 실패',error?.message||String(error));}
-  finally{if(saveButton)saveButton.disabled=false;}
+    renderPanelPreview();markPanelSelected();renderLibraryList();
+    notice('게임 라이브러리',name+' 저장 및 D1 재조회 완료. 일정에 연결하려면 스케줄도 저장하세요.');
+  }catch(error){
+    // Never discard local data when the server commit state is uncertain.
+    notice('게임 등록 검증 실패',(error?.message||String(error))+' 새로고침하지 말고 저장 상태를 확인하세요.');
+  }finally{
+    if(button){button.disabled=false;button.textContent='라이브러리 저장';}
+  }
 }
 function renderLibraryList(){
   const box=$('gameLibListV1');
@@ -229,6 +255,10 @@ function installCss(){
 .mws-game-preview-actions-v112 button{flex:1;padding:7px 9px;font-size:10px}
 .mws-game-preview-empty-v112{min-height:188px;display:grid;place-items:center;padding:22px;text-align:center;color:var(--muted);font-size:11px;line-height:1.65}
 .mws-game-preview-empty-mark-v112{width:48px;height:48px;margin:0 auto 10px;border:1px solid color-mix(in srgb,var(--accent) 42%,var(--border));border-radius:13px;display:grid;place-items:center;color:var(--accent);font-size:28px;font-weight:900;background:color-mix(in srgb,var(--accent) 8%,var(--input))}
+.mws-game-mode-tabs-v1{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:12px}
+.mws-game-mode-tabs-v1 button{font-size:12px;padding:9px 6px;border:1px solid var(--border);border-radius:8px}
+.mws-game-mode-tabs-v1 button.active{border-color:var(--accent);background:var(--input)}
+.mws-game-search-section-v112[hidden]{display:none!important}
 .mws-game-search-section-v112{margin-top:15px;min-height:0;display:flex;flex-direction:column;flex:1}
 .mws-game-search-label-v112{font-size:11px;font-weight:900;margin-bottom:7px}
 .mws-game-search-row-v112{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px}
@@ -293,11 +323,15 @@ function ensurePanel(){
   panel.className='event-game-panel-v112';
   panel.innerHTML=`
     <div class="space mws-game-panel-head-v112">
-      <div><h3>게임</h3><div class="muted small" style="margin-top:4px">이 스케줄에서 플레이할 Steam 게임을 연결합니다.</div></div>
+      <div><h3>게임</h3><div class="muted small" style="margin-top:4px">Steam 게임 또는 직접 등록 게임을 일정에 연결합니다.</div></div>
       <span class="chip">스케줄 저장 시 저장</span>
     </div>
     <div id="eventGamePreviewV112" class="mws-game-preview-v112"></div>
-    <div class="mws-game-search-section-v112">
+    <div class="mws-game-mode-tabs-v1" role="group" aria-label="게임 찾기 방식">
+      <button type="button" id="gameSteamModeTabV1" class="active" aria-pressed="true">Steam 게임</button>
+      <button type="button" id="gameManualModeTabV1" aria-pressed="false">직접 등록 게임</button>
+    </div>
+    <div id="eventGameSteamSectionV1" class="mws-game-search-section-v112">
       <div class="mws-game-search-label-v112">게임 찾기</div>
       <div class="mws-game-search-row-v112">
         <input id="eventGameSearchV112" autocomplete="off" placeholder="Steam 게임 이름 검색">
@@ -326,6 +360,10 @@ function ensurePanel(){
     </section>
     <div class="mws-game-panel-bottom-v112"><button type="button" class="secondary" id="eventGameRemoveV112">게임 연결 해제</button></div>`;
   info.insertAdjacentElement('afterend',panel);
+  // Move the existing form directly beneath the source selector.
+  $('gameManualModeTabV1').closest('.mws-game-mode-tabs-v1').insertAdjacentElement('afterend',$('gameManualFormV1'));
+  $('gameSteamModeTabV1').addEventListener('click',()=>setGameEntryMode('steam'));
+  $('gameManualModeTabV1').addEventListener('click',()=>openManualForm(null));
 
   const input=$('eventGameSearchV112');
   input.addEventListener('input',()=>{
@@ -457,7 +495,7 @@ function syncEditorPanel(force=false){
     activeEditorEventId=id;
     panelDraftGame=normalizeGame(event?.steamGame);
     resetPanelSearch();
-    closeManualForm();
+    setGameEntryMode('steam');
     renderPanelPreview();
     renderLibraryList();
   }
