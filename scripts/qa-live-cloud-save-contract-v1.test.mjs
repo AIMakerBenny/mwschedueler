@@ -29,7 +29,7 @@ for(const path of clientPaths){
       mode:'admin',currentAdmin:{id:1},
       cloudSaving:false,pendingSave:false,dirtyParts:new Set(['core']),
       loadedParts:new Set(['core']),manifest:{parts:{core:74}},baselineJson:baseline,
-      window:{__mwsAppReadyV130:true},
+      window:{__mwsAppReadyV130:true},data:current,
       markDirty(){
         ctx.dirtyParts.clear();
         if(JSON.stringify(current.core)!==baseline.get('core'))ctx.dirtyParts.add('core');
