@@ -31,8 +31,8 @@ for(const path of clientPaths){
       loadedParts:new Set(['core']),manifest:{parts:{core:74}},baselineJson:baseline,
       window:{__mwsAppReadyV130:true},
       markDirty(){
-        this.dirtyParts.clear();
-        if(JSON.stringify(current.core)!==this.baselineJson.get('core'))this.dirtyParts.add('core');
+        ctx.dirtyParts.clear();
+        if(JSON.stringify(current.core)!==baseline.get('core'))ctx.dirtyParts.add('core');
       },
       extractPart(part){assert.equal(part,'core');return structuredClone(current.core)},
       mergePart(part,value){current[part]=structuredClone(value)},
