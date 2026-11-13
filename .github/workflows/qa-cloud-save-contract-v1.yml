@@ -1,0 +1,45 @@
+name: Cloud D1 save contract and calendar drag audit QA
+on:
+  pull_request:
+    branches:
+      - cloudflare-production
+    paths:
+      - 'assets/cloud-v1.1.js'
+      - 'assets/cloud-runtime-v130.js'
+      - 'assets/cloud-v1.1-loader.js'
+      - 'scripts/qa-live-cloud-save-contract-v1.test.mjs'
+      - 'scripts/run-phase38-calendar-preview-mousemove-audit.mjs'
+      - 'scripts/run-phase174-calendar-pointer-drag-audit.mjs'
+      - '.github/workflows/qa-cloud-save-contract-v1.yml'
+  push:
+    branches:
+      - 'fix/cloud-save-readiness-version-contract-v1-20261113'
+permissions:
+  contents: read
+jobs:
+  cloud-save:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Syntax
+        run: |
+          node --check assets/cloud-runtime-v130.js
+          node --check assets/cloud-v1.1-loader.js
+          node --check scripts/qa-live-cloud-save-contract-v1.test.mjs
+      - name: Real client save and online/offline hydration state
+        run: node --test scripts/qa-live-cloud-save-contract-v1.test.mjs
+      - name: Delegated preview and handle-only pointer drag
+        run: |
+          node scripts/run-phase38-calendar-preview-mousemove-audit.mjs
+          node scripts/run-phase174-calendar-pointer-drag-audit.mjs
+      - name: Full cumulative integration audit
+        run: node scripts/run-current-full-integration-audit.mjs > /tmp/full-audit.log || { tail -n 9 /tmp/full-audit.log; exit 1; }
+      - name: Existing Cloudflare and group recovery regressions
+        run: |
+          node --test scripts/qa-active-cloudflare-core-groups-v1.test.mjs
+          node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs
+          node scripts/qa-calendar-group-recovery-v1-browser.mjs
