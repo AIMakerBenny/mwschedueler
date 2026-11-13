@@ -1,0 +1,23 @@
+/* Recover previously orphaned calendar group IDs without rewriting schedules. */
+.calendar-group-recovery-v1{
+  display:grid;
+  gap:10px;
+  margin-top:12px;
+  padding:12px;
+  border:1px solid color-mix(in srgb, var(--accent) 60%,var(--border));
+  border-radius:10px;
+  background:color-mix(in srgb,var(--panel) 88%,var(--accent));
+  min-width:0;
+}
+.calendar-group-recovery-v1[hidden],.calendar-group-persist-status-v1[hidden]{display:none!important}
+.calendar-group-recovery-v1 h4{margin:0;font-size:14px;color:var(--text)}
+.calendar-group-recovery-v1 p{margin:0;font-size:12px;line-height:1.6;color:var(--muted)}
+.calendar-group-recovery-row-v1{min-width:0;padding:10px;border:1px solid var(--border);border-radius:9px;display:grid;gap:7px;background:var(--input)}
+.calendar-group-recovery-label-v1{font-size:12px;font-weight:800}
+.calendar-group-recovery-preview-v1{font-size:11px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
+.calendar-group-recovery-controls-v1{display:flex;gap:8px;align-items:center;min-width:0;flex-wrap:wrap}
+.calendar-group-recovery-controls-v1 input[type=text]{min-width:145px;flex:1 1 170px;height:36px;font-size:12px}
+.calendar-group-recovery-controls-v1 input[type=color]{width:44px;min-width:44px;height:36px;box-sizing:border-box;padding:3px}
+.calendar-group-recovery-controls-v1 button{min-height:36px;font-size:12px}
+.calendar-group-persist-status-v1{padding:9px 12px;margin:8px 0;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--text);font-size:12px;line-height:1.5}
+.calendar-group-persist-status-v1.error{border-color:var(--danger);color:var(--danger)}
