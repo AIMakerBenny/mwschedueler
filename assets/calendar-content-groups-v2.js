@@ -233,6 +233,164 @@
     data.contentGroups.push(group);
     return group;
   }
+
+  // The D1 core could previously lose group definitions while events retained
+  // their original contentGroupId values. Never generate replacement IDs.
+  function orphanGroupCounts(){
+    const known=new Set(groups().map(group=>String(group.id||'')));
+    const byId=new Map();
+    for(const e of Array.isArray(data.events)?data.events:[]){
+      const id=String(e?.contentGroupId||'').trim();
+      if(!id||known.has(id))continue;
+      if(!byId.has(id))byId.set(id,{id,count:0,titles:[]});
+      const item=byId.get(id);
+      item.count++;
+      const title=String(e?.title||'').trim();
+      if(title&&item.titles.length<3&&!item.titles.includes(title))item.titles.push(title);
+    }
+    return [...byId.values()].sort((a,b)=>b.count-a.count||a.id.localeCompare(b.id));
+  }
+  function groupWriteStatus(message,failed=false){
+    for(const hostId of ['calendarGroupPanelV2','calendarGroupManagerPanelV4']){
+      const host=$(hostId);
+      if(!host)continue;
+      let status=host.querySelector('.calendar-group-persist-status-v1');
+      if(!status){
+        status=document.createElement('div');
+        status.className='calendar-group-persist-status-v1';
+        host.prepend(status);
+      }
+      status.textContent=String(message||'');
+      status.hidden=!message;
+      status.classList.toggle('error',Boolean(failed));
+    }
+    if(failed){
+      const globalStatus=$('syncStatusText');
+      if(globalStatus)globalStatus.textContent='콘텐츠 그룹 저장 실패';
+    }
+  }
+  async function persistGroupChange(reason,verifyEventIds=[]){
+    if(document.body.dataset.mwsMode!=='admin'||root.__mwsAppReadyV130!==true){
+      groupWriteStatus('관리자 로그인과 데이터 불러오기가 완료된 후 저장해 주세요.',true);
+      toast('콘텐츠 그룹 저장 실패','관리자 데이터 로딩 상태를 확인해 주세요.');
+      return false;
+    }
+    if(typeof saveData!=='function'||typeof root.mwsV55SaveNow!=='function'){
+      groupWriteStatus('온라인 저장 기능을 사용할 수 없습니다. 이 페이지에서 이동하지 마세요.',true);
+      toast('콘텐츠 그룹 저장 실패','온라인 저장 기능을 사용할 수 없습니다.');
+      return false;
+    }
+    const expectedGroups=groups().map(g=>({id:g.id,name:g.name,color:g.color}));
+    const eventMap=new Map((Array.isArray(data.events)?data.events:[]).map(e=>[String(e.id),String(e.contentGroupId||'')]));
+    groupWriteStatus('Cloudflare D1에 저장하고 검증하는 중...');
+    try{
+      saveData(reason);
+      const saved=await root.mwsV55SaveNow();
+      if(!saved)throw new Error('온라인 저장 요청이 완료되지 않았습니다.');
+      const coreResponse=await fetch('/api/parts/core',{credentials:'same-origin',cache:'no-store'});
+      if(!coreResponse.ok)throw new Error('서버 그룹 목록을 검증하지 못했습니다. HTTP '+coreResponse.status);
+      const coreRow=await coreResponse.json();
+      const serverGroups=Array.isArray(coreRow?.data?.contentGroups)?coreRow.data.contentGroups:[];
+      for(const expected of expectedGroups){
+        const actual=serverGroups.find(g=>g.id===expected.id);
+        if(!actual||actual.name!==expected.name||actual.color!==expected.color)
+          throw new Error('그룹 정의가 서버에 반영되지 않았습니다.');
+      }
+      // A deleted group must also be absent from the core.
+      const expectedIds=new Set(expectedGroups.map(g=>g.id));
+      if(serverGroups.some(g=>!expectedIds.has(g.id)))
+        throw new Error('서버 그룹 목록이 현재 편집 내용과 일치하지 않습니다.');
+      if(verifyEventIds.length){
+        const eventsResponse=await fetch('/api/parts/events',{credentials:'same-origin',cache:'no-store'});
+        if(!eventsResponse.ok)throw new Error('서버 일정 연결을 검증하지 못했습니다. HTTP '+eventsResponse.status);
+        const eventsRow=await eventsResponse.json();
+        const remote=new Map((Array.isArray(eventsRow?.data)?eventsRow.data:[]).map(e=>[String(e.id),String(e.contentGroupId||'')]));
+        for(const id of verifyEventIds){
+          if(!remote.has(String(id))||remote.get(String(id))!==eventMap.get(String(id)))
+            throw new Error('일정 그룹 연결이 서버에 반영되지 않았습니다.');
+        }
+      }
+      groupWriteStatus('Cloudflare D1 저장 및 재조회 완료');
+      return true;
+    }catch(error){
+      const message=String(error?.message||error);
+      groupWriteStatus('온라인 저장 실패. 새로고침하지 말고 다시 저장하세요. '+message,true);
+      toast('콘텐츠 그룹 저장 실패',message);
+      console.error('Content group save verification failed',error);
+      return false;
+    }
+  }
+  function renderOrphanRecovery(){
+    const orphans=orphanGroupCounts();
+    for(const [hostId,boxId] of [
+      ['calendarGroupPanelV2','calendarGroupRecoveryPanelV1'],
+      ['calendarGroupManagerPanelV4','calendarGroupManagerRecoveryV1']
+    ]){
+      const host=$(hostId);
+      if(!host)continue;
+      let box=$(boxId);
+      if(!box){
+        box=document.createElement('div');
+        box.id=boxId;
+        box.className='calendar-group-recovery-v1';
+        host.appendChild(box);
+      }
+      box.hidden=!orphans.length;
+      box.replaceChildren();
+      if(!orphans.length)continue;
+      const h=document.createElement('h4');
+      h.textContent='기존 그룹 연결 복구 - '+orphans.length+'개 그룹';
+      const p=document.createElement('p');
+      p.textContent='기존 일정 '+orphans.reduce((n,item)=>n+item.count,0)+'개에 그룹 ID가 남아 있습니다. 그룹 이름과 색상을 직접 확인하고 복구하면 기존 일정 연결이 유지됩니다. 새 그룹 ID는 만들지 않습니다.';
+      box.append(h,p);
+      for(const orphan of orphans){
+        const row=document.createElement('div');
+        row.className='calendar-group-recovery-row-v1';
+        const label=document.createElement('div');
+        label.className='calendar-group-recovery-label-v1';
+        label.textContent='미복구 그룹 - '+orphan.count+'개 일정 · ID '+orphan.id.slice(0,8);
+        const preview=document.createElement('div');
+        preview.className='calendar-group-recovery-preview-v1';
+        preview.textContent='연결된 일정 예시: '+(orphan.titles.join(' / ')||'제목 없음');
+        const controls=document.createElement('div');
+        controls.className='calendar-group-recovery-controls-v1';
+        const name=document.createElement('input');
+        name.type='text';name.maxLength=64;
+        name.placeholder='확인한 기존 그룹 이름';
+        name.setAttribute('aria-label','미복구 그룹 '+orphan.id.slice(0,8)+' 이름');
+        const color=document.createElement('input');
+        color.type='color';color.value='#0f8c95';
+        color.title='복구할 그룹 색상';
+        const button=document.createElement('button');
+        button.type='button';button.className='secondary';
+        button.textContent='원래 ID로 복구';
+        button.addEventListener('click',async()=>{
+          const title=name.value.trim();
+          if(!title||title.length>64){toast('그룹 복구','그룹 이름을 1~64자로 입력해 주세요.');return}
+          if(find(orphan.id)){redrawSelects();return}
+          if(groups().some(g=>g.name.toLocaleLowerCase('ko-KR')===title.toLocaleLowerCase('ko-KR'))){
+            toast('그룹 복구','동일한 이름이 이미 있습니다. 기존 그룹을 확인해 주세요.');return;
+          }
+          if(document.body.dataset.mwsMode!=='admin'||root.__mwsAppReadyV130!==true){
+            toast('그룹 복구','관리자 데이터 로딩이 끝난 후 복구해 주세요.');return;
+          }
+          button.disabled=true;
+          data.contentGroups.push({id:orphan.id,name:title,color:safeColor(color.value)});
+          redrawSelects();
+          const ok=await persistGroupChange('기존 콘텐츠 그룹 ID 복구');
+          if(ok){
+            redrawSelects();
+            toast('그룹 복구',title+' - 기존 '+orphan.count+'개 일정 연결 유지, 서버 저장 완료');
+          }
+          button.disabled=false;
+        });
+        controls.append(name,color,button);
+        row.append(label,preview,controls);
+        box.appendChild(row);
+      }
+    }
+  }
+
   function redrawSelects(preserve,managerPreserve){
     options($('calendarGroupTargetV2'),preserve);
     options($('calendarGroupManageTargetV4'),managerPreserve);
@@ -245,6 +403,7 @@
     renderGroupSearch('panel',false);
     renderGroupSearch('manager',false);
     renderGroupSearch('editor',false);
+    renderOrphanRecovery();
   }
   function closeManager(){
     const box=$('calendarGroupManagerPanelV4'),button=$('calendarGroupManageToggleV4');
@@ -365,6 +524,8 @@
     });
     $('evContentGroupCreateV2')?.addEventListener('click',createFromEditor);
     root.addEventListener('mawang:datachange',()=>redrawSelects($('calendarGroupTargetV2')?.value));
+    root.addEventListener('mws:app-ready',()=>redrawSelects($('calendarGroupTargetV2')?.value));
+    root.addEventListener('mws:parts-loaded',()=>redrawSelects($('calendarGroupTargetV2')?.value));
     redrawSelects('');
   }
   root.mwsCalendarContentGroupsV2=Object.freeze({
