@@ -18,6 +18,8 @@ on:
       - 'assets/cloud-runtime-v130.js'
       - 'assets/cloud-v1.1-loader.js'
       - 'src/index.js'
+      - 'src/cf-v111-auth.js'
+      - 'scripts/qa-active-cloudflare-core-groups-v1.test.mjs'
       - 'scripts/qa-game-library-v1.test.mjs'
       - 'scripts/qa-game-library-v1-browser.mjs'
 
@@ -50,6 +52,7 @@ jobs:
           node --check assets/cloud-v5.5.js
           node --check src/index.js
           node --check src/cf-v111-entry.js
+          node --check src/cf-v111-auth.js
           node --check assets/soop-contact-autofill-v1.js
           node --check assets/steam-game-v111.js
           node --check assets/cloud-v1.1-loader.js
@@ -68,6 +71,7 @@ jobs:
           node --test scripts/qa-game-library-v1.test.mjs
           node scripts/qa-event-sidebar-tabs-v5-browser.mjs
           node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs
+          node --test scripts/qa-active-cloudflare-core-groups-v1.test.mjs
           node --test scripts/qa-soop-contact-autofill-v1.test.mjs
       - name: Install deployment dependencies
         run: npm install
