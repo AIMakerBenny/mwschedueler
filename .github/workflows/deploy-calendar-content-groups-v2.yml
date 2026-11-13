@@ -20,6 +20,7 @@ on:
       - 'src/index.js'
       - 'src/cf-v111-auth.js'
       - 'scripts/qa-active-cloudflare-core-groups-v1.test.mjs'
+      - 'scripts/qa-live-calendar-core-summary-v1.mjs'
       - 'scripts/qa-game-library-v1.test.mjs'
       - 'scripts/qa-game-library-v1-browser.mjs'
 
@@ -162,6 +163,9 @@ jobs:
           done
           test "$ok" = 1
           echo "EVENT_SIDEBAR_V5_PRODUCTION_OK"
+      - name: Read-only production group and linked-event health
+        continue-on-error: true
+        run: node scripts/qa-live-calendar-core-summary-v1.mjs
       - name: Publish scoped Cloudflare deployment result
         if: always()
         env:
