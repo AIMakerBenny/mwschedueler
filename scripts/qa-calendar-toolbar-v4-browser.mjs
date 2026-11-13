@@ -44,6 +44,12 @@ function saveData(reason){
  return true;
 }
 function toast(){}
+document.body.dataset.mwsMode='admin';
+window.__mwsAppReadyV130=true;
+window.mwsV55SaveNow=async()=>true;
+window.fetch=async url=>({ok:true,json:async()=>({
+  data:String(url).includes('/core')?{contentGroups:structuredClone(data.contentGroups)}:structuredClone(data.events)
+})});
 function hideCalendarEventPreview(){}
 function confirm(){return true}
 `;
