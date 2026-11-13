@@ -330,25 +330,30 @@
   }
   function renderOrphanRecovery(){
     const orphans=orphanGroupCounts();
+    // Recovery belongs only to the separately opened Admin group manager.
+    // The ordinary calendar group selector must never grow an emergency panel.
     for(const [hostId,boxId] of [
-      ['calendarGroupPanelV2','calendarGroupRecoveryPanelV1'],
       ['calendarGroupManagerPanelV4','calendarGroupManagerRecoveryV1']
     ]){
       const host=$(hostId);
       if(!host)continue;
       let box=$(boxId);
       if(!box){
-        box=document.createElement('div');
+        box=document.createElement('details');
         box.id=boxId;
         box.className='calendar-group-recovery-v1';
         host.appendChild(box);
       }
-      box.hidden=!orphans.length;
+      box.hidden=!orphans.length||document.body.dataset.mwsMode!=='admin';
       const signature=orphans.map(item=>item.id+':'+item.count).join('|');
       if(box.dataset.mwsOrphanSignatureV1===signature)continue;
       box.dataset.mwsOrphanSignatureV1=signature;
       box.replaceChildren();
+      box.open=false;
       if(!orphans.length)continue;
+      const summary=document.createElement('summary');
+      summary.textContent='고급 복구 · 연결 정보가 누락된 그룹 '+orphans.length+'개';
+      box.appendChild(summary);
       const h=document.createElement('h4');
       h.textContent='기존 그룹 연결 복구 - '+orphans.length+'개 그룹';
       const p=document.createElement('p');
