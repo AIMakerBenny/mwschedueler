@@ -344,6 +344,9 @@
         host.appendChild(box);
       }
       box.hidden=!orphans.length;
+      const signature=orphans.map(item=>item.id+':'+item.count).join('|');
+      if(box.dataset.mwsOrphanSignatureV1===signature)continue;
+      box.dataset.mwsOrphanSignatureV1=signature;
       box.replaceChildren();
       if(!orphans.length)continue;
       const h=document.createElement('h4');
