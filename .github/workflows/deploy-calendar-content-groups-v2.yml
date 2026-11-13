@@ -105,11 +105,11 @@ jobs:
           for i in $(seq 1 3); do
             t=$(date +%s)
             if curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/?scoped-calgroup-v2=$t" -o /tmp/group-index.html \
-                && grep -Fq 'calendar-content-groups-v2.js?v=6-recovery-verified' /tmp/group-index.html \
-                && grep -Fq 'assets/calendar-group-recovery-v1.css?v=1' /tmp/group-index.html \
+                && grep -Fq 'calendar-content-groups-v2.js?v=7-save-contract-bulk' /tmp/group-index.html \
+                && grep -Fq 'assets/calendar-group-recovery-v1.css?v=2' /tmp/group-index.html \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-group-recovery-v1.css?check=$t" -o /tmp/group-recovery.css \
                 && grep -Fq 'calendar-group-recovery-row-v1' /tmp/group-recovery.css \
-                && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/calendar-content-groups-v2.js?v=5&check=$t" -o /tmp/group-manager.js \
+                && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/calendar-content-groups-v2.js?v=7-save-contract-bulk&check=$t" -o /tmp/group-manager.js \
                 && grep -Fq 'mwsCalendarContentGroupsV2' /tmp/group-manager.js \
                 && grep -Fq 'renderGroupSearch' /tmp/group-manager.js \
                 && grep -Fq 'renderOrphanRecovery' /tmp/group-manager.js \
