@@ -1,0 +1,34 @@
+name: Active Cloudflare D1 core persistence QA
+on:
+  pull_request:
+    branches:
+      - cloudflare-production
+    paths:
+      - 'src/cf-v111-auth.js'
+      - 'src/cf-v111-entry.js'
+      - 'scripts/qa-active-cloudflare-core-groups-v1.test.mjs'
+      - '.github/workflows/qa-active-cloudflare-core-groups-v1.yml'
+  push:
+    branches:
+      - 'fix/cloudflare-core-groups-game-library-v1-20261113'
+permissions:
+  contents: read
+jobs:
+  d1-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate actual worker and script syntax
+        run: |
+          node --check src/cf-v111-auth.js
+          node --check src/cf-v111-entry.js
+          node --check scripts/qa-active-cloudflare-core-groups-v1.test.mjs
+      - name: Confirm active D1 worker saves groups and game library
+        run: |
+          node --test scripts/qa-active-cloudflare-core-groups-v1.test.mjs
+          node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs
+          node --test scripts/qa-game-library-v1.test.mjs
