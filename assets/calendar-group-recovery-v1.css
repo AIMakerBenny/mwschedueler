@@ -21,3 +21,5 @@
 .calendar-group-recovery-controls-v1 button{min-height:36px;font-size:12px}
 .calendar-group-persist-status-v1{padding:9px 12px;margin:8px 0;border-radius:8px;background:var(--input);border:1px solid var(--border);color:var(--text);font-size:12px;line-height:1.5}
 .calendar-group-persist-status-v1.error{border-color:var(--danger);color:var(--danger)}
+
+.calendar-group-bulk-recovery-v1{justify-self:start;min-height:38px;padding:8px 12px;font-size:12px;font-weight:750}
