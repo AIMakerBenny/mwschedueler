@@ -105,11 +105,11 @@ jobs:
           for i in $(seq 1 3); do
             t=$(date +%s)
             if curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/?scoped-calgroup-v2=$t" -o /tmp/group-index.html \
-                && grep -Fq 'calendar-content-groups-v2.js?v=7-save-contract-bulk' /tmp/group-index.html \
-                && grep -Fq 'assets/calendar-group-recovery-v1.css?v=2' /tmp/group-index.html \
+                && grep -Fq 'calendar-content-groups-v2.js?v=8-recovery-manager' /tmp/group-index.html \
+                && grep -Fq 'assets/calendar-group-recovery-v1.css?v=3-manager-collapsed' /tmp/group-index.html \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-group-recovery-v1.css?check=$t" -o /tmp/group-recovery.css \
                 && grep -Fq 'calendar-group-recovery-row-v1' /tmp/group-recovery.css \
-                && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/calendar-content-groups-v2.js?v=7-save-contract-bulk&check=$t" -o /tmp/group-manager.js \
+                && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/calendar-content-groups-v2.js?v=8-recovery-manager&check=$t" -o /tmp/group-manager.js \
                 && grep -Fq 'mwsCalendarContentGroupsV2' /tmp/group-manager.js \
                 && grep -Fq 'renderGroupSearch' /tmp/group-manager.js \
                 && grep -Fq 'renderOrphanRecovery' /tmp/group-manager.js \
@@ -127,8 +127,8 @@ jobs:
                 && grep -Fq 'scrollbar-gutter:stable' /tmp/sidebar-rail.css \
                 && grep -Fq 'grid-template-columns:72px' /tmp/sidebar-rail.css \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/cloud-v1.1-loader.js?check=$t" -o /tmp/game-loader.js \
-                && grep -Fq '1.1.4-perf30&game-library-v1=1' /tmp/game-loader.js \
-                && grep -Fq 'save-contract-v1=1' /tmp/game-loader.js \
+                && grep -Fq '1.1.4-perf30&manual-game-readback-v2=1' /tmp/game-loader.js \
+                && grep -Fq 'save-readback-v2=1' /tmp/game-loader.js \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/steam-game-v111.js?check=$t" -o /tmp/game-panel.js \
                 && grep -Fq 'gameManualFormV1' /tmp/game-panel.js \
                 && grep -Fq 'gameLibListV1' /tmp/game-panel.js \
