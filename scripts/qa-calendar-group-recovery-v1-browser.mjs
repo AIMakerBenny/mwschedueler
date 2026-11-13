@@ -6,7 +6,7 @@ import path from 'node:path';
 const load=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const manager=load('assets/calendar-content-groups-v2.js');
 const html=load('index.html');
-assert(html.includes('calendar-content-groups-v2.js?v=6-recovery-verified'));
+assert(html.includes('calendar-content-groups-v2.js?v=7-save-contract-bulk'));
 const chrome=['google-chrome','google-chrome-stable','chromium','chromium-browser']
   .map(x=>spawnSync('which',[x],{encoding:'utf8'})).find(x=>x.status===0)?.stdout.trim();
 assert(chrome,'Chromium unavailable');
@@ -60,8 +60,16 @@ const check=[
  'const refusedFalseSuccess=error?.classList.contains("error")&&error?.textContent.includes("온라인 저장 실패");',
  'const serverUntouched=serverCore.contentGroups.length===3;',
  'const noFakeSuccess=!notices.some(x=>x.includes("저장 실패 테스트")&&x.includes("온라인 저장 완료"));',
- 'const ok=initial&&initialNoGroups&&inputPreserved&&groupsSaved&&linksIntact&&noOrphans&&managerOptions&&reloadNames&&refusedFalseSuccess&&serverUntouched&&noFakeSuccess;',
- '$("qa-result").textContent=JSON.stringify({ok,initial,initialNoGroups,inputPreserved,groupsSaved,linksIntact,noOrphans,managerOptions,reloadNames,refusedFalseSuccess,serverUntouched,noFakeSuccess,recovered:serverCore.contentGroups.length,events:serverEvents.length,saves:saveCalls});',
+ 'discardWrites=false;data={events:structuredClone(serverEvents),contentGroups:[]};serverCore={contentGroups:[]};',
+ 'dispatchEvent(new Event("mws:app-ready"));',
+ 'const bulkButton=$("calendarGroupRecoveryPanelV1").querySelector(".calendar-group-bulk-recovery-v1");',
+ 'const bulkShown=Boolean(bulkButton)&&!$("calendarGroupRecoveryPanelV1").hidden;',
+ 'bulkButton?.click();await sleep();',
+ 'const bulkRestored=serverCore.contentGroups.length===3&&originals.every(id=>serverCore.contentGroups.some(g=>g.id===id&&g.name.startsWith("이름 미확인 그룹 ")&&g.color==="#808080"));',
+ 'const bulkLinksIntact=data.events.length===19&&originalLinks.every(([id,link])=>data.events.find(e=>e.id===id).contentGroupId===link);',
+ 'const bulkHidesRecovery=$("calendarGroupRecoveryPanelV1").hidden;',
+ 'const ok=initial&&initialNoGroups&&inputPreserved&&groupsSaved&&linksIntact&&noOrphans&&managerOptions&&reloadNames&&refusedFalseSuccess&&serverUntouched&&noFakeSuccess&&bulkShown&&bulkRestored&&bulkLinksIntact&&bulkHidesRecovery;',
+ '$("qa-result").textContent=JSON.stringify({ok,initial,initialNoGroups,inputPreserved,groupsSaved,linksIntact,noOrphans,managerOptions,reloadNames,refusedFalseSuccess,serverUntouched,noFakeSuccess,bulkShown,bulkRestored,bulkLinksIntact,bulkHidesRecovery,recovered:serverCore.contentGroups.length,events:serverEvents.length,saves:saveCalls});',
  '})().catch(error=>{document.getElementById("qa-result").textContent=JSON.stringify({ok:false,error:String(error),stack:error.stack})});'
 ].join('\n');
 const controls='<section id="calendar"><button id="calendarGroupToggleV2"></button><button id="calendarGroupManageToggleV4"></button>'+

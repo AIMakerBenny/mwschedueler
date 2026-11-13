@@ -11,13 +11,20 @@ export function runPhase174CalendarPointerDragAudit(){
     'function beginCalendarPointerEventDragV174(event,node){',
     'function moveCalendarPointerEventDragV174(event){',
     'function endCalendarPointerEventDragV174(event){',
-    "el.onpointerdown=e=>beginCalendarPointerEventDragV174(e,el);",
     "saveData('일정 이동');",
     'addEventToCalendarClipboard(id);',
-    'calendarSuppressEventClickV174',
-    "state.source.setAttribute('draggable',calendarPcDragEnabledV174()?'true':'false')"
+    'calendarSuppressEventClickV174'
   ])if(!core.includes(token))issues.push('Phase 174 runtime missing: '+token);
 
+  // The modern design starts pointer drag only from the explicit drag handle.
+  // Binding the entire event card would break ordinary edit/selection clicks.
+  if(!core.includes('moveHandle.onpointerdown=e=>{')||
+     !core.includes('beginCalendarPointerEventDragV174(e,el);')||
+     !core.includes('el.onpointerdown=null;'))
+    issues.push('calendar pointer drag is not isolated to the event move handle');
+  if(!core.includes("state.source.setAttribute('draggable','false');")||
+     !core.includes('if(handle)handle.draggable=calendarPcDragEnabledV174();'))
+    issues.push('pointer drag cleanup does not preserve handle-only native drag');
   if(!core.includes("document.body.dataset.deviceMode!=='mobile'"))issues.push('PC pointer drag is not gated away from mobile mode');
   if(!core.includes("document.body.dataset.resolution!=='mobile'"))issues.push('PC pointer drag is not gated away from mobile resolution');
   if(!core.includes('Math.hypot(event.clientX-state.startX,event.clientY-state.startY)'))issues.push('pointer drag has no movement threshold');

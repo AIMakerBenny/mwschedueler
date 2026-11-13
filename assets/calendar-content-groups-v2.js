@@ -354,6 +354,36 @@
       const p=document.createElement('p');
       p.textContent='기존 일정 '+orphans.reduce((n,item)=>n+item.count,0)+'개에 그룹 ID가 남아 있습니다. 그룹 이름과 색상을 직접 확인하고 복구하면 기존 일정 연결이 유지됩니다. 새 그룹 ID는 만들지 않습니다.';
       box.append(h,p);
+      // Original names and colors were not preserved in D1. Allow an explicit
+      // bulk recovery using clearly identified temporary names, never guesses.
+      const bulk=document.createElement('button');
+      bulk.type='button';
+      bulk.className='secondary calendar-group-bulk-recovery-v1';
+      bulk.textContent='기존 그룹 ID 전체 복구 - 임시 이름';
+      bulk.addEventListener('click',async()=>{
+        if(!canWriteGroup())return;
+        const missing=orphanGroupCounts();
+        if(!missing.length)return;
+        if(!confirm('기존 일정에 남은 '+missing.length+'개 그룹 ID를 유지하고 이름 미확인 그룹이라는 임시 이름으로 복구합니다. 원래 이름과 색상은 자동으로 알 수 없으며, 복구 후 그룹 관리에서 수정할 수 있습니다. 진행하시겠습니까?'))return;
+        bulk.disabled=true;
+        const current=new Set(groups().map(g=>String(g.name||'').toLocaleLowerCase('ko-KR')));
+        let sequence=1;
+        const recovered=missing.map(item=>{
+          let name='이름 미확인 그룹 '+sequence++;
+          while(current.has(name.toLocaleLowerCase('ko-KR')))name='이름 미확인 그룹 '+sequence++;
+          current.add(name.toLocaleLowerCase('ko-KR'));
+          return{id:item.id,name,color:'#808080'};
+        });
+        data.contentGroups.push(...recovered);
+        redrawSelects();
+        const saved=await persistGroupChange('기존 그룹 ID 전체 임시 이름 복구');
+        if(saved){
+          toast('그룹 복구',recovered.length+'개 그룹 ID 복구 및 Cloudflare 저장 완료. 원래 이름과 색상은 그룹 관리에서 수정해 주세요.');
+          redrawSelects();
+        }
+        bulk.disabled=false;
+      });
+      box.appendChild(bulk);
       for(const orphan of orphans){
         const row=document.createElement('div');
         row.className='calendar-group-recovery-row-v1';
