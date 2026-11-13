@@ -14,6 +14,12 @@ on:
       - 'index.html'
       - 'scripts/qa-calendar-responsive-v1-browser.mjs'
       - 'assets/steam-game-v111.js'
+      - 'assets/calendar-content-groups-v2.js'
+      - 'assets/calendar-group-recovery-v1.css'
+      - 'scripts/qa-calendar-group-recovery-v1-browser.mjs'
+      - 'scripts/qa-calendar-content-groups-v2-browser.mjs'
+      - 'scripts/qa-calendar-content-groups-v3-search-browser.mjs'
+      - 'scripts/qa-calendar-groups-cloud-save-v1.test.mjs'
       - 'assets/cloud-v1.1.js'
       - 'assets/cloud-runtime-v130.js'
       - 'assets/cloud-v1.1-loader.js'
@@ -64,6 +70,7 @@ jobs:
           node scripts/qa-calendar-continuous-series-browser-v1.mjs
           node scripts/qa-calendar-content-groups-v2-browser.mjs
           node scripts/qa-calendar-content-groups-v3-search-browser.mjs
+          node scripts/qa-calendar-group-recovery-v1-browser.mjs
           node scripts/qa-calendar-toolbar-v4-browser.mjs
           node scripts/qa-calendar-responsive-v1-browser.mjs
           node scripts/qa-calendar-stable-layout-v1-browser.mjs
@@ -91,10 +98,15 @@ jobs:
           for i in $(seq 1 3); do
             t=$(date +%s)
             if curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/?scoped-calgroup-v2=$t" -o /tmp/group-index.html \
-                && grep -Fq 'calendar-content-groups-v2.js?v=5' /tmp/group-index.html \
+                && grep -Fq 'calendar-content-groups-v2.js?v=6-recovery-verified' /tmp/group-index.html \
+                && grep -Fq 'assets/calendar-group-recovery-v1.css?v=1' /tmp/group-index.html \
+                && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-group-recovery-v1.css?check=$t" -o /tmp/group-recovery.css \
+                && grep -Fq 'calendar-group-recovery-row-v1' /tmp/group-recovery.css \
                 && curl --fail --silent --show-error --max-time 15 -H 'Cache-Control: no-cache' "$base/assets/calendar-content-groups-v2.js?v=5&check=$t" -o /tmp/group-manager.js \
                 && grep -Fq 'mwsCalendarContentGroupsV2' /tmp/group-manager.js \
                 && grep -Fq 'renderGroupSearch' /tmp/group-manager.js \
+                && grep -Fq 'renderOrphanRecovery' /tmp/group-manager.js \
+                && grep -Fq 'persistGroupChange' /tmp/group-manager.js \
                 && grep -Fq 'evContentGroupSearchV3' /tmp/group-index.html \
                 && grep -Fq 'calendarGroupSearchPanelV3' /tmp/group-index.html \
                 && grep -Fq 'assets/calendar-content-groups-v2.css?v=3' /tmp/group-index.html \

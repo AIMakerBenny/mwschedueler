@@ -78,7 +78,7 @@ test('calendar creates groups and edits do not rewrite individual schedule field
   assert(app.includes('if(!Array.isArray(data.contentGroups))data.contentGroups=[];'));
   const manager=load('assets/calendar-content-groups-v2.js');
   assert(manager.includes('data.contentGroups.push(group)'));
-  assert(manager.includes('saveData(\'콘텐츠 그룹 이름·색상 변경\')'));
+  assert(manager.includes("persistGroupChange('콘텐츠 그룹 이름·색상 변경')"));
   assert(manager.includes('group.name=name;group.color='));
   assert(app.includes('contentGroupId:document.getElementById(\'evContentGroupV2\')'));
 });

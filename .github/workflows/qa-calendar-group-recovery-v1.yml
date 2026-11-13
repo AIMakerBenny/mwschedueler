@@ -1,0 +1,42 @@
+name: Calendar group recovery and verified cloud save QA
+on:
+  pull_request:
+    branches:
+      - cloudflare-production
+    paths:
+      - 'assets/calendar-content-groups-v2.js'
+      - 'assets/calendar-group-recovery-v1.css'
+      - 'assets/cloud-v1.1.js'
+      - 'assets/cloud-runtime-v130.js'
+      - 'index.html'
+      - 'scripts/qa-calendar-group-recovery-v1-browser.mjs'
+      - '.github/workflows/qa-calendar-group-recovery-v1.yml'
+  push:
+    branches:
+      - 'fix/calendar-group-recovery-save-confirm-v1-20261113'
+permissions:
+  contents: read
+jobs:
+  recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Group and cloud source syntax
+        run: |
+          node --check assets/calendar-content-groups-v2.js
+          node --check assets/cloud-runtime-v130.js
+          node --check src/cf-v111-entry.js
+          node --check scripts/qa-calendar-group-recovery-v1-browser.mjs
+      - name: Exact original group ID recovery, save verification and failure state
+        run: node scripts/qa-calendar-group-recovery-v1-browser.mjs
+      - name: Existing calendar group editor and search regressions
+        run: |
+          node scripts/qa-calendar-content-groups-v2-browser.mjs
+          node scripts/qa-calendar-content-groups-v3-search-browser.mjs
+          node --test scripts/qa-active-cloudflare-core-groups-v1.test.mjs
+          node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs
+          node scripts/qa-calendar-responsive-v1-browser.mjs

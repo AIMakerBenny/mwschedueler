@@ -34,7 +34,7 @@ test('client and deployed auth Worker accept same shared core fields',()=>{
     for(const key of required)assert(keys.includes(key),name+' discards '+key);
   }
   assert(manager.includes('data.contentGroups.push(group)'));
-  assert(manager.includes("saveData('콘텐츠 그룹 이름·색상 변경')"));
+  assert(manager.includes("persistGroupChange('콘텐츠 그룹 이름·색상 변경')"));
 });
 
 test('the active D1 externalizer preserves names and colors along with manual games',async()=>{
