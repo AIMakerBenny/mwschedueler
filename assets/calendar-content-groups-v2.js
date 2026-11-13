@@ -450,9 +450,9 @@
     if(!canWriteGroup())return;
     const g=createGroup($('evContentGroupNewNameV2')?.value,$('evContentGroupNewColorV2')?.value);
     if(!g)return;
-    const saved=await persistGroupChange('콘텐츠 그룹 만들기');
     redrawSelects($('calendarGroupTargetV2')?.value);
     options($('evContentGroupV2'),g.id);
+    const saved=await persistGroupChange('콘텐츠 그룹 만들기');
     if($('evContentGroupSearchV3'))$('evContentGroupSearchV3').value='';
     renderGroupSearch('editor',false);
     $('evContentGroupNewWrapV2').hidden=true;
@@ -467,9 +467,9 @@
       if(!e.restDay&&selected.has(String(e.id))){e.contentGroupId=g.id;assigned.push(e.id)}
     }
     finish();
-    const saved=await persistGroupChange('콘텐츠 그룹 만들기'+(assigned.length?' 및 '+assigned.length+'개 일정 연결':''),assigned);
     if($('calendarGroupSearchPanelV3'))$('calendarGroupSearchPanelV3').value='';
     redrawSelects(g.id);
+    const saved=await persistGroupChange('콘텐츠 그룹 만들기'+(assigned.length?' 및 '+assigned.length+'개 일정 연결':''),assigned);
     $('calendarGroupNewNameV2').value='';
     if(saved)toast('콘텐츠 그룹',g.name+' 그룹 온라인 저장 완료'+(assigned.length?' · '+assigned.length+'개 일정 연결':''));
   }
