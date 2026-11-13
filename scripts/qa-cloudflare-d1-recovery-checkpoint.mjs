@@ -15,7 +15,12 @@ async function getApi(path){
     signal:AbortSignal.timeout(20000)
   });
   const body=await res.json().catch(()=>({}));
-  if(!res.ok||body.success!==true)throw new Error('Cloudflare read API rejected '+path.split('/').slice(-2).join('/')+' HTTP '+res.status);
+  if(!res.ok||body.success!==true){
+    const permission=path.includes('/time_travel/bookmark')&&[401,403].includes(res.status)
+      ? ' Cloudflare API token needs D1 Read on the bound database. Release blocked until a checkpoint is verified.'
+      : '';
+    throw new Error('Cloudflare read API rejected '+path.split('/').slice(-2).join('/')+' HTTP '+res.status+'.'+permission);
+  }
   return body.result;
 }
 const deployments=await getApi('/workers/scripts/'+scriptName+'/deployments?per_page=1');
