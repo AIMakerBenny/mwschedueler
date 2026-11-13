@@ -269,6 +269,14 @@
       if(globalStatus)globalStatus.textContent='콘텐츠 그룹 저장 실패';
     }
   }
+  function canWriteGroup(){
+    const ready=document.body.dataset.mwsMode==='admin'&&root.__mwsAppReadyV130===true;
+    if(!ready){
+      groupWriteStatus('관리자 데이터 로딩이 끝나기 전에는 그룹을 수정할 수 없습니다.',true);
+      toast('콘텐츠 그룹','관리자 로그인을 완료한 뒤 다시 시도해 주세요.');
+    }
+    return ready;
+  }
   async function persistGroupChange(reason,verifyEventIds=[]){
     if(document.body.dataset.mwsMode!=='admin'||root.__mwsAppReadyV130!==true){
       groupWriteStatus('관리자 로그인과 데이터 불러오기가 완료된 후 저장해 주세요.',true);
@@ -438,18 +446,20 @@
     if(create)create.hidden=true;
     if($('evContentGroupNewNameV2'))$('evContentGroupNewNameV2').value='';
   }
-  function createFromEditor(){
+  async function createFromEditor(){
+    if(!canWriteGroup())return;
     const g=createGroup($('evContentGroupNewNameV2')?.value,$('evContentGroupNewColorV2')?.value);
     if(!g)return;
-    saveData('콘텐츠 그룹 만들기');
+    const saved=await persistGroupChange('콘텐츠 그룹 만들기');
     redrawSelects($('calendarGroupTargetV2')?.value);
     options($('evContentGroupV2'),g.id);
     if($('evContentGroupSearchV3'))$('evContentGroupSearchV3').value='';
     renderGroupSearch('editor',false);
     $('evContentGroupNewWrapV2').hidden=true;
-    toast('콘텐츠 그룹',g.name+' 그룹을 만들었습니다');
+    if(saved)toast('콘텐츠 그룹',g.name+' 그룹을 만들고 온라인 저장을 확인했습니다');
   }
-  function createFromPanel(){
+  async function createFromPanel(){
+    if(!canWriteGroup())return;
     const g=createGroup($('calendarGroupNewNameV2')?.value,$('calendarGroupNewColorV2')?.value);
     if(!g)return;
     const assigned=[];
@@ -457,28 +467,31 @@
       if(!e.restDay&&selected.has(String(e.id))){e.contentGroupId=g.id;assigned.push(e.id)}
     }
     finish();
-    saveData('콘텐츠 그룹 만들기'+(assigned.length?' 및 '+assigned.length+'개 일정 연결':''));
+    const saved=await persistGroupChange('콘텐츠 그룹 만들기'+(assigned.length?' 및 '+assigned.length+'개 일정 연결':''),assigned);
     if($('calendarGroupSearchPanelV3'))$('calendarGroupSearchPanelV3').value='';
     redrawSelects(g.id);
     $('calendarGroupNewNameV2').value='';
-    toast('콘텐츠 그룹',g.name+' 그룹을 만들었습니다'+(assigned.length?' · '+assigned.length+'개 일정 연결':''));
+    if(saved)toast('콘텐츠 그룹',g.name+' 그룹 온라인 저장 완료'+(assigned.length?' · '+assigned.length+'개 일정 연결':''));
   }
-  function applyToSelected(clear=false){
+  async function applyToSelected(clear=false){
+    if(!canWriteGroup())return;
     const groupId=clear?'':$('calendarGroupTargetV2')?.value||'';
     if(!clear&&!find(groupId)){toast('콘텐츠 그룹','연결할 기존 그룹을 선택해 주세요');return}
     if(!selected.size){toast('콘텐츠 그룹','캘린더에서 일정을 먼저 선택해 주세요');return}
     let count=0;
+    const modified=[];
     for(const e of data.events){
       if(!e.restDay&&selected.has(String(e.id))){
-        e.contentGroupId=groupId;count++;
+        e.contentGroupId=groupId;count++;modified.push(e.id);
       }
     }
     finish();
-    saveData(clear?'콘텐츠 그룹 연결 해제':'콘텐츠 그룹 일괄 연결');
+    const saved=await persistGroupChange(clear?'콘텐츠 그룹 연결 해제':'콘텐츠 그룹 일괄 연결',modified);
     redrawSelects(groupId);
-    toast('콘텐츠 그룹',count+'개 일정 '+(clear?'연결을 해제했습니다':'연결했습니다'));
+    if(saved)toast('콘텐츠 그룹',count+'개 일정 '+(clear?'연결 해제':'그룹 연결')+' 온라인 저장 완료');
   }
-  function updateGroup(){
+  async function updateGroup(){
+    if(!canWriteGroup())return;
     const group=selectedManagedGroup();
     if(!group){toast('콘텐츠 그룹','수정할 그룹을 선택해 주세요');return}
     const name=String($('calendarGroupRenameV2')?.value||'').trim();
@@ -487,20 +500,22 @@
       toast('콘텐츠 그룹','같은 이름의 다른 그룹이 있습니다');return;
     }
     group.name=name;group.color=safeColor($('calendarGroupRecolorV2')?.value);
-    saveData('콘텐츠 그룹 이름·색상 변경');
+    const saved=await persistGroupChange('콘텐츠 그룹 이름·색상 변경');
     redrawSelects(undefined,group.id);
-    toast('콘텐츠 그룹',name+' 그룹을 수정했습니다');
+    if(saved)toast('콘텐츠 그룹',name+' 그룹 수정 및 온라인 저장 완료');
   }
-  function deleteGroup(){
+  async function deleteGroup(){
+    if(!canWriteGroup())return;
     const group=selectedManagedGroup();
     if(!group)return;
     const count=data.events.filter(e=>e.contentGroupId===group.id).length;
     if(!confirm(group.name+' 그룹을 삭제하시겠습니까? 연결된 '+count+'개 일정은 삭제되지 않고 그룹 연결만 해제됩니다.'))return;
+    const modified=data.events.filter(e=>e.contentGroupId===group.id).map(e=>e.id);
     data.contentGroups=data.contentGroups.filter(g=>g.id!==group.id);
     for(const e of data.events)if(e.contentGroupId===group.id)e.contentGroupId='';
-    saveData('콘텐츠 그룹 삭제');
+    const saved=await persistGroupChange('콘텐츠 그룹 삭제',modified);
     redrawSelects(undefined,'');
-    toast('콘텐츠 그룹','그룹을 삭제했습니다. 일정은 유지됩니다');
+    if(saved)toast('콘텐츠 그룹','그룹 정의와 연결 해제 온라인 저장 완료. 일정은 유지됩니다');
   }
   function init(){
     const toggleBtn=$('calendarGroupToggleV2');if(!toggleBtn)return;
