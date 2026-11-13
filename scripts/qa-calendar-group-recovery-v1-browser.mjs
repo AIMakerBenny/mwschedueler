@@ -34,6 +34,9 @@ const check=[
  'const start=$("calendarGroupRecoveryPanelV1"),manager=$("calendarGroupManagerRecoveryV1");',
  'const initial=start.querySelectorAll(".calendar-group-recovery-row-v1").length===3&&manager.querySelectorAll(".calendar-group-recovery-row-v1").length===3;',
  'const initialNoGroups=data.contentGroups.length===0;',
+ 'const originalNameField=start.querySelector(".calendar-group-recovery-row-v1 input[type=text]");',
+ 'originalNameField.value="임시 이름 입력";dispatchEvent(new Event("mawang:datachange"));',
+ 'const inputPreserved=originalNameField===start.querySelector(".calendar-group-recovery-row-v1 input[type=text]")&&originalNameField.value==="임시 이름 입력";',
  'const originalLinks=data.events.map(e=>[e.id,e.contentGroupId]);',
  'const originals=["lost-original-a","lost-original-b","lost-original-c"];',
  'const labels=["SBO","와우 포에버","다른 게임 프로젝트"];',
@@ -57,8 +60,8 @@ const check=[
  'const refusedFalseSuccess=error?.classList.contains("error")&&error?.textContent.includes("온라인 저장 실패");',
  'const serverUntouched=serverCore.contentGroups.length===3;',
  'const noFakeSuccess=!notices.some(x=>x.includes("저장 실패 테스트")&&x.includes("온라인 저장 완료"));',
- 'const ok=initial&&initialNoGroups&&groupsSaved&&linksIntact&&noOrphans&&managerOptions&&reloadNames&&refusedFalseSuccess&&serverUntouched&&noFakeSuccess;',
- '$("qa-result").textContent=JSON.stringify({ok,initial,initialNoGroups,groupsSaved,linksIntact,noOrphans,managerOptions,reloadNames,refusedFalseSuccess,serverUntouched,noFakeSuccess,recovered:serverCore.contentGroups.length,events:serverEvents.length,saves:saveCalls});',
+ 'const ok=initial&&initialNoGroups&&inputPreserved&&groupsSaved&&linksIntact&&noOrphans&&managerOptions&&reloadNames&&refusedFalseSuccess&&serverUntouched&&noFakeSuccess;',
+ '$("qa-result").textContent=JSON.stringify({ok,initial,initialNoGroups,inputPreserved,groupsSaved,linksIntact,noOrphans,managerOptions,reloadNames,refusedFalseSuccess,serverUntouched,noFakeSuccess,recovered:serverCore.contentGroups.length,events:serverEvents.length,saves:saveCalls});',
  '})().catch(error=>{document.getElementById("qa-result").textContent=JSON.stringify({ok:false,error:String(error),stack:error.stack})});'
 ].join('\n');
 const controls='<section id="calendar"><button id="calendarGroupToggleV2"></button><button id="calendarGroupManageToggleV4"></button>'+
