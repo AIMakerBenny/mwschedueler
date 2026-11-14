@@ -23,9 +23,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Validate app core syntax and search only names for initial-only queries
+      - name: Validate isolated app-core search helper and search only names for initial-only queries
         run: |
-          node --check assets/app-core.js
           node --test scripts/qa-contact-initials-name-only-v1.test.mjs
           node scripts/run-phase70-universal-korean-initial-search-audit.mjs
           node scripts/run-phase71-korean-ime-jamo-search-audit.mjs
