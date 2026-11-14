@@ -9,3 +9,25 @@ for(const id of ['kwakchunshik','larothy']){
     console.log('SOOP_PRODUCTION_PROBE',JSON.stringify({id,status:res.status,elapsedMs:Date.now()-t,ok:body?.ok===true,nicknameAvailable:Boolean(body?.name),hasProfile:body?.hasProfile??null,attempts:body?.upstreamAttempts||null}));
   }catch(e){console.log('SOOP_PRODUCTION_PROBE',JSON.stringify({id,status:'network-error',elapsedMs:Date.now()-t,errorType:e?.name||'unknown'}));}
 }
+
+
+for(const id of ['kwakchunshik','larothy']){
+  const started=Date.now();
+  try{
+    const res=await fetch(base+'/api/soop/contact-avatar?id='+id,{
+      headers:{accept:'image/*','cache-control':'no-cache'},
+      signal:AbortSignal.timeout(20000)
+    });
+    const bytes=res.ok?(await res.arrayBuffer()).byteLength:0;
+    console.log('SOOP_PRODUCTION_AVATAR_PROBE',JSON.stringify({
+      id,status:res.status,elapsedMs:Date.now()-started,
+      mime:res.headers.get('content-type')?.split(';')[0]||null,
+      sizeBytes:bytes
+    }));
+  }catch(error){
+    console.log('SOOP_PRODUCTION_AVATAR_PROBE',JSON.stringify({
+      id,status:'network-error',elapsedMs:Date.now()-started,
+      errorType:error?.name||'unknown'
+    }));
+  }
+}
