@@ -29,13 +29,13 @@
   /* Preserve the pin control, brand mark and readable category names. */
   body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]).sidebar-pinned .sidebar-head .logo,
   body.mws-premium:not([data-resolution="mobile"]):not(.sidebar-pinned):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]) .sidebar:hover .sidebar-head .logo {
-    left:4px!important;
-    width:104px!important;
-    min-width:104px!important;
-    max-width:104px!important;
+    left:1px!important;
+    width:92px!important;
+    min-width:92px!important;
+    max-width:92px!important;
     margin-left:0!important;
-    font-size:18px!important;
-    letter-spacing:.08em!important;
+    font-size:17px!important;
+    letter-spacing:.07em!important;
   }
   body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]).sidebar-pinned .sidebar-head .sidebar-pin,
   body.mws-premium:not([data-resolution="mobile"]):not(.sidebar-pinned):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]) .sidebar:hover .sidebar-head .sidebar-pin {
