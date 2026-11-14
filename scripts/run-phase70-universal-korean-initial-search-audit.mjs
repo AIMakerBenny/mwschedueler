@@ -38,7 +38,7 @@ export function runPhase70UniversalKoreanInitialSearchAudit(){
         [match&&match('김마왕 방송','ㄱㅁㅇ'),true,'김마왕 to ㄱㅁㅇ'],
         [match&&match('오늘 방송 준비','ㅇㄴㅂㅅ'),true,'multi-word Korean initials'],
         [contact&&contact({name:'리나',labels:['버튜버']},'ㄹㄴ'),true,'contact initials'],
-        [contact&&contact({name:'리나',labels:['버튜버']},'ㅂㅌㅂ'),true,'label initials']
+        [contact&&contact({name:'리나',labels:['버튜버']},'ㅂㅌㅂ'),false,'initials must not match hidden tag instead of the name']
       ];
       for(const row of tests)if(row[0]!==row[1])issues.push('functional initial-search failure: '+row[2]);
     }catch(error){issues.push('shared matcher functional test failed: '+String(error&&error.message||error))}

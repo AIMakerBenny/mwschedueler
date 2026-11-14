@@ -3479,9 +3479,26 @@ function mwsTextMatches(value,q=''){
   if(!queryInitials)return false;
   return mwsKoreanInitials(text).includes(queryInitials);
 }
+function mwsIsKoreanInitialOnlyQuery(q=''){
+  let normalized=String(q||'').trim().replace(/\s+/g,'');
+  if(!normalized)return false;
+  try{normalized=normalized.normalize('NFKD')}catch(_){}
+  return [...normalized].every(ch=>MWS_KOREAN_CHOSEONG.includes(ch)||MWS_KOREAN_INITIALS.includes(ch));
+}
 function contactMatches(c,q=''){
-  const text=String(c?.name||'')+' '+(c?.labels||[]).join(' ')+' '+String(c?.notes||'');
-  return mwsTextMatches(text,q);
+  const query=String(q||'').trim();
+  if(!query)return true;
+  // Initial-consonant searches target the displayed name only. Matching hidden
+  // memo text or popular tags made unrelated contacts appear in the results.
+  if(mwsIsKoreanInitialOnlyQuery(query)){
+    const initials=mwsKoreanInitials(query);
+    return Boolean(initials&&mwsKoreanInitials(c?.name||'').includes(initials));
+  }
+  // Ordinary text queries continue to match each field independently.
+  // Do not join fields: name/tag/memo boundaries must not create fake matches.
+  const fields=[c?.name,...(Array.isArray(c?.labels)?c.labels:[]),c?.notes];
+  const literal=query.toLowerCase();
+  return fields.some(value=>String(value??'').toLowerCase().includes(literal));
 }
 window.mwsKoreanInitials=mwsKoreanInitials;
 window.mwsTextMatches=mwsTextMatches;

@@ -1,0 +1,31 @@
+name: Contact name-only Korean initials regression QA
+on:
+  pull_request:
+    branches:
+      - cloudflare-production
+    paths:
+      - 'assets/app-core.js'
+      - 'index.html'
+      - 'scripts/qa-contact-initials-name-only-v1.test.mjs'
+      - 'scripts/run-phase70-universal-korean-initial-search-audit.mjs'
+      - '.github/workflows/qa-contact-initials-name-only-v1.yml'
+  push:
+    branches:
+      - 'fix/contact-initials-name-only-20261114'
+permissions:
+  contents: read
+jobs:
+  contact-initials:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate isolated app-core search helper and search only names for initial-only queries
+        run: |
+          node --test scripts/qa-contact-initials-name-only-v1.test.mjs
+          node scripts/run-phase70-universal-korean-initial-search-audit.mjs
+          node scripts/run-phase71-korean-ime-jamo-search-audit.mjs
+          node scripts/run-phase72-search-owner-collision-audit.mjs
