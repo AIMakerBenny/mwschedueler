@@ -88,13 +88,13 @@ try{
       '<style>'+styles+'\n'+inline+'\n'+frame+'</style>'+
       '<style id="compact-style">'+compact+'</style></head>'+
       '<body class="mws-premium '+(pinned?'sidebar-pinned':'')+'" data-resolution="fhd" data-ui-frame="classic">'+
-      '<div class="app">'+aside+'<main class="main">'+
+      '<div class="app">'+(pinned?aside.replace(/>고정<\/span>/,'>고정 해제</span>'):aside)+'<main class="main">'+
       '<div class="topbar"><div class="top-left"><h1>캘린더</h1><div class="subtle">2026년 11월 14일 토요일</div></div>'+
       '<div class="clock"><span class="sync-status">컨텐츠 그룹 저장 실패</span><span>오후 01:34:33</span><button class="primary">컨텐츠 추가</button></div></div>'+
       '<section id="calendar" class="section active"><div class="calendar-topbar-v4">'+
       '<div class="calendar-toolbar">캘린더 보기 이전 오늘 다음 2026년 11월</div></div>'+
       '<div id="calendarGrid" class="calendar">'+days+'</div></section></main></div>'+
-      '<pre id="qa-result">pending</pre><script>('+measure.toString()+');('+testPage.toString()+')()</script></body></html>';
+      '<pre id="qa-result">pending</pre><script>const measure=('+measure.toString()+');('+testPage.toString()+')()</script></body></html>';
     const filename=path.join(folder,'case.html');
     writeFileSync(filename,fixture);
     const run=spawnSync(chrome,['--headless=new','--no-sandbox','--disable-gpu',
