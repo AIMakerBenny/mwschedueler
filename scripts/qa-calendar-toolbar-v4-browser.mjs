@@ -14,7 +14,9 @@ const stylesheet=file('assets/app-core.css')+'\n'+file('assets/calendar-content-
  +'\n'+file('assets/calendar-toolbar-v4.css');
 const manager=file('assets/calendar-content-groups-v2.js');
 const moves=file('assets/calendar-move-guard-v4.js');
-const open='<section id="calendar" class="section">';
+const open=html.includes('<section id="calendar" class="section active">')
+ ? '<section id="calendar" class="section active">'
+ : '<section id="calendar" class="section">';
 const close='<div id="calendarCopyTray" class="calendar-copy-tray">';
 const i=html.indexOf(open),j=html.indexOf(close,i);
 assert(i>=0&&j>i,'Actual calendar header/panel source not found');
