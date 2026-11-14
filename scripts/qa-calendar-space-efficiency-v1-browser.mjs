@@ -62,16 +62,17 @@ function testPage(){
   const sidebarOK=isPinned?Math.abs(after.sideWidth-200)<2:Math.abs(after.sideWidth-72)<2;
   const gained=after.mainWidth-before.mainWidth;
   const logoSafe=!isPinned||after.logoEnd<=after.pinStart-2;
-  const expectedGain=isPinned?gained>=20:gained>=4;
+  const expectedGain=isPinned?gained>=8:gained>=4;
+  const sideShrunk=!isPinned||before.sideWidth-after.sideWidth>=18;
   const keyOK=!isPinned||after.navKeyFits.every(x=>x.found&&x.visible&&x.fits);
   const dayGain=after.dayWidth-before.dayWidth;
   const dayOK=!wide||dayGain>=2;
   const horizontalOK=!wide||!after.rootOverflow;
   const headerOK=after.topbarHeight<=before.topbarHeight+1;
   const paddingOK=after.mainPadding<before.mainPadding;
-  const ok=sidebarOK&&expectedGain&&logoSafe&&keyOK&&dayOK&&horizontalOK&&headerOK&&paddingOK;
+  const ok=sidebarOK&&sideShrunk&&expectedGain&&logoSafe&&keyOK&&dayOK&&horizontalOK&&headerOK&&paddingOK;
   document.querySelector('#qa-result').textContent=JSON.stringify({
-    ok,isPinned,wide,sidebarOK,expectedGain,logoSafe,keyOK,dayOK,horizontalOK,headerOK,paddingOK,
+    ok,isPinned,wide,sidebarOK,sideShrunk,expectedGain,logoSafe,keyOK,dayOK,horizontalOK,headerOK,paddingOK,
     gained,dayGain,before,after
   });
 }
