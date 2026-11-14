@@ -3497,7 +3497,8 @@ function contactMatches(c,q=''){
   // Ordinary text queries continue to match each field independently.
   // Do not join fields: name/tag/memo boundaries must not create fake matches.
   const fields=[c?.name,...(Array.isArray(c?.labels)?c.labels:[]),c?.notes];
-  return fields.some(value=>mwsTextMatches(value,query));
+  const literal=query.toLowerCase();
+  return fields.some(value=>String(value??'').toLowerCase().includes(literal));
 }
 window.mwsKoreanInitials=mwsKoreanInitials;
 window.mwsTextMatches=mwsTextMatches;
