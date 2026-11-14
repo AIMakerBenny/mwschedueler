@@ -1,0 +1,19 @@
+name: SOOP station production read-only diagnostic
+on:
+  push:
+    branches:
+      - 'fix/soop-contact-lookup-timeout-20261114'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Probe SOOP contact-station API without modifying D1
+        run: node scripts/qa-soop-contact-production-probe-v2.mjs
