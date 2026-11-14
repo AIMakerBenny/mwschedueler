@@ -1,0 +1,31 @@
+name: Calendar default and contact portrait layout QA
+on:
+  pull_request:
+    branches:
+      - cloudflare-production
+    paths:
+      - 'assets/contact-card-readable-layout-v1.css'
+      - 'index.html'
+      - 'scripts/qa-contact-card-readable-v1-browser.mjs'
+      - '.github/workflows/qa-contact-card-readable-v1.yml'
+  push:
+    branches:
+      - 'fix/calendar-default-contact-card-grid-20261114'
+permissions:
+  contents: read
+jobs:
+  default-and-contacts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Initial calendar and portrait/text collision regression
+        run: node scripts/qa-contact-card-readable-v1-browser.mjs
+      - name: Existing sidebar/calendar geometry
+        run: |
+          node scripts/qa-calendar-space-efficiency-v1-browser.mjs
+          node scripts/qa-sidebar-rail-scrollbar-v1-browser.mjs
+          node scripts/qa-calendar-responsive-v1-browser.mjs
