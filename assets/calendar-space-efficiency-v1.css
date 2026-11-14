@@ -1,0 +1,73 @@
+/* MWS Calendar space efficiency v1.
+   Desktop premium shell only. Fixed sidebar never changes the document grid
+   while hover expands the unpinned icon rail. Mobile and specialized
+   agenda/messenger/workshop frames retain their existing layout. */
+@media (min-width:901px) {
+  body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]) .app {
+    gap:12px!important;
+    padding:12px!important;
+  }
+
+  /* Reduce the permanently visible category column from 220px to 200px. */
+  body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]).sidebar-pinned .app {
+    grid-template-columns:200px minmax(0,1fr)!important;
+  }
+  body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]).sidebar-pinned .app > .sidebar,
+  body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]).sidebar-pinned .app > .sidebar:hover {
+    width:200px!important;
+    min-width:200px!important;
+    max-width:200px!important;
+  }
+
+  /* Unpinned rail reserves only 72px; its expanded menu overlays content. */
+  body.mws-premium:not([data-resolution="mobile"]):not(.sidebar-pinned):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]) .app > .sidebar:hover {
+    width:200px!important;
+    min-width:200px!important;
+    max-width:200px!important;
+  }
+
+  /* Preserve the pin control, brand mark and readable category names. */
+  body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]).sidebar-pinned .sidebar-head .logo,
+  body.mws-premium:not([data-resolution="mobile"]):not(.sidebar-pinned):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]) .sidebar:hover .sidebar-head .logo {
+    left:1px!important;
+    width:92px!important;
+    min-width:92px!important;
+    max-width:92px!important;
+    margin-left:0!important;
+    font-size:17px!important;
+    letter-spacing:.07em!important;
+  }
+  body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]).sidebar-pinned .sidebar-head .sidebar-pin,
+  body.mws-premium:not([data-resolution="mobile"]):not(.sidebar-pinned):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]) .sidebar:hover .sidebar-head .sidebar-pin {
+    right:3px!important;
+    min-width:64px!important;
+    padding:0 5px!important;
+    gap:4px!important;
+  }
+  body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]).sidebar-pinned .nav .nav-scroll > button,
+  body.mws-premium:not([data-resolution="mobile"]):not(.sidebar-pinned):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]) .sidebar:hover .nav .nav-scroll > button {
+    gap:8px!important;
+    padding-left:7px!important;
+    padding-right:7px!important;
+  }
+  body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]).sidebar-pinned .nav .nav-label,
+  body.mws-premium:not([data-resolution="mobile"]):not(.sidebar-pinned):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]) .sidebar:hover .nav .nav-label {
+    min-width:0!important;
+    text-overflow:ellipsis!important;
+  }
+
+  /* Trade decorative gutters for real calendar event width. */
+  body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]) .main {
+    padding:18px 18px 32px!important;
+  }
+
+  /* Apply the smaller header only on the calendar; leave other tools as-is. */
+  body.mws-premium:not([data-resolution="mobile"]):has(#calendar.section.active) .topbar {
+    min-height:58px;
+    margin-bottom:12px!important;
+    padding-bottom:10px;
+  }
+  body.mws-premium:not([data-resolution="mobile"]):has(#calendar.section.active) #calendar .calendar-topbar-v4 {
+    margin-bottom:6px;
+  }
+}

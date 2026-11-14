@@ -1,0 +1,32 @@
+name: Calendar desktop space efficiency QA
+on:
+  pull_request:
+    branches:
+      - cloudflare-production
+    paths:
+      - 'assets/calendar-space-efficiency-v1.css'
+      - 'index.html'
+      - 'scripts/qa-calendar-space-efficiency-v1-browser.mjs'
+      - '.github/workflows/qa-calendar-space-efficiency-v1.yml'
+  push:
+    branches:
+      - 'fix/calendar-compact-sidebar-space-20261114'
+permissions:
+  contents: read
+jobs:
+  compact-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Desktop calendar compact sidebar and content geometry
+        run: node scripts/qa-calendar-space-efficiency-v1-browser.mjs
+      - name: Existing sidebar icon rail, calendar and toolbar regressions
+        run: |
+          node scripts/qa-sidebar-rail-scrollbar-v1-browser.mjs
+          node scripts/qa-calendar-responsive-v1-browser.mjs
+          node scripts/qa-calendar-stable-layout-v1-browser.mjs
+          node scripts/qa-calendar-toolbar-v4-browser.mjs
