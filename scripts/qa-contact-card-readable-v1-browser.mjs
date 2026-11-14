@@ -50,6 +50,7 @@ function geometry(){
    if(el.scrollWidth>el.clientWidth+3)failures.push(key+' horizontal clip '+name.textContent);
   }
   if(avatar.scrollWidth>avatar.clientWidth+2)failures.push('avatar overflow');
+  if(avatar.tagName==='DIV'&&getComputedStyle(avatar).display!=='grid')failures.push('fallback initials are not centered');
   if(card.scrollHeight>card.clientHeight+2)failures.push('card vertical clip '+name.textContent);
  }
  if(document.documentElement.scrollWidth>window.innerWidth+4)failures.push('root page horizontal overflow');
@@ -69,8 +70,8 @@ const cards=[
  ['유튜브_방송자_길이가아주긴이름','버튜버','천타버스',
    '최근 컨텐츠: 매우 긴 방송 제목과 연속 진행되는 이벤트 안내 및 참고 일정']
 ];
-const cardMarkup=cards.map(([name,t1,t2,last])=>
- '<div class="contact-card"><div class="contact-card-core">'+avatar+
+const cardMarkup=cards.map(([name,t1,t2,last],i)=>
+ '<div class="contact-card"><div class="contact-card-core">'+(i===3?'<div class="contact-card-avatar-lg">?</div>':avatar)+
  '<div class="contact-card-info"><div class="contact-card-name-row"><div class="contact-card-name">'+name+'</div></div>'+
  '<div class="contact-card-tags"><span class="chip">'+t1+'</span>'+(t2?'<span class="chip">'+t2+'</span>':'')+
  '</div><div class="contact-card-last">'+last+'</div><div class="contact-card-actions">'+
