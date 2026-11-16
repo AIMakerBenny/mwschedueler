@@ -20,9 +20,9 @@ export function runPhase12ManualSaveSerializationAudit(){
   if(!runtime.includes('event.stopImmediatePropagation()'))issues.push('legacy manual save handler can still run beside the serialized handler');
   if(!runtime.includes('if(btn)btn.disabled=true'))issues.push('SAVE button is not disabled for the serialized lifecycle');
   if(!runtime.includes('if(btn)btn.disabled=false'))issues.push('SAVE button is not restored after the serialized lifecycle');
-  if(!runtime.includes("let ok=await window.mwsV55SaveNow()"))issues.push('serialized handler does not invoke the authoritative manual save function');
-  if(!runtime.includes('while(activeSaveRequests===0&&Date.now()<appearDeadline)await sleep(50)'))issues.push('busy gap before autosave POST is not handled');
-  if((runtime.match(/ok=await window\.mwsV55SaveNow\(\)/g)||[]).length<2)issues.push('manual save is not retried after an in-flight autosave settles');
+  if(!runtime.includes("const ok=await window.mwsV55SaveNow()"))issues.push('serialized handler does not invoke the authoritative manual save function');
+  const cloud=fs.readFileSync('assets/cloud-v1.1.js','utf8');
+  if(!cloud.includes('if(saveRun)return saveRun')||!cloud.includes('while(dirtyParts.size)'))issues.push('manual and automatic saves must share the complete drain promise');
   if(!loader.includes('/assets/integrity-runtime-v130.js?v=1.3.0-phase12'))issues.push('Phase 12 integrity runtime cache key was not advanced');
 
   // Lifecycle reproduction: an explicit SAVE arrives while autosave owns the save channel.

@@ -9,7 +9,7 @@ function report(){
 }
 function hasUnsavedAdminState(){
   const r=report();
-  return Boolean(r&&r.mode==='admin'&&Array.isArray(r.dirtyParts)&&r.dirtyParts.length);
+  return Boolean(r&&r.mode==='admin'&&(r.saving||r.blockedDraft||(Array.isArray(r.dirtyParts)&&r.dirtyParts.length)));
 }
 function requestImmediateSave(){
   if(!hasUnsavedAdminState()||typeof window.mwsV55SaveNow!=='function')return false;
@@ -88,27 +88,10 @@ async function guardedManualSave(){
   guardedManualSaveRunning=true;
   if(btn)btn.disabled=true;
   try{
-    if(!(await waitForSaveRequests())){
-      try{toast('SAVE 보류','진행 중인 온라인 저장이 끝나지 않았습니다.')}catch(_){}
-      return false;
-    }
     if(typeof window.mwsV55SaveNow!=='function')return false;
-    let ok=await window.mwsV55SaveNow();
-    if(ok)return true;
-
-    // false can mean that an autosave is between its session check and POST request.
-    const appearDeadline=Date.now()+5000;
-    while(activeSaveRequests===0&&Date.now()<appearDeadline)await sleep(50);
-    if(activeSaveRequests>0){
-      if(!(await waitForSaveRequests())){
-        try{toast('SAVE 보류','진행 중인 온라인 저장이 끝나지 않았습니다.')}catch(_){}
-        return false;
-      }
-      ok=await window.mwsV55SaveNow();
-      if(ok)return true;
-    }
-    try{toast('SAVE FAILED','온라인 저장을 완료하지 못했습니다.')}catch(_){}
-    return false;
+    const ok=await window.mwsV55SaveNow();
+    if(!ok)try{toast('SAVE FAILED','온라인 저장을 완료하지 못했습니다. 미저장 복구본을 확인해 주세요.')}catch(_){}
+    return ok;
   }finally{
     guardedManualSaveRunning=false;
     if(btn)btn.disabled=false;

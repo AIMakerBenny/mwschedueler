@@ -8,7 +8,7 @@ export function runPhase9ExportLazyLoadFailureAudit(){
 
   // The transform must still target the actual production source path.
   if(!raw.includes("async function ensurePartsForTab(tab){"))issues.push('raw lazy-load function is missing');
-  if(!raw.includes("ensurePartsForTab('export').then(()=>exportAll.click())"))issues.push('raw export guard target no longer matches Phase 9 transform');
+  if(!raw.includes("if(ok&&loadedParts.size===ALL_PARTS.length)exportAll.click()"))issues.push('raw export guard must hand off only after complete data loading');
 
   // Phase 9 replacement policy.
   if(!entry.includes('let changed=false,failed=[]'))issues.push('lazy-load failures are not accumulated');
