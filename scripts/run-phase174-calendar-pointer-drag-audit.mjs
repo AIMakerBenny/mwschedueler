@@ -16,12 +16,12 @@ export function runPhase174CalendarPointerDragAudit(){
     'calendarSuppressEventClickV174'
   ])if(!core.includes(token))issues.push('Phase 174 runtime missing: '+token);
 
-  // The modern design starts pointer drag only from the explicit drag handle.
-  // Binding the entire event card would break ordinary edit/selection clicks.
+  // Drag either card body or explicit handle, excluding nested controls.
   if(!core.includes('moveHandle.onpointerdown=e=>{')||
      !core.includes('beginCalendarPointerEventDragV174(e,el);')||
-     !core.includes('el.onpointerdown=null;'))
-    issues.push('calendar pointer drag is not isolated to the event move handle');
+     !core.includes('el.onpointerdown=e=>{')||
+     !core.includes("e.target?.closest?.('button,a,input,select,textarea,"))
+    issues.push('calendar card drag or nested-control exclusion missing');
   if(!core.includes("state.source.setAttribute('draggable','false');")||
      !core.includes('if(handle)handle.draggable=calendarPcDragEnabledV174();'))
     issues.push('pointer drag cleanup does not preserve handle-only native drag');

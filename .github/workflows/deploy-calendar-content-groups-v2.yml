@@ -65,6 +65,7 @@ jobs:
           node --check src/cf-v111-auth.js
           node --check assets/soop-contact-autofill-v1.js
           node --check assets/steam-game-v111.js
+          node --check assets/cloud-v1.1.js
           node --check assets/cloud-v1.1-loader.js
           node --check assets/cloud-runtime-v130.js
       - name: Calendar content group, hover and duration regression
@@ -153,11 +154,16 @@ jobs:
                 && grep -Fq 'calendar-event-drag-handle-v4' /tmp/group-core.js \
                 && grep -Fq 'mws-steam-host-v111' /tmp/group-core.js \
                 && grep -Fq 'mwsCalendarMoveGuardV4?.recordMove' /tmp/group-core.js \
+                && grep -Fq 'canChangeCalendarClipboardV1' /tmp/group-core.js \
+                && grep -Fq 'el.onpointerdown=e=>{' /tmp/group-core.js \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/cloud-v1.1.js?check=$t" -o /tmp/group-cloud.js \
                 && node -e "const s=require('fs').readFileSync('/tmp/group-cloud.js','utf8');const m=s.match(/const CORE_KEYS=\\[([^\\]]*)\\]/);if(!m||!m[1].includes('contentGroups')||!m[1].includes('gameLibrary'))process.exit(1)" \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/cloud-runtime-v130.js?check=$t" -o /tmp/group-cloud-v130.js \
                 && grep -Fq 'versions:expectedVersions' /tmp/group-cloud.js \
                 && grep -Fq '__mwsAppReadyV130=Boolean' /tmp/group-cloud.js \
+                && grep -Fq 'mwsCanEditCalendarClipboardV1' /tmp/group-cloud.js \
+                && grep -Fq 'mwsCanEditCalendarClipboardV1' /tmp/group-cloud-v130.js \
+                && grep -Fq 'clipboard-first-v1=1' /tmp/game-loader.js \
                 && grep -Fq 'versions:expectedVersions' /tmp/group-cloud-v130.js \
                 && node -e "const s=require('fs').readFileSync('/tmp/group-cloud-v130.js','utf8');const m=s.match(/const CORE_KEYS=\\[([^\\]]*)\\]/);if(!m||!m[1].includes('contentGroups')||!m[1].includes('gameLibrary'))process.exit(1)" \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-move-guard-v4.js?check=$t" -o /tmp/group-undo.js \
