@@ -164,6 +164,11 @@ jobs:
                 && grep -Fq 'mwsCanEditCalendarClipboardV1' /tmp/group-cloud.js \
                 && grep -Fq 'mwsCanEditCalendarClipboardV1' /tmp/group-cloud-v130.js \
                 && grep -Fq 'clipboard-first-v1=1' /tmp/game-loader.js \
+                && grep -Fq 'save-queue-v2=1' /tmp/game-loader.js \
+                && grep -Fq 'function mergeSaveChanges' /tmp/group-cloud.js \
+                && grep -Fq 'function mergeSaveChanges' /tmp/group-cloud-v130.js \
+                && curl --fail --silent --show-error --max-time 15 "$base/assets/perf-runtime.js?check=$t" -o /tmp/save-perf.js \
+                && grep -Fq 'Do not synthesize manifest or part responses' /tmp/save-perf.js \
                 && grep -Fq 'versions:expectedVersions' /tmp/group-cloud-v130.js \
                 && node -e "const s=require('fs').readFileSync('/tmp/group-cloud-v130.js','utf8');const m=s.match(/const CORE_KEYS=\\[([^\\]]*)\\]/);if(!m||!m[1].includes('contentGroups')||!m[1].includes('gameLibrary'))process.exit(1)" \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-move-guard-v4.js?check=$t" -o /tmp/group-undo.js \

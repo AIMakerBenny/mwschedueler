@@ -107,7 +107,7 @@ async function start(){
 
   // These enhance the already-hydrated app but must never hold the login gate open.
   void Promise.all([
-    load('perf-runtime','/assets/perf-runtime.js?v=1.4.0-phase113-contact-image-owner1','__mwsCf571Optimizer'),
+    load('perf-runtime','/assets/perf-runtime.js?v=1.4.0-phase113-contact-image-owner1&save-queue-v2=1','__mwsCf571Optimizer'),
     load('today-people-runtime-v130','/assets/today-people-runtime-v130.js?v=1.3.0-final68','__mwsTodayPeopleRuntimeV130'),
     load('contact-runtime-v130','/assets/contact-runtime-v130.js?v=1.3.0-search86','__mwsContactRuntimeV130')
   ]).then(recordOptionalResults).catch(()=>{});
@@ -122,7 +122,7 @@ async function start(){
     loadStyle('mobile-calendar-v130','/assets/mobile-calendar-v130.css?v=1.3.0-mobile-calendar-viewport-p29'),
     load('mobile-calendar-quick-add-v130','/assets/mobile-calendar-quick-add-v130.js?v=1.3.0-mobile-calendar-ui-p26','__mwsMobileCalendarQuickAddV130'),
     load('mobile-calendar-day-detail-v130','/assets/mobile-calendar-day-detail-v130.js?v=1.3.0-perf35','__mwsMobileCalendarDayDetailV130'),
-    load('integrity-runtime-v130','/assets/integrity-runtime-v130.js?v=1.3.0-phase12','__mwsIntegrityRuntimeV130'),
+    load('integrity-runtime-v130','/assets/integrity-runtime-v130.js?v=1.3.0-phase12&save-queue-v2=1','__mwsIntegrityRuntimeV130'),
     loadStyle('workspace-ui-v176','/assets/workspace-ui-v176.css?v=1.6.21-workspace176'),
     load('workspace-ui-v176','/assets/workspace-ui-v176.js?v=1.6.21-workspace176','__mwsWorkspaceUiV176')
   ]);

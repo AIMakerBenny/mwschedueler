@@ -145,27 +145,9 @@
     try{url=new URL(raw,location.href)}catch(_){return nativeFetch(input,init)}
     const method=String(init?.method||input?.method||'GET').toUpperCase();
     if(url.origin!==location.origin||method!=='GET')return nativeFetch(input,init);
-    if(url.pathname==='/api/health')return syntheticJson({ok:true,env:'cloudflare-production',backend:'D1 + R2',optimized:BUILD,mediaMode:'r2-original-bytes'});
-    if(url.pathname==='/api/manifest'){
-      const result=await getBootstrap();
-      if(result.raw)return result.raw;
-      return syntheticJson(result.manifest||{parts:{},scope:'public',cacheSchemaVersion:DB_VERSION,backend:'cloudflare-d1'});
-    }
-    if(url.pathname.startsWith('/api/parts/')){
-      const part=decodeURIComponent(url.pathname.slice('/api/parts/'.length));
-      const result=await getBootstrap();
-      if(result.raw)return result.raw;
-      const bundled=result.bundle?.parts?.[part];
-      if(bundled)return syntheticJson(bundled);
-      const cached=await getCachedPart(part,'public');
-      const wanted=Number(result.manifest?.parts?.[part])||0;
-      if(cached&&(!wanted||Number(cached.version)===wanted))return syntheticJson({part,version:Number(cached.version)||wanted||1,data:cached.data});
-      try{localStorage.removeItem(ETAG_KEY)}catch(_){}
-      const refreshed=await requestBootstrap(false);
-      if(refreshed.raw)return refreshed.raw;
-      const row=refreshed.bundle?.parts?.[part];
-      return row?syntheticJson(row):syntheticJson({error:`Part unavailable after bootstrap: ${part}`},503);
-    }
+    // Save verification, hydration and conflict recovery must see the real D1 version.
+    // Do not synthesize manifest or part responses from a session-long bootstrap bundle.
+    if(url.pathname==='/api/health'||url.pathname==='/api/manifest'||url.pathname==='/api/bootstrap'||url.pathname.startsWith('/api/parts/'))return nativeFetch(input,{...init,cache:'no-store'});
     return nativeFetch(input,init);
   };
 
