@@ -1483,8 +1483,14 @@ function cloneEventAsTemplate(e){
   copy.seriesId='';copy.seriesIndex=null;copy.repeat='';copy.repeatConfig=null;
   return copy;
 }
+function canChangeCalendarClipboardV1(){
+  if(typeof window.mwsCanEditCalendarClipboardV1!=='function'||window.mwsCanEditCalendarClipboardV1())return true;
+  toast('복사 보관함','복사 보관함 데이터와 저장 버전을 확인하지 못했습니다. 온라인 동기화 후 다시 시도해 주세요.');
+  return false;
+}
 function addEventToCalendarClipboard(eventId){
   document.body.classList.remove('calendar-copy-source-dragging');
+  if(!canChangeCalendarClipboardV1())return null;
   const event=data.events.find(e=>e.id===eventId);
   if(!event)return null;
   const item={
@@ -1500,6 +1506,7 @@ function addEventToCalendarClipboard(eventId){
 window.addEventToCalendarClipboard=addEventToCalendarClipboard;
 
 function removeCalendarClipboardItem(id){
+  if(!canChangeCalendarClipboardV1())return;
   const item=data.scheduleClipboard.find(x=>x.id===id);
   data.scheduleClipboard=data.scheduleClipboard.filter(x=>x.id!==id);
   saveData('캘린더 복사 보관함 삭제');
@@ -1509,6 +1516,7 @@ window.removeCalendarClipboardItem=removeCalendarClipboardItem;
 
 function createEventFromClipboardItem(templateId,date){
   document.body.classList.remove('calendar-template-dragging');
+  if(!canChangeCalendarClipboardV1())return null;
   const item=data.scheduleClipboard.find(x=>x.id===templateId);
   if(!item?.event)return null;
   const event=JSON.parse(JSON.stringify(item.event));
@@ -1774,6 +1782,7 @@ function setCalendarPointerEventTargetV174(clientX,clientY){
 function activateCalendarPointerEventDragV174(state,event){
   if(state.dragging)return;
   state.dragging=true;
+  try{state.source.setPointerCapture(state.pointerId)}catch(_){}
   calendarDragPayload={type:'event',id:state.id};
   hideCalendarEventPreview();
   state.source.classList.add('mws-calendar-event-pointer-dragging-v174');
@@ -1816,7 +1825,6 @@ function beginCalendarPointerEventDragV174(event,node){
     dragging:false,ghost:null,targetDay:null,targetTray:null
   };
   attachCalendarPointerEventListenersV174();
-  try{node.setPointerCapture(event.pointerId)}catch(_){}
 }
 function moveCalendarPointerEventDragV174(event){
   const state=calendarPointerEventDragV174;
@@ -1962,7 +1970,12 @@ function renderCalendar(){
       };
       moveHandle.onkeydown=e=>e.stopPropagation();
     }
-    el.onpointerdown=null;
+    el.onpointerdown=e=>{
+      // Card body drag uses the same threshold and undo path as the handle.
+      // Nested controls retain their own click and keyboard behavior.
+      if(e.target?.closest?.('button,a,input,select,textarea,[contenteditable="true"]'))return;
+      beginCalendarPointerEventDragV174(e,el);
+    };
     el.ondragstart=e=>{
       if(!calendarPcDragEnabledV174()||!e.target?.closest?.('.calendar-event-drag-handle-v4')){
         e.preventDefault();return;

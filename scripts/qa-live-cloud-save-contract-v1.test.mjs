@@ -147,5 +147,67 @@ test('legacy full-integration audit checks current delegated preview and drag ha
  const phase174=source('scripts/run-phase174-calendar-pointer-drag-audit.mjs');
  assert(phase38.includes('grid.onpointermove=pointerPreview;'));
  assert(phase174.includes('moveHandle.onpointerdown=e=>{'));
- assert(!phase174.includes('"el.onpointerdown=e=>beginCalendarPointerEventDragV174(e,el);"'));
+ assert(phase174.includes('el.onpointerdown=e=>{'));
 });
+
+test('calendar card pointer drag, click, controls, copy and undo contract',()=>{
+ const code=source('assets/app-core.js');
+ const clipboard=sourceFunction(code,'function cloneEventAsTemplate(', 'function clipboardChipColor(');
+ const click=sourceFunction(code,'let calendarSuppressEventClickV174=',"document.addEventListener('keydown'");
+ const pointer=sourceFunction(code,'let calendarPointerEventDragV174=', 'function renderCalendar(){');
+ const wiring=sourceFunction(code,"grid.querySelectorAll('.mini-event').forEach(el=>{",'    el.ondragstart=e=>{')+'});';
+ const classList={add(){},remove(){}};
+ const handle={draggable:true},day={dataset:{date:'2026-11-17'},classList},tray={classList};
+ let hit=day,group=false,ready=true,captures=0,opened=0,copies=0,moves=[],saves=[],uid=0;
+ const card={dataset:{evid:'e1'},classList,isConnected:true,setAttribute(){},setPointerCapture(){captures++},hasPointerCapture(){return false},querySelector(sel){return sel.includes('handle')?handle:{textContent:'Event'}}};
+ const ctx={data:{events:[{id:'e1',date:'2026-11-16',title:'Event'}],scheduleClipboard:[]},calendarDragPayload:null,calendarCtrlCopyMode:false,calendarViewModeV172:'month',
+  window:{mwsCalendarContentGroupsV2:{selectionActive:()=>group,selectEvent:()=>group},mwsCalendarMoveGuardV4:{recordMove(...args){moves.push(args)}},mwsCanEditCalendarClipboardV1:()=>ready},
+  document:{body:{dataset:{},classList,appendChild(){}},addEventListener(){},removeEventListener(){},createElement(){return {style:{},remove(){}}},elementFromPoint(){return{closest(sel){return sel.includes('Dropzone')?(hit===tray?tray:null):(hit===day?day:null)}}}},
+  grid:{querySelectorAll(){return[card]}},performance:{now:()=>100},crypto:{randomUUID:()=>String(++uid)},isCalendarTabActive:()=>true,hideCalendarEventPreview(){},openEvent(){opened++},duplicateEventById(){copies++},saveData(s){saves.push(s)},toast(){},formatDate:s=>s};
+ vm.runInNewContext(clipboard+click+pointer+wiring+'\nthis.move=moveCalendarPointerEventDragV174;this.end=endCalendarPointerEventDragV174;this.click=handleCalendarMiniEventClick;this.cancel=cancelCalendarPointerEventDragV174;',ctx);
+ const event=(x=0,control=false,ctrlKey=false)=>({button:0,pointerId:1,clientX:x,clientY:0,ctrlKey,preventDefault(){},stopPropagation(){},target:{closest(){return control?{}:null}}});
+ card.onpointerdown(event());ctx.move(event(4));ctx.end(event(4));ctx.click(event(),'e1');
+ assert.equal(opened,1);assert.equal(captures,0);assert.equal(saves.length,0);
+ card.onpointerdown(event(0,true));ctx.move(event(12));ctx.end(event(12));assert.equal(saves.length,0);
+ card.onpointerdown(event(0,false,true));ctx.move(event(12));ctx.end(event(12));ctx.click(event(0,false,true),'e1');assert.equal(copies,1);
+ group=true;card.onpointerdown(event());ctx.move(event(12));ctx.end(event(12));group=false;assert.equal(saves.length,0);
+ card.onpointerdown(event());ctx.move(event(12));ctx.end(event(12));ctx.click(event(),'e1');
+ assert.equal(opened,1);assert.equal(ctx.data.events[0].date,'2026-11-17');assert.deepEqual(moves,[['e1','2026-11-16','2026-11-17','Event']]);assert.equal(captures,1);
+ hit=tray; card.onpointerdown(event());ctx.move(event(12));ctx.end(event(12));
+ assert.equal(ctx.data.events.length,1);assert.equal(ctx.data.events[0].date,'2026-11-17');assert.equal(ctx.data.scheduleClipboard.length,1);assert.equal(ctx.data.scheduleClipboard[0].event.title,'Event');
+ ready=false;card.onpointerdown(event());ctx.move(event(12));ctx.end(event(12));assert.equal(ctx.data.scheduleClipboard.length,1);
+ ready=true;const item=ctx.data.scheduleClipboard[0];ctx.window.createEventFromClipboardItem(item.id,'2026-11-18');assert.equal(ctx.data.events.length,2);assert.equal(ctx.data.scheduleClipboard.length,1);
+ card.onpointerdown(event());ctx.move(event(12));ctx.cancel(event(12));assert.equal(ctx.data.scheduleClipboard.length,1);
+});
+
+for(const path of clientPaths){
+ const code=source(path);
+ test(path+' loads clipboard on first render and keeps subsequent edits during a pending save',async()=>{
+  const list=code.match(/const INITIAL_PARTS=(\[[^;]+\]);/)[1];
+  const initial=vm.runInNewContext(list);
+  assert(initial.includes('clipboard'));
+  const hydrate=sourceFunction(code,'async function hydrate(chosen){','  async function ensurePartsForTab(tab){');
+  const write=sourceFunction(code,'async function writeCloudNow(manual=false){','  window.mwsV55SaveNow=');
+  const mark=sourceFunction(code,'function markDirty(){','  function queueCloudSave(){');
+  const original={id:'existing',event:{title:'Existing'}};
+  const second={id:'second',event:{title:'Second'}};
+  const third={id:'third',event:{title:'Third'}};
+  const cp=v=>JSON.parse(JSON.stringify(v));
+  let persisted={scheduleClipboard:[original]},version=74,resaves=0,rendered=null;
+  const ctx={mode:null,currentAdmin:{id:1},loadedParts:new Set(),baselineJson:new Map(),dirtyParts:new Set(),manifest:null,INITIAL_PARTS:initial,data:null,cloudSaving:false,pendingSave:false,
+   async fetchManifest(){return{parts:Object.fromEntries(initial.map(p=>[p,p==='clipboard'?version:1]))}},
+   async loadPartWithCache(scope,p){return{data:p==='clipboard'?cp(persisted):{},version:p==='clipboard'?version:1}},
+   mergePart(p,v,d){if(p==='clipboard')d.scheduleClipboard=cp(v.scheduleClipboard)},
+   freshSkeleton(){return{scheduleClipboard:[]}},normalizeAndRender(){rendered=cp(ctx.data.scheduleClipboard)},applyModeUi(){},hideGate(){},metric(){},localStorage:{removeItem(){}},window:{dispatchEvent(){}},CustomEvent:class{},console,
+   $(){return{textContent:''}},extractPart(p){return p==='clipboard'?cp({scheduleClipboard:ctx.data.scheduleClipboard}):{}},
+   async fetchJson(route,opts){if(route==='/api/auth/session')return{authenticated:true};assert.equal(route,'/api/save');const body=JSON.parse(opts.body);assert.equal(body.versions.clipboard,version);persisted=cp(body.parts.clipboard);version++;if(version===75)ctx.data.scheduleClipboard.push(third);return{versions:{clipboard:version},normalized:{clipboard:cp(persisted)}}},
+   mergeNormalizedResult(v){if(v.clipboard)ctx.data.scheduleClipboard=cp(v.clipboard.scheduleClipboard)},
+   async putCachedPart(){},queueCloudSave(){resaves++},setManualSaveProgress(){},toast(){}
+  };
+  vm.runInNewContext(hydrate+mark+write+'\nthis.hydrate=hydrate;this.write=writeCloudNow;',ctx);
+  await ctx.hydrate('admin');assert.deepEqual(rendered,[original]);assert(ctx.loadedParts.has('clipboard'));assert.equal(ctx.dirtyParts.size,0);
+  ctx.data.scheduleClipboard.push(second);assert.equal(await ctx.write(),true);assert.deepEqual(cp(ctx.data.scheduleClipboard),[original,second,third]);assert.equal(resaves,1);
+  assert.equal(await ctx.write(),true);assert.deepEqual(persisted.scheduleClipboard,[original,second,third]);assert.equal(version,76);
+  await ctx.hydrate('admin');assert.deepEqual(rendered,[original,second,third]);assert.equal(ctx.dirtyParts.size,0);
+ });
+}

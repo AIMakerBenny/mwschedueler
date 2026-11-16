@@ -46,7 +46,9 @@ jobs:
       - name: New compact header, group management and undo in real browser
         run: node scripts/qa-calendar-toolbar-v4-browser.mjs
       - name: Cloudflare calendar content group persistence and runtime patch
-        run: node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs
+        run: |
+          node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs
+          node --test scripts/qa-live-cloud-save-contract-v1.test.mjs
       - name: Event editor Series and Memo tab UI at four widths
         run: node scripts/qa-event-sidebar-tabs-v5-browser.mjs
       - name: Duration and SOOP regression
