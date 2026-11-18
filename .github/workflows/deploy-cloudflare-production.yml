@@ -995,7 +995,7 @@ jobs:
           grep -Fq 'function setCalendarViewModeV172(mode){' /tmp/app-core-phase172.js
           grep -Fq 'calendarEventMatchesSearchV171(event,query,type)' /tmp/app-core-phase172.js
           grep -Fq 'calendarEventInSearchRangeV172(event)' /tmp/app-core-phase172.js
-          grep -Fq 'if(id)openEvent(id);' /tmp/app-core-phase172.js
+          grep -Fq 'if(id)openCalendarEventDetailsV1(id);' /tmp/app-core-phase172.js
           echo '[phase176] workspace navigation and notebook cards'
           grep -Fq 'data-dashboard-mode="worldtime"' /tmp/index.html
           grep -Fq 'id="dashboardGoCalendarBtnV176"' /tmp/index.html
