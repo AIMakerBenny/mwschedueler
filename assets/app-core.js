@@ -779,11 +779,15 @@ function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt
 function rgba(hex,a=.16){const h=(hex||'#64748b').replace('#','');if(h.length!==6)return `rgba(100,116,139,${a})`;const n=parseInt(h,16);return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`}
 function deviceChip(e){return e.device?`<span class="chip device-chip">${esc(e.device)}</span>`:''}
 
+const legacyFeatureTabsV1=new Set(['wardogs','gameRps','gamePachinko']);
 function setTab(tab){
   if(tab==='reminders'){tab='dashboard';dashboardMode='reminders'}
-  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  const navTab=legacyFeatureTabsV1.has(tab)?'legacy':tab;
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===navTab));
+  const legacyBack=document.getElementById('mwsLegacyBackV1');
+  if(legacyBack)legacyBack.hidden=!legacyFeatureTabsV1.has(tab);
   document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===tab));
-  const names={dashboard:'대시보드',calendar:'캘린더',contacts:'연락처',posts:'게시글',sniper:'최근 합방 인원',targets:'저격 리스트',memos:'메모',worldtime:'세계 시간',achievements:'업적',wardogs:'워독스 전쟁견들',contentPlanner:'그림판',toolTier:'티어 게임',toolMatrix:'2D Matrix Chart',toolRelations:'인물 관계도',gameMajoku:'Majoku Castle',gameLadder:'사다리타기',gameRps:'가위바위보',gameF1Racing:'F1 레이싱',gamePachinko:'경마',gameMultiDraw:'Gacha 뽑기',export:'가져오기 / 내보내기',settings:'설정'};
+  const names={dashboard:'대시보드',calendar:'캘린더',contacts:'연락처',posts:'게시글',sniper:'최근 합방 인원',targets:'저격 리스트',memos:'메모',worldtime:'세계 시간',achievements:'업적',wardogs:'워독스 전쟁견들',contentPlanner:'그림판',toolTier:'티어 게임',toolMatrix:'2D Matrix Chart',toolRelations:'인물 관계도',gameMajoku:'Majoku Castle',gameLadder:'사다리타기',gameRps:'가위바위보',gameF1Racing:'F1 레이싱',gamePachinko:'경마',gameMultiDraw:'Gacha 뽑기',legacy:'레거시',export:'가져오기 / 내보내기',settings:'설정'};
   document.getElementById('pageTitle').textContent=names[tab]||tab;
   // 탭 이동 시에도 같은 중앙 데이터에서 최신 상태를 다시 계산
   if(tab==='calendar')safeRenderView('캘린더',renderCalendar);
@@ -805,6 +809,7 @@ function setTab(tab){
   try{window.mwsContactRuntimeOnTabV130?.(tab)}catch(_){}
 }
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+document.querySelectorAll('[data-legacy-link-v1]').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
 function syncSidebarPinUI(){
   document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));
   const btn=document.getElementById('sidebarPinBtn');
