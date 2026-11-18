@@ -2,7 +2,7 @@
   'use strict';
   const DAY = 86400000;
   const weekdays = '일월화수목금토';
-  let lastSignature = '', initialized = false, resizeObserver;
+  let lastSignature = '', initialized = false, resizeObserver, tooltip, tooltipOwner;
 
   function parseDay(value) {
     if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return NaN;
@@ -92,6 +92,39 @@
     }
   }
 
+  function hideTooltip() {
+    if (tooltip) tooltip.hidden = true;
+    if (tooltipOwner) tooltipOwner.removeAttribute('aria-describedby');
+    tooltipOwner = null;
+  }
+
+  function showTooltip(icon, name) {
+    if (!tooltip) {
+      tooltip = root.document.createElement('div');
+      tooltip.className = 'calendar-timeline-tooltip-v1';
+      tooltip.id = 'calendarTimelineGameTooltipV1';
+      tooltip.setAttribute('role','tooltip');
+      root.document.body.append(tooltip);
+    }
+    hideTooltip();
+    tooltipOwner = icon;
+    tooltip.textContent = name;
+    icon.setAttribute('aria-describedby', tooltip.id);
+    tooltip.hidden = false;
+    tooltip.style.left = '0px';
+    tooltip.style.top = '0px';
+    const rect = icon.getBoundingClientRect();
+    const box = tooltip.getBoundingClientRect();
+    const scale = tooltip.offsetWidth ? box.width / tooltip.offsetWidth : 1;
+    const width = root.document.documentElement.clientWidth;
+    const height = root.document.documentElement.clientHeight;
+    const x = Math.max(8, Math.min(rect.left + (rect.width - box.width) / 2, width - box.width - 8));
+    const above = rect.top - box.height - 7;
+    const y = above >= 8 ? above : Math.max(8, Math.min(rect.bottom + 7, height - box.height - 8));
+    tooltip.style.left = (x - box.left) / (scale || 1) + 'px';
+    tooltip.style.top = (y - box.top) / (scale || 1) + 'px';
+  }
+
   function render(events, today, groups = [], library = []) {
     const panel = root.document?.getElementById('calendarTimelinePanelV1');
     if (!panel || panel.hidden) return;
@@ -101,6 +134,7 @@
       panel.querySelector('#calendarTimelineTodayV1')?.addEventListener('click', () => jumpToday(panel));
       for (const button of panel.querySelectorAll('[data-timeline-layout]')) {
         button.addEventListener('click', () => {
+          hideTooltip();
           const current = list.querySelector('.is-today');
           const visible = current && current.getBoundingClientRect().top >= list.getBoundingClientRect().top && current.getBoundingClientRect().bottom <= list.getBoundingClientRect().bottom && current.getBoundingClientRect().left >= list.getBoundingClientRect().left && current.getBoundingClientRect().right <= list.getBoundingClientRect().right;
           list.classList.toggle('is-single-line', button.dataset.timelineLayout === 'line');
@@ -112,6 +146,9 @@
           if (visible) jumpToday(panel);
         });
       }
+      root.addEventListener('scroll', hideTooltip, true);
+      root.addEventListener('resize', hideTooltip);
+      root.addEventListener('blur', hideTooltip);
       if (typeof root.ResizeObserver === 'function') {
         resizeObserver = new root.ResizeObserver(() => markRowEdges(list));
         resizeObserver.observe(list);
@@ -123,6 +160,7 @@
     if (signature === lastSignature) { markRowEdges(list); return; }
     const initial = !lastSignature;
     lastSignature = signature;
+    hideTooltip();
     const fragment = root.document.createDocumentFragment();
     for (const day of days) {
       const cell = root.document.createElement('article');
@@ -159,9 +197,14 @@
       for (const {name, image} of day.icons) {
         const game = root.document.createElement('div');
         game.className = 'calendar-timeline-game-v1';
-        game.title = name;
+        game.dataset.gameName = name;
         game.setAttribute('aria-label', name);
         game.setAttribute('role', 'img');
+        game.tabIndex = 0;
+        game.addEventListener('pointerenter', () => showTooltip(game, name));
+        game.addEventListener('pointerleave', hideTooltip);
+        game.addEventListener('focus', () => showTooltip(game, name));
+        game.addEventListener('blur', hideTooltip);
         const fallback = root.document.createElement('span');
         fallback.textContent = Array.from(name)[0] || '?';
         fallback.setAttribute('aria-hidden', 'true');
@@ -187,5 +230,5 @@
     if (initial) jumpToday(panel);
   }
 
-  root.mwsCalendarTimelineV1 = {buildDays, render};
+  root.mwsCalendarTimelineV1 = {buildDays, render, hideTooltip};
 })(globalThis);

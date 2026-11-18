@@ -51,7 +51,7 @@
 #calendar #calendarGrid .mini-event:not(.rest-event) .mini-event-people{
   max-height:1.3em;
 }
-@container mws-calendar-day (max-width:215px){
+@container mws-calendar-day (max-width:185px){
   #calendar #calendarGrid .mini-event.mws-steam-host-v111:not(.rest-event){
     grid-template-rows:28px 2.8em 1.3em!important;
   }
@@ -73,4 +73,17 @@
 /* Stabilize viewport width when the calendar creates a vertical page scrollbar. */
 @media (min-width:761px){
   html{scrollbar-gutter:stable}
+}
+
+/* Mid-width desktop dates retain the original two-row card, with a slightly
+   narrower game slot to reserve readable title space. Only very narrow days
+   get the separate control row. */
+@container mws-calendar-day (min-width:185.01px) and (max-width:215px){
+  #calendar #calendarGrid .mini-event.mws-steam-host-v111{
+    padding-right:40px!important;
+  }
+  #calendar #calendarGrid .mini-event.mws-steam-host-v111>.mws-steam-slot-v111{
+    width:34px!important;
+    min-width:34px!important;
+  }
 }

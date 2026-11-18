@@ -62,7 +62,7 @@
 }
 /* For a narrow date column, give the game image its own top-row cell.
    The event title and participant line then use the entire card width. */
-@container mws-calendar-day (max-width:215px){
+@container mws-calendar-day (max-width:185px){
   #calendar #calendarGrid .mini-event.mws-steam-host-v111{
     grid-template-columns:minmax(0,1fr) 34px;
     grid-template-rows:28px auto auto;
@@ -105,4 +105,17 @@
 }
 @media(prefers-reduced-motion:reduce){
   #calendar #calendarGrid .mini-event{transition:none}
+}
+
+/* Mid-width desktop dates retain the original two-row card, with a slightly
+   narrower game slot to reserve readable title space. Only very narrow days
+   get the separate control row. */
+@container mws-calendar-day (min-width:185.01px) and (max-width:215px){
+  #calendar #calendarGrid .mini-event.mws-steam-host-v111{
+    padding-right:40px!important;
+  }
+  #calendar #calendarGrid .mini-event.mws-steam-host-v111>.mws-steam-slot-v111{
+    width:34px!important;
+    min-width:34px!important;
+  }
 }
