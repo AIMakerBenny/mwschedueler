@@ -271,7 +271,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
       <div class="calendar-topbar-v4">
       <div class="calendar-view-tabs-v172" role="tablist" aria-label="캘린더 보기">
         <button type="button" class="secondary calendar-view-tab-v172 active" data-calendar-view-tab="month" role="tab" aria-selected="true">캘린더</button>
-        <button type="button" class="secondary calendar-view-tab-v172" data-calendar-view-tab="timeline" role="tab" aria-selected="false" aria-controls="calendarTimelinePanelV1">타임라인</button>
+        <button type="button" class="secondary calendar-view-tab-v172" data-calendar-view-tab="timeline" role="tab" aria-selected="false" aria-controls="calendarTimelinePanelV1">게임</button>
         <button type="button" class="secondary calendar-view-tab-v172" data-calendar-view-tab="search" role="tab" aria-selected="false">검색</button>
       </div>
         <div class="toolbar calendar-toolbar">
@@ -377,14 +377,14 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
         </div>
       </div>
 
-      <div id="calendarTimelinePanelV1" class="calendar-view-panel-v172" data-calendar-view-panel="timeline" role="tabpanel" aria-label="게임 타임라인" hidden>
+      <div id="calendarTimelinePanelV1" class="calendar-view-panel-v172" data-calendar-view-panel="timeline" role="tabpanel" aria-label="게임별 일정" hidden>
         <div class="calendar-timeline-toolbar-v1">
           <span id="calendarTimelineRangeV1" class="calendar-timeline-range-v1" aria-live="polite"></span>
           <button type="button" class="secondary active" data-timeline-layout="compact" aria-pressed="true">압축 보기</button>
           <button type="button" class="secondary" data-timeline-layout="line" aria-pressed="false">한 줄 보기</button>
           <button type="button" class="secondary" id="calendarTimelineTodayV1">오늘로</button>
         </div>
-        <div id="calendarTimelineDaysV1" class="calendar-timeline-days-v1" role="region" tabindex="0" aria-label="연속 날짜별 게임"></div>
+        <div id="calendarTimelineDaysV1" class="calendar-timeline-days-v1" role="region" tabindex="0" aria-label="날짜별 게임 일정"></div>
       </div>
 
       <div id="calendarSearchPanelV172" class="calendar-view-panel-v172 calendar-search-panel-v172" data-calendar-view-panel="search" hidden>
@@ -2130,7 +2130,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <script src="assets/calendar-broadcast-duration-v1.js?v=1"></script>
 <script src="assets/calendar-continuous-series-v1.js?v=2"></script>
 <script src="assets/calendar-timeline-v1.js?v=4"></script>
-<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&calendarcardnames=0"></script>
+<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&calendarcardnames=0"></script>
 <script src="assets/calendar-content-groups-v2.js?v=7-save-contract-bulk"></script>
 <script src="assets/event-sidebar-tabs-v5.js?v=1"></script>
 <script src="assets/calendar-move-guard-v4.js?v=1"></script>
@@ -4630,6 +4630,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .sidebar-save-v572{padding-left:0
 <link rel="stylesheet" href="assets/ui-frame-presets.css?v=3.0.0-space132-space153">
 <link rel="stylesheet" href="assets/calendar-space-efficiency-v1.css?v=1">
 <link rel="stylesheet" href="assets/contact-card-readable-layout-v1.css?v=1">
+<link rel="stylesheet" href="assets/workspace-clean-v1.css?v=1">
 <script src="assets/device-ui.js?v=1.3.0-perf87"></script>
 </body>
 </html>

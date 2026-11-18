@@ -1,0 +1,117 @@
+/* MWS workspace clean v1. Presentation only, using the selected theme palette.
+   Preserve monthly slot geometry, sidebar rail widths and specialized F1 UI. */
+body.mws-premium:not(:has(#gameF1Racing.active)){
+  --mws-clean-line:color-mix(in srgb,var(--border) 68%,transparent);
+  background:var(--bg)!important;
+}
+body.mws-premium:not(:has(#gameF1Racing.active)) .app>.main{
+  border-color:transparent!important;border-radius:10px!important;
+  background:var(--bg)!important;box-shadow:none!important;
+}
+body.mws-premium:not(:has(#gameF1Racing.active)) .main::before{display:none}
+body.mws-premium:not(:has(#gameF1Racing.active)) .app>.sidebar{
+  border-color:var(--mws-clean-line)!important;border-radius:10px!important;
+  background:var(--sidebar)!important;box-shadow:none!important;
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+}
+body.mws-premium:not(:has(#gameF1Racing.active)) .sidebar .logo{text-shadow:none;letter-spacing:.035em!important}
+body.mws-premium:not(:has(#gameF1Racing.active)) .sidebar .logo small{letter-spacing:.015em}
+body.mws-premium:not(:has(#gameF1Racing.active)) .nav-scroll{gap:2px!important}
+body.mws-premium:not(:has(#gameF1Racing.active)) .sidebar .nav button{
+  min-height:40px;border-radius:6px!important;box-shadow:none!important;
+  font-weight:550!important;transition:background .12s,color .12s!important;
+}
+body.mws-premium:not(:has(#gameF1Racing.active)) .sidebar .nav button:hover{
+  transform:none!important;background:color-mix(in srgb,var(--accent) 7%,var(--sidebar))!important;
+  border-color:transparent!important;
+}
+body.mws-premium:not(:has(#gameF1Racing.active)) .sidebar .nav button.active{
+  background:color-mix(in srgb,var(--accent) 13%,var(--sidebar))!important;
+  border-color:transparent!important;color:var(--text)!important;
+}
+body.mws-premium:not(:has(#gameF1Racing.active)) .sidebar .nav .nav-icon{
+  border-color:transparent!important;background:transparent!important;
+  box-shadow:none!important;filter:none!important;
+}
+body.mws-premium:not(:has(#gameF1Racing.active)) .sidebar .nav .active .nav-icon{color:var(--accent)!important}
+body.mws-premium:not(:has(#gameF1Racing.active)) .main>.topbar{
+  min-height:48px!important;gap:8px 16px;flex-wrap:wrap;
+  padding:0 0 8px!important;margin-bottom:12px!important;border-color:var(--mws-clean-line);
+}
+body.mws-premium:not(:has(#gameF1Racing.active)) .main>.topbar #pageTitle{
+  font-size:20px!important;line-height:1.3!important;font-weight:700!important;
+  letter-spacing:-.025em!important;text-shadow:none!important;margin:0 0 2px!important;
+}
+body.mws-premium:not(:has(#gameF1Racing.active)) .topbar #todayText{font-size:12px;margin-top:0}
+body.mws-premium:not(:has(#gameF1Racing.active)) .topbar .clock{
+  gap:8px;padding:0;border:0;background:transparent;box-shadow:none;flex-wrap:wrap;
+}
+body.mws-premium:not(:has(#gameF1Racing.active)) .topbar #clockText{font-size:13px;white-space:nowrap}
+body.mws-premium:not(:has(#gameF1Racing.active)) .topbar .sync-status{background:transparent;padding:4px 6px;font-size:11px}
+body.mws-premium:not(:has(#gameF1Racing.active)) .topbar :is(.primary,.secondary){
+  min-height:32px!important;padding:6px 11px!important;font-size:13px!important;line-height:1.4!important;
+}
+/* Subheadings are subordinate to the page title, including legacy inline sizes. */
+body.mws-premium :is(#dashboard,#calendar,#contacts,#posts,#sniper,#targets,#memos,#worldtime,#export,#settings)>h2{
+  font-size:17px!important;line-height:1.4;font-weight:650;letter-spacing:-.02em;margin:0 0 12px;
+}
+body.mws-premium :is(#dashboard,#calendar,#contacts,#posts,#sniper,#targets,#memos,#worldtime,#export,#settings) .card h3{
+  font-size:14px!important;font-weight:650!important;line-height:1.4;letter-spacing:-.015em;
+}
+body.mws-premium :is(#dashboard,#calendar,#contacts,#posts,#sniper,#targets,#memos,#worldtime,#export,#settings) :is(.card,.event-card,.contact-card,.reminder-card){
+  border-color:var(--mws-clean-line,var(--border))!important;border-radius:9px!important;
+  background:var(--panel)!important;box-shadow:none!important;
+}
+body.mws-premium :is(#dashboard,#contacts,#posts,#sniper,#targets,#memos,#worldtime,#export,#settings) .card{
+  padding:14px!important;
+}
+body.mws-premium :is(#dashboard,#calendar,#contacts,#posts,#sniper,#targets,#memos,#worldtime,#export,#settings) :is(.card,.contact-card):hover{
+  transform:none!important;box-shadow:none!important;
+  border-color:color-mix(in srgb,var(--accent) 26%,var(--border))!important;
+}
+body.mws-premium :is(#dashboard,#calendar,#contacts,#posts,#sniper,#targets,#memos,#worldtime,#export,#settings) :is(.primary,.secondary,.ghost,.pillbtn),
+body.mws-premium:not(:has(#gameF1Racing.active)) .topbar :is(.primary,.secondary,.ghost,.pillbtn){
+  border-radius:6px!important;box-shadow:none!important;text-shadow:none!important;font-weight:600;
+}
+body.mws-premium :is(#dashboard,#calendar,#contacts,#posts,#sniper,#targets,#memos,#worldtime,#export,#settings) .primary{
+  background:var(--accent)!important;
+}
+body.mws-premium :is(#dashboard,#calendar,#contacts,#posts,#sniper,#targets,#memos,#worldtime,#export,#settings) :is(.secondary,.ghost,.pillbtn){
+  background:color-mix(in srgb,var(--panel) 78%,var(--bg))!important;
+}
+body.mws-premium:not(:has(#gameF1Racing.active)) .topbar #newEventBtn{
+  background:#287def!important;border-color:#4b92f0!important;box-shadow:none!important;
+}
+/* Month cards keep their existing dimensions and all drag / cover / add slots. */
+body.mws-premium #calendar .calendar-toolbar{background:transparent!important;box-shadow:none!important;border:0!important;border-radius:0!important}
+body.mws-premium #calendar #calendarGrid .day{
+  background:var(--panel)!important;border-radius:6px!important;box-shadow:none!important;
+}
+body.mws-premium #calendar #calendarGrid .day:hover{
+  transform:none!important;box-shadow:none!important;
+  background:color-mix(in srgb,var(--accent) 4%,var(--panel))!important;
+}
+body.mws-premium #calendar #calendarGrid .day.today{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 50%,transparent)!important}
+body.mws-premium #calendar #calendarGrid .mini-event{box-shadow:none!important}
+body.mws-premium #calendar .calendar-topbar-v4 .calendar-view-tab-v172{
+  min-width:64px;padding:6px 11px;border-color:transparent!important;background:transparent!important;
+}
+body.mws-premium #calendar .calendar-topbar-v4 .calendar-view-tab-v172.active{
+  color:var(--text);background:color-mix(in srgb,var(--accent) 13%,var(--panel))!important;
+  box-shadow:inset 0 -2px var(--accent)!important;
+}
+body.mws-premium #calendar .calendar-timeline-toolbar-v1 button{border-radius:5px!important;box-shadow:none!important}
+body.mws-premium #calendar .calendar-timeline-meta-v2{line-height:1.5}
+/* Shared data-entry dialogs: preserve layout and controls, quieten their surfaces. */
+body.mws-premium :is(#eventModal,#contactModal) .modalbox{
+  background:var(--sidebar)!important;border-radius:12px!important;box-shadow:0 16px 48px #0006!important;
+}
+body.mws-premium :is(#eventModalTitle,#contactModalTitle){font-size:18px!important;font-weight:650!important;letter-spacing:-.02em}
+body.mws-premium :is(#eventModal,#contactModal) :is(input,select,textarea,.picker-button){
+  border-radius:6px!important;box-shadow:none!important;background:var(--input)!important;
+}
+@media(max-width:760px){
+  body.mws-premium:not(:has(#gameF1Racing.active)) .main>.topbar #pageTitle{font-size:18px!important}
+  body.mws-premium:not(:has(#gameF1Racing.active)) .main>.topbar{gap:8px;margin-bottom:10px!important}
+  body.mws-premium:not(:has(#gameF1Racing.active)) .app>.main{border-radius:0!important}
+}
