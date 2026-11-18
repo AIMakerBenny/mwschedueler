@@ -1426,7 +1426,9 @@ function scheduleCalendarSearchResultsV172(){
   calendarSearchTimerV171=setTimeout(renderCalendarSearchResultsV172,70);
 }
 function setCalendarViewModeV172(mode){
-  calendarViewModeV172=mode==='search'?'search':'month';
+  calendarViewModeV172=['month','timeline','search'].includes(mode)?mode:'month';
+  const calendarRoot=document.getElementById('calendar');
+  if(calendarRoot)calendarRoot.dataset.calendarViewMode=calendarViewModeV172;
   document.querySelectorAll('[data-calendar-view-tab]').forEach(button=>{
     const active=button.dataset.calendarViewTab===calendarViewModeV172;
     button.classList.toggle('active',active);
@@ -1438,6 +1440,7 @@ function setCalendarViewModeV172(mode){
     panel.classList.toggle('active',active);
   });
   if(calendarViewModeV172==='search')renderCalendarSearchResultsV172();
+  if(calendarViewModeV172==='timeline')window.mwsCalendarTimelineV1?.render(activeEvents(),todayKST());
 }
 function initCalendarSearchV172(){
   const input=document.getElementById('calendarSearchV171');
@@ -1475,6 +1478,9 @@ function initCalendarViewTabsV172(){
     button.addEventListener('click',()=>setCalendarViewModeV172(button.dataset.calendarViewTab));
   });
   initCalendarSearchV172();
+  window.addEventListener('mawang:datachange',()=>{
+    if(calendarViewModeV172==='timeline')window.mwsCalendarTimelineV1?.render(activeEvents(),todayKST());
+  });
   setCalendarViewModeV172(calendarViewModeV172);
 }
 window.setCalendarViewModeV172=setCalendarViewModeV172;
@@ -1920,6 +1926,7 @@ function renderCalendar(){
   window.mwsCalendarContinuousSeriesV1?.render(grid,activeEvents(),data.contentGroups);
   initCalendarViewTabsV172();
   renderCalendarSearchResultsV172();
+  if(calendarViewModeV172==='timeline')window.mwsCalendarTimelineV1?.render(activeEvents(),todayKST());
   grid.querySelectorAll('.day').forEach(day=>{
     day.onclick=()=>openEvent(null,day.dataset.date);
     day.ondragenter=e=>{

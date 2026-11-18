@@ -43,6 +43,10 @@ jobs:
           node scripts/qa-calendar-continuous-series-browser-v1.mjs
           node scripts/qa-calendar-content-groups-v2-browser.mjs
           node scripts/qa-calendar-content-groups-v3-search-browser.mjs
+      - name: Continuous timeline, game labels and responsive views
+        run: |
+          node --test scripts/qa-calendar-timeline-v1.test.mjs
+          node scripts/qa-calendar-timeline-v1-browser.mjs
       - name: New compact header, group management and undo in real browser
         run: node scripts/qa-calendar-toolbar-v4-browser.mjs
       - name: Cloudflare calendar content group persistence and runtime patch
