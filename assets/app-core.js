@@ -1439,6 +1439,7 @@ function setCalendarViewModeV172(mode){
     panel.hidden=!active;
     panel.classList.toggle('active',active);
   });
+  if(calendarViewModeV172!=='timeline')window.mwsCalendarTimelineV1?.hideTooltip?.();
   if(calendarViewModeV172==='search')renderCalendarSearchResultsV172();
   if(calendarViewModeV172==='timeline')window.mwsCalendarTimelineV1?.render(activeEvents(),todayKST(),data.contentGroups,data.gameLibrary);
 }

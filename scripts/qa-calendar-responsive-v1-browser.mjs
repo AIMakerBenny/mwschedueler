@@ -66,7 +66,9 @@ const boot=`
  const r=el=>el.getBoundingClientRect();
  const width=r(day).width,mainRect=r(main),slotRect=r(slot),handleRect=r(handle);
  const compact=getComputedStyle(slot).position==='static';
- const expectedCompact=width-18<=215;
+ const dayStyle=getComputedStyle(day);
+ const contentWidth=day.clientWidth-parseFloat(dayStyle.paddingLeft)-parseFloat(dayStyle.paddingRight);
+ const expectedCompact=contentWidth<=185;
  const regionHeight=r(scroll).height;
  const noMainSlotOverlap=compact? mainRect.top>=slotRect.bottom-1:mainRect.right<=slotRect.left+1;
  const noHandleTitleOverlap=compact?mainRect.top>=handleRect.bottom-1:mainRect.left>=handleRect.right-1;
@@ -103,7 +105,7 @@ const temp=mkdtempSync(path.join(os.tmpdir(),'mws-calendar-responsive-v1-'));
 try{
  const test=path.join(temp,'index.html');
  const widths=[[2560,1440,1],[2048,1140,1],[1920,1080,1],[1898,902,1],
-  [1366,768,1],[1366,768,1.25],[1898,902,1.1],[1092,768,1],[850,768,1],
+  [1590,900,1],[1647,900,0.9],[1366,768,1],[1366,768,1.25],[1898,902,1.1],[1092,768,1],[850,768,1],
   [1920,1080,1,'pinned'],[1366,768,1,'pinned'],[1366,768,1,'pinned',1.25]];
  for(const [width,height,zoom,sidebar,dpr=1] of widths){
    writeFileSync(test,`<!doctype html><html lang="ko"><head><meta charset="utf-8">

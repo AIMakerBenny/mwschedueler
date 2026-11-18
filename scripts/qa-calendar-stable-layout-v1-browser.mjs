@@ -61,6 +61,8 @@ const beforeScript=[
   'buttons:document.querySelectorAll("#calendarGrid .mws-steam-slot-v111").length,',
   'width:cards[0].querySelector(".mws-steam-slot-v111").getBoundingClientRect().width,',
   'position:getComputedStyle(cards[0].querySelector(".mws-steam-slot-v111")).position,',
+  'contentWidth:day.clientWidth-parseFloat(getComputedStyle(day).paddingLeft)-parseFloat(getComputedStyle(day).paddingRight),',
+  'titleRows:getComputedStyle(cards[0]).gridTemplateRows.split(" ").length,',
   'rootOverflow:document.documentElement.scrollWidth>innerWidth+3};};',
   'window.before=window.measure();'
 ].join('\n');
@@ -82,10 +84,11 @@ const verifyScript=[
   'setTimeout(()=>{const rescan=window.measure();',
   'const noDup=rescan.buttons===before.buttons;',
   'const afterStable=Math.abs(rescan.row-afterTitle.row)<.6;',
-  'const ok=slots&&clickBound&&stable&&titleStable&&noDup&&afterStable&&',
+  'const compactDesktop=before.contentWidth<=185||before.position==="absolute"&&before.titleRows===2;',
+  'const ok=compactDesktop&&slots&&clickBound&&stable&&titleStable&&noDup&&afterStable&&',
   ' !rescan.rootOverflow&&before.buttons>30;',
   'document.getElementById("qa-result").textContent=JSON.stringify({ok,',
-  ' before,after,afterTitle,rescan,slots,clickBound,stable,titleStable,noDup,afterStable});',
+  ' before,after,afterTitle,rescan,slots,clickBound,stable,titleStable,noDup,afterStable,compactDesktop});',
   '},35);',
   '}catch(err){document.getElementById("qa-result").textContent=JSON.stringify({ok:false,error:String(err),stack:err.stack})}',
   '},35));'
@@ -96,6 +99,7 @@ try{
   const page=path.join(temp,'stable.html');
   for(const [width,height,zoom,pinned,dpr] of [
     [1920,1080,1,false,1],[1898,902,1,false,1],
+    [1590,900,1,false,1],[1647,900,0.9,false,1],
     [1366,768,1,false,1],[1366,768,1.25,false,1],
     [1898,902,1,false,1.25],[850,768,1,false,1],
     [1898,902,1,true,1],[1366,768,1.25,true,1]
