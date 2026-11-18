@@ -9,8 +9,9 @@ export function runPhase116WardogsNavigationShellAudit(){
 
   for(const token of [
     'data-tab="wardogs"',
-    '<span class="nav-label">워독스 전쟁견들</span>',
-    '<div class="nav-game-divider wardogs-content-divider-v116"><span></span><em>컨텐츠</em><span></span></div>',
+    'data-tab="legacy"',
+    '<section id="legacy" class="section">',
+    'data-tab="wardogs" data-legacy-link-v1',
     '<section id="wardogs" class="section" data-wardogs-shell-v116="1">',
     'assets/app-core.js?v=1.3.0-search115-wardogs116'
   ])if(!index.includes(token))issues.push('WARDOGS navigation shell missing: '+token);
@@ -19,12 +20,13 @@ export function runPhase116WardogsNavigationShellAudit(){
     issues.push('WARDOGS page title mapping missing');
   }
 
-  const achievement=index.indexOf('data-tab="achievements"');
-  const content=index.indexOf('wardogs-content-divider-v116');
-  const wardogs=index.indexOf('data-tab="wardogs"');
-  const mini=index.indexOf('<div class="nav-game-divider"><span></span><em>미니게임</em><span></span></div>');
-  if(!(achievement>=0&&content>achievement&&wardogs>content&&mini>wardogs)){
-    issues.push('sidebar order must be achievements -> content divider -> wardogs -> minigames');
+  const sidebar=index.slice(index.indexOf('<aside'),index.indexOf('</aside>'));
+  const achievement=sidebar.indexOf('data-tab="achievements"');
+  const mini=sidebar.indexOf('<em>미니게임</em>');
+  const legacy=sidebar.indexOf('data-tab="legacy"');
+  const exportTab=sidebar.indexOf('data-tab="export"');
+  if(!(achievement>=0&&mini>achievement&&legacy>mini&&exportTab>legacy)||sidebar.includes('data-tab="wardogs"')||sidebar.includes('wardogs-content-divider-v116')){
+    issues.push('sidebar must list achievements, minigames, legacy, export; WARDOGS must only appear in legacy');
   }
 
   const achievementSection=index.indexOf('<section id="achievements" class="section">');
@@ -37,7 +39,7 @@ export function runPhase116WardogsNavigationShellAudit(){
   for(const token of [
     'run-phase116-wardogs-navigation-shell-audit.mjs',
     'data-tab="wardogs"',
-    'wardogs-content-divider-v116',
+    'data-tab="legacy"',
     'search115-wardogs116'
   ])if(!workflow.includes(token))issues.push('production Phase 116 verification missing: '+token);
 

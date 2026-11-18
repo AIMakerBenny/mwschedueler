@@ -637,10 +637,11 @@ jobs:
           grep -Fq 'data-tab="achievements"' /tmp/index.html
           grep -Fq '<span class="nav-label">업적</span>' /tmp/index.html
           grep -Fq '<section id="achievements" class="section">' /tmp/index.html
-          grep -Fq 'class="nav-game-divider wardogs-content-divider-v116"' /tmp/index.html
+          grep -Fq 'data-tab="legacy"' /tmp/index.html
+          grep -Fq 'data-tab="wardogs" data-legacy-link-v1' /tmp/index.html
           grep -Fq '<em>컨텐츠</em>' /tmp/index.html
           grep -Fq 'data-tab="wardogs"' /tmp/index.html
-          grep -Fq '<span class="nav-label">워독스 전쟁견들</span>' /tmp/index.html
+          grep -Fq '<strong>워독스 전쟁견들</strong>' /tmp/index.html
           grep -Fq '<section id="wardogs" class="section" data-wardogs-shell-v116="1">' /tmp/index.html
           grep -Fq 'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136-aperture152-medicaperture165-classapertures166-unassigned168-framepreload169-consolidated170' /tmp/index.html
           grep -Fq 'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138' /tmp/index.html
@@ -681,7 +682,7 @@ jobs:
           grep -Fq 'id="achievementExportPackageBtn"' /tmp/index.html
           grep -Fq 'id="achievementImportPackageInput"' /tmp/index.html
           grep -Fq '패키지 가져오기는 기존 카드를 지우지 않고 뒤에 추가합니다.' /tmp/index.html
-          node -e "const fs=require('fs'),s=fs.readFileSync('/tmp/index.html','utf8'),a=s.indexOf('data-tab=\"achievements\"'),c=s.indexOf('wardogs-content-divider-v116'),d=s.indexOf('data-tab=\"wardogs\"'),m=s.indexOf('<div class=\"nav-game-divider\"><span></span><em>미니게임</em>');if(/<button[^>]+data-tab=\"worldtime\"/.test(s)||/<button[^>]+data-tab=\"targets\"/.test(s)||!(a>=0&&c>a&&d>c&&m>d))process.exit(1)"
+          node -e "const fs=require('fs'),s=fs.readFileSync('/tmp/index.html','utf8'),n=s.slice(s.indexOf('<aside'),s.indexOf('</aside>')),a=n.indexOf('data-tab=\"achievements\"'),m=n.indexOf('<em>미니게임</em>'),l=n.indexOf('data-tab=\"legacy\"'),e=n.indexOf('data-tab=\"export\"');if(/<button[^>]+data-tab=\"(?:worldtime|targets)\"/.test(s)||/data-tab=\"(?:wardogs|gameRps|gamePachinko)\"/.test(n)||!(a>=0&&m>a&&l>m&&e>l))process.exit(1)"
           retry_contains "$BASE/assets/app-core.js?deploy=$GITHUB_SHA" "assetSchema:3," > /tmp/app-core.js
           node --check /tmp/app-core.js
           grep -Fq "achievements:'업적',wardogs:'워독스 전쟁견들'" /tmp/app-core.js

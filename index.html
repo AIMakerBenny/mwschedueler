@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>마왕 스케줄러</title>
+<link rel="stylesheet" href="assets/legacy-hub-v1.css?v=1">
 <link rel="stylesheet" href="assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171-searchtab172-drag174-workspace176-splitquick177&f1feedback303=1">
 <link rel="stylesheet" href="assets/calendar-broadcast-duration-v1.css?v=1">
 <link rel="stylesheet" href="assets/calendar-continuous-series-v1.css?v=2">
@@ -135,10 +136,6 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 6H4v2a4 4 0 0 0 4 4M17 6h3v2a4 4 0 0 1-4 4M12 13v4M8 21h8M9 17h6v4"/></svg></span><span class="nav-label">업적</span>
         </button>
 
-        <div class="nav-game-divider wardogs-content-divider-v116"><span></span><em>컨텐츠</em><span></span></div>
-        <button data-tab="wardogs" title="워독스 전쟁견들">
-          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V6l8-3Z"/><path d="M8 12h8M12 8v8"/></svg></span><span class="nav-label">워독스 전쟁견들</span>
-        </button>
 
         <div class="nav-game-divider"><span></span><em>미니게임</em><span></span></div>
         <button data-tab="gameMajoku" title="Majoku Castle">
@@ -147,20 +144,17 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
         <button data-tab="gameLadder" title="사다리타기">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M7 3v18M17 3v18M7 7h10M7 12h10M7 17h10"/></svg></span><span class="nav-label">사다리타기</span>
         </button>
-        <button data-tab="gameRps" title="가위바위보">
-          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M5 18c3-1 4-4 4-7V7m0 4 3-7m-3 7 6-5m-6 5 8-1M5 18c2 3 9 3 12-1 2-3 2-6 0-7"/></svg></span><span class="nav-label">가위바위보</span>
-        </button>
         <button data-tab="gameF1Racing" title="F1 레이싱">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 17h3l2-5h7l2 5h2"/><path d="M7 17h10M9 12l2-4h3l2 4"/><circle cx="8" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><span class="nav-label">F1 레이싱</span>
-        </button>
-        <button data-tab="gamePachinko" title="경마">
-          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M5 3h14v18H5z"/><circle cx="9" cy="8" r="1"/><circle cx="15" cy="8" r="1"/><circle cx="12" cy="11" r="1"/><circle cx="8" cy="14" r="1"/><circle cx="16" cy="14" r="1"/><path d="M8 18h8M12 3v2"/></svg></span><span class="nav-label">경마</span>
         </button>
         <button data-tab="gameMultiDraw" title="Gacha 뽑기">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="M8 3h8v3M8 18h8v3"/><circle cx="12" cy="12" r="3"/><path d="M2 9h2m16 0h2M2 15h2m16 0h2"/></svg></span><span class="nav-label">Gacha 뽑기</span>
         </button>
 
         <div class="nav-settings-divider" aria-hidden="true"></div>
+        <button data-tab="legacy" title="레거시">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16v5H4zM5 9v11h14V9M9 13h6"/></svg></span><span class="nav-label">레거시</span>
+        </button>
         <button data-tab="export" title="가져오기 / 내보내기">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14"/></svg></span><span class="nav-label">가져오기 / 내보내기</span>
         </button>
@@ -178,7 +172,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 
   <main class="main">
     <div class="topbar">
-      <div class="top-left"><h1 id="pageTitle">캘린더</h1><div class="subtle" id="todayText"></div></div>
+      <div class="top-left"><h1 id="pageTitle">캘린더</h1><div class="subtle" id="todayText"></div><button type="button" id="mwsLegacyBackV1" class="mws-legacy-back-v1" data-tab="legacy" data-legacy-link-v1 hidden>레거시 목록으로</button></div>
       <div class="clock"><span class="sync-status"><span class="sync-dot"></span><span id="syncStatusText">전체 화면 동기화</span></span><span id="clockText"></span><button class="primary" id="newEventBtn">컨텐츠 추가</button></div>
     </div>
 
@@ -1497,6 +1491,30 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
   </div>
 </div>
 
+<section id="legacy" class="section">
+  <div class="mws-legacy-panel-v1">
+    <h2>이전 기능</h2>
+    <p>기존 기능을 선택하여 사용할 수 있습니다.</p>
+    <div class="mws-legacy-grid-v1">
+      <button type="button" class="mws-legacy-link-v1" data-tab="wardogs" data-legacy-link-v1>
+        <span class="mws-legacy-icon-v1" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V6l8-3Z"/><path d="M8 12h8M12 8v8"/></svg></span>
+        <span class="mws-legacy-label-v1"><span class="mws-legacy-category-v1">컨텐츠</span><strong>워독스 전쟁견들</strong></span>
+        <svg class="mws-legacy-chevron-v1" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+      </button>
+      <button type="button" class="mws-legacy-link-v1" data-tab="gameRps" data-legacy-link-v1>
+        <span class="mws-legacy-icon-v1" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 18c3-1 4-4 4-7V7m0 4 3-7m-3 7 6-5m-6 5 8-1M5 18c2 3 9 3 12-1 2-3 2-6 0-7"/></svg></span>
+        <span class="mws-legacy-label-v1"><span class="mws-legacy-category-v1">미니게임</span><strong>가위바위보</strong></span>
+        <svg class="mws-legacy-chevron-v1" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+      </button>
+      <button type="button" class="mws-legacy-link-v1" data-tab="gamePachinko" data-legacy-link-v1>
+        <span class="mws-legacy-icon-v1" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h14v18H5z"/><circle cx="9" cy="8" r="1"/><circle cx="15" cy="8" r="1"/><circle cx="12" cy="11" r="1"/><circle cx="8" cy="14" r="1"/><circle cx="16" cy="14" r="1"/><path d="M8 18h8M12 3v2"/></svg></span>
+        <span class="mws-legacy-label-v1"><span class="mws-legacy-category-v1">미니게임</span><strong>경마</strong></span>
+        <svg class="mws-legacy-chevron-v1" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+      </button>
+    </div>
+  </div>
+</section>
+
 <section id="export" class="section">
       <div class="card" style="margin-bottom:14px;border-color:rgba(90,184,255,.28);background:linear-gradient(135deg,rgba(33,96,155,.10),rgba(18,22,33,.96))">
         <div class="space">
@@ -2099,7 +2117,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 
 <script src="assets/calendar-broadcast-duration-v1.js?v=1"></script>
 <script src="assets/calendar-continuous-series-v1.js?v=2"></script>
-<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1"></script>
+<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1"></script>
 <script src="assets/calendar-content-groups-v2.js?v=7-save-contract-bulk"></script>
 <script src="assets/event-sidebar-tabs-v5.js?v=1"></script>
 <script src="assets/calendar-move-guard-v4.js?v=1"></script>
