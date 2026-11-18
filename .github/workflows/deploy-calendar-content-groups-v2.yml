@@ -6,6 +6,8 @@ on:
     paths:
       - '.github/workflows/deploy-calendar-content-groups-v2.yml'
       - 'assets/calendar-timeline-v1.js'
+      - 'assets/workspace-clean-v1.css'
+      - 'scripts/qa-workspace-clean-v1-browser.mjs'
       - 'assets/calendar-timeline-v1.css'
       - 'scripts/qa-calendar-timeline-v1.test.mjs'
       - 'scripts/qa-calendar-timeline-v1-browser.mjs'
@@ -82,6 +84,8 @@ jobs:
         run: |
           node --test scripts/qa-calendar-timeline-v1.test.mjs
           node scripts/qa-calendar-timeline-v1-browser.mjs
+          node scripts/qa-workspace-clean-v1-browser.mjs
+          node scripts/qa-contact-card-readable-v1-browser.mjs
           node --test scripts/qa-login-ready-v2.test.mjs
           node --test scripts/qa-legacy-hub-v1.test.mjs
           node scripts/run-phase116-wardogs-navigation-shell-audit.mjs
@@ -126,6 +130,8 @@ jobs:
                 && grep -Fq 'mwsCalendarTimelineV1' /tmp/calendar-timeline.js \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-timeline-v1.css?check=$t" -o /tmp/calendar-timeline.css \
                 && grep -Fq 'calendar-timeline-days-v1' /tmp/calendar-timeline.css \
+                && curl --fail --silent --show-error --max-time 15 "$base/assets/workspace-clean-v1.css?check=$t" -o /tmp/workspace-clean.css \
+                && grep -Fq 'MWS workspace clean v1' /tmp/workspace-clean.css \
                 && grep -Fq 'data-tab="legacy"' /tmp/group-index.html \
                 && grep -Fq 'data-tab="wardogs" data-legacy-link-v1' /tmp/group-index.html \
                 && grep -Fq 'data-tab="gameRps" data-legacy-link-v1' /tmp/group-index.html \
