@@ -68,11 +68,12 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const boxFits=r($('.event-modalbox')).width<=innerWidth+1;
  const dateTimeRow=!desktop||Math.abs(r($('#evDateDisplay')).top-r($('#evStartDisplay')).top)<2&&Math.abs(r($('#evStartDisplay')).top-r($('#evEndDisplay')).top)<2;
  const noPaneOverlap=!desktop||r($('.event-info-panel')).right<=r($('.event-editor-tools-v6')).left+1;
+ const oneCardRow=getComputedStyle($('.mini-event')).gridTemplateRows.trim().split(/\s+/).length===1;
  const cardTitle=$('.mini-event-main'),cover=$('.mws-steam-slot-v111');
  const cardNoOverlap=r(cardTitle).right<=r(cover).left+1;
  const noSourceMutation=baseline===JSON.stringify(data)&&saves===0;
  const geometry={height:innerHeight,boxTop:r($('.event-modalbox')).top,boxBottom:r($('.event-modalbox')).bottom,footerTop:footerRect.top,footerBottom:footerRect.bottom,saveBottom:r($('#saveEventBtn')).bottom};
- const result={geometry,readOnlyDrawer,refreshKeepsOpen,contentEscaped,drawerFits,escapeCloses,editOnlyOnButton,lateGameReparented,initialGameVisible,memoVisible,inputsRetained,uniqueInputs,footerVisible,boxFits,dateTimeRow,noPaneOverlap,cardNoOverlap,noSourceMutation,noRootOverflow:document.documentElement.scrollWidth<=innerWidth+2};
+ const result={geometry,oneCardRow,readOnlyDrawer,refreshKeepsOpen,contentEscaped,drawerFits,escapeCloses,editOnlyOnButton,lateGameReparented,initialGameVisible,memoVisible,inputsRetained,uniqueInputs,footerVisible,boxFits,dateTimeRow,noPaneOverlap,cardNoOverlap,noSourceMutation,noRootOverflow:document.documentElement.scrollWidth<=innerWidth+2};
  $('#result').textContent=JSON.stringify(result);
  $('[data-editor-tool-v6="game"]').click();
 });

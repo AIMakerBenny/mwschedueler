@@ -1,9 +1,9 @@
 /* Calendar details v1: compact cards, read-only side drawer, focused editor. */
 #calendarMoveStatusV4{display:none!important}
-#calendar #calendarGrid .mini-event:not(:has(.calendar-event-drag-handle-v4)){
+#calendar #calendarGrid .mini-event[data-evid]:not(:has(.calendar-event-drag-handle-v4)){
   grid-template-columns:minmax(0,1fr)!important;grid-template-rows:2.8em!important;
 }
-#calendar #calendarGrid .mini-event:not(:has(.calendar-event-drag-handle-v4)) .mini-event-main{grid-column:1!important;grid-row:1!important}
+#calendar #calendarGrid .mini-event[data-evid]:not(:has(.calendar-event-drag-handle-v4)) .mini-event-main{grid-column:1!important;grid-row:1!important}
 #calendar #calendarGrid .mini-event.mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4)){padding-right:43px!important}
 #calendar #calendarGrid .mini-event.mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4))>.mws-steam-slot-v111{
   position:absolute!important;inset:3px 3px 3px auto!important;width:34px!important;min-width:34px!important;
