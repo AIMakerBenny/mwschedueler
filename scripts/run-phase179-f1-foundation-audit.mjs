@@ -28,7 +28,13 @@ export function runPhase179F1FoundationAudit(){
     'data.contacts||[]'
   ])if(!core.includes(token))issues.push('Contact integration anchor missing: '+token);
 
-  if(navHorse>=0&&gachaNav>=0&&navHorse>gachaNav)issues.push('Horse-racing navigation is unexpectedly after Gacha');
+  const sidebar=index.match(/<aside class="sidebar">[\s\S]*?<\/aside>/)?.[0]||'';
+  const legacyHub=index.match(/<section id="legacy" class="section">[\s\S]*?<\/section>/)?.[0];
+  if(legacyHub){
+    if(!legacyHub.includes('data-tab="gamePachinko" data-legacy-link-v1')||sidebar.includes('data-tab="gamePachinko"'))issues.push('Horse-racing must be accessible from Legacy only');
+    const f1=sidebar.indexOf('data-tab="gameF1Racing"'),gacha=sidebar.indexOf('data-tab="gameMultiDraw"');
+    if(f1<0||gacha<0||f1>gacha)issues.push('F1 must remain in the active minigame navigation before Gacha');
+  }else if(navHorse>=0&&gachaNav>=0&&navHorse>gachaNav)issues.push('Horse-racing navigation is unexpectedly after Gacha');
   if(index.includes('data-tab="gameF1Racing"'))warnings.push('F1 racing shell already exists before Phase 180');
 
   const result={
@@ -41,7 +47,7 @@ export function runPhase179F1FoundationAudit(){
       horseNavigation:navHorse>=0,
       horseSection:horseSection>=0,
       contactSource:'data.contacts',
-      targetPlacement:'immediately before gamePachinko'
+      targetPlacement:legacyHub?'active minigames before Gacha':'immediately before gamePachinko'
     }
   };
   console.log(JSON.stringify(result));
