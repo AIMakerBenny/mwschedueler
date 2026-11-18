@@ -641,7 +641,7 @@ jobs:
           grep -Fq 'data-tab="wardogs" data-legacy-link-v1' /tmp/index.html
           grep -Fq '<em>컨텐츠</em>' /tmp/index.html
           grep -Fq 'data-tab="wardogs"' /tmp/index.html
-          grep -Fq '<span class="nav-label">워독스 전쟁견들</span>' /tmp/index.html
+          grep -Fq '<strong>워독스 전쟁견들</strong>' /tmp/index.html
           grep -Fq '<section id="wardogs" class="section" data-wardogs-shell-v116="1">' /tmp/index.html
           grep -Fq 'assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136-aperture152-medicaperture165-classapertures166-unassigned168-framepreload169-consolidated170' /tmp/index.html
           grep -Fq 'assets/wardogs-v1.js?v=1.0.0-phase125-portrait138' /tmp/index.html
