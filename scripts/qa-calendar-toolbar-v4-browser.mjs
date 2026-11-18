@@ -31,7 +31,7 @@ assert(core.includes("e.target?.closest?.('button,a,input,select,textarea,"),'ne
 assert(core.includes("moveHandle.onpointerdown=e=>"),'move handle must be wired');
 assert(core.includes('window.mwsCalendarMoveGuardV4?.recordMove'),'record moves in calendar');
 assert(core.includes('draggable="false"'),'calendar cards not native draggable');
-assert(core.includes('class="calendar-event-drag-handle-v4" draggable="true"'));
+assert(!core.includes('class="calendar-event-drag-handle-v4" draggable="true"'),'visible calendar handles removed');
 
 const boot=`
 const data={contentGroups:[{id:'sbo',name:'SBO 프로젝트',color:'#7659a5'},
@@ -94,7 +94,8 @@ const check=`
  const disabledBefore=$('calendarUndoLastMoveV4').disabled;
  data.events[0].date='2026-11-09';
  move.recordMove('event-1','2026-11-08','2026-11-09','와우 포에버 8일차');
- const logged=!$('calendarUndoLastMoveV4').disabled&&!!move.last()&&
+ const noticeQuiet=$('calendarMoveStatusV4').hidden&&$('calendarMoveStatusV4').textContent==='';
+ const logged=noticeQuiet&&!$('calendarUndoLastMoveV4').disabled&&!!move.last()&&
   localStorage.getItem('mwsCalendarMoveHistoryV4')?.includes('2026-11-08');
  $('calendarUndoLastMoveV4').click();
  const restored=data.events[0].date==='2026-11-08'&&move.last()===null;

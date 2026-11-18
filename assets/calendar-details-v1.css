@@ -1,0 +1,117 @@
+/* Calendar details v1: compact cards, read-only side drawer, focused editor. */
+#calendarMoveStatusV4{display:none!important}
+#calendar #calendarGrid .mini-event:not(:has(.calendar-event-drag-handle-v4)){
+  grid-template-columns:minmax(0,1fr)!important;grid-template-rows:2.8em!important;
+}
+#calendar #calendarGrid .mini-event:not(:has(.calendar-event-drag-handle-v4)) .mini-event-main{grid-column:1!important;grid-row:1!important}
+#calendar #calendarGrid .mini-event.mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4)){padding-right:43px!important}
+#calendar #calendarGrid .mini-event.mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4))>.mws-steam-slot-v111{
+  position:absolute!important;inset:3px 3px 3px auto!important;width:34px!important;min-width:34px!important;
+  height:auto!important;min-height:0!important;grid-area:auto!important;
+}
+#calendar #calendarGrid .mini-event.event-details-selected-v1{outline:1px solid var(--accent);outline-offset:1px}
+.event-details-drawer-v1{
+  position:fixed;inset:0 0 0 auto;width:min(420px,100vw);height:100dvh;z-index:8000;
+  display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:var(--sidebar,#11141a);color:var(--text,#f1f3f5);
+  border-left:1px solid var(--border,#2a303b);box-shadow:-12px 0 40px #0005;
+  transform:translateX(102%);transition:transform .18s ease;pointer-events:none;
+}
+.event-details-drawer-v1[hidden]{display:none!important}
+.event-details-drawer-v1.open{transform:translateX(0);pointer-events:auto}
+.event-details-head-v1,.event-details-footer-v1{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);font-size:13px}
+.event-details-footer-v1{border-top:1px solid var(--border);border-bottom:0;justify-content:flex-end}
+.event-details-body-v1{min-height:0;padding:20px 18px;overflow:auto;overscroll-behavior:contain;overflow-wrap:anywhere}
+.event-details-body-v1 .calendar-preview-title{font-size:21px;line-height:1.45;font-weight:700}
+.event-details-body-v1 .space:first-child{flex-direction:column;gap:10px}
+.event-details-body-v1 .event-meta{gap:7px 12px;line-height:1.65;margin-top:14px}
+.event-details-body-v1 .calendar-preview-people{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.event-details-body-v1 .calendar-preview-person{display:flex;gap:8px;min-width:0;align-items:center}
+.event-details-body-v1 .calendar-preview-person .avatar{width:34px;height:34px;flex:0 0 34px;border-radius:7px}
+.event-details-body-v1 .calendar-preview-person-name{display:block;font-size:13px;overflow-wrap:anywhere}
+.event-details-section-v1{margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+.event-details-section-v1 h3{font-size:12px;font-weight:650;color:var(--muted);margin:0 0 9px}
+.event-details-text-v1{white-space:pre-wrap;line-height:1.7;font-size:13px;margin:0}
+.event-details-game-v1{display:flex;align-items:center;gap:12px;font-size:14px;font-weight:600}
+.event-details-game-v1 img{width:92px;height:52px;border-radius:6px;object-fit:cover}
+.event-details-section-v1 a{color:var(--accent)}
+/* The footer is outside scrolling panes; both primary and auxiliary content use
+   available height instead of creating a screen-wide three-column form. */
+#eventModal .event-modalbox.mws-event-editor-v6{
+  display:grid!important;grid-template-rows:auto minmax(0,1fr) auto!important;
+  width:min(1160px,96vw)!important;height:min(850px,calc(100dvh - 32px))!important;
+  max-height:calc(100dvh - 32px)!important;padding:0!important;overflow:hidden!important;
+}
+#eventModal .mws-event-editor-v6>.event-modal-header{padding:12px 20px;margin:0!important;border-bottom:1px solid var(--border)}
+#eventModal .mws-event-editor-v6>.event-modal-header h2{font-size:18px!important;line-height:1.4!important;margin:0!important}
+#eventModal .mws-event-editor-v6>.event-modal-header .muted{font-size:11px;margin-top:4px}
+#eventModal .event-modalbox.mws-event-editor-v6 .event-modal-layout,
+#eventModal .event-modalbox.mws-event-editor-v6.repeat-panel-open .event-modal-layout{
+  display:grid!important;grid-template-columns:minmax(0,1fr) 340px!important;gap:0!important;
+  min-height:0!important;max-height:none!important;overflow:hidden!important;
+}
+#eventModal .mws-event-editor-v6 .event-info-panel{
+  grid-column:1;grid-row:1;overflow:auto!important;padding:18px 20px!important;min-width:0;min-height:0;
+  border:0;border-radius:0;background:transparent;overscroll-behavior:contain;
+}
+#eventModal .mws-event-editor-v6 .event-info-panel>.formgrid{grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+#eventModal .mws-event-editor-v6 .event-info-panel>.formgrid>.field{grid-column:span 2;order:2}
+#eventModal .mws-event-editor-v6 .event-info-panel>.formgrid>.field.full{grid-column:1/-1}
+#eventModal .mws-event-editor-v6 .event-info-panel>.formgrid>.field:has(#evTitle){order:1}
+#eventModal .mws-event-editor-v6 .event-info-panel>.formgrid>.field:has(#evCategory){order:3;grid-column:1/-1}
+#eventModal .mws-event-editor-v6 .event-info-panel>.formgrid>.event-editor-quick-v6{order:4}
+#eventModal .mws-event-editor-v6 .event-info-panel>.formgrid>#evBroadcastDurationWrapV1{order:5}
+#eventModal .mws-event-editor-v6 .event-info-panel>.formgrid>.field:has(#participantSearch){order:6}
+#eventModal .mws-event-editor-v6 .event-info-panel>.formgrid>.event-editor-advanced-v6{order:7}
+#eventModal .event-editor-heading-v6{grid-column:1/-1;order:0;font-size:13px;font-weight:650;color:var(--muted);margin:0}
+#eventModal .mws-event-editor-v6 .event-title-row{grid-template-columns:minmax(0,1fr) 46px 95px;gap:8px}
+#eventModal .mws-event-editor-v6 :is(input,select,.picker-button){min-height:36px!important;font-size:13px!important;padding:7px 9px!important}
+#eventModal .mws-event-editor-v6 .event-favorite-btn{height:36px;min-height:36px;font-size:20px}
+#eventModal .mws-event-editor-v6 .event-broadcast-duration-v1{display:flex;flex-direction:row!important;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)}
+#eventModal .mws-event-editor-v6 .event-broadcast-duration-output-v1{background:transparent;border:0;padding:0;min-height:24px;font-size:13px}
+#eventModal .mws-event-editor-v6 .event-broadcast-duration-help-v1{display:none}
+#eventModal .mws-event-editor-v6 .participant-box{padding:10px;border-radius:7px;box-shadow:none!important}
+#eventModal .mws-event-editor-v6 .participant-results{max-height:170px}
+#eventModal .mws-event-editor-v6 .selected-people{max-height:110px;overflow:auto}
+#eventModal .mws-event-editor-v6 .field:has(#participantSearch)>.muted{font-size:11px;line-height:1.5}
+#eventModal .event-editor-quick-v6,#eventModal .event-editor-advanced-v6{display:block;border-top:1px solid var(--border);padding-top:10px;min-width:0}
+#eventModal .mws-event-editor-v6 summary{cursor:pointer;font-size:12px;color:var(--muted);padding:4px 0;list-style-position:inside}
+#eventModal .mws-event-editor-v6 details[open]>summary{margin-bottom:10px;color:var(--text)}
+#eventModal .mws-event-editor-v6 .event-datetime-quick-v177{margin:0;padding:0;border:0;background:transparent}
+#eventModal .event-editor-advanced-v6>.formgrid{grid-template-columns:1fr 1fr;gap:12px}
+#eventModal .event-editor-tools-v6{grid-column:2;grid-row:1;display:flex;flex-direction:column;min-height:0;min-width:0;border-left:1px solid var(--border);background:var(--panel)}
+#eventModal .event-editor-tool-tabs-v6{display:flex;gap:6px;padding:12px;border-bottom:1px solid var(--border);flex-shrink:0}
+#eventModal .event-editor-tool-tabs-v6 button{flex:1;min-height:32px;padding:6px;font-size:12px;color:var(--muted);background:transparent;border:0;border-radius:6px}
+#eventModal .event-editor-tool-tabs-v6 button[aria-selected=true]{color:var(--text);background:color-mix(in srgb,var(--accent) 16%,var(--panel))}
+#eventModal .mws-event-editor-v6 .event-editor-tools-v6 .event-memo-panel,
+#eventModal .mws-event-editor-v6 .event-editor-tools-v6 .event-game-panel-v112{
+  min-height:0!important;overflow:auto!important;flex:1 1 auto;padding:12px!important;border:0;border-radius:0;overscroll-behavior:contain;
+}
+#eventModal .event-editor-tools-v6[data-tool-view=game] .event-memo-panel,
+#eventModal .event-editor-tools-v6[data-tool-view=organize] .event-game-panel-v112{display:none!important}
+#eventModal .mws-event-editor-v6 .event-memo-panel .event-side-tabpanel-v5{overflow:visible}
+#eventModal .mws-event-editor-v6 .event-series-intro-v5{display:none}
+#eventModal .mws-event-editor-v6 .mws-game-preview-image-v112{max-height:110px;object-fit:contain}
+#eventModal .mws-event-editor-v6 .mws-game-preview-empty-v112{min-height:100px;padding:12px}
+#eventModal .mws-event-editor-v6 .mws-game-preview-name-v112{font-size:14px;font-weight:650}
+#eventModal .mws-event-editor-v6 .mws-game-results-v112{flex:0 0 auto;max-height:180px;min-height:30px}
+#eventModal .mws-event-editor-v6 .mws-game-library-list-v1{max-height:180px}
+#eventModal .mws-event-editor-v6 .mws-game-search-section-v112{flex:0 0 auto}
+#eventModal .mws-event-editor-v6>.event-actions{
+  position:static!important;margin:0!important;padding:12px 20px!important;flex-wrap:wrap;
+  border-top:1px solid var(--border);background:var(--sidebar);z-index:1;backdrop-filter:none;
+}
+#eventModal .event-modalbox.mws-event-editor-v6.repeat-panel-open .event-editor-tools-v6{display:none}
+#eventModal .mws-event-editor-v6 .event-repeat-panel.open{grid-column:2;grid-row:1;border:0;border-left:1px solid var(--border);border-radius:0;min-height:0!important;overflow:auto}
+@media(max-width:760px){
+  #eventModal .event-modalbox.mws-event-editor-v6{width:100vw!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important}
+  #eventModal .event-modalbox.mws-event-editor-v6 .event-modal-layout,
+  #eventModal .event-modalbox.mws-event-editor-v6.repeat-panel-open .event-modal-layout{display:block!important;overflow:auto!important}
+  #eventModal .mws-event-editor-v6 .event-info-panel{overflow:visible!important;padding:14px!important}
+  #eventModal .event-editor-tools-v6{border-left:0;border-top:1px solid var(--border)}
+  #eventModal .mws-event-editor-v6 .event-editor-tools-v6 .event-memo-panel,
+  #eventModal .mws-event-editor-v6 .event-editor-tools-v6 .event-game-panel-v112{overflow:visible!important}
+  #eventModal .mws-event-editor-v6 .event-info-panel>.formgrid>.field{grid-column:span 3}
+  #eventModal .mws-event-editor-v6 .event-info-panel>.formgrid>.field.full{grid-column:1/-1}
+  #eventModal .mws-event-editor-v6 .event-title-row{grid-template-columns:minmax(0,1fr) 40px 80px}
+}
+@media(prefers-reduced-motion:reduce){.event-details-drawer-v1{transition:none}}

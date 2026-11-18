@@ -45,12 +45,7 @@
         `"${move.title||'일정'}" ${move.to}에서 ${move.from}로 되돌리기`:
         '이 컴퓨터에서 되돌릴 수 있는 마지막 이동 기록이 없습니다';
     }
-    if(notice){
-      notice.hidden=!move||!canUndo;
-      if(canUndo){
-        notice.textContent=`최근 이동: ${move.title||'일정'} · ${move.from} → ${move.to}. 이동 취소 버튼으로 되돌릴 수 있습니다.`;
-      }else notice.textContent='';
-    }
+    if(notice){notice.hidden=true;notice.textContent='';}
   }
   function recordMove(id,from,to,title){
     const move={id:String(id||''),from:String(from||''),to:String(to||''),

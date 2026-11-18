@@ -7,6 +7,9 @@ on:
       - '.github/workflows/deploy-calendar-content-groups-v2.yml'
       - 'assets/calendar-timeline-v1.js'
       - 'assets/workspace-clean-v1.css'
+      - 'assets/calendar-details-v1.js'
+      - 'assets/calendar-details-v1.css'
+      - 'scripts/qa-calendar-details-v1-browser.mjs'
       - 'scripts/qa-workspace-clean-v1-browser.mjs'
       - 'assets/calendar-timeline-v1.css'
       - 'scripts/qa-calendar-timeline-v1.test.mjs'
@@ -67,6 +70,7 @@ jobs:
         run: |
           node --check --input-type=commonjs < assets/app-core.js
           node --check assets/calendar-timeline-v1.js
+          node --check assets/calendar-details-v1.js
           node --check assets/calendar-continuous-series-v1.js
           node --check assets/calendar-content-groups-v2.js
           node --check assets/event-sidebar-tabs-v5.js
@@ -85,6 +89,7 @@ jobs:
           node --test scripts/qa-calendar-timeline-v1.test.mjs
           node scripts/qa-calendar-timeline-v1-browser.mjs
           node scripts/qa-workspace-clean-v1-browser.mjs
+          node scripts/qa-calendar-details-v1-browser.mjs
           node scripts/qa-contact-card-readable-v1-browser.mjs
           node --test scripts/qa-login-ready-v2.test.mjs
           node --test scripts/qa-legacy-hub-v1.test.mjs
@@ -132,6 +137,10 @@ jobs:
                 && grep -Fq 'calendar-timeline-days-v1' /tmp/calendar-timeline.css \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/workspace-clean-v1.css?check=$t" -o /tmp/workspace-clean.css \
                 && grep -Fq 'MWS workspace clean v1' /tmp/workspace-clean.css \
+                && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-details-v1.js?check=$t" -o /tmp/calendar-details.js \
+                && grep -Fq 'mwsCalendarDetailsV1' /tmp/calendar-details.js \
+                && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-details-v1.css?check=$t" -o /tmp/calendar-details.css \
+                && grep -Fq 'event-details-drawer-v1' /tmp/calendar-details.css \
                 && grep -Fq 'data-tab="legacy"' /tmp/group-index.html \
                 && grep -Fq 'data-tab="wardogs" data-legacy-link-v1' /tmp/group-index.html \
                 && grep -Fq 'data-tab="gameRps" data-legacy-link-v1' /tmp/group-index.html \
