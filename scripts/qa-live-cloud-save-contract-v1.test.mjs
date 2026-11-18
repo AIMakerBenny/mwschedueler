@@ -31,7 +31,7 @@ function makeRuntime(code,remote,versions,opts={}){
   CustomEvent:class{constructor(type,o){this.type=type;this.detail=o.detail}},console:{error(){},warn(){}},setTimeout:(f,ms)=>setTimeout(f,Math.min(ms,10)),clearTimeout,
   $:id=>id==='syncStatusText'?status:null,toast:(...args)=>alerts.push(args),setManualSaveProgress(){},
   freshSkeleton:()=>({}),mergePart:(p,v,target)=>{target[p]=cp(v)},extractPart:p=>cp(ctx.data[p]),
-  normalizeAndRender(){},normalizeDataShape(){},applyModeUi(){},hideGate(){},metric(){},
+  normalizeAndRender(){},normalizeDataShape(){},applyModeUi(){},hideGate(){},metric(){},setLoginError(){},timeout:promise=>Promise.resolve(promise),
   async fetchManifest(){if(opts.offline)throw Error('offline');return{parts:cp(versions)}},
   async getCachedPart(scope,p){return opts.cache?.[p]||null},
   async loadPartWithCache(scope,p){if(opts.failPart===p)throw Error('network');return {data:cp(remote[p]),version:versions[p]}},

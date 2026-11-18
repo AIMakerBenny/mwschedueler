@@ -91,15 +91,16 @@
   async function fetchManifest(){const started=performance.now(),m=await fetchJson('/api/manifest',{},'Cloudflare 버전 확인');metrics.semanticResponseBytes+=byteLen(m);metric('manifest',{bytes:byteLen(m),backend:m.backend,ms:Math.round(performance.now()-started)});return m}
   async function fetchPart(part){const started=performance.now(),row=await fetchJson(`/api/parts/${encodeURIComponent(part)}`,{cache:'no-store'},`${part} 불러오기`);metrics.semanticResponseBytes+=byteLen(row);metrics.cacheMisses++;metric('part-fetch',{part,version:Number(row.version)||0,bytes:byteLen(row),ms:Math.round(performance.now()-started)});return row}
   async function loadPartWithCache(scope,part,serverManifest,{allowStale=true}={}){
-    const wanted=Number(serverManifest?.parts?.[part])||0,cached=await getCachedPart(scope,part);
+    const wanted=Number(serverManifest?.parts?.[part])||0,cacheCheck=await timeout(getCachedPart(scope,part),1500,'로컬 캐시 확인').then(cached=>({cached}),()=>({cached:null,timedOut:true})),cached=cacheCheck.cached;
     if(serverManifest?.parts&&!ownSave(serverManifest.parts,part)){
-      if(Number(cached?.version)>0)throw Error('서버 데이터가 없어 기존 캐시를 보호합니다: '+part);
+      if(cacheCheck.timedOut||Number(cached?.version)>0)throw Error('서버 데이터가 없어 기존 캐시를 보호합니다: '+part);
       return{data:extractPart(part,freshSkeleton()),version:0,source:'absent'};
     }
     if(cached&&wanted>0&&Number(cached.version)===wanted){metrics.cacheHits++;return{data:cached.data,version:wanted,source:'cache'}}
     if(!serverManifest&&cached&&allowStale){metrics.cacheHits++;return{data:cached.data,version:Number(cached.version)||0,source:'cache-offline'}}
     const row=await fetchPart(part);if(!Number.isInteger(Number(row?.version))||!ownSave(row,'data')||(serverManifest&&Number(row.version)<wanted))throw Error('최신 서버 데이터 확인 실패: '+part);
-    await putCachedPart(scope,part,row.version,row.data);return{data:row.data,version:Number(row.version),source:'network'};
+    // A slow local cache must not prevent a verified server response from opening the app.
+    void putCachedPart(scope,part,row.version,row.data).catch(()=>{});return{data:row.data,version:Number(row.version),source:'network'};
   }
 
   async function hydrate(chosen){
@@ -107,19 +108,24 @@
     loadedParts.clear();baselineJson.clear();dirtyParts.clear();lazyPartLoads.clear();manifest=null;draftBlocked=null;lastDraft=null;draftOrigin=null;
     const scope=chosen==='admin'?'admin':'public',required=chosen==='admin'?ALL_PARTS:INITIAL_PARTS;
     let serverManifest=null,offline=false;
+    setLoginError('로그인 완료 · 서버 버전을 확인하는 중입니다.');
     try{serverManifest=await fetchManifest();manifest=serverManifest}catch(e){offline=true;console.warn('Manifest unavailable; IndexedDB fallback',e)}
     try{
       if(chosen==='admin'&&offline)throw Error('관리자 편집은 최신 서버 버전 확인 후 가능합니다. 미저장 복구본은 그대로 보존됩니다.');
       const next=freshSkeleton();
-      const results=await Promise.allSettled(required.map(part=>loadPartWithCache(scope,part,serverManifest,{allowStale:true})));
+      let transferred=0;
+      const showProgress=()=>{if(generation===hydrationSeq&&mode===chosen)setLoginError(`로그인 완료 · 필수 데이터 ${transferred}/${required.length} 확인 중`)};
+      showProgress();
+      const results=await Promise.allSettled(required.map(part=>loadPartWithCache(scope,part,serverManifest,{allowStale:true}).finally(()=>{transferred++;showProgress()})));
       if(generation!==hydrationSeq||mode!==chosen)throw Error('데이터 로딩이 취소되었습니다.');
       for(let i=0;i<required.length;i++){
         const part=required[i],result=results[i];let row=result.status==='fulfilled'?result.value:null;
-        if(!row){const cached=await getCachedPart(scope,part);if(!cached||(serverManifest&&Number(cached.version)!==Number(serverManifest.parts?.[part])))throw Error('최신 데이터를 불러오지 못했습니다: '+part);row=cached}
+        if(!row){const cached=await timeout(getCachedPart(scope,part),1500,'로컬 캐시 복구').catch(()=>null);if(!cached||(serverManifest&&Number(cached.version)!==Number(serverManifest.parts?.[part])))throw Error('최신 데이터를 불러오지 못했습니다: '+part);row=cached}
         if(generation!==hydrationSeq||mode!==chosen)throw Error('데이터 로딩이 취소되었습니다.');
         mergePart(part,row.data,next);loadedParts.add(part);baselineJson.set(part,JSON.stringify(row.data));
         if(serverManifest?.parts)serverManifest.parts[part]=Number(row.version);
       }
+      setLoginError('로그인 완료 · 화면을 준비하는 중입니다.');
       data=next;normalizeDataShape();const recovered=chosen==='admin'&&!offline?await recoverSaveDraft():false;
       normalizeAndRender(offline?'IndexedDB 오프라인 캐시':'Cloudflare D1 데이터');
       try{localStorage.removeItem('mawangSchedulerBeta')}catch(_){}
