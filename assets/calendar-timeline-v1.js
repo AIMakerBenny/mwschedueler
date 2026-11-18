@@ -2,7 +2,7 @@
   'use strict';
   const DAY = 86400000;
   const weekdays = '일월화수목금토';
-  let lastSignature = '', initialized = false;
+  let lastSignature = '', initialized = false, resizeObserver;
 
   function parseDay(value) {
     if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return NaN;
@@ -12,10 +12,22 @@
 
   function dayKey(time) { return new Date(time).toISOString().slice(0, 10); }
 
-  function buildDays(events, today) {
+  function safeImage(value) {
+    const url = typeof value === 'string' ? value.trim() : '';
+    return /^https:\/\/[^\s<>"']+$/i.test(url) ||
+      (url.length <= 95000 && /^data:image\/(?:webp|jpeg|png);base64,[a-z0-9+/=]+$/i.test(url)) ? url : '';
+  }
+
+  function gameIdentity(game) {
+    return game?.source === 'manual' && game.id ? String(game.id) :
+      /^\d{1,12}$/.test(String(game?.appid || '')) ? 'steam:' + game.appid : '';
+  }
+
+  function buildDays(events, today, groups = [], library = []) {
     const now = parseDay(today);
     if (!Number.isFinite(now)) return [];
     const gamesByDate = new Map();
+    const libraryById = new Map((Array.isArray(library) ? library : []).map(game => [gameIdentity(game), game]).filter(([id]) => id));
     let first = now - 90 * DAY, last = now + 30 * DAY;
     for (const event of Array.isArray(events) ? events : []) {
       const time = parseDay(event?.date);
@@ -27,14 +39,34 @@
       if (!gamesByDate.has(time)) gamesByDate.set(time, new Map());
       const names = gamesByDate.get(time);
       const key = name.normalize('NFC').toLocaleLowerCase('ko-KR');
-      if (!names.has(key)) names.set(key, name);
+      const identity = gameIdentity(event.steamGame);
+      const registered = libraryById.get(identity);
+      const image = safeImage(event.steamGame.image || event.steamGame.headerImage) ||
+        safeImage(registered?.image || registered?.headerImage) ||
+        (identity.startsWith('steam:') ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/' + event.steamGame.appid + '/header.jpg' : '');
+      const previous = names.get(key);
+      if (!previous || (!previous.image && image)) names.set(key, {name: previous?.name || name, image});
+    }
+    // Use the exact same explicit contentGroupId streaks as the monthly calendar.
+    const bandsByDate = new Map(), laneEnds = [];
+    const streaks = root.mwsCalendarContinuousSeriesV1?.streaks(events, groups) || [];
+    for (const streak of streaks) {
+      let lane = laneEnds.findIndex(end => end < streak.start);
+      if (lane < 0) lane = laneEnds.length;
+      laneEnds[lane] = streak.end;
+      for (const date of streak.dates) {
+        if (!bandsByDate.has(date)) bandsByDate.set(date, []);
+        bandsByDate.get(date).push({id: streak.key, name: streak.title, color: streak.color, lane,
+          before: date !== streak.start, after: date !== streak.end});
+      }
     }
     const days = [];
     for (let time = first; time <= last; time += DAY) {
       const date = new Date(time);
-      days.push({date: dayKey(time), year: date.getUTCFullYear(), month: date.getUTCMonth() + 1,
+      const key = dayKey(time), icons = [...(gamesByDate.get(time)?.values() || [])];
+      days.push({date: key, year: date.getUTCFullYear(), month: date.getUTCMonth() + 1,
         day: date.getUTCDate(), weekday: date.getUTCDay(), today: time === now,
-        games: [...(gamesByDate.get(time)?.values() || [])]});
+        games: icons.map(icon => icon.name), icons, bands: bandsByDate.get(key) || []});
     }
     return days;
   }
@@ -50,7 +82,17 @@
     }
   }
 
-  function render(events, today) {
+  function markRowEdges(list) {
+    const cells = [...list.children];
+    if (!cells.length || !list.clientWidth) return;
+    const tops = cells.map(cell => cell.offsetTop);
+    for (let i = 0; i < cells.length; i++) {
+      cells[i].classList.toggle('is-row-start', i === 0 || tops[i] !== tops[i-1]);
+      cells[i].classList.toggle('is-row-end', i === cells.length-1 || tops[i] !== tops[i+1]);
+    }
+  }
+
+  function render(events, today, groups = [], library = []) {
     const panel = root.document?.getElementById('calendarTimelinePanelV1');
     if (!panel || panel.hidden) return;
     const list = panel.querySelector('#calendarTimelineDaysV1');
@@ -62,6 +104,7 @@
           const current = list.querySelector('.is-today');
           const visible = current && current.getBoundingClientRect().top >= list.getBoundingClientRect().top && current.getBoundingClientRect().bottom <= list.getBoundingClientRect().bottom && current.getBoundingClientRect().left >= list.getBoundingClientRect().left && current.getBoundingClientRect().right <= list.getBoundingClientRect().right;
           list.classList.toggle('is-single-line', button.dataset.timelineLayout === 'line');
+          markRowEdges(list);
           for (const other of panel.querySelectorAll('[data-timeline-layout]')) {
             other.classList.toggle('active', other === button);
             other.setAttribute('aria-pressed', String(other === button));
@@ -69,11 +112,15 @@
           if (visible) jumpToday(panel);
         });
       }
+      if (typeof root.ResizeObserver === 'function') {
+        resizeObserver = new root.ResizeObserver(() => markRowEdges(list));
+        resizeObserver.observe(list);
+      }
       initialized = true;
     }
-    const days = buildDays(events, today);
-    const signature = JSON.stringify(days.map(day => [day.date, day.today, day.games]));
-    if (signature === lastSignature) return;
+    const days = buildDays(events, today, groups, library);
+    const signature = JSON.stringify(days.map(day => [day.date, day.today, day.icons, day.bands]));
+    if (signature === lastSignature) { markRowEdges(list); return; }
     const initial = !lastSignature;
     lastSignature = signature;
     const fragment = root.document.createDocumentFragment();
@@ -91,16 +138,50 @@
       date.textContent = `${day.day === 1 ? day.year + '.' : ''}${day.month}.${day.day} ${weekdays[day.weekday]}`;
       date.title = day.date;
       cell.append(date);
-      for (const name of day.games) {
+      if (day.bands.length) {
+        const bands = root.document.createElement('div');
+        bands.className = 'calendar-timeline-bands-v1';
+        for (const band of day.bands) {
+          const bar = root.document.createElement('div');
+          bar.className = 'calendar-timeline-band-v1';
+          bar.dataset.groupId = band.id;
+          bar.title = band.name;
+          bar.style.setProperty('--series-color', band.color);
+          bar.style.gridRow = String(band.lane + 1);
+          if (band.before) bar.classList.add('continues-before');
+          if (band.after) bar.classList.add('continues-after');
+          bands.append(bar);
+        }
+        cell.append(bands);
+      }
+      const icons = root.document.createElement('div');
+      icons.className = 'calendar-timeline-icons-v1';
+      for (const {name, image} of day.icons) {
         const game = root.document.createElement('div');
         game.className = 'calendar-timeline-game-v1';
-        game.textContent = name;
         game.title = name;
-        cell.append(game);
+        game.setAttribute('aria-label', name);
+        game.setAttribute('role', 'img');
+        const fallback = root.document.createElement('span');
+        fallback.textContent = Array.from(name)[0] || '?';
+        fallback.setAttribute('aria-hidden', 'true');
+        game.append(fallback);
+        if (image) {
+          const img = root.document.createElement('img');
+          img.alt = '';
+          img.loading = 'lazy';
+          img.decoding = 'async';
+          img.addEventListener('error', () => img.remove(), {once:true});
+          img.src = image;
+          game.append(img);
+        }
+        icons.append(game);
       }
+      cell.append(icons);
       fragment.append(cell);
     }
     list.replaceChildren(fragment);
+    markRowEdges(list);
     const summary = panel.querySelector('#calendarTimelineRangeV1');
     if (summary && days.length) summary.textContent = `${days[0].date} ~ ${days[days.length - 1].date} · ${days.length}일`;
     if (initial) jumpToday(panel);
