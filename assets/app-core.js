@@ -781,6 +781,7 @@ function deviceChip(e){return e.device?`<span class="chip device-chip">${esc(e.d
 
 const legacyFeatureTabsV1=new Set(['wardogs','gameRps','gamePachinko']);
 function setTab(tab){
+  window.mwsCalendarDetailsV1?.close({restoreFocus:false});
   if(tab==='reminders'){tab='dashboard';dashboardMode='reminders'}
   const navTab=legacyFeatureTabsV1.has(tab)?'legacy':tab;
   document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===navTab));
@@ -1417,7 +1418,7 @@ function renderCalendarSearchResultsV172(){
   results.querySelectorAll('[data-calendar-search-event-id]').forEach(button=>{
     button.addEventListener('click',()=>{
       const id=String(button.dataset.calendarSearchEventId||'');
-      if(id)openEvent(id);
+      if(id)openCalendarEventDetailsV1(id);
     });
   });
 }
@@ -1426,6 +1427,7 @@ function scheduleCalendarSearchResultsV172(){
   calendarSearchTimerV171=setTimeout(renderCalendarSearchResultsV172,70);
 }
 function setCalendarViewModeV172(mode){
+  if(mode!==calendarViewModeV172)window.mwsCalendarDetailsV1?.close({restoreFocus:false});
   calendarViewModeV172=['month','timeline','search'].includes(mode)?mode:'month';
   const calendarRoot=document.getElementById('calendar');
   if(calendarRoot)calendarRoot.dataset.calendarViewMode=calendarViewModeV172;
@@ -1721,6 +1723,28 @@ function setCalendarCtrlCopyMode(active){
     hint.setAttribute('aria-hidden',calendarCtrlCopyMode?'false':'true');
   }
 }
+function openCalendarEventDetailsV1(id){
+  const event=data.events.find(item=>String(item.id)===String(id));
+  if(!event){window.mwsCalendarDetailsV1?.close({restoreFocus:false});return;}
+  hideCalendarEventPreview();
+  const safeURL=value=>{try{const url=new URL(String(value||''));return ['https:','http:'].includes(url.protocol)?url.href:''}catch(_){return ''}};
+  const game=event.steamGame;
+  const registered=(data.gameLibrary||[]).find(item=>game&&(item.id&&item.id===game.id||item.appid&&String(item.appid)===String(game.appid)));
+  const image=safeURL(game?.image||game?.headerImage||registered?.image||registered?.headerImage);
+  const link=safeURL(event.url);
+  const section=(title,content)=>`<section class="event-details-section-v1"><h3>${title}</h3>${content}</section>`;
+  const gameHTML=game?.name?section('게임',`<div class="event-details-game-v1">${image?`<img src="${esc(image)}" alt="" loading="lazy">`:''}<span>${esc(game.name)}</span></div>`):'';
+  const description=event.description?section('상세 내용',`<p class="event-details-text-v1">${esc(event.description)}</p>`):'';
+  const memo=event.memoTitle||event.memoContent?section(esc(event.memoTitle||'메모'),`<p class="event-details-text-v1">${esc(event.memoContent||'')}</p>`):'';
+  const checklist=Array.isArray(event.checklist)&&event.checklist.length?section('체크리스트',`<ul>${event.checklist.map(item=>`<li>${item.done?'완료 · ':''}${esc(item.text||'')}</li>`).join('')}</ul>`):'';
+  const url=link?section('공지',`<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">공지 열기</a>`):'';
+  window.mwsCalendarDetailsV1?.open({id:String(event.id),title:event.restDay?'휴방':event.title,
+    html:calendarPreviewHTML(event)+gameHTML+description+memo+checklist+url,
+    onRefresh:()=>openCalendarEventDetailsV1(event.id),
+    onEdit:()=>{openEvent(event.id);requestAnimationFrame(()=>document.getElementById('evTitle')?.focus())}});
+}
+window.openCalendarEventDetailsV1=openCalendarEventDetailsV1;
+
 let calendarSuppressEventClickV174={id:'',until:0};
 function handleCalendarMiniEventClick(ev,id){
   ev.stopPropagation();
@@ -1735,7 +1759,7 @@ function handleCalendarMiniEventClick(ev,id){
     duplicateEventById(id,{closeModal:false,source:'ctrl'});
     return;
   }
-  openEvent(id);
+  openCalendarEventDetailsV1(id);
 }
 window.handleCalendarMiniEventClick=handleCalendarMiniEventClick;
 
@@ -1797,6 +1821,7 @@ function setCalendarPointerEventTargetV174(clientX,clientY){
 }
 function activateCalendarPointerEventDragV174(state,event){
   if(state.dragging)return;
+  window.mwsCalendarDetailsV1?.close({restoreFocus:false});
   state.dragging=true;
   try{state.source.setPointerCapture(state.pointerId)}catch(_){}
   calendarDragPayload={type:'event',id:state.id};
@@ -1877,7 +1902,7 @@ function endCalendarPointerEventDragV174(event){
   row.date=date;
   saveData('일정 이동');
   window.mwsCalendarMoveGuardV4?.recordMove(row.id,oldDate,date,row.title);
-  toast(row.restDay?'휴방':row.title,'날짜가 이동됐습니다. 상단 이동 취소 버튼으로 되돌릴 수 있습니다.');
+
 }
 function cancelCalendarPointerEventDragV174(event){
   const state=calendarPointerEventDragV174;
@@ -1911,14 +1936,12 @@ function renderCalendar(){
       ${evs.map(e=>{
         const groupColor=groupColors.get(e.contentGroupId);
         const color=e.restDay?'#e85d75':(groupColor||e.color||category(e.categoryId)?.color||'#64748b');
-        const timePrefix=e.start==='TBD'?'':`${esc(e.start||'')} `;
-        const label=e.restDay?'휴방':`${e.device?`[${e.device}] `:''}${timePrefix}${esc(e.title)}`;
+        const label=e.restDay?'휴방':`${e.device?`[${e.device}] `:''}${esc(e.title)}`;
         return `<div class="mini-event ${e.restDay?'rest-event':''} ${groupColor?'calendar-content-group-event-v2':''} ${e.restDay?'':'mws-steam-host-v111'}"
           draggable="false"
-          data-evid="${e.id}"
+          data-evid="${e.id}" tabindex="0" aria-label="${esc(e.restDay?'휴방':e.title)} 상세 보기"
           style="border-left:4px solid ${color};background:${rgba(color,.18)};--content-group-color:${color}"
           onclick="handleCalendarMiniEventClick(event,'${e.id}')">
-          <button type="button" class="calendar-event-drag-handle-v4" draggable="true" aria-label="일정 이동 손잡이" title="여기를 드래그하면 날짜를 옮길 수 있습니다" onclick="event.preventDefault();event.stopPropagation()">⋮⋮</button>
           <span class="mini-event-main">${label}</span>
           ${e.restDay?'':`<button type="button" class="mws-steam-slot-v111" data-event-id="${esc(e.id)}" aria-label="게임 추가" title="게임 추가">+</button>`}
         </div>`
@@ -1972,7 +1995,7 @@ function renderCalendar(){
         ev.date=newDate;
         saveData('일정 이동');
         window.mwsCalendarMoveGuardV4?.recordMove(ev.id,oldDate,newDate,ev.title);
-        toast(ev.restDay?'휴방':ev.title,'날짜가 이동됐습니다. 상단 이동 취소 버튼으로 되돌릴 수 있습니다.');
+
       }
     };
   });
@@ -2017,7 +2040,7 @@ function renderCalendar(){
   window.mwsCalendarContentGroupsV2?.refreshCalendarSelection();
   const pointerPreview=e=>{
     lastCalendarPreviewPointerV2={x:e.clientX,y:e.clientY};
-    if(calendarPointerEventDragV174?.dragging||document.querySelector('.modal.open'))return;
+    if(calendarPointerEventDragV174?.dragging||document.querySelector('.modal.open')||window.mwsCalendarDetailsV1?.isOpen())return;
     const node=e.target?.closest?.('.mini-event[data-evid]');
     if(node&&grid.contains(node))showCalendarEventPreview(node.dataset.evid,e.clientX,e.clientY);
     else hideCalendarEventPreview();
@@ -3043,6 +3066,8 @@ document.getElementById('repeatEndDate').onchange=e=>{eventRepeatDraft.endDate=e
 
 
 function openEvent(id=null,date=null){
+  window.mwsCalendarDetailsV1?.close({restoreFocus:false});
+  window.mwsEventEditorLayoutV6?.reset();
   closeMainModals();
   editingEventId=id;populateEventSelectors();const e=id?data.events.find(x=>x.id===id):null;
   document.getElementById('eventModalTitle').textContent=e?(e.restDay?'휴방 수정':'컨텐츠 스케줄 수정'):'스케줄 추가';

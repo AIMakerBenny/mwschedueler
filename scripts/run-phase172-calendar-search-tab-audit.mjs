@@ -31,7 +31,7 @@ export function runPhase172CalendarSearchTabAudit(){
     "calendarEventMatchesSearchV171(event,query,type)",
     "calendarEventInSearchRangeV172(event)",
     "data-calendar-search-event-id",
-    "if(id)openEvent(id);",
+    "if(id)openCalendarEventDetailsV1(id);",
     "window.__mwsCalendarSearchTabV172='second-tab-date-grouped-list';"
   ])if(!app.includes(token))issues.push('Phase 172 runtime token missing: '+token);
 
