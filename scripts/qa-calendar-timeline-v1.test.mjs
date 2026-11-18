@@ -5,8 +5,9 @@ import vm from 'node:vm';
 
 const source=fs.readFileSync(new URL('../assets/calendar-timeline-v1.js', import.meta.url),'utf8');
 const context=vm.createContext({});
+vm.runInContext(fs.readFileSync(new URL('../assets/calendar-continuous-series-v1.js',import.meta.url),'utf8'),context);
 vm.runInContext(source,context);
-const build=(events,today)=>JSON.parse(JSON.stringify(context.mwsCalendarTimelineV1.buildDays(events,today)));
+const build=(events,today,groups,library)=>JSON.parse(JSON.stringify(context.mwsCalendarTimelineV1.buildDays(events,today,groups,library)));
 
 test('dates are uninterrupted across months, years and leap days',()=>{
   const days=build([{date:'2023-12-30',steamGame:{name:'Old'}},{date:'2024-04-05',steamGame:{name:'New'}}],'2024-03-01');
@@ -41,4 +42,36 @@ test('only registered Steam and manual games, de-duplicated per day; no source m
 test('empty dates and invalid today are safe',()=>{
   assert.equal(build([],'2026-11-18').length,121);
   assert.deepEqual(build([],'invalid'),[]);
+});
+
+test('registered images, manual library fallback, Steam fallback and safe invalid image handling',()=>{
+  const date='2026-11-18';
+  const days=build([
+    {date,steamGame:{name:'Steam image',appid:'1',image:'https://example.test/icon.png'}},
+    {date,steamGame:{name:'Steam fallback',appid:'2'}},
+    {date,steamGame:{name:'Manual',source:'manual',id:'manual:1'}},
+    {date,steamGame:{name:'Unusable image',image:'javascript:alert(1)'}}
+  ],date,[],[{source:'manual',id:'manual:1',image:'https://example.test/manual.png'}]);
+  assert.deepEqual(days.find(d=>d.today).icons,[
+    {name:'Steam image',image:'https://example.test/icon.png'},
+    {name:'Steam fallback',image:'https://cdn.cloudflare.steamstatic.com/steam/apps/2/header.jpg'},
+    {name:'Manual',image:'https://example.test/manual.png'},
+    {name:'Unusable image',image:''}
+  ]);
+});
+
+test('shared explicit group ribbons continue across dates, preserve colors and separate gaps and overlapping groups',()=>{
+  const groups=[{id:'wow',name:'WoW',color:'#123456'},{id:'other',name:'Other',color:'#abc'}];
+  const events=[
+    ...['2026-11-17','2026-11-18','2026-11-19','2026-11-21'].map(date=>({date,contentGroupId:'wow'})),
+    ...['2026-11-18','2026-11-19'].map(date=>({date,contentGroupId:'other'})),
+    {date:'2026-11-20',steamGame:{name:'WoW'}}
+  ];
+  const days=build(events,'2026-11-18',groups);
+  const at=date=>days.find(d=>d.date===date).bands;
+  assert.deepEqual(at('2026-11-17'),[{id:'wow',name:'WoW',color:'#123456',lane:0,before:false,after:true}]);
+  assert.deepEqual(at('2026-11-18').map(b=>[b.id,b.lane,b.before,b.after]),[['wow',0,true,true],['other',1,false,true]]);
+  assert.equal(at('2026-11-19')[0].after,false);
+  assert.deepEqual(at('2026-11-20'),[]);
+  assert.equal(at('2026-11-21')[0].before,false);
 });
