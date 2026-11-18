@@ -33,7 +33,7 @@ const measure=()=>{
   const q=s=>document.querySelector(s),rect=x=>x.getBoundingClientRect();
   const body=document.body,app=q('.app'),side=q('.sidebar'),main=q('.main'),logo=q('.logo'),
     pin=q('#sidebarPinBtn'),day=q('#calendarGrid .day'),top=q('.topbar');
-  const keyLabels=['캘린더','최근 합방 인원','워독스 전쟁견들'];
+  const keyLabels=['캘린더','최근 합방 인원','레거시'];
   const keyFits=keyLabels.map(label=>{
     const e=[...document.querySelectorAll('.nav-scroll > button .nav-label')]
       .find(n=>n.textContent.trim()===label);
