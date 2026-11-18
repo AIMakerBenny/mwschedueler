@@ -43,17 +43,14 @@
 /* Reserve exact text rows even when a one-line title receives a game cover.
    CSS Grid can no longer grow a week just because a title wraps later. */
 #calendar #calendarGrid .mini-event:not(.rest-event){
-  grid-template-rows:2.8em 1.3em!important;
+  grid-template-rows:2.8em!important;
 }
 #calendar #calendarGrid .mini-event:not(.rest-event) .mini-event-main{
   max-height:2.8em;
 }
-#calendar #calendarGrid .mini-event:not(.rest-event) .mini-event-people{
-  max-height:1.3em;
-}
 @container mws-calendar-day (max-width:185px){
   #calendar #calendarGrid .mini-event.mws-steam-host-v111:not(.rest-event){
-    grid-template-rows:28px 2.8em 1.3em!important;
+    grid-template-rows:28px 2.8em!important;
   }
   /* On narrow dates the cover occupies its dedicated first-row cell.
      This is the same compact geometry as calendar-responsive-cards-v1.css. */
@@ -75,7 +72,7 @@
   html{scrollbar-gutter:stable}
 }
 
-/* Mid-width desktop dates retain the original two-row card, with a slightly
+/* Mid-width desktop dates retain the title-only compact card, with a slightly
    narrower game slot to reserve readable title space. Only very narrow days
    get the separate control row. */
 @container mws-calendar-day (min-width:185.01px) and (max-width:215px){

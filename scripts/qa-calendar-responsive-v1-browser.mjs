@@ -23,7 +23,7 @@ assert(html.includes('<div class="calendar-responsive-scroll-v1"'));
 assert(html.includes('id="calendarGrid" class="calendar"'));
 assert(html.indexOf('class="calendar-head"')<html.indexOf('id="calendarGrid"'));
 assert(html.includes('class="calendar-responsive-scroll-v1" role="region" tabindex="0"'));
-assert(!responsive.includes('display:none'),'Responsive CSS must not hide events');
+assert(!/\.mini-event\s*\{[^}]*display\s*:\s*none/.test(responsive),'Responsive CSS must not hide events');
 const steamCss=steamModule.match(/style\.textContent=`([\s\S]*?)`;/)?.[1];
 assert(steamCss&&steamCss.includes('mws-steam-slot-v111'),'Steam runtime CSS must be used in QA');
 const stylesheet=[core,seriesStyle,toolbar,responsive,steamCss].join('\n');
@@ -70,6 +70,9 @@ const boot=`
  const contentWidth=day.clientWidth-parseFloat(dayStyle.paddingLeft)-parseFloat(dayStyle.paddingRight);
  const expectedCompact=contentWidth<=185;
  const regionHeight=r(scroll).height;
+ const hiddenNames=getComputedStyle(card.querySelector('.mini-event-people')).display==='none';
+ const titleRows=getComputedStyle(card).gridTemplateRows.split(' ').length;
+ const noNameTrack=titleRows===(compact?2:1);
  const noMainSlotOverlap=compact? mainRect.top>=slotRect.bottom-1:mainRect.right<=slotRect.left+1;
  const noHandleTitleOverlap=compact?mainRect.top>=handleRect.bottom-1:mainRect.left>=handleRect.right-1;
  const noHeaderMismatch=Math.abs(r(cells[0]).left-r($('.calendar-head>div')).left)<2;
@@ -91,12 +94,12 @@ const boot=`
  const hadScroll=scroll.scrollWidth>scroll.clientWidth+2;
  const scrollbarWorks=!hadScroll||scroll.scrollLeft>beforeScroll;
  const noRootOverflow=document.documentElement.scrollWidth<=window.innerWidth+3;
- const ok=compact===expectedCompact&&noMainSlotOverlap&&noHandleTitleOverlap&&
+ const ok=hiddenNames&&noNameTrack&&compact===expectedCompact&&noMainSlotOverlap&&noHandleTitleOverlap&&
    noHeaderMismatch&&allCardsPresent&&textReadable&&columnFloor&&interactionSafe&&
    groupAligned&&scrollSync&&scrollbarWorks&&noRootOverflow&&regionHeight>0;
  $('#qa-result').textContent=JSON.stringify({ok,viewport:innerWidth,zoom:document.body.style.zoom||'1',
    dateWidth:Math.round(width),titleWidth:Math.round(mainRect.width),compact,expectedCompact,
-   noMainSlotOverlap,noHandleTitleOverlap,noHeaderMismatch,allCardsPresent,textReadable,
+   hiddenNames,noNameTrack,noMainSlotOverlap,noHandleTitleOverlap,noHeaderMismatch,allCardsPresent,textReadable,
    columnFloor,interactionSafe,groupAligned,scrollSync,hadScroll,scrollbarWorks,
    noRootOverflow,ribbonCount:$$('.calendar-continuous-ribbon-v1').length});
 })().catch(e=>document.querySelector('#qa-result').textContent=JSON.stringify({ok:false,error:String(e),stack:e.stack}));

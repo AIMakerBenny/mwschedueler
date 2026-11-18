@@ -148,7 +148,7 @@ jobs:
                 && grep -Fq 'assets/calendar-responsive-cards-v1.css?v=1' /tmp/group-index.html \
                 && grep -Fq 'assets/calendar-stable-layout-v1.css?v=1' /tmp/group-index.html \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-stable-layout-v1.css?check=$t" -o /tmp/calendar-stable.css \
-                && grep -Fq 'grid-template-rows:2.8em 1.3em' /tmp/calendar-stable.css \
+                && grep -Fq 'grid-template-rows:2.8em!important' /tmp/calendar-stable.css \
                 && grep -Fq 'assets/sidebar-rail-scrollbar-v1.css?v=1' /tmp/group-index.html \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/sidebar-rail-scrollbar-v1.css?check=$t" -o /tmp/sidebar-rail.css \
                 && grep -Fq 'scrollbar-gutter:stable' /tmp/sidebar-rail.css \

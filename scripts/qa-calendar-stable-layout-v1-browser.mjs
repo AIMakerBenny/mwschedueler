@@ -12,6 +12,10 @@ const chrome=['google-chrome','google-chrome-stable','chromium','chromium-browse
 assert(chrome,'Chromium is required');
 const source=read('assets/app-core.js');
 assert(source.includes("'mws-steam-host-v111'"),'Calendar must render the Steam host immediately');
+const render=source.slice(source.indexOf('function renderCalendar(){'),source.indexOf('const grid=document.getElementById(\'calendarGrid\');grid.innerHTML=out;'));
+assert(!render.includes('mini-event-people'),'Monthly calendar must not render participant name rows');
+const preview=source.slice(source.indexOf('function calendarPreviewHTML(e){'),source.indexOf('function positionCalendarEventPreview('));
+assert(preview.includes('eventParticipantRows(e)')&&preview.includes('calendar-preview-person-name')&&preview.includes('esc(person.name)'),'Existing hover preview must retain all participant names');
 assert(source.includes('data-event-id=')&&source.includes('aria-label="게임 추가"'),
   'Calendar must render the game button immediately');
 const steam=read('assets/steam-game-v111.js');
@@ -50,6 +54,11 @@ const beforeScript=[
   'date:el.closest(".day").dataset.date,restDay:false,steamGame:id==="e100"?',
   '{appid:"730",name:"Counter-Strike 2",image:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9WlVUp8AAAAASUVORK5CYII="}:null});}',
   'function saveData(){return true;}function toast(){};',
+  'function category(){return null;}function esc(v){return String(v??"");}',
+  'function eventParticipantRows(){return [{person:{name:"참가자 A"},status:"confirmed"},{person:{name:"참가자 B"},status:"confirmed"}];}',
+  'function formatDateWeekday(v){return v;}function deviceChip(){return "";}function formatTimeKorean(v){return v;}',
+  'function initials(v){return v.slice(0,1);}function participantStatusClass(){return "confirmed";}function participantStatusLabel(){return "확정";}',
+  preview,
   'window.openEvent=function(){openCount++};',
   'document.getElementById("saveEventBtn").onclick=function(){};',
   'window.measure=function(){',
@@ -84,11 +93,14 @@ const verifyScript=[
   'setTimeout(()=>{const rescan=window.measure();',
   'const noDup=rescan.buttons===before.buttons;',
   'const afterStable=Math.abs(rescan.row-afterTitle.row)<.6;',
-  'const compactDesktop=before.contentWidth<=185||before.position==="absolute"&&before.titleRows===2;',
-  'const ok=compactDesktop&&slots&&clickBound&&stable&&titleStable&&noDup&&afterStable&&',
+  'const compactDesktop=before.contentWidth<=185?before.titleRows===2:before.position==="absolute"&&before.titleRows===1;',
+  'const hiddenNames=getComputedStyle(card.querySelector(".mini-event-people")).display==="none";',
+  'const previewFixture=document.createElement("div");previewFixture.innerHTML=calendarPreviewHTML(data.events[0]);',
+  'const allPreviewNames=[...previewFixture.querySelectorAll(".calendar-preview-person-name")].map(n=>n.textContent).join("|")==="참가자 A|참가자 B";',
+  'const ok=hiddenNames&&allPreviewNames&&compactDesktop&&slots&&clickBound&&stable&&titleStable&&noDup&&afterStable&&',
   ' !rescan.rootOverflow&&before.buttons>30;',
   'document.getElementById("qa-result").textContent=JSON.stringify({ok,',
-  ' before,after,afterTitle,rescan,slots,clickBound,stable,titleStable,noDup,afterStable,compactDesktop});',
+  ' before,after,afterTitle,rescan,slots,clickBound,stable,titleStable,noDup,afterStable,compactDesktop,hiddenNames,allPreviewNames});',
   '},35);',
   '}catch(err){document.getElementById("qa-result").textContent=JSON.stringify({ok:false,error:String(err),stack:err.stack})}',
   '},35));'
