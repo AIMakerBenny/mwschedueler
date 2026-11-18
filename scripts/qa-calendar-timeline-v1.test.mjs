@@ -75,3 +75,27 @@ test('shared explicit group ribbons continue across dates, preserve colors and s
   assert.deepEqual(at('2026-11-20'),[]);
   assert.equal(at('2026-11-21')[0].before,false);
 });
+
+
+test('timeline keeps all timed sessions, unlinked content and participant names without mutating source',()=>{
+  const events=[
+    {id:'late',date:'2026-11-18',title:'후열',start:'18:00',end:'19:00',participants:['a','a','b'],contentGroupId:'wow',steamGame:{name:'WoW'}},
+    {id:'early',date:'2026-11-18',title:'게임 없는 합방',start:'10:00'},
+    {id:'rest',date:'2026-11-19',restDay:true},
+    {id:'bad',date:'2026-02-30',title:'Invalid'}
+  ];
+  const groups=[{id:'wow',name:'와포',color:'#123456'}];
+  const contacts=[{id:'a',name:'참가자 A'},{id:'b',name:'참가자 B'}];
+  const before=JSON.stringify({events,groups,contacts});
+  const entries=context.mwsCalendarTimelineV1.buildEntries(events,groups,contacts);
+  const rows=JSON.parse(JSON.stringify(entries.get('2026-11-18')));
+  assert.deepEqual(rows.map(e=>e.title),['게임 없는 합방','후열']);
+  assert.deepEqual(rows[1].participants,['참가자 A','참가자 B']);
+  assert.equal(rows[1].participantCount,2);
+  assert.equal(rows[1].color,'#123456');
+  assert.equal(rows[1].group,'와포');
+  assert.equal(rows[1].end,'19:00');
+  assert.equal(entries.get('2026-11-19')[0].rest,true);
+  assert.equal(entries.has('2026-02-30'),false);
+  assert.equal(JSON.stringify({events,groups,contacts}),before);
+});

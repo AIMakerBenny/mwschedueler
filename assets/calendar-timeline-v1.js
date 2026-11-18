@@ -125,7 +125,32 @@
     tooltip.style.top = (y - box.top) / (scale || 1) + 'px';
   }
 
-  function render(events, today, groups = [], library = []) {
+  // Presentation-only projection. Keep every session, even without a linked game,
+  // and never edit source events, participant IDs or explicit group links.
+  function buildEntries(events, groups = [], contacts = []) {
+    const people = new Map((Array.isArray(contacts) ? contacts : []).map(p => [p.id, p.name]));
+    const groupMap = new Map((Array.isArray(groups) ? groups : []).map(g => [g.id, g]));
+    const entries = new Map();
+    for (const event of Array.isArray(events) ? events : []) {
+      if (!Number.isFinite(parseDay(event?.date))) continue;
+      const game = String(event.steamGame?.name || '').trim();
+      const title = String(event.title || (event.restDay ? '휴방' : game) || '제목 없음').trim();
+      const ids = [...new Set(Array.isArray(event.participants) ? event.participants : [])];
+      const participants = ids.map(id => people.get(id)).filter(Boolean);
+      const group = groupMap.get(event.contentGroupId);
+      const color = /^#[\da-f]{3}(?:[\da-f]{3})?$/i.test(group?.color || '') ? group.color : '';
+      const time = /^\d{2}:\d{2}$/.test(event.start || '') ? event.start : '';
+      const end = /^\d{2}:\d{2}$/.test(event.end || '') ? event.end : '';
+      const entry = {title, game, time, end, participants, participantCount: ids.length,
+        group: String(group?.name || ''), color, rest: Boolean(event.restDay)};
+      if (!entries.has(event.date)) entries.set(event.date, []);
+      entries.get(event.date).push(entry);
+    }
+    for (const rows of entries.values()) rows.sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+    return entries;
+  }
+
+  function render(events, today, groups = [], library = [], contacts = []) {
     const panel = root.document?.getElementById('calendarTimelinePanelV1');
     if (!panel || panel.hidden) return;
     const list = panel.querySelector('#calendarTimelineDaysV1');
@@ -156,7 +181,8 @@
       initialized = true;
     }
     const days = buildDays(events, today, groups, library);
-    const signature = JSON.stringify(days.map(day => [day.date, day.today, day.icons, day.bands]));
+    const entries = buildEntries(events, groups, contacts);
+    const signature = JSON.stringify([days, [...entries]]);
     if (signature === lastSignature) { markRowEdges(list); return; }
     const initial = !lastSignature;
     lastSignature = signature;
@@ -166,6 +192,7 @@
       const cell = root.document.createElement('article');
       cell.className = 'calendar-timeline-day-v1';
       cell.dataset.date = day.date;
+      if (!entries.get(day.date)?.length) cell.classList.add('is-empty');
       if (day.today) cell.classList.add('is-today');
       if (day.day === 1) cell.classList.add('is-month-start');
       if (day.weekday === 0) cell.classList.add('is-sunday');
@@ -194,18 +221,27 @@
       }
       const icons = root.document.createElement('div');
       icons.className = 'calendar-timeline-icons-v1';
-      for (const {name, image} of day.icons) {
+      const rows = entries.get(day.date) || [];
+      for (const entry of rows) {
+        const name = entry.game || entry.title;
+        const image = day.icons.find(icon => icon.name.toLocaleLowerCase('ko-KR') === entry.game.toLocaleLowerCase('ko-KR'))?.image;
         const game = root.document.createElement('div');
         game.className = 'calendar-timeline-game-v1';
+        if (entry.group) game.classList.add('has-group');
+        if (entry.color) game.style.setProperty('--entry-color', entry.color);
         game.dataset.gameName = name;
-        game.setAttribute('aria-label', name);
-        game.setAttribute('role', 'img');
+        const timing = entry.time ? entry.time + (entry.end ? ' - ' + entry.end : '') : (entry.rest ? '휴방' : '시간 미정');
+        const details = [day.date, entry.title, timing, entry.game, entry.group ? '연속 콘텐츠: ' + entry.group : '',
+          entry.participantCount ? '참가자 ' + entry.participantCount + '명' + (entry.participants.length ? ': ' + entry.participants.join(', ') : '') : ''].filter(Boolean).join('\n');
+        game.setAttribute('aria-label', details);
+        game.setAttribute('role', 'group');
         game.tabIndex = 0;
-        game.addEventListener('pointerenter', () => showTooltip(game, name));
+        game.addEventListener('pointerenter', () => showTooltip(game, details));
         game.addEventListener('pointerleave', hideTooltip);
-        game.addEventListener('focus', () => showTooltip(game, name));
+        game.addEventListener('focus', () => showTooltip(game, details));
         game.addEventListener('blur', hideTooltip);
         const fallback = root.document.createElement('span');
+        fallback.className = 'calendar-timeline-cover-v2';
         fallback.textContent = Array.from(name)[0] || '?';
         fallback.setAttribute('aria-hidden', 'true');
         game.append(fallback);
@@ -216,8 +252,18 @@
           img.decoding = 'async';
           img.addEventListener('error', () => img.remove(), {once:true});
           img.src = image;
-          game.append(img);
+          fallback.append(img);
         }
+        const copy = root.document.createElement('span');
+        copy.className = 'calendar-timeline-copy-v2';
+        const title = root.document.createElement('span');
+        title.className = 'calendar-timeline-title-v2';
+        title.textContent = entry.title;
+        const meta = root.document.createElement('span');
+        meta.className = 'calendar-timeline-meta-v2';
+        meta.textContent = timing + (entry.participantCount ? ' · ' + entry.participantCount + '명' : '') + (entry.group ? ' · ' + entry.group : '');
+        copy.append(title, meta);
+        game.append(copy);
         icons.append(game);
       }
       cell.append(icons);
@@ -230,5 +276,5 @@
     if (initial) jumpToday(panel);
   }
 
-  root.mwsCalendarTimelineV1 = {buildDays, render, hideTooltip};
+  root.mwsCalendarTimelineV1 = {buildDays, buildEntries, render, hideTooltip};
 })(globalThis);
