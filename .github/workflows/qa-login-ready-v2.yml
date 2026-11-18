@@ -1,0 +1,25 @@
+name: QA Login Readiness V2
+on:
+  pull_request:
+    branches: [cloudflare-production]
+    paths:
+      - 'src/cf-v111-entry.js'
+      - 'assets/cloud-v1.1.js'
+      - 'assets/cloud-runtime-v130.js'
+      - 'assets/app-core.js'
+      - 'scripts/qa-login-ready-v2.test.mjs'
+      - '.github/workflows/qa-login-ready-v2.yml'
+permissions:
+  contents: read
+jobs:
+  login-ready:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: |
+          node --check --input-type=commonjs < assets/app-core.js
+          node --test scripts/qa-login-ready-v2.test.mjs
+          node --test scripts/qa-live-cloud-save-contract-v1.test.mjs

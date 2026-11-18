@@ -6767,7 +6767,7 @@ function renderAll(reason=lastSyncReason){
 compactExistingAutosaves();
 normalizeDataShape();
 persist();
-renderAll('초기 로드');
+// The first full render runs after the runtime overrides below have initialized.
 
 
 /* v3.8 overrides - ladder geometry, horse race, custom coin */
@@ -8572,3 +8572,5 @@ window.resetMultiDraw=()=>{const card=document.getElementById('multiRevealCard')
 renderLadderFullResultList();
 renderMultiDraw();
 
+// Initial render must see initialized favorite-folder and mini-game runtimes.
+renderAll('초기 로드');
