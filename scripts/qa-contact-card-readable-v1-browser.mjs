@@ -11,7 +11,7 @@ const css=['assets/app-core.css','assets/mawang-premium-v1621.css',
   'assets/ui-frame-presets.css','assets/calendar-space-efficiency-v1.css',
   'assets/contact-card-readable-layout-v1.css'].map(file).join('\n');
 const inline=[...index.matchAll(/<style(?:\s[^>]*)?>([\s\S]*?)<\/style>/gi)].map(m=>m[1]).join('\n');
-const newSheet=file('assets/contact-card-readable-layout-v1.css');
+const newSheet=file('assets/contact-card-readable-layout-v1.css')+'\n'+file('assets/workspace-clean-v1.css');
 const nav=index.match(/<button class="active" data-tab="calendar"/g)||[];
 assert.equal(nav.length,1,'Calendar must be the sole default active nav button');
 assert(!index.includes('<button class="active" data-tab="dashboard"'),'Dashboard must not be default nav');

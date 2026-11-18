@@ -33,6 +33,8 @@ const days=Array.from({length:42},(_,i)=>'<div class="day"><div class="daynum">'
 document.querySelector('#calendarGrid').innerHTML=days;
 const $=s=>document.querySelector(s),rect=e=>e.getBoundingClientRect();
 const base=JSON.stringify(events);
+const card=$('#calendarGrid .mini-event'),titleRect=rect(card.querySelector('.mini-event-main')),slot=card.querySelector('.mws-steam-slot-v111'),slotRect=rect(slot),handleRect=rect(card.querySelector('.calendar-event-drag-handle-v4'));
+const noCardOverlap=getComputedStyle(slot).position==='static'?titleRect.top>=slotRect.bottom-1&&titleRect.top>=handleRect.bottom-1:titleRect.right<=slotRect.left+1&&titleRect.left>=handleRect.right-1;
 const heading=getComputedStyle($('#pageTitle')).fontSize;
 const quietShell=getComputedStyle($('.main')).boxShadow==='none'&&getComputedStyle($('.sidebar')).boxShadow==='none';
 const headerFit=rect($('.top-left')).right<=rect($('.clock')).left||rect($('.top-left')).bottom<=rect($('.clock')).top;
@@ -47,7 +49,7 @@ setCalendarViewModeV172('timeline');
 const inactiveTitleSafe=$('#pageTitle').textContent==='캘린더';
 const f1ShellRestored=getComputedStyle($('.main')).boxShadow!=='none';
 $('#gameF1Racing').classList.remove('active');$('#calendar').classList.add('active');setCalendarViewModeV172('month');
-const result={headingOK:parseFloat(heading)<=20,quietShell,headerFit,gameTitle,searchTitle,monthTitle,inactiveTitleSafe,f1ShellRestored,noMutation:base===JSON.stringify(events),noRootOverflow:document.documentElement.scrollWidth<=innerWidth+3};
+const result={noCardOverlap,headingOK:parseFloat(heading)<=20,quietShell,headerFit,gameTitle,searchTitle,monthTitle,inactiveTitleSafe,f1ShellRestored,noMutation:base===JSON.stringify(events),noRootOverflow:document.documentElement.scrollWidth<=innerWidth+3};
 document.querySelector('#result').textContent=JSON.stringify(result);
 `;
 const temp=mkdtempSync(path.join(os.tmpdir(),'mws-workspace-clean-'));
