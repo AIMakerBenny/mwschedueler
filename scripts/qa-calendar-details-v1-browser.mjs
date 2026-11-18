@@ -71,7 +71,8 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const cardTitle=$('.mini-event-main'),cover=$('.mws-steam-slot-v111');
  const cardNoOverlap=r(cardTitle).right<=r(cover).left+1;
  const noSourceMutation=baseline===JSON.stringify(data)&&saves===0;
- const result={readOnlyDrawer,refreshKeepsOpen,contentEscaped,drawerFits,escapeCloses,editOnlyOnButton,lateGameReparented,initialGameVisible,memoVisible,inputsRetained,uniqueInputs,footerVisible,boxFits,dateTimeRow,noPaneOverlap,cardNoOverlap,noSourceMutation,noRootOverflow:document.documentElement.scrollWidth<=innerWidth+2};
+ const geometry={height:innerHeight,boxTop:r($('.event-modalbox')).top,boxBottom:r($('.event-modalbox')).bottom,footerTop:footerRect.top,footerBottom:footerRect.bottom,saveBottom:r($('#saveEventBtn')).bottom};
+ const result={geometry,readOnlyDrawer,refreshKeepsOpen,contentEscaped,drawerFits,escapeCloses,editOnlyOnButton,lateGameReparented,initialGameVisible,memoVisible,inputsRetained,uniqueInputs,footerVisible,boxFits,dateTimeRow,noPaneOverlap,cardNoOverlap,noSourceMutation,noRootOverflow:document.documentElement.scrollWidth<=innerWidth+2};
  $('#result').textContent=JSON.stringify(result);
  $('[data-editor-tool-v6="game"]').click();
 });
@@ -86,7 +87,7 @@ try{
  for(const [width,height] of [[1366,768],[1920,1080],[2560,1440],[2560,1080],[700,900]]){
   const run=spawnSync(chrome,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--no-first-run','--disable-background-networking','--virtual-time-budget=2500','--window-size='+width+','+height,'--dump-dom','file://'+dest],{encoding:'utf8',timeout:30000,maxBuffer:18*1024*1024});
   assert.equal(run.status,0,run.stderr.slice(-700));const match=run.stdout.match(/<pre id="result">([^<]+)<\/pre>/);assert(match,'Missing details result');
-  const result=JSON.parse(match[1]);for(const [key,value] of Object.entries(result))assert.equal(value,true,width+'x'+height+' '+key+' '+JSON.stringify(result));
+  const result=JSON.parse(match[1]);for(const [key,value] of Object.entries(result))if(key!=='geometry')assert.equal(value,true,width+'x'+height+' '+key+' '+JSON.stringify(result));
   console.log('CALENDAR_DETAILS_BROWSER_OK',width,height,JSON.stringify(result));
  }
 }finally{rmSync(temp,{recursive:true,force:true})}
