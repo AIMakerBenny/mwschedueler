@@ -43,7 +43,9 @@
     $('calendarDetailsBodyV1').innerHTML=details.html;
     $('calendarDetailsBodyV1').scrollTop=0;
     drawer.hidden=false;drawer.setAttribute('aria-hidden','false');markSelected(details.id);
-    requestAnimationFrame(()=>{if(current){drawer.classList.add('open');$('calendarDetailsCloseV1').focus({preventScroll:true})}});
+    // Establish the closed position before applying the slide-in state.
+    void drawer.offsetWidth;
+    drawer.classList.add('open');$('calendarDetailsCloseV1').focus({preventScroll:true});
   }
   root.mwsCalendarDetailsV1=Object.freeze({open,close,isOpen:()=>Boolean(current)});
 

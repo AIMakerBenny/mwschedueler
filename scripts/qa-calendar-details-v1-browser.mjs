@@ -34,7 +34,7 @@ function openEvent(){editorOpens++;document.getElementById('eventModal').classLi
 ${helper}
 document.querySelector('.mini-event').onclick=e=>handleCalendarMiniEventClick(e,'qa-event');
 document.querySelector('[data-close="eventModal"]').onclick=()=>document.getElementById('eventModal').classList.remove('open');
-const tick=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+const tick=()=>new Promise(r=>setTimeout(r,30));
 window.addEventListener('DOMContentLoaded',async()=>{
  await tick();
  const $=s=>document.querySelector(s),r=e=>e.getBoundingClientRect();
