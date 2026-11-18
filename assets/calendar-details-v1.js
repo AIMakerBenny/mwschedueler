@@ -32,20 +32,22 @@
         event.preventDefault();close();
       }
     });
-    root.addEventListener('mawang:datachange',()=>{if(current)close({restoreFocus:false})});
+    root.addEventListener('mawang:datachange',()=>current?.onRefresh?.());
   }
   function open(details){
     ensure();clearTimeout(hideTimer);
-    if(!current)previousFocus=document.activeElement;
+    const opening=!current;
+    const scroll=current?.id===details.id?$('calendarDetailsBodyV1').scrollTop:0;
+    if(opening)previousFocus=document.activeElement;
     current=details;
     drawer.setAttribute('aria-label',String(details.title||'일정')+' 상세');
     // HTML is generated and escaped by the application's calendar renderer.
     $('calendarDetailsBodyV1').innerHTML=details.html;
-    $('calendarDetailsBodyV1').scrollTop=0;
+    $('calendarDetailsBodyV1').scrollTop=scroll;
     drawer.hidden=false;drawer.setAttribute('aria-hidden','false');markSelected(details.id);
     // Establish the closed position before applying the slide-in state.
     void drawer.offsetWidth;
-    drawer.classList.add('open');$('calendarDetailsCloseV1').focus({preventScroll:true});
+    drawer.classList.add('open');if(opening)$('calendarDetailsCloseV1').focus({preventScroll:true});
   }
   root.mwsCalendarDetailsV1=Object.freeze({open,close,isOpen:()=>Boolean(current)});
 

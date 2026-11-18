@@ -40,6 +40,8 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const $=s=>document.querySelector(s),r=e=>e.getBoundingClientRect();
  $('.mini-event').click();await tick();await new Promise(resolve=>setTimeout(resolve,220));
  const readOnlyDrawer=window.mwsCalendarDetailsV1.isOpen()&&!$('#eventModal').classList.contains('open')&&editorOpens===0&&saves===0;
+ window.dispatchEvent(new Event('mawang:datachange'));await tick();
+ const refreshKeepsOpen=window.mwsCalendarDetailsV1.isOpen()&&editorOpens===0;
  const contentEscaped=$('#calendarDetailsBodyV1').textContent.includes('<script>unsafe')&&!$('#calendarDetailsBodyV1 script');
  const drawerFits=r($('#calendarEventDetailsV1')).right<=innerWidth+1&&r($('#calendarEventDetailsV1')).left>=0;
  document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
@@ -69,14 +71,15 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const cardTitle=$('.mini-event-main'),cover=$('.mws-steam-slot-v111');
  const cardNoOverlap=r(cardTitle).right<=r(cover).left+1;
  const noSourceMutation=baseline===JSON.stringify(data)&&saves===0;
- const result={readOnlyDrawer,contentEscaped,drawerFits,escapeCloses,editOnlyOnButton,lateGameReparented,initialGameVisible,memoVisible,inputsRetained,uniqueInputs,footerVisible,boxFits,dateTimeRow,noPaneOverlap,cardNoOverlap,noSourceMutation,noRootOverflow:document.documentElement.scrollWidth<=innerWidth+2};
+ const result={readOnlyDrawer,refreshKeepsOpen,contentEscaped,drawerFits,escapeCloses,editOnlyOnButton,lateGameReparented,initialGameVisible,memoVisible,inputsRetained,uniqueInputs,footerVisible,boxFits,dateTimeRow,noPaneOverlap,cardNoOverlap,noSourceMutation,noRootOverflow:document.documentElement.scrollWidth<=innerWidth+2};
  $('#result').textContent=JSON.stringify(result);
  $('[data-editor-tool-v6="game"]').click();
 });
 `;
+// Final geometry uses reduced animation; the live browser verifies slide-in.
 const temp=mkdtempSync(path.join(os.tmpdir(),'mws-details-'));
 try{
- const fixture='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body class="mws-premium" data-resolution="fhd"><main><section id="calendar" class="section active"><div id="calendarGrid" class="calendar"><div class="day"><div class="daynum">18</div><div class="mini-event mws-steam-host-v111" data-evid="qa-event"><span class="mini-event-main">합방 예열 로블록스</span><button type="button" class="mws-steam-slot-v111">+</button></div></div></div></section></main>'+modal+'<pre id="result">pending</pre><script>'+read('assets/event-sidebar-tabs-v5.js')+'</script><script>'+read('assets/calendar-details-v1.js')+'</script><script>'+boot+'</script></body></html>';
+ const fixture='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'\n.event-details-drawer-v1{transition:none!important}</style></head><body class="mws-premium" data-resolution="fhd"><main><section id="calendar" class="section active"><div id="calendarGrid" class="calendar"><div class="day"><div class="daynum">18</div><div class="mini-event mws-steam-host-v111" data-evid="qa-event"><span class="mini-event-main">합방 예열 로블록스</span><button type="button" class="mws-steam-slot-v111">+</button></div></div></div></section></main>'+modal+'<pre id="result">pending</pre><script>'+read('assets/event-sidebar-tabs-v5.js')+'</script><script>'+read('assets/calendar-details-v1.js')+'</script><script>'+boot+'</script></body></html>';
  const dest=path.join(temp,'test.html');writeFileSync(dest,fixture);
  if(process.env.MWS_DETAILS_FIXTURE){writeFileSync(process.env.MWS_DETAILS_FIXTURE,fixture);if(process.env.MWS_FIXTURE_ONLY)process.exit(0);}
  const chrome=['google-chrome','google-chrome-stable','chromium','chromium-browser'].map(n=>spawnSync('which',[n],{encoding:'utf8'})).find(r=>r.status===0)?.stdout.trim();assert(chrome,'Chromium required');

@@ -1427,7 +1427,7 @@ function scheduleCalendarSearchResultsV172(){
   calendarSearchTimerV171=setTimeout(renderCalendarSearchResultsV172,70);
 }
 function setCalendarViewModeV172(mode){
-  window.mwsCalendarDetailsV1?.close({restoreFocus:false});
+  if(mode!==calendarViewModeV172)window.mwsCalendarDetailsV1?.close({restoreFocus:false});
   calendarViewModeV172=['month','timeline','search'].includes(mode)?mode:'month';
   const calendarRoot=document.getElementById('calendar');
   if(calendarRoot)calendarRoot.dataset.calendarViewMode=calendarViewModeV172;
@@ -1725,7 +1725,7 @@ function setCalendarCtrlCopyMode(active){
 }
 function openCalendarEventDetailsV1(id){
   const event=data.events.find(item=>String(item.id)===String(id));
-  if(!event)return;
+  if(!event){window.mwsCalendarDetailsV1?.close({restoreFocus:false});return;}
   hideCalendarEventPreview();
   const safeURL=value=>{try{const url=new URL(String(value||''));return ['https:','http:'].includes(url.protocol)?url.href:''}catch(_){return ''}};
   const game=event.steamGame;
@@ -1740,6 +1740,7 @@ function openCalendarEventDetailsV1(id){
   const url=link?section('공지',`<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">공지 열기</a>`):'';
   window.mwsCalendarDetailsV1?.open({id:String(event.id),title:event.restDay?'휴방':event.title,
     html:calendarPreviewHTML(event)+gameHTML+description+memo+checklist+url,
+    onRefresh:()=>openCalendarEventDetailsV1(event.id),
     onEdit:()=>{openEvent(event.id);requestAnimationFrame(()=>document.getElementById('evTitle')?.focus())}});
 }
 window.openCalendarEventDetailsV1=openCalendarEventDetailsV1;
