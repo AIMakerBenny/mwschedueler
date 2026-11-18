@@ -36,15 +36,15 @@ const today=days.find(x=>x.dataset.date==='2026-11-18');
 const gameIcons=[...today.querySelectorAll('.calendar-timeline-game-v1')];
 const labels=gameIcons.map(x=>x.dataset.gameName);
 const images=gameIcons.every(x=>x.querySelector('img')?.getAttribute('src')===image);
-const iconOnly=gameIcons.every(x=>x.getAttribute('aria-label')===x.dataset.gameName&&x.textContent.length===1&&!x.title);
+const readableSessions=gameIcons.every(x=>x.querySelector('.calendar-timeline-title-v2')?.textContent&&x.querySelector('.calendar-timeline-meta-v2')?.textContent&&x.querySelector('.calendar-timeline-copy-v2').getBoundingClientRect().left>=x.querySelector('.calendar-timeline-cover-v2').getBoundingClientRect().right);
 gameIcons[0].dispatchEvent(new PointerEvent('pointerenter'));
 const tooltip=$('calendarTimelineGameTooltipV1');
 const tipRect=tooltip.getBoundingClientRect();
-const immediateTooltip=!tooltip.hidden&&tooltip.textContent==='WOW'&&tipRect.width>0&&tipRect.left>=0&&tipRect.right<=innerWidth;
+const immediateTooltip=!tooltip.hidden&&tooltip.textContent.includes('WOW')&&tipRect.width>0&&tipRect.left>=0&&tipRect.right<=innerWidth;
 gameIcons[0].dispatchEvent(new PointerEvent('pointerleave'));
 const hoverExit=tooltip.hidden;
-gameIcons[1].dispatchEvent(new PointerEvent('pointerenter'));
-const secondTooltip=!tooltip.hidden&&tooltip.textContent==='와우 포에버';
+gameIcons[2].dispatchEvent(new PointerEvent('pointerenter'));
+const secondTooltip=!tooltip.hidden&&tooltip.textContent.includes('와우 포에버');
 const widerCells=today.getBoundingClientRect().width>=112;
 const groupColor=today.querySelector('[data-group-id="wow"]').style.getPropertyValue('--series-color')==='#123456';
 const hasCrossMonth=days.some(x=>x.dataset.date==='2026-12-01');
@@ -69,19 +69,20 @@ const tabTooltipHidden=tooltip.hidden;
 const searchWorks=panel.hidden&&!$('calendarSearchPanelV172').hidden&&searchRenders===1;
 tabs[0].click();
 const monthWorks=panel.hidden&&!$('calendarMonthPanelV172').hidden&&getComputedStyle(document.querySelector('.calendar-toolbar')).display!=='none';
-const result={order:tabs.map(x=>x.dataset.calendarViewTab).join(','),labels:labels.join('|'),images,iconOnly,immediateTooltip,hoverExit,secondTooltip,tabTooltipHidden,widerCells,groupColor,connected,colorUpdate,hasCrossMonth,compactRows,noPageOverflow,monthHidden,oneLine,todayVisible,noMutation,liveUpdate,searchWorks,monthWorks};
+const result={order:tabs.map(x=>x.dataset.calendarViewTab).join(','),labels:labels.join('|'),images,readableSessions,immediateTooltip,hoverExit,secondTooltip,tabTooltipHidden,widerCells,groupColor,connected,colorUpdate,hasCrossMonth,compactRows,noPageOverflow,monthHidden,oneLine,todayVisible,noMutation,liveUpdate,searchWorks,monthWorks};
 document.getElementById('result').textContent=JSON.stringify(result);
 `;
 const tmp=mkdtempSync(path.join(os.tmpdir(),'mws-timeline-'));
 try{
  const p=path.join(tmp,'test.html');
  writeFileSync(p,'<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>'+css+'</style></head><body>'+section+'<pre id="result">pending</pre><script>'+series+'</script><script>'+js+'</script><script>'+boot+'</script></body></html>');
- for(const width of [1920,1366,700]){
-  const run=spawnSync(chrome,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--no-first-run','--disable-background-networking','--window-size='+width+',1000','--dump-dom','file://'+p],{encoding:'utf8',timeout:30000,maxBuffer:12*1024*1024});
+ if(process.env.MWS_TIMELINE_FIXTURE)writeFileSync(process.env.MWS_TIMELINE_FIXTURE,readFileSync(p,'utf8').replace('<script>'+boot+'</script>','<script>'+boot.slice(0,boot.indexOf('tabs[1].click();'))+'tabs[1].click();</script>'));
+ for(const [width,height] of [[1366,768],[1920,1080],[2560,1440],[2560,1080],[700,1000]]){
+  const run=spawnSync(chrome,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--no-first-run','--disable-background-networking','--window-size='+width+','+height,'--dump-dom','file://'+p],{encoding:'utf8',timeout:30000,maxBuffer:12*1024*1024});
   assert.equal(run.status,0,run.stderr.slice(-900));
   const match=run.stdout.match(/<pre id="result">([^<]+)<\/pre>/);assert(match,'missing browser result');
   const result=JSON.parse(match[1]);
-  assert.equal(result.order,'month,timeline,search');assert.equal(result.labels,'WOW|와우 포에버');
+  assert.equal(result.order,'month,timeline,search');assert.equal(result.labels,'WOW|WOW|와우 포에버');
   for(const [key,value] of Object.entries(result))if(!['order','labels'].includes(key))assert.equal(value,true,width+' '+key+' '+JSON.stringify(result));
   console.log('CALENDAR_TIMELINE_BROWSER_OK',width,JSON.stringify(result));
  }

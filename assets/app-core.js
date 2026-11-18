@@ -1441,7 +1441,7 @@ function setCalendarViewModeV172(mode){
   });
   if(calendarViewModeV172!=='timeline')window.mwsCalendarTimelineV1?.hideTooltip?.();
   if(calendarViewModeV172==='search')renderCalendarSearchResultsV172();
-  if(calendarViewModeV172==='timeline')window.mwsCalendarTimelineV1?.render(activeEvents(),todayKST(),data.contentGroups,data.gameLibrary);
+  if(calendarViewModeV172==='timeline')window.mwsCalendarTimelineV1?.render(activeEvents(),todayKST(),data.contentGroups,data.gameLibrary,data.contacts);
 }
 function initCalendarSearchV172(){
   const input=document.getElementById('calendarSearchV171');
@@ -1480,7 +1480,7 @@ function initCalendarViewTabsV172(){
   });
   initCalendarSearchV172();
   window.addEventListener('mawang:datachange',()=>{
-    if(calendarViewModeV172==='timeline')window.mwsCalendarTimelineV1?.render(activeEvents(),todayKST(),data.contentGroups,data.gameLibrary);
+    if(calendarViewModeV172==='timeline')window.mwsCalendarTimelineV1?.render(activeEvents(),todayKST(),data.contentGroups,data.gameLibrary,data.contacts);
   });
   setCalendarViewModeV172(calendarViewModeV172);
 }
@@ -1925,7 +1925,7 @@ function renderCalendar(){
   window.mwsCalendarContinuousSeriesV1?.render(grid,activeEvents(),data.contentGroups);
   initCalendarViewTabsV172();
   renderCalendarSearchResultsV172();
-  if(calendarViewModeV172==='timeline')window.mwsCalendarTimelineV1?.render(activeEvents(),todayKST(),data.contentGroups,data.gameLibrary);
+  if(calendarViewModeV172==='timeline')window.mwsCalendarTimelineV1?.render(activeEvents(),todayKST(),data.contentGroups,data.gameLibrary,data.contacts);
   grid.querySelectorAll('.day').forEach(day=>{
     day.onclick=()=>openEvent(null,day.dataset.date);
     day.ondragenter=e=>{

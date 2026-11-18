@@ -1,0 +1,64 @@
+name: Calendar visual hierarchy and regression
+on:
+  pull_request:
+    branches: [cloudflare-production]
+    paths:
+      - 'assets/calendar-timeline-v1.*'
+      - 'assets/app-core.js'
+      - 'index.html'
+      - 'scripts/qa-calendar-timeline-v1*'
+      - '.github/workflows/qa-calendar-visual-hierarchy-v2.yml'
+permissions:
+  contents: read
+jobs:
+  calendar-ui-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Calendar and existing feature syntax
+        run: |
+          node --check --input-type=commonjs < assets/app-core.js
+          node --check assets/calendar-timeline-v1.js
+          node --check assets/calendar-continuous-series-v1.js
+          node --check assets/calendar-content-groups-v2.js
+          node --check assets/event-sidebar-tabs-v5.js
+          node --check assets/calendar-move-guard-v4.js
+          node --check assets/cloud-v5.5.js
+          node --check src/index.js
+          node --check src/cf-v111-entry.js
+          node --check src/cf-v111-auth.js
+          node --check assets/soop-contact-autofill-v1.js
+          node --check assets/steam-game-v111.js
+          node --check assets/cloud-v1.1.js
+          node --check assets/cloud-v1.1-loader.js
+          node --check assets/cloud-runtime-v130.js
+      - name: Calendar content group, hover and duration regression
+        run: |
+          node --test scripts/qa-calendar-timeline-v1.test.mjs
+          node scripts/qa-calendar-timeline-v1-browser.mjs
+          node --test scripts/qa-login-ready-v2.test.mjs
+          node --test scripts/qa-legacy-hub-v1.test.mjs
+          node scripts/run-phase116-wardogs-navigation-shell-audit.mjs
+          node --test scripts/qa-calendar-continuous-series-v1.test.mjs
+          node --test scripts/qa-calendar-broadcast-duration-v1.test.mjs
+          node scripts/qa-calendar-continuous-series-browser-v1.mjs
+          node scripts/qa-calendar-content-groups-v2-browser.mjs
+          node scripts/qa-calendar-content-groups-v3-search-browser.mjs
+          node scripts/qa-calendar-group-recovery-v1-browser.mjs
+          node scripts/qa-calendar-toolbar-v4-browser.mjs
+          node scripts/qa-calendar-responsive-v1-browser.mjs
+          node scripts/qa-calendar-stable-layout-v1-browser.mjs
+          node scripts/qa-sidebar-rail-scrollbar-v1-browser.mjs
+          node scripts/qa-game-library-v1-browser.mjs
+          node --test scripts/qa-game-library-v1.test.mjs
+          node scripts/qa-event-sidebar-tabs-v5-browser.mjs
+          node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs
+          node --test scripts/qa-active-cloudflare-core-groups-v1.test.mjs
+          node --test scripts/qa-live-cloud-save-contract-v1.test.mjs
+          node scripts/run-phase38-calendar-preview-mousemove-audit.mjs
+          node scripts/run-phase174-calendar-pointer-drag-audit.mjs
+          node --test scripts/qa-soop-contact-autofill-v1.test.mjs
