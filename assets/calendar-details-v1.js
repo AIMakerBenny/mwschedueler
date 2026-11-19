@@ -20,7 +20,7 @@
     const finish=()=>{if(!current){drawer.hidden=true;motion?.cancel();motion=null}};
     if(drawer.animate&&!reducedMotion()){
       motion=drawer.animate([{transform:from},{transform:'translateX(104%)'}],{duration:320,easing:'cubic-bezier(.2,.7,.2,1)',fill:'both'});
-      motion.onfinish=finish;
+      motion.finished.then(finish,()=>{});
     }else finish();
   }
   function ensure(){
@@ -68,7 +68,7 @@
       // Explicit keyframes work even when display:none and open change in one paint.
       motion=drawer.animate([{transform:from},{transform:'translateX(0)'}],{duration:320,easing:'cubic-bezier(.2,.7,.2,1)',fill:'both'});
       const activeMotion=motion;
-      activeMotion.onfinish=()=>{if(motion===activeMotion){activeMotion.cancel();motion=null}};
+      activeMotion.finished.then(()=>{if(motion===activeMotion){activeMotion.cancel();motion=null}},()=>{});
     }
     if(opening)$('calendarDetailsCloseV1').focus({preventScroll:true});
   }

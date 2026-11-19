@@ -1184,7 +1184,7 @@ function calendarPreviewHTML(e){
     <div class="event-meta"><span>${formatDateWeekday(e.date)}</span><span>하루 종일</span></div>`;
   }
   const people=eventParticipantRows(e);
-  const gamePreview=calendarGamePreviewHTMLV3(e);
+  const gamePreview=typeof calendarGamePreviewHTMLV3==='function'?calendarGamePreviewHTMLV3(e):'';
   const broadcastDuration=window.mwsCalendarBroadcastDurationV1?.label(e.start,e.end)||'';
   return `<div class="space" style="align-items:flex-start">
     <div class="calendar-preview-title">${esc(e.title)}</div>
