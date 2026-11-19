@@ -24,8 +24,13 @@ const tick=()=>new Promise(r=>setTimeout(r,35));
 window.addEventListener('DOMContentLoaded',async()=>{
  const $=s=>document.querySelector(s);await tick();$('#qaCard').click();
  const drawer=$('#calendarEventDetailsV1'),animation=drawer.getAnimations()[0];
- const explicitMotion=Boolean(animation)&&animation.effect.getTiming().duration===320;
- animation.pause();animation.currentTime=160;await tick();
+ const explicitMotion=Boolean(animation)&&animation.effect.getTiming().duration===380;
+ animation.pause();animation.currentTime=190;await tick();
+ const main=document.querySelector('.app>.main'),layout=main.getAnimations()[0];
+ const calendarUsesCompositor=Boolean(layout)&&layout.effect.getKeyframes().every(frame=>frame.width===undefined&&frame.marginRight===undefined)&&getComputedStyle(main).transitionProperty==='none';
+ let resizeCount=0;const resizeObserver=new ResizeObserver(()=>resizeCount++);resizeObserver.observe(main);
+ for(const t of [30,90,150,210,270,330]){layout.pause();layout.currentTime=t;await tick()}
+ const noPerFrameRelayout=resizeCount<=2;resizeObserver.disconnect();
  const matrix=new DOMMatrix(getComputedStyle(drawer).transform),middle=matrix.m41;
  const entersThroughIntermediatePosition=middle>1&&middle<drawer.getBoundingClientRect().width;
  window.dispatchEvent(new Event('mawang:datachange'));await tick();
@@ -35,14 +40,14 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const detailImage=drawer.querySelector('.calendar-preview-game-v3 img'),hoverImage=$('#calendarEventPreview .calendar-preview-game-v3 img');
  const uploadedImageDecoded=detailImage?.complete&&detailImage.naturalWidth>0&&hoverImage?.complete&&hoverImage.naturalWidth>0;
  const oneGameSection=drawer.querySelectorAll('.calendar-preview-game-v3').length===1;
- $('#background').click();const exit=drawer.getAnimations()[0];exit.pause();exit.currentTime=160;await tick();
+ $('#background').click();const exit=drawer.getAnimations()[0];exit.pause();exit.currentTime=190;await tick();
  const leaving=new DOMMatrix(getComputedStyle(drawer).transform).m41;
  const exitsThroughIntermediatePosition=leaving>1&&leaving<drawer.getBoundingClientRect().width*1.04;
  exit.finish();await tick();const backgroundCloses=drawer.hidden&&!window.mwsCalendarDetailsV1.isOpen()&&editorOpens===0;
  $('#qaCard').click();$('#calendarDetailsCloseV1').click();$('#qaCard').click();
  const reopening=drawer.getAnimations()[0];reopening.finish();await tick();
  const rapidReopenStable=!drawer.hidden&&window.mwsCalendarDetailsV1.isOpen()&&drawer.classList.contains('open');
- $('#result').textContent=JSON.stringify({explicitMotion,entersThroughIntermediatePosition,refreshKeepsMotion,finalPosition,uploadedImageDecoded,oneGameSection,exitsThroughIntermediatePosition,backgroundCloses,rapidReopenStable,noMutation:baseline===JSON.stringify(data)});
+ $('#result').textContent=JSON.stringify({explicitMotion,calendarUsesCompositor,noPerFrameRelayout,entersThroughIntermediatePosition,refreshKeepsMotion,finalPosition,uploadedImageDecoded,oneGameSection,exitsThroughIntermediatePosition,backgroundCloses,rapidReopenStable,noMutation:baseline===JSON.stringify(data)});
 });`;
 function fixture(test){return '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'\nbody{margin:0;padding:16px;background:#101217;color:#eef0f5}.main{padding:12px}#calendarEventPreview{position:static;display:block;visibility:visible;opacity:1;pointer-events:auto;max-width:500px;margin-top:28px}#result{position:fixed;visibility:hidden}</style><body><div class="app"><main class="main"><section id="calendar" class="section active"><h1>캘린더</h1><div id="calendarGrid"><div class="day"><button id="qaCard" class="mini-event" data-evid="qa">10:41 와우 포에버</button><button id="background">달력 바탕</button></div></div><div id="calendarEventPreview"></div></section></main></div><pre id="result">pending</pre><script>'+read('assets/calendar-details-v1.js')+'</script><script>'+setup+(test?checks:'')+'</script></body></html>'}
 if(process.env.MWS_MOTION_FIXTURE){writeFileSync(process.env.MWS_MOTION_FIXTURE,fixture(false));process.exit(0)}
