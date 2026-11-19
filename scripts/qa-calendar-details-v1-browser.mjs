@@ -88,7 +88,7 @@ try{
  if(process.env.MWS_DETAILS_FIXTURE){writeFileSync(process.env.MWS_DETAILS_FIXTURE,fixture);if(process.env.MWS_FIXTURE_ONLY)process.exit(0);}
  const chrome=['google-chrome','google-chrome-stable','chromium','chromium-browser'].map(n=>spawnSync('which',[n],{encoding:'utf8'})).find(r=>r.status===0)?.stdout.trim();assert(chrome,'Chromium required');
  for(const [width,height] of [[1366,768],[1920,1080],[2560,1440],[2560,1080],[700,900]]){
-  const run=spawnSync(chrome,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--no-first-run','--disable-background-networking','--virtual-time-budget=2500','--window-size='+width+','+height,'--dump-dom','file://'+dest],{encoding:'utf8',timeout:30000,maxBuffer:18*1024*1024});
+  const run=spawnSync(chrome,['--headless=new','--force-prefers-reduced-motion=reduce','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--no-first-run','--disable-background-networking','--virtual-time-budget=2500','--window-size='+width+','+height,'--dump-dom','file://'+dest],{encoding:'utf8',timeout:30000,maxBuffer:18*1024*1024});
   assert.equal(run.status,0,run.stderr.slice(-700));const match=run.stdout.match(/<pre id="result">([^<]+)<\/pre>/);assert(match,'Missing details result');
   const result=JSON.parse(match[1]);for(const [key,value] of Object.entries(result))if(key!=='geometry')assert.equal(value,true,width+'x'+height+' '+key+' '+JSON.stringify(result));
   console.log('CALENDAR_DETAILS_BROWSER_OK',width,height,JSON.stringify(result));

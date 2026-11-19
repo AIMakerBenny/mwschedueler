@@ -11,7 +11,7 @@ const top=html.slice(html.indexOf('      <div class="calendar-topbar-v4">'),html
 const host=read('assets/content-planner-host.js');
 const runtimeCSS=host.slice(host.indexOf('#calendarGrid.calendar{'),host.indexOf('#sniper .sniper-name'));
 const css=['app-core.css','mawang-premium-v1621.css','calendar-space-efficiency-v1.css','calendar-toolbar-v4.css','calendar-responsive-cards-v1.css','calendar-stable-layout-v1.css','calendar-continuous-series-v1.css','workspace-clean-v1.css','calendar-details-v1.css'].map(p=>read('assets/'+p)).join('\n')+'\n'+runtimeCSS;
-assert(css.includes('transition:transform .26s'),'Drawer keeps a real slide transition');
+assert(read('assets/calendar-details-v1.js').includes('drawer.animate'),'Drawer keeps explicit sliding keyframes');
 const bootstrap=`
 const data={contentGroups:[{id:'series',name:'연속 게임',color:'#118c95'}],events:[]};let calDate=new Date(2026,10,1);
 const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),sundayIndex=d=>d,todayKST=()=> '2026-11-18',activeEvents=()=>data.events,category=()=>({color:'#8b5cf6'}),rgba=()=> '#29233f';
@@ -59,7 +59,7 @@ try{
  const file=path.join(temp,'index.html');writeFileSync(file,fixture());
  const chrome=['google-chrome','google-chrome-stable','chromium','chromium-browser'].map(n=>spawnSync('which',[n],{encoding:'utf8'})).find(r=>r.status===0)?.stdout.trim();assert(chrome,'Chromium required');
  for(const [width,height] of [[1366,768],[1920,1080],[2560,1440],[2560,1080]]){
-  const run=spawnSync(chrome,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--no-first-run','--disable-background-networking','--virtual-time-budget=6500','--window-size='+width+','+height,'--dump-dom','file://'+file],{encoding:'utf8',timeout:30000,maxBuffer:18*1024*1024});
+  const run=spawnSync(chrome,['--headless=new','--force-prefers-reduced-motion=reduce','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--no-first-run','--disable-background-networking','--virtual-time-budget=6500','--window-size='+width+','+height,'--dump-dom','file://'+file],{encoding:'utf8',timeout:30000,maxBuffer:18*1024*1024});
   assert.equal(run.status,0,run.stderr.slice(-700));const match=run.stdout.match(/<pre id="result">([^<]+)<\/pre>/);assert(match,'Missing month result');const result=JSON.parse(match[1]);for(const [key,value] of Object.entries(result))assert.equal(value,true,width+'x'+height+' '+key+' '+JSON.stringify(result));console.log('CALENDAR_MONTH_VIEWPORT_OK',width,height,JSON.stringify(result));
  }
 }finally{rmSync(temp,{recursive:true,force:true})}

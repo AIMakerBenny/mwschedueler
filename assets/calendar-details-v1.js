@@ -2,7 +2,7 @@
 (function(root){
   'use strict';
   const $=id=>document.getElementById(id);
-  let drawer,previousFocus,hideTimer,openFrame,openTimer,current=null;
+  let drawer,previousFocus,hideTimer,motion,current=null;
   function markSelected(id){
     document.querySelectorAll('#calendarGrid .mini-event[data-evid]').forEach(node=>{
       node.classList.toggle('event-details-selected-v1',node.dataset.evid===id);
@@ -10,13 +10,18 @@
   }
   function close({restoreFocus=true}={}){
     if(!drawer)return;
-    clearTimeout(hideTimer);cancelAnimationFrame(openFrame);clearTimeout(openTimer);
+    clearTimeout(hideTimer);
+    const from=getComputedStyle(drawer).transform;motion?.cancel();
     document.body.classList.remove('calendar-details-open-v2');
     drawer.inert=true;drawer.classList.remove('open');
     drawer.setAttribute('aria-hidden','true');
     current=null;markSelected('');
     if(restoreFocus&&previousFocus?.isConnected)previousFocus.focus({preventScroll:true});
-    hideTimer=setTimeout(()=>{if(!current)drawer.hidden=true},280);
+    const finish=()=>{if(!current){drawer.hidden=true;motion?.cancel();motion=null}};
+    if(drawer.animate&&!reducedMotion()){
+      motion=drawer.animate([{transform:from},{transform:'translateX(104%)'}],{duration:320,easing:'cubic-bezier(.2,.7,.2,1)',fill:'both'});
+      motion.finished.then(finish,()=>{});
+    }else finish();
   }
   function ensure(){
     if(drawer)return;
@@ -43,9 +48,12 @@
     });
     root.addEventListener('mawang:datachange',()=>current?.onRefresh?.());
   }
+  function reducedMotion(){return root.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true}
   function open(details){
     ensure();clearTimeout(hideTimer);
     const opening=!current;
+    const from=drawer.hidden?'translateX(104%)':getComputedStyle(drawer).transform;
+    if(opening){motion?.cancel();motion=null;}
     const scroll=current?.id===details.id?$('calendarDetailsBodyV1').scrollTop:0;
     if(opening)previousFocus=document.activeElement;
     current=details;
@@ -55,19 +63,14 @@
     $('calendarDetailsBodyV1').scrollTop=scroll;
     $('calendarDetailsEditV1').hidden=typeof details.onEdit!=='function';
     drawer.inert=false;drawer.hidden=false;drawer.setAttribute('aria-hidden','false');markSelected(details.id);
-    // Establish the closed position before applying the slide-in state.
-    void drawer.offsetWidth;
-    cancelAnimationFrame(openFrame);
-    clearTimeout(openTimer);
-    const reveal=()=>{
-      cancelAnimationFrame(openFrame);clearTimeout(openTimer);
-      if(!current)return;
-      document.body.classList.add('calendar-details-open-v2');drawer.classList.add('open');
-      if(opening)$('calendarDetailsCloseV1').focus({preventScroll:true});
-    };
-    openFrame=requestAnimationFrame(reveal);
-    // Timer fallback also reveals the drawer in background or throttled tabs.
-    openTimer=setTimeout(reveal,32);
+    document.body.classList.add('calendar-details-open-v2');drawer.classList.add('open');
+    if(opening&&drawer.animate&&!reducedMotion()){
+      // Explicit keyframes work even when display:none and open change in one paint.
+      motion=drawer.animate([{transform:from},{transform:'translateX(0)'}],{duration:320,easing:'cubic-bezier(.2,.7,.2,1)',fill:'both'});
+      const activeMotion=motion;
+      activeMotion.finished.then(()=>{if(motion===activeMotion){activeMotion.cancel();motion=null}},()=>{});
+    }
+    if(opening)$('calendarDetailsCloseV1').focus({preventScroll:true});
   }
   root.mwsCalendarDetailsV1=Object.freeze({open,close,isOpen:()=>Boolean(current)});
 
