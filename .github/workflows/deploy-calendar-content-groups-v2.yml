@@ -14,6 +14,7 @@ on:
       - 'scripts/qa-calendar-details-motion-v3-browser.mjs'
       - 'scripts/qa-calendar-details-frame-pacing-v5-browser.mjs'
       - 'scripts/calendar-browser-realtime.mjs'
+      - 'scripts/qa-live-calendar-drawer-motion-v6.mjs'
       - 'scripts/qa-calendar-game-preview-v3.test.mjs'
       - 'scripts/qa-workspace-clean-v1-browser.mjs'
       - 'assets/calendar-timeline-v1.css'
@@ -254,6 +255,8 @@ jobs:
       - name: Read-only production group and linked-event health
         continue-on-error: true
         run: node scripts/qa-live-calendar-core-summary-v1.mjs
+      - name: Verify visibly sustained drawer motion on live public calendar
+        run: node scripts/qa-live-calendar-drawer-motion-v6.mjs
       - name: Publish scoped Cloudflare deployment result
         if: always()
         env:

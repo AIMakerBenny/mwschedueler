@@ -20,19 +20,22 @@ try{
     const tick=()=>new Promise(resolve=>requestAnimationFrame(resolve));
     async function measure(action,opening){
       const start=performance.now();action();const synchronousMs=performance.now()-start;
-      let entered=false,previous=null,width=null,stableWidth=true,monotonic=true,lastX=null;
+      let entered=false,previous=null,width=null,stableWidth=true,monotonic=true,lastX=null,firstTime=null,lastTime=null,firstMiddle=null,lastMiddle=null;
       const intervals=[],positions=[];
-      while(performance.now()-start<1600){
+      while(performance.now()-start<2600){
         const timestamp=await tick(),animation=drawer.getAnimations()[0];
         if(!animation){if(entered)break;continue}
         entered=true;
         const x=new DOMMatrix(getComputedStyle(drawer).transform).m41;
+        const fraction=x/(drawer.offsetWidth*1.04);
+        if(firstTime===null)firstTime=timestamp;lastTime=timestamp;
+        if(fraction>=.2&&fraction<=.8){if(firstMiddle===null)firstMiddle=timestamp;lastMiddle=timestamp}
         positions.push(x);if(lastX!==null&&((opening&&x>lastX+1)||(!opening&&x<lastX-1)))monotonic=false;lastX=x;
         if(previous!==null)intervals.push(timestamp-previous);previous=timestamp;
         const w=grid.offsetWidth;if(width!==null&&w!==width)stableWidth=false;width=w;
       }
       const ordered=[...intervals].sort((a,b)=>a-b),round=v=>Math.round(v*10)/10;
-      return {synchronousMs:round(synchronousMs),frames:positions.length,distinctPositions:new Set(positions.map(x=>Math.round(x))).size,p95Ms:round(ordered[Math.max(0,Math.ceil(ordered.length*.95)-1)]||0),maxMs:round(Math.max(0,...intervals)),over33Ms:intervals.filter(x=>x>33.5).length,stableWidth,monotonic,settled:opening?!drawer.hidden&&drawer.classList.contains('open'):drawer.hidden};
+      return {synchronousMs:round(synchronousMs),visiblePlaybackMs:round((lastTime??0)-(firstTime??0)),middleTravelMs:round((lastMiddle??0)-(firstMiddle??0)),frames:positions.length,distinctPositions:new Set(positions.map(x=>Math.round(x))).size,p95Ms:round(ordered[Math.max(0,Math.ceil(ordered.length*.95)-1)]||0),maxMs:round(Math.max(0,...intervals)),over33Ms:intervals.filter(x=>x>33.5).length,stableWidth,monotonic,settled:opening?!drawer.hidden&&drawer.classList.contains('open'):drawer.hidden};
     }
     await tick();await tick();const result=[];
     for(let i=0;i<3;i++){
@@ -46,7 +49,7 @@ try{
     const {cards,ribbons,result}=await browser.evaluate(frameTest);
     assert(cards>=40&&ribbons>=3,'Realistic month fixture required');
     for(const sample of result){
-      assert(sample.settled&&sample.stableWidth&&sample.monotonic&&sample.frames>=8&&sample.distinctPositions>=5,JSON.stringify(sample));
+      assert(sample.settled&&sample.stableWidth&&sample.monotonic&&sample.frames>=12&&sample.distinctPositions>=10&&sample.visiblePlaybackMs>=620&&sample.middleTravelMs>=150,JSON.stringify(sample));
     }
     // CI hosts vary. Record full frame pacing and fail clearly degraded median playback;
     // the logs are also needed when investigating intermittent individual long frames.

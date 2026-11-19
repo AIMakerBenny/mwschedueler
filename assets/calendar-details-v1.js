@@ -3,7 +3,9 @@
   'use strict';
   const $=id=>document.getElementById(id);
   let drawer,previousFocus,motion,layoutMotion,layoutElement,fitViewportNow,current=null,renderedHTML='',motionGeneration=0,prepareFrame=0;
-  const duration=360,easing='cubic-bezier(.4,0,.2,1)';
+  // Deliberately visible, balanced motion: half the panel travels in the first half
+  // rather than rushing most of the distance on an aggressively eased-out curve.
+  const duration=700,easing='cubic-bezier(.4,0,.6,1)';
   const offscreen='translate3d(104%,0,0)',onscreen='translate3d(0,0,0)';
   function stopLayoutMotion(){
     layoutMotion?.cancel();layoutMotion=null;
@@ -74,8 +76,12 @@
     drawer.id='calendarEventDetailsV1';drawer.className='event-details-drawer-v1';drawer.hidden=true;drawer.inert=true;
     drawer.setAttribute('role','dialog');drawer.setAttribute('aria-modal','false');
     drawer.setAttribute('aria-label','일정 상세');drawer.setAttribute('aria-hidden','true');
-    drawer.innerHTML='<header class="event-details-head-v1"><span>일정 상세</span><button type="button" class="ghost" id="calendarDetailsCloseV1" aria-label="일정 상세 닫기">닫기</button></header><div class="event-details-body-v1" id="calendarDetailsBodyV1"></div><footer class="event-details-footer-v1"><button type="button" class="primary" id="calendarDetailsEditV1">수정</button></footer>';
+    drawer.innerHTML='<header class="event-details-head-v1"><span>일정 상세</span><div class="event-details-head-actions-v6"><button type="button" class="ghost" id="calendarDetailsMotionV6" hidden>슬라이드 켜기</button><button type="button" class="ghost" id="calendarDetailsCloseV1" aria-label="일정 상세 닫기">닫기</button></div></header><div class="event-details-body-v1" id="calendarDetailsBodyV1"></div><footer class="event-details-footer-v1"><button type="button" class="primary" id="calendarDetailsEditV1">수정</button></footer>';
     document.body.append(drawer);
+    const preferenceButton=$('calendarDetailsMotionV6');
+    const syncPreference=()=>{preferenceButton.hidden=!systemReducedMotion();preferenceButton.textContent=motionOverride?'시스템 설정 사용':'슬라이드 켜기';preferenceButton.setAttribute('aria-pressed',String(motionOverride));preferenceButton.title='이 브라우저에서 일정 상세 슬라이드 효과만 설정합니다'};
+    preferenceButton.onclick=()=>{motionOverride=!motionOverride;try{localStorage.setItem('mws-calendar-slide-v6',motionOverride?'on':'system')}catch(_){}syncPreference()};
+    root.matchMedia?.('(prefers-reduced-motion: reduce)').addEventListener?.('change',syncPreference);syncPreference();
     drawer.addEventListener('click',event=>{const button=event.target.closest('[data-detail-event-v2]');if(button)root.openCalendarEventDetailsV1?.(button.dataset.detailEventV2)});
     document.addEventListener('click',event=>{
       if(!current||drawer.contains(event.target)||event.target.closest('.mini-event[data-evid],.calendar-day-more-v2,.modal.open'))return;
@@ -93,7 +99,10 @@
     });
     root.addEventListener('mawang:datachange',()=>current?.onRefresh?.());
   }
-  function reducedMotion(){return root.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true}
+  let motionOverride=false;
+  try{motionOverride=localStorage.getItem('mws-calendar-slide-v6')==='on'}catch(_){}
+  function systemReducedMotion(){return root.matchMedia?.('(prefers-reduced-motion: reduce)').matches===true}
+  function reducedMotion(){return systemReducedMotion()&&!motionOverride}
   function open(details){
     ensure();
     const opening=!current;
