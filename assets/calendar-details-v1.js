@@ -28,7 +28,7 @@
     document.body.append(drawer);
     drawer.addEventListener('click',event=>{const button=event.target.closest('[data-detail-event-v2]');if(button)root.openCalendarEventDetailsV1?.(button.dataset.detailEventV2)});
     document.addEventListener('click',event=>{
-      if(!current||drawer.contains(event.target)||event.target.closest('.mini-event[data-evid],.modal.open'))return;
+      if(!current||drawer.contains(event.target)||event.target.closest('.mini-event[data-evid],.calendar-day-more-v2,.modal.open'))return;
       const calendarBackground=event.target.closest('#calendarGrid');
       close({restoreFocus:false});
       // Dismissing the panel must not also create a new schedule.

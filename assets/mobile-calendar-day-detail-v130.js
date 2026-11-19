@@ -223,10 +223,10 @@ function decorateGrid(){
   const mobile=isMobileMonth();
 
   grid.querySelectorAll('.day[data-date]').forEach(day=>{
-    const miniEvents=[...day.querySelectorAll(':scope > .mini-event[data-evid]')];
+    const miniEvents=[...day.querySelectorAll(':scope > .mini-event[data-evid],:scope > .calendar-day-events-v2 > .mini-event[data-evid]')];
 
     for(const child of [...day.children]){
-      const keep=child.classList.contains('daynum')||child.classList.contains('mini-event');
+      const keep=child.classList.contains('daynum')||child.classList.contains('mini-event')||child.classList.contains('calendar-day-events-v2');
       child.classList.toggle('mws-mobile-calendar-extra-v130',mobile&&!keep);
     }
 
@@ -234,6 +234,8 @@ function decorateGrid(){
       const main=node.querySelector('.mini-event-main');
       node.classList.toggle('mws-mobile-event-hidden-v130',mobile&&index>=2);
       if(!main)return;
+      // Structured month labels already contain escaped title and start time.
+      if(main.querySelector('.calendar-start-v2')){node.setAttribute('draggable','false');return;}
       if(!main.dataset.mwsMobileOriginalText)main.dataset.mwsMobileOriginalText=main.textContent||'';
       if(mobile){
         const event=eventById(node.dataset.evid);
