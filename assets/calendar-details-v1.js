@@ -2,7 +2,7 @@
 (function(root){
   'use strict';
   const $=id=>document.getElementById(id);
-  let drawer,previousFocus,hideTimer,openFrame,current=null;
+  let drawer,previousFocus,hideTimer,openFrame,openTimer,current=null;
   function markSelected(id){
     document.querySelectorAll('#calendarGrid .mini-event[data-evid]').forEach(node=>{
       node.classList.toggle('event-details-selected-v1',node.dataset.evid===id);
@@ -10,7 +10,7 @@
   }
   function close({restoreFocus=true}={}){
     if(!drawer)return;
-    clearTimeout(hideTimer);cancelAnimationFrame(openFrame);
+    clearTimeout(hideTimer);cancelAnimationFrame(openFrame);clearTimeout(openTimer);
     document.body.classList.remove('calendar-details-open-v2');
     drawer.inert=true;drawer.classList.remove('open');
     drawer.setAttribute('aria-hidden','true');
@@ -58,11 +58,16 @@
     // Establish the closed position before applying the slide-in state.
     void drawer.offsetWidth;
     cancelAnimationFrame(openFrame);
-    openFrame=requestAnimationFrame(()=>{
+    clearTimeout(openTimer);
+    const reveal=()=>{
+      cancelAnimationFrame(openFrame);clearTimeout(openTimer);
       if(!current)return;
       document.body.classList.add('calendar-details-open-v2');drawer.classList.add('open');
       if(opening)$('calendarDetailsCloseV1').focus({preventScroll:true});
-    });
+    };
+    openFrame=requestAnimationFrame(reveal);
+    // Timer fallback also reveals the drawer in background or throttled tabs.
+    openTimer=setTimeout(reveal,32);
   }
   root.mwsCalendarDetailsV1=Object.freeze({open,close,isOpen:()=>Boolean(current)});
 
