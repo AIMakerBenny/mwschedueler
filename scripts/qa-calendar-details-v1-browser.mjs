@@ -9,7 +9,7 @@ const modal=html.slice(html.indexOf('<div id="eventModal"'),html.indexOf('<div i
 const helper=core.slice(core.indexOf('function openCalendarEventDetailsV1(id){'),core.indexOf("document.addEventListener('keydown'",core.indexOf('function openCalendarEventDetailsV1(id){')));
 const render=core.slice(core.indexOf('function renderCalendar(){'),core.indexOf('  const grid=document.getElementById(\'calendarGrid\');grid.innerHTML=out;'));
 assert(!render.includes('calendar-event-drag-handle-v4'),'Monthly card must have no drag handle');
-assert(!render.includes('timePrefix'),'Monthly labels must have no generated time prefix');
+assert(render.includes('calendar-start-v2'),'Monthly labels show the scheduled start time');
 assert(core.includes('el.onpointerdown=e=>{')&&core.includes('beginCalendarPointerEventDragV174(e,el);'));
 const gameMarkup=steam.match(/panel\.innerHTML=`([\s\S]*?)`;/)[1];
 const steamCSS=steam.match(/style\.textContent=`([\s\S]*?)`;/)[1];
@@ -46,6 +46,8 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const drawerFits=r($('#calendarEventDetailsV1')).right<=innerWidth+1&&r($('#calendarEventDetailsV1')).left>=0;
  document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
  const escapeCloses=!window.mwsCalendarDetailsV1.isOpen();
+ $('.mini-event').click();await tick();document.querySelector('main').click();
+ const outsideCloses=!window.mwsCalendarDetailsV1.isOpen();
  $('.mini-event').click();await tick();$('#calendarDetailsEditV1').click();await tick();
  const editOnlyOnButton=editorOpens===1&&$('#eventModal').classList.contains('open')&&!window.mwsCalendarDetailsV1.isOpen();
  const game=document.createElement('aside');game.id='eventGamePanelV112';game.className='event-game-panel-v112';game.innerHTML=${JSON.stringify(gameMarkup)};
@@ -73,7 +75,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const cardNoOverlap=r(cardTitle).right<=r(cover).left+1;
  const noSourceMutation=baseline===JSON.stringify(data)&&saves===0;
  const geometry={height:innerHeight,boxTop:r($('.event-modalbox')).top,boxBottom:r($('.event-modalbox')).bottom,footerTop:footerRect.top,footerBottom:footerRect.bottom,saveBottom:r($('#saveEventBtn')).bottom};
- const result={geometry,oneCardRow,readOnlyDrawer,refreshKeepsOpen,contentEscaped,drawerFits,escapeCloses,editOnlyOnButton,lateGameReparented,initialGameVisible,memoVisible,inputsRetained,uniqueInputs,footerVisible,boxFits,dateTimeRow,noPaneOverlap,cardNoOverlap,noSourceMutation,noRootOverflow:document.documentElement.scrollWidth<=innerWidth+2};
+ const result={geometry,oneCardRow,readOnlyDrawer,refreshKeepsOpen,contentEscaped,drawerFits,escapeCloses,outsideCloses,editOnlyOnButton,lateGameReparented,initialGameVisible,memoVisible,inputsRetained,uniqueInputs,footerVisible,boxFits,dateTimeRow,noPaneOverlap,cardNoOverlap,noSourceMutation,noRootOverflow:document.documentElement.scrollWidth<=innerWidth+2};
  $('#result').textContent=JSON.stringify(result);
  $('[data-editor-tool-v6="game"]').click();
 });

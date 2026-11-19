@@ -2,7 +2,7 @@
 (function(root){
   'use strict';
   const $=id=>document.getElementById(id);
-  let drawer,previousFocus,hideTimer,current=null;
+  let drawer,previousFocus,hideTimer,openFrame,openTimer,current=null;
   function markSelected(id){
     document.querySelectorAll('#calendarGrid .mini-event[data-evid]').forEach(node=>{
       node.classList.toggle('event-details-selected-v1',node.dataset.evid===id);
@@ -10,12 +10,13 @@
   }
   function close({restoreFocus=true}={}){
     if(!drawer)return;
-    clearTimeout(hideTimer);
-    drawer.classList.remove('open');
+    clearTimeout(hideTimer);cancelAnimationFrame(openFrame);clearTimeout(openTimer);
+    document.body.classList.remove('calendar-details-open-v2');
+    drawer.inert=true;drawer.classList.remove('open');
     drawer.setAttribute('aria-hidden','true');
     current=null;markSelected('');
     if(restoreFocus&&previousFocus?.isConnected)previousFocus.focus({preventScroll:true});
-    hideTimer=setTimeout(()=>{if(!current)drawer.hidden=true},180);
+    hideTimer=setTimeout(()=>{if(!current)drawer.hidden=true},280);
   }
   function ensure(){
     if(drawer)return;
@@ -25,6 +26,14 @@
     drawer.setAttribute('aria-label','일정 상세');drawer.setAttribute('aria-hidden','true');
     drawer.innerHTML='<header class="event-details-head-v1"><span>일정 상세</span><button type="button" class="ghost" id="calendarDetailsCloseV1" aria-label="일정 상세 닫기">닫기</button></header><div class="event-details-body-v1" id="calendarDetailsBodyV1"></div><footer class="event-details-footer-v1"><button type="button" class="primary" id="calendarDetailsEditV1">수정</button></footer>';
     document.body.append(drawer);
+    drawer.addEventListener('click',event=>{const button=event.target.closest('[data-detail-event-v2]');if(button)root.openCalendarEventDetailsV1?.(button.dataset.detailEventV2)});
+    document.addEventListener('click',event=>{
+      if(!current||drawer.contains(event.target)||event.target.closest('.mini-event[data-evid],.calendar-day-more-v2,.modal.open'))return;
+      const calendarBackground=event.target.closest('#calendarGrid');
+      close({restoreFocus:false});
+      // Dismissing the panel must not also create a new schedule.
+      if(calendarBackground){event.preventDefault();event.stopImmediatePropagation()}
+    },true);
     $('calendarDetailsCloseV1').onclick=()=>close();
     $('calendarDetailsEditV1').onclick=()=>{const edit=current?.onEdit;close({restoreFocus:false});edit?.()};
     document.addEventListener('keydown',event=>{
@@ -44,12 +53,55 @@
     // HTML is generated and escaped by the application's calendar renderer.
     $('calendarDetailsBodyV1').innerHTML=details.html;
     $('calendarDetailsBodyV1').scrollTop=scroll;
-    drawer.hidden=false;drawer.setAttribute('aria-hidden','false');markSelected(details.id);
+    $('calendarDetailsEditV1').hidden=typeof details.onEdit!=='function';
+    drawer.inert=false;drawer.hidden=false;drawer.setAttribute('aria-hidden','false');markSelected(details.id);
     // Establish the closed position before applying the slide-in state.
     void drawer.offsetWidth;
-    drawer.classList.add('open');if(opening)$('calendarDetailsCloseV1').focus({preventScroll:true});
+    cancelAnimationFrame(openFrame);
+    clearTimeout(openTimer);
+    const reveal=()=>{
+      cancelAnimationFrame(openFrame);clearTimeout(openTimer);
+      if(!current)return;
+      document.body.classList.add('calendar-details-open-v2');drawer.classList.add('open');
+      if(opening)$('calendarDetailsCloseV1').focus({preventScroll:true});
+    };
+    openFrame=requestAnimationFrame(reveal);
+    // Timer fallback also reveals the drawer in background or throttled tabs.
+    openTimer=setTimeout(reveal,32);
   }
   root.mwsCalendarDetailsV1=Object.freeze({open,close,isOpen:()=>Boolean(current)});
+
+  function initMonthViewport(){
+    const grid=$('calendarGrid');if(!grid)return;
+    let frame;
+    function fit(){
+      cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{
+        if(!grid.getClientRects().length||innerWidth<901)return;
+        const top=grid.getBoundingClientRect().top+scrollY;
+        grid.style.setProperty('--calendar-week-count-v2',Math.max(1,Math.ceil(grid.querySelectorAll('.day[data-date]').length/7)));
+        grid.style.setProperty('--calendar-month-height-v2',Math.max(240,innerHeight-top-24)+'px');
+        grid.querySelectorAll('.day[data-date]').forEach(day=>{
+          const list=day.querySelector('.calendar-day-events-v2');if(!list)return;
+          const number=day.querySelector('.daynum');
+          let more=number?.querySelector('.calendar-day-more-v2');
+          const count=list.querySelectorAll('.mini-event').length;
+          if(!more&&count){
+            more=document.createElement('button');more.type='button';more.className='calendar-day-more-v2';number.append(more);
+            more.onclick=event=>{event.stopPropagation();root.openCalendarDayDetailsV2?.(day.dataset.date)};
+          }
+          if(more){more.textContent=count+'개';more.title='이 날짜 일정 전체 보기';more.setAttribute('aria-label',day.dataset.date+' 일정 '+count+'개 전체 보기');more.hidden=list.scrollHeight<=list.clientHeight+2}
+        });
+      });
+    }
+    new MutationObserver(fit).observe(grid,{childList:true});
+    if(typeof ResizeObserver==='function'){
+      const observer=new ResizeObserver(fit);observer.observe(grid);
+      const header=document.querySelector('.topbar');if(header)observer.observe(header);
+      const toolbar=document.querySelector('.calendar-topbar-v4');if(toolbar)observer.observe(toolbar);
+    }
+    root.addEventListener('resize',fit);fit();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initMonthViewport,{once:true});else initMonthViewport();
 
   let tools,mode='game';
   function selectTool(value){
