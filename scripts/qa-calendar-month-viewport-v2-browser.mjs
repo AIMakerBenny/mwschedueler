@@ -31,6 +31,13 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const visibleMonth=[...document.querySelectorAll('.day:not(.out)')].length===30;
  const startTimeVisible=$('.calendar-start-v2').textContent==='13:55';
  const clockHidden=getComputedStyle($('#clockText')).display==='none';
+ const shortList=$('.day[data-date="2026-11-26"] .calendar-day-events-v2'),crowdedList=$('.day[data-date="2026-11-18"] .calendar-day-events-v2');
+ const emptyList=$('.day[data-date="2026-12-02"] .calendar-day-events-v2');
+ const shortListDoesNotFillBlankSpace=shortList.scrollHeight<=shortList.clientHeight+2&&shortList.getBoundingClientRect().bottom<r('.day[data-date="2026-11-26"]').bottom-34;
+ const emptyListDoesNotCaptureBlankSpace=emptyList.getBoundingClientRect().height<=2;
+ const crowdedListStillScrolls=crowdedList.scrollHeight>crowdedList.clientHeight+2;
+ crowdedList.scrollTop=24;const crowdedListMoves=crowdedList.scrollTop>0;crowdedList.scrollTop=0;
+ const pageScrollCanChain=[shortList,crowdedList,emptyList].every(node=>getComputedStyle(node).overscrollBehaviorY==='auto');
  $('[data-evid="qa-18-0"]').click();await tick();
  const panelPushes=r('#calendarGrid').width<closedWidth-250&&r('#calendarGrid').right<=r('#calendarEventDetailsV1').left;
  const saturdayVisible=[...document.querySelectorAll('.day.sat')].every(e=>e.getBoundingClientRect().right<=r('#calendarEventDetailsV1').left);
@@ -50,7 +57,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const noRootOverflow=document.documentElement.scrollWidth<=innerWidth;
  const months=[new Date(2026,1,1),new Date(2026,7,1)];let otherMonthsFit=true;
  for(const date of months){calDate=date;renderCalendar();await tick();otherMonthsFit&&=r('#calendarGrid').bottom<=innerHeight-10&&document.querySelectorAll('.day:not(.out)').length===new Date(date.getFullYear(),date.getMonth()+1,0).getDate()}
- document.getElementById('result').textContent=JSON.stringify({monthFits,visibleMonth,startTimeVisible,clockHidden,panelPushes,saturdayVisible,participantRailClear,ribbonsKept,openMonthFits,outsideCloses,crowdedDayAccessible,dayToDetails,escapeCloses,noMutation,noRootOverflow,otherMonthsFit});
+ document.getElementById('result').textContent=JSON.stringify({monthFits,visibleMonth,startTimeVisible,clockHidden,shortListDoesNotFillBlankSpace,emptyListDoesNotCaptureBlankSpace,crowdedListStillScrolls,crowdedListMoves,pageScrollCanChain,panelPushes,saturdayVisible,participantRailClear,ribbonsKept,openMonthFits,outsideCloses,crowdedDayAccessible,dayToDetails,escapeCloses,noMutation,noRootOverflow,otherMonthsFit});
 });`;
 export function fixture({test=true}={}){return '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+(test?'\n.event-details-drawer-v1,body:has(#calendar.section.active) .app>.main:has(#calendar.section.active){transition:none!important}':'')+'\n.app{display:grid;grid-template-columns:180px minmax(0,1fr)}.calendar-head{display:grid;grid-template-columns:repeat(7,1fr)}#result{position:fixed;bottom:0;visibility:hidden}</style><body class="mws-premium sidebar-pinned" data-resolution="fhd"><div class="app"><aside class="sidebar">MAWANG<br>캘린더</aside><main class="main"><div class="topbar"><h1>캘린더</h1><div id="todayText">2026년 11월 18일</div><div class="clock"><span id="clockText">오후 10:46:17</span><button id="newEventBtn">컨텐츠 추가</button></div></div><section id="calendar" class="section active">'+top+'<div class="calendar-responsive-scroll-v1"><div class="calendar-head">'+['일','월','화','수','목','금','토'].map(s=>'<span>'+s+'</span>').join('')+'</div><div id="calendarGrid" class="calendar"></div></div></section></main></div><pre id="result">pending</pre><script>'+read('assets/calendar-continuous-series-v1.js')+'</script><script>'+read('assets/calendar-details-v1.js')+'</script><script>'+bootstrap+(test?checks:'')+'</script></body></html>'}
 if(process.env.MWS_MONTH_FIXTURE){writeFileSync(process.env.MWS_MONTH_FIXTURE,fixture({test:false}));process.exit(0)}
