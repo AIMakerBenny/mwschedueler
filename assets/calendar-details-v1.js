@@ -25,7 +25,7 @@
   }
   function close({restoreFocus=true}={}){
     if(!drawer)return;
-    const from=getComputedStyle(drawer).transform;motion?.cancel();
+    const style=getComputedStyle(drawer),from=style.transform,fromOpacity=Number(style.opacity);motion?.cancel();
     changeLayout(false);
     drawer.inert=true;drawer.classList.remove('open');
     drawer.setAttribute('aria-hidden','true');
@@ -33,7 +33,7 @@
     if(restoreFocus&&previousFocus?.isConnected)previousFocus.focus({preventScroll:true});
     const finish=()=>{if(!current){drawer.hidden=true;motion?.cancel();motion=null;stopLayoutMotion()}};
     if(drawer.animate&&!reducedMotion()){
-      motion=drawer.animate([{transform:from},{transform:'translateX(104%)'}],{duration,easing,fill:'both'});
+      motion=drawer.animate([{transform:from,opacity:fromOpacity},{transform:'translateX(104%)',opacity:0}],{duration,easing,fill:'both'});
       motion.finished.then(finish,()=>{});
     }else finish();
   }
@@ -66,7 +66,7 @@
   function open(details){
     ensure();
     const opening=!current;
-    const from=drawer.hidden?'translateX(104%)':getComputedStyle(drawer).transform;
+    const style=getComputedStyle(drawer),from=drawer.hidden?'translateX(104%)':style.transform,fromOpacity=drawer.hidden?0:Number(style.opacity);
     if(opening){motion?.cancel();motion=null;}
     const scroll=current?.id===details.id?$('calendarDetailsBodyV1').scrollTop:0;
     if(opening)previousFocus=document.activeElement;
@@ -80,7 +80,7 @@
     if(opening)changeLayout(true);drawer.classList.add('open');
     if(opening&&drawer.animate&&!reducedMotion()){
       // Explicit keyframes work even when display:none and open change in one paint.
-      motion=drawer.animate([{transform:from},{transform:'translateX(0)'}],{duration,easing,fill:'both'});
+      motion=drawer.animate([{transform:from,opacity:fromOpacity},{transform:'translateX(0)',opacity:1}],{duration,easing,fill:'both'});
       const activeMotion=motion;
       activeMotion.finished.then(()=>{if(motion===activeMotion){activeMotion.cancel();motion=null;stopLayoutMotion()}},()=>{});
     }
