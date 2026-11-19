@@ -157,7 +157,7 @@ body:has(#calendar.section.active) #newEventBtn{min-height:30px!important;paddin
 #calendar #calendarGrid .calendar-start-v2,#calendar #calendarGrid .calendar-card-title-v2{display:block;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
 
 @media(min-width:901px){
- #calendar #calendarGrid .day.has-ohamsa-local-v2{padding-bottom:26px!important}
+ #calendar #calendarGrid .day{padding-bottom:26px!important}
  #calendar #calendarGrid .ohamsa-calendar-strip-local-v2{height:20px!important;min-height:20px!important;bottom:3px!important;left:4px!important;right:4px!important;padding:1px 4px!important;border-radius:4px!important}
  #calendar #calendarGrid .ohamsa-calendar-strip-local-v2 :is(img,.ohamsa-calendar-avatar-local-v2){height:17px!important;width:17px!important;flex-basis:17px!important;border-radius:4px!important}
  #calendar #calendarGrid .daynum{padding-right:21px!important}
