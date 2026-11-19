@@ -10,6 +10,7 @@ on:
       - 'assets/calendar-details-v1.js'
       - 'assets/calendar-details-v1.css'
       - 'scripts/qa-calendar-details-v1-browser.mjs'
+      - 'scripts/qa-calendar-month-viewport-v2-browser.mjs'
       - 'scripts/qa-workspace-clean-v1-browser.mjs'
       - 'assets/calendar-timeline-v1.css'
       - 'scripts/qa-calendar-timeline-v1.test.mjs'
@@ -90,6 +91,7 @@ jobs:
           node scripts/qa-calendar-timeline-v1-browser.mjs
           node scripts/qa-workspace-clean-v1-browser.mjs
           node scripts/qa-calendar-details-v1-browser.mjs
+          node scripts/qa-calendar-month-viewport-v2-browser.mjs
           node scripts/qa-contact-card-readable-v1-browser.mjs
           node --test scripts/qa-login-ready-v2.test.mjs
           node --test scripts/qa-legacy-hub-v1.test.mjs

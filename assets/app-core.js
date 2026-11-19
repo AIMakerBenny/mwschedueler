@@ -1723,6 +1723,12 @@ function setCalendarCtrlCopyMode(active){
     hint.setAttribute('aria-hidden',calendarCtrlCopyMode?'false':'true');
   }
 }
+function openCalendarDayDetailsV2(date){
+  const events=activeEvents().filter(e=>e.date===date).sort((a,b)=>String(a.start||'99:99').localeCompare(String(b.start||'99:99')));
+  const html=`<div class="calendar-preview-title">${esc(date)}</div><p class="muted">일정 ${events.length}개</p><div class="calendar-day-list-v2">${events.map(e=>`<button type="button" class="secondary" data-detail-event-v2="${esc(e.id)}"><time>${esc(e.restDay?'휴방':e.start&&e.start!=='TBD'?String(e.start).slice(0,5):'시간 미정')}</time><span>${esc(e.title||'휴방')}</span></button>`).join('')}</div>`;
+  window.mwsCalendarDetailsV1?.open({id:'day:'+date,title:date,html,onRefresh:()=>openCalendarDayDetailsV2(date)});
+}
+window.openCalendarDayDetailsV2=openCalendarDayDetailsV2;
 function openCalendarEventDetailsV1(id){
   const event=data.events.find(item=>String(item.id)===String(id));
   if(!event){window.mwsCalendarDetailsV1?.close({restoreFocus:false});return;}
@@ -1923,7 +1929,8 @@ function renderCalendar(){
     if(!eventsByDate.has(key))eventsByDate.set(key,[]);
     eventsByDate.get(key).push(event);
   }
-  for(let i=0;i<42;i++){
+  const cellCount=Math.ceil((offset+new Date(y,m+1,0).getDate())/7)*7;
+  for(let i=0;i<cellCount;i++){
     const d=new Date(start);d.setDate(start.getDate()+i);
     const ds=ymd(d),inMonth=d.getMonth()===m,today=ds===todayKST(),dow=d.getDay();
     const evs=(eventsByDate.get(ds)||[]).sort((a,b)=>{
@@ -1933,10 +1940,11 @@ function renderCalendar(){
     });
     out+=`<div class="day ${inMonth?'':'out'} ${today?'today':''} ${dow===0?'sun':''} ${dow===6?'sat':''}" data-date="${ds}">
       <div class="daynum">${d.getDate()}</div>
-      ${evs.map(e=>{
+      <div class="calendar-day-events-v2" tabindex="0" aria-label="${ds} 일정 ${evs.length}개">${evs.map(e=>{
         const groupColor=groupColors.get(e.contentGroupId);
         const color=e.restDay?'#e85d75':(groupColor||e.color||category(e.categoryId)?.color||'#64748b');
-        const label=e.restDay?'휴방':`${e.device?`[${e.device}] `:''}${esc(e.title)}`;
+        const startLabel=e.start&&e.start!=='TBD'?String(e.start).slice(0,5):'미정';
+        const label=e.restDay?'휴방':`<time class="calendar-start-v2">${esc(startLabel)}</time><span class="calendar-card-title-v2">${esc(e.title)}</span>`;
         return `<div class="mini-event ${e.restDay?'rest-event':''} ${groupColor?'calendar-content-group-event-v2':''} ${e.restDay?'':'mws-steam-host-v111'}"
           draggable="false"
           data-evid="${e.id}" tabindex="0" aria-label="${esc(e.restDay?'휴방':e.title)} 상세 보기"
@@ -1945,7 +1953,7 @@ function renderCalendar(){
           <span class="mini-event-main">${label}</span>
           ${e.restDay?'':`<button type="button" class="mws-steam-slot-v111" data-event-id="${esc(e.id)}" aria-label="게임 추가" title="게임 추가">+</button>`}
         </div>`
-      }).join('')}
+      }).join('')}</div>
     </div>`;
   }
   const grid=document.getElementById('calendarGrid');grid.innerHTML=out;
