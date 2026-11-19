@@ -10,6 +10,7 @@ on:
       - 'scripts/qa-calendar-details-v1-browser.mjs'
       - 'scripts/qa-calendar-month-viewport-v2-browser.mjs'
       - 'scripts/qa-calendar-details-motion-v3-browser.mjs'
+      - 'scripts/qa-calendar-details-frame-pacing-v5-browser.mjs'
       - 'scripts/qa-calendar-game-preview-v3.test.mjs'
       - 'scripts/qa-workspace-clean-v1-browser.mjs'
       - 'assets/app-core.js'
@@ -54,6 +55,7 @@ jobs:
           node scripts/qa-calendar-month-viewport-v2-browser.mjs
           node --test scripts/qa-calendar-game-preview-v3.test.mjs
           node scripts/qa-calendar-details-motion-v3-browser.mjs
+          node scripts/qa-calendar-details-frame-pacing-v5-browser.mjs
           node scripts/qa-contact-card-readable-v1-browser.mjs
           node --test scripts/qa-login-ready-v2.test.mjs
           node --test scripts/qa-legacy-hub-v1.test.mjs
