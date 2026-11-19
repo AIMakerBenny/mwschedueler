@@ -11,6 +11,7 @@ on:
       - 'scripts/qa-calendar-month-viewport-v2-browser.mjs'
       - 'scripts/qa-calendar-details-motion-v3-browser.mjs'
       - 'scripts/qa-calendar-details-frame-pacing-v5-browser.mjs'
+      - 'scripts/calendar-browser-realtime.mjs'
       - 'scripts/qa-calendar-game-preview-v3.test.mjs'
       - 'scripts/qa-workspace-clean-v1-browser.mjs'
       - 'assets/app-core.js'

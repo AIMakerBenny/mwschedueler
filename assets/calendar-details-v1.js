@@ -3,7 +3,7 @@
   'use strict';
   const $=id=>document.getElementById(id);
   let drawer,previousFocus,motion,layoutMotion,layoutElement,fitViewportNow,current=null,renderedHTML='',motionGeneration=0,prepareFrame=0;
-  const duration=320,easing='cubic-bezier(.25,.8,.25,1)';
+  const duration=360,easing='cubic-bezier(.4,0,.2,1)';
   const offscreen='translate3d(104%,0,0)',onscreen='translate3d(0,0,0)';
   function stopLayoutMotion(){
     layoutMotion?.cancel();layoutMotion=null;

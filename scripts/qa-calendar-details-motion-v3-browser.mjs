@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
-import {spawnSync} from 'node:child_process';
+import {pathToFileURL} from 'node:url';
+import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 import path from 'node:path';
 import os from 'node:os';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
@@ -26,9 +27,9 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const ready=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
  await ready();
  const drawer=$('#calendarEventDetailsV1'),animation=drawer.getAnimations()[0];
- const explicitMotion=Boolean(animation)&&animation.effect.getTiming().duration===320;
+ const explicitMotion=Boolean(animation)&&animation.effect.getTiming().duration===360;
  const opaqueSlide=animation.effect.getKeyframes().every(frame=>frame.opacity===undefined);
- animation.pause();animation.currentTime=160;await tick();
+ animation.pause();animation.currentTime=180;await tick();
  const main=document.querySelector('.app>.main'),layout=main.getAnimations()[0];
  const calendarUsesCompositor=Boolean(layout)&&layout.effect.getKeyframes().every(frame=>frame.width===undefined&&frame.marginRight===undefined)&&getComputedStyle(main).transitionProperty==='none';
  let resizeCount=0;const resizeObserver=new ResizeObserver(()=>resizeCount++);resizeObserver.observe(main);
@@ -43,7 +44,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const detailImage=drawer.querySelector('.calendar-preview-game-v3 img'),hoverImage=$('#calendarEventPreview .calendar-preview-game-v3 img');
  const uploadedImageDecoded=detailImage?.complete&&detailImage.naturalWidth>0&&hoverImage?.complete&&hoverImage.naturalWidth>0;
  const oneGameSection=drawer.querySelectorAll('.calendar-preview-game-v3').length===1;
- $('#background').click();await ready();const exit=drawer.getAnimations()[0];exit.pause();exit.currentTime=160;await tick();
+ $('#background').click();await ready();const exit=drawer.getAnimations()[0];exit.pause();exit.currentTime=180;await tick();
  const leaving=new DOMMatrix(getComputedStyle(drawer).transform).m41;
  const exitsThroughIntermediatePosition=leaving>1&&leaving<drawer.getBoundingClientRect().width*1.04;
  exit.finish();await tick();const backgroundCloses=drawer.hidden&&!window.mwsCalendarDetailsV1.isOpen()&&editorOpens===0;
@@ -55,10 +56,12 @@ window.addEventListener('DOMContentLoaded',async()=>{
 function fixture(test){return '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'\nbody{margin:0;padding:16px;background:#101217;color:#eef0f5}.main{padding:12px}#calendarEventPreview{position:static;display:block;visibility:visible;opacity:1;pointer-events:auto;max-width:500px;margin-top:28px}#result{position:fixed;visibility:hidden}</style><body><div class="app"><main class="main"><section id="calendar" class="section active"><h1>캘린더</h1><div id="calendarGrid"><div class="day"><button id="qaCard" class="mini-event" data-evid="qa">10:41 와우 포에버</button><button id="background">달력 바탕</button></div></div><div id="calendarEventPreview"></div></section></main></div><pre id="result">pending</pre><script>'+read('assets/calendar-details-v1.js')+'</script><script>'+setup+(test?checks:'')+'</script></body></html>'}
 if(process.env.MWS_MOTION_FIXTURE){writeFileSync(process.env.MWS_MOTION_FIXTURE,fixture(false));process.exit(0)}
 const temp=mkdtempSync(path.join(os.tmpdir(),'mws-motion-'));
+let browser;
 try{const file=path.join(temp,'index.html');writeFileSync(file,fixture(true));
- const chrome=['google-chrome','google-chrome-stable','chromium','chromium-browser'].map(n=>spawnSync('which',[n],{encoding:'utf8'})).find(r=>r.status===0)?.stdout.trim();assert(chrome,'Chromium required');
+ browser=await launchCalendarBrowser(temp);
  for(const[width,height]of [[1366,768],[1920,1080],[2560,1440],[2560,1080]]){
-  const run=spawnSync(chrome,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--no-first-run','--disable-background-networking','--virtual-time-budget=2500','--window-size='+width+','+height,'--dump-dom','file://'+file],{encoding:'utf8',timeout:30000,maxBuffer:18*1024*1024});
-  assert.equal(run.status,0,run.stderr.slice(-700));const match=run.stdout.match(/<pre id="result">([^<]+)<\/pre>/);assert(match,'Missing motion result');const result=JSON.parse(match[1]);for(const[key,value]of Object.entries(result))assert.equal(value,true,width+'x'+height+' '+key+' '+JSON.stringify(result));console.log('CALENDAR_MOTION_IMAGE_V3_OK',width,height,JSON.stringify(result));
+  await browser.navigate(pathToFileURL(file).href+'?size='+width+'x'+height,width,height);
+  const result=await browser.evaluate(`new Promise((resolve,reject)=>{const start=performance.now();const check=()=>{const value=document.querySelector('#result')?.textContent;if(value&&value!=='pending'){resolve(JSON.parse(value));return}if(performance.now()-start>6000){reject(new Error('Missing motion result'));return}setTimeout(check,25)};check()})`);
+  for(const[key,value]of Object.entries(result))assert.equal(value,true,width+'x'+height+' '+key+' '+JSON.stringify(result));console.log('CALENDAR_MOTION_IMAGE_V3_OK',width,height,JSON.stringify(result));
  }
-}finally{rmSync(temp,{recursive:true,force:true})}
+}finally{await browser?.close();rmSync(temp,{recursive:true,force:true})}

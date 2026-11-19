@@ -1,34 +1,20 @@
 import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync} from 'node:fs';
-import {spawn,spawnSync} from 'node:child_process';
+import {spawnSync} from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import {pathToFileURL,fileURLToPath} from 'node:url';
+import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 
 // The month fixture includes real calendar cards, overflow controls and continuous ribbons.
 // Unlike the keyframe regression, this check uses ordinary wall-clock rAF timestamps.
 const dir=mkdtempSync(path.join(os.tmpdir(),'mws-frame-pacing-'));
 const fixture=path.join(dir,'month.html');
-const chrome=['google-chrome','google-chrome-stable','chromium','chromium-browser'].map(n=>spawnSync('which',[n],{encoding:'utf8'})).find(r=>r.status===0)?.stdout.trim();
 let browser;
 try{
-  assert(chrome,'Chromium required');
   const generate=spawnSync(process.execPath,[fileURLToPath(new URL('./qa-calendar-month-viewport-v2-browser.mjs',import.meta.url))],{env:{...process.env,MWS_MONTH_FIXTURE:fixture},encoding:'utf8'});
   assert.equal(generate.status,0,generate.stderr);
-  browser=spawn(chrome,['--headless=new','--no-sandbox','--disable-dev-shm-usage','--no-first-run','--disable-background-networking','--remote-debugging-pipe',`--user-data-dir=${path.join(dir,'profile')}`,'about:blank'],{stdio:['ignore','ignore','ignore','pipe','pipe']});
-  const pending=new Map();let serial=0,buffer='';
-  browser.stdio[4].setEncoding('utf8');browser.stdio[4].on('data',chunk=>{
-    buffer+=chunk;let index;
-    while((index=buffer.indexOf('\0'))>=0){const message=JSON.parse(buffer.slice(0,index));buffer=buffer.slice(index+1);const entry=pending.get(message.id);if(entry){pending.delete(message.id);clearTimeout(entry.timer);if(message.error)entry.reject(new Error(JSON.stringify(message.error)));else entry.resolve(message.result)}}
-  });
-  function send(method,params={},sessionId){return new Promise((resolve,reject)=>{
-    const id=++serial,timer=setTimeout(()=>{pending.delete(id);reject(new Error(`CDP timeout: ${method}`))},20000);
-    pending.set(id,{resolve,reject,timer});browser.stdio[3].write(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})})+'\0');
-  })}
-  const {targetId}=await send('Target.createTarget',{url:'about:blank'});
-  const {sessionId}=await send('Target.attachToTarget',{targetId,flatten:true});
-  await send('Target.activateTarget',{targetId});
-  const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true},sessionId);assert(!result.exceptionDetails,JSON.stringify(result.exceptionDetails));return result.result.value};
+  browser=await launchCalendarBrowser(dir);
   const frameTest=String.raw`(async()=>{
     const $=s=>document.querySelector(s),grid=$('#calendarGrid'),drawer=$('#calendarEventDetailsV1'),card=$('[data-evid="qa-18-0"]');
     const tick=()=>new Promise(resolve=>requestAnimationFrame(resolve));
@@ -56,15 +42,8 @@ try{
     return {cards:grid.querySelectorAll('.mini-event').length,ribbons:grid.querySelectorAll('.calendar-continuous-ribbon-v1').length,result};
   })()`;
   for(const [width,height] of [[1366,768],[1920,1080],[2560,1440],[2560,1080]]){
-    await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false},sessionId);
-    await send('Page.navigate',{url:pathToFileURL(fixture).href},sessionId);
-    let ready=false;
-    for(let retry=0;retry<80&&!ready;retry++){
-      try{ready=await evaluate(`Boolean(document.readyState==='complete'&&document.querySelector('#calendarEventDetailsV1')&&document.querySelector('[data-evid="qa-18-0"]'))`)}catch{}
-      if(!ready)await new Promise(resolve=>setTimeout(resolve,50));
-    }
-    assert(ready,'Calendar fixture did not initialize');
-    const {cards,ribbons,result}=await evaluate(frameTest);
+    await browser.navigate(pathToFileURL(fixture).href+'?size='+width+'x'+height,width,height);
+    const {cards,ribbons,result}=await browser.evaluate(frameTest);
     assert(cards>=40&&ribbons>=3,'Realistic month fixture required');
     for(const sample of result){
       assert(sample.settled&&sample.stableWidth&&sample.monotonic&&sample.frames>=8&&sample.distinctPositions>=5,JSON.stringify(sample));
@@ -75,4 +54,4 @@ try{
     assert(p95s[3]<=50,`Sustained frame pacing regression: ${JSON.stringify(result)}`);
     console.log('CALENDAR_FRAME_PACING_V5',width,height,JSON.stringify({cards,ribbons,result}));
   }
-}finally{if(browser&&browser.exitCode===null&&browser.signalCode===null){browser.kill();await new Promise(resolve=>browser.once('exit',resolve))}rmSync(dir,{recursive:true,force:true})}
+}finally{await browser?.close();rmSync(dir,{recursive:true,force:true})}
