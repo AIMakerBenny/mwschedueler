@@ -2,21 +2,55 @@
 (function(root){
   'use strict';
   const $=id=>document.getElementById(id);
-  let drawer,previousFocus,motion,layoutMotion,fitViewportNow,current=null,renderedHTML='';
-  const duration=380,easing='cubic-bezier(.32,0,.2,1)';
-  function stopLayoutMotion(){layoutMotion?.cancel();layoutMotion=null;document.querySelector('.calendar-layout-motion-v4')?.classList.remove('calendar-layout-motion-v4')}
-  function changeLayout(open){
+  let drawer,previousFocus,motion,layoutMotion,layoutElement,fitViewportNow,current=null,renderedHTML='',motionGeneration=0,prepareFrame=0;
+  const duration=360,easing='cubic-bezier(.4,0,.2,1)';
+  const offscreen='translate3d(104%,0,0)',onscreen='translate3d(0,0,0)';
+  function stopLayoutMotion(){
+    layoutMotion?.cancel();layoutMotion=null;
+    if(layoutElement){layoutElement.style.removeProperty('transform');layoutElement.classList.remove('calendar-layout-motion-v5');layoutElement=null}
+  }
+  function prepareLayout(open){
     const main=document.querySelector('.app>.main:has(#calendar.section.active)');
     const before=main?.getBoundingClientRect();
     stopLayoutMotion();
     document.body.classList.toggle('calendar-details-open-v2',open);
-    // Commit the destination layout once, then animate only the compositor layer.
+    // Commit the destination layout before playback, including overflow measurements.
     fitViewportNow?.();
     const after=main?.getBoundingClientRect();
     if(main&&main.animate&&!reducedMotion()&&before?.width&&after?.width&&Math.abs(before.width-after.width)>1){
-      main.classList.add('calendar-layout-motion-v4');
-      layoutMotion=main.animate([{transform:`translateX(${before.left-after.left}px) scaleX(${before.width/after.width})`},{transform:'none'}],{duration,easing,fill:'both'});
+      layoutElement=main;
+      main.classList.add('calendar-layout-motion-v5');
+      const inverse=`translate3d(${before.left-after.left}px,0,0) scaleX(${before.width/after.width})`;
+      main.style.transform=inverse;
+      return {main,inverse};
     }
+    return null;
+  }
+  function playMotion(open,from,layout,finish){
+    const generation=++motionGeneration;
+    cancelAnimationFrame(prepareFrame);
+    motion?.cancel();motion=null;
+    drawer.style.transform=from;
+    const complete=()=>{
+      if(generation!==motionGeneration)return;
+      motion?.cancel();motion=null;drawer.style.removeProperty('transform');stopLayoutMotion();finish?.();
+    };
+    if(!drawer.animate||reducedMotion()){complete();return}
+    // Let the resized calendar, ribbons and drawer content paint before starting the clock.
+    // Starting from a prepainted position avoids consuming animation time on layout/raster work.
+    prepareFrame=requestAnimationFrame(()=>{
+      prepareFrame=requestAnimationFrame(()=>{
+        if(generation!==motionGeneration)return;
+        const options={duration,easing,fill:'both'};
+        if(layout){
+          layoutMotion=layout.main.animate([{transform:layout.inverse},{transform:'none'}],options);
+          layout.main.style.removeProperty('transform');
+        }
+        motion=drawer.animate([{transform:from},{transform:open?onscreen:offscreen}],options);
+        drawer.style.removeProperty('transform');
+        motion.finished.then(complete,()=>{});
+      });
+    });
   }
   function markSelected(id){
     document.querySelectorAll('#calendarGrid .mini-event[data-evid]').forEach(node=>{
@@ -24,23 +58,20 @@
     });
   }
   function close({restoreFocus=true}={}){
-    if(!drawer)return;
-    const style=getComputedStyle(drawer),from=style.transform,fromOpacity=Number(style.opacity);motion?.cancel();
-    changeLayout(false);
+    if(!drawer||!current)return;
+    const from=getComputedStyle(drawer).transform;
     drawer.inert=true;drawer.classList.remove('open');
     drawer.setAttribute('aria-hidden','true');
     current=null;markSelected('');
-    if(restoreFocus&&previousFocus?.isConnected)previousFocus.focus({preventScroll:true});
-    const finish=()=>{if(!current){drawer.hidden=true;motion?.cancel();motion=null;stopLayoutMotion()}};
-    if(drawer.animate&&!reducedMotion()){
-      motion=drawer.animate([{transform:from,opacity:fromOpacity},{transform:'translateX(104%)',opacity:0}],{duration,easing,fill:'both'});
-      motion.finished.then(finish,()=>{});
-    }else finish();
+    const layout=prepareLayout(false);
+    playMotion(false,from,layout,()=>{
+      if(!current){drawer.hidden=true;if(restoreFocus&&previousFocus?.isConnected)previousFocus.focus({preventScroll:true})}
+    });
   }
   function ensure(){
     if(drawer)return;
     drawer=document.createElement('aside');
-    drawer.id='calendarEventDetailsV1';drawer.className='event-details-drawer-v1';drawer.hidden=true;
+    drawer.id='calendarEventDetailsV1';drawer.className='event-details-drawer-v1';drawer.hidden=true;drawer.inert=true;
     drawer.setAttribute('role','dialog');drawer.setAttribute('aria-modal','false');
     drawer.setAttribute('aria-label','일정 상세');drawer.setAttribute('aria-hidden','true');
     drawer.innerHTML='<header class="event-details-head-v1"><span>일정 상세</span><button type="button" class="ghost" id="calendarDetailsCloseV1" aria-label="일정 상세 닫기">닫기</button></header><div class="event-details-body-v1" id="calendarDetailsBodyV1"></div><footer class="event-details-footer-v1"><button type="button" class="primary" id="calendarDetailsEditV1">수정</button></footer>';
@@ -66,27 +97,29 @@
   function open(details){
     ensure();
     const opening=!current;
-    const style=getComputedStyle(drawer),from=drawer.hidden?'translateX(104%)':style.transform,fromOpacity=drawer.hidden?0:Number(style.opacity);
-    if(opening){motion?.cancel();motion=null;}
+    const from=opening?(drawer.hidden?offscreen:getComputedStyle(drawer).transform):null;
     const scroll=current?.id===details.id?$('calendarDetailsBodyV1').scrollTop:0;
     if(opening)previousFocus=document.activeElement;
     current=details;
     drawer.setAttribute('aria-label',String(details.title||'일정')+' 상세');
     // HTML is generated and escaped by the application's calendar renderer.
-    if(renderedHTML!==details.html){$('calendarDetailsBodyV1').innerHTML=details.html;renderedHTML=details.html}
+    if(renderedHTML!==details.html){
+      $('calendarDetailsBodyV1').innerHTML=details.html;
+      for(const image of $('calendarDetailsBodyV1').querySelectorAll('img'))image.decoding='async';
+      renderedHTML=details.html;
+    }
     $('calendarDetailsBodyV1').scrollTop=scroll;
     $('calendarDetailsEditV1').hidden=typeof details.onEdit!=='function';
     drawer.inert=false;drawer.hidden=false;drawer.setAttribute('aria-hidden','false');markSelected(details.id);
-    if(opening)changeLayout(true);drawer.classList.add('open');
-    if(opening&&drawer.animate&&!reducedMotion()){
-      // Explicit keyframes work even when display:none and open change in one paint.
-      motion=drawer.animate([{transform:from,opacity:fromOpacity},{transform:'translateX(0)',opacity:1}],{duration,easing,fill:'both'});
-      const activeMotion=motion;
-      activeMotion.finished.then(()=>{if(motion===activeMotion){activeMotion.cancel();motion=null;stopLayoutMotion()}},()=>{});
+    drawer.classList.add('open');
+    if(opening){
+      const layout=prepareLayout(true);
+      playMotion(true,from,layout,()=>{$('calendarDetailsCloseV1').focus({preventScroll:true})});
     }
-    if(opening)$('calendarDetailsCloseV1').focus({preventScroll:true});
   }
   root.mwsCalendarDetailsV1=Object.freeze({open,close,isOpen:()=>Boolean(current)});
+  // Mount the offscreen shell once, so opening does not allocate the entire panel.
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensure,{once:true});else ensure();
 
   function initMonthViewport(){
     const grid=$('calendarGrid');if(!grid)return;

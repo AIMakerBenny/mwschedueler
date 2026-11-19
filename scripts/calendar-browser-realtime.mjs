@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import {spawn,spawnSync} from 'node:child_process';
+import path from 'node:path';
+
+// Real-time Chromium over CDP's local pipe; no external npm/browser dependency.
+export async function launchCalendarBrowser(dir){
+  const chrome=['google-chrome','google-chrome-stable','chromium','chromium-browser'].map(n=>spawnSync('which',[n],{encoding:'utf8'})).find(r=>r.status===0)?.stdout.trim();
+  assert(chrome,'Chromium required');
+  const browser=spawn(chrome,['--headless=new','--no-sandbox','--disable-dev-shm-usage','--no-first-run','--disable-background-networking','--disable-background-timer-throttling','--disable-renderer-backgrounding','--remote-debugging-pipe',`--user-data-dir=${path.join(dir,'profile')}`,'about:blank'],{stdio:['ignore','ignore','ignore','pipe','pipe']});
+  const pending=new Map();let serial=0,buffer='';
+  const fail=error=>{for(const entry of pending.values()){clearTimeout(entry.timer);entry.reject(error)}pending.clear()};
+  browser.on('error',fail);browser.on('exit',()=>fail(new Error('Chromium exited')));browser.stdio[3].on('error',fail);browser.stdio[4].on('error',fail);
+  browser.stdio[4].setEncoding('utf8');browser.stdio[4].on('data',chunk=>{
+    buffer+=chunk;let index;
+    while((index=buffer.indexOf('\0'))>=0){const message=JSON.parse(buffer.slice(0,index));buffer=buffer.slice(index+1);const entry=pending.get(message.id);if(entry){pending.delete(message.id);clearTimeout(entry.timer);if(message.error)entry.reject(new Error(JSON.stringify(message.error)));else entry.resolve(message.result)}}
+  });
+  function send(method,params={},sessionId){return new Promise((resolve,reject)=>{
+    if(browser.exitCode!==null||browser.signalCode!==null){reject(new Error('Chromium exited'));return}
+    const id=++serial,timer=setTimeout(()=>{pending.delete(id);reject(new Error(`CDP timeout: ${method}`))},25000);
+    pending.set(id,{resolve,reject,timer});browser.stdio[3].write(JSON.stringify({id,method,params,...(sessionId?{sessionId}:{})})+'\0');
+  })}
+  async function close(){if(browser.exitCode===null&&browser.signalCode===null){const exited=new Promise(resolve=>browser.once('exit',resolve));browser.kill();await exited}}
+  try{
+    const {targetId}=await send('Target.createTarget',{url:'about:blank'});
+    const {sessionId}=await send('Target.attachToTarget',{targetId,flatten:true});
+    await send('Target.activateTarget',{targetId});
+    const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true},sessionId);assert(!result.exceptionDetails,JSON.stringify(result.exceptionDetails));return result.result.value};
+    async function navigate(url,width,height){
+      await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false},sessionId);
+      await send('Page.navigate',{url},sessionId);
+      let ready=false;
+      for(let retry=0;retry<100&&!ready;retry++){
+        try{ready=await evaluate(`location.href===${JSON.stringify(url)}&&document.readyState==='complete'`)}catch{}
+        if(!ready)await new Promise(resolve=>setTimeout(resolve,50));
+      }
+      assert(ready,'Calendar fixture did not initialize');
+    }
+    return {navigate,evaluate,close};
+  }catch(error){await close();throw error}
+}
