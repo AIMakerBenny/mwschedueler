@@ -19,6 +19,8 @@
 .event-details-drawer-v1[hidden]{display:none!important;pointer-events:none!important}
 .event-details-drawer-v1.open{transform:translate3d(0,0,0);pointer-events:auto}
 .event-details-head-v1,.event-details-footer-v1{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);font-size:13px}
+.event-details-head-actions-v6{display:flex;align-items:center;gap:6px}
+#calendarDetailsMotionV6[hidden]{display:none!important}
 .event-details-footer-v1{border-top:1px solid var(--border);border-bottom:0;justify-content:flex-end}
 .event-details-body-v1{min-height:0;padding:20px 18px;overflow:auto;overscroll-behavior:contain;overflow-wrap:anywhere}
 .event-details-body-v1 .calendar-preview-title{font-size:21px;line-height:1.45;font-weight:700}

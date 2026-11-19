@@ -27,16 +27,16 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const ready=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
  await ready();
  const drawer=$('#calendarEventDetailsV1'),animation=drawer.getAnimations()[0];
- const explicitMotion=Boolean(animation)&&animation.effect.getTiming().duration===360;
+ const explicitMotion=Boolean(animation)&&animation.effect.getTiming().duration===700;
  const opaqueSlide=animation.effect.getKeyframes().every(frame=>frame.opacity===undefined);
- animation.pause();animation.currentTime=180;await tick();
+ animation.pause();animation.currentTime=350;await tick();
  const main=document.querySelector('.app>.main'),layout=main.getAnimations()[0];
  const calendarUsesCompositor=Boolean(layout)&&layout.effect.getKeyframes().every(frame=>frame.width===undefined&&frame.marginRight===undefined)&&getComputedStyle(main).transitionProperty==='none';
  let resizeCount=0;const resizeObserver=new ResizeObserver(()=>resizeCount++);resizeObserver.observe(main);
  for(const t of [25,75,125,175,225,275]){layout.pause();layout.currentTime=t;await tick()}
  const noPerFrameRelayout=resizeCount<=2;resizeObserver.disconnect();
  const matrix=new DOMMatrix(getComputedStyle(drawer).transform),middle=matrix.m41;
- const entersThroughIntermediatePosition=middle>1&&middle<drawer.getBoundingClientRect().width;
+ const entersThroughIntermediatePosition=middle>drawer.getBoundingClientRect().width*.42&&middle<drawer.getBoundingClientRect().width*.62;
  window.dispatchEvent(new Event('mawang:datachange'));await tick();
  const refreshKeepsMotion=drawer.getAnimations()[0]===animation;
  animation.finish();await tick();
@@ -44,7 +44,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const detailImage=drawer.querySelector('.calendar-preview-game-v3 img'),hoverImage=$('#calendarEventPreview .calendar-preview-game-v3 img');
  const uploadedImageDecoded=detailImage?.complete&&detailImage.naturalWidth>0&&hoverImage?.complete&&hoverImage.naturalWidth>0;
  const oneGameSection=drawer.querySelectorAll('.calendar-preview-game-v3').length===1;
- $('#background').click();await ready();const exit=drawer.getAnimations()[0];exit.pause();exit.currentTime=180;await tick();
+ $('#background').click();await ready();const exit=drawer.getAnimations()[0];exit.pause();exit.currentTime=350;await tick();
  const leaving=new DOMMatrix(getComputedStyle(drawer).transform).m41;
  const exitsThroughIntermediatePosition=leaving>1&&leaving<drawer.getBoundingClientRect().width*1.04;
  exit.finish();await tick();const backgroundCloses=drawer.hidden&&!window.mwsCalendarDetailsV1.isOpen()&&editorOpens===0;
@@ -64,4 +64,9 @@ try{const file=path.join(temp,'index.html');writeFileSync(file,fixture(true));
   const result=await browser.evaluate(`new Promise((resolve,reject)=>{const start=performance.now();const check=()=>{const value=document.querySelector('#result')?.textContent;if(value&&value!=='pending'){resolve(JSON.parse(value));return}if(performance.now()-start>6000){reject(new Error('Missing motion result'));return}setTimeout(check,25)};check()})`);
   for(const[key,value]of Object.entries(result))assert.equal(value,true,width+'x'+height+' '+key+' '+JSON.stringify(result));console.log('CALENDAR_MOTION_IMAGE_V3_OK',width,height,JSON.stringify(result));
  }
+ const reducedFile=path.join(temp,'reduced.html');writeFileSync(reducedFile,fixture(false));
+ await browser.setReducedMotion(true);
+ await browser.navigate(pathToFileURL(reducedFile).href,1366,768);
+ const preference=await browser.evaluate(`(async()=>{const $=s=>document.querySelector(s),tick=()=>new Promise(r=>requestAnimationFrame(r));$('#qaCard').click();const d=$('#calendarEventDetailsV1'),b=$('#calendarDetailsMotionV6');const respectsSystem=d.getAnimations().length===0&&!b.hidden;b.click();$('#calendarDetailsCloseV1').click();await tick();await tick();await tick();const overrideMotion=d.getAnimations()[0]?.effect.getTiming().duration===700;return {respectsSystem,overrideMotion}})()`);
+ assert(preference.respectsSystem&&preference.overrideMotion,JSON.stringify(preference));console.log('CALENDAR_MOTION_ACCESSIBILITY_V6_OK',JSON.stringify(preference));
 }finally{await browser?.close();rmSync(temp,{recursive:true,force:true})}

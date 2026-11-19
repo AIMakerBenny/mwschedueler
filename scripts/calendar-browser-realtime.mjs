@@ -29,12 +29,18 @@ export async function launchCalendarBrowser(dir){
       await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false},sessionId);
       await send('Page.navigate',{url},sessionId);
       let ready=false;
-      for(let retry=0;retry<100&&!ready;retry++){
+      for(let retry=0;retry<320&&!ready;retry++){
         try{ready=await evaluate(`location.href===${JSON.stringify(url)}&&document.readyState==='complete'`)}catch{}
         if(!ready)await new Promise(resolve=>setTimeout(resolve,50));
       }
       assert(ready,'Calendar fixture did not initialize');
     }
-    return {navigate,evaluate,close};
+    async function clickPoint(x,y){
+      await send('Input.dispatchMouseEvent',{type:'mouseMoved',x,y},sessionId);
+      await send('Input.dispatchMouseEvent',{type:'mousePressed',x,y,button:'left',clickCount:1},sessionId);
+      await send('Input.dispatchMouseEvent',{type:'mouseReleased',x,y,button:'left',clickCount:1},sessionId);
+    }
+    const setReducedMotion=enabled=>send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:enabled?'reduce':'no-preference'}]},sessionId);
+    return {navigate,evaluate,clickPoint,setReducedMotion,close};
   }catch(error){await close();throw error}
 }
