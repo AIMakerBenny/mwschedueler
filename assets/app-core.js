@@ -1155,6 +1155,24 @@ function calendarParticipantSummary(e){
   const extra=names.length-4;
   return `${shown.join(' · ')}${extra>0?` +${extra}명`:''}`;
 }
+// Shared read-only game presentation accepts the same bounded raster uploads as the picker.
+function calendarGamePreviewV3(event){
+  const game=event?.steamGame;if(!game)return null;
+  const registered=(data.gameLibrary||[]).find(item=>game.id&&item.id===game.id||game.appid&&String(item.appid)===String(game.appid));
+  const safeImage=value=>{
+    const image=String(value||'').trim();
+    if(/^https?:\/\/[^\s<>"']+$/i.test(image))return image;
+    if(image.length<=95000&&/^data:image\/(?:webp|jpeg|png);base64,[a-z0-9+/=]+$/i.test(image))return image;
+    return '';
+  };
+  const image=[game.image,game.headerImage,registered?.image,registered?.headerImage].map(safeImage).find(Boolean)||'';
+  return {name:String(game.name||registered?.name||''),image,platform:String(game.platform||registered?.platform||''),appid:game.appid||game.appId||'',source:game.source||registered?.source||''};
+}
+window.mwsCalendarGamePreviewV3=calendarGamePreviewV3;
+function calendarGamePreviewHTMLV3(event){
+  const game=calendarGamePreviewV3(event);if(!game?.name)return '';
+  return `<section class="calendar-preview-game-v3"><div class="event-details-game-v1">${game.image?`<img src="${esc(game.image)}" alt="${esc(game.name)}" loading="eager">`:''}<span>${esc(game.name)}</span></div></section>`;
+}
 function calendarPreviewHTML(e){
   const cat=category(e.categoryId),linkedGroup=data.contentGroups?.find(g=>g.id===e.contentGroupId);
   const color=e.restDay?'#e85d75':(linkedGroup?.color||e.color||cat?.color||'#64748b');
@@ -1166,6 +1184,7 @@ function calendarPreviewHTML(e){
     <div class="event-meta"><span>${formatDateWeekday(e.date)}</span><span>하루 종일</span></div>`;
   }
   const people=eventParticipantRows(e);
+  const gamePreview=calendarGamePreviewHTMLV3(e);
   const broadcastDuration=window.mwsCalendarBroadcastDurationV1?.label(e.start,e.end)||'';
   return `<div class="space" style="align-items:flex-start">
     <div class="calendar-preview-title">${esc(e.title)}</div>
@@ -1177,6 +1196,7 @@ function calendarPreviewHTML(e){
     ${broadcastDuration?`<span class="calendar-preview-broadcast-duration-v1">${esc(broadcastDuration)}</span>`:''}
     ${linkedGroup?`<span class="calendar-preview-content-group-v2" style="border-color:${color}">${esc(linkedGroup.name)}</span>`:''}
   </div>
+  ${gamePreview}
   <div class="reminder-section" style="margin-top:10px;padding-top:9px">
     <div class="reminder-label">참가자 ${people.length?`· ${people.length}명`:''}</div>
     <div class="calendar-preview-people">
@@ -1734,18 +1754,14 @@ function openCalendarEventDetailsV1(id){
   if(!event){window.mwsCalendarDetailsV1?.close({restoreFocus:false});return;}
   hideCalendarEventPreview();
   const safeURL=value=>{try{const url=new URL(String(value||''));return ['https:','http:'].includes(url.protocol)?url.href:''}catch(_){return ''}};
-  const game=event.steamGame;
-  const registered=(data.gameLibrary||[]).find(item=>game&&(item.id&&item.id===game.id||item.appid&&String(item.appid)===String(game.appid)));
-  const image=safeURL(game?.image||game?.headerImage||registered?.image||registered?.headerImage);
   const link=safeURL(event.url);
   const section=(title,content)=>`<section class="event-details-section-v1"><h3>${title}</h3>${content}</section>`;
-  const gameHTML=game?.name?section('게임',`<div class="event-details-game-v1">${image?`<img src="${esc(image)}" alt="" loading="lazy">`:''}<span>${esc(game.name)}</span></div>`):'';
   const description=event.description?section('상세 내용',`<p class="event-details-text-v1">${esc(event.description)}</p>`):'';
   const memo=event.memoTitle||event.memoContent?section(esc(event.memoTitle||'메모'),`<p class="event-details-text-v1">${esc(event.memoContent||'')}</p>`):'';
   const checklist=Array.isArray(event.checklist)&&event.checklist.length?section('체크리스트',`<ul>${event.checklist.map(item=>`<li>${item.done?'완료 · ':''}${esc(item.text||'')}</li>`).join('')}</ul>`):'';
   const url=link?section('공지',`<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">공지 열기</a>`):'';
   window.mwsCalendarDetailsV1?.open({id:String(event.id),title:event.restDay?'휴방':event.title,
-    html:calendarPreviewHTML(event)+gameHTML+description+memo+checklist+url,
+    html:calendarPreviewHTML(event)+description+memo+checklist+url,
     onRefresh:()=>openCalendarEventDetailsV1(event.id),
     onEdit:()=>{openEvent(event.id);requestAnimationFrame(()=>document.getElementById('evTitle')?.focus())}});
 }

@@ -37,7 +37,7 @@ function normalizeGame(game){
     const name=String(game.name||'').trim().slice(0,100);
     if(!name)return null;
     return {source:'manual',id:String(game.id).slice(0,100),name,
-      image:validImage(game.image),platform:String(game.platform||'기타').trim().slice(0,40)||'기타'};
+      image:validImage(game.image)||validImage((typeof getData==='function'?(getData()?.gameLibrary||[]):[]).find(item=>item?.id===game.id)?.image),platform:String(game.platform||'기타').trim().slice(0,40)||'기타'};
   }
   const appid=appIdOf(game);
   if(!/^\d{1,12}$/.test(appid))return null;
