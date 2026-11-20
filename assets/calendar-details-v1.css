@@ -252,7 +252,7 @@ body #calendar.section[data-calendar-view-mode]:not([data-calendar-view-mode=mon
  body:not([data-device-mode=mobile]):not([data-resolution=mobile]) .main:has(>.topbar):has(>#calendar.section.active>.calendar-topbar-v4){
    display:grid!important;grid-template-columns:max-content minmax(0,1fr) max-content;grid-template-rows:auto auto;column-gap:12px;row-gap:0;align-content:start;
  }
- body:not([data-device-mode=mobile]):not([data-resolution=mobile]) .main:has(>#calendar.section.active>.calendar-topbar-v4)>.topbar{
+ body:has(#calendar.section.active):not([data-device-mode=mobile]):not([data-resolution=mobile]) .main:has(>#calendar.section.active>.calendar-topbar-v4)>.topbar{
    display:grid!important;grid-template-columns:subgrid;grid-column:1/-1;grid-row:1;align-items:center;gap:0 12px!important;
    min-height:40px!important;height:auto!important;margin:0!important;padding:0 0 4px!important;border-width:0 0 1px!important;background:transparent!important;z-index:2;pointer-events:none;
  }
