@@ -1,54 +1,70 @@
-/* Shared window motion. Only the standard modal shell participates; layout,
-   focus handling, calendar anchors and mini-game-specific overlays are untouched. */
-.modal {
-  --mws-modal-enter:240ms;
-  --mws-modal-exit:180ms;
-  --mws-modal-ease:cubic-bezier(.22,.75,.25,1);
+/* Keep the full-screen shell out of the animated compositing group. A flat
+   translucent scrim and the panel animate independently; no backdrop sampling. */
+body .modal,body.mws-premium .modal {
+  --mws-modal-enter:300ms;
+  --mws-modal-exit:200ms;
+  --mws-modal-ready:32ms;
+  --mws-modal-ease:cubic-bezier(.35,0,.25,1);
   --mws-modal-exit-ease:cubic-bezier(.4,0,.6,1);
+  background:transparent!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  isolation:isolate;
 }
+.modal::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:rgba(0,0,0,.76);
+  opacity:0;
+  will-change:opacity;
+}
+.modal > :is(.modalbox,.confirm-box) {
+  opacity:0;
+  scale:.985;
+  transform-origin:center;
+  will-change:opacity,scale;
+}
+.modal.open::before,.modal.open > :is(.modalbox,.confirm-box) {opacity:1}
+.modal.open > :is(.modalbox,.confirm-box) {scale:none}
 
 @supports (transition-behavior:allow-discrete) {
   .modal {
-    opacity:0;
     pointer-events:none;
-    transition:opacity var(--mws-modal-exit) var(--mws-modal-exit-ease),
-               display var(--mws-modal-exit) allow-discrete;
+    transition:display var(--mws-modal-exit) allow-discrete;
   }
-  .modal.open {
-    opacity:1;
-    pointer-events:auto;
-    transition-duration:var(--mws-modal-enter);
-    transition-timing-function:var(--mws-modal-ease),linear;
-  }
+  .modal.open {pointer-events:auto}
+  .modal::before {transition:opacity 180ms ease-out}
   .modal > :is(.modalbox,.confirm-box) {
-    scale:.975;
-    transform-origin:center;
-    transition:scale var(--mws-modal-exit) var(--mws-modal-exit-ease);
+    transition:opacity var(--mws-modal-exit) var(--mws-modal-exit-ease),scale var(--mws-modal-exit) var(--mws-modal-exit-ease);
   }
+  .modal.open::before {transition:opacity 220ms var(--mws-modal-ease)}
   .modal.open > :is(.modalbox,.confirm-box) {
-    scale:none;
-    transition:scale var(--mws-modal-enter) var(--mws-modal-ease);
+    /* Give first layout/raster a short head start before moving the panel. */
+    transition:opacity var(--mws-modal-enter) var(--mws-modal-ease) var(--mws-modal-ready),scale var(--mws-modal-enter) var(--mws-modal-ease) var(--mws-modal-ready);
   }
   @starting-style {
-    .modal.open {opacity:0}
-    .modal.open > :is(.modalbox,.confirm-box) {scale:.975}
+    .modal.open::before {opacity:0}
+    .modal.open > :is(.modalbox,.confirm-box) {opacity:0;scale:.985}
   }
-  /* Closed windows cannot receive keyboard or pointer input during the fade. */
   .modal:not(.open) {interactivity:inert}
 }
 
-/* Earlier engines still receive a graceful entrance without delaying close. */
 @supports not (transition-behavior:allow-discrete) {
-  .modal.open {animation:mws-modal-fade-in-v1 var(--mws-modal-enter) var(--mws-modal-ease)}
-  .modal.open > :is(.modalbox,.confirm-box) {animation:mws-modal-scale-in-v1 var(--mws-modal-enter) var(--mws-modal-ease)}
-  @keyframes mws-modal-fade-in-v1 {from{opacity:0}to{opacity:1}}
-  @keyframes mws-modal-scale-in-v1 {from{scale:.975}to{scale:none}}
+  .modal.open::before {animation:mws-modal-scrim-in-v2 220ms var(--mws-modal-ease) both}
+  .modal.open > :is(.modalbox,.confirm-box) {animation:mws-modal-panel-in-v2 var(--mws-modal-enter) var(--mws-modal-ease) var(--mws-modal-ready) both}
+  @keyframes mws-modal-scrim-in-v2 {from{opacity:0}to{opacity:1}}
+  @keyframes mws-modal-panel-in-v2 {from{opacity:0;scale:.985}to{opacity:1;scale:none}}
 }
 
-/* A short non-spatial fade is sufficient in reduced-motion environments. */
+/* Never animate geometry for users who prefer reduced motion. */
 @media(prefers-reduced-motion:reduce) {
-  .modal {--mws-modal-enter:120ms;--mws-modal-exit:100ms}
-  .modal > :is(.modalbox,.confirm-box),.modal.open > :is(.modalbox,.confirm-box) {
-    scale:none!important;transition:none!important;animation:none!important;
+  body .modal,body.mws-premium .modal {--mws-modal-enter:120ms;--mws-modal-exit:100ms;--mws-modal-ready:0ms}
+  .modal::before,.modal.open::before {transition-duration:100ms;animation-duration:100ms}
+  .modal > :is(.modalbox,.confirm-box),.modal.open > :is(.modalbox,.confirm-box) {scale:none!important;transition-property:opacity!important}
+  @supports not (transition-behavior:allow-discrete) {
+    .modal.open > :is(.modalbox,.confirm-box) {animation-name:mws-modal-scrim-in-v2}
   }
 }

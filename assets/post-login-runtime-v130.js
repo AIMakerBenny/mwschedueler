@@ -109,7 +109,7 @@ async function start(){
   void Promise.all([
     load('perf-runtime','/assets/perf-runtime.js?v=1.4.0-phase113-contact-image-owner1&save-queue-v2=1&workspace-nav-v1=1','__mwsCf571Optimizer'),
     load('today-people-runtime-v130','/assets/today-people-runtime-v130.js?v=1.3.0-final68','__mwsTodayPeopleRuntimeV130'),
-    load('contact-runtime-v130','/assets/contact-runtime-v130.js?v=1.3.0-search86&contactgroup178=1','__mwsContactRuntimeV130')
+    load('contact-runtime-v130','/assets/contact-runtime-v130.js?v=1.3.0-search86&contactgroup178=1&modalmotionv2=1','__mwsContactRuntimeV130')
   ]).then(recordOptionalResults).catch(()=>{});
 
   // Keep the primary device shell ordered first, but cap the wait.
