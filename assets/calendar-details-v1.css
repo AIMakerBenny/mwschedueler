@@ -246,6 +246,29 @@ body #calendar.section[data-calendar-view-mode]:not([data-calendar-view-mode=mon
 }
 @media(max-width:900px){body:has(#calendar.section.active) .main>.topbar #newEventBtn::before{display:none}}
 
+/* Share a single desktop header row between the global title/actions and the
+   calendar tools. Both retain their original DOM parents and event handlers. */
+@media(min-width:1050px){
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) .main:has(>.topbar):has(>#calendar.section.active>.calendar-topbar-v4){
+   display:grid!important;grid-template-columns:max-content minmax(0,1fr) max-content;grid-template-rows:auto auto;column-gap:12px;row-gap:0;align-content:start;
+ }
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) .main:has(>#calendar.section.active>.calendar-topbar-v4)>.topbar{
+   display:grid!important;grid-template-columns:subgrid;grid-column:1/-1;grid-row:1;align-items:center;gap:0 12px!important;
+   min-height:40px!important;height:auto!important;margin:0!important;padding:0 0 4px!important;border-width:0 0 1px!important;background:transparent!important;z-index:2;pointer-events:none;
+ }
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) .main:has(>#calendar.section.active)>.topbar>.top-left{grid-column:1;grid-row:1;pointer-events:auto;white-space:nowrap}
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) .main:has(>#calendar.section.active)>.topbar>.clock{grid-column:3;grid-row:1;justify-self:end;flex-wrap:nowrap!important;pointer-events:auto;white-space:nowrap}
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) .main:has(>.topbar)>#calendar.section.active:has(>.calendar-topbar-v4){
+   display:grid!important;grid-column:1/-1;grid-row:1/3;grid-template-columns:subgrid;grid-template-rows:subgrid;min-width:0;
+ }
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) .main:has(>.topbar)>#calendar.section.active>.calendar-topbar-v4{
+   grid-column:2;grid-row:1;align-self:center;flex-wrap:nowrap!important;margin:0!important;padding:0 0 4px!important;min-width:0;
+ }
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) .main:has(>.topbar)>#calendar.section.active>.calendar-topbar-v4 .calendar-toolbar{flex:1 1 auto!important;min-width:0!important;padding:0!important;margin:0!important;flex-wrap:nowrap!important}
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) .main:has(>.topbar)>#calendar.section.active>.calendar-topbar-v4 .calendar-group-toolbar-v2{margin:0 0 0 auto!important;flex-wrap:nowrap!important}
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]) .main:has(>.topbar)>#calendar.section.active:has(>.calendar-topbar-v4)>:not(.calendar-topbar-v4){grid-column:1/-1;grid-row:2;min-width:0}
+}
+
 /* A fixed shelf is outside the calendar's flow, including during drag states.
    Stored chips are still the same DOM elements and retain all drag handlers. */
 body #calendar.section.active #calendarCopyTray.calendar-copy-tray{
