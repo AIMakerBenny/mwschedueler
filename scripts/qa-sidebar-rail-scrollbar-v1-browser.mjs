@@ -25,7 +25,7 @@ const readCheck=`
   const $=s=>document.querySelector(s),r=el=>el.getBoundingClientRect();
   const pinned=document.body.classList.contains('sidebar-pinned');
   const side=$('.sidebar'),scroll=$('.nav-scroll'),main=$('.main'),nav=$('.nav');
-  const buttons=[...scroll.querySelectorAll(':scope > button')];
+  const buttons=[...scroll.querySelectorAll(':scope > button')].filter(b=>getComputedStyle(b).display!=='none');
   const sideRect=r(side),scrollRect=r(scroll),mainRect=r(main);
   const css=getComputedStyle(scroll);
   const scale=scrollRect.width/scroll.offsetWidth;
