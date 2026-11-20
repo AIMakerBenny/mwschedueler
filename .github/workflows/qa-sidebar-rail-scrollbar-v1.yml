@@ -5,6 +5,11 @@ on:
       - cloudflare-production
     paths:
       - 'assets/sidebar-rail-scrollbar-v1.css'
+      - 'assets/workspace-ui-v176.js'
+      - 'assets/workspace-ui-v176.css'
+      - 'assets/content-planner-host.js'
+      - 'assets/tools.js'
+      - 'scripts/qa-workspace-navigation-v1-browser.mjs'
       - 'index.html'
       - 'scripts/qa-sidebar-rail-scrollbar-v1-browser.mjs'
       - '.github/workflows/qa-sidebar-rail-scrollbar-v1.yml'
@@ -28,3 +33,6 @@ jobs:
         run: |
           node scripts/qa-calendar-responsive-v1-browser.mjs
           node scripts/qa-event-sidebar-tabs-v5-browser.mjs
+
+      - name: Workspace navigation and contact route regressions
+        run: node scripts/qa-workspace-navigation-v1-browser.mjs

@@ -127,7 +127,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
         <button data-tab="posts" title="게시글">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/><path d="M16 4v4h4"/></svg></span><span class="nav-label">게시글</span>
         </button>
-        <button data-tab="sniper" title="최근 합방 인원">
+        <button data-tab="sniper" title="최근 합방 인원" hidden style="display:none!important">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M7 6h10M7 18h10M6 8v8m12-8v8M9 12h6"/></svg></span><span class="nav-label">최근 합방 인원</span>
         </button>
         <button data-tab="memos" title="메모">
@@ -152,6 +152,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="M8 3h8v3M8 18h8v3"/><circle cx="12" cy="12" r="3"/><path d="M2 9h2m16 0h2M2 15h2m16 0h2"/></svg></span><span class="nav-label">Gacha 뽑기</span>
         </button>
 
+        <div id="mwsToolsDivider" class="nav-game-divider mws-tools-divider"><span></span><em>도구</em><span></span></div>
         <div class="nav-settings-divider" aria-hidden="true"></div>
         <button data-tab="legacy" title="레거시">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16v5H4zM5 9v11h14V9M9 13h6"/></svg></span><span class="nav-label">레거시</span>
@@ -4635,7 +4636,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .sidebar-save-v572{padding-left:0
 </style>
 
 <!-- mws-contact-search-performance-v1 -->
-<script src="assets/perf-runtime.js?v=1.4.0-phase87"></script>
+<script src="assets/perf-runtime.js?v=1.4.0-phase87&workspace-nav-v1=1"></script>
 <script src="assets/online-v5-loader.js?v=1.3.0-search73"></script>
 <link rel="stylesheet" href="assets/device-ui.css?v=4">
 <link rel="stylesheet" href="assets/ui-frame-presets.css?v=3.0.0-space132-space153">
