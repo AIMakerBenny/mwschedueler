@@ -173,8 +173,7 @@ body:has(#calendar.section.active) #newEventBtn{min-height:30px!important;paddin
 #calendarEventPreview .calendar-preview-game-v3 .event-details-game-v1{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:650}
 #calendarEventPreview .calendar-preview-game-v3 img{display:block;width:92px;height:52px;object-fit:cover;border-radius:6px}
 
-/* Google Calendar-inspired surfaces: one quiet grid and raised event cards.
-   Keep existing theme, geometry and tools. */
+/* Quiet calendar surfaces; retain existing theme, geometry and tools. */
 body #calendar.section .calendar-topbar-v4 :is(button,select){border-radius:20px!important;box-shadow:none!important;transition:background-color 140ms ease,border-color 140ms ease,color 140ms ease!important}
 body #calendar.section .calendar-topbar-v4 .calendar-view-tab-v172.active{background:color-mix(in srgb,var(--accent) 22%,var(--panel))!important;box-shadow:none!important;color:var(--text)!important}
 body:has(#calendar.section.active) #newEventBtn{border-radius:20px!important;box-shadow:0 2px 6px #0003!important;transition:background-color 140ms ease,box-shadow 140ms ease!important;transform:none!important}
@@ -186,8 +185,19 @@ body #calendar.section #calendarGrid .calendar-date-number-v3{display:inline-gri
 body #calendar.section #calendarGrid .day.today .calendar-date-number-v3{background:var(--accent);color:white}
 body #calendar.section #calendarGrid .day.out{opacity:1!important;background:color-mix(in srgb,var(--panel) 70%,var(--bg))!important}
 body #calendar.section #calendarGrid .day.out .calendar-date-number-v3{opacity:.52}
-body #calendar.section #calendarGrid .mini-event[data-evid]{border-radius:6px!important;border-left-width:3px!important;background:linear-gradient(180deg,color-mix(in srgb,var(--content-group-color,var(--accent)) 47%,var(--panel)),color-mix(in srgb,var(--content-group-color,var(--accent)) 36%,var(--panel)))!important;transition:filter 140ms ease,box-shadow 140ms ease!important;transform:none!important;box-shadow:inset 0 1px 0 #ffffff24,0 2px 3px #0008,0 4px 7px #0004!important}
-body #calendar.section #calendarGrid .mini-event[data-evid]:hover,body #calendar.section #calendarGrid .mini-event.event-details-selected-v1{filter:brightness(1.10);transform:none!important;box-shadow:inset 0 1px 0 #ffffff30,0 2px 4px #0009,0 5px 9px #0006!important}
+/* Matte event rows: restrained category tint, one accent edge and soft elevation. */
+body #calendar.section #calendarGrid .mini-event[data-evid]{
+  border:0!important;border-left:3px solid var(--content-group-color,var(--accent))!important;
+  border-radius:5px!important;background:color-mix(in srgb,var(--content-group-color,var(--accent)) 23%,var(--panel))!important;
+  color:var(--text)!important;box-shadow:0 1px 2px #0003!important;transform:none!important;
+  transition:background-color 140ms ease,box-shadow 140ms ease!important;
+}
+body #calendar.section #calendarGrid .mini-event[data-evid]:hover,body #calendar.section #calendarGrid .mini-event.event-details-selected-v1{
+  background:color-mix(in srgb,var(--content-group-color,var(--accent)) 34%,var(--panel))!important;
+  filter:none!important;transform:none!important;box-shadow:0 2px 5px #0004!important;
+}
+body #calendar.section #calendarGrid .mini-event.calendar-content-group-event-v2:not(.calendar-group-selected-v2):not(.event-details-selected-v1){outline:none}
+body #calendar.section #calendarGrid .mini-event[data-evid]:focus-visible{outline:2px solid var(--accent)!important;outline-offset:-2px}
 body #calendar.section #calendarGrid .mini-event.event-details-selected-v1{outline:1px solid var(--content-group-color,var(--accent))!important;outline-offset:-1px}
 body #calendar.section #calendarGrid .mini-event.calendar-group-selected-v2{outline:2px solid #f8fafc!important;outline-offset:-2px}
 body #calendar.section #calendarGrid .calendar-day-more-v2{border-radius:12px!important;transition:background-color 140ms ease!important}
@@ -195,7 +205,7 @@ body #calendar.section #calendarGrid .calendar-day-more-v2:hover{background:colo
 body #calendar.section .calendar-timeline-day-v1{transition:background-color 140ms ease!important}
 body #calendar.section .calendar-timeline-game-v1{border-radius:6px!important;transition:background-color 140ms ease!important}
 body #calendar.section .calendar-timeline-game-v1:hover{background:color-mix(in srgb,var(--text) 6%,transparent)!important}
-body #calendar.section .calendar-continuous-ribbon-v1{box-shadow:inset 0 1px 0 #ffffff28,0 2px 4px #0007,0 4px 7px #0004;border-radius:4px}
+body #calendar.section .calendar-continuous-ribbon-v1{height:8px;border:0;border-radius:4px;background:color-mix(in srgb,var(--series-color) 76%,var(--panel));box-shadow:none; margin-top:2px}
 body:has(#calendar.section.active) #calendarEventPreview{border-radius:18px!important;background:var(--calendar-detail-glass-v4)!important;border:1px solid var(--calendar-detail-border-v3)!important;box-shadow:0 4px 10px #0006,0 16px 38px #0009!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 body:has(#calendar.section.active) #eventModal .event-modalbox.mws-event-editor-v6{border-radius:20px!important;box-shadow:0 4px 12px #0004,0 24px 60px #0005!important}
 body #calendar.section #calendarGrid .day:is(.drag-over,.template-drag-over){box-shadow:inset 0 0 0 2px var(--accent)!important;background:color-mix(in srgb,var(--accent) 12%,var(--panel))!important}
@@ -289,3 +299,37 @@ body[data-theme=neon] #calendar.section #calendarGrid .day.out{background:var(--
 body[data-theme=neon] #calendar.section #calendarGrid .day:hover{background:color-mix(in srgb,var(--text) 3%,var(--calendar-grid-surface))!important}
 body[data-theme=neon] #calendar.section #calendarGrid .day:is(.drag-over,.template-drag-over){background:color-mix(in srgb,var(--accent) 12%,var(--calendar-grid-surface))!important}
 body[data-theme=neon] #calendar .calendar-timeline-tooltip-v1{background:var(--panel);color:var(--text);border-color:var(--border)}
+
+/* Adaptive month event layout. Narrow cells keep time above the full-width
+   title, and wider date cells use a single row. Original buttons remain live. */
+@media(min-width:901px){
+ body #calendar.section #calendarGrid .mini-event[data-evid]:not(:has(.calendar-event-drag-handle-v4)){
+   grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto!important;align-items:center!important;
+   min-height:30px!important;height:auto!important;margin:2px 0!important;padding:4px 6px!important;
+ }
+ body #calendar.section #calendarGrid .mini-event[data-evid]:not(:has(.calendar-event-drag-handle-v4)) .mini-event-main{
+   display:flex!important;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;
+   min-width:0;max-width:100%;font-weight:600!important;line-height:1.2!important;-webkit-line-clamp:unset;
+ }
+ body #calendar.section #calendarGrid .mini-event[data-evid] .calendar-start-v2{
+   flex:0 0 auto;font-size:calc(11px * var(--ui-text-scale,1))!important;line-height:1.2!important;font-weight:500!important;
+   color:color-mix(in srgb,var(--text) 72%,var(--panel))!important;margin:0!important;letter-spacing:0;
+ }
+ body #calendar.section #calendarGrid .mini-event[data-evid] .calendar-card-title-v2{
+   min-width:0;max-width:100%;font-size:calc(12px * var(--ui-text-scale,1))!important;line-height:1.25!important;font-weight:600!important;
+ }
+ body #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4)){padding-right:35px!important}
+ body #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4))>.mws-steam-slot-v111{
+   position:absolute!important;inset:50% 5px auto auto!important;width:24px!important;min-width:24px!important;height:24px!important;min-height:24px!important;
+   transform:translateY(-50%)!important;border:0!important;border-radius:5px!important;background:color-mix(in srgb,var(--text) 8%,var(--panel))!important;
+   padding:0!important;box-shadow:none!important;font-size:16px!important;font-weight:500!important;
+ }
+ body #calendar.section #calendarGrid .mini-event[data-evid]>.mws-steam-slot-v111:not(.linked){opacity:.65}
+ body #calendar.section #calendarGrid .mini-event[data-evid]>.mws-steam-slot-v111:hover{opacity:1;background:color-mix(in srgb,var(--text) 15%,var(--panel))!important}
+ @container mws-calendar-day (min-width:215px){
+   body #calendar.section #calendarGrid .mini-event[data-evid]:not(:has(.calendar-event-drag-handle-v4)) .mini-event-main{
+     flex-direction:row;align-items:baseline;justify-content:flex-start;gap:7px;
+   }
+   body #calendar.section #calendarGrid .mini-event[data-evid] .calendar-card-title-v2{flex:1 1 auto}
+ }
+}
