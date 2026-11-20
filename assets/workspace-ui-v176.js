@@ -92,7 +92,7 @@ function friendFinderNavButtonV176(){
     else nav.appendChild(button);
   }
   button.hidden=true;
-  button.style.display='none';
+  button.style.setProperty('display','none','important');
   button.onclick=event=>{event.preventDefault();window.setTab?.('friendFinder')};
   return button;
 }
@@ -122,6 +122,7 @@ function syncContactNavigationV176(tab){
   }
   nav?.querySelectorAll('button[data-tab="sniper"],button[data-tab="friendFinder"]').forEach(button=>{
     button.hidden=true;
+    if(button.style.getPropertyValue('display')!=='none'||button.style.getPropertyPriority('display')!=='important')button.style.setProperty('display','none','important');
     button.classList.remove('active');
   });
   document.querySelectorAll('[data-contact-view-v176]').forEach(button=>{
