@@ -1955,12 +1955,14 @@ function renderCalendar(){
         const color=e.restDay?'#e85d75':(groupColor||e.color||category(e.categoryId)?.color||'#64748b');
         const startLabel=e.start&&e.start!=='TBD'?String(e.start).slice(0,5):'미정';
         const label=e.restDay?'휴방':`<time class="calendar-start-v2">${esc(startLabel)}</time><span class="calendar-card-title-v2">${esc(e.title)}</span>`;
-        return `<div class="mini-event ${e.restDay?'rest-event':''} ${groupColor?'calendar-content-group-event-v2':''} ${e.restDay?'':'mws-steam-host-v111'}"
+        const isVR=!e.restDay&&e.device==='VR';
+        return `<div class="mini-event ${e.restDay?'rest-event':''} ${groupColor?'calendar-content-group-event-v2':''} ${e.restDay?'':'mws-steam-host-v111'}${isVR?' calendar-event-vr-v1':''}"
           draggable="false"
-          data-evid="${e.id}" tabindex="0" aria-label="${esc(e.restDay?'휴방':e.title)} 상세 보기"
+          data-evid="${e.id}" tabindex="0" aria-label="${esc(e.restDay?'휴방':e.title)}${isVR?' VR':''} 상세 보기"
           style="border-left:4px solid ${color};background:${rgba(color,.18)};--content-group-color:${color}"
           onclick="handleCalendarMiniEventClick(event,'${e.id}')">
           <span class="mini-event-main">${label}</span>
+          ${isVR?'<span class="calendar-vr-badge-v1" aria-hidden="true">VR</span>':''}
           ${e.restDay?'':`<button type="button" class="mws-steam-slot-v111" data-event-id="${esc(e.id)}" aria-label="게임 추가" title="게임 추가">+</button>`}
         </div>`
       }).join('')}</div>
