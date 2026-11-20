@@ -1,0 +1,23 @@
+name: Ladder three-step wizard browser QA
+on:
+  pull_request:
+    branches: [cloudflare-production]
+    paths:
+      - 'index.html'
+      - 'assets/ladder-wizard-v1.*'
+      - 'assets/app-core.js'
+      - 'scripts/qa-ladder-wizard-v1-browser.mjs'
+      - '.github/workflows/qa-ladder-wizard-v1.yml'
+permissions:
+  contents: read
+jobs:
+  ladder-wizard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --check assets/ladder-wizard-v1.js
+      - run: node scripts/qa-ladder-wizard-v1-browser.mjs
