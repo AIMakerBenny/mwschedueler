@@ -1,0 +1,24 @@
+name: Achievement exhibition browser QA
+on:
+  pull_request:
+    branches: [cloudflare-production]
+    paths:
+      - 'index.html'
+      - 'assets/achievement-exhibition-v1.css'
+      - 'assets/achievement-gallery-v1621.*'
+      - 'scripts/qa-achievement-exhibition-v1-browser.mjs'
+      - '.github/workflows/qa-achievement-exhibition-v1.yml'
+permissions:
+  contents: read
+jobs:
+  exhibition:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node scripts/qa-achievement-exhibition-v1-browser.mjs
+      - run: node scripts/run-phase90-achievement-gallery-audit.mjs
+      - run: node scripts/run-phase93-achievement-touch-audit.mjs
