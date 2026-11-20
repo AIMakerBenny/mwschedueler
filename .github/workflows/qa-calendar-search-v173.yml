@@ -22,4 +22,4 @@ jobs:
       - run: node scripts/qa-calendar-search-v173-browser.mjs
       - run: node scripts/run-phase171-calendar-content-search-audit.mjs
       - run: node scripts/run-phase172-calendar-search-tab-audit.mjs
-      - run: node --check assets/app-core.js
+      - run: node --check --input-type=commonjs < assets/app-core.js
