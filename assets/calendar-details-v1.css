@@ -218,8 +218,7 @@ body #calendar.section #calendarGrid .day:is(.drag-over,.template-drag-over){box
  body #calendar.section #calendarGrid{gap:0!important;border:1px solid var(--border);border-radius:0 0 14px 14px;background:var(--panel);box-sizing:border-box}
  body #calendar.section #calendarGrid .day{border:0!important;border-right:1px solid var(--border)!important;border-bottom:1px solid var(--border)!important;border-radius:0!important;background:var(--panel)!important;padding-top:3px!important}
  body #calendar.section #calendarGrid .day:nth-child(7n){border-right:0!important}
- body #calendar.section #calendarGrid .daynum{display:flex;align-items:center;justify-content:center;position:relative;min-height:24px;margin-bottom:2px!important;padding-right:0!important}
- body #calendar.section #calendarGrid .daynum:has(.calendar-day-more-v2:not([hidden])){justify-content:flex-start;padding-left:3px!important}
+ body #calendar.section #calendarGrid .daynum{display:flex;align-items:center;justify-content:center;position:relative;min-height:24px;margin-bottom:2px!important;padding-inline:0!important}
  body #calendar.section #calendarGrid .calendar-day-more-v2{position:absolute;right:19px;top:3px;float:none}
 }
 @media(max-width:600px){.event-details-popover-v2{border-radius:20px}.event-details-body-v1{padding:5px 18px 20px 39px}.event-details-body-v1 .calendar-preview-title{font-size:20px}}
@@ -332,4 +331,26 @@ body[data-theme=neon] #calendar .calendar-timeline-tooltip-v1{background:var(--p
    }
    body #calendar.section #calendarGrid .mini-event[data-evid] .calendar-card-title-v2{flex:1 1 auto}
  }
+}
+
+/* VR-only environment badge. Reserve space beside the existing game control;
+   the passive marker never intercepts the card or thumbnail interaction. */
+body #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111.calendar-event-vr-v1:not(:has(.calendar-event-drag-handle-v4)){
+  padding-right:66px!important;
+}
+body #calendar.section #calendarGrid .mini-event[data-evid]>.calendar-vr-badge-v1{
+  position:absolute;right:41px;top:50%;transform:translateY(-50%);
+  display:grid;place-items:center;box-sizing:border-box;width:20px;height:20px;
+  border:1px solid color-mix(in srgb,var(--text) 30%,transparent);
+  border-radius:50%;background:color-mix(in srgb,var(--text) 8%,var(--panel));
+  color:var(--text);font-size:9px;font-weight:700;line-height:1;white-space:nowrap;pointer-events:none;
+}
+@media(min-width:901px){
+  body #calendar.section #calendarGrid .mini-event[data-evid].mws-steam-host-v111.calendar-event-vr-v1:not(:has(.calendar-event-drag-handle-v4)){padding-right:58px!important}
+  body #calendar.section #calendarGrid .mini-event[data-evid]>.calendar-vr-badge-v1{right:33px}
+}
+@media(min-width:901px){
+  @container mws-calendar-day (max-width:125px){
+    body #calendar.section #calendarGrid .calendar-day-more-v2{right:13px;font-size:9px!important;padding-inline:2px!important}
+  }
 }
