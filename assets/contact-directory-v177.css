@@ -38,7 +38,7 @@ body.mws-premium #contacts .contact-view-switch-v177 .contact-view.active {
   border-color:var(--contact-edge-v177)!important; box-shadow:0 2px 5px #0002!important;
 }
 body.mws-premium #contacts .contact-view-switch-v177 .contact-view:hover {color:var(--text);background:var(--panel2)!important}
-body.mws-premium #contacts .contact-toolbar-tools-v177 {gap:8px; flex-wrap:wrap; min-width:0; max-width:100%}
+body.mws-premium #contacts .contact-toolbar-tools-v177 {gap:8px; flex-wrap:wrap; flex:1 1 530px; justify-content:flex-end; min-width:0; max-width:100%}
 #contacts .contact-search-field-v177 {position:relative; display:block; flex:1 1 220px; min-width:150px; max-width:340px; margin:0}
 #contacts .contact-search-field-v177 svg {position:absolute; left:12px; top:50%; transform:translateY(-50%); width:17px; height:17px; color:var(--muted); pointer-events:none}
 body.mws-premium #contacts #contactSearch {width:100%!important; min-width:0!important; height:38px; border-radius:9px!important; padding:8px 10px 8px 38px!important; background:var(--input); font-size:12px}
