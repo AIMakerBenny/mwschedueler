@@ -19,8 +19,6 @@
 .event-details-drawer-v1[hidden]{display:none!important;pointer-events:none!important}
 .event-details-drawer-v1.open{transform:translate3d(0,0,0);pointer-events:auto}
 .event-details-head-v1,.event-details-footer-v1{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);font-size:13px}
-.event-details-head-actions-v6{display:flex;align-items:center;gap:6px}
-#calendarDetailsMotionV6[hidden]{display:none!important}
 .event-details-footer-v1{border-top:1px solid var(--border);border-bottom:0;justify-content:flex-end}
 .event-details-body-v1{min-height:0;padding:20px 18px;overflow:auto;overscroll-behavior:contain;overflow-wrap:anywhere}
 .event-details-body-v1 .calendar-preview-title{font-size:21px;line-height:1.45;font-weight:700}
@@ -117,7 +115,6 @@
   #eventModal .mws-event-editor-v6 .event-info-panel>.formgrid>.field.full{grid-column:1/-1}
   #eventModal .mws-event-editor-v6 .event-title-row{grid-template-columns:minmax(0,1fr) 40px 80px}
 }
-@media(prefers-reduced-motion:reduce){.event-details-drawer-v1{transition:none}}
 
 /* Month overview: reserve the detail column and divide the viewport into weeks. */
 body:has(#calendar.section.active){--calendar-details-width-v2:clamp(300px,26vw,380px);overflow-x:clip}
@@ -154,7 +151,6 @@ body:has(#calendar.section.active) #newEventBtn{min-height:30px!important;paddin
  #calendar #calendarGrid .mini-event.mws-steam-host-v111:not(:has(.calendar-event-drag-handle-v4))>.mws-steam-slot-v111{width:25px!important;min-width:25px!important;inset:3px 2px 3px auto!important}
  #calendar #calendarGrid .mini-event[data-evid] .mini-event-main{font-size:inherit!important;line-height:1.3!important;overflow:hidden!important;display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;text-overflow:ellipsis!important}
 }
-@media(prefers-reduced-motion:reduce){body:has(#calendar.section.active) .app>.main:has(#calendar.section.active){transition:none!important}}
 
 #calendar #calendarGrid .calendar-start-v2,#calendar #calendarGrid .calendar-card-title-v2{display:block;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
 

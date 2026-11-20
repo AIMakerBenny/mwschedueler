@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
-import {spawnSync} from 'node:child_process';
+import {pathToFileURL} from 'node:url';
+import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 import os from 'node:os';
 import path from 'node:path';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
@@ -38,7 +39,7 @@ const tick=()=>new Promise(r=>setTimeout(r,30));
 window.addEventListener('DOMContentLoaded',async()=>{
  await tick();
  const $=s=>document.querySelector(s),r=e=>e.getBoundingClientRect();
- $('.mini-event').click();await tick();await new Promise(resolve=>setTimeout(resolve,220));
+ $('.mini-event').click();await new Promise(resolve=>setTimeout(resolve,600));
  const readOnlyDrawer=window.mwsCalendarDetailsV1.isOpen()&&!$('#eventModal').classList.contains('open')&&editorOpens===0&&saves===0;
  window.dispatchEvent(new Event('mawang:datachange'));await tick();
  const refreshKeepsOpen=window.mwsCalendarDetailsV1.isOpen()&&editorOpens===0;
@@ -80,17 +81,18 @@ window.addEventListener('DOMContentLoaded',async()=>{
  $('[data-editor-tool-v6="game"]').click();
 });
 `;
-// Final geometry uses reduced animation; the live browser verifies slide-in.
+// Geometry is checked after the real-time drawer animation settles.
 const temp=mkdtempSync(path.join(os.tmpdir(),'mws-details-'));
+let browser;
 try{
  const fixture='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'\n.event-details-drawer-v1{transition:none!important}</style></head><body class="mws-premium" data-resolution="fhd"><main><section id="calendar" class="section active"><div id="calendarGrid" class="calendar"><div class="day"><div class="daynum">18</div><div class="mini-event mws-steam-host-v111" data-evid="qa-event"><span class="mini-event-main">합방 예열 로블록스</span><button type="button" class="mws-steam-slot-v111">+</button></div></div></div></section></main>'+modal+'<pre id="result">pending</pre><script>'+read('assets/event-sidebar-tabs-v5.js')+'</script><script>'+read('assets/calendar-details-v1.js')+'</script><script>'+boot+'</script></body></html>';
  const dest=path.join(temp,'test.html');writeFileSync(dest,fixture);
  if(process.env.MWS_DETAILS_FIXTURE){writeFileSync(process.env.MWS_DETAILS_FIXTURE,fixture);if(process.env.MWS_FIXTURE_ONLY)process.exit(0);}
- const chrome=['google-chrome','google-chrome-stable','chromium','chromium-browser'].map(n=>spawnSync('which',[n],{encoding:'utf8'})).find(r=>r.status===0)?.stdout.trim();assert(chrome,'Chromium required');
+ browser=await launchCalendarBrowser(temp);
  for(const [width,height] of [[1366,768],[1920,1080],[2560,1440],[2560,1080],[700,900]]){
-  const run=spawnSync(chrome,['--headless=new','--force-prefers-reduced-motion=reduce','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--no-first-run','--disable-background-networking','--virtual-time-budget=2500','--window-size='+width+','+height,'--dump-dom','file://'+dest],{encoding:'utf8',timeout:30000,maxBuffer:18*1024*1024});
-  assert.equal(run.status,0,run.stderr.slice(-700));const match=run.stdout.match(/<pre id="result">([^<]+)<\/pre>/);assert(match,'Missing details result');
-  const result=JSON.parse(match[1]);for(const [key,value] of Object.entries(result))if(key!=='geometry')assert.equal(value,true,width+'x'+height+' '+key+' '+JSON.stringify(result));
+  await browser.navigate(pathToFileURL(dest).href+'?size='+width+'x'+height,width,height);
+  const result=await browser.evaluate(`new Promise((resolve,reject)=>{const start=performance.now();const check=()=>{const value=document.querySelector('#result')?.textContent;if(value&&value!=='pending'){resolve(JSON.parse(value));return}if(performance.now()-start>6000){reject(new Error('Missing details result'));return}setTimeout(check,25)};check()})`);
+  for(const [key,value] of Object.entries(result))if(key!=='geometry')assert.equal(value,true,width+'x'+height+' '+key+' '+JSON.stringify(result));
   console.log('CALENDAR_DETAILS_BROWSER_OK',width,height,JSON.stringify(result));
  }
-}finally{rmSync(temp,{recursive:true,force:true})}
+}finally{await browser?.close();rmSync(temp,{recursive:true,force:true})}
