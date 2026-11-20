@@ -1,0 +1,25 @@
+name: Calendar search accuracy and responsive design QA
+on:
+  pull_request:
+    branches: [cloudflare-production]
+    paths:
+      - 'index.html'
+      - 'assets/app-core.js'
+      - 'assets/calendar-search-v173.css'
+      - 'scripts/qa-calendar-search-v173-browser.mjs'
+      - '.github/workflows/qa-calendar-search-v173.yml'
+permissions:
+  contents: read
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node scripts/qa-calendar-search-v173-browser.mjs
+      - run: node scripts/run-phase171-calendar-content-search-audit.mjs
+      - run: node scripts/run-phase172-calendar-search-tab-audit.mjs
+      - run: node --check assets/app-core.js
