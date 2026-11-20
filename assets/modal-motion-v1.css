@@ -1,10 +1,10 @@
 /* Keep the full-screen shell out of the animated compositing group. A flat
    translucent scrim and the panel animate independently; no backdrop sampling. */
 body .modal,body.mws-premium .modal {
-  --mws-modal-enter:300ms;
-  --mws-modal-exit:200ms;
-  --mws-modal-ready:32ms;
-  --mws-modal-ease:cubic-bezier(.35,0,.25,1);
+  --mws-modal-enter:360ms;
+  --mws-modal-exit:220ms;
+  --mws-modal-ready:16ms;
+  --mws-modal-ease:cubic-bezier(.32,.08,.22,1);
   --mws-modal-exit-ease:cubic-bezier(.4,0,.6,1);
   background:transparent!important;
   backdrop-filter:none!important;
@@ -23,12 +23,13 @@ body .modal,body.mws-premium .modal {
 }
 .modal > :is(.modalbox,.confirm-box) {
   opacity:0;
-  scale:.985;
+  scale:.95;
+  translate:0 14px;
   transform-origin:center;
-  will-change:opacity,scale;
+  will-change:opacity,scale,translate;
 }
 .modal.open::before,.modal.open > :is(.modalbox,.confirm-box) {opacity:1}
-.modal.open > :is(.modalbox,.confirm-box) {scale:none}
+.modal.open > :is(.modalbox,.confirm-box) {scale:none;translate:none}
 
 @supports (transition-behavior:allow-discrete) {
   .modal {
@@ -38,16 +39,16 @@ body .modal,body.mws-premium .modal {
   .modal.open {pointer-events:auto}
   .modal::before {transition:opacity 180ms ease-out}
   .modal > :is(.modalbox,.confirm-box) {
-    transition:opacity var(--mws-modal-exit) var(--mws-modal-exit-ease),scale var(--mws-modal-exit) var(--mws-modal-exit-ease);
+    transition:opacity var(--mws-modal-exit) var(--mws-modal-exit-ease),scale var(--mws-modal-exit) var(--mws-modal-exit-ease),translate var(--mws-modal-exit) var(--mws-modal-exit-ease);
   }
   .modal.open::before {transition:opacity 220ms var(--mws-modal-ease)}
   .modal.open > :is(.modalbox,.confirm-box) {
     /* Give first layout/raster a short head start before moving the panel. */
-    transition:opacity var(--mws-modal-enter) var(--mws-modal-ease) var(--mws-modal-ready),scale var(--mws-modal-enter) var(--mws-modal-ease) var(--mws-modal-ready);
+    transition:opacity var(--mws-modal-enter) var(--mws-modal-ease) var(--mws-modal-ready),scale var(--mws-modal-enter) var(--mws-modal-ease) var(--mws-modal-ready),translate var(--mws-modal-enter) var(--mws-modal-ease) var(--mws-modal-ready);
   }
   @starting-style {
     .modal.open::before {opacity:0}
-    .modal.open > :is(.modalbox,.confirm-box) {opacity:0;scale:.985}
+    .modal.open > :is(.modalbox,.confirm-box) {opacity:0;scale:.95;translate:0 14px}
   }
   .modal:not(.open) {interactivity:inert}
 }
@@ -56,14 +57,14 @@ body .modal,body.mws-premium .modal {
   .modal.open::before {animation:mws-modal-scrim-in-v2 220ms var(--mws-modal-ease) both}
   .modal.open > :is(.modalbox,.confirm-box) {animation:mws-modal-panel-in-v2 var(--mws-modal-enter) var(--mws-modal-ease) var(--mws-modal-ready) both}
   @keyframes mws-modal-scrim-in-v2 {from{opacity:0}to{opacity:1}}
-  @keyframes mws-modal-panel-in-v2 {from{opacity:0;scale:.985}to{opacity:1;scale:none}}
+  @keyframes mws-modal-panel-in-v2 {from{opacity:0;scale:.95;translate:0 14px}to{opacity:1;scale:none;translate:none}}
 }
 
 /* Never animate geometry for users who prefer reduced motion. */
 @media(prefers-reduced-motion:reduce) {
-  body .modal,body.mws-premium .modal {--mws-modal-enter:120ms;--mws-modal-exit:100ms;--mws-modal-ready:0ms}
+  body .modal,body.mws-premium .modal {--mws-modal-enter:220ms;--mws-modal-exit:160ms;--mws-modal-ready:0ms}
   .modal::before,.modal.open::before {transition-duration:100ms;animation-duration:100ms}
-  .modal > :is(.modalbox,.confirm-box),.modal.open > :is(.modalbox,.confirm-box) {scale:none!important;transition-property:opacity!important}
+  .modal > :is(.modalbox,.confirm-box),.modal.open > :is(.modalbox,.confirm-box) {scale:none!important;translate:none!important;transition-property:opacity!important}
   @supports not (transition-behavior:allow-discrete) {
     .modal.open > :is(.modalbox,.confirm-box) {animation-name:mws-modal-scrim-in-v2}
   }
