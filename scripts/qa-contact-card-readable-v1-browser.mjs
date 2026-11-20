@@ -20,7 +20,7 @@ assert(index.includes('<section id="dashboard" class="section">'),'Dashboard mus
 assert(index.includes('<h1 id="pageTitle">캘린더</h1>'),'Header must show calendar on initial HTML paint');
 assert(index.indexOf('assets/contact-card-readable-layout-v1.css?v=1')>
   index.indexOf('assets/calendar-space-efficiency-v1.css?v=1'),'Override must load after old CSS');
-assert(index.indexOf('assets/contact-directory-v177.css?v=1')>index.indexOf('assets/workspace-clean-v1.css'),'Directory polish must load after prior overrides');
+assert(index.indexOf('assets/contact-directory-v177.css?v=2')>index.indexOf('assets/workspace-clean-v1.css'),'Directory polish must load after prior overrides');
 assert(app.includes('function renderAll(reason=lastSyncReason)'),'Runtime must still render all panels after login');
 assert(app.includes("safeRenderView('캘린더',renderCalendar)"),'Hydrated calendar render must remain intact');
 assert(app.includes('contact-card-core')&&app.includes('contact-card-avatar-lg')&&app.includes('contact-card-info'),
@@ -60,6 +60,10 @@ function geometry(){
  const sidebar=document.querySelector('#contacts .contact-tag-panel');
  for(const el of [toolbar,board,sidebar,document.querySelector('#contactSearch'),document.querySelector('#newContactBtn')]){
    if(r(el).right>innerWidth+2||r(el).left<0)failures.push('toolbar/tag layout overflow '+el.className);
+ }
+ if(r(toolbar).width>=900){
+   const tools=['#contactSearch','#contactSort','#cleanupDuplicatesBtn','#newContactBtn'].map(s=>r(document.querySelector(s)));
+   if(Math.max(...tools.map(x=>x.top))-Math.min(...tools.map(x=>x.top))>2)failures.push(' desktop toolbar unexpectedly wraps');
  }
  const first=cards[0];
  first.hidden=true;
