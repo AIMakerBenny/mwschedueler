@@ -62,11 +62,11 @@ try{
       const input=$('ladderPrizeList').querySelector('input');input.value='';input.dispatchEvent(new Event('input'));const blankBlocked=$('ladderWizardNext').disabled;input.value='직접 입력';input.dispatchEvent(new Event('input'));
       $('ladderWizardBack').click();const back=visible();$('ladderWizardNext').click();const customKept=labels()[0]==='직접 입력';$('ladderWizardNext').click();const third=visible();
       renderMiniContactPalette('rps','');const otherUnchanged=otherPaletteCalls===1;
-      const board=$('ladderCanvas').getBoundingClientRect(),thirdFooterFits=$('ladderWizardBack').getBoundingClientRect().bottom<=innerHeight;
-      return {initial,initialBlocked,contactCards,initialFooterFits,fullFooterFits,searchKept,toggled,cap,manualCap,manual,second,initialPrizes,presetSelected,secondFooterFits,winner,rank,teams,defaults,blankBlocked,back,customKept,third,thirdFooterFits,canvasBottom:board.bottom,canvasHeight:board.height,otherUnchanged,overflow:document.documentElement.scrollWidth>innerWidth+3};
+      const board=$('ladderCanvas').getBoundingClientRect(),thirdFooterFits=$('ladderWizardBack').getBoundingClientRect().bottom<=innerHeight,stageBottom=document.querySelector('.ladder-stage-card').getBoundingClientRect().bottom,summaryBottom=document.querySelector('.ladder-summary-shell').getBoundingClientRect().bottom;
+      return {initial,initialBlocked,contactCards,initialFooterFits,fullFooterFits,searchKept,toggled,cap,manualCap,manual,second,initialPrizes,presetSelected,secondFooterFits,winner,rank,teams,defaults,blankBlocked,back,customKept,third,thirdFooterFits,canvasBottom:board.bottom,canvasHeight:board.height,stageBottom,summaryBottom,otherUnchanged,overflow:document.documentElement.scrollWidth>innerWidth+3};
     })()`);
     assert.deepEqual(state.initial,[1]);assert.equal(state.contactCards,217);assert.deepEqual(state.second,[2]);assert.deepEqual(state.back,[1]);assert.deepEqual(state.third,[3]);
-    if(w>850)assert(state.initialFooterFits&&state.fullFooterFits&&state.secondFooterFits&&state.thirdFooterFits&&state.canvasBottom<=h,'Controls or board below viewport: '+JSON.stringify(state));
+    if(w>850)assert(state.initialFooterFits&&state.fullFooterFits&&state.secondFooterFits&&state.thirdFooterFits&&state.canvasBottom<=h&&state.stageBottom<=h&&state.summaryBottom<=h,'Controls or board below viewport: '+JSON.stringify(state));
     assert.deepEqual(state.initialPrizes,['당첨','꽝','꽝','꽝']);assert(state.presetSelected);
     for(const k of ['initialBlocked','searchKept','toggled','cap','manualCap','manual','blankBlocked','customKept','otherUnchanged'])assert(state[k],k+': '+JSON.stringify(state));
     assert.deepEqual(state.winner,['당첨','당첨','꽝','꽝']);assert.deepEqual(state.rank,['1등','2등','3등','4등']);assert.deepEqual(state.teams,['A팀','B팀','A팀','B팀']);assert.deepEqual(state.defaults,['결과 1','결과 2','결과 3','결과 4']);assert(!state.overflow,JSON.stringify(state));
