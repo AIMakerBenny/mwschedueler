@@ -39,10 +39,13 @@
     };
     if(!drawer.animate){complete();return}
     // Let the resized calendar, ribbons and drawer content paint before starting the clock.
-    // Starting from a prepainted position avoids consuming animation time on layout/raster work.
-    prepareFrame=requestAnimationFrame(()=>{
-      prepareFrame=requestAnimationFrame(()=>{
+    // A long preparation frame signals that the browser is still processing layout/raster work.
+    // Keep the initial position until a normal frame arrives, with a bounded preparation window.
+    prepareFrame=requestAnimationFrame(first=>{
+      let previous=first;
+      function startPrepared(timestamp){
         if(generation!==motionGeneration)return;
+        if(timestamp-previous>50&&timestamp-first<180){previous=timestamp;prepareFrame=requestAnimationFrame(startPrepared);return}
         const options={duration,easing,fill:'both'};
         if(layout){
           layoutMotion=layout.main.animate([{transform:layout.inverse},{transform:'none'}],options);
@@ -51,7 +54,8 @@
         motion=drawer.animate([{transform:from},{transform:open?onscreen:offscreen}],options);
         drawer.style.removeProperty('transform');
         motion.finished.then(complete,()=>{});
-      });
+      }
+      prepareFrame=requestAnimationFrame(startPrepared);
     });
   }
   function markSelected(id){

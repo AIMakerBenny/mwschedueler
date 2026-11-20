@@ -24,7 +24,7 @@ const checks=`
 const tick=()=>new Promise(r=>setTimeout(r,35));
 window.addEventListener('DOMContentLoaded',async()=>{
  const $=s=>document.querySelector(s);await tick();$('#qaCard').click();
- const ready=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+ const ready=()=>new Promise((resolve,reject)=>{const start=performance.now();function next(){if($('#calendarEventDetailsV1').getAnimations().length){resolve();return}if(performance.now()-start>800){reject(Error('Missing prepared drawer animation'));return}requestAnimationFrame(next)}requestAnimationFrame(next)});
  await ready();
  const drawer=$('#calendarEventDetailsV1'),animation=drawer.getAnimations()[0];
  const explicitMotion=Boolean(animation)&&animation.effect.getTiming().duration===360&&animation.effect.getTiming().easing==='cubic-bezier(0.4, 0, 0.6, 1)';
