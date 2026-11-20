@@ -26,7 +26,12 @@ export function runPhase89AchievementNavigationShellAudit(){
   if(!/assets\/app-core\.js\?v=1\.3\.0-search(?:8[9]|9[0-9]|[1-9][0-9]{2,})/.test(index))issues.push('app-core cache-bust is older than search89');
 
   if(!tools.includes("let mini=[...n.querySelectorAll('.nav-game-divider')].find(x=>/미니게임/.test(x.textContent||''));"))issues.push('tool group still cannot anchor itself to the mini-game divider');
-  if(!tools.includes("mini.before(d)"))issues.push('tool divider insertion anchor changed unexpectedly');
+  const toolsDivider=index.indexOf('id="mwsToolsDivider"');
+  const lastGame=index.indexOf('data-tab="gameMultiDraw"');
+  const settings=index.indexOf('class="nav-settings-divider"');
+  if(!(mini<lastGame&&lastGame<toolsDivider&&toolsDivider<settings))issues.push('mini-game group must precede the tools group');
+  if(!tools.includes("tools:['contentPlanner','toolTier','toolMatrix','toolRelations']"))issues.push('drawing board does not collapse with tools');
+  if(tools.includes("mini.before(d)")||tools.includes("anchor.insertAdjacentElement('afterend',mini)"))issues.push('obsolete tools-before-games reorder remains');
 
   const summary={phase:89,name:'achievement-navigation-shell',issues,warnings,pass:issues.length===0};
   console.log(JSON.stringify(summary));
