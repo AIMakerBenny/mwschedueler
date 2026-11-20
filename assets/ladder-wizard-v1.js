@@ -40,6 +40,12 @@
     pages.forEach(p=>{p.hidden=Number(p.dataset.ladderPage)!==step});
     steps.forEach(b=>{const i=Number(b.dataset.ladderStep);b.classList.toggle('current',i===step);b.classList.toggle('complete',i<step);b.disabled=locked||i>furthest||(i>=2&&!validRoster())||(i===3&&!validPrizes());if(i===step)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current')});
     const previous=$('ladderWizardBack'),next=$('ladderWizardNext');
+    const footer=root.querySelector('.ladder-wizard-footer'),actions=root.querySelector('.ladder-action-row');
+    // During play, navigation belongs beside the game controls rather than
+    // below a potentially long results list.
+    if(step===3){if(previous.parentElement!==actions)actions.prepend(previous)}
+    else if(previous.parentElement!==footer)footer.prepend(previous);
+    footer.hidden=step===3;
     previous.hidden=step===1;previous.disabled=locked;
     next.hidden=step===3;next.disabled=locked||(step===1?!validRoster():!validPrizes());
     next.textContent=step===1?'결과 설정':'게임 화면으로';
