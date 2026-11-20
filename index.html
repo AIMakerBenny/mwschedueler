@@ -401,22 +401,22 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
         <div class="calendar-search-head-v172">
           <div>
             <div class="calendar-search-title-v172">컨텐츠 검색</div>
-            <div class="calendar-search-help-v172">연락처 이름, 게임 이름, 컨텐츠 제목을 검색합니다. 한글 초성 검색도 지원합니다.</div>
+            <div class="calendar-search-help-v172">게임명과 약칭, 컨텐츠 제목, 참가자 이름으로 일정을 찾아보세요. 초성 검색은 자음만 입력하세요.</div>
           </div>
         </div>
         <div class="calendar-searchbar-v171" role="search" aria-label="캘린더 컨텐츠 검색">
-          <div class="calendar-searchbox-v171">
+          <div class="calendar-searchbox-v171"><svg class="calendar-search-glass-v173" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg>
             <input id="calendarSearchV171" class="search calendar-search-input-v171" autocomplete="off" placeholder="연락처, 게임, 컨텐츠 제목 또는 초성 검색">
-            <button type="button" id="calendarSearchClearV171" class="ghost calendar-search-clear-v171" hidden>지우기</button>
+            <button type="button" id="calendarSearchClearV171" class="ghost calendar-search-clear-v171" aria-label="검색어 지우기" title="검색어 지우기" hidden><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
           </div>
           <div id="calendarSearchStatusV171" class="calendar-search-status-v171" aria-live="polite">검색어를 입력해 주세요</div>
         </div>
         <div class="calendar-search-controls-v172">
           <div class="calendar-search-filter-group-v172" role="group" aria-label="검색 대상">
-            <button type="button" class="secondary calendar-search-type-v172 active" data-calendar-search-type="all">전체</button>
-            <button type="button" class="secondary calendar-search-type-v172" data-calendar-search-type="contact">연락처</button>
-            <button type="button" class="secondary calendar-search-type-v172" data-calendar-search-type="game">게임</button>
-            <button type="button" class="secondary calendar-search-type-v172" data-calendar-search-type="title">컨텐츠</button>
+            <button type="button" class="secondary calendar-search-type-v172 active" data-calendar-search-type="all" aria-pressed="true">전체</button>
+            <button type="button" class="secondary calendar-search-type-v172" data-calendar-search-type="contact" aria-pressed="false">연락처</button>
+            <button type="button" class="secondary calendar-search-type-v172" data-calendar-search-type="game" aria-pressed="false">게임</button>
+            <button type="button" class="secondary calendar-search-type-v172" data-calendar-search-type="title" aria-pressed="false">컨텐츠</button>
           </div>
           <div class="calendar-search-options-v172">
             <select id="calendarSearchRangeV172" aria-label="검색 기간">
@@ -438,7 +438,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
           <label>종료일 <input type="date" id="calendarSearchToV172"></label>
         </div>
         <div id="calendarSearchResultsV172" class="calendar-search-results-v172">
-          <div class="calendar-search-empty-v172">검색어를 입력하면 날짜별 결과가 여기에 표시됩니다.</div>
+          <div class="calendar-search-empty-v172"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><strong>찾고 싶은 일정을 검색하세요</strong><span>컨텐츠 제목, 게임명, 참가자 이름으로 검색할 수 있습니다.</span></div>
         </div>
       </div>
     </section>
@@ -2150,7 +2150,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <script src="assets/calendar-broadcast-duration-v1.js?v=1"></script>
 <script src="assets/calendar-continuous-series-v1.js?v=2"></script>
 <script src="assets/calendar-timeline-v1.js?v=4"></script>
-<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1"></script>
+<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=1"></script>
 <script src="assets/calendar-content-groups-v2.js?v=7-save-contract-bulk"></script>
 <script src="assets/event-sidebar-tabs-v5.js?v=1"></script>
 <script src="assets/calendar-move-guard-v4.js?v=1&quietmoves=1"></script>
@@ -4649,6 +4649,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .sidebar-save-v572{padding-left:0
 <link rel="stylesheet" href="assets/workspace-clean-v1.css?v=2">
 <link rel="stylesheet" href="assets/calendar-details-v1.css?v=17">
 <link rel="stylesheet" href="assets/achievement-exhibition-v1.css?v=2">
+<link rel="stylesheet" href="assets/calendar-search-v173.css?v=1">
 <script src="assets/calendar-details-v1.js?v=10"></script>
 <script src="assets/device-ui.js?v=1.3.0-perf87"></script>
 </body>
