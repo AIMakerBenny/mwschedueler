@@ -1104,6 +1104,8 @@ async function render(){
   if(!section||!grid||!empty||!count)return false;
 
   const token=++renderToken;
+  const preview=document.getElementById('achievementExhibitionPreview');
+  preview?.replaceChildren();
   clearGalleryObjectUrls();
   const list=cards();
   count.textContent=`${list.length}장`;
@@ -1113,11 +1115,23 @@ async function render(){
   if(!list.length)return true;
 
   const pending=[];
+  const previewViews=[];
   for(const card of list){
     const view=makeTile(card);
     grid.appendChild(view.tile);
+    if(previewViews.length<3)previewViews.push(view);
     pending.push(loadFront(card,view,token));
   }
+  // Reuse the gallery object URLs. No secondary media requests or fake cards.
+  if(preview)void Promise.allSettled(pending.slice(0,3)).then(()=>{
+    if(token!==renderToken)return;
+    preview.replaceChildren();
+    for(const view of previewViews){
+      const front=view.thumb.querySelector('img');if(!front?.src)continue;
+      const image=document.createElement('img');image.alt='';image.decoding='async';
+      image.onerror=()=>image.remove();image.src=front.src;preview.appendChild(image);
+    }
+  });
   await Promise.allSettled(pending);
   try{window.mwsScheduleImageTune?.()}catch(_){}
   return token===renderToken;
