@@ -15,8 +15,8 @@ try{
   // Public mode may navigate during boot. Poll across document changes rather than
   // holding a pending evaluation in the outgoing page. Wait for hydrated UI and
   // late startup scripts to settle before measuring actual interactive playback.
-  let ready,readySince=0,documentOrigin;
-  const until=Date.now()+24000;
+  let ready,readySince=0,documentOrigin,lastState;
+  const until=Date.now()+60000;
   while(Date.now()<until){
     let state;
     try{state=await browser.evaluate(String.raw`(()=>{
@@ -25,19 +25,27 @@ try{
       if(!document.body)return null;
       const publicMode=document.body.classList.contains('mws-public-mode');
       const visibleGate=gate&&getComputedStyle(gate).display!=='none'&&gate.getBoundingClientRect().width>0;
-      if(visibleGate&&$('#mwsModePublic')&&!$('#mwsLoginSubmit')?.disabled){$('#mwsModePublic').click();$('#mwsLoginSubmit')?.click()}
+      if(document.readyState==='complete'&&visibleGate&&$('#mwsModePublic')&&!$('#mwsLoginSubmit')?.disabled){
+        // Clicking before the runtime binds the form submits a native navigation.
+        // A successful mode selection proves its handler has been installed.
+        if($('#mwsLoginForm')?.dataset.mode!=='public')$('#mwsModePublic').click();
+        if($('#mwsLoginForm')?.dataset.mode==='public'&&(!window.__mwsPopoverQaLoginAt||performance.now()-window.__mwsPopoverQaLoginAt>=3000)){
+          window.__mwsPopoverQaLoginAt=performance.now();$('#mwsLoginSubmit')?.click();
+        }
+      }
       if(document.readyState==='complete'&&publicMode&&!visibleGate&&$('#calendarGrid .mini-event[data-evid]')&&$('#calendarEventDetailsV1')){
         const latestScript=Math.max(0,...performance.getEntriesByType('resource').filter(e=>e.initiatorType==='script').map(e=>e.responseEnd));
         return {cards:document.querySelectorAll('#calendarGrid .mini-event[data-evid]').length,version:[...document.scripts].some(s=>s.src.includes('calendar-details-v1.js?v=9')),reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,noPreferenceControl:!$('#calendarDetailsMotionV6')&&$('#calendarEventDetailsV1').classList.contains('event-details-popover-v2'),origin:performance.timeOrigin,quiet:performance.now()-latestScript>=800};
       }
-      return null;
+      return {waiting:true,readyState:document.readyState,publicMode,visibleGate:!!visibleGate,mode:$('#mwsLoginForm')?.dataset.mode,submitDisabled:$('#mwsLoginSubmit')?.disabled,cards:document.querySelectorAll('#calendarGrid .mini-event[data-evid]').length,popup:!!$('#calendarEventDetailsV1')};
     })()`)}catch(error){if(!/Inspected target navigated or closed|Cannot find context|Execution context was destroyed/.test(String(error)))throw error;state=null}
+    if(state)lastState=state;
     if(state?.quiet){if(documentOrigin!==state.origin||!readySince){documentOrigin=state.origin;readySince=Date.now()}
       if(Date.now()-readySince>=1200){ready=state;break}
     }else readySince=0;
     await new Promise(resolve=>setTimeout(resolve,125));
   }
-  assert(ready,'No stable hydrated public calendar');
+  assert(ready,'No stable hydrated public calendar: '+JSON.stringify(lastState));
   assert(ready.cards>0&&ready.version&&!ready.reduced&&ready.noPreferenceControl,JSON.stringify(ready));
   const target=await browser.evaluate(String.raw`(()=>{
     const cards=[...document.querySelectorAll('#calendarGrid .mini-event[data-evid] .mini-event-main')];
