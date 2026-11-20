@@ -22,6 +22,7 @@ try{
     try{state=await browser.evaluate(String.raw`(()=>{
       const $=s=>document.querySelector(s);
       const gate=$('#mwsAccessGate');
+      if(!document.body)return null;
       const publicMode=document.body.classList.contains('mws-public-mode');
       const visibleGate=gate&&getComputedStyle(gate).display!=='none'&&gate.getBoundingClientRect().width>0;
       if(visibleGate&&$('#mwsModePublic')&&!$('#mwsLoginSubmit')?.disabled){$('#mwsModePublic').click();$('#mwsLoginSubmit')?.click()}
