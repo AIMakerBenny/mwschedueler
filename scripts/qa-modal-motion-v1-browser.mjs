@@ -10,7 +10,7 @@ const index=read('index.html');
 assert(index.includes('assets/modal-motion-v1.css?v=2'));
 const runtime=read('assets/contact-runtime-v130.js'),app=read('assets/app-core.js');
 assert(runtime.includes('loading="lazy" decoding="async" width="42" height="42"'));
-assert(app.includes('contactApplicationHistoryPendingV180=true')&&app.includes("contactDetailTab==='applications'&&contactApplicationHistoryPendingV180"));
+assert(app.includes('renderContactHistory(id);\n  renderContactApplicationHistory(id);'));
 assert(index.includes('id="ctHeaderAvatarImage" decoding="async"')&&index.includes('class="contact-image-preview" decoding="async"'));
 const css=['assets/app-core.css','assets/mawang-premium-v1621.css','assets/device-ui.css','assets/ui-frame-presets.css','assets/workspace-clean-v1.css','assets/contact-directory-v177.css','assets/modal-motion-v1.css'].map(read).join('\n');
 const groupCss=runtime.match(/css\.textContent=`([\s\S]*?)`;/)?.[1]||'';

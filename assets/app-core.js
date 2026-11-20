@@ -4834,13 +4834,9 @@ function renderContactHistory(contactId){
 }
 
 
-let contactDetailTab='content',contactApplicationHistoryPendingV180=false;
+let contactDetailTab='content';
 window.setContactDetailTab=tab=>{
   contactDetailTab=tab==='applications'?'applications':'content';
-  if(contactDetailTab==='applications'&&contactApplicationHistoryPendingV180){
-    renderContactApplicationHistory(editingContactId);
-    contactApplicationHistoryPendingV180=false;
-  }
   document.getElementById('contactContentTab')?.classList.toggle('active',contactDetailTab==='content');
   document.getElementById('contactApplicationTab')?.classList.toggle('active',contactDetailTab==='applications');
   document.getElementById('contactContentHistoryPanel')?.classList.toggle('active',contactDetailTab==='content');
@@ -5033,12 +5029,9 @@ function openContact(id=null){
   setContactImagePreview(c?.image||'',c?.image?'현재 저장된 프로필 이미지':'선택된 파일 없음');
   document.getElementById('deleteContactBtn').style.display=c?'':'none';
   contactDetailTab='content';
-  contactApplicationHistoryPendingV180=true;
   setContactDetailTab('content');
   renderContactHistory(id);
-  // The application history is in a hidden pane. Build it only when selected.
-  document.getElementById('contactApplicationList')?.replaceChildren();
-  document.getElementById('contactApplicationCount').textContent='0개';
+  renderContactApplicationHistory(id);
   document.getElementById('contactModal').classList.add('open');
 }
 window.openContact=openContact;document.getElementById('newContactBtn').onclick=()=>openContact();
