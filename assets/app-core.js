@@ -4834,9 +4834,13 @@ function renderContactHistory(contactId){
 }
 
 
-let contactDetailTab='content';
+let contactDetailTab='content',contactApplicationHistoryPendingV180=false;
 window.setContactDetailTab=tab=>{
   contactDetailTab=tab==='applications'?'applications':'content';
+  if(contactDetailTab==='applications'&&contactApplicationHistoryPendingV180){
+    renderContactApplicationHistory(editingContactId);
+    contactApplicationHistoryPendingV180=false;
+  }
   document.getElementById('contactContentTab')?.classList.toggle('active',contactDetailTab==='content');
   document.getElementById('contactApplicationTab')?.classList.toggle('active',contactDetailTab==='applications');
   document.getElementById('contactContentHistoryPanel')?.classList.toggle('active',contactDetailTab==='content');
@@ -4867,13 +4871,15 @@ function setContactImagePreview(src='',filename=''){
   const name=String(document.getElementById('ctName')?.value||'').trim();
   if(img){
     if(src){
-      img.src=src;img.classList.add('visible');placeholder?.classList.add('hidden');
+      if(img.getAttribute('src')!==src)img.src=src;
+      img.classList.add('visible');placeholder?.classList.add('hidden');
       mwsBindContactMediaImageV111(img);
     }else{img.removeAttribute('src');img.classList.remove('visible');placeholder?.classList.remove('hidden')}
   }
   if(headerImg&&headerFallback){
     if(src){
-      headerImg.src=src;headerImg.style.display='block';headerFallback.style.display='none';
+      if(headerImg.getAttribute('src')!==src)headerImg.src=src;
+      headerImg.style.display='block';headerFallback.style.display='none';
       mwsBindContactMediaImageV111(headerImg);
     }else{headerImg.removeAttribute('src');headerImg.style.display='none';headerFallback.style.display='grid';headerFallback.textContent=(name||'?').slice(0,1)}
   }
@@ -5027,9 +5033,12 @@ function openContact(id=null){
   setContactImagePreview(c?.image||'',c?.image?'현재 저장된 프로필 이미지':'선택된 파일 없음');
   document.getElementById('deleteContactBtn').style.display=c?'':'none';
   contactDetailTab='content';
+  contactApplicationHistoryPendingV180=true;
   setContactDetailTab('content');
   renderContactHistory(id);
-  renderContactApplicationHistory(id);
+  // The application history is in a hidden pane. Build it only when selected.
+  document.getElementById('contactApplicationList')?.replaceChildren();
+  document.getElementById('contactApplicationCount').textContent='0개';
   document.getElementById('contactModal').classList.add('open');
 }
 window.openContact=openContact;document.getElementById('newContactBtn').onclick=()=>openContact();
