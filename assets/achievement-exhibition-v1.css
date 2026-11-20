@@ -129,3 +129,154 @@
 @media(prefers-reduced-motion:reduce){
   #achievements .achievement-card-open,#achievements .achievement-card-thumb{transition:none!important;transform:none!important}
 }
+
+/* Exhibition V2: gilded trophy hall, authentic collection preview and engraved display frames. */
+#achievements{
+  --exhibition-gold:#e8c787;
+  --exhibition-ink:#fff0cf;
+  --exhibition-muted:#b4aaa0;
+}
+#achievements .achievement-gallery-head{
+  min-height:180px;gap:27px;padding:24px 34px;margin:5px 0 24px;
+  border:1px solid #795d39;border-radius:18px;
+  background:
+    radial-gradient(ellipse at 12% 48%,#b8863d24,transparent 44%),
+    radial-gradient(ellipse at 72% 42%,#aa793e27,transparent 50%),
+    linear-gradient(118deg,#30251b 0%,#16191f 43%,#181a20 72%,#2b2118 100%);
+  box-shadow:0 13px 35px #0008,inset 0 0 34px #d5a7610a,inset 0 1px 0 #ffe0a239;
+}
+#achievements .achievement-gallery-head::before{
+  content:"";position:absolute;inset:6px;z-index:-1;pointer-events:none;
+  border:1px solid #c4995822;border-radius:12px;
+  background:
+    linear-gradient(#d6ae6b,#d6ae6b) left top/27px 2px no-repeat,
+    linear-gradient(#d6ae6b,#d6ae6b) left top/2px 27px no-repeat,
+    linear-gradient(#d6ae6b,#d6ae6b) right bottom/27px 2px no-repeat,
+    linear-gradient(#d6ae6b,#d6ae6b) right bottom/2px 27px no-repeat,
+    repeating-linear-gradient(130deg,transparent 0 23px,#e6c07804 23px 24px);
+}
+#achievements .achievement-gallery-head::after{
+  z-index:-1;background:
+    linear-gradient(90deg,transparent,#ecbd6f99,transparent) center top/80% 1px no-repeat,
+    linear-gradient(90deg,transparent,#ecbd6f44,transparent) center bottom/80% 1px no-repeat;
+}
+#achievements .achievement-exhibition-emblem{
+  position:relative;flex:0 0 112px;width:112px;height:112px;
+  border:1px solid #eccb8a66;background:radial-gradient(circle at 35% 25%,#c89b4c37,#131519 68%);
+  box-shadow:inset 0 0 0 5px #e1b46710,inset 0 0 0 6px #e1b46727,0 0 32px #e1b46726;
+}
+#achievements .achievement-exhibition-emblem .achievement-laurels{
+  position:absolute;inset:2px;width:calc(100% - 4px);height:calc(100% - 4px);color:#d9b36a;
+}
+#achievements .achievement-exhibition-emblem .achievement-trophy{width:52px;height:52px;color:#ffe7ae;filter:drop-shadow(0 0 8px #d9ad6980)}
+#achievements .achievement-exhibition-kicker{
+  letter-spacing:.27em;font-size:11px;color:#efc77c;text-shadow:0 0 12px #eabb6350;
+}
+#achievements .achievement-gallery-head-copy h2{
+  margin:7px 0 9px;font-size:clamp(27px,3.25cqi,49px);font-weight:850;
+  color:#ffefcc;letter-spacing:-.045em;text-shadow:0 2px 14px #d6aa5f36;
+}
+#achievements .achievement-gallery-head-copy p{color:#c8b9a5;font-size:13px}
+#achievements .achievement-exhibition-preview{
+  position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;
+  flex:0 0 clamp(180px,24cqi,340px);height:128px;margin:0 4px;pointer-events:none;
+}
+#achievements .achievement-exhibition-preview:empty{visibility:hidden}
+#achievements .achievement-exhibition-preview::before{
+  content:"";position:absolute;inset:12% -10% -20%;z-index:-1;
+  background:radial-gradient(ellipse,#cf9e4e27 0%,#cf9e4e0f 42%,transparent 72%);
+}
+#achievements .achievement-exhibition-preview img{
+  flex:0 0 auto;display:block;width:77px;height:116px;object-fit:contain;
+  background:#111217;border:1px solid #c9a46e;border-radius:6px;
+  box-shadow:0 6px 16px #000b,0 0 0 3px #aa80442b;
+  margin-inline:-6px;transform:translateY(7px) rotate(-12deg);
+}
+#achievements .achievement-exhibition-preview img:nth-child(2){transform:translateY(-7px) rotate(0deg) scale(1.12);z-index:1}
+#achievements .achievement-exhibition-preview img:nth-child(3){transform:translateY(7px) rotate(12deg)}
+#achievements .achievement-exhibition-preview img:only-child{transform:rotate(-5deg)}
+#achievements .achievement-exhibition-stat{
+  justify-items:center;gap:6px;padding:16px 20px;min-width:125px;
+  border:1px solid #b58b4b44;border-radius:12px;background:linear-gradient(155deg,#d2a86c15,#11131875);
+  box-shadow:inset 0 1px 0 #efcf9230,0 5px 15px #0003;
+  color:#c7ac82;font-size:12px;font-weight:650;
+}
+#achievements .achievement-exhibition-stat .achievement-count-chip{font-size:39px!important;color:#ffe5aa!important;letter-spacing:-.045em;text-shadow:0 0 15px #d8a25444}
+#achievements .achievement-collection-heading{display:flex;align-items:center;gap:12px;margin:0 0 18px;padding:0 3px}
+#achievements .achievement-collection-heading h3{font-size:17px;color:#f0e1c5;letter-spacing:-.025em;margin:0;font-weight:800;white-space:nowrap}
+#achievements .achievement-collection-mark{width:9px;height:9px;flex:0 0 9px;transform:rotate(45deg);border:1px solid #f0cf8b;background:#b18748;box-shadow:0 0 9px #d6a45966}
+#achievements .achievement-collection-rule{height:1px;flex:1;background:linear-gradient(90deg,#ae8657a0,#ae86571a)}
+#achievements .achievement-collection-label{font-size:9px;letter-spacing:.18em;color:#b49b79;white-space:nowrap}
+#achievements .achievement-card-open{
+  border:1px solid #796047!important;
+  background:linear-gradient(145deg,#332a24,#1e2025 24%,#13151b 72%,#211b18)!important;
+  box-shadow:0 12px 25px #0008,inset 0 1px 0 #ffe4a745,inset 0 0 0 3px #d7b3730b!important;
+}
+#achievements .achievement-card-open::before{
+  z-index:2;inset:5px;border-radius:12px;
+  background:
+    linear-gradient(#f2d39b,#9b763d) left top/13px 1px no-repeat,
+    linear-gradient(#f2d39b,#9b763d) left top/1px 13px no-repeat,
+    linear-gradient(#f2d39b,#9b763d) right top/13px 1px no-repeat,
+    linear-gradient(#f2d39b,#9b763d) right top/1px 13px no-repeat,
+    linear-gradient(#9b763d,#e3b76f) left bottom/13px 1px no-repeat,
+    linear-gradient(#9b763d,#e3b76f) left bottom/1px 13px no-repeat,
+    linear-gradient(#9b763d,#e3b76f) right bottom/13px 1px no-repeat,
+    linear-gradient(#9b763d,#e3b76f) right bottom/1px 13px no-repeat;
+}
+#achievements .achievement-card-thumb{
+  border:1px solid #b3925e;box-shadow:0 4px 12px #000b,0 0 0 2px #d3a96e1b;
+}
+#achievements .achievement-card-thumb::after{
+  background:linear-gradient(135deg,#fff0c626 0%,transparent 17%,transparent 80%,#d6b27018 100%);
+  box-shadow:inset 0 0 0 1px #ffe7b62c;transition:opacity .22s ease;
+}
+#achievements .achievement-card-caption{border-top:1px solid #aa88542b;padding-right:54px}
+#achievements .achievement-card-caption::after{
+  content:"NO. " counter(exhibit,decimal-leading-zero);top:14px;right:1px;
+  font-size:9px;letter-spacing:.05em;padding:3px 5px;border:1px solid #b98c4d55;border-radius:4px;background:#ba904414;
+  color:#e7ba78;
+}
+#achievements .achievement-card-game{color:#ffebce;font-size:15px;font-weight:800}
+#achievements .achievement-card-content{color:#c0b5a6}
+@media(hover:hover) and (pointer:fine){
+  #achievements .achievement-card-open:hover{
+    transform:translateY(-6px)!important;border-color:#e1b468!important;
+    box-shadow:0 18px 33px #000b,0 0 22px #d3a45938,inset 0 0 0 3px #d6b37915!important;
+  }
+  #achievements .achievement-card-open:hover .achievement-card-thumb::after{opacity:.45}
+}
+@container achievement-exhibition (max-width:999px){
+  #achievements .achievement-exhibition-preview{flex-basis:195px;height:112px}
+  #achievements .achievement-exhibition-preview img{width:64px;height:96px}
+  #achievements .achievement-gallery-head{gap:18px;padding:19px 20px}
+  #achievements .achievement-exhibition-emblem{flex-basis:86px;width:86px;height:86px}
+  #achievements .achievement-exhibition-emblem .achievement-trophy{width:42px;height:42px}
+}
+@container achievement-exhibition (max-width:749px){
+  #achievements .achievement-exhibition-preview{display:none}
+  #achievements .achievement-gallery-head{min-height:124px}
+}
+@container achievement-exhibition (max-width:649px){
+  #achievements .achievement-gallery-head{gap:11px;min-height:0;padding:15px 12px;margin-bottom:20px}
+  #achievements .achievement-exhibition-emblem{flex-basis:47px;width:47px;height:47px}
+  #achievements .achievement-exhibition-emblem .achievement-trophy{width:25px;height:25px}
+  #achievements .achievement-exhibition-kicker{font-size:8px;letter-spacing:.13em}
+  #achievements .achievement-gallery-head-copy h2{font-size:21px;margin:4px 0 5px}
+  #achievements .achievement-gallery-head-copy p{font-size:10px}
+  #achievements .achievement-exhibition-stat{min-width:0;padding:9px 8px;gap:3px;font-size:9px}
+  #achievements .achievement-exhibition-stat .achievement-count-chip{font-size:23px!important}
+  #achievements .achievement-collection-heading{gap:9px;margin-bottom:13px}
+  #achievements .achievement-collection-heading h3{font-size:14px}
+  #achievements .achievement-collection-label{display:none}
+  #achievements .achievement-card-caption{padding-right:23px}
+  #achievements .achievement-card-caption::after{content:counter(exhibit,decimal-leading-zero);top:9px;font-size:8px;padding:2px 3px}
+  #achievements .achievement-card-game{font-size:12px}
+}
+@container achievement-exhibition (max-width:340px){
+  #achievements .achievement-exhibition-emblem{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  #achievements .achievement-card-open:hover{transform:none!important}
+  #achievements .achievement-card-thumb::after{transition:none}
+}
