@@ -6,8 +6,7 @@ import path from 'node:path';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 
-// The month fixture includes real calendar cards, overflow controls and continuous ribbons.
-// Unlike the keyframe regression, this check uses ordinary wall-clock rAF timestamps.
+// Use the full month fixture to verify the anchored fade never moves the grid.
 const dir=mkdtempSync(path.join(os.tmpdir(),'mws-frame-pacing-'));
 const fixture=path.join(dir,'month.html');
 let browser;
@@ -19,23 +18,20 @@ try{
     const $=s=>document.querySelector(s),grid=$('#calendarGrid'),drawer=$('#calendarEventDetailsV1'),card=$('[data-evid="qa-18-0"]');
     const tick=()=>new Promise(resolve=>requestAnimationFrame(resolve));
     async function measure(action,opening){
-      const start=performance.now();action();const synchronousMs=performance.now()-start;
-      let entered=false,previous=null,width=null,stableWidth=true,monotonic=true,lastX=null,firstTime=null,lastTime=null,firstMiddle=null,lastMiddle=null;
-      const intervals=[],positions=[];
-      while(performance.now()-start<2600){
+      const initial=grid.getBoundingClientRect(),start=performance.now();action();const synchronousMs=performance.now()-start;
+      const position=drawer.getBoundingClientRect();
+      let stableWidth=true,stablePosition=true,fadeOnly=true,duration=null;
+      const opacity=[];
+      while(performance.now()-start<1000){
         const timestamp=await tick(),animation=drawer.getAnimations()[0];
-        if(!animation){if(entered)break;continue}
-        entered=true;
-        const x=new DOMMatrix(getComputedStyle(drawer).transform).m41;
-        const fraction=x/(drawer.offsetWidth*1.04);
-        if(firstTime===null)firstTime=timestamp;lastTime=timestamp;
-        if(fraction>=.2&&fraction<=.8){if(firstMiddle===null)firstMiddle=timestamp;lastMiddle=timestamp}
-        positions.push(x);if(lastX!==null&&((opening&&x>lastX+1)||(!opening&&x<lastX-1)))monotonic=false;lastX=x;
-        if(previous!==null)intervals.push(timestamp-previous);previous=timestamp;
-        const w=grid.offsetWidth;if(width!==null&&w!==width)stableWidth=false;width=w;
+        const r=grid.getBoundingClientRect();stableWidth&&=Math.abs(r.width-initial.width)<1&&Math.abs(r.left-initial.left)<1;
+        if(!animation)break;
+        duration=animation.effect.getTiming().duration;
+        fadeOnly&&=animation.effect.getKeyframes().every(frame=>frame.transform===undefined&&frame.opacity!==undefined);
+        const p=drawer.getBoundingClientRect();stablePosition&&=Math.abs(p.left-position.left)<1&&Math.abs(p.top-position.top)<1;
+        opacity.push(Number(getComputedStyle(drawer).opacity));
       }
-      const ordered=[...intervals].sort((a,b)=>a-b),round=v=>Math.round(v*10)/10;
-      return {synchronousMs:round(synchronousMs),visiblePlaybackMs:round((lastTime??0)-(firstTime??0)),middleTravelMs:round((lastMiddle??0)-(firstMiddle??0)),frames:positions.length,distinctPositions:new Set(positions.map(x=>Math.round(x))).size,p95Ms:round(ordered[Math.max(0,Math.ceil(ordered.length*.95)-1)]||0),maxMs:round(Math.max(0,...intervals)),over33Ms:intervals.filter(x=>x>33.5).length,stableWidth,monotonic,settled:opening?!drawer.hidden&&drawer.classList.contains('open'):drawer.hidden};
+      return {synchronousMs:Math.round(synchronousMs),duration,frames:opacity.length,stableWidth,stablePosition,fadeOnly,monotonic:opacity.every((v,i)=>!i||(opening?v>=opacity[i-1]-.001:v<=opacity[i-1]+.001)),settled:opening?!drawer.hidden&&drawer.classList.contains('open'):drawer.hidden};
     }
     await tick();await tick();const result=[];
     for(let i=0;i<3;i++){
@@ -48,13 +44,9 @@ try{
     await browser.navigate(pathToFileURL(fixture).href+'?size='+width+'x'+height,width,height);
     const {cards,ribbons,result}=await browser.evaluate(frameTest);
     assert(cards>=40&&ribbons>=3,'Realistic month fixture required');
-    for(const sample of result){
-    assert(sample.settled&&sample.stableWidth&&sample.monotonic&&sample.frames>=10&&sample.distinctPositions>=9&&sample.visiblePlaybackMs>=280&&sample.middleTravelMs>=65,JSON.stringify(sample));
+    for(const [i,sample] of result.entries()){
+      assert(sample.settled&&sample.stableWidth&&sample.stablePosition&&sample.fadeOnly&&sample.monotonic&&sample.duration===(i%2?110:150)&&sample.frames>=1,JSON.stringify(sample));
     }
-    // CI hosts vary. Record full frame pacing and fail clearly degraded median playback;
-    // the logs are also needed when investigating intermittent individual long frames.
-    const p95s=result.map(x=>x.p95Ms).sort((a,b)=>a-b);
-    assert(p95s[3]<=50,`Sustained frame pacing regression: ${JSON.stringify(result)}`);
-    console.log('CALENDAR_FRAME_PACING_V5',width,height,JSON.stringify({cards,ribbons,result}));
+    console.log('CALENDAR_POPOVER_STABLE_V2',width,height,JSON.stringify({cards,ribbons,result}));
   }
 }finally{await browser?.close();rmSync(dir,{recursive:true,force:true})}

@@ -150,7 +150,7 @@ jobs:
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-details-v1.js?check=$t" -o /tmp/calendar-details.js \
                 && grep -Fq 'mwsCalendarDetailsV1' /tmp/calendar-details.js \
                 && curl --fail --silent --show-error --max-time 15 "$base/assets/calendar-details-v1.css?check=$t" -o /tmp/calendar-details.css \
-                && grep -Fq 'event-details-drawer-v1' /tmp/calendar-details.css \
+                && grep -Fq 'event-details-popover-v2' /tmp/calendar-details.css \
                 && grep -Fq 'data-tab="legacy"' /tmp/group-index.html \
                 && grep -Fq 'data-tab="wardogs" data-legacy-link-v1' /tmp/group-index.html \
                 && grep -Fq 'data-tab="gameRps" data-legacy-link-v1' /tmp/group-index.html \
@@ -255,7 +255,7 @@ jobs:
       - name: Read-only production group and linked-event health
         continue-on-error: true
         run: node scripts/qa-live-calendar-core-summary-v1.mjs
-      - name: Verify visibly sustained drawer motion on live public calendar
+      - name: Verify anchored detail popover on live public calendar
         run: node scripts/qa-live-calendar-drawer-motion-v6.mjs
       - name: Publish scoped Cloudflare deployment result
         if: always()

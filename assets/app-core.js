@@ -1955,7 +1955,7 @@ function renderCalendar(){
       return at.localeCompare(bt)
     });
     out+=`<div class="day ${inMonth?'':'out'} ${today?'today':''} ${dow===0?'sun':''} ${dow===6?'sat':''}" data-date="${ds}">
-      <div class="daynum">${d.getDate()}</div>
+      <div class="daynum"><span class="calendar-date-number-v3">${d.getDate()}</span></div>
       <div class="calendar-day-events-v2" tabindex="0" aria-label="${ds} 일정 ${evs.length}개">${evs.map(e=>{
         const groupColor=groupColors.get(e.contentGroupId);
         const color=e.restDay?'#e85d75':(groupColor||e.color||category(e.categoryId)?.color||'#64748b');
