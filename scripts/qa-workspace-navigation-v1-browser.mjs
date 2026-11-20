@@ -22,6 +22,11 @@ const setup=()=>{
     document.getElementById('pageTitle').textContent=tab;
   };
   document.querySelectorAll('.nav button[data-tab]').forEach(b=>b.onclick=()=>window.setTab(b.dataset.tab));
+  // Simulate the legacy organizer moving the mini-game divider too early.
+  const memo=document.querySelector('[data-tab="memos"]');
+  const mini=document.querySelector('.nav-game-divider');
+  memo.after(mini);
+  mini.after(document.querySelector('[data-tab="gameMajoku"]'));
 };
 const test=()=>{
   const q=s=>document.querySelector(s);
@@ -33,6 +38,9 @@ const test=()=>{
   try{
     const mini=q('.nav-game-divider:not(#mwsToolsDivider)'),tools=q('#mwsToolsDivider');
     const precedes=(a,b)=>Boolean(a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING);
+    check(tab('memos').nextElementSibling===tab('achievements')&&precedes(tab('achievements'),mini),'Achievements must follow notebook outside mini-games');
+    check(tab('gameMultiDraw').nextElementSibling===tab('gameMajoku'),'Chat game must follow Gacha');
+    check(tab('gameMajoku').title==='채팅연동게임'&&tab('gameMajoku').querySelector('.nav-label').textContent==='채팅연동게임','Chat game label incorrect');
     for(const id of ['gameMajoku','gameLadder','gameF1Racing','gameMultiDraw']){
       check(precedes(mini,tab(id))&&precedes(tab(id),tools),id+' not in mini-game group');
     }
@@ -46,7 +54,7 @@ const test=()=>{
     tools.click();
     check(visible(tab('contentPlanner')),'Drawing did not reopen');
     mini.click();
-    check(!visible(tab('gameMajoku'))&&!visible(tab('gameF1Racing'))&&visible(tab('contentPlanner')),'Games collapse hides wrong buttons');
+    check(!visible(tab('gameMajoku'))&&!visible(tab('gameF1Racing'))&&visible(tab('contentPlanner'))&&visible(tab('achievements')),'Games collapse hides wrong buttons');
     mini.click();
     check(!visible(tab('sniper'))&&!visible(tab('friendFinder')),'Old sidebar items are visible');
     tab('contacts').click();
@@ -59,13 +67,15 @@ const test=()=>{
     check(active()==='targets'&&q('#targets [data-contact-view-v176="friendFinder"]').getAttribute('aria-selected')==='true','Target route lost nested selection');
     clickContact('contacts');
     check(active()==='contacts'&&q('#pageTitle').textContent==='연락처','Contacts return failed');
+    window.setTab('gameMajoku');
+    check(active()==='gameMajoku'&&q('#pageTitle').textContent==='채팅연동게임','Chat game route/title changed');
     window.setTab('calendar');
     check(!tab('contacts').classList.contains('active'),'Contacts remains active on calendar');
     document.getElementById('qa-result').textContent='PASS';
   }catch(e){document.getElementById('qa-result').textContent='FAIL: '+e.message}
 };
 try{
-  const body='<!doctype html><meta charset="utf-8"><style>'+styles+'</style><body class="sidebar-pinned" style="background:#101216"><div class="app">'+aside+'<main class="main"><h1 id="pageTitle">캘린더</h1><section id="calendar" class="section active"></section><section id="contacts" class="section"></section><section id="sniper" class="section"></section><section id="friendFinder" class="section"></section><section id="targets" class="section"></section></main></div><pre id="qa-result">pending</pre><script id="mwsToolsCleanV110Script"></script><script>('+setup.toString()+')();</script>'+runtime.map(s=>'<script>'+s+'</script>').join('')+'<script>setTimeout('+test.toString()+',500)</script></body>';
+  const body='<!doctype html><meta charset="utf-8"><style>'+styles+'</style><body class="sidebar-pinned" style="background:#101216"><div class="app">'+aside+'<main class="main"><h1 id="pageTitle">캘린더</h1><section id="calendar" class="section active"></section><section id="contacts" class="section"></section><section id="sniper" class="section"></section><section id="friendFinder" class="section"></section><section id="targets" class="section"></section><section id="gameMajoku" class="section"></section></main></div><pre id="qa-result">pending</pre><script id="mwsToolsCleanV110Script"></script><script>('+setup.toString()+')();</script>'+runtime.map(s=>'<script>'+s+'</script>').join('')+'<script>setTimeout('+test.toString()+',500)</script></body>';
   const file=path.join(fixture,'fixture.html');
   writeFileSync(file,body);
   const run=spawnSync(chrome,['--headless','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--no-first-run','--user-data-dir='+path.join(fixture,'profile'),'--window-size=1366,768','--virtual-time-budget=1500','--dump-dom','file://'+file],{encoding:'utf8',timeout:60000,maxBuffer:12*1024*1024});
