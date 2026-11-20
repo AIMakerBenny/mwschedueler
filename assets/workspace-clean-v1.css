@@ -115,3 +115,18 @@ body.mws-premium :is(#eventModal,#contactModal) :is(input,select,textarea,.picke
   body.mws-premium:not(:has(#gameF1Racing.active)) .main>.topbar{gap:8px;margin-bottom:10px!important}
   body.mws-premium:not(:has(#gameF1Racing.active)) .app>.main{border-radius:0!important}
 }
+
+/* Neutral charcoal default. Keep alternate named themes, semantic status
+   colors and specialised mini-game surfaces intact. */
+body.mws-premium[data-theme=neon] #mwsAccessGate{background:var(--bg)!important}
+body.mws-premium[data-theme=neon] #mwsAccessGate::before,body.mws-premium[data-theme=neon] #mwsAccessGate::after{display:none}
+body.mws-premium[data-theme=neon] .mws-login-shell{background:var(--sidebar)!important;border-color:var(--border)!important;box-shadow:0 16px 48px #0006!important}
+body.mws-premium[data-theme=neon] .mws-login-shell::before{display:none}
+body.mws-premium[data-theme=neon] .mws-login-shell .mws-mode-card{background:var(--panel)!important;border-color:var(--border)!important;box-shadow:none!important}
+body.mws-premium[data-theme=neon] .mws-login-shell .mws-mode-card.active{background:color-mix(in srgb,var(--accent) 10%,var(--panel))!important;border-color:var(--accent)!important}
+body.mws-premium[data-theme=neon] .mws-login-input{background:var(--input)!important;border-color:var(--border)!important}
+body.mws-premium[data-theme=neon] .mws-login-submit{background:var(--accent)!important;box-shadow:none!important}
+body.mws-premium[data-theme=neon]:not(:has(#gameF1Racing.active)) .app>.sidebar{border-color:var(--border)!important;scrollbar-color:var(--panel2) transparent}
+body.mws-premium[data-theme=neon]:not(:has(#gameF1Racing.active)) .sidebar .nav-scroll{scrollbar-color:var(--panel2) transparent}
+body.mws-premium[data-theme=neon]:not(:has(#gameF1Racing.active)) .sidebar :is(.nav-scroll,.nav)::-webkit-scrollbar-thumb{background:var(--panel2)!important}
+body.mws-premium[data-theme=neon]:not(:has(#gameF1Racing.active)) .sidebar .nav button.active{background:color-mix(in srgb,var(--accent) 12%,var(--panel))!important}

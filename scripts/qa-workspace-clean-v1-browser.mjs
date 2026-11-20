@@ -37,6 +37,8 @@ const card=$('#calendarGrid .mini-event'),titleRect=rect(card.querySelector('.mi
 const noCardOverlap=getComputedStyle(slot).position==='static'?titleRect.top>=slotRect.bottom-1&&titleRect.top>=handleRect.bottom-1:titleRect.right<=slotRect.left+1&&titleRect.left>=handleRect.right-1;
 const heading=getComputedStyle($('#pageTitle')).fontSize;
 const quietShell=getComputedStyle($('.main')).boxShadow==='none'&&getComputedStyle($('.sidebar')).boxShadow==='none';
+const charcoalShell=getComputedStyle(document.body).backgroundColor==='rgb(13, 15, 20)'&&getComputedStyle($('.main')).backgroundColor==='rgb(13, 15, 20)'&&getComputedStyle($('.sidebar')).backgroundColor==='rgb(18, 20, 27)'&&getComputedStyle(document.body).getPropertyValue('--panel').trim()==='#171920'&&getComputedStyle(document.body).getPropertyValue('--text').trim()==='#f5f5f7';
+document.body.dataset.theme='rose';const alternateThemeKept=getComputedStyle(document.body).getPropertyValue('--bg').trim()==='#160d14'&&getComputedStyle(document.body).getPropertyValue('--accent').trim()==='#e65b9c';document.body.dataset.theme='neon';
 const headerFit=rect($('.top-left')).right<=rect($('.clock')).left||rect($('.top-left')).bottom<=rect($('.clock')).top;
 const tab=$('[data-calendar-view-tab="timeline"]');tab.click();
 const gameTitle=$('#pageTitle').textContent==='게임'&&tab.textContent==='게임';
@@ -49,12 +51,12 @@ setCalendarViewModeV172('timeline');
 const inactiveTitleSafe=$('#pageTitle').textContent==='캘린더';
 const f1ShellRestored=getComputedStyle($('.main')).boxShadow!=='none';
 $('#gameF1Racing').classList.remove('active');$('#calendar').classList.add('active');setCalendarViewModeV172('month');
-const result={noCardOverlap,headingOK:parseFloat(heading)<=20,quietShell,headerFit,gameTitle,searchTitle,monthTitle,inactiveTitleSafe,f1ShellRestored,noMutation:base===JSON.stringify(events),noRootOverflow:document.documentElement.scrollWidth<=innerWidth+3};
+const result={noCardOverlap,headingOK:parseFloat(heading)<=20,quietShell,charcoalShell,alternateThemeKept,headerFit,gameTitle,searchTitle,monthTitle,inactiveTitleSafe,f1ShellRestored,noMutation:base===JSON.stringify(events),noRootOverflow:document.documentElement.scrollWidth<=innerWidth+3};
 document.querySelector('#result').textContent=JSON.stringify(result);
 `;
 const temp=mkdtempSync(path.join(os.tmpdir(),'mws-workspace-clean-'));
 try{
-  const fixture='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body class="mws-premium sidebar-pinned" data-resolution="fhd" data-ui-frame="classic"><div class="app">'+aside+'<main class="main">'+header+calendar+'<section id="gameF1Racing" class="section"></section></main></div><pre id="result"></pre><script>'+read('assets/calendar-timeline-v1.js')+'</script><script>'+boot+'</script></body></html>';
+  const fixture='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body data-theme="neon" class="mws-premium sidebar-pinned" data-resolution="fhd" data-ui-frame="classic"><div class="app">'+aside+'<main class="main">'+header+calendar+'<section id="gameF1Racing" class="section"></section></main></div><pre id="result"></pre><script>'+read('assets/calendar-timeline-v1.js')+'</script><script>'+boot+'</script></body></html>';
   const dest=path.join(temp,'test.html');writeFileSync(dest,fixture);
   if(process.env.MWS_WORKSPACE_FIXTURE){writeFileSync(process.env.MWS_WORKSPACE_FIXTURE,fixture);if(process.env.MWS_FIXTURE_ONLY)process.exit(0);}
   for(const [width,height] of [[1366,768],[1920,1080],[2560,1440],[2560,1080]]){

@@ -51,9 +51,10 @@ try{
     const card=document.querySelector('#calendarGrid .mini-event[data-evid]'),preview=document.querySelector('#calendarEventPreview'),popover=document.querySelector('#calendarEventDetailsV1');
     const alpha=color=>{const canvas=document.createElement('canvas');canvas.width=canvas.height=1;const ctx=canvas.getContext('2d');ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return ctx.getImageData(0,0,1,1).data[3]};
     const cardCSS=getComputedStyle(card),previewCSS=getComputedStyle(preview),popoverCSS=getComputedStyle(popover);
-    return {version:!!document.querySelector('link[href*="calendar-details-v1.css?v=12"]'),raised:cardCSS.boxShadow.includes('inset')&&cardCSS.backgroundImage.includes('linear-gradient'),previewAlpha:alpha(previewCSS.backgroundColor),popoverAlpha:alpha(popoverCSS.backgroundColor),previewNoBlur:previewCSS.backdropFilter==='none',popoverNoBlur:popoverCSS.backdropFilter==='none'};
+    return {version:!!document.querySelector('link[href*="calendar-details-v1.css?v=13"]'),raised:cardCSS.boxShadow.includes('inset')&&cardCSS.backgroundImage.includes('linear-gradient'),previewAlpha:alpha(previewCSS.backgroundColor),popoverAlpha:alpha(popoverCSS.backgroundColor),previewNoBlur:previewCSS.backdropFilter==='none',popoverNoBlur:popoverCSS.backdropFilter==='none',theme:document.body.dataset.theme,bodyColor:getComputedStyle(document.body).getPropertyValue('--bg').trim(),gridColor:getComputedStyle(document.querySelector('#calendarGrid')).backgroundColor};
   })()`);
-  assert(surface.version&&surface.raised&&surface.previewAlpha===255&&surface.popoverAlpha===255&&surface.previewNoBlur&&surface.popoverNoBlur,JSON.stringify(surface));
+  assert(surface.version&&surface.raised&&surface.previewAlpha>=223&&surface.previewAlpha<=225&&surface.popoverAlpha>=223&&surface.popoverAlpha<=225&&surface.previewNoBlur&&surface.popoverNoBlur,JSON.stringify(surface));
+  if(surface.theme==='neon')assert(surface.bodyColor==='#0d0f14'&&surface.gridColor==='rgb(12, 14, 18)',JSON.stringify(surface));
   console.log('MWS_LIVE_CALENDAR_DEPTH_V3',JSON.stringify(surface));
   const trayLayout=await browser.evaluate(String.raw`(async()=>{
     const $=s=>document.querySelector(s),r=s=>$(s).getBoundingClientRect(),tick=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
