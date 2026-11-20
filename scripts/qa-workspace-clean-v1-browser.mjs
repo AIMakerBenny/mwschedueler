@@ -9,6 +9,7 @@ const aside=html.slice(html.indexOf('<aside class="sidebar">'),html.indexOf('</a
 const header=html.slice(html.indexOf('    <div class="topbar">'),html.indexOf('<section id="dashboard"'));
 const calendar=html.slice(html.indexOf('<section id="calendar"'),html.indexOf('</section>',html.indexOf('<section id="calendar"'))+10);
 const switcher=core.slice(core.indexOf('function setCalendarViewModeV172(mode){'),core.indexOf('function initCalendarSearchV172(){'));
+const pageScale=html.slice(html.indexOf("  const PAGE_SCALE_KEY='mws_page_text_scales_v54';"),html.indexOf('  /* ---------- Robust contact tag panel ---------- */'));
 const inline=[...html.matchAll(/<style(?:\s[^>]*)?>([\s\S]*?)<\/style>/gi)].map(m=>m[1]).join('\n');
 const css=[read('assets/app-core.css'),inline,...[
   'mawang-premium-v1621.css','ui-frame-presets.css','calendar-toolbar-v4.css',
@@ -23,6 +24,7 @@ const boot=`
 let calendarViewModeV172='month';
 const events=[{date:'2026-11-18',title:'와우 포에버',start:'10:00',end:'14:00',participants:[],steamGame:{name:'월드 오브 워크래프트: 포에버'}}];
 const data={contentGroups:[],gameLibrary:[],contacts:[]};
+${pageScale}
 const activeEvents=()=>events,todayKST=()=> '2026-11-18';
 function renderCalendarSearchResultsV172(){}
 ${switcher}
@@ -51,7 +53,13 @@ setCalendarViewModeV172('timeline');
 const inactiveTitleSafe=$('#pageTitle').textContent==='캘린더';
 const f1ShellRestored=getComputedStyle($('.main')).boxShadow!=='none';
 $('#gameF1Racing').classList.remove('active');$('#calendar').classList.add('active');setCalendarViewModeV172('month');
-const result={noCardOverlap,headingOK:parseFloat(heading)<=20,quietShell,charcoalShell,alternateThemeKept,headerFit,gameTitle,searchTitle,monthTitle,inactiveTitleSafe,f1ShellRestored,noMutation:base===JSON.stringify(events),noRootOverflow:document.documentElement.scrollWidth<=innerWidth+3};
+const control=$('#pageTextScaleControlV54'),label=$('#pageTextScaleValueV54'),controlButtons=control.querySelectorAll('button');
+const scaleInSidebar=control.parentElement===$('.sidebar')&&control.previousElementSibling.classList.contains('nav')&&!$('.topbar').contains(control)&&rect(control).width>0&&rect(control).bottom<=rect($('.sidebar')).bottom&&rect(control).right<=rect($('.sidebar')).right;
+window.resetPageTextScaleV54();controlButtons[1].click();const scaleIncrease=label.textContent==='페이지 105%'&&$('#calendar').style.getPropertyValue('--ui-text-scale')==='1.05'&&JSON.parse(localStorage.getItem(PAGE_SCALE_KEY)).calendar===105;
+controlButtons[0].click();const scaleDecrease=label.textContent==='페이지 100%';controlButtons[1].click();
+$('#calendar').classList.remove('active');$('#gameF1Racing').classList.add('active');applyPageTextScalesV54();const scalePerPage=label.textContent==='페이지 100%';
+$('#gameF1Racing').classList.remove('active');$('#calendar').classList.add('active');applyPageTextScalesV54();const scaleRetained=label.textContent==='페이지 105%';controlButtons[2].click();const scaleReset=label.textContent==='페이지 100%';
+const result={noCardOverlap,headingOK:parseFloat(heading)<=20,quietShell,charcoalShell,alternateThemeKept,headerFit,gameTitle,searchTitle,monthTitle,inactiveTitleSafe,f1ShellRestored,scaleInSidebar,scaleIncrease,scaleDecrease,scalePerPage,scaleRetained,scaleReset,noMutation:base===JSON.stringify(events),noRootOverflow:document.documentElement.scrollWidth<=innerWidth+3};
 document.querySelector('#result').textContent=JSON.stringify(result);
 `;
 const temp=mkdtempSync(path.join(os.tmpdir(),'mws-workspace-clean-'));
