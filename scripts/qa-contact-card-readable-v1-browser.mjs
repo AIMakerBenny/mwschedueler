@@ -7,6 +7,7 @@ import os from 'node:os';
 const file=name=>readFileSync(new URL('../'+name,import.meta.url),'utf8');
 const index=file('index.html');
 const app=file('assets/app-core.js');
+const runtime=file('assets/contact-runtime-v130.js');
 const css=['assets/app-core.css','assets/mawang-premium-v1621.css',
   'assets/ui-frame-presets.css','assets/calendar-space-efficiency-v1.css',
   'assets/contact-card-readable-layout-v1.css'].map(file).join('\n');
@@ -20,7 +21,7 @@ assert(index.includes('<section id="dashboard" class="section">'),'Dashboard mus
 assert(index.includes('<h1 id="pageTitle">캘린더</h1>'),'Header must show calendar on initial HTML paint');
 assert(index.indexOf('assets/contact-card-readable-layout-v1.css?v=1')>
   index.indexOf('assets/calendar-space-efficiency-v1.css?v=1'),'Override must load after old CSS');
-assert(index.indexOf('assets/contact-directory-v177.css?v=2')>index.indexOf('assets/workspace-clean-v1.css'),'Directory polish must load after prior overrides');
+assert(index.indexOf('assets/contact-directory-v177.css?v=3')>index.indexOf('assets/workspace-clean-v1.css'),'Directory polish must load after prior overrides');
 assert(app.includes('function renderAll(reason=lastSyncReason)'),'Runtime must still render all panels after login');
 assert(app.includes("safeRenderView('캘린더',renderCalendar)"),'Hydrated calendar render must remain intact');
 assert(app.includes('contact-card-core')&&app.includes('contact-card-avatar-lg')&&app.includes('contact-card-info'),
@@ -73,6 +74,20 @@ function geometry(){
  if(getComputedStyle(parent).display!=='none')failures.push('maintenance tab cannot hide cards');
  parent.style.display='grid';
  if(innerWidth<=760&&r(sidebar).bottom>r(parent).top+1)failures.push('mobile tag panel overlaps cards');
+ const header=$('contactGroupHeaderV178'),area=$('contactTagBannerArea');
+ activeContactTag='빈 그룹';renderContactTagBanner();injectAdd();
+ const add=$('contactGroupAddV178');
+ if(header.hidden||$('contactGroupNameV178').textContent!=='빈 그룹'||!add||r(add).width>34||r(add).height>34||parent.querySelector('.v56-add'))failures.push('group add must be a compact header action');
+ if(getComputedStyle(area).display!=='none'||area.childElementCount||!$('contactGroupBannerRemoveV178').hidden)failures.push('empty banner must not occupy space');
+ add.click();if(window.qaAdd?.gt!=='빈 그룹')failures.push('group add action lost');
+ $('contactGroupBannerChooseV178').click();if(window.qaChoose!=='빈 그룹')failures.push('banner choose action lost');
+ activeContactTag='배너 그룹';renderContactTagBanner();injectAdd();
+ if(!area.querySelector('img')||getComputedStyle(area).display==='none'||$('contactGroupBannerRemoveV178').hidden)failures.push('existing banner not displayed');
+ const persistentAdd=$('contactGroupAddV178');$('contactGroupBannerRemoveV178').click();
+ if(area.childElementCount||getComputedStyle(area).display!=='none'||!$('contactGroupBannerRemoveV178').hidden||$('contactGroupAddV178')!==persistentAdd)failures.push('removing banner must collapse area without replacing controls');
+ activeContactTag='';renderContactTagBanner();injectAdd();
+ if(!header.hidden||getComputedStyle(header).display!=='none')failures.push('all contacts must not have group header');
+ if(!getComputedStyle(first).backgroundImage.includes('gradient')||getComputedStyle(first).boxShadow==='none')failures.push('card depth styling missing');
  document.querySelector('#qa-result').textContent=JSON.stringify({
   ok:failures.length===0,failures,viewport:innerWidth,resolution:document.body.dataset.resolution,
   columns:getComputedStyle(parent).gridTemplateColumns,
@@ -101,6 +116,14 @@ const contactsSection=index.match(/<section id="contacts" class="section">[\s\S]
  .replace('<div id="contactTagList" class="contact-tag-list"></div>','<div id="contactTagList" class="contact-tag-list"><div class="contact-tag-item"><button class="contact-tag-button active"><span class="contact-tag-name">전체</span><span class="contact-tag-count">217</span></button></div><div class="contact-tag-item"><button class="tag-reorder-handle">⋮⋮</button><button class="contact-tag-button"><span class="contact-tag-name">버튜버</span><span class="contact-tag-count">195</span></button></div></div>')
  .replace('<div id="contactGrid" class="contact-grid"></div>','<div id="contactGrid" class="contact-grid">'+cardMarkup+'</div>');
 
+const boot=`const $=id=>document.getElementById(id);let contactView='cards',activeContactTag='';
+const data={contactTagBanners:{'배너 그룹':'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22/%3E'}};
+const D=()=>data,view=()=>contactView,tag=()=>activeContactTag,visibility=()=>{},esc=s=>String(s);
+function openAdd(kind,gt){window.qaAdd={kind,gt}};window.chooseContactTagBanner=t=>window.qaChoose=t;
+window.removeContactTagBanner=t=>{delete data.contactTagBanners[t];renderContactTagBanner();injectAdd()};
+${app.slice(app.indexOf('function renderContactTagBanner(){'),app.indexOf('window.renderContactTagBanner=renderContactTagBanner;'))}
+${runtime.slice(runtime.indexOf('function injectAdd(){'),runtime.indexOf('let injectQueuedV141=false;'))}`;
+
 const folder=mkdtempSync(path.join(os.tmpdir(),'mws-contact-readable-'));
 try {
  for(const [width,height,resolution,scale] of [
@@ -111,7 +134,7 @@ try {
     '<style>'+css+'\n'+inline+'\n'+newSheet+'</style></head>'+
     '<body class="mws-premium" data-resolution="'+resolution+'" data-ui-frame="classic" style="--ui-text-scale:'+scale+'">'+
     '<div class="app"><aside class="sidebar"></aside><main class="main">'+contactsSection+'</main></div>'+
-    '<pre id="qa-result">pending</pre><script>('+geometry.toString()+')()</script></body></html>';
+    '<pre id="qa-result">pending</pre><script>'+boot+'\n('+geometry.toString()+')()</script></body></html>';
   const dest=path.join(folder,'contact.html');writeFileSync(dest,page,'utf8');
   const proc=spawnSync(chrome,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
     '--no-first-run','--disable-background-networking','--virtual-time-budget=900',

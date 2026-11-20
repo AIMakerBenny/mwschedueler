@@ -61,14 +61,29 @@ function addToGroup(id){const c=C(id);if(!c)return;if(group.kind==='favorite')c.
 function openAdd(kind,t=''){group={kind,tag:t};const m=modal();$('v56AddTitle').textContent=kind==='favorite'?'즐겨찾기 인원 추가':`${t} 태그 인원 추가`;$('v56Search').value='';renderCandidates();m.classList.add('open');setTimeout(()=>$('v56Search').focus(),0)}
 function injectAdd(){
  visibility();
- const v=view(),t=tag();let host=null,kind='',gt='';
- if(v==='cards'&&t){host=$('contactGrid');kind='tag';gt=t}else if(v==='favorite'){host=$('favoriteContacts')?.querySelector('.contact-maintenance-grid')||$('favoriteContacts');kind='favorite'}
+ const v=view(),t=tag(),header=$('contactGroupHeaderV178'),host=$('contactGroupToolsV178'),name=$('contactGroupNameV178');
+ if(!header||!host||!name)return;
+ let kind='',gt='';
+ if(v==='cards'&&t){kind='tag';gt=t}else if(v==='favorite'){kind='favorite'}
  const key=kind==='favorite'?'favorite':(kind==='tag'?`tag:${gt}`:'');
- const existing=document.querySelector('.v56-add');
- if(!host){document.querySelectorAll('.v56-add').forEach(x=>x.remove());return}
- if(existing&&existing.parentNode===host&&existing.dataset.groupKey===key)return;
- document.querySelectorAll('.v56-add').forEach(x=>x.remove());
- const b=document.createElement('button');b.className='v56-add';b.type='button';b.dataset.groupKey=key;b.innerHTML='<span class="ico">＋</span><strong>추가</strong><small>'+(kind==='favorite'?'즐겨찾기에 인원 추가':'이 태그에 인원 추가')+'</small>';b.onclick=()=>openAdd(kind,gt);host.prepend(b)
+ const existing=host.querySelector('.v56-add');
+ const banner=kind==='tag'&&Boolean(D()?.contactTagBanners?.[gt]);
+ const area=$('contactTagBannerArea');if(area&&!banner){area.style.display='none';if(area.childElementCount)area.replaceChildren()}
+ header.hidden=!key;
+ if(!key){if(host.childElementCount)host.replaceChildren();return}
+ name.textContent=kind==='favorite'?'즐겨찾기':gt;
+ if(!existing||existing.parentNode!==host||!(existing.dataset.groupKey===key)){
+   host.replaceChildren();
+   const make=(id,label,paths,action)=>{const b=document.createElement('button');b.id=id;b.type='button';b.className='contact-icon-v178';b.title=label;b.setAttribute('aria-label',label);b.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;b.onclick=action;host.append(b);return b};
+   const b=make('contactGroupAddV178','그룹에 인원 추가','<circle cx="9" cy="7" r="3"/><path d="M3 20v-2a6 6 0 0 1 10-4.5M18 11v8m-4-4h8"/>',()=>openAdd(kind,gt));b.classList.add('v56-add');b.dataset.groupKey=key;
+   if(kind==='tag'){
+     make('contactGroupBannerChooseV178','배너 추가','<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m4 17 5-5 4 4 3-3 5 4"/>',()=>window.chooseContactTagBanner(gt));
+     make('contactGroupBannerRemoveV178','배너 제거','<path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 3v7m4-7v7"/>',()=>window.removeContactTagBanner(gt));
+   }
+ }
+ const choose=$('contactGroupBannerChooseV178'),remove=$('contactGroupBannerRemoveV178');
+ if(choose){const label=banner?'배너 교체':'배너 추가';choose.title=label;choose.setAttribute('aria-label',label)}
+ if(remove)remove.hidden=!banner;
 }
 let injectQueuedV141=false;
 function queueInjectAddV141(){
@@ -76,7 +91,7 @@ function queueInjectAddV141(){
  injectQueuedV141=true;
  queueMicrotask(()=>{injectQueuedV141=false;injectAdd()});
 }
-function hookContacts(){for(const n of ['setActiveContactTag','setContactView','renderContacts','renderFavoriteContactsV574']){const base=window[n];if(typeof base!=='function'||base.__v56)continue;const w=function(){const r=base.apply(this,arguments);queueInjectAddV141();return r};w.__v56=1;window[n]=w;try{eval(`${n}=window[n]`)}catch(_){}}const s=$('contactSearch');if(s)s.placeholder='이름, 태그 또는 초성 검색';visibility();queueInjectAddV141()}
+function hookContacts(){for(const n of ['setActiveContactTag','setContactView','renderContacts','renderFavoriteContactsV574','renderContactTagBanner']){const base=window[n];if(typeof base!=='function'||base.__v56)continue;const w=function(){const r=base.apply(this,arguments);queueInjectAddV141();return r};w.__v56=1;window[n]=w;try{eval(`${n}=window[n]`)}catch(_){}}const s=$('contactSearch');if(s)s.placeholder='이름, 태그 또는 초성 검색';visibility();queueInjectAddV141()}
 function today(){try{return todayKST()}catch(_){return new Date().toISOString().slice(0,10)}}function days(dt){try{return daysSince(dt)}catch(_){return Math.max(0,Math.floor((new Date(today()+'T12:00:00')-new Date(dt+'T12:00:00'))/864e5))}}function dd(n){return n===0?'D-DAY':`D+${n}`}
 function hist(c){let content=[];try{content=normalizedCollaborationHistory().filter(r=>(r.participants||[]).includes(c.id))}catch(_){}content.sort((a,b)=>String(b.date).localeCompare(String(a.date)));const together=[];for(const [date,ids] of Object.entries(D()?.todayPeopleByDate||{}))if(Array.isArray(ids)&&ids.includes(c.id))together.push({date,title:'오늘 함께한 사람'});together.sort((a,b)=>b.date.localeCompare(a.date));const all=[...content.map(x=>({date:x.date,title:x.title||'컨텐츠'})),...together].sort((a,b)=>String(b.date).localeCompare(String(a.date)));return{content,together,latest:all[0]||null}}
 function detail(c){const out=$('v56HistoryOut');if(!out||!c)return;const h=hist(c),cnt={};h.content.forEach(r=>cnt[r.title||'컨텐츠']=(cnt[r.title||'컨텐츠']||0)+1);const freq=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,8),n=h.latest?days(h.latest.date):null;out.innerHTML=`<div class="v56-hero">${c.image?`<img src="${E(c.image)}">`:`<div class="v56-bigav">${E(String(c.name||'?').slice(0,2))}</div>`}<div style="flex:1"><h2 style="margin:0">${E(c.name)}</h2><div class="muted small">${E((c.labels||[]).join(' · ')||'태그 없음')}</div></div><button class="secondary" id="v56Profile">프로필 보기</button></div><div class="v56-stats"><div class="v56-stat"><span>마지막 만남</span><strong>${h.latest?E(h.latest.date):'기록 없음'}</strong><small>${h.latest?E(h.latest.title):''}</small></div><div class="v56-stat"><span>D-DAY</span><strong>${h.latest?dd(n):'-'}</strong></div><div class="v56-stat"><span>같이 한 컨텐츠</span><strong>${h.content.length}회</strong></div><div class="v56-stat"><span>함께한 사람 기록</span><strong>${h.together.length}회</strong></div></div><div class="v56-grid"><div class="v56-box"><h3>지금까지 뭐하고 놀았는지</h3><div class="v56-events">${h.content.length?h.content.map(r=>`<div class="v56-event"><span><strong>${E(r.title||'컨텐츠')}</strong><small>${E(r.date)}</small></span><b>${dd(days(r.date))}</b></div>`).join(''):'<div class="muted">과거 컨텐츠 기록이 없습니다.</div>'}</div></div><div class="v56-box"><h3>자주 한 컨텐츠</h3>${freq.length?freq.map(([t,k])=>`<div class="space" style="padding:5px 0"><span>${E(t)}</span><b>${k}회</b></div>`).join(''):'<div class="muted">기록 없음</div>'}</div></div>`;$('v56Profile').onclick=()=>{try{openContact(c.id)}catch(_){}}}

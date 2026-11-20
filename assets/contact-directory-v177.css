@@ -161,3 +161,65 @@ body[data-resolution="mobile"].mws-premium #contacts.active .contact-tag-panel.c
 body[data-resolution="mobile"].mws-premium #contacts.active .contact-grid {grid-template-columns:minmax(0,1fr)!important}
 body[data-resolution="mobile"].mws-premium #contacts {--mws-contact-card-photo:76px}
 @media(prefers-reduced-motion:reduce) {body.mws-premium #contacts *,body.mws-premium :is(#contacts,#sniper,#friendFinder,#targets) .mws-contact-tab-v176 {transition:none!important}}
+
+/* Restrained dimensional surfaces and a compact, independent group action row. */
+body.mws-premium #contacts .contact-icon-v178 {
+  box-sizing:border-box; display:inline-grid!important; place-items:center; flex:0 0 auto;
+  width:32px!important; height:32px!important; min-width:32px!important; min-height:32px!important;
+  padding:0!important; border-radius:8px!important; border:1px solid var(--contact-edge-v177)!important;
+  color:var(--muted); background:var(--input)!important; box-shadow:none!important;
+  transition:background .15s ease,color .15s ease,border-color .15s ease;
+}
+body.mws-premium #contacts .contact-icon-v178[hidden],#contacts #contactGroupHeaderV178[hidden] {display:none!important}
+#contacts .contact-icon-v178 svg {width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+body.mws-premium #contacts .contact-icon-v178:hover {color:var(--text); background:var(--panel2)!important; border-color:color-mix(in srgb,var(--accent) 35%,var(--border))!important;transform:none!important}
+body.mws-premium #contacts :is(#cleanupDuplicatesBtn,#newContactBtn).contact-icon-v178 {width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important}
+body.mws-premium #contacts #newContactBtn.contact-icon-v178 {color:#fff;background:#287def!important;border-color:#4b92f0!important}
+body.mws-premium #contacts #newContactBtn.contact-icon-v178::before {content:none}
+body.mws-premium #contacts #addContactTagBtn.contact-icon-v178 {width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important}
+#contacts #contactGroupHeaderV178 {display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;padding:0 1px;min-height:32px}
+#contacts #contactGroupNameV178 {min-width:0;overflow-wrap:anywhere;font-weight:750;font-size:14px;line-height:1.4;color:var(--text)}
+#contacts #contactGroupToolsV178 {display:flex;align-items:center;gap:6px;flex:0 0 auto}
+body.mws-premium #contacts #contactGroupToolsV178 .v56-add {min-height:32px!important;gap:0!important;align-content:center!important;border-style:solid!important}
+#contacts #contactTagBannerArea {margin-bottom:12px}
+#contacts #contactTagBannerArea:empty {display:none!important;margin:0!important}
+#contacts .contact-tag-banner {border-radius:11px;min-height:0;max-height:170px;box-shadow:0 4px 12px #0003}
+#contacts .contact-tag-banner img {height:clamp(105px,13vw,170px);min-height:0;max-height:none;object-fit:cover}
+#contacts .contact-tag-banner::after {background:linear-gradient(180deg,transparent 65%,#0003)}
+
+body.mws-premium #contacts {--mws-contact-card-photo:84px;--contact-depth-top-v178:color-mix(in srgb,var(--panel2) 54%,var(--panel));--contact-depth-bottom-v178:color-mix(in srgb,var(--panel) 81%,var(--bg))}
+body.mws-premium #contacts .contact-grid > .contact-card {
+  min-height:128px!important;padding:12px!important;border-radius:12px!important;
+  border-color:color-mix(in srgb,var(--border) 90%,var(--muted))!important;
+  background:linear-gradient(155deg,var(--contact-depth-top-v178),var(--panel) 48%,var(--contact-depth-bottom-v178))!important;
+  box-shadow:0 5px 12px #0005,0 1px 2px #0003,inset 0 1px 0 #ffffff0e!important;
+  transition:box-shadow .18s ease,border-color .18s ease,background .18s ease;
+}
+body.mws-premium #contacts .contact-grid > .contact-card:hover {
+  border-color:color-mix(in srgb,var(--accent) 30%,var(--border))!important;
+  background:linear-gradient(155deg,color-mix(in srgb,var(--panel2) 72%,var(--panel)),var(--panel) 52%,var(--contact-depth-bottom-v178))!important;
+  box-shadow:0 8px 18px #0006,inset 0 1px 0 #ffffff18!important;
+}
+body.mws-premium #contacts .contact-grid > .contact-card.is-self {border-color:color-mix(in srgb,#d4ad62 65%,var(--border))!important}
+body.mws-premium #contacts .contact-grid > .contact-card.has-upcoming {border-color:color-mix(in srgb,#37c7a3 42%,var(--border))!important}
+body.mws-premium #contacts .contact-grid > .contact-card .contact-card-core {column-gap:12px!important}
+body.mws-premium #contacts .contact-grid > .contact-card .contact-card-avatar-lg {border-radius:10px!important;border-color:color-mix(in srgb,var(--border) 55%,var(--muted))!important;box-shadow:0 4px 10px #0006,inset 0 1px 0 #ffffff12}
+#contacts .contact-card:has(.station-link) .contact-card-name-row {padding-right:31px}
+body.mws-premium #contacts .contact-card .contact-card-name {font-weight:750;line-height:1.35!important}
+body.mws-premium #contacts .contact-card .contact-card-tags {margin-top:4px!important;gap:4px!important}
+body.mws-premium #contacts .contact-card .contact-card-tags .chip {background:color-mix(in srgb,var(--panel2) 62%,var(--input));border-color:transparent;padding:2px 6px;font-weight:550;border-radius:5px}
+body.mws-premium #contacts .contact-card .contact-card-last {border-top:0;padding:0;margin-top:7px!important;line-height:1.5!important}
+body.mws-premium #contacts .contact-card .contact-card-actions {padding-top:0!important;min-height:0;position:static;justify-content:flex-start}
+body.mws-premium #contacts .contact-card .station-link {
+  position:absolute;right:11px;top:11px;width:27px;height:27px;min-height:27px;
+  padding:0;display:grid;place-items:center;border-radius:7px;font-size:0;gap:0;
+  color:var(--muted);background:color-mix(in srgb,var(--input) 78%,var(--panel));border-color:var(--contact-edge-v177);
+}
+#contacts .contact-card .station-link::after {content:'';width:15px;height:15px;background:currentColor;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 5h6v6m0-6-9 9M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5'/%3E%3C/svg%3E") center/contain no-repeat}
+#contacts .contact-card .station-link:hover {color:var(--text);border-color:var(--accent)}
+#contacts .contact-tag-action {font-size:0;width:23px;height:27px;padding:0;align-items:center;justify-content:center}
+#contacts .contact-tag-action::after {content:'✎';font-size:14px;line-height:1}
+#contacts .contact-tag-action[title='태그 삭제']::after {content:'×';font-size:17px}
+@media(min-width:1800px){body.mws-premium #contacts {--mws-contact-card-photo:94px}}
+@media(max-width:760px){body.mws-premium #contacts {--mws-contact-card-photo:76px}body.mws-premium #contacts .contact-grid > .contact-card {min-height:118px!important;padding:11px!important}#contacts .contact-tag-banner img {height:105px}}
+body[data-resolution="mobile"].mws-premium #contacts {--mws-contact-card-photo:76px}
