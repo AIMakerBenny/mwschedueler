@@ -5,7 +5,7 @@ if(window.__mwsContentPlannerHostCleanV110)return;window.__mwsContentPlannerHost
 const TAB='contentPlanner';
 const FRAME_ID='mwsContentPlannerFrame';
 const FRAME_URL='/content-planner.html?v=1.0';
-const TOOLS_URL='/assets/tools.js?v=1.4.0-phase105-achievement-navfix1';
+const TOOLS_URL='/assets/tools.js?v=1.4.0-phase105-achievement-navfix1&workspace-nav-v1=1';
 const EMPTY_PNG='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLAlQAAAABJRU5ErkJggg==';
 function syncGlobals(){try{if(typeof data!=='undefined')window.data=data}catch(_){ }try{if(typeof saveData==='function'&&!window.saveData)window.saveData=saveData}catch(_){ }try{if(typeof persist==='function'&&!window.persist)window.persist=persist}catch(_){ }}
 function forceVersion(){try{window.mwsApplyAppVersionV120?.()}catch(_){ }}
@@ -58,13 +58,13 @@ function installPlannerCanvasSafetyV10(frame){try{const w=frame?.contentWindow;i
 function ensureSection(){const duplicates=[...document.querySelectorAll(`#${TAB}`)];if(duplicates.length>1)duplicates.slice(1).forEach(x=>x.remove());let section=document.getElementById(TAB);if(section)return section;const main=document.querySelector('.main');if(!main)return null;section=document.createElement('section');section.id=TAB;section.className='section';section.innerHTML=`<div id="mwsContentPlannerShell"><iframe id="${FRAME_ID}" title="MAWANG 그림판" referrerpolicy="same-origin" allow="clipboard-write; fullscreen" allowfullscreen></iframe></div>`;main.appendChild(section);return section}
 function loadFrame(){const frame=document.getElementById(FRAME_ID);if(!frame)return;if(frame.dataset.mwsLoaded==='1'){installPlannerCanvasSafetyV10(frame);setTimeout(sendPlannerData,0);return}frame.dataset.mwsLoaded='1';frame.addEventListener('load',()=>{installPlannerCanvasSafetyV10(frame);setTimeout(sendPlannerData,0)});frame.src=FRAME_URL}
 function activate(){ensureSection();if(typeof window.setTab==='function'){try{window.setTab(TAB)}catch(error){console.warn('Content Planner setTab failed',error)}}const section=document.getElementById(TAB);if(section&&!section.classList.contains('active')){document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s===section));document.querySelectorAll('.nav button[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===TAB))}const title=document.getElementById('pageTitle');if(title)title.textContent='그림판';loadFrame()}
-function ensureNav(){const existing=[...document.querySelectorAll(`.nav button[data-tab="${TAB}"]`)];let button=existing.shift()||null;existing.forEach(x=>x.remove());const memos=document.querySelector('.nav button[data-tab="memos"]');if(!memos)return;if(!button){button=document.createElement('button');button.type='button';button.dataset.tab=TAB;button.title='그림판';button.innerHTML='<span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h5M8 16h4M15 15l2 2 3-4"/></svg></span><span class="nav-label">그림판</span>';button.addEventListener('click',event=>{event.preventDefault();activate()})}memos.insertAdjacentElement('afterend',button)}
+function ensureNav(){const existing=[...document.querySelectorAll(`.nav button[data-tab="${TAB}"]`)];let button=existing.shift()||null;existing.forEach(x=>x.remove());const toolsDivider=document.getElementById('mwsToolsDivider');if(!toolsDivider)return;if(!button){button=document.createElement('button');button.type='button';button.dataset.tab=TAB;button.title='그림판';button.innerHTML='<span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h5M8 16h4M15 15l2 2 3-4"/></svg></span><span class="nav-label">그림판</span>';button.addEventListener('click',event=>{event.preventDefault();activate()})}if(toolsDivider.nextElementSibling!==button)toolsDivider.insertAdjacentElement('afterend',button)}
 let uiOrderObserver=null;
 function enforceUiOrder(){
   const nav=document.querySelector('.nav-scroll')||document.querySelector('.nav');
-  const notebook=nav?.querySelector('button[data-tab="memos"]');
+  const toolsDivider=nav?.querySelector('#mwsToolsDivider');
   const planner=nav?.querySelector(`button[data-tab="${TAB}"]`);
-  if(notebook&&planner&&notebook.nextElementSibling!==planner)notebook.insertAdjacentElement('afterend',planner);
+  if(toolsDivider&&planner&&toolsDivider.nextElementSibling!==planner)toolsDivider.insertAdjacentElement('afterend',planner);
   const tabs=document.querySelector('.memo-section-tabs');
   const library=document.getElementById('memoLibraryTab');
   const favorites=document.getElementById('memoFavoritesTab');
