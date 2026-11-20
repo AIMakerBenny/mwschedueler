@@ -129,7 +129,15 @@
     function updateViewport(){
       if(!grid.getClientRects().length||innerWidth<901)return;
       const rows=Math.max(1,Math.ceil(grid.querySelectorAll('.day[data-date]').length/7));
-      const height=Math.max(240,innerHeight-grid.getBoundingClientRect().top-scrollY-24)+'px';
+      // Reserve the actual shell and panel bottom gutters, which vary by theme
+      // and resolution. The grid's border box already includes its own padding.
+      const px=value=>Number.parseFloat(value)||0;
+      let bottomSpace=px(getComputedStyle(grid).marginBottom)+2;
+      for(let node=grid.parentElement;node&&node!==document.documentElement;node=node.parentElement){
+        const style=getComputedStyle(node);
+        bottomSpace+=px(style.paddingBottom)+px(style.borderBottomWidth)+px(style.marginBottom);
+      }
+      const height=Math.max(240,innerHeight-grid.getBoundingClientRect().top-scrollY-Math.max(24,bottomSpace))+'px';
       if(grid.style.getPropertyValue('--calendar-week-count-v2')!==String(rows))grid.style.setProperty('--calendar-week-count-v2',rows);
       if(grid.style.getPropertyValue('--calendar-month-height-v2')!==height)grid.style.setProperty('--calendar-month-height-v2',height);
       const measurements=[...grid.querySelectorAll('.day[data-date]')].map(day=>{
