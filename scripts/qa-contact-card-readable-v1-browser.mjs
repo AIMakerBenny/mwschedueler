@@ -11,7 +11,7 @@ const css=['assets/app-core.css','assets/mawang-premium-v1621.css',
   'assets/ui-frame-presets.css','assets/calendar-space-efficiency-v1.css',
   'assets/contact-card-readable-layout-v1.css'].map(file).join('\n');
 const inline=[...index.matchAll(/<style(?:\s[^>]*)?>([\s\S]*?)<\/style>/gi)].map(m=>m[1]).join('\n');
-const newSheet=file('assets/contact-card-readable-layout-v1.css')+'\n'+file('assets/workspace-clean-v1.css');
+const newSheet=['assets/contact-card-readable-layout-v1.css','assets/workspace-clean-v1.css','assets/workspace-ui-v176.css','assets/contact-directory-v177.css'].map(file).join('\n');
 const nav=index.match(/<button class="active" data-tab="calendar"/g)||[];
 assert.equal(nav.length,1,'Calendar must be the sole default active nav button');
 assert(!index.includes('<button class="active" data-tab="dashboard"'),'Dashboard must not be default nav');
@@ -20,6 +20,7 @@ assert(index.includes('<section id="dashboard" class="section">'),'Dashboard mus
 assert(index.includes('<h1 id="pageTitle">캘린더</h1>'),'Header must show calendar on initial HTML paint');
 assert(index.indexOf('assets/contact-card-readable-layout-v1.css?v=1')>
   index.indexOf('assets/calendar-space-efficiency-v1.css?v=1'),'Override must load after old CSS');
+assert(index.indexOf('assets/contact-directory-v177.css?v=1')>index.indexOf('assets/workspace-clean-v1.css'),'Directory polish must load after prior overrides');
 assert(app.includes('function renderAll(reason=lastSyncReason)'),'Runtime must still render all panels after login');
 assert(app.includes("safeRenderView('캘린더',renderCalendar)"),'Hydrated calendar render must remain intact');
 assert(app.includes('contact-card-core')&&app.includes('contact-card-avatar-lg')&&app.includes('contact-card-info'),
@@ -54,6 +55,20 @@ function geometry(){
   if(card.scrollHeight>card.clientHeight+2)failures.push('card vertical clip '+name.textContent);
  }
  if(document.documentElement.scrollWidth>window.innerWidth+4)failures.push('root page horizontal overflow');
+ const toolbar=document.querySelector('#contacts .toolbar');
+ const board=document.querySelector('#contacts .contact-board-layout');
+ const sidebar=document.querySelector('#contacts .contact-tag-panel');
+ for(const el of [toolbar,board,sidebar,document.querySelector('#contactSearch'),document.querySelector('#newContactBtn')]){
+   if(r(el).right>innerWidth+2||r(el).left<0)failures.push('toolbar/tag layout overflow '+el.className);
+ }
+ const first=cards[0];
+ first.hidden=true;
+ if(getComputedStyle(first).display!=='none')failures.push('search-hidden contact still displayed');
+ first.hidden=false;
+ parent.style.display='none';
+ if(getComputedStyle(parent).display!=='none')failures.push('maintenance tab cannot hide cards');
+ parent.style.display='grid';
+ if(innerWidth<=760&&r(sidebar).bottom>r(parent).top+1)failures.push('mobile tag panel overlaps cards');
  document.querySelector('#qa-result').textContent=JSON.stringify({
   ok:failures.length===0,failures,viewport:innerWidth,resolution:document.body.dataset.resolution,
   columns:getComputedStyle(parent).gridTemplateColumns,
@@ -76,6 +91,11 @@ const cardMarkup=cards.map(([name,t1,t2,last],i)=>
  '<div class="contact-card-tags"><span class="chip">'+t1+'</span>'+(t2?'<span class="chip">'+t2+'</span>':'')+
  '</div><div class="contact-card-last">'+last+'</div><div class="contact-card-actions">'+
  '<button class="station-link">방송국 열기</button></div></div></div></div>').join('');
+const contactsSection=index.match(/<section id="contacts" class="section">[\s\S]*?<\/section>/)[0]
+ .replace('class="section"','class="section active"')
+ .replace('<div class="toolbar">','<div class="mws-contact-tabs-v176"><button class="mws-contact-tab-v176 active">연락처</button><button class="mws-contact-tab-v176">최근 만난 사람</button><button class="mws-contact-tab-v176">친구 찾기</button></div><div class="toolbar">')
+ .replace('<div id="contactTagList" class="contact-tag-list"></div>','<div id="contactTagList" class="contact-tag-list"><div class="contact-tag-item"><button class="contact-tag-button active"><span class="contact-tag-name">전체</span><span class="contact-tag-count">217</span></button></div><div class="contact-tag-item"><button class="tag-reorder-handle">⋮⋮</button><button class="contact-tag-button"><span class="contact-tag-name">버튜버</span><span class="contact-tag-count">195</span></button></div></div>')
+ .replace('<div id="contactGrid" class="contact-grid"></div>','<div id="contactGrid" class="contact-grid">'+cardMarkup+'</div>');
 
 const folder=mkdtempSync(path.join(os.tmpdir(),'mws-contact-readable-'));
 try {
@@ -86,8 +106,7 @@ try {
   const page='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+
     '<style>'+css+'\n'+inline+'\n'+newSheet+'</style></head>'+
     '<body class="mws-premium" data-resolution="'+resolution+'" data-ui-frame="classic" style="--ui-text-scale:'+scale+'">'+
-    '<div class="app"><aside class="sidebar"></aside><main class="main"><section id="contacts" class="section active">'+
-    '<div class="contact-grid">'+cardMarkup+'</div></section></main></div>'+
+    '<div class="app"><aside class="sidebar"></aside><main class="main">'+contactsSection+'</main></div>'+
     '<pre id="qa-result">pending</pre><script>('+geometry.toString()+')()</script></body></html>';
   const dest=path.join(folder,'contact.html');writeFileSync(dest,page,'utf8');
   const proc=spawnSync(chrome,['--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
