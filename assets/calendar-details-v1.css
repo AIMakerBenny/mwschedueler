@@ -240,7 +240,10 @@ body #calendar.section .calendar-topbar-v4 button[aria-pressed=true],body #calen
 body #calendar.section .calendar-topbar-v4 .calendar-toolbar{min-width:230px;flex-wrap:nowrap}
 body #calendar.section .calendar-topbar-v4 .calendar-group-toolbar-v2{margin-left:auto;flex-wrap:nowrap}
 body #calendar.section[data-calendar-view-mode]:not([data-calendar-view-mode=month]) #calendarCopyTrayToggleV4,body[data-device-mode=mobile] #calendar[data-mobile-calendar-view]:not([data-mobile-calendar-view=month]) #calendarCopyTrayToggleV4{display:none!important}
-@media(min-width:901px){body:has(#calendar.section.active) .main>.topbar #newEventBtn{display:inline-grid!important;place-items:center;width:34px!important;min-width:34px!important;height:34px!important;min-height:34px!important;padding:0!important;font-size:0!important;line-height:1!important;border-radius:50%!important}}
+@media(min-width:901px){
+ body:has(#calendar.section.active) .main>.topbar #newEventBtn{position:relative!important;display:inline-grid!important;place-items:center;width:34px!important;min-width:34px!important;height:34px!important;min-height:34px!important;padding:0!important;font-size:0!important;line-height:1!important;border-radius:50%!important}
+ body:has(#calendar.section.active) .main>.topbar #newEventBtn::before{position:absolute;left:50%;top:50%;margin:0;transform:translate(-50%,-50%);pointer-events:none}
+}
 @media(max-width:900px){body:has(#calendar.section.active) .main>.topbar #newEventBtn::before{display:none}}
 
 /* A fixed shelf is outside the calendar's flow, including during drag states.

@@ -51,7 +51,7 @@ try{
     const card=document.querySelector('#calendarGrid .mini-event[data-evid]'),preview=document.querySelector('#calendarEventPreview'),popover=document.querySelector('#calendarEventDetailsV1');
     const alpha=color=>{const canvas=document.createElement('canvas');canvas.width=canvas.height=1;const ctx=canvas.getContext('2d');ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return ctx.getImageData(0,0,1,1).data[3]};
     const cardCSS=getComputedStyle(card),previewCSS=getComputedStyle(preview),popoverCSS=getComputedStyle(popover);
-    return {version:!!document.querySelector('link[href*="calendar-details-v1.css?v=13"]'),raised:cardCSS.boxShadow.includes('inset')&&cardCSS.backgroundImage.includes('linear-gradient'),previewAlpha:alpha(previewCSS.backgroundColor),popoverAlpha:alpha(popoverCSS.backgroundColor),previewNoBlur:previewCSS.backdropFilter==='none',popoverNoBlur:popoverCSS.backdropFilter==='none',theme:document.body.dataset.theme,bodyColor:getComputedStyle(document.body).getPropertyValue('--bg').trim(),gridColor:getComputedStyle(document.querySelector('#calendarGrid')).backgroundColor};
+    return {version:!!document.querySelector('link[href*="calendar-details-v1.css?v=14"]'),raised:cardCSS.boxShadow.includes('inset')&&cardCSS.backgroundImage.includes('linear-gradient'),previewAlpha:alpha(previewCSS.backgroundColor),popoverAlpha:alpha(popoverCSS.backgroundColor),previewNoBlur:previewCSS.backdropFilter==='none',popoverNoBlur:popoverCSS.backdropFilter==='none',theme:document.body.dataset.theme,bodyColor:getComputedStyle(document.body).getPropertyValue('--bg').trim(),gridColor:getComputedStyle(document.querySelector('#calendarGrid')).backgroundColor};
   })()`);
   assert(surface.version&&surface.raised&&surface.previewAlpha>=223&&surface.previewAlpha<=225&&surface.popoverAlpha>=223&&surface.popoverAlpha<=225&&surface.previewNoBlur&&surface.popoverNoBlur,JSON.stringify(surface));
   if(surface.theme==='neon')assert(surface.bodyColor==='#0d0f14'&&surface.gridColor==='rgb(12, 14, 18)',JSON.stringify(surface));
@@ -60,14 +60,17 @@ try{
     const $=s=>document.querySelector(s),r=s=>$(s).getBoundingClientRect(),tick=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
     const button=$('#calendarCopyTrayToggleV4'),tray=$('#calendarCopyTray'),before=r('#calendarGrid'),hidden=getComputedStyle(tray).display==='none';
     const icons=[...document.querySelectorAll('.calendar-topbar-v4 button')].every(b=>getComputedStyle(b,'::before').maskImage!=='none'&&getComputedStyle(b).fontSize==='0px');
+    const add=$('#newEventBtn'),icon=getComputedStyle(add,'::before'),style=getComputedStyle(add),boxAdd=r('#newEventBtn'),scale=$('#pageTextScaleControlV54');
+    const centeredAdd=icon.position==='absolute'&&Math.abs(parseFloat(style.borderLeftWidth)+parseFloat(icon.left)-boxAdd.width/2)<1&&Math.abs(parseFloat(style.borderTopWidth)+parseFloat(icon.top)-boxAdd.height/2)<1&&icon.transform==='matrix(1, 0, 0, 1, -9.5, -9.5)';
+    const scaleInSidebar=scale.parentElement===$('.sidebar')&&scale.previousElementSibling.classList.contains('nav')&&!$('.topbar').contains(scale);
     const monthFits=before.top>=0&&before.bottom<=innerHeight&&document.querySelectorAll('#calendarGrid .day:not(.out)').length>=28;
     button.click();await tick();const after=r('#calendarGrid'),box=r('#calendarCopyTray');
     const open=button.getAttribute('aria-expanded')==='true'&&getComputedStyle(tray).position==='fixed'&&box.top>=r('#calendarCopyTrayToggleV4').bottom&&box.right<=innerWidth&&box.bottom<=innerHeight;
     const stable=Math.abs(before.top-after.top)<1&&Math.abs(before.height-after.height)<1&&Math.abs(before.width-after.width)<1;
     $('#calendarCopyTrayCloseV4').click();await tick();
-    return {hidden,icons,monthFits,open,stable,closed:getComputedStyle(tray).display==='none',scrollHeight:document.documentElement.scrollHeight,viewport:innerHeight};
+    return {hidden,icons,centeredAdd,scaleInSidebar,monthFits,open,stable,closed:getComputedStyle(tray).display==='none',scrollHeight:document.documentElement.scrollHeight,viewport:innerHeight};
   })()`);
-  assert(trayLayout.hidden&&trayLayout.icons&&trayLayout.monthFits&&trayLayout.open&&trayLayout.stable&&trayLayout.closed,JSON.stringify(trayLayout));
+  assert(trayLayout.hidden&&trayLayout.icons&&trayLayout.centeredAdd&&trayLayout.scaleInSidebar&&trayLayout.monthFits&&trayLayout.open&&trayLayout.stable&&trayLayout.closed,JSON.stringify(trayLayout));
   console.log('MWS_LIVE_CALENDAR_LAYOUT_V4',JSON.stringify(trayLayout));
   const target=await browser.evaluate(String.raw`(()=>{
     const cards=[...document.querySelectorAll('#calendarGrid .mini-event[data-evid] .mini-event-main')];
