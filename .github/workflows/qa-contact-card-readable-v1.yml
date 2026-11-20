@@ -6,6 +6,8 @@ on:
     paths:
       - 'assets/contact-card-readable-layout-v1.css'
       - 'index.html'
+      - 'assets/modal-motion-v1.css'
+      - 'scripts/qa-modal-motion-v1-browser.mjs'
       - 'scripts/qa-contact-card-readable-v1-browser.mjs'
       - '.github/workflows/qa-contact-card-readable-v1.yml'
   push:
@@ -24,6 +26,8 @@ jobs:
           node-version: '24'
       - name: Initial calendar and portrait/text collision regression
         run: node scripts/qa-contact-card-readable-v1-browser.mjs
+      - name: Real-time modal entrance and exit frames
+        run: node scripts/qa-modal-motion-v1-browser.mjs
       - name: Existing sidebar/calendar geometry
         run: |
           node scripts/qa-calendar-space-efficiency-v1-browser.mjs
