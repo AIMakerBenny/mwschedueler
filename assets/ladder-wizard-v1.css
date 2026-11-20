@@ -17,12 +17,13 @@
 #gameLadder .ladder-wizard-heading h2{font-size:clamp(19px,2vw,25px);font-weight:850;margin:0 0 5px;letter-spacing:-.025em}
 #gameLadder .ladder-wizard-heading p{font-size:12px;line-height:1.55;color:var(--muted);margin:0}
 #gameLadder .ladder-wizard-count{flex:0 0 auto;border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));border-radius:999px;background:color-mix(in srgb,var(--accent) 8%,var(--panel));font-size:13px;font-weight:750;padding:8px 13px;color:var(--text)}
-#gameLadder .ladder-wizard-roster{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(260px,1fr);gap:16px;align-items:stretch}
+#gameLadder .ladder-wizard-roster{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(260px,1fr);gap:16px;align-items:start}
 #gameLadder .ladder-wizard-config{display:grid;grid-template-columns:minmax(240px,.8fr) minmax(0,1.5fr);gap:16px;align-items:start}
 #gameLadder .ladder-wizard-roster>.card,#gameLadder .ladder-wizard-config>.card,#gameLadder .ladder-stage-card{min-width:0;padding:18px!important;border-radius:15px!important;background:linear-gradient(148deg,color-mix(in srgb,var(--panel) 95%,var(--accent)),var(--panel))!important;box-shadow:0 8px 24px rgba(0,0,0,.13)}
 #gameLadder .ladder-wizard-roster h3,#gameLadder .ladder-wizard-config h3{font-size:15px;margin:0;font-weight:800}
 #gameLadder.active .ladder-contact-dock,#gameLadder .ladder-wizard-selected{display:flex!important;flex-direction:column;position:static!important;height:auto!important;max-height:none!important;min-height:0!important;overflow:hidden!important;align-self:stretch!important;z-index:auto!important}
-#gameLadder.active #ladderContactPalette{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px;align-content:start;max-height:clamp(230px,calc(100vh - 350px),550px)!important;min-height:230px!important;flex:1 1 auto!important;overflow:auto;padding:2px 4px 2px 2px;scrollbar-gutter:stable}
+#gameLadder .ladder-wizard-selected{align-self:start!important}
+#gameLadder.active #ladderContactPalette{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:8px;align-content:start;max-height:clamp(180px,calc(100vh - 500px),480px)!important;min-height:180px!important;flex:1 1 auto!important;overflow:auto;padding:2px 4px 2px 2px;scrollbar-gutter:stable}
 #gameLadder .ladder-contact-choice{display:flex;align-items:center;gap:9px;min-width:0;text-align:left;min-height:64px;padding:8px!important;border:1px solid var(--border);border-radius:11px!important;background:var(--input);box-shadow:0 2px 6px rgba(0,0,0,.07);transition:background .15s,border-color .15s,transform .15s;cursor:pointer}
 #gameLadder .ladder-contact-choice:hover:not(:disabled){border-color:var(--accent);transform:translateY(-1px)}
 #gameLadder .ladder-contact-choice[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--input));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 30%,transparent)}
@@ -33,7 +34,7 @@
 #gameLadder .ladder-choice-info small{font-size:10px;color:var(--muted);font-weight:500}
 #gameLadder .ladder-choice-mark{width:22px;height:22px;flex:0 0 22px;display:grid;place-items:center;border:1px solid var(--border);border-radius:50%;color:var(--muted);font-size:15px;line-height:1}
 #gameLadder .ladder-contact-choice[aria-pressed="true"] .ladder-choice-mark{background:var(--accent);color:white;border-color:transparent}
-#gameLadder #ladderPlayerList{flex:1;margin-top:12px;min-height:100px;max-height:clamp(230px,calc(100vh - 350px),550px)!important;display:flex;overflow:auto}
+#gameLadder #ladderPlayerList{flex:0 1 auto;margin-top:12px;min-height:60px;max-height:clamp(180px,calc(100vh - 500px),480px)!important;display:flex;overflow:auto}
 #gameLadder #ladderPlayerList .mini-entry-row{grid-template-columns:36px minmax(0,1fr) 30px!important;min-height:49px;padding:6px!important}
 #gameLadder .ladder-wizard-selected .mini-manual-add{margin:12px 0 0}
 #gameLadder .ladder-wizard-selected.drag-over{border-color:var(--accent)!important}
