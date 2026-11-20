@@ -9,17 +9,43 @@
   const validRoster=()=>players().length>=2&&players().length<=12;
   const validPrizes=()=>validRoster()&&prizes().length===players().length&&prizes().every(p=>String(p.label||'').trim());
   const rosterKey=()=>JSON.stringify(players().map(p=>p.id).sort());
-  let step=1,furthest=1,key=null,paletteKey=null;
+  let step=1,furthest=1,key=null,paletteKey=null,preset='winner';
   const pages=[...root.querySelectorAll('[data-ladder-page]')],steps=[...root.querySelectorAll('[data-ladder-step]')];
+  // Old demonstrations persisted these four labels in the shared data. Only
+  // replace the exact sample set or empty results, never
+  // arbitrary custom results. Preserve custom prizes across navigation.
+  const legacySample=['[SAMPLE]','결과 수정은','아랫쪽에서','할 수 있습니다'].sort().join('|');
+  const originalEnsure=window.ensureLadderPrizeCount;
+  window.ensureLadderPrizeCount=function(){
+    const before=prizes().map(p=>String(p.label||'').trim()),n=players().length;
+    const stock=before.length===0||before.slice().sort().join('|')===legacySample;
+    const winnerOnly=before.length>0&&before.every(x=>x==='당첨'||x==='꽝');
+    originalEnsure();
+    if(stock){prizes().forEach((p,i)=>p.label=i===0?'당첨':'꽝');preset='winner'}
+    else if(winnerOnly&&before.length!==n){const wins=Math.min(n,Math.max(1,before.filter(x=>x==='당첨').length));prizes().forEach((p,i)=>p.label=i<wins?'당첨':'꽝')}
+  };
+  function reflectPreset(){
+    const labels=prizes().map(p=>p.label);
+    if(labels.length&&labels.every(x=>x==='당첨'||x==='꽝')){preset='winner';$('ladderWinnerCount').value=String(Math.max(1,labels.filter(x=>x==='당첨').length))}
+    else if(labels.length){preset=['rank','team','default'].find(k=>labels.every((x,i)=>x===(k==='rank'?`${i+1}등`:k==='team'?(i%2===0?'A팀':'B팀'):`결과 ${i+1}`)))||'custom'}
+    root.querySelectorAll('[data-ladder-preset]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.ladderPreset===preset)));
+  }
   function sync(){
     const n=players().length,m=prizes().length,locked=busy();
     $('ladderWizardRosterCount').textContent=`${n} / 12명`;
     $('ladderWizardGameCount').textContent=`${n}명 · ${m}개`;
+    root.style.setProperty('--ladder-lanes',String(Math.max(2,n)));
     const winners=$('ladderWinnerCount');winners.max=String(Math.max(1,n));
     if(Number(winners.value)>n&&n>0)winners.value=String(n);
     pages.forEach(p=>{p.hidden=Number(p.dataset.ladderPage)!==step});
     steps.forEach(b=>{const i=Number(b.dataset.ladderStep);b.classList.toggle('current',i===step);b.classList.toggle('complete',i<step);b.disabled=locked||i>furthest||(i>=2&&!validRoster())||(i===3&&!validPrizes());if(i===step)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current')});
     const previous=$('ladderWizardBack'),next=$('ladderWizardNext');
+    const footer=root.querySelector('.ladder-wizard-footer'),actions=root.querySelector('.ladder-action-row');
+    // During play, navigation belongs beside the game controls rather than
+    // below a potentially long results list.
+    if(step===3){if(previous.parentElement!==actions)actions.prepend(previous)}
+    else if(previous.parentElement!==footer)footer.prepend(previous);
+    footer.hidden=step===3;
     previous.hidden=step===1;previous.disabled=locked;
     next.hidden=step===3;next.disabled=locked||(step===1?!validRoster():!validPrizes());
     next.textContent=step===1?'결과 설정':'게임 화면으로';
@@ -29,6 +55,8 @@
     // The core rebuilds player buttons during every automatic path; inert is
     // inherited by newly created buttons and does not interrupt the drawing.
     $('ladderPlayerButtons').inert=locked;
+    $('ladderPlayerButtons').hidden=!miniGameRuntime.ladder.generated||locked;
+    reflectPreset();
   }
   function clearBoard(){
     const r=miniGameRuntime.ladder;r.generated=false;r.rungs=[];r.activePlayer=-1;r.autoResultNames=[];r.autoResultEntries=[];
@@ -39,10 +67,13 @@
   function go(target){
     if(busy()||target<1||target>3||target>step+1&&target>furthest)return;
     if(target>=2&&!validRoster()||target===3&&!validPrizes())return;
+    if(target===step)return;
     step=target;furthest=Math.max(furthest,step);sync();
     if(step===1){paletteKey=null;renderMiniContactPalette('ladder',$('ladderContactSearch').value)}
     if(step===2||step===3)renderLadder();
-    root.scrollIntoView({block:'start',behavior:'instant'});
+    // Keep the outer header visible on small desktop screens. Only scroll
+    // when the user was actually below the wizard header.
+    if(root.getBoundingClientRect().top<0)root.scrollIntoView({block:'start',behavior:'instant'});
   }
   const basePalette=window.renderMiniContactPalette;
   window.renderMiniContactPalette=function(game,q){
@@ -95,7 +126,9 @@
     const n=players().length,w=Math.min(n,Math.max(1,Math.floor(Number($('ladderWinnerCount').value)||1)));
     $('ladderWinnerCount').value=String(w);
     prizes().forEach((p,i)=>{p.label=kind==='winner'?(i<w?'당첨':'꽝'):kind==='rank'?`${i+1}등`:kind==='team'?(i%2===0?'A팀':'B팀'):`결과 ${i+1}`});
-    miniPersist();clearBoard();renderLadder();
+    // An explicitly chosen numbered preset is intentional, not a legacy
+    // placeholder. Do not let the default migration undo that choice.
+    preset=kind;miniPersist();clearBoard();renderLadder();
   }
   const baseRender=window.renderLadder;
   window.renderLadder=function(){
@@ -112,6 +145,7 @@
   steps.forEach(b=>b.addEventListener('click',()=>go(Number(b.dataset.ladderStep))));
   $('ladderWizardBack').addEventListener('click',()=>go(step-1));$('ladderWizardNext').addEventListener('click',()=>go(step+1));
   root.querySelectorAll('[data-ladder-preset]').forEach(b=>b.addEventListener('click',()=>applyPreset(b.dataset.ladderPreset)));
+  $('ladderWinnerCount').addEventListener('change',()=>applyPreset('winner'));
   $('ladderManualName').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();miniManualAdd('ladder','ladderManualName')}});
-  sync();
+  renderLadder();
 })();

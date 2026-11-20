@@ -7,7 +7,7 @@ import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const index=read('index.html');
-assert(index.includes('assets/modal-motion-v1.css?v=2'));
+assert(index.includes('assets/modal-motion-v1.css?v=3'));
 const runtime=read('assets/contact-runtime-v130.js'),app=read('assets/app-core.js');
 assert(runtime.includes('loading="lazy" decoding="async" width="42" height="42"'));
 assert(app.includes('renderContactHistory(id);\n  renderContactApplicationHistory(id);'));
@@ -37,7 +37,7 @@ try{
       document.body.classList.toggle('modal-active',open);
       for(let i=0;i<90&&performance.now()-start<1200;i++){
         const time=await tick(),s=getComputedStyle(modal),b=getComputedStyle(panel);
-        values.push({ms:Math.round(time-start),opacity:Number(b.opacity),scrim:Number(getComputedStyle(modal,'::before').opacity),scale:b.scale,display:s.display,hit:s.pointerEvents,width:panel.offsetWidth,shellOpacity:Number(s.opacity),filter:s.backdropFilter});
+        values.push({ms:Math.round(time-start),opacity:Number(b.opacity),scrim:Number(getComputedStyle(modal,'::before').opacity),scale:b.scale,translate:b.translate,display:s.display,hit:s.pointerEvents,width:panel.offsetWidth,shellOpacity:Number(s.opacity),filter:s.backdropFilter});
         if(open?Number(b.opacity)===1&&b.scale==='none':s.display==='none')break;
       }
       return values;
@@ -62,7 +62,9 @@ try{
     assert(r.exited.filter(intermediate).length>=3,JSON.stringify(r));
     assert.equal(r.entered.at(-1).opacity,1);assert.equal(r.entered.at(-1).scale,'none');
     assert.equal(r.exited.at(-1).display,'none');assert(r.exited.every(v=>v.hit==='none'));
-    assert(r.entered.some(v=>v.scale!=='none'&&Number(v.scale)>.98&&Number(v.scale)<1));
+    assert(r.entered.some(v=>v.scale!=='none'&&Number(v.scale)<.97));
+    assert(r.entered.some(v=>parseFloat(v.translate.split(' ')[1])>8));
+    assert.equal(r.entered.at(-1).translate,'none');
     assert(r.entered.every(v=>v.width===r.entered[0].width));
     for(const values of [r.entered,r.exited,r.groupEnter,r.groupExit]){
       assert(values.every(v=>v.shellOpacity===1&&v.filter==='none'),'Full viewport must not be filtered or faded');
@@ -81,6 +83,7 @@ try{
   await browser.navigate(pathToFileURL(file).href+'?reduced',1366,768);
   const reduced=await browser.evaluate(sample);
   assert(reduced.entered.every(v=>v.scale==='none'));
+  assert(reduced.entered.every(v=>v.translate==='none'));
   assert(reduced.entered.some(v=>v.opacity>0&&v.opacity<1));
   assert.equal(reduced.exited.at(-1).display,'none');
   console.log('MODAL_REDUCED_MOTION_OK');

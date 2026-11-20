@@ -65,7 +65,8 @@ function normalizeMiniGameData(){
   data.miniGames.ladder.prizes=data.miniGames.ladder.prizes.filter(Boolean).map(x=>({id:x.id||crypto.randomUUID(),label:String(x.label??'')}));
   while(data.miniGames.ladder.prizes.length<data.miniGames.ladder.players.length){
     const n=data.miniGames.ladder.prizes.length+1;
-    data.miniGames.ladder.prizes.push({id:crypto.randomUUID(),label:`결과 ${n}`});
+    const winnerPreset=data.miniGames.ladder.prizes.every(p=>p.label==='당첨'||p.label==='꽝');
+    data.miniGames.ladder.prizes.push({id:crypto.randomUUID(),label:winnerPreset?(n===1?'당첨':'꽝'):`결과 ${n}`});
   }
   if(data.miniGames.ladder.prizes.length>data.miniGames.ladder.players.length)data.miniGames.ladder.prizes.splice(data.miniGames.ladder.players.length);
   data.miniGames.multiDraw.targetCount=Math.max(1,Math.min(150,Number(data.miniGames.multiDraw.targetCount)||8));
@@ -6702,7 +6703,7 @@ window.spinRoulette=()=>{
 /* Ladder */
 function ensureLadderPrizeCount(){
   const players=data.miniGames.ladder.players,prizes=data.miniGames.ladder.prizes;
-  while(prizes.length<players.length)prizes.push({id:crypto.randomUUID(),label:`결과 ${prizes.length+1}`});
+  while(prizes.length<players.length){const n=prizes.length+1,winnerPreset=prizes.every(p=>p.label==='당첨'||p.label==='꽝');prizes.push({id:crypto.randomUUID(),label:winnerPreset?(n===1?'당첨':'꽝'):`결과 ${n}`})}
   if(prizes.length>players.length)prizes.splice(players.length);
 }
 function renderLadder(){
@@ -6839,7 +6840,7 @@ persist();
 
 
 /* v3.8 overrides - ladder geometry, horse race, custom coin */
-function ladderGeometry(){const canvas=document.getElementById('ladderCanvas'),n=data.miniGames.ladder.players.length,w=canvas?.width||1360,h=canvas?.height||720,top=82,bottom=h-82,left=68,right=w-68;const xs=Array.from({length:n},(_,i)=>n===1?w/2:left+(right-left)*i/(n-1));const rows=Math.max(10,n*2);return{canvas,n,w,h,top,bottom,xs,rows}}
+function ladderGeometry(){const canvas=document.getElementById('ladderCanvas'),n=data.miniGames.ladder.players.length,w=canvas?.width||1360,h=canvas?.height||480,top=54,bottom=h-54,left=72,right=w-72;const xs=Array.from({length:n},(_,i)=>n===1?w/2:left+(right-left)*i/(n-1));const rows=Math.max(10,n*2);return{canvas,n,w,h,top,bottom,xs,rows}}
 function renderLadder(){
   ensureLadderPrizeCount();renderMiniContactPalette('ladder');const players=data.miniGames.ladder.players,prizes=data.miniGames.ladder.prizes;
   const pc=document.getElementById('ladderPlayerCountChip');if(pc)pc.textContent=`${players.length}명`;const rc=document.getElementById('ladderPrizeCountChip');if(rc)rc.textContent=`${prizes.length}개`;
@@ -7890,7 +7891,7 @@ window.renderLadderAutoResultSlots=renderLadderAutoResultSlots;
 
 /* Larger canvas labels around the ladder. */
 function drawLadder(highlightPoints=null,progress=1){
-  const g=ladderGeometry();if(!g.canvas)return;const ctx=g.canvas.getContext('2d');ctx.clearRect(0,0,g.w,g.h);ctx.lineCap='round';ctx.strokeStyle='#54617a';ctx.lineWidth=4;g.xs.forEach(x=>{ctx.beginPath();ctx.moveTo(x,g.top);ctx.lineTo(x,g.bottom);ctx.stroke()});miniGameRuntime.ladder.rungs.forEach(r=>{const y=g.top+(g.bottom-g.top)*(r.row+1)/(g.rows+1);ctx.beginPath();ctx.moveTo(g.xs[r.left],y);ctx.lineTo(g.xs[r.left+1],y);ctx.stroke()});ctx.font='900 21px sans-serif';ctx.textAlign='center';ctx.fillStyle='#f5f7ff';data.miniGames.ladder.players.forEach((p,i)=>ctx.fillText(p.name.slice(0,9),g.xs[i],34));ctx.fillStyle='#ffd96a';ctx.font='900 20px sans-serif';data.miniGames.ladder.prizes.forEach((p,i)=>ctx.fillText((p.label||`결과 ${i+1}`).slice(0,10),g.xs[i],g.h-24));if(highlightPoints?.length)drawPolylineProgress(ctx,highlightPoints,progress)
+  const g=ladderGeometry();if(!g.canvas)return;const ctx=g.canvas.getContext('2d');ctx.clearRect(0,0,g.w,g.h);ctx.lineCap='round';ctx.strokeStyle='#54617a';ctx.lineWidth=3;g.xs.forEach(x=>{ctx.beginPath();ctx.moveTo(x,g.top);ctx.lineTo(x,g.bottom);ctx.stroke()});miniGameRuntime.ladder.rungs.forEach(r=>{const y=g.top+(g.bottom-g.top)*(r.row+1)/(g.rows+1);ctx.beginPath();ctx.moveTo(g.xs[r.left],y);ctx.lineTo(g.xs[r.left+1],y);ctx.stroke()});const maxLabel=Math.min(132,(g.xs[1]-g.xs[0]||g.w)-12);ctx.font='750 21px sans-serif';ctx.textAlign='center';ctx.fillStyle='#f5f7ff';data.miniGames.ladder.players.forEach((p,i)=>ctx.fillText(p.name.length>10?p.name.slice(0,9)+'…':p.name,g.xs[i],32,maxLabel));ctx.fillStyle='#ffd96a';ctx.font='750 20px sans-serif';data.miniGames.ladder.prizes.forEach((p,i)=>{const label=p.label||`결과 ${i+1}`;ctx.fillText(label.length>10?label.slice(0,9)+'…':label,g.xs[i],g.h-24,maxLabel)});if(highlightPoints?.length)drawPolylineProgress(ctx,highlightPoints,progress)
 }
 window.drawLadder=drawLadder;
 

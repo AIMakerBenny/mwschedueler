@@ -1085,18 +1085,18 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
     </div>
   </div>
   <div class="ladder-wizard-page" data-ladder-page="3" hidden>
-    <div class="ladder-wizard-heading"><div><h2>사다리타기</h2><p>자동 시작을 누르면 순서와 사다리를 섞고 참가자별 결과를 순차적으로 공개합니다.</p></div><span class="ladder-wizard-count" id="ladderWizardGameCount">0명 · 0개</span></div>
+    <div class="ladder-wizard-heading"><div><h2>게임 진행</h2><p>자동 시작으로 결과를 확인하세요.</p></div><span class="ladder-wizard-count" id="ladderWizardGameCount">0명 · 0개</span></div>
     <div class="card ladder-stage-card">
       <div class="space ladder-stage-toolbar">
         <div id="ladderStatus" class="mini-result-line compact">참가자를 준비해 주세요</div>
         <div class="row ladder-action-row"><button class="secondary" id="ladderResetBtn" onclick="resetLadderBoard()">초기화</button><button class="primary ladder-auto-start-btn" id="ladderAutoStartBtn" onclick="autoStartLadder()">자동 시작</button></div>
       </div>
-      <div id="ladderPlayerButtons" class="ladder-player-buttons"></div>
-      <div class="ladder-canvas-wrap"><canvas id="ladderCanvas" width="1360" height="720"></canvas></div>
+      <div class="ladder-canvas-wrap"><canvas id="ladderCanvas" width="1360" height="480"></canvas></div>
+      <div id="ladderPlayerButtons" class="ladder-player-buttons" hidden></div>
       <div id="ladderAutoResultSlots" class="ladder-auto-result-slots"></div>
       <div id="ladderResult" class="ladder-result-panel">자동 시작을 누르면 참가자별 결과가 공개됩니다.</div>
       <div class="ladder-summary-shell">
-        <div class="space"><div><h3>경기 결과 정리</h3><div class="subtle">참가자가 많을 때도 모든 결과를 아래에서 한 번에 확인할 수 있습니다.</div></div><span id="ladderSummaryCountChip" class="chip">0건</span></div>
+        <div class="space"><h3>게임 결과</h3><span id="ladderSummaryCountChip" class="chip">0건</span></div>
         <div id="ladderFullResultList" class="ladder-full-result-list"></div>
       </div>
     </div>
@@ -2165,7 +2165,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <script src="assets/calendar-broadcast-duration-v1.js?v=1"></script>
 <script src="assets/calendar-continuous-series-v1.js?v=2"></script>
 <script src="assets/calendar-timeline-v1.js?v=4"></script>
-<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=1&contactgroup178=1&modalmotionv2=2"></script>
+<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=1&contactgroup178=1&modalmotionv2=2&ladderdefaults=1"></script>
 <script src="assets/calendar-content-groups-v2.js?v=7-save-contract-bulk"></script>
 <script src="assets/event-sidebar-tabs-v5.js?v=1"></script>
 <script src="assets/calendar-move-guard-v4.js?v=1&quietmoves=1"></script>
@@ -4604,19 +4604,6 @@ body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout.main
 <!-- mws-v5.7.1-storage-title-hotfix -->
 
 <style id="mws-v572-predeploy-style">
-/* Ladder contact palette stays visible while the game page scrolls. */
-@media(min-width:851px){
-  #gameLadder.active .ladder-contact-dock{
-    position:sticky!important;top:18px!important;align-self:start!important;z-index:46!important;
-    height:calc(100vh - 36px)!important;min-height:0!important;max-height:calc(100vh - 36px)!important;
-    overflow:hidden!important;display:flex!important;flex-direction:column!important;
-    box-shadow:0 16px 36px rgba(0,0,0,.16)
-  }
-  #gameLadder.active #ladderContactPalette{flex:1 1 auto!important;min-height:0!important;max-height:none!important}
-  #gameLadder.active .mini-contact-search,#gameLadder.active .mini-manual-add,#gameLadder.active .mini-drop-zone{flex:0 0 auto!important}
-}
-body[data-resolution="mobile"] #gameLadder.active .ladder-contact-dock{position:static!important;height:auto!important;max-height:none!important}
-
 /* Checklist presentation is removed from the dashboard summary. */
 #dashboard .dashboard-week-row-v55{grid-template-columns:58px minmax(0,1fr)!important}
 #dashboard .dashboard-week-progress-v55{display:none!important}
@@ -4666,10 +4653,10 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .sidebar-save-v572{padding-left:0
 <link rel="stylesheet" href="assets/achievement-exhibition-v1.css?v=2">
 <link rel="stylesheet" href="assets/calendar-search-v173.css?v=1">
 <link rel="stylesheet" href="assets/contact-directory-v177.css?v=3">
-<link rel="stylesheet" href="assets/modal-motion-v1.css?v=2">
+<link rel="stylesheet" href="assets/modal-motion-v1.css?v=3">
 <script src="assets/calendar-details-v1.js?v=10"></script>
 <script src="assets/device-ui.js?v=1.3.0-perf87"></script>
-<link rel="stylesheet" href="assets/ladder-wizard-v1.css?v=2">
-<script src="assets/ladder-wizard-v1.js?v=1"></script>
+<link rel="stylesheet" href="assets/ladder-wizard-v1.css?v=3">
+<script src="assets/ladder-wizard-v1.js?v=2"></script>
 </body>
 </html>
