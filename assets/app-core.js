@@ -3936,37 +3936,15 @@ window.openContactStation=id=>{
 function renderContactTagBanner(){
   const area=document.getElementById('contactTagBannerArea');
   if(!area)return;
-  if(contactView!=='cards'||!activeContactTag){
+  const banner=contactView==='cards'&&activeContactTag?data.contactTagBanners?.[activeContactTag]:'';
+  if(!banner){
     area.style.display='none';
     area.innerHTML='';
     return;
   }
-
-  const banner=data.contactTagBanners?.[activeContactTag]||'';
   area.style.display='block';
-  const encoded=encodeURIComponent(activeContactTag);
-
-  if(!banner){
-    area.innerHTML=`<div class="contact-tag-banner-placeholder">
-      <div>
-        <div class="contact-tag-banner-placeholder-title">${esc(activeContactTag)}</div>
-        <div class="contact-tag-banner-placeholder-help">이 태그 그룹 전용 배너 이미지를 추가할 수 있습니다.</div>
-      </div>
-      <button type="button" class="secondary" onclick="chooseContactTagBanner(decodeURIComponent('${encoded}'))">배너 추가</button>
-    </div>`;
-    return;
-  }
-
   area.innerHTML=`<div class="contact-tag-banner">
-    <img src="${banner}" alt="${esc(activeContactTag)} 배너">
-    <div class="contact-tag-banner-info">
-      <div class="contact-tag-banner-kicker">CONTACT GROUP</div>
-      <div class="contact-tag-banner-name">${esc(activeContactTag)}</div>
-    </div>
-    <div class="contact-tag-banner-actions">
-      <button type="button" class="secondary small" onclick="chooseContactTagBanner(decodeURIComponent('${encoded}'))">배너 교체</button>
-      <button type="button" class="danger small" onclick="removeContactTagBanner(decodeURIComponent('${encoded}'))">배너 제거</button>
-    </div>
+    <img src="${esc(banner)}" alt="${esc(activeContactTag)} 배너">
   </div>`;
 }
 window.renderContactTagBanner=renderContactTagBanner;
