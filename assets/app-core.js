@@ -1280,6 +1280,34 @@ let calendarDragPayload=null;
 let calendarSearchTimerV171=0;
 let calendarViewModeV172='month';
 
+// Calendar search is deliberately isolated from shared contact/minigame matching.
+function calendarSearchNormalizeV173(value){
+  return String(value??'').normalize('NFKC').toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g,'').replace(/\s+/g,' ').trim();
+}
+function calendarSearchTextMatchesV173(value,q){
+  if(mwsIsKoreanInitialOnlyQuery(q))return mwsTextMatches(value,q);
+  const query=calendarSearchNormalizeV173(q);
+  return Boolean(query&&calendarSearchNormalizeV173(value).includes(query));
+}
+function calendarSearchGameFieldsV173(event){
+  const game=event?.steamGame;
+  if(!game)return [];
+  const appid=String(game.appid||game.appId||'');
+  const registered=(data.gameLibrary||[]).find(item=>
+    (game.id&&item.id===game.id)||(appid&&appid!=='0'&&String(item.appid||item.appId||'')===appid)
+  );
+  const names=[String(event?.steamGame?.name||''),registered?.name];
+  const aliases=[...(Array.isArray(game.aliases)?game.aliases:[]),...(Array.isArray(registered?.aliases)?registered.aliases:[])];
+  // Explicit aliases for the known WoW title; never infer aliases from unrelated initials.
+  for(const name of names){
+    const canonical=calendarSearchNormalizeV173(name).replace(/[\s:：-]/g,'');
+    if(/^(월드오브워크래프트|worldofwarcraft)(포에버|forever)?$/.test(canonical)){
+      aliases.push('와우','WOW','World of Warcraft','월드 오브 워크래프트');
+      if(/(포에버|forever)$/.test(canonical))aliases.push('와포','와우 포에버','WOW Forever','World of Warcraft Forever');
+    }
+  }
+  return [...new Set([...names,...aliases].filter(value=>typeof value==='string'&&value.trim()))];
+}
 function calendarEventSearchFieldGroupsV172(event){
   const contacts=[];
   const ids=[...new Set([
@@ -1292,7 +1320,7 @@ function calendarEventSearchFieldGroupsV172(event){
   }
   return {
     title:[String(event?.title||'')].filter(Boolean),
-    game:[String(event?.steamGame?.name||'')].filter(Boolean),
+    game:calendarSearchGameFieldsV173(event),
     contact:contacts
   };
 }
@@ -1304,10 +1332,8 @@ function calendarEventMatchesSearchV171(event,query,type='all'){
   const q=String(query||'').trim();
   if(!q||!event||event.restDay)return false;
   const groups=calendarEventSearchFieldGroupsV172(event);
-  if(type==='title')return groups.title.some(value=>mwsTextMatches(value,q));
-  if(type==='game')return groups.game.some(value=>mwsTextMatches(value,q));
-  if(type==='contact')return groups.contact.some(value=>mwsTextMatches(value,q));
-  return calendarEventSearchFieldsV171(event).some(value=>mwsTextMatches(value,q));
+  const values=type==='all'?Object.values(groups).flat():(groups[type]||[]);
+  return values.some(value=>calendarSearchTextMatchesV173(value,q));
 }
 function calendarSearchMatchKindsV172(event,query){
   const q=String(query||'').trim();
@@ -1315,7 +1341,7 @@ function calendarSearchMatchKindsV172(event,query){
   const groups=calendarEventSearchFieldGroupsV172(event);
   const labels={title:'컨텐츠',game:'게임',contact:'연락처'};
   return Object.entries(groups)
-    .filter(([,values])=>values.some(value=>mwsTextMatches(value,q)))
+    .filter(([,values])=>values.some(value=>calendarSearchTextMatchesV173(value,q)))
     .map(([key])=>labels[key]);
 }
 function calendarSearchShiftDateV172(baseDate,days){
@@ -1356,7 +1382,8 @@ function calendarSearchParticipantNamesV172(event){
 function calendarSearchResultCardV172(event,query){
   const cat=category(event.categoryId);
   const color=event.color||cat?.color||'#64748b';
-  const game=String(event?.steamGame?.name||'');
+  const preview=calendarGamePreviewV3(event);
+  const game=preview?.name||calendarSearchGameFieldsV173(event)[0]||'';
   const people=calendarSearchParticipantNamesV172(event);
   const time=event.start==='TBD'||!event.start
     ? '시간 미정'
@@ -1365,8 +1392,12 @@ function calendarSearchResultCardV172(event,query){
   const peopleText=people.length
     ? `${people.slice(0,8).map(esc).join(' · ')}${people.length>8?` +${people.length-8}명`:''}`
     : '참가자 없음';
+  const art=preview?.image
+    ? `<img class="calendar-search-thumb-v173" src="${esc(preview.image)}" alt="" loading="lazy" decoding="async">`
+    : '<svg class="calendar-search-thumb-icon-v173" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4M16 3v4M4 10h16M8 14h3M8 17h6"/></svg>';
   return `<button type="button" class="calendar-search-result-v172" data-calendar-search-event-id="${esc(event.id)}">
-    <span class="calendar-search-result-accent-v172" style="background:${color}"></span>
+    <span class="calendar-search-result-accent-v172" style="background:${esc(color)}"></span>
+    <span class="calendar-search-art-v173" aria-hidden="true">${art}</span>
     <span class="calendar-search-result-main-v172">
       <span class="calendar-search-result-top-v172">
         <strong class="calendar-search-result-title-v172">${esc(event.title||'제목 없음')}</strong>
@@ -1375,9 +1406,10 @@ function calendarSearchResultCardV172(event,query){
       <span class="calendar-search-result-meta-v172">
         ${game?`<span><b>게임</b> ${esc(game)}</span>`:''}
         <span><b>참가자</b> ${peopleText}</span>
+        ${kinds.length?`<span class="calendar-search-result-match-v172">${kinds.map(x=>`<span class="chip">${esc(x)} 일치</span>`).join('')}</span>`:''}
       </span>
-      ${kinds.length?`<span class="calendar-search-result-match-v172">${kinds.map(x=>`<span class="chip">${esc(x)} 일치</span>`).join('')}</span>`:''}
     </span>
+    <svg class="calendar-search-arrow-v173" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
   </button>`;
 }
 function renderCalendarSearchResultsV172(){
@@ -1397,7 +1429,7 @@ function renderCalendarSearchResultsV172(){
 
   if(!query){
     status.textContent='검색어를 입력해 주세요';
-    results.innerHTML='<div class="calendar-search-empty-v172">검색어를 입력하면 날짜별 결과가 여기에 표시됩니다.</div>';
+    results.innerHTML='<div class="calendar-search-empty-v172"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><strong>찾고 싶은 일정을 검색하세요</strong><span>컨텐츠 제목, 게임명, 참가자 이름으로 검색할 수 있습니다.</span></div>';
     return;
   }
 
@@ -1411,7 +1443,7 @@ function renderCalendarSearchResultsV172(){
 
   if(!matched.length){
     status.textContent='검색 결과 없음';
-    results.innerHTML='<div class="calendar-search-empty-v172">조건에 맞는 컨텐츠가 없습니다.</div>';
+    results.innerHTML='<div class="calendar-search-empty-v172"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><strong>검색 결과가 없습니다</strong><span>검색어 또는 검색 조건을 바꿔 보세요.</span></div>';
     return;
   }
 
@@ -1474,7 +1506,7 @@ function initCalendarSearchV172(){
   if(!input||input.dataset.calendarSearchReady==='172')return;
   input.dataset.calendarSearchReady='172';
 
-  input.addEventListener('input',scheduleCalendarSearchResultsV172);
+  input.addEventListener('input',event=>{if(!event.isComposing)scheduleCalendarSearchResultsV172();});
   input.addEventListener('compositionend',()=>{
     clearTimeout(calendarSearchTimerV171);
     renderCalendarSearchResultsV172();
@@ -1487,7 +1519,7 @@ function initCalendarSearchV172(){
   });
   document.querySelectorAll('[data-calendar-search-type]').forEach(button=>{
     button.addEventListener('click',()=>{
-      document.querySelectorAll('[data-calendar-search-type]').forEach(x=>x.classList.toggle('active',x===button));
+      document.querySelectorAll('[data-calendar-search-type]').forEach(x=>{x.classList.toggle('active',x===button);x.setAttribute('aria-pressed',String(x===button));});
       renderCalendarSearchResultsV172();
     });
   });
