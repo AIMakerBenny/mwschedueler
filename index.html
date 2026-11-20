@@ -1051,18 +1051,41 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 </section>
 
 <section id="gameLadder" class="section mini-game-section">
-  <div class="mini-game-head">
-    <div><div class="mini-kicker">MINI GAME 01</div><h2>사다리타기</h2><p>참가자를 추가하면 같은 수의 당첨 항목이 자동으로 생성됩니다. 자동 시작을 누르면 내부적으로 순서와 사다리가 자동 셔플되어 전체 결과가 순차적으로 공개됩니다.</p></div>
-    <div class="mini-game-head-badge">자동 항목 · 전체 결과 요약</div>
-  </div>
-  <div class="mini-game-layout ladder-layout">
+  <nav class="ladder-wizard-steps" aria-label="사다리타기 진행 단계">
+    <button type="button" data-ladder-step="1" aria-current="step"><span>01</span><div><strong>참가자 선택</strong><small>함께할 사람</small></div></button>
+    <button type="button" data-ladder-step="2" disabled><span>02</span><div><strong>결과 설정</strong><small>사다리 아래 항목</small></div></button>
+    <button type="button" data-ladder-step="3" disabled><span>03</span><div><strong>게임 진행</strong><small>사다리 및 결과</small></div></button>
+  </nav>
+  <div class="ladder-wizard-page" data-ladder-page="1">
+    <div class="ladder-wizard-heading"><div><h2>누구와 함께할까요?</h2><p>연락처 카드를 클릭하거나 이름을 직접 입력하세요. 2~12명을 선택할 수 있습니다.</p></div><span class="ladder-wizard-count" id="ladderWizardRosterCount">0 / 12명</span></div>
+    <div class="ladder-wizard-roster">
     <div class="card mini-contact-dock ladder-contact-dock">
-      <div class="space"><div><h3>연락처 팔레트</h3><div class="subtle">최대 12명 · 드래그 또는 +</div></div><span class="chip" id="ladderContactCount">0명</span></div>
-      <input class="mini-contact-search" placeholder="연락처 또는 초성 검색" oninput="renderMiniContactPalette('ladder',this.value)">
+      <div class="space"><h3>연락처</h3><span class="chip" id="ladderContactCount">0명</span></div>
+      <input id="ladderContactSearch" class="mini-contact-search" placeholder="이름, 태그 또는 초성 검색" aria-label="참가자 연락처 검색" oninput="renderMiniContactPalette('ladder',this.value)">
       <div id="ladderContactPalette" class="mini-contact-palette"></div>
-      <div class="mini-manual-add"><input id="ladderManualName" placeholder="수동 참가자 이름"><button class="secondary" onclick="miniManualAdd('ladder','ladderManualName')">추가</button></div>
-      <div class="mini-drop-zone" data-mini-drop="ladder" ondragover="miniDropOver(event)" ondragleave="miniDropLeave(event)" ondrop="miniDropContact('ladder',event)">연락처를 이곳에 끌어 놓으세요</div>
     </div>
+    <div class="card ladder-wizard-selected" data-mini-drop="ladder" ondragover="miniDropOver(event)" ondragleave="miniDropLeave(event)" ondrop="miniDropContact('ladder',event)">
+      <div class="space"><h3>선택된 참가자</h3><div class="row"><span id="ladderPlayerCountChip" class="chip">0명</span><button type="button" class="ghost small" onclick="clearMiniEntries('ladder')">전원 제거</button></div></div>
+      <div id="ladderPlayerList" class="mini-entry-list ladder-list-wide"></div>
+      <div class="mini-manual-add"><input id="ladderManualName" placeholder="직접 이름 입력" aria-label="수동 참가자 이름"><button type="button" class="secondary" onclick="miniManualAdd('ladder','ladderManualName')">추가</button></div>
+    </div>
+    </div>
+  </div>
+  <div class="ladder-wizard-page" data-ladder-page="2" hidden>
+    <div class="ladder-wizard-heading"><div><h2>어떤 결과를 배치할까요?</h2><p>참가자 수만큼 항목을 설정하세요. 같은 결과를 여러 번 입력해도 됩니다.</p></div><span id="ladderPrizeCountChip" class="ladder-wizard-count">0개</span></div>
+    <div class="ladder-wizard-config">
+      <div class="card ladder-wizard-presets"><h3>기본 프리셋</h3><p class="muted">프리셋을 누르면 현재 결과 항목이 교체됩니다. 이후 자유롭게 수정할 수 있습니다.</p>
+        <label class="ladder-winner-field" for="ladderWinnerCount">당첨 인원 <input id="ladderWinnerCount" type="number" min="1" max="12" value="1"></label>
+        <button type="button" class="ladder-preset" data-ladder-preset="winner"><strong>당첨 / 꽝</strong><small>당첨 인원만큼 당첨, 나머지는 꽝</small></button>
+        <button type="button" class="ladder-preset" data-ladder-preset="rank"><strong>순위 정하기</strong><small>1등부터 마지막 순위까지</small></button>
+        <button type="button" class="ladder-preset" data-ladder-preset="team"><strong>팀 나누기</strong><small>A팀과 B팀을 가능한 균등하게</small></button>
+        <button type="button" class="ladder-preset" data-ladder-preset="default"><strong>기본 항목</strong><small>결과 1, 결과 2, 결과 3...</small></button>
+      </div>
+      <div class="card ladder-wizard-prizes"><h3>사다리 아래 결과 항목</h3><p class="muted">각 항목을 직접 입력하거나 프리셋을 수정하세요.</p><div id="ladderPrizeList" class="mini-entry-list ladder-list-wide"></div></div>
+    </div>
+  </div>
+  <div class="ladder-wizard-page" data-ladder-page="3" hidden>
+    <div class="ladder-wizard-heading"><div><h2>사다리타기</h2><p>자동 시작을 누르면 순서와 사다리를 섞고 참가자별 결과를 순차적으로 공개합니다.</p></div><span class="ladder-wizard-count" id="ladderWizardGameCount">0명 · 0개</span></div>
     <div class="card ladder-stage-card">
       <div class="space ladder-stage-toolbar">
         <div id="ladderStatus" class="mini-result-line compact">참가자를 준비해 주세요</div>
@@ -1077,17 +1100,8 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
         <div id="ladderFullResultList" class="ladder-full-result-list"></div>
       </div>
     </div>
-    <div class="card mini-game-config ladder-config ladder-config-below">
-      <div class="ladder-config-column">
-        <div class="space"><div><h3>참가자</h3><div class="subtle">이 순서대로 사다리 위쪽에 배치됩니다.</div></div><div class="row"><span id="ladderPlayerCountChip" class="chip">0명</span><button type="button" class="ghost small" onclick="clearMiniEntries('ladder')">전원 제거</button></div></div>
-        <div id="ladderPlayerList" class="mini-entry-list ladder-list-wide"></div>
-      </div>
-      <div class="ladder-config-column">
-        <div class="space"><div><h3>당첨 항목</h3><div class="subtle">참가자 수에 맞춰 자동 생성됩니다. 내용만 수정하세요.</div></div><span id="ladderPrizeCountChip" class="chip">0개</span></div>
-        <div id="ladderPrizeList" class="mini-entry-list ladder-list-wide"></div>
-      </div>
-    </div>
   </div>
+  <footer class="ladder-wizard-footer"><button type="button" class="secondary" id="ladderWizardBack" hidden>이전 단계</button><span id="ladderWizardHint" role="status" aria-live="polite">참가자를 2명 이상 선택하세요.</span><button type="button" class="primary" id="ladderWizardNext" disabled>결과 설정</button></footer>
 </section>
 
     <section id="gameRps" class="section mini-game-section">
@@ -4655,5 +4669,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .sidebar-save-v572{padding-left:0
 <link rel="stylesheet" href="assets/modal-motion-v1.css?v=2">
 <script src="assets/calendar-details-v1.js?v=10"></script>
 <script src="assets/device-ui.js?v=1.3.0-perf87"></script>
+<link rel="stylesheet" href="assets/ladder-wizard-v1.css?v=1">
+<script src="assets/ladder-wizard-v1.js?v=1"></script>
 </body>
 </html>
