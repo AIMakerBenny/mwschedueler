@@ -11,7 +11,7 @@ assert(chrome,'Chromium required for calendar layout and interaction QA');
 const file=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const html=file('index.html'),core=file('assets/app-core.js');
 const stylesheet=file('assets/app-core.css')+'\n'+file('assets/calendar-content-groups-v2.css')
- +'\n'+file('assets/calendar-toolbar-v4.css');
+ +'\n'+file('assets/calendar-toolbar-v4.css')+'\n'+file('assets/calendar-details-v1.css');
 const manager=file('assets/calendar-content-groups-v2.js');
 const moves=file('assets/calendar-move-guard-v4.js');
 const open=html.includes('<section id="calendar" class="section active">')
