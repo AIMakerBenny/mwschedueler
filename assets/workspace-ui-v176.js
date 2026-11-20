@@ -91,6 +91,8 @@ function friendFinderNavButtonV176(){
     else if(memos)nav.insertBefore(button,memos);
     else nav.appendChild(button);
   }
+  button.hidden=true;
+  button.style.display='none';
   button.onclick=event=>{event.preventDefault();window.setTab?.('friendFinder')};
   return button;
 }
@@ -105,11 +107,57 @@ function bindFriendTabsV176(root){
     button.onclick=()=>window.setTab?.(button.dataset.friendViewV176);
   });
 }
+/* Contacts owns the former standalone recent/friend routes. Keep their sections
+   and underlying renderers intact, including the nested target list. */
+const contactRoutesV176=['contacts','sniper','friendFinder','targets'];
+const contactViewsV176=[['contacts','연락처'],['sniper','최근 만난 사람'],['friendFinder','친구 찾기']];
+function contactViewV176(tab){return tab==='targets'?'friendFinder':tab}
+function syncContactNavigationV176(tab){
+  const grouped=contactRoutesV176.includes(tab);
+  const nav=document.querySelector('.nav-scroll')||document.querySelector('.sidebar .nav');
+  if(grouped){
+    nav?.querySelector('button[data-tab="contacts"]')?.classList.add('active');
+    const title=$('pageTitle');
+    if(title&&title.textContent!=='연락처')title.textContent='연락처';
+  }
+  nav?.querySelectorAll('button[data-tab="sniper"],button[data-tab="friendFinder"]').forEach(button=>{
+    button.hidden=true;
+    button.classList.remove('active');
+  });
+  document.querySelectorAll('[data-contact-view-v176]').forEach(button=>{
+    const selected=grouped&&button.dataset.contactViewV176===contactViewV176(tab);
+    button.classList.toggle('active',selected);
+    button.setAttribute('aria-selected',String(selected));
+  });
+}
+function installContactTabsV176(){
+  for(const id of contactRoutesV176){
+    const section=$(id);
+    if(!section||section.querySelector('.mws-contact-tabs-v176'))continue;
+    const tabs=document.createElement('div');
+    tabs.className='mws-contact-tabs-v176';
+    tabs.setAttribute('role','tablist');
+    tabs.setAttribute('aria-label','연락처 보기');
+    for(const [target,label] of contactViewsV176){
+      const button=document.createElement('button');
+      button.type='button';
+      button.className='mws-contact-tab-v176';
+      button.dataset.contactViewV176=target;
+      button.setAttribute('role','tab');
+      button.setAttribute('aria-selected','false');
+      button.textContent=label;
+      button.onclick=()=>window.setTab?.(target);
+      tabs.append(button);
+    }
+    section.prepend(tabs);
+  }
+  syncContactNavigationV176(document.querySelector('.section.active')?.id||'');
+}
 function installFriendTargetsV176(){
   const targets=$('targets');
   const friend=$('friendFinder');
   document.querySelectorAll('.nav button[data-tab="targets"]').forEach(button=>button.remove());
-  const friendButton=friendFinderNavButtonV176();
+  friendFinderNavButtonV176();
   if(!targets)return false;
   if(!targets.querySelector('.mws-friend-tabs-v176')){
     targets.insertAdjacentHTML('afterbegin',friendTabsMarkupV176('targets'));
@@ -127,7 +175,7 @@ function installFriendTargetsV176(){
       button.setAttribute('aria-selected',selected?'true':'false');
     });
   });
-  if(friendButton)friendButton.classList.toggle('active',active==='friendFinder'||active==='targets');
+  installContactTabsV176();
   return Boolean(friend);
 }
 
@@ -275,11 +323,8 @@ function enforceDrawingBoardLabelV176(){
 }
 
 function syncGroupedNavigationV176(tab){
-  const friendButton=document.querySelector('.nav button[data-tab="friendFinder"]');
-  if(friendButton)friendButton.classList.toggle('active',tab==='friendFinder'||tab==='targets');
-  if(tab==='friendFinder'||tab==='targets'){
-    const title=$('pageTitle');if(title&&title.textContent!=='친구 찾기')title.textContent='친구 찾기';
-  }
+  installContactTabsV176();
+  syncContactNavigationV176(tab);
   document.querySelectorAll('.mws-friend-tabs-v176').forEach(tabs=>{
     tabs.querySelectorAll('[data-friend-view-v176]').forEach(button=>{
       const selected=button.dataset.friendViewV176===tab;
