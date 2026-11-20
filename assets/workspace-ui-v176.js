@@ -323,6 +323,24 @@ function enforceDrawingBoardLabelV176(){
   }
 }
 
+/* The legacy sidebar organizer moves the game divider after the notebook.
+   Re-anchor the standalone achievement entry and chat game after all loaders. */
+function enforceExhibitionNavigationV176(){
+  const nav=document.querySelector('.nav-scroll');
+  if(!nav)return;
+  const button=id=>nav.querySelector('button[data-tab="'+id+'"]');
+  const memo=button('memos'),achievement=button('achievements'),gacha=button('gameMultiDraw'),chat=button('gameMajoku');
+  if(memo&&achievement&&memo.nextElementSibling!==achievement)memo.after(achievement);
+  if(gacha&&chat&&gacha.nextElementSibling!==chat)gacha.after(chat);
+  if(chat){
+    if(chat.title!=='채팅연동게임')chat.title='채팅연동게임';
+    const label=chat.querySelector('.nav-label');
+    if(label&&label.textContent!=='채팅연동게임')label.textContent='채팅연동게임';
+  }
+  if($('gameMajoku')?.classList.contains('active')){
+    const title=$('pageTitle');if(title&&title.textContent!=='채팅연동게임')title.textContent='채팅연동게임';
+  }
+}
 function syncGroupedNavigationV176(tab){
   installContactTabsV176();
   syncContactNavigationV176(tab);
@@ -334,6 +352,7 @@ function syncGroupedNavigationV176(tab){
     });
   });
   enforceDrawingBoardLabelV176();
+  enforceExhibitionNavigationV176();
 }
 
 function installSetTabBridgeV176(){
@@ -365,6 +384,7 @@ function installAllV176(){
   installFriendTargetsV176();
   installNotebookViewsV176();
   enforceDrawingBoardLabelV176();
+  enforceExhibitionNavigationV176();
   installSetTabBridgeV176();
 }
 function queueInstallV176(){
