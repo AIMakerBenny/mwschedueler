@@ -1681,13 +1681,6 @@ function beginCalendarPointerTemplateDrag(e,chip){
   try{chip.setPointerCapture(e.pointerId)}catch(_){}
   updateCalendarPointerTemplateTarget(e.clientX,e.clientY);
 
-  requestAnimationFrame(()=>{
-    const section=document.getElementById('calendar');
-    if(section){
-      const top=section.getBoundingClientRect().top+window.scrollY;
-      window.scrollTo({top:Math.max(0,top-8),behavior:'auto'});
-    }
-  });
 }
 function moveCalendarPointerTemplateDrag(e){
   if(!calendarPointerTemplateDrag||calendarPointerTemplateDrag.pointerId!==e.pointerId)return;
@@ -1703,8 +1696,8 @@ function endCalendarPointerTemplateDrag(e){
 }
 
 function initCalendarCopyTrayDnD(){
-  const tray=document.getElementById('calendarCopyTrayDropzone');
-  if(!tray||tray.dataset.dndReady)return;
+  for(const tray of [document.getElementById('calendarCopyTrayDropzone'),document.getElementById('calendarCopyTrayToggleV4')]){
+  if(!tray||tray.dataset.dndReady)continue;
   tray.dataset.dndReady='1';
 
   tray.addEventListener('dragenter',e=>{
@@ -1729,6 +1722,7 @@ function initCalendarCopyTrayDnD(){
       ||raw.replace(/^event:/,'');
     if(eventId)addEventToCalendarClipboard(eventId);
   });
+  }
 }
 
 let calendarCtrlCopyMode=false;
@@ -1829,7 +1823,7 @@ function setCalendarPointerEventTargetV174(clientX,clientY){
   const hit=document.elementFromPoint(clientX,clientY);
   state.ghost.style.display='flex';
   const day=hit?.closest?.('#calendarGrid .day[data-date]')||null;
-  const tray=hit?.closest?.('#calendarCopyTrayDropzone')||null;
+  const tray=hit?.closest?.('#calendarCopyTrayDropzone,#calendarCopyTrayToggleV4')||null;
   if(day!==state.targetDay){
     state.targetDay?.classList.remove('drag-over');
     state.targetDay=day;
@@ -2054,6 +2048,7 @@ function renderCalendar(){
       calendarDragPayload=null;
       document.querySelectorAll('.day.drag-over,.day.template-drag-over').forEach(x=>x.classList.remove('drag-over','template-drag-over'));
       document.getElementById('calendarCopyTrayDropzone')?.classList.remove('drag-over');
+      document.getElementById('calendarCopyTrayToggleV4')?.classList.remove('drag-over');
     };
     el.onkeydown=e=>{
       if(e.key!=='Enter'&&e.key!==' ')return;

@@ -174,7 +174,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
   <main class="main">
     <div class="topbar">
       <div class="top-left"><h1 id="pageTitle">캘린더</h1><div class="subtle" id="todayText"></div><button type="button" id="mwsLegacyBackV1" class="mws-legacy-back-v1" data-tab="legacy" data-legacy-link-v1 hidden>레거시 목록으로</button></div>
-      <div class="clock"><span class="sync-status"><span class="sync-dot"></span><span id="syncStatusText">전체 화면 동기화</span></span><span id="clockText"></span><button class="primary" id="newEventBtn">컨텐츠 추가</button></div>
+      <div class="clock"><span class="sync-status"><span class="sync-dot"></span><span id="syncStatusText">전체 화면 동기화</span></span><span id="clockText"></span><button class="primary" id="newEventBtn" title="컨텐츠 추가" aria-label="컨텐츠 추가">컨텐츠 추가</button></div>
     </div>
 
     
@@ -270,15 +270,15 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <section id="calendar" class="section active">
       <div class="calendar-topbar-v4">
       <div class="calendar-view-tabs-v172" role="tablist" aria-label="캘린더 보기">
-        <button type="button" class="secondary calendar-view-tab-v172 active" data-calendar-view-tab="month" role="tab" aria-selected="true">캘린더</button>
-        <button type="button" class="secondary calendar-view-tab-v172" data-calendar-view-tab="timeline" role="tab" aria-selected="false" aria-controls="calendarTimelinePanelV1">게임</button>
-        <button type="button" class="secondary calendar-view-tab-v172" data-calendar-view-tab="search" role="tab" aria-selected="false">검색</button>
+        <button type="button" class="secondary calendar-view-tab-v172 active" data-calendar-view-tab="month" role="tab" aria-selected="true" title="캘린더" aria-label="캘린더">캘린더</button>
+        <button type="button" class="secondary calendar-view-tab-v172" data-calendar-view-tab="timeline" role="tab" aria-selected="false" aria-controls="calendarTimelinePanelV1" title="게임" aria-label="게임">게임</button>
+        <button type="button" class="secondary calendar-view-tab-v172" data-calendar-view-tab="search" role="tab" aria-selected="false" title="검색" aria-label="검색">검색</button>
       </div>
         <div class="toolbar calendar-toolbar">
           <div class="row">
-            <button class="secondary" id="prevMonth">이전</button>
-            <button class="secondary" id="todayMonth">오늘</button>
-            <button class="secondary" id="nextMonth">다음</button>
+            <button class="secondary" id="prevMonth" title="이전 달" aria-label="이전 달">이전</button>
+            <button class="secondary" id="todayMonth" title="오늘" aria-label="오늘">오늘</button>
+            <button class="secondary" id="nextMonth" title="다음 달" aria-label="다음 달">다음</button>
           </div>
           <div class="calendar-jump">
             <select id="calendarYearSelect" aria-label="연도 선택"></select>
@@ -293,8 +293,9 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
         </div>
         <div class="calendar-group-toolbar-v2">
           <button class="secondary" type="button" id="calendarGroupToggleV2" aria-pressed="false" title="여러 일정을 하나의 콘텐츠 그룹에 연결">그룹 묶기</button>
-          <button class="secondary" type="button" id="calendarGroupManageToggleV4" aria-expanded="false" aria-controls="calendarGroupManagerPanelV4">그룹 관리</button>
+          <button class="secondary" type="button" id="calendarGroupManageToggleV4" aria-expanded="false" aria-controls="calendarGroupManagerPanelV4" title="그룹 관리">그룹 관리</button>
           <button class="secondary" type="button" id="calendarUndoLastMoveV4" title="이 컴퓨터에서 마지막으로 이동한 일정 되돌리기" disabled>이동 취소</button>
+          <button class="secondary" type="button" id="calendarCopyTrayToggleV4" aria-expanded="false" aria-controls="calendarCopyTray" title="복사 보관함" aria-label="복사 보관함">복사 보관함</button>
         </div>
       </div>
       <div id="calendarMonthPanelV172" class="calendar-view-panel-v172 active" data-calendar-view-panel="month">
@@ -366,6 +367,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
               <div class="calendar-copy-tray-help">달력의 컨텐츠를 이곳으로 끌어오면 원본은 제자리에 유지되고 복사용 버블만 저장됩니다. 저장된 버블을 원하는 날짜로 끌어 놓으면 새 컨텐츠가 만들어집니다.</div>
             </div>
             <span id="calendarCopyTrayCount" class="chip">0개</span>
+            <button type="button" class="secondary" id="calendarCopyTrayCloseV4" title="복사 보관함 닫기" aria-label="복사 보관함 닫기">닫기</button>
           </div>
           <div id="calendarCopyTrayDropzone" class="calendar-copy-tray-dropzone">
             <div id="calendarCopyTrayEmpty" class="calendar-copy-tray-empty">
@@ -2130,7 +2132,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <script src="assets/calendar-broadcast-duration-v1.js?v=1"></script>
 <script src="assets/calendar-continuous-series-v1.js?v=2"></script>
 <script src="assets/calendar-timeline-v1.js?v=4"></script>
-<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=4&calendarcardnames=0"></script>
+<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0"></script>
 <script src="assets/calendar-content-groups-v2.js?v=7-save-contract-bulk"></script>
 <script src="assets/event-sidebar-tabs-v5.js?v=1"></script>
 <script src="assets/calendar-move-guard-v4.js?v=1&quietmoves=1"></script>
@@ -4631,8 +4633,8 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .sidebar-save-v572{padding-left:0
 <link rel="stylesheet" href="assets/calendar-space-efficiency-v1.css?v=1">
 <link rel="stylesheet" href="assets/contact-card-readable-layout-v1.css?v=1">
 <link rel="stylesheet" href="assets/workspace-clean-v1.css?v=1">
-<link rel="stylesheet" href="assets/calendar-details-v1.css?v=11">
-<script src="assets/calendar-details-v1.js?v=9"></script>
+<link rel="stylesheet" href="assets/calendar-details-v1.css?v=12">
+<script src="assets/calendar-details-v1.js?v=10"></script>
 <script src="assets/device-ui.js?v=1.3.0-perf87"></script>
 </body>
 </html>

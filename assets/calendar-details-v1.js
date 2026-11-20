@@ -129,7 +129,15 @@
     function updateViewport(){
       if(!grid.getClientRects().length||innerWidth<901)return;
       const rows=Math.max(1,Math.ceil(grid.querySelectorAll('.day[data-date]').length/7));
-      const height=Math.max(240,innerHeight-grid.getBoundingClientRect().top-scrollY-24)+'px';
+      // Reserve the actual shell and panel bottom gutters, which vary by theme
+      // and resolution. The grid's border box already includes its own padding.
+      const px=value=>Number.parseFloat(value)||0;
+      let bottomSpace=px(getComputedStyle(grid).marginBottom)+2;
+      for(let node=grid.parentElement;node&&node!==document.documentElement;node=node.parentElement){
+        const style=getComputedStyle(node);
+        bottomSpace+=px(style.paddingBottom)+px(style.borderBottomWidth)+px(style.marginBottom);
+      }
+      const height=Math.max(240,innerHeight-grid.getBoundingClientRect().top-scrollY-Math.max(24,bottomSpace))+'px';
       if(grid.style.getPropertyValue('--calendar-week-count-v2')!==String(rows))grid.style.setProperty('--calendar-week-count-v2',rows);
       if(grid.style.getPropertyValue('--calendar-month-height-v2')!==height)grid.style.setProperty('--calendar-month-height-v2',height);
       const measurements=[...grid.querySelectorAll('.day[data-date]')].map(day=>{
@@ -161,6 +169,30 @@
     root.addEventListener('resize',fit);fit();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initMonthViewport,{once:true});else initMonthViewport();
+
+  // The copy shelf is a non-modal overlay. Its contents and drag handlers remain
+  // in the calendar, but its visibility never participates in month geometry.
+  function initCopyTrayV4(){
+    const section=$('calendar'),button=$('calendarCopyTrayToggleV4'),tray=$('calendarCopyTray'),closeButton=$('calendarCopyTrayCloseV4');
+    if(!section||!button||!tray)return;
+    const isOpen=()=>tray.classList.contains('is-open');
+    const available=()=>section.classList.contains('active')&&(!section.dataset.calendarViewMode||section.dataset.calendarViewMode==='month')&&(document.body.dataset.deviceMode!=='mobile'||!section.dataset.mobileCalendarView||section.dataset.mobileCalendarView==='month');
+    function position(){if(isOpen())tray.style.setProperty('--calendar-copy-tray-top-v4',Math.max(12,button.getBoundingClientRect().bottom+8)+'px')}
+    function setOpen(open,restoreFocus=false){
+      open=Boolean(open&&available());
+      tray.classList.toggle('is-open',open);tray.setAttribute('aria-hidden',String(!open));tray.inert=!open;
+      button.setAttribute('aria-expanded',String(open));
+      if(open)position();else if(restoreFocus)button.focus({preventScroll:true});
+    }
+    button.addEventListener('click',()=>setOpen(!isOpen()));
+    closeButton?.addEventListener('click',()=>setOpen(false,true));
+    document.addEventListener('click',event=>{if(isOpen()&&!tray.contains(event.target)&&!button.contains(event.target))setOpen(false)});
+    document.addEventListener('keydown',event=>{if(event.key==='Escape'&&isOpen()){setOpen(false,true)}});
+    root.addEventListener('resize',position,{passive:true});root.addEventListener('scroll',position,{passive:true});
+    new MutationObserver(()=>{if(!available())setOpen(false)}).observe(section,{attributes:true,attributeFilter:['class','data-calendar-view-mode','data-mobile-calendar-view']});
+    setOpen(false);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initCopyTrayV4,{once:true});else initCopyTrayV4();
 
   let tools,mode='game';
   function selectTool(value){

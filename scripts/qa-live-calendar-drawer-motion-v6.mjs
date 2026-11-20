@@ -35,7 +35,7 @@ try{
       }
       if(document.readyState==='complete'&&publicMode&&!visibleGate&&$('#calendarGrid .mini-event[data-evid]')&&$('#calendarEventDetailsV1')){
         const latestScript=Math.max(0,...performance.getEntriesByType('resource').filter(e=>e.initiatorType==='script').map(e=>e.responseEnd));
-        return {cards:document.querySelectorAll('#calendarGrid .mini-event[data-evid]').length,version:[...document.scripts].some(s=>s.src.includes('calendar-details-v1.js?v=9')),reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,noPreferenceControl:!$('#calendarDetailsMotionV6')&&$('#calendarEventDetailsV1').classList.contains('event-details-popover-v2'),origin:performance.timeOrigin,quiet:performance.now()-latestScript>=800};
+        return {cards:document.querySelectorAll('#calendarGrid .mini-event[data-evid]').length,version:[...document.scripts].some(s=>s.src.includes('calendar-details-v1.js?v=10')),reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,noPreferenceControl:!$('#calendarDetailsMotionV6')&&$('#calendarEventDetailsV1').classList.contains('event-details-popover-v2'),origin:performance.timeOrigin,quiet:performance.now()-latestScript>=800};
       }
       return {waiting:true,readyState:document.readyState,publicMode,visibleGate:!!visibleGate,mode:$('#mwsLoginForm')?.dataset.mode,submitDisabled:$('#mwsLoginSubmit')?.disabled,cards:document.querySelectorAll('#calendarGrid .mini-event[data-evid]').length,popup:!!$('#calendarEventDetailsV1')};
     })()`)}catch(error){if(!/Inspected target navigated or closed|Cannot find context|Execution context was destroyed/.test(String(error)))throw error;state=null}
@@ -51,10 +51,23 @@ try{
     const card=document.querySelector('#calendarGrid .mini-event[data-evid]'),preview=document.querySelector('#calendarEventPreview'),popover=document.querySelector('#calendarEventDetailsV1');
     const alpha=color=>{const canvas=document.createElement('canvas');canvas.width=canvas.height=1;const ctx=canvas.getContext('2d');ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return ctx.getImageData(0,0,1,1).data[3]};
     const cardCSS=getComputedStyle(card),previewCSS=getComputedStyle(preview),popoverCSS=getComputedStyle(popover);
-    return {version:!!document.querySelector('link[href*="calendar-details-v1.css?v=11"]'),raised:cardCSS.boxShadow.includes('inset')&&cardCSS.backgroundImage.includes('linear-gradient'),previewAlpha:alpha(previewCSS.backgroundColor),popoverAlpha:alpha(popoverCSS.backgroundColor),previewNoBlur:previewCSS.backdropFilter==='none',popoverNoBlur:popoverCSS.backdropFilter==='none'};
+    return {version:!!document.querySelector('link[href*="calendar-details-v1.css?v=12"]'),raised:cardCSS.boxShadow.includes('inset')&&cardCSS.backgroundImage.includes('linear-gradient'),previewAlpha:alpha(previewCSS.backgroundColor),popoverAlpha:alpha(popoverCSS.backgroundColor),previewNoBlur:previewCSS.backdropFilter==='none',popoverNoBlur:popoverCSS.backdropFilter==='none'};
   })()`);
   assert(surface.version&&surface.raised&&surface.previewAlpha===255&&surface.popoverAlpha===255&&surface.previewNoBlur&&surface.popoverNoBlur,JSON.stringify(surface));
   console.log('MWS_LIVE_CALENDAR_DEPTH_V3',JSON.stringify(surface));
+  const trayLayout=await browser.evaluate(String.raw`(async()=>{
+    const $=s=>document.querySelector(s),r=s=>$(s).getBoundingClientRect(),tick=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    const button=$('#calendarCopyTrayToggleV4'),tray=$('#calendarCopyTray'),before=r('#calendarGrid'),hidden=getComputedStyle(tray).display==='none';
+    const icons=[...document.querySelectorAll('.calendar-topbar-v4 button')].every(b=>getComputedStyle(b,'::before').maskImage!=='none'&&getComputedStyle(b).fontSize==='0px');
+    const monthFits=before.top>=0&&before.bottom<=innerHeight&&document.querySelectorAll('#calendarGrid .day:not(.out)').length>=28;
+    button.click();await tick();const after=r('#calendarGrid'),box=r('#calendarCopyTray');
+    const open=button.getAttribute('aria-expanded')==='true'&&getComputedStyle(tray).position==='fixed'&&box.top>=r('#calendarCopyTrayToggleV4').bottom&&box.right<=innerWidth&&box.bottom<=innerHeight;
+    const stable=Math.abs(before.top-after.top)<1&&Math.abs(before.height-after.height)<1&&Math.abs(before.width-after.width)<1;
+    $('#calendarCopyTrayCloseV4').click();await tick();
+    return {hidden,icons,monthFits,open,stable,closed:getComputedStyle(tray).display==='none',scrollHeight:document.documentElement.scrollHeight,viewport:innerHeight};
+  })()`);
+  assert(trayLayout.hidden&&trayLayout.icons&&trayLayout.monthFits&&trayLayout.open&&trayLayout.stable&&trayLayout.closed,JSON.stringify(trayLayout));
+  console.log('MWS_LIVE_CALENDAR_LAYOUT_V4',JSON.stringify(trayLayout));
   const target=await browser.evaluate(String.raw`(()=>{
     const cards=[...document.querySelectorAll('#calendarGrid .mini-event[data-evid] .mini-event-main')];
     for(const card of cards){const rect=card.getBoundingClientRect(),x=rect.left+Math.min(20,rect.width/2),y=rect.top+rect.height/2;if(rect.width>10&&y>0&&y<innerHeight&&document.elementFromPoint(x,y)?.closest('.mini-event[data-evid]')===card.closest('.mini-event[data-evid]'))return{x,y}}
