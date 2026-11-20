@@ -11,7 +11,7 @@ export function runPhase53SidebarToolWorkspaceAudit(){
   if(!tools.includes("relationTitle==='toolRelations'?LABEL.relations:relationTitle"))issues.push('legacy toolRelations title is not migrated to the visible Korean label');
   if(!tools.includes("#toolRelations .mws-relation-board{width:100%!important;max-width:none!important"))issues.push('relationship grid workspace is not full-width on PC');
   if(!tools.includes("#toolRelations .mws-contact-drawer{width:100%!important;max-width:none!important"))issues.push('relationship contact drawer is not full-width with the workspace');
-  if(!tools.includes("const NAV_GROUP_TABS={tools:['toolTier','toolMatrix','toolRelations'],games:['gameMajoku','gameLadder','gameRps','gamePachinko','gameMultiDraw']}"))issues.push('sidebar tool and minigame groups are not explicitly defined');
+  if(!tools.includes("const NAV_GROUP_TABS={tools:['contentPlanner','toolTier','toolMatrix','toolRelations'],games:['gameMajoku','gameLadder','gameRps','gameF1Racing','gamePachinko','gameMultiDraw']}"))issues.push('sidebar tool and minigame groups are not explicitly defined');
   if(!tools.includes("const out={tools:true,games:true}"))issues.push('sidebar groups do not default to the existing expanded behavior');
   if(!tools.includes("bindNavGroup(n,d,'tools','도구');bindNavGroup(n,mini,'games','미니게임')"))issues.push('tool and minigame dividers are not wired as collapsible controls');
   if(!tools.includes("localStorage.setItem(NAV_GROUP_PREFS_KEY"))issues.push('sidebar group state is not saved as a device-local preference');
