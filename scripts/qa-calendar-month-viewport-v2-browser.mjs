@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
-import {spawnSync} from 'node:child_process';
+import {pathToFileURL} from 'node:url';
+import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 import os from 'node:os';
 import path from 'node:path';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
@@ -23,7 +24,7 @@ for(let day=1;day<=30;day++)for(let j=0;j<(day===18?8:day%5===0?3:1);j++)data.ev
 ${dayDetails}\n${render}\nrenderCalendar();document.querySelectorAll('.day').forEach(day=>{day.classList.add('has-ohamsa-local-v2');const strip=document.createElement('button');strip.className='ohamsa-calendar-strip-local-v2';strip.textContent='참가자';strip.style.cssText='position:absolute;bottom:6px;height:31px';day.append(strip)});
 `;
 const checks=`
-const tick=()=>new Promise(r=>setTimeout(r,350));
+const tick=()=>new Promise(r=>setTimeout(r,600));
 window.addEventListener('DOMContentLoaded',async()=>{
  await tick();const $=s=>document.querySelector(s),r=s=>$(s).getBoundingClientRect();
  const baseline=JSON.stringify(data),closedWidth=r('#calendarGrid').width;
@@ -62,11 +63,13 @@ window.addEventListener('DOMContentLoaded',async()=>{
 export function fixture({test=true}={}){return '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+(test?'\n.event-details-drawer-v1,body:has(#calendar.section.active) .app>.main:has(#calendar.section.active){transition:none!important}':'')+'\n.app{display:grid;grid-template-columns:180px minmax(0,1fr)}.calendar-head{display:grid;grid-template-columns:repeat(7,1fr)}#result{position:fixed;bottom:0;visibility:hidden}</style><body class="mws-premium sidebar-pinned" data-resolution="fhd"><div class="app"><aside class="sidebar">MAWANG<br>캘린더</aside><main class="main"><div class="topbar"><h1>캘린더</h1><div id="todayText">2026년 11월 18일</div><div class="clock"><span id="clockText">오후 10:46:17</span><button id="newEventBtn">컨텐츠 추가</button></div></div><section id="calendar" class="section active">'+top+'<div class="calendar-responsive-scroll-v1"><div class="calendar-head">'+['일','월','화','수','목','금','토'].map(s=>'<span>'+s+'</span>').join('')+'</div><div id="calendarGrid" class="calendar"></div></div></section></main></div><pre id="result">pending</pre><script>'+read('assets/calendar-continuous-series-v1.js')+'</script><script>'+read('assets/calendar-details-v1.js')+'</script><script>'+bootstrap+(test?checks:'')+'</script></body></html>'}
 if(process.env.MWS_MONTH_FIXTURE){writeFileSync(process.env.MWS_MONTH_FIXTURE,fixture({test:false}));process.exit(0)}
 const temp=mkdtempSync(path.join(os.tmpdir(),'mws-month-'));
+let browser;
 try{
  const file=path.join(temp,'index.html');writeFileSync(file,fixture());
- const chrome=['google-chrome','google-chrome-stable','chromium','chromium-browser'].map(n=>spawnSync('which',[n],{encoding:'utf8'})).find(r=>r.status===0)?.stdout.trim();assert(chrome,'Chromium required');
+ browser=await launchCalendarBrowser(temp);
  for(const [width,height] of [[1366,768],[1920,1080],[2560,1440],[2560,1080]]){
-  const run=spawnSync(chrome,['--headless=new','--force-prefers-reduced-motion=reduce','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--no-first-run','--disable-background-networking','--virtual-time-budget=6500','--window-size='+width+','+height,'--dump-dom','file://'+file],{encoding:'utf8',timeout:30000,maxBuffer:18*1024*1024});
-  assert.equal(run.status,0,run.stderr.slice(-700));const match=run.stdout.match(/<pre id="result">([^<]+)<\/pre>/);assert(match,'Missing month result');const result=JSON.parse(match[1]);for(const [key,value] of Object.entries(result))assert.equal(value,true,width+'x'+height+' '+key+' '+JSON.stringify(result));console.log('CALENDAR_MONTH_VIEWPORT_OK',width,height,JSON.stringify(result));
+  await browser.navigate(pathToFileURL(file).href+'?size='+width+'x'+height,width,height);
+  const result=await browser.evaluate(`new Promise((resolve,reject)=>{const start=performance.now();const check=()=>{const value=document.querySelector('#result')?.textContent;if(value&&value!=='pending'){resolve(JSON.parse(value));return}if(performance.now()-start>12000){reject(new Error('Missing month result'));return}setTimeout(check,25)};check()})`);
+  for(const [key,value] of Object.entries(result))assert.equal(value,true,width+'x'+height+' '+key+' '+JSON.stringify(result));console.log('CALENDAR_MONTH_VIEWPORT_OK',width,height,JSON.stringify(result));
  }
-}finally{rmSync(temp,{recursive:true,force:true})}
+}finally{await browser?.close();rmSync(temp,{recursive:true,force:true})}

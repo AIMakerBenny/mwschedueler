@@ -27,9 +27,9 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const ready=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
  await ready();
  const drawer=$('#calendarEventDetailsV1'),animation=drawer.getAnimations()[0];
- const explicitMotion=Boolean(animation)&&animation.effect.getTiming().duration===700;
+ const explicitMotion=Boolean(animation)&&animation.effect.getTiming().duration===360&&animation.effect.getTiming().easing==='cubic-bezier(0.4, 0, 0.6, 1)';
  const opaqueSlide=animation.effect.getKeyframes().every(frame=>frame.opacity===undefined);
- animation.pause();animation.currentTime=350;await tick();
+ animation.pause();animation.currentTime=180;await tick();
  const main=document.querySelector('.app>.main'),layout=main.getAnimations()[0];
  const calendarUsesCompositor=Boolean(layout)&&layout.effect.getKeyframes().every(frame=>frame.width===undefined&&frame.marginRight===undefined)&&getComputedStyle(main).transitionProperty==='none';
  let resizeCount=0;const resizeObserver=new ResizeObserver(()=>resizeCount++);resizeObserver.observe(main);
@@ -44,7 +44,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const detailImage=drawer.querySelector('.calendar-preview-game-v3 img'),hoverImage=$('#calendarEventPreview .calendar-preview-game-v3 img');
  const uploadedImageDecoded=detailImage?.complete&&detailImage.naturalWidth>0&&hoverImage?.complete&&hoverImage.naturalWidth>0;
  const oneGameSection=drawer.querySelectorAll('.calendar-preview-game-v3').length===1;
- $('#background').click();await ready();const exit=drawer.getAnimations()[0];exit.pause();exit.currentTime=350;await tick();
+ $('#background').click();await ready();const exit=drawer.getAnimations()[0];exit.pause();exit.currentTime=180;await tick();
  const leaving=new DOMMatrix(getComputedStyle(drawer).transform).m41;
  const exitsThroughIntermediatePosition=leaving>1&&leaving<drawer.getBoundingClientRect().width*1.04;
  exit.finish();await tick();const backgroundCloses=drawer.hidden&&!window.mwsCalendarDetailsV1.isOpen()&&editorOpens===0;
@@ -67,6 +67,6 @@ try{const file=path.join(temp,'index.html');writeFileSync(file,fixture(true));
  const reducedFile=path.join(temp,'reduced.html');writeFileSync(reducedFile,fixture(false));
  await browser.setReducedMotion(true);
  await browser.navigate(pathToFileURL(reducedFile).href,1366,768);
- const preference=await browser.evaluate(`(async()=>{const $=s=>document.querySelector(s),tick=()=>new Promise(r=>requestAnimationFrame(r));$('#qaCard').click();const d=$('#calendarEventDetailsV1'),b=$('#calendarDetailsMotionV6');const respectsSystem=d.getAnimations().length===0&&!b.hidden;b.click();$('#calendarDetailsCloseV1').click();await tick();await tick();await tick();const overrideMotion=d.getAnimations()[0]?.effect.getTiming().duration===700;return {respectsSystem,overrideMotion}})()`);
- assert(preference.respectsSystem&&preference.overrideMotion,JSON.stringify(preference));console.log('CALENDAR_MOTION_ACCESSIBILITY_V6_OK',JSON.stringify(preference));
+ const preference=await browser.evaluate(`(async()=>{const $=s=>document.querySelector(s),ready=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(r))));$('#qaCard').click();await ready();const d=$('#calendarEventDetailsV1'),a=d.getAnimations()[0];const defaultOpen=a?.effect.getTiming().duration===360;const noPreferenceControl=d.querySelectorAll('header button').length===1&&!$('#calendarDetailsMotionV6');a.finish();await ready();$('#calendarDetailsCloseV1').click();await ready();const exit=d.getAnimations()[0];const defaultClose=exit?.effect.getTiming().duration===360;exit.finish();await ready();return {reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,defaultOpen,defaultClose,noPreferenceControl,closed:d.hidden}})()`);
+ for(const value of Object.values(preference))assert.equal(value,true,JSON.stringify(preference));console.log('CALENDAR_MOTION_DEFAULT_V7_OK',JSON.stringify(preference));
 }finally{await browser?.close();rmSync(temp,{recursive:true,force:true})}
