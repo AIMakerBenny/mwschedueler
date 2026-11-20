@@ -1,5 +1,5 @@
 /* Scoped to the ladder only. Other mini games retain their existing layout. */
-#gameLadder.active{max-width:1260px!important;margin-inline:auto;min-width:0;--ladder-list-height:clamp(160px,calc(100dvh - 375px),480px);container-type:inline-size}
+#gameLadder.active{max-width:1260px!important;margin-inline:auto;min-width:0;--ladder-list-height:clamp(150px,calc(100dvh - 510px),480px);container-type:inline-size}
 #gameLadder [data-ladder-page][hidden],#gameLadder .ladder-wizard-footer [hidden],#gameLadder #ladderPlayerButtons[hidden]{display:none!important}
 #gameLadder .ladder-wizard-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:0 0 13px;padding:4px;background:var(--panel);border:1px solid var(--border);border-radius:13px}
 #gameLadder .ladder-wizard-steps button{display:flex;align-items:center;gap:10px;min-width:0;text-align:left;padding:8px 12px;border:1px solid transparent;border-radius:9px;background:transparent;box-shadow:none;color:var(--muted);transition:background .2s,border-color .2s,color .2s}
@@ -54,19 +54,19 @@
 #gameLadder #ladderPrizeList{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:7px;max-height:var(--ladder-list-height)!important;overflow:auto;padding:0}
 #gameLadder #ladderPrizeList .mini-entry-row{display:grid;grid-template-columns:33px minmax(0,1fr)!important;padding:8px!important;min-height:52px}
 #gameLadder #ladderPrizeList .mini-entry-avatar{width:33px;height:33px;background:color-mix(in srgb,var(--accent) 12%,var(--panel));font-size:12px}
-#gameLadder .ladder-stage-card{min-height:0!important;max-width:100%;overflow:hidden;display:grid;gap:8px}
+#gameLadder .ladder-stage-card{min-height:0!important;max-width:100%;overflow:hidden;display:grid;gap:8px;grid-template-columns:minmax(0,1fr) minmax(190px,.30fr);align-items:start}
 #gameLadder .ladder-canvas-wrap{overflow:auto;max-width:100%;min-height:0!important;padding:4px;border-radius:10px;background:var(--input)}
 /* Logical coordinates stay fixed during a run, so resizing cannot distort
    paths. Constrain the board by both available width and viewport height. */
 #gameLadder #ladderCanvas{width:min(100%,calc(clamp(175px,100dvh - 465px,440px) * 2.833333));height:auto;max-width:none;min-width:min(100%,calc(var(--ladder-lanes,4) * 59px));display:block;aspect-ratio:1360/480;margin:auto}
-#gameLadder .ladder-stage-toolbar{flex-wrap:wrap;margin:0;gap:8px}
+#gameLadder .ladder-stage-toolbar{flex-wrap:wrap;margin:0;gap:8px;grid-column:1/-1}
 #gameLadder .ladder-action-row button{min-height:36px!important;padding:0 13px!important}
-#gameLadder #ladderPlayerButtons{display:grid;grid-template-columns:repeat(auto-fit,minmax(78px,1fr))!important;gap:5px!important;margin:0!important}
+#gameLadder #ladderPlayerButtons{display:grid;grid-column:1;grid-template-columns:repeat(auto-fit,minmax(78px,1fr))!important;gap:5px!important;margin:0!important}
 #gameLadder #ladderPlayerButtons button{min-height:28px!important;font-size:11px!important;padding:4px 6px!important}
-#gameLadder .ladder-result-panel{min-height:0!important;margin:0;padding:7px 10px!important;font-size:12px!important}
-#gameLadder .ladder-summary-shell{margin:0!important;padding:8px!important;background:var(--panel);border-radius:10px;border-color:var(--border)}
+#gameLadder .ladder-result-panel{grid-column:1;min-height:0!important;margin:0;padding:7px 10px!important;font-size:12px!important}
+#gameLadder .ladder-summary-shell{grid-column:2;grid-row:2/span 3;min-width:0;margin:0!important;padding:8px!important;background:var(--panel);border-radius:10px;border-color:var(--border)}
 #gameLadder .ladder-summary-shell h3{font-size:13px;margin:0}
-#gameLadder .ladder-full-result-list{grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr))!important;max-height:104px!important;overflow:auto!important;gap:5px;margin-top:5px}
+#gameLadder .ladder-full-result-list{grid-template-columns:1fr!important;max-height:clamp(160px,calc(100dvh - 420px),420px)!important;overflow:auto!important;gap:5px;margin-top:5px}
 #gameLadder .ladder-full-result-row{padding:6px 8px;gap:6px;border-radius:8px;background:var(--input);border-color:var(--border)}
 #gameLadder .ladder-full-result-row .ladder-result-avatar{width:27px;height:27px;flex:0 0 27px;border-radius:7px;font-size:11px}
 #gameLadder .ladder-full-result-left{gap:6px}
@@ -80,4 +80,5 @@
 #gameLadder .ladder-wizard-footer{display:flex;align-items:center;gap:10px;justify-content:flex-end;margin:10px 0 0;padding:8px 0;border-top:1px solid var(--border)}
 #gameLadder .ladder-wizard-footer>span{flex:1;color:var(--muted);font-size:12px}
 #gameLadder .ladder-wizard-footer button{min-height:36px;min-width:104px;border-radius:9px!important}
+@container (max-width:850px){#gameLadder .ladder-stage-card{grid-template-columns:minmax(0,1fr)}#gameLadder .ladder-summary-shell{grid-column:1;grid-row:auto}#gameLadder .ladder-full-result-list{grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr))!important;max-height:90px!important}#gameLadder #ladderCanvas{width:min(100%,calc(clamp(150px,100dvh - 530px,380px) * 2.833333))}}
 @container (max-width:680px){#gameLadder .ladder-wizard-roster,#gameLadder .ladder-wizard-config{grid-template-columns:1fr}#gameLadder .ladder-wizard-steps button{padding:7px 5px;gap:5px}#gameLadder .ladder-wizard-steps button>span{width:25px;height:25px;flex-basis:25px}#gameLadder .ladder-wizard-steps button small{display:none}#gameLadder .ladder-wizard-steps button strong{font-size:12px}#gameLadder .ladder-wizard-heading{align-items:flex-start}#gameLadder #ladderCanvas{min-width:calc(var(--ladder-lanes,4) * 66px);width:100%}#gameLadder .ladder-wizard-footer{flex-wrap:wrap}#gameLadder .ladder-wizard-footer>span{min-width:100%;order:-1}#gameLadder .ladder-full-result-list{max-height:180px!important}}
