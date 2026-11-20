@@ -12,7 +12,7 @@ const top=html.slice(html.indexOf('      <div class="calendar-topbar-v4">'),html
 const host=read('assets/content-planner-host.js');
 const runtimeCSS=host.slice(host.indexOf('#calendarGrid.calendar{'),host.indexOf('#sniper .sniper-name'));
 const css=['app-core.css','mawang-premium-v1621.css','calendar-space-efficiency-v1.css','calendar-toolbar-v4.css','calendar-responsive-cards-v1.css','calendar-stable-layout-v1.css','calendar-continuous-series-v1.css','workspace-clean-v1.css','calendar-details-v1.css'].map(p=>read('assets/'+p)).join('\n')+'\n'+runtimeCSS;
-assert(read('assets/calendar-details-v1.js').includes('drawer.animate'),'Drawer keeps explicit sliding keyframes');
+assert(!read('assets/calendar-details-v1.js').includes('calendar-details-open-v2'),'Popover cannot resize the calendar');
 const bootstrap=`
 const data={contentGroups:[{id:'series',name:'연속 게임',color:'#118c95'}],events:[]};let calDate=new Date(2026,10,1);
 const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),sundayIndex=d=>d,todayKST=()=> '2026-11-18',activeEvents=()=>data.events,category=()=>({color:'#8b5cf6'}),rgba=()=> '#29233f';
@@ -40,8 +40,9 @@ window.addEventListener('DOMContentLoaded',async()=>{
  crowdedList.scrollTop=24;const crowdedListMoves=crowdedList.scrollTop>0;crowdedList.scrollTop=0;
  const pageScrollCanChain=[shortList,crowdedList,emptyList].every(node=>getComputedStyle(node).overscrollBehaviorY==='auto');
  $('[data-evid="qa-18-0"]').click();await tick();
- const panelPushes=r('#calendarGrid').width<closedWidth-250&&r('#calendarGrid').right<=r('#calendarEventDetailsV1').left;
- const saturdayVisible=[...document.querySelectorAll('.day.sat')].every(e=>e.getBoundingClientRect().right<=r('#calendarEventDetailsV1').left);
+ const panelPushes=Math.abs(r('#calendarGrid').width-closedWidth)<1&&getComputedStyle($('.app>.main')).transform==='none';
+ const popup=r('#calendarEventDetailsV1'),card=r('[data-evid="qa-18-0"]');
+ const saturdayVisible=popup.left>=11&&popup.right<=innerWidth-11&&popup.top>=11&&popup.bottom<=innerHeight-11&&(popup.right<=card.left||popup.left>=card.right);
  const participantRailClear=r('.calendar-day-events-v2').bottom<=r('.ohamsa-calendar-strip-local-v2').top+1;
  const ribbonsKept=document.querySelectorAll('.calendar-continuous-ribbon-v1').length>=3;
  const openMonthFits=r('#calendarGrid').bottom<=innerHeight-10;
