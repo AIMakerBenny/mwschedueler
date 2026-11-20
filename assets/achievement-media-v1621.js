@@ -139,7 +139,16 @@ async function get(id){
   if(local?.blob instanceof Blob)return local;
   const blob=await fetchCloudBlob(id);
   if(!(blob instanceof Blob))return null;
-  return await storeLocal(blob,{id,kind:kindForId(id),mime:blob.type});
+  const kind=kindForId(id);
+  try{
+    return await storeLocal(blob,{id,kind,mime:blob.type});
+  }catch(error){
+    // Cloud media remains readable even when the optional local cache is full.
+    // Keep upload/write operations strict; this fallback applies only to reads.
+    if(error?.name!=='QuotaExceededError')throw error;
+    const now=new Date().toISOString();
+    return {id,blob,mime:blob.type||'application/octet-stream',kind,width:0,height:0,size:blob.size,createdAt:now,updatedAt:now};
+  }
 }
 async function getBlob(id){const record=await get(id);return record?.blob instanceof Blob?record.blob:null}
 async function has(id){
