@@ -47,6 +47,14 @@ try{
   }
   assert(ready,'No stable hydrated public calendar: '+JSON.stringify(lastState));
   assert(ready.cards>0&&ready.version&&!ready.reduced&&ready.noPreferenceControl,JSON.stringify(ready));
+  const surface=await browser.evaluate(String.raw`(()=>{
+    const card=document.querySelector('#calendarGrid .mini-event[data-evid]'),preview=document.querySelector('#calendarEventPreview'),popover=document.querySelector('#calendarEventDetailsV1');
+    const alpha=color=>{const canvas=document.createElement('canvas');canvas.width=canvas.height=1;const ctx=canvas.getContext('2d');ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return ctx.getImageData(0,0,1,1).data[3]};
+    const cardCSS=getComputedStyle(card),previewCSS=getComputedStyle(preview),popoverCSS=getComputedStyle(popover);
+    return {version:!!document.querySelector('link[href*="calendar-details-v1.css?v=11"]'),raised:cardCSS.boxShadow.includes('inset')&&cardCSS.backgroundImage.includes('linear-gradient'),previewAlpha:alpha(previewCSS.backgroundColor),popoverAlpha:alpha(popoverCSS.backgroundColor),previewNoBlur:previewCSS.backdropFilter==='none',popoverNoBlur:popoverCSS.backdropFilter==='none'};
+  })()`);
+  assert(surface.version&&surface.raised&&surface.previewAlpha===255&&surface.popoverAlpha===255&&surface.previewNoBlur&&surface.popoverNoBlur,JSON.stringify(surface));
+  console.log('MWS_LIVE_CALENDAR_DEPTH_V3',JSON.stringify(surface));
   const target=await browser.evaluate(String.raw`(()=>{
     const cards=[...document.querySelectorAll('#calendarGrid .mini-event[data-evid] .mini-event-main')];
     for(const card of cards){const rect=card.getBoundingClientRect(),x=rect.left+Math.min(20,rect.width/2),y=rect.top+rect.height/2;if(rect.width>10&&y>0&&y<innerHeight&&document.elementFromPoint(x,y)?.closest('.mini-event[data-evid]')===card.closest('.mini-event[data-evid]'))return{x,y}}

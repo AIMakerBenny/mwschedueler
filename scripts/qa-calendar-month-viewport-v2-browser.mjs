@@ -39,7 +39,19 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const crowdedListStillScrolls=crowdedList.scrollHeight>crowdedList.clientHeight+2;
  crowdedList.scrollTop=24;const crowdedListMoves=crowdedList.scrollTop>0;crowdedList.scrollTop=0;
  const pageScrollCanChain=[shortList,crowdedList,emptyList].every(node=>getComputedStyle(node).overscrollBehaviorY==='auto');
+ const ordinaryCard=$('[data-evid="qa-26-0"]');
+ const cardCSS=getComputedStyle(ordinaryCard);
+ const restingCardElevated=cardCSS.boxShadow!=='none'&&cardCSS.boxShadow.includes('inset')&&cardCSS.backgroundImage.includes('linear-gradient')&&cardCSS.transform==='none';
+ const ribbonElevated=getComputedStyle($('.calendar-continuous-ribbon-v1')).boxShadow.includes('inset');
+ const shadowGutter=Number.parseFloat(getComputedStyle(shortList).paddingInlineStart)>=3&&Number.parseFloat(getComputedStyle(shortList).paddingBottom)>=5;
+ const preview=document.createElement('div');preview.id='calendarEventPreview';preview.className='calendar-event-preview open';document.body.append(preview);
+ const alpha=color=>{const canvas=document.createElement('canvas');canvas.width=canvas.height=1;const ctx=canvas.getContext('2d');ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return ctx.getImageData(0,0,1,1).data[3]};
+ const previewCSS=getComputedStyle(preview);
+ const opaquePreview=alpha(previewCSS.backgroundColor)===255&&previewCSS.backdropFilter==='none'&&previewCSS.boxShadow!=='none';
+ preview.remove();
  $('[data-evid="qa-18-0"]').click();await tick();
+ const popoverCSS=getComputedStyle($('#calendarEventDetailsV1'));
+ const opaquePopover=alpha(popoverCSS.backgroundColor)===255&&popoverCSS.backdropFilter==='none'&&popoverCSS.opacity==='1'&&popoverCSS.boxShadow!=='none';
  const panelPushes=Math.abs(r('#calendarGrid').width-closedWidth)<1&&getComputedStyle($('.app>.main')).transform==='none';
  const popup=r('#calendarEventDetailsV1'),card=r('[data-evid="qa-18-0"]');
  const saturdayVisible=popup.left>=11&&popup.right<=innerWidth-11&&popup.top>=11&&popup.bottom<=innerHeight-11&&(popup.right<=card.left||popup.left>=card.right);
@@ -59,7 +71,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const noRootOverflow=document.documentElement.scrollWidth<=innerWidth;
  const months=[new Date(2026,1,1),new Date(2026,7,1)];let otherMonthsFit=true;
  for(const date of months){calDate=date;renderCalendar();await tick();otherMonthsFit&&=r('#calendarGrid').bottom<=innerHeight-10&&document.querySelectorAll('.day:not(.out)').length===new Date(date.getFullYear(),date.getMonth()+1,0).getDate()}
- document.getElementById('result').textContent=JSON.stringify({monthFits,visibleMonth,startTimeVisible,clockHidden,shortListDoesNotFillBlankSpace,emptyListDoesNotCaptureBlankSpace,crowdedListStillScrolls,crowdedListMoves,pageScrollCanChain,panelPushes,saturdayVisible,participantRailClear,ribbonsKept,openMonthFits,outsideCloses,crowdedDayAccessible,dayToDetails,escapeCloses,noMutation,noRootOverflow,otherMonthsFit});
+ document.getElementById('result').textContent=JSON.stringify({monthFits,visibleMonth,startTimeVisible,clockHidden,shortListDoesNotFillBlankSpace,emptyListDoesNotCaptureBlankSpace,crowdedListStillScrolls,crowdedListMoves,pageScrollCanChain,restingCardElevated,ribbonElevated,shadowGutter,opaquePreview,opaquePopover,panelPushes,saturdayVisible,participantRailClear,ribbonsKept,openMonthFits,outsideCloses,crowdedDayAccessible,dayToDetails,escapeCloses,noMutation,noRootOverflow,otherMonthsFit});
 });`;
 export function fixture({test=true}={}){return '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+(test?'\n.event-details-drawer-v1,body:has(#calendar.section.active) .app>.main:has(#calendar.section.active){transition:none!important}':'')+'\n.app{display:grid;grid-template-columns:180px minmax(0,1fr)}.calendar-head{display:grid;grid-template-columns:repeat(7,1fr)}#result{position:fixed;bottom:0;visibility:hidden}</style><body class="mws-premium sidebar-pinned" data-resolution="fhd"><div class="app"><aside class="sidebar">MAWANG<br>캘린더</aside><main class="main"><div class="topbar"><h1>캘린더</h1><div id="todayText">2026년 11월 18일</div><div class="clock"><span id="clockText">오후 10:46:17</span><button id="newEventBtn">컨텐츠 추가</button></div></div><section id="calendar" class="section active">'+top+'<div class="calendar-responsive-scroll-v1"><div class="calendar-head">'+['일','월','화','수','목','금','토'].map(s=>'<span>'+s+'</span>').join('')+'</div><div id="calendarGrid" class="calendar"></div></div></section></main></div><pre id="result">pending</pre><script>'+read('assets/calendar-continuous-series-v1.js')+'</script><script>'+read('assets/calendar-details-v1.js')+'</script><script>'+bootstrap+(test?checks:'')+'</script></body></html>'}
 if(process.env.MWS_MONTH_FIXTURE){writeFileSync(process.env.MWS_MONTH_FIXTURE,fixture({test:false}));process.exit(0)}
