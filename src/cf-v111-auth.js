@@ -1,6 +1,7 @@
 import appWorker from './cf-v110-steam.js';
 
 const PARTS=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook','wardogs'];
+const CALENDAR_STARTUP_PARTS=['core','events','contacts','clipboard','activity','notebook','contactMeta'];
 const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','achievementCards','contentGroups','gameLibrary'];
 const WARDOGS_CLASS_IDS=Object.freeze(['assault','medic','recon','support','driver','pilot','unassigned']);
 const WARDOGS_CLASS_SET=new Set(WARDOGS_CLASS_IDS);
@@ -403,6 +404,18 @@ async function handleSave(request,env){
   return json({versions,normalized,savedBy:admin.id});
 }
 async function handleManifest(env){await ensureSchema(env);await repairStoredContactImageRefs(env);const {results=[]}=await env.DB.prepare("SELECT part,version FROM workspace_parts WHERE scope='public' ORDER BY part").all();const parts={};for(const row of results)parts[row.part]=Number(row.version)||1;return json({parts,scope:'public',cacheSchemaVersion:3,backend:'cloudflare-d1'})}
+// A single consistent read replaces the manifest -> per-part request waterfall.
+// Known versions are only bandwidth hints: the client verifies its actual cache.
+async function handleCalendarStartup(request,env){
+  let known={};try{const raw=new URL(request.url).searchParams.get('known')||'';if(raw.length<=2048)known=JSON.parse(raw)||{}}catch(_){}
+  await ensureSchema(env);await repairStoredContactImageRefs(env);
+  const versionHints=CALENDAR_STARTUP_PARTS.map(p=>Number.isSafeInteger(known[p])&&known[p]>=0?known[p]:-1);
+  const cases=CALENDAR_STARTUP_PARTS.map(p=>`WHEN '${p}' THEN CASE WHEN version<>? THEN data END`).join(' ');
+  const {results=[]}=await env.DB.prepare(`SELECT part,version,CASE part ${cases} END AS data FROM workspace_parts WHERE scope='public' ORDER BY part`).bind(...versionHints).all();
+  const versions={},parts={};
+  for(const row of results){const version=Number(row.version)||1;versions[row.part]=version;if(CALENDAR_STARTUP_PARTS.includes(row.part)&&row.data!==null&&row.data!==undefined){try{parts[row.part]={part:row.part,version,data:JSON.parse(row.data)}}catch(_){return json({error:'Stored data is invalid'},500)}}}
+  return json({manifest:{parts:versions,scope:'public',cacheSchemaVersion:3,backend:'cloudflare-d1'},parts});
+}
 async function handlePart(env,part){if(!PARTS.includes(part))return json({error:'Invalid part'},400);await ensureSchema(env);if(part==='contacts')await repairStoredContactImageRefs(env);const row=await env.DB.prepare("SELECT part,version,data FROM workspace_parts WHERE scope='public' AND part=?").bind(part).first();if(!row)return json({error:'Part not found'},404);let data;try{data=JSON.parse(row.data)}catch(_){return json({error:'Stored data is invalid'},500)}return json({part:row.part,version:Number(row.version)||1,data})}
 async function handleBootstrap(env){await ensureSchema(env);await repairStoredContactImageRefs(env);const {results=[]}=await env.DB.prepare("SELECT part,version,data FROM workspace_parts WHERE scope='public' ORDER BY part").all();const parts={},versions={};for(const row of results){let data=null;try{data=JSON.parse(row.data)}catch(_){}const version=Number(row.version)||1;versions[row.part]=version;parts[row.part]={part:row.part,version,data}}return json({backend:'cloudflare-d1-r2',mode:'mawang-scheduler-v1.1',build:'Mawang Scheduler v.1.1.0',cacheSchemaVersion:3,manifest:{parts:versions,scope:'public',cacheSchemaVersion:3,backend:'cloudflare-d1'},parts})}
 async function handleMedia(request,env,kind,key){if(!['contact','workspace'].includes(kind)||!/^[A-Za-z0-9_-]{1,160}$/.test(key))return new Response('Invalid media key',{status:400});const url=new URL(request.url),requested=Math.max(0,Number(url.searchParams.get('v'))||0),explicitToken=cleanMediaToken(url.searchParams.get('h'));let object=explicitToken&&requested?await env.IMAGES.get(r2VersionedKey(kind,key,requested,explicitToken)):null;if(!object&&!explicitToken){const current=await currentImageRecord(env,kind,key),currentVersion=Number(current?.version)||0,currentToken=tokenFromImageSource(current?.source_url);if(currentToken&&(!requested||requested===currentVersion))object=await env.IMAGES.get(r2VersionedKey(kind,key,currentVersion,currentToken))}if(!object&&requested)object=await env.IMAGES.get(r2VersionedKey(kind,key,requested));if(!object)object=await env.IMAGES.get(r2Key(kind,key));if(!object)return new Response('Not found',{status:404});const headers=new Headers();object.writeHttpMetadata(headers);headers.set('etag',object.httpEtag);headers.set('x-content-type-options','nosniff');if(url.searchParams.has('v')){headers.set('cache-control','public, max-age=31536000, immutable');headers.set('x-mws-image-policy','original-bytes-no-reencode')}else headers.set('cache-control','public, max-age=300, stale-while-revalidate=86400');return new Response(object.body,{headers})}
@@ -485,6 +498,7 @@ export default{
       if(path==='/api/auth/admins'&&request.method==='POST')return handleAdminCreate(request,env);
       if(path==='/api/health'&&request.method==='GET'){await ensureSchema(env);const admin=await currentAdmin(request,env);return json({ok:true,env:env.MWS_ENV||'cloudflare-production',backend:'D1 + R2 + D1 Auth',authenticated:Boolean(admin),supabase:false,build:'Mawang Scheduler v.1.1.0'})}
       if(path==='/api/manifest'&&request.method==='GET')return handleManifest(env);
+      if(path==='/api/calendar-startup'&&request.method==='GET')return handleCalendarStartup(request,env);
       if(path.startsWith('/api/parts/')&&request.method==='GET')return handlePart(env,decodeURIComponent(path.slice('/api/parts/'.length)));
       if(path==='/api/bootstrap'&&request.method==='GET')return handleBootstrap(env);
       if(path==='/api/save'&&request.method==='POST')return handleSave(request,env);

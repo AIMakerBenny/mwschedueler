@@ -1961,6 +1961,9 @@ function cancelCalendarPointerEventDragV174(event){
 }
 
 function renderCalendar(){
+  // Until the authoritative startup snapshot is committed, do not construct
+  // a misleading empty calendar from local defaults or intermediate data.
+  if(document.body?.dataset?.calendarStartup==='pending'&&!window.__mwsCalendarCommitV2)return;
   hideCalendarEventPreview();
   ensureCalendarYearOptions();
   const y=calDate.getFullYear(),m=calDate.getMonth();
@@ -6802,44 +6805,36 @@ window.startPachinko=()=>{
   setTimeout(()=>{miniGameRuntime.pachinko.running=false;miniGameRuntime.pachinko.winnerId=winner.id;const wel=balls.querySelector(`[data-id="${CSS.escape(winner.id)}"]`);wel?.classList.add('winner');document.getElementById('pachinkoResult').textContent=`JACKPOT · ${winner.name}`;document.getElementById('pachinkoStatus').textContent=`중앙에 가장 가까운 공 · ${winner.name}`;const btn=document.getElementById('pachinkoStartBtn');if(btn)btn.disabled=false;showMiniGameCelebration('PACHINKO JACKPOT',winner.name,winner.image)},maxEnd+250)
 };
 
-// First paint only touches the visible calendar, never hidden contact/game cards.
-// The cloud layer retains the authoritative snapshot until all required parts
-// are validated. This read-only preview must not normalize partial data.
-function renderCalendarShellV1(){
+// Apply device preferences without constructing any calendar cells.
+function renderCalendarPreferencesV2(){
   document.body.dataset.theme=data.theme||'neon';
   safeRenderView('메뉴 고정',syncSidebarPinUI);
   safeRenderView('글자 크기',()=>applyTextScale(data.textScale??100,false));
   safeRenderView('UI 디자인',()=>applyUiFrame(false));
   safeRenderView('배경',applyBackground);
-  safeRenderView('다가오는 일정',updateUpcomingAccent);
-  const ok=safeRenderView('캘린더',renderCalendar);
   safeRenderView('시계',tickClock);
-  return ok;
 }
-window.mwsRenderCalendarFirstV1=snapshot=>{
-  if(window.__mwsCalendarFirstPaintV1||!document.body.classList.contains('mws-app-loading')||document.body.classList.contains('mws-gated')||!isCalendarTabActive())return false;
-  const previous=data;
-  try{
-    data={...snapshot};
-    if(typeof mwsApplyDevicePrefs==='function')mwsApplyDevicePrefs(data);
-    const ok=renderCalendarShellV1();
-    if(ok){window.__mwsCalendarFirstPaintV1={at:performance.now(),events:snapshot.events?.length||0};document.getElementById('calendarGrid')?.setAttribute('aria-busy','true')}
-    return ok;
-  }finally{data=previous}
-};
+function renderCalendarShellV1(){
+  renderCalendarPreferencesV2();
+  safeRenderView('다가오는 일정',updateUpcomingAccent);
+  return safeRenderView('캘린더',renderCalendar);
+}
 window.mwsRenderHydratedCalendarV1=(reason,parts)=>{
   // A manual mode switch away from the calendar keeps the existing full refresh.
   if(!isCalendarTabActive()){renderAll(reason);return}
-  renderCalendarShellV1();
+  const initial=document.body.dataset.calendarStartup==='pending';
+  window.__mwsCalendarCommitV2=true;
+  let ok=false;try{ok=renderCalendarShellV1()}finally{window.__mwsCalendarCommitV2=false}
+  if(initial&&ok){document.body.dataset.calendarStartup='ready';window.__mwsCalendarStartupRenderV2={at:performance.now(),events:data.events?.length||0,cards:document.querySelectorAll('#calendarGrid .mini-event').length,parts:[...parts]}}
+  if(initial&&!ok)throw Error('캘린더 초기 화면을 표시하지 못했습니다.');
   document.getElementById('calendarGrid')?.removeAttribute('aria-busy');
   safeRenderView('저장 상태',()=>updateStorageStatus(true));
   window.__mwsCalendarHydratedV1={at:performance.now(),parts:[...parts]};
 };
 function renderAll(reason=lastSyncReason){
   if(reason==='초기 로드'&&document.body.classList.contains('mws-app-loading')){
-    // Initial HTML shows the calendar immediately. Never paint an outdated
-    // legacy local schedule before the verified Cloudflare rows arrive.
-    const previous=data;try{data={...data,events:[],contacts:[],scheduleClipboard:[]};renderCalendarShellV1()}finally{data=previous}
+    // Keep the loading surface stable; there is no empty grid to replace.
+    renderCalendarPreferencesV2();
     return;
   }
   normalizeDataShape();
