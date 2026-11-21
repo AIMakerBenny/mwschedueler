@@ -10,7 +10,6 @@ const dir=mkdtempSync(path.join(os.tmpdir(),'mws-live-drawer-'));
 let browser;
 try{
   browser=await launchCalendarBrowser(dir);
-  await browser.addInitScript(`(()=>{const writes=[];window.__mwsQaCalendarWritesV2=writes;new MutationObserver(records=>{for(const r of records)if(r.target.id==='calendarGrid'&&r.type==='childList'&&[...r.addedNodes,...r.removedNodes].some(n=>n.nodeType===1&&n.classList?.contains('day'))){const g=document.getElementById('calendarGrid');if(g)writes.push({at:performance.now(),days:g.querySelectorAll('.day').length,cards:[...r.addedNodes].reduce((count,n)=>count+(n.nodeType===1?n.querySelectorAll('.mini-event').length:0),0)})}}).observe(document,{subtree:true,childList:true})})()`);
   const url=base.replace(/\/$/,'')+'/?calendar-popover-v2='+Date.now();
   await browser.navigate(url,1366,768);
   // Public mode may navigate during boot. Poll across document changes rather than
@@ -57,7 +56,7 @@ try{
   }
   assert(ready,'No stable hydrated public calendar: '+JSON.stringify(lastState));
   assert(ready.cards>0&&ready.version&&!ready.reduced&&ready.noPreferenceControl,JSON.stringify(ready));
-  const startupExpression=`(()=>({commit:window.__mwsCalendarStartupRenderV2,writes:window.__mwsQaCalendarWritesV2,metrics:window.mwsV55EgressReport?.().requests.filter(r=>r.type==='calendar-startup-batch'||r.type==='calendar-startup-commit'||r.type==='hydrate-complete'),request:performance.getEntriesByType('resource').find(e=>e.name.includes('/api/calendar-startup'))?.startTime}))()`;
+  const startupExpression=`(()=>({commit:window.__mwsCalendarStartupRenderV2,writes:window.__mwsCalendarRenderHistoryV2,metrics:window.mwsV55EgressReport?.().requests.filter(r=>r.type==='calendar-startup-batch'||r.type==='calendar-startup-commit'||r.type==='hydrate-complete'),request:performance.getEntriesByType('resource').find(e=>e.name.includes('/api/calendar-startup'))?.startTime}))()`;
   const verifyStartup=startup=>{
     assert(startup.commit?.cards>0&&startup.writes?.length===1&&startup.writes[0].cards===startup.commit.cards,JSON.stringify(startup));
     assert(startup.metrics?.[0]?.type==='calendar-startup-batch'&&startup.metrics.some(r=>r.type==='calendar-startup-commit')&&Number.isFinite(startup.request),JSON.stringify(startup));
