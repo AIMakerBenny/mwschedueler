@@ -1,7 +1,9 @@
 /* Scoped to the ladder only. Other mini games retain their existing layout. */
-#gameLadder.active{max-width:1260px!important;margin-inline:auto;min-width:0;--ladder-list-height:clamp(150px,calc(100dvh - 510px),480px);container-type:inline-size}
+#gameLadder.active{box-sizing:border-box;width:100%;max-width:none!important;margin:0;min-width:0;padding:0!important;container-type:inline-size;display:grid!important;grid-template-rows:auto minmax(0,1fr) auto;gap:12px;height:var(--ladder-workspace-height,calc(100dvh - 125px));min-height:420px}
+#gameLadder.active:has([data-ladder-page="3"]:not([hidden])){grid-template-rows:auto minmax(0,1fr)}
+#gameLadder.active[data-ladder-compact="true"]{height:auto;min-height:0;display:block!important}
 #gameLadder [data-ladder-page][hidden],#gameLadder .ladder-wizard-footer[hidden],#gameLadder .ladder-wizard-footer [hidden],#gameLadder #ladderPlayerButtons[hidden]{display:none!important}
-#gameLadder .ladder-wizard-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:0 0 13px;padding:4px;background:var(--panel);border:1px solid var(--border);border-radius:13px}
+#gameLadder .ladder-wizard-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:0;padding:4px;background:var(--panel);border:1px solid var(--border);border-radius:13px}
 #gameLadder .ladder-wizard-steps button{display:flex;align-items:center;gap:10px;min-width:0;text-align:left;padding:8px 12px;border:1px solid transparent;border-radius:9px;background:transparent;box-shadow:none;color:var(--muted);transition:background .2s,border-color .2s,color .2s}
 #gameLadder .ladder-wizard-steps button:focus:not(:focus-visible){outline:none!important}
 #gameLadder .ladder-wizard-steps button:focus-visible{outline:2px solid var(--accent)!important;outline-offset:2px}
@@ -13,21 +15,20 @@
 #gameLadder .ladder-wizard-steps button.current>span{background:var(--accent);color:#fff}
 #gameLadder .ladder-wizard-steps button.complete>span{background:color-mix(in srgb,var(--accent) 18%,var(--input));color:var(--text)}
 #gameLadder .ladder-wizard-steps button:disabled:not(.current){opacity:.56;cursor:default}
-#gameLadder .ladder-wizard-page{min-width:0;animation:ladder-wizard-enter .32s cubic-bezier(.25,.65,.3,1) both}
+#gameLadder .ladder-wizard-page{min-width:0;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;animation:ladder-wizard-enter .32s cubic-bezier(.25,.65,.3,1) both}
 @keyframes ladder-wizard-enter{from{opacity:.2;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
 @keyframes ladder-wizard-fade{from{opacity:.2}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){#gameLadder .ladder-wizard-page{animation:ladder-wizard-fade .18s ease-out both}}
-#gameLadder .ladder-wizard-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px;padding:0 2px}
+#gameLadder .ladder-wizard-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0;padding:0 2px}
 #gameLadder .ladder-wizard-heading h2{font-size:clamp(18px,1.6vw,23px);font-weight:800;margin:0 0 3px;letter-spacing:-.025em}
 #gameLadder .ladder-wizard-heading p{font-size:12px;line-height:1.55;color:var(--muted);margin:0}
 #gameLadder .ladder-wizard-count{flex:0 0 auto;border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));border-radius:999px;background:color-mix(in srgb,var(--accent) 8%,var(--panel));font-size:13px;font-weight:750;padding:8px 13px;color:var(--text)}
-#gameLadder .ladder-wizard-roster{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(240px,1fr);gap:12px;align-items:start}
-#gameLadder .ladder-wizard-config{display:grid;grid-template-columns:minmax(210px,.8fr) minmax(0,1.5fr);gap:12px;align-items:start}
+#gameLadder .ladder-wizard-roster{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,30%);gap:12px;min-height:0;align-items:stretch}
+#gameLadder .ladder-wizard-config{display:grid;grid-template-columns:minmax(240px,30%) minmax(0,1fr);gap:12px;min-height:0;align-items:stretch}
 #gameLadder .ladder-wizard-roster>.card,#gameLadder .ladder-wizard-config>.card,#gameLadder .ladder-stage-card{min-width:0;padding:12px!important;border-radius:13px!important;background:linear-gradient(155deg,color-mix(in srgb,var(--panel) 97%,var(--accent)),var(--panel))!important;box-shadow:0 7px 20px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.04)}
 #gameLadder .ladder-wizard-roster h3,#gameLadder .ladder-wizard-config h3{font-size:15px;margin:0;font-weight:800}
 #gameLadder.active .ladder-contact-dock,#gameLadder .ladder-wizard-selected{display:flex!important;flex-direction:column;position:static!important;height:auto!important;max-height:none!important;min-height:0!important;overflow:hidden!important;align-self:stretch!important;z-index:auto!important}
-#gameLadder .ladder-wizard-selected{align-self:start!important}
-#gameLadder.active #ladderContactPalette{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,146px),1fr));gap:6px;align-content:start;max-height:var(--ladder-list-height)!important;min-height:140px!important;flex:1 1 auto!important;overflow:auto;padding:2px 4px 2px 2px;scrollbar-gutter:stable}
+#gameLadder.active #ladderContactPalette{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,clamp(156px,13cqw,220px)),1fr));gap:8px;align-content:start;max-height:none!important;min-height:0!important;flex:1 1 0!important;overflow:auto;padding:2px 4px 2px 2px;scrollbar-gutter:stable}
 #gameLadder .ladder-contact-choice{display:flex;align-items:center;gap:9px;min-width:0;text-align:left;min-height:64px;padding:8px!important;border:1px solid var(--border);border-radius:11px!important;background:var(--input);box-shadow:0 2px 6px rgba(0,0,0,.07);transition:background .15s,border-color .15s,transform .15s;cursor:pointer}
 #gameLadder .ladder-contact-choice:hover:not(:disabled){border-color:var(--accent);transform:translateY(-1px)}
 #gameLadder .ladder-contact-choice[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--input));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 30%,transparent)}
@@ -38,11 +39,13 @@
 #gameLadder .ladder-choice-info small{font-size:10px;color:var(--muted);font-weight:500}
 #gameLadder .ladder-choice-mark{width:22px;height:22px;flex:0 0 22px;display:grid;place-items:center;border:1px solid var(--border);border-radius:50%;color:var(--muted);font-size:15px;line-height:1}
 #gameLadder .ladder-contact-choice[aria-pressed="true"] .ladder-choice-mark{background:var(--accent);color:white;border-color:transparent}
-#gameLadder #ladderPlayerList{flex:0 1 auto;margin-top:8px;min-height:54px;max-height:var(--ladder-list-height)!important;display:flex;overflow:auto}
+#gameLadder #ladderPlayerList{flex:1 1 0;margin-top:8px;min-height:0;max-height:none!important;display:flex;overflow:auto}
 #gameLadder #ladderPlayerList .mini-entry-row{grid-template-columns:36px minmax(0,1fr) 30px!important;min-height:49px;padding:6px!important}
 #gameLadder .ladder-wizard-selected .mini-manual-add{margin:12px 0 0}
 #gameLadder .ladder-wizard-selected.drag-over{border-color:var(--accent)!important}
-#gameLadder .ladder-wizard-presets{display:grid;gap:9px}
+#gameLadder .ladder-wizard-presets{display:grid;gap:9px;min-height:0;align-content:start;overflow:auto}
+#gameLadder .ladder-wizard-prizes{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+@container (min-width:1400px){#gameLadder .ladder-wizard-presets{grid-template-columns:repeat(2,minmax(0,1fr))}#gameLadder .ladder-wizard-presets>:is(h3,p,label){grid-column:1/-1}#gameLadder .ladder-preset{min-height:88px}}
 #gameLadder .ladder-wizard-config p{margin:5px 0 9px;font-size:12px;line-height:1.55}
 #gameLadder .ladder-winner-field{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--muted);font-size:12px}
 #gameLadder #ladderWinnerCount{width:76px;text-align:center}
@@ -51,34 +54,44 @@
 #gameLadder .ladder-preset[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--input));box-shadow:inset 3px 0 0 var(--accent)}
 #gameLadder .ladder-preset strong{font-size:14px;color:var(--text)}
 #gameLadder .ladder-preset small{font-size:11px;color:var(--muted);font-weight:500}
-#gameLadder #ladderPrizeList{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:7px;max-height:var(--ladder-list-height)!important;overflow:auto;padding:0}
+#gameLadder #ladderPrizeList{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:8px;align-content:start;min-height:0;max-height:none!important;overflow:auto;padding:0;flex:1 1 0}
 #gameLadder #ladderPrizeList .mini-entry-row{display:grid;grid-template-columns:33px minmax(0,1fr)!important;padding:8px!important;min-height:52px}
 #gameLadder #ladderPrizeList .mini-entry-avatar{width:33px;height:33px;background:color-mix(in srgb,var(--accent) 12%,var(--panel));font-size:12px}
-#gameLadder .ladder-stage-card{min-height:0!important;max-width:100%;overflow:hidden;display:grid;gap:8px;grid-template-columns:minmax(0,1fr) minmax(190px,.30fr);align-items:start}
-#gameLadder .ladder-canvas-wrap{grid-column:1;grid-row:2;overflow:auto;min-width:0;max-width:100%;min-height:0!important;padding:4px;border-radius:10px;background:var(--input)}
-/* Logical coordinates stay fixed during a run, so resizing cannot distort
-   paths. Constrain the board by both available width and viewport height. */
-#gameLadder #ladderCanvas{width:min(100%,calc(clamp(175px,100dvh - 510px,440px) * 2.833333));height:auto;max-width:none;min-width:min(100%,calc(var(--ladder-lanes,4) * 59px));display:block;aspect-ratio:1360/480;margin:auto}
+#gameLadder .ladder-stage-card{min-height:0!important;max-width:100%;overflow:hidden;display:grid;gap:12px;grid-template-columns:minmax(0,1fr) clamp(235px,24%,400px);grid-template-rows:auto minmax(0,1fr);align-items:stretch}
+#gameLadder .ladder-board-column{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0;grid-column:1;grid-row:2}
+#gameLadder .ladder-canvas-wrap{flex:1 1 0;overflow:auto;min-width:0;max-width:100%;min-height:0!important;padding:4px;border-radius:10px;background:var(--input)}
+/* The canvas backing store follows the actual CSS rectangle at device pixel
+   density. No aspect ratio, width or height ceiling constrains the board. */
+#gameLadder #ladderCanvas{width:100%;height:100%;min-width:0;max-width:none;display:block;margin:0;aspect-ratio:auto}
 #gameLadder .ladder-stage-toolbar{flex-wrap:wrap;margin:0;gap:8px;grid-column:1/-1}
 #gameLadder .ladder-action-row button{min-height:36px!important;padding:0 13px!important}
-#gameLadder #ladderPlayerButtons{display:grid;grid-column:1;grid-template-columns:repeat(auto-fit,minmax(78px,1fr))!important;gap:5px!important;margin:0!important}
+#gameLadder #ladderPlayerButtons{display:grid;flex:0 0 auto;grid-template-columns:repeat(auto-fit,minmax(78px,1fr))!important;gap:5px!important;margin:0!important}
 #gameLadder #ladderPlayerButtons button{min-height:28px!important;font-size:11px!important;padding:4px 6px!important}
-#gameLadder .ladder-result-panel{grid-column:1;min-height:0!important;margin:0;padding:7px 10px!important;font-size:12px!important}
-#gameLadder .ladder-summary-shell{grid-column:2;grid-row:2/span 3;min-width:0;margin:0!important;padding:8px!important;background:var(--panel);border-radius:10px;border-color:var(--border)}
-#gameLadder .ladder-summary-shell h3{font-size:13px;margin:0}
-#gameLadder .ladder-full-result-list{grid-template-columns:1fr!important;max-height:clamp(160px,calc(100dvh - 485px),420px)!important;overflow:auto!important;gap:5px;margin-top:5px}
-#gameLadder .ladder-full-result-row{padding:6px 8px;gap:6px;border-radius:8px;background:var(--input);border-color:var(--border)}
-#gameLadder .ladder-full-result-row .ladder-result-avatar{width:27px;height:27px;flex:0 0 27px;border-radius:7px;font-size:11px}
+#gameLadder .ladder-result-panel{flex:0 0 auto;min-height:0!important;margin:0;padding:9px 10px!important;font-size:clamp(12px,1cqw,16px)!important}
+#gameLadder .ladder-summary-shell{grid-column:2;grid-row:2;display:flex;flex-direction:column;min-width:0;min-height:0;margin:0!important;padding:12px!important;background:var(--panel);border-radius:10px;border-color:var(--border)}
+#gameLadder .ladder-summary-shell h3{font-size:clamp(15px,1.1cqw,19px);margin:0}
+#gameLadder .ladder-full-result-list{display:grid;grid-template-columns:1fr!important;align-content:start;flex:1 1 0;min-height:0;max-height:none!important;overflow:auto!important;gap:8px;margin-top:10px}
+#gameLadder .ladder-full-result-row{padding:9px 10px;gap:8px;border-radius:9px;background:var(--input);border-color:var(--border)}
+#gameLadder .ladder-full-result-row .ladder-result-avatar{width:clamp(30px,2.2cqw,44px);height:clamp(30px,2.2cqw,44px);flex:0 0 clamp(30px,2.2cqw,44px);border-radius:9px;font-size:13px}
 #gameLadder .ladder-full-result-left{gap:6px}
 #gameLadder .ladder-full-result-meta,#gameLadder .ladder-full-result-caption{display:none}
-#gameLadder .ladder-full-result-name{font-size:12px;font-weight:650;color:var(--text)}
-#gameLadder .ladder-full-result-label{font-size:13px;line-height:1.3;color:var(--text);overflow-wrap:anywhere}
+#gameLadder .ladder-full-result-name{font-size:clamp(13px,1cqw,17px);font-weight:650;color:var(--text)}
+#gameLadder .ladder-full-result-label{font-size:clamp(14px,1.1cqw,19px);line-height:1.3;color:var(--text);overflow-wrap:anywhere}
 #gameLadder .ladder-full-result-row.revealed{border-color:color-mix(in srgb,var(--accent) 40%,var(--border))}
 #gameLadder .ladder-full-result-row.revealed .ladder-full-result-label{color:var(--accent)}
 /* The complete result list below is the single visible results overview. */
 #gameLadder .ladder-auto-result-slots{display:none!important}
-#gameLadder .ladder-wizard-footer{display:flex;align-items:center;gap:10px;justify-content:flex-end;margin:10px 0 0;padding:8px 0;border-top:1px solid var(--border)}
+#gameLadder .ladder-wizard-footer{display:flex;align-items:center;gap:10px;justify-content:flex-end;margin:0;padding:8px 0 0;border-top:1px solid var(--border)}
 #gameLadder .ladder-wizard-footer>span{flex:1;color:var(--muted);font-size:12px}
 #gameLadder .ladder-wizard-footer button{min-height:36px;min-width:104px;border-radius:9px!important}
-@container (max-width:850px){#gameLadder .ladder-stage-card{grid-template-columns:minmax(0,1fr)}#gameLadder .ladder-summary-shell{grid-column:1;grid-row:auto}#gameLadder .ladder-full-result-list{grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr))!important;max-height:90px!important}#gameLadder #ladderCanvas{width:min(100%,calc(clamp(150px,100dvh - 530px,380px) * 2.833333))}}
-@container (max-width:680px){#gameLadder .ladder-wizard-roster,#gameLadder .ladder-wizard-config{grid-template-columns:1fr}#gameLadder .ladder-wizard-steps button{padding:7px 5px;gap:5px}#gameLadder .ladder-wizard-steps button>span{width:25px;height:25px;flex-basis:25px}#gameLadder .ladder-wizard-steps button small{display:none}#gameLadder .ladder-wizard-steps button strong{font-size:12px}#gameLadder .ladder-wizard-heading{align-items:flex-start}#gameLadder #ladderCanvas{min-width:calc(var(--ladder-lanes,4) * 66px);width:100%}#gameLadder .ladder-wizard-footer{flex-wrap:wrap}#gameLadder .ladder-wizard-footer>span{min-width:100%;order:-1}#gameLadder .ladder-full-result-list{max-height:180px!important}}
+#gameLadder[data-ladder-compact="true"] .ladder-wizard-steps{margin-bottom:12px}
+#gameLadder[data-ladder-compact="true"] .ladder-wizard-page{display:block}
+#gameLadder[data-ladder-compact="true"] .ladder-wizard-heading{margin-bottom:12px}
+#gameLadder[data-ladder-compact="true"] :is(#ladderPlayerList,#ladderPrizeList,#ladderContactPalette){flex:0 1 auto!important;max-height:350px!important;min-height:100px!important}
+#gameLadder[data-ladder-compact="true"] .ladder-stage-card{grid-template-rows:auto auto;grid-template-columns:minmax(0,1fr)}
+#gameLadder[data-ladder-compact="true"] .ladder-canvas-wrap{flex:none;height:clamp(260px,55dvh,560px)}
+#gameLadder[data-ladder-compact="true"] #ladderCanvas{min-width:calc(var(--ladder-lanes,4) * 76px)}
+#gameLadder[data-ladder-compact="true"] .ladder-summary-shell{grid-column:1;grid-row:3}
+#gameLadder[data-ladder-compact="true"] .ladder-full-result-list{flex:none;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr))!important;max-height:240px!important}
+#gameLadder[data-ladder-compact="true"] .ladder-wizard-footer{margin:12px 0 0}
+@container (max-width:680px){#gameLadder .ladder-wizard-roster,#gameLadder .ladder-wizard-config{grid-template-columns:1fr}#gameLadder .ladder-wizard-steps button{padding:7px 5px;gap:5px}#gameLadder .ladder-wizard-steps button>span{width:25px;height:25px;flex-basis:25px}#gameLadder .ladder-wizard-steps button small{display:none}#gameLadder .ladder-wizard-steps button strong{font-size:12px}#gameLadder .ladder-wizard-heading{align-items:flex-start}#gameLadder .ladder-wizard-footer{flex-wrap:wrap}#gameLadder .ladder-wizard-footer>span{min-width:100%;order:-1}}

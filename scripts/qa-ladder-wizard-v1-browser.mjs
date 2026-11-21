@@ -8,7 +8,7 @@ import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const index=read('index.html'),core=read('assets/app-core.js'),wizard=read('assets/ladder-wizard-v1.js');
 const markup=index.slice(index.indexOf('<section id="gameLadder"'),index.indexOf('<section id="gameRps"'));
-assert(index.includes('assets/ladder-wizard-v1.js?v=2')&&index.includes('assets/ladder-wizard-v1.css?v=3'));
+assert(index.includes('assets/ladder-wizard-v1.js?v=3')&&index.includes('assets/ladder-wizard-v1.css?v=4'));
 assert.equal((markup.match(/data-ladder-page=/g)||[]).length,3);
 function part(start,end,last=false){const a=last?core.lastIndexOf(start):core.indexOf(start),b=core.indexOf(end,a+start.length);assert(a>=0&&b>a,start);return core.slice(a,b)}
 // Use the actual legacy renderer and CSPRNG game implementation, with just
@@ -41,11 +41,11 @@ ${part('function ladderAllResults()','const _shuffleLadderOrdersV413=')}
 new Function(bootstrap);
 const css=['assets/app-core.css','assets/mawang-premium-v1621.css','assets/device-ui.css','assets/ui-frame-presets.css','assets/workspace-clean-v1.css','assets/ladder-wizard-v1.css'].map(read).join('\n');
 const dir=mkdtempSync(path.join(os.tmpdir(),'mws-ladder-wizard-')),file=path.join(dir,'fixture.html');
-writeFileSync(file,`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}\nbody{margin:0}#gameLadder{padding:18px}</style><body class="mws-premium"><div style="height:78px"></div>${markup.replace('class="section mini-game-section"','class="section mini-game-section active"')}<script>${bootstrap}</script><script>${wizard}</script><script>renderLadder()</script>`);
+writeFileSync(file,`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}\nbody{margin:0}#fixture-main{margin-left:200px;padding:22px} @media(max-width:850px){#fixture-main{margin:0;padding:12px}}</style><body class="mws-premium"><main id="fixture-main"><div style="height:56px"></div>${markup.replace('class="section mini-game-section"','class="section mini-game-section active"')}</main><script>${bootstrap}</script><script>${wizard}</script><script>renderLadder()</script>`);
 let browser;
 try{
   browser=await launchCalendarBrowser(dir);
-  for(const [w,h] of [[1366,768],[1920,1080],[390,844]]){
+  for(const [w,h] of [[1366,768],[1920,900],[1920,1080],[2560,1440],[2844,1578],[390,844]]){
     await browser.navigate(pathToFileURL(file).href+'?size='+w,w,h);
     const state=await browser.evaluate(`(()=>{
       const $=id=>document.getElementById(id),click=sel=>document.querySelector(sel).click(),visible=()=>[...document.querySelectorAll('[data-ladder-page]')].filter(p=>getComputedStyle(p).display!=='none').map(p=>Number(p.dataset.ladderPage)),labels=()=>data.miniGames.ladder.prizes.map(p=>p.label),n=()=>data.miniGames.ladder.players.length;
@@ -70,6 +70,11 @@ try{
     assert.deepEqual(state.initialPrizes,['당첨','꽝','꽝','꽝']);assert(state.presetSelected);
     for(const k of ['initialBlocked','searchKept','toggled','cap','manualCap','manual','blankBlocked','customKept','otherUnchanged'])assert(state[k],k+': '+JSON.stringify(state));
     assert.deepEqual(state.winner,['당첨','당첨','꽝','꽝']);assert.deepEqual(state.rank,['1등','2등','3등','4등']);assert.deepEqual(state.teams,['A팀','B팀','A팀','B팀']);assert.deepEqual(state.defaults,['결과 1','결과 2','결과 3','결과 4']);assert(!state.overflow,JSON.stringify(state));
+    const fit=await browser.evaluate(`(async()=>{await new Promise(r=>setTimeout(r,360));const root=document.getElementById('gameLadder'),canvas=document.getElementById('ladderCanvas'),stage=root.querySelector('.ladder-stage-card'),column=root.querySelector('.ladder-board-column'),rect=e=>e.getBoundingClientRect();return {root:rect(root).width,available:document.getElementById('fixture-main').clientWidth-44,stage:rect(stage).width,bottom:rect(stage).bottom,top:rect(stage).top,canvas:rect(canvas).width,canvasHeight:rect(canvas).height,column:rect(column).width,backingWidth:canvas.width,backingHeight:canvas.height,clientWidth:canvas.clientWidth,clientHeight:canvas.clientHeight,compact:root.dataset.ladderCompact}})()`);
+    assert(Math.abs(fit.backingWidth-fit.clientWidth)<=1&&Math.abs(fit.backingHeight-fit.clientHeight)<=1,'Canvas backing store: '+JSON.stringify(fit));
+    if(w>850){assert(fit.root>=fit.available*.98&&fit.stage>=fit.root*.98&&fit.canvas>=fit.column*.97&&fit.canvas>=fit.root*.68&&fit.canvasHeight>=(fit.bottom-fit.top)*.65&&fit.bottom>=h-45&&fit.bottom<=h,'Workspace coverage: '+JSON.stringify(fit));assert.equal(fit.compact,'false')}
+    else assert.equal(fit.compact,'true');
+    console.log('LADDER_WORKSPACE_FIT_OK',w,h,JSON.stringify(fit));
     if(w===1366){
       const result=await browser.evaluate(`(async()=>{const $=id=>document.getElementById(id);const pending=autoStartLadder();const locked=$('ladderWizardBack').disabled&&$('ladderResetBtn').disabled&&$('ladderPlayerButtons').inert;const before=data.miniGames.ladder.players.length;miniRemoveEntry('ladder',data.miniGames.ladder.players[0].id);const guarded=before===data.miniGames.ladder.players.length;await pending;const entries=miniGameRuntime.ladder.autoResultEntries.filter(Boolean),unique=new Set(entries.map(p=>p.id)).size;const results=$('ladderFullResultList').querySelectorAll('.revealed').length;const unlocked=!$('ladderWizardBack').disabled&&!$('ladderResetBtn').disabled;resetLadderBoard();return {locked,guarded,unique,results,unlocked,cleared:!miniGameRuntime.ladder.generated&&!miniGameRuntime.ladder.autoResultEntries.length}})()`);
       assert.deepEqual(result,{locked:true,guarded:true,unique:4,results:4,unlocked:true,cleared:true});console.log('LADDER_GAME_ENGINE_OK',JSON.stringify(result));
