@@ -15,13 +15,13 @@
   const validPrizes=()=>validRoster()&&prizes().length===players().length&&prizes().every(p=>String(p.label||'').trim());
   const rosterKey=()=>JSON.stringify(players().map(p=>p.id).sort());
   let step=1,furthest=1,key=null,paletteKey=null,preset='winner',shufflePhase=null;
-  const shuffleTempo={initial:240,fast:60,accelerate:900,brake:1100,slow:340,hold:220};
-  let shuffleStartedAt=0,shuffleStoppedAt=0,shuffleStopInterval=0;
+  const shuffleTempo={fast:60,brake:1100,slow:340,hold:220,blind:580};
+  let shuffleStartedAt=0,shuffleStoppedAt=0,blindProgress=0;
   const smoothstep=t=>{const x=Math.max(0,Math.min(1,t));return x*x*(3-2*x)};
   function shuffleInterval(now){
-    const {initial,fast,accelerate,brake,slow}=shuffleTempo;
-    if(shufflePhase==='settle')return shuffleStopInterval+(slow-shuffleStopInterval)*smoothstep((now-shuffleStoppedAt)/brake);
-    return initial+(fast-initial)*smoothstep((now-shuffleStartedAt)/accelerate);
+    const {fast,brake,slow}=shuffleTempo;
+    if(shufflePhase==='settle')return fast+(slow-fast)*smoothstep((now-shuffleStoppedAt)/brake);
+    return fast;
   }
   const nav=$('ladderWizardSteps'),header=$('pageTitle')?.parentElement;
   const pages=[...root.querySelectorAll('[data-ladder-page]')],steps=[...nav.querySelectorAll('[data-ladder-step]')];
@@ -85,26 +85,47 @@
     ctx.setTransform(bw/w,0,0,bh/h,0,0);ctx.clearRect(0,0,w,h);
     const padX=Math.min(w/Math.max(2,g.n*2),Math.max(42,w/13)),padY=Math.min(h/5,Math.max(36,h*.10));
     const mapX=x=>padX+(x-72)/(1288-72)*(w-2*padX),mapY=y=>padY+(y-g.top)/(g.bottom-g.top)*(h-2*padY);
-    const lane=g.n>1?(w-2*padX)/(g.n-1):w;
+    const lane=g.n>1?(w-2*padX)/(g.n-1):w,style=getComputedStyle(root);
+    const ink=style.getPropertyValue('--text').trim()||'#f5f7ff',panel=style.getPropertyValue('--panel').trim()||'#181b22',input=style.getPropertyValue('--input').trim()||'#11151c';
     const line=(x1,y1,x2,y2)=>{ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke()};
-    ctx.lineCap='round';ctx.strokeStyle='#54617a';ctx.lineWidth=Math.max(1.5,Math.min(2.5,w/520));
-    g.xs.forEach(x=>line(mapX(x),padY,mapX(x),h-padY));
-    if(miniGameRuntime.ladder.generated)for(const r of miniGameRuntime.ladder.rungs){const y=mapY(g.top+(g.bottom-g.top)*(r.row+1)/(g.rows+1));line(mapX(g.xs[r.left]),y,mapX(g.xs[r.left+1]),y)}
+    // Recessed board with a restrained lane grid and metallic two-tone rails.
+    const bed=ctx.createLinearGradient(0,padY,0,h-padY);bed.addColorStop(0,panel);bed.addColorStop(1,input);ctx.fillStyle=bed;ctx.fillRect(0,padY-8,w,h-2*padY+16);
+    ctx.save();ctx.strokeStyle='#8191b412';ctx.lineWidth=1;for(let i=1;i<=g.rows;i++){const y=mapY(g.top+(g.bottom-g.top)*i/(g.rows+1));line(0,y,w,y)}ctx.restore();
+    ctx.lineCap='round';const rail=ctx.createLinearGradient(0,padY,0,h-padY);rail.addColorStop(0,'#8393b1');rail.addColorStop(.5,'#53617d');rail.addColorStop(1,'#8090ab');
+    const rails=[];g.xs.forEach(x=>rails.push([mapX(x),padY,mapX(x),h-padY]));
+    if(miniGameRuntime.ladder.generated)for(const r of miniGameRuntime.ladder.rungs){const y=mapY(g.top+(g.bottom-g.top)*(r.row+1)/(g.rows+1));rails.push([mapX(g.xs[r.left]),y,mapX(g.xs[r.left+1]),y])}
+    ctx.strokeStyle='#090b1490';ctx.lineWidth=5;rails.forEach(r=>line(...r));ctx.strokeStyle=rail;ctx.lineWidth=Math.max(2,Math.min(3,w/420));rails.forEach(r=>line(...r));
+    // The blind is painted over rails only. Names and prize labels are not
+    // part of the covered region; revealed paths are composited above it.
+    canvas.dataset.blindProgress=blindProgress.toFixed(3);
+    if(blindProgress>0){
+      const top=padY-8,height=(h-2*padY+16)*blindProgress,bottom=top+height;
+      ctx.save();ctx.beginPath();ctx.rect(0,top,w,height);ctx.clip();
+      const shade=ctx.createLinearGradient(0,top,0,h-padY);shade.addColorStop(0,panel);shade.addColorStop(1,input);ctx.fillStyle=shade;ctx.fillRect(0,top,w,height);
+      ctx.fillStyle='#8795bc0b';for(let y=top;y<bottom;y+=24)ctx.fillRect(0,y,w,12);
+      ctx.strokeStyle='#899bb320';ctx.lineWidth=1;for(let y=top+24;y<bottom;y+=24)line(0,y,w,y);
+      ctx.fillStyle='#899bb33b';ctx.fillRect(0,bottom-4,w,4);
+      if(blindProgress>.96&&!lastPoints?.length){ctx.font=`650 ${Math.min(16,Math.max(12,w/55))}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=style.getPropertyValue('--muted').trim()||'#91a1bc';ctx.fillText('BLIND',w/2,(top+bottom)/2-10);ctx.font='11px sans-serif';ctx.fillText('경로 비공개',w/2,(top+bottom)/2+12)}
+      ctx.restore();
+    }
     const font=Math.max(12,Math.min(26,w/58,lane/5.5,padY*.57));
     const labelWidth=Math.max(18,Math.min(lane-12,padX*2-10));
     const label=(value,x,y)=>{let s=String(value||'');if(ctx.measureText(s).width>labelWidth){while(s.length>1&&ctx.measureText(s+'…').width>labelWidth)s=s.slice(0,-1);s+='…'}ctx.fillText(s,x,y)};
     ctx.font=`750 ${font}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillStyle=getComputedStyle(root).getPropertyValue('--text').trim()||'#f5f7ff';
-    players().forEach((p,i)=>label(p.name,mapX(g.xs[i]),padY/2));
-    ctx.fillStyle='#ffd96a';prizes().slice(0,g.n).forEach((p,i)=>label(p.label||`결과 ${i+1}`,mapX(g.xs[i]),h-padY/2));
-    if(lastPoints?.length&&miniGameRuntime.ladder.generated)drawRoute(ctx,lastPoints.map(p=>({x:mapX(p.x),y:mapY(p.y)})),lastProgress);
+    const pill=(x,y,text,active,winner=false)=>{const pw=Math.min(lane-6,padX*2-8,Math.max(34,ctx.measureText(text).width+18)),ph=Math.min(padY-10,font+15);ctx.fillStyle=active?(winner?'#8b702c55':'#8b5cf644'):panel;ctx.beginPath();ctx.roundRect(x-pw/2,y-ph/2,pw,ph,Math.min(10,ph/2));ctx.fill();ctx.strokeStyle=active?(winner?'#f0ca68':'#9c79fe'):'#899bb32a';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle=winner?'#e5b64b':ink;label(text,x,y)};
+    const entries=miniGameRuntime.ladder.autoResultEntries||[],active=miniGameRuntime.ladder.activePlayer;
+    players().forEach((p,i)=>pill(mapX(g.xs[i]),padY/2,p.name,active===i||entries.some(e=>e?.id===p.id)));
+    prizes().slice(0,g.n).forEach((p,i)=>pill(mapX(g.xs[i]),h-padY/2,p.label||`결과 ${i+1}`,Boolean(entries[i]),p.label==='당첨'));
+    const mapped=pts=>pts.map(p=>({x:mapX(p.x),y:mapY(p.y)}));
+    if(blindProgress>0&&miniGameRuntime.ladder.generated)players().forEach((p,i)=>{if(i!==active&&entries.some(e=>e?.id===p.id))drawRoute(ctx,mapped(ladderPath(i).points),1,'#baa6fc',true)});
+    if(lastPoints?.length&&miniGameRuntime.ladder.generated){const revealed=entries.find(e=>e?.id===players()[active]?.id),win=revealed&&prizes()[entries.indexOf(revealed)]?.label==='당첨';drawRoute(ctx,mapped(lastPoints),lastProgress,win?'#ffdc66':'#ac8cff')}
   };
-  function drawRoute(ctx,points,progress){
+  function drawRoute(ctx,points,progress,color='#ac8cff',muted=false){
     const lengths=points.slice(1).map((p,i)=>Math.hypot(p.x-points[i].x,p.y-points[i].y));
     let remaining=lengths.reduce((sum,n)=>sum+n,0)*progress,marker=points[0];
-    ctx.save();ctx.strokeStyle='#ffe14a';ctx.shadowColor='#ffe14a';ctx.shadowBlur=6;ctx.lineWidth=4;ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(marker.x,marker.y);
+    ctx.save();ctx.strokeStyle=color;ctx.shadowColor=color;ctx.shadowBlur=muted?0:13;ctx.globalAlpha=muted?.38:1;ctx.lineWidth=muted?2.5:5;ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(marker.x,marker.y);
     for(let i=0;i<lengths.length;i++){const a=points[i],b=points[i+1],len=lengths[i],t=len?Math.min(1,remaining/len):1;marker={x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};ctx.lineTo(marker.x,marker.y);remaining-=len;if(t<1)break}
-    ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle='#fff6a1';ctx.beginPath();ctx.arc(marker.x,marker.y,5,0,Math.PI*2);ctx.fill();ctx.restore();
+    ctx.stroke();if(!muted){ctx.shadowBlur=0;ctx.strokeStyle='#fff';ctx.globalAlpha=.48;ctx.lineWidth=1.5;ctx.stroke();ctx.globalAlpha=.18;ctx.fillStyle=color;ctx.beginPath();ctx.arc(marker.x,marker.y,12,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;ctx.shadowColor=color;ctx.shadowBlur=12;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(marker.x,marker.y,5,0,Math.PI*2);ctx.fill()}ctx.restore();
   }
   function scheduleFit(){if(resizeFrame)return;resizeFrame=requestAnimationFrame(()=>{resizeFrame=0;fitWorkspace();if(canvas.clientWidth&&canvas.clientHeight)drawLadder(lastPoints,lastProgress)})}
   const observer=new ResizeObserver(scheduleFit);observer.observe(root);observer.observe(canvas);
@@ -136,7 +157,7 @@
   window.renderLadderPlayerButtons=function(){
     const box=$('ladderPlayerButtons'),list=players(),rt=miniGameRuntime.ladder;
     if(box.children.length!==list.length){box.replaceChildren(...list.map((_,i)=>{const b=document.createElement('button');b.type='button';b.className='secondary';b.addEventListener('click',()=>runLadderPath(i));return b}))}
-    list.forEach((p,i)=>{const b=box.children[i];b.dataset.playerId=p.id;b.textContent=p.name;b.title=p.name+'의 사다리만 타기';b.disabled=!rt.generated;b.classList.toggle('path-active',rt.activePlayer===i)});
+    list.forEach((p,i)=>{const b=box.children[i],revealed=(rt.autoResultEntries||[]).some(e=>e?.id===p.id);b.dataset.playerId=p.id;b.dataset.revealed=String(revealed);b.textContent=p.name;b.title=p.name+(revealed?' · 공개 완료':' · 개별 공개');b.disabled=!rt.generated||Boolean(round?.ready&&revealed);b.classList.toggle('path-active',rt.activePlayer===i)});
   };
   function paintRound(){renderLadderPlayerButtons();renderLadderFullResultList();drawLadder()}
   // Old demonstrations persisted these four labels in the shared data. Only
@@ -152,11 +173,25 @@
     if(stock){prizes().forEach((p,i)=>p.label=i===0?'당첨':'꽝');preset='winner'}
     else if(winnerOnly&&before.length!==n){const wins=Math.min(n,Math.max(1,before.filter(x=>x==='당첨').length));prizes().forEach((p,i)=>p.label=i<wins?'당첨':'꽝')}
   };
+  function decoratePrizeCards(){
+    const box=$('ladderPrizeList');
+    box.dataset.prizeCount=String(prizes().length);
+    const icons={winner:'<path d="M7 3h10v5a5 5 0 0 1-10 0zm5 10v5m-4 1h8M7 5H3v2a4 4 0 0 0 4 4m10-6h4v2a4 4 0 0 1-4 4"/>',miss:'<circle cx="12" cy="12" r="8"/><path d="m9 9 6 6m0-6-6 6"/>',rank:'<path d="M4 20V11h5v9m0 0V4h6v16m0-9h5v9M3 20h18"/>',team:'<circle cx="8" cy="7" r="3"/><circle cx="17" cy="8" r="2.5"/><path d="M2 20v-3a6 6 0 0 1 12 0v3m2-7a5 5 0 0 1 6 5v2"/>',custom:'<path d="M3 8h18v12H3zM3 8V5h18v3M12 5v15M8 5a3 3 0 1 1 4-3 3 3 0 1 1 4 3"/>'};
+    [...box.querySelectorAll('.mini-entry-row')].forEach((row,i)=>{
+      const input=row.querySelector('input'),avatar=row.querySelector('.mini-entry-avatar');if(!input||!avatar)return;
+      const value=input.value.trim(),kind=value==='당첨'?'winner':value==='꽝'?'miss':/^\d+등$/.test(value)?'rank':/^[AB]팀$/.test(value)?'team':'custom';
+      if(!row.querySelector('.ladder-prize-slot')){const label=document.createElement('span');label.className='ladder-prize-slot';label.textContent=`RESULT ${String(i+1).padStart(2,'0')}`;row.prepend(label)}
+      if(row.dataset.prizeKind!==kind){row.dataset.prizeKind=kind;avatar.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true">${icons[kind]}</svg>`}
+      input.setAttribute('aria-label',`${i+1}번 결과`);input.placeholder='결과 직접 입력';
+    });
+  }
+  $('ladderPrizeList').addEventListener('click',e=>{const card=e.target.closest('.mini-entry-row');if(card&&e.target.tagName!=='INPUT')card.querySelector('input')?.focus({preventScroll:true})});
   function reflectPreset(){
     const labels=prizes().map(p=>p.label);
-    if(labels.length&&labels.every(x=>x==='당첨'||x==='꽝')){preset='winner';$('ladderWinnerCount').value=String(Math.max(1,labels.filter(x=>x==='당첨').length))}
-    else if(labels.length){preset=['rank','team','default'].find(k=>labels.every((x,i)=>x===(k==='rank'?`${i+1}등`:k==='team'?(i%2===0?'A팀':'B팀'):`결과 ${i+1}`)))||'custom'}
+    if(preset!=='custom'&&labels.length&&labels.every(x=>x==='당첨'||x==='꽝')){preset='winner';$('ladderWinnerCount').value=String(Math.max(1,labels.filter(x=>x==='당첨').length))}
+    else if(preset!=='custom'&&labels.length){preset=['rank','team','default'].find(k=>labels.every((x,i)=>x===(k==='rank'?`${i+1}등`:k==='team'?(i%2===0?'A팀':'B팀'):`결과 ${i+1}`)))||'custom'}
     root.querySelectorAll('[data-ladder-preset]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.ladderPreset===preset)));
+    decoratePrizeCards();
   }
   function sync(){
     syncHeader();
@@ -184,9 +219,9 @@
     $('ladderWizardHint').textContent=locked?'게임 진행 중에는 설정을 변경할 수 없습니다.':step===1?(validRoster()?`${n}명 선택 완료`:'참가자를 2~12명 선택하세요.'):step===2?(validPrizes()?`${m}개 결과 준비 완료`:'모든 결과 항목을 입력하세요.'): '이전 단계에서 참가자와 결과를 수정할 수 있습니다.';
     $('ladderResetBtn').disabled=locked;
     const start=$('ladderAutoStartBtn');
-    start.textContent=shufflePhase==='shuffle'?'시작':shufflePhase==='settle'?'멈추는 중':locked?'진행 중':'섞기 시작';
+    start.textContent=shufflePhase==='shuffle'?'시작':shufflePhase==='settle'?'멈추는 중':locked?'공개 중':round?.ready?'전체 공개':'섞기 시작';
     start.disabled=!validPrizes()||(locked&&shufflePhase!=='shuffle');
-    const stage=root.querySelector('.ladder-stage-card');stage.dataset.ladderPhase=shufflePhase||(locked?'play':'idle');stage.classList.toggle('auto-running',locked);
+    const stage=root.querySelector('.ladder-stage-card');stage.dataset.ladderPhase=shufflePhase||(locked?'play':round?.ready?'ready':'idle');stage.classList.toggle('auto-running',locked);
     // The core rebuilds player buttons during every automatic path; inert is
     // inherited by newly created buttons and does not interrupt the drawing.
     $('ladderPlayerButtons').inert=locked;
@@ -197,7 +232,7 @@
     fitWorkspace();scheduleFit();
   }
   function clearBoard(){
-    round=null;
+    round=null;blindProgress=0;
     const r=miniGameRuntime.ladder;r.generated=false;r.rungs=[];r.activePlayer=-1;r.autoResultNames=[];r.autoResultEntries=[];
     resultText('결과 대기');
     $('ladderStatus').textContent='참가자와 결과 항목이 준비되었습니다.';
@@ -253,7 +288,7 @@
   for(const name of ['miniAddContact','miniManualAdd','miniRemoveEntry','clearMiniEntries','miniRenameEntry']){
     const original=window[name];window[name]=function(game,...args){
       if(game!=='ladder')return original.apply(this,arguments);
-      if(busy())return;
+      if(busy()||round?.ready&&root.classList.contains('active'))return;
       if((name==='miniAddContact'||name==='miniManualAdd')&&players().length>=12)return toast('사다리타기','최대 12명까지 선택할 수 있습니다.');
       const before=JSON.stringify(players().map(p=>[p.id,p.name]));const out=original.apply(this,arguments);
       if(before!==JSON.stringify(players().map(p=>[p.id,p.name]))){clearBoard();furthest=1;sync()}
@@ -261,9 +296,10 @@
     };
   }
   const baseUpdate=window.updateLadderPrize;
-  window.updateLadderPrize=function(id,value){if(busy())return;const p=prizes().find(x=>x.id===id);if(!p||p.label===String(value??''))return;const out=baseUpdate.apply(this,arguments);clearBoard();sync();return out};
+  window.updateLadderPrize=function(id,value){if(busy())return;const p=prizes().find(x=>x.id===id);if(!p||p.label===String(value??''))return;preset='custom';const out=baseUpdate.apply(this,arguments);clearBoard();sync();return out};
   function applyPreset(kind){
     if(busy()||step!==2||!validRoster())return;
+    if(kind==='custom'){preset='custom';sync();const input=$('ladderPrizeList').querySelector('input');input?.focus({preventScroll:true});input?.select();return}
     const n=players().length,w=Math.min(n,Math.max(1,Math.floor(Number($('ladderWinnerCount').value)||1)));
     $('ladderWinnerCount').value=String(w);
     prizes().forEach((p,i)=>{p.label=kind==='winner'?(i<w?'당첨':'꽝'):kind==='rank'?`${i+1}등`:kind==='team'?(i%2===0?'A팀':'B팀'):`결과 ${i+1}`});
@@ -275,7 +311,7 @@
   window.renderLadder=function(){
     // Background renderAll may be called while the active game is displayed.
     // Render the isolated round instead of copying cloud state into its UI.
-    if(round&&round.runtime!==miniGameRuntime.ladder&&!busy()){round=null;drawLadder(null)}
+    if(round&&round.runtime!==miniGameRuntime.ladder&&!busy()){round=null;blindProgress=0;drawLadder(null)}
     if(round){paintRound();sync();return}
     const nextKey=rosterKey();
     if(key!==null&&key!==nextKey&&!busy()){step=1;furthest=1;paletteKey=null;clearBoard()}
@@ -294,38 +330,73 @@
     rt.activePlayer=index;renderLadderPlayerButtons();
     return new Promise(resolve=>{
       const start=performance.now(),frame=now=>{
-        if(miniGameRuntime.ladder!==rt){resolve(false);return}
+        if(miniGameRuntime.ladder!==rt||!root.classList.contains('active')){resolve(false);return}
         const t=Math.min(1,(now-start)/duration);
-        drawLadder(path.points,1-Math.pow(1-t,2.1));
+        drawLadder(path.points,smoothstep(t));
         if(t<1){requestAnimationFrame(frame);return}
         if(!Array.isArray(rt.autoResultEntries))rt.autoResultEntries=[];
         rt.autoResultEntries[path.resultIndex]={id:person.id,name:person.name,image:person.image||'',contactId:person.contactId||''};
-        renderLadderFullResultList();resolve(true);
+        renderLadderFullResultList();renderLadderPlayerButtons();drawLadder(path.points,1);resolve(true);
       };requestAnimationFrame(frame);
     });
   }
+  const revealedCount=rt=>(rt.autoResultEntries||[]).filter(Boolean).length;
+  const hasRevealed=(rt,person)=>(rt.autoResultEntries||[]).some(p=>p?.id===person.id);
+  function showReady(rt){
+    $('ladderStatus').textContent=`${revealedCount(rt)} / ${players().length}명 공개 · 참가자 또는 전체 공개 선택`;
+    if(!revealedCount(rt))resultText('개별 공개 또는 전체 공개');
+  }
+  async function finishRound(session){
+    const rt=session.runtime;
+    // Expose the complete board only after every result is already revealed.
+    const start=performance.now();
+    while(miniGameRuntime.ladder===rt&&root.classList.contains('active')){
+      blindProgress=1-smoothstep((performance.now()-start)/560);drawLadder();
+      if(blindProgress<=0)break;await new Promise(requestAnimationFrame);
+    }
+    if(miniGameRuntime.ladder!==rt)return;
+    blindProgress=0;session.ready=false;rt.activePlayer=-1;
+    if(sourceKey()===session.source){
+      const livePlayers=new Map(savedPlayers().map(p=>[p.id,p])),livePrizes=new Map(savedPrizes().map(p=>[p.id,p]));
+      data.miniGames.ladder.players=session.players.map(p=>livePlayers.get(p.id));
+      data.miniGames.ladder.prizes=session.prizes.map(p=>livePrizes.get(p.id));miniPersist();
+    }
+    $('ladderStatus').textContent=`전체 공개 완료 · ${session.players.length}명`;renderLadder();finalResult();
+  }
+  async function revealAll(){
+    const session=round,rt=session?.runtime;if(!session?.ready||busy()||rt!==miniGameRuntime.ladder)return;
+    rt.autoRunning=true;sync();$('ladderStatus').textContent='전체 공개 중';resultText('결과 공개 중');
+    try{
+      for(let i=0;i<session.players.length;i++){
+        if(hasRevealed(rt,session.players[i]))continue;
+        if(miniGameRuntime.ladder!==rt||!await animateRoundPath(i,Math.max(800,1160-session.players.length*20),rt))return;
+        await ladderSleep(170);
+      }
+      if(revealedCount(rt)===session.players.length)await finishRound(session);
+    }finally{rt.autoRunning=false;if(session.ready&&miniGameRuntime.ladder===rt){showReady(rt);if(!hasRevealed(rt,session.players[rt.activePlayer]||{})){rt.activePlayer=-1;drawLadder(null)}}sync()}
+  }
   window.autoStartLadder=async function(){
-    // Brake from the actual current tempo, even if Start is pressed early.
-    // Only the final preview is locked; subsequent presses cannot restart it.
+    // Start freezes the shuffle after braking; a separate action reveals paths.
     if(shufflePhase==='shuffle'){
-      shuffleStoppedAt=performance.now();shuffleStopInterval=shuffleInterval(shuffleStoppedAt);
+      shuffleStoppedAt=performance.now();
       shufflePhase='settle';sync();$('ladderStatus').textContent='사다리 확정 중';resultText('멈추는 중');return;
     }
     if(step!==3||busy()||!root.classList.contains('active'))return;
-    round=null;
+    if(round?.ready)return revealAll();
+    round=null;blindProgress=0;
     ensureLadderPrizeCount();
     if(!validPrizes()){clearBoard();renderLadder();return}
-    const rt=miniGameRuntime.ladder,session={runtime:rt,source:sourceKey(),players:savedPlayers().map(p=>({...p})),prizes:savedPrizes().map(p=>({...p}))};
+    const rt=miniGameRuntime.ladder,session={runtime:rt,source:sourceKey(),players:savedPlayers().map(p=>({...p})),prizes:savedPrizes().map(p=>({...p})),ready:false};
     round=session;
     const roster=session.players,outcomes=session.prizes;
     rt.autoRunning=true;rt.autoResultNames=[];rt.autoResultEntries=[];rt.generated=false;rt.rungs=[];rt.activePlayer=-1;shuffleStartedAt=performance.now();shufflePhase='shuffle';
     drawLadder(null);renderLadder();resultText('섞는 중');
     const status=$('ladderStatus');status.textContent='참가자 · 결과 · 사다리 섞는 중';
-    let completed=false;
+    let ready=false;
     try{
       let lastPreview=-Infinity;
       while(root.classList.contains('active')&&miniGameRuntime.ladder===rt){
-        const now=performance.now(),braking=shufflePhase==='settle';
+        const now=performance.now(),braking=shufflePhase==='settle',nextBlind=smoothstep((now-shuffleStartedAt)/shuffleTempo.blind),changed=nextBlind!==blindProgress;blindProgress=nextBlind;
         if(braking&&now-shuffleStoppedAt>=shuffleTempo.brake){
           // Give the final, visible board a short beat before tracing a path.
           if(now-lastPreview>=shuffleTempo.hold)break;
@@ -333,30 +404,16 @@
           cryptoShuffleInPlace(roster);cryptoShuffleInPlace(outcomes);
           rt.rungs=spacedRungs(roster.length);rt.generated=true;paintRound();lastPreview=now;
         }
+        else if(changed)drawLadder();
         // At most one preview per paint; never catch up with burst updates.
         await new Promise(requestAnimationFrame);
       }
       // Leaving the game during acceleration or braking cancels the preview.
       if(!root.classList.contains('active')||miniGameRuntime.ladder!==rt||shufflePhase!=='settle')return;
-      shufflePhase=null;sync();
-      status.textContent='사다리 진행 · 왼쪽부터 결과 확인';
-      resultText('결과 공개 중');
-      for(let i=0;i<roster.length;i++){if(miniGameRuntime.ladder!==rt||!await animateRoundPath(i,Math.max(430,720-roster.length*14),rt))return;await ladderSleep(120)}
-      if(miniGameRuntime.ladder!==rt)return;
-      completed=true;rt.activePlayer=-1;status.textContent=`자동 사다리 완료 · ${roster.length}명`;
+      session.ready=true;ready=true;blindProgress=1;rt.activePlayer=-1;drawLadder(null);showReady(rt);
     }finally{
       shufflePhase=null;rt.autoRunning=false;
-      if(completed){
-        // Commit the final order only if the shared roster and prizes still
-        // match the setup. Preserve any genuinely newer cloud edits.
-        if(sourceKey()===session.source){
-          const livePlayers=new Map(savedPlayers().map(p=>[p.id,p])),livePrizes=new Map(savedPrizes().map(p=>[p.id,p]));
-          data.miniGames.ladder.players=roster.map(p=>livePlayers.get(p.id));
-          data.miniGames.ladder.prizes=outcomes.map(p=>livePrizes.get(p.id));
-          miniPersist();
-        }
-        renderLadder();finalResult()
-      }else{round=null;if(miniGameRuntime.ladder===rt)clearBoard();renderLadder()}
+      if(ready){paintRound()}else{round=null;blindProgress=0;if(miniGameRuntime.ladder===rt)clearBoard();renderLadder()}
       sync();
     }
   };
@@ -364,11 +421,12 @@
   // manual wrapper published its destination before the marker arrived.
   window.runLadderPath=async function(index){
     if(step!==3||busy()||!miniGameRuntime.ladder.generated||!players()[index])return;
-    const person=players()[index],path=ladderPath(index);miniGameRuntime.ladder.animating=true;resultText(`${person.name} · 경로 확인 중`);sync();
+    const session=round,person=players()[index],path=ladderPath(index);if(session?.ready&&hasRevealed(miniGameRuntime.ladder,person))return;
+    miniGameRuntime.ladder.animating=true;resultText(`${person.name} · 경로 확인 중`);sync();
     const rt=miniGameRuntime.ladder;
-    try{if(await animateRoundPath(index,1000,rt))resultText(`${person.name} → ${prizes()[path.resultIndex]?.label||`결과 ${path.resultIndex+1}`}`,true)}finally{rt.animating=false;sync()}
+    try{if(await animateRoundPath(index,1150,rt)){resultText(`${person.name} → ${prizes()[path.resultIndex]?.label||`결과 ${path.resultIndex+1}`}`,true);if(session?.ready&&revealedCount(rt)===players().length)await finishRound(session)}}finally{rt.animating=false;if(session?.ready){showReady(rt);if(!hasRevealed(rt,person)){rt.activePlayer=-1;drawLadder(null)}}sync()}
   };
-  const reset=window.resetLadderBoard;window.resetLadderBoard=function(){if(busy())return;round=null;const out=reset.apply(this,arguments);resultText('결과 대기');renderLadder();return out};
+  const reset=window.resetLadderBoard;window.resetLadderBoard=function(){if(busy())return;round=null;blindProgress=0;const out=reset.apply(this,arguments);resultText('결과 대기');renderLadder();return out};
   steps.forEach(b=>b.addEventListener('click',()=>go(Number(b.dataset.ladderStep))));
   $('ladderWizardBack').addEventListener('click',()=>go(step-1));$('ladderWizardNext').addEventListener('click',()=>go(step+1));
   root.querySelectorAll('[data-ladder-preset]').forEach(b=>b.addEventListener('click',()=>applyPreset(b.dataset.ladderPreset)));
