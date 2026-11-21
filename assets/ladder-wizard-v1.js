@@ -37,8 +37,11 @@
     const n=players().length,w=1360,h=480,top=54,bottom=426,left=72,right=1288;
     return {canvas,n,w,h,top,bottom,xs:Array.from({length:n},(_,i)=>n===1?w/2:left+(right-left)*i/(n-1)),rows:Math.max(10,n*2)};
   };
-  window.drawLadder=function(highlightPoints=null,progress=1){
-    lastPoints=Array.isArray(highlightPoints)?highlightPoints:null;lastProgress=progress;
+  window.drawLadder=function(highlightPoints,progress=1){
+    // Core repaint calls (including requestAnimationFrame timestamps) must
+    // not erase an active or completed path. A new board explicitly clears it.
+    if(Array.isArray(highlightPoints)){lastPoints=highlightPoints;lastProgress=progress}
+    else if(highlightPoints===null||!miniGameRuntime.ladder.generated){lastPoints=null;lastProgress=1}
     const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;
     const g=ladderGeometry(),ctx=canvas.getContext('2d');
     const density=Math.min(3,(devicePixelRatio||1)*canvas.getBoundingClientRect().width/w);
@@ -51,7 +54,7 @@
     const line=(x1,y1,x2,y2)=>{ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke()};
     ctx.lineCap='round';ctx.strokeStyle='#54617a';ctx.lineWidth=Math.max(2,Math.min(4,w/420));
     g.xs.forEach(x=>line(mapX(x),padY,mapX(x),h-padY));
-    for(const r of miniGameRuntime.ladder.rungs){const y=mapY(g.top+(g.bottom-g.top)*(r.row+1)/(g.rows+1));line(mapX(g.xs[r.left]),y,mapX(g.xs[r.left+1]),y)}
+    if(miniGameRuntime.ladder.generated)for(const r of miniGameRuntime.ladder.rungs){const y=mapY(g.top+(g.bottom-g.top)*(r.row+1)/(g.rows+1));line(mapX(g.xs[r.left]),y,mapX(g.xs[r.left+1]),y)}
     const font=Math.max(12,Math.min(26,w/58,lane/5.5,padY*.57));
     const labelWidth=Math.max(18,Math.min(lane-12,padX*2-10));
     const label=(value,x,y)=>{let s=String(value||'');if(ctx.measureText(s).width>labelWidth){while(s.length>1&&ctx.measureText(s+'…').width>labelWidth)s=s.slice(0,-1);s+='…'}ctx.fillText(s,x,y)};
@@ -59,11 +62,32 @@
     ctx.fillStyle=getComputedStyle(root).getPropertyValue('--text').trim()||'#f5f7ff';
     players().forEach((p,i)=>label(p.name,mapX(g.xs[i]),padY/2));
     ctx.fillStyle='#ffd96a';prizes().slice(0,g.n).forEach((p,i)=>label(p.label||`결과 ${i+1}`,mapX(g.xs[i]),h-padY/2));
-    if(lastPoints?.length)drawPolylineProgress(ctx,lastPoints.map(p=>({x:mapX(p.x),y:mapY(p.y)})),progress);
+    if(lastPoints?.length&&miniGameRuntime.ladder.generated)drawPolylineProgress(ctx,lastPoints.map(p=>({x:mapX(p.x),y:mapY(p.y)})),lastProgress);
   };
   function scheduleFit(){if(resizeFrame)return;resizeFrame=requestAnimationFrame(()=>{resizeFrame=0;fitWorkspace();if(canvas.clientWidth&&canvas.clientHeight)drawLadder(lastPoints,lastProgress)})}
   const observer=new ResizeObserver(scheduleFit);observer.observe(root);observer.observe(canvas);
   window.addEventListener('resize',scheduleFit,{passive:true});
+  // The destination slot is the single source for both the board and summary.
+  // Keep rows in place instead of replacing their avatars during every shuffle.
+  window.renderLadderFullResultList=function(){
+    const box=$('ladderFullResultList'),entries=miniGameRuntime.ladder.autoResultEntries||[],list=prizes();
+    $('ladderSummaryCountChip').textContent=`${list.filter((_,i)=>entries[i]).length}건`;
+    if(!list.length){box.innerHTML='<div class="ladder-summary-empty">참가자를 추가하면 결과 요약이 여기에 표시됩니다.</div>';return}
+    if(box.children.length!==list.length||!box.firstElementChild?.querySelector('.ladder-result-slot-number')){
+      box.replaceChildren(...list.map((_,i)=>{const row=document.createElement('div');row.className='ladder-full-result-row';row.dataset.resultIndex=String(i);row.innerHTML='<div class="ladder-full-result-left"><div class="ladder-result-avatar">?</div><div class="ladder-result-identity"><div class="ladder-full-result-name"></div><div class="ladder-result-slot-number"></div></div></div><div class="ladder-full-result-label"></div>';return row}));
+    }
+    list.forEach((p,i)=>{
+      const row=box.children[i],person=entries[i],avatar=row.querySelector('.ladder-result-avatar'),name=row.querySelector('.ladder-full-result-name'),label=row.querySelector('.ladder-full-result-label');
+      row.classList.toggle('revealed',Boolean(person));row.classList.toggle('winner',Boolean(person)&&p.label==='당첨');
+      name.textContent=person?.name||'결과 대기';name.title=name.textContent;
+      row.querySelector('.ladder-result-slot-number').textContent=`${i+1}번 도착`;
+      label.textContent=p.label||`결과 ${i+1}`;label.title=label.textContent;
+      const avatarKey=JSON.stringify([person?.id,person?.name,person?.image]);
+      if(avatar.dataset.key!==avatarKey){avatar.dataset.key=avatarKey;avatar.replaceChildren();if(person?.image){const img=document.createElement('img');img.src=person.image;img.alt='';avatar.append(img)}else avatar.textContent=person?initials(person.name):'?'}
+    });
+  };
+  const baseOrderVisual=window.renderLadderOrderVisual;
+  window.renderLadderOrderVisual=function(){const out=baseOrderVisual.apply(this,arguments);renderLadderFullResultList();return out};
   // Old demonstrations persisted these four labels in the shared data. Only
   // replace the exact sample set or empty results, never
   // arbitrary custom results. Preserve custom prizes across navigation.
@@ -108,7 +132,9 @@
     // The core rebuilds player buttons during every automatic path; inert is
     // inherited by newly created buttons and does not interrupt the drawing.
     $('ladderPlayerButtons').inert=locked;
-    $('ladderPlayerButtons').hidden=!miniGameRuntime.ladder.generated||locked;
+    // Keep the replay strip in the layout throughout the run; enabling its
+    // controls must not change the canvas rectangle.
+    $('ladderPlayerButtons').hidden=false;
     reflectPreset();
     fitWorkspace();scheduleFit();
   }
@@ -116,7 +142,7 @@
     const r=miniGameRuntime.ladder;r.generated=false;r.rungs=[];r.activePlayer=-1;r.autoResultNames=[];r.autoResultEntries=[];
     const result=$('ladderResult');result.classList.remove('done');result.textContent='자동 시작을 누르면 참가자별 결과가 공개됩니다.';
     $('ladderStatus').textContent='참가자와 결과 항목이 준비되었습니다.';
-    renderLadderPlayerButtons();renderLadderAutoResultSlots();renderLadderFullResultList();drawLadder();
+    renderLadderPlayerButtons();renderLadderAutoResultSlots();renderLadderFullResultList();drawLadder(null);
   }
   function go(target){
     if(busy()||target<1||target>3||target>step+1&&target>furthest)return;
@@ -193,9 +219,20 @@
     const out=baseRender.apply(this,arguments);sync();return out;
   };
   const auto=window.autoStartLadder;
-  window.autoStartLadder=async function(){if(step!==3||busy()||!validPrizes())return;try{const task=auto.apply(this,arguments);sync();await task}finally{sync()}};
-  const single=window.runLadderPath;
-  window.runLadderPath=function(){if(step!==3||busy())return;const out=single.apply(this,arguments);sync();const refresh=()=>{if(busy())requestAnimationFrame(refresh);else sync()};requestAnimationFrame(refresh);return out};
+  function resultText(text,done=false){const el=$('ladderResult');el.textContent=text;el.title=text;el.classList.toggle('done',done)}
+  function finalResult(){
+    const entries=miniGameRuntime.ladder.autoResultEntries||[],wins=prizes().map((p,i)=>p.label==='당첨'?entries[i]:null).filter(Boolean);
+    if(wins.length===1){const index=players().findIndex(p=>p.id===wins[0].id);if(index>=0){miniGameRuntime.ladder.activePlayer=index;drawLadder(ladderPath(index).points,1);renderLadderPlayerButtons();resultText(`당첨 · ${wins[0].name}`,true);return}}
+    drawLadder(null);resultText(wins.length?`당첨 · ${wins.map(p=>p.name).join(', ')}`:'모든 참가자의 결과가 공개되었습니다.',true);
+  }
+  window.autoStartLadder=async function(){if(step!==3||busy()||!validPrizes())return;drawLadder(null);resultText('참가자와 결과 순서를 섞는 중입니다.');try{const task=auto.apply(this,arguments);sync();await task;finalResult()}finally{sync()}};
+  // Replay uses the same path and reveal operation as automatic play. The old
+  // manual wrapper published its destination before the marker arrived.
+  window.runLadderPath=async function(index){
+    if(step!==3||busy()||!miniGameRuntime.ladder.generated||!players()[index])return;
+    const person=players()[index],path=ladderPath(index);miniGameRuntime.ladder.animating=true;resultText(`${person.name} · 경로 확인 중`);sync();
+    try{await animateLadderPathAuto(index,1000);resultText(`${person.name} → ${prizes()[path.resultIndex]?.label||`결과 ${path.resultIndex+1}`}`,true)}finally{miniGameRuntime.ladder.animating=false;sync()}
+  };
   const reset=window.resetLadderBoard;window.resetLadderBoard=function(){if(busy())return;const out=reset.apply(this,arguments);sync();return out};
   steps.forEach(b=>b.addEventListener('click',()=>go(Number(b.dataset.ladderStep))));
   $('ladderWizardBack').addEventListener('click',()=>go(step-1));$('ladderWizardNext').addEventListener('click',()=>go(step+1));
