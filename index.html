@@ -181,13 +181,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 
   <main class="main">
     <div class="topbar">
-      <div class="top-left"><h1 id="pageTitle">캘린더</h1><nav id="ladderWizardSteps" class="ladder-wizard-steps" aria-label="사다리타기 진행 단계">
-        <button type="button" data-ladder-step="1" aria-label="1 참가자 선택" aria-current="step" title="참가자 선택"><span class="ladder-step-bubble">1</span><span class="ladder-step-label">참가자</span></button>
-        <span class="ladder-step-arrow" aria-hidden="true"></span>
-        <button type="button" data-ladder-step="2" aria-label="2 결과 설정" title="결과 설정" disabled><span class="ladder-step-bubble">2</span><span class="ladder-step-label">결과</span></button>
-        <span class="ladder-step-arrow" aria-hidden="true"></span>
-        <button type="button" data-ladder-step="3" aria-label="3 게임 진행" title="게임 진행" disabled><span class="ladder-step-bubble">3</span><span class="ladder-step-label">진행</span></button>
-      </nav><div class="subtle" id="todayText"></div><button type="button" id="mwsLegacyBackV1" class="mws-legacy-back-v1" data-tab="legacy" data-legacy-link-v1 hidden>레거시 목록으로</button></div>
+      <div class="top-left"><h1 id="pageTitle">캘린더</h1><div class="subtle" id="todayText"></div><button type="button" id="mwsLegacyBackV1" class="mws-legacy-back-v1" data-tab="legacy" data-legacy-link-v1 hidden>레거시 목록으로</button></div>
       <div class="clock"><span class="sync-status"><span class="sync-dot"></span><span id="syncStatusText">전체 화면 동기화</span></span><span id="clockText"></span><button class="primary" id="newEventBtn" title="컨텐츠 추가" aria-label="컨텐츠 추가">컨텐츠 추가</button></div>
     </div>
 
@@ -1057,6 +1051,13 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 </section>
 
 <section id="gameLadder" class="section mini-game-section">
+  <nav id="ladderWizardSteps" class="ladder-wizard-steps" aria-label="사다리타기 진행 단계">
+    <button type="button" data-ladder-step="1" aria-label="1 참가자 선택" aria-current="step" title="참가자 선택"><span class="ladder-step-bubble">1</span><span class="ladder-step-label">참가자</span></button>
+    <span class="ladder-step-arrow" aria-hidden="true"></span>
+    <button type="button" data-ladder-step="2" aria-label="2 결과 설정" title="결과 설정" disabled><span class="ladder-step-bubble">2</span><span class="ladder-step-label">결과</span></button>
+    <span class="ladder-step-arrow" aria-hidden="true"></span>
+    <button type="button" data-ladder-step="3" aria-label="3 게임 진행" title="게임 진행" disabled><span class="ladder-step-bubble">3</span><span class="ladder-step-label">진행</span></button>
+  </nav>
   <div class="ladder-wizard-page" data-ladder-page="1">
     <div class="ladder-wizard-heading"><div><h2>참가자 선택</h2><p>2~12명</p></div><span class="ladder-wizard-count" id="ladderWizardRosterCount">0 / 12명</span><div class="ladder-wizard-navigation"><button type="button" class="secondary" id="ladderWizardBack" hidden>이전 단계</button><span id="ladderWizardHint" role="status" aria-live="polite">참가자를 2명 이상 선택하세요.</span><button type="button" class="primary" id="ladderWizardNext" disabled>결과 설정</button></div></div>
     <div class="ladder-wizard-roster">
