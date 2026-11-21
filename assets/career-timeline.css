@@ -1,0 +1,29 @@
+#careerTimeline {
+  --career-ink: var(--accent, #8081df);
+  --career-line: color-mix(in srgb, var(--career-ink) 48%, transparent);
+}
+.career-tree { max-width: 64rem; margin: 1rem auto 3rem; padding: 0 1rem; }
+.career-year { position: relative; border-inline-start: 2px solid var(--career-line); padding: 0 0 1.75rem 1.5rem; }
+.career-year:last-child { padding-bottom: 0; }
+.career-year summary { width: fit-content; cursor: pointer; font-size: 1.25rem; font-weight: 750; line-height: 1.5; }
+.career-year summary::before, .career-month h3::before {
+  content: ""; position: absolute; border-radius: 50%; background: var(--career-ink);
+}
+.career-year summary::before { width: .7rem; height: .7rem; left: calc(-.35rem - 1px); top: .6rem; }
+.career-year summary:focus-visible { outline: 2px solid var(--career-ink); outline-offset: 4px; }
+.career-month { position: relative; margin-top: 1rem; }
+.career-month h3 { position: relative; font-size: .86rem; line-height: 1.5rem; margin: 0 0 .3rem; }
+.career-month h3::before { width: .4rem; height: .4rem; left: calc(-1.7rem - 1px); top: .55rem; }
+.career-month h3::after { content: ""; position: absolute; left: -1.5rem; top: .75rem; width: 1.1rem; border-top: 1px solid var(--career-line); }
+.career-month ul { list-style: none; margin: 0; padding: 0 0 0 1rem; border-inline-start: 1px solid var(--career-line); }
+.career-month li { position: relative; display: flex; justify-content: space-between; gap: .4rem 1rem; flex-wrap: wrap; padding: .55rem .8rem; border-radius: .6rem; background: color-mix(in srgb, currentColor 5%, transparent); }
+.career-month li + li { margin-top: .35rem; }
+.career-month li::before { content: ""; position: absolute; width: 1rem; left: -1rem; top: 1.05rem; border-top: 1px solid var(--career-line); }
+.career-month li strong { font-size: .94rem; }
+.career-month li p { margin: .15rem 0 0; font-size: .85rem; overflow-wrap: anywhere; }
+.career-tags { display: flex; align-items: flex-start; gap: .35rem; }
+.career-tags span { white-space: nowrap; font-size: .74rem; border: 1px solid var(--career-line); border-radius: 2rem; padding: .12rem .45rem; }
+@media (max-width: 600px) {
+  .career-tree { padding: 0 .45rem; }
+  .career-month li { flex-direction: column; }
+}

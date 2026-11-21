@@ -38,7 +38,7 @@ const test=()=>{
   try{
     const mini=q('.nav-game-divider:not(#mwsToolsDivider)'),tools=q('#mwsToolsDivider');
     const precedes=(a,b)=>Boolean(a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING);
-    check(tab('memos').nextElementSibling===tab('achievements')&&precedes(tab('achievements'),mini),'Achievements must follow notebook outside mini-games');
+    check(tab('memos').nextElementSibling===tab('careerTimeline')&&tab('careerTimeline').nextElementSibling===tab('achievements')&&precedes(tab('achievements'),mini),'Achievements must follow notebook outside mini-games');
     check(tab('gameMultiDraw').nextElementSibling===tab('gameMajoku'),'Chat game must follow Gacha');
     check(tab('gameMajoku').title==='채팅연동게임'&&tab('gameMajoku').querySelector('.nav-label').textContent==='채팅연동게임','Chat game label incorrect');
     for(const id of ['gameMajoku','gameLadder','gameF1Racing','gameMultiDraw']){

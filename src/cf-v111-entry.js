@@ -23,7 +23,7 @@ function normalizeVersionHtml(html){
     out=out.replace(re,'');
   }
   if(!out.includes('post-login-runtime-v130.js')){
-    out=out.replace(/<\/body>/i,'<script src="assets/post-login-runtime-v130.js?v=1.4.0-phase176-workspace-ui&save-queue-v2=1&workspace-nav-v1=1&hall-v2=1&achievement-cache-read=2&contactgroup178=1&modalmotionv2=1&shell-perf=1"></script>\n</body>');
+    out=out.replace(/<\/body>/i,'<script src="assets/post-login-runtime-v130.js?v=1.4.0-phase176-workspace-ui&save-queue-v2=1&workspace-nav-v1=1&hall-v2=1&achievement-cache-read=2&contactgroup178=1&modalmotionv2=1&shell-perf=1&career=1"></script>\n</body>');
   }
   return out;
 }

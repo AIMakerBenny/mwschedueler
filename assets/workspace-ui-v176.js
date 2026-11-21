@@ -335,7 +335,10 @@ function enforceExhibitionNavigationV176(){
   if(!nav)return;
   const button=id=>nav.querySelector('button[data-tab="'+id+'"]');
   const memo=button('memos'),achievement=button('achievements'),gacha=button('gameMultiDraw'),chat=button('gameMajoku');
-  if(memo&&achievement&&memo.nextElementSibling!==achievement)memo.after(achievement);
+  const timeline=button('careerTimeline');
+  if(memo&&timeline&&memo.nextElementSibling!==timeline)memo.after(timeline);
+  const beforeAchievement=timeline||memo;
+  if(beforeAchievement&&achievement&&beforeAchievement.nextElementSibling!==achievement)beforeAchievement.after(achievement);
   if(gacha&&chat&&gacha.nextElementSibling!==chat)gacha.after(chat);
   if(chat){
     if(chat.title!=='채팅연동게임')chat.title='채팅연동게임';
