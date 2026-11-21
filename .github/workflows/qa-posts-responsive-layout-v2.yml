@@ -21,3 +21,7 @@ jobs:
           node-version: '24'
       - name: Card and list geometry with real applicant renderer
         run: node scripts/qa-posts-responsive-layout-v2.mjs
+      # Opt-in on QA-only branches: production already contains the layout.
+      - name: Verify deployed layout with public data
+        if: startsWith(github.head_ref, 'qa/live-posts-')
+        run: node scripts/qa-posts-responsive-layout-v2.mjs --live

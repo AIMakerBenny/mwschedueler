@@ -28,12 +28,15 @@ try{
     const url=live?base.replace(/\/$/,'')+'/?posts-layout-qa='+width+'-'+Date.now():pathToFileURL(file).href;
     await browser.navigate(url,width,900,width<=760);
     if(live){
-      let done=false;
+      let done=false,lastState=null;
       for(let n=0;n<200&&!done;n++){
-        try{done=await browser.evaluate(`(()=>{const notice=document.querySelector('#mwsAnnouncementDialog[open]');if(notice)notice.querySelector('.mws-notice-close')?.click();if(!window.__mwsAppReadyV130)return false;if(!document.getElementById('posts').classList.contains('active'))setTab('posts');return !!document.querySelector('#postApplicantGrid .post-applicant-card')})()`)}catch{}
+        try{
+          lastState=await browser.evaluate(`(async()=>{const notice=document.querySelector('#mwsAnnouncementDialog[open]');if(notice)notice.querySelector('.mws-notice-close')?.click();const report=window.mwsV55EgressReport?.();const ready=window.__mwsAppReadyV130===true;const nav=document.querySelector('.nav button[data-tab="posts"]');if(ready&&nav&&!document.getElementById('posts').classList.contains('active'))nav.click();if(ready&&typeof window.mwsV55EnsureParts==='function'&&!report?.loadedParts?.includes('posts'))await window.mwsV55EnsureParts('posts');const active=document.getElementById('posts').classList.contains('active');const count=document.querySelectorAll('#postApplicantGrid .post-applicant-card').length;return {ready,active,count,mode:document.body.dataset.mwsMode,parts:window.mwsV55EgressReport?.()?.loadedParts||[],saved:document.querySelectorAll('#postSavedList .post-saved-item').length}})()`);
+          done=lastState.active&&lastState.count>0;
+        }catch(error){lastState={error:String(error).slice(0,500)}}
         if(!done)await wait(150);
       }
-      assert(done,'Production posts did not initialize at '+width);
+      assert(done,'Production posts did not initialize at '+width+': '+JSON.stringify(lastState));
     }
     for(const mode of ['card','list']){
       await browser.evaluate(`setPostCardColumns(5);setPostViewMode(${JSON.stringify(mode)})`);await wait(250);
