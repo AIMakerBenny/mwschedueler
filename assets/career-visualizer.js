@@ -175,7 +175,7 @@
     }
     function updateControls(){
       const list=byYear(selected.year), index=list.indexOf(selected);
-      prev.disabled=index===0; next.disabled=index===list.length-1;
+      prev.disabled=resultsOpen||index===0; next.disabled=resultsOpen||index===list.length-1;
       play.disabled=selected.year==='레거시'||resultsOpen;
       play.textContent=playing?'일시정지':'재생';
       play.setAttribute('aria-pressed',String(playing));
@@ -227,6 +227,7 @@
       for(const [m,col] of monthElements){
         col.classList.toggle('cv-active-month',m===r.month);
         col.classList.toggle('cv-near',Math.abs(activeMonths.indexOf(m)-idx)<=1&&!col.classList.contains('cv-empty'));
+        col.classList.toggle('cv-next-month',activeMonths[idx+1]===m);
         for(const b of col.querySelectorAll('button'))b.tabIndex=m===r.month?0:-1;
       }
       for(const [m,b] of miniButtons) b.setAttribute('aria-current',String(m===r.month));
@@ -321,6 +322,7 @@
       playing=false;paused=false;
       if(raf)cancelAnimationFrame(raf);raf=0;introUntil=0;panel.classList.remove('cv-intro');overview.hidden=true;motion=null;
       resultsOpen=false;stage.hidden=false;results.hidden=true;
+      resultsButton.hidden=!query.value.trim();
       move(r,true);
     }
     function step(direction){
@@ -352,7 +354,7 @@
     function renderResults(){
       const list=matches(); resultsOpen=true; stage.hidden=true;results.hidden=false;
       results.replaceChildren(node('div','cv-result-count','검색 결과 '+list.length+'건'));
-      resultsButton.hidden=false;resultsButton.textContent='검색 결과 '+list.length+'건';
+      resultsButton.hidden=true;resultsButton.textContent='검색 결과 '+list.length+'건';
       for(const y of years){
         const found=list.filter(r=>r.year===y); if(!found.length)continue;
         const group=node('div','cv-result-group'); group.append(node('h3','',y==='레거시'?y:y+'년'));

@@ -147,7 +147,7 @@
   .cv-viewport::before,.cv-viewport::after,.cv-axis::before { display:none; }
   .cv-axis { display:block; width:auto; height:auto; padding:3px 16px; transform:none!important; }
   .cv-month { display:none; width:auto; border-left:2px solid var(--cv-line); padding:0 0 12px 15px; text-align:left; }
-  .cv-month.cv-near,.cv-month.cv-legacy-month { display:block; }
+  .cv-month.cv-active-month,.cv-month.cv-next-month,.cv-month.cv-legacy-month { display:block; }
   .cv-month.cv-active-month { border-left-color:var(--cv-accent); }
   .cv-panel .cv-tick { display:block; margin:0; height:28px; padding:0 0 4px; }
   .cv-tick::after { bottom:auto; top:9px; left:-16px; }
