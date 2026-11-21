@@ -11,10 +11,12 @@
   const CACHE_STORES=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook'];
   const WARDOGS_CACHE_DB='mws_wardogs_meta_v1';
   const WARDOGS_CACHE_VERSION=1;
-  const INITIAL_PARTS=['core','contacts','events','posts','activity','clipboard'];
+  // Calendar editor dependencies include notebook (favorite folders / memo source)
+  // and contact metadata. Posts, games and Wardogs are loaded when requested.
+  const INITIAL_PARTS=['core','events','contacts','clipboard','activity','notebook','contactMeta'];
   const EXTRA_PARTS=['wardogs'];
   const ALL_PARTS=[...CACHE_STORES,...EXTRA_PARTS];
-  const PARTS_BY_TAB={dashboard:[],calendar:['clipboard'],contacts:['contactMeta'],posts:[],sniper:[],targets:[],memos:['notebook'],worldtime:[],wardogs:['wardogs'],gameLadder:['miniGames'],gameRps:['miniGames'],gamePachinko:['miniGames'],gameMultiDraw:['miniGames'],toolTier:['miniGames'],toolMatrix:['miniGames'],toolRelations:['miniGames'],export:['contactMeta','miniGames','notebook','clipboard','wardogs'],settings:['contactMeta']};
+  const PARTS_BY_TAB={dashboard:[],calendar:['clipboard','notebook','contactMeta'],contacts:['contactMeta','posts'],posts:['posts'],sniper:[],targets:[],memos:['notebook'],worldtime:[],wardogs:['wardogs'],gameLadder:['miniGames'],gameRps:['miniGames'],gamePachinko:['miniGames'],gameMultiDraw:['miniGames'],gameF1Racing:['miniGames'],gameMajoku:['miniGames'],contentPlanner:['contactMeta'],toolTier:['miniGames'],toolMatrix:['miniGames'],toolRelations:['miniGames'],export:ALL_PARTS,settings:['contactMeta']};
   const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','achievementCards','contentGroups','gameLibrary'];
   const $=id=>document.getElementById(id);
   const clone=v=>{try{return structuredClone(v)}catch(_){return JSON.parse(JSON.stringify(v))}};
@@ -86,7 +88,7 @@
   function extractPart(part,src=data){const d=src||{};if(part==='core'){const out={};for(const k of CORE_KEYS)if(Object.prototype.hasOwnProperty.call(d,k))out[k]=clone(d[k]);return out}if(part==='contacts')return clone(Array.isArray(d.contacts)?d.contacts:[]);if(part==='events')return clone(Array.isArray(d.events)?d.events:[]);if(part==='posts')return stripPostSources(d.posts);if(part==='miniGames')return clone(d.miniGames&&typeof d.miniGames==='object'?d.miniGames:{});if(part==='activity')return{collaborations:clone(Array.isArray(d.collaborations)?d.collaborations:[]),todayPeopleByDate:clone(d.todayPeopleByDate&&typeof d.todayPeopleByDate==='object'?d.todayPeopleByDate:{}),todayPeopleManualByDate:clone(d.todayPeopleManualByDate&&typeof d.todayPeopleManualByDate==='object'?d.todayPeopleManualByDate:{}),targetList:clone(Array.isArray(d.targetList)?d.targetList:[])};if(part==='notebook')return{memos:clone(Array.isArray(d.memos)?d.memos:[]),favoriteFolders:clone(Array.isArray(d.favoriteFolders)?d.favoriteFolders:[]),patchNotes:clone(Array.isArray(d.patchNotes)?d.patchNotes:[]),suggestions:clone(Array.isArray(d.suggestions)?d.suggestions:[])};if(part==='contactMeta')return{contactTags:clone(Array.isArray(d.contactTags)?d.contactTags:[]),contactTagBanners:clone(d.contactTagBanners&&typeof d.contactTagBanners==='object'?d.contactTagBanners:{}),emoticons:clone(Array.isArray(d.emoticons)?d.emoticons:[])};if(part==='clipboard')return{scheduleClipboard:clone(Array.isArray(d.scheduleClipboard)?d.scheduleClipboard:[])};if(part==='wardogs'){const raw=d.wardogs&&typeof d.wardogs==='object'&&!Array.isArray(d.wardogs)?d.wardogs:{schemaVersion:1,cards:[]};return window.mwsWardogsDataV119?.normalize?window.mwsWardogsDataV119.normalize(raw):clone(raw)}return null}
   function mergePart(part,value,target=data){const v=clone(value);if(part==='core'){Object.assign(target,v||{});return}if(part==='contacts'){target.contacts=Array.isArray(v)?v:[];return}if(part==='events'){target.events=Array.isArray(v)?v:[];return}if(part==='posts'){target.posts=Array.isArray(v)?v:[];return}if(part==='miniGames'){target.miniGames=v&&typeof v==='object'?v:{};return}if(part==='wardogs'){const raw=v&&typeof v==='object'&&!Array.isArray(v)?v:{schemaVersion:1,cards:[]};target.wardogs=window.mwsWardogsDataV119?.normalize?window.mwsWardogsDataV119.normalize(raw):raw;return}if(['activity','notebook','contactMeta','clipboard'].includes(part))Object.assign(target,v&&typeof v==='object'?v:{})}
   function freshSkeleton(){return{version:52,categories:[],contacts:[],events:[],posts:[],miniGames:{},collaborations:[],todayPeopleByDate:{},todayPeopleManualByDate:{},targetList:[],memos:[],favoriteFolders:[],patchNotes:[],suggestions:[],contactTags:[],contactTagBanners:{},emoticons:[],scheduleClipboard:[],timezones:[],achievementCards:[],gameLibrary:[],wardogs:{schemaVersion:1,cards:[]}}}
-  function normalizeAndRender(reason){try{normalizeDataShape()}catch(_){try{normalizeMiniGameData()}catch(__){}}try{if(typeof mwsApplyDevicePrefs==='function')mwsApplyDevicePrefs(data)}catch(_){}document.body.dataset.theme=data.theme||'neon';document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));try{renderAll(reason)}catch(e){console.error('v1.1 render failed',e)}}
+  function normalizeAndRender(reason,startup=false){try{normalizeDataShape()}catch(_){try{normalizeMiniGameData()}catch(__){}}try{if(typeof mwsApplyDevicePrefs==='function')mwsApplyDevicePrefs(data)}catch(_){}document.body.dataset.theme=data.theme||'neon';document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));try{if(startup&&typeof window.mwsRenderHydratedCalendarV1==='function')window.mwsRenderHydratedCalendarV1(reason,[...loadedParts]);else renderAll(reason)}catch(e){console.error('v1.1 render failed',e)}}
 
   async function fetchManifest(){const started=performance.now(),m=await fetchJson('/api/manifest',{},'Cloudflare 버전 확인');metrics.semanticResponseBytes+=byteLen(m);metric('manifest',{bytes:byteLen(m),backend:m.backend,ms:Math.round(performance.now()-started)});return m}
   async function fetchPart(part){const started=performance.now(),row=await fetchJson(`/api/parts/${encodeURIComponent(part)}`,{cache:'no-store'},`${part} 불러오기`);metrics.semanticResponseBytes+=byteLen(row);metrics.cacheMisses++;metric('part-fetch',{part,version:Number(row.version)||0,bytes:byteLen(row),ms:Math.round(performance.now()-started)});return row}
@@ -116,18 +118,39 @@
       let transferred=0;
       const showProgress=()=>{if(generation===hydrationSeq&&mode===chosen)setLoginError(`로그인 완료 · 필수 데이터 ${transferred}/${required.length} 확인 중`)};
       showProgress();
-      const results=await Promise.allSettled(required.map(part=>loadPartWithCache(scope,part,serverManifest,{allowStale:true}).finally(()=>{transferred++;showProgress()})));
+      const loadBatch=async parts=>{
+      const results=await Promise.allSettled(parts.map(part=>loadPartWithCache(scope,part,serverManifest,{allowStale:true}).finally(()=>{transferred++;showProgress()})));
       if(generation!==hydrationSeq||mode!==chosen)throw Error('데이터 로딩이 취소되었습니다.');
-      for(let i=0;i<required.length;i++){
-        const part=required[i],result=results[i];let row=result.status==='fulfilled'?result.value:null;
+      for(let i=0;i<parts.length;i++){
+        const part=parts[i],result=results[i];let row=result.status==='fulfilled'?result.value:null;
         if(!row){const cached=await timeout(getCachedPart(scope,part),1500,'로컬 캐시 복구').catch(()=>null);if(!cached||(serverManifest&&Number(cached.version)!==Number(serverManifest.parts?.[part])))throw Error('최신 데이터를 불러오지 못했습니다: '+part);row=cached}
         if(generation!==hydrationSeq||mode!==chosen)throw Error('데이터 로딩이 취소되었습니다.');
         mergePart(part,row.data,next);loadedParts.add(part);baselineJson.set(part,JSON.stringify(row.data));
         if(serverManifest?.parts)serverManifest.parts[part]=Number(row.version);
+      }};
+      // Show the month as soon as its authoritative event/category rows arrive.
+      // Keep the snapshot read-only; never normalize/save against missing parts.
+      const priority=required.filter(part=>part==='core'||part==='events');
+      const remaining=required.filter(part=>!priority.includes(part));
+      await loadBatch(priority);
+      if(priority.includes('core')&&priority.includes('events')&&typeof window.mwsRenderCalendarFirstV1==='function'){
+        const painted=window.mwsRenderCalendarFirstV1(next);
+        if(painted){
+          metric('calendar-first-paint',{scope,loaded:[...loadedParts]});
+          const st=$('syncStatusText');if(st)st.textContent='캘린더 표시 · 데이터 준비 중';
+          // Yield an actual paint before requesting large, unrelated datasets.
+          await new Promise(resolve=>{
+            let done=false;const finish=()=>{if(done)return;done=true;clearTimeout(timer);resolve()};
+            const timer=setTimeout(finish,50);
+            if(typeof requestAnimationFrame==='function')requestAnimationFrame(()=>requestAnimationFrame(finish));
+          });
+        }
       }
+      if(generation!==hydrationSeq||mode!==chosen)throw Error('데이터 로딩이 취소되었습니다.');
+      await loadBatch(remaining);
       setLoginError('로그인 완료 · 화면을 준비하는 중입니다.');
       data=next;normalizeDataShape();const recovered=chosen==='admin'&&!offline?await recoverSaveDraft():false;
-      normalizeAndRender(offline?'IndexedDB 오프라인 캐시':'Cloudflare D1 데이터');
+      normalizeAndRender(offline?'IndexedDB 오프라인 캐시':'Cloudflare D1 데이터',true);
       try{localStorage.removeItem('mawangSchedulerBeta')}catch(_){}
       applyModeUi();hideGate();const st=$('syncStatusText');if(st)st.textContent=offline?'오프라인 · 편집 저장 보류':'Cloudflare D1 동기화';
       metric('hydrate-complete',{scope,offline,loaded:[...loadedParts]});

@@ -56,6 +56,27 @@ const transform=vm.runInNewContext(sourceFunction(entry,'function normalizeCloud
 for(const path of clientPaths){
  const code=transform(source(path));
  const initial=vm.runInNewContext(source(path).match(/const INITIAL_PARTS=(\[[^;]+\]);/)[1]);assert(initial.includes('clipboard'));
+ test(path+' paints authoritative calendar before slow parts; Public defers optional data and Admin preserves full readiness',async()=>{
+  const remote={core:{categories:[]},events:[{id:'e1',title:'verified',favoriteFolderId:'f1'}],contacts:[],clipboard:{},activity:{},notebook:{favoriteFolders:[{id:'f1'}]},contactMeta:{},posts:[],miniGames:{},wardogs:{}};
+  const versions=Object.fromEntries(Object.keys(remote).map(p=>[p,1]));
+  for(const mode of ['public','admin']){
+   const h=makeRuntime(code,cp(remote),cp(versions));const calls=[];let preview,release,ready=false;
+   const painted=new Promise(r=>preview=r),slow=new Promise(r=>release=r);
+   h.ctx.INITIAL_PARTS=initial;h.ctx.PARTS_BY_TAB={posts:['posts'],export:Object.keys(remote)};
+   h.ctx.loadPartWithCache=async(scope,p)=>{calls.push(p);if(p!=='core'&&p!=='events')await slow;return {data:cp(remote[p]),version:1}};
+   h.ctx.window.mwsRenderCalendarFirstV1=snapshot=>{assert.deepEqual([...h.ctx.loadedParts],['core','events']);assert.equal(snapshot.events[0].favoriteFolderId,'f1');assert.equal(h.ctx.data,null);preview();return true};
+   h.ctx.normalizeAndRender=(reason,startup)=>{if(startup)ready=true};
+   const pending=h.ctx.hydrate(mode);await painted;
+   assert.deepEqual(calls,['core','events']);assert.equal(ready,false);assert.equal(h.ctx.window.__mwsAppReadyV130,false);assert.equal(h.writes.length,0);
+   release();await pending;assert.equal(ready,true);
+   assert.deepEqual([...h.ctx.loadedParts].sort(),[...(mode==='admin'?Object.keys(remote):initial)].sort());
+   if(mode==='public'){
+    assert(!calls.includes('posts')&&!calls.includes('miniGames')&&!calls.includes('wardogs'));
+    await Promise.all([h.ctx.ensure('posts'),h.ctx.ensure('posts')]);assert.equal(calls.filter(p=>p==='posts').length,1);
+    await h.ctx.ensure('export');assert.equal(h.ctx.loadedParts.size,Object.keys(remote).length);
+   }
+  }
+ });
  test(path+' actual served runtime drains all overlapping changes and manual SAVE waits for latest',async()=>{
   const remote={events:[{id:'e1',title:'old'}],contacts:[{id:'c1',name:'old'}],core:{contentGroups:[]},clipboard:{scheduleClipboard:[{id:'x'}]}},versions={events:4,contacts:5,core:7,clipboard:9};
   let release,start;const pending=new Promise(r=>release=r),started=new Promise(r=>start=r);

@@ -798,8 +798,8 @@ function setTab(tab){
   if(tab==='sniper')safeRenderView('최근 합방 인원',()=>{sniperViewMode==='ranking'?renderCollabRanking():renderSniperList()});
   if(tab==='targets')safeRenderView('저격 리스트',renderTargetList);
   if(tab==='memos')safeRenderView('메모',()=>setMemoView('library'));
-  if(tab==='dashboard')safeRenderView('대시보드',renderDashboard);
-  if(tab==='contacts')safeRenderView('연락처',renderContacts);
+  if(tab==='dashboard'){safeRenderView('대시보드',renderDashboard);safeRenderView('리마인더',renderReminders)}
+  if(tab==='contacts'){safeRenderView('연락처 필터',renderContactFilters);safeRenderView('연락처',()=>setContactView(contactView))}
   if(tab==='posts')safeRenderView('게시글',renderPosts);
   if(tab==='gameLadder')safeRenderView('사다리타기',renderLadder);
   if(tab==='gameRps')safeRenderView('가위바위보',renderRps);
@@ -807,6 +807,7 @@ function setTab(tab){
   if(tab==='gamePachinko')safeRenderView('경마',renderPachinko);
   if(tab==='gameMultiDraw')safeRenderView('Gacha 뽑기',renderMultiDraw);
   if(tab==='settings')safeRenderView('설정',renderSettings);
+  if(tab==='export')safeRenderView('백업 이미지 상태',updateFullBackupAssetStatus);
   try{window.mwsScheduleImageTune?.()}catch(_){}
   try{window.mwsContactRuntimeOnTabV130?.(tab)}catch(_){}
 }
@@ -6801,7 +6802,46 @@ window.startPachinko=()=>{
   setTimeout(()=>{miniGameRuntime.pachinko.running=false;miniGameRuntime.pachinko.winnerId=winner.id;const wel=balls.querySelector(`[data-id="${CSS.escape(winner.id)}"]`);wel?.classList.add('winner');document.getElementById('pachinkoResult').textContent=`JACKPOT · ${winner.name}`;document.getElementById('pachinkoStatus').textContent=`중앙에 가장 가까운 공 · ${winner.name}`;const btn=document.getElementById('pachinkoStartBtn');if(btn)btn.disabled=false;showMiniGameCelebration('PACHINKO JACKPOT',winner.name,winner.image)},maxEnd+250)
 };
 
+// First paint only touches the visible calendar, never hidden contact/game cards.
+// The cloud layer retains the authoritative snapshot until all required parts
+// are validated. This read-only preview must not normalize partial data.
+function renderCalendarShellV1(){
+  document.body.dataset.theme=data.theme||'neon';
+  safeRenderView('메뉴 고정',syncSidebarPinUI);
+  safeRenderView('글자 크기',()=>applyTextScale(data.textScale??100,false));
+  safeRenderView('UI 디자인',()=>applyUiFrame(false));
+  safeRenderView('배경',applyBackground);
+  safeRenderView('다가오는 일정',updateUpcomingAccent);
+  const ok=safeRenderView('캘린더',renderCalendar);
+  safeRenderView('시계',tickClock);
+  return ok;
+}
+window.mwsRenderCalendarFirstV1=snapshot=>{
+  if(window.__mwsCalendarFirstPaintV1||!document.body.classList.contains('mws-app-loading')||document.body.classList.contains('mws-gated')||!isCalendarTabActive())return false;
+  const previous=data;
+  try{
+    data={...snapshot};
+    if(typeof mwsApplyDevicePrefs==='function')mwsApplyDevicePrefs(data);
+    const ok=renderCalendarShellV1();
+    if(ok){window.__mwsCalendarFirstPaintV1={at:performance.now(),events:snapshot.events?.length||0};document.getElementById('calendarGrid')?.setAttribute('aria-busy','true')}
+    return ok;
+  }finally{data=previous}
+};
+window.mwsRenderHydratedCalendarV1=(reason,parts)=>{
+  // A manual mode switch away from the calendar keeps the existing full refresh.
+  if(!isCalendarTabActive()){renderAll(reason);return}
+  renderCalendarShellV1();
+  document.getElementById('calendarGrid')?.removeAttribute('aria-busy');
+  safeRenderView('저장 상태',()=>updateStorageStatus(true));
+  window.__mwsCalendarHydratedV1={at:performance.now(),parts:[...parts]};
+};
 function renderAll(reason=lastSyncReason){
+  if(reason==='초기 로드'&&document.body.classList.contains('mws-app-loading')){
+    // Initial HTML shows the calendar immediately. Never paint an outdated
+    // legacy local schedule before the verified Cloudflare rows arrive.
+    const previous=data;try{data={...data,events:[],contacts:[],scheduleClipboard:[]};renderCalendarShellV1()}finally{data=previous}
+    return;
+  }
   normalizeDataShape();
   document.body.dataset.theme=data.theme||'neon';
   updateUpcomingAccent();
@@ -7562,7 +7602,7 @@ function renderPosts(){
 window.renderPosts=renderPosts;
 
 // Ensure controls are synchronized after initialization and after data restores.
-applyPostViewPrefs();renderFavoriteSchedules();
+applyPostViewPrefs();if(!document.body.classList.contains('mws-app-loading'))renderFavoriteSchedules();
 window.addEventListener('mawang:datachange',()=>{try{applyTextScale(data.textScale??100,false);applyPostViewPrefs()}catch(_){}});
 
 
@@ -7822,7 +7862,7 @@ function refreshUserIdentityOnDataChangeV147(){
   try{renderUserIdentitySettings()}catch(_){}
 }
 window.addEventListener('mawang:datachange',refreshUserIdentityOnDataChangeV147);
-renderUserIdentitySettings();
+if(!document.body.classList.contains('mws-app-loading'))renderUserIdentitySettings();
 
 
 
@@ -8083,7 +8123,7 @@ window.launchPostApplicantsIntoGame=game=>{
   data.miniGames.multiDraw.players=arr.map(x=>({id:crypto.randomUUID(),contactId:x.contactId||'',name:x.name,image:x.image||'',description:''}));data.miniGames.multiDraw.targetCount=Math.min(8,arr.length);multiDrawRuntimeReset();normalizeMiniGameData();saveData('게시글 확정 신청자 → Gacha 뽑기');document.getElementById('postGamePickerModal')?.classList.remove('open');syncModalInteractionState();const tr=document.getElementById('postGameTransition');document.getElementById('postGameTransitionTitle').textContent='Gacha 뽑기';document.getElementById('postGameTransitionMeta').textContent=`확정 ${arr.length}명 · 기본 목표 ${Math.min(8,arr.length)}명`;tr?.classList.add('open');tr?.setAttribute('aria-hidden','false');setTimeout(()=>{setTab('gameMultiDraw');setTimeout(()=>{tr?.classList.remove('open');tr?.setAttribute('aria-hidden','true')},320)},650)
 };
 
-renderMultiDraw();
+if(!document.body.classList.contains('mws-app-loading'))renderMultiDraw();
 
 
 
@@ -8460,7 +8500,7 @@ renderMultiDraw=function(){
 };
 
 window.resetMultiDraw=()=>{const card=document.getElementById('multiRevealCard');multiDrawRuntimeReset();resetMultiStageVisualsV412();if(card){card.className='multi-reveal-card';card.innerHTML='';card.style.opacity='0'}renderMultiDraw();toast('Gacha 뽑기','선발 결과를 초기화했습니다')};
-renderMultiDraw();
+if(!document.body.classList.contains('mws-app-loading'))renderMultiDraw();
 
 
 
@@ -8638,8 +8678,7 @@ fireMultiDraw=async function(gauge){
   else if(status)status.textContent=`${winner.name} 당첨 · 다음 카드 정리를 누르면 오른쪽 보관함으로 이동합니다`;
 };
 window.resetMultiDraw=()=>{const card=document.getElementById('multiRevealCard');multiDrawRuntimeReset();resetMultiStageVisualsV413(false);if(card){card.className='multi-reveal-card';card.innerHTML='';card.style.opacity='0'}renderMultiDraw();toast('Gacha 뽑기','선발 결과를 초기화했습니다')};
-renderLadderFullResultList();
-renderMultiDraw();
+if(!document.body.classList.contains('mws-app-loading')){renderLadderFullResultList();renderMultiDraw()}
 
 // Initial render must see initialized favorite-folder and mini-game runtimes.
 renderAll('초기 로드');

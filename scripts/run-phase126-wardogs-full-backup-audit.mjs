@@ -74,7 +74,7 @@ export function runPhase126WardogsFullBackupAudit(){
   ])if(!media.includes(token))issues.push('WARDOGS backup local restore support missing: '+token);
 
   for(const [name,source] of [['cloud-v1.1',cloud],['cloud-runtime-v130',staged]]){
-    if(!source.includes("export:['contactMeta','miniGames','notebook','clipboard','wardogs']")){
+    if(!source.includes('export:ALL_PARTS')||!source.includes("const EXTRA_PARTS=['wardogs'];")||!source.includes('const ALL_PARTS=[...CACHE_STORES,...EXTRA_PARTS];')){
       issues.push(name+' export lazy-load must include WARDOGS before full backup');
     }
   }
@@ -91,7 +91,7 @@ export function runPhase126WardogsFullBackupAudit(){
     "const wardogsResult=await restoreWardogsBackupMedia(obj,payload);",
     "const cloudSaved=await window.mwsV55SaveNow();",
     "async function putLocal(blob,meta={})",
-    "export:['contactMeta','miniGames','notebook','clipboard','wardogs']"
+    'export:ALL_PARTS'
   ])if(!workflow.includes(token))issues.push('production Phase 126 verification missing: '+token);
 
   const summary={phase:126,name:'wardogs-full-backup',issues,warnings,pass:issues.length===0};

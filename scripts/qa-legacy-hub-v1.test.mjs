@@ -34,7 +34,7 @@ test('real setTab implementation routes legacy buttons and returns without break
     querySelectorAll(s){return s==='.nav button'?nav:s==='.section'?sections:s==='[data-legacy-link-v1]'?links:[]},
     getElementById(id){return id==='pageTitle'?title:id==='mwsLegacyBackV1'?back:null}
   };
-  const scope={document:doc,window:{},safeRenderView:(title,fn)=>{renders.push(title);fn()},renderCalendar(){},renderRps(){},renderPachinko(){}};
+  const scope={document:doc,window:{},safeRenderView:(title,fn)=>{renders.push(title);fn()},renderCalendar(){},renderRps(){},renderPachinko(){},updateFullBackupAssetStatus(){}};
   const start=app.indexOf('const legacyFeatureTabsV1='),end=app.indexOf('function syncSidebarPinUI(){',start);
   assert.ok(start>=0&&end>start);
   vm.runInNewContext(app.slice(start,end),scope);
@@ -57,4 +57,5 @@ test('real setTab implementation routes legacy buttons and returns without break
   assertActive('calendar','calendar','캘린더',true);
   nav[2].onclick();
   assertActive('export','export','가져오기 / 내보내기',true);
+  assert.equal(renders.at(-1),'백업 이미지 상태');
 });
