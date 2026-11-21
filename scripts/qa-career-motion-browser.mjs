@@ -107,7 +107,7 @@ try{
   if(mode==='all'||mode==='record'){
   const {context,page,errors,started}=await open(1366,768,true);
   const video=page.video();
-  const startSeconds=(Date.now()-started)/1000;
+  const startSeconds=Math.max(0,(Date.now()-started)/1000-3);
   // Start the recording sequence at the final record of 2024 so playback restarts at February.
   await chooseYear(page,'2024');await pause(950);await chooseMonth(page,12);await pause(950);
   await page.locator('.cv-controls .cv-control').last().click();await pause(350);
@@ -119,7 +119,7 @@ try{
   await pause(750);assert.equal(await title(page),stopped);assert.equal(await page.locator('.cv-axis').evaluate(e=>e.style.transform),transform);
   await page.locator('.cv-play').click();await pause(1300);
   await search(page,'릴동파');
-  await pause(500);
+  await pause(900);
   await page.locator('.cv-result').first().click();await pause(1500);
   assert.match(await page.locator('.cv-hero-date').innerText(),/2025년/);
   assert.equal(await page.locator('.cv-play').innerText(),'재생');
