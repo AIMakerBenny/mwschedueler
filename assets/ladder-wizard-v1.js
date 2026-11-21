@@ -15,7 +15,7 @@
   const validPrizes=()=>validRoster()&&prizes().length===players().length&&prizes().every(p=>String(p.label||'').trim());
   const rosterKey=()=>JSON.stringify(players().map(p=>p.id).sort());
   let step=1,furthest=1,key=null,paletteKey=null,preset='winner',shuffling=false;
-  const pages=[...root.querySelectorAll('[data-ladder-page]')],steps=[...root.querySelectorAll('[data-ladder-step]')];
+  const pages=[...root.querySelectorAll('[data-ladder-page]')],steps=[...$('ladderWizardSteps').querySelectorAll('[data-ladder-step]')];
   const canvas=$('ladderCanvas');
   let lastPoints=null,lastProgress=1,resizeFrame=0;
   function fitWorkspace(){
