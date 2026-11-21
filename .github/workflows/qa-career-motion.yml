@@ -9,6 +9,10 @@ jobs:
   browser:
     runs-on: ubuntu-latest
     timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [desktop, mobile, record]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -16,9 +20,39 @@ jobs:
           node-version: '24'
       - run: npm install --no-save --package-lock=false playwright
       - run: npx playwright install chromium
+      - name: Install capture codecs and Korean fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg fonts-noto-cjk
       - run: node scripts/qa-career-motion-browser.mjs
+        env:
+          CAREER_QA_MODE: ${{ matrix.mode }}
+      - name: Video frame review
+        if: matrix.mode == 'record' && always()
+        run: |
+          test -f career-qa/career-timeline-recording.webm
+          ffprobe -v error -show_entries format=duration:stream=width,height -of json career-qa/career-timeline-recording.webm
+          ffmpeg -v error -i career-qa/career-timeline-recording.webm -f null -
+          ffmpeg -loglevel error -y -i career-qa/career-timeline-recording.webm -vf 'fps=1/2,scale=640:-2,tile=2x5' -frames:v 1 -q:v 8 career-qa/contact-sheet.jpg
+          echo 'CAPTURE_BEGIN contact-sheet.jpg'
+          base64 -w 4096 career-qa/contact-sheet.jpg
+          echo CAPTURE_END
+          ffmpeg -loglevel error -y -i career-qa/career-timeline-recording.webm -vf 'fps=6,scale=1000:-2' -c:v libwebp_anim -lossless 0 -quality 38 -loop 0 career-qa/career-timeline-recording.webp
+          echo 'CAPTURE_BEGIN career-timeline-recording.webp'
+          base64 -w 4096 career-qa/career-timeline-recording.webp
+          echo CAPTURE_END
+      - name: Mobile screenshot review
+        if: matrix.mode == 'mobile' && always()
+        run: |
+          for f in career-qa/*.png; do
+            test -f "$f" || continue
+            ffmpeg -loglevel error -y -i "$f" -q:v 7 "${f%.png}.jpg"
+            echo "CAPTURE_BEGIN $(basename "${f%.png}.jpg")"
+            base64 -w 4096 "${f%.png}.jpg"
+            echo CAPTURE_END
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: career-motion-browser
+          name: career-motion-browser-${{ matrix.mode }}
           path: career-qa/

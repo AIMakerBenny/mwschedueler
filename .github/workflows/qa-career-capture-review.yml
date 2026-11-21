@@ -8,42 +8,14 @@ permissions:
 jobs:
   review:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Download the browser recording from verified QA
-        run: |
-          for i in {1..45}; do
-            state="$(gh run view 44906460588 --repo "$GITHUB_REPOSITORY" --json status --jq .status)"
-            test "$state" != completed || break
-            sleep 6
-          done
-          gh run download 44906460588 --repo "$GITHUB_REPOSITORY" --name career-motion-browser --dir capture
-      - name: Decode and inspect the video frames and screenshots
-        run: |
-          ls -lh capture
-          for f in capture/2024-march-*.png capture/search-*.png; do
-            test -f "$f" || continue
-            ffmpeg -loglevel error -y -i "$f" -vf 'scale=1000:-2' -q:v 8 "${f%.png}.jpg"
-            echo "CAPTURE_BEGIN $(basename "${f%.png}.jpg")"
-            base64 -w 4096 "${f%.png}.jpg"
+      - run: gh run download 44906460588 --repo "$GITHUB_REPOSITORY" --name career-motion-browser --dir capture
+      - run: |
+          for f in capture/2022-april-1366.png capture/2024-march-1366.png capture/search-1366.png; do
+            echo "CAPTURE_BEGIN $(basename "$f")"
+            base64 -w 4096 "$f"
             echo CAPTURE_END
           done
-          if test -f capture/career-timeline-recording.webm; then
-            ffprobe -v error -show_entries format=duration:stream=width,height -of json capture/career-timeline-recording.webm
-            ffmpeg -v error -i capture/career-timeline-recording.webm -f null -
-            ffmpeg -loglevel error -y -i capture/career-timeline-recording.webm -vf 'fps=1/2,scale=640:-2,tile=2x5' -frames:v 1 -q:v 8 capture/contact-sheet.jpg
-            echo "CAPTURE_BEGIN contact-sheet.jpg"
-            base64 -w 4096 capture/contact-sheet.jpg
-            echo CAPTURE_END
-            ffmpeg -loglevel error -y -i capture/career-timeline-recording.webm -vf 'fps=6,scale=1000:-2' -c:v libwebp_anim -lossless 0 -quality 38 -loop 0 capture/career-timeline-recording.webp
-            echo "CAPTURE_BEGIN career-timeline-recording.webp"
-            base64 -w 4096 capture/career-timeline-recording.webp
-            echo CAPTURE_END
-          fi
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: reviewed-career-capture
-          path: capture/

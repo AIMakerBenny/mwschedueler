@@ -9,6 +9,7 @@ const output=resolve(process.env.CAREER_QA_OUTPUT||'career-qa');
 mkdirSync(output,{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true,args:['--no-sandbox']});
 const candidate=process.env.CAREER_LIVE!=='1';
+const mode=process.env.CAREER_QA_MODE||'all';
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,reducedMotion,...(video?{recordVideo:{dir:output,size:{width,height}}}:{})});
@@ -24,13 +25,16 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   const started=Date.now(), page=await context.newPage();
   const errors=[];page.on('pageerror',err=>{if(err.stack?.includes('career-visualizer'))errors.push(err.message)});
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
+  await page.waitForFunction(()=>window.__mwsAppReadyV130&&!document.body.classList.contains('mws-app-loading'),{},{timeout:45000});
   const close=page.locator('#mwsAnnouncementDialog button').filter({hasText:'닫기'});
   if(await close.first().isVisible().catch(()=>false))await close.first().click();
   const nav=page.locator('[data-tab=careerTimeline]');
   if(width<=700){
+    await page.waitForFunction(()=>document.body.dataset.deviceMode==='mobile'&&document.body.dataset.resolution==='mobile'&&typeof window.toggleMobileDrawer==='function',{},{timeout:15000});
     const menu=page.locator('[data-mobile-tab=menu]');
-    if(await menu.isVisible())await menu.click();
-    else if(await page.locator('#mobileNavToggle').isVisible())await page.locator('#mobileNavToggle').click();
+    await menu.waitFor({state:'visible',timeout:15000});
+    await menu.click();
+    await page.waitForFunction(()=>document.body.classList.contains('mobile-drawer-open'),{},{timeout:10000});
   }
   // A public page may present its announcement after initial hydration.
   await nav.click({timeout:30000}).catch(async()=>{
@@ -59,7 +63,7 @@ const checkFit=async p=>{
   assert(await p.locator('.cv-panel').evaluate(e=>e.getBoundingClientRect().right<=innerWidth+1),'Panel overflow');
 };
 try{
-  for(const [width,height] of [[1366,768],[1920,1080],[390,844]]){
+  for(const [width,height] of [[1366,768],[1920,1080],[390,844]].filter(([w])=>mode==='all'||(mode==='mobile'&&w===390)||(mode==='desktop'&&w>700))){
     const {context,page,errors}=await open(width,height);
     await chooseYear(page,'2022'); await pause(1200);
     assert.equal(await page.locator('.cv-month[data-month="4"] .cv-record').count(),3);
@@ -100,6 +104,7 @@ try{
     console.log('PASS',width,height);
     await context.close();
   }
+  if(mode==='all'||mode==='record'){
   const {context,page,errors,started}=await open(1366,768,true);
   const video=page.video();
   const startSeconds=(Date.now()-started)/1000;
@@ -126,4 +131,5 @@ try{
   console.log('PASS recording interaction');
   const rm=await open(1366,768,false,'reduce');
   await chooseYear(rm.page,'2022');assert.match(await title(rm.page),/1위/);await rm.context.close();
+  }
 }finally{await browser.close();}
