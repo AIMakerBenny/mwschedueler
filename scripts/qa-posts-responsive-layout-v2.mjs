@@ -47,7 +47,8 @@ try{
         const m=await browser.evaluate(`(()=>{const d=document.querySelector(${JSON.stringify('#posts '+selector)}),r=d.querySelector('.post-menu-panel').getBoundingClientRect();return {open:d.open,count:document.querySelectorAll('#posts details[open]').length,fit:r.left>=-1&&r.right<=innerWidth+1,height:r.height,rootOverflow:document.documentElement.scrollWidth-innerWidth}})()`);
         assert(m.open&&m.count===1&&m.fit&&m.height>0&&m.rootOverflow<=2,JSON.stringify({width,mode,selector,...m}));
       }
-      await browser.keyPress('Escape');assert.equal(await browser.evaluate(`document.querySelectorAll('#posts details[open]').length`),0);
+      await browser.evaluate(`document.querySelector('#posts details[open] > summary').focus({preventScroll:true})`);
+      await browser.keyPress('Escape');await wait(100);assert.equal(await browser.evaluate(`document.querySelectorAll('#posts details[open]').length`),0);
     }
     if(!live){await browser.evaluate(`document.querySelector('#postApplicantGrid .post-applicant-status-menu summary').click()`);await wait(80);await browser.evaluate(`document.querySelector('#postApplicantGrid .post-decision-btn.gacha').click()`);assert.equal(await browser.evaluate(`decisions.at(-1)[2]`),'gacha');assert.equal(await browser.evaluate(`document.querySelectorAll('#posts details[open]').length`),0)}
   }
