@@ -501,41 +501,47 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 
 <section id="posts" class="section">
   <div class="posts-head">
-    <div>
-      <div class="posts-kicker">SOOP COMMENT INTAKE</div>
-      <h2>게시글 참가 신청</h2>
-      <p>SOOP 게시글 URL을 등록하면 댓글 작성자 이름, 프로필 사진, 댓글 내용(각오), 작성 시간과 첨부 이미지를 자동으로 가져옵니다.</p>
+    <h2>참가 신청</h2>
+    <div class="post-workspace-actions">
+      <details class="post-menu post-saved-menu" id="postSavedMenu">
+        <summary class="post-menu-trigger">등록 게시글 <span id="postSavedCount" class="chip">0개</span></summary>
+        <div class="post-menu-panel posts-saved-panel"><div id="postSavedList" class="post-saved-list"></div></div>
+      </details>
+      <details class="post-menu post-register-menu" id="postRegisterMenu">
+        <summary class="post-menu-trigger post-register-trigger">새 게시글 등록</summary>
+        <div class="post-menu-panel post-url-card">
+          <label for="postUrlInput">SOOP 게시글 주소</label>
+          <div class="post-url-form">
+            <input id="postUrlInput" type="url" placeholder="https://www.sooplive.com/station/아이디/post/글번호">
+            <button class="primary" id="postUrlAddBtn">댓글 불러오기</button>
+          </div>
+          <div id="postSyncGlobalStatus" class="posts-status-chip">URL 대기</div>
+          <div class="post-url-help">기존 게시글을 다시 등록하면 신청 상태를 유지하며 댓글만 갱신합니다.</div>
+        </div>
+      </details>
     </div>
-    <div id="postSyncGlobalStatus" class="posts-status-chip">URL 대기</div>
-  </div>
-  <div class="card post-url-card">
-    <div class="post-url-form">
-      <input id="postUrlInput" type="url" placeholder="https://www.sooplive.com/station/아이디/post/글번호">
-      <button class="primary" id="postUrlAddBtn">URL 등록 · 댓글 불러오기</button>
-    </div>
-    <div class="post-url-help">SOOP 방송국 게시글 주소를 그대로 붙여넣으세요. 같은 게시글을 다시 등록하면 기존 신청자 상태는 유지하면서 댓글 내용만 갱신합니다.</div>
   </div>
   <div class="posts-layout">
-    <aside class="card posts-saved-panel">
-      <div class="space"><div><h3>등록 게시글</h3><div class="subtle">게시글별 참가 신청 관리</div></div><span id="postSavedCount" class="chip">0개</span></div>
-      <div id="postSavedList" class="post-saved-list"></div>
-    </aside>
     <div class="card posts-main-panel">
       <div id="postEmptyState" class="posts-empty-state"><div class="posts-empty-icon">▤</div><h3>게시글 URL을 등록해 주세요</h3><p>댓글이 동기화되면 신청자 카드가 여기에 나타납니다.</p></div>
       <div id="postDetailView" style="display:none">
         <div class="post-detail-head">
           <div style="min-width:0">
             <textarea id="postDisplayName" class="post-title-input post-title-textarea" rows="1" aria-label="게시글 표시 이름" title="클릭해서 게시글 제목을 수정할 수 있습니다">게시글</textarea>
-            <div id="postDetailMeta" class="subtle"></div>
           </div>
           <div class="post-detail-actions-v415">
-            <div class="row post-detail-actions-main-v415">
-              <button class="primary post-random-game-btn" id="postRandomGameBtn">랜덤선별</button>
-              <button class="secondary" id="postOpenBtn">원문 열기</button>
-              <button class="secondary" id="postSyncBtn">댓글 다시 동기화</button>
-              <button class="ghost danger" id="postDeleteBtn">게시글 삭제</button>
-            </div>
-            <button class="post-schedule-create-btn-v415" id="postScheduleCreateBtn" type="button">컨텐츠 일정 추가</button>
+            <details class="post-menu post-detail-menu">
+              <summary class="post-menu-trigger">게시글 관리</summary>
+              <div class="post-menu-panel post-action-panel">
+                <div id="postDetailMeta" class="subtle"></div>
+                <div id="postApplicantExtraStats" class="post-extra-stats"></div>
+                <button class="primary post-random-game-btn" id="postRandomGameBtn">랜덤선별</button>
+                <button class="secondary" id="postOpenBtn">원문 열기</button>
+                <button class="secondary" id="postSyncBtn">댓글 다시 동기화</button>
+                <button class="post-schedule-create-btn-v415" id="postScheduleCreateBtn" type="button">컨텐츠 일정 추가</button>
+                <button class="ghost danger" id="postDeleteBtn">게시글 삭제</button>
+              </div>
+            </details>
           </div>
         </div>
         <div class="post-detail-tabs" role="tablist" aria-label="게시글 보기">
@@ -547,13 +553,13 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
             <input id="postApplicantSearch" class="search" placeholder="이름, ID, 각오 내용 또는 초성 검색">
             <select id="postApplicantStatusFilter"><option value="">전체 상태</option><option value="pending">대기</option><option value="selected">확정</option><option value="gacha">가챠</option><option value="nextchance">다음기회에</option></select>
             <select id="postApplicantSort"><option value="recent">최신 댓글순</option><option value="oldest">오래된 댓글순</option><option value="upDesc">UP 높은순</option><option value="upAsc">UP 낮은순</option><option value="name">이름 가나다순</option></select>
-          </div>
-          <div class="post-view-controls">
+            <details class="post-menu post-filter-menu">
+              <summary class="post-menu-trigger">보기 설정</summary>
+              <div class="post-menu-panel post-action-panel">
             <div class="post-view-mode" role="group" aria-label="신청자 보기 방식">
               <button type="button" id="postCardViewBtn" class="post-view-btn" onclick="setPostViewMode('card')"><svg class="post-view-icon-v53" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.2"></rect><rect x="14" y="3" width="7" height="7" rx="1.2"></rect><rect x="3" y="14" width="7" height="7" rx="1.2"></rect><rect x="14" y="14" width="7" height="7" rx="1.2"></rect></svg><span>카드형</span></button>
               <button type="button" id="postListViewBtn" class="post-view-btn" onclick="setPostViewMode('list')"><svg class="post-view-icon-v53" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"></path><rect x="3" y="4" width="2" height="2" rx=".5"></rect><rect x="3" y="10" width="2" height="2" rx=".5"></rect><rect x="3" y="16" width="2" height="2" rx=".5"></rect></svg><span>리스트형</span></button>
             </div>
-            <div class="post-bulk-actions"><button type="button" class="secondary post-bulk-confirm mws-admin-only" onclick="bulkConfirmPostApplicants()">전체 확정</button><button type="button" class="post-bulk-gacha-v50 mws-admin-only" onclick="bulkGachaPostApplicantsV50()">전체 가챠</button><button type="button" class="ghost post-bulk-cancel mws-admin-only" onclick="bulkCancelPostApplicants()">전체 취소</button><div class="post-partial-confirm-v53"><button type="button" class="post-partial-confirm-btn-v53" onclick="bulkPartialConfirmPostApplicantsV53()">부분 확정</button><label class="post-partial-count-v53">상위 <input id="postPartialConfirmCountV53" type="number" min="1" value="3" inputmode="numeric"> 명</label></div></div>
             <div class="post-column-control">
               <label for="postCardColumns">최대 카드</label>
               <select id="postCardColumns" onchange="setPostCardColumns(this.value)">
@@ -561,6 +567,13 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
               </select>
             </div>
             <div id="postViewHint" class="post-view-hint">화면에 맞춰 자동 배치</div>
+              </div>
+            </details>
+            <details class="post-menu post-bulk-menu">
+              <summary class="post-menu-trigger">일괄 처리</summary>
+              <div class="post-menu-panel post-action-panel post-bulk-actions"><button type="button" class="secondary post-bulk-confirm mws-admin-only" onclick="bulkConfirmPostApplicants()">전체 확정</button><button type="button" class="post-bulk-gacha-v50 mws-admin-only" onclick="bulkGachaPostApplicantsV50()">전체 가챠</button><button type="button" class="ghost post-bulk-cancel mws-admin-only" onclick="bulkCancelPostApplicants()">전체 취소</button><div class="post-partial-confirm-v53"><button type="button" class="post-partial-confirm-btn-v53" onclick="bulkPartialConfirmPostApplicantsV53()">부분 확정</button><label class="post-partial-count-v53">상위 <input id="postPartialConfirmCountV53" type="number" min="1" value="3" inputmode="numeric"> 명</label></div></div>
+            </details>
+            <div id="postMiniGameEntryV57" class="post-minigame-entry-v57"></div>
           </div>
           <div id="postApplicantGrid" class="post-applicant-grid"></div>
         </div>
@@ -2186,7 +2199,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <script src="assets/calendar-broadcast-duration-v1.js?v=1"></script>
 <script src="assets/calendar-continuous-series-v1.js?v=2"></script>
 <script src="assets/calendar-timeline-v1.js?v=4"></script>
-<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=1&contactgroup178=1&modalmotionv2=2&ladderdefaults=1&future-only=1&post-layout-v2=1"></script>
+<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=1&contactgroup178=1&modalmotionv2=2&ladderdefaults=1&future-only=1&post-layout-v3=1"></script>
 <script src="assets/calendar-content-groups-v2.js?v=7-save-contract-bulk"></script>
 <script src="assets/event-sidebar-tabs-v5.js?v=1"></script>
 <script src="assets/calendar-move-guard-v4.js?v=1&quietmoves=1"></script>
@@ -3354,11 +3367,11 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
   };
 
   postApplicantCardHTML=function(post,c,dups){
-    const matched=findContactForSoopApplicant(c),station=c.stationUrl||soopUserStationUrl(c.userId),avatar=c.profileImage?`<img class="post-applicant-avatar" src="${esc(c.profileImage)}" loading="lazy">`:`<div class="post-applicant-avatar">${esc(initials(c.name))}</div>`,st=normStatus(c.status);
+    const matched=findContactForSoopApplicant(c),station=c.stationUrl||soopUserStationUrl(c.userId),image=c.profileImage||matched?.image,avatar=image?`<img class="post-applicant-avatar" src="${esc(image)}" alt="${esc(c.name)} 프로필" loading="lazy" decoding="async" width="96" height="96">`:`<div class="post-applicant-avatar">${esc(initials(c.name))}</div>`,st=normStatus(c.status);
     const contactAction=matched
       ? `<button class="secondary post-contact-btn" onclick="openMatchedPostContact('${matched.id}')">연락처 보기</button>`
       : `<button class="secondary post-contact-btn" onclick="addPostApplicantToContacts('${post.id}','${c.id}')">연락처 추가</button>`;
-    return `<div class="post-applicant-card ${st} ${matched?'':'new-applicant'}" data-comment-id="${c.id}">${matched?'':'<span class="post-new-badge">신규</span>'}<div class="post-applicant-top">${station?`<a class="post-applicant-avatar-link" href="${esc(station)}" target="_blank" rel="noopener noreferrer" title="${esc(c.name)} 방송국 열기">${avatar}</a>`:avatar}<div style="min-width:0"><div class="post-applicant-name">${esc(c.name)}${dups[c.userId]>1?' <span class="chip" style="font-size:7px">중복 댓글</span>':''}</div><div class="post-applicant-id">${esc(c.userId||'ID 없음')}</div>${matched?'<div class="post-contact-match">연락처 연결됨 · 신청 기록 자동 저장</div>':'<div class="post-applicant-id" style="color:#61baff;margin-top:3px">연락처에서 찾을 수 없음</div>'}</div><div class="post-status-block"><span class="post-status-badge ${st}">${applicantStatusLabel(st)}</span><div class="post-decision-row"><button type="button" class="post-decision-btn selected ${st==='selected'?'active':''}" onclick="setPostApplicantDecision('${post.id}','${c.id}','selected')">확정</button><button type="button" class="post-decision-btn gacha ${st==='gacha'?'active':''}" onclick="setPostApplicantDecision('${post.id}','${c.id}','gacha')">가챠</button><button type="button" class="post-decision-btn nextchance ${st==='nextchance'?'active':''}" onclick="setPostApplicantDecision('${post.id}','${c.id}','nextchance')">다음기회에</button></div></div></div><div class="post-applicant-comment">${esc(c.comment||'(내용 없음)')}</div>${c.photoUrl?`<img class="post-applicant-photo" src="${esc(c.photoUrl)}" loading="lazy">`:''}<div class="post-applicant-foot"><div class="post-applicant-foot-left"><div class="post-applicant-date">${esc(c.regDate||'작성 시간 없음')}</div><span class="post-up-count">♡ UP ${Math.max(0,Number(c.upCount)||0)}</span></div><div class="post-applicant-actions">${contactAction}<button type="button" class="ghost post-contact-btn post-applicant-delete" onclick="deletePostApplicant('${post.id}','${c.id}')">삭제</button></div></div></div>`;
+    return `<div class="post-applicant-card ${st} ${matched?'':'new-applicant'}" data-comment-id="${c.id}"><div class="post-applicant-top">${station?`<a class="post-applicant-avatar-link" href="${esc(station)}" target="_blank" rel="noopener noreferrer" title="${esc(c.name)} 방송국 열기">${avatar}</a>`:avatar}<div class="post-applicant-identity"><div class="post-applicant-name">${esc(c.name)}</div><div class="post-applicant-id">${esc(c.userId||'ID 없음')}${dups[c.userId]>1?' · 중복 댓글':''}</div><div class="post-applicant-identity-meta">${matched?'<span class="post-contact-match" title="연락처 연결됨 · 신청 기록 자동 저장">연락처 연결</span>':'<span class="post-new-inline">신규 신청자</span>'}</div><details class="post-menu post-applicant-status-menu"><summary class="post-menu-trigger post-status-badge ${st}" aria-label="${esc(c.name)} 신청 상태 및 관리">${applicantStatusLabel(st)}</summary><div class="post-menu-panel post-action-panel post-applicant-menu"><div class="post-menu-label">신청 상태 변경</div><div class="post-decision-row"><button type="button" class="post-decision-btn selected ${st==='selected'?'active':''}" onclick="setPostApplicantDecision('${post.id}','${c.id}','selected')">확정</button><button type="button" class="post-decision-btn gacha ${st==='gacha'?'active':''}" onclick="setPostApplicantDecision('${post.id}','${c.id}','gacha')">가챠</button><button type="button" class="post-decision-btn nextchance ${st==='nextchance'?'active':''}" onclick="setPostApplicantDecision('${post.id}','${c.id}','nextchance')">다음기회에</button></div><div class="post-applicant-actions">${contactAction}<button type="button" class="ghost post-contact-btn post-applicant-delete" onclick="deletePostApplicant('${post.id}','${c.id}')">삭제</button></div></div></details></div></div><div class="post-applicant-comment">${esc(c.comment||'(내용 없음)')}</div>${c.photoUrl?`<img class="post-applicant-photo" src="${esc(c.photoUrl)}" loading="lazy" decoding="async">`:''}<div class="post-applicant-foot"><div class="post-applicant-foot-left"><div class="post-applicant-date">${esc(c.regDate||'작성 시간 없음')}</div><span class="post-up-count">♡ UP ${Math.max(0,Number(c.upCount)||0)}</span></div></div></div>`;
   };
 
   uniquePostGameApplicants=function(post){
@@ -3424,7 +3437,8 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
     const p=postById(activePostId),summary=document.getElementById('postApplicantSummary');
     if(p&&summary){
       const unique=new Set((p.comments||[]).map(c=>c.userId).filter(Boolean)),confirmed=(p.comments||[]).filter(c=>normStatus(c.status)==='selected').length,gacha=(p.comments||[]).filter(c=>normStatus(c.status)==='gacha').length,nextchance=(p.comments||[]).filter(c=>normStatus(c.status)==='nextchance').length,matchedCount=(p.comments||[]).filter(c=>findContactForSoopApplicant(c)).length,newCount=(p.comments||[]).filter(c=>!findContactForSoopApplicant(c)).length;
-      summary.innerHTML=`<span class="chip">댓글 ${p.comments.length}개</span><span class="chip">고유 작성자 ${unique.size}명</span><span class="chip" style="border-color:#38b77a">확정 ${confirmed}명</span><span class="chip" style="border-color:#d44fc7;color:#ffb5f4">가챠 ${gacha}명</span><span class="chip">다음기회에 ${nextchance}명</span><span class="chip" style="border-color:#2ea676">연락처 연결 ${matchedCount}개</span>${newCount?`<span class="chip" style="border-color:#3aa9ff;color:#7ccaff">신규 ${newCount}개 댓글</span>`:''}`;
+      summary.innerHTML=`<span class="chip post-total-count">신청 ${p.comments.length}개</span><span class="chip post-confirmed-count">확정 ${confirmed}</span><span class="chip post-gacha-count">가챠 ${gacha}</span><span class="chip">다음기회에 ${nextchance}</span>`;
+      const extra=document.getElementById('postApplicantExtraStats');if(extra)extra.textContent=`고유 작성자 ${unique.size}명 · 연락처 연결 ${matchedCount}개${newCount?` · 신규 ${newCount}개 댓글`:''}`;
     }
     const game=document.getElementById('postRandomGameBtn');if(game)game.onclick=window.openPostGamePicker;
     return out;
@@ -4429,16 +4443,15 @@ body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout.main
   if(window.__mwsV57Loaded)return; window.__mwsV57Loaded=true;
 
   function ensureMiniGameButtonV57(){
-    const controls=document.querySelector('#postApplicantsPanel .post-view-controls');
-    const column=document.querySelector('#postApplicantsPanel .post-column-control');
-    if(!controls||!column)return;
+    const controls=document.querySelector('#postApplicantsPanel .post-applicant-tools');
+    if(!controls)return;
     let btn=document.getElementById('postRandomGameBtn');
     if(!btn){
       btn=document.createElement('button');
       btn.id='postRandomGameBtn';
       btn.type='button';
     }
-    btn.textContent='미니게임 진행하기';
+    btn.textContent='미니게임';
     btn.className='post-mini-game-btn-v57';
     btn.onclick=()=>{ if(typeof window.openPostGamePicker==='function') window.openPostGamePicker(); };
     let wrap=document.getElementById('postMiniGameEntryV57');
@@ -4448,7 +4461,7 @@ body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout.main
       wrap.className='post-minigame-entry-v57';
     }
     if(btn.parentElement!==wrap)wrap.appendChild(btn);
-    if(wrap.parentElement!==controls)controls.insertBefore(wrap,column);
+    if(wrap.parentElement!==controls)controls.appendChild(wrap);
   }
 
   window.openPostGamePicker=function(){
@@ -4671,7 +4684,8 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .sidebar-save-v572{padding-left:0
 <link rel="stylesheet" href="assets/contact-card-readable-layout-v1.css?v=1">
 <link rel="stylesheet" href="assets/workspace-clean-v1.css?v=3">
 <link rel="stylesheet" href="assets/calendar-details-v1.css?v=17">
-<link rel="stylesheet" href="assets/posts-responsive-layout-v2.css?v=1">
+<link rel="stylesheet" href="assets/posts-responsive-layout-v2.css?v=2">
+<script src="assets/posts-focus-layout-v3.js?v=1" defer></script>
 <link rel="stylesheet" data-mws-post-login-style="mobile-calendar-v130" href="assets/mobile-calendar-v130.css?v=1.3.0-mobile-calendar-viewport-p29-layout-v2">
 <link rel="stylesheet" href="assets/achievement-exhibition-v1.css?v=2">
 <link rel="stylesheet" href="assets/calendar-search-v173.css?v=1">
