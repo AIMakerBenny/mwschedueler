@@ -44,92 +44,112 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   });
   await page.locator('.cv-panel').waitFor({state:'visible'});
   await page.locator('.cv-axis').waitFor({state:'visible'});
-  await page.locator('.cv-intro').waitFor({state:'hidden',timeout:5000});
-  await pause(1100);
+  await pause(350);
   assert.equal(await page.locator('.career-tree li').count(),51);
-  assert.equal(await page.locator('.career-tree .career-year').last().locator('li').count(),7);
-  assert.match(await page.locator('.cv-hero-title').innerText(),/전사 1위/);
+  assert.equal(await page.locator('.cv-axis .cv-entry').count(),44);
+  assert.equal(await page.locator('.cv-legacy .cv-entry').count(),7);
+  assert.equal(await page.locator('.cv-map-dots i').count(),44);
+  assert.equal(await page.locator('.cv-axis .cv-year').count(),5);
+  assert.equal(await page.locator('.cv-play,.cv-years,.cv-hero').count(),0);
   return {context,page,errors,started};
 };
-const title=p=>p.locator('.cv-hero-title').innerText();
-const chooseYear=(p,y)=>p.locator('.cv-years').getByRole('button',{name:y,exact:true}).click();
-const chooseMonth=(p,m)=>p.locator('.cv-mini').nth(m-1).click();
-const search=(p,q)=>p.locator('.cv-search').fill(q);
+const position=p=>p.evaluate(()=>{
+  const panel=document.querySelector('.cv-panel');
+  for(let el=panel.parentElement;el&&el!==document.body;el=el.parentElement){if(/auto|scroll/.test(getComputedStyle(el).overflowY)&&el.scrollHeight>el.clientHeight+2)return el.scrollTop;}
+  return document.scrollingElement.scrollTop;
+});
+const scrollTo=async(p,top)=>{await p.evaluate(top=>{
+  const panel=document.querySelector('.cv-panel');let root=document.scrollingElement;
+  for(let el=panel.parentElement;el&&el!==document.body;el=el.parentElement){if(/auto|scroll/.test(getComputedStyle(el).overflowY)&&el.scrollHeight>el.clientHeight+2){root=el;break;}}
+  root.scrollTo({top,behavior:'instant'});
+},top);await pause(100);};
+const inspect=async entry=>entry.evaluate(e=>{
+  const r=e.getBoundingClientRect(), c=e.querySelector('.cv-card').getBoundingClientRect();
+  return {p:Number(e.style.getPropertyValue('--cv-p')),shift:c.left-r.left,branch:getComputedStyle(e,'::before').transform,top:r.top,bottom:r.bottom,left:c.left,right:c.right,view:innerHeight,width:innerWidth};
+});
 const checkFit=async p=>{
-  const fit=await p.locator('.cv-hero-title').evaluate(e=>{
-    const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&r.top>=0&&r.bottom<=innerHeight+1&&e.scrollWidth<=e.clientWidth+1;
-  });
-  assert(fit,'Hero clipped');
-  assert(await p.locator('.cv-panel').evaluate(e=>e.getBoundingClientRect().right<=innerWidth+1),'Panel overflow');
+  const fit=await p.locator('.cv-panel').evaluate(e=>e.getBoundingClientRect().right<=innerWidth+1);
+  assert(fit,'Panel overflow');
+  assert(await p.locator('.cv-bar').evaluate(e=>e.getBoundingClientRect().top>=-2&&e.getBoundingClientRect().bottom<innerHeight),'Overview not sticky');
+  const clipped=await p.locator('.cv-card').evaluateAll(els=>els.filter(e=>{
+    const r=e.getBoundingClientRect();return r.top<innerHeight&&r.bottom>0&&(r.left<-1||r.right>innerWidth+1||e.scrollWidth>e.clientWidth+2);
+  }).map(e=>e.textContent));
+  assert.deepEqual(clipped,[],'Card clipped');
 };
+const chooseYear=(p,y)=>p.locator('.cv-map-year').filter({hasText:y}).click();
+const search=(p,q)=>p.locator('.cv-search').fill(q);
 try{
   for(const [width,height] of [[1366,768],[1920,1080],[390,844]].filter(([w])=>mode==='all'||(mode==='mobile'&&w===390)||(mode==='desktop'&&w>700))){
     const {context,page,errors}=await open(width,height);
-    await chooseYear(page,'2022'); await pause(1200);
-    assert.equal(await page.locator('.cv-month[data-month="4"] .cv-record').count(),3);
     await checkFit(page);
-    await page.screenshot({path:output+'/2022-april-'+width+'.png'});
-    await chooseYear(page,'2024');await pause(1200);
-    await chooseMonth(page,3);await pause(1200);
-    assert.match(await title(page),/1위/);
-    const camera=await page.locator('.cv-axis').evaluate(e=>e.style.transform);
-    await page.locator('.cv-controls').getByRole('button',{name:'다음',exact:true}).click();
-    await pause(400);
-    assert.equal(await title(page),'팀 종합 우승');
-    assert.equal(await page.locator('.cv-axis').evaluate(e=>e.style.transform),camera,'Same-month camera moved');
+    await page.screenshot({path:output+'/overview-'+width+'.png'});
+    assert.equal(await page.locator('.cv-year[data-year="2022"] .cv-month[data-month="4"] .cv-entry').count(),3);
+    const entry=page.locator('.cv-year[data-year="2024"] .cv-month[data-month="3"] .cv-entry').first();
+    const first=await inspect(entry);const start=await position(page);
+    const target=start+first.top-height*.8;
+    await scrollTo(page,target);
+    const partial=await inspect(entry);
+    await scrollTo(page,target+height*.25);
+    const attached=await inspect(entry);
+    await scrollTo(page,target);
+    const reversed=await inspect(entry);
+    assert(partial.p>0&&partial.p<1,JSON.stringify(partial));
+    assert(attached.p>partial.p+.15,JSON.stringify({partial,attached}));
+    assert(Math.abs(attached.shift)<Math.abs(partial.shift),JSON.stringify({partial,attached}));
+    assert(Math.abs(reversed.p-partial.p)<.02,JSON.stringify({partial,reversed}));
+    assert.equal(reversed.branch,partial.branch);
+    console.log('PASS scroll reverse',width,JSON.stringify({partial,attached,reversed}));
+    await page.screenshot({path:output+'/2024-approach-'+width+'.png'});
+    await chooseYear(page,'2024');await pause(180);
     await checkFit(page);
+    await page.screenshot({path:output+'/2024-year-'+width+'.png'});
+    await scrollTo(page,(await position(page))+(await inspect(entry)).top-245);
+    await checkFit(page);
+    assert.equal(await page.locator('.cv-year[data-year="2024"] .cv-month[data-month="3"] .cv-entry').count(),2);
     await page.screenshot({path:output+'/2024-march-'+width+'.png'});
-    await chooseMonth(page,7);await pause(1200);
-    await page.locator('.cv-month[data-month="7"]').getByRole('button',{name:'왁체대 종합 우승'}).click();await pause(400);
-    assert.equal(await title(page),'팀 종합 우승');
-    assert.match(await page.locator('.cv-hero-extra').innerText(),/개인 공동 1위/);
+    const saved=await position(page);
     await search(page,'릴동파');
     assert.equal(await page.locator('.cv-result-group').count(),2);
     assert.equal(await page.locator('.cv-result').count(),3);
+    assert.equal(await page.locator('.cv-entry[data-match=true]').count(),3);
     await page.screenshot({path:output+'/search-'+width+'.png'});
-    await page.locator('.cv-result').first().click();await pause(1200);
-    assert.match(await page.locator('.cv-hero-date').innerText(),/2025년/);
-    await search(page,'');await pause(1200);
-    assert.match(await page.locator('.cv-hero-date').innerText(),/2024년 7월/);
+    await page.locator('.cv-result').first().click();await pause(200);
+    assert.match(await page.locator('.cv-entry[data-selected=true]').innerText(),/죠뗌므/);
+    assert(await page.locator('.cv-entry[data-selected=true]').isVisible());
+    await search(page,'');await pause(150);
+    assert(Math.abs((await position(page))-saved)<3,'Search did not restore scroll');
     for(const [q,n] of [['코치',3],['VR 우승',4],['WBD',1],['왁타버스 야구',1],['F1 챔스',1]]){
-      await search(page,q);
-      assert.equal(await page.locator('.cv-result').count(),n,q);
+      await search(page,q);assert.equal(await page.locator('.cv-result').count(),n,q);
       if(q==='VR 우승')assert(!((await page.locator('.cv-results').innerText()).includes('준우승')));
     }
     await search(page,'');
-    await chooseYear(page,'레거시');await pause(100);
-    assert.equal(await page.locator('.cv-record').count(),7);
-    assert(await page.locator('.cv-play').isDisabled());
+    await page.locator('.cv-legacy-link').click();await pause(150);
+    assert.equal(await page.locator('.cv-legacy .cv-entry').count(),7);
     assert.deepEqual(errors,[]);
     console.log('PASS',width,height);
     await context.close();
   }
   if(mode==='all'||mode==='record'){
-  const {context,page,errors,started}=await open(1366,768,true);
-  const video=page.video();
-  const startSeconds=Math.max(0,(Date.now()-started)/1000-3);
-  // Start the recording sequence at the final record of 2024 so playback restarts at February.
-  await chooseYear(page,'2024');await pause(950);await chooseMonth(page,12);await pause(950);
-  await page.locator('.cv-controls .cv-control').last().click();await pause(350);
-  await page.locator('.cv-play').click();
-  await pause(1300); assert.match(await page.locator('.cv-hero-date').innerText(),/2024년 2월/);
-  await pause(8800);
-  await page.locator('.cv-play').click();
-  const stopped=await title(page), transform=await page.locator('.cv-axis').evaluate(e=>e.style.transform);
-  await pause(750);assert.equal(await title(page),stopped);assert.equal(await page.locator('.cv-axis').evaluate(e=>e.style.transform),transform);
-  await page.locator('.cv-play').click();await pause(1300);
-  await search(page,'릴동파');
-  await pause(900);
-  await page.locator('.cv-result').first().click();await pause(1500);
-  assert.match(await page.locator('.cv-hero-date').innerText(),/2025년/);
-  assert.equal(await page.locator('.cv-play').innerText(),'재생');
-  await page.screenshot({path:output+'/recording-end.png'});
-  assert.deepEqual(errors,[]);
-  await context.close();
-  await video.saveAs(output+'/career-timeline-raw.webm');
-  execFileSync('ffmpeg',['-y','-ss',String(startSeconds),'-i',output+'/career-timeline-raw.webm','-t','25','-c:v','libvpx-vp9','-crf','30','-b:v','0',output+'/career-timeline-recording.webm'],{stdio:'inherit'});
-  console.log('PASS recording interaction');
-  const rm=await open(1366,768,false,'reduce');
-  await chooseYear(rm.page,'2022');assert.match(await title(rm.page),/1위/);await rm.context.close();
+    const {context,page,errors,started}=await open(1366,768,true);
+    const video=page.video(),startSeconds=Math.max(0,(Date.now()-started)/1000-1);
+    await chooseYear(page,'2024');await pause(500);
+    const x=800,y=480;
+    await page.mouse.move(x,y);
+    for(let i=0;i<18;i++){await page.mouse.wheel(0,65);await pause(240);}
+    await pause(700);
+    for(let i=0;i<14;i++){await page.mouse.wheel(0,-65);await pause(240);}
+    await pause(800);
+    await search(page,'릴동파');await pause(1400);
+    await page.locator('.cv-result').first().click();await pause(1200);
+    await search(page,'');await pause(1100);
+    await page.screenshot({path:output+'/recording-end.png'});
+    assert.deepEqual(errors,[]);
+    await context.close();
+    await video.saveAs(output+'/career-timeline-raw.webm');
+    execFileSync('ffmpeg',['-y','-ss',String(startSeconds),'-i',output+'/career-timeline-raw.webm','-t','25','-c:v','libvpx-vp9','-crf','30','-b:v','0',output+'/career-timeline-recording.webm'],{stdio:'inherit'});
+    console.log('PASS recording interaction');
+    const rm=await open(1366,768,false,'reduce');
+    assert.equal((await inspect(rm.page.locator('.cv-axis .cv-entry').last())).p,1);
+    await rm.context.close();
   }
 }finally{await browser.close();}

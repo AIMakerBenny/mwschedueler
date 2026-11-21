@@ -95,251 +95,152 @@
     const years = [...new Set(rows.map(r=>r.year))];
     const dated = rows.filter(r=>Number.isFinite(r.month));
     const byYear = y=>rows.filter(r=>r.year===y);
-    let selected = dated.at(-1), shown = selected, searchOrigin = null, resultsOpen = false;
-    let playing = false, paused = false, remaining = 0, lastTime = 0, raf = 0, motion = null, offset = 0;
-    let builtYear = '', drag = null, introUntil = 0;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-    const mobile = matchMedia('(max-width: 700px)');
     const node = (tag, cls, value) => {
-      const el = document.createElement(tag);
-      if (cls) el.className = cls;
-      if (value != null) el.textContent = value;
+      const el=document.createElement(tag);
+      if(cls)el.className=cls;
+      if(value!=null)el.textContent=value;
       return el;
     };
     const button = (cls,label,action) => {
-      const b=node('button',cls,label); b.type='button'; b.onclick=action; return b;
+      const b=node('button',cls,label); b.type='button'; b.addEventListener('click',action); return b;
     };
     const panel=node('div','cv-panel');
-    const bar=node('div','cv-bar'), nav=node('nav','cv-years');
-    nav.setAttribute('aria-label','타임라인 연도');
-    const searchBox=node('div','cv-searchbox'), query=node('input','cv-search');
+    const bar=node('div','cv-bar');
+    const toolbar=node('div','cv-toolbar');
+    const info=node('div','cv-summary');
+    info.append(node('strong','',dated.length+'개 기록'),node('span','','2022 – 2026'));
+    const searchBox=node('div','cv-searchbox');
+    const query=node('input','cv-search');
     query.type='search'; query.placeholder='전체 기록 검색'; query.setAttribute('aria-label','전체 타임라인 검색');
-    const resultsButton=button('cv-result-toggle','검색 결과',()=>{ stop(); resultsOpen=true; renderResults(); });
-    resultsButton.hidden=true;
-    searchBox.append(query,resultsButton);
-    const controls=node('div','cv-controls');
-    const prev=button('cv-control','이전',()=>step(-1));
-    const play=button('cv-control cv-play','재생',togglePlay);
-    const next=button('cv-control','다음',()=>step(1));
-    const count=node('span','cv-count');
-    controls.append(prev,play,next,count);
-    bar.append(nav,searchBox,controls);
-    const stage=node('div','cv-stage');
-    const hero=node('article','cv-hero');
-    hero.setAttribute('aria-live','polite');
-    const heroDate=node('div','cv-hero-date'), heroTitle=node('h2','cv-hero-title');
-    const heroContext=node('p','cv-hero-context'), heroExtra=node('p','cv-hero-extra');
-    const facts=node('div','cv-facts'), detail=node('details','cv-details');
-    detail.append(node('summary','','기록 상세'));
-    const detailBody=node('div','cv-detail-body'); detail.append(detailBody);
-    facts.append(detail);
-    hero.append(heroDate,heroTitle,heroContext,heroExtra,facts);
-    const viewport=node('div','cv-viewport'); viewport.tabIndex=0;
-    viewport.setAttribute('role','region'); viewport.setAttribute('aria-label','월별 기록 탐색');
-    const axis=node('div','cv-axis'), overview=node('div','cv-overview'); overview.hidden=true;
-    for(const y of years.filter(y=>y!=='레거시')){
-      const mark=node('div','cv-overview-year');
-      mark.append(node('strong','',y+'년'),node('span','',byYear(y).length+'건'));
-      overview.append(mark);
-    }
-    viewport.append(axis,overview);
-    const annual=node('div','cv-annual');
-    const annualLabel=node('span','cv-annual-label');
-    const months=node('div','cv-minimap');
-    const progress=node('div','cv-progress'); progress.append(node('i'));
-    annual.append(annualLabel,months,progress);
-    stage.append(hero,viewport,annual);
+    const toggle=button('cv-result-toggle','검색 결과',()=>{results.hidden=!results.hidden;toggle.setAttribute('aria-expanded',String(!results.hidden));});
+    toggle.hidden=true; toggle.setAttribute('aria-expanded','false');
+    const clear=button('cv-clear','검색 지우기',()=>clearSearch(true)); clear.hidden=true;
+    searchBox.append(query,toggle,clear);
+    toolbar.append(info,searchBox);
+    const nav=node('nav','cv-overview'); nav.setAttribute('aria-label','전체 연도 위치');
     const results=node('div','cv-results'); results.hidden=true;
-    panel.append(bar,stage,results); section.append(panel); source.hidden=true;
+    results.setAttribute('aria-label','검색 결과');
+    bar.append(toolbar,nav,results);
+    const axis=node('div','cv-axis'); axis.setAttribute('role','region');axis.setAttribute('aria-label','연속 업적 타임라인');
+    const legacy=node('section','cv-legacy'); legacy.setAttribute('aria-label','시기 미확인 기록');
+    panel.append(bar,axis,legacy);section.append(panel);source.hidden=true;
 
-    const yearButtons = new Map(), monthElements = new Map(), miniButtons = new Map(), recordButtons = new Map();
-    for (const y of years) {
-      const b=button('',y,()=>{ clearSearch(false); choose(byYear(y)[0]); });
-      nav.append(b); yearButtons.set(y,b);
+    const entries=new Map(), markers=new Map(), yearButtons=new Map(), anim=[], months=[];
+    let raf=0, attached=false, searchOrigin=null, selected=null, scrollRoot=null;
+    const clamp=(v)=>Math.max(0,Math.min(1,v));
+    const getRoot=()=>{
+      for(let el=panel.parentElement;el&&el!==document.body;el=el.parentElement){
+        if(/auto|scroll/.test(getComputedStyle(el).overflowY)&&el.scrollHeight>el.clientHeight+2)return el;
+      }
+      return document.scrollingElement;
+    };
+    const scrollTop=()=>scrollRoot?.scrollTop||0;
+    const setScroll=(top)=>{if(scrollRoot)scrollRoot.scrollTo({top,behavior:'instant'});};
+    function tone(r){
+      const s=r.headline+' '+(r.extra||'');
+      if(/준우승|2위|은메달/.test(s)&&!/우승팀|종합 우승|팀 우승|공동 1위/.test(s))return 'silver';
+      if(/우승|1위|금메달|대상|MVP|올해의|수상/.test(s))return 'gold';
+      if(/3위|동메달/.test(s))return 'bronze';
+      if(/감독|코치|교관/.test(s))return 'role';
+      if(/제작|몸연기|주최|운영|개장|시작/.test(s))return 'creative';
+      return 'neutral';
     }
-    function dateLabel(r){return r.year==='레거시'?'레거시 · 시기 미확인':r.year+'년 '+r.date;}
-    function heroRender(r) {
-      shown=r;
-      heroDate.textContent=dateLabel(r);
-      heroTitle.textContent=r.headline;
-      heroContext.textContent=[r.name,r.context].filter(Boolean).join(' · ');
-      heroExtra.textContent=r.extra||'';
-      heroExtra.hidden=!r.extra;
-      detail.open=false;
-      detailBody.replaceChildren(node('p','',r.info),node('small','',r.tags.join(' · ')));
+    function makeCard(r,isLegacy=false){
+      const entry=node('div','cv-entry'); entry.dataset.record=String(r.id);entry.dataset.tone=tone(r);
+      const card=node('details','cv-card');
+      const summary=node('summary','cv-record');
+      summary.append(node('span','cv-headline',r.headline),node('span','cv-context',[r.name===r.headline?'':r.name,r.context].filter(Boolean).join(' · ')||r.info));
+      if(r.extra&&r.extra!==r.info)summary.append(node('span','cv-extra',r.extra));
+      const detail=node('div','cv-detail');
+      detail.append(node('p','',r.info),node('small','',r.tags.join(' · ')));
       if(evidence[r.name]){
-        const a=node('a','cv-source','분류 근거'); a.href=evidence[r.name]; a.target='_blank'; a.rel='noopener noreferrer'; detailBody.append(a);
+        const link=node('a','cv-source','분류 근거');link.href=evidence[r.name];link.target='_blank';link.rel='noopener noreferrer';detail.append(link);
       }
-      hero.dataset.record=String(r.id);
-      for(const [id,b] of recordButtons) b.setAttribute('aria-current',String(id===r.id));
+      card.append(summary,detail);entry.append(card);entries.set(r.id,entry);
+      if(!isLegacy)anim.push(entry);
+      card.addEventListener('toggle',schedule);
+      return entry;
     }
-    function updateControls(){
-      const list=byYear(selected.year), index=list.indexOf(selected);
-      prev.disabled=resultsOpen||index===0; next.disabled=resultsOpen||index===list.length-1;
-      play.disabled=selected.year==='레거시'||resultsOpen;
-      play.textContent=playing?'일시정지':'재생';
-      play.setAttribute('aria-pressed',String(playing));
-      count.textContent=(index+1)+' / '+list.length;
-      panel.classList.toggle('cv-playing',playing);
-      for(const [y,b] of yearButtons) b.setAttribute('aria-pressed',String(selected.year===y));
+    function gapLabel(a,b){
+      const start=Number(a.year)*12+a.month-1, end=Number(b.year)*12+b.month-1;
+      if(end-start<2)return null;
+      const label=n=>Math.floor(n/12)+'년 '+(n%12+1)+'월';
+      const from=start+1,to=end-1;
+      const text=from===to?label(from):Math.floor(from/12)===Math.floor(to/12)?Math.floor(from/12)+'년 '+(from%12+1)+'–'+(to%12+1)+'월':label(from)+' – '+label(to);
+      const gap=node('div','cv-gap');gap.append(node('span','',text+' · 기록 없음'));return gap;
     }
-    function record(r,action=()=>choose(r)){
-      const b=button('cv-record',r.caption,action);
-      b.dataset.record=String(r.id);
-      b.setAttribute('aria-current',String(r===shown));
-      return b;
-    }
-    function build(y){
-      builtYear=y; axis.replaceChildren(); months.replaceChildren();
-      monthElements.clear(); miniButtons.clear(); recordButtons.clear();
-      const legacy=y==='레거시';
-      viewport.classList.toggle('cv-legacy',legacy); annual.hidden=legacy;
-      if(legacy){
-        const col=node('div','cv-month cv-legacy-month');
-        col.append(node('div','cv-tick','시기 미확인'));
-        const branch=node('div','cv-branch');
-        for(const r of byYear(y)){const b=record(r); recordButtons.set(r.id,b); branch.append(b);}
-        col.append(branch); axis.append(col); return;
-      }
-      annualLabel.textContent=y+'년';
-      for(let m=1;m<=12;m++){
-        const list=byYear(y).filter(r=>r.month===m);
-        const col=node('div','cv-month'+(list.length?'':' cv-empty'));
-        col.dataset.month=String(m);
-        const tick=button('cv-tick',m+'월',()=>{if(list.length) choose(list[0]);});
-        tick.disabled=!list.length; col.append(tick);
-        if(list.length){
-          const branch=node('div','cv-branch');
-          list.forEach((r,i)=>{
-            const b=record(r); b.style.setProperty('--order',i); recordButtons.set(r.id,b); branch.append(b);
-          });
-          col.append(branch);
+    let previous=null;
+    for(const y of years.filter(y=>y!=='레거시')){
+      const list=byYear(y);
+      if(previous){const gap=gapLabel(previous,list[0]);if(gap)axis.append(gap);}
+      const year=node('section','cv-year');year.dataset.year=y;
+      const heading=node('h2','cv-year-heading');heading.append(node('span','',y),node('small','',list.length+'건'));
+      year.append(heading);axis.append(year);markers.set(y,heading);
+      const mapButton=button('cv-map-year','',()=>jump(heading));mapButton.setAttribute('aria-label',y+'년 '+list.length+'건 위치로 이동');
+      const mapLabel=node('span','cv-map-label');mapLabel.append(node('strong','',y),node('small','',list.length+'건'));
+      const dots=node('span','cv-map-dots');
+      for(const r of list){const dot=node('i','');dot.dataset.tone=tone(r);dot.dataset.record=String(r.id);dots.append(dot);}
+      mapButton.append(mapLabel,dots);nav.append(mapButton);yearButtons.set(y,mapButton);
+      for(const m of [...new Set(list.map(r=>r.month))]){
+        const records=list.filter(r=>r.month===m);
+        if(previous&&previous.year===y){const gap=gapLabel(previous,records[0]);if(gap)year.append(gap);}
+        const month=node('section','cv-month');month.dataset.month=String(m);month.dataset.year=y;
+        const title=node('h3','cv-month-title',m+'월');month.append(title);months.push(month);
+        for(let i=0;i<records.length;i+=2){
+          const pair=node('div','cv-pair');pair.dataset.single=String(records.length-i===1);
+          const left=makeCard(records[i]);left.classList.add(i%4===0?'cv-left':'cv-right');
+          pair.append(left);
+          if(records[i+1]){const right=makeCard(records[i+1]);right.classList.add(i%4===0?'cv-right':'cv-left');pair.append(right);}
+          // Alternate single-record months without changing chronological DOM order.
+          if(records.length===1){left.classList.toggle('cv-left',m%2===0);left.classList.toggle('cv-right',m%2!==0);}
+          pair.append(node('i','cv-junction'));
+          month.append(pair);
         }
-        axis.append(col); monthElements.set(m,col);
-        const mini=button('cv-mini',String(m),()=>{if(list.length) choose(list[0]);});
-        mini.disabled=!list.length; mini.setAttribute('aria-label',y+'년 '+m+'월'+(list.length?' '+list.length+'건':' 기록 없음'));
-        months.append(mini); miniButtons.set(m,mini);
+        year.append(month);previous=records.at(-1);
       }
     }
-    function focusMonth(r){
-      const activeMonths=[...monthElements.keys()].filter(m=>!monthElements.get(m).classList.contains('cv-empty'));
-      const idx=activeMonths.indexOf(r.month);
-      for(const [m,col] of monthElements){
-        col.classList.toggle('cv-active-month',m===r.month);
-        col.classList.toggle('cv-near',Math.abs(activeMonths.indexOf(m)-idx)<=1&&!col.classList.contains('cv-empty'));
-        col.classList.toggle('cv-next-month',activeMonths[idx+1]===m);
-        for(const b of col.querySelectorAll('button'))b.tabIndex=m===r.month?0:-1;
-      }
-      for(const [m,b] of miniButtons) b.setAttribute('aria-current',String(m===r.month));
-    }
-    function targetOffset(r){
-      const col=monthElements.get(r.month);
-      return mobile.matches||!col?0:viewport.clientWidth/2-col.offsetLeft-col.offsetWidth/2;
-    }
-    function setOffset(x){offset=x;axis.style.transform=mobile.matches||builtYear==='레거시'?'none':'translate3d('+x+'px,0,0)';}
-    function clearBranch(){
-      for(const col of monthElements.values()){
-        col.style.removeProperty('--branch'); col.style.removeProperty('--reveal'); col.classList.remove('cv-arriving');
-      }
-    }
-    function drawMotion(t){
-      const m=motion; if(!m)return;
-      const travel=m.travel, branch=m.branch;
-      const fraction=travel?Math.min(1,t/travel):1;
-      setOffset(m.from+(m.to-m.from)*(1-Math.pow(1-fraction,3)));
-      if(t<travel)return;
-      if(!m.arrived){
-        m.arrived=true; focusMonth(selected); heroRender(selected);
-        hero.classList.add('cv-hero-enter');
-      }
-      const col=monthElements.get(selected.month);
-      if(col&&m.reveal){
-        col.classList.add('cv-arriving');
-        col.style.setProperty('--branch',Math.min(1,(t-travel)/260));
-        col.style.setProperty('--reveal',Math.max(0,(t-travel-200)/80));
-      }
-      hero.style.setProperty('--hero-in',Math.min(1,(t-travel)/240));
-      if(t>=travel+branch){
-        motion=null; clearBranch(); hero.classList.remove('cv-hero-enter'); hero.style.removeProperty('--hero-in');
-        remaining=dwell(selected);
-      }
-    }
-    function dwell(r){return Math.min(6800,Math.max(3100,2600+(r.info.length+r.name.length)*42));}
-    function schedule(){if(!raf&&!document.hidden&&section.classList.contains('active'))raf=requestAnimationFrame(tick);}
-    function tick(now){
+    const legacyHead=node('h2','cv-legacy-heading','레거시 · 시기 미확인');legacy.append(legacyHead);
+    const legacyGrid=node('div','cv-legacy-grid'); legacy.append(legacyGrid);
+    for(const r of byYear('레거시'))legacyGrid.append(makeCard(r,true));
+    const legacyButton=button('cv-legacy-link','레거시 '+byYear('레거시').length+'건',()=>jump(legacyHead)); nav.append(legacyButton);
+    const viewport=()=>{
+      if(scrollRoot&&scrollRoot!==document.scrollingElement){const r=scrollRoot.getBoundingClientRect();return {top:Math.max(0,r.top),bottom:Math.min(innerHeight,r.bottom)};}
+      return {top:0,bottom:innerHeight};
+    };
+    function update(){
       raf=0;
-      const delta=lastTime?Math.min(80,now-lastTime):0; lastTime=now;
-      if(introUntil){
-        if(now>=introUntil){introUntil=0; panel.classList.remove('cv-intro'); overview.hidden=true; move(selected,true);}
-        else schedule();
-        return;
+      if(!attached||document.hidden||!section.classList.contains('active'))return;
+      const {top,bottom}=viewport(), h=bottom-top;
+      const barBottom=bar.getBoundingClientRect().bottom;
+      const activeTop=Math.max(top,Math.min(barBottom,bottom-80));
+      const usable=bottom-activeTop;
+      // Read all untransformed slot geometry first. Writes never affect layout.
+      const states=anim.map(entry=>{
+        const r=entry.getBoundingClientRect();
+        const p=reduced.matches?1:clamp((bottom+Math.min(40,h*.055)-r.top)/(Math.max(120,usable*.60)));
+        return [entry,p];
+      });
+      let current=null;
+      for(const [y,marker] of markers){if(marker.getBoundingClientRect().top<=activeTop+Math.max(70,usable*.35))current=y;}
+      if(!current)current=markers.keys().next().value;
+      for(const [entry,p] of states){
+        const value=p.toFixed(3);
+        if(entry.style.getPropertyValue('--cv-p')!==value)entry.style.setProperty('--cv-p',value);
       }
-      if(paused)return;
-      if(motion){
-        motion.elapsed+=delta; drawMotion(motion.elapsed);
-      }else if(playing){
-        remaining-=delta;
-        const p=progress.firstElementChild; p.style.transform='scaleX('+Math.min(1,Math.max(0,1-remaining/dwell(selected)))+')';
-        if(remaining<=0){
-          const list=byYear(selected.year), index=list.indexOf(selected);
-          if(index===list.length-1){playing=false;updateControls();}
-          else move(list[index+1],true);
-        }
-      }
-      if(motion||playing)schedule(); else lastTime=0;
+      const legacyActive=legacyHead.getBoundingClientRect().top<=activeTop+usable*.35;
+      for(const [y,b] of yearButtons)b.setAttribute('aria-current',String(!legacyActive&&current===y));
+      legacyButton.setAttribute('aria-current',String(legacyActive));
     }
-    function settle(){
-      if(raf)cancelAnimationFrame(raf); raf=0; lastTime=0; introUntil=0;
-      panel.classList.remove('cv-intro'); overview.hidden=true; motion=null; clearBranch(); hero.classList.remove('cv-hero-enter'); hero.style.removeProperty('--hero-in');
-      focusMonth(selected); heroRender(selected); setOffset(targetOffset(selected));
-      remaining=dwell(selected); progress.firstElementChild.style.transform='scaleX(0)';
-    }
-    function stop(){
-      playing=false;paused=false;settle();updateControls();
-    }
-    function move(r,animate){
-      const same=builtYear===r.year&&shown.month===r.month;
-      const changed=builtYear!==r.year;
-      selected=r; clearBranch();
-      if(changed){build(r.year);setOffset(mobile.matches?0:viewport.clientWidth/2-(monthElements.get(1)?.offsetWidth||0)/2);}
-      if(!animate||reduced.matches||r.year==='레거시'){
-        settle();updateControls(); if(playing)schedule(); return;
-      }
-      const from=offset, to=targetOffset(r);
-      const travel=(same&&Math.abs(to-from)<1)||mobile.matches?0:650;
-      const branch=same?240:Math.max(410,260+80*byYear(r.year).filter(x=>x.month===r.month).length);
-      motion={from,to,elapsed:0,travel,branch,arrived:false,reveal:!same};
-      if(!same) {
-        const col=monthElements.get(r.month);
-        if(col){col.classList.add('cv-arriving');col.style.setProperty('--branch',0);col.style.setProperty('--reveal',0);}
-      }
-      if(mobile.matches)focusMonth(r);
-      progress.firstElementChild.style.transform='scaleX(0)';
-      paused=false;lastTime=0;updateControls();drawMotion(0);schedule();
-    }
-    function choose(r){
-      if(!r)return;
-      playing=false;paused=false;
-      if(raf)cancelAnimationFrame(raf);raf=0;introUntil=0;panel.classList.remove('cv-intro');overview.hidden=true;motion=null;
-      resultsOpen=false;stage.hidden=false;results.hidden=true;
-      resultsButton.hidden=!query.value.trim();
-      move(r,true);
-    }
-    function step(direction){
-      const list=byYear(selected.year), index=list.indexOf(selected);
-      if(list[index+direction]) choose(list[index+direction]);
-    }
-    function togglePlay(){
-      if(playing){
-        playing=false;paused=true;if(raf)cancelAnimationFrame(raf);raf=0;lastTime=0;updateControls();return;
-      }
-      if(selected.year==='레거시'||resultsOpen)return;
-      playing=true;
-      if(paused){paused=false;lastTime=0;updateControls();schedule();return;}
-      const list=byYear(selected.year);
-      if(introUntil){introUntil=0;panel.classList.remove('cv-intro');overview.hidden=true;}
-      if(selected===list.at(-1))move(list[0],true);
-      else { if(!motion)remaining=dwell(selected); updateControls();schedule(); }
+    function schedule(){if(attached&&!raf&&!document.hidden)raf=requestAnimationFrame(update);}
+    function jump(target,focus=false){
+      scrollRoot=getRoot();
+      const r=target.getBoundingClientRect(), v=viewport();
+      // Header remains visible, and selected card lands in its fully attached region.
+      const reserved=Math.max(110,bar.offsetHeight+22);
+      setScroll(scrollTop()+r.top-v.top-reserved);
+      if(focus)target.querySelector('summary')?.focus({preventScroll:true});
+      schedule();
     }
     function matches(){
       const tokens=query.value.trim().normalize('NFKC').toLowerCase().split(/\s+/).filter(Boolean);
@@ -351,68 +252,64 @@
         return r.terms.includes(t);
       }));
     }
-    function renderResults(){
-      const list=matches(); resultsOpen=true; stage.hidden=true;results.hidden=false;
+    function choose(r){
+      results.hidden=true;toggle.setAttribute('aria-expanded','false');
+      if(selected)entries.get(selected.id)?.removeAttribute('data-selected');
+      selected=r;
+      const entry=entries.get(r.id);entry.dataset.selected='true';jump(entry,true);
+    }
+    function renderSearch(){
+      const list=matches(), ids=new Set(list.map(r=>r.id));
+      panel.classList.add('cv-searching');
+      for(const [id,entry] of entries)entry.dataset.match=String(ids.has(id));
+      for(const dot of nav.querySelectorAll('i[data-record]'))dot.dataset.match=String(ids.has(Number(dot.dataset.record)));
+      toggle.hidden=false;clear.hidden=false;toggle.textContent='검색 결과 '+list.length+'건';toggle.setAttribute('aria-expanded','true');
       results.replaceChildren(node('div','cv-result-count','검색 결과 '+list.length+'건'));
-      resultsButton.hidden=true;resultsButton.textContent='검색 결과 '+list.length+'건';
       for(const y of years){
-        const found=list.filter(r=>r.year===y); if(!found.length)continue;
-        const group=node('div','cv-result-group'); group.append(node('h3','',y==='레거시'?y:y+'년'));
+        const found=list.filter(r=>r.year===y);if(!found.length)continue;
+        const group=node('div','cv-result-group');group.append(node('h3','',y==='레거시'?y:y+'년'));
         for(const r of found){
           const b=button('cv-result','',()=>choose(r));
-          b.append(node('span','cv-result-date',r.date),node('span','cv-result-title',r.caption),node('span','cv-result-info',r.info));
-          group.append(b);
+          b.append(node('span','cv-result-date',r.date),node('strong','',r.caption),node('span','cv-result-info',r.info));group.append(b);
         }
         results.append(group);
       }
       if(!list.length)results.append(node('p','','일치하는 기록이 없습니다.'));
-      updateControls();
+      results.hidden=false;
     }
     function clearSearch(restore){
-      const origin=searchOrigin; query.value=''; searchOrigin=null;resultsOpen=false;results.hidden=true;stage.hidden=false;resultsButton.hidden=true;
-      if(restore&&origin)choose(origin); else updateControls();
+      query.value='';results.hidden=true;toggle.hidden=true;clear.hidden=true;panel.classList.remove('cv-searching');
+      toggle.setAttribute('aria-expanded','false');
+      if(selected)entries.get(selected.id)?.removeAttribute('data-selected');selected=null;
+      for(const entry of entries.values())entry.removeAttribute('data-match');
+      for(const dot of nav.querySelectorAll('[data-match]'))dot.removeAttribute('data-match');
+      if(restore&&searchOrigin!==null){scrollRoot=getRoot();setScroll(searchOrigin);}
+      searchOrigin=null;schedule();
     }
-    query.addEventListener('focus',()=>{if(playing||motion)stop();});
     query.addEventListener('input',()=>{
       if(!query.value.trim()){clearSearch(true);return;}
-      if(!searchOrigin)searchOrigin=selected;
-      stop();renderResults();
+      if(searchOrigin===null){scrollRoot=getRoot();searchOrigin=scrollTop();}
+      renderSearch();
     });
     query.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();clearSearch(true);}});
-    viewport.addEventListener('keydown',e=>{
-      if(['ArrowLeft','ArrowUp','ArrowRight','ArrowDown','Home','End'].includes(e.key)){
-        e.preventDefault();
-        if(e.key==='Home'||e.key==='End')choose(byYear(selected.year)[e.key==='Home'?0:byYear(selected.year).length-1]);
-        else step(['ArrowLeft','ArrowUp'].includes(e.key)?-1:1);
+    const outside=e=>{if(!bar.contains(e.target)&&!results.hidden){results.hidden=true;toggle.setAttribute('aria-expanded','false');}};
+    const observer=new ResizeObserver(schedule);
+    const resize=()=>{
+      if(!attached){
+        attached=true;window.addEventListener('scroll',schedule,{passive:true,capture:true});
+        window.addEventListener('resize',schedule,{passive:true});
+        document.addEventListener('pointerdown',outside);
+        reduced.addEventListener('change',schedule);observer.observe(panel);
       }
-    });
-    viewport.addEventListener('pointerdown',e=>{
-      if(mobile.matches||builtYear==='레거시'||e.pointerType!=='mouse'||e.button!==0||e.target.closest('button'))return;
-      stop();drag={x:e.clientX,offset};viewport.setPointerCapture(e.pointerId);viewport.classList.add('cv-dragging');
-    });
-    viewport.addEventListener('pointermove',e=>{
-      if(!drag)return;
-      const cols=[...monthElements.values()].filter(col=>!col.classList.contains('cv-empty'));
-      const first=cols[0],last=cols.at(-1);
-      const max=viewport.clientWidth/2-first.offsetLeft-first.offsetWidth/2;
-      const min=viewport.clientWidth/2-last.offsetLeft-last.offsetWidth/2;
-      setOffset(Math.max(min,Math.min(max,drag.offset+e.clientX-drag.x)));
-    });
-    viewport.addEventListener('lostpointercapture',()=>{
-      if(!drag)return;drag=null;viewport.classList.remove('cv-dragging');
-      const closest=byYear(selected.year).reduce((a,b)=>Math.abs(targetOffset(a)-offset)<=Math.abs(targetOffset(b)-offset)?a:b);
-      choose(closest.month===selected.month?selected:closest);
-    });
-    const resize=()=>{if(section.classList.contains('active')&&!resultsOpen){stop();}};
-    const suspend=()=>{if(builtYear)stop();};
-    new ResizeObserver(()=>{if(!motion&&!introUntil&&!drag&&!resultsOpen&&section.classList.contains('active'))setOffset(targetOffset(selected));}).observe(viewport);
-    reduced.addEventListener('change',resize); mobile.addEventListener('change',resize);
-    document.addEventListener('visibilitychange',()=>{if(document.hidden)suspend();});
-    build(selected.year); heroRender(selected); focusMonth(selected);updateControls();remaining=dwell(selected);
-    if(!reduced.matches&&!mobile.matches){
-      setOffset(targetOffset(byYear(selected.year)[0]));panel.classList.add('cv-intro');overview.hidden=false;
-      introUntil=performance.now()+480; schedule();
-    }else settle();
+      scrollRoot=getRoot();schedule();
+    };
+    const suspend=()=>{
+      if(!attached)return;attached=false;if(raf)cancelAnimationFrame(raf);raf=0;
+      window.removeEventListener('scroll',schedule,true);window.removeEventListener('resize',schedule);
+      document.removeEventListener('pointerdown',outside);reduced.removeEventListener('change',schedule);observer.disconnect();
+    };
+    document.addEventListener('visibilitychange',()=>{if(document.hidden){if(raf)cancelAnimationFrame(raf);raf=0;}else schedule();});
+    resize();
     return {resize,suspend};
   }
 })();
