@@ -6,6 +6,9 @@
   min-width:0;
 }
 #careerTimeline [hidden]{display:none!important}
+/* The scheduler uses overflow-x:hidden on its page shell. Clip only this
+   active view so the document remains the sticky header's scroll container. */
+html:has(#careerTimeline.active),body:has(#careerTimeline.active){overflow-x:clip!important}
 .career-tree{max-width:64rem;margin:1rem auto}
 .career-year{padding:0 0 1rem 1rem;border-left:2px solid var(--cv-accent)}
 .career-month li{margin:.4rem 0}
@@ -39,7 +42,7 @@
 .cv-map-dots i{width:5px;height:5px;flex:0 0 5px;border-radius:50%;background:var(--cv-tone,var(--cv-accent))}
 .cv-legacy-link{align-self:center}
 .cv-axis{
-  --cv-shift:clamp(32px,5vw,76px);--cv-half-gap:30px;
+  --cv-shift:clamp(48px,8vw,116px);--cv-half-gap:30px;
   position:relative;padding:0 var(--cv-shift) 24px;
   isolation:isolate;
 }
