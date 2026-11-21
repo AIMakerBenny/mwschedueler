@@ -16,6 +16,8 @@ on:
       - 'scripts/calendar-browser-realtime.mjs'
       - 'scripts/qa-live-calendar-drawer-motion-v6.mjs'
       - 'scripts/qa-mobile-calendar-layout-v2.mjs'
+      - 'assets/posts-responsive-layout-v2.css'
+      - 'scripts/qa-posts-responsive-layout-v2.mjs'
       - 'assets/mobile-calendar-v130.css'
       - 'assets/device-ui.js'
       - 'assets/mobile-calendar-quick-add-v130.js'
@@ -120,6 +122,7 @@ jobs:
           node scripts/qa-calendar-toolbar-v4-browser.mjs
           node scripts/qa-calendar-responsive-v1-browser.mjs
           node scripts/qa-mobile-calendar-layout-v2.mjs
+          node scripts/qa-posts-responsive-layout-v2.mjs
           node scripts/qa-calendar-stable-layout-v1-browser.mjs
           node scripts/qa-sidebar-rail-scrollbar-v1-browser.mjs
           node scripts/qa-game-library-v1-browser.mjs
@@ -267,6 +270,8 @@ jobs:
         run: node scripts/qa-live-calendar-drawer-motion-v6.mjs
       - name: Verify mobile calendar geometry and interactions on live public site
         run: node scripts/qa-mobile-calendar-layout-v2.mjs --live
+      - name: Verify live posts applicant card and list geometry
+        run: node scripts/qa-posts-responsive-layout-v2.mjs --live
       - name: Publish scoped Cloudflare deployment result
         if: always()
         env:

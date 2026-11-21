@@ -7572,7 +7572,7 @@ function applyPostViewPrefs(){
   document.getElementById('postListViewBtn')?.classList.toggle('active',mode==='list');
   const select=document.getElementById('postCardColumns');if(select)select.value=String(cols);
   document.querySelector('.post-column-control')?.classList.toggle('disabled',mode==='list');
-  const hint=document.getElementById('postViewHint');if(hint)hint.textContent=mode==='card'?`카드형 · 한 줄 ${cols}개`:'리스트형 · 가로 상세 보기';
+  const hint=document.getElementById('postViewHint');if(hint)hint.textContent=mode==='card'?'화면에 맞춰 자동 배치':'댓글 중심 상세 보기';
 }
 window.setPostViewMode=mode=>{data.postViewMode=mode==='list'?'list':'card';mwsSaveDevicePrefs(data);applyPostViewPrefs()};
 window.setPostCardColumns=v=>{data.postCardColumns=Math.max(2,Math.min(5,Number(v)||4));mwsSaveDevicePrefs(data);applyPostViewPrefs()};
