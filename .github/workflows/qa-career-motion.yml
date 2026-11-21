@@ -1,0 +1,24 @@
+name: Career timeline motion browser QA
+on:
+  push:
+    branches: ['qa/career-motion-20261121']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --no-save --package-lock=false playwright
+      - run: npx playwright install chromium
+      - run: node scripts/qa-career-motion-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: career-motion-browser
+          path: career-qa/
