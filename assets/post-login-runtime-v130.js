@@ -113,15 +113,15 @@ async function start(){
   ]).then(recordOptionalResults).catch(()=>{});
 
   // Keep the primary device shell ordered first, but cap the wait.
-  const deviceUiResult=await load('device-ui','/assets/device-ui.js?v=1.3.0-perf87');
+  const deviceUiResult=await load('device-ui','/assets/device-ui.js?v=1.3.0-perf87-mobile-layout-v2');
 
   // The remaining shell helpers can load together. Every request is time-bounded.
   const criticalResults=await Promise.all([
     Promise.resolve(deviceUiResult),
     loadStyle('mobile-drawer-v130','/assets/mobile-drawer-v130.css?v=1.6.21-navfix1'),
-    loadStyle('mobile-calendar-v130','/assets/mobile-calendar-v130.css?v=1.3.0-mobile-calendar-viewport-p29'),
-    load('mobile-calendar-quick-add-v130','/assets/mobile-calendar-quick-add-v130.js?v=1.3.0-mobile-calendar-ui-p26','__mwsMobileCalendarQuickAddV130'),
-    load('mobile-calendar-day-detail-v130','/assets/mobile-calendar-day-detail-v130.js?v=1.3.0-perf35','__mwsMobileCalendarDayDetailV130'),
+    loadStyle('mobile-calendar-v130','/assets/mobile-calendar-v130.css?v=1.3.0-mobile-calendar-viewport-p29-layout-v2'),
+    load('mobile-calendar-quick-add-v130','/assets/mobile-calendar-quick-add-v130.js?v=1.3.0-mobile-calendar-ui-v2','__mwsMobileCalendarQuickAddV130'),
+    load('mobile-calendar-day-detail-v130','/assets/mobile-calendar-day-detail-v130.js?v=1.3.0-perf35-mobile-layout-v2','__mwsMobileCalendarDayDetailV130'),
     load('integrity-runtime-v130','/assets/integrity-runtime-v130.js?v=1.3.0-phase12&save-queue-v2=1','__mwsIntegrityRuntimeV130'),
     loadStyle('workspace-ui-v176','/assets/workspace-ui-v176.css?v=1.6.21-workspace176&workspace-nav-v1=1'),
     load('workspace-ui-v176','/assets/workspace-ui-v176.js?v=1.6.21-workspace176&workspace-nav-v1=1&hall-v2=1&shell-perf=1','__mwsWorkspaceUiV176')
