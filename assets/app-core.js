@@ -6898,6 +6898,9 @@ function renderAll(reason=lastSyncReason){
     safeRenderView('저장 상태',()=>updateStorageStatus(true)),
     safeRenderView('시계',tickClock)
   ];
+  // Posts are loaded on demand in public mode; refresh the active view when
+  // its partition finishes hydrating instead of leaving the initial empty UI.
+  if(document.getElementById('posts')?.classList.contains('active'))results.push(safeRenderView('게시글',renderPosts));
 
   const status=document.getElementById('syncStatusText');
   if(status){
