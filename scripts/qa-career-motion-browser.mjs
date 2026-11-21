@@ -83,7 +83,7 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   assert.equal(await page.locator('.cv-axis .cv-entry').count(),99);
   assert.equal(await page.locator('.cv-legacy .cv-entry').count(),6);
   assert.match(await page.locator('.cv-year[data-year="2024"] .cv-month[data-month="4"] .cv-entry').filter({hasText:'지피티 VR 체험'}).innerText(),/4월 19일/);
-  assert.equal(await page.locator('.cv-year[data-year="2026"] .cv-month[data-month="9"] .cv-entry').filter({hasText:'코렛트 코순이 아바타'}).count(),1);
+  assert.match(await page.locator('.cv-year[data-year="2025"] .cv-month[data-month="5"] .cv-entry').filter({hasText:'코렛트 코순이 아바타'}).innerText(),/5월 29일/);
   assert(!((await page.locator('.cv-legacy').innerText()).includes('미확인')));
   assert.equal(await page.locator('.cv-map-dots i').count(),0);
   assert.equal(await page.locator('.cv-map-year').count(),7);
