@@ -134,7 +134,7 @@ body.mws-premium[data-theme=neon]:not(:has(#gameF1Racing.active)) .sidebar .nav 
 /* Immediate hover-in feedback. Keep the existing exit fade, label/rail
    motion and theme palette; do not interpolate paint-heavy hover colors
    while the pointer is already moving to the next category. */
-@media (hover:hover) and (pointer:fine){
+@media (min-width:761px){
   html body .app>.sidebar .nav .nav-scroll>button[data-tab]:hover,
   html body.mws-premium:not(:has(#gameF1Racing.active)) .app>.sidebar .nav .nav-scroll>button[data-tab]:hover{
     transition-property:transform!important;

@@ -45,12 +45,12 @@ try{
       const idleAfter=await browser.performanceMetrics();
       const points=await browser.evaluate(`[...document.querySelectorAll('.nav-scroll>button[data-tab]')].filter(b=>!b.classList.contains('active')&&b.getBoundingClientRect().height>0).slice(0,6).map(b=>{const r=b.getBoundingClientRect();return {tab:b.dataset.tab,x:r.x+r.width/2,y:r.y+r.height/2}}).filter(p=>p.y>0&&p.y<innerHeight)`);
       assert(points.length>=4,'Too few visible categories');
-      const readColor=tab=>browser.evaluate(`(()=>{const b=document.querySelector('[data-tab="'+${JSON.stringify(tab)}+'"]');const s=getComputedStyle(b);return {hover:b.matches(':hover'),background:s.backgroundColor,color:s.color,border:s.borderColor}})()`);
+      const readColor=tab=>browser.evaluate(`(()=>{const b=document.querySelector('[data-tab="'+${JSON.stringify(tab)}+'"]');const s=getComputedStyle(b);return {hover:b.matches(':hover'),background:s.backgroundColor,color:s.color,border:s.borderColor,transition:s.transitionProperty,media:matchMedia('(hover:hover) and (pointer:fine)').matches}})()`);
       const settled=new Map();
       for(const p of points){await browser.movePoint(p.x,p.y);await new Promise(r=>setTimeout(r,220));settled.set(p.tab,await readColor(p.tab))}
-      let hits=0,samples=0;
+      let hits=0,samples=0,firstMismatch=null;
       const hoverBefore=await browser.performanceMetrics();
-      for(let k=0;k<5;k++)for(const p of points){await browser.movePoint(p.x,p.y);const now=await readColor(p.tab),target=settled.get(p.tab);samples++;if(now.hover&&now.background===target.background&&now.color===target.color&&now.border===target.border)hits++}
+      for(let k=0;k<5;k++)for(const p of points){await browser.movePoint(p.x,p.y);const now=await readColor(p.tab),target=settled.get(p.tab);samples++;if(now.hover&&now.background===target.background&&now.color===target.color&&now.border===target.border)hits++;else if(!firstMismatch)firstMismatch={tab:p.tab,now,target}}
       const hoverAfter=await browser.performanceMetrics();
       const data=await browser.evaluate(`(async()=>{
         const card=document.getElementById('patchNoteCardsV176'),old=card.firstElementChild;
@@ -62,7 +62,7 @@ try{
         return {updated,routed:document.querySelector('.section.active')?.id==='calendar',oldReplaced:old!==card.firstElementChild}
       })()`);
       const delta=(a,b,key)=>Math.round(((b[key]||0)-(a[key]||0))*1000)/1000;
-      console.log('MWS_SHELL_PROFILE',JSON.stringify({label,width,height,idle,hover:{hits,samples},idleTaskSeconds:delta(idleBefore,idleAfter,'TaskDuration'),idleScriptSeconds:delta(idleBefore,idleAfter,'ScriptDuration'),idleLayouts:delta(idleBefore,idleAfter,'LayoutCount'),hoverTaskSeconds:delta(hoverBefore,hoverAfter,'TaskDuration'),data}));
+      console.log('MWS_SHELL_PROFILE',JSON.stringify({label,width,height,idle,hover:{hits,samples,firstMismatch},idleTaskSeconds:delta(idleBefore,idleAfter,'TaskDuration'),idleScriptSeconds:delta(idleBefore,idleAfter,'ScriptDuration'),idleLayouts:delta(idleBefore,idleAfter,'LayoutCount'),hoverTaskSeconds:delta(hoverBefore,hoverAfter,'TaskDuration'),data}));
       if(label==='after'){assert.equal(idle.changes,0,'Background notebook continues to mutate');assert(idle.stableNode);assert.equal(hits,samples,'Hover entrance was not immediate');assert(data.updated&&data.routed)}
     }
     const castle=path.join(dir,'castle-'+label+'.html');
