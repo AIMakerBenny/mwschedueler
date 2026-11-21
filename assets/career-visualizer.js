@@ -177,8 +177,9 @@
           const date = month.querySelector('h3').textContent;
           const [headline, context, caption, extra] = presentation[year+' '+name] || presentation[name] || [name,'',name,info];
           const synonyms = aliases.filter(([re])=>re.test(name)).map(([,alias])=>alias);
+          const media=art[artFor({year,name})];
           rows.push({id:rows.length,year,date,month:parseInt(date),name,info,tags,headline,context,caption,extra,
-            terms:norm([year,date,name,info,headline,caption,...synonyms].join(' '))});
+            terms:norm([year,date,name,info,headline,caption,media?.[0]||'',...synonyms].join(' '))});
         }
       }
     }
@@ -220,7 +221,7 @@
 
     const entries=new Map(), markers=new Map(), yearButtons=new Map(), anim=[], months=[];
     let raf=0, attached=false, searchOrigin=null, pendingOrigin=null, selected=null, scrollRoot=null;
-    let dirty=true, snapNext=true, lastFrame=0;
+    let dirty=true, snapNext=true, lastFrame=0, lastBrowsePosition=0, restoreFrame=0;
     const motion=new Map();
     const clamp=(v)=>Math.max(0,Math.min(1,v));
     const ease=v=>{v=clamp(v);return v*v*(3-2*v);};
@@ -270,7 +271,7 @@
       if(media){const link=node('a','cv-source','이미지 출처');link.href=media[1];link.target='_blank';link.rel='noopener noreferrer';detail.append(link)}
       card.append(summary,detail);entry.append(card);entries.set(r.id,entry);
       anim.push(entry);
-      card.addEventListener('toggle',()=>{schedule();if(card.open&&!reduced()&&card.animate){detail.animate([{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'translateY(0)'}],{duration:260,easing:'ease-out'});}});
+      card.addEventListener('toggle',()=>{schedule();detail.getAnimations?.().forEach(animation=>animation.cancel());if(card.open&&!reduced()&&!entry.hidden&&detail.animate){detail.animate([{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'translateY(0)'}],{duration:260,easing:'ease-out'});}});
       return entry;
     }
     for(const y of years.filter(y=>y!=='레거시')){
@@ -314,6 +315,7 @@
     };
     function readGeometry(){
       const root=getRoot();if(root!==scrollRoot){scrollRoot=root;snapNext=true;}
+      if(!query.value.trim()&&!restoreFrame)lastBrowsePosition=scrollTop();
       const {top,bottom}=viewport(), h=bottom-top;
       const hostRect=barHost.getBoundingClientRect();
       const barHeight=bar.offsetHeight;
@@ -420,7 +422,7 @@
       const ids=list&&new Set(list.map(r=>r.id));
       for(const [id,entry] of entries){
         entry.hidden=!!ids&&!ids.has(id);
-        if(entry.hidden){motion.delete(entry);entry.firstElementChild.open=false;}
+        if(entry.hidden)motion.delete(entry);
         if(ids)entry.dataset.match=String(ids.has(id));else entry.removeAttribute('data-match');
       }
       for(const pair of panel.querySelectorAll('.cv-pair'))pair.hidden=!pair.querySelector('.cv-entry:not([hidden])');
@@ -457,20 +459,32 @@
       else{scrollRoot=getRoot();setScroll(0);}
     }
     function clearSearch(restore){
+      if(restoreFrame)cancelAnimationFrame(restoreFrame);restoreFrame=0;
+      const origin=searchOrigin;
       query.value='';results.hidden=true;toggle.hidden=true;clear.hidden=true;panel.classList.remove('cv-searching');
       toggle.setAttribute('aria-expanded','false');
       if(selected)entries.get(selected.id)?.removeAttribute('data-selected');selected=null;
       filterTimeline(null);
-      if(restore&&searchOrigin!==null){scrollRoot=getRoot();snapNext=true;setScroll(searchOrigin);}
+      if(restore&&origin!==null){
+        scrollRoot=getRoot();snapNext=true;setScroll(origin);
+        // Re-expose the original month geometry before restoring a position that was
+        // beyond the shortened, filtered scroll range. No queued restore survives input.
+        restoreFrame=requestAnimationFrame(()=>{
+          scrollRoot=getRoot();snapNext=true;setScroll(origin);
+          restoreFrame=requestAnimationFrame(()=>{restoreFrame=0;scrollRoot=getRoot();snapNext=true;setScroll(origin);lastBrowsePosition=origin;schedule()});
+        });
+      }
       searchOrigin=null;pendingOrigin=null;schedule();
     }
     query.addEventListener('input',()=>{
+      if(restoreFrame)cancelAnimationFrame(restoreFrame);restoreFrame=0;
       if(!query.value.trim()){clearSearch(true);return;}
-      if(searchOrigin===null){scrollRoot=getRoot();searchOrigin=pendingOrigin??scrollTop();}
+      if(searchOrigin===null){scrollRoot=getRoot();searchOrigin=pendingOrigin??lastBrowsePosition;}
       renderSearch();
     });
     query.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();clearSearch(true);}});
-    query.addEventListener('focus',()=>{if(searchOrigin===null&&!query.value.trim()){scrollRoot=getRoot();pendingOrigin=scrollTop();}});
+    query.addEventListener('pointerdown',()=>{if(searchOrigin===null&&!query.value.trim()){scrollRoot=getRoot();pendingOrigin=scrollTop();}});
+    query.addEventListener('focus',()=>{if(searchOrigin===null&&!query.value.trim()&&pendingOrigin===null)pendingOrigin=lastBrowsePosition;});
     const outside=e=>{if(!bar.contains(e.target)&&!results.hidden){results.hidden=true;toggle.setAttribute('aria-expanded','false');}};
     const observer=new ResizeObserver(schedule);
     const resize=()=>{
@@ -484,11 +498,13 @@
     };
     const suspend=()=>{
       if(!attached)return;attached=false;if(raf)cancelAnimationFrame(raf);raf=0;lastFrame=0;snapNext=true;
+      if(restoreFrame)cancelAnimationFrame(restoreFrame);restoreFrame=0;
+      for(const entry of anim)entry.querySelector('.cv-detail').getAnimations?.().forEach(animation=>animation.cancel());
       window.removeEventListener('scroll',schedule,true);window.removeEventListener('resize',schedule);
       document.removeEventListener('pointerdown',outside);window.removeEventListener('mws-motion-change',schedule);observer.disconnect();
       bar.classList.remove('cv-pinned');barHost.style.removeProperty('height');
     };
-    document.addEventListener('visibilitychange',()=>{if(document.hidden){if(raf)cancelAnimationFrame(raf);raf=0;lastFrame=0;}else{snapNext=true;schedule();}});
+    document.addEventListener('visibilitychange',()=>{if(document.hidden){if(raf)cancelAnimationFrame(raf);raf=0;lastFrame=0;if(restoreFrame)cancelAnimationFrame(restoreFrame);restoreFrame=0;for(const entry of anim)entry.querySelector('.cv-detail').getAnimations?.().forEach(animation=>animation.cancel());}else{snapNext=true;schedule();}});
     resize();
     return {resize,suspend};
   }

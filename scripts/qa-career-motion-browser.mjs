@@ -82,7 +82,10 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   assert.equal(await page.locator('.cv-map-dots i').count(),0);
   assert.equal(await page.locator('.cv-map-year').count(),5);
   assert.equal(await page.locator('.cv-gap').count(),0);
-  assert((await page.locator('.cv-bar').boundingBox()).height<(width>700?60:85));
+  const barBox=await page.locator('.cv-bar').boundingBox();
+  console.log('Toolbar size',width,JSON.stringify(barBox));
+  await page.screenshot({path:output+'/initial-'+width+'.png'});
+  assert(barBox.height<(width>700?60:85),JSON.stringify(barBox));
   assert.equal(await page.locator('.cv-axis .cv-year').count(),5);
   assert.equal(await page.locator('.cv-play,.cv-years,.cv-hero').count(),0);
   assert.equal(await page.locator('html').getAttribute('data-mws-motion'),'full');
@@ -229,6 +232,10 @@ try{
     await pause(700);
     for(let i=0;i<11;i++){await page.mouse.wheel(0,72);await pause(230);}
     await pause(800);
+    await chooseYear(page,'2024');await pause(200);
+    await scrollTo(page,(await position(page))+(await inspect(entry)).top-210);
+    await entry.locator('summary').click();await pause(1500);
+    await entry.locator('summary').click();await pause(350);
     await search(page,'릴동파');await pause(1400);
     await page.locator('.cv-result-toggle').click();await pause(500);
     await page.locator('.cv-result').first().click();await pause(1200);
@@ -240,7 +247,7 @@ try{
     execFileSync('ffmpeg',['-y','-ss',String(startSeconds),'-i',output+'/career-timeline-raw.webm','-t','25','-c:v','libvpx-vp9','-crf','30','-b:v','0',output+'/career-timeline-recording.webm'],{stdio:'inherit'});
     console.log('PASS recording interaction');
     const rm=await open(1366,768,false,'reduce');
-    await chooseYear(rm.page,'2024');
+    await chooseYear(rm.page,'2024');await pause(250);
     const reducedEntry=rm.page.locator('.cv-year[data-year="2024"] .cv-month[data-month="3"] .cv-entry').first();
     await approach(rm.page,reducedEntry);
     const before=await inspect(reducedEntry);
@@ -257,7 +264,7 @@ try{
     await rm.page.locator('#mwsScreenMotion').selectOption('reduced');
     assert.equal(await rm.page.locator('html').getAttribute('data-mws-motion'),'reduced');
     await rm.page.locator('[data-tab=careerTimeline]').click();
-    await chooseYear(rm.page,'2024');await approach(rm.page,reducedEntry);
+    await chooseYear(rm.page,'2024');await pause(250);await approach(rm.page,reducedEntry);
     const still=await inspect(reducedEntry);assert.equal(still.opacity,1);assert(Math.abs(still.scale-1)<.01);
     assert(Math.abs(still.shift)<Math.abs(before.shift)*.6);
     await rm.page.locator('[data-tab=settings]').click();

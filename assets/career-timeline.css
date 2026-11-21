@@ -124,12 +124,13 @@
   .cv-summary strong{font-size:11px}
   .cv-summary span{font-size:11px}
   .cv-searchbox{max-width:none}
-  .cv-search{flex:1;width:0}
+  .cv-search{flex:1;width:0;height:32px!important;min-height:32px!important;padding:4px 7px!important}
+  .cv-searchbox button{min-height:30px!important;padding:4px 6px!important}
   .cv-overview{grid-column:1/-1;grid-row:1;gap:0;justify-content:space-between}
-  .cv-map-year{padding:5px 4px!important;flex:1}
+  .cv-map-year{padding:4px 4px!important;min-height:30px!important;height:30px!important;flex:1}
   .cv-map-label strong{font-size:12px}
   .cv-map-label small{font-size:10px}
-  .cv-legacy-link{font-size:10px!important;padding:5px}
+  .cv-legacy-link{font-size:10px!important;padding:4px;min-height:30px!important;height:30px!important}
   .cv-axis,.cv-legacy-grid{--cv-shift:36px;--cv-half-gap:22px;--cv-travel-extra:18%;--cv-scale-loss:.18;--cv-lift:24px;padding:0 var(--cv-shift) 12px 4px}
   .cv-axis::before,.cv-legacy-grid::before{left:23px}
   .cv-year{padding-top:12px}
