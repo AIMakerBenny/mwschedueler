@@ -11,6 +11,50 @@
   const rosterKey=()=>JSON.stringify(players().map(p=>p.id).sort());
   let step=1,furthest=1,key=null,paletteKey=null,preset='winner';
   const pages=[...root.querySelectorAll('[data-ladder-page]')],steps=[...root.querySelectorAll('[data-ladder-step]')];
+  const canvas=$('ladderCanvas');
+  let lastPoints=null,lastProgress=1,resizeFrame=0;
+  function fitWorkspace(){
+    const rect=root.getBoundingClientRect();if(!rect.width||!root.classList.contains('active'))return;
+    // The app's per-page zoom changes CSS pixels independently of the viewport.
+    const zoom=rect.width/Math.max(1,root.offsetWidth)||1;
+    const available=Math.floor((innerHeight-Math.max(0,rect.top)-24)/zoom);
+    const compact=root.clientWidth<850||available<420;
+    root.dataset.ladderCompact=String(compact);
+    root.style.setProperty('--ladder-workspace-height',`${Math.max(420,available)}px`);
+  }
+  // Game routes use a fixed logical coordinate system. Resizing either monitor
+  // changes only how those positions are painted, never the route or outcome.
+  window.ladderGeometry=function(){
+    const n=players().length,w=1360,h=480,top=54,bottom=426,left=72,right=1288;
+    return {canvas,n,w,h,top,bottom,xs:Array.from({length:n},(_,i)=>n===1?w/2:left+(right-left)*i/(n-1)),rows:Math.max(10,n*2)};
+  };
+  window.drawLadder=function(highlightPoints=null,progress=1){
+    lastPoints=Array.isArray(highlightPoints)?highlightPoints:null;lastProgress=progress;
+    const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;
+    const g=ladderGeometry(),ctx=canvas.getContext('2d');
+    const density=Math.min(3,(devicePixelRatio||1)*canvas.getBoundingClientRect().width/w);
+    const bw=Math.max(1,Math.round(w*density)),bh=Math.max(1,Math.round(h*density));
+    if(canvas.width!==bw||canvas.height!==bh){canvas.width=bw;canvas.height=bh}
+    ctx.setTransform(bw/w,0,0,bh/h,0,0);ctx.clearRect(0,0,w,h);
+    const padX=Math.min(w/Math.max(2,g.n*2),Math.max(42,w/13)),padY=Math.min(h/5,Math.max(36,h*.10));
+    const mapX=x=>padX+(x-72)/(1288-72)*(w-2*padX),mapY=y=>padY+(y-g.top)/(g.bottom-g.top)*(h-2*padY);
+    const lane=g.n>1?(w-2*padX)/(g.n-1):w;
+    const line=(x1,y1,x2,y2)=>{ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke()};
+    ctx.lineCap='round';ctx.strokeStyle='#54617a';ctx.lineWidth=Math.max(2,Math.min(4,w/420));
+    g.xs.forEach(x=>line(mapX(x),padY,mapX(x),h-padY));
+    for(const r of miniGameRuntime.ladder.rungs){const y=mapY(g.top+(g.bottom-g.top)*(r.row+1)/(g.rows+1));line(mapX(g.xs[r.left]),y,mapX(g.xs[r.left+1]),y)}
+    const font=Math.max(12,Math.min(26,w/58,lane/5.5,padY*.57));
+    const labelWidth=Math.max(18,Math.min(lane-12,padX*2-10));
+    const label=(value,x,y)=>{let s=String(value||'');if(ctx.measureText(s).width>labelWidth){while(s.length>1&&ctx.measureText(s+'…').width>labelWidth)s=s.slice(0,-1);s+='…'}ctx.fillText(s,x,y)};
+    ctx.font=`750 ${font}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle=getComputedStyle(root).getPropertyValue('--text').trim()||'#f5f7ff';
+    players().forEach((p,i)=>label(p.name,mapX(g.xs[i]),padY/2));
+    ctx.fillStyle='#ffd96a';prizes().slice(0,g.n).forEach((p,i)=>label(p.label||`결과 ${i+1}`,mapX(g.xs[i]),h-padY/2));
+    if(lastPoints?.length)drawPolylineProgress(ctx,lastPoints.map(p=>({x:mapX(p.x),y:mapY(p.y)})),progress);
+  };
+  function scheduleFit(){if(resizeFrame)return;resizeFrame=requestAnimationFrame(()=>{resizeFrame=0;fitWorkspace();if(canvas.clientWidth&&canvas.clientHeight)drawLadder(lastPoints,lastProgress)})}
+  const observer=new ResizeObserver(scheduleFit);observer.observe(root);observer.observe(canvas);
+  window.addEventListener('resize',scheduleFit,{passive:true});
   // Old demonstrations persisted these four labels in the shared data. Only
   // replace the exact sample set or empty results, never
   // arbitrary custom results. Preserve custom prizes across navigation.
@@ -57,6 +101,7 @@
     $('ladderPlayerButtons').inert=locked;
     $('ladderPlayerButtons').hidden=!miniGameRuntime.ladder.generated||locked;
     reflectPreset();
+    fitWorkspace();scheduleFit();
   }
   function clearBoard(){
     const r=miniGameRuntime.ladder;r.generated=false;r.rungs=[];r.activePlayer=-1;r.autoResultNames=[];r.autoResultEntries=[];
