@@ -136,7 +136,13 @@
     hero.append(heroDate,heroTitle,heroContext,heroExtra,facts);
     const viewport=node('div','cv-viewport'); viewport.tabIndex=0;
     viewport.setAttribute('role','region'); viewport.setAttribute('aria-label','월별 기록 탐색');
-    const axis=node('div','cv-axis'); viewport.append(axis);
+    const axis=node('div','cv-axis'), overview=node('div','cv-overview'); overview.hidden=true;
+    for(const y of years.filter(y=>y!=='레거시')){
+      const mark=node('div','cv-overview-year');
+      mark.append(node('strong','',y+'년'),node('span','',byYear(y).length+'건'));
+      overview.append(mark);
+    }
+    viewport.append(axis,overview);
     const annual=node('div','cv-annual');
     const annualLabel=node('span','cv-annual-label');
     const months=node('div','cv-minimap');
@@ -221,6 +227,7 @@
       for(const [m,col] of monthElements){
         col.classList.toggle('cv-active-month',m===r.month);
         col.classList.toggle('cv-near',Math.abs(activeMonths.indexOf(m)-idx)<=1&&!col.classList.contains('cv-empty'));
+        for(const b of col.querySelectorAll('button'))b.tabIndex=m===r.month?0:-1;
       }
       for(const [m,b] of miniButtons) b.setAttribute('aria-current',String(m===r.month));
     }
@@ -262,7 +269,7 @@
       raf=0;
       const delta=lastTime?Math.min(80,now-lastTime):0; lastTime=now;
       if(introUntil){
-        if(now>=introUntil){introUntil=0; panel.classList.remove('cv-intro'); move(selected,true);}
+        if(now>=introUntil){introUntil=0; panel.classList.remove('cv-intro'); overview.hidden=true; move(selected,true);}
         else schedule();
         return;
       }
@@ -282,7 +289,7 @@
     }
     function settle(){
       if(raf)cancelAnimationFrame(raf); raf=0; lastTime=0; introUntil=0;
-      panel.classList.remove('cv-intro'); motion=null; clearBranch(); hero.classList.remove('cv-hero-enter'); hero.style.removeProperty('--hero-in');
+      panel.classList.remove('cv-intro'); overview.hidden=true; motion=null; clearBranch(); hero.classList.remove('cv-hero-enter'); hero.style.removeProperty('--hero-in');
       focusMonth(selected); heroRender(selected); setOffset(targetOffset(selected));
       remaining=dwell(selected); progress.firstElementChild.style.transform='scaleX(0)';
     }
@@ -312,7 +319,7 @@
     function choose(r){
       if(!r)return;
       playing=false;paused=false;
-      if(raf)cancelAnimationFrame(raf);raf=0;introUntil=0;panel.classList.remove('cv-intro');motion=null;
+      if(raf)cancelAnimationFrame(raf);raf=0;introUntil=0;panel.classList.remove('cv-intro');overview.hidden=true;motion=null;
       resultsOpen=false;stage.hidden=false;results.hidden=true;
       move(r,true);
     }
@@ -328,7 +335,7 @@
       playing=true;
       if(paused){paused=false;lastTime=0;updateControls();schedule();return;}
       const list=byYear(selected.year);
-      if(introUntil){introUntil=0;panel.classList.remove('cv-intro');}
+      if(introUntil){introUntil=0;panel.classList.remove('cv-intro');overview.hidden=true;}
       if(selected===list.at(-1))move(list[0],true);
       else { if(!motion)remaining=dwell(selected); updateControls();schedule(); }
     }
@@ -401,7 +408,7 @@
     document.addEventListener('visibilitychange',()=>{if(document.hidden)suspend();});
     build(selected.year); heroRender(selected); focusMonth(selected);updateControls();remaining=dwell(selected);
     if(!reduced.matches&&!mobile.matches){
-      setOffset(targetOffset(byYear(selected.year)[0]));panel.classList.add('cv-intro');
+      setOffset(targetOffset(byYear(selected.year)[0]));panel.classList.add('cv-intro');overview.hidden=false;
       introUntil=performance.now()+480; schedule();
     }else settle();
     return {resize,suspend};

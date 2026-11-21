@@ -27,9 +27,10 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   const close=page.locator('#mwsAnnouncementDialog button').filter({hasText:'닫기'});
   if(await close.first().isVisible().catch(()=>false))await close.first().click();
   const nav=page.locator('[data-tab=careerTimeline]');
-  if(!await nav.isVisible()){
-    const menu=page.locator('button').filter({hasText:'메뉴'});
-    if(await menu.first().isVisible())await menu.first().click();
+  if(width<=700){
+    const menu=page.locator('[data-mobile-tab=menu]');
+    if(await menu.isVisible())await menu.click();
+    else if(await page.locator('#mobileNavToggle').isVisible())await page.locator('#mobileNavToggle').click();
   }
   // A public page may present its announcement after initial hydration.
   await nav.click({timeout:30000}).catch(async()=>{
@@ -38,6 +39,7 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
     await nav.click({timeout:30000});
   });
   await page.locator('.cv-panel').waitFor({state:'visible'});
+  await page.locator('.cv-axis').waitFor({state:'visible'});
   await page.locator('.cv-intro').waitFor({state:'hidden',timeout:5000});
   await pause(1100);
   assert.equal(await page.locator('.career-tree li').count(),51);
