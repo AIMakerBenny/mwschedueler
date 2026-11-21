@@ -60,9 +60,19 @@
   }
   function syncAll(){
     if(!ensureTodayPeopleDataV130())return;
-    const dates=new Set([...Object.keys(data.todayPeopleByDate),...Object.keys(data.todayPeopleManualByDate)]);
-    for(const event of Array.isArray(data.events)?data.events:[])if(validDateKey(event?.date))dates.add(String(event.date));
-    for(const date of dates)syncDate(date);
+    // Build one index instead of cloning the entire maps and scanning the
+    // event/contact arrays separately for every date at startup.
+    const own=selfId(),known=new Set((Array.isArray(data.contacts)?data.contacts:[]).map(c=>c?.id).filter(id=>typeof id==='string'&&id&&id!==own));
+    const byDate=new Map(),dates=new Set([...Object.keys(data.todayPeopleByDate),...Object.keys(data.todayPeopleManualByDate)]);
+    const add=(date,id)=>{id=String(id||'');if(!known.has(id))return;let ids=byDate.get(date);if(!ids){ids=new Set();byDate.set(date,ids)}ids.add(id)};
+    for(const [date,ids] of Object.entries(data.todayPeopleManualByDate))for(const id of ids)add(date,id);
+    for(const event of Array.isArray(data.events)?data.events:[]){
+      if(!event||!validDateKey(event.date))continue;
+      dates.add(String(event.date));
+      if(event.restDay||String(event.title||'').trim()==='휴방')continue;
+      for(const id of Array.isArray(event.participants)?event.participants:[])add(String(event.date),id);
+    }
+    data.todayPeopleByDate=Object.fromEntries([...dates].filter(date=>byDate.has(date)).map(date=>[date,[...byDate.get(date)]]));
   }
   let lastTodayPeopleSyncSignatureV130='';
   function todayPeopleSyncSignatureV130(){
@@ -208,7 +218,9 @@
     };
     try{openTodayPeoplePicker=window.openTodayPeoplePicker}catch(_){}
 
-    try{if(typeof renderAll==='function')renderAll('Mawang Scheduler v1.3.0 자동 함께한 사람 동기화')}catch(e){console.error('Mawang Scheduler v1.3.0 initial render',e)}
+    // This changes activity summaries, never the calendar's date/event cards.
+    // Refresh only a visible dependent tab if the user already navigated.
+    try{const active=document.querySelector('.section.active')?.id;if(active==='dashboard'&&typeof renderDashboard==='function')renderDashboard();else if(active==='sniper'&&typeof renderSniperList==='function')renderSniperList();else if(active==='contacts'&&typeof renderContacts==='function')renderContacts()}catch(e){console.error('Mawang Scheduler v1.3.0 initial render',e)}
     updateCopy();
     window.dispatchEvent(new CustomEvent('mws:today-people-runtime-ready'));
   }

@@ -31,6 +31,15 @@ test('calendar startup reads consistent versions and only changed calendar parts
   const known=encodeURIComponent(JSON.stringify({core:4,events:3,contacts:4}));const warm=await fn({url:'https://test/api/calendar-startup?known='+known},sqlEnv);assert(!warm.parts.core&&!warm.parts.contacts);assert.equal(warm.parts.events.version,4);assert.equal(warm.manifest.parts.core,4);
  }finally{db.close()}
 });
+test('startup activity indexing matches the old per-date sync without a calendar redraw',()=>{
+ const runtime=source('assets/today-people-runtime-v130.js');
+ const methods=sourceFunction(runtime,'function validDateKey(value)','  let lastTodayPeopleSyncSignatureV130=');
+ const inputs={selfContactId:'self',contacts:[{id:'self'},{id:'a'},{id:'b'},{id:'c'}],todayPeopleByDate:{'2026-11-20':['a'],'2026-11-22':['b']},todayPeopleManualByDate:{'2026-11-20':['b','missing','self'],'2026-11-23':['c']},events:[{date:'2026-11-20',title:'broadcast',participants:['a','b','self','missing']},{date:'2026-11-21',restDay:true,participants:['c']},{date:'2026-11-22',title:'휴방',participants:['a']},{date:'2026-11-24',title:'game',participants:['a','a','c']}]};
+ const run=expression=>{const ctx={data:JSON.parse(JSON.stringify(inputs))};ctx.contact=id=>ctx.data.contacts.find(c=>c.id===id);vm.runInNewContext(methods+'\n'+expression,ctx);return JSON.stringify(ctx.data.todayPeopleByDate)};
+ const expected=run(`const dates=new Set([...Object.keys(data.todayPeopleByDate),...Object.keys(data.todayPeopleManualByDate)]);for(const event of data.events)if(validDateKey(event?.date))dates.add(String(event.date));for(const date of dates)syncDate(date);`);
+ assert.equal(run('syncAll()'),expected);
+ assert(!runtime.includes("renderAll('Mawang Scheduler v1.3.0 자동 함께한 사람 동기화')"));
+});
 
 
 const cp=v=>JSON.parse(JSON.stringify(v));
