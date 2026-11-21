@@ -34,7 +34,7 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
       assert(sectionPattern.test(original),'Timeline section absent from production');
       await route.fulfill({response,body:original.replace(sectionPattern,replacement).replace(asidePattern,source.match(asidePattern)[0]).replace('</head>',firstPaint+'</head>')});
     });
-    for(const file of ['career-visualizer.js','career-timeline.css','tools.js','content-planner-host.js','perf-runtime.js','post-login-runtime-v130.js']){
+    for(const file of ['career-visualizer.js','career-timeline.css','tools.js','content-planner-host.js','perf-runtime.js','post-login-runtime-v130.js','online-v5-loader.js']){
       await context.route('**/assets/'+file+'*',async route=>{if(file==='tools.js'||file==='content-planner-host.js')await pause(1800);await route.fulfill({
         status:200,contentType:file.endsWith('.js')?'application/javascript':'text/css',
         body:readFileSync(new URL('../assets/'+file,import.meta.url))

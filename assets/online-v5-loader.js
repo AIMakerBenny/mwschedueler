@@ -21,7 +21,10 @@
     const legacyContactMatcher=/window\.mwsKoreanInitials=koreanInitials;\s*contactMatches=function\(c,q\)\{[\s\S]*?\};\s*window\.contactMatches=contactMatches;/;
     const safeFeatures=features.replace(legacyContactMatcher,'window.mwsKoreanInitials=window.mwsKoreanInitials||koreanInitials;');
     if(safeFeatures===features)console.warn('Legacy V5 contact matcher patch target not found');
-    run(safeFeatures);
+    // The first-paint HTML owns the sidebar; the encoded V3 organizer otherwise
+    // moves the mini-game divider above timeline/achievements until V176 repairs it.
+    const stableFeatures=safeFeatures.replace('function organizeSidebarV3(){','function organizeSidebarV3(){if(window.__mwsSidebarGroupsInitial)return;');
+    run(stableFeatures);
     if(typeof sharedSearchOwner.contactMatches==='function'){
       window.contactMatches=sharedSearchOwner.contactMatches;
       try{contactMatches=sharedSearchOwner.contactMatches}catch(_){}
