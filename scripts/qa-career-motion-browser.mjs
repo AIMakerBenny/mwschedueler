@@ -117,7 +117,8 @@ try{
     assert.match(await page.locator('.cv-entry[data-selected=true]').innerText(),/죠뗌므/);
     assert(await page.locator('.cv-entry[data-selected=true]').isVisible());
     await search(page,'');await pause(150);
-    assert(Math.abs((await position(page))-saved)<3,'Search did not restore scroll');
+    const restored=await position(page);
+    assert(Math.abs(restored-saved)<3,'Search did not restore scroll: '+JSON.stringify({saved,restored}));
     for(const [q,n] of [['코치',3],['VR 우승',4],['WBD',1],['왁타버스 야구',1],['F1 챔스',1]]){
       await search(page,q);assert.equal(await page.locator('.cv-result').count(),n,q);
       if(q==='VR 우승')assert(!((await page.locator('.cv-results').innerText()).includes('준우승')));

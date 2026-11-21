@@ -128,7 +128,7 @@
     panel.append(barHost,axis,legacy);section.append(panel);source.hidden=true;
 
     const entries=new Map(), markers=new Map(), yearButtons=new Map(), anim=[], months=[];
-    let raf=0, attached=false, searchOrigin=null, selected=null, scrollRoot=null;
+    let raf=0, attached=false, searchOrigin=null, pendingOrigin=null, selected=null, scrollRoot=null;
     const clamp=(v)=>Math.max(0,Math.min(1,v));
     const getRoot=()=>{
       for(let el=panel.parentElement;el&&el!==document.body;el=el.parentElement){
@@ -214,8 +214,9 @@
       if(!attached||document.hidden||!section.classList.contains('active'))return;
       const {top,bottom}=viewport(), h=bottom-top;
       const hostRect=barHost.getBoundingClientRect();
-      const pin=Math.max(0,top-hostRect.top);
-      const barBottom=hostRect.bottom+pin;
+      const barHeight=bar.offsetHeight;
+      const pin=hostRect.top<=top;
+      const barBottom=(pin?top:hostRect.top)+barHeight;
       const activeTop=Math.max(top,Math.min(barBottom,bottom-80));
       const usable=bottom-activeTop;
       // Read all untransformed slot geometry first. Writes never affect layout.
@@ -227,7 +228,11 @@
       let current=null;
       for(const [y,marker] of markers){if(marker.getBoundingClientRect().top<=activeTop+Math.max(70,usable*.35))current=y;}
       if(!current)current=markers.keys().next().value;
-      bar.style.setProperty('--cv-pin',pin+'px');
+      barHost.style.height=barHeight+'px';
+      bar.style.setProperty('--cv-top',top+'px');
+      bar.style.setProperty('--cv-left',hostRect.left+'px');
+      bar.style.setProperty('--cv-width',hostRect.width+'px');
+      bar.classList.toggle('cv-pinned',pin);
       for(const [entry,p] of states){
         const value=p.toFixed(3);
         if(entry.style.getPropertyValue('--cv-p')!==value)entry.style.setProperty('--cv-p',value);
@@ -288,14 +293,15 @@
       for(const entry of entries.values())entry.removeAttribute('data-match');
       for(const dot of nav.querySelectorAll('[data-match]'))dot.removeAttribute('data-match');
       if(restore&&searchOrigin!==null){scrollRoot=getRoot();setScroll(searchOrigin);}
-      searchOrigin=null;schedule();
+      searchOrigin=null;pendingOrigin=null;schedule();
     }
     query.addEventListener('input',()=>{
       if(!query.value.trim()){clearSearch(true);return;}
-      if(searchOrigin===null){scrollRoot=getRoot();searchOrigin=scrollTop();}
+      if(searchOrigin===null){scrollRoot=getRoot();searchOrigin=pendingOrigin??scrollTop();}
       renderSearch();
     });
     query.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();clearSearch(true);}});
+    query.addEventListener('focus',()=>{if(searchOrigin===null&&!query.value.trim()){scrollRoot=getRoot();pendingOrigin=scrollTop();}});
     const outside=e=>{if(!bar.contains(e.target)&&!results.hidden){results.hidden=true;toggle.setAttribute('aria-expanded','false');}};
     const observer=new ResizeObserver(schedule);
     const resize=()=>{
@@ -303,7 +309,7 @@
         attached=true;window.addEventListener('scroll',schedule,{passive:true,capture:true});
         window.addEventListener('resize',schedule,{passive:true});
         document.addEventListener('pointerdown',outside);
-        reduced.addEventListener('change',schedule);observer.observe(panel);
+        reduced.addEventListener('change',schedule);observer.observe(panel);observer.observe(bar);
       }
       scrollRoot=getRoot();schedule();
     };
@@ -311,6 +317,7 @@
       if(!attached)return;attached=false;if(raf)cancelAnimationFrame(raf);raf=0;
       window.removeEventListener('scroll',schedule,true);window.removeEventListener('resize',schedule);
       document.removeEventListener('pointerdown',outside);reduced.removeEventListener('change',schedule);observer.disconnect();
+      bar.classList.remove('cv-pinned');barHost.style.removeProperty('height');
     };
     document.addEventListener('visibilitychange',()=>{if(document.hidden){if(raf)cancelAnimationFrame(raf);raf=0;}else schedule();});
     resize();
