@@ -8,10 +8,10 @@ import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 
 const read=p=>readFileSync(new URL('../'+p,import.meta.url));
 const index=read('index.html').toString();
-assert(index.includes('assets/announcement-carousel-v1.js?v=1')&&index.includes('assets/announcement-carousel-v1.css?v=1'));
+assert(index.includes('assets/announcement-carousel-v1.js?v=2')&&index.includes('assets/announcement-carousel-v1.css?v=1'));
 const styles=[...index.matchAll(/<link rel="stylesheet" href="(assets\/[^"?]+)[^"]*">|<style(?:\s[^>]*)?>([\s\S]*?)<\/style>/gi)]
   .map(m=>m[1]?m[0]:m[0]).join('\n');
-const fixture='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+styles+'</head><body class="mws-gated mws-premium" data-theme="neon"><div id="mwsAccessGate">Login gate</div><div class="app"><main class="main"><button id="background">Background action</button></main></div><script src="assets/announcement-carousel-v1.js?v=1"></script></body></html>';
+const fixture='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+styles+'</head><body class="mws-gated mws-premium" data-theme="neon"><div id="mwsAccessGate">Login gate</div><div class="app"><main class="main"><button id="background">Background action</button></main></div><script src="assets/announcement-carousel-v1.js?v=2"></script></body></html>';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const server=createServer((req,res)=>{
   const route=new URL(req.url,'http://localhost').pathname;
@@ -31,6 +31,15 @@ try{
   const release=`(()=>{document.body.dataset.mwsMode='public';document.body.classList.remove('mws-gated');document.getElementById('mwsAccessGate').classList.add('hidden');window.dispatchEvent(new Event('mws:app-ready'))})()`;
   const getIndex=()=>browser.evaluate("document.getElementById('mwsAnnouncementDialog')?.dataset.noticeIndex");
   const open=()=>browser.evaluate("!!document.querySelector('#mwsAnnouncementDialog[open]')");
+  // The production Worker emits readiness before the gate is released.
+  await browser.navigate(url,1366,768);
+  await browser.evaluate("document.body.dataset.mwsMode='public';window.dispatchEvent(new Event('mws:app-ready'))");
+  assert.equal(await open(),false);
+  await browser.evaluate("document.body.classList.remove('mws-gated');document.getElementById('mwsAccessGate').classList.add('hidden')");
+  assert(await open(),'Notice must appear after delayed gate release');
+  await browser.evaluate("document.querySelector('.mws-notice-close').click();document.body.classList.toggle('qa-ready')");
+  assert.equal(await open(),false,'Observer must not reopen a closed notice');
+  console.log('MWS_NOTICE_DELAYED_GATE_OK');
   for(const [width,height] of [[1366,768],[1920,1080],[2560,1440],[390,844]]){
     await browser.navigate(url,width,height);
     assert.equal(await open(),false,'Notice must not cover login');
