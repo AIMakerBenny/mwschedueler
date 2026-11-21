@@ -36,3 +36,5 @@ jobs:
 
       - name: Workspace navigation and contact route regressions
         run: node scripts/qa-workspace-navigation-v1-browser.mjs
+      - name: Rapid pointer feedback, idle workspace and Majoku home
+        run: node scripts/qa-sidebar-interaction-v1-browser.mjs

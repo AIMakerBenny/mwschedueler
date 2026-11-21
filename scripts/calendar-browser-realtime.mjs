@@ -35,12 +35,13 @@ export async function launchCalendarBrowser(dir){
       }
       assert(ready,'Calendar fixture did not initialize');
     }
+    async function movePoint(x,y){await send('Input.dispatchMouseEvent',{type:'mouseMoved',x,y},sessionId)}
     async function clickPoint(x,y){
-      await send('Input.dispatchMouseEvent',{type:'mouseMoved',x,y},sessionId);
+      await movePoint(x,y);
       await send('Input.dispatchMouseEvent',{type:'mousePressed',x,y,button:'left',clickCount:1},sessionId);
       await send('Input.dispatchMouseEvent',{type:'mouseReleased',x,y,button:'left',clickCount:1},sessionId);
     }
     const setReducedMotion=enabled=>send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:enabled?'reduce':'no-preference'}]},sessionId);
-    return {navigate,evaluate,clickPoint,setReducedMotion,close};
+    return {navigate,evaluate,movePoint,clickPoint,setReducedMotion,close};
   }catch(error){await close();throw error}
 }
