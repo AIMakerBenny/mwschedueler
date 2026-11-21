@@ -30,9 +30,9 @@
     const presentation = {
       '그란투리스모 7':['데이토나 개인 1위','와크-무런 · 팀 신짱게이밍','그란투리스모 7 데이토나 1위'],
       '신호등':['총감독 · 몸연기','아이네 뮤직비디오','신호등 총감독'],
-      '제8회 상황극 콘테스트':['현수 역 몸연기','낙화','낙화 몸연기'],
+      '제8회 상황극 콘테스트':['현수 역 몸연기','낙화','낙화 몸연기','작품 대상 · 연기대상 · 명장면상'],
       '에고시의 검':['몸연기','단편영화 콘테스트','에고시의 검 몸연기'],
-      '그냥 살아!':['팀 감독','고멤가요제 · 김피탕&짬뽕','그냥 살아! 감독'],
+      '그냥 살아!':['팀 감독 · 최종 2위','고멤가요제 · 김피탕&짬뽕','그냥 살아! 감독'],
       '제9회 상황극 콘테스트':['두 작품 몸연기','실종 · 신형식 역 / PUNK: Shutdown · 레브 역','실종 · PUNK 몸연기'],
       '버츄얼 파이터':['굳가대표 선출','버복대 · 한일 VR 복싱 한국 대표','버복대 굳가대표 선출'],
       '왁타버스 배그 대잔치':['듀오 라운드 우승','마다옴과 듀오','배그 대잔치 라운드 우승'],
@@ -48,14 +48,14 @@
       '왁타버스 배그 티어게임':['한 라운드 우승','제2회 대회 · 총 18킬 · 1.5티어','배그 티어게임 라운드 우승'],
       '왁이큐':['대회 참가','사형선고 팀','왁이큐 참가'],
       '제1회 버츄페 어워드':['올해의 섹시상 공동 수상','VRChat 버추얼 연말 페스티벌','버츄페 섹시상 공동 수상'],
-      '2024 SOOP 스트리머 대상':['수상자 인터뷰','','SOOP 대상 수상자 인터뷰','세부 상명 미확인'],
+      '2024 SOOP 스트리머 대상':['신인상 수상','','SOOP 신인상'],
       '제1회 릴동파':['팀 종합 우승','죠뗌므','릴동파 종합 우승','개인 공동 1위 · 봅슬레이·눈덩이 금 · 바이애슬론 은 · 본선 최다 진출상·개인 메달 1위상'],
-      'WBD 왁타버스 야구 대회':['4강','로얄 버팔로즈 · 선발투수 겸 2번 타자','WBD 4강'],
+      'WBD 왁타버스 야구 대회':['4강 · 투타 겸업','로얄 버팔로즈 · 선발투수 겸 2번 타자','WBD 4강','팀 1순위 지명 · 8강 승부치기 승리'],
       '제6회 처니랜드 소대전투':['HONOR 진영 승리','배틀그라운드 · 저격병 참가','처니랜드 HONOR 승리'],
       '마인크래프트 지독서버':['다이아몬드 채집 3위','','지독서버 채집 3위'],
       'VR 비키니 비치발리볼 대회':['팀 우승','마다옴·예다·양도끼','VR 비치발리볼 팀 우승'],
       '2025 마왕 재활센터':['VRChat 전용 맵 개장','','재활센터 전용 맵 개장'],
-      '버츄얼 육상 선수권 대회':['은메달 2 · 동메달 1','악성코드 팀','버육대 메달 3개'],
+      '버츄얼 육상 선수권 대회':['은메달 2 · 동메달 1','악성코드 팀','버육대 메달 3개','스카이다이빙·자동차 은메달 · 권총 사격 동메달'],
       '지육대':['팀 코치','털즈란','지육대 코치'],
       '아르마 3 랜덤 가챠 고지전':['퍼스트 킬 상 수상','한결을 잡아 수상','아르마 3 퍼스트 킬 상'],
       '릴파 버추얼 복싱 대회':['우승팀 코치','천양 팀','릴복대 우승팀 코치'],
@@ -70,7 +70,7 @@
       '이터널 리턴 「이리야 어서와」':['MVP','코렛트 선정','이터널 리턴 MVP'],
       'STALZONE 크루대전':['팀 준우승','환승센터','STALZONE 팀 준우승'],
       '제2회 파블로프 VR 대전쟁':['대회 주최','','파블로프 VR 대전쟁 2 주최'],
-      'SBO 야구 대회':['포수 출전 · 타율 .400','무파 자이언츠','SBO 포수 출전'],
+      'SBO 야구 대회':['포수 출전 · 타율 .400','무파 자이언츠','SBO 포수 출전','10월 23일 3타수 2안타 · 결승타'],
       '와우 포에버':['전사 1위','','와우 포에버 전사 1위','방송 제목에 기록 · 집계 기준 미확인']
     };
     // One verified game/platform image per recorded event; event-specific stills
@@ -107,13 +107,15 @@
       '제3회 버종리 VR 겟투워크':'vrchat','브산동':'vrchat','이터널 리턴 「이리야 어서와」':'eternal','STALZONE 크루대전':'stalzone',
       'SBO 야구 대회':'vrchat','와우 포에버':'wow'
     };
-    const artFor=r=>recordArt[r.year+' '+r.name]||recordArt[r.name]||(/배그/.test(r.name)?'pubg':/파블로프/.test(r.name)?'pavlov':null);
+    Object.assign(art,{zomboid:['Project Zomboid'],rust:['Rust'],party:['Party Animals'],assetto:['Assetto Corsa'],sf6:['Street Fighter 6'],delta:['Delta Force'],civ6:['문명 VI'],terraria:['Terraria']});
+    Object.assign(recordArt,{'러스트 스트리머 서버':'rust','파티 애니멀즈':'party','아세토 코르사 고갯길 대회':'assetto','고세구 스트리트파이터 6':'sf6','델타포스 20 대 20':'delta','문명 6 멀티 대회':'civ6','테라리아 마왕의 놀이터':'terraria'});
+    const artFor=r=>r.artKey||recordArt[r.year+' '+r.name]||recordArt[r.name]||(/배그/.test(r.name)?'pubg':/파블로프/.test(r.name)?'pavlov':r.tags?.includes('프로젝트 좀보이드')?'zomboid':null);
     const descriptions={
       '그란투리스모 7':'2022년 4월 2일, 레이싱 게임 그란투리스모 7의 와크-무런 대회 4강에 Team 신짱게이밍 소속으로 출전했다. 데이토나 코스에서 개인 1위를 기록했고, 팀은 최종 3위에 올랐다.',
       '신호등':'아이네의 이무진 신호등 커버 뮤직비디오 제작에 총감독으로 참여했다. VRChat을 활용해 뮤직비디오의 연출과 아바타 제작, 카메라, 몸연기를 맡았다.',
-      '제8회 상황극 콘테스트':'VRChat 상황극 작품 낙화에 출연했다. 현수 역의 움직임을 직접 몸연기로 표현하며 작품 제작에 참여했다.',
+      '제8회 상황극 콘테스트':'VRChat 상황극 작품 낙화에 현수 역 몸연기로 참여했다. 작품은 대상, 연기대상, 명장면상을 받았고 마왕은 감초상 후보로 올랐다.',
       '에고시의 검':'VRChat을 활용한 단편영화 콘테스트 출품작 에고시의 검에서 캐릭터의 움직임을 몸연기로 표현했다.',
-      '그냥 살아!':'고멤가요제 참가팀 김피탕&짬뽕의 곡 그냥 살아!에서 팀 감독을 맡아 VRChat으로 제작된 뮤직비디오에 참여했다.',
+      '그냥 살아!':'고멤가요제 참가팀 김피탕&짬뽕의 곡 그냥 살아!에서 감독을 맡았다. VRChat으로 제작한 뮤직비디오와 함께 최종 2위를 기록했다.',
       '제9회 상황극 콘테스트':'VRChat으로 제작된 두 상황극 작품에 몸연기로 참여했다. 실종에서는 신형식 역을, PUNK: Shutdown에서는 레브 역을 맡았다.',
       '버츄얼 파이터':'우왁굳이 주최한 VRChat 복싱 대회다. 6월 2일 국가대표 선발전을 통해 굳가대표로 선발되어, 6월 4일 한일 이벤트전에서 한국 팀 대표로 출전했다.',
       '왁타버스 배그 대잔치':'배틀그라운드 대회에서 마다옴과 듀오를 이루어 출전했고 한 라운드에서 우승했다.',
@@ -124,19 +126,19 @@
       '나만 아니면 돼':'암벽등반 게임 A Difficult Game About Climbing으로 진행된 대결에서 1위에 올랐다.',
       '왁타버스 배틀크러쉬':'배틀크러쉬 대회에 현지인즈 팀으로 출전해 팀 종합 우승을 차지했다. 최초 하드캐리 상과 최다 하드캐리 상도 수상했다.',
       'VRChat 촉각슈트 동아리':'주르르가 주최한 VRChat 촉각슈트 동아리에서 교관을 맡았다.',
-      '왁타버스 체육대회':'VRChat으로 구현된 종목별 체육대회에서 버스터콜 소속으로 팀 종합 우승을 차지했다. 권총 사격과 조정에서 금메달을 획득했고 개인 공동 1위에 올랐다.',
+      '왁타버스 체육대회':'VRChat으로 구현된 종목별 체육대회에서 버스터콜 소속으로 팀 종합 우승을 차지했다. 권총 사격과 조정에서 각각 금메달, 클레이 사격에서 은메달을 획득해 개인 메달 순위 공동 1위에 올랐다.',
       '2024 마왕 재활센터':'VR 운동을 주제로 한 정기 방송 콘텐츠인 마왕 재활센터의 운영을 시작했다.',
-      '왁타버스 배그 티어게임':'제2회 배틀그라운드 티어게임에 참가해 한 라운드를 우승했다.',
+      '왁타버스 배그 티어게임':'제2회 배틀그라운드 티어게임에 참가해 한 라운드를 우승했다. 총 18킬을 기록하고 1.5티어로 배정됐다.',
       '왁이큐':'VRChat에서 진행된 왁이큐 배구 대회에 사형선고 팀 소속으로 참가했다.',
       '제1회 버츄페 어워드':'VRChat에서 열린 버추얼 연말 페스티벌의 첫 어워드에서 올해의 섹시상을 공동 수상했다.',
-      '2024 SOOP 스트리머 대상':'2024 SOOP 스트리머 대상 시상식에서 수상자 인터뷰에 참여했다. 기존 자료에서는 수상 부문의 세부 명칭을 확인할 수 없다.',
-      '제1회 릴동파':'릴파가 주최한 VRChat 동계 스포츠 대회에 죠뗌므 소속으로 출전해 팀 종합 우승을 차지했다. 개인은 금메달 2개와 은메달 1개로 공동 1위를 기록했고 본선 최다 진출상과 개인 메달 1위상도 받았다.',
-      'WBD 왁타버스 야구 대회':'VRChat 야구 대회에 로얄 버팔로즈의 선발투수로 출전해 8강 승부치기에서 팀이 승리해 4강에 진출했다.',
+      '2024 SOOP 스트리머 대상':'2024년 12월 28일 열린 SOOP 스트리머 대상 시상식에서 신인상을 수상했다.',
+      '제1회 릴동파':'릴파가 주최한 VRChat 동계 스포츠 대회에 죠뗌므 소속으로 출전해 팀 종합 우승을 차지했다. 봅슬레이와 눈덩이 종목에서 금메달, 바이애슬론에서 은메달을 획득해 개인 공동 1위를 기록했다. 본선 최다 진출상과 개인 메달 1위상도 받았다.',
+      'WBD 왁타버스 야구 대회':'VRChat 야구 대회에서 로얄 버팔로즈에 1순위로 지명됐다. 선발투수와 2번 타자를 겸해 투타 양쪽에서 활약했다. 8강 승부치기에서 3 대 1로 승리하며 팀의 4강 진출에 기여했다.',
       '제6회 처니랜드 소대전투':'배틀그라운드로 진행된 처니랜드 소대전투에 저격병으로 참가했다. 소속된 HONOR 진영이 승리했다.',
       '마인크래프트 지독서버':'마인크래프트 지독서버에서 다이아몬드를 채집하는 부문에 참여해 3위를 기록했다.',
       'VR 비키니 비치발리볼 대회':'VR 비치발리볼 대회에서 마다옴, 예다, 양도끼와 함께 팀을 이루어 우승했다.',
       '2025 마왕 재활센터':'기존 VR 운동 콘텐츠인 마왕 재활센터를 위한 VRChat 전용 맵을 개장했다.',
-      '버츄얼 육상 선수권 대회':'VRChat 육상 대회에 악성코드 팀 소속으로 출전해 은메달 2개와 동메달 1개를 획득했다.',
+      '버츄얼 육상 선수권 대회':'VRChat 육상 대회에 악성코드 팀 소속으로 출전했다. 스카이다이빙과 자동차 종목에서 은메달, 권총 사격에서 동메달을 획득했다.',
       '지육대':'털즈란 소속으로 대회를 준비하는 선수들을 지도하는 팀 코치를 맡았다.',
       '아르마 3 랜덤 가챠 고지전':'군사 전술 게임 Arma 3로 진행된 랜덤 가챠 고지전에 참가했다. 한결을 잡아 퍼스트 킬 상을 수상했다.',
       '릴파 버추얼 복싱 대회':'릴파 주최 버추얼 복싱 대회에서 천양 팀의 코치를 맡았고, 해당 팀이 우승했다.',
@@ -151,7 +153,7 @@
       '이터널 리턴 「이리야 어서와」':'이터널 리턴 콘텐츠 이리야 어서와에 참여해 코렛트가 선정한 MVP로 뽑혔다.',
       'STALZONE 크루대전':'STALZONE 크루대전에 환승센터 팀 소속으로 참가해 팀 준우승을 차지했다.',
       '제2회 파블로프 VR 대전쟁':'Pavlov VR 대전쟁의 두 번째 대회를 주최했다.',
-      'SBO 야구 대회':'무파 자이언츠 포수로 출전했다. 타요 스타포스와의 친선전에서는 3번 타자로 나서 4회에 2루타를 쳤다.',
+      'SBO 야구 대회':'무파 자이언츠의 포수로 출전했다. 10월 23일 경기에서 3타수 2안타, 1타점을 기록했고 결승타를 쳤다.',
       '와우 포에버':'월드 오브 워크래프트 와우 포에버를 플레이했다. 당시 방송 제목에 전사 1위라고 기록되어 있으며, 순위의 구체적인 집계 기준은 확인되지 않았다.',
       '왁타버스 최대 도움상':'왁타버스 활동에 기여한 공헌을 인정받아 최대 도움상을 받은 기록이다.',
       '이세계아이돌 VR 자문':'이세계아이돌 관련 VR 콘텐츠에 필요한 기술 지원 및 자문을 제공했다.',
@@ -168,10 +170,11 @@
           const info = li.querySelector('p').textContent;
           const tags = [...li.querySelectorAll('.career-tags span')].map(el=>el.textContent);
           const date = month.querySelector('h3').textContent;
-          const [headline, context, caption, extra] = presentation[year+' '+name] || presentation[name] || [li.dataset.achievement || name,'',name,''];
+          const [headline, context, caption, extra] = presentation[year+' '+name] || presentation[name] || [li.dataset.achievement || name,li.dataset.context||'',name,li.dataset.extra||''];
           const synonyms = aliases.filter(([re])=>re.test(name)).map(([,alias])=>alias);
-          const media=art[artFor({year,name})];
-          rows.push({id:rows.length,year,date,month:parseInt(date),name,info,tags,headline,context,caption,extra,
+          const artKey=li.dataset.art;
+          const media=art[artFor({year,name,artKey,tags})];
+          rows.push({id:rows.length,year,date,month:parseInt(date),name,info,tags,headline,context,caption,extra,artKey,
             terms:norm([year,date,name,info,headline,context,extra||'',...tags,caption,media?.[0]||'',...synonyms].join(' '))});
         }
       }
@@ -203,9 +206,9 @@
     const clear=button('cv-clear','검색 지우기',()=>clearSearch(true)); clear.hidden=true;
     const exportButton=button('cv-export','',()=>{
       const lines=matches().map(r=>{
-        const date=r.year==='레거시'?'시기 미상':r.year+'.'+String(r.month).padStart(2,'0');
+        const date=r.year==='레거시'?'':r.year+'.'+String(r.month).padStart(2,'0')+'  ';
         const result=r.headline===r.name?'':r.headline;
-        return date+'  '+r.name+(result&&result!==r.name?' - '+result:'');
+        return date+r.name+(result&&result!==r.name?' - '+result:'')+(r.extra&&!r.extra.includes('미확인')?' · '+r.extra:'');
       });
       if(!lines.length)return;
       const url=URL.createObjectURL(new Blob(['\uFEFF',lines.join('\r\n')+'\r\n'],{type:'text/plain;charset=utf-8'}));
@@ -247,8 +250,8 @@
       if(/준우승|2위|은메달/.test(s)&&!/우승팀|종합 우승|팀 우승|공동 1위/.test(s))return 'silver';
       if(/우승|1위|금메달|대상|MVP|올해의|수상/.test(s))return 'gold';
       if(/3위|동메달/.test(s))return 'bronze';
-      if(/감독|코치|교관/.test(s))return 'role';
-      if(/제작|몸연기|주최|운영|개장|시작/.test(s))return 'creative';
+      if(/감독|코치|코칭|교관|교육|지도|조교/.test(s))return 'role';
+      if(/제작|몸연기|주최|운영|개장|시작|창설|개설|공개/.test(s))return 'creative';
       return 'neutral';
     }
     function makeCard(r){
@@ -256,6 +259,8 @@
       const card=node('details','cv-card');
       const summary=node('summary','cv-record');
       const copy=node('span','cv-copy');
+      const kind={gold:'수상 · 성과',silver:'입상',bronze:'입상',role:'지도 · 연출',creative:'제작 · 운영',neutral:'활동'}[entry.dataset.tone];
+      copy.append(node('span','cv-kind',kind));
       copy.append(node('span','cv-headline',r.name));
       if(r.headline!==r.name)copy.append(node('span','cv-achievement',r.headline));
       if(r.context)copy.append(node('span','cv-context',r.context));
@@ -391,7 +396,7 @@
         const v=state.value, drift=(1-v)*state.drift, rm=reduced();
         const card=entry.firstElementChild;
         card.style.transform=`translate3d(${(state.direction*drift).toFixed(2)}px,${(rm?0:(1-v)*(state.compact?24:28)).toFixed(2)}px,0) scale(${(rm?1:1-(1-v)*(state.compact?.18:.24)).toFixed(4)})`;
-        card.style.opacity=rm?'1':(.22+.78*v).toFixed(3);
+        card.style.opacity=rm?'1':(.42+.58*v).toFixed(3);
         entry.style.setProperty('--cv-drift',drift.toFixed(2)+'px');
         entry.style.setProperty('--cv-branch',String(clamp((v-.46)/.54)));
       }
@@ -413,7 +418,7 @@
         const t=norm(token), index={vr:1,'비vr':1,'게임':0,'비게임':0}[t];
         if(typeof index==='number')return norm(r.tags[index])===t;
         if(t==='우승')return r.terms.replaceAll('준우승','').includes(t);
-        if(t==='코치')return r.terms.includes('코치')||r.terms.includes('코칭');
+        if(t==='코치')return /코치|코칭|교관|조교|교육|지도/.test(r.terms);
         return r.terms.includes(t);
       }));
     }

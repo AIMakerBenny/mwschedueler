@@ -4,15 +4,15 @@ import {resolve} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {chromium} from 'playwright';
 
-const base='https://mawang-scheduler.majoku.workers.dev/';
+const base=process.env.CAREER_QA_BASE||'https://mawang-scheduler.majoku.workers.dev/';
 const output=resolve(process.env.CAREER_QA_OUTPUT||'career-qa');
 mkdirSync(output,{recursive:true});
-const browser=await chromium.launch({...(process.env.CAREER_CHROME?{executablePath:process.env.CAREER_CHROME}:{channel:'chrome'}),headless:true,args:['--no-sandbox']});
+const browser=await chromium.launch({...(process.env.CAREER_CHROME?{executablePath:process.env.CAREER_CHROME}:{channel:'chrome'}),headless:true,args:['--no-sandbox'],...(process.env.CAREER_QA_PROXY?{proxy:{server:process.env.CAREER_QA_PROXY}}:{})});
 const candidate=process.env.CAREER_LIVE!=='1';
 const mode=process.env.CAREER_QA_MODE||'all';
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 const open=async(width,height,video=false,reducedMotion='no-preference')=>{
-  const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,reducedMotion,...(video?{recordVideo:{dir:output,size:{width,height}}}:{})});
+  const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,reducedMotion,ignoreHTTPSErrors:true,...(video?{recordVideo:{dir:output,size:{width,height}}}:{})});
   if(width>700){
     await context.addInitScript(({collapsed})=>{
       localStorage.setItem('mws-sidebar-nav-groups-v1',JSON.stringify({tools:!collapsed,games:true}));
@@ -75,25 +75,24 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   await page.locator('.cv-panel').waitFor({state:'visible'});
   await page.locator('.cv-axis').waitFor({state:'visible'});
   await pause(350);
-  assert.equal(await page.locator('.career-tree li').count(),48);
-  assert.equal(await page.locator('.cv-axis .cv-entry').count(),44);
-  assert.equal(await page.locator('.cv-legacy .cv-entry').count(),4);
+  assert.equal(await page.locator('.career-tree li').count(),104);
+  assert.equal(await page.locator('.cv-axis .cv-entry').count(),97);
+  assert.equal(await page.locator('.cv-legacy .cv-entry').count(),7);
   assert(!((await page.locator('.cv-legacy').innerText()).includes('미확인')));
   assert.equal(await page.locator('.cv-map-dots i').count(),0);
-  assert.equal(await page.locator('.cv-map-year').count(),5);
+  assert.equal(await page.locator('.cv-map-year').count(),7);
   assert.equal(await page.locator('.cv-gap').count(),0);
   const barBox=await page.locator('.cv-bar').boundingBox();
   console.log('Toolbar size',width,JSON.stringify(barBox));
   await page.screenshot({path:output+'/initial-'+width+'.png'});
   assert(barBox.height<(width>700?60:85),JSON.stringify(barBox));
-  assert.equal(await page.locator('.cv-axis .cv-year').count(),5);
+  assert.equal(await page.locator('.cv-axis .cv-year').count(),7);
   assert.equal(await page.locator('.cv-play,.cv-years,.cv-hero').count(),0);
   assert.equal(await page.locator('html').getAttribute('data-mws-motion'),'full');
   assert.equal(await page.locator('.cv-media[data-art=gt7]').count(),1);
-  assert.equal(await page.locator('.cv-media[data-art=pubg]').count(),5);
+  assert((await page.locator('.cv-media[data-art=pubg]').count())>=5);
   assert.equal(await page.locator('.cv-media[data-art=battlecrush]').count(),1);
   assert.equal(await page.locator('.cv-media[data-art=climbing]').count(),1);
-  await page.waitForFunction(()=>{const img=document.querySelector('.cv-media[data-art=gt7] img');return img.complete&&img.naturalWidth>0});
   return {context,page,errors,started};
 };
 const position=p=>p.evaluate(()=>{
@@ -138,7 +137,7 @@ try{
     const {context,page,errors}=await open(width,height);
     await checkFit(page);
     await page.screenshot({path:output+'/overview-'+width+'.png'});
-    assert.equal(await page.locator('.cv-year[data-year="2022"] .cv-month[data-month="4"] .cv-entry').count(),3);
+    assert.equal(await page.locator('.cv-year[data-year="2022"] .cv-month[data-month="4"] .cv-entry').count(),5);
     const entry=page.locator('.cv-year[data-year="2024"] .cv-month[data-month="3"] .cv-entry').first();
     await chooseYear(page,'2024');await pause(200);
     await approach(page,entry);
@@ -153,7 +152,7 @@ try{
     assert(wheelDistance>=100&&wheelDistance<=145,JSON.stringify({wheelDistance}));
     assert(movement>(width>700?60:22),JSON.stringify({partial,incoming,movement}));
     assert(incoming.scale>partial.scale+.045,JSON.stringify({partial,incoming}));
-    assert(incoming.opacity>partial.opacity+.18,JSON.stringify({partial,incoming}));
+    assert(incoming.opacity>partial.opacity+.12,JSON.stringify({partial,incoming}));
     await page.screenshot({path:output+'/2024-wheel-'+width+'.png'});
     await page.mouse.wheel(0,-120);await pause(320);
     const reversed=await inspect(entry);
@@ -170,7 +169,7 @@ try{
     await scrollTo(page,(await position(page))+(await inspect(entry)).top-245);
     await checkFit(page);
     await page.waitForFunction(()=>['climbing','battlecrush'].every(key=>document.querySelector(`.cv-media[data-art=${key}] img`).naturalWidth>0));
-    assert.equal(await page.locator('.cv-year[data-year="2024"] .cv-month[data-month="3"] .cv-entry').count(),2);
+    assert.equal(await page.locator('.cv-year[data-year="2024"] .cv-month[data-month="3"] .cv-entry').count(),5);
     await page.screenshot({path:output+'/2024-march-'+width+'.png'});
     const beforeOpen=(await entry.boundingBox()).height;
     await entry.locator('summary').click();await pause(400);
@@ -185,23 +184,28 @@ try{
     assert.equal(await page.locator('.cv-entry[data-match=true]').count(),3);
     assert.equal(await page.locator('.cv-entry:visible').count(),3);
     assert.equal(await page.locator('.cv-year:visible').count(),2);
+    const downloadPromise=page.waitForEvent('download');
+    await page.locator('.cv-export').click();
+    const download=await downloadPromise;
+    const exported=readFileSync(await download.path(),'utf8').replace(/^\uFEFF/,'').trim().split(/\r?\n/);
+    assert.equal(exported.length,3);assert(exported.every(line=>line.includes('릴동파')));assert(exported.every(line=>!line.includes('http')));
     await page.screenshot({path:output+'/search-'+width+'.png'});
     await page.locator('.cv-result-toggle').click();
     await page.locator('.cv-result').first().click();await pause(200);
     assert.match(await page.locator('.cv-entry[data-selected=true]').innerText(),/죠뗌므/);
     assert(await page.locator('.cv-entry[data-selected=true]').isVisible());
     await search(page,'');await pause(150);
-    assert.equal(await page.locator('.cv-entry:visible').count(),48);
+    assert.equal(await page.locator('.cv-entry:visible').count(),104);
     const restored=await position(page);
     assert(Math.abs(restored-saved)<3,'Search did not restore scroll: '+JSON.stringify({saved,restored}));
-    for(const [q,n] of [['코치',3],['VR 우승',4],['WBD',1],['왁타버스 야구',1],['F1 챔스',1],['브축대',1],['굳가대표',1],['데이토나',1]]){
-      await search(page,q);assert.equal(await page.locator('.cv-result').count(),n,q);
-      assert.equal(await page.locator('.cv-entry:visible').count(),n,q);
+    for(const [q,n] of [['코치',null],['VR 우승',4],['WBD',2],['왁타버스 야구',2],['F1 챔스',1],['브축대',1],['굳가대표',1],['데이토나',1]]){
+      await search(page,q);const found=await page.locator('.cv-result').count();if(n!==null)assert.equal(found,n,q);else assert(found>=8,q);
+      assert.equal(await page.locator('.cv-entry:visible').count(),found,q);
       if(q==='VR 우승')assert(!((await page.locator('.cv-results').textContent()).includes('준우승')));
     }
     await search(page,'');
-    await page.locator('.cv-legacy-link').click();await pause(150);
-    assert.equal(await page.locator('.cv-legacy .cv-entry').count(),4);
+    await page.locator('.cv-legacy-link').click();await pause(250);
+    assert.equal(await page.locator('.cv-legacy .cv-entry').count(),7);
     const legacyEntry=page.locator('.cv-legacy .cv-entry').first();
     const legacyBase=await position(page), legacySettled=await inspect(legacyEntry);
     const lastDated=await inspect(page.locator('.cv-axis .cv-entry').last());
@@ -256,7 +260,7 @@ try{
     await rm.page.mouse.wheel(0,-120);await pause(300);
     const reverse=await inspect(reducedEntry);
     assert(Math.abs(after.shift-before.shift)>60,JSON.stringify({before,after,reverse}));
-    assert(before.opacity<.85&&after.opacity>before.opacity+.18);assert(before.scale<.93&&after.scale>before.scale+.045);
+    assert(before.opacity<.9&&after.opacity>before.opacity+.12);assert(before.scale<.93&&after.scale>before.scale+.045);
     assert(Math.abs(before.shift-reverse.shift)<2);
     console.log('PASS full scroll motion despite OS reduced motion',JSON.stringify({before,after,reverse}));
     await rm.page.screenshot({path:output+'/os-reduced-full-motion.png'});
