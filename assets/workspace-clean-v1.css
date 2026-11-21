@@ -130,3 +130,18 @@ body.mws-premium[data-theme=neon]:not(:has(#gameF1Racing.active)) .app>.sidebar{
 body.mws-premium[data-theme=neon]:not(:has(#gameF1Racing.active)) .sidebar .nav-scroll{scrollbar-color:var(--panel2) transparent}
 body.mws-premium[data-theme=neon]:not(:has(#gameF1Racing.active)) .sidebar :is(.nav-scroll,.nav)::-webkit-scrollbar-thumb{background:var(--panel2)!important}
 body.mws-premium[data-theme=neon]:not(:has(#gameF1Racing.active)) .sidebar .nav button.active{background:color-mix(in srgb,var(--accent) 12%,var(--panel))!important}
+
+/* Immediate hover-in feedback. Keep the existing exit fade, label/rail
+   motion and theme palette; do not interpolate paint-heavy hover colors
+   while the pointer is already moving to the next category. */
+@media (hover:hover) and (pointer:fine){
+  html body .app>.sidebar .nav .nav-scroll>button[data-tab]:hover,
+  html body.mws-premium:not(:has(#gameF1Racing.active)) .app>.sidebar .nav .nav-scroll>button[data-tab]:hover{
+    transition-property:transform!important;
+    transition-delay:0s!important;
+  }
+  html body .app>.sidebar .nav .nav-scroll>button[data-tab]:hover>.nav-icon{
+    transition-property:transform!important;
+    transition-delay:0s!important;
+  }
+}

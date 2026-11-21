@@ -198,7 +198,7 @@ function renderNotebookCardsV176(type){
   const list=$(type==='patch'?'patchNoteCardsV176':'suggestionCardsV176');
   if(!list)return;
   const rows=[...cardListV176(type)].sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
-  list.innerHTML=rows.length?rows.map(item=>`
+  const markup=rows.length?rows.map(item=>`
     <article class="mws-note-card-v176">
       <div class="mws-note-card-head-v176">
         <strong>${esc(item.author||'작성자 미상')}</strong>
@@ -206,7 +206,12 @@ function renderNotebookCardsV176(type){
       </div>
       <div class="mws-note-card-content-v176">${esc(item.content||'')}</div>
     </article>`).join(''):`<div class="mws-note-empty-v176">${type==='patch'?'등록된 패치노트가 없습니다.':'등록된 건의가 없습니다.'}</div>`;
+  // Do not replace existing cards or notify mutation observers for unchanged data.
+  if(notebookMarkupV176.get(list)===markup&&list.childElementCount)return;
+  list.innerHTML=markup;
+  notebookMarkupV176.set(list,markup);
 }
+const notebookMarkupV176=new WeakMap();
 function setNotebookViewV176(view){
   notebookViewV176=['patch','suggestions'].includes(view)?view:'';
   const builtInIds=['memoLibraryView','memoFavoritesView'];
@@ -393,8 +398,14 @@ function queueInstallV176(){
   requestAnimationFrame(installAllV176);
 }
 
-const observer=new MutationObserver(queueInstallV176);
+// The workspace owns navigation and section shells, not the changing contents
+// of calendars, mini-games, clocks, live cards or notebook result lists.
+const workspaceShellV176='.nav,.nav-scroll,.main,#dashboard,#worldtime,#memos,#contacts,#sniper,#friendFinder,#targets,.dashboard-mode-tabs,.memo-section-tabs';
+const observer=new MutationObserver(records=>{
+  if(records.some(record=>record.target instanceof Element&&record.target.matches(workspaceShellV176)))queueInstallV176();
+});
 observer.observe(document.documentElement,{childList:true,subtree:true});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)queueInstallV176()});
 window.addEventListener('mws:parts-loaded',event=>{
   if((event?.detail?.parts||[]).includes('notebook')){
     ensureNotebookDataV176();

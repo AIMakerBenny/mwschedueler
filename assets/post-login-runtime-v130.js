@@ -124,7 +124,7 @@ async function start(){
     load('mobile-calendar-day-detail-v130','/assets/mobile-calendar-day-detail-v130.js?v=1.3.0-perf35','__mwsMobileCalendarDayDetailV130'),
     load('integrity-runtime-v130','/assets/integrity-runtime-v130.js?v=1.3.0-phase12&save-queue-v2=1','__mwsIntegrityRuntimeV130'),
     loadStyle('workspace-ui-v176','/assets/workspace-ui-v176.css?v=1.6.21-workspace176&workspace-nav-v1=1'),
-    load('workspace-ui-v176','/assets/workspace-ui-v176.js?v=1.6.21-workspace176&workspace-nav-v1=1&hall-v2=1','__mwsWorkspaceUiV176')
+    load('workspace-ui-v176','/assets/workspace-ui-v176.js?v=1.6.21-workspace176&workspace-nav-v1=1&hall-v2=1&shell-perf=1','__mwsWorkspaceUiV176')
   ]);
   const criticalFailures=criticalResults.filter(x=>!x?.ok).map(x=>x.key);
 
