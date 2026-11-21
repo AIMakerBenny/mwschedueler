@@ -92,6 +92,91 @@ function normalizeCloudCore(js){
     ""
   );
 
+  /* Public-first entry: the HTML shell is visible before authentication. Keep the
+     existing server authorization and save lifecycle; only the explicit Admin
+     action opens the credential form. A remembered cookie is verified server-side. */
+  out=out.replace("const isAdmin=mode==='admin';document.body.classList.toggle", "const isAdmin=mode==='admin'&&Boolean(currentAdmin);document.body.classList.toggle");
+  out=out.replace("if($('mwsAdminManageBtn'))", "if($('mwsChangeModeBtn'))$('mwsChangeModeBtn').textContent=isAdmin?'로그아웃':'관리자 로그인';if($('mwsAdminManageBtn'))");
+  out=out.replace("admin?'Admin 로그인':'Public 입장'", "admin?'로그인':'Public 입장'");
+  out=out.replace("    applyModeUi();\n    document.body.classList.add('mws-app-loading');", "    if(chosen==='public')applyModeUi();\n    setEntryBusy(true);\n    document.body.classList.add('mws-app-loading');");
+  out=out.replace("    hideGate();\n  }\n  function markAppReady", "    hideGate();\n    setEntryBusy(false);\n  }\n  function markAppReady");
+  out=out.replace("      showGate();\n      setLoginError('로그인에는 성공했지만 필수 데이터를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.');", `      if(chosen==='admin'){
+        currentAdmin=null;mode='public';applyModeUi();hideGate();
+        try{toast('관리자 복원 실패','Public으로 접속합니다. 관리자 로그인을 다시 시도해 주세요.')}catch(_){}
+        enterAppShell('public');await startHydration('public');return;
+      }
+      // No credential prompt for a public network failure. Retain the inert
+      // shell, do not promote stale data to ready, and explain how to retry.
+      mode='public';currentAdmin=null;applyModeUi();hideGate();
+      document.body.classList.add('mws-app-loading');setEntryBusy(true);
+      if(st)st.textContent='데이터 로딩 실패 · 새로고침 후 다시 시도해 주세요';`);
+  const publicEntry=`  let accessBusy=false;
+  function setEntryBusy(busy){
+    const app=document.querySelector('.app');if(app)app.inert=busy;
+    const button=$('mwsChangeModeBtn');if(button)button.disabled=busy;
+    const manage=$('mwsAdminManageBtn');if(manage)manage.disabled=busy;
+  }
+  function closeAdminLogin(){
+    if(accessBusy||hydrating||!window.__mwsAppReadyV130)return;
+    const pw=$('mwsLoginPw');if(pw)pw.value='';
+    setLoginError('');hideGate();setEntryBusy(false);$('mwsChangeModeBtn')?.focus();
+  }
+  function openAdminLogin(){
+    if(accessBusy||hydrating||!window.__mwsAppReadyV130)return;
+    selectLoginMode('admin');setEntryBusy(true);showGate();$('mwsLoginId')?.focus();
+  }
+  async function changeAccessMode(){
+    if(accessBusy||hydrating||!window.__mwsAppReadyV130)return;
+    if(mode!=='admin'){openAdminLogin();return}
+    accessBusy=true;setEntryBusy(true);
+    try{
+      markDirty();if((saveRun||dirtyParts.size||draftBlocked)&&!(await writeCloudNow(true)))return;
+      markDirty();if(dirtyParts.size||draftBlocked)return;
+      // Only a confirmed server logout can switch to Public. Keep Admin and
+      // its unsaved recovery state untouched if logout or saving fails.
+      await fetchJson('/api/auth/logout',{method:'POST'},'로그아웃');
+      ++hydrationSeq;clearTimeout(cloudSaveTimer);clearTimeout(saveRetryTimer);
+      try{localStorage.removeItem(REMEMBER_KEY);localStorage.removeItem(MODE_KEY)}catch(_){}
+      currentAdmin=null;mode='public';enterAppShell('public');await startHydration('public');
+    }catch(error){try{toast('로그아웃 실패',error.message||String(error))}catch(_){}}
+    finally{accessBusy=false;if(window.__mwsAppReadyV130)setEntryBusy(false)}
+  }
+  async function handleLogin(ev){
+    ev.preventDefault();if(accessBusy||hydrating||!window.__mwsAppReadyV130||$('mwsAccessGate')?.classList.contains('hidden'))return;
+    const btn=$('mwsLoginSubmit');if(btn)btn.disabled=true;accessBusy=true;setLoginError('');
+    try{
+      const u=$('mwsLoginId')?.value.trim(),p=$('mwsLoginPw')?.value;
+      if(!u||!p)throw Error('관리자 아이디와 비밀번호를 입력해 주세요.');
+      const result=await adminLogin(u,p);if(!currentAdmin)throw Error('관리자 세션을 확인하지 못했습니다.');
+      if($('mwsLoginPw'))$('mwsLoginPw').value='';
+      if(result.bootstrapped){try{toast('Admin 생성','Cloudflare D1에 최초 Admin 계정을 생성했습니다.')}catch(_){}}
+      try{rememberChoice('admin')}catch(_){}
+      enterAppShell('admin');await startHydration('admin');
+    }catch(error){setLoginError(error.message||String(error))}
+    finally{accessBusy=false;if(btn)btn.disabled=false}
+  }
+  async function init(){
+    installSaveBridge();bindUi();selectLoginMode('admin');mode='public';applyModeUi();setEntryBusy(true);
+    const cache=validateCacheSchema().catch(()=>{});
+    let chosen='public',remembered=false;
+    try{remembered=localStorage.getItem(REMEMBER_KEY)==='1'&&localStorage.getItem(MODE_KEY)==='admin'}catch(_){}
+    if(remembered){
+      try{
+        const session=await fetchJson('/api/auth/session',{timeout:4000},'Admin 세션 확인');
+        if(session?.authenticated===true&&session.user){currentAdmin=session.user;chosen='admin'}
+        else{try{localStorage.removeItem(REMEMBER_KEY);localStorage.removeItem(MODE_KEY)}catch(_){}}
+      }catch(_){currentAdmin=null}
+    }
+    await cache;enterAppShell(chosen);await startHydration(chosen);
+  }
+`;
+  // Replace only the two access lifecycle functions in either supported core.
+  const loginStart=out.indexOf('  async function handleLogin(ev){'),loginEnd=out.indexOf('  async function loadAdminList(',loginStart);
+  if(loginStart>=0&&loginEnd>loginStart)out=out.slice(0,loginStart)+publicEntry+out.slice(loginEnd);
+  out=out.replace(/  async function init\(\)\{[^\n]*\}\n(?=\n)/g,match=>match.includes('validateCacheSchema')&&match.includes('showGate()')?'':match);
+  const modeBind=out.indexOf("$('mwsChangeModeBtn')?.addEventListener('click',async()=>"),manageBind=out.indexOf("$('mwsAdminManageBtn')?.addEventListener",modeBind);
+  if(modeBind>=0&&manageBind>modeBind)out=out.slice(0,modeBind)+"$('mwsChangeModeBtn')?.addEventListener('click',changeAccessMode);$('mwsLoginClose')?.addEventListener('click',closeAdminLogin);$('mwsLoginBack')?.addEventListener('click',closeAdminLogin);$('mwsAccessGate')?.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();closeAdminLogin()}else if(e.key==='Tab'){const items=[...$('mwsAccessGate').querySelectorAll('button:not([disabled]),input:not([disabled])')].filter(el=>el.getClientRects().length);if(e.shiftKey&&document.activeElement===items[0]){e.preventDefault();items.at(-1)?.focus()}else if(!e.shiftKey&&document.activeElement===items.at(-1)){e.preventDefault();items[0]?.focus()}}});"+out.slice(manageBind);
+
   /* Phase 7: a save acknowledgement may only advance the baseline to the payload that the server accepted.
      Edits made while /api/save is in flight must remain dirty and must never be overwritten by normalization. */
   out=out.replace(

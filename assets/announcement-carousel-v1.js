@@ -15,7 +15,7 @@
 
   function openAnnouncements(){
     if(shown||hiddenToday()||!announcements.length){gateObserver?.disconnect();return}
-    if(document.body.classList.contains('mws-gated')||!document.body.dataset.mwsMode)return;
+    if(document.body.classList.contains('mws-gated')||document.body.classList.contains('mws-app-loading')||!document.body.dataset.mwsMode)return;
     gateObserver?.disconnect();
     shown=true;
     const dialog=document.createElement('dialog');
