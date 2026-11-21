@@ -222,7 +222,7 @@ body #calendar.section #calendarGrid .day:is(.drag-over,.template-drag-over){box
  body #calendar.section #calendarGrid .calendar-day-more-v2{position:absolute;right:19px;top:3px;float:none}
 }
 @media(max-width:600px){.event-details-popover-v2{border-radius:20px}.event-details-body-v1{padding:5px 18px 20px 39px}.event-details-body-v1 .calendar-preview-title{font-size:20px}}
-@media(prefers-reduced-motion:reduce){body #calendar.section :is(.day,.mini-event,.calendar-day-more-v2,.calendar-timeline-day-v1,.calendar-timeline-game-v1,.calendar-topbar-v4 button,.calendar-topbar-v4 select),.event-details-popover-v2 .event-details-action-v2{transition:none!important}}
+html[data-mws-motion=reduced] :is(body #calendar.section :is(.day,.mini-event,.calendar-day-more-v2,.calendar-timeline-day-v1,.calendar-timeline-game-v1,.calendar-topbar-v4 button,.calendar-topbar-v4 select),.event-details-popover-v2 .event-details-action-v2){transition:none!important}
 
 /* Compact icon toolbar. Text remains in the DOM for accessible naming, while
    the year/month selects remain readable. No additional toolbar row. */

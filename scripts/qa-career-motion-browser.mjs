@@ -28,18 +28,21 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
     const replacement=source.match(sectionPattern)[0];
     const asidePattern=/<aside class="sidebar">[\s\S]*?<\/aside>/;
     const firstPaint=source.match(/<style id="mws-nav-first-paint">[\s\S]*?<\/style>/)[0];
+    const motionPreference=source.match(/<script id="mws-motion-preference">[\s\S]*?<\/script>/)[0];
+    const motionSettings=source.match(/<div class="card" id="mwsMotionSettings">[\s\S]*?<\/div>/)[0];
     await context.route(base,async route=>{
       const response=await route.fetch();
       const original=await response.text();
       assert(sectionPattern.test(original),'Timeline section absent from production');
-      await route.fulfill({response,body:original.replace(sectionPattern,replacement).replace(asidePattern,source.match(asidePattern)[0]).replace('</head>',firstPaint+'</head>')});
+      await route.fulfill({response,body:original.replace(sectionPattern,replacement).replace(asidePattern,source.match(asidePattern)[0]).replace('</head>',motionPreference+firstPaint+'</head>').replace('<section id="settings" class="section">','<section id="settings" class="section">'+motionSettings)});
     });
-    for(const file of ['career-visualizer.js','career-timeline.css','tools.js','content-planner-host.js','perf-runtime.js','post-login-runtime-v130.js','online-v5-loader.js']){
+    for(const file of ['career-visualizer.js','career-timeline.css','calendar-details-v1.js','calendar-details-v1.css','modal-motion-v1.css','tools.js','content-planner-host.js','perf-runtime.js','post-login-runtime-v130.js','online-v5-loader.js']){
       await context.route('**/assets/'+file+'*',async route=>{if(file==='tools.js'||file==='content-planner-host.js')await pause(1800);await route.fulfill({
         status:200,contentType:file.endsWith('.js')?'application/javascript':'text/css',
         body:readFileSync(new URL('../assets/'+file,import.meta.url))
       })});
     }
+    await context.route('**/assets/career-media/*.webp',route=>route.fulfill({status:200,contentType:'image/webp',body:readFileSync(new URL('../assets/career-media/'+new URL(route.request().url()).pathname.split('/').at(-1),import.meta.url))}));
   }
   const started=Date.now(), page=await context.newPage();
   const errors=[];page.on('pageerror',err=>{if(err.stack?.includes('career-visualizer'))errors.push(err.message)});
@@ -76,19 +79,28 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   assert.equal(await page.locator('.cv-axis .cv-entry').count(),44);
   assert.equal(await page.locator('.cv-legacy .cv-entry').count(),4);
   assert(!((await page.locator('.cv-legacy').innerText()).includes('미확인')));
-  assert.equal(await page.locator('.cv-map-dots i').count(),44);
+  assert.equal(await page.locator('.cv-map-dots i').count(),0);
+  assert.equal(await page.locator('.cv-map-year').count(),5);
+  assert.equal(await page.locator('.cv-gap').count(),0);
+  assert((await page.locator('.cv-bar').boundingBox()).height<(width>700?60:85));
   assert.equal(await page.locator('.cv-axis .cv-year').count(),5);
   assert.equal(await page.locator('.cv-play,.cv-years,.cv-hero').count(),0);
+  assert.equal(await page.locator('html').getAttribute('data-mws-motion'),'full');
+  assert.equal(await page.locator('.cv-media[data-art=gt7]').count(),1);
+  assert.equal(await page.locator('.cv-media[data-art=pubg]').count(),5);
+  assert.equal(await page.locator('.cv-media[data-art=battlecrush]').count(),1);
+  assert.equal(await page.locator('.cv-media[data-art=climbing]').count(),1);
+  await page.waitForFunction(()=>{const img=document.querySelector('.cv-media[data-art=gt7] img');return img.complete&&img.naturalWidth>0});
   return {context,page,errors,started};
 };
 const position=p=>p.evaluate(()=>{
   const panel=document.querySelector('.cv-panel');
-  for(let el=panel.parentElement;el&&el!==document.body;el=el.parentElement){if(/auto|scroll/.test(getComputedStyle(el).overflowY)&&el.scrollHeight>el.clientHeight+2)return el.scrollTop;}
+  for(let el=panel.parentElement;el&&el!==document.body;el=el.parentElement){if(/auto|scroll/.test(getComputedStyle(el).overflowY)&&el.clientHeight>0)return el.scrollTop;}
   return document.scrollingElement.scrollTop;
 });
 const scrollTo=async(p,top)=>{await p.evaluate(top=>{
   const panel=document.querySelector('.cv-panel');let root=document.scrollingElement;
-  for(let el=panel.parentElement;el&&el!==document.body;el=el.parentElement){if(/auto|scroll/.test(getComputedStyle(el).overflowY)&&el.scrollHeight>el.clientHeight+2){root=el;break;}}
+  for(let el=panel.parentElement;el&&el!==document.body;el=el.parentElement){if(/auto|scroll/.test(getComputedStyle(el).overflowY)&&el.clientHeight>0){root=el;break;}}
   root.scrollTo({top,behavior:'instant'});
 },top);await pause(300);};
 const inspect=async entry=>entry.evaluate(e=>{
@@ -100,7 +112,7 @@ const approach=async(p,entry)=>{
   const start=await position(p),r=await inspect(entry);
   const band=await p.evaluate(()=>{
     const panel=document.querySelector('.cv-panel');let root=document.scrollingElement;
-    for(let el=panel.parentElement;el&&el!==document.body;el=el.parentElement){if(/auto|scroll/.test(getComputedStyle(el).overflowY)&&el.scrollHeight>el.clientHeight+2){root=el;break;}}
+    for(let el=panel.parentElement;el&&el!==document.body;el=el.parentElement){if(/auto|scroll/.test(getComputedStyle(el).overflowY)&&el.clientHeight>0){root=el;break;}}
     const bottom=root===document.scrollingElement?innerHeight:Math.min(innerHeight,root.getBoundingClientRect().bottom);
     const top=Math.min(document.querySelector('.cv-bar').getBoundingClientRect().bottom,bottom-80);
     return {top,bottom};
@@ -154,23 +166,35 @@ try{
     await page.screenshot({path:output+'/2024-year-'+width+'.png'});
     await scrollTo(page,(await position(page))+(await inspect(entry)).top-245);
     await checkFit(page);
+    await page.waitForFunction(()=>['climbing','battlecrush'].every(key=>document.querySelector(`.cv-media[data-art=${key}] img`).naturalWidth>0));
     assert.equal(await page.locator('.cv-year[data-year="2024"] .cv-month[data-month="3"] .cv-entry').count(),2);
     await page.screenshot({path:output+'/2024-march-'+width+'.png'});
+    const beforeOpen=(await entry.boundingBox()).height;
+    await entry.locator('summary').click();await pause(400);
+    assert((await entry.boundingBox()).height>beforeOpen+40);
+    assert.match(await entry.locator('.cv-detail').innerText(),/A Difficult Game About Climbing/);
+    await page.screenshot({path:output+'/2024-expanded-'+width+'.png'});
+    await entry.locator('summary').click();await pause(400);
     const saved=await position(page);
     await search(page,'릴동파');
     assert.equal(await page.locator('.cv-result-group').count(),2);
     assert.equal(await page.locator('.cv-result').count(),3);
     assert.equal(await page.locator('.cv-entry[data-match=true]').count(),3);
+    assert.equal(await page.locator('.cv-entry:visible').count(),3);
+    assert.equal(await page.locator('.cv-year:visible').count(),2);
     await page.screenshot({path:output+'/search-'+width+'.png'});
+    await page.locator('.cv-result-toggle').click();
     await page.locator('.cv-result').first().click();await pause(200);
     assert.match(await page.locator('.cv-entry[data-selected=true]').innerText(),/죠뗌므/);
     assert(await page.locator('.cv-entry[data-selected=true]').isVisible());
     await search(page,'');await pause(150);
+    assert.equal(await page.locator('.cv-entry:visible').count(),48);
     const restored=await position(page);
     assert(Math.abs(restored-saved)<3,'Search did not restore scroll: '+JSON.stringify({saved,restored}));
     for(const [q,n] of [['코치',3],['VR 우승',4],['WBD',1],['왁타버스 야구',1],['F1 챔스',1],['브축대',1],['굳가대표',1],['데이토나',1]]){
       await search(page,q);assert.equal(await page.locator('.cv-result').count(),n,q);
-      if(q==='VR 우승')assert(!((await page.locator('.cv-results').innerText()).includes('준우승')));
+      assert.equal(await page.locator('.cv-entry:visible').count(),n,q);
+      if(q==='VR 우승')assert(!((await page.locator('.cv-results').textContent()).includes('준우승')));
     }
     await search(page,'');
     await page.locator('.cv-legacy-link').click();await pause(150);
@@ -206,6 +230,7 @@ try{
     for(let i=0;i<11;i++){await page.mouse.wheel(0,72);await pause(230);}
     await pause(800);
     await search(page,'릴동파');await pause(1400);
+    await page.locator('.cv-result-toggle').click();await pause(500);
     await page.locator('.cv-result').first().click();await pause(1200);
     await search(page,'');await pause(1100);
     await page.screenshot({path:output+'/recording-end.png'});
@@ -223,10 +248,25 @@ try{
     const after=await inspect(reducedEntry);
     await rm.page.mouse.wheel(0,-120);await pause(300);
     const reverse=await inspect(reducedEntry);
-    assert(Math.abs(after.shift-before.shift)>35,JSON.stringify({before,after,reverse}));
-    assert.equal(before.opacity,1);assert.equal(after.opacity,1);assert(Math.abs(before.scale-1)<.01);
+    assert(Math.abs(after.shift-before.shift)>60,JSON.stringify({before,after,reverse}));
+    assert(before.opacity<.85&&after.opacity>before.opacity+.18);assert(before.scale<.93&&after.scale>before.scale+.045);
     assert(Math.abs(before.shift-reverse.shift)<2);
-    console.log('PASS reduced motion wheel',JSON.stringify({before,after,reverse}));
+    console.log('PASS full scroll motion despite OS reduced motion',JSON.stringify({before,after,reverse}));
+    await rm.page.screenshot({path:output+'/os-reduced-full-motion.png'});
+    await rm.page.locator('[data-tab=settings]').click();
+    await rm.page.locator('#mwsScreenMotion').selectOption('reduced');
+    assert.equal(await rm.page.locator('html').getAttribute('data-mws-motion'),'reduced');
+    await rm.page.locator('[data-tab=careerTimeline]').click();
+    await chooseYear(rm.page,'2024');await approach(rm.page,reducedEntry);
+    const still=await inspect(reducedEntry);assert.equal(still.opacity,1);assert(Math.abs(still.scale-1)<.01);
+    assert(Math.abs(still.shift)<Math.abs(before.shift)*.6);
+    await rm.page.locator('[data-tab=settings]').click();
+    await rm.page.locator('#mwsScreenMotion').selectOption('system');
+    assert.equal(await rm.page.locator('html').getAttribute('data-mws-motion'),'reduced');
+    await rm.page.locator('#mwsScreenMotion').selectOption('full');
+    assert.equal(await rm.page.locator('html').getAttribute('data-mws-motion'),'full');
+    await rm.page.screenshot({path:output+'/motion-settings.png'});
+    console.log('PASS site setting reduced and system and full',JSON.stringify(still));
     await rm.context.close();
   }
 }finally{await browser.close();}

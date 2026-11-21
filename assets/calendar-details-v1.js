@@ -43,7 +43,7 @@
     const generation=++motionGeneration;
     motion?.cancel();motion=null;
     const complete=()=>{if(generation!==motionGeneration)return;motion?.cancel();motion=null;finish?.()};
-    if(!drawer.animate||root.matchMedia?.('(prefers-reduced-motion: reduce)').matches){complete();return}
+    if(!drawer.animate||root.mwsMotionReduced?.()){complete();return}
     motion=drawer.animate([{opacity:from},{opacity:open?1:0}],{duration:open?150:110,easing:'ease-out',fill:'both'});
     motion.finished.then(complete,()=>{});
   }

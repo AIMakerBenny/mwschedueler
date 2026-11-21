@@ -60,12 +60,10 @@ body .modal,body.mws-premium .modal {
   @keyframes mws-modal-panel-in-v2 {from{opacity:0;scale:.95;translate:0 14px}to{opacity:1;scale:none;translate:none}}
 }
 
-/* Never animate geometry for users who prefer reduced motion. */
-@media(prefers-reduced-motion:reduce) {
-  body .modal,body.mws-premium .modal {--mws-modal-enter:220ms;--mws-modal-exit:160ms;--mws-modal-ready:0ms}
-  .modal::before,.modal.open::before {transition-duration:100ms;animation-duration:100ms}
-  .modal > :is(.modalbox,.confirm-box),.modal.open > :is(.modalbox,.confirm-box) {scale:none!important;translate:none!important;transition-property:opacity!important}
-  @supports not (transition-behavior:allow-discrete) {
-    .modal.open > :is(.modalbox,.confirm-box) {animation-name:mws-modal-scrim-in-v2}
-  }
+/* The explicit site preference, not the system setting alone, controls motion. */
+html[data-mws-motion=reduced] body .modal,html[data-mws-motion=reduced] body.mws-premium .modal {--mws-modal-enter:220ms;--mws-modal-exit:160ms;--mws-modal-ready:0ms}
+html[data-mws-motion=reduced] :is(.modal,.modal.open)::before {transition-duration:100ms;animation-duration:100ms}
+html[data-mws-motion=reduced] .modal > :is(.modalbox,.confirm-box) {scale:none!important;translate:none!important;transition-property:opacity!important}
+@supports not (transition-behavior:allow-discrete) {
+  html[data-mws-motion=reduced] .modal.open > :is(.modalbox,.confirm-box) {animation-name:mws-modal-scrim-in-v2}
 }
