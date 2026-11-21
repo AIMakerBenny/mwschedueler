@@ -17,7 +17,16 @@
     const rect=root.getBoundingClientRect();if(!rect.width||!root.classList.contains('active'))return;
     // The app's per-page zoom changes CSS pixels independently of the viewport.
     const zoom=rect.width/Math.max(1,root.offsetWidth)||1;
-    const available=Math.floor((innerHeight-Math.max(0,rect.top)-24)/zoom);
+    // Use the document position, not the currently scrolled position: clicking
+    // a footer must never increase the board height and create more scrolling.
+    // Include the app shell's real bottom padding (which differs by device).
+    let bottomSpace=0;
+    for(let parent=root.parentElement;parent;parent=parent.parentElement){
+      const style=getComputedStyle(parent);
+      bottomSpace+=(parseFloat(style.paddingBottom)||0)+(parseFloat(style.borderBottomWidth)||0)+(parseFloat(style.marginBottom)||0);
+      if(parent===document.body)break;
+    }
+    const available=Math.floor((innerHeight-Math.max(0,rect.top+window.scrollY)-Math.max(24,bottomSpace))/zoom);
     const compact=root.clientWidth<850||available<420;
     root.dataset.ladderCompact=String(compact);
     root.style.setProperty('--ladder-workspace-height',`${Math.max(420,available)}px`);
@@ -118,7 +127,8 @@
     if(step===2||step===3)renderLadder();
     // Keep the outer header visible on small desktop screens. Only scroll
     // when the user was actually below the wizard header.
-    if(root.getBoundingClientRect().top<0)root.scrollIntoView({block:'start',behavior:'instant'});
+    if(root.dataset.ladderCompact==='false'&&window.scrollY>0)window.scrollTo({top:0,behavior:'instant'});
+    else if(root.getBoundingClientRect().top<0)root.scrollIntoView({block:'start',behavior:'instant'});
   }
   const basePalette=window.renderMiniContactPalette;
   window.renderMiniContactPalette=function(game,q){
