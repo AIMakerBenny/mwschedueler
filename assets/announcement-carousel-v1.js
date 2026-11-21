@@ -11,10 +11,12 @@
   const dayKST=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
   const hiddenToday=()=>{try{return localStorage.getItem(storageKey)===dayKST()}catch(_){return false}};
   const svg=path=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${path}"/></svg>`;
-  let shown=false;
+  let shown=false,gateObserver=null;
 
   function openAnnouncements(){
-    if(shown||hiddenToday()||!announcements.length||document.body.classList.contains('mws-gated')||!document.body.dataset.mwsMode)return;
+    if(shown||hiddenToday()||!announcements.length){gateObserver?.disconnect();return}
+    if(document.body.classList.contains('mws-gated')||!document.body.dataset.mwsMode)return;
+    gateObserver?.disconnect();
     shown=true;
     const dialog=document.createElement('dialog');
     dialog.id='mwsAnnouncementDialog';
@@ -92,8 +94,12 @@
     dialog.addEventListener('close',()=>dialog.remove(),{once:true});
     document.body.append(dialog);go(0);dialog.showModal();
   }
-  // Both public and admin hydration dispatch this event. A remembered mode
-  // may finish before this asset executes, so also inspect the released gate.
-  window.addEventListener('mws:app-ready',openAnnouncements);
+  // The deployed Worker may dispatch app-ready before releasing the gate.
+  // Observe only the gate attributes until the first successful display.
+  if(!hiddenToday()){
+    gateObserver=new MutationObserver(openAnnouncements);
+    gateObserver.observe(document.body,{attributes:true,attributeFilter:['class','data-mws-mode']});
+  }
+  window.addEventListener('mws:app-ready',openAnnouncements,{once:true});
   openAnnouncements();
 })();
