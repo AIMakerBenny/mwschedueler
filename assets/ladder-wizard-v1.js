@@ -15,6 +15,84 @@
   const validPrizes=()=>validRoster()&&prizes().length===players().length&&prizes().every(p=>String(p.label||'').trim());
   const rosterKey=()=>JSON.stringify(players().map(p=>p.id).sort());
   let step=1,furthest=1,key=null,paletteKey=null,preset='winner',shufflePhase=null;
+  // Presets are templates, not game rules. Only the final, editable labels
+  // enter the existing unbiased shuffle and saved-data contract.
+  const presetDefs={
+    winner:{name:'당첨 / 꽝',description:'당첨 인원을 정하고 나머지는 꽝으로 채웁니다.',fields:[{key:'wins',id:'ladderWinnerCount',label:'당첨 인원',type:'number',min:1,max:n=>n,initial:1}]},
+    rank:{name:'순위 정하기',description:'모든 참가자에게 중복 없이 순위를 배정합니다.',fields:[{key:'start',label:'시작 번호',type:'number',min:1,max:999,initial:1},{key:'suffix',label:'표기 방식',choices:[['등','1등, 2등'],['번','1번, 2번'],['위','1위, 2위']],initial:'등'}]},
+    team:{name:'팀 나누기',description:'팀별 인원 차이가 최대 1명인 균등 배분입니다.',fields:[{key:'teams',label:'팀 수',type:'number',min:2,max:n=>Math.min(n,6),initial:2},{key:'style',label:'팀 이름',choices:[['letters','A팀, B팀'],['numbers','1팀, 2팀'],['colors','색상 팀']],initial:'letters'}]},
+    role:{name:'역할 추첨',description:'특별 역할과 일반 참가자를 무작위로 배정합니다.',fields:[{key:'pack',label:'역할 구성',choices:[['host','진행자 / 참가자'],['leader','팀장 / 팀원'],['game','공격 / 수비 / 지원']],initial:'host'},{key:'special',id:'ladderRoleCount',label:'특별 역할 인원',type:'number',min:1,max:n=>n,initial:1}]},
+    mission:{name:'미션 추첨',description:'각 참가자에게 방송 또는 게임 미션을 부여합니다.',fields:[{key:'pack',label:'미션 테마',choices:[['stream','방송 미션'],['game','게임 미션'],['talk','토크 미션']],initial:'stream'},{key:'pass',label:'미션 면제 인원',type:'number',min:0,max:n=>n,initial:0}]},
+    loot:{name:'보상 상자',description:'전설, 희귀, 일반 보상의 수량을 직접 구성합니다.',fields:[{key:'legend',label:'전설 상자',type:'number',min:0,max:n=>n,initial:1},{key:'rare',label:'희귀 상자',type:'number',min:0,max:(n,s)=>n-s.legend,initial:1}]},
+    default:{name:'기본 항목',description:'번호가 붙은 항목을 생성해 원하는 이름으로 편집합니다.',fields:[{key:'prefix',label:'항목 이름',type:'text',initial:'결과'}]},
+    custom:{name:'커스텀',description:'기존 결과를 유지한 채 각 카드에 원하는 내용을 입력합니다.',fields:[]}
+  };
+  const missionPacks={stream:['노래 한 소절','랜덤 포즈','캐릭터 성대모사','웃음 참기','10초 자기소개','칭찬 릴레이'],game:['무기 랜덤 선택','다음 판 팀장','아이템 하나 제한','첫 라운드 도전','장비 랜덤 선택','다음 맵 선택'],talk:['밸런스 게임','오늘의 TMI','추천 게임 소개','추억 이야기','칭찬 한마디','랜덤 질문 답변']};
+  const teamColors=['레드팀','블루팀','그린팀','옐로팀','퍼플팀','오렌지팀'];
+  const settings=Object.fromEntries(Object.entries(presetDefs).map(([kind,def])=>[kind,Object.fromEntries(def.fields.map(f=>[f.key,f.initial]))]));
+  let presetFingerprint=null,optionsKey='';
+  const fingerprint=()=>JSON.stringify(savedPrizes().map(p=>[p.id,p.label]).sort());
+  function normalizeOptions(kind,n){
+    const s=settings[kind];
+    for(const f of presetDefs[kind].fields){
+      if(f.type==='number'){const max=typeof f.max==='function'?f.max(n,s):f.max;s[f.key]=Math.max(f.min,Math.min(max,Math.floor(Number(s[f.key])||0)))}
+      else if(f.type==='text')s[f.key]=String(s[f.key]||f.initial).trim().slice(0,24)||f.initial;
+      else if(!f.choices.some(([v])=>v===s[f.key]))s[f.key]=f.initial;
+    }
+    return s;
+  }
+  function templateLabels(kind,n,s){
+    const labels=Array.from({length:n},(_,i)=>{
+      switch(kind){
+        case 'winner':return i<s.wins?'당첨':'꽝';
+        case 'rank':return `${s.start+i}${s.suffix}`;
+        case 'team':return s.style==='colors'?teamColors[i%s.teams]:`${s.style==='numbers'?i%s.teams+1:String.fromCharCode(65+i%s.teams)}팀`;
+        case 'role':return s.pack==='game'?['공격','수비','지원'][i%Math.min(n,3)]:i<s.special?(s.pack==='leader'?'팀장':'진행자'):(s.pack==='leader'?'팀원':'참가자');
+        case 'mission':return i<n-s.pass?missionPacks[s.pack][i%missionPacks[s.pack].length]:'미션 면제';
+        case 'loot':return i<s.legend?'전설 상자':i<s.legend+s.rare?'희귀 상자':'일반 상자';
+        default:return `${s.prefix} ${i+1}`;
+      }
+    });
+    return labels;
+  }
+  function inferPreset(){
+    const labels=savedPrizes().map(p=>p.label),n=labels.length;
+    if(!n)return;
+    const same=(kind,s)=>JSON.stringify(templateLabels(kind,n,s).sort())===JSON.stringify([...labels].sort());
+    if(labels.includes('당첨')&&labels.every(x=>x==='당첨'||x==='꽝')){preset='winner';settings.winner.wins=labels.filter(x=>x==='당첨').length;return}
+    const rank=labels[0]?.match(/^(\d+)(등|번|위)$/);
+    if(rank){const s={start:Math.min(...labels.map(x=>parseInt(x,10))),suffix:rank[2]};if(same('rank',s)){preset='rank';Object.assign(settings.rank,s);return}}
+    for(const style of ['letters','numbers','colors'])for(let teams=2;teams<=Math.min(n,6);teams++){const s={style,teams};if(same('team',s)){preset='team';Object.assign(settings.team,s);return}}
+    for(const pack of ['host','leader','game']){const s={pack,special:labels.filter(x=>x===(pack==='leader'?'팀장':'진행자')).length};if((s.special||pack==='game')&&same('role',s)){preset='role';Object.assign(settings.role,s);return}}
+    for(const pack of Object.keys(missionPacks)){const s={pack,pass:labels.filter(x=>x==='미션 면제').length};if(same('mission',s)){preset='mission';Object.assign(settings.mission,s);return}}
+    const loot={legend:labels.filter(x=>x==='전설 상자').length,rare:labels.filter(x=>x==='희귀 상자').length};if(same('loot',loot)){preset='loot';Object.assign(settings.loot,loot);return}
+    const numbered=labels[0]?.match(/^(.+) \d+$/);if(numbered&&same('default',{prefix:numbered[1]})){preset='default';settings.default.prefix=numbered[1];return}
+    preset='custom';
+  }
+  function renderPresetOptions(){
+    const def=presetDefs[preset],n=players().length,box=$('ladderPresetOptions'),s=normalizeOptions(preset,n);
+    const activeFields=def.fields.filter(f=>!(preset==='role'&&s.pack==='game'&&f.key==='special'));
+    const signature=JSON.stringify([preset,n,activeFields.map(f=>[f.key,s[f.key],typeof f.max==='function'?f.max(n,s):f.max])]);
+    $('ladderPresetTitle').textContent=def.name;
+    $('ladderPresetDescription').textContent=def.description+(activeFields.length?' 설정 변경 시 카드를 다시 생성합니다.':'');
+    const counts=new Map();for(const p of prizes())counts.set(p.label,(counts.get(p.label)||0)+1);
+    const countsText=['winner','team','role','loot'].includes(preset)?[...counts].map(([label,count])=>`${label||'미입력'} ${count}명`).join(' · '):`${n}개 결과`;
+    $('ladderPresetSummary').textContent=countsText;
+    if(optionsKey===signature)return;
+    optionsKey=signature;box.replaceChildren();box.hidden=!activeFields.length;
+    for(const f of activeFields){
+      const label=document.createElement('label');label.className='ladder-preset-field';
+      const title=document.createElement('span');title.textContent=f.label;
+      const input=document.createElement(f.choices?'select':'input');if(f.id)input.id=f.id;input.dataset.presetField=f.key;
+      if(f.choices){for(const [v,t] of f.choices){const option=document.createElement('option');option.value=v;option.textContent=t;input.append(option)}}
+      else{input.type=f.type;if(f.type==='number'){input.min=f.min;input.max=typeof f.max==='function'?f.max(n,s):f.max;input.step=1}else input.maxLength=24}
+      input.value=String(s[f.key]);label.append(title,input);box.append(label);
+      input.addEventListener('change',()=>{s[f.key]=input.value;normalizeOptions(preset,n);optionsKey='';applyPreset(preset,true)});
+    }
+    if(activeFields.length){
+      const regenerate=document.createElement('button');regenerate.type='button';regenerate.className='secondary ladder-preset-regenerate';regenerate.textContent='카드 다시 생성';regenerate.title='현재 설정값으로 결과 카드를 다시 생성합니다.';regenerate.addEventListener('click',()=>applyPreset(preset,true));box.append(regenerate);
+    }
+  }
   const shuffleTempo={fast:60,brake:1100,slow:340,hold:220,blind:580};
   let shuffleStartedAt=0,shuffleStoppedAt=0,blindProgress=0;
   const smoothstep=t=>{const x=Math.max(0,Math.min(1,t));return x*x*(3-2*x)};
@@ -176,10 +254,11 @@
   function decoratePrizeCards(){
     const box=$('ladderPrizeList');
     box.dataset.prizeCount=String(prizes().length);
-    const icons={winner:'<path d="M7 3h10v5a5 5 0 0 1-10 0zm5 10v5m-4 1h8M7 5H3v2a4 4 0 0 0 4 4m10-6h4v2a4 4 0 0 1-4 4"/>',miss:'<circle cx="12" cy="12" r="8"/><path d="m9 9 6 6m0-6-6 6"/>',rank:'<path d="M4 20V11h5v9m0 0V4h6v16m0-9h5v9M3 20h18"/>',team:'<circle cx="8" cy="7" r="3"/><circle cx="17" cy="8" r="2.5"/><path d="M2 20v-3a6 6 0 0 1 12 0v3m2-7a5 5 0 0 1 6 5v2"/>',custom:'<path d="M3 8h18v12H3zM3 8V5h18v3M12 5v15M8 5a3 3 0 1 1 4-3 3 3 0 1 1 4 3"/>'};
+    const icons={winner:'<path d="M7 3h10v5a5 5 0 0 1-10 0zm5 10v5m-4 1h8M7 5H3v2a4 4 0 0 0 4 4m10-6h4v2a4 4 0 0 1-4 4"/>',miss:'<circle cx="12" cy="12" r="8"/><path d="m9 9 6 6m0-6-6 6"/>',rank:'<path d="M4 20V11h5v9m0 0V4h6v16m0-9h5v9M3 20h18"/>',team:'<circle cx="8" cy="7" r="3"/><circle cx="17" cy="8" r="2.5"/><path d="M2 20v-3a6 6 0 0 1 12 0v3m2-7a5 5 0 0 1 6 5v2"/>',role:'<path d="M4 4h16v16H4zM8 15h8M9 18h6"/><circle cx="12" cy="9" r="2.5"/>',mission:'<path d="M8 4h8v4H8zM8 6H5v15h14V6h-3M8 13l2 2 5-5M8 18h7"/>',custom:'<path d="M3 8h18v12H3zM3 8V5h18v3M12 5v15M8 5a3 3 0 1 1 4-3 3 3 0 1 1 4 3"/>'};
     [...box.querySelectorAll('.mini-entry-row')].forEach((row,i)=>{
       const input=row.querySelector('input'),avatar=row.querySelector('.mini-entry-avatar');if(!input||!avatar)return;
-      const value=input.value.trim(),kind=value==='당첨'?'winner':value==='꽝'?'miss':/^\d+등$/.test(value)?'rank':/^[AB]팀$/.test(value)?'team':'custom';
+      const value=input.value.trim(),kind=value==='당첨'?'winner':value==='꽝'?'miss':/^\d+[등번위]$/.test(value)?'rank':/^[A-F1-6]팀$/.test(value)||teamColors.includes(value)?'team':preset==='role'?'role':preset==='mission'?'mission':'custom';
+      row.dataset.prizeTier=value==='전설 상자'?'legend':value==='희귀 상자'?'rare':value==='일반 상자'?'common':value==='미션 면제'?'pass':'';
       if(!row.querySelector('.ladder-prize-slot')){const label=document.createElement('span');label.className='ladder-prize-slot';label.textContent=`RESULT ${String(i+1).padStart(2,'0')}`;row.prepend(label)}
       if(row.dataset.prizeKind!==kind){row.dataset.prizeKind=kind;avatar.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true">${icons[kind]}</svg>`}
       input.setAttribute('aria-label',`${i+1}번 결과`);input.placeholder='결과 직접 입력';
@@ -187,10 +266,9 @@
   }
   $('ladderPrizeList').addEventListener('click',e=>{const card=e.target.closest('.mini-entry-row');if(card&&e.target.tagName!=='INPUT')card.querySelector('input')?.focus({preventScroll:true})});
   function reflectPreset(){
-    const labels=prizes().map(p=>p.label);
-    if(preset!=='custom'&&labels.length&&labels.every(x=>x==='당첨'||x==='꽝')){preset='winner';$('ladderWinnerCount').value=String(Math.max(1,labels.filter(x=>x==='당첨').length))}
-    else if(preset!=='custom'&&labels.length){preset=['rank','team','default'].find(k=>labels.every((x,i)=>x===(k==='rank'?`${i+1}등`:k==='team'?(i%2===0?'A팀':'B팀'):`결과 ${i+1}`)))||'custom'}
+    if(!round&&presetFingerprint!==fingerprint()){inferPreset();presetFingerprint=fingerprint()}
     root.querySelectorAll('[data-ladder-preset]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.ladderPreset===preset)));
+    if(step===2)renderPresetOptions();
     decoratePrizeCards();
   }
   function sync(){
@@ -198,8 +276,6 @@
     const n=players().length,m=prizes().length,locked=busy();
     $('ladderWizardRosterCount').textContent=`${n} / 12명`;
     root.style.setProperty('--ladder-lanes',String(Math.max(2,n)));
-    const winners=$('ladderWinnerCount');winners.max=String(Math.max(1,n));
-    if(Number(winners.value)>n&&n>0)winners.value=String(n);
     pages.forEach(p=>{p.hidden=Number(p.dataset.ladderPage)!==step});
     steps.forEach(b=>{const i=Number(b.dataset.ladderStep);b.classList.toggle('current',i===step);b.classList.toggle('complete',i<step);b.disabled=locked||i>furthest||(i>=2&&!validRoster())||(i===3&&!validPrizes());if(i===step)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current')});
     const previous=$('ladderWizardBack'),next=$('ladderWizardNext');
@@ -296,16 +372,16 @@
     };
   }
   const baseUpdate=window.updateLadderPrize;
-  window.updateLadderPrize=function(id,value){if(busy())return;const p=prizes().find(x=>x.id===id);if(!p||p.label===String(value??''))return;preset='custom';const out=baseUpdate.apply(this,arguments);clearBoard();sync();return out};
-  function applyPreset(kind){
+  window.updateLadderPrize=function(id,value){if(busy())return;const p=prizes().find(x=>x.id===id);if(!p||p.label===String(value??''))return;const out=baseUpdate.apply(this,arguments);presetFingerprint=fingerprint();clearBoard();sync();return out};
+  function applyPreset(kind,regenerate=false){
     if(busy()||step!==2||!validRoster())return;
-    if(kind==='custom'){preset='custom';sync();const input=$('ladderPrizeList').querySelector('input');input?.focus({preventScroll:true});input?.select();return}
-    const n=players().length,w=Math.min(n,Math.max(1,Math.floor(Number($('ladderWinnerCount').value)||1)));
-    $('ladderWinnerCount').value=String(w);
-    prizes().forEach((p,i)=>{p.label=kind==='winner'?(i<w?'당첨':'꽝'):kind==='rank'?`${i+1}등`:kind==='team'?(i%2===0?'A팀':'B팀'):`결과 ${i+1}`});
+    if(kind==='custom'){preset='custom';presetFingerprint=fingerprint();sync();const input=$('ladderPrizeList').querySelector('input');input?.focus({preventScroll:true});input?.select();return}
+    if(kind===preset&&!regenerate)return;
+    const n=players().length,labels=templateLabels(kind,n,normalizeOptions(kind,n));
+    prizes().forEach((p,i)=>{p.label=labels[i]});
     // An explicitly chosen numbered preset is intentional, not a legacy
     // placeholder. Do not let the default migration undo that choice.
-    preset=kind;miniPersist();clearBoard();renderLadder();
+    preset=kind;presetFingerprint=fingerprint();miniPersist();clearBoard();renderLadder();
   }
   const baseRender=window.renderLadder;
   window.renderLadder=function(){
@@ -430,7 +506,6 @@
   steps.forEach(b=>b.addEventListener('click',()=>go(Number(b.dataset.ladderStep))));
   $('ladderWizardBack').addEventListener('click',()=>go(step-1));$('ladderWizardNext').addEventListener('click',()=>go(step+1));
   root.querySelectorAll('[data-ladder-preset]').forEach(b=>b.addEventListener('click',()=>applyPreset(b.dataset.ladderPreset)));
-  $('ladderWinnerCount').addEventListener('change',()=>applyPreset('winner'));
   $('ladderManualName').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();miniManualAdd('ladder','ladderManualName')}});
   renderLadder();
 })();

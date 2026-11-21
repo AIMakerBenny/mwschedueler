@@ -58,22 +58,32 @@ body .main:has(>#gameLadder.active)>.topbar{margin-bottom:10px!important;padding
 #gameLadder #ladderPlayerList .mini-entry-row{grid-template-columns:36px minmax(0,1fr) 30px!important;min-height:49px;padding:6px!important}
 #gameLadder .ladder-wizard-selected .mini-manual-add{margin:12px 0 0}
 #gameLadder .ladder-wizard-selected.drag-over{border-color:var(--accent)!important}
-#gameLadder .ladder-wizard-presets{display:grid;gap:9px;min-height:0;align-content:start;overflow:auto}
+#gameLadder .ladder-wizard-presets{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:8px;min-height:0;align-content:start;overflow:auto}
+#gameLadder .ladder-wizard-presets>:is(h3,p){grid-column:1/-1}
 #gameLadder .ladder-wizard-prizes{display:flex;flex-direction:column;min-height:0;overflow:hidden}
-@container (min-width:1500px){#gameLadder .ladder-wizard-presets{grid-template-columns:repeat(2,minmax(0,1fr))}#gameLadder .ladder-wizard-presets>:is(h3,p,label){grid-column:1/-1}#gameLadder .ladder-preset{min-height:72px}}
 #gameLadder .ladder-wizard-config p{margin:5px 0 9px;font-size:12px;line-height:1.55}
-#gameLadder .ladder-winner-field{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--muted);font-size:12px}
-#gameLadder #ladderWinnerCount{width:76px;text-align:center}
-#gameLadder .ladder-preset{display:grid;grid-template-columns:32px minmax(0,1fr);align-items:center;gap:10px;text-align:left;padding:10px!important;min-height:63px;border:1px solid color-mix(in srgb,var(--border) 75%,transparent);border-radius:9px!important;background:var(--input);transition:background .15s,border-color .15s}
+#gameLadder .ladder-preset{display:grid;grid-template-columns:30px minmax(0,1fr);align-items:center;gap:8px;text-align:left;padding:8px!important;min-height:56px;border:1px solid color-mix(in srgb,var(--border) 75%,transparent);border-radius:9px!important;background:var(--input);transition:background .15s,border-color .15s,transform .15s}
 #gameLadder .ladder-preset>span:last-child{display:grid;gap:3px;min-width:0}
-#gameLadder .ladder-preset-icon{display:grid;place-items:center;width:32px;height:32px;background:color-mix(in srgb,var(--accent) 9%,var(--input));color:var(--accent);border-radius:8px}
+#gameLadder .ladder-preset-icon{display:grid;place-items:center;width:30px;height:30px;background:color-mix(in srgb,var(--accent) 9%,var(--input));color:var(--accent);border-radius:8px}
 #gameLadder .ladder-preset-icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round}
-#gameLadder .ladder-preset:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--input))}
+#gameLadder .ladder-preset:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--input));transform:translateY(-1px)}
 #gameLadder .ladder-preset[aria-pressed="true"]{border-color:color-mix(in srgb,var(--accent) 75%,var(--border));background:color-mix(in srgb,var(--accent) 9%,var(--input));box-shadow:none}
 #gameLadder .ladder-preset strong{font-size:14px;color:var(--text)}
-#gameLadder .ladder-preset small{font-size:11px;color:var(--muted);font-weight:500}
+#gameLadder .ladder-preset small{font-size:11px;color:var(--muted);font-weight:500;white-space:normal;line-height:1.4}
 #gameLadder .ladder-preset[data-ladder-preset="custom"]{grid-column:1/-1;border-style:dashed}
 #gameLadder .ladder-prize-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+#gameLadder .ladder-prize-heading p{margin-bottom:0}
+#gameLadder .ladder-preset-options{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;flex:0 0 auto;padding:12px;margin:0 0 15px;border:1px solid color-mix(in srgb,var(--accent) 18%,var(--border));border-radius:12px;background:linear-gradient(120deg,color-mix(in srgb,var(--accent) 5%,var(--input)),var(--input));animation:ladder-wizard-fade .18s ease-out both}
+#gameLadder .ladder-preset-options[hidden]{display:none!important}
+#gameLadder .ladder-preset-field{display:flex;flex-direction:column;gap:6px;min-width:0;flex:0 1 auto;font-size:11px;font-weight:650;color:var(--muted)}
+#gameLadder .ladder-preset-field :is(input,select){width:100%;min-width:0;max-width:100%;min-height:35px!important;padding:5px 9px!important;border:1px solid var(--border)!important;border-radius:8px!important;background:var(--panel)!important;color:var(--text)!important;font-size:13px!important}
+#gameLadder .ladder-preset-field input[type="number"]{width:76px;text-align:center;font-variant-numeric:tabular-nums}
+#gameLadder .ladder-preset-field input[type="text"]{width:clamp(100px,16cqw,200px)}
+#gameLadder .ladder-preset-field select{min-width:133px}
+#gameLadder .ladder-preset-regenerate{margin-left:auto;min-height:35px!important;font-size:11px!important;white-space:nowrap;border-radius:8px!important;padding:5px 10px!important}
+#gameLadder .ladder-card-heading{display:flex;flex-wrap:wrap;align-items:center;gap:6px 9px;margin:0 0 9px;min-height:25px}
+#gameLadder .ladder-card-heading h3{flex:none}
+#gameLadder #ladderPresetSummary{flex:1;min-width:0;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #gameLadder .ladder-prize-edit-badge{flex:none;padding:5px 9px;border-radius:999px;border:1px solid var(--border);font-size:10px;color:var(--muted)}
 #gameLadder #ladderPrizeList{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;align-content:start;min-height:0;max-height:none!important;overflow:auto;padding:3px 5px 10px;flex:1 1 0;scrollbar-gutter:stable}
 #gameLadder #ladderPrizeList[data-prize-count="4"]{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -81,6 +91,11 @@ body .main:has(>#gameLadder.active)>.topbar{margin-bottom:10px!important;padding
 #gameLadder #ladderPrizeList .mini-entry-row{--prize-accent:var(--accent);position:relative;isolation:isolate;display:grid;grid-template-columns:1fr!important;grid-template-rows:auto 1fr auto;align-items:center;justify-items:center;gap:10px;padding:15px!important;min-height:168px;border:1px solid color-mix(in srgb,var(--prize-accent) 22%,var(--border));border-radius:14px!important;background:radial-gradient(ellipse at 50% 0%,color-mix(in srgb,var(--prize-accent) 15%,transparent),transparent 75%),linear-gradient(155deg,var(--panel),var(--input));box-shadow:0 6px 15px #0002,inset 0 1px 0 #ffffff0a;transition:border-color .2s,box-shadow .2s,transform .2s;cursor:text}
 #gameLadder #ladderPrizeList .mini-entry-row[data-prize-kind="winner"]{--prize-accent:#d9aa47}
 #gameLadder #ladderPrizeList .mini-entry-row[data-prize-kind="miss"]{--prize-accent:#77849c}
+#gameLadder #ladderPrizeList .mini-entry-row[data-prize-kind="role"]{--prize-accent:#68b8be}
+#gameLadder #ladderPrizeList .mini-entry-row[data-prize-kind="mission"]{--prize-accent:#8eabf2}
+#gameLadder #ladderPrizeList .mini-entry-row[data-prize-tier="legend"]{--prize-accent:#e2b44f}
+#gameLadder #ladderPrizeList .mini-entry-row[data-prize-tier="rare"]{--prize-accent:#af8bff}
+#gameLadder #ladderPrizeList .mini-entry-row[data-prize-tier="common"],#gameLadder #ladderPrizeList .mini-entry-row[data-prize-tier="pass"]{--prize-accent:#778eaa}
 #gameLadder #ladderPrizeList .mini-entry-row:focus-within{border-color:var(--prize-accent);box-shadow:0 5px 18px color-mix(in srgb,var(--prize-accent) 18%,transparent);transform:translateY(-1px)}
 #gameLadder #ladderPrizeList .ladder-prize-slot{display:flex;align-items:center;justify-content:space-between;width:100%;font-size:10px;letter-spacing:.07em;font-weight:750;color:var(--muted)}
 #gameLadder #ladderPrizeList .ladder-prize-slot::after{content:'편집';letter-spacing:0;font-weight:500}
