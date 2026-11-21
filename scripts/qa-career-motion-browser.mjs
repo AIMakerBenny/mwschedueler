@@ -34,7 +34,11 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
       const response=await route.fetch();
       const original=await response.text();
       assert(sectionPattern.test(original),'Timeline section absent from production');
-      await route.fulfill({response,body:original.replace(sectionPattern,replacement).replace(asidePattern,source.match(asidePattern)[0]).replace('</head>',motionPreference+firstPaint+'</head>').replace('<section id="settings" class="section">','<section id="settings" class="section">'+motionSettings)});
+      let body=original.replace(sectionPattern,replacement).replace(asidePattern,source.match(asidePattern)[0]);
+      if(!body.includes('id="mws-motion-preference"'))body=body.replace('</head>',motionPreference+'</head>');
+      if(!body.includes('id="mws-nav-first-paint"'))body=body.replace('</head>',firstPaint+'</head>');
+      if(!body.includes('id="mwsMotionSettings"'))body=body.replace('<section id="settings" class="section">','<section id="settings" class="section">'+motionSettings);
+      await route.fulfill({response,body});
     });
     for(const file of ['career-visualizer.js','career-timeline.css','calendar-details-v1.js','calendar-details-v1.css','modal-motion-v1.css','tools.js','content-planner-host.js','perf-runtime.js','post-login-runtime-v130.js','online-v5-loader.js']){
       await context.route('**/assets/'+file+'*',async route=>{if(file==='tools.js'||file==='content-planner-host.js')await pause(1800);await route.fulfill({
