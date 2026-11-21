@@ -71,11 +71,23 @@ const scrollTo=async(p,top)=>{await p.evaluate(top=>{
   const panel=document.querySelector('.cv-panel');let root=document.scrollingElement;
   for(let el=panel.parentElement;el&&el!==document.body;el=el.parentElement){if(/auto|scroll/.test(getComputedStyle(el).overflowY)&&el.scrollHeight>el.clientHeight+2){root=el;break;}}
   root.scrollTo({top,behavior:'instant'});
-},top);await pause(100);};
+},top);await pause(300);};
 const inspect=async entry=>entry.evaluate(e=>{
-  const r=e.getBoundingClientRect(), c=e.querySelector('.cv-card').getBoundingClientRect();
-  return {p:Number(e.style.getPropertyValue('--cv-p')),shift:c.left-r.left,branch:getComputedStyle(e,'::before').transform,top:r.top,bottom:r.bottom,left:c.left,right:c.right,view:innerHeight,width:innerWidth};
+  const r=e.getBoundingClientRect(), card=e.querySelector('.cv-card'),c=card.getBoundingClientRect();
+  const direction=Number(getComputedStyle(e).getPropertyValue('--cv-direction'));
+  return {p:Number(e.style.getPropertyValue('--cv-p')),shift:direction<0?c.right-r.right:c.left-r.left,scale:c.width/r.width,opacity:Number(getComputedStyle(card).opacity),branch:getComputedStyle(e,'::before').transform,top:r.top,bottom:r.bottom,left:c.left,right:c.right,view:innerHeight,width:innerWidth};
 });
+const approach=async(p,entry)=>{
+  const start=await position(p),r=await inspect(entry);
+  const band=await p.evaluate(()=>{
+    const panel=document.querySelector('.cv-panel');let root=document.scrollingElement;
+    for(let el=panel.parentElement;el&&el!==document.body;el=el.parentElement){if(/auto|scroll/.test(getComputedStyle(el).overflowY)&&el.scrollHeight>el.clientHeight+2){root=el;break;}}
+    const bottom=root===document.scrollingElement?innerHeight:Math.min(innerHeight,root.getBoundingClientRect().bottom);
+    const top=Math.min(document.querySelector('.cv-bar').getBoundingClientRect().bottom,bottom-80);
+    return {top,bottom};
+  });
+  await scrollTo(p,start+(r.top+r.bottom)/2-(band.top+(band.bottom-band.top)*.84));
+};
 const checkFit=async p=>{
   const fit=await p.locator('.cv-panel').evaluate(e=>e.getBoundingClientRect().right<=innerWidth+1);
   assert(fit,'Panel overflow');
@@ -94,21 +106,30 @@ try{
     await page.screenshot({path:output+'/overview-'+width+'.png'});
     assert.equal(await page.locator('.cv-year[data-year="2022"] .cv-month[data-month="4"] .cv-entry').count(),3);
     const entry=page.locator('.cv-year[data-year="2024"] .cv-month[data-month="3"] .cv-entry').first();
-    const first=await inspect(entry);const start=await position(page);
-    const target=start+first.top-height*.8;
-    await scrollTo(page,target);
+    await chooseYear(page,'2024');await pause(200);
+    await approach(page,entry);
+    const target=await position(page);
     const partial=await inspect(entry);
-    await scrollTo(page,target+height*.25);
-    const attached=await inspect(entry);
-    await scrollTo(page,target);
-    const reversed=await inspect(entry);
-    assert(partial.p>0&&partial.p<1,JSON.stringify(partial));
-    assert(attached.p>partial.p+.15,JSON.stringify({partial,attached}));
-    assert(Math.abs(attached.shift)<Math.abs(partial.shift),JSON.stringify({partial,attached}));
-    assert(Math.abs(reversed.p-partial.p)<.02,JSON.stringify({partial,reversed}));
-    assert.equal(reversed.branch,partial.branch);
-    console.log('PASS scroll reverse',width,JSON.stringify({partial,attached,reversed}));
     await page.screenshot({path:output+'/2024-approach-'+width+'.png'});
+    await page.mouse.move(width*.8,height*.62);
+    await page.mouse.wheel(0,120);await pause(320);
+    const incoming=await inspect(entry);
+    const wheelDistance=(await position(page))-target;
+    const movement=Math.abs(partial.shift)-Math.abs(incoming.shift);
+    assert(wheelDistance>=100&&wheelDistance<=145,JSON.stringify({wheelDistance}));
+    assert(movement>(width>700?60:22),JSON.stringify({partial,incoming,movement}));
+    assert(incoming.scale>partial.scale+.045,JSON.stringify({partial,incoming}));
+    assert(incoming.opacity>partial.opacity+.18,JSON.stringify({partial,incoming}));
+    await page.screenshot({path:output+'/2024-wheel-'+width+'.png'});
+    await page.mouse.wheel(0,-120);await pause(320);
+    const reversed=await inspect(entry);
+    assert(Math.abs(reversed.p-partial.p)<.02,JSON.stringify({partial,reversed}));
+    assert(Math.abs(reversed.shift-partial.shift)<3,JSON.stringify({partial,reversed}));
+    await scrollTo(page,target+height*.48);
+    const attached=await inspect(entry);
+    assert(attached.p>.99&&Math.abs(attached.shift)<2&&attached.scale>.99,JSON.stringify(attached));
+    assert.equal(attached.branch,'matrix(1, 0, 0, 1, 0, 0)');
+    console.log('PASS wheel arrival and reverse',width,JSON.stringify({wheelDistance,movement,partial,incoming,attached,reversed}));
     await chooseYear(page,'2024');await pause(180);
     await checkFit(page);
     await page.screenshot({path:output+'/2024-year-'+width+'.png'});
@@ -137,6 +158,8 @@ try{
     assert.equal(await page.locator('.cv-legacy .cv-entry').count(),4);
     const legacyEntry=page.locator('.cv-legacy .cv-entry').first();
     const legacyBase=await position(page), legacySettled=await inspect(legacyEntry);
+    const lastDated=await inspect(page.locator('.cv-axis .cv-entry').last());
+    assert(legacySettled.p>.99&&lastDated.p>.99,JSON.stringify({legacySettled,lastDated}));
     await scrollTo(page,legacyBase-height*.65);
     const legacyDetached=await inspect(legacyEntry);
     await scrollTo(page,legacyBase);
@@ -153,11 +176,15 @@ try{
     const {context,page,errors,started}=await open(1366,768,true);
     const video=page.video(),startSeconds=Math.max(0,(Date.now()-started)/1000-1);
     await chooseYear(page,'2024');await pause(500);
+    const entry=page.locator('.cv-year[data-year="2024"] .cv-month[data-month="3"] .cv-entry').first();
+    await approach(page,entry);await pause(550);
     const x=800,y=480;
     await page.mouse.move(x,y);
-    for(let i=0;i<18;i++){await page.mouse.wheel(0,65);await pause(240);}
+    for(let i=0;i<7;i++){await page.mouse.wheel(0,62);await pause(370);}
+    await pause(950);
+    for(let i=0;i<7;i++){await page.mouse.wheel(0,-62);await pause(370);}
     await pause(700);
-    for(let i=0;i<14;i++){await page.mouse.wheel(0,-65);await pause(240);}
+    for(let i=0;i<11;i++){await page.mouse.wheel(0,72);await pause(230);}
     await pause(800);
     await search(page,'릴동파');await pause(1400);
     await page.locator('.cv-result').first().click();await pause(1200);

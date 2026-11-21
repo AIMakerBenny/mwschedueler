@@ -134,7 +134,10 @@
 
     const entries=new Map(), markers=new Map(), yearButtons=new Map(), anim=[], months=[];
     let raf=0, attached=false, searchOrigin=null, pendingOrigin=null, selected=null, scrollRoot=null;
+    let dirty=true, snapNext=true, lastFrame=0;
+    const motion=new Map();
     const clamp=(v)=>Math.max(0,Math.min(1,v));
+    const ease=v=>{v=clamp(v);return v*v*(3-2*v);};
     const getRoot=()=>{
       for(let el=panel.parentElement;el&&el!==document.body;el=el.parentElement){
         if(/auto|scroll/.test(getComputedStyle(el).overflowY)&&el.scrollHeight>el.clientHeight+2)return el;
@@ -220,9 +223,7 @@
       if(scrollRoot&&scrollRoot!==document.scrollingElement){const r=scrollRoot.getBoundingClientRect();return {top:Math.max(0,r.top),bottom:Math.min(innerHeight,r.bottom)};}
       return {top:0,bottom:innerHeight};
     };
-    function update(){
-      raf=0;
-      if(!attached||document.hidden||!section.classList.contains('active'))return;
+    function readGeometry(){
       const {top,bottom}=viewport(), h=bottom-top;
       const hostRect=barHost.getBoundingClientRect();
       const barHeight=bar.offsetHeight;
@@ -230,15 +231,19 @@
       const barBottom=(pin?top:hostRect.top)+barHeight;
       const activeTop=Math.max(top,Math.min(barBottom,bottom-80));
       const usable=bottom-activeTop;
-      // Read all untransformed slot geometry first. Writes never affect layout.
+      // The arrival zone is the lower half of the readable viewport, not the entire page.
+      // An untransformed slot is the stable reference for both directions.
+      const arrivalStart=activeTop+usable*.94;
+      const arrivalEnd=activeTop+usable*.48;
+      const travel=Math.max(120,arrivalStart-arrivalEnd);
+      const distanceToEnd=Math.max(0,(scrollRoot?.scrollHeight||0)-(scrollRoot?.clientHeight||0)-scrollTop());
+      const tail=ease(1-distanceToEnd/Math.max(150,usable*.38));
       const legacyTop=legacyHead.getBoundingClientRect().top;
-      const legacyProgress=clamp((bottom-legacyTop)/Math.max(120,Math.min(usable*.92,legacy.offsetHeight*.95)));
       const states=anim.map(entry=>{
         const r=entry.getBoundingClientRect();
-        const progress=clamp((bottom-r.top)/(Math.max(120,usable*.88)));
-        // The undated collection has a shared convergence point so its final row settles at the bottom.
-        const p=reduced.matches?1:entry.dataset.legacy==='true'?Math.max(progress,legacyProgress):progress;
-        return [entry,p];
+        const progress=ease((arrivalStart-(r.top+r.height/2))/travel);
+        const p=reduced.matches?1:Math.max(progress,tail);
+        return [entry,p,r.bottom>=activeTop-120&&r.top<=bottom+120];
       });
       let current=null;
       for(const [y,marker] of markers){if(marker.getBoundingClientRect().top<=activeTop+Math.max(70,usable*.35))current=y;}
@@ -248,21 +253,42 @@
       bar.style.setProperty('--cv-left',hostRect.left+'px');
       bar.style.setProperty('--cv-width',hostRect.width+'px');
       bar.classList.toggle('cv-pinned',pin);
-      for(const [entry,p] of states){
-        const value=p.toFixed(3);
-        if(entry.style.getPropertyValue('--cv-p')!==value)entry.style.setProperty('--cv-p',value);
+      for(const [entry,target,visible] of states){
+        const previous=motion.get(entry);
+        const value=snapNext||reduced.matches||!visible||!previous?target:previous.value;
+        motion.set(entry,{value,target,visible});
       }
-      const legacyActive=legacyHead.getBoundingClientRect().top<=activeTop+usable*.35;
+      const legacyActive=legacyTop<=activeTop+usable*.48||distanceToEnd<=2;
       for(const [y,b] of yearButtons)b.setAttribute('aria-current',String(!legacyActive&&current===y));
       legacyButton.setAttribute('aria-current',String(legacyActive));
+      snapNext=false;dirty=false;
     }
-    function schedule(){if(attached&&!raf&&!document.hidden)raf=requestAnimationFrame(update);}
+    function update(time){
+      raf=0;
+      if(!attached||document.hidden||!section.classList.contains('active')){lastFrame=0;return;}
+      if(dirty)readGeometry();
+      // A short, time-based damping filter makes discrete wheel notches flow smoothly.
+      // No queued animations: new scroll input immediately replaces the target.
+      const dt=lastFrame?Math.min(48,Math.max(1,time-lastFrame)):16;
+      lastFrame=time;
+      const alpha=1-Math.exp(-dt/35);
+      let moving=false;
+      for(const [entry,state] of motion){
+        const delta=state.target-state.value;
+        state.value=Math.abs(delta)<.004||!state.visible||reduced.matches?state.target:state.value+delta*alpha;
+        moving||=state.value!==state.target;
+        const next=state.value.toFixed(3);
+        if(entry.style.getPropertyValue('--cv-p')!==next)entry.style.setProperty('--cv-p',next);
+      }
+      if(moving||dirty)raf=requestAnimationFrame(update);else lastFrame=0;
+    }
+    function schedule(){dirty=true;if(attached&&!raf&&!document.hidden)raf=requestAnimationFrame(update);}
     function jump(target,focus=false){
       scrollRoot=getRoot();
       const r=target.getBoundingClientRect(), v=viewport();
       // Header remains visible, and selected card lands in its fully attached region.
       const reserved=Math.max(110,bar.offsetHeight+22);
-      setScroll(scrollTop()+r.top-v.top-reserved);
+      snapNext=true;setScroll(scrollTop()+r.top-v.top-reserved);
       if(focus)target.querySelector('summary')?.focus({preventScroll:true});
       schedule();
     }
@@ -307,7 +333,7 @@
       if(selected)entries.get(selected.id)?.removeAttribute('data-selected');selected=null;
       for(const entry of entries.values())entry.removeAttribute('data-match');
       for(const dot of nav.querySelectorAll('[data-match]'))dot.removeAttribute('data-match');
-      if(restore&&searchOrigin!==null){scrollRoot=getRoot();setScroll(searchOrigin);}
+      if(restore&&searchOrigin!==null){scrollRoot=getRoot();snapNext=true;setScroll(searchOrigin);}
       searchOrigin=null;pendingOrigin=null;schedule();
     }
     query.addEventListener('input',()=>{
@@ -326,15 +352,15 @@
         document.addEventListener('pointerdown',outside);
         reduced.addEventListener('change',schedule);observer.observe(panel);observer.observe(bar);
       }
-      scrollRoot=getRoot();schedule();
+      scrollRoot=getRoot();snapNext=true;schedule();
     };
     const suspend=()=>{
-      if(!attached)return;attached=false;if(raf)cancelAnimationFrame(raf);raf=0;
+      if(!attached)return;attached=false;if(raf)cancelAnimationFrame(raf);raf=0;lastFrame=0;snapNext=true;
       window.removeEventListener('scroll',schedule,true);window.removeEventListener('resize',schedule);
       document.removeEventListener('pointerdown',outside);reduced.removeEventListener('change',schedule);observer.disconnect();
       bar.classList.remove('cv-pinned');barHost.style.removeProperty('height');
     };
-    document.addEventListener('visibilitychange',()=>{if(document.hidden){if(raf)cancelAnimationFrame(raf);raf=0;}else schedule();});
+    document.addEventListener('visibilitychange',()=>{if(document.hidden){if(raf)cancelAnimationFrame(raf);raf=0;lastFrame=0;}else{snapNext=true;schedule();}});
     resize();
     return {resize,suspend};
   }
