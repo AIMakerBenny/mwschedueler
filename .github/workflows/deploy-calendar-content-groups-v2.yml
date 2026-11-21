@@ -17,6 +17,7 @@ on:
       - 'scripts/qa-live-calendar-drawer-motion-v6.mjs'
       - 'scripts/qa-mobile-calendar-layout-v2.mjs'
       - 'assets/posts-responsive-layout-v2.css'
+      - 'assets/posts-focus-layout-v3.js'
       - 'scripts/qa-posts-responsive-layout-v2.mjs'
       - 'assets/mobile-calendar-v130.css'
       - 'assets/device-ui.js'

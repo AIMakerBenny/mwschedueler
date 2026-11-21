@@ -1,106 +1,118 @@
-/* Applicant management: responsive to the usable panel, not the browser width. */
-#posts.section{container: mws-posts / inline-size;min-width:0}
-#posts.section .posts-head{align-items:center;margin-bottom:10px;gap:10px}
-#posts.section .posts-head h2{font-size:calc(20px * var(--ui-text-scale,1));margin:2px 0 4px}
-#posts.section .posts-head p{font-size:12px;line-height:1.45;margin:0;max-width:76ch;overflow-wrap:anywhere}
-#posts.section .post-url-card{margin-bottom:12px;padding:12px!important}
-#posts.section .post-url-form{gap:8px;grid-template-columns:minmax(0,1fr) auto}
+/* Participant-first workspace. Closed menus consume no permanent layout space. */
+#posts.section{container:mws-posts / inline-size;min-width:0;overflow:visible}
+#posts.section .posts-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 12px;flex-wrap:wrap;position:relative;z-index:4}
+#posts.section .posts-head h2{font-size:calc(17px * var(--ui-text-scale,1));margin:0;line-height:1.3}
+#posts.section .post-workspace-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-width:0}
+#posts.section .post-menu{position:relative;min-width:0;max-width:100%}
+#posts.section .post-menu-trigger{display:flex;align-items:center;justify-content:center;gap:7px;min-height:36px;padding:7px 11px;border:1px solid var(--border);border-radius:9px;background:var(--input);color:var(--text);font-size:12px;font-weight:750;line-height:1.3;cursor:pointer;list-style:none;white-space:nowrap;user-select:none;transition:border-color .12s,background .12s}
+#posts.section .post-menu-trigger::-webkit-details-marker{display:none}
+#posts.section .post-menu-trigger::after{content:'';width:6px;height:6px;flex:0 0 6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);margin:-3px 1px 0 1px}
+#posts.section .post-menu[open]>.post-menu-trigger::after{transform:rotate(225deg);margin-top:3px}
+#posts.section .post-menu-trigger:hover,#posts.section .post-menu[open]>.post-menu-trigger{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--input))}
+#posts.section .post-menu-trigger:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+#posts.section .post-menu-trigger .chip{padding:2px 6px;font-size:11px;white-space:nowrap}
+#posts.section .post-register-trigger{border-color:color-mix(in srgb,var(--accent) 55%,var(--border));color:var(--text)}
+#posts.section .post-menu-panel{position:absolute;top:calc(100% + 7px);right:0;z-index:25;width: min(300px,calc(100vw - 30px));padding:10px!important;min-width:0;min-height:0;margin:0;border:1px solid var(--border);border-radius:12px;background:var(--panel);box-shadow:0 10px 30px rgba(0,0,0,.32);color:var(--text);text-align:left}
+#posts.section .post-menu:not([open])>.post-menu-panel{display:none!important}
+#posts.section .post-action-panel{display:grid;gap:7px;max-height:min(65vh,500px);overflow-y:auto}
+#posts.section .post-action-panel button{width:100%;min-width:0;min-height:36px!important;white-space:nowrap;font-size:12px!important;padding:7px 9px!important;box-shadow:none!important}
+#posts.section .post-menu-label,#posts.section .post-extra-stats,#posts.section #postDetailMeta{font-size:11px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
+#posts.section .posts-saved-panel{width:min(320px,calc(100vw - 30px));min-height:0!important;overflow:visible}
+#posts.section .post-saved-list{display:flex;flex-direction:column;gap:6px;max-height:min(58vh,420px);overflow:auto;overscroll-behavior:contain}
+#posts.section .post-saved-item{width:100%;min-width:0;display:block;text-align:left;padding:10px;white-space:normal;background:var(--input);border-radius:9px;overflow:hidden}
+#posts.section .post-saved-title{font-size:calc(13px * var(--ui-text-scale,1));line-height:1.4;overflow-wrap:anywhere}
+#posts.section .post-saved-meta{font-size:10px;line-height:1.4;flex-wrap:wrap;gap:4px 7px}
+#posts.section .post-url-card{width:min(480px,calc(100vw - 30px));display:grid;gap:8px}
+#posts.section .post-url-form{display:grid;gap:7px;grid-template-columns:minmax(0,1fr)}
 #posts.section .post-url-form>*{min-width:0;min-height:40px}
-#posts.section .post-url-help{font-size:11px;line-height:1.4;margin-top:6px}
-#posts.section .posts-layout{grid-template-columns:clamp(190px,17%,240px) minmax(0,1fr);gap:12px;align-items:start}
-#posts.section .posts-saved-panel,#posts.section .posts-main-panel{min-width:0;min-height:0;padding:12px!important}
-#posts.section .posts-main-panel{container:mws-post-applicants / inline-size}
-#posts.section .post-saved-list{gap:7px;max-height:min(65vh,690px);overscroll-behavior:contain}
-#posts.section .post-saved-item{min-width:0;padding:10px;overflow:hidden}
-#posts.section .post-saved-title{font-size:calc(13px * var(--ui-text-scale,1));line-height:1.35;overflow-wrap:anywhere}
-#posts.section .post-saved-meta{font-size:10px;line-height:1.4;flex-wrap:wrap;gap:3px 7px}
-#posts.section .post-detail-head{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 12px;padding-bottom:10px}
-#posts.section .post-detail-head>div:first-child{flex:1 1 260px;min-width:0}
-#posts.section .post-title-textarea{padding:4px 0!important;font-size:calc(20px * var(--ui-text-scale,1))!important;line-height:1.35}
-#posts.section #postDetailMeta{font-size:12px;line-height:1.4;overflow-wrap:anywhere}
-#posts.section .post-detail-actions-v415{display:flex!important;flex-direction:row;align-items:center;justify-content:flex-end;flex:0 1 auto;flex-wrap:wrap;gap:6px;width:auto;max-width:100%}
-#posts.section .post-detail-actions-main-v415{display:flex!important;flex-wrap:wrap;justify-content:flex-start;gap:6px;min-width:0}
-#posts.section .post-detail-actions-v415 button{min-height:36px!important;padding:7px 10px!important;font-size:12px!important;white-space:nowrap;box-shadow:none!important}
-#posts.section .post-schedule-create-btn-v415{min-width:0;max-width:100%;width:auto!important;align-self:auto}
-/* A single tab doesn't need a separate navigation row. Future tabs still show. */
+#posts.section .post-url-help{font-size:11px;line-height:1.45;margin:0}
+#posts.section #postSyncGlobalStatus{width:max-content;max-width:100%;white-space:normal}
+
+/* The saved-post picker is no longer a sidebar; the entire grid is usable. */
+#posts.section .posts-layout{display:block;min-width:0}
+#posts.section .posts-main-panel{container:mws-post-applicants / inline-size;min-width:0;min-height:0;overflow:visible;padding:13px!important;background:transparent;border:0;box-shadow:none}
+#posts.section .post-detail-head{display:flex;align-items:center;justify-content:space-between;gap:8px 14px;padding:0 0 8px;margin:0;border-bottom:0;position:relative;z-index:3}
+#posts.section .post-detail-head>div:first-child{flex:1 1 220px;min-width:0}
+#posts.section .post-title-textarea{padding:2px 0!important;font-size:calc(22px * var(--ui-text-scale,1))!important;line-height:1.35;background:transparent!important;border:0!important;box-shadow:none!important;border-radius:4px!important;min-height:30px!important}
+#posts.section .post-title-textarea:hover,#posts.section .post-title-textarea:focus{background:color-mix(in srgb,var(--accent) 5%,transparent)!important;outline:1px solid var(--border)}
+#posts.section .post-detail-actions-v415{display:block!important;width:auto!important;flex:0 0 auto;min-width:0}
+#posts.section .post-schedule-create-btn-v415{width:100%!important;min-width:0;max-width:100%;align-self:auto}
 #posts.section .post-detail-tabs:has(>button:only-child){display:none!important}
-#posts.section .post-applicant-summary{margin:10px 0;gap:5px;flex-wrap:wrap}
-#posts.section .post-applicant-summary .chip{font-size:12px;line-height:1.3;padding:5px 9px}
-#posts.section .post-applicant-tools{grid-template-columns:minmax(0,1fr) minmax(110px,140px) minmax(125px,156px);gap:7px;margin-bottom:8px}
-#posts.section .post-applicant-tools>*{min-width:0;width:100%;min-height:38px}
-#posts.section .post-view-controls{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:7px 10px!important;padding:7px 8px;margin-bottom:10px;min-width:0}
-#posts.section .post-view-mode{order:1;flex:0 0 auto;gap:2px;padding:2px}
-#posts.section .post-view-btn{min-height:34px!important;padding:5px 9px!important;font-size:12px!important;white-space:nowrap}
+#posts.section .post-applicant-summary{display:flex;align-items:center;gap:5px 12px;flex-wrap:wrap;margin:0 0 11px;min-width:0}
+#posts.section .post-applicant-summary .chip{background:none;border:0;box-shadow:none;padding:0;color:var(--muted);font-size:12px;line-height:1.5;white-space:nowrap}
+#posts.section .post-applicant-summary .post-total-count{font-weight:850;color:var(--text)}
+#posts.section .post-applicant-summary .post-confirmed-count{color:#68d9a0}
+#posts.section .post-applicant-summary .post-gacha-count{color:#f0a5e9}
+#posts.section .post-applicant-tools{display:flex!important;flex-wrap:wrap;align-items:center;gap:7px;margin:0 0 12px;position:relative;z-index:2;min-width:0}
+#posts.section .post-applicant-tools>input{flex:1 1 190px;min-width:0;width:auto;min-height:36px}
+#posts.section .post-applicant-tools>select{flex:0 1 128px;width:auto;min-width:0;min-height:36px;font-size:12px}
+#posts.section .post-applicant-tools>.post-menu{flex:0 0 auto}
+#posts.section .post-view-mode{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:3px}
+#posts.section .post-view-btn{min-height:36px!important;white-space:nowrap;box-shadow:none!important}
 #posts.section .post-view-icon-v53{width:17px;height:17px;flex-basis:17px}
-#posts.section .post-column-control{order:2;margin-left:0!important;gap:6px;flex:0 0 auto}
-#posts.section .post-column-control select{min-width:60px;min-height:34px;padding:5px 7px!important}
-#posts.section .post-view-hint{order:3;min-width:0;flex:1 1 100px;text-align:left;font-size:11px;line-height:1.4}
-#posts.section .post-bulk-actions{order:4;display:flex!important;flex-wrap:wrap!important;gap:6px!important;min-width:0;flex:0 1 auto}
-#posts.section .post-bulk-actions button{min-height:34px!important;padding:6px 9px!important;font-size:12px!important;white-space:nowrap;box-shadow:none!important}
-#posts.section .post-partial-confirm-v53{margin-left:2px;padding-left:8px;gap:5px;flex-wrap:wrap;min-width:0}
-#posts.section .post-partial-count-v53{font-size:11px}
-#posts.section #postPartialConfirmCountV53{width:52px!important;min-width:0!important;min-height:34px!important;padding:5px!important}
-#posts.section .post-minigame-entry-v57{order:5;padding:0;margin:0 0 0 auto;border:0;width:auto;flex:0 0 auto}
-#posts.section .post-mini-game-btn-v57{width:auto;min-height:34px;padding:7px 10px;font-size:12px;box-shadow:none}
+#posts.section .post-column-control{margin:0!important;justify-content:space-between;gap:8px}
+#posts.section .post-column-control select{min-width:64px;min-height:36px;padding:5px 7px!important}
+#posts.section .post-view-hint{font-size:11px;text-align:left;min-width:0;display:block}
+#posts.section .post-bulk-actions{display:grid!important;gap:6px!important;min-width:0;margin:0!important}
+#posts.section .post-partial-confirm-v53{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px;margin:0;padding:7px 0 0;border:0;border-top:1px solid var(--border)}
+#posts.section .post-partial-count-v53{font-size:11px;white-space:nowrap}
+#posts.section #postPartialConfirmCountV53{width:48px!important;min-width:0!important;min-height:34px!important;padding:5px!important}
+#posts.section .post-minigame-entry-v57{width:auto;flex:0 0 auto;padding:0;margin:0;border:0}
+#posts.section .post-mini-game-btn-v57{width:auto;min-height:36px;padding:7px 11px;font-size:12px;box-shadow:none;white-space:nowrap}
 
-/* The selected count is a maximum. Never squeeze the card below its readable width. */
-#posts.section .post-applicant-grid.view-card{
-  display:grid;gap:10px;align-items:stretch;
-  grid-template-columns:repeat(auto-fill,minmax(min(100%,max(272px,calc((100% - (var(--post-card-columns,4) - 1) * 10px) / var(--post-card-columns,4)))),1fr));
-}
-#posts.section .post-applicant-grid.view-card .post-applicant-card{display:flex;flex-direction:column;min-height:0;padding:12px;gap:9px;min-width:0}
-#posts.section .post-applicant-grid .post-applicant-top{
-  display:grid;grid-template-columns:44px minmax(0,1fr) max-content!important;align-items:start!important;gap:7px 9px;min-width:0;
-}
-#posts.section .post-applicant-grid .post-applicant-top>:nth-child(2){min-width:0;overflow-wrap:anywhere}
-#posts.section .post-applicant-grid .post-applicant-avatar{width:44px;height:44px;border-radius:10px;object-fit:cover}
-#posts.section .post-applicant-avatar-link{display:block;width:44px;height:44px;min-width:0}
-#posts.section .post-applicant-name{font-size:calc(15px * var(--ui-text-scale,1));line-height:1.35;overflow-wrap:anywhere}
-#posts.section .post-applicant-id,#posts.section .post-contact-match{font-size:11px;line-height:1.4;overflow-wrap:anywhere}
-#posts.section .post-applicant-grid .post-status-block{display:contents!important}
-#posts.section .post-applicant-grid .post-status-badge{grid-column:3;grid-row:1;align-self:start;justify-self:end;white-space:nowrap;font-size:10px;padding:4px 7px;max-width:100%}
-#posts.section .post-applicant-grid .post-decision-row{grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px;min-width:0}
-#posts.section .post-applicant-grid .post-decision-btn{width:100%;min-width:0;min-height:32px!important;padding:6px 3px!important;font-size:12px!important;line-height:1.25;white-space:nowrap;box-shadow:none!important}
-#posts.section .post-applicant-grid .post-new-badge{top:-7px;right:8px;font-size:10px}
-#posts.section .post-applicant-grid .post-applicant-comment{margin:0;min-width:0;padding:9px 10px;font-size:calc(13px * var(--ui-text-scale,1));line-height:1.55;overflow-wrap:anywhere;word-break:normal}
-#posts.section .post-applicant-grid .post-applicant-photo{margin:0;width:100%;max-height:200px;object-fit:contain}
-#posts.section .post-applicant-grid .post-applicant-foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px;margin:0;margin-top:auto;min-width:0;padding-top:3px}
-#posts.section .post-applicant-grid .post-applicant-foot-left{min-width:0;gap:5px;flex-wrap:wrap}
-#posts.section .post-applicant-grid .post-applicant-date{font-size:10px;line-height:1.4;overflow-wrap:anywhere}
-#posts.section .post-applicant-grid .post-up-count{font-size:10px;white-space:nowrap;line-height:1.25}
-#posts.section .post-applicant-grid .post-applicant-actions{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-left:auto;min-width:0}
-#posts.section .post-applicant-grid .post-contact-btn{min-height:30px!important;padding:5px 8px!important;font-size:11px!important;white-space:nowrap}
+/* 96px profile portraits and only one visible management control per applicant. */
+#posts.section .post-applicant-grid.view-card{display:grid;gap:12px;align-items:start;grid-template-columns:repeat(auto-fill,minmax(min(100%,max(284px,calc((100% - (var(--post-card-columns,4) - 1) * 12px) / var(--post-card-columns,4)))),1fr))}
+#posts.section .post-applicant-grid.view-card .post-applicant-card{display:flex;flex-direction:column;gap:12px;min-height:0;padding:14px;min-width:0}
+#posts.section .post-applicant-grid .post-applicant-card{position:relative;overflow:visible;box-shadow:none}
+#posts.section .post-applicant-grid .post-applicant-card:has(.post-menu[open]){z-index:5}
+#posts.section .post-applicant-grid .post-applicant-top{display:grid;grid-template-columns:96px minmax(0,1fr)!important;align-items:center!important;gap:12px;min-width:0;position:static}
+#posts.section .post-applicant-grid .post-applicant-avatar,#posts.section .post-applicant-grid .post-applicant-avatar-link{width:96px!important;height:96px!important;flex:0 0 96px;max-width:100%;min-width:0;border-radius:14px!important;display:grid;place-items:center}
+#posts.section .post-applicant-avatar{object-fit:cover;border:1px solid var(--border)!important;font-size:30px!important;background:var(--panel);overflow:hidden;aspect-ratio:1}
+#posts.section .post-applicant-avatar-link:hover .post-applicant-avatar{transform:none;box-shadow:none;border-color:var(--accent)!important}
+#posts.section .post-applicant-identity{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:4px;overflow-wrap:anywhere}
+#posts.section .post-applicant-name{font-size:calc(16px * var(--ui-text-scale,1));line-height:1.35;overflow-wrap:anywhere}
+#posts.section .post-applicant-id,#posts.section .post-contact-match,#posts.section .post-new-inline{font-size:11px;line-height:1.35;overflow-wrap:anywhere}
+#posts.section .post-contact-match{margin:0;gap:5px}
+#posts.section .post-new-inline{color:#82bcff}
+#posts.section .post-applicant-status-menu{position:static;margin-top:2px}
+#posts.section .post-applicant-status-menu>.post-menu-trigger{min-height:28px;padding:4px 8px;font-size:11px!important;white-space:nowrap;box-shadow:none;border-radius:7px}
+#posts.section .post-applicant-status-menu>.post-menu-panel{top:auto;right:12px;width:230px;max-width:calc(100% - 24px);margin-top:5px}
+#posts.section .post-applicant-grid .post-decision-row{display:grid;grid-template-columns:1fr!important;gap:5px}
+#posts.section .post-applicant-grid .post-decision-btn{font-size:12px!important;min-height:34px!important;box-shadow:none!important}
+#posts.section .post-applicant-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;min-width:0;border-top:1px solid var(--border);padding-top:7px;margin:0}
+#posts.section .post-applicant-grid .post-applicant-comment{margin:0;padding:10px 11px;min-width:0;min-height:0;font-size:calc(14px * var(--ui-text-scale,1));line-height:1.55;overflow-wrap:anywhere;word-break:normal}
+#posts.section .post-applicant-grid .post-applicant-photo{margin:0;width:100%;max-height:240px;object-fit:contain}
+#posts.section .post-applicant-grid .post-applicant-foot{display:flex;align-items:center;margin:0;min-width:0;padding:0}
+#posts.section .post-applicant-grid .post-applicant-foot-left{display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:wrap}
+#posts.section .post-applicant-grid .post-applicant-date{font-size:11px!important;line-height:1.4;overflow-wrap:anywhere}
+#posts.section .post-applicant-grid .post-up-count{font-size:10px!important;white-space:nowrap}
 
-/* List view spends the width on reading comments, not an empty image column. */
-#posts.section .post-applicant-grid.view-list{display:flex;flex-direction:column;gap:8px}
-#posts.section .post-applicant-grid.view-list .post-applicant-card{display:grid;grid-template-columns:minmax(220px,0.9fr) minmax(0,2fr);grid-template-rows:auto auto;align-items:start;gap:8px 14px;padding:12px;min-height:0;min-width:0}
-#posts.section .post-applicant-grid.view-list .post-applicant-top{grid-column:1;grid-row:1 / span 3;align-self:start}
-#posts.section .post-applicant-grid.view-list .post-applicant-comment{grid-column:2;grid-row:1;min-height:0}
-#posts.section .post-applicant-grid.view-list .post-applicant-photo{grid-column:2;grid-row:2;height:auto;max-height:200px}
+#posts.section .post-applicant-grid.view-list{display:flex;flex-direction:column;gap:9px}
+#posts.section .post-applicant-grid.view-list .post-applicant-card{display:grid;grid-template-columns:minmax(235px,0.8fr) minmax(0,2fr);grid-template-rows:auto auto;gap:8px 16px;align-items:start;padding:12px;min-width:0;min-height:0}
+#posts.section .post-applicant-grid.view-list .post-applicant-top{grid-column:1;grid-row:1/span 3}
+#posts.section .post-applicant-grid.view-list .post-applicant-comment{grid-column:2;grid-row:1}
+#posts.section .post-applicant-grid.view-list .post-applicant-photo{grid-column:2;grid-row:2;height:auto;max-height:220px}
 #posts.section .post-applicant-grid.view-list .post-applicant-foot{grid-column:2;grid-row:3;align-self:end}
-@container mws-posts (max-width:1050px){
-  #posts.section .posts-layout{grid-template-columns:minmax(0,1fr)}
-  #posts.section .post-saved-list{flex-direction:row;overflow-x:auto;overflow-y:hidden;max-height:none;padding-bottom:4px}
-  #posts.section .post-saved-item{flex:0 0 min(220px,85%)}
-}
-@container mws-post-applicants (max-width:950px){
-  #posts.section .post-view-hint{flex:1 1 auto;text-align:right}
-  #posts.section .post-bulk-actions{flex:1 1 100%;border-top:1px solid var(--border);padding-top:7px}
-  #posts.section .post-minigame-entry-v57{margin-left:auto}
-}
-@container mws-post-applicants (max-width:640px){
+#posts.section .post-applicant-grid.view-list .post-applicant-top{position:relative}
+#posts.section .post-applicant-grid.view-list .post-applicant-status-menu>.post-menu-panel{right:0;max-width:100%}
+
+@container mws-post-applicants (max-width:660px){
+  #posts.section .post-applicant-tools>input{flex:1 1 100%}
+  #posts.section .post-applicant-tools>select{flex:1 1 105px}
   #posts.section .post-applicant-grid.view-list .post-applicant-card{display:flex;flex-direction:column;align-items:stretch}
   #posts.section .post-applicant-grid.view-list .post-applicant-foot{align-self:stretch}
-  #posts.section .post-applicant-tools{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-  #posts.section #postApplicantSearch{grid-column:1/-1}
-  #posts.section .post-detail-actions-v415{justify-content:flex-start;flex:1 1 100%}
-  #posts.section .post-partial-confirm-v53{margin:0;padding:0;border:0}
+  #posts.section .post-applicant-grid.view-list .post-applicant-top{position:static}
+  #posts.section .post-applicant-grid.view-list .post-applicant-status-menu>.post-menu-panel{right:12px;max-width:calc(100% - 24px)}
 }
 @container mws-posts (max-width:480px){
-  #posts.section .posts-head{align-items:flex-start;flex-wrap:wrap}
-  #posts.section .post-url-form{grid-template-columns:minmax(0,1fr)}
-  #posts.section .post-view-hint{display:none}
-  #posts.section .posts-saved-panel,#posts.section .posts-main-panel{padding:9px!important}
-  #posts.section .post-applicant-grid.view-card .post-applicant-card{padding:10px}
-  #posts.section .post-applicant-grid .post-decision-btn{font-size:11px!important}
+  #posts.section .posts-head{justify-content:space-between;margin-bottom:8px}
+  #posts.section .post-workspace-actions{gap:5px}
+  #posts.section .posts-main-panel{padding:0!important}
+  #posts.section .post-menu-trigger{padding:7px 9px;font-size:11px}
+  #posts.section .post-title-textarea{font-size:calc(18px * var(--ui-text-scale,1))!important}
+  #posts.section .post-detail-head>div:first-child{flex:1 1 120px}
+  #posts.section .post-menu-panel{max-width:calc(100vw - 36px)}
+  #posts.section .post-saved-menu>.post-menu-panel{left:0;right:auto}
+  #posts.section .post-filter-menu>.post-menu-panel{left:0;right:auto}
+  #posts.section .post-applicant-grid.view-card .post-applicant-card{padding:12px}
 }

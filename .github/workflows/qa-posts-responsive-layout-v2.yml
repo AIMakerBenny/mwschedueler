@@ -6,6 +6,7 @@ on:
       - 'index.html'
       - 'assets/app-core.js'
       - 'assets/posts-responsive-layout-v2.css'
+      - 'assets/posts-focus-layout-v3.js'
       - 'scripts/qa-posts-responsive-layout-v2.mjs'
       - '.github/workflows/qa-posts-responsive-layout-v2.yml'
 permissions:

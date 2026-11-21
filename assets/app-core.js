@@ -6898,6 +6898,9 @@ function renderAll(reason=lastSyncReason){
     safeRenderView('저장 상태',()=>updateStorageStatus(true)),
     safeRenderView('시계',tickClock)
   ];
+  // Posts are loaded on demand in public mode; refresh the active view when
+  // its partition finishes hydrating instead of leaving the initial empty UI.
+  if(document.getElementById('posts')?.classList.contains('active'))results.push(safeRenderView('게시글',renderPosts));
 
   const status=document.getElementById('syncStatusText');
   if(status){
@@ -7341,7 +7344,7 @@ async function syncSoopPost(id,{quiet=false}={}){
   }catch(err){post.lastError=String(err?.message||err);saveData('SOOP 댓글 동기화 오류');setPostGlobalStatus('댓글 동기화 실패','error');if(!quiet)toast('게시글',post.lastError)}
   renderPosts();
 }
-window.selectPost=id=>{activePostId=id;renderPosts()};
+window.selectPost=id=>{activePostId=id;renderPosts();const menu=document.getElementById('postSavedMenu');if(menu?.open){menu.open=false;menu.querySelector('summary')?.focus()}};
 window.addSoopPostFromUrl=async()=>{
   const input=document.getElementById('postUrlInput'),parsed=parseSoopPostUrl(input?.value);if(!parsed)return toast('게시글','SOOP 게시글 URL 형식을 확인해 주세요');
   let post=data.posts.find(p=>p.bjId===parsed.bjId&&p.postNo===parsed.postNo);
@@ -7689,7 +7692,7 @@ function metaFromSoopRecord(r){
   }
 }
 
-function autoGrowPostTitle(el){if(!el)return;el.style.height='auto';el.style.height=Math.max(46,el.scrollHeight)+'px'}
+function autoGrowPostTitle(el){if(!el)return;el.style.height='auto';el.style.height=Math.max(30,el.scrollHeight)+'px'}
 window.autoGrowPostTitle=autoGrowPostTitle;
 const postTitleV45=document.getElementById('postDisplayName');
 if(postTitleV45)postTitleV45.addEventListener('input',()=>autoGrowPostTitle(postTitleV45));
@@ -7879,7 +7882,7 @@ window.applyTextScale=applyTextScale;applyTextScale(data.textScale??100,false);
 /* Final v4.5 posts renderer: full title, confirmed labels, deleted comment support. */
 function renderPosts(){
   if(!Array.isArray(data.posts))data.posts=[];if(activePostId&&!postById(activePostId))activePostId='';if(!activePostId&&data.posts.length)activePostId=data.posts[0].id;
-  const count=document.getElementById('postSavedCount');if(count)count.textContent=`${data.posts.length}개`;const list=document.getElementById('postSavedList');if(list)list.innerHTML=data.posts.map(p=>`<div class="post-saved-item ${p.id===activePostId?'active':''}" onclick="selectPost('${p.id}')"><div class="post-saved-title">${esc(p.name)}</div><div class="post-saved-meta"><span>${p.comments?.length||0}개 댓글</span><span>${p.lastSyncAt?new Date(p.lastSyncAt).toLocaleString('ko-KR'):'미동기화'}</span></div></div>`).join('')||'<div class="empty small">등록된 게시글이 없습니다</div>';
+  const count=document.getElementById('postSavedCount');if(count)count.textContent=`${data.posts.length}개`;const list=document.getElementById('postSavedList');if(list)list.innerHTML=data.posts.map(p=>`<button type="button" class="post-saved-item ${p.id===activePostId?'active':''}" aria-pressed="${p.id===activePostId}" onclick="selectPost('${p.id}')"><div class="post-saved-title">${esc(p.name)}</div><div class="post-saved-meta"><span>${p.comments?.length||0}개 댓글</span><span>${p.lastSyncAt?new Date(p.lastSyncAt).toLocaleString('ko-KR'):'미동기화'}</span></div></button>`).join('')||'<div class="empty small">등록된 게시글이 없습니다</div>';
   const p=postById(activePostId),empty=document.getElementById('postEmptyState'),detail=document.getElementById('postDetailView');if(empty)empty.style.display=p?'none':'';if(detail)detail.style.display=p?'':'none';if(!p){applyPostViewPrefs();return}
   const title=document.getElementById('postDisplayName');if(title&&document.activeElement!==title){title.value=p.name;requestAnimationFrame(()=>autoGrowPostTitle(title))}const meta=document.getElementById('postDetailMeta');if(meta)meta.textContent=`${p.bjId} · 글 ${p.postNo} · ${p.lastSyncAt?'마지막 동기화 '+new Date(p.lastSyncAt).toLocaleString('ko-KR'):'아직 동기화하지 않음'}${p.sourceTitle&&p.nameManual?` · SOOP 원문 제목: ${p.sourceTitle}`:''}${p.lastError?' · 최근 오류 있음':''}`;
   const open=document.getElementById('postOpenBtn');if(open)open.onclick=()=>window.open(p.url,'_blank','noopener');const sync=document.getElementById('postSyncBtn');if(sync)sync.onclick=()=>syncSoopPost(p.id);const del=document.getElementById('postDeleteBtn');if(del)del.onclick=()=>deletePost(p.id);const game=document.getElementById('postRandomGameBtn');if(game)game.onclick=openPostGamePicker;setPostDetailMode(postDetailMode);renderPostSourceContent(p);
