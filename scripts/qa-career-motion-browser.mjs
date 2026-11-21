@@ -79,9 +79,13 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   await page.locator('.cv-panel').waitFor({state:'visible'});
   await page.locator('.cv-axis').waitFor({state:'visible'});
   await pause(350);
-  assert.equal(await page.locator('.career-tree li').count(),105);
-  assert.equal(await page.locator('.cv-axis .cv-entry').count(),99);
-  assert.equal(await page.locator('.cv-legacy .cv-entry').count(),6);
+  assert.equal(await page.locator('.career-tree li').count(),99);
+  assert.equal(await page.locator('.cv-axis .cv-entry').count(),95);
+  assert.equal(await page.locator('.cv-legacy .cv-entry').count(),4);
+  assert.equal(await page.locator('.cv-pair[data-single]').count(),0);
+  assert(await page.locator('.cv-axis .cv-entry').evaluateAll(es=>es.every((e,i)=>e.classList.contains(i%2===0?'cv-left':'cv-right')&&e.parentElement.querySelectorAll('.cv-entry').length===1)));
+  assert.match(await page.locator('.cv-year[data-year="2022"] .cv-month[data-month="4"] .cv-entry').filter({hasText:'이세계아이돌 햄스터 아바타'}).innerText(),/4월 23일/);
+  assert.equal(await page.locator('.cv-entry').filter({hasText:'MECCHA CHAMELEON'}).count(),0);
   assert.match(await page.locator('.cv-year[data-year="2024"] .cv-month[data-month="4"] .cv-entry').filter({hasText:'지피티 VR 체험'}).innerText(),/4월 19일/);
   assert.match(await page.locator('.cv-year[data-year="2025"] .cv-month[data-month="5"] .cv-entry').filter({hasText:'코렛트 코순이 아바타'}).innerText(),/5월 29일/);
   assert(!((await page.locator('.cv-legacy').innerText()).includes('미확인')));
@@ -143,7 +147,7 @@ try{
     const {context,page,errors}=await open(width,height);
     await checkFit(page);
     await page.screenshot({path:output+'/overview-'+width+'.png'});
-    assert.equal(await page.locator('.cv-year[data-year="2022"] .cv-month[data-month="4"] .cv-entry').count(),5);
+    assert.equal(await page.locator('.cv-year[data-year="2022"] .cv-month[data-month="4"] .cv-entry').count(),6);
     const entry=page.locator('.cv-year[data-year="2024"] .cv-month[data-month="3"] .cv-entry').first();
     await chooseYear(page,'2024');await pause(200);
     await approach(page,entry);
@@ -202,7 +206,7 @@ try{
     assert.match(await page.locator('.cv-entry[data-selected=true]').innerText(),/죠뗌므/);
     assert(await page.locator('.cv-entry[data-selected=true]').isVisible());
     await search(page,'');await pause(150);
-    assert.equal(await page.locator('.cv-entry:visible').count(),105);
+    assert.equal(await page.locator('.cv-entry:visible').count(),99);
     const restored=await position(page);
     assert(Math.abs(restored-saved)<3,'Search did not restore scroll: '+JSON.stringify({saved,restored}));
     for(const [q,n] of [['코치',null],['VR 우승',4],['WBD',2],['왁타버스 야구',2],['F1 챔스',1],['브축대',1],['굳가대표',1],['데이토나',1]]){
@@ -212,7 +216,7 @@ try{
     }
     await search(page,'');
     await page.locator('.cv-legacy-link').click();await pause(250);
-    assert.equal(await page.locator('.cv-legacy .cv-entry').count(),6);
+    assert.equal(await page.locator('.cv-legacy .cv-entry').count(),4);
     const legacyEntry=page.locator('.cv-legacy .cv-entry').first();
     const lastDated=await inspect(page.locator('.cv-axis .cv-entry').last());
     assert(lastDated.p>.99,JSON.stringify(lastDated));

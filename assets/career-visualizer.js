@@ -32,7 +32,7 @@
       '신호등':['총감독 · 몸연기','아이네 뮤직비디오','신호등 총감독'],
       '제8회 상황극 콘테스트':['현수 역 몸연기','낙화','낙화 몸연기','작품 대상 · 연기대상 · 명장면상'],
       '에고시의 검':['몸연기','단편영화 콘테스트','에고시의 검 몸연기'],
-      '그냥 살아!':['팀 감독 · 최종 2위','고멤가요제 · 김피탕&짬뽕','그냥 살아! 감독'],
+      '그냥 살아!':['팀 감독 · 최종 2위','고멤가요제 · 김피탕&짬뽕','그냥 살아! 감독','뮤직비디오 500만 조회 이상'],
       '제9회 상황극 콘테스트':['두 작품 몸연기','실종 · 신형식 역 / PUNK: Shutdown · 레브 역','실종 · PUNK 몸연기'],
       '버츄얼 파이터':['굳가대표 선출','버복대 · 한일 VR 복싱 한국 대표','버복대 굳가대표 선출'],
       '왁타버스 배그 대잔치':['듀오 라운드 우승','마다옴과 듀오','배그 대잔치 라운드 우승'],
@@ -71,7 +71,7 @@
       'STALZONE 크루대전':['팀 준우승','환승센터','STALZONE 팀 준우승'],
       '제2회 파블로프 VR 대전쟁':['대회 주최','','파블로프 VR 대전쟁 2 주최'],
       'SBO 야구 대회':['포수 출전 · 타율 .400','무파 자이언츠','SBO 포수 출전','10월 23일 3타수 2안타 · 결승타'],
-      '와우 포에버':['전사 1위','','와우 포에버 전사 1위','방송 제목에 기록 · 집계 기준 미확인']
+      '와우 포에버':['전사 1위','당시 방송 제목 기준','와우 포에버 전사 1위']
     };
     // One verified game/platform image per recorded event; event-specific stills
     // take precedence over the platform cover. No guessed games for legacy rows.
@@ -94,6 +94,9 @@
       award2024:['2024 SOOP 스트리머 대상','https://isplus.com/article/view/isp202412290086'],
       award2025:['2025 SOOP 스트리머 대상',video('GTGMfzUngV8')],
       wow:['WoW Forever','assets/announcements/20261121-warrior.webp'],
+      wowmount:['WoW Forever · 천골마','assets/announcements/20261121-mount.webp'],
+      wowwarrior:['WoW Forever · 전사','assets/announcements/20261121-warrior.webp'],
+      wowsword:['WoW Forever · 성검 원정대','assets/announcements/20261121-expedition.webp'],
       f1:['F1 25',steam(3059520)]
     };
     const recordArt={
@@ -115,7 +118,7 @@
       '신호등':'아이네의 이무진 신호등 커버 뮤직비디오 제작에 총감독으로 참여했다. VRChat을 활용해 뮤직비디오의 연출과 아바타 제작, 카메라, 몸연기를 맡았다.',
       '제8회 상황극 콘테스트':'VRChat 상황극 작품 낙화에 현수 역 몸연기로 참여했다. 작품은 대상, 연기대상, 명장면상을 받았고 마왕은 감초상 후보로 올랐다.',
       '에고시의 검':'VRChat을 활용한 단편영화 콘테스트 출품작 에고시의 검에서 캐릭터의 움직임을 몸연기로 표현했다.',
-      '그냥 살아!':'고멤가요제 참가팀 김피탕&짬뽕의 곡 그냥 살아!에서 감독을 맡았다. VRChat으로 제작한 뮤직비디오와 함께 최종 2위를 기록했다.',
+      '그냥 살아!':'고멤가요제 참가팀 김피탕&짬뽕의 곡 그냥 살아!에서 감독을 맡았다. VRChat으로 제작한 뮤직비디오와 함께 최종 2위를 기록했으며, 뮤직비디오는 500만 회 이상 재생되었다.',
       '제9회 상황극 콘테스트':'VRChat으로 제작된 두 상황극 작품에 몸연기로 참여했다. 실종에서는 신형식 역을, PUNK: Shutdown에서는 레브 역을 맡았다.',
       '버츄얼 파이터':'우왁굳이 주최한 VRChat 복싱 대회다. 6월 2일 국가대표 선발전을 통해 굳가대표로 선발되어, 6월 4일 한일 이벤트전에서 한국 팀 대표로 출전했다.',
       '왁타버스 배그 대잔치':'배틀그라운드 대회에서 마다옴과 듀오를 이루어 출전했고 한 라운드에서 우승했다.',
@@ -132,7 +135,7 @@
       '왁이큐':'VRChat에서 진행된 왁이큐 배구 대회에 사형선고 팀 소속으로 참가했다.',
       '제1회 버츄페 어워드':'VRChat에서 열린 버추얼 연말 페스티벌의 첫 어워드에서 올해의 섹시상을 공동 수상했다.',
       '2024 SOOP 스트리머 대상':'2024년 12월 28일 열린 SOOP 스트리머 대상 시상식에서 신인상을 수상했다.',
-      '제1회 릴동파':'릴파가 주최한 VRChat 동계 스포츠 대회에 죠뗌므 소속으로 출전해 팀 종합 우승을 차지했다. 봅슬레이와 눈덩이 종목에서 금메달, 바이애슬론에서 은메달을 획득해 개인 공동 1위를 기록했다. 본선 최다 진출상과 개인 메달 1위상도 받았다.',
+      '제1회 릴동파':'릴파가 주최한 VRChat 동계 스포츠 대회에 죠뗌므 소속으로 출전해 팀 종합 우승을 차지했다. 봅슬레이와 눈덩이 종목에서 금메달, 바이애슬론에서 은메달을 획득해 개인 공동 1위를 기록했다. 본선 최다 진출상과 개인 메달 1위상도 받았다. 앞선 왁타버스 체육대회에 이어 두 대회에서 연속으로 팀 종합 우승을 경험했다.',
       'WBD 왁타버스 야구 대회':'VRChat 야구 대회에서 로얄 버팔로즈에 1순위로 지명됐다. 선발투수와 2번 타자를 겸해 투타 양쪽에서 활약했다. 8강 승부치기에서 3 대 1로 승리하며 팀의 4강 진출에 기여했고, 4강 경기 중에는 타율 .833을 기록했다.',
       '제6회 처니랜드 소대전투':'배틀그라운드로 진행된 처니랜드 소대전투에 저격병으로 참가했다. 소속된 HONOR 진영이 승리했다.',
       '마인크래프트 지독서버':'마인크래프트 지독서버에서 다이아몬드를 채집하는 부문에 참여해 3위를 기록했다.',
@@ -269,7 +272,7 @@
       const key=artFor(r),media=art[key];
       if(media){
         const cover=node('span','cv-media');cover.dataset.art=key;
-        const image=node('img','cv-image');image.alt='';image.loading='lazy';image.decoding='async';image.src='assets/career-media/'+key+'.webp';
+        const image=node('img','cv-image');image.alt='';image.loading='lazy';image.decoding='async';image.src=media[1]?.startsWith('assets/announcements/')?media[1]:'assets/career-media/'+key+'.webp';
         image.addEventListener('error',()=>{image.hidden=true;cover.classList.add('cv-media-unavailable')},{once:true});
         cover.append(image,node('span','cv-media-label',media[0]));summary.classList.add('cv-with-media');summary.append(cover);
       }
@@ -284,6 +287,7 @@
       card.addEventListener('toggle',()=>{schedule();detail.getAnimations?.().forEach(animation=>animation.cancel());if(card.open&&!reduced()&&!entry.hidden&&detail.animate){detail.animate([{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'translateY(0)'}],{duration:260,easing:'ease-out'});}});
       return entry;
     }
+    let ordinal=0;
     for(const y of years.filter(y=>y!=='레거시')){
       const list=byYear(y);
       const year=node('section','cv-year');year.dataset.year=y;
@@ -296,13 +300,11 @@
         const records=list.filter(r=>r.month===m);
         const month=node('section','cv-month');month.dataset.month=String(m);month.dataset.year=y;
         const title=node('h3','cv-month-title',m+'월');month.append(title);months.push(month);
-        for(let i=0;i<records.length;i+=2){
-          const pair=node('div','cv-pair');pair.dataset.single=String(records.length-i===1);
-          const left=makeCard(records[i]);left.classList.add(i%4===0?'cv-left':'cv-right');
-          pair.append(left);
-          if(records[i+1]){const right=makeCard(records[i+1]);right.classList.add(i%4===0?'cv-right':'cv-left');pair.append(right);}
-          // Alternate single-record months without changing chronological DOM order.
-          if(records.length===1){left.classList.toggle('cv-left',m%2===0);left.classList.toggle('cv-right',m%2!==0);}
+        for(const record of records){
+          const pair=node('div','cv-pair');
+          const card=makeCard(record);
+          card.classList.add(ordinal++%2===0?'cv-left':'cv-right');
+          pair.append(card);
           pair.append(node('i','cv-junction'));
           month.append(pair);
         }
@@ -349,8 +351,7 @@
         const height=entry.firstElementChild.open?entry.querySelector('summary').offsetHeight:r.height;
         const progress=ease((arrivalStart-(r.top+height/2))/travel);
         const p=Math.max(progress,tail);
-        const single=entry.parentElement.dataset.single==='true';
-        const drift=(compact?Math.max(12,pad-3):single?Math.min(110,pad+24):Math.max(32,pad-3))*(reduced()?.45:1);
+        const drift=(compact?Math.max(12,pad-3):Math.max(32,pad-3))*(reduced()?.45:1);
         return [entry,p,r.bottom>=activeTop-120&&r.top<=bottom+120,drift,compact||entry.classList.contains('cv-right')?1:-1,compact];
       });
       let current=null;
@@ -437,7 +438,7 @@
         if(entry.hidden)motion.delete(entry);
         if(ids)entry.dataset.match=String(ids.has(id));else entry.removeAttribute('data-match');
       }
-      for(const pair of axis.querySelectorAll('.cv-pair')){const n=pair.querySelectorAll('.cv-entry:not([hidden])').length;pair.hidden=!n;pair.dataset.single=String(n===1);}
+      for(const pair of axis.querySelectorAll('.cv-pair'))pair.hidden=!pair.querySelector('.cv-entry:not([hidden])');
       for(const month of months)month.hidden=!month.querySelector('.cv-entry:not([hidden])');
       for(const [y,marker] of markers){
         const visible=byYear(y).filter(r=>!ids||ids.has(r.id)).length;
