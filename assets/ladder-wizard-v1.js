@@ -15,7 +15,13 @@
   const validPrizes=()=>validRoster()&&prizes().length===players().length&&prizes().every(p=>String(p.label||'').trim());
   const rosterKey=()=>JSON.stringify(players().map(p=>p.id).sort());
   let step=1,furthest=1,key=null,paletteKey=null,preset='winner',shuffling=false;
-  const pages=[...root.querySelectorAll('[data-ladder-page]')],steps=[...root.querySelectorAll('[data-ladder-step]')];
+  const nav=$('ladderWizardSteps'),header=$('pageTitle')?.parentElement;
+  const pages=[...root.querySelectorAll('[data-ladder-page]')],steps=[...nav.querySelectorAll('[data-ladder-step]')];
+  function syncHeader(){
+    // Leave the shared calendar and other page headers entirely untouched.
+    const target=root.classList.contains('active')&&header?header:root;
+    if(nav.parentElement!==target)target.append(nav);
+  }
   const canvas=$('ladderCanvas');
   let lastPoints=null,lastProgress=1,resizeFrame=0;
   function fitWorkspace(){
@@ -94,6 +100,7 @@
   }
   function scheduleFit(){if(resizeFrame)return;resizeFrame=requestAnimationFrame(()=>{resizeFrame=0;fitWorkspace();if(canvas.clientWidth&&canvas.clientHeight)drawLadder(lastPoints,lastProgress)})}
   const observer=new ResizeObserver(scheduleFit);observer.observe(root);observer.observe(canvas);
+  new MutationObserver(()=>{syncHeader();scheduleFit()}).observe(root,{attributes:true,attributeFilter:['class']});
   window.addEventListener('resize',scheduleFit,{passive:true});
   // The destination slot is the single source for both the board and summary.
   // Keep rows in place instead of replacing their avatars during every shuffle.
@@ -144,6 +151,7 @@
     root.querySelectorAll('[data-ladder-preset]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.ladderPreset===preset)));
   }
   function sync(){
+    syncHeader();
     const n=players().length,m=prizes().length,locked=busy();
     $('ladderWizardRosterCount').textContent=`${n} / 12명`;
     root.style.setProperty('--ladder-lanes',String(Math.max(2,n)));

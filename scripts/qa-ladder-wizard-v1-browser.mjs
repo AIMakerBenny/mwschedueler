@@ -8,7 +8,8 @@ import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const index=read('index.html'),core=read('assets/app-core.js'),wizard=read('assets/ladder-wizard-v1.js');
 const markup=index.slice(index.indexOf('<section id="gameLadder"'),index.indexOf('<section id="gameRps"'));
-assert(index.includes('assets/ladder-wizard-v1.js?v=7')&&index.includes('assets/ladder-wizard-v1.css?v=7'));
+const header=index.slice(index.indexOf('<div class="topbar">'),index.indexOf('<section id="dashboard"')).replace('>캘린더</h1>','>사다리타기</h1>').replace('id="todayText"></div>','id="todayText">2026년 11월 21일 토요일</div>').replace('id="clockText"></span>','id="clockText">오전 11:38:23</span>');
+assert(index.includes('assets/ladder-wizard-v1.js?v=8')&&index.includes('assets/ladder-wizard-v1.css?v=8'));
 assert.equal((markup.match(/data-ladder-page=/g)||[]).length,3);
 function part(start,end,last=false){const a=last?core.lastIndexOf(start):core.indexOf(start),b=core.indexOf(end,a+start.length);assert(a>=0&&b>a,start);return core.slice(a,b)}
 // Use the actual legacy renderer and CSPRNG game implementation, with just
@@ -42,7 +43,7 @@ ${part('function ladderAllResults()','const _shuffleLadderOrdersV413=')}
 new Function(bootstrap);
 const css=['assets/app-core.css','assets/mawang-premium-v1621.css','assets/device-ui.css','assets/ui-frame-presets.css','assets/workspace-clean-v1.css','assets/ladder-wizard-v1.css'].map(read).join('\n');
 const dir=mkdtempSync(path.join(os.tmpdir(),'mws-ladder-wizard-')),file=path.join(dir,'fixture.html');
-writeFileSync(file,`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}\nbody{margin:0}#fixture-app{padding-bottom:12px}#fixture-main{margin-left:200px;padding:22px;padding-bottom:32px;border-bottom:1px solid transparent} @media(max-width:850px){#fixture-main{margin:0;padding:12px}}</style><body class="mws-premium"><div id="fixture-app"><main id="fixture-main"><div style="height:56px"></div>${markup.replace('class="section mini-game-section"','class="section mini-game-section active"')}</main></div><script>${bootstrap}</script><script>${wizard}</script><script>renderLadder()</script>`);
+writeFileSync(file,`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}\nbody{margin:0}#fixture-app{padding-bottom:12px}#fixture-main{width:auto!important;min-height:0!important;margin-left:200px;padding:22px;padding-inline:22px!important;padding-bottom:32px!important;border-bottom:1px solid transparent} @media(max-width:850px){#fixture-main{margin:0;padding:12px;padding-inline:12px!important;padding-bottom:12px!important}}</style><body class="mws-premium"><div id="fixture-app"><main class="main" id="fixture-main">${header}${markup.replace('class="section mini-game-section"','class="section mini-game-section active"')}</main></div><script>${bootstrap}</script><script>${wizard}</script><script>renderLadder()</script>`);
 let browser;
 try{
   browser=await launchCalendarBrowser(dir);
@@ -51,7 +52,9 @@ try{
     const state=await browser.evaluate(`(()=>{
       const $=id=>document.getElementById(id),click=sel=>document.querySelector(sel).click(),visible=()=>[...document.querySelectorAll('[data-ladder-page]')].filter(p=>getComputedStyle(p).display!=='none').map(p=>Number(p.dataset.ladderPage)),labels=()=>data.miniGames.ladder.prizes.map(p=>p.label),n=()=>data.miniGames.ladder.players.length;
       const aboveCards=()=>{const page=document.querySelector('[data-ladder-page]:not([hidden])');return page.querySelector('.ladder-wizard-heading').contains($('ladderWizardNext'))&&$('ladderWizardNext').getBoundingClientRect().bottom<=page.lastElementChild.getBoundingClientRect().top+1};
-      const initial=visible(),initialBlocked=$('ladderWizardNext').disabled,contactCards=$('ladderContactPalette').children.length,initialFooterFits=$('ladderWizardNext').getBoundingClientRect().bottom<=innerHeight,firstNavAbove=aboveCards(),stepsHeight=document.querySelector('.ladder-wizard-steps').getBoundingClientRect().height;
+      const nav=$('ladderWizardSteps'),root=$('gameLadder'),nr=nav.getBoundingClientRect(),tr=$('pageTitle').getBoundingClientRect(),stepsHeight=nr.height,inline=nr.left>=tr.right&&Math.abs((nr.top+nr.bottom-tr.top-tr.bottom)/2)<=3&&nr.width<=350&&nav.parentElement===$('pageTitle').parentElement&&!root.contains(nav)&&nav.querySelectorAll('.ladder-step-arrow').length===2;
+      root.classList.remove('active');const navHidden=getComputedStyle(nav).display==='none';root.classList.add('active');renderLadder();
+      const initial=visible(),initialBlocked=$('ladderWizardNext').disabled,contactCards=$('ladderContactPalette').children.length,initialFooterFits=$('ladderWizardNext').getBoundingClientRect().bottom<=innerHeight,firstNavAbove=aboveCards();
       $('ladderContactSearch').value='참가자 1';$('ladderContactSearch').dispatchEvent(new Event('input'));click('[data-contact-id="c1"]');
       const searchKept=$('ladderContactSearch').value==='참가자 1'&&document.querySelector('[data-contact-id="c1"]').getAttribute('aria-pressed')==='true';
       click('[data-contact-id="c1"]');const toggled=n()===0;
@@ -65,10 +68,12 @@ try{
       $('ladderWizardBack').click();const back=visible();$('ladderWizardNext').click();const customKept=labels()[0]==='직접 입력';$('ladderWizardNext').click();const third=visible();
       renderMiniContactPalette('rps','');const otherUnchanged=otherPaletteCalls===1;
       const board=$('ladderCanvas').getBoundingClientRect(),thirdFooterFits=$('ladderWizardBack').getBoundingClientRect().bottom<=innerHeight,stageBottom=document.querySelector('.ladder-stage-card').getBoundingClientRect().bottom,summaryBottom=document.querySelector('.ladder-summary-shell').getBoundingClientRect().bottom;
-      return {initial,initialBlocked,contactCards,initialFooterFits,fullFooterFits,searchKept,toggled,cap,manualCap,manual,second,initialPrizes,presetSelected,secondFooterFits,winner,rank,teams,defaults,blankBlocked,back,customKept,third,thirdFooterFits,firstNavAbove,secondNavAbove,stepsHeight,canvasBottom:board.bottom,canvasHeight:board.height,stageBottom,summaryBottom,otherUnchanged,overflow:document.documentElement.scrollWidth>innerWidth+3};
+      const navCurrent=nav.querySelector('[aria-current="step"]')?.dataset.ladderStep==='3',navReachable=![...nav.querySelectorAll('button')].some(b=>b.disabled);
+      click('[data-ladder-step="1"]');const navReturn=visible()[0]===1;click('[data-ladder-step="3"]');const navForward=visible()[0]===3;
+      return {initial,initialBlocked,contactCards,initialFooterFits,fullFooterFits,searchKept,toggled,cap,manualCap,manual,second,initialPrizes,presetSelected,secondFooterFits,winner,rank,teams,defaults,blankBlocked,back,customKept,third,thirdFooterFits,firstNavAbove,secondNavAbove,stepsHeight,inline,navHidden,navCurrent,navReachable,navReturn,navForward,canvasBottom:board.bottom,canvasHeight:board.height,stageBottom,summaryBottom,otherUnchanged,overflow:document.documentElement.scrollWidth>innerWidth+3};
     })()`);
     assert.deepEqual(state.initial,[1]);assert.equal(state.contactCards,217);assert.deepEqual(state.second,[2]);assert.deepEqual(state.back,[1]);assert.deepEqual(state.third,[3]);
-    assert(state.firstNavAbove&&state.secondNavAbove&&state.stepsHeight<=46,'Compact header or navigation: '+JSON.stringify(state));
+    assert(state.firstNavAbove&&state.secondNavAbove&&state.stepsHeight<=34&&state.inline&&state.navHidden&&state.navCurrent&&state.navReachable&&state.navReturn&&state.navForward,'Compact header or navigation: '+JSON.stringify(state));
     assert(await browser.evaluate("!document.querySelector('[data-ladder-page=\"3\"] .ladder-wizard-heading')"),'Duplicate game heading must be removed');
     if(w>850)assert(state.initialFooterFits&&state.fullFooterFits&&state.secondFooterFits&&state.thirdFooterFits&&state.canvasBottom<=h&&state.stageBottom<=h&&state.summaryBottom<=h,'Controls or board below viewport: '+JSON.stringify(state));
     assert.deepEqual(state.initialPrizes,['당첨','꽝','꽝','꽝']);assert(state.presetSelected);
