@@ -49,7 +49,7 @@
 .cv-axis::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;transform:translateX(-50%);background:color-mix(in srgb,var(--cv-ink) 17%,transparent);z-index:-1}
 .cv-axis::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%);background:radial-gradient(ellipse 2px 90px at 50% var(--cv-focus,0px),var(--cv-accent),transparent);pointer-events:none;z-index:-1;opacity:.8}
 .cv-year{position:relative;margin:0;padding:20px 0 10px}
-.cv-year-heading{position:relative;width:max-content;max-width:100%;display:flex;align-items:baseline;gap:9px;margin:0 auto 15px;padding:6px 18px;background:var(--bg);font-size:40px;line-height:1.18;font-weight:780;letter-spacing:-.045em;color:var(--cv-ink)}
+.cv-year-heading{position:relative;width:max-content;max-width:100%;display:flex;align-items:baseline;gap:9px;margin:0 auto 15px;padding:6px 18px;background:radial-gradient(ellipse closest-side,var(--bg) 70%,transparent);font-size:40px;line-height:1.18;font-weight:780;letter-spacing:-.045em;color:var(--cv-ink);text-shadow:0 1px 8px var(--bg)}
 .cv-year-heading small{font-size:11px;font-weight:550;color:var(--cv-muted);letter-spacing:0}
 .cv-year-heading[data-current=true] span{color:var(--cv-accent)}
 .cv-month{padding:0 0 9px;position:relative}
@@ -131,9 +131,10 @@
 .cv-result-date,.cv-result-info{font-size:12px;color:var(--cv-muted)}
 .cv-legacy{padding:24px clamp(8px,4vw,48px) 35px}
 .cv-legacy-heading{font-size:25px;font-weight:760;margin:0 0 17px;letter-spacing:-.03em}
-.cv-legacy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px;align-items:start}
+.cv-legacy-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
 .cv-legacy-grid .cv-entry{min-width:0}
 .cv-legacy .cv-card{transition:transform .2s,border-color .2s,box-shadow .2s}
+.cv-legacy .cv-record{min-height:112px}
 .cv-legacy .cv-card:hover{transform:translateY(-2px)}
 @media(max-width:700px){
   .cv-bar{padding:5px 5px;top:0}
@@ -172,6 +173,7 @@
   .cv-result{grid-template-columns:35px minmax(0,1fr);gap:4px 6px;padding:7px}
   .cv-result-info{grid-column:2}
   .cv-legacy-grid{grid-template-columns:1fr}
+  .cv-legacy .cv-record{min-height:88px}
 }
 /* Reduced motion preserves direct scroll-linked attachment but removes scaling, fading,
    vertical travel and inertial follow-through in the controller. */
