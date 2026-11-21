@@ -251,7 +251,7 @@
     function tone(r){
       const s=r.headline+' '+(r.extra||'');
       if(/준우승|2위|은메달/.test(s)&&!/우승팀|종합 우승|팀 우승|공동 1위/.test(s))return 'silver';
-      if(/우승|1위|금메달|대상|MVP|올해의|수상|최초|달성|돌파|획득 성공/.test(s))return 'gold';
+      if(/우승|1위|금메달|대상|MVP|올해의|수상|최초|달성|돌파|획득 성공|승리/.test(s))return 'gold';
       if(/3위|동메달/.test(s))return 'bronze';
       if(/감독|코치|코칭|교관|교육|지도|조교/.test(s))return 'role';
       if(/제작|몸연기|주최|운영|개장|시작|창설|개설|공개/.test(s))return 'creative';
@@ -262,7 +262,7 @@
       const card=node('details','cv-card');
       const summary=node('summary','cv-record');
       const copy=node('span','cv-copy');
-      const kind={gold:'수상 · 성과',silver:'입상',bronze:'입상',role:'지도 · 연출',creative:'제작 · 운영',neutral:'활동'}[entry.dataset.tone];
+      const kind={gold:'수상 · 성과',silver:'입상',bronze:'입상',role:'지도 · 연출',creative:'제작 · 운영',neutral:'활동 · 기록'}[entry.dataset.tone];
       copy.append(node('span','cv-kind',kind));
       copy.append(node('span','cv-headline',r.name));
       if(r.headline!==r.name)copy.append(node('span','cv-achievement',r.headline));
@@ -433,8 +433,14 @@
     }
     function filterTimeline(list){
       const ids=list&&new Set(list.map(r=>r.id));
+      let visibleOrdinal=0;
       for(const [id,entry] of entries){
         entry.hidden=!!ids&&!ids.has(id);
+        if(!entry.hidden&&entry.dataset.legacy!=='true'){
+          const left=visibleOrdinal++%2===0;
+          entry.classList.toggle('cv-left',left);
+          entry.classList.toggle('cv-right',!left);
+        }
         if(entry.hidden)motion.delete(entry);
         if(ids)entry.dataset.match=String(ids.has(id));else entry.removeAttribute('data-match');
       }

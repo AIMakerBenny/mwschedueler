@@ -194,6 +194,7 @@ try{
     assert.equal(await page.locator('.cv-result').count(),3);
     assert.equal(await page.locator('.cv-entry[data-match=true]').count(),3);
     assert.equal(await page.locator('.cv-entry:visible').count(),3);
+    assert(await page.locator('.cv-axis .cv-entry:visible').evaluateAll(es=>es.every((e,i)=>e.classList.contains(i%2===0?'cv-left':'cv-right'))));
     assert.equal(await page.locator('.cv-year:visible').count(),2);
     const downloadPromise=page.waitForEvent('download');
     await page.locator('.cv-export').click();
@@ -207,6 +208,7 @@ try{
     assert(await page.locator('.cv-entry[data-selected=true]').isVisible());
     await search(page,'');await pause(150);
     assert.equal(await page.locator('.cv-entry:visible').count(),99);
+    assert(await page.locator('.cv-axis .cv-entry').evaluateAll(es=>es.every((e,i)=>e.classList.contains(i%2===0?'cv-left':'cv-right'))));
     const restored=await position(page);
     assert(Math.abs(restored-saved)<3,'Search did not restore scroll: '+JSON.stringify({saved,restored}));
     for(const [q,n] of [['코치',null],['VR 우승',4],['WBD',2],['왁타버스 야구',2],['F1 챔스',1],['브축대',1],['굳가대표',1],['데이토나',1]]){
