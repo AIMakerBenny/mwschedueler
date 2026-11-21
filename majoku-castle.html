@@ -40,10 +40,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .topbar h1{font-size:28px;margin:0 0 5px;letter-spacing:.01em}.subtle{color:var(--muted);font-size:13px;line-height:1.6}
 .section{display:none}.section.active{display:block}
 .card{background:var(--panel);border:1px solid var(--border);border-radius:16px}
-.hero{padding:22px;margin-bottom:16px;display:flex;justify-content:space-between;gap:20px;align-items:center;overflow:hidden;position:relative}
-.hero:after{content:"";position:absolute;right:-90px;top:-120px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--accent) 18%,transparent),transparent 68%);pointer-events:none}
-.hero-title{font-size:21px;font-weight:900;margin-bottom:8px;letter-spacing:.06em}.hero-desc{max-width:760px;color:var(--muted);font-size:13px;line-height:1.65}
-.hero-chip{position:relative;z-index:1;border:1px solid color-mix(in srgb,var(--accent) 55%,var(--border));background:color-mix(in srgb,var(--accent) 10%,var(--panel));padding:7px 10px;border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap}
+.castle-home-head{align-items:center;flex-wrap:wrap;margin-bottom:18px}
+.castle-availability{border:1px solid color-mix(in srgb,var(--accent) 38%,var(--border));background:color-mix(in srgb,var(--accent) 9%,var(--panel));padding:6px 11px;border-radius:999px;font-size:12px;font-weight:750;white-space:nowrap}
 .games-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 .game-card{min-height:190px;padding:18px;border-radius:16px;border:1px solid var(--border);background:var(--panel);color:var(--text);text-align:left;display:flex;flex-direction:column;justify-content:space-between;transition:border-color .15s,transform .15s,background .15s,box-shadow .15s;position:relative;overflow:hidden}
 .game-card.live:hover{transform:translateY(-2px);border-color:var(--accent);background:color-mix(in srgb,var(--panel) 94%,var(--accent));box-shadow:0 14px 36px rgba(0,0,0,.25),0 0 0 1px color-mix(in srgb,var(--accent) 28%,transparent)}
@@ -370,19 +368,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 
   <main class="main">
     <section id="castleHome" class="section active">
-      <div class="topbar">
+      <div class="topbar castle-home-head">
         <div>
           <h1>Majoku Castle</h1>
           <div class="subtle">방송에서 바로 사용할 수 있는 시청자 참여형 게임 모음</div>
         </div>
-      </div>
-
-      <div class="card hero">
-        <div>
-          <div class="hero-title">MAJOKU CASTLE</div>
-          <div class="hero-desc">게임을 선택하면 Majoku Castle 내부에서 해당 게임 화면으로 이동합니다. 현재는 그림 맞추기, 뭐먹지, 초성 퀴즈, 마왕 기록 예측, 마왕과 오목, 마왕의 폭격을 피해라, 소수결 눈치싸움, 추락하는 엘리베이터를 사용할 수 있으며 나머지 게임과 기록실은 순차적으로 추가됩니다.</div>
-        </div>
-        <div class="hero-chip">9 / 9 Available</div>
+        <div class="castle-availability">게임 9개 이용 가능</div>
       </div>
 
       <div class="games-grid" id="gameGrid">

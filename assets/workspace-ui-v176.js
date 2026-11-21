@@ -183,6 +183,7 @@ function installFriendTargetsV176(){
 /* Notebook > Patch Notes / Suggestions */
 let notebookViewV176='';
 let composerTypeV176='patch';
+const notebookRenderedV176=new WeakMap();
 function ensureNotebookDataV176(){
   const d=rootData();
   if(!d)return null;
@@ -198,6 +199,11 @@ function renderNotebookCardsV176(type){
   const list=$(type==='patch'?'patchNoteCardsV176':'suggestionCardsV176');
   if(!list)return;
   const rows=[...cardListV176(type)].sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+  // The observer also sees our own DOM writes. Keep node identity stable
+  // unless the displayed data actually changes, including after cloud sync.
+  const signature=JSON.stringify(rows.map(item=>[item.id,item.author,item.createdAt,item.content]));
+  if(notebookRenderedV176.get(list)===signature&&list.firstElementChild)return;
+  notebookRenderedV176.set(list,signature);
   list.innerHTML=rows.length?rows.map(item=>`
     <article class="mws-note-card-v176">
       <div class="mws-note-card-head-v176">
@@ -386,6 +392,7 @@ function installAllV176(){
   enforceDrawingBoardLabelV176();
   enforceExhibitionNavigationV176();
   installSetTabBridgeV176();
+  observeWorkspaceRootsV176();
 }
 function queueInstallV176(){
   if(installQueued||document.hidden)return;
@@ -393,8 +400,19 @@ function queueInstallV176(){
   requestAnimationFrame(installAllV176);
 }
 
-const observer=new MutationObserver(queueInstallV176);
-observer.observe(document.documentElement,{childList:true,subtree:true});
+// Only structural changes to the workspace shell can require reinstalling
+// these integrations. Clock ticks, game frames, cards, and notebook rows
+// are ordinary content updates and must never restart the installer.
+const workspaceStructuralRootsV176='.app,.app>.main,.sidebar,.sidebar .nav,.nav-scroll,#dashboard,#worldtime,#contacts,#sniper,#friendFinder,#targets,#memos,.dashboard-mode-tabs,.memo-section-tabs';
+const observer=new MutationObserver(records=>{
+  if(records.some(record=>[...record.addedNodes,...record.removedNodes].some(node=>node instanceof Element)))queueInstallV176();
+});
+function observeWorkspaceRootsV176(){
+  // Rebind after late-loaded sections or shell replacements. Observe just
+  // their immediate children, never the continuously changing content tree.
+  observer.disconnect();
+  document.querySelectorAll(workspaceStructuralRootsV176).forEach(root=>observer.observe(root,{childList:true}));
+}
 window.addEventListener('mws:parts-loaded',event=>{
   if((event?.detail?.parts||[]).includes('notebook')){
     ensureNotebookDataV176();
