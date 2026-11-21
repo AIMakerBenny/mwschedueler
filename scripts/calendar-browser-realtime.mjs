@@ -44,6 +44,10 @@ export async function launchCalendarBrowser(dir){
     const movePoint=(x,y)=>send('Input.dispatchMouseEvent',{type:'mouseMoved',x,y},sessionId);
     const enablePerformance=()=>send('Performance.enable',{},sessionId);
     const performanceMetrics=async()=>Object.fromEntries((await send('Performance.getMetrics',{},sessionId)).metrics.map(({name,value})=>[name,value]));
-    return {navigate,evaluate,clickPoint,movePoint,enablePerformance,performanceMetrics,setReducedMotion,close};
+    const mouseDown=(x,y)=>send('Input.dispatchMouseEvent',{type:'mousePressed',x,y,button:'left',buttons:1,clickCount:1},sessionId);
+    const mouseDrag=(x,y)=>send('Input.dispatchMouseEvent',{type:'mouseMoved',x,y,button:'left',buttons:1},sessionId);
+    const mouseUp=(x,y)=>send('Input.dispatchMouseEvent',{type:'mouseReleased',x,y,button:'left',buttons:0,clickCount:1},sessionId);
+    const keyPress=async key=>{await send('Input.dispatchKeyEvent',{type:'keyDown',key,code:key},sessionId);await send('Input.dispatchKeyEvent',{type:'keyUp',key,code:key},sessionId)};
+    return {navigate,evaluate,clickPoint,movePoint,mouseDown,mouseDrag,mouseUp,keyPress,enablePerformance,performanceMetrics,setReducedMotion,close};
   }catch(error){await close();throw error}
 }

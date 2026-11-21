@@ -34,8 +34,17 @@ try{
         }
       }
       if(document.readyState==='complete'&&publicMode&&!visibleGate&&$('#calendarGrid .mini-event[data-evid]')&&$('#calendarEventDetailsV1')){
+        // The welcome notice is a native modal; verify its live content and
+        // dismiss it normally before interacting with the calendar behind it.
+        const notice=$('#mwsAnnouncementDialog[open]');
+        if(notice){
+          const images=[...notice.querySelectorAll('.mws-notice-slide img')];
+          if(images.some(img=>!img.complete))return {waiting:true,announcementLoading:true};
+          window.__mwsLiveAnnouncementQaV1={count:images.length,loaded:images.every(img=>img.naturalWidth===1448&&img.naturalHeight===1086),initial:notice.dataset.noticeIndex,hideToday:!!notice.querySelector('.mws-notice-today')};
+          notice.querySelector('.mws-notice-close').click();
+        }
         const latestScript=Math.max(0,...performance.getEntriesByType('resource').filter(e=>e.initiatorType==='script').map(e=>e.responseEnd));
-        return {cards:document.querySelectorAll('#calendarGrid .mini-event[data-evid]').length,version:[...document.scripts].some(s=>s.src.includes('calendar-details-v1.js?v=10')),reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,noPreferenceControl:!$('#calendarDetailsMotionV6')&&$('#calendarEventDetailsV1').classList.contains('event-details-popover-v2'),origin:performance.timeOrigin,quiet:performance.now()-latestScript>=800};
+        return {cards:document.querySelectorAll('#calendarGrid .mini-event[data-evid]').length,version:[...document.scripts].some(s=>s.src.includes('calendar-details-v1.js?v=10')),reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,noPreferenceControl:!$('#calendarDetailsMotionV6')&&$('#calendarEventDetailsV1').classList.contains('event-details-popover-v2'),origin:performance.timeOrigin,quiet:performance.now()-latestScript>=800,announcementEnabled:!!window.__mwsAnnouncementCarouselV1,announcement:window.__mwsLiveAnnouncementQaV1||null};
       }
       return {waiting:true,readyState:document.readyState,publicMode,visibleGate:!!visibleGate,mode:$('#mwsLoginForm')?.dataset.mode,submitDisabled:$('#mwsLoginSubmit')?.disabled,cards:document.querySelectorAll('#calendarGrid .mini-event[data-evid]').length,popup:!!$('#calendarEventDetailsV1')};
     })()`)}catch(error){if(!/Inspected target navigated or closed|Cannot find context|Execution context was destroyed/.test(String(error)))throw error;state=null}
@@ -47,6 +56,7 @@ try{
   }
   assert(ready,'No stable hydrated public calendar: '+JSON.stringify(lastState));
   assert(ready.cards>0&&ready.version&&!ready.reduced&&ready.noPreferenceControl,JSON.stringify(ready));
+  if(ready.announcementEnabled){assert(ready.announcement?.count===3&&ready.announcement.loaded&&ready.announcement.initial==='0'&&ready.announcement.hideToday,JSON.stringify(ready));console.log('MWS_LIVE_ANNOUNCEMENTS',JSON.stringify(ready.announcement))}
   const surface=await browser.evaluate(String.raw`(()=>{
     const card=document.querySelector('#calendarGrid .mini-event[data-evid]'),preview=document.querySelector('#calendarEventPreview'),popover=document.querySelector('#calendarEventDetailsV1');
     const alpha=color=>{const canvas=document.createElement('canvas');canvas.width=canvas.height=1;const ctx=canvas.getContext('2d');ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return ctx.getImageData(0,0,1,1).data[3]};
