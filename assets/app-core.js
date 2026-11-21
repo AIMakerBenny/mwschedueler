@@ -2006,6 +2006,10 @@ function renderCalendar(){
     </div>`;
   }
   const grid=document.getElementById('calendarGrid');grid.innerHTML=out;
+  // Record actual month DOM replacements, bounded to the first few renders.
+  // This makes startup regressions observable on cold and repeat navigation.
+  const startupHistory=window.__mwsCalendarRenderHistoryV2??=[];
+  if(startupHistory.length<8)startupHistory.push({at:performance.now(),days:cellCount,cards:grid.querySelectorAll('.mini-event').length});
   window.mwsCalendarContinuousSeriesV1?.render(grid,activeEvents(),data.contentGroups);
   initCalendarViewTabsV172();
   renderCalendarSearchResultsV172();
