@@ -1,0 +1,23 @@
+name: Posts applicant responsive layout QA
+on:
+  pull_request:
+    branches: [cloudflare-production]
+    paths:
+      - 'index.html'
+      - 'assets/app-core.js'
+      - 'assets/posts-responsive-layout-v2.css'
+      - 'scripts/qa-posts-responsive-layout-v2.mjs'
+      - '.github/workflows/qa-posts-responsive-layout-v2.yml'
+permissions:
+  contents: read
+jobs:
+  browser-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Card and list geometry with real applicant renderer
+        run: node scripts/qa-posts-responsive-layout-v2.mjs

@@ -555,12 +555,12 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
             </div>
             <div class="post-bulk-actions"><button type="button" class="secondary post-bulk-confirm mws-admin-only" onclick="bulkConfirmPostApplicants()">전체 확정</button><button type="button" class="post-bulk-gacha-v50 mws-admin-only" onclick="bulkGachaPostApplicantsV50()">전체 가챠</button><button type="button" class="ghost post-bulk-cancel mws-admin-only" onclick="bulkCancelPostApplicants()">전체 취소</button><div class="post-partial-confirm-v53"><button type="button" class="post-partial-confirm-btn-v53" onclick="bulkPartialConfirmPostApplicantsV53()">부분 확정</button><label class="post-partial-count-v53">상위 <input id="postPartialConfirmCountV53" type="number" min="1" value="3" inputmode="numeric"> 명</label></div></div>
             <div class="post-column-control">
-              <label for="postCardColumns">한 줄 카드</label>
+              <label for="postCardColumns">최대 카드</label>
               <select id="postCardColumns" onchange="setPostCardColumns(this.value)">
                 <option value="2">2개</option><option value="3">3개</option><option value="4">4개</option><option value="5">5개</option>
               </select>
             </div>
-            <div id="postViewHint" class="post-view-hint">카드형 · 한 줄 4개</div>
+            <div id="postViewHint" class="post-view-hint">화면에 맞춰 자동 배치</div>
           </div>
           <div id="postApplicantGrid" class="post-applicant-grid"></div>
         </div>
@@ -2186,7 +2186,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <script src="assets/calendar-broadcast-duration-v1.js?v=1"></script>
 <script src="assets/calendar-continuous-series-v1.js?v=2"></script>
 <script src="assets/calendar-timeline-v1.js?v=4"></script>
-<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=1&contactgroup178=1&modalmotionv2=2&ladderdefaults=1&future-only=1"></script>
+<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=1&contactgroup178=1&modalmotionv2=2&ladderdefaults=1&future-only=1&post-layout-v2=1"></script>
 <script src="assets/calendar-content-groups-v2.js?v=7-save-contract-bulk"></script>
 <script src="assets/event-sidebar-tabs-v5.js?v=1"></script>
 <script src="assets/calendar-move-guard-v4.js?v=1&quietmoves=1"></script>
@@ -4671,6 +4671,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .sidebar-save-v572{padding-left:0
 <link rel="stylesheet" href="assets/contact-card-readable-layout-v1.css?v=1">
 <link rel="stylesheet" href="assets/workspace-clean-v1.css?v=3">
 <link rel="stylesheet" href="assets/calendar-details-v1.css?v=17">
+<link rel="stylesheet" href="assets/posts-responsive-layout-v2.css?v=1">
 <link rel="stylesheet" data-mws-post-login-style="mobile-calendar-v130" href="assets/mobile-calendar-v130.css?v=1.3.0-mobile-calendar-viewport-p29-layout-v2">
 <link rel="stylesheet" href="assets/achievement-exhibition-v1.css?v=2">
 <link rel="stylesheet" href="assets/calendar-search-v173.css?v=1">
