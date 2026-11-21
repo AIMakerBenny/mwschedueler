@@ -601,3 +601,61 @@ body:is([data-device-mode="mobile"],[data-resolution="mobile"]) #calendar[data-m
   opacity:1!important;
   color:var(--text)!important;
 }
+
+/* Mobile viewport contract: desktop card sizing must never leak into this grid. */
+body[data-device-mode="mobile"] #calendar.section .calendar-responsive-scroll-v1{
+  width:100%;min-width:0;max-width:100%;overflow:visible!important;scrollbar-gutter:auto!important;
+}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] .calendar-responsive-scroll-v1>:is(.calendar-head,#calendarGrid){
+  box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:3px!important;margin-inline:0!important;padding-inline:0!important;
+}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] .calendar-topbar-v4{
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;
+  gap:6px!important;margin:0 0 8px!important;padding:0!important;min-width:0!important;
+}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] .calendar-topbar-v4 .calendar-toolbar{
+  grid-column:1/-1;grid-row:1;min-width:0!important;min-height:44px!important;margin:0!important;
+}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] .calendar-jump{min-height:44px!important;box-sizing:border-box!important}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #monthLabel{
+  display:block!important;min-height:0!important;font-size:19px!important;line-height:1.4!important;font-weight:850!important;
+}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #monthLabel::before,
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #monthLabel::after{display:none!important;content:none!important}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] .calendar-topbar-v4 :is(.calendar-view-tabs-v172,.calendar-group-toolbar-v2){
+  width:auto!important;min-width:0!important;margin:0!important;gap:3px!important;flex-wrap:nowrap!important;
+}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] .calendar-topbar-v4 :is(.calendar-view-tabs-v172,.calendar-group-toolbar-v2) button{
+  width:36px!important;min-width:36px!important;height:40px!important;min-height:40px!important;padding:0!important;
+}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] .mws-calendar-tabs{margin-bottom:8px!important}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .day{
+  position:relative!important;min-height:91px!important;height:auto!important;padding:5px 2px 4px!important;gap:0!important;
+}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .daynum{
+  margin-bottom:3px!important;padding:0 1px!important;box-sizing:border-box!important;
+}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .calendar-day-events-v2{
+  display:flex!important;flex-direction:column!important;flex:0 0 auto!important;min-width:0!important;min-height:0!important;
+  margin:0!important;padding:0!important;overflow:visible!important;gap:3px!important;
+}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .mini-event[data-evid]{
+  display:block!important;box-sizing:border-box!important;min-height:23px!important;height:23px!important;max-height:23px!important;
+  padding:3px 1px!important;margin:0!important;line-height:15px!important;font-size:10px!important;border-left-width:2px!important;
+}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .mini-event[data-evid].mws-mobile-event-hidden-v130{display:none!important}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .mini-event[data-evid] .mini-event-main{
+  display:block!important;min-width:0!important;line-height:15px!important;font-size:inherit!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .mini-event[data-evid] .calendar-start-v2{display:none!important}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .mini-event[data-evid] .calendar-card-title-v2{
+  display:block!important;font-size:inherit!important;line-height:15px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .calendar-day-more-v2{display:none!important}
+body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .calendar-continuous-ribbon-v1{height:6px!important;box-shadow:none!important}
+body[data-device-mode="mobile"][data-resolution="mobile"]:has(.mws-mobile-tabs) .mobile-nav-toggle{display:none!important}
+@media(max-width:350px){
+  body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] .calendar-topbar-v4 :is(.calendar-view-tabs-v172,.calendar-group-toolbar-v2) button{width:32px!important;min-width:32px!important}
+  body[data-device-mode="mobile"] #calendar.section[data-mobile-calendar-view="month"] #calendarGrid .mini-event[data-evid]{font-size:9px!important}
+}

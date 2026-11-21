@@ -6,6 +6,11 @@ on:
     paths:
       - 'index.html'
       - 'assets/calendar-responsive-cards-v1.css'
+      - 'assets/mobile-calendar-v130.css'
+      - 'assets/mobile-calendar-quick-add-v130.js'
+      - 'assets/mobile-calendar-day-detail-v130.js'
+      - 'assets/device-ui.js'
+      - 'scripts/qa-mobile-calendar-layout-v2.mjs'
       - 'scripts/qa-calendar-responsive-v1-browser.mjs'
       - '.github/workflows/qa-calendar-responsive-v1.yml'
   push:
@@ -24,6 +29,8 @@ jobs:
           node-version: '24'
       - name: Responsive calendar geometry in Chromium
         run: node scripts/qa-calendar-responsive-v1-browser.mjs
+      - name: Mobile calendar geometry and interactions in Chromium
+        run: node scripts/qa-mobile-calendar-layout-v2.mjs
       - name: Existing calendar ribbon and drag handle regression
         run: |
           node scripts/qa-calendar-continuous-series-browser-v1.mjs

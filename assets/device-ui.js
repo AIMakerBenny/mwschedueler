@@ -4,7 +4,7 @@
 const KEY='mws-device-ui-v1';
 const desktops=['fhd','2k','4k','wide'];
 let prefs={mode:'pc',pc:'fhd'};
-try { const saved=JSON.parse(localStorage.getItem(KEY)||'null'); if(saved){prefs.mode=saved.mode==='mobile'?'mobile':'pc';prefs.pc=desktops.includes(saved.pc)?saved.pc:'fhd';}else{prefs.mode=document.body.dataset.resolution==='mobile'?'mobile':'pc';prefs.pc=desktops.includes(document.body.dataset.resolution)?document.body.dataset.resolution:'fhd';}} catch(_){}
+try { const saved=JSON.parse(localStorage.getItem(KEY)||'null'); if(saved){prefs.mode=saved.mode==='mobile'?'mobile':'pc';prefs.pc=desktops.includes(saved.pc)?saved.pc:'fhd';}else{prefs.mode=document.body.dataset.resolution==='mobile'||matchMedia('(max-width: 760px)').matches?'mobile':'pc';prefs.pc=desktops.includes(document.body.dataset.resolution)?document.body.dataset.resolution:'fhd';}} catch(_){prefs.mode=matchMedia('(max-width: 760px)').matches?'mobile':'pc';}
 const settings=document.querySelector('#settings');
 if(!settings||!window.setResolutionMode)return;
 const card=document.createElement('div');card.className='card mws-device-card';

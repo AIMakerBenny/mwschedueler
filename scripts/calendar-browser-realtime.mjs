@@ -25,8 +25,9 @@ export async function launchCalendarBrowser(dir){
     const {sessionId}=await send('Target.attachToTarget',{targetId,flatten:true});
     await send('Target.activateTarget',{targetId});
     const evaluate=async expression=>{const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true},sessionId);assert(!result.exceptionDetails,JSON.stringify(result.exceptionDetails));return result.result.value};
-    async function navigate(url,width,height){
-      await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false},sessionId);
+    async function navigate(url,width,height,mobile=false){
+      await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile},sessionId);
+      await send('Emulation.setTouchEmulationEnabled',{enabled:mobile},sessionId);
       await send('Page.navigate',{url},sessionId);
       let ready=false;
       for(let retry=0;retry<320&&!ready;retry++){

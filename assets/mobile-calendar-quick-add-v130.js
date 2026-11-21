@@ -22,12 +22,11 @@ style.textContent=`
 .mws-mobile-calendar-quick-add-v130{display:none}
 body[data-device-mode="mobile"] .mws-mobile-calendar-quick-add-v130{
   position:fixed;
-  left:50%;
+  right:12px;
   bottom:calc(var(--mws-mobile-nav-offset-v130,68px) + 14px);
   z-index:4850;
-  width:min(72vw,420px);
+  width:126px;
   pointer-events:none;
-  transform:translateX(-50%);
 }
 body[data-device-mode="mobile"] .mws-mobile-calendar-quick-add-v130.is-visible{
   display:block;
@@ -42,31 +41,29 @@ body[data-device-mode="mobile"] .mws-mobile-calendar-quick-add-v130 #newEventBtn
   justify-content:space-between!important;
   width:100%!important;
   min-width:0!important;
-  height:58px!important;
-  min-height:58px!important;
+  height:44px!important;
+  min-height:44px!important;
   margin:0!important;
-  padding:0 18px 0 22px!important;
+  padding:0 10px!important;
   border:1px solid color-mix(in srgb,var(--text) 18%,var(--border))!important;
   border-radius:999px!important;
   background:color-mix(in srgb,var(--panel) 94%,#000)!important;
   color:var(--text)!important;
-  font-size:14px!important;
+  font-size:12px!important;
   font-weight:850!important;
   letter-spacing:-.02em!important;
-  box-shadow:0 16px 42px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.04)!important;
+  box-shadow:0 4px 12px rgba(0,0,0,.3)!important;
   pointer-events:auto!important;
-  backdrop-filter:blur(16px);
-  -webkit-backdrop-filter:blur(16px);
 }
 body[data-device-mode="mobile"] .mws-mobile-calendar-quick-add-v130 #newEventBtn::after{
   content:'+';
   display:grid;
   place-items:center;
-  width:34px;
-  height:34px;
-  margin-left:14px;
+  width:20px;
+  height:20px;
+  margin-left:4px;
   color:var(--text);
-  font-size:32px;
+  font-size:23px;
   font-weight:300;
   line-height:1;
 }
@@ -78,8 +75,8 @@ body[data-device-mode="mobile"] #calendar[data-mobile-calendar-view="month"]{
   padding-bottom:78px!important;
 }
 @media(max-width:420px){
-  body[data-device-mode="mobile"] .mws-mobile-calendar-quick-add-v130{width:min(78vw,360px)}
-  body[data-device-mode="mobile"] .mws-mobile-calendar-quick-add-v130 #newEventBtn{height:54px!important;min-height:54px!important;padding-left:18px!important}
+  body[data-device-mode="mobile"] .mws-mobile-calendar-quick-add-v130{width:122px}
+  body[data-device-mode="mobile"] .mws-mobile-calendar-quick-add-v130 #newEventBtn{height:44px!important;min-height:44px!important;padding-left:10px!important}
 }
 `;
 document.head.appendChild(style);
