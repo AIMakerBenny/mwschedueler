@@ -20,6 +20,10 @@ jobs:
           node-version: '24'
       - run: npm install --no-save --package-lock=false playwright
       - run: npx playwright install chromium
+      - name: Install capture codecs and Korean fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg fonts-noto-cjk
       - run: node scripts/qa-career-motion-browser.mjs
         env:
           CAREER_QA_MODE: ${{ matrix.mode }}
