@@ -197,7 +197,7 @@
     const barHost=node('div','cv-bar-host');barHost.append(bar);
     const toolbar=node('div','cv-toolbar');
     const info=node('div','cv-summary');
-    const count=node('strong','',dated.length+'개 기록');info.append(count);
+    const count=node('strong','',rows.length+'개 기록');info.append(count);
     const searchBox=node('div','cv-searchbox');
     const query=node('input','cv-search');
     query.type='search'; query.placeholder='전체 기록 검색'; query.setAttribute('aria-label','전체 타임라인 검색');
@@ -280,7 +280,7 @@
       const detailsTags=r.tags.filter(t=>!t.includes('미확인'));
       if(detailsTags.length)detail.append(node('small','',detailsTags.join(' · ')));
       card.append(summary,detail);entry.append(card);entries.set(r.id,entry);
-      anim.push(entry);
+      if(r.year!=='레거시')anim.push(entry);
       card.addEventListener('toggle',()=>{schedule();detail.getAnimations?.().forEach(animation=>animation.cancel());if(card.open&&!reduced()&&!entry.hidden&&detail.animate){detail.animate([{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'translateY(0)'}],{duration:260,easing:'ease-out'});}});
       return entry;
     }
@@ -312,12 +312,7 @@
     const legacyHead=node('h2','cv-legacy-heading','레거시');legacy.append(legacyHead);
     const legacyGrid=node('div','cv-legacy-grid'); legacy.append(legacyGrid);
     const legacyRecords=byYear('레거시');
-    for(let i=0;i<legacyRecords.length;i+=2){
-      const pair=node('div','cv-pair');
-      const a=makeCard(legacyRecords[i]);a.classList.add('cv-left');a.dataset.legacy='true';pair.append(a);
-      if(legacyRecords[i+1]){const b=makeCard(legacyRecords[i+1]);b.classList.add('cv-right');b.dataset.legacy='true';pair.append(b);}
-      pair.append(node('i','cv-junction'));legacyGrid.append(pair);
-    }
+    for(const r of legacyRecords){const entry=makeCard(r);entry.dataset.legacy='true';legacyGrid.append(entry);}
     const legacyButton=button('cv-legacy-link','레거시',()=>jump(legacyHead)); nav.append(legacyButton);
     const viewport=()=>{
       if(scrollRoot&&scrollRoot!==document.scrollingElement){const r=scrollRoot.getBoundingClientRect();return {top:Math.max(0,r.top),bottom:Math.min(innerHeight,r.bottom)};}
@@ -343,15 +338,19 @@
       const tail=scrollRange>2?ease(1-distanceToEnd/Math.max(150,usable*.38)):1;
       const legacyTop=legacyHead.getBoundingClientRect().top;
       const compact=matchMedia('(max-width:700px)').matches;
-      const pads=new Map([axis,legacyGrid].map(el=>[el,parseFloat(getComputedStyle(el).paddingRight)||0]));
+      const pad=parseFloat(getComputedStyle(axis).paddingRight)||0;
+      const focusY=activeTop+usable*.48;
+      const axisRect=axis.getBoundingClientRect();
+      const focus=Math.max(0,Math.min(axisRect.height,focusY-axisRect.top));
+      axis.style.setProperty('--cv-focus',focus+'px');
+      panel.style.setProperty('--cv-light',Math.max(0,Math.min(axisRect.height,focus)+axisRect.top-panel.getBoundingClientRect().top)+'px');
       const states=anim.filter(entry=>!entry.hidden).map(entry=>{
         const r=entry.getBoundingClientRect();
         const height=entry.firstElementChild.open?entry.querySelector('summary').offsetHeight:r.height;
         const progress=ease((arrivalStart-(r.top+height/2))/travel);
         const p=Math.max(progress,tail);
-        const parent=entry.closest('.cv-axis,.cv-legacy-grid');
-        const width=entry.offsetWidth;
-        const drift=((pads.get(parent)||0)+width*(compact?.18:.24))*(reduced()?.45:1);
+        const single=entry.parentElement.dataset.single==='true';
+        const drift=(compact?Math.max(12,pad-3):single?Math.min(110,pad+24):Math.max(32,pad-3))*(reduced()?.45:1);
         return [entry,p,r.bottom>=activeTop-120&&r.top<=bottom+120,drift,compact||entry.classList.contains('cv-right')?1:-1,compact];
       });
       let current=null;
@@ -369,7 +368,10 @@
         motion.set(entry,{value,target,visible,drift,direction,compact,applied:previous?.applied});
       }
       const legacyActive=!legacy.hidden&&(legacyTop<=activeTop+usable*.48||distanceToEnd<=2);
-      for(const [y,b] of yearButtons)b.setAttribute('aria-current',String(!legacyActive&&current===y));
+      let currentMonth=null;
+      for(const month of months){if(!month.hidden&&!month.parentElement.hidden&&month.getBoundingClientRect().top<=focusY)currentMonth=month;}
+      for(const month of months)month.firstElementChild.dataset.current=String(!legacyActive&&month===currentMonth);
+      for(const [y,b] of yearButtons){const active=!legacyActive&&current===y;b.setAttribute('aria-current',String(active));markers.get(y).dataset.current=String(active);}
       legacyButton.setAttribute('aria-current',String(legacyActive));
       snapNext=false;dirty=false;
     }
@@ -395,10 +397,10 @@
         // Direct numeric transforms work even on browsers with incomplete CSS calc support.
         const v=state.value, drift=(1-v)*state.drift, rm=reduced();
         const card=entry.firstElementChild;
-        card.style.transform=`translate3d(${(state.direction*drift).toFixed(2)}px,${(rm?0:(1-v)*(state.compact?24:28)).toFixed(2)}px,0) scale(${(rm?1:1-(1-v)*(state.compact?.18:.24)).toFixed(4)})`;
-        card.style.opacity=rm?'1':(.42+.58*v).toFixed(3);
+        card.style.transform=`translate3d(${(state.direction*drift).toFixed(2)}px,${(rm?0:(1-v)*(state.compact?8:14)).toFixed(2)}px,0) scale(${(rm?1:1-(1-v)*(state.compact?.04:.06)).toFixed(4)})`;
+        card.style.opacity=rm?'1':(.82+.18*v).toFixed(3);
         entry.style.setProperty('--cv-drift',drift.toFixed(2)+'px');
-        entry.style.setProperty('--cv-branch',String(clamp((v-.46)/.54)));
+        entry.style.setProperty('--cv-branch',String(ease((v-.28)/.72)));
       }
       if(moving||dirty)raf=requestAnimationFrame(update);else lastFrame=0;
     }
@@ -435,7 +437,7 @@
         if(entry.hidden)motion.delete(entry);
         if(ids)entry.dataset.match=String(ids.has(id));else entry.removeAttribute('data-match');
       }
-      for(const pair of panel.querySelectorAll('.cv-pair'))pair.hidden=!pair.querySelector('.cv-entry:not([hidden])');
+      for(const pair of axis.querySelectorAll('.cv-pair')){const n=pair.querySelectorAll('.cv-entry:not([hidden])').length;pair.hidden=!n;pair.dataset.single=String(n===1);}
       for(const month of months)month.hidden=!month.querySelector('.cv-entry:not([hidden])');
       for(const [y,marker] of markers){
         const visible=byYear(y).filter(r=>!ids||ids.has(r.id)).length;
@@ -445,7 +447,7 @@
       legacy.hidden=!legacy.querySelector('.cv-entry:not([hidden])');legacyButton.disabled=legacy.hidden;
       axis.hidden=!axis.querySelector('.cv-entry:not([hidden])');empty.hidden=!ids||ids.size>0;
       exportButton.disabled=ids?.size===0;
-      count.textContent=(ids?ids.size:dated.length)+'개 기록';
+      count.textContent=(ids?ids.size:rows.length)+'개 기록';
       snapNext=true;schedule();
     }
     function renderSearch(){

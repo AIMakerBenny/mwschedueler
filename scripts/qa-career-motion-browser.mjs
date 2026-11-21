@@ -79,8 +79,8 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   await page.locator('.cv-panel').waitFor({state:'visible'});
   await page.locator('.cv-axis').waitFor({state:'visible'});
   await pause(350);
-  assert.equal(await page.locator('.career-tree li').count(),104);
-  assert.equal(await page.locator('.cv-axis .cv-entry').count(),97);
+  assert.equal(await page.locator('.career-tree li').count(),105);
+  assert.equal(await page.locator('.cv-axis .cv-entry').count(),98);
   assert.equal(await page.locator('.cv-legacy .cv-entry').count(),7);
   assert(!((await page.locator('.cv-legacy').innerText()).includes('미확인')));
   assert.equal(await page.locator('.cv-map-dots i').count(),0);
@@ -154,9 +154,10 @@ try{
     const wheelDistance=(await position(page))-target;
     const movement=Math.abs(partial.shift)-Math.abs(incoming.shift);
     assert(wheelDistance>=100&&wheelDistance<=145,JSON.stringify({wheelDistance}));
-    assert(movement>(width>700?60:22),JSON.stringify({partial,incoming,movement}));
-    assert(incoming.scale>partial.scale+.045,JSON.stringify({partial,incoming}));
-    assert(incoming.opacity>partial.opacity+.12,JSON.stringify({partial,incoming}));
+    assert(movement>(width>700?20:6),JSON.stringify({partial,incoming,movement}));
+    assert(incoming.scale>partial.scale+.008,JSON.stringify({partial,incoming}));
+    assert(partial.opacity>=.82&&incoming.opacity>partial.opacity+.025,JSON.stringify({partial,incoming}));
+    assert.notEqual(partial.branch,incoming.branch);
     await page.screenshot({path:output+'/2024-wheel-'+width+'.png'});
     await page.mouse.wheel(0,-120);await pause(320);
     const reversed=await inspect(entry);
@@ -199,7 +200,7 @@ try{
     assert.match(await page.locator('.cv-entry[data-selected=true]').innerText(),/죠뗌므/);
     assert(await page.locator('.cv-entry[data-selected=true]').isVisible());
     await search(page,'');await pause(150);
-    assert.equal(await page.locator('.cv-entry:visible').count(),104);
+    assert.equal(await page.locator('.cv-entry:visible').count(),105);
     const restored=await position(page);
     assert(Math.abs(restored-saved)<3,'Search did not restore scroll: '+JSON.stringify({saved,restored}));
     for(const [q,n] of [['코치',null],['VR 우승',4],['WBD',2],['왁타버스 야구',2],['F1 챔스',1],['브축대',1],['굳가대표',1],['데이토나',1]]){
@@ -211,16 +212,13 @@ try{
     await page.locator('.cv-legacy-link').click();await pause(250);
     assert.equal(await page.locator('.cv-legacy .cv-entry').count(),7);
     const legacyEntry=page.locator('.cv-legacy .cv-entry').first();
-    const legacyBase=await position(page), legacySettled=await inspect(legacyEntry);
     const lastDated=await inspect(page.locator('.cv-axis .cv-entry').last());
-    assert(legacySettled.p>.99&&lastDated.p>.99,JSON.stringify({legacySettled,lastDated}));
-    await scrollTo(page,legacyBase-height*.65);
-    const legacyDetached=await inspect(legacyEntry);
-    await scrollTo(page,legacyBase);
-    const legacyReattached=await inspect(legacyEntry);
-    assert(legacySettled.p>legacyDetached.p+.2,JSON.stringify({legacySettled,legacyDetached}));
-    assert(Math.abs(legacySettled.p-legacyReattached.p)<.02);
-    assert(Math.abs(legacyDetached.shift)>Math.abs(legacyReattached.shift));
+    assert(lastDated.p>.99,JSON.stringify(lastDated));
+    assert.equal(await page.locator('.cv-legacy .cv-pair,.cv-legacy .cv-junction').count(),0);
+    assert.equal(await page.locator('.cv-legacy-grid').evaluate(e=>getComputedStyle(e,'::before').content),'none');
+    assert.equal(await legacyEntry.evaluate(e=>e.firstElementChild.style.transform),'');
+    await legacyEntry.locator('summary').click();await pause(350);
+    assert(await legacyEntry.locator('.cv-detail').isVisible());
     await page.screenshot({path:output+'/legacy-'+width+'.png'});
     assert.deepEqual(errors,[]);
     console.log('PASS',width,height);
@@ -263,8 +261,8 @@ try{
     const after=await inspect(reducedEntry);
     await rm.page.mouse.wheel(0,-120);await pause(300);
     const reverse=await inspect(reducedEntry);
-    assert(Math.abs(after.shift-before.shift)>60,JSON.stringify({before,after,reverse}));
-    assert(before.opacity<.9&&after.opacity>before.opacity+.12);assert(before.scale<.93&&after.scale>before.scale+.045);
+    assert(Math.abs(after.shift-before.shift)>20,JSON.stringify({before,after,reverse}));
+    assert(before.opacity>=.82&&after.opacity>before.opacity+.025);assert(before.scale<.99&&after.scale>before.scale+.008);
     assert(Math.abs(before.shift-reverse.shift)<2);
     console.log('PASS full scroll motion despite OS reduced motion',JSON.stringify({before,after,reverse}));
     await rm.page.screenshot({path:output+'/os-reduced-full-motion.png'});

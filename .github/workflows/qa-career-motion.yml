@@ -1,7 +1,7 @@
 name: Career timeline motion browser QA
 on:
   push:
-    branches: ['qa/career-motion-20261121', 'qa/career-history-20261122']
+    branches: ['qa/career-motion-20261121', 'qa/career-history-20261122', 'qa/career-refine-20261122']
   workflow_dispatch:
 permissions:
   contents: read
