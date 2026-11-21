@@ -1,0 +1,37 @@
+name: Workspace response and performance QA
+on:
+  pull_request:
+    branches: [cloudflare-production]
+    paths:
+      - 'assets/workspace-ui-v176.js'
+      - 'assets/workspace-clean-v1.css'
+      - 'majoku-castle.html'
+      - 'scripts/qa-workspace-performance-v1-browser.mjs'
+      - '.github/workflows/qa-workspace-performance-v1.yml'
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Before and after Chromium profile
+        env:
+          MWS_PERF_BASE_REF: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/qa-workspace-performance-v1-browser.mjs
+      - name: Navigation, stable layout, and calendar details regression
+        run: |
+          node scripts/qa-workspace-navigation-v1-browser.mjs
+          node scripts/qa-workspace-clean-v1-browser.mjs
+          node scripts/qa-sidebar-rail-scrollbar-v1-browser.mjs
+          node scripts/qa-calendar-details-frame-pacing-v5-browser.mjs
+      - name: Cloud save and login regression
+        run: |
+          node --test scripts/qa-login-ready-v2.test.mjs
+          node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs

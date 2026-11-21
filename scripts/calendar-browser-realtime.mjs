@@ -41,6 +41,9 @@ export async function launchCalendarBrowser(dir){
       await send('Input.dispatchMouseEvent',{type:'mouseReleased',x,y,button:'left',clickCount:1},sessionId);
     }
     const setReducedMotion=enabled=>send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:enabled?'reduce':'no-preference'}]},sessionId);
-    return {navigate,evaluate,clickPoint,setReducedMotion,close};
+    const movePoint=(x,y)=>send('Input.dispatchMouseEvent',{type:'mouseMoved',x,y},sessionId);
+    const enablePerformance=()=>send('Performance.enable',{},sessionId);
+    const performanceMetrics=async()=>Object.fromEntries((await send('Performance.getMetrics',{},sessionId)).metrics.map(({name,value})=>[name,value]));
+    return {navigate,evaluate,clickPoint,movePoint,enablePerformance,performanceMetrics,setReducedMotion,close};
   }catch(error){await close();throw error}
 }
