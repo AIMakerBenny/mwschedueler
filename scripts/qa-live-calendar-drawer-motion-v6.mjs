@@ -25,7 +25,7 @@ try{
       if(!document.body)return null;
       const publicMode=document.body.classList.contains('mws-public-mode');
       const visibleGate=gate&&getComputedStyle(gate).display!=='none'&&gate.getBoundingClientRect().width>0;
-      if(document.readyState==='complete'&&visibleGate&&$('#mwsModePublic')&&!$('#mwsLoginSubmit')?.disabled){
+      if(!$('#mws-public-entry-style')&&document.readyState==='complete'&&visibleGate&&$('#mwsModePublic')&&!$('#mwsLoginSubmit')?.disabled){
         // Clicking before the runtime binds the form submits a native navigation.
         // A successful mode selection proves its handler has been installed.
         if($('#mwsLoginForm')?.dataset.mode!=='public')$('#mwsModePublic').click();
@@ -33,7 +33,7 @@ try{
           window.__mwsPopoverQaLoginAt=performance.now();$('#mwsLoginSubmit')?.click();
         }
       }
-      if(document.readyState==='complete'&&publicMode&&!visibleGate&&$('#calendarGrid .mini-event[data-evid]')&&$('#calendarEventDetailsV1')){
+      if(document.readyState==='complete'&&publicMode&&!visibleGate&&window.__mwsAppReadyV130&&!document.body.classList.contains('mws-app-loading')&&$('#calendarGrid .mini-event[data-evid]')&&$('#calendarEventDetailsV1')){
         // The welcome notice is a native modal; verify its live content and
         // dismiss it normally before interacting with the calendar behind it.
         const notice=$('#mwsAnnouncementDialog[open]');
@@ -57,6 +57,15 @@ try{
   assert(ready,'No stable hydrated public calendar: '+JSON.stringify(lastState));
   assert(ready.cards>0&&ready.version&&!ready.reduced&&ready.noPreferenceControl,JSON.stringify(ready));
   if(ready.announcementEnabled){assert(ready.announcement?.count===3&&ready.announcement.loaded&&ready.announcement.initial==='0'&&ready.announcement.hideToday,JSON.stringify(ready));console.log('MWS_LIVE_ANNOUNCEMENTS',JSON.stringify(ready.announcement))}
+  const publicEntry=await browser.evaluate(`(()=>{
+    const $=id=>document.getElementById(id),gate=$('mwsAccessGate'),button=$('mwsChangeModeBtn'),app=document.querySelector('.app');
+    const visible=()=>!gate.classList.contains('hidden')&&getComputedStyle(gate).display!=='none';
+    const initial=!visible()&&!app.inert&&document.body.dataset.mwsMode==='public'&&!button.disabled&&button.textContent==='관리자 로그인';
+    button.click();const form=visible()&&app.inert&&$('mwsLoginForm').dataset.mode==='admin'&&$('mwsLoginTitle').textContent==='관리자 로그인'&&getComputedStyle($('mwsModePublic').parentElement).display==='none';
+    $('mwsLoginBack').click();const returned=!visible()&&!app.inert&&document.body.dataset.mwsMode==='public';
+    return {initial,form,returned};
+  })()`);
+  assert(publicEntry.initial&&publicEntry.form&&publicEntry.returned,JSON.stringify(publicEntry));console.log('MWS_LIVE_PUBLIC_ENTRY',JSON.stringify(publicEntry));
   const surface=await browser.evaluate(String.raw`(()=>{
     const card=document.querySelector('#calendarGrid .mini-event[data-evid]'),preview=document.querySelector('#calendarEventPreview'),popover=document.querySelector('#calendarEventDetailsV1');
     const alpha=color=>{const canvas=document.createElement('canvas');canvas.width=canvas.height=1;const ctx=canvas.getContext('2d');ctx.fillStyle=color;ctx.fillRect(0,0,1,1);return ctx.getImageData(0,0,1,1).data[3]};

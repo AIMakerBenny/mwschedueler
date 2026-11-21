@@ -8,7 +8,7 @@ import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 
 const read=p=>readFileSync(new URL('../'+p,import.meta.url));
 const index=read('index.html').toString();
-assert(index.includes('assets/announcement-carousel-v1.js?v=2')&&index.includes('assets/announcement-carousel-v1.css?v=1'));
+assert(index.includes('assets/announcement-carousel-v1.js?v=3')&&index.includes('assets/announcement-carousel-v1.css?v=1'));
 const styles=[...index.matchAll(/<link rel="stylesheet" href="(assets\/[^"?]+)[^"]*">|<style(?:\s[^>]*)?>([\s\S]*?)<\/style>/gi)]
   .map(m=>m[1]?m[0]:m[0]).join('\n');
 const fixture='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+styles+'</head><body class="mws-gated mws-premium" data-theme="neon"><div id="mwsAccessGate">Login gate</div><div class="app"><main class="main"><button id="background">Background action</button></main></div><script src="assets/announcement-carousel-v1.js?v=2"></script></body></html>';

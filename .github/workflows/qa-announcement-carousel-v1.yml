@@ -7,6 +7,9 @@ on:
       - 'assets/announcement-carousel-v1.*'
       - 'assets/announcements/**'
       - 'scripts/qa-announcement-carousel-v1-browser.mjs'
+      - 'scripts/qa-public-entry-v1-browser.mjs'
+      - 'scripts/qa-login-ready-v2.test.mjs'
+      - 'src/cf-v111-entry.js'
       - '.github/workflows/qa-announcement-carousel-v1.yml'
 permissions:
   contents: read
@@ -21,3 +24,5 @@ jobs:
           node-version: '24'
       - run: node --check assets/announcement-carousel-v1.js
       - run: node scripts/qa-announcement-carousel-v1-browser.mjs
+      - run: node --test scripts/qa-login-ready-v2.test.mjs
+      - run: node scripts/qa-public-entry-v1-browser.mjs

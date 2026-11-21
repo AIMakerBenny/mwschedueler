@@ -60,33 +60,35 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <link rel="stylesheet" href="assets/wardogs-intro-v1.css?v=1.0.0-phase118">
 <link rel="stylesheet" href="assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-frame140-frame144-aperture152-medicaperture165-classapertures166-unassigned168">
 </head>
-<body data-theme="neon" class="mws-gated mws-premium" data-build-version="MWS V 1.4.0">
-<div id="mwsAccessGate" aria-modal="true" role="dialog">
+<body data-theme="neon" class="mws-premium mws-public-mode mws-app-loading" data-mws-mode="public" data-build-version="MWS V 1.4.0">
+<div id="mwsAccessGate" class="hidden" aria-modal="true" role="dialog" aria-labelledby="mwsLoginTitle">
   <div class="mws-login-shell">
-    <div class="mws-login-brand">MAWANG WORKSPACE</div>
-    <div class="mws-login-title">접속 모드를 선택하세요</div>
-    <div class="mws-login-sub">Admin은 공유 데이터를 저장하고, Public은 같은 기능을 세션 안에서 자유롭게 사용할 수 있습니다.</div>
-    <div class="mws-mode-grid">
-      <button type="button" class="mws-mode-card active" id="mwsModeAdmin"><div class="mws-mode-name">Admin</div><div class="mws-mode-desc">관리자 아이디와 비밀번호로 로그인합니다. 일정, 연락처 등 공유 데이터를 편집하고 온라인에 저장할 수 있습니다. 개인 화면 설정은 이 기기에만 저장됩니다.</div></button>
-      <button type="button" class="mws-mode-card" id="mwsModePublic"><div class="mws-mode-name">Public</div><div class="mws-mode-desc">아이디와 비밀번호 없이 입장합니다. Admin과 같은 기능을 사용할 수 있지만 변경사항은 온라인에 저장되지 않습니다.</div></button>
+    <button type="button" id="mwsLoginClose" class="mws-login-close" aria-label="Public으로 돌아가기">×</button>
+    <div class="mws-login-lock" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+    <div class="mws-login-title" id="mwsLoginTitle">관리자 로그인</div>
+    <div class="mws-login-sub">관리자만 공유 일정을 온라인에 저장하고 관리할 수 있습니다.</div>
+    <div class="mws-mode-grid" hidden>
+      <button type="button" class="mws-mode-card active" id="mwsModeAdmin">Admin</button>
+      <button type="button" class="mws-mode-card" id="mwsModePublic">Public</button>
     </div>
-    <form id="mwsLoginForm">
+    <form id="mwsLoginForm" data-mode="admin">
       <div id="mwsAdminFields">
-        <input class="mws-login-input" id="mwsLoginId" autocomplete="username" placeholder="Admin ID" aria-label="Admin ID">
-        <input class="mws-login-input" id="mwsLoginPw" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password">
+        <label for="mwsLoginId">관리자 아이디</label><input class="mws-login-input" id="mwsLoginId" autocomplete="username" placeholder="아이디 입력" aria-label="관리자 아이디">
+        <label for="mwsLoginPw">비밀번호</label><input class="mws-login-input" id="mwsLoginPw" type="password" autocomplete="current-password" placeholder="비밀번호 입력" aria-label="비밀번호">
       </div>
-      <div class="mws-login-error" id="mwsLoginError"></div>
+      <div class="mws-login-error" id="mwsLoginError" role="status" aria-live="polite"></div>
       <div class="mws-login-actions">
-        <label class="mws-remember"><input type="checkbox" id="mwsRemember" checked> 다음부터 이 화면 표시 안 함</label>
-        <button class="mws-login-submit" id="mwsLoginSubmit" type="submit">Admin 로그인</button>
+        <label class="mws-remember"><input type="checkbox" id="mwsRemember" checked> 로그인 유지</label>
+        <button class="mws-login-submit" id="mwsLoginSubmit" type="submit">로그인</button>
       </div>
     </form>
+    <button type="button" id="mwsLoginBack" class="mws-login-back">Public으로 돌아가기</button>
   </div>
 </div>
-<div class="mws-access-tools" id="mwsAccessTools" hidden>
+<div class="mws-access-tools" id="mwsAccessTools">
   <span class="mws-access-pill" id="mwsModeBadge">PUBLIC</span>
   <button type="button" class="mws-access-btn" id="mwsAdminManageBtn" hidden>Admin 관리</button>
-  <button type="button" class="mws-access-btn" id="mwsChangeModeBtn">모드 변경</button>
+  <button type="button" class="mws-access-btn" id="mwsChangeModeBtn" disabled>관리자 로그인</button>
 </div>
 <div id="mwsAdminModal" aria-hidden="true">
   <div class="mws-admin-box">
@@ -104,7 +106,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 
 <button type="button" id="mobileNavToggle" class="mobile-nav-toggle" aria-label="메뉴 열기" aria-expanded="false" title="메뉴 열기"><span aria-hidden="true">›</span></button>
 <div id="mobileNavBackdrop" class="mobile-nav-backdrop" aria-hidden="true"></div>
-<div class="app">
+<div class="app" inert>
   <aside class="sidebar">
     <div class="sidebar-head">
       <div class="logo"><span class="logo-full">MAWANG</span><span class="logo-mini">M</span><small>컨텐츠 스케줄러</small></div>
@@ -182,7 +184,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
   <main class="main">
     <div class="topbar">
       <div class="top-left"><h1 id="pageTitle">캘린더</h1><div class="subtle" id="todayText"></div><button type="button" id="mwsLegacyBackV1" class="mws-legacy-back-v1" data-tab="legacy" data-legacy-link-v1 hidden>레거시 목록으로</button></div>
-      <div class="clock"><span class="sync-status"><span class="sync-dot"></span><span id="syncStatusText">전체 화면 동기화</span></span><span id="clockText"></span><button class="primary" id="newEventBtn" title="컨텐츠 추가" aria-label="컨텐츠 추가">컨텐츠 추가</button></div>
+      <div class="clock"><span class="sync-status"><span class="sync-dot"></span><span id="syncStatusText">데이터 불러오는 중</span></span><span id="clockText"></span><button class="primary" id="newEventBtn" title="컨텐츠 추가" aria-label="컨텐츠 추가">컨텐츠 추가</button></div>
     </div>
 
     
@@ -4669,6 +4671,31 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .sidebar-save-v572{padding-left:0
 <link rel="stylesheet" href="assets/ladder-wizard-v1.css?v=10">
 <script src="assets/ladder-wizard-v1.js?v=11"></script>
 <link rel="stylesheet" href="assets/announcement-carousel-v1.css?v=1">
-<script src="assets/announcement-carousel-v1.js?v=2"></script>
+<style id="mws-public-entry-style">
+body.mws-gated .app{filter:none!important;opacity:1!important}
+body.mws-premium #mwsAccessGate{background:var(--bg,#080c15)!important;overflow:auto;align-items:flex-start;padding:clamp(24px,10vh,96px) 16px}
+#mwsAccessGate.hidden,#mwsAccessGate [hidden],#mwsAccessTools [hidden],#mwsAccessTools[hidden]{display:none!important}
+body.mws-premium #mwsAccessGate::before,body.mws-premium #mwsAccessGate::after{display:none!important}
+body.mws-premium #mwsAccessGate .mws-login-shell{box-sizing:border-box;width:min(410px,100%)!important;padding:30px!important;background:var(--panel,#111722)!important;border:1px solid var(--border,#303743)!important;border-radius:18px!important;box-shadow:none!important;backdrop-filter:none!important;text-align:center}
+#mwsAccessGate .mws-login-shell::before{display:none!important}
+#mwsAccessGate .mws-login-lock{width:48px;height:48px;display:grid;place-items:center;margin:0 auto 16px;border:1px solid var(--border);border-radius:50%;color:var(--muted);background:var(--input)}
+#mwsAccessGate .mws-login-lock svg{width:23px;height:23px}
+body.mws-premium #mwsAccessGate .mws-login-title{font-size:22px!important;margin:0!important;line-height:1.35!important;text-shadow:none!important;color:var(--text)}
+#mwsAccessGate .mws-login-sub{font-size:12px!important;line-height:1.55!important;margin:7px 0 24px!important;color:var(--muted)!important}
+#mwsAccessGate #mwsAdminFields{grid-template-columns:1fr;gap:7px;text-align:left;margin:0!important}
+#mwsAccessGate #mwsAdminFields label{font-size:12px;color:var(--muted);margin-top:7px}
+#mwsAccessGate #mwsAdminFields input{box-sizing:border-box;width:100%;min-height:42px;background:var(--input)!important;border:1px solid var(--border)!important;color:var(--text)!important;border-radius:10px!important;padding:10px 12px!important}
+#mwsAccessGate #mwsAdminFields input:focus{border-color:var(--accent)!important}
+#mwsAccessGate .mws-login-error{min-height:0;margin:9px 0;text-align:left;color:var(--danger,#ff8b9b)}
+#mwsAccessGate .mws-login-actions{display:grid;gap:14px;margin-top:14px;text-align:left}
+#mwsAccessGate .mws-remember{font-size:12px;color:var(--muted);justify-content:flex-start}
+#mwsAccessGate .mws-login-submit{width:100%;min-height:42px;background:var(--text,#e5e7eb)!important;color:var(--bg,#080c15)!important;border:0!important;border-radius:10px!important;box-shadow:none!important}
+#mwsAccessGate .mws-login-close{position:absolute;top:12px;right:12px;background:transparent;border:0;color:var(--muted);font-size:22px;line-height:1;width:32px;height:32px;padding:0;box-shadow:none}
+#mwsAccessGate .mws-login-back{margin-top:15px;padding:6px 8px;background:transparent;border:0;color:var(--muted);font-size:12px;box-shadow:none}
+#mwsAccessGate .mws-login-back:hover,#mwsAccessGate .mws-login-close:hover{color:var(--text)}
+#mwsChangeModeBtn:disabled{opacity:.55;cursor:wait}
+@media(max-width:480px){body.mws-premium #mwsAccessGate{padding:24px 12px}body.mws-premium #mwsAccessGate .mws-login-shell{padding:22px!important}}
+</style>
+<script src="assets/announcement-carousel-v1.js?v=3"></script>
 </body>
 </html>

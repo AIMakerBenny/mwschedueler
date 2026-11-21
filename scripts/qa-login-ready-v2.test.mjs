@@ -13,6 +13,9 @@ for(const path of ['assets/cloud-v1.1.js','assets/cloud-runtime-v130.js']){
     assert.match(patched,/await hydrate\(chosen\);\s*installLazyTabBridge\(\);\s*markAppReady\(chosen,false\)/);
     assert.match(patched,/window\.__mwsAppReadyV130=Boolean\(chosen==='admin'&&currentAdmin&&!offline&&loadedParts.has\('core'\)&&manifest\?\.parts\)/);
     assert.match(patched,/로그인 완료 · 필수 데이터/);
+    assert.equal((patched.match(/async function init\(/g)||[]).length,1,'exactly one startup implementation');
+    assert.match(patched,/addEventListener\('click',changeAccessMode\)/);
+    assert.match(patched,/hideGate\(\);\s*setEntryBusy\(false\)/);
   });
   test(path+' slow cache does not block confirmed server data, absent server part fails closed',async()=>{
     const start=raw.indexOf('async function loadPartWithCache('),end=raw.indexOf('async function hydrate(',start);
@@ -40,6 +43,47 @@ test('gate releases after verified hydration even when optional UI ready event n
   const publicMode=make('public',false);publicMode.mark('public');assert.equal(publicMode.events[0].detail.adminReady,false);assert.equal(publicMode.scope.window.__mwsAppReadyV130,true);publicMode.emitReady();assert.equal(publicMode.revealed(),1);
   const stale=make('admin',true);stale.mark('admin');stale.scope.hydrationSeq++;stale.runTimeout();assert.equal(stale.revealed(),0);
   const invalid=make('admin',false);assert.throws(()=>invalid.mark('admin'),/관리자 필수 데이터 준비 실패/);assert.equal(invalid.revealed(),0);
+});
+test('Public first entry uses server verified remembered sessions only, without login or logout requests',async()=>{
+  for(const path of ['assets/cloud-v1.1.js','assets/cloud-runtime-v130.js']){
+    const patched=transform(file(path));
+    const source=patched.slice(patched.indexOf('  async function init(){'),patched.indexOf('  async function loadAdminList('));
+    for(const [name,remembered,response,expected,requests] of [
+      ['new visitor',false,null,'public',0],['valid',true,{authenticated:true,user:{id:1}},'admin',1],
+      ['expired',true,{authenticated:false},'public',1],['network error',true,Error('network'),'public',1],
+      ['malformed',true,{authenticated:true},'public',1]
+    ]){
+      const calls=[],storage=new Map(remembered?[['remember','1'],['mode','admin']]:[]);
+      const scope={mode:null,currentAdmin:null,REMEMBER_KEY:'remember',MODE_KEY:'mode',
+        localStorage:{getItem:k=>storage.get(k),removeItem:k=>storage.delete(k)},
+        installSaveBridge(){},bindUi(){},selectLoginMode(){},applyModeUi(){assert.equal(scope.mode,'public')},setEntryBusy(){},
+        timeout:p=>p,validateCacheSchema:async()=>{},
+        fetchJson:async url=>{calls.push(url);if(response instanceof Error)throw response;return response},
+        enterAppShell(chosen){calls.push(chosen)},startHydration:async chosen=>calls.push('hydrate:'+chosen)};
+      await vm.runInNewContext(source+'\ninit()',scope);
+      assert.equal(calls.filter(x=>x.startsWith('/')).length,requests,name);
+      assert.deepEqual(calls.slice(-2),[expected,'hydrate:'+expected],name);
+      assert.equal(Boolean(scope.currentAdmin),expected==='admin',name);
+      if(name==='expired'||name==='malformed')assert.equal(storage.has('remember'),false);
+    }
+  }
+});
+test('Public failure is not mistaken for admin login; failed admin hydration falls back safely',async()=>{
+  const output=transform(file('assets/cloud-v1.1.js'));
+  const source=output.slice(output.indexOf('  async function startHydration('),output.indexOf('  async function adminLogin('));
+  for(const first of ['public','admin']){
+    const attempts=[],classes=new Set(),parts=new Set(['core']),events=[];let gates=0;
+    const scope={mode:first,currentAdmin:{id:1},loadedParts:parts,baselineJson:new Map([['core',1]]),dirtyParts:new Set(['core']),
+      window:{__mwsAppReadyV130:false,dispatchEvent:e=>events.push(e)},CustomEvent:class{constructor(type){this.type=type}},console:{error(){}},
+      document:{body:{classList:{add:x=>classes.add(x),remove:x=>classes.delete(x)}}},$:()=>null,
+      hydrate:async chosen=>{attempts.push(chosen);if(attempts.length===1)throw Error('fixture failure')},
+      installLazyTabBridge(){},markAppReady:chosen=>{assert.equal(chosen,'public');scope.window.__mwsAppReadyV130=true},
+      applyModeUi(){},selectLoginMode(){},hideGate(){gates++},showGate(){throw Error('credential gate unexpectedly shown')},setEntryBusy(){},toast(){},enterAppShell(chosen){scope.mode=chosen}};
+    await vm.runInNewContext(source+'\nstartHydration(mode)',scope);
+    assert.equal(scope.mode,'public');assert.equal(scope.currentAdmin,null);assert.equal(parts.size,0);assert.equal(gates,1);
+    assert.deepEqual(attempts,first==='admin'?['admin','public']:['public']);
+    assert.equal(scope.window.__mwsAppReadyV130,first==='admin');
+  }
 });
 test('first full core render runs after favorite and mini-game runtime initialization',()=>{
   const app=file('assets/app-core.js');
