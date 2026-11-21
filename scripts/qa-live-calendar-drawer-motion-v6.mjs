@@ -56,6 +56,11 @@ try{
   }
   assert(ready,'No stable hydrated public calendar: '+JSON.stringify(lastState));
   assert(ready.cards>0&&ready.version&&!ready.reduced&&ready.noPreferenceControl,JSON.stringify(ready));
+  const startup=await browser.evaluate(`(()=>({first:window.__mwsCalendarFirstPaintV1,hydrated:window.__mwsCalendarHydratedV1,metrics:window.mwsV55EgressReport?.().requests.filter(r=>r.type==='calendar-first-paint'||r.type==='hydrate-complete')}))()`);
+  assert(startup.first&&startup.hydrated&&startup.first.at<startup.hydrated.at,JSON.stringify(startup));
+  assert(startup.metrics?.[0]?.type==='calendar-first-paint'&&startup.metrics[0].loaded.join(',')==='core,events',JSON.stringify(startup));
+  assert(['posts','miniGames','wardogs'].every(p=>!startup.hydrated.parts.includes(p)),JSON.stringify(startup));
+  console.log('MWS_LIVE_CALENDAR_FIRST_STARTUP',JSON.stringify(startup));
   if(ready.announcementEnabled){assert(ready.announcement?.count===3&&ready.announcement.loaded&&ready.announcement.initial==='0'&&ready.announcement.hideToday,JSON.stringify(ready));console.log('MWS_LIVE_ANNOUNCEMENTS',JSON.stringify(ready.announcement))}
   const publicEntry=await browser.evaluate(`(()=>{
     const $=id=>document.getElementById(id),gate=$('mwsAccessGate'),button=$('mwsChangeModeBtn'),app=document.querySelector('.app');

@@ -6,6 +6,10 @@ on:
       - 'index.html'
       - 'assets/announcement-carousel-v1.*'
       - 'assets/announcements/**'
+      - 'assets/app-core.js'
+      - 'assets/cloud-v1.1.js'
+      - 'assets/cloud-runtime-v130.js'
+      - 'scripts/qa-live-cloud-save-contract-v1.test.mjs'
       - 'scripts/qa-announcement-carousel-v1-browser.mjs'
       - 'scripts/qa-public-entry-v1-browser.mjs'
       - 'scripts/qa-login-ready-v2.test.mjs'
@@ -25,4 +29,5 @@ jobs:
       - run: node --check assets/announcement-carousel-v1.js
       - run: node scripts/qa-announcement-carousel-v1-browser.mjs
       - run: node --test scripts/qa-login-ready-v2.test.mjs
+      - run: node --test scripts/qa-live-cloud-save-contract-v1.test.mjs
       - run: node scripts/qa-public-entry-v1-browser.mjs

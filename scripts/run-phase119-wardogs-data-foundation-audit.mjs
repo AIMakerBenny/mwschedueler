@@ -36,7 +36,7 @@ export function runPhase119WardogsDataFoundationAudit(){
       "const EXTRA_PARTS=['wardogs'];",
       "const ALL_PARTS=[...CACHE_STORES,...EXTRA_PARTS];",
       "wardogs:['wardogs']",
-      "export:['contactMeta','miniGames','notebook','clipboard','wardogs']",
+      "export:ALL_PARTS",
       "if(part==='wardogs'){try{return await wardogsCacheTx('readonly'",
       "if(part==='wardogs'){try{await wardogsCacheTx('readwrite'",
       "if(part==='wardogs'){const raw=d.wardogs",
