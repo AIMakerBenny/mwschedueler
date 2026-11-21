@@ -17,7 +17,9 @@
       [/릴동파/, '릴파 버츄얼 동계 스포츠 대회'],
       [/WBD/, '왁야대 VR챗 왁타버스 야구 대회 왁타버스야구'],
       [/왁타버스 체육대회/, '왁체대'], [/버츄얼 육상/, '버육대'],
-      [/버츄얼 파이터|버복대/, '버복대 버츄얼 파이터'],
+      [/버츄얼 파이터|버복대/, '버복대 버츄얼 파이터 굳가대표 한국 대표 VR 복싱'],
+      [/VR챗 축구 대전/, '브축대 VR 축구 VRChat 축구'],
+      [/그란투리스모 7/, 'F1 챔스 데이토나 그란투리스모7'],
       [/릴파 버추얼 복싱/, '릴복대'], [/상황극 콘테스트/, '상컨'],
       [/와우 포에버/, 'WOW 월드 오브 워크래프트 와포'],
       [/배그/, 'PUBG 배틀그라운드'], [/배틀크러쉬/, '배틀크러시'],
@@ -26,15 +28,15 @@
     ];
     // Display-only editorial labels. The source dates, facts and tags stay in index.html.
     const presentation = {
-      '그란투리스모 7':['데이토나 개인 1위','와크-무런 · 4강 데이토나 코스','그란투리스모 7 개인 1위'],
+      '그란투리스모 7':['데이토나 개인 1위','와크-무런 · 팀 신짱게이밍','그란투리스모 7 데이토나 1위'],
       '신호등':['총감독 · 몸연기','아이네 뮤직비디오','신호등 총감독'],
       '제8회 상황극 콘테스트':['현수 역 몸연기','낙화','낙화 몸연기'],
       '에고시의 검':['몸연기','단편영화 콘테스트','에고시의 검 몸연기'],
       '그냥 살아!':['팀 감독','고멤가요제 · 김피탕&짬뽕','그냥 살아! 감독'],
       '제9회 상황극 콘테스트':['두 작품 몸연기','실종 · 신형식 역 / PUNK: Shutdown · 레브 역','실종 · PUNK 몸연기'],
-      '버츄얼 파이터':['대표 출전','한일 이벤트 매치','버츄얼 파이터 대표 출전'],
+      '버츄얼 파이터':['굳가대표 선출','버복대 · 한일 VR 복싱 한국 대표','버복대 굳가대표 선출'],
       '왁타버스 배그 대잔치':['듀오 라운드 우승','마다옴과 듀오','배그 대잔치 라운드 우승'],
-      'VR챗 축구 대전':['팀 준우승','별 부수는 마단 · 팀장','VR챗 축구 준우승'],
+      'VR챗 축구 대전':['팀 준우승','브축대 · 별 부수는 마단 팀장','브축대 팀 준우승'],
       '왁타버스 래프팅 대회':['대회 참가','마피아지 팀','래프팅 대회 참가'],
       '왁타버스 사이클 대회':['선수 참가','VR 멀미 극복 투어 진행','사이클 대회 참가'],
       '왁타버스 배그 삼국지':['개인 종합 3위','','배그 삼국지 개인 3위'],
@@ -72,6 +74,9 @@
       '와우 포에버':['전사 1위','','와우 포에버 전사 1위','방송 제목에 기록 · 집계 기준 미확인']
     };
     const evidence = {
+      '그란투리스모 7':'https://namu.moe/w/MaWang',
+      '버츄얼 파이터':'https://dark.namu.moe/w/왁타버스/콘텐츠/버츄얼%20파이터/진행%20과정',
+      'VR챗 축구 대전':'https://namu.moe/w/VR챗%20축구%20대전',
       '제1회 버츄페 어워드':'https://pick.sooplive.com/daily/view/161255',
       '제6회 처니랜드 소대전투':'https://pick.sooplive.com/daily/view/173654'
     };
@@ -124,7 +129,7 @@
     results.setAttribute('aria-label','검색 결과');
     bar.append(toolbar,nav,results);
     const axis=node('div','cv-axis'); axis.setAttribute('role','region');axis.setAttribute('aria-label','연속 업적 타임라인');
-    const legacy=node('section','cv-legacy'); legacy.setAttribute('aria-label','시기 미확인 기록');
+    const legacy=node('section','cv-legacy'); legacy.setAttribute('aria-label','레거시 기록');
     panel.append(barHost,axis,legacy);section.append(panel);source.hidden=true;
 
     const entries=new Map(), markers=new Map(), yearButtons=new Map(), anim=[], months=[];
@@ -147,7 +152,7 @@
       if(/제작|몸연기|주최|운영|개장|시작/.test(s))return 'creative';
       return 'neutral';
     }
-    function makeCard(r,isLegacy=false){
+    function makeCard(r){
       const entry=node('div','cv-entry'); entry.dataset.record=String(r.id);entry.dataset.tone=tone(r);
       const card=node('details','cv-card');
       const summary=node('summary','cv-record');
@@ -156,10 +161,10 @@
       const detail=node('div','cv-detail');
       detail.append(node('p','',r.info),node('small','',r.tags.join(' · ')));
       if(evidence[r.name]){
-        const link=node('a','cv-source','분류 근거');link.href=evidence[r.name];link.target='_blank';link.rel='noopener noreferrer';detail.append(link);
+        const link=node('a','cv-source','기록 출처');link.href=evidence[r.name];link.target='_blank';link.rel='noopener noreferrer';detail.append(link);
       }
       card.append(summary,detail);entry.append(card);entries.set(r.id,entry);
-      if(!isLegacy)anim.push(entry);
+      anim.push(entry);
       card.addEventListener('toggle',schedule);
       return entry;
     }
@@ -201,9 +206,15 @@
         year.append(month);previous=records.at(-1);
       }
     }
-    const legacyHead=node('h2','cv-legacy-heading','레거시 · 시기 미확인');legacy.append(legacyHead);
+    const legacyHead=node('h2','cv-legacy-heading','레거시');legacy.append(legacyHead);
     const legacyGrid=node('div','cv-legacy-grid'); legacy.append(legacyGrid);
-    for(const r of byYear('레거시'))legacyGrid.append(makeCard(r,true));
+    const legacyRecords=byYear('레거시');
+    for(let i=0;i<legacyRecords.length;i+=2){
+      const pair=node('div','cv-pair');
+      const a=makeCard(legacyRecords[i]);a.classList.add('cv-left');a.dataset.legacy='true';pair.append(a);
+      if(legacyRecords[i+1]){const b=makeCard(legacyRecords[i+1]);b.classList.add('cv-right');b.dataset.legacy='true';pair.append(b);}
+      pair.append(node('i','cv-junction'));legacyGrid.append(pair);
+    }
     const legacyButton=button('cv-legacy-link','레거시 '+byYear('레거시').length+'건',()=>jump(legacyHead)); nav.append(legacyButton);
     const viewport=()=>{
       if(scrollRoot&&scrollRoot!==document.scrollingElement){const r=scrollRoot.getBoundingClientRect();return {top:Math.max(0,r.top),bottom:Math.min(innerHeight,r.bottom)};}
@@ -220,9 +231,13 @@
       const activeTop=Math.max(top,Math.min(barBottom,bottom-80));
       const usable=bottom-activeTop;
       // Read all untransformed slot geometry first. Writes never affect layout.
+      const legacyTop=legacyHead.getBoundingClientRect().top;
+      const legacyProgress=clamp((bottom-legacyTop)/Math.max(120,Math.min(usable*.92,legacy.offsetHeight*.95)));
       const states=anim.map(entry=>{
         const r=entry.getBoundingClientRect();
-        const p=reduced.matches?1:clamp((bottom+Math.min(40,h*.055)-r.top)/(Math.max(120,usable*.60)));
+        const progress=clamp((bottom-r.top)/(Math.max(120,usable*.88)));
+        // The undated collection has a shared convergence point so its final row settles at the bottom.
+        const p=reduced.matches?1:entry.dataset.legacy==='true'?Math.max(progress,legacyProgress):progress;
         return [entry,p];
       });
       let current=null;

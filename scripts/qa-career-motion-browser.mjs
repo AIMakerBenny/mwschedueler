@@ -7,7 +7,7 @@ import {chromium} from 'playwright';
 const base='https://mawang-scheduler.majoku.workers.dev/';
 const output=resolve(process.env.CAREER_QA_OUTPUT||'career-qa');
 mkdirSync(output,{recursive:true});
-const browser=await chromium.launch({channel:'chrome',headless:true,args:['--no-sandbox']});
+const browser=await chromium.launch({...(process.env.CAREER_CHROME?{executablePath:process.env.CAREER_CHROME}:{channel:'chrome'}),headless:true,args:['--no-sandbox']});
 const candidate=process.env.CAREER_LIVE!=='1';
 const mode=process.env.CAREER_QA_MODE||'all';
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
@@ -15,6 +15,14 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,reducedMotion,...(video?{recordVideo:{dir:output,size:{width,height}}}:{})});
   if(candidate){
     // Use the real public production shell/data with only candidate frontend assets overridden.
+    const sectionPattern=/<section class="section" id="careerTimeline"[\s\S]*?<\/section>/;
+    const replacement=readFileSync(new URL('../index.html',import.meta.url),'utf8').match(sectionPattern)[0];
+    await context.route(base,async route=>{
+      const response=await route.fetch();
+      const original=await response.text();
+      assert(sectionPattern.test(original),'Timeline section absent from production');
+      await route.fulfill({response,body:original.replace(sectionPattern,replacement)});
+    });
     for(const file of ['career-visualizer.js','career-timeline.css']){
       await context.route('**/assets/'+file+'*',route=>route.fulfill({
         status:200,contentType:file.endsWith('.js')?'application/javascript':'text/css',
@@ -45,9 +53,10 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   await page.locator('.cv-panel').waitFor({state:'visible'});
   await page.locator('.cv-axis').waitFor({state:'visible'});
   await pause(350);
-  assert.equal(await page.locator('.career-tree li').count(),51);
+  assert.equal(await page.locator('.career-tree li').count(),48);
   assert.equal(await page.locator('.cv-axis .cv-entry').count(),44);
-  assert.equal(await page.locator('.cv-legacy .cv-entry').count(),7);
+  assert.equal(await page.locator('.cv-legacy .cv-entry').count(),4);
+  assert(!((await page.locator('.cv-legacy').innerText()).includes('미확인')));
   assert.equal(await page.locator('.cv-map-dots i').count(),44);
   assert.equal(await page.locator('.cv-axis .cv-year').count(),5);
   assert.equal(await page.locator('.cv-play,.cv-years,.cv-hero').count(),0);
@@ -119,13 +128,23 @@ try{
     await search(page,'');await pause(150);
     const restored=await position(page);
     assert(Math.abs(restored-saved)<3,'Search did not restore scroll: '+JSON.stringify({saved,restored}));
-    for(const [q,n] of [['코치',3],['VR 우승',4],['WBD',1],['왁타버스 야구',1],['F1 챔스',1]]){
+    for(const [q,n] of [['코치',3],['VR 우승',4],['WBD',1],['왁타버스 야구',1],['F1 챔스',1],['브축대',1],['굳가대표',1],['데이토나',1]]){
       await search(page,q);assert.equal(await page.locator('.cv-result').count(),n,q);
       if(q==='VR 우승')assert(!((await page.locator('.cv-results').innerText()).includes('준우승')));
     }
     await search(page,'');
     await page.locator('.cv-legacy-link').click();await pause(150);
-    assert.equal(await page.locator('.cv-legacy .cv-entry').count(),7);
+    assert.equal(await page.locator('.cv-legacy .cv-entry').count(),4);
+    const legacyEntry=page.locator('.cv-legacy .cv-entry').first();
+    const legacyBase=await position(page), legacySettled=await inspect(legacyEntry);
+    await scrollTo(page,legacyBase-height*.65);
+    const legacyDetached=await inspect(legacyEntry);
+    await scrollTo(page,legacyBase);
+    const legacyReattached=await inspect(legacyEntry);
+    assert(legacySettled.p>legacyDetached.p+.2,JSON.stringify({legacySettled,legacyDetached}));
+    assert(Math.abs(legacySettled.p-legacyReattached.p)<.02);
+    assert(Math.abs(legacyDetached.shift)>Math.abs(legacyReattached.shift));
+    await page.screenshot({path:output+'/legacy-'+width+'.png'});
     assert.deepEqual(errors,[]);
     console.log('PASS',width,height);
     await context.close();
