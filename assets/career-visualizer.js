@@ -42,14 +42,14 @@
       '왁타버스 배그 삼국지':['개인 종합 3위','','배그 삼국지 개인 3위'],
       '나만 아니면 돼':['암벽등반 대결 1위','','나만 아니면 돼 1위'],
       '왁타버스 배틀크러쉬':['팀 종합 우승','현지인즈','배틀크러쉬 팀 종합 우승','최초 하드캐리 상 · 최다 하드캐리 상'],
-      'VRChat 촉각슈트 동아리':['교관','주르르 주최 모임','촉각슈트 동아리 교관'],
-      '왁타버스 체육대회':['팀 종합 우승','버스터콜','왁체대 종합 우승','개인 공동 1위 · 권총 사격·조정 금메달'],
+      'VRChat 촉각슈트 동아리':['교관','7월 21일 · 주르르 주최 모임','촉각슈트 동아리 교관'],
+      '왁타버스 체육대회':['팀 종합 우승','버스터콜','왁체대 종합 우승','개인 공동 1위 · 권총 사격·조정 금메달 · 클레이 사격 은메달'],
       '2024 마왕 재활센터':['정기 VR 운동 콘텐츠 시작','','마왕 재활센터 운영 시작'],
-      '왁타버스 배그 티어게임':['한 라운드 우승','제2회 대회','배그 티어게임 라운드 우승'],
+      '왁타버스 배그 티어게임':['한 라운드 우승','제2회 대회 · 총 18킬 · 1.5티어','배그 티어게임 라운드 우승'],
       '왁이큐':['대회 참가','사형선고 팀','왁이큐 참가'],
       '제1회 버츄페 어워드':['올해의 섹시상 공동 수상','VRChat 버추얼 연말 페스티벌','버츄페 섹시상 공동 수상'],
       '2024 SOOP 스트리머 대상':['수상자 인터뷰','','SOOP 대상 수상자 인터뷰','세부 상명 미확인'],
-      '제1회 릴동파':['팀 종합 우승','죠뗌므','릴동파 종합 우승','개인 공동 1위 · 금 2·은 1 · 본선 최다 진출상·개인 메달 1위상'],
+      '제1회 릴동파':['팀 종합 우승','죠뗌므','릴동파 종합 우승','개인 공동 1위 · 봅슬레이·눈덩이 금 · 바이애슬론 은 · 본선 최다 진출상·개인 메달 1위상'],
       'WBD 왁타버스 야구 대회':['4강','로얄 버팔로즈 · 선발투수','WBD 4강'],
       '제6회 처니랜드 소대전투':['HONOR 진영 승리','배틀그라운드 · 저격병 참가','처니랜드 HONOR 승리'],
       '마인크래프트 지독서버':['다이아몬드 채집 3위','','지독서버 채집 3위'],
@@ -70,15 +70,8 @@
       '이터널 리턴 「이리야 어서와」':['MVP','코렛트 선정','이터널 리턴 MVP'],
       'STALZONE 크루대전':['팀 준우승','환승센터','STALZONE 팀 준우승'],
       '제2회 파블로프 VR 대전쟁':['대회 주최','','파블로프 VR 대전쟁 2 주최'],
-      'SBO 야구 대회':['대회 참가','무파 자이언츠','SBO 야구 대회 참가'],
+      'SBO 야구 대회':['포수 출전 · 타율 .400','무파 자이언츠','SBO 포수 출전'],
       '와우 포에버':['전사 1위','','와우 포에버 전사 1위','방송 제목에 기록 · 집계 기준 미확인']
-    };
-    const evidence = {
-      '그란투리스모 7':'https://namu.moe/w/MaWang',
-      '버츄얼 파이터':'https://dark.namu.moe/w/왁타버스/콘텐츠/버츄얼%20파이터/진행%20과정',
-      'VR챗 축구 대전':'https://namu.moe/w/VR챗%20축구%20대전',
-      '제1회 버츄페 어워드':'https://pick.sooplive.com/daily/view/161255',
-      '제6회 처니랜드 소대전투':'https://pick.sooplive.com/daily/view/173654'
     };
     // One verified game/platform image per recorded event; event-specific stills
     // take precedence over the platform cover. No guessed games for legacy rows.
@@ -104,7 +97,7 @@
       f1:['F1 25',steam(3059520)]
     };
     const recordArt={
-      '그란투리스모 7':'gt7','신호등':'vrchat','제8회 상황극 콘테스트':'vrchat','에고시의 검':'vrchat',
+      '왁타버스 해상전쟁':'minecraft','SOOP OPEN 이터널 리턴':'eternal','그란투리스모 7':'gt7','신호등':'vrchat','제8회 상황극 콘테스트':'vrchat','에고시의 검':'vrchat',
       '그냥 살아!':'alive','제9회 상황극 콘테스트':'vrchat','버츄얼 파이터':'vrchat','VR챗 축구 대전':'vrchat','왁타버스 래프팅 대회':'vrchat',
       '왁타버스 사이클 대회':'cycle','나만 아니면 돼':'climbing','왁타버스 배틀크러쉬':'battlecrush','VRChat 촉각슈트 동아리':'vrchat',
       '왁타버스 체육대회':'sports','마왕 재활센터':'vrchat','왁이큐':'vrchat','제1회 버츄페 어워드':'vrchat','제1회 릴동파':'vrchat',
@@ -158,7 +151,7 @@
       '이터널 리턴 「이리야 어서와」':'이터널 리턴 콘텐츠 이리야 어서와에 참여해 코렛트가 선정한 MVP로 뽑혔다.',
       'STALZONE 크루대전':'STALZONE 크루대전에 환승센터 팀 소속으로 참가해 팀 준우승을 차지했다.',
       '제2회 파블로프 VR 대전쟁':'Pavlov VR 대전쟁의 두 번째 대회를 주최했다.',
-      'SBO 야구 대회':'VR 야구 대회인 SBO에 무파 자이언츠 소속으로 참가했다.',
+      'SBO 야구 대회':'무파 자이언츠 포수로 출전했다. 타요 스타포스와의 친선전에서는 3번 타자로 나서 4회에 2루타를 쳤다.',
       '와우 포에버':'월드 오브 워크래프트 와우 포에버를 플레이했다. 당시 방송 제목에 전사 1위라고 기록되어 있으며, 순위의 구체적인 집계 기준은 확인되지 않았다.',
       '왁타버스 최대 도움상':'왁타버스 활동에 기여한 공헌을 인정받아 최대 도움상을 받은 기록이다.',
       '이세계아이돌 VR 자문':'이세계아이돌 관련 VR 콘텐츠에 필요한 기술 지원 및 자문을 제공했다.',
@@ -175,11 +168,11 @@
           const info = li.querySelector('p').textContent;
           const tags = [...li.querySelectorAll('.career-tags span')].map(el=>el.textContent);
           const date = month.querySelector('h3').textContent;
-          const [headline, context, caption, extra] = presentation[year+' '+name] || presentation[name] || [name,'',name,info];
+          const [headline, context, caption, extra] = presentation[year+' '+name] || presentation[name] || [li.dataset.achievement || name,'',name,''];
           const synonyms = aliases.filter(([re])=>re.test(name)).map(([,alias])=>alias);
           const media=art[artFor({year,name})];
           rows.push({id:rows.length,year,date,month:parseInt(date),name,info,tags,headline,context,caption,extra,
-            terms:norm([year,date,name,info,headline,caption,media?.[0]||'',...synonyms].join(' '))});
+            terms:norm([year,date,name,info,headline,context,extra||'',...tags,caption,media?.[0]||'',...synonyms].join(' '))});
         }
       }
     }
@@ -208,7 +201,23 @@
     const toggle=button('cv-result-toggle','검색 결과',()=>{results.hidden=!results.hidden;toggle.setAttribute('aria-expanded',String(!results.hidden));});
     toggle.hidden=true; toggle.setAttribute('aria-expanded','false');
     const clear=button('cv-clear','검색 지우기',()=>clearSearch(true)); clear.hidden=true;
-    searchBox.append(query,toggle,clear);
+    const exportButton=button('cv-export','',()=>{
+      const lines=matches().map(r=>{
+        const date=r.year==='레거시'?'시기 미상':r.year+'.'+String(r.month).padStart(2,'0');
+        const result=r.headline===r.name?r.info:r.headline;
+        return date+'  '+r.name+(result&&result!==r.name?' - '+result:'');
+      });
+      if(!lines.length)return;
+      const url=URL.createObjectURL(new Blob(['\uFEFF',lines.join('\r\n')+'\r\n'],{type:'text/plain;charset=utf-8'}));
+      const link=document.createElement('a');
+      link.href=url;link.download='마왕_업적_타임라인.txt';
+      document.body.append(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+    });
+    exportButton.title='현재 기록을 텍스트로 저장';
+    exportButton.setAttribute('aria-label',exportButton.title);
+    exportButton.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg>';
+    searchBox.append(query,toggle,clear,exportButton);
     toolbar.append(info,searchBox);
     const nav=node('nav','cv-overview'); nav.setAttribute('aria-label','전체 연도 위치');
     const results=node('div','cv-results'); results.hidden=true;
@@ -265,10 +274,6 @@
       detail.append(node('p','',descriptions[r.year+' '+r.name]||descriptions[r.name]||r.info));
       const detailsTags=r.tags.filter(t=>!t.includes('미확인'));
       if(detailsTags.length)detail.append(node('small','',detailsTags.join(' · ')));
-      if(evidence[r.name]){
-        const link=node('a','cv-source','기록 출처');link.href=evidence[r.name];link.target='_blank';link.rel='noopener noreferrer';detail.append(link);
-      }
-      if(media){const link=node('a','cv-source','이미지 출처');link.href=media[1];link.target='_blank';link.rel='noopener noreferrer';detail.append(link)}
       card.append(summary,detail);entry.append(card);entries.set(r.id,entry);
       anim.push(entry);
       card.addEventListener('toggle',()=>{schedule();detail.getAnimations?.().forEach(animation=>animation.cancel());if(card.open&&!reduced()&&!entry.hidden&&detail.animate){detail.animate([{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'translateY(0)'}],{duration:260,easing:'ease-out'});}});
@@ -434,6 +439,7 @@
       }
       legacy.hidden=!legacy.querySelector('.cv-entry:not([hidden])');legacyButton.disabled=legacy.hidden;
       axis.hidden=!axis.querySelector('.cv-entry:not([hidden])');empty.hidden=!ids||ids.size>0;
+      exportButton.disabled=ids?.size===0;
       count.textContent=(ids?ids.size:dated.length)+'개 기록';
       snapNext=true;schedule();
     }
