@@ -9,7 +9,7 @@
   const validRoster=()=>players().length>=2&&players().length<=12;
   const validPrizes=()=>validRoster()&&prizes().length===players().length&&prizes().every(p=>String(p.label||'').trim());
   const rosterKey=()=>JSON.stringify(players().map(p=>p.id).sort());
-  let step=1,furthest=1,key=null,paletteKey=null,preset='winner';
+  let step=1,furthest=1,key=null,paletteKey=null,preset='winner',shuffling=false;
   const pages=[...root.querySelectorAll('[data-ladder-page]')],steps=[...root.querySelectorAll('[data-ladder-step]')];
   const canvas=$('ladderCanvas');
   let lastPoints=null,lastProgress=1,resizeFrame=0;
@@ -117,18 +117,25 @@
     pages.forEach(p=>{p.hidden=Number(p.dataset.ladderPage)!==step});
     steps.forEach(b=>{const i=Number(b.dataset.ladderStep);b.classList.toggle('current',i===step);b.classList.toggle('complete',i<step);b.disabled=locked||i>furthest||(i>=2&&!validRoster())||(i===3&&!validPrizes());if(i===step)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current')});
     const previous=$('ladderWizardBack'),next=$('ladderWizardNext');
-    const footer=root.querySelector('.ladder-wizard-footer'),actions=root.querySelector('.ladder-action-row');
-    // During play, navigation belongs beside the game controls rather than
-    // below a potentially long results list.
+    const navigation=root.querySelector('.ladder-wizard-navigation'),actions=root.querySelector('.ladder-action-row');
+    // Setup controls stay in the active heading, leaving the full remaining
+    // workspace to the roster or prize cards. In play, Back joins game controls.
     if(step===3){if(previous.parentElement!==actions)actions.prepend(previous)}
-    else if(previous.parentElement!==footer)footer.prepend(previous);
-    footer.hidden=step===3;
+    else {
+      const heading=pages[step-1].querySelector('.ladder-wizard-heading');
+      if(navigation.parentElement!==heading)heading.append(navigation);
+      if(previous.parentElement!==navigation)navigation.prepend(previous);
+    }
+    navigation.hidden=step===3;
     previous.hidden=step===1;previous.disabled=locked;
     next.hidden=step===3;next.disabled=locked||(step===1?!validRoster():!validPrizes());
     next.textContent=step===1?'결과 설정':'게임 화면으로';
     $('ladderWizardHint').textContent=locked?'게임 진행 중에는 설정을 변경할 수 없습니다.':step===1?(validRoster()?`${n}명 선택 완료`:'참가자를 2~12명 선택하세요.'):step===2?(validPrizes()?`${m}개 결과 준비 완료`:'모든 결과 항목을 입력하세요.'): '이전 단계에서 참가자와 결과를 수정할 수 있습니다.';
     $('ladderResetBtn').disabled=locked;
-    $('ladderAutoStartBtn').disabled=locked||!validPrizes();
+    const start=$('ladderAutoStartBtn');
+    start.textContent=shuffling?'시작':locked?'진행 중':'섞기 시작';
+    start.disabled=!validPrizes()||(locked&&!shuffling);
+    root.querySelector('.ladder-stage-card').dataset.ladderPhase=shuffling?'shuffle':locked?'play':'idle';
     // The core rebuilds player buttons during every automatic path; inert is
     // inherited by newly created buttons and does not interrupt the drawing.
     $('ladderPlayerButtons').inert=locked;
@@ -140,7 +147,7 @@
   }
   function clearBoard(){
     const r=miniGameRuntime.ladder;r.generated=false;r.rungs=[];r.activePlayer=-1;r.autoResultNames=[];r.autoResultEntries=[];
-    const result=$('ladderResult');result.classList.remove('done');result.textContent='자동 시작을 누르면 참가자별 결과가 공개됩니다.';
+    resultText('섞기 시작을 누른 뒤 시작을 누르세요.');
     $('ladderStatus').textContent='참가자와 결과 항목이 준비되었습니다.';
     renderLadderPlayerButtons();renderLadderAutoResultSlots();renderLadderFullResultList();drawLadder(null);
   }
@@ -218,14 +225,44 @@
     key=nextKey;
     const out=baseRender.apply(this,arguments);sync();return out;
   };
-  const auto=window.autoStartLadder;
   function resultText(text,done=false){const el=$('ladderResult');el.textContent=text;el.title=text;el.classList.toggle('done',done)}
   function finalResult(){
     const entries=miniGameRuntime.ladder.autoResultEntries||[],wins=prizes().map((p,i)=>p.label==='당첨'?entries[i]:null).filter(Boolean);
     if(wins.length===1){const index=players().findIndex(p=>p.id===wins[0].id);if(index>=0){miniGameRuntime.ladder.activePlayer=index;drawLadder(ladderPath(index).points,1);renderLadderPlayerButtons();resultText(`당첨 · ${wins[0].name}`,true);return}}
     drawLadder(null);resultText(wins.length?`당첨 · ${wins.map(p=>p.name).join(', ')}`:'모든 참가자의 결과가 공개되었습니다.',true);
   }
-  window.autoStartLadder=async function(){if(step!==3||busy()||!validPrizes())return;drawLadder(null);resultText('참가자와 결과 순서를 섞는 중입니다.');try{const task=auto.apply(this,arguments);sync();await task;finalResult()}finally{sync()}};
+  window.autoStartLadder=async function(){
+    // A second activation locks exactly the currently visible board. No timer
+    // can pick a new board after the user has pressed Start.
+    if(shuffling){shuffling=false;sync();return}
+    if(step!==3||busy()||!validPrizes()||!root.classList.contains('active'))return;
+    ensureLadderPrizeCount();
+    const rt=miniGameRuntime.ladder,roster=players(),outcomes=prizes(),originalRoster=roster.slice(),originalOutcomes=outcomes.slice();
+    rt.autoRunning=true;rt.autoResultNames=[];rt.autoResultEntries=[];rt.generated=false;rt.rungs=[];rt.activePlayer=-1;shuffling=true;
+    drawLadder(null);renderLadder();resultText('계속 섞는 중입니다. 시작을 누르면 현재 사다리로 진행합니다.');
+    const status=$('ladderStatus');status.textContent='참가자 · 결과 · 사다리 섞는 중';
+    let completed=false;
+    try{
+      while(shuffling&&root.classList.contains('active')&&miniGameRuntime.ladder===rt&&players()===roster&&prizes()===outcomes){
+        cryptoShuffleInPlace(roster);cryptoShuffleInPlace(outcomes);
+        rt.rungs=makeRandomLadderRungs(roster.length);rt.generated=true;
+        renderLadderOrderVisual();
+        await ladderSleep(150);
+      }
+      // Leaving the game during shuffle cancels the previews, without saving
+      // an arbitrary intermediate order or starting a game in the background.
+      if(shuffling||miniGameRuntime.ladder!==rt||players()!==roster||prizes()!==outcomes)return;
+      status.textContent='사다리 진행 · 왼쪽부터 결과 확인';
+      resultText('왼쪽 참가자부터 차례대로 사다리를 내려갑니다.');
+      for(let i=0;i<roster.length;i++){await animateLadderPathAuto(i,Math.max(430,720-roster.length*14));await ladderSleep(120)}
+      completed=true;rt.activePlayer=-1;status.textContent=`자동 사다리 완료 · ${roster.length}명`;
+    }finally{
+      shuffling=false;rt.autoRunning=false;
+      if(completed){miniPersist();renderLadder();finalResult()}
+      else if(miniGameRuntime.ladder===rt&&players()===roster&&prizes()===outcomes){roster.splice(0,roster.length,...originalRoster);outcomes.splice(0,outcomes.length,...originalOutcomes);clearBoard();renderLadder()}
+      sync();
+    }
+  };
   // Replay uses the same path and reveal operation as automatic play. The old
   // manual wrapper published its destination before the marker arrived.
   window.runLadderPath=async function(index){
@@ -233,7 +270,7 @@
     const person=players()[index],path=ladderPath(index);miniGameRuntime.ladder.animating=true;resultText(`${person.name} · 경로 확인 중`);sync();
     try{await animateLadderPathAuto(index,1000);resultText(`${person.name} → ${prizes()[path.resultIndex]?.label||`결과 ${path.resultIndex+1}`}`,true)}finally{miniGameRuntime.ladder.animating=false;sync()}
   };
-  const reset=window.resetLadderBoard;window.resetLadderBoard=function(){if(busy())return;const out=reset.apply(this,arguments);sync();return out};
+  const reset=window.resetLadderBoard;window.resetLadderBoard=function(){if(busy())return;const out=reset.apply(this,arguments);resultText('섞기 시작을 누른 뒤 시작을 누르세요.');sync();return out};
   steps.forEach(b=>b.addEventListener('click',()=>go(Number(b.dataset.ladderStep))));
   $('ladderWizardBack').addEventListener('click',()=>go(step-1));$('ladderWizardNext').addEventListener('click',()=>go(step+1));
   root.querySelectorAll('[data-ladder-preset]').forEach(b=>b.addEventListener('click',()=>applyPreset(b.dataset.ladderPreset)));
