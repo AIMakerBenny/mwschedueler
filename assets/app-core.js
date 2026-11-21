@@ -708,10 +708,10 @@ function dt(ev){
   return new Date(ev.date+'T'+time+':00');
 }
 function ymd(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
-function todayKST(){
+function todayKST(now=new Date()){
   const parts=new Intl.DateTimeFormat('en-CA',{
     timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'
-  }).formatToParts(new Date());
+  }).formatToParts(now);
   const get=t=>parts.find(p=>p.type===t)?.value;
   return `${get('year')}-${get('month')}-${get('day')}`;
 }
@@ -755,11 +755,34 @@ window.updateEventBroadcastDurationPreviewV1=updateEventBroadcastDurationPreview
 function category(id){return data.categories.find(c=>c.id===id)}
 function contact(id){return data.contacts.find(c=>c.id===id)}
 function activeEvents(){return data.events}
+// A scheduled start is expressed in Korean local time, regardless of the device timezone.
+function upcomingStartKSTV1(e){
+  if(!e?.date||!/^\d{2}:\d{2}$/.test(e.start||''))return null;
+  const timestamp=Date.parse(`${e.date}T${e.start}:00+09:00`);
+  return Number.isFinite(timestamp)?timestamp:null;
+}
+function isUpcomingEventV1(e,now,today){
+  if(!e||e.restDay||!e.date||e.date<today)return false;
+  const start=upcomingStartKSTV1(e);
+  return start===null||start>now;
+}
 function upcomingEvents(){
-  const today=todayKST();
+  return upcomingEventsAtV1(Date.now());
+}
+function upcomingEventsAtV1(now){
+  const today=todayKST(new Date(now));
   return activeEvents()
-    .filter(e=>!e.restDay && e.date>=today)
-    .sort((a,b)=>dt(a)-dt(b));
+    .filter(e=>isUpcomingEventV1(e,now,today))
+    .sort((a,b)=>(upcomingStartKSTV1(a)??Date.parse(`${a.date}T23:59:59+09:00`))-(upcomingStartKSTV1(b)??Date.parse(`${b.date}T23:59:59+09:00`)));
+}
+function upcomingRefreshBoundaryV1(up,now){
+  // KST midnight also expires time-unconfirmed events from yesterday.
+  let boundary=Date.parse(todayKST(new Date(now))+'T00:00:00+09:00')+86400000;
+  for(const e of up){
+    const start=upcomingStartKSTV1(e);
+    if(start!==null&&start>now&&start<boundary)boundary=start;
+  }
+  return boundary;
 }
 function checklistProgress(ev){const a=ev.checklist||[];if(!a.length)return[0,0,0];const done=a.filter(x=>x.done).length;return[done,a.length,Math.round(done/a.length*100)]}
 function getLastCollab(contactId){
@@ -832,6 +855,7 @@ const clockTimeFormatterV133=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seo
 const clockDateFormatterV133=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',weekday:'long',year:'numeric',month:'long',day:'numeric'});
 let clockTimerV133=0;
 let clockDateRefreshAtV133=0;
+let dashboardUpcomingRefreshAtV1=Infinity;
 function tickClock(){
   if(document.hidden)return;
   const now=new Date();
@@ -843,6 +867,12 @@ function tickClock(){
     const today=document.getElementById('todayText');
     const nextDate=clockDateFormatterV133.format(now);
     if(today&&today.textContent!==nextDate)today.textContent=nextDate;
+  }
+  // Reuse the existing visibility-aware clock. No new polling or per-second render.
+  if(now.getTime()>=dashboardUpcomingRefreshAtV1&&document.getElementById('dashboard')?.classList.contains('active')){
+    dashboardUpcomingRefreshAtV1=Infinity;
+    safeRenderView('대시보드',renderDashboard);
+    if(dashboardMode==='reminders')safeRenderView('리마인더',renderReminders);
   }
 }
 function scheduleClockV133(){
@@ -948,7 +978,9 @@ function dashboardDetailHTML(e){
   </div>`;
 }
 function renderDashboardDetail(eventId=null){
-  const e=eventId?data.events.find(x=>x.id===eventId):dashboardSelectedEvent();
+  const candidate=eventId?data.events.find(x=>x.id===eventId):null;
+  const now=Date.now();
+  const e=candidate&&isUpcomingEventV1(candidate,now,todayKST(new Date(now)))?candidate:dashboardSelectedEvent();
   const box=document.getElementById('nextStreamCard');
   if(box)box.innerHTML=dashboardDetailHTML(e);
   const edit=document.getElementById('editNextBtn');
@@ -985,9 +1017,10 @@ window.dashboardResetPreview=()=>{
   updateDashboardPinnedStyles();
 }
 function renderDashboard(){
-  const up=upcomingEvents(),next=up[0];
+  const now=Date.now(),up=upcomingEventsAtV1(now),next=up[0];
+  dashboardUpcomingRefreshAtV1=upcomingRefreshBoundaryV1(up,now);
   document.getElementById('contactCountKpi').textContent=data.contacts.length;
-  document.getElementById('weekCountKpi').textContent=up.filter(e=>dt(e)<=new Date(Date.now()+7*86400000)).length;
+  document.getElementById('weekCountKpi').textContent=up.filter(e=>(upcomingStartKSTV1(e)??Date.parse(`${e.date}T23:59:59+09:00`))<=now+7*86400000).length;
   document.getElementById('nextStreamKpi').textContent=next?(next.restDay?`${shortDateWeekday(next.date)} 휴방`:`${shortDateWeekday(next.date)} ${formatTimeKorean(next.start)}`):'없음';
 
   if(dashboardPinnedEventId&&!up.some(e=>e.id===dashboardPinnedEventId))dashboardPinnedEventId=null;

@@ -28,6 +28,7 @@ on:
       - 'assets/calendar-responsive-cards-v1.css'
       - 'assets/calendar-stable-layout-v1.css'
       - 'assets/app-core.js'
+      - 'scripts/qa-dashboard-upcoming-v1.test.mjs'
       - 'src/cf-v111-entry.js'
       - 'scripts/qa-login-ready-v2.test.mjs'
       - 'assets/legacy-hub-v1.css'
@@ -97,6 +98,7 @@ jobs:
           node --check assets/cloud-runtime-v130.js
       - name: Calendar content group, hover and duration regression
         run: |
+          node --test scripts/qa-dashboard-upcoming-v1.test.mjs
           node --test scripts/qa-calendar-timeline-v1.test.mjs
           node scripts/qa-calendar-timeline-v1-browser.mjs
           node scripts/qa-workspace-clean-v1-browser.mjs

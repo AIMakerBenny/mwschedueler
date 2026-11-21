@@ -9,6 +9,7 @@ on:
       - 'assets/calendar-stable-layout-v1.css'
       - 'index.html'
       - 'scripts/qa-calendar-stable-layout-v1-browser.mjs'
+      - 'scripts/qa-dashboard-upcoming-v1.test.mjs'
       - '.github/workflows/qa-calendar-stable-layout-v1.yml'
   push:
     branches:
@@ -26,6 +27,7 @@ jobs:
           node-version: '24'
       - name: Syntax checks
         run: |
+          node --test scripts/qa-dashboard-upcoming-v1.test.mjs
           node --check --input-type=commonjs < assets/app-core.js
           node --check assets/steam-game-v111.js
           node --check scripts/qa-calendar-stable-layout-v1-browser.mjs

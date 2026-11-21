@@ -156,4 +156,15 @@ try{
   }
   verifyStartup(warm);
   console.log('MWS_LIVE_CALENDAR_ATOMIC_WARM',JSON.stringify(warm));
+  const upcoming=await browser.evaluate(`(()=>{
+    setTab('dashboard');
+    const now=Date.now(),today=todayKST(new Date(now));
+    const start=e=>e.start&&e.start!=='TBD'?Date.parse(e.date+'T'+e.start+':00+09:00'):NaN;
+    const expected=activeEvents().filter(e=>!e.restDay&&e.date>=today&&(!Number.isFinite(start(e))||start(e)>now)).sort((a,b)=>(Number.isFinite(start(a))?start(a):Date.parse(a.date+'T23:59:59+09:00'))-(Number.isFinite(start(b))?start(b):Date.parse(b.date+'T23:59:59+09:00')));
+    const ids=[...document.querySelectorAll('#upcomingDashboard .dashboard-upcoming-card')].map(el=>el.dataset.eventId);
+    return {expected:expected.slice(0,15).map(e=>e.id),visible:ids,allCount:expected.length,startedToday:activeEvents().filter(e=>!e.restDay&&e.date===today&&Number.isFinite(start(e))&&start(e)<=now).length,next:dashboardDefaultEvent()?.id||null};
+  })()`);
+  assert.deepEqual(upcoming.visible,upcoming.expected,JSON.stringify(upcoming));
+  assert.equal(upcoming.next,upcoming.expected[0]||null);
+  console.log('MWS_LIVE_DASHBOARD_FUTURE_ONLY',JSON.stringify({visible:upcoming.visible.length,allCount:upcoming.allCount,startedTodayExcluded:upcoming.startedToday}));
 }finally{await browser?.close();rmSync(dir,{recursive:true,force:true})}
