@@ -25,12 +25,13 @@
     const button=event.target.closest?.('#posts .post-action-panel button');
     if(button&&menu&&!button.disabled){menu.open=false;menu.querySelector('summary')?.focus({preventScroll:true});}
   });
-  document.addEventListener('keydown',event=>{
-    if(event.key!=='Escape')return;
+  // Run before the workspace's legacy Escape handlers when this menu is open.
+  window.addEventListener('keydown',event=>{
+    if(event.key!=='Escape'||!section.classList.contains('active'))return;
     const menu=section.querySelector('details.post-menu[open]');
     if(!menu)return;
     menu.open=false;menu.querySelector('summary')?.focus({preventScroll:true});
-    event.preventDefault();
-  });
+    event.preventDefault();event.stopPropagation();
+  },true);
   window.addEventListener('resize',()=>{for(const menu of menus())fit(menu)},{passive:true});
 })();
