@@ -251,7 +251,7 @@
     function tone(r){
       const s=r.headline+' '+(r.extra||'');
       if(/준우승|2위|은메달/.test(s)&&!/우승팀|종합 우승|팀 우승|공동 1위/.test(s))return 'silver';
-      if(/우승|1위|금메달|대상|MVP|올해의|수상/.test(s))return 'gold';
+      if(/우승|1위|금메달|대상|MVP|올해의|수상|최초|달성|돌파|획득 성공/.test(s))return 'gold';
       if(/3위|동메달/.test(s))return 'bronze';
       if(/감독|코치|코칭|교관|교육|지도|조교/.test(s))return 'role';
       if(/제작|몸연기|주최|운영|개장|시작|창설|개설|공개/.test(s))return 'creative';
