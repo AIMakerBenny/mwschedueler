@@ -107,6 +107,7 @@
     };
     const panel=node('div','cv-panel');
     const bar=node('div','cv-bar');
+    const barHost=node('div','cv-bar-host');barHost.append(bar);
     const toolbar=node('div','cv-toolbar');
     const info=node('div','cv-summary');
     info.append(node('strong','',dated.length+'개 기록'),node('span','','2022 – 2026'));
@@ -124,7 +125,7 @@
     bar.append(toolbar,nav,results);
     const axis=node('div','cv-axis'); axis.setAttribute('role','region');axis.setAttribute('aria-label','연속 업적 타임라인');
     const legacy=node('section','cv-legacy'); legacy.setAttribute('aria-label','시기 미확인 기록');
-    panel.append(bar,axis,legacy);section.append(panel);source.hidden=true;
+    panel.append(barHost,axis,legacy);section.append(panel);source.hidden=true;
 
     const entries=new Map(), markers=new Map(), yearButtons=new Map(), anim=[], months=[];
     let raf=0, attached=false, searchOrigin=null, selected=null, scrollRoot=null;
@@ -212,7 +213,9 @@
       raf=0;
       if(!attached||document.hidden||!section.classList.contains('active'))return;
       const {top,bottom}=viewport(), h=bottom-top;
-      const barBottom=bar.getBoundingClientRect().bottom;
+      const hostRect=barHost.getBoundingClientRect();
+      const pin=Math.max(0,top-hostRect.top);
+      const barBottom=hostRect.bottom+pin;
       const activeTop=Math.max(top,Math.min(barBottom,bottom-80));
       const usable=bottom-activeTop;
       // Read all untransformed slot geometry first. Writes never affect layout.
@@ -224,6 +227,7 @@
       let current=null;
       for(const [y,marker] of markers){if(marker.getBoundingClientRect().top<=activeTop+Math.max(70,usable*.35))current=y;}
       if(!current)current=markers.keys().next().value;
+      bar.style.setProperty('--cv-pin',pin+'px');
       for(const [entry,p] of states){
         const value=p.toFixed(3);
         if(entry.style.getPropertyValue('--cv-p')!==value)entry.style.setProperty('--cv-p',value);
