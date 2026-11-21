@@ -14,7 +14,15 @@
   const validRoster=()=>players().length>=2&&players().length<=12;
   const validPrizes=()=>validRoster()&&prizes().length===players().length&&prizes().every(p=>String(p.label||'').trim());
   const rosterKey=()=>JSON.stringify(players().map(p=>p.id).sort());
-  let step=1,furthest=1,key=null,paletteKey=null,preset='winner',shuffling=false;
+  let step=1,furthest=1,key=null,paletteKey=null,preset='winner',shufflePhase=null;
+  const shuffleTempo={initial:240,fast:60,accelerate:900,brake:1100,slow:340,hold:220};
+  let shuffleStartedAt=0,shuffleStoppedAt=0,shuffleStopInterval=0;
+  const smoothstep=t=>{const x=Math.max(0,Math.min(1,t));return x*x*(3-2*x)};
+  function shuffleInterval(now){
+    const {initial,fast,accelerate,brake,slow}=shuffleTempo;
+    if(shufflePhase==='settle')return shuffleStopInterval+(slow-shuffleStopInterval)*smoothstep((now-shuffleStoppedAt)/brake);
+    return initial+(fast-initial)*smoothstep((now-shuffleStartedAt)/accelerate);
+  }
   const nav=$('ladderWizardSteps'),header=$('pageTitle')?.parentElement;
   const pages=[...root.querySelectorAll('[data-ladder-page]')],steps=[...nav.querySelectorAll('[data-ladder-step]')];
   function syncHeader(){
@@ -176,9 +184,9 @@
     $('ladderWizardHint').textContent=locked?'게임 진행 중에는 설정을 변경할 수 없습니다.':step===1?(validRoster()?`${n}명 선택 완료`:'참가자를 2~12명 선택하세요.'):step===2?(validPrizes()?`${m}개 결과 준비 완료`:'모든 결과 항목을 입력하세요.'): '이전 단계에서 참가자와 결과를 수정할 수 있습니다.';
     $('ladderResetBtn').disabled=locked;
     const start=$('ladderAutoStartBtn');
-    start.textContent=shuffling?'시작':locked?'진행 중':'섞기 시작';
-    start.disabled=!validPrizes()||(locked&&!shuffling);
-    const stage=root.querySelector('.ladder-stage-card');stage.dataset.ladderPhase=shuffling?'shuffle':locked?'play':'idle';stage.classList.toggle('auto-running',locked);
+    start.textContent=shufflePhase==='shuffle'?'시작':shufflePhase==='settle'?'멈추는 중':locked?'진행 중':'섞기 시작';
+    start.disabled=!validPrizes()||(locked&&shufflePhase!=='shuffle');
+    const stage=root.querySelector('.ladder-stage-card');stage.dataset.ladderPhase=shufflePhase||(locked?'play':'idle');stage.classList.toggle('auto-running',locked);
     // The core rebuilds player buttons during every automatic path; inert is
     // inherited by newly created buttons and does not interrupt the drawing.
     $('ladderPlayerButtons').inert=locked;
@@ -297,9 +305,12 @@
     });
   }
   window.autoStartLadder=async function(){
-    // A second activation locks exactly the currently visible board. No timer
-    // can pick a new board after the user has pressed Start.
-    if(shuffling){shuffling=false;sync();return}
+    // Brake from the actual current tempo, even if Start is pressed early.
+    // Only the final preview is locked; subsequent presses cannot restart it.
+    if(shufflePhase==='shuffle'){
+      shuffleStoppedAt=performance.now();shuffleStopInterval=shuffleInterval(shuffleStoppedAt);
+      shufflePhase='settle';sync();$('ladderStatus').textContent='사다리 확정 중';resultText('멈추는 중');return;
+    }
     if(step!==3||busy()||!root.classList.contains('active'))return;
     round=null;
     ensureLadderPrizeCount();
@@ -307,27 +318,34 @@
     const rt=miniGameRuntime.ladder,session={runtime:rt,source:sourceKey(),players:savedPlayers().map(p=>({...p})),prizes:savedPrizes().map(p=>({...p}))};
     round=session;
     const roster=session.players,outcomes=session.prizes;
-    rt.autoRunning=true;rt.autoResultNames=[];rt.autoResultEntries=[];rt.generated=false;rt.rungs=[];rt.activePlayer=-1;shuffling=true;
+    rt.autoRunning=true;rt.autoResultNames=[];rt.autoResultEntries=[];rt.generated=false;rt.rungs=[];rt.activePlayer=-1;shuffleStartedAt=performance.now();shufflePhase='shuffle';
     drawLadder(null);renderLadder();resultText('섞는 중');
     const status=$('ladderStatus');status.textContent='참가자 · 결과 · 사다리 섞는 중';
     let completed=false;
     try{
-      while(shuffling&&root.classList.contains('active')&&miniGameRuntime.ladder===rt){
-        cryptoShuffleInPlace(roster);cryptoShuffleInPlace(outcomes);
-        rt.rungs=spacedRungs(roster.length);rt.generated=true;
-        paintRound();
-        await ladderSleep(60);
+      let lastPreview=-Infinity;
+      while(root.classList.contains('active')&&miniGameRuntime.ladder===rt){
+        const now=performance.now(),braking=shufflePhase==='settle';
+        if(braking&&now-shuffleStoppedAt>=shuffleTempo.brake){
+          // Give the final, visible board a short beat before tracing a path.
+          if(now-lastPreview>=shuffleTempo.hold)break;
+        }else if(now-lastPreview>=shuffleInterval(now)){
+          cryptoShuffleInPlace(roster);cryptoShuffleInPlace(outcomes);
+          rt.rungs=spacedRungs(roster.length);rt.generated=true;paintRound();lastPreview=now;
+        }
+        // At most one preview per paint; never catch up with burst updates.
+        await new Promise(requestAnimationFrame);
       }
-      // Leaving the game during shuffle cancels the previews, without saving
-      // an arbitrary intermediate order or starting a game in the background.
-      if(shuffling||miniGameRuntime.ladder!==rt)return;
+      // Leaving the game during acceleration or braking cancels the preview.
+      if(!root.classList.contains('active')||miniGameRuntime.ladder!==rt||shufflePhase!=='settle')return;
+      shufflePhase=null;sync();
       status.textContent='사다리 진행 · 왼쪽부터 결과 확인';
       resultText('결과 공개 중');
       for(let i=0;i<roster.length;i++){if(miniGameRuntime.ladder!==rt||!await animateRoundPath(i,Math.max(430,720-roster.length*14),rt))return;await ladderSleep(120)}
       if(miniGameRuntime.ladder!==rt)return;
       completed=true;rt.activePlayer=-1;status.textContent=`자동 사다리 완료 · ${roster.length}명`;
     }finally{
-      shuffling=false;rt.autoRunning=false;
+      shufflePhase=null;rt.autoRunning=false;
       if(completed){
         // Commit the final order only if the shared roster and prizes still
         // match the setup. Preserve any genuinely newer cloud edits.
