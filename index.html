@@ -4,6 +4,15 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>마왕 스케줄러</title>
+<script>
+// Start the authoritative calendar read before CSS and the large UI runtime.
+// Only version numbers are stored locally; no unverified content is displayed.
+(()=>{const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),7000);let known={};try{const scope=localStorage.getItem('mws_access_remember_v1')==='1'&&localStorage.getItem('mws_access_mode_v1')==='admin'?'admin':'public';known=JSON.parse(localStorage.getItem('mws_calendar_startup_versions_v2:'+scope)||'{}')}catch(_){}window.__mwsCalendarStartupRequestV2=fetch('/api/calendar-startup?known='+encodeURIComponent(JSON.stringify(known)),{cache:'no-store',credentials:'same-origin',signal:controller.signal}).then(r=>r.ok?r.json():null).catch(()=>null).finally(()=>clearTimeout(timer))})();
+</script>
+<style id="mws-calendar-startup-v2-style">
+body[data-calendar-startup="pending"] #calendarGrid{position:relative;min-height:clamp(240px,60vh,650px)}
+body[data-calendar-startup="pending"] #calendarGrid:empty::before{content:'일정을 불러오는 중입니다';grid-column:1/-1;align-self:center;justify-self:center;color:var(--muted,#9ca3af);font-size:13px}
+</style>
 <link rel="stylesheet" href="assets/legacy-hub-v1.css?v=1">
 <link rel="stylesheet" href="assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171-searchtab172-drag174-workspace176-splitquick177&f1feedback303=1&charcoal=1">
 <link rel="stylesheet" href="assets/calendar-broadcast-duration-v1.css?v=1">
@@ -60,7 +69,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <link rel="stylesheet" href="assets/wardogs-intro-v1.css?v=1.0.0-phase118">
 <link rel="stylesheet" href="assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-frame140-frame144-aperture152-medicaperture165-classapertures166-unassigned168">
 </head>
-<body data-theme="neon" class="mws-premium mws-public-mode mws-app-loading" data-mws-mode="public" data-build-version="MWS V 1.4.0">
+<body data-theme="neon" class="mws-premium mws-public-mode mws-app-loading" data-mws-mode="public" data-build-version="MWS V 1.4.0" data-calendar-startup="pending">
 <div id="mwsAccessGate" class="hidden" aria-modal="true" role="dialog" aria-labelledby="mwsLoginTitle">
   <div class="mws-login-shell">
     <button type="button" id="mwsLoginClose" class="mws-login-close" aria-label="Public으로 돌아가기">×</button>

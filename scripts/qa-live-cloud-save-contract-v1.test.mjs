@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
+import {DatabaseSync} from 'node:sqlite';
 
 const source=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const server=source('src/cf-v111-auth.js');
@@ -17,6 +18,18 @@ test('active Cloudflare D1 requires per-part optimistic concurrency versions',()
  assert(server.includes('const expectedVersions=body?.versions'));
  assert(server.includes('Number(expectedVersions[part])'));
  assert(server.includes('return json({versions,normalized,savedBy:admin.id})'));
+});
+test('calendar startup reads consistent versions and only changed calendar parts from public D1',async()=>{
+ const db=new DatabaseSync(':memory:');db.exec('CREATE TABLE workspace_parts(scope TEXT,part TEXT,version INTEGER,data TEXT)');
+ const insert=db.prepare('INSERT INTO workspace_parts VALUES(?,?,?,?)');
+ for(const p of ['core','events','contacts','clipboard','activity','notebook','contactMeta','posts','miniGames','wardogs'])insert.run('public',p,4,JSON.stringify({p}));
+ insert.run('admin','events',9,JSON.stringify({private:true}));
+ const sqlEnv={DB:{prepare:sql=>({bind:(...args)=>({all:async()=>({results:db.prepare(sql).all(...args)})})})}};
+ const fn=vm.runInNewContext(sourceFunction(server,'async function handleCalendarStartup(request,env){','async function handlePart(')+'\nhandleCalendarStartup',{URL,ensureSchema:async()=>{},repairStoredContactImageRefs:async()=>{},CALENDAR_STARTUP_PARTS:['core','events','contacts','clipboard','activity','notebook','contactMeta'],json:v=>v});
+ try{
+  const cold=await fn({url:'https://test/api/calendar-startup'},sqlEnv);assert.equal(Object.keys(cold.parts).length,7);assert.equal(Object.keys(cold.manifest.parts).length,10);assert.equal(cold.parts.events.version,4);assert.equal(cold.parts.events.data.p,'events');assert(!cold.parts.posts);
+  const known=encodeURIComponent(JSON.stringify({core:4,events:3,contacts:4}));const warm=await fn({url:'https://test/api/calendar-startup?known='+known},sqlEnv);assert(!warm.parts.core&&!warm.parts.contacts);assert.equal(warm.parts.events.version,4);assert.equal(warm.manifest.parts.core,4);
+ }finally{db.close()}
 });
 
 
@@ -56,19 +69,23 @@ const transform=vm.runInNewContext(sourceFunction(entry,'function normalizeCloud
 for(const path of clientPaths){
  const code=transform(source(path));
  const initial=vm.runInNewContext(source(path).match(/const INITIAL_PARTS=(\[[^;]+\]);/)[1]);assert(initial.includes('clipboard'));
- test(path+' paints authoritative calendar before slow parts; Public defers optional data and Admin preserves full readiness',async()=>{
+ test(path+' loads required rows in parallel and commits one complete calendar; Public defers optional data',async()=>{
   const remote={core:{categories:[]},events:[{id:'e1',title:'verified',favoriteFolderId:'f1'}],contacts:[],clipboard:{},activity:{},notebook:{favoriteFolders:[{id:'f1'}]},contactMeta:{},posts:[],miniGames:{},wardogs:{}};
   const versions=Object.fromEntries(Object.keys(remote).map(p=>[p,1]));
   for(const mode of ['public','admin']){
-   const h=makeRuntime(code,cp(remote),cp(versions));const calls=[];let preview,release,ready=false;
-   const painted=new Promise(r=>preview=r),slow=new Promise(r=>release=r);
+   const h=makeRuntime(code,cp(remote),cp(versions));const calls=[];let release,commits=0;
+   const slow=new Promise(r=>release=r);
    h.ctx.INITIAL_PARTS=initial;h.ctx.PARTS_BY_TAB={posts:['posts'],export:Object.keys(remote)};
-   h.ctx.loadPartWithCache=async(scope,p)=>{calls.push(p);if(p!=='core'&&p!=='events')await slow;return {data:cp(remote[p]),version:1}};
-   h.ctx.window.mwsRenderCalendarFirstV1=snapshot=>{assert.deepEqual([...h.ctx.loadedParts],['core','events']);assert.equal(snapshot.events[0].favoriteFolderId,'f1');assert.equal(h.ctx.data,null);preview();return true};
-   h.ctx.normalizeAndRender=(reason,startup)=>{if(startup)ready=true};
-   const pending=h.ctx.hydrate(mode);await painted;
-   assert.deepEqual(calls,['core','events']);assert.equal(ready,false);assert.equal(h.ctx.window.__mwsAppReadyV130,false);assert.equal(h.writes.length,0);
-   release();await pending;assert.equal(ready,true);
+   const required=[...(mode==='admin'?Object.keys(remote):initial)];
+   const batchParts={core:{version:1,data:cp(remote.core)},events:{version:1,data:cp(remote.events)}};
+   h.ctx.window.__mwsCalendarStartupRequestV2=Promise.resolve({manifest:{parts:cp(versions)},parts:batchParts});
+   h.ctx.fetchManifest=async()=>{throw Error('prefetched manifest must be used')};
+   h.ctx.loadPartWithCache=async(scope,p)=>{calls.push(p);await slow;return {data:cp(remote[p]),version:1}};
+   h.ctx.window.mwsRenderCalendarFirstV1=()=>assert.fail('partial calendar must not render');
+   h.ctx.normalizeAndRender=(reason,startup)=>{if(startup){commits++;assert.equal(h.ctx.data.events[0].favoriteFolderId,'f1');assert.equal(h.ctx.data.notebook.favoriteFolders[0].id,'f1')}};
+   const pending=h.ctx.hydrate(mode);await new Promise(r=>setImmediate(r));
+   assert.deepEqual(calls.slice().sort(),required.filter(p=>!batchParts[p]).sort());assert.equal(commits,0);assert.equal(h.ctx.window.__mwsAppReadyV130,false);assert.equal(h.writes.length,0);
+   release();await pending;assert.equal(commits,1);
    assert.deepEqual([...h.ctx.loadedParts].sort(),[...(mode==='admin'?Object.keys(remote):initial)].sort());
    if(mode==='public'){
     assert(!calls.includes('posts')&&!calls.includes('miniGames')&&!calls.includes('wardogs'));
@@ -76,6 +93,12 @@ for(const path of clientPaths){
     await h.ctx.ensure('export');assert.equal(h.ctx.loadedParts.size,Object.keys(remote).length);
    }
   }
+ });
+ test(path+' warm startup uses version hints only; missing or mismatched cached rows are verified',async()=>{
+  const remote={core:{categories:[]},events:[{id:'current'}]},versions={core:7,events:9};const h=makeRuntime(code,remote,versions);const calls=[];
+  h.ctx.window.__mwsCalendarStartupRequestV2=Promise.resolve({manifest:{parts:versions},parts:{events:{version:8,data:[{id:'old'}]}}});
+  h.ctx.loadPartWithCache=async(scope,p)=>{calls.push(p);return{data:cp(remote[p]),version:versions[p]}};
+  await h.ctx.hydrate('public');assert.deepEqual(calls,['core','events']);assert.equal(h.ctx.data.events[0].id,'current');assert.equal(JSON.parse(h.localStorage.getItem('mws_calendar_startup_versions_v2:public')).events,9);
  });
  test(path+' actual served runtime drains all overlapping changes and manual SAVE waits for latest',async()=>{
   const remote={events:[{id:'e1',title:'old'}],contacts:[{id:'c1',name:'old'}],core:{contentGroups:[]},clipboard:{scheduleClipboard:[{id:'x'}]}},versions={events:4,contacts:5,core:7,clipboard:9};

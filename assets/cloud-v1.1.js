@@ -88,7 +88,7 @@
   function extractPart(part,src=data){const d=src||{};if(part==='core'){const out={};for(const k of CORE_KEYS)if(Object.prototype.hasOwnProperty.call(d,k))out[k]=clone(d[k]);return out}if(part==='contacts')return clone(Array.isArray(d.contacts)?d.contacts:[]);if(part==='events')return clone(Array.isArray(d.events)?d.events:[]);if(part==='posts')return stripPostSources(d.posts);if(part==='miniGames')return clone(d.miniGames&&typeof d.miniGames==='object'?d.miniGames:{});if(part==='activity')return{collaborations:clone(Array.isArray(d.collaborations)?d.collaborations:[]),todayPeopleByDate:clone(d.todayPeopleByDate&&typeof d.todayPeopleByDate==='object'?d.todayPeopleByDate:{}),todayPeopleManualByDate:clone(d.todayPeopleManualByDate&&typeof d.todayPeopleManualByDate==='object'?d.todayPeopleManualByDate:{}),targetList:clone(Array.isArray(d.targetList)?d.targetList:[])};if(part==='notebook')return{memos:clone(Array.isArray(d.memos)?d.memos:[]),favoriteFolders:clone(Array.isArray(d.favoriteFolders)?d.favoriteFolders:[]),patchNotes:clone(Array.isArray(d.patchNotes)?d.patchNotes:[]),suggestions:clone(Array.isArray(d.suggestions)?d.suggestions:[])};if(part==='contactMeta')return{contactTags:clone(Array.isArray(d.contactTags)?d.contactTags:[]),contactTagBanners:clone(d.contactTagBanners&&typeof d.contactTagBanners==='object'?d.contactTagBanners:{}),emoticons:clone(Array.isArray(d.emoticons)?d.emoticons:[])};if(part==='clipboard')return{scheduleClipboard:clone(Array.isArray(d.scheduleClipboard)?d.scheduleClipboard:[])};if(part==='wardogs'){const raw=d.wardogs&&typeof d.wardogs==='object'&&!Array.isArray(d.wardogs)?d.wardogs:{schemaVersion:1,cards:[]};return window.mwsWardogsDataV119?.normalize?window.mwsWardogsDataV119.normalize(raw):clone(raw)}return null}
   function mergePart(part,value,target=data){const v=clone(value);if(part==='core'){Object.assign(target,v||{});return}if(part==='contacts'){target.contacts=Array.isArray(v)?v:[];return}if(part==='events'){target.events=Array.isArray(v)?v:[];return}if(part==='posts'){target.posts=Array.isArray(v)?v:[];return}if(part==='miniGames'){target.miniGames=v&&typeof v==='object'?v:{};return}if(part==='wardogs'){const raw=v&&typeof v==='object'&&!Array.isArray(v)?v:{schemaVersion:1,cards:[]};target.wardogs=window.mwsWardogsDataV119?.normalize?window.mwsWardogsDataV119.normalize(raw):raw;return}if(['activity','notebook','contactMeta','clipboard'].includes(part))Object.assign(target,v&&typeof v==='object'?v:{})}
   function freshSkeleton(){return{version:52,categories:[],contacts:[],events:[],posts:[],miniGames:{},collaborations:[],todayPeopleByDate:{},todayPeopleManualByDate:{},targetList:[],memos:[],favoriteFolders:[],patchNotes:[],suggestions:[],contactTags:[],contactTagBanners:{},emoticons:[],scheduleClipboard:[],timezones:[],achievementCards:[],gameLibrary:[],wardogs:{schemaVersion:1,cards:[]}}}
-  function normalizeAndRender(reason,startup=false){try{normalizeDataShape()}catch(_){try{normalizeMiniGameData()}catch(__){}}try{if(typeof mwsApplyDevicePrefs==='function')mwsApplyDevicePrefs(data)}catch(_){}document.body.dataset.theme=data.theme||'neon';document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));try{if(startup&&typeof window.mwsRenderHydratedCalendarV1==='function')window.mwsRenderHydratedCalendarV1(reason,[...loadedParts]);else renderAll(reason)}catch(e){console.error('v1.1 render failed',e)}}
+  function normalizeAndRender(reason,startup=false){try{normalizeDataShape()}catch(_){try{normalizeMiniGameData()}catch(__){}}try{if(typeof mwsApplyDevicePrefs==='function')mwsApplyDevicePrefs(data)}catch(_){}document.body.dataset.theme=data.theme||'neon';document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));try{if(startup&&typeof window.mwsRenderHydratedCalendarV1==='function')window.mwsRenderHydratedCalendarV1(reason,[...loadedParts]);else renderAll(reason)}catch(e){console.error('v1.1 render failed',e);if(startup)throw e}}
 
   async function fetchManifest(){const started=performance.now(),m=await fetchJson('/api/manifest',{},'Cloudflare 버전 확인');metrics.semanticResponseBytes+=byteLen(m);metric('manifest',{bytes:byteLen(m),backend:m.backend,ms:Math.round(performance.now()-started)});return m}
   async function fetchPart(part){const started=performance.now(),row=await fetchJson(`/api/parts/${encodeURIComponent(part)}`,{cache:'no-store'},`${part} 불러오기`);metrics.semanticResponseBytes+=byteLen(row);metrics.cacheMisses++;metric('part-fetch',{part,version:Number(row.version)||0,bytes:byteLen(row),ms:Math.round(performance.now()-started)});return row}
@@ -109,9 +109,18 @@
     const generation=++hydrationSeq;hydrating=true;window.__mwsAppReadyV130=false;mode=chosen;
     loadedParts.clear();baselineJson.clear();dirtyParts.clear();lazyPartLoads.clear();manifest=null;draftBlocked=null;lastDraft=null;draftOrigin=null;
     const scope=chosen==='admin'?'admin':'public',required=chosen==='admin'?ALL_PARTS:INITIAL_PARTS;
-    let serverManifest=null,offline=false;
+    let serverManifest=null,offline=false,startupParts={},startupUsed=false;
     setLoginError('로그인 완료 · 서버 버전을 확인하는 중입니다.');
-    try{serverManifest=await fetchManifest();manifest=serverManifest}catch(e){offline=true;console.warn('Manifest unavailable; IndexedDB fallback',e)}
+    try{
+      const prefetched=window.__mwsCalendarStartupRequestV2;
+      if(prefetched)delete window.__mwsCalendarStartupRequestV2;
+      let batch=null;
+      try{if(prefetched)batch=await prefetched}catch(_){}
+      if(batch?.manifest?.parts&&batch.parts&&typeof batch.parts==='object'){
+        serverManifest=batch.manifest;startupParts=batch.parts;manifest=serverManifest;startupUsed=true;
+        metric('calendar-startup-batch',{scope,received:Object.keys(startupParts)});
+      }else{serverManifest=await fetchManifest();manifest=serverManifest}
+    }catch(e){offline=true;console.warn('Manifest unavailable; IndexedDB fallback',e)}
     try{
       if(chosen==='admin'&&offline)throw Error('관리자 편집은 최신 서버 버전 확인 후 가능합니다. 미저장 복구본은 그대로 보존됩니다.');
       const next=freshSkeleton();
@@ -119,7 +128,16 @@
       const showProgress=()=>{if(generation===hydrationSeq&&mode===chosen)setLoginError(`로그인 완료 · 필수 데이터 ${transferred}/${required.length} 확인 중`)};
       showProgress();
       const loadBatch=async parts=>{
-      const results=await Promise.allSettled(parts.map(part=>loadPartWithCache(scope,part,serverManifest,{allowStale:true}).finally(()=>{transferred++;showProgress()})));
+      const results=await Promise.allSettled(parts.map(async part=>{
+        try{
+          const row=startupParts[part],wanted=Number(serverManifest?.parts?.[part]);
+          if(row&&ownSave(row,'data')&&Number.isInteger(wanted)&&Number(row.version)===wanted){
+            void putCachedPart(scope,part,wanted,row.data).catch(()=>{});
+            return row;
+          }
+          return await loadPartWithCache(scope,part,serverManifest,{allowStale:true});
+        }finally{transferred++;showProgress()}
+      }));
       if(generation!==hydrationSeq||mode!==chosen)throw Error('데이터 로딩이 취소되었습니다.');
       for(let i=0;i<parts.length;i++){
         const part=parts[i],result=results[i];let row=result.status==='fulfilled'?result.value:null;
@@ -128,29 +146,14 @@
         mergePart(part,row.data,next);loadedParts.add(part);baselineJson.set(part,JSON.stringify(row.data));
         if(serverManifest?.parts)serverManifest.parts[part]=Number(row.version);
       }};
-      // Show the month as soon as its authoritative event/category rows arrive.
-      // Keep the snapshot read-only; never normalize/save against missing parts.
-      const priority=required.filter(part=>part==='core'||part==='events');
-      const remaining=required.filter(part=>!priority.includes(part));
-      await loadBatch(priority);
-      if(priority.includes('core')&&priority.includes('events')&&typeof window.mwsRenderCalendarFirstV1==='function'){
-        const painted=window.mwsRenderCalendarFirstV1(next);
-        if(painted){
-          metric('calendar-first-paint',{scope,loaded:[...loadedParts]});
-          const st=$('syncStatusText');if(st)st.textContent='캘린더 표시 · 데이터 준비 중';
-          // Yield an actual paint before requesting large, unrelated datasets.
-          await new Promise(resolve=>{
-            let done=false;const finish=()=>{if(done)return;done=true;clearTimeout(timer);resolve()};
-            const timer=setTimeout(finish,50);
-            if(typeof requestAnimationFrame==='function')requestAnimationFrame(()=>requestAnimationFrame(finish));
-          });
-        }
-      }
-      if(generation!==hydrationSeq||mode!==chosen)throw Error('데이터 로딩이 취소되었습니다.');
-      await loadBatch(remaining);
+      // All calendar dependencies load together. Do not paint a partial or
+      // empty month and replace its DOM again a frame later.
+      await loadBatch(required);
       setLoginError('로그인 완료 · 화면을 준비하는 중입니다.');
       data=next;normalizeDataShape();const recovered=chosen==='admin'&&!offline?await recoverSaveDraft():false;
       normalizeAndRender(offline?'IndexedDB 오프라인 캐시':'Cloudflare D1 데이터',true);
+      if(startupUsed&&!offline&&serverManifest?.parts){try{const hints={};for(const p of INITIAL_PARTS)if(loadedParts.has(p)&&Number.isSafeInteger(Number(serverManifest.parts[p])))hints[p]=Number(serverManifest.parts[p]);localStorage.setItem('mws_calendar_startup_versions_v2:'+scope,JSON.stringify(hints))}catch(_){}}
+      metric('calendar-startup-commit',{scope,loaded:[...loadedParts]});
       try{localStorage.removeItem('mawangSchedulerBeta')}catch(_){}
       applyModeUi();hideGate();const st=$('syncStatusText');if(st)st.textContent=offline?'오프라인 · 편집 저장 보류':'Cloudflare D1 동기화';
       metric('hydrate-complete',{scope,offline,loaded:[...loadedParts]});
