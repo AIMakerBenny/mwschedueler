@@ -1,28 +1,30 @@
 /* Scoped to the ladder only. Other mini games retain their existing layout. */
-#gameLadder.active{box-sizing:border-box;width:100%;max-width:none!important;margin:0;min-width:0;padding:0!important;container-type:inline-size;display:grid!important;grid-template-rows:auto minmax(0,1fr) auto;gap:12px;height:var(--ladder-workspace-height,calc(100dvh - 125px));min-height:420px}
-#gameLadder.active:has([data-ladder-page="3"]:not([hidden])){grid-template-rows:auto minmax(0,1fr)}
+body:not([data-device-mode="mobile"]) .main:has(>#gameLadder.active){padding-top:12px!important}
+body.mws-premium .main:has(>#gameLadder.active)>.topbar{margin-bottom:6px!important;padding-bottom:5px!important}
+#gameLadder.active{box-sizing:border-box;width:100%;max-width:none!important;margin:0;min-width:0;padding:0!important;container-type:inline-size;display:grid!important;grid-template-rows:auto minmax(0,1fr);gap:7px;height:var(--ladder-workspace-height,calc(100dvh - 100px));min-height:420px}
 #gameLadder.active[data-ladder-compact="true"]{height:auto;min-height:0;display:block!important}
-#gameLadder [data-ladder-page][hidden],#gameLadder .ladder-wizard-footer[hidden],#gameLadder .ladder-wizard-footer [hidden],#gameLadder #ladderPlayerButtons[hidden]{display:none!important}
-#gameLadder .ladder-wizard-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:0;padding:4px;background:var(--panel);border:1px solid var(--border);border-radius:13px}
-#gameLadder .ladder-wizard-steps button{display:flex;align-items:center;gap:10px;min-width:0;text-align:left;padding:8px 12px;border:1px solid transparent;border-radius:9px;background:transparent;box-shadow:none;color:var(--muted);transition:background .2s,border-color .2s,color .2s}
+#gameLadder [data-ladder-page][hidden],#gameLadder .ladder-wizard-navigation[hidden],#gameLadder .ladder-wizard-navigation [hidden],#gameLadder #ladderPlayerButtons[hidden]{display:none!important}
+#gameLadder .ladder-wizard-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:0;padding:3px;background:var(--panel);border:1px solid var(--border);border-radius:10px}
+#gameLadder .ladder-wizard-steps button{display:flex;align-items:center;gap:8px;min-width:0;min-height:32px!important;text-align:left;padding:3px 10px!important;border:1px solid transparent;border-radius:7px;background:transparent;box-shadow:none;color:var(--muted);transition:background .2s,border-color .2s,color .2s}
 #gameLadder .ladder-wizard-steps button:focus:not(:focus-visible){outline:none!important}
 #gameLadder .ladder-wizard-steps button:focus-visible{outline:2px solid var(--accent)!important;outline-offset:2px}
-#gameLadder .ladder-wizard-steps button>span{display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;border-radius:50%;background:var(--input);font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}
+#gameLadder .ladder-wizard-steps button>span{display:grid;place-items:center;width:25px;height:25px;flex:0 0 25px;border-radius:50%;background:var(--input);font-size:11px;font-weight:800;font-variant-numeric:tabular-nums}
 #gameLadder .ladder-wizard-steps button strong,#gameLadder .ladder-wizard-steps button small{display:block;line-height:1.45}
 #gameLadder .ladder-wizard-steps button strong{font-size:14px;color:var(--text)}
-#gameLadder .ladder-wizard-steps button small{font-size:11px;font-weight:500;color:var(--muted)}
+#gameLadder .ladder-wizard-steps button small{display:none}
 #gameLadder .ladder-wizard-steps button.current{background:color-mix(in srgb,var(--accent) 12%,var(--panel));border-color:color-mix(in srgb,var(--accent) 48%,var(--border));opacity:1}
 #gameLadder .ladder-wizard-steps button.current>span{background:var(--accent);color:#fff}
 #gameLadder .ladder-wizard-steps button.complete>span{background:color-mix(in srgb,var(--accent) 18%,var(--input));color:var(--text)}
 #gameLadder .ladder-wizard-steps button:disabled:not(.current){opacity:.56;cursor:default}
-#gameLadder .ladder-wizard-page{min-width:0;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;animation:ladder-wizard-enter .32s cubic-bezier(.25,.65,.3,1) both}
+#gameLadder .ladder-wizard-page{min-width:0;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:7px;animation:ladder-wizard-enter .32s cubic-bezier(.25,.65,.3,1) both}
 @keyframes ladder-wizard-enter{from{opacity:.2;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
 @keyframes ladder-wizard-fade{from{opacity:.2}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){#gameLadder .ladder-wizard-page{animation:ladder-wizard-fade .18s ease-out both}}
-#gameLadder .ladder-wizard-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0;padding:0 2px}
-#gameLadder .ladder-wizard-heading h2{font-size:clamp(18px,1.6vw,23px);font-weight:800;margin:0 0 3px;letter-spacing:-.025em}
+#gameLadder .ladder-wizard-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0;padding:0 2px;min-height:34px}
+#gameLadder .ladder-wizard-heading>div:first-child{flex:1;min-width:0;display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 10px}
+#gameLadder .ladder-wizard-heading h2{font-size:18px;font-weight:800;margin:0;letter-spacing:-.025em;line-height:1.35}
 #gameLadder .ladder-wizard-heading p{font-size:12px;line-height:1.55;color:var(--muted);margin:0}
-#gameLadder .ladder-wizard-count{flex:0 0 auto;border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));border-radius:999px;background:color-mix(in srgb,var(--accent) 8%,var(--panel));font-size:13px;font-weight:750;padding:8px 13px;color:var(--text)}
+#gameLadder .ladder-wizard-count{flex:0 0 auto;border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));border-radius:999px;background:color-mix(in srgb,var(--accent) 8%,var(--panel));font-size:12px;font-weight:750;padding:5px 9px;color:var(--text)}
 #gameLadder .ladder-wizard-roster{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,30%);gap:12px;min-height:0;align-items:stretch}
 #gameLadder .ladder-wizard-config{display:grid;grid-template-columns:minmax(240px,30%) minmax(0,1fr);gap:12px;min-height:0;align-items:stretch}
 #gameLadder .ladder-wizard-roster>.card,#gameLadder .ladder-wizard-config>.card,#gameLadder .ladder-stage-card{min-width:0;padding:12px!important;border-radius:13px!important;background:linear-gradient(155deg,color-mix(in srgb,var(--panel) 97%,var(--accent)),var(--panel))!important;box-shadow:0 7px 20px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.04)}
@@ -68,6 +70,7 @@
 #gameLadder .ladder-action-row{flex:0 0 auto;flex-wrap:nowrap}
 #gameLadder .ladder-action-row button{min-height:36px!important;padding:0 13px!important}
 #gameLadder #ladderAutoStartBtn{width:120px;min-width:120px}
+#gameLadder .ladder-stage-card[data-ladder-phase="shuffle"] #ladderAutoStartBtn{pointer-events:auto}
 #gameLadder #ladderPlayerButtons{display:grid;flex:0 0 auto;grid-template-columns:repeat(auto-fit,minmax(78px,1fr))!important;gap:5px!important;margin:0!important}
 #gameLadder #ladderPlayerButtons button{height:30px!important;min-height:30px!important;font-size:11px!important;padding:4px 6px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #gameLadder #ladderPlayerButtons[inert] button{opacity:.55;pointer-events:none}
@@ -89,12 +92,12 @@
 #gameLadder .ladder-full-result-row.winner .ladder-full-result-label{color:#ffd96a}
 /* The complete result list below is the single visible results overview. */
 #gameLadder .ladder-auto-result-slots{display:none!important}
-#gameLadder .ladder-wizard-footer{display:flex;align-items:center;gap:10px;justify-content:flex-end;margin:0;padding:8px 0 0;border-top:1px solid var(--border)}
-#gameLadder .ladder-wizard-footer>span{flex:1;color:var(--muted);font-size:12px}
-#gameLadder .ladder-wizard-footer button{min-height:36px;min-width:104px;border-radius:9px!important}
-#gameLadder[data-ladder-compact="true"] .ladder-wizard-steps{margin-bottom:12px}
+#gameLadder .ladder-wizard-navigation{display:flex;align-items:center;gap:6px;justify-content:flex-end;flex:0 0 auto}
+#gameLadder .ladder-wizard-navigation>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#gameLadder .ladder-wizard-navigation button{min-height:34px!important;min-width:96px;padding:5px 10px!important;border-radius:8px!important}
+#gameLadder[data-ladder-compact="true"] .ladder-wizard-steps{margin-bottom:7px}
 #gameLadder[data-ladder-compact="true"] .ladder-wizard-page{display:block}
-#gameLadder[data-ladder-compact="true"] .ladder-wizard-heading{margin-bottom:12px}
+#gameLadder[data-ladder-compact="true"] .ladder-wizard-heading{margin-bottom:7px}
 #gameLadder[data-ladder-compact="true"] :is(#ladderPlayerList,#ladderPrizeList,#ladderContactPalette){flex:0 1 auto!important;max-height:350px!important;min-height:100px!important}
 #gameLadder[data-ladder-compact="true"] .ladder-stage-card{grid-template-rows:auto auto;grid-template-columns:minmax(0,1fr)}
 #gameLadder[data-ladder-compact="true"] .ladder-stage-toolbar{display:grid;grid-template-columns:minmax(0,1fr);justify-items:stretch}
@@ -105,5 +108,4 @@
 #gameLadder[data-ladder-compact="true"] #ladderCanvas{min-width:calc(var(--ladder-lanes,4) * 76px)}
 #gameLadder[data-ladder-compact="true"] .ladder-summary-shell{grid-column:1;grid-row:3}
 #gameLadder[data-ladder-compact="true"] .ladder-full-result-list{flex:none;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr))!important;max-height:240px!important}
-#gameLadder[data-ladder-compact="true"] .ladder-wizard-footer{margin:12px 0 0}
-@container (max-width:680px){#gameLadder .ladder-wizard-roster,#gameLadder .ladder-wizard-config{grid-template-columns:1fr}#gameLadder .ladder-wizard-steps button{padding:7px 5px;gap:5px}#gameLadder .ladder-wizard-steps button>span{width:25px;height:25px;flex-basis:25px}#gameLadder .ladder-wizard-steps button small{display:none}#gameLadder .ladder-wizard-steps button strong{font-size:12px}#gameLadder .ladder-wizard-heading{align-items:flex-start}#gameLadder .ladder-wizard-footer{flex-wrap:wrap}#gameLadder .ladder-wizard-footer>span{min-width:100%;order:-1}}
+@container (max-width:680px){#gameLadder .ladder-wizard-roster,#gameLadder .ladder-wizard-config{grid-template-columns:1fr}#gameLadder .ladder-wizard-steps button{padding:3px 5px!important;gap:5px}#gameLadder .ladder-wizard-steps button strong{font-size:12px}#gameLadder .ladder-wizard-heading{flex-wrap:wrap}#gameLadder .ladder-wizard-heading>div:first-child{flex-basis:65%}#gameLadder .ladder-wizard-navigation{flex:1 0 100%}#gameLadder .ladder-wizard-navigation button{min-width:0}}
