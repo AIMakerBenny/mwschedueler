@@ -13,27 +13,46 @@ const mode=process.env.CAREER_QA_MODE||'all';
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,reducedMotion,...(video?{recordVideo:{dir:output,size:{width,height}}}:{})});
+  if(width>700){
+    await context.addInitScript(({collapsed})=>{
+      localStorage.setItem('mws-sidebar-nav-groups-v1',JSON.stringify({tools:!collapsed,games:true}));
+      window.__navFirstPaintSamples=[];
+      const snapshot=()=>{if(!window.__mwsSidebarGroupsInitial)return;const list=[...document.querySelectorAll('.nav-scroll > [data-tab],.nav-scroll > [data-mws-nav-group]')].map(e=>[e.dataset.tab||e.dataset.mwsNavGroup,e.getAttribute('aria-expanded'),e.classList.contains('mws-nav-group-hidden')]);const value=JSON.stringify(list);const seen=window.__navFirstPaintSamples;if(seen.at(-1)!==value)seen.push(value)};
+      new MutationObserver(snapshot).observe(document,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-expanded','class']});
+    },{collapsed:reducedMotion==='reduce'});
+  }
   if(candidate){
     // Use the real public production shell/data with only candidate frontend assets overridden.
     const sectionPattern=/<section class="section" id="careerTimeline"[\s\S]*?<\/section>/;
-    const replacement=readFileSync(new URL('../index.html',import.meta.url),'utf8').match(sectionPattern)[0];
+    const source=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+    const replacement=source.match(sectionPattern)[0];
+    const asidePattern=/<aside class="sidebar">[\s\S]*?<\/aside>/;
+    const firstPaint=source.match(/<style id="mws-nav-first-paint">[\s\S]*?<\/style>/)[0];
     await context.route(base,async route=>{
       const response=await route.fetch();
       const original=await response.text();
       assert(sectionPattern.test(original),'Timeline section absent from production');
-      await route.fulfill({response,body:original.replace(sectionPattern,replacement)});
+      await route.fulfill({response,body:original.replace(sectionPattern,replacement).replace(asidePattern,source.match(asidePattern)[0]).replace('</head>',firstPaint+'</head>')});
     });
-    for(const file of ['career-visualizer.js','career-timeline.css']){
-      await context.route('**/assets/'+file+'*',route=>route.fulfill({
+    for(const file of ['career-visualizer.js','career-timeline.css','tools.js','content-planner-host.js','perf-runtime.js','post-login-runtime-v130.js']){
+      await context.route('**/assets/'+file+'*',async route=>{if(file==='tools.js'||file==='content-planner-host.js')await pause(1800);await route.fulfill({
         status:200,contentType:file.endsWith('.js')?'application/javascript':'text/css',
         body:readFileSync(new URL('../assets/'+file,import.meta.url))
-      }));
+      })});
     }
   }
   const started=Date.now(), page=await context.newPage();
   const errors=[];page.on('pageerror',err=>{if(err.stack?.includes('career-visualizer'))errors.push(err.message)});
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>window.__mwsAppReadyV130&&!document.body.classList.contains('mws-app-loading'),{},{timeout:45000});
+  if(width>700){
+    await page.waitForFunction(()=>window.mwsOpenDrawingBoardV1&&window.mwsCleanToolsActivate,{},{timeout:30000});
+    const samples=await page.evaluate(()=>window.__navFirstPaintSamples.map(JSON.parse));
+    assert(samples.length>0,'No sidebar first paint sample');
+    const expected=['memos','careerTimeline','achievements','games','gameLadder','gameF1Racing','gameMultiDraw','gameMajoku','tools','contentPlanner','toolTier','toolMatrix','toolRelations','legacy'];
+    for(const sample of samples){const ids=sample.map(x=>x[0]);assert.deepEqual(ids.filter(i=>expected.includes(i)),expected);assert.equal(sample.find(x=>x[0]==='tools')[1],String(reducedMotion!=='reduce'));assert.equal(sample.find(x=>x[0]==='toolTier')[2],reducedMotion==='reduce');}
+    console.log('PASS sidebar first paint, delayed runtimes',samples.length);
+  }
   const close=page.locator('#mwsAnnouncementDialog button').filter({hasText:'닫기'});
   if(await close.first().isVisible().catch(()=>false))await close.first().click();
   const nav=page.locator('[data-tab=careerTimeline]');
@@ -196,7 +215,18 @@ try{
     execFileSync('ffmpeg',['-y','-ss',String(startSeconds),'-i',output+'/career-timeline-raw.webm','-t','25','-c:v','libvpx-vp9','-crf','30','-b:v','0',output+'/career-timeline-recording.webm'],{stdio:'inherit'});
     console.log('PASS recording interaction');
     const rm=await open(1366,768,false,'reduce');
-    assert.equal((await inspect(rm.page.locator('.cv-axis .cv-entry').last())).p,1);
+    await chooseYear(rm.page,'2024');
+    const reducedEntry=rm.page.locator('.cv-year[data-year="2024"] .cv-month[data-month="3"] .cv-entry').first();
+    await approach(rm.page,reducedEntry);
+    const before=await inspect(reducedEntry);
+    await rm.page.mouse.move(850,480);await rm.page.mouse.wheel(0,120);await pause(300);
+    const after=await inspect(reducedEntry);
+    await rm.page.mouse.wheel(0,-120);await pause(300);
+    const reverse=await inspect(reducedEntry);
+    assert(Math.abs(after.shift-before.shift)>35,JSON.stringify({before,after,reverse}));
+    assert.equal(before.opacity,1);assert.equal(after.opacity,1);assert(Math.abs(before.scale-1)<.01);
+    assert(Math.abs(before.shift-reverse.shift)<2);
+    console.log('PASS reduced motion wheel',JSON.stringify({before,after,reverse}));
     await rm.context.close();
   }
 }finally{await browser.close();}

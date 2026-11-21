@@ -143,4 +143,6 @@
   .cv-result{grid-template-columns:35px minmax(0,1fr);gap:4px 6px;padding:7px}
   .cv-result-info{grid-column:2}
 }
-@media(prefers-reduced-motion:reduce){.cv-pair .cv-card{transform:none!important;opacity:1}.cv-pair .cv-entry::before{transform:none!important}}
+/* Reduced motion preserves direct scroll-linked attachment but removes scaling, fading,
+   vertical travel and inertial follow-through in the controller. */
+@media(prefers-reduced-motion:reduce){.cv-pair .cv-card{opacity:1}}

@@ -224,6 +224,7 @@
       return {top:0,bottom:innerHeight};
     };
     function readGeometry(){
+      const root=getRoot();if(root!==scrollRoot){scrollRoot=root;snapNext=true;}
       const {top,bottom}=viewport(), h=bottom-top;
       const hostRect=barHost.getBoundingClientRect();
       const barHeight=bar.offsetHeight;
@@ -236,14 +237,20 @@
       const arrivalStart=activeTop+usable*.94;
       const arrivalEnd=activeTop+usable*.48;
       const travel=Math.max(120,arrivalStart-arrivalEnd);
-      const distanceToEnd=Math.max(0,(scrollRoot?.scrollHeight||0)-(scrollRoot?.clientHeight||0)-scrollTop());
-      const tail=ease(1-distanceToEnd/Math.max(150,usable*.38));
+      const scrollRange=Math.max(0,(scrollRoot?.scrollHeight||0)-(scrollRoot?.clientHeight||0));
+      const distanceToEnd=Math.max(0,scrollRange-scrollTop());
+      const tail=scrollRange>2?ease(1-distanceToEnd/Math.max(150,usable*.38)):0;
       const legacyTop=legacyHead.getBoundingClientRect().top;
+      const compact=matchMedia('(max-width:700px)').matches;
+      const pads=new Map([axis,legacyGrid].map(el=>[el,parseFloat(getComputedStyle(el).paddingRight)||0]));
       const states=anim.map(entry=>{
         const r=entry.getBoundingClientRect();
         const progress=ease((arrivalStart-(r.top+r.height/2))/travel);
-        const p=reduced.matches?1:Math.max(progress,tail);
-        return [entry,p,r.bottom>=activeTop-120&&r.top<=bottom+120];
+        const p=Math.max(progress,tail);
+        const parent=entry.closest('.cv-axis,.cv-legacy-grid');
+        const width=entry.offsetWidth;
+        const drift=((pads.get(parent)||0)+width*(compact?.18:.24))*(reduced.matches?.45:1);
+        return [entry,p,r.bottom>=activeTop-120&&r.top<=bottom+120,drift,compact||entry.classList.contains('cv-right')?1:-1,compact];
       });
       let current=null;
       for(const [y,marker] of markers){if(marker.getBoundingClientRect().top<=activeTop+Math.max(70,usable*.35))current=y;}
@@ -253,10 +260,10 @@
       bar.style.setProperty('--cv-left',hostRect.left+'px');
       bar.style.setProperty('--cv-width',hostRect.width+'px');
       bar.classList.toggle('cv-pinned',pin);
-      for(const [entry,target,visible] of states){
+      for(const [entry,target,visible,drift,direction,compact] of states){
         const previous=motion.get(entry);
         const value=snapNext||reduced.matches||!visible||!previous?target:previous.value;
-        motion.set(entry,{value,target,visible});
+        motion.set(entry,{value,target,visible,drift,direction,compact,applied:previous?.applied});
       }
       const legacyActive=legacyTop<=activeTop+usable*.48||distanceToEnd<=2;
       for(const [y,b] of yearButtons)b.setAttribute('aria-current',String(!legacyActive&&current===y));
@@ -278,7 +285,17 @@
         state.value=Math.abs(delta)<.004||!state.visible||reduced.matches?state.target:state.value+delta*alpha;
         moving||=state.value!==state.target;
         const next=state.value.toFixed(3);
+        const key=[next,state.drift,state.direction,state.compact,reduced.matches].join(':');
+        if(state.applied===key)continue;
+        state.applied=key;
         if(entry.style.getPropertyValue('--cv-p')!==next)entry.style.setProperty('--cv-p',next);
+        // Direct numeric transforms work even on browsers with incomplete CSS calc support.
+        const v=state.value, drift=(1-v)*state.drift, rm=reduced.matches;
+        const card=entry.firstElementChild;
+        card.style.transform=`translate3d(${(state.direction*drift).toFixed(2)}px,${(rm?0:(1-v)*(state.compact?24:28)).toFixed(2)}px,0) scale(${(rm?1:1-(1-v)*(state.compact?.18:.24)).toFixed(4)})`;
+        card.style.opacity=rm?'1':(.22+.78*v).toFixed(3);
+        entry.style.setProperty('--cv-drift',drift.toFixed(2)+'px');
+        entry.style.setProperty('--cv-branch',String(clamp((v-.46)/.54)));
       }
       if(moving||dirty)raf=requestAnimationFrame(update);else lastFrame=0;
     }
