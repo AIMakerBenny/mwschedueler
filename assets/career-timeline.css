@@ -99,6 +99,7 @@
 .cv-achievement{font-size:15px;font-weight:720;line-height:1.3;color:var(--cv-tone,var(--cv-ink))}
 .cv-context{font-size:13px;color:var(--cv-muted);line-height:1.46;font-weight:550}
 .cv-extra{font-size:12px;color:var(--cv-ink);line-height:1.45}
+.cv-headline,.cv-achievement,.cv-context,.cv-extra,.cv-detail p{word-break:keep-all;overflow-wrap:break-word}
 .cv-entry[data-tone=gold],.cv-map-dots [data-tone=gold]{--cv-tone:#dfb65f}
 .cv-entry[data-tone=silver],.cv-map-dots [data-tone=silver]{--cv-tone:#a7b7cf}
 .cv-entry[data-tone=bronze],.cv-map-dots [data-tone=bronze]{--cv-tone:#c98d67}

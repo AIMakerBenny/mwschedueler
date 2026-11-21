@@ -83,6 +83,7 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   assert.equal(await page.locator('.cv-axis .cv-entry').count(),95);
   assert.equal(await page.locator('.cv-legacy .cv-entry').count(),4);
   assert.equal(await page.locator('.cv-pair[data-single]').count(),0);
+  assert.equal(await page.locator('.cv-headline').first().evaluate(e=>getComputedStyle(e).wordBreak),'keep-all');
   assert(await page.locator('.cv-axis .cv-entry').evaluateAll(es=>es.every((e,i)=>e.classList.contains(i%2===0?'cv-left':'cv-right')&&e.parentElement.querySelectorAll('.cv-entry').length===1)));
   assert.match(await page.locator('.cv-year[data-year="2022"] .cv-month[data-month="4"] .cv-entry').filter({hasText:'이세계아이돌 햄스터 아바타'}).innerText(),/4월 23일/);
   assert.equal(await page.locator('.cv-entry').filter({hasText:'MECCHA CHAMELEON'}).count(),0);
