@@ -10,7 +10,7 @@
   // Cloud saves and normalization may replace arrays even when their contents
   // are unchanged. Never let those references control the life of a round.
   const sourceKey=()=>JSON.stringify([savedPlayers().map(p=>[p.id,p.name]).sort(),savedPrizes().map(p=>[p.id,p.label]).sort()]);
-  const busy=()=>Boolean(miniGameRuntime.ladder.autoRunning||miniGameRuntime.ladder.animating);
+  const busy=()=>Boolean(miniGameRuntime.ladder.autoRunning||miniGameRuntime.ladder.animating||round?.runtime.autoRunning||round?.runtime.animating);
   const validRoster=()=>players().length>=2&&players().length<=12;
   const validPrizes=()=>validRoster()&&prizes().length===players().length&&prizes().every(p=>String(p.label||'').trim());
   const rosterKey=()=>JSON.stringify(players().map(p=>p.id).sort());
@@ -259,6 +259,7 @@
   window.renderLadder=function(){
     // Background renderAll may be called while the active game is displayed.
     // Render the isolated round instead of copying cloud state into its UI.
+    if(round&&round.runtime!==miniGameRuntime.ladder&&!busy()){round=null;drawLadder(null)}
     if(round){paintRound();sync();return}
     const nextKey=rosterKey();
     if(key!==null&&key!==nextKey&&!busy()){step=1;furthest=1;paletteKey=null;clearBoard()}
@@ -295,7 +296,7 @@
     round=null;
     ensureLadderPrizeCount();
     if(!validPrizes()){clearBoard();renderLadder();return}
-    const rt=miniGameRuntime.ladder,session={source:sourceKey(),players:savedPlayers().map(p=>({...p})),prizes:savedPrizes().map(p=>({...p}))};
+    const rt=miniGameRuntime.ladder,session={runtime:rt,source:sourceKey(),players:savedPlayers().map(p=>({...p})),prizes:savedPrizes().map(p=>({...p}))};
     round=session;
     const roster=session.players,outcomes=session.prizes;
     rt.autoRunning=true;rt.autoResultNames=[];rt.autoResultEntries=[];rt.generated=false;rt.rungs=[];rt.activePlayer=-1;shuffling=true;
