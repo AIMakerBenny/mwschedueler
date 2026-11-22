@@ -48,6 +48,7 @@
 }
 .cv-axis::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;transform:translateX(-50%);background:color-mix(in srgb,var(--cv-ink) 17%,transparent);z-index:-1}
 .cv-axis::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;transform:translateX(-50%);background:radial-gradient(ellipse 2px 90px at 50% var(--cv-focus,0px),var(--cv-accent),transparent);pointer-events:none;z-index:-1;opacity:.8}
+.cv-watermark{position:absolute;z-index:-2;left:50%;top:clamp(min(80px,50%),var(--cv-focus,260px),max(50%,calc(100% - 80px)));transform:translate(-50%,-50%);font-size:clamp(52px,12vw,155px);font-weight:900;letter-spacing:.12em;padding-left:.12em;line-height:1;white-space:nowrap;color:color-mix(in srgb,var(--cv-ink) 6%,transparent);pointer-events:none;user-select:none}
 .cv-year{position:relative;margin:0;padding:28px 0 12px}
 .cv-year-heading{position:relative;width:max-content;max-width:100%;display:flex;align-items:baseline;gap:9px;margin:0 auto 18px;padding:5px 16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;font-size:40px;line-height:1.18;font-weight:780;letter-spacing:-.045em;color:var(--cv-ink)}
 .cv-year-heading small{font-size:11px;font-weight:550;color:var(--cv-muted);letter-spacing:0}
@@ -170,6 +171,7 @@
   .cv-legacy-link{font-size:10px!important;padding:4px;min-height:30px!important;height:30px!important}
   .cv-axis{--cv-shift:24px;--cv-half-gap:20px;--cv-travel-extra:0%;--cv-scale-loss:.04;--cv-lift:8px;padding:0 var(--cv-shift) 12px 4px}
   .cv-axis::before,.cv-axis::after{left:23px}
+  .cv-watermark{font-size:clamp(38px,13vw,76px)}
   .cv-year{padding-top:12px}
   .cv-year::before{left:-4px}
   .cv-year-heading{margin:4px 0 12px 4px;padding:6px 10px;font-size:27px}

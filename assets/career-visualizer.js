@@ -277,6 +277,7 @@
     results.setAttribute('aria-label','검색 결과');
     toolbar.insertBefore(nav,searchBox);bar.append(toolbar,results);
     const axis=node('div','cv-axis'); axis.setAttribute('role','region');axis.setAttribute('aria-label','연속 업적 타임라인');
+    const watermark=node('div','cv-watermark','MAWANG');watermark.setAttribute('aria-hidden','true');axis.append(watermark);
     const legacy=node('section','cv-legacy'); legacy.setAttribute('aria-label','레거시 기록');
     const empty=node('div','cv-empty','검색 결과가 없습니다.');empty.hidden=true;
     panel.append(barHost,empty,axis,legacy);section.append(panel);source.hidden=true;
