@@ -171,7 +171,7 @@ function installStyle(){
 #mwsFriendFastBadge{font-size:10px;color:var(--muted);white-space:nowrap}
 #friendFinderGridV5.mws-friend-live-grid-v120{grid-auto-rows:auto!important;align-items:start!important}
 #friendFinder .friend-finder-card-v5.mws-friend-live-card-v120{height:auto!important;min-height:0!important;max-height:none!important;overflow:hidden!important;align-self:start!important}
-#friendFinder .friend-finder-card-v5 .mws-live-screen-v120{grid-column:1/-1!important;display:block!important;width:100%!important;min-width:0!important;min-height:0!important;margin-top:2px!important;border-radius:12px;overflow:hidden;border:1px solid rgba(255,51,79,.72);background:#090b10;cursor:pointer;aspect-ratio:16/9!important;position:relative;box-sizing:border-box}
+#friendFinder .friend-finder-card-v5 .mws-live-screen-v120{grid-column:1/-1!important;display:block!important;width:100%!important;min-width:0!important;min-height:0!important;margin-top:2px!important;border-radius:12px;overflow:hidden;border:1px solid rgba(255,51,79,.72);background:#090b10;cursor:var(--mws-cursor-pointer,pointer);aspect-ratio:16/9!important;position:relative;box-sizing:border-box}
 .mws-live-screen-v120[hidden]{display:none!important}
 .mws-live-screen-v120 img{display:block;width:100%;height:100%;object-fit:cover;background:#090b10}
 .mws-live-screen-v120.is-image-fallback img{opacity:0}

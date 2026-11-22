@@ -21,7 +21,7 @@
 #mwsAnnouncementDialog .mws-notice-slide{flex:0 0 100%;min-width:0;height:100%;margin:0;position:relative}
 #mwsAnnouncementDialog .mws-notice-slide img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none}
 #mwsAnnouncementDialog .mws-notice-slide img:before{content:attr(alt)}
-#mwsAnnouncementDialog button{font:inherit;cursor:pointer;position:relative;box-sizing:border-box;min-height:0!important;min-width:0!important;text-shadow:none!important;box-shadow:none!important;transition:background-color .15s,color .15s,opacity .15s!important}
+#mwsAnnouncementDialog button{font:inherit;cursor:var(--mws-cursor-pointer,pointer);position:relative;box-sizing:border-box;min-height:0!important;min-width:0!important;text-shadow:none!important;box-shadow:none!important;transition:background-color .15s,color .15s,opacity .15s!important}
 #mwsAnnouncementDialog button:focus-visible{outline:2px solid #f6c86d;outline-offset:2px}
 #mwsAnnouncementDialog .mws-notice-x,#mwsAnnouncementDialog .mws-notice-arrow{
   position:absolute;z-index:2;display:grid;place-items:center;

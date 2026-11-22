@@ -3,7 +3,7 @@
 #legacy .mws-legacy-panel-v1 h2{margin:0 0 6px;font-size:20px}
 #legacy .mws-legacy-panel-v1 p{margin:0 0 20px;color:var(--muted)}
 #legacy .mws-legacy-grid-v1{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px}
-#legacy .mws-legacy-link-v1{display:flex;align-items:center;text-align:left;gap:12px;min-width:0;width:100%;min-height:82px;padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--input);color:var(--text);cursor:pointer;font:inherit}
+#legacy .mws-legacy-link-v1{display:flex;align-items:center;text-align:left;gap:12px;min-width:0;width:100%;min-height:82px;padding:16px;border:1px solid var(--border);border-radius:12px;background:var(--input);color:var(--text);cursor:var(--mws-cursor-pointer,pointer);font:inherit}
 #legacy .mws-legacy-link-v1:hover,#legacy .mws-legacy-link-v1:focus-visible{border-color:var(--accent);background:var(--panel2)}
 #legacy .mws-legacy-icon-v1{display:grid;place-items:center;flex:0 0 44px;height:44px;border-radius:10px;background:var(--chip);color:var(--accent)}
 #legacy .mws-legacy-label-v1{display:flex;flex:1;min-width:0;flex-direction:column;gap:5px}
@@ -12,6 +12,6 @@
 #legacy .mws-legacy-icon-v1 svg,#legacy .mws-legacy-chevron-v1{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 #legacy .mws-legacy-chevron-v1{flex:0 0 22px;color:var(--muted)}
 #mwsLegacyBackV1[hidden]{display:none!important}
-#mwsLegacyBackV1{width:max-content;max-width:100%;padding:5px 10px;border:1px solid var(--border);border-radius:8px;background:var(--panel);color:var(--text);font-size:12px;cursor:pointer}
+#mwsLegacyBackV1{width:max-content;max-width:100%;padding:5px 10px;border:1px solid var(--border);border-radius:8px;background:var(--panel);color:var(--text);font-size:12px;cursor:var(--mws-cursor-pointer,pointer)}
 #mwsLegacyBackV1:hover,#mwsLegacyBackV1:focus-visible{border-color:var(--accent)}
 @media(max-width:600px){#legacy .mws-legacy-panel-v1{padding:14px}#legacy .mws-legacy-grid-v1{grid-template-columns:1fr}}

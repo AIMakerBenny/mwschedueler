@@ -4,7 +4,7 @@
 #posts.section .posts-head h2{font-size:calc(17px * var(--ui-text-scale,1));margin:0;line-height:1.3}
 #posts.section .post-workspace-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-width:0}
 #posts.section .post-menu{position:relative;min-width:0;max-width:100%}
-#posts.section .post-menu-trigger{display:flex;align-items:center;justify-content:center;gap:7px;min-height:36px;padding:7px 11px;border:1px solid var(--border);border-radius:9px;background:var(--input);color:var(--text);font-size:12px;font-weight:750;line-height:1.3;cursor:pointer;list-style:none;white-space:nowrap;user-select:none;transition:border-color .12s,background .12s}
+#posts.section .post-menu-trigger{display:flex;align-items:center;justify-content:center;gap:7px;min-height:36px;padding:7px 11px;border:1px solid var(--border);border-radius:9px;background:var(--input);color:var(--text);font-size:12px;font-weight:750;line-height:1.3;cursor:var(--mws-cursor-pointer,pointer);list-style:none;white-space:nowrap;user-select:none;transition:border-color .12s,background .12s}
 #posts.section .post-menu-trigger::-webkit-details-marker{display:none}
 #posts.section .post-menu-trigger::after{content:'';width:6px;height:6px;flex:0 0 6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);margin:-3px 1px 0 1px}
 #posts.section .post-menu[open]>.post-menu-trigger::after{transform:rotate(225deg);margin-top:3px}

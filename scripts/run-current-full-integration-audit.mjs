@@ -1,3 +1,4 @@
+import './run-mawang-cursor-audit.mjs';
 import {runPhase408F1PassExitAudit} from './run-phase408-f1-pass-exit-audit.mjs';
 import {runPhase407F1TaperedBoostAudit} from './run-phase407-f1-tapered-boost-audit.mjs';
 import {runPhase406F1PhysicalPassStateAudit} from './run-phase406-f1-physical-pass-audit.mjs';

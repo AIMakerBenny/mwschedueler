@@ -179,7 +179,7 @@ body:not([data-device-mode="mobile"]):not([data-resolution="mobile"])
   cursor:grab;
   user-select:none;
 }
-#calendar.active #calendarGrid .mini-event button:not(.calendar-event-drag-handle-v4){cursor:pointer;}
+#calendar.active #calendarGrid .mini-event button:not(.calendar-event-drag-handle-v4){cursor:var(--mws-cursor-pointer,pointer);}
 @media(min-width:1300px){
   #calendar .calendar-topbar-v4{flex-wrap:nowrap}
   #calendar .calendar-topbar-v4 .calendar-toolbar{min-width:0}

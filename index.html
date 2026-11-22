@@ -16,6 +16,8 @@
 body[data-calendar-startup="pending"] #calendarGrid{position:relative;min-height:clamp(240px,60vh,650px)}
 body[data-calendar-startup="pending"] #calendarGrid:empty::before{content:'일정을 불러오는 중입니다';grid-column:1/-1;align-self:center;justify-self:center;color:var(--muted,#9ca3af);font-size:13px}
 </style>
+<link rel="stylesheet" href="assets/mawang-cursor-v1.css?v=1">
+<script defer src="assets/mawang-cursor-v1.js?v=1"></script>
 <link rel="stylesheet" href="assets/legacy-hub-v1.css?v=1">
 <link rel="stylesheet" href="assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171-searchtab172-drag174-workspace176-splitquick177&f1feedback303=1&charcoal=1&dashboardnav=1">
 <link rel="stylesheet" href="assets/calendar-broadcast-duration-v1.css?v=1">
@@ -53,9 +55,9 @@ body.mws-gated .app{pointer-events:none;user-select:none;filter:blur(5px);opacit
 #mwsAccessGate.hidden{display:none}
 .mws-login-shell{width:min(760px,96vw);border:1px solid rgba(156,163,175,.24);background:rgba(12,16,29,.94);backdrop-filter:blur(20px);border-radius:24px;padding:28px;box-shadow:0 30px 100px rgba(0,0,0,.58)}
 .mws-login-brand{font-size:12px;letter-spacing:.22em;color:#9eadd0;font-weight:850}.mws-login-title{font-size:30px;font-weight:950;margin-top:7px}.mws-login-sub{font-size:13px;color:#9eadd0;margin-top:7px;line-height:1.55}
-.mws-mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:22px 0 16px}.mws-mode-card{border:1px solid #293654;background:#11172a;color:#f7f8ff;border-radius:16px;padding:17px;text-align:left;cursor:pointer;min-height:116px;transition:.16s}.mws-mode-card:hover,.mws-mode-card.active{border-color:#8b5cf6;background:#171b33;box-shadow:0 0 0 1px rgba(139,92,246,.25),0 14px 35px rgba(0,0,0,.25)}.mws-mode-name{font-size:18px;font-weight:900}.mws-mode-desc{font-size:12px;color:#9eadd0;margin-top:8px;line-height:1.5}
+.mws-mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:22px 0 16px}.mws-mode-card{border:1px solid #293654;background:#11172a;color:#f7f8ff;border-radius:16px;padding:17px;text-align:left;cursor:var(--mws-cursor-pointer,pointer);min-height:116px;transition:.16s}.mws-mode-card:hover,.mws-mode-card.active{border-color:#8b5cf6;background:#171b33;box-shadow:0 0 0 1px rgba(139,92,246,.25),0 14px 35px rgba(0,0,0,.25)}.mws-mode-name{font-size:18px;font-weight:900}.mws-mode-desc{font-size:12px;color:#9eadd0;margin-top:8px;line-height:1.5}
 #mwsAdminFields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.mws-login-input{width:100%;background:#090f1d;border:1px solid #293654;color:#fff;border-radius:11px;padding:12px 13px;outline:none}.mws-login-input:focus{border-color:#8b5cf6}.mws-login-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;flex-wrap:wrap}.mws-remember{display:flex;align-items:center;gap:8px;font-size:12px;color:#cbd5e1}.mws-login-submit{border:1px solid #8b5cf6;background:#8b5cf6;color:#fff;border-radius:11px;padding:11px 18px;font-weight:900;min-width:140px}.mws-login-submit:disabled{opacity:.5}.mws-login-error{min-height:18px;color:#ff9aae;font-size:12px;margin-top:10px}
-.mws-access-tools{position:fixed;right:16px;bottom:16px;z-index:5000;display:flex;gap:8px;align-items:center}.mws-access-pill,.mws-access-btn{border:1px solid var(--border);background:color-mix(in srgb,var(--panel) 94%,transparent);color:var(--text);border-radius:999px;padding:8px 11px;font-size:11px;box-shadow:0 8px 24px rgba(0,0,0,.25)}.mws-access-btn{cursor:pointer}.mws-access-pill.admin{border-color:color-mix(in srgb,var(--accent) 65%,var(--border));color:var(--text)}
+.mws-access-tools{position:fixed;right:16px;bottom:16px;z-index:5000;display:flex;gap:8px;align-items:center}.mws-access-pill,.mws-access-btn{border:1px solid var(--border);background:color-mix(in srgb,var(--panel) 94%,transparent);color:var(--text);border-radius:999px;padding:8px 11px;font-size:11px;box-shadow:0 8px 24px rgba(0,0,0,.25)}.mws-access-btn{cursor:var(--mws-cursor-pointer,pointer)}.mws-access-pill.admin{border-color:color-mix(in srgb,var(--accent) 65%,var(--border));color:var(--text)}
 #mwsAdminModal{position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:20px}#mwsAdminModal.open{display:flex}.mws-admin-box{width:min(620px,96vw);max-height:86vh;overflow:auto;background:var(--sidebar);border:1px solid var(--border);border-radius:18px;padding:20px}.mws-admin-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.mws-admin-head h2{margin:0}.mws-admin-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-top:16px}.mws-admin-list{display:flex;flex-direction:column;gap:7px;margin-top:15px}.mws-admin-row{border:1px solid var(--border);background:var(--input);border-radius:10px;padding:10px 11px;display:flex;justify-content:space-between;gap:10px;align-items:center}.mws-admin-row small{color:var(--muted)}
 body.mws-public-mode [data-mws-public-hidden="true"]{display:none!important}
 @media(max-width:650px){.mws-mode-grid{grid-template-columns:1fr}#mwsAdminFields,.mws-admin-grid{grid-template-columns:1fr}.mws-login-shell{padding:20px}.mws-login-title{font-size:25px}.mws-access-tools{left:10px;right:10px;justify-content:flex-end;flex-wrap:wrap}}
@@ -74,7 +76,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <link rel="stylesheet" href="assets/career-timeline.css?v=16">
 <style id="mws-nav-first-paint">
 .nav-content-divider-v3{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:8px 8px 9px;opacity:.95}
-.nav-game-divider[data-mws-nav-group]{cursor:pointer;user-select:none}
+.nav-game-divider[data-mws-nav-group]{cursor:var(--mws-cursor-pointer,pointer);user-select:none}
 .nav-game-divider[data-mws-nav-group] em{display:inline-flex;align-items:center;gap:6px}
 .nav-game-divider[data-mws-nav-group] em:after{content:"";width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg)}
 .nav-game-divider[data-mws-nav-group].collapsed em:after{transform:rotate(-45deg)}
@@ -1994,6 +1996,18 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
           <p class="muted small">타임라인, 일정 상세와 팝업의 애니메이션을 설정합니다. 기본 효과는 운영체제의 애니메이션 설정과 관계없이 표시됩니다.</p>
           <select id="mwsScreenMotion" style="width:100%"><option value="full">기본 효과</option><option value="reduced">모션 감소</option><option value="system">시스템 설정 따르기</option></select>
         </div>
+        <div class="card" id="mwsCursorSettings">
+          <div class="space"><h3>마우스 포인터</h3><span class="chip" data-cursor-status>시스템 기본</span></div>
+          <p class="muted small">원하는 디자인을 선택하세요. 이 브라우저에 자동 저장됩니다.</p>
+          <div class="mws-cursor-choices" data-cursor-choices role="radiogroup" aria-label="마우스 포인터 디자인"></div>
+          <div class="space" style="margin:12px 0 6px"><span class="muted small">포인터 크기</span><button type="button" class="ghost small" data-cursor-reset>기본값 복원</button></div>
+          <div class="mws-cursor-size-row" role="radiogroup" aria-label="마우스 포인터 크기">
+            <label class="mws-cursor-size"><input type="radio" name="mwsCursorSize" value="32">작게 · 32px</label>
+            <label class="mws-cursor-size"><input type="radio" name="mwsCursorSize" value="48" checked>보통 · 48px</label>
+            <label class="mws-cursor-size"><input type="radio" name="mwsCursorSize" value="64">크게 · 64px</label>
+          </div>
+          <div data-cursor-test>이곳에 마우스를 올려 포인터를 확인하세요.</div>
+        </div>
         <div class="card ui-frame-settings-card">
           <div class="space">
             <div>
@@ -2492,7 +2506,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
 .post-schedule-create-btn-v415{
   min-width:174px;min-height:40px;padding:9px 16px;border-radius:11px;
   border:1px solid rgba(132,225,255,.76);color:#effbff;font-weight:950;font-size:12px;
-  background:linear-gradient(135deg,#14c8ef,#2476ff);cursor:pointer;
+  background:linear-gradient(135deg,#14c8ef,#2476ff);cursor:var(--mws-cursor-pointer,pointer);
   box-shadow:0 10px 24px rgba(20,133,255,.22),0 0 18px rgba(20,200,239,.12);
   transition:transform .14s ease,filter .14s ease,box-shadow .14s ease;
 }
@@ -3380,7 +3394,7 @@ body[data-resolution="mobile"] #gameMultiDraw .gacha-fire-btn-v418{font-size:18p
 #gameMultiDraw .gacha-action-row-v419{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(230px,.7fr);gap:12px;align-items:stretch}
 #gameMultiDraw .gacha-action-row-v419 .gacha-fire-btn-v418{width:100%;margin:0}
 #gameMultiDraw .gacha-auto-btn-v419{
-  min-height:60px;padding:0 18px;border-radius:13px;cursor:pointer;
+  min-height:60px;padding:0 18px;border-radius:13px;cursor:var(--mws-cursor-pointer,pointer);
   border:1px solid rgba(94,238,199,.62);color:#eafff8;font-size:17px;font-weight:1000;letter-spacing:.02em;
   background:linear-gradient(135deg,rgba(16,168,139,.96),rgba(34,118,183,.96));
   box-shadow:0 16px 34px rgba(16,148,132,.18),0 0 24px rgba(57,218,185,.1);
@@ -3593,12 +3607,12 @@ body[data-resolution="mobile"] #gameMultiDraw .gacha-action-row-v419{grid-templa
 .post-decision-row{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 .post-decision-btn.gacha{color:#d9a7ff!important;border-color:#6c478d!important;background:rgba(100,63,139,.08)!important}
 .post-decision-btn.gacha.active{color:#ffd2fa!important;border-color:#df55d0!important;background:linear-gradient(135deg,rgba(188,62,182,.22),rgba(92,82,211,.18))!important;box-shadow:0 0 13px rgba(208,79,196,.16)}
-.post-bulk-gacha-v50{border:1px solid #d44fc7;border-radius:10px;padding:8px 11px;color:#ffe0fb;background:linear-gradient(135deg,rgba(186,54,176,.24),rgba(85,67,183,.22));font-weight:900;cursor:pointer;box-shadow:0 0 14px rgba(198,66,187,.12)}
+.post-bulk-gacha-v50{border:1px solid #d44fc7;border-radius:10px;padding:8px 11px;color:#ffe0fb;background:linear-gradient(135deg,rgba(186,54,176,.24),rgba(85,67,183,.22));font-weight:900;cursor:var(--mws-cursor-pointer,pointer);box-shadow:0 0 14px rgba(198,66,187,.12)}
 .post-bulk-gacha-v50:hover{filter:brightness(1.12);box-shadow:0 0 20px rgba(198,66,187,.22)}
 .gacha-speed-control-v50{min-height:60px;display:grid;grid-template-columns:auto 88px;gap:9px;align-items:center;padding:0 14px;border-radius:13px;border:1px solid rgba(185,137,255,.34);background:linear-gradient(135deg,rgba(76,48,128,.42),rgba(32,48,93,.48));color:#e9ddff}
 .gacha-speed-control-v50 label{font-size:11px;font-weight:950;letter-spacing:.08em;color:#cbb5ff}.gacha-speed-control-v50 select{min-width:88px;font-size:13px;font-weight:900}
 #gameMultiDraw .gacha-action-row-v419{grid-template-columns:minmax(0,1.65fr) minmax(220px,.72fr) minmax(170px,.46fr)!important}
-.gacha-post-confirm-v50{margin-top:7px;width:100%;border:1px solid rgba(82,218,145,.52);border-radius:9px;padding:7px 9px;background:rgba(42,151,93,.13);color:#a9f2ca;font-size:10px;font-weight:950;cursor:pointer}
+.gacha-post-confirm-v50{margin-top:7px;width:100%;border:1px solid rgba(82,218,145,.52);border-radius:9px;padding:7px 9px;background:rgba(42,151,93,.13);color:#a9f2ca;font-size:10px;font-weight:950;cursor:var(--mws-cursor-pointer,pointer)}
 .gacha-post-confirm-v50:hover{background:rgba(42,151,93,.22);border-color:#5cd995}.gacha-post-confirm-v50.done{opacity:.62;cursor:default}
 body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!important}
 @media(max-width:980px){#gameMultiDraw .gacha-action-row-v419{grid-template-columns:1fr!important}.gacha-speed-control-v50{grid-template-columns:1fr auto;min-height:54px}}
@@ -3840,21 +3854,21 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
 #posts .post-view-icon-v53{width:22px;height:22px;flex:0 0 22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 #posts .post-view-btn.active .post-view-icon-v53{filter:drop-shadow(0 0 4px rgba(255,255,255,.26))}
 #posts .post-partial-confirm-v53{display:flex;align-items:center;gap:7px;margin-left:18px;padding-left:18px;border-left:1px solid color-mix(in srgb,var(--border) 78%,transparent)}
-#posts .post-partial-confirm-btn-v53{min-height:40px;padding:8px 15px;border:1px solid #5b8cff;border-radius:10px;background:rgba(67,112,255,.10);color:#b9d0ff;font-weight:950;cursor:pointer}
+#posts .post-partial-confirm-btn-v53{min-height:40px;padding:8px 15px;border:1px solid #5b8cff;border-radius:10px;background:rgba(67,112,255,.10);color:#b9d0ff;font-weight:950;cursor:var(--mws-cursor-pointer,pointer)}
 #posts .post-partial-confirm-btn-v53:hover{background:rgba(67,112,255,.18);box-shadow:0 0 18px rgba(67,112,255,.12)}
 #posts .post-partial-count-v53{display:flex;align-items:center;gap:5px;white-space:nowrap;color:var(--muted);font-size:10px;font-weight:850}
 #posts #postPartialConfirmCountV53{width:64px;height:40px;padding:6px 7px;text-align:center;font-weight:950}
 @media(max-width:1180px){#posts .post-partial-confirm-v53{margin-left:0;padding-left:0;border-left:0}}
 
 #gameMultiDraw .gacha-apply-post-wrap-v53{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid color-mix(in srgb,var(--border) 74%,transparent)}
-#gameMultiDraw .gacha-apply-post-btn-v53{min-width:250px;min-height:48px;padding:10px 22px;border-radius:12px;border:1px solid rgba(104,220,173,.72);background:linear-gradient(135deg,rgba(18,151,113,.96),rgba(28,113,168,.96));color:#f1fff9;font-size:14px;font-weight:1000;cursor:pointer;box-shadow:0 12px 30px rgba(20,140,112,.16),0 0 24px rgba(80,224,180,.09)}
+#gameMultiDraw .gacha-apply-post-btn-v53{min-width:250px;min-height:48px;padding:10px 22px;border-radius:12px;border:1px solid rgba(104,220,173,.72);background:linear-gradient(135deg,rgba(18,151,113,.96),rgba(28,113,168,.96));color:#f1fff9;font-size:14px;font-weight:1000;cursor:var(--mws-cursor-pointer,pointer);box-shadow:0 12px 30px rgba(20,140,112,.16),0 0 24px rgba(80,224,180,.09)}
 #gameMultiDraw .gacha-apply-post-btn-v53:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px)}
 #gameMultiDraw .gacha-apply-post-btn-v53:disabled{opacity:.38;cursor:not-allowed;filter:grayscale(.35)}
 #gameMultiDraw .gacha-apply-post-help-v53{max-width:780px;text-align:center;color:var(--muted);font-size:10px;line-height:1.55}
 .gacha-apply-post-box-v53{width:min(760px,94vw)!important}
 .gacha-apply-note-v53{margin:13px 0;padding:11px 12px;border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));border-radius:10px;background:color-mix(in srgb,var(--accent) 7%,var(--input));color:var(--muted);font-size:10px;line-height:1.55}
 .gacha-apply-post-list-v53{display:flex;flex-direction:column;gap:8px;max-height:54vh;overflow:auto;padding-right:3px}
-.gacha-post-choice-v53{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 12px;border:1px solid var(--border);border-radius:11px;background:var(--input);cursor:pointer}
+.gacha-post-choice-v53{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 12px;border:1px solid var(--border);border-radius:11px;background:var(--input);cursor:var(--mws-cursor-pointer,pointer)}
 .gacha-post-choice-v53:hover{border-color:color-mix(in srgb,var(--accent) 55%,var(--border));background:color-mix(in srgb,var(--accent) 6%,var(--input))}
 .gacha-post-choice-v53 input{width:17px;height:17px}
 .gacha-post-choice-title-v53{font-size:12px;font-weight:950;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -4007,7 +4021,7 @@ body[data-resolution="mobile"] #contacts.active .contact-tag-panel{position:stat
   border:1px solid rgba(146,118,255,.30);
   border-radius:17px;
   background:linear-gradient(145deg,rgba(87,57,170,.19),rgba(7,10,19,.97));
-  cursor:pointer;
+  cursor:var(--mws-cursor-pointer,pointer);
   overflow:hidden;
   transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,filter .16s ease;
 }
@@ -4458,7 +4472,7 @@ body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout.main
 
 /* Contact header profile image is now an interactive Profile Card launcher. */
 #contactModal #ctHeaderAvatar.v56-profile-launcher{
-  cursor:pointer!important;
+  cursor:var(--mws-cursor-pointer,pointer)!important;
   position:relative;
   transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,filter .16s ease;
 }
@@ -4694,7 +4708,7 @@ body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout.main
 .post-schedule-notice-title-v57{font-size:31px;font-weight:1000;line-height:1.1;margin:0 0 12px}
 .post-schedule-notice-body-v57{font-size:15px;line-height:1.75;color:#dbe6ff}
 .post-schedule-notice-body-v57 strong{color:#ffffff}
-.post-schedule-notice-check-v57{display:flex;align-items:center;gap:10px;margin-top:16px;padding:12px 14px;border-radius:14px;border:1px solid rgba(99,102,241,.22);background:rgba(99,102,241,.08);cursor:pointer}
+.post-schedule-notice-check-v57{display:flex;align-items:center;gap:10px;margin-top:16px;padding:12px 14px;border-radius:14px;border:1px solid rgba(99,102,241,.22);background:rgba(99,102,241,.08);cursor:var(--mws-cursor-pointer,pointer)}
 .post-schedule-notice-check-v57 input{width:17px;height:17px}
 .post-schedule-notice-actions-v57{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;flex-wrap:wrap}
 .post-schedule-notice-ok-v57{min-width:112px;padding:11px 16px;border-radius:12px;border:1px solid rgba(56,189,248,.28);background:linear-gradient(135deg,rgba(59,130,246,.92),rgba(6,182,212,.95));color:#fff;font-weight:950;box-shadow:0 14px 34px rgba(37,99,235,.22)}

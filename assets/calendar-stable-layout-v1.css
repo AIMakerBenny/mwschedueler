@@ -32,7 +32,7 @@
   font-weight:1000!important;
   line-height:1!important;
   overflow:hidden!important;
-  cursor:pointer!important;
+  cursor:var(--mws-cursor-pointer,pointer)!important;
 }
 #calendar #calendarGrid .mini-event.mws-steam-host-v111>.mws-steam-slot-v111 img{
   width:100%!important;

@@ -30,7 +30,7 @@
   font-weight:800;
   white-space:normal;
   line-height:1.35;
-  cursor:pointer;
+  cursor:var(--mws-cursor-pointer,pointer);
 }
 #eventModal .event-side-tab-v5.active,
 #eventModal .event-side-tab-v5[aria-selected="true"]{

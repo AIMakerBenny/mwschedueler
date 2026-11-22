@@ -192,7 +192,7 @@
 
 /* Phase 125: linked contact card detail */
 .wardogs-gallery-card-v124{
-  cursor:pointer;
+  cursor:var(--mws-cursor-pointer,pointer);
   transition:border-color .14s ease,transform .14s ease,box-shadow .14s ease
 }
 .wardogs-gallery-card-v124:hover,
@@ -232,7 +232,7 @@
 }
 .wardogs-detail-close-v125{
   width:42px;height:42px;border:1px solid rgba(255,255,255,.11);border-radius:8px;
-  background:rgba(255,255,255,.035);color:#c8d0d8;font-size:24px;line-height:1;cursor:pointer
+  background:rgba(255,255,255,.035);color:#c8d0d8;font-size:24px;line-height:1;cursor:var(--mws-cursor-pointer,pointer)
 }
 .wardogs-detail-close-v125:hover,
 .wardogs-detail-close-v125:focus-visible{border-color:rgba(255,103,44,.42);color:#fff;outline:none}
