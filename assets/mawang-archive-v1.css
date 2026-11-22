@@ -40,6 +40,8 @@
 .ma-gallery-thumbs button{flex:none;width:43px;height:43px;border:1px solid var(--border);border-radius:7px;overflow:hidden;padding:0;background:var(--input);opacity:.7;transition:opacity 110ms,border-color 110ms,transform 110ms}
 .ma-gallery-thumbs button[aria-pressed=true]{border-color:var(--ma-color);box-shadow:0 0 0 1px var(--ma-color);opacity:1}
 .ma-gallery-thumbs button img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.ma-gallery-thumbs button[data-ma-photo-profile]{position:relative}
+.ma-gallery-thumbs button[data-ma-photo-profile]>span{position:absolute;bottom:0;left:0;right:0;background:#111827d9;color:#fff;text-align:center;font-size:9px;font-weight:800;line-height:1.35;pointer-events:none}
 .ma-gallery-thumbs>span{white-space:nowrap;color:var(--muted);font-size:11px}
 .ma-gallery-actions{display:none;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px;margin-top:3px;padding:10px 0 0;border-top:1px solid var(--border)}
 body[data-mws-mode=admin] .ma-gallery-actions{display:flex}

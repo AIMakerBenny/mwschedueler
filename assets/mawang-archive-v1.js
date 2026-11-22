@@ -17,7 +17,9 @@
   const matching=()=>entries.filter(c=>(filter==='all'||filter===c.group)&&normalize([c.name,c.english,c.tagline,...c.tags].join(' ')).includes(normalize(query)));
   const stock=c=>c.imageSource.startsWith('PIKU')?{url:c.image,caption:c.imageSource}:null;
   const profilePhoto=c=>profiles.get(c.id)||stock(c);
-  const photos=c=>[...(uploaded.get(c.id)||[]),...(stock(c)?[stock(c)]:[])];
+  // The main viewer always starts with the same representative photo as the
+  // roster. The custom profile replaces the public fallback, never gallery data.
+  const photos=c=>{const profile=profilePhoto(c);return [...(profile?[{...profile,isProfile:true}]:[]),...(uploaded.get(c.id)||[])]};
   const photoIndex=c=>Math.min(Math.max(0,position.get(c.id)||0),Math.max(0,photos(c).length-1));
   function pic(c,hero=false){
     const p=hero?photos(c)[photoIndex(c)]:profilePhoto(c),failed=!p||missing.has(p.url);
@@ -56,7 +58,7 @@
     frame.title=list.length>1?'휠 또는 좌우 드래그 · 사진 좌우 클릭으로 이동':'';
     const thumbs=root.querySelector('.ma-gallery-thumbs');
     const signature=list.map(p=>p.url).join('|')||'empty';
-    if(thumbs.dataset.photos!==signature){thumbs.dataset.photos=signature;thumbs.innerHTML=list.length?list.map((p,i)=>`<button type="button" data-ma-photo="${i}" aria-label="사진 ${i+1}"><img src="${escape(p.url)}" alt="" loading="lazy" draggable="false"></button>`).join(''):'<span>사진이 아직 등록되지 않았습니다</span>'}
+    if(thumbs.dataset.photos!==signature){thumbs.dataset.photos=signature;thumbs.innerHTML=list.length?list.map((p,i)=>`<button type="button" data-ma-photo="${i}"${p.isProfile?' data-ma-photo-profile aria-label="대표 프로필 사진" title="대표 프로필 사진"':` aria-label="갤러리 사진 ${i+1-(list[0]?.isProfile?1:0)}"`}><img src="${escape(p.url)}" alt="" loading="lazy" draggable="false">${p.isProfile?'<span>대표</span>':''}</button>`).join(''):'<span>사진이 아직 등록되지 않았습니다</span>'}
     thumbs.querySelectorAll('[data-ma-photo]').forEach((b,i)=>b.setAttribute('aria-pressed',String(i===index)));
     const active=thumbs.querySelector('[aria-pressed=true]');
     if(active){if(active.offsetLeft<thumbs.scrollLeft)thumbs.scrollLeft=active.offsetLeft;else if(active.offsetLeft+active.offsetWidth>thumbs.scrollLeft+thumbs.clientWidth)thumbs.scrollLeft=active.offsetLeft+active.offsetWidth-thumbs.clientWidth}
@@ -64,7 +66,7 @@
     if(!nav.firstElementChild)nav.innerHTML='<button type="button" data-ma-step="-1" aria-label="이전 사진">‹</button><span aria-live="polite"></span><button type="button" data-ma-step="1" aria-label="다음 사진">›</button>';
     nav.querySelector('span').textContent=(list.length?index+1:0)+' / '+list.length;
     nav.querySelectorAll('button').forEach(b=>b.disabled=Boolean(disabled));
-    root.querySelector('.ma-gallery-actions').innerHTML=`<div class="ma-gallery-actions-label"><strong>갤러리 사진</strong><small>최대 30장 · 원본 저장 · 32MB/장</small></div><div class="ma-gallery-buttons"><button type="button" data-ma-upload aria-label="갤러리 사진 업로드" ${busy.has(c.id)||!galleryReady?'disabled':''}>＋ 갤러리 사진 업로드</button>${p?.id?`<button type="button" data-ma-delete="${p.id}" ${busy.has(c.id)?'disabled':''}>선택 사진 삭제</button>`:''}</div>`;
+    root.querySelector('.ma-gallery-actions').innerHTML=`<div class="ma-gallery-actions-label"><strong>갤러리 사진 ${uploaded.get(c.id)?.length||0} / 30</strong><small>대표 프로필 제외 · 원본 저장 · 32MB/장</small></div><div class="ma-gallery-buttons"><button type="button" data-ma-upload aria-label="갤러리 사진 업로드" ${busy.has(c.id)||!galleryReady?'disabled':''}>＋ 갤러리 사진 업로드</button>${p?.id?`<button type="button" data-ma-delete="${p.id}" ${busy.has(c.id)?'disabled':''}>선택 사진 삭제</button>`:''}</div>`;
     root.querySelector('.ma-gallery-message').textContent=messages.get(c.id)||galleryError||'';
     root.querySelectorAll('.ma-profile-actions button').forEach(b=>b.disabled=busy.has(c.id)||!galleryReady);
     root.querySelector('.ma-announce').textContent=c.name+' 사진 '+(list.length?index+1:0)+' / '+list.length;
@@ -100,7 +102,7 @@
   }
   function choose(c,focus=false){
     if(!c)return;
-    selected=c;wheelSum=0;lastWheel=-Infinity;
+    selected=c;position.set(c.id,0);wheelSum=0;lastWheel=-Infinity;
     // Only selection-dependent areas update; no full page re-render or timer.
     root.querySelectorAll('[data-ma-character]').forEach(b=>{
       const active=b.dataset.maCharacter===c.id;
@@ -112,7 +114,7 @@
   }
   function updateFilter(){
     const list=matching();
-    if(list.length&&!list.includes(selected))selected=list[0];
+    if(list.length&&!list.includes(selected)){selected=list[0];position.set(selected.id,0)}
     roster();stage();
   }
   function normalizePhoto(p){
@@ -121,7 +123,7 @@
   }
   function normalizeProfile(p){
     if(!entries.some(c=>c.id===p?.character)||!/^\d{1,15}-[a-f0-9]{0,80}$/i.test(p?.revision||''))return null;
-    return {character:p.character,url:'/media/mawang-profile/'+p.character+'?rev='+p.revision,caption:'관리자 등록 프로필'};
+    return {character:p.character,url:'/media/mawang-profile/'+p.character+'?rev='+p.revision,caption:'등록된 대표 프로필 · 원본'};
   }
   async function request(url,options={}){
     const response=await fetch(url,{credentials:'same-origin',cache:'no-store',...options});
@@ -151,6 +153,7 @@
       const body=await request('/api/mawang-profile/'+c.id,reset?{method:'DELETE'}:{method:'PUT',headers:{'content-type':file.type},body:file});
       if(reset)profiles.delete(c.id);
       else{const p=normalizeProfile(body.profile);if(!p||p.character!==c.id)throw Error('프로필 저장 응답 오류');profiles.set(c.id,p)}
+      position.set(c.id,0);
       messages.set(c.id,reset?'프로필 초기화 완료':'프로필 사진 저장 완료');
     }catch(error){messages.set(c.id,error.message)}
     finally{busy.delete(c.id);updateProfileUI(c)}
@@ -167,7 +170,7 @@
         try{
           const body=await request('/api/mawang-gallery/'+c.id,{method:'POST',headers:{'content-type':file.type},body:file});
           const p=normalizePhoto(body.photo);if(!p||p.character!==c.id)throw Error('업로드 응답 오류');
-          uploaded.set(c.id,[p,...(uploaded.get(c.id)||[])]);added++;position.set(c.id,0);
+          uploaded.set(c.id,[p,...(uploaded.get(c.id)||[])]);added++;position.set(c.id,profilePhoto(c)?1:0);
         }catch(error){errors.push(file.name+': '+error.message)}
       }
     }finally{

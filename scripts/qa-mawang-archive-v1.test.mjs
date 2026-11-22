@@ -35,7 +35,7 @@ test('26 individually named records with dates distinguished from unknown dates 
 test('archive registered between timeline and achievements; only gallery API writes',()=>{
   const html=read('index.html'),core=read('assets/app-core.js'),ui=read('assets/workspace-ui-v176.js'),runtime=read('assets/mawang-archive-v1.js'),css=read('assets/mawang-archive-v1.css');
   assert(/data-tab="careerTimeline"[\s\S]*?data-tab="mawangArchive"[\s\S]*?data-tab="achievements"/.test(html));
-  assert(html.includes('id="mawangArchive"')&&html.includes('assets/mawang-archive-v1.js?v=5')&&html.includes('assets/mawang-archive-data-v1.js?v=3'));
+  assert(html.includes('id="mawangArchive"')&&html.includes('assets/mawang-archive-v1.js?v=6')&&html.includes('assets/mawang-archive-data-v1.js?v=3'));
   assert(core.includes("names.mawangArchive='마왕 자료실'")&&core.includes('window.mwsMawangArchiveV1?.render()'));
   assert(ui.includes('timeline.after(archive)')&&ui.includes('beforeAchievement=archive||timeline||afterPosts'));
   assert(!/\b(?:localStorage|setInterval|saveData)\s*\(/.test(runtime));
