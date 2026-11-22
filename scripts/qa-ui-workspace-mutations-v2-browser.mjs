@@ -37,7 +37,15 @@ try{
   assert(await browser.evaluate(`!!document.querySelector('.calendar-event-pointer-ghost-v174')&&document.querySelector('[data-date="2026-11-22"]').classList.contains('drag-over')`));
   await browser.mouseUp(dest.x,dest.y);
   assert.deepEqual(await browser.evaluate(`({date:data.events[0].date,moves:moves.length,ghost:!!document.querySelector('.calendar-event-pointer-ghost-v174')})`),{date:'2026-11-22',moves:1,ghost:false});
-  const tray=await point('#calendarCopyTrayToggleV4');await browser.mouseDown(source.x,source.y);await browser.mouseDrag(tray.x,tray.y);await browser.mouseUp(tray.x,tray.y);
+  // The production save replaces the month DOM. Recreate the moved card at
+  // its new date rather than dragging the obsolete fixture node again.
+  await browser.evaluate(`(()=>{const old=document.querySelector('.mini-event'),card=old.cloneNode(true);old.remove();document.querySelector('[data-date="2026-11-22"]').append(card);card.onpointerdown=e=>beginCalendarPointerEventDragV174(e,e.currentTarget)})()`);
+  const moved=await point('.mini-event');
+  const tray=await point('#calendarCopyTrayToggleV4');
+  await browser.movePoint(moved.x,moved.y);await browser.mouseDown(moved.x,moved.y);await browser.mouseDrag(tray.x,tray.y);
+  const drag=await browser.evaluate(`(()=>{const s=calendarPointerEventDragV174,e=document.elementFromPoint(${tray.x},${tray.y});return {active:!!s?.dragging,tray:s?.targetTray?.id||null,hit:e?.id||null,source:s?.source?.dataset.evid||null}})()`);
+  assert(drag.active&&drag.tray==='calendarCopyTrayToggleV4',JSON.stringify({drag,moved,tray}));
+  await browser.mouseUp(tray.x,tray.y);
   assert.equal(await browser.evaluate('data.scheduleClipboard.length'),1);
   const result=await browser.evaluate(`(()=>{const original=JSON.stringify(data.events[0]),item=data.scheduleClipboard[0],copy=createEventFromClipboardItem(item.id,'2026-11-24');return {originalUnchanged:JSON.stringify(data.events[0])===original,newId:copy.id!==data.events[0].id,date:copy.date,group:copy.contentGroupId,series:copy.seriesId,complete:copy.completed,copyCount:data.events.length}})()`);
   assert.deepEqual(result,{originalUnchanged:true,newId:true,date:'2026-11-24',group:'group',series:'',complete:false,copyCount:2});
