@@ -34,7 +34,7 @@ body .section:not(#gameF1Racing) :is(button[aria-selected=true],button[aria-pres
    resting cards or changes to day widths, margins, rows or clipping. */
 body #calendar.section #calendarGrid .mini-event[data-evid]{
   scale:none;transform-origin:center;
-  box-shadow:inset 0 1px 0 var(--mws-ui-edge),0 1px 3px #0003!important;
+  box-shadow:0 1px 3px #0003!important;
   transition:scale var(--mws-ui-card) var(--mws-ui-ease),background-color var(--mws-ui-fast),box-shadow var(--mws-ui-card)!important;
 }
 body #calendar.section #calendarGrid .mini-event[data-evid].mws-ui-group-highlight{
@@ -105,7 +105,7 @@ body[data-mws-ui-surface=castle] .game-card{box-shadow:var(--mws-ui-shadow)}
    mouse input. A wide pointer-less viewport may hover only if it actually
    receives a mouse hover; touch/coarse devices remain excluded. */
 @media (hover:hover) and (pointer:fine), (hover:none) and (pointer:none) and (min-width:901px){
-  body #calendar.section #calendarGrid .mini-event[data-evid]:hover:not(.mws-calendar-event-pointer-dragging-v174){scale:1.02;z-index:1;box-shadow:inset 0 1px 0 var(--mws-ui-edge),0 2px 4px #0004!important}
+  body #calendar.section #calendarGrid .mini-event[data-evid]:hover:not(.mws-calendar-event-pointer-dragging-v174){scale:1.02;z-index:1;box-shadow:0 1px 2px #0002,0 3px 5px #0004!important}
   body #calendar.section #calendarGrid .mini-event[data-evid]:hover>.mws-steam-slot-v111 img{scale:1.07}
   body #calendar.section #calendarGrid .mini-event[data-evid]:active:not(:has(button:active)){scale:.98!important}
   body .section:not(#gameF1Racing) :is(button.secondary,button.ghost,.mws-tool-btn,.theme-card,.resolution-preset):not(:disabled):hover{border-color:var(--mws-ui-selected)!important}
