@@ -6,18 +6,23 @@ import {handleArchiveGallery} from '../src/mawang-archive-gallery-v1.js';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const window={};vm.runInNewContext(read('assets/mawang-archive-data-v1.js'),{window});
 const {entries,videos}=window.mwsMawangArchiveDataV1;
-test('23 individually named records with dates distinguished from unknown dates and sources',()=>{
-  assert.equal(entries.length,23);
-  assert.equal(new Set(entries.map(c=>c.id)).size,23);
-  assert.equal(entries.filter(c=>c.group==='jeong').length,9);
+test('26 individually named records with dates distinguished from unknown dates and sources',()=>{
+  assert.equal(entries.length,26);
+  assert.equal(new Set(entries.map(c=>c.id)).size,26);
+  assert.equal(entries.filter(c=>c.group==='jeong').length,12);
   assert.equal(entries.filter(c=>c.group==='classic').length,14);
   assert.equal(entries.filter(c=>c.imageSource.startsWith('PIKU')).length,20);
   assert.equal(entries.find(c=>c.id==='yoo').name,'유정');
+  assert.deepEqual(Array.from(entries.filter(c=>c.variantOf==='미정'),c=>c.name),['흑미정','금미정']);
+  assert.deepEqual(Array.from(entries.filter(c=>c.variantOf==='수정'),c=>c.name),['백수정','흑수정','반반수정']);
+  assert.equal(entries.find(c=>c.id==='mi').name,'흑미정');
+  assert.equal(entries.find(c=>c.id==='su').name,'백수정');
   for(const c of entries){
     assert(c.description&&c.tagline&&c.english&&c.tags.length&&c.sources.length);
     assert(c.date===null||/^\d{4}-\d{2}-\d{2}$/.test(c.date));
     assert(c.date!==null||c.dateLabel.includes('미확인'));
-    assert(/^https:\/\/(img2\.piku\.co\.kr|file\.namu\.moe)\//.test(c.imageOriginal));
+    if(['mi-gold','su-black','su-half'].includes(c.id)){assert.equal(c.image,null);assert.equal(c.imageOriginal,null);assert.equal(c.date,null)}
+    else assert(/^https:\/\/(img2\.piku\.co\.kr|file\.namu\.moe)\//.test(c.imageOriginal));
     if(c.imageSource.startsWith('PIKU')){
       assert.equal(c.image,`/assets/mawang-archive-portraits/${c.id}.jpg`);
       const jpg=readFileSync(new URL('..'+c.image,import.meta.url));
@@ -30,7 +35,7 @@ test('23 individually named records with dates distinguished from unknown dates 
 test('archive registered between timeline and achievements; only gallery API writes',()=>{
   const html=read('index.html'),core=read('assets/app-core.js'),ui=read('assets/workspace-ui-v176.js'),runtime=read('assets/mawang-archive-v1.js'),css=read('assets/mawang-archive-v1.css');
   assert(/data-tab="careerTimeline"[\s\S]*?data-tab="mawangArchive"[\s\S]*?data-tab="achievements"/.test(html));
-  assert(html.includes('id="mawangArchive"')&&html.includes('assets/mawang-archive-v1.js?v=4')&&html.includes('assets/mawang-archive-data-v1.js?v=2'));
+  assert(html.includes('id="mawangArchive"')&&html.includes('assets/mawang-archive-v1.js?v=5')&&html.includes('assets/mawang-archive-data-v1.js?v=3'));
   assert(core.includes("names.mawangArchive='마왕 자료실'")&&core.includes('window.mwsMawangArchiveV1?.render()'));
   assert(ui.includes('timeline.after(archive)')&&ui.includes('beforeAchievement=archive||timeline||afterPosts'));
   assert(!/\b(?:localStorage|setInterval|saveData)\s*\(/.test(runtime));
@@ -81,4 +86,13 @@ test('gallery stores originals, exposes public reads, enforces admin writes, and
   assert.equal((await call('/api/mawang-profile/ae',{method:'DELETE'},true)).status,200);
   assert.equal((await call(profile.url)).status,404);
   const finalList=await(await call('/api/mawang-gallery')).json();assert.equal(finalList.photos.length,1);assert.equal(finalList.profiles.length,0);
+  for(const character of ['mi','mi-gold','su','su-black','su-half']){
+    assert.equal((await call('/api/mawang-gallery/'+character,upload,true)).status,201);
+    assert.equal((await call('/api/mawang-profile/'+character,profileUpload,true)).status,200);
+  }
+  const variants=await(await call('/api/mawang-gallery')).json();
+  assert.equal(variants.photos.length,6);assert.equal(variants.profiles.length,5);
+  await call('/api/mawang-profile/su-half',{method:'DELETE'},true);
+  assert.equal((await call('/media/mawang-profile/su')).status,200);
+  assert.equal((await call('/media/mawang-profile/su-black')).status,200);
 });

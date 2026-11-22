@@ -26,7 +26,7 @@ try{
       check(!q('[data-ma-upload]').disabled,'gallery loaded');
       check(getComputedStyle(q('.ma-gallery-actions')).display==='none','public upload hidden');
       check(getComputedStyle(q('.ma-profile-actions')).display==='none','public profile hidden');
-      check(all('[data-ma-character]').length===23,'roster count');
+      check(all('[data-ma-character]').length===26,'roster count');
       check(q('.ma-roster').getBoundingClientRect().bottom<=q('.ma-stage').getBoundingClientRect().top,'roster first');
       check(q('.ma-character-card .ma-portrait').getBoundingClientRect().width>=100,'large portraits');
       check(q('.ma-roster-grid').scrollWidth>q('.ma-roster-grid').clientWidth,'horizontal roster');
@@ -35,8 +35,13 @@ try{
       const search=q('input');search.value='코코';search.dispatchEvent(new Event('input',{bubbles:true}));
       check(all('[data-ma-character]').length===3,'search');
       search.value='';search.dispatchEvent(new Event('input',{bubbles:true}));
-      q('[data-ma-filter="jeong"]').click();check(all('[data-ma-character]').length===9,'jeong');
-      q('[data-ma-character="mi"]').click();q('[data-ma-character="mi"]').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));check(q('#maCharacterName').textContent==='예정','keyboard');
+      q('[data-ma-filter="jeong"]').click();check(all('[data-ma-character]').length===12,'jeong');
+      search.value='수정';search.dispatchEvent(new Event('input',{bubbles:true}));check(all('[data-ma-character]').length===3,'three Su variants');
+      q('[data-ma-character="su-half"]').click();check(q('#maCharacterName').textContent==='반반수정'&&q('.ma-stage-nav span').textContent==='0 / 0','half variant independent');
+      search.value='미정';search.dispatchEvent(new Event('input',{bubbles:true}));check(all('[data-ma-character]').length===2,'two Mi variants');
+      q('[data-ma-character="mi-gold"]').click();check(q('#maCharacterName').textContent==='금미정'&&q('.ma-stage-nav span').textContent==='0 / 0','gold variant independent');
+      search.value='';search.dispatchEvent(new Event('input',{bubbles:true}));
+      q('[data-ma-character="mi-gold"]').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));check(q('#maCharacterName').textContent==='예정','keyboard');
       check(all('[data-ma-photo]').length===3,'two uploaded plus original');
       q('[data-ma-step="1"]').click();check(q('#maCharacterName').textContent==='예정'&&q('[data-ma-photo="1"]').getAttribute('aria-pressed')==='true','next photo, same avatar');
       q('[data-ma-photo="0"]').click();

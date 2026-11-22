@@ -88,8 +88,8 @@
        <div class="ma-profile-panel"></div>
        <h3>${escape(c.tagline)}</h3><p class="ma-desc">${escape(c.description)}</p>
        <div class="ma-tags">${c.tags.map(t=>`<span>${escape(t)}</span>`).join('')}</div>
-       <dl class="ma-facts"><div><dt>${escape(c.dateLabel)}</dt><dd>${c.date?escape(c.date.replaceAll('-','.')):'미확인'}</dd></div><div><dt>구분</dt><dd>${groupName(c)}</dd></div><div><dt>정보 근거</dt><dd>공개 기록 <small>2차 자료</small></dd></div></dl>
-       <div class="ma-source-links">${c.sources.map(s=>link(s.url,s.label)).join('')}${link(c.imageOriginal,'이미지 원본 주소')}</div>
+       <dl class="ma-facts"><div><dt>${escape(c.dateLabel)}</dt><dd>${c.date?escape(c.date.replaceAll('-','.')):'미확인'}</dd></div><div><dt>구분</dt><dd>${groupName(c)}</dd></div><div><dt>정보 근거</dt><dd>${c.variantOf?'사용자 제공 분류 <small>공통 정보 · 공개 기록</small>':'공개 기록 <small>2차 자료</small>'}</dd></div></dl>
+       <div class="ma-source-links">${c.sources.map(s=>link(s.url,c.variantOf&&!s.label.includes('PIKU')?s.label+' · 공통 정보':s.label)).join('')}${c.imageOriginal?link(c.imageOriginal,'이미지 원본 주소'):''}</div>
        <div class="ma-gallery-actions" aria-label="사진 관리"></div>
        <p class="ma-gallery-message" role="status"></p>
      </div>`;

@@ -33,10 +33,13 @@
   };
   const entries=[
     ['yoo','유정','Yoo-Jeong','jeong','#7dd3fc','2023-04-13','제작 시작','개백수티의 주인공','개백수티와 함께 알려진 마왕의 대표 아바타. 2.0 보이스가 도입된 시기 이후 토크와 게임 방송에서 중심적으로 사용되었다.',['개백수티','2.0 보이스','게임 · 저챗'],'유정마왕.png','d541b4870fbecc5ccab53d15322e696d77bd346c64f291d765fac779fee495da',['voice']],
-    ['mi','미정','Mi-Jeong','jeong','#edbb76','2022-04-14','제작 기록','정 시리즈의 시작','갸루 분위기의 아바타로, 검은 머리와 금발 버전을 사용한다. 이름을 정하지 못해 부르던 명칭이 실제 이름이 되었고 이후 정 시리즈의 계기가 되었다.',['갸루','흑발 · 금발','이름의 시작'],'갸루마왕.png','b6a9097bd28d8d5478ac6fbb49770be6741e3d34fb61cbd72044f18d2c0dfa0a',['mi']],
+    ['mi','흑미정','Black Mi-Jeong','jeong','#edbb76','2022-04-14','미정 공통 제작 기록','정 시리즈의 시작 · 흑발','미정의 검은 머리 버전. 미정은 갸루 분위기의 아바타이며, 이름을 정하지 못해 부르던 명칭이 실제 이름이 되어 정 시리즈의 계기가 되었다. 세부 버전의 제작일은 확인되지 않았다.',['미정','흑발','갸루','정 시리즈'],'갸루마왕.png','b6a9097bd28d8d5478ac6fbb49770be6741e3d34fb61cbd72044f18d2c0dfa0a',['mi']],
+    ['mi-gold','금미정','Gold Mi-Jeong','jeong','#f6d47d',null,'세부 버전 등장일 미확인','미정 · 금발 버전','미정의 금발 버전. 별도 프로필과 갤러리로 관리하며 이 버전의 정확한 등장일과 대표 사진은 아직 확인되지 않았다.',['미정','금발','갸루','정 시리즈'],null,null,['mi']],
     ['ye','예정','Ye-Jeong','jeong','#9db2d3','2022-07-04','제작 기록','직장인 콘셉트','일상에 지친 직장인을 모티브로 한 캐릭터. 다크서클과 사원증이 캐릭터의 개성을 드러낸다. 사원증은 이전의 밝은 모습을 담고 있다는 기록이 있다.',['직장인','다크서클','사원증'],'예정마왕.png','ddec6662ede6e6678d777fccbd67a60875e839a59a65f7ffe93af2bdd9ac716b',[]],
     ['seon','선정','Seon-Jeong','jeong','#f5a8c7','2022-08-06','제작 기록','반전 매력','독특한 분위기를 의도해 만든 아바타지만 완성된 모습은 청순하고 귀여운 인상으로 알려졌다. 제작 과정에서 아이디어를 고민했다는 기록이 남아 있다.',['청순한 인상','VRChat','정 시리즈'],'선정이.jpg','0d9b2bf7db871e2fbba7f076614a1f155d3fb93a11118969ac78901798a4572b',[]],
-    ['su','수정','Su-Jeong','jeong','#a78bfa','2022-12-10','공개 기록','VRChat 대표 아바타','2022년 겨울에 공개된 아바타. 이후 VRChat에서 주로 사용되었다는 기록이 남아 있다.',['VRChat','2022년 겨울','정 시리즈'],'수정마왕.png','194a5bf451e4b8aca2c6e0b27e3c0392f3ab06667e65b60beb7549417d153e6c',[]],
+    ['su','백수정','White Su-Jeong','jeong','#c4b5fd','2022-12-10','수정 공통 공개 기록','수정 · 백발 버전','수정의 흰 머리 버전. 수정은 2022년 겨울에 공개되어 VRChat에서 주로 사용되었다는 기록이 남아 있다. 세부 버전의 등장일은 확인되지 않았다.',['수정','백발','VRChat','정 시리즈'],'수정마왕.png','194a5bf451e4b8aca2c6e0b27e3c0392f3ab06667e65b60beb7549417d153e6c',[]],
+    ['su-black','흑수정','Black Su-Jeong','jeong','#8d86c9',null,'세부 버전 등장일 미확인','수정 · 흑발 버전','수정의 흑발 버전. 별도 프로필과 갤러리로 관리하며 이 버전의 정확한 등장일과 대표 사진은 아직 확인되지 않았다.',['수정','흑발','VRChat','정 시리즈'],null,null,[]],
+    ['su-half','반반수정','Half & Half Su-Jeong','jeong','#b2a2db',null,'세부 버전 등장일 미확인','수정 · 반반 버전','수정의 반반 버전. 별도 프로필과 갤러리로 관리하며 이 버전의 정확한 등장일과 대표 사진은 아직 확인되지 않았다.',['수정','반반','VRChat','정 시리즈'],null,null,[]],
     ['so','소정','So-Jeong','jeong','#f0a3e2','2023-09-10','제작 시작','장난기 있는 스타일','생방송에서 작업한 캐릭터. 구상할 때 어린아이 같은 장난기와 지뢰계 패션을 참고했으며 완성 단계에서 후자의 인상이 약해졌다고 기록되어 있다.',['장난기','지뢰계 모티브','생방송 제작'],'Sojung.png','110d57d05b46c540677f75b5241b52e7ea458bc85371aa06d2e5539498d20855',[]],
     ['ae','애정','Ae-Jeong','jeong','#7dc7a5','2024-09-11','제작 시작','느슨한 일상','집에 머무는 사람의 수수하고 흐트러진 모습을 의도한 아바타. 유정과 다른 생활감 있는 이미지로 구상되었다.',['생활감','수수한 분위기','생방송 제작'],'Aejeong.png','5e1f74946bd55f8a4e7bde95d9f096e945817b7473aeede56d40f516a4051f94',[]],
     ['da','다정','Da-Jeong','jeong','#f4d58b',null,'제작일 미확인','밝은 미소','다른 아바타와 비교해 밝은 분위기로 알려진 캐릭터. 웃는 표정이 특히 인상적이라는 공개 기록이 있다.',['밝은 분위기','웃는 표정','정 시리즈'],'Dajeong.jpg','35f8cb26e1ee34cb7d8db7bd573bc488bfb6cb5c08ae46ea4dc29acfa0e1941c',[]],
@@ -57,9 +60,10 @@
     ['baby-kuma','아기쿠마','Baby Kuma','classic','#d2b28a',null,'최초 등장일 미확인','쌍둥이 캐릭터','아기상어와 쌍둥이인 초기 아바타. 등장 빈도가 낮다고 기록되어 있으며 세부 설정은 미확인 상태다.',['쿠마','아기상어','쌍둥이'],'Mawang_BabyKuma1.png','00dfaedebee250634a384d1c77e39bceb627428e66b3ac5ad88586e5b7b2231d',[]]
   ].map(([id,name,english,group,color,date,dateLabel,tagline,description,tags,imageName,imageId,media],index)=>Object.freeze({
     id,name,english,group,color,date,dateLabel,tagline,description,tags,imageName,
-    image:portraits[id]?'/assets/mawang-archive-portraits/'+id+'.jpg':'https://file.namu.moe/file/'+imageId,
-    imageOriginal:portraits[id]?'https://img2.piku.co.kr/w/uploads/9M736q/'+portraits[id]+'.jpg':'https://file.namu.moe/file/'+imageId,
-    imageSource:portraits[id]?'PIKU 공개 이미지 · 2차 자료':'나무위키 미러 · 2차 자료',
+    image:portraits[id]?'/assets/mawang-archive-portraits/'+id+'.jpg':imageId?'https://file.namu.moe/file/'+imageId:null,
+    imageOriginal:portraits[id]?'https://img2.piku.co.kr/w/uploads/9M736q/'+portraits[id]+'.jpg':imageId?'https://file.namu.moe/file/'+imageId:null,
+    imageSource:portraits[id]?'PIKU 공개 이미지 · 2차 자료':imageId?'나무위키 미러 · 2차 자료':'이미지 미등록',
+    variantOf:['mi','mi-gold'].includes(id)?'미정':['su','su-black','su-half'].includes(id)?'수정':null,
     media,number:index+1,
     sources:[{label:'나무위키 미러 · 2차 자료',url:wiki},...(group==='jeong'&&id!=='ye-new'?[{label:'소나위키 · 2차 자료',url:sona}]:[]),...(portraits[id]?[{label:'PIKU 이미지 출처',url:piku}]:[])]
   }));
