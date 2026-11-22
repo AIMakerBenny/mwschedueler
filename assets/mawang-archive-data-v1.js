@@ -21,84 +21,104 @@
     'baby-shark':'4dd0dc60ac4ed227835051caead1f4d8','baby-kuma':'6cd39e95206a1f9debd50fdc07f46a48'
   };
   const videos={
-    intro:{id:'k1dm9mmHOKY',title:'1주년 캐릭터 소개',kind:'공식 영상'},
-    profile:{id:'BS5W_GSRS-U',title:'Who is MaWang?',kind:'공식 영상'},
+    intro:{id:'k1dm9mmHOKY',title:'1주년 캐릭터 소개',kind:'공식 영상',published:'2021-07-27'},
+    profile:{id:'BS5W_GSRS-U',title:'Who is MaWang?',kind:'공식 영상',published:'2024-02-07'},
     mi:{id:'f_PUpKJvJdA',title:'미정 소개 영상',kind:'공개 기록에 연결된 영상'},
-    kokoa:{id:'mBbtB811rJM',title:'Kokoa MaWang · 360° 영상',kind:'공식 영상'},
-    devil:{id:'oP565EZ4Mwo',title:'A Day with Devil MaWang',kind:'공식 영상'},
-    hina:{id:'Kla2-2hjXw8',title:'Find the MaWang Hamster',kind:'공식 영상'},
-    real:{id:'d8pOSpkgw1I',title:'Burn Out · Real MaWang',kind:'공식 영상'},
+    hakka:{id:'wLenu624veU',title:'A day with mawang 2',kind:'공식 영상',published:'2022-01-17'},
+    kokoa:{id:'mBbtB811rJM',title:'A day with kokoa mawang',kind:'공식 영상',published:'2021-08-08'},
+    devil:{id:'oP565EZ4Mwo',title:'A day with devil mawang',kind:'공식 영상',published:'2021-12-23'},
+    hina:{id:'Kla2-2hjXw8',title:'Find the MaWang Hamster',kind:'공식 영상',published:'2021-09-20'},
+    hamsterAdventure:{id:'9zIknidFEJ8',title:'The Adventures of a Hamster',kind:'공식 영상',published:'2021-06-11'},
+    hamsterMeal:{id:'slhaxObZjKs',title:'What are you doing, MaWang hamster? 2',kind:'공식 영상',published:'2021-07-05'},
+    babyShark:{id:'QLfDcsu3RG4',title:'Baby Shark',kind:'공식 영상',published:'2021-02-28'},
+    real:{id:'d8pOSpkgw1I',title:'Burn Out · Real MaWang',kind:'공식 영상',published:'2021-11-27'},
     hamster:{id:'PEO110rb3bU',title:'뭐하고 있니 마왕 햄스터',kind:'공식 영상'},
     voice:{id:'RKQ2XmEfFB8',title:'2.0 보이스 관련 영상',kind:'공개 기록에 연결된 영상'}
   };
   // Requested display priority, not a measured last-used timestamp.
-  const order='yoo da su su-black su-half ae ye-new ye seon so mi mi-gold hakka lena kokoa devil hina real wolferia mike coco azuki nyasuka chibi baby-shark baby-kuma kkomwang'.split(' ');
-  // Additional factual notes, paraphrased from the linked public character records.
-  const details={
-    yoo:[['제작 과정','제작 이틀 뒤인 2023년 4월 15일 전후로 이름을 확정했다는 기록이 있다.'],['방송에서의 역할','개백수티와 새 음성 방식의 도입을 함께 상징하며, 토크와 게임 방송에 주로 등장한다.']],
-    da:[['디자인','다른 아바타보다 밝은 인상과 자연스러운 웃는 얼굴이 두드러진다.'],['의상','비교적 노출을 줄인 스타일이며, 기존 캐릭터와 대비되는 분위기다.']],
-    su:[['제작 배경','코로나로 휴식을 취하던 시기에 제작했다는 공개 기록이 있다.'],['버전 구분','백수정·흑수정·반반수정 세 종류가 있으며, 여기서는 백수정을 소개한다.']],
-    'su-black':[['제작 배경','수정 원형의 공개 기록은 2022년 12월 10일이다. 세부 버전의 제작 시점은 별도 확인되지 않았다.'],['버전 구분','백수정·반반수정과 별도로 분류하는 흑수정이다.']],
-    'su-half':[['제작 배경','수정 원형은 2022년 겨울에 공개됐다. 반반 버전의 별도 등장일은 미확인이다.'],['버전 구분','백수정·흑수정과 구별되는 반반수정으로 관리한다.']],
-    ae:[['제작 의도','유정보다 생활감이 강하고 흐트러진 외형을 표현하려 했다고 기록돼 있다.'],['캐릭터 이미지','낯을 가리고 집에서 지내는 생활을 모티브로 삼았다.']],
-    ye:[['외형과 설정','무심한 표정과 눈 밑의 피로감으로 직장 생활을 표현한다.'],['디자인 디테일','사원증 속 사진에는 이전의 생기 있는 얼굴이 담겨 있다는 기록이 있다.']],
-    'ye-new':[['기존 캐릭터와 관계','원래 예정의 개조 버전으로, 같은 이름의 서로 다른 모델을 구분한다.'],['공개 기록','2026년 5월 방송 등장 기록이 있지만 구체적인 변경 사양은 미확인이다.']],
-    seon:[['구상 과정','처음에는 도발적인 분위기를 목표로 했으나 결과적으로 부드러운 인상의 캐릭터가 되었다.'],['이름의 유래','초기 콘셉트에 따라 선정이라는 이름을 선택했다는 기록이 있다.']],
-    so:[['제작 과정','2023년 9월 생방송 작업에서 출발했다.'],['스타일','어린아이 같은 장난스러움과 지뢰계 패션의 일부 요소를 결합했다.']],
-    mi:[['이름의 유래','작업 후 이름을 정하지 못한 상태에서 부르던 별칭이 정식 명칭처럼 자리 잡았다.'],['영상 기록','2022년 7월 5일 메인 채널에 미정 소개 영상이 게시되었다는 기록이 있다.']],
-    'mi-gold':[['외형 차이','흑미정과 같은 얼굴을 바탕으로 머리색을 바꾼 버전으로 소개된다.'],['관련 기록','미정 공통 소개 영상은 2022년 7월 공개되었으며 금발 버전 자체의 등장일은 미확인이다.']],
-    hakka:[['영상 속 모습','귀여운 행동과 실수하는 연출이 특징이며 레나와 함께 등장하는 장면이 많다.'],['대표 연출','영상 클로징에 활용한 발레 동작이 캐릭터의 인상적인 요소다.']],
-    lena:[['영상 속 역할','과장된 몸 연기, 반전되는 음성, 코미디 상황을 표현하는 캐릭터다.'],['관련 캐릭터','하카와 함께 출연하는 초기 영상이 알려져 있다.']],
-    kokoa:[['디자인 배경','지인이 그린 마왕의 이미지에서 모티브를 얻었다는 기록이 있다.'],['영상 스타일','반짝이는 피부 표현과 문신이 어우러진 캐릭터로 360도 영상에도 등장한다.']],
-    devil:[['영상 속 역할','다른 캐릭터와 관계를 맺으며 악마라는 설정을 활용한 반전 연출을 보여준다.'],['비주얼 차이','초기 아바타에서 흔했던 푸른색과 달리 분홍색이 핵심이다.']],
-    hina:[['등장 변화','초기에는 아기 마왕의 모습으로 등장했고 햄스터 영상 이후 의상이 정착했다고 기록돼 있다.'],['대표 연출','작은 체구와 빠른 움직임, 강한 힘을 대비하는 코미디 캐릭터다.']],
-    real:[['영상 속 설정','Burn Out에서 작업하는 편집자의 역할을 맡는다.'],['다른 세계관','일반 캐릭터들과 다른 설정으로 소개되며 생방송에서 사용된 기록도 있다.']],
-    wolferia:[['외형','큰 키와 날카로운 치아가 알려진 특징이다.'],['활동 기록','초기 공개 자료에는 등장하지만 구체적인 제작일과 최근 사용 여부는 확인되지 않았다.']],
-    mike:[['외형','큰 키와 근육질 체형의 남성 아바타다.'],['대표 연출','이불을 터는 장면 등 예상과 다른 동작으로 웃음을 주는 영상에 등장했다.']],
-    coco:[['캐릭터 설정','감정적인 장면이 많으며 치비는 코코의 어린 시절을 나타낸다.'],['영상 서사','어린 자신과 만나는 에피소드에서 지친 일상의 모습을 표현한다.']],
-    azuki:[['변천','초기 마왕냥 이후 족제비를 거쳐 고양이 콘셉트로 돌아왔다는 공개 기록이 있다.'],['대표 연출','어린 외형과 예상치 못한 몸개그가 대비된다.']],
-    nyasuka:[['디자인','노란 계열과 볼의 반창고가 눈에 띄는 캐릭터다.'],['활동 기록','초기 소개 영상의 등장 기록이 있으나 최근 사용 상황은 확인되지 않았다.']],
-    chibi:[['등장 기록','초창기 첫 영상부터 다섯 번째 영상까지 등장했다는 공개 자료가 있다.'],['연결 관계','코코의 어린 시절이며 아기상어·아기쿠마와 비슷한 작은 캐릭터 계열이다.']],
-    'baby-shark':[['관계','아기쿠마와 쌍둥이로 설정되어 있다.'],['외형','초기 히나보다 약간 큰 체구로 소개된다. 등장 기록이 적어 구체적인 설정은 제한적이다.']],
-    'baby-kuma':[['관계','아기상어와 쌍둥이 캐릭터다.'],['외형','아기상어와 함께 히나보다 약간 큰 체구로 소개된다. 개별 등장일은 미확인이다.']],
-    kkomwang:[['확인 상태','사용자에게 확인한 캐릭터 이름이다. 공개 자료에서 별도 제작일과 설정을 확인하지 못했다.'],['대표 사진','관리자 프로필 등록을 통해 실제 캐릭터 사진을 추가할 수 있다.']]
+  const order='yoo da su su-black su-half ae kkomwang ye-new ye seon so mi mi-gold hakka lena kokoa devil hina real wolferia mike coco azuki nyasuka chibi baby-shark baby-kuma'.split(' ');
+  // Character introductions use the public avatar descriptions and original channel
+  // videos as reference. Color variants share the same character narrative.
+  const profiles={
+    yoo:['개백수티를 착용하는 아바타다.',[
+      ['방송','2.0 보이스 도입 이후 저스트 채팅, 게임 방송과 합방에 주로 사용되었다.']]],
+    da:['다른 마왕 아바타에 비해 밝은 분위기와 웃는 인상이 특징이다. 의상의 노출도 비교적 적은 편이다.',[
+      ['제작','생방송에서 아바타를 작업했다.']]],
+    su:['코로나에 걸렸을 때 제작한 아바타로, 수정은 2022년 12월 10일 공개되었다. VRChat 방송에 주로 사용된 캐릭터 중 하나다.',[
+      ['세 가지 스타일','백수정, 흑수정, 반반수정은 머리색을 달리한 수정의 변형으로, 동일한 캐릭터 콘셉트를 공유한다.']]],
+    ae:['은둔형 외톨이와 대인관계가 서툰 사람을 콘셉트로 제작한 아바타다. 개백수 콘셉트의 유정보다 흐트러진 외형을 표현했다. 2024년 9월 11일 생방송에서 제작을 시작했다.',[]],
+    ye:['직장 생활에 지친 사람을 콘셉트로 제작한 아바타다. 시크한 인상과 다크서클이 특징이며, 초기 트위치 방송에서 자주 사용했다.',[
+      ['사원증','사원증에 담긴 신입 사원 시절의 모습에는 다크서클이 없다.']]],
+    'ye-new':['직장인 콘셉트 아바타 예정의 리메이크 버전이다.',[]],
+    seon:['선정적인 디자인을 구상하며 제작을 시작했으나 완성된 아바타는 청순하고 귀여운 외형으로 바뀌었다.',[
+      ['이름의 유래','초기의 선정적인 디자인 방향을 반영해 선정이라는 이름을 붙였다.'],
+      ['제작 과정','제작 초기에 디자인 아이디어를 떠올리는 데 어려움을 겪었으며, 노출이 있는 의상을 사용한다.']]],
+    so:['2023년 9월 10일 생방송에서 제작을 시작한 아바타다. 어린아이와 지뢰계 스타일을 구상했으며 완성된 디자인에서는 지뢰계 요소가 약해졌다.',[]],
+    mi:['트위치 생방송에서 갸루 콘셉트로 제작한 아바타다. 이름을 정하지 못해 임시로 미정이라 부르다가 실제 이름으로 굳어졌다. 이후 예정과 선정의 이름에도 영향을 주었다.',[
+      ['두 가지 스타일','검은 머리의 흑미정과 금발의 금미정이 있다.'],
+      ['방송','트위치 생방송에서 자주 사용하던 아바타 중 하나다.']]],
+    hakka:['마왕의 초창기 유튜브에서 레나와 함께 대표 캐릭터로 사용된 고양이 귀 아바타다.',[
+      ['대표 콘텐츠','2022년 1월 17일 공개된 360도 영상 A day with mawang 2는 하카와 하루를 함께 보내는 콘셉트로 제작되었다.'],
+      ['엔딩','영상 말미에 발레 동작을 선보인다.']]],
+    lena:['악마를 연상시키는 뿔을 가진 아바타다. 영상에서는 남성 목소리와 몸개그가 등장하기도 한다.',[
+      ['대표 캐릭터','2022년 하카의 360도 콘텐츠 A day with mawang 2에서 마왕은 하카와 레나를 채널의 대표 캐릭터로 소개했다.']]],
+    kokoa:['섹시한 콘셉트의 아바타다. 문신과 광택 있는 피부, 노출이 있는 의상이 특징이다.',[
+      ['대표 콘텐츠','2021년 8월 8일 공개한 A day with kokoa mawang은 코코아와 하루를 보내는 360도 체험 영상으로, 조회수 1,000만 회를 넘겼다.']]],
+    devil:['분홍색 계열의 악마 콘셉트 아바타다.',[
+      ['대표 콘텐츠','2021년 12월 23일 공개한 A day with devil mawang은 악마 마왕과 하루를 보내는 360도 영상으로, 조회수 1,000만 회를 넘겼다.']]],
+    hina:['햄스터 옷을 입은 작은 아바타다. 빠른 움직임과 강한 힘이 특징이며, 초기에는 햄스터 옷을 입지 않은 모습으로도 등장했다.',[
+      ['대표 콘텐츠','2021년 6월 The Adventures of a Hamster, 7월 What are you doing, MaWang hamster? 2, 9월 360도 숨바꼭질 영상 Find the MaWang Hamster가 공개되었다.'],
+      ['아바타의 확장','성장한 햄스터 형태도 등장하며, 이세계아이돌 햄스터 아바타 제작에도 히나 에셋이 활용되었다.']]],
+    real:['뮤직비디오 Burn Out에 등장하는 편집자 마왕이다. 마왕이 유튜브 활동 중 경험한 번아웃을 소재로 만든 VRChat 영상이다.',[
+      ['대표 작품','2021년 11월 27일 공개한 VRChat 뮤직비디오 Burn Out에 등장한다.'],
+      ['세계관','일반 마왕 캐릭터들과 별개의 세계관에 속하며, 생방송에서도 사용한 적이 있다.']]],
+    wolferia:['큰 키와 뾰족한 치아가 특징인 초기 아바타다.',[]],
+    mike:['큰 키와 근육질의 체격을 가진 남성 아바타다. 영상에서는 이불을 터는 장면에 등장한다.',[]],
+    coco:['레나처럼 뿔을 가진 캐릭터다. 어린 시절의 자신인 치비와 만나는 에피소드가 있다.',[]],
+    azuki:['처음에는 마왕냥이라는 이름으로 등장한 고양이 캐릭터다. 족제비 콘셉트를 거친 뒤 고양이 콘셉트로 돌아왔으며 몸개그 영상에 등장한다.',[]],
+    nyasuka:['노란색을 중심으로 꾸민 아바타로, 뺨에 붙인 반창고가 특징이다. 초기 캐릭터들 가운데 중간 정도의 키를 가졌으며 마왕의 캐릭터 소개 영상에도 등장했다.',[]],
+    chibi:['코코의 어린 시절을 표현한 아바타로, 마왕의 초창기 유튜브 영상에 등장한다.',[]],
+    'baby-shark':['아기쿠마와 쌍둥이인 작은 캐릭터다. 히나보다 조금 큰 체구이며, 에피소드에 따라 성장한 모습으로도 등장한다.',[['대표 콘텐츠','2021년 2월 28일 공개한 VRChat 단편 Baby Shark는 아기상어를 건드렸다가 곤란해지는 코미디를 소재로 제작했다.']]],
+    'baby-kuma':['아기상어와 쌍둥이인 작은 캐릭터다. 히나보다 키가 조금 크고, 아기상어와 마찬가지로 어른 형태도 존재한다.',[]],
+    kkomwang:['',[]]
   };
+  const profileKey=id=>id.startsWith('su-')?'su':id==='mi-gold'?'mi':id;
   const entries=[
-    ['yoo','유정','Yoo-Jeong','jeong','#7dd3fc','2023-04-13','제작 시작','개백수티의 주인공','개백수티와 함께 알려진 마왕의 대표 아바타. 2.0 보이스가 도입된 시기 이후 토크와 게임 방송에서 중심적으로 사용되었다.',['개백수티','2.0 보이스','게임 · 저챗'],'유정마왕.png','d541b4870fbecc5ccab53d15322e696d77bd346c64f291d765fac779fee495da',['voice']],
-    ['mi','흑미정','Black Mi-Jeong','jeong','#edbb76','2022-04-14','미정 공통 제작 기록','정 시리즈의 시작 · 흑발','미정의 검은 머리 버전. 미정은 갸루 분위기의 아바타이며, 이름을 정하지 못해 부르던 명칭이 실제 이름이 되어 정 시리즈의 계기가 되었다. 세부 버전의 제작일은 확인되지 않았다.',['미정','흑발','갸루','정 시리즈'],'갸루마왕.png','b6a9097bd28d8d5478ac6fbb49770be6741e3d34fb61cbd72044f18d2c0dfa0a',['mi']],
-    ['mi-gold','금미정','Gold Mi-Jeong','jeong','#f6d47d',null,'세부 버전 등장일 미확인','미정 · 금발 버전','미정의 금발 버전. 별도 프로필과 갤러리로 관리하며 이 버전의 정확한 등장일과 대표 사진은 아직 확인되지 않았다.',['미정','금발','갸루','정 시리즈'],null,null,['mi']],
-    ['ye','예정','Ye-Jeong','jeong','#9db2d3','2022-07-04','제작 기록','직장인 콘셉트','일상에 지친 직장인을 모티브로 한 캐릭터. 다크서클과 사원증이 캐릭터의 개성을 드러낸다. 사원증은 이전의 밝은 모습을 담고 있다는 기록이 있다.',['직장인','다크서클','사원증'],'예정마왕.png','ddec6662ede6e6678d777fccbd67a60875e839a59a65f7ffe93af2bdd9ac716b',[]],
-    ['seon','선정','Seon-Jeong','jeong','#f5a8c7','2022-08-06','제작 기록','반전 매력','독특한 분위기를 의도해 만든 아바타지만 완성된 모습은 청순하고 귀여운 인상으로 알려졌다. 제작 과정에서 아이디어를 고민했다는 기록이 남아 있다.',['청순한 인상','VRChat','정 시리즈'],'선정이.jpg','0d9b2bf7db871e2fbba7f076614a1f155d3fb93a11118969ac78901798a4572b',[]],
-    ['su','백수정','White Su-Jeong','jeong','#c4b5fd','2022-12-10','수정 공통 공개 기록','수정 · 백발 버전','수정의 흰 머리 버전. 수정은 2022년 겨울에 공개되어 VRChat에서 주로 사용되었다는 기록이 남아 있다. 세부 버전의 등장일은 확인되지 않았다.',['수정','백발','VRChat','정 시리즈'],'수정마왕.png','194a5bf451e4b8aca2c6e0b27e3c0392f3ab06667e65b60beb7549417d153e6c',[]],
-    ['su-black','흑수정','Black Su-Jeong','jeong','#8d86c9',null,'세부 버전 등장일 미확인','수정 · 흑발 버전','수정의 흑발 버전. 별도 프로필과 갤러리로 관리하며 이 버전의 정확한 등장일과 대표 사진은 아직 확인되지 않았다.',['수정','흑발','VRChat','정 시리즈'],null,null,[]],
-    ['su-half','반반수정','Half & Half Su-Jeong','jeong','#b2a2db',null,'세부 버전 등장일 미확인','수정 · 반반 버전','수정의 반반 버전. 별도 프로필과 갤러리로 관리하며 이 버전의 정확한 등장일과 대표 사진은 아직 확인되지 않았다.',['수정','반반','VRChat','정 시리즈'],null,null,[]],
-    ['so','소정','So-Jeong','jeong','#f0a3e2','2023-09-10','제작 시작','장난기 있는 스타일','생방송에서 작업한 캐릭터. 구상할 때 어린아이 같은 장난기와 지뢰계 패션을 참고했으며 완성 단계에서 후자의 인상이 약해졌다고 기록되어 있다.',['장난기','지뢰계 모티브','생방송 제작'],'Sojung.png','110d57d05b46c540677f75b5241b52e7ea458bc85371aa06d2e5539498d20855',[]],
-    ['ae','애정','Ae-Jeong','jeong','#7dc7a5','2024-09-11','제작 시작','느슨한 일상','집에 머무는 사람의 수수하고 흐트러진 모습을 의도한 아바타. 유정과 다른 생활감 있는 이미지로 구상되었다.',['생활감','수수한 분위기','생방송 제작'],'Aejeong.png','5e1f74946bd55f8a4e7bde95d9f096e945817b7473aeede56d40f516a4051f94',[]],
-    ['da','다정','Da-Jeong','jeong','#f4d58b',null,'제작일 미확인','밝은 미소','다른 아바타와 비교해 밝은 분위기로 알려진 캐릭터. 웃는 표정이 특히 인상적이라는 공개 기록이 있다.',['밝은 분위기','웃는 표정','정 시리즈'],'Dajeong.jpg','35f8cb26e1ee34cb7d8db7bd573bc488bfb6cb5c08ae46ea4dc29acfa0e1941c',[]],
-    ['ye-new','예정 리메이크','Ye-Jeong · NEW','jeong','#a5b4fc','2026-05-12','등장 기록','예정의 새로운 버전','기존 예정 아바타의 리메이크. 공개 위키에 2026년 5월 12일 방송에서 보였다는 기록이 있으며, 최초 공개를 직접 확인할 수 있는 공식 원본은 확보하지 못했다.',['리메이크','예정','2026년'],'(new)예정이.png','11d3fee08109663ae488cee5f237fcadca5307f88618b510ddf534bfef235700',[]],
-    ['hakka','하카','Hakka','classic','#86c8fa',null,'최초 등장일 미확인','초기 마왕의 얼굴','고양이 귀가 특징인 초기 대표 아바타. 레나와 함께 등장하는 영상이 많았고 발레를 활용한 영상 엔딩으로도 알려져 있다.',['고양이 귀','발레','레나'],'하카.jpg','232aa75ab6c2b84924ca55326b97478a2424f27d784a5a5a0ca4569b4860aced',[]],
-    ['lena','레나','Lena','classic','#bd9df7',null,'최초 등장일 미확인','몸개그의 단골','악마를 연상시키는 뿔이 있는 초기 캐릭터. 하카와 어울리며 다양한 슬랩스틱 코미디를 보여주었다.',['악마 뿔','몸개그','하카'],'레나2.png','02681fed83a249fde61298c8256afd852c376456b0c2e0953466029eeb06a790',[]],
-    ['kokoa','코코아','Kokoa','classic','#d8a0cf',null,'최초 등장일 미확인','개성 있는 비주얼','문신과 광택 있는 표현이 눈에 띄는 아바타. 공식 채널의 캐릭터 중심 360도 영상에서 이름을 확인할 수 있다.',['문신','광택','360° 영상'],'코코아2.jpg','5ff9e546b063c8e07b023ab6223645305d3cbdd030c59fcf5fb25ddfc7d0e046',['kokoa']],
-    ['devil','악마','Devil','classic','#f291b6',null,'최초 등장일 미확인','분홍빛 악마','기존 아바타의 푸른 이미지와 달리 분홍 계열의 캐릭터. 공식 VRChat 360도 영상에서 악마 마왕이라는 이름으로 소개된다.',['분홍색','악마','360° 영상'],'악마22.jpg','b73e1835568115bc62ecd438c30e900a377294bcf4525e3ca43c38ea163b8532',['devil']],
-    ['hina','히나','Hina','classic','#f2cc8a',null,'최초 등장일 미확인','마왕 햄스터','햄스터 의상을 입은 작은 캐릭터. 빠른 움직임과 과장된 힘을 보여주는 코미디가 특징이며, 햄스터 숨바꼭질 영상으로도 알려져 있다.',['햄스터','숨바꼭질','밈 영상'],'히나.jpg','8628d0c9dcd41a0fc8e0102302e2d6fc91b7580d290ef1938620f45f5cfb85b8',['hina','hamster']],
-    ['real','리얼 마왕','Real MaWang','classic','#9eabd0',null,'최초 등장일 미확인','영상 속 편집자','공식 뮤직비디오 Burn Out에 등장하는 편집자 역할의 아바타. 기존 코미디 캐릭터와는 다른 배경 설정으로 소개된다.',['편집자','Burn Out','뮤직비디오'],'리얼마왕.jpg','01648034426c6f14e19783f071d454dbf4fe4d46fad9817b78d42ac4c2a50af2',['real']],
-    ['wolferia','울페리아','Wolferia','classic','#a3c7db',null,'최초 등장일 미확인','날카로운 인상','큰 체격과 뾰족한 치아가 특징으로 기록된 초기 아바타. 현재 새로운 등장 기록은 확인되지 않았다.',['큰 체격','뾰족한 치아','초기 영상'],'울페리아.jpg','840acd08bcc1f54c00958af91dfefa65fb4b788c25e2ce3bf410f1875d975507',[]],
-    ['mike','마이크','Mike','classic','#b9c2a4',null,'최초 등장일 미확인','근육질 캐릭터','근육질의 큰 남성 아바타. 이불을 터는 장면과 같은 코미디 연출에 등장한 것으로 알려져 있다.',['근육','슬랩스틱','초기 영상'],'Mawang_Mike1.png','84d00d6259cc7d02741649747336f87cd557dc4defed49e9380b19dcd5182294',[]],
-    ['coco','코코','Coco','classic','#b9b2e8',null,'최초 등장일 미확인','치비와 이어지는 이야기','레나와 비슷한 뿔을 가진 캐릭터. 어린 시절의 자기 자신인 치비와 만나는 이야기가 영상에 등장한다. 직업은 확인되지 않았다.',['뿔','치비','스토리 영상'],'코코22.jpg','0babc98697978ba20fda80a3bc5ecac4cddddf96ad49779fe1adfc9c23e1e1b9',[]],
-    ['azuki','아즈키','Azuki','classic','#e5b5b0',null,'최초 등장일 미확인','고양이 마왕냥','초기에는 마왕냥이라는 이름으로 등장했다고 전해진다. 이후 고양이 콘셉트로 알려졌으며 코미디 연출에도 등장한다.',['마왕냥','고양이','몸개그'],'Mawang_Azuki1.png','b0b786c47acc69ff07d47ebbc28b522a2b9da65655dadf8a11d21d82a2636569',[]],
-    ['nyasuka','냐스카','Nyasuka','classic','#e8d180',null,'최초 등장일 미확인','노란색 포인트','노란색 계열의 디자인과 뺨의 반창고가 특징인 초기 캐릭터. 정확한 등장일은 확보하지 못했다.',['노란색','반창고','초기 영상'],'Nyasuka1.png','ed5914710a494ef265b0730f1f41a2e3b05d8dadabc32e1f1673ce04cd9b6787',[]],
-    ['chibi','치비','Chibi','classic','#a8d5ef',null,'최초 등장일 미확인','어린 코코','마왕의 극초기 영상에 등장한 캐릭터로, 코코 마왕의 어린 시절이라는 설정이 기록되어 있다.',['아기코코','코코','극초기 영상'],'아기코코.jpg','5a0a03b7812726e3b597ad400ff472895d5df71dd2aedd85f006e9eb5a92889b',[]],
-    ['baby-shark','아기상어','Baby Shark','classic','#6ec8ef',null,'최초 등장일 미확인','쌍둥이 캐릭터','아기쿠마와 쌍둥이인 초기 아바타. 공개 기록에서는 히나보다 조금 큰 캐릭터로 설명된다.',['상어','아기쿠마','쌍둥이'],'Mawang_BabyShark1.png','00dfaedebee250634a384d1c77e39bce47180676e71d83480f4c3a82c4c0dc64',[]],
-    ['baby-kuma','아기쿠마','Baby Kuma','classic','#d2b28a',null,'최초 등장일 미확인','쌍둥이 캐릭터','아기상어와 쌍둥이인 초기 아바타. 등장 빈도가 낮다고 기록되어 있으며 세부 설정은 미확인 상태다.',['쿠마','아기상어','쌍둥이'],'Mawang_BabyKuma1.png','00dfaedebee250634a384d1c77e39bceb627428e66b3ac5ad88586e5b7b2231d',[]],
-    ['kkomwang','꼬뫙','Kkomwang','other','#bca7ea',null,'등장일 미확인','꼬뫙','마왕의 별도 캐릭터로 등록했다. 정확한 등장일과 세부 설정은 공개 자료에서 확인하지 못했다.',['꼬뫙','마왕'],null,null,[]]
-  ].sort((a,b)=>order.indexOf(a[0])-order.indexOf(b[0])).map(([id,name,english,group,color,date,dateLabel,tagline,description,tags,imageName,imageId,media],index)=>Object.freeze({
-    id,name,english,group,color,date,dateLabel,tagline,description,tags,imageName,
+    ['yoo','유정','Yoo-Jeong','jeong','#7dd3fc','2023-04-13','제작 시작','개백수티의 주인공',['개백수티','2.0 보이스','게임 · 저챗'],'유정마왕.png','d541b4870fbecc5ccab53d15322e696d77bd346c64f291d765fac779fee495da',['voice']],
+    ['mi','흑미정','Black Mi-Jeong','jeong','#edbb76','2022-04-14','미정 제작일','정 시리즈의 시작 · 흑발',['미정','흑발','갸루','정 시리즈'],'갸루마왕.png','b6a9097bd28d8d5478ac6fbb49770be6741e3d34fb61cbd72044f18d2c0dfa0a',['mi']],
+    ['mi-gold','금미정','Gold Mi-Jeong','jeong','#f6d47d',null,null,'미정 · 금발 버전',['미정','금발','갸루','정 시리즈'],null,null,['mi']],
+    ['ye','예정','Ye-Jeong','jeong','#9db2d3','2022-07-04','제작일','직장인 콘셉트',['직장인','다크서클','사원증'],'예정마왕.png','ddec6662ede6e6678d777fccbd67a60875e839a59a65f7ffe93af2bdd9ac716b',[]],
+    ['seon','선정','Seon-Jeong','jeong','#f5a8c7','2022-08-06','제작일','청순한 외형',['청순한 인상','정 시리즈'],'선정이.jpg','0d9b2bf7db871e2fbba7f076614a1f155d3fb93a11118969ac78901798a4572b',[]],
+    ['su','백수정','White Su-Jeong','jeong','#c4b5fd','2022-12-10','수정 공개일','수정 · 백발 버전',['수정','백발','VRChat','정 시리즈'],'수정마왕.png','194a5bf451e4b8aca2c6e0b27e3c0392f3ab06667e65b60beb7549417d153e6c',[]],
+    ['su-black','흑수정','Black Su-Jeong','jeong','#8d86c9',null,null,'수정 · 흑발 버전',['수정','흑발','VRChat','정 시리즈'],null,null,[]],
+    ['su-half','반반수정','Half & Half Su-Jeong','jeong','#b2a2db',null,null,'수정 · 반반 버전',['수정','반반','VRChat','정 시리즈'],null,null,[]],
+    ['so','소정','So-Jeong','jeong','#f0a3e2','2023-09-10','제작 시작','어린아이 콘셉트',['지뢰계 모티브','생방송 제작'],'Sojung.png','110d57d05b46c540677f75b5241b52e7ea458bc85371aa06d2e5539498d20855',[]],
+    ['ae','애정','Ae-Jeong','jeong','#7dc7a5','2024-09-11','제작 시작','은둔형 외톨이 콘셉트',['은둔형 외톨이','생방송 제작'],'Aejeong.png','5e1f74946bd55f8a4e7bde95d9f096e945817b7473aeede56d40f516a4051f94',[]],
+    ['da','다정','Da-Jeong','jeong','#f4d58b',null,null,'밝은 미소',['밝은 분위기','웃는 표정','정 시리즈'],'Dajeong.jpg','35f8cb26e1ee34cb7d8db7bd573bc488bfb6cb5c08ae46ea4dc29acfa0e1941c',[]],
+    ['ye-new','예정 리메이크','Ye-Jeong · NEW','jeong','#a5b4fc',null,null,'예정의 새로운 버전',['리메이크','예정'],'(new)예정이.png','11d3fee08109663ae488cee5f237fcadca5307f88618b510ddf534bfef235700',[]],
+    ['hakka','하카','Hakka','classic','#86c8fa',null,null,'초기 마왕의 얼굴',['고양이 귀','발레','레나'],'하카.jpg','232aa75ab6c2b84924ca55326b97478a2424f27d784a5a5a0ca4569b4860aced',['hakka']],
+    ['lena','레나','Lena','classic','#bd9df7',null,null,'몸개그의 단골',['악마 뿔','몸개그','하카'],'레나2.png','02681fed83a249fde61298c8256afd852c376456b0c2e0953466029eeb06a790',['hakka']],
+    ['kokoa','코코아','Kokoa','classic','#d8a0cf',null,null,'개성 있는 비주얼',['문신','광택','360° 영상'],'코코아2.jpg','5ff9e546b063c8e07b023ab6223645305d3cbdd030c59fcf5fb25ddfc7d0e046',['kokoa']],
+    ['devil','악마','Devil','classic','#f291b6',null,null,'분홍빛 악마',['분홍색','악마','360° 영상'],'악마22.jpg','b73e1835568115bc62ecd438c30e900a377294bcf4525e3ca43c38ea163b8532',['devil']],
+    ['hina','히나','Hina','classic','#f2cc8a',null,null,'마왕 햄스터',['햄스터','숨바꼭질','밈 영상'],'히나.jpg','8628d0c9dcd41a0fc8e0102302e2d6fc91b7580d290ef1938620f45f5cfb85b8',['hina','hamster','hamsterAdventure','hamsterMeal']],
+    ['real','리얼 마왕','Real MaWang','classic','#9eabd0',null,null,'영상 속 편집자',['편집자','Burn Out','뮤직비디오'],'리얼마왕.jpg','01648034426c6f14e19783f071d454dbf4fe4d46fad9817b78d42ac4c2a50af2',['real']],
+    ['wolferia','울페리아','Wolferia','classic','#a3c7db',null,null,'날카로운 인상',['큰 체격','뾰족한 치아','초기 영상'],'울페리아.jpg','840acd08bcc1f54c00958af91dfefa65fb4b788c25e2ce3bf410f1875d975507',[]],
+    ['mike','마이크','Mike','classic','#b9c2a4',null,null,'근육질 캐릭터',['근육','슬랩스틱','초기 영상'],'Mawang_Mike1.png','84d00d6259cc7d02741649747336f87cd557dc4defed49e9380b19dcd5182294',[]],
+    ['coco','코코','Coco','classic','#b9b2e8',null,null,'치비와 이어지는 이야기',['뿔','치비','스토리 영상'],'코코22.jpg','0babc98697978ba20fda80a3bc5ecac4cddddf96ad49779fe1adfc9c23e1e1b9',[]],
+    ['azuki','아즈키','Azuki','classic','#e5b5b0',null,null,'고양이 마왕냥',['마왕냥','고양이','몸개그'],'Mawang_Azuki1.png','b0b786c47acc69ff07d47ebbc28b522a2b9da65655dadf8a11d21d82a2636569',[]],
+    ['nyasuka','냐스카','Nyasuka','classic','#e8d180',null,null,'노란색 포인트',['노란색','반창고','초기 영상'],'Nyasuka1.png','ed5914710a494ef265b0730f1f41a2e3b05d8dadabc32e1f1673ce04cd9b6787',[]],
+    ['chibi','치비','Chibi','classic','#a8d5ef',null,null,'어린 코코',['아기코코','코코','극초기 영상'],'아기코코.jpg','5a0a03b7812726e3b597ad400ff472895d5df71dd2aedd85f006e9eb5a92889b',[]],
+    ['baby-shark','아기상어','Baby Shark','classic','#6ec8ef',null,null,'쌍둥이 캐릭터',['상어','아기쿠마','쌍둥이'],'Mawang_BabyShark1.png','00dfaedebee250634a384d1c77e39bce47180676e71d83480f4c3a82c4c0dc64',['babyShark']],
+    ['baby-kuma','아기쿠마','Baby Kuma','classic','#d2b28a',null,null,'쌍둥이 캐릭터',['쿠마','아기상어','쌍둥이'],'Mawang_BabyKuma1.png','00dfaedebee250634a384d1c77e39bceb627428e66b3ac5ad88586e5b7b2231d',[]],
+    ['kkomwang','꼬뫙','Kkomwang','jeong','#bca7ea',null,null,'',['꼬뫙','신작','정 시리즈'],null,null,[]]
+  ].sort((a,b)=>order.indexOf(a[0])-order.indexOf(b[0])).map(([id,name,english,group,color,date,dateLabel,tagline,tags,imageName,imageId,media],index)=>Object.freeze({
+    id,name,english,group,color,date,dateLabel,tagline,description:profiles[profileKey(id)][0],tags,imageName,
     image:portraits[id]?'/assets/mawang-archive-portraits/'+id+'.jpg':imageId?'https://file.namu.moe/file/'+imageId:null,
     imageOriginal:portraits[id]?'https://img2.piku.co.kr/w/uploads/9M736q/'+portraits[id]+'.jpg':imageId?'https://file.namu.moe/file/'+imageId:null,
     imageSource:portraits[id]?'PIKU 공개 이미지 · 2차 자료':imageId?'나무위키 미러 · 2차 자료':'이미지 미등록',
     variantOf:['mi','mi-gold'].includes(id)?'미정':['su','su-black','su-half'].includes(id)?'수정':null,
-    media,number:index+1,details:details[id],
-    sources:id==='kkomwang'?[]:[{label:'나무위키 미러 · 2차 자료',url:wiki},...(group==='jeong'&&id!=='ye-new'?[{label:'소나위키 · 2차 자료',url:sona}]:[]),...(portraits[id]?[{label:'PIKU 이미지 출처',url:piku}]:[])]
+    media,number:index+1,details:profiles[profileKey(id)][1],
+    sources:id==='kkomwang'?[]:[{label:'나무위키 미러 · 2차 자료',url:wiki},...(id!=='ye-new'?[{label:'소나위키 · 2차 자료',url:sona}]:[]),...(group==='classic'?[{label:'공식 캐릭터 소개 영상',url:'https://www.youtube.com/watch?v='+videos.intro.id}]:[]),...media.map(k=>({label:videos[k].title,url:'https://www.youtube.com/watch?v='+videos[k].id})),...(portraits[id]?[{label:'PIKU 이미지 출처',url:piku}]:[])]
   }));
   window.mwsMawangArchiveDataV1=Object.freeze({entries:Object.freeze(entries),videos:Object.freeze(videos),
     channels:{official,soop,secondary:'https://www.youtube.com/channel/UCsc6HwSjfU8ig2spLjAtAig'},wiki,sona,

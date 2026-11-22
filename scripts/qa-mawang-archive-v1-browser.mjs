@@ -17,34 +17,47 @@ try{
     await browser.navigate(pathToFileURL(file).href,width,height,mobile);
     const result=await browser.evaluate(`(async()=>{
       const r=document.getElementById('mwsArchiveRoot'),q=s=>r.querySelector(s),all=s=>r.querySelectorAll(s),check=(v,m)=>{if(!v)throw Error(m)},names=()=>[...all('.ma-roster-label strong')].map(x=>x.textContent),select=id=>{for(let i=0;i<15&&!q('[data-ma-character="'+id+'"]');i++){const next=q('[data-ma-step="1"]');if(next.disabled)break;next.click()}const b=q('[data-ma-character="'+id+'"]');check(b,'selectable: '+id);b.click()},rewind=()=>{while(!q('[data-ma-step="-1"]').disabled)q('[data-ma-step="-1"]').click()},collect=()=>{rewind();const result=names();while(!q('[data-ma-step="1"]').disabled){q('[data-ma-step="1"]').click();result.push(...names())}return result},hero=()=>q('.ma-main-profile img')?.src;
-      for(let i=0;i<30&&q('[data-ma-profile-upload]').disabled;i++)await new Promise(r=>setTimeout(r,20));
-      check(!q('[data-ma-profile-upload]').disabled,'profile list loaded');
-      check(getComputedStyle(q('.ma-profile-actions')).display==='none','public upload hidden');
+      for(let i=0;i<30&&!q('[data-ma-character="mi"] img')?.src.includes('profile-123-abcd');i++)await new Promise(r=>setTimeout(r,20));
+      check(q('[data-ma-character="mi"] img')?.src.includes('profile-123-abcd'),'profile list loaded');
+      check(!q('.ma-profile-actions, .ma-profile-label, .ma-profile-input'),'public controls absent from DOM');
       check(q('#maCharacterName').textContent==='유정'&&q('.ma-count').textContent==='27 / 27','initial selection');
       check(collect().slice(0,6).join(',')==='유정,다정,백수정,흑수정,반반수정,애정','requested order');rewind();
       check(q('[data-ma-step="-1"]').disabled&&!q('[data-ma-step="1"]').disabled&&q('.ma-pagination').textContent.startsWith('1 / '),'visible previous/next pages');
-      check(q('.ma-roster-grid').scrollWidth<=q('.ma-roster-grid').clientWidth+1,'no horizontal scrolling');
+      const next=q('[data-ma-step="1"]'),nextRect=next.getBoundingClientRect(),hit=document.elementFromPoint(nextRect.x+nextRect.width/2,nextRect.y+nextRect.height/2);
+      check(nextRect.width>=36&&nextRect.height>=44&&hit?.closest('button')===next,'next page is a visible and unobstructed click target');
+      check(names().length===13&&names().includes('꼬뫙')&&names().at(-1)==='금미정','page one contains all Jeong avatars');
+      next.click();check(q('.ma-pagination').textContent==='2 / 2 페이지 · 클래식'&&names().length===14&&names()[0]==='하카'&&!names().includes('꼬뫙'),'page two contains all classic avatars');q('[data-ma-step="-1"]').click();
+      await new Promise(r=>setTimeout(r,340));check(q('.ma-roster-grid').scrollWidth<=q('.ma-roster-grid').clientWidth+1,'no horizontal scrolling');
       check(q('.ma-roster').getBoundingClientRect().bottom<=q('.ma-stage').getBoundingClientRect().top,'roster first');
       check(!q('a[href],.ma-gallery-frame,.ma-stage-nav,.ma-stage-ring,.ma-upload-input'),'profile-only, no external links or decorations');
       check(q('.ma-main-profile').getBoundingClientRect().width>=220,'large profile');
-      if(innerWidth>=1000){const photo=q('.ma-main-profile').getBoundingClientRect();check(photo.bottom<=innerHeight-8,'whole portrait visible at initial viewport '+JSON.stringify({bottom:photo.bottom,height:innerHeight}));}
+      if(innerWidth>=1000){await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const photo=q('.ma-main-profile').getBoundingClientRect();check(photo.bottom<=innerHeight-8,'whole portrait visible at initial viewport '+JSON.stringify({bottom:photo.bottom,height:innerHeight}));}
       check(getComputedStyle(q('.ma-main-profile img')).objectFit==='contain','uncropped full photo');
-      check(all('.ma-character-details>div').length===2,'expanded character details');
+      check(all('.ma-character-details>div').length===1,'verified character details only');
+      const heroStep=step=>q('[data-ma-hero-step="'+step+'"]'),heroClick=step=>heroStep(step).click();
+      for(const step of [-1,1]){const button=heroStep(step);button.scrollIntoView({block:'center'});const rect=button.getBoundingClientRect(),art=q('.ma-stage-art').getBoundingClientRect();check(rect.width>=44&&rect.height>=44&&rect.left>=art.left&&rect.right<=art.right&&document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2)?.closest('button')===button,'hero arrow is accessible over the portrait');}
+      window.scrollTo(0,0);heroClick(1);check(q('#maCharacterName').textContent==='다정'&&q('[data-ma-character="da"]').classList.contains('is-selected'),'hero next selects adjacent character');
+      heroClick(-1);check(q('#maCharacterName').textContent==='유정','hero previous selects adjacent character');heroClick(-1);check(q('#maCharacterName').textContent==='아기쿠마'&&q('[data-ma-character="baby-kuma"]').classList.contains('is-selected'),'hero previous wraps across roster pages');heroClick(1);check(q('#maCharacterName').textContent==='유정'&&q('.ma-pagination').textContent.startsWith('1 / '),'hero next wraps to first page');
+      const lastOnPage=[...all('[data-ma-character]')].at(-1);lastOnPage.click();heroClick(1);check(q('.ma-pagination').textContent.startsWith('2 / ')&&q('[data-ma-character].is-selected')===q('[data-ma-character]'),'hero crosses roster page boundary');rewind();
       select('mi');check(hero()===q('[data-ma-character="mi"] img').src&&hero().includes('profile-123-abcd'),'saved profile exactly matches roster');
       const allNames=collect();check(allNames.length===27&&new Set(allNames).size===27&&allNames.includes('꼬뫙'),'all pages accessible and no duplicates');
       rewind();select('hina');check(q('#maCharacterName').textContent==='히나','select classic');
       q('[data-ma-filter="classic"]').click();check(collect().length===14,'classic direct view');
-      q('[data-ma-filter="jeong"]').click();const jeong=collect();check(jeong.length===12&&jeong.slice(-2).join(',')==='흑미정,금미정','Mi series last');
+      q('[data-ma-filter="jeong"]').click();const jeong=collect();check(jeong.length===13&&jeong.includes('꼬뫙')&&jeong.slice(-2).join(',')==='흑미정,금미정','Mi series last, Kkomwang within Jeong');
       const search=q('.ma-search input');search.value='수정';search.dispatchEvent(new Event('input',{bubbles:true}));check(names().join(',')==='백수정,흑수정,반반수정','Su variants');
+      const copy=q('.ma-desc').textContent;heroClick(1);check(q('#maCharacterName').textContent==='흑수정'&&q('.ma-desc').textContent===copy,'variant copy is shared');heroClick(1);check(q('#maCharacterName').textContent==='반반수정'&&q('.ma-desc').textContent===copy,'third variant copy is shared');heroClick(1);check(q('#maCharacterName').textContent==='백수정','hero navigation respects search and category');
       search.value='';search.dispatchEvent(new Event('input',{bubbles:true}));q('[data-ma-filter="all"]').click();
       rewind();const last=[...all('[data-ma-character]')].at(-1);last.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));check(q('.ma-pagination').textContent.startsWith('2 /')&&q('[data-ma-character].is-selected')===q('[data-ma-character]'),'keyboard cross page');
       search.value='꼬뫙';search.dispatchEvent(new Event('input',{bubbles:true}));check(names().join(',')==='꼬뫙'&&q('#maCharacterName').textContent==='꼬뫙'&&!hero(),'new record no invented photo');
-      document.body.dataset.mwsMode='admin';check(getComputedStyle(q('.ma-profile-actions')).display==='flex'&&!q('.ma-profile-input').multiple,'single profile input');
+      check(heroStep(-1).disabled&&heroStep(1).disabled&&!q('.ma-character-details'),'single result hides navigation and unsupported detail');
+      document.body.dataset.mwsMode='admin';await Promise.resolve();check(!q('.ma-profile-actions'),'unready admin has no controls');window.__mwsAppReadyV130=true;window.dispatchEvent(new CustomEvent('mws:app-ready'));check(getComputedStyle(q('.ma-profile-actions')).display==='flex'&&!q('.ma-profile-input').multiple,'authenticated admin has single profile input');
+      q('.ma-facts').scrollIntoView({block:'end'});const info=q('.ma-facts').getBoundingClientRect();check(info.bottom<=innerHeight+1,'bottom character details can be reached');window.scrollTo(0,0);
       const input=q('.ma-profile-input'),upload=async(name)=>{q('[data-ma-profile-upload]').click();const dt=new DataTransfer();dt.items.add(new File(['image'],name,{type:'image/png'}));input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));for(let i=0;i<30&&q('[data-ma-profile-upload]').disabled;i++)await new Promise(r=>setTimeout(r,20))};
       await upload('profile.png');const first=hero();check(first&&first===q('[data-ma-character="kkomwang"] img').src,'new profile immediate');
       await upload('replacement.png');check(hero()!==first&&hero()===q('[data-ma-character="kkomwang"] img').src,'replace matching hero');
       q('[data-ma-profile-reset]').click();for(let i=0;i<30&&q('[data-ma-profile-upload]').disabled;i++)await new Promise(r=>setTimeout(r,20));check(!hero(),'reset only profile');
       search.value='';search.dispatchEvent(new Event('input',{bubbles:true}));rewind();select('mi');check(hero().includes('profile-123-abcd'),'other saved profile intact');
+      document.body.dataset.mwsMode='public';await Promise.resolve();check(!q('.ma-profile-actions, .ma-profile-label, .ma-profile-input'),'logout removes controls');
       q('.ma-main-profile img').dispatchEvent(new Event('error'));check(q('.ma-main-profile .ma-portrait').classList.contains('ma-image-missing'),'broken profile fallback');
       document.documentElement.dataset.mwsMotion='reduced';check(getComputedStyle(q('.ma-stage-info')).animationName==='none','reduced animation');check(getComputedStyle(q('[data-ma-character]')).transitionDuration==='0s','reduced transition');
       check(document.documentElement.scrollWidth<=innerWidth+2,'horizontal viewport overflow');

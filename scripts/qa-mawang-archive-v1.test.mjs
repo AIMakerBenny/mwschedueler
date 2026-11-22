@@ -9,9 +9,12 @@ const {entries,videos}=window.mwsMawangArchiveDataV1;
 test('27 individually named records with requested priority and verified detail notes',()=>{
   assert.equal(entries.length,27);
   assert.equal(new Set(entries.map(c=>c.id)).size,27);
-  assert.equal(entries.filter(c=>c.group==='jeong').length,12);
+  assert.equal(entries.filter(c=>c.group==='jeong').length,13);
   assert.equal(entries.filter(c=>c.group==='classic').length,14);
-  assert.equal(entries.filter(c=>c.group==='other').length,1);
+  assert.equal(entries.filter(c=>c.group==='other').length,0);
+  assert.equal(entries.find(c=>c.id==='kkomwang').group,'jeong');
+  assert(entries.find(c=>c.id==='kkomwang').tags.includes('신작'));
+  assert(entries.slice(0,13).every(c=>c.group==='jeong')&&entries.slice(13).every(c=>c.group==='classic'));
   assert.deepEqual(Array.from(entries.slice(0,6),c=>c.id),['yoo','da','su','su-black','su-half','ae']);
   assert.deepEqual(Array.from(entries.filter(c=>c.group==='jeong').slice(-2),c=>c.id),['mi','mi-gold']);
   assert.equal(entries.filter(c=>c.imageSource.startsWith('PIKU')).length,20);
@@ -21,10 +24,12 @@ test('27 individually named records with requested priority and verified detail 
   assert.equal(entries.find(c=>c.id==='mi').name,'흑미정');
   assert.equal(entries.find(c=>c.id==='su').name,'백수정');
   for(const c of entries){
-    assert(c.description&&c.tagline&&c.english&&c.tags.length&&c.details.length===2);
+    assert(c.english&&c.tags.length&&Array.isArray(c.details));
+    if(c.id!=='kkomwang')assert(c.description&&c.tagline);
+    assert(!/미확인|확인되지|확보하지|불명|알려지지|추정|기록(?:이 있다|되어|돼|에 남)|갤러리로 관리|관리자 프로필|정반대의 매력|시청자들은/.test([c.dateLabel,c.tagline,c.description,...c.tags,...c.details.flat()].join(' ')));
     assert(c.id==='kkomwang'||c.sources.length);
     assert(c.date===null||/^\d{4}-\d{2}-\d{2}$/.test(c.date));
-    assert(c.date!==null||c.dateLabel.includes('미확인'));
+    assert(c.date!==null||c.dateLabel===null);
     if(['mi-gold','su-black','su-half','kkomwang'].includes(c.id)){assert.equal(c.image,null);assert.equal(c.imageOriginal,null);assert.equal(c.date,null)}
     else assert(/^https:\/\/(img2\.piku\.co\.kr|file\.namu\.moe)\//.test(c.imageOriginal));
     if(c.imageSource.startsWith('PIKU')){
@@ -36,10 +41,80 @@ test('27 individually named records with requested priority and verified detail 
     assert(c.media.every(k=>videos[k]&&/^[\w-]{11}$/.test(videos[k].id)));
   }
 });
+test('color variants share one character introduction, without changing the individual records',()=>{
+  const byId=id=>entries.find(c=>c.id===id);
+  for(const ids of [['su','su-black','su-half'],['mi','mi-gold']]){
+    const base=byId(ids[0]);
+    for(const id of ids.slice(1)){
+      const variant=byId(id);assert.equal(variant.description,base.description);assert.deepEqual(variant.details,base.details);assert.notEqual(variant.name,base.name);
+    }
+  }
+  assert.deepEqual(Array.from(byId('kkomwang').details),[]);assert.equal(byId('kkomwang').description,'');assert.equal(byId('kkomwang').tagline,'');
+});
+test('representative official videos remain attached to character copy as internal references',()=>{
+  const expected={hakka:['hakka'],lena:['hakka'],kokoa:['kokoa'],devil:['devil'],hina:['hina','hamsterAdventure','hamsterMeal'],real:['real'],'baby-shark':['babyShark']};
+  for(const [id,keys] of Object.entries(expected)){
+    const c=entries.find(item=>item.id===id);
+    for(const key of keys){const video=videos[key];assert(c.media.includes(key));assert.match(video.published,/^\d{4}-\d{2}-\d{2}$/);assert(c.sources.some(s=>s.url==='https://www.youtube.com/watch?v='+video.id));}
+    assert(c.details.some(([,value])=>value.includes(videos[keys[0]].title==='Find the MaWang Hamster'?'숨바꼭질':videos[keys[0]].title.split(' · ')[0])||value.includes('360도')));
+  }
+});
+test('portrait arrows navigate the matching list and synchronize roster pages',async()=>{
+  const nodes=new Map(),handlers=new Map(),makeNode=()=>({innerHTML:'',textContent:'',clientWidth:1450,dataset:{},style:{setProperty(){}},getBoundingClientRect:()=>({top:280}),focus(){}});
+  const root={clientWidth:1600,innerHTML:'',closest:()=>null,querySelector(s){if(!nodes.has(s))nodes.set(s,makeNode());return nodes.get(s)},querySelectorAll:()=>[],addEventListener:(name,fn)=>handlers.set(name,fn)};
+  const win={mwsMawangArchiveDataV1:window.mwsMawangArchiveDataV1,scrollY:0,innerHeight:900,addEventListener:(name,fn)=>handlers.set(name,fn)};
+  vm.runInNewContext(read('assets/mawang-archive-v1.js'),{window:win,document:{getElementById:()=>root,body:{dataset:{}}},fetch:async()=>new Response(JSON.stringify({profiles:[]}))});
+  win.mwsMawangArchiveV1.render();
+  const click=dataset=>handlers.get('click')({target:{closest:()=>({dataset})}}),name=()=>root.querySelector('.ma-profile-panel').innerHTML.match(/id="maCharacterName">([^<]+)</)[1],step=n=>click({maHeroStep:String(n)}),page=()=>root.querySelector('.ma-pagination').textContent;
+  const rosterIds=()=>Array.from(root.querySelector('.ma-roster-grid').innerHTML.matchAll(/data-ma-character="([^"]+)"/g),m=>m[1]);
+  const expectedIds=group=>Array.from(entries.filter(c=>c.group===group),c=>c.id);
+  assert.equal(name(),'유정');assert.deepEqual(rosterIds(),expectedIds('jeong'));assert.equal(page(),'1 / 2 페이지 · 정 시리즈');
+  click({maStep:'1'});assert.equal(name(),'하카');assert.deepEqual(rosterIds(),expectedIds('classic'));assert.equal(page(),'2 / 2 페이지 · 클래식');
+  for(const width of [1000,400,250,1450]){root.querySelector('.ma-roster-grid').clientWidth=width;root.clientWidth=width+100;handlers.get('resize')();assert.deepEqual(rosterIds(),expectedIds('classic'));assert.equal(name(),'하카');}
+  click({maStep:'-1'});assert.equal(name(),'유정');assert.deepEqual(rosterIds(),expectedIds('jeong'));
+  step(1);assert.equal(name(),'다정');step(-1);assert.equal(name(),'유정');step(-1);assert.equal(name(),'아기쿠마');assert.equal(page(),'2 / 2 페이지 · 클래식');step(1);assert.equal(name(),'유정');assert.equal(page(),'1 / 2 페이지 · 정 시리즈');
+  click({maCharacter:'mi-gold'});step(1);assert.equal(name(),'하카');assert.deepEqual(rosterIds(),expectedIds('classic'));step(-1);assert.equal(name(),'금미정');assert.deepEqual(rosterIds(),expectedIds('jeong'));click({maCharacter:'yoo'});
+  const seen=[];for(let i=0;i<27;i++){seen.push(name());const markup=root.querySelector('.ma-stage').innerHTML;const entry=entries.find(c=>c.name===name());assert(!/미확인|확인되지|기록돼|기록되어|추정|불명/.test(markup));if(entry.date)assert(markup.includes(`<dt>${entry.dateLabel}</dt><dd>${entry.date.replaceAll('-','.')}</dd>`));else assert.deepEqual(Array.from(markup.matchAll(/<dt>([^<]*)<\/dt>/g),m=>m[1]),['분류']);if(name()==='꼬뫙')assert(!markup.includes('ma-desc')&&!markup.includes('ma-character-details'));step(1)}assert.equal(new Set(seen).size,27);assert.equal(name(),'유정');
+  click({maFilter:'jeong'});
+  assert.deepEqual(rosterIds(),expectedIds('jeong'));assert.equal(page(),'1 / 1 페이지 · 정 시리즈');
+  handlers.get('input')({target:{value:'수정',matches:()=>true}});
+  assert.equal(name(),'백수정');step(1);assert.equal(name(),'흑수정');step(1);assert.equal(name(),'반반수정');step(1);assert.equal(name(),'백수정');
+  handlers.get('input')({target:{value:'유정',matches:()=>true}});step(1);assert.equal(name(),'유정');assert.match(root.querySelector('.ma-stage').innerHTML,/data-ma-hero-step="1"[^>]*disabled/);
+  await new Promise(resolve=>setImmediate(resolve));
+});
+test('public and unready admin mount no profile controls; authenticated mode change mounts and removes them',async()=>{
+  const nodes=new Map(),handlers=new Map(),writes=[],body={dataset:{mwsMode:'public'}},makeNode=()=>({innerHTML:'',textContent:'',clientWidth:1450,dataset:{},style:{setProperty(){}},getBoundingClientRect:()=>({top:280}),focus(){},click(){writes.push('picker')}});
+  const root={clientWidth:1600,innerHTML:'',closest:()=>null,querySelector(s){if(!nodes.has(s))nodes.set(s,makeNode());return nodes.get(s)},querySelectorAll:()=>[],addEventListener:(name,fn)=>handlers.set(name,fn)};
+  const win={mwsMawangArchiveDataV1:window.mwsMawangArchiveDataV1,scrollY:0,innerHeight:900,addEventListener:(name,fn)=>handlers.set(name,fn)};
+  let observe;class Observer{constructor(fn){observe=fn}observe(){}}
+  vm.runInNewContext(read('assets/mawang-archive-v1.js'),{window:win,document:{getElementById:()=>root,body},MutationObserver:Observer,fetch:async(url,opts)=>{if(opts.method)writes.push(opts.method);return new Response(JSON.stringify({profiles:[{character:'mi',revision:'123-abcd'}]}))}});
+  win.mwsMawangArchiveV1.render();await new Promise(resolve=>setImmediate(resolve));
+  const panel=()=>root.querySelector('.ma-profile-panel').innerHTML,slot=()=>root.querySelector('.ma-admin-input-slot').innerHTML;
+  assert.doesNotMatch(panel(),/data-ma-profile-upload|data-ma-profile-reset|ma-profile-label/);assert.equal(slot(),'');
+  assert.doesNotMatch(root.innerHTML,/<input class="ma-profile-input"/);
+  const forged=()=>handlers.get('click')({target:{closest:()=>({dataset:{},hasAttribute:attr=>attr==='data-ma-profile-upload'})}});
+  forged();assert.deepEqual(writes,[]);
+  body.dataset.mwsMode='admin';observe();assert.doesNotMatch(panel(),/data-ma-profile-upload/);assert.equal(slot(),'');
+  win.__mwsAppReadyV130=true;handlers.get('mws:app-ready')();assert.match(panel(),/data-ma-profile-upload/);assert.match(slot(),/type="file"/);
+  handlers.get('click')({target:{closest:()=>({dataset:{maCharacter:'mi'}})}});assert.match(panel(),/data-ma-profile-reset/);
+  body.dataset.mwsMode='public';observe();assert.doesNotMatch(panel(),/data-ma-profile-upload|data-ma-profile-reset/);assert.equal(slot(),'');forged();assert.deepEqual(writes,[]);
+  handlers.get('input')({target:{value:'no match',matches:()=>true}});assert(root.querySelector('.ma-stage').hidden);assert.match(root.querySelector('.ma-roster-grid').innerHTML,/검색 초기화/);
+  handlers.get('click')({target:{closest:()=>({dataset:{maClear:''}})}});assert(!root.querySelector('.ma-stage').hidden);
+});
+test('voice transition includes only the three broadcast stages, on the May 2023 milestone',()=>{
+  const html=read('index.html'),year=html.match(/<details class="career-year" open><summary>2023년<\/summary>([\s\S]*?)<\/details>/)[1];
+  const may=year.match(/<div class="career-month"><h3>5월<\/h3><ul>([\s\S]*?)<\/ul>/)[1];
+  assert.match(may,/음성인식 자막 → STS 1\.0 → AI 보이스 2\.0/);
+  assert.match(may,/2023년 5월부터 RVC 기반의 AI 보이스 2\.0/);
+  assert.doesNotMatch(year,/Honey|Piano Man|AI 커버|미확인/);
+});
 test('archive registered between timeline and achievements; only gallery API writes',()=>{
   const html=read('index.html'),core=read('assets/app-core.js'),ui=read('assets/workspace-ui-v176.js'),runtime=read('assets/mawang-archive-v1.js'),css=read('assets/mawang-archive-v1.css');
   assert(/data-tab="careerTimeline"[\s\S]*?data-tab="mawangArchive"[\s\S]*?data-tab="achievements"/.test(html));
-  assert(html.includes('id="mawangArchive"')&&html.includes('assets/mawang-archive-v1.js?v=7')&&html.includes('assets/mawang-archive-data-v1.js?v=4'));
+  assert(html.includes('id="mawangArchive"'));
+  for(const asset of ['mawang-archive-v1.css','mawang-archive-v1.js','mawang-archive-data-v1.js']){
+    assert(html.includes('assets/'+asset+'?v='),'versioned archive asset: '+asset);
+  }
   assert(!runtime.includes('ma-gallery')&&!runtime.includes('<a ')&&!runtime.includes('ma-stage-ring')&&!runtime.includes('/api/mawang-gallery'));
   assert(core.includes("names.mawangArchive='마왕 자료실'")&&core.includes('window.mwsMawangArchiveV1?.render()'));
   assert(ui.includes('timeline.after(archive)')&&ui.includes('beforeAchievement=archive||timeline||afterPosts'));
