@@ -2,6 +2,7 @@ import {MAWANG_ID,MAX_CAMPAIGNS,MAX_ENTRIES,parsePostUrl,commentPermalink,normal
 const section=document.getElementById('contentApplications');
 if(section){
 const $=id=>document.getElementById(id),list=$('caList'),detail=$('caDetail'),editor=$('caEditor'),form=$('caForm');
+const dashboard=$('dashboard'),overview=$('dashboardOverviewMode'),dashboardSupport=$('dashboardApplicationSupport');
 const number=n=>n==null?'확인 불가':n.toLocaleString('ko-KR');
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const heart='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21 3.6 12.6A5.5 5.5 0 0 1 11.4 4.8l.6.7.6-.7a5.5 5.5 0 0 1 7.8 7.8Z"/></svg>';
@@ -10,7 +11,9 @@ const clock='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12"
 let selected='',editing='',busy=false,timer=0,sessionMode='',epoch=0;
 const snapshots=new Map(),pending=new Map(),attempts=new Map();
 const isAdmin=()=>document.body.dataset.mwsMode==='admin'&&window.__mwsAppReadyV130===true;
-const active=()=>section.classList.contains('active')&&!document.hidden;
+const sectionActive=()=>section.classList.contains('active');
+const dashboardActive=()=>!!dashboardSupport&&dashboard?.classList.contains('active')&&overview?.classList.contains('active');
+const active=()=>!document.hidden&&(sectionActive()||dashboardActive());
 const records=()=>normalizeCampaigns(typeof data==='object'?data.contentApplications:[]);
 const current=()=>records().find(c=>c.id===selected);
 const kst=v=>toKstInput(v).replace('T',' ')+' KST';
@@ -23,6 +26,19 @@ const postLink=(e,cls='ca-origin',label=e?.commentNo?'SOOP 댓글 바로가기':
 function avatar(e,own=false){return `<span class="ca-avatar${own?' own':''}">${esc((e?.nickname||(own?'마왕':'?')).slice(0,2))}${e?.avatar?`<img src="${esc(e.avatar)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:''}</span>`}
 function confirmed(s,r){return !!s&&s.complete&&r.allKnown}
 function rankLabel(s,r){return r.ownRank===null?'–':(confirmed(s,r)?'':'확인 기준 ')+r.ownRank+'위'}
+function renderDashboardSupport(){
+ if(!dashboardSupport||!dashboardActive())return;
+ const campaigns=records().filter(c=>!countdown(c.deadline).expired).sort((a,b)=>Date.parse(a.deadline)-Date.parse(b.deadline));
+ dashboardSupport.hidden=!campaigns.length;
+ if(!campaigns.length){dashboardSupport.replaceChildren();return}
+ const row=c=>{
+  const s=snapshot(c),r=rankOf(c),own=r.mawang;
+  const gap=own?.likes!=null&&r.leader?Math.max(0,r.leader.likes-own.likes):null;
+  const link=own?postLink(own,'ca-dash-vote',heart+' 응원하기'):postLink(c.entries[0],'ca-dash-source','모집 글 보기');
+  return `<article class="ca-dash-row"><div class="ca-dash-person">${avatar(own,true)}<div class="ca-dash-name"><div class="ca-dash-title">${status(c)}<strong>${esc(c.title)}</strong></div><span>마왕0216 <span class="ca-dash-sep">·</span> ${s?number(r.total)+'명 신청':pending.has(c.id)?'댓글 확인 중':'조회 대기'}</span></div></div><div class="ca-dash-metrics"><div><small>좋아요</small><strong class="ca-dash-likes">${own?number(own.likes):'–'}</strong></div><div><small>현재 순위</small><strong>${rankLabel(s,r)}</strong></div><div><small>1위와 차이</small><strong>${gap==null?'–':number(gap)}</strong></div></div><div class="ca-dash-actions"><div class="ca-dash-time">${clock}${time(c)}</div><div class="ca-dash-buttons">${link}<button type="button" class="ca-dash-detail" data-ca-dashboard-open="${esc(c.id)}" aria-label="${esc(c.title)} 신청 상세">상세 보기</button></div></div></article>`;
+ };
+ dashboardSupport.innerHTML=`<div class="ca-dash-head"><div><span class="ca-dash-kicker">FAN SUPPORT</span><h3>마왕 신청 콘텐츠</h3></div><span class="ca-dash-count">${campaigns.length}개 진행 중</span></div><div class="ca-dash-list">${campaigns.map(row).join('')}</div>`;
+}
 function card(c){
  const s=snapshot(c),r=rankOf(c),own=r.mawang;
  return `<button type="button" class="ca-campaign" data-ca-open="${esc(c.id)}"><div class="ca-campaign-top">${status(c)}<span>${s?number(r.total)+'명 댓글 신청자':pending.has(c.id)?'댓글 확인 중':'신청 현황 보기'}</span></div><div class="ca-campaign-title"><span class="ca-eyebrow">MAWANG SUPPORT</span><strong>${esc(c.title)}</strong><small>${esc(c.entries[0]?.title||'SOOP 모집 게시글')}</small></div><div class="ca-card-person">${avatar(own,true)}<div><span>응원할 신청자</span><b>마왕0216</b></div><div class="ca-card-metric"><small>좋아요</small><b>${own?number(own.likes):'–'}</b></div><div class="ca-card-metric"><small>순위</small><b>${rankLabel(s,r)}</b></div></div><div class="ca-campaign-bottom"><span class="ca-campaign-timing">${clock}${time(c)}</span><span class="ca-card-action">응원 현황 보기 →</span></div></button>`;
@@ -44,21 +60,25 @@ function renderDetail(){
  detail.innerHTML=`<div class="ca-detail-top"><button class="ca-back" data-ca-back>‹ 목록</button><div class="ca-detail-title"><span class="ca-eyebrow">APPLICATION TRACKER</span><h2>${esc(c.title)}</h2><div>${status(c)} ${clock}${time(c)} <span class="ca-deadline">마감 ${esc(kst(c.deadline))}</span></div></div><div class="ca-detail-actions"><button class="ca-secondary" data-ca-refresh ${loading?'disabled':''}>${loading?'갱신 중…':'새로고침'}</button>${isAdmin()?'<button class="ca-secondary" data-ca-edit>수정</button>':''}</div></div>${hero}<div class="ca-ranking-head"><div><h3>전체 신청 댓글 순위 <span class="ca-count">${s?number(r.total):'–'}</span></h3><p>댓글 좋아요 내림차순 · 같은 계정은 가장 많은 좋아요를 받은 댓글 기준 · 모집 글 작성자 제외</p></div><span class="ca-update">${s?'최근 조회 '+esc(kst(s.checkedAt)):'조회 대기'}${expired?' · 마감 당시 수치 아님':''}</span></div>${s&&!s.complete?'<div class="ca-warning" role="status">일부 댓글 페이지 조회에 실패했습니다. 순위는 확인된 댓글 기준입니다. 새로고침을 시도해 주세요.</div>':''}<div class="ca-ranking">${others.length?others.map(row).join(''):`<div class="ca-empty-row">${loading?'신청 댓글을 불러오는 중입니다.':s?.complete?'다른 신청 댓글이 없습니다.':'아직 댓글 정보를 확인하지 못했습니다.'}</div>`}</div>`;
 }
 function render(){
- if(!section.classList.contains('active'))return;
+ if(!sectionActive()&&!dashboardActive())return;
  const mode=document.body.dataset.mwsMode||'';
  if(mode!==sessionMode){selected='';editing='';editor.hidden=true;snapshots.clear();pending.clear();attempts.clear();epoch++;sessionMode=mode}
- $('caNewBtn').hidden=!isAdmin();if(selected&&!current())selected='';list.hidden=!!selected;detail.hidden=!selected;
- if(selected)renderDetail();else renderList();updateClocks();
+ if(sectionActive()){
+  $('caNewBtn').hidden=!isAdmin();if(selected&&!current())selected='';list.hidden=!!selected;detail.hidden=!selected;
+  if(selected)renderDetail();else renderList();
+ }
+ renderDashboardSupport();updateClocks();
 }
 function updateClocks(){
  if(!active())return;
- section.querySelectorAll('[data-ca-time]').forEach(el=>{const t=countdown(el.dataset.caTime);if(el.textContent!==t.label)el.textContent=t.label});
- let changed=false;section.querySelectorAll('[data-ca-state]').forEach(el=>{if(el.classList.contains('expired')!==countdown(el.dataset.caState).expired)changed=true});if(changed)render();
+ const root=sectionActive()?(selected?detail:list):dashboardSupport;
+ root?.querySelectorAll('[data-ca-time]').forEach(el=>{const t=countdown(el.dataset.caTime);if(el.textContent!==t.label)el.textContent=t.label});
+ let changed=false;root?.querySelectorAll('[data-ca-state]').forEach(el=>{if(el.classList.contains('expired')!==countdown(el.dataset.caState).expired)changed=true});if(changed)render();
 }
 function stopTimer(){clearInterval(timer);timer=0}
-function tick(){if(!active()){stopTimer();return}updateClocks();const c=current();if(c&&!countdown(c.deadline).expired&&Date.now()-(attempts.get(c.id)||0)>60000)refresh(c);else if(!c&&!pending.size)loadVisible()}
+function tick(){if(!active()){stopTimer();return}updateClocks();const c=sectionActive()?current():null;if(c&&!countdown(c.deadline).expired&&Date.now()-(attempts.get(c.id)||0)>60000)refresh(c);else if(!c&&!pending.size)loadVisible()}
 function loadVisible(){
- const c=current();if(c){if(!snapshot(c)||Date.now()-(attempts.get(c.id)||0)>60000&&!countdown(c.deadline).expired)refresh(c);return}
+ const c=sectionActive()?current():null;if(c){if(!snapshot(c)||Date.now()-(attempts.get(c.id)||0)>60000&&!countdown(c.deadline).expired)refresh(c);return}
  const candidates=records().filter(c=>!countdown(c.deadline).expired&&Date.now()-(attempts.get(c.id)||0)>60000).sort((a,b)=>(attempts.get(a.id)||0)-(attempts.get(b.id)||0));if(candidates.length&&!pending.size)refresh(candidates[0]);
 }
 function activate(){if(!active()){stopTimer();return}render();if(!timer)timer=setInterval(tick,1000);loadVisible()}
@@ -90,7 +110,7 @@ async function refresh(c,manual=false){
   if(!rows.length&&!complete&&previous)snapshots.set(c.id,{...previous,complete:false});
   else snapshots.set(c.id,{signature:sig,applicants:uniqueApplicants(rows),complete,checkedAt:new Date().toISOString()});
   if(manual&&!complete&&typeof toast==='function')toast('신청 콘텐츠','일부 댓글을 확인하지 못했습니다.');
- }finally{if(pending.get(c.id)===token){pending.delete(c.id);if(generation===epoch){render();if(!selected&&active())loadVisible()}}}
+ }finally{if(pending.get(c.id)===token){pending.delete(c.id);if(generation===epoch){render();if(active()&&(!sectionActive()||!selected))loadVisible()}}}
 }
 function openEditor(c){if(!isAdmin()||busy)return;editing=c?.id||'';editor.hidden=false;form.reset();$('caEditorTitle').textContent=c?'신청 콘텐츠 수정':'새 신청 콘텐츠';$('caTitle').value=c?.title||'';$('caDeadline').value=c?toKstInput(c.deadline):toKstInput(new Date(Date.now()+86400000).toISOString());$('caUrls').value=c?.entries.map(e=>e.url).join('\n')||'';$('caDelete').hidden=!c;$('caFormMessage').textContent='';$('caTitle').focus();}
 function closeEditor(){if(busy)return;editor.hidden=true;editing='';$('caFormMessage').textContent=''}
@@ -121,7 +141,14 @@ section.addEventListener('click',async ev=>{
 });
 $('newEventBtn')?.addEventListener('click',ev=>{if(section.classList.contains('active')){ev.preventDefault();ev.stopImmediatePropagation();openEditor(null)}},true);
 section.addEventListener('error',ev=>{if(ev.target instanceof HTMLImageElement)ev.target.hidden=true},true);
-new MutationObserver(activate).observe(section,{attributes:true,attributeFilter:['class']});
+dashboardSupport?.addEventListener('click',ev=>{
+ const button=ev.target.closest('[data-ca-dashboard-open]');if(!button)return;
+ const id=button.dataset.caDashboardOpen;if(!records().some(c=>c.id===id))return;
+ selected=id;if(typeof setTab==='function')setTab('contentApplications');
+});
+dashboardSupport?.addEventListener('error',ev=>{if(ev.target instanceof HTMLImageElement)ev.target.hidden=true},true);
+const viewObserver=new MutationObserver(activate);
+for(const node of [section,dashboard,overview])if(node)viewObserver.observe(node,{attributes:true,attributeFilter:['class']});
 document.addEventListener('visibilitychange',activate);
 window.addEventListener('mws:app-ready',activate);
 window.addEventListener('mawang:datachange',()=>{if(active()){render();loadVisible()}});
