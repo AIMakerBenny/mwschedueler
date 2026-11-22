@@ -78,7 +78,9 @@
       const calendarBackground=event.target.closest('#calendarGrid');
       close({restoreFocus:false});
       // Dismissing the panel must not also create a new schedule.
-      if(calendarBackground){event.preventDefault();event.stopImmediatePropagation()}
+      // A date-number click is an explicit Today People action, not a
+      // background schedule-create click. Let the dedicated picker receive it.
+      if(calendarBackground&&!event.target.closest('[data-calendar-people-date]')){event.preventDefault();event.stopImmediatePropagation()}
     },true);
     $('calendarDetailsCloseV1').onclick=()=>close();
     $('calendarDetailsEditV1').onclick=()=>{const edit=current?.onEdit;close({restoreFocus:false});edit?.()};
