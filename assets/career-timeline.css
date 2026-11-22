@@ -64,6 +64,25 @@
 .cv-pair .cv-entry::before{content:'';position:absolute;top:50%;height:2px;width:calc(var(--cv-half-gap) + var(--cv-drift));background:var(--cv-tone,var(--cv-accent));transform:scaleX(var(--cv-branch));opacity:calc(.35 + .65 * var(--cv-p));pointer-events:none;z-index:-1}
 .cv-pair .cv-left::before{right:calc(-1 * var(--cv-half-gap));transform-origin:right}
 .cv-pair .cv-right::before{left:calc(-1 * var(--cv-half-gap));transform-origin:left}
+/* A second, shorter branch carries verified outcomes across the same junction.
+   Cards remain in their permanent alternating slots even as the branch unfolds. */
+.cv-outcomes{--cv-outcome-p:inherit;position:relative;grid-row:1;align-self:center;display:grid;gap:12px;min-width:0;width:min(100%,260px);padding:10px 0;opacity:calc(.67 + .33 * var(--cv-outcome-p,1));color:var(--cv-ink)}
+.cv-pair:has(.cv-left) .cv-outcomes{grid-column:3;justify-self:start;padding-left:20px;text-align:left}
+.cv-pair:has(.cv-right) .cv-outcomes{grid-column:1;justify-self:end;padding-right:20px;text-align:right}
+.cv-outcomes::before{content:'';position:absolute;top:50%;height:1px;width:calc(var(--cv-half-gap) + 10px);background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--cv-ink) 42%,transparent));transform:scaleX(var(--cv-outcome-p,1));pointer-events:none}
+.cv-pair:has(.cv-left) .cv-outcomes::before{left:calc(-1 * var(--cv-half-gap));transform-origin:left;background:linear-gradient(90deg,color-mix(in srgb,var(--cv-ink) 48%,transparent),transparent)}
+.cv-pair:has(.cv-right) .cv-outcomes::before{right:calc(-1 * var(--cv-half-gap));transform-origin:right}
+.cv-outcome{position:relative;display:flex;align-items:center;gap:8px;min-width:0;--cv-result-tone:var(--cv-muted)}
+.cv-outcome[data-kind=gold]{--cv-result-tone:#dfb65f}
+.cv-outcome[data-kind=silver]{--cv-result-tone:#a7b7cf}
+.cv-outcome[data-kind=bronze]{--cv-result-tone:#c98d67}
+.cv-outcome[data-kind=role]{--cv-result-tone:#a899ed}
+.cv-outcome::before{content:'';width:3px;height:30px;border-radius:2px;background:var(--cv-result-tone);flex:none;opacity:.8}
+.cv-pair:has(.cv-right) .cv-outcome{flex-direction:row-reverse}
+.cv-outcome-copy{display:grid;gap:2px;min-width:0;flex:1}
+.cv-outcome-title{display:block;color:var(--cv-result-tone);font-size:clamp(17px,1.8vw,25px);font-weight:820;letter-spacing:-.045em;line-height:1.24;word-break:keep-all;overflow-wrap:break-word}
+.cv-outcome-detail{display:block;color:var(--cv-muted);font-size:12px;font-weight:540;line-height:1.4;word-break:keep-all;overflow-wrap:break-word}
+.cv-has-outcomes{--cv-outcome-p:1}
 .cv-pair .cv-card{
   transform:translate3d(calc(var(--cv-direction) * var(--cv-drift)),calc((1 - var(--cv-p)) * var(--cv-lift)),0) scale(var(--cv-scale));
   opacity:calc(.82 + .18 * var(--cv-p));
@@ -163,6 +182,12 @@
   .cv-pair .cv-entry::before{display:block;left:-21px;right:auto;width:calc(21px + var(--cv-drift));transform-origin:left}
   .cv-left .cv-card::before{left:0;right:auto}
   .cv-junction{display:none}
+  .cv-pair:has(.cv-left) .cv-outcomes,.cv-pair:has(.cv-right) .cv-outcomes{grid-column:2;grid-row:2;justify-self:stretch;width:auto;text-align:left;padding:3px 0 7px 12px;gap:8px;border-left:1px solid color-mix(in srgb,var(--cv-ink) 20%,transparent);margin-left:5px;opacity:1}
+  .cv-pair:has(.cv-left) .cv-outcomes::before,.cv-pair:has(.cv-right) .cv-outcomes::before{left:0;right:auto;top:-7px;width:1px;height:7px;background:color-mix(in srgb,var(--cv-ink) 25%,transparent);transform:none}
+  .cv-pair:has(.cv-right) .cv-outcome{flex-direction:row}
+  .cv-outcome::before{height:24px;width:2px}
+  .cv-outcome-title{font-size:17px}
+  .cv-outcome-detail{font-size:12px}
   .cv-record{min-height:88px;padding:10px 21px 10px 11px;gap:7px}
   .cv-with-media{grid-template-columns:minmax(0,1fr) 72px}
   .cv-record::after{right:9px;top:11px}

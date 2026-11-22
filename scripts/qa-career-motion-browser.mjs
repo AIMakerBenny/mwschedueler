@@ -79,8 +79,8 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   await page.locator('.cv-panel').waitFor({state:'visible'});
   await page.locator('.cv-axis').waitFor({state:'visible'});
   await pause(350);
-  assert.equal(await page.locator('.career-tree li').count(),101);
-  assert.equal(await page.locator('.cv-axis .cv-entry').count(),97);
+  assert.equal(await page.locator('.career-tree li').count(),99);
+  assert.equal(await page.locator('.cv-axis .cv-entry').count(),95);
   assert.equal(await page.locator('.cv-legacy .cv-entry').count(),4);
   assert.equal(await page.locator('.cv-pair[data-single]').count(),0);
   assert.equal(await page.locator('.cv-headline').first().evaluate(e=>getComputedStyle(e).wordBreak),'keep-all');
@@ -90,6 +90,12 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   assert.match(await page.locator('.cv-year[data-year="2024"] .cv-month[data-month="1"] .cv-entry').filter({hasText:'트위치에서 아프리카TV로 이적'}).innerText(),/방송 플랫폼 이전/);
   assert.match(await page.locator('.cv-year[data-year="2024"] .cv-month[data-month="2"] .cv-entry').filter({hasText:'아프리카TV 베스트 BJ'}).innerText(),/2월 29일 선정/);
   assert.equal(await page.locator('.cv-entry').filter({hasText:'MECCHA CHAMELEON'}).count(),0);
+  assert.equal(await page.locator('.cv-entry').filter({hasText:/좀보이드 유치원|천코이드|50택사스 야구 교육/}).count(),0);
+  assert.equal(await page.locator('.cv-has-outcomes').count(),39);
+  assert.equal(await page.locator('.cv-legacy .cv-outcomes').count(),0);
+  assert.equal(await page.locator('.cv-pair').filter({has:page.locator('.cv-headline').filter({hasText:/^지육대$/})}).locator('.cv-outcomes').count(),0);
+  const sports=page.locator('.cv-pair').filter({has:page.locator('.cv-headline').filter({hasText:/^왁타버스 체육대회$/})});
+  assert.match(await sports.locator('.cv-outcomes').innerText(),/금메달 2개[\s\S]*은메달 1개/);
   assert.match(await page.locator('.cv-year[data-year="2024"] .cv-month[data-month="4"] .cv-entry').filter({hasText:'지피티 VR 체험'}).innerText(),/4월 19일/);
   assert.match(await page.locator('.cv-year[data-year="2025"] .cv-month[data-month="5"] .cv-entry').filter({hasText:'코렛트 코순이 아바타'}).innerText(),/5월 29일/);
   assert(!((await page.locator('.cv-legacy').innerText()).includes('미확인')));
@@ -186,6 +192,8 @@ try{
     await page.waitForFunction(()=>['climbing','battlecrush'].every(key=>document.querySelector(`.cv-media[data-art=${key}] img`).naturalWidth>0));
     assert.equal(await page.locator('.cv-year[data-year="2024"] .cv-month[data-month="3"] .cv-entry').count(),5);
     await page.screenshot({path:output+'/2024-march-'+width+'.png'});
+    const branchFit=await entry.evaluate(e=>{const a=e.getBoundingClientRect(),b=e.parentElement.querySelector('.cv-outcomes').getBoundingClientRect();return innerWidth>700?(a.right<=b.left||b.right<=a.left):b.top>=a.bottom-1&&b.right<=innerWidth;});
+    assert(branchFit,'Outcome branch overlaps event or viewport');
     const beforeOpen=(await entry.boundingBox()).height;
     await entry.locator('summary').click();await pause(400);
     assert((await entry.boundingBox()).height>beforeOpen+40);
@@ -211,11 +219,11 @@ try{
     assert.match(await page.locator('.cv-entry[data-selected=true]').innerText(),/죠뗌므/);
     assert(await page.locator('.cv-entry[data-selected=true]').isVisible());
     await search(page,'');await pause(150);
-    assert.equal(await page.locator('.cv-entry:visible').count(),101);
+    assert.equal(await page.locator('.cv-entry:visible').count(),99);
     assert(await page.locator('.cv-axis .cv-entry').evaluateAll(es=>es.every((e,i)=>e.classList.contains(i%2===0?'cv-left':'cv-right'))));
     const restored=await position(page);
     assert(Math.abs(restored-saved)<3,'Search did not restore scroll: '+JSON.stringify({saved,restored}));
-    for(const [q,n] of [['코치',null],['VR 우승',4],['WBD',2],['왁타버스 야구',2],['F1 챔스',1],['브축대',1],['굳가대표',1],['데이토나',1],['트위치에서 아프리카TV로 이적',1],['패러블',1]]){
+    for(const [q,n] of [['코치',null],['VR 우승',4],['WBD',1],['왁타버스 야구',1],['50텍사스',1],['F1 챔스',1],['브축대',1],['굳가대표',1],['데이토나',1],['트위치에서 아프리카TV로 이적',1],['패러블',1]]){
       await search(page,q);const found=await page.locator('.cv-result').count();if(n!==null)assert.equal(found,n,q);else assert(found>=8,q);
       assert.equal(await page.locator('.cv-entry:visible').count(),found,q);
       if(q==='VR 우승')assert(!((await page.locator('.cv-results').textContent()).includes('준우승')));
