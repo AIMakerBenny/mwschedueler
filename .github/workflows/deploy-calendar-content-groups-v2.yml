@@ -300,6 +300,15 @@ jobs:
       - name: Verify workspace navigation and sidebar
         if: ${{ !cancelled() && steps.live_publish.outcome == 'success' }}
         run: node scripts/qa-workspace-navigation-v1-browser.mjs
+      - name: Verify live layout geometry independently of F1
+        if: ${{ !cancelled() && steps.live_publish.outcome == 'success' }}
+        run: node scripts/diagnose-phase154-live-layout.mjs
+      - name: Verify live tier planner UI independently of F1
+        if: ${{ !cancelled() && steps.live_publish.outcome == 'success' }}
+        run: node scripts/diagnose-phase155-tier-planner-ui.mjs
+      - name: Verify live tools independently of F1
+        if: ${{ !cancelled() && steps.live_publish.outcome == 'success' }}
+        run: node scripts/diagnose-phase156-tool-planner-regression.mjs
       - name: Publish scoped Cloudflare deployment result
         if: always()
         env:
