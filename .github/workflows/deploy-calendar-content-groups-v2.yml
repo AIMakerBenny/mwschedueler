@@ -9,6 +9,10 @@ on:
       - 'assets/workspace-clean-v1.css'
       - 'assets/calendar-details-v1.js'
       - 'assets/calendar-details-v1.css'
+      - 'assets/ui-interactions-v1.css'
+      - 'assets/ui-interactions-v1.js'
+      - 'scripts/qa-ui-interactions-v1.test.mjs'
+      - 'scripts/qa-ui-interactions-v1-browser.mjs'
       - 'scripts/qa-calendar-details-v1-browser.mjs'
       - 'scripts/qa-calendar-month-viewport-v2-browser.mjs'
       - 'scripts/qa-calendar-details-motion-v3-browser.mjs'
@@ -101,6 +105,8 @@ jobs:
           node --check assets/cloud-runtime-v130.js
       - name: Calendar content group, hover and duration regression
         run: |
+          node --test scripts/qa-ui-interactions-v1.test.mjs
+          node scripts/qa-ui-interactions-v1-browser.mjs
           node --test scripts/qa-dashboard-upcoming-v1.test.mjs
           node --test scripts/qa-calendar-timeline-v1.test.mjs
           node scripts/qa-calendar-timeline-v1-browser.mjs

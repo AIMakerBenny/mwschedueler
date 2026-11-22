@@ -30,6 +30,11 @@ jobs:
       - name: Run cumulative phase audits
         run: node scripts/run-current-full-integration-audit.mjs
 
+      - name: Verify shared UI interactions across desktop and mobile viewports
+        run: |
+          node --test scripts/qa-ui-interactions-v1.test.mjs
+          node scripts/qa-ui-interactions-v1-browser.mjs
+
       - name: JavaScript syntax check
         run: |
           node --check --input-type=commonjs < assets/app-core.js

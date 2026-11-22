@@ -43,7 +43,9 @@
     const generation=++motionGeneration;
     motion?.cancel();motion=null;
     const complete=()=>{if(generation!==motionGeneration)return;motion?.cancel();motion=null;finish?.()};
-    if(!drawer.animate||root.mwsMotionReduced?.()){complete();return}
+    // Standalone calendar pages and browser fixtures may load before the
+    // workspace preference controller. Respect OS motion in that case only.
+    if(!drawer.animate||(root.mwsMotionReduced?.()??root.matchMedia?.('(prefers-reduced-motion: reduce)').matches)){complete();return}
     motion=drawer.animate([{opacity:from},{opacity:open?1:0}],{duration:open?150:110,easing:'ease-out',fill:'both'});
     motion.finished.then(complete,()=>{});
   }

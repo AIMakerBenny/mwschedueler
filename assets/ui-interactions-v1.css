@@ -1,0 +1,136 @@
+/* MWS interaction system v1. Paint-only feedback; no changes to card geometry,
+   game canvases, data ownership, navigation structure or cursor implementation. */
+:root{
+  --mws-ui-fast:100ms;
+  --mws-ui-card:150ms;
+  --mws-ui-menu:180ms;
+  --mws-ui-ease:cubic-bezier(.2,.7,.3,1);
+  --mws-ui-edge:color-mix(in srgb,var(--text) 8%,transparent);
+  --mws-ui-shadow:0 1px 2px #0002,0 3px 8px #0002;
+  --mws-ui-lift:0 2px 4px #0003,0 5px 12px #0003;
+  --mws-ui-selected:color-mix(in srgb,var(--accent) 55%,var(--border));
+}
+
+/* Shared controls. Exclude racing controls and gameplay surfaces. Independent
+   scale does not replace existing translate/rotate positioning. */
+body .section:not(#gameF1Racing) :is(button,summary)[tabindex]:focus-visible,
+body .section:not(#gameF1Racing) :is(button,summary,input,select,textarea):focus-visible,
+body .sidebar :is(button,[role=button]):focus-visible,
+body .topbar button:focus-visible{
+  outline:2px solid var(--accent)!important;outline-offset:2px;
+}
+body .section:not(#gameF1Racing) :is(button.secondary,button.primary,button.ghost,.mws-tool-btn,.theme-card,.resolution-preset,.memo-section-tab),
+body .topbar button,body .modal :is(button.secondary,button.primary,button.ghost){
+  transition:background-color var(--mws-ui-fast),color var(--mws-ui-fast),border-color var(--mws-ui-fast),scale 80ms var(--mws-ui-ease)!important;
+}
+body .section:not(#gameF1Racing) :is(button.secondary,button.primary,button.ghost,.mws-tool-btn,.theme-card,.resolution-preset,.memo-section-tab):not(:disabled):active,
+body .topbar button:not(:disabled):active,body .modal :is(button.secondary,button.primary,button.ghost):not(:disabled):active{scale:.97!important}
+body .section:not(#gameF1Racing) button:disabled{scale:none!important}
+body .section:not(#gameF1Racing) :is(button[aria-selected=true],button[aria-pressed=true],.theme-card.active,.resolution-preset.active,.memo-section-tab.active){
+  border-color:var(--mws-ui-selected)!important;box-shadow:inset 0 0 0 1px var(--mws-ui-edge)!important;
+}
+
+/* Calendar: use the existing scroll gutter for the 2% lift. No z-index on
+   resting cards or changes to day widths, margins, rows or clipping. */
+body #calendar.section #calendarGrid .mini-event[data-evid]{
+  scale:none;transform-origin:center;
+  box-shadow:inset 0 1px 0 var(--mws-ui-edge),0 1px 3px #0003!important;
+  transition:scale var(--mws-ui-card) var(--mws-ui-ease),background-color var(--mws-ui-fast),box-shadow var(--mws-ui-card)!important;
+}
+body #calendar.section #calendarGrid .mini-event[data-evid].mws-ui-group-highlight{
+  background:color-mix(in srgb,var(--content-group-color,var(--accent)) 31%,var(--panel))!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--content-group-color,var(--accent)) 48%,transparent)!important;
+}
+body #calendar.section #calendarGrid .calendar-continuous-ribbon-v1.mws-ui-group-highlight{background:var(--series-color);box-shadow:0 0 0 1px color-mix(in srgb,var(--series-color) 40%,transparent)}
+body #calendar.section #calendarGrid .mini-event.event-details-selected-v1{outline:2px solid var(--content-group-color,var(--accent))!important;outline-offset:-2px;background:color-mix(in srgb,var(--content-group-color,var(--accent)) 38%,var(--panel))!important}
+body #calendar.section #calendarGrid .mini-event.calendar-group-selected-v2{outline:2px solid var(--text)!important;outline-offset:-2px}
+body #calendar.section #calendarGrid .mini-event[data-evid]:active:not(:has(button:active)){scale:.98!important}
+body #calendar.section #calendarGrid .mini-event[data-evid].mws-calendar-event-pointer-dragging-v174{scale:none!important;transition:none!important}
+.calendar-event-pointer-ghost-v174{box-shadow:0 8px 20px #0005,0 0 0 1px var(--accent)!important}
+body #calendar.section #calendarGrid .mini-event[data-evid]>.mws-steam-slot-v111 img{transition:scale var(--mws-ui-card) var(--mws-ui-ease);transform-origin:center}
+body #calendar.section #calendarGrid button.calendar-date-number-v3{transition:background-color var(--mws-ui-fast),color var(--mws-ui-fast)!important}
+body #calendar.section #calendarGrid .calendar-date-number-v3:active{scale:.93}
+#calendarPeopleHoverV1:not([hidden]),#calendarEventPreview.open{animation:mws-ui-tooltip-in 120ms var(--mws-ui-ease) both}
+.event-details-popover-v2.open .event-details-body-v1{animation:mws-ui-content-in 150ms var(--mws-ui-ease) both;transform-origin:top center}
+@keyframes mws-ui-tooltip-in{from{opacity:0;scale:.985}to{opacity:1;scale:1}}
+@keyframes mws-ui-content-in{from{opacity:.72;scale:.99}to{opacity:1;scale:1}}
+
+/* Workspace surfaces: only the actual interactive tiles lift. Large parent
+   panels never transform, so fixed menus, scrolling and drag stay anchored. */
+body.mws-premium :is(#dashboard,#contacts,#posts,#sniper,#targets,#memos,#settings) :is(.card,.event-card,.contact-card,.reminder-card),
+body #friendFinder .friend-finder-card-v5,body #posts .post-applicant-card,body #targets .target-person-card,
+body #memos :is(.memo-list-item,.favorite-folder-tile),body #gameLadder .ladder-preset{
+  box-shadow:var(--mws-ui-shadow),inset 0 1px 0 var(--mws-ui-edge)!important;
+  transition:border-color var(--mws-ui-card),background-color var(--mws-ui-card),box-shadow var(--mws-ui-card),scale var(--mws-ui-card) var(--mws-ui-ease)!important;
+}
+#dashboard .dashboard-kpi-grid-local .kpi strong{font-variant-numeric:tabular-nums}
+body #dashboard .dashboard-upcoming-card.pinned,body #memos :is(.memo-list-item,.favorite-folder-tile).active,
+body #gameLadder .ladder-preset[aria-pressed=true],body #gameLadder .ladder-preset.active,
+body #toolRelations .mws-rel-node.selected{
+  outline:1px solid var(--accent)!important;outline-offset:-1px;background-color:color-mix(in srgb,var(--accent) 10%,var(--panel))!important;
+}
+body #friendFinder .friend-finder-card-v5.mws-friend-live-card-v120{border-color:color-mix(in srgb,#ef4565 60%,var(--border))!important;box-shadow:inset 0 2px 0 #ef4565,var(--mws-ui-shadow)!important}
+#friendFinder .friend-finder-state-v5.live{font-weight:800;color:#ff788b}
+#contacts .contact-card-avatar-lg,#posts .post-applicant-avatar,#targets .target-person-avatar,#sniper .avatar{transition:scale var(--mws-ui-card) var(--mws-ui-ease)}
+body #posts .post-menu[open] .post-menu-panel{animation:mws-ui-tooltip-in 120ms var(--mws-ui-ease) both;transform-origin:top right}
+body #gameLadder .ladder-full-result-row.revealed{box-shadow:inset 0 0 0 1px var(--mws-ui-edge)}
+body #gameLadder .ladder-full-result-row.winner{box-shadow:inset 0 0 0 1px #c9a64d55,var(--mws-ui-shadow)}
+body :is(#toolTier,#toolMatrix,#toolRelations) :is(.mws-placed,.mws-contact-chip,.mws-matrix-node,.mws-rel-node){transition:box-shadow var(--mws-ui-fast),border-color var(--mws-ui-fast);box-shadow:var(--mws-ui-shadow)}
+body :is(#toolTier,#toolMatrix,#toolRelations) :is(.mws-placed,.mws-contact-chip,.mws-matrix-node,.mws-rel-node):active{box-shadow:var(--mws-ui-lift);cursor:grabbing}
+body #toolTier .mws-tier-drop.dragover,body :is(#toolMatrix,#toolRelations) :is(.mws-matrix-board,.mws-relation-board).dragover{outline:2px solid var(--accent);outline-offset:-2px}
+
+/* Navigation state appears immediately even if the pointer crosses a row in
+   less than one frame of the old transition. The arrow animates independently. */
+html body .app .sidebar .nav .nav-scroll>button[data-tab]{transition:color 60ms,scale 80ms!important}
+html body .app .sidebar .nav .nav-scroll>button[data-tab]:not(.active):hover{background:color-mix(in srgb,var(--accent) 11%,var(--sidebar))!important}
+html body .app .sidebar .nav .nav-scroll>button[data-tab].active{background:color-mix(in srgb,var(--accent) 17%,var(--sidebar))!important}
+html body .app .sidebar .nav .nav-scroll>button[data-tab]:active{scale:.98}
+.nav-game-divider[data-mws-nav-group] em:after{transition:transform var(--mws-ui-menu) var(--mws-ui-ease)!important}
+.nav-game-divider[data-mws-nav-group]:hover em{color:var(--text)}
+html body .app .sidebar .nav .nav-scroll>button:is([data-tab=gameMajoku],[data-tab=gameLadder],[data-tab=gameF1Racing],[data-tab=gameMultiDraw],[data-tab=contentPlanner],[data-tab=toolTier],[data-tab=toolMatrix],[data-tab=toolRelations]):not(.mws-nav-group-hidden){animation:mws-ui-nav-in var(--mws-ui-menu) var(--mws-ui-ease) both}
+@keyframes mws-ui-nav-in{from{opacity:0;translate:0 -3px}to{opacity:1;translate:0 0}}
+body #settings :is(input[type=checkbox],input[type=radio]){accent-color:var(--accent)}
+
+/* Embedded tools have their own palettes and documents. Keep game controls
+   separate from the playfield and do not animate node coordinates on drag. */
+body[data-mws-ui-surface] :is(.btn,.tool-icon,.mode-tabs button,.game-card,.canvas-tab){transition:scale 80ms var(--mws-ui-ease),background-color var(--mws-ui-fast),border-color var(--mws-ui-fast),box-shadow var(--mws-ui-card)!important}
+body[data-mws-ui-surface] :is(.btn,.tool-icon,.mode-tabs button,.game-card,.canvas-tab):not(:disabled):active{scale:.97}
+body[data-mws-ui-surface] :is(.btn,.tool-icon,.game-card,.canvas-tab):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+body[data-mws-ui-surface=planner] .node.selected{box-shadow:0 5px 14px #0003,0 0 0 1px var(--accent)}
+body[data-mws-ui-surface=planner] .node.selected:active{box-shadow:0 8px 20px #0005,0 0 0 1px var(--accent)}
+body[data-mws-ui-surface=planner] .dropdown-panel:not([hidden]){animation:mws-ui-tooltip-in 120ms var(--mws-ui-ease)}
+body[data-mws-ui-surface=castle] .game-card{box-shadow:var(--mws-ui-shadow)}
+
+@media (hover:hover) and (pointer:fine){
+  body #calendar.section #calendarGrid .mini-event[data-evid]:hover:not(.mws-calendar-event-pointer-dragging-v174){scale:1.02;z-index:1;box-shadow:inset 0 1px 0 var(--mws-ui-edge),0 2px 4px #0004!important}
+  body #calendar.section #calendarGrid .mini-event[data-evid]:hover>.mws-steam-slot-v111 img{scale:1.07}
+  body #calendar.section #calendarGrid .mini-event[data-evid]:active:not(:has(button:active)){scale:.98!important}
+  body .section:not(#gameF1Racing) :is(button.secondary,button.ghost,.mws-tool-btn,.theme-card,.resolution-preset):not(:disabled):hover{border-color:var(--mws-ui-selected)!important}
+  body.mws-premium #dashboard :is(.local-kpi-link,.dashboard-upcoming-card):hover,
+  body.mws-premium :is(#contacts,#sniper) .contact-card:hover,body #friendFinder .friend-finder-card-v5:hover,
+  body #posts .post-applicant-card:hover,body #targets .target-person-card:hover,
+  body #memos :is(.memo-list-item,.favorite-folder-tile):hover,body #gameLadder .ladder-preset:hover{
+    box-shadow:var(--mws-ui-lift),inset 0 0 0 1px var(--mws-ui-edge)!important;border-color:var(--mws-ui-selected)!important;
+  }
+  body #contacts .contact-card:hover .contact-card-avatar-lg,body #posts .post-applicant-card:hover .post-applicant-avatar,body #targets .target-person-card:hover .target-person-avatar{scale:1.025}
+  body #dashboard .local-kpi-link:hover,body #memos .favorite-folder-tile:hover,body #gameLadder .ladder-preset:hover{scale:1.01}
+  body #dashboard .local-kpi-link:active,body #memos .favorite-folder-tile:active,body #gameLadder .ladder-preset:active{scale:.98}
+  body #careerTimeline .cv-map-year:hover{box-shadow:inset 0 0 0 1px var(--cv-accent)}
+  body #careerTimeline .cv-card:hover .cv-image{scale:1.02;transform:none}
+  body #achievements .achievement-card-open:hover .achievement-card-thumb img{scale:1.025}
+  #achievements .achievement-card-thumb img{transition:scale var(--mws-ui-card) var(--mws-ui-ease)}
+  body[data-mws-ui-surface] :is(.btn,.tool-icon,.canvas-tab):not(:disabled):hover{border-color:var(--accent)}
+  body[data-mws-ui-surface=castle] .game-card:hover{scale:1.01;box-shadow:var(--mws-ui-lift)}
+}
+
+/* No sticky touch hover, extra compositor layers or continuous animations. */
+html[data-mws-motion=reduced] :is(.section:not(#gameF1Racing) button,.sidebar button,.nav-game-divider em:after,.topbar button,.modal button,.mini-event[data-evid],.mini-event img,.calendar-date-number-v3,.contact-card,.contact-card-avatar-lg,.post-applicant-card,.post-applicant-avatar,.friend-finder-card-v5,.target-person-card,.target-person-avatar,.memo-list-item,.favorite-folder-tile,.ladder-preset,.cv-image,.achievement-card-thumb img,.mws-tool-btn,.event-details-body-v1,#calendarPeopleHoverV1,#calendarEventPreview,.post-menu-panel){transition-duration:0s!important;animation:none!important;scale:none!important}
+html[data-mws-motion=reduced] body #calendar.section #calendarGrid .mini-event[data-evid],
+html[data-mws-motion=reduced] body #calendar.section #calendarGrid .mini-event[data-evid]:is(:hover,:active,:focus-visible){scale:none!important;transition:none!important}
+@media(prefers-reduced-motion:reduce){
+  html:not([data-mws-motion=full]){--mws-ui-fast:0ms;--mws-ui-card:0ms;--mws-ui-menu:0ms}
+  html:not([data-mws-motion=full]) :is(.mini-event[data-evid],.mini-event img,.section:not(#gameF1Racing) button,.sidebar button,.topbar button,.event-details-body-v1,#calendarPeopleHoverV1,#calendarEventPreview,.post-menu-panel,.cv-image,.achievement-card-thumb img){scale:none!important;animation:none!important;transition-duration:0s!important}
+  body[data-mws-ui-surface] :is(.btn,.tool-icon,.game-card,.canvas-tab,.mode-tabs button,.dropdown-panel){scale:none!important;animation:none!important;transition:none!important}
+  html:not([data-mws-motion=full]) body #calendar.section #calendarGrid .mini-event[data-evid],
+  html:not([data-mws-motion=full]) body #calendar.section #calendarGrid .mini-event[data-evid]:is(:hover,:active,:focus-visible){scale:none!important;transition:none!important}
+}

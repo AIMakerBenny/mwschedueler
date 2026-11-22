@@ -820,7 +820,8 @@ function setTab(tab){
   if(legacyBack)legacyBack.hidden=!legacyFeatureTabsV1.has(tab);
   document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===tab));
   const names={dashboard:'대시보드',calendar:'캘린더',contacts:'연락처',posts:'게시글',sniper:'최근 만난 사람',friendFinder:'친구 찾기',targets:'저격 리스트',memos:'수첩',worldtime:'세계 시간',careerTimeline:'타임라인',achievements:'업적',wardogs:'워독스 전쟁견들',contentPlanner:'그림판',toolTier:'티어 게임',toolMatrix:'2D Matrix Chart',toolRelations:'인물 관계도',gameMajoku:'채팅연동게임',gameLadder:'사다리타기',gameRps:'가위바위보',gameF1Racing:'F1 레이싱',gamePachinko:'경마',gameMultiDraw:'Gacha 뽑기',legacy:'레거시',export:'가져오기 / 내보내기',settings:'설정'};
-  document.getElementById('pageTitle').textContent=names[tab]||tab;
+  const title=document.getElementById('pageTitle'),nextTitle=names[tab]||tab;
+  if(title.textContent!==nextTitle){title.textContent=nextTitle;window.mwsUiInteractionsV1?.nav(title)}
   // 탭 이동 시에도 같은 중앙 데이터에서 최신 상태를 다시 계산
   if(tab==='calendar')safeRenderView('캘린더',renderCalendar);
   if(tab==='worldtime')safeRenderView('세계 시간',renderWorldTime);
@@ -1026,9 +1027,10 @@ window.dashboardResetPreview=()=>{
 function renderDashboard(){
   const now=Date.now(),up=upcomingEventsAtV1(now),next=up[0];
   dashboardUpcomingRefreshAtV1=upcomingRefreshBoundaryV1(up,now);
-  document.getElementById('contactCountKpi').textContent=data.contacts.length;
-  document.getElementById('weekCountKpi').textContent=up.filter(e=>(upcomingStartKSTV1(e)??Date.parse(`${e.date}T23:59:59+09:00`))<=now+7*86400000).length;
-  document.getElementById('nextStreamKpi').textContent=next?(next.restDay?`${shortDateWeekday(next.date)} 휴방`:`${shortDateWeekday(next.date)} ${formatTimeKorean(next.start)}`):'없음';
+  const metric=(id,value)=>{const el=document.getElementById(id);if(window.mwsUiInteractionsV1)window.mwsUiInteractionsV1.metric(el,value);else el.textContent=value};
+  metric('contactCountKpi',data.contacts.length);
+  metric('weekCountKpi',up.filter(e=>(upcomingStartKSTV1(e)??Date.parse(`${e.date}T23:59:59+09:00`))<=now+7*86400000).length);
+  metric('nextStreamKpi',next?(next.restDay?`${shortDateWeekday(next.date)} 휴방`:`${shortDateWeekday(next.date)} ${formatTimeKorean(next.start)}`):'없음');
 
   if(dashboardPinnedEventId&&!up.some(e=>e.id===dashboardPinnedEventId))dashboardPinnedEventId=null;
   if(dashboardHoverEventId&&!up.some(e=>e.id===dashboardHoverEventId))dashboardHoverEventId=null;
@@ -1613,6 +1615,7 @@ function addEventToCalendarClipboard(eventId){
   };
   data.scheduleClipboard.push(item);
   saveData('캘린더 복사 보관함 추가');
+  window.mwsUiInteractionsV1?.success(document.getElementById('calendarCopyTrayToggleV4'));
   toast(event.restDay?'휴방':event.title,document.body.dataset.mwsMode==='public'?'현재 세션의 복사 보관함에 추가했습니다. 원본 일정은 그대로 유지됩니다.':'복사 보관함에 저장했습니다. 원본 일정은 그대로 유지됩니다.');
   return item;
 }
@@ -2036,7 +2039,7 @@ function renderCalendar(){
         const isVR=!e.restDay&&e.device==='VR';
         return `<div class="mini-event ${e.restDay?'rest-event':''} ${groupColor?'calendar-content-group-event-v2':''} ${e.restDay?'':'mws-steam-host-v111'}${isVR?' calendar-event-vr-v1':''}"
           draggable="false"
-          data-evid="${e.id}" tabindex="0" aria-label="${esc(e.restDay?'휴방':e.title)}${isVR?' VR':''} 상세 보기"
+          data-evid="${e.id}" ${groupColor&&!e.restDay?`data-mws-ui-group="${esc(e.contentGroupId)}"`:''} tabindex="0" aria-label="${esc(e.restDay?'휴방':e.title)}${isVR?' VR':''} 상세 보기"
           style="border-left:4px solid ${color};background:${rgba(color,.18)};--content-group-color:${color}"
           onclick="handleCalendarMiniEventClick(event,'${e.id}')">
           <span class="mini-event-main">${label}</span>
@@ -2141,16 +2144,26 @@ function renderCalendar(){
     };
   });
   window.mwsCalendarContentGroupsV2?.refreshCalendarSelection();
+  let highlightedGroup='',highlightedNodes=[];
+  const highlightGroup=id=>{
+    if(highlightedGroup===id)return;
+    highlightedNodes.forEach(node=>node.classList.remove('mws-ui-group-highlight'));
+    highlightedGroup=id;highlightedNodes=[];
+    if(!id)return;
+    highlightedNodes=[...grid.querySelectorAll('[data-mws-ui-group],.calendar-continuous-ribbon-v1[data-group-id]')].filter(node=>(node.dataset.mwsUiGroup||node.dataset.groupId)===id);
+    highlightedNodes.forEach(node=>node.classList.add('mws-ui-group-highlight'));
+  };
   const pointerPreview=e=>{
     lastCalendarPreviewPointerV2={x:e.clientX,y:e.clientY};
-    if(calendarPointerEventDragV174?.dragging||document.querySelector('.modal.open')||window.mwsCalendarDetailsV1?.isOpen())return;
+    if(calendarPointerEventDragV174?.dragging||document.querySelector('.modal.open')||window.mwsCalendarDetailsV1?.isOpen()){highlightGroup('');return}
     const node=e.target?.closest?.('.mini-event[data-evid]');
+    highlightGroup(e.pointerType==='touch'?'':node?.dataset.mwsUiGroup||'');
     if(node&&grid.contains(node))showCalendarEventPreview(node.dataset.evid,e.clientX,e.clientY);
     else hideCalendarEventPreview();
   };
   grid.onpointermove=pointerPreview;
   grid.onpointerover=pointerPreview;
-  grid.onpointerleave=hideCalendarEventPreview;
+  grid.onpointerleave=()=>{highlightGroup('');hideCalendarEventPreview()};
   if(lastCalendarPreviewPointerV2){
     const {x,y}=lastCalendarPreviewPointerV2;
     requestAnimationFrame(()=>{
@@ -5090,7 +5103,7 @@ document.getElementById('contactFavoriteBtnV574').onclick=()=>{
   c.favorite=!Boolean(c.favorite);
   const btn=document.getElementById('contactFavoriteBtnV574');
   if(btn){btn.classList.toggle('active',c.favorite);btn.setAttribute('aria-pressed',c.favorite?'true':'false');btn.textContent=c.favorite?'★':'☆';btn.title=c.favorite?'즐겨찾기에서 제거':'즐겨찾기에 추가'}
-  saveData(c.favorite?'연락처 즐겨찾기 추가':'연락처 즐겨찾기 해제');
+  if(saveData(c.favorite?'연락처 즐겨찾기 추가':'연락처 즐겨찾기 해제'))window.mwsUiInteractionsV1?.success(btn);
   try{renderFavoriteContactsV574()}catch(_){}
   try{renderContacts()}catch(_){}
   toast(c.name,c.favorite?'즐겨찾기에 추가했습니다':'즐겨찾기에서 제거했습니다');
