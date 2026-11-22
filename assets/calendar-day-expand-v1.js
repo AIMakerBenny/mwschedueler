@@ -3,7 +3,9 @@
 (()=>{
   const grid=document.getElementById('calendarGrid'),section=document.getElementById('calendar');
   if(!grid||!section)return;
-  const desktop=matchMedia('(min-width:901px) and (hover:hover) and (pointer:fine)');
+  // PointerEvent identifies an actual mouse even on hybrid touch devices and
+  // headless browser sessions whose primary-pointer media reports 'none'.
+  const desktop=matchMedia('(min-width:901px)');
   let open=null,press=null;
   const enabled=()=>desktop.matches&&section.classList.contains('active')&&document.body.dataset.deviceMode!=='mobile'&&document.body.dataset.resolution!=='mobile'&&(!section.dataset.calendarViewMode||section.dataset.calendarViewMode==='month')&&!document.body.matches('.mws-calendar-event-pointer-active-v174,.calendar-template-dragging,.calendar-pointer-template-dragging,.calendar-copy-source-dragging')&&!section.classList.contains('calendar-group-select-active-v2');
   const reduced=()=>window.mwsMotionReduced?.()??matchMedia('(prefers-reduced-motion: reduce)').matches;

@@ -1,6 +1,6 @@
 /* The week tracks retain their exact geometry. Only one existing event list
    occupies an absolute overlay in its original date's stacking context. */
-@media(min-width:901px) and (hover:hover) and (pointer:fine){
+@media(min-width:901px){
   body #calendar.section #calendarGrid .day.mws-day-expand-v1{
     overflow:visible!important;z-index:45!important;
   }
