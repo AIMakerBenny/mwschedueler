@@ -41,7 +41,7 @@ const localStorage = {getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set
 vm.runInNewContext(code,{document,window,localStorage,matchMedia:()=>mouse,URL,AbortController,Element:FakeElement,Image:FakeImage,getComputedStyle:el=>({cursor:el.cursor??properties.get('--mws-cursor-default')}),requestAnimationFrame:cb=>{raf=cb;return ++rafCount;},cancelAnimationFrame:()=>{raf=null;}});
 assert.equal(root.dataset.mwsCursor,'finger');
 assert(sizes.every(s=>!s.disabled));
-assert(!listeners.has('pointermove'));
+assert(listeners.has('pointermove'));
 const points={finger:[[1,14],[1,21],[1,28]],red:[[1,1],[1,1],[1,1]],big:[[9,1],[13,1],[17,1]],mw:[[1,1],[1,1],[1,1]],'0216':[[1,1],[1,1],[1,1]],codeng:[[1,1],[1,1],[1,1]],'devil-dance':[[1,1],[1,1],[1,1]]};
 for (const [variant,hotspots] of Object.entries(points)) {
   callbacks.change({target:{name:'mwsCursorVariant',value:variant}});
@@ -53,9 +53,8 @@ for (const [variant,hotspots] of Object.entries(points)) {
     const w=png.readUInt32BE(16),h=png.readUInt32BE(20);
     assert.equal(Math.max(w,h),size);
     assert(x>=0&&x<w&&y>=0&&y<h);
-    const [sx,sy]=hotspots[0];
     const primary=`url("https://example.test/assets/cursors/${variant}-${size}.png?v=3") ${x} ${y}`;
-    const fallback=size>32?`, url("https://example.test/assets/cursors/${variant}-32.png?v=3") ${sx} ${sy}`:'';
+    const fallback=', url("https://example.test/assets/cursors/animation-arrow-32.png?v=3") 1 1';
     assert.equal(properties.get('--mws-cursor-default'),`${primary}${fallback}, auto`);
     assert.equal(properties.get('--mws-cursor-pointer'),`${primary}${fallback}, pointer`);
     assert.equal(properties.get('--mws-cursor-pointer').endsWith(', pointer'),true);
@@ -85,7 +84,7 @@ for (const [variant,hotspots] of Object.entries(points)) {
       for(const [clientX,clientY] of [[1279,719],[1279,0],[0,719],[0,0]]) {
         listeners.get('pointermove')({...ev,clientX,clientY});raf();
         const offset=[6,8,10][i]-1;
-        const left=Math.min(root.clientWidth-width,clientX+offset),top=Math.min(root.clientHeight-width,clientY+offset);
+        const left=Math.min(root.clientWidth-width-16,clientX+offset),top=Math.min(root.clientHeight-width-4,clientY+offset);
         assert.equal(sprite.style.transform,`translate3d(${left}px,${top}px,0)`);
         assert.equal(sprite.hidden,false);
         assert.equal(sprite.playing,true);
@@ -96,25 +95,46 @@ for (const [variant,hotspots] of Object.entries(points)) {
       listeners.get('pointermove')({...ev,target:Object.assign(new FakeElement(),{cursor:'text'})});
       assert.equal(sprite.hidden,true);
       assert.equal(sprite.playing,false);
-    } else assert(!listeners.has('pointermove'));
+    } else {
+      sheet.naturalWidth=w;sheet.naturalHeight=h;sheet.events.load();
+      assert.equal(sprite.style.width,`${w}px`);assert.equal(sprite.style.height,`${h}px`);
+      assert(sprite.hidden);
+      const ev={target:new FakeElement(),pointerType:'mouse',buttons:0,clientX:400,clientY:300};
+      const count=rafCount;
+      listeners.get('pointermove')(ev);assert.equal(rafCount,count);assert(sprite.hidden);
+      for(const [clientX,clientY] of [[1279,719],[1279,0],[0,719],[0,0],[1279,300],[400,719],[400,0]]){
+        listeners.get('pointermove')({...ev,clientX,clientY});raf();
+        assert.equal(sprite.hidden,false);
+        assert.equal(sprite.style.width,`${w}px`);assert.equal(sprite.style.height,`${h}px`);
+        const left=Math.min(root.clientWidth-w-16,Math.max(0,clientX-x)),top=Math.min(root.clientHeight-h-4,Math.max(0,clientY-y));
+        assert.equal(sprite.style.transform,`translate3d(${left}px,${top}px,0)`);
+        assert.equal(properties.get('--mws-cursor-default'),`url("https://example.test/assets/cursors/animation-arrow-${size}.png?v=3") 1 1, auto`);
+      }
+      listeners.get('pointerout')({...ev,clientX:1279,clientY:719,relatedTarget:null});assert(!sprite.hidden);
+      listeners.get('pointerout')({...ev,clientX:1281,clientY:720,relatedTarget:null});assert(sprite.hidden);
+      assert.equal(properties.get('--mws-cursor-default'),`${primary}${fallback}, auto`);
+      listeners.get('pointermove')({...ev,clientX:1279,clientY:719});raf();
+      listeners.get('pointermove')(ev);assert(sprite.hidden);assert.equal(properties.get('--mws-cursor-default'),`${primary}${fallback}, auto`);
+    }
   }
 }
 mouse.matches=false;callbacks.media();assert.equal(root.dataset.mwsCursor,undefined);assert.equal(properties.size,0);
 mouse.matches=true;callbacks.media();assert.equal(root.dataset.mwsCursor,'devil-dance');
 root.dataset.mwsMotion='reduced';storage.set('mws-screen-motion-v1','reduced');listeners.get('storage')({key:'mws-screen-motion-v1'});assert(listeners.has('pointermove'));
-callbacks.change({target:{name:'mwsCursorPlay',checked:false}});assert(!listeners.has('pointermove'));assert.match(properties.get('--mws-cursor-default'),/devil-dance-64\.png/);
+callbacks.change({target:{name:'mwsCursorPlay',checked:false}});assert(listeners.has('pointermove'));assert.match(properties.get('--mws-cursor-default'),/devil-dance-64\.png/);
 callbacks.change({target:{name:'mwsCursorPlay',checked:true}});assert(listeners.has('pointermove'));
 callbacks.change({target:{name:'mwsCursorVariant',value:'mw'}});assert(!colors.hidden);assert(playPanel.hidden);
-const before=images.length;callbacks.change({target:{name:'mwsCursorColor',value:'#75b5ff'}});for(const img of images.slice(before))img.onload?.();await Promise.resolve();await Promise.resolve();await Promise.resolve();assert.equal((properties.get('--mws-cursor-default').match(/data:image\/png/g)||[]).length,2);
+const before=images.length;callbacks.change({target:{name:'mwsCursorColor',value:'#75b5ff'}});for(const img of images.slice(before))img.onload?.();await Promise.resolve();await Promise.resolve();await Promise.resolve();assert.equal((properties.get('--mws-cursor-default').match(/data:image\/png/g)||[]).length,1);
+sheet.naturalWidth=64;sheet.naturalHeight=28;sheet.events.load();assert.match(sprite.style.backgroundImage,/data:image\/png/);
 assert.deepEqual([...pixels.data.slice(4)],[255,255,255,255,20,20,20,255]);assert(pixels.data[2]>pixels.data[0]);
 callbacks.change({target:{name:'mwsCursorVariant',value:'0216'}});assert.equal(colorInput.value,'#f8dce9');assert.equal(JSON.parse(storage.get(key)).colors.mw,'#75b5ff');
-storage.set(key,JSON.stringify({variant:'mini',size:32}));listeners.get('storage')({key});assert.equal(root.dataset.mwsCursor,'finger');assert(!listeners.has('pointermove'));
+storage.set(key,JSON.stringify({variant:'mini',size:32}));listeners.get('storage')({key});assert.equal(root.dataset.mwsCursor,'finger');assert(listeners.has('pointermove'));
 storage.set(key,'invalid JSON');listeners.get('storage')({key});assert.equal(root.dataset.mwsCursor,'finger');
 callbacks.change({target:{name:'mwsCursorVariant',value:'toString'}});assert.equal(root.dataset.mwsCursor,'finger');
-callbacks.change({target:{name:'mwsCursorVariant',value:'system'}});assert.equal(root.dataset.mwsCursor,undefined);assert(sizes.every(s=>s.disabled));
+callbacks.change({target:{name:'mwsCursorVariant',value:'system'}});assert.equal(root.dataset.mwsCursor,undefined);assert(sizes.every(s=>s.disabled));assert(!listeners.has('pointermove'));
 listeners.get('storage')({key});assert.equal(root.dataset.mwsCursor,undefined);
 callbacks.reset();assert.deepEqual(JSON.parse(storage.get(key)),{variant:'finger',size:48,colors:{mw:'#f8dce9','0216':'#f8dce9'},play:true});
 for (const page of ['index.html','content-planner.html','majoku-castle.html']) {
-  const html=read(page).toString();assert(html.includes('assets/mawang-cursor-v1.css?v=3'));assert(html.includes('assets/mawang-cursor-v1.js?v=4'));
+  const html=read(page).toString();assert(html.includes('assets/mawang-cursor-v1.css?v=3'));assert(html.includes('assets/mawang-cursor-v1.js?v=5'));
 }
-console.log('PASS: 21 cursor images, 6 sprite strips, 8 choices, independent colors and animation, 32px color-matched edge fallback, 4 corner clamps, resize, default migration, storage, reset, native arrow, event cleanup, frame coalescing, 3 application pages');
+console.log('PASS: full-size static edge overlays at all 4 corners and edges, no size reduction, exact native click marker, scrollbar retention, central native restoration, custom color, animated bounds, defaults, storage, cleanup and 3 pages');

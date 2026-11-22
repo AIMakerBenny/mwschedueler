@@ -15,6 +15,8 @@
   const assetBase = new URL('cursors/', document.currentScript.src);
   const mouse = matchMedia('(any-hover: hover) and (any-pointer: fine)');
   const imageUrl = (variant, size) => new URL(`${variant}-${size}.png?v=3`, assetBase).href;
+  const withinWindow = event => event.clientX>=0 && event.clientY>=0 &&
+    event.clientX<(window.innerWidth||root.clientWidth) && event.clientY<(window.innerHeight||root.clientHeight);
   const original = '#f8dce9';
   const validColor = color => typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : original;
   function normalize(raw) {
@@ -29,6 +31,7 @@
   }
   let prefs = load();
   let animation = null;
+  let staticEdge = null;
   const logoCache = new Map();
   const previewImages = new Map();
   let applyVersion = 0;
@@ -66,16 +69,12 @@
     if (logoCache.size>24) logoCache.delete(logoCache.keys().next().value);
     return result;
   }
-  function setNative(variant,size,arrow=false,customUrl=null,smallUrl=null) {
-    const [x,y] = variants[variant].points[sizes.indexOf(size)];
+  function setNative(variant,size,arrow=false,customUrl=null) {
+    const [x,y] = arrow ? [1,1] : variants[variant].points[sizes.indexOf(size)];
     let image = `url("${customUrl || imageUrl(arrow?'animation-arrow':variant, size)}") ${x} ${y}`;
-    // Chromium rejects cursors larger than 32px when their image extends past
-    // the viewport. Let the browser choose the same design at a safe size,
-    // with its own exact hotspot, instead of abruptly reverting to the OS cursor.
-    if (!arrow && size>32) {
-      const [sx,sy] = variants[variant].points[0];
-      image += `, url("${smallUrl || imageUrl(variant,32)}") ${sx} ${sy}`;
-    }
+    // Never shrink the selected art. The small native arrow is only a real
+    // click marker while the original image is rendered inside the page.
+    if (!arrow) image += `, url("${imageUrl('animation-arrow',32)}") 1 1`;
     root.style.setProperty('--mws-cursor-default', `${image}, auto`);
     root.style.setProperty('--mws-cursor-pointer', `${image}, pointer`);
     root.dataset.mwsCursor = variant;
@@ -84,6 +83,92 @@
     if (!animation) return;
     animation.dispose();
     animation = null;
+  }
+  function stopStaticEdge() {
+    if (!staticEdge) return;
+    staticEdge.dispose();
+    staticEdge = null;
+  }
+  // A native cursor remains fastest and exact in the middle of the page.
+  // On approaching any viewport boundary, move the full-size artwork onto
+  // a non-interactive fixed layer. The white native arrow marks the actual
+  // click coordinate; artwork can be clamped without moving that coordinate.
+  function startStaticEdge(variant,size,customUrl=null) {
+    const source = customUrl || imageUrl(variant,size);
+    const id = `${variant}-${size}-${source}`;
+    if (staticEdge?.id === id) return;
+    stopStaticEdge();
+    setNative(variant,size,false,source);
+    if (!document.body) return;
+    const [hotX,hotY] = variants[variant].points[sizes.indexOf(size)];
+    const controller = new AbortController(), signal = controller.signal;
+    const sprite = document.createElement('div');
+    sprite.className = 'mws-cursor-animation mws-cursor-static-edge';
+    sprite.setAttribute('aria-hidden','true');
+    sprite.hidden = true;
+    document.body.append(sprite);
+    const arrowUrl = imageUrl('animation-arrow',size);
+    let w=0,h=0,frame=0,target=null,eligible=false,active=false,lastEvent=null;
+    let vw=root.clientWidth,vh=root.clientHeight,left=0,top=0;
+    const hide = () => {
+      if(frame) cancelAnimationFrame(frame);
+      frame=0; sprite.hidden=true;
+      if(active) { active=false; setNative(variant,size,false,source); }
+    };
+    const clear = () => {lastEvent=null;target=null;eligible=false;hide();};
+    const current = {id,dispose(){controller.abort();clear();sprite.remove();}};
+    staticEdge=current;
+    const update = event => {
+      if(event.pointerType!=='mouse'||document.hidden){clear();return;}
+      lastEvent=event;
+      if(!w||!h)return;
+      const next=event.target;
+      if(target!==next){
+        target=next;
+        const cursor=next instanceof Element&&!next.matches('iframe,object,embed')?getComputedStyle(next).cursor:'';
+        eligible=cursor.includes(source)||cursor.includes(arrowUrl);
+      }
+      if(!eligible){hide();return;}
+      // Keep a small gutter from native scrollbars and browser edges.
+      const x=event.clientX-hotX,y=event.clientY-hotY;
+      const maxX=Math.max(0,vw-w-16),maxY=Math.max(0,vh-h-4);
+      const edge=x<2||y<2||x>maxX||y>maxY;
+      if(!edge){hide();return;}
+      left=Math.min(maxX,Math.max(0,x));top=Math.min(maxY,Math.max(0,y));
+      if(!frame)frame=requestAnimationFrame(()=>{
+        frame=0;
+        sprite.style.transform=`translate3d(${left}px,${top}px,0)`;
+        sprite.hidden=false;
+        if(!active){active=true;setNative(variant,size,true);}
+      });
+    };
+    const opts={capture:true,passive:true,signal};
+    window.addEventListener('pointermove',update,opts);
+    window.addEventListener('pointerover',update,opts);
+    window.addEventListener('pointerup',update,opts);
+    window.addEventListener('pointercancel',clear,opts);
+    window.addEventListener('pointerout',event=>{
+      if(event.relatedTarget)return;
+      // A native scrollbar may report no related DOM element while the
+      // pointer is still inside the viewport. Keep the artwork there.
+      if(active&&withinWindow(event))return;
+      clear();
+    },opts);
+    window.addEventListener('dragstart',clear,opts);
+    window.addEventListener('blur',clear,{signal});
+    window.addEventListener('scroll',()=>{target=null;},opts);
+    window.addEventListener('resize',()=>{vw=root.clientWidth;vh=root.clientHeight;target=null;if(lastEvent)update(lastEvent);},opts);
+    document.addEventListener('visibilitychange',clear,{signal});
+    const img=new Image();
+    img.addEventListener('load',()=>{
+      if(staticEdge!==current||!img.naturalWidth||!img.naturalHeight)return;
+      w=img.naturalWidth;h=img.naturalHeight;
+      sprite.style.width=`${w}px`;sprite.style.height=`${h}px`;
+      sprite.style.backgroundImage=`url("${source}")`;
+      sprite.style.backgroundSize=`${w}px ${h}px`;
+      if(lastEvent)update(lastEvent);
+    },{once:true,signal});
+    img.src=source;
   }
   // Keep the arrow as a real native cursor. Only the tiny animated character
   // follows it, with no hit testing changes and at most one transform per frame.
@@ -126,8 +211,8 @@
         frame = 0;
         // Constrain only the decoration to the visible page. The small native
         // arrow stays at the actual click coordinate, including at corners.
-        const maxX = Math.max(0,root.clientWidth-width);
-        const maxY = Math.max(0,root.clientHeight-width);
+        const maxX = Math.max(0,root.clientWidth-width-16);
+        const maxY = Math.max(0,root.clientHeight-width-4);
         const left = Math.min(maxX,Math.max(0,x));
         const top = Math.min(maxY,Math.max(0,y));
         sprite.style.transform = `translate3d(${left}px,${top}px,0)`;
@@ -141,7 +226,7 @@
     window.addEventListener('pointerdown',clear,opts);
     window.addEventListener('pointerup',update,opts);
     window.addEventListener('pointercancel',clear,opts);
-    window.addEventListener('pointerout',event=>{if (!event.relatedTarget) clear();},opts);
+    window.addEventListener('pointerout',event=>{if (!event.relatedTarget && (sprite.hidden || !withinWindow(event))) clear();},opts);
     window.addEventListener('dragstart',clear,opts);
     window.addEventListener('blur',clear,{signal});
     window.addEventListener('scroll',()=>{target=null;},opts);
@@ -172,17 +257,15 @@
     const {variant, size, colors, play} = prefs;
     const version = ++applyVersion;
     if (variant === 'system' || !mouse.matches) {
-      stopAnimation();
+      stopAnimation(); stopStaticEdge();
       root.removeAttribute('data-mws-cursor');
       root.style.removeProperty('--mws-cursor-default');
       root.style.removeProperty('--mws-cursor-pointer');
-    } else if (variants[variant].animated && play) startAnimation(variant,size);
+    } else if (variants[variant].animated && play) {stopStaticEdge();startAnimation(variant,size);}
     else {
-      stopAnimation(); setNative(variant,size);
+      stopAnimation(); startStaticEdge(variant,size);
       if (variants[variant].color && colors[variant] !== original) {
-        // Generate the edge fallback in the same selected color as the full size.
-        Promise.all([logoUrl(variant,size,colors[variant]),logoUrl(variant,32,colors[variant])])
-          .then(([url,smallUrl])=>{if(version===applyVersion)setNative(variant,size,false,url,smallUrl);});
+        logoUrl(variant,size,colors[variant]).then(url=>{if(version===applyVersion)startStaticEdge(variant,size,url);});
       }
     }
     const panel = document.getElementById('mwsCursorSettings');
