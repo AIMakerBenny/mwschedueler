@@ -36,6 +36,13 @@
     // The profile is separate from the six metrics, so it never leaves a lone
     // metric card on a second row at intermediate widths.
     safeFeatures=safeFeatures.replace("const grid=document.querySelector('#dashboard .dashboard-kpi-grid-local');","const grid=document.querySelector('#dashboardProfileSlot');");
+    // Keep metric and LIVE state changes with the existing renderer, avoiding
+    // polling, observing the DOM or animating unchanged cards on refresh.
+    for(const [variable,value] of [['post','String(uniqueActiveApplicants())'],['recent','`${recent30History().length}회`'],['target','`${(data.targetList||[]).length}명`']]){
+      safeFeatures=safeFeatures.replace(`if(${variable})${variable}.textContent=${value};`,`if(${variable}){if(window.mwsUiInteractionsV1)window.mwsUiInteractionsV1.metric(${variable},${value});else ${variable}.textContent=${value};}`);
+    }
+    safeFeatures=safeFeatures.replace("const grid=$('friendFinderGridV5');if(!grid)return;","const grid=$('friendFinderGridV5');if(!grid)return;const previousUiStates=window.mwsUiInteractionsV1?.snapshot(grid,'.friend-finder-card-v5[data-id]');");
+    safeFeatures=safeFeatures.replace("grid.querySelectorAll('[data-profile]').forEach", "if(previousUiStates)window.mwsUiInteractionsV1?.stateChanges(grid,'.friend-finder-card-v5[data-id]',previousUiStates);grid.querySelectorAll('[data-profile]').forEach");
     // Expose the real section initializer for navigation and create it before
     // switching tabs, including when an earlier render has removed the section.
     safeFeatures=safeFeatures.replace('window.renderFriendFinderV5=renderFriendFinderV5;','window.mwsEnsureFriendFinderV5=ensureFriendFinderV5;window.renderFriendFinderV5=renderFriendFinderV5;');

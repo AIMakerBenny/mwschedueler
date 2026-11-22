@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
+import {gunzipSync} from 'node:zlib';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 
 test('motion defaults to system and preserves saved user choices',()=>{
@@ -34,9 +35,26 @@ test('feedback only animates changed, visible values; reduced motion is respecte
 
 test('production references the shared design layer and preserves existing event/drag owners',()=>{
   const index=read('index.html'),core=read('assets/app-core.js'),css=read('assets/ui-interactions-v1.css');
-  assert(index.includes('assets/ui-interactions-v1.css?v=2')&&index.includes('assets/ui-interactions-v1.js?v=1'));
+  assert(index.includes('assets/ui-interactions-v1.css?v=3')&&index.includes('assets/ui-interactions-v1.js?v=2'));
   assert(core.includes('highlightedGroup===id')&&core.includes('data-mws-ui-group')&&core.includes('highlightGroup(\'\');hideCalendarEventPreview()'));
   assert(core.includes('beginCalendarPointerEventDragV174(e,el)')&&core.includes('saveData(\'캘린더 복사 보관함 추가\')'));
   assert(css.includes('scale:1.02')&&css.includes('scale:.98!important')&&css.includes('@media (hover:hover) and (pointer:fine)'));
   assert(!/\btransition\s*:[^;{}]*\b(?:all|width|height|margin|padding)\b/.test(css));
+});
+
+test('encoded dashboard and live-card owner still has all integration patch targets',()=>{
+  const loader=read('assets/online-v5-loader.js'),payload=loader.match(/const PAYLOAD='([^']+)'/)[1];
+  const code=gunzipSync(Buffer.from(payload,'base64')).toString();
+  for(const token of ['if(post)post.textContent=String(uniqueActiveApplicants());','if(recent)recent.textContent=`${recent30History().length}회`;','if(target)target.textContent=`${(data.targetList||[]).length}명`;',"const grid=$('friendFinderGridV5');if(!grid)return;","grid.querySelectorAll('[data-profile]').forEach"]){assert.equal(code.split(token).length,2,token)}
+  assert(loader.includes('mwsUiInteractionsV1.metric')&&loader.includes('previousUiStates')&&loader.includes('stateChanges'));
+});
+
+test('friend state transitions occur on changes only, not repeated renders',()=>{
+  const window={matchMedia:()=>({matches:false})};vm.runInNewContext(read('assets/ui-interactions-v1.js'),{window});
+  let animations=0;
+  const card=(id,className)=>{const state={className,getClientRects:()=>[{}],animate(){animations++;return {cancel(){}}}};return {dataset:{id},querySelector:()=>state}};
+  const root=nodes=>({querySelectorAll:()=>nodes}),api=window.mwsUiInteractionsV1;
+  const before=api.snapshot(root([card('a','live'),card('b','offline')]),'.card');
+  api.stateChanges(root([card('a','live'),card('b','live'),card('c','offline')]),'.card',before);
+  assert.equal(animations,1);
 });

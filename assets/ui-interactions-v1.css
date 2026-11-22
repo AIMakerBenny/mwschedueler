@@ -137,3 +137,32 @@ html[data-mws-motion=reduced] body #calendar.section #calendarGrid .mini-event[d
   html:not([data-mws-motion=full]) body #calendar.section #calendarGrid .mini-event[data-evid],
   html:not([data-mws-motion=full]) body #calendar.section #calendarGrid .mini-event[data-evid]:is(:hover,:active,:focus-visible){scale:none!important;transition:none!important}
 }
+
+/* Second-pass workspace detail: real rendered list items, states and controls.
+   Keep the dimensions, scroll containers and gameplay geometry untouched. */
+body :is(#dashboard,#contacts,#sniper,#posts,#memos,#achievements,#gameLadder,#gameMultiDraw,#legacy,#export,#settings) :is(.dashboard-notice-item-local,.today-person-card-local,.contact-maintenance-card,.sniper-row,.post-saved-item,.favorite-schedule-card,.achievement-card-open,.ladder-full-result-row,.mws-legacy-link-v1){
+  box-shadow:var(--mws-ui-shadow)!important;
+  transition:box-shadow var(--mws-ui-card),border-color var(--mws-ui-fast),background-color var(--mws-ui-fast)!important;
+}
+body:has(#contactModal.open) #contacts .contact-card.mws-ui-contact-selected,
+body #posts .post-saved-item.active,body #posts .post-applicant-card.selected,
+body #careerTimeline .cv-map-year[aria-current=true],body #careerTimeline .cv-entry[data-selected=true] .cv-card{
+  outline:2px solid var(--accent)!important;outline-offset:-2px;
+}
+body #posts .post-applicant-card.nextchance{border-color:color-mix(in srgb,var(--muted) 42%,var(--border))!important}
+body #friendFinder .friend-finder-card-v5.live{border-color:color-mix(in srgb,#ef4565 65%,var(--border))!important;box-shadow:inset 0 2px 0 #ef4565,var(--mws-ui-shadow)!important}
+body #friendFinder .friend-finder-state-v5{transition:color var(--mws-ui-fast),background-color var(--mws-ui-fast)}
+body #friendFinder .friend-live-badge-v5{box-shadow:0 1px 4px #0003}
+body #settings :is(input[type=checkbox],input[type=radio]){transition:scale 80ms var(--mws-ui-ease);accent-color:var(--accent)}
+body #settings :is(input[type=checkbox],input[type=radio]):active:not(:disabled){scale:.9}
+body #settings :is(.theme-card.active,.resolution-preset.active,[data-cursor-color][aria-pressed=true]){outline:2px solid var(--accent)!important;outline-offset:-2px}
+body :is(#toolTier,#toolMatrix,#toolRelations) .mws-ui-drag-source{opacity:.8;box-shadow:var(--mws-ui-lift),0 0 0 1px var(--accent)!important}
+body #gameLadder .ladder-full-result-row.revealed{border-color:var(--mws-ui-selected)!important}
+body #gameLadder .ladder-full-result-row.winner{border-color:#c9a64d!important}
+@media (hover:hover) and (pointer:fine), (hover:none) and (pointer:none) and (min-width:901px){
+  body #calendar #calendarGrid .calendar-date-number-v3:hover{border-radius:50%;background:color-mix(in srgb,var(--accent) 20%,transparent)!important}
+  body :is(#dashboard,#contacts,#sniper,#posts,#memos,#achievements,#legacy) :is(.dashboard-notice-item-local,.today-person-card-local,.contact-maintenance-card,.sniper-row,.post-saved-item,.favorite-schedule-card,.achievement-card-open,.mws-legacy-link-v1):hover{box-shadow:var(--mws-ui-lift)!important;border-color:var(--mws-ui-selected)!important}
+  body #friendFinder .friend-finder-card-v5:hover .friend-finder-avatar-v5,body #sniper .sniper-row:hover .avatar{scale:1.025}
+  body #friendFinder .friend-finder-avatar-v5,body #sniper .avatar{transition:scale var(--mws-ui-card) var(--mws-ui-ease)}
+}
+html[data-mws-motion=reduced] body :is(#dashboard,#contacts,#sniper,#posts,#memos,#friendFinder,#settings,#achievements,#gameLadder,#legacy) :is(.dashboard-notice-item-local,.today-person-card-local,.contact-maintenance-card,.sniper-row,.post-saved-item,.favorite-schedule-card,.achievement-card-open,.ladder-full-result-row,.mws-legacy-link-v1,.friend-finder-avatar-v5,.friend-finder-state-v5,.avatar,input[type=checkbox],input[type=radio]){transition:none!important;scale:none!important}

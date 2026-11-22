@@ -13,6 +13,12 @@ on:
       - 'assets/ui-interactions-v1.js'
       - 'scripts/qa-ui-interactions-v1.test.mjs'
       - 'scripts/qa-ui-interactions-v1-browser.mjs'
+      - 'scripts/qa-ui-workspace-mutations-v2-browser.mjs'
+      - 'scripts/qa-ui-workspace-live-v2.mjs'
+      - 'assets/online-v5-loader.js'
+      - 'assets/ladder-wizard-v1.js'
+      - 'assets/tools.js'
+      - 'assets/content-planner-host.js'
       - 'scripts/qa-calendar-details-v1-browser.mjs'
       - 'scripts/qa-calendar-month-viewport-v2-browser.mjs'
       - 'scripts/qa-calendar-details-motion-v3-browser.mjs'
@@ -107,6 +113,9 @@ jobs:
         run: |
           node --test scripts/qa-ui-interactions-v1.test.mjs
           node scripts/qa-ui-interactions-v1-browser.mjs
+          node scripts/qa-ui-workspace-mutations-v2-browser.mjs
+          node scripts/qa-ladder-wizard-v1-browser.mjs
+          node scripts/qa-workspace-navigation-v1-browser.mjs
           node --test scripts/qa-dashboard-upcoming-v1.test.mjs
           node --test scripts/qa-calendar-timeline-v1.test.mjs
           node scripts/qa-calendar-timeline-v1-browser.mjs
@@ -282,6 +291,9 @@ jobs:
       - name: Verify live posts applicant card and list geometry
         if: ${{ !cancelled() && steps.live_publish.outcome == 'success' }}
         run: node scripts/qa-posts-responsive-layout-v2.mjs --live
+      - name: Verify every non-F1 workspace across six live viewports
+        if: ${{ !cancelled() && steps.live_publish.outcome == 'success' }}
+        run: node scripts/qa-ui-workspace-live-v2.mjs
       - name: Publish scoped Cloudflare deployment result
         if: always()
         env:

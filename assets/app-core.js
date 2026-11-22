@@ -3545,8 +3545,10 @@ function renderMemoLibrary(){
   refreshEventMemoLibrarySelect();
 }
 window.selectMemo=id=>{
+  const changed=editingMemoId!==id;
   editingMemoId=id;
   renderMemoLibrary();
+  if(changed)window.mwsUiInteractionsV1?.status(document.getElementById('memoEditor'));
 }
 function createMemo(){
   const now=new Date().toISOString();
@@ -3568,7 +3570,8 @@ function saveCurrentMemo(){
   memo.title=title;
   memo.content=document.getElementById('memoContentInput').value;
   memo.updatedAt=new Date().toISOString();
-  saveData('메모 저장');
+  const saved=saveData('메모 저장');
+  if(saved)window.mwsUiInteractionsV1?.success(document.getElementById('saveMemoBtn'));
   toast(memo.title,'메모가 저장되었습니다');
 }
 function deleteCurrentMemo(){
@@ -5072,6 +5075,7 @@ function openContact(id=null){
   closeMainModals();
   editingContactId=id;
   const c=id?contact(id):null;
+  document.querySelectorAll('#contacts .contact-card[data-contact-id]').forEach(card=>card.classList.toggle('mws-ui-contact-selected',Boolean(id)&&card.dataset.contactId===String(id)));
   document.getElementById('contactModalTitle').textContent=c?(c.pendingSetup?'신규 연락처 정보 입력':'연락처 상세'):'연락처 추가';
   document.getElementById('contactModalSubtitle').textContent=c?`${c.name} · 함께한 과거 컨텐츠와 연락처 정보를 한 화면에서 확인합니다`:'새 연락처를 등록합니다';
   const favoriteBtnV574=document.getElementById('contactFavoriteBtnV574');
@@ -7505,7 +7509,7 @@ function extractSoopUpCount(c){
 function applicantStatusLabel(s){return s==='selected'?'확정':(s==='nextchance'||s==='excluded')?'다음기회에':'대기'}
 function applicationStatusText(s){return applicantStatusLabel(s)}
 function aggregateApplicantStatus(comments){if(comments.some(c=>c.status==='selected'))return'selected';if(comments.length&&comments.every(c=>c.status==='nextchance'||c.status==='excluded'))return'nextchance';return'pending'}
-window.updatePostApplicantStatus=(postId,commentId,status)=>{const p=postById(postId),c=p?.comments.find(x=>x.id===commentId);if(!c)return;c.status=status==='excluded'?'nextchance':(['pending','selected','nextchance'].includes(status)?status:'pending');syncPostContactApplicationHistories(p);saveData('게시글 신청자 상태 변경');renderPostsAfterSaveV148()};
+window.updatePostApplicantStatus=(postId,commentId,status)=>{const p=postById(postId),c=p?.comments.find(x=>x.id===commentId);if(!c)return;const previous=c.status;c.status=status==='excluded'?'nextchance':(['pending','selected','nextchance'].includes(status)?status:'pending');syncPostContactApplicationHistories(p);saveData('게시글 신청자 상태 변경');renderPostsAfterSaveV148();if(previous!==c.status)window.mwsUiInteractionsV1?.status([...document.querySelectorAll('#posts .post-applicant-card[data-comment-id]')].find(card=>card.dataset.commentId===String(commentId)))};
 window.setPostApplicantDecision=(postId,commentId,status)=>{const p=postById(postId),c=p?.comments.find(x=>x.id===commentId);if(!c)return;const next=(c.status===status)?'pending':status;updatePostApplicantStatus(postId,commentId,next)};
 
 function renderPostSourceContent(p){
@@ -7603,7 +7607,7 @@ window.setPostCardColumns=v=>{data.postCardColumns=Math.max(2,Math.min(5,Number(
 
 function favoriteFolderById(id){return (data.favoriteFolders||[]).find(f=>f.id===id)||null}
 function favoriteFolderCount(id){return favoriteEvents().filter(e=>(e.favoriteFolderId||'')===id).length}
-function setFavoriteFolderFilter(id){favoriteFolderFilter=id||'unfiled';renderFavoriteSchedules()}
+function setFavoriteFolderFilter(id){const next=id||'unfiled',changed=favoriteFolderFilter!==next;favoriteFolderFilter=next;renderFavoriteSchedules();if(changed)window.mwsUiInteractionsV1?.status(document.getElementById('favoriteScheduleList'))}
 window.setFavoriteFolderFilter=setFavoriteFolderFilter;
 window.addFavoriteFolder=()=>{
   if(!Array.isArray(data.favoriteFolders))data.favoriteFolders=[];

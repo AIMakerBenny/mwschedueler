@@ -220,7 +220,9 @@
     }
     list.forEach((p,i)=>{
       const row=box.children[i],person=entries[i],avatar=row.querySelector('.ladder-result-avatar'),name=row.querySelector('.ladder-full-result-name'),label=row.querySelector('.ladder-full-result-label');
+      const newlyRevealed=Boolean(person)&&!row.classList.contains('revealed');
       row.dataset.prizeId=p.id;row.classList.toggle('revealed',Boolean(person));row.classList.toggle('winner',Boolean(person)&&p.label==='당첨');
+      if(newlyRevealed)window.mwsUiInteractionsV1?.status(row);
       name.textContent=person?.name||'결과 대기';name.title=name.textContent;
       row.querySelector('.ladder-result-slot-number').textContent=`${i+1}번 도착`;
       label.textContent=p.label||`결과 ${i+1}`;label.title=label.textContent;
