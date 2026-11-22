@@ -1,0 +1,23 @@
+/* The week tracks retain their exact geometry. Only one existing event list
+   occupies an absolute overlay in its original date's stacking context. */
+@media(min-width:901px) and (hover:hover) and (pointer:fine){
+  body #calendar.section #calendarGrid .day.mws-day-expand-v1{
+    overflow:visible!important;z-index:45!important;
+  }
+  body #calendar.section #calendarGrid .calendar-day-events-v2.mws-day-list-expand-v1{
+    position:absolute!important;
+    top:var(--mws-day-list-top)!important;
+    left:var(--mws-day-list-left)!important;
+    right:auto!important;bottom:auto!important;
+    width:var(--mws-day-list-width)!important;
+    height:var(--mws-day-list-height)!important;
+    max-height:none!important;min-height:0!important;
+    margin:0!important;box-sizing:border-box!important;
+    background:var(--mws-day-list-bg,var(--panel))!important;
+    border-radius:0 0 7px 7px;
+    box-shadow:inset 0 -1px 0 var(--border),inset 1px 0 0 var(--border),inset -1px 0 0 var(--border),0 5px 12px #0003;
+    overflow-y:auto!important;overflow-x:hidden!important;
+    scrollbar-gutter:stable;
+    z-index:46;
+  }
+}

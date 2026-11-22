@@ -56,7 +56,7 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
     await page.waitForFunction(()=>window.mwsOpenDrawingBoardV1&&window.mwsCleanToolsActivate,{},{timeout:30000});
     const samples=await page.evaluate(()=>window.__navFirstPaintSamples.map(JSON.parse));
     assert(samples.length>0,'No sidebar first paint sample');
-    const expected=['memos','careerTimeline','achievements','games','gameLadder','gameF1Racing','gameMultiDraw','gameMajoku','tools','contentPlanner','toolTier','toolMatrix','toolRelations','legacy'];
+    const expected=['careerTimeline','achievements','games','gameLadder','gameF1Racing','gameMultiDraw','gameMajoku','tools','contentPlanner','toolTier','toolMatrix','toolRelations','memos','legacy'];
     for(const sample of samples){const ids=sample.map(x=>x[0]);assert.deepEqual(ids.filter(i=>expected.includes(i)),expected);assert.equal(sample.find(x=>x[0]==='tools')[1],String(reducedMotion!=='reduce'));assert.equal(sample.find(x=>x[0]==='toolTier')[2],reducedMotion==='reduce');}
     console.log('PASS sidebar first paint, delayed runtimes',samples.length);
   }

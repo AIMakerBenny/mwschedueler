@@ -25,7 +25,7 @@ for(const [width,height,mobile] of sizes){
         const selector=route==='sniper'||route==='friendFinder'?`[data-contact-view-v176="${route}"]`:route==='targets'?'[data-friend-view-v176="targets"]':['wardogs','gameRps','gamePachinko'].includes(route)?`#legacy [data-tab="${route}"]`:`.sidebar button[data-tab="${route}"]`;
         if(['wardogs','gameRps','gamePachinko'].includes(route))await browser.evaluate(`document.querySelector('.sidebar button[data-tab="legacy"]').click()`);
         if(['gameLadder','gameMultiDraw','gameMajoku'].includes(route))await browser.evaluate(`(()=>{const e=document.querySelector('[data-mws-nav-group="games"]');if(e.getAttribute('aria-expanded')==='false')e.click()})()`);
-        if(['contentPlanner','toolTier','toolMatrix','toolRelations'].includes(route))await browser.evaluate(`(()=>{const e=document.querySelector('[data-mws-nav-group="tools"]');if(e.getAttribute('aria-expanded')==='false')e.click()})()`);
+        if(['contentPlanner','toolTier','toolMatrix','toolRelations','memos'].includes(route))await browser.evaluate(`(()=>{const e=document.querySelector('[data-mws-nav-group="tools"]');if(e.getAttribute('aria-expanded')==='false')e.click()})()`);
         await until(()=>browser.evaluate(`(()=>{const selector=${JSON.stringify(selector)},el=[...document.querySelectorAll(selector)].find(e=>e.closest('.section.active'))||document.querySelector(selector);if(!el)return false;el.click();return true})()`),'navigation control '+route);
         await until(()=>browser.evaluate(`(()=>{const e=document.getElementById(${JSON.stringify(route)});return e?.classList.contains('active')&&e.getBoundingClientRect().width>0})()`),'active '+route);
         await pause(180);

@@ -23,11 +23,11 @@ const setup=()=>{
     document.getElementById('pageTitle').textContent=tab;
   };
   document.querySelectorAll('.nav button[data-tab]').forEach(b=>b.onclick=()=>window.setTab(b.dataset.tab));
-  // Simulate the legacy organizer moving the mini-game divider too early.
+  // Simulate legacy notebook ordering; runtime must repair it.
   const memo=document.querySelector('[data-tab="memos"]');
   const mini=document.querySelector('.nav-game-divider');
-  memo.after(mini);
-  mini.after(document.querySelector('[data-tab="gameMajoku"]'));
+  document.querySelector('[data-tab="posts"]').after(memo);
+  mini.before(document.querySelector('[data-tab="gameMajoku"]'));
 };
 const test=()=>{
   const q=s=>document.querySelector(s);
@@ -41,19 +41,19 @@ const test=()=>{
     check(mini.getAttribute('aria-expanded')==='false'&&tools.getAttribute('aria-expanded')==='false','New sidebar groups must start collapsed');
     check(!visible(tab('gameMajoku'))&&!visible(tab('contentPlanner')),'Collapsed groups still show items');
     const precedes=(a,b)=>Boolean(a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING);
-    check(tab('memos').nextElementSibling===tab('careerTimeline')&&tab('careerTimeline').nextElementSibling===tab('achievements')&&precedes(tab('achievements'),mini),'Achievements must follow notebook outside mini-games');
+    check(tab('careerTimeline').nextElementSibling===tab('achievements')&&precedes(tab('achievements'),mini),'Achievements must remain outside mini-games');
     check(tab('gameMultiDraw').nextElementSibling===tab('gameMajoku'),'Chat game must follow Gacha');
     check(tab('gameMajoku').title==='채팅연동게임'&&tab('gameMajoku').querySelector('.nav-label').textContent==='채팅연동게임','Chat game label incorrect');
     for(const id of ['gameMajoku','gameLadder','gameF1Racing','gameMultiDraw']){
       check(precedes(mini,tab(id))&&precedes(tab(id),tools),id+' not in mini-game group');
     }
-    for(const id of ['contentPlanner','toolTier','toolMatrix','toolRelations']){
+    for(const id of ['contentPlanner','toolTier','toolMatrix','toolRelations','memos']){
       check(precedes(tools,tab(id))&&precedes(tab(id),q('.nav-settings-divider')),id+' not in tools group');
     }
     if(tools.getAttribute('aria-expanded')==='false')tools.click();
     if(mini.getAttribute('aria-expanded')==='false')mini.click();
     tools.click();
-    check(!visible(tab('contentPlanner'))&&!visible(tab('toolTier'))&&visible(tab('gameMajoku')),'Tools collapse hides wrong buttons');
+    check(!visible(tab('contentPlanner'))&&!visible(tab('toolTier'))&&!visible(tab('memos'))&&visible(tab('gameMajoku')),'Tools collapse hides wrong buttons');
     tools.click();
     check(visible(tab('contentPlanner')),'Drawing did not reopen');
     mini.click();

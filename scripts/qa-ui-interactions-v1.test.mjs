@@ -35,7 +35,7 @@ test('feedback only animates changed, visible values; reduced motion is respecte
 
 test('production references the shared design layer and preserves existing event/drag owners',()=>{
   const index=read('index.html'),core=read('assets/app-core.js'),css=read('assets/ui-interactions-v1.css');
-  assert(index.includes('assets/ui-interactions-v1.css?v=3')&&index.includes('assets/ui-interactions-v1.js?v=2'));
+  assert(index.includes('assets/ui-interactions-v1.css?v=4')&&index.includes('assets/ui-interactions-v1.js?v=2'));
   assert(core.includes('highlightedGroup===id')&&core.includes('data-mws-ui-group')&&core.includes('highlightGroup(\'\');hideCalendarEventPreview()'));
   assert(core.includes('beginCalendarPointerEventDragV174(e,el)')&&core.includes('saveData(\'캘린더 복사 보관함 추가\')'));
   assert(css.includes('scale:1.02')&&css.includes('scale:.98!important')&&css.includes('@media (hover:hover) and (pointer:fine)'));

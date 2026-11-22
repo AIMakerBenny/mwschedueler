@@ -30,12 +30,12 @@ export function runPhase89AchievementNavigationShellAudit(){
   const gacha=index.indexOf('data-tab="gameMultiDraw"');
   const lastGame=index.indexOf('data-tab="gameMajoku"');
   const memo=index.indexOf('data-tab="memos"');
-  if(!(memo<achievement&&achievement<mini))issues.push('achievement entry must be below the notebook and above mini-games');
+  if(!(achievement<mini&&toolsDivider<memo))issues.push('achievement must remain above mini-games and notebook must follow tools');
   if(!(gacha<lastGame&&lastGame<toolsDivider))issues.push('chat game must follow Gacha in the mini-game group');
   if(!index.includes('data-tab="gameMajoku" title="채팅연동게임"')||!core.includes("gameMajoku:'채팅연동게임'"))issues.push('chat game visible name is incorrect');
   const settings=index.indexOf('class="nav-settings-divider"');
   if(!(mini<lastGame&&lastGame<toolsDivider&&toolsDivider<settings))issues.push('mini-game group must precede the tools group');
-  if(!tools.includes("tools:['contentPlanner','toolTier','toolMatrix','toolRelations']"))issues.push('drawing board does not collapse with tools');
+  if(!tools.includes("tools:['contentPlanner','toolTier','toolMatrix','toolRelations','memos']"))issues.push('drawing board does not collapse with tools');
   if(tools.includes("mini.before(d)")||tools.includes("anchor.insertAdjacentElement('afterend',mini)"))issues.push('obsolete tools-before-games reorder remains');
 
   const summary={phase:89,name:'achievement-navigation-shell',issues,warnings,pass:issues.length===0};

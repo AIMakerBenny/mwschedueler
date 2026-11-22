@@ -328,17 +328,20 @@ function enforceDrawingBoardLabelV176(){
   }
 }
 
-/* The legacy sidebar organizer moves the game divider after the notebook.
-   Re-anchor the standalone achievement entry and chat game after all loaders. */
+/* Keep the timeline/exhibition standalone and notebook in the tools group,
+   including after legacy sidebar organizers finish loading. */
 function enforceExhibitionNavigationV176(){
   const nav=document.querySelector('.nav-scroll');
   if(!nav)return;
   const button=id=>nav.querySelector('button[data-tab="'+id+'"]');
   const memo=button('memos'),achievement=button('achievements'),gacha=button('gameMultiDraw'),chat=button('gameMajoku');
   const timeline=button('careerTimeline');
-  if(memo&&timeline&&memo.nextElementSibling!==timeline)memo.after(timeline);
-  const beforeAchievement=timeline||memo;
+  const afterPosts=button('sniper')||button('posts');
+  if(afterPosts&&timeline&&afterPosts.nextElementSibling!==timeline)afterPosts.after(timeline);
+  const beforeAchievement=timeline||afterPosts;
   if(beforeAchievement&&achievement&&beforeAchievement.nextElementSibling!==achievement)beforeAchievement.after(achievement);
+  const lastTool=button('toolRelations')||button('toolMatrix')||button('toolTier')||button('contentPlanner');
+  if(memo&&lastTool&&lastTool.nextElementSibling!==memo)lastTool.after(memo);
   if(gacha&&chat&&gacha.nextElementSibling!==chat)gacha.after(chat);
   if(chat){
     if(chat.title!=='채팅연동게임')chat.title='채팅연동게임';

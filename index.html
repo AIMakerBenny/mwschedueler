@@ -159,9 +159,6 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
         <button data-tab="sniper" title="최근 합방 인원" hidden style="display:none!important">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M7 6h10M7 18h10M6 8v8m12-8v8M9 12h6"/></svg></span><span class="nav-label">최근 합방 인원</span>
         </button>
-        <button data-tab="memos" title="수첩">
-          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5zM8 9h8M8 13h8M8 17h5"/></svg></span><span class="nav-label">수첩</span>
-        </button>
         <button data-tab="careerTimeline" title="타임라인">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M6 3v18m0-15h8M6 13h11"/><circle cx="16" cy="6" r="2"/><circle cx="19" cy="13" r="2"/></svg></span><span class="nav-label">타임라인</span>
         </button>
@@ -190,6 +187,9 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
         <button type="button" data-tab="toolTier" title="티어 게임"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 5h16v4H4zM4 10h16v4H4zM4 15h16v4H4z"/></svg></span><span class="nav-label">티어 게임</span></button>
         <button type="button" data-tab="toolMatrix" title="2D Matrix Chart"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4zM4 12h16M12 4v16"/></svg></span><span class="nav-label">2D Matrix Chart</span></button>
         <button type="button" data-tab="toolRelations" title="인물 관계도"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 14h6v6h-6zM9 11l4 2"/></svg></span><span class="nav-label">인물 관계도</span></button>
+        <button data-tab="memos" title="수첩">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5zM8 9h8M8 13h8M8 17h5"/></svg></span><span class="nav-label">수첩</span>
+        </button>
         <div class="nav-settings-divider" aria-hidden="true"></div>
         <button data-tab="legacy" title="레거시">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16v5H4zM5 9v11h14V9M9 13h6"/></svg></span><span class="nav-label">레거시</span>
@@ -204,7 +204,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
     </div>
     <script>
     // Restore group visibility before first paint, independently of late tool runtimes.
-    (()=>{const nav=document.querySelector('.nav-scroll'),key='mws-sidebar-nav-groups-v2',groups={tools:['contentPlanner','toolTier','toolMatrix','toolRelations'],games:['gameMajoku','gameLadder','gameRps','gameF1Racing','gamePachinko','gameMultiDraw']};let prefs={tools:false,games:false};try{const saved=JSON.parse(localStorage.getItem(key)||'null');for(const k of Object.keys(prefs))if(typeof saved?.[k]==='boolean')prefs[k]=saved[k]}catch(_){}for(const [group,tabs] of Object.entries(groups)){const divider=nav.querySelector('[data-mws-nav-group="'+group+'"]'),label=divider.querySelector('em').textContent;const apply=()=>{const open=prefs[group];divider.classList.toggle('collapsed',!open);divider.setAttribute('aria-expanded',String(open));divider.title=label+' '+(open?'접기':'펼치기');for(const tab of tabs)nav.querySelector('[data-tab="'+tab+'"]')?.classList.toggle('mws-nav-group-hidden',!open)};const toggle=()=>{prefs[group]=!prefs[group];try{localStorage.setItem(key,JSON.stringify(prefs))}catch(_){}apply()};divider.onclick=toggle;divider.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}};apply()}window.__mwsSidebarGroupsInitial=true;let pending=0;nav.addEventListener('click',e=>{const token=++pending,b=e.target.closest('button[data-tab]'),tab=b?.dataset.tab;if(!groups.tools.includes(tab))return;const ready=()=>tab==='contentPlanner'?typeof window.mwsOpenDrawingBoardV1==='function':typeof window.mwsCleanToolsActivate==='function';if(ready())return;e.preventDefault();e.stopImmediatePropagation();let tries=0;const retry=()=>{if(token!==pending)return;if(ready())b.click();else if(++tries<100)setTimeout(retry,100)};retry()},true)})();
+    (()=>{const nav=document.querySelector('.nav-scroll'),key='mws-sidebar-nav-groups-v2',groups={tools:['contentPlanner','toolTier','toolMatrix','toolRelations','memos'],games:['gameMajoku','gameLadder','gameRps','gameF1Racing','gamePachinko','gameMultiDraw']};let prefs={tools:false,games:false};try{const saved=JSON.parse(localStorage.getItem(key)||'null');for(const k of Object.keys(prefs))if(typeof saved?.[k]==='boolean')prefs[k]=saved[k]}catch(_){}for(const [group,tabs] of Object.entries(groups)){const divider=nav.querySelector('[data-mws-nav-group="'+group+'"]'),label=divider.querySelector('em').textContent;const apply=()=>{const open=prefs[group];divider.classList.toggle('collapsed',!open);divider.setAttribute('aria-expanded',String(open));divider.title=label+' '+(open?'접기':'펼치기');for(const tab of tabs)nav.querySelector('[data-tab="'+tab+'"]')?.classList.toggle('mws-nav-group-hidden',!open)};const toggle=()=>{prefs[group]=!prefs[group];try{localStorage.setItem(key,JSON.stringify(prefs))}catch(_){}apply()};divider.onclick=toggle;divider.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}};apply()}window.__mwsSidebarGroupsInitial=true;let pending=0;nav.addEventListener('click',e=>{const token=++pending,b=e.target.closest('button[data-tab]'),tab=b?.dataset.tab;if(tab==='memos'||!groups.tools.includes(tab))return;const ready=()=>tab==='contentPlanner'?typeof window.mwsOpenDrawingBoardV1==='function':typeof window.mwsCleanToolsActivate==='function';if(ready())return;e.preventDefault();e.stopImmediatePropagation();let tries=0;const retry=()=>{if(token!==pending)return;if(ready())b.click();else if(++tries<100)setTimeout(retry,100)};retry()},true)})();
     </script>
     <div id="pageTextScaleControlV54" class="page-text-control-v54" role="group" aria-label="현재 페이지 글자 크기" title="현재 페이지의 글자 크기만 조절합니다. 개인 브라우저에 저장됩니다.">
       <button type="button" class="ghost" onclick="adjustPageTextScaleV54(-5)" title="현재 페이지 글자 작게" aria-label="현재 페이지 글자 작게">A−</button>
@@ -5041,9 +5041,11 @@ body.mws-premium #mwsAccessGate .mws-login-title{font-size:22px!important;margin
 </style>
 <script src="assets/announcement-carousel-v1.js?v=3"></script>
 <script defer src="assets/career-visualizer.js?v=15"></script>
-<link rel="stylesheet" href="assets/ui-interactions-v1.css?v=3">
+<link rel="stylesheet" href="assets/ui-interactions-v1.css?v=4">
 <script src="assets/ui-interactions-v1.js?v=2"></script>
 <link rel="stylesheet" href="assets/content-applications-v1.css?v=4">
 <script type="module" src="assets/content-applications-v2.js?v=4"></script>
+<link rel="stylesheet" href="assets/calendar-day-expand-v1.css?v=1">
+<script src="assets/calendar-day-expand-v1.js?v=1"></script>
 </body>
 </html>
