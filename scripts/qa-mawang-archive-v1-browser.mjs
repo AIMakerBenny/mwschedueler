@@ -10,7 +10,7 @@ try{
   const data=read('assets/mawang-archive-data-v1.js').replace(/image:portraits\[id\]\?[^,]+,/,'image:'+JSON.stringify(svg)+',');
   const runtime=read('assets/mawang-archive-v1.js').replace("'/media/mawang-profile/'+p.character+'?rev='+p.revision",JSON.stringify(svg+'#profile-')+'+p.revision');
   const mock=`let serial=2,profiles={mi:{character:'mi',revision:'123-abcd'}};window.fetch=async(url,opts={})=>{if(url==='/api/mawang-profile')return new Response(JSON.stringify({profiles:Object.values(profiles)}));if(url.includes('/mawang-profile/')){let character=url.split('/').pop();if(opts.method==='PUT'){let profile={character,revision:String(++serial)+'-abcd'};profiles[character]=profile;return new Response(JSON.stringify({profile}))}if(opts.method==='DELETE'){delete profiles[character];return new Response(JSON.stringify({ok:true}))}}throw Error('Unexpected endpoint '+url)};window.confirm=()=>true;`;
-  const html='<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>'+read('assets/app-core.css')+'\n'+read('assets/mawang-archive-v1.css')+'\n@media(min-width:1000px){.main{margin-left:190px}}'+'</style><main class="main"><div style="height:76px"></div><section class="section active" id="mawangArchive"><div class="mawang-archive" id="mwsArchiveRoot"></div></section></main><script>'+mock+'</script><script>'+data+'</script><script>'+runtime+'</script>';
+  const html='<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>'+read('assets/app-core.css')+'\n'+read('assets/mawang-archive-v1.css')+'\n@media(min-width:1000px){.main{margin-left:190px;width:calc(100% - 190px)!important}}'+'</style><main class="main"><div style="height:76px"></div><section class="section active" id="mawangArchive"><div class="mawang-archive" id="mwsArchiveRoot"></div></section></main><script>'+mock+'</script><script>'+data+'</script><script>'+runtime+'</script>';
   const file=path.join(tmp,'archive.html');writeFileSync(file,html);
   browser=await launchCalendarBrowser(tmp);
   for(const [width,height,mobile] of [[1366,768,false],[1920,911,false],[1920,1080,false],[2560,1440,false],[2560,1080,false],[390,844,true],[844,390,true]]){
@@ -24,7 +24,7 @@ try{
       check(collect().slice(0,6).join(',')==='유정,다정,백수정,흑수정,반반수정,애정','requested order');rewind();
       check(q('[data-ma-step="-1"]').disabled&&!q('[data-ma-step="1"]').disabled&&q('.ma-pagination').textContent.startsWith('1 / '),'visible previous/next pages');
       const next=q('[data-ma-step="1"]'),nextRect=next.getBoundingClientRect(),hit=document.elementFromPoint(nextRect.x+nextRect.width/2,nextRect.y+nextRect.height/2);
-      check(nextRect.width>=36&&nextRect.height>=44&&hit?.closest('button')===next,'next page is a visible and unobstructed click target');
+      check(nextRect.width>=36&&nextRect.height>=44&&hit?.closest('button')===next,'next page is a visible and unobstructed click target '+JSON.stringify({width:innerWidth,height:innerHeight,rect:nextRect,hit:hit?.className}));
       check(names().length===13&&names().includes('꼬뫙')&&names().at(-1)==='금미정','page one contains all Jeong avatars');
       next.click();check(q('.ma-pagination').textContent==='2 / 2 페이지 · 클래식'&&names().length===14&&names()[0]==='하카'&&!names().includes('꼬뫙'),'page two contains all classic avatars');q('[data-ma-step="-1"]').click();
       await new Promise(r=>setTimeout(r,340));check(q('.ma-roster-grid').scrollWidth<=q('.ma-roster-grid').clientWidth+1,'no horizontal scrolling');
