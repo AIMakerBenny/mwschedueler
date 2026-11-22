@@ -1,0 +1,14 @@
+/* The sidebar shell is sized before first paint; only the menu list scrolls. */
+@media(min-width:761px){
+  html body:not([data-resolution=mobile]) .app>.sidebar{overflow:clip!important;overscroll-behavior:none}
+  html body:not([data-resolution=mobile]) .app>.sidebar>.sidebar-head{flex:0 0 58px!important;min-height:58px!important;max-height:58px!important}
+  html body:not([data-resolution=mobile]) .app>.sidebar>.nav{flex:1 1 0!important;height:auto!important;min-height:0!important;overflow:clip!important}
+  html body:not([data-resolution=mobile]) .sidebar>.nav>.nav-scroll{flex:1 1 auto;min-height:0;overflow-y:auto!important;overscroll-behavior:contain;overflow-anchor:none}
+  html body.mws-app-loading:not([data-resolution=mobile]) :is(.app,.sidebar,.sidebar-head,.nav,.nav-scroll){transition:none!important;animation:none!important}
+}
+/* Admin geometry may be reserved during remembered-session verification, but
+   controls are never visible or interactive before authentication succeeds. */
+html body.mws-app-loading[data-sidebar-boot-mode=admin][data-mws-mode=public] #mwsBuildVersion{display:block!important;visibility:hidden;pointer-events:none}
+html body.mws-app-loading[data-sidebar-boot-mode=admin][data-mws-mode=public] :is(#mwsSidebarSaveBtn,#mwsStationVisitBtnV110)[hidden]{display:flex!important;visibility:hidden;pointer-events:none}
+#mwsStationVisitBtnV110{margin-top:4px!important;margin-bottom:4px!important}
+#mwsStationVisitBtnV110 .sidebar-save-icon-v572 svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}

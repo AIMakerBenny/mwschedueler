@@ -2017,6 +2017,7 @@ function renderCalendar(){
   ensureCalendarYearOptions();
   const y=calDate.getFullYear(),m=calDate.getMonth();
   document.getElementById('monthLabel').textContent=new Intl.DateTimeFormat('ko-KR',{month:'long',year:'numeric'}).format(calDate);
+  window.mwsCalendarHistoricalV1?.render(calDate,activeEvents());
   const first=new Date(y,m,1),offset=sundayIndex(first.getDay()),start=new Date(y,m,1-offset);let out='';
   const groupColors=new Map((data.contentGroups||[]).map(g=>[g.id,g.color]));
   const eventsByDate=new Map();
@@ -2039,7 +2040,7 @@ function renderCalendar(){
       <div class="calendar-day-events-v2" tabindex="0" aria-label="${ds} 일정 ${evs.length}개">${evs.map(e=>{
         const groupColor=groupColors.get(e.contentGroupId);
         const color=e.restDay?'#e85d75':(groupColor||e.color||category(e.categoryId)?.color||'#64748b');
-        const startLabel=e.start&&e.start!=='TBD'?String(e.start).slice(0,5):'미정';
+        const startLabel=e.start&&e.start!=='TBD'?String(e.start).slice(0,5):e.historicalRecord?.basis==='publication'?'공개':e.historicalRecord?.basis==='announcement'?'공지':'미정';
         const label=e.restDay?'휴방':`<time class="calendar-start-v2">${esc(startLabel)}</time><span class="calendar-card-title-v2">${esc(e.title)}</span>`;
         const isVR=!e.restDay&&e.device==='VR';
         return `<div class="mini-event ${e.restDay?'rest-event':''} ${groupColor?'calendar-content-group-event-v2':''} ${e.restDay?'':'mws-steam-host-v111'}${isVR?' calendar-event-vr-v1':''}"

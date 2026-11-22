@@ -1,0 +1,10 @@
+#calendarHistoricalMonthV1[hidden]{display:none!important}
+#calendarHistoricalMonthV1{position:relative;flex:none;color:var(--text);z-index:12}
+#calendarHistoricalMonthV1 summary{list-style:none;cursor:pointer;font-size:11px;padding:7px 9px;border:1px solid var(--border);border-radius:8px;background:var(--panel);white-space:nowrap}
+#calendarHistoricalMonthV1 summary::-webkit-details-marker{display:none}
+#calendarHistoricalMonthV1 summary span{color:var(--accent);font-weight:750}
+#calendarHistoricalMonthV1[open] summary{border-color:var(--accent)}
+#calendarHistoricalMonthV1 .calendar-historical-popover-v1{position:absolute;right:0;top:calc(100% + 7px);width:min(360px,80vw);max-height:45vh;overflow:auto;padding:8px;border:1px solid var(--border);border-radius:12px;background:var(--panel);box-shadow:0 10px 30px #0006}
+#calendarHistoricalMonthV1 article{padding:9px;border-bottom:1px solid var(--border);display:grid;gap:4px}
+#calendarHistoricalMonthV1 article:last-child{border:0}
+#calendarHistoricalMonthV1 strong{font-size:13px}#calendarHistoricalMonthV1 p,#calendarHistoricalMonthV1 small{font-size:11px;color:var(--muted);margin:0}#calendarHistoricalMonthV1 a{color:var(--accent)}

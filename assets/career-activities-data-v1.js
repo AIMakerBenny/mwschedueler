@@ -186,7 +186,7 @@
 2026-10|event|SBO 세구 베이스볼 온라인|무파 자이언츠 포수 · VRChat 야구|a
 2026-10-25|server|워독스 마왕 한국 서버 재오픈|공식 방송국에서 재개를 공지|p||announcement
 2026-11|game|와우 포에버|월드 오브 워크래프트 방송|p||record`;
-  window.mwsCareerActivitiesDataV1=Object.freeze(raw.split('\n').map(line=>{
+  (typeof window==='object'?window:globalThis).mwsCareerActivitiesDataV1=Object.freeze(raw.split('\n').map(line=>{
     const [date,kind,title,context,source,end='',basis='event']=line.split('|');
     const ref=sources[source]||[source.includes('youtube.com')?'공식 유튜브 영상':source.includes('pick.sooplive.com')?'SOOP PICK · 보도': '콘텐츠 제작자 기록',source];
     return Object.freeze({date,kind,title,context,source:ref[0],url:ref[1],end,basis,origin:'archive'});

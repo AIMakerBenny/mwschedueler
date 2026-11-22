@@ -4,12 +4,12 @@
   if (!source) return;
   let controller;
   const activation = () => {
-    if (section.classList.contains('active') && section.dataset.careerView !== 'activities') {
+    if (section.classList.contains('active')) {
       if (!controller) controller = mount();
       else controller.resize();
     } else controller?.suspend();
   };
-  new MutationObserver(activation).observe(section,{attributes:true,attributeFilter:['class','data-career-view']});
+  new MutationObserver(activation).observe(section,{attributes:true,attributeFilter:['class']});
   activation();
 
   function mount() {
@@ -257,6 +257,9 @@
     const toolbar=node('div','cv-toolbar');
     const info=node('div','cv-summary');
     const count=node('strong','',rows.length+'개 기록');info.append(count);
+    const prev=button('cv-step','‹',()=>stepRecord(-1)),next=button('cv-step','›',()=>stepRecord(1));
+    prev.title='이전 업적';next.title='다음 업적';prev.setAttribute('aria-label',prev.title);next.setAttribute('aria-label',next.title);
+    info.append(prev,next);
     const searchBox=node('div','cv-searchbox');
     const query=node('input','cv-search');
     query.type='search'; query.placeholder='전체 기록 검색'; query.setAttribute('aria-label','전체 타임라인 검색');
@@ -288,7 +291,7 @@
     const axis=node('div','cv-axis'); axis.setAttribute('role','region');axis.setAttribute('aria-label','연속 업적 타임라인');
     const legacy=node('section','cv-legacy'); legacy.setAttribute('aria-label','기타 기록');
     const empty=node('div','cv-empty','검색 결과가 없습니다.');empty.hidden=true;
-    panel.id='careerAchievementsPanelV1';panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby','careerAchievementsTabV1');
+    panel.id='careerAchievementsPanelV1';panel.setAttribute('role','region');panel.setAttribute('aria-label','업적 타임라인');
     panel.append(barHost,empty,axis,legacy);section.append(panel);source.hidden=true;
 
     const entries=new Map(), markers=new Map(), yearButtons=new Map(), anim=[], months=[];
@@ -341,6 +344,7 @@
       if(detailsTags.length)detail.append(node('small','',detailsTags.join(' · ')));
       card.append(summary,detail);entry.append(card);entries.set(r.id,entry);
       if(r.year!=='레거시')anim.push(entry);
+      summary.addEventListener('click',()=>markSelected(r));
       card.addEventListener('toggle',()=>{schedule();detail.getAnimations?.().forEach(animation=>animation.cancel());if(card.open&&!reduced()&&!entry.hidden&&detail.animate){detail.animate([{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'translateY(0)'}],{duration:260,easing:'ease-out'});}});
       return entry;
     }
@@ -374,7 +378,9 @@
           const card=makeCard(record);
           card.classList.add(ordinal++%2===0?'cv-left':'cv-right');
           pair.append(card);
-          pair.append(node('i','cv-junction'));
+          const junction=button('cv-junction','',()=>{choose(record);card.querySelector('details').open=true;});
+          junction.title=record.name+' 상세 보기';junction.setAttribute('aria-label',junction.title);junction.setAttribute('aria-pressed','false');
+          pair.append(junction);
           if(record.results.length){pair.classList.add('cv-has-outcomes');pair.append(makeOutcomeBranch(record));}
           month.append(pair);
         }
@@ -496,11 +502,20 @@
         return r.terms.includes(t);
       }));
     }
-    function choose(r){
-      results.hidden=true;toggle.setAttribute('aria-expanded','false');
-      if(selected)entries.get(selected.id)?.removeAttribute('data-selected');
+    function markSelected(r){
+      if(selected){const old=entries.get(selected.id);old?.removeAttribute('data-selected');old?.parentElement.querySelector('.cv-junction')?.setAttribute('aria-pressed','false');}
       selected=r;
-      const entry=entries.get(r.id);entry.dataset.selected='true';jump(entry,true);
+      if(r){const entry=entries.get(r.id);entry.dataset.selected='true';if(entry.parentElement.classList.contains('cv-pair'))entry.parentElement.querySelector('.cv-junction')?.setAttribute('aria-pressed','true');}
+      const list=matches(),i=list.findIndex(x=>x.id===r?.id);prev.disabled=!list.length||i===0;next.disabled=!list.length||i===list.length-1;
+      count.title=r?.name||'';
+    }
+    function choose(r){
+      results.hidden=true;toggle.setAttribute('aria-expanded','false');markSelected(r);jump(entries.get(r.id),true);
+    }
+    function stepRecord(direction){
+      const list=matches();if(!list.length)return;
+      const i=list.findIndex(r=>r.id===selected?.id);const record=list[i<0?(direction>0?0:list.length-1):Math.max(0,Math.min(list.length-1,i+direction))];
+      choose(record);
     }
     function filterTimeline(list){
       const ids=list&&new Set(list.map(r=>r.id));
@@ -531,7 +546,7 @@
     function renderSearch(){
       const list=matches();
       panel.classList.add('cv-searching');
-      if(selected)entries.get(selected.id)?.removeAttribute('data-selected');selected=null;
+      markSelected(null);
       filterTimeline(list);
       toggle.hidden=false;clear.hidden=false;toggle.textContent='목록';toggle.setAttribute('aria-expanded','false');
       results.replaceChildren(node('div','cv-result-count','검색 결과 '+list.length+'건'));
@@ -554,7 +569,7 @@
       const origin=searchOrigin;
       query.value='';results.hidden=true;toggle.hidden=true;clear.hidden=true;panel.classList.remove('cv-searching');
       toggle.setAttribute('aria-expanded','false');
-      if(selected)entries.get(selected.id)?.removeAttribute('data-selected');selected=null;
+      markSelected(null);
       filterTimeline(null);
       if(restore&&origin!==null){
         scrollRoot=getRoot();snapNext=true;setScroll(origin);

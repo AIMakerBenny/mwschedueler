@@ -1,5 +1,6 @@
 import appWorker from './cf-v110-steam.js';
 import {normalizeCampaigns} from '../assets/content-applications-model-v1.js';
+import {ensureHistoricalCalendarMigration} from './historical-calendar-migration-v1.js';
 
 const PARTS=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook','wardogs'];
 const CALENDAR_STARTUP_PARTS=['core','events','contacts','clipboard','activity','notebook','contactMeta'];
@@ -58,6 +59,7 @@ async function ensureSchema(env){
     ]).catch(error=>{schemaPromise=undefined;throw error});
   }
   await schemaPromise;
+  await ensureHistoricalCalendarMigration(env);
 }
 
 async function currentAdmin(request,env){

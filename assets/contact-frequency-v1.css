@@ -15,7 +15,20 @@
 #contactFrequency :is(.cf-legend,.cf-month-values) span{display:inline-flex;align-items:center;gap:6px}
 #contactFrequency :is(.cf-legend,.cf-month-values) i{width:9px;height:9px;border-radius:50%;background:var(--cf-color);flex:none}
 #contactFrequency :is(.cf-legend,.cf-month-values) b{color:var(--text);font-variant-numeric:tabular-nums}
-#contactFrequency .cf-chart{overflow-x:auto;min-height:110px;scrollbar-gutter:stable}
+#contactFrequency .cf-chart{position:relative;overflow-x:auto;min-height:110px;scrollbar-gutter:stable}
+#contactFrequency .cf-month-target{fill:transparent;cursor:pointer;outline:none}
+#contactFrequency .cf-month-target:focus-visible{fill:color-mix(in srgb,var(--accent) 7%,transparent);stroke:var(--accent);stroke-dasharray:3 3}
+#contactFrequency .cf-month-marker{stroke:var(--accent);stroke-width:1;stroke-dasharray:4 4;opacity:0;pointer-events:none;transition:opacity 100ms}
+#contactFrequency .cf-month-marker.cf-current{opacity:.85}
+#contactFrequency circle.cf-current{r:6;stroke-width:2}
+#contactFrequency .cf-tooltip{position:absolute;top:8px;z-index:2;display:grid;gap:7px;width:max-content;max-width:calc(100% - 12px);padding:10px 12px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border));background:var(--panel);border-radius:10px;box-shadow:0 8px 22px #0003;pointer-events:none;font-size:12px;color:var(--text);animation:cf-appear 120ms ease-out}
+#contactFrequency .cf-tooltip[hidden]{display:none!important}
+#contactFrequency .cf-tooltip span{display:flex;align-items:center;gap:6px;white-space:nowrap}
+#contactFrequency .cf-tooltip i{width:8px;height:8px;border-radius:50%;background:var(--cf-color);flex:none}
+#contactFrequency .cf-tooltip b{margin-left:auto;padding-left:12px;font-variant-numeric:tabular-nums}
+@keyframes cf-appear{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){#contactFrequency :is(.cf-tooltip,.cf-month-marker){animation:none;transition:none}}
+html[data-mws-motion=reduced] #contactFrequency :is(.cf-tooltip,.cf-month-marker){animation:none;transition:none}
 #contactFrequency .cf-chart svg{display:block;min-width:100%;max-width:none;flex:none}
 #contactFrequency .cf-chart text{font-size:10px;fill:var(--muted);font-variant-numeric:tabular-nums}
 #contactFrequency .cf-gridline{stroke:var(--border);stroke-width:1;stroke-dasharray:3 4}

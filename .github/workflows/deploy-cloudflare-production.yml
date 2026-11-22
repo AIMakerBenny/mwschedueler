@@ -46,7 +46,7 @@ jobs:
           node --test scripts/qa-calendar-people-view-v1.test.mjs
           node scripts/qa-calendar-people-view-v1-browser.mjs
 
-      - name: Verify historical activity archive and timeline tabs
+      - name: Verify historical calendar migration and timeline interactions
         run: |
           node --test scripts/qa-career-activities-v1.test.mjs
           node scripts/qa-career-activities-v1-browser.mjs
