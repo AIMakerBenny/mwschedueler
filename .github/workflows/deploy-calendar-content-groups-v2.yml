@@ -11,6 +11,9 @@ on:
       - 'assets/calendar-details-v1.css'
       - 'assets/ui-interactions-v1.css'
       - 'assets/ui-interactions-v1.js'
+      - 'assets/mawang-archive-*.js'
+      - 'assets/mawang-archive-v1.css'
+      - 'scripts/qa-mawang-archive-*.mjs'
       - 'assets/content-applications-v1.js'
       - 'assets/content-applications-model-v1.js'
       - 'assets/content-applications-v1.css'
@@ -120,6 +123,10 @@ jobs:
         run: |
           node --test scripts/qa-content-applications-v1.test.mjs
           node scripts/qa-content-applications-v1-browser.mjs
+      - name: Verify MaWang character archive
+        run: |
+          node --test scripts/qa-mawang-archive-v1.test.mjs
+          node scripts/qa-mawang-archive-v1-browser.mjs
       - name: Calendar content group, hover and duration regression
         run: |
           node --test scripts/qa-ui-interactions-v1.test.mjs

@@ -8,7 +8,7 @@ import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 // gameplay. The companion local browser fixture exercises data changes.
 const base=(process.env.MWS_LIVE_BASE||'https://mawang-scheduler.majoku.workers.dev').replace(/\/$/,'');
 const sizes=[[1366,768,false],[1920,1080,false],[2560,1440,false],[2560,1080,false],[390,844,true],[844,390,true]];
-const routes=['dashboard','calendar','contacts','sniper','friendFinder','targets','posts','memos','careerTimeline','achievements','gameLadder','gameMultiDraw','gameMajoku','contentPlanner','toolTier','toolMatrix','toolRelations','legacy','wardogs','gameRps','gamePachinko','export','settings'];
+const routes=['dashboard','calendar','contacts','sniper','friendFinder','targets','posts','memos','careerTimeline','mawangArchive','achievements','gameLadder','gameMultiDraw','gameMajoku','contentPlanner','toolTier','toolMatrix','toolRelations','legacy','wardogs','gameRps','gamePachinko','export','settings'];
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(check,label,attempts=100){let last;for(let i=0;i<attempts;i++){try{last=await check();if(last)return last}catch(error){last=String(error)}await pause(120)}throw Error(label+': '+JSON.stringify(last))}
 const failures=[];
@@ -50,6 +50,10 @@ for(const [width,height,mobile] of sizes){
           await browser.evaluate(`document.getElementById('memoFavoritesTab').click()`);assert(await browser.evaluate(`document.getElementById('memoFavoritesView').classList.contains('active')`));await browser.evaluate(`document.getElementById('memoLibraryTab').click()`);
         }
         if(route==='careerTimeline')await until(()=>browser.evaluate(`!!document.querySelector('#careerTimeline .cv-map-year')`),'timeline runtime');
+        if(route==='mawangArchive'){
+          await until(()=>browser.evaluate(`document.querySelectorAll('#mawangArchive [data-ma-character]').length===23`),'character archive');
+          assert(await browser.evaluate(`(()=>{const r=document.getElementById('mwsArchiveRoot');r.querySelector('[data-ma-character="hina"]').click();if(r.querySelector('#maCharacterName').textContent!=='히나')return false;r.querySelector('[data-ma-filter="jeong"]').click();return r.querySelectorAll('[data-ma-character]').length===9&&r.querySelector('#maCharacterName').textContent==='유정'})()`),'archive selection and filter');
+        }
         if(route==='achievements')await until(()=>browser.evaluate(`!!document.querySelector('#achievements .achievement-card-open')`),'achievement gallery');
         if(route==='gameLadder')assert(await browser.evaluate(`!!document.getElementById('ladderWizardSteps')`));
         if(route==='friendFinder')await until(()=>browser.evaluate(`!!document.getElementById('friendFinderGridV5')`),'friend grid');

@@ -335,10 +335,11 @@ function enforceExhibitionNavigationV176(){
   if(!nav)return;
   const button=id=>nav.querySelector('button[data-tab="'+id+'"]');
   const memo=button('memos'),achievement=button('achievements'),gacha=button('gameMultiDraw'),chat=button('gameMajoku');
-  const timeline=button('careerTimeline');
+  const timeline=button('careerTimeline'),archive=button('mawangArchive');
   const afterPosts=button('sniper')||button('posts');
   if(afterPosts&&timeline&&afterPosts.nextElementSibling!==timeline)afterPosts.after(timeline);
-  const beforeAchievement=timeline||afterPosts;
+  if(timeline&&archive&&timeline.nextElementSibling!==archive)timeline.after(archive);
+  const beforeAchievement=archive||timeline||afterPosts;
   if(beforeAchievement&&achievement&&beforeAchievement.nextElementSibling!==achievement)beforeAchievement.after(achievement);
   const lastTool=button('toolRelations')||button('toolMatrix')||button('toolTier')||button('contentPlanner');
   if(memo&&lastTool&&lastTool.nextElementSibling!==memo)lastTool.after(memo);

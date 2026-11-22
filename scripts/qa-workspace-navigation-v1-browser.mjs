@@ -41,7 +41,7 @@ const test=()=>{
     check(mini.getAttribute('aria-expanded')==='false'&&tools.getAttribute('aria-expanded')==='false','New sidebar groups must start collapsed');
     check(!visible(tab('gameMajoku'))&&!visible(tab('contentPlanner')),'Collapsed groups still show items');
     const precedes=(a,b)=>Boolean(a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING);
-    check(tab('careerTimeline').nextElementSibling===tab('achievements')&&precedes(tab('achievements'),mini),'Achievements must remain outside mini-games');
+    check(tab('careerTimeline').nextElementSibling===tab('mawangArchive')&&tab('mawangArchive').nextElementSibling===tab('achievements')&&precedes(tab('achievements'),mini),'Timeline, archive and achievements must remain outside mini-games');
     check(tab('gameMultiDraw').nextElementSibling===tab('gameMajoku'),'Chat game must follow Gacha');
     check(tab('gameMajoku').title==='채팅연동게임'&&tab('gameMajoku').querySelector('.nav-label').textContent==='채팅연동게임','Chat game label incorrect');
     for(const id of ['gameMajoku','gameLadder','gameF1Racing','gameMultiDraw']){
