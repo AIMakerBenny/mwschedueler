@@ -16,8 +16,8 @@
 body[data-calendar-startup="pending"] #calendarGrid{position:relative;min-height:clamp(240px,60vh,650px)}
 body[data-calendar-startup="pending"] #calendarGrid:empty::before{content:'일정을 불러오는 중입니다';grid-column:1/-1;align-self:center;justify-self:center;color:var(--muted,#9ca3af);font-size:13px}
 </style>
-<link rel="stylesheet" href="assets/mawang-cursor-v1.css?v=2">
-<script defer src="assets/mawang-cursor-v1.js?v=2"></script>
+<link rel="stylesheet" href="assets/mawang-cursor-v1.css?v=3">
+<script defer src="assets/mawang-cursor-v1.js?v=3"></script>
 <link rel="stylesheet" href="assets/legacy-hub-v1.css?v=1">
 <link rel="stylesheet" href="assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171-searchtab172-drag174-workspace176-splitquick177&f1feedback303=1&charcoal=1&dashboardnav=1">
 <link rel="stylesheet" href="assets/calendar-broadcast-duration-v1.css?v=1">
@@ -2005,6 +2005,23 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
             <label class="mws-cursor-size"><input type="radio" name="mwsCursorSize" value="32">작게 · 32px</label>
             <label class="mws-cursor-size"><input type="radio" name="mwsCursorSize" value="48" checked>보통 · 48px</label>
             <label class="mws-cursor-size"><input type="radio" name="mwsCursorSize" value="64">크게 · 64px</label>
+          </div>
+          <div class="mws-cursor-extra" data-cursor-colors hidden>
+            <label class="muted small" for="mwsCursorColor">로고 포인트 색상</label>
+            <div class="mws-cursor-palette">
+              <button type="button" data-cursor-color="#f8dce9" style="--swatch:#f8dce9" aria-label="원본 핑크" title="원본 핑크"></button>
+              <button type="button" data-cursor-color="#ffffff" style="--swatch:#ffffff" aria-label="화이트" title="화이트"></button>
+              <button type="button" data-cursor-color="#75b5ff" style="--swatch:#75b5ff" aria-label="블루" title="블루"></button>
+              <button type="button" data-cursor-color="#83e5c2" style="--swatch:#83e5c2" aria-label="민트" title="민트"></button>
+              <button type="button" data-cursor-color="#c0a0ff" style="--swatch:#c0a0ff" aria-label="퍼플" title="퍼플"></button>
+              <button type="button" data-cursor-color="#ffd477" style="--swatch:#ffd477" aria-label="골드" title="골드"></button>
+              <input type="color" id="mwsCursorColor" name="mwsCursorColor" value="#f8dce9" aria-label="직접 색상 선택" title="직접 색상 선택">
+            </div>
+            <span class="muted small">MW와 0216의 색상을 각각 저장합니다. 화살표는 흰색으로 유지됩니다.</span>
+          </div>
+          <div class="mws-cursor-extra" data-cursor-play hidden>
+            <label class="mws-cursor-play-label"><input type="checkbox" name="mwsCursorPlay" checked>움짤 재생</label>
+            <span class="muted small">화면 모션 설정과 별도로 재생합니다.</span>
           </div>
           <div data-cursor-test>이곳에 마우스를 올려 포인터를 확인하세요.</div>
         </div>
