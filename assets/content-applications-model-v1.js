@@ -19,6 +19,11 @@ export function parsePostUrl(raw){
   }catch{return null}
 }
 function imageUrl(v){try{const u=new URL(String(v||'').replace(/^\/\//,'https://'));return u.protocol==='https:'&&['profile.img.sooplive.co.kr','profile.img.afreecatv.com','stimg.sooplive.co.kr','stimg.afreecatv.com'].includes(u.hostname)?u.href:''}catch{return ''}}
+export function commentPermalink(entry){
+  const source=parsePostUrl(entry?.url);if(!source)return '';
+  const no=String(entry?.commentNo??'');
+  return /^\d{1,24}$/.test(no)?source.url+'#comment_noti'+no:source.url;
+}
 export function normalizeEntry(raw){
   const parsed=parsePostUrl(raw?.url);if(!parsed)return null;
   const checkedAt=iso(raw.checkedAt),userId=text(raw.userId,40).toLowerCase();

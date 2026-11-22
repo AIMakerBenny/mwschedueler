@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {parsePostUrl,parsePostMetadata,normalizeCampaigns,parseCommentPage,uniqueApplicants,rankEntries,countdown,fromKstInput,toKstInput} from '../assets/content-applications-model-v1.js';
+import {parsePostUrl,commentPermalink,parsePostMetadata,normalizeCampaigns,parseCommentPage,uniqueApplicants,rankEntries,countdown,fromKstInput,toKstInput} from '../assets/content-applications-model-v1.js';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const url=(id,no)=>`https://www.sooplive.com/station/${id}/post/${no}`;
 const e=(id,no,likes)=>({...parsePostUrl(url(id,no)),userId:id,nickname:id,likes,checkedAt:'2026-11-22T00:00:00.000Z'});
@@ -34,8 +34,16 @@ test('recruitment comments use like_cnt, pinned duplicates and multiple pages ne
  assert.equal(first.pages,2);assert.equal(rows.length,4);assert.equal(r.mawang.likes,41);assert.equal(r.ownRank,2);assert.equal(r.leader.likes,50);assert.equal(r.mawang.comment,'신청& 어필');assert.equal(r.mawang.commentNo,'2');assert(!rows.some(e=>e.userId==='host'));assert.equal(r.known,3);assert.equal(r.allKnown,false);
  assert.throws(()=>parseCommentPage({data:[]},source));assert.equal(parseCommentPage({meta:{current_page:1,last_page:1,total:0},data:[]},source).applicants.length,0);
 });
+test('comment links target the verified SOOP comment ID, with a safe source fallback',()=>{
+ const source=url('wjdfogur98','213215761');
+ assert.equal(commentPermalink({url:source,commentNo:'125370759'}),source+'#comment_noti125370759');
+ assert.equal(commentPermalink({url:source+'#comment_noti1',commentNo:'125370759'}),source+'#comment_noti125370759');
+ assert.equal(commentPermalink({url:source,commentNo:'1?bad'}),source);
+ assert.equal(commentPermalink({url:source}),source);
+ assert.equal(commentPermalink({url:'https://example.com',commentNo:'123'}),'');
+});
 test('production entry and cloud contract share the campaign core key without changing other fields',()=>{
- const html=read('index.html');assert(html.indexOf('data-tab="contentApplications"')<html.indexOf('data-tab="posts"'));assert(html.includes('id="contentApplications"'));assert(html.includes('content-applications-v2.js?v=2'));
+ const html=read('index.html');assert(html.indexOf('data-tab="contentApplications"')<html.indexOf('data-tab="posts"'));assert(html.includes('id="contentApplications"'));assert(html.includes('content-applications-v2.js?v=3'));
  for(const p of ['assets/cloud-v1.1.js','assets/cloud-runtime-v130.js','src/cf-v111-auth.js']){const keys=read(p).match(/const CORE_KEYS\s*=\s*(\[[^\]\n]+\])/)[1];assert(keys.includes("'contentApplications'"));assert(keys.includes("'achievementCards'"));assert(keys.includes("'contentGroups'"))}
  const server=read('src/cf-v111-auth.js');assert(server.includes('source.contentApplications=previousCore.contentApplications'));assert(server.includes("key==='contentApplications'?normalizeCampaigns(src[key]):src[key]"));
  const ui=read('assets/content-applications-v2.js');assert(ui.includes('data.contentApplications=normalizeCampaigns(rows)'));assert(ui.includes('window.mwsV55SaveNow()'));assert(ui.includes('document.body.dataset.mwsMode===\'admin\''));assert(!ui.includes('method:\'POST\''));
