@@ -1038,7 +1038,7 @@ function renderDashboard(){
 
   const dashboard=document.getElementById('dashboard');
   dashboard?.classList.remove('dashboard-upcoming-hidden');
-  if(dashboard)dashboard.dataset.upcomingCount=String(up.length);
+  dashboard?.setAttribute?.('data-upcoming-count',String(up.length));
   const summary=document.getElementById('upcomingDashboardSummary');
   if(summary)summary.textContent=`예정 컨텐츠 ${up.length}개`;
   const count=document.getElementById('upcomingDashboardCount');

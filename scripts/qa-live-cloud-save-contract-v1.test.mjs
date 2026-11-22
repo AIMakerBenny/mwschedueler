@@ -75,6 +75,7 @@ test('dashboard and shared action have one responsive layout owner; sidebar defa
  assert(html.includes("key='mws-sidebar-nav-groups-v2'")&&html.includes('let prefs={tools:false,games:false}'));
  assert(tools.includes("NAV_GROUP_PREFS_KEY='mws-sidebar-nav-groups-v2'")&&tools.includes('const out={tools:false,games:false}'));
  assert(calendar.includes('body .main>.topbar #newEventBtn::before')&&calendar.includes('body .main>.topbar #newEventBtn{'));
+ assert(/id="newEventBtn" title="컨텐츠 추가" aria-label="컨텐츠 추가"><\/button>/.test(html));
  assert(!calendar.includes('body:has(#calendar.section.active) .main>.topbar #newEventBtn'));
  assert(style.includes('repeat(6,minmax(0,1fr))')&&style.includes('repeat(3,minmax(0,1fr))')&&style.includes('repeat(2,minmax(0,1fr))'));
  assert(!source('assets/content-planner-host.js').includes('#dashboard .dashboard-kpi-grid-local'));

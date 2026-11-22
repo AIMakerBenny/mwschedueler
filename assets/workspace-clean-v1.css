@@ -48,7 +48,7 @@ body.mws-premium:not(:has(#gameF1Racing.active)) .topbar .clock{
 }
 body.mws-premium:not(:has(#gameF1Racing.active)) .topbar #clockText{font-size:13px;white-space:nowrap}
 body.mws-premium:not(:has(#gameF1Racing.active)) .topbar .sync-status{background:transparent;padding:4px 6px;font-size:11px}
-body.mws-premium:not(:has(#gameF1Racing.active)) .topbar :is(.primary,.secondary){
+body.mws-premium:not(:has(#gameF1Racing.active)) .topbar :is(.primary,.secondary):not(#newEventBtn){
   min-height:32px!important;padding:6px 11px!important;font-size:13px!important;line-height:1.4!important;
 }
 /* Subheadings are subordinate to the page title, including legacy inline sizes. */
@@ -144,13 +144,15 @@ body.mws-premium[data-theme=neon]:not(:has(#gameF1Racing.active)) .sidebar .nav 
 #dashboard #dashboardOverviewMode .dashboard-overview-heading p{margin:4px 0 0;font-size:12px}
 #dashboardProfileSlot:empty{display:none}
 #dashboard #dashboardProfileSlot .dashboard-my-profile-v3{
-  min-height:0!important;width:min(250px,100%);padding:10px 14px!important;overflow:hidden!important;
+  display:flex!important;align-items:center;gap:10px;min-height:0!important;width:auto;max-width:100%;
+  padding:8px 12px!important;overflow:hidden!important;
 }
+#dashboard #dashboardProfileSlot .dashboard-my-profile-kicker-v3{margin:0;white-space:nowrap}
 #dashboard #dashboardOverviewMode .dashboard-kpi-grid-local{
   display:grid;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:10px!important;margin:0 0 22px;align-items:stretch;
 }
 #dashboard #dashboardOverviewMode .dashboard-kpi-grid-local>.card{
-  position:relative;min-width:0;height:auto!important;min-height:96px!important;display:flex;align-items:center;
+  position:relative;min-width:0;height:auto!important;min-height:84px!important;display:flex;align-items:center;
   padding:14px!important;border-radius:12px!important;overflow:hidden!important;
 }
 #dashboard #dashboardOverviewMode .dashboard-kpi-grid-local>.card::before{
@@ -185,6 +187,7 @@ body.mws-premium[data-theme=neon]:not(:has(#gameF1Racing.active)) .sidebar .nav 
 #dashboard #dashboardOverviewMode .dashboard-upcoming-list{max-height:440px;scrollbar-gutter:stable}
 #dashboard #dashboardOverviewMode .dashboard-insights-v55{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px;align-items:start}
 #dashboard #dashboardOverviewMode .dashboard-insight-head-v55{gap:12px;margin-bottom:12px}
+#dashboard #dashboardOverviewMode .dashboard-insight-head-v55 .chip{flex:0 0 auto;white-space:nowrap}
 #dashboard #dashboardOverviewMode .dashboard-insight-head-v55 h3{font-size:15px;font-weight:750}
 #dashboard #dashboardOverviewMode .dashboard-today-people-layout-local{
   grid-template-columns:minmax(0,1fr);gap:10px;min-height:0!important;
@@ -200,7 +203,7 @@ body.mws-premium[data-theme=neon]:not(:has(#gameF1Racing.active)) .sidebar .nav 
 #dashboard #dashboardOverviewMode .today-person-card-local{padding:8px}
 #dashboard #dashboardOverviewMode .today-person-card-local img,#dashboard #dashboardOverviewMode .today-person-avatar-local{width:36px;height:36px}
 #dashboard #dashboardOverviewMode .dashboard-notice-url-row-local input{min-width:0}
-@container dashboard-overview (max-width:1100px){
+@container dashboard-overview (max-width:960px){
   #dashboard #dashboardOverviewMode .dashboard-kpi-grid-local{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 }
 @container dashboard-overview (max-width:730px){
