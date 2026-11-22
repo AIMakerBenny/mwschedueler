@@ -1,0 +1,40 @@
+#contactFrequency{min-width:0}
+#contactFrequency :is(.cf-heading,.cf-chart-head){display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+#contactFrequency h2{margin:0 0 5px;font-size:24px;letter-spacing:-.04em}
+#contactFrequency h3{margin:0 0 4px;font-size:17px}
+#contactFrequency p{margin:0;color:var(--muted);font-size:12px;line-height:1.5}
+#contactFrequency label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+#contactFrequency :is(select,input){max-width:100%;border-radius:9px;font-size:13px;padding:8px 12px}
+#contactFrequency .cf-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:16px 0}
+#contactFrequency :is(.cf-stat,.cf-card){background:var(--panel);border:1px solid var(--border);border-radius:14px;min-width:0;box-shadow:0 3px 12px #0000000d}
+#contactFrequency .cf-stat{display:grid;gap:8px;padding:16px;color:var(--muted);font-size:12px}
+#contactFrequency .cf-stat strong{font-size:clamp(15px,1.35vw,24px);letter-spacing:-.035em;color:var(--text);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#contactFrequency .cf-card{padding:16px;margin:0 0 14px}
+#contactFrequency :is(.cf-legend,.cf-month-values){display:flex;gap:8px 16px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+#contactFrequency .cf-legend{padding:15px 0 7px}
+#contactFrequency :is(.cf-legend,.cf-month-values) span{display:inline-flex;align-items:center;gap:6px}
+#contactFrequency :is(.cf-legend,.cf-month-values) i{width:9px;height:9px;border-radius:50%;background:var(--cf-color);flex:none}
+#contactFrequency :is(.cf-legend,.cf-month-values) b{color:var(--text);font-variant-numeric:tabular-nums}
+#contactFrequency .cf-chart{overflow-x:auto;min-height:110px;scrollbar-gutter:stable}
+#contactFrequency .cf-chart svg{display:block;min-width:100%;max-width:none;flex:none}
+#contactFrequency .cf-chart text{font-size:10px;fill:var(--muted);font-variant-numeric:tabular-nums}
+#contactFrequency .cf-gridline{stroke:var(--border);stroke-width:1;stroke-dasharray:3 4}
+#contactFrequency .cf-detail{display:flex;align-items:center;flex-wrap:wrap;gap:12px;border-top:1px solid var(--border);padding-top:12px}
+#contactFrequency .cf-ranking{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:8px;margin-top:14px}
+#contactFrequency .cf-rank{display:flex;align-items:center;gap:10px;text-align:left;background:var(--input);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:11px;min-width:0;font-size:13px;transition:background 100ms,border-color 100ms,transform 80ms}
+#contactFrequency .cf-rank.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 11%,var(--panel))}
+#contactFrequency .cf-rank-no{width:24px;text-align:center;font-size:12px;font-variant-numeric:tabular-nums;color:var(--muted);flex:none}
+#contactFrequency .cp-avatar{position:relative;display:grid;place-items:center;overflow:hidden;width:42px;height:42px;flex:none;border-radius:50%;border:1px solid var(--border);background:var(--panel)}
+#contactFrequency .cp-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#contactFrequency .cf-rank-name{display:grid;gap:4px;min-width:0;flex:1;overflow-wrap:anywhere}
+#contactFrequency .cf-rank-name small{font-size:10px;color:var(--muted);font-weight:400}
+#contactFrequency .cf-bar{display:block;height:4px;border-radius:4px;background:var(--border);overflow:hidden;margin-top:3px}
+#contactFrequency .cf-bar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+#contactFrequency .cf-count{color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums;font-size:11px}
+#contactFrequency .cf-count b{font-size:21px;color:var(--text);margin-right:2px}
+#contactFrequency .cf-empty{padding:30px 12px;text-align:center;grid-column:1/-1}
+#contactFrequency :is(button,input,select,.cf-chart):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(hover:hover){#contactFrequency .cf-rank:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--input))}}
+#contactFrequency .cf-rank:active{transform:scale(.99)}
+@media(max-width:720px){#contactFrequency .cf-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#contactFrequency .cf-stat,#contactFrequency .cf-card{padding:12px}}
+@media(prefers-reduced-motion:reduce){#contactFrequency .cf-rank{transition:none}#contactFrequency .cf-rank:active{transform:none}}

@@ -62,6 +62,8 @@ const test=()=>{
     check(!visible(tab('sniper'))&&!visible(tab('friendFinder')),'Old sidebar items are visible');
     tab('contacts').click();
     check(active()==='contacts','Contacts did not open');
+    clickContact('contactFrequency');
+    check(active()==='contactFrequency'&&tab('contacts').classList.contains('active')&&q('#contactFrequency [data-contact-view-v176="contactFrequency"]').getAttribute('aria-selected')==='true','Frequency route/parent selection failed');
     clickContact('sniper');
     check(active()==='sniper'&&tab('contacts').classList.contains('active'),'Recent people route/parent selection failed');
     clickContact('friendFinder');
@@ -88,7 +90,7 @@ const test=()=>{
   }catch(e){document.getElementById('qa-result').textContent='FAIL: '+e.message}
 };
 try{
-  const body='<!doctype html><meta charset="utf-8"><style>'+styles+'</style><body class="sidebar-pinned" style="background:#101216"><div class="app">'+aside+'<main class="main">'+header+'<section id="calendar" class="section active"></section><section id="contacts" class="section"></section><section id="sniper" class="section"></section><section id="friendFinder" class="section"></section><section id="targets" class="section"></section><section id="gameMajoku" class="section"></section></main></div><pre id="qa-result">pending</pre><script id="mwsToolsCleanV110Script"></script><script>('+setup.toString()+')();</script>'+runtime.map(s=>'<script>'+s+'</script>').join('')+'<script>setTimeout('+test.toString()+',500)</script></body>';
+    const body='<!doctype html><meta charset="utf-8"><style>'+styles+'</style><body class="sidebar-pinned" style="background:#101216"><div class="app">'+aside+'<main class="main">'+header+'<section id="calendar" class="section active"></section><section id="contacts" class="section"></section><section id="contactFrequency" class="section"></section><section id="sniper" class="section"></section><section id="friendFinder" class="section"></section><section id="targets" class="section"></section><section id="gameMajoku" class="section"></section></main></div><pre id="qa-result">pending</pre><script id="mwsToolsCleanV110Script"></script><script>('+setup.toString()+')();</script>'+runtime.map(s=>'<script>'+s+'</script>').join('')+'<script>setTimeout('+test.toString()+',500)</script></body>';
   const file=path.join(fixture,'fixture.html');
   writeFileSync(file,body);
   const run=spawnSync(chrome,['--headless','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--no-first-run','--user-data-dir='+path.join(fixture,'profile'),'--window-size=1366,768','--virtual-time-budget=1500','--dump-dom','file://'+file],{encoding:'utf8',timeout:60000,maxBuffer:12*1024*1024});

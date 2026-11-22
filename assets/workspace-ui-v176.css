@@ -16,9 +16,10 @@
 .mws-contact-tab-v176:hover{color:var(--text);background:var(--input)}
 .mws-contact-tab-v176.active{color:var(--text);border-color:color-mix(in srgb,var(--accent) 60%,var(--border));background:color-mix(in srgb,var(--accent) 24%,var(--input))}
 @media(max-width:720px){
-  .mws-contact-tabs-v176{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+  .mws-contact-tabs-v176{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
   .mws-contact-tab-v176{min-width:0;padding:9px 3px;font-size:12px}
 }
+@media(max-width:460px){.mws-contact-tabs-v176{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 .mws-friend-tabs-v176{
   display:flex;gap:8px;align-items:center;margin:0 0 14px;padding:5px;

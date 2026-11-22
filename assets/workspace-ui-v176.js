@@ -109,8 +109,8 @@ function bindFriendTabsV176(root){
 }
 /* Contacts owns the former standalone recent/friend routes. Keep their sections
    and underlying renderers intact, including the nested target list. */
-const contactRoutesV176=['contacts','sniper','friendFinder','targets'];
-const contactViewsV176=[['contacts','연락처'],['sniper','최근 만난 사람'],['friendFinder','친구 찾기']];
+const contactRoutesV176=['contacts','sniper','friendFinder','targets','contactFrequency'];
+const contactViewsV176=[['contacts','연락처'],['sniper','최근 만난 사람'],['friendFinder','친구 찾기'],['contactFrequency','만남 빈도']];
 function contactViewV176(tab){return tab==='targets'?'friendFinder':tab}
 function syncContactNavigationV176(tab){
   const grouped=contactRoutesV176.includes(tab);
@@ -413,7 +413,7 @@ function queueInstallV176(){
 
 // The workspace owns navigation and section shells, not the changing contents
 // of calendars, mini-games, clocks, live cards or notebook result lists.
-const workspaceShellV176='.nav,.nav-scroll,.main,#dashboard,#worldtime,#memos,#contacts,#sniper,#friendFinder,#targets,.dashboard-mode-tabs,.memo-section-tabs';
+const workspaceShellV176='.nav,.nav-scroll,.main,#dashboard,#worldtime,#memos,#contacts,#sniper,#friendFinder,#targets,#contactFrequency,.dashboard-mode-tabs,.memo-section-tabs';
 const observer=new MutationObserver(records=>{
   if(records.some(record=>record.target instanceof Element&&record.target.matches(workspaceShellV176)))queueInstallV176();
 });

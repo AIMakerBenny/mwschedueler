@@ -814,13 +814,13 @@ function setTab(tab){
   }
   window.mwsCalendarDetailsV1?.close({restoreFocus:false});
   if(tab==='reminders'){tab='dashboard';dashboardMode='reminders'}
-  const navTab=['sniper','friendFinder','targets'].includes(tab)?'contacts':legacyFeatureTabsV1.has(tab)?'legacy':tab;
+  const navTab=['sniper','friendFinder','targets','contactFrequency'].includes(tab)?'contacts':legacyFeatureTabsV1.has(tab)?'legacy':tab;
   document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===navTab));
   const legacyBack=document.getElementById('mwsLegacyBackV1');
   if(legacyBack)legacyBack.hidden=!legacyFeatureTabsV1.has(tab);
   document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===tab));
   const names={dashboard:'대시보드',calendar:'캘린더',contacts:'연락처',contentApplications:'신청한 콘텐츠',posts:'게시글',sniper:'최근 만난 사람',friendFinder:'친구 찾기',targets:'저격 리스트',memos:'수첩',worldtime:'세계 시간',careerTimeline:'타임라인',achievements:'업적',wardogs:'워독스 전쟁견들',contentPlanner:'그림판',toolTier:'티어 게임',toolMatrix:'2D Matrix Chart',toolRelations:'인물 관계도',gameMajoku:'채팅연동게임',gameLadder:'사다리타기',gameRps:'가위바위보',gameF1Racing:'F1 레이싱',gamePachinko:'경마',gameMultiDraw:'Gacha 뽑기',legacy:'레거시',export:'가져오기 / 내보내기',settings:'설정'};
-  const title=document.getElementById('pageTitle'),nextTitle=names[tab]||tab;
+  const title=document.getElementById('pageTitle'),nextTitle=tab==='contactFrequency'?'연락처':names[tab]||tab;
   if(title.textContent!==nextTitle){title.textContent=nextTitle;window.mwsUiInteractionsV1?.nav(title)}
   // 탭 이동 시에도 같은 중앙 데이터에서 최신 상태를 다시 계산
   if(tab==='calendar')safeRenderView('캘린더',renderCalendar);
@@ -831,6 +831,7 @@ function setTab(tab){
   if(tab==='memos')safeRenderView('메모',()=>setMemoView('library'));
   if(tab==='dashboard'){safeRenderView('대시보드',renderDashboard);safeRenderView('리마인더',renderReminders)}
   if(tab==='contacts'){safeRenderView('연락처 필터',renderContactFilters);safeRenderView('연락처',()=>setContactView(contactView))}
+  if(tab==='contactFrequency')safeRenderView('만남 빈도',()=>window.mwsContactFrequencyV1?.render(data,todayKST()));
   if(tab==='posts')safeRenderView('게시글',renderPosts);
   if(tab==='gameLadder')safeRenderView('사다리타기',renderLadder);
   if(tab==='gameRps')safeRenderView('가위바위보',renderRps);
@@ -843,6 +844,7 @@ function setTab(tab){
   try{window.mwsContactRuntimeOnTabV130?.(tab)}catch(_){}
 }
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+window.addEventListener('mawang:datachange',()=>{if(document.getElementById('contactFrequency')?.classList.contains('active'))safeRenderView('만남 빈도',()=>window.mwsContactFrequencyV1?.render(data,todayKST()))});
 document.querySelectorAll('[data-legacy-link-v1]').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
 function syncSidebarPinUI(){
   document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));

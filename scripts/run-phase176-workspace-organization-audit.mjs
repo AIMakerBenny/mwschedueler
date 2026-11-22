@@ -54,7 +54,7 @@ export function runPhase176WorkspaceOrganizationAudit(){
   if(!css.includes('.mws-note-card-v176{'))issues.push('patch/suggestion card styling is missing');
   if(!css.includes('.mws-friend-tabs-v176{'))issues.push('friend/target tab styling is missing');
   if(!css.includes('.mws-contact-tabs-v176{'))issues.push('contacts subtab styling is missing');
-  if(!ui.includes("contactRoutesV176=['contacts','sniper','friendFinder','targets']"))issues.push('contacts grouping omits a previous route');
+  if(!ui.includes("contactRoutesV176=['contacts','sniper','friendFinder','targets','contactFrequency']"))issues.push('contacts grouping omits a route');
   if(!ui.includes("return tab==='targets'?'friendFinder':tab"))issues.push('target list is no longer nested in friend finder');
   if(!index.includes('data-tab="sniper" title="최근 합방 인원" hidden'))issues.push('standalone recent people menu is not hidden');
 
