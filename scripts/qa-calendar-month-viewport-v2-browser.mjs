@@ -15,7 +15,7 @@ const copyDnd=core.slice(core.indexOf('function initCalendarCopyTrayDnD(){'),cor
 const copyPointerTarget=core.slice(core.indexOf('function setCalendarPointerEventTargetV174('),core.indexOf('function activateCalendarPointerEventDragV174('));
 const host=read('assets/content-planner-host.js');
 const runtimeCSS=host.slice(host.indexOf('#calendarGrid.calendar{'),host.indexOf('#sniper .sniper-name'));
-const css=['app-core.css','mawang-premium-v1621.css','calendar-space-efficiency-v1.css','calendar-toolbar-v4.css','calendar-responsive-cards-v1.css','calendar-stable-layout-v1.css','calendar-continuous-series-v1.css','workspace-clean-v1.css','calendar-details-v1.css','calendar-drag-layout-fix.css','calendar-day-expand-v1.css'].map(p=>read('assets/'+p)).join('\n')+'\n'+runtimeCSS;
+const css=['app-core.css','mawang-premium-v1621.css','calendar-space-efficiency-v1.css','calendar-toolbar-v4.css','calendar-responsive-cards-v1.css','calendar-stable-layout-v1.css','calendar-continuous-series-v1.css','workspace-clean-v1.css','calendar-details-v1.css','calendar-drag-layout-fix.css','calendar-day-expand-v1.css','calendar-people-view-v1.css'].map(p=>read('assets/'+p)).join('\n')+'\n'+runtimeCSS;
 assert(!read('assets/calendar-details-v1.js').includes('calendar-details-open-v2'),'Popover cannot resize the calendar');
 const bootstrap=`
 const data={contentGroups:[{id:'series',name:'연속 게임',color:'#118c95'}],events:[],contacts:[{id:'qa-person',name:'테스트 참가자'}],todayPeopleByDate:{'2026-11-26':['qa-person']}};let calDate=new Date(2026,10,1);

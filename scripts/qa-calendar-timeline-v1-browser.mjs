@@ -64,7 +64,7 @@ window.mwsCalendarTimelineV1.render(activeEvents(),todayKST(),data.contentGroups
 const liveUpdate=!!list.querySelector('[data-date="2026-11-18"] [data-game-name="Live update"]');
 const colorUpdate=list.querySelector('[data-date="2026-11-18"] [data-group-id="wow"]').style.getPropertyValue('--series-color')==='#abcdef';
 list.querySelector('[data-game-name="Live update"]').dispatchEvent(new PointerEvent('pointerenter'));
-tabs[2].click();
+tabs.find(t=>t.dataset.calendarViewTab==='search').click();
 const tabTooltipHidden=tooltip.hidden;
 const searchWorks=panel.hidden&&!$('calendarSearchPanelV172').hidden&&searchRenders===1;
 tabs[0].click();
@@ -82,7 +82,7 @@ try{
   assert.equal(run.status,0,run.stderr.slice(-900));
   const match=run.stdout.match(/<pre id="result">([^<]+)<\/pre>/);assert(match,'missing browser result');
   const result=JSON.parse(match[1]);
-  assert.equal(result.order,'month,timeline,search');assert.equal(result.labels,'WOW|WOW|와우 포에버');
+  assert.equal(result.order,'month,timeline,people,search');assert.equal(result.labels,'WOW|WOW|와우 포에버');
   for(const [key,value] of Object.entries(result))if(!['order','labels'].includes(key))assert.equal(value,true,width+' '+key+' '+JSON.stringify(result));
   console.log('CALENDAR_TIMELINE_BROWSER_OK',width,JSON.stringify(result));
  }
