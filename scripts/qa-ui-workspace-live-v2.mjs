@@ -51,9 +51,9 @@ for(const [width,height,mobile] of sizes){
         }
         if(route==='careerTimeline')await until(()=>browser.evaluate(`!!document.querySelector('#careerTimeline .cv-map-year')`),'timeline runtime');
         if(route==='mawangArchive'){
-          await until(()=>browser.evaluate(`document.querySelectorAll('#mawangArchive [data-ma-character]').length===14 && document.querySelector('#mawangArchive .ma-count').textContent==='27 / 27'`),'character archive');
+          await until(()=>browser.evaluate(`document.querySelectorAll('#mawangArchive [data-ma-character]').length>=2 && document.querySelector('#mawangArchive .ma-count').textContent==='27 / 27'`),'character archive');
           await until(()=>browser.evaluate(`document.querySelector('#mawangArchive .ma-stage-art .ma-character-image')?.naturalWidth>1`),'actual character portrait loaded');
-          assert(await browser.evaluate(`(()=>{const r=document.getElementById('mwsArchiveRoot');r.querySelector('[data-ma-page="1"]').click();r.querySelector('[data-ma-character="hina"]').click();if(r.querySelector('#maCharacterName').textContent!=='히나')return false;r.querySelector('[data-ma-filter="jeong"]').click();return r.querySelectorAll('[data-ma-character]').length===12&&r.querySelector('#maCharacterName').textContent==='유정'&&!r.querySelector('a[href]')})()`),'archive selection and filter');
+          assert(await browser.evaluate(`(()=>{const r=document.getElementById('mwsArchiveRoot');for(let i=0;i<14&&!r.querySelector('[data-ma-character="hina"]');i++){const next=r.querySelector('[data-ma-step="1"]');if(next.disabled)return false;next.click()}r.querySelector('[data-ma-character="hina"]').click();if(r.querySelector('#maCharacterName').textContent!=='히나')return false;r.querySelector('[data-ma-filter="jeong"]').click();return r.querySelector('.ma-count').textContent==='12 / 27'&&r.querySelector('#maCharacterName').textContent==='유정'&&!r.querySelector('a[href]')})()`),'archive selection and filter');
         }
         if(route==='achievements')await until(()=>browser.evaluate(`!!document.querySelector('#achievements .achievement-card-open')`),'achievement gallery');
         if(route==='gameLadder')assert(await browser.evaluate(`!!document.getElementById('ladderWizardSteps')`));
