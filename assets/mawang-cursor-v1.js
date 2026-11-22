@@ -131,6 +131,9 @@
       if(!eligible){hide();return;}
       // Keep a small gutter from native scrollbars and browser edges.
       const x=event.clientX-hotX,y=event.clientY-hotY;
+      // Scrollbar appearance can change clientWidth without a window resize.
+      // Refresh only near a boundary to avoid layout reads during ordinary motion.
+      if(x<2||y<2||x>vw-w-32||y>vh-h-32){vw=root.clientWidth;vh=root.clientHeight;}
       const maxX=Math.max(0,vw-w-16),maxY=Math.max(0,vh-h-4);
       const edge=x<2||y<2||x>maxX||y>maxY;
       if(!edge){hide();return;}

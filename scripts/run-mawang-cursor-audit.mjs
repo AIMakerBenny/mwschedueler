@@ -114,6 +114,10 @@ for (const [variant,hotspots] of Object.entries(points)) {
       listeners.get('pointerout')({...ev,clientX:1281,clientY:720,relatedTarget:null});assert(sprite.hidden);
       assert.equal(properties.get('--mws-cursor-default'),`${primary}${fallback}, auto`);
       listeners.get('pointermove')({...ev,clientX:1279,clientY:719});raf();
+      root.clientWidth=1265;
+      listeners.get('pointermove')({...ev,clientX:1264,clientY:719});raf();
+      assert.equal(sprite.style.transform,`translate3d(${1265-w-16}px,${720-h-4}px,0)`);
+      root.clientWidth=1280;
       listeners.get('pointermove')(ev);assert(sprite.hidden);assert.equal(properties.get('--mws-cursor-default'),`${primary}${fallback}, auto`);
     }
   }
@@ -135,6 +139,6 @@ callbacks.change({target:{name:'mwsCursorVariant',value:'system'}});assert.equal
 listeners.get('storage')({key});assert.equal(root.dataset.mwsCursor,undefined);
 callbacks.reset();assert.deepEqual(JSON.parse(storage.get(key)),{variant:'finger',size:48,colors:{mw:'#f8dce9','0216':'#f8dce9'},play:true});
 for (const page of ['index.html','content-planner.html','majoku-castle.html']) {
-  const html=read(page).toString();assert(html.includes('assets/mawang-cursor-v1.css?v=3'));assert(html.includes('assets/mawang-cursor-v1.js?v=5'));
+  const html=read(page).toString();assert(html.includes('assets/mawang-cursor-v1.css?v=3'));assert(html.includes('assets/mawang-cursor-v1.js?v=6'));
 }
 console.log('PASS: full-size static edge overlays at all 4 corners and edges, no size reduction, exact native click marker, scrollbar retention, central native restoration, custom color, animated bounds, defaults, storage, cleanup and 3 pages');
