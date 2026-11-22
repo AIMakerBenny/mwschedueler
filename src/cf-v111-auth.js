@@ -498,7 +498,7 @@ export default{
   async fetch(request,env,ctx){
     try{
       const url=new URL(request.url),path=url.pathname;
-      if(path.startsWith('/api/mawang-gallery')||path.startsWith('/api/mawang-profile/')||path.startsWith('/media/mawang-archive/')||path.startsWith('/media/mawang-profile/')){
+      if(path.startsWith('/api/mawang-gallery')||path==='/api/mawang-profile'||path.startsWith('/api/mawang-profile/')||path.startsWith('/media/mawang-archive/')||path.startsWith('/media/mawang-profile/')){
         const gallery=await handleArchiveGallery(request,env,currentAdmin);if(gallery)return gallery;
       }
       if(path==='/api/auth/login'&&request.method==='POST')return handleLogin(request,env);
