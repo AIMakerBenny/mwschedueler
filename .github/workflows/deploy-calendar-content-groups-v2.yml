@@ -11,6 +11,11 @@ on:
       - 'assets/calendar-details-v1.css'
       - 'assets/ui-interactions-v1.css'
       - 'assets/ui-interactions-v1.js'
+      - 'assets/content-applications-v1.js'
+      - 'assets/content-applications-model-v1.js'
+      - 'assets/content-applications-v1.css'
+      - 'scripts/qa-content-applications-v1.test.mjs'
+      - 'scripts/qa-content-applications-v1-browser.mjs'
       - 'scripts/qa-ui-interactions-v1.test.mjs'
       - 'scripts/qa-ui-interactions-v1-browser.mjs'
       - 'scripts/qa-ui-workspace-mutations-v2-browser.mjs'
@@ -111,6 +116,10 @@ jobs:
           node --check assets/cloud-v1.1.js
           node --check assets/cloud-v1.1-loader.js
           node --check assets/cloud-runtime-v130.js
+      - name: Verify SOOP content application tracker
+        run: |
+          node --test scripts/qa-content-applications-v1.test.mjs
+          node scripts/qa-content-applications-v1-browser.mjs
       - name: Calendar content group, hover and duration regression
         run: |
           node --test scripts/qa-ui-interactions-v1.test.mjs

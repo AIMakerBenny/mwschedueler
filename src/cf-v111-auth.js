@@ -1,8 +1,9 @@
 import appWorker from './cf-v110-steam.js';
+import {normalizeCampaigns} from '../assets/content-applications-model-v1.js';
 
 const PARTS=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook','wardogs'];
 const CALENDAR_STARTUP_PARTS=['core','events','contacts','clipboard','activity','notebook','contactMeta'];
-const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','achievementCards','contentGroups','gameLibrary'];
+const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','achievementCards','contentGroups','gameLibrary','contentApplications'];
 const WARDOGS_CLASS_IDS=Object.freeze(['assault','medic','recon','support','driver','pilot','unassigned']);
 const WARDOGS_CLASS_SET=new Set(WARDOGS_CLASS_IDS);
 const WARDOGS_MAX_CARDS=5000;
@@ -333,7 +334,7 @@ function normalizeWardogsPart(raw){
 
 async function externalizePart(env,part,raw,saveContext=null){
   if(part==='core'){
-    const src=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{},out={};for(const key of CORE_KEYS)if(Object.prototype.hasOwnProperty.call(src,key))out[key]=src[key];return out;
+    const src=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{},out={};for(const key of CORE_KEYS)if(Object.prototype.hasOwnProperty.call(src,key))out[key]=key==='contentApplications'?normalizeCampaigns(src[key]):src[key];return out;
   }
   if(part==='contacts'){
     const out=[];for(const original of Array.isArray(raw)?raw:[]){const item=original&&typeof original==='object'?structuredClone(original):original;if(!item||typeof item!=='object'){out.push(item);continue}const id=String(item.id||'').trim();if(id&&parseDataImage(item.image))item.image=await storeDataImage(env,'contact',id,item.image,true,saveContext);else if(id&&trustedRemoteContactImageUrl(item.image))item.image=await storeRemoteContactImage(env,id,item.image,saveContext);else if(id&&String(item.image||'').startsWith('/media/contact/'))item.image=await canonicalManagedContactUrl(env,id,item.image);out.push(item)}return out;
@@ -365,10 +366,13 @@ async function handleSave(request,env){
   const versions={},normalized={},staged=[],mediaContext={statements:[]};
   for(const [part,raw] of entries){
     let source=raw;
-    if(part==='core'&&raw&&typeof raw==='object'&&!Array.isArray(raw)&&!Object.prototype.hasOwnProperty.call(raw,'achievementCards')){
+    if(part==='core'&&raw&&typeof raw==='object'&&!Array.isArray(raw)&&(!Object.prototype.hasOwnProperty.call(raw,'achievementCards')||!Object.prototype.hasOwnProperty.call(raw,'contentApplications'))){
       const previousRow=await env.DB.prepare("SELECT data FROM workspace_parts WHERE scope='public' AND part='core'").first();
       let previousCore={};try{previousCore=JSON.parse(previousRow?.data||'{}')}catch(_){}
-      source={...raw,achievementCards:Array.isArray(previousCore?.achievementCards)?previousCore.achievementCards:[]};
+      source={...raw};
+      if(!Object.prototype.hasOwnProperty.call(raw,'achievementCards'))source.achievementCards=Array.isArray(previousCore?.achievementCards)?previousCore.achievementCards:[];
+      // Older open tabs don't know this field. Don't erase their newer shared records.
+      if(!Object.prototype.hasOwnProperty.call(raw,'contentApplications')&&Array.isArray(previousCore?.contentApplications))source.contentApplications=previousCore.contentApplications;
     }
     if(part==='contacts')source=await preserveContactImagesForSave(env,source);
     const value=await externalizePart(env,part,source,mediaContext);

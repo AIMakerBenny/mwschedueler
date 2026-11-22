@@ -150,6 +150,9 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 9a7 7 0 0 1 14 0"/></svg></span><span class="nav-label">연락처</span>
         </button>
         <div id="navContentGroupDividerV3" class="nav-content-divider-v3" aria-hidden="true"></div>
+        <button data-tab="contentApplications" title="신청한 콘텐츠">
+          <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 21 3.6 12.6A5.5 5.5 0 0 1 11.4 4.8l.6.7.6-.7a5.5 5.5 0 0 1 7.8 7.8Z"/></svg></span><span class="nav-label">신청한 콘텐츠</span>
+        </button>
         <button data-tab="posts" title="게시글">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/><path d="M16 4v4h4"/></svg></span><span class="nav-label">게시글</span>
         </button>
@@ -529,6 +532,24 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
         </div>
       </div>
     </section>
+
+<section id="contentApplications" class="section">
+  <div class="ca-head"><div><h2>신청한 콘텐츠</h2><p>마왕0216의 콘텐츠 신청 현황을 확인하고 응원해 주세요.</p></div><button type="button" class="ca-primary ca-icon-btn" id="caNewBtn" aria-label="신청 콘텐츠 추가" title="신청 콘텐츠 추가" hidden>+</button></div>
+  <div class="ca-editor" id="caEditor" hidden>
+    <h3 id="caEditorTitle">새 신청 콘텐츠</h3>
+    <form id="caForm">
+      <div class="ca-form-fields">
+        <label>콘텐츠 이름<input id="caTitle" maxlength="100" placeholder="예: 스트리머 합방 참가 신청" required></label>
+        <label>신청 마감 시간 · 한국 시간<input id="caDeadline" type="datetime-local" required></label>
+        <label class="wide">신청 게시글 URL<textarea id="caUrls" maxlength="30000" placeholder="https://www.sooplive.com/station/아이디/post/글번호" required></textarea></label>
+      </div>
+      <div class="ca-form-help">마왕0216 및 다른 신청자들의 SOOP 게시글 주소를 한 줄에 하나씩 붙여넣으세요. 작성자와 좋아요를 자동으로 확인합니다.</div>
+      <div class="ca-form-message" id="caFormMessage" role="status"></div>
+      <div class="ca-form-actions"><button type="button" class="ca-secondary ca-delete" id="caDelete" hidden>삭제</button><button type="button" class="ca-secondary" id="caCancel">취소</button><button type="submit" class="ca-primary" id="caSave">등록 및 저장</button></div>
+    </form>
+  </div>
+  <div id="caList"></div><div id="caDetail" hidden></div>
+</section>
 
 <section id="posts" class="section">
   <div class="posts-head">
@@ -2494,7 +2515,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
 <script src="assets/calendar-broadcast-duration-v1.js?v=1"></script>
 <script src="assets/calendar-continuous-series-v1.js?v=2"></script>
 <script src="assets/calendar-timeline-v1.js?v=4"></script>
-<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=1&contactgroup178=1&modalmotionv2=2&ladderdefaults=1&future-only=1&post-layout-v3=1&career=1&clipboard-people=1&dashboardnav=3&ui-interactions=2"></script>
+<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=1&contactgroup178=1&modalmotionv2=2&ladderdefaults=1&future-only=1&post-layout-v3=1&career=1&clipboard-people=1&dashboardnav=3&ui-interactions=2&contentapplications=1"></script>
 <script src="assets/calendar-content-groups-v2.js?v=7-save-contract-bulk"></script>
 <script src="assets/event-sidebar-tabs-v5.js?v=1"></script>
 <script src="assets/calendar-move-guard-v4.js?v=1&quietmoves=1"></script>
@@ -5021,5 +5042,7 @@ body.mws-premium #mwsAccessGate .mws-login-title{font-size:22px!important;margin
 <script defer src="assets/career-visualizer.js?v=15"></script>
 <link rel="stylesheet" href="assets/ui-interactions-v1.css?v=3">
 <script src="assets/ui-interactions-v1.js?v=2"></script>
+<link rel="stylesheet" href="assets/content-applications-v1.css?v=1">
+<script type="module" src="assets/content-applications-v1.js?v=1"></script>
 </body>
 </html>

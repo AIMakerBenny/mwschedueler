@@ -35,6 +35,11 @@ jobs:
           node --test scripts/qa-ui-interactions-v1.test.mjs
           node scripts/qa-ui-interactions-v1-browser.mjs
 
+      - name: Verify SOOP content application tracker
+        run: |
+          node --test scripts/qa-content-applications-v1.test.mjs
+          node scripts/qa-content-applications-v1-browser.mjs
+
       - name: JavaScript syntax check
         run: |
           node --check --input-type=commonjs < assets/app-core.js
