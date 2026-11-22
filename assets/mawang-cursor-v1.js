@@ -66,9 +66,16 @@
     if (logoCache.size>24) logoCache.delete(logoCache.keys().next().value);
     return result;
   }
-  function setNative(variant,size,arrow=false,customUrl=null) {
+  function setNative(variant,size,arrow=false,customUrl=null,smallUrl=null) {
     const [x,y] = variants[variant].points[sizes.indexOf(size)];
-    const image = `url("${customUrl || imageUrl(arrow?'animation-arrow':variant, size)}") ${x} ${y}`;
+    let image = `url("${customUrl || imageUrl(arrow?'animation-arrow':variant, size)}") ${x} ${y}`;
+    // Chromium rejects cursors larger than 32px when their image extends past
+    // the viewport. Let the browser choose the same design at a safe size,
+    // with its own exact hotspot, instead of abruptly reverting to the OS cursor.
+    if (!arrow && size>32) {
+      const [sx,sy] = variants[variant].points[0];
+      image += `, url("${smallUrl || imageUrl(variant,32)}") ${sx} ${sy}`;
+    }
     root.style.setProperty('--mws-cursor-default', `${image}, auto`);
     root.style.setProperty('--mws-cursor-pointer', `${image}, pointer`);
     root.dataset.mwsCursor = variant;
@@ -117,7 +124,13 @@
       x = event.clientX+offset-1; y = event.clientY+offset-1;
       if (!frame) frame = requestAnimationFrame(() => {
         frame = 0;
-        sprite.style.transform = `translate3d(${x}px,${y}px,0)`;
+        // Constrain only the decoration to the visible page. The small native
+        // arrow stays at the actual click coordinate, including at corners.
+        const maxX = Math.max(0,root.clientWidth-width);
+        const maxY = Math.max(0,root.clientHeight-width);
+        const left = Math.min(maxX,Math.max(0,x));
+        const top = Math.min(maxY,Math.max(0,y));
+        sprite.style.transform = `translate3d(${left}px,${top}px,0)`;
         if (sprite.hidden) { sprite.hidden = false; playback?.play(); }
       });
     };
@@ -132,6 +145,7 @@
     window.addEventListener('dragstart',clear,opts);
     window.addEventListener('blur',clear,{signal});
     window.addEventListener('scroll',()=>{target=null;},opts);
+    window.addEventListener('resize',()=>{target=null;if(lastEvent)update(lastEvent);},opts);
     document.addEventListener('visibilitychange',clear,{signal});
     const sheet = new Image();
     const stripUrl = imageUrl(`${variant}-strip`,size);
@@ -166,7 +180,9 @@
     else {
       stopAnimation(); setNative(variant,size);
       if (variants[variant].color && colors[variant] !== original) {
-        logoUrl(variant,size,colors[variant]).then(url=>{if(version===applyVersion)setNative(variant,size,false,url);});
+        // Generate the edge fallback in the same selected color as the full size.
+        Promise.all([logoUrl(variant,size,colors[variant]),logoUrl(variant,32,colors[variant])])
+          .then(([url,smallUrl])=>{if(version===applyVersion)setNative(variant,size,false,url,smallUrl);});
       }
     }
     const panel = document.getElementById('mwsCursorSettings');
