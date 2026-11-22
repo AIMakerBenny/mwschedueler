@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {parsePostUrl,parsePostMetadata,normalizeCampaigns,rankEntries,countdown,fromKstInput,toKstInput} from '../assets/content-applications-model-v1.js';
+import {parsePostUrl,parsePostMetadata,normalizeCampaigns,parseCommentPage,uniqueApplicants,rankEntries,countdown,fromKstInput,toKstInput} from '../assets/content-applications-model-v1.js';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const url=(id,no)=>`https://www.sooplive.com/station/${id}/post/${no}`;
 const e=(id,no,likes)=>({...parsePostUrl(url(id,no)),userId:id,nickname:id,likes,checkedAt:'2026-11-22T00:00:00.000Z'});
@@ -25,9 +25,18 @@ test('ranks tie, missing counts never become zero, mawang always has actual comp
 test('time limit is Korea time, expiry boundary is exact, and invalid dates fail',()=>{
  const ts=fromKstInput('2026-11-23T23:59');assert.equal(ts,'2026-11-23T14:59:00.000Z');assert.equal(toKstInput(ts),'2026-11-23T23:59');assert.equal(fromKstInput('2026-02-30T01:00'),'');const end=Date.parse(ts);assert.equal(countdown(ts,end-1001).label,'00:00:02');assert.equal(countdown(ts,end-1).expired,false);assert.equal(countdown(ts,end).expired,true);assert.equal(countdown(ts,end-86401000).label,'1일 00:00:01');
 });
+test('recruitment comments use like_cnt, pinned duplicates and multiple pages never double count',()=>{
+ const source={...parsePostUrl(url('host','123')),userId:'host'};
+ const comment=(user,id,likes)=>({user_id:user,user_nick:user,p_comment_no:id,title_no:123,like_cnt:likes,comment:'<b>신청</b>&amp; 어필',is_best_top:true});
+ const first=parseCommentPage({meta:{last_page:2,current_page:1,total:5},data:[comment('host',1,999),comment('mawang0216',2,40),comment('other',3,50)]},source);
+ const second=parseCommentPage({meta:{last_page:2,current_page:2,total:5},data:[comment('mawang0216',2,41),comment('other',4,12),comment('unknown',5,null),comment('zero',6,0)]},source);
+ const rows=uniqueApplicants([...first.applicants,...second.applicants]),r=rankEntries(rows);
+ assert.equal(first.pages,2);assert.equal(rows.length,4);assert.equal(r.mawang.likes,41);assert.equal(r.ownRank,2);assert.equal(r.leader.likes,50);assert.equal(r.mawang.comment,'신청& 어필');assert.equal(r.mawang.commentNo,'2');assert(!rows.some(e=>e.userId==='host'));assert.equal(r.known,3);assert.equal(r.allKnown,false);
+ assert.throws(()=>parseCommentPage({data:[]},source));assert.equal(parseCommentPage({meta:{current_page:1,last_page:1,total:0},data:[]},source).applicants.length,0);
+});
 test('production entry and cloud contract share the campaign core key without changing other fields',()=>{
- const html=read('index.html');assert(html.indexOf('data-tab="contentApplications"')<html.indexOf('data-tab="posts"'));assert(html.includes('id="contentApplications"'));assert(html.includes('content-applications-v1.js?v=1'));
+ const html=read('index.html');assert(html.indexOf('data-tab="contentApplications"')<html.indexOf('data-tab="posts"'));assert(html.includes('id="contentApplications"'));assert(html.includes('content-applications-v2.js?v=2'));
  for(const p of ['assets/cloud-v1.1.js','assets/cloud-runtime-v130.js','src/cf-v111-auth.js']){const keys=read(p).match(/const CORE_KEYS\s*=\s*(\[[^\]\n]+\])/)[1];assert(keys.includes("'contentApplications'"));assert(keys.includes("'achievementCards'"));assert(keys.includes("'contentGroups'"))}
  const server=read('src/cf-v111-auth.js');assert(server.includes('source.contentApplications=previousCore.contentApplications'));assert(server.includes("key==='contentApplications'?normalizeCampaigns(src[key]):src[key]"));
- const ui=read('assets/content-applications-v1.js');assert(ui.includes('data.contentApplications=normalizeCampaigns(rows)'));assert(ui.includes('window.mwsV55SaveNow()'));assert(ui.includes('document.body.dataset.mwsMode===\'admin\''));assert(!ui.includes('method:\'POST\''));
+ const ui=read('assets/content-applications-v2.js');assert(ui.includes('data.contentApplications=normalizeCampaigns(rows)'));assert(ui.includes('window.mwsV55SaveNow()'));assert(ui.includes('document.body.dataset.mwsMode===\'admin\''));assert(!ui.includes('method:\'POST\''));
 });

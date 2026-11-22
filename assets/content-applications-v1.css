@@ -90,3 +90,72 @@
 @media(max-width:700px){#contentApplications .ca-head{margin-bottom:10px}#contentApplications .ca-detail-title{order:3;flex-basis:100%}#contentApplications .ca-hero{gap:14px;padding:15px;border-radius:16px}#contentApplications .ca-avatar.own{width:58px;height:58px}#contentApplications .ca-stats{grid-template-columns:repeat(2,minmax(0,1fr))}#contentApplications .ca-stats>div{min-height:65px;padding:10px}#contentApplications .ca-hero-bottom{align-items:stretch;flex-direction:column}#contentApplications .ca-vote{white-space:normal;width:100%;box-sizing:border-box}#contentApplications .ca-hero-note{text-align:center}#contentApplications .ca-person{grid-template-columns:28px 36px minmax(0,1fr) auto;gap:7px;padding:9px}#contentApplications .ca-person .ca-avatar{width:36px;height:36px}#contentApplications .ca-origin{grid-column:3/-1;justify-self:end}#contentApplications .ca-person-likes{font-size:12px}#contentApplications .ca-form-fields{grid-template-columns:1fr}#contentApplications .ca-editor{padding:13px}}
 @media(prefers-reduced-motion:reduce){#contentApplications *,#contentApplications *::before{transition:none!important;animation:none!important}}
 html[data-mws-motion="reduced"] #contentApplications *{transition:none!important;animation:none!important}
+
+/* Application tracker: editorial campaign cards and a focused support hero. */
+#contentApplications{--ca-pink:#e9669d;--ca-surface:var(--panel,var(--card,var(--input)));max-width:1440px;margin-inline:auto}
+#contentApplications .ca-head{margin-bottom:16px}
+#contentApplications .ca-eyebrow{display:block;font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--muted)}
+#contentApplications .ca-list-intro{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:clamp(20px,3vw,38px);margin-bottom:28px;border-radius:20px;border:1px solid var(--border);background:radial-gradient(ellipse at 85% 0%,color-mix(in srgb,var(--ca-pink) 16%,transparent),transparent 70%),var(--ca-surface)}
+#contentApplications .ca-list-intro h2{font-size:clamp(22px,3vw,34px);letter-spacing:-.055em;margin:8px 0!important}
+#contentApplications .ca-list-intro p{color:var(--muted);font-size:13px;line-height:1.65}
+#contentApplications .ca-list-count{display:flex;flex-direction:column;text-align:right;min-width:100px;gap:4px}
+#contentApplications .ca-list-count strong{font-size:36px;color:var(--ca-pink);font-variant-numeric:tabular-nums}
+#contentApplications .ca-list-count span{font-size:11px;color:var(--muted)}
+#contentApplications .ca-list-label{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:800;margin:22px 0 12px}
+#contentApplications .ca-list-label span,#contentApplications .ca-count{font-size:12px;border-radius:40px;padding:4px 9px;color:var(--muted);background:var(--input)}
+#contentApplications .ca-list-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:18px}
+#contentApplications .ca-campaign{gap:18px;padding:24px;min-height:250px;border-radius:20px;background:linear-gradient(125deg,color-mix(in srgb,var(--ca-pink) 8%,var(--ca-surface)),var(--ca-surface) 72%);box-shadow:0 7px 24px #00000012}
+#contentApplications .ca-campaign-title{display:grid;gap:6px}
+#contentApplications .ca-campaign-title strong{font-size:clamp(23px,3vw,32px)}
+#contentApplications .ca-campaign-title small{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+#contentApplications .ca-card-person{display:grid;grid-template-columns:56px minmax(80px,1fr) auto auto;align-items:center;gap:14px;padding:15px;border-radius:14px;background:color-mix(in srgb,var(--input) 70%,transparent);border:1px solid var(--border)}
+#contentApplications .ca-card-person .ca-avatar{width:56px;height:56px}
+#contentApplications .ca-card-person>div{display:grid;gap:4px}
+#contentApplications .ca-card-person span,#contentApplications .ca-card-person small{color:var(--muted);font-size:11px}
+#contentApplications .ca-card-person b{font-size:17px;color:var(--text);font-variant-numeric:tabular-nums}
+#contentApplications .ca-card-person .ca-card-metric{padding-left:13px;border-left:1px solid var(--border)}
+#contentApplications .ca-card-metric:first-of-type b{color:var(--ca-pink)}
+#contentApplications .ca-card-action{font-weight:800;color:var(--text);font-size:13px}
+#contentApplications .ca-campaign-bottom{padding-top:14px}
+#contentApplications .ca-detail-top{margin-bottom:22px}
+#contentApplications .ca-detail-title h2{font-size:clamp(24px,3vw,34px);margin:4px 0 7px!important}
+#contentApplications .ca-hero{padding:clamp(20px,3vw,36px);gap:22px;border-radius:24px;background:radial-gradient(ellipse at 8% 0%,color-mix(in srgb,var(--ca-pink) 19%,transparent),transparent 72%),var(--ca-surface);box-shadow:0 10px 30px #00000014}
+#contentApplications .ca-hero-head{gap:20px}
+#contentApplications .ca-hero-person{gap:18px}
+#contentApplications .ca-avatar{position:relative;overflow:hidden}
+#contentApplications .ca-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 150ms ease}
+#contentApplications .ca-avatar.own{width:92px;height:92px;border:3px solid color-mix(in srgb,var(--ca-pink) 85%,white);box-shadow:0 5px 16px #0003}
+#contentApplications .ca-hero-person h3{font-size:clamp(27px,4vw,44px);letter-spacing:-.04em}
+#contentApplications .ca-hero-body{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(250px,1fr);gap:22px}
+#contentApplications .ca-hero-data{min-width:0;display:grid;gap:17px}
+#contentApplications .ca-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#contentApplications .ca-stats>div{min-height:108px;padding:16px;justify-content:center}
+#contentApplications .ca-stats span{display:flex;align-items:center;gap:4px}
+#contentApplications .ca-stats strong{font-size:clamp(22px,3vw,38px)}
+#contentApplications .ca-comparison{padding:13px 15px;border:1px solid var(--border);border-radius:13px;background:color-mix(in srgb,var(--input) 45%,transparent)}
+#contentApplications .ca-comparison>div:first-child{display:flex;justify-content:space-between;gap:10px;font-size:13px}
+#contentApplications .ca-comparison small{color:var(--muted);font-size:11px}
+#contentApplications .ca-support{display:flex;flex-direction:column;justify-content:center;gap:12px;padding:22px;border:1px solid color-mix(in srgb,var(--ca-pink) 35%,var(--border));border-radius:17px;background:color-mix(in srgb,var(--ca-pink) 7%,var(--ca-surface))}
+#contentApplications .ca-support h4{font-size:clamp(18px,2vw,25px);letter-spacing:-.04em;margin:0;color:var(--text)}
+#contentApplications .ca-support p{font-size:13px;color:var(--muted);line-height:1.7}
+#contentApplications .ca-support .ca-vote{margin-top:5px;white-space:normal}
+#contentApplications .ca-application,#contentApplications .ca-row-details{min-width:0;color:var(--muted);font-size:12px}
+#contentApplications details summary{cursor:pointer;list-style-position:inside;font-weight:700;color:var(--text);padding:8px 0}
+#contentApplications details summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+#contentApplications details p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65;max-height:300px;overflow:auto;padding:12px;border-radius:10px;background:var(--input)}
+#contentApplications .ca-ranking-head{margin-top:30px;margin-bottom:14px}
+#contentApplications .ca-ranking-head h3{font-size:21px}
+#contentApplications .ca-ranking{gap:9px}
+#contentApplications .ca-person{grid-template-columns:44px 50px minmax(0,1fr) minmax(72px,auto) auto;min-height:76px;padding:12px 16px;transition:border-color 120ms ease,box-shadow 150ms ease}
+#contentApplications .ca-person .ca-avatar{width:50px;height:50px}
+#contentApplications .ca-person-name strong{font-size:15px}
+#contentApplications .ca-person-name .ca-excerpt{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px}
+#contentApplications .ca-person-likes strong{font-size:19px}
+#contentApplications .ca-rank.first{color:var(--ca-pink)}
+#contentApplications .ca-best{font-size:10px;padding:2px 5px;border-radius:5px;background:color-mix(in srgb,var(--ca-pink) 16%,transparent);color:var(--ca-pink)}
+#contentApplications .ca-row-details[open]{grid-column:3/-1;grid-row:2}
+#contentApplications .ca-row-details .ca-origin{margin-top:8px}
+#contentApplications .ca-warning{padding:12px;margin-bottom:12px;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:12px}
+@media(hover:hover){#contentApplications .ca-person:hover{border-color:color-mix(in srgb,var(--accent) 40%,var(--border));box-shadow:0 4px 12px #00000010}#contentApplications .ca-person:hover img,#contentApplications .ca-campaign:hover img{transform:scale(1.05)}}
+@media(max-width:850px){#contentApplications .ca-hero-body{grid-template-columns:1fr}#contentApplications .ca-hero-person{gap:12px}#contentApplications .ca-avatar.own{width:72px;height:72px}}
+@media(max-width:520px){#contentApplications .ca-list-intro{padding:18px;gap:12px}#contentApplications .ca-list-count{min-width:55px}#contentApplications .ca-list-count strong{font-size:26px}#contentApplications .ca-campaign{padding:15px;gap:14px}#contentApplications .ca-card-person{grid-template-columns:38px minmax(0,1fr) auto auto;gap:7px;padding:10px}#contentApplications .ca-card-person .ca-avatar{width:38px;height:38px}#contentApplications .ca-card-person b{font-size:13px}#contentApplications .ca-card-person .ca-card-metric{padding-left:7px}#contentApplications .ca-hero{padding:15px}#contentApplications .ca-hero-mark{font-size:10px}#contentApplications .ca-hero-person h3{font-size:27px}#contentApplications .ca-stats{gap:5px}#contentApplications .ca-stats>div{min-height:82px;padding:9px}#contentApplications .ca-stats strong{font-size:22px}#contentApplications .ca-stats span{font-size:10px}#contentApplications .ca-stats small{font-size:9px}#contentApplications .ca-person{grid-template-columns:27px 38px minmax(0,1fr) auto;gap:8px;padding:10px}#contentApplications .ca-person .ca-avatar{width:38px;height:38px}#contentApplications .ca-person-likes strong{font-size:14px}#contentApplications .ca-row-details{grid-column:3/-1;justify-self:stretch}#contentApplications .ca-support{padding:16px}}

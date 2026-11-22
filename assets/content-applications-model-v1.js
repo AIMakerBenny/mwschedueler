@@ -39,6 +39,29 @@ export function parsePostMetadata(payload,entry,checkedAt=new Date().toISOString
   if(!result?.userId)throw Error('게시글 작성자 확인 실패');
   return result;
 }
+// Recruitment posts are sources, not applications. SOOP returns pinned BEST
+// comments alongside chronological pages, so deduplicate by comment ID.
+export function parseCommentPage(payload,source){
+  const rows=payload?.data,meta=payload?.meta;
+  if(!Array.isArray(rows)||!meta||!Number.isInteger(Number(meta.last_page))||Number(meta.last_page)<1)throw Error('댓글 페이지 확인 실패');
+  const applicants=rows.flatMap(c=>{
+    const userId=text(c?.user_id,40).toLowerCase(),commentNo=text(c?.p_comment_no,24);
+    if(!/^[a-z0-9_]+$/.test(userId)||!/^\d+$/.test(commentNo)||userId===source.station||userId===source.userId)return [];
+    if(c.title_no!=null&&String(c.title_no)!==source.postNo)return [];
+    const comment=text(String(c.comment??'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&nbsp;/g,' '),5000);
+    return [{id:source.id+':'+commentNo,commentNo,userId,nickname:text(c.user_nick,80)||userId,avatar:imageUrl(c.profile_image),likes:count(c.like_cnt),comment,regDate:text(c.reg_date,50),best:c.is_best_top===true,url:source.url,sourceTitle:source.title||'',sourceId:source.id}];
+  });
+  return {applicants,pages:Number(meta.last_page),page:Number(meta.current_page),total:count(meta.total)};
+}
+export function uniqueApplicants(rows){
+  const comments=new Map(),people=new Map();
+  for(const row of rows)comments.set(row.id,row);
+  for(const row of comments.values()){
+    const prev=people.get(row.userId);
+    if(!prev||(row.likes??-1)>(prev.likes??-1)||((row.likes??-1)===(prev.likes??-1)&&row.id.localeCompare(prev.id)<0))people.set(row.userId,row);
+  }
+  return [...people.values()];
+}
 export function countdown(deadline,now=Date.now()){
   const remaining=Math.max(0,Math.ceil((Date.parse(deadline)-now)/1000)||0);
   const days=Math.floor(remaining/86400),hours=Math.floor(remaining/3600)%24,minutes=Math.floor(remaining/60)%60,seconds=remaining%60;
