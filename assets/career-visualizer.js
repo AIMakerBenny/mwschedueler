@@ -131,11 +131,6 @@
     const video=id=>'https://www.youtube.com/watch?v='+id;
     const art={
       vrchat:['VRChat',steam(438100)],
-      mawang360first:['VRChat · 360도',video('yEobsmqpvlc')],
-      mawang360devil:['VRChat · 360도',video('oP565EZ4Mwo')],
-      mawang360variety:['VRChat · 360도',video('GCCKjTuj6_E')],
-      mawang360pocky:['VRChat · 360도',video('rTX9zAr4ypQ')],
-      mawang360second:['VRChat · 360도',video('wLenu624veU')],
       pubg:['배틀그라운드',steam(578080)],
       pavlov:['Pavlov VR',steam(555160)],
       arma3:['Arma 3',steam(107410)],
