@@ -44,7 +44,8 @@ try{
           notice.querySelector('.mws-notice-close').click();
         }
         const latestScript=Math.max(0,...performance.getEntriesByType('resource').filter(e=>e.initiatorType==='script').map(e=>e.responseEnd));
-        return {cards:document.querySelectorAll('#calendarGrid .mini-event[data-evid]').length,version:[...document.scripts].some(s=>s.src.includes('calendar-details-v1.js?v=12&motion-fallback=1'))&&!!window.mwsUiInteractionsV1&&!!$('link[href*="ui-interactions-v1.css?v=3"]'),reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,noPreferenceControl:!$('#calendarDetailsMotionV6')&&$('#calendarEventDetailsV1').classList.contains('event-details-popover-v2'),origin:performance.timeOrigin,quiet:performance.now()-latestScript>=800,announcementEnabled:!!window.__mwsAnnouncementCarouselV1,announcement:window.__mwsLiveAnnouncementQaV1||null};
+        const interactionStyles=[...document.styleSheets].some(sheet=>sheet.href&&new URL(sheet.href).pathname==='/assets/ui-interactions-v1.css'&&Number(new URL(sheet.href).searchParams.get('v'))>=4);
+        return {cards:document.querySelectorAll('#calendarGrid .mini-event[data-evid]').length,version:[...document.scripts].some(s=>s.src.includes('calendar-details-v1.js?v=12&motion-fallback=1'))&&!!window.mwsUiInteractionsV1&&interactionStyles,reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,noPreferenceControl:!$('#calendarDetailsMotionV6')&&$('#calendarEventDetailsV1').classList.contains('event-details-popover-v2'),origin:performance.timeOrigin,quiet:performance.now()-latestScript>=800,announcementEnabled:!!window.__mwsAnnouncementCarouselV1,announcement:window.__mwsLiveAnnouncementQaV1||null};
       }
       return {waiting:true,readyState:document.readyState,publicMode,visibleGate:!!visibleGate,mode:$('#mwsLoginForm')?.dataset.mode,submitDisabled:$('#mwsLoginSubmit')?.disabled,cards:document.querySelectorAll('#calendarGrid .mini-event[data-evid]').length,popup:!!$('#calendarEventDetailsV1')};
     })()`)}catch(error){if(!/Inspected target navigated or closed|Cannot find context|Execution context was destroyed/.test(String(error)))throw error;state=null}
@@ -56,7 +57,7 @@ try{
   }
   assert(ready,'No stable hydrated public calendar: '+JSON.stringify(lastState));
   assert(ready.cards>0&&ready.version&&!ready.reduced&&ready.noPreferenceControl,JSON.stringify(ready));
-  const startupExpression=`(()=>({commit:window.__mwsCalendarStartupRenderV2,writes:window.__mwsCalendarRenderHistoryV2,metrics:window.mwsV55EgressReport?.().requests.filter(r=>r.type==='calendar-startup-batch'||r.type==='calendar-startup-commit'||r.type==='hydrate-complete'),request:performance.getEntriesByType('resource').find(e=>e.name.includes('/api/calendar-startup'))?.startTime}))()`;
+  const startupExpression=`(()=>{const sidebar=document.querySelector('.sidebar'),head=sidebar?.querySelector('.sidebar-head'),nav=sidebar?.querySelector('.nav');return {commit:window.__mwsCalendarStartupRenderV2,writes:window.__mwsCalendarRenderHistoryV2,metrics:window.mwsV55EgressReport?.().requests.filter(r=>r.type==='calendar-startup-batch'||r.type==='calendar-startup-commit'||r.type==='hydrate-complete'),request:performance.getEntriesByType('resource').find(e=>e.name.includes('/api/calendar-startup'))?.startTime,sidebar:sidebar&&head&&nav?{scroll:sidebar.scrollTop,top:sidebar.getBoundingClientRect().top,head:head.getBoundingClientRect().top,nav:nav.getBoundingClientRect().top,overflow:getComputedStyle(sidebar).overflowY}:null}})()`;
   const verifyStartup=startup=>{
     assert(startup.commit?.cards>0&&startup.writes?.length===1&&startup.writes[0].cards===startup.commit.cards,JSON.stringify(startup));
     assert(startup.metrics?.[0]?.type==='calendar-startup-batch'&&startup.metrics.some(r=>r.type==='calendar-startup-commit')&&Number.isFinite(startup.request),JSON.stringify(startup));
@@ -156,6 +157,7 @@ try{
     await new Promise(r=>setTimeout(r,125));
   }
   verifyStartup(warm);
+  assert(startup.sidebar&&warm.sidebar&&startup.sidebar.scroll===0&&warm.sidebar.scroll===0&&startup.sidebar.overflow==='clip'&&warm.sidebar.overflow==='clip'&&Math.abs(warm.sidebar.head-startup.sidebar.head)<1&&Math.abs(warm.sidebar.nav-startup.sidebar.nav)<1,JSON.stringify({cold:startup.sidebar,warm:warm.sidebar}));
   console.log('MWS_LIVE_CALENDAR_ATOMIC_WARM',JSON.stringify(warm));
   const upcoming=await browser.evaluate(`(()=>{
     setTab('dashboard');
