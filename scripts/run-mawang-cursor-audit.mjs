@@ -24,17 +24,17 @@ const storage = new Map();
 const mouse = {matches:true,addEventListener:(type,callback)=>callbacks.media=callback};
 class FakeElement {
   constructor(){this.style={};this.classList={add(){}};this.events={};this.naturalWidth=40;}
-  append(){} setAttribute(){} matches(){return false;}
+  append(el){this.child=el;} setAttribute(){} matches(){return false;}
   addEventListener(type,callback){this.events[type]=callback;}
   remove(){this.removed=true;}
   animate(frames,options){this.frames=frames;this.options=options;return {pause:()=>this.playing=false,play:()=>this.playing=true,cancel:()=>this.cancelled=true};}
 }
-let sprite = null, sheet = null, raf = null, rafCount = 0;
+let sprite = null, layer = null, sheet = null, raf = null, rafCount = 0;
 const images=[];
 class FakeImage extends FakeElement {constructor(){super();this.naturalWidth=40;this.naturalHeight=20;sheet=this;images.push(this);}}
 const pixels = {data:new Uint8ClampedArray([250,222,237,255,255,255,255,255,20,20,20,255])};
 const canvas = {getContext:()=>({drawImage(){},getImageData:()=>pixels,putImageData(){}}),toDataURL:()=>'data:image/png;base64,test'};
-const document = {documentElement:root,currentScript:{src:'https://example.test/assets/mawang-cursor-v1.js?v=3'},getElementById:()=>panel,readyState:'complete',createElement:tag=>tag==='canvas'?canvas:new FakeElement(),body:{append(el){sprite=el;}},addEventListener(){}};
+const document = {documentElement:root,currentScript:{src:'https://example.test/assets/mawang-cursor-v1.js?v=3'},getElementById:()=>panel,readyState:'complete',createElement:tag=>tag==='canvas'?canvas:new FakeElement(),body:{append(el){layer=el;sprite=el.child;}},addEventListener(){}};
 const listeners = new Map();
 const window = {addEventListener(type,callback,opts){listeners.set(type,callback);opts?.signal?.addEventListener('abort',()=>{if(listeners.get(type)===callback)listeners.delete(type);});}};
 const localStorage = {getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)};
@@ -54,9 +54,9 @@ for (const [variant,hotspots] of Object.entries(points)) {
     assert.equal(Math.max(w,h),size);
     assert(x>=0&&x<w&&y>=0&&y<h);
     const primary=`url("https://example.test/assets/cursors/${variant}-${size}.png?v=3") ${x} ${y}`;
-    const fallback=', url("https://example.test/assets/cursors/animation-arrow-32.png?v=3") 1 1';
-    assert.equal(properties.get('--mws-cursor-default'),`${primary}${fallback}, auto`);
-    assert.equal(properties.get('--mws-cursor-pointer'),`${primary}${fallback}, pointer`);
+    assert.equal(properties.get('--mws-cursor-default'),`${primary}, auto`);
+    assert.equal(properties.get('--mws-cursor-pointer'),`${primary}, pointer`);
+    assert.equal(layer.className,'mws-cursor-clip');
     assert.equal(properties.get('--mws-cursor-pointer').endsWith(', pointer'),true);
     assert.equal(root.dataset.mwsCursor,variant);
     assert.deepEqual(JSON.parse(storage.get(key)),{variant,size,colors:{mw:'#f8dce9','0216':'#f8dce9'},play:true});
@@ -84,7 +84,7 @@ for (const [variant,hotspots] of Object.entries(points)) {
       for(const [clientX,clientY] of [[1279,719],[1279,0],[0,719],[0,0]]) {
         listeners.get('pointermove')({...ev,clientX,clientY});raf();
         const offset=[6,8,10][i]-1;
-        const left=Math.min(root.clientWidth-width-16,clientX+offset),top=Math.min(root.clientHeight-width-4,clientY+offset);
+        const left=clientX+offset,top=clientY+offset;
         assert.equal(sprite.style.transform,`translate3d(${left}px,${top}px,0)`);
         assert.equal(sprite.hidden,false);
         assert.equal(sprite.playing,true);
@@ -106,19 +106,21 @@ for (const [variant,hotspots] of Object.entries(points)) {
         listeners.get('pointermove')({...ev,clientX,clientY});raf();
         assert.equal(sprite.hidden,false);
         assert.equal(sprite.style.width,`${w}px`);assert.equal(sprite.style.height,`${h}px`);
-        const left=Math.min(root.clientWidth-w-16,Math.max(0,clientX-x)),top=Math.min(root.clientHeight-h-4,Math.max(0,clientY-y));
+        const left=clientX-x,top=clientY-y;
         assert.equal(sprite.style.transform,`translate3d(${left}px,${top}px,0)`);
-        assert.equal(properties.get('--mws-cursor-default'),`url("https://example.test/assets/cursors/animation-arrow-${size}.png?v=3") 1 1, auto`);
+        assert.equal(properties.get('--mws-cursor-default'),'none');
+        assert.equal(properties.get('--mws-cursor-pointer'),'none');
       }
-      listeners.get('pointerout')({...ev,clientX:1279,clientY:719,relatedTarget:null});assert(!sprite.hidden);
-      listeners.get('pointerout')({...ev,clientX:1281,clientY:720,relatedTarget:null});assert(sprite.hidden);
-      assert.equal(properties.get('--mws-cursor-default'),`${primary}${fallback}, auto`);
+      listeners.get('pointerout')({...ev,clientX:1279,clientY:719,relatedTarget:null});assert(sprite.hidden);
+      assert.equal(properties.get('--mws-cursor-default'),`${primary}, auto`);
       listeners.get('pointermove')({...ev,clientX:1279,clientY:719});raf();
       root.clientWidth=1265;
       listeners.get('pointermove')({...ev,clientX:1264,clientY:719});raf();
-      assert.equal(sprite.style.transform,`translate3d(${1265-w-16}px,${720-h-4}px,0)`);
+      assert.equal(sprite.style.transform,`translate3d(${1264-x}px,${719-y}px,0)`);
+      listeners.get('pointermove')({...ev,clientX:1265,clientY:719});assert(sprite.hidden);
       root.clientWidth=1280;
-      listeners.get('pointermove')(ev);assert(sprite.hidden);assert.equal(properties.get('--mws-cursor-default'),`${primary}${fallback}, auto`);
+      listeners.get('pointermove')({...ev,clientX:1279,clientY:719});raf();
+      listeners.get('pointermove')(ev);assert(sprite.hidden);assert.equal(properties.get('--mws-cursor-default'),`${primary}, auto`);
     }
   }
 }
@@ -139,6 +141,6 @@ callbacks.change({target:{name:'mwsCursorVariant',value:'system'}});assert.equal
 listeners.get('storage')({key});assert.equal(root.dataset.mwsCursor,undefined);
 callbacks.reset();assert.deepEqual(JSON.parse(storage.get(key)),{variant:'finger',size:48,colors:{mw:'#f8dce9','0216':'#f8dce9'},play:true});
 for (const page of ['index.html','content-planner.html','majoku-castle.html']) {
-  const html=read(page).toString();assert(html.includes('assets/mawang-cursor-v1.css?v=3'));assert(html.includes('assets/mawang-cursor-v1.js?v=6'));
+  const html=read(page).toString();assert(html.includes('assets/mawang-cursor-v1.css?v=7'));assert(html.includes('assets/mawang-cursor-v1.js?v=7'));
 }
-console.log('PASS: full-size static edge overlays at all 4 corners and edges, no size reduction, exact native click marker, scrollbar retention, central native restoration, custom color, animated bounds, defaults, storage, cleanup and 3 pages');
+console.log('PASS: one single cursor at edges, precise hotspot tracking without clamping, natural clipping, native restoration, scrollbar exit, animated tracking, custom color, defaults, storage, cleanup and 3 pages');

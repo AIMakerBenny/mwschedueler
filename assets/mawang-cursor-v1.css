@@ -18,7 +18,8 @@
 .mws-cursor-preview img { width:64px;height:64px;object-fit:contain; }
 .mws-cursor-preview svg { width:36px;height:36px; }
 .mws-cursor-animated-choice::after { content:'움짤';position:absolute;top:4px;right:4px;padding:2px 4px;border-radius:5px;background:var(--accent);color:#fff;font-size:9px;line-height:1.1; }
-.mws-cursor-animation { position:fixed!important;top:0!important;left:0!important;z-index:2147483647!important;pointer-events:none!important;user-select:none!important;background-repeat:no-repeat;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;border:0!important;contain:layout paint style;will-change:transform;transition:none!important; }
+.mws-cursor-clip { position:fixed!important;inset:0!important;z-index:2147483647!important;overflow:hidden!important;pointer-events:none!important;contain:strict!important;margin:0!important;padding:0!important;border:0!important; }
+.mws-cursor-animation { position:absolute!important;top:0!important;left:0!important;pointer-events:none!important;user-select:none!important;background-repeat:no-repeat;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;border:0!important;contain:layout paint style;will-change:transform;transition:none!important; }
 .mws-cursor-animation[hidden] { display:none!important; }
 .mws-cursor-size-row { display:flex;gap:6px;flex-wrap:wrap; }
 .mws-cursor-size { position:relative;flex:1;padding:7px 8px;border:1px solid var(--border);border-radius:8px;background:var(--input);text-align:center;font-size:11px;font-weight:700;cursor:var(--mws-cursor-pointer,pointer); }

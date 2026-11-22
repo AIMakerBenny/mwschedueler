@@ -15,8 +15,8 @@
   const assetBase = new URL('cursors/', document.currentScript.src);
   const mouse = matchMedia('(any-hover: hover) and (any-pointer: fine)');
   const imageUrl = (variant, size) => new URL(`${variant}-${size}.png?v=3`, assetBase).href;
-  const withinWindow = event => event.clientX>=0 && event.clientY>=0 &&
-    event.clientX<(window.innerWidth||root.clientWidth) && event.clientY<(window.innerHeight||root.clientHeight);
+  const withinContent = event => event.clientX>=0 && event.clientY>=0 &&
+    event.clientX<root.clientWidth && event.clientY<root.clientHeight;
   const original = '#f8dce9';
   const validColor = color => typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : original;
   function normalize(raw) {
@@ -71,10 +71,7 @@
   }
   function setNative(variant,size,arrow=false,customUrl=null) {
     const [x,y] = arrow ? [1,1] : variants[variant].points[sizes.indexOf(size)];
-    let image = `url("${customUrl || imageUrl(arrow?'animation-arrow':variant, size)}") ${x} ${y}`;
-    // Never shrink the selected art. The small native arrow is only a real
-    // click marker while the original image is rendered inside the page.
-    if (!arrow) image += `, url("${imageUrl('animation-arrow',32)}") 1 1`;
+    const image = `url("${customUrl || imageUrl(arrow?'animation-arrow':variant, size)}") ${x} ${y}`;
     root.style.setProperty('--mws-cursor-default', `${image}, auto`);
     root.style.setProperty('--mws-cursor-pointer', `${image}, pointer`);
     root.dataset.mwsCursor = variant;
@@ -89,10 +86,18 @@
     staticEdge.dispose();
     staticEdge = null;
   }
+  function mountSprite(sprite) {
+    const layer=document.createElement('div');
+    layer.className='mws-cursor-clip';
+    layer.setAttribute('aria-hidden','true');
+    layer.append(sprite);
+    document.body.append(layer);
+    return layer;
+  }
   // A native cursor remains fastest and exact in the middle of the page.
-  // On approaching any viewport boundary, move the full-size artwork onto
-  // a non-interactive fixed layer. The white native arrow marks the actual
-  // click coordinate; artwork can be clamped without moving that coordinate.
+  // Near the viewport boundary, replace (not supplement) the native cursor
+  // with the same image at exactly the same hotspot. Never clamp the image:
+  // the clipping layer naturally crops any part outside the page.
   function startStaticEdge(variant,size,customUrl=null) {
     const source = customUrl || imageUrl(variant,size);
     const id = `${variant}-${size}-${source}`;
@@ -106,8 +111,7 @@
     sprite.className = 'mws-cursor-animation mws-cursor-static-edge';
     sprite.setAttribute('aria-hidden','true');
     sprite.hidden = true;
-    document.body.append(sprite);
-    const arrowUrl = imageUrl('animation-arrow',size);
+    const layer=mountSprite(sprite);
     let w=0,h=0,frame=0,target=null,eligible=false,active=false,lastEvent=null;
     let vw=root.clientWidth,vh=root.clientHeight,left=0,top=0;
     const hide = () => {
@@ -116,33 +120,36 @@
       if(active) { active=false; setNative(variant,size,false,source); }
     };
     const clear = () => {lastEvent=null;target=null;eligible=false;hide();};
-    const current = {id,dispose(){controller.abort();clear();sprite.remove();}};
+    const current = {id,dispose(){controller.abort();clear();layer.remove();}};
     staticEdge=current;
     const update = event => {
-      if(event.pointerType!=='mouse'||document.hidden){clear();return;}
+      if(event.pointerType!=='mouse'||document.hidden||!withinContent(event)){clear();return;}
       lastEvent=event;
       if(!w||!h)return;
       const next=event.target;
       if(target!==next){
         target=next;
         const cursor=next instanceof Element&&!next.matches('iframe,object,embed')?getComputedStyle(next).cursor:'';
-        eligible=cursor.includes(source)||cursor.includes(arrowUrl);
+        eligible=cursor.includes(source)||(active&&cursor==='none');
       }
       if(!eligible){hide();return;}
-      // Keep a small gutter from native scrollbars and browser edges.
       const x=event.clientX-hotX,y=event.clientY-hotY;
       // Scrollbar appearance can change clientWidth without a window resize.
       // Refresh only near a boundary to avoid layout reads during ordinary motion.
       if(x<2||y<2||x>vw-w-32||y>vh-h-32){vw=root.clientWidth;vh=root.clientHeight;}
-      const maxX=Math.max(0,vw-w-16),maxY=Math.max(0,vh-h-4);
+      const maxX=vw-w,maxY=vh-h;
       const edge=x<2||y<2||x>maxX||y>maxY;
       if(!edge){hide();return;}
-      left=Math.min(maxX,Math.max(0,x));top=Math.min(maxY,Math.max(0,y));
+      left=x;top=y;
       if(!frame)frame=requestAnimationFrame(()=>{
         frame=0;
         sprite.style.transform=`translate3d(${left}px,${top}px,0)`;
         sprite.hidden=false;
-        if(!active){active=true;setNative(variant,size,true);}
+        if(!active){
+          active=true;
+          root.style.setProperty('--mws-cursor-default','none');
+          root.style.setProperty('--mws-cursor-pointer','none');
+        }
       });
     };
     const opts={capture:true,passive:true,signal};
@@ -150,13 +157,7 @@
     window.addEventListener('pointerover',update,opts);
     window.addEventListener('pointerup',update,opts);
     window.addEventListener('pointercancel',clear,opts);
-    window.addEventListener('pointerout',event=>{
-      if(event.relatedTarget)return;
-      // A native scrollbar may report no related DOM element while the
-      // pointer is still inside the viewport. Keep the artwork there.
-      if(active&&withinWindow(event))return;
-      clear();
-    },opts);
+    window.addEventListener('pointerout',event=>{if(!event.relatedTarget)clear();},opts);
     window.addEventListener('dragstart',clear,opts);
     window.addEventListener('blur',clear,{signal});
     window.addEventListener('scroll',()=>{target=null;},opts);
@@ -190,17 +191,17 @@
     sprite.hidden = true;
     const width = size-offset;
     sprite.style.width = sprite.style.height = `${width}px`;
-    document.body.append(sprite);
+    const layer=mountSprite(sprite);
     const arrowUrl = imageUrl('animation-arrow',size);
     let frame = 0, target = null, eligible = false, x = 0, y = 0, playback = null, lastEvent = null;
     const hide = () => {
       if (frame) cancelAnimationFrame(frame);
       frame = 0; target = null; eligible = false; sprite.hidden = true; playback?.pause();
     };
-    const current = {id,ready:false,dispose(){controller.abort();hide();playback?.cancel();sprite.remove();}};
+    const current = {id,ready:false,dispose(){controller.abort();hide();playback?.cancel();layer.remove();}};
     animation = current;
     const update = event => {
-      if (event.pointerType !== 'mouse' || event.buttons || document.hidden) { lastEvent=null; hide(); return; }
+      if (event.pointerType !== 'mouse' || event.buttons || document.hidden || !withinContent(event)) { lastEvent=null; hide(); return; }
       lastEvent = event;
       if (!current.ready) return;
       const next = event.target;
@@ -212,13 +213,8 @@
       x = event.clientX+offset-1; y = event.clientY+offset-1;
       if (!frame) frame = requestAnimationFrame(() => {
         frame = 0;
-        // Constrain only the decoration to the visible page. The small native
-        // arrow stays at the actual click coordinate, including at corners.
-        const maxX = Math.max(0,root.clientWidth-width-16);
-        const maxY = Math.max(0,root.clientHeight-width-4);
-        const left = Math.min(maxX,Math.max(0,x));
-        const top = Math.min(maxY,Math.max(0,y));
-        sprite.style.transform = `translate3d(${left}px,${top}px,0)`;
+        // The character follows the arrow without getting stuck at a border.
+        sprite.style.transform = `translate3d(${x}px,${y}px,0)`;
         if (sprite.hidden) { sprite.hidden = false; playback?.play(); }
       });
     };
@@ -229,7 +225,7 @@
     window.addEventListener('pointerdown',clear,opts);
     window.addEventListener('pointerup',update,opts);
     window.addEventListener('pointercancel',clear,opts);
-    window.addEventListener('pointerout',event=>{if (!event.relatedTarget && (sprite.hidden || !withinWindow(event))) clear();},opts);
+    window.addEventListener('pointerout',event=>{if (!event.relatedTarget) clear();},opts);
     window.addEventListener('dragstart',clear,opts);
     window.addEventListener('blur',clear,{signal});
     window.addEventListener('scroll',()=>{target=null;},opts);
