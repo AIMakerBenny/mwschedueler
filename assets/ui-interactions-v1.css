@@ -101,7 +101,10 @@ body[data-mws-ui-surface=planner] .node.selected:active{box-shadow:0 8px 20px #0
 body[data-mws-ui-surface=planner] .dropdown-panel:not([hidden]){animation:mws-ui-tooltip-in 120ms var(--mws-ui-ease)}
 body[data-mws-ui-surface=castle] .game-card{box-shadow:var(--mws-ui-shadow)}
 
-@media (hover:hover) and (pointer:fine){
+/* Headless desktop Chromium reports pointer:none even when it receives
+   mouse input. A wide pointer-less viewport may hover only if it actually
+   receives a mouse hover; touch/coarse devices remain excluded. */
+@media (hover:hover) and (pointer:fine), (hover:none) and (pointer:none) and (min-width:901px){
   body #calendar.section #calendarGrid .mini-event[data-evid]:hover:not(.mws-calendar-event-pointer-dragging-v174){scale:1.02;z-index:1;box-shadow:inset 0 1px 0 var(--mws-ui-edge),0 2px 4px #0004!important}
   body #calendar.section #calendarGrid .mini-event[data-evid]:hover>.mws-steam-slot-v111 img{scale:1.07}
   body #calendar.section #calendarGrid .mini-event[data-evid]:active:not(:has(button:active)){scale:.98!important}
