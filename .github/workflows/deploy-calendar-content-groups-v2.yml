@@ -150,6 +150,7 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
       - name: Verify live calendar group frontend was published
+        id: live_publish
         shell: bash
         run: |
           set -euo pipefail
@@ -276,8 +277,10 @@ jobs:
       - name: Verify anchored detail popover on live public calendar
         run: node scripts/qa-live-calendar-drawer-motion-v6.mjs
       - name: Verify mobile calendar geometry and interactions on live public site
+        if: ${{ !cancelled() && steps.live_publish.outcome == 'success' }}
         run: node scripts/qa-mobile-calendar-layout-v2.mjs --live
       - name: Verify live posts applicant card and list geometry
+        if: ${{ !cancelled() && steps.live_publish.outcome == 'success' }}
         run: node scripts/qa-posts-responsive-layout-v2.mjs --live
       - name: Publish scoped Cloudflare deployment result
         if: always()
