@@ -24,3 +24,9 @@ test('calendar records are read only, past-only, deduplicated and distinctly lab
   assert.equal(api.filter(rows,{year:'2020',source:'archive'}).length,2);
   assert.equal(api.filter(rows,{source:'calendar'}).length,1);
 });
+test('same-day repeated broadcasts retain distinct times and searchable people',()=>{
+  const events=[{id:'a',date:'2026-11-18',title:'와우 포에버',start:'10:41',participants:['p'],steamGame:{name:'World of Warcraft'}},{id:'b',date:'2026-11-18',title:'와우 포에버',start:'17:37'}];
+  const rows=api.build(archive,events,'2026-11-22',[{id:'p',name:'테스트 인물'}]);
+  assert.deepEqual(Array.from(rows.filter(r=>r.origin==='calendar'),r=>r.time),['17:37','10:41']);
+  assert.equal(api.filter(rows,{query:'테스트 인물 World of Warcraft'}).length,1);
+});

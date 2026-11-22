@@ -7,15 +7,21 @@
   const isDate=s=>/^\d{4}-\d{2}-\d{2}$/.test(s)&&!Number.isNaN(Date.parse(s))&&new Date(s+'T00:00:00Z').toISOString().slice(0,10)===s;
   const monthKey=r=>r.date.slice(0,7);
   const dateKey=d=>d.length===7?d+'-00':d;
-  const compare=(a,b)=>dateKey(b.date).localeCompare(dateKey(a.date))||a.title.localeCompare(b.title,'ko');
-  function build(archive,events,today){
-    const rows=archive.filter(r=>!excluded(r.title)&&r.date<=today).slice(),keys=new Set(rows.map(r=>r.date+'|'+norm(r.title))),ids=new Set();
+  const compare=(a,b)=>dateKey(b.date).localeCompare(dateKey(a.date))||String(b.time||'').localeCompare(String(a.time||''))||a.title.localeCompare(b.title,'ko');
+  const clock=value=>/^([01]\d|2[0-3]):[0-5]\d$/.test(String(value||''))?String(value):'';
+  function build(archive,events,today,contacts=[]){
+    const rows=archive.filter(r=>!excluded(r.title)&&r.date<=today).slice(),archiveKeys=new Set(rows.map(r=>r.date+'|'+norm(r.title))),keys=new Set(),ids=new Set();
+    const people=new Map((contacts||[]).filter(c=>c?.id&&c.name).map(c=>[String(c.id),String(c.name)]));
     for(const e of events||[]){
       const title=String(e?.title||'').trim(),date=String(e?.date||''),id=String(e?.id||'');
       if(!id||ids.has(id)||!title||!isDate(date)||date>=today||e.restDay||/^(휴방|휴식|미정|일정 미정|일정 없음|취소|방송 없음)$/.test(title)||excluded(title)||e.cancelled||e.canceled||['cancelled','canceled','취소'].includes(e.status))continue;
-      const key=date+'|'+norm(title);if(keys.has(key))continue;
+      const time=clock(e.start),endTime=clock(e.end),label=date+'|'+norm(title),key=label+'|'+time+'|'+endTime;
+      if(keys.has(key)||archiveKeys.has(label)&&!time)continue;
       ids.add(id);keys.add(key);
-      rows.push({date,kind:'calendar',title,context:'캘린더에 등록된 과거 일정 · 실제 진행 여부는 별도 확인 필요',source:'스케줄러 캘린더',url:'',end:'',basis:'calendar',origin:'calendar',id});
+      const names=[...new Set((Array.isArray(e.participants)?e.participants:[]).map(id=>people.get(String(id))).filter(Boolean))];
+      const game=String(e.steamGame?.name||'').trim();
+      const context=[game&&`게임 ${game}`,names.length&&`함께한 사람 ${names.join(' · ')}`].filter(Boolean).join(' / ');
+      rows.push({date,kind:'calendar',title,context:context||'등록된 과거 일정',time,endTime,source:'스케줄러 캘린더',url:'',end:'',basis:'calendar',origin:'calendar',id});
     }
     return rows.sort(compare);
   }
@@ -41,7 +47,7 @@
   function root(){for(let el=section.parentElement;el&&el!==document.body;el=el.parentElement){if(/auto|scroll/.test(getComputedStyle(el).overflowY)&&el.clientHeight)return el}return document.scrollingElement}
   const today=()=>typeof todayKST==='function'?todayKST():new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
   function refresh(){
-    rows=build(archive,typeof data!=='undefined'?data.events:[],today());dirty=false;
+    rows=build(archive,typeof data!=='undefined'?data.events:[],today(),typeof data!=='undefined'?data.contacts:[]);dirty=false;
     const ys=[...new Set(rows.map(r=>r.date.slice(0,4)))];
     if(year===null||year&&!ys.includes(year))year=ys[0]||'';
     years.innerHTML=[['','전체'],...ys.map(y=>[y,y])].map(([id,title])=>`<button type="button" data-ca-year="${id}" aria-pressed="${year===id}">${title}<small>${id?rows.filter(r=>r.date.startsWith(id)).length:rows.length}</small></button>`).join('');
@@ -51,7 +57,7 @@
   function rowHTML(r){
     const date=r.date.length===10?String(Number(r.date.slice(8))):'—';
     const url=r.url&&/^https:\/\//i.test(r.url)?r.url:'';
-    return `<article class="ca-record" data-ca-category="${r.kind}"><div class="ca-date"><time datetime="${esc(r.date)}">${date}</time><small>${r.date.length===10?'일':'월 기록'}</small></div><span class="ca-dot" aria-hidden="true"></span><div class="ca-card"><div class="ca-card-main"><div class="ca-meta"><span class="ca-kind">${kinds[r.kind]}</span><span>${esc(basis[r.basis]||'기록 기준')}</span>${r.end?`<span>${esc(dateText(r.date))} ~ ${esc(dateText(r.end))}</span>`:''}</div><h3>${esc(r.title)}</h3><p>${esc(r.context)}</p></div><div class="ca-source">${url?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" title="출처 열기">${esc(r.source)} ↗</a>`:r.id?`<button type="button" data-ca-event="${esc(r.id)}">일정 상세 ›</button>`:`<span>${esc(r.source)}</span>`}</div></div></article>`;
+    return `<article class="ca-record" data-ca-category="${r.kind}"><div class="ca-date"><time datetime="${esc(r.date)}">${date}</time><small>${r.date.length===10?'일':'월 기록'}</small></div><span class="ca-dot" aria-hidden="true"></span><div class="ca-card"><div class="ca-card-main"><div class="ca-meta"><span class="ca-kind">${kinds[r.kind]}</span><span>${esc(basis[r.basis]||'기록 기준')}</span>${r.time?`<span class="ca-time">${esc(r.time)}${r.endTime?' ~ '+esc(r.endTime):''}</span>`:''}${r.end?`<span>${esc(dateText(r.date))} ~ ${esc(dateText(r.end))}</span>`:''}</div><h3>${esc(r.title)}</h3><p>${esc(r.context)}</p></div><div class="ca-source">${url?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" title="출처 열기">${esc(r.source)} ↗</a>`:r.id?`<button type="button" data-ca-event="${esc(r.id)}">일정 상세 ›</button>`:`<span>${esc(r.source)}</span>`}</div></div></article>`;
   }
   function render(){
     if(view!=='activities'||!section.classList.contains('active'))return;
