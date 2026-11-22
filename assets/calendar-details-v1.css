@@ -159,9 +159,6 @@ body:has(#calendar.section.active) #newEventBtn{min-height:30px!important;paddin
 #calendar #calendarGrid .calendar-start-v2,#calendar #calendarGrid .calendar-card-title-v2{display:block;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
 
 @media(min-width:901px){
- #calendar #calendarGrid .day{padding-bottom:26px!important}
- #calendar #calendarGrid .ohamsa-calendar-strip-local-v2{height:20px!important;min-height:20px!important;bottom:3px!important;left:4px!important;right:4px!important;padding:1px 4px!important;border-radius:4px!important}
- #calendar #calendarGrid .ohamsa-calendar-strip-local-v2 :is(img,.ohamsa-calendar-avatar-local-v2){height:17px!important;width:17px!important;flex-basis:17px!important;border-radius:4px!important}
  #calendar #calendarGrid .daynum{padding-right:21px!important}
  #calendar #calendarGrid .calendar-day-add-local-v2{width:18px!important;height:18px!important;min-height:18px!important;top:2px!important;right:3px!important;font-size:14px!important}
 }
@@ -182,6 +179,19 @@ body #calendar.section #calendarGrid .day{transition:background-color 140ms ease
 body #calendar.section #calendarGrid .day:hover{transform:none!important;box-shadow:none!important;background:color-mix(in srgb,var(--text) 3%,var(--panel))!important}
 body #calendar.section #calendarGrid .day.today{outline:none!important;box-shadow:none!important}
 body #calendar.section #calendarGrid .calendar-date-number-v3{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;font-size:12px;font-weight:600;line-height:1;color:inherit}
+body #calendar.section #calendarGrid button.calendar-date-number-v3{border:0;padding:0!important;min-width:0!important;min-height:0!important;background:transparent;box-shadow:none;transform:none;cursor:pointer}
+body #calendar.section #calendarGrid button.calendar-date-number-v3:is(:hover,:focus-visible){background:color-mix(in srgb,var(--accent) 18%,var(--panel));outline:1px solid var(--accent);outline-offset:1px}
+/* Legacy V5 allocated a bottom rail on every date; the date tooltip needs no space. */
+body #calendar.section #calendarGrid .day{padding-bottom:4px!important}
+body #calendar.section #calendarGrid .ohamsa-calendar-strip-local-v2{display:none!important}
+#calendarPeopleHoverV1{position:fixed;z-index:10090;pointer-events:none;width:max-content;max-width:min(340px,calc(100vw - 20px));max-height:calc(100dvh - 20px);overflow:hidden;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px #0005;padding:11px 13px;font-size:12px;box-sizing:border-box}
+#calendarPeopleHoverV1[hidden]{display:none!important}
+#calendarPeopleHoverV1 strong{font-size:13px;display:block;margin-bottom:8px}
+#calendarPeopleHoverV1 .calendar-people-names-v1{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px;max-height:220px;overflow:hidden}
+#calendarPeopleHoverV1 .calendar-people-person-v1{display:flex;align-items:center;gap:6px;min-width:0}
+#calendarPeopleHoverV1 .calendar-people-person-v1 span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#calendarPeopleHoverV1 :is(img,.calendar-people-avatar-v1){width:25px;height:25px;border-radius:6px;object-fit:cover;flex:none;display:grid;place-items:center;background:var(--input);font-size:10px}
+#calendarPeopleHoverV1 small{display:block;color:var(--muted);margin-top:8px;font-size:11px}
 body #calendar.section #calendarGrid .day.today .calendar-date-number-v3{background:var(--accent);color:white}
 body #calendar.section #calendarGrid .day.out{opacity:1!important;background:color-mix(in srgb,var(--panel) 70%,var(--bg))!important}
 body #calendar.section #calendarGrid .day.out .calendar-date-number-v3{opacity:.52}

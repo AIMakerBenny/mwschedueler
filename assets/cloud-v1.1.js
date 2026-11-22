@@ -25,7 +25,9 @@
 
   let mode=null,manifest=null,cloudSaveTimer=0,cloudSaving=false,cacheDbPromise=null,wardogsCacheDbPromise=null,currentAdmin=null;
   const loadedParts=new Set(),baselineJson=new Map(),dirtyParts=new Set();
-  window.mwsCanEditCalendarClipboardV1=()=>mode==='admin'&&Boolean(currentAdmin)&&!hydrating&&loadedParts.has('clipboard')&&Number.isInteger(manifest?.parts?.clipboard)&&manifest.parts.clipboard>=0;
+  // Public edits are session-only, just like other calendar edits. Admin writes
+  // still require a verified clipboard version and an authenticated session.
+  window.mwsCanEditCalendarClipboardV1=()=>!hydrating&&loadedParts.has('clipboard')&&loadedParts.has('events')&&(mode==='public'||(mode==='admin'&&Boolean(currentAdmin)&&Number.isInteger(manifest?.parts?.clipboard)&&manifest.parts.clipboard>=0));
   let lazyBridgeInstalled=false;
   const metrics=window.__mwsV55NetworkMetrics={startedAt:new Date().toISOString(),backend:'cloudflare-d1-r2-auth',cacheSchemaVersion:CACHE_SCHEMA_VERSION,requests:[],cacheHits:0,cacheMisses:0,semanticResponseBytes:0,actualCloudflareResponseBytes:0,actualCloudflareRequestBytes:0};
   function metric(type,detail={}){metrics.requests.push({at:new Date().toISOString(),type,...detail});if(metrics.requests.length>300)metrics.requests.shift()}

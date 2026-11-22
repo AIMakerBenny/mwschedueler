@@ -18,7 +18,7 @@ const runtimeCSS=host.slice(host.indexOf('#calendarGrid.calendar{'),host.indexOf
 const css=['app-core.css','mawang-premium-v1621.css','calendar-space-efficiency-v1.css','calendar-toolbar-v4.css','calendar-responsive-cards-v1.css','calendar-stable-layout-v1.css','calendar-continuous-series-v1.css','workspace-clean-v1.css','calendar-details-v1.css','calendar-drag-layout-fix.css'].map(p=>read('assets/'+p)).join('\n')+'\n'+runtimeCSS;
 assert(!read('assets/calendar-details-v1.js').includes('calendar-details-open-v2'),'Popover cannot resize the calendar');
 const bootstrap=`
-const data={contentGroups:[{id:'series',name:'연속 게임',color:'#118c95'}],events:[]};let calDate=new Date(2026,10,1);
+const data={contentGroups:[{id:'series',name:'연속 게임',color:'#118c95'}],events:[],contacts:[{id:'qa-person',name:'테스트 참가자'}],todayPeopleByDate:{'2026-11-26':['qa-person']}};let calDate=new Date(2026,10,1);
 const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),sundayIndex=d=>d,todayKST=()=> '2026-11-18',activeEvents=()=>data.events,category=()=>({color:'#8b5cf6'}),rgba=()=> '#29233f';
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 function hideCalendarEventPreview(){}function ensureCalendarYearOptions(){}let editorOpens=0;
@@ -27,7 +27,8 @@ ${copyDnd}\n${copyPointerTarget}\ninitCalendarCopyTrayDnD();
 function handleCalendarMiniEventClick(e,id){e.stopPropagation();window.mwsCalendarDetailsV1.open({id,title:'방송 일정',html:'<h2>게임 방송</h2><p>13:55 - 15:02</p>',onEdit:()=>editorOpens++})}
 window.openCalendarEventDetailsV1=id=>handleCalendarMiniEventClick({stopPropagation(){}},id);
 for(let day=1;day<=30;day++)for(let j=0;j<(day===18?8:day%5===0?3:1);j++)data.events.push({id:'qa-'+day+'-'+j,date:'2026-11-'+String(day).padStart(2,'0'),start:j?'18:30':'13:55',title:j?'게임 방송 일정 '+j:'와우 포에버',device:day===18&&j%2===0||day===5&&j===1||day===3?'VR':day===1?'비방':day===2?'':'PC',restDay:day===3,contentGroupId:day>=5&&day<=18?'series':null});
-${dayDetails}\n${render}\nrenderCalendar();document.querySelectorAll('.day').forEach(day=>{day.classList.add('has-ohamsa-local-v2');const strip=document.createElement('button');strip.className='ohamsa-calendar-strip-local-v2';strip.textContent='참가자';strip.style.cssText='position:absolute;bottom:6px;height:31px';day.append(strip)});
+${dayDetails}\n${render}\nrenderCalendar();window.openTodayPeoplePicker=date=>window.qaPeoplePickerDate=date;
+${read('assets/calendar-today-people-hover-v1.js')}
 `;
 const checks=`
 const tick=()=>new Promise(r=>setTimeout(r,600));
@@ -100,7 +101,12 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const panelPushes=Math.abs(r('#calendarGrid').width-closedWidth)<1&&getComputedStyle($('.app>.main')).transform==='none';
  const popup=r('#calendarEventDetailsV1'),card=r('[data-evid="qa-18-0"]');
  const saturdayVisible=popup.left>=11&&popup.right<=innerWidth-11&&popup.top>=11&&popup.bottom<=innerHeight-11&&(popup.right<=card.left||popup.left>=card.right);
- const participantRailClear=r('.calendar-day-events-v2').bottom<=r('.ohamsa-calendar-strip-local-v2').top+1;
+ const dateButton=$('.day[data-date="2026-11-26"] [data-calendar-people-date]'),beforeHover=r('.day[data-date="2026-11-26"]');
+ dateButton.dispatchEvent(new PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}));
+ const tip=$('#calendarPeopleHoverV1');const peopleHover=tip&&!tip.hidden&&tip.textContent.includes('테스트 참가자')&&r('.day[data-date="2026-11-26"]').height===beforeHover.height;
+ dateButton.dispatchEvent(new PointerEvent('pointerout',{bubbles:true,pointerType:'mouse',relatedTarget:document.body}));
+ const peopleHide=tip?.hidden;dateButton.click();const peopleEdit=window.qaPeoplePickerDate==='2026-11-26';
+ const participantRailClear=!$('.ohamsa-calendar-strip-local-v2')&&parseFloat(getComputedStyle(day).paddingBottom)<=5&&peopleHover&&peopleHide&&peopleEdit;
  const ribbonsKept=document.querySelectorAll('.calendar-continuous-ribbon-v1').length>=3;
  const openMonthFits=r('#calendarGrid').bottom<=innerHeight-10;
  

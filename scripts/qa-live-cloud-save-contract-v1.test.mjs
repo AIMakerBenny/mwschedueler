@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
+import {gunzipSync} from 'node:zlib';
 
 const source=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const server=source('src/cf-v111-auth.js');
@@ -39,6 +40,16 @@ test('startup activity indexing matches the old per-date sync without a calendar
  const expected=run(`const dates=new Set([...Object.keys(data.todayPeopleByDate),...Object.keys(data.todayPeopleManualByDate)]);for(const event of data.events)if(validDateKey(event?.date))dates.add(String(event.date));for(const date of dates)syncDate(date);`);
  assert.equal(run('syncAll()'),expected);
  assert(!runtime.includes("renderAll('Mawang Scheduler v1.3.0 자동 함께한 사람 동기화')"));
+});
+test('encoded calendar feature no longer injects bottom participant strips, but retains date and memo controls',()=>{
+ const loader=source('assets/online-v5-loader.js');
+ const payload=gunzipSync(Buffer.from(loader.match(/const PAYLOAD='([^']+)'/)[1],'base64')).toString();
+ const features=payload.split('\n/*__MWS_SPLIT_FEATURES_CSS__*/\n')[0].split('\n/*__MWS_SPLIT_CLOUD_FEATURES__*/\n')[1];
+ const patch=sourceFunction(loader,'    safeFeatures=safeFeatures.replace(/  function injectTodayPeopleIntoCalendar','    run(safeFeatures)');
+ const transformed=vm.runInNewContext('let safeFeatures=features;'+patch+'\nsafeFeatures',{features});
+ new vm.Script(transformed);
+ assert(!/function injectTodayPeopleIntoCalendar|ensureEveryDayPeopleSlotV4|strip.className='ohamsa-calendar-strip-local-v2/.test(transformed));
+ assert(transformed.includes('function injectCalendarV2()')&&transformed.includes('renderCalendarDayDetailLocalV2(date)')&&transformed.includes('syncFavoriteFoldersV4()'));
 });
 
 
@@ -78,6 +89,18 @@ const transform=vm.runInNewContext(sourceFunction(entry,'function normalizeCloud
 for(const path of clientPaths){
  const code=transform(source(path));
  const initial=vm.runInNewContext(source(path).match(/const INITIAL_PARTS=(\[[^;]+\]);/)[1]);assert(initial.includes('clipboard'));
+ test(path+' clipboard works in Public session but never writes to D1; Admin retains version guard',async()=>{
+  const remote={events:[{id:'e1',title:'original'}],clipboard:{scheduleClipboard:[]}},versions={events:4,clipboard:9};
+  const h=makeRuntime(code,cp(remote),cp(versions));
+  vm.runInNewContext(code.match(/window\.mwsCanEditCalendarClipboardV1=\(\)=>[^;]+;/)[0],h.ctx);
+  assert.equal(h.ctx.window.mwsCanEditCalendarClipboardV1(),false);
+  await h.ctx.hydrate('public');assert.equal(h.ctx.window.mwsCanEditCalendarClipboardV1(),true);
+  h.ctx.data.clipboard.scheduleClipboard.push({id:'local-copy'});h.ctx.queue();assert.equal(await h.ctx.write(),false);assert.equal(h.writes.length,0);assert.equal(remote.clipboard.scheduleClipboard.length,0);
+  h.ctx.loadedParts.delete('clipboard');assert.equal(h.ctx.window.mwsCanEditCalendarClipboardV1(),false);
+  await h.ctx.hydrate('admin');assert.equal(h.ctx.window.mwsCanEditCalendarClipboardV1(),true);
+  h.ctx.manifest.parts.clipboard=undefined;assert.equal(h.ctx.window.mwsCanEditCalendarClipboardV1(),false);
+  h.ctx.manifest.parts.clipboard=9;h.ctx.currentAdmin=null;assert.equal(h.ctx.window.mwsCanEditCalendarClipboardV1(),false);
+ });
  test(path+' loads required rows in parallel and commits one complete calendar; Public defers optional data',async()=>{
   const remote={core:{categories:[]},events:[{id:'e1',title:'verified',favoriteFolderId:'f1'}],contacts:[],clipboard:{},activity:{},notebook:{favoriteFolders:[{id:'f1'}]},contactMeta:{},posts:[],miniGames:{},wardogs:{}};
   const versions=Object.fromEntries(Object.keys(remote).map(p=>[p,1]));

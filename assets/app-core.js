@@ -1590,7 +1590,7 @@ function cloneEventAsTemplate(e){
 }
 function canChangeCalendarClipboardV1(){
   if(typeof window.mwsCanEditCalendarClipboardV1!=='function'||window.mwsCanEditCalendarClipboardV1())return true;
-  toast('복사 보관함','복사 보관함 데이터와 저장 버전을 확인하지 못했습니다. 온라인 동기화 후 다시 시도해 주세요.');
+  toast('복사 보관함',document.body.dataset.mwsMode==='public'?'복사 보관함을 불러오는 중입니다. 잠시 후 다시 시도해 주세요.':'복사 보관함 데이터와 저장 버전을 확인하지 못했습니다. 온라인 동기화 후 다시 시도해 주세요.');
   return false;
 }
 function addEventToCalendarClipboard(eventId){
@@ -1605,7 +1605,7 @@ function addEventToCalendarClipboard(eventId){
   };
   data.scheduleClipboard.push(item);
   saveData('캘린더 복사 보관함 추가');
-  toast(event.restDay?'휴방':event.title,'복사 보관함에 저장했습니다. 원본 일정은 그대로 유지됩니다.');
+  toast(event.restDay?'휴방':event.title,document.body.dataset.mwsMode==='public'?'현재 세션의 복사 보관함에 추가했습니다. 원본 일정은 그대로 유지됩니다.':'복사 보관함에 저장했습니다. 원본 일정은 그대로 유지됩니다.');
   return item;
 }
 window.addEventToCalendarClipboard=addEventToCalendarClipboard;
@@ -2019,7 +2019,7 @@ function renderCalendar(){
       return at.localeCompare(bt)
     });
     out+=`<div class="day ${inMonth?'':'out'} ${today?'today':''} ${dow===0?'sun':''} ${dow===6?'sat':''}" data-date="${ds}">
-      <div class="daynum"><span class="calendar-date-number-v3">${d.getDate()}</span></div>
+      <div class="daynum"><button type="button" class="calendar-date-number-v3" data-calendar-people-date="${ds}" aria-label="${ds} 오늘 함께한 사람 보기 및 수정">${d.getDate()}</button></div>
       <div class="calendar-day-events-v2" tabindex="0" aria-label="${ds} 일정 ${evs.length}개">${evs.map(e=>{
         const groupColor=groupColors.get(e.contentGroupId);
         const color=e.restDay?'#e85d75':(groupColor||e.color||category(e.categoryId)?.color||'#64748b');

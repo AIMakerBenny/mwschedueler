@@ -24,6 +24,12 @@
     // The first-paint HTML owns the sidebar; the encoded V3 organizer otherwise
     // moves the mini-game divider above timeline/achievements until V176 repairs it.
     safeFeatures=safeFeatures.replace('function organizeSidebarV3(){','function organizeSidebarV3(){if(window.__mwsSidebarGroupsInitial)return;');
+    // The date-number hover owns Today People. Remove the encoded V1/V2/V4
+    // day-cell injections while retaining the separate day detail and memo features.
+    safeFeatures=safeFeatures.replace(/  function injectTodayPeopleIntoCalendar\(\)\{[\s\S]*?(?=  \/\/ ---------- Contact detail:)/,'');
+    safeFeatures=safeFeatures.replace(/\n      const people=visibleContactsForDate\(date\);\n      if\(people.length\)\{[\s\S]*?\n      \}\n\n      day.onclick/, '\n      day.onclick');
+    safeFeatures=safeFeatures.replace(/  function ensureEveryDayPeopleSlotV4\(\)\{[\s\S]*?(?=  \/\/ Keep the V4 layout)/,'');
+    safeFeatures=safeFeatures.replace("if(tab==='calendar')setTimeout(ensureEveryDayPeopleSlotV4,0);",'').replace('syncFavoriteFoldersV4();ensureEveryDayPeopleSlotV4()','syncFavoriteFoldersV4()');
     run(safeFeatures);
     if(typeof sharedSearchOwner.contactMatches==='function'){
       window.contactMatches=sharedSearchOwner.contactMatches;

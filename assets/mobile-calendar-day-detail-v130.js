@@ -267,6 +267,9 @@ document.addEventListener('click',event=>{
   if(!isMobileMonth())return;
   const target=event.target;
   if(!(target instanceof Element))return;
+  // A date number opens the Today People picker; blank space and event cards
+  // continue to open the existing touch day sheet.
+  if(target.closest('[data-calendar-people-date]'))return;
   const day=target.closest('#calendarGrid .day[data-date]');
   if(!day||!calendar.contains(day))return;
   event.preventDefault();
