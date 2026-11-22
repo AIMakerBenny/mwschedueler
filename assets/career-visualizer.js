@@ -4,12 +4,12 @@
   if (!source) return;
   let controller;
   const activation = () => {
-    if (section.classList.contains('active')) {
+    if (section.classList.contains('active') && section.dataset.careerView !== 'activities') {
       if (!controller) controller = mount();
       else controller.resize();
     } else controller?.suspend();
   };
-  new MutationObserver(activation).observe(section,{attributes:true,attributeFilter:['class']});
+  new MutationObserver(activation).observe(section,{attributes:true,attributeFilter:['class','data-career-view']});
   activation();
 
   function mount() {
@@ -288,6 +288,7 @@
     const axis=node('div','cv-axis'); axis.setAttribute('role','region');axis.setAttribute('aria-label','연속 업적 타임라인');
     const legacy=node('section','cv-legacy'); legacy.setAttribute('aria-label','기타 기록');
     const empty=node('div','cv-empty','검색 결과가 없습니다.');empty.hidden=true;
+    panel.id='careerAchievementsPanelV1';panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby','careerAchievementsTabV1');
     panel.append(barHost,empty,axis,legacy);section.append(panel);source.hidden=true;
 
     const entries=new Map(), markers=new Map(), yearButtons=new Map(), anim=[], months=[];
