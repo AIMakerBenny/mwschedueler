@@ -1,5 +1,6 @@
 // Isolated gallery in R2: original bytes, public reads and authenticated writes.
 const PREFIX='mawang-archive/';
+const PROFILE_PREFIX='mawang-archive-profile/';
 const CHARACTERS=new Set('yoo mi ye seon su so ae da ye-new hakka lena kokoa devil hina real wolferia mike coco azuki nyasuka chibi baby-shark baby-kuma'.split(' '));
 const MAX_BYTES=32*1024*1024,MAX_PHOTOS=30;
 const ID=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
@@ -18,6 +19,12 @@ function photo(object){
   if(!CHARACTERS.has(character)||!ID.test(id||''))return null;
   return {character,id,url:'/media/mawang-archive/'+character+'/'+id,uploaded:new Date(object.uploaded).toISOString(),size:object.size};
 }
+function profile(object){
+  const character=object.key.slice(PROFILE_PREFIX.length);
+  if(!CHARACTERS.has(character))return null;
+  const revision=new Date(object.uploaded).getTime()+'-'+String(object.etag||'').replace(/[^a-f0-9]/gi,'');
+  return {character,revision,url:'/media/mawang-profile/'+character+'?rev='+revision,size:object.size};
+}
 async function list(bucket,prefix=PREFIX){
   let cursor,objects=[];
   do{
@@ -30,14 +37,16 @@ export async function handleArchiveGallery(request,env,currentAdmin){
   const path=new URL(request.url).pathname,method=request.method;
   const api=path.match(/^\/api\/mawang-gallery(?:\/([^/]+)(?:\/([^/]+))?)?$/);
   const media=path.match(/^\/media\/mawang-archive\/([^/]+)\/([^/]+)$/);
-  if(!api&&!media)return null;
+  const profileApi=path.match(/^\/api\/mawang-profile\/([^/]+)$/);
+  const profileMedia=path.match(/^\/media\/mawang-profile\/([^/]+)$/);
+  if(!api&&!media&&!profileApi&&!profileMedia)return null;
   const bucket=env.IMAGES;
   if(!bucket)return json({error:'사진 저장소를 사용할 수 없습니다.'},503);
-  if(media){
-    const [,character,id]=media;
-    if(!CHARACTERS.has(character)||!ID.test(id))return json({error:'잘못된 사진 주소'},400);
+  if(media||profileMedia){
+    const [,character,id]=media||profileMedia;
+    if(!CHARACTERS.has(character)||media&&!ID.test(id))return json({error:'잘못된 사진 주소'},400);
     if(!['GET','HEAD'].includes(method))return json({error:'Method not allowed'},405);
-    const object=await bucket.get(PREFIX+character+'/'+id);
+    const object=await bucket.get(profileMedia?PROFILE_PREFIX+character:PREFIX+character+'/'+id);
     if(!object)return json({error:'사진을 찾을 수 없습니다.'},404);
     const headers=new Headers();object.writeHttpMetadata(headers);
     headers.set('etag',object.httpEtag);headers.set('x-content-type-options','nosniff');
@@ -45,28 +54,32 @@ export async function handleArchiveGallery(request,env,currentAdmin){
     headers.set('x-mws-image-policy','original-bytes-no-reencode');
     return new Response(method==='HEAD'?null:object.body,{headers});
   }
-  const [,character,id]=api;
+  const [,character,id]=api||profileApi;
   if(method==='GET'&&!character){
-    const photos=(await list(bucket)).map(photo).filter(Boolean).sort((a,b)=>b.uploaded.localeCompare(a.uploaded)||b.id.localeCompare(a.id));
-    return json({photos,maxPhotos:MAX_PHOTOS,maxBytes:MAX_BYTES});
+    const [galleryObjects,profileObjects]=await Promise.all([list(bucket),list(bucket,PROFILE_PREFIX)]);
+    const photos=galleryObjects.map(photo).filter(Boolean).sort((a,b)=>b.uploaded.localeCompare(a.uploaded)||b.id.localeCompare(a.id));
+    return json({photos,profiles:profileObjects.map(profile).filter(Boolean),maxPhotos:MAX_PHOTOS,maxBytes:MAX_BYTES});
   }
   if(!CHARACTERS.has(character)||id&&!ID.test(id))return json({error:'잘못된 캐릭터 또는 사진'},400);
-  if(!(method==='POST'&&!id||method==='DELETE'&&id))return json({error:'Method not allowed'},405);
+  if(profileApi?!['PUT','DELETE'].includes(method):!(method==='POST'&&!id||method==='DELETE'&&id))return json({error:'Method not allowed'},405);
   const origin=request.headers.get('origin');
   if(origin&&origin!==new URL(request.url).origin||request.headers.get('sec-fetch-site')==='cross-site')return json({error:'잘못된 요청 출처'},403);
   if(!await currentAdmin(request,env))return json({error:'관리자 로그인 후 이용해 주세요.'},401);
   if(method==='DELETE'){
-    await bucket.delete(PREFIX+character+'/'+id);return json({ok:true,id});
+    await bucket.delete(profileApi?PROFILE_PREFIX+character:PREFIX+character+'/'+id);return json({ok:true,id,character});
   }
   const type=(request.headers.get('content-type')||'').split(';')[0].trim().toLowerCase();
   if(!TYPES.has(type))return json({error:'JPG, PNG, WEBP, GIF, AVIF 사진만 등록할 수 있습니다.'},415);
   if(Number(request.headers.get('content-length'))>MAX_BYTES)return json({error:'사진은 32MB 이하만 등록할 수 있습니다.'},413);
-  const existing=await list(bucket,PREFIX+character+'/');
-  if(existing.length>=MAX_PHOTOS)return json({error:'캐릭터별 사진은 최대 30장입니다.'},409);
+  if(!profileApi){
+    const existing=await list(bucket,PREFIX+character+'/');
+    if(existing.length>=MAX_PHOTOS)return json({error:'캐릭터별 사진은 최대 30장입니다.'},409);
+  }
   const bytes=await request.arrayBuffer();
   if(bytes.byteLength>MAX_BYTES)return json({error:'사진은 32MB 이하만 등록할 수 있습니다.'},413);
   if(!signature(type,bytes))return json({error:'올바른 이미지 파일이 아닙니다.'},415);
-  const key=PREFIX+character+'/'+crypto.randomUUID();
-  const stored=await bucket.put(key,bytes,{httpMetadata:{contentType:type},customMetadata:{source:'mawang-archive-upload'}});
+  const key=profileApi?PROFILE_PREFIX+character:PREFIX+character+'/'+crypto.randomUUID();
+  const stored=await bucket.put(key,bytes,{httpMetadata:{contentType:type},customMetadata:{source:profileApi?'mawang-archive-profile':'mawang-archive-upload'}});
+  if(profileApi)return json({ok:true,profile:profile(stored)});
   return json({ok:true,photo:photo(stored)},201);
 }

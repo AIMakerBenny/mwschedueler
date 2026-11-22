@@ -30,7 +30,7 @@ test('23 individually named records with dates distinguished from unknown dates 
 test('archive registered between timeline and achievements; only gallery API writes',()=>{
   const html=read('index.html'),core=read('assets/app-core.js'),ui=read('assets/workspace-ui-v176.js'),runtime=read('assets/mawang-archive-v1.js'),css=read('assets/mawang-archive-v1.css');
   assert(/data-tab="careerTimeline"[\s\S]*?data-tab="mawangArchive"[\s\S]*?data-tab="achievements"/.test(html));
-  assert(html.includes('id="mawangArchive"')&&html.includes('assets/mawang-archive-v1.js?v=3')&&html.includes('assets/mawang-archive-data-v1.js?v=2'));
+  assert(html.includes('id="mawangArchive"')&&html.includes('assets/mawang-archive-v1.js?v=4')&&html.includes('assets/mawang-archive-data-v1.js?v=2'));
   assert(core.includes("names.mawangArchive='마왕 자료실'")&&core.includes('window.mwsMawangArchiveV1?.render()'));
   assert(ui.includes('timeline.after(archive)')&&ui.includes('beforeAchievement=archive||timeline||afterPosts'));
   assert(!/\b(?:localStorage|setInterval|saveData)\s*\(/.test(runtime));
@@ -56,6 +56,20 @@ test('gallery stores originals, exposes public reads, enforces admin writes, and
   const {photo}=await result.json();assert.equal(photo.character,'ae');assert.equal(photo.size,data.length);
   const second=await call('/api/mawang-gallery/ae',upload,true);assert.equal(second.status,201);
   const publicList=await (await call('/api/mawang-gallery')).json();assert.equal(publicList.photos.length,2);
+  assert.equal(publicList.profiles.length,0);
+  const profileUpload={...upload,method:'PUT'};
+  assert.equal((await call('/api/mawang-profile/ae',profileUpload)).status,401);
+  assert.equal((await call('/api/mawang-profile/ae',{...profileUpload,body:'invalid'},true)).status,415);
+  const profileResponse=await call('/api/mawang-profile/ae',profileUpload,true);assert.equal(profileResponse.status,200);
+  const {profile}=await profileResponse.json();assert.equal(profile.character,'ae');
+  assert.deepEqual(Buffer.from(await (await call(profile.url)).arrayBuffer()),data);
+  const replacement=readFileSync(new URL('../assets/mawang-archive-portraits/mi.jpg',import.meta.url));
+  const replaced=await (await call('/api/mawang-profile/ae',{...profileUpload,body:replacement},true)).json();
+  assert.deepEqual(Buffer.from(await (await call(replaced.profile.url)).arrayBuffer()),replacement);
+  const withProfile=await (await call('/api/mawang-gallery')).json();assert.equal(withProfile.profiles.length,1);assert.equal(withProfile.photos.length,2);
+  assert.equal((await call('/api/mawang-profile/ae',{method:'DELETE'})).status,401);
+  await call('/api/mawang-profile/da',{method:'DELETE'},true);
+  assert.equal((await call(profile.url)).status,200);
   const media=await call(photo.url);assert.equal(media.headers.get('content-type'),'image/jpeg');assert.deepEqual(Buffer.from(await media.arrayBuffer()),data);
   assert.equal((await call(photo.url,{method:'HEAD'})).status,200);
   assert.equal((await call('/api/mawang-gallery/ae/'+photo.id,{method:'DELETE'})).status,401);
@@ -63,5 +77,8 @@ test('gallery stores originals, exposes public reads, enforces admin writes, and
   assert.equal((await call(photo.url)).status,200);
   assert.equal((await call('/api/mawang-gallery/ae/'+photo.id,{method:'DELETE'},true)).status,200);
   assert.equal((await call(photo.url)).status,404);
-  assert.equal((await(await call('/api/mawang-gallery')).json()).photos.length,1);
+  assert.equal((await call(profile.url)).status,200);
+  assert.equal((await call('/api/mawang-profile/ae',{method:'DELETE'},true)).status,200);
+  assert.equal((await call(profile.url)).status,404);
+  const finalList=await(await call('/api/mawang-gallery')).json();assert.equal(finalList.photos.length,1);assert.equal(finalList.profiles.length,0);
 });
