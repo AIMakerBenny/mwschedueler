@@ -24,6 +24,8 @@
       [/와우 포에버/, 'WOW 월드 오브 워크래프트 와포'],
       [/배그/, 'PUBG 배틀그라운드'], [/배틀크러쉬/, '배틀크러시'],
       [/파블로프/, 'Pavlov'], [/레귤러원/, 'Regular One'],
+      [/A Day with|Pocky.*MaWang/, '마왕 VRChat 360도 유튜브 영상'],
+      [/Find the MaWang Hamster/, '마왕 햄스터 찾기 유튜브 영상'],
       [/재활센터|브산동/, '센터장']
     ];
     // Display-only editorial labels. The source dates, facts and tags stay in index.html.
@@ -76,6 +78,13 @@
     // Explicit, editorially verified outcomes. An outcome belongs to its event, not
     // a second timeline record; do not create a branch from a bare attendance label.
     const outcomes={
+      'A Day with MaWang':[['gold','2,287만 조회 이상','유튜브 공개 조회수 확인']],
+      'A Day with Devil MaWang':[['gold','약 1,273만 조회','2026년 11월 19일 기준']],
+      "A Day with MaWang's":[['gold','약 381만 조회','2026년 11월 19일 기준']],
+      "Today Is Pocky's Day with Kokoa MaWang":[['gold','약 293만 조회','2026년 11월 19일 기준']],
+      'A Day with MaWang 2':[['gold','약 246만 조회','2026년 11월 19일 기준']],
+      'Find the MaWang Hamster!!':[['gold','약 157만 조회','2026년 11월 19일 기준']],
+      'VRChat 360도 생방송':[['role','360도 생방송 첫 구현','마왕 VRChat 방송 기술']],
       '그란투리스모 7':[['gold','데이토나 개인 1위','와크-무런 4강'],['bronze','팀 3위','신짱게이밍']],
       '제8회 상황극 콘테스트':[['gold','작품 대상','낙화 · 공동 제작진'],['gold','연기대상 · 명장면상','작품 수상']],
       '그냥 살아!':[['silver','최종 2위','김피탕&짬뽕'],['gold','500만 조회 이상','뮤직비디오']],
@@ -122,6 +131,11 @@
     const video=id=>'https://www.youtube.com/watch?v='+id;
     const art={
       vrchat:['VRChat',steam(438100)],
+      mawang360first:['VRChat · 360도',video('yEobsmqpvlc')],
+      mawang360devil:['VRChat · 360도',video('oP565EZ4Mwo')],
+      mawang360variety:['VRChat · 360도',video('GCCKjTuj6_E')],
+      mawang360pocky:['VRChat · 360도',video('rTX9zAr4ypQ')],
+      mawang360second:['VRChat · 360도',video('wLenu624veU')],
       pubg:['배틀그라운드',steam(578080)],
       pavlov:['Pavlov VR',steam(555160)],
       arma3:['Arma 3',steam(107410)],

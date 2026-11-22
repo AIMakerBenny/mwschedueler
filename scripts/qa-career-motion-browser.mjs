@@ -79,8 +79,8 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   await page.locator('.cv-panel').waitFor({state:'visible'});
   await page.locator('.cv-axis').waitFor({state:'visible'});
   await pause(350);
-  assert.equal(await page.locator('.career-tree li').count(),99);
-  assert.equal(await page.locator('.cv-axis .cv-entry').count(),95);
+  assert.equal(await page.locator('.career-tree li').count(),103);
+  assert.equal(await page.locator('.cv-axis .cv-entry').count(),99);
   assert.equal(await page.locator('.cv-legacy .cv-entry').count(),4);
   assert.equal(await page.locator('.cv-pair[data-single]').count(),0);
   assert.equal(await page.locator('.cv-headline').first().evaluate(e=>getComputedStyle(e).wordBreak),'keep-all');
@@ -91,7 +91,12 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   assert.match(await page.locator('.cv-year[data-year="2024"] .cv-month[data-month="2"] .cv-entry').filter({hasText:'아프리카TV 베스트 BJ'}).innerText(),/2월 29일 선정/);
   assert.equal(await page.locator('.cv-entry').filter({hasText:'MECCHA CHAMELEON'}).count(),0);
   assert.equal(await page.locator('.cv-entry').filter({hasText:/좀보이드 유치원|천코이드|50택사스 야구 교육/}).count(),0);
-  assert.equal(await page.locator('.cv-has-outcomes').count(),39);
+  assert.equal(await page.locator('.cv-has-outcomes').count(),46);
+  assert.match(await page.locator('.cv-year[data-year="2021"] .cv-month[data-month="1"] .cv-outcomes').innerText(),/2,287만 조회 이상/);
+  assert.equal(await page.locator('.cv-year[data-year="2021"] .cv-month[data-month="11"] .cv-entry').count(),2);
+  assert.match(await page.locator('.cv-year[data-year="2021"] .cv-month[data-month="12"] .cv-outcomes').innerText(),/1,273만/);
+  assert.match(await page.locator('.cv-year[data-year="2022"] .cv-month[data-month="1"] .cv-outcomes').innerText(),/246만/);
+  assert.match(await page.locator('.cv-pair').filter({has:page.locator('.cv-headline').filter({hasText:/^VRChat 360도 생방송$/})}).locator('.cv-outcomes').innerText(),/360도 생방송 첫 구현/);
   assert.equal(await page.locator('.cv-legacy .cv-outcomes').count(),0);
   assert.equal(await page.locator('.cv-pair').filter({has:page.locator('.cv-headline').filter({hasText:/^지육대$/})}).locator('.cv-outcomes').count(),0);
   const sports=page.locator('.cv-pair').filter({has:page.locator('.cv-headline').filter({hasText:/^왁타버스 체육대회$/})});
@@ -219,7 +224,7 @@ try{
     assert.match(await page.locator('.cv-entry[data-selected=true]').innerText(),/죠뗌므/);
     assert(await page.locator('.cv-entry[data-selected=true]').isVisible());
     await search(page,'');await pause(150);
-    assert.equal(await page.locator('.cv-entry:visible').count(),99);
+    assert.equal(await page.locator('.cv-entry:visible').count(),103);
     assert(await page.locator('.cv-axis .cv-entry').evaluateAll(es=>es.every((e,i)=>e.classList.contains(i%2===0?'cv-left':'cv-right'))));
     const restored=await position(page);
     assert(Math.abs(restored-saved)<3,'Search did not restore scroll: '+JSON.stringify({saved,restored}));
