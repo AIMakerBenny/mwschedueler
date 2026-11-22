@@ -1525,12 +1525,12 @@ function scheduleCalendarSearchResultsV172(){
 }
 function setCalendarViewModeV172(mode){
   if(mode!==calendarViewModeV172)window.mwsCalendarDetailsV1?.close({restoreFocus:false});
-  calendarViewModeV172=['month','timeline','search'].includes(mode)?mode:'month';
+  calendarViewModeV172=['month','timeline','people','search'].includes(mode)?mode:'month';
   const calendarRoot=document.getElementById('calendar');
   if(calendarRoot)calendarRoot.dataset.calendarViewMode=calendarViewModeV172;
   if(calendarRoot?.classList.contains('active')){
     const title=document.getElementById('pageTitle');
-    if(title)title.textContent={month:'캘린더',timeline:'게임',search:'일정 검색'}[calendarViewModeV172];
+    if(title)title.textContent={month:'캘린더',timeline:'게임',people:'함께한 사람',search:'일정 검색'}[calendarViewModeV172];
   }
   document.querySelectorAll('[data-calendar-view-tab]').forEach(button=>{
     const active=button.dataset.calendarViewTab===calendarViewModeV172;
@@ -1545,6 +1545,7 @@ function setCalendarViewModeV172(mode){
   if(calendarViewModeV172!=='timeline')window.mwsCalendarTimelineV1?.hideTooltip?.();
   if(calendarViewModeV172==='search')renderCalendarSearchResultsV172();
   if(calendarViewModeV172==='timeline')window.mwsCalendarTimelineV1?.render(activeEvents(),todayKST(),data.contentGroups,data.gameLibrary,data.contacts);
+  if(calendarViewModeV172==='people')window.mwsCalendarPeopleViewV1?.render(data,calDate,todayKST());
 }
 function initCalendarSearchV172(){
   const input=document.getElementById('calendarSearchV171');
@@ -1584,6 +1585,7 @@ function initCalendarViewTabsV172(){
   initCalendarSearchV172();
   window.addEventListener('mawang:datachange',()=>{
     if(calendarViewModeV172==='timeline')window.mwsCalendarTimelineV1?.render(activeEvents(),todayKST(),data.contentGroups,data.gameLibrary,data.contacts);
+    if(calendarViewModeV172==='people'&&root.classList.contains('active'))window.mwsCalendarPeopleViewV1?.render(data,calDate,todayKST());
   });
   setCalendarViewModeV172(calendarViewModeV172);
 }
@@ -1822,6 +1824,7 @@ function openCalendarDayDetailsV2(date){
 }
 window.openCalendarDayDetailsV2=openCalendarDayDetailsV2;
 function openCalendarEventDetailsV1(id){
+  const anchor=arguments[1];
   const event=data.events.find(item=>String(item.id)===String(id));
   if(!event){window.mwsCalendarDetailsV1?.close({restoreFocus:false});return;}
   hideCalendarEventPreview();
@@ -1832,7 +1835,7 @@ function openCalendarEventDetailsV1(id){
   const memo=event.memoTitle||event.memoContent?section(esc(event.memoTitle||'메모'),`<p class="event-details-text-v1">${esc(event.memoContent||'')}</p>`):'';
   const checklist=Array.isArray(event.checklist)&&event.checklist.length?section('체크리스트',`<ul>${event.checklist.map(item=>`<li>${item.done?'완료 · ':''}${esc(item.text||'')}</li>`).join('')}</ul>`):'';
   const url=link?section('공지',`<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">공지 열기</a>`):'';
-  window.mwsCalendarDetailsV1?.open({id:String(event.id),title:event.restDay?'휴방':event.title,
+  window.mwsCalendarDetailsV1?.open({id:String(event.id),title:event.restDay?'휴방':event.title,anchor:anchor?.isConnected?anchor:undefined,
     html:calendarPreviewHTML(event)+description+memo+checklist+url,
     onRefresh:()=>openCalendarEventDetailsV1(event.id),
     onEdit:()=>{openEvent(event.id);requestAnimationFrame(()=>document.getElementById('evTitle')?.focus())}});
@@ -2058,6 +2061,7 @@ function renderCalendar(){
   initCalendarViewTabsV172();
   renderCalendarSearchResultsV172();
   if(calendarViewModeV172==='timeline')window.mwsCalendarTimelineV1?.render(activeEvents(),todayKST(),data.contentGroups,data.gameLibrary,data.contacts);
+  if(calendarViewModeV172==='people')window.mwsCalendarPeopleViewV1?.render(data,calDate,todayKST());
   grid.querySelectorAll('.day').forEach(day=>{
     day.onclick=()=>openEvent(null,day.dataset.date);
     day.ondragenter=e=>{

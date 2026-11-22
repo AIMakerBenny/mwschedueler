@@ -43,6 +43,8 @@ jobs:
         run: |
           node scripts/qa-calendar-month-viewport-v2-browser.mjs
           node scripts/qa-workspace-navigation-v1-browser.mjs
+          node --test scripts/qa-calendar-people-view-v1.test.mjs
+          node scripts/qa-calendar-people-view-v1-browser.mjs
 
       - name: JavaScript syntax check
         run: |

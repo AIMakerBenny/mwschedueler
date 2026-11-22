@@ -221,7 +221,7 @@
     const norm = s => s.normalize('NFKC').toLowerCase().replace(/\s+/g,'');
     const rows = [];
     for (const group of source.querySelectorAll('.career-year')) {
-      const year = group.querySelector('summary').textContent.replace('년','');
+      const year = group.dataset.year || group.querySelector('summary').textContent.replace('년','');
       for (const month of group.querySelectorAll('.career-month')) {
         for (const li of month.querySelectorAll('li')) {
           const name = li.querySelector('strong').textContent;
@@ -286,7 +286,7 @@
     results.setAttribute('aria-label','검색 결과');
     toolbar.insertBefore(nav,searchBox);bar.append(toolbar,results);
     const axis=node('div','cv-axis'); axis.setAttribute('role','region');axis.setAttribute('aria-label','연속 업적 타임라인');
-    const legacy=node('section','cv-legacy'); legacy.setAttribute('aria-label','레거시 기록');
+    const legacy=node('section','cv-legacy'); legacy.setAttribute('aria-label','기타 기록');
     const empty=node('div','cv-empty','검색 결과가 없습니다.');empty.hidden=true;
     panel.append(barHost,empty,axis,legacy);section.append(panel);source.hidden=true;
 
@@ -380,11 +380,11 @@
         year.append(month);
       }
     }
-    const legacyHead=node('h2','cv-legacy-heading','레거시');legacy.append(legacyHead);
+    const legacyHead=node('h2','cv-legacy-heading','기타');legacy.append(legacyHead);
     const legacyGrid=node('div','cv-legacy-grid'); legacy.append(legacyGrid);
     const legacyRecords=byYear('레거시');
     for(const r of legacyRecords){const entry=makeCard(r);entry.dataset.legacy='true';legacyGrid.append(entry);}
-    const legacyButton=button('cv-legacy-link','레거시',()=>jump(legacyHead)); nav.append(legacyButton);
+    const legacyButton=button('cv-legacy-link','기타',()=>jump(legacyHead)); nav.append(legacyButton);
     const viewport=()=>{
       if(scrollRoot&&scrollRoot!==document.scrollingElement){const r=scrollRoot.getBoundingClientRect();return {top:Math.max(0,r.top),bottom:Math.min(innerHeight,r.bottom)};}
       return {top:0,bottom:innerHeight};
@@ -536,7 +536,7 @@
       results.replaceChildren(node('div','cv-result-count','검색 결과 '+list.length+'건'));
       for(const y of years){
         const found=list.filter(r=>r.year===y);if(!found.length)continue;
-        const group=node('div','cv-result-group');group.append(node('h3','',y==='레거시'?y:y+'년'));
+        const group=node('div','cv-result-group');group.append(node('h3','',y==='레거시'?'기타':y+'년'));
         for(const r of found){
           const b=button('cv-result','',()=>choose(r));
           b.append(node('span','cv-result-date',r.date),node('strong','',r.name),node('span','cv-result-info',r.headline===r.name?r.info:r.headline+' · '+r.context));group.append(b);

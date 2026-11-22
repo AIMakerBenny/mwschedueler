@@ -1,0 +1,37 @@
+/* Person-centred monthly agenda, using the same calendar month controls. */
+#calendar [data-calendar-view-tab=people]{--calendar-toolbar-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='9' cy='8' r='3'/%3E%3Cpath d='M3 20v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m2 2a5 5 0 0 1 3 5v2'/%3E%3C/svg%3E")}
+#calendar[data-calendar-view-mode=people] .calendar-group-toolbar-v2{display:none!important}
+#calendarPeoplePanelV1{min-width:0;color:var(--text);padding:12px 0 24px}
+#calendarPeoplePanelV1 .cp-toolbar{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap}
+#calendarPeoplePanelV1 .cp-heading h2{font-size:22px;margin:0 0 5px;letter-spacing:-.035em}
+#calendarPeoplePanelV1 .cp-heading span,#calendarPeoplePanelV1 .cp-filter{font-size:13px;color:var(--muted)}
+#calendarPeoplePanelV1 .cp-filter{display:flex;align-items:center;gap:8px;min-width:0}
+#calendarPeoplePanelV1 .cp-filter select{width:clamp(140px,20vw,240px);min-width:0;max-width:100%;padding:8px 12px;font-size:13px;border-radius:9px}
+#calendarPeoplePanelV1 .cp-days{display:grid;gap:12px;min-width:0}
+#calendarPeoplePanelV1 .cp-day{display:grid;grid-template-columns:145px minmax(0,1fr);gap:14px;padding:13px;border:1px solid var(--border);border-radius:14px;background:var(--panel);box-shadow:0 3px 12px #0000000c;min-width:0}
+#calendarPeoplePanelV1 .cp-day.is-today{border-color:color-mix(in srgb,var(--accent) 65%,var(--border));background:color-mix(in srgb,var(--accent) 4%,var(--panel))}
+#calendarPeoplePanelV1 .cp-date{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:6px 8px 8px;border-right:1px solid var(--border)}
+#calendarPeoplePanelV1 .cp-date-number{display:flex;align-items:baseline;gap:7px;color:var(--accent)}
+#calendarPeoplePanelV1 .cp-date-number strong{font-size:32px;font-weight:850;line-height:1;letter-spacing:-.06em;font-variant-numeric:tabular-nums;color:var(--text)}
+#calendarPeoplePanelV1 .cp-date-number span{font-size:14px;font-weight:700}
+#calendarPeoplePanelV1 .cp-date-full{display:block;font-size:11px;color:var(--muted);margin-bottom:3px}
+#calendarPeoplePanelV1 .cp-date b{font-size:13px}
+#calendarPeoplePanelV1 .cp-date-manage{font-size:11px;padding:5px 8px;background:var(--input);color:var(--muted);border:1px solid var(--border);border-radius:7px;white-space:nowrap}
+#calendarPeoplePanelV1 .cp-people{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:9px;min-width:0;align-items:start}
+#calendarPeoplePanelV1 .cp-person{border:1px solid var(--border);background:color-mix(in srgb,var(--input) 55%,var(--panel));border-radius:12px;min-width:0;overflow:hidden}
+#calendarPeoplePanelV1 .cp-person-head{width:100%;display:flex;align-items:center;gap:10px;padding:11px;text-align:left;background:transparent;border:0;color:var(--text);border-radius:10px;min-width:0}
+#calendarPeoplePanelV1 .cp-person-name{display:grid;gap:3px;flex:1;min-width:0}
+#calendarPeoplePanelV1 .cp-person-name strong{font-size:15px;font-weight:750;overflow-wrap:anywhere}
+#calendarPeoplePanelV1 .cp-person-name small,#calendarPeoplePanelV1 .cp-manual{color:var(--muted);font-size:11px}
+#calendarPeoplePanelV1 .cp-avatar{width:42px;height:42px;flex:none;position:relative;display:grid;place-items:center;border:1px solid var(--border);border-radius:50%;overflow:hidden;background:color-mix(in srgb,var(--accent) 14%,var(--panel));font-size:12px;font-weight:750}
+#calendarPeoplePanelV1 .cp-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#calendarPeoplePanelV1 .cp-events{display:grid;gap:2px;margin:0 10px 10px;border-top:1px solid var(--border);padding-top:5px}
+#calendarPeoplePanelV1 .cp-event{display:grid;grid-template-columns:37px minmax(0,1fr) 10px;align-items:center;gap:6px;text-align:left;width:100%;border:0;background:transparent;border-radius:6px;padding:6px 4px;font-size:12px;color:var(--text);min-width:0}
+#calendarPeoplePanelV1 .cp-event time{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+#calendarPeoplePanelV1 .cp-event span{min-width:0;overflow-wrap:anywhere}
+#calendarPeoplePanelV1 .cp-chevron{color:var(--muted);font-size:16px;line-height:1}
+#calendarPeoplePanelV1 .cp-manual{padding:0 11px 11px}
+#calendarPeoplePanelV1 .cp-empty{padding:40px 12px;text-align:center;color:var(--muted);border:1px dashed var(--border);border-radius:14px}
+#calendarPeoplePanelV1 button:focus-visible,#calendarPeoplePanelV1 select:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+@media(hover:hover){#calendarPeoplePanelV1 :is(.cp-person-head,.cp-event,.cp-date-manage):hover{background:color-mix(in srgb,var(--accent) 10%,var(--input));color:var(--text)}}
+@media(max-width:700px){#calendarPeoplePanelV1{padding:8px 0 18px}#calendarPeoplePanelV1 .cp-day{grid-template-columns:minmax(0,1fr);gap:8px;padding:10px}#calendarPeoplePanelV1 .cp-date{flex-direction:row;align-items:center;border-right:0;border-bottom:1px solid var(--border);padding:0 0 9px;gap:10px}#calendarPeoplePanelV1 .cp-date-number strong{font-size:26px}#calendarPeoplePanelV1 .cp-date-manage{margin-left:auto}#calendarPeoplePanelV1 .cp-people{grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr))}}

@@ -10,6 +10,10 @@
     return r.width>0&&r.height>0&&r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<document.documentElement.clientWidth&&(!clip?.height||r.bottom>clip.top&&r.top<clip.bottom);
   }
   function findAnchor(id){
+    if(!id.startsWith('day:')){
+      const personEvent=[...document.querySelectorAll('#calendarPeoplePanelV1 [data-cp-event]')].find(el=>el.dataset.cpEvent===id&&visibleAnchor(el));
+      if(personEvent)return personEvent;
+    }
     const nodes=id.startsWith('day:')?document.querySelectorAll('#calendarGrid .day[data-date]'):document.querySelectorAll('#calendarGrid .mini-event[data-evid]');
     const node=[...nodes].find(el=>(id.startsWith('day:')?el.dataset.date===id.slice(4):el.dataset.evid===id)&&visibleAnchor(el));
     return id.startsWith('day:')?(node?.querySelector('.calendar-day-more-v2:not([hidden])')||node):node;
@@ -76,7 +80,7 @@
     document.body.append(drawer);
     drawer.addEventListener('click',event=>{const button=event.target.closest('[data-detail-event-v2]');if(button)root.openCalendarEventDetailsV1?.(button.dataset.detailEventV2)});
     document.addEventListener('click',event=>{
-      if(!current||drawer.contains(event.target)||event.target.closest('.mini-event[data-evid],.calendar-day-more-v2,.modal.open'))return;
+      if(!current||drawer.contains(event.target)||event.target.closest('.mini-event[data-evid],.calendar-day-more-v2,[data-cp-event],.modal.open'))return;
       const calendarBackground=event.target.closest('#calendarGrid');
       close({restoreFocus:false});
       // Dismissing the panel must not also create a new schedule.
