@@ -40,6 +40,7 @@
     // switching tabs, including when an earlier render has removed the section.
     safeFeatures=safeFeatures.replace('window.renderFriendFinderV5=renderFriendFinderV5;','window.mwsEnsureFriendFinderV5=ensureFriendFinderV5;window.renderFriendFinderV5=renderFriendFinderV5;');
     safeFeatures=safeFeatures.replace('const out=setTabBeforeV5.apply(this,arguments);\n    ensureFriendFinderV5();','ensureFriendFinderV5();\n    const out=setTabBeforeV5.apply(this,arguments);');
+    safeFeatures=safeFeatures.replace("b.dataset.tab==='friendFinder'))","b.dataset.tab==='contacts'))");
     run(safeFeatures);
     if(typeof sharedSearchOwner.contactMatches==='function'){
       window.contactMatches=sharedSearchOwner.contactMatches;

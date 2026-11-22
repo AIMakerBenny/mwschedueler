@@ -54,6 +54,7 @@ test('encoded calendar feature no longer injects bottom participant strips, but 
  assert(transformed.includes("const grid=document.querySelector('#dashboardProfileSlot');"));
  const friend=transformed.slice(transformed.indexOf('/* MAWANG Scheduler ONLINE V5 - Friend Finder'));
  assert(friend.includes('ensureFriendFinderV5();\n    const out=setTabBeforeV5.apply(this,arguments);'));
+ assert(friend.includes("b.dataset.tab==='contacts'))"));
  // Run the actual encoded Friend Finder implementation, instead of testing
  // against a pre-created empty section that could hide an initialization bug.
  const nodes=new Map(),active=new Set(['contacts']);

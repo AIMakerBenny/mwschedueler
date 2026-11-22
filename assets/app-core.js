@@ -814,7 +814,7 @@ function setTab(tab){
   }
   window.mwsCalendarDetailsV1?.close({restoreFocus:false});
   if(tab==='reminders'){tab='dashboard';dashboardMode='reminders'}
-  const navTab=legacyFeatureTabsV1.has(tab)?'legacy':tab;
+  const navTab=['sniper','friendFinder','targets'].includes(tab)?'contacts':legacyFeatureTabsV1.has(tab)?'legacy':tab;
   document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===navTab));
   const legacyBack=document.getElementById('mwsLegacyBackV1');
   if(legacyBack)legacyBack.hidden=!legacyFeatureTabsV1.has(tab);
