@@ -13,6 +13,7 @@ on:
       - 'assets/ui-interactions-v1.js'
       - 'assets/mawang-archive-*.js'
       - 'assets/mawang-archive-v1.css'
+      - 'assets/mawang-archive-portraits/**'
       - 'scripts/qa-mawang-archive-*.mjs'
       - 'assets/content-applications-v1.js'
       - 'assets/content-applications-model-v1.js'

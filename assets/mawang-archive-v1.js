@@ -47,7 +47,7 @@
        <h3>${escape(c.tagline)}</h3><p class="ma-desc">${escape(c.description)}</p>
        <div class="ma-tags">${c.tags.map(t=>`<span>${escape(t)}</span>`).join('')}</div>
        <dl class="ma-facts"><div><dt>${escape(c.dateLabel)}</dt><dd>${c.date?escape(c.date.replaceAll('-','.')):'미확인'}</dd></div><div><dt>구분</dt><dd>${groupName(c)}</dd></div><div><dt>정보 근거</dt><dd>공개 기록 <small>2차 자료</small></dd></div></dl>
-       <div class="ma-source-links">${c.sources.map(s=>link(s.url,s.label)).join('')}${link(c.image,'이미지 원본 주소')}</div>
+       <div class="ma-source-links">${c.sources.map(s=>link(s.url,s.label)).join('')}${link(c.imageOriginal,'이미지 원본 주소')}</div>
      </div>`;
     const related=root.querySelector('.ma-related');
     const keys=c.media.length?c.media:c.group==='classic'?['intro']:['profile'];
@@ -74,7 +74,7 @@
   function render(){
     if(mounted)return;
     mounted=true;
-    root.innerHTML=`<header class="ma-header"><div class="ma-header-brand"><div class="ma-brand-img"><img src="${db.profileImage}" alt="공개 마왕 채널 프로필" decoding="async"></div><div><div class="ma-eyebrow">MAWANG ARCHIVES / CHARACTER SELECT</div><h2>마왕 자료실</h2><p>마왕0216의 여러 모습, 캐릭터마다 이어지는 이야기.</p></div></div><div class="ma-header-count"><strong>${entries.length}</strong><span>CHARACTER FILES<br>공개 자료로 정리</span></div></header>
+    root.innerHTML=`<header class="ma-header"><div class="ma-header-brand"><div class="ma-brand-img"><img src="${db.profileImage}" alt="유정 공개 자료 이미지" decoding="async"></div><div><div class="ma-eyebrow">MAWANG ARCHIVES / CHARACTER SELECT</div><h2>마왕 자료실</h2><p>마왕0216의 여러 모습, 캐릭터마다 이어지는 이야기.</p></div></div><div class="ma-header-count"><strong>${entries.length}</strong><span>CHARACTER FILES<br>공개 자료로 정리</span></div></header>
       <div class="ma-stage" aria-labelledby="maCharacterName"></div>
       <div class="ma-roster"><div class="ma-section-title"><div><span class="ma-eyebrow">SELECT YOUR CHARACTER</span><h3>캐릭터 선택 <span class="ma-count"></span></h3></div><label class="ma-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input type="search" aria-label="캐릭터 검색" placeholder="이름 또는 특징 검색"></label></div>
       <div class="ma-filters" aria-label="캐릭터 분류"><button type="button" data-ma-filter="all">전체 ${entries.length}</button><button type="button" data-ma-filter="jeong">정 시리즈 ${entries.filter(c=>c.group==='jeong').length}</button><button type="button" data-ma-filter="classic">클래식 ${entries.filter(c=>c.group==='classic').length}</button></div><div class="ma-roster-grid" aria-label="캐릭터 목록"></div></div>
@@ -82,7 +82,7 @@
       <footer class="ma-footer"><div><span class="ma-eyebrow">SOURCE INDEX</span><p>공개 자료 확인 기준 · 2026.11.22. 제작일과 첫 등장일이 불명확한 경우 미확인으로 표시합니다. PIKU의 팬 공개 이미지와 위키 자료는 2차 자료이며 공식 설정과 구분합니다. 이미지 표시가 불가능할 경우 원본 주소와 관련 영상으로 안내합니다.</p></div><div class="ma-channel-links">${link(channels.official,'마왕 공식 유튜브')}${link(channels.secondary,'마왕의 심연')}${link(channels.soop,'SOOP 방송국')}${link(db.wiki,'캐릭터 공개 기록')}${link(db.sona,'소나위키')}</div><span class="ma-announce" aria-live="polite"></span></footer>`;
     // Capture image errors once, including lazy roster images. Never substitute
     // another character's face for a missing source image.
-    root.addEventListener('error',event=>{
+    function imageFailed(event){
       const img=event.target;if(!(img instanceof HTMLImageElement))return;
       const url=img.dataset.maImage,wrap=img.closest('.ma-portrait');
       img.hidden=true;
@@ -98,8 +98,9 @@
           replacement.addEventListener('error',()=>{caption.textContent='이미지 원본 연결 불가';wrap.classList.remove('ma-video-fallback')},{once:true});
         }else caption.textContent='이미지 원본 연결 불가';
       }
-    },true);
-    root.addEventListener('load',e=>{if(e.target.dataset?.maImage)loaded.add(e.target.dataset.maImage)},true);
+    }
+    root.addEventListener('error',imageFailed,true);
+    root.addEventListener('load',e=>{if(e.target.dataset?.maImage){if(e.target.naturalWidth<2||e.target.naturalHeight<2)imageFailed(e);else loaded.add(e.target.dataset.maImage)}},true);
     root.addEventListener('click',e=>{
       const b=e.target.closest('button');if(!b)return;
       if(b.dataset.maCharacter)choose(entries.find(c=>c.id===b.dataset.maCharacter));

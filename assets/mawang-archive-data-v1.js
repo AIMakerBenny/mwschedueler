@@ -57,12 +57,13 @@
     ['baby-kuma','아기쿠마','Baby Kuma','classic','#d2b28a',null,'최초 등장일 미확인','쌍둥이 캐릭터','아기상어와 쌍둥이인 초기 아바타. 등장 빈도가 낮다고 기록되어 있으며 세부 설정은 미확인 상태다.',['쿠마','아기상어','쌍둥이'],'Mawang_BabyKuma1.png','00dfaedebee250634a384d1c77e39bceb627428e66b3ac5ad88586e5b7b2231d',[]]
   ].map(([id,name,english,group,color,date,dateLabel,tagline,description,tags,imageName,imageId,media],index)=>Object.freeze({
     id,name,english,group,color,date,dateLabel,tagline,description,tags,imageName,
-    image:portraits[id]?'https://img2.piku.co.kr/w/uploads/9M736q/'+portraits[id]+'.jpg':'https://file.namu.moe/file/'+imageId,
+    image:portraits[id]?'/assets/mawang-archive-portraits/'+id+'.jpg':'https://file.namu.moe/file/'+imageId,
+    imageOriginal:portraits[id]?'https://img2.piku.co.kr/w/uploads/9M736q/'+portraits[id]+'.jpg':'https://file.namu.moe/file/'+imageId,
     imageSource:portraits[id]?'PIKU 공개 이미지 · 2차 자료':'나무위키 미러 · 2차 자료',
     media,number:index+1,
     sources:[{label:'나무위키 미러 · 2차 자료',url:wiki},...(group==='jeong'&&id!=='ye-new'?[{label:'소나위키 · 2차 자료',url:sona}]:[]),...(portraits[id]?[{label:'PIKU 이미지 출처',url:piku}]:[])]
   }));
   window.mwsMawangArchiveDataV1=Object.freeze({entries:Object.freeze(entries),videos:Object.freeze(videos),
     channels:{official,soop,secondary:'https://www.youtube.com/channel/UCsc6HwSjfU8ig2spLjAtAig'},wiki,sona,
-    profileImage:'https://file.sona.wiki/i/3bb12892e0f53b90ee6b7985251de40f26d8f6ff688e9db8e35a4360a79a124b.jpg'});
+    profileImage:'/assets/mawang-archive-portraits/yoo.jpg'});
 })();
