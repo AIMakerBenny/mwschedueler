@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>마왕 스케줄러</title>
 <script id="mws-motion-preference">
-(()=>{const key='mws-screen-motion-v1',system=matchMedia('(prefers-reduced-motion: reduce)');let mode='full';try{const saved=localStorage.getItem(key);if(['full','reduced','system'].includes(saved))mode=saved}catch(_){}const apply=()=>{const reduced=mode==='reduced'||(mode==='system'&&system.matches);document.documentElement.dataset.mwsMotion=reduced?'reduced':'full';window.dispatchEvent(new Event('mws-motion-change'))};window.mwsMotionReduced=()=>document.documentElement.dataset.mwsMotion==='reduced';apply();system.addEventListener('change',apply);document.addEventListener('DOMContentLoaded',()=>{const select=document.getElementById('mwsScreenMotion');if(!select)return;select.value=mode;select.addEventListener('change',()=>{mode=select.value;try{localStorage.setItem(key,mode)}catch(_){}apply()})})})();
+(()=>{const key='mws-screen-motion-v1',system=matchMedia('(prefers-reduced-motion: reduce)');let mode='system';try{const saved=localStorage.getItem(key);if(['full','reduced','system'].includes(saved))mode=saved}catch(_){}const apply=()=>{const reduced=mode==='reduced'||(mode==='system'&&system.matches);document.documentElement.dataset.mwsMotion=reduced?'reduced':'full';window.dispatchEvent(new Event('mws-motion-change'))};window.mwsMotionReduced=()=>document.documentElement.dataset.mwsMotion==='reduced';apply();system.addEventListener('change',apply);document.addEventListener('DOMContentLoaded',()=>{const select=document.getElementById('mwsScreenMotion');if(!select)return;select.value=mode;select.addEventListener('change',()=>{mode=select.value;try{localStorage.setItem(key,mode)}catch(_){}apply()})})})();
 </script>
 <script>
 // Start the authoritative calendar read before CSS and the large UI runtime.
@@ -1993,7 +1993,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
         </div>
         <div class="card" id="mwsMotionSettings">
           <h3><label for="mwsScreenMotion">화면 모션</label></h3>
-          <p class="muted small">타임라인, 일정 상세와 팝업의 애니메이션을 설정합니다. 기본 효과는 운영체제의 애니메이션 설정과 관계없이 표시됩니다.</p>
+          <p class="muted small">타임라인, 일정 상세와 팝업의 애니메이션을 설정합니다. 처음에는 운영체제 설정을 따르며, 기본 효과를 선택하면 항상 효과를 표시합니다.</p>
           <select id="mwsScreenMotion" style="width:100%"><option value="full">기본 효과</option><option value="reduced">모션 감소</option><option value="system">시스템 설정 따르기</option></select>
         </div>
         <div class="card" id="mwsCursorSettings">

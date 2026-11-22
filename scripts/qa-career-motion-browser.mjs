@@ -113,7 +113,7 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   assert(barBox.height<(width>700?60:85),JSON.stringify(barBox));
   assert.equal(await page.locator('.cv-axis .cv-year').count(),7);
   assert.equal(await page.locator('.cv-play,.cv-years,.cv-hero').count(),0);
-  assert.equal(await page.locator('html').getAttribute('data-mws-motion'),'full');
+  assert.equal(await page.locator('html').getAttribute('data-mws-motion'),reducedMotion==='reduce'?'reduced':'full');
   assert.equal(await page.locator('.cv-media[data-art=gt7]').count(),1);
   assert((await page.locator('.cv-media[data-art=pubg]').count())>=5);
   assert.equal(await page.locator('.cv-media[data-art=battlecrush]').count(),1);
@@ -281,6 +281,10 @@ try{
     execFileSync('ffmpeg',['-y','-ss',String(startSeconds),'-i',output+'/career-timeline-raw.webm','-t','25','-c:v','libvpx-vp9','-crf','30','-b:v','0',output+'/career-timeline-recording.webm'],{stdio:'inherit'});
     console.log('PASS recording interaction');
     const rm=await open(1366,768,false,'reduce');
+    await rm.page.locator('[data-tab=settings]').click();
+    assert.equal(await rm.page.locator('#mwsScreenMotion').inputValue(),'system');
+    await rm.page.locator('#mwsScreenMotion').selectOption('full');
+    await rm.page.locator('[data-tab=careerTimeline]').click();
     await chooseYear(rm.page,'2024');await pause(250);
     const reducedEntry=rm.page.locator('.cv-year[data-year="2024"] .cv-month[data-month="3"] .cv-entry').first();
     await approach(rm.page,reducedEntry);

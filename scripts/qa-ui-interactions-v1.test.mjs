@@ -4,6 +4,18 @@ import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 
+test('motion defaults to system and preserves saved user choices',()=>{
+  const source=read('index.html').match(/<script id="mws-motion-preference">([\s\S]*?)<\/script>/)[1];
+  for(const [saved,initial,expected,after] of [[null,false,false,true],[null,true,true,false],['full',true,false,false],['reduced',false,true,true]]){
+    let change;
+    const system={matches:initial,addEventListener(type,fn){change=fn}};
+    const window={dispatchEvent(){}},document={documentElement:{dataset:{}},addEventListener(){}};
+    vm.runInNewContext(source,{window,document,matchMedia:()=>system,localStorage:{getItem:()=>saved},Event:class{}});
+    assert.equal(window.mwsMotionReduced(),expected);
+    system.matches=!initial;change();assert.equal(window.mwsMotionReduced(),after);
+  }
+});
+
 test('feedback only animates changed, visible values; reduced motion is respected',()=>{
   let system=false,setting;
   const window={matchMedia:()=>({matches:system}),mwsMotionReduced:()=>setting};
