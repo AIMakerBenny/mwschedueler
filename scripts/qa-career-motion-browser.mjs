@@ -79,14 +79,16 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   await page.locator('.cv-panel').waitFor({state:'visible'});
   await page.locator('.cv-axis').waitFor({state:'visible'});
   await pause(350);
-  assert.equal(await page.locator('.career-tree li').count(),103);
-  assert.equal(await page.locator('.cv-axis .cv-entry').count(),99);
+  assert.equal(await page.locator('.career-tree li').count(),105);
+  assert.equal(await page.locator('.cv-axis .cv-entry').count(),101);
   assert.equal(await page.locator('.cv-legacy .cv-entry').count(),4);
   assert.equal(await page.locator('.cv-pair[data-single]').count(),0);
   assert.equal(await page.locator('.cv-headline').first().evaluate(e=>getComputedStyle(e).wordBreak),'keep-all');
   assert(await page.locator('.cv-axis .cv-entry').evaluateAll(es=>es.every((e,i)=>e.classList.contains(i%2===0?'cv-left':'cv-right')&&e.parentElement.querySelectorAll('.cv-entry').length===1)));
   assert.match(await page.locator('.cv-year[data-year="2022"] .cv-month[data-month="4"] .cv-entry').filter({hasText:'이세계아이돌 햄스터 아바타'}).innerText(),/4월 23일/);
   assert.match(await page.locator('.cv-year[data-year="2022"] .cv-month[data-month="4"] .cv-entry').filter({hasText:'패러블 엔터테인먼트'}).innerText(),/MCN 계약/);
+  assert.match(await page.locator('.cv-year[data-year="2023"] .cv-month[data-month="7"] .cv-entry').filter({hasText:'마왕 첫 공식 굿즈'}).innerText(),/첫 굿즈 출시 · 개백수티/);
+  assert.match(await page.locator('.cv-year[data-year="2026"] .cv-month[data-month="3"] .cv-entry').filter({hasText:'마왕 공식 굿즈 출시'}).innerText(),/개백수티 Ver\.2 출시/);
   assert.match(await page.locator('.cv-year[data-year="2024"] .cv-month[data-month="1"] .cv-entry').filter({hasText:'트위치에서 아프리카TV로 이적'}).innerText(),/방송 플랫폼 이전/);
   assert.match(await page.locator('.cv-year[data-year="2024"] .cv-month[data-month="2"] .cv-entry').filter({hasText:'아프리카TV 베스트 BJ'}).innerText(),/2월 29일 선정/);
   assert.equal(await page.locator('.cv-entry').filter({hasText:'MECCHA CHAMELEON'}).count(),0);
@@ -224,11 +226,11 @@ try{
     assert.match(await page.locator('.cv-entry[data-selected=true]').innerText(),/죠뗌므/);
     assert(await page.locator('.cv-entry[data-selected=true]').isVisible());
     await search(page,'');await pause(150);
-    assert.equal(await page.locator('.cv-entry:visible').count(),103);
+    assert.equal(await page.locator('.cv-entry:visible').count(),105);
     assert(await page.locator('.cv-axis .cv-entry').evaluateAll(es=>es.every((e,i)=>e.classList.contains(i%2===0?'cv-left':'cv-right'))));
     const restored=await position(page);
     assert(Math.abs(restored-saved)<3,'Search did not restore scroll: '+JSON.stringify({saved,restored}));
-    for(const [q,n] of [['코치',null],['VR 우승',4],['WBD',1],['왁타버스 야구',1],['50텍사스',1],['F1 챔스',1],['브축대',1],['굳가대표',1],['데이토나',1],['트위치에서 아프리카TV로 이적',1],['패러블',1]]){
+    for(const [q,n] of [['코치',null],['VR 우승',4],['WBD',1],['왁타버스 야구',1],['50텍사스',1],['F1 챔스',1],['브축대',1],['굳가대표',1],['데이토나',1],['트위치에서 아프리카TV로 이적',1],['패러블',1],['굿즈',2],['개백수티',2],['개백수 티셔츠',2],['마왕출현',0]]){
       await search(page,q);const found=await page.locator('.cv-result').count();if(n!==null)assert.equal(found,n,q);else assert(found>=8,q);
       assert.equal(await page.locator('.cv-entry:visible').count(),found,q);
       if(q==='VR 우승')assert(!((await page.locator('.cv-results').textContent()).includes('준우승')));
