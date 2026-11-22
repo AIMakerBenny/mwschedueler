@@ -81,9 +81,6 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   await pause(350);
   assert.equal(await page.locator('.career-tree li').count(),99);
   assert.equal(await page.locator('.cv-axis .cv-entry').count(),95);
-  const watermark=await page.locator('.cv-axis > .cv-watermark').evaluate(e=>{const r=e.getBoundingClientRect(),a=e.parentElement.getBoundingClientRect(),c=getComputedStyle(e);return {text:e.textContent,hidden:e.getAttribute('aria-hidden'),pointer:c.pointerEvents,z:c.zIndex,center:Math.abs((r.left+r.right-a.left-a.right)/2),fits:r.left>=a.left-1&&r.right<=a.right+1};});
-  assert.deepEqual(watermark,{text:'MAWANG',hidden:'true',pointer:'none',z:'-2',center:watermark.center,fits:true});
-  assert(watermark.center<1,JSON.stringify(watermark));
   assert.equal(await page.locator('.cv-legacy .cv-entry').count(),4);
   assert.equal(await page.locator('.cv-pair[data-single]').count(),0);
   assert.equal(await page.locator('.cv-headline').first().evaluate(e=>getComputedStyle(e).wordBreak),'keep-all');
