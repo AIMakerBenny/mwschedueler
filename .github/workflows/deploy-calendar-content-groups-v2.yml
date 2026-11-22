@@ -15,6 +15,8 @@ on:
       - 'scripts/qa-ui-interactions-v1-browser.mjs'
       - 'scripts/qa-ui-workspace-mutations-v2-browser.mjs'
       - 'scripts/qa-ui-workspace-live-v2.mjs'
+      - 'scripts/qa-ladder-wizard-v1-browser.mjs'
+      - 'scripts/qa-workspace-navigation-v1-browser.mjs'
       - 'assets/online-v5-loader.js'
       - 'assets/ladder-wizard-v1.js'
       - 'assets/tools.js'
@@ -114,8 +116,6 @@ jobs:
           node --test scripts/qa-ui-interactions-v1.test.mjs
           node scripts/qa-ui-interactions-v1-browser.mjs
           node scripts/qa-ui-workspace-mutations-v2-browser.mjs
-          node scripts/qa-ladder-wizard-v1-browser.mjs
-          node scripts/qa-workspace-navigation-v1-browser.mjs
           node --test scripts/qa-dashboard-upcoming-v1.test.mjs
           node --test scripts/qa-calendar-timeline-v1.test.mjs
           node scripts/qa-calendar-timeline-v1-browser.mjs
@@ -294,6 +294,12 @@ jobs:
       - name: Verify every non-F1 workspace across six live viewports
         if: ${{ !cancelled() && steps.live_publish.outcome == 'success' }}
         run: node scripts/qa-ui-workspace-live-v2.mjs
+      - name: Verify ladder wizard and result rules
+        if: ${{ !cancelled() && steps.live_publish.outcome == 'success' }}
+        run: node scripts/qa-ladder-wizard-v1-browser.mjs
+      - name: Verify workspace navigation and sidebar
+        if: ${{ !cancelled() && steps.live_publish.outcome == 'success' }}
+        run: node scripts/qa-workspace-navigation-v1-browser.mjs
       - name: Publish scoped Cloudflare deployment result
         if: always()
         env:

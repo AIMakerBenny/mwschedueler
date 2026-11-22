@@ -9,7 +9,7 @@ const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const index=read('index.html'),core=read('assets/app-core.js'),wizard=read('assets/ladder-wizard-v1.js');
 const markup=index.slice(index.indexOf('<section id="gameLadder"'),index.indexOf('<section id="gameRps"'));
 const header=index.slice(index.indexOf('<div class="topbar">'),index.indexOf('<section id="dashboard"')).replace('>캘린더</h1>','>사다리타기</h1>').replace('id="todayText"></div>','id="todayText">2026년 11월 21일 토요일</div>').replace('id="clockText"></span>','id="clockText">오전 11:38:23</span>');
-assert(index.includes('assets/ladder-wizard-v1.js?v=11')&&index.includes('assets/ladder-wizard-v1.css?v=10'));
+assert(index.includes('assets/ladder-wizard-v1.js?v=12')&&index.includes('assets/ladder-wizard-v1.css?v=10'));
 assert.equal((markup.match(/data-ladder-page=/g)||[]).length,3);
 function part(start,end,last=false){const a=last?core.lastIndexOf(start):core.indexOf(start),b=core.indexOf(end,a+start.length);assert(a>=0&&b>a,start);return core.slice(a,b)}
 // Use the actual legacy renderer and CSPRNG game implementation, with just
