@@ -14,6 +14,7 @@ on:
       - 'assets/mawang-archive-*.js'
       - 'assets/mawang-archive-v1.css'
       - 'assets/mawang-archive-portraits/**'
+      - 'src/mawang-archive-gallery-v1.js'
       - 'scripts/qa-mawang-archive-*.mjs'
       - 'assets/content-applications-v1.js'
       - 'assets/content-applications-model-v1.js'

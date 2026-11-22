@@ -52,7 +52,7 @@ for(const [width,height,mobile] of sizes){
         if(route==='careerTimeline')await until(()=>browser.evaluate(`!!document.querySelector('#careerTimeline .cv-map-year')`),'timeline runtime');
         if(route==='mawangArchive'){
           await until(()=>browser.evaluate(`document.querySelectorAll('#mawangArchive [data-ma-character]').length===23`),'character archive');
-          await until(()=>browser.evaluate(`document.querySelector('#mawangArchive .ma-stage-art .ma-character-image')?.naturalWidth===300`),'actual character portrait loaded');
+          await until(()=>browser.evaluate(`document.querySelector('#mawangArchive .ma-stage-art .ma-character-image')?.naturalWidth>1`),'actual character portrait loaded');
           assert(await browser.evaluate(`(()=>{const r=document.getElementById('mwsArchiveRoot');r.querySelector('[data-ma-character="hina"]').click();if(r.querySelector('#maCharacterName').textContent!=='히나')return false;r.querySelector('[data-ma-filter="jeong"]').click();return r.querySelectorAll('[data-ma-character]').length===9&&r.querySelector('#maCharacterName').textContent==='유정'})()`),'archive selection and filter');
         }
         if(route==='achievements')await until(()=>browser.evaluate(`!!document.querySelector('#achievements .achievement-card-open')`),'achievement gallery');

@@ -1,6 +1,7 @@
 import appWorker from './cf-v110-steam.js';
 import {normalizeCampaigns} from '../assets/content-applications-model-v1.js';
 import {ensureHistoricalCalendarMigration} from './historical-calendar-migration-v1.js';
+import {handleArchiveGallery} from './mawang-archive-gallery-v1.js';
 
 const PARTS=['core','contacts','contactMeta','events','posts','miniGames','activity','clipboard','notebook','wardogs'];
 const CALENDAR_STARTUP_PARTS=['core','events','contacts','clipboard','activity','notebook','contactMeta'];
@@ -497,6 +498,9 @@ export default{
   async fetch(request,env,ctx){
     try{
       const url=new URL(request.url),path=url.pathname;
+      if(path.startsWith('/api/mawang-gallery')||path.startsWith('/media/mawang-archive/')){
+        const gallery=await handleArchiveGallery(request,env,currentAdmin);if(gallery)return gallery;
+      }
       if(path==='/api/auth/login'&&request.method==='POST')return handleLogin(request,env);
       if(path==='/api/auth/logout'&&request.method==='POST')return handleLogout(request,env);
       if(path==='/api/auth/session'&&request.method==='GET')return handleSession(request,env);
