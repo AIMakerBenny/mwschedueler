@@ -642,6 +642,7 @@ function saveData(reason='데이터 저장'){
 window.addEventListener('mawang:datachange',e=>{
   const status=document.getElementById('syncStatusText');
   if(status)status.textContent='전체 화면 동기화';
+  if(document.getElementById('contactFrequency')?.classList.contains('active'))safeRenderView('만남 빈도',()=>window.mwsContactFrequencyV1?.render(data,todayKST()));
 });
 
 function mwsGetF1RacingSettingsRecoveryD(){
@@ -844,7 +845,6 @@ function setTab(tab){
   try{window.mwsContactRuntimeOnTabV130?.(tab)}catch(_){}
 }
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
-window.addEventListener('mawang:datachange',()=>{if(document.getElementById('contactFrequency')?.classList.contains('active'))safeRenderView('만남 빈도',()=>window.mwsContactFrequencyV1?.render(data,todayKST()))});
 document.querySelectorAll('[data-legacy-link-v1]').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
 function syncSidebarPinUI(){
   document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));
