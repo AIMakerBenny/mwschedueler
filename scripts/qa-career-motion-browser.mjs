@@ -15,7 +15,7 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
   const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,reducedMotion,ignoreHTTPSErrors:true,...(video?{recordVideo:{dir:output,size:{width,height}}}:{})});
   if(width>700){
     await context.addInitScript(({collapsed})=>{
-      localStorage.setItem('mws-sidebar-nav-groups-v1',JSON.stringify({tools:!collapsed,games:true}));
+      localStorage.setItem('mws-sidebar-nav-groups-v2',JSON.stringify({tools:!collapsed,games:true}));
       window.__navFirstPaintSamples=[];
       const snapshot=()=>{if(!window.__mwsSidebarGroupsInitial)return;const list=[...document.querySelectorAll('.nav-scroll > [data-tab],.nav-scroll > [data-mws-nav-group]')].map(e=>[e.dataset.tab||e.dataset.mwsNavGroup,e.getAttribute('aria-expanded'),e.classList.contains('mws-nav-group-hidden')]);const value=JSON.stringify(list);const seen=window.__navFirstPaintSamples;if(seen.at(-1)!==value)seen.push(value)};
       new MutationObserver(snapshot).observe(document,{childList:true,subtree:true,attributes:true,attributeFilter:['aria-expanded','class']});

@@ -14,9 +14,9 @@ const searchState={tier:'',matrix:'',relations:''};
 let relationSelected=new Set();
 let saveTimer=0;
 let requestedActivated=false;
-const NAV_GROUP_PREFS_KEY='mws-sidebar-nav-groups-v1';
+const NAV_GROUP_PREFS_KEY='mws-sidebar-nav-groups-v2';
 const NAV_GROUP_TABS={tools:['contentPlanner','toolTier','toolMatrix','toolRelations'],games:['gameMajoku','gameLadder','gameRps','gameF1Racing','gamePachinko','gameMultiDraw']};
-function loadNavGroupPrefs(){const out={tools:true,games:true};try{const raw=JSON.parse(localStorage.getItem(NAV_GROUP_PREFS_KEY)||'null');if(raw&&typeof raw==='object'){if(typeof raw.tools==='boolean')out.tools=raw.tools;if(typeof raw.games==='boolean')out.games=raw.games}}catch(_){}return out}
+function loadNavGroupPrefs(){const out={tools:false,games:false};try{const raw=JSON.parse(localStorage.getItem(NAV_GROUP_PREFS_KEY)||'null');if(raw&&typeof raw==='object'){if(typeof raw.tools==='boolean')out.tools=raw.tools;if(typeof raw.games==='boolean')out.games=raw.games}}catch(_){}return out}
 let navGroupPrefs=loadNavGroupPrefs();
 function saveNavGroupPrefs(){try{localStorage.setItem(NAV_GROUP_PREFS_KEY,JSON.stringify(navGroupPrefs))}catch(_){}}
 function syncGlobals(){try{if(typeof data!=='undefined')window.data=data}catch(_){ }try{if(typeof saveData==='function'&&!window.saveData)window.saveData=saveData}catch(_){ }try{if(typeof persist==='function'&&!window.persist)window.persist=persist}catch(_){ }}

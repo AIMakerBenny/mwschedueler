@@ -42,10 +42,6 @@ body:has(#calendar.section.active) .topbar .clock{
   gap:8px;padding:3px;border:0;background:transparent;box-shadow:none;flex-wrap:wrap;
 }
 body:has(#calendar.section.active) #clockText{font-size:14px;white-space:nowrap}
-body:has(#calendar.section.active) #newEventBtn{
-  min-height:34px!important;padding:6px 12px!important;font-size:13px!important;line-height:1.4!important;
-  border-radius:8px!important;box-shadow:0 3px 10px rgba(20,112,255,.16)!important;
-}
 body:has(#calendar.section.active) #eventModalTitle{font-size:18px;line-height:1.3;margin:0}
 body:has(#calendar.section.active) #eventModal .modalbox>.space{margin-bottom:10px!important}
 #calendar .calendar-topbar-v4 .calendar-view-tab-v172{min-width:68px;min-height:30px;padding:6px 10px}

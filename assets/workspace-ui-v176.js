@@ -369,6 +369,13 @@ function installSetTabBridgeV176(){
   window.__mwsWorkspaceSetTabBridgeV176=true;
   baseSetTabV176=window.setTab;
   const wrapped=function(tab){
+    if(tab==='friendFinder'&&!$('friendFinder')){
+      window.mwsEnsureFriendFinderV5?.();
+      if(!$('friendFinder')){
+        if(typeof toast==='function')toast('친구 찾기','친구 찾기를 준비 중입니다. 잠시 후 다시 시도해 주세요.');
+        return;
+      }
+    }
     if(tab==='worldtime'){
       const result=baseSetTabV176.call(this,'dashboard');
       installDashboardWorldTimeV176();

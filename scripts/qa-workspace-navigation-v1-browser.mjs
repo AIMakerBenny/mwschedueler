@@ -9,7 +9,8 @@ const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const index=read('index.html');
 const aside=index.slice(index.indexOf('<aside class="sidebar">'),index.indexOf('</aside>')+8);
 assert(aside.includes('mwsToolsDivider'),'Tools divider missing in source');
-const styles=read('assets/app-core.css')+'\n'+read('assets/workspace-ui-v176.css');
+const header=index.slice(index.indexOf('    <div class="topbar">'),index.indexOf('<section id="dashboard"'));
+const styles=['assets/app-core.css','assets/workspace-ui-v176.css','assets/workspace-clean-v1.css','assets/calendar-details-v1.css'].map(read).join('\n');
 const runtime=['assets/content-planner-host.js','assets/tools.js','assets/workspace-ui-v176.js'].map(read);
 const chrome=['google-chrome','google-chrome-stable','chromium','chromium-browser'].map(name=>spawnSync('which',[name],{encoding:'utf8'})).find(r=>r.status===0)?.stdout.trim();
 assert(chrome,'Chromium is required');
@@ -37,6 +38,8 @@ const test=()=>{
   const visible=e=>getComputedStyle(e).display!=='none';
   try{
     const mini=q('.nav-game-divider:not(#mwsToolsDivider)'),tools=q('#mwsToolsDivider');
+    check(mini.getAttribute('aria-expanded')==='false'&&tools.getAttribute('aria-expanded')==='false','New sidebar groups must start collapsed');
+    check(!visible(tab('gameMajoku'))&&!visible(tab('contentPlanner')),'Collapsed groups still show items');
     const precedes=(a,b)=>Boolean(a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING);
     check(tab('memos').nextElementSibling===tab('careerTimeline')&&tab('careerTimeline').nextElementSibling===tab('achievements')&&precedes(tab('achievements'),mini),'Achievements must follow notebook outside mini-games');
     check(tab('gameMultiDraw').nextElementSibling===tab('gameMajoku'),'Chat game must follow Gacha');
@@ -67,15 +70,25 @@ const test=()=>{
     check(active()==='targets'&&q('#targets [data-contact-view-v176="friendFinder"]').getAttribute('aria-selected')==='true','Target route lost nested selection');
     clickContact('contacts');
     check(active()==='contacts'&&q('#pageTitle').textContent==='연락처','Contacts return failed');
+    const friend=q('#friendFinder');friend.remove();clickContact('friendFinder');
+    check(active()==='contacts','Missing friend section must not blank the workspace');
+    q('main').append(friend);clickContact('friendFinder');
+    check(active()==='friendFinder','Restored friend section did not open');
     window.setTab('gameMajoku');
     check(active()==='gameMajoku'&&q('#pageTitle').textContent==='채팅연동게임','Chat game route/title changed');
     window.setTab('calendar');
     check(!tab('contacts').classList.contains('active'),'Contacts remains active on calendar');
+    const add=q('#newEventBtn');
+    for(const section of document.querySelectorAll('.section')){
+      window.setTab(section.id);
+      const css=getComputedStyle(add),icon=getComputedStyle(add,'::before');
+      check(css.fontSize==='0px'&&css.width==='34px'&&css.height==='34px'&&icon.maskImage!=='none'&&add.getAttribute('aria-label')==='컨텐츠 추가','Shared add icon inconsistent: '+section.id);
+    }
     document.getElementById('qa-result').textContent='PASS';
   }catch(e){document.getElementById('qa-result').textContent='FAIL: '+e.message}
 };
 try{
-  const body='<!doctype html><meta charset="utf-8"><style>'+styles+'</style><body class="sidebar-pinned" style="background:#101216"><div class="app">'+aside+'<main class="main"><h1 id="pageTitle">캘린더</h1><section id="calendar" class="section active"></section><section id="contacts" class="section"></section><section id="sniper" class="section"></section><section id="friendFinder" class="section"></section><section id="targets" class="section"></section><section id="gameMajoku" class="section"></section></main></div><pre id="qa-result">pending</pre><script id="mwsToolsCleanV110Script"></script><script>('+setup.toString()+')();</script>'+runtime.map(s=>'<script>'+s+'</script>').join('')+'<script>setTimeout('+test.toString()+',500)</script></body>';
+  const body='<!doctype html><meta charset="utf-8"><style>'+styles+'</style><body class="sidebar-pinned" style="background:#101216"><div class="app">'+aside+'<main class="main">'+header+'<section id="calendar" class="section active"></section><section id="contacts" class="section"></section><section id="sniper" class="section"></section><section id="friendFinder" class="section"></section><section id="targets" class="section"></section><section id="gameMajoku" class="section"></section></main></div><pre id="qa-result">pending</pre><script id="mwsToolsCleanV110Script"></script><script>('+setup.toString()+')();</script>'+runtime.map(s=>'<script>'+s+'</script>').join('')+'<script>setTimeout('+test.toString()+',500)</script></body>';
   const file=path.join(fixture,'fixture.html');
   writeFileSync(file,body);
   const run=spawnSync(chrome,['--headless','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--no-first-run','--user-data-dir='+path.join(fixture,'profile'),'--window-size=1366,768','--virtual-time-budget=1500','--dump-dom','file://'+file],{encoding:'utf8',timeout:60000,maxBuffer:12*1024*1024});

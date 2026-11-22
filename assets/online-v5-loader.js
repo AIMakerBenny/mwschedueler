@@ -27,9 +27,19 @@
     // The date-number hover owns Today People. Remove the encoded V1/V2/V4
     // day-cell injections while retaining the separate day detail and memo features.
     safeFeatures=safeFeatures.replace(/  function injectTodayPeopleIntoCalendar\(\)\{[\s\S]*?(?=  \/\/ ---------- Contact detail:)/,'');
+    // Its final initializer used to throw before the subsequent Friend Finder
+    // IIFE could create its section. Remove the call along with the definition.
+    safeFeatures=safeFeatures.replace('renderDashboardLocalExtras();injectTodayPeopleIntoCalendar();','renderDashboardLocalExtras();');
     safeFeatures=safeFeatures.replace(/\n      const people=visibleContactsForDate\(date\);\n      if\(people.length\)\{[\s\S]*?\n      \}\n\n      day.onclick/, '\n      day.onclick');
     safeFeatures=safeFeatures.replace(/  function ensureEveryDayPeopleSlotV4\(\)\{[\s\S]*?(?=  \/\/ Keep the V4 layout)/,'');
     safeFeatures=safeFeatures.replace("if(tab==='calendar')setTimeout(ensureEveryDayPeopleSlotV4,0);",'').replace('syncFavoriteFoldersV4();ensureEveryDayPeopleSlotV4()','syncFavoriteFoldersV4()');
+    // The profile is separate from the six metrics, so it never leaves a lone
+    // metric card on a second row at intermediate widths.
+    safeFeatures=safeFeatures.replace("const grid=document.querySelector('#dashboard .dashboard-kpi-grid-local');","const grid=document.querySelector('#dashboardProfileSlot');");
+    // Expose the real section initializer for navigation and create it before
+    // switching tabs, including when an earlier render has removed the section.
+    safeFeatures=safeFeatures.replace('window.renderFriendFinderV5=renderFriendFinderV5;','window.mwsEnsureFriendFinderV5=ensureFriendFinderV5;window.renderFriendFinderV5=renderFriendFinderV5;');
+    safeFeatures=safeFeatures.replace('const out=setTabBeforeV5.apply(this,arguments);\n    ensureFriendFinderV5();','ensureFriendFinderV5();\n    const out=setTabBeforeV5.apply(this,arguments);');
     run(safeFeatures);
     if(typeof sharedSearchOwner.contactMatches==='function'){
       window.contactMatches=sharedSearchOwner.contactMatches;

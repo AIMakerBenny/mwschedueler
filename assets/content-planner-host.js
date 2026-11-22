@@ -5,7 +5,7 @@ if(window.__mwsContentPlannerHostCleanV110)return;window.__mwsContentPlannerHost
 const TAB='contentPlanner';
 const FRAME_ID='mwsContentPlannerFrame';
 const FRAME_URL='/content-planner.html?v=1.0';
-const TOOLS_URL='/assets/tools.js?v=1.4.0-phase105-achievement-navfix1&workspace-nav-v1=1&firstpaint=1';
+const TOOLS_URL='/assets/tools.js?v=1.4.0-phase105-achievement-navfix1&workspace-nav-v1=1&firstpaint=1&dashboardnav=1';
 const EMPTY_PNG='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLAlQAAAABJRU5ErkJggg==';
 function syncGlobals(){try{if(typeof data!=='undefined')window.data=data}catch(_){ }try{if(typeof saveData==='function'&&!window.saveData)window.saveData=saveData}catch(_){ }try{if(typeof persist==='function'&&!window.persist)window.persist=persist}catch(_){ }}
 function forceVersion(){try{window.mwsApplyAppVersionV120?.()}catch(_){ }}
@@ -13,8 +13,6 @@ function ensureStyle(){if(document.getElementById('mwsContentPlannerHostStyleV11
 #contentPlanner{padding:0!important;zoom:1!important;font-size:inherit!important;--ui-text-scale:1!important;overflow:hidden!important}
 #mwsContentPlannerShell{height:calc(100vh - 92px);min-height:560px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:#070a12}
 #mwsContentPlannerFrame{display:block;width:100%;height:100%;border:0;background:#070a12}
-#dashboard .dashboard-kpi-grid-local{grid-template-columns:repeat(auto-fit,minmax(calc(185px * var(--ui-text-scale,1)),1fr))!important;align-items:stretch!important}
-#dashboard .dashboard-kpi-grid-local>.card,#dashboard .dashboard-kpi-grid-local>button.card{height:auto!important;min-height:calc(82px * var(--ui-text-scale,1))!important;overflow:visible!important;padding:calc(15px * var(--ui-text-scale,1))!important}
 #dashboard .dashboard-my-profile-v3{height:auto!important;min-height:calc(82px * var(--ui-text-scale,1))!important;overflow:visible!important}
 #dashboard .dashboard-my-profile-kicker-v3{font-size:calc(10px * var(--ui-text-scale,1))!important;line-height:1.35!important}
 #dashboard .dashboard-my-profile-row-v3 strong{font-size:calc(15px * var(--ui-text-scale,1))!important;line-height:1.35!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important}

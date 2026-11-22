@@ -48,8 +48,38 @@ test('encoded calendar feature no longer injects bottom participant strips, but 
  const patch=sourceFunction(loader,'    safeFeatures=safeFeatures.replace(/  function injectTodayPeopleIntoCalendar','    run(safeFeatures)');
  const transformed=vm.runInNewContext('let safeFeatures=features;'+patch+'\nsafeFeatures',{features});
  new vm.Script(transformed);
- assert(!/function injectTodayPeopleIntoCalendar|ensureEveryDayPeopleSlotV4|strip.className='ohamsa-calendar-strip-local-v2/.test(transformed));
+ assert(!/injectTodayPeopleIntoCalendar|ensureEveryDayPeopleSlotV4|strip.className='ohamsa-calendar-strip-local-v2/.test(transformed));
  assert(transformed.includes('function injectCalendarV2()')&&transformed.includes('renderCalendarDayDetailLocalV2(date)')&&transformed.includes('syncFavoriteFoldersV4()'));
+ assert(transformed.includes('window.mwsEnsureFriendFinderV5=ensureFriendFinderV5'));
+ assert(transformed.includes("const grid=document.querySelector('#dashboardProfileSlot');"));
+ const friend=transformed.slice(transformed.indexOf('/* MAWANG Scheduler ONLINE V5 - Friend Finder'));
+ assert(friend.includes('ensureFriendFinderV5();\n    const out=setTabBeforeV5.apply(this,arguments);'));
+ // Run the actual encoded Friend Finder implementation, instead of testing
+ // against a pre-created empty section that could hide an initialization bug.
+ const nodes=new Map(),active=new Set(['contacts']);
+ const el=id=>{const node={id,style:{setProperty(){}},classList:{toggle:(_cls,on)=>on?active.add(node.id):active.delete(node.id)},addEventListener(){},querySelectorAll:()=>[],set innerHTML(value){this.html=value;for(const [,child] of value.matchAll(/id="([^"]+)"/g))nodes.set(child,el(child))},get innerHTML(){return this.html||''}};return node};
+ nodes.set('contacts',el('contacts'));nodes.set('pageTitle',el('pageTitle'));
+ const main={appendChild:section=>nodes.set(section.id,section)};
+ const ctx={document:{getElementById:id=>nodes.get(id)||null,createElement:()=>el(''),querySelector:s=>s==='main.main'?main:null,querySelectorAll:s=>s==='.section'?[nodes.get('contacts'),nodes.get('friendFinder')].filter(Boolean):[]},data:{contacts:[]},setTimeout:()=>0};
+ ctx.window=ctx;ctx.setTab=()=>{assert(nodes.has('friendFinder'),'section must exist before navigation')};
+ vm.runInNewContext(friend,ctx);
+ assert(nodes.has('friendFinder'));assert(nodes.has('friendFinderGridV5'));
+ ctx.setTab('friendFinder');
+ assert(active.has('friendFinder'));assert(!active.has('contacts'));
+ assert.equal(nodes.get('pageTitle').textContent,'친구 찾기');
+ assert.match(nodes.get('friendFinderGridV5').innerHTML,/즐겨찾기에 사람을 추가/);
+});
+
+test('dashboard and shared action have one responsive layout owner; sidebar defaults closed',()=>{
+ const html=source('index.html'),tools=source('assets/tools.js'),style=source('assets/workspace-clean-v1.css'),calendar=source('assets/calendar-details-v1.css');
+ assert(html.includes("key='mws-sidebar-nav-groups-v2'")&&html.includes('let prefs={tools:false,games:false}'));
+ assert(tools.includes("NAV_GROUP_PREFS_KEY='mws-sidebar-nav-groups-v2'")&&tools.includes('const out={tools:false,games:false}'));
+ assert(calendar.includes('body .main>.topbar #newEventBtn::before')&&calendar.includes('body .main>.topbar #newEventBtn{'));
+ assert(!calendar.includes('body:has(#calendar.section.active) .main>.topbar #newEventBtn'));
+ assert(style.includes('repeat(6,minmax(0,1fr))')&&style.includes('repeat(3,minmax(0,1fr))')&&style.includes('repeat(2,minmax(0,1fr))'));
+ assert(!source('assets/content-planner-host.js').includes('#dashboard .dashboard-kpi-grid-local'));
+ const core=source('assets/app-core.js');
+ assert(core.indexOf("if(tab==='friendFinder'&&!document.getElementById('friendFinder'))")<core.indexOf("document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===tab))"));
 });
 
 

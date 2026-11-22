@@ -128,7 +128,6 @@ body:has(#calendar.section.active) .main:has(#calendar.section.active)>.topbar{m
 body:has(#calendar.section.active) .main:has(#calendar.section.active)>.topbar h1{font-size:18px!important;margin:0!important;line-height:1.3!important}
 body:has(#calendar.section.active) #todayText{display:none!important}
 body:has(#calendar.section.active) .main:has(#calendar.section.active)>.topbar .clock{gap:8px!important}
-body:has(#calendar.section.active) #newEventBtn{min-height:30px!important;padding:5px 10px!important;font-size:12px!important}
 #calendar .calendar-topbar-v4{gap:4px 8px!important;margin-bottom:3px!important}
 #calendar .calendar-topbar-v4 :is(button,select){min-height:28px!important;height:28px!important;padding:4px 7px!important;font-size:12px!important}
 #calendar .calendar-topbar-v4 .calendar-view-tab-v172{min-width:48px!important}
@@ -173,8 +172,6 @@ body:has(#calendar.section.active) #newEventBtn{min-height:30px!important;paddin
 /* Quiet calendar surfaces; retain existing theme, geometry and tools. */
 body #calendar.section .calendar-topbar-v4 :is(button,select){border-radius:20px!important;box-shadow:none!important;transition:background-color 140ms ease,border-color 140ms ease,color 140ms ease!important}
 body #calendar.section .calendar-topbar-v4 .calendar-view-tab-v172.active{background:color-mix(in srgb,var(--accent) 22%,var(--panel))!important;box-shadow:none!important;color:var(--text)!important}
-body:has(#calendar.section.active) #newEventBtn{border-radius:20px!important;box-shadow:0 2px 6px #0003!important;transition:background-color 140ms ease,box-shadow 140ms ease!important;transform:none!important}
-body:has(#calendar.section.active) #newEventBtn:hover{box-shadow:0 3px 10px #0004!important}
 body #calendar.section #calendarGrid .day{transition:background-color 140ms ease!important;transform:none!important;box-shadow:none!important}
 body #calendar.section #calendarGrid .day:hover{transform:none!important;box-shadow:none!important;background:color-mix(in srgb,var(--text) 3%,var(--panel))!important}
 body #calendar.section #calendarGrid .day.today{outline:none!important;box-shadow:none!important}
@@ -239,7 +236,7 @@ html[data-mws-motion=reduced] :is(body #calendar.section :is(.day,.mini-event,.c
 body #calendar.section .calendar-topbar-v4 button,body #calendar.section #calendarCopyTrayCloseV4{
   display:inline-grid!important;place-items:center;flex:0 0 32px!important;width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;padding:0!important;font-size:0!important;line-height:1!important;border-radius:50%!important;
 }
-body #calendar.section .calendar-topbar-v4 button::before,body #calendar.section #calendarCopyTrayCloseV4::before,body:has(#calendar.section.active) .main>.topbar #newEventBtn::before{
+body #calendar.section .calendar-topbar-v4 button::before,body #calendar.section #calendarCopyTrayCloseV4::before,body .main>.topbar #newEventBtn::before{
   content:'';display:block;width:19px;height:19px;background:currentColor;mask:var(--calendar-toolbar-icon) center/contain no-repeat;-webkit-mask:var(--calendar-toolbar-icon) center/contain no-repeat;
 }
 body #calendar.section .calendar-topbar-v4 button:hover:not(:disabled),body #calendar.section #calendarCopyTrayCloseV4:hover{background:color-mix(in srgb,var(--text) 11%,var(--panel))!important;transform:none!important}
@@ -259,19 +256,18 @@ body #calendar.section .calendar-topbar-v4 button[aria-pressed=true],body #calen
 body #calendar.section .calendar-topbar-v4 .calendar-toolbar{min-width:230px;flex-wrap:nowrap}
 body #calendar.section .calendar-topbar-v4 .calendar-group-toolbar-v2{margin-left:auto;flex-wrap:nowrap}
 body #calendar.section[data-calendar-view-mode]:not([data-calendar-view-mode=month]) #calendarCopyTrayToggleV4,body[data-device-mode=mobile] #calendar[data-mobile-calendar-view]:not([data-mobile-calendar-view=month]) #calendarCopyTrayToggleV4{display:none!important}
-@media(min-width:901px){
- body:has(#calendar.section.active) .main>.topbar #newEventBtn{position:relative!important;display:inline-grid!important;place-items:center;width:34px!important;min-width:34px!important;height:34px!important;min-height:34px!important;padding:0!important;font-size:0!important;line-height:1!important;border-radius:50%!important}
- body:has(#calendar.section.active) .main>.topbar #newEventBtn::before{position:absolute;left:50%;top:50%;margin:0;transform:translate(-50%,-50%);pointer-events:none}
-}
-@media(max-width:900px){body:has(#calendar.section.active) .main>.topbar #newEventBtn::before{display:none}}
+/* The shared content action belongs to every section, not just Calendar. */
+body .main>.topbar #newEventBtn{position:relative!important;display:inline-grid!important;place-items:center;flex:0 0 34px!important;width:34px!important;min-width:34px!important;height:34px!important;min-height:34px!important;padding:0!important;font-size:0!important;line-height:1!important;border-radius:50%!important;transform:none!important}
+body .main>.topbar #newEventBtn::before{position:absolute;left:50%;top:50%;margin:0;transform:translate(-50%,-50%);pointer-events:none}
+body .main>.topbar #newEventBtn:focus-visible{outline:2px solid var(--text);outline-offset:3px}
 
 /* Share a single desktop header row between the global title/actions and the
    calendar tools. Both retain their original DOM parents and event handlers. */
 @media(min-width:1050px){
- body:not([data-device-mode=mobile]):not([data-resolution=mobile]) .main:has(>.topbar):has(>#calendar.section.active>.calendar-topbar-v4){
+ body:not([data-device-mode=mobile]):not([data-resolution=mobile]):not(.f1-racing-r12-compact-v287):not(.f1-racing-immersive) .main:has(>.topbar):has(>#calendar.section.active>.calendar-topbar-v4){
    display:grid!important;grid-template-columns:max-content minmax(0,1fr) max-content;grid-template-rows:auto auto;column-gap:12px;row-gap:0;align-content:start;
  }
- body:has(#calendar.section.active):not([data-device-mode=mobile]):not([data-resolution=mobile]) .main:has(>#calendar.section.active>.calendar-topbar-v4)>.topbar{
+ body:has(#calendar.section.active):not([data-device-mode=mobile]):not([data-resolution=mobile]):not(.f1-racing-r12-compact-v287):not(.f1-racing-immersive) .main:has(>#calendar.section.active>.calendar-topbar-v4)>.topbar{
    display:grid!important;grid-template-columns:subgrid;grid-column:1/-1;grid-row:1;align-items:center;gap:0 12px!important;
    min-height:40px!important;height:auto!important;margin:0!important;padding:0 0 4px!important;border-width:0 0 1px!important;background:transparent!important;z-index:2;pointer-events:none;
  }
