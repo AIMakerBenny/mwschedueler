@@ -120,15 +120,20 @@ try{
         "return {style:getComputedStyle(document.querySelector('.topbar')).pointerEvents,clickable:hit===b||b.contains(hit)}})()");
       assert(click.style!=='none'&&click.clickable,JSON.stringify({width,click}));
       await browser.evaluate("window.__qaActivate('careerTimeline')");
-      const timeline=await browser.evaluate("(()=>{const bar=document.querySelector('#careerTimeline .cv-bar');"+
-        "bar.classList.add('cv-pinned');const css=getComputedStyle(bar),head=getComputedStyle(document.querySelector('.topbar'));"+
-        "const result={border:css.borderTopWidth,shadow:css.boxShadow,headerClicks:head.pointerEvents};bar.classList.remove('cv-pinned');return result})()");
-      assert.equal(timeline.border,'0px',JSON.stringify({width,timeline}));
-      assert.equal(timeline.shadow,'none',JSON.stringify({width,timeline}));
+      const timeline=await browser.evaluate("(()=>{const host=document.querySelector('#careerTimeline .cv-bar-host'),bar=host.querySelector('.cv-bar');const css=getComputedStyle(bar),head=getComputedStyle(document.querySelector('.topbar'));return {border:css.borderTopWidth,shadow:css.boxShadow,barPosition:css.position,hostPosition:getComputedStyle(host).position,hostHeight:host.getBoundingClientRect().height,headerClicks:head.pointerEvents,inlineHeight:host.style.height,oldPinned:bar.classList.contains('cv-pinned')}})()");
+      assert.equal(timeline.hostPosition,'sticky',JSON.stringify({width,timeline}));
+      assert.equal(timeline.barPosition,'relative',JSON.stringify({width,timeline}));
+      assert.equal(timeline.border,'1px',JSON.stringify({width,timeline}));
+      assert(timeline.shadow!=='none'&&timeline.hostHeight>20&&!timeline.oldPinned&&timeline.inlineHeight==='',JSON.stringify({width,timeline}));
       assert.notEqual(timeline.headerClicks,'none',JSON.stringify({width,timeline}));
       const inlineTimeline=await browser.evaluate("(()=>{const title=document.querySelector('#pageTitle').getBoundingClientRect(),"+
         "bar=document.querySelector('#careerTimeline .cv-bar').getBoundingClientRect(),panel=document.querySelector('#careerTimeline .cv-panel').getBoundingClientRect(),section=document.querySelector('#careerTimeline').getBoundingClientRect(),main=document.querySelector('.main').getBoundingClientRect();return {titleY:(title.top+title.bottom)/2,barY:(bar.top+bar.bottom)/2,panelTop:panel.top,sectionTop:section.top,mainTop:main.top,barTop:bar.top,topbarBottom:document.querySelector('.topbar').getBoundingClientRect().bottom,other:[...document.querySelector('.main').children].map(e=>({id:e.id||e.className,display:getComputedStyle(e).display,top:e.getBoundingClientRect().top,bottom:e.getBoundingClientRect().bottom}))}})()");
-      if(width>=1101)assert(Math.abs(inlineTimeline.titleY-inlineTimeline.barY)<30,JSON.stringify({width,inlineTimeline}));
+      // Timeline controls now occupy their own stable in-flow row. The former
+      // overlapping title-row/fixed-header state caused a visible scroll jolt.
+      if(width>=1101)assert(inlineTimeline.barTop>=inlineTimeline.topbarBottom-2
+        &&inlineTimeline.barTop-inlineTimeline.topbarBottom<65
+        &&inlineTimeline.barTop>=inlineTimeline.sectionTop-2,
+        JSON.stringify({width,inlineTimeline}));
       if(width>=1101){
         const timelineHit=await browser.evaluate("(()=>{const control=document.querySelector('#careerTimeline .cv-search'),rect=control.getBoundingClientRect(),hit=document.elementFromPoint(rect.left+rect.width/2,rect.top+rect.height/2);return {rect:{top:rect.top,left:rect.left,width:rect.width,height:rect.height},clickable:hit===control||control.contains(hit),hitTag:hit?.tagName,hitClass:hit?.className}})()");
         assert(timelineHit.clickable,JSON.stringify({width,timelineHit}));
