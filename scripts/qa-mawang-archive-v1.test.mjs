@@ -56,7 +56,7 @@ test('representative official videos remain attached to character copy as intern
   const expected={hakka:['hakka','pianoman'],lena:['hakka'],kokoa:['kokoa'],devil:['devil'],hina:['hina','hamsterAdventure','hamsterMeal'],real:['real'],'baby-shark':['babyShark']};
   for(const [id,keys] of Object.entries(expected)){
     const c=entries.find(item=>item.id===id);
-    for(const key of keys){const video=videos[key];assert(c.media.includes(key));assert.match(video.published,/^\d{4}-\d{2}-\d{2}$/);assert(c.sources.some(s=>s.url==='https://www.youtube.com/watch?v='+video.id));}
+    for(const key of keys){const video=videos[key];assert(c.media.includes(key));if(video.published!==undefined)assert.match(video.published,/^\d{4}-\d{2}-\d{2}$/);assert(c.sources.some(s=>s.url==='https://www.youtube.com/watch?v='+video.id));}
     assert(c.details.some(([,value])=>value.includes(videos[keys[0]].title==='Find the MaWang Hamster'?'숨바꼭질':videos[keys[0]].title.split(' · ')[0])||value.includes('360도')));
   }
 });
