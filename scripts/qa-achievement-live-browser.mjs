@@ -79,7 +79,7 @@ try{
   assert(layout.dialogRight<=width+1&&layout.controlsBottom<=height+1&&(mobile||layout.dialogBottom<=height+1),'Real gallery card exceeds viewport: '+JSON.stringify({width,layout}));
   if(mobile){
     const scroll=await browser.evaluate("(()=>{const m=document.querySelector('.achievement-detail-modal'),c=document.querySelector('.achievement-detail-close');m.scrollTop=m.scrollHeight;const r=c.getBoundingClientRect();return {position:getComputedStyle(c).position,top:r.top,bottom:r.bottom,scroll:m.scrollTop}})()");
-    assert(scroll.position==='sticky'&&scroll.top>=0&&scroll.bottom<=innerHeight&&scroll.scroll>=0,'Mobile close must remain accessible while scrolling: '+JSON.stringify(scroll));
+    assert(scroll.position==='sticky'&&scroll.top>=0&&scroll.bottom<=height&&scroll.scroll>=0,'Mobile close must remain accessible while scrolling: '+JSON.stringify(scroll));
     await browser.evaluate("document.querySelector('.achievement-detail-modal').scrollTop=0");
   }
   if(!mobile)assert(layout.dialogOverflow<=2&&layout.modalOverflow<=2,'Unexpected desktop modal scrollbar: '+JSON.stringify({width,layout}));
