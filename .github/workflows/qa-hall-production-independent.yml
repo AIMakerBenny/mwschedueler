@@ -2,6 +2,8 @@ name: Hall of Fame independent Cloudflare production verification
 on:
   push:
     branches: [cloudflare-production]
+  pull_request:
+    branches: [cloudflare-production]
   workflow_dispatch:
 permissions:
   contents: read
