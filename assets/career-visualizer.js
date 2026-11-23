@@ -485,7 +485,11 @@
       const r=target.getBoundingClientRect(), v=viewport();
       // Header remains visible, and selected card lands in its fully attached region.
       const reserved=Math.max(76,bar.offsetHeight+24);
-      snapNext=true;setScroll(scrollTop()+r.top-v.top-reserved);
+      const destination=scrollTop()+r.top-v.top-reserved;
+      snapNext=true;
+      // Year/search navigation scrolls smoothly without creating a second
+      // animation loop. A subsequent wheel or jump replaces this request.
+      scrollRoot?.scrollTo({top:destination,behavior:reduced()?'instant':'smooth'});
       if(focus)target.querySelector('summary')?.focus({preventScroll:true});
       schedule();
     }
