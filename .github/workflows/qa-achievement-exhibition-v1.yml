@@ -7,6 +7,7 @@ on:
       - 'assets/achievement-exhibition-v1.css'
       - 'assets/achievement-gallery-v1621.*'
       - 'scripts/qa-achievement-exhibition-v1-browser.mjs'
+      - 'scripts/qa-achievement-live-browser.mjs'
       - '.github/workflows/qa-achievement-exhibition-v1.yml'
 permissions:
   contents: read
@@ -19,6 +20,41 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: node scripts/qa-achievement-exhibition-v1-browser.mjs
+      - name: Install Korean fonts for visual evidence
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-nanum
+      - name: Render and validate gallery hover and detail
+        env:
+          MWS_HALL_CAPTURE: '1'
+        run: node scripts/qa-achievement-exhibition-v1-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: achievement-hall-interaction-browser
+          path: visual-achievement-hall/*.jpg
+          if-no-files-found: ignore
       - run: node scripts/run-phase90-achievement-gallery-audit.mjs
       - run: node scripts/run-phase93-achievement-touch-audit.mjs
+  public-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install Korean fonts for real public screenshots
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-nanum
+      - name: Actual Cloudflare site - candidate hover and detail, read-only
+        env:
+          MWS_HALL_CAPTURE: '1'
+        run: node scripts/qa-achievement-live-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: achievement-hall-real-public-chromium
+          path: visual-achievement-live/*.jpg
+          if-no-files-found: ignore
