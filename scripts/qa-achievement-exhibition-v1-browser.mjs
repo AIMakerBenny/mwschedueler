@@ -104,7 +104,7 @@ try{
     return {dialogScroll:dialog.scrollHeight-dialog.clientHeight,modalScroll:modal.scrollHeight-modal.clientHeight,dialogBottom:d.bottom,dialogRight:d.right,controlsBottom:c.bottom,ratio:st.width/st.height,stageHeight:st.height,infoKeyboard:info.tabIndex===0,infoOverflow:getComputedStyle(info).overflowY,dialogOverflow:getComputedStyle(dialog).overflowY};
   })()`);
   assert(Math.abs(geometry.ratio-2/3)<.015&&geometry.stageHeight>100&&geometry.infoKeyboard,JSON.stringify({width,geometry}));
-  assert(geometry.dialogRight<=width+1&&geometry.dialogBottom<=height+1&&geometry.controlsBottom<=height+1,JSON.stringify({width,geometry}));
+  assert(geometry.dialogRight<=width+1&&geometry.controlsBottom<=height+1&&(width<=760||geometry.dialogBottom<=height+1),JSON.stringify({width,geometry}));
   if(width>760){
     assert(geometry.dialogScroll<=2&&geometry.modalScroll<=2&&geometry.dialogOverflow==='hidden',JSON.stringify({width,geometry}));
     assert(geometry.infoOverflow==='auto',JSON.stringify({width,geometry}));
@@ -138,7 +138,11 @@ try{
   })()`);
   assert(longInfo.text>8000,JSON.stringify({width,longInfo}));
   if(width>760)assert(longInfo.infoCanScroll&&longInfo.infoScrollTop>100&&longInfo.dialogScroll<=2,JSON.stringify({width,longInfo}));
-  else assert(longInfo.modalCanScroll&&longInfo.modalScrollTop>100,JSON.stringify({width,longInfo}));
+  else {
+    assert(longInfo.modalCanScroll&&longInfo.modalScrollTop>100,JSON.stringify({width,longInfo}));
+    const close=await browser.evaluate(`(()=>{const c=document.querySelector('.achievement-detail-close'),r=c.getBoundingClientRect();return {position:getComputedStyle(c).position,top:r.top,bottom:r.bottom}})()`);
+    assert(close.position==='sticky'&&close.top>=0&&close.bottom<=height,'Mobile close disappears while scrolling: '+JSON.stringify({width,close}));
+  }
   if(capture)writeFileSync(path.join(output,'hall-'+width+'-detail-long.jpg'),Buffer.from(await browser.captureScreenshot(),'base64'));
   await browser.evaluate(`(()=>{document.querySelector('.achievement-detail-close').click();window.mwsGetAchievementCardsV1621=()=>fixtureCards})()`);
   assert(await browser.evaluate(`document.getElementById('achievementDetailModal').hidden`));
