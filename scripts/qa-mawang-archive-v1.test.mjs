@@ -238,7 +238,11 @@ test('workspace header keeps only page-relevant actions and links to the exact M
   for(const section of ['careerTimeline','posts','contentApplications'])assert(density.includes('#'+section+'.active'));
   assert.match(density,/\.cv-bar-host/);
   assert.match(density,/\.posts-head/);
-  assert(!density.includes('pointer-events:none!important'));
+  // Only non-interactive timeline title chrome is transparent to pointer input;
+  // actual header actions explicitly retain pointer events.
+  assert.match(density,/main:has\(\#careerTimeline\.active\)>\.topbar\{\s*pointer-events:none!important/);
+  assert.match(density,/pointer-events:auto!important/);
+  assert.doesNotMatch(density,/main:has\(\#posts\.active\)>\.topbar\{\s*pointer-events:none!important/);
   assert.match(density,/post-workspace-actions/);
   assert.match(html,/career-visualizer\.js\?v=\d+&single-view=1/);
   const careerRuntime=read('assets/career-visualizer.js');
