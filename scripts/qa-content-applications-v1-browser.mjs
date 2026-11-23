@@ -45,7 +45,8 @@ try{
   // An identical refresh must not replace rows or replay transitions.
   await evalJS("window.__qaBeforeUnchanged=document.querySelector('.ca-person[data-ca-own]');document.querySelector('[data-ca-refresh]').click()");
   await delay(150);
-  assert(await evalJS("window.__qaBeforeUnchanged===document.querySelector('.ca-person[data-ca-own]')&&!document.querySelector('.ca-person .ca-rank-change')"));
+  const unchanged=await evalJS("(()=>{const own=document.querySelector('.ca-person[data-ca-own]');return {same:window.__qaBeforeUnchanged===own,animations:own?.getAnimations().length||0}})()");
+  assert(unchanged.same&&unchanged.animations===0,JSON.stringify(unchanged));
   // Restore previous likes under reduced-motion preference; no motion is permitted.
   await browser.setReducedMotion(true);
   await evalJS("window.__qaBoostLikes=false;document.querySelector('[data-ca-refresh]').click()");
