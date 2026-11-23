@@ -227,7 +227,7 @@ test('workspace header keeps only page-relevant actions and links to the exact M
   assert.match(archive,/\.mws-archive-wiki/);
   assert.match(archive,/\.ma-header-filters/);
   assert.match(archive,/\.ma-header-filters\[hidden\]/);
-  assert.match(html,/assets\/workspace-density-v1\.css\?v=1/);
+  assert.match(html,/assets\/workspace-density-v1\.css\?v=2/);
   const density=read('assets/workspace-density-v1.css');
   for(const section of ['careerTimeline','posts','contentApplications'])assert(density.includes('#'+section+'.active'));
   assert.match(density,/\.cv-bar-host/);

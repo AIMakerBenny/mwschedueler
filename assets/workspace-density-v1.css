@@ -50,6 +50,12 @@
     position:relative!important;
     z-index:16!important;
   }
+  #posts.section.active .posts-head{
+    transform:translateY(-43px)!important;
+  }
+  #posts.section.active .posts-layout{
+    margin-top:-43px!important;
+  }
   #posts.section.active .posts-head > h2{display:none!important}
   #posts.section.active .post-workspace-actions{
     margin:0!important;
@@ -181,7 +187,8 @@ body.mws-premium .main:not(:has(#mawangArchive.active)) > .topbar .ma-header-fil
 
 @media(max-width:1100px){
   #careerTimeline.active .cv-bar-host{margin-top:0!important}
-  #posts.section.active .posts-head{margin:0 0 8px!important}
+  #posts.section.active .posts-head{margin:0 0 8px!important;transform:none!important}
+  #posts.section.active .posts-layout{margin-top:0!important}
   #contentApplications.section.active > .ca-head{margin:0 0 8px!important}
   #contentApplications.section.active > .ca-head .ca-eyebrow{display:none!important}
   #contentApplications.section.active .ca-detail-top{
