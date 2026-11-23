@@ -37,6 +37,16 @@
     semanticResponseBytes:0,actualCloudflareResponseBytes:0,actualCloudflareRequestBytes:0,actualSupabaseResponseBytes:0,actualSupabaseRequestBytes:0
   };
   function metric(type,detail={}){metrics.requests.push({at:new Date().toISOString(),type,...detail});if(metrics.requests.length>300)metrics.requests.shift()}
+  window.mwsV55CacheDiagnostics=async()=>{
+    let storage=null;
+    try{
+      const estimate=await navigator.storage?.estimate?.();
+      if(estimate)storage={usageBytes:estimate.usage??null,quotaBytes:estimate.quota??null};
+    }catch(_){}
+    return {cacheDatabase:CACHE_DB,cacheSchema:CACHE_SCHEMA_VERSION,
+      loadedParts:[...loadedParts],hits:metrics.cacheHits,misses:metrics.cacheMisses,
+      dirtyParts:[...dirtyParts],storage};
+  };
   window.mwsV55EgressReport=()=>({
     ...clone(metrics),mode,manifest:clone(manifest),loadedParts:[...loadedParts],dirtyParts:[...dirtyParts],
     imageResources:(performance.getEntriesByType?.('resource')||[]).filter(x=>/\/media\/(contact|workspace)\//.test(x.name)).map(x=>({name:x.name,transferSize:x.transferSize,encodedBodySize:x.encodedBodySize,decodedBodySize:x.decodedBodySize,duration:Math.round(x.duration)}))
@@ -99,7 +109,11 @@
     });
   }
   async function getCachedPart(scope,part){if(!CACHE_STORES.includes(part))return null;try{return await idbTx(part,'readonly',os=>os.get(scope))||null}catch(e){console.warn('IndexedDB cache read',part,e);return null}}
-  async function putCachedPart(scope,part,version,value){if(!CACHE_STORES.includes(part))return;try{await idbTx(part,'readwrite',os=>os.put({scope,version:Number(version)||0,data:clone(value),cachedAt:Date.now()}))}catch(e){console.warn('IndexedDB cache write',part,e)}}
+  async function putCachedPart(scope,part,version,value){if(!CACHE_STORES.includes(part))return;try{
+    // IndexedDB's put() already structured-clones its input. Cloning first
+    // creates an avoidable second full-size in-memory copy of schedules.
+    await idbTx(part,'readwrite',os=>os.put({scope,version:Number(version)||0,data:value,cachedAt:Date.now()}));
+  }catch(e){console.warn('IndexedDB cache write',part,e)}}
   async function clearCache(){try{const db=await openCache();await Promise.all(CACHE_STORES.map(store=>new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite');tx.objectStore(store).clear();tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})))}catch(e){console.warn('IndexedDB cache clear',e)}}
   async function validateCacheSchema(){
     try{
