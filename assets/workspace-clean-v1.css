@@ -305,3 +305,8 @@ body[data-device-mode="mobile"] #dashboard #dashboardOverviewMode .dashboard-kpi
     transition-delay:0s!important;
   }
 }
+
+/* Prevent a blinking insertion caret on static page text in caret-browsing mode.
+   Keep text selection/copy intact and preserve the normal typing caret in editors. */
+html,body.mws-premium{caret-color:transparent}
+body.mws-premium :is(input,textarea,[contenteditable]:not([contenteditable="false"]),[role="textbox"]){caret-color:auto}

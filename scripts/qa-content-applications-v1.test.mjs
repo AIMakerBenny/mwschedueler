@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {parsePostUrl,commentPermalink,parsePostMetadata,normalizeCampaigns,parseCommentPage,uniqueApplicants,rankEntries,countdown,fromKstInput,toKstInput} from '../assets/content-applications-model-v1.js';
+import {parsePostUrl,commentPermalink,parsePostMetadata,normalizeCampaigns,parseCommentPage,uniqueApplicants,rankEntries,countdown,campaignStatus,MAX_AUTHORS,fromKstInput,toKstInput} from '../assets/content-applications-model-v1.js';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const url=(id,no)=>`https://www.sooplive.com/station/${id}/post/${no}`;
 const e=(id,no,likes)=>({...parsePostUrl(url(id,no)),userId:id,nickname:id,likes,checkedAt:'2026-11-22T00:00:00.000Z'});
@@ -43,9 +43,38 @@ test('comment links target the verified SOOP comment ID, with a safe source fall
  assert.equal(commentPermalink({url:'https://example.com',commentNo:'123'}),'');
 });
 test('production entry and cloud contract share the campaign core key without changing other fields',()=>{
- const html=read('index.html');assert(html.indexOf('data-tab="contentApplications"')<html.indexOf('data-tab="posts"'));assert(html.includes('id="contentApplications"'));assert(html.includes('content-applications-v2.js?v=5'));
+ const html=read('index.html');assert(html.indexOf('data-tab="contentApplications"')<html.indexOf('data-tab="posts"'));assert(html.includes('id="contentApplications"'));assert(html.includes('content-applications-v2.js?v=6'));
  assert(html.indexOf('id="dashboardApplicationSupport"')>html.indexOf('class="dashboard-kpi-grid-local"'));assert(html.indexOf('id="dashboardApplicationSupport"')<html.indexOf('class="dashboard-view-controls"'));
  for(const p of ['assets/cloud-v1.1.js','assets/cloud-runtime-v130.js','src/cf-v111-auth.js']){const keys=read(p).match(/const CORE_KEYS\s*=\s*(\[[^\]\n]+\])/)[1];assert(keys.includes("'contentApplications'"));assert(keys.includes("'achievementCards'"));assert(keys.includes("'contentGroups'"))}
  const server=read('src/cf-v111-auth.js');assert(server.includes('source.contentApplications=previousCore.contentApplications'));assert(server.includes("key==='contentApplications'?normalizeCampaigns(src[key]):src[key]"));
  const ui=read('assets/content-applications-v2.js');assert(ui.includes('data.contentApplications=normalizeCampaigns(rows)'));assert(ui.includes('window.mwsV55SaveNow()'));assert(ui.includes('document.body.dataset.mwsMode===\'admin\''));assert(!ui.includes('method:\'POST\''));
+});
+
+test('final six hours is urgent, and expiry never remains urgent',()=>{
+ const end=Date.parse('2026-11-25T12:00:00.000Z');
+ const deadline=new Date(end).toISOString();
+ assert.equal(campaignStatus(deadline,end-6*3600000-1),'open');
+ assert.equal(campaignStatus(deadline,end-6*3600000),'urgent');
+ assert.equal(campaignStatus(deadline,end-1),'urgent');
+ assert.equal(campaignStatus(deadline,end),'expired');
+ assert.equal(campaignStatus(deadline,end+1000),'expired');
+ assert.equal(campaignStatus('not-a-date',end),'expired');
+});
+test('application organizer names survive normalization without losing old campaigns',()=>{
+ const base={id:'campaign-a',title:'외부 제작 콘텐츠',deadline:'2026-11-25T12:00:00.000Z',entries:[e('host','1',0)]};
+ const authors=['신청 글 작성자 A','작성자 B','  작성자 B  ','',...Array.from({length:20},(_,i)=>'작성자 '+i),'<img src=x onerror=alert(1)>'];
+ const withAuthors=normalizeCampaigns([{...base,authors}])[0];
+ assert.deepEqual(withAuthors.authors.slice(0,2),['신청 글 작성자 A','작성자 B']);
+ assert.equal(withAuthors.authors.length,MAX_AUTHORS);
+ assert.equal(normalizeCampaigns([base])[0].authors.length,0);
+ assert.deepEqual(normalizeCampaigns([withAuthors])[0].authors,withAuthors.authors);
+});
+test('application UI keeps normal typing caret but hides static-text caret',()=>{
+ const css=read('assets/workspace-clean-v1.css');
+ const ui=read('assets/content-applications-v2.js');
+ assert.match(css,/caret-color:transparent/);
+ assert.match(css,/input,textarea,[^\n]*caret-color:auto/);
+ assert.match(ui,/data-ca-phase/);
+ assert.match(ui,/data-ca-author-remove/);
+ assert.match(ui,/data-ca-back/);
 });
