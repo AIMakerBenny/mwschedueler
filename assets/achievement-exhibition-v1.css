@@ -280,3 +280,30 @@
   #achievements .achievement-card-open:hover{transform:none!important}
   #achievements .achievement-card-thumb::after{transition:none}
 }
+
+/* MWS interactive gallery depth. Keep the 3D effect inside the
+   original exhibition component, instead of in generic UI overrides. */
+#achievements .achievement-card-open::after{
+  content:"";position:absolute;inset:1px;border-radius:inherit;z-index:3;pointer-events:none;
+  background:radial-gradient(180px circle at var(--ach-light-x,50%) var(--ach-light-y,35%),#fff2cf29,transparent 75%);
+  opacity:0;transition:opacity .2s ease;
+}
+@media(hover:hover) and (pointer:fine){
+  #achievements .achievement-card-open:hover{
+    transform:perspective(960px) translateY(-6px) rotateX(var(--ach-tilt-x,0deg)) rotateY(var(--ach-tilt-y,0deg))!important;
+    box-shadow:0 20px 36px #000a,0 0 24px #d3a45928,inset 0 1px 0 #ffe4a745!important;
+  }
+  #achievements .achievement-card-open:hover::after{opacity:1}
+}
+html[data-mws-motion="reduced"] #achievements .achievement-card-open:hover{
+  transform:none!important;
+}
+html[data-mws-motion="reduced"] #achievements .achievement-card-open::after{display:none}
+@media(prefers-reduced-motion:reduce){
+  html[data-mws-motion="full"] #achievements .achievement-card-open{
+    transition:transform .22s cubic-bezier(.2,.75,.25,1),border-color .22s ease,box-shadow .22s ease!important;
+  }
+  html[data-mws-motion="full"] #achievements .achievement-card-open:hover{
+    transform:perspective(960px) translateY(-6px) rotateX(var(--ach-tilt-x,0deg)) rotateY(var(--ach-tilt-y,0deg))!important;
+  }
+}
