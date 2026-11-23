@@ -20,12 +20,14 @@ const inline=[...html.matchAll(/<style(?:\s[^>]*)?>([\s\S]*?)<\/style>/gi)].map(
 const css=[
   'app-core.css','mawang-premium-v1621.css','ui-frame-presets.css',
   'sidebar-rail-scrollbar-v1.css','sidebar-stable-v1.css','career-timeline.css',
-  'workspace-clean-v1.css','workspace-density-v1.css','sidebar-compact-v1.css'
+  'content-applications-v1.css','workspace-clean-v1.css','workspace-density-v1.css','sidebar-compact-v1.css'
 ].map(p=>read('assets/'+p)).join('\n')+'\n'+inline;
 const pageScale=slice("const PAGE_SCALE_KEY='mws_page_text_scales_v54';",
   '/* ---------- Robust contact tag panel ---------- */');
+const applicationSection=slice('<section id="contentApplications"','<section id="posts"');
 const moreSections=[
   '<section id="contacts" class="section"><div class="contact-section-tabs"><button>연락처</button></div></section>',
+  applicationSection,
   '<section id="posts" class="section"><div class="posts-head"><button type="button" id="qaPostsButton">게시글 도구</button></div></section>',
   '<section id="careerTimeline" class="section"><div class="cv-bar-host"><div class="cv-bar cv-pinned"><div class="cv-toolbar"><button type="button">연도 선택</button></div></div></div></section>'
 ].join('');
@@ -68,6 +70,12 @@ try{
     const contacts=await browser.evaluate("(()=>({heading:getComputedStyle(document.querySelector('.top-left')).display,clock:getComputedStyle(document.querySelector('.clock')).display}))()");
     assert.equal(contacts.heading,'none',JSON.stringify({width,contacts}));
     assert.notEqual(contacts.clock,'none');
+    await browser.evaluate("window.__qaActivate('contentApplications')");
+    const application=await browser.evaluate("(()=>{const h=document.querySelector('#contentApplications>.ca-head'),b=document.querySelector('#caNewBtn');"+
+      "const initiallyHidden=b.hidden&&getComputedStyle(h).display==='none';"+
+      "b.hidden=false;const addVisible=getComputedStyle(h).display!=='none';"+
+      "b.hidden=true;return {initiallyHidden,addVisible}})()");
+    assert(application.initiallyHidden&&application.addVisible,JSON.stringify({width,application}));
     await browser.evaluate("window.__qaActivate('dashboard')");
     const scale=await browser.evaluate("(()=>{window.setPageTextScaleV54(115);const a=document.querySelector('#pageTextScaleValueV54').textContent;"+
       "window.__qaActivate('contacts');const b=document.querySelector('#pageTextScaleValueV54').textContent;"+
