@@ -66,6 +66,23 @@ body.mws-premium .sidebar .nav-scroll button[data-tab]:focus-visible,
   .sidebar .logo-mini{display:block!important;visibility:visible!important}
 }
 
+/* Overrides the older, more specific :hover display rules during
+   partial expansion. Hidden controls never bleed into the narrow rail. */
+@container (max-width:145px){
+  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar:hover .logo-full,
+  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar:hover .logo small,
+  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar:hover .nav-label,
+  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar:hover .sidebar-pin,
+  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar:hover #pageTextScaleControlV54{
+    display:none!important;
+    visibility:hidden!important;
+    pointer-events:none!important;
+  }
+  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar:hover .logo-mini{
+    display:block!important;
+    visibility:visible!important;
+  }
+}
 @media(max-width:760px){
   .mws-creator-links{gap:8px;margin:6px auto;max-width:180px}
   .sidebar #pageTextScaleControlV54{max-width:180px}
