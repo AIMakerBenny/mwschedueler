@@ -394,7 +394,7 @@ html[data-mws-motion="reduced"] #dashboardApplicationSupport .ca-state.urgent{an
   animation:ca-stat-appear 480ms ease-out both;
 }
 #contentApplications .ca-mini-progress span,
-#contentApplications .ca-progress span{transition:width 580ms cubic-bezier(.2,.75,.25,1)}
+#contentApplications .ca-progress span{transform-origin:left center;will-change:transform}
 @media(max-width:700px){
   #contentApplications .ca-ranking-head{align-items:flex-start}
   #contentApplications .ca-ranking-tools{width:100%;justify-content:space-between}
@@ -424,4 +424,5 @@ html[data-mws-motion="reduced"] #contentApplications .ca-person,
 html[data-mws-motion="reduced"] #contentApplications .ca-stat-card,
 html[data-mws-motion="reduced"] #contentApplications .ca-my-rank-jump,
 html[data-mws-motion="reduced"] #contentApplications .ca-rank-change,
+html[data-mws-motion="reduced"] #contentApplications .ca-like-change,
 html[data-mws-motion="reduced"] #contentApplications .ca-stat-trend{animation:none!important;transition:none!important}
