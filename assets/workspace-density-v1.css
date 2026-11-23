@@ -229,3 +229,51 @@ body.mws-premium .main:not(:has(#mawangArchive.active)) > .topbar .ma-header-fil
    events on the global topbar or the Posts toolbar. */
 /* The removed navigation arrows are never presented, even on old cached pages. */
 #careerTimeline .cv-summary .cv-step{display:none!important}
+
+/* MWS true inline workspace controls.
+   Anchor controls to the shared main workspace instead of pulling them
+   upward with negative margins. The original DOM sections and handlers stay. */
+@media(min-width:1101px){
+  body.mws-premium .main:has(:is(#posts.active,#careerTimeline.active,#contentApplications.active)){
+    position:relative!important;
+  }
+  body.mws-premium #posts.section.active,
+  body.mws-premium #contentApplications.section.active{
+    position:static!important;
+  }
+  body.mws-premium #posts.section.active>.posts-head{
+    position:absolute!important;
+    top:18px!important;
+    right:22px!important;
+    bottom:auto!important;left:auto!important;
+    width:auto!important;
+    min-height:36px!important;height:36px!important;
+    margin:0!important;padding:0!important;
+    transform:none!important;
+    z-index:18!important;
+    pointer-events:auto!important;
+  }
+  body.mws-premium #posts.section.active>.posts-head .post-workspace-actions,
+  body.mws-premium #posts.section.active>.posts-head :is(.post-menu,.post-menu-panel){
+    pointer-events:auto!important;
+  }
+  body.mws-premium #contentApplications.section.active>.ca-head:has(#caNewBtn:not([hidden])){
+    position:absolute!important;
+    top:18px!important;right:22px!important;
+    bottom:auto!important;left:auto!important;
+    height:36px!important;min-height:36px!important;
+    margin:0!important;padding:0!important;
+    z-index:17!important;
+  }
+  body.mws-premium #careerTimeline.active .cv-panel>.cv-bar-host{
+    position:absolute!important;
+    top:-43px!important;
+    left:0!important;right:0!important;
+    width:100%!important;
+    margin:0!important;
+    z-index:18!important;
+  }
+  body.mws-premium #careerTimeline.active .cv-panel>.cv-axis{
+    padding-top:0!important;
+  }
+}
