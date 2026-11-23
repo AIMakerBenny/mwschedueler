@@ -19,6 +19,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: node scripts/qa-achievement-exhibition-v1-browser.mjs
+      - name: Render and validate gallery hover and detail
+        env:
+          MWS_HALL_CAPTURE: '1'
+        run: node scripts/qa-achievement-exhibition-v1-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: achievement-hall-interaction-browser
+          path: visual-achievement-hall/*.jpg
+          if-no-files-found: ignore
       - run: node scripts/run-phase90-achievement-gallery-audit.mjs
       - run: node scripts/run-phase93-achievement-touch-audit.mjs
