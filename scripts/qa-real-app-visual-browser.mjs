@@ -61,8 +61,12 @@ try{
       writeFileSync(path.join(output,'calendar-'+width+'.jpg'),Buffer.from(await browser.captureScreenshot(),'base64'));
       writeFileSync(path.join(output,'calendar-'+width+'.json'),JSON.stringify(result,null,2));
     }
-    const tab=await browser.evaluate("(()=>{if(typeof window.setTab!=='function')return {ok:false};window.setTab('dashboard');return {ok:!!document.querySelector('#dashboard.active'),count:document.querySelectorAll('#dashboard .dashboard-kpi-grid-local>.card').length}})()");
-    assert(tab.ok&&tab.count===6,'Real dashboard failed navigation: '+JSON.stringify({width,tab}));
+    // Navigate via the actual menu wiring rather than invoking a global
+    // function that another workspace layer might replace.
+    await browser.evaluate("document.querySelector('.nav button[data-tab=dashboard]')?.click()");
+    await sleep(180);
+    const tab=await browser.evaluate("(()=>({ok:!!document.querySelector('#dashboard.active'),count:document.querySelectorAll('#dashboard .dashboard-kpi-grid-local>.card').length,title:document.querySelector('#pageTitle')?.textContent,active:[...document.querySelectorAll('.section.active')].map(e=>e.id),navActive:!!document.querySelector('.nav button[data-tab=dashboard].active')}))()");
+    assert(tab.ok&&tab.navActive&&tab.count===6,'Real dashboard failed menu navigation: '+JSON.stringify({width,tab}));
     await sleep(250);
     if(capture&&width===1920)writeFileSync(path.join(output,'dashboard-'+width+'.jpg'),Buffer.from(await browser.captureScreenshot(),'base64'));
     console.log('MWS_REAL_APP_VISUAL_OK',width,height,JSON.stringify(result));
