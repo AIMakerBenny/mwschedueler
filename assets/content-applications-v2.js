@@ -140,7 +140,7 @@ function renderDetail(){
 function render(){
  if(!sectionActive()&&!dashboardActive())return;
  const mode=document.body.dataset.mwsMode||'';
- if(mode!==sessionMode){selected='';editing='';editor.hidden=true;snapshots.clear();pending.clear();attempts.clear();epoch++;sessionMode=mode}
+ if(mode!==sessionMode){selected='';editing='';editor.hidden=true;snapshots.clear();pending.clear();attempts.clear();rankMotions.clear();epoch++;sessionMode=mode}
  if(sectionActive()){
   $('caNewBtn').hidden=!isAdmin();if(selected&&!current())selected='';list.hidden=!!selected;detail.hidden=!selected;
   if(selected)renderDetail();else renderList();
@@ -175,7 +175,14 @@ async function fetchSource(source){
 }
 async function refresh(c,manual=false){
  if(!c||pending.has(c.id)||!active())return;
- const token=Symbol(),generation=epoch,sig=signature(c);pending.set(c.id,token);attempts.set(c.id,Date.now());render();
+ const token=Symbol(),generation=epoch,sig=signature(c);
+ pending.set(c.id,token);attempts.set(c.id,Date.now());
+ if(!snapshot(c))render();
+ else if(sectionActive()&&selected===c.id){
+  const button=detail.querySelector('[data-ca-refresh]');
+  if(button){button.disabled=true;button.textContent='갱신 중…'}
+ }
+ let unchanged=false;
  try{
   const rows=[];let complete=c.entries.length>0;
   for(let i=0;i<c.entries.length;i+=2){
@@ -183,13 +190,38 @@ async function refresh(c,manual=false){
    if(generation!==epoch||pending.get(c.id)!==token)return;
    for(const result of results){if(result.status==='fulfilled'){rows.push(...result.value.rows);complete&&=result.value.complete}else complete=false}
   }
-  const latest=records().find(x=>x.id===c.id);if(generation!==epoch||pending.get(c.id)!==token||!latest||signature(latest)!==sig)return;
+  const latest=records().find(x=>x.id===c.id);
+  if(generation!==epoch||pending.get(c.id)!==token||!latest||signature(latest)!==sig)return;
   const previous=snapshot(c);
-  if(!rows.length&&!complete&&previous)snapshots.set(c.id,{...previous,complete:false});
-  else snapshots.set(c.id,{signature:sig,applicants:uniqueApplicants(rows),complete,checkedAt:new Date().toISOString()});
+  let next;
+  if(!rows.length&&!complete&&previous)next={...previous,complete:false};
+  else next={signature:sig,applicants:uniqueApplicants(rows),complete,checkedAt:new Date().toISOString()};
+  unchanged=!!previous&&previous.complete===next.complete&&sameApplicants(previous.applicants,next.applicants);
+  if(previous&&!unchanged&&sectionActive()&&selected===c.id){
+   const diff=compareRankSnapshots(previous.applicants,next.applicants);
+   if(diff.changed)rankMotions.set(c.id,diff);
+  }
+  snapshots.set(c.id,next);
   if(manual&&!complete&&typeof toast==='function')toast('신청 콘텐츠','일부 댓글을 확인하지 못했습니다.');
- }finally{if(pending.get(c.id)===token){pending.delete(c.id);if(generation===epoch){render();if(active()&&(!sectionActive()||!selected))loadVisible()}}}
+ }finally{
+  if(pending.get(c.id)===token){
+   pending.delete(c.id);
+   if(generation===epoch){
+    if(unchanged){
+     if(sectionActive()&&selected===c.id){
+      const button=detail.querySelector('[data-ca-refresh]');
+      if(button){button.disabled=false;button.textContent='새로고침'}
+      const updated=detail.querySelector('.ca-update'),now=snapshot(c);
+      if(updated&&now)updated.textContent='최근 조회 '+kst(now.checkedAt)+(countdown(c.deadline).expired?' · 마감 당시 수치 아님':'');
+      updateClocks();
+     }
+    }else render();
+    if(active()&&(!sectionActive()||!selected))loadVisible();
+   }
+  }
+ }
 }
+
 function addAuthorInput(value=''){
  const holder=$('caAuthors'),count=holder.querySelectorAll('.ca-author-field').length;
  if(count>=MAX_AUTHORS)return null;
@@ -224,6 +256,10 @@ section.addEventListener('click',async ev=>{
   else if(b===$('caNewBtn')||b.hasAttribute('data-ca-create'))openEditor(null);
  else if(b.dataset.caOpen){selected=b.dataset.caOpen;render();loadVisible()}
  else if(b.hasAttribute('data-ca-back')){selected='';render();loadVisible()}
+ else if(b.hasAttribute('data-ca-my-rank')){
+  const row=detail.querySelector('.ca-person[data-ca-own]');
+  if(row){row.scrollIntoView({behavior:reduceMotion()?'instant':'smooth',block:'center'});row.focus({preventScroll:true});if(!reduceMotion())row.animate([{outlineColor:'var(--ca-pink)',outlineOffset:'0px'},{outlineColor:'transparent',outlineOffset:'8px'}],{duration:1050,easing:'ease-out'})}
+ }
  else if(b.hasAttribute('data-ca-refresh'))refresh(current(),true);
  else if(b.hasAttribute('data-ca-edit'))openEditor(current());
  else if(b===$('caCancel'))closeEditor();
