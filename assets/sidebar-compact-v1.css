@@ -40,6 +40,32 @@ body.mws-premium .sidebar .nav-scroll button[data-tab]:focus-visible,
 .mws-access-tools #mwsSidebarSaveBtn .sidebar-save-icon-v572 svg {width:17px;height:17px}
 .mws-access-tools #mwsSidebarSaveBtn .sidebar-save-label-v572 {position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip-path:inset(50%);white-space:nowrap}
 .mws-access-tools #mwsSidebarSaveBtn.save-failed-v574 {color:#ff98a3!important;border-color:#fb7185!important}
+/* MWS collapsed sidebar content gate.
+   Use the actual available inline width, not :hover, to avoid exposing
+   the expanded labels during the 72px -> 184px transition. */
+@media(min-width:761px){
+  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar{
+    container-type:inline-size;
+  }
+}
+@container (max-width:145px){
+  .sidebar .logo-full,
+  .sidebar .logo small,
+  .sidebar .sidebar-pin,
+  .sidebar .nav-label,
+  .sidebar .nav-game-divider em,
+  .sidebar #pageTextScaleControlV54,
+  .sidebar #mwsBuildVersion,
+  .sidebar .sidebar-build-version-v53,
+  .sidebar .mws-creator-links,
+  .sidebar .sidebar-save-label-v572{
+    display:none!important;
+    visibility:hidden!important;
+    pointer-events:none!important;
+  }
+  .sidebar .logo-mini{display:block!important;visibility:visible!important}
+}
+
 @media(max-width:760px){
   .mws-creator-links{gap:8px;margin:6px auto;max-width:180px}
   .sidebar #pageTextScaleControlV54{max-width:180px}
