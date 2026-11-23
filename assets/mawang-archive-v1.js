@@ -149,6 +149,12 @@
         headerFilters.setAttribute('aria-label','캐릭터 분류');
         headerFilters.innerHTML=root.querySelector('.ma-filters').innerHTML;
         wiki.insertAdjacentElement('afterend',headerFilters);
+        const archiveSection=root.closest('.section');
+        const reflectVisible=()=>{headerFilters.hidden=!archiveSection?.classList.contains('active')};
+        reflectVisible();
+        if(archiveSection&&typeof MutationObserver==='function'){
+          new MutationObserver(reflectVisible).observe(archiveSection,{attributes:true,attributeFilter:['class']});
+        }
         headerFilters.addEventListener('click',event=>{
           const button=event.target.closest('button[data-ma-filter]');
           if(button)root.querySelector('.ma-filters [data-ma-filter="'+button.dataset.maFilter+'"]')?.click();

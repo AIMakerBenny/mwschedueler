@@ -23,6 +23,13 @@ try{
       check(!q('.ma-profile-actions, .ma-profile-label, .ma-profile-input'),'public controls absent from DOM');
       const heading=document.querySelector('.main > .topbar'),headerFilters=document.querySelector('.ma-header-filters');
       check(headerFilters?.querySelectorAll('[data-ma-filter]').length===4,'header has four category controls');
+      const archiveSection=document.getElementById('mawangArchive');
+      archiveSection.classList.remove('active');
+      await Promise.resolve();
+      check(headerFilters.hidden&&getComputedStyle(headerFilters).display==='none','archive categories disappear immediately after leaving archive');
+      archiveSection.classList.add('active');
+      await Promise.resolve();
+      check(!headerFilters.hidden,'archive categories return only on archive');
       if(innerWidth>=1101){const h=heading.getBoundingClientRect(),nav=headerFilters.getBoundingClientRect();check(h.height<=55&&nav.width>0&&nav.right<=h.right+1&&getComputedStyle(heading).boxShadow==='none'&&getComputedStyle(heading).borderTopWidth==='0px','archive title and filters fit one compact unboxed row '+JSON.stringify({h:h.height,navRight:nav.right,headerRight:h.right}));}
       else check(getComputedStyle(headerFilters).display==='none'&&getComputedStyle(q('.ma-filters')).display!=='none','compact screen keeps filters in roster');
       check(q('#maCharacterName').textContent==='유정'&&q('.ma-count').textContent==='28 / 28','initial selection');

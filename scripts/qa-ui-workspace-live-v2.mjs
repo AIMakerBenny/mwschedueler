@@ -8,7 +8,7 @@ import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 // gameplay. The companion local browser fixture exercises data changes.
 const base=(process.env.MWS_LIVE_BASE||'https://mawang-scheduler.majoku.workers.dev').replace(/\/$/,'');
 const sizes=[[1366,768,false],[1920,1080,false],[2560,1440,false],[2560,1080,false],[390,844,true],[844,390,true]];
-const routes=['dashboard','calendar','contacts','sniper','friendFinder','targets','posts','memos','careerTimeline','mawangArchive','achievements','gameLadder','gameMultiDraw','gameMajoku','contentPlanner','toolTier','toolMatrix','toolRelations','legacy','wardogs','gameRps','gamePachinko','export','settings'];
+const routes=['dashboard','calendar','contacts','sniper','friendFinder','targets','posts','contentApplications','memos','careerTimeline','mawangArchive','achievements','gameLadder','gameMultiDraw','gameMajoku','contentPlanner','toolTier','toolMatrix','toolRelations','legacy','wardogs','gameRps','gamePachinko','export','settings'];
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(check,label,attempts=100){let last;for(let i=0;i<attempts;i++){try{last=await check();if(last)return last}catch(error){last=String(error)}await pause(120)}throw Error(label+': '+JSON.stringify(last))}
 const failures=[];
@@ -52,7 +52,26 @@ for(const [width,height,mobile] of sizes){
         if(route==='memos'){
           await browser.evaluate(`document.getElementById('memoFavoritesTab').click()`);assert(await browser.evaluate(`document.getElementById('memoFavoritesView').classList.contains('active')`));await browser.evaluate(`document.getElementById('memoLibraryTab').click()`);
         }
-        if(route==='careerTimeline')await until(()=>browser.evaluate(`!!document.querySelector('#careerTimeline .cv-map-year')`),'timeline runtime');
+        if(route==='careerTimeline'){
+          await until(()=>browser.evaluate(`!!document.querySelector('#careerTimeline .cv-map-year')`),'timeline runtime');
+          if(width>=1101){
+            const geo=await browser.evaluate(`(()=>{const top=document.querySelector('#pageTitle').getBoundingClientRect(),bar=document.querySelector('#careerTimeline .cv-bar').getBoundingClientRect();return {titleY:(top.top+top.bottom)/2,barY:(bar.top+bar.bottom)/2,barW:bar.width}})()`);
+            assert(Math.abs(geo.titleY-geo.barY)<=30&&geo.barW>=450,'timeline title and tools on one row '+JSON.stringify(geo));
+          }
+        }
+        if(route==='posts'&&width>=1101){
+          const geo=await browser.evaluate(`(()=>{const a=document.querySelector('#posts .post-workspace-actions').getBoundingClientRect(),t=document.querySelector('#pageTitle').getBoundingClientRect();return {actionY:(a.top+a.bottom)/2,titleY:(t.top+t.bottom)/2,visible:getComputedStyle(document.querySelector('#posts .posts-head h2')).display}})()`);
+          assert(Math.abs(geo.actionY-geo.titleY)<=24&&geo.visible==='none','posts action row aligned with title '+JSON.stringify(geo));
+        }
+        if(route==='contentApplications'&&width>=1101){
+          const geo=await browser.evaluate(`(()=>{const h=document.querySelector('#pageTitle').getBoundingClientRect(),a=document.querySelector('#contentApplications .ca-head').getBoundingClientRect();return {titleY:(h.top+h.bottom)/2,actionY:(a.top+a.bottom)/2,eyebrow:getComputedStyle(document.querySelector('#contentApplications .ca-head .ca-eyebrow')).display}})()`);
+          assert(Math.abs(geo.titleY-geo.actionY)<=24&&geo.eyebrow==='none','application title and header on one row '+JSON.stringify(geo));
+        }
+        if(route!=='mawangArchive'){
+          assert(await browser.evaluate(`(()=>{const nav=document.querySelector('.ma-header-filters');return !nav||nav.hidden||getComputedStyle(nav).display==='none'})()`),'archive category buttons are hidden on '+route);
+        }else if(width>=1101){
+          assert(await browser.evaluate(`(()=>{const nav=document.querySelector('.ma-header-filters');return !!nav&&!nav.hidden&&getComputedStyle(nav).display==='flex'})()`),'archive category buttons visible only in archive');
+        }
         if(route==='mawangArchive'){
           await until(()=>browser.evaluate(`document.querySelectorAll('#mawangArchive [data-ma-character]').length>=2 && document.querySelector('#mawangArchive .ma-count').textContent==='28 / 28'`),'character archive');
           await until(()=>browser.evaluate(`document.querySelector('#mawangArchive .ma-stage-art .ma-character-image')?.naturalWidth>1`),'actual character portrait loaded');

@@ -1,0 +1,212 @@
+/* One-row workspace headers without removing or duplicating underlying actions.
+   Desktop gets compact inline controls; narrow/mobile screens wrap below the title. */
+
+/* Timeline: move the existing sticky toolbar visually into the title row.
+   Keep its DOM and its scroll-pin calculations intact. */
+@media(min-width:1101px){
+  body.mws-premium .main:has(#careerTimeline.active) > .topbar{
+    z-index:7;margin-bottom:0!important;min-height:39px!important;
+    padding-top:3px!important;padding-bottom:3px!important;
+    border-bottom-color:transparent!important;
+  }
+  #careerTimeline.active .cv-bar-host{
+    margin-top:-51px!important;
+    margin-bottom:8px!important;
+    z-index:12;
+  }
+  #careerTimeline.active .cv-bar:not(.cv-pinned){
+    padding:2px 5px!important;
+    background:transparent!important;border:0!important;
+    box-shadow:none!important;
+  }
+  #careerTimeline.active .cv-toolbar{
+    gap:8px!important;
+    grid-template-columns:auto minmax(0,1fr) auto!important;
+  }
+  #careerTimeline.active .cv-overview{gap:clamp(1px,.5vw,8px)!important}
+  #careerTimeline.active .cv-summary{gap:4px!important}
+  #careerTimeline.active .cv-map-year{padding:5px 3px!important}
+  #careerTimeline.active .cv-search{width:clamp(100px,12vw,188px)!important}
+  #careerTimeline.active .cv-bar.cv-pinned{
+    padding:5px 9px!important;
+    background:var(--panel)!important;
+    border:1px solid var(--border)!important;
+    box-shadow:0 8px 24px #0005!important;
+  }
+
+  /* Posts: the common page title is the only heading. Keep both menus
+     inside #posts so their dropdown positioning and handlers stay valid. */
+  body.mws-premium .main:has(#posts.active) > .topbar{
+    z-index:6;margin-bottom:0!important;min-height:39px!important;
+    border-bottom-color:transparent!important;
+  }
+  #posts.section.active .posts-head{
+    height:36px!important;
+    min-height:36px!important;
+    display:flex!important;
+    justify-content:flex-end!important;
+    align-items:center!important;
+    margin:-60px 0 8px!important;
+    position:relative!important;
+    z-index:16!important;
+  }
+  #posts.section.active .posts-head > h2{display:none!important}
+  #posts.section.active .post-workspace-actions{
+    margin:0!important;
+    gap:6px!important;
+    flex-wrap:nowrap!important;
+  }
+  #posts.section.active #postRegisterMenu > summary.post-register-trigger{
+    min-height:34px!important;height:34px!important;
+    width:34px!important;border-radius:9px!important;
+    position:relative;overflow:hidden;
+  }
+  #posts.section.active #postRegisterMenu > summary.post-register-trigger::after{display:none!important}
+
+  /* Application tracker: remove the duplicated subtitle strip and
+     tuck registration into the shared title row. */
+  body.mws-premium .main:has(#contentApplications.active) > .topbar{
+    z-index:7;margin-bottom:0!important;min-height:39px!important;
+    border-bottom-color:transparent!important;
+  }
+  #contentApplications.section.active > .ca-head{
+    min-height:36px!important;height:36px!important;
+    position:relative!important;z-index:12!important;
+    justify-content:flex-end!important;align-items:center!important;
+    margin:-56px 0 9px!important;padding:0!important;
+  }
+  #contentApplications.section.active > .ca-head > .ca-eyebrow{display:none!important}
+  #contentApplications.section.active > .ca-head > #caNewBtn{
+    min-height:32px!important;padding:6px 11px!important;
+    border-radius:9px!important;font-size:11px!important;
+    box-shadow:none!important;
+  }
+}
+
+/* Content application details: compact, functional information hierarchy. */
+#contentApplications.section.active .ca-detail-top{
+  display:grid!important;
+  grid-template-columns:auto minmax(180px,1fr) minmax(165px,auto) auto!important;
+  align-items:center!important;
+  gap:8px 12px!important;
+  margin:0 0 10px!important;
+  padding:0 0 10px!important;
+  border-bottom:1px solid var(--border);
+}
+#contentApplications.section.active .ca-detail-top > .ca-back{
+  min-height:32px!important;
+  padding:6px 9px!important;
+  border-radius:8px!important;
+  white-space:nowrap;
+  font-size:11px!important;
+}
+#contentApplications.section.active .ca-detail-title{
+  min-width:0!important;flex:none!important;
+}
+#contentApplications.section.active .ca-detail-title h2{
+  font-size:clamp(20px,2vw,27px)!important;
+  line-height:1.2!important;margin:1px 0 4px!important;
+}
+#contentApplications.section.active .ca-detail-title > .ca-eyebrow{display:none!important}
+#contentApplications.section.active .ca-detail-title > div{
+  margin-top:0!important;
+}
+#contentApplications.section.active .ca-countdown-panel{
+  padding:5px 9px!important;
+  min-width:0!important;max-width:100%;
+  gap:2px!important;
+  border-radius:9px!important;
+  box-shadow:none!important;
+}
+#contentApplications.section.active .ca-countdown-label{
+  font-size:10px!important;
+  line-height:1.25!important;gap:5px!important;
+}
+#contentApplications.section.active .ca-countdown-label svg{width:13px!important;height:13px!important}
+#contentApplications.section.active .ca-countdown-panel .ca-time{
+  font-size:clamp(19px,1.8vw,26px)!important;
+  line-height:1.15!important;
+}
+#contentApplications.section.active .ca-countdown-panel .ca-deadline{
+  font-size:10px!important;line-height:1.2!important;
+}
+#contentApplications.section.active .ca-detail-actions{
+  display:flex!important;gap:5px!important;flex-wrap:nowrap!important;
+}
+#contentApplications.section.active .ca-detail-actions > button{
+  min-height:32px!important;
+  padding:6px 9px!important;border-radius:8px!important;
+  font-size:11px!important;white-space:nowrap;
+}
+#contentApplications.section.active .ca-hero{
+  padding:clamp(12px,1.4vw,19px)!important;
+  gap:12px!important;border-radius:13px!important;
+  box-shadow:0 5px 16px #00000010!important;
+}
+#contentApplications.section.active .ca-hero-head{gap:8px!important}
+#contentApplications.section.active .ca-hero-person{gap:10px!important}
+#contentApplications.section.active .ca-hero-person .ca-avatar.own{
+  width:58px!important;height:58px!important;border-width:2px!important;
+}
+#contentApplications.section.active .ca-hero-person h3{font-size:clamp(21px,2.3vw,29px)!important}
+#contentApplications.section.active .ca-feature-label{font-size:9px!important;margin-bottom:3px!important}
+#contentApplications.section.active .ca-hero-body{
+  gap:12px!important;
+  grid-template-columns:minmax(0,1.5fr) minmax(210px,1fr)!important;
+}
+#contentApplications.section.active .ca-hero-data{gap:9px!important}
+#contentApplications.section.active .ca-stats{gap:7px!important}
+#contentApplications.section.active .ca-stats > div{
+  min-height:72px!important;
+  padding:9px!important;border-radius:9px!important;
+}
+#contentApplications.section.active .ca-stats span{font-size:10px!important}
+#contentApplications.section.active .ca-stats strong{font-size:clamp(19px,2vw,28px)!important}
+#contentApplications.section.active .ca-support{
+  gap:8px!important;padding:12px!important;
+  border-radius:11px!important;
+}
+#contentApplications.section.active .ca-support h4{font-size:17px!important}
+#contentApplications.section.active .ca-support p{font-size:11px!important;line-height:1.45!important}
+#contentApplications.section.active .ca-support .ca-vote{
+  min-height:38px!important;
+  margin-top:3px!important;padding:8px 10px!important;
+  font-size:12px!important;
+}
+
+/* Archive-specific header navigation never survives another tab. */
+body.mws-premium .main:not(:has(#mawangArchive.active)) > .topbar .ma-header-filters{
+  display:none!important;
+}
+
+@media(max-width:1100px){
+  #careerTimeline.active .cv-bar-host{margin-top:0!important}
+  #posts.section.active .posts-head{margin:0 0 8px!important}
+  #contentApplications.section.active > .ca-head{margin:0 0 8px!important}
+  #contentApplications.section.active > .ca-head .ca-eyebrow{display:none!important}
+  #contentApplications.section.active .ca-detail-top{
+    grid-template-columns:auto minmax(140px,1fr) minmax(145px,auto)!important;
+  }
+  #contentApplications.section.active .ca-detail-actions{grid-column:2 / -1;justify-content:flex-end!important}
+}
+@media(max-width:700px){
+  #contentApplications.section.active .ca-detail-top{
+    grid-template-columns:auto minmax(0,1fr)!important;
+    gap:7px!important;
+  }
+  #contentApplications.section.active .ca-detail-top .ca-countdown-panel{
+    grid-column:1 / -1!important;
+    width:100%!important;
+    order:initial!important;flex-basis:auto!important;
+    display:flex!important;align-items:center;justify-content:space-between;
+    gap:8px!important;flex-wrap:wrap;
+  }
+  #contentApplications.section.active .ca-detail-top .ca-countdown-panel .ca-time{
+    font-size:22px!important;
+  }
+  #contentApplications.section.active .ca-detail-actions{grid-column:1 / -1!important;justify-content:flex-end}
+  #contentApplications.section.active .ca-hero-body{grid-template-columns:minmax(0,1fr)!important}
+  #contentApplications.section.active .ca-hero-head{gap:8px!important}
+  #contentApplications.section.active .ca-hero-person .ca-avatar.own{width:48px!important;height:48px!important}
+}
+@media(prefers-reduced-motion:reduce){#careerTimeline.active .cv-bar-host{transition:none!important}}

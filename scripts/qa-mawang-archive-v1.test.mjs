@@ -215,7 +215,7 @@ test('workspace header keeps only page-relevant actions and links to the exact M
   assert(!html.includes('class="mws-archive-title-line"'));
   assert.match(html,/<div class="top-left">[\s\S]*?<h1 id="pageTitle">캘린더<\/h1>[\s\S]*?<a id="mwsArchiveWikiLink"/);
   assert.match(html,/id="mwsArchiveWikiLink"[^>]*href="https:\/\/namu\.wiki\/w\/MaWang"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
-  assert.match(html,/assets\/mawang-archive-header-v1\.css\?v=2/);
+  assert.match(html,/assets\/mawang-archive-header-v1\.css\?v=3/);
   assert.match(html,/assets\/topbar-context-v1\.css\?v=2/);
   assert.match(html,/assets\/topbar-context-v1\.js\?v=1/);
   assert.match(global,/body:has\(\#calendar\.active\).*\#newEventBtn/);
@@ -226,6 +226,13 @@ test('workspace header keeps only page-relevant actions and links to the exact M
   assert.match(runtime,/오프라인/);
   assert.match(archive,/\.mws-archive-wiki/);
   assert.match(archive,/\.ma-header-filters/);
+  assert.match(archive,/\.ma-header-filters\[hidden\]/);
+  assert.match(html,/assets\/workspace-density-v1\.css\?v=1/);
+  const density=read('assets/workspace-density-v1.css');
+  for(const section of ['careerTimeline','posts','contentApplications'])assert(density.includes('#'+section+'.active'));
+  assert.match(density,/\.cv-bar-host/);
+  assert.match(density,/\.posts-head/);
+  assert.match(density,/\.ca-detail-top/);
   assert.match(global,/box-shadow:none!important/);
   assert.match(global,/background:transparent!important/);
   assert.doesNotMatch(global,/min-height:57px!important/);
