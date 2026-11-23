@@ -295,6 +295,8 @@
   }
   #achievements .achievement-card-open:hover::after{opacity:1}
 }
+html[data-mws-motion="reduced"] #achievements .achievement-card-open.is-pointer-active{transform:none!important}
+html[data-mws-motion="reduced"] #achievements .achievement-card-open.is-pointer-active .achievement-card-thumb img{transform:none!important}
 html[data-mws-motion="reduced"] #achievements .achievement-card-open:hover{
   transform:none!important;
 }
@@ -394,6 +396,31 @@ html[data-mws-motion="reduced"] #achievements .achievement-card-open::after{disp
     transition-duration:90ms!important;
   }
 }
+/* Use genuine mouse PointerEvents as the source of hover truth. This works
+   with remote desktops where CSS (hover:hover) reports false, and never
+   activates for touch pointers. */
+#achievements .achievement-card-tile.is-pointer-active{z-index:4}
+#achievements .achievement-card-open.is-pointer-active{
+  transform:perspective(1040px) translate3d(0,-6px,0)
+    rotateX(var(--ach-tilt-x,0deg)) rotateY(var(--ach-tilt-y,0deg)) scale(1.015)!important;
+  border-color:#e9c483!important;
+  box-shadow:0 22px 42px #000b,0 0 20px #ddad5944,
+    inset 0 1px 0 #ffe4a74d!important;
+}
+#achievements .achievement-card-open.is-pointer-active .achievement-card-thumb img{
+  transform:translate3d(var(--ach-parallax-x,0px),var(--ach-parallax-y,0px),0) scale(1.035)!important;
+  filter:saturate(1.05);
+}
+#achievements .achievement-card-open.is-pointer-active .achievement-card-thumb::before{opacity:.5}
+#achievements .achievement-card-open.is-pointer-active::after{opacity:1}
+#achievements .achievement-card-open.is-pointer-active .achievement-card-caption{transform:translate3d(0,-2px,0)}
+#achievements .achievement-card-open.is-pointer-active .achievement-card-peek{
+  visibility:visible;opacity:1;transform:translate3d(0,0,0);
+}
+#achievements .achievement-card-open.is-pointer-active:active{
+  transform:perspective(1040px) translate3d(0,-2px,0) scale(.995)!important;
+  transition-duration:90ms!important;
+}
 /* The existing detail remains the only record viewer, with a connected entrance. */
 #achievementDetailModal:not([hidden]) .achievement-detail-dialog{
   animation:achievement-hall-detail-in .32s cubic-bezier(.2,.75,.2,1) both;
@@ -427,6 +454,8 @@ html[data-mws-motion="reduced"] #achievements .achievement-card-thumb::before{
     transition:none!important;transform:none!important;
   }
   html:not([data-mws-motion="full"]) #achievements .achievement-card-open:hover{transform:none!important}
+  html:not([data-mws-motion="full"]) #achievements .achievement-card-open.is-pointer-active{transform:none!important}
+  html:not([data-mws-motion="full"]) #achievements .achievement-card-open.is-pointer-active .achievement-card-thumb img{transform:none!important}
   html:not([data-mws-motion="full"]) #achievements .achievement-card-thumb::before{display:none!important}
   html:not([data-mws-motion="full"]) #achievementDetailModal .achievement-detail-dialog{animation:none!important}
 }
