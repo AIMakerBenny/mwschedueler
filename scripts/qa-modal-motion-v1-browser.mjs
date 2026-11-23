@@ -81,6 +81,9 @@ try{
   }
   await browser.setReducedMotion(true);
   await browser.navigate(pathToFileURL(file).href+'?reduced',1366,768);
+  // The fixture does not boot the production motion-preference initializer.
+  // Mirror its resolved HTML state before testing user-selected reduced motion.
+  await browser.evaluate("document.documentElement.dataset.mwsMotion='reduced'");
   const reduced=await browser.evaluate(sample);
   assert(reduced.entered.every(v=>v.scale==='none'));
   assert(reduced.entered.every(v=>v.translate==='none'));
