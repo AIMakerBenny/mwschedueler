@@ -141,7 +141,7 @@ try{
       const inlinePosts=await browser.evaluate("(()=>{const title=document.querySelector('#pageTitle').getBoundingClientRect(),"+
         "bar=document.querySelector('#posts .posts-head').getBoundingClientRect();return {titleY:(title.top+title.bottom)/2,barY:(bar.top+bar.bottom)/2}})()");
       if(width>=1101)assert(Math.abs(inlinePosts.titleY-inlinePosts.barY)<24,JSON.stringify({width,inlinePosts}));
-      const click=await browser.evaluate("(()=>{const b=document.querySelector('#newEventBtn'),r=b.getBoundingClientRect();"+
+      const click=await browser.evaluate("(()=>{const b=document.querySelector('#posts #qaPostsButton'),r=b.getBoundingClientRect();"+
         "const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);"+
         "return {style:getComputedStyle(document.querySelector('.topbar')).pointerEvents,clickable:hit===b||b.contains(hit)}})()");
       assert(click.style!=='none'&&click.clickable,JSON.stringify({width,click}));
