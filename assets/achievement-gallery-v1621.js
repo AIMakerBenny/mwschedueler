@@ -73,6 +73,39 @@ function makeTile(card){
   caption.append(game,content);
 
   button.append(thumb,caption);
+  // Lightweight pointer-driven depth on the gallery tile, separate from
+  // the existing drag-to-rotate 3D detail viewer.
+  let tiltFrame=0,tiltCoords=null;
+  const clearTilt=()=>{
+    if(tiltFrame)cancelAnimationFrame(tiltFrame);
+    tiltFrame=0;tiltCoords=null;
+    button.style.removeProperty('--ach-tilt-x');
+    button.style.removeProperty('--ach-tilt-y');
+    button.style.removeProperty('--ach-light-x');
+    button.style.removeProperty('--ach-light-y');
+  };
+  button.addEventListener('pointermove',event=>{
+    if(event.pointerType!=='mouse'||document.documentElement.dataset.mwsMotion==='reduced')return;
+    const rect=button.getBoundingClientRect();
+    if(!rect.width||!rect.height)return;
+    tiltCoords={
+      x:Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width)),
+      y:Math.max(0,Math.min(1,(event.clientY-rect.top)/rect.height))
+    };
+    if(tiltFrame)return;
+    tiltFrame=requestAnimationFrame(()=>{
+      tiltFrame=0;
+      if(!tiltCoords)return;
+      const {x,y}=tiltCoords;
+      button.style.setProperty('--ach-tilt-x',((.5-y)*7).toFixed(2)+'deg');
+      button.style.setProperty('--ach-tilt-y',((x-.5)*7).toFixed(2)+'deg');
+      button.style.setProperty('--ach-light-x',(x*100).toFixed(1)+'%');
+      button.style.setProperty('--ach-light-y',(y*100).toFixed(1)+'%');
+    });
+  });
+  button.addEventListener('pointerleave',clearTilt);
+  button.addEventListener('pointercancel',clearTilt);
+  button.addEventListener('blur',clearTilt);
   button.addEventListener('click',()=>openDetail(card?.id));
   tile.appendChild(button);
   return {tile,thumb,placeholder};

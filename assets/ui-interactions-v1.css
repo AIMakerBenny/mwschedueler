@@ -140,7 +140,7 @@ html[data-mws-motion=reduced] body #calendar.section #calendarGrid .mini-event[d
 
 /* Second-pass workspace detail: real rendered list items, states and controls.
    Keep the dimensions, scroll containers and gameplay geometry untouched. */
-body :is(#dashboard,#contacts,#sniper,#posts,#memos,#achievements,#gameLadder,#gameMultiDraw,#legacy,#export,#settings) :is(.dashboard-notice-item-local,.today-person-card-local,.contact-maintenance-card,.sniper-row,.post-saved-item,.favorite-schedule-card,.achievement-card-open,.ladder-full-result-row,.mws-legacy-link-v1){
+body :is(#dashboard,#contacts,#sniper,#posts,#memos,#achievements,#gameLadder,#gameMultiDraw,#legacy,#export,#settings) :is(.dashboard-notice-item-local,.today-person-card-local,.contact-maintenance-card,.sniper-row,.post-saved-item,.favorite-schedule-card,.ladder-full-result-row,.mws-legacy-link-v1){
   box-shadow:var(--mws-ui-shadow)!important;
   transition:box-shadow var(--mws-ui-card),border-color var(--mws-ui-fast),background-color var(--mws-ui-fast)!important;
 }
@@ -161,8 +161,8 @@ body #gameLadder .ladder-full-result-row.revealed{border-color:var(--mws-ui-sele
 body #gameLadder .ladder-full-result-row.winner{border-color:#c9a64d!important}
 @media (hover:hover) and (pointer:fine), (hover:none) and (pointer:none) and (min-width:901px){
   body #calendar #calendarGrid .calendar-date-number-v3:hover{border-radius:50%;background:color-mix(in srgb,var(--accent) 20%,transparent)!important}
-  body :is(#dashboard,#contacts,#sniper,#posts,#memos,#achievements,#legacy) :is(.dashboard-notice-item-local,.today-person-card-local,.contact-maintenance-card,.sniper-row,.post-saved-item,.favorite-schedule-card,.achievement-card-open,.mws-legacy-link-v1):hover{box-shadow:var(--mws-ui-lift)!important;border-color:var(--mws-ui-selected)!important}
+  body :is(#dashboard,#contacts,#sniper,#posts,#memos,#achievements,#legacy) :is(.dashboard-notice-item-local,.today-person-card-local,.contact-maintenance-card,.sniper-row,.post-saved-item,.favorite-schedule-card,.mws-legacy-link-v1):hover{box-shadow:var(--mws-ui-lift)!important;border-color:var(--mws-ui-selected)!important}
   body #friendFinder .friend-finder-card-v5:hover .friend-finder-avatar-v5,body #sniper .sniper-row:hover .avatar{scale:1.025}
   body #friendFinder .friend-finder-avatar-v5,body #sniper .avatar{transition:scale var(--mws-ui-card) var(--mws-ui-ease)}
 }
-html[data-mws-motion=reduced] body :is(#dashboard,#contacts,#sniper,#posts,#memos,#friendFinder,#settings,#achievements,#gameLadder,#legacy) :is(.dashboard-notice-item-local,.today-person-card-local,.contact-maintenance-card,.sniper-row,.post-saved-item,.favorite-schedule-card,.achievement-card-open,.ladder-full-result-row,.mws-legacy-link-v1,.friend-finder-avatar-v5,.friend-finder-state-v5,.avatar,input[type=checkbox],input[type=radio]){transition:none!important;scale:none!important}
+html[data-mws-motion=reduced] body :is(#dashboard,#contacts,#sniper,#posts,#memos,#friendFinder,#settings,#achievements,#gameLadder,#legacy) :is(.dashboard-notice-item-local,.today-person-card-local,.contact-maintenance-card,.sniper-row,.post-saved-item,.favorite-schedule-card,.ladder-full-result-row,.mws-legacy-link-v1,.friend-finder-avatar-v5,.friend-finder-state-v5,.avatar,input[type=checkbox],input[type=radio]){transition:none!important;scale:none!important}

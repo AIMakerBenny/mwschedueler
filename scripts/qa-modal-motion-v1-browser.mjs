@@ -7,7 +7,7 @@ import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const index=read('index.html');
-assert(index.includes('assets/modal-motion-v1.css?v=3'));
+assert(index.includes('assets/modal-motion-v1.css?v=4'));
 const runtime=read('assets/contact-runtime-v130.js'),app=read('assets/app-core.js');
 assert(runtime.includes('loading="lazy" decoding="async" width="42" height="42"'));
 assert(app.includes('renderContactHistory(id);\n  renderContactApplicationHistory(id);'));
@@ -81,6 +81,9 @@ try{
   }
   await browser.setReducedMotion(true);
   await browser.navigate(pathToFileURL(file).href+'?reduced',1366,768);
+  // The fixture does not boot the production motion-preference initializer.
+  // Mirror its resolved HTML state before testing user-selected reduced motion.
+  await browser.evaluate("document.documentElement.dataset.mwsMotion='reduced'");
   const reduced=await browser.evaluate(sample);
   assert(reduced.entered.every(v=>v.scale==='none'));
   assert(reduced.entered.every(v=>v.translate==='none'));

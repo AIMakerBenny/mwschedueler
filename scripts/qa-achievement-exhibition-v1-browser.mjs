@@ -10,8 +10,8 @@ const start=html.indexOf('<section id="achievements"');
 const end=html.indexOf('</section>',start);
 assert(start>=0&&end>start);
 const section=html.slice(start,end+10).replace('class="section"','class="section active"');
-assert(html.includes('assets/achievement-exhibition-v1.css?v=2'));
-const styles=['app-core.css','mawang-premium-v1621.css','device-ui.css','ui-frame-presets.css','achievement-exhibition-v1.css','achievement-gallery-v1621.css'].map(p=>read('assets/'+p)).join('\n');
+assert(html.includes('assets/achievement-exhibition-v1.css?v=3'));
+const styles=['app-core.css','mawang-premium-v1621.css','device-ui.css','ui-frame-presets.css','achievement-exhibition-v1.css','achievement-gallery-v1621.css','ui-interactions-v1.css'].map(p=>read('assets/'+p)).join('\n');
 const runtime=read('assets/achievement-gallery-v1621.js');
 const bootstrap=`
 const fixtureCards=Array.from({length:26},(_,i)=>({id:'card-'+i,order:26-i,gameName:i===25?'A Difficult Game About Climbing':'Game '+i,contentName:'특별한 순간 '+i,description:'Original description '+i,frontImageId:'image-'+i}));
@@ -51,6 +51,24 @@ try{
   assert.equal(result.cardCount,26);assert.equal(result.count,'26장');assert.equal(result.heading,'명예의 전당');
   assert(result.sorted&&result.oneTitle&&result.ratio&&result.imageFit&&result.frame&&result.caption&&result.rootFits&&result.imageReady,JSON.stringify(result));
   assert(result.horizontalGutter>=(width>760?25:12)-.5&&result.verticalGutter>=(width>760?25:12)-.5,JSON.stringify(result));
+  if(width>760){
+    const hoverMotion=await browser.evaluate(`(async()=>{
+      const button=document.querySelector('.achievement-card-open'),box=button.getBoundingClientRect();
+      button.dispatchEvent(new PointerEvent('pointermove',{
+        bubbles:true,pointerType:'mouse',
+        clientX:box.left+box.width*.8,clientY:box.top+box.height*.2
+      }));
+      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+      return {
+        tiltX:button.style.getPropertyValue('--ach-tilt-x'),
+        tiltY:button.style.getPropertyValue('--ach-tilt-y'),
+        lightX:button.style.getPropertyValue('--ach-light-x'),
+        transition:getComputedStyle(button).transitionProperty
+      };
+    })()`);
+    assert(Number.parseFloat(hoverMotion.tiltX)>0&&Number.parseFloat(hoverMotion.tiltY)>0,JSON.stringify(hoverMotion));
+    assert(Number.parseFloat(hoverMotion.lightX)>50&&hoverMotion.transition.includes('transform'),JSON.stringify(hoverMotion));
+  }
   await browser.clickPoint(result.firstCard.x,result.firstCard.y);
   const opened=await browser.evaluate(`(()=>{const modal=document.getElementById('achievementDetailModal');return !!modal&&!modal.hidden&&modal.querySelector('#achievementDetailTitle').textContent==='특별한 순간 25'&&modal.querySelector('[data-achievement-detail="description"]').textContent==='Original description 25'&&!!modal.querySelector('[data-achievement-card3d]')})()`);
   assert(opened,'Existing card detail action failed');

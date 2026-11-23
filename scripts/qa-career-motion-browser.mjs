@@ -139,15 +139,32 @@ const inspect=async entry=>entry.evaluate(e=>{
   return {p:Number(e.style.getPropertyValue('--cv-p')),shift:direction<0?c.right-r.right:c.left-r.left,scale:c.width/r.width,opacity:Number(getComputedStyle(card).opacity),branch:getComputedStyle(e,'::before').transform,top:r.top,bottom:r.bottom,left:c.left,right:c.right,view:innerHeight,width:innerWidth};
 });
 const approach=async(p,entry)=>{
-  const start=await position(p),r=await inspect(entry);
-  const band=await p.evaluate(()=>{
-    const panel=document.querySelector('.cv-panel');let root=document.scrollingElement;
-    for(let el=panel.parentElement;el&&el!==document.body;el=el.parentElement){if(/auto|scroll/.test(getComputedStyle(el).overflowY)&&el.clientHeight>0){root=el;break;}}
-    const bottom=root===document.scrollingElement?innerHeight:Math.min(innerHeight,root.getBoundingClientRect().bottom);
-    const top=Math.min(document.querySelector('.cv-bar').getBoundingClientRect().bottom,bottom-80);
-    return {top,bottom};
-  });
-  await scrollTo(p,start+(r.top+r.bottom)/2-(band.top+(band.bottom-band.top)*.84));
+  // Navigation and lazy images can still settle after a year jump. Converge
+  // on the visible arrival band instead of relying on one stale coordinate.
+  for(let attempt=0;attempt<5;attempt++){
+    const r=await inspect(entry);
+    const band=await p.evaluate(()=>{
+      const panel=document.querySelector('.cv-panel');let root=document.scrollingElement;
+      for(let el=panel.parentElement;el&&el!==document.body;el=el.parentElement){
+        if(/auto|scroll/.test(getComputedStyle(el).overflowY)&&el.clientHeight>0){root=el;break;}
+      }
+      const bottom=root===document.scrollingElement?innerHeight:Math.min(innerHeight,root.getBoundingClientRect().bottom);
+      const top=Math.min(document.querySelector('.cv-bar').getBoundingClientRect().bottom,bottom-80);
+      return {top,bottom};
+    });
+    const center=(r.top+r.bottom)/2;
+    const desired=band.top+(band.bottom-band.top)*.84;
+    const delta=center-desired;
+    if(Math.abs(delta)<8)break;
+    await p.evaluate(delta=>{
+      const panel=document.querySelector('.cv-panel');let root=document.scrollingElement;
+      for(let el=panel.parentElement;el&&el!==document.body;el=el.parentElement){
+        if(/auto|scroll/.test(getComputedStyle(el).overflowY)&&el.clientHeight>0){root=el;break;}
+      }
+      root.scrollBy({top:delta,behavior:'instant'});
+    },delta);
+    await pause(240);
+  }
 };
 const checkFit=async p=>{
   const fit=await p.locator('.cv-panel').evaluate(e=>e.getBoundingClientRect().right<=innerWidth+1);
@@ -167,7 +184,16 @@ try{
     await page.screenshot({path:output+'/overview-'+width+'.png'});
     assert.equal(await page.locator('.cv-year[data-year="2022"] .cv-month[data-month="4"] .cv-entry').count(),7);
     const entry=page.locator('.cv-year[data-year="2024"] .cv-month[data-month="3"] .cv-entry').first();
-    await chooseYear(page,'2024');await pause(200);
+    await chooseYear(page,'2024');
+    // Wait for the native smooth navigation to reach the destination before
+    // taking card-motion samples. A fixed 200ms can catch it mid-flight.
+    await page.waitForFunction(()=>{
+      const heading=document.querySelector('.cv-year[data-year="2024"] .cv-year-heading');
+      if(!heading)return false;
+      const top=heading.getBoundingClientRect().top;
+      return top>=55&&top<Math.min(280,innerHeight*.45);
+    },{},{timeout:5000});
+    await pause(140);
     await approach(page,entry);
     const target=await position(page);
     const partial=await inspect(entry);
@@ -240,7 +266,12 @@ try{
     assert.match(await page.locator('.cv-results').textContent(),/트위치에서 아프리카TV로 이적/);
     assert.match(await page.locator('.cv-results').textContent(),/아프리카TV 베스트 BJ/);
     await search(page,'');
-    await page.locator('.cv-legacy-link').click();await pause(250);
+    await page.locator('.cv-legacy-link').click();
+    // Smooth navigation can take longer than 250ms on a long timeline.
+    await page.waitForFunction(()=>{
+      const dated=[...document.querySelectorAll('.cv-axis .cv-entry')].at(-1);
+      return dated&&Number(dated.style.getPropertyValue('--cv-p'))>.99;
+    },{},{timeout:6000});
     assert.equal(await page.locator('.cv-legacy .cv-entry').count(),4);
     const legacyEntry=page.locator('.cv-legacy .cv-entry').first();
     const lastDated=await inspect(page.locator('.cv-axis .cv-entry').last());
