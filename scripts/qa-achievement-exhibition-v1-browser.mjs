@@ -98,7 +98,49 @@ try{
   await browser.clickPoint(result.firstCard.x,result.firstCard.y);
   const opened=await browser.evaluate(`(()=>{const modal=document.getElementById('achievementDetailModal');return !!modal&&!modal.hidden&&modal.querySelector('#achievementDetailTitle').textContent==='특별한 순간 25'&&modal.querySelector('[data-achievement-detail="description"]').textContent==='Original description 25'&&!!modal.querySelector('[data-achievement-card3d]')})()`);
   assert(opened,'Existing card detail action failed');
-  await browser.evaluate(`document.querySelector('.achievement-detail-close').click()`);
+  const geometry=await browser.evaluate(`(()=>{
+    const modal=document.querySelector('.achievement-detail-modal'),dialog=document.querySelector('.achievement-detail-dialog'),stage=document.querySelector('.achievement-detail-stage'),controls=document.querySelector('.achievement-detail-controls'),info=document.querySelector('.achievement-detail-info');
+    const b=e=>e.getBoundingClientRect(),d=b(dialog),c=b(controls),st=b(stage);
+    return {dialogScroll:dialog.scrollHeight-dialog.clientHeight,modalScroll:modal.scrollHeight-modal.clientHeight,dialogBottom:d.bottom,dialogRight:d.right,controlsBottom:c.bottom,ratio:st.width/st.height,stageHeight:st.height,infoKeyboard:info.tabIndex===0,infoOverflow:getComputedStyle(info).overflowY,dialogOverflow:getComputedStyle(dialog).overflowY};
+  })()`);
+  assert(Math.abs(geometry.ratio-2/3)<.015&&geometry.stageHeight>100&&geometry.infoKeyboard,JSON.stringify({width,geometry}));
+  assert(geometry.dialogRight<=width+1&&geometry.dialogBottom<=height+1&&geometry.controlsBottom<=height+1,JSON.stringify({width,geometry}));
+  if(width>760){
+    assert(geometry.dialogScroll<=2&&geometry.modalScroll<=2&&geometry.dialogOverflow==='hidden',JSON.stringify({width,geometry}));
+    assert(geometry.infoOverflow==='auto',JSON.stringify({width,geometry}));
+  }
+  if(capture)writeFileSync(path.join(output,'hall-'+width+'-detail-front.jpg'),Buffer.from(await browser.captureScreenshot(),'base64'));
+  if(width>760){
+    const pt=await browser.evaluate(`(()=>{const r=document.querySelector('.achievement-detail-stage').getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2}})()`);
+    await browser.mouseDown(pt.x,pt.y);await browser.mouseDrag(pt.x+155,pt.y);await browser.mouseUp(pt.x+155,pt.y);
+    const rotated=await browser.evaluate(`Number(document.querySelector('[data-achievement-card3d]').dataset.rotateY)`);
+    assert(rotated>=75&&rotated<=105,'3D drag did not reach side view: '+rotated);
+    if(capture)writeFileSync(path.join(output,'hall-'+width+'-detail-side.jpg'),Buffer.from(await browser.captureScreenshot(),'base64'));
+    await browser.mouseDown(pt.x,pt.y);await browser.mouseDrag(pt.x+155,pt.y);await browser.mouseUp(pt.x+155,pt.y);
+    const back=await browser.evaluate(`Number(document.querySelector('[data-achievement-card3d]').dataset.rotateY)`);
+    assert(back>=165&&back<=200,'3D drag did not reach back view: '+back);
+    if(capture)writeFileSync(path.join(output,'hall-'+width+'-detail-back.jpg'),Buffer.from(await browser.captureScreenshot(),'base64'));
+    await browser.evaluate(`document.querySelector('.achievement-detail-reset').click()`);
+    assert.equal(await browser.evaluate(`Number(document.querySelector('[data-achievement-card3d]').dataset.rotateY)`),0,'Front reset did not work');
+  }
+  await browser.evaluate(`(()=>{
+    document.querySelector('.achievement-detail-close').click();
+    window.mwsGetAchievementCardsV1621=()=>fixtureCards.map(c=>({...c,description:c.id==='card-25'?'긴 설명 테스트 '.repeat(1100):c.description}));
+    document.querySelector('.achievement-card-open').click();
+  })()`);
+  const longInfo=await browser.evaluate(`(()=>{
+    const modal=document.querySelector('.achievement-detail-modal'),dialog=document.querySelector('.achievement-detail-dialog'),info=document.querySelector('.achievement-detail-info'),dd=info.querySelector('.achievement-detail-description-row dd');
+    const infoCanScroll=info.scrollHeight>info.clientHeight+5;
+    const modalCanScroll=modal.scrollHeight>modal.clientHeight+5;
+    if(infoCanScroll)info.scrollTop=info.scrollHeight;
+    if(modalCanScroll)modal.scrollTop=modal.scrollHeight;
+    return {text:dd.textContent.length,infoCanScroll,modalCanScroll,infoScrollTop:info.scrollTop,modalScrollTop:modal.scrollTop,dialogScroll:dialog.scrollHeight-dialog.clientHeight};
+  })()`);
+  assert(longInfo.text>8000,JSON.stringify({width,longInfo}));
+  if(width>760)assert(longInfo.infoCanScroll&&longInfo.infoScrollTop>100&&longInfo.dialogScroll<=2,JSON.stringify({width,longInfo}));
+  else assert(longInfo.modalCanScroll&&longInfo.modalScrollTop>100,JSON.stringify({width,longInfo}));
+  if(capture)writeFileSync(path.join(output,'hall-'+width+'-detail-long.jpg'),Buffer.from(await browser.captureScreenshot(),'base64'));
+  await browser.evaluate(`(()=>{document.querySelector('.achievement-detail-close').click();window.mwsGetAchievementCardsV1621=()=>fixtureCards})()`);
   assert(await browser.evaluate(`document.getElementById('achievementDetailModal').hidden`));
   const empty=await browser.evaluate(`(async()=>{window.mwsGetAchievementCardsV1621=()=>[];await window.mwsRenderAchievementGalleryV1621();return !document.getElementById('achievementEmptyState').hidden&&document.getElementById('achievementGallery').hidden&&document.getElementById('achievementCountChip').textContent==='0장'&&!document.getElementById('achievementExhibitionPreview').children.length})()`);
   assert(empty,'Empty collection state failed');
