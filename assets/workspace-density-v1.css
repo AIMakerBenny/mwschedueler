@@ -1,8 +1,8 @@
 /* One-row workspace headers without removing or duplicating underlying actions.
    Desktop gets compact inline controls; narrow/mobile screens wrap below the title. */
 
-/* Timeline: move the existing sticky toolbar visually into the title row.
-   Keep its DOM and its scroll-pin calculations intact. */
+/* Timeline: keep the year toolbar in its own stable sticky row.
+   Never absolutely position it over the title or switch its appearance on scroll. */
 @media(min-width:1101px){
   body.mws-premium .main:has(#careerTimeline.active) > .topbar{
     z-index:7;margin-bottom:0!important;min-height:39px!important;
@@ -14,10 +14,11 @@
     margin-bottom:8px!important;
     z-index:12;
   }
-  #careerTimeline.active .cv-bar:not(.cv-pinned){
-    padding:2px 5px!important;
-    background:transparent!important;border:0!important;
-    box-shadow:none!important;
+  #careerTimeline.active .cv-bar{
+    padding:5px 9px!important;
+    background:color-mix(in srgb,var(--bg) 88%,var(--panel))!important;
+    border:1px solid color-mix(in srgb,var(--cv-accent) 15%,var(--border))!important;
+    box-shadow:0 7px 22px #0002!important;
   }
   #careerTimeline.active .cv-toolbar{
     gap:8px!important;
@@ -27,12 +28,6 @@
   #careerTimeline.active .cv-summary{gap:4px!important}
   #careerTimeline.active .cv-map-year{padding:5px 3px!important}
   #careerTimeline.active .cv-search{width:clamp(100px,12vw,188px)!important}
-  #careerTimeline.active .cv-bar.cv-pinned{
-    padding:5px 9px!important;
-    background:var(--panel)!important;
-    border:0!important;
-    box-shadow:none!important;
-  }
 
   /* Posts: the common page title is the only heading. Keep both menus
      inside #posts so their dropdown positioning and handlers stay valid. */
@@ -266,11 +261,11 @@ body.mws-premium .main:not(:has(#mawangArchive.active)) > .topbar .ma-header-fil
     z-index:17!important;
   }
   body.mws-premium #careerTimeline.active .cv-panel>.cv-bar-host{
-    position:absolute!important;
-    top:-43px!important;
-    left:0!important;right:0!important;
-    width:100%!important;
-    margin:0!important;
+    position:sticky!important;
+    top:0!important;
+    left:auto!important;right:auto!important;
+    width:auto!important;
+    margin:0 0 8px!important;
     z-index:18!important;
   }
   body.mws-premium #careerTimeline.active .cv-panel>.cv-axis{
@@ -278,12 +273,8 @@ body.mws-premium .main:not(:has(#mawangArchive.active)) > .topbar .ma-header-fil
   }
 }
 
-/* The timeline toolbar occupies the visual title row while retaining its DOM
-   position inside .cv-panel. The panel and its absolute-positioned children
-   are nested in the section's stacking context. Keep the active timeline
-   section above the topbar (z-index:7) so the header cannot intercept
-   real pointer clicks on search, export or year controls. Do not disable
-   pointer-events on the shared topbar, which is interactive on other tabs. */
+/* Keep the timeline section above shared chrome while scrolling.
+   The timeline controls remain in normal flow with a stable sticky header. */
 @media(min-width:1101px){
   body.mws-premium .main > #careerTimeline.section.active{
     z-index:9!important;
