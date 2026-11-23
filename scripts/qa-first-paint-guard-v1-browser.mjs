@@ -13,7 +13,7 @@ const guardIndex=html.indexOf('<style id="mws-first-paint-guard">');
 const firstSheet=html.indexOf('<link rel="stylesheet"');
 assert(guardIndex>0&&guardIndex<firstSheet,'Critical first-paint CSS must precede external CSS');
 assert(html.includes('class="mws-archive-kicker"')&&html.includes('class="mws-archive-wiki"'));
-const fixture=`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${match[1]}</style></head><body><div class="app"><aside class="sidebar"><nav class="nav"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"></path></svg></span></nav></aside><main class="main"><span class="mws-archive-kicker">WRONG HEADER</span><a class="mws-archive-wiki"><svg viewBox="0 0 24 24"><path d="M2 2h20v20H2z"></path></svg></a><section class="section">WRONG TAB</section><section class="section active">캘린더</section></main></div></body></html>`;
+const fixture=`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${match[1]}</style></head><body class="mws-app-loading"><div class="app"><aside class="sidebar"><nav class="nav"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"></path></svg></span></nav></aside><main class="main"><span class="mws-archive-kicker">WRONG HEADER</span><a class="mws-archive-wiki"><svg viewBox="0 0 24 24"><path d="M2 2h20v20H2z"></path></svg></a><section class="section">WRONG TAB</section><section class="section active">캘린더</section></main></div></body></html>`;
 const output='visual-first-paint';
 const capture=process.env.MWS_FIRST_PAINT_CAPTURE==='1';
 if(capture)mkdirSync(output,{recursive:true});
