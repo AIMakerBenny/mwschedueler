@@ -15,6 +15,7 @@ const pause=ms=>new Promise(r=>setTimeout(r,ms));
 const dir=mkdtempSync(path.join(os.tmpdir(),'mws-real-hall-'));
 const output='visual-achievement-live';
 const capture=process.env.MWS_HALL_CAPTURE==='1';
+const verifyProduction=process.env.MWS_HALL_PRODUCTION==='1';
 if(capture)mkdirSync(output,{recursive:true});
 let browser;
 try{
@@ -38,7 +39,9 @@ try{
   }
   assert(state?.ready&&!state?.gated&&state?.gallery,'Public app cannot mount achievement section: '+JSON.stringify({width,state}));
   await browser.evaluate("(()=>{const notice=document.querySelector('#mwsAnnouncementDialog');if(notice?.open)notice.querySelector('[data-notice-close]')?.click();document.querySelector('.nav button[data-tab=achievements]')?.click()})()");
-  const replaced=await browser.evaluate('(()=>{'+
+  const replaced=verifyProduction
+    ?await browser.evaluate("(()=>({ok:!!document.querySelector('link[href*=\"achievement-exhibition-v1.css\"]')?.href.includes('v=5')&&!!document.querySelector('#mws-first-paint-guard'),runtime:!!window.__mwsAchievementGalleryRuntimeV1621}))()")
+    :await browser.evaluate('(()=>{'+
     'const existing=[...document.querySelectorAll("link[rel=stylesheet]")].find(el=>el.href.includes("/assets/achievement-exhibition-v1.css"));'+
     'if(!existing)return {ok:false,reason:"original exhibition stylesheet missing"};'+
     'const style=document.createElement("style");style.id="qa-candidate-hall";style.textContent='+JSON.stringify(candidateCss)+';existing.replaceWith(style);'+
@@ -49,8 +52,9 @@ try{
   assert(replaced.ok&&replaced.runtime,'Cannot inject candidate into public page: '+JSON.stringify({width,replaced}));
   await browser.evaluate("window.mwsRenderAchievementGalleryV1621()");
   await pause(250);
-  const initial=await browser.evaluate("(()=>{const grid=document.querySelector('#achievementGallery'),first=grid?.querySelector('.achievement-card-open');return {active:!!document.querySelector('#achievements.active'),title:document.querySelector('#pageTitle')?.textContent?.trim(),count:grid?.querySelectorAll('.achievement-card-open').length,first:!!first,overflow:document.documentElement.scrollWidth>innerWidth+4,media:!!window.mwsAchievementMediaV1?.getBlob,description:!!first?.querySelector('.achievement-card-peek'),hasCandidate:!!document.querySelector('#qa-candidate-hall')}})()");
+  const initial=await browser.evaluate("(()=>{const grid=document.querySelector('#achievementGallery'),first=grid?.querySelector('.achievement-card-open');return {active:!!document.querySelector('#achievements.active'),title:document.querySelector('#pageTitle')?.textContent?.trim(),count:grid?.querySelectorAll('.achievement-card-open').length,first:!!first,overflow:document.documentElement.scrollWidth>innerWidth+4,media:!!window.mwsAchievementMediaV1?.getBlob,description:!!first?.querySelector('.achievement-card-peek'),hasCandidate:!!document.querySelector('#qa-candidate-hall')||!!document.querySelector('link[href*="achievement-exhibition-v1.css"][href*="v=5"]')&&!!document.querySelector('#mws-first-paint-guard')}})()");
   assert(initial.active&&initial.title==='업적'&&!initial.overflow&&initial.hasCandidate,'Real public gallery shell broken: '+JSON.stringify({width,initial}));
+  if(verifyProduction)assert(initial.count>0,'Real production Hall of Fame has no cards at '+width);
   if(!initial.count){
     console.log('MWS_REAL_HALL_PUBLIC_EMPTY',width,JSON.stringify(initial));
     continue;
