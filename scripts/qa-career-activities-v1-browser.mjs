@@ -17,7 +17,8 @@ try{
     await browser.navigate(pathToFileURL(file).href+'?'+w,w,h,w<900);await browser.setReducedMotion(w<900);
     const result=await browser.evaluate(`(()=>{const $=s=>document.querySelector(s);window.mwsCalendarHistoricalV1.render(new Date(2026,10,1),[]);const history=$('#calendarHistoricalMonthV1');history.open=true;const j=$('.cv-junction');j.click();return {history:!history.hidden,records:document.querySelectorAll('.cv-entry').length,selected:!!$('.cv-entry[data-selected=true] details[open]'),pressed:j.getAttribute('aria-pressed'),overflow:document.documentElement.scrollWidth>innerWidth}})()`);
     assert(result.history);assert(result.records>10);assert(result.selected);assert.equal(result.pressed,'true');assert.equal(result.overflow,false);
-    assert.equal(await browser.evaluate(`(()=>{const $=s=>document.querySelector(s);if(document.querySelectorAll('.cv-step').length)return false;const year=$('.cv-map-year[aria-label^="2025년"]');if(!year)return false;const before=document.scrollingElement.scrollTop;year.click();return document.scrollingElement.scrollTop!==before})()`),true);
+    const navigated=await browser.evaluate(`(async()=>{const $=s=>document.querySelector(s);if(document.querySelectorAll('.cv-step').length)return false;const year=$('.cv-map-year[aria-label^="2025년"]');if(!year)return false;const root=document.scrollingElement,before=root.scrollTop;year.click();for(let i=0;i<40;i++){await new Promise(resolve=>requestAnimationFrame(resolve));if(Math.abs(root.scrollTop-before)>2)return true;}return false})()`);
+    assert.equal(navigated,true);
     if(w<900)assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('.cv-junction'),'::before').transitionDuration`),'0s');
     console.log('HISTORICAL_CALENDAR_TIMELINE_OK',w,h);
   }
