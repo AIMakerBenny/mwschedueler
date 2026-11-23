@@ -22,11 +22,19 @@ const measure=()=> {
     return document.scrollingElement;
   })();
   const br=bar.getBoundingClientRect(),hr=host.getBoundingClientRect(),yr=heading.getBoundingClientRect();
+  const shared=document.querySelector('.main>.topbar'),title=bar.querySelector('.cv-summary-title');
+  const yearNav=bar.querySelector('.cv-overview')?.getBoundingClientRect();
+  const summary=bar.querySelector('.cv-summary')?.getBoundingClientRect();
+  const sr=shared?.getBoundingClientRect();
   return {
     scroll:scroller.scrollTop,maxScroll:scroller.scrollHeight-scroller.clientHeight,
     scrollHeight:scroller.scrollHeight,root:scroller===document.scrollingElement?'document':scroller.className,
     hostTop:hr.top,hostLeft:hr.left,hostWidth:hr.width,hostHeight:hr.height,
     barTop:br.top,barLeft:br.left,barWidth:br.width,barHeight:br.height,
+    sharedTopbarDisplay:shared?getComputedStyle(shared).display:null,
+    timelineTitle:title?.textContent?.trim(),titleVisible:!!title&&getComputedStyle(title).display!=='none',
+    navLeft:yearNav?.left,navWidth:yearNav?.width,navTop:yearNav?.top,
+    summaryWidth:summary?.width,sharedHeight:sr?.height,
     yearTop:yr.top,yearDocY:yr.top+scroller.scrollTop,
     sticky:getComputedStyle(host).position,barPosition:getComputedStyle(bar).position,
     dynamicWidth:bar.style.width,hostInlineHeight:host.style.height,
@@ -72,6 +80,10 @@ try{
   assert.equal(start.sticky,'sticky',JSON.stringify(start));
   assert.equal(start.barPosition,'relative',JSON.stringify(start));
   assert(start.hostHeight>25&&start.barHeight>25&&start.overflow<2,JSON.stringify(start));
+  if(width>1100)assert(start.sharedTopbarDisplay==='none'&&start.timelineTitle==='타임라인'&&start.titleVisible
+    &&start.navWidth>235&&start.navLeft>start.barLeft+70,
+    'Timeline still swaps two different headers on initial desktop paint: '+JSON.stringify({width,start}));
+
   if(capture)await page.screenshot({path:path.join(output,'before-'+width+'.png')});
   const threshold=Math.max(20,Math.ceil(start.hostTop));
   const positions=[0,Math.max(0,threshold-15),Math.max(0,threshold-4),
@@ -100,6 +112,10 @@ try{
       const barMovement=Math.abs(sample.barTop-previous.barTop);
       assert(barMovement<=delta+2,'Sticky rail jumped more than scroll input: '+JSON.stringify({width,previous,sample}));
       assert(Math.abs(sample.yearDocY-start.yearDocY)<=2.5,'Timeline content jolted: '+JSON.stringify({width,start,sample}));
+      if(width>1100)assert(sample.sharedTopbarDisplay==='none'&&sample.titleVisible
+        &&Math.abs(sample.navLeft-start.navLeft)<=1.2&&Math.abs(sample.navWidth-start.navWidth)<=1.2
+        &&Math.abs(sample.summaryWidth-start.summaryWidth)<=1.2,
+        'Timeline year rail shifted during a scroll threshold: '+JSON.stringify({width,start,sample}));
       assert(Math.abs(sample.barWidth-start.barWidth)<=1.2&&Math.abs(sample.hostHeight-start.hostHeight)<=1.2,
         'Timeline year header resized on scroll: '+JSON.stringify({width,start,sample}));
       assert(Math.abs(sample.barLeft-start.barLeft)<=1.2&&Math.abs(sample.scrollHeight-start.scrollHeight)<=3,
@@ -114,6 +130,9 @@ try{
     await page.mouse.wheel(0,distance);
     await delay(90);
     const sample=await page.evaluate(measure);
+    if(width>1100)assert(sample.sharedTopbarDisplay==='none'
+      &&Math.abs(sample.navLeft-start.navLeft)<=1.2&&Math.abs(sample.navWidth-start.navWidth)<=1.2,
+      'Wheel scrolling changed timeline header coordinates: '+JSON.stringify({width,start,sample}));
     assert(sample.sticky==='sticky'&&sample.barPosition==='relative'&&!sample.forcedClass
       &&Math.abs(sample.barWidth-start.barWidth)<=1.2&&Math.abs(sample.hostHeight-start.hostHeight)<=1.2,
       'Wheel scroll caused year rail to change geometry: '+JSON.stringify({width,sample}));

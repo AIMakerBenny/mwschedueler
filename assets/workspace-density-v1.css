@@ -295,3 +295,47 @@ body.mws-premium .main:not(:has(#mawangArchive.active)) > .topbar .ma-header-fil
     z-index:9!important;
   }
 }
+
+
+/* Timeline single-rail layout: the shared page header used to scroll out of
+   view just as the narrower year rail became sticky, looking like a resize.
+   Do not switch headers during scroll. Only the timeline desktop page uses
+   the gallery's own in-flow sticky controls from the first paint onward. */
+@media (min-width:1101px){
+  body.mws-premium .main:has(#careerTimeline.section.active) > .topbar{
+    display:none!important;
+  }
+  body.mws-premium #careerTimeline.section.active .cv-bar-host{
+    position:sticky!important;
+    top:0!important;
+    margin-top:0!important;
+    margin-bottom:10px!important;
+    width:100%!important;
+    z-index:18!important;
+    transform:none!important;
+    transition:none!important;
+  }
+  body.mws-premium #careerTimeline.section.active .cv-bar{
+    position:relative!important;
+    width:100%!important;
+    min-height:43px;
+    border-radius:12px;
+    transform:none!important;
+    transition:none!important;
+  }
+  #careerTimeline.section.active .cv-summary-title{
+    display:inline-block;
+    color:var(--cv-ink);
+    font-size:16px;
+    font-weight:760;
+    letter-spacing:-.035em;
+    line-height:1.15;
+    white-space:nowrap;
+    margin-right:14px;
+  }
+}
+/* Small viewports keep the existing shared title and compact two-row rail,
+   without the duplicate title inside the sticky navigation. */
+@media (max-width:1100px){
+  #careerTimeline .cv-summary-title{display:none}
+}

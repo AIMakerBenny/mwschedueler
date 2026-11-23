@@ -256,6 +256,9 @@
     const barHost=node('div','cv-bar-host');barHost.append(bar);
     const toolbar=node('div','cv-toolbar');
     const info=node('div','cv-summary');
+    // A single timeline rail owns the desktop heading from the first frame.
+    // The shared page title no longer scrolls away to reveal a second toolbar.
+    const timelineTitle=node('span','cv-summary-title','타임라인');info.append(timelineTitle);
     const count=node('strong','',rows.length+'개 기록');info.append(count);
     const searchBox=node('div','cv-searchbox');
     const query=node('input','cv-search');
