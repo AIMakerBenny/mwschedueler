@@ -136,7 +136,7 @@ async function start(){
   void Promise.all([
     load('achievement-media-v1621','/assets/achievement-media-v1621.js?v=1.6.21-phase107-cloud1-quota2','__mwsAchievementMediaRuntimeV1621'),
     loadStyle('achievement-gallery-v1621','/assets/achievement-gallery-v1621.css?v=1.6.21-phase111'),
-    load('achievement-gallery-v1621','/assets/achievement-gallery-v1621.js?v=1.6.21-phase112','__mwsAchievementGalleryRuntimeV1621'),
+    load('achievement-gallery-v1621','/assets/achievement-gallery-v1621.js?v=1.6.21-phase113','__mwsAchievementGalleryRuntimeV1621'),
     load('mobile-access-tools-v130','/assets/mobile-access-tools-v130.js?v=1.3.0-mobile-cleanup','__mwsMobileAccessToolsV130')
   ]).then(results=>{
     const previous=Array.isArray(window.__mwsPostLoginOptionalErrorsV130)?window.__mwsPostLoginOptionalErrorsV130:[];

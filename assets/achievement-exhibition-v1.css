@@ -295,6 +295,8 @@
   }
   #achievements .achievement-card-open:hover::after{opacity:1}
 }
+html[data-mws-motion="reduced"] #achievements .achievement-card-open.is-pointer-active{transform:none!important}
+html[data-mws-motion="reduced"] #achievements .achievement-card-open.is-pointer-active .achievement-card-thumb img{transform:none!important}
 html[data-mws-motion="reduced"] #achievements .achievement-card-open:hover{
   transform:none!important;
 }
@@ -306,4 +308,154 @@ html[data-mws-motion="reduced"] #achievements .achievement-card-open::after{disp
   html[data-mws-motion="full"] #achievements .achievement-card-open:hover{
     transform:perspective(960px) translateY(-6px) rotateX(var(--ach-tilt-x,0deg)) rotateY(var(--ach-tilt-y,0deg))!important;
   }
+}
+
+
+/* Hall of Fame V3 - interactive museum lighting, not permanent GPU layers.
+   Only hovered or keyboard-focused cards receive depth and surface activity.
+   Existing 2:3 image proportions, card order and detail actions are unchanged. */
+#achievements .achievement-card-tile{
+  position:relative;
+  isolation:isolate;
+}
+#achievements .achievement-card-open{
+  transform:translate3d(0,0,0)!important;
+  transform-origin:50% 52%;
+  transform-style:preserve-3d;
+  transition:transform .28s cubic-bezier(.2,.8,.22,1),
+    box-shadow .3s cubic-bezier(.2,.8,.22,1),
+    border-color .24s ease!important;
+}
+#achievements .achievement-card-thumb img{
+  transition:transform .34s cubic-bezier(.2,.78,.22,1),filter .28s ease!important;
+  transform-origin:center 40%;
+  transform:translate3d(0,0,0) scale(1)!important;
+  filter:saturate(.97);
+  backface-visibility:hidden;
+}
+#achievements .achievement-card-thumb::before{
+  content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  border-radius:inherit;opacity:0;
+  background:radial-gradient(175px circle at var(--ach-light-x,50%) var(--ach-light-y,30%),
+    #fff5d443,transparent 70%),
+    linear-gradient(120deg,transparent 20%,#fff1c313 45%,transparent 70%);
+  mix-blend-mode:screen;
+  transition:opacity .27s ease;
+}
+#achievements .achievement-card-open::after{
+  background:radial-gradient(210px circle at var(--ach-light-x,50%) var(--ach-light-y,35%),
+    #fff1c21c,transparent 78%);
+  transition:opacity .24s ease;
+}
+#achievements .achievement-card-caption{
+  transition:transform .28s cubic-bezier(.2,.8,.22,1);
+}
+#achievements .achievement-card-peek{
+  position:absolute;inset:auto 0 0;z-index:4;
+  display:flex;align-items:flex-end;
+  box-sizing:border-box;max-height:42%;min-height:58px;padding:28px 13px 13px;
+  overflow:hidden;pointer-events:none;
+  background:linear-gradient(0deg,#090b11ef 2%,#101016c9 47%,transparent);
+  color:#fff2d9;font-size:12px;font-weight:600;line-height:1.46;
+  opacity:0;visibility:hidden;
+  transform:translate3d(0,8px,0);
+  transition:opacity .23s ease,transform .3s cubic-bezier(.2,.8,.22,1),visibility .3s;
+}
+#achievements .achievement-card-peek span{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;
+  overflow:hidden;overflow-wrap:anywhere;
+}
+@media(hover:hover) and (pointer:fine){
+  #achievements .achievement-card-tile:hover{z-index:4}
+  #achievements .achievement-card-open:hover{
+    transform:perspective(1040px) translate3d(0,-6px,0)
+      rotateX(var(--ach-tilt-x,0deg)) rotateY(var(--ach-tilt-y,0deg)) scale(1.015)!important;
+    border-color:#e9c483!important;
+    box-shadow:0 22px 42px #000b,0 0 20px #ddad5944,
+      inset 0 1px 0 #ffe4a74d!important;
+  }
+  #achievements .achievement-card-open:hover .achievement-card-thumb img{
+    transform:translate3d(var(--ach-parallax-x,0px),var(--ach-parallax-y,0px),0) scale(1.035)!important;
+    filter:saturate(1.05);
+  }
+  #achievements .achievement-card-open:hover .achievement-card-thumb::before{opacity:.5}
+  #achievements .achievement-card-open:hover .achievement-card-caption{
+    transform:translate3d(0,-2px,0);
+  }
+}
+#achievements .achievement-card-open:is(:hover,:focus-visible) .achievement-card-peek{
+  visibility:visible;opacity:1;transform:translate3d(0,0,0);
+}
+#achievements .achievement-card-open:focus-visible .achievement-card-thumb::before{opacity:.36}
+#achievements .achievement-card-open:focus-visible{
+  outline:2px solid #e8c787!important;outline-offset:3px;
+}
+@media(hover:hover) and (pointer:fine){
+  #achievements .achievement-card-open:active{
+    transform:perspective(1040px) translate3d(0,-2px,0) scale(.995)!important;
+    transition-duration:90ms!important;
+  }
+}
+/* Use genuine mouse PointerEvents as the source of hover truth. This works
+   with remote desktops where CSS (hover:hover) reports false, and never
+   activates for touch pointers. */
+#achievements .achievement-card-tile.is-pointer-active{z-index:4}
+#achievements .achievement-card-open.is-pointer-active{
+  transform:perspective(1040px) translate3d(0,-6px,0)
+    rotateX(var(--ach-tilt-x,0deg)) rotateY(var(--ach-tilt-y,0deg)) scale(1.015)!important;
+  border-color:#e9c483!important;
+  box-shadow:0 22px 42px #000b,0 0 20px #ddad5944,
+    inset 0 1px 0 #ffe4a74d!important;
+}
+#achievements .achievement-card-open.is-pointer-active .achievement-card-thumb img{
+  transform:translate3d(var(--ach-parallax-x,0px),var(--ach-parallax-y,0px),0) scale(1.035)!important;
+  filter:saturate(1.05);
+}
+#achievements .achievement-card-open.is-pointer-active .achievement-card-thumb::before{opacity:.5}
+#achievements .achievement-card-open.is-pointer-active::after{opacity:1}
+#achievements .achievement-card-open.is-pointer-active .achievement-card-caption{transform:translate3d(0,-2px,0)}
+#achievements .achievement-card-open.is-pointer-active .achievement-card-peek{
+  display:flex;visibility:visible;opacity:1;transform:translate3d(0,0,0);
+}
+#achievements .achievement-card-open.is-pointer-active:active{
+  transform:perspective(1040px) translate3d(0,-2px,0) scale(.995)!important;
+  transition-duration:90ms!important;
+}
+/* The existing detail remains the only record viewer, with a connected entrance. */
+#achievementDetailModal:not([hidden]) .achievement-detail-dialog{
+  animation:achievement-hall-detail-in .32s cubic-bezier(.2,.75,.2,1) both;
+}
+@keyframes achievement-hall-detail-in{
+  from{opacity:.78;transform:translate3d(0,11px,0) scale(.985)}
+  to{opacity:1;transform:translate3d(0,0,0) scale(1)}
+}
+@media(hover:none),(pointer:coarse){
+  #achievements .achievement-card-peek{display:none}
+  #achievements .achievement-card-open:active{scale:.988;transition:scale .13s ease!important}
+}
+html[data-mws-motion="reduced"] #achievements .achievement-card-open,
+html[data-mws-motion="reduced"] #achievements .achievement-card-thumb img,
+html[data-mws-motion="reduced"] #achievements .achievement-card-peek{
+  transition:none!important;transform:none!important;
+}
+html[data-mws-motion="reduced"] #achievements .achievement-card-open:hover{
+  transform:none!important;
+}
+html[data-mws-motion="reduced"] #achievementDetailModal .achievement-detail-dialog{
+  animation:none!important;
+}
+html[data-mws-motion="reduced"] #achievements .achievement-card-thumb::before{
+  display:none!important;
+}
+@media(prefers-reduced-motion:reduce){
+  html:not([data-mws-motion="full"]) #achievements .achievement-card-open,
+  html:not([data-mws-motion="full"]) #achievements .achievement-card-thumb img,
+  html:not([data-mws-motion="full"]) #achievements .achievement-card-peek{
+    transition:none!important;transform:none!important;
+  }
+  html:not([data-mws-motion="full"]) #achievements .achievement-card-open:hover{transform:none!important}
+  html:not([data-mws-motion="full"]) #achievements .achievement-card-open.is-pointer-active{transform:none!important}
+  html:not([data-mws-motion="full"]) #achievements .achievement-card-open.is-pointer-active .achievement-card-thumb img{transform:none!important}
+  html:not([data-mws-motion="full"]) #achievements .achievement-card-thumb::before{display:none!important}
+  html:not([data-mws-motion="full"]) #achievementDetailModal .achievement-detail-dialog{animation:none!important}
 }
