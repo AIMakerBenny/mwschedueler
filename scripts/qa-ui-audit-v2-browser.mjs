@@ -120,10 +120,11 @@ try{
       await browser.evaluate("window.__qaActivate('careerTimeline')");
       const timeline=await browser.evaluate("(()=>{const bar=document.querySelector('#careerTimeline .cv-bar');"+
         "bar.classList.add('cv-pinned');const css=getComputedStyle(bar),head=getComputedStyle(document.querySelector('.topbar'));"+
-        "const result={border:css.borderTopWidth,shadow:css.boxShadow,headerClicks:head.pointerEvents};bar.classList.remove('cv-pinned');return result})()");
+        "const result={border:css.borderTopWidth,shadow:css.boxShadow,headerClicks:head.pointerEvents,headerButton:getComputedStyle(document.querySelector('#newEventBtn')).pointerEvents};bar.classList.remove('cv-pinned');return result})()");
       assert.equal(timeline.border,'0px',JSON.stringify({width,timeline}));
       assert.equal(timeline.shadow,'none',JSON.stringify({width,timeline}));
-      assert.notEqual(timeline.headerClicks,'none',JSON.stringify({width,timeline}));
+      assert.equal(timeline.headerClicks,'none',JSON.stringify({width,timeline}));
+      assert.equal(timeline.headerButton,'auto',JSON.stringify({width,timeline}));
       const inlineTimeline=await browser.evaluate("(()=>{const title=document.querySelector('#pageTitle').getBoundingClientRect(),"+
         "bar=document.querySelector('#careerTimeline .cv-bar').getBoundingClientRect(),panel=document.querySelector('#careerTimeline .cv-panel').getBoundingClientRect(),section=document.querySelector('#careerTimeline').getBoundingClientRect(),main=document.querySelector('.main').getBoundingClientRect();return {titleY:(title.top+title.bottom)/2,barY:(bar.top+bar.bottom)/2,panelTop:panel.top,sectionTop:section.top,mainTop:main.top,barTop:bar.top,topbarBottom:document.querySelector('.topbar').getBoundingClientRect().bottom,other:[...document.querySelector('.main').children].map(e=>({id:e.id||e.className,display:getComputedStyle(e).display,top:e.getBoundingClientRect().top,bottom:e.getBoundingClientRect().bottom}))}})()");
       if(width>=1101)assert(Math.abs(inlineTimeline.titleY-inlineTimeline.barY)<30,JSON.stringify({width,inlineTimeline}));
