@@ -869,6 +869,13 @@ body.mws-achievement-manager-open{overflow:hidden!important}
     overflow:visible;
     border-radius:14px;
   }
+  /* Keep close reachable when tall mobile descriptions scroll. */
+  .achievement-detail-close{
+    position:sticky;
+    top:max(12px,env(safe-area-inset-top));
+    margin:12px 12px -50px auto;
+    z-index:15;
+  }
   .achievement-detail-layout{
     grid-template-columns:minmax(0,1fr);
     height:auto;
