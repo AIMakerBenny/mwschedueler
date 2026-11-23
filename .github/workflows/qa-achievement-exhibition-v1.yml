@@ -37,6 +37,11 @@ jobs:
           if-no-files-found: ignore
       - run: node scripts/run-phase90-achievement-gallery-audit.mjs
       - run: node scripts/run-phase93-achievement-touch-audit.mjs
+      - name: Check complete pre-deployment integration audits
+        run: |
+          node --check scripts/qa-achievement-live-browser.mjs
+          node --check assets/achievement-gallery-v1621.js
+          node scripts/run-current-full-integration-audit.mjs
   first-paint:
     runs-on: ubuntu-latest
     timeout-minutes: 5
