@@ -25,7 +25,7 @@ test('28 individually named records with requested priority and verified detail 
   assert.equal(entries.find(c=>c.id==='su').name,'백수정');
   for(const c of entries){
     assert(c.english&&c.tags.length&&Array.isArray(c.details));
-    if(c.id!=='kkomwang')assert(c.description&&c.tagline);
+    assert(c.description&&c.tagline);
     assert(!/미확인|확인되지|확보하지|불명|알려지지|추정|기록(?:이 있다|되어|돼|에 남)|갤러리로 관리|관리자 프로필|정반대의 매력|시청자들은/.test([c.dateLabel,c.tagline,c.description,...c.tags,...c.details.flat()].join(' ')));
     assert(['kkomwang','marorong'].includes(c.id)||c.sources.length);
     assert(c.date===null||/^\d{4}-\d{2}-\d{2}$/.test(c.date));
@@ -50,7 +50,8 @@ test('color variants share one character introduction, without changing the indi
       const variant=byId(id);assert.equal(variant.description,base.description);assert.deepEqual(variant.details,base.details);assert.notEqual(variant.name,base.name);
     }
   }
-  assert.deepEqual(Array.from(byId('kkomwang').details),[]);assert.equal(byId('kkomwang').description,'');assert.equal(byId('kkomwang').tagline,'');
+  assert.deepEqual(Array.from(byId('kkomwang').details),[]);assert.match(byId('kkomwang').description,/쇼츠 콘텐츠 활성화/);assert.match(byId('kkomwang').tagline,/쇼츠/);
+  assert.match(byId('ae').description,/개백순/);assert(byId('ae').tags.includes('개백순'));
 });
 test('representative official videos remain attached to character copy as internal references',()=>{
   const expected={hakka:['hakka','pianoman'],lena:['hakka'],kokoa:['kokoa'],devil:['devil'],hina:['hina','hamsterAdventure','hamsterMeal'],real:['real'],'baby-shark':['babyShark']};
@@ -73,11 +74,18 @@ test('portrait arrows navigate the matching list and synchronize roster pages',a
   click({maStep:'1'});assert.equal(name(),'하카');assert.deepEqual(rosterIds(),expectedIds('classic'));assert.equal(page(),'2 / 3 페이지 · 클래식');click({maStep:'1'});assert.equal(name(),'마로롱');assert.deepEqual(rosterIds(),expectedIds('mascot'));assert.equal(page(),'3 / 3 페이지 · 마스코트');click({maStep:'-1'});
   for(const width of [1000,400,250,1450]){root.querySelector('.ma-roster-grid').clientWidth=width;root.clientWidth=width+100;handlers.get('resize')();assert.deepEqual(rosterIds(),expectedIds('classic'));assert.equal(name(),'하카');}
   click({maStep:'-1'});assert.equal(name(),'유정');assert.deepEqual(rosterIds(),expectedIds('jeong'));
+  click({maStep:'-1'});assert.equal(name(),'마로롱');assert.equal(page(),'3 / 3 페이지 · 마스코트');
+  click({maStep:'1'});assert.equal(name(),'유정');assert.equal(page(),'1 / 3 페이지 · 정 시리즈');
+  click({maStep:'1'});click({maCharacter:'baby-kuma'});step(1);assert.equal(name(),'마로롱');assert.equal(page(),'3 / 3 페이지 · 마스코트');
+  step(1);assert.equal(name(),'유정');assert.equal(page(),'1 / 3 페이지 · 정 시리즈');
   step(1);assert.equal(name(),'다정');step(-1);assert.equal(name(),'유정');step(-1);assert.equal(name(),'마로롱');assert.equal(page(),'3 / 3 페이지 · 마스코트');step(1);assert.equal(name(),'유정');assert.equal(page(),'1 / 3 페이지 · 정 시리즈');
   click({maCharacter:'mi-gold'});step(1);assert.equal(name(),'하카');assert.deepEqual(rosterIds(),expectedIds('classic'));step(-1);assert.equal(name(),'금미정');assert.deepEqual(rosterIds(),expectedIds('jeong'));click({maCharacter:'yoo'});
-  const seen=[];for(let i=0;i<28;i++){seen.push(name());const markup=root.querySelector('.ma-stage').innerHTML;const entry=entries.find(c=>c.name===name());assert(!/미확인|확인되지|기록돼|기록되어|추정|불명/.test(markup));if(entry.date)assert(markup.includes(`<dt>${entry.dateLabel}</dt><dd>${entry.date.replaceAll('-','.')}</dd>`));else assert.deepEqual(Array.from(markup.matchAll(/<dt>([^<]*)<\/dt>/g),m=>m[1]),['분류']);if(name()==='꼬뫙')assert(!markup.includes('ma-desc')&&!markup.includes('ma-character-details'));step(1)}assert.equal(new Set(seen).size,28);assert.equal(name(),'유정');
+  const seen=[];for(let i=0;i<28;i++){seen.push(name());const markup=root.querySelector('.ma-stage').innerHTML;const entry=entries.find(c=>c.name===name());assert(!/미확인|확인되지|기록돼|기록되어|추정|불명/.test(markup));if(entry.date)assert(markup.includes(`<dt>${entry.dateLabel}</dt><dd>${entry.date.replaceAll('-','.')}</dd>`));else assert.deepEqual(Array.from(markup.matchAll(/<dt>([^<]*)<\/dt>/g),m=>m[1]),['분류']);if(name()==='꼬뫙'){assert(markup.includes('쇼츠 콘텐츠 활성화'));assert(!markup.includes('ma-character-details'))}step(1)}assert.equal(new Set(seen).size,28);assert.equal(name(),'유정');
   click({maFilter:'jeong'});
   assert.deepEqual(rosterIds(),expectedIds('jeong'));assert.equal(page(),'1 / 1 페이지 · 정 시리즈');
+  click({maStep:'-1'});assert.equal(name(),'마로롱');assert.equal(page(),'3 / 3 페이지 · 마스코트');
+  click({maFilter:'classic'});click({maCharacter:'baby-kuma'});step(1);assert.equal(name(),'마로롱');
+  step(1);assert.equal(name(),'유정');click({maFilter:'jeong'});
   handlers.get('input')({target:{value:'수정',matches:()=>true}});
   assert.equal(name(),'백수정');step(1);assert.equal(name(),'흑수정');step(1);assert.equal(name(),'반반수정');step(1);assert.equal(name(),'백수정');
   handlers.get('input')({target:{value:'유정',matches:()=>true}});step(1);assert.equal(name(),'유정');assert.match(root.querySelector('.ma-stage').innerHTML,/data-ma-hero-step="1"[^>]*disabled/);

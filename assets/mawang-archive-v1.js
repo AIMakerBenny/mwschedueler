@@ -16,6 +16,8 @@
   let selected=entries[0],filter='all',query='',page=0,mounted=false,profileError='',profileReady=false,uploadTarget=null;
   const normalize=s=>s.toLocaleLowerCase('ko').replace(/[\s-]+/g,'');
   const matching=()=>entries.filter(c=>(filter==='all'||filter===c.group)&&normalize([c.name,c.english,c.tagline,...c.tags].join(' ')).includes(normalize(query)));
+  // Category cards stay grouped; arrows follow one continuous archive when not searching.
+  const navigation=()=>normalize(query)?matching():entries;
   const rosterPages=(list=matching())=>['jeong','classic','mascot'].map(group=>list.filter(c=>c.group===group)).filter(items=>items.length);
   const profilePhoto=c=>profiles.get(c.id)||(c.image?.startsWith('/assets/mawang-archive-portraits/')?{url:c.image}:null);
   function pic(c,hero=false){
@@ -32,8 +34,9 @@
     root.querySelectorAll('[data-ma-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.maFilter===filter)));
     const paging=root.querySelector('.ma-pagination');
     paging.textContent=(page+1)+' / '+pages+' 페이지'+(visible.length?' · '+groupName(visible[0]):'');
-    root.querySelector('[data-ma-step="-1"]').disabled=page===0;
-    root.querySelector('[data-ma-step="1"]').disabled=page>=pages-1;
+    const canBrowse=pages>1||(!normalize(query)&&filter!=='all'&&rosterPages(entries).length>1);
+    root.querySelector('[data-ma-step="-1"]').disabled=!canBrowse;
+    root.querySelector('[data-ma-step="1"]').disabled=!canBrowse;
     grid.style.setProperty('--ma-columns',activeColumns);
     grid.dataset.rows=String(Math.ceil(visible.length/activeColumns));
     grid.dataset.pageSize=String(visible.length);
@@ -71,29 +74,45 @@
   }
   function stage(direction=0){
     const c=selected,node=root.querySelector('.ma-stage');node.style.setProperty('--ma-color',c.color);node.dataset.group=c.group;
-    const list=matching(),index=list.indexOf(c);
+    const visibleList=matching(),nav=navigation(),index=visibleList.indexOf(c),navIndex=nav.indexOf(c);
     node.hidden=index<0;if(index<0){node.innerHTML='';return;}
     node.style.setProperty('--ma-enter-x',direction<0?'-12px':direction>0?'12px':'0px');
     const dateFact=c.date&&c.dateLabel?`<div><span class="ma-fact-icon">${icon('calendar')}</span><div><dt>${escape(c.dateLabel)}</dt><dd>${escape(c.date.replaceAll('-','.'))}</dd></div></div>`:'';
-    const arrow=step=>{const target=list.length>1?list[(index+step+list.length)%list.length]:null,label=(step<0?'이전':'다음')+' 캐릭터'+(target?' · '+target.name:'');return `<button type="button" class="ma-hero-arrow" data-ma-hero-step="${step}" aria-label="${escape(label)}" ${target?'':'disabled'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${step<0?'m15 5-7 7 7 7':'m9 5 7 7-7 7'}"/></svg>${target?`<span class="ma-hero-tip">${escape(target.name)}</span>`:''}</button>`};
-    node.innerHTML=`<div class="ma-stage-art"><div class="ma-main-profile" aria-label="${escape(c.name)} 대표 프로필"></div>${arrow(-1)}${arrow(1)}<span class="ma-hero-count"><span>${String(index+1).padStart(2,'0')}</span> / ${String(list.length).padStart(2,'0')}</span></div><div class="ma-stage-info"><div class="ma-profile-panel"></div>${c.tagline?`<h3>${escape(c.tagline)}</h3>`:''}${c.description?`<p class="ma-desc">${escape(c.description)}</p>`:''}<div class="ma-tags">${c.tags.map(t=>`<span>${escape(t)}</span>`).join('')}</div><dl class="ma-facts">${dateFact}<div><span class="ma-fact-icon">${icon('layers')}</span><div><dt>분류</dt><dd>${escape(groupName(c))}</dd></div></div></dl>${c.details?.length?`<div class="ma-character-details"><h3>캐릭터 정보</h3>${c.details.map(([label,value])=>`<div><h4>${escape(label)}</h4><p>${escape(value)}</p></div>`).join('')}</div>`:''}<p class="ma-profile-message" role="status"></p></div>`;
+    const arrow=step=>{const target=nav.length>1?nav[(navIndex+step+nav.length)%nav.length]:null,label=(step<0?'이전':'다음')+' 캐릭터'+(target?' · '+target.name:'');return `<button type="button" class="ma-hero-arrow" data-ma-hero-step="${step}" aria-label="${escape(label)}" ${target?'':'disabled'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${step<0?'m15 5-7 7 7 7':'m9 5 7 7-7 7'}"/></svg>${target?`<span class="ma-hero-tip">${escape(target.name)}</span>`:''}</button>`};
+    node.innerHTML=`<div class="ma-stage-art"><div class="ma-main-profile" aria-label="${escape(c.name)} 대표 프로필"></div>${arrow(-1)}${arrow(1)}<span class="ma-hero-count"><span>${String(navIndex+1).padStart(2,'0')}</span> / ${String(nav.length).padStart(2,'0')}</span></div><div class="ma-stage-info"><div class="ma-profile-panel"></div>${c.tagline?`<h3>${escape(c.tagline)}</h3>`:''}${c.description?`<p class="ma-desc">${escape(c.description)}</p>`:''}<div class="ma-tags">${c.tags.map(t=>`<span>${escape(t)}</span>`).join('')}</div><dl class="ma-facts">${dateFact}<div><span class="ma-fact-icon">${icon('layers')}</span><div><dt>분류</dt><dd>${escape(groupName(c))}</dd></div></div></dl>${c.details?.length?`<div class="ma-character-details"><h3>캐릭터 정보</h3>${c.details.map(([label,value])=>`<div><h4>${escape(label)}</h4><p>${escape(value)}</p></div>`).join('')}</div>`:''}<p class="ma-profile-message" role="status"></p></div>`;
     profilePanel();
   }
   function stepCharacter(step){
-    const list=matching(),i=list.indexOf(selected);
+    const list=navigation(),i=list.indexOf(selected);
     if(list.length<2||i<0)return;
     choose(list[(i+step+list.length)%list.length],false,step);
     root.querySelector('[data-ma-hero-step="'+step+'"]')?.focus({preventScroll:true});
   }
   function choose(c,focus=false,direction=0){
-    if(!c)return;const list=matching(),old=list.indexOf(selected);if(c===selected){if(focus)root.querySelector('[data-ma-character="'+c.id+'"]')?.focus({preventScroll:true});return;}selected=c;
+    if(!c)return;const list=navigation(),old=list.indexOf(selected);if(c===selected){if(focus)root.querySelector('[data-ma-character="'+c.id+'"]')?.focus({preventScroll:true});return;}
+    const outsideFilter=filter!=='all'&&!normalize(query)&&c.group!==filter;
+    if(outsideFilter)filter='all';
+    selected=c;
     const move=direction||Math.sign(list.indexOf(c)-old);
     const nextPage=rosterPages().findIndex(items=>items.includes(c));
-    if(nextPage>=0&&nextPage!==page){page=nextPage;roster(move)}else root.querySelectorAll('[data-ma-character]').forEach(b=>{const active=b.dataset.maCharacter===c.id;b.classList.toggle('is-selected',active);b.setAttribute('aria-pressed',String(active))});
+    if(nextPage>=0&&(nextPage!==page||outsideFilter)){page=nextPage;roster(move)}else root.querySelectorAll('[data-ma-character]').forEach(b=>{const active=b.dataset.maCharacter===c.id;b.classList.toggle('is-selected',active);b.setAttribute('aria-pressed',String(active))});
     stage(move);if(focus)root.querySelector('[data-ma-character="'+c.id+'"]')?.focus({preventScroll:true});
   }
   function updateFilter(animate=false){const first=rosterPages()[0]||[];page=0;if(first.length&&!first.includes(selected))selected=first[0];roster(animate?1:0);stage(animate?1:0)}
-  function changePage(next){const sections=rosterPages(),old=page;page=Math.max(0,Math.min(next,sections.length-1));if(old===page)return;const visible=sections[page]||[];if(visible.length&&!visible.includes(selected))selected=visible[0];const move=Math.sign(page-old);roster(move);stage(move);}
+  function changePage(next){
+    let sections=rosterPages(),old=page;const move=Math.sign(next-old);if(!move)return;
+    if(filter!=='all'&&!normalize(query)){
+      const currentGroup=sections[old]?.[0]?.group||selected.group;
+      sections=rosterPages(entries);const from=sections.findIndex(items=>items[0]?.group===currentGroup);
+      filter='all';page=((from+move)%sections.length+sections.length)%sections.length;
+    }else{
+      if(sections.length<2)return;
+      page=((next%sections.length)+sections.length)%sections.length;
+    }
+    const visible=sections[page]||[];
+    if(visible.length&&!visible.includes(selected))selected=visible[0];
+    roster(move);stage(move);
+  }
   function normalizeProfile(p){
     if(!entries.some(c=>c.id===p?.character)||!/^\d{1,15}-[a-f0-9]{0,80}$/i.test(p?.revision||''))return null;
     return {character:p.character,url:'/media/mawang-profile/'+p.character+'?rev='+p.revision};
@@ -124,7 +143,7 @@
     root.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;if(b.dataset.maCharacter)choose(entries.find(c=>c.id===b.dataset.maCharacter));else if(b.dataset.maHeroStep!==undefined)stepCharacter(Number(b.dataset.maHeroStep));else if(b.dataset.maFilter){if(filter!==b.dataset.maFilter){filter=b.dataset.maFilter;updateFilter(true)}}else if(b.dataset.maStep!==undefined){changePage(page+Number(b.dataset.maStep));if(b.disabled)root.querySelector('[data-ma-step="'+(-Number(b.dataset.maStep))+'"]')?.focus({preventScroll:true})}else if(b.dataset.maClear!==undefined){query='';root.querySelector('.ma-search input').value='';updateFilter();root.querySelector('.ma-search input').focus()}else if(b.hasAttribute('data-ma-profile-upload')&&isAdmin()&&profileReady){uploadTarget=selected;root.querySelector('.ma-profile-input')?.click()}else if(b.hasAttribute('data-ma-profile-reset'))void changeProfile(selected,null,true)});
     root.addEventListener('change',e=>{if(e.target.matches('.ma-profile-input')){const c=uploadTarget,file=e.target.files[0];e.target.value='';uploadTarget=null;if(c&&file)void changeProfile(c,file)}});
     root.addEventListener('input',e=>{if(e.target.matches('.ma-search input')){query=e.target.value;updateFilter()}});
-    root.addEventListener('keydown',e=>{const b=e.target.closest('[data-ma-character]');if(!b||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key))return;const list=matching(),i=list.findIndex(c=>c.id===b.dataset.maCharacter),next=e.key==='Home'?0:e.key==='End'?list.length-1:i+({ArrowLeft:-1,ArrowRight:1,ArrowUp:-activeColumns,ArrowDown:activeColumns}[e.key]||0);e.preventDefault();choose(list[Math.min(list.length-1,Math.max(0,next))],true)});
+    root.addEventListener('keydown',e=>{const b=e.target.closest('[data-ma-character]');if(!b||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key))return;const list=navigation(),i=list.findIndex(c=>c.id===b.dataset.maCharacter),delta=({ArrowLeft:-1,ArrowRight:1,ArrowUp:-activeColumns,ArrowDown:activeColumns}[e.key]||0),next=e.key==='Home'?0:e.key==='End'?list.length-1:['ArrowLeft','ArrowRight'].includes(e.key)?(i+delta+list.length)%list.length:Math.min(list.length-1,Math.max(0,i+delta));e.preventDefault();choose(list[next],true)});
     let swipe=null;
     root.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&e.target.closest('.ma-stage-art')&&!e.target.closest('button'))swipe={id:e.pointerId,x:e.clientX,y:e.clientY};});
     root.addEventListener('pointerup',e=>{if(!swipe||swipe.id!==e.pointerId)return;const dx=e.clientX-swipe.x,dy=e.clientY-swipe.y;swipe=null;if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.5)stepCharacter(dx<0?1:-1);});

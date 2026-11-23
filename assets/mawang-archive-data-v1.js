@@ -49,7 +49,8 @@
       ['제작','생방송에서 아바타를 작업했다.']]],
     su:['코로나에 걸렸을 때 제작한 아바타로, 수정은 2022년 12월 10일 공개되었다. VRChat 방송에 주로 사용된 캐릭터 중 하나다.',[
       ['세 가지 스타일','백수정, 흑수정, 반반수정은 머리색을 달리한 수정의 변형으로, 동일한 캐릭터 콘셉트를 공유한다.']]],
-    ae:['은둔형 외톨이와 대인관계가 서툰 사람을 콘셉트로 제작한 아바타다. 개백수 콘셉트의 유정보다 흐트러진 외형을 표현했다. 2024년 9월 11일 생방송에서 제작을 시작했다.',[]],
+    ae:['개백순으로 유명한 정 시리즈 아바타다. 은둔형 외톨이와 대인관계가 서툰 사람을 콘셉트로 제작했으며, 개백수 콘셉트의 유정보다 흐트러진 외형을 표현했다. 2024년 9월 11일 생방송에서 제작을 시작했다.',[
+      ['별칭','개백순이라는 별칭으로 알려져 있다.']]],
     ye:['직장 생활에 지친 사람을 콘셉트로 제작한 아바타다. 시크한 인상과 다크서클이 특징이며, 초기 트위치 방송에서 자주 사용했다.',[
       ['사원증','사원증에 담긴 신입 사원 시절의 모습에는 다크서클이 없다.']]],
     'ye-new':['직장인 콘셉트 아바타 예정의 리메이크 버전이다.',[]],
@@ -87,7 +88,7 @@
     'baby-kuma':['아기상어와 쌍둥이인 작은 캐릭터다. 히나보다 키가 조금 크고, 아기상어와 마찬가지로 어른 형태도 존재한다.',[]],
     marorong:['유정이를 바탕으로 만들어진 마왕의 마스코트다. 제공된 일러스트에서는 연분홍색 머리, 고양이 귀, 커다란 파란 눈과 풍성한 꼬리를 가진 네 발 캐릭터로 표현된다.',[
       ['디자인','유정이 아바타에서 이어지는 마스코트로, 첨부된 원본 그림을 그대로 사용한다.']]],
-    kkomwang:['',[]]
+    kkomwang:['쇼츠 콘텐츠 활성화를 위해 제작한 정 시리즈의 신작 아바타다.',[]]
   };
   const profileKey=id=>id.startsWith('su-')?'su':id==='mi-gold'?'mi':id;
   const entries=[
@@ -100,7 +101,7 @@
     ['su-black','흑수정','Black Su-Jeong','jeong','#8d86c9',null,null,'수정 · 흑발 버전',['수정','흑발','VRChat','정 시리즈'],null,null,[]],
     ['su-half','반반수정','Half & Half Su-Jeong','jeong','#b2a2db',null,null,'수정 · 반반 버전',['수정','반반','VRChat','정 시리즈'],null,null,[]],
     ['so','소정','So-Jeong','jeong','#f0a3e2','2023-09-10','제작 시작','어린아이 콘셉트',['지뢰계 모티브','생방송 제작'],'Sojung.png','110d57d05b46c540677f75b5241b52e7ea458bc85371aa06d2e5539498d20855',[]],
-    ['ae','애정','Ae-Jeong','jeong','#7dc7a5','2024-09-11','제작 시작','은둔형 외톨이 콘셉트',['은둔형 외톨이','생방송 제작'],'Aejeong.png','5e1f74946bd55f8a4e7bde95d9f096e945817b7473aeede56d40f516a4051f94',[]],
+    ['ae','애정','Ae-Jeong','jeong','#7dc7a5','2024-09-11','제작 시작','개백순 · 은둔형 외톨이 콘셉트',['개백순','은둔형 외톨이','생방송 제작'],'Aejeong.png','5e1f74946bd55f8a4e7bde95d9f096e945817b7473aeede56d40f516a4051f94',[]],
     ['da','다정','Da-Jeong','jeong','#f4d58b',null,null,'밝은 미소',['밝은 분위기','웃는 표정','정 시리즈'],'Dajeong.jpg','35f8cb26e1ee34cb7d8db7bd573bc488bfb6cb5c08ae46ea4dc29acfa0e1941c',[]],
     ['ye-new','예정 리메이크','Ye-Jeong · NEW','jeong','#a5b4fc',null,null,'예정의 새로운 버전',['리메이크','예정'],'(new)예정이.png','11d3fee08109663ae488cee5f237fcadca5307f88618b510ddf534bfef235700',[]],
     ['hakka','하카','Hakka','classic','#86c8fa',null,null,'초창기 대표 캐릭터 · Piano Man',['대표 아바타','Piano Man','첫 AI 노래','외무부장관','레나'],'하카.jpg','232aa75ab6c2b84924ca55326b97478a2424f27d784a5a5a0ca4569b4860aced',['hakka','pianoman']],
@@ -117,7 +118,7 @@
     ['chibi','치비','Chibi','classic','#a8d5ef',null,null,'어린 코코',['아기코코','코코','극초기 영상'],'아기코코.jpg','5a0a03b7812726e3b597ad400ff472895d5df71dd2aedd85f006e9eb5a92889b',[]],
     ['baby-shark','아기상어','Baby Shark','classic','#6ec8ef',null,null,'쌍둥이 캐릭터',['상어','아기쿠마','쌍둥이'],'Mawang_BabyShark1.png','00dfaedebee250634a384d1c77e39bce47180676e71d83480f4c3a82c4c0dc64',['babyShark']],
     ['baby-kuma','아기쿠마','Baby Kuma','classic','#d2b28a',null,null,'쌍둥이 캐릭터',['쿠마','아기상어','쌍둥이'],'Mawang_BabyKuma1.png','00dfaedebee250634a384d1c77e39bceb627428e66b3ac5ad88586e5b7b2231d',[]],
-    ['kkomwang','꼬뫙','Kkomwang','jeong','#bca7ea',null,null,'',['꼬뫙','신작','정 시리즈'],null,null,[]],
+    ['kkomwang','꼬뫙','Kkomwang','jeong','#bca7ea',null,null,'쇼츠 활성화를 위해 제작',['꼬뫙','신작','쇼츠','정 시리즈'],null,null,[]],
     ['marorong','마로롱','Marorong','mascot','#f1a6c1',null,null,'유정이를 바탕으로 한 마스코트',['마스코트','유정','고양이 귀','파란 눈'],null,null,[]]
   ].sort((a,b)=>order.indexOf(a[0])-order.indexOf(b[0])).map(([id,name,english,group,color,date,dateLabel,tagline,tags,imageName,imageId,media],index)=>Object.freeze({
     id,name,english,group,color,date,dateLabel,tagline,description:profiles[profileKey(id)][0],tags,imageName,
