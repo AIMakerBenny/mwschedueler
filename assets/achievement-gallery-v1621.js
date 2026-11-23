@@ -85,8 +85,7 @@ function makeTile(card){
     button.style.removeProperty('--ach-light-y');
   };
   button.addEventListener('pointermove',event=>{
-    if(event.pointerType!=='mouse'||document.documentElement.dataset.mwsMotion==='reduced'
-      ||!matchMedia('(hover:hover) and (pointer:fine)').matches)return;
+    if(event.pointerType!=='mouse'||document.documentElement.dataset.mwsMotion==='reduced')return;
     const rect=button.getBoundingClientRect();
     if(!rect.width||!rect.height)return;
     tiltCoords={
