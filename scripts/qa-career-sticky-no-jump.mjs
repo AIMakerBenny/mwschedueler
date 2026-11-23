@@ -126,7 +126,20 @@ try{
       &&e.getBoundingClientRect().top<innerHeight*.58;
   },{},{timeout:6500});
   const jumped=await page.evaluate(measure);
-  assert(jumped.sticky==='sticky'&&jumped.barPosition==='relative',JSON.stringify(jumped));
+  const layout=await page.evaluate(()=>{
+    const panel=document.querySelector('.cv-panel');
+    const host=panel.querySelector('.cv-bar-host');
+    const chain=[];
+    for(let el=host;el;el=el.parentElement){
+      const c=getComputedStyle(el),r=el.getBoundingClientRect();
+      chain.push({node:el.tagName.toLowerCase()+(el.id?'#'+el.id:'')+(el.className&&typeof el.className==='string'?'.'+el.className.split(/\\s+/).join('.'):''),top:r.top,bottom:r.bottom,height:r.height,position:c.position,overflowX:c.overflowX,overflowY:c.overflowY,contain:c.contain,transform:c.transform});
+    }
+    return chain;
+  });
+  console.log('TIMELINE_DEEP_STICKY_DEBUG',width,JSON.stringify({jumped,layout}));
+  assert(jumped.sticky==='sticky'&&jumped.barPosition==='relative'
+    &&jumped.barTop>=-2&&jumped.barTop<=8,
+    'Year bar vanished during deep scroll: '+JSON.stringify({width,jumped,layout}));
   const q=page.locator('.cv-search');
   await q.fill('굿즈');
   await delay(220);
