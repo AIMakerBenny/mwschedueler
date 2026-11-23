@@ -167,7 +167,16 @@ try{
     await page.screenshot({path:output+'/overview-'+width+'.png'});
     assert.equal(await page.locator('.cv-year[data-year="2022"] .cv-month[data-month="4"] .cv-entry').count(),7);
     const entry=page.locator('.cv-year[data-year="2024"] .cv-month[data-month="3"] .cv-entry').first();
-    await chooseYear(page,'2024');await pause(200);
+    await chooseYear(page,'2024');
+    // Wait for the native smooth navigation to reach the destination before
+    // taking card-motion samples. A fixed 200ms can catch it mid-flight.
+    await page.waitForFunction(()=>{
+      const heading=document.querySelector('.cv-year[data-year="2024"] .cv-year-heading');
+      if(!heading)return false;
+      const top=heading.getBoundingClientRect().top;
+      return top>=55&&top<Math.min(280,innerHeight*.45);
+    },{},{timeout:5000});
+    await pause(140);
     await approach(page,entry);
     const target=await position(page);
     const partial=await inspect(entry);
