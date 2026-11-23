@@ -55,6 +55,64 @@ function renderList(){
  const rows=records().sort((a,b)=>Number(countdown(a.deadline).expired)-Number(countdown(b.deadline).expired)||Date.parse(a.deadline)-Date.parse(b.deadline)),open=rows.filter(c=>!countdown(c.deadline).expired),closed=rows.filter(c=>countdown(c.deadline).expired);
  list.innerHTML=rows.length?`<div class="ca-list-intro"><div><span class="ca-eyebrow">FAN SUPPORT CENTER</span><h2>마왕의 다음 무대를 응원해 주세요</h2><p>신청 댓글의 좋아요와 순위를 한눈에 확인할 수 있습니다.</p></div><div class="ca-list-count"><strong>${open.length}</strong><span>진행 중인 콘텐츠</span></div></div>${open.length?`<div class="ca-list-label">진행 중 <span>${open.length}</span></div><div class="ca-list-grid">${open.map(card).join('')}</div>`:''}${closed.length?`<div class="ca-list-label">마감된 콘텐츠 <span>${closed.length}</span></div><div class="ca-list-grid">${closed.map(card).join('')}</div>`:''}`:`<div class="ca-empty"><span class="ca-empty-icon">${heart}</span><h3>등록된 신청 콘텐츠가 없습니다</h3><p>모집 게시글이 등록되면 마왕의 신청 댓글을 응원할 수 있습니다.</p>${isAdmin()?'<button class="ca-primary" data-ca-create>새 콘텐츠 등록</button>':''}</div>`;
 }
+
+/* Every motion is driven by an actual change in verified SOOP data.
+   When the ranking is unchanged there is no rerender or animation. */
+function animateLeaderboardChanges(movement,beforeRects,beforeBars,beforeProgress,beforeStats){
+ if(!movement?.changed||reduceMotion()||document.hidden)return;
+ let animatedRows=0;
+ detail.querySelectorAll('.ca-person[data-ca-user]').forEach(el=>{
+  const before=beforeRects?.get(el.dataset.caUser),after=el.getBoundingClientRect();
+  const delta=movement.rows.get(el.dataset.caUser);
+  if(before&&after.bottom>0&&after.top<innerHeight&&animatedRows<16){
+   const shift=before.top-after.top;
+   if(Math.abs(shift)>2&&Math.abs(shift)<innerHeight*1.75){
+    el.animate([{transform:`translate3d(0,${shift}px,0)`,opacity:.88,filter:'brightness(1.13)'},{transform:'translate3d(0,0,0)',opacity:1,filter:'brightness(1)'}],{duration:580,easing:'cubic-bezier(.2,.8,.25,1)'});
+    animatedRows++;
+   }
+  }
+  if(delta?.rankDelta||delta?.likesDelta){
+   const name=el.querySelector('.ca-person-name strong');
+   name?.animate([{color:'var(--ca-pink)'},{color:'var(--text)'}],{duration:700,easing:'ease-out'});
+   el.animate([{boxShadow:'0 0 0 1px var(--ca-pink), 0 0 24px #e9669d32'},{boxShadow:'none'}],{duration:850,easing:'ease-out'});
+  }
+  const bar=el.querySelector('.ca-mini-progress span'),oldWidth=beforeBars?.get(el.dataset.caUser);
+  if(bar&&oldWidth!=null&&oldWidth!==bar.style.width){
+   const nextWidth=bar.style.width;
+   bar.style.transition='none';bar.style.width=oldWidth;
+   requestAnimationFrame(()=>{if(!bar.isConnected)return;bar.style.transition='width 580ms cubic-bezier(.19,.78,.25,1)';bar.style.width=nextWidth});
+  }
+ });
+ const progress=detail.querySelector('.ca-comparison .ca-progress span');
+ if(progress&&beforeProgress!=null&&progress.style.width!==beforeProgress){
+  const finalWidth=progress.style.width;
+  progress.style.transition='none';progress.style.width=beforeProgress;
+  requestAnimationFrame(()=>{if(progress.isConnected){progress.style.transition='width 650ms cubic-bezier(.2,.75,.25,1)';progress.style.width=finalWidth}});
+ }
+ detail.querySelectorAll('[data-ca-stat]').forEach(el=>{
+  const oldValue=beforeStats?.get(el.dataset.caStat),targetValue=el.dataset.caValue;
+  if(oldValue==null||oldValue===''||targetValue===''||oldValue===targetValue)return;
+  const from=Number(oldValue),to=Number(targetValue);
+  if(!Number.isFinite(from)||!Number.isFinite(to))return;
+  const prefix=el.dataset.caPrefix||'',suffix=el.dataset.caSuffix||'',began=performance.now();
+  el.animate([{filter:'brightness(1.7)',transform:'translateY(3px) scale(.98)'},{filter:'brightness(1)',transform:'translateY(0) scale(1)'}],{duration:650,easing:'cubic-bezier(.2,.72,.25,1)'});
+  el.textContent=prefix+number(from)+suffix;
+  const frame=now=>{
+   if(!el.isConnected)return;
+   const p=Math.min(1,(now-began)/650),ease=1-Math.pow(1-p,3);
+   el.textContent=prefix+number(Math.round(from+(to-from)*ease))+suffix;
+   if(p<1)requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+ });
+}
+const trend=(kind,change)=>{
+ if(!Number.isFinite(change)||!change)return '';
+ const better=change>0;
+ const label=kind==='rank'?(better?'상승':'하락'):(better?'증가':'감소');
+ const amount=kind==='rank'?Math.abs(change)+'계단':(better?'+':'')+number(change);
+ return `<small class="ca-stat-trend ${better?'up':'down'}" aria-label="${kind==='rank'?'순위':'좋아요'} ${label} ${Math.abs(change)}">${kind==='rank'?(better?'↑ ':'↓ '):''}${amount}</small>`;
+};
 function renderDetail(){
  const c=current();if(!c){selected='';render();return}
  const movement=rankMotions.get(c.id)||null;rankMotions.delete(c.id);
@@ -65,7 +123,7 @@ function renderDetail(){
  const s=snapshot(c),r=rankOf(c),own=r.mawang,expired=countdown(c.deadline).expired,loading=pending.has(c.id),complete=confirmed(s,r);
  const gap=own?.likes!=null&&r.leader?Math.max(0,r.leader.likes-own.likes):null,pct=gap!==null?(r.leader.likes?Math.round(100*own.likes/r.leader.likes):100):0;
  const source=own||c.entries[0],next=r.ahead&&own?.likes!=null?r.ahead.likes-own.likes+1:null;
- const metrics=`<div class="ca-stats"><div class="ca-stat-card"><span>${heart} 받은 좋아요</span>${stat('likes',own?.likes)}<small>마왕의 신청 댓글</small></div><div class="ca-stat-card"><span>현재 순위</span>${stat('rank',r.ownRank,r.ownRank!==null&&!complete?'확인 기준 ':'','위')}<small>${s?number(r.total)+'명 중'+(complete?'':' · 일부 확인'):'댓글 조회 필요'}</small></div><div class="ca-stat-card"><span>1위와 차이</span>${stat('gap',gap)}<small>${gap===0?'현재 공동 선두 이상':'좋아요 수 차이'}</small></div></div>`;
+ const metrics=`<div class="ca-stats"><div class="ca-stat-card"><span>${heart} 받은 좋아요</span><div class="ca-stat-value">${stat('likes',own?.likes)}${trend('likes',movement?.own?.likesDelta)}</div><small>마왕의 신청 댓글</small></div><div class="ca-stat-card"><span>현재 순위</span><div class="ca-stat-value">${stat('rank',r.ownRank,r.ownRank!==null&&!complete?'확인 기준 ':'','위')}${trend('rank',movement?.own?.rankDelta)}</div><small>${s?number(r.total)+'명 중'+(complete?'':' · 일부 확인'):'댓글 조회 필요'}</small></div><div class="ca-stat-card"><span>1위와 차이</span><div class="ca-stat-value">${stat('gap',gap)}</div><small>${gap===0?'현재 공동 선두 이상':'좋아요 수 차이'}</small></div></div>`;
  const description=own?.comment?`<details class="ca-application"><summary>마왕의 신청 댓글 보기</summary><p>${esc(own.comment)}</p></details>`:'';
  const hero=`<article class="ca-hero"><div class="ca-hero-head"><div class="ca-hero-person">${avatar(own,true)}<div><span class="ca-feature-label">FEATURED APPLICANT</span><h3>마왕0216</h3><div class="ca-post-title">${own?(own.best?'BEST 댓글 · ':'')+'참가 신청 댓글':loading?'신청 댓글을 확인하고 있습니다':s?.complete?'등록된 모집 글에서 신청 댓글을 찾지 못했습니다':'신청 댓글 정보 확인 전'}</div></div></div><span class="ca-hero-mark">${heart} 마왕 응원</span></div><div class="ca-hero-body"><div class="ca-hero-data">${metrics}<div class="ca-comparison"><div><strong>${gap===null?'좋아요 비교 정보 확인 중':gap===0?'현재 확인된 댓글 중 선두입니다':`1위까지 좋아요 ${number(gap)}개 차이`}</strong><span>${gap!==null?pct+'%':''}</span></div><div class="ca-progress" role="progressbar" aria-label="선두 좋아요 대비" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></div><small>${next!=null?'바로 앞 순위 추월까지 '+number(next)+'개 · ':''}${complete?'모든 댓글 조회 완료':'확인된 댓글의 수치만 비교'}</small></div></div><div class="ca-support"><span class="ca-eyebrow">SUPPORT MAWANG</span><h4>${expired?'신청이 마감되었습니다':'여러분의 좋아요가 힘이 됩니다'}</h4><p>${own?(expired?'마왕의 신청 댓글 원문을 확인할 수 있습니다.':'마왕의 신청 댓글로 바로 이동해 좋아요를 눌러 주세요.'):'모집 글에서 신청 댓글을 확인할 수 있습니다.'}</p>${postLink(source,expired||!own?'ca-secondary':'ca-vote',own?(expired?'마왕 신청 댓글 보기':heart+' 마왕 좋아요 하러 가기'):'모집 원문 보기')}</div></div>${description}</article>`;
  const everyone=[...r.ordered,...(s?.applicants||[]).filter(e=>!r.ranks.has(e.id)).sort((a,b)=>a.userId.localeCompare(b.userId))];
