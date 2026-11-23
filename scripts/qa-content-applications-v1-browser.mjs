@@ -18,24 +18,33 @@ try{
  for(const [w,h,mobile] of [[1366,768,false],[390,844,true]]){
   await browser.navigate(pathToFileURL(file).href,w,h,mobile);
   const evalJS=expr=>browser.evaluate(expr);
-  await evalJS(`(()=>{document.querySelector('#caNewBtn').click();document.querySelector('#caTitle').value='QA 신청';document.querySelector('#caDeadline').value=toKstInput(new Date(Date.now()+90000000).toISOString());document.querySelector('#caUrls').value='https://www.sooplive.com/station/host/post/1\\nhttps://www.sooplive.com/station/host/post/2\\nhttps://www.sooplive.com/station/host/post/3';document.querySelector('#caSave').click()})()`);
+  await evalJS(`(()=>{document.querySelector('#caNewBtn').click();document.querySelector('#caTitle').value='QA 신청';document.querySelector('#caDeadline').value=toKstInput(new Date(Date.now()+90000000).toISOString());document.querySelector('.ca-author-input').value='게시자 A';document.querySelector('#caAuthorAdd').click();document.querySelectorAll('.ca-author-input')[1].value='게시자 B';document.querySelector('#caUrls').value='https://www.sooplive.com/station/host/post/1\\nhttps://www.sooplive.com/station/host/post/2\\nhttps://www.sooplive.com/station/host/post/3';document.querySelector('#caSave').click()})()`);
   await delay(150);
   const state=await evalJS(`(()=>({saved:data.contentApplications?.[0],writes,onlineSaves,reads,hero:document.querySelector('.ca-hero')?.innerText,rank:document.querySelector('.ca-ranking')?.innerText,rankLabel:document.querySelector('.ca-ranking-head')?.innerText,cta:document.querySelector('.ca-vote')?.href,overflow:document.documentElement.scrollWidth>innerWidth}))()`);
-  assert.equal(state.saved.title,'QA 신청');assert.equal(state.saved.entries.length,3);assert.equal(state.saved.entries[0].userId,'');assert.equal(state.saved.entries[2].likes,null);assert.equal(state.writes,1);assert.equal(state.onlineSaves,1);assert.equal(state.reads,4);assert.match(state.hero,/마왕0216[\s\S]*40[\s\S]*2위/);assert.match(state.hero,/1위까지 좋아요 10개 차이/);assert.match(state.rank,/다른 신청자/);assert.match(state.rank,/세번째 신청자/);assert.doesNotMatch(state.rank,/주최자|마왕0216/);assert.match(state.rankLabel,/3/);assert.equal(state.cta,'https://www.sooplive.com/station/host/post/1#comment_noti2');assert.equal(state.overflow,false); assert.equal(await evalJS("document.querySelector('.ca-person .ca-origin').href"),'https://www.sooplive.com/station/host/post/1#comment_noti3');
+  assert.equal(state.saved.title,'QA 신청');assert.deepEqual(state.saved.authors,['게시자 A','게시자 B']);assert.match(state.hero,/마왕0216/);assert.equal(state.saved.entries.length,3);assert.equal(state.saved.entries[0].userId,'');assert.equal(state.saved.entries[2].likes,null);assert.equal(state.writes,1);assert.equal(state.onlineSaves,1);assert.equal(state.reads,4);assert.match(state.hero,/마왕0216[\s\S]*40[\s\S]*2위/);assert.match(state.hero,/1위까지 좋아요 10개 차이/);assert.match(state.rank,/다른 신청자/);assert.match(state.rank,/세번째 신청자/);assert.doesNotMatch(state.rank,/주최자|마왕0216/);assert.match(state.rankLabel,/3/);assert.equal(state.cta,'https://www.sooplive.com/station/host/post/1#comment_noti2');assert.equal(state.overflow,false); assert.equal(await evalJS("document.querySelector('.ca-person .ca-origin').href"),'https://www.sooplive.com/station/host/post/1#comment_noti3');
   assert(await evalJS(`(()=>{const box=document.querySelector('.ca-countdown-panel'),time=box.querySelector('.ca-time'),deadline=box.querySelector('.ca-deadline');return box.getBoundingClientRect().width>150&&parseFloat(getComputedStyle(time).fontSize)>=25&&/남은 시간/.test(box.textContent)&&/^마감 .* KST$/.test(deadline.textContent)&&time.getBoundingClientRect().width<=box.clientWidth})()`));
   await evalJS("setTab('dashboard')");await delay(100);
   const dash=await evalJS(`(()=>({visible:!document.querySelector('#dashboardApplicationSupport').hidden,text:document.querySelector('#dashboardApplicationSupport').innerText,link:document.querySelector('.ca-dash-vote')?.href,reads,overflow:document.documentElement.scrollWidth>innerWidth}))()`);
-  assert(dash.visible);assert.match(dash.text,/QA 신청[\s\S]*마왕0216[\s\S]*40[\s\S]*2위/);assert.equal(dash.link,state.cta);assert.equal(dash.reads,4);assert.equal(dash.overflow,false);
+  assert(dash.visible);assert.match(dash.text,/게시글 작성자[\s\S]*게시자 A[\s\S]*게시자 B/);assert.match(dash.text,/QA 신청[\s\S]*마왕0216[\s\S]*40[\s\S]*2위/);assert.equal(dash.link,state.cta);assert.equal(dash.reads,4);assert.equal(dash.overflow,false);
   await evalJS("document.querySelector('[data-ca-dashboard-open]').click()");await delay(100);
   assert(await evalJS("document.querySelector('#contentApplications').classList.contains('active')&&!document.querySelector('#caDetail').hidden"));
+  assert(await evalJS("document.querySelector('[data-ca-back]').textContent.includes('목록으로')"));
+  await evalJS("document.querySelector('[data-ca-back]').click()");
+  assert(await evalJS("!document.querySelector('#caList').hidden&&document.querySelector('#caList .ca-author-line')?.textContent.includes('게시자 A')"));
+  await evalJS("document.querySelector('[data-ca-open]').click()");
+  await evalJS(`(()=>{document.querySelector('[data-ca-edit]').click();document.querySelector('#caDeadline').value=toKstInput(new Date(Date.now()+5*3600000).toISOString());document.querySelector('#caSave').click()})()`);await delay(150);
+  assert(await evalJS("document.querySelector('#caDetail .ca-state').textContent==='마감임박'&&document.querySelector('.ca-countdown-panel').classList.contains('urgent')"));
+  await evalJS("setTab('dashboard')");await delay(80);
+  assert(await evalJS("!!document.querySelector('#dashboardApplicationSupport .ca-state.urgent')"));
+  await evalJS("setTab('contentApplications')");await delay(80);
   await evalJS(`(()=>{document.querySelector('[data-ca-edit]').click();document.querySelector('#caDeadline').value=toKstInput(new Date(Date.now()-900000).toISOString());document.querySelector('#caSave').click()})()`);await delay(150);
   assert(await evalJS(`document.querySelector('#caDetail .ca-state').textContent==='만료'&&!document.querySelector('.ca-vote')&&document.querySelector('.ca-support a').href.endsWith('#comment_noti2')`));
   assert.equal(await evalJS(`document.querySelector('.ca-countdown-panel .ca-time').textContent`),'만료');
   await evalJS("setTab('dashboard')");await delay(100);assert(await evalJS("document.querySelector('#dashboardApplicationSupport').hidden"));await evalJS("setTab('contentApplications')");await delay(100);
   await evalJS(`(()=>{document.body.dataset.mwsMode='public';window.dispatchEvent(new CustomEvent('mws:app-ready'));document.querySelector('[data-ca-open]').click()})()`);await delay(100);
   const pub=await evalJS(`(()=>({newHidden:document.querySelector('#caNewBtn').hidden,edit:!!document.querySelector('[data-ca-edit]'),writes,onlineSaves,rank:document.querySelector('.ca-hero')?.innerText}))()`);
-  assert.equal(pub.newHidden,true);assert.equal(pub.edit,false);assert.equal(pub.writes,2);assert.equal(pub.onlineSaves,2);assert.match(pub.rank,/마왕0216/);
-  await evalJS(`document.querySelector('[data-ca-refresh]').click()`);await delay(150);assert.equal(await evalJS('writes'),2);
+  assert.equal(pub.newHidden,true);assert.equal(pub.edit,false);assert.equal(pub.writes,3);assert.equal(pub.onlineSaves,3);assert.match(pub.rank,/마왕0216/);
+  await evalJS(`document.querySelector('[data-ca-refresh]').click()`);await delay(150);assert.equal(await evalJS('writes'),3);
   console.log('CONTENT_APPLICATIONS_BROWSER_OK',w,h,'create, compare, expiry, read-only public, no horizontal overflow');
  }
 }finally{await browser?.close();rmSync(dir,{recursive:true,force:true})}
