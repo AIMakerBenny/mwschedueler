@@ -319,7 +319,7 @@ function ensureDetailModal(){
             <button type="button" class="achievement-detail-reset">정면 보기</button>
           </div>
         </div>
-        <aside class="achievement-detail-info">
+        <aside class="achievement-detail-info" role="region" aria-label="업적 상세 정보" tabindex="0">
           <div class="achievement-detail-kicker">ACHIEVEMENT CARD</div>
           <h2 id="achievementDetailTitle">업적</h2>
           <dl class="achievement-detail-fields">
