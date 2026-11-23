@@ -29,7 +29,7 @@ const moreSections=[
   '<section id="contacts" class="section"><div class="contact-section-tabs"><button>연락처</button></div></section>',
   applicationSection,
   '<section id="posts" class="section"><div class="posts-head"><button type="button" id="qaPostsButton">게시글 도구</button></div></section>',
-  '<section id="careerTimeline" class="section"><div class="cv-panel"><div class="cv-bar-host"><div class="cv-bar cv-pinned"><div class="cv-toolbar"><button type="button">연도 선택</button></div></div></div><div class="cv-axis">타임라인 콘텐츠</div></div></section>'
+  '<section id="careerTimeline" class="section"><div class="cv-panel"><div class="cv-bar-host"><div class="cv-bar"><div class="cv-toolbar"><button type="button">연도 선택</button></div></div></div><div class="cv-axis">타임라인 콘텐츠</div></div></section>'
 ].join('');
 const bootstrap='let data={textScale:100};'+pageScale+
   ';window.__qaActivate=function(id){document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===id));applyPageTextScalesV54()};'+
@@ -110,9 +110,9 @@ try{
         "return {style:getComputedStyle(document.querySelector('.topbar')).pointerEvents,clickable:hit===b||b.contains(hit)}})()");
       assert(click.style!=='none'&&click.clickable,JSON.stringify({width,click}));
       await browser.evaluate("window.__qaActivate('careerTimeline')");
-      const timeline=await browser.evaluate("(()=>{const bar=document.querySelector('.cv-bar.cv-pinned');"+
-        "const css=getComputedStyle(bar),head=getComputedStyle(document.querySelector('.topbar'));"+
-        "return {border:css.borderTopWidth,shadow:css.boxShadow,headerClicks:head.pointerEvents}})()");
+      const timeline=await browser.evaluate("(()=>{const bar=document.querySelector('#careerTimeline .cv-bar');"+
+        "bar.classList.add('cv-pinned');const css=getComputedStyle(bar),head=getComputedStyle(document.querySelector('.topbar'));"+
+        "const result={border:css.borderTopWidth,shadow:css.boxShadow,headerClicks:head.pointerEvents};bar.classList.remove('cv-pinned');return result})()");
       assert.equal(timeline.border,'0px',JSON.stringify({width,timeline}));
       assert.equal(timeline.shadow,'none',JSON.stringify({width,timeline}));
       assert.notEqual(timeline.headerClicks,'none',JSON.stringify({width,timeline}));
