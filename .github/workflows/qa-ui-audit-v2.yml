@@ -1,0 +1,26 @@
+name: MWS integrated UI regression QA
+on:
+  pull_request:
+    branches: [cloudflare-production]
+    paths:
+      - 'index.html'
+      - 'assets/workspace-clean-v1.css'
+      - 'assets/workspace-density-v1.css'
+      - 'assets/sidebar-compact-v1.css'
+      - 'assets/sidebar-rail-scrollbar-v1.css'
+      - 'assets/achievement-exhibition-v1.css'
+      - 'scripts/qa-ui-audit-v2-browser.mjs'
+      - '.github/workflows/qa-ui-audit-v2.yml'
+permissions:
+  contents: read
+jobs:
+  integrated-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Desktop and mobile Chromium regression
+        run: node scripts/qa-ui-audit-v2-browser.mjs
