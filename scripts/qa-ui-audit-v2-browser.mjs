@@ -32,7 +32,7 @@ const moreSections=[
   '<section id="careerTimeline" class="section"><div class="cv-bar-host"><div class="cv-bar cv-pinned"><div class="cv-toolbar"><button type="button">연도 선택</button></div></div></div></section>'
 ].join('');
 const bootstrap='let data={textScale:100};'+pageScale+
-  ';window.__qaActivate=function(id){document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===id));applyPageTextScalesV54()};'+
+  ';window.__qaActivate=function(id){document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===id));applyPageTextScalesV54()};window.__qaRoutes=[];window.setTab=id=>{window.__qaRoutes.push(id);window.__qaActivate(id)};'+
   'const qaProfile=document.createElement("div");qaProfile.className="dashboard-my-profile-v3";qaProfile.textContent="마왕 프로필";document.querySelector("#dashboardProfileSlot").append(qaProfile);';
 const fixture='<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+
   '<style>'+css+'</style><body class="mws-premium" data-theme="neon" data-resolution="fhd" data-mws-mode="admin">'+
@@ -66,6 +66,14 @@ try{
     assert(dashboardResult.emptyShown&&dashboardResult.populated,JSON.stringify({width,dashboardResult}));
     assert(dashboardResult.inViewport&&!dashboardResult.overflows&&!dashboardResult.oldHeading,JSON.stringify({width,dashboardResult}));
     if(width>760)assert(dashboardResult.sameRow,JSON.stringify({width,dashboardResult}));
+    const metricRoutes=await browser.evaluate("(()=>{const b=[...document.querySelectorAll('#dashboard .dashboard-kpi-grid-local > button')];"+
+      "const labels=b.map(x=>x.getAttribute('aria-label')||x.textContent.trim());"+
+      "const allKeyboard=b.every(x=>x.tagName==='BUTTON'&&x.type==='button');"+
+      "const ids=['nextStreamKpi','weekCountKpi','contactCountKpi'],routes=[];"+
+      "for(const id of ids){window.__qaActivate('dashboard');const x=document.getElementById(id).closest('button');x.click();routes.push(window.__qaRoutes.at(-1));}"+
+      "window.__qaActivate('dashboard');return {count:b.length,routes,allKeyboard,labels}})()");
+    assert(metricRoutes.count===6&&metricRoutes.allKeyboard,JSON.stringify({width,metricRoutes}));
+    assert.deepEqual(metricRoutes.routes,['calendar','calendar','contacts'],JSON.stringify({width,metricRoutes}));
     await browser.evaluate("window.__qaActivate('contacts')");
     const contacts=await browser.evaluate("(()=>({heading:getComputedStyle(document.querySelector('.top-left')).display,clock:getComputedStyle(document.querySelector('.clock')).display}))()");
     assert.equal(contacts.heading,'none',JSON.stringify({width,contacts}));
