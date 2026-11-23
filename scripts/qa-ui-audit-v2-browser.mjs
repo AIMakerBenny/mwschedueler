@@ -20,6 +20,7 @@ const inline=[...html.matchAll(/<style(?:\s[^>]*)?>([\s\S]*?)<\/style>/gi)].map(
 const css=[
   'app-core.css','mawang-premium-v1621.css','ui-frame-presets.css',
   'sidebar-rail-scrollbar-v1.css','sidebar-stable-v1.css','career-timeline.css',
+  'topbar-context-v1.css','mawang-archive-header-v1.css',
   'content-applications-v1.css','workspace-clean-v1.css','workspace-density-v1.css','sidebar-compact-v1.css','visual-experience-v1.css'
 ].map(p=>read('assets/'+p)).join('\n')+'\n'+inline;
 const pageScale=slice("const PAGE_SCALE_KEY='mws_page_text_scales_v54';",
@@ -62,7 +63,13 @@ try{
       "oldHeading:!!$('.dashboard-overview-heading')};})()");
     const visual=await browser.evaluate("(()=>{const tile=document.querySelector('#dashboard .dashboard-kpi-grid-local>.card'),style=getComputedStyle(tile),rect=tile.getBoundingClientRect();return {shadow:style.boxShadow,background:style.backgroundImage,radius:style.borderRadius,rect:[rect.x,rect.y,rect.width,rect.height]}})()");
     assert(visual.shadow!=='none'&&visual.background.includes('gradient')&&parseFloat(visual.radius)>=10,JSON.stringify({width,visual}));
-    if(process.env.MWS_VISUAL_CAPTURE==='1'&&[1366,1920,2560,390].includes(width)){mkdirSync('visual-qa',{recursive:true});writeFileSync('visual-qa/dashboard-'+width+'.jpg',Buffer.from(await browser.captureScreenshot(),'base64'));}
+    // This is a component fixture, not an actual application screenshot. The
+    // shared topbar includes archive-only controls which must be hidden outside
+    // the archive. A missing header stylesheet previously produced giant black
+    // SVGs and the wrong title while the old assertions still passed.
+    const fixtureIntegrity=await browser.evaluate("(()=>{const visible=e=>!!e&&getComputedStyle(e).display!=='none'&&e.getBoundingClientRect().width>0;const kicker=document.querySelector('.mws-archive-kicker'),wiki=document.querySelector('#mwsArchiveWikiLink'),svg=wiki?.querySelector('svg'),title=document.querySelector('#pageTitle'),grid=document.querySelector('.dashboard-kpi-grid-local');return {dashboardActive:document.querySelector('#dashboard')?.classList.contains('active'),archiveKickerVisible:visible(kicker),archiveWikiVisible:visible(wiki),wikiSvgWidth:svg?.getBoundingClientRect().width,headerHeight:document.querySelector('.topbar')?.getBoundingClientRect().height,title:title?.textContent?.trim(),metricWidth:grid?.getBoundingClientRect().width}})()");
+    assert(fixtureIntegrity.dashboardActive&&fixtureIntegrity.title==='캘린더'&&!fixtureIntegrity.archiveKickerVisible&&!fixtureIntegrity.archiveWikiVisible&&fixtureIntegrity.wikiSvgWidth<=20&&fixtureIntegrity.headerHeight<100&&fixtureIntegrity.metricWidth>100,'Invalid visual fixture, do not capture or approve screenshots: '+JSON.stringify({width,fixtureIntegrity}));
+    if(process.env.MWS_VISUAL_CAPTURE==='1'&&[1366,1920,2560,390].includes(width)){mkdirSync('visual-fixture',{recursive:true});writeFileSync('visual-fixture/dashboard-'+width+'.jpg',Buffer.from(await browser.captureScreenshot(),'base64'));}
     if(width===1366){
       const valueChange=await browser.evaluate("(()=>{const v=document.querySelector('#nextStreamKpi');v.textContent='시각 테스트 1';return true})()");
       await sleep(50);
