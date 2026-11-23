@@ -1,0 +1,30 @@
+name: Browser cache safety and archive freshness QA
+
+on:
+  pull_request:
+    paths:
+      - 'src/mawang-archive-gallery-v1.js'
+      - 'assets/mawang-archive-v1.js'
+      - 'assets/cloud-v5.5.js'
+      - 'scripts/qa-browser-cache-safe.test.mjs'
+      - '.github/workflows/qa-browser-cache-safe.yml'
+  push:
+    paths:
+      - 'src/mawang-archive-gallery-v1.js'
+      - 'assets/mawang-archive-v1.js'
+      - 'assets/cloud-v5.5.js'
+      - 'scripts/qa-browser-cache-safe.test.mjs'
+      - '.github/workflows/qa-browser-cache-safe.yml'
+jobs:
+  cache-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Storage, ETag, immutable version, server authorization QA
+        run: node --test scripts/qa-browser-cache-safe.test.mjs
+      - name: Existing archive and profile backend contract
+        run: node --test scripts/qa-mawang-archive-v1.test.mjs
