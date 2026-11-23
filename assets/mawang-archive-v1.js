@@ -40,7 +40,8 @@
     root.querySelector('[data-ma-step="-1"]').disabled=!canBrowse;
     root.querySelector('[data-ma-step="1"]').disabled=!canBrowse;
     grid.style.setProperty('--ma-columns',activeColumns);
-    grid.dataset.rows=String(Math.ceil(visible.length/activeColumns));
+    // A one-card mascot page follows the same thumbnail-height tier as 13-14 card pages.
+    grid.dataset.rows=String(Math.ceil(referenceCount/activeColumns));
     grid.dataset.pageSize=String(visible.length);
     root.querySelector('.ma-search-clear').hidden=!query;
   }
