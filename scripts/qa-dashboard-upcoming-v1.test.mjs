@@ -23,7 +23,7 @@ function setup(initial){
   let now=initial,renderCount=0,active=true,hidden=false;
   class FakeDate extends Date{constructor(...args){super(...(args.length?args:[now]))}static now(){return now}}
   const nodes=new Map();
-  const document={get hidden(){return hidden},getElementById(id){if(!nodes.has(id))nodes.set(id,{textContent:'',innerHTML:'',style:{},classList:{contains:()=>active,remove(){}}});return nodes.get(id)},querySelectorAll(){return []}};
+  const document={get hidden(){return hidden},getElementById(id){if(!nodes.has(id))nodes.set(id,{textContent:'',innerHTML:'',dataset:{},style:{},classList:{contains:()=>active,remove(){}},setAttribute(key,value){if(key==='data-upcoming-count')this.dataset.upcomingCount=String(value)}});return nodes.get(id)},querySelectorAll(){return []}};
   const ctx=vm.createContext({Date:FakeDate,Intl,data:{events,contacts:[]},document,window:{},console,
     safeRenderView(_name,fn){renderCount++;return fn()},dashboardMode:'overview',renderReminders(){},
     formatTimeKorean:x=>x,shortDateWeekday:x=>x,dashboardUpcomingCardHTML:e=>e.id,
@@ -41,6 +41,7 @@ test('only future starts remain; unknown time stays visible and KST is authorita
   x.run('renderDashboard();renderDashboardDetail("running")');
   assert.equal(x.nodes.get('nextStreamCard').innerHTML,'next');
   assert(!x.nodes.get('upcomingDashboard').innerHTML.includes('running'));
+  assert.equal(x.nodes.get('dashboard').dataset.upcomingCount,String(x.run('upcomingEventsAtV1(Date.now()).length')));
 });
 test('open dashboard updates at start boundary, clears stale pin, never renders each second',()=>{
   const x=setup(time('2026-11-21T12:59:58'));
@@ -52,4 +53,6 @@ test('open dashboard updates at start boundary, clears stale pin, never renders 
   x.hide(true);x.advance(time('2026-11-22T00:00:00'));x.run('tickClock()');assert.equal(x.renders,1);
   x.hide(false);x.run('tickClock()');assert.equal(x.renders,2);
   assert.equal(x.nodes.get('nextStreamCard').innerHTML,'tbd-tomorrow');
+  x.advance(time('2026-11-24T12:00:00'));x.run('renderDashboard()');
+  assert.equal(x.nodes.get('dashboard').dataset.upcomingCount,'0');
 });

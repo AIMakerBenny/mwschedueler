@@ -267,9 +267,9 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
 
   <div id="dashboardOverviewMode" class="dashboard-mode-panel active">
     <div class="dashboard-kpi-grid-local">
-      <div class="card"><div class="kpi">다음 컨텐츠<strong id="nextStreamKpi">없음</strong></div></div>
-      <div class="card"><div class="kpi">7일 이내 컨텐츠<strong id="weekCountKpi">0</strong></div></div>
-      <div class="card"><div class="kpi">연락처<strong id="contactCountKpi">0</strong></div></div>
+      <button type="button" class="card local-kpi-link" onclick="setTab('calendar')" aria-label="다음 컨텐츠를 캘린더에서 확인"><div class="kpi">다음 컨텐츠<strong id="nextStreamKpi">없음</strong></div></button>
+      <button type="button" class="card local-kpi-link" onclick="setTab('calendar')" aria-label="7일 이내 컨텐츠를 캘린더에서 확인"><div class="kpi">7일 이내 컨텐츠<strong id="weekCountKpi">0</strong></div></button>
+      <button type="button" class="card local-kpi-link" onclick="setTab('contacts')" aria-label="연락처 화면 열기"><div class="kpi">연락처<strong id="contactCountKpi">0</strong></div></button>
       <button type="button" class="card local-kpi-link" onclick="setTab('posts')"><div class="kpi">게시글 신청<strong id="dashboardPostApplicantsLocal">0</strong></div></button>
       <button type="button" class="card local-kpi-link" onclick="setTab('sniper');setTimeout(()=>setSniperView('recent'),0)"><div class="kpi">최근 30일 합방<strong id="dashboardRecentCollabLocal">0회</strong></div></button>
       <button type="button" class="card local-kpi-link" onclick="setTab('targets')"><div class="kpi">저격 리스트<strong id="dashboardTargetCountLocal">0명</strong></div></button>
