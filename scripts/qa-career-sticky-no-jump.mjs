@@ -91,6 +91,7 @@ try{
     await delay(95);
     const sample=await page.evaluate(measure);
     samples.push(sample);
+    if(capture&&top===threshold+90)await page.screenshot({path:path.join(output,'pinned-'+width+'.png')});
     assert(sample.scroll>=0&&sample.sticky==='sticky'&&sample.barPosition==='relative'&&!sample.forcedClass
       &&sample.hostInlineHeight===''&&sample.dynamicWidth===''&&sample.overflow<2,
       'Layout switching has returned: '+JSON.stringify({width,sample}));
@@ -140,6 +141,7 @@ try{
   assert(jumped.sticky==='sticky'&&jumped.barPosition==='relative'
     &&jumped.barTop>=-2&&jumped.barTop<=8,
     'Year bar vanished during deep scroll: '+JSON.stringify({width,jumped,layout}));
+  if(capture)await page.screenshot({path:path.join(output,'deep-'+width+'.png')});
   const q=page.locator('.cv-search');
   await q.fill('굿즈');
   await delay(220);
