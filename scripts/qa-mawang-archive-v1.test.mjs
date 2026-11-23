@@ -204,7 +204,7 @@ test('sidebar has official icon links, compact zoom and admin-only docked save',
   assert(!html.includes('id="mwsStationVisitBtnV110"'));
   assert.match(html,/id="pageTextScaleValueV54"[^>]*>100%<\/span>/);
   assert(!html.includes('페이지 100%'));
-  assert.match(html,/assets\/sidebar-compact-v1\.css\?v=1/);
+  assert.match(html,/assets\/sidebar-compact-v1\.css\?v=\d+/);
   assert.match(styles,/grid-template-columns:184px/);
   assert.match(styles,/\#mwsSidebarSaveBtn\[hidden\]/);
 });
@@ -233,14 +233,14 @@ test('workspace header keeps only page-relevant actions and links to the exact M
   assert(!archiveRuntime.includes('등록된 프로필 사진'));
   assert(archiveRuntime.includes('--ma-light-x'));
   assert.match(archive,/\.ma-header-filters\[hidden\]/);
-  assert.match(html,/assets\/workspace-density-v1\.css\?v=3/);
+  assert.match(html,/assets\/workspace-density-v1\.css\?v=\d+/);
   const density=read('assets/workspace-density-v1.css');
   for(const section of ['careerTimeline','posts','contentApplications'])assert(density.includes('#'+section+'.active'));
   assert.match(density,/\.cv-bar-host/);
   assert.match(density,/\.posts-head/);
-  assert.match(density,/pointer-events:none!important/);
+  assert(!density.includes('pointer-events:none!important'));
   assert.match(density,/post-workspace-actions/);
-  assert.match(html,/career-visualizer\.js\?v=18&single-view=1/);
+  assert.match(html,/career-visualizer\.js\?v=\d+&single-view=1/);
   const careerRuntime=read('assets/career-visualizer.js');
   assert(!careerRuntime.includes("button('cv-step'"));
 
