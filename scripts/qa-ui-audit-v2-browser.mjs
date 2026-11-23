@@ -31,7 +31,7 @@ const moreSections=[
 ].join('');
 const bootstrap='let data={textScale:100};'+pageScale+
   ';window.__qaActivate=function(id){document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===id));applyPageTextScalesV54()};'+
-  'document.querySelector("#dashboardProfileSlot").innerHTML="<div class=\"dashboard-my-profile-v3\">마왕 프로필</div>";';
+  'const qaProfile=document.createElement("div");qaProfile.className="dashboard-my-profile-v3";qaProfile.textContent="마왕 프로필";document.querySelector("#dashboardProfileSlot").append(qaProfile);';
 const fixture='<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+
   '<style>'+css+'</style><body class="mws-premium" data-theme="neon" data-resolution="fhd" data-mws-mode="admin">'+
   '<div class="app">'+aside+'<main class="main">'+header+dashboard+moreSections+'</main></div>'+
@@ -54,7 +54,7 @@ try{
       "d.dataset.upcomingCount='3';"+
       "const populated=getComputedStyle(grid).display!=='none'&&getComputedStyle(empty).display==='none';"+
       "const inViewport=[toolbar,tabs,profile,metrics,grid].every(e=>r(e).left>=-2&&r(e).right<=innerWidth+2);"+
-      "return {toolbar:!!toolbar,tabs:tabs.querySelectorAll('button').length,profiles:document.querySelectorAll('#dashboardProfileSlot').length,"+
+      "return {toolbar:!!toolbar,tabs:tabs.querySelectorAll('button').length,profiles:document.querySelectorAll('#dashboardProfileSlot .dashboard-my-profile-v3').length,"+
       "emptyShown,populated,inViewport,overflows:document.documentElement.scrollWidth>innerWidth+3,"+
       "sameRow:Math.abs((r(tabs).top+r(tabs).bottom)/2-(r(profile).top+r(profile).bottom)/2)<20,positions:{tabs:{top:r(tabs).top,height:r(tabs).height},profile:{top:r(profile).top,height:r(profile).height},toolbar:{top:r(toolbar).top,height:r(toolbar).height}},metricCount:metrics.querySelectorAll(':scope > .card').length,"+
       "oldHeading:!!$('.dashboard-overview-heading')};})()");
