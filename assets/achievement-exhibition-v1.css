@@ -415,7 +415,7 @@ html[data-mws-motion="reduced"] #achievements .achievement-card-open::after{disp
 #achievements .achievement-card-open.is-pointer-active::after{opacity:1}
 #achievements .achievement-card-open.is-pointer-active .achievement-card-caption{transform:translate3d(0,-2px,0)}
 #achievements .achievement-card-open.is-pointer-active .achievement-card-peek{
-  visibility:visible;opacity:1;transform:translate3d(0,0,0);
+  display:flex;visibility:visible;opacity:1;transform:translate3d(0,0,0);
 }
 #achievements .achievement-card-open.is-pointer-active:active{
   transform:perspective(1040px) translate3d(0,-2px,0) scale(.995)!important;
