@@ -277,3 +277,151 @@ html[data-mws-motion="reduced"] #dashboardApplicationSupport .ca-state.urgent{an
 #contentApplications .ca-author-inputs{display:grid;gap:8px}
 #contentApplications .ca-author-field{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px}
 #contentApplications .ca-author-hint{color:var(--muted);font-size:11px;line-height:1.5}
+
+/* Application leaderboard motion system: calm at rest, expressive only on change. */
+#contentApplications{
+  --ca-live-ink:color-mix(in srgb,var(--text) 92%,white);
+  --ca-live-edge:color-mix(in srgb,var(--ca-pink) 54%,var(--border));
+}
+#contentApplications .ca-hero{
+  background:radial-gradient(ellipse at 5% 0%,color-mix(in srgb,var(--ca-pink) 16%,transparent),transparent 62%),
+             linear-gradient(145deg,color-mix(in srgb,var(--ca-pink) 5%,var(--ca-surface)),var(--ca-surface) 65%)!important;
+  border-color:color-mix(in srgb,var(--ca-pink) 48%,var(--border))!important;
+  box-shadow:0 14px 35px #00000020,inset 0 1px 0 #ffffff15!important;
+}
+#contentApplications .ca-stat-card{
+  position:relative;isolation:isolate;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--input) 82%,var(--ca-pink)),var(--input) 78%)!important;
+  box-shadow:inset 0 1px 0 #ffffff0c,0 5px 14px #0000000e;
+  transition:transform 220ms cubic-bezier(.2,.7,.2,1),box-shadow 220ms ease,border-color 220ms ease;
+}
+#contentApplications .ca-stat-card:nth-child(2){
+  background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 7%,var(--input)),var(--input) 80%)!important;
+}
+#contentApplications .ca-stat-card:hover{
+  transform:translateY(-2px);
+  box-shadow:inset 0 1px 0 #ffffff0e,0 10px 20px #00000022;
+  border-color:color-mix(in srgb,var(--ca-pink) 35%,var(--border));
+}
+#contentApplications .ca-stat-value{
+  display:flex;flex-wrap:wrap;align-items:center;gap:5px 10px;min-height:29px;min-width:0;
+}
+#contentApplications .ca-stat-value>strong{white-space:nowrap;transform-origin:bottom left;font-variant-numeric:tabular-nums}
+#contentApplications .ca-stat-trend{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:3px 7px;min-height:19px;border-radius:7px;
+  font-size:11px!important;line-height:1.2;font-weight:850;white-space:nowrap;
+  border:1px solid currentColor;animation:ca-stat-appear 520ms cubic-bezier(.2,.8,.24,1) both;
+}
+#contentApplications .ca-stat-trend.up{color:#55d9af;background:#55d9af15}
+#contentApplications .ca-stat-trend.down{color:#ef9aab;background:#ef9aab15}
+@keyframes ca-stat-appear{
+  from{opacity:.25;transform:translateY(6px) scale(.94)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+#contentApplications .ca-ranking-head{
+  align-items:center;gap:10px 20px;margin-top:26px!important;
+}
+#contentApplications .ca-ranking-tools{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;min-width:0}
+#contentApplications .ca-my-rank-jump{
+  display:inline-flex;align-items:center;justify-content:center;min-height:36px;
+  padding:8px 12px;border-radius:10px;white-space:nowrap;
+  border:1px solid var(--ca-live-edge);background:color-mix(in srgb,var(--ca-pink) 10%,var(--input));
+  box-shadow:inset 0 1px 0 #ffffff0c;
+  color:var(--text);font-size:12px;font-weight:750;
+  transition:transform 180ms ease,box-shadow 180ms ease,background-color 180ms ease;
+}
+#contentApplications .ca-my-rank-jump:hover{
+  transform:translateY(-2px);
+  background:color-mix(in srgb,var(--ca-pink) 20%,var(--input));
+  box-shadow:0 6px 16px #00000024;
+}
+#contentApplications .ca-ranking{gap:10px!important}
+#contentApplications .ca-person{
+  position:relative;isolation:isolate;
+  min-height:80px;border-radius:14px;
+  background:linear-gradient(115deg,color-mix(in srgb,var(--panel,var(--input)) 92%,var(--accent)),var(--ca-surface) 76%)!important;
+  box-shadow:0 4px 14px #00000013,inset 0 1px 0 #ffffff0a;
+  border-color:color-mix(in srgb,var(--text) 8%,var(--border))!important;
+  transition:transform 210ms cubic-bezier(.2,.8,.25,1),box-shadow 210ms ease,border-color 210ms ease,background-color 210ms ease!important;
+}
+#contentApplications .ca-person:hover{
+  transform:translateY(-2px);
+  box-shadow:0 11px 25px #00000028,inset 0 1px 0 #ffffff12!important;
+  border-color:color-mix(in srgb,var(--accent) 50%,var(--border))!important;
+}
+#contentApplications .ca-person.is-mawang{
+  border:1.5px solid var(--ca-live-edge)!important;
+  background:radial-gradient(ellipse at 2% 50%,color-mix(in srgb,var(--ca-pink) 15%,transparent),transparent 68%),
+             linear-gradient(108deg,color-mix(in srgb,var(--ca-pink) 9%,var(--ca-surface)),var(--ca-surface) 82%)!important;
+  box-shadow:0 8px 28px #00000022,inset 0 1px 0 color-mix(in srgb,var(--ca-pink) 32%,transparent)!important;
+}
+#contentApplications .ca-person.is-mawang::before{
+  content:"";position:absolute;left:-1px;top:13px;bottom:13px;width:4px;
+  border-radius:0 5px 5px 0;
+  background:linear-gradient(180deg,#ffabc8,var(--ca-pink),#a55aff);
+  box-shadow:0 0 14px color-mix(in srgb,var(--ca-pink) 50%,transparent);
+  pointer-events:none;
+}
+#contentApplications .ca-person.is-mawang .ca-rank{color:var(--ca-pink)!important}
+#contentApplications .ca-person.is-mawang .ca-avatar{
+  border-color:var(--ca-pink);box-shadow:0 0 0 3px color-mix(in srgb,var(--ca-pink) 15%,transparent);
+}
+#contentApplications .ca-person.is-mawang .ca-person-name>strong{color:var(--ca-live-ink)}
+#contentApplications .ca-person[data-ca-own]:focus{outline:2px solid var(--ca-pink);outline-offset:3px}
+#contentApplications .ca-own-label{
+  display:inline-flex;align-items:center;vertical-align:middle;margin-inline-start:4px;
+  border:1px solid color-mix(in srgb,var(--ca-pink) 50%,transparent);
+  background:color-mix(in srgb,var(--ca-pink) 17%,var(--input));
+  color:var(--text);border-radius:6px;padding:3px 6px;
+  font-size:10px;font-weight:850;letter-spacing:.04em;white-space:nowrap;
+}
+#contentApplications .ca-rank{
+  display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;
+  white-space:nowrap;font-variant-numeric:tabular-nums;
+}
+#contentApplications .ca-rank-change{
+  font-size:10px;line-height:1;letter-spacing:0;font-weight:850;
+  border-radius:6px;padding:3px 5px;animation:ca-stat-appear 480ms ease-out both;
+}
+#contentApplications .ca-rank-change.up,
+#contentApplications .ca-like-change.up{color:#66dbb9;background:#66dbb915}
+#contentApplications .ca-rank-change.down,
+#contentApplications .ca-like-change.down{color:#f0a3b0;background:#f0a3b015}
+#contentApplications .ca-person-likes{flex-wrap:wrap;gap:4px 6px}
+#contentApplications .ca-like-change{
+  font-size:10px;font-weight:850;border-radius:6px;padding:3px 5px;white-space:nowrap;
+  animation:ca-stat-appear 480ms ease-out both;
+}
+#contentApplications .ca-mini-progress span,
+#contentApplications .ca-progress span{transition:width 580ms cubic-bezier(.2,.75,.25,1)}
+@media(max-width:700px){
+  #contentApplications .ca-ranking-head{align-items:flex-start}
+  #contentApplications .ca-ranking-tools{width:100%;justify-content:space-between}
+  #contentApplications .ca-person{min-height:76px}
+}
+@media(max-width:520px){
+  #contentApplications .ca-person{
+    grid-template-columns:31px 38px minmax(0,1fr) auto!important;gap:8px!important;
+    padding:11px 10px!important;
+  }
+  #contentApplications .ca-person-likes{max-width:94px;justify-content:flex-end}
+  #contentApplications .ca-person-likes strong{font-size:13px!important}
+  #contentApplications .ca-like-change{margin-left:auto}
+  #contentApplications .ca-person-name>strong{font-size:13px!important}
+  #contentApplications .ca-own-label{font-size:9px;padding:2px 4px}
+  #contentApplications .ca-ranking-tools{align-items:flex-start}
+  #contentApplications .ca-my-rank-jump{min-height:34px;font-size:11px}
+  #contentApplications .ca-row-details{grid-column:3/-1}
+}
+@media(prefers-reduced-motion:reduce){
+  #contentApplications .ca-person,#contentApplications .ca-stat-card,
+  #contentApplications .ca-my-rank-jump,
+  #contentApplications .ca-rank-change,#contentApplications .ca-like-change,
+  #contentApplications .ca-stat-trend{animation:none!important;transition:none!important}
+}
+html[data-mws-motion="reduced"] #contentApplications .ca-person,
+html[data-mws-motion="reduced"] #contentApplications .ca-stat-card,
+html[data-mws-motion="reduced"] #contentApplications .ca-my-rank-jump,
+html[data-mws-motion="reduced"] #contentApplications .ca-rank-change,
+html[data-mws-motion="reduced"] #contentApplications .ca-stat-trend{animation:none!important;transition:none!important}
