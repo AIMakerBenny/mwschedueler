@@ -24,3 +24,19 @@ jobs:
           node-version: '24'
       - name: Desktop and mobile Chromium regression
         run: node scripts/qa-ui-audit-v2-browser.mjs
+  timeline-motion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright
+          npx playwright install chromium
+      - name: Real Chromium candidate timeline scroll and click QA
+        env:
+          CAREER_QA_MODE: desktop
+        run: node scripts/qa-career-motion-browser.mjs
