@@ -208,3 +208,21 @@ test('sidebar has official icon links, compact zoom and admin-only docked save',
   assert.match(styles,/grid-template-columns:184px/);
   assert.match(styles,/\#mwsSidebarSaveBtn\[hidden\]/);
 });
+
+test('workspace header keeps only page-relevant actions and links to the exact MaWang wiki',()=>{
+  const html=read('index.html'),global=read('assets/topbar-context-v1.css'),runtime=read('assets/topbar-context-v1.js'),archive=read('assets/mawang-archive-header-v1.css');
+  assert.equal((html.match(/id="mwsArchiveWikiLink"/g)||[]).length,1);
+  assert.match(html,/id="mwsArchiveWikiLink"[^>]*href="https:\/\/namu\.wiki\/w\/MaWang"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
+  assert.match(html,/assets\/mawang-archive-header-v1\.css\?v=1/);
+  assert.match(html,/assets\/topbar-context-v1\.css\?v=1/);
+  assert.match(html,/assets\/topbar-context-v1\.js\?v=1/);
+  assert.match(global,/body:has\(\#calendar\.active\).*\#newEventBtn/);
+  assert.match(global,/\.topbar \#clockText\s*\{display:none!important\}/);
+  assert.match(global,/\.topbar \#todayText/);
+  assert.match(global,/\.sync-status\.mws-sync-needs-attention/);
+  assert.match(runtime,/MutationObserver\(syncState\)/);
+  assert.match(runtime,/오프라인/);
+  assert.match(archive,/\.mws-archive-wiki/);
+  assert.match(html,/id="postRegisterMenu"/);
+  assert.match(html,/class="post-menu-trigger post-register-trigger" aria-label="새 게시글 등록"/);
+});

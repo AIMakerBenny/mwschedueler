@@ -14,7 +14,7 @@ const inline=[...html.matchAll(/<style(?:\s[^>]*)?>([\s\S]*?)<\/style>/gi)].map(
 const css=[read('assets/app-core.css'),inline,...[
   'mawang-premium-v1621.css','ui-frame-presets.css','calendar-toolbar-v4.css',
   'calendar-responsive-cards-v1.css','calendar-stable-layout-v1.css','sidebar-rail-scrollbar-v1.css',
-  'calendar-space-efficiency-v1.css','calendar-timeline-v1.css','workspace-clean-v1.css'
+  'calendar-space-efficiency-v1.css','calendar-timeline-v1.css','workspace-clean-v1.css','topbar-context-v1.css'
 ].map(p=>read('assets/'+p))].join('\n');
 const chrome=['google-chrome','google-chrome-stable','chromium','chromium-browser'].map(n=>spawnSync('which',[n],{encoding:'utf8'})).find(r=>r.status===0)?.stdout.trim();
 assert(chrome,'Chromium required');

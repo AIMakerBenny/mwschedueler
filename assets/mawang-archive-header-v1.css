@@ -1,0 +1,97 @@
+/* MaWang archive contextual topbar, isolated from other workspaces.
+   Do not shift or decorate the archive portrait canvas. */
+body.mws-premium:not(:has(#gameF1Racing.active)) .main:has(> #mawangArchive.active) > .topbar,
+body.mws-premium:not(:has(#gameF1Racing.active)) .main:has(> .section#mawangArchive.active) > .topbar {
+  position:relative!important;
+  isolation:isolate;
+  overflow:hidden;
+  min-height:78px!important;
+  padding:11px 17px 11px 20px!important;
+  margin-bottom:15px!important;
+  border:1px solid color-mix(in srgb,var(--accent) 29%,var(--border))!important;
+  border-radius:16px!important;
+  background:
+    radial-gradient(ellipse at 2% 0%,color-mix(in srgb,var(--accent) 21%,transparent),transparent 52%),
+    linear-gradient(110deg,color-mix(in srgb,var(--panel) 95%,#18233b),color-mix(in srgb,var(--sidebar) 96%,#0a101a))!important;
+  box-shadow:0 12px 26px rgba(0,0,0,.14),inset 0 1px 0 rgba(255,255,255,.055)!important;
+}
+body.mws-premium .main:has(#mawangArchive.active) > .topbar::before {
+  content:"";
+  position:absolute;
+  left:0;top:16px;bottom:16px;width:3px;
+  border-radius:0 4px 4px 0;
+  background:linear-gradient(180deg,#6dd6ee,color-mix(in srgb,var(--accent) 78%,#9177f8));
+  box-shadow:0 0 16px color-mix(in srgb,var(--accent) 46%,transparent);
+  pointer-events:none;
+}
+.main:has(#mawangArchive.active) > .topbar::after {
+  content:"";
+  position:absolute;
+  width:145px;height:145px;left:31%;top:-118px;
+  border:1px solid color-mix(in srgb,var(--accent) 15%,transparent);
+  border-radius:50%;
+  box-shadow:0 0 0 28px color-mix(in srgb,var(--accent) 3%,transparent);
+  pointer-events:none;
+}
+.main:has(#mawangArchive.active) > .topbar > * {position:relative;z-index:1}
+.mws-archive-title-line {display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.mws-archive-kicker {display:none;font-size:9px;font-weight:850;letter-spacing:.18em;line-height:1.25;color:color-mix(in srgb,var(--accent) 45%,#bfe5f7);user-select:none}
+.mws-archive-kicker i {display:inline-block;width:5px;height:5px;background:#76dce7;border-radius:50%;vertical-align:2px;margin-right:7px;box-shadow:0 0 9px #75c7dd77}
+.mws-archive-wiki {
+  display:none;
+  align-items:center;justify-content:center;gap:7px;
+  min-height:31px;
+  padding:6px 11px;
+  border-radius:9px;
+  border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border));
+  background:color-mix(in srgb,var(--accent) 11%,var(--input));
+  color:var(--text)!important;
+  font-size:11px;
+  font-weight:750;
+  line-height:1;
+  letter-spacing:-.015em;
+  white-space:nowrap;
+  text-decoration:none!important;
+  cursor:pointer;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 4px 10px rgba(0,0,0,.12);
+  transition:transform 160ms cubic-bezier(.2,.8,.2,1),border-color 160ms,box-shadow 160ms,background 160ms;
+}
+.mws-archive-wiki svg {width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.mws-archive-wiki .mws-wiki-open {width:13px;height:13px;opacity:.65;transition:transform 160ms,opacity 160ms}
+.mws-archive-wiki:hover {
+  transform:translateY(-2px);
+  background:color-mix(in srgb,var(--accent) 20%,var(--panel));
+  border-color:var(--accent);
+  box-shadow:0 7px 17px color-mix(in srgb,var(--accent) 14%,transparent);
+}
+.mws-archive-wiki:hover .mws-wiki-open {transform:translate(1px,-1px);opacity:1}
+.mws-archive-wiki:active {transform:translateY(0) scale(.97)}
+.mws-archive-wiki:focus-visible {outline:2px solid var(--accent);outline-offset:3px}
+.main:has(#mawangArchive.active) .mws-archive-kicker {display:block;margin-bottom:6px}
+.main:has(#mawangArchive.active) .mws-archive-wiki {display:inline-flex}
+body.mws-premium .main:has(#mawangArchive.active) .top-left {min-width:0}
+body.mws-premium .main:has(#mawangArchive.active) .top-left h1 {
+  font-size:23px!important;
+  line-height:1.15;
+  margin:0!important;
+  letter-spacing:-.045em!important;
+  text-shadow:0 4px 17px rgba(0,0,0,.16);
+}
+body.mws-premium .main:has(#mawangArchive.active) #todayText {margin-top:5px!important;font-size:11px;color:color-mix(in srgb,var(--muted) 85%,#c5dbec)}
+body.mws-premium .main:has(#mawangArchive.active) .clock {
+  background:color-mix(in srgb,var(--panel) 65%,transparent);
+  border-color:color-mix(in srgb,var(--border) 80%,transparent);
+}
+@media(max-width:850px) {
+  .main:has(#mawangArchive.active) > .topbar {flex-wrap:wrap;gap:10px;padding:12px 13px 12px 18px!important}
+  .main:has(#mawangArchive.active) > .topbar .clock {margin-left:auto;max-width:100%;flex-wrap:wrap}
+}
+@media(max-width:510px) {
+  .main:has(#mawangArchive.active) > .topbar {border-radius:12px!important;min-height:0!important}
+  .mws-archive-title-line {gap:8px}
+  body.mws-premium .main:has(#mawangArchive.active) .top-left h1 {font-size:20px!important}
+  .mws-archive-wiki {min-height:29px;padding:6px 9px;font-size:10px}
+  .main:has(#mawangArchive.active) .mws-archive-kicker {font-size:8px}
+  .main:has(#mawangArchive.active) > .topbar::after {display:none}
+}
+@media(prefers-reduced-motion:reduce){.mws-archive-wiki,.mws-archive-wiki .mws-wiki-open{transition:none!important}}

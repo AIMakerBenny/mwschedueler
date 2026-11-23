@@ -240,8 +240,20 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
 
   <main class="main">
     <div class="topbar">
-      <div class="top-left"><h1 id="pageTitle">캘린더</h1><div class="subtle" id="todayText"></div><button type="button" id="mwsLegacyBackV1" class="mws-legacy-back-v1" data-tab="legacy" data-legacy-link-v1 hidden>레거시 목록으로</button></div>
-      <div class="clock"><span class="sync-status"><span class="sync-dot"></span><span id="syncStatusText">데이터 불러오는 중</span></span><span id="clockText"></span><button class="primary" id="newEventBtn" title="컨텐츠 추가" aria-label="컨텐츠 추가"></button></div>
+      <div class="top-left">
+          <span class="mws-archive-kicker" aria-hidden="true"><i></i>MAWANG / CHARACTER ARCHIVE</span>
+          <div class="mws-archive-title-line">
+            <h1 id="pageTitle">캘린더</h1>
+            <a id="mwsArchiveWikiLink" class="mws-archive-wiki" href="https://namu.wiki/w/MaWang" target="_blank" rel="noopener noreferrer" title="새 탭에서 마왕 위키 열기" aria-label="새 탭에서 마왕 위키 열기">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11c1.2 0 2 .5 3 1.5C15 3.5 15.8 3 17 3h.5A2.5 2.5 0 0 1 20 5.5V20h-3c-1.2 0-2.1.4-3 1.2C13.1 20.4 12.2 20 11 20H4z"/><path d="M14 4.5V21"/></svg>
+              <span>마왕 위키</span>
+              <svg class="mws-wiki-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 5h6v6M19 5l-9 9M18 13v6H5V6h6"/></svg>
+            </a>
+          </div>
+          <div class="subtle" id="todayText"></div>
+          <button type="button" id="mwsLegacyBackV1" class="mws-legacy-back-v1" data-tab="legacy" data-legacy-link-v1 hidden>레거시 목록으로</button>
+        </div>
+      <div class="clock"><span class="sync-status" role="status" aria-live="polite"><span class="sync-dot"></span><span id="syncStatusText">데이터 불러오는 중</span></span><span id="clockText"></span><button class="primary" id="newEventBtn" title="컨텐츠 추가" aria-label="컨텐츠 추가"></button></div>
     </div>
 
     
@@ -593,7 +605,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
         <div class="post-menu-panel posts-saved-panel"><div id="postSavedList" class="post-saved-list"></div></div>
       </details>
       <details class="post-menu post-register-menu" id="postRegisterMenu">
-        <summary class="post-menu-trigger post-register-trigger">새 게시글 등록</summary>
+        <summary class="post-menu-trigger post-register-trigger" aria-label="새 게시글 등록" title="새 게시글 등록">새 게시글 등록</summary>
         <div class="post-menu-panel post-url-card">
           <label for="postUrlInput">SOOP 게시글 주소</label>
           <div class="post-url-form">
@@ -5097,5 +5109,8 @@ body.mws-premium #mwsAccessGate .mws-login-title{font-size:22px!important;margin
 <script defer src="assets/mawang-archive-data-v1.js?v=11"></script>
 <script defer src="assets/mawang-archive-v1.js?v=16"></script>
 <link rel="stylesheet" href="assets/sidebar-compact-v1.css?v=1">
+<link rel="stylesheet" href="assets/topbar-context-v1.css?v=1">
+<link rel="stylesheet" href="assets/mawang-archive-header-v1.css?v=1">
+<script defer src="assets/topbar-context-v1.js?v=1"></script>
 </body>
 </html>
