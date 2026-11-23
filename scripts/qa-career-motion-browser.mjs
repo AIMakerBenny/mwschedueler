@@ -40,7 +40,7 @@ const open=async(width,height,video=false,reducedMotion='no-preference')=>{
       if(!body.includes('id="mwsMotionSettings"'))body=body.replace('<section id="settings" class="section">','<section id="settings" class="section">'+motionSettings);
       await route.fulfill({response,body});
     });
-    for(const file of ['career-visualizer.js','career-timeline.css','calendar-details-v1.js','calendar-details-v1.css','modal-motion-v1.css','tools.js','content-planner-host.js','perf-runtime.js','post-login-runtime-v130.js','online-v5-loader.js']){
+    for(const file of ['career-visualizer.js','career-timeline.css','workspace-density-v1.css','calendar-details-v1.js','calendar-details-v1.css','modal-motion-v1.css','tools.js','content-planner-host.js','perf-runtime.js','post-login-runtime-v130.js','online-v5-loader.js']){
       await context.route('**/assets/'+file+'*',async route=>{if(file==='tools.js'||file==='content-planner-host.js')await pause(1800);await route.fulfill({
         status:200,contentType:file.endsWith('.js')?'application/javascript':'text/css',
         body:readFileSync(new URL('../assets/'+file,import.meta.url))
