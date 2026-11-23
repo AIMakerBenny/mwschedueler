@@ -10,7 +10,7 @@ const start=html.indexOf('<section id="achievements"');
 const end=html.indexOf('</section>',start);
 assert(start>=0&&end>start);
 const section=html.slice(start,end+10).replace('class="section"','class="section active"');
-assert(html.includes('assets/achievement-exhibition-v1.css?v=2'));
+assert(html.includes('assets/achievement-exhibition-v1.css?v=3'));
 const styles=['app-core.css','mawang-premium-v1621.css','device-ui.css','ui-frame-presets.css','achievement-exhibition-v1.css','achievement-gallery-v1621.css','ui-interactions-v1.css'].map(p=>read('assets/'+p)).join('\n');
 const runtime=read('assets/achievement-gallery-v1621.js');
 const bootstrap=`
