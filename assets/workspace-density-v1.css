@@ -225,26 +225,7 @@ body.mws-premium .main:not(:has(#mawangArchive.active)) > .topbar .ma-header-fil
 }
 @media(prefers-reduced-motion:reduce){#careerTimeline.active .cv-bar-host{transition:none!important}}
 
-/* Click-through repair for overlapping title/toolbar geometry.
-   The page titles are visual here, not interactive. Actual buttons remain clickable.
-   Avoid positive z-index empty wrappers that can steal pointer input at scroll top. */
-@media(min-width:1101px){
-  body.mws-premium .main:has(#careerTimeline.active) > .topbar,
-  body.mws-premium .main:has(#posts.active) > .topbar{
-    pointer-events:none!important;
-  }
-  #posts.section.active .posts-head{
-    pointer-events:none!important;
-  }
-  #posts.section.active .post-workspace-actions{
-    pointer-events:auto!important;
-  }
-  #posts.section.active .post-workspace-actions .post-menu{
-    pointer-events:auto!important;
-  }
-  #posts.section.active .post-workspace-actions .post-menu-panel{
-    pointer-events:auto!important;
-  }
-}
+/* Both headings now use normal document flow. Do not disable pointer
+   events on the global topbar or the Posts toolbar. */
 /* The removed navigation arrows are never presented, even on old cached pages. */
 #careerTimeline .cv-summary .cv-step{display:none!important}
