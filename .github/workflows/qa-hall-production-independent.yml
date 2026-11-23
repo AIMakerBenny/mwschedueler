@@ -1,0 +1,48 @@
+name: Hall of Fame independent Cloudflare production verification
+on:
+  push:
+    branches: [cloudflare-production]
+  pull_request:
+    branches: [cloudflare-production]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: hall-production-verify-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  hall-live:
+    name: Actual live Hall and first-paint, no injected candidate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify production browser scripts
+        run: |
+          node --check scripts/qa-achievement-live-browser.mjs
+          node --check scripts/qa-production-first-paint-v1-browser.mjs
+      - name: Install Korean fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-nanum
+      - name: Verify actual Cloudflare code and interactive cards
+        env:
+          MWS_HALL_PRODUCTION: '1'
+          MWS_HALL_CAPTURE: '1'
+        run: node scripts/qa-achievement-live-browser.mjs
+      - name: Cold and warm production visual checks at four viewports
+        env:
+          MWS_HALL_CAPTURE: '1'
+        run: node scripts/qa-production-first-paint-v1-browser.mjs
+      - name: Archive real, uninjected production screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hall-production-uninjected-browser
+          path: |
+            visual-achievement-live/*.jpg
+            visual-achievement-production-firstpaint/*.jpg
+          if-no-files-found: ignore
