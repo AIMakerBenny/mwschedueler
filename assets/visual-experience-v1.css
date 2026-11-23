@@ -99,8 +99,7 @@ body.mws-premium #posts .post-applicant-photo img{
 /* Calendar remains a stable grid; movement belongs to content, not day cells. */
 body.mws-premium #calendar #calendarGrid .day{
   border-color:var(--mws-vx-edge)!important;
-  background-color:var(--panel)!important;
-  background-image:linear-gradient(155deg,color-mix(in srgb,var(--text) 3%,transparent),transparent 46%)!important;
+  background:linear-gradient(155deg,color-mix(in srgb,var(--text) 3%,var(--panel)),var(--panel) 46%)!important;
   box-shadow:inset 0 1px 0 color-mix(in srgb,var(--text) 5%,transparent)!important;
   transition:background-color var(--mws-vx-short),border-color var(--mws-vx-short),box-shadow var(--mws-vx-standard)!important;
 }
