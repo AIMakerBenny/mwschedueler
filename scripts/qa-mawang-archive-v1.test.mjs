@@ -104,7 +104,7 @@ test('public and unready admin mount no profile controls; authenticated mode cha
   const forged=()=>handlers.get('click')({target:{closest:()=>({dataset:{},hasAttribute:attr=>attr==='data-ma-profile-upload'})}});
   forged();assert.deepEqual(writes,[]);
   body.dataset.mwsMode='admin';observe();assert.doesNotMatch(panel(),/data-ma-profile-upload/);assert.equal(slot(),'');
-  win.__mwsAppReadyV130=true;handlers.get('mws:app-ready')();assert.match(panel(),/data-ma-profile-upload/);assert.match(slot(),/type="file"/);
+  win.__mwsAppReadyV130=true;handlers.get('mws:app-ready')();assert.match(panel(),/data-ma-profile-upload/);assert.match(slot(),/type="file"/);assert.doesNotMatch(panel(),/등록된 프로필 사진|기본 프로필 사진|프로필 사진 미등록|ma-profile-label/);
   handlers.get('click')({target:{closest:()=>({dataset:{maCharacter:'mi'}})}});assert.match(panel(),/data-ma-profile-reset/);
   body.dataset.mwsMode='public';observe();assert.doesNotMatch(panel(),/data-ma-profile-upload|data-ma-profile-reset/);assert.equal(slot(),'');forged();assert.deepEqual(writes,[]);
   handlers.get('input')({target:{value:'no match',matches:()=>true}});assert(root.querySelector('.ma-stage').hidden);assert.match(root.querySelector('.ma-roster-grid').innerHTML,/검색 초기화/);
@@ -226,6 +226,12 @@ test('workspace header keeps only page-relevant actions and links to the exact M
   assert.match(runtime,/오프라인/);
   assert.match(archive,/\.mws-archive-wiki/);
   assert.match(archive,/\.ma-header-filters/);
+  assert.match(html,/assets\/mawang-archive-finish-v1\.css\?v=1/);
+  assert.match(html,/assets\/mawang-archive-v1\.js\?v=19/);
+  const finish=read('assets/mawang-archive-finish-v1.css'),archiveRuntime=read('assets/mawang-archive-v1.js');
+  for(const marker of ['.ma-character-card:hover','.ma-stage-art::after','.ma-page-arrow','ma-portrait-focus','prefers-reduced-motion'])assert(finish.includes(marker));
+  assert(!archiveRuntime.includes('등록된 프로필 사진'));
+  assert(archiveRuntime.includes('--ma-light-x'));
   assert.match(archive,/\.ma-header-filters\[hidden\]/);
   assert.match(html,/assets\/workspace-density-v1\.css\?v=2/);
   const density=read('assets/workspace-density-v1.css');

@@ -11,7 +11,7 @@ try{
   const runtime=read('assets/mawang-archive-v1.js').replace("'/media/mawang-profile/'+p.character+'?rev='+p.revision",JSON.stringify(svg+'#profile-')+'+p.revision').replace("(c.image?.startsWith('/assets/mawang-archive-portraits/')?{url:c.image}:null)","(c.image?{url:c.image}:null)");
   const mock=`let serial=2,profiles={mi:{character:'mi',revision:'123-abcd'}};window.fetch=async(url,opts={})=>{if(url==='/api/mawang-profile')return new Response(JSON.stringify({profiles:Object.values(profiles)}));if(url.includes('/mawang-profile/')){let character=url.split('/').pop();if(opts.method==='PUT'){let profile={character,revision:String(++serial)+'-abcd'};profiles[character]=profile;return new Response(JSON.stringify({profile}))}if(opts.method==='DELETE'){delete profiles[character];return new Response(JSON.stringify({ok:true}))}}throw Error('Unexpected endpoint '+url)};window.confirm=()=>true;`;
   const header=read('index.html').slice(read('index.html').indexOf('    <div class="topbar">'),read('index.html').indexOf('\n<section id="dashboard"'));
-  const html='<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>'+read('assets/app-core.css')+'\n'+read('assets/mawang-archive-v1.css')+'\n'+read('assets/topbar-context-v1.css')+'\n'+read('assets/mawang-archive-header-v1.css')+'\n@media(min-width:1000px){.archive-fixture{padding-left:190px}}'+'</style><body class="mws-premium" data-theme="neon"><div class="archive-fixture"><main class="main">'+header+'<section class="section active" id="mawangArchive"><div class="mawang-archive" id="mwsArchiveRoot"></div></section></main></div><script>'+mock+'</script><script>'+data+'</script><script>'+runtime+'</script>';
+  const html='<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>'+read('assets/app-core.css')+'\n'+read('assets/mawang-archive-v1.css')+'\n'+read('assets/topbar-context-v1.css')+'\n'+read('assets/mawang-archive-header-v1.css')+'\n'+read('assets/mawang-archive-finish-v1.css')+'\n@media(min-width:1000px){.archive-fixture{padding-left:190px}}'+'</style><body class="mws-premium" data-theme="neon"><div class="archive-fixture"><main class="main">'+header+'<section class="section active" id="mawangArchive"><div class="mawang-archive" id="mwsArchiveRoot"></div></section></main></div><script>'+mock+'</script><script>'+data+'</script><script>'+runtime+'</script>';
   const file=path.join(tmp,'archive.html');writeFileSync(file,html);
   browser=await launchCalendarBrowser(tmp);
   for(const [width,height,mobile] of [[1366,768,false],[1920,911,false],[1920,1080,false],[2560,1440,false],[2560,1080,false],[390,844,true],[844,390,true]]){
@@ -50,6 +50,17 @@ try{
       check(q('.ma-main-profile').getBoundingClientRect().width>=220,'large profile');
       if(innerWidth>=1000){await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const photo=q('.ma-main-profile').getBoundingClientRect();check(photo.bottom<=innerHeight-8,'whole portrait visible at initial viewport '+JSON.stringify({bottom:photo.bottom,height:innerHeight}));}
       check(getComputedStyle(q('.ma-main-profile img')).objectFit==='contain','uncropped full photo');
+      const photoFrame=q('.ma-stage-art'),photoStyle=getComputedStyle(photoFrame),thumbStyle=getComputedStyle(q('.ma-character-card'));
+      check(parseFloat(photoStyle.borderRadius)>=10&&parseFloat(photoStyle.borderTopWidth)>=1,'recessed photo frame');
+      check(thumbStyle.boxShadow!=='none'&&getComputedStyle(q('.ma-roster-row')).boxShadow!=='none','filmstrip has card depth');
+      check(!q('.ma-profile-label')&&!q('.ma-profile-panel').textContent.includes('등록된 프로필 사진'),'no redundant profile text');
+      if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
+        const box=photoFrame.getBoundingClientRect();
+        photoFrame.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,pointerType:'mouse',clientX:box.left+box.width*.7,clientY:box.top+box.height*.36}));
+        await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+        const x=parseFloat(photoFrame.style.getPropertyValue('--ma-light-x')),y=parseFloat(photoFrame.style.getPropertyValue('--ma-light-y'));
+        check(x>65&&x<75&&y>31&&y<41,'portrait light follows pointer '+JSON.stringify({x,y}));
+      }
       check(all('.ma-character-details>div').length===3,'verified character details only');
       const heroStep=step=>q('[data-ma-hero-step="'+step+'"]'),heroClick=step=>heroStep(step).click();
       for(const step of [-1,1]){const button=heroStep(step);button.scrollIntoView({block:'center'});const rect=button.getBoundingClientRect(),art=q('.ma-stage-art').getBoundingClientRect();check(rect.width>=44&&rect.height>=44&&rect.left>=art.left&&rect.right<=art.right&&document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2)?.closest('button')===button,'hero arrow is accessible over the portrait');}
@@ -69,6 +80,7 @@ try{
       search.value='꼬뫙';search.dispatchEvent(new Event('input',{bubbles:true}));check(names().join(',')==='꼬뫙'&&q('#maCharacterName').textContent==='꼬뫙'&&!hero()&&q('.ma-desc').textContent.includes('쇼츠 콘텐츠 활성화'),'new record short-form purpose without invented photo');
       check(heroStep(-1).disabled&&heroStep(1).disabled&&!q('.ma-character-details'),'single result hides navigation and unsupported detail');
       document.body.dataset.mwsMode='admin';await Promise.resolve();check(!q('.ma-profile-actions'),'unready admin has no controls');window.__mwsAppReadyV130=true;window.dispatchEvent(new CustomEvent('mws:app-ready'));check(getComputedStyle(q('.ma-profile-actions')).display==='flex'&&!q('.ma-profile-input').multiple,'authenticated admin has single profile input');
+      check(!q('.ma-profile-label')&&!q('.ma-profile-panel').textContent.includes('등록된 프로필 사진'),'admin has controls but no profile status text');
       q('.ma-facts').scrollIntoView({block:'end'});const info=q('.ma-facts').getBoundingClientRect();check(info.bottom<=innerHeight+1,'bottom character details can be reached');window.scrollTo(0,0);
       const input=q('.ma-profile-input'),upload=async(name)=>{q('[data-ma-profile-upload]').click();const dt=new DataTransfer();dt.items.add(new File(['image'],name,{type:'image/png'}));input.files=dt.files;input.dispatchEvent(new Event('change',{bubbles:true}));for(let i=0;i<30&&q('[data-ma-profile-upload]').disabled;i++)await new Promise(r=>setTimeout(r,20))};
       await upload('profile.png');const first=hero();check(first&&first===q('[data-ma-character="kkomwang"] img').src,'new profile immediate');

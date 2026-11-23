@@ -62,10 +62,10 @@
     node.style.setProperty('--ma-profile-space',space+'px');
   }
   function profilePanel(refreshPhoto=true){
-    const c=selected,custom=profiles.has(c.id),p=profilePhoto(c),panel=root.querySelector('.ma-profile-panel');
+    const c=selected,custom=profiles.has(c.id),panel=root.querySelector('.ma-profile-panel');
     if(!panel||root.querySelector('.ma-stage').hidden)return;
     const admin=isAdmin(),disabled=busy.has(c.id)||!profileReady?'disabled':'';
-    panel.innerHTML=`<div class="ma-profile-copy"><span class="ma-eyebrow"><i></i>${escape(groupName(c))}<span class="ma-profile-number">NO. ${number(c)}</span></span><h2 id="maCharacterName">${escape(c.name)}</h2><p class="ma-english">${escape(c.english)}</p>${admin?`<span class="ma-profile-label">${custom?'등록된 프로필 사진':p?'기본 프로필 사진':'프로필 사진 미등록'}</span>`:''}</div>${admin?`<div class="ma-profile-actions"><button type="button" data-ma-profile-upload ${disabled}>${icon('image')}${custom?'사진 변경':'사진 등록'}</button>${custom?`<button type="button" data-ma-profile-reset ${disabled} title="프로필 사진 초기화" aria-label="프로필 사진 초기화">${icon('reset')}</button>`:''}</div>`:''}`;
+    panel.innerHTML=`<div class="ma-profile-copy"><span class="ma-eyebrow"><i></i>${escape(groupName(c))}<span class="ma-profile-number">NO. ${number(c)}</span></span><h2 id="maCharacterName">${escape(c.name)}</h2><p class="ma-english">${escape(c.english)}</p></div>${admin?`<div class="ma-profile-actions"><button type="button" data-ma-profile-upload ${disabled}>${icon('image')}${custom?'사진 변경':'사진 등록'}</button>${custom?`<button type="button" data-ma-profile-reset ${disabled} title="프로필 사진 초기화" aria-label="프로필 사진 초기화">${icon('reset')}</button>`:''}</div>`:''}`;
     root.querySelector('.ma-profile-message').textContent=admin?(messages.get(c.id)||profileError||''):'';
     if(refreshPhoto){root.querySelector('.ma-main-profile').innerHTML=pic(c,true);root.querySelector('.ma-announce').textContent=c.name+' 선택';}
   }
@@ -169,6 +169,26 @@
     root.addEventListener('input',e=>{if(e.target.matches('.ma-search input')){query=e.target.value;updateFilter()}});
     root.addEventListener('keydown',e=>{const b=e.target.closest('[data-ma-character]');if(!b||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key))return;const list=navigation(),i=list.findIndex(c=>c.id===b.dataset.maCharacter),delta=({ArrowLeft:-1,ArrowRight:1,ArrowUp:-activeColumns,ArrowDown:activeColumns}[e.key]||0),next=e.key==='Home'?0:e.key==='End'?list.length-1:['ArrowLeft','ArrowRight'].includes(e.key)?(i+delta+list.length)%list.length:Math.min(list.length-1,Math.max(0,i+delta));e.preventDefault();choose(list[next],true)});
     let swipe=null;
+    // A subtle, pointer-following reflection is confined to the portrait surface.
+    // Coalesce movement to one paint frame; never run it for touch or reduced motion.
+    let lightFrame=0,lightArt=null,lightX=50,lightY=35;
+    root.addEventListener('pointermove',event=>{
+      if(event.pointerType!=='mouse'&&event.pointerType!=='pen')return;
+      if(document.documentElement.dataset.mwsMotion==='reduced'||(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches&&document.documentElement.dataset.mwsMotion!=='full'))return;
+      const art=event.target.closest('.ma-stage-art');
+      if(!art||event.target.closest('.ma-hero-arrow'))return;
+      const rect=art.getBoundingClientRect();if(!rect.width||!rect.height)return;
+      lightArt=art;
+      lightX=Math.max(0,Math.min(100,(event.clientX-rect.left)/rect.width*100));
+      lightY=Math.max(0,Math.min(100,(event.clientY-rect.top)/rect.height*100));
+      if(lightFrame)return;
+      lightFrame=requestAnimationFrame(()=>{
+        lightFrame=0;
+        if(!lightArt?.isConnected)return;
+        lightArt.style.setProperty('--ma-light-x',lightX.toFixed(1)+'%');
+        lightArt.style.setProperty('--ma-light-y',lightY.toFixed(1)+'%');
+      });
+    });
     root.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&e.target.closest('.ma-stage-art')&&!e.target.closest('button'))swipe={id:e.pointerId,x:e.clientX,y:e.clientY};});
     root.addEventListener('pointerup',e=>{if(!swipe||swipe.id!==e.pointerId)return;const dx=e.clientX-swipe.x,dy=e.clientY-swipe.y;swipe=null;if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.5)stepCharacter(dx<0?1:-1);});
     root.addEventListener('pointercancel',()=>{swipe=null});

@@ -1,0 +1,330 @@
+/* MaWang archive visual finish
+   Character art remains uncropped. No autoplay, fixed background or decorative UI text. */
+#mawangArchive .mawang-archive{
+  --ma-surface-line:color-mix(in srgb,var(--border) 74%,transparent);
+  --ma-soft-ink:color-mix(in srgb,var(--text) 88%,var(--muted));
+  gap:11px;
+}
+
+/* Separate the thin control row from a tactile photo filmstrip. */
+#mawangArchive .ma-roster{
+  position:relative;
+  padding:0!important;
+  background:none!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  overflow:visible;
+}
+#mawangArchive .ma-roster-toolbar{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  min-height:36px;
+  padding:0 3px 8px;
+  margin:0 0 8px;
+  border-bottom:1px solid var(--ma-surface-line);
+}
+#mawangArchive .ma-roster-heading h3{
+  font-size:13px;
+  font-weight:770;
+  letter-spacing:-.035em;
+}
+#mawangArchive .ma-count{color:var(--muted);font-weight:550}
+#mawangArchive .ma-roster-row{
+  position:relative;
+  isolation:isolate;
+  grid-template-columns:42px minmax(0,1fr) 42px;
+  align-items:center;
+  gap:9px;
+  padding:7px;
+  border:1px solid color-mix(in srgb,var(--border) 80%,var(--text) 6%);
+  border-radius:15px;
+  background:linear-gradient(165deg,
+    color-mix(in srgb,var(--panel) 94%,var(--text) 6%) 0%,
+    color-mix(in srgb,var(--panel) 97%,var(--bg)) 47%,
+    color-mix(in srgb,var(--input) 58%,var(--panel)) 100%);
+  box-shadow:0 11px 25px #0000001c,inset 0 1px 0 #ffffff0b;
+}
+#mawangArchive .ma-roster-row::before{
+  content:"";position:absolute;top:0;left:18px;right:18px;height:1px;
+  background:linear-gradient(90deg,transparent,#ffffff2b 24%,#ffffff16 77%,transparent);
+  pointer-events:none;
+}
+#mawangArchive .ma-roster-grid{gap:8px;align-items:start}
+#mawangArchive .ma-character-card{
+  position:relative;
+  isolation:isolate;
+  border-radius:12px;
+  border:1px solid color-mix(in srgb,var(--border) 85%,transparent);
+  background:var(--panel);
+  box-shadow:inset 0 1px 0 #ffffff10,0 3px 8px #0000002b,0 1px 2px #0000001c;
+  transform:translate3d(0,0,0);
+  transition:transform 225ms cubic-bezier(.2,.8,.2,1),
+    border-color 180ms ease,box-shadow 225ms ease,
+    background 180ms ease!important;
+}
+#mawangArchive .ma-character-card::before{
+  content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  border-radius:inherit;
+  background:linear-gradient(128deg,#ffffff23 0%,transparent 30%,transparent 75%,#00000012 100%);
+  opacity:.22;
+  transition:opacity 240ms ease;
+}
+#mawangArchive .ma-character-card::after{
+  content:"";position:absolute;left:8px;right:8px;bottom:0;z-index:2;
+  height:2px;border-radius:3px;
+  background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--ma-color) 70%,#ffffff),transparent);
+  opacity:0;transform:scaleX(.35);
+  transition:opacity 230ms ease,transform 260ms cubic-bezier(.2,.8,.2,1);
+  pointer-events:none;
+}
+#mawangArchive .ma-character-card .ma-portrait{background:color-mix(in srgb,var(--ma-color) 5%,var(--input))}
+#mawangArchive .ma-character-card .ma-portrait img{
+  transition:transform 360ms cubic-bezier(.2,.75,.2,1),filter 270ms ease;
+  backface-visibility:hidden;
+}
+#mawangArchive .ma-roster-label{
+  position:relative;z-index:2;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--panel2) 87%,var(--input)),var(--input));
+  border-top:1px solid #ffffff13;
+  color:var(--ma-soft-ink);
+  transition:background 200ms,color 200ms;
+}
+#mawangArchive .ma-roster-label strong{font-weight:770;letter-spacing:-.035em}
+#mawangArchive .ma-character-card.is-selected{
+  border-color:color-mix(in srgb,var(--ma-color) 60%,var(--border));
+  background:var(--panel);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--ma-color) 34%,transparent),
+    0 9px 20px #0000003c,inset 0 1px 0 #ffffff17;
+}
+#mawangArchive .ma-character-card.is-selected::after{
+  opacity:1;transform:scaleX(1);
+}
+#mawangArchive .ma-character-card.is-selected .ma-roster-label{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--ma-color) 9%,var(--panel)),var(--input));
+  color:var(--text);
+}
+#mawangArchive .ma-selection-mark{
+  width:19px;height:19px;
+  background:#111820de;color:#fff;border:1px solid #ffffff84;
+  box-shadow:0 3px 10px #0007;
+}
+#mawangArchive .ma-new-badge{
+  background:#252934e6;border:1px solid #ffffff3d;
+  color:#f9f8ff;border-radius:6px;
+  box-shadow:0 3px 8px #0005;
+}
+
+/* Navigation is an understated physical control, not a saturated vertical stripe. */
+#mawangArchive .ma-page-arrow{
+  align-self:center;min-width:0;
+  width:42px;height:66px;min-height:54px;
+  padding:5px 2px;gap:1px;
+  border-radius:12px;
+  border:1px solid color-mix(in srgb,var(--border) 85%,var(--text) 6%);
+  color:var(--ma-soft-ink);
+  background:linear-gradient(155deg,color-mix(in srgb,var(--panel2) 90%,var(--text) 5%),var(--input));
+  box-shadow:inset 0 1px 0 #ffffff13,0 3px 9px #00000029;
+  transition:transform 175ms cubic-bezier(.2,.8,.2,1),background 175ms,
+    border-color 175ms,box-shadow 175ms!important;
+}
+#mawangArchive .ma-page-arrow svg{width:23px;height:23px;stroke-width:1.75}
+#mawangArchive .ma-page-arrow>span{font-size:9px;font-weight:650;letter-spacing:-.03em;color:var(--muted)}
+#mawangArchive .ma-page-arrow:disabled{opacity:.35;box-shadow:none}
+#mawangArchive .ma-page-arrow:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#mawangArchive .ma-pagination{
+  background:color-mix(in srgb,var(--input) 78%,var(--panel));
+  border:1px solid var(--ma-surface-line);
+  border-radius:8px;
+  color:var(--muted);
+  box-shadow:inset 0 1px 0 #ffffff08;
+}
+#mawangArchive .ma-search input{
+  border-radius:9px;
+  background:color-mix(in srgb,var(--input) 86%,var(--panel));
+  border-color:var(--ma-surface-line);
+}
+#mawangArchive .ma-filters button,
+body.mws-premium .main:has(#mawangArchive.active) .ma-header-filters button{
+  color:var(--ma-soft-ink);
+  border-color:var(--ma-surface-line);
+  background:color-mix(in srgb,var(--input) 76%,var(--panel));
+  box-shadow:inset 0 1px 0 #ffffff0b;
+}
+#mawangArchive .ma-filters button[aria-pressed=true],
+body.mws-premium .main:has(#mawangArchive.active) .ma-header-filters button[aria-pressed=true]{
+  color:var(--text);
+  background:color-mix(in srgb,var(--accent) 9%,var(--panel));
+  border-color:color-mix(in srgb,var(--accent) 48%,var(--border));
+  box-shadow:inset 0 1px 0 #ffffff0d;
+}
+#mawangArchive .ma-filters button[aria-pressed=true] .ma-filter-count,
+body.mws-premium .main:has(#mawangArchive.active) .ma-header-filters button[aria-pressed=true] .ma-filter-count{
+  background:color-mix(in srgb,var(--accent) 13%,var(--input));color:var(--text);
+}
+@media(hover:hover) and (pointer:fine){
+  #mawangArchive .ma-character-card:hover{
+    z-index:4;
+    transform:translateY(-4px) scale(1.028);
+    border-color:color-mix(in srgb,var(--ma-color) 65%,var(--border));
+    box-shadow:0 13px 23px #00000051,0 0 0 1px color-mix(in srgb,var(--ma-color) 17%,transparent);
+  }
+  #mawangArchive .ma-character-card:hover::before{opacity:.62}
+  #mawangArchive .ma-character-card:hover .ma-portrait img{transform:scale(1.065);filter:brightness(1.045) saturate(1.055)}
+  #mawangArchive .ma-character-card:hover .ma-roster-label{color:var(--text)}
+  #mawangArchive .ma-page-arrow:not(:disabled):hover{
+    background:linear-gradient(145deg,color-mix(in srgb,var(--panel2) 90%,var(--text) 9%),var(--panel2));
+    border-color:color-mix(in srgb,var(--text) 26%,var(--border));
+    box-shadow:inset 0 1px 0 #ffffff20,0 6px 14px #00000032;
+    color:var(--text);transform:translateY(-2px);
+  }
+}
+#mawangArchive .ma-character-card:active{transform:translateY(0) scale(.97)!important;transition-duration:90ms!important}
+#mawangArchive .ma-page-arrow:not(:disabled):active{transform:scale(.94)!important;transition-duration:85ms!important}
+
+/* Image lives in an inset, luminous photo well: art is never cropped or covered by text. */
+#mawangArchive .ma-stage{
+  position:relative;
+  border:1px solid color-mix(in srgb,var(--border) 81%,var(--ma-color) 10%);
+  background:linear-gradient(143deg,color-mix(in srgb,var(--ma-color) 4%,var(--panel)),var(--panel) 62%);
+  border-radius:17px;
+  box-shadow:0 15px 40px #00000030,0 2px 7px #00000016,inset 0 1px 0 #ffffff12;
+}
+#mawangArchive .ma-stage-art{
+  position:relative;
+  margin:10px 0 10px 10px;
+  border:1px solid #ffffff37;
+  border-radius:14px;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--ma-color) 14%,var(--input)),var(--input));
+  box-shadow:inset 0 1px 0 #ffffff52,0 9px 21px #00000047,0 2px 5px #0000002a;
+  transition:border-color 300ms ease,box-shadow 340ms ease;
+}
+#mawangArchive .ma-stage-art::before{
+  content:"";position:absolute;inset:0;z-index:2;
+  pointer-events:none;border-radius:inherit;
+  background:linear-gradient(180deg,#ffffff11 0%,transparent 15%,transparent 79%,#0000002b 100%);
+  opacity:.82;
+}
+#mawangArchive .ma-stage-art::after{
+  content:"";position:absolute;inset:0;z-index:2;
+  pointer-events:none;border-radius:inherit;
+  background:radial-gradient(ellipse 220px 220px at var(--ma-light-x,50%) var(--ma-light-y,36%),#ffffff4a,transparent 73%);
+  opacity:0;mix-blend-mode:soft-light;
+  transition:opacity 360ms ease;
+}
+#mawangArchive .ma-main-profile{overflow:hidden;border-radius:inherit}
+#mawangArchive .ma-main-profile .ma-portrait{
+  border-radius:inherit;
+  background:color-mix(in srgb,var(--ma-color) 8%,var(--input));
+}
+#mawangArchive .ma-main-profile .ma-character-image{
+  object-fit:contain;
+  animation:ma-portrait-focus 340ms cubic-bezier(.2,.75,.2,1) backwards;
+  transition:transform 550ms cubic-bezier(.2,.75,.2,1),filter 350ms ease;
+  transform-origin:center center;
+}
+@keyframes ma-portrait-focus{
+  from{opacity:.52;filter:blur(3px);transform:translate3d(var(--ma-enter-x,0px),0,0) scale(1.022)}
+  to{opacity:1;filter:blur(0);transform:none}
+}
+#mawangArchive .ma-hero-arrow{
+  z-index:5;
+  width:46px;height:51px;border-radius:12px;
+  border:1px solid #ffffff6d;
+  background:#121a27ac;
+  box-shadow:inset 0 1px 0 #ffffff17,0 5px 15px #00000052;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  transition:transform 200ms cubic-bezier(.2,.8,.2,1),background 200ms,border-color 200ms,box-shadow 200ms!important;
+}
+#mawangArchive .ma-hero-arrow svg{width:23px;height:23px;stroke-width:2}
+#mawangArchive .ma-hero-count{
+  z-index:4;
+  background:#111923aa;border-color:#ffffff48;
+  backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+  box-shadow:0 4px 11px #0005;
+  color:#fff;
+}
+#mawangArchive .ma-stage-info{
+  padding:clamp(15px,1.8vw,27px);
+  gap:11px;
+  background:linear-gradient(157deg,color-mix(in srgb,var(--ma-color) 5%,var(--panel)),var(--panel) 55%);
+}
+#mawangArchive .ma-profile-panel{padding-bottom:13px;align-items:center}
+#mawangArchive .ma-profile-copy{gap:3px}
+#mawangArchive .ma-profile-copy h2{letter-spacing:-.055em}
+#mawangArchive .ma-eyebrow{font-size:10px}
+#mawangArchive .ma-profile-actions button{
+  color:var(--text);
+  background:color-mix(in srgb,var(--input) 83%,var(--panel));
+  border-color:var(--border);
+  box-shadow:inset 0 1px 0 #ffffff12;
+}
+#mawangArchive .ma-profile-actions button[data-ma-profile-upload]{
+  color:var(--text);
+  background:color-mix(in srgb,var(--accent) 7%,var(--input));
+  border-color:color-mix(in srgb,var(--accent) 34%,var(--border));
+}
+#mawangArchive .ma-facts>div{box-shadow:inset 0 1px 0 #ffffff0c,0 2px 7px #00000011}
+#mawangArchive .ma-character-details>div{box-shadow:inset 0 1px 0 #ffffff09}
+@media(hover:hover) and (pointer:fine){
+  #mawangArchive .ma-stage-art:hover{
+    border-color:color-mix(in srgb,var(--ma-color) 43%,#ffffff7a);
+    box-shadow:inset 0 1px 0 #ffffff4e,0 16px 28px #0000004a,0 2px 7px #00000026;
+  }
+  #mawangArchive .ma-stage-art:hover::after{opacity:.62}
+  #mawangArchive .ma-stage-art:hover .ma-main-profile .ma-character-image{
+    transform:scale(1.012);filter:saturate(1.03) contrast(1.014);
+  }
+  #mawangArchive .ma-hero-arrow:not(:disabled):hover{
+    background:#182334e3;border-color:#ffffffb0;
+    box-shadow:inset 0 1px 0 #ffffff23,0 7px 20px #0007;
+    transform:scale(1.055);
+  }
+  #mawangArchive .ma-profile-actions button:not(:disabled):hover{
+    background:color-mix(in srgb,var(--accent) 11%,var(--panel2));
+    border-color:color-mix(in srgb,var(--accent) 55%,var(--border));
+  }
+}
+#mawangArchive .ma-hero-arrow:not(:disabled):active{transform:scale(.92)!important}
+#mawangArchive .ma-hero-arrow:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(max-width:1000px){
+  #mawangArchive .ma-stage-art{margin:8px 0 8px 8px;border-radius:11px}
+  #mawangArchive .ma-roster-row{gap:6px;padding:6px}
+  #mawangArchive .ma-roster-grid{gap:6px}
+}
+@media(max-width:680px){
+  #mawangArchive .ma-roster-row{grid-template-columns:36px minmax(0,1fr) 36px;padding:5px;gap:5px;border-radius:12px}
+  #mawangArchive .ma-page-arrow{width:36px;height:56px;min-height:50px;border-radius:10px}
+  #mawangArchive .ma-page-arrow svg{width:21px;height:21px}
+  #mawangArchive .ma-roster-toolbar{margin-bottom:6px;padding-bottom:7px}
+  #mawangArchive .ma-stage-art{
+    width:calc(100% - 16px)!important;
+    margin:8px!important;
+    border-radius:12px;
+    max-height:min(76dvh,600px);
+  }
+  #mawangArchive .ma-stage-info{padding:13px!important}
+  #mawangArchive .ma-hero-arrow{width:44px;height:47px;border-radius:10px}
+  #mawangArchive .ma-roster-label strong{font-size:11px}
+}
+@media(max-width:420px){
+  #mawangArchive .ma-roster-toolbar{gap:5px}
+  #mawangArchive .ma-roster-row{padding:4px;gap:4px;grid-template-columns:34px minmax(0,1fr) 34px}
+  #mawangArchive .ma-page-arrow{width:36px;height:54px}
+}
+html[data-mws-motion=reduced] #mawangArchive *,
+html[data-mws-motion=reduced] #mawangArchive *::before,
+html[data-mws-motion=reduced] #mawangArchive *::after{
+  animation:none!important;transition:none!important;
+}
+html[data-mws-motion=reduced] #mawangArchive :is(.ma-character-card,.ma-character-card img,.ma-hero-arrow){
+  transform:none!important;
+}
+@media(prefers-reduced-motion:reduce){
+  html:not([data-mws-motion=full]) #mawangArchive *,
+  html:not([data-mws-motion=full]) #mawangArchive *::before,
+  html:not([data-mws-motion=full]) #mawangArchive *::after{animation:none!important;transition:none!important}
+  html:not([data-mws-motion=full]) #mawangArchive :is(.ma-character-card,.ma-character-card img,.ma-hero-arrow){transform:none!important}
+}
