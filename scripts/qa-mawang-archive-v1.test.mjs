@@ -212,6 +212,8 @@ test('sidebar has official icon links, compact zoom and admin-only docked save',
 test('workspace header keeps only page-relevant actions and links to the exact MaWang wiki',()=>{
   const html=read('index.html'),global=read('assets/topbar-context-v1.css'),runtime=read('assets/topbar-context-v1.js'),archive=read('assets/mawang-archive-header-v1.css');
   assert.equal((html.match(/id="mwsArchiveWikiLink"/g)||[]).length,1);
+  assert(!html.includes('class="mws-archive-title-line"'));
+  assert.match(html,/<div class="top-left">[\s\S]*?<h1 id="pageTitle">캘린더<\/h1>[\s\S]*?<a id="mwsArchiveWikiLink"/);
   assert.match(html,/id="mwsArchiveWikiLink"[^>]*href="https:\/\/namu\.wiki\/w\/MaWang"[^>]*target="_blank"[^>]*rel="noopener noreferrer"/);
   assert.match(html,/assets\/mawang-archive-header-v1\.css\?v=1/);
   assert.match(html,/assets\/topbar-context-v1\.css\?v=1/);
