@@ -266,7 +266,12 @@ try{
     assert.match(await page.locator('.cv-results').textContent(),/트위치에서 아프리카TV로 이적/);
     assert.match(await page.locator('.cv-results').textContent(),/아프리카TV 베스트 BJ/);
     await search(page,'');
-    await page.locator('.cv-legacy-link').click();await pause(250);
+    await page.locator('.cv-legacy-link').click();
+    // Smooth navigation can take longer than 250ms on a long timeline.
+    await page.waitForFunction(()=>{
+      const dated=[...document.querySelectorAll('.cv-axis .cv-entry')].at(-1);
+      return dated&&Number(dated.style.getPropertyValue('--cv-p'))>.99;
+    },{},{timeout:6000});
     assert.equal(await page.locator('.cv-legacy .cv-entry').count(),4);
     const legacyEntry=page.locator('.cv-legacy .cv-entry').first();
     const lastDated=await inspect(page.locator('.cv-axis .cv-entry').last());
