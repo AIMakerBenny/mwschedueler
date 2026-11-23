@@ -78,15 +78,16 @@ try{
       await browser.movePoint(width-80,height-80);await sleep(220);
       const collapsed=await browser.evaluate("(()=>({width:document.querySelector('.sidebar').getBoundingClientRect().width,"+
         "text:getComputedStyle(document.querySelector('#pageTextScaleControlV54')).display,"+
-        "logo:getComputedStyle(document.querySelector('.logo-full')).display}))()");
+        "logo:getComputedStyle(document.querySelector('.logo-full')).display,navLabel:getComputedStyle(document.querySelector('.nav-label')).display}))()");
       assert(collapsed.width<100&&collapsed.text==='none'&&collapsed.logo==='none',JSON.stringify({width,collapsed}));
       await browser.movePoint(30,20);await sleep(25);
       const intermediate=await browser.evaluate("(()=>({width:document.querySelector('.sidebar').getBoundingClientRect().width,"+
         "text:getComputedStyle(document.querySelector('#pageTextScaleControlV54')).display,"+
-        "logo:getComputedStyle(document.querySelector('.logo-full')).display}))()");
+        "logo:getComputedStyle(document.querySelector('.logo-full')).display,navLabel:getComputedStyle(document.querySelector('.nav-label')).display}))()");
       if(intermediate.width<145){
         assert.equal(intermediate.text,'none',JSON.stringify({width,intermediate}));
         assert.equal(intermediate.logo,'none',JSON.stringify({width,intermediate}));
+        assert.equal(intermediate.navLabel,'none',JSON.stringify({width,intermediate}));
       }
       await sleep(260);
       const expanded=await browser.evaluate("(()=>({width:document.querySelector('.sidebar').getBoundingClientRect().width,"+
