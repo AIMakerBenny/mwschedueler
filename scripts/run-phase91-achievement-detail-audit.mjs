@@ -10,7 +10,7 @@ export function runPhase91AchievementDetailAudit(){
 
   for(const token of [
     "button.className='achievement-card-open'",
-    "button.addEventListener('click',()=>openDetail(card?.id))",
+    "button.addEventListener('click',()=>{clearTilt();openDetail(card?.id)})",
     "root.id='achievementDetailModal'",
     "root.setAttribute('role','dialog')",
     "root.setAttribute('aria-modal','true')",
@@ -41,12 +41,14 @@ export function runPhase91AchievementDetailAudit(){
   ]){
     if(!css.includes(token))issues.push('achievement detail CSS missing: '+token);
   }
-  if(!css.includes('grid-template-columns:minmax(720px,820px) minmax(420px,1fr);'))issues.push('desktop achievement detail enlarged split layout is missing');
-  if(!css.includes('width:min(1720px,99vw);'))issues.push('desktop achievement detail dialog is not enlarged');
-  if(!css.includes('width:min(100%,620px,calc((96vh - 120px)*2/3));'))issues.push('desktop achievement card stage size changed unexpectedly');
-  if(!css.includes('padding:32px 72px;'))issues.push('achievement detail outer side spacing is not widened');
-  if(!css.includes('gap:56px;'))issues.push('achievement detail content spacing is not widened');
-  if(!css.includes('width:min(90vw,400px)'))issues.push('mobile achievement card viewer is still too small');
+  if(!css.includes('grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);'))issues.push('responsive desktop achievement split layout is missing');
+  if(!css.includes('width:min(1240px,calc(100vw - 32px));')||!css.includes('height:min(970px,calc(100dvh - 32px));'))issues.push('desktop achievement detail dialog does not fit viewport');
+  if(!css.includes('height:min(780px,calc(100dvh - 198px));')||!css.includes('aspect-ratio:2/3;'))issues.push('detail card stage must fit viewport and retain 2:3 ratio');
+  if(!css.includes('padding:36px 54px;'))issues.push('achievement detail outer side spacing is not balanced');
+  if(!css.includes('gap:clamp(20px,4vw,54px);'))issues.push('achievement detail column spacing is not adaptive');
+  if(!css.includes('width:min(74vw,340px);')||!css.includes('aspect-ratio:2/3;'))issues.push('mobile detail viewer lacks responsive proportional card sizing');
+  if(!css.includes('overflow-y:auto;')||!css.includes('scrollbar-width:none;'))issues.push('long descriptions must remain scrollable without visible scrollbar');
+  if(!gallery.includes('aria-label="업적 상세 정보" tabindex="0"'))issues.push('long-description scroll must support keyboard focus');
   if(!css.includes('width:100%;'))issues.push('mobile achievement detail dialog does not use full width');
   if(!css.includes('white-space:pre-wrap;'))issues.push('achievement description multiline rendering is missing');
 
