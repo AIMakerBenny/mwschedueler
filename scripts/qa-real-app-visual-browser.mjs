@@ -33,7 +33,7 @@ try{
     const injected=await browser.evaluate('(()=>{'+
       'const old=[...document.querySelectorAll("link[rel=stylesheet]")].find(link=>link.href.includes("/assets/workspace-clean-v1.css"));'+
       'if(!old)return {ok:false,reason:"workspace-clean stylesheet not found"};old.remove();'+
-      'const style=(id,css)=>{const el=document.createElement("style");el.id=id;el.textContent=css;document.head.append(el)};'+
+      'const style=(id,css)=>{const el=document.createElement("style");el.id=id;el.textContent=css;document.body.append(el)};'+
       'style("mws-candidate-clean",'+JSON.stringify(clean)+');'+
       'style("mws-candidate-visual",'+JSON.stringify(visual)+');'+
       'const run=document.createElement("script");run.textContent='+JSON.stringify(behavior)+';document.body.append(run);'+
