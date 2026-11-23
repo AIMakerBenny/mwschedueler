@@ -19,7 +19,7 @@ const dashboard=slice('<section id="dashboard"','<section id="calendar"')
 const inline=[...html.matchAll(/<style(?:\s[^>]*)?>([\s\S]*?)<\/style>/gi)].map(m=>m[1]).join('\n');
 const css=[
   'app-core.css','mawang-premium-v1621.css','ui-frame-presets.css',
-  'sidebar-rail-scrollbar-v1.css','sidebar-stable-v1.css',
+  'sidebar-rail-scrollbar-v1.css','sidebar-stable-v1.css','career-timeline.css',
   'workspace-clean-v1.css','workspace-density-v1.css','sidebar-compact-v1.css'
 ].map(p=>read('assets/'+p)).join('\n')+'\n'+inline;
 const pageScale=slice("const PAGE_SCALE_KEY='mws_page_text_scales_v54';",
@@ -98,6 +98,13 @@ try{
         "const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);"+
         "return {style:getComputedStyle(document.querySelector('.topbar')).pointerEvents,clickable:hit===b||b.contains(hit)}})()");
       assert(click.style!=='none'&&click.clickable,JSON.stringify({width,click}));
+      await browser.evaluate("window.__qaActivate('careerTimeline')");
+      const timeline=await browser.evaluate("(()=>{const bar=document.querySelector('.cv-bar.cv-pinned');"+
+        "const css=getComputedStyle(bar),head=getComputedStyle(document.querySelector('.topbar'));"+
+        "return {border:css.borderTopWidth,shadow:css.boxShadow,headerClicks:head.pointerEvents}})()");
+      assert.equal(timeline.border,'0px',JSON.stringify({width,timeline}));
+      assert.equal(timeline.shadow,'none',JSON.stringify({width,timeline}));
+      assert.notEqual(timeline.headerClicks,'none',JSON.stringify({width,timeline}));
     }
     console.log('MWS_UI_AUDIT_V2_OK',width,height,JSON.stringify(dashboardResult));
   }
