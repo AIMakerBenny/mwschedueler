@@ -5,6 +5,7 @@ on:
     paths:
       - 'assets/career-visualizer.js'
       - 'assets/career-timeline.css'
+      - 'assets/workspace-density-v1.css'
       - 'index.html'
       - 'scripts/qa-career-sticky-no-jump.mjs'
       - '.github/workflows/qa-career-sticky-no-jump.yml'
