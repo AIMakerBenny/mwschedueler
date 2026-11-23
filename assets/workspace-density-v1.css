@@ -291,3 +291,17 @@ body.mws-premium .main:not(:has(#mawangArchive.active)) > .topbar .ma-header-fil
     pointer-events:auto!important;
   }
 }
+
+/* MWS timeline topbar hit pass-through.
+   Shared title text is non-interactive. Let the overlaid timeline toolbar
+   receive pointer input without disabling actual global header controls. */
+@media(min-width:1101px){
+  body.mws-premium .main:has(#careerTimeline.active)>.topbar{
+    pointer-events:none!important;
+  }
+  body.mws-premium .main:has(#careerTimeline.active)>.topbar :is(
+    button,a,input,select,textarea,[role="button"],[tabindex]
+  ){
+    pointer-events:auto!important;
+  }
+}
