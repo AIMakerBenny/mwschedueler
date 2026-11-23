@@ -97,8 +97,11 @@ for(const [width,height,mobile] of sizes){
           if(width>=1101){
             await browser.evaluate('window.scrollTo(0,0)');
             await pause(120);
-            const geo=await browser.evaluate(`(()=>{const top=document.querySelector('#pageTitle').getBoundingClientRect(),bar=document.querySelector('#careerTimeline .cv-bar').getBoundingClientRect();return {titleY:(top.top+top.bottom)/2,barY:(bar.top+bar.bottom)/2,barW:bar.width}})()`);
-            assert(Math.abs(geo.titleY-geo.barY)<=30&&geo.barW>=450,'timeline title and tools on one row '+JSON.stringify(geo));
+            const geo=await browser.evaluate(`(()=>{const title=document.querySelector('#pageTitle').getBoundingClientRect(),bar=document.querySelector('#careerTimeline .cv-bar').getBoundingClientRect(),host=document.querySelector('#careerTimeline .cv-bar-host'),topbar=document.querySelector('.main>.topbar').getBoundingClientRect();return {titleY:(title.top+title.bottom)/2,barTop:bar.top,barBottom:bar.bottom,barW:bar.width,topbarBottom:topbar.bottom,sticky:getComputedStyle(host).position,barPosition:getComputedStyle(host.firstElementChild).position,inlineHostHeight:host.style.height,oldPinned:bar.classList.contains('cv-pinned')}})()`);
+            assert(geo.sticky==='sticky'&&geo.barPosition==='relative'&&!geo.oldPinned
+              &&geo.inlineHostHeight===''&&geo.barW>=450
+              &&geo.barTop>=geo.topbarBottom-2&&geo.barTop-geo.topbarBottom<70,
+              'timeline toolbar must stay in its own stable in-flow row '+JSON.stringify(geo));
             await expectMouseTarget(browser,'#careerTimeline .cv-search','timeline search');
             await expectMouseTarget(browser,'#careerTimeline .cv-export','timeline export');
             const yearPoint=await expectMouseTarget(browser,'#careerTimeline .cv-map-year[aria-label^="2025년"]','timeline year 2025');
