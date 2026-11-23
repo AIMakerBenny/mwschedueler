@@ -97,7 +97,7 @@ for(const [width,height,mobile] of sizes){
           if(width>=1101){
             await browser.evaluate('window.scrollTo(0,0)');
             await pause(120);
-            const geo=await browser.evaluate(`(()=>{const title=document.querySelector('#pageTitle').getBoundingClientRect(),bar=document.querySelector('#careerTimeline .cv-bar').getBoundingClientRect(),host=document.querySelector('#careerTimeline .cv-bar-host'),topbar=document.querySelector('.main>.topbar').getBoundingClientRect();return {titleY:(title.top+title.bottom)/2,barTop:bar.top,barBottom:bar.bottom,barW:bar.width,topbarBottom:topbar.bottom,sticky:getComputedStyle(host).position,barPosition:getComputedStyle(host.firstElementChild).position,inlineHostHeight:host.style.height,oldPinned:bar.classList.contains('cv-pinned')}})()`);
+            const geo=await browser.evaluate(`(()=>{const title=document.querySelector('#pageTitle').getBoundingClientRect(),bar=document.querySelector('#careerTimeline .cv-bar').getBoundingClientRect(),host=document.querySelector('#careerTimeline .cv-bar-host'),topbar=document.querySelector('.main>.topbar').getBoundingClientRect();return {titleY:(title.top+title.bottom)/2,barTop:bar.top,barBottom:bar.bottom,barW:bar.width,topbarBottom:topbar.bottom,sticky:getComputedStyle(host).position,barPosition:getComputedStyle(host.firstElementChild).position,inlineHostHeight:host.style.height,oldPinned:host.firstElementChild.classList.contains('cv-pinned')}})()`);
             assert(geo.sticky==='sticky'&&geo.barPosition==='relative'&&!geo.oldPinned
               &&geo.inlineHostHeight===''&&geo.barW>=450
               &&geo.barTop>=geo.topbarBottom-2&&geo.barTop-geo.topbarBottom<70,
