@@ -1,0 +1,47 @@
+name: Career timeline stable scrolling QA
+on:
+  pull_request:
+    branches: [cloudflare-production]
+    paths:
+      - 'assets/career-visualizer.js'
+      - 'assets/career-timeline.css'
+      - 'assets/workspace-density-v1.css'
+      - 'index.html'
+      - 'scripts/qa-career-sticky-no-jump.mjs'
+      - '.github/workflows/qa-career-sticky-no-jump.yml'
+permissions:
+  contents: read
+jobs:
+  stable-scroll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install browser and Korean font
+        run: |
+          npm install --no-save --package-lock=false playwright
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-nanum
+      - name: Verify real public Cloudflare timeline with candidate source
+        env:
+          MWS_TIMELINE_CAPTURE: '1'
+        run: node scripts/qa-career-sticky-no-jump.mjs
+      - name: Verify existing timeline desktop navigation, search, and animations
+        env:
+          CAREER_QA_MODE: desktop
+        run: node scripts/qa-career-motion-browser.mjs
+      - name: Verify existing timeline mobile controls and gestures
+        env:
+          CAREER_QA_MODE: mobile
+        run: node scripts/qa-career-motion-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: career-timeline-stable-qa
+          path: |
+            timeline-sticky-qa/*.png
+            career-qa/*.png
+          if-no-files-found: ignore

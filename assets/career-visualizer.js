@@ -397,10 +397,9 @@
       const root=getRoot();if(root!==scrollRoot){scrollRoot=root;snapNext=true;}
       if(!query.value.trim()&&!restoreFrame)lastBrowsePosition=scrollTop();
       const {top,bottom}=viewport(), h=bottom-top;
-      const hostRect=barHost.getBoundingClientRect();
-      const barHeight=bar.offsetHeight;
-      const pin=hostRect.top<=top;
-      const barBottom=(pin?top:hostRect.top)+barHeight;
+      // The CSS sticky host stays in flow: reading its real viewport geometry
+      // keeps the arrival zone stable without detaching/repositioning the bar.
+      const barBottom=bar.getBoundingClientRect().bottom;
       const activeTop=Math.max(top,Math.min(barBottom,bottom-80));
       const usable=bottom-activeTop;
       // The arrival zone is the lower half of the readable viewport, not the entire page.
@@ -431,11 +430,6 @@
       const visibleMarkers=[...markers].filter(([,marker])=>!marker.parentElement.hidden);
       for(const [y,marker] of visibleMarkers){if(marker.getBoundingClientRect().top<=activeTop+Math.max(70,usable*.35))current=y;}
       if(!current)current=visibleMarkers[0]?.[0];
-      barHost.style.height=barHeight+'px';
-      bar.style.setProperty('--cv-top',top+'px');
-      bar.style.setProperty('--cv-left',hostRect.left+'px');
-      bar.style.setProperty('--cv-width',hostRect.width+'px');
-      bar.classList.toggle('cv-pinned',pin);
       for(const [entry,target,visible,drift,direction,compact] of states){
         const previous=motion.get(entry);
         const value=snapNext||reduced()||!visible||!previous?target:previous.value;
@@ -603,7 +597,7 @@
       for(const entry of anim)entry.querySelector('.cv-detail').getAnimations?.().forEach(animation=>animation.cancel());
       window.removeEventListener('scroll',schedule,true);window.removeEventListener('resize',schedule);
       document.removeEventListener('pointerdown',outside);window.removeEventListener('mws-motion-change',schedule);observer.disconnect();
-      bar.classList.remove('cv-pinned');barHost.style.removeProperty('height');
+      // Sticky layout has no scroll-linked inline geometry to reset.
     };
     document.addEventListener('visibilitychange',()=>{if(document.hidden){if(raf)cancelAnimationFrame(raf);raf=0;lastFrame=0;if(restoreFrame)cancelAnimationFrame(restoreFrame);restoreFrame=0;for(const entry of anim)entry.querySelector('.cv-detail').getAnimations?.().forEach(animation=>animation.cancel());}else{snapNext=true;schedule();}});
     resize();
