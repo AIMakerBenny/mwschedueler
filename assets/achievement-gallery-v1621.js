@@ -158,7 +158,8 @@ async function loadFront(card,view,token){
     img.src=url;
     img.onload=()=>{if(token===renderToken)view.thumb.classList.add('has-image')};
     img.onerror=()=>{if(token===renderToken)view.placeholder.textContent='카드 이미지를 표시할 수 없습니다.'};
-    view.thumb.appendChild(img);
+    // Overlay must follow the decoded image in paint order, never sit behind it.
+    view.thumb.insertBefore(img,view.thumb.querySelector('.achievement-card-peek'));
   }catch(error){
     console.warn('Achievement card image load failed',imageId,error);
     if(token===renderToken)view.placeholder.textContent='카드 이미지를 불러오지 못했습니다.';
