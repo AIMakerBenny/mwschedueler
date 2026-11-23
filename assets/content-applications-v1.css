@@ -209,3 +209,71 @@ html[data-mws-motion="reduced"] #contentApplications *{transition:none!important
 @media(max-width:580px){#dashboardApplicationSupport{padding:11px;margin:10px 0 14px}#dashboardApplicationSupport .ca-dash-row{grid-template-columns:minmax(0,1fr);padding:10px;gap:12px}#dashboardApplicationSupport .ca-dash-metrics>div{padding:0 8px}#dashboardApplicationSupport .ca-dash-actions{display:grid;grid-template-columns:minmax(0,1fr);justify-items:stretch}#dashboardApplicationSupport .ca-dash-buttons{display:grid;grid-template-columns:1fr 1fr}#dashboardApplicationSupport .ca-dash-time{justify-content:flex-start}#dashboardApplicationSupport .ca-avatar{width:46px;height:46px}}
 @media(prefers-reduced-motion:reduce){#dashboardApplicationSupport *{transition:none!important;animation:none!important}}
 html[data-mws-motion="reduced"] #dashboardApplicationSupport *{transition:none!important;animation:none!important}
+
+/* Campaign urgency, shown only during the last six hours. */
+#contentApplications .ca-state.urgent,#dashboardApplicationSupport .ca-state.urgent{
+  color:var(--text)!important;
+  border-color:color-mix(in srgb,#eb9d2f 70%,var(--border))!important;
+  background:color-mix(in srgb,#eb9d2f 18%,var(--input))!important;
+  animation:ca-urgent-breathe 3s ease-in-out infinite;
+}
+#contentApplications .ca-state.urgent::before,#dashboardApplicationSupport .ca-state.urgent::before{
+  background:#eba132!important;
+  box-shadow:0 0 5px #eb9d2f80;
+}
+#contentApplications .ca-countdown-panel.urgent{
+  border-color:color-mix(in srgb,#eb9d2f 65%,var(--border))!important;
+  background:color-mix(in srgb,#eb9d2f 9%,var(--ca-surface))!important;
+}
+@keyframes ca-urgent-breathe{
+  0%,100%{box-shadow:0 0 0 0 #eb9d2f00}
+  50%{box-shadow:0 0 0 3px #eb9d2f27}
+}
+@media(prefers-reduced-motion:reduce){
+  #contentApplications .ca-state.urgent,#dashboardApplicationSupport .ca-state.urgent{animation:none!important}
+}
+html[data-mws-motion="reduced"] #contentApplications .ca-state.urgent,
+html[data-mws-motion="reduced"] #dashboardApplicationSupport .ca-state.urgent{animation:none!important}
+
+/* At-a-glance organizer attribution without asserting that the station owner wrote a post. */
+#contentApplications .ca-author-line,
+#dashboardApplicationSupport .ca-author-line{
+  display:flex;align-items:baseline;gap:5px 9px;flex-wrap:wrap;min-width:0;
+  color:var(--muted);font-size:11px;line-height:1.55;
+}
+#contentApplications .ca-author-line>span,#dashboardApplicationSupport .ca-author-line>span{flex:none;color:var(--muted)}
+#contentApplications .ca-author-line>strong,#dashboardApplicationSupport .ca-author-line>strong{
+  color:var(--text);font-size:inherit;line-height:inherit;font-weight:650;min-width:0;overflow-wrap:anywhere;
+}
+#contentApplications .ca-campaign-title .ca-author-line{margin-top:4px}
+#contentApplications .ca-detail-authors{margin-top:8px}
+#dashboardApplicationSupport .ca-dash-authors{font-size:11px}
+
+/* The list return action remains visually readable even when the title is long. */
+#contentApplications .ca-back{
+  flex:none!important;min-width:108px!important;min-height:36px!important;
+  padding:8px 12px!important;white-space:nowrap!important;
+  background:color-mix(in srgb,var(--accent) 16%,var(--panel))!important;
+  border-color:color-mix(in srgb,var(--accent) 58%,var(--border))!important;
+  color:var(--text)!important;font-size:12px!important;font-weight:800!important;
+  box-shadow:0 2px 8px #00000018!important;
+}
+#contentApplications .ca-back:hover{background:color-mix(in srgb,var(--accent) 26%,var(--panel))!important}
+#contentApplications .ca-detail-title{min-width:0!important}
+#contentApplications .ca-detail-title h2{overflow-wrap:anywhere}
+
+/* Repeatable organizer fields in admin-only editor. */
+#contentApplications .ca-authors-editor{display:grid;gap:8px;min-width:0}
+#contentApplications .ca-authors-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#contentApplications .ca-author-add,#contentApplications .ca-author-remove{
+  flex:none;padding:6px 11px;border:1px solid var(--border);
+  border-radius:8px;background:var(--input);color:var(--text);
+  font-size:12px;font-weight:700;min-height:34px;cursor:pointer;
+}
+#contentApplications .ca-author-add:hover,#contentApplications .ca-author-remove:hover{
+  border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--input));
+}
+#contentApplications .ca-author-add:disabled{opacity:.4;cursor:not-allowed}
+#contentApplications .ca-author-inputs{display:grid;gap:8px}
+#contentApplications .ca-author-field{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px}
+#contentApplications .ca-author-hint{color:var(--muted);font-size:11px;line-height:1.5}
