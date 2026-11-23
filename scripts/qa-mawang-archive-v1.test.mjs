@@ -225,6 +225,10 @@ test('workspace header keeps only page-relevant actions and links to the exact M
   assert.match(runtime,/MutationObserver\(syncState\)/);
   assert.match(runtime,/오프라인/);
   assert.match(archive,/\.mws-archive-wiki/);
+  assert.match(archive,/\.ma-header-filters/);
+  assert.match(global,/box-shadow:none!important/);
+  assert.match(global,/background:transparent!important/);
+  assert.doesNotMatch(global,/min-height:57px!important/);
   assert.match(html,/id="postRegisterMenu"/);
   assert.match(html,/class="post-menu-trigger post-register-trigger" aria-label="새 게시글 등록"/);
 });

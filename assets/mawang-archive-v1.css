@@ -101,7 +101,22 @@ html[data-mws-motion=reduced] .mawang-archive :is(.ma-character-card,.ma-charact
 @media(prefers-reduced-motion:reduce){html:not([data-mws-motion=full]) .mawang-archive *,html:not([data-mws-motion=full]) .mawang-archive *::before,html:not([data-mws-motion=full]) .mawang-archive *::after{animation:none!important;transition:none!important}html:not([data-mws-motion=full]) .mawang-archive :is(.ma-character-card,.ma-character-card img,button){transform:none!important}}
 
 /* Single mascot page: preserve supplied image proportions. */
-.ma-roster-grid[data-page-size="1"]{grid-template-columns:minmax(140px,205px)!important;justify-content:center}
-.ma-character-card[data-ma-character="marorong"] .ma-portrait{aspect-ratio:740/640;max-height:none}
+/* The mascot occupies the same grid slot and square portrait as every other character. */
+.ma-roster-grid[data-page-size="1"]{grid-template-columns:repeat(var(--ma-columns,14),minmax(0,1fr))!important;justify-content:normal}
 .ma-character-card[data-ma-character="marorong"] .ma-portrait img{object-fit:contain;object-position:center}
 .ma-stage[data-group="mascot"] .ma-stage-art,.ma-stage[data-group="mascot"] .ma-main-profile,.ma-stage[data-group="mascot"] .ma-main-profile .ma-portrait{background:#fff}
+
+/* Compact character strip: let portraits own the space, not toolbar padding. */
+.mawang-archive{gap:9px}
+.ma-roster{padding:9px 11px;border-radius:12px}
+.ma-roster-toolbar{margin-bottom:7px;gap:8px}
+.ma-roster-heading h3{font-size:13px}
+.ma-roster-label{padding:6px 3px}
+.ma-character-card .ma-portrait{aspect-ratio:1}
+.ma-roster-grid{align-items:start}
+.ma-page-arrow{border-radius:9px;gap:3px}
+@media(min-width:1101px){
+  .main:has(#mawangArchive.active) .ma-roster-toolbar .ma-filters{display:none!important}
+  .main:has(#mawangArchive.active) .ma-roster-toolbar .ma-search{margin-left:auto}
+}
+@media(max-width:680px){.ma-roster{padding:7px}.ma-roster-toolbar{margin-bottom:6px}}

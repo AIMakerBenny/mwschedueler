@@ -3,7 +3,7 @@
   const db=window.mwsMawangArchiveDataV1,root=document.getElementById('mwsArchiveRoot');
   if(!db||!root)return;
   const {entries}=db;
-  let columnCapacity=14,activeColumns=14;
+  let columnCapacity=14,activeColumns=14,headerFilters=null;
   const escape=value=>String(value??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
   const groups={all:'전체',jeong:'정 시리즈',classic:'클래식',mascot:'마스코트'};
   const groupName=c=>groups[c.group];
@@ -27,11 +27,13 @@
   function roster(direction=0){
     const list=matching(),sections=rosterPages(list),pages=Math.max(1,sections.length);page=Math.min(page,pages-1);
     const visible=sections[page]||[],grid=root.querySelector('.ma-roster-grid');
-    activeColumns=visible.length?Math.ceil(visible.length/Math.ceil(visible.length/columnCapacity)):1;
+    // Keep the same card slot width across every category, including the single mascot.
+    const referenceCount=Math.max(...rosterPages(entries).map(items=>items.length));
+    activeColumns=Math.max(1,Math.ceil(referenceCount/Math.ceil(referenceCount/columnCapacity)));
     root.querySelector('.ma-count').textContent=list.length+' / '+entries.length;
     grid.dataset.motion=direction?'slide':'none';grid.style.setProperty('--ma-enter-x',direction<0?'-10px':'10px');
     grid.innerHTML=visible.length?visible.map((c,i)=>`<button type="button" class="ma-character-card${c.id===selected.id?' is-selected':''}" data-ma-character="${c.id}" aria-pressed="${c.id===selected.id}" title="${escape(c.name)}" style="--ma-color:${c.color};--ma-delay:${Math.min(i,7)*13}ms">${pic(c)}${c.id==='kkomwang'?'<span class="ma-new-badge">NEW</span>':''}<span class="ma-selection-mark">${icon('check')}</span><span class="ma-roster-label"><strong>${escape(c.name)}</strong></span></button>`).join(''):'<div class="ma-no-results">검색 결과가 없습니다.<button type="button" data-ma-clear>검색 초기화</button></div>';
-    root.querySelectorAll('[data-ma-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.maFilter===filter)));
+    [...root.querySelectorAll('[data-ma-filter]'),...(headerFilters?.querySelectorAll('[data-ma-filter]')||[])].forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.maFilter===filter)));
     const paging=root.querySelector('.ma-pagination');
     paging.textContent=(page+1)+' / '+pages+' 페이지'+(visible.length?' · '+groupName(visible[0]):'');
     const canBrowse=pages>1||(!normalize(query)&&filter!=='all'&&rosterPages(entries).length>1);
@@ -137,6 +139,21 @@
   function render(){
     if(mounted)return;mounted=true;
     root.innerHTML=`<div class="ma-roster"><div class="ma-roster-toolbar"><div class="ma-roster-heading"><h3>캐릭터 선택 <span class="ma-count"></span></h3></div><div class="ma-filters" aria-label="캐릭터 분류">${Object.entries(groups).map(([key,name])=>`<button type="button" data-ma-filter="${key}"><span>${name}</span><span class="ma-filter-count">${key==='all'?entries.length:entries.filter(c=>c.group===key).length}</span></button>`).join('')}</div><div class="ma-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input type="search" aria-label="캐릭터 검색" placeholder="캐릭터 검색"><button class="ma-search-clear" type="button" data-ma-clear aria-label="검색 초기화" hidden>${icon('close')}</button></div><div class="ma-pagination" aria-live="polite" aria-label="캐릭터 목록 페이지"></div></div><div class="ma-roster-row"><button type="button" class="ma-page-arrow" data-ma-step="-1" aria-label="이전 캐릭터 페이지"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg><span>이전</span></button><div class="ma-roster-grid" aria-label="캐릭터 목록"></div><button type="button" class="ma-page-arrow" data-ma-step="1" aria-label="다음 캐릭터 페이지"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg><span>다음</span></button></div></div><div class="ma-stage" aria-labelledby="maCharacterName"></div><div class="ma-admin-input-slot"></div><span class="ma-announce" aria-live="polite"></span>`;
+    // The header uses the same category controls without duplicating the archive state.
+    if(typeof document.createElement==='function'){
+      const wiki=document.getElementById('mwsArchiveWikiLink');
+      if(wiki?.parentElement){
+        headerFilters=document.createElement('nav');
+        headerFilters.className='ma-header-filters';
+        headerFilters.setAttribute('aria-label','캐릭터 분류');
+        headerFilters.innerHTML=root.querySelector('.ma-filters').innerHTML;
+        wiki.insertAdjacentElement('afterend',headerFilters);
+        headerFilters.addEventListener('click',event=>{
+          const button=event.target.closest('button[data-ma-filter]');
+          if(button)root.querySelector('.ma-filters [data-ma-filter="'+button.dataset.maFilter+'"]')?.click();
+        });
+      }
+    }
     function imageFailed(event){const img=event.target;if(!(img instanceof HTMLImageElement))return;const url=img.dataset.maImage,wrap=img.closest('.ma-portrait');img.hidden=true;if(!url||!wrap)return;missing.add(url);wrap.classList.add('ma-image-missing');const note=wrap.querySelector('.ma-monogram small');if(note)note.textContent='사진 불러오기 실패'}
     root.addEventListener('error',imageFailed,true);
     root.addEventListener('load',e=>{if(e.target.dataset?.maImage&&(e.target.naturalWidth<2||e.target.naturalHeight<2))imageFailed(e)},true);
