@@ -9,6 +9,7 @@ on:
       - 'assets/content-applications-model-v1.js'
       - 'scripts/qa-content-applications-v1.test.mjs'
       - 'scripts/qa-content-applications-v1-browser.mjs'
+      - 'scripts/calendar-browser-realtime.mjs'
       - 'assets/workspace-clean-v1.css'
       - 'assets/workspace-density-v1.css'
       - 'assets/sidebar-compact-v1.css'
@@ -35,7 +36,7 @@ jobs:
       - name: Application deadlines, authors and public/read-only Chromium QA
         run: |
           node --test scripts/qa-content-applications-v1.test.mjs
-          node scripts/qa-content-applications-v1-browser.mjs
+          MWS_RANK_VISUAL=1 node scripts/qa-content-applications-v1-browser.mjs
       - name: Dashboard render count and zero-state regression
         run: node --test scripts/qa-dashboard-upcoming-v1.test.mjs
       - name: Archive and cache-version source regression
