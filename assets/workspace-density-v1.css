@@ -57,14 +57,9 @@ body.mws-premium .main:has(#careerTimeline.section.active){
     justify-content:flex-end!important;
     align-items:center!important;
     margin:0 0 8px!important;
-    padding-right:52px!important;
-    pointer-events:none;
     position:relative!important;
     z-index:16!important;
   }
-  /* Reserve space for the always-on calendar shortcut and do not let
-     the full-width posts toolbar intercept clicks on the shared header. */
-  #posts.section.active .posts-head > *{pointer-events:auto}
   #posts.section.active .posts-head{
     transform:none!important;
   }
@@ -256,10 +251,12 @@ body.mws-premium .main:not(:has(#mawangArchive.active)) > .topbar .ma-header-fil
   body.mws-premium #contentApplications.section.active{
     position:static!important;
   }
+  /* Rightmost header space is reserved for the always-available add button
+     and sync controls. The posts menus remain usable to their left. */
   body.mws-premium #posts.section.active>.posts-head{
     position:absolute!important;
     top:18px!important;
-    right:22px!important;
+    right:228px!important;
     bottom:auto!important;left:auto!important;
     width:auto!important;
     min-height:36px!important;height:36px!important;
