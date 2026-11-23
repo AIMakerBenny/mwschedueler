@@ -28,6 +28,10 @@ try{
       await sleep(150);
     }
     assert(state.cells>=28&&state.calendar&&state.app&&state.startup!=='pending','Real public calendar never reached settled state: '+JSON.stringify({width,state}));
+    // Dismiss the announcement only in this ephemeral public QA browser so
+    // the actual calendar, not the onboarding overlay, is visually inspected.
+    await browser.evaluate("(()=>{const dialog=document.querySelector('#mwsAnnouncementDialog');if(dialog?.open){dialog.querySelector('[data-notice-close]')?.click()}return !document.querySelector('#mwsAnnouncementDialog[open]')})()");
+    await sleep(100);
     // Swap the production copy of the edited stylesheet, then load the PR's
     // new CSS and JS. This does not change files or data on the hosted site.
     const injected=await browser.evaluate('(()=>{'+
