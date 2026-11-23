@@ -56,7 +56,7 @@ try{
       "const inViewport=[toolbar,tabs,profile,metrics,grid].every(e=>r(e).left>=-2&&r(e).right<=innerWidth+2);"+
       "return {toolbar:!!toolbar,tabs:tabs.querySelectorAll('button').length,profiles:document.querySelectorAll('#dashboardProfileSlot').length,"+
       "emptyShown,populated,inViewport,overflows:document.documentElement.scrollWidth>innerWidth+3,"+
-      "sameRow:Math.abs(r(tabs).top-r(profile).top)<20,metricCount:metrics.querySelectorAll(':scope > .card').length,"+
+      "sameRow:Math.abs((r(tabs).top+r(tabs).bottom)/2-(r(profile).top+r(profile).bottom)/2)<20,positions:{tabs:{top:r(tabs).top,height:r(tabs).height},profile:{top:r(profile).top,height:r(profile).height},toolbar:{top:r(toolbar).top,height:r(toolbar).height}},metricCount:metrics.querySelectorAll(':scope > .card').length,"+
       "oldHeading:!!$('.dashboard-overview-heading')};})()");
     assert.equal(dashboardResult.metricCount,6,JSON.stringify({width,dashboardResult}));
     assert.equal(dashboardResult.tabs,3,JSON.stringify({width,dashboardResult}));
