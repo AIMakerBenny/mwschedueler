@@ -5,7 +5,7 @@
   const {entries}=db;
   let columnCapacity=14,activeColumns=14;
   const escape=value=>String(value??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
-  const groups={all:'전체',jeong:'정 시리즈',classic:'클래식'};
+  const groups={all:'전체',jeong:'정 시리즈',classic:'클래식',mascot:'마스코트'};
   const groupName=c=>groups[c.group];
   const number=c=>String(c.number).padStart(2,'0');
   const missing=new Set(),profiles=new Map(),busy=new Set(),messages=new Map();
@@ -16,8 +16,8 @@
   let selected=entries[0],filter='all',query='',page=0,mounted=false,profileError='',profileReady=false,uploadTarget=null;
   const normalize=s=>s.toLocaleLowerCase('ko').replace(/[\s-]+/g,'');
   const matching=()=>entries.filter(c=>(filter==='all'||filter===c.group)&&normalize([c.name,c.english,c.tagline,...c.tags].join(' ')).includes(normalize(query)));
-  const rosterPages=(list=matching())=>['jeong','classic'].map(group=>list.filter(c=>c.group===group)).filter(items=>items.length);
-  const profilePhoto=c=>profiles.get(c.id)||(c.imageSource.startsWith('PIKU')?{url:c.image}:null);
+  const rosterPages=(list=matching())=>['jeong','classic','mascot'].map(group=>list.filter(c=>c.group===group)).filter(items=>items.length);
+  const profilePhoto=c=>profiles.get(c.id)||(c.image?.startsWith('/assets/mawang-archive-portraits/')?{url:c.image}:null);
   function pic(c,hero=false){
     const p=profilePhoto(c),failed=!p||missing.has(p.url);
     return `<div class="ma-portrait${failed?' ma-image-missing':''}" style="--ma-color:${c.color}"><div class="ma-monogram" aria-hidden="true"><span>${escape(c.name.slice(0,1))}</span>${hero?`<small>${p?'사진 불러오기 실패':'프로필 사진 미등록'}</small>`:''}</div>${!failed?`<img class="ma-character-image" data-ma-image="${escape(p.url)}" src="${escape(p.url)}" alt="${escape(c.name)} 프로필 사진" loading="${hero?'eager':'lazy'}" decoding="async" draggable="false">`:''}</div>`;
@@ -70,7 +70,7 @@
     profilePanel(false);
   }
   function stage(direction=0){
-    const c=selected,node=root.querySelector('.ma-stage');node.style.setProperty('--ma-color',c.color);
+    const c=selected,node=root.querySelector('.ma-stage');node.style.setProperty('--ma-color',c.color);node.dataset.group=c.group;
     const list=matching(),index=list.indexOf(c);
     node.hidden=index<0;if(index<0){node.innerHTML='';return;}
     node.style.setProperty('--ma-enter-x',direction<0?'-12px':direction>0?'12px':'0px');

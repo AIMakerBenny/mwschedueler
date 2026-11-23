@@ -33,15 +33,18 @@
     babyShark:{id:'QLfDcsu3RG4',title:'Baby Shark',kind:'공식 영상',published:'2021-02-28'},
     real:{id:'d8pOSpkgw1I',title:'Burn Out · Real MaWang',kind:'공식 영상',published:'2021-11-27'},
     hamster:{id:'PEO110rb3bU',title:'뭐하고 있니 마왕 햄스터',kind:'공식 영상'},
-    voice:{id:'RKQ2XmEfFB8',title:'2.0 보이스 관련 영상',kind:'공개 기록에 연결된 영상'}
+    voice:{id:'RKQ2XmEfFB8',title:'2.0 보이스 관련 영상',kind:'공개 기록에 연결된 영상'},
+    pianoman:{id:'yiHUdhBJmjA',title:'Piano Man - Cover by Mawang0216',kind:'공개 AI 커버 영상'}
   };
   // Requested display priority, not a measured last-used timestamp.
-  const order='yoo da su su-black su-half ae kkomwang ye-new ye seon so mi mi-gold hakka lena kokoa devil hina real wolferia mike coco azuki nyasuka chibi baby-shark baby-kuma'.split(' ');
+  const order='yoo da su su-black su-half ae kkomwang ye-new ye seon so mi mi-gold hakka lena kokoa devil hina real wolferia mike coco azuki nyasuka chibi baby-shark baby-kuma marorong'.split(' ');
   // Character introductions use the public avatar descriptions and original channel
   // videos as reference. Color variants share the same character narrative.
   const profiles={
-    yoo:['개백수티를 착용하는 아바타다.',[
-      ['방송','2.0 보이스 도입 이후 저스트 채팅, 게임 방송과 합방에 주로 사용되었다.']]],
+    yoo:['마왕의 대표 아바타 중 하나로, 개백수티를 처음 입고 시그니처로 자리잡게 한 캐릭터다. 2.0 보이스 도입 이후 저스트 채팅과 게임, 합방에 주로 사용되었으며 마스코트 마로롱의 디자인 바탕이 되었다.',[
+      ['개백수티','개백수티의 원조 아바타다. 개백수티는 직접 손으로 그린 글씨가 들어간 마왕의 시그니처 의상이다.'],
+      ['방송','2023년 4월 제작을 시작해 2.0 보이스 도입 이후 방송의 대표 캐릭터로 자리잡았다.'],
+      ['마로롱','마왕의 마스코트 마로롱은 유정이의 디자인을 바탕으로 만들어졌다.']]],
     da:['다른 마왕 아바타에 비해 밝은 분위기와 웃는 인상이 특징이다. 의상의 노출도 비교적 적은 편이다.',[
       ['제작','생방송에서 아바타를 작업했다.']]],
     su:['코로나에 걸렸을 때 제작한 아바타로, 수정은 2022년 12월 10일 공개되었다. VRChat 방송에 주로 사용된 캐릭터 중 하나다.',[
@@ -57,9 +60,11 @@
     mi:['트위치 생방송에서 갸루 콘셉트로 제작한 아바타다. 이름을 정하지 못해 임시로 미정이라 부르다가 실제 이름으로 굳어졌다. 이후 예정과 선정의 이름에도 영향을 주었다.',[
       ['두 가지 스타일','검은 머리의 흑미정과 금발의 금미정이 있다.'],
       ['방송','트위치 생방송에서 자주 사용하던 아바타 중 하나다.']]],
-    hakka:['마왕의 초창기 유튜브에서 레나와 함께 대표 캐릭터로 사용된 고양이 귀 아바타다.',[
-      ['대표 콘텐츠','2022년 1월 17일 공개된 360도 영상 A day with mawang 2는 하카와 하루를 함께 보내는 콘셉트로 제작되었다.'],
-      ['엔딩','영상 말미에 발레 동작을 선보인다.']]],
+    hakka:['마왕의 초창기 유튜브를 대표한 고양이 귀 아바타다. 레나와 함께 영상에 자주 등장하며 귀엽고 엉뚱한 모습으로 알려졌다. 처음 AI 노래를 선보인 캐릭터로서 Piano Man 커버와도 연결된다.',[
+      ['대표 콘텐츠','2022년 공개된 360도 영상 A day with mawang 2에서 하카와 함께하는 하루를 보여준다.'],
+      ['AI 노래 · Piano Man','마왕이 처음 AI 노래를 선보인 캐릭터다. 공개된 AI 커버 Piano Man으로도 알려져 있다.'],
+      ['외무부장관','외부 시참과 합방에 주로 사용되면서 외무부장관이라는 별명을 얻었다.'],
+      ['엔딩','초기 영상 말미에 발레 동작으로 마무리하는 모습이 등장한다.']]],
     lena:['악마를 연상시키는 뿔을 가진 아바타다. 영상에서는 남성 목소리와 몸개그가 등장하기도 한다.',[
       ['대표 캐릭터','2022년 하카의 360도 콘텐츠 A day with mawang 2에서 마왕은 하카와 레나를 채널의 대표 캐릭터로 소개했다.']]],
     kokoa:['섹시한 콘셉트의 아바타다. 문신과 광택 있는 피부, 노출이 있는 의상이 특징이다.',[
@@ -80,11 +85,13 @@
     chibi:['코코의 어린 시절을 표현한 아바타로, 마왕의 초창기 유튜브 영상에 등장한다.',[]],
     'baby-shark':['아기쿠마와 쌍둥이인 작은 캐릭터다. 히나보다 조금 큰 체구이며, 에피소드에 따라 성장한 모습으로도 등장한다.',[['대표 콘텐츠','2021년 2월 28일 공개한 VRChat 단편 Baby Shark는 아기상어를 건드렸다가 곤란해지는 코미디를 소재로 제작했다.']]],
     'baby-kuma':['아기상어와 쌍둥이인 작은 캐릭터다. 히나보다 키가 조금 크고, 아기상어와 마찬가지로 어른 형태도 존재한다.',[]],
+    marorong:['유정이를 바탕으로 만들어진 마왕의 마스코트다. 제공된 일러스트에서는 연분홍색 머리, 고양이 귀, 커다란 파란 눈과 풍성한 꼬리를 가진 네 발 캐릭터로 표현된다.',[
+      ['디자인','유정이 아바타에서 이어지는 마스코트로, 첨부된 원본 그림을 그대로 사용한다.']]],
     kkomwang:['',[]]
   };
   const profileKey=id=>id.startsWith('su-')?'su':id==='mi-gold'?'mi':id;
   const entries=[
-    ['yoo','유정','Yoo-Jeong','jeong','#7dd3fc','2023-04-13','제작 시작','개백수티의 주인공',['개백수티','2.0 보이스','게임 · 저챗'],'유정마왕.png','d541b4870fbecc5ccab53d15322e696d77bd346c64f291d765fac779fee495da',['voice']],
+    ['yoo','유정','Yoo-Jeong','jeong','#7dd3fc','2023-04-13','제작 시작','개백수티의 원조 · 마로롱의 바탕',['개백수티','대표 아바타','2.0 보이스','마로롱'],'유정마왕.png','d541b4870fbecc5ccab53d15322e696d77bd346c64f291d765fac779fee495da',['voice']],
     ['mi','흑미정','Black Mi-Jeong','jeong','#edbb76','2022-04-14','미정 제작일','정 시리즈의 시작 · 흑발',['미정','흑발','갸루','정 시리즈'],'갸루마왕.png','b6a9097bd28d8d5478ac6fbb49770be6741e3d34fb61cbd72044f18d2c0dfa0a',['mi']],
     ['mi-gold','금미정','Gold Mi-Jeong','jeong','#f6d47d',null,null,'미정 · 금발 버전',['미정','금발','갸루','정 시리즈'],null,null,['mi']],
     ['ye','예정','Ye-Jeong','jeong','#9db2d3','2022-07-04','제작일','직장인 콘셉트',['직장인','다크서클','사원증'],'예정마왕.png','ddec6662ede6e6678d777fccbd67a60875e839a59a65f7ffe93af2bdd9ac716b',[]],
@@ -96,7 +103,7 @@
     ['ae','애정','Ae-Jeong','jeong','#7dc7a5','2024-09-11','제작 시작','은둔형 외톨이 콘셉트',['은둔형 외톨이','생방송 제작'],'Aejeong.png','5e1f74946bd55f8a4e7bde95d9f096e945817b7473aeede56d40f516a4051f94',[]],
     ['da','다정','Da-Jeong','jeong','#f4d58b',null,null,'밝은 미소',['밝은 분위기','웃는 표정','정 시리즈'],'Dajeong.jpg','35f8cb26e1ee34cb7d8db7bd573bc488bfb6cb5c08ae46ea4dc29acfa0e1941c',[]],
     ['ye-new','예정 리메이크','Ye-Jeong · NEW','jeong','#a5b4fc',null,null,'예정의 새로운 버전',['리메이크','예정'],'(new)예정이.png','11d3fee08109663ae488cee5f237fcadca5307f88618b510ddf534bfef235700',[]],
-    ['hakka','하카','Hakka','classic','#86c8fa',null,null,'초기 마왕의 얼굴',['고양이 귀','발레','레나'],'하카.jpg','232aa75ab6c2b84924ca55326b97478a2424f27d784a5a5a0ca4569b4860aced',['hakka']],
+    ['hakka','하카','Hakka','classic','#86c8fa',null,null,'초창기 대표 캐릭터 · Piano Man',['대표 아바타','Piano Man','첫 AI 노래','외무부장관','레나'],'하카.jpg','232aa75ab6c2b84924ca55326b97478a2424f27d784a5a5a0ca4569b4860aced',['hakka','pianoman']],
     ['lena','레나','Lena','classic','#bd9df7',null,null,'몸개그의 단골',['악마 뿔','몸개그','하카'],'레나2.png','02681fed83a249fde61298c8256afd852c376456b0c2e0953466029eeb06a790',['hakka']],
     ['kokoa','코코아','Kokoa','classic','#d8a0cf',null,null,'개성 있는 비주얼',['문신','광택','360° 영상'],'코코아2.jpg','5ff9e546b063c8e07b023ab6223645305d3cbdd030c59fcf5fb25ddfc7d0e046',['kokoa']],
     ['devil','악마','Devil','classic','#f291b6',null,null,'분홍빛 악마',['분홍색','악마','360° 영상'],'악마22.jpg','b73e1835568115bc62ecd438c30e900a377294bcf4525e3ca43c38ea163b8532',['devil']],
@@ -110,15 +117,16 @@
     ['chibi','치비','Chibi','classic','#a8d5ef',null,null,'어린 코코',['아기코코','코코','극초기 영상'],'아기코코.jpg','5a0a03b7812726e3b597ad400ff472895d5df71dd2aedd85f006e9eb5a92889b',[]],
     ['baby-shark','아기상어','Baby Shark','classic','#6ec8ef',null,null,'쌍둥이 캐릭터',['상어','아기쿠마','쌍둥이'],'Mawang_BabyShark1.png','00dfaedebee250634a384d1c77e39bce47180676e71d83480f4c3a82c4c0dc64',['babyShark']],
     ['baby-kuma','아기쿠마','Baby Kuma','classic','#d2b28a',null,null,'쌍둥이 캐릭터',['쿠마','아기상어','쌍둥이'],'Mawang_BabyKuma1.png','00dfaedebee250634a384d1c77e39bceb627428e66b3ac5ad88586e5b7b2231d',[]],
-    ['kkomwang','꼬뫙','Kkomwang','jeong','#bca7ea',null,null,'',['꼬뫙','신작','정 시리즈'],null,null,[]]
+    ['kkomwang','꼬뫙','Kkomwang','jeong','#bca7ea',null,null,'',['꼬뫙','신작','정 시리즈'],null,null,[]],
+    ['marorong','마로롱','Marorong','mascot','#f1a6c1',null,null,'유정이를 바탕으로 한 마스코트',['마스코트','유정','고양이 귀','파란 눈'],null,null,[]]
   ].sort((a,b)=>order.indexOf(a[0])-order.indexOf(b[0])).map(([id,name,english,group,color,date,dateLabel,tagline,tags,imageName,imageId,media],index)=>Object.freeze({
     id,name,english,group,color,date,dateLabel,tagline,description:profiles[profileKey(id)][0],tags,imageName,
-    image:portraits[id]?'/assets/mawang-archive-portraits/'+id+'.jpg':imageId?'https://file.namu.moe/file/'+imageId:null,
-    imageOriginal:portraits[id]?'https://img2.piku.co.kr/w/uploads/9M736q/'+portraits[id]+'.jpg':imageId?'https://file.namu.moe/file/'+imageId:null,
-    imageSource:portraits[id]?'PIKU 공개 이미지 · 2차 자료':imageId?'나무위키 미러 · 2차 자료':'이미지 미등록',
+    image:id==='marorong'?'/assets/mawang-archive-portraits/marorong.webp':portraits[id]?'/assets/mawang-archive-portraits/'+id+'.jpg':imageId?'https://file.namu.moe/file/'+imageId:null,
+    imageOriginal:id==='marorong'?'/assets/mawang-archive-portraits/marorong.webp':portraits[id]?'https://img2.piku.co.kr/w/uploads/9M736q/'+portraits[id]+'.jpg':imageId?'https://file.namu.moe/file/'+imageId:null,
+    imageSource:id==='marorong'?'사용자 제공 일러스트':portraits[id]?'PIKU 공개 이미지 · 2차 자료':imageId?'나무위키 미러 · 2차 자료':'이미지 미등록',
     variantOf:['mi','mi-gold'].includes(id)?'미정':['su','su-black','su-half'].includes(id)?'수정':null,
     media,number:index+1,details:profiles[profileKey(id)][1],
-    sources:id==='kkomwang'?[]:[{label:'나무위키 미러 · 2차 자료',url:wiki},...(id!=='ye-new'?[{label:'소나위키 · 2차 자료',url:sona}]:[]),...(group==='classic'?[{label:'공식 캐릭터 소개 영상',url:'https://www.youtube.com/watch?v='+videos.intro.id}]:[]),...media.map(k=>({label:videos[k].title,url:'https://www.youtube.com/watch?v='+videos[k].id})),...(portraits[id]?[{label:'PIKU 이미지 출처',url:piku}]:[])]
+    sources:['kkomwang','marorong'].includes(id)?[]:[{label:'나무위키 미러 · 2차 자료',url:wiki},...(id!=='ye-new'?[{label:'소나위키 · 2차 자료',url:sona}]:[]),...(group==='classic'?[{label:'공식 캐릭터 소개 영상',url:'https://www.youtube.com/watch?v='+videos.intro.id}]:[]),...media.map(k=>({label:videos[k].title,url:'https://www.youtube.com/watch?v='+videos[k].id})),...(portraits[id]?[{label:'PIKU 이미지 출처',url:piku}]:[])]
   }));
   window.mwsMawangArchiveDataV1=Object.freeze({entries:Object.freeze(entries),videos:Object.freeze(videos),
     channels:{official,soop,secondary:'https://www.youtube.com/channel/UCsc6HwSjfU8ig2spLjAtAig'},wiki,sona,

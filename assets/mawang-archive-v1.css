@@ -99,3 +99,9 @@ body[data-mws-mode=admin] .mawang-archive{padding-bottom:64px}
 html[data-mws-motion=reduced] .mawang-archive *,html[data-mws-motion=reduced] .mawang-archive *::before,html[data-mws-motion=reduced] .mawang-archive *::after{animation:none!important;transition:none!important}
 html[data-mws-motion=reduced] .mawang-archive :is(.ma-character-card,.ma-character-card img,button){transform:none!important}
 @media(prefers-reduced-motion:reduce){html:not([data-mws-motion=full]) .mawang-archive *,html:not([data-mws-motion=full]) .mawang-archive *::before,html:not([data-mws-motion=full]) .mawang-archive *::after{animation:none!important;transition:none!important}html:not([data-mws-motion=full]) .mawang-archive :is(.ma-character-card,.ma-character-card img,button){transform:none!important}}
+
+/* Single mascot page: preserve supplied image proportions. */
+.ma-roster-grid[data-page-size="1"]{grid-template-columns:minmax(140px,205px)!important;justify-content:center}
+.ma-character-card[data-ma-character="marorong"] .ma-portrait{aspect-ratio:740/640;max-height:none}
+.ma-character-card[data-ma-character="marorong"] .ma-portrait img{object-fit:contain;object-position:center}
+.ma-stage[data-group="mascot"] .ma-stage-art,.ma-stage[data-group="mascot"] .ma-main-profile,.ma-stage[data-group="mascot"] .ma-main-profile .ma-portrait{background:#fff}

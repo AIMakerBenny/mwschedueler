@@ -6,15 +6,15 @@ import {handleArchiveGallery} from '../src/mawang-archive-gallery-v1.js';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const window={};vm.runInNewContext(read('assets/mawang-archive-data-v1.js'),{window});
 const {entries,videos}=window.mwsMawangArchiveDataV1;
-test('27 individually named records with requested priority and verified detail notes',()=>{
-  assert.equal(entries.length,27);
-  assert.equal(new Set(entries.map(c=>c.id)).size,27);
+test('28 individually named records with requested priority and verified detail notes',()=>{
+  assert.equal(entries.length,28);
+  assert.equal(new Set(entries.map(c=>c.id)).size,28);
   assert.equal(entries.filter(c=>c.group==='jeong').length,13);
   assert.equal(entries.filter(c=>c.group==='classic').length,14);
-  assert.equal(entries.filter(c=>c.group==='other').length,0);
+  assert.equal(entries.filter(c=>c.group==='mascot').length,1);
   assert.equal(entries.find(c=>c.id==='kkomwang').group,'jeong');
   assert(entries.find(c=>c.id==='kkomwang').tags.includes('신작'));
-  assert(entries.slice(0,13).every(c=>c.group==='jeong')&&entries.slice(13).every(c=>c.group==='classic'));
+  assert(entries.slice(0,13).every(c=>c.group==='jeong')&&entries.slice(13,27).every(c=>c.group==='classic')&&entries[27].group==='mascot');
   assert.deepEqual(Array.from(entries.slice(0,6),c=>c.id),['yoo','da','su','su-black','su-half','ae']);
   assert.deepEqual(Array.from(entries.filter(c=>c.group==='jeong').slice(-2),c=>c.id),['mi','mi-gold']);
   assert.equal(entries.filter(c=>c.imageSource.startsWith('PIKU')).length,20);
@@ -27,10 +27,11 @@ test('27 individually named records with requested priority and verified detail 
     assert(c.english&&c.tags.length&&Array.isArray(c.details));
     if(c.id!=='kkomwang')assert(c.description&&c.tagline);
     assert(!/미확인|확인되지|확보하지|불명|알려지지|추정|기록(?:이 있다|되어|돼|에 남)|갤러리로 관리|관리자 프로필|정반대의 매력|시청자들은/.test([c.dateLabel,c.tagline,c.description,...c.tags,...c.details.flat()].join(' ')));
-    assert(c.id==='kkomwang'||c.sources.length);
+    assert(['kkomwang','marorong'].includes(c.id)||c.sources.length);
     assert(c.date===null||/^\d{4}-\d{2}-\d{2}$/.test(c.date));
     assert(c.date!==null||c.dateLabel===null);
     if(['mi-gold','su-black','su-half','kkomwang'].includes(c.id)){assert.equal(c.image,null);assert.equal(c.imageOriginal,null);assert.equal(c.date,null)}
+    else if(c.id==='marorong'){assert.equal(c.image,'/assets/mawang-archive-portraits/marorong.webp');assert.equal(c.imageOriginal,c.image);const bytes=readFileSync(new URL('..'+c.image,import.meta.url));assert(bytes.length>3000&&bytes.toString('ascii',8,12)==='WEBP');}
     else assert(/^https:\/\/(img2\.piku\.co\.kr|file\.namu\.moe)\//.test(c.imageOriginal));
     if(c.imageSource.startsWith('PIKU')){
       assert.equal(c.image,`/assets/mawang-archive-portraits/${c.id}.jpg`);
@@ -52,7 +53,7 @@ test('color variants share one character introduction, without changing the indi
   assert.deepEqual(Array.from(byId('kkomwang').details),[]);assert.equal(byId('kkomwang').description,'');assert.equal(byId('kkomwang').tagline,'');
 });
 test('representative official videos remain attached to character copy as internal references',()=>{
-  const expected={hakka:['hakka'],lena:['hakka'],kokoa:['kokoa'],devil:['devil'],hina:['hina','hamsterAdventure','hamsterMeal'],real:['real'],'baby-shark':['babyShark']};
+  const expected={hakka:['hakka','pianoman'],lena:['hakka'],kokoa:['kokoa'],devil:['devil'],hina:['hina','hamsterAdventure','hamsterMeal'],real:['real'],'baby-shark':['babyShark']};
   for(const [id,keys] of Object.entries(expected)){
     const c=entries.find(item=>item.id===id);
     for(const key of keys){const video=videos[key];assert(c.media.includes(key));assert.match(video.published,/^\d{4}-\d{2}-\d{2}$/);assert(c.sources.some(s=>s.url==='https://www.youtube.com/watch?v='+video.id));}
@@ -68,13 +69,13 @@ test('portrait arrows navigate the matching list and synchronize roster pages',a
   const click=dataset=>handlers.get('click')({target:{closest:()=>({dataset})}}),name=()=>root.querySelector('.ma-profile-panel').innerHTML.match(/id="maCharacterName">([^<]+)</)[1],step=n=>click({maHeroStep:String(n)}),page=()=>root.querySelector('.ma-pagination').textContent;
   const rosterIds=()=>Array.from(root.querySelector('.ma-roster-grid').innerHTML.matchAll(/data-ma-character="([^"]+)"/g),m=>m[1]);
   const expectedIds=group=>Array.from(entries.filter(c=>c.group===group),c=>c.id);
-  assert.equal(name(),'유정');assert.deepEqual(rosterIds(),expectedIds('jeong'));assert.equal(page(),'1 / 2 페이지 · 정 시리즈');
-  click({maStep:'1'});assert.equal(name(),'하카');assert.deepEqual(rosterIds(),expectedIds('classic'));assert.equal(page(),'2 / 2 페이지 · 클래식');
+  assert.equal(name(),'유정');assert.deepEqual(rosterIds(),expectedIds('jeong'));assert.equal(page(),'1 / 3 페이지 · 정 시리즈');
+  click({maStep:'1'});assert.equal(name(),'하카');assert.deepEqual(rosterIds(),expectedIds('classic'));assert.equal(page(),'2 / 3 페이지 · 클래식');click({maStep:'1'});assert.equal(name(),'마로롱');assert.deepEqual(rosterIds(),expectedIds('mascot'));assert.equal(page(),'3 / 3 페이지 · 마스코트');click({maStep:'-1'});
   for(const width of [1000,400,250,1450]){root.querySelector('.ma-roster-grid').clientWidth=width;root.clientWidth=width+100;handlers.get('resize')();assert.deepEqual(rosterIds(),expectedIds('classic'));assert.equal(name(),'하카');}
   click({maStep:'-1'});assert.equal(name(),'유정');assert.deepEqual(rosterIds(),expectedIds('jeong'));
-  step(1);assert.equal(name(),'다정');step(-1);assert.equal(name(),'유정');step(-1);assert.equal(name(),'아기쿠마');assert.equal(page(),'2 / 2 페이지 · 클래식');step(1);assert.equal(name(),'유정');assert.equal(page(),'1 / 2 페이지 · 정 시리즈');
+  step(1);assert.equal(name(),'다정');step(-1);assert.equal(name(),'유정');step(-1);assert.equal(name(),'마로롱');assert.equal(page(),'3 / 3 페이지 · 마스코트');step(1);assert.equal(name(),'유정');assert.equal(page(),'1 / 3 페이지 · 정 시리즈');
   click({maCharacter:'mi-gold'});step(1);assert.equal(name(),'하카');assert.deepEqual(rosterIds(),expectedIds('classic'));step(-1);assert.equal(name(),'금미정');assert.deepEqual(rosterIds(),expectedIds('jeong'));click({maCharacter:'yoo'});
-  const seen=[];for(let i=0;i<27;i++){seen.push(name());const markup=root.querySelector('.ma-stage').innerHTML;const entry=entries.find(c=>c.name===name());assert(!/미확인|확인되지|기록돼|기록되어|추정|불명/.test(markup));if(entry.date)assert(markup.includes(`<dt>${entry.dateLabel}</dt><dd>${entry.date.replaceAll('-','.')}</dd>`));else assert.deepEqual(Array.from(markup.matchAll(/<dt>([^<]*)<\/dt>/g),m=>m[1]),['분류']);if(name()==='꼬뫙')assert(!markup.includes('ma-desc')&&!markup.includes('ma-character-details'));step(1)}assert.equal(new Set(seen).size,27);assert.equal(name(),'유정');
+  const seen=[];for(let i=0;i<28;i++){seen.push(name());const markup=root.querySelector('.ma-stage').innerHTML;const entry=entries.find(c=>c.name===name());assert(!/미확인|확인되지|기록돼|기록되어|추정|불명/.test(markup));if(entry.date)assert(markup.includes(`<dt>${entry.dateLabel}</dt><dd>${entry.date.replaceAll('-','.')}</dd>`));else assert.deepEqual(Array.from(markup.matchAll(/<dt>([^<]*)<\/dt>/g),m=>m[1]),['분류']);if(name()==='꼬뫙')assert(!markup.includes('ma-desc')&&!markup.includes('ma-character-details'));step(1)}assert.equal(new Set(seen).size,28);assert.equal(name(),'유정');
   click({maFilter:'jeong'});
   assert.deepEqual(rosterIds(),expectedIds('jeong'));assert.equal(page(),'1 / 1 페이지 · 정 시리즈');
   handlers.get('input')({target:{value:'수정',matches:()=>true}});
@@ -178,4 +179,24 @@ test('gallery stores originals, exposes public reads, enforces admin writes, and
   await call('/api/mawang-profile/su-half',{method:'DELETE'},true);
   assert.equal((await call('/media/mawang-profile/su')).status,200);
   assert.equal((await call('/media/mawang-profile/su-black')).status,200);
+});
+
+
+test('sidebar has official icon links, compact zoom and admin-only docked save',()=>{
+  const html=read('index.html'),styles=read('assets/sidebar-compact-v1.css');
+  assert.match(html,/class="mws-creator-links"/);
+  for(const href of [
+    'https://www.sooplive.com/station/mawang0216',
+    'https://www.youtube.com/channel/UCNpcMizRJ73OJm48LszuytQ/',
+    'https://cafe.naver.com/mawangvr?iframe_url=/MyCafeIntro.nhn%3Fclubid=30660728'
+  ])assert(html.includes('href="'+href+'"'));
+  assert.equal((html.match(/id="mwsSidebarSaveBtn"/g)||[]).length,1);
+  const dock=html.indexOf('id="mwsAccessTools"'),save=html.indexOf('id="mwsSidebarSaveBtn"'),admin=html.indexOf('id="mwsAdminManageBtn"');
+  assert(dock>=0&&save>dock&&save<admin);
+  assert(!html.includes('id="mwsStationVisitBtnV110"'));
+  assert.match(html,/id="pageTextScaleValueV54"[^>]*>100%<\/span>/);
+  assert(!html.includes('페이지 100%'));
+  assert.match(html,/assets\/sidebar-compact-v1\.css\?v=1/);
+  assert.match(styles,/grid-template-columns:184px/);
+  assert.match(styles,/\#mwsSidebarSaveBtn\[hidden\]/);
 });

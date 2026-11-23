@@ -1,7 +1,7 @@
 // Isolated gallery in R2: original bytes, public reads and authenticated writes.
 const PREFIX='mawang-archive/';
 const PROFILE_PREFIX='mawang-archive-profile/';
-const CHARACTERS=new Set('yoo mi mi-gold ye seon su su-black su-half so ae da ye-new hakka lena kokoa devil hina real wolferia mike coco azuki nyasuka chibi baby-shark baby-kuma kkomwang'.split(' '));
+const CHARACTERS=new Set('yoo mi mi-gold ye seon su su-black su-half so ae da ye-new hakka lena kokoa devil hina real wolferia mike coco azuki nyasuka chibi baby-shark baby-kuma kkomwang marorong'.split(' '));
 const MAX_BYTES=32*1024*1024,MAX_PHOTOS=30;
 const ID=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 const TYPES=new Set(['image/jpeg','image/png','image/webp','image/gif','image/avif']);

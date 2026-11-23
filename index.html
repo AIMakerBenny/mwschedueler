@@ -115,6 +115,10 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
 </div>
 <div class="mws-access-tools" id="mwsAccessTools">
   <span class="mws-access-pill" id="mwsModeBadge">PUBLIC</span>
+  <button type="button" id="mwsSidebarSaveBtn" class="sidebar-save-v572" title="현재 Admin 데이터를 즉시 온라인 저장" aria-label="온라인 저장" hidden>
+    <span class="sidebar-save-icon-v572" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h12l2 2v16H5z"/><path d="M8 3v6h8V3M8 17h8"/></svg></span>
+    <span class="sidebar-save-label-v572" aria-live="polite">SAVE</span>
+  </button>
   <button type="button" class="mws-access-btn" id="mwsAdminManageBtn" hidden>Admin 관리</button>
   <button type="button" class="mws-access-btn" id="mwsChangeModeBtn" disabled>관리자 로그인</button>
 </div>
@@ -214,18 +218,24 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
     // Restore group visibility before first paint, independently of late tool runtimes.
     (()=>{const nav=document.querySelector('.nav-scroll'),key='mws-sidebar-nav-groups-v2',groups={tools:['contentPlanner','toolTier','toolMatrix','toolRelations','memos'],games:['gameMajoku','gameLadder','gameRps','gameF1Racing','gamePachinko','gameMultiDraw']};let prefs={tools:false,games:false};try{const saved=JSON.parse(localStorage.getItem(key)||'null');for(const k of Object.keys(prefs))if(typeof saved?.[k]==='boolean')prefs[k]=saved[k]}catch(_){}for(const [group,tabs] of Object.entries(groups)){const divider=nav.querySelector('[data-mws-nav-group="'+group+'"]'),label=divider.querySelector('em').textContent;const apply=()=>{const open=prefs[group];divider.classList.toggle('collapsed',!open);divider.setAttribute('aria-expanded',String(open));divider.title=label+' '+(open?'접기':'펼치기');for(const tab of tabs)nav.querySelector('[data-tab="'+tab+'"]')?.classList.toggle('mws-nav-group-hidden',!open)};const toggle=()=>{prefs[group]=!prefs[group];try{localStorage.setItem(key,JSON.stringify(prefs))}catch(_){}apply()};divider.onclick=toggle;divider.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}};apply()}window.__mwsSidebarGroupsInitial=true;let pending=0;nav.addEventListener('click',e=>{const token=++pending,b=e.target.closest('button[data-tab]'),tab=b?.dataset.tab;if(tab==='memos'||!groups.tools.includes(tab))return;const ready=()=>tab==='contentPlanner'?typeof window.mwsOpenDrawingBoardV1==='function':typeof window.mwsCleanToolsActivate==='function';if(ready())return;e.preventDefault();e.stopImmediatePropagation();let tries=0;const retry=()=>{if(token!==pending)return;if(ready())b.click();else if(++tries<100)setTimeout(retry,100)};retry()},true)})();
     </script>
-    <div id="pageTextScaleControlV54" class="page-text-control-v54" role="group" aria-label="현재 페이지 글자 크기" title="현재 페이지의 글자 크기만 조절합니다. 개인 브라우저에 저장됩니다.">
-      <button type="button" class="ghost" onclick="adjustPageTextScaleV54(-5)" title="현재 페이지 글자 작게" aria-label="현재 페이지 글자 작게">A−</button>
-      <span id="pageTextScaleValueV54" class="page-text-label-v54" aria-live="polite">페이지 100%</span>
-      <button type="button" class="ghost" onclick="adjustPageTextScaleV54(5)" title="현재 페이지 글자 크게" aria-label="현재 페이지 글자 크게">A＋</button>
-      <button type="button" class="ghost page-text-reset-v54" onclick="resetPageTextScaleV54()" title="현재 페이지 100%로 초기화" aria-label="현재 페이지 100%로 초기화">↺</button>
+    <div id="pageTextScaleControlV54" class="page-text-control-v54" role="group" aria-label="글자 크기 조절" title="이 화면의 글자 크기 조절">
+      <button type="button" class="ghost" onclick="adjustPageTextScaleV54(-5)" title="글자 작게" aria-label="글자 작게">A−</button>
+      <span id="pageTextScaleValueV54" class="page-text-label-v54" aria-live="polite">100%</span>
+      <button type="button" class="ghost" onclick="adjustPageTextScaleV54(5)" title="글자 크게" aria-label="글자 크게">A＋</button>
+      <button type="button" class="ghost page-text-reset-v54" onclick="resetPageTextScaleV54()" title="기본 크기로 복원" aria-label="기본 크기로 복원">↺</button>
     </div>
     <div id="mwsBuildVersion" class="sidebar-build-version-v53" aria-label="현재 버전 Mawang Scheduler v 1.6.21">Mawang Scheduler v 1.6.21</div>
-    <button type="button" id="mwsStationVisitBtnV110" class="sidebar-save-v572 sidebar-station-v110" title="현재 이용자의 방송국 열기" hidden><span class="sidebar-save-icon-v572" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 5h5v5M10 14 19 5M19 13v6H5V5h6"/></svg></span><span class="sidebar-save-label-v572">방송국 가기</span></button>
-    <button type="button" id="mwsSidebarSaveBtn" class="sidebar-save-v572" title="현재 Admin 데이터를 즉시 온라인 저장" hidden>
-      <span class="sidebar-save-icon-v572" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3h12l2 2v16H5z"/><path d="M8 3v6h8V3M8 17h8"/></svg></span>
-      <span class="sidebar-save-label-v572">SAVE</span>
-    </button>
+    <nav class="mws-creator-links" aria-label="마왕 공식 채널">
+      <a data-site="soop" href="https://www.sooplive.com/station/mawang0216" target="_blank" rel="noopener noreferrer" title="SOOP 방송국" aria-label="SOOP 방송국 열기">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="4"/><path d="m10 9 5 3-5 3z"/><path d="M7 2v3m10-3v3"/></svg>
+      </a>
+      <a data-site="youtube" href="https://www.youtube.com/channel/UCNpcMizRJ73OJm48LszuytQ/" target="_blank" rel="noopener noreferrer" title="YouTube" aria-label="마왕 YouTube 열기">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.7" y="5" width="18.6" height="14" rx="4.4"/><path class="mws-youtube-play" d="m10 8.8 5.6 3.2L10 15.2z"/></svg>
+      </a>
+      <a data-site="cafe" href="https://cafe.naver.com/mawangvr?iframe_url=/MyCafeIntro.nhn%3Fclubid=30660728" target="_blank" rel="noopener noreferrer" title="네이버 팬카페" aria-label="마왕 네이버 팬카페 열기">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h12v7a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5z"/><path d="M17 9h2a3 3 0 0 1 0 6h-2M4 21h15M8 3v3M13 3v3"/></svg>
+      </a>
+    </nav>
   </aside>
 
   <main class="main">
@@ -4340,7 +4350,7 @@ body[data-resolution="mobile"] .main{grid-column:auto!important}
   function applyPageTextScalesV54(){
     const global=globalTextScaleV54();
     document.querySelectorAll('.section').forEach(sec=>{const local=pageScaleV54(sec.id),combined=(global*local)/100;sec.style.setProperty('--ui-text-scale',String(combined/100));sec.style.fontSize=`calc(14px * ${combined/100})`});
-    const label=document.getElementById('pageTextScaleValueV54');if(label)label.textContent=`페이지 ${pageScaleV54()}%`;
+    const label=document.getElementById('pageTextScaleValueV54');if(label)label.textContent=`${pageScaleV54()}%`;
   }
   window.setPageTextScaleV54=value=>{const id=activePageIdV54();pageScales[id]=clampScale(value);persistPageScalesV54();applyPageTextScalesV54()};
   window.adjustPageTextScaleV54=delta=>window.setPageTextScaleV54(pageScaleV54()+delta);
@@ -5083,8 +5093,9 @@ body.mws-premium #mwsAccessGate .mws-login-title{font-size:22px!important;margin
 <link rel="stylesheet" href="assets/contact-frequency-v1.css?v=2">
 <link rel="stylesheet" href="assets/calendar-day-expand-v1.css?v=1">
 <script src="assets/calendar-day-expand-v1.js?v=1"></script>
-<link rel="stylesheet" href="assets/mawang-archive-v1.css?v=10">
-<script defer src="assets/mawang-archive-data-v1.js?v=9"></script>
-<script defer src="assets/mawang-archive-v1.js?v=14"></script>
+<link rel="stylesheet" href="assets/mawang-archive-v1.css?v=11">
+<script defer src="assets/mawang-archive-data-v1.js?v=10"></script>
+<script defer src="assets/mawang-archive-v1.js?v=15"></script>
+<link rel="stylesheet" href="assets/sidebar-compact-v1.css?v=1">
 </body>
 </html>

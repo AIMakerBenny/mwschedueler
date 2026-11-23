@@ -1,0 +1,50 @@
+/* Compact, theme-aware sidebar footer and admin save shortcut. */
+@media (min-width:761px) {
+  body.mws-premium.sidebar-pinned:not([data-resolution="mobile"]) .app {grid-template-columns:184px minmax(0,1fr)!important}
+  body.mws-premium.sidebar-pinned:not([data-resolution="mobile"]) .sidebar,
+  body.mws-premium.sidebar-pinned:not([data-resolution="mobile"]) .sidebar:hover,
+  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .sidebar:hover {width:184px!important;min-width:184px!important}
+  body.mws-premium.sidebar-pinned[data-resolution="wide"] .app {grid-template-columns:174px minmax(0,1fr)!important}
+  body.mws-premium.sidebar-pinned[data-resolution="wide"] .sidebar,
+  body.mws-premium.sidebar-pinned[data-resolution="wide"] .sidebar:hover {width:174px!important;min-width:174px!important}
+  body.mws-premium.sidebar-pinned[data-resolution="2k"] .app {grid-template-columns:198px minmax(0,1fr)!important}
+  body.mws-premium.sidebar-pinned[data-resolution="2k"] .sidebar,
+  body.mws-premium.sidebar-pinned[data-resolution="2k"] .sidebar:hover {width:198px!important;min-width:198px!important}
+  body.mws-premium.sidebar-pinned[data-resolution="4k"] .app {grid-template-columns:226px minmax(0,1fr)!important}
+  body.mws-premium.sidebar-pinned[data-resolution="4k"] .sidebar,
+  body.mws-premium.sidebar-pinned[data-resolution="4k"] .sidebar:hover {width:226px!important;min-width:226px!important}
+}
+body.mws-premium .sidebar .nav-scroll button[data-tab] {border-radius:10px;transition:background .14s ease,border-color .14s ease,color .14s ease,box-shadow .15s ease,transform .15s ease}
+body.mws-premium .sidebar .nav-scroll button[data-tab]:focus-visible,
+.mws-creator-links a:focus-visible,.mws-access-tools #mwsSidebarSaveBtn:focus-visible {outline:2px solid var(--accent);outline-offset:2px}
+.mws-creator-links {display:flex;align-items:center;justify-content:center;gap:9px;margin:8px 2px 3px;padding:12px 0 1px;border-top:1px solid var(--border);flex:none}
+.mws-creator-links a {width:35px;height:35px;flex:none;display:grid;place-items:center;position:relative;color:var(--muted);background:color-mix(in srgb,var(--panel) 65%,var(--input));border:1px solid color-mix(in srgb,var(--border) 88%,var(--accent) 12%);border-radius:11px;text-decoration:none;box-shadow:inset 0 1px 0 #ffffff0a;transition:color .15s ease,background .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease}
+.mws-creator-links a svg {width:18px;height:18px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.mws-creator-links a[data-site="youtube"] svg .mws-youtube-play {fill:currentColor;stroke:none}
+.mws-creator-links a[data-site="youtube"] {color:#d8a6ac}
+.mws-creator-links a[data-site="cafe"] {color:#94cbb6}
+.mws-creator-links a:hover {transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 65%,var(--border));background:color-mix(in srgb,var(--accent) 12%,var(--panel));color:var(--text);box-shadow:0 5px 16px #0004}
+.mws-creator-links a:active {transform:translateY(0) scale(.95)}
+@media(min-width:761px) {
+  body:not(.sidebar-pinned):not([data-resolution="mobile"]) .sidebar:not(:hover) .mws-creator-links {display:none}
+}
+.sidebar #pageTextScaleControlV54 {display:grid!important;grid-template-columns:27px minmax(0,1fr) 27px 25px!important;gap:2px!important;align-items:center;width:100%;min-height:31px;box-sizing:border-box;margin:5px 0 0!important;padding:2px 3px!important;background:color-mix(in srgb,var(--panel) 82%,var(--input))!important;border:1px solid var(--border)!important;border-radius:10px!important;box-shadow:inset 0 1px 0 #ffffff06!important}
+.sidebar #pageTextScaleControlV54 button {width:27px!important;height:25px!important;min-height:25px!important;border:0!important;border-radius:6px!important;background:transparent!important;color:var(--muted)!important;font-size:12px!important;font-weight:700!important;cursor:pointer}
+.sidebar #pageTextScaleControlV54 button:hover {background:color-mix(in srgb,var(--accent) 16%,var(--panel))!important;color:var(--text)!important}
+.sidebar #pageTextScaleControlV54 .page-text-label-v54 {font-size:10px!important;font-weight:750!important;color:var(--text)!important;white-space:nowrap}
+.sidebar #pageTextScaleControlV54 .page-text-reset-v54 {font-size:18px!important;font-weight:500!important}
+.mws-access-tools #mwsSidebarSaveBtn.sidebar-save-v572 {width:34px!important;min-width:34px!important;max-width:34px!important;height:34px!important;min-height:34px!important;max-height:34px!important;padding:0!important;margin:0!important;display:grid!important;place-items:center!important;flex:0 0 34px!important;border-radius:50%!important;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--border))!important;background:color-mix(in srgb,var(--accent) 15%,var(--panel))!important;color:var(--text)!important;box-shadow:0 4px 14px #0003!important;line-height:1!important;letter-spacing:0!important;overflow:hidden!important;isolation:isolate!important;transition:transform .16s ease,background .16s ease,border-color .16s ease!important}
+.mws-access-tools #mwsSidebarSaveBtn[hidden]{display:none!important}
+.mws-access-tools #mwsSidebarSaveBtn:hover:not(:disabled) {transform:translateY(-2px)!important;background:color-mix(in srgb,var(--accent) 28%,var(--panel))!important;border-color:var(--accent)!important}
+.mws-access-tools #mwsSidebarSaveBtn .sidebar-save-icon-v572 {width:17px;height:17px;display:grid;place-items:center}
+.mws-access-tools #mwsSidebarSaveBtn .sidebar-save-icon-v572 svg {width:17px;height:17px}
+.mws-access-tools #mwsSidebarSaveBtn .sidebar-save-label-v572 {position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip-path:inset(50%);white-space:nowrap}
+.mws-access-tools #mwsSidebarSaveBtn.save-failed-v574 {color:#ff98a3!important;border-color:#fb7185!important}
+@media(max-width:760px){
+  .mws-creator-links{gap:8px;margin:6px auto;max-width:180px}
+  .sidebar #pageTextScaleControlV54{max-width:180px}
+  .mws-access-tools #mwsSidebarSaveBtn.sidebar-save-v572{flex:0 0 34px!important}
+}
+@media(prefers-reduced-motion:reduce) {
+  .mws-creator-links a,.mws-access-tools #mwsSidebarSaveBtn {transition:none!important;animation:none!important}
+}
