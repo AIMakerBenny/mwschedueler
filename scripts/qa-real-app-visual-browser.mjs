@@ -36,9 +36,9 @@ try{
     // new CSS and JS. This does not change files or data on the hosted site.
     const injected=await browser.evaluate('(()=>{'+
       'const old=[...document.querySelectorAll("link[rel=stylesheet]")].find(link=>link.href.includes("/assets/workspace-clean-v1.css"));'+
-      'if(!old)return {ok:false,reason:"workspace-clean stylesheet not found"};old.remove();'+
+      'if(!old)return {ok:false,reason:"workspace-clean stylesheet not found"};'+
+      'const cleanStyle=document.createElement("style");cleanStyle.id="mws-candidate-clean";cleanStyle.textContent='+JSON.stringify(clean)+';old.replaceWith(cleanStyle);'+
       'const style=(id,css)=>{const el=document.createElement("style");el.id=id;el.textContent=css;document.body.append(el)};'+
-      'style("mws-candidate-clean",'+JSON.stringify(clean)+');'+
       'style("mws-candidate-visual",'+JSON.stringify(visual)+');'+
       'const run=document.createElement("script");run.textContent='+JSON.stringify(behavior)+';document.body.append(run);'+
       'return {ok:true,clean:true,visual:!!document.querySelector("#mws-candidate-visual")}})()');
