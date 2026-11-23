@@ -97,12 +97,16 @@ function makeTile(card){
   const clearTilt=()=>{
     if(tiltFrame)cancelAnimationFrame(tiltFrame);
     tiltFrame=0;tiltCoords=null;
+    button.classList.remove('is-pointer-active');
+    tile.classList.remove('is-pointer-active');
     for(const key of ['--ach-tilt-x','--ach-tilt-y','--ach-light-x','--ach-light-y','--ach-parallax-x','--ach-parallax-y']){
       button.style.removeProperty(key);
     }
   };
   button.addEventListener('pointermove',event=>{
     if(!motionAllowed(event))return;
+    button.classList.add('is-pointer-active');
+    tile.classList.add('is-pointer-active');
     const rect=tile.getBoundingClientRect();
     if(!rect.width||!rect.height)return;
     tiltCoords={
