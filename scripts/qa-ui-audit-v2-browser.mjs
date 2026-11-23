@@ -62,7 +62,7 @@ try{
       "oldHeading:!!$('.dashboard-overview-heading')};})()");
     const visual=await browser.evaluate("(()=>{const tile=document.querySelector('#dashboard .dashboard-kpi-grid-local>.card'),style=getComputedStyle(tile),rect=tile.getBoundingClientRect();return {shadow:style.boxShadow,background:style.backgroundImage,radius:style.borderRadius,rect:[rect.x,rect.y,rect.width,rect.height]}})()");
     assert(visual.shadow!=='none'&&visual.background.includes('gradient')&&parseFloat(visual.radius)>=10,JSON.stringify({width,visual}));
-    if(process.env.MWS_VISUAL_CAPTURE==='1'&&width===1920){mkdirSync('visual-qa',{recursive:true});writeFileSync('visual-qa/dashboard-1920.jpg',Buffer.from(await browser.captureScreenshot(),'base64'));}
+    if(process.env.MWS_VISUAL_CAPTURE==='1'&&[1366,1920,2560,390].includes(width)){mkdirSync('visual-qa',{recursive:true});writeFileSync('visual-qa/dashboard-'+width+'.jpg',Buffer.from(await browser.captureScreenshot(),'base64'));}
     if(width===1366){
       const valueChange=await browser.evaluate("(()=>{const v=document.querySelector('#nextStreamKpi');v.textContent='시각 테스트 1';return true})()");
       await sleep(50);
