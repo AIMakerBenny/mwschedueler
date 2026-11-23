@@ -29,13 +29,13 @@ const moreSections=[
   '<section id="contacts" class="section"><div class="contact-section-tabs"><button>연락처</button></div></section>',
   applicationSection,
   '<section id="posts" class="section"><div class="posts-head"><button type="button" id="qaPostsButton">게시글 도구</button></div></section>',
-  '<section id="careerTimeline" class="section"><div class="cv-bar-host"><div class="cv-bar cv-pinned"><div class="cv-toolbar"><button type="button">연도 선택</button></div></div></div></section>'
+  '<section id="careerTimeline" class="section"><div class="cv-panel"><div class="cv-bar-host"><div class="cv-bar"><div class="cv-toolbar"><button type="button">연도 선택</button></div></div></div><div class="cv-axis">타임라인 콘텐츠</div></div></section>'
 ].join('');
 const bootstrap='let data={textScale:100};'+pageScale+
   ';window.__qaActivate=function(id){document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===id));applyPageTextScalesV54()};window.__qaRoutes=[];window.setTab=id=>{window.__qaRoutes.push(id);window.__qaActivate(id)};'+
   'const qaProfile=document.createElement("div");qaProfile.className="dashboard-my-profile-v3";qaProfile.textContent="마왕 프로필";document.querySelector("#dashboardProfileSlot").append(qaProfile);';
 const fixture='<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+
-  '<style>'+css+'</style><body class="mws-premium" data-theme="neon" data-resolution="fhd" data-mws-mode="admin">'+
+  '<style>'+css+'\n@media(min-width:1101px){.main>.topbar{height:48px!important;min-height:48px!important;max-height:48px!important}}'+'</style><body class="mws-premium" data-theme="neon" data-resolution="fhd" data-mws-mode="admin">'+
   '<div class="app">'+aside+'<main class="main">'+header+dashboard+moreSections+'</main></div>'+
   '<script>'+bootstrap+'</script></body>';
 const dir=mkdtempSync(path.join(os.tmpdir(),'mws-ui-audit-v2-'));
@@ -110,17 +110,23 @@ try{
         "text:getComputedStyle(document.querySelector('#pageTextScaleControlV54')).display}))()");
       assert(expanded.width>=165&&expanded.text!=='none',JSON.stringify({width,expanded}));
       await browser.evaluate("window.__qaActivate('posts')");
+      const inlinePosts=await browser.evaluate("(()=>{const title=document.querySelector('#pageTitle').getBoundingClientRect(),"+
+        "bar=document.querySelector('#posts .posts-head').getBoundingClientRect();return {titleY:(title.top+title.bottom)/2,barY:(bar.top+bar.bottom)/2}})()");
+      if(width>=1101)assert(Math.abs(inlinePosts.titleY-inlinePosts.barY)<24,JSON.stringify({width,inlinePosts}));
       const click=await browser.evaluate("(()=>{const b=document.querySelector('#newEventBtn'),r=b.getBoundingClientRect();"+
         "const hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);"+
         "return {style:getComputedStyle(document.querySelector('.topbar')).pointerEvents,clickable:hit===b||b.contains(hit)}})()");
       assert(click.style!=='none'&&click.clickable,JSON.stringify({width,click}));
       await browser.evaluate("window.__qaActivate('careerTimeline')");
-      const timeline=await browser.evaluate("(()=>{const bar=document.querySelector('.cv-bar.cv-pinned');"+
-        "const css=getComputedStyle(bar),head=getComputedStyle(document.querySelector('.topbar'));"+
-        "return {border:css.borderTopWidth,shadow:css.boxShadow,headerClicks:head.pointerEvents}})()");
+      const timeline=await browser.evaluate("(()=>{const bar=document.querySelector('#careerTimeline .cv-bar');"+
+        "bar.classList.add('cv-pinned');const css=getComputedStyle(bar),head=getComputedStyle(document.querySelector('.topbar'));"+
+        "const result={border:css.borderTopWidth,shadow:css.boxShadow,headerClicks:head.pointerEvents};bar.classList.remove('cv-pinned');return result})()");
       assert.equal(timeline.border,'0px',JSON.stringify({width,timeline}));
       assert.equal(timeline.shadow,'none',JSON.stringify({width,timeline}));
       assert.notEqual(timeline.headerClicks,'none',JSON.stringify({width,timeline}));
+      const inlineTimeline=await browser.evaluate("(()=>{const title=document.querySelector('#pageTitle').getBoundingClientRect(),"+
+        "bar=document.querySelector('#careerTimeline .cv-bar').getBoundingClientRect(),panel=document.querySelector('#careerTimeline .cv-panel').getBoundingClientRect(),section=document.querySelector('#careerTimeline').getBoundingClientRect(),main=document.querySelector('.main').getBoundingClientRect();return {titleY:(title.top+title.bottom)/2,barY:(bar.top+bar.bottom)/2,panelTop:panel.top,sectionTop:section.top,mainTop:main.top,barTop:bar.top,topbarBottom:document.querySelector('.topbar').getBoundingClientRect().bottom,other:[...document.querySelector('.main').children].map(e=>({id:e.id||e.className,display:getComputedStyle(e).display,top:e.getBoundingClientRect().top,bottom:e.getBoundingClientRect().bottom}))}})()");
+      if(width>=1101)assert(Math.abs(inlineTimeline.titleY-inlineTimeline.barY)<30,JSON.stringify({width,inlineTimeline}));
     }
     console.log('MWS_UI_AUDIT_V2_OK',width,height,JSON.stringify(dashboardResult));
   }
