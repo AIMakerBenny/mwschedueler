@@ -256,17 +256,16 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
 
     
 <section id="dashboard" class="section">
-  <div class="dashboard-mode-tabs" role="tablist" aria-label="대시보드 보기">
-    <button type="button" class="dashboard-mode-tab active" data-dashboard-mode="overview">대시보드</button>
-    <button type="button" class="dashboard-mode-tab" data-dashboard-mode="reminders">리마인더</button>
-    <button type="button" class="dashboard-mode-tab" data-dashboard-mode="worldtime" id="dashboardWorldTimeTabV176">세계 시간</button>
+  <div class="dashboard-toolbar-v2">
+    <div class="dashboard-mode-tabs" role="tablist" aria-label="대시보드 보기">
+      <button type="button" class="dashboard-mode-tab active" data-dashboard-mode="overview">개요</button>
+      <button type="button" class="dashboard-mode-tab" data-dashboard-mode="reminders">리마인더</button>
+      <button type="button" class="dashboard-mode-tab" data-dashboard-mode="worldtime" id="dashboardWorldTimeTabV176">세계 시간</button>
+    </div>
+    <div id="dashboardProfileSlot"></div>
   </div>
 
   <div id="dashboardOverviewMode" class="dashboard-mode-panel active">
-    <div class="dashboard-overview-heading">
-      <div><h2>운영 현황</h2><p class="muted">다가오는 컨텐츠와 연락처 현황</p></div>
-      <div id="dashboardProfileSlot"></div>
-    </div>
     <div class="dashboard-kpi-grid-local">
       <div class="card"><div class="kpi">다음 컨텐츠<strong id="nextStreamKpi">없음</strong></div></div>
       <div class="card"><div class="kpi">7일 이내 컨텐츠<strong id="weekCountKpi">0</strong></div></div>
@@ -289,19 +288,21 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
       </div>
       <div class="card dashboard-upcoming-panel" id="upcomingDashboardPanel">
         <div class="space dashboard-upcoming-heading">
-          <div><h3>예정 컨텐츠</h3><div class="subtle" id="upcomingDashboardCount">최대 15개까지 표시합니다</div></div>
+          <div><h3>예정 컨텐츠</h3><div class="subtle" id="upcomingDashboardCount">0개 표시</div></div>
         </div>
         <div id="upcomingDashboard" class="list dashboard-upcoming-list"></div>
       </div>
+    </div>
+    <div class="dashboard-no-events-v2" role="status">
+      <span>예정된 컨텐츠가 없습니다.</span>
+      <button type="button" class="secondary small" onclick="setTab('calendar')">캘린더 보기</button>
     </div>
 
     <div class="dashboard-insights-v55 dashboard-insights-local">
       <div class="card dashboard-insight-card-v55 dashboard-notice-card-local">
         <div class="space dashboard-insight-head-v55">
           <div>
-            <div class="dashboard-insight-kicker-v55">NOTICE</div>
             <h3>공지</h3>
-            <div class="subtle">SOOP 방송국 최신 공지 5개</div>
           </div>
           <button type="button" class="secondary small" id="dashboardNoticeRefreshBtn">새로고침</button>
         </div>
@@ -316,9 +317,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
       <div class="card dashboard-insight-card-v55 dashboard-today-people-card-local">
         <div class="space dashboard-insight-head-v55">
           <div>
-            <div class="dashboard-insight-kicker-v55">TODAY PEOPLE</div>
             <h3>오늘 함께한 사람</h3>
-            <div class="subtle">오늘 컨텐츠의 참가자 및 직접 등록한 인원</div>
           </div>
           <span id="dashboardTodayPeopleCount" class="chip">0명</span>
         </div>
