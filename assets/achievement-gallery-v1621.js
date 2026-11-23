@@ -88,8 +88,9 @@ function makeTile(card){
   // Pointer tracking is frame-batched and only affects the card under the
   // mouse. Use the untransformed tile bounds to prevent 3D hover jitter.
   let tiltFrame=0,tiltCoords=null;
+  // PointerEvent reports the real device even when headless/remote browsers
+  // misreport the CSS hover media feature. Respect motion preferences directly.
   const motionAllowed=event=>event.pointerType==='mouse'
-    &&(window.matchMedia?.('(hover: hover) and (pointer: fine)')?.matches??true)
     &&document.documentElement.dataset.mwsMotion!=='reduced'
     &&(document.documentElement.dataset.mwsMotion==='full'
       ||!(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches??false));
