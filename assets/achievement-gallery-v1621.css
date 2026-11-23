@@ -860,7 +860,9 @@ body.mws-achievement-manager-open{overflow:hidden!important}
     overflow-y:auto;
     overflow-x:hidden;
     overscroll-behavior:contain;
+    scrollbar-width:none;
   }
+  .achievement-detail-modal::-webkit-scrollbar{display:none}
   .achievement-detail-dialog{
     width:100%;
     height:auto;
