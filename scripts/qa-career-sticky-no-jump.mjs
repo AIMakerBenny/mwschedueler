@@ -42,6 +42,9 @@ try{
   const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1});
   await context.route('**/assets/career-visualizer.js*',route=>route.fulfill({status:200,contentType:'application/javascript',body:read('career-visualizer.js')}));
   await context.route('**/assets/career-timeline.css*',route=>route.fulfill({status:200,contentType:'text/css',body:read('career-timeline.css')}));
+  // The later workspace CSS used to force the bar position:absolute!important.
+  // Testing only career-timeline.css would falsely report a working sticky bar.
+  await context.route('**/assets/workspace-density-v1.css*',route=>route.fulfill({status:200,contentType:'text/css',body:read('workspace-density-v1.css')}));
   const page=await context.newPage();
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
