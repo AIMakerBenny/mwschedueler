@@ -257,9 +257,6 @@
     const toolbar=node('div','cv-toolbar');
     const info=node('div','cv-summary');
     const count=node('strong','',rows.length+'개 기록');info.append(count);
-    const prev=button('cv-step','‹',()=>stepRecord(-1)),next=button('cv-step','›',()=>stepRecord(1));
-    prev.title='이전 업적';next.title='다음 업적';prev.setAttribute('aria-label',prev.title);next.setAttribute('aria-label',next.title);
-    info.append(prev,next);
     const searchBox=node('div','cv-searchbox');
     const query=node('input','cv-search');
     query.type='search'; query.placeholder='전체 기록 검색'; query.setAttribute('aria-label','전체 타임라인 검색');
@@ -506,16 +503,10 @@
       if(selected){const old=entries.get(selected.id);old?.removeAttribute('data-selected');old?.parentElement.querySelector('.cv-junction')?.setAttribute('aria-pressed','false');}
       selected=r;
       if(r){const entry=entries.get(r.id);entry.dataset.selected='true';if(entry.parentElement.classList.contains('cv-pair'))entry.parentElement.querySelector('.cv-junction')?.setAttribute('aria-pressed','true');}
-      const list=matches(),i=list.findIndex(x=>x.id===r?.id);prev.disabled=!list.length||i===0;next.disabled=!list.length||i===list.length-1;
       count.title=r?.name||'';
     }
     function choose(r){
       results.hidden=true;toggle.setAttribute('aria-expanded','false');markSelected(r);jump(entries.get(r.id),true);
-    }
-    function stepRecord(direction){
-      const list=matches();if(!list.length)return;
-      const i=list.findIndex(r=>r.id===selected?.id);const record=list[i<0?(direction>0?0:list.length-1):Math.max(0,Math.min(list.length-1,i+direction))];
-      choose(record);
     }
     function filterTimeline(list){
       const ids=list&&new Set(list.map(r=>r.id));

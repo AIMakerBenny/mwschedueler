@@ -11,6 +11,26 @@ const sizes=[[1366,768,false],[1920,1080,false],[2560,1440,false],[2560,1080,fal
 const routes=['dashboard','calendar','contacts','sniper','friendFinder','targets','posts','contentApplications','memos','careerTimeline','mawangArchive','achievements','gameLadder','gameMultiDraw','gameMajoku','contentPlanner','toolTier','toolMatrix','toolRelations','legacy','wardogs','gameRps','gamePachinko','export','settings'];
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(check,label,attempts=100){let last;for(let i=0;i<attempts;i++){try{last=await check();if(last)return last}catch(error){last=String(error)}await pause(120)}throw Error(label+': '+JSON.stringify(last))}
+// Real hit-test against the top, middle and bottom of each control.
+// Element.click() alone bypasses overlays and missed the reported regression.
+async function expectMouseTarget(browser,selector,label){
+  const result=await browser.evaluate(`(()=>{
+    const target=document.querySelector(${JSON.stringify(selector)});
+    if(!target)return {missing:true,selector:${JSON.stringify(selector)}};
+    const box=target.getBoundingClientRect(),cs=getComputedStyle(target);
+    const samples=[];
+    for(const fx of [.18,.5,.82])for(const fy of [.25,.5,.75]){
+      const x=box.left+box.width*fx,y=box.top+box.height*fy;
+      if(x<0||y<0||x>=innerWidth||y>=innerHeight){samples.push({x,y,offscreen:true});continue}
+      const hit=document.elementFromPoint(x,y);
+      samples.push({x:Math.round(x),y:Math.round(y),valid:!!hit&&(hit===target||target.contains(hit)),hit:hit?.tagName+'.'+String(hit?.className).slice(0,70)});
+    }
+    return {rect:{x:box.x,y:box.y,w:box.width,h:box.height},display:cs.display,samples};
+  })()`);
+  assert(result.rect&&result.rect.w>=20&&result.rect.h>=20&&result.display!=='none',label+' geometry '+JSON.stringify(result));
+  assert(result.samples.every(v=>v.valid===true),label+' pointer is blocked '+JSON.stringify(result));
+  return {x:result.rect.x+result.rect.w/2,y:result.rect.y+result.rect.h/2};
+}
 const failures=[];
 for(const [width,height,mobile] of sizes){
   const dir=mkdtempSync(path.join(os.tmpdir(),'mws-workspace-live-'));let browser;
@@ -47,16 +67,47 @@ for(const [width,height,mobile] of sizes){
           assert(await browser.evaluate(`!!document.querySelector('#contacts .contact-card.mws-ui-contact-selected')`));await browser.evaluate(`document.querySelector('[data-close="contactModal"]').click()`);
         }
         if(route==='posts'){
-          await browser.evaluate(`document.querySelector('#postSavedMenu summary').click()`);assert(await browser.evaluate(`document.getElementById('postSavedMenu').open`));await browser.evaluate(`document.querySelector('#postSavedMenu summary').click()`);
+          if(width>=1101) {
+            await browser.evaluate('window.scrollTo(0,0)');
+            await pause(120);
+            for(const [selector,id] of [['#postSavedMenu > summary','postSavedMenu'],['#postRegisterMenu > summary','postRegisterMenu']]){
+              const point=await expectMouseTarget(browser,selector,selector);
+              await browser.clickPoint(point.x,point.y);
+              assert(await browser.evaluate(`document.getElementById(${JSON.stringify(id)}).open`),'real mouse click must open '+id);
+              await browser.clickPoint(point.x,point.y);
+              assert(!await browser.evaluate(`document.getElementById(${JSON.stringify(id)}).open`),'real mouse click must close '+id);
+            }
+            const detailVisible=await browser.evaluate(`(()=>{const el=document.querySelector('#posts .post-detail-menu > summary');if(!el)return false;const r=el.getBoundingClientRect();return r.width>=20&&r.height>=20&&r.top>=0&&r.bottom<=innerHeight})()`);
+            if(detailVisible){
+              const point=await expectMouseTarget(browser,'#posts .post-detail-menu > summary','post management');
+              await browser.clickPoint(point.x,point.y);
+              assert(await browser.evaluate(`document.querySelector('#posts .post-detail-menu').open`),'real mouse opens management');
+              await browser.clickPoint(point.x,point.y);
+            }
+          }else{
+            await browser.evaluate(`document.querySelector('#postSavedMenu summary').click()`);assert(await browser.evaluate(`document.getElementById('postSavedMenu').open`));await browser.evaluate(`document.querySelector('#postSavedMenu summary').click()`);
+          }
         }
         if(route==='memos'){
           await browser.evaluate(`document.getElementById('memoFavoritesTab').click()`);assert(await browser.evaluate(`document.getElementById('memoFavoritesView').classList.contains('active')`));await browser.evaluate(`document.getElementById('memoLibraryTab').click()`);
         }
         if(route==='careerTimeline'){
           await until(()=>browser.evaluate(`!!document.querySelector('#careerTimeline .cv-map-year')`),'timeline runtime');
+          assert.equal(await browser.evaluate(`document.querySelectorAll('#careerTimeline .cv-summary .cv-step').length`),0,'unnecessary timeline arrows removed');
           if(width>=1101){
+            await browser.evaluate('window.scrollTo(0,0)');
+            await pause(120);
             const geo=await browser.evaluate(`(()=>{const top=document.querySelector('#pageTitle').getBoundingClientRect(),bar=document.querySelector('#careerTimeline .cv-bar').getBoundingClientRect();return {titleY:(top.top+top.bottom)/2,barY:(bar.top+bar.bottom)/2,barW:bar.width}})()`);
             assert(Math.abs(geo.titleY-geo.barY)<=30&&geo.barW>=450,'timeline title and tools on one row '+JSON.stringify(geo));
+            await expectMouseTarget(browser,'#careerTimeline .cv-search','timeline search');
+            await expectMouseTarget(browser,'#careerTimeline .cv-export','timeline export');
+            const yearPoint=await expectMouseTarget(browser,'#careerTimeline .cv-map-year[aria-label^="2025년"]','timeline year 2025');
+            const searchPoint=await expectMouseTarget(browser,'#careerTimeline .cv-search','timeline search field');
+            await browser.clickPoint(searchPoint.x,searchPoint.y);
+            assert(await browser.evaluate(`document.activeElement===document.querySelector('#careerTimeline .cv-search')`),'real click focuses timeline search');
+            await browser.clickPoint(yearPoint.x,yearPoint.y);
+            await pause(180);
+            assert(await browser.evaluate(`document.scrollingElement.scrollTop>20 || document.querySelector('#careerTimeline .cv-map-year[aria-label^="2025년"]').getAttribute('aria-current')==='true'`),'real click activates timeline year');
           }
         }
         if(route==='posts'&&width>=1101){

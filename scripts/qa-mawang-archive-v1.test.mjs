@@ -233,11 +233,17 @@ test('workspace header keeps only page-relevant actions and links to the exact M
   assert(!archiveRuntime.includes('등록된 프로필 사진'));
   assert(archiveRuntime.includes('--ma-light-x'));
   assert.match(archive,/\.ma-header-filters\[hidden\]/);
-  assert.match(html,/assets\/workspace-density-v1\.css\?v=2/);
+  assert.match(html,/assets\/workspace-density-v1\.css\?v=3/);
   const density=read('assets/workspace-density-v1.css');
   for(const section of ['careerTimeline','posts','contentApplications'])assert(density.includes('#'+section+'.active'));
   assert.match(density,/\.cv-bar-host/);
   assert.match(density,/\.posts-head/);
+  assert.match(density,/pointer-events:none!important/);
+  assert.match(density,/post-workspace-actions/);
+  assert.match(html,/career-visualizer\.js\?v=18&single-view=1/);
+  const careerRuntime=read('assets/career-visualizer.js');
+  assert(!careerRuntime.includes("button('cv-step'"));
+
   assert.match(density,/\.ca-detail-top/);
   assert.match(global,/box-shadow:none!important/);
   assert.match(global,/background:transparent!important/);
