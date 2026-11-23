@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {handleArchiveGallery} from '../src/mawang-archive-gallery-v1.js';
 
@@ -116,4 +117,58 @@ test('client revalidates archive manifest after interval without IndexedDB, loca
   assert.match(cloud,/data:value,cachedAt:Date\.now\(\)/);
   assert.doesNotMatch(cloud,/data:clone\(value\),cachedAt:Date\.now\(\)/);
   assert.match(cloud,/mwsV55CacheDiagnostics=async/);
+});
+
+
+test('archive tab returns reuse live manifest, send conditional GET after 60s and refresh images',async()=>{
+  const window={scrollY:0,innerHeight:900,addEventListener(){}};
+  vm.runInNewContext(read('assets/mawang-archive-data-v1.js'),{window});
+  const nodes=new Map(),handlers=new Map();
+  const element=()=>({
+    innerHTML:'',textContent:'',hidden:false,clientWidth:1200,dataset:{},style:{setProperty(){}},
+    getBoundingClientRect:()=>({top:200}),focus(){},querySelector:()=>null
+  });
+  const root={
+    clientWidth:1300,innerHTML:'',closest:()=>null,
+    querySelector(selector){if(!nodes.has(selector))nodes.set(selector,element());return nodes.get(selector)},
+    querySelectorAll:()=>[],
+    addEventListener:(event,fn)=>handlers.set(event,fn)
+  };
+  let time=1_000_000,reads=0;
+  class Clock extends Date{static now(){return time}}
+  const requests=[];
+  const fetch=async(url,options={})=>{
+    assert.equal(url,'/api/mawang-profile');
+    requests.push(options);
+    reads++;
+    if(reads===2){
+      assert.equal(options.headers?.['If-None-Match'],'"first"');
+      return new Response(null,{status:304,headers:{etag:'"first"'}});
+    }
+    return new Response(JSON.stringify({
+      profiles:[{character:'mi',revision:reads===1?'123-abcd':'456-abcd'}]
+    }),{headers:{etag:reads===1?'"first"':'"second"'}});
+  };
+  const document={getElementById:()=>root,body:{dataset:{mwsMode:'public'}}};
+  vm.runInNewContext(read('assets/mawang-archive-v1.js'),{window,document,fetch,Date:Clock});
+  const flush=()=>new Promise(resolve=>setImmediate(resolve));
+  window.mwsMawangArchiveV1.render();
+  await flush();
+  assert.equal(reads,1);
+  handlers.get('click')({target:{closest:()=>({dataset:{maCharacter:'mi'}})}});
+  assert.match(root.querySelector('.ma-main-profile').innerHTML,/rev=123-abcd/);
+  window.mwsMawangArchiveV1.render();
+  await flush();
+  assert.equal(reads,1,'no network on immediate return to archive');
+  time+=60_001;
+  window.mwsMawangArchiveV1.render();
+  await flush();
+  assert.equal(reads,2,'revalidation is conditional and no duplicate GET');
+  assert.match(root.querySelector('.ma-main-profile').innerHTML,/rev=123-abcd/);
+  time+=60_001;
+  window.mwsMawangArchiveV1.render();
+  await flush();
+  assert.equal(reads,3);
+  assert.match(root.querySelector('.ma-main-profile').innerHTML,/rev=456-abcd/);
+  assert.equal(requests[2].headers['If-None-Match'],'"first"');
 });
