@@ -76,7 +76,12 @@ try{
   assert(opened,'Live public achievement click did not open detail on '+width);
   const layout=await browser.evaluate("(()=>{const modal=document.querySelector('.achievement-detail-modal'),dialog=document.querySelector('.achievement-detail-dialog'),stage=document.querySelector('.achievement-detail-stage'),controls=document.querySelector('.achievement-detail-controls'),info=document.querySelector('.achievement-detail-info');const d=dialog.getBoundingClientRect(),c=controls.getBoundingClientRect(),s=stage.getBoundingClientRect();return {modalOverflow:modal.scrollHeight-modal.clientHeight,dialogOverflow:dialog.scrollHeight-dialog.clientHeight,dialogBottom:d.bottom,dialogRight:d.right,controlsBottom:c.bottom,cardRatio:s.width/s.height,stageHeight:s.height,infoKeyboard:info.tabIndex===0}})()");
   assert(Math.abs(layout.cardRatio-2/3)<.02&&layout.infoKeyboard&&layout.stageHeight>100,'Real gallery card geometry failed: '+JSON.stringify({width,layout}));
-  assert(layout.dialogBottom<=height+1&&layout.dialogRight<=width+1&&layout.controlsBottom<=height+1,'Real gallery card exceeds viewport: '+JSON.stringify({width,layout}));
+  assert(layout.dialogRight<=width+1&&layout.controlsBottom<=height+1&&(mobile||layout.dialogBottom<=height+1),'Real gallery card exceeds viewport: '+JSON.stringify({width,layout}));
+  if(mobile){
+    const scroll=await browser.evaluate("(()=>{const m=document.querySelector('.achievement-detail-modal'),c=document.querySelector('.achievement-detail-close');m.scrollTop=m.scrollHeight;const r=c.getBoundingClientRect();return {position:getComputedStyle(c).position,top:r.top,bottom:r.bottom,scroll:m.scrollTop}})()");
+    assert(scroll.position==='sticky'&&scroll.top>=0&&scroll.bottom<=innerHeight&&scroll.scroll>=0,'Mobile close must remain accessible while scrolling: '+JSON.stringify(scroll));
+    await browser.evaluate("document.querySelector('.achievement-detail-modal').scrollTop=0");
+  }
   if(!mobile)assert(layout.dialogOverflow<=2&&layout.modalOverflow<=2,'Unexpected desktop modal scrollbar: '+JSON.stringify({width,layout}));
   if(capture)writeFileSync(path.join(output,'actual-hall-'+width+'-detail-front.jpg'),Buffer.from(await browser.captureScreenshot(),'base64'));
   await browser.evaluate("document.querySelector('.achievement-detail-close')?.click()");
