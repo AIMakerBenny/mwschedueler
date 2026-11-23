@@ -44,7 +44,8 @@ try{
   const motion=await evalJS("(()=>{const own=document.querySelector('.ca-person[data-ca-own]'),rows=[...document.querySelectorAll('.ca-person[data-ca-user]')],rank=own?.querySelector('.ca-rank'),header=document.querySelector('.ca-stats'),stat=header?.querySelector('[data-ca-stat=likes]');return {position:rows.indexOf(own),count:rows.length,rank:rank?.innerText,delta:rank?.querySelector('.ca-rank-change')?.innerText,likesBadge:own?.querySelector('.ca-like-change')?.innerText,statTrend:!!header?.querySelector('.ca-stat-trend.up'),value:Number(stat?.dataset.caValue),animations:own?.getAnimations().length||0,overflow:document.documentElement.scrollWidth>innerWidth}})()");
   assert.equal(motion.position,0,JSON.stringify(motion));assert.equal(motion.count,3);assert.match(motion.rank,/1위/);
   assert.match(motion.delta,/↑ 1/);assert.match(motion.likesBadge,/\+60/);
-  assert(motion.statTrend&&motion.value===100&&!motion.overflow,JSON.stringify(motion));
+  assert(motion.statTrend&&motion.value===100&&motion.animations>0&&!motion.overflow,JSON.stringify(motion));
+  console.log('MWS_RANK_MOTION_QA',w,JSON.stringify(motion));
   await delay(660);
   assert(await evalJS("document.querySelector('[data-ca-stat=likes]').textContent==='100'&&document.querySelector('[data-ca-stat=rank]').textContent.endsWith('1위')"));
   if(w===1366&&process.env.MWS_RANK_VISUAL==='1'){
