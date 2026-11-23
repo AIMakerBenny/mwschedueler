@@ -49,6 +49,7 @@ jobs:
           path: visual-fixture/*.jpg
           if-no-files-found: ignore
       - name: Real public Cloudflare app with PR candidate styles
+        if: always()
         env:
           MWS_REAL_VISUAL_CAPTURE: '1'
         run: node scripts/qa-real-app-visual-browser.mjs
