@@ -29,7 +29,7 @@ const moreSections=[
   '<section id="contacts" class="section"><div class="contact-section-tabs"><button>연락처</button></div></section>',
   applicationSection,
   '<section id="posts" class="section"><div class="posts-head"><button type="button" id="qaPostsButton">게시글 도구</button></div></section>',
-  '<section id="careerTimeline" class="section"><div class="cv-panel"><div class="cv-bar-host"><div class="cv-bar"><div class="cv-toolbar"><button type="button">연도 선택</button></div></div></div><div class="cv-axis">타임라인 콘텐츠</div></div></section>'
+  '<section id="careerTimeline" class="section"><div class="cv-panel"><div class="cv-bar-host"><div class="cv-bar"><div class="cv-toolbar"><button type="button">연도 선택</button><input class="cv-search" aria-label="타임라인 검색" value=""></div></div></div><div class="cv-axis">타임라인 콘텐츠</div></div></section>'
 ].join('');
 const bootstrap='let data={textScale:100};'+pageScale+
   ';window.__qaActivate=function(id){document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active",s.id===id));applyPageTextScalesV54()};window.__qaRoutes=[];window.setTab=id=>{window.__qaRoutes.push(id);window.__qaActivate(id)};'+
@@ -127,6 +127,12 @@ try{
       const inlineTimeline=await browser.evaluate("(()=>{const title=document.querySelector('#pageTitle').getBoundingClientRect(),"+
         "bar=document.querySelector('#careerTimeline .cv-bar').getBoundingClientRect(),panel=document.querySelector('#careerTimeline .cv-panel').getBoundingClientRect(),section=document.querySelector('#careerTimeline').getBoundingClientRect(),main=document.querySelector('.main').getBoundingClientRect();return {titleY:(title.top+title.bottom)/2,barY:(bar.top+bar.bottom)/2,panelTop:panel.top,sectionTop:section.top,mainTop:main.top,barTop:bar.top,topbarBottom:document.querySelector('.topbar').getBoundingClientRect().bottom,other:[...document.querySelector('.main').children].map(e=>({id:e.id||e.className,display:getComputedStyle(e).display,top:e.getBoundingClientRect().top,bottom:e.getBoundingClientRect().bottom}))}})()");
       if(width>=1101)assert(Math.abs(inlineTimeline.titleY-inlineTimeline.barY)<30,JSON.stringify({width,inlineTimeline}));
+      if(width>=1101){
+        const hit=await browser.evaluate("(()=>{const input=document.querySelector('#careerTimeline .cv-search');"+
+          "const r=input.getBoundingClientRect(),e=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);"+
+          "return {position:[r.left,r.top,r.width,r.height],hit:e===input||input.contains(e),top:e?.className}})()");
+        assert(hit.hit,JSON.stringify({width,hit}));
+      }
     }
     console.log('MWS_UI_AUDIT_V2_OK',width,height,JSON.stringify(dashboardResult));
   }
