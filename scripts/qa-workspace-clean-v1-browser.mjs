@@ -56,10 +56,10 @@ $('#gameF1Racing').classList.remove('active');$('#calendar').classList.add('acti
 const control=$('#pageTextScaleControlV54'),label=$('#pageTextScaleValueV54'),controlButtons=control.querySelectorAll('button');
 const sidebarLayoutChildren=[...$('.sidebar').children].filter(e=>!e.matches('script,style,template'));
 const scaleInSidebar=control.parentElement===$('.sidebar')&&sidebarLayoutChildren[sidebarLayoutChildren.indexOf(control)-1]?.classList.contains('nav')&&!$('.topbar').contains(control)&&rect(control).width>0&&rect(control).bottom<=rect($('.sidebar')).bottom&&rect(control).right<=rect($('.sidebar')).right;
-window.resetPageTextScaleV54();controlButtons[1].click();const scaleIncrease=label.textContent==='페이지 105%'&&$('#calendar').style.getPropertyValue('--ui-text-scale')==='1.05'&&JSON.parse(localStorage.getItem(PAGE_SCALE_KEY)).calendar===105;
-controlButtons[0].click();const scaleDecrease=label.textContent==='페이지 100%';controlButtons[1].click();
-$('#calendar').classList.remove('active');$('#gameF1Racing').classList.add('active');applyPageTextScalesV54();const scalePerPage=label.textContent==='페이지 100%';
-$('#gameF1Racing').classList.remove('active');$('#calendar').classList.add('active');applyPageTextScalesV54();const scaleRetained=label.textContent==='페이지 105%';controlButtons[2].click();const scaleReset=label.textContent==='페이지 100%';
+window.resetPageTextScaleV54();controlButtons[1].click();const scaleIncrease=label.textContent==='105%'&&$('#calendar').style.getPropertyValue('--ui-text-scale')==='1.05'&&JSON.parse(localStorage.getItem(PAGE_SCALE_KEY)).calendar===105;
+controlButtons[0].click();const scaleDecrease=label.textContent==='100%';controlButtons[1].click();
+$('#calendar').classList.remove('active');$('#gameF1Racing').classList.add('active');applyPageTextScalesV54();const scalePerPage=label.textContent==='100%';
+$('#gameF1Racing').classList.remove('active');$('#calendar').classList.add('active');applyPageTextScalesV54();const scaleRetained=label.textContent==='105%';controlButtons[2].click();const scaleReset=label.textContent==='100%';
 const result={noCardOverlap,headingOK:parseFloat(heading)<=20,quietShell,charcoalShell,alternateThemeKept,headerFit,gameTitle,searchTitle,monthTitle,inactiveTitleSafe,f1ShellRestored,scaleInSidebar,scaleIncrease,scaleDecrease,scalePerPage,scaleRetained,scaleReset,noMutation:base===JSON.stringify(events),noRootOverflow:document.documentElement.scrollWidth<=innerWidth+3};
 document.querySelector('#result').textContent=JSON.stringify(result);
 `;
