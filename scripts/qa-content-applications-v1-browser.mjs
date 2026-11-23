@@ -23,6 +23,11 @@ try{
   const state=await evalJS(`(()=>({saved:data.contentApplications?.[0],writes,onlineSaves,reads,hero:document.querySelector('.ca-hero')?.innerText,rank:document.querySelector('.ca-ranking')?.innerText,rankLabel:document.querySelector('.ca-ranking-head')?.innerText,cta:document.querySelector('.ca-vote')?.href,overflow:document.documentElement.scrollWidth>innerWidth}))()`);
   assert.equal(state.saved.title,'QA 신청');assert.deepEqual(state.saved.authors,['게시자 A','게시자 B']);assert.match(state.hero,/마왕0216/);assert.equal(state.saved.entries.length,3);assert.equal(state.saved.entries[0].userId,'');assert.equal(state.saved.entries[2].likes,null);assert.equal(state.writes,1);assert.equal(state.onlineSaves,1);assert.equal(state.reads,4);assert.match(state.hero,/마왕0216[\s\S]*40[\s\S]*2위/);assert.match(state.hero,/1위까지 좋아요 10개 차이/);assert.match(state.rank,/다른 신청자/);assert.match(state.rank,/세번째 신청자/);assert.doesNotMatch(state.rank,/주최자/);assert.match(state.rank,/마왕0216/);assert.match(state.rankLabel,/3/);assert.equal(state.cta,'https://www.sooplive.com/station/host/post/1#comment_noti2');assert.equal(state.overflow,false); assert.equal(await evalJS("document.querySelector('.ca-person .ca-origin').href"),'https://www.sooplive.com/station/host/post/1#comment_noti3');
   const initialOwn=await evalJS("(()=>{const own=document.querySelector('.ca-person[data-ca-own]'),rows=[...document.querySelectorAll('.ca-person[data-ca-user]')];const cs=getComputedStyle(own);return {exists:!!own,rank:own.querySelector('.ca-rank')?.innerText,position:rows.indexOf(own),count:rows.length,highlight:cs.borderTopColor!==getComputedStyle(rows[0]).borderTopColor,hasJump:!!document.querySelector('[data-ca-my-rank]'),overflow:document.documentElement.scrollWidth>innerWidth}})()");
+  if(w===1366&&process.env.MWS_RANK_VISUAL==='1'){
+    await evalJS("document.querySelector('.ca-hero').scrollIntoView({block:'start',behavior:'instant'})");
+    await delay(100);
+    console.log('MWS_RANK_BEFORE_JPEG_START'+await browser.captureScreenshot()+'MWS_RANK_BEFORE_JPEG_END');
+  }
   assert(initialOwn.exists&&initialOwn.position===1&&initialOwn.count===3,JSON.stringify(initialOwn));
   assert.match(initialOwn.rank,/2위/);assert(initialOwn.highlight&&initialOwn.hasJump&&!initialOwn.overflow,JSON.stringify(initialOwn));
   await evalJS("document.querySelector('[data-ca-my-rank]').click()");
@@ -42,6 +47,11 @@ try{
   assert(motion.statTrend&&motion.value===100&&!motion.overflow,JSON.stringify(motion));
   await delay(660);
   assert(await evalJS("document.querySelector('[data-ca-stat=likes]').textContent==='100'&&document.querySelector('[data-ca-stat=rank]').textContent.endsWith('1위')"));
+  if(w===1366&&process.env.MWS_RANK_VISUAL==='1'){
+    await evalJS("document.querySelector('.ca-hero').scrollIntoView({block:'start',behavior:'instant'})");
+    await delay(80);
+    console.log('MWS_RANK_AFTER_JPEG_START'+await browser.captureScreenshot()+'MWS_RANK_AFTER_JPEG_END');
+  }
   // An identical refresh must not replace rows or replay transitions.
   await evalJS("window.__qaBeforeUnchanged=document.querySelector('.ca-person[data-ca-own]');document.querySelector('[data-ca-refresh]').click()");
   await delay(150);
