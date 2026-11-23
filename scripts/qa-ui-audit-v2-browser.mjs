@@ -117,7 +117,7 @@ try{
       assert.equal(timeline.shadow,'none',JSON.stringify({width,timeline}));
       assert.notEqual(timeline.headerClicks,'none',JSON.stringify({width,timeline}));
       const inlineTimeline=await browser.evaluate("(()=>{const title=document.querySelector('#pageTitle').getBoundingClientRect(),"+
-        "bar=document.querySelector('#careerTimeline .cv-bar').getBoundingClientRect(),panel=document.querySelector('#careerTimeline .cv-panel').getBoundingClientRect(),section=document.querySelector('#careerTimeline').getBoundingClientRect(),main=document.querySelector('.main').getBoundingClientRect();return {titleY:(title.top+title.bottom)/2,barY:(bar.top+bar.bottom)/2,panelTop:panel.top,sectionTop:section.top,mainTop:main.top,barTop:bar.top}})()");
+        "bar=document.querySelector('#careerTimeline .cv-bar').getBoundingClientRect(),panel=document.querySelector('#careerTimeline .cv-panel').getBoundingClientRect(),section=document.querySelector('#careerTimeline').getBoundingClientRect(),main=document.querySelector('.main').getBoundingClientRect();return {titleY:(title.top+title.bottom)/2,barY:(bar.top+bar.bottom)/2,panelTop:panel.top,sectionTop:section.top,mainTop:main.top,barTop:bar.top,topbarBottom:document.querySelector('.topbar').getBoundingClientRect().bottom,other:[...document.querySelector('.main').children].map(e=>({id:e.id||e.className,display:getComputedStyle(e).display,top:e.getBoundingClientRect().top,bottom:e.getBoundingClientRect().bottom}))}})()");
       if(width>=1101)assert(Math.abs(inlineTimeline.titleY-inlineTimeline.barY)<30,JSON.stringify({width,inlineTimeline}));
     }
     console.log('MWS_UI_AUDIT_V2_OK',width,height,JSON.stringify(dashboardResult));
