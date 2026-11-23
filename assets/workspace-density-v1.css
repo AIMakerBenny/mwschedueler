@@ -57,9 +57,14 @@ body.mws-premium .main:has(#careerTimeline.section.active){
     justify-content:flex-end!important;
     align-items:center!important;
     margin:0 0 8px!important;
+    padding-right:52px!important;
+    pointer-events:none;
     position:relative!important;
     z-index:16!important;
   }
+  /* Reserve space for the always-on calendar shortcut and do not let
+     the full-width posts toolbar intercept clicks on the shared header. */
+  #posts.section.active .posts-head > *{pointer-events:auto}
   #posts.section.active .posts-head{
     transform:none!important;
   }
