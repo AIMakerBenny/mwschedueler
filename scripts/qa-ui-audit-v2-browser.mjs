@@ -13,14 +13,16 @@ const slice=(start,end)=>{
   return html.slice(a,b);
 };
 const aside=slice('<aside class="sidebar">','</aside>')+'</aside>';
+const qaAside=aside.replace('<button data-tab="dashboard"','<button class="active" data-tab="dashboard"').replace('<button class="active" data-tab="calendar"','<button data-tab="calendar"');
 const header=slice('<div class="topbar">','<section id="dashboard"');
+const qaHeader=header.replace('<h1 id="pageTitle">캘린더</h1>','<h1 id="pageTitle">대시보드</h1>');
 const dashboard=slice('<section id="dashboard"','<section id="calendar"')
   .replace('class="section"','class="section active"');
 const inline=[...html.matchAll(/<style(?:\s[^>]*)?>([\s\S]*?)<\/style>/gi)].map(m=>m[1]).join('\n');
 const css=[
   'app-core.css','mawang-premium-v1621.css','ui-frame-presets.css',
   'sidebar-rail-scrollbar-v1.css','sidebar-stable-v1.css','career-timeline.css',
-  'topbar-context-v1.css','mawang-archive-header-v1.css',
+  'mawang-archive-header-v1.css',
   'content-applications-v1.css','workspace-clean-v1.css','workspace-density-v1.css','sidebar-compact-v1.css','visual-experience-v1.css'
 ].map(p=>read('assets/'+p)).join('\n')+'\n'+inline;
 const pageScale=slice("const PAGE_SCALE_KEY='mws_page_text_scales_v54';",
@@ -37,7 +39,7 @@ const bootstrap='let data={textScale:100};'+pageScale+
   'const qaProfile=document.createElement("div");qaProfile.className="dashboard-my-profile-v3";qaProfile.textContent="마왕 프로필";document.querySelector("#dashboardProfileSlot").append(qaProfile);';
 const fixture='<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+
   '<style>'+css+'\n@media(min-width:1101px){.main>.topbar{height:48px!important;min-height:48px!important;max-height:48px!important}}'+'</style><body class="mws-premium" data-theme="neon" data-resolution="fhd" data-mws-mode="admin">'+
-  '<div class="app">'+aside+'<main class="main">'+header+dashboard+moreSections+'</main></div>'+
+  '<div class="app">'+qaAside+'<main class="main">'+qaHeader+dashboard+moreSections+'</main></div>'+
   '<script>'+bootstrap+'</script><script>'+read('assets/visual-experience-v1.js')+'</script></body>';
 const dir=mkdtempSync(path.join(os.tmpdir(),'mws-ui-audit-v2-'));
 let browser;
@@ -68,7 +70,7 @@ try{
     // the archive. A missing header stylesheet previously produced giant black
     // SVGs and the wrong title while the old assertions still passed.
     const fixtureIntegrity=await browser.evaluate("(()=>{const visible=e=>!!e&&getComputedStyle(e).display!=='none'&&e.getBoundingClientRect().width>0;const kicker=document.querySelector('.mws-archive-kicker'),wiki=document.querySelector('#mwsArchiveWikiLink'),svg=wiki?.querySelector('svg'),title=document.querySelector('#pageTitle'),grid=document.querySelector('.dashboard-kpi-grid-local');return {dashboardActive:document.querySelector('#dashboard')?.classList.contains('active'),archiveKickerVisible:visible(kicker),archiveWikiVisible:visible(wiki),wikiSvgWidth:svg?.getBoundingClientRect().width,headerHeight:document.querySelector('.topbar')?.getBoundingClientRect().height,title:title?.textContent?.trim(),metricWidth:grid?.getBoundingClientRect().width}})()");
-    assert(fixtureIntegrity.dashboardActive&&fixtureIntegrity.title==='캘린더'&&!fixtureIntegrity.archiveKickerVisible&&!fixtureIntegrity.archiveWikiVisible&&fixtureIntegrity.wikiSvgWidth<=20&&fixtureIntegrity.headerHeight<100&&fixtureIntegrity.metricWidth>100,'Invalid visual fixture, do not capture or approve screenshots: '+JSON.stringify({width,fixtureIntegrity}));
+    assert(fixtureIntegrity.dashboardActive&&fixtureIntegrity.title==='대시보드'&&!fixtureIntegrity.archiveKickerVisible&&!fixtureIntegrity.archiveWikiVisible&&fixtureIntegrity.wikiSvgWidth<=20&&fixtureIntegrity.headerHeight<100&&fixtureIntegrity.metricWidth>100,'Invalid visual fixture, do not capture or approve screenshots: '+JSON.stringify({width,fixtureIntegrity}));
     if(process.env.MWS_VISUAL_CAPTURE==='1'&&[1366,1920,2560,390].includes(width)){mkdirSync('visual-fixture',{recursive:true});writeFileSync('visual-fixture/dashboard-'+width+'.jpg',Buffer.from(await browser.captureScreenshot(),'base64'));}
     if(width===1366){
       const valueChange=await browser.evaluate("(()=>{const v=document.querySelector('#nextStreamKpi');v.textContent='시각 테스트 1';return true})()");
@@ -84,7 +86,7 @@ try{
       assert(!(await browser.evaluate("document.querySelector('#nextStreamKpi').classList.contains('mws-vx-updated')")),'Reduced motion must suppress value change');
       await browser.evaluate("delete document.documentElement.dataset.mwsMotion");
     }
-    const caretResult=await browser.evaluate("(()=>{const title=document.querySelector('#pageTitle');const input=document.createElement('input');input.setAttribute('aria-label','QA typing caret');document.body.append(input);const staticCaret=getComputedStyle(title).caretColor,editCaret=getComputedStyle(input).caretColor;const selection=window.getSelection(),range=document.createRange();range.selectNodeContents(title);selection.removeAllRanges();selection.addRange(range);const selectable=selection.toString().includes('캘린더');selection.removeAllRanges();input.remove();return {staticCaret,editCaret,selectable}})()");
+    const caretResult=await browser.evaluate("(()=>{const title=document.querySelector('#pageTitle');const input=document.createElement('input');input.setAttribute('aria-label','QA typing caret');document.body.append(input);const staticCaret=getComputedStyle(title).caretColor,editCaret=getComputedStyle(input).caretColor;const selection=window.getSelection(),range=document.createRange();range.selectNodeContents(title);selection.removeAllRanges();selection.addRange(range);const selectable=selection.toString().includes('대시보드');selection.removeAllRanges();input.remove();return {staticCaret,editCaret,selectable}})()");
     assert(['transparent','rgba(0, 0, 0, 0)'].includes(caretResult.staticCaret)&&caretResult.editCaret!==caretResult.staticCaret&&caretResult.selectable,JSON.stringify({width,caretResult}));
     assert.equal(dashboardResult.metricCount,6,JSON.stringify({width,dashboardResult}));
     assert.equal(dashboardResult.tabs,3,JSON.stringify({width,dashboardResult}));
