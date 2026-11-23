@@ -277,3 +277,15 @@ body.mws-premium .main:not(:has(#mawangArchive.active)) > .topbar .ma-header-fil
     padding-top:0!important;
   }
 }
+
+/* The timeline toolbar occupies the visual title row while retaining its DOM
+   position inside .cv-panel. The panel and its absolute-positioned children
+   are nested in the section's stacking context. Keep the active timeline
+   section above the topbar (z-index:7) so the header cannot intercept
+   real pointer clicks on search, export or year controls. Do not disable
+   pointer-events on the shared topbar, which is interactive on other tabs. */
+@media(min-width:1101px){
+  body.mws-premium .main > #careerTimeline.section.active{
+    z-index:9!important;
+  }
+}
