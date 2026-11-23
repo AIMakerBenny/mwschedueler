@@ -8,6 +8,7 @@ on:
       - 'assets/achievement-gallery-v1621.*'
       - 'scripts/qa-achievement-exhibition-v1-browser.mjs'
       - 'scripts/qa-achievement-live-browser.mjs'
+      - 'scripts/qa-first-paint-guard-v1-browser.mjs'
       - '.github/workflows/qa-achievement-exhibition-v1.yml'
 permissions:
   contents: read
@@ -36,6 +37,24 @@ jobs:
           if-no-files-found: ignore
       - run: node scripts/run-phase90-achievement-gallery-audit.mjs
       - run: node scripts/run-phase93-achievement-touch-audit.mjs
+  first-paint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify unstyled first-frame safeguards at 4 viewports
+        env:
+          MWS_FIRST_PAINT_CAPTURE: '1'
+        run: node scripts/qa-first-paint-guard-v1-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: critical-first-paint-chromium
+          path: visual-first-paint/*.jpg
+          if-no-files-found: ignore
   public-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 12
