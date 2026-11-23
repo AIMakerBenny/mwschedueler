@@ -46,13 +46,22 @@ try{
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForFunction(()=>window.__mwsAppReadyV130&&!document.body.classList.contains('mws-app-loading'),{},{timeout:35000});
-  await page.locator('#mwsAnnouncementDialog [data-notice-close]').click({timeout:1200}).catch(()=>{});
+  // Public onboarding opens asynchronously after hydration, so it can
+  // appear after a too-early dismiss attempt and intercept the navigation.
+  await delay(900);
+  await page.evaluate(()=>{
+    const notice=document.querySelector('#mwsAnnouncementDialog');
+    if(notice?.open)notice.querySelector('[data-notice-close]')?.click();
+  });
   if(mobile){
     await page.waitForFunction(()=>document.body.dataset.deviceMode==='mobile',{},{timeout:12000});
     const menu=page.locator('[data-mobile-tab=menu]');
     await menu.click({timeout:12000});
   }
-  await page.locator('[data-tab=careerTimeline]').click({timeout:20000});
+  await page.locator('[data-tab=careerTimeline]').click({timeout:10000}).catch(async()=>{
+    await page.evaluate(()=>document.querySelector('#mwsAnnouncementDialog[open]')?.close());
+    await page.locator('[data-tab=careerTimeline]').click({timeout:15000});
+  });
   await page.locator('.cv-panel').waitFor({state:'visible',timeout:20000});
   await delay(350);
   const start=await page.evaluate(measure);
