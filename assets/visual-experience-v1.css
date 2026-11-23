@@ -97,14 +97,14 @@ body.mws-premium #posts .post-applicant-photo img{
   body.mws-premium #posts .post-applicant-card:hover .post-applicant-photo img{scale:1.025}
 }
 /* Calendar remains a stable grid; movement belongs to content, not day cells. */
-body.mws-premium #calendar #calendarGrid .day{
+body.mws-premium #calendar.section #calendarGrid .day{
   border-color:var(--mws-vx-edge)!important;
-  background:linear-gradient(155deg,color-mix(in srgb,var(--text) 3%,var(--panel)),var(--panel) 46%)!important;
+  background:linear-gradient(155deg,color-mix(in srgb,var(--text) 3%,transparent),transparent 46%),var(--calendar-grid-surface,var(--panel))!important;
   box-shadow:inset 0 1px 0 color-mix(in srgb,var(--text) 5%,transparent)!important;
   transition:background-color var(--mws-vx-short),border-color var(--mws-vx-short),box-shadow var(--mws-vx-standard)!important;
 }
 @media (hover:hover) and (pointer:fine){
-  body.mws-premium #calendar #calendarGrid .day:hover{
+  body.mws-premium #calendar.section #calendarGrid .day:hover{
     border-color:var(--mws-vx-edge-hover)!important;
     box-shadow:inset 0 1px 0 var(--mws-vx-highlight),0 2px 8px #0002!important;
     transform:none!important;
@@ -164,12 +164,12 @@ body.mws-premium #dashboard .kpi strong.mws-vx-updated{
   body.mws-premium :is(#dashboard,#contacts,#posts,#sniper,#targets,#memos) :is(.card,.contact-card,.post-applicant-card){scale:none!important}
 }
 html[data-mws-motion=reduced] body.mws-premium :is(.card,.contact-card,.event-card,.reminder-card,.post-applicant-card,.contact-card-avatar-lg,.kpi strong,.ca-person,.ca-stat-card,.achievement-card-open,.cv-card),
-html[data-mws-motion=reduced] body.mws-premium #calendar #calendarGrid .day{
+html[data-mws-motion=reduced] body.mws-premium #calendar.section #calendarGrid .day{
   animation:none!important;transition:none!important;scale:none!important;
 }
 @media(prefers-reduced-motion:reduce){
   html:not([data-mws-motion=full]) body.mws-premium :is(.card,.contact-card,.event-card,.reminder-card,.post-applicant-card,.contact-card-avatar-lg,.kpi strong,.ca-person,.ca-stat-card,.achievement-card-open,.cv-card),
-  html:not([data-mws-motion=full]) body.mws-premium #calendar #calendarGrid .day{
+  html:not([data-mws-motion=full]) body.mws-premium #calendar.section #calendarGrid .day{
     animation:none!important;transition:none!important;scale:none!important;
   }
 }
