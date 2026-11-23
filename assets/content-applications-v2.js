@@ -58,6 +58,14 @@ function renderList(){
 
 /* Every motion is driven by an actual change in verified SOOP data.
    When the ranking is unchanged there is no rerender or animation. */
+function animateTrack(bar,oldWidth,duration=580){
+ if(!bar||!oldWidth||oldWidth===bar.style.width)return;
+ const before=parseFloat(oldWidth),after=parseFloat(bar.style.width);
+ if(!Number.isFinite(before)||!Number.isFinite(after))return;
+ const options={duration,easing:'cubic-bezier(.2,.75,.25,1)'};
+ if(after>0)bar.animate([{transform:`scaleX(${before/after})`},{transform:'scaleX(1)'}],options);
+ else if(before>0)bar.animate([{width:oldWidth},{width:'0%'}],options);
+}
 function animateLeaderboardChanges(movement,beforeRects,beforeBars,beforeProgress,beforeStats){
  if(!movement?.changed||reduceMotion()||document.hidden)return;
  let animatedRows=0;
@@ -71,24 +79,15 @@ function animateLeaderboardChanges(movement,beforeRects,beforeBars,beforeProgres
     animatedRows++;
    }
   }
-  if(delta?.rankDelta||delta?.likesDelta){
+  if((delta?.rankDelta||delta?.likesDelta)&&after.bottom>0&&after.top<innerHeight){
    const name=el.querySelector('.ca-person-name strong');
    name?.animate([{color:'var(--ca-pink)'},{color:'var(--text)'}],{duration:700,easing:'ease-out'});
    el.animate([{boxShadow:'0 0 0 1px var(--ca-pink), 0 0 24px #e9669d32'},{boxShadow:'none'}],{duration:850,easing:'ease-out'});
   }
-  const bar=el.querySelector('.ca-mini-progress span'),oldWidth=beforeBars?.get(el.dataset.caUser);
-  if(bar&&oldWidth!=null&&oldWidth!==bar.style.width){
-   const nextWidth=bar.style.width;
-   bar.style.transition='none';bar.style.width=oldWidth;
-   requestAnimationFrame(()=>{if(!bar.isConnected)return;bar.style.transition='width 580ms cubic-bezier(.19,.78,.25,1)';bar.style.width=nextWidth});
-  }
+  if(after.bottom>0&&after.top<innerHeight)animateTrack(el.querySelector('.ca-mini-progress span'),beforeBars?.get(el.dataset.caUser));
  });
  const progress=detail.querySelector('.ca-comparison .ca-progress span');
- if(progress&&beforeProgress!=null&&progress.style.width!==beforeProgress){
-  const finalWidth=progress.style.width;
-  progress.style.transition='none';progress.style.width=beforeProgress;
-  requestAnimationFrame(()=>{if(progress.isConnected){progress.style.transition='width 650ms cubic-bezier(.2,.75,.25,1)';progress.style.width=finalWidth}});
- }
+ animateTrack(progress,beforeProgress,650);
  detail.querySelectorAll('[data-ca-stat]').forEach(el=>{
   const oldValue=beforeStats?.get(el.dataset.caStat),targetValue=el.dataset.caValue;
   if(oldValue==null||oldValue===''||targetValue===''||oldValue===targetValue)return;
