@@ -11,6 +11,8 @@ on:
       - 'scripts/qa-content-applications-v1-browser.mjs'
       - 'scripts/calendar-browser-realtime.mjs'
       - 'assets/workspace-clean-v1.css'
+      - 'assets/visual-experience-v1.css'
+      - 'assets/visual-experience-v1.js'
       - 'assets/workspace-density-v1.css'
       - 'assets/sidebar-compact-v1.css'
       - 'assets/sidebar-rail-scrollbar-v1.css'
@@ -32,7 +34,15 @@ jobs:
         with:
           node-version: '24'
       - name: Desktop and mobile Chromium regression
+        env:
+          MWS_VISUAL_CAPTURE: '1'
         run: node scripts/qa-ui-audit-v2-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mws-visual-foundation-candidate
+          path: visual-qa/*.jpg
+          if-no-files-found: ignore
       - name: Application deadlines, authors and public/read-only Chromium QA
         run: |
           node --test scripts/qa-content-applications-v1.test.mjs
