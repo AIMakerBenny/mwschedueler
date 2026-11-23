@@ -40,3 +40,13 @@ jobs:
         env:
           CAREER_QA_MODE: desktop
         run: node scripts/qa-career-motion-browser.mjs
+      - name: Mobile Chromium candidate timeline navigation QA
+        env:
+          CAREER_QA_MODE: mobile
+        run: node scripts/qa-career-motion-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mws-ui-timeline-candidate
+          path: career-qa/*.png
+          if-no-files-found: ignore
