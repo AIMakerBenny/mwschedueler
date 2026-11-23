@@ -10,7 +10,7 @@
     border-bottom-color:transparent!important;
   }
   #careerTimeline.active .cv-bar-host{
-    margin-top:-51px!important;
+    margin-top:0!important;
     margin-bottom:8px!important;
     z-index:12;
   }
@@ -30,8 +30,8 @@
   #careerTimeline.active .cv-bar.cv-pinned{
     padding:5px 9px!important;
     background:var(--panel)!important;
-    border:1px solid var(--border)!important;
-    box-shadow:0 8px 24px #0005!important;
+    border:0!important;
+    box-shadow:none!important;
   }
 
   /* Posts: the common page title is the only heading. Keep both menus
@@ -46,15 +46,15 @@
     display:flex!important;
     justify-content:flex-end!important;
     align-items:center!important;
-    margin:-60px 0 8px!important;
+    margin:0 0 8px!important;
     position:relative!important;
     z-index:16!important;
   }
   #posts.section.active .posts-head{
-    transform:translateY(-43px)!important;
+    transform:none!important;
   }
   #posts.section.active .posts-layout{
-    margin-top:-43px!important;
+    margin-top:0!important;
   }
   #posts.section.active .posts-head > h2{display:none!important}
   #posts.section.active .post-workspace-actions{
@@ -76,10 +76,10 @@
     border-bottom-color:transparent!important;
   }
   #contentApplications.section.active > .ca-head{
-    min-height:36px!important;height:36px!important;
-    position:relative!important;z-index:12!important;
+    min-height:0!important;height:auto!important;
+    position:relative!important;z-index:4!important;
     justify-content:flex-end!important;align-items:center!important;
-    margin:-56px 0 9px!important;padding:0!important;
+    margin:0 0 12px!important;padding:0!important;
   }
   #contentApplications.section.active > .ca-head > .ca-eyebrow{display:none!important}
   #contentApplications.section.active > .ca-head > #caNewBtn{
@@ -88,6 +88,13 @@
     box-shadow:none!important;
   }
 }
+
+/* No content or controls: do not reserve a phantom top toolbar.
+   Keep the shared global status and calendar shortcut available above it. */
+#contentApplications.section.active > .ca-head:not(:has(#caNewBtn:not([hidden]))){
+  display:none!important;
+}
+#contentApplications.section.active > :is(#caList,#caDetail){padding-top:12px}
 
 /* Content application details: compact, functional information hierarchy. */
 #contentApplications.section.active .ca-detail-top{
