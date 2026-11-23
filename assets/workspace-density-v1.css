@@ -277,3 +277,17 @@ body.mws-premium .main:not(:has(#mawangArchive.active)) > .topbar .ma-header-fil
     padding-top:0!important;
   }
 }
+
+/* MWS timeline toolbar hit-test layer.
+   The section was a lower stacking context than the shared title bar,
+   causing its visually aligned controls to be blocked by .topbar. */
+@media(min-width:1101px){
+  body.mws-premium .main:has(#careerTimeline.active)>#careerTimeline.section.active{
+    position:relative!important;
+    z-index:20!important;
+  }
+  body.mws-premium #careerTimeline.active .cv-panel>.cv-bar-host{
+    z-index:22!important;
+    pointer-events:auto!important;
+  }
+}
