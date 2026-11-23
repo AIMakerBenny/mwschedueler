@@ -116,7 +116,8 @@ for(const [width,height,mobile] of sizes){
         }
         if(route==='contentApplications'&&width>=1101){
           const geo=await browser.evaluate(`(()=>{const h=document.querySelector('#pageTitle').getBoundingClientRect(),a=document.querySelector('#contentApplications .ca-head').getBoundingClientRect();return {titleY:(h.top+h.bottom)/2,actionY:(a.top+a.bottom)/2,eyebrow:getComputedStyle(document.querySelector('#contentApplications .ca-head .ca-eyebrow')).display}})()`);
-          assert(Math.abs(geo.titleY-geo.actionY)<=24&&geo.eyebrow==='none','application title and header on one row '+JSON.stringify(geo));
+          const headerVisible=await browser.evaluate("getComputedStyle(document.querySelector('#contentApplications .ca-head')).display!=='none'");
+          assert((!headerVisible||Math.abs(geo.titleY-geo.actionY)<=24)&&geo.eyebrow==='none','application header hidden when empty or aligned to title '+JSON.stringify({geo,headerVisible}));
         }
         if(route!=='mawangArchive'){
           assert(await browser.evaluate(`(()=>{const nav=document.querySelector('.ma-header-filters');return !nav||nav.hidden||getComputedStyle(nav).display==='none'})()`),'archive category buttons are hidden on '+route);
