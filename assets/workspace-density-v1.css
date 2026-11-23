@@ -1,6 +1,15 @@
 /* One-row workspace headers without removing or duplicating underlying actions.
    Desktop gets compact inline controls; narrow/mobile screens wrap below the title. */
 
+/* The shared .main normally creates a horizontal scroll container with a
+   hidden vertical axis. CSS sticky would then attach to that non-scrolling
+   ancestor instead of the actual document scroller and disappear on long
+   timelines. Scope this exception to the timeline only. */
+body.mws-premium .main:has(#careerTimeline.section.active){
+  overflow-x:clip!important;
+  overflow-y:visible!important;
+}
+
 /* Timeline: keep the year toolbar in its own stable sticky row.
    Never absolutely position it over the title or switch its appearance on scroll. */
 @media(min-width:1101px){
