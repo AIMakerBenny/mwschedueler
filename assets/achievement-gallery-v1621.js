@@ -72,41 +72,59 @@ function makeTile(card){
   content.textContent=text(card?.contentName,'컨텐츠 이름 없음');
   caption.append(game,content);
 
+  // A card is a small exhibition piece. Reveal unique record notes only when
+  // present; the existing title and content remain visible without hovering.
+  const description=String(card?.description??'').trim();
+  if(description){
+    const peek=document.createElement('div');
+    peek.className='achievement-card-peek';
+    const detail=document.createElement('span');
+    detail.textContent=description;
+    peek.append(detail);
+    thumb.appendChild(peek);
+  }
+
   button.append(thumb,caption);
-  // Lightweight pointer-driven depth on the gallery tile, separate from
-  // the existing drag-to-rotate 3D detail viewer.
+  // Pointer tracking is frame-batched and only affects the card under the
+  // mouse. Use the untransformed tile bounds to prevent 3D hover jitter.
   let tiltFrame=0,tiltCoords=null;
+  const motionAllowed=event=>event.pointerType==='mouse'
+    &&(window.matchMedia?.('(hover: hover) and (pointer: fine)')?.matches??true)
+    &&document.documentElement.dataset.mwsMotion!=='reduced'
+    &&(document.documentElement.dataset.mwsMotion==='full'
+      ||!(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches??false));
   const clearTilt=()=>{
     if(tiltFrame)cancelAnimationFrame(tiltFrame);
     tiltFrame=0;tiltCoords=null;
-    button.style.removeProperty('--ach-tilt-x');
-    button.style.removeProperty('--ach-tilt-y');
-    button.style.removeProperty('--ach-light-x');
-    button.style.removeProperty('--ach-light-y');
+    for(const key of ['--ach-tilt-x','--ach-tilt-y','--ach-light-x','--ach-light-y','--ach-parallax-x','--ach-parallax-y']){
+      button.style.removeProperty(key);
+    }
   };
   button.addEventListener('pointermove',event=>{
-    if(event.pointerType!=='mouse'||document.documentElement.dataset.mwsMotion==='reduced')return;
-    const rect=button.getBoundingClientRect();
+    if(!motionAllowed(event))return;
+    const rect=tile.getBoundingClientRect();
     if(!rect.width||!rect.height)return;
     tiltCoords={
-      x:Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width)),
-      y:Math.max(0,Math.min(1,(event.clientY-rect.top)/rect.height))
+      x:clamp((event.clientX-rect.left)/rect.width,0,1),
+      y:clamp((event.clientY-rect.top)/rect.height,0,1)
     };
     if(tiltFrame)return;
     tiltFrame=requestAnimationFrame(()=>{
       tiltFrame=0;
-      if(!tiltCoords)return;
+      if(!tiltCoords||!button.isConnected)return;
       const {x,y}=tiltCoords;
-      button.style.setProperty('--ach-tilt-x',((.5-y)*7).toFixed(2)+'deg');
-      button.style.setProperty('--ach-tilt-y',((x-.5)*7).toFixed(2)+'deg');
+      button.style.setProperty('--ach-tilt-x',((.5-y)*5.6).toFixed(2)+'deg');
+      button.style.setProperty('--ach-tilt-y',((x-.5)*5.6).toFixed(2)+'deg');
       button.style.setProperty('--ach-light-x',(x*100).toFixed(1)+'%');
       button.style.setProperty('--ach-light-y',(y*100).toFixed(1)+'%');
+      button.style.setProperty('--ach-parallax-x',((.5-x)*6).toFixed(2)+'px');
+      button.style.setProperty('--ach-parallax-y',((.5-y)*5).toFixed(2)+'px');
     });
   });
   button.addEventListener('pointerleave',clearTilt);
   button.addEventListener('pointercancel',clearTilt);
   button.addEventListener('blur',clearTilt);
-  button.addEventListener('click',()=>openDetail(card?.id));
+  button.addEventListener('click',()=>{clearTilt();openDetail(card?.id)});
   tile.appendChild(button);
   return {tile,thumb,placeholder};
 }
