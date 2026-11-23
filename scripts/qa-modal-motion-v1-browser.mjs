@@ -7,7 +7,7 @@ import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const index=read('index.html');
-assert(index.includes('assets/modal-motion-v1.css?v=3'));
+assert(index.includes('assets/modal-motion-v1.css?v=4'));
 const runtime=read('assets/contact-runtime-v130.js'),app=read('assets/app-core.js');
 assert(runtime.includes('loading="lazy" decoding="async" width="42" height="42"'));
 assert(app.includes('renderContactHistory(id);\n  renderContactApplicationHistory(id);'));
