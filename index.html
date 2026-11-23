@@ -4360,7 +4360,7 @@ body[data-resolution="mobile"] .main{grid-column:auto!important}
   function applyPageTextScalesV54(){
     const global=globalTextScaleV54();
     document.querySelectorAll('.section').forEach(sec=>{const local=pageScaleV54(sec.id),combined=(global*local)/100;sec.style.setProperty('--ui-text-scale',String(combined/100));sec.style.fontSize=`calc(14px * ${combined/100})`});
-    const label=document.getElementById('pageTextScaleValueV54');if(label)label.textContent=`${pageScaleV54()}%`;
+    const label=document.getElementById('pageTextScaleValueV54'),nextLabel=`${pageScaleV54()}%`;if(label&&label.textContent!==nextLabel)label.textContent=nextLabel;
   }
   window.setPageTextScaleV54=value=>{const id=activePageIdV54();pageScales[id]=clampScale(value);persistPageScalesV54();applyPageTextScalesV54()};
   window.adjustPageTextScaleV54=delta=>window.setPageTextScaleV54(pageScaleV54()+delta);
@@ -4390,7 +4390,7 @@ body[data-resolution="mobile"] .main{grid-column:auto!important}
   const baseRenderMultiV54=window.renderMultiDraw;
   if(typeof baseRenderMultiV54==='function'){window.renderMultiDraw=function(){const out=baseRenderMultiV54.apply(this,arguments);ensureGachaTargetControlV54();renderSelectedDockV54();syncGachaQuickControlsV54();applyPageTextScalesV54();return out};try{renderMultiDraw=window.renderMultiDraw}catch(_){}}
   const baseSetTabV54=window.setTab||((typeof setTab==='function')?setTab:null);
-  if(typeof baseSetTabV54==='function'){window.setTab=function(tab){const out=baseSetTabV54.apply(this,arguments);setTimeout(()=>{applyPageTextScalesV54();if(tab==='contacts')reinforceContactTagStickyV54();if(tab==='gameMultiDraw'){ensureGachaTargetControlV54();renderSelectedDockV54()}},0);return out};try{setTab=window.setTab}catch(_){}}
+  if(typeof baseSetTabV54==='function'){window.setTab=function(tab){const out=baseSetTabV54.apply(this,arguments);applyPageTextScalesV54();if(tab==='contacts')reinforceContactTagStickyV54();if(tab==='gameMultiDraw'){ensureGachaTargetControlV54();renderSelectedDockV54()}return out};try{setTab=window.setTab}catch(_){}}
   const baseApplyTextV54=window.applyTextScale;
   if(typeof baseApplyTextV54==='function'){window.applyTextScale=function(){const out=baseApplyTextV54.apply(this,arguments);applyPageTextScalesV54();return out};try{applyTextScale=window.applyTextScale}catch(_){}}
 
