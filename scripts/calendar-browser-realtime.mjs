@@ -49,6 +49,10 @@ export async function launchCalendarBrowser(dir){
     const mouseDrag=(x,y)=>send('Input.dispatchMouseEvent',{type:'mouseMoved',x,y,button:'left',buttons:1},sessionId);
     const mouseUp=(x,y)=>send('Input.dispatchMouseEvent',{type:'mouseReleased',x,y,button:'left',buttons:0,clickCount:1},sessionId);
     const keyPress=async key=>{await send('Input.dispatchKeyEvent',{type:'keyDown',key,code:key},sessionId);await send('Input.dispatchKeyEvent',{type:'keyUp',key,code:key},sessionId)};
-    return {navigate,evaluate,clickPoint,movePoint,mouseDown,mouseDrag,mouseUp,keyPress,enablePerformance,performanceMetrics,setReducedMotion,close};
+    const captureScreenshot=async()=>{
+      const result=await send('Page.captureScreenshot',{format:'jpeg',quality:53,captureBeyondViewport:false},sessionId);
+      return result.data;
+    };
+    return {navigate,evaluate,clickPoint,movePoint,mouseDown,mouseDrag,mouseUp,keyPress,enablePerformance,performanceMetrics,setReducedMotion,captureScreenshot,close};
   }catch(error){await close();throw error}
 }

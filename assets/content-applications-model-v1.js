@@ -97,3 +97,25 @@ export function rankEntries(entries,unavailable=new Set()){
   const ahead=ownRank&&ownRank>1?ordered.filter(e=>e.likes>mawang.likes).at(-1):null;
   return {ordered,ranks,mawang,leader,ownRank,ahead,known:eligible.length,total:entries.length,allKnown:eligible.length===entries.length};
 }
+
+/**
+ * Compare two verified comment snapshots by account rather than comment ID.
+ * SOOP may select a different best-liked comment for the same account.
+ * Missing counts/ranks are unknown, never a numeric zero or a rank change.
+ */
+export function compareRankSnapshots(previous,next){
+  const before=rankEntries(Array.isArray(previous)?previous:[]);
+  const after=rankEntries(Array.isArray(next)?next:[]);
+  const oldUsers=new Map((Array.isArray(previous)?previous:[]).map(row=>[row.userId,row]));
+  const rows=new Map();let changed=false;
+  for(const person of Array.isArray(next)?next:[]){
+    const old=oldUsers.get(person.userId);
+    const oldRank=old?before.ranks.get(old.id)??null:null;
+    const newRank=after.ranks.get(person.id)??null;
+    const rankDelta=oldRank!=null&&newRank!=null?oldRank-newRank:null;
+    const likesDelta=old?.likes!=null&&person.likes!=null?person.likes-old.likes:null;
+    if(rankDelta!==null&&rankDelta!==0||likesDelta!==null&&likesDelta!==0)changed=true;
+    rows.set(person.userId,{oldRank,newRank,rankDelta,likesDelta});
+  }
+  return {rows,changed,own:rows.get(MAWANG_ID)||null};
+}

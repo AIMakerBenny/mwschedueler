@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {parsePostUrl,commentPermalink,parsePostMetadata,normalizeCampaigns,parseCommentPage,uniqueApplicants,rankEntries,countdown,campaignStatus,MAX_AUTHORS,fromKstInput,toKstInput} from '../assets/content-applications-model-v1.js';
+import {parsePostUrl,commentPermalink,parsePostMetadata,normalizeCampaigns,parseCommentPage,uniqueApplicants,rankEntries,compareRankSnapshots,countdown,campaignStatus,MAX_AUTHORS,fromKstInput,toKstInput} from '../assets/content-applications-model-v1.js';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const url=(id,no)=>`https://www.sooplive.com/station/${id}/post/${no}`;
 const e=(id,no,likes)=>({...parsePostUrl(url(id,no)),userId:id,nickname:id,likes,checkedAt:'2026-11-22T00:00:00.000Z'});
@@ -43,7 +43,7 @@ test('comment links target the verified SOOP comment ID, with a safe source fall
  assert.equal(commentPermalink({url:'https://example.com',commentNo:'123'}),'');
 });
 test('production entry and cloud contract share the campaign core key without changing other fields',()=>{
- const html=read('index.html');assert(html.indexOf('data-tab="contentApplications"')<html.indexOf('data-tab="posts"'));assert(html.includes('id="contentApplications"'));assert(html.includes('content-applications-v2.js?v=6'));
+ const html=read('index.html');assert(html.indexOf('data-tab="contentApplications"')<html.indexOf('data-tab="posts"'));assert(html.includes('id="contentApplications"'));assert(html.includes('content-applications-v2.js?v=7'));
  assert(html.indexOf('id="dashboardApplicationSupport"')>html.indexOf('class="dashboard-kpi-grid-local"'));assert(html.indexOf('id="dashboardApplicationSupport"')<html.indexOf('class="dashboard-view-controls"'));
  for(const p of ['assets/cloud-v1.1.js','assets/cloud-runtime-v130.js','src/cf-v111-auth.js']){const keys=read(p).match(/const CORE_KEYS\s*=\s*(\[[^\]\n]+\])/)[1];assert(keys.includes("'contentApplications'"));assert(keys.includes("'achievementCards'"));assert(keys.includes("'contentGroups'"))}
  const server=read('src/cf-v111-auth.js');assert(server.includes('source.contentApplications=previousCore.contentApplications'));assert(server.includes("key==='contentApplications'?normalizeCampaigns(src[key]):src[key]"));
@@ -77,4 +77,34 @@ test('application UI keeps normal typing caret but hides static-text caret',()=>
  assert.match(ui,/data-ca-phase/);
  assert.match(ui,/data-ca-author-remove/);
  assert.match(ui,/data-ca-back/);
+});
+
+test('full leaderboard keeps MaWang at its actual rank and compares account-based changes',()=>{
+ const before=[e('other','101',70),e('mawang0216','202',40),e('third','303',30),e('unknown','404',null)];
+ const after=[e('mawang0216','999',85),e('other','101',70),e('third','303',34),e('unknown','404',null)];
+ const r=rankEntries(after);
+ assert.equal(r.ordered.length,3);
+ assert.equal(r.ordered[0].userId,'mawang0216');
+ assert.equal(r.ownRank,1);
+ const diff=compareRankSnapshots(before,after);
+ assert.equal(diff.changed,true);
+ assert.deepEqual(diff.own,{oldRank:2,newRank:1,rankDelta:1,likesDelta:45});
+ assert.deepEqual(diff.rows.get('other'),{oldRank:1,newRank:2,rankDelta:-1,likesDelta:0});
+ assert.deepEqual(diff.rows.get('unknown'),{oldRank:null,newRank:null,rankDelta:null,likesDelta:null});
+ const steady=compareRankSnapshots(after,[...after]);
+ assert.equal(steady.changed,false);
+ assert.equal(steady.own.rankDelta,0);
+ assert.equal(steady.own.likesDelta,0);
+ assert.equal(compareRankSnapshots([],after).changed,false,'Initial fetch must not imply an invented change');
+});
+test('rank movement supports ties, lost counts, decreases and unavailable users',()=>{
+ const before=[e('mawang0216','1',60),e('other','2',60),e('third','3',25)];
+ const after=[e('mawang0216','1',49),e('other','2',65),e('third','3',25)];
+ const changed=compareRankSnapshots(before,after);
+ assert.equal(changed.own.rankDelta,-1);
+ assert.equal(changed.own.likesDelta,-11);
+ assert.equal(changed.rows.get('third').rankDelta,0);
+ const lost=compareRankSnapshots(before,[e('mawang0216','1',null),e('other','2',65)]);
+ assert.equal(lost.own.rankDelta,null);
+ assert.equal(lost.own.likesDelta,null);
 });
