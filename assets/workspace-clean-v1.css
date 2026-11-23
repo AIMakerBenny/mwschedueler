@@ -51,6 +51,16 @@ body.mws-premium:not(:has(#gameF1Racing.active)) .topbar .sync-status{background
 body.mws-premium:not(:has(#gameF1Racing.active)) .topbar :is(.primary,.secondary):not(#newEventBtn){
   min-height:32px!important;padding:6px 11px!important;font-size:13px!important;line-height:1.4!important;
 }
+/* Contacts already has a functional primary tab row. Do not spend
+   a second header line repeating the selected category name. Preserve
+   global sync status and the calendar shortcut on the right. */
+body.mws-premium:not(:has(#gameF1Racing.active)) .main:has(#contacts.active)>.topbar{
+  min-height:0!important;margin-bottom:8px!important;padding:0 0 5px!important;
+  justify-content:flex-end!important;
+}
+body.mws-premium:not(:has(#gameF1Racing.active)) .main:has(#contacts.active)>.topbar .top-left{
+  display:none!important;
+}
 /* Subheadings are subordinate to the page title, including legacy inline sizes. */
 body.mws-premium :is(#dashboard,#calendar,#contacts,#posts,#sniper,#targets,#memos,#worldtime,#export,#settings)>h2{
   font-size:17px!important;line-height:1.4;font-weight:650;letter-spacing:-.02em;margin:0 0 12px;
@@ -136,12 +146,13 @@ body.mws-premium[data-theme=neon]:not(:has(#gameF1Racing.active)) .sidebar .nav 
    width rather than viewport width so pinning the sidebar cannot orphan a KPI. */
 #dashboardOverviewMode{container:dashboard-overview / inline-size}
 #dashboard #dashboardOverviewMode .dashboard-overview-heading{
-  display:flex;align-items:center;justify-content:space-between;gap:16px;margin:8px 0 14px;
+  display:flex;align-items:center;justify-content:flex-end;gap:10px;margin:0 0 9px;
 }
 #dashboard #dashboardOverviewMode :is(.dashboard-overview-heading,.dashboard-view-controls) h2{
   margin:0;font-size:clamp(16px,1.5vw,20px);font-weight:750;letter-spacing:-.025em;color:var(--text);
 }
 #dashboard #dashboardOverviewMode .dashboard-overview-heading p{margin:4px 0 0;font-size:12px}
+#dashboard #dashboardOverviewMode .dashboard-overview-heading>div:first-child{display:none!important}
 #dashboardProfileSlot:empty{display:none}
 #dashboard #dashboardProfileSlot .dashboard-my-profile-v3{
   display:flex!important;align-items:center;gap:10px;min-height:0!important;width:auto;max-width:100%;
@@ -149,7 +160,7 @@ body.mws-premium[data-theme=neon]:not(:has(#gameF1Racing.active)) .sidebar .nav 
 }
 #dashboard #dashboardProfileSlot .dashboard-my-profile-kicker-v3{margin:0;white-space:nowrap}
 #dashboard #dashboardOverviewMode .dashboard-kpi-grid-local{
-  display:grid;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:10px!important;margin:0 0 22px;align-items:stretch;
+  display:grid;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:10px!important;margin:0 0 12px;align-items:stretch;
 }
 #dashboard #dashboardOverviewMode .dashboard-kpi-grid-local>.card{
   position:relative;min-width:0;height:auto!important;min-height:84px!important;display:flex;align-items:center;
@@ -182,7 +193,8 @@ body.mws-premium[data-theme=neon]:not(:has(#gameF1Racing.active)) .sidebar .nav 
 #dashboard #dashboardOverviewMode :is(#nextStreamCard,#upcomingDashboard)>.empty{
   display:grid;place-items:center;border:1px dashed var(--border);min-height:88px;padding:14px;border-radius:9px;background:var(--input);font-size:12px;
 }
-#dashboard[data-upcoming-count="0"] #dashboardOverviewMode #dashboardMainGrid{align-items:stretch}
+#dashboard[data-upcoming-count="0"] #dashboardOverviewMode #dashboardMainGrid{grid-template-columns:minmax(0,1fr)!important;align-items:stretch}
+#dashboard[data-upcoming-count="0"] #dashboardOverviewMode #upcomingDashboardPanel{display:none!important}
 #dashboard[data-upcoming-count="0"] #dashboardOverviewMode .dashboard-preview-hint{display:none}
 #dashboard #dashboardOverviewMode .dashboard-upcoming-list{max-height:440px;scrollbar-gutter:stable}
 #dashboard #dashboardOverviewMode .dashboard-insights-v55{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px;align-items:start}
