@@ -60,6 +60,8 @@ try{
       "emptyShown,populated,inViewport,overflows:document.documentElement.scrollWidth>innerWidth+3,"+
       "sameRow:Math.abs((r(tabs).top+r(tabs).bottom)/2-(r(profile).top+r(profile).bottom)/2)<20,positions:{tabs:{top:r(tabs).top,height:r(tabs).height},profile:{top:r(profile).top,height:r(profile).height},toolbar:{top:r(toolbar).top,height:r(toolbar).height}},metricCount:metrics.querySelectorAll(':scope > .card').length,"+
       "oldHeading:!!$('.dashboard-overview-heading')};})()");
+    const caretResult=await browser.evaluate("(()=>{const title=document.querySelector('#pageTitle');const input=document.createElement('input');input.setAttribute('aria-label','QA typing caret');document.body.append(input);const staticCaret=getComputedStyle(title).caretColor,editCaret=getComputedStyle(input).caretColor;const selection=window.getSelection(),range=document.createRange();range.selectNodeContents(title);selection.removeAllRanges();selection.addRange(range);const selectable=selection.toString().includes('캘린더');selection.removeAllRanges();input.remove();return {staticCaret,editCaret,selectable}})()");
+    assert(/transparent|rgba\\(0,\\s*0,\\s*0,\\s*0\\)/.test(caretResult.staticCaret)&&caretResult.editCaret!==caretResult.staticCaret&&caretResult.selectable,JSON.stringify({width,caretResult}));
     assert.equal(dashboardResult.metricCount,6,JSON.stringify({width,dashboardResult}));
     assert.equal(dashboardResult.tabs,3,JSON.stringify({width,dashboardResult}));
     assert.equal(dashboardResult.profiles,1);
