@@ -2,6 +2,7 @@
 export const MAWANG_ID='mawang0216';
 export const MAX_CAMPAIGNS=100;
 export const MAX_ENTRIES=50;
+export const MAX_AUTHORS=12;
 const text=(v,max=200)=>String(v??'').trim().slice(0,max);
 const iso=v=>{const n=Date.parse(v);return Number.isFinite(n)?new Date(n).toISOString():''};
 const count=v=>{if(v===null||v===undefined||v===''||typeof v==='boolean')return null;const n=Number(v);return Number.isSafeInteger(n)&&n>=0?n:null};
@@ -34,7 +35,8 @@ export function normalizeCampaigns(raw){
     const id=text(c?.id,80),title=text(c?.title,100),deadline=iso(c?.deadline);
     if(!id||!title||!deadline||ids.has(id))return [];
     ids.add(id);const seen=new Set(),entries=(Array.isArray(c.entries)?c.entries:[]).slice(0,MAX_ENTRIES).flatMap(e=>{const n=normalizeEntry(e);if(!n||seen.has(n.id))return [];seen.add(n.id);return [n]});
-    return [{id,title,deadline,entries}];
+    const authors=[...new Set((Array.isArray(c.authors)?c.authors:[]).map(a=>text(a,80)).filter(Boolean))].slice(0,MAX_AUTHORS);
+    return [{id,title,deadline,entries,authors}];
   });
 }
 export function parsePostMetadata(payload,entry,checkedAt=new Date().toISOString()){
@@ -66,6 +68,12 @@ export function uniqueApplicants(rows){
     if(!prev||(row.likes??-1)>(prev.likes??-1)||((row.likes??-1)===(prev.likes??-1)&&row.id.localeCompare(prev.id)<0))people.set(row.userId,row);
   }
   return [...people.values()];
+}
+// A campaign is urgent only during its final six hours, never at expiry.
+export function campaignStatus(deadline,now=Date.now()){
+  const remaining=Date.parse(deadline)-now;
+  if(!Number.isFinite(remaining)||remaining<=0)return 'expired';
+  return remaining<=6*60*60*1000?'urgent':'open';
 }
 export function countdown(deadline,now=Date.now()){
   const remaining=Math.max(0,Math.ceil((Date.parse(deadline)-now)/1000)||0);
