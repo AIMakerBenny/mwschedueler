@@ -145,14 +145,26 @@ body.mws-premium[data-theme=neon]:not(:has(#gameF1Racing.active)) .sidebar .nav 
    schedule panels, and an independent profile card. Use available content
    width rather than viewport width so pinning the sidebar cannot orphan a KPI. */
 #dashboardOverviewMode{container:dashboard-overview / inline-size}
-#dashboard #dashboardOverviewMode .dashboard-overview-heading{
-  display:flex;align-items:center;justify-content:flex-end;gap:10px;margin:0 0 9px;
+/* Dashboard navigation and profile share one functional row. */
+#dashboard .dashboard-toolbar-v2{
+  display:flex;align-items:center;justify-content:space-between;gap:8px 14px;
+  flex-wrap:wrap;margin:0 0 12px;min-width:0;
 }
-#dashboard #dashboardOverviewMode :is(.dashboard-overview-heading,.dashboard-view-controls) h2{
+#dashboard .dashboard-toolbar-v2 .dashboard-mode-tabs{
+  display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+  margin:0!important;min-width:0;
+}
+#dashboard .dashboard-toolbar-v2 .dashboard-mode-tab{
+  padding:7px 13px!important;min-height:33px!important;
+  font-size:12px!important;font-weight:700!important;
+}
+#dashboard .dashboard-toolbar-v2 #dashboardProfileSlot{
+  display:flex;align-items:center;min-width:0;max-width:100%;
+  margin-left:auto;
+}
+#dashboard #dashboardOverviewMode .dashboard-view-controls h2{
   margin:0;font-size:clamp(16px,1.5vw,20px);font-weight:750;letter-spacing:-.025em;color:var(--text);
 }
-#dashboard #dashboardOverviewMode .dashboard-overview-heading p{margin:4px 0 0;font-size:12px}
-#dashboard #dashboardOverviewMode .dashboard-overview-heading>div:first-child{display:none!important}
 #dashboardProfileSlot:empty{display:none}
 #dashboard #dashboardProfileSlot .dashboard-my-profile-v3{
   display:flex!important;align-items:center;gap:10px;min-height:0!important;width:auto;max-width:100%;
@@ -223,14 +235,61 @@ body.mws-premium[data-theme=neon]:not(:has(#gameF1Racing.active)) .sidebar .nav 
 }
 @container dashboard-overview (max-width:540px){
   #dashboard #dashboardOverviewMode .dashboard-kpi-grid-local{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-  #dashboard #dashboardOverviewMode .dashboard-overview-heading{align-items:flex-start;flex-direction:column;gap:8px}
-  #dashboard #dashboardProfileSlot .dashboard-my-profile-v3{width:100%}
   #dashboard #dashboardOverviewMode .dashboard-kpi-grid-local>.card{min-height:80px!important;padding:12px!important}
   #dashboard #dashboardOverviewMode .dashboard-notice-url-row-local{grid-template-columns:minmax(0,1fr) auto}
 }
 body[data-device-mode="mobile"] #dashboard #dashboardOverviewMode #dashboardMainGrid,
 body[data-device-mode="mobile"] #dashboard #dashboardOverviewMode .dashboard-insights-v55{grid-template-columns:minmax(0,1fr)!important}
 body[data-device-mode="mobile"] #dashboard #dashboardOverviewMode .dashboard-kpi-grid-local{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+
+
+/* Compact empty state: don't reserve two empty schedule cards. */
+#dashboard #dashboardOverviewMode .dashboard-no-events-v2{display:none}
+#dashboard[data-upcoming-count="0"] #dashboardOverviewMode #dashboardMainGrid{display:none!important}
+#dashboard[data-upcoming-count="0"] #dashboardOverviewMode .dashboard-no-events-v2{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;min-height:53px;padding:9px 12px;margin:0 0 10px;
+  border:1px solid var(--border);border-radius:11px;
+  background:var(--panel);color:var(--muted);font-size:13px;
+}
+#dashboard #dashboardOverviewMode .dashboard-view-controls{min-height:30px}
+#dashboard #dashboardOverviewMode .dashboard-view-controls h2{font-size:16px!important}
+#dashboard #dashboardOverviewMode .dashboard-insights-v55{align-items:start}
+#dashboard #dashboardOverviewMode .dashboard-insight-card-v55{height:auto!important;min-height:0!important}
+#dashboard #dashboardOverviewMode .dashboard-insight-head-v55{margin-bottom:8px}
+#dashboard #dashboardOverviewMode .dashboard-insight-head-v55 h3{font-size:15px!important}
+#dashboard #dashboardOverviewMode .dashboard-notice-card-local .dashboard-notice-list-local:empty{display:none}
+#dashboard #dashboardOverviewMode .today-people-cards-local{gap:9px}
+#dashboard #dashboardOverviewMode .today-person-card-local{
+  min-width:0;min-height:70px;display:flex;align-items:center;gap:10px;
+  padding:9px!important;border-radius:10px;
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease!important;
+}
+#dashboard #dashboardOverviewMode .today-person-card-local :is(img,.today-person-avatar-local){
+  width:52px!important;height:52px!important;flex:0 0 52px;
+  border-radius:12px;object-fit:cover;
+}
+#dashboard #dashboardOverviewMode .dashboard-kpi-grid-local>.card{
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease!important;
+}
+@media(hover:hover) and (pointer:fine){
+  #dashboard #dashboardOverviewMode .dashboard-kpi-grid-local>.card:hover,
+  #dashboard #dashboardOverviewMode .today-person-card-local:hover{
+    transform:translateY(-2px)!important;
+    box-shadow:0 9px 22px #0003!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #dashboard #dashboardOverviewMode :is(.dashboard-kpi-grid-local>.card,.today-person-card-local){
+    transition:none!important;
+  }
+}
+@media(max-width:760px){
+  #dashboard .dashboard-toolbar-v2{align-items:flex-start;gap:8px;margin-bottom:10px}
+  #dashboard .dashboard-toolbar-v2 #dashboardProfileSlot{width:100%;margin-left:0}
+  #dashboard .dashboard-toolbar-v2 .dashboard-mode-tab{padding:7px 10px!important}
+  #dashboard[data-upcoming-count="0"] #dashboardOverviewMode .dashboard-no-events-v2{flex-wrap:wrap}
+}
 
 /* Immediate hover-in feedback. Keep the existing exit fade, label/rail
    motion and theme palette; do not interpolate paint-heavy hover colors
