@@ -2898,6 +2898,21 @@ jobs:
           echo 'Mawang Scheduler v1.6.21 display/auth UI isolation verification passed.'
 
 
+      - name: Verify deployed Hall of Fame in real Chromium
+        env:
+          MWS_HALL_PRODUCTION: '1'
+          MWS_HALL_CAPTURE: '1'
+        run: |
+          node scripts/qa-achievement-live-browser.mjs
+
+      - name: Archive actual production Hall screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hall-of-fame-production-chromium
+          path: visual-achievement-live/*.jpg
+          if-no-files-found: ignore
+
       - name: Report Cloudflare production status
         if: always()
         env:

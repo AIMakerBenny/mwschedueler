@@ -251,10 +251,12 @@ body.mws-premium .main:not(:has(#mawangArchive.active)) > .topbar .ma-header-fil
   body.mws-premium #contentApplications.section.active{
     position:static!important;
   }
+  /* Rightmost header space is reserved for the always-available add button
+     and sync controls. The posts menus remain usable to their left. */
   body.mws-premium #posts.section.active>.posts-head{
     position:absolute!important;
     top:18px!important;
-    right:22px!important;
+    right:228px!important;
     bottom:auto!important;left:auto!important;
     width:auto!important;
     min-height:36px!important;height:36px!important;
