@@ -18,6 +18,7 @@ on:
       - 'assets/sidebar-rail-scrollbar-v1.css'
       - 'assets/achievement-exhibition-v1.css'
       - 'scripts/qa-ui-audit-v2-browser.mjs'
+      - 'scripts/qa-real-app-visual-browser.mjs'
       - 'scripts/qa-dashboard-upcoming-v1.test.mjs'
       - 'scripts/qa-career-activities-v1-browser.mjs'
       - 'scripts/qa-mawang-archive-v1.test.mjs'
@@ -44,8 +45,18 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: mws-visual-foundation-candidate
-          path: visual-qa/*.jpg
+          name: mws-component-fixture-only
+          path: visual-fixture/*.jpg
+          if-no-files-found: ignore
+      - name: Real public Cloudflare app with PR candidate styles
+        env:
+          MWS_REAL_VISUAL_CAPTURE: '1'
+        run: node scripts/qa-real-app-visual-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mws-real-app-candidate-browser
+          path: visual-real-app/*
           if-no-files-found: ignore
       - name: Application deadlines, authors and public/read-only Chromium QA
         run: |
