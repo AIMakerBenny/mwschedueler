@@ -15,13 +15,14 @@
 .cv-panel button,.cv-panel input{font:inherit;color:inherit;box-sizing:border-box}
 .cv-panel button{cursor:var(--mws-cursor-pointer,pointer)}
 .cv-panel button:focus-visible,.cv-panel input:focus-visible,.cv-panel summary:focus-visible{outline:2px solid var(--cv-accent);outline-offset:3px}
-.cv-bar-host{position:relative;z-index:8;overflow-anchor:none}
+/* Keep the year rail in document flow while it sticks. Switching the child
+   from relative to fixed previously detached it and caused scroll-time jolts. */
+.cv-bar-host{position:sticky;top:0;z-index:8;overflow-anchor:none}
 .cv-bar{
-  position:relative;z-index:8;background:color-mix(in srgb,var(--bg) 88%,var(--panel));
+  position:relative;z-index:8;width:100%;box-sizing:border-box;background:color-mix(in srgb,var(--bg) 88%,var(--panel));
   border:1px solid color-mix(in srgb,var(--cv-accent) 15%,var(--border));border-radius:12px;padding:5px 9px;
   box-shadow:0 7px 22px #0002;
 }
-.cv-bar.cv-pinned{position:fixed;top:var(--cv-top,0px);left:var(--cv-left);width:var(--cv-width);margin:0}
 .cv-toolbar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px}
 .cv-summary{display:flex;align-items:baseline;gap:9px;white-space:nowrap}
 .cv-summary strong{font-size:12px;font-weight:620;color:var(--cv-muted);letter-spacing:-.03em}
