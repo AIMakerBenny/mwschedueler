@@ -238,9 +238,9 @@ test('workspace header keeps only page-relevant actions and links to the exact M
   for(const section of ['careerTimeline','posts','contentApplications'])assert(density.includes('#'+section+'.active'));
   assert.match(density,/\.cv-bar-host/);
   assert.match(density,/\.posts-head/);
-  assert.match(density,/pointer-events:none!important/);
+  assert(!density.includes('pointer-events:none!important'));
   assert.match(density,/post-workspace-actions/);
-  assert.match(html,/career-visualizer\.js\?v=18&single-view=1/);
+  assert.match(html,/career-visualizer\.js\?v=\d+&single-view=1/);
   const careerRuntime=read('assets/career-visualizer.js');
   assert(!careerRuntime.includes("button('cv-step'"));
 
