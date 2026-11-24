@@ -170,7 +170,8 @@ window.mwsFriendFinderFastRefresh=async()=>{if(!friendReadActive())return;liveCa
 function stopActiveRefresh(){if(activeRefreshTimer)clearTimeout(activeRefreshTimer);activeRefreshTimer=0}
 async function refreshActiveFriendLive(force=true){
   if(document.hidden||!activeFriendRoot())return;
-  const first=allContactTargets()[0];
+  const targets=allContactTargets(),now=Date.now();
+  const first=force?targets[0]:targets.find(url=>!(liveAttempts.has(url)&&now-liveAttempts.get(url)<LIVE_CACHE_MS)&&!(liveCache.has(url)&&now-liveCache.get(url).at<LIVE_CACHE_MS));
   if(!first){scheduleUi();return}
   try{await ensureBatch(new URL(first),{force})}catch(error){console.warn('Friend Finder active refresh failed',error)}
   scheduleUi();

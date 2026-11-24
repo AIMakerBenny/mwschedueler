@@ -1,0 +1,27 @@
+name: Request V3 isolated 60-minute idle
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-idle:
+    if: github.ref == 'refs/heads/request-v3-isolated-candidate-nov24'
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [public, admin]
+        visibility: [visible, hidden]
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      MWS_QA_OFFLINE: '1'
+      MWS_QA_LONG_IDLE: '1'
+      MWS_QA_IDLE_MODE: ${{ matrix.mode }}
+      MWS_QA_IDLE_VISIBILITY: ${{ matrix.visibility }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Actual elapsed time at 1, 5, 10, 30, 60 minutes
+        run: bash scripts/mws-v3-network-only.sh node scripts/qa-request-budget-full-app-v2-browser.mjs

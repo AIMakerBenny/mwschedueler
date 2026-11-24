@@ -332,7 +332,9 @@ async function refresh(c,manual=false){
   if(pending.get(c.id)===token){
    const interrupted=!canContinue();
    pending.delete(c.id);
-   if(interrupted&&!snapshot(c))attempts.delete(c.id);
+   // Keep a short cooldown for interrupted or failed reads. Never start an
+   // automatic retry storm if a slow request completes after navigating away.
+   if(generation===epoch&&attempts.has(c.id))attempts.set(c.id,Date.now());
    if(generation===epoch){
     if(unchanged){
      if(sectionActive()&&selected===c.id){

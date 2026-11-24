@@ -32,11 +32,12 @@ const cdnServer=createServer((req,res)=>{
  res.writeHead(200,{'content-type':'image/png','access-control-allow-origin':'*','cache-control':'public,max-age=3600'});
  res.end(req.method==='HEAD'?undefined:png);
 });
+const featureOnly=process.env.MWS_QA_FEATURES_ONLY==='1';
 const upstream=[];
 const originalFetch=globalThis.fetch;
 globalThis.fetch=async input=>{
  const u=new URL(typeof input==='string'?input:input.url||input.href);upstream.push(u.hostname+u.pathname);
- if(u.hostname==='api-channel.sooplive.co.kr')return Response.json({data:{}});
+ if(u.hostname==='api-channel.sooplive.co.kr'){if(featureOnly)await new Promise(resolve=>setTimeout(resolve,250));return Response.json({data:{}})}
  if(u.hostname==='chapi.sooplive.co.kr'){const page=Number(u.searchParams.get('page')||1),post=Number(u.pathname.split('/').at(-2));return Response.json({data:[{title_no:post,user_id:page===1&&post===1?'mawang0216':'user'+post+'_'+page,p_comment_no:page,user_nick:'Fixture',like_cnt:post*10+page,comment:'fixture'}],meta:{last_page:post===1?3:4,total:post===1?3:4,current_page:page}})}
  if(u.hostname.startsWith('liveimg.'))return new Response(png,{headers:{'content-type':'image/png'}});
  if(u.hostname==='live.sooplive.com')return new Response('[]',{headers:{'content-type':'application/json'}});
@@ -45,20 +46,21 @@ globalThis.fetch=async input=>{
 const ctx={waitUntil:p=>void Promise.resolve(p).catch(()=>{}),passThroughOnException(){}};
 const base='http://127.0.0.1';
 const health=await worker.fetch(new Request(base+'/api/health'),env,ctx);assert.equal(health.status,200,await health.text());
-const contacts=Array.from({length:200},(_,i)=>{const id='qa'+i,token=String(i+1).padStart(32,'0');objects.set('contacts/'+id+'/v1-'+token,true);db.prepare('INSERT INTO image_sources(kind,item_key,source_url,version,content_type) VALUES(?,?,?,?,?)').run('contact',id,'mws-r2:'+token,1,'image/png');return{id,name:'Fixture '+i,stationUrl:'https://bj.sooplive.co.kr/'+id,favorite:i<13,image:'/media/contact/'+id+'?v=1&h='+token+'&r=2',labels:[],pendingSetup:false}});
+const contacts=Array.from({length:200},(_,i)=>{const id='qa'+i,token=String(i+1).padStart(32,'0');objects.set('contacts/'+id+'/v1-'+token,true);db.prepare('INSERT INTO image_sources(kind,item_key,source_url,version,content_type) VALUES(?,?,?,?,?)').run('contact',id,'mws-r2:'+token,1,'image/png');return{id,name:'Fixture '+i,stationUrl:'https://bj.sooplive.co.kr/'+id,favorite:i<(featureOnly?73:13),image:'/media/contact/'+id+'?v=1&h='+token+'&r=2',labels:[],pendingSetup:false}});
 const achievementCards=Array.from({length:26},(_,i)=>{const id='card'+i,frontImageId='image'+i;objects.set('achievements/'+frontImageId,true);return{id,frontImageId,order:i,gameName:'Fixture',contentName:'Card '+i,description:'Fixture only'}});
 const day=new Date(Date.now()+9*3600000).toISOString().slice(0,10);
 const parts={core:{version:52,categories:[],timezones:[],contentGroups:[],gameLibrary:[],achievementCards,contentApplications:[]},events:[{id:'fixture-event',title:'Fixture event',date:day,start:'12:00',end:'13:00',participants:['qa0'],checklist:[]}],contacts,contactMeta:{contactTags:[],contactTagBanners:{},emoticons:[]},activity:{collaborations:[],todayPeopleByDate:{},todayPeopleManualByDate:{},targetList:[]},clipboard:{scheduleClipboard:[]},notebook:{memos:[],favoriteFolders:[]},posts:[],miniGames:{},wardogs:{schemaVersion:1,cards:[]}};
 for(const [part,data] of Object.entries(parts))db.prepare("INSERT OR REPLACE INTO workspace_parts(scope,part,data,version) VALUES('public',?,?,1)").run(part,JSON.stringify(data));
 const workerFirst=p=>config.assets.run_worker_first.some(pattern=>pattern.endsWith('*')?p.startsWith(pattern.slice(0,-1)):p===pattern);
-let calls=[],errors=[];
+let calls=[],errors=[],arrivals=[];
 const csp="default-src 'self' data: blob: 'unsafe-inline' 'unsafe-eval'; connect-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; frame-src 'self' data: blob:; worker-src 'self' blob:; object-src 'none'";
 const server=createServer(async(req,res)=>{
  try{
   const u=new URL(req.url,base+':'+server.address().port),method=req.method||'GET',body=[];
   for await(const chunk of req)body.push(chunk);
   const request=new Request(u,{method,headers:req.headers,...(!['GET','HEAD'].includes(method)?{body:Buffer.concat(body)}:{})});
-  const counted=workerFirst(u.pathname),response=await (counted?worker.fetch(request,env,ctx):ASSETS.fetch(request));
+  const counted=workerFirst(u.pathname);if(counted)arrivals.push({path:u.pathname,method,at:Date.now()});
+  const response=await (counted?worker.fetch(request,env,ctx):ASSETS.fetch(request));
   if(counted)calls.push({path:u.pathname,method,status:response.status,...(u.pathname==='/api/save'&&method==='POST'?{parts:Object.keys(JSON.parse(Buffer.concat(body).toString()).parts||{})}:{})});
   res.statusCode=response.status;for(const [key,value] of response.headers)if(!['content-length','content-encoding','transfer-encoding'].includes(key))res.setHeader(key,value);
   if(u.pathname==='/'||u.pathname==='/index.html')res.setHeader('content-security-policy',useCdn?csp.replace("connect-src 'self'","connect-src 'self' "+cdnOrigin).replace("img-src 'self'","img-src 'self' "+cdnOrigin):csp);
@@ -91,7 +93,70 @@ try{
  const routes=['calendar','contacts','dashboard','memos','careerTimeline','achievements','mawangArchive','gameLadder','gameMultiDraw','contentPlanner','toolTier','toolMatrix','toolRelations','settings','calendar'];
  const nav=async list=>browser.evaluate('(async()=>{for(const id of '+JSON.stringify(list)+'){window.setTab(id);await new Promise(r=>setTimeout(r,450));if(!document.getElementById(id)?.classList.contains("active"))throw Error("route "+id)}return true})()');
  let before=calls.length;
- if(process.env.MWS_QA_LONG_IDLE==='1'||process.env.MWS_QA_SESSION==='1'){
+ if(featureOnly){
+  // Start 73 favorites (seven batches) and leave before the first wave ends.
+  // Count at HTTP arrival, not response completion.
+  const friendCount=()=>arrivals.filter(r=>r.path==='/api/soop/live-batch').length;
+  const baseFriend=friendCount();
+  await browser.evaluate("window.setTab('friendFinder');true");
+  await until(()=>Promise.resolve(friendCount()>baseFriend),'Friend request began');
+  await browser.evaluate("window.setTab('calendar');true");
+  await until(()=>browser.evaluate("document.querySelector('#calendar').classList.contains('active')"),'Calendar after friend exit');
+  const dispatched=friendCount();
+  await pause(2300);
+  assert.equal(friendCount(),dispatched,'New friend requests after leaving view');
+  assert(dispatched-baseFriend>=1&&dispatched-baseFriend<=3,'Unexpected initial friend batch wave: '+(dispatched-baseFriend));
+  console.log('V3_FRIEND_EXIT_OK '+JSON.stringify({favorites:73,possibleBatches:7,dispatched:dispatched-baseFriend,afterExit:0}));
+  // Test an actual hidden browser document, not a synthetic visibility flag.
+  await browser.openBackgroundTestTab();
+  await until(()=>browser.evaluate("document.visibilityState==='hidden'"),'Browser tab hidden');
+  const hiddenBefore=friendCount();
+  await browser.evaluate("window.setTab('friendFinder');true");
+  await pause(32000);
+  assert.equal(friendCount(),hiddenBefore,'Hidden friend page emitted live request');
+  console.log('V3_FRIEND_HIDDEN_OK '+JSON.stringify({seconds:32,requests:0}));
+  // Closing the browser avoids artificially changing document.visibilityState.
+  await browser.close();browser=await launchCalendarBrowser(dir);
+  await browser.navigate(base+':'+server.address().port+'/',1366,768);
+  await until(()=>browser.evaluate("!!window.__mwsAppReadyV130&&!document.body.classList.contains('mws-app-loading')"),'Public restart ready');
+  const campaign={id:'app-qa',title:'Application fixture',deadline:new Date(Date.now()+3600000).toISOString(),entries:[{url:'https://www.sooplive.com/station/host1/post/1'},{url:'https://www.sooplive.com/station/host2/post/2'}]};
+  parts.core.contentApplications=[campaign];
+  db.prepare("UPDATE workspace_parts SET data=?,version=version+1 WHERE scope='public' AND part='core'").run(JSON.stringify(parts.core));
+  await browser.evaluate('(()=>{data.contentApplications='+JSON.stringify([campaign])+';window.dispatchEvent(new CustomEvent("mawang:datachange"));return true})()');
+  const syncCount=()=>arrivals.filter(r=>r.path==='/api/soop/application-sync').length;
+  const startSync=syncCount(),startUpstream=upstream.length;
+  await nav(['contentApplications']);
+  await until(()=>browser.evaluate("!!document.querySelector('[data-ca-open=\"app-qa\"]')&&document.querySelector('[data-ca-open=\"app-qa\"]').innerText.includes('7명')"),'Server aggregated campaign list');
+  assert.equal(syncCount()-startSync,1,'Campaign initial request count');
+  const commentCount=upstream.slice(startUpstream).filter(x=>x.startsWith('chapi.sooplive.co.kr')).length;
+  assert.equal(commentCount,7,'Seven simulated comment pages');
+  await browser.evaluate("document.querySelector('[data-ca-open=\"app-qa\"]').click()");
+  await until(()=>browser.evaluate("document.querySelector('[data-ca-stat=likes]')?.textContent==='11'"),'Campaign likes');
+  const freshBefore=syncCount();
+  await browser.navigate(base+':'+server.address().port+'/',1366,768);
+  await until(()=>browser.evaluate("!!window.__mwsAppReadyV130&&!document.body.classList.contains('mws-app-loading')"),'Fresh snapshot reload ready');
+  await nav(['contentApplications']);
+  await until(()=>browser.evaluate("document.querySelector('[data-ca-open=\"app-qa\"]')?.innerText.includes('7명')"),'Fresh server snapshot rendered');
+  await pause(1500);
+  assert.equal(syncCount(),freshBefore,'Fresh server snapshot triggered another sync');
+  await browser.evaluate("document.querySelector('[data-ca-open=\"app-qa\"]').click()");
+  await until(()=>browser.evaluate("document.querySelector('[data-ca-stat=likes]')?.textContent==='11'"),'Fresh snapshot likes');
+  await browser.evaluate("document.querySelector('[data-ca-refresh]').click()");
+  await until(()=>Promise.resolve(syncCount()===freshBefore+1),'Manual sync still works');
+  await until(()=>browser.evaluate("!document.querySelector('[data-ca-refresh]')?.disabled"),'Manual refresh settled');
+  campaign.deadline=new Date(Date.now()-1000).toISOString();
+  db.prepare("UPDATE workspace_parts SET data=?,version=version+1 WHERE scope='public' AND part='core'").run(JSON.stringify(parts.core));
+  await browser.navigate(base+':'+server.address().port+'/',1366,768);
+  await until(()=>browser.evaluate("!!window.__mwsAppReadyV130&&!document.body.classList.contains('mws-app-loading')"),'Expired snapshot reload ready');
+  const expiredBefore=syncCount();
+  await nav(['contentApplications']);
+  await browser.evaluate("document.querySelector('[data-ca-open=\"app-qa\"]').click()");
+  await until(()=>browser.evaluate("document.querySelector('#caDetail').classList.contains('is-closed')&&document.querySelector('[data-ca-stat=likes]')?.textContent==='11'"),'Expired data and likes retained');
+  await pause(1200);
+  assert.equal(syncCount(),expiredBefore,'Expired campaign triggered sync');
+  console.log('V3_APPLICATION_SNAPSHOT_OK '+JSON.stringify({sources:2,applicants:7,initialWorker:1,simulatedUpstreamPages:commentCount,freshReloadWorker:0,manualWorker:1,expiredWorker:0}));
+  assert.equal(errors.length,0,JSON.stringify(errors));
+ }else if(process.env.MWS_QA_LONG_IDLE==='1'||process.env.MWS_QA_SESSION==='1'){
   const mode=process.env.MWS_QA_IDLE_MODE||'public',visibility=process.env.MWS_QA_IDLE_VISIBILITY||'visible';
   if(mode==='admin'){
    await browser.evaluate("document.querySelector('#mwsChangeModeBtn').click()");

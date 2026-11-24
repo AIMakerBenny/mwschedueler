@@ -16,5 +16,5 @@ exec setpriv --reuid "$uid" --regid "$gid" --init-groups -- env PATH="$outer_pat
 if [[ $uid == 0 ]]; then
   exec unshare --net -- bash -c "$runner" bash "$parent" "$uid" "$gid" "$outer_path" "$@"
 else
-  exec sudo -n --preserve-env=MWS_QA_OFFLINE,MWS_QA_SESSION,MWS_QA_IDLE_MODE,MWS_QA_LONG_IDLE,MWS_QA_IDLE_VISIBILITY unshare --net -- bash -c "$runner" bash "$parent" "$uid" "$gid" "$outer_path" "$@"
+  exec sudo -n --preserve-env=MWS_QA_OFFLINE,MWS_QA_SESSION,MWS_QA_IDLE_MODE,MWS_QA_LONG_IDLE,MWS_QA_IDLE_VISIBILITY,MWS_QA_FEATURES_ONLY unshare --net -- bash -c "$runner" bash "$parent" "$uid" "$gid" "$outer_path" "$@"
 fi
