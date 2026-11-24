@@ -70,11 +70,12 @@ jobs:
           node scripts/qa-achievement-exhibition-v1-browser.mjs
           node scripts/qa-first-paint-guard-v1-browser.mjs
   calendar-idle:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'request-trace-live-idle-nov24'
     strategy:
       fail-fast: false
       matrix:
         mode: [public, admin]
-        visibility: [visible, hidden]
+        visibility: [visible, hidden, minimized]
     runs-on: ubuntu-latest
     timeout-minutes: 70
     env:
@@ -87,5 +88,30 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Measure foreground public calendar idle with a local Worker
-        run: node scripts/qa-request-budget-full-app-v2-browser.mjs
+      - name: Set up window manager for minimized-window check
+        if: matrix.visibility == 'minimized'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq openbox xvfb
+      - name: Measure calendar idle in isolated Chromium
+        run: |
+          if [ "$MWS_QA_IDLE_VISIBILITY" = minimized ]; then
+            xvfb-run -a sh -c 'openbox >/tmp/mws-wm.log 2>&1 & sleep 1; MWS_QA_HEADFUL=1 node scripts/qa-request-budget-full-app-v2-browser.mjs'
+          else
+            node scripts/qa-request-budget-full-app-v2-browser.mjs
+          fi
+  navigation-audit:
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [public, admin]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      MWS_QA_OFFLINE: '1'
+      MWS_QA_SESSION: '1'
+      MWS_QA_IDLE_MODE: ${{ matrix.mode }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node scripts/qa-request-budget-full-app-v2-browser.mjs

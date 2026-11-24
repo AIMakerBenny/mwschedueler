@@ -121,7 +121,7 @@ async function runBatch(extraTarget,force=false){
       // Keep individual failures within the batch; never fall back to N requests.
       try{
         const load=async()=>{
-          const response=await baseFetch('/api/soop/live-batch',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'content-type':'application/json'},body:JSON.stringify({urls,force})});
+          const response=await baseFetch('/api/soop/live-batch',{mwsTrace:{module:'friend-finder-v120',automatic:!force,retry:false},method:'POST',credentials:'same-origin',cache:'no-store',headers:{'content-type':'application/json'},body:JSON.stringify({urls,force})});
           if(!response.ok)throw new Error(`LIVE batch HTTP ${response.status}`);
           return response.json();
         };

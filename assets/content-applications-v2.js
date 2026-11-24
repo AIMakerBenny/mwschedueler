@@ -265,7 +265,7 @@ async function fetchCampaign(c,canContinue,manual){
  // Server owns continuation and final persistence. Legacy endpoint fallback
  // only for unsupported sizes or older server versions, never expired posts.
  for(let i=0;i<600&&canContinue();i++){
-  const res=await fetch('/api/soop/application-sync?id='+encodeURIComponent(c.id)+(manual&&i===0?'&force=1':'')+(i?'&continue=1':''),{cache:'no-store',signal:AbortSignal.timeout(60000)});
+  const res=await fetch('/api/soop/application-sync?id='+encodeURIComponent(c.id)+(manual&&i===0?'&force=1':'')+(i?'&continue=1':''),{mwsTrace:{module:'content-applications-v2',automatic:!manual,retry:false},cache:'no-store',signal:AbortSignal.timeout(60000)});
   if(res.status===404||res.status===405)return null;
   if(!res.ok)throw Error('Application sync HTTP '+res.status);
   const value=await res.json();

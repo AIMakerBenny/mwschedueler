@@ -96,7 +96,7 @@ function makeRuntime(code,remote,versions,opts={}){
   CustomEvent:class{constructor(type,o){this.type=type;this.detail=o.detail}},console:{error(){},warn(){}},setTimeout:(f,ms)=>setTimeout(f,Math.min(ms,10)),clearTimeout,
   $:id=>id==='syncStatusText'?status:null,toast:(...args)=>alerts.push(args),setManualSaveProgress(){},
   freshSkeleton:()=>({}),mergePart:(p,v,target)=>{target[p]=cp(v)},extractPart:p=>cp(ctx.data[p]),
-  normalizeAndRender(){},normalizeDataShape(){},applyModeUi(){},hideGate(){},metric(){},setLoginError(){},timeout:promise=>Promise.resolve(promise),requestAnimationFrame:fn=>{ctx.pendingBackground=fn;return 1},
+  normalizeAndRender(){},normalizeDataShape(){opts.normalize?.(ctx.data)},applyModeUi(){},hideGate(){},metric(){},setLoginError(){},timeout:promise=>Promise.resolve(promise),requestAnimationFrame:fn=>{ctx.pendingBackground=fn;return 1},
   async fetchManifest(){if(opts.offline)throw Error('offline');return{parts:cp(versions)}},
   async getCachedPart(scope,p){return opts.cache?.[p]||null},
   async loadPartWithCache(scope,p){if(opts.failPart===p)throw Error('network');return {data:cp(remote[p]),version:versions[p]}},
@@ -121,6 +121,13 @@ const transform=vm.runInNewContext(sourceFunction(entry,'function normalizeCloud
 for(const path of clientPaths){
  const code=transform(source(path));
  const initial=vm.runInNewContext(source(path).match(/const INITIAL_PARTS=(\[[^;]+\]);/)[1]);assert(initial.includes('clipboard'));
+ test(path+' normalized legacy defaults do not save on a read-only admin session',async()=>{
+  const remote={events:[{id:'e',title:'before'}],notebook:{memos:[]}},versions={events:1,notebook:1};
+  const h=makeRuntime(code,remote,versions,{normalize:d=>{d.notebook.favoriteFolders??=[]}});
+  await h.ctx.hydrate('admin');await h.ctx.write(true);assert.equal(h.writes.length,0);
+  h.ctx.data.events[0].title='after';await h.ctx.write(true);
+  assert.deepEqual(Object.keys(h.writes[0].parts),['events']);assert.equal(remote.events[0].title,'after');
+ });
  test(path+' clipboard works in Public session but never writes to D1; Admin retains version guard',async()=>{
   const remote={events:[{id:'e1',title:'original'}],clipboard:{scheduleClipboard:[]}},versions={events:4,clipboard:9};
   const h=makeRuntime(code,cp(remote),cp(versions));

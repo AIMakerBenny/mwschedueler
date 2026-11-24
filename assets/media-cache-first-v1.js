@@ -25,7 +25,7 @@ async function warm(urls,limit){
   }
   let count=0;
   for(let i=0;i<missing.length&&!document.hidden;i+=3){
-    await Promise.all(missing.slice(i,i+3).map(async url=>{try{const res=await fetch(url,{cache:'default',credentials:'same-origin',signal:AbortSignal.timeout(8000)});if(res.ok){await res.arrayBuffer();count++}}catch(_){}}));
+    await Promise.all(missing.slice(i,i+3).map(async url=>{try{const res=await fetch(url,{mwsTrace:{module:'media-cache-first-v1',automatic:true,retry:false},cache:'default',credentials:'same-origin',signal:AbortSignal.timeout(8000)});if(res.ok){await res.arrayBuffer();count++}}catch(_){}}));
   }
   return count;
 }

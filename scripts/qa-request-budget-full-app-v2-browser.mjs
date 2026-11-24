@@ -5,6 +5,7 @@ import {DatabaseSync} from 'node:sqlite';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {auditSession} from './qa-request-budget-session.mjs';
 import worker from '../src/cf-v111-entry.js';
 import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 
@@ -17,7 +18,7 @@ function statement(sql,args=[]){return{bind:(...args)=>statement(sql,args),first
 const DB={prepare:sql=>statement(sql),batch:async statements=>{db.exec('BEGIN');try{const results=[];for(const s of statements)results.push(await s.run());db.exec('COMMIT');return results}catch(e){db.exec('ROLLBACK');throw e}}};
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jf2sAAAAASUVORK5CYII=','base64');
 const objects=new Map();
-const IMAGES={get:async key=>objects.has(key)?{body:new Uint8Array(png),size:png.length,httpEtag:'"fixture-'+key+'"',writeHttpMetadata:h=>h.set('content-type','image/png')}:null,head:async key=>objects.has(key)?{size:png.length}:null,put:async key=>objects.set(key,true),delete:async key=>objects.delete(key),list:async()=>({objects:[],truncated:false})};
+const IMAGES={get:async key=>objects.has(key)?{body:new Uint8Array(png),size:png.length,httpEtag:'"fixture-'+key+'"',writeHttpMetadata:h=>h.set('content-type','image/png')}:null,head:async key=>objects.has(key)?{size:png.length}:null,put:async key=>{objects.set(key,true);return {key,uploaded:new Date(),size:png.length,etag:"a".repeat(32)}},delete:async key=>objects.delete(key),list:async()=>({objects:[],truncated:false})};
 const types={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.ico':'image/x-icon','.woff2':'font/woff2','.woff':'font/woff','.gif':'image/gif'};
 const ASSETS={fetch:async req=>{const u=new URL(req.url),name=u.pathname==='/'?'index.html':decodeURIComponent(u.pathname.slice(1)),file=path.resolve(root,name);if(!file.startsWith(root)||!statSafe(file))return new Response('not found',{status:404});return new Response(readFileSync(file),{headers:{'content-type':types[path.extname(file)]||'application/octet-stream','cache-control':'public, max-age=3600'}})}};
 function statSafe(file){try{return statSync(file).isFile()}catch{return false}}
@@ -58,7 +59,7 @@ const server=createServer(async(req,res)=>{
   for await(const chunk of req)body.push(chunk);
   const request=new Request(u,{method,headers:req.headers,...(!['GET','HEAD'].includes(method)?{body:Buffer.concat(body)}:{})});
   const counted=workerFirst(u.pathname),response=await (counted?worker.fetch(request,env,ctx):ASSETS.fetch(request));
-  if(counted)calls.push({path:u.pathname,method,status:response.status});
+  if(counted)calls.push({path:u.pathname,method,status:response.status,...(u.pathname==='/api/save'&&method==='POST'?{parts:Object.keys(JSON.parse(Buffer.concat(body).toString()).parts||{})}:{})});
   res.statusCode=response.status;for(const [key,value] of response.headers)if(!['content-length','content-encoding','transfer-encoding'].includes(key))res.setHeader(key,value);
   if(u.pathname==='/'||u.pathname==='/index.html')res.setHeader('content-security-policy',useCdn?csp.replace("connect-src 'self'","connect-src 'self' "+cdnOrigin).replace("img-src 'self'","img-src 'self' "+cdnOrigin):csp);
   res.end(method==='HEAD'?undefined:Buffer.from(await response.arrayBuffer()));
@@ -90,7 +91,7 @@ try{
  const routes=['calendar','contacts','dashboard','memos','careerTimeline','achievements','mawangArchive','gameLadder','gameMultiDraw','contentPlanner','toolTier','toolMatrix','toolRelations','settings','calendar'];
  const nav=async list=>browser.evaluate('(async()=>{for(const id of '+JSON.stringify(list)+'){window.setTab(id);await new Promise(r=>setTimeout(r,450));if(!document.getElementById(id)?.classList.contains("active"))throw Error("route "+id)}return true})()');
  let before=calls.length;
- if(process.env.MWS_QA_LONG_IDLE==='1'){
+ if(process.env.MWS_QA_LONG_IDLE==='1'||process.env.MWS_QA_SESSION==='1'){
   const mode=process.env.MWS_QA_IDLE_MODE||'public',visibility=process.env.MWS_QA_IDLE_VISIBILITY||'visible';
   if(mode==='admin'){
    await browser.evaluate("document.querySelector('#mwsChangeModeBtn').click()");
@@ -99,8 +100,24 @@ try{
    await until(()=>browser.evaluate("document.body.dataset.mwsMode==='admin'&&!document.body.classList.contains('mws-app-loading')&&!document.body.classList.contains('mws-gated')"),'Admin ready');
    await nav(['calendar']);await pause(3000);
   }
+  if(process.env.MWS_QA_SESSION==='1'){await auditSession({browser,nav,calls,summary,until,mode});
+   const ready=()=>until(()=>browser.evaluate("!!window.__mwsAppReadyV130&&!document.body.classList.contains('mws-app-loading')&&document.body.dataset.mwsMode==="+JSON.stringify(mode)),'Reload with remembered mode');
+   for(const action of ['reload','hard-reload','restart','new-tab','two-tabs']){
+    const start=calls.length,url=base+':'+server.address().port+'/';
+    if(action==='restart'){await browser.close();browser=await launchCalendarBrowser(dir);await browser.navigate(url,1366,768);await ready()}
+    else if(action.endsWith('tab')||action.endsWith('tabs')){
+     const ids=await Promise.all(Array.from({length:action==='two-tabs'?2:1},()=>browser.sibling(url)));
+     await until(()=>Promise.resolve(calls.slice(start).filter(r=>r.path==='/api/calendar-startup').length>=ids.length),'New tab startup');
+     await pause(3500);for(const {targetId} of ids)await browser.closeTarget(targetId);
+    }else{
+     const beforeReload=await browser.evaluate('performance.timeOrigin');await browser.reload(action==='hard-reload');
+     await until(async()=>{try{return await browser.evaluate('performance.timeOrigin')!==beforeReload}catch{return false}},'New document');await ready();
+    }
+    await pause(1500);console.log('REENTRY_AUDIT '+JSON.stringify({action,mode,worker:summary(calls.slice(start))}));
+   }}else{
   if(visibility==='hidden')await browser.openBackgroundTestTab();
-  assert.equal(await browser.evaluate('document.visibilityState'),visibility);
+  if(visibility==='minimized')await browser.minimizeWindow();
+  await until(()=>browser.evaluate('document.visibilityState').then(state=>state===(visibility==='minimized'?'hidden':visibility)),'Confirmed page visibility');
   before=calls.length;
   const started=performance.now();
   for(const minutes of [1,5,10,30,60]){
@@ -109,6 +126,7 @@ try{
   }
   assert.deepEqual(calls.slice(before),[],'Idle calendar emitted a Worker request');
   console.log('LONG_IDLE_OK');
+  }
  }else{
  const routeStats=[];
  for(const route of routes){const offset=calls.length;await nav([route]);const dom=await browser.evaluate("(()=>{const root=document.querySelector('.section.active');return {canonical:root?.querySelectorAll('img[src*=\"/media/contact/\"]').length||0,deferred:root?.querySelectorAll('img[data-mws-deferred-contact-src]').length||0,cdn:root?.querySelectorAll('img[data-mws-cdn-contact-source]').length||0}})()");routeStats.push({route,worker:summary(calls.slice(offset)),dom})}

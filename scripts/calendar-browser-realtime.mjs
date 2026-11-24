@@ -6,7 +6,7 @@ import path from 'node:path';
 export async function launchCalendarBrowser(dir){
   const chrome=['google-chrome','google-chrome-stable','chromium','chromium-browser'].map(n=>spawnSync('which',[n],{encoding:'utf8'})).find(r=>r.status===0)?.stdout.trim();
   assert(chrome,'Chromium required');
-  const browser=spawn(chrome,['--headless=new','--no-sandbox','--disable-dev-shm-usage','--no-first-run','--disable-background-networking','--disable-background-timer-throttling','--disable-renderer-backgrounding',...(process.env.MWS_QA_OFFLINE==='1'?['--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost','--no-proxy-server']:[]),'--remote-debugging-pipe',`--user-data-dir=${path.join(dir,'profile')}`,'about:blank'],{stdio:['ignore','ignore','ignore','pipe','pipe']});
+  const browser=spawn(chrome,[...(process.env.MWS_QA_HEADFUL==='1'?[]:['--headless=new']),'--no-sandbox','--disable-dev-shm-usage','--no-first-run','--disable-background-networking','--disable-background-timer-throttling','--disable-renderer-backgrounding',...(process.env.MWS_QA_OFFLINE==='1'?['--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost','--no-proxy-server']:[]),'--remote-debugging-pipe',`--user-data-dir=${path.join(dir,'profile')}`,'about:blank'],{stdio:['ignore','ignore','ignore','pipe','pipe']});
   const pending=new Map();let serial=0,buffer='';
   const fail=error=>{for(const entry of pending.values()){clearTimeout(entry.timer);entry.reject(error)}pending.clear()};
   browser.on('error',fail);browser.on('exit',()=>fail(new Error('Chromium exited')));browser.stdio[3].on('error',fail);browser.stdio[4].on('error',fail);
@@ -54,6 +54,15 @@ export async function launchCalendarBrowser(dir){
       return result.data;
     };
     const openBackgroundTestTab=async()=>{const other=await send('Target.createTarget',{url:'about:blank'});await send('Target.activateTarget',{targetId:other.targetId})};
-    return {openBackgroundTestTab,navigate,evaluate,clickPoint,movePoint,mouseDown,mouseDrag,mouseUp,keyPress,enablePerformance,performanceMetrics,setReducedMotion,captureScreenshot,close};
+    const minimizeWindow=async()=>{
+      const {windowId}=await send('Browser.getWindowForTarget',{targetId});
+      await send('Browser.setWindowBounds',{windowId,bounds:{windowState:'minimized'}});
+      const {bounds}=await send('Browser.getWindowBounds',{windowId});
+      assert.equal(bounds.windowState,'minimized');
+    };
+    const reload=ignoreCache=>send('Page.reload',{ignoreCache},sessionId);
+    const sibling=url=>send('Target.createTarget',{url});
+    const closeTarget=id=>send('Target.closeTarget',{targetId:id});
+    return {reload,sibling,closeTarget,minimizeWindow,openBackgroundTestTab,navigate,evaluate,clickPoint,movePoint,mouseDown,mouseDrag,mouseUp,keyPress,enablePerformance,performanceMetrics,setReducedMotion,captureScreenshot,close};
   }catch(error){await close();throw error}
 }

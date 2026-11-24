@@ -52,12 +52,21 @@ window.addEventListener('mws:workspace-tab-v1',markCategory);
 // Session-local fingerprints support equality checks without retaining URLs or identifiers.
 const fingerprints=new Map(),pendingMethods=new Map();
 let salt=0;
+const deliveries=new Map();
+function signalWorker(enabled){navigator.serviceWorker?.controller?.postMessage({kind:'mws-media-trace',enabled,salt})}
+navigator.serviceWorker?.addEventListener('controllerchange',()=>{if(trace.start!==null&&trace.end===null)signalWorker(true)});
+navigator.serviceWorker?.addEventListener('message',event=>{
+ const m=event.data;
+ if(event.source!==navigator.serviceWorker.controller||m?.kind!=='mws-media-delivery'||m.salt!==salt||!['service-worker-cache','service-worker-fetch'].includes(m.source))return;
+ if(deliveries.size>=2000)deliveries.delete(deliveries.keys().next().value);
+ deliveries.set(m.id,m);
+});
 function fingerprint(value){
  let hash=2166136261^salt;
  for(let i=0;i<value.length;i++)hash=Math.imul(hash^value.charCodeAt(i),16777619);
  return hash>>>0;
 }
-function markMethod(raw,method){
+function markMethod(raw,method,meta){
  if(trace.start===null||trace.end!==null)return;
  try{
   const url=new URL(raw,location.href);url.hash='';
@@ -65,13 +74,13 @@ function markMethod(raw,method){
   if(pendingMethods.size>=2000&&!pendingMethods.has(id))pendingMethods.delete(pendingMethods.keys().next().value);
   const queue=pendingMethods.get(id)||[];
   if(queue.length>=20)queue.shift();
-  queue.push({method:/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)$/i.test(method)?method.toUpperCase():null,at:performance.now()});
+  queue.push({method:/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)$/i.test(method)?method.toUpperCase():null,at:performance.now(),automatic:typeof meta?.automatic==='boolean'?meta.automatic:null,retry:typeof meta?.retry==='boolean'?meta.retry:null,module:['friend-finder-v120','content-applications-v2','media-cache-first-v1'].includes(meta?.module)?meta.module:null});
   pendingMethods.set(id,queue);
  }catch(_){}
 }
 const originalFetch=window.fetch;
 if(originalFetch)window.fetch=function(input,options){
- if(trace.start!==null&&trace.end===null)markMethod(input?.url??input,options?.method||input?.method||'GET');
+ if(trace.start!==null&&trace.end===null)markMethod(input?.url??input,options?.method||input?.method||'GET',options?.mwsTrace);
  return originalFetch.apply(this,arguments);
 };
 function record(entry){
@@ -88,14 +97,17 @@ function record(entry){
  const id=fingerprint(url.href),duplicate=fingerprints.has(id);
  if(fingerprints.size>=4000&&!duplicate)fingerprints.delete(fingerprints.keys().next().value);
  fingerprints.set(id,true);
+ const delivery=deliveries.get(id);
+ const swSource=delivery&&delivery.at>=performance.timeOrigin+entry.startTime-5&&delivery.at<=performance.timeOrigin+entry.responseEnd+50?delivery.source:null;
  const queue=pendingMethods.get(id);
  const index=queue?.findIndex(x=>Math.abs(x.at-entry.startTime)<1000)??-1;
- const method=index>=0?queue.splice(index,1)[0].method:['img','css','script','link','iframe'].includes(entry.initiatorType)?'GET':null;
+ const matched=index>=0?queue.splice(index,1)[0]:null;
+ const method=matched?matched.method:['img','css','script','link','iframe'].includes(entry.initiatorType)?'GET':null;
  if(!queue?.length)pendingMethods.delete(id);
  const key=category+' · '+route;
  trace.counts.set(key,(trace.counts.get(key)||0)+1);
  trace.total++;
- trace.rows.push({time:new Date(performance.timeOrigin+entry.startTime).toISOString(),category,route,feature:group,initiator:entry.initiatorType,method,duplicate,workerRoute:!!workerRoute,retry:null,automatic:null,status:entry.responseStatus||null,delivery:kind,workerExecution:null,bytes:entry.encodedBodySize||null,durationMs:Math.round(entry.duration)});
+ trace.rows.push({time:new Date(performance.timeOrigin+entry.startTime).toISOString(),category,route,feature:group,initiator:entry.initiatorType,method,duplicate,workerRoute:!!workerRoute,retry:matched?.retry??null,automatic:matched?.automatic??null,module:matched?.module??null,status:entry.responseStatus||null,delivery:swSource||kind,network:swSource==='service-worker-cache'||kind==='browser-cache'?false:kind==='network'?true:null,workerExecution:null,bytes:entry.encodedBodySize||null,durationMs:Math.round(entry.duration)});
  if(trace.rows.length>2000)trace.rows.shift();
 }
 try{
@@ -117,7 +129,7 @@ function bind(){
  }
  const controls=document.getElementById('mwsTraceControls');
  const status=document.createElement('p'),history=document.createElement('pre');history.style.cssText='max-height:16rem;overflow:auto;white-space:pre-wrap;font-size:.8rem';
- const reset=()=>{fingerprints.clear();pendingMethods.clear();salt=crypto.getRandomValues(new Uint32Array(1))[0];trace.start=null;trace.end=null;trace.total=0;trace.counts.clear();trace.rows.length=0;categories.length=0};
+ const reset=()=>{signalWorker(false);deliveries.clear();fingerprints.clear();pendingMethods.clear();salt=crypto.getRandomValues(new Uint32Array(1))[0];trace.start=null;trace.end=null;trace.total=0;trace.counts.clear();trace.rows.length=0;categories.length=0};
  function update(){
   history.textContent=trace.rows.slice(-30).map(row=>row.time.slice(11,19)+' UTC · '+row.category+' · '+(row.method||'?')+' '+row.route+' · '+(row.status||'?')+' · '+row.delivery+' · '+row.durationMs+'ms').join('\n');
   const minutes=trace.start===null?0:((trace.end??performance.now())-trace.start)/60000;
@@ -125,8 +137,8 @@ function bind(){
  }
  function action(label,fn){const b=document.createElement('button');b.type='button';b.className='ghost small';b.textContent=label;b.onclick=()=>{fn();update()};controls.append(b)}
  if(controls){
-  action('측정 시작',()=>{if(trace.start!==null&&trace.end===null)return;reset();trace.start=performance.now();markCategory()});
-  action('측정 종료',()=>{if(trace.start!==null)trace.end??=performance.now()});
+  action('측정 시작',()=>{if(trace.start!==null&&trace.end===null)return;reset();trace.start=performance.now();signalWorker(true);markCategory()});
+  action('측정 종료',()=>{if(trace.start!==null){trace.end??=performance.now();signalWorker(false)}});
   action('초기화',reset);
   action('JSON 내보내기',()=>{const blob=new Blob([JSON.stringify({total:trace.total,counts:Object.fromEntries(trace.counts),latest2000:trace.rows},null,2)],{type:'application/json'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='mws-network.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)});
   controls.append(status,history);update();

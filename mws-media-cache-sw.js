@@ -41,14 +41,29 @@ async function store(cache,request,response){
     if(++writes%12===1)await trim(cache);
   }catch(error){if(error.name==='QuotaExceededError')await trim(cache,true).catch(()=>{})}
 }
+const diagnosticClients=new Map();
+self.addEventListener('message',event=>{
+  const source=event.source,message=event.data;
+  if(!source?.id||message?.kind!=='mws-media-trace')return;
+  if(message.enabled&&Number.isInteger(message.salt)){
+    if(diagnosticClients.size>=16)diagnosticClients.delete(diagnosticClients.keys().next().value);
+    diagnosticClients.set(source.id,{client:source,salt:message.salt});
+  }else diagnosticClients.delete(source.id);
+});
+function traceDelivery(id,url,source){
+  const session=diagnosticClients.get(id);if(!session)return;
+  let hash=2166136261^session.salt;
+  for(let i=0;i<url.length;i++)hash=Math.imul(hash^url.charCodeAt(i),16777619);
+  try{session.client.postMessage({kind:'mws-media-delivery',id:hash>>>0,source,salt:session.salt,at:Date.now()})}catch(_){diagnosticClients.delete(id)}
+}
 self.addEventListener('fetch',event=>{
   const request=event.request;
   if(request.method!=='GET'||request.headers.has('range'))return;
   const key=cacheKey(request.url);if(!key)return;
   const task=(async()=>{
     let cache;
-    try{cache=await caches.open(CACHE);const hit=await cache.match(request);if(hit){touch(request.url);return {response:hit}}}catch(_){}
-    const response=await fetch(request);
+    try{cache=await caches.open(CACHE);const hit=await cache.match(request);if(hit){traceDelivery(event.clientId,request.url,'service-worker-cache');touch(request.url);return {response:hit}}}catch(_){}
+    const response=await fetch(request);traceDelivery(event.clientId,request.url,'service-worker-fetch');
     return {response,save:cache&&canStore(response,key)?store(cache,request,response.clone()):null};
   })();
   event.respondWith(task.then(result=>result.response));

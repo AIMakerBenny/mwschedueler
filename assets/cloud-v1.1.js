@@ -213,7 +213,15 @@
       await loadBatch(INITIAL_PARTS);
       if(chosen==='admin')await loadBatch(required.filter(part=>!loadedParts.has(part)));
       setLoginError('로그인 완료 · 화면을 준비하는 중입니다.');
-      data=next;normalizeDataShape();const recovered=chosen==='admin'&&!offline?await recoverSaveDraft():false;
+      data=next;normalizeDataShape();
+      // Compare edits against the view after legacy defaults are filled. Keep raw D1
+      // baselines for version checks, conflict merging and recovery drafts.
+      normalizedReadBaseline.clear();
+      if(chosen==='admin')for(const part of loadedParts){
+        const normalized=JSON.stringify(extractPart(part));
+        if(normalized!==baselineJson.get(part))normalizedReadBaseline.set(part,normalized);
+      }
+      const recovered=chosen==='admin'&&!offline?await recoverSaveDraft():false;
       // Do not replace the visible calendar a second time when nothing changed.
       const previewUnchanged=previewVersions&&serverManifest?.parts&&INITIAL_PARTS.every(part=>previewVersions[part]===Number(serverManifest.parts[part]));
       if(!previewUnchanged)normalizeAndRender(offline?'IndexedDB 오프라인 캐시':'Cloudflare D1 데이터',true);
@@ -273,6 +281,7 @@
 
   // Authoritative per-part save queue and recoverable draft. No workspace schema changes.
   const SAVE_DRAFT_PREFIX='mws_save_outbox_v1:';
+  const normalizedReadBaseline=new Map();
   let saveRun=null,saveRetryTimer=0,hydrationSeq=0,hydrating=false,draftDbPromise=null,draftWrites=Promise.resolve(),draftOrigin=null,draftBlocked=null,lastDraft=null;
   const lazyPartLoads=new Map();
   let draftTabId='';
@@ -380,13 +389,13 @@
       if(!merged.ok){const error=Error('같은 항목이 다른 화면에서 변경되었습니다. 미저장 복구본을 보관하고 충돌 내용을 확인해 주세요: '+merged.path);error.conflict=true;throw error}
       staged.push([part,Number(row.version),remote,merged.value]);
     }
-    for(const [part,version,remote,value] of staged){manifest.parts[part]=version;baselineJson.set(part,JSON.stringify(remote));mergePart(part,value,data);void putCachedPart('admin',part,version,remote)}
+    for(const [part,version,remote,value] of staged){manifest.parts[part]=version;normalizedReadBaseline.delete(part);baselineJson.set(part,JSON.stringify(remote));mergePart(part,value,data);void putCachedPart('admin',part,version,remote)}
     markDirty();persistSaveDraft();normalizeAndRender('서버 변경사항 병합');
   }
 
   function markDirty(){
     if(mode!=='admin')return[];const changed=[];
-    for(const part of loadedParts){const current=JSON.stringify(extractPart(part));if(current!==baselineJson.get(part)){dirtyParts.add(part);changed.push(part)}else dirtyParts.delete(part)}
+    for(const part of loadedParts){const current=JSON.stringify(extractPart(part));if(current!==(normalizedReadBaseline.get(part)??baselineJson.get(part))){dirtyParts.add(part);changed.push(part)}else dirtyParts.delete(part)}
     return changed;
   }
   function queueCloudSave(){
@@ -432,7 +441,7 @@
             const local=extractPart(part),serverValue=normalized[part],version=Number(versions[part]);
             if(sameSaveValue(local,payload[part]))mergePart(part,serverValue,data);
             else{const merged=mergeSaveChanges(payload[part],local,serverValue,part);if(merged.ok)mergePart(part,merged.value,data)}
-            manifest.parts[part]=version;baselineJson.set(part,JSON.stringify(serverValue));
+            manifest.parts[part]=version;normalizedReadBaseline.delete(part);baselineJson.set(part,JSON.stringify(serverValue));
             void putCachedPart('admin',part,version,serverValue);
           }
           markDirty();persistSaveDraft();recoveries=0;
