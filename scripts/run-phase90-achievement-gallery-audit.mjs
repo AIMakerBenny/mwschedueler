@@ -41,7 +41,7 @@ export function runPhase90AchievementGalleryAudit(){
   if(!css.includes('grid-template-columns:repeat(2,minmax(0,1fr));'))issues.push('mobile achievement gallery two-column layout is missing');
 
   if(!/loadStyle\('achievement-gallery-v1621','\/assets\/achievement-gallery-v1621\.css\?v=1\.6\.21-phase(?:9[0-9]|[1-9][0-9]{2,})'\)/.test(post))issues.push('achievement gallery stylesheet cache is older than Phase 90');
-  if(!/load\('achievement-gallery-v1621','\/assets\/achievement-gallery-v1621\.js\?v=1\.6\.21-phase(?:9[0-9]|[1-9][0-9]{2,})','__mwsAchievementGalleryRuntimeV1621'\)/.test(post))issues.push('achievement gallery runtime cache is older than Phase 90');
+  if(!/load\('achievement-gallery-v1621','\/assets\/achievement-gallery-v1621\.js\?v=1\.6\.21-phase(?:9[0-9]|[1-9][0-9]{2,})(?:&request-budget=\d+)?','__mwsAchievementGalleryRuntimeV1621'\)/.test(post))issues.push('achievement gallery runtime cache is older than Phase 90');
   if(!/post-login-runtime-v130\.js\?v=1\.4\.0-phase(?:9[0-9]|[1-9][0-9]{2,})/.test(entry))issues.push('Worker post-login cache-bust is older than phase90');
 
   const summary={phase:90,name:'achievement-gallery',issues,warnings,pass:issues.length===0};

@@ -62,8 +62,11 @@ export function runPhase124WardogsGalleryAudit(){
 
   for(const [name,source] of [['cloud-v1.1',cloud],['cloud-runtime-v130',staged]]){
     for(const token of [
-      "new CustomEvent('mws:parts-loaded',{detail:{tab,parts:[...extras]}})",
-      "if(changed){normalizeAndRender(`${tab} lazy data`);"
+      "new CustomEvent('mws:parts-loaded',{detail:{tab:'export',parts:hydratedParts}})",
+      "if(hydratedParts.length){",
+      "normalizeDataShape();",
+      "await ensureRemainingWorkspace();",
+      "if(generation!==hydrationSeq)return false;"
     ])if(!source.includes(token))issues.push(name+' lazy part event missing: '+token);
   }
 

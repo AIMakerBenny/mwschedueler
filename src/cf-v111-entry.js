@@ -23,7 +23,7 @@ function normalizeVersionHtml(html){
     out=out.replace(re,'');
   }
   if(!out.includes('post-login-runtime-v130.js')){
-    out=out.replace(/<\/body>/i,'<script src="assets/post-login-runtime-v130.js?v=1.4.0-phase176-workspace-ui&save-queue-v2=1&workspace-nav-v1=1&hall-v3=1&firstpaint-guard=1&achievement-cache-read=2&contactgroup178=1&modalmotionv2=1&shell-perf=1&career=1&firstpaint=1&peoplehover=1&dashboardnav=1&notebook-tools=1&contact-frequency=1&sidebar-stable=1&mawang-archive=1"></script>\n</body>');
+    out=out.replace(/<\/body>/i,'<script src="assets/post-login-runtime-v130.js?v=1.4.0-phase176-workspace-ui&save-queue-v2=1&workspace-nav-v1=1&hall-v3=1&firstpaint-guard=1&achievement-cache-read=2&contactgroup178=1&modalmotionv2=1&shell-perf=1&career=1&firstpaint=1&peoplehover=1&dashboardnav=1&notebook-tools=1&contact-frequency=1&sidebar-stable=1&mawang-archive=1&request-budget=6"></script>\n</body>');
   }
   return out;
 }
@@ -316,7 +316,7 @@ export default {
     }
 
     if(url.pathname==='/assets/cloud-v5.5.js'){
-      const replacement=new URL('/assets/cloud-v1.1-loader.js?v=1.3.0-auth-decoupled&clipboard-first-v1=1&save-queue-v2=1',request.url);
+      const replacement=new URL('/assets/cloud-v1.1-loader.js?v=1.3.0-auth-decoupled&clipboard-first-v1=1&save-queue-v2=1&request-budget=6',request.url);
       const response=await env.ASSETS.fetch(new Request(replacement.toString(),{method:'GET',headers:request.headers}));
       const source=await response.text();
       const patched=source.replace('app-version-v120.js?v=1.3.0','app-version-v120.js?v=1.4.0-phase73');

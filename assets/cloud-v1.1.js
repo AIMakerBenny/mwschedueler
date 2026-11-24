@@ -222,7 +222,7 @@
     const scope=mode==='admin'?'admin':'public',generation=hydrationSeq;
     const current=()=>generation===hydrationSeq&&scope===(mode==='admin'?'admin':'public');
     const loading=(async()=>{
-      let changed=false;
+      const hydratedParts=[];
       try{
         if(!manifest){const fresh=await fetchManifest();if(!current())return false;manifest=clone(fresh)}
         if(!current())return false;
@@ -231,12 +231,12 @@
         for(let i=0;i<missing.length;i++){
           const part=missing[i],result=rows[i];if(result.status!=='fulfilled'||loadedParts.has(part))continue;
           const row=result.value;mergePart(part,row.data,data);loadedParts.add(part);baselineJson.set(part,JSON.stringify(row.data));
-          if(manifest?.parts)manifest.parts[part]=Number(row.version);changed=true;
+          if(manifest?.parts)manifest.parts[part]=Number(row.version);hydratedParts.push(part);
         }
-        if(changed){
+        if(hydratedParts.length){
           // Background data hydration must not redraw unrelated hidden screens.
           normalizeDataShape();
-          try{window.dispatchEvent(new CustomEvent('mws:parts-loaded',{detail:{tab:'export',parts:missing.filter(part=>loadedParts.has(part))}}))}catch(_){}
+          try{window.dispatchEvent(new CustomEvent('mws:parts-loaded',{detail:{tab:'export',parts:hydratedParts}}))}catch(_){}
         }
         return missing.every(part=>loadedParts.has(part));
       }catch(e){console.error('Workspace preload failed',e);return false}
