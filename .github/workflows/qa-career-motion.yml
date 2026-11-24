@@ -5,6 +5,8 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+env:
+  MWS_QA_OFFLINE: '1'
 jobs:
   browser:
     runs-on: ubuntu-latest
@@ -24,7 +26,8 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y ffmpeg fonts-noto-cjk
-      - run: node scripts/qa-career-motion-browser.mjs
+      - shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: node scripts/qa-career-motion-browser.mjs
         env:
           CAREER_QA_MODE: ${{ matrix.mode }}
       - name: Video frame review

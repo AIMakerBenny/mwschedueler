@@ -20,6 +20,8 @@ on:
       - '.github/workflows/qa-calendar-visual-hierarchy-v2.yml'
 permissions:
   contents: read
+env:
+  MWS_QA_OFFLINE: '1'
 jobs:
   calendar-ui-regression:
     runs-on: ubuntu-latest
@@ -30,6 +32,7 @@ jobs:
         with:
           node-version: '24'
       - name: Calendar and existing feature syntax
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --check --input-type=commonjs < assets/app-core.js
           node --check assets/calendar-timeline-v1.js
@@ -48,6 +51,7 @@ jobs:
           node --check assets/cloud-v1.1-loader.js
           node --check assets/cloud-runtime-v130.js
       - name: Calendar content group, hover and duration regression
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --test scripts/qa-calendar-timeline-v1.test.mjs
           node scripts/qa-calendar-timeline-v1-browser.mjs

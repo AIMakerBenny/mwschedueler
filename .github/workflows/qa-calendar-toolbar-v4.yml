@@ -23,6 +23,8 @@ on:
       - cloudflare-production
   workflow_dispatch:
 
+env:
+  MWS_QA_OFFLINE: '1'
 jobs:
   calendar-ux-v4:
     runs-on: ubuntu-latest
@@ -33,29 +35,36 @@ jobs:
         with:
           node-version: '22'
       - name: Syntax validation
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --check --input-type=commonjs < assets/app-core.js
           node --check assets/calendar-content-groups-v2.js
           node --check assets/calendar-move-guard-v4.js
       - name: Connected calendar and existing group regression
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --test scripts/qa-calendar-continuous-series-v1.test.mjs
           node scripts/qa-calendar-continuous-series-browser-v1.mjs
           node scripts/qa-calendar-content-groups-v2-browser.mjs
           node scripts/qa-calendar-content-groups-v3-search-browser.mjs
       - name: Continuous timeline, game labels and responsive views
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --test scripts/qa-calendar-timeline-v1.test.mjs
           node scripts/qa-calendar-timeline-v1-browser.mjs
       - name: New compact header, group management and undo in real browser
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-calendar-toolbar-v4-browser.mjs
       - name: Cloudflare calendar content group persistence and runtime patch
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs
           node --test scripts/qa-live-cloud-save-contract-v1.test.mjs
       - name: Event editor Series and Memo tab UI at four widths
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-event-sidebar-tabs-v5-browser.mjs
       - name: Duration and SOOP regression
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --test scripts/qa-calendar-broadcast-duration-v1.test.mjs
           node --test scripts/qa-soop-contact-autofill-v1.test.mjs

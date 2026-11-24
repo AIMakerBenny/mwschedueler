@@ -11,6 +11,8 @@ on:
       - '.github/workflows/qa-career-sticky-no-jump.yml'
 permissions:
   contents: read
+env:
+  MWS_QA_OFFLINE: '1'
 jobs:
   stable-scroll:
     runs-on: ubuntu-latest
@@ -28,14 +30,17 @@ jobs:
       - name: Verify real public Cloudflare timeline with candidate source
         env:
           MWS_TIMELINE_CAPTURE: '1'
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-career-sticky-no-jump.mjs
       - name: Verify existing timeline desktop navigation, search, and animations
         env:
           CAREER_QA_MODE: desktop
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-career-motion-browser.mjs
       - name: Verify existing timeline mobile controls and gestures
         env:
           CAREER_QA_MODE: mobile
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-career-motion-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()

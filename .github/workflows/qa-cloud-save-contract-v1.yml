@@ -16,6 +16,8 @@ on:
       - 'fix/cloud-save-readiness-version-contract-v1-20261113'
 permissions:
   contents: read
+env:
+  MWS_QA_OFFLINE: '1'
 jobs:
   cloud-save:
     runs-on: ubuntu-latest
@@ -26,19 +28,24 @@ jobs:
         with:
           node-version: '24'
       - name: Syntax
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --check assets/cloud-runtime-v130.js
           node --check assets/cloud-v1.1-loader.js
           node --check scripts/qa-live-cloud-save-contract-v1.test.mjs
       - name: Real client save and online/offline hydration state
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node --test scripts/qa-live-cloud-save-contract-v1.test.mjs
       - name: Delegated preview and handle-only pointer drag
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node scripts/run-phase38-calendar-preview-mousemove-audit.mjs
           node scripts/run-phase174-calendar-pointer-drag-audit.mjs
       - name: Full cumulative integration audit
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/run-current-full-integration-audit.mjs > /tmp/full-audit.log || { tail -n 9 /tmp/full-audit.log; exit 1; }
       - name: Existing Cloudflare and group recovery regressions
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --test scripts/qa-active-cloudflare-core-groups-v1.test.mjs
           node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs

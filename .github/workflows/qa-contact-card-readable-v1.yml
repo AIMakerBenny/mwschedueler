@@ -15,6 +15,8 @@ on:
       - 'fix/calendar-default-contact-card-grid-20261114'
 permissions:
   contents: read
+env:
+  MWS_QA_OFFLINE: '1'
 jobs:
   default-and-contacts:
     runs-on: ubuntu-latest
@@ -25,10 +27,13 @@ jobs:
         with:
           node-version: '24'
       - name: Initial calendar and portrait/text collision regression
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-contact-card-readable-v1-browser.mjs
       - name: Real-time modal entrance and exit frames
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-modal-motion-v1-browser.mjs
       - name: Existing sidebar/calendar geometry
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node scripts/qa-calendar-space-efficiency-v1-browser.mjs
           node scripts/qa-sidebar-rail-scrollbar-v1-browser.mjs
