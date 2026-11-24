@@ -18,22 +18,22 @@ jobs:
           const account=process.env.CF_ACCOUNT,token=process.env.CF_TOKEN;
           if(!/^[a-f0-9]{32}$/i.test(account||'')||!token)throw Error('Missing credentials');
           const base='https://api.cloudflare.com/client/v4',headers={authorization:'Bearer '+token,'content-type':'application/json'};
-          const end=Date.now(),start=end-60*60*1000;
+          const end=Date.parse('2026-11-24T12:39:00Z'),start=Date.parse('2026-11-24T12:31:00Z');
           const iso=t=>new Date(t).toISOString();
           console.log('AUDIT_WINDOW '+JSON.stringify({from:iso(start),to:iso(end)}));
           async function call(path,body){
             try{const r=await fetch(base+path,{method:body?'POST':'GET',headers,body:body?JSON.stringify(body):undefined,redirect:'error',signal:AbortSignal.timeout(20000)});const j=await r.json();return {http:r.status,j}}catch(e){return {http:0,j:{errors:[{message:String(e.name)}]}}}
           }
           const settings=await call('/accounts/'+account+'/workers/scripts/mawang-scheduler/settings');
-          console.log('AUDIT_SETTINGS '+JSON.stringify({http:settings.http,observability:settings.j.result?.observability,errors:settings.j.errors?.map(e=>({code:e.code,message:e.message}))}));
+          console.log('AUDIT_SETTINGS '+JSON.stringify({http:settings.http,keys:Object.keys(settings.j.result||{}),observability:settings.j.result?.observability??settings.j.result?.settings?.observability??null,errors:settings.j.errors?.map(e=>({code:e.code,message:e.message}))}));
           const query=async(label,filter,fields)=>{
             const q='query { viewer { accounts(filter:{accountTag:'+JSON.stringify(account)+'}) { workersInvocationsAdaptive(limit:1000,filter:{datetime_geq:'+JSON.stringify(iso(start))+',datetime_leq:'+JSON.stringify(iso(end))+filter+'}) { '+fields+' } } } }';
             const r=await call('/graphql',{query:q});console.log('AUDIT_'+label+' '+JSON.stringify({http:r.http,rows:r.j.data?.viewer?.accounts?.[0]?.workersInvocationsAdaptive,errors:r.j.errors?.map(e=>({code:e.code,message:e.message}))}));
           };
           const filter=',scriptName:"mawang-scheduler"';
           await Promise.all([query('ALL_SCRIPTS','', 'dimensions { scriptName } sum { requests errors subrequests }'),query('MINUTES',filter,'dimensions { datetimeMinute status } sum { requests errors subrequests }'),query('TOTAL',filter,'sum { requests errors subrequests } quantiles { cpuTimeP50 cpuTimeP99 }')]);
-          const telemetry=await call('/accounts/'+account+'/workers/observability/telemetry/query',{queryId:'mws-v5-readonly-attribution',dry:true,timeframe:{from:start,to:end},view:'invocations',limit:1000,parameters:{filters:[{key:'$workers.scriptName',operation:'eq',type:'string',value:'mawang-scheduler'}]}});
+          const telemetry=await call('/accounts/'+account+'/workers/observability/telemetry/query',{queryId:'mws-v5-readonly-attribution',dry:true,timeframe:{from:start,to:end},view:'invocations',limit:1000,parameters:{filters:[]}});
           const result=telemetry.j.result||{},inv=result.invocations||{},rows=Array.isArray(inv)?inv:Object.values(inv).map(events=>events.find(e=>e.$workers?.event?.request)||events.find(e=>e.$metadata?.url)||events[0]).filter(Boolean);
-          const groups={};let withPath=0;for(const row of rows){const w=row.$workers||row.workers||{},event=w.event||row.event||{},req=event.request||{};let p=req.path||req.url||row.$metadata?.url||'';if(!p)continue;try{p=new URL(p,'https://local.invalid').pathname}catch{continue}withPath++;p=p.replace(/^\/media\/(contact|workspace|achievement|wardogs|mawang-profile|mawang-archive)\/.*$/,'/media/$1/*').replace(/^\/api\/parts\/.*$/,'/api/parts/*');const key=p+' '+(event.response?.status||w.outcome||'');groups[key]=(groups[key]||0)+1}
+          const groups={};let withPath=0;for(const row of rows){const w=row.$workers||row.workers||{},event=w.event||row.event||{},req=event.request||{};let p=req.path||req.url||row.$metadata?.url||'';if(w.scriptName!=='mawang-scheduler'||!p)continue;try{p=new URL(p,'https://local.invalid').pathname}catch{continue}withPath++;p=p.replace(/^\/media\/(contact|workspace|achievement|wardogs|mawang-profile|mawang-archive)\/.*$/,'/media/$1/*').replace(/^\/api\/parts\/.*$/,'/api/parts/*');const key=p.startsWith('/api/')||p.startsWith('/media/')||p==='/'?p.split('/').slice(0,4).join('/')+' '+(event.response?.status||w.outcome||''):'other';groups[key]=(groups[key]||0)+1}
           console.log('AUDIT_LOGS '+JSON.stringify({http:telemetry.http,errors:telemetry.j.errors?.map(e=>({code:e.code,message:e.message})),resultKeys:Object.keys(result),rows:rows.length,withPath,groups,invocations:Object.keys(inv).length,firstRowKeys:Object.keys(rows[0]||{}),firstWorkerKeys:Object.keys(rows[0]?.$workers||rows[0]?.workers||{}),statistics:result.statistics}));
           NODE
