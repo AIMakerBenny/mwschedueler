@@ -431,6 +431,16 @@
     return saveRun;
   }
   window.mwsV55SaveNow=()=>writeCloudNow(true);
+  // Use only a version-checked baseline, not optimistic local edits.
+  window.mwsReadVerifiedPartsV1=parts=>{
+    if(mode!=='admin'||!currentAdmin||hydrating||!manifest?.parts)return null;
+    const out={};
+    for(const part of parts){
+      if(!loadedParts.has(part)||dirtyParts.has(part)||!baselineJson.has(part)||!Number.isInteger(Number(manifest.parts[part])))return null;
+      try{out[part]={part,version:Number(manifest.parts[part]),data:JSON.parse(baselineJson.get(part))}}catch(_){return null}
+    }
+    return out;
+  };
   window.addEventListener('online',()=>{if(mode==='admin'&&dirtyParts.size){if(manifest?.parts)queueCloudSave();else setSaveStatus('연결 복구 · 복구본을 보관했습니다. 새로고침 후 다시 저장해 주세요',true)}});
   function installSaveBridge(){
     const devicePersist=()=>{try{if(typeof mwsSaveDevicePrefs==='function')mwsSaveDevicePrefs(data)}catch(_){}if(mode==='admin')queueCloudSave();return true};

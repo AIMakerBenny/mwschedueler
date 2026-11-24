@@ -105,3 +105,14 @@ test('expired campaign detail, manual refresh and in-flight continuation cannot 
  d=>({expired:now>=d}),new Map(),()=>true,1,()=> 'same',()=>[campaign],()=>true,'one',new Map(),()=>null,()=>{},null,async()=>{requests++},{now:()=>now});
  await run(campaign,true);assert.equal(requests,0);
 });
+
+test('group persistence verifies the acknowledged server state without a second HTTP request',async()=>{
+ const src=read('assets/calendar-content-groups-v2.js');
+ const code=extract(src,'async function persistGroupChange(reason,','function renderOrphanRecovery');
+ const data={contentGroups:[{id:'g',name:'QA',color:'#123456'}],events:[{id:'e',contentGroupId:'g'}]};
+ let saves=0,reads=0,bad=false;
+ const root={__mwsAppReadyV130:true,mwsV55SaveNow:async()=>true,mwsReadVerifiedPartsV1:()=>({core:{data:{contentGroups:structuredClone(data.contentGroups)}},events:{data:[{id:'e',contentGroupId:bad?'wrong':'g'}]}})};
+ const run=new Function('root','document','saveData','groups','data','fetch','groupWriteStatus','toast','console',code+'\nreturn persistGroupChange')(root,{body:{dataset:{mwsMode:'admin'}}},()=>saves++,()=>data.contentGroups,data,async()=>{reads++;throw Error('unexpected read')},()=>{},()=>{},{error(){}});
+ assert.equal(await run('test',['e']),true);assert.equal(saves,1);assert.equal(reads,0);
+ bad=true;assert.equal(await run('test',['e']),false);assert.equal(reads,0);
+});
