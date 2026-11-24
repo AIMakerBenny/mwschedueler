@@ -18,11 +18,11 @@ function statement(sql,args=[]){return{bind:(...args)=>statement(sql,args),first
 const DB={prepare:sql=>statement(sql),batch:async statements=>{db.exec('BEGIN');try{const results=[];for(const s of statements)results.push(await s.run());db.exec('COMMIT');return results}catch(e){db.exec('ROLLBACK');throw e}}};
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jf2sAAAAASUVORK5CYII=','base64');
 const objects=new Map();
-const IMAGES={get:async key=>objects.has(key)?{body:new Uint8Array(png),size:png.length,httpEtag:'"fixture-'+key+'"',writeHttpMetadata:h=>h.set('content-type','image/png')}:null,head:async key=>objects.has(key)?{size:png.length}:null,put:async key=>{objects.set(key,true);return {key,uploaded:new Date(),size:png.length,etag:"a".repeat(32)}},delete:async key=>objects.delete(key),list:async()=>({objects:[],truncated:false})};
+const IMAGES={get:async key=>objects.has(key)?{body:new Blob([png]).stream(),size:png.length,httpEtag:'"fixture-'+key+'"',writeHttpMetadata:h=>h.set('content-type','image/png')}:null,head:async key=>objects.has(key)?{size:png.length}:null,put:async key=>{objects.set(key,true);return {key,uploaded:new Date(),size:png.length,etag:"a".repeat(32)}},delete:async key=>objects.delete(key),list:async()=>({objects:[],truncated:false})};
 const types={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.ico':'image/x-icon','.woff2':'font/woff2','.woff':'font/woff','.gif':'image/gif'};
 const ASSETS={fetch:async req=>{const u=new URL(req.url),name=u.pathname==='/'?'index.html':decodeURIComponent(u.pathname.slice(1)),file=path.resolve(root,name);if(!file.startsWith(root)||!statSafe(file))return new Response('not found',{status:404});return new Response(readFileSync(file),{headers:{'content-type':types[path.extname(file)]||'application/octet-stream','cache-control':'public, max-age=3600'}})}};
 function statSafe(file){try{return statSync(file).isFile()}catch{return false}}
-const env={DB,IMAGES,ASSETS,MWS_ENV:'local-qa'};
+const env={DB,IMAGES,ASSETS,MWS_ENV:'local-qa',MWS_MEDIA_BATCH_V5:'1'};
 const useCdn=process.env.MWS_QA_MEDIA_CDN==='1',cdnCalls=[];
 let cdnOrigin='';
 const cdnServer=createServer((req,res)=>{
@@ -98,7 +98,9 @@ try{
  const routes=['calendar','contacts','dashboard','memos','careerTimeline','achievements','mawangArchive','gameLadder','gameMultiDraw','contentPlanner','toolTier','toolMatrix','toolRelations','settings','calendar'];
  const nav=async list=>browser.evaluate('(async()=>{for(const id of '+JSON.stringify(list)+'){window.setTab(id);await new Promise(r=>setTimeout(r,450));if(!document.getElementById(id)?.classList.contains("active"))throw Error("route "+id)}return true})()');
  let before=calls.length;
- if(scale){
+ if(process.env.MWS_QA_V5_ATTRIBUTION==='1'){
+  for(let round=1;round<=2;round++){const start=calls.length;for(const route of [...routes,'friendFinder','contentApplications','calendar']){const off=calls.length;await nav([route]);await pause(400);const r=calls.slice(off);console.log('V5_ROUTE '+JSON.stringify({round,route,worker:summary(r),statuses:r.filter(x=>x.status>=400).map(x=>({path:x.path.replace(/\/media\/[^/]+\/.*/,'/media/*'),status:x.status}))}));}await pause(1800);console.log('V5_ROUND '+JSON.stringify({round,worker:summary(calls.slice(start)),errors}));}
+ }else if(scale){
   // A warm-cache fixture is created through actual same-origin browser reads.
   // No synthetic production data or external traffic.
   const media=contacts.map(c=>c.image);

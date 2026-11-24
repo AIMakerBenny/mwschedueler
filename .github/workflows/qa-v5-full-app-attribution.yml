@@ -1,0 +1,20 @@
+name: V5 full app request attribution fixture
+on:
+  push:
+    branches: [audit-v5-request-cause-nov24]
+permissions:
+  contents: read
+jobs:
+  fixture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      MWS_QA_OFFLINE: '1'
+      MWS_QA_V5_ATTRIBUTION: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Full app navigation twice on loopback only
+        run: bash scripts/mws-v3-network-only.sh node scripts/qa-request-budget-full-app-v2-browser.mjs
