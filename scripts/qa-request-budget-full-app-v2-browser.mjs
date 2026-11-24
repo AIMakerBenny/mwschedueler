@@ -88,8 +88,28 @@ try{
   await until(()=>browser.evaluate('(async()=>!!await (await caches.open("mws-public-versioned-media-v1")).match('+JSON.stringify(url)+'))()'),'Versioned portrait persisted');
  }
  const routes=['calendar','contacts','dashboard','memos','careerTimeline','achievements','mawangArchive','gameLadder','gameMultiDraw','contentPlanner','toolTier','toolMatrix','toolRelations','settings','calendar'];
- const nav=async list=>browser.evaluate('(async()=>{for(const id of '+JSON.stringify(list)+'){window.setTab(id);await new Promise(r=>setTimeout(r,120));if(!document.getElementById(id)?.classList.contains("active"))throw Error("route "+id)}return true})()');
+ const nav=async list=>browser.evaluate('(async()=>{for(const id of '+JSON.stringify(list)+'){window.setTab(id);await new Promise(r=>setTimeout(r,450));if(!document.getElementById(id)?.classList.contains("active"))throw Error("route "+id)}return true})()');
  let before=calls.length;
+ if(process.env.MWS_QA_LONG_IDLE==='1'){
+  const mode=process.env.MWS_QA_IDLE_MODE||'public',visibility=process.env.MWS_QA_IDLE_VISIBILITY||'visible';
+  if(mode==='admin'){
+   await browser.evaluate("document.querySelector('#mwsChangeModeBtn').click()");
+   await until(()=>browser.evaluate("document.querySelector('#mwsLoginForm').dataset.mode==='admin'"),'Admin login form');
+   await browser.evaluate("document.querySelector('#mwsLoginId').value='Majoku0216';document.querySelector('#mwsLoginPw').value='local-fixture-only';document.querySelector('#mwsLoginForm').requestSubmit()");
+   await until(()=>browser.evaluate("document.body.dataset.mwsMode==='admin'&&!document.body.classList.contains('mws-app-loading')&&!document.body.classList.contains('mws-gated')"),'Admin ready');
+   await nav(['calendar']);await pause(3000);
+  }
+  if(visibility==='hidden')await browser.openBackgroundTestTab();
+  assert.equal(await browser.evaluate('document.visibilityState'),visibility);
+  before=calls.length;
+  const started=performance.now();
+  for(const minutes of [1,5,10,30,60]){
+   await pause(Math.max(0,minutes*60000-(performance.now()-started)));
+   console.log('CALENDAR_IDLE '+JSON.stringify({mode,visibility,minutes,elapsedMs:Math.round(performance.now()-started),worker:summary(calls.slice(before))}));
+  }
+  assert.deepEqual(calls.slice(before),[],'Idle calendar emitted a Worker request');
+  console.log('LONG_IDLE_OK');
+ }else{
  const routeStats=[];
  for(const route of routes){const offset=calls.length;await nav([route]);const dom=await browser.evaluate("(()=>{const root=document.querySelector('.section.active');return {canonical:root?.querySelectorAll('img[src*=\"/media/contact/\"]').length||0,deferred:root?.querySelectorAll('img[data-mws-deferred-contact-src]').length||0,cdn:root?.querySelectorAll('img[data-mws-cdn-contact-source]').length||0}})()");routeStats.push({route,worker:summary(calls.slice(offset)),dom})}
  await pause(700);const cold=calls.slice(before);console.log('FULL_APP_COLD_NAV '+JSON.stringify(summary(cold)));console.log('FULL_APP_ROUTE_BREAKDOWN '+JSON.stringify(routeStats));
@@ -121,28 +141,8 @@ try{
  assert(live.filter(r=>r.path==='/api/soop/live-batch').length>=1&&live.filter(r=>r.path==='/api/soop/live-batch').length<=2,JSON.stringify(summary(live)));
  assert.equal(live.filter(r=>r.path==='/api/soop/proxy').length,0);
  before=calls.length;
- if(process.env.MWS_QA_LONG_IDLE==='1'){
-  const mode=process.env.MWS_QA_IDLE_MODE||'public',visibility=process.env.MWS_QA_IDLE_VISIBILITY||'visible';
-  if(mode==='admin'){
-   await browser.evaluate("document.querySelector('#mwsChangeModeBtn').click()");
-   await until(()=>browser.evaluate("document.querySelector('#mwsLoginForm').dataset.mode==='admin'"),'Admin login form');
-   await browser.evaluate("document.querySelector('#mwsLoginId').value='Majoku0216';document.querySelector('#mwsLoginPw').value='local-fixture-only';document.querySelector('#mwsLoginForm').requestSubmit()");
-   await until(()=>browser.evaluate("document.body.dataset.mwsMode==='admin'&&!document.body.classList.contains('mws-app-loading')&&!document.body.classList.contains('mws-gated')"),'Admin ready');
-   await nav(['calendar']);await pause(3000);
-  }
-  if(visibility==='hidden')await browser.openBackgroundTestTab();
-  assert.equal(await browser.evaluate('document.visibilityState'),visibility);
-  before=calls.length;
-  const started=performance.now();
-  for(const minutes of [1,5,10,30,60]){
-   await pause(Math.max(0,minutes*60000-(performance.now()-started)));
-   console.log('CALENDAR_IDLE '+JSON.stringify({mode,visibility,minutes,elapsedMs:Math.round(performance.now()-started),worker:summary(calls.slice(before))}));
-  }
-  assert.deepEqual(calls.slice(before),[],'Idle calendar emitted a Worker request');
-  console.log('LONG_IDLE_OK');
- }else await pause(1200);
+ await pause(1200);
  const idle=calls.slice(before);assert.equal(idle.filter(common).length,0);assert.equal(idle.filter(r=>r.path==='/api/soop/live-batch').length,0);
- if(process.env.MWS_QA_LONG_IDLE!=='1'){
  // Register a synthetic campaign after baseline navigation; the actual UI
  // module and Worker aggregate both posts and retain results across reload.
  const campaign={id:'app-qa',title:'Application fixture',deadline:new Date(Date.now()+3600000).toISOString(),entries:[{url:'https://www.sooplive.com/station/host1/post/1'},{url:'https://www.sooplive.com/station/host2/post/2'}]};

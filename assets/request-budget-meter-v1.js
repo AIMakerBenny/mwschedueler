@@ -27,7 +27,8 @@ function createMeter(origin){
  function observe(entry){
   const group=classify(entry);if(!group)return;
   const row=totals.get(group)||{network:0,cache:0,unknown:0};
-  if(entry.transferSize>0)row.network++;
+  if(entry.workerStart>0)row.unknown++;
+  else if(entry.transferSize>0)row.network++;
   else if(entry.transferSize===0&&(entry.decodedBodySize>0||entry.deliveryType==='cache'))row.cache++;
   else row.unknown++;
   totals.set(group,row);
@@ -48,20 +49,53 @@ function markCategory(){
  if(categories.at(-1)?.category!==category)categories.push({at:performance.now(),category});
 }
 window.addEventListener('mws:workspace-tab-v1',markCategory);
+// Session-local fingerprints support equality checks without retaining URLs or identifiers.
+const fingerprints=new Map(),pendingMethods=new Map();
+let salt=0;
+function fingerprint(value){
+ let hash=2166136261^salt;
+ for(let i=0;i<value.length;i++)hash=Math.imul(hash^value.charCodeAt(i),16777619);
+ return hash>>>0;
+}
+function markMethod(raw,method){
+ if(trace.start===null||trace.end!==null)return;
+ try{
+  const url=new URL(raw,location.href);url.hash='';
+  const id=fingerprint(url.href);
+  if(pendingMethods.size>=2000&&!pendingMethods.has(id))pendingMethods.delete(pendingMethods.keys().next().value);
+  const queue=pendingMethods.get(id)||[];
+  if(queue.length>=20)queue.shift();
+  queue.push({method:/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)$/i.test(method)?method.toUpperCase():null,at:performance.now()});
+  pendingMethods.set(id,queue);
+ }catch(_){}
+}
+const originalFetch=window.fetch;
+if(originalFetch)window.fetch=function(input,options){
+ if(trace.start!==null&&trace.end===null)markMethod(input?.url??input,options?.method||input?.method||'GET');
+ return originalFetch.apply(this,arguments);
+};
 function record(entry){
  meter.observe(entry);
  if(trace.start===null||entry.startTime<trace.start||trace.end!==null&&entry.startTime>trace.end)return;
- const group=meter.classify(entry);
- if(!group)return;
+ const workerRoute=meter.classify(entry);
  const url=new URL(entry.name,location.href);
+ if(!['https:','http:'].includes(url.protocol))return;
+ const group=workerRoute||(url.origin===location.origin?'정적 리소스':'외부 리소스');
  const category=categories.findLast(item=>item.at<=entry.startTime)?.category||'unknown';
  const kind=entry.workerStart>0?'service-worker':entry.deliveryType==='cache'?'browser-cache':entry.transferSize>0?'network':'unknown';
  // Only route families are retained. Raw paths, query strings and headers can identify people.
  const route=['/api/soop/live-batch','/api/soop/live-thumb','/api/soop/application-sync','/api/soop/comment-batch','/api/calendar-startup','/api/parts-batch','/api/save','/api/manifest','/api/bootstrap','/api/health','/','/index.html'].includes(url.pathname)?url.pathname:group;
+ const id=fingerprint(url.href),duplicate=fingerprints.has(id);
+ if(fingerprints.size>=4000&&!duplicate)fingerprints.delete(fingerprints.keys().next().value);
+ fingerprints.set(id,true);
+ const queue=pendingMethods.get(id);
+ const index=queue?.findIndex(x=>Math.abs(x.at-entry.startTime)<1000)??-1;
+ const method=index>=0?queue.splice(index,1)[0].method:['img','css','script','link','iframe'].includes(entry.initiatorType)?'GET':null;
+ if(!queue?.length)pendingMethods.delete(id);
  const key=category+' · '+route;
  trace.counts.set(key,(trace.counts.get(key)||0)+1);
  trace.total++;
- trace.rows.push({time:new Date(performance.timeOrigin+entry.startTime).toISOString(),category,route,feature:group,initiator:entry.initiatorType,status:entry.responseStatus||null,delivery:kind,workerExecution:null,bytes:entry.encodedBodySize||null,durationMs:Math.round(entry.duration)});
+ trace.rows.push({time:new Date(performance.timeOrigin+entry.startTime).toISOString(),category,route,feature:group,initiator:entry.initiatorType,method,duplicate,workerRoute:!!workerRoute,retry:null,automatic:null,status:entry.responseStatus||null,delivery:kind,workerExecution:null,bytes:entry.encodedBodySize||null,durationMs:Math.round(entry.duration)});
  if(trace.rows.length>2000)trace.rows.shift();
 }
 try{
@@ -82,9 +116,10 @@ function bind(){
   for(const group of r.groups){const row=document.createElement('div');row.className='space';const name=document.createElement('span'),counts=document.createElement('span');name.textContent=group.name;counts.className='muted small';counts.textContent=group.network.toLocaleString()+' / '+group.cache.toLocaleString()+' / '+group.unknown.toLocaleString();row.append(name,counts);out.appendChild(row)}
  }
  const controls=document.getElementById('mwsTraceControls');
- const status=document.createElement('p');
- const reset=()=>{trace.start=null;trace.end=null;trace.total=0;trace.counts.clear();trace.rows.length=0;categories.length=0};
+ const status=document.createElement('p'),history=document.createElement('pre');history.style.cssText='max-height:16rem;overflow:auto;white-space:pre-wrap;font-size:.8rem';
+ const reset=()=>{fingerprints.clear();pendingMethods.clear();salt=crypto.getRandomValues(new Uint32Array(1))[0];trace.start=null;trace.end=null;trace.total=0;trace.counts.clear();trace.rows.length=0;categories.length=0};
  function update(){
+  history.textContent=trace.rows.slice(-30).map(row=>row.time.slice(11,19)+' UTC · '+row.category+' · '+(row.method||'?')+' '+row.route+' · '+(row.status||'?')+' · '+row.delivery+' · '+row.durationMs+'ms').join('\n');
   const minutes=trace.start===null?0:((trace.end??performance.now())-trace.start)/60000;
   status.textContent=(trace.start===null?'대기':trace.end===null?'측정 중':'종료')+' · '+trace.total+'건 · 분당 '+(minutes?(trace.total/minutes).toFixed(1):0)+'건';
  }
@@ -94,7 +129,7 @@ function bind(){
   action('측정 종료',()=>{if(trace.start!==null)trace.end??=performance.now()});
   action('초기화',reset);
   action('JSON 내보내기',()=>{const blob=new Blob([JSON.stringify({total:trace.total,counts:Object.fromEntries(trace.counts),latest2000:trace.rows},null,2)],{type:'application/json'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='mws-network.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)});
-  controls.append(status);update();
+  controls.append(status,history);update();
   panel.querySelector('[data-request-budget-refresh]')?.addEventListener('click',update);
  }
  details.addEventListener('toggle',render);panel.querySelector('[data-request-budget-refresh]')?.addEventListener('click',render);

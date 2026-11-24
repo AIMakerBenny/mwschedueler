@@ -254,6 +254,14 @@ async function readSource(source,canContinue,manual=false){
  return result;
 }
 async function readCampaign(c,canContinue,manual){
+ const load=()=>fetchCampaign(c,canContinue,manual);
+ const shared=window.mwsPublicReadSharingV1;
+ if(!shared)return load();
+ const key='campaign:'+document.body.dataset.mwsMode+':'+c.id+':'+signature(c);
+ const result=await shared.read(key,{ttl:60000,force:manual,load,valid:s=>s?.complete===true&&s.signature===signature(c)&&Date.now()-Date.parse(s.checkedAt)<60000});
+ return result.value;
+}
+async function fetchCampaign(c,canContinue,manual){
  // Server owns continuation and final persistence. Legacy endpoint fallback
  // only for unsupported sizes or older server versions, never expired posts.
  for(let i=0;i<600&&canContinue();i++){

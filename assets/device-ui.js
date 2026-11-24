@@ -98,6 +98,11 @@ queue();
 const frame=document.querySelector('#gameMajoku .majoku-castle-frame');
 if(!frame)return;
 
+function openCastleFrame(){
+ if(frame.closest('.section')?.classList.contains('active')&&!frame.hasAttribute('src')&&frame.dataset.mwsFrameSrc)frame.src=frame.dataset.mwsFrameSrc;
+}
+window.addEventListener('mws:workspace-tab-v1',openCastleFrame);
+openCastleFrame();
 function frameDoc(){try{return frame.contentDocument||frame.contentWindow?.document||null}catch(_){return null}}
 function cleanLegacyRecords(doc){
  if(!doc)return false;
