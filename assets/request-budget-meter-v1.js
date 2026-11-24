@@ -37,11 +37,35 @@ function createMeter(origin){
   const sum=key=>groups.reduce((n,row)=>n+row[key],0);
   return {network:sum('network'),cache:sum('cache'),unknown:sum('unknown'),groups};
  }
- return {observe,report};
+ return {observe,report,classify};
 }
 const meter=createMeter(location.origin);let supported=false;
+const trace={start:null,end:null,rows:[],counts:new Map(),total:0};
+const categories=[];
+function markCategory(){
+ if(trace.start===null||trace.end!==null)return;
+ const category=document.querySelector('.section.active')?.id||'unknown';
+ if(categories.at(-1)?.category!==category)categories.push({at:performance.now(),category});
+}
+window.addEventListener('mws:workspace-tab-v1',markCategory);
+function record(entry){
+ meter.observe(entry);
+ if(trace.start===null||entry.startTime<trace.start||trace.end!==null&&entry.startTime>trace.end)return;
+ const group=meter.classify(entry);
+ if(!group)return;
+ const url=new URL(entry.name,location.href);
+ const category=categories.findLast(item=>item.at<=entry.startTime)?.category||'unknown';
+ const kind=entry.workerStart>0?'service-worker':entry.deliveryType==='cache'?'browser-cache':entry.transferSize>0?'network':'unknown';
+ // Only route families are retained. Raw paths, query strings and headers can identify people.
+ const route=['/api/soop/live-batch','/api/soop/live-thumb','/api/soop/application-sync','/api/soop/comment-batch','/api/calendar-startup','/api/parts-batch','/api/save','/api/manifest','/api/bootstrap','/api/health','/','/index.html'].includes(url.pathname)?url.pathname:group;
+ const key=category+' · '+route;
+ trace.counts.set(key,(trace.counts.get(key)||0)+1);
+ trace.total++;
+ trace.rows.push({time:new Date(performance.timeOrigin+entry.startTime).toISOString(),category,route,feature:group,initiator:entry.initiatorType,status:entry.responseStatus||null,delivery:kind,workerExecution:null,bytes:entry.encodedBodySize||null,durationMs:Math.round(entry.duration)});
+ if(trace.rows.length>2000)trace.rows.shift();
+}
 try{
- const observer=new PerformanceObserver(list=>{for(const entry of list.getEntries())meter.observe(entry)});
+ const observer=new PerformanceObserver(list=>{for(const entry of list.getEntries())record(entry)});
  observer.observe({type:'resource',buffered:true});supported=true;
 }catch(_){}
 try{for(const entry of performance.getEntriesByType('navigation'))meter.observe(entry)}catch(_){}
@@ -56,6 +80,22 @@ function bind(){
   out.replaceChildren();
   const summary=document.createElement('p');summary.className='muted small';summary.textContent=r.supported?'네트워크 전송 '+r.network.toLocaleString()+'건 · 캐시 '+r.cache.toLocaleString()+'건 · 판별 불가 '+r.unknown.toLocaleString()+'건':'이 브라우저에서는 세부 측정이 지원되지 않습니다.';out.appendChild(summary);
   for(const group of r.groups){const row=document.createElement('div');row.className='space';const name=document.createElement('span'),counts=document.createElement('span');name.textContent=group.name;counts.className='muted small';counts.textContent=group.network.toLocaleString()+' / '+group.cache.toLocaleString()+' / '+group.unknown.toLocaleString();row.append(name,counts);out.appendChild(row)}
+ }
+ const controls=document.getElementById('mwsTraceControls');
+ const status=document.createElement('p');
+ const reset=()=>{trace.start=null;trace.end=null;trace.total=0;trace.counts.clear();trace.rows.length=0;categories.length=0};
+ function update(){
+  const minutes=trace.start===null?0:((trace.end??performance.now())-trace.start)/60000;
+  status.textContent=(trace.start===null?'대기':trace.end===null?'측정 중':'종료')+' · '+trace.total+'건 · 분당 '+(minutes?(trace.total/minutes).toFixed(1):0)+'건';
+ }
+ function action(label,fn){const b=document.createElement('button');b.type='button';b.className='ghost small';b.textContent=label;b.onclick=()=>{fn();update()};controls.append(b)}
+ if(controls){
+  action('측정 시작',()=>{if(trace.start!==null&&trace.end===null)return;reset();trace.start=performance.now();markCategory()});
+  action('측정 종료',()=>{if(trace.start!==null)trace.end??=performance.now()});
+  action('초기화',reset);
+  action('JSON 내보내기',()=>{const blob=new Blob([JSON.stringify({total:trace.total,counts:Object.fromEntries(trace.counts),latest2000:trace.rows},null,2)],{type:'application/json'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='mws-network.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000)});
+  controls.append(status);update();
+  panel.querySelector('[data-request-budget-refresh]')?.addEventListener('click',update);
  }
  details.addEventListener('toggle',render);panel.querySelector('[data-request-budget-refresh]')?.addEventListener('click',render);
  window.addEventListener('mws:app-ready',syncMode);

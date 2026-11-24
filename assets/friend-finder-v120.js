@@ -254,9 +254,9 @@ function liveThumbCandidates(bno,stamp=liveThumbStamp()){
   return [
     `https://liveimg.sooplive.com/m/${id}?mws=${stamp}`,
     `https://liveimg.sooplive.co.kr/m/${id}?mws=${stamp}`,
-    `/api/soop/live-thumb?bno=${id}&v=${stamp}`,
     `https://liveimg.sooplive.com/m/${id}`,
-    `https://liveimg.sooplive.co.kr/m/${id}`
+    `https://liveimg.sooplive.co.kr/m/${id}`,
+    `/api/soop/live-thumb?bno=${id}`
   ];
 }
 function livePlayUrl(id,bno){return `https://play.sooplive.com/${encodeURIComponent(id)}${bno?`/${encodeURIComponent(bno)}`:''}`}
@@ -298,7 +298,7 @@ function setLiveImage(img,screen,bno,stamp=liveThumbStamp()){
   const preferred=thumbPreferred.get(bno);if(Number.isInteger(preferred)&&preferred>0&&preferred<candidates.length){const url=candidates.splice(preferred,1)[0];candidates.unshift(url)}
   let index=0;
   screen.classList.remove('is-image-fallback');
-  img.onload=()=>{screen.classList.remove('is-image-fallback');const chosen=liveThumbCandidates(bno,stamp).indexOf(candidates[index]);if(chosen>=0){if(thumbPreferred.size>=300)thumbPreferred.delete(thumbPreferred.keys().next().value);thumbPreferred.set(bno,chosen)}};
+  img.onload=()=>{screen.classList.remove('is-image-fallback');const chosen=liveThumbCandidates(bno,stamp).indexOf(candidates[index]);if(chosen>=0&&!candidates[index].startsWith('/api/')){if(thumbPreferred.size>=300)thumbPreferred.delete(thumbPreferred.keys().next().value);thumbPreferred.set(bno,chosen)}};
   img.onerror=()=>{
     index+=1;
     if(index<candidates.length){img.src=candidates[index];return}

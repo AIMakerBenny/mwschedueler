@@ -31,7 +31,7 @@ window.addEventListener('error',event=>{
 </script>
 
 <title>마왕 스케줄러</title>
-<script src="assets/request-budget-meter-v1.js?v=2"></script>
+<script src="assets/request-budget-meter-v1.js?v=3"></script>
 <script id="mws-motion-preference">
 (()=>{const key='mws-screen-motion-v1',system=matchMedia('(prefers-reduced-motion: reduce)');let mode='system';try{const saved=localStorage.getItem(key);if(['full','reduced','system'].includes(saved))mode=saved}catch(_){}const apply=()=>{const reduced=mode==='reduced'||(mode==='system'&&system.matches);document.documentElement.dataset.mwsMotion=reduced?'reduced':'full';window.dispatchEvent(new Event('mws-motion-change'))};window.mwsMotionReduced=()=>document.documentElement.dataset.mwsMotion==='reduced';apply();system.addEventListener('change',apply);document.addEventListener('DOMContentLoaded',()=>{const select=document.getElementById('mwsScreenMotion');if(!select)return;select.value=mode;select.addEventListener('change',()=>{mode=select.value;try{localStorage.setItem(key,mode)}catch(_){}apply()})})})();
 </script>
@@ -2102,6 +2102,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
           <details id="mwsRequestBudgetDetails">
             <summary>네트워크 요청 진단</summary>
             <p class="muted small">현재 탭에서 관측된 전송 / 캐시 / 판별 불가 건수입니다. 계정 전체 Worker 실행량과는 다르며 Cloudflare 대시보드에서 실제 한도를 확인하세요.</p>
+            <div id="mwsTraceControls"></div>
             <div id="mwsRequestBudgetOutput" aria-live="polite"></div>
             <button type="button" class="ghost small" data-request-budget-refresh>측정값 확인</button>
           </details>

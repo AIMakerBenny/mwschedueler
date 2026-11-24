@@ -119,7 +119,15 @@ try{
  before=calls.length;await nav(['contacts','friendFinder']);await pause(3000);await nav(['calendar']);await pause(500);const live=calls.slice(before);console.log('FULL_APP_FRIEND_NAV '+JSON.stringify(summary(live)));
  assert(live.filter(r=>r.path==='/api/soop/live-batch').length>=1&&live.filter(r=>r.path==='/api/soop/live-batch').length<=2,JSON.stringify(summary(live)));
  assert.equal(live.filter(r=>r.path==='/api/soop/proxy').length,0);
- before=calls.length;await pause(1200);const idle=calls.slice(before);assert.equal(idle.filter(common).length,0);assert.equal(idle.filter(r=>r.path==='/api/soop/live-batch').length,0);
+ before=calls.length;
+ if(process.env.MWS_QA_LONG_IDLE==='1'){
+  const started=performance.now();
+  for(const minutes of [1,5,10,30,60]){
+   await pause(Math.max(0,minutes*60000-(performance.now()-started)));
+   console.log('PUBLIC_CALENDAR_IDLE '+JSON.stringify({minutes,elapsedMs:Math.round(performance.now()-started),worker:summary(calls.slice(before))}));
+  }
+ }else await pause(1200);
+ const idle=calls.slice(before);assert.equal(idle.filter(common).length,0);assert.equal(idle.filter(r=>r.path==='/api/soop/live-batch').length,0);
  // Register a synthetic campaign after baseline navigation; the actual UI
  // module and Worker aggregate both posts and retain results across reload.
  const campaign={id:'app-qa',title:'Application fixture',deadline:new Date(Date.now()+3600000).toISOString(),entries:[{url:'https://www.sooplive.com/station/host1/post/1'},{url:'https://www.sooplive.com/station/host2/post/2'}]};

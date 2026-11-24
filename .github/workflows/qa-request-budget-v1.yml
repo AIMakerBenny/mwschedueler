@@ -69,3 +69,16 @@ jobs:
           node scripts/qa-mawang-archive-v1-browser.mjs
           node scripts/qa-achievement-exhibition-v1-browser.mjs
           node scripts/qa-first-paint-guard-v1-browser.mjs
+  calendar-idle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    env:
+      MWS_QA_OFFLINE: '1'
+      MWS_QA_LONG_IDLE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Measure foreground public calendar idle with a local Worker
+        run: node scripts/qa-request-budget-full-app-v2-browser.mjs

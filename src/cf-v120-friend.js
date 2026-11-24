@@ -134,7 +134,7 @@ async function fetchLiveThumb(target){
     if(!res.ok||!type.startsWith('image/'))return null;
     return new Response(res.body,{status:200,headers:{
       'content-type':type,
-      'cache-control':'public, max-age=5, s-maxage=10',
+      'cache-control':'public, max-age=60, s-maxage=60',
       'x-content-type-options':'nosniff'
     }});
   }catch(_){return null}

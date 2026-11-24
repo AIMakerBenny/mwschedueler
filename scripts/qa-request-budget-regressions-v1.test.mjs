@@ -140,7 +140,8 @@ test('contact image URLs are withheld until observation, external images remain 
 test('direct SOOP thumbnail is attempted before Worker fallback',()=>{
  const code=extract(friend,'function liveThumbCandidates','function livePlayUrl');
  const urls=new Function(code+'\nreturn liveThumbCandidates')()('123','1');
- assert(urls[0].startsWith('https://liveimg.sooplive.com/'));assert(urls[2].startsWith('/api/soop/live-thumb?'));
+ assert(urls[0].startsWith('https://liveimg.sooplive.com/'));assert.equal(urls.at(-1),'/api/soop/live-thumb?bno=123');
+ assert(urls.slice(0,-1).every(url=>url.startsWith('https://liveimg.')));
 });
 
 test('Friend Finder reacts to actual workspace transitions, not only sidebar clicks',()=>{
