@@ -1,16 +1,18 @@
 name: Request V3 isolated 60-minute idle
 on:
   workflow_dispatch:
+  push:
+    branches: [request-v3-isolated-candidate-nov24]
 permissions:
   contents: read
 jobs:
   real-idle:
-    if: github.ref == 'refs/heads/request-v3-isolated-candidate-nov24'
+    if: github.ref == 'refs/heads/request-v3-isolated-candidate-nov24' && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[idle-60]'))
     strategy:
       fail-fast: false
       matrix:
         mode: [public, admin]
-        visibility: [visible, hidden]
+        visibility: [visible]
     runs-on: ubuntu-latest
     timeout-minutes: 75
     env:
