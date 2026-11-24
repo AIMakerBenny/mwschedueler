@@ -1,6 +1,9 @@
 name: Deploy Cloudflare Production
 
 on:
+  push:
+    branches: [cloudflare-production]
+    paths: ['.github/production-release.json']
   workflow_dispatch:
     inputs:
       full_live:
@@ -11,6 +14,7 @@ on:
 permissions:
   contents: read
   statuses: write
+  actions: read
 
 concurrency:
   group: cloudflare-production
@@ -18,7 +22,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.ref == 'refs/heads/cloudflare-production'
+    if: github.ref == 'refs/heads/cloudflare-production' && (github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'release: request budget v1'))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -29,6 +33,28 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+
+      - name: Check explicit release record
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const release=JSON.parse(fs.readFileSync('.github/production-release.json','utf8'));
+          const response=await fetch('https://api.github.com/repos/'+process.env.GITHUB_REPOSITORY+'/actions/runs/'+release.qaRun,{headers:{Authorization:'Bearer '+process.env.GH_TOKEN,Accept:'application/vnd.github+json'}});
+          if(!response.ok)throw Error('Cannot verify offline QA');
+          const run=await response.json();
+          if(run.conclusion!=='success'||run.head_sha!==release.candidate||run.name!=='Request budget offline QA')throw Error('Offline QA does not match approved release');
+          NODE
+
+      - name: Block production access during pre-deployment checks
+        run: |
+          sudo cp /etc/hosts /tmp/mws-hosts-preflight
+          printf '\n127.0.0.1 mawang-scheduler.majoku.workers.dev\n::1 mawang-scheduler.majoku.workers.dev\n' | sudo tee -a /etc/hosts >/dev/null
+          node -e "require('node:dns').lookup('mawang-scheduler.majoku.workers.dev',{all:true},(e,a)=>{if(e||!a.length||a.some(x=>!['127.0.0.1','::1'].includes(x.address)))process.exit(1)})"
+          echo 'MWS_QA_OFFLINE=1' >> "$GITHUB_ENV"
+          echo 'NO_PROXY=localhost,127.0.0.1,mawang-scheduler.majoku.workers.dev' >> "$GITHUB_ENV"
 
       - name: Run cumulative phase audits
         run: node scripts/run-current-full-integration-audit.mjs
@@ -390,6 +416,11 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      - name: Restore network for explicit production release
+        run: |
+          sudo cp /tmp/mws-hosts-preflight /etc/hosts
+          echo 'MWS_QA_OFFLINE=0' >> "$GITHUB_ENV"
 
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3

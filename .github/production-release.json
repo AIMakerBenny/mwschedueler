@@ -1,0 +1,7 @@
+{
+  "version": "request-budget-v1",
+  "candidate": "d405dc7a8a08d43ecaefdd22f2fa25688001ea0f",
+  "qaRun": 45308626778,
+  "previousProduction": "0288c1120f0f5006f20baab51378d54532c6233f",
+  "smokeRequests": 3
+}
