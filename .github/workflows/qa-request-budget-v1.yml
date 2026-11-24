@@ -43,6 +43,8 @@ jobs:
         run: node scripts/qa-request-budget-navigation-v2-browser.mjs
       - name: Full application Worker and browser request budget
         run: node scripts/qa-request-budget-full-app-v2-browser.mjs
+      - name: Public media CDN direct reads and Worker fallback
+        run: MWS_QA_MEDIA_CDN=1 node scripts/qa-request-budget-full-app-v2-browser.mjs
       - name: Calendar group ribbons across visible month boundaries
         run: |
           node --test scripts/qa-calendar-continuous-series-v1.test.mjs

@@ -6,8 +6,22 @@ const DISPLAY_VERSION='1.6.21';
 const APP_LABEL=`Mawang Scheduler v ${DISPLAY_VERSION}`;
 const BUILD_LABEL=`MWS V ${APP_VERSION}`;
 
-function normalizeVersionHtml(html){
+// Opt-in only: never treat the legacy r2.dev development endpoint as a production CDN.
+export function publicMediaOrigin(env){
+  try{
+    const raw=String(env?.MWS_PUBLIC_MEDIA_CDN_ORIGIN||'').trim();
+    if(!raw)return '';
+    const u=new URL(raw),host=u.hostname.toLowerCase();
+    const local=env?.MWS_ENV==='local-qa'&&u.protocol==='http:'&&host==='127.0.0.1';
+    if(!local&&(u.protocol!=='https:'||!host.includes('.')||host==='r2.dev'||host.endsWith('.r2.dev')||host.endsWith('.workers.dev')))return '';
+    if(u.username||u.password||u.pathname!=='/'||u.search||u.hash)return '';
+    return u.origin;
+  }catch(_){return ''}
+}
+function normalizeVersionHtml(html,env){
   let out=String(html||'');
+  const mediaOrigin=publicMediaOrigin(env);
+  if(mediaOrigin)out=out.replace(/<\/head>/i,'<meta name="mws-public-media-origin" content="'+mediaOrigin+'">\n</head>');
   out=out.replace(/data-build-version=["'][^"']*["']/i,`data-build-version="${BUILD_LABEL}"`);
   out=out.replace(/(<div\s+id=["']mwsBuildVersion["'][^>]*>)[\s\S]*?(<\/div>)/i,`$1${APP_LABEL}$2`);
 
@@ -23,7 +37,7 @@ function normalizeVersionHtml(html){
     out=out.replace(re,'');
   }
   if(!out.includes('post-login-runtime-v130.js')){
-    out=out.replace(/<\/body>/i,'<script src="assets/post-login-runtime-v130.js?v=1.4.0-phase176-workspace-ui&save-queue-v2=1&workspace-nav-v1=1&hall-v3=1&firstpaint-guard=1&achievement-cache-read=2&contactgroup178=1&modalmotionv2=1&shell-perf=1&career=1&firstpaint=1&peoplehover=1&dashboardnav=1&notebook-tools=1&contact-frequency=1&sidebar-stable=1&mawang-archive=1&request-budget=6"></script>\n</body>');
+    out=out.replace(/<\/body>/i,'<script src="assets/post-login-runtime-v130.js?v=1.4.0-phase176-workspace-ui&save-queue-v2=1&workspace-nav-v1=1&hall-v3=1&firstpaint-guard=1&achievement-cache-read=2&contactgroup178=1&modalmotionv2=1&shell-perf=1&career=1&firstpaint=1&peoplehover=1&dashboardnav=1&notebook-tools=1&contact-frequency=1&sidebar-stable=1&mawang-archive=1&request-budget=7"></script>\n</body>');
   }
   return out;
 }
@@ -335,7 +349,7 @@ export default {
     const contentType=response.headers.get('content-type')||'';
     if(!contentType.toLowerCase().includes('text/html'))return response;
 
-    const html=normalizeVersionHtml(await response.text());
+    const html=normalizeVersionHtml(await response.text(),env);
     const headers=new Headers(response.headers);
     headers.delete('content-length');
     headers.set('cache-control','no-store, max-age=0');

@@ -22,6 +22,15 @@ const types={'.html':'text/html; charset=utf-8','.js':'application/javascript; c
 const ASSETS={fetch:async req=>{const u=new URL(req.url),name=u.pathname==='/'?'index.html':decodeURIComponent(u.pathname.slice(1)),file=path.resolve(root,name);if(!file.startsWith(root)||!statSafe(file))return new Response('not found',{status:404});return new Response(readFileSync(file),{headers:{'content-type':types[path.extname(file)]||'application/octet-stream','cache-control':'public, max-age=3600'}})}};
 function statSafe(file){try{return statSync(file).isFile()}catch{return false}}
 const env={DB,IMAGES,ASSETS,MWS_ENV:'local-qa'};
+const useCdn=process.env.MWS_QA_MEDIA_CDN==='1',cdnCalls=[];
+let cdnOrigin='';
+const cdnServer=createServer((req,res)=>{
+ const key=decodeURIComponent(new URL(req.url,'http://127.0.0.1').pathname.slice(1));
+ cdnCalls.push(key);
+ if(!objects.has(key)||key.startsWith('contacts/qa0/')||key==='achievements/image0'){res.writeHead(404,{'access-control-allow-origin':'*'}).end();return}
+ res.writeHead(200,{'content-type':'image/png','access-control-allow-origin':'*','cache-control':'public,max-age=3600'});
+ res.end(req.method==='HEAD'?undefined:png);
+});
 const upstream=[];
 const originalFetch=globalThis.fetch;
 globalThis.fetch=async input=>{
@@ -51,7 +60,7 @@ const server=createServer(async(req,res)=>{
   const counted=workerFirst(u.pathname),response=await (counted?worker.fetch(request,env,ctx):ASSETS.fetch(request));
   if(counted)calls.push({path:u.pathname,method,status:response.status});
   res.statusCode=response.status;for(const [key,value] of response.headers)if(!['content-length','content-encoding','transfer-encoding'].includes(key))res.setHeader(key,value);
-  if(u.pathname==='/'||u.pathname==='/index.html')res.setHeader('content-security-policy',csp);
+  if(u.pathname==='/'||u.pathname==='/index.html')res.setHeader('content-security-policy',useCdn?csp.replace("connect-src 'self'","connect-src 'self' "+cdnOrigin).replace("img-src 'self'","img-src 'self' "+cdnOrigin):csp);
   res.end(method==='HEAD'?undefined:Buffer.from(await response.arrayBuffer()));
  }catch(e){errors.push(String(e));res.writeHead(500).end('fixture error')}
 });
@@ -61,6 +70,7 @@ async function until(fn,label,attempts=160){for(let i=0;i<attempts;i++){if(await
 const summary=list=>Object.fromEntries([...new Set(list.map(r=>r.path.replace(/^\/media\/contact\/.*/,'/media/contact/*').replace(/^\/media\/achievement\/.*/,'/media/achievement/*')))].sort().map(p=>[p,list.filter(r=>r.path.replace(/^\/media\/contact\/.*/,'/media/contact/*').replace(/^\/media\/achievement\/.*/,'/media/achievement/*')===p).length]));
 const common=r=>r.path==='/api/calendar-startup'||r.path==='/api/manifest'||r.path==='/api/bootstrap'||r.path==='/api/parts-batch'||r.path.startsWith('/api/parts/');
 try{
+ if(useCdn){await new Promise(r=>cdnServer.listen(0,'127.0.0.1',r));cdnOrigin=base+':'+cdnServer.address().port;env.MWS_PUBLIC_MEDIA_CDN_ORIGIN=cdnOrigin}
  await new Promise(r=>server.listen(0,'127.0.0.1',r));browser=await launchCalendarBrowser(dir);
  await browser.navigate(base+':'+server.address().port+'/',1366,768);
  await until(()=>browser.evaluate("(()=>{document.querySelector('#mwsAnnouncementDialog[open] .mws-notice-close')?.click();if(document.body.classList.contains('mws-gated')){document.querySelector('#mwsModePublic')?.click();document.querySelector('#mwsLoginSubmit')?.click()}return !!window.__mwsAppReadyV130&&document.body.dataset.mwsMode==='public'&&!document.body.classList.contains('mws-gated')&&!document.body.classList.contains('mws-app-loading')})()"),'Full app public readiness');
@@ -71,6 +81,15 @@ try{
  const nav=async list=>browser.evaluate('(async()=>{for(const id of '+JSON.stringify(list)+'){window.setTab(id);await new Promise(r=>setTimeout(r,120));if(!document.getElementById(id)?.classList.contains("active"))throw Error("route "+id)}return true})()');
  let before=calls.length;await nav(routes);await pause(700);const cold=calls.slice(before);console.log('FULL_APP_COLD_NAV '+JSON.stringify(summary(cold)));
  assert.equal(cold.filter(common).length,0);
+ if(useCdn){
+  assert(cdnCalls.some(key=>key.startsWith('contacts/')),JSON.stringify(cdnCalls));
+  assert(cdnCalls.some(key=>key.startsWith('achievements/')),JSON.stringify(cdnCalls));
+  // A missing CDN object must still be displayed through the original Worker route.
+  const blobSize=await browser.evaluate("(async()=>{const b=await window.mwsAchievementMediaV1.getBlob('image0');return b?.size||0})()");
+  assert.equal(blobSize,png.length);
+  assert(calls.some(r=>r.path==='/media/achievement/image0'));
+  console.log('FULL_APP_CDN '+JSON.stringify({cdn:cdnCalls.length,workerContact:cold.filter(r=>r.path.startsWith('/media/contact/')).length,workerAchievement:cold.filter(r=>r.path.startsWith('/media/achievement/')).length}));
+ }
  before=calls.length;await nav([...routes,...routes]);await pause(700);const warm=calls.slice(before);console.log('FULL_APP_WARM_NAV '+JSON.stringify(summary(warm)));
  assert.equal(warm.filter(common).length,0);
  assert.equal(warm.filter(r=>r.path.startsWith('/media/achievement/')).length,0);
@@ -104,4 +123,4 @@ try{
  console.log('FULL_APP_APPLICATION_SNAPSHOT_OK '+JSON.stringify({activeSync:1,archivedApplicants:7,expiredSync:0}));
  assert.equal(errors.length,0,JSON.stringify(errors));
  console.log('FULL_APP_REQUEST_BUDGET_OK '+JSON.stringify({startup:summary(startup),cold:summary(cold),warm:summary(warm),friend:summary(live),idle:summary(idle),upstreamSimulated:upstream.length}));
-}finally{await browser?.close();await new Promise(r=>server.close(r));db.close();globalThis.fetch=originalFetch;rmSync(dir,{recursive:true,force:true})}
+}finally{await browser?.close();await new Promise(r=>server.close(r));if(cdnServer.listening)await new Promise(r=>cdnServer.close(r));db.close();globalThis.fetch=originalFetch;rmSync(dir,{recursive:true,force:true})}

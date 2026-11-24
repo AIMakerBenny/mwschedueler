@@ -148,3 +148,18 @@ test('Friend Finder reacts to actual workspace transitions, not only sidebar cli
  active=false;handler();assert.equal(stops,2);assert.deepEqual(scheduled,[0]);
  active=true;doc.hidden=true;handler();assert.equal(stops,3);assert.deepEqual(scheduled,[0]);
 });
+
+test('public image CDN is opt-in, preserves canonical paths, and rejects unversioned or nonpublic routes',async()=>{
+ const {publicMediaOrigin}=await import('../src/cf-v111-entry.js');
+ assert.equal(publicMediaOrigin({MWS_R2_PUBLIC_BASE_URL:'https://pub-test.r2.dev'}),'');
+ for(const origin of ['https://pub-test.r2.dev','https://test.workers.dev','http://cdn.example.test','https://cdn.example.test/path','https://user@cdn.example.test'])assert.equal(publicMediaOrigin({MWS_PUBLIC_MEDIA_CDN_ORIGIN:origin}),'');
+ assert.equal(publicMediaOrigin({MWS_PUBLIC_MEDIA_CDN_ORIGIN:'https://cdn.example.test'}),'https://cdn.example.test');
+ const src=read('assets/app-core.js'),code=extract(src,'window.mwsPublicMediaUrlV1=function(raw)','const mwsCdnContactFailuresV1=');
+ const win={},document={querySelector:()=>({content:'https://cdn.example.test'})};
+ new Function('window','document','location','URL',code)(win,document,{origin:'https://app.example.test'},URL);
+ const token='a'.repeat(32),canonical='/media/contact/qa0?v=2&h='+token+'&r=2';
+ assert.equal(win.mwsPublicMediaUrlV1(canonical),'https://cdn.example.test/contacts/qa0/v2-'+token);
+ assert.equal(win.mwsPublicMediaUrlV1('/media/achievement/image1'),'https://cdn.example.test/achievements/image1');
+ for(const path of ['/media/contact/qa0?v=2','/media/contact/qa0?v=2&h='+token+'&fallback=1','/media/workspace/secret','/api/achievement-media/image1','https://app.example.test'+canonical,'/media/achievement/image1?x=1'])assert.equal(win.mwsPublicMediaUrlV1(path),'');
+ document.querySelector=()=>null;assert.equal(win.mwsPublicMediaUrlV1(canonical),'');
+});

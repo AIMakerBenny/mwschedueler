@@ -2685,9 +2685,30 @@ window.setParticipantStatus=(id,status)=>{
 };
 
 /* 참여자 검색, 다중 선택, 버블 표시, 빠른 추가 */
+// Resolve only existing public image routes. Keep canonical /media references in data,
+// saves, backups and exports. A CDN failure never changes the stored image.
+window.mwsPublicMediaUrlV1=function(raw){
+  const base=document.querySelector?.('meta[name="mws-public-media-origin"]')?.content;
+  if(!base||typeof raw!=='string'||!raw.startsWith('/media/'))return '';
+  try{
+    const url=new URL(raw,location.origin);
+    if(url.origin!==location.origin||url.hash)return '';
+    const contact=/^\/media\/contact\/([A-Za-z0-9_-]{1,160})$/.exec(url.pathname);
+    if(contact){
+      const v=url.searchParams.get('v'),h=url.searchParams.get('h');
+      if(!/^[1-9][0-9]{0,9}$/.test(v||'')||!/^[a-f0-9]{32}$/.test(h||''))return '';
+      if([...url.searchParams.keys()].some(k=>!['v','h','r'].includes(k)))return '';
+      if(url.searchParams.getAll('v').length!==1||url.searchParams.getAll('h').length!==1)return '';
+      return new URL('/contacts/'+contact[1]+'/v'+v+'-'+h,base).href;
+    }
+    const achievement=/^\/media\/achievement\/([A-Za-z0-9_-]{1,160})$/.exec(url.pathname);
+    return achievement&&!url.search?new URL('/achievements/'+achievement[1],base).href:'';
+  }catch(_){return ''}
+};
+const mwsCdnContactFailuresV1=new Map();
 function mwsContactMediaIdV110(img){
   if(!(img instanceof HTMLImageElement))return '';
-  const raw=String(img.getAttribute('src')||img.currentSrc||'').trim();
+  const raw=String(img.dataset.mwsCdnContactSource||img.getAttribute('src')||img.currentSrc||'').trim();
   const explicit=String(img.dataset.contactId||'').trim();
   if(!raw)return explicit;
   try{
@@ -2747,6 +2768,14 @@ window.mwsRecoverContactMediaImageV110=img=>{
   if(!(img instanceof HTMLImageElement))return false;
   const id=mwsContactMediaIdV110(img);
   if(!id)return false;
+  const cdnSource=img.dataset.mwsCdnContactSource;
+  if(cdnSource){
+    delete img.dataset.mwsCdnContactSource;
+    if(mwsCdnContactFailuresV1.size>=500)mwsCdnContactFailuresV1.delete(mwsCdnContactFailuresV1.keys().next().value);
+    mwsCdnContactFailuresV1.set(cdnSource,Date.now());
+    img.removeAttribute('srcset');img.src=cdnSource;
+    return true;
+  }
   const state=String(img.dataset.mwsContactRecoveryV110||'');
   const now=Date.now();
   const key=img.dataset.mwsContactRetryKeyV2||String(img.getAttribute('src')||img.src||id);
@@ -2801,7 +2830,10 @@ function mwsActivateDeferredContactImageV1(img){
   const src=img.getAttribute('data-mws-deferred-contact-src');if(!src)return;
   mwsDeferredContactObserverV1?.unobserve(img);
   img.removeAttribute('data-mws-deferred-contact-src');
-  img.src=src;mwsBindContactMediaImageV111(img);
+  const failure=mwsCdnContactFailuresV1.get(src);
+  const direct=(!failure||Date.now()-failure>=300000)?window.mwsPublicMediaUrlV1(src):'';
+  if(direct){img.dataset.mwsCdnContactSource=src;img.referrerPolicy='no-referrer'}
+  img.src=direct||src;mwsBindContactMediaImageV111(img);
 }
 function mwsObserveDeferredContactImageV1(img){
   if(!img.hasAttribute('data-mws-deferred-contact-src'))return;
