@@ -33,8 +33,10 @@ export function runPhase88AchievementDataFoundationAudit(){
     "function cloudApiUrl(id){return '/api/achievement-media/'",
     "async function fetchCloudBlob(id)",
     "async function uploadCloud(id,blob)",
-    "async function syncReferencedToCloud()",
-    "setTimeout(()=>{syncReferencedToCloud()",
+    "async function syncReferencedToCloud({localOnly=false}={})",
+    "await syncReferencedToCloud({localOnly:true})",
+    "scheduleLocalMigration();window.addEventListener",
+    "if(document.body?.dataset?.mwsMode!=='admin')return",
     "if(local?.blob instanceof Blob)return local;",
     "const blob=await fetchCloudBlob(id);"
   ]){

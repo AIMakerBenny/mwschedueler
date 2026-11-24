@@ -282,6 +282,7 @@ function setLiveImage(img,screen,bno,stamp=liveThumbStamp()){
   img.dataset.thumbStamp=stamp;
   img.src=candidates[0];
 }
+function shouldRefreshLiveImage(img,bno,stamp,visible){return img.dataset.bno!==bno||(visible&&img.dataset.thumbStamp!==stamp)}
 function decorate(root=friendRoot()){
   if(!root||document.hidden||!activeFriendRoot())return;installStyle();setVersionLabel();
   ensureCategoryControl(root).catch(()=>{});
@@ -311,7 +312,7 @@ function decorate(root=friendRoot()){
       try{img.fetchPriority='low'}catch(_){}
       const bounds=screen.getBoundingClientRect();
       const visible=bounds.width>0&&bounds.height>0&&bounds.bottom>0&&bounds.right>0&&bounds.top<window.innerHeight&&bounds.left<window.innerWidth;
-      if(img.dataset.bno!==bno||(visible&&img.dataset.thumbStamp!==thumbStamp))setLiveImage(img,screen,bno,thumbStamp)
+      if(shouldRefreshLiveImage(img,bno,thumbStamp,visible))setLiveImage(img,screen,bno,thumbStamp)
     }
   }
 }

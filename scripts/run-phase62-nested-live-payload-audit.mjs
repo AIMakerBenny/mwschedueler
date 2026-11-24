@@ -14,7 +14,7 @@ export function runPhase62NestedLivePayloadAudit(){
 
   if(!friend.includes('function normalizeLivePayload(root)'))issues.push('Friend Finder nested LIVE fallback normalizer is missing');
   if(!friend.includes("const live=row?.live&&typeof row.live==='object'?row.live:normalizeLivePayload(parsed)"))issues.push('Friend Finder does not prefer row.live normalized metadata');
-  if(!friend.includes('liveByUserId.set(id,{at:Date.now(),status:Number(row.status)||0,data:live,url:row.url})'))issues.push('Friend Finder does not store normalized live metadata');
+  if(!friend.includes('liveByUserId.set(id,{at:sampledAt,status:Number(row.status)||0,data:live,url:row.url})'))issues.push('Friend Finder does not store normalized live metadata');
   if(!friend.includes("const hint=baseLiveHint(card),bno=liveBroadNo(entry)||hint.bno"))issues.push('thumbnail visibility is not driven by normalized broadcast number');
   if(!loader.includes('friend-finder-v120.js?v=1.3.0-phase62'))issues.push('Phase 62 Friend Finder cache revision is missing');
 

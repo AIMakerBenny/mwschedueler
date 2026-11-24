@@ -10,7 +10,7 @@ export function runPhase55FriendLiveThumbnailAudit(){
   if(!friend.includes("card.appendChild(screen)"))issues.push('LIVE thumbnail container is not inserted into the rendered card');
   if(!friend.includes("function activeFriendRoot()"))issues.push('active Friend Finder root guard is missing');
   if(!friend.includes("const ACTIVE_REFRESH_MS=30000"))issues.push('active Friend Finder LIVE refresh cadence is missing');
-  if(!friend.includes("await refreshActiveFriendLive(true)"))issues.push('active Friend Finder does not periodically refresh LIVE state');
+  if(!/await refreshActiveFriendLive\((?:true|false)\)/.test(friend)||!friend.includes('scheduleActiveRefresh(ACTIVE_REFRESH_MS)')||!friend.includes('Date.now()-cached.at<LIVE_CACHE_MS'))issues.push('active Friend Finder does not periodically refresh LIVE state with bounded cache reuse');
   if(!friend.includes("window.addEventListener('mawang:datachange'"))issues.push('Friend Finder does not redecorate after data rerenders');
   if(!friend.includes("document.addEventListener('visibilitychange'"))issues.push('Friend Finder LIVE refresh does not pause/resume with visibility');
   if(friend.includes('setInterval('))issues.push('Friend Finder uses an always-on interval instead of active-tab scheduling');

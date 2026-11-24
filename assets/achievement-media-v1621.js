@@ -9,7 +9,7 @@ const DB_VERSION=1;
 const STORE='media';
 const MAX_BYTES=32*1024*1024;
 let dbPromise=null;
-let migrationPromise=null;
+let migrationPromise=null,migrationLocalOnly=false;
 const pendingReads=new Map();
 
 function openDb(){
@@ -199,7 +199,8 @@ function referencedIds(){
   return [...ids];
 }
 async function syncReferencedToCloud({localOnly=false}={}){
-  if(migrationPromise)return migrationPromise;
+  if(migrationPromise){if(!localOnly&&migrationLocalOnly){await migrationPromise;return syncReferencedToCloud()}return migrationPromise}
+  migrationLocalOnly=localOnly;
   migrationPromise=(async()=>{
     const referenced=referencedIds();
     let ids=referenced;
@@ -238,7 +239,7 @@ async function syncReferencedToCloud({localOnly=false}={}){
     window.__mwsAchievementMediaCloudSyncV1621=result;
     try{window.dispatchEvent(new CustomEvent('mws:achievement-media-cloud-sync',{detail:result}))}catch(_){}
     return result;
-  })().finally(()=>{migrationPromise=null});
+  })().finally(()=>{migrationPromise=null;migrationLocalOnly=false});
   return migrationPromise;
 }
 
