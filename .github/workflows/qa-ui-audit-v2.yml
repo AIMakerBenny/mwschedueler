@@ -22,6 +22,8 @@ on:
       - '.github/workflows/qa-ui-audit-v2.yml'
 permissions:
   contents: read
+env:
+  MWS_QA_OFFLINE: '1'
 jobs:
   integrated-ui:
     runs-on: ubuntu-latest
@@ -32,16 +34,21 @@ jobs:
         with:
           node-version: '24'
       - name: Desktop and mobile Chromium regression
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-ui-audit-v2-browser.mjs
       - name: Application deadlines, authors and public/read-only Chromium QA
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --test scripts/qa-content-applications-v1.test.mjs
           MWS_RANK_VISUAL=1 node scripts/qa-content-applications-v1-browser.mjs
       - name: Dashboard render count and zero-state regression
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node --test scripts/qa-dashboard-upcoming-v1.test.mjs
       - name: Archive and cache-version source regression
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node --test scripts/qa-mawang-archive-v1.test.mjs
       - name: Smooth historical timeline navigation regression
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-career-activities-v1-browser.mjs
   timeline-motion:
     runs-on: ubuntu-latest
@@ -58,10 +65,12 @@ jobs:
       - name: Real Chromium candidate timeline scroll and click QA
         env:
           CAREER_QA_MODE: desktop
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-career-motion-browser.mjs
       - name: Mobile Chromium candidate timeline navigation QA
         env:
           CAREER_QA_MODE: mobile
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-career-motion-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()

@@ -10,6 +10,8 @@ on:
       - '.github/workflows/qa-workspace-performance-v1.yml'
 permissions:
   contents: read
+env:
+  MWS_QA_OFFLINE: '1'
 jobs:
   browser:
     runs-on: ubuntu-latest
@@ -24,14 +26,17 @@ jobs:
       - name: Before and after Chromium profile
         env:
           MWS_PERF_BASE_REF: ${{ github.event.pull_request.base.sha }}
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-workspace-performance-v1-browser.mjs
       - name: Navigation, stable layout, and calendar details regression
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node scripts/qa-workspace-navigation-v1-browser.mjs
           node scripts/qa-workspace-clean-v1-browser.mjs
           node scripts/qa-sidebar-rail-scrollbar-v1-browser.mjs
           node scripts/qa-calendar-details-frame-pacing-v5-browser.mjs
       - name: Cloud save and login regression
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --test scripts/qa-login-ready-v2.test.mjs
           node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs

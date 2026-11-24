@@ -17,6 +17,8 @@ on:
       - 'feat/calendar-game-library-v1-20261112'
 permissions:
   contents: read
+env:
+  MWS_QA_OFFLINE: '1'
 jobs:
   game-library:
     runs-on: ubuntu-latest
@@ -27,6 +29,7 @@ jobs:
         with:
           node-version: '24'
       - name: Syntax of game and cloud modules
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --check assets/steam-game-v111.js
           node --check --input-type=commonjs < assets/app-core.js
@@ -36,12 +39,15 @@ jobs:
           node --check assets/cloud-v1.1-loader.js
           node --check src/index.js
       - name: Manual and Steam serialization plus Cloudflare core regression
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --test scripts/qa-game-library-v1.test.mjs
           node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs
       - name: Browser manual game registration and reuse
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-game-library-v1-browser.mjs
       - name: Existing calendar editor regression
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node scripts/qa-event-sidebar-tabs-v5-browser.mjs
           node scripts/qa-calendar-responsive-v1-browser.mjs
