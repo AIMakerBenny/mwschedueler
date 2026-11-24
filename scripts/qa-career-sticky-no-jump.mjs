@@ -48,11 +48,13 @@ let errors=[];
 try{
  for(const [width,height,mobile] of [[1366,768,false],[1920,1080,false],[390,844,true]]){
   const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1});
+  if(!process.env.MWS_TIMELINE_VERIFY_DEPLOYED){
   await context.route('**/assets/career-visualizer.js*',route=>route.fulfill({status:200,contentType:'application/javascript',body:read('career-visualizer.js')}));
   await context.route('**/assets/career-timeline.css*',route=>route.fulfill({status:200,contentType:'text/css',body:read('career-timeline.css')}));
   // The later workspace CSS used to force the bar position:absolute!important.
   // Testing only career-timeline.css would falsely report a working sticky bar.
   await context.route('**/assets/workspace-density-v1.css*',route=>route.fulfill({status:200,contentType:'text/css',body:read('workspace-density-v1.css')}));
+  }
   const page=await context.newPage();
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
@@ -77,6 +79,7 @@ try{
   await delay(350);
   const start=await page.evaluate(measure);
   assert(start.active&&start.total===106,'Actual public timeline not rendered: '+JSON.stringify({width,start}));
+  if(process.env.MWS_TIMELINE_VERIFY_DEPLOYED)console.log('MWS_TIMELINE_LIVE_DEPLOYED',width,JSON.stringify({sharedTopbarDisplay:start.sharedTopbarDisplay,timelineTitle:start.timelineTitle,navLeft:start.navLeft,navWidth:start.navWidth}));
   assert.equal(start.sticky,'sticky',JSON.stringify(start));
   assert.equal(start.barPosition,'relative',JSON.stringify(start));
   assert(start.hostHeight>25&&start.barHeight>25&&start.overflow<2,JSON.stringify(start));

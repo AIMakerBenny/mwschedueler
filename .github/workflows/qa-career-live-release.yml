@@ -1,0 +1,33 @@
+name: Timeline deployed Cloudflare verification
+on:
+  pull_request:
+    branches: [cloudflare-production]
+    paths:
+      - 'scripts/qa-career-sticky-no-jump.mjs'
+      - '.github/workflows/qa-career-live-release.yml'
+permissions:
+  contents: read
+jobs:
+  release-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: |
+          npm install --no-save --package-lock=false playwright
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-nanum
+      - name: Inspect deployed Cloudflare, no route overrides
+        env:
+          MWS_TIMELINE_VERIFY_DEPLOYED: '1'
+          MWS_TIMELINE_CAPTURE: '1'
+        run: node scripts/qa-career-sticky-no-jump.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deployed-timeline-browser
+          path: timeline-sticky-qa/*.png
+          if-no-files-found: ignore
