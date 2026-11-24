@@ -21,6 +21,19 @@ jobs:
           bash scripts/mws-v3-network-only.sh node --test scripts/qa-request-v4-delivery.test.mjs scripts/qa-request-v3-cache-integrity.test.mjs scripts/qa-request-v3-live-cache.test.mjs scripts/qa-request-v3-feature-guards.test.mjs
           bash scripts/mws-v3-network-only.sh node --check mws-media-cache-sw.js
           bash scripts/mws-v3-network-only.sh node scripts/build-cf-static-runtime.mjs --check
+  local-browser:
+    needs: local-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      MWS_QA_OFFLINE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Actual Chromium with isolated scheduler and CDN origins
+        run: bash scripts/mws-v3-network-only.sh node scripts/qa-request-v4-media-browser.mjs
   production-management-read:
     runs-on: ubuntu-latest
     timeout-minutes: 5
