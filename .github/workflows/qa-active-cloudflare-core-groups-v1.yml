@@ -13,6 +13,8 @@ on:
       - 'fix/cloudflare-core-groups-game-library-v1-20261113'
 permissions:
   contents: read
+env:
+  MWS_QA_OFFLINE: '1'
 jobs:
   d1-core:
     runs-on: ubuntu-latest
@@ -23,11 +25,13 @@ jobs:
         with:
           node-version: '24'
       - name: Validate actual worker and script syntax
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --check src/cf-v111-auth.js
           node --check src/cf-v111-entry.js
           node --check scripts/qa-active-cloudflare-core-groups-v1.test.mjs
       - name: Confirm active D1 worker saves groups and game library
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --test scripts/qa-active-cloudflare-core-groups-v1.test.mjs
           node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs

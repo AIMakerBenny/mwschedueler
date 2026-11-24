@@ -13,6 +13,8 @@ on:
       - 'fix/calendar-compact-sidebar-space-20261114'
 permissions:
   contents: read
+env:
+  MWS_QA_OFFLINE: '1'
 jobs:
   compact-layout:
     runs-on: ubuntu-latest
@@ -23,8 +25,10 @@ jobs:
         with:
           node-version: '24'
       - name: Desktop calendar compact sidebar and content geometry
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-calendar-space-efficiency-v1-browser.mjs
       - name: Existing sidebar icon rail, calendar and toolbar regressions
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node scripts/qa-sidebar-rail-scrollbar-v1-browser.mjs
           node scripts/qa-calendar-responsive-v1-browser.mjs

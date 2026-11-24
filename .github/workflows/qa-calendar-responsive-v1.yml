@@ -18,6 +18,8 @@ on:
       - 'fix/calendar-responsive-cards-v1-20261112'
 permissions:
   contents: read
+env:
+  MWS_QA_OFFLINE: '1'
 jobs:
   browser-layout:
     runs-on: ubuntu-latest
@@ -28,10 +30,13 @@ jobs:
         with:
           node-version: '24'
       - name: Responsive calendar geometry in Chromium
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-calendar-responsive-v1-browser.mjs
       - name: Mobile calendar geometry and interactions in Chromium
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-mobile-calendar-layout-v2.mjs
       - name: Existing calendar ribbon and drag handle regression
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node scripts/qa-calendar-continuous-series-browser-v1.mjs
           node scripts/qa-calendar-toolbar-v4-browser.mjs

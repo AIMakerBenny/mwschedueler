@@ -10,6 +10,8 @@ on:
       - '.github/workflows/qa-calendar-search-v173.yml'
 permissions:
   contents: read
+env:
+  MWS_QA_OFFLINE: '1'
 jobs:
   search:
     runs-on: ubuntu-latest
@@ -19,7 +21,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: node scripts/qa-calendar-search-v173-browser.mjs
-      - run: node scripts/run-phase171-calendar-content-search-audit.mjs
-      - run: node scripts/run-phase172-calendar-search-tab-audit.mjs
-      - run: node --check --input-type=commonjs < assets/app-core.js
+      - shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: node scripts/qa-calendar-search-v173-browser.mjs
+      - shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: node scripts/run-phase171-calendar-content-search-audit.mjs
+      - shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: node scripts/run-phase172-calendar-search-tab-audit.mjs
+      - shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: node --check --input-type=commonjs < assets/app-core.js

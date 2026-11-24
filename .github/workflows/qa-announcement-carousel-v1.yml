@@ -17,6 +17,8 @@ on:
       - '.github/workflows/qa-announcement-carousel-v1.yml'
 permissions:
   contents: read
+env:
+  MWS_QA_OFFLINE: '1'
 jobs:
   browser:
     runs-on: ubuntu-latest
@@ -26,8 +28,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: node --check assets/announcement-carousel-v1.js
-      - run: node scripts/qa-announcement-carousel-v1-browser.mjs
-      - run: node --test scripts/qa-login-ready-v2.test.mjs
-      - run: node --test scripts/qa-live-cloud-save-contract-v1.test.mjs
-      - run: node scripts/qa-public-entry-v1-browser.mjs
+      - shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: node --check assets/announcement-carousel-v1.js
+      - shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: node scripts/qa-announcement-carousel-v1-browser.mjs
+      - shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: node --test scripts/qa-login-ready-v2.test.mjs
+      - shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: node --test scripts/qa-live-cloud-save-contract-v1.test.mjs
+      - shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: node scripts/qa-public-entry-v1-browser.mjs

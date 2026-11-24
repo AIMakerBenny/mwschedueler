@@ -16,6 +16,8 @@ on:
       - 'fix/calendar-group-recovery-save-confirm-v1-20261113'
 permissions:
   contents: read
+env:
+  MWS_QA_OFFLINE: '1'
 jobs:
   recovery:
     runs-on: ubuntu-latest
@@ -26,14 +28,17 @@ jobs:
         with:
           node-version: '24'
       - name: Group and cloud source syntax
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --check assets/calendar-content-groups-v2.js
           node --check assets/cloud-runtime-v130.js
           node --check src/cf-v111-entry.js
           node --check scripts/qa-calendar-group-recovery-v1-browser.mjs
       - name: Exact original group ID recovery, save verification and failure state
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-calendar-group-recovery-v1-browser.mjs
       - name: Existing calendar group editor and search regressions
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node scripts/qa-calendar-content-groups-v2-browser.mjs
           node scripts/qa-calendar-content-groups-v3-search-browser.mjs
