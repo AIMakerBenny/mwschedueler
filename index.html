@@ -31,14 +31,14 @@ window.addEventListener('error',event=>{
 </script>
 
 <title>마왕 스케줄러</title>
-<script src="assets/request-budget-meter-v1.js?v=1"></script>
+<script src="assets/request-budget-meter-v1.js?v=2"></script>
 <script id="mws-motion-preference">
 (()=>{const key='mws-screen-motion-v1',system=matchMedia('(prefers-reduced-motion: reduce)');let mode='system';try{const saved=localStorage.getItem(key);if(['full','reduced','system'].includes(saved))mode=saved}catch(_){}const apply=()=>{const reduced=mode==='reduced'||(mode==='system'&&system.matches);document.documentElement.dataset.mwsMotion=reduced?'reduced':'full';window.dispatchEvent(new Event('mws-motion-change'))};window.mwsMotionReduced=()=>document.documentElement.dataset.mwsMotion==='reduced';apply();system.addEventListener('change',apply);document.addEventListener('DOMContentLoaded',()=>{const select=document.getElementById('mwsScreenMotion');if(!select)return;select.value=mode;select.addEventListener('change',()=>{mode=select.value;try{localStorage.setItem(key,mode)}catch(_){}apply()})})})();
 </script>
 <script>
 // Start the authoritative calendar read before CSS and the large UI runtime.
 // Only version numbers are stored locally; no unverified content is displayed.
-(()=>{const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),7000);let known={};try{const scope=localStorage.getItem('mws_access_remember_v1')==='1'&&localStorage.getItem('mws_access_mode_v1')==='admin'?'admin':'public';known=JSON.parse(localStorage.getItem('mws_calendar_startup_versions_v2:'+scope)||'{}')}catch(_){}window.__mwsCalendarStartupRequestV2=fetch('/api/calendar-startup?known='+encodeURIComponent(JSON.stringify(known)),{cache:'no-store',credentials:'same-origin',signal:controller.signal}).then(r=>r.ok?r.json():null).catch(()=>null).finally(()=>clearTimeout(timer))})();
+(()=>{const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),7000);let known={};try{const scope=localStorage.getItem('mws_access_remember_v1')==='1'&&localStorage.getItem('mws_access_mode_v1')==='admin'?'admin':'public';known=JSON.parse(localStorage.getItem('mws_calendar_startup_versions_v2:'+scope)||'{}')}catch(_){}window.__mwsCalendarStartupRequestV2=fetch('/api/calendar-startup?known='+encodeURIComponent(JSON.stringify(known)),{cache:'no-store',credentials:'same-origin',signal:controller.signal}).then(r=>r.ok?r.json():null).then(batch=>{if(Array.isArray(batch?.applicationSnapshots))window.__mwsApplicationSnapshotsV1=batch.applicationSnapshots;return batch}).catch(()=>null).finally(()=>clearTimeout(timer))})();
 </script>
 <style id="mws-calendar-startup-v2-style">
 body[data-calendar-startup="pending"] #calendarGrid{position:relative;min-height:clamp(240px,60vh,650px)}
@@ -2606,8 +2606,8 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
 <script src="assets/contact-frequency-v1.js?v=2"></script>
 <script src="assets/career-activities-data-v1.js?v=2"></script>
 <script src="assets/calendar-historical-v1.js?v=1"></script>
-<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=1&contactgroup178=1&modalmotionv2=2&ladderdefaults=1&future-only=1&post-layout-v3=1&career=1&clipboard-people=1&dashboardnav=3&ui-interactions=2&contentapplications=1&peopleview=2&contact-frequency=2&historical-calendar=1&mawang-archive=1&request-budget=6"></script>
-<script src="assets/calendar-content-groups-v2.js?v=7-save-contract-bulk"></script>
+<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=1&contactgroup178=1&modalmotionv2=2&ladderdefaults=1&future-only=1&post-layout-v3=1&career=1&clipboard-people=1&dashboardnav=3&ui-interactions=2&contentapplications=1&peopleview=2&contact-frequency=2&historical-calendar=1&mawang-archive=1&request-budget=12"></script>
+<script src="assets/calendar-content-groups-v2.js?v=7-save-contract-bulk&proof=1"></script>
 <script src="assets/event-sidebar-tabs-v5.js?v=1"></script>
 <script src="assets/calendar-move-guard-v4.js?v=1&quietmoves=1"></script>
 <script src="assets/soop-contact-autofill-v1.js?v=1"></script>
@@ -3929,8 +3929,8 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
     setPostGlobalStatus('게시글 · 댓글 동기화 중','syncing');
     post.lastError='';stripLegacyPostSourceV510(post);renderPosts();
     try{
-      const first=await fetchSoopJson(soopApiUrl(post,1));
-      const sourceTitle=typeof fetchSoopPostTitle==='function'?await fetchSoopPostTitle(post,first):(typeof titleFromSoopJson==='function'?titleFromSoopJson(first):'');
+      const firstBatch=await fetchSoopLegacyPageGroupV1(post,[1],{title:true}),first=firstBatch.rows[0];
+      const sourceTitle=titleFromSoopJson(first)||cleanSoopPostTitle(firstBatch.title)||String(post.sourceTitle||'').trim()||await fetchSoopPostTitle(post,first);
       if(sourceTitle){
         post.sourceTitle=sourceTitle;
         const placeholder=/^게시글\s+\d+$/u.test(String(post.name||'').trim());
@@ -3940,10 +3940,11 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
 
       const totalPages=Math.max(1,Math.min(100,Number(first?.meta?.last_page)||1));
       let raw=[...(Array.isArray(first?.data)?first.data:[])];
-      for(let page=2;page<=totalPages;page++){
-        setPostGlobalStatus(`댓글 동기화 ${page} / ${totalPages}`,'syncing');
-        const j=await fetchSoopJson(soopApiUrl(post,page));
-        if(Array.isArray(j?.data))raw.push(...j.data);
+      for(let page=2;page<=totalPages;page+=9){
+        const pages=Array.from({length:Math.min(9,totalPages-page+1)},(_,i)=>page+i);
+        setPostGlobalStatus(`댓글 동기화 ${pages.at(-1)} / ${totalPages}`,'syncing');
+        const batch=await fetchSoopLegacyPageGroupV1(post,pages);
+        for(const j of batch.rows)if(Array.isArray(j?.data))raw.push(...j.data);
       }
       const ignored=new Set(post.ignoredCommentKeys||[]);
       const prev=new Map((post.comments||[]).map(c=>[postCommentIdentity(c),c]));
@@ -5085,7 +5086,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .sidebar-save-v572{padding-left:0
 <!-- mws-contact-search-performance-v1 -->
 <script src="assets/perf-runtime.js?v=1.4.0-phase87&workspace-nav-v1=1&firstpaint=1&dashboardnav=1"></script>
 <script src="assets/public-read-sharing-v1.js?v=1"></script>
-<script src="assets/online-v5-loader.js?v=1.3.0-search73&firstpaint=1&peoplehover=2&friendfinder=2&ui-interactions=2"></script>
+<script src="assets/online-v5-loader.js?v=1.3.0-search73&firstpaint=1&peoplehover=2&friendfinder=2&ui-interactions=2&static-runtime=1"></script>
 <script defer src="assets/calendar-today-people-hover-v1.js?v=1"></script>
 <link rel="stylesheet" href="assets/device-ui.css?v=4">
 <link rel="stylesheet" href="assets/ui-frame-presets.css?v=3.0.0-space132-space153">
@@ -5103,7 +5104,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .sidebar-save-v572{padding-left:0
 <script src="assets/calendar-details-v1.js?v=12&motion-fallback=1&peopleview=1"></script>
 <script src="assets/device-ui.js?v=1.3.0-perf87-mobile-layout-v2"></script>
 <link rel="stylesheet" href="assets/ladder-wizard-v1.css?v=10">
-<script src="assets/ladder-wizard-v1.js?v=12"></script>
+<script src="assets/ladder-wizard-v1.js?v=13"></script>
 <link rel="stylesheet" href="assets/announcement-carousel-v1.css?v=1">
 <style id="mws-public-entry-style">
 body.mws-gated .app{filter:none!important;opacity:1!important}
@@ -5135,7 +5136,7 @@ body.mws-premium #mwsAccessGate .mws-login-title{font-size:22px!important;margin
 <link rel="stylesheet" href="assets/ui-interactions-v1.css?v=5">
 <script src="assets/ui-interactions-v1.js?v=2"></script>
 <link rel="stylesheet" href="assets/content-applications-v1.css?v=8">
-<script type="module" src="assets/content-applications-v2.js?v=7&request-budget=4&closed=1"></script>
+<script type="module" src="assets/content-applications-v2.js?v=7&request-budget=4&closed=1&snapshot=1"></script>
 <link rel="stylesheet" href="assets/calendar-people-view-v1.css?v=2">
 <link rel="stylesheet" href="assets/contact-frequency-v1.css?v=2">
 <link rel="stylesheet" href="assets/calendar-day-expand-v1.css?v=1">

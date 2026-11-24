@@ -34,15 +34,19 @@ jobs:
         run: |
           printf '\n127.0.0.1 mawang-scheduler.majoku.workers.dev\n::1 mawang-scheduler.majoku.workers.dev\n' | sudo tee -a /etc/hosts >/dev/null
           node -e "require('node:dns').lookup('mawang-scheduler.majoku.workers.dev',{all:true},(e,a)=>{if(e||!a.length||a.some(x=>!['127.0.0.1','::1'].includes(x.address)))process.exit(1)})"
+      - name: Verify prebuilt static runtime byte equivalence
+        run: node scripts/build-cf-static-runtime.mjs --check
       - name: Network optimization and storage contracts
         run: |
           node --test scripts/qa-request-budget-v1.test.mjs scripts/qa-workspace-read-batch-v1.test.mjs scripts/qa-public-read-sharing-v1.test.mjs scripts/qa-request-budget-meter-v1.test.mjs scripts/qa-request-budget-regressions-v1.test.mjs scripts/qa-request-budget-navigation-v2.test.mjs
           node scripts/qa-achievement-cache-quota.mjs
-          node --test scripts/qa-live-cloud-save-contract-v1.test.mjs
+          node --test scripts/qa-live-cloud-save-contract-v1.test.mjs scripts/qa-application-snapshot-v1.test.mjs
       - name: Real browser request counting fixture
         run: node scripts/qa-request-budget-navigation-v2-browser.mjs
       - name: Full application Worker and browser request budget
         run: node scripts/qa-request-budget-full-app-v2-browser.mjs
+      - name: Public media CDN direct reads and Worker fallback
+        run: MWS_QA_MEDIA_CDN=1 node scripts/qa-request-budget-full-app-v2-browser.mjs
       - name: Calendar group ribbons across visible month boundaries
         run: |
           node --test scripts/qa-calendar-continuous-series-v1.test.mjs

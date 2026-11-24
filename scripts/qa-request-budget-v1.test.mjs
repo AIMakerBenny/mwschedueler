@@ -41,3 +41,11 @@ test('nine-page maximum and sequential groups of three preserve all results',asy
  });
  assert.equal(res.status,200);assert.equal((await res.json()).results.length,9);assert.equal(calls,9);assert.equal(peak,3);
 });
+
+test('legacy comment management batches original SOOP endpoint and title in one Worker invocation',async()=>{
+ const seen=[];const proxy=async req=>{const u=new URL(new URL(req.url).searchParams.get('url'));seen.push(u.href);if(u.hostname==='chapi.sooplive.co.kr')return Response.json({data:{title_no:123,title_name:'Original title'}});return Response.json({data:[],meta:{current_page:Number(u.searchParams.get('page')),last_page:20}})};
+ const first=await handleSoopCommentBatch(new Request('https://fixture.test/api/soop/comment-batch?station=host&post=123&pages=1&legacy=1&title=1'),proxy);
+ assert.equal((await first.json()).title,'Original title');assert.equal(seen.length,2);assert(seen[0].startsWith('https://bjapi.afreecatv.com/'));
+ const rest=await handleSoopCommentBatch(new Request('https://fixture.test/api/soop/comment-batch?station=host&post=123&pages=2,3,4,5,6,7,8,9,10&legacy=1'),proxy);assert.equal((await rest.json()).results.length,9);
+ const board=await handleSoopCommentBatch(new Request('https://fixture.test/api/soop/comment-batch?station=host&post=123&pages=1,2,3&legacy=1&kind=board'),proxy);assert.equal((await board.json()).results.length,3);assert(seen.at(-1).includes('/board?page=3'));
+});

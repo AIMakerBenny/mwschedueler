@@ -109,7 +109,7 @@ async function start(){
   void Promise.all([
     load('perf-runtime','/assets/perf-runtime.js?v=1.4.0-phase113-contact-image-owner1&save-queue-v2=1&workspace-nav-v1=1&firstpaint=1','__mwsCf571Optimizer'),
     load('today-people-runtime-v130','/assets/today-people-runtime-v130.js?v=1.3.0-final68&atomic-startup-v2=1','__mwsTodayPeopleRuntimeV130'),
-    load('contact-runtime-v130','/assets/contact-runtime-v130.js?v=1.3.0-search86&contactgroup178=1&modalmotionv2=1&sidebar-stable=1','__mwsContactRuntimeV130')
+    load('contact-runtime-v130','/assets/contact-runtime-v130.js?v=1.3.0-search86&contactgroup178=1&modalmotionv2=1&sidebar-stable=1&request-budget=1','__mwsContactRuntimeV130')
   ]).then(recordOptionalResults).catch(()=>{});
 
   // Keep the primary device shell ordered first, but cap the wait.
@@ -134,7 +134,7 @@ async function start(){
 
   // Achievement/access extras are explicitly non-blocking after the shell is released.
   void Promise.all([
-    load('achievement-media-v1621','/assets/achievement-media-v1621.js?v=1.6.21-phase107-cloud1-quota2&request-budget=2','__mwsAchievementMediaRuntimeV1621'),
+    load('achievement-media-v1621','/assets/achievement-media-v1621.js?v=1.6.21-phase107-cloud1-quota2&request-budget=3','__mwsAchievementMediaRuntimeV1621'),
     loadStyle('achievement-gallery-v1621','/assets/achievement-gallery-v1621.css?v=1.6.21-phase114'),
     load('achievement-gallery-v1621','/assets/achievement-gallery-v1621.js?v=1.6.21-phase114&request-budget=5','__mwsAchievementGalleryRuntimeV1621'),
     load('mobile-access-tools-v130','/assets/mobile-access-tools-v130.js?v=1.3.0-mobile-cleanup','__mwsMobileAccessToolsV130')

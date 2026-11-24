@@ -97,7 +97,17 @@ async function cloudExists(id){
 }
 async function fetchCloudBlob(id){
   id=String(id||'');if(!id)return null;
-  const res=await fetch(cloudUrl(id),{method:'GET',credentials:'same-origin',cache:'default'});
+  const canonical=cloudUrl(id),direct=window.mwsPublicMediaUrlV1?.(canonical);
+  if(direct){
+    try{
+      const response=await fetch(direct,{method:'GET',credentials:'omit',cache:'default',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(5000)});
+      if(response.ok&&/^image\//i.test(response.headers.get('content-type')||'')){
+        const blob=await response.blob();
+        if(blob instanceof Blob&&blob.size>0&&blob.size<=MAX_BYTES)return blob;
+      }else await response.body?.cancel();
+    }catch(_){/* Canonical Worker remains authoritative on CDN failure. */}
+  }
+  const res=await fetch(canonical,{method:'GET',credentials:'same-origin',cache:'default'});
   if(res.status===404)return null;
   if(!res.ok)throw new Error('Achievement cloud media read failed: HTTP '+res.status);
   const blob=await res.blob();

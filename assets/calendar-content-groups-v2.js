@@ -295,9 +295,21 @@
       saveData(reason);
       const saved=await root.mwsV55SaveNow();
       if(!saved)throw new Error('온라인 저장 요청이 완료되지 않았습니다.');
-      const coreResponse=await fetch('/api/parts/core',{credentials:'same-origin',cache:'no-store'});
-      if(!coreResponse.ok)throw new Error('서버 그룹 목록을 검증하지 못했습니다. HTTP '+coreResponse.status);
-      const coreRow=await coreResponse.json();
+      const parts=verifyEventIds.length?['core','events']:['core'];
+      const proof=root.mwsReadVerifiedPartsV1?.(parts);
+      let coreRow=proof?.core,eventsRow=proof?.events;
+      if(!coreRow||verifyEventIds.length&&!eventsRow){
+        const response=await fetch('/api/parts-batch?parts='+encodeURIComponent(parts.join(',')),{credentials:'same-origin',cache:'no-store'});
+        if(response.ok){
+          const batch=await response.json();coreRow=batch.results?.core?.row;eventsRow=batch.results?.events?.row;
+          if(!coreRow||verifyEventIds.length&&!eventsRow)throw new Error('서버 그룹 저장 응답을 검증하지 못했습니다.');
+        }else if(response.status===404||response.status===405){
+          const coreResponse=await fetch('/api/parts/core',{credentials:'same-origin',cache:'no-store'});
+          if(!coreResponse.ok)throw new Error('서버 그룹 목록을 검증하지 못했습니다. HTTP '+coreResponse.status);
+          coreRow=await coreResponse.json();
+          if(verifyEventIds.length){const eventsResponse=await fetch('/api/parts/events',{credentials:'same-origin',cache:'no-store'});if(!eventsResponse.ok)throw new Error('서버 일정 연결을 검증하지 못했습니다. HTTP '+eventsResponse.status);eventsRow=await eventsResponse.json()}
+        }else throw new Error('서버 그룹 저장 응답을 검증하지 못했습니다. HTTP '+response.status);
+      }
       const serverGroups=Array.isArray(coreRow?.data?.contentGroups)?coreRow.data.contentGroups:[];
       for(const expected of expectedGroups){
         const actual=serverGroups.find(g=>g.id===expected.id);
@@ -309,16 +321,13 @@
       if(serverGroups.some(g=>!expectedIds.has(g.id)))
         throw new Error('서버 그룹 목록이 현재 편집 내용과 일치하지 않습니다.');
       if(verifyEventIds.length){
-        const eventsResponse=await fetch('/api/parts/events',{credentials:'same-origin',cache:'no-store'});
-        if(!eventsResponse.ok)throw new Error('서버 일정 연결을 검증하지 못했습니다. HTTP '+eventsResponse.status);
-        const eventsRow=await eventsResponse.json();
         const remote=new Map((Array.isArray(eventsRow?.data)?eventsRow.data:[]).map(e=>[String(e.id),String(e.contentGroupId||'')]));
         for(const id of verifyEventIds){
           if(!remote.has(String(id))||remote.get(String(id))!==eventMap.get(String(id)))
             throw new Error('일정 그룹 연결이 서버에 반영되지 않았습니다.');
         }
       }
-      groupWriteStatus('Cloudflare D1 저장 및 재조회 완료');
+      groupWriteStatus('Cloudflare D1 저장 및 검증 완료');
       return true;
     }catch(error){
       const message=String(error?.message||error);

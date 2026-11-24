@@ -105,3 +105,68 @@ test('expired campaign detail, manual refresh and in-flight continuation cannot 
  d=>({expired:now>=d}),new Map(),()=>true,1,()=> 'same',()=>[campaign],()=>true,'one',new Map(),()=>null,()=>{},null,async()=>{requests++},{now:()=>now});
  await run(campaign,true);assert.equal(requests,0);
 });
+
+test('group persistence verifies the acknowledged server state without a second HTTP request',async()=>{
+ const src=read('assets/calendar-content-groups-v2.js');
+ const code=extract(src,'async function persistGroupChange(reason,','function renderOrphanRecovery');
+ const data={contentGroups:[{id:'g',name:'QA',color:'#123456'}],events:[{id:'e',contentGroupId:'g'}]};
+ let saves=0,reads=0,bad=false;
+ const root={__mwsAppReadyV130:true,mwsV55SaveNow:async()=>true,mwsReadVerifiedPartsV1:()=>({core:{data:{contentGroups:structuredClone(data.contentGroups)}},events:{data:[{id:'e',contentGroupId:bad?'wrong':'g'}]}})};
+ const run=new Function('root','document','saveData','groups','data','fetch','groupWriteStatus','toast','console',code+'\nreturn persistGroupChange')(root,{body:{dataset:{mwsMode:'admin'}}},()=>saves++,()=>data.contentGroups,data,async()=>{reads++;throw Error('unexpected read')},()=>{},()=>{},{error(){}});
+ assert.equal(await run('test',['e']),true);assert.equal(saves,1);assert.equal(reads,0);
+ bad=true;assert.equal(await run('test',['e']),false);assert.equal(reads,0);
+});
+
+test('Friend Finder only queries favorite contacts used by its actual legacy view',()=>{
+ const code=extract(friend,'function allContactTargets()','function extractActualTarget');
+ const data={contacts:Array.from({length:200},(_,i)=>({favorite:i<13,stationUrl:'station'+i}))};
+ const targets=new Function('dataRef','stationKey','channelUrl',code+'\nreturn allContactTargets')(()=>data,x=>x,x=>x);
+ assert.equal(targets().length,13);assert.deepEqual(targets(),Array.from({length:13},(_,i)=>'station'+i));
+});
+test('contact image URLs are withheld until observation, external images remain unchanged',()=>{
+ const app=read('assets/app-core.js'),code=extract(app,'function mwsDeferredContactAttrsV1','let mwsDeferredContactObserverV1');
+ const win={};
+ const attrs=new Function('esc','IntersectionObserver','window',code+'\nreturn mwsDeferredContactAttrsV1')(v=>v,()=>{},win);
+ const img={setAttribute(k,v){this[k]=v}};
+ win.mwsSetDeferredContactImageV1(img,'/media/contact/id?v=1');
+ assert.equal(img['data-mws-deferred-contact-src'],'/media/contact/id?v=1');assert.equal(img.src,undefined);
+ const external={setAttribute(){throw Error('external image should not be deferred')}};
+ win.mwsSetDeferredContactImageV1(external,'https://example.test/image.jpg');
+ assert.equal(external.src,'https://example.test/image.jpg');
+ assert.equal(attrs('/media/contact/id?v=1'),'data-mws-deferred-contact-src="/media/contact/id?v=1"');
+ assert.equal(attrs('https://example.test/image.jpg'),'src="https://example.test/image.jpg"');
+ assert(app.includes('entry.isIntersecting)mwsActivateDeferredContactImageV1(entry.target)'));
+});
+test('direct SOOP thumbnail is attempted before Worker fallback',()=>{
+ const code=extract(friend,'function liveThumbCandidates','function livePlayUrl');
+ const urls=new Function(code+'\nreturn liveThumbCandidates')()('123','1');
+ assert(urls[0].startsWith('https://liveimg.sooplive.com/'));assert(urls[2].startsWith('/api/soop/live-thumb?'));
+});
+
+test('Friend Finder reacts to actual workspace transitions, not only sidebar clicks',()=>{
+ const src=read('assets/app-core.js');
+ const nav=extract(src,'function setTab(tab)',"document.querySelectorAll('.nav button').forEach(b=>b.onclick");
+ assert(nav.includes("window.dispatchEvent(new CustomEvent('mws:workspace-tab-v1'"));
+ const code=extract(friend,"window.addEventListener('mws:workspace-tab-v1'", "document.addEventListener('input'");
+ let handler,active=false,stops=0,binds=0,ui=0,scheduled=[];
+ const doc={hidden:false};
+ new Function('window','document','stopActiveRefresh','activeFriendRoot','bindFriendGridObserver','scheduleUi','scheduleActiveRefresh',code)({addEventListener:(_,fn)=>handler=fn},doc,()=>stops++,()=>active,()=>binds++,()=>ui++,ms=>scheduled.push(ms));
+ active=true;handler();assert.deepEqual(scheduled,[0]);assert.equal(binds,1);assert.equal(ui,1);
+ active=false;handler();assert.equal(stops,2);assert.deepEqual(scheduled,[0]);
+ active=true;doc.hidden=true;handler();assert.equal(stops,3);assert.deepEqual(scheduled,[0]);
+});
+
+test('public image CDN is opt-in, preserves canonical paths, and rejects unversioned or nonpublic routes',async()=>{
+ const {publicMediaOrigin}=await import('../src/cf-v111-entry.js');
+ assert.equal(publicMediaOrigin({MWS_R2_PUBLIC_BASE_URL:'https://pub-test.r2.dev'}),'');
+ for(const origin of ['https://pub-test.r2.dev','https://test.workers.dev','http://cdn.example.test','https://cdn.example.test/path','https://user@cdn.example.test'])assert.equal(publicMediaOrigin({MWS_PUBLIC_MEDIA_CDN_ORIGIN:origin}),'');
+ assert.equal(publicMediaOrigin({MWS_PUBLIC_MEDIA_CDN_ORIGIN:'https://cdn.example.test'}),'https://cdn.example.test');
+ const src=read('assets/app-core.js'),code=extract(src,'window.mwsPublicMediaUrlV1=function(raw)','const mwsCdnContactFailuresV1=');
+ const win={},document={querySelector:()=>({content:'https://cdn.example.test'})};
+ new Function('window','document','location','URL',code)(win,document,{origin:'https://app.example.test'},URL);
+ const token='a'.repeat(32),canonical='/media/contact/qa0?v=2&h='+token+'&r=2';
+ assert.equal(win.mwsPublicMediaUrlV1(canonical),'https://cdn.example.test/contacts/qa0/v2-'+token);
+ assert.equal(win.mwsPublicMediaUrlV1('/media/achievement/image1'),'https://cdn.example.test/achievements/image1');
+ for(const path of ['/media/contact/qa0?v=2','/media/contact/qa0?v=2&h='+token+'&fallback=1','/media/workspace/secret','/api/achievement-media/image1','https://app.example.test'+canonical,'/media/achievement/image1?x=1'])assert.equal(win.mwsPublicMediaUrlV1(path),'');
+ document.querySelector=()=>null;assert.equal(win.mwsPublicMediaUrlV1(canonical),'');
+});

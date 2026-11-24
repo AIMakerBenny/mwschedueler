@@ -227,7 +227,7 @@
       row.querySelector('.ladder-result-slot-number').textContent=`${i+1}번 도착`;
       label.textContent=p.label||`결과 ${i+1}`;label.title=label.textContent;
       const avatarKey=JSON.stringify([person?.id,person?.name,person?.image]);
-      if(avatar.dataset.key!==avatarKey){avatar.dataset.key=avatarKey;avatar.replaceChildren();if(person?.image){const img=document.createElement('img');img.src=person.image;img.alt='';avatar.append(img)}else avatar.textContent=person?initials(person.name):'?'}
+      if(avatar.dataset.key!==avatarKey){avatar.dataset.key=avatarKey;avatar.replaceChildren();if(person?.image){const img=document.createElement('img');if(typeof window.mwsSetDeferredContactImageV1==='function')window.mwsSetDeferredContactImageV1(img,person.image);else img.src=person.image;img.alt='';avatar.append(img)}else avatar.textContent=person?initials(person.name):'?'}
     });
   };
   const baseOrderVisual=window.renderLadderOrderVisual;
@@ -347,7 +347,7 @@
       const picked=selected.has(c.id);b.setAttribute('aria-pressed',String(picked));b.disabled=!picked&&players().length>=12;
       b.draggable=true;b.addEventListener('dragstart',e=>miniContactDragStart(c.id,e));b.addEventListener('dragend',miniContactDragEnd);
       const avatar=document.createElement(c.image?'img':'span');avatar.className='ladder-choice-avatar';
-      if(c.image){avatar.src=c.image;avatar.alt='';avatar.loading='lazy';avatar.decoding='async'}else avatar.textContent=initials(c.name);
+      if(c.image){if(typeof window.mwsSetDeferredContactImageV1==='function')window.mwsSetDeferredContactImageV1(avatar,c.image);else avatar.src=c.image;avatar.alt='';avatar.loading='lazy';avatar.decoding='async'}else avatar.textContent=initials(c.name);
       const info=document.createElement('span');info.className='ladder-choice-info';const name=document.createElement('strong');name.textContent=c.name;const tags=document.createElement('small');tags.textContent=(c.labels||[]).join(' · ')||'태그 없음';info.append(name,tags);
       const mark=document.createElement('span');mark.className='ladder-choice-mark';mark.textContent=picked?'✓':'+';mark.setAttribute('aria-hidden','true');
       b.append(avatar,info,mark);fragment.append(b);

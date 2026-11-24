@@ -11,3 +11,10 @@ test('local timing observations classify Worker routes and distinguish network, 
  m.observe({name:'https://outside.test/api/save',transferSize:200});
  const r=m.report();assert.equal(r.network,4);assert.equal(r.cache,1);assert.equal(r.unknown,1);assert.equal(r.groups.find(g=>g.name==='신청 콘텐츠 댓글').network,2);assert(!JSON.stringify(r).includes('secret'));assert(!JSON.stringify(r).includes('outside'));
 });
+
+test('new unified application and legacy post batches are reported separately',()=>{
+ const origin='https://fixture.test',m=create(origin);
+ m.observe({name:origin+'/api/soop/application-sync?id=private',transferSize:200});
+ m.observe({name:origin+'/api/soop/comment-batch?legacy=1&pages=1,2',transferSize:200});
+ assert.deepEqual(m.report().groups.map(x=>x.name),['신청 콘텐츠 통합 조회','게시글 관리 동기화']);
+});

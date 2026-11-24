@@ -29,12 +29,12 @@ test('real setTab implementation routes legacy buttons and returns without break
   const nav=['calendar','legacy','export'].map(setup);
   const sections=['calendar','legacy',...ids,'export'].map(setup);
   const back=setup('legacy'), links=[...ids.map(setup),back], title={textContent:''};
-  const renders=[];
+  const renders=[],tabEvents=[];
   const doc={
     querySelectorAll(s){return s==='.nav button'?nav:s==='.section'?sections:s==='[data-legacy-link-v1]'?links:[]},
     getElementById(id){return id==='pageTitle'?title:id==='mwsLegacyBackV1'?back:null}
   };
-  const scope={document:doc,window:{},safeRenderView:(title,fn)=>{renders.push(title);fn()},renderCalendar(){},renderRps(){},renderPachinko(){},updateFullBackupAssetStatus(){}};
+  const scope={document:doc,CustomEvent:class{constructor(type,init){this.type=type;this.detail=init.detail}},window:{dispatchEvent(event){assert.equal(event.type,'mws:workspace-tab-v1');tabEvents.push(event.detail.tab)}},safeRenderView:(title,fn)=>{renders.push(title);fn()},renderCalendar(){},renderRps(){},renderPachinko(){},updateFullBackupAssetStatus(){}};
   const start=app.indexOf('const legacyFeatureTabsV1='),end=app.indexOf('function syncSidebarPinUI(){',start);
   assert.ok(start>=0&&end>start);
   vm.runInNewContext(app.slice(start,end),scope);
@@ -58,4 +58,5 @@ test('real setTab implementation routes legacy buttons and returns without break
   nav[2].onclick();
   assertActive('export','export','가져오기 / 내보내기',true);
   assert.equal(renders.at(-1),'백업 이미지 상태');
+  assert.deepEqual(tabEvents,['legacy','wardogs','legacy','gameRps','legacy','gamePachinko','legacy','calendar','export']);
 });

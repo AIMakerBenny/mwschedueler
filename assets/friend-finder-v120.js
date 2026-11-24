@@ -7,7 +7,7 @@ window.__mwsFriendFinderV120=1;
 const baseFetch=window.fetch.bind(window);
 const liveCache=new Map();
 const liveByUserId=new Map();
-const LIVE_CACHE_MS=10000;
+const LIVE_CACHE_MS=30000;
 const THUMB_REFRESH_MS=10000;
 const ACTIVE_REFRESH_MS=30000;
 const LIVE_BATCH_SIZE=12;
@@ -37,7 +37,7 @@ function channelUrl(id){return `https://api-channel.sooplive.co.kr/v1.1/channel/
 function allContactTargets(){
   const contacts=Array.isArray(dataRef()?.contacts)?dataRef().contacts:[];
   const out=[];const seen=new Set();
-  for(const c of contacts){const id=stationKey(c?.stationUrl);if(!id||seen.has(id))continue;seen.add(id);out.push(channelUrl(id))}
+  for(const c of contacts){if(!c?.favorite)continue;const id=stationKey(c?.stationUrl);if(!id||seen.has(id))continue;seen.add(id);out.push(channelUrl(id))}
   return out;
 }
 function extractActualTarget(input){
@@ -252,9 +252,9 @@ function liveThumbCandidates(bno,stamp=liveThumbStamp()){
   if(!bno)return[];
   const id=encodeURIComponent(bno);
   return [
-    `/api/soop/live-thumb?bno=${id}&v=${stamp}`,
     `https://liveimg.sooplive.com/m/${id}?mws=${stamp}`,
     `https://liveimg.sooplive.co.kr/m/${id}?mws=${stamp}`,
+    `/api/soop/live-thumb?bno=${id}&v=${stamp}`,
     `https://liveimg.sooplive.com/m/${id}`,
     `https://liveimg.sooplive.co.kr/m/${id}`
   ];
@@ -265,13 +265,13 @@ async function loadCategories(){
   if(categoriesPromise)return categoriesPromise;
   categoriesPromise=(async()=>{
     try{
-      const cached=JSON.parse(sessionStorage.getItem('mws_soop_categories_v120')||'null');
+      const cached=JSON.parse(localStorage.getItem('mws_soop_categories_v120')||'null');
       if(cached&&Date.now()-Number(cached.at||0)<21600000&&Array.isArray(cached.items))return cached.items;
     }catch(_){}
     try{
       const res=await baseFetch('/api/soop/categories',{credentials:'same-origin',cache:'no-store'});if(!res.ok)throw new Error(`HTTP ${res.status}`);
       const body=await res.json();const items=Array.isArray(body?.categories)?body.categories:[];
-      try{sessionStorage.setItem('mws_soop_categories_v120',JSON.stringify({at:Date.now(),items}))}catch(_){}
+      try{localStorage.setItem('mws_soop_categories_v120',JSON.stringify({at:Date.now(),items}))}catch(_){}
       return items;
     }catch(error){console.warn('SOOP categories unavailable',error);return[]}
   })();
@@ -291,12 +291,14 @@ async function ensureCategoryControl(root){
   for(const entry of liveByUserId.values()){if(!isLiveEntry(entry))continue;const name=liveCategory(entry),id=liveCategoryId(entry);if(name)unique.set(`${id}|${name}`,{id,name})}
   [...unique.values()].sort((a,b)=>a.name.localeCompare(b.name,'ko')).forEach(x=>{const o=document.createElement('option');o.value=x.id?`id:${x.id}`:`name:${x.name}`;o.textContent=x.name;select.appendChild(o)});
 }
+const thumbPreferred=new Map();
 function setLiveImage(img,screen,bno,stamp=liveThumbStamp()){
   if(!img||!screen||!bno)return;
   const candidates=liveThumbCandidates(bno,stamp);
+  const preferred=thumbPreferred.get(bno);if(Number.isInteger(preferred)&&preferred>0&&preferred<candidates.length){const url=candidates.splice(preferred,1)[0];candidates.unshift(url)}
   let index=0;
   screen.classList.remove('is-image-fallback');
-  img.onload=()=>screen.classList.remove('is-image-fallback');
+  img.onload=()=>{screen.classList.remove('is-image-fallback');const chosen=liveThumbCandidates(bno,stamp).indexOf(candidates[index]);if(chosen>=0){if(thumbPreferred.size>=300)thumbPreferred.delete(thumbPreferred.keys().next().value);thumbPreferred.set(bno,chosen)}};
   img.onerror=()=>{
     index+=1;
     if(index<candidates.length){img.src=candidates[index];return}
@@ -336,7 +338,7 @@ function decorate(root=friendRoot()){
       try{img.fetchPriority='low'}catch(_){}
       const bounds=screen.getBoundingClientRect();
       const visible=bounds.width>0&&bounds.height>0&&bounds.bottom>0&&bounds.right>0&&bounds.top<window.innerHeight&&bounds.left<window.innerWidth;
-      if(shouldRefreshLiveImage(img,bno,thumbStamp,visible))setLiveImage(img,screen,bno,thumbStamp)
+      if(visible&&shouldRefreshLiveImage(img,bno,thumbStamp,visible))setLiveImage(img,screen,bno,thumbStamp)
     }
   }
 }
@@ -360,9 +362,14 @@ window.addEventListener('mawang:datachange',()=>{bindFriendGridObserver();schedu
 document.addEventListener('click',event=>{
   const text=String(event.target?.closest?.('button')?.textContent||'').trim();
   if(text.includes('라이브 새로고침')){liveCache.clear();liveByUserId.clear();forceNextBatch=true;setTimeout(()=>{scheduleUi();refreshActiveFriendLive(true).finally(()=>scheduleActiveRefresh())},0)}
-  const nav=event.target?.closest?.('.nav button[data-tab]');
-  if(nav)setTimeout(()=>{bindFriendGridObserver();if(activeFriendRoot()){scheduleUi();refreshActiveFriendLive(false).finally(()=>scheduleActiveRefresh())}else stopActiveRefresh()},0);
 },true);
+// All navigation paths, including contact sub-tabs and programmatic transitions.
+window.addEventListener('mws:workspace-tab-v1',()=>{
+  stopActiveRefresh();
+  if(!document.hidden&&activeFriendRoot()){
+    bindFriendGridObserver();scheduleUi();scheduleActiveRefresh(0);
+  }
+});
 document.addEventListener('input',event=>{if(activeFriendRoot()?.contains(event.target))setTimeout(scheduleUi,0)},true);
 document.addEventListener('change',event=>{if(activeFriendRoot()?.contains(event.target))setTimeout(scheduleUi,0)},true);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopActiveRefresh();else{scheduleUi();scheduleActiveRefresh(120)}});

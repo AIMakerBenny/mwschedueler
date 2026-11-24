@@ -1,5 +1,6 @@
 import appWorker from './cf-v110-steam.js';
 import {normalizeCampaigns} from '../assets/content-applications-model-v1.js';
+import {readApplicationSnapshots} from './application-snapshot-v1.js';
 import {ensureHistoricalCalendarMigration} from './historical-calendar-migration-v1.js';
 import {handleArchiveGallery} from './mawang-archive-gallery-v1.js';
 
@@ -421,7 +422,8 @@ async function handleCalendarStartup(request,env){
   const {results=[]}=await env.DB.prepare(`SELECT part,version,CASE part ${cases} END AS data FROM workspace_parts WHERE scope='public' ORDER BY part`).bind(...versionHints).all();
   const versions={},parts={};
   for(const row of results){const version=Number(row.version)||1;versions[row.part]=version;if(CALENDAR_STARTUP_PARTS.includes(row.part)&&row.data!==null&&row.data!==undefined){try{parts[row.part]={part:row.part,version,data:JSON.parse(row.data)}}catch(_){return json({error:'Stored data is invalid'},500)}}}
-  return json({manifest:{parts:versions,scope:'public',cacheSchemaVersion:3,backend:'cloudflare-d1'},parts});
+  const applicationSnapshots=await readApplicationSnapshots(env).catch(()=>[]);
+  return json({manifest:{parts:versions,scope:'public',cacheSchemaVersion:3,backend:'cloudflare-d1'},parts,applicationSnapshots});
 }
 async function handlePart(env,part){if(!PARTS.includes(part))return json({error:'Invalid part'},400);await ensureSchema(env);if(part==='contacts')await repairStoredContactImageRefs(env);const row=await env.DB.prepare("SELECT part,version,data FROM workspace_parts WHERE scope='public' AND part=?").bind(part).first();if(!row)return json({error:'Part not found'},404);let data;try{data=JSON.parse(row.data)}catch(_){return json({error:'Stored data is invalid'},500)}return json({part:row.part,version:Number(row.version)||1,data})}
 // Read exactly the same public rows exposed by /api/parts/:part.
