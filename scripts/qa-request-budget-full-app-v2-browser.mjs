@@ -77,9 +77,14 @@ try{
  await pause(1800);
  const startup=calls.slice();console.log('FULL_APP_STARTUP '+JSON.stringify(summary(startup)));
  assert.deepEqual(startup.filter(common).map(r=>r.path),['/api/calendar-startup','/api/parts-batch']);
+ assert.equal(startup.filter(r=>['/assets/cloud-v5.5.js','/assets/cloud-v1.1.js','/assets/boss-manager-v121.js'].includes(r.path)).length,0);
+ assert.equal(await browser.evaluate("!!window.__mwsCloudV110Loaded"),true);
  const routes=['calendar','contacts','dashboard','memos','careerTimeline','achievements','mawangArchive','gameLadder','gameMultiDraw','contentPlanner','toolTier','toolMatrix','toolRelations','settings','calendar'];
  const nav=async list=>browser.evaluate('(async()=>{for(const id of '+JSON.stringify(list)+'){window.setTab(id);await new Promise(r=>setTimeout(r,120));if(!document.getElementById(id)?.classList.contains("active"))throw Error("route "+id)}return true})()');
- let before=calls.length;await nav(routes);await pause(700);const cold=calls.slice(before);console.log('FULL_APP_COLD_NAV '+JSON.stringify(summary(cold)));
+ let before=calls.length;
+ const routeStats=[];
+ for(const route of routes){const offset=calls.length;await nav([route]);const dom=await browser.evaluate("(()=>{const root=document.querySelector('.section.active');return {canonical:root?.querySelectorAll('img[src*=\"/media/contact/\"]').length||0,deferred:root?.querySelectorAll('img[data-mws-deferred-contact-src]').length||0,cdn:root?.querySelectorAll('img[data-mws-cdn-contact-source]').length||0}})()");routeStats.push({route,worker:summary(calls.slice(offset)),dom})}
+ await pause(700);const cold=calls.slice(before);console.log('FULL_APP_COLD_NAV '+JSON.stringify(summary(cold)));console.log('FULL_APP_ROUTE_BREAKDOWN '+JSON.stringify(routeStats));
  assert.equal(cold.filter(common).length,0);
  if(useCdn){
   assert(cdnCalls.some(key=>key.startsWith('contacts/')),JSON.stringify(cdnCalls));

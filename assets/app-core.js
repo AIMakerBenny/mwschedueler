@@ -2708,11 +2708,11 @@ window.mwsPublicMediaUrlV1=function(raw){
 const mwsCdnContactFailuresV1=new Map();
 function mwsContactMediaIdV110(img){
   if(!(img instanceof HTMLImageElement))return '';
-  const raw=String(img.dataset.mwsCdnContactSource||img.getAttribute('src')||img.currentSrc||'').trim();
+  const raw=String(img.getAttribute('src')||img.currentSrc||'').trim();
   const explicit=String(img.dataset.contactId||'').trim();
   if(!raw)return explicit;
   try{
-    const url=new URL(raw,location.href);
+    const url=new URL(img.dataset.mwsCdnContactSource||raw,location.href);
     const match=url.pathname.match(/^\/media\/contact\/([^/]+)$/);
     return match?decodeURIComponent(match[1]):'';
   }catch(_){return ''}
