@@ -2881,10 +2881,30 @@ function mwsActivateDeferredContactImageV1(img){
   const src=img.getAttribute('data-mws-deferred-contact-src');if(!src)return;
   mwsDeferredContactObserverV1?.unobserve(img);
   img.removeAttribute('data-mws-deferred-contact-src');
-  const failure=mwsCdnContactFailuresV1.get(src);
-  const direct=(!failure||Date.now()-failure>=300000)?window.mwsPublicMediaUrlV1(src):'';
-  if(direct){img.dataset.mwsCdnContactSource=src;img.referrerPolicy='no-referrer'}
-  img.src=direct||src;mwsBindContactMediaImageV111(img);
+  const normal=()=>{
+    const failure=mwsCdnContactFailuresV1.get(src);
+    const direct=(!failure||Date.now()-failure>=300000)?window.mwsPublicMediaUrlV1(src):'';
+    if(direct){img.dataset.mwsCdnContactSource=src;img.referrerPolicy='no-referrer'}
+    img.src=direct||src;mwsBindContactMediaImageV111(img);
+  };
+  // A first-time visitor may render before the SW takes control. Use only
+  // approved, checksum-verified V4 bytes; do not block the calendar itself.
+  if(document.querySelector('meta[name="mws-public-media-v4-bootstrap"]')&&!navigator.serviceWorker?.controller){
+    const original=img.getAttribute('src'),marker=src;
+    img.dataset.mwsV4Pending=marker;
+    const current=()=>img.isConnected&&img.dataset.mwsV4Pending===marker&&img.getAttribute('src')===original&&!img.hasAttribute('data-mws-deferred-contact-src');
+    import('/assets/media-v4-page.js').then(m=>m.readPublicContactV4(src)).catch(()=>null).then(blob=>{
+      if(!current())return;
+      delete img.dataset.mwsV4Pending;
+      if(!blob){normal();return}
+      const object=URL.createObjectURL(blob),release=()=>URL.revokeObjectURL(object);
+      img.dataset.mwsCdnContactSource=src;
+      img.addEventListener('load',release,{once:true});img.addEventListener('error',release,{once:true});
+      img.src=object;mwsBindContactMediaImageV111(img);
+    });
+    return;
+  }
+  normal();
 }
 function mwsObserveDeferredContactImageV1(img){
   if(!img.hasAttribute('data-mws-deferred-contact-src'))return;

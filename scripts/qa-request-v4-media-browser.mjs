@@ -33,11 +33,14 @@ const dir=await mkdtemp(join(tmpdir(),'mws-v4-media-'));
 const sw=(await readFile(new URL('../mws-media-cache-sw.js',import.meta.url),'utf8')).replace('V4_PUBLIC_MEDIA_ENABLED=false','V4_PUBLIC_MEDIA_ENABLED=true').replace('create(self.MWS_PUBLIC_MEDIA_V4_CATALOG)','create(self.MWS_PUBLIC_MEDIA_V4_CATALOG,{local:true})');
 assert(sw.includes('{local:true}'));
 const runtime=await readFile(new URL('../assets/media-v4-delivery.js',import.meta.url));
+const pageRuntime=(await readFile(new URL('../assets/media-v4-page.js',import.meta.url),'utf8')).replace('M.validate(catalog)','M.validate(catalog,true)').replace('M.create(catalog)','M.create(catalog,{local:true})');
 let catalog;
 const app=createServer((req,res)=>{
  const u=new URL(req.url,'http://127.0.0.1');
+ if(u.pathname==='/uncontrolled'){res.writeHead(200,{'content-type':'text/html','cache-control':'no-store'}).end('<!doctype html><title>First visitor, no SW control</title>');return}
  if(u.pathname==='/'){res.writeHead(200,{'content-type':'text/html','cache-control':'no-store'}).end('<!doctype html><title>V4 local fixture</title><main>Calendar fixture</main><script>navigator.serviceWorker.register("/mws-media-cache-sw.js")</script>');return}
  if(u.pathname==='/mws-media-cache-sw.js'){res.writeHead(200,{'content-type':'text/javascript','cache-control':'no-store'}).end(sw);return}
+ if(u.pathname==='/assets/media-v4-page.js'){res.writeHead(200,{'content-type':'text/javascript'}).end(pageRuntime);return}
  if(u.pathname==='/assets/media-v4-delivery.js'){res.writeHead(200,{'content-type':'text/javascript'}).end(runtime);return}
  if(u.pathname==='/assets/media-v4-catalog.js'){res.writeHead(200,{'content-type':'text/javascript'}).end('globalThis.MWS_PUBLIC_MEDIA_V4_CATALOG='+JSON.stringify(catalog)+';');return}
  if(u.pathname.startsWith('/media/')){
@@ -64,8 +67,16 @@ try{
  await listen(cdn);catalog={schema:1,origin:'http://127.0.0.1:'+cdn.address().port,entries,packs};await listen(app);
  const origin='http://127.0.0.1:'+app.address().port+'/';
  const open=async()=>{browser=await launchCalendarBrowser(dir);await browser.navigate(origin,1280,720);await until(()=>browser.evaluate('!!navigator.serviceWorker.controller'),'SW control');await browser.enablePerformance()};
- await open();
- for(const n of [10,50,100,300,500,1000,2000]){
+ browser=await launchCalendarBrowser(dir);
+ await browser.navigate(origin+'uncontrolled',1280,720);
+ assert.equal(await browser.evaluate('!!navigator.serviceWorker.controller'),false);
+ const firstBefore=snapshot();
+ assert(await browser.evaluate('(async()=>{const m=await import("/assets/media-v4-page.js");const b=await m.readPublicContactV4('+JSON.stringify(entries[0].url)+');return b instanceof Blob&&b.size>0})()'));
+ const first=delta(firstBefore);assert.equal(first.worker,0);assert.equal(first.cdn,1);assert.equal(await size(),1);
+ await browser.close();browser=null;await open();
+ const controlBefore=snapshot();await fetchAll(entries.slice(0,1));assert.equal(delta(controlBefore).cdn,0);assert.equal(delta(controlBefore).worker,0);
+ console.log('V4_MEDIA_BROWSER_FIRST_VISITOR '+JSON.stringify({beforeServiceWorker:first,afterControl:delta(controlBefore),fixture:true}));
+ for(const n of [10,50,100,200,300,500,1000,2000]){
   await clear();const before=snapshot(),rows=entries.slice(0,n),coldMs=await fetchAll(rows);
   await until(async()=>await size()===n,'Cold cache not populated: '+n);
   const cold=delta(before);assert.equal(cold.worker,0);assert(cold.cdn<=n&&cold.cdn>0);
@@ -80,13 +91,13 @@ try{
  const beforeChange=snapshot();await Promise.all([fetchAll(changed.slice(0,1)),fetchAll(changed.slice(0,1),sibling)]);
  await until(async()=>await size()===2001,'changed cache');assert.equal(delta(beforeChange).cdn,1);assert.equal(delta(beforeChange).worker,0);
  const beforeMany=snapshot();await fetchAll(changed);await fetchAll([fresh]);await until(async()=>await size()===2011,'new cache');
- assert.equal(delta(beforeMany).cdn,10);assert.equal(delta(beforeMany).worker,0);
+ assert.equal(delta(beforeMany).cdn,10);assert.equal(delta(beforeMany).worker,0);const changedNineAndNew=delta(beforeMany);
  const beforeFallback=snapshot();
  corrupt.add('/v4/objects/'+broken.sha256);failed.add('/v4/objects/'+unavailable.sha256);
  await fetchAll([broken,unavailable]);await until(async()=>await size()===2013,'fallback cache');
  assert.equal(delta(beforeFallback).worker,2);assert.equal(delta(beforeFallback).cdn,2);
  const beforeWarm=snapshot();await fetchAll([broken,unavailable]);assert.equal(delta(beforeWarm).worker,0);assert.equal(delta(beforeWarm).cdn,0);
  const displayMs=await browser.evaluate('(async()=>{const t=performance.now();const i=new Image();i.src='+JSON.stringify(entries[0].url)+';await i.decode();return performance.now()-t})()');
- console.log('V4_MEDIA_BROWSER_DELTA '+JSON.stringify({restart,changedOne:1,changedNineAndNew:delta(beforeMany),fallback:delta(beforeFallback),displayMs,fixture:true}));
+ console.log('V4_MEDIA_BROWSER_DELTA '+JSON.stringify({restart,changedOne:1,changedNineAndNew,fallback:delta(beforeFallback),displayMs,fixture:true}));
  await browser.closeTarget(sibling.targetId);
 }finally{if(browser)await browser.close();await close(app);await close(cdn);await rm(dir,{recursive:true,force:true})}

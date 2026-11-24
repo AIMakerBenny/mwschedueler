@@ -1,11 +1,15 @@
-/* V4: approved immutable public contact objects only. No API polling or storage eviction. */
+/* V4: explicitly approved immutable public revisions only. No API polling or storage eviction. */
 (function(g){
 'use strict';
 const TYPES=new Set(['image/jpeg','image/png','image/webp','image/gif','image/avif']);
 const HEX=/^[a-f0-9]{64}$/;
 const CONTACT=/^\/media\/contact\/[A-Za-z0-9_-]{1,160}\?v=([1-9]\d*)&h=([a-f0-9]{32})(?:&r=\d+)?$/;
+const WORKSPACE=/^\/media\/workspace\/(?:tag|emoticon|mini)-[a-f0-9]{32}\?v=([1-9]\d*)&h=([a-f0-9]{32})$/;
+const PROFILE=/^\/media\/mawang-profile\/([a-z0-9-]+)\?rev=(\d{1,15}-[a-f0-9]{1,80})$/;
+const CHARACTERS=new Set('yoo mi mi-gold ye seon su su-black su-half so ae da ye-new hakka lena kokoa devil hina real wolferia mike coco azuki nyasuka chibi baby-shark baby-kuma kkomwang marorong'.split(' '));
+function revision(raw){if(typeof raw!=='string')return null;const m=CONTACT.exec(raw)||WORKSPACE.exec(raw);if(m)return m[1]+'-'+m[2];const p=PROFILE.exec(raw);return p&&CHARACTERS.has(p[1])?p[2]:null}
 const MAX_OBJECT=32*1024*1024, MAX_PACK=4*1024*1024;
-function canonical(raw){return typeof raw==='string'&&CONTACT.test(raw)?raw:null}
+function canonical(raw){return revision(raw)?raw:null}
 function origin(raw,local=false){
  try{const u=new URL(raw);if(u.username||u.password||u.pathname!=='/'||u.search||u.hash)return '';
  if(local&&u.protocol==='http:'&&u.hostname==='127.0.0.1')return u.origin;
@@ -37,7 +41,7 @@ async function readExact(response,n){
  if(pos!==n)throw Error('truncated body');return out}
  catch(e){try{await r.cancel()}catch(_){}throw e}finally{r.releaseLock()}
 }
-function response(e,bytes){const m=CONTACT.exec(e.url);return new Response(bytes,{headers:{'content-type':e.type,'content-length':String(e.bytes),'cache-control':'public, max-age=31536000, immutable','x-mws-cache-version':m[1]+'-'+m[2],'x-mws-image-policy':'original-bytes-no-reencode','x-content-type-options':'nosniff'}})}
+function response(e,bytes){return new Response(bytes,{headers:{'content-type':e.type,'content-length':String(e.bytes),'cache-control':'public, max-age=31536000, immutable','x-mws-cache-version':revision(e.url),'x-mws-image-policy':'original-bytes-no-reencode','x-content-type-options':'nosniff'}})}
 function create(c,{fetcher=fetch,local=false,windowMs=12,now=Date.now}={}){
  let cat;try{cat=validate(c,local)}catch(_){return null}if(!cat)return null;
  const waiting=new Map(),negative=new Map();let packCooldown=0;
@@ -76,5 +80,5 @@ function create(c,{fetcher=fetch,local=false,windowMs=12,now=Date.now}={}){
   });
  };
 }
-g.MWSMediaV4=Object.freeze({canonical,origin,validate,digest,create,MAX_PACK,MAX_OBJECT});
+g.MWSMediaV4=Object.freeze({canonical,revision,origin,validate,digest,create,MAX_PACK,MAX_OBJECT});
 })(globalThis);

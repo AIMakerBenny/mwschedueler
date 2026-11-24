@@ -35,3 +35,14 @@ test('invalid data and unavailable CDN return null for canonical fallback; negat
  assert.equal(await d(req(url(0))),null);assert.equal(await d(req(url(0))),null);assert.equal(calls,1);
  const bad=structuredClone(f.catalog);bad.packs[0].members[1].offset=0;assert.equal(M.create(bad),null);
 });
+
+test('allowlisted exact workspace banner/emoticon/minigame and character profile revisions',async()=>{
+ const f=await fixture(1),base=f.catalog.entries[0],hash='a'.repeat(32);
+ const urls=['/media/workspace/tag-'+hash+'?v=2&h='+hash,'/media/workspace/emoticon-'+hash+'?v=2&h='+hash,'/media/workspace/mini-'+hash+'?v=2&h='+hash,'/media/mawang-profile/yoo?rev=1234-abcd'];
+ f.catalog.entries=urls.map(url=>({...base,url}));
+ const d=M.create(f.catalog,{fetcher:async()=>new Response(bytes(0),{headers:{'content-type':'image/png'}})});
+ const rs=await Promise.all(urls.map(u=>d(req(u))));assert(rs.every(r=>r?.ok));
+ assert.equal(rs[0].headers.get('x-mws-cache-version'),'2-'+hash);assert.equal(rs[3].headers.get('x-mws-cache-version'),'1234-abcd');
+ assert.equal(await d(req('/media/workspace/private?v=2&h='+hash)),null);
+ assert.equal(await d(req('/media/mawang-profile/yoo?rev=1235-abcd')),null);
+});

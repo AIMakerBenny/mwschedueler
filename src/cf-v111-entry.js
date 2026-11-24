@@ -21,6 +21,7 @@ export function publicMediaOrigin(env){
 function normalizeVersionHtml(html,env){
   let out=String(html||'');
   out=out.replace(/<\/head>/i,'<meta name="mws-static-runtime" content="1">\n</head>');
+  if(env?.MWS_PUBLIC_MEDIA_V4_ENABLED==='1')out=out.replace(/<\/head>/i,'<meta name="mws-public-media-v4-bootstrap" content="1">\n</head>');
   const mediaOrigin=publicMediaOrigin(env);
   if(mediaOrigin)out=out.replace(/<\/head>/i,'<meta name="mws-public-media-origin" content="'+mediaOrigin+'">\n</head>');
   out=out.replace(/data-build-version=["'][^"']*["']/i,`data-build-version="${BUILD_LABEL}"`);

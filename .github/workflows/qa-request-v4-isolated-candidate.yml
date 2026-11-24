@@ -34,6 +34,22 @@ jobs:
           node-version: '24'
       - name: Actual Chromium with isolated scheduler and CDN origins
         run: bash scripts/mws-v3-network-only.sh node scripts/qa-request-v4-media-browser.mjs
+  v3-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      MWS_QA_OFFLINE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Original request, save and UI regressions, loopback only
+        run: |
+          bash scripts/mws-v3-network-only.sh node --test scripts/qa-request-budget-v1.test.mjs scripts/qa-workspace-read-batch-v1.test.mjs scripts/qa-public-read-sharing-v1.test.mjs scripts/qa-request-budget-meter-v1.test.mjs scripts/qa-request-budget-regressions-v1.test.mjs scripts/qa-request-budget-navigation-v2.test.mjs scripts/qa-live-cloud-save-contract-v1.test.mjs scripts/qa-application-snapshot-v1.test.mjs
+          bash scripts/mws-v3-network-only.sh node scripts/qa-mobile-calendar-layout-v2.mjs
+          bash scripts/mws-v3-network-only.sh node scripts/qa-posts-responsive-layout-v2.mjs
+          bash scripts/mws-v3-network-only.sh node scripts/qa-ui-audit-v2-browser.mjs
   production-management-read:
     runs-on: ubuntu-latest
     timeout-minutes: 5
