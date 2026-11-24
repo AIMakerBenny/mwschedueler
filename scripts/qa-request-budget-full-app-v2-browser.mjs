@@ -270,8 +270,12 @@ try{
   assert(await editor.evaluate("(async()=>{data.events[0].title='Confirmed peer event';window.saveData('peer fixture');return await window.mwsV55SaveNow()})()"));
   // Chromium background tabs can be hidden. Bring each to its foreground
   // before testing its visibility-gated, local-only application.
-  await clean.evaluate("window.dispatchEvent(new CustomEvent('mws:workspace-tab-v1'));true");
+  await clean.activate();
+  await until(()=>clean.evaluate("document.visibilityState==='visible'"),'Clean peer foreground');
+  await clean.evaluate("document.querySelector('#mwsAnnouncementDialog[open] .mws-notice-close')?.click();window.dispatchEvent(new CustomEvent('mws:workspace-tab-v1'));true");
   await until(()=>clean.evaluate("data.events[0].title==='Confirmed peer event'"),'Peer event from shared cache',200);
+  await browser.activate();
+  await until(()=>browser.evaluate("document.visibilityState==='visible'"),'Edited peer foreground');
   await browser.evaluate("window.dispatchEvent(new CustomEvent('mws:workspace-tab-v1'));true");
   assert.equal(await browser.evaluate("data.events[0].title"),'Local unsaved fixture edit');
   await pause(300);
