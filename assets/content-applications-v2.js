@@ -153,10 +153,11 @@ function updateClocks(){
  let changed=false;root?.querySelectorAll('[data-ca-state]').forEach(el=>{if(el.dataset.caPhase!==campaignStatus(el.dataset.caState))changed=true});if(changed)render();
 }
 function stopTimer(){clearInterval(timer);timer=0}
-function tick(){if(!active()){stopTimer();return}updateClocks();const c=sectionActive()?current():null;if(c&&!countdown(c.deadline).expired&&Date.now()-(attempts.get(c.id)||0)>60000)refresh(c);else if(!c&&!pending.size)loadVisible()}
+function refreshInterval(c){return sectionActive()||campaignStatus(c.deadline)==='urgent'?60000:180000}
+function tick(){if(!active()){stopTimer();return}updateClocks();loadVisible()}
 function loadVisible(){
- const c=sectionActive()?current():null;if(c){if(!snapshot(c)||Date.now()-(attempts.get(c.id)||0)>60000&&!countdown(c.deadline).expired)refresh(c);return}
- const candidates=records().filter(c=>!countdown(c.deadline).expired&&Date.now()-(attempts.get(c.id)||0)>60000).sort((a,b)=>(attempts.get(a.id)||0)-(attempts.get(b.id)||0));if(candidates.length&&!pending.size)refresh(candidates[0]);
+ const c=sectionActive()?current():null;if(c){if(!attempts.has(c.id)||(!countdown(c.deadline).expired&&Date.now()-(attempts.get(c.id)||0)>=refreshInterval(c)))refresh(c);return}
+ const candidates=records().filter(c=>!countdown(c.deadline).expired&&Date.now()-(attempts.get(c.id)||0)>=refreshInterval(c)).sort((a,b)=>(attempts.get(a.id)||0)-(attempts.get(b.id)||0));if(candidates.length&&!pending.size)refresh(candidates[0]);
 }
 function activate(){if(!active()){stopTimer();return}render();if(!timer)timer=setInterval(tick,1000);loadVisible()}
 async function fetchPage(source,page){
@@ -165,16 +166,34 @@ async function fetchPage(source,page){
  if(!res.ok)throw Error('SOOP HTTP '+res.status);
  const parsed=parseCommentPage(await res.json(),source);if(parsed.page!==page)throw Error('댓글 페이지 번호 불일치');return parsed;
 }
-async function fetchSource(source){
+async function fetchPageGroup(source,pages){
+ if(pages.length===1)return Promise.allSettled(pages.map(page=>fetchPage(source,page)));
+ const query='station='+encodeURIComponent(source.station)+'&post='+encodeURIComponent(source.postNo)+'&pages='+pages.join(',');
+ const res=await fetch('/api/soop/comment-batch?'+query,{headers:{accept:'application/json'},cache:'no-store',signal:AbortSignal.timeout(45000)});
+ if(res.status===404||res.status===405)return Promise.allSettled(pages.map(page=>fetchPage(source,page)));
+ if(!res.ok)throw Error('SOOP batch HTTP '+res.status);
+ const payload=await res.json();
+ if(!Array.isArray(payload?.results))throw Error('댓글 일괄 응답 확인 실패');
+ return pages.map(page=>{
+  try{const rows=payload.results.filter(row=>row.page===page);if(rows.length!==1||rows[0].status<200||rows[0].status>=300||!Number.isInteger(rows[0].status))throw Error('댓글 페이지 조회 실패');
+   const value=parseCommentPage(rows[0].data,source);if(value.page!==page)throw Error('댓글 페이지 번호 불일치');return {status:'fulfilled',value};
+  }catch(reason){return {status:'rejected',reason}}
+ });
+}
+async function fetchSource(source,canContinue=()=>true){
+ if(!canContinue())throw Error('조회 중단');
  const first=await fetchPage(source,1),rows=[...first.applicants];let complete=first.pages<=100;const limit=Math.min(100,first.pages);
  for(let start=2;start<=limit;start+=3){
-  const results=await Promise.allSettled(Array.from({length:Math.min(3,limit-start+1)},(_,i)=>fetchPage(source,start+i)));
+  if(!canContinue())throw Error('조회 중단');
+  const pages=Array.from({length:Math.min(3,limit-start+1)},(_,i)=>start+i);
+  let results;try{results=await fetchPageGroup(source,pages)}catch(error){results=pages.map(()=>({status:'rejected',reason:error}))}
   for(const result of results){if(result.status==='fulfilled'){rows.push(...result.value.applicants);if(result.value.pages!==first.pages||result.value.total!==first.total)complete=false}else complete=false}
  }return {rows,complete};
 }
 async function refresh(c,manual=false){
  if(!c||pending.has(c.id)||!active())return;
  const token=Symbol(),generation=epoch,sig=signature(c);
+ const canContinue=()=>generation===epoch&&pending.get(c.id)===token&&active()&&(!sectionActive()||!selected||selected===c.id);
  pending.set(c.id,token);attempts.set(c.id,Date.now());
  if(!snapshot(c))render();
  else if(sectionActive()&&selected===c.id){
@@ -185,12 +204,13 @@ async function refresh(c,manual=false){
  try{
   const rows=[];let complete=c.entries.length>0;
   for(let i=0;i<c.entries.length;i+=2){
-   const results=await Promise.allSettled(c.entries.slice(i,i+2).map(fetchSource));
-   if(generation!==epoch||pending.get(c.id)!==token)return;
+   if(!canContinue())return;
+   const results=await Promise.allSettled(c.entries.slice(i,i+2).map(source=>fetchSource(source,canContinue)));
+   if(!canContinue())return;
    for(const result of results){if(result.status==='fulfilled'){rows.push(...result.value.rows);complete&&=result.value.complete}else complete=false}
   }
   const latest=records().find(x=>x.id===c.id);
-  if(generation!==epoch||pending.get(c.id)!==token||!latest||signature(latest)!==sig)return;
+  if(!canContinue()||!latest||signature(latest)!==sig)return;
   const previous=snapshot(c);
   let next;
   if(!rows.length&&!complete&&previous)next={...previous,complete:false};
@@ -204,7 +224,9 @@ async function refresh(c,manual=false){
   if(manual&&!complete&&typeof toast==='function')toast('신청 콘텐츠','일부 댓글을 확인하지 못했습니다.');
  }finally{
   if(pending.get(c.id)===token){
+   const interrupted=!canContinue();
    pending.delete(c.id);
+   if(interrupted&&!snapshot(c))attempts.delete(c.id);
    if(generation===epoch){
     if(unchanged){
      if(sectionActive()&&selected===c.id){

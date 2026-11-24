@@ -8,7 +8,7 @@ const baseFetch=window.fetch.bind(window);
 const liveCache=new Map();
 const liveByUserId=new Map();
 const LIVE_CACHE_MS=10000;
-const THUMB_REFRESH_MS=10000;
+const THUMB_REFRESH_MS=60000;
 const ACTIVE_REFRESH_MS=30000;
 let batchPromise=null;
 let categoriesPromise=null;
@@ -138,7 +138,7 @@ function scheduleActiveRefresh(delay=ACTIVE_REFRESH_MS){
   activeRefreshTimer=setTimeout(async()=>{
     activeRefreshTimer=0;
     if(document.hidden||!activeFriendRoot())return;
-    await refreshActiveFriendLive(true);
+    await refreshActiveFriendLive(false);
     if(!document.hidden&&activeFriendRoot())scheduleActiveRefresh(ACTIVE_REFRESH_MS);
   },Math.max(0,Number(delay)||0));
 }
@@ -277,7 +277,7 @@ function setLiveImage(img,screen,bno,stamp=liveThumbStamp()){
   img.src=candidates[0];
 }
 function decorate(root=friendRoot()){
-  if(!root)return;installStyle();setVersionLabel();
+  if(!root||document.hidden||!activeFriendRoot())return;installStyle();setVersionLabel();
   ensureCategoryControl(root).catch(()=>{});
   const selected=document.getElementById('mwsFriendCategorySelect')?.value||'';
   for(const {card,id} of cardRows(root)){
@@ -303,7 +303,9 @@ function decorate(root=friendRoot()){
     if(img){
       img.loading='lazy';
       try{img.fetchPriority='low'}catch(_){}
-      if(img.dataset.bno!==bno||img.dataset.thumbStamp!==thumbStamp)setLiveImage(img,screen,bno,thumbStamp)
+      const bounds=screen.getBoundingClientRect();
+      const visible=bounds.width>0&&bounds.height>0&&bounds.bottom>0&&bounds.right>0&&bounds.top<window.innerHeight&&bounds.left<window.innerWidth;
+      if(img.dataset.bno!==bno||(visible&&img.dataset.thumbStamp!==thumbStamp))setLiveImage(img,screen,bno,thumbStamp)
     }
   }
 }
@@ -328,11 +330,12 @@ document.addEventListener('click',event=>{
   const text=String(event.target?.closest?.('button')?.textContent||'').trim();
   if(text.includes('라이브 새로고침')){liveCache.clear();liveByUserId.clear();forceNextBatch=true;setTimeout(()=>{scheduleUi();refreshActiveFriendLive(true).finally(()=>scheduleActiveRefresh())},0)}
   const nav=event.target?.closest?.('.nav button[data-tab]');
-  if(nav)setTimeout(()=>{bindFriendGridObserver();if(activeFriendRoot()){scheduleUi();refreshActiveFriendLive(true).finally(()=>scheduleActiveRefresh())}else stopActiveRefresh()},0);
+  if(nav)setTimeout(()=>{bindFriendGridObserver();if(activeFriendRoot()){scheduleUi();refreshActiveFriendLive(false).finally(()=>scheduleActiveRefresh())}else stopActiveRefresh()},0);
 },true);
 document.addEventListener('input',event=>{if(activeFriendRoot()?.contains(event.target))setTimeout(scheduleUi,0)},true);
 document.addEventListener('change',event=>{if(activeFriendRoot()?.contains(event.target))setTimeout(scheduleUi,0)},true);
-document.addEventListener('visibilitychange',()=>{if(document.hidden)stopActiveRefresh();else scheduleActiveRefresh(120)});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopActiveRefresh();else{scheduleUi();scheduleActiveRefresh(120)}});
+document.addEventListener('scroll',()=>{if(!document.hidden&&activeFriendRoot())scheduleUi()},{capture:true,passive:true});
 
 function boot(){installStyle();setVersionLabel();bindFriendGridObserver();scheduleUi();scheduleActiveRefresh(120);[100,350,900,1800].forEach(ms=>setTimeout(()=>{setVersionLabel();bindFriendGridObserver();scheduleUi()},ms))}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();

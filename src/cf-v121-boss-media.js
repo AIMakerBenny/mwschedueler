@@ -1,4 +1,5 @@
 import appWorker from './cf-v112-authfix.js';
+import {handleSoopCommentBatch} from './soop-comment-batch-v1.js';
 
 const MAX_IMAGE_BYTES=4*1024*1024;
 const SOOP_PROXY_HOST_SUFFIXES=['sooplive.com','sooplive.co.kr','afreecatv.com'];
@@ -163,6 +164,7 @@ export default {
   async fetch(request,env,ctx){
     const url=new URL(request.url);
     if(url.pathname==='/api/soop/proxy')return handleSoopProxy(request);
+    if(url.pathname==='/api/soop/comment-batch')return handleSoopCommentBatch(request,handleSoopProxy);
     if(url.pathname==='/api/boss-image'&&request.method==='POST')return handleBossImageUpload(request,env,ctx);
     if(url.pathname==='/api/save'&&request.method==='POST'){
       try{return appWorker.fetch(await rewriteSaveRequest(request,env),env,ctx)}catch(error){console.error('Boss image externalization failed',error);return appWorker.fetch(request,env,ctx)}
