@@ -1,0 +1,175 @@
+/* MAWANG visual experience system v1
+ * Shared depth, interaction and visual hierarchy. This layer does not change
+ * event geometry, calendars, list order, game canvases or storage behavior.
+ * Theme variables remain the single color source.
+ */
+body.mws-premium{
+  --mws-vx-edge:color-mix(in srgb,var(--border) 74%,var(--text) 9%);
+  --mws-vx-edge-hover:color-mix(in srgb,var(--accent) 44%,var(--border));
+  --mws-vx-highlight:color-mix(in srgb,var(--text) 7%,transparent);
+  --mws-vx-ambient:color-mix(in srgb,var(--accent) 9%,transparent);
+  --mws-vx-shadow:0 2px 5px #0002,0 10px 24px #0002,inset 0 1px 0 var(--mws-vx-highlight);
+  --mws-vx-shadow-hover:0 5px 10px #0003,0 18px 36px #0003,inset 0 1px 0 var(--mws-vx-highlight);
+  --mws-vx-ease:cubic-bezier(.22,.75,.22,1);
+  --mws-vx-short:150ms;
+  --mws-vx-standard:240ms;
+  --mws-vx-reveal:400ms;
+}
+/* Make section actions feel related, without moving anchored layout parents. */
+body.mws-premium :is(#dashboard,#contacts,#posts,#sniper,#targets,#memos,#settings) :is(.card,.contact-card,.event-card,.reminder-card),
+body.mws-premium #posts .post-applicant-card{
+  border-color:var(--mws-vx-edge)!important;
+  border-radius:13px!important;
+  background-image:linear-gradient(154deg,var(--mws-vx-highlight),transparent 48%)!important;
+  box-shadow:var(--mws-vx-shadow)!important;
+  transition:border-color var(--mws-vx-short) ease,box-shadow var(--mws-vx-standard) var(--mws-vx-ease),scale var(--mws-vx-standard) var(--mws-vx-ease)!important;
+}
+@media (hover:hover) and (pointer:fine), (hover:none) and (pointer:none) and (min-width:901px){
+  body.mws-premium :is(#contacts,#posts,#sniper,#targets,#memos) :is(.contact-card,.post-applicant-card,.memo-list-item,.favorite-folder-tile):hover{
+    border-color:var(--mws-vx-edge-hover)!important;
+    box-shadow:var(--mws-vx-shadow-hover)!important;
+    scale:1.008;
+  }
+}
+/* KPI tiles are glanceable, not six identical boxes. Retain their click routes. */
+body.mws-premium #dashboard #dashboardOverviewMode .dashboard-kpi-grid-local>.card{
+  border:1px solid var(--mws-vx-edge)!important;
+  border-radius:14px!important;
+  background-color:var(--panel)!important;
+  background-image:radial-gradient(ellipse at 95% 5%,color-mix(in srgb,var(--metric-accent,var(--accent)) 12%,transparent),transparent 63%),linear-gradient(146deg,var(--mws-vx-highlight),transparent 53%)!important;
+  box-shadow:var(--mws-vx-shadow)!important;
+  isolation:isolate;
+  transition:border-color var(--mws-vx-short),box-shadow var(--mws-vx-standard) var(--mws-vx-ease),scale var(--mws-vx-standard) var(--mws-vx-ease)!important;
+}
+body.mws-premium #dashboard #dashboardOverviewMode .dashboard-kpi-grid-local>.card::before{
+  width:3px;border-radius:0 3px 3px 0;
+  box-shadow:0 0 13px color-mix(in srgb,var(--metric-accent,var(--accent)) 25%,transparent);
+}
+body.mws-premium #dashboard #dashboardOverviewMode .dashboard-kpi-grid-local .kpi{font-size:11px;line-height:1.45;letter-spacing:.015em}
+body.mws-premium #dashboard #dashboardOverviewMode .dashboard-kpi-grid-local .kpi strong{
+  margin-top:7px;line-height:1.15;letter-spacing:-.045em;
+  font-feature-settings:"tnum";color:var(--text);
+}
+@media (hover:hover) and (pointer:fine), (hover:none) and (pointer:none) and (min-width:901px){
+  body.mws-premium #dashboard #dashboardOverviewMode .dashboard-kpi-grid-local>.card:is(:hover,:focus-visible){
+    scale:1.012;transform:none!important;
+    border-color:var(--mws-vx-edge-hover)!important;
+    box-shadow:var(--mws-vx-shadow-hover)!important;
+  }
+  body.mws-premium #dashboard #dashboardOverviewMode .dashboard-kpi-grid-local>.card:active{scale:.989}
+}
+body.mws-premium #dashboard #dashboardOverviewMode :is(.dashboard-detail-card,.dashboard-upcoming-panel,.dashboard-insight-card-v55){
+  border-color:var(--mws-vx-edge)!important;
+  border-radius:15px!important;
+  background-image:linear-gradient(160deg,var(--mws-vx-highlight),transparent 46%)!important;
+  box-shadow:var(--mws-vx-shadow)!important;
+}
+body.mws-premium #dashboard #dashboardOverviewMode .today-person-card-local{
+  border-radius:12px!important;
+  box-shadow:var(--mws-vx-shadow)!important;
+  background-image:linear-gradient(145deg,var(--mws-vx-highlight),transparent 55%);
+}
+body.mws-premium #dashboard #dashboardOverviewMode .today-person-card-local:hover{
+  box-shadow:var(--mws-vx-shadow-hover)!important;
+}
+/* Contacts are portrait-first: the name and image remain readable at rest. */
+body.mws-premium #contacts .contact-card{
+  background-color:var(--panel)!important;
+  background-image:radial-gradient(ellipse at 92% -15%,var(--mws-vx-ambient),transparent 65%),linear-gradient(155deg,var(--mws-vx-highlight),transparent 50%)!important;
+  box-shadow:var(--mws-vx-shadow)!important;
+}
+body.mws-premium #contacts :is(.contact-card-avatar-lg,.contact-card img){
+  transition:scale var(--mws-vx-standard) var(--mws-vx-ease),filter var(--mws-vx-standard) ease;
+}
+@media (hover:hover) and (pointer:fine){
+  body.mws-premium #contacts .contact-card:hover :is(.contact-card-avatar-lg,img){scale:1.035}
+}
+/* Posts prioritize the actual applicant and their artwork. */
+body.mws-premium #posts .post-applicant-card{
+  background-color:var(--panel)!important;
+  background-image:linear-gradient(145deg,var(--mws-vx-highlight),transparent 50%)!important;
+}
+body.mws-premium #posts .post-applicant-photo img{
+  transition:scale var(--mws-vx-standard) var(--mws-vx-ease);
+  transform-origin:center;
+}
+@media (hover:hover) and (pointer:fine){
+  body.mws-premium #posts .post-applicant-card:hover .post-applicant-photo img{scale:1.025}
+}
+/* Calendar remains a stable grid; movement belongs to content, not day cells. */
+body.mws-premium #calendar.section #calendarGrid .day{
+  border-color:var(--mws-vx-edge)!important;
+  background:linear-gradient(155deg,color-mix(in srgb,var(--text) 3%,transparent),transparent 46%),var(--calendar-grid-surface,var(--panel))!important;
+  box-shadow:inset 0 1px 0 color-mix(in srgb,var(--text) 5%,transparent)!important;
+  transition:background-color var(--mws-vx-short),border-color var(--mws-vx-short),box-shadow var(--mws-vx-standard)!important;
+}
+@media (hover:hover) and (pointer:fine){
+  body.mws-premium #calendar.section #calendarGrid .day:hover{
+    border-color:var(--mws-vx-edge-hover)!important;
+    box-shadow:inset 0 1px 0 var(--mws-vx-highlight),0 2px 8px #0002!important;
+    transform:none!important;
+  }
+}
+/* Ranking rows already have verified FLIP/delta effects. Enhance only the
+ * resting stage; never animate the row transform or disturb reorder math. */
+body.mws-premium #contentApplications :is(.ca-person,.ca-stat-card){
+  box-shadow:var(--mws-vx-shadow);
+  border-color:var(--mws-vx-edge);
+}
+body.mws-premium #contentApplications .ca-ranking>.ca-person:nth-child(-n+3):not(.is-mawang){
+  background-image:linear-gradient(115deg,color-mix(in srgb,var(--ca-pink,var(--accent)) 7%,transparent),transparent 46%);
+}
+body.mws-premium #contentApplications .ca-person.is-mawang{
+  box-shadow:0 2px 8px #0003,0 0 0 1px color-mix(in srgb,var(--ca-pink,var(--accent)) 20%,transparent),inset 0 1px 0 var(--mws-vx-highlight)!important;
+}
+/* Exhibition and timeline retain their own motion engines. Give their
+ * interactive records a tactile focus instead of animating the whole stage. */
+body.mws-premium #achievements .achievement-card-open,
+body.mws-premium #careerTimeline .cv-card{
+  transition:border-color var(--mws-vx-short),box-shadow var(--mws-vx-standard) var(--mws-vx-ease)!important;
+}
+@media (hover:hover) and (pointer:fine){
+  body.mws-premium #achievements .achievement-card-open:hover,
+  body.mws-premium #careerTimeline .cv-card:hover{
+    box-shadow:var(--mws-vx-shadow-hover)!important;
+  }
+}
+/* Active navigation gains hierarchy without waiting for a color animation. */
+body.mws-premium .sidebar .nav .nav-scroll>button[data-tab].active{
+  background-image:linear-gradient(100deg,color-mix(in srgb,var(--accent) 12%,transparent),transparent 90%)!important;
+  box-shadow:inset 2px 0 0 var(--accent)!important;
+}
+body.mws-premium .sidebar .nav .nav-scroll>button[data-tab]:focus-visible,
+body.mws-premium :is(#dashboard,#contacts,#posts,#calendar,#contentApplications) :is(button,a,[tabindex]):focus-visible{
+  outline:2px solid var(--accent)!important;
+  outline-offset:2px;
+}
+body.mws-premium :is(#eventModal,#contactModal) .modalbox{
+  border:1px solid var(--mws-vx-edge)!important;
+  box-shadow:0 24px 62px #0006,inset 0 1px 0 var(--mws-vx-highlight)!important;
+}
+/* Live data changed, so the number acknowledges it. Never pulse continuously. */
+body.mws-premium #dashboard .kpi strong.mws-vx-updated{
+  animation:mws-vx-numeric-update 380ms var(--mws-vx-ease) both;
+}
+@keyframes mws-vx-numeric-update{
+  0%{opacity:.5;translate:0 3px}
+  65%{opacity:1;translate:0 -1px}
+  100%{opacity:1;translate:0 0}
+}
+/* Touch layout stays stable. System and explicit reduced-motion preferences
+ * suppress every new effect, even on a device that reports hover:none. */
+@media(max-width:760px){
+  body.mws-premium #dashboard #dashboardOverviewMode .dashboard-kpi-grid-local>.card{border-radius:12px!important}
+  body.mws-premium :is(#dashboard,#contacts,#posts,#sniper,#targets,#memos) :is(.card,.contact-card,.post-applicant-card){scale:none!important}
+}
+html[data-mws-motion=reduced] body.mws-premium :is(.card,.contact-card,.event-card,.reminder-card,.post-applicant-card,.contact-card-avatar-lg,.kpi strong,.ca-person,.ca-stat-card,.achievement-card-open,.cv-card),
+html[data-mws-motion=reduced] body.mws-premium #calendar.section #calendarGrid .day{
+  animation:none!important;transition:none!important;scale:none!important;
+}
+@media(prefers-reduced-motion:reduce){
+  html:not([data-mws-motion=full]) body.mws-premium :is(.card,.contact-card,.event-card,.reminder-card,.post-applicant-card,.contact-card-avatar-lg,.kpi strong,.ca-person,.ca-stat-card,.achievement-card-open,.cv-card),
+  html:not([data-mws-motion=full]) body.mws-premium #calendar.section #calendarGrid .day{
+    animation:none!important;transition:none!important;scale:none!important;
+  }
+}
