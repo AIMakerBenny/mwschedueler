@@ -41,6 +41,8 @@ jobs:
           node --test scripts/qa-live-cloud-save-contract-v1.test.mjs
       - name: Real browser request counting fixture
         run: node scripts/qa-request-budget-navigation-v2-browser.mjs
+      - name: Full application Worker and browser request budget
+        run: node scripts/qa-request-budget-full-app-v2-browser.mjs
       - name: Local rank UI fixture
         run: node scripts/qa-content-applications-v1-browser.mjs
       - name: Cumulative application integration audit
