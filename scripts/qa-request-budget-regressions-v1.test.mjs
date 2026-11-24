@@ -70,7 +70,7 @@ test('application rank polling keeps 60-second freshness, stops outside relevant
  let now=100000,visible=false,onApplications=false,clocks=0,requests=0,stopped=0;
  const attempts=new Map(),pending=new Map(),campaign={id:'one',deadline:100000+10800000};
  const api=new Function('active','updateClocks','sectionActive','current','records','countdown','attempts','pending','refresh','render','setInterval','clearInterval','Date','snapshot','let timer=1;'+code+'\nreturn {tick,activate}')(
- ()=>visible,()=>clocks++,()=>onApplications,()=>null,()=>[campaign],deadline=>({expired:now>=deadline}),attempts,pending,c=>{requests++;attempts.set(c.id,now)},()=>{},()=>1,()=>stopped++,{now:()=>now},()=>null);
+ ()=>visible,()=>clocks++,()=>onApplications,()=>null,()=>[campaign],deadline=>({expired:now>=deadline}),attempts,pending,c=>{requests++;attempts.set(c.id,now)},()=>{},()=>1,()=>stopped++,{now:()=>now,parse:Date.parse},()=>null);
  for(let n=0;n<3600;n++){now+=1000;api.tick()}assert.equal(requests,0);assert.equal(clocks,0);
  visible=true;for(let n=0;n<3600;n++){api.tick();now+=1000}assert.equal(requests,0);
  onApplications=true;for(let n=0;n<3600;n++){api.tick();now+=1000}assert.equal(requests,60);assert.equal(clocks,7200);
