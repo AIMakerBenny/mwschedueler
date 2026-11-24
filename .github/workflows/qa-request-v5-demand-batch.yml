@@ -22,3 +22,16 @@ jobs:
           bash scripts/mws-v3-network-only.sh node --check src/cf-v111-auth.js
           bash scripts/mws-v3-network-only.sh node --check src/cf-v111-entry.js
           bash scripts/mws-v3-network-only.sh node scripts/build-cf-static-runtime.mjs --check
+  local-browser:
+    needs: local-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      MWS_QA_OFFLINE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Real Chromium persistent cache and actual batch handler over loopback
+        run: bash scripts/mws-v3-network-only.sh node scripts/qa-request-v5-demand-batch-browser.mjs
