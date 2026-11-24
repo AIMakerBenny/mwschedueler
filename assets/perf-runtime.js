@@ -147,7 +147,7 @@
     if(url.origin!==location.origin||method!=='GET')return nativeFetch(input,init);
     // Save verification, hydration and conflict recovery must see the real D1 version.
     // Do not synthesize manifest or part responses from a session-long bootstrap bundle.
-    if(url.pathname==='/api/health'||url.pathname==='/api/manifest'||url.pathname==='/api/bootstrap'||url.pathname==='/api/calendar-startup'||url.pathname.startsWith('/api/parts/'))return nativeFetch(input,{...init,cache:'no-store'});
+    if(url.pathname==='/api/health'||url.pathname==='/api/manifest'||url.pathname==='/api/bootstrap'||url.pathname==='/api/calendar-startup'||url.pathname==='/api/parts-batch'||url.pathname.startsWith('/api/parts/'))return nativeFetch(input,{...init,cache:'no-store'});
     return nativeFetch(input,init);
   };
 

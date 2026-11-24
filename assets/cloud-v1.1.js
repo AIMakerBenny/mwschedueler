@@ -92,8 +92,49 @@
   function freshSkeleton(){return{version:52,categories:[],contacts:[],events:[],posts:[],miniGames:{},collaborations:[],todayPeopleByDate:{},todayPeopleManualByDate:{},targetList:[],memos:[],favoriteFolders:[],patchNotes:[],suggestions:[],contactTags:[],contactTagBanners:{},emoticons:[],scheduleClipboard:[],timezones:[],achievementCards:[],gameLibrary:[],wardogs:{schemaVersion:1,cards:[]}}}
   function normalizeAndRender(reason,startup=false){try{normalizeDataShape()}catch(_){try{normalizeMiniGameData()}catch(__){}}try{if(typeof mwsApplyDevicePrefs==='function')mwsApplyDevicePrefs(data)}catch(_){}document.body.dataset.theme=data.theme||'neon';document.body.classList.toggle('sidebar-pinned',Boolean(data.sidebarPinned));try{if(startup&&typeof window.mwsRenderHydratedCalendarV1==='function')window.mwsRenderHydratedCalendarV1(reason,[...loadedParts]);else renderAll(reason)}catch(e){console.error('v1.1 render failed',e);if(startup)throw e}}
 
-  async function fetchManifest(){const started=performance.now(),m=await fetchJson('/api/manifest',{},'Cloudflare 버전 확인');metrics.semanticResponseBytes+=byteLen(m);metric('manifest',{bytes:byteLen(m),backend:m.backend,ms:Math.round(performance.now()-started)});return m}
-  async function fetchPart(part){const started=performance.now(),row=await fetchJson(`/api/parts/${encodeURIComponent(part)}`,{cache:'no-store'},`${part} 불러오기`);metrics.semanticResponseBytes+=byteLen(row);metrics.cacheMisses++;metric('part-fetch',{part,version:Number(row.version)||0,bytes:byteLen(row),ms:Math.round(performance.now()-started)});return row}
+  function fetchManifest(){
+    const key=String(hydrationSeq)+':'+String(mode);
+    if(manifestReads.has(key))return manifestReads.get(key);
+    const reading=readManifest().finally(()=>{if(manifestReads.get(key)===reading)manifestReads.delete(key)});
+    manifestReads.set(key,reading);return reading;
+  }
+  async function readManifest(){const started=performance.now(),m=await fetchJson('/api/manifest',{},'Cloudflare 버전 확인');metrics.semanticResponseBytes+=byteLen(m);metric('manifest',{bytes:byteLen(m),backend:m.backend,ms:Math.round(performance.now()-started)});return m}
+  // Only simultaneous public-scope reads are coalesced. No persistent version cache.
+  const partReadQueues=new Map();
+  const manifestReads=new Map();
+  function fetchPart(part,fresh=false){
+    const key=String(hydrationSeq)+':'+String(mode)+':'+(fresh?'fresh':'normal');
+    let queue=partReadQueues.get(key);
+    if(!queue){
+      queue=new Map();partReadQueues.set(key,queue);
+      setTimeout(()=>{if(partReadQueues.get(key)===queue)partReadQueues.delete(key);void flushPartReads(queue)},12);
+    }
+    return new Promise((resolve,reject)=>{
+      if(!queue.has(part))queue.set(part,[]);
+      queue.get(part).push({resolve,reject});
+    });
+  }
+  async function readSinglePart(part){return fetchJson(`/api/parts/${encodeURIComponent(part)}`,{cache:'no-store'},`${part} 불러오기`)}
+  async function flushPartReads(queue){
+    const started=performance.now(),parts=[...queue.keys()];
+    const deliver=(part,row,error)=>{
+      if(!error){metrics.semanticResponseBytes+=byteLen(row);metrics.cacheMisses++;metric('part-fetch',{part,version:Number(row?.version)||0,bytes:byteLen(row),ms:Math.round(performance.now()-started)})}
+      for(const waiter of queue.get(part)||[]){if(error)waiter.reject(error);else waiter.resolve(clone(row))}
+    };
+    const single=async part=>{try{deliver(part,await readSinglePart(part))}catch(error){deliver(part,null,error)}};
+    try{
+      if(parts.length===1){await single(parts[0]);return}
+      let body;
+      try{body=await fetchJson('/api/parts-batch?parts='+encodeURIComponent(parts.join(',')),{cache:'no-store'},'Cloudflare 데이터 일괄 조회')}
+      catch(error){if(error.status===404||error.status===405){await Promise.all(parts.map(single));return}throw error}
+      if(!body?.results||typeof body.results!=='object'||Array.isArray(body.results))throw Error('일괄 조회 응답 확인 실패');
+      for(const part of parts){
+        const item=Object.prototype.hasOwnProperty.call(body.results,part)?body.results[part]:null;
+        if(item?.status===200&&item.row?.part===part&&Number.isInteger(Number(item.row.version))&&ownSave(item.row,'data'))deliver(part,item.row);
+        else{const error=Error(item?.error||'최신 서버 데이터 확인 실패: '+part);error.status=Number(item?.status)||502;deliver(part,null,error)}
+      }
+    }catch(error){for(const part of parts)deliver(part,null,error)}
+  }
   async function loadPartWithCache(scope,part,serverManifest,{allowStale=true}={}){
     const wanted=Number(serverManifest?.parts?.[part])||0,cacheCheck=await timeout(getCachedPart(scope,part),1500,'로컬 캐시 확인').then(cached=>({cached}),()=>({cached:null,timedOut:true})),cached=cacheCheck.cached;
     if(serverManifest?.parts&&!ownSave(serverManifest.parts,part)){
@@ -165,9 +206,10 @@
     }catch(error){if(generation===hydrationSeq){loadedParts.clear();baselineJson.clear();dirtyParts.clear();window.__mwsAppReadyV130=false}throw error}finally{if(generation===hydrationSeq)hydrating=false}
   }
   async function ensurePartsForTab(tab){
-    const extras=PARTS_BY_TAB[tab]||[];if(!extras.length)return true;
+    const extras=PARTS_BY_TAB[tab]||[];if(!extras.length||extras.every(part=>loadedParts.has(part)))return true;
     const scope=mode==='admin'?'admin':'public',generation=hydrationSeq;let changed=false;
-    if(!manifest){try{manifest=await fetchManifest()}catch(_){}}
+    if(!manifest){try{const fresh=await fetchManifest();if(generation!==hydrationSeq||scope!==(mode==='admin'?'admin':'public'))return false;manifest=clone(fresh)}catch(_){}}
+    if(generation!==hydrationSeq||scope!==(mode==='admin'?'admin':'public'))return false;
     const results=await Promise.all(extras.map(async part=>{
       if(loadedParts.has(part))return true;
       if(!lazyPartLoads.has(part)){
