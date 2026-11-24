@@ -103,11 +103,21 @@ try{
   if(process.env.MWS_QA_SESSION==='1'){await auditSession({browser,nav,calls,summary,until,mode});
    const ready=()=>until(()=>browser.evaluate("!!window.__mwsAppReadyV130&&!document.body.classList.contains('mws-app-loading')&&document.body.dataset.mwsMode==="+JSON.stringify(mode)),'Reload with remembered mode');
    for(const action of ['reload','hard-reload','restart','new-tab','two-tabs']){
+    // Force an independent concurrent-entry sample instead of relying on a previous
+    // eight-second peer response. This delay is local QA only.
+    if(action==='two-tabs'&&mode==='public')await pause(8200);
     const start=calls.length,url=base+':'+server.address().port+'/';
     if(action==='restart'){await browser.close();browser=await launchCalendarBrowser(dir);await browser.navigate(url,1366,768);await ready()}
     else if(action.endsWith('tab')||action.endsWith('tabs')){
      const ids=await Promise.all(Array.from({length:action==='two-tabs'?2:1},()=>browser.sibling(url)));
-     await until(()=>Promise.resolve(calls.slice(start).filter(r=>r.path==='/api/calendar-startup').length>=ids.length),'New tab startup');
+     // A shared startup response is allowed to produce no network request.
+     // Verify that each actual tab is fully usable instead of counting requests
+     // as a proxy for readiness.
+     const expression="!!window.__mwsAppReadyV130&&!document.body.classList.contains('mws-app-loading')&&!document.body.classList.contains('mws-gated')&&document.body.dataset.mwsMode==="+JSON.stringify(mode);
+     await until(async()=>{const ready=await Promise.all(ids.map(tab=>tab.evaluate(expression).catch(()=>false)));return ready.every(Boolean)},'New tabs ready');
+     const startupCalls=calls.slice(start).filter(r=>r.path==='/api/calendar-startup').length;
+     console.log('NEW_TABS_READY '+JSON.stringify({mode,count:ids.length,startupCalls}));
+     assert(startupCalls<=(mode==='public'?1:ids.length),'Duplicate startup requests: '+startupCalls);
      await pause(3500);for(const {targetId} of ids)await browser.closeTarget(targetId);
     }else{
      const beforeReload=await browser.evaluate('performance.timeOrigin');await browser.reload(action==='hard-reload');

@@ -66,7 +66,15 @@ export async function launchCalendarBrowser(dir){
       assert.equal(state,'minimized');
     };
     const reload=ignoreCache=>send('Page.reload',{ignoreCache},sessionId);
-    const sibling=url=>send('Target.createTarget',{url});
+    const sibling=async url=>{
+      const {targetId}=await send('Target.createTarget',{url});
+      const {sessionId:childSession}=await send('Target.attachToTarget',{targetId,flatten:true});
+      const evaluate=async expression=>{
+        const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true},childSession);
+        assert(!result.exceptionDetails,JSON.stringify(result.exceptionDetails));return result.result.value;
+      };
+      return {targetId,evaluate};
+    };
     const closeTarget=id=>send('Target.closeTarget',{targetId:id});
     return {reload,sibling,closeTarget,minimizeWindow,openBackgroundTestTab,navigate,evaluate,clickPoint,movePoint,mouseDown,mouseDrag,mouseUp,keyPress,enablePerformance,performanceMetrics,setReducedMotion,captureScreenshot,close};
   }catch(error){await close();throw error}

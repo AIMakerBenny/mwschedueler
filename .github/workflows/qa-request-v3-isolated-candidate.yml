@@ -39,3 +39,16 @@ jobs:
           node-version: '24'
       - name: Browser session using loopback only
         run: bash scripts/mws-v3-network-only.sh node scripts/qa-request-budget-full-app-v2-browser.mjs
+  local-media-cache:
+    needs: local-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      MWS_QA_OFFLINE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Persist 1005 versioned images using only loopback
+        run: bash scripts/mws-v3-network-only.sh node scripts/qa-request-v3-media-cache-browser.mjs
