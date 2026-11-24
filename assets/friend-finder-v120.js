@@ -8,7 +8,7 @@ const baseFetch=window.fetch.bind(window);
 const liveCache=new Map();
 const liveByUserId=new Map();
 const LIVE_CACHE_MS=30000;
-const THUMB_REFRESH_MS=10000;
+const THUMB_REFRESH_MS=30000;
 const ACTIVE_REFRESH_MS=30000;
 const LIVE_BATCH_SIZE=12;
 const liveAttempts=new Map();
@@ -305,24 +305,31 @@ async function ensureCategoryControl(root){
   for(const entry of liveByUserId.values()){if(!isLiveEntry(entry))continue;const name=liveCategory(entry),id=liveCategoryId(entry);if(name)unique.set(`${id}|${name}`,{id,name})}
   [...unique.values()].sort((a,b)=>a.name.localeCompare(b.name,'ko')).forEach(x=>{const o=document.createElement('option');o.value=x.id?`id:${x.id}`:`name:${x.name}`;o.textContent=x.name;select.appendChild(o)});
 }
-const thumbPreferred=new Map();
+const thumbPreferred=new Map(),thumbFailedAt=new Map();
+const THUMB_FAILURE_COOLDOWN=60000;
+function thumbRetryAllowed(bno,now=Date.now()){
+ for(const [id,at] of thumbFailedAt)if(now-at>=THUMB_FAILURE_COOLDOWN)thumbFailedAt.delete(id);
+ return !thumbFailedAt.has(bno);
+}
 function visibleFriendScreen(screen){
   if(!friendReadActive()||!screen?.isConnected||screen.hidden)return false;
   const bounds=screen.getBoundingClientRect();
   return bounds.width>0&&bounds.height>0&&bounds.bottom>0&&bounds.right>0&&bounds.top<window.innerHeight&&bounds.left<window.innerWidth;
 }
 function setLiveImage(img,screen,bno,stamp=liveThumbStamp()){
-  if(!img||!screen||!bno)return;
+  if(!img||!screen||!bno||!visibleFriendScreen(screen))return;
+  if(!thumbRetryAllowed(bno)){screen.classList.add('is-image-fallback');return}
   const candidates=liveThumbCandidates(bno,stamp);
   const preferred=thumbPreferred.get(bno);if(Number.isInteger(preferred)&&preferred>0&&preferred<candidates.length){const url=candidates.splice(preferred,1)[0];candidates.unshift(url)}
   let index=0;
   screen.classList.remove('is-image-fallback');
-  img.onload=()=>{screen.classList.remove('is-image-fallback');const chosen=liveThumbCandidates(bno,stamp).indexOf(candidates[index]);if(chosen>=0&&!candidates[index].startsWith('/api/')){if(thumbPreferred.size>=300)thumbPreferred.delete(thumbPreferred.keys().next().value);thumbPreferred.set(bno,chosen)}};
+  img.onload=()=>{thumbFailedAt.delete(bno);screen.classList.remove('is-image-fallback');const chosen=liveThumbCandidates(bno,stamp).indexOf(candidates[index]);if(chosen>=0&&!candidates[index].startsWith('/api/')){if(thumbPreferred.size>=300)thumbPreferred.delete(thumbPreferred.keys().next().value);thumbPreferred.set(bno,chosen)}};
   img.onerror=()=>{
     if(img.dataset.bno!==bno||img.dataset.thumbStamp!==stamp)return;
     if(!visibleFriendScreen(screen)){img.dataset.thumbStamp='';return}
     index+=1;
     if(index<candidates.length){img.src=candidates[index];return}
+    thumbFailedAt.set(bno,Date.now());
     screen.classList.add('is-image-fallback');
   };
   img.dataset.bno=bno;

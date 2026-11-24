@@ -42,10 +42,68 @@ function traceDelivery(id,url,source){
 }
 // Only share a verified Cache Storage fill; never hand another request
 // an unverified response. Cache.match honors Vary and failed fills are not reused.
+// LIVE images are mutable. Keep them in a separate, short-lived cache.
+// Reuse verified public bytes only within the origin's existing 60s policy.
+const LIVE_CACHE='mws-public-live-thumb-v3',LIVE_TTL=60000;
+const liveFills=new Map(),liveFailures=new Map();
+let nextLiveSweep=0;
+function liveThumbKey(url){
+  const u=new URL(url,self.location.origin);
+  return u.origin===self.location.origin&&u.pathname==='/api/soop/live-thumb'&&[...u.searchParams.keys()].join(',')==='bno'&&/^\d{3,20}$/.test(u.searchParams.get('bno')||'')?u.href:null;
+}
+function validLiveThumb(res){
+  return res?.status===200&&!res.redirected&&/^image\/(?:jpeg|png|webp|gif|avif)(?:;|$)/i.test(res.headers.get('content-type')||'')&&/\bpublic\b/i.test(res.headers.get('cache-control')||'')&&!/no-store|private|no-cache/i.test(res.headers.get('cache-control')||'')&&/\bmax-age=60\b/.test(res.headers.get('cache-control')||'');
+}
+function freshLiveThumb(res,now=Date.now()){
+  const at=Number(res?.headers.get('x-mws-live-cached-at'));
+  return validLiveThumb(res)&&Number.isFinite(at)&&at>0&&at<=now&&now-at<LIVE_TTL;
+}
+async function sweepLiveThumbs(cache,now){
+  // Expire transient frames only; never touch the persistent portrait cache.
+  if(!cache||now<nextLiveSweep)return;
+  nextLiveSweep=now+LIVE_TTL;
+  try{for(const key of await cache.keys()){const row=await cache.match(key);if(!freshLiveThumb(row,now))await cache.delete(key)}}catch(_){}
+}
+async function readLiveThumb(request,id){
+  const key=liveThumbKey(request.url);
+  let cache;try{cache=await caches.open(LIVE_CACHE)}catch(_){}
+  const lookup=async()=>{try{const row=await cache?.match(request);return freshLiveThumb(row)?row:null}catch(_){return null}};
+  const cached=await lookup();
+  if(cached){traceDelivery(id,key,'service-worker-cache');return {response:cached,save:sweepLiveThumbs(cache,Date.now())}}
+  for(const [url,at] of liveFailures)if(Date.now()-at>=LIVE_TTL)liveFailures.delete(url);
+  const failed=()=>new Response('SOOP live thumbnail temporarily unavailable',{status:502,headers:{'cache-control':'no-store','retry-after':'60'}});
+  if(liveFailures.has(key)){traceDelivery(id,key,'service-worker-cache');return {response:failed()}}
+  while(liveFills.has(key)){
+    await liveFills.get(key);
+    const hit=await lookup();
+    if(hit){traceDelivery(id,key,'service-worker-cache');return {response:hit}}
+    if(liveFailures.has(key)){traceDelivery(id,key,'service-worker-cache');return {response:failed()}}
+  }
+  let finish;const pending=new Promise(resolve=>{finish=resolve});
+  liveFills.set(key,pending);
+  const release=()=>{if(liveFills.get(key)===pending)liveFills.delete(key);finish()};
+  try{
+    const response=await fetch(request,{cache:'no-store'});
+    traceDelivery(id,key,'service-worker-fetch');
+    if(response.status===502||response.status===503)liveFailures.set(key,Date.now());
+    if(cache&&validLiveThumb(response)){
+      const headers=new Headers(response.headers);headers.set('x-mws-live-cached-at',String(Date.now()));
+      const stored=new Response(response.clone().body,{status:200,headers});
+      const save=store(cache,request,stored).finally(release).then(()=>sweepLiveThumbs(cache,Date.now()));
+      return {response,save};
+    }
+    release();return {response,save:sweepLiveThumbs(cache,Date.now())};
+  }catch(error){release();throw error}
+}
 const filling=new Map();
 self.addEventListener('fetch',event=>{
   const request=event.request;
   if(request.method!=='GET'||request.headers.has('range'))return;
+  if(liveThumbKey(request.url)&&!request.headers.has('authorization')){
+    const task=readLiveThumb(request,event.clientId);
+    event.respondWith(task.then(result=>result.response));
+    event.waitUntil(task.then(result=>result.save).catch(()=>{}));return;
+  }
   const key=cacheKey(request.url);if(!key)return;
   const task=(async()=>{
     let cache;

@@ -10,13 +10,17 @@ const sw=readFileSync(new URL('../mws-media-cache-sw.js',import.meta.url));
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jf2sAAAAASUVORK5CYII=','base64');
 const dir=mkdtempSync(path.join(tmpdir(),'mws-v3-media-'));
 let browser,mediaRequests=0;
-const blobRequests=new Map();
+const blobRequests=new Map(),liveRequests=new Map();
 const server=createServer((req,res)=>{
  const url=new URL(req.url,'http://127.0.0.1');
  if(url.pathname==='/'){res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store'}).end('<!doctype html><title>Local cache fixture</title><script>window.registration=navigator.serviceWorker.register("/mws-media-cache-sw.js")</script><script src="/assets/achievement-media-v1621.js"></script><script src="/assets/wardogs-media-v1.js"></script>');return}
  if(url.pathname==='/mws-media-cache-sw.js'){res.writeHead(200,{'content-type':'text/javascript','cache-control':'no-cache'}).end(sw);return}
  if(['/assets/achievement-media-v1621.js','/assets/wardogs-media-v1.js'].includes(url.pathname)){
   res.writeHead(200,{'content-type':'text/javascript','cache-control':'no-store'}).end(readFileSync(new URL('..'+url.pathname,import.meta.url)));return
+ }
+ if(url.pathname==='/api/soop/live-thumb'){
+  const id=url.searchParams.get('bno');liveRequests.set(id,(liveRequests.get(id)||0)+1);
+  setTimeout(()=>{if(id==='999')res.writeHead(502,{'content-type':'text/plain','cache-control':'no-store'}).end('fixture failure');else res.writeHead(200,{'content-type':'image/png','cache-control':'public, max-age=60, s-maxage=60'}).end(png)},100);return
  }
  if(/^\/media\/(achievement|wardogs)\/qa\d+$/.test(url.pathname)){
   blobRequests.set(url.pathname,(blobRequests.get(url.pathname)||0)+1);
@@ -69,6 +73,17 @@ try{
   assert(result.every(Boolean));assert.equal(blobRequests.get('/media/'+route+'/qa0'),1,'Concurrent blob requests for '+route);
   assert(await browser.evaluate(expr));assert.equal(blobRequests.get('/media/'+route+'/qa0'),1);
  }
+ await until(()=>sibling.evaluate('!!navigator.serviceWorker.controller'),'Sibling service worker control');
+ const readLive=(id,status)=>'(async()=>{const rows=await Promise.all(Array.from({length:10},()=>fetch("/api/soop/live-thumb?bno='+id+'",{cache:"reload"})));return rows.every(r=>r.status==='+status+')})()';
+ for(const [id,status] of [['123',200],['999',502]]){
+  assert((await Promise.all([browser.evaluate(readLive(id,status)),sibling.evaluate(readLive(id,status))])).every(Boolean));
+  assert.equal(liveRequests.get(id),1,'Duplicate live thumbnail '+id);
+  assert(await browser.evaluate(readLive(id,status)));assert.equal(liveRequests.get(id),1);
+ }
+ const liveCacheCount=await browser.evaluate('(async()=> (await (await caches.open("mws-public-live-thumb-v3")).keys()).length)()');
+ assert.equal(liveCacheCount,1,'Only verified successful live image persisted');
+ assert.equal(await size(),count+31,'Live cache touched immutable media');
+ console.log('V3_LIVE_THUMB_CACHE_OK '+JSON.stringify({successReads:30,successWorker:1,failureReads:30,failureWorker:1,failedPersisted:0}));
  await browser.closeTarget(sibling.targetId);
  await browser.close();browser=null;await open();
  for(const [kind,route] of [['mwsAchievementMediaV1','achievement'],['mwsWardogsMediaV1','wardogs']]){
