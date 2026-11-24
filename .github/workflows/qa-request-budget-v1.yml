@@ -70,6 +70,7 @@ jobs:
           node scripts/qa-achievement-exhibition-v1-browser.mjs
           node scripts/qa-first-paint-guard-v1-browser.mjs
   calendar-idle:
+    needs: [offline-contracts, navigation-audit]
     if: github.event_name == 'workflow_dispatch' || github.head_ref == 'request-trace-live-idle-nov24'
     strategy:
       fail-fast: false

@@ -57,8 +57,13 @@ export async function launchCalendarBrowser(dir){
     const minimizeWindow=async()=>{
       const {windowId}=await send('Browser.getWindowForTarget',{targetId});
       await send('Browser.setWindowBounds',{windowId,bounds:{windowState:'minimized'}});
-      const {bounds}=await send('Browser.getWindowBounds',{windowId});
-      assert.equal(bounds.windowState,'minimized');
+      let state;
+      for(let i=0;i<50;i++){
+        const {bounds}=await send('Browser.getWindowBounds',{windowId});state=bounds.windowState;
+        if(state==='minimized')return;
+        await new Promise(resolve=>setTimeout(resolve,100));
+      }
+      assert.equal(state,'minimized');
     };
     const reload=ignoreCache=>send('Page.reload',{ignoreCache},sessionId);
     const sibling=url=>send('Target.createTarget',{url});

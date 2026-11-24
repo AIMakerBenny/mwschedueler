@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 export async function auditSession({browser,nav,calls,summary,until,mode}){
  const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
  const routes=['calendar','dashboard','contacts','sniper','contactFrequency','friendFinder','targets','posts','contentApplications','memos','careerTimeline','mawangArchive','achievements','gameLadder','gameMultiDraw','gameMajoku','gameF1Racing','gameRps','gamePachinko','worldtime','contentPlanner','toolTier','toolMatrix','toolRelations','settings'];
+ const capture=()=>browser.evaluate(`Object.fromEntries(Object.entries(data).map(([key,value])=>[key,typeof value==='object'&&value&&!Array.isArray(value)?Object.fromEntries(Object.entries(value).map(([k,v])=>[k,JSON.stringify(v)])):JSON.stringify(value)]))`);
+ let snapshot=await capture();
  for(let round=1;round<=3;round++){
   for(const route of routes){
    const start=calls.length,began=performance.now();
@@ -25,6 +27,17 @@ export async function auditSession({browser,nav,calls,summary,until,mode}){
    }
    await pause(350);
    const rows=calls.slice(start);
+   if(mode==='admin'&&round===1){
+    const current=await capture(),changed=[];
+    for(const key of Object.keys(current)){
+     if(JSON.stringify(current[key])===JSON.stringify(snapshot[key]))continue;
+     if(current[key]&&typeof current[key]==='object'){
+      for(const k of Object.keys(current[key]))if(current[key][k]!==snapshot[key]?.[k])changed.push(key+'.'+k);
+     }else changed.push(key);
+    }
+    if(changed.length)console.log('VIEW_DATA_CHANGE '+JSON.stringify({route,changed}));
+    snapshot=current;
+   }
    console.log('ROUTE_AUDIT '+JSON.stringify({mode,round,route,interactions,elapsedIncludingWaitMs:Math.round(performance.now()-began),worker:summary(rows)}));
    assert(!rows.some(r=>r.path==='/api/save'),'Navigation saved data: '+route);
    if(route==='posts')assert(!rows.some(r=>r.path.startsWith('/api/soop/')),'Post view contacted SOOP');
