@@ -60,6 +60,7 @@
   }
   function syncAll(){
     if(!ensureTodayPeopleDataV130())return;
+    if(typeof window.mwsNormalizeActivityWorkspaceV3==='function'&&window.mwsNormalizeActivityWorkspaceV3(data))return;
     // Build one index instead of cloning the entire maps and scanning the
     // event/contact arrays separately for every date at startup.
     const own=selfId(),known=new Set((Array.isArray(data.contacts)?data.contacts:[]).map(c=>c?.id).filter(id=>typeof id==='string'&&id&&id!==own));

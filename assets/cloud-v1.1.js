@@ -226,6 +226,8 @@
       if(chosen==='admin')await loadBatch(required.filter(part=>!loadedParts.has(part)));
       setLoginError('로그인 완료 · 화면을 준비하는 중입니다.');
       data=next;normalizeDataShape();
+      // Set known legacy derived/default view fields before measuring dirty parts.
+      if(chosen==='admin')window.mwsNormalizeLoadedReadDefaultsV3?.(data,loadedParts);
       // Compare edits against the view after legacy defaults are filled. Keep raw D1
       // baselines for version checks, conflict merging and recovery drafts.
       normalizedReadBaseline.clear();

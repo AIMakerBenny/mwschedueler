@@ -49,6 +49,51 @@ function defaultMiniGames(){
     f1Racing:{selectedDriverIds:[],selectedTrackId:'majoku-ring-v1',totalLaps:10,workspaceLayout:{}}
   };
 }
+// Complete the exact legacy read-time defaults before the cloud dirty baseline.
+function mwsNormalizeToolsWorkspaceV3(d){
+  const LABEL={tier:'티어 게임',matrix:'2D Matrix Chart',relations:'인물 관계도'};
+  const uid=()=>{try{return crypto.randomUUID()}catch(_){return'id_'+Date.now()+'_'+Math.random().toString(36).slice(2)}};
+  function defaults(){return{tier:{title:'티어 게임',filterTag:'',tiers:[{id:uid(),name:'S',desc:'',color:'#ff7f7f',contactIds:[]},{id:uid(),name:'A',desc:'',color:'#ffbf7f',contactIds:[]},{id:uid(),name:'B',desc:'',color:'#ffe07f',contactIds:[]},{id:uid(),name:'C',desc:'',color:'#f8f878',contactIds:[]},{id:uid(),name:'D',desc:'',color:'#b7f879',contactIds:[]}]},matrix:{title:'2D Matrix Chart',filterTag:'',xLabel:'X축',yLabel:'Y축',cardScale:150,positions:{}},relations:{title:'인물 관계도',filterTag:'',nodes:{},edges:[],relationType:'친함',relationLabel:''},savedV108:{tier:[],matrix:[],relations:[]}}}
+  if(!d)return null;if(!d.miniGames||typeof d.miniGames!=='object')d.miniGames={};if(!d.miniGames.toolsV1||typeof d.miniGames.toolsV1!=='object')d.miniGames.toolsV1={};const t=d.miniGames.toolsV1,def=defaults();if(!t.tier||typeof t.tier!=='object')t.tier=def.tier;if(!Array.isArray(t.tier.tiers)||!t.tier.tiers.length)t.tier.tiers=def.tier.tiers;t.tier.title=String(t.tier.title||LABEL.tier);t.tier.filterTag=String(t.tier.filterTag||'');t.tier.tiers=t.tier.tiers.filter(Boolean).map(x=>({id:String(x.id||uid()),name:String(x.name??''),desc:String(x.desc??''),color:String(x.color||'#8b5cf6'),contactIds:Array.isArray(x.contactIds)?[...new Set(x.contactIds.map(String))]:[]}));if(!t.matrix||typeof t.matrix!=='object')t.matrix=def.matrix;t.matrix.title=String(t.matrix.title||LABEL.matrix);t.matrix.filterTag=String(t.matrix.filterTag||'');t.matrix.xLabel=String(t.matrix.xLabel||'X축');t.matrix.yLabel=String(t.matrix.yLabel||'Y축');t.matrix.cardScale=Math.max(70,Math.min(220,Number(t.matrix.cardScale)||150));t.matrix.positions=t.matrix.positions&&typeof t.matrix.positions==='object'?t.matrix.positions:{};if(!t.relations||typeof t.relations!=='object')t.relations=def.relations;const relationTitle=String(t.relations.title||'').trim();t.relations.title=!relationTitle||relationTitle==='toolRelations'?LABEL.relations:relationTitle;t.relations.filterTag=String(t.relations.filterTag||'');t.relations.nodes=t.relations.nodes&&typeof t.relations.nodes==='object'?t.relations.nodes:{};t.relations.edges=Array.isArray(t.relations.edges)?t.relations.edges:[];t.relations.relationType=String(t.relations.relationType||'친함');t.relations.relationLabel=String(t.relations.relationLabel||'');if(!t.savedV108||typeof t.savedV108!=='object')t.savedV108=def.savedV108;for(const k of ['tier','matrix','relations'])if(!Array.isArray(t.savedV108[k]))t.savedV108[k]=[];return t
+}
+function mwsNormalizeActivityWorkspaceV3(d){
+  if(!d||typeof d!=='object')return false;
+  const validDateKey=value=>/^\d{4}-\d{2}-\d{2}$/.test(String(value||''));
+  const cloneIdMap=src=>{
+    const out={};
+    if(!src||typeof src!=='object'||Array.isArray(src))return out;
+    for(const [date,ids] of Object.entries(src)){
+      if(!validDateKey(date)||!Array.isArray(ids))continue;
+      out[date]=[...new Set(ids.map(String).filter(Boolean))];
+    }
+    return out;
+  };
+  d.todayPeopleByDate=cloneIdMap(d.todayPeopleByDate);
+  if(!d.todayPeopleManualByDate||typeof d.todayPeopleManualByDate!=='object'||Array.isArray(d.todayPeopleManualByDate)){
+    d.todayPeopleManualByDate=cloneIdMap(d.todayPeopleByDate);
+  }else d.todayPeopleManualByDate=cloneIdMap(d.todayPeopleManualByDate);
+  const own=String(d.selfContactId||''),known=new Set((Array.isArray(d.contacts)?d.contacts:[]).map(c=>c?.id).filter(id=>typeof id==='string'&&id&&id!==own));
+  const byDate=new Map(),dates=new Set([...Object.keys(d.todayPeopleByDate),...Object.keys(d.todayPeopleManualByDate)]);
+  const add=(date,id)=>{id=String(id||'');if(!known.has(id))return;let ids=byDate.get(date);if(!ids){ids=new Set();byDate.set(date,ids)}ids.add(id)};
+  for(const [date,ids] of Object.entries(d.todayPeopleManualByDate))for(const id of ids)add(date,id);
+  for(const event of Array.isArray(d.events)?d.events:[]){
+    if(!event||!validDateKey(event.date))continue;
+    dates.add(String(event.date));
+    if(event.restDay||String(event.title||'').trim()==='휴방')continue;
+    for(const id of Array.isArray(event.participants)?event.participants:[])add(String(event.date),id);
+  }
+  d.todayPeopleByDate=Object.fromEntries([...dates].filter(date=>byDate.has(date)).map(date=>[date,[...byDate.get(date)]]));
+  return true;
+}
+function mwsNormalizeLoadedReadDefaultsV3(d,loaded){
+  if(loaded.has('core')&&typeof d.dashboardNoticeUrl!=='string')d.dashboardNoticeUrl='';
+  if(loaded.has('miniGames'))mwsNormalizeToolsWorkspaceV3(d);
+  if(['activity','events','contacts','core'].every(part=>loaded.has(part)))mwsNormalizeActivityWorkspaceV3(d);
+}
+window.mwsNormalizeToolsWorkspaceV3=mwsNormalizeToolsWorkspaceV3;
+window.mwsNormalizeActivityWorkspaceV3=mwsNormalizeActivityWorkspaceV3;
+window.mwsNormalizeLoadedReadDefaultsV3=mwsNormalizeLoadedReadDefaultsV3;
+
 function normalizeMiniGameData(){
   const d=defaultMiniGames();
   if(!data.miniGames||typeof data.miniGames!=='object')data.miniGames={};
