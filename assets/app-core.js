@@ -845,6 +845,7 @@ function setTab(tab){
   if(tab==='export')safeRenderView('백업 이미지 상태',updateFullBackupAssetStatus);
   try{window.mwsScheduleImageTune?.()}catch(_){}
   try{window.mwsContactRuntimeOnTabV130?.(tab)}catch(_){}
+  window.dispatchEvent(new CustomEvent('mws:workspace-tab-v1',{detail:{tab}}));
 }
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
 document.querySelectorAll('[data-legacy-link-v1]').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));

@@ -362,9 +362,14 @@ window.addEventListener('mawang:datachange',()=>{bindFriendGridObserver();schedu
 document.addEventListener('click',event=>{
   const text=String(event.target?.closest?.('button')?.textContent||'').trim();
   if(text.includes('라이브 새로고침')){liveCache.clear();liveByUserId.clear();forceNextBatch=true;setTimeout(()=>{scheduleUi();refreshActiveFriendLive(true).finally(()=>scheduleActiveRefresh())},0)}
-  const nav=event.target?.closest?.('.nav button[data-tab]');
-  if(nav)setTimeout(()=>{bindFriendGridObserver();if(activeFriendRoot()){scheduleUi();refreshActiveFriendLive(false).finally(()=>scheduleActiveRefresh())}else stopActiveRefresh()},0);
 },true);
+// All navigation paths, including contact sub-tabs and programmatic transitions.
+window.addEventListener('mws:workspace-tab-v1',()=>{
+  stopActiveRefresh();
+  if(!document.hidden&&activeFriendRoot()){
+    bindFriendGridObserver();scheduleUi();scheduleActiveRefresh(0);
+  }
+});
 document.addEventListener('input',event=>{if(activeFriendRoot()?.contains(event.target))setTimeout(scheduleUi,0)},true);
 document.addEventListener('change',event=>{if(activeFriendRoot()?.contains(event.target))setTimeout(scheduleUi,0)},true);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopActiveRefresh();else{scheduleUi();scheduleActiveRefresh(120)}});

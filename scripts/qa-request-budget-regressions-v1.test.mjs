@@ -135,3 +135,16 @@ test('direct SOOP thumbnail is attempted before Worker fallback',()=>{
  const urls=new Function(code+'\nreturn liveThumbCandidates')()('123','1');
  assert(urls[0].startsWith('https://liveimg.sooplive.com/'));assert(urls[2].startsWith('/api/soop/live-thumb?'));
 });
+
+test('Friend Finder reacts to actual workspace transitions, not only sidebar clicks',()=>{
+ const src=read('assets/app-core.js');
+ const nav=extract(src,'function setTab(tab)',"document.querySelectorAll('.nav button').forEach(b=>b.onclick");
+ assert(nav.includes("window.dispatchEvent(new CustomEvent('mws:workspace-tab-v1'"));
+ const code=extract(friend,"window.addEventListener('mws:workspace-tab-v1'", "document.addEventListener('input'");
+ let handler,active=false,stops=0,binds=0,ui=0,scheduled=[];
+ const doc={hidden:false};
+ new Function('window','document','stopActiveRefresh','activeFriendRoot','bindFriendGridObserver','scheduleUi','scheduleActiveRefresh',code)({addEventListener:(_,fn)=>handler=fn},doc,()=>stops++,()=>active,()=>binds++,()=>ui++,ms=>scheduled.push(ms));
+ active=true;handler();assert.deepEqual(scheduled,[0]);assert.equal(binds,1);assert.equal(ui,1);
+ active=false;handler();assert.equal(stops,2);assert.deepEqual(scheduled,[0]);
+ active=true;doc.hidden=true;handler();assert.equal(stops,3);assert.deepEqual(scheduled,[0]);
+});
