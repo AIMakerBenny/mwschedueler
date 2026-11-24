@@ -38,7 +38,7 @@ jobs:
         run: |
           node --test scripts/qa-request-budget-v1.test.mjs scripts/qa-workspace-read-batch-v1.test.mjs scripts/qa-public-read-sharing-v1.test.mjs scripts/qa-request-budget-meter-v1.test.mjs scripts/qa-request-budget-regressions-v1.test.mjs scripts/qa-request-budget-navigation-v2.test.mjs
           node scripts/qa-achievement-cache-quota.mjs
-          node --test scripts/qa-live-cloud-save-contract-v1.test.mjs
+          node --test scripts/qa-live-cloud-save-contract-v1.test.mjs scripts/qa-application-snapshot-v1.test.mjs
       - name: Real browser request counting fixture
         run: node scripts/qa-request-budget-navigation-v2-browser.mjs
       - name: Full application Worker and browser request budget
