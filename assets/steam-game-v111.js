@@ -10,7 +10,9 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt
 const appIdOf=game=>String(game?.appid??game?.appId??'').trim();
 const steamUrl=id=>`https://store.steampowered.com/app/${encodeURIComponent(id)}/`;
 let panelDraftGame=null;
-let panelSearchAbort=null;
+let panelSearchGeneration=0;
+const steamSearchPending=new Map();
+const steamSearchFailures=new Map();
 let panelSearchTimer=null;
 let scanTimer=null;
 let activeEditorEventId='';
@@ -329,17 +331,17 @@ function ensurePanel(){
 
   const input=$('eventGameSearchV112');
   input.addEventListener('input',()=>{
-    clearTimeout(panelSearchTimer);
+    cancelPanelSearch();
     panelSearchTimer=setTimeout(()=>searchSteam(input.value),320);
   });
   input.addEventListener('keydown',event=>{
     if(event.key==='Enter'){
       event.preventDefault();
       clearTimeout(panelSearchTimer);
-      searchSteam(input.value);
+      searchSteam(input.value,true);
     }
   });
-  $('eventGameSearchBtnV112').addEventListener('click',()=>searchSteam(input.value));
+  $('eventGameSearchBtnV112').addEventListener('click',()=>searchSteam(input.value,true));
   $('gameLibFilterV1').addEventListener('input',renderLibraryList);
   $('gameLibAddToggleV1').addEventListener('click',()=>openManualForm(null));
   $('gameManualCancelV1').addEventListener('click',()=>closeManualForm());
@@ -404,28 +406,66 @@ function renderSearchResults(items,message=''){
   markPanelSelected();
 }
 
-async function searchSteam(query){
-  const q=String(query||'').trim();
-  if(q.length<2){renderSearchResults([],'게임 이름을 2글자 이상 입력하세요.');return}
-  if(panelSearchAbort)panelSearchAbort.abort();
-  panelSearchAbort=new AbortController();
-  renderSearchResults([],'Steam에서 검색 중...');
-  try{
-    const response=await fetch(`/api/steam/search?q=${encodeURIComponent(q)}`,{headers:{accept:'application/json'},signal:panelSearchAbort.signal,cache:'no-store'});
-    const body=await response.json().catch(()=>null);
-    if(!response.ok)throw new Error(body?.error||`HTTP ${response.status}`);
-    renderSearchResults(body?.results||[]);
-  }catch(error){
-    if(error?.name==='AbortError')return;
-    console.error('Steam search failed',error);
-    renderSearchResults([],'Steam 검색에 실패했습니다. 다시 시도해 주세요.');
+const STEAM_CACHE_TTL=60000,STEAM_CACHE_PREFIX='mws-steam-search-v3:';
+function steamQuery(query){return String(query||'').trim()}
+function steamCacheKey(q){return STEAM_CACHE_PREFIX+encodeURIComponent(q)}
+function validSteamBody(body,q){return body?.query===q&&Array.isArray(body.results)&&body.results.length<=8&&body.results.every(game=>/^\d{1,12}$/.test(String(game?.appid||''))&&typeof game.name==='string'&&game.name.length>0)}
+function steamCacheRead(q){
+ try{const row=JSON.parse(localStorage.getItem(steamCacheKey(q))||'null');const age=Date.now()-row?.at;
+ if(Number.isFinite(age)&&age>=0&&age<STEAM_CACHE_TTL&&validSteamBody(row.body,q))return row.body;
+ if(row)localStorage.removeItem(steamCacheKey(q))}catch(_){}
+ return null;
+}
+function steamCacheWrite(q,body){
+ try{
+  // Remove only expired search results, not images or workspace records.
+  const now=Date.now();
+  for(let i=localStorage.length-1;i>=0;i--){const key=localStorage.key(i);if(!key?.startsWith(STEAM_CACHE_PREFIX))continue;
+   try{const row=JSON.parse(localStorage.getItem(key)||'null');if(!row||now-row.at>=STEAM_CACHE_TTL||now<row.at)localStorage.removeItem(key)}catch(_){localStorage.removeItem(key)}
   }
+  localStorage.setItem(steamCacheKey(q),JSON.stringify({at:now,body}));
+ }catch(_){}
+}
+function cancelPanelSearch(){clearTimeout(panelSearchTimer);panelSearchTimer=null;panelSearchGeneration++}
+function steamPanelActive(){return !document.hidden&&$('eventModal')?.classList.contains('open')&&!$('eventGamePanelV112')?.hidden}
+async function readSteamSearch(q,canStart){
+ const hit=steamCacheRead(q);if(hit)return hit;
+ if(steamSearchPending.has(q))return steamSearchPending.get(q);
+ const load=async()=>{
+  const cached=steamCacheRead(q);if(cached)return cached;
+  if(!canStart())throw new DOMException('Search view changed','AbortError');
+  const response=await fetch('/api/steam/search?q='+encodeURIComponent(q),{headers:{accept:'application/json'},signal:AbortSignal.timeout(12000),cache:'no-store'});
+  const body=await response.json().catch(()=>null);
+  if(!response.ok||!validSteamBody(body,q))throw new Error(body?.error||'Invalid Steam search response');
+  steamCacheWrite(q,body);return body;
+ };
+ const run=async()=>{
+  const locks=window.navigator?.locks;if(!locks?.request)return load();
+  let entered=false;try{return await locks.request('mws-steam-search-v3:'+q,async()=>{entered=true;return load()})}catch(error){if(entered)throw error;return load()}
+ };
+ const pending=run().finally(()=>{if(steamSearchPending.get(q)===pending)steamSearchPending.delete(q)});
+ steamSearchPending.set(q,pending);return pending;
+}
+async function searchSteam(query,manual=false){
+ clearTimeout(panelSearchTimer);panelSearchTimer=null;
+ const generation=++panelSearchGeneration,q=steamQuery(query);
+ if(!steamPanelActive())return;
+ if(q.length<2||q.length>80){renderSearchResults([],q.length<2?'게임 이름을 2글자 이상 입력하세요.':'게임 이름을 80글자 이하로 입력하세요.');return}
+ const current=()=>generation===panelSearchGeneration&&steamPanelActive()&&steamQuery($('eventGameSearchV112')?.value)===q;
+ if(!manual&&Date.now()-(steamSearchFailures.get(q)||0)<5000){renderSearchResults([],'Steam 검색에 실패했습니다. 다시 시도해 주세요.');return}
+ renderSearchResults([],'Steam에서 검색 중...');
+ try{
+  const body=await readSteamSearch(q,()=>steamPanelActive()&&steamQuery($('eventGameSearchV112')?.value)===q);
+  steamSearchFailures.delete(q);if(current())renderSearchResults(body.results);
+ }catch(error){
+  if(error?.name==='AbortError')return;
+  steamSearchFailures.set(q,Date.now());
+  if(current()){console.error('Steam search failed',error);renderSearchResults([],'Steam 검색에 실패했습니다. 다시 시도해 주세요.')}
+ }
 }
 
 function resetPanelSearch(){
-  if(panelSearchAbort)panelSearchAbort.abort();
-  panelSearchAbort=null;
-  clearTimeout(panelSearchTimer);
+  cancelPanelSearch();
   const input=$('eventGameSearchV112');
   if(input)input.value='';
   const status=$('eventGameSearchStatusV112');
@@ -441,6 +481,7 @@ function syncEditorPanel(force=false){
   if(!panel||!modal||!box)return;
   const isOpen=modal.classList.contains('open');
   if(!isOpen){
+    cancelPanelSearch();
     activeEditorEventId='';
     box.classList.remove('mws-game-panel-enabled-v112');
     return;
@@ -604,7 +645,7 @@ function boot(){
   observeScanRoot($('upcomingDashboard'),'__mwsSteamDashboardObserverV111',{childList:true});
   observeScanRoot($('eventModal'),'__mwsSteamModalObserverV111',{attributes:true,attributeFilter:['class']});
   window.addEventListener('mawang:datachange',scheduleScan);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleScan()});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelPanelSearch();else scheduleScan()});
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
