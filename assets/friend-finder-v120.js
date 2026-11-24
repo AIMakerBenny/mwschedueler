@@ -17,6 +17,9 @@ let categoriesPromise=null;
 let forceNextBatch=false;
 let uiScheduled=false;
 let activeRefreshTimer=0;
+let friendReadGeneration=0;
+function friendReadActive(){return !document.hidden&&Boolean(activeFriendRoot())}
+function invalidateFriendReads(){friendReadGeneration++;forceNextBatch=false;}
 
 function setVersionLabel(){try{window.mwsApplyAppVersionV120?.()}catch(_){}}
 
@@ -105,6 +108,9 @@ function rememberRow(row,sampledAt=Date.now()){
 function dispatchLiveUpdate(){window.dispatchEvent(new CustomEvent('mws:friend-live-updated',{detail:{count:liveByUserId.size}}));scheduleUi()}
 
 async function runBatch(extraTarget,force=false){
+  const generation=friendReadGeneration,scope=document.body?.dataset?.mwsMode;
+  const canContinue=()=>friendReadActive()&&generation===friendReadGeneration&&scope===document.body?.dataset?.mwsMode;
+  if(!canContinue())return;
   const urls=allContactTargets();
   if(extraTarget&&!urls.includes(extraTarget.href))urls.unshift(extraTarget.href);
   const now=Date.now();
@@ -112,37 +118,44 @@ async function runBatch(extraTarget,force=false){
   const targets=urls.filter(url=>force||(!liveAttempts.has(url)&&!(liveCache.has(url)&&now-liveCache.get(url).at<LIVE_CACHE_MS)));
   if(!targets.length)return;
   const groups=[];for(let i=0;i<targets.length;i+=LIVE_BATCH_SIZE)groups.push(targets.slice(i,i+LIVE_BATCH_SIZE));
-  for(const url of targets)liveAttempts.set(url,now);
-  const shared=window.mwsPublicReadSharingV1,scope=document.body?.dataset?.mwsMode;
+  const shared=window.mwsPublicReadSharingV1;
   let cursor=0;
   async function worker(){
-    while(cursor<groups.length){
-      const urls=groups[cursor++];
+    while(cursor<groups.length&&canContinue()){
+      const urls=groups[cursor++];let dispatched=false;
       // Keep individual failures within the batch; never fall back to N requests.
       try{
         const load=async()=>{
+          if(!canContinue())throw new DOMException('Friend Finder no longer active','AbortError');
+          dispatched=true;
           const response=await baseFetch('/api/soop/live-batch',{mwsTrace:{module:'friend-finder-v120',automatic:!force,retry:false},method:'POST',credentials:'same-origin',cache:'no-store',headers:{'content-type':'application/json'},body:JSON.stringify({urls,force})});
           if(!response.ok)throw new Error(`LIVE batch HTTP ${response.status}`);
           return response.json();
         };
         const valid=payload=>{const rows=payload?.results;if(!Array.isArray(rows)||rows.length!==urls.length)return false;const requested=new Set(urls);return rows.every(row=>requested.delete(row.url)&&Number(row.status)>=200&&Number(row.status)<300)};
         const result=shared&&['admin','public'].includes(scope)?await shared.read('live:'+scope+':'+JSON.stringify([...urls].sort()),{ttl:LIVE_CACHE_MS,force,load,valid}):{at:Date.now(),value:await load()};
+        if(scope!==document.body?.dataset?.mwsMode)return;
+        const attemptedAt=dispatched?Date.now():Math.min(Date.now(),Number(result.at)||Date.now());
+        for(const url of urls)liveAttempts.set(url,attemptedAt);
         const requested=new Set(urls);
         for(const row of Array.isArray(result.value?.results)?result.value.results:[]){
           if(!requested.delete(row.url))continue;
           const status=Number(row.status);
           if((status>=200&&status<300)||status===404)rememberRow(row,result.at);
         }
-      }catch(error){console.warn('LIVE batch unavailable; retain last result',error)}
+      }catch(error){
+        if(dispatched&&scope===document.body?.dataset?.mwsMode)for(const url of urls)liveAttempts.set(url,Date.now());
+        if(error?.name!=='AbortError')console.warn('LIVE batch unavailable; retain last result',error);
+      }
     }
   }
   await Promise.all(Array.from({length:Math.min(3,groups.length)},worker));
-  // Start the failure cooldown at completion, not before slow upstream reads.
-  for(const url of targets)liveAttempts.set(url,Date.now());
-  dispatchLiveUpdate();
+  // Do not cooldown groups that were never dispatched or shared.
+  if(scope===document.body?.dataset?.mwsMode)dispatchLiveUpdate();
 }
 async function ensureBatch(target,{force=false}={}){
   const cached=liveCache.get(target.href);
+  if(!friendReadActive())return cached?.row||null;
   if(!force&&cached&&Date.now()-cached.at<LIVE_CACHE_MS)return cached.row;
   if(!force&&!forceNextBatch&&!batchPromise&&liveAttempts.has(target.href)&&Date.now()-liveAttempts.get(target.href)<LIVE_CACHE_MS)return cached?.row||null;
   if(!batchPromise){
@@ -152,7 +165,7 @@ async function ensureBatch(target,{force=false}={}){
   await batchPromise;
   return liveCache.get(target.href)?.row||null;
 }
-window.mwsFriendFinderFastRefresh=async()=>{liveCache.clear();liveByUserId.clear();forceNextBatch=true;const first=allContactTargets()[0];if(first){try{await ensureBatch(new URL(first),{force:true})}catch(e){console.warn('Friend Finder fast refresh failed',e)}}};
+window.mwsFriendFinderFastRefresh=async()=>{if(!friendReadActive())return;liveCache.clear();liveByUserId.clear();forceNextBatch=true;const first=allContactTargets()[0];if(first){try{await ensureBatch(new URL(first),{force:true})}catch(e){console.warn('Friend Finder fast refresh failed',e)}}};
 
 function stopActiveRefresh(){if(activeRefreshTimer)clearTimeout(activeRefreshTimer);activeRefreshTimer=0}
 async function refreshActiveFriendLive(force=true){
@@ -292,6 +305,11 @@ async function ensureCategoryControl(root){
   [...unique.values()].sort((a,b)=>a.name.localeCompare(b.name,'ko')).forEach(x=>{const o=document.createElement('option');o.value=x.id?`id:${x.id}`:`name:${x.name}`;o.textContent=x.name;select.appendChild(o)});
 }
 const thumbPreferred=new Map();
+function visibleFriendScreen(screen){
+  if(!friendReadActive()||!screen?.isConnected||screen.hidden)return false;
+  const bounds=screen.getBoundingClientRect();
+  return bounds.width>0&&bounds.height>0&&bounds.bottom>0&&bounds.right>0&&bounds.top<window.innerHeight&&bounds.left<window.innerWidth;
+}
 function setLiveImage(img,screen,bno,stamp=liveThumbStamp()){
   if(!img||!screen||!bno)return;
   const candidates=liveThumbCandidates(bno,stamp);
@@ -300,6 +318,8 @@ function setLiveImage(img,screen,bno,stamp=liveThumbStamp()){
   screen.classList.remove('is-image-fallback');
   img.onload=()=>{screen.classList.remove('is-image-fallback');const chosen=liveThumbCandidates(bno,stamp).indexOf(candidates[index]);if(chosen>=0&&!candidates[index].startsWith('/api/')){if(thumbPreferred.size>=300)thumbPreferred.delete(thumbPreferred.keys().next().value);thumbPreferred.set(bno,chosen)}};
   img.onerror=()=>{
+    if(img.dataset.bno!==bno||img.dataset.thumbStamp!==stamp)return;
+    if(!visibleFriendScreen(screen)){img.dataset.thumbStamp='';return}
     index+=1;
     if(index<candidates.length){img.src=candidates[index];return}
     screen.classList.add('is-image-fallback');
@@ -336,8 +356,7 @@ function decorate(root=friendRoot()){
     if(img){
       img.loading='lazy';
       try{img.fetchPriority='low'}catch(_){}
-      const bounds=screen.getBoundingClientRect();
-      const visible=bounds.width>0&&bounds.height>0&&bounds.bottom>0&&bounds.right>0&&bounds.top<window.innerHeight&&bounds.left<window.innerWidth;
+      const visible=visibleFriendScreen(screen);
       if(visible&&shouldRefreshLiveImage(img,bno,thumbStamp,visible))setLiveImage(img,screen,bno,thumbStamp)
     }
   }
@@ -361,18 +380,18 @@ window.addEventListener('mws:friend-live-updated',scheduleUi);
 window.addEventListener('mawang:datachange',()=>{bindFriendGridObserver();scheduleUi();scheduleActiveRefresh(250)});
 document.addEventListener('click',event=>{
   const text=String(event.target?.closest?.('button')?.textContent||'').trim();
-  if(text.includes('라이브 새로고침')){liveCache.clear();liveByUserId.clear();forceNextBatch=true;setTimeout(()=>{scheduleUi();refreshActiveFriendLive(true).finally(()=>scheduleActiveRefresh())},0)}
+  if(friendReadActive()&&activeFriendRoot()?.contains(event.target)&&text.includes('라이브 새로고침')){liveCache.clear();liveByUserId.clear();forceNextBatch=true;setTimeout(()=>{scheduleUi();refreshActiveFriendLive(true).finally(()=>scheduleActiveRefresh())},0)}
 },true);
 // All navigation paths, including contact sub-tabs and programmatic transitions.
 window.addEventListener('mws:workspace-tab-v1',()=>{
   stopActiveRefresh();
   if(!document.hidden&&activeFriendRoot()){
     bindFriendGridObserver();scheduleUi();scheduleActiveRefresh(0);
-  }
+  }else invalidateFriendReads();
 });
 document.addEventListener('input',event=>{if(activeFriendRoot()?.contains(event.target))setTimeout(scheduleUi,0)},true);
 document.addEventListener('change',event=>{if(activeFriendRoot()?.contains(event.target))setTimeout(scheduleUi,0)},true);
-document.addEventListener('visibilitychange',()=>{if(document.hidden)stopActiveRefresh();else{scheduleUi();scheduleActiveRefresh(120)}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){stopActiveRefresh();invalidateFriendReads()}else{scheduleUi();scheduleActiveRefresh(120)}});
 let friendScrollRefreshTimer=0;
 document.addEventListener('scroll',()=>{if(document.hidden||!activeFriendRoot())return;clearTimeout(friendScrollRefreshTimer);friendScrollRefreshTimer=setTimeout(()=>{if(!document.hidden&&activeFriendRoot())scheduleUi()},180)},{capture:true,passive:true});
 

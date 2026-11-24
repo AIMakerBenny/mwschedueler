@@ -524,7 +524,8 @@ data.posts=data.posts.filter(Boolean).map(p=>({
   postNo:String(p.postNo||''),
   name:String(p.name||(`게시글 ${p.postNo||''}`)).trim()||'게시글',
   sourceTitle:String(p.sourceTitle||''),
-  nameManual:p.nameManual===true || (p.nameManual===undefined && String(p.name||'').trim() && String(p.name||'').trim()!==`게시글 ${p.postNo||''}`),
+  // Store a boolean on the first pass, including unnamed legacy posts.
+  nameManual:p.nameManual===true || Boolean(p.nameManual===undefined && String(p.name||'').trim() && String(p.name||'').trim()!==`게시글 ${p.postNo||''}`.trim()),
   createdAt:p.createdAt||new Date().toISOString(),
   lastSyncAt:p.lastSyncAt||'',
   lastError:String(p.lastError||''),

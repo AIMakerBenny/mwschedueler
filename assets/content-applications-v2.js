@@ -195,11 +195,18 @@ function updateClocks(){
 }
 function stopTimer(){clearInterval(timer);timer=0}
 function refreshInterval(){return 60000}
+function campaignSnapshotFresh(c,now=Date.now()){
+ const value=snapshot(c),sampled=Date.parse(value?.checkedAt);
+ return value?.complete===true&&Number.isFinite(sampled)&&sampled<=now&&now-sampled<refreshInterval(c);
+}
+function campaignDue(c,now=Date.now()){
+ return !countdown(c.deadline).expired&&!pending.has(c.id)&&!campaignSnapshotFresh(c,now)&&(!attempts.has(c.id)||now-attempts.get(c.id)>=refreshInterval(c));
+}
 function tick(){if(!active()){stopTimer();return}updateClocks();loadVisible();if(!records().some(c=>!countdown(c.deadline).expired))stopTimer()}
 function loadVisible(){
  if(!sectionActive())return;
- const c=sectionActive()?current():null;if(c){if(!countdown(c.deadline).expired&&(!attempts.has(c.id)||Date.now()-(attempts.get(c.id)||0)>=refreshInterval(c)))refresh(c);return}
- const candidates=records().filter(c=>!countdown(c.deadline).expired&&Date.now()-(attempts.get(c.id)||0)>=refreshInterval(c)).sort((a,b)=>(attempts.get(a.id)||0)-(attempts.get(b.id)||0));if(candidates.length&&!pending.size)refresh(candidates[0]);
+ const c=current();if(c){if(campaignDue(c))refresh(c);return}
+ const candidates=records().filter(c=>campaignDue(c)).sort((a,b)=>(attempts.get(a.id)||0)-(attempts.get(b.id)||0));if(candidates.length&&!pending.size)refresh(candidates[0]);
 }
 function activate(){if(!active()){stopTimer();return}render();if(records().some(c=>!countdown(c.deadline).expired)){if(!timer)timer=setInterval(tick,1000)}else stopTimer();loadVisible()}
 async function fetchPage(source,page){
@@ -279,7 +286,7 @@ async function fetchCampaign(c,canContinue,manual){
  throw Error('Application sync interrupted');
 }
 async function refresh(c,manual=false){
- if(!c||countdown(c.deadline).expired||pending.has(c.id)||!active())return;
+ if(!c||countdown(c.deadline).expired||pending.has(c.id)||!active()||!sectionActive()||(!manual&&campaignSnapshotFresh(c)))return;
  const token=Symbol(),generation=epoch,sig=signature(c);
  const canContinue=()=>{
   if(generation!==epoch||pending.get(c.id)!==token||!active()||!sectionActive()||(selected&&selected!==c.id))return false;
