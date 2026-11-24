@@ -11,7 +11,7 @@ function fixture(pages=[3,4]){
  const env={DB:{prepare:sql=>statement(sql),batch:async list=>{db.exec('BEGIN');try{const out=[];for(const s of list)out.push(await s.run());db.exec('COMMIT');return out}catch(e){db.exec('ROLLBACK');throw e}}}};
  let calls=0,fail=false;
  const proxy=async r=>{calls++;const u=new URL(new URL(r.url).searchParams.get('url'));const n=Number(u.pathname.split('/').at(-2)),page=Number(u.searchParams.get('page'));if(fail)return new Response('{}',{status:503});return Response.json({meta:{current_page:page,last_page:pages[n-1],total:pages[n-1]},data:[{title_no:n,user_id:'user'+n+'_'+page,p_comment_no:page,user_nick:'test',like_cnt:page,comment:'hello'}]})};
- const sync=async(force=false)=>{const r=await handleApplicationSync(new Request('https://test/api/soop/application-sync?id=qa'+(force?'&force=1':'')),env,proxy);assert.equal(r.status,200);return r.json()};
+ const sync=async(force=false,continuation=false)=>{const r=await handleApplicationSync(new Request('https://test/api/soop/application-sync?id=qa'+(force?'&force=1':'')+(continuation?'&continue=1':'')),env,proxy);assert.equal(r.status,200);return r.json()};
  return {db,env,campaign,write,sync,calls:()=>calls,fail:()=>{fail=true}};
 }
 test('two registered posts seven SOOP pages one Worker invocation, shared archived snapshot',async()=>{
@@ -27,4 +27,22 @@ test('multiple posts use a single bounded continuation job; every page exactly o
 });
 test('expired never-read campaign sends zero upstream requests and creates no synthetic record',async()=>{
  const x=fixture();try{x.campaign.deadline=new Date(Date.now()-1000).toISOString();x.write();const r=await x.sync();assert(r.expired&&r.snapshot===null);assert.equal(x.calls(),0);assert.deepEqual(await readApplicationSnapshots(x.env),[])}finally{x.db.close()}
+});
+
+test('failed refresh never destroys a verified complete archived result',async()=>{
+ const x=fixture();try{const first=await x.sync();assert(first.snapshot.complete);
+ const old={...first.snapshot,checkedAt:new Date(Date.now()-120000).toISOString()};
+ x.db.prepare('UPDATE mws_application_snapshots SET checked_at=?,payload=?').run(old.checkedAt,JSON.stringify(old));
+ x.fail();const failed=await x.sync(true);assert(failed.partial);assert.deepEqual(failed.snapshot,old);
+ assert.deepEqual((await readApplicationSnapshots(x.env))[0].applicants,old.applicants);
+ }finally{x.db.close()}
+});
+test('manual continuation cannot return a previous fresh snapshot mid-job',async()=>{
+ const x=fixture([10,10]);try{let result;do{result=await x.sync()}while(!result.done);
+ const old={...result.snapshot,checkedAt:new Date(Date.now()-10000).toISOString()};
+ x.db.prepare('UPDATE mws_application_snapshots SET checked_at=?,payload=?').run(old.checkedAt,JSON.stringify(old));
+ const start=await x.sync(true);assert.equal(start.done,false);
+ const step=await x.sync(false,true);assert.equal(step.done,false);
+ const end=await x.sync(false,true);assert(end.done&&end.snapshot.complete);assert.equal(x.calls(),40);
+ }finally{x.db.close()}
 });

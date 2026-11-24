@@ -1,6 +1,6 @@
 import {normalizeCampaigns,parseCommentPage,uniqueApplicants} from '../assets/content-applications-model-v1.js';
 
-const PAGE_BUDGET=9,MAX_PAGES=100,MAX_BYTES=850000,LEASE_MS=90000,TTL=60000;
+const PAGE_BUDGET=9,MAX_PAGES=100,MAX_BYTES=850000,LEASE_MS=180000,TTL=60000;
 const schema=new WeakMap();
 const json=(body,status=200)=>Response.json(body,{status,headers:{'cache-control':'no-store','x-content-type-options':'nosniff'}});
 const sig=c=>c.entries.map(e=>e.id).join('|');
@@ -21,7 +21,7 @@ async function campaigns(env){
 }
 function validSnapshot(row,c){
  const value=parse(row?.payload);
- if(!value||value.signature!==sig(c)||!Array.isArray(value.applicants)||typeof value.complete!=='boolean'||!Number.isFinite(Date.parse(value.checkedAt))||Date.parse(value.checkedAt)>Date.parse(c.deadline))return null;
+ if(!value||value.signature!==sig(c)||!Array.isArray(value.applicants)||typeof value.complete!=='boolean'||!Number.isFinite(Date.parse(value.checkedAt)))return null;
  return value;
 }
 export async function readApplicationSnapshots(env){
@@ -48,7 +48,11 @@ export async function handleApplicationSync(request,env,proxy){
  const previous=validSnapshot(await env.DB.prepare('SELECT payload FROM mws_application_snapshots WHERE campaign_id=?').bind(id).first(),c);
  if(expired(c))return json({done:true,expired:true,snapshot:previous});
  const now=Date.now(),force=url.searchParams.get('force')==='1',key=configKey(c);
- if(previous&&now-Date.parse(previous.checkedAt)<(force?3000:TTL))return json({done:true,snapshot:previous,cached:true});
+ const continuation=url.searchParams.get('continue')==='1';
+ if(previous&&now-Date.parse(previous.checkedAt)<(force?3000:TTL)){
+  const pending=continuation?await env.DB.prepare('SELECT config_key FROM mws_application_sync_jobs WHERE campaign_id=?').bind(id).first():null;
+  if(!pending||pending.config_key!==key)return json({done:true,snapshot:previous,cached:true});
+ }
  const token=crypto.randomUUID();
  const initial={sources:c.entries.map(()=>({next:1,pages:0,total:null,rows:[],failed:false})),complete:c.entries.length>0};
  const initialText=JSON.stringify(initial);

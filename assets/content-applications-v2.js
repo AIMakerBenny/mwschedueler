@@ -45,7 +45,11 @@ function archivedSnapshot(c){
  if(!row.applicants.every(e=>e&&typeof e.id==='string'&&typeof e.userId==='string'&&typeof e.nickname==='string'&&ids.has(e.sourceId)&&(e.likes===null||Number.isSafeInteger(e.likes)&&e.likes>=0)))return null;
  return row;
 }
-const snapshot=c=>{const s=snapshots.get(c.id);return s?.signature===signature(c)?s:countdown(c.deadline).expired?archivedSnapshot(c):null};
+const snapshot=c=>{
+ const local=snapshots.get(c.id),server=(Array.isArray(window.__mwsApplicationSnapshotsV1)?window.__mwsApplicationSnapshotsV1:[]).find(s=>s.id===c.id&&s.signature===signature(c));
+ const cached=countdown(c.deadline).expired?archivedSnapshot(c):null;
+ return [local,server,cached].filter(s=>s?.signature===signature(c)&&Number.isFinite(Date.parse(s.checkedAt))).sort((a,b)=>Date.parse(b.checkedAt)-Date.parse(a.checkedAt))[0]||null;
+};
 const rankOf=c=>rankEntries(snapshot(c)?.applicants||[]);
 const reduceMotion=()=>document.documentElement.dataset.mwsMotion==='reduced'||window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
 const sameApplicants=(a,b)=>{
@@ -248,6 +252,23 @@ async function readSource(source,canContinue,manual=false){
  if(canContinue()&&result.complete){if(sourceReads.size>=100)sourceReads.delete(sourceReads.keys().next().value);sourceReads.set(key,{startedAt:result.sampledAt,result})}
  return result;
 }
+async function readCampaign(c,canContinue,manual){
+ // Server owns continuation and final persistence. Legacy endpoint fallback
+ // only for unsupported sizes or older server versions, never expired posts.
+ for(let i=0;i<600&&canContinue();i++){
+  const res=await fetch('/api/soop/application-sync?id='+encodeURIComponent(c.id)+(manual&&i===0?'&force=1':'')+(i?'&continue=1':''),{cache:'no-store',signal:AbortSignal.timeout(60000)});
+  if(res.status===404||res.status===405)return null;
+  if(!res.ok)throw Error('Application sync HTTP '+res.status);
+  const value=await res.json();
+  if(value.oversize)return null;
+  if(value.busy||value.done){
+   if(!value.snapshot)return {noSnapshot:true};
+   if(value.snapshot.signature!==signature(c)||!Array.isArray(value.snapshot.applicants)||typeof value.snapshot.complete!=='boolean'||!Number.isFinite(Date.parse(value.snapshot.checkedAt)))throw Error('Invalid campaign snapshot');
+   return value.snapshot;
+  }
+ }
+ throw Error('Application sync interrupted');
+}
 async function refresh(c,manual=false){
  if(!c||countdown(c.deadline).expired||pending.has(c.id)||!active())return;
  const token=Symbol(),generation=epoch,sig=signature(c);
@@ -264,18 +285,22 @@ async function refresh(c,manual=false){
  }
  let unchanged=false;
  try{
+  const shared=await readCampaign(c,canContinue,manual).catch(error=>{console.warn('Application sync unavailable',error);return undefined});
+  if(!canContinue()||shared===undefined||shared?.noSnapshot)return;
   const rows=[];let complete=c.entries.length>0,sampledAt=Date.now();
+  if(shared){rows.push(...shared.applicants);complete=shared.complete;sampledAt=Date.parse(shared.checkedAt)}else{
   for(let i=0;i<c.entries.length;i+=2){
    if(!canContinue())return;
    const results=await Promise.allSettled(c.entries.slice(i,i+2).map(source=>readSource(source,canContinue,manual)));
    if(!canContinue())return;
    for(const result of results){if(result.status==='fulfilled'){rows.push(...result.value.rows);complete&&=result.value.complete;sampledAt=Math.min(sampledAt,result.value.sampledAt)}else complete=false}
   }
+  }
   const latest=records().find(x=>x.id===c.id);
   if(!canContinue()||!latest||signature(latest)!==sig)return;
   const previous=snapshot(c);
   let next;
-  if(!rows.length&&!complete&&previous)next={...previous,complete:false};
+  if(!complete&&previous&&(previous.complete||!rows.length))next=previous;
   else next={signature:sig,applicants:uniqueApplicants(rows),complete,checkedAt:new Date(sampledAt).toISOString()};
   unchanged=!!previous&&previous.complete===next.complete&&sameApplicants(previous.applicants,next.applicants);
   if(previous&&!unchanged&&sectionActive()&&selected===c.id){
@@ -283,8 +308,9 @@ async function refresh(c,manual=false){
    if(diff.changed)rankMotions.set(c.id,diff);
   }
   snapshots.set(c.id,next);archiveSnapshot(c,next);
+  if(shared){const all=Array.isArray(window.__mwsApplicationSnapshotsV1)?window.__mwsApplicationSnapshotsV1:[];window.__mwsApplicationSnapshotsV1=[...all.filter(s=>s.id!==c.id),{id:c.id,...next}]}
   // Shared results retain their original sample time, including for the next refresh deadline.
-  if(complete)attempts.set(c.id,Math.min(attempts.get(c.id)||sampledAt,sampledAt));
+  if(shared)attempts.set(c.id,Date.now());else if(complete)attempts.set(c.id,Math.min(attempts.get(c.id)||sampledAt,sampledAt));
   if(manual&&!complete&&typeof toast==='function')toast('신청 콘텐츠','일부 댓글을 확인하지 못했습니다.');
  }finally{
   if(pending.get(c.id)===token){
