@@ -9,7 +9,7 @@ export function activeDeployment(body){
  assert(Number.isFinite(Date.parse(latest.created_on)),'Invalid deployment date');
  assert(Array.isArray(latest.versions)&&latest.versions.length===1&&Number(latest.versions[0].percentage)===100,'Expected one fully active Worker version');
  assert(/^[a-f0-9-]{36}$/i.test(latest.versions[0].version_id),'Invalid active version ID');
- return {id:latest.id,createdOn:latest.created_on,versionId:latest.versions[0].version_id};
+ return {id:latest.id,createdOn:latest.created_on,versionId:latest.versions[0].version_id,message:latest.annotations?.['workers/message']||''};
 }
 export function verifyVersion(body,active,expected){
  assert.equal(body?.success,true);
@@ -17,21 +17,32 @@ export function verifyVersion(body,active,expected){
  assert.equal(version?.id,active.versionId,'Deployment/version ID mismatch');
  const message=version.annotations?.['workers/message']||'';
  const tag=version.annotations?.['workers/tag']||'';
- const matched=message==='git:'+expected||tag===expected||tag==='git:'+expected;
+ const matched=active.message==='git:'+expected||message==='git:'+expected||tag===expected||tag==='git:'+expected||version.annotations?.['workers/commit_sha']===expected;
  return {deploymentId:active.id,deployedAt:active.createdOn,versionId:active.versionId,expectedCommit:expected,commitMatched:matched};
 }
 export async function verify({account,token,expected,fetchImpl=fetch}){
  assert(/^[a-f0-9]{32}$/i.test(account||''),'Missing or invalid account ID');
  assert(token,'Cloudflare token unavailable');
  assert(/^[a-f0-9]{40}$/i.test(expected||''),'Expected full Git SHA');
- const base='https://api.cloudflare.com/client/v4/accounts/'+account+'/workers/scripts/mawang-scheduler';
+ const base='https://api.cloudflare.com/client/v4/accounts/'+account,worker='/workers/scripts/mawang-scheduler';
  const get=async suffix=>{
   const response=await fetchImpl(base+suffix,{method:'GET',redirect:'error',headers:{authorization:'Bearer '+token,accept:'application/json'},signal:AbortSignal.timeout(20000)});
   assert(response.ok,'Cloudflare management HTTP '+response.status);
   return response.json();
  };
- const active=activeDeployment(await get('/deployments'));
- const result=verifyVersion(await get('/versions/'+active.versionId),active,expected);
+ const active=activeDeployment(await get(worker+'/deployments'));
+ const result=verifyVersion(await get(worker+'/versions/'+active.versionId),active,expected);
+ if(result.commitMatched)result.evidence='exact deployment/version annotation';
+ else{
+  try{
+   const builds=await get('/builds/builds?version_ids='+encodeURIComponent(active.versionId));
+   const build=builds.success===true?builds.result?.builds?.[active.versionId]:null;
+   const meta=build?.build_trigger_metadata;
+   if(build?.build_outcome==='success'&&meta?.commit_hash===expected&&meta?.branch==='cloudflare-production'&&meta?.repo_name==='mwschedueler'){
+    result.commitMatched=true;result.evidence='matching active version Workers Builds record';
+   }
+  }catch(error){result.buildLookup='unavailable'}
+ }
  console.log('MWS_MANAGEMENT_DEPLOYMENT '+JSON.stringify(result));
  assert(result.commitMatched,'Active version lacks the exact expected Git SHA annotation; deployment identity not verified');
  return result;

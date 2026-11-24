@@ -18,7 +18,7 @@ jobs:
       - name: No-network contracts and generated runtime equivalence
         run: |
           bash scripts/mws-v3-network-only.sh node scripts/build-cf-static-runtime.mjs --check
-          bash scripts/mws-v3-network-only.sh node --test scripts/qa-request-v3-shared-workspace.test.mjs scripts/qa-request-v3-read-defaults.test.mjs scripts/qa-request-v3-feature-guards.test.mjs scripts/qa-request-v3-cache-integrity.test.mjs scripts/qa-request-v3-steam-search.test.mjs scripts/qa-request-v3-notice-cache.test.mjs scripts/qa-request-v3-live-cache.test.mjs scripts/qa-request-v3-application-batch.test.mjs
+          bash scripts/mws-v3-network-only.sh node --test scripts/qa-request-v3-shared-workspace.test.mjs scripts/qa-request-v3-read-defaults.test.mjs scripts/qa-request-v3-feature-guards.test.mjs scripts/qa-request-v3-cache-integrity.test.mjs scripts/qa-request-v3-steam-search.test.mjs scripts/qa-request-v3-notice-cache.test.mjs scripts/qa-request-v3-live-cache.test.mjs scripts/qa-request-v3-application-batch.test.mjs scripts/qa-request-v3-deployment.test.mjs
           bash scripts/mws-v3-network-only.sh node --check mws-media-cache-sw.js
   local-browser:
     needs: local-contracts
@@ -85,3 +85,47 @@ jobs:
           node-version: '24'
       - name: Large synthetic workspace, warm navigation, multiple tabs
         run: bash scripts/mws-v3-network-only.sh node scripts/qa-request-budget-full-app-v2-browser.mjs
+
+  local-regression:
+    needs: local-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      MWS_QA_OFFLINE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify all workflow YAML syntax
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: ruby -e 'require "yaml"; Dir.glob(".github/workflows/*.yml").each { |f| YAML.parse_file(f) }; puts "MWS_WORKFLOW_YAML_OK"'
+      - name: Verify original request and save contracts
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: |
+          node --test scripts/qa-request-budget-v1.test.mjs scripts/qa-workspace-read-batch-v1.test.mjs scripts/qa-public-read-sharing-v1.test.mjs scripts/qa-request-budget-meter-v1.test.mjs scripts/qa-request-budget-regressions-v1.test.mjs scripts/qa-request-budget-navigation-v2.test.mjs scripts/qa-live-cloud-save-contract-v1.test.mjs scripts/qa-application-snapshot-v1.test.mjs
+      - name: Desktop and mobile regression using loopback only
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: |
+          node scripts/qa-mobile-calendar-layout-v2.mjs
+          node scripts/qa-posts-responsive-layout-v2.mjs
+          node scripts/qa-ui-audit-v2-browser.mjs
+      - name: Existing cumulative integration contracts
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: node scripts/run-current-full-integration-audit.mjs
+  production-management-read:
+    if: contains(github.event.head_commit.message, '[management-audit]')
+    needs: local-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Read-only active production identity, no Worker requests
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          MWS_EXPECTED_SHA: c1e3f1c03dee12b552d431213fc7e3a758268112
+        run: node scripts/verify-cloudflare-deployment-v3.mjs

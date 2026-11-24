@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         mode: [public, admin]
-        visibility: [visible]
+        visibility: [visible, hidden, minimized]
     runs-on: ubuntu-latest
     timeout-minutes: 75
     env:
@@ -25,5 +25,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Install local window manager for minimized-window checks
+        if: matrix.visibility == 'minimized'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq openbox xvfb
       - name: Actual elapsed time at 1, 5, 10, 30, 60 minutes
-        run: bash scripts/mws-v3-network-only.sh node scripts/qa-request-budget-full-app-v2-browser.mjs
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: |
+          if [ "$MWS_QA_IDLE_VISIBILITY" = minimized ]; then
+            xvfb-run -a sh -c 'openbox >/tmp/mws-wm.log 2>&1 & sleep 1; MWS_QA_HEADFUL=1 node scripts/qa-request-budget-full-app-v2-browser.mjs'
+          else
+            node scripts/qa-request-budget-full-app-v2-browser.mjs
+          fi

@@ -31,7 +31,7 @@ window.addEventListener('error',event=>{
 </script>
 
 <title>마왕 스케줄러</title>
-<script src="assets/request-budget-meter-v1.js?v=3"></script>
+<script src="assets/request-budget-meter-v1.js?v=3&request-v3=1"></script>
 <script id="mws-motion-preference">
 (()=>{const key='mws-screen-motion-v1',system=matchMedia('(prefers-reduced-motion: reduce)');let mode='system';try{const saved=localStorage.getItem(key);if(['full','reduced','system'].includes(saved))mode=saved}catch(_){}const apply=()=>{const reduced=mode==='reduced'||(mode==='system'&&system.matches);document.documentElement.dataset.mwsMotion=reduced?'reduced':'full';window.dispatchEvent(new Event('mws-motion-change'))};window.mwsMotionReduced=()=>document.documentElement.dataset.mwsMotion==='reduced';apply();system.addEventListener('change',apply);document.addEventListener('DOMContentLoaded',()=>{const select=document.getElementById('mwsScreenMotion');if(!select)return;select.value=mode;select.addEventListener('change',()=>{mode=select.value;try{localStorage.setItem(key,mode)}catch(_){}apply()})})})();
 </script>
