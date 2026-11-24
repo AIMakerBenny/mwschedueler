@@ -99,7 +99,43 @@ try{
  const nav=async list=>browser.evaluate('(async()=>{for(const id of '+JSON.stringify(list)+'){window.setTab(id);await new Promise(r=>setTimeout(r,450));if(!document.getElementById(id)?.classList.contains("active"))throw Error("route "+id)}return true})()');
  let before=calls.length;
  if(process.env.MWS_QA_V5_ATTRIBUTION==='1'){
-  for(let round=1;round<=2;round++){const start=calls.length;for(const route of [...routes,'friendFinder','contentApplications','calendar']){const off=calls.length;await nav([route]);await pause(400);const r=calls.slice(off);console.log('V5_ROUTE '+JSON.stringify({round,route,worker:summary(r),statuses:r.filter(x=>x.status>=400).map(x=>({path:x.path.replace(/\/media\/[^/]+\/.*/,'/media/*'),status:x.status}))}));}await pause(1800);console.log('V5_ROUND '+JSON.stringify({round,worker:summary(calls.slice(start)),errors}));}
+  const mode=process.env.MWS_QA_IDLE_MODE||'public';
+  if(mode==='admin'){
+   await browser.evaluate("document.querySelector('#mwsChangeModeBtn').click()");
+   await until(()=>browser.evaluate("document.querySelector('#mwsLoginForm').dataset.mode==='admin'"),'Admin login form');
+   await browser.evaluate("document.querySelector('#mwsLoginId').value='Majoku0216';document.querySelector('#mwsLoginPw').value='local-fixture-only';document.querySelector('#mwsLoginForm').requestSubmit()");
+   await until(()=>browser.evaluate("document.body.dataset.mwsMode==='admin'&&!document.body.classList.contains('mws-app-loading')&&!document.body.classList.contains('mws-gated')"),'Admin ready');
+   await pause(2000);
+  }
+  const sequence=[...routes,'posts','friendFinder','contentApplications','calendar'];
+  for(let round=1;round<=2;round++){
+   const start=calls.length;
+   for(const route of sequence){
+    const off=calls.length;await nav([route]);
+    if(process.env.MWS_QA_V51_SCROLL==='1'&&route==='contacts'){
+     for(const fraction of [0,.25,.5,.75,1,0]){
+      await browser.evaluate('(()=>{const g=document.querySelector("#contactGrid");if(!g)return;let p=g;while(p&&p.scrollHeight<=p.clientHeight+2)p=p.parentElement;if(!p)p=document.scrollingElement;p.scrollTop=Math.round((p.scrollHeight-p.clientHeight)*'+fraction+');})()');
+      await pause(400);
+     }
+     await browser.evaluate("window.openContact('qa0')");
+     await until(()=>browser.evaluate("document.getElementById('contactModal')?.classList.contains('open')"),'Contact detail');
+     await browser.evaluate("document.querySelector('[data-close=contactModal]').click()");
+    }
+    if(scale&&route==='posts'){
+     for(const id of ['scale-post-0','scale-post-'+(scalePosts-1)]){await browser.evaluate('window.selectPost('+JSON.stringify(id)+')');await pause(400)}
+    }
+    await pause(400);const r=calls.slice(off);
+    console.log('V51_EXT_ROUTE '+JSON.stringify({mode,scale,round,route,worker:summary(r),statuses:r.filter(x=>x.status>=400).map(x=>({path:x.path.replace(/\/media\/[^/]+\/.*/,'/media/*'),status:x.status}))}));
+   }
+   await pause(1800);const rows=calls.slice(start);
+   console.log('V51_EXT_ROUND '+JSON.stringify({mode,scale,round,worker:summary(rows),errors}));
+   if(round===2){
+    assert.equal(rows.filter(common).length,0,'Repeated navigation reloaded workspace data');
+    assert.equal(rows.filter(r=>r.path.startsWith('/media/contact/')||r.path.startsWith('/media/achievement/')||r.path==='/api/media-batch-v5').length,0,'Repeated navigation reloaded identical media');
+   }
+  }
+  assert.equal(errors.length,0,JSON.stringify(errors));
+  const idleStart=calls.length;await pause(30000);console.log('V51_EXT_IDLE '+JSON.stringify({mode,scale,seconds:30,worker:summary(calls.slice(idleStart))}));assert.equal(calls.length,idleStart,'Idle calendar requests');
  }else if(scale){
   // A warm-cache fixture is created through actual same-origin browser reads.
   // No synthetic production data or external traffic.

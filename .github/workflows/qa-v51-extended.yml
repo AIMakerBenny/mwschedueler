@@ -1,0 +1,30 @@
+name: V51 extended navigation and admin checks
+on:
+  push:
+    branches: [request-v51-unified-media-nov24]
+permissions:
+  contents: read
+jobs:
+  extended:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: public
+            scale: 500
+          - mode: admin
+            scale: 300
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      MWS_QA_OFFLINE: '1'
+      MWS_QA_V5_ATTRIBUTION: '1'
+      MWS_QA_V51_SCROLL: '1'
+      MWS_QA_IDLE_MODE: ${{ matrix.mode }}
+      MWS_QA_SCALE_CONTACTS: ${{ matrix.scale }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: bash scripts/mws-v3-network-only.sh node scripts/qa-request-budget-full-app-v2-browser.mjs
