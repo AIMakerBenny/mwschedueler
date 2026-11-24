@@ -22,3 +22,16 @@ test('200 simultaneous LIVE readers use bounded batches, even when every batch f
  const results=await Promise.all(urls.map(url=>window.fetch(url)));assert(results.every(r=>r.status===503));assert.equal(batchCalls,17);assert.equal(singleCalls,0);
  await Promise.all(urls.map(url=>window.fetch(url)));assert.equal(batchCalls,17);assert.equal(singleCalls,0);
 });
+
+test('contact image failures share retry URLs and suppress repeated failed fallback',()=>{
+ const app=read('assets/app-core.js'),code=slice(app,'const mwsContactRetryHistoryV2=','function mwsBindContactMediaImageV111');
+ let now=1000;class Image{constructor(src){this.src=src;this.dataset={};this.style={}}getAttribute(){return this.src}removeAttribute(){}replaceWith(){this.replaced=true}}
+ const win={};
+ new Function('window','HTMLImageElement','mwsContactMediaIdV110','contact','initials','mwsPersistentContactMediaFallbackV115','mwsContactFallbackNodeV110','Date',code)(win,Image,()=> 'one',()=>({name:'One'}),()=> 'O',()=>false,()=>({}),{now:()=>now});
+ const a=new Image('/media/contact/one?v=1'),b=new Image('/media/contact/one?v=1');
+ win.mwsRecoverContactMediaImageV110(a);now++;win.mwsRecoverContactMediaImageV110(b);assert.equal(a.src,b.src);
+ win.mwsRecoverContactMediaImageV110(a);assert(a.replaced);
+ const c=new Image('/media/contact/one?v=1');win.mwsRecoverContactMediaImageV110(c);assert(c.replaced);
+ const d=new Image('/media/contact/one?v=2');win.mwsRecoverContactMediaImageV110(d);assert(!d.replaced);assert.notEqual(d.src,b.src);
+ now+=60001;const e=new Image('/media/contact/one?v=1');win.mwsRecoverContactMediaImageV110(e);assert(!e.replaced);assert.notEqual(e.src,b.src);
+});

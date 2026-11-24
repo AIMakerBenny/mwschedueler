@@ -2731,10 +2731,13 @@ function mwsPersistentContactMediaFallbackV115(img,id){
   }
   return false;
 }
+const mwsContactRetryHistoryV2=new Map();
+const MWS_CONTACT_RETRY_MS_V2=60000;
 window.mwsContactMediaLoadedV110=img=>{
   if(!(img instanceof HTMLImageElement))return false;
   if(img.dataset.mwsContactRecoveryV110){
     img.dataset.mwsContactRecoveryV110='ok';
+    const key=img.dataset.mwsContactRetryKeyV2;if(key){const row=mwsContactRetryHistoryV2.get(key);if(row)row.failed=false}
     img.style.visibility='visible';
   }
   return true;
@@ -2744,7 +2747,17 @@ window.mwsRecoverContactMediaImageV110=img=>{
   const id=mwsContactMediaIdV110(img);
   if(!id)return false;
   const state=String(img.dataset.mwsContactRecoveryV110||'');
-  if(state!=='retry'){
+  const now=Date.now();
+  const key=img.dataset.mwsContactRetryKeyV2||String(img.getAttribute('src')||img.src||id);
+  let attempt=mwsContactRetryHistoryV2.get(key);
+  if(attempt&&now-attempt.at>=MWS_CONTACT_RETRY_MS_V2){mwsContactRetryHistoryV2.delete(key);attempt=null}
+  if(state!=='retry'&&!attempt?.failed){
+    if(!attempt){
+      if(mwsContactRetryHistoryV2.size>=500)mwsContactRetryHistoryV2.delete(mwsContactRetryHistoryV2.keys().next().value);
+      attempt={at:now,failed:false,url:`/media/contact/${encodeURIComponent(id)}?fallback=110&cb=${now.toString(36)}`};
+      mwsContactRetryHistoryV2.set(key,attempt);
+    }
+    img.dataset.mwsContactRetryKeyV2=key;
     const person=typeof contact==='function'?contact(id):(data?.contacts||[]).find(row=>String(row?.id||'')===String(id));
     if(!img.dataset.contactInitials)img.dataset.contactInitials=String(initials(person?.name||img.alt||'')||'?');
     img.dataset.contactId=id;
@@ -2752,9 +2765,10 @@ window.mwsRecoverContactMediaImageV110=img=>{
     img.style.visibility='hidden';
     img.loading='eager';
     img.removeAttribute('srcset');
-    img.src=`/media/contact/${encodeURIComponent(id)}?fallback=110&cb=${Date.now().toString(36)}`;
+    img.src=attempt.url;
     return true;
   }
+  if(attempt)attempt.failed=true;
   img.dataset.mwsContactRecoveryV110='failed';
   if(mwsPersistentContactMediaFallbackV115(img,id))return true;
   img.replaceWith(mwsContactFallbackNodeV110(img,id));

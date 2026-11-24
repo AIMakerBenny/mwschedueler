@@ -96,7 +96,7 @@ function makeRuntime(code,remote,versions,opts={}){
   CustomEvent:class{constructor(type,o){this.type=type;this.detail=o.detail}},console:{error(){},warn(){}},setTimeout:(f,ms)=>setTimeout(f,Math.min(ms,10)),clearTimeout,
   $:id=>id==='syncStatusText'?status:null,toast:(...args)=>alerts.push(args),setManualSaveProgress(){},
   freshSkeleton:()=>({}),mergePart:(p,v,target)=>{target[p]=cp(v)},extractPart:p=>cp(ctx.data[p]),
-  normalizeAndRender(){},normalizeDataShape(){},applyModeUi(){},hideGate(){},metric(){},setLoginError(){},timeout:promise=>Promise.resolve(promise),
+  normalizeAndRender(){},normalizeDataShape(){},applyModeUi(){},hideGate(){},metric(){},setLoginError(){},timeout:promise=>Promise.resolve(promise),requestAnimationFrame:fn=>{ctx.pendingBackground=fn;return 1},
   async fetchManifest(){if(opts.offline)throw Error('offline');return{parts:cp(versions)}},
   async getCachedPart(scope,p){return opts.cache?.[p]||null},
   async loadPartWithCache(scope,p){if(opts.failPart===p)throw Error('network');return {data:cp(remote[p]),version:versions[p]}},
@@ -111,7 +111,7 @@ function makeRuntime(code,remote,versions,opts={}){
     return {versions:newVersions,normalized};
   }
  };
- const hyd=sourceFunction(code,'async function hydrate(chosen){','  window.mwsV55EnsureParts=');
+ const hyd=sourceFunction(code,'function checkPartCache(scope,part)','  window.mwsV55EnsureParts=');
  const save=sourceFunction(code,"const SAVE_DRAFT_PREFIX=",'  window.mwsV55SaveNow=');
  vm.runInNewContext(save+hyd+'\nthis.hydrate=hydrate;this.write=writeCloudNow;this.queue=queueCloudSave;this.ensure=ensurePartsForTab;this.merge=mergeSaveChanges;this.draft=()=>lastDraft;this.flushDraft=()=>draftWrites;',ctx);
  return {ctx,writes,cache,alerts,events,status,localStorage,sessionStorage};
@@ -148,12 +148,12 @@ for(const path of clientPaths){
    h.ctx.window.mwsRenderCalendarFirstV1=()=>assert.fail('partial calendar must not render');
    h.ctx.normalizeAndRender=(reason,startup)=>{if(startup){commits++;assert.equal(h.ctx.data.events[0].favoriteFolderId,'f1');assert.equal(h.ctx.data.notebook.favoriteFolders[0].id,'f1')}};
    const pending=h.ctx.hydrate(mode);await new Promise(r=>setImmediate(r));
-   assert.deepEqual(calls.slice().sort(),required.filter(p=>!batchParts[p]).sort());assert.equal(commits,0);assert.equal(h.ctx.window.__mwsAppReadyV130,false);assert.equal(h.writes.length,0);
-   release();await pending;assert.equal(commits,1);
+   assert.deepEqual(calls.slice().sort(),initial.filter(p=>!batchParts[p]).sort());assert.equal(commits,0);assert.equal(h.ctx.window.__mwsAppReadyV130,false);assert.equal(h.writes.length,0);
+   release();await pending;assert.equal(commits,1);assert.deepEqual(calls.slice().sort(),required.filter(p=>!batchParts[p]).sort());
    assert.deepEqual([...h.ctx.loadedParts].sort(),[...(mode==='admin'?Object.keys(remote):initial)].sort());
    if(mode==='public'){
     assert(!calls.includes('posts')&&!calls.includes('miniGames')&&!calls.includes('wardogs'));
-    await Promise.all([h.ctx.ensure('posts'),h.ctx.ensure('posts')]);assert.equal(calls.filter(p=>p==='posts').length,1);
+    h.ctx.pendingBackground();await Promise.all([h.ctx.ensure('posts'),h.ctx.ensure('posts')]);for(const extra of ['posts','miniGames','wardogs'])assert.equal(calls.filter(p=>p===extra).length,1);
     await h.ctx.ensure('export');assert.equal(h.ctx.loadedParts.size,Object.keys(remote).length);
    }
   }
@@ -214,7 +214,7 @@ for(const path of clientPaths){
   const remote={notebook:{memos:[]}},versions={notebook:5};const h=makeRuntime(code,remote,versions);
   await h.ctx.hydrate('public');h.ctx.loadedParts.delete('notebook');let calls=0,resolve;
   h.ctx.loadPartWithCache=()=>{calls++;return new Promise(r=>resolve=r)};
-  const a=h.ctx.ensure('memos'),b=h.ctx.ensure('memos');resolve({version:6,data:{memos:[{id:'1'}]}});assert.equal(await a,true);assert.equal(await b,true);assert.equal(calls,1);assert.equal(h.ctx.manifest.parts.notebook,6);
+  const a=h.ctx.ensure('memos'),b=h.ctx.ensure('memos');await new Promise(r=>setImmediate(r));resolve({version:6,data:{memos:[{id:'1'}]}});assert.equal(await a,true);assert.equal(await b,true);assert.equal(calls,1);assert.equal(h.ctx.manifest.parts.notebook,6);
   h.ctx.loadedParts.delete('notebook');h.ctx.loadPartWithCache=async()=>{throw Error('network')};assert.equal(await h.ctx.ensure('memos'),false);
  });
 }
