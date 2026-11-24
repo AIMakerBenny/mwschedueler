@@ -9,7 +9,7 @@ const heart='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21 3.6 12.
 const external='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6m0-6L10 14m9-1v7H4V5h7"/></svg>';
 const clock='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
 let selected='',editing='',busy=false,timer=0,sessionMode='',epoch=0;
-const snapshots=new Map(),pending=new Map(),attempts=new Map(),rankMotions=new Map();
+const snapshots=new Map(),pending=new Map(),attempts=new Map(),rankMotions=new Map(),sourceReads=new Map();
 const isAdmin=()=>document.body.dataset.mwsMode==='admin'&&window.__mwsAppReadyV130===true;
 const sectionActive=()=>section.classList.contains('active');
 const dashboardActive=()=>!!dashboardSupport&&dashboard?.classList.contains('active')&&overview?.classList.contains('active');
@@ -139,7 +139,7 @@ function renderDetail(){
 function render(){
  if(!sectionActive()&&!dashboardActive())return;
  const mode=document.body.dataset.mwsMode||'';
- if(mode!==sessionMode){selected='';editing='';editor.hidden=true;snapshots.clear();pending.clear();attempts.clear();rankMotions.clear();epoch++;sessionMode=mode}
+ if(mode!==sessionMode){selected='';editing='';editor.hidden=true;snapshots.clear();pending.clear();attempts.clear();rankMotions.clear();sourceReads.clear();epoch++;sessionMode=mode}
  if(sectionActive()){
   $('caNewBtn').hidden=!isAdmin();if(selected&&!current())selected='';list.hidden=!!selected;detail.hidden=!selected;
   if(selected)renderDetail();else renderList();
@@ -153,7 +153,7 @@ function updateClocks(){
  let changed=false;root?.querySelectorAll('[data-ca-state]').forEach(el=>{if(el.dataset.caPhase!==campaignStatus(el.dataset.caState))changed=true});if(changed)render();
 }
 function stopTimer(){clearInterval(timer);timer=0}
-function refreshInterval(c){return sectionActive()||campaignStatus(c.deadline)==='urgent'?60000:180000}
+function refreshInterval(){return 60000}
 function tick(){if(!active()){stopTimer();return}updateClocks();loadVisible()}
 function loadVisible(){
  const c=sectionActive()?current():null;if(c){if(!attempts.has(c.id)||(!countdown(c.deadline).expired&&Date.now()-(attempts.get(c.id)||0)>=refreshInterval(c)))refresh(c);return}
@@ -169,8 +169,10 @@ async function fetchPage(source,page){
 async function fetchPageGroup(source,pages){
  if(pages.length===1)return Promise.allSettled(pages.map(page=>fetchPage(source,page)));
  const query='station='+encodeURIComponent(source.station)+'&post='+encodeURIComponent(source.postNo)+'&pages='+pages.join(',');
- const res=await fetch('/api/soop/comment-batch?'+query,{headers:{accept:'application/json'},cache:'no-store',signal:AbortSignal.timeout(45000)});
- if(res.status===404||res.status===405)return Promise.allSettled(pages.map(page=>fetchPage(source,page)));
+ const res=await fetch('/api/soop/comment-batch?'+query,{headers:{accept:'application/json'},cache:'no-store',signal:AbortSignal.timeout(60000)});
+ if(res.status===404||res.status===405){
+  const results=[];for(let i=0;i<pages.length;i+=3)results.push(...await Promise.allSettled(pages.slice(i,i+3).map(page=>fetchPage(source,page))));return results;
+ }
  if(!res.ok)throw Error('SOOP batch HTTP '+res.status);
  const payload=await res.json();
  if(!Array.isArray(payload?.results))throw Error('댓글 일괄 응답 확인 실패');
@@ -183,12 +185,23 @@ async function fetchPageGroup(source,pages){
 async function fetchSource(source,canContinue=()=>true){
  if(!canContinue())throw Error('조회 중단');
  const first=await fetchPage(source,1),rows=[...first.applicants];let complete=first.pages<=100;const limit=Math.min(100,first.pages);
- for(let start=2;start<=limit;start+=3){
+ for(let start=2;start<=limit;start+=9){
   if(!canContinue())throw Error('조회 중단');
-  const pages=Array.from({length:Math.min(3,limit-start+1)},(_,i)=>start+i);
+  const pages=Array.from({length:Math.min(9,limit-start+1)},(_,i)=>start+i);
   let results;try{results=await fetchPageGroup(source,pages)}catch(error){results=pages.map(()=>({status:'rejected',reason:error}))}
   for(const result of results){if(result.status==='fulfilled'){rows.push(...result.value.applicants);if(result.value.pages!==first.pages||result.value.total!==first.total)complete=false}else complete=false}
  }return {rows,complete};
+}
+// Share only complete, recently collected public SOOP results within this access session.
+async function readSource(source,canContinue,manual=false){
+ if(!canContinue())throw Error('조회 중단');
+ const key=JSON.stringify([source.station,source.postNo,source.userId||'',source.title||'']);
+ const now=Date.now(),cached=sourceReads.get(key);
+ if(!manual&&cached&&now-cached.startedAt<60000)return cached.result;
+ for(const [k,row] of sourceReads)if(now-row.startedAt>=60000)sourceReads.delete(k);
+ const result=await fetchSource(source,canContinue);
+ if(canContinue()&&result.complete){if(sourceReads.size>=100)sourceReads.delete(sourceReads.keys().next().value);sourceReads.set(key,{startedAt:now,result})}
+ return result;
 }
 async function refresh(c,manual=false){
  if(!c||pending.has(c.id)||!active())return;
@@ -205,7 +218,7 @@ async function refresh(c,manual=false){
   const rows=[];let complete=c.entries.length>0;
   for(let i=0;i<c.entries.length;i+=2){
    if(!canContinue())return;
-   const results=await Promise.allSettled(c.entries.slice(i,i+2).map(source=>fetchSource(source,canContinue)));
+   const results=await Promise.allSettled(c.entries.slice(i,i+2).map(source=>readSource(source,canContinue,manual)));
    if(!canContinue())return;
    for(const result of results){if(result.status==='fulfilled'){rows.push(...result.value.rows);complete&&=result.value.complete}else complete=false}
   }

@@ -10,6 +10,7 @@ const STORE='media';
 const MAX_BYTES=32*1024*1024;
 let dbPromise=null;
 let migrationPromise=null;
+const pendingReads=new Map();
 
 function openDb(){
   if(dbPromise)return dbPromise;
@@ -135,6 +136,11 @@ async function put(blob,meta={}){
 }
 async function get(id){
   id=String(id||'');if(!id)return null;
+  if(pendingReads.has(id))return pendingReads.get(id);
+  const reading=readMedia(id).finally(()=>{if(pendingReads.get(id)===reading)pendingReads.delete(id)});
+  pendingReads.set(id,reading);return reading;
+}
+async function readMedia(id){
   const local=await getLocal(id);
   if(local?.blob instanceof Blob)return local;
   const blob=await fetchCloudBlob(id);
@@ -232,6 +238,15 @@ window.mwsAchievementMediaV1=Object.freeze({
   cloudExists,
   syncReferencedToCloud
 });
-setTimeout(()=>{syncReferencedToCloud().catch(error=>console.warn('Achievement media startup cloud sync failed',error))},250);
+// Migration only needs local-only legacy blobs, not a HEAD for every remote card on every login.
+// The explicit syncReferencedToCloud() remains available for full verification.
+async function startupLocalMigration(){
+  if(document.body?.dataset?.mwsMode!=='admin')return;
+  const ids=referencedIds();if(!ids.length)return;
+  const localIds=new Set(await listIds());
+  if(!ids.some(id=>localIds.has(id)))return;
+  await syncReferencedToCloud();
+}
+setTimeout(()=>{if(typeof document!=='undefined')startupLocalMigration().catch(error=>console.warn('Achievement media startup cloud sync failed',error))},250);
 try{window.dispatchEvent(new Event('mws:achievement-media-ready'))}catch(_){}
 })();
