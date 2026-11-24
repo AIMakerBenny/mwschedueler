@@ -88,6 +88,13 @@ try{
   const blobSize=await browser.evaluate("(async()=>{const b=await window.mwsAchievementMediaV1.getBlob('image0');return b?.size||0})()");
   assert.equal(blobSize,png.length);
   assert(calls.some(r=>r.path==='/media/achievement/image0'));
+  const canonical=contacts[0].image;
+  assert.equal(await browser.evaluate("data.contacts.find(c=>c.id==='qa0').image"),canonical);
+  await browser.evaluate("(()=>{const holder=document.createElement('div');holder.id='qa-cdn-fallback-contact';holder.style.cssText='position:fixed;top:10px;left:10px;width:40px;height:40px;z-index:9999';holder.innerHTML='<img width=40 height=40 '+mwsDeferredContactAttrsV1(data.contacts.find(c=>c.id==='qa0').image)+'>';document.body.appendChild(holder);return true})()");
+  await until(()=>browser.evaluate("(()=>{const img=document.querySelector('#qa-cdn-fallback-contact img');return !!img&&img.complete&&img.naturalWidth>0&&img.getAttribute('src').startsWith('/media/contact/qa0?')})()"),'Contact CDN fallback displays original image');
+  assert(cdnCalls.some(key=>key.startsWith('contacts/qa0/')));
+  assert(calls.some(r=>r.path==='/media/contact/qa0'));
+  await browser.evaluate("document.querySelector('#qa-cdn-fallback-contact')?.remove()");
   console.log('FULL_APP_CDN '+JSON.stringify({cdn:cdnCalls.length,workerContact:cold.filter(r=>r.path.startsWith('/media/contact/')).length,workerAchievement:cold.filter(r=>r.path.startsWith('/media/achievement/')).length}));
  }
  before=calls.length;await nav([...routes,...routes]);await pause(700);const warm=calls.slice(before);console.log('FULL_APP_WARM_NAV '+JSON.stringify(summary(warm)));
