@@ -1,6 +1,6 @@
 'use strict';
 const CACHE='mws-public-versioned-media-v1';
-const MAX_ENTRIES=320, MAX_BYTES=32*1024*1024;
+const MAX_BYTES=32*1024*1024;
 function cacheKey(url){
   const u=new URL(url,self.location.origin);
   if(u.origin!==self.location.origin)return null;
@@ -19,27 +19,10 @@ function canStore(res,key){
 }
 self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
-let writes=0;
-const recent=new Map();
-function touch(url){
-  recent.delete(url);recent.set(url,Date.now());
-  if(recent.size>4096)recent.delete(recent.keys().next().value);
-}
-async function trim(cache,force=false){
-  const estimate=await self.navigator?.storage?.estimate?.().catch(()=>null);
-  // The old count is a fallback for browsers without a usable storage estimate.
-  if(!force&&estimate?.quota>0&&estimate.usage<estimate.quota*0.8)return;
-  const keys=await cache.keys();
-  const count=force||estimate?.quota>0?Math.ceil(keys.length/10):Math.max(0,keys.length-MAX_ENTRIES);
-  keys.sort((a,b)=>(recent.get(a.url)||0)-(recent.get(b.url)||0));
-  for(const key of keys.slice(0,count)){await cache.delete(key);recent.delete(key.url)}
-}
+// Never evict previously stored public revisions on an application count,
+// storage percentage, or failed new write.
 async function store(cache,request,response){
-  try{
-    // A quota failure may consume the response stream. Evict for the next read.
-    await cache.put(request,response);touch(request.url);
-    if(++writes%12===1)await trim(cache);
-  }catch(error){if(error.name==='QuotaExceededError')await trim(cache,true).catch(()=>{})}
+  try{await cache.put(request,response);return true}catch(_){return false}
 }
 const diagnosticClients=new Map();
 self.addEventListener('message',event=>{
@@ -56,13 +39,36 @@ function traceDelivery(id,url,source){
   for(let i=0;i<url.length;i++)hash=Math.imul(hash^url.charCodeAt(i),16777619);
   try{session.client.postMessage({kind:'mws-media-delivery',id:hash>>>0,source,salt:session.salt,at:Date.now()})}catch(_){diagnosticClients.delete(id)}
 }
+// Only share a verified Cache Storage fill; never hand another request
+// an unverified response. Cache.match honors Vary and failed fills are not reused.
+const filling=new Map();
 self.addEventListener('fetch',event=>{
   const request=event.request;
   if(request.method!=='GET'||request.headers.has('range'))return;
   const key=cacheKey(request.url);if(!key)return;
   const task=(async()=>{
     let cache;
-    try{cache=await caches.open(CACHE);const hit=await cache.match(request);if(hit){traceDelivery(event.clientId,request.url,'service-worker-cache');touch(request.url);return {response:hit}}}catch(_){}
+    const lookup=async()=>{try{return await cache?.match(request)}catch(_){return undefined}};
+    const deliverHit=hit=>{traceDelivery(event.clientId,request.url,'service-worker-cache');return {response:hit}};
+    try{cache=await caches.open(CACHE)}catch(_){}
+    const hit=await lookup();if(hit)return deliverHit(hit);
+    if(cache){
+      while(filling.has(request.url)){await filling.get(request.url);const shared=await lookup();if(shared)return deliverHit(shared)}
+      if(!filling.has(request.url)){
+        let finish;const pending=new Promise(resolve=>{finish=resolve});
+        filling.set(request.url,pending);
+        const release=()=>{if(filling.get(request.url)===pending)filling.delete(request.url);finish()};
+        try{
+          const lateHit=await lookup();if(lateHit){release();return deliverHit(lateHit)}
+          const response=await fetch(request);traceDelivery(event.clientId,request.url,'service-worker-fetch');
+          if(canStore(response,key)){
+            const save=store(cache,request,response.clone()).finally(release);
+            return {response,save};
+          }
+          release();return {response};
+        }catch(error){release();throw error}
+      }
+    }
     const response=await fetch(request);traceDelivery(event.clientId,request.url,'service-worker-fetch');
     return {response,save:cache&&canStore(response,key)?store(cache,request,response.clone()):null};
   })();

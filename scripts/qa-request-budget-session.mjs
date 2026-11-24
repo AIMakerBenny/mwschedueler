@@ -51,12 +51,14 @@ export async function auditSession({browser,nav,calls,summary,until,mode}){
    ['contact','contacts',"data.contacts[0].name='Edited fixture contact'"],
    ['portrait','contacts','data.contacts[0].image='+JSON.stringify(image)],
    ['post','posts',"data.posts.push({id:'qa-post',title:'Test post',comments:[]})"],
-   ['game','miniGames',"data.miniGames.ladder.prizes=[{id:'qa',label:'Fixture'}]"],
+   ['game','miniGames',"data.miniGames.multiDraw.targetCount=data.miniGames.multiDraw.targetCount===7?8:7"],
    ['note','notebook',"data.memos.push({id:'qa-note',title:'Fixture note',content:'updated'})"]
   ];
   for(const [label,part,edit] of edits){
    const offset=calls.length;
-   await browser.evaluate('(async()=>{'+edit+";window.saveData('fixture edit');return await window.mwsV55SaveNow()})()");
+   const diagnostics=await browser.evaluate('(async()=>{const before=window.mwsV3LocalDirtyPaths?.();'+edit+";const afterEdit=window.mwsV3LocalDirtyPaths?.();window.saveData('fixture edit');const afterSaveData=window.mwsV3LocalDirtyPaths?.();const ok=await window.mwsV55SaveNow();return {before,afterEdit,afterSaveData,ok}})()");
+   console.log('DIRTY_PATH_AUDIT '+JSON.stringify({label,...diagnostics}));
+   assert.equal(diagnostics.ok,true,'Save failed: '+label);
    const writes=calls.slice(offset).filter(row=>row.path==='/api/save');
    console.log('EDIT_AUDIT '+JSON.stringify({label,worker:summary(calls.slice(offset)),parts:writes.map(row=>row.parts)}));
    assert.equal(writes.length,1,'Single save for '+label);assert.equal(writes[0].status,200);

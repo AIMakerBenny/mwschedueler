@@ -107,7 +107,8 @@
     let queue=partReadQueues.get(key);
     if(!queue){
       queue=new Map();partReadQueues.set(key,queue);
-      setTimeout(()=>{if(partReadQueues.get(key)===queue)partReadQueues.delete(key);void flushPartReads(queue)},12);
+      const generation=hydrationSeq,shareAllowed=mode==='public'&&!fresh;
+      setTimeout(()=>{if(partReadQueues.get(key)===queue)partReadQueues.delete(key);void flushPartReads(queue,shareAllowed&&generation===hydrationSeq&&mode==='public')},12);
     }
     return new Promise((resolve,reject)=>{
       if(!queue.has(part))queue.set(part,[]);
@@ -115,17 +116,28 @@
     });
   }
   async function readSinglePart(part){return fetchJson(`/api/parts/${encodeURIComponent(part)}`,{cache:'no-store'},`${part} 불러오기`)}
-  async function flushPartReads(queue){
-    const started=performance.now(),parts=[...queue.keys()];
+  // Only coalesce exact, version-verified public reads. Admin, conflict reads,
+  // unknown versions, and failed/mismatched responses keep their normal behavior.
+  async function readSharedWorkspaceV3(parts,versions,load,valid,allowed){
+    const sharing=window.mwsPublicReadSharingV1;
+    const pairs=[...parts].sort().map(part=>[part,versions?.[part]]);
+    if(!allowed||typeof sharing?.read!=='function'||pairs.some(([,version])=>!Number.isSafeInteger(version)||version<1))return load();
+    const key='workspace-parts-v3:'+JSON.stringify(pairs);
+    const {value}=await sharing.read(key,{ttl:8000,load,valid:body=>valid(body,versions)});
+    return clone(value);
+  }
+  async function flushPartReads(queue,shareAllowed=false){
+    const started=performance.now(),parts=[...queue.keys()],versions=Object.fromEntries(parts.map(part=>[part,manifest?.parts?.[part]]));
+    const exactRow=(row,part,wanted)=>row?.part===part&&Number(row.version)===wanted&&ownSave(row,'data');
     const deliver=(part,row,error)=>{
       if(!error){metrics.semanticResponseBytes+=byteLen(row);metrics.cacheMisses++;metric('part-fetch',{part,version:Number(row?.version)||0,bytes:byteLen(row),ms:Math.round(performance.now()-started)})}
       for(const waiter of queue.get(part)||[]){if(error)waiter.reject(error);else waiter.resolve(clone(row))}
     };
-    const single=async part=>{try{deliver(part,await readSinglePart(part))}catch(error){deliver(part,null,error)}};
+    const single=async part=>{try{deliver(part,await readSharedWorkspaceV3([part],versions,()=>readSinglePart(part),(row,v)=>exactRow(row,part,v[part]),shareAllowed))}catch(error){deliver(part,null,error)}};
     try{
       if(parts.length===1){await single(parts[0]);return}
       let body;
-      try{body=await fetchJson('/api/parts-batch?parts='+encodeURIComponent(parts.join(',')),{cache:'no-store'},'Cloudflare 데이터 일괄 조회')}
+      try{body=await readSharedWorkspaceV3(parts,versions,()=>fetchJson('/api/parts-batch?parts='+encodeURIComponent(parts.join(',')),{cache:'no-store'},'Cloudflare 데이터 일괄 조회'),(body,v)=>parts.every(part=>body?.results?.[part]?.status===200&&exactRow(body.results[part].row,part,v[part])),shareAllowed)}
       catch(error){if(error.status===404||error.status===405){await Promise.all(parts.map(single));return}throw error}
       if(!body?.results||typeof body.results!=='object'||Array.isArray(body.results))throw Error('일괄 조회 응답 확인 실패');
       for(const part of parts){
@@ -393,9 +405,54 @@
     markDirty();persistSaveDraft();normalizeAndRender('서버 변경사항 병합');
   }
 
+  // Local-only diagnostics, no values or network requests.
+  function mwsQaDirtyPathReport(){
+    if(!['127.0.0.1','localhost','[::1]'].includes(location.hostname))return null;
+    const paths=(a,b,path,out)=>{
+      if(out.length>=80||JSON.stringify(a)===JSON.stringify(b))return;
+      if(Array.isArray(a)&&Array.isArray(b)){
+        if(a.length!==b.length)out.push(path+'.length');
+        for(let i=0;i<Math.min(a.length,b.length)&&out.length<80;i++)paths(a[i],b[i],path+'['+i+']',out);
+        return;
+      }
+      if(a&&b&&typeof a==='object'&&typeof b==='object'&&!Array.isArray(a)&&!Array.isArray(b)){
+        const ak=Object.keys(a),bk=Object.keys(b);
+        if(ak.length===bk.length&&ak.every(k=>Object.hasOwn(b,k))&&ak.join('\0')!==bk.join('\0'))out.push(path+'.@key-order');
+        for(const k of new Set([...ak,...bk])){
+          if(out.length>=80)break;
+          if(!Object.hasOwn(a,k)||!Object.hasOwn(b,k))out.push(path+'.'+k);
+          else paths(a[k],b[k],path+'.'+k,out);
+        }
+        return;
+      }
+      out.push(path);
+    };
+    const result={};
+    for(const part of loadedParts){
+      const base=normalizedReadBaseline.get(part)??baselineJson.get(part);
+      if(typeof base!=='string')continue;
+      const current=extractPart(part),before=JSON.parse(base),changed=[];
+      paths(before,current,part,changed);
+      if(changed.length)result[part]=changed;
+    }
+    return result;
+  }
+  if(['127.0.0.1','localhost','[::1]'].includes(location.hostname))window.mwsV3LocalDirtyPaths=mwsQaDirtyPathReport;
+  function sameSerializedSaveValue(a,b){
+    if(a===b)return true;
+    if(typeof a!=='string'||typeof b!=='string')return false;
+    const equal=(x,y)=>{
+      if(x===y)return true;
+      if(!x||!y||typeof x!=='object'||typeof y!=='object'||Array.isArray(x)!==Array.isArray(y))return false;
+      if(Array.isArray(x))return x.length===y.length&&x.every((v,i)=>equal(v,y[i]));
+      const keys=Object.keys(x);
+      return keys.length===Object.keys(y).length&&keys.every(k=>Object.hasOwn(y,k)&&equal(x[k],y[k]));
+    };
+    try{return equal(JSON.parse(a),JSON.parse(b))}catch(_){return false}
+  }
   function markDirty(){
     if(mode!=='admin')return[];const changed=[];
-    for(const part of loadedParts){const current=JSON.stringify(extractPart(part));if(current!==(normalizedReadBaseline.get(part)??baselineJson.get(part))){dirtyParts.add(part);changed.push(part)}else dirtyParts.delete(part)}
+    for(const part of loadedParts){const current=JSON.stringify(extractPart(part));if(!sameSerializedSaveValue(current,normalizedReadBaseline.get(part)??baselineJson.get(part))){dirtyParts.add(part);changed.push(part)}else dirtyParts.delete(part)}
     return changed;
   }
   function queueCloudSave(){
