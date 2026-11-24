@@ -199,8 +199,15 @@ async function readSource(source,canContinue,manual=false){
  const now=Date.now(),cached=sourceReads.get(key);
  if(!manual&&cached&&now-cached.startedAt<60000)return cached.result;
  for(const [k,row] of sourceReads)if(now-row.startedAt>=60000)sourceReads.delete(k);
- const result={...await fetchSource(source,canContinue),sampledAt:now};
- if(canContinue()&&result.complete){if(sourceReads.size>=100)sourceReads.delete(sourceReads.keys().next().value);sourceReads.set(key,{startedAt:now,result})}
+ const shared=typeof window!=='undefined'?window.mwsPublicReadSharingV1:null;
+ const scope=typeof document!=='undefined'?document.body?.dataset?.mwsMode:'';
+ const load=async()=>{if(!canContinue())throw Error('조회 중단');return {...await fetchSource(source,canContinue),sampledAt:Date.now()}};
+ let result;
+ if(shared&&['admin','public'].includes(scope)){
+  const row=await shared.read('comments:'+scope+':'+key,{ttl:60000,force:manual,load,valid:value=>value?.complete===true&&Array.isArray(value.rows)});
+  result={...row.value,sampledAt:row.at};
+ }else result={...await fetchSource(source,canContinue),sampledAt:now};
+ if(canContinue()&&result.complete){if(sourceReads.size>=100)sourceReads.delete(sourceReads.keys().next().value);sourceReads.set(key,{startedAt:result.sampledAt,result})}
  return result;
 }
 async function refresh(c,manual=false){

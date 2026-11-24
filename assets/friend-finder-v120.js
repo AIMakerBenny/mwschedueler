@@ -90,14 +90,14 @@ function syntheticResponse(row){
   headers.set('x-mws-live-batch','v1.3.0');
   return new Response(String(row?.body??''),{status:Number(row?.status)||200,headers});
 }
-function rememberRow(row){
+function rememberRow(row,sampledAt=Date.now()){
   if(!row?.url)return;
-  liveCache.set(row.url,{row,at:Date.now()});
+  liveCache.set(row.url,{row,at:sampledAt});
   try{
     const target=new URL(row.url);const id=userIdFromTarget(target);if(!id)return;
     const body=String(row.body||'').trim();let parsed=null;try{parsed=body?JSON.parse(body):null}catch(_){}
     const live=row?.live&&typeof row.live==='object'?row.live:normalizeLivePayload(parsed);
-    liveByUserId.set(id,{at:Date.now(),status:Number(row.status)||0,data:live,url:row.url});
+    liveByUserId.set(id,{at:sampledAt,status:Number(row.status)||0,data:live,url:row.url});
   }catch(_){}
 }
 function dispatchLiveUpdate(){window.dispatchEvent(new CustomEvent('mws:friend-live-updated',{detail:{count:liveByUserId.size}}));scheduleUi()}
@@ -106,10 +106,16 @@ async function runBatch(extraTarget,force=false){
   const urls=allContactTargets();
   if(extraTarget){const i=urls.indexOf(extraTarget.href);if(i>0){urls.splice(i,1);urls.unshift(extraTarget.href)}else if(i<0)urls.unshift(extraTarget.href)}
   if(!urls.length)return;
-  const response=await baseFetch('/api/soop/live-batch',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'content-type':'application/json'},body:JSON.stringify({urls,force})});
-  if(!response.ok)throw new Error(`LIVE batch HTTP ${response.status}`);
-  const payload=await response.json();
-  for(const row of Array.isArray(payload?.results)?payload.results:[])rememberRow(row);
+  const load=async()=>{
+    const response=await baseFetch('/api/soop/live-batch',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'content-type':'application/json'},body:JSON.stringify({urls,force})});
+    if(!response.ok)throw new Error(`LIVE batch HTTP ${response.status}`);
+    return response.json();
+  };
+  const shared=window.mwsPublicReadSharingV1,scope=document.body?.dataset?.mwsMode;
+  const valid=payload=>{const rows=payload?.results;if(!Array.isArray(rows)||rows.length!==urls.length)return false;const requested=new Set(urls);return rows.every(row=>requested.delete(row.url)&&Number(row.status)>=200&&Number(row.status)<300)};
+  const result=shared&&['admin','public'].includes(scope)?await shared.read('live:'+scope+':'+JSON.stringify([...urls].sort()),{ttl:LIVE_CACHE_MS,force,load,valid}):{at:Date.now(),value:await load()};
+  const payload=result.value;
+  for(const row of Array.isArray(payload?.results)?payload.results:[])rememberRow(row,result.at);
   dispatchLiveUpdate();
 }
 async function ensureBatch(target,{force=false}={}){
