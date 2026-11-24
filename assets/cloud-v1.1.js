@@ -540,6 +540,7 @@
   // Never replace an open editor, merge an Admin draft, or fetch on a peer event.
   let peerApplyBusy=false,peerNotice=null;
   const peerNoticeKey='mws-public-confirmed-parts-v3';
+  if(typeof location!=='undefined'&&['127.0.0.1','localhost','[::1]'].includes(location.hostname))window.mwsV3PeerDiagnostic=()=>({mode,hydrating,remaining:Boolean(remainingWorkspaceLoad),busy:peerApplyBusy,notice:peerNotice,versions:manifest?.parts,dirty:mwsQaDirtyPathReport(),ready:window.__mwsAppReadyV130,hidden:document.hidden,dialogs:[...document.querySelectorAll('.modal.open,dialog[open],.modal-overlay.open,.modal-backdrop.open')].map(e=>e.id||e.className),last:localStorage.getItem(peerNoticeKey)});
   function queuePeerWorkspace(event){
     if(event.key!==peerNoticeKey||!event.newValue)return;
     try{
@@ -599,10 +600,14 @@
       if(peerNotice&&peerNotice!==notice)void applyPeerWorkspace();
     }
   }
+  function resumePeerWorkspace(){
+    try{const value=localStorage.getItem(peerNoticeKey);if(value){queuePeerWorkspace({key:peerNoticeKey,newValue:value});return}}catch(_){}
+    void applyPeerWorkspace();
+  }
   window.addEventListener('storage',queuePeerWorkspace);
-  window.addEventListener('mws:workspace-tab-v1',()=>{void applyPeerWorkspace()});
-  window.addEventListener('mws:app-ready',()=>{void applyPeerWorkspace()});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void applyPeerWorkspace()});
+  window.addEventListener('mws:workspace-tab-v1',resumePeerWorkspace);
+  window.addEventListener('mws:app-ready',resumePeerWorkspace);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)resumePeerWorkspace()});
   window.addEventListener('online',()=>{if(mode==='admin'&&dirtyParts.size){if(manifest?.parts)queueCloudSave();else setSaveStatus('연결 복구 · 복구본을 보관했습니다. 새로고침 후 다시 저장해 주세요',true)}});
   function installSaveBridge(){
     const devicePersist=()=>{try{if(typeof mwsSaveDevicePrefs==='function')mwsSaveDevicePrefs(data)}catch(_){}if(mode==='admin')queueCloudSave();return true};
