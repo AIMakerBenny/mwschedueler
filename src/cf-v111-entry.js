@@ -316,7 +316,7 @@ export default {
     }
 
     if(url.pathname==='/assets/cloud-v5.5.js'){
-      const replacement=new URL('/assets/cloud-v1.1-loader.js?v=1.3.0-auth-decoupled&clipboard-first-v1=1&save-queue-v2=1&request-budget=6',request.url);
+      const replacement=new URL('/assets/cloud-v1.1-loader.js?v=1.3.0-auth-decoupled&clipboard-first-v1=1&save-queue-v2=1&request-budget=7',request.url);
       const response=await env.ASSETS.fetch(new Request(replacement.toString(),{method:'GET',headers:request.headers}));
       const source=await response.text();
       const patched=source.replace('app-version-v120.js?v=1.3.0','app-version-v120.js?v=1.4.0-phase73');

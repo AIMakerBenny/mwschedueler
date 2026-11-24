@@ -973,7 +973,7 @@ function dashboardDetailHTML(e){
 
   <div class="dashboard-participant-list">
     ${people.length?people.map(({person,status})=>`<div class="dashboard-person">
-      ${person.image?`<img class="dashboard-person-avatar" loading="lazy" src="${person.image}">`:`<span class="dashboard-person-avatar avatar" style="display:grid;place-items:center">${esc(initials(person.name))}</span>`}
+      ${person.image?`<img class="dashboard-person-avatar" loading="lazy" ${mwsDeferredContactAttrsV1(person.image)}>`:`<span class="dashboard-person-avatar avatar" style="display:grid;place-items:center">${esc(initials(person.name))}</span>`}
       <span class="dashboard-person-name">${esc(person.name)}</span>
       <span class="status-badge ${participantStatusClass(status)}">${participantStatusLabel(status)}</span>
     </div>`).join(''):'<span class="muted small">참여자 없음</span>'}
@@ -1117,7 +1117,7 @@ function reminderCardHTML(e){
     <div class="reminder-section">
       <div class="reminder-label">참가자 ${people.length?`· ${people.length}명`:''}</div>
       <div class="reminder-people">
-        ${people.length?people.map(({person,status})=>`<span class="reminder-person">${person.image?`<img class="avatar sm" loading="lazy" src="${person.image}">`:''}<span>${esc(person.name)}</span><span class="status-badge ${participantStatusClass(status)}">${participantStatusLabel(status)}</span></span>`).join(''):'<span class="muted small">등록된 참가자가 없습니다</span>'}
+        ${people.length?people.map(({person,status})=>`<span class="reminder-person">${person.image?`<img class="avatar sm" loading="lazy" ${mwsDeferredContactAttrsV1(person.image)}>`:''}<span>${esc(person.name)}</span><span class="status-badge ${participantStatusClass(status)}">${participantStatusLabel(status)}</span></span>`).join(''):'<span class="muted small">등록된 참가자가 없습니다</span>'}
       </div>
     </div>
 
@@ -1250,7 +1250,7 @@ function calendarPreviewHTML(e){
     <div class="reminder-label">참가자 ${people.length?`· ${people.length}명`:''}</div>
     <div class="calendar-preview-people">
       ${people.length?people.map(({person,status})=>`<div class="calendar-preview-person">
-        ${person.image?`<img class="avatar" loading="lazy" src="${person.image}">`:`<span class="avatar" style="display:grid;place-items:center">${esc(initials(person.name))}</span>`}
+        ${person.image?`<img class="avatar" loading="lazy" ${mwsDeferredContactAttrsV1(person.image)}>`:`<span class="avatar" style="display:grid;place-items:center">${esc(initials(person.name))}</span>`}
         <span style="min-width:0">
           <span class="calendar-preview-person-name">${esc(person.name)}</span>
           <span class="status-badge ${participantStatusClass(status)}" style="margin-top:3px">${participantStatusLabel(status)}</span>
@@ -2787,18 +2787,49 @@ function mwsBindContactMediaImageV111(img){
   }
   return true;
 }
+// Do not give offscreen contact portraits a network URL until they are near
+// the viewport. Native lazy loading alone can prefetch an entire dense grid.
+function mwsDeferredContactAttrsV1(raw){
+  const src=String(raw||'');
+  if(/^\/media\/contact\/[A-Za-z0-9_-]+(?:\?|$)/.test(src)&&typeof IntersectionObserver==='function')
+    return 'data-mws-deferred-contact-src="'+esc(src)+'"';
+  return 'src="'+esc(src)+'"';
+}
+let mwsDeferredContactObserverV1=null;
+function mwsActivateDeferredContactImageV1(img){
+  const src=img.getAttribute('data-mws-deferred-contact-src');if(!src)return;
+  mwsDeferredContactObserverV1?.unobserve(img);
+  img.removeAttribute('data-mws-deferred-contact-src');
+  img.src=src;mwsBindContactMediaImageV111(img);
+}
+function mwsObserveDeferredContactImageV1(img){
+  if(!img.hasAttribute('data-mws-deferred-contact-src'))return;
+  if(typeof IntersectionObserver!=='function'){mwsActivateDeferredContactImageV1(img);return}
+  if(!mwsDeferredContactObserverV1)mwsDeferredContactObserverV1=new IntersectionObserver(entries=>{
+    for(const entry of entries){
+      if(!entry.target.isConnected){mwsDeferredContactObserverV1.unobserve(entry.target);continue}
+      if(entry.isIntersecting)mwsActivateDeferredContactImageV1(entry.target);
+    }
+  },{rootMargin:'120px 0px'});
+  mwsDeferredContactObserverV1.observe(img);
+}
 function mwsScanContactMediaImagesV111(root=document){
-  if(root instanceof HTMLImageElement)mwsBindContactMediaImageV111(root);
+  if(root instanceof HTMLImageElement){if(root.hasAttribute('data-mws-deferred-contact-src'))mwsObserveDeferredContactImageV1(root);else mwsBindContactMediaImageV111(root)}
   const scope=root&&typeof root.querySelectorAll==='function'?root:document;
   scope.querySelectorAll('img[src*="/media/contact/"]').forEach(mwsBindContactMediaImageV111);
+  scope.querySelectorAll('img[data-mws-deferred-contact-src]').forEach(mwsObserveDeferredContactImageV1);
 }
 if(!window.__mwsContactMediaRecoveryV111){
   window.__mwsContactMediaRecoveryV111=true;
   const start=()=>{
     mwsScanContactMediaImagesV111(document);
     const observer=new MutationObserver(records=>{
-      for(const record of records)for(const node of record.addedNodes){
-        if(node instanceof Element)mwsScanContactMediaImagesV111(node);
+      for(const record of records){
+        for(const node of record.removedNodes)if(node instanceof Element){
+          if(node instanceof HTMLImageElement)mwsDeferredContactObserverV1?.unobserve(node);
+          node.querySelectorAll?.('img[data-mws-deferred-contact-src]').forEach(img=>mwsDeferredContactObserverV1?.unobserve(img));
+        }
+        for(const node of record.addedNodes)if(node instanceof Element)mwsScanContactMediaImagesV111(node);
       }
     });
     observer.observe(document.documentElement,{childList:true,subtree:true});
@@ -2815,7 +2846,7 @@ function participantAvatarHTMLV109(c,eager=false){
   const initial=esc(initials(name));
   const src=String(c?.image||'').trim();
   if(!src)return `<span class="avatar sm" style="display:grid;place-items:center">${initial}</span>`;
-  return `<img class="avatar sm" loading="${eager?'eager':'lazy'}" decoding="async" src="${esc(src)}" data-contact-id="${esc(id)}" data-contact-initials="${initial}">`;
+  return `<img class="avatar sm" loading="${eager?'eager':'lazy'}" decoding="async" ${eager?'src="'+esc(src)+'"':mwsDeferredContactAttrsV1(src)} data-contact-id="${esc(id)}" data-contact-initials="${initial}">`;
 }
 window.mwsParticipantAvatarLoadedV109=img=>window.mwsContactMediaLoadedV110(img);
 window.mwsRecoverParticipantAvatarV109=img=>window.mwsRecoverContactMediaImageV110(img);
@@ -3417,7 +3448,7 @@ function favoriteParticipantHTML(id){
   if(!c)return '';
   return `<span class="favorite-person">
     ${c.image
-      ? `<img loading="lazy" src="${c.image}">`
+      ? `<img loading="lazy" ${mwsDeferredContactAttrsV1(c.image)}>`
       : `<span class="favorite-person-avatar" style="display:grid;place-items:center">${esc(initials(c.name))}</span>`}
     <span class="favorite-person-name">${esc(c.name)}</span>
   </span>`;
@@ -4172,7 +4203,7 @@ function targetCardHTML(c){
     ${targetClearFxHTML()}
     <div class="target-person-header">
       ${c.image
-        ? `<img class="target-person-avatar" loading="lazy" src="${c.image}">`
+        ? `<img class="target-person-avatar" loading="lazy" ${mwsDeferredContactAttrsV1(c.image)}>`
         : `<div class="target-person-avatar placeholder">${esc(initials(c.name))}</div>`}
       <div style="min-width:0;flex:1">
         <div class="target-person-name">${esc(c.name)}</div>
@@ -4274,7 +4305,7 @@ function renderTargetPicker(){
       ${isRegistered?'disabled':''}
       onclick="addTargetContact('${c.id}')">
       <span class="row" style="min-width:0">
-        ${c.image?`<img class="avatar" loading="lazy" src="${c.image}">`:`<span class="avatar" style="display:grid;place-items:center">${esc(initials(c.name))}</span>`}
+        ${c.image?`<img class="avatar" loading="lazy" ${mwsDeferredContactAttrsV1(c.image)}>`:`<span class="avatar" style="display:grid;place-items:center">${esc(initials(c.name))}</span>`}
         <span style="min-width:0">
           <span class="target-picker-name">${esc(c.name)}</span>
           <span class="target-picker-meta">${(c.labels||[]).slice(0,3).map(esc).join(' · ')||'라벨 없음'}${last?` · 마지막 합방 ${daysSince(last.date)}일 전`:' · 합방 기록 없음'}</span>
@@ -4530,7 +4561,7 @@ function rankingCrownSVG(){
 }
 function rankingAvatarHTML(c,cls='ranking-podium-avatar'){
   return c.image
-    ? `<img class="${cls}" loading="lazy" src="${c.image}">`
+    ? `<img class="${cls}" loading="lazy" ${mwsDeferredContactAttrsV1(c.image)}>`
     : `<div class="${cls}" style="display:grid;place-items:center;font-size:22px;font-weight:950">${esc(initials(c.name))}</div>`;
 }
 function podiumSlotHTML(entry,place){
@@ -4770,7 +4801,7 @@ function renderSniperList(){
       <div class="sniper-row">
         <div class="sniper-rank">${i+1}</div>
         <div class="sniper-main" onclick="openContact('${c.id}')">
-          ${c.image?`<img class="avatar sm" loading="lazy" src="${c.image}">`:`<div class="avatar sm" style="display:grid;place-items:center;font-weight:800">${esc(initials(c.name))}</div>`}
+          ${c.image?`<img class="avatar sm" loading="lazy" ${mwsDeferredContactAttrsV1(c.image)}>`:`<div class="avatar sm" style="display:grid;place-items:center;font-weight:800">${esc(initials(c.name))}</div>`}
           <div style="min-width:0">
             <div class="sniper-name">${esc(c.name)}</div>
             <div class="sniper-meta">${(c.labels||[]).slice(0,4).map(esc).join(' · ')||'라벨 없음'}</div>
@@ -6745,7 +6776,7 @@ function renderMiniContactPalette(game,q=''){
   const arr=(data.contacts||[]).filter(c=>!c.pendingSetup&&contactMatches(c,query));
   const counter=document.getElementById(`${game}ContactCount`);if(counter)counter.textContent=`${arr.length}명`;
   box.innerHTML=arr.map(c=>`<div class="mini-contact-item" draggable="true" ondragstart="miniContactDragStart('${c.id}',event)" ondragend="miniContactDragEnd(event)" title="게임 영역으로 끌어 놓으세요">
-    ${c.image?`<img loading="lazy" decoding="async" src="${c.image}">`:`<div class="mini-contact-avatar">${esc(initials(c.name))}</div>`}
+    ${c.image?`<img loading="lazy" decoding="async" ${mwsDeferredContactAttrsV1(c.image)}>`:`<div class="mini-contact-avatar">${esc(initials(c.name))}</div>`}
     <div style="min-width:0"><div class="mini-contact-name">${esc(c.name)}</div><div class="mini-contact-tags">${esc((c.labels||[]).join(' · ')||'라벨 없음')}</div></div>
     <button class="ghost mini-contact-add" onclick="event.stopPropagation();miniAddContact('${game}','${c.id}')">+</button>
   </div>`).join('')||'<div class="empty small">검색 결과가 없습니다</div>';
@@ -7479,14 +7510,14 @@ function renderIncompleteContacts(){
   let arr=(data.contacts||[]).filter(c=>contactMatches(c,q)&&contactNeedsCompletion(c));arr=sortContacts(arr,sort);
   const allCount=(data.contacts||[]).filter(contactNeedsCompletion).length,btn=document.getElementById('incompleteTabBtn');if(btn)btn.textContent=`정보 미완성${allCount?` ${allCount}`:''}`;
   const box=document.getElementById('incompleteContacts');if(!box)return;
-  box.innerHTML=`<div class="space" style="margin-bottom:12px"><div><h3 style="margin:0">정보 미완성 연락처</h3><div class="muted small" style="margin-top:4px">태그 또는 방송국 URL이 비어 있는 연락처만 표시합니다.</div></div><span class="chip">${arr.length}명</span></div><div class="contact-incomplete-grid">${arr.map(c=>`<div class="contact-incomplete-card" onclick="openContact('${c.id}')"><div class="row">${c.image?`<img class="avatar" src="${c.image}" loading="lazy">`:`<div class="avatar" style="display:grid;place-items:center;font-weight:850">${esc(initials(c.name))}</div>`}<div style="min-width:0"><div class="event-title">${esc(c.name)}</div><div class="muted small">클릭해서 정보를 보완하세요</div></div></div><div class="contact-missing-badges">${!(c.labels||[]).length?'<span class="contact-missing-badge">태그 없음</span>':''}${!String(c.stationUrl||'').trim()?'<span class="contact-missing-badge">URL 없음</span>':''}</div></div>`).join('')||'<div class="empty">태그와 URL이 모두 입력되어 있습니다</div>'}</div>`;
+  box.innerHTML=`<div class="space" style="margin-bottom:12px"><div><h3 style="margin:0">정보 미완성 연락처</h3><div class="muted small" style="margin-top:4px">태그 또는 방송국 URL이 비어 있는 연락처만 표시합니다.</div></div><span class="chip">${arr.length}명</span></div><div class="contact-incomplete-grid">${arr.map(c=>`<div class="contact-incomplete-card" onclick="openContact('${c.id}')"><div class="row">${c.image?`<img class="avatar" ${mwsDeferredContactAttrsV1(c.image)} loading="lazy">`:`<div class="avatar" style="display:grid;place-items:center;font-weight:850">${esc(initials(c.name))}</div>`}<div style="min-width:0"><div class="event-title">${esc(c.name)}</div><div class="muted small">클릭해서 정보를 보완하세요</div></div></div><div class="contact-missing-badges">${!(c.labels||[]).length?'<span class="contact-missing-badge">태그 없음</span>':''}${!String(c.stationUrl||'').trim()?'<span class="contact-missing-badge">URL 없음</span>':''}</div></div>`).join('')||'<div class="empty">태그와 URL이 모두 입력되어 있습니다</div>'}</div>`;
 }
 function renderFavoriteContactsV574(){
   const q=(document.getElementById('contactSearch')?.value||'').trim().toLowerCase(),sort=document.getElementById('contactSort')?.value||'nameAsc';
   let arr=(data.contacts||[]).filter(c=>Boolean(c.favorite)&&contactMatches(c,q));arr=sortContacts(arr,sort);
   const allCount=(data.contacts||[]).filter(c=>Boolean(c.favorite)).length,btn=document.getElementById('favoriteContactTabBtn');if(btn)btn.textContent=`즐겨찾기${allCount?` ${allCount}`:''}`;
   const box=document.getElementById('favoriteContacts');if(!box)return;
-  box.innerHTML=`<div class="space" style="margin-bottom:12px"><div><h3 style="margin:0">즐겨찾기 연락처</h3><div class="muted small" style="margin-top:4px">별표를 켠 연락처를 한곳에서 확인합니다.</div></div><span class="chip">${arr.length}명</span></div><div class="contact-maintenance-grid">${arr.map(c=>{const av=c.image?`<img class="contact-maintenance-avatar" src="${c.image}" loading="lazy">`:`<div class="contact-maintenance-avatar">${esc(initials(c.name))}</div>`;const tags=(c.labels||[]).slice(0,4).map(x=>`<span class="chip">${esc(x)}</span>`).join('');return `<div class="contact-maintenance-card contact-favorite-card-v574" onclick="openContact('${c.id}')">${av}<div style="min-width:0"><div class="contact-maintenance-title">★ ${esc(c.name)}</div><div class="contact-maintenance-desc">${c.stationUrl?esc(c.stationUrl):'방송국 URL 없음'}</div><div class="contact-favorite-tags-v574">${tags}</div></div></div>`}).join('')||'<div class="empty" style="grid-column:1/-1">아직 즐겨찾기한 연락처가 없습니다. 연락처 상세의 별표를 눌러 추가해 보세요.</div>'}</div>`;
+  box.innerHTML=`<div class="space" style="margin-bottom:12px"><div><h3 style="margin:0">즐겨찾기 연락처</h3><div class="muted small" style="margin-top:4px">별표를 켠 연락처를 한곳에서 확인합니다.</div></div><span class="chip">${arr.length}명</span></div><div class="contact-maintenance-grid">${arr.map(c=>{const av=c.image?`<img class="contact-maintenance-avatar" ${mwsDeferredContactAttrsV1(c.image)} loading="lazy">`:`<div class="contact-maintenance-avatar">${esc(initials(c.name))}</div>`;const tags=(c.labels||[]).slice(0,4).map(x=>`<span class="chip">${esc(x)}</span>`).join('');return `<div class="contact-maintenance-card contact-favorite-card-v574" onclick="openContact('${c.id}')">${av}<div style="min-width:0"><div class="contact-maintenance-title">★ ${esc(c.name)}</div><div class="contact-maintenance-desc">${c.stationUrl?esc(c.stationUrl):'방송국 URL 없음'}</div><div class="contact-favorite-tags-v574">${tags}</div></div></div>`}).join('')||'<div class="empty" style="grid-column:1/-1">아직 즐겨찾기한 연락처가 없습니다. 연락처 상세의 별표를 눌러 추가해 보세요.</div>'}</div>`;
 }
 window.renderFavoriteContactsV574=renderFavoriteContactsV574;
 function setContactView(view){
@@ -7755,7 +7786,7 @@ function renderUserIdentitySettings(){
     preview.classList.remove('empty');preview.innerHTML=`<div class="self-contact-preview-card">${av}<div style="min-width:0"><div class="self-contact-preview-name">${esc(current.name)} <span class="contact-self-badge">MY PROFILE</span></div><div class="self-contact-preview-tags">${(current.labels||[]).map(x=>`<span class="chip">${esc(x)}</span>`).join('')||'<span class="muted small">태그 없음</span>'}</div><div class="self-contact-preview-note">연락처 화면의 첫 번째 카드에 고정되고, 모든 컨텐츠 참가자에 자동 포함되며 전용 테두리와 광택 효과가 표시됩니다.</div></div></div>`
   }else{preview.classList.add('empty');preview.innerHTML='<div>아직 본인으로 지정한 연락처가 없습니다. 아래 연락처를 클릭해 선택하세요.</div>'}
   const q=String(search?.value||'').trim().toLowerCase();let arr=(data.contacts||[]).filter(c=>!q||contactMatches(c,q));arr.sort((a,b)=>a.name.localeCompare(b.name,'ko'));
-  picker.innerHTML=arr.map(c=>{const selected=c.id===data.selfContactId,av=c.image?`<img src="${c.image}" loading="lazy">`:`<div class="self-contact-option-avatar">${esc(initials(c.name))}</div>`;return `<button type="button" class="self-contact-option ${selected?'selected':''}" onclick="setSelfContact('${c.id}')">${av}<div style="min-width:0"><div class="self-contact-option-name">${esc(c.name)}${selected?' · 본인':''}</div><div class="self-contact-option-tags">${esc((c.labels||[]).join(' · ')||'태그 없음')}</div></div></button>`}).join('')||'<div class="empty small" style="grid-column:1/-1">검색 조건에 맞는 연락처가 없습니다.</div>'
+  picker.innerHTML=arr.map(c=>{const selected=c.id===data.selfContactId,av=c.image?`<img ${mwsDeferredContactAttrsV1(c.image)} loading="lazy">`:`<div class="self-contact-option-avatar">${esc(initials(c.name))}</div>`;return `<button type="button" class="self-contact-option ${selected?'selected':''}" onclick="setSelfContact('${c.id}')">${av}<div style="min-width:0"><div class="self-contact-option-name">${esc(c.name)}${selected?' · 본인':''}</div><div class="self-contact-option-tags">${esc((c.labels||[]).join(' · ')||'태그 없음')}</div></div></button>`}).join('')||'<div class="empty small" style="grid-column:1/-1">검색 조건에 맞는 연락처가 없습니다.</div>'
 }
 window.renderUserIdentitySettings=renderUserIdentitySettings;
 function syncSelectedUserAcrossEvents(nextId){
@@ -7847,7 +7878,7 @@ function renderContacts(){
   }
   const mwsCards=arr.map(c=>{
     const last=mwsHistory?(mwsLastByContact.get(c.id)||null):getLastCollab(c.id),upcoming=mwsUpcomingByContact.get(c.id)||[],isSelf=c.id===data.selfContactId;
-    const avatar=c.image?`<img class="contact-card-avatar-lg" loading="lazy" decoding="async" src="${c.image}">`:`<div class="contact-card-avatar-lg">${esc(initials(c.name))}</div>`;
+    const avatar=c.image?`<img class="contact-card-avatar-lg" loading="lazy" decoding="async" ${mwsDeferredContactAttrsV1(c.image)}>`:`<div class="contact-card-avatar-lg">${esc(initials(c.name))}</div>`;
     return `<div class="contact-card ${isSelf?'is-self':''} ${c.pendingSetup?'pending-card':''} ${upcoming.length?'has-upcoming':''}" draggable="true" data-contact-id="${c.id}" ondragstart="contactCardDragStart('${c.id}',event)" ondragend="contactCardDragEnd(event)" onclick="openContact('${c.id}')"><div class="contact-card-core">${avatar}<div class="contact-card-info"><div class="contact-card-name-row"><div class="contact-card-name">${esc(c.name)}</div>${isSelf?'<span class="contact-self-badge">본인</span>':''}${upcoming.length?`<span class="upcoming-count-badge">UPCOMING ${upcoming.length}</span>`:''}</div><div class="contact-card-tags">${(c.labels||[]).map(x=>`<span class="chip">${esc(x)}</span>`).join('')||'<span class="muted small">태그 없음</span>'}</div><div class="contact-card-last">${last?`최근 컨텐츠: <strong style="color:var(--text)">${esc(last.title)}</strong><br>${formatDateWeekday(last.date)} · ${daysSince(last.date)}일 전`:'합방 기록 없음'}</div><div class="contact-card-actions">${c.stationUrl?`<button type="button" class="station-link" onclick="event.stopPropagation();openContactStation('${c.id}')">방송국 열기</button>`:''}${c.pendingSetup?'<span class="chip">신규 추가</span>':''}</div></div></div>${contactUpcomingPopover(c)}</div>`
   }).join('');
   grid.innerHTML=mwsCards?(mwsCards+'<div class="empty mws-contact-search-empty" hidden>연락처가 없습니다</div>'):'<div class="empty">연락처가 없습니다</div>';
@@ -7860,12 +7891,12 @@ window.renderContacts=renderContacts;
 function renderPendingContacts(){
   const arr=filteredContacts({pendingOnly:true}),allCount=data.contacts.filter(c=>c.pendingSetup).length,btn=document.getElementById('pendingTabBtn');if(btn)btn.textContent=`신규 추가${allCount?` ${allCount}`:''}`;
   const box=document.getElementById('pendingContacts');if(!box)return;
-  box.innerHTML=`<div class="space" style="margin-bottom:12px"><div><h3 style="margin:0">신규 추가 연락처</h3><div class="muted small" style="margin-top:4px">일정 등록 중 빠르게 추가한 연락처입니다. 정보를 채우면 일반 연락처로 이동합니다.</div></div><span class="chip">${arr.length}명</span></div><div class="contact-maintenance-grid">${arr.map(c=>{const av=c.image?`<img class="contact-maintenance-avatar" src="${c.image}" loading="lazy">`:`<div class="contact-maintenance-avatar">${esc(initials(c.name))}</div>`;return `<div class="contact-maintenance-card" onclick="openContact('${c.id}')">${av}<div style="min-width:0"><div class="contact-maintenance-title">${esc(c.name)}</div><div class="contact-maintenance-desc">프로필 이미지, 태그와 방송국 정보를 입력해 연락처를 완성하세요.</div><div class="contact-missing-badges"><span class="contact-missing-badge">신규 추가</span></div></div></div>`}).join('')||'<div class="empty" style="grid-column:1/-1">새로 정리할 연락처가 없습니다</div>'}</div>`
+  box.innerHTML=`<div class="space" style="margin-bottom:12px"><div><h3 style="margin:0">신규 추가 연락처</h3><div class="muted small" style="margin-top:4px">일정 등록 중 빠르게 추가한 연락처입니다. 정보를 채우면 일반 연락처로 이동합니다.</div></div><span class="chip">${arr.length}명</span></div><div class="contact-maintenance-grid">${arr.map(c=>{const av=c.image?`<img class="contact-maintenance-avatar" ${mwsDeferredContactAttrsV1(c.image)} loading="lazy">`:`<div class="contact-maintenance-avatar">${esc(initials(c.name))}</div>`;return `<div class="contact-maintenance-card" onclick="openContact('${c.id}')">${av}<div style="min-width:0"><div class="contact-maintenance-title">${esc(c.name)}</div><div class="contact-maintenance-desc">프로필 이미지, 태그와 방송국 정보를 입력해 연락처를 완성하세요.</div><div class="contact-missing-badges"><span class="contact-missing-badge">신규 추가</span></div></div></div>`}).join('')||'<div class="empty" style="grid-column:1/-1">새로 정리할 연락처가 없습니다</div>'}</div>`
 }
 function renderIncompleteContacts(){
   const q=(document.getElementById('contactSearch')?.value||'').trim().toLowerCase(),sort=document.getElementById('contactSort')?.value||'nameAsc';let arr=(data.contacts||[]).filter(c=>contactMatches(c,q)&&contactNeedsCompletion(c));arr=sortContacts(arr,sort);
   const allCount=(data.contacts||[]).filter(contactNeedsCompletion).length,btn=document.getElementById('incompleteTabBtn');if(btn)btn.textContent=`정보 미완성${allCount?` ${allCount}`:''}`;const box=document.getElementById('incompleteContacts');if(!box)return;
-  box.innerHTML=`<div class="space" style="margin-bottom:12px"><div><h3 style="margin:0">정보 미완성 연락처</h3><div class="muted small" style="margin-top:4px">태그 또는 방송국 URL이 비어 있는 연락처만 표시합니다.</div></div><span class="chip">${arr.length}명</span></div><div class="contact-maintenance-grid">${arr.map(c=>{const av=c.image?`<img class="contact-maintenance-avatar" src="${c.image}" loading="lazy">`:`<div class="contact-maintenance-avatar">${esc(initials(c.name))}</div>`;return `<div class="contact-maintenance-card" onclick="openContact('${c.id}')">${av}<div style="min-width:0"><div class="contact-maintenance-title">${esc(c.name)}</div><div class="contact-maintenance-desc">클릭해서 누락된 정보를 보완하세요.</div><div class="contact-missing-badges">${!(c.labels||[]).length?'<span class="contact-missing-badge">태그 없음</span>':''}${!String(c.stationUrl||'').trim()?'<span class="contact-missing-badge">URL 없음</span>':''}</div></div></div>`}).join('')||'<div class="empty" style="grid-column:1/-1">태그와 URL이 모두 입력되어 있습니다</div>'}</div>`
+  box.innerHTML=`<div class="space" style="margin-bottom:12px"><div><h3 style="margin:0">정보 미완성 연락처</h3><div class="muted small" style="margin-top:4px">태그 또는 방송국 URL이 비어 있는 연락처만 표시합니다.</div></div><span class="chip">${arr.length}명</span></div><div class="contact-maintenance-grid">${arr.map(c=>{const av=c.image?`<img class="contact-maintenance-avatar" ${mwsDeferredContactAttrsV1(c.image)} loading="lazy">`:`<div class="contact-maintenance-avatar">${esc(initials(c.name))}</div>`;return `<div class="contact-maintenance-card" onclick="openContact('${c.id}')">${av}<div style="min-width:0"><div class="contact-maintenance-title">${esc(c.name)}</div><div class="contact-maintenance-desc">클릭해서 누락된 정보를 보완하세요.</div><div class="contact-missing-badges">${!(c.labels||[]).length?'<span class="contact-missing-badge">태그 없음</span>':''}${!String(c.stationUrl||'').trim()?'<span class="contact-missing-badge">URL 없음</span>':''}</div></div></div>`}).join('')||'<div class="empty" style="grid-column:1/-1">태그와 URL이 모두 입력되어 있습니다</div>'}</div>`
 }
 window.renderPendingContacts=renderPendingContacts;window.renderIncompleteContacts=renderIncompleteContacts;
 

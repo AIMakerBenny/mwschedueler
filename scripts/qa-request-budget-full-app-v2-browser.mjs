@@ -35,7 +35,7 @@ globalThis.fetch=async input=>{
 const ctx={waitUntil:p=>void Promise.resolve(p).catch(()=>{}),passThroughOnException(){}};
 const base='http://127.0.0.1';
 const health=await worker.fetch(new Request(base+'/api/health'),env,ctx);assert.equal(health.status,200,await health.text());
-const contacts=Array.from({length:200},(_,i)=>{const id='qa'+i,token=String(i+1).padStart(32,'0');objects.set('contacts/'+id+'/v1-'+token,true);db.prepare('INSERT INTO image_sources(kind,item_key,source_url,version,content_type) VALUES(?,?,?,?,?)').run('contact',id,'mws-r2:'+token,1,'image/png');return{id,name:'Fixture '+i,stationUrl:'https://bj.sooplive.co.kr/'+id,image:'/media/contact/'+id+'?v=1&h='+token+'&r=2',labels:[],pendingSetup:false}});
+const contacts=Array.from({length:200},(_,i)=>{const id='qa'+i,token=String(i+1).padStart(32,'0');objects.set('contacts/'+id+'/v1-'+token,true);db.prepare('INSERT INTO image_sources(kind,item_key,source_url,version,content_type) VALUES(?,?,?,?,?)').run('contact',id,'mws-r2:'+token,1,'image/png');return{id,name:'Fixture '+i,stationUrl:'https://bj.sooplive.co.kr/'+id,favorite:i<13,image:'/media/contact/'+id+'?v=1&h='+token+'&r=2',labels:[],pendingSetup:false}});
 const achievementCards=Array.from({length:26},(_,i)=>{const id='card'+i,frontImageId='image'+i;objects.set('achievements/'+frontImageId,true);return{id,frontImageId,order:i,gameName:'Fixture',contentName:'Card '+i,description:'Fixture only'}});
 const day=new Date(Date.now()+9*3600000).toISOString().slice(0,10);
 const parts={core:{version:52,categories:[],timezones:[],contentGroups:[],gameLibrary:[],achievementCards,contentApplications:[]},events:[{id:'fixture-event',title:'Fixture event',date:day,start:'12:00',end:'13:00',participants:['qa0'],checklist:[]}],contacts,contactMeta:{contactTags:[],contactTagBanners:{},emoticons:[]},activity:{collaborations:[],todayPeopleByDate:{},todayPeopleManualByDate:{},targetList:[]},clipboard:{scheduleClipboard:[]},notebook:{memos:[],favoriteFolders:[]},posts:[],miniGames:{},wardogs:{schemaVersion:1,cards:[]}};
@@ -77,7 +77,7 @@ try{
  assert.equal(warm.filter(r=>r.path.startsWith('/media/contact/')).length,0);
  assert.equal(warm.filter(r=>r.path==='/api/soop/live-batch').length,0);
  before=calls.length;await nav(['contacts','friendFinder']);await pause(3000);await nav(['calendar']);await pause(500);const live=calls.slice(before);console.log('FULL_APP_FRIEND_NAV '+JSON.stringify(summary(live)));
- assert(live.filter(r=>r.path==='/api/soop/live-batch').length<=17);
+ assert(live.filter(r=>r.path==='/api/soop/live-batch').length>=1&&live.filter(r=>r.path==='/api/soop/live-batch').length<=2,JSON.stringify(summary(live)));
  assert.equal(live.filter(r=>r.path==='/api/soop/proxy').length,0);
  before=calls.length;await pause(1200);const idle=calls.slice(before);assert.equal(idle.filter(common).length,0);assert.equal(idle.filter(r=>r.path==='/api/soop/live-batch').length,0);
  assert.equal(errors.length,0,JSON.stringify(errors));

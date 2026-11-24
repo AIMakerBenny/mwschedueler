@@ -116,3 +116,22 @@ test('group persistence verifies the acknowledged server state without a second 
  assert.equal(await run('test',['e']),true);assert.equal(saves,1);assert.equal(reads,0);
  bad=true;assert.equal(await run('test',['e']),false);assert.equal(reads,0);
 });
+
+test('Friend Finder only queries favorite contacts used by its actual legacy view',()=>{
+ const code=extract(friend,'function allContactTargets()','function extractActualTarget');
+ const data={contacts:Array.from({length:200},(_,i)=>({favorite:i<13,stationUrl:'station'+i}))};
+ const targets=new Function('dataRef','stationKey','channelUrl',code+'\nreturn allContactTargets')(()=>data,x=>x,x=>x);
+ assert.equal(targets().length,13);assert.deepEqual(targets(),Array.from({length:13},(_,i)=>'station'+i));
+});
+test('contact image URLs are withheld until observation, external images remain unchanged',()=>{
+ const app=read('assets/app-core.js'),code=extract(app,'function mwsDeferredContactAttrsV1','let mwsDeferredContactObserverV1');
+ const attrs=new Function('esc','IntersectionObserver',code+'\nreturn mwsDeferredContactAttrsV1')(v=>v,()=>{});
+ assert.equal(attrs('/media/contact/id?v=1'),'data-mws-deferred-contact-src="/media/contact/id?v=1"');
+ assert.equal(attrs('https://example.test/image.jpg'),'src="https://example.test/image.jpg"');
+ assert(app.includes('entry.isIntersecting)mwsActivateDeferredContactImageV1(entry.target)'));
+});
+test('direct SOOP thumbnail is attempted before Worker fallback',()=>{
+ const code=extract(friend,'function liveThumbCandidates','function livePlayUrl');
+ const urls=new Function(code+'\nreturn liveThumbCandidates')()('123','1');
+ assert(urls[0].startsWith('https://liveimg.sooplive.com/'));assert(urls[2].startsWith('/api/soop/live-thumb?'));
+});
