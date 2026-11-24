@@ -130,7 +130,7 @@
   let profileLoad=null;
   async function loadProfiles(){
     if(profileLoad)return profileLoad;
-    profileLoad=(async()=>{try{const body=await request('/api/mawang-profile');if(!Array.isArray(body.profiles))throw Error('프로필 목록을 불러올 수 없습니다.');const before=JSON.stringify([...profiles.values()]);profiles.clear();for(const raw of body.profiles){const p=normalizeProfile(raw);if(p)profiles.set(p.character,p)}storeProfileList();profileError='';profileReady=true;if(mounted){if(before!==JSON.stringify([...profiles.values()]))roster();profilePanel(before!==JSON.stringify([...profiles.values()]))}}
+    profileLoad=(async()=>{try{const body=Array.isArray(window.__mwsStartupProfiles)?{profiles:window.__mwsStartupProfiles}:await request('/api/mawang-profile');if(!Array.isArray(body.profiles))throw Error('프로필 목록을 불러올 수 없습니다.');const before=JSON.stringify([...profiles.values()]);profiles.clear();for(const raw of body.profiles){const p=normalizeProfile(raw);if(p)profiles.set(p.character,p)}storeProfileList();profileError='';profileReady=true;if(mounted){if(before!==JSON.stringify([...profiles.values()]))roster();profilePanel(before!==JSON.stringify([...profiles.values()]))}}
     catch(error){profileError='등록 프로필을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.';if(mounted)profilePanel(false)}})();
     return profileLoad;
   }

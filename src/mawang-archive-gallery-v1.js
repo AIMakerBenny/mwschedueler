@@ -33,6 +33,9 @@ async function list(bucket,prefix=PREFIX){
   }while(cursor);
   return objects;
 }
+export async function listPublicProfiles(bucket){
+  return (await list(bucket,PROFILE_PREFIX)).map(profile).filter(Boolean);
+}
 export async function handleArchiveGallery(request,env,currentAdmin){
   const path=new URL(request.url).pathname,method=request.method;
   const api=path.match(/^\/api\/mawang-gallery(?:\/([^/]+)(?:\/([^/]+))?)?$/);
@@ -61,7 +64,7 @@ export async function handleArchiveGallery(request,env,currentAdmin){
   const [,character,id]=api||profileApi;
   if(profileApi&&!character){
     if(method!=='GET')return json({error:'Method not allowed'},405);
-    return json({profiles:(await list(bucket,PROFILE_PREFIX)).map(profile).filter(Boolean),maxBytes:MAX_BYTES});
+    return json({profiles:await listPublicProfiles(bucket),maxBytes:MAX_BYTES});
   }
   if(method==='GET'&&!character){
     const [galleryObjects,profileObjects]=await Promise.all([list(bucket),list(bucket,PROFILE_PREFIX)]);

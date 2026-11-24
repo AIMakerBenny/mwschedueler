@@ -197,6 +197,7 @@ function stopTimer(){clearInterval(timer);timer=0}
 function refreshInterval(){return 60000}
 function tick(){if(!active()){stopTimer();return}updateClocks();loadVisible();if(!records().some(c=>!countdown(c.deadline).expired))stopTimer()}
 function loadVisible(){
+ if(!sectionActive())return;
  const c=sectionActive()?current():null;if(c){if(!countdown(c.deadline).expired&&(!attempts.has(c.id)||Date.now()-(attempts.get(c.id)||0)>=refreshInterval(c)))refresh(c);return}
  const candidates=records().filter(c=>!countdown(c.deadline).expired&&Date.now()-(attempts.get(c.id)||0)>=refreshInterval(c)).sort((a,b)=>(attempts.get(a.id)||0)-(attempts.get(b.id)||0));if(candidates.length&&!pending.size)refresh(candidates[0]);
 }
@@ -273,7 +274,7 @@ async function refresh(c,manual=false){
  if(!c||countdown(c.deadline).expired||pending.has(c.id)||!active())return;
  const token=Symbol(),generation=epoch,sig=signature(c);
  const canContinue=()=>{
-  if(generation!==epoch||pending.get(c.id)!==token||!active()||(sectionActive()&&selected&&selected!==c.id))return false;
+  if(generation!==epoch||pending.get(c.id)!==token||!active()||!sectionActive()||(selected&&selected!==c.id))return false;
   const latest=records().find(x=>x.id===c.id);
   return !!latest&&signature(latest)===sig&&!countdown(latest.deadline).expired;
  };

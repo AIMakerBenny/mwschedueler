@@ -78,6 +78,7 @@ try{
  await browser.evaluate('window.__mwsMediaPreloadPromiseV1.then(()=>true)');
  await pause(1800);
  const startup=calls.slice();console.log('FULL_APP_STARTUP '+JSON.stringify(summary(startup)));
+ assert.equal(startup.filter(r=>r.path==='/api/mawang-profile').length,0);
  assert.deepEqual(startup.filter(common).map(r=>r.path),['/api/calendar-startup','/api/parts-batch']);
  assert.equal(startup.filter(r=>['/assets/cloud-v5.5.js','/assets/cloud-v1.1.js','/assets/boss-manager-v121.js'].includes(r.path)).length,0);
  assert.equal(await browser.evaluate("!!window.__mwsCloudV110Loaded"),true);
