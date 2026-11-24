@@ -111,7 +111,9 @@
     const cells=[...grid.querySelectorAll('.day[data-date]')];
     if(!cells.length)return;
     const dates=cells.map(el=>el.dataset.date);
-    const weeks=weekSegments(events,groups,dates,i=>!cells[i].classList.contains('out'));
+    // All visible cells contain real event cards, including adjacent-month days.
+    // The ribbon must use the same visible date range as those cards.
+    const weeks=weekSegments(events,groups,dates);
     if(!weeks.some(items=>items.length))return;
     grid.classList.add('calendar-has-continuous-series-v1');
     const layer=document.createElement('div');

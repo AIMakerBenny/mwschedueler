@@ -14,15 +14,16 @@ if(!chrome)throw new Error('Chrome is required for continuous calendar UI geomet
 const engine=readFileSync(new URL('../assets/calendar-continuous-series-v1.js',import.meta.url),'utf8');
 const css=readFileSync(new URL('../assets/calendar-continuous-series-v1.css',import.meta.url),'utf8');
 const dates=Array.from({length:42},(_,i)=>new Date(Date.UTC(2026,10,1+i)).toISOString().slice(0,10));
-const days=dates.map((d,i)=>`<div class="day" data-date="${d}"><div class="daynum">${i+1}</div><div class="mini-event">방송 일정</div></div>`).join('');
+const days=dates.map((d,i)=>`<div class="day ${d.startsWith('2026-11')?'':'out'}" data-date="${d}"><div class="daynum">${i+1}</div><div class="mini-event">방송 일정</div></div>`).join('');
 const events=['05','06','07','08','09','10','11','12'].map(day=>({
   title:'와우 포에버 '+day,contentGroupId:'wow',categoryId:'gaming',color:'#0f8c95',
   date:'2026-11-'+day,restDay:false
 }));
+events.push(...['2026-11-26','2026-12-03','2026-12-04','2026-12-05'].map(date=>({title:'오퍼 M - 드래프트',contentGroupId:'draft',date,restDay:false})));
 const script=`
 const events=${JSON.stringify(events)};
 window.mwsCalendarContinuousSeriesV1.render(
-  document.getElementById('calendarGrid'),events,[{id:'wow',name:'와우 포에버',color:'#0f8c95'}]
+  document.getElementById('calendarGrid'),events,[{id:'wow',name:'와우 포에버',color:'#0f8c95'},{id:'draft',name:'오퍼 M - 드래프트',color:'#d97706'}]
 );
 const grid=document.getElementById('calendarGrid');
 const bars=[...grid.querySelectorAll('.calendar-continuous-ribbon-v1')];
@@ -32,7 +33,11 @@ const r1=bars[0]?.getBoundingClientRect(),r2=bars[1]?.getBoundingClientRect();
 const c1=first.getBoundingClientRect(),c7=last.getBoundingClientRect();
 const c8=next.getBoundingClientRect(),c12=nextLast.getBoundingClientRect();
 const card=first.querySelector('.mini-event').getBoundingClientRect();
-const ok=bars.length===2 && bars.every(b=>b.dataset.groupId==='wow' && b.textContent.trim()==='') &&
+const dec=bars.find(b=>b.dataset.groupId==='draft'&&b.dataset.seriesStart==='2026-12-03');
+const dr=dec?.getBoundingClientRect(),dc1=cells[32].getBoundingClientRect(),dc3=cells[34].getBoundingClientRect();
+const ok=bars.length===4 && bars.slice(0,2).every(b=>b.dataset.groupId==='wow' && b.textContent.trim()==='') &&
+  !!dr && cells[32].classList.contains('out') && Math.abs(dr.left-(dc1.left+7))<3 && Math.abs(dr.right-(dc3.right-7))<3 &&
+  dec.dataset.seriesEnd==='2026-12-05' && bars.filter(b=>b.dataset.groupId==='draft').length===2 &&
   Math.abs(r1.left-(c1.left+7))<3 &&
   Math.abs(r1.right-(c7.right-7))<3 &&
   Math.abs(r2.left-(c8.left+7))<3 &&

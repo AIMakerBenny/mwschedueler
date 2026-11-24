@@ -111,3 +111,19 @@ test('UI integrates explicit group selection, groups survive saves, hover uses p
   assert(core.includes('if(lastCalendarPreviewPointerV2)'));
   assert(core.includes('data.contentGroups=data.contentGroups.filter'));
 });
+
+test('visible adjacent-month sessions retain group ribbons without bridging gaps',()=>{
+ const visible=Array.from({length:42},(_,i)=>new Date(Date.UTC(2026,10,1+i)).toISOString().slice(0,10));
+ const events=['2026-11-26','2026-12-03','2026-12-04','2026-12-05'].map(d=>e(d,'오퍼 M - 드래프트','sbo'));
+ const weeks=calc.weekSegments(events,groups,visible);
+ assert.equal(weeks[3].length,1);assert.equal(weeks[3][0].startCol,4);assert.equal(weeks[3][0].endCol,4);
+ assert.equal(weeks[4].length,1);assert.equal(weeks[4][0].startCol,4);assert.equal(weeks[4][0].endCol,6);
+ assert.equal(weeks[4][0].continuesBefore,false);assert.equal(weeks[4][0].continuesAfter,false);
+ assert.equal(weeks.flat().length,2);
+});
+test('cross-month consecutive sessions keep a continuous ribbon in the same week',()=>{
+ const visible=Array.from({length:35},(_,i)=>new Date(Date.UTC(2026,10,1+i)).toISOString().slice(0,10));
+ const events=['2026-11-30','2026-12-01','2026-12-02'].map(d=>e(d,'연속 콘텐츠','sbo'));
+ const weeks=calc.weekSegments(events,groups,visible);
+ assert.equal(weeks[4].length,1);assert.equal(weeks[4][0].startCol,1);assert.equal(weeks[4][0].endCol,3);
+});

@@ -43,6 +43,10 @@ jobs:
         run: node scripts/qa-request-budget-navigation-v2-browser.mjs
       - name: Full application Worker and browser request budget
         run: node scripts/qa-request-budget-full-app-v2-browser.mjs
+      - name: Calendar group ribbons across visible month boundaries
+        run: |
+          node --test scripts/qa-calendar-continuous-series-v1.test.mjs
+          node scripts/qa-calendar-continuous-series-browser-v1.mjs
       - name: Local rank UI fixture
         run: node scripts/qa-content-applications-v1-browser.mjs
       - name: Cumulative application integration audit
