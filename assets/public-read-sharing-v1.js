@@ -40,6 +40,6 @@ function createPublicReadSharing({channel,locks,now=Date.now,delay=setTimeout,ca
  }
  return {read};
 }
-let channel=null;try{if(typeof BroadcastChannel==='function'&&navigator.locks?.request)channel=new BroadcastChannel('mws-public-read-sharing-v1')}catch(_){}
-window.mwsPublicReadSharingV1=createPublicReadSharing({channel,locks:typeof navigator==='object'?navigator.locks:null});
+let channel=null,locks=null;try{locks=typeof navigator==='object'?navigator.locks:null;if(typeof BroadcastChannel==='function'&&locks?.request)channel=new BroadcastChannel('mws-public-read-sharing-v1')}catch(_){}
+window.mwsPublicReadSharingV1=createPublicReadSharing({channel,locks});
 })();

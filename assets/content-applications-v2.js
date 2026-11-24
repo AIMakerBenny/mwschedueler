@@ -241,6 +241,8 @@ async function refresh(c,manual=false){
    if(diff.changed)rankMotions.set(c.id,diff);
   }
   snapshots.set(c.id,next);
+  // Shared results retain their original sample time, including for the next refresh deadline.
+  if(complete)attempts.set(c.id,Math.min(attempts.get(c.id)||sampledAt,sampledAt));
   if(manual&&!complete&&typeof toast==='function')toast('신청 콘텐츠','일부 댓글을 확인하지 못했습니다.');
  }finally{
   if(pending.get(c.id)===token){
