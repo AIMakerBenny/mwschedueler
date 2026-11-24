@@ -18,7 +18,7 @@ jobs:
       - name: Demand-only batch and existing cache contracts
         run: |
           bash scripts/mws-v3-network-only.sh node --test scripts/qa-request-v5-demand-batch.test.mjs scripts/qa-request-v3-cache-integrity.test.mjs scripts/qa-request-v3-live-cache.test.mjs
-          bash scripts/mws-v3-network-only.sh node --check assets/app-core.js
+          bash scripts/mws-v3-network-only.sh node -e 'new (require("node:vm").Script)(require("node:fs").readFileSync("assets/app-core.js","utf8"))'
           bash scripts/mws-v3-network-only.sh node --check src/cf-v111-auth.js
           bash scripts/mws-v3-network-only.sh node --check src/cf-v111-entry.js
           bash scripts/mws-v3-network-only.sh node scripts/build-cf-static-runtime.mjs --check
