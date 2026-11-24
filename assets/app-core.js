@@ -2881,6 +2881,20 @@ function mwsActivateDeferredContactImageV1(img){
   const src=img.getAttribute('data-mws-deferred-contact-src');if(!src)return;
   mwsDeferredContactObserverV1?.unobserve(img);
   img.removeAttribute('data-mws-deferred-contact-src');
+  if(document.querySelector('meta[name="mws-media-batch-v5"]')?.content==='1'&&/^\/media\/contact\/[A-Za-z0-9_-]+\?/.test(src)){
+    const ticket=Symbol();img.__mwsBatchTicketV5=ticket;
+    import('/assets/media-batch-client-v5.js').then(m=>m.getDemandedContact(src)).then(async response=>{
+      if(!img.isConnected||img.__mwsBatchTicketV5!==ticket||img.hasAttribute('data-mws-deferred-contact-src'))return;
+      if(!response){img.src=src;mwsBindContactMediaImageV111(img);return}
+      const blob=await response.blob();
+      if(!img.isConnected||img.__mwsBatchTicketV5!==ticket||img.hasAttribute('data-mws-deferred-contact-src'))return;
+      const local=URL.createObjectURL(blob);
+      const release=()=>{URL.revokeObjectURL(local);img.removeEventListener('load',release);img.removeEventListener('error',release)};
+      img.addEventListener('load',release);img.addEventListener('error',release);
+      img.dataset.mwsCdnContactSource=src;img.src=local;mwsBindContactMediaImageV111(img);
+    }).catch(()=>{if(img.isConnected&&img.__mwsBatchTicketV5===ticket&&!img.hasAttribute('data-mws-deferred-contact-src')){img.src=src;mwsBindContactMediaImageV111(img)}});
+    return;
+  }
   const failure=mwsCdnContactFailuresV1.get(src);
   const direct=(!failure||Date.now()-failure>=300000)?window.mwsPublicMediaUrlV1(src):'';
   if(direct){img.dataset.mwsCdnContactSource=src;img.referrerPolicy='no-referrer'}

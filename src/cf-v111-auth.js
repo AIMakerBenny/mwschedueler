@@ -1,3 +1,4 @@
+import {handleMediaBatch} from './media-batch-v5.js';
 import appWorker from './cf-v110-steam.js';
 import {normalizeCampaigns} from '../assets/content-applications-model-v1.js';
 import {readApplicationSnapshots} from './application-snapshot-v1.js';
@@ -525,6 +526,7 @@ export default{
       if(path==='/api/auth/admins'&&request.method==='GET')return handleAdminList(request,env);
       if(path==='/api/auth/admins'&&request.method==='POST')return handleAdminCreate(request,env);
       if(path==='/api/health'&&request.method==='GET'){await ensureSchema(env);const admin=await currentAdmin(request,env);return json({ok:true,env:env.MWS_ENV||'cloudflare-production',backend:'D1 + R2 + D1 Auth',authenticated:Boolean(admin),supabase:false,build:'Mawang Scheduler v.1.1.0'})}
+      if(path==='/api/media-batch-v5')return handleMediaBatch(request,env);
       if(path==='/api/manifest'&&request.method==='GET')return handleManifest(env);
       if(path==='/api/calendar-startup'&&request.method==='GET')return handleCalendarStartup(request,env);
       if(path==='/api/parts-batch'&&request.method==='GET')return handlePartsBatch(request,env);
