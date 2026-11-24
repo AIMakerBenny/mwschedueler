@@ -50,14 +50,32 @@ export async function handleArchiveGallery(request,env,currentAdmin){
     if(!object)return json({error:'사진을 찾을 수 없습니다.'},404);
     const headers=new Headers();object.writeHttpMetadata(headers);
     headers.set('etag',object.httpEtag);headers.set('x-content-type-options','nosniff');
-    headers.set('cache-control','public, max-age=300');headers.set('content-length',String(object.size));
+    // Versioned, small public portraits may be kept on disk for a day.
+    // Larger originals and unversioned URLs retain short-lived caching to
+    // avoid pinning potentially many 32 MB images in browser storage.
+    const requestedRevision=profileMedia?new URL(request.url).searchParams.get('rev'):null;
+    const canCachePortrait=profileMedia&&object.size<=2*1024*1024&&
+      requestedRevision!==null&&requestedRevision===profile(object)?.revision;
+    headers.set('cache-control',canCachePortrait?'public, max-age=86400, immutable':'public, max-age=300');
+    headers.set('content-length',String(object.size));
     headers.set('x-mws-image-policy','original-bytes-no-reencode');
     return new Response(method==='HEAD'?null:object.body,{headers});
   }
   const [,character,id]=api||profileApi;
   if(profileApi&&!character){
     if(method!=='GET')return json({error:'Method not allowed'},405);
-    return json({profiles:(await list(bucket,PROFILE_PREFIX)).map(profile).filter(Boolean),maxBytes:MAX_BYTES});
+    // Conditional, no-store metadata revalidation. No portraits or admin
+    // information are copied into a second persistent browser database.
+    const profiles=(await list(bucket,PROFILE_PREFIX)).map(profile).filter(Boolean)
+      .sort((a,b)=>a.character.localeCompare(b.character));
+    const serialized=JSON.stringify(profiles);
+    const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(serialized));
+    const tag='"'+Array.from(new Uint8Array(digest).slice(0,16),byte=>byte.toString(16).padStart(2,'0')).join('')+'"';
+    const headers={'cache-control':'no-store','etag':tag,'x-content-type-options':'nosniff'};
+    if(request.headers.get('if-none-match')===tag)return new Response(null,{status:304,headers});
+    const response=json({profiles,maxBytes:MAX_BYTES});
+    response.headers.set('etag',tag);
+    return response;
   }
   if(method==='GET'&&!character){
     const [galleryObjects,profileObjects]=await Promise.all([list(bucket),list(bucket,PROFILE_PREFIX)]);

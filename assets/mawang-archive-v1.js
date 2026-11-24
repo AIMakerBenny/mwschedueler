@@ -14,6 +14,10 @@
   const icons={check:'m5 12 4 4L19 6',image:'M4 4h16v16H4z M4 16l5-5 4 4 3-3 4 4 M15 8h.01',reset:'M4 11a8 8 0 1 1 2 6 M4 4v7h7',calendar:'M4 6h16v15H4z M8 3v6 M16 3v6 M4 11h16',layers:'m12 3 9 5-9 5-9-5 9-5 M3 12l9 5 9-5 M3 16l9 5 9-5',close:'m6 6 12 12 M18 6 6 18'};
   const icon=name=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${icons[name]}"/></svg>`;
   let selected=entries[0],filter='all',query='',page=0,mounted=false,profileError='',profileReady=false,uploadTarget=null;
+  // This page only holds a small profile manifest in memory. The browser
+  // already owns HTTP image caching, so never duplicate image bytes in JS/IDB.
+  const PROFILE_REVALIDATE_MS=60_000;
+  let profileListEtag='',profileCheckedAt=0,profileRequest=null;
   const normalize=s=>s.toLocaleLowerCase('ko').replace(/[\s-]+/g,'');
   const matching=()=>entries.filter(c=>(filter==='all'||filter===c.group)&&normalize([c.name,c.english,c.tagline,...c.tags].join(' ')).includes(normalize(query)));
   // Category cards stay grouped; arrows follow one continuous archive when not searching.
@@ -125,8 +129,32 @@
     if(!response.ok||!body)throw Error(body?.error||'사진 서버 연결 실패');return body;
   }
   async function loadProfiles(){
-    try{const body=await request('/api/mawang-profile');if(!Array.isArray(body.profiles))throw Error('프로필 목록을 불러올 수 없습니다.');profiles.clear();for(const raw of body.profiles){const p=normalizeProfile(raw);if(p)profiles.set(p.character,p)}profileError='';profileReady=true;roster();profilePanel()}
-    catch(error){profileError='등록 프로필을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.';profilePanel()}
+    if(profileRequest)return profileRequest;
+    if(profileReady&&Date.now()-profileCheckedAt<PROFILE_REVALIDATE_MS)return;
+    profileCheckedAt=Date.now();
+    profileRequest=(async()=>{
+      try{
+        const headers=profileReady&&profileListEtag?{'If-None-Match':profileListEtag}:{};
+        const response=await fetch('/api/mawang-profile',{credentials:'same-origin',cache:'no-store',headers});
+        if(response.status===304){
+          if(!profileReady)throw Error('서버 캐시 상태 불일치');
+          profileError='';return;
+        }
+        const body=await response.json().catch(()=>null);
+        if(!response.ok||!Array.isArray(body?.profiles))throw Error('프로필 목록을 불러올 수 없습니다.');
+        const next=body.profiles.map(normalizeProfile).filter(Boolean);
+        profiles.clear();for(const p of next)profiles.set(p.character,p);
+        profileListEtag=response.headers?.get?.('etag')||'';
+        profileError='';profileReady=true;roster();profilePanel();
+      }catch(error){
+        // Retain the last good in-memory list on temporary network failure.
+        // Retry on the next visit instead of showing an empty archive.
+        profileCheckedAt=0;
+        profileError='등록 프로필을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.';
+        profilePanel();
+      }finally{profileRequest=null}
+    })();
+    return profileRequest;
   }
   function updateProfileUI(c){roster();if(c===selected)profilePanel()}
   async function changeProfile(c,file,reset=false){
@@ -134,11 +162,11 @@
     if(reset&&!confirm(c.name+'의 프로필 사진을 기본 상태로 되돌리시겠습니까?'))return;
     if(!reset&&(!file||!validTypes.has(file.type)||!file.size||file.size>32*1024*1024)){messages.set(c.id,'프로필 사진 형식 또는 32MB 용량 제한');updateProfileUI(c);return}
     busy.add(c.id);messages.set(c.id,'프로필 사진 저장 중…');updateProfileUI(c);
-    try{const body=await request('/api/mawang-profile/'+c.id,reset?{method:'DELETE'}:{method:'PUT',headers:{'content-type':file.type},body:file});if(reset)profiles.delete(c.id);else{const p=normalizeProfile(body.profile);if(!p||p.character!==c.id)throw Error('프로필 저장 응답 오류');profiles.set(c.id,p)}messages.set(c.id,reset?'프로필 초기화 완료':'프로필 사진 저장 완료')}
+    try{const body=await request('/api/mawang-profile/'+c.id,reset?{method:'DELETE'}:{method:'PUT',headers:{'content-type':file.type},body:file});if(reset)profiles.delete(c.id);else{const p=normalizeProfile(body.profile);if(!p||p.character!==c.id)throw Error('프로필 저장 응답 오류');profiles.set(c.id,p)}profileListEtag='';profileCheckedAt=0;messages.set(c.id,reset?'프로필 초기화 완료':'프로필 사진 저장 완료')}
     catch(error){messages.set(c.id,error.message)}finally{busy.delete(c.id);updateProfileUI(c)}
   }
   function render(){
-    if(mounted)return;mounted=true;
+    if(mounted){void loadProfiles();return}mounted=true;
     root.innerHTML=`<div class="ma-roster"><div class="ma-roster-toolbar"><div class="ma-roster-heading"><h3>캐릭터 선택 <span class="ma-count"></span></h3></div><div class="ma-filters" aria-label="캐릭터 분류">${Object.entries(groups).map(([key,name])=>`<button type="button" data-ma-filter="${key}"><span>${name}</span><span class="ma-filter-count">${key==='all'?entries.length:entries.filter(c=>c.group===key).length}</span></button>`).join('')}</div><div class="ma-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input type="search" aria-label="캐릭터 검색" placeholder="캐릭터 검색"><button class="ma-search-clear" type="button" data-ma-clear aria-label="검색 초기화" hidden>${icon('close')}</button></div><div class="ma-pagination" aria-live="polite" aria-label="캐릭터 목록 페이지"></div></div><div class="ma-roster-row"><button type="button" class="ma-page-arrow" data-ma-step="-1" aria-label="이전 캐릭터 페이지"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg><span>이전</span></button><div class="ma-roster-grid" aria-label="캐릭터 목록"></div><button type="button" class="ma-page-arrow" data-ma-step="1" aria-label="다음 캐릭터 페이지"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg><span>다음</span></button></div></div><div class="ma-stage" aria-labelledby="maCharacterName"></div><div class="ma-admin-input-slot"></div><span class="ma-announce" aria-live="polite"></span>`;
     // The header uses the same category controls without duplicating the archive state.
     if(typeof document.createElement==='function'){
