@@ -10,10 +10,18 @@ const sw=readFileSync(new URL('../mws-media-cache-sw.js',import.meta.url));
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jf2sAAAAASUVORK5CYII=','base64');
 const dir=mkdtempSync(path.join(tmpdir(),'mws-v3-media-'));
 let browser,mediaRequests=0;
+const blobRequests=new Map();
 const server=createServer((req,res)=>{
  const url=new URL(req.url,'http://127.0.0.1');
- if(url.pathname==='/'){res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store'}).end('<!doctype html><title>Local cache fixture</title><script>window.registration=navigator.serviceWorker.register("/mws-media-cache-sw.js")</script>');return}
+ if(url.pathname==='/'){res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store'}).end('<!doctype html><title>Local cache fixture</title><script>window.registration=navigator.serviceWorker.register("/mws-media-cache-sw.js")</script><script src="/assets/achievement-media-v1621.js"></script><script src="/assets/wardogs-media-v1.js"></script>');return}
  if(url.pathname==='/mws-media-cache-sw.js'){res.writeHead(200,{'content-type':'text/javascript','cache-control':'no-cache'}).end(sw);return}
+ if(['/assets/achievement-media-v1621.js','/assets/wardogs-media-v1.js'].includes(url.pathname)){
+  res.writeHead(200,{'content-type':'text/javascript','cache-control':'no-store'}).end(readFileSync(new URL('..'+url.pathname,import.meta.url)));return
+ }
+ if(/^\/media\/(achievement|wardogs)\/qa\d+$/.test(url.pathname)){
+  blobRequests.set(url.pathname,(blobRequests.get(url.pathname)||0)+1);
+  setTimeout(()=>res.writeHead(200,{'content-type':'image/png','content-length':png.length,'cache-control':'no-store'}).end(png),100);return
+ }
  if(/^\/media\/(contact|workspace)\/qa\d+$/.test(url.pathname)){
   mediaRequests++;
   const bad=url.searchParams.get('h')==='b'.repeat(32),privateRow=url.searchParams.get('h')==='c'.repeat(32);
@@ -52,6 +60,21 @@ try{
  assert.equal(mediaRequests-beforeWorkspace,34,'Unverified or private image reused');
  assert.equal(await size(),count+31);
  console.log('V3_WORKSPACE_MEDIA_OK '+JSON.stringify({cold:30,warm:0,unverifiedRequests:4,unverifiedRetained:0}));
+ const sibling=await browser.sibling(origin);
+ await until(()=>sibling.evaluate('!!window.mwsAchievementMediaV1&&!!window.mwsWardogsMediaV1').catch(()=>false),'Second tab media APIs ready');
+ const readBlob=(kind,id)=>'(async()=>{const media=window['+JSON.stringify(kind)+'];const items=await Promise.all(Array.from({length:20},()=>media.getBlob('+JSON.stringify(id)+')));return items.every(b=>b instanceof Blob&&b.size>0)})()';
+ for(const [kind,route] of [['mwsAchievementMediaV1','achievement'],['mwsWardogsMediaV1','wardogs']]){
+  const expr=readBlob(kind,'qa0');
+  const result=await Promise.all([browser.evaluate(expr),sibling.evaluate(expr)]);
+  assert(result.every(Boolean));assert.equal(blobRequests.get('/media/'+route+'/qa0'),1,'Concurrent blob requests for '+route);
+  assert(await browser.evaluate(expr));assert.equal(blobRequests.get('/media/'+route+'/qa0'),1);
+ }
+ await browser.closeTarget(sibling.targetId);
+ await browser.close();browser=null;await open();
+ for(const [kind,route] of [['mwsAchievementMediaV1','achievement'],['mwsWardogsMediaV1','wardogs']]){
+  assert(await browser.evaluate(readBlob(kind,'qa0')));assert.equal(blobRequests.get('/media/'+route+'/qa0'),1,'Restart blob re-fetch '+route);
+ }
+ console.log('V3_IDB_MEDIA_OK '+JSON.stringify({achievementConcurrent:40,wardogsConcurrent:40,achievementRequests:1,wardogsRequests:1,restart:0}));
 }finally{
  if(browser)await browser.close();
  await new Promise(r=>server.close(r));

@@ -158,11 +158,18 @@ async function put(blob,meta={}){
 async function get(id){
   id=String(id||'');if(!id)return null;
   if(pendingReads.has(id))return pendingReads.get(id);
-  const reading=readMedia(id).finally(()=>{if(pendingReads.get(id)===reading)pendingReads.delete(id)});
+  const reading=readWithMediaLock(id).finally(()=>{if(pendingReads.get(id)===reading)pendingReads.delete(id)});
   pendingReads.set(id,reading);return reading;
 }
+async function readWithMediaLock(id){
+  const locks=window.navigator?.locks;
+  if(!locks?.request)return readMedia(id);
+  let entered=false;
+  try{return await locks.request('mws-achievement-media-v3:'+id,async()=>{entered=true;return readMedia(id)})}
+  catch(error){if(entered)throw error;return readMedia(id)}
+}
 async function readMedia(id){
-  const local=await getLocal(id);
+  const local=await getLocal(id).catch(()=>null);
   if(local?.blob instanceof Blob)return local;
   const blob=await fetchCloudBlob(id);
   if(!(blob instanceof Blob))return null;
@@ -172,7 +179,8 @@ async function readMedia(id){
   }catch(error){
     // Cloud media remains readable even when the optional local cache is full.
     // Keep upload/write operations strict; this fallback applies only to reads.
-    if(error?.name!=='QuotaExceededError')throw error;
+    // The remote image remains usable if IndexedDB is blocked or unavailable.
+    // Upload and delete operations still use the strict write path.
     const now=new Date().toISOString();
     return {id,blob,mime:blob.type||'application/octet-stream',kind,width:0,height:0,size:blob.size,createdAt:now,updatedAt:now};
   }

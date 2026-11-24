@@ -11,6 +11,7 @@ const MAX_BYTES=32*1024*1024;
 let dbPromise=null;
 let syncPromise=null;
 let localWarningShown=false;
+const pendingReads=new Map();
 
 function createId(){
   const shared=window.mwsWardogsDataV119?.createId;
@@ -179,6 +180,18 @@ async function put(blob,meta={}){
 }
 async function get(id){
   id=String(id||'');if(!id)return null;
+  if(pendingReads.has(id))return pendingReads.get(id);
+  const reading=readWithMediaLock(id).finally(()=>{if(pendingReads.get(id)===reading)pendingReads.delete(id)});
+  pendingReads.set(id,reading);return reading;
+}
+async function readWithMediaLock(id){
+  const locks=window.navigator?.locks;
+  if(!locks?.request)return readMedia(id);
+  let entered=false;
+  try{return await locks.request('mws-wardogs-media-v3:'+id,async()=>{entered=true;return readMedia(id)})}
+  catch(error){if(entered)throw error;return readMedia(id)}
+}
+async function readMedia(id){
   const local=await tryGetLocal(id);
   if(local?.blob instanceof Blob)return local;
   const blob=await fetchCloudBlob(id);
