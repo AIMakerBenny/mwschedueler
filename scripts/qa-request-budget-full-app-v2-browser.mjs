@@ -27,7 +27,7 @@ const originalFetch=globalThis.fetch;
 globalThis.fetch=async input=>{
  const u=new URL(typeof input==='string'?input:input.url||input.href);upstream.push(u.hostname+u.pathname);
  if(u.hostname==='api-channel.sooplive.co.kr')return Response.json({data:{}});
- if(u.hostname==='chapi.sooplive.co.kr')return Response.json({data:[],meta:{last_page:1,total:0,current_page:1}});
+ if(u.hostname==='chapi.sooplive.co.kr'){const page=Number(u.searchParams.get('page')||1),post=Number(u.pathname.split('/').at(-2));return Response.json({data:[{title_no:post,user_id:page===1&&post===1?'mawang0216':'user'+post+'_'+page,p_comment_no:page,user_nick:'Fixture',like_cnt:post*10+page,comment:'fixture'}],meta:{last_page:post===1?3:4,total:post===1?3:4,current_page:page}})}
  if(u.hostname.startsWith('liveimg.'))return new Response(png,{headers:{'content-type':'image/png'}});
  if(u.hostname==='live.sooplive.com')return new Response('[]',{headers:{'content-type':'application/json'}});
  return new Response('{}',{status:404,headers:{'content-type':'application/json'}});
@@ -80,6 +80,28 @@ try{
  assert(live.filter(r=>r.path==='/api/soop/live-batch').length>=1&&live.filter(r=>r.path==='/api/soop/live-batch').length<=2,JSON.stringify(summary(live)));
  assert.equal(live.filter(r=>r.path==='/api/soop/proxy').length,0);
  before=calls.length;await pause(1200);const idle=calls.slice(before);assert.equal(idle.filter(common).length,0);assert.equal(idle.filter(r=>r.path==='/api/soop/live-batch').length,0);
+ // Register a synthetic campaign after baseline navigation; the actual UI
+ // module and Worker aggregate both posts and retain results across reload.
+ const campaign={id:'app-qa',title:'Application fixture',deadline:new Date(Date.now()+3600000).toISOString(),entries:[{url:'https://www.sooplive.com/station/host1/post/1'},{url:'https://www.sooplive.com/station/host2/post/2'}]};
+ parts.core.contentApplications=[campaign];
+ db.prepare("UPDATE workspace_parts SET data=?,version=version+1 WHERE scope='public' AND part='core'").run(JSON.stringify(parts.core));
+ await browser.evaluate('(()=>{data.contentApplications='+JSON.stringify([campaign])+';window.dispatchEvent(new CustomEvent("mawang:datachange"));return true})()');
+ before=calls.length;await nav(['contentApplications']);
+ await until(()=>browser.evaluate("!!document.querySelector('[data-ca-open=\"app-qa\"]')&&document.querySelector('[data-ca-open=\"app-qa\"]').innerText.includes('7명')"),'Server aggregated campaign list');
+ const campaignCalls=calls.slice(before);assert.equal(campaignCalls.filter(r=>r.path==='/api/soop/application-sync').length,1);
+ await browser.evaluate("document.querySelector('[data-ca-open=\"app-qa\"]').click()");
+ await until(()=>browser.evaluate("document.querySelector('[data-ca-stat=likes]')?.textContent==='11'"),'Server archived likes');
+ assert.equal(calls.slice(before).filter(r=>r.path==='/api/soop/application-sync').length,1);
+ // Retroactive fixture deadline simulates the transition without another read.
+ campaign.deadline=new Date(Date.now()-1000).toISOString();
+ db.prepare("UPDATE workspace_parts SET data=?,version=version+1 WHERE scope='public' AND part='core'").run(JSON.stringify(parts.core));
+ await browser.navigate(base+':'+server.address().port+'/',1366,768);
+ await until(()=>browser.evaluate("!!window.__mwsAppReadyV130&&!document.body.classList.contains('mws-app-loading')"),'Reload readiness');
+ before=calls.length;await nav(['contentApplications']);
+ await browser.evaluate("document.querySelector('[data-ca-open=\"app-qa\"]').click()");
+ await until(()=>browser.evaluate("document.querySelector('#caDetail').classList.contains('is-closed')&&document.querySelector('[data-ca-stat=likes]')?.textContent==='11'"),'Expired snapshot restored');
+ assert.equal(calls.slice(before).filter(r=>r.path.startsWith('/api/soop/application-sync')).length,0);
+ console.log('FULL_APP_APPLICATION_SNAPSHOT_OK '+JSON.stringify({activeSync:1,archivedApplicants:7,expiredSync:0}));
  assert.equal(errors.length,0,JSON.stringify(errors));
  console.log('FULL_APP_REQUEST_BUDGET_OK '+JSON.stringify({startup:summary(startup),cold:summary(cold),warm:summary(warm),friend:summary(live),idle:summary(idle),upstreamSimulated:upstream.length}));
 }finally{await browser?.close();await new Promise(r=>server.close(r));db.close();globalThis.fetch=originalFetch;rmSync(dir,{recursive:true,force:true})}

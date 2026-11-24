@@ -7309,6 +7309,19 @@ function soopPhotoUrl(photo){
 }
 function soopApiUrl(post,page=1){return `https://bjapi.afreecatv.com/api/${encodeURIComponent(post.bjId)}/title/${encodeURIComponent(post.postNo)}/comment?page=${page}`}
 function soopBoardApiUrl(post,page=1){return `https://bjapi.afreecatv.com/api/${encodeURIComponent(post.bjId)}/board?page=${page}`}
+async function fetchSoopLegacyPageGroupV1(post,pages,{board=false,title=false}={}){
+  const query='station='+encodeURIComponent(post.bjId)+'&post='+encodeURIComponent(post.postNo)+'&pages='+pages.join(',')+'&legacy=1'+(board?'&kind=board':'')+(title?'&title=1':'');
+  const response=await fetch('/api/soop/comment-batch?'+query,{cache:'no-store',credentials:'same-origin'});
+  if(response.status===404||response.status===405){
+    const rows=[];for(const page of pages)rows.push(await fetchSoopJson(board?soopBoardApiUrl(post,page):soopApiUrl(post,page)));
+    return {rows,title:''};
+  }
+  if(!response.ok)throw Error('SOOP batch HTTP '+response.status);
+  const body=await response.json();
+  if(!Array.isArray(body?.results))throw Error('SOOP 일괄 조회 응답 오류');
+  const rows=pages.map(page=>{const matches=body.results.filter(r=>r.page===page);if(matches.length!==1||matches[0].status<200||matches[0].status>=300||!Array.isArray(matches[0].data?.data))throw Error('SOOP 페이지 '+page+' 조회 실패');return matches[0].data});
+  return {rows,title:typeof body.title==='string'?body.title:''};
+}
 async function fetchSoopJson(url){
   try{
     const r=await fetch(url,{headers:{accept:'application/json'}});if(!r.ok)throw new Error(`HTTP ${r.status}`);return await r.json();
@@ -7546,7 +7559,19 @@ function soopPlainText(raw){
 function soopPhotosFromHtml(raw){const s=String(raw||''),out=[];try{const d=new DOMParser().parseFromString(s,'text/html');for(const img of d.querySelectorAll('img[src]')){const u=normalizeSoopUrl(img.getAttribute('src')||'');if(u&&!out.includes(u))out.push(u)}}catch(_){}return out.slice(0,30)}
 function metaFromSoopRecord(r){if(!r||typeof r!=='object')return{};const rawContent=r.contents??r.content??r.board_content??r.post_content??r.memo??'';const photos=[];const photoCandidates=[r.photos,r.photo,r.images,r.attachments,r.files];for(const x of photoCandidates){if(Array.isArray(x))for(const z of x){const u=normalizeSoopUrl(typeof z==='string'?z:(z?.url||z?.image_url||z?.file_url||z?.src||''));if(u&&!photos.includes(u))photos.push(u)}}for(const u of soopPhotosFromHtml(rawContent))if(!photos.includes(u))photos.push(u);return{title:cleanSoopPostTitle(r.title_name??r.title??r.subject??r.post_title??''),content:soopPlainText(rawContent),author:String(r.user_nick??r.writer_nick??r.nick??''),authorId:String(r.user_id??r.writer_id??''),regDate:String(r.reg_date??r.write_date??r.created_at??''),viewCount:Math.max(0,Number(r.view_cnt??r.read_cnt??r.hit??r.view_count??0)||0),photos:photos.slice(0,30)}}
 async function fetchSoopBoardRecord(post){
-  const target=Number(post.postNo)||0;for(let page=1;page<=120;page++){const j=await fetchSoopJson(soopBoardApiUrl(post,page));const rec=boardRecordFromResult(j,post.postNo);if(rec)return rec;const rows=Array.isArray(j?.data)?j.data:[];if(!rows.length)break;const nums=rows.map(boardRecordPostNo).map(Number).filter(Number.isFinite);if(target&&nums.length&&Math.min(...nums)<target)break;const last=Math.max(1,Number(j?.meta?.last_page)||1);if(page>=last)break}return null
+  const target=Number(post.postNo)||0;let last=1;
+  for(let start=1;start<=Math.min(120,last);){
+    const pages=Array.from({length:Math.min(start===1?1:9,Math.min(120,last)-start+1)},(_,i)=>start+i);
+    const batch=await fetchSoopLegacyPageGroupV1(post,pages,{board:true});
+    for(let i=0;i<pages.length;i++){
+      const j=batch.rows[i],rec=boardRecordFromResult(j,post.postNo);if(rec)return rec;
+      const rows=Array.isArray(j?.data)?j.data:[];if(!rows.length)return null;
+      const nums=rows.map(boardRecordPostNo).map(Number).filter(Number.isFinite);
+      if(target&&nums.length&&Math.min(...nums)<target)return null;
+      last=Math.max(1,Number(j?.meta?.last_page)||1);if(pages[i]>=last)return null;
+    }
+    start+=pages.length;
+  }return null
 }
 function metaFromBridgeJson(j){return{title:cleanSoopPostTitle(j?.title),content:String(j?.content||''),author:String(j?.author||''),authorId:String(j?.authorId||''),regDate:String(j?.regDate||''),viewCount:Math.max(0,Number(j?.viewCount)||0),photos:Array.isArray(j?.photos)?j.photos.filter(Boolean).map(String):[]}}
 async function fetchSoopPostMetaV43(post,firstJson){

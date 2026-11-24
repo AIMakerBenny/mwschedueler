@@ -8,7 +8,8 @@ function createMeter(origin){
   let u;try{u=new URL(entry.name,origin)}catch(_){return null}
   if(u.origin!==origin)return null;
   const p=u.pathname;
-  if(p==='/api/soop/comment-batch')return '신청 콘텐츠 댓글';
+  if(p==='/api/soop/application-sync')return '신청 콘텐츠 통합 조회';
+  if(p==='/api/soop/comment-batch')return u.searchParams.get('legacy')==='1'?'게시글 관리 동기화':'신청 콘텐츠 댓글';
   if(p==='/api/soop/proxy'){try{const t=new URL(u.searchParams.get('url'));if(t.hostname==='chapi.sooplive.co.kr'&&/\/comment\/?$/.test(t.pathname))return '신청 콘텐츠 댓글'}catch(_){}return 'SOOP 기타 조회'}
   if(p==='/api/soop/live-batch')return '친구찾기 방송 상태';
   if(p==='/api/soop/live-thumb')return 'LIVE 썸네일';

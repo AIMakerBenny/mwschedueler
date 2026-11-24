@@ -31,7 +31,7 @@ window.addEventListener('error',event=>{
 </script>
 
 <title>마왕 스케줄러</title>
-<script src="assets/request-budget-meter-v1.js?v=1"></script>
+<script src="assets/request-budget-meter-v1.js?v=2"></script>
 <script id="mws-motion-preference">
 (()=>{const key='mws-screen-motion-v1',system=matchMedia('(prefers-reduced-motion: reduce)');let mode='system';try{const saved=localStorage.getItem(key);if(['full','reduced','system'].includes(saved))mode=saved}catch(_){}const apply=()=>{const reduced=mode==='reduced'||(mode==='system'&&system.matches);document.documentElement.dataset.mwsMotion=reduced?'reduced':'full';window.dispatchEvent(new Event('mws-motion-change'))};window.mwsMotionReduced=()=>document.documentElement.dataset.mwsMotion==='reduced';apply();system.addEventListener('change',apply);document.addEventListener('DOMContentLoaded',()=>{const select=document.getElementById('mwsScreenMotion');if(!select)return;select.value=mode;select.addEventListener('change',()=>{mode=select.value;try{localStorage.setItem(key,mode)}catch(_){}apply()})})})();
 </script>
@@ -2606,7 +2606,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
 <script src="assets/contact-frequency-v1.js?v=2"></script>
 <script src="assets/career-activities-data-v1.js?v=2"></script>
 <script src="assets/calendar-historical-v1.js?v=1"></script>
-<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=1&contactgroup178=1&modalmotionv2=2&ladderdefaults=1&future-only=1&post-layout-v3=1&career=1&clipboard-people=1&dashboardnav=3&ui-interactions=2&contentapplications=1&peopleview=2&contact-frequency=2&historical-calendar=1&mawang-archive=1&request-budget=7"></script>
+<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=1&contactgroup178=1&modalmotionv2=2&ladderdefaults=1&future-only=1&post-layout-v3=1&career=1&clipboard-people=1&dashboardnav=3&ui-interactions=2&contentapplications=1&peopleview=2&contact-frequency=2&historical-calendar=1&mawang-archive=1&request-budget=8"></script>
 <script src="assets/calendar-content-groups-v2.js?v=7-save-contract-bulk&proof=1"></script>
 <script src="assets/event-sidebar-tabs-v5.js?v=1"></script>
 <script src="assets/calendar-move-guard-v4.js?v=1&quietmoves=1"></script>
@@ -3929,8 +3929,8 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
     setPostGlobalStatus('게시글 · 댓글 동기화 중','syncing');
     post.lastError='';stripLegacyPostSourceV510(post);renderPosts();
     try{
-      const first=await fetchSoopJson(soopApiUrl(post,1));
-      const sourceTitle=typeof fetchSoopPostTitle==='function'?await fetchSoopPostTitle(post,first):(typeof titleFromSoopJson==='function'?titleFromSoopJson(first):'');
+      const firstBatch=await fetchSoopLegacyPageGroupV1(post,[1],{title:true}),first=firstBatch.rows[0];
+      const sourceTitle=titleFromSoopJson(first)||cleanSoopPostTitle(firstBatch.title)||String(post.sourceTitle||'').trim()||await fetchSoopPostTitle(post,first);
       if(sourceTitle){
         post.sourceTitle=sourceTitle;
         const placeholder=/^게시글\s+\d+$/u.test(String(post.name||'').trim());
@@ -3940,10 +3940,11 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
 
       const totalPages=Math.max(1,Math.min(100,Number(first?.meta?.last_page)||1));
       let raw=[...(Array.isArray(first?.data)?first.data:[])];
-      for(let page=2;page<=totalPages;page++){
-        setPostGlobalStatus(`댓글 동기화 ${page} / ${totalPages}`,'syncing');
-        const j=await fetchSoopJson(soopApiUrl(post,page));
-        if(Array.isArray(j?.data))raw.push(...j.data);
+      for(let page=2;page<=totalPages;page+=9){
+        const pages=Array.from({length:Math.min(9,totalPages-page+1)},(_,i)=>page+i);
+        setPostGlobalStatus(`댓글 동기화 ${pages.at(-1)} / ${totalPages}`,'syncing');
+        const batch=await fetchSoopLegacyPageGroupV1(post,pages);
+        for(const j of batch.rows)if(Array.isArray(j?.data))raw.push(...j.data);
       }
       const ignored=new Set(post.ignoredCommentKeys||[]);
       const prev=new Map((post.comments||[]).map(c=>[postCommentIdentity(c),c]));
