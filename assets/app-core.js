@@ -2825,6 +2825,11 @@ function mwsDeferredContactAttrsV1(raw){
     return 'data-mws-deferred-contact-src="'+esc(src)+'"';
   return 'src="'+esc(src)+'"';
 }
+window.mwsSetDeferredContactImageV1=function(img,raw){
+  const src=String(raw||'');
+  if(/^\/media\/contact\/[A-Za-z0-9_-]+(?:\?|$)/.test(src)&&typeof IntersectionObserver==='function')img.setAttribute('data-mws-deferred-contact-src',src);
+  else img.src=src;
+};
 let mwsDeferredContactObserverV1=null;
 function mwsActivateDeferredContactImageV1(img){
   const src=img.getAttribute('data-mws-deferred-contact-src');if(!src)return;

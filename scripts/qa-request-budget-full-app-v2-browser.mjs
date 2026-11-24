@@ -89,6 +89,8 @@ try{
  if(useCdn){
   assert(cdnCalls.some(key=>key.startsWith('contacts/')),JSON.stringify(cdnCalls));
   assert(cdnCalls.some(key=>key.startsWith('achievements/')),JSON.stringify(cdnCalls));
+  assert.equal(cold.filter(r=>r.path.startsWith('/media/contact/')&&r.path!=='/media/contact/qa0').length,0,'Successful CDN contact images must never hit Worker: '+JSON.stringify(routeStats));
+  assert(cdnCalls.length>0);
   // A missing CDN object must still be displayed through the original Worker route.
   const blobSize=await browser.evaluate("(async()=>{const b=await window.mwsAchievementMediaV1.getBlob('image0');return b?.size||0})()");
   assert.equal(blobSize,png.length);

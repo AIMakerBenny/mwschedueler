@@ -43,7 +43,7 @@ function normalizeVersionHtml(html,env){
   return out;
 }
 
-export function normalizeCloudCore(js){
+function normalizeCloudCore(js){
   let out=String(js||'');
 
   /* Repair the legacy source typo that was previously hidden by the old inline loader. */
@@ -262,7 +262,7 @@ function normalizeBossRaidHtml(html){
   return out;
 }
 
-export function normalizeBossScript(js){
+function normalizeBossScript(js){
   return String(js||'')
     .replaceAll("if(id==='boss-default'&&hp===100)hp=DEFAULT_HP;",'')
     .replaceAll('if(id==="boss-default"&&hp===100)hp=DEFAULT_HP;','');
@@ -359,3 +359,5 @@ export default {
     return new Response(html,{status:response.status,statusText:response.statusText,headers});
   },
 };
+
+export {normalizeCloudCore,normalizeBossScript};
