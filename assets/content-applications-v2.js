@@ -199,7 +199,7 @@ async function readSource(source,canContinue,manual=false){
  const now=Date.now(),cached=sourceReads.get(key);
  if(!manual&&cached&&now-cached.startedAt<60000)return cached.result;
  for(const [k,row] of sourceReads)if(now-row.startedAt>=60000)sourceReads.delete(k);
- const result=await fetchSource(source,canContinue);
+ const result={...await fetchSource(source,canContinue),sampledAt:now};
  if(canContinue()&&result.complete){if(sourceReads.size>=100)sourceReads.delete(sourceReads.keys().next().value);sourceReads.set(key,{startedAt:now,result})}
  return result;
 }
@@ -215,19 +215,19 @@ async function refresh(c,manual=false){
  }
  let unchanged=false;
  try{
-  const rows=[];let complete=c.entries.length>0;
+  const rows=[];let complete=c.entries.length>0,sampledAt=Date.now();
   for(let i=0;i<c.entries.length;i+=2){
    if(!canContinue())return;
    const results=await Promise.allSettled(c.entries.slice(i,i+2).map(source=>readSource(source,canContinue,manual)));
    if(!canContinue())return;
-   for(const result of results){if(result.status==='fulfilled'){rows.push(...result.value.rows);complete&&=result.value.complete}else complete=false}
+   for(const result of results){if(result.status==='fulfilled'){rows.push(...result.value.rows);complete&&=result.value.complete;sampledAt=Math.min(sampledAt,result.value.sampledAt)}else complete=false}
   }
   const latest=records().find(x=>x.id===c.id);
   if(!canContinue()||!latest||signature(latest)!==sig)return;
   const previous=snapshot(c);
   let next;
   if(!rows.length&&!complete&&previous)next={...previous,complete:false};
-  else next={signature:sig,applicants:uniqueApplicants(rows),complete,checkedAt:new Date().toISOString()};
+  else next={signature:sig,applicants:uniqueApplicants(rows),complete,checkedAt:new Date(sampledAt).toISOString()};
   unchanged=!!previous&&previous.complete===next.complete&&sameApplicants(previous.applicants,next.applicants);
   if(previous&&!unchanged&&sectionActive()&&selected===c.id){
    const diff=compareRankSnapshots(previous.applicants,next.applicants);

@@ -21,3 +21,23 @@ test('twenty pages use four Worker calls and preserve all pages',async()=>{
  const result=await load({station:'host',postNo:'123'});assert.equal(result.complete,true);assert.deepEqual(result.rows,Array.from({length:20},(_,i)=>i+1));assert.equal(calls,4);
  let active=0;await assert.rejects(()=>load({station:'host',postNo:'123'},()=>++active<2));assert.equal(calls,5);
 });
+
+test('completed public source data is reused within freshness window but manual refresh bypasses it',async()=>{
+ let calls=0,now=100000;
+ const fetchPage=async(s,page)=>{calls++;return {page,pages:1,total:1,applicants:[page]}};
+ const read=new Function('fetch','fetchPage','parseCommentPage','AbortSignal','sourceReads','Date',code+'\nreturn readSource')(()=>{throw Error('unexpected batch')},fetchPage,x=>x,{timeout:()=>undefined},new Map(),{now:()=>now});
+ const source={station:'host',postNo:'123',title:'x',userId:'host'};
+ const first=await read(source,()=>true);now+=10000;
+ assert.equal(await read(source,()=>true),first);assert.equal(calls,1);assert.equal(first.sampledAt,100000);
+ await read(source,()=>true,true);assert.equal(calls,2);
+ now+=60000;await read(source,()=>true);assert.equal(calls,3);
+});
+test('nine-page maximum and sequential groups of three preserve all results',async()=>{
+ let active=0,peak=0,calls=0;
+ const res=await handleSoopCommentBatch(new Request('https://fixture.test/api/soop/comment-batch?station=host&post=123&pages=1,2,3,4,5,6,7,8,9'),async request=>{
+  active++;calls++;peak=Math.max(peak,active);
+  await Promise.resolve();active--;
+  return new Response('{}',{status:200});
+ });
+ assert.equal(res.status,200);assert.equal((await res.json()).results.length,9);assert.equal(calls,9);assert.equal(peak,3);
+});

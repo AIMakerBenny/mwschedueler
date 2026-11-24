@@ -71,10 +71,20 @@ async function storeLocal(blob,meta={}){
     height:Math.max(0,Number(meta.height)||0),
     size:Math.max(0,Number(blob.size)||0),
     createdAt:String(existing?.createdAt||meta.createdAt||now),
-    updatedAt:now
+    updatedAt:now,
+    cloudConfirmed:meta.cloudConfirmed===true
   };
   await withStore('readwrite',store=>store.put(record));
   return record;
+}
+// A successful cloud GET or PUT proves this immutable image ID is already stored.
+// Update metadata without resurrecting a record deleted or replaced during an upload.
+async function markCloudConfirmed(id,updatedAt){
+  try{await withStore('readwrite',store=>{
+    const req=store.get(id);
+    req.onsuccess=()=>{const record=req.result;if(record&&record.updatedAt===updatedAt&&!record.cloudConfirmed)store.put({...record,cloudConfirmed:true})};
+    return req;
+  })}catch(_){}
 }
 function cloudUrl(id){return '/media/achievement/'+encodeURIComponent(String(id||''))}
 function cloudApiUrl(id){return '/api/achievement-media/'+encodeURIComponent(String(id||''))}
@@ -125,6 +135,7 @@ async function put(blob,meta={}){
   const record=await storeLocal(blob,{...meta,id});
   try{
     await uploadCloud(id,blob);
+    await markCloudConfirmed(id,record.updatedAt);
   }catch(error){
     try{
       if(previous)await withStore('readwrite',store=>store.put(previous));
@@ -147,7 +158,7 @@ async function readMedia(id){
   if(!(blob instanceof Blob))return null;
   const kind=kindForId(id);
   try{
-    return await storeLocal(blob,{id,kind,mime:blob.type});
+    return await storeLocal(blob,{id,kind,mime:blob.type,cloudConfirmed:true});
   }catch(error){
     // Cloud media remains readable even when the optional local cache is full.
     // Keep upload/write operations strict; this fallback applies only to reads.
@@ -187,27 +198,34 @@ function referencedIds(){
   }catch(_){}
   return [...ids];
 }
-async function syncReferencedToCloud(){
+async function syncReferencedToCloud({localOnly=false}={}){
   if(migrationPromise)return migrationPromise;
   migrationPromise=(async()=>{
+    const referenced=referencedIds();
+    let ids=referenced;
+    if(localOnly){
+      const localIds=new Set(await listIds());ids=[];
+      for(const id of referenced){if(!localIds.has(id))continue;const record=await getLocal(id);if(record?.blob instanceof Blob&&!record.cloudConfirmed)ids.push(id)}
+      if(!ids.length)return {authenticated:true,referenced:referenced.length,local:0,uploaded:0,existing:0,missingLocal:0,failed:0,skipped:true};
+    }
     let session=null;
     try{
       const res=await fetch('/api/auth/session',{credentials:'same-origin',cache:'no-store'});
       if(res.ok)session=await res.json();
     }catch(_){}
     if(!session?.authenticated)return {authenticated:false,referenced:0,local:0,uploaded:0,existing:0,missingLocal:0,failed:0};
-    const ids=referencedIds();
     let local=0,uploaded=0,existing=0,missingLocal=0,failed=0,cursor=0;
     async function worker(){
       while(true){
         const index=cursor++;if(index>=ids.length)return;
         const id=ids[index];
         try{
-          if(await cloudExists(id)){existing++;continue}
           const record=await getLocal(id);
+          if(await cloudExists(id)){if(record)await markCloudConfirmed(id,record.updatedAt);existing++;continue}
           if(!(record?.blob instanceof Blob)){missingLocal++;continue}
           local++;
           await uploadCloud(id,record.blob);
+          await markCloudConfirmed(id,record.updatedAt);
           uploaded++;
         }catch(error){
           failed++;
@@ -216,7 +234,7 @@ async function syncReferencedToCloud(){
       }
     }
     await Promise.all(Array.from({length:Math.min(2,Math.max(1,ids.length))},worker));
-    const result={authenticated:true,referenced:ids.length,local,uploaded,existing,missingLocal,failed};
+    const result={authenticated:true,referenced:referenced.length,local,uploaded,existing,missingLocal,failed};
     window.__mwsAchievementMediaCloudSyncV1621=result;
     try{window.dispatchEvent(new CustomEvent('mws:achievement-media-cloud-sync',{detail:result}))}catch(_){}
     return result;
@@ -242,11 +260,9 @@ window.mwsAchievementMediaV1=Object.freeze({
 // The explicit syncReferencedToCloud() remains available for full verification.
 async function startupLocalMigration(){
   if(document.body?.dataset?.mwsMode!=='admin')return;
-  const ids=referencedIds();if(!ids.length)return;
-  const localIds=new Set(await listIds());
-  if(!ids.some(id=>localIds.has(id)))return;
-  await syncReferencedToCloud();
+  await syncReferencedToCloud({localOnly:true});
 }
-setTimeout(()=>{if(typeof document!=='undefined')startupLocalMigration().catch(error=>console.warn('Achievement media startup cloud sync failed',error))},250);
+const scheduleLocalMigration=()=>setTimeout(()=>{if(typeof document!=='undefined')startupLocalMigration().catch(error=>console.warn('Achievement media startup cloud sync failed',error))},250);
+scheduleLocalMigration();window.addEventListener?.('mws:app-ready',scheduleLocalMigration);
 try{window.dispatchEvent(new Event('mws:achievement-media-ready'))}catch(_){}
 })();
