@@ -335,7 +335,8 @@ document.addEventListener('click',event=>{
 document.addEventListener('input',event=>{if(activeFriendRoot()?.contains(event.target))setTimeout(scheduleUi,0)},true);
 document.addEventListener('change',event=>{if(activeFriendRoot()?.contains(event.target))setTimeout(scheduleUi,0)},true);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopActiveRefresh();else{scheduleUi();scheduleActiveRefresh(120)}});
-document.addEventListener('scroll',()=>{if(!document.hidden&&activeFriendRoot())scheduleUi()},{capture:true,passive:true});
+let friendScrollRefreshTimer=0;
+document.addEventListener('scroll',()=>{if(document.hidden||!activeFriendRoot())return;clearTimeout(friendScrollRefreshTimer);friendScrollRefreshTimer=setTimeout(()=>{if(!document.hidden&&activeFriendRoot())scheduleUi()},180)},{capture:true,passive:true});
 
 function boot(){installStyle();setVersionLabel();bindFriendGridObserver();scheduleUi();scheduleActiveRefresh(120);[100,350,900,1800].forEach(ms=>setTimeout(()=>{setVersionLabel();bindFriendGridObserver();scheduleUi()},ms))}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
