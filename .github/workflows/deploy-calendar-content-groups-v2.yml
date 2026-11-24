@@ -1,6 +1,11 @@
 name: Deploy Calendar Editor Sidebar V5 - Scoped Production
 on:
   workflow_dispatch:
+    inputs:
+      live_approval:
+        description: 'Legacy live deployment suite: APPROVED_LIVE_REQUESTS after separate approval'
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -12,7 +17,7 @@ concurrency:
 
 jobs:
   scoped-calendar-deploy:
-    if: github.ref == 'refs/heads/cloudflare-production'
+    if: github.ref == 'refs/heads/cloudflare-production' && inputs.live_approval == 'APPROVED_LIVE_REQUESTS'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

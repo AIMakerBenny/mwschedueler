@@ -35,27 +35,36 @@ jobs:
           printf '\n127.0.0.1 mawang-scheduler.majoku.workers.dev\n::1 mawang-scheduler.majoku.workers.dev\n' | sudo tee -a /etc/hosts >/dev/null
           node -e "require('node:dns').lookup('mawang-scheduler.majoku.workers.dev',{all:true},(e,a)=>{if(e||!a.length||a.some(x=>!['127.0.0.1','::1'].includes(x.address)))process.exit(1)})"
       - name: Verify prebuilt static runtime byte equivalence
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/build-cf-static-runtime.mjs --check
       - name: Network optimization and storage contracts
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --test scripts/qa-request-budget-v1.test.mjs scripts/qa-workspace-read-batch-v1.test.mjs scripts/qa-public-read-sharing-v1.test.mjs scripts/qa-request-budget-meter-v1.test.mjs scripts/qa-request-budget-regressions-v1.test.mjs scripts/qa-request-budget-navigation-v2.test.mjs
           node scripts/qa-achievement-cache-quota.mjs
           node --test scripts/qa-live-cloud-save-contract-v1.test.mjs scripts/qa-application-snapshot-v1.test.mjs
       - name: Real browser request counting fixture
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-request-budget-navigation-v2-browser.mjs
       - name: Full application Worker and browser request budget
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-request-budget-full-app-v2-browser.mjs
       - name: Public media CDN direct reads and Worker fallback
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: MWS_QA_MEDIA_CDN=1 node scripts/qa-request-budget-full-app-v2-browser.mjs
       - name: Calendar group ribbons across visible month boundaries
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --test scripts/qa-calendar-continuous-series-v1.test.mjs
           node scripts/qa-calendar-continuous-series-browser-v1.mjs
       - name: Local rank UI fixture
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-content-applications-v1-browser.mjs
       - name: Cumulative application integration audit
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/run-current-full-integration-audit.mjs
       - name: Local calendar and contact UI regressions
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --test scripts/qa-content-applications-v1.test.mjs scripts/qa-calendar-groups-cloud-save-v1.test.mjs scripts/qa-active-cloudflare-core-groups-v1.test.mjs scripts/qa-login-ready-v2.test.mjs scripts/qa-ui-interactions-v1.test.mjs
           node scripts/qa-ui-interactions-v1-browser.mjs
@@ -64,6 +73,7 @@ jobs:
           node scripts/qa-contact-card-readable-v1-browser.mjs
           node scripts/qa-mobile-calendar-layout-v2.mjs
       - name: Local archive and Hall of Fame UI regressions
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --test scripts/qa-mawang-archive-v1.test.mjs
           node scripts/qa-mawang-archive-v1-browser.mjs
@@ -93,6 +103,7 @@ jobs:
         if: matrix.visibility == 'minimized'
         run: sudo apt-get update -qq && sudo apt-get install -y -qq openbox xvfb
       - name: Measure calendar idle in isolated Chromium
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           if [ "$MWS_QA_IDLE_VISIBILITY" = minimized ]; then
             xvfb-run -a sh -c 'openbox >/tmp/mws-wm.log 2>&1 & sleep 1; MWS_QA_HEADFUL=1 node scripts/qa-request-budget-full-app-v2-browser.mjs'
@@ -115,4 +126,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: node scripts/qa-request-budget-full-app-v2-browser.mjs
+      - shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: node scripts/qa-request-budget-full-app-v2-browser.mjs

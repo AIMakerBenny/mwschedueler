@@ -15,6 +15,13 @@ on:
     branches:
       - cloudflare-production
   workflow_dispatch:
+    inputs:
+      live_approval:
+        description: 'APPROVED_LIVE_REQUESTS only after separate approval'
+        type: string
+        default: ''
+env:
+  MWS_QA_OFFLINE: '1'
 jobs:
   soop-contact-autofill:
     runs-on: ubuntu-latest
@@ -25,14 +32,16 @@ jobs:
         with:
           node-version: '22'
       - name: Syntax check
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --check src/soop-contact-autofill-v1.js
           node --check src/cf-v111-entry.js
           node --check assets/soop-contact-autofill-v1.js
       - name: Station lookup and contact preservation tests
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node --test scripts/qa-soop-contact-autofill-v1.test.mjs
       - name: Probe public SOOP station API and avatar
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && inputs.live_approval == 'APPROVED_LIVE_REQUESTS'
         id: live_api_probe
         continue-on-error: true
         run: node scripts/qa-soop-contact-live-v1.mjs

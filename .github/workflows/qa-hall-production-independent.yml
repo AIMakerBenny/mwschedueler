@@ -1,6 +1,11 @@
 name: Hall of Fame independent Cloudflare production verification
 on:
   workflow_dispatch:
+    inputs:
+      live_approval:
+        description: 'APPROVED_LIVE_REQUESTS only after separate approval'
+        type: string
+        default: ''
 permissions:
   contents: read
 concurrency:
@@ -8,7 +13,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   hall-live:
-    if: github.ref == 'refs/heads/cloudflare-production'
+    if: github.ref == 'refs/heads/cloudflare-production' && inputs.live_approval == 'APPROVED_LIVE_REQUESTS'
     name: Actual live Hall and first-paint, no injected candidate
     runs-on: ubuntu-latest
     timeout-minutes: 15

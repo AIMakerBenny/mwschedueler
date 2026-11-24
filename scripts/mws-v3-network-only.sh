@@ -16,5 +16,14 @@ exec setpriv --reuid "$uid" --regid "$gid" --init-groups -- env PATH="$outer_pat
 if [[ $uid == 0 ]]; then
   exec unshare --net -- bash -c "$runner" bash "$parent" "$uid" "$gid" "$outer_path" "$@"
 else
-  exec sudo -n --preserve-env=MWS_QA_OFFLINE,MWS_QA_SESSION,MWS_QA_IDLE_MODE,MWS_QA_LONG_IDLE,MWS_QA_IDLE_VISIBILITY,MWS_QA_FEATURES_ONLY,MWS_QA_SCALE_CONTACTS unshare --net -- bash -c "$runner" bash "$parent" "$uid" "$gid" "$outer_path" "$@"
+  # Preserve QA configuration and browser-display variables, not credentials.
+  keep=()
+  while IFS= read -r key; do
+    case "$key" in
+      MWS_*TOKEN*|MWS_*SECRET*|MWS_*PASSWORD*|MWS_*API_KEY*) ;;
+      MWS_*|CAREER_QA_*|CI|GITHUB_WORKSPACE|GITHUB_SHA|GITHUB_REF|GITHUB_HEAD_REF|GITHUB_BASE_REF|RUNNER_TEMP|RUNNER_OS|HOME|DISPLAY|XAUTHORITY|XDG_RUNTIME_DIR|PLAYWRIGHT_BROWSERS_PATH) keep+=("$key");;
+    esac
+  done < <(compgen -e)
+  preserved=$(IFS=,; echo "${keep[*]}")
+  exec sudo -n --preserve-env="$preserved" unshare --net -- bash -c "$runner" bash "$parent" "$uid" "$gid" "$outer_path" "$@"
 fi

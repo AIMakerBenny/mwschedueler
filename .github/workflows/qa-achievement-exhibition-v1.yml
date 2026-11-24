@@ -11,8 +11,15 @@ on:
       - 'scripts/qa-first-paint-guard-v1-browser.mjs'
       - '.github/workflows/qa-achievement-exhibition-v1.yml'
   workflow_dispatch:
+    inputs:
+      live_approval:
+        description: 'APPROVED_LIVE_REQUESTS only after separate approval'
+        type: string
+        default: ''
 permissions:
   contents: read
+env:
+  MWS_QA_OFFLINE: '1'
 jobs:
   exhibition:
     runs-on: ubuntu-latest
@@ -22,9 +29,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: node scripts/run-phase90-achievement-gallery-audit.mjs
-      - run: node scripts/run-phase93-achievement-touch-audit.mjs
+      - shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: node scripts/run-phase90-achievement-gallery-audit.mjs
+      - shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: node scripts/run-phase93-achievement-touch-audit.mjs
       - name: Check complete pre-deployment integration audits
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: |
           node --check scripts/qa-achievement-live-browser.mjs
           node --check assets/achievement-gallery-v1621.js
@@ -36,6 +46,7 @@ jobs:
       - name: Render and validate gallery hover and detail
         env:
           MWS_HALL_CAPTURE: '1'
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-achievement-exhibition-v1-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
@@ -54,6 +65,7 @@ jobs:
       - name: Verify unstyled first-frame safeguards at 4 viewports
         env:
           MWS_FIRST_PAINT_CAPTURE: '1'
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
         run: node scripts/qa-first-paint-guard-v1-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
@@ -62,7 +74,7 @@ jobs:
           path: visual-first-paint/*.jpg
           if-no-files-found: ignore
   public-smoke:
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/cloudflare-production'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/cloudflare-production' && inputs.live_approval == 'APPROVED_LIVE_REQUESTS'
     concurrency:
       group: cloudflare-production
       cancel-in-progress: false
