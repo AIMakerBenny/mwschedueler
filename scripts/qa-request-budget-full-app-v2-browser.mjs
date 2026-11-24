@@ -33,6 +33,8 @@ const cdnServer=createServer((req,res)=>{
  res.end(req.method==='HEAD'?undefined:png);
 });
 const featureOnly=process.env.MWS_QA_FEATURES_ONLY==='1';
+const scale=Number(process.env.MWS_QA_SCALE_CONTACTS||0),scalePosts=scale>=500?50:10;
+assert(!scale||[100,300,500,1000].includes(scale),'Explicit synthetic scale only');
 const upstream=[];
 const originalFetch=globalThis.fetch;
 globalThis.fetch=async input=>{
@@ -48,10 +50,11 @@ globalThis.fetch=async input=>{
 const ctx={waitUntil:p=>void Promise.resolve(p).catch(()=>{}),passThroughOnException(){}};
 const base='http://127.0.0.1';
 const health=await worker.fetch(new Request(base+'/api/health'),env,ctx);assert.equal(health.status,200,await health.text());
-const contacts=Array.from({length:200},(_,i)=>{const id='qa'+i,token=String(i+1).padStart(32,'0');objects.set('contacts/'+id+'/v1-'+token,true);db.prepare('INSERT INTO image_sources(kind,item_key,source_url,version,content_type) VALUES(?,?,?,?,?)').run('contact',id,'mws-r2:'+token,1,'image/png');return{id,name:'Fixture '+i,stationUrl:'https://bj.sooplive.co.kr/'+id,favorite:i<(featureOnly?73:13),image:'/media/contact/'+id+'?v=1&h='+token+'&r=2',labels:[],pendingSetup:false}});
-const achievementCards=Array.from({length:26},(_,i)=>{const id='card'+i,frontImageId='image'+i;objects.set('achievements/'+frontImageId,true);return{id,frontImageId,order:i,gameName:'Fixture',contentName:'Card '+i,description:'Fixture only'}});
+const contacts=Array.from({length:scale||200},(_,i)=>{const id='qa'+i,token=String(i+1).padStart(32,'0');objects.set('contacts/'+id+'/v1-'+token,true);db.prepare('INSERT INTO image_sources(kind,item_key,source_url,version,content_type) VALUES(?,?,?,?,?)').run('contact',id,'mws-r2:'+token,1,'image/png');return{id,name:'Fixture '+i,stationUrl:'https://bj.sooplive.co.kr/'+id,favorite:i<(scale?({100:12,300:36,500:100,1000:100}[scale]):featureOnly?73:13),image:'/media/contact/'+id+'?v=1&h='+token+'&r=2',labels:[],pendingSetup:false}});
+const achievementCards=Array.from({length:scale?({100:50,300:100,500:300,1000:300}[scale]):26},(_,i)=>{const id='card'+i,frontImageId='image'+i;objects.set('achievements/'+frontImageId,true);return{id,frontImageId,order:i,gameName:'Fixture',contentName:'Card '+i,description:'Fixture only'}});
 const day=new Date(Date.now()+9*3600000).toISOString().slice(0,10);
-const parts={core:{version:52,categories:[],timezones:[],contentGroups:[],gameLibrary:[],achievementCards,contentApplications:[]},events:[{id:'fixture-event',title:'Fixture event',date:day,start:'12:00',end:'13:00',participants:['qa0'],checklist:[]}],contacts,contactMeta:{contactTags:[],contactTagBanners:{},emoticons:[]},activity:{collaborations:[],todayPeopleByDate:{},todayPeopleManualByDate:{},targetList:[]},clipboard:{scheduleClipboard:[]},notebook:{memos:[],favoriteFolders:[]},posts:[],miniGames:{},wardogs:{schemaVersion:1,cards:[]}};
+const fixturePosts=scale?Array.from({length:scalePosts},(_,i)=>({id:'scale-post-'+i,name:'Fixture post '+i,nameManual:true,bjId:'host'+i,postNo:String(i+100),url:'https://www.sooplive.com/station/host'+i+'/post/'+(i+100),lastSyncAt:new Date().toISOString(),comments:Array.from({length:20},(_,j)=>({id:'p'+i+'-c'+j,commentNo:String(j+1),userId:'qa'+((i*20+j)%scale),name:'Fixture '+((i*20+j)%scale),comment:'Synthetic applicant',regDate:'2026-11-20T00:00:00Z',status:'pending'}))})):[];
+const parts={core:{version:52,categories:[],timezones:[],contentGroups:[],gameLibrary:[],achievementCards,contentApplications:[]},events:[{id:'fixture-event',title:'Fixture event',date:day,start:'12:00',end:'13:00',participants:['qa0'],checklist:[]}],contacts,contactMeta:{contactTags:[],contactTagBanners:{},emoticons:[]},activity:{collaborations:[],todayPeopleByDate:{},todayPeopleManualByDate:{},targetList:[]},clipboard:{scheduleClipboard:[]},notebook:{memos:[],favoriteFolders:[]},posts:fixturePosts,miniGames:{},wardogs:{schemaVersion:1,cards:[]}};
 for(const [part,data] of Object.entries(parts))db.prepare("INSERT OR REPLACE INTO workspace_parts(scope,part,data,version) VALUES('public',?,?,1)").run(part,JSON.stringify(data));
 const workerFirst=p=>config.assets.run_worker_first.some(pattern=>pattern.endsWith('*')?p.startsWith(pattern.slice(0,-1)):p===pattern);
 let calls=[],errors=[],arrivals=[];
@@ -95,7 +98,57 @@ try{
  const routes=['calendar','contacts','dashboard','memos','careerTimeline','achievements','mawangArchive','gameLadder','gameMultiDraw','contentPlanner','toolTier','toolMatrix','toolRelations','settings','calendar'];
  const nav=async list=>browser.evaluate('(async()=>{for(const id of '+JSON.stringify(list)+'){window.setTab(id);await new Promise(r=>setTimeout(r,450));if(!document.getElementById(id)?.classList.contains("active"))throw Error("route "+id)}return true})()');
  let before=calls.length;
- if(featureOnly){
+ if(scale){
+  // A warm-cache fixture is created through actual same-origin browser reads.
+  // No synthetic production data or external traffic.
+  const media=contacts.map(c=>c.image);
+  for(let i=0;i<media.length;i+=25){
+   const group=media.slice(i,i+25);
+   assert(await browser.evaluate('(async()=>{const urls='+JSON.stringify(group)+';await Promise.all(urls.map(async url=>{const r=await fetch(url,{cache:"reload"});if(!r.ok||!(await r.blob()).size)throw Error("Portrait missing")}));return true})()'));
+  }
+  await until(async()=>await browser.evaluate('(async()=> (await (await caches.open("mws-public-versioned-media-v1")).keys()).length)()')>=scale,'Synthetic portraits persisted',300);
+  await browser.evaluate('(async()=>{const ids='+JSON.stringify(achievementCards.map(c=>c.frontImageId))+';for(let i=0;i<ids.length;i+=20){const blobs=await Promise.all(ids.slice(i,i+20).map(id=>window.mwsAchievementMediaV1.getBlob(id)));if(blobs.some(b=>!b?.size))throw Error("Achievement missing")}return true})()');
+  await pause(600);
+  const warmStart=calls.length,upstreamStart=upstream.length;
+  const measured=[];
+  for(let round=1;round<=3;round++){
+   const at=performance.now();
+   await nav(['contacts']);
+   const result=await browser.evaluate(`(()=>{const search=document.getElementById('contactSearch'),sort=document.getElementById('contactSort');
+    if(search){search.value='Fixture 1';search.dispatchEvent(new Event('input',{bubbles:true}));search.value='';search.dispatchEvent(new Event('input',{bubbles:true}))}
+    if(sort?.options.length>1){const initial=sort.value;sort.selectedIndex=1;sort.dispatchEvent(new Event('change',{bubbles:true}));sort.value=initial;sort.dispatchEvent(new Event('change',{bubbles:true}))}
+    const root=document.getElementById('contactGrid');if(root)root.scrollTop=150;
+    return {contacts:data.contacts.length,posts:data.posts.length,cards:root?.querySelectorAll('[data-contact-id]').length||0}})()`);
+   assert.equal(result.contacts,scale);assert.equal(result.posts,scalePosts);
+   await browser.evaluate("window.openContact('qa0')");
+   await until(()=>browser.evaluate("document.getElementById('contactModal')?.classList.contains('open')"),'Contact detail');
+   await browser.evaluate("document.querySelector('[data-close=contactModal]').click()");
+   await nav(['posts']);
+   for(const id of ['scale-post-0','scale-post-'+(scalePosts-1)]){
+    await browser.evaluate('window.selectPost('+JSON.stringify(id)+')');
+    await pause(100);
+   }
+   await nav(['achievements','mawangArchive','calendar']);
+   await pause(500);measured.push({round,elapsedIncludingWaitMs:Math.round(performance.now()-at),...result});
+  }
+  const warm=calls.slice(warmStart);
+  assert.equal(warm.filter(common).length,0,'Warm data reloaded');
+  assert.equal(warm.filter(r=>r.path.startsWith('/api/soop/')).length,0,'Read-only views fetched SOOP');
+  assert.equal(warm.filter(r=>r.path.startsWith('/media/contact/')||r.path.startsWith('/media/achievement/')).length,0,'Warm media reloaded');
+  assert.equal(upstream.length,upstreamStart,'Read-only views requested upstream data');
+  console.log('V3_SCALE_WARM_OK '+JSON.stringify({contacts:scale,posts:scalePosts,applicants:scalePosts*20,achievementImages:achievementCards.length,rounds:measured,worker:summary(warm)}));
+  // Actual browser multi-tab readiness, with three/five concurrent tabs.
+  const tabs=scale>=500?5:3;
+  await pause(8200);
+  const at=calls.length;
+  const siblings=await Promise.all(Array.from({length:tabs},()=>browser.sibling(base+':'+server.address().port+'/')));
+  await until(async()=>{const ready=await Promise.all(siblings.map(tab=>tab.evaluate("!!window.__mwsAppReadyV130&&!document.body.classList.contains('mws-app-loading')&&data.contacts.length==="+scale).catch(()=>false)));return ready.every(Boolean)},'Concurrent scaled tabs ready',300);
+  const startupCalls=calls.slice(at).filter(r=>r.path==='/api/calendar-startup').length;
+  assert(startupCalls<=1,'Duplicate scaled startup: '+startupCalls);
+  console.log('V3_SCALE_TABS_OK '+JSON.stringify({contacts:scale,tabs,startupCalls}));
+  for(const tab of siblings)await browser.closeTarget(tab.targetId);
+  assert.equal(errors.length,0,JSON.stringify(errors));
+ }else if(featureOnly){
   // Start 73 favorites (seven batches) and leave before the first wave ends.
   // Count at HTTP arrival, not response completion.
   const friendCount=()=>arrivals.filter(r=>r.path==='/api/soop/live-batch').length;

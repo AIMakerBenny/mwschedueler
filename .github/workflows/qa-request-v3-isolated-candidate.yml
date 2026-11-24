@@ -66,3 +66,22 @@ jobs:
           node-version: '24'
       - name: Friend exit and hidden tab, fresh and expired applications
         run: bash scripts/mws-v3-network-only.sh node scripts/qa-request-budget-full-app-v2-browser.mjs
+
+  local-scale:
+    needs: local-contracts
+    strategy:
+      fail-fast: false
+      matrix:
+        contacts: [100, 300, 500, 1000]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      MWS_QA_OFFLINE: '1'
+      MWS_QA_SCALE_CONTACTS: ${{ matrix.contacts }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Large synthetic workspace, warm navigation, multiple tabs
+        run: bash scripts/mws-v3-network-only.sh node scripts/qa-request-budget-full-app-v2-browser.mjs

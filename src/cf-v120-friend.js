@@ -9,7 +9,7 @@ const BATCH_MAX=12;
 const CONCURRENCY=4;
 const MAX_LIVE_REDIRECTS=3;
 const FETCH_TIMEOUT_MS=5000;
-const liveCache=new Map(),livePending=new Map();
+const liveCache=new Map();
 let categoryCache={at:0,categories:[]};
 
 function json(value,status=200,headers={}){
@@ -96,14 +96,10 @@ function attachNormalizedLive(row){
 async function liveRow(target,force=false){
   const key=target.href,hit=liveCache.get(key);
   if(!force&&hit&&Date.now()-hit.at<LIVE_TTL_MS)return hit.row;
-  if(livePending.has(key))return livePending.get(key);
-  const pending=(async()=>{
-    const row=attachNormalizedLive(await fetchText(target));
-    liveCache.set(key,{at:Date.now(),row});
-    if(liveCache.size>240){for(const [k,v] of liveCache)if(Date.now()-v.at>120000)liveCache.delete(k)}
-    return row;
-  })().finally(()=>{if(livePending.get(key)===pending)livePending.delete(key)});
-  livePending.set(key,pending);return pending;
+  const row=attachNormalizedLive(await fetchText(target));
+  liveCache.set(key,{at:Date.now(),row});
+  if(liveCache.size>240){for(const [k,v] of liveCache)if(Date.now()-v.at>120000)liveCache.delete(k)}
+  return row;
 }
 async function mapLimit(items,limit,fn){
   const out=new Array(items.length);let next=0;

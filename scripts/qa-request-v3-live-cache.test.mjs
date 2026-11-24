@@ -11,14 +11,14 @@ test('only verified short-lived live image responses can be cached; invalid rout
  assert(f.freshLiveThumb(row(100000),159999));assert(!f.freshLiveThumb(row(100000),160000));assert(!f.freshLiveThumb(row(100001),100000));
  assert(!f.validLiveThumb(row(100000,'private, max-age=60')));assert(!f.validLiveThumb(row(100000,'public, no-store, max-age=60')));
 });
-test('same-isolate simultaneous visitors share one upstream status fetch, including forced concurrent read',async()=>{
+test('same-isolate reuse only completed plain-data status rows, respecting expiry and manual refresh',async()=>{
  const source=readFileSync(new URL('../src/cf-v120-friend.js',import.meta.url),'utf8');
  const code=source.slice(source.indexOf('async function liveRow('),source.indexOf('async function mapLimit('));
- let calls=0,release;const gate=new Promise(r=>release=r);
- const read=new Function('fetchText','attachNormalizedLive','Date','const LIVE_TTL_MS=30000,liveCache=new Map(),livePending=new Map();\n'+code+'\nreturn liveRow')(
- async target=>{calls++;await gate;return {url:target.href,status:200}},v=>v,{now:()=>100000});
+ let calls=0,now=100000;
+ const read=new Function('fetchText','attachNormalizedLive','Date','const LIVE_TTL_MS=30000,liveCache=new Map();\n'+code+'\nreturn liveRow')(
+ async target=>{calls++;return {url:target.href,status:200}},v=>v,{now:()=>now});
  const target=new URL('https://fixture.invalid/channel');
- const pending=Array.from({length:10},(_,i)=>read(target,i%2===0));
- assert.equal(calls,1);release();assert((await Promise.all(pending)).every(r=>r.status===200));
- await read(target);assert.equal(calls,1);
+ assert.equal((await read(target)).status,200);await read(target);assert.equal(calls,1);
+ now+=30000;await read(target);assert.equal(calls,2);await read(target,true);assert.equal(calls,3);
+ assert(!source.includes('livePending'),'Do not share request-scoped I/O promises across invocations');
 });
