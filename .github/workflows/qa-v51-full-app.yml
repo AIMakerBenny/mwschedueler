@@ -1,0 +1,20 @@
+name: V51 full app request attribution
+on:
+  push:
+    branches: [request-v51-unified-media-nov24]
+permissions:
+  contents: read
+jobs:
+  full-app:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      MWS_QA_OFFLINE: '1'
+      MWS_QA_V5_ATTRIBUTION: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Two complete rounds with V51 active
+        run: bash scripts/mws-v3-network-only.sh node scripts/qa-request-budget-full-app-v2-browser.mjs
