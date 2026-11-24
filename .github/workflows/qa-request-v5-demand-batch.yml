@@ -1,0 +1,24 @@
+name: Demand media batch V5 isolated QA
+on:
+  push:
+    branches: [request-v5-demand-batch-nov24]
+permissions:
+  contents: read
+jobs:
+  local-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      MWS_QA_OFFLINE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Demand-only batch and existing cache contracts
+        run: |
+          bash scripts/mws-v3-network-only.sh node --test scripts/qa-request-v5-demand-batch.test.mjs scripts/qa-request-v3-cache-integrity.test.mjs scripts/qa-request-v3-live-cache.test.mjs
+          bash scripts/mws-v3-network-only.sh node --check assets/app-core.js
+          bash scripts/mws-v3-network-only.sh node --check src/cf-v111-auth.js
+          bash scripts/mws-v3-network-only.sh node --check src/cf-v111-entry.js
+          bash scripts/mws-v3-network-only.sh node scripts/build-cf-static-runtime.mjs --check
