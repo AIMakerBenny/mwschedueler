@@ -55,7 +55,14 @@ function createPublicReadSharing({channel,locks,storage,now=Date.now,delay=setTi
   if(epoch===null)return Promise.resolve().then(policy.load).then(value=>({at:now(),value}));
   return read('workspace-epoch:'+epoch+':'+key,policy);
  }
- return {read,readWorkspace,invalidateWorkspace};
+ function publishWorkspaceParts(versions){
+  if(!storage||!versions||typeof versions!=='object')return false;
+  try{
+   storage.setItem('mws-public-confirmed-parts-v3',JSON.stringify({at:now(),nonce:Math.random(),versions}));
+   return true;
+  }catch(_){return false}
+ }
+ return {read,readWorkspace,invalidateWorkspace,publishWorkspaceParts};
 }
 let channel=null,locks=null;try{locks=typeof navigator==='object'?navigator.locks:null;if(typeof BroadcastChannel==='function'&&locks?.request)channel=new BroadcastChannel('mws-public-read-sharing-v1')}catch(_){}
 let storage=null;try{storage=window.localStorage}catch(_){}

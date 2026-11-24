@@ -252,6 +252,34 @@ try{
   await nav(['calendar','contentApplications','calendar','contentApplications']);
   assert.equal(arrivals.slice(batchBefore).filter(r=>r.path==='/api/soop/application-batch'||r.path==='/api/soop/application-sync').length,2);
   console.log('V3_APPLICATION_BATCH_OK '+JSON.stringify({active:10,expired:50,worker:2,upstream:10,warm:0,expiredRequests:0}));
+  // One public tab observes a verified Admin save via IndexedDB; a second
+  // public tab has a local edit and must retain it, with no server read.
+  await nav(['calendar']);
+  const address=base+':'+server.address().port+'/';
+  const clean=await browser.sibling(address),editor=await browser.sibling(address);
+  const publicReady="!!window.__mwsAppReadyV130&&document.body.dataset.mwsMode==='public'&&!document.body.classList.contains('mws-app-loading')&&!document.body.classList.contains('mws-gated')";
+  await until(async()=>await clean.evaluate(publicReady)&&await editor.evaluate(publicReady),'Public peer tabs ready',300);
+  await pause(1500);
+  await browser.evaluate("data.events[0].title='Local unsaved fixture edit';true");
+  await editor.evaluate("document.querySelector('#mwsChangeModeBtn').click()");
+  await until(()=>editor.evaluate("document.querySelector('#mwsLoginForm').dataset.mode==='admin'"),'Peer admin login form');
+  await editor.evaluate("document.querySelector('#mwsLoginId').value='Majoku0216';document.querySelector('#mwsLoginPw').value='local-fixture-only';document.querySelector('#mwsLoginForm').requestSubmit()");
+  await until(()=>editor.evaluate("!!window.__mwsAppReadyV130&&document.body.dataset.mwsMode==='admin'&&!document.body.classList.contains('mws-app-loading')&&!document.body.classList.contains('mws-gated')"),'Peer admin ready',300);
+  await pause(1500);
+  const peerOffset=calls.length;
+  assert(await editor.evaluate("(async()=>{data.events[0].title='Confirmed peer event';window.saveData('peer fixture');return await window.mwsV55SaveNow()})()"));
+  // Chromium background tabs can be hidden. Bring each to its foreground
+  // before testing its visibility-gated, local-only application.
+  await clean.evaluate("window.dispatchEvent(new CustomEvent('mws:workspace-tab-v1'));true");
+  await until(()=>clean.evaluate("data.events[0].title==='Confirmed peer event'"),'Peer event from shared cache',200);
+  await browser.evaluate("window.dispatchEvent(new CustomEvent('mws:workspace-tab-v1'));true");
+  assert.equal(await browser.evaluate("data.events[0].title"),'Local unsaved fixture edit');
+  await pause(300);
+  const peerRows=calls.slice(peerOffset);
+  assert.equal(peerRows.filter(r=>r.path==='/api/save').length,1);
+  assert.equal(peerRows.filter(common).length,0,'Peer update issued a network read');
+  console.log('V3_PEER_SAVE_OK '+JSON.stringify({writes:1,extraReads:0,cleanTabUpdated:true,localEditPreserved:true,worker:summary(peerRows)}));
+  await browser.closeTarget(clean.targetId);await browser.closeTarget(editor.targetId);
   assert.equal(errors.length,0,JSON.stringify(errors));
  }else if(process.env.MWS_QA_LONG_IDLE==='1'||process.env.MWS_QA_SESSION==='1'){
   const mode=process.env.MWS_QA_IDLE_MODE||'public',visibility=process.env.MWS_QA_IDLE_VISIBILITY||'visible';

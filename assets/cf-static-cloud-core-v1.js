@@ -240,6 +240,7 @@
       const previewUnchanged=previewVersions&&serverManifest?.parts&&INITIAL_PARTS.every(part=>previewVersions[part]===Number(serverManifest.parts[part]));
       if(!previewUnchanged)normalizeAndRender(offline?'IndexedDB 오프라인 캐시':'Cloudflare D1 데이터',true);
       else metric('calendar-local-first-reused',{scope});
+      if(chosen==='public')for(const part of loadedParts)normalizedReadBaseline.set(part,JSON.stringify(extractPart(part)));
       if(startupUsed&&!offline&&serverManifest?.parts){try{const hints={};for(const p of INITIAL_PARTS)if(loadedParts.has(p)&&Number.isSafeInteger(Number(serverManifest.parts[p])))hints[p]=Number(serverManifest.parts[p]);localStorage.setItem('mws_calendar_startup_versions_v2:'+scope,JSON.stringify(hints))}catch(_){}}
       metric('calendar-startup-commit',{scope,loaded:[...loadedParts]});
       try{localStorage.removeItem('mawangSchedulerBeta')}catch(_){}
@@ -275,6 +276,7 @@
         if(hydratedParts.length){
           // Background data hydration must not redraw unrelated hidden screens.
           normalizeDataShape();
+          if(scope==='public')for(const part of hydratedParts)normalizedReadBaseline.set(part,JSON.stringify(extractPart(part)));
           try{window.dispatchEvent(new CustomEvent('mws:parts-loaded',{detail:{tab:'export',parts:hydratedParts}}))}catch(_){}
         }
         return missing.every(part=>loadedParts.has(part));
@@ -495,7 +497,7 @@
             throw error;
           }
           if(generation!==hydrationSeq||mode!=='admin')throw Error('저장 세션이 변경되었습니다.');
-          const versions=result.versions,normalized=result.normalized;
+          const versions=result.versions,normalized=result.normalized,peerWrites=[];
           for(const part of partsToSave){
             const local=extractPart(part),serverValue=normalized[part],version=Number(versions[part]);
             if(sameSaveValue(local,payload[part]))mergePart(part,serverValue,data);
@@ -504,9 +506,11 @@
             void putCachedPart('admin',part,version,serverValue);
             // The server commits identical normalized public/admin rows. Cache only
             // that acknowledged public value, never uncommitted local edits.
-            void putCachedPart('public',part,version,serverValue);
+            peerWrites.push(putCachedPart('public',part,version,serverValue));
           }
           window.mwsPublicReadSharingV1?.invalidateWorkspace?.();
+          // The peer notice is emitted only after the IndexedDB writes settle.
+          void Promise.all(peerWrites).then(()=>window.mwsPublicReadSharingV1?.publishWorkspaceParts?.(versions)).catch(()=>{});
           markDirty();persistSaveDraft();recoveries=0;
         }
         if(draftBlocked){setSaveStatus('저장 완료 · 충돌 복구본 별도 확인',true);showDraftExport();return false}
@@ -530,6 +534,75 @@
     }
     return out;
   };
+
+  // Public session edits remain local. Accept a confirmed same-browser save
+  // only when all affected, loaded parts still match their read baselines.
+  // Never replace an open editor, merge an Admin draft, or fetch on a peer event.
+  let peerApplyBusy=false,peerNotice=null;
+  const peerNoticeKey='mws-public-confirmed-parts-v3';
+  function queuePeerWorkspace(event){
+    if(event.key!==peerNoticeKey||!event.newValue)return;
+    try{
+      const notice=JSON.parse(event.newValue),versions=notice.versions;
+      if(!versions||typeof versions!=='object'||Array.isArray(versions))return;
+      const entries=Object.entries(versions);
+      if(!entries.length||entries.some(([p,v])=>!ALL_PARTS.includes(p)||!Number.isSafeInteger(v)||v<1))return;
+      // Keep the highest confirmed version per part across notices.
+      const next={...(peerNotice||{})};
+      for(const [p,v] of entries)next[p]=Math.max(next[p]||0,v);
+      peerNotice=next;void applyPeerWorkspace();
+    }catch(_){}
+  }
+  async function applyPeerWorkspace(){
+    if(peerApplyBusy||!peerNotice||mode!=='public'||hydrating||remainingWorkspaceLoad||!manifest?.parts||!window.__mwsAppReadyV130||document.hidden||document.querySelector('.modal.open,dialog[open],.modal-overlay.open,.modal-backdrop.open'))return false;
+    const generation=hydrationSeq,notice=peerNotice;
+    const targets=Object.entries(notice).filter(([p,v])=>v>Number(manifest.parts[p]||0));
+    if(!targets.length){if(peerNotice===notice)peerNotice=null;return true}
+    peerApplyBusy=true;
+    try{
+      const rows=await Promise.all(targets.map(([p])=>getCachedPart('public',p)));
+      if(generation!==hydrationSeq||mode!=='public'||hydrating||remainingWorkspaceLoad||document.hidden||document.querySelector('.modal.open,dialog[open],.modal-overlay.open,.modal-backdrop.open'))return false;
+      if(rows.some((row,i)=>!row||!ownSave(row,'data')||!Number.isSafeInteger(Number(row.version))||Number(row.version)<targets[i][1]))return false;
+      // Check every affected part before applying any of the saved transaction.
+      const changed=targets.filter(([p],i)=>Number(rows[i].version)>Number(manifest.parts[p]||0));
+      if(changed.some(([p])=>loadedParts.has(p)&&!sameSerializedSaveValue(JSON.stringify(extractPart(p)),normalizedReadBaseline.get(p)??baselineJson.get(p)))){
+        metric('peer-workspace-preserved-local',{parts:changed.map(([p])=>p)});
+        return false;
+      }
+      const touched=[];
+      for(let i=0;i<targets.length;i++){
+        const [part]=targets[i],row=rows[i],version=Number(row.version);
+        if(version<=Number(manifest.parts[part]||0))continue;
+        manifest.parts[part]=version;
+        if(loadedParts.has(part)){
+          mergePart(part,row.data,data);baselineJson.set(part,JSON.stringify(row.data));touched.push(part);
+        }
+      }
+      if(touched.length){
+        normalizeAndRender('다른 탭의 저장 내용 반영');
+        for(const part of touched)normalizedReadBaseline.set(part,JSON.stringify(extractPart(part)));
+        try{window.dispatchEvent(new CustomEvent('mawang:datachange',{detail:{reason:'다른 탭의 저장 내용 반영',parts:touched}}))}catch(_){}
+      }
+      try{
+        const hints={};
+        for(const p of INITIAL_PARTS)if(loadedParts.has(p)&&Number.isSafeInteger(Number(manifest.parts[p])))hints[p]=Number(manifest.parts[p]);
+        localStorage.setItem('mws_calendar_startup_versions_v2:public',JSON.stringify(hints));
+      }catch(_){}
+      if(peerNotice===notice)peerNotice=null;
+      metric('peer-workspace-cache-applied',{parts:touched});
+      return true;
+    }catch(error){console.warn('Local peer cache could not be applied',error);return false}
+    finally{
+      peerApplyBusy=false;
+      // A newer notice can arrive while IndexedDB is being read. Process only
+      // that newer event, not a polling/retry loop.
+      if(peerNotice&&peerNotice!==notice)void applyPeerWorkspace();
+    }
+  }
+  window.addEventListener('storage',queuePeerWorkspace);
+  window.addEventListener('mws:workspace-tab-v1',()=>{void applyPeerWorkspace()});
+  window.addEventListener('mws:app-ready',()=>{void applyPeerWorkspace()});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void applyPeerWorkspace()});
   window.addEventListener('online',()=>{if(mode==='admin'&&dirtyParts.size){if(manifest?.parts)queueCloudSave();else setSaveStatus('연결 복구 · 복구본을 보관했습니다. 새로고침 후 다시 저장해 주세요',true)}});
   function installSaveBridge(){
     const devicePersist=()=>{try{if(typeof mwsSaveDevicePrefs==='function')mwsSaveDevicePrefs(data)}catch(_){}if(mode==='admin')queueCloudSave();return true};
