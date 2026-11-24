@@ -1,0 +1,68 @@
+name: Read-only production media reference inventory
+on:
+  push:
+    branches: [audit-v5-data-shape-nov24]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Compare D1 image references and R2 key metadata only
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          node --input-type=module <<'NODE'
+          const a=process.env.CF_ACCOUNT,t=process.env.CF_TOKEN;
+          if(!/^[a-f0-9]{32}$/i.test(a||'')||!t)throw Error('Missing credentials');
+          const base='https://api.cloudflare.com/client/v4/accounts/'+a;
+          async function call(path,body){
+            try{const r=await fetch(base+path,{method:body?'POST':'GET',headers:{authorization:'Bearer '+t,'content-type':'application/json'},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(20000),redirect:'error'});const j=await r.json();return {status:r.status,j}}catch(e){return {status:0,j:{errors:[{code:e.name}]}}}
+          }
+          const settings=await call('/workers/scripts/mawang-scheduler/settings');
+          const bindings=settings.j.result?.bindings||[],db=bindings.find(x=>x.name==='DB'),bucket=bindings.find(x=>x.name==='IMAGES');
+          console.log('INVENTORY_BINDINGS '+JSON.stringify({http:settings.status,d1:!!db,r2:!!bucket,dbFields:Object.keys(db||{}),bucketFields:Object.keys(bucket||{})}));
+          const dbid=db?.id||db?.database_id,bname=bucket?.bucket_name||bucket?.bucket;
+          let objects=[],complete=false;
+          if(bname){
+            let cursor='';
+            for(let page=0;page<10;page++){
+              const r=await call('/r2/buckets/'+encodeURIComponent(bname)+'/objects?per_page=1000'+(cursor?'&cursor='+encodeURIComponent(cursor):''));
+              if(!r.j.success){console.log('INVENTORY_R2_ERROR '+JSON.stringify({http:r.status,codes:r.j.errors?.map(x=>x.code)}));break}
+              const rows=Array.isArray(r.j.result)?r.j.result:r.j.result?.objects;
+              if(!Array.isArray(rows)){console.log('INVENTORY_R2_SHAPE '+JSON.stringify({keys:Object.keys(r.j.result||{})}));break}
+              objects.push(...rows);cursor=r.j.result_info?.cursor||r.j.result?.cursor||'';
+              if(!cursor){complete=true;break}
+            }
+          }
+          const keys=new Map(objects.map(x=>[x.key||x.name,x]));
+          const groups={};for(const o of objects){const k=String(o.key||o.name||'').split('/')[0];if(!['contacts','workspace','achievements','wardogs','mawang-archive-profile','mawang-archive-gallery'].includes(k))continue;const g=groups[k]||={count:0,bytes:0,types:{}};g.count++;g.bytes+=Number(o.size)||0;const type=o.http_metadata?.content_type||o.http_metadata?.contentType||'unknown';g.types[type]=(g.types[type]||0)+1}
+          console.log('INVENTORY_R2 '+JSON.stringify({complete,objects:objects.length,groups}));
+          if(!dbid){console.log('INVENTORY_D1 unavailable');process.exit(0)}
+          const sql="SELECT part,data FROM workspace_parts WHERE scope='public' AND part IN ('contacts','core','contactMeta','miniGames','wardogs','posts')";
+          const r=await call('/d1/database/'+dbid+'/query',{sql});
+          if(!r.j.success){console.log('INVENTORY_D1_ERROR '+JSON.stringify({http:r.status,codes:r.j.errors?.map(x=>x.code)}));process.exit(0)}
+          const results=r.j.result?.[0]?.results||[],meta=r.j.result?.[0]?.meta||{};
+          const data=Object.fromEntries(results.map(x=>[x.part,JSON.parse(x.data)]));
+          const count={total:0,exact:0,exactMissing:0,exactUnsupportedType:0,legacy:0,unversioned:0,otherLocal:0,external:0,inline:0,empty:0},missingIds={};
+          for(const c of Array.isArray(data.contacts)?data.contacts:[]){
+            count.total++;const v=String(c?.image||'');
+            if(!v){count.empty++;continue}
+            if(v.startsWith('data:')){count.inline++;continue}
+            if(/^https?:/.test(v)){count.external++;continue}
+            const u=new URL(v,'https://local.invalid'),m=/^\/media\/contact\/([A-Za-z0-9_-]+)$/.exec(u.pathname);
+            if(!m){count.otherLocal++;continue}
+            const ver=u.searchParams.get('v'),hash=u.searchParams.get('h');
+            if(/^[1-9]\d*$/.test(ver||'')&&/^[a-f0-9]{32}$/.test(hash||'')){
+              count.exact++;const obj=keys.get('contacts/'+m[1]+'/v'+ver+'-'+hash);
+              if(complete&&!obj)count.exactMissing++;
+              const type=obj?.http_metadata?.content_type||obj?.http_metadata?.contentType;
+              if(type&&!/^image\/(jpeg|png|webp|gif|avif)(;|$)/i.test(type))count.exactUnsupportedType++;
+            }else if(ver)count.legacy++;else count.unversioned++;
+          }
+          const cardIds=(Array.isArray(data.core?.achievementCards)?data.core.achievementCards:[]).flatMap(c=>[c?.frontImageId,c?.backImageId]).filter(Boolean);
+          const achievement={cards:data.core?.achievementCards?.length||0,uniqueImageIds:new Set(cardIds).size,missing:complete?[...new Set(cardIds)].filter(x=>!keys.has('achievements/'+x)).length:null};
+          console.log('INVENTORY_D1 '+JSON.stringify({parts:Object.keys(data),rowsRead:meta.rows_read,contacts:count,achievement,posts:Array.isArray(data.posts)?data.posts.length:null,r2ComparisonComplete:complete}));
+          NODE
