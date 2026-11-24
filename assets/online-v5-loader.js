@@ -48,6 +48,81 @@
     safeFeatures=safeFeatures.replace('window.renderFriendFinderV5=renderFriendFinderV5;','window.mwsEnsureFriendFinderV5=ensureFriendFinderV5;window.renderFriendFinderV5=renderFriendFinderV5;');
     safeFeatures=safeFeatures.replace('const out=setTabBeforeV5.apply(this,arguments);\n    ensureFriendFinderV5();','ensureFriendFinderV5();\n    const out=setTabBeforeV5.apply(this,arguments);');
     safeFeatures=safeFeatures.replace("b.dataset.tab==='friendFinder'))","b.dataset.tab==='contacts'))");
+    // V3: replace the packed legacy notice reader, preserving its renderer and controls.
+    const noticeStart=safeFeatures.indexOf("  let noticeCache={url:'',rows:[],loading:false,error:''};");
+    const noticeEnd=safeFeatures.indexOf('  function renderNoticeRows(',noticeStart);
+    if(noticeStart<0||noticeEnd<0)throw Error('V3 notice patch target missing');
+    safeFeatures=safeFeatures.slice(0,noticeStart)+String.raw`  let noticeCache={url:'',rows:[],loading:false,error:''};
+  const noticeRecords=new Map(),noticeAttempts=new Set(),noticePending=new Map();
+  const NOTICE_PREFIX='mws-dashboard-notice-v3:',NOTICE_TTL=60000;
+  function noticeViewActive(){return window.__mwsAppReadyV130===true&&!document.hidden&&document.getElementById('dashboard')?.classList.contains('active')}
+  function noticeStorageKey(target){return NOTICE_PREFIX+encodeURIComponent(target)}
+  function validNoticeRecord(row){return Number.isFinite(row?.at)&&row.at<=Date.now()&&Array.isArray(row.rows)&&row.rows.length<=5&&row.rows.every(item=>typeof item?.title==='string'&&typeof item.reg_date==='string'&&typeof item.title_no==='string')}
+  function storedNotice(target){
+    try{const row=JSON.parse(localStorage.getItem(noticeStorageKey(target))||'null');if(validNoticeRecord(row))return row}catch(_){}
+    return null
+  }
+  function saveNotice(target,row){noticeRecords.set(target,row);try{localStorage.setItem(noticeStorageKey(target),JSON.stringify(row))}catch(_){}}
+  function recentNotice(row){return validNoticeRecord(row)&&Date.now()-row.at<NOTICE_TTL}
+  function noticeTargetStillActive(target){
+    if(!noticeViewActive())return false;
+    const url=String(data.dashboardNoticeUrl||'').trim(),station=extractStationId(url);
+    return !!station&&soopNoticeApiUrl(station,extractNoticeBoardNumber(url))===target;
+  }
+  async function readNotice(target,force){
+    if(noticePending.has(target))return noticePending.get(target);
+    const load=async()=>{
+      if(!noticeTargetStillActive(target))throw new DOMException('Notice view changed','AbortError');
+      const previous=storedNotice(target);
+      if(!force&&recentNotice(previous)){noticeRecords.set(target,previous);return previous}
+      noticeAttempts.add(target);
+      const json=await fetchSoopJson(target);
+      if(!Array.isArray(json)&&!Array.isArray(json?.notice_data)&&!Array.isArray(json?.data))throw Error('Invalid notice response');
+      const merged=[...(Array.isArray(json?.notice_data)?json.notice_data:[]),...(Array.isArray(json?.data)?json.data:Array.isArray(json)?json:[])];
+      const seen=new Set(),rows=merged.filter(row=>row&&typeof row==='object').filter(row=>{
+        const key=noticePostNo(row)||noticeTitle(row)+'|'+noticeDate(row);
+        if(seen.has(key))return false;seen.add(key);return true;
+      }).sort((a,b)=>noticeDate(b).localeCompare(noticeDate(a))).slice(0,5).map(row=>({title_no:noticePostNo(row),title:noticeTitle(row),reg_date:noticeDate(row)}));
+      const result={at:Date.now(),rows};saveNotice(target,result);return result;
+    };
+    const run=async()=>{
+      const locks=window.navigator?.locks;if(!locks?.request)return load();
+      let entered=false;try{return await locks.request('mws-dashboard-notice-v3:'+target,async()=>{entered=true;return load()})}catch(error){if(entered)throw error;return load()}
+    };
+    const pending=run().finally(()=>{if(noticePending.get(target)===pending)noticePending.delete(target)});
+    noticePending.set(target,pending);return pending;
+  }
+  async function loadDashboardNotices(force=false){
+    if(!noticeViewActive())return;
+    const url=String(data.dashboardNoticeUrl||'').trim(),station=extractStationId(url),boardNumber=extractNoticeBoardNumber(url);
+    const list=document.getElementById('dashboardNoticeList'),status=document.getElementById('dashboardNoticeStatus');
+    if(!url){if(status)status.textContent='SOOP 방송국 게시판 URL을 입력해 주세요.';if(list)list.innerHTML='<div class="empty">공지 URL이 아직 등록되지 않았습니다</div>';return}
+    if(!station){if(status)status.textContent='SOOP 방송국 URL 형식을 확인해 주세요.';if(list)list.innerHTML='<div class="empty">예: https://www.sooplive.com/station/mawang0216/board/98921353</div>';return}
+    const target=soopNoticeApiUrl(station,boardNumber);
+    const memory=noticeRecords.get(target),previous=memory||storedNotice(target);
+    const draw=row=>{
+      noticeCache={url,rows:row.rows,loading:false,error:''};
+      renderNoticeRows(url,station,row.rows,boardNumber);
+      if(status)status.textContent+=' · 최근 조회 '+new Date(row.at).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'});
+    };
+    if(previous)draw(previous);
+    if(!force&&(memory||recentNotice(previous)||noticeAttempts.has(target))){
+      if(!previous&&status)status.textContent='SOOP 공지 조회 실패 · 새로고침으로 다시 시도할 수 있습니다.';
+      if(!previous&&list)list.innerHTML='<div class="empty">공지를 불러오지 못했습니다.</div>';
+      return
+    }
+    if(noticePending.has(target))return;
+    if(!previous){if(status)status.textContent='SOOP 최신 공지를 불러오는 중...';if(list)list.innerHTML='<div class="empty">불러오는 중...</div>'}
+    try{const row=await readNotice(target,force);if(noticeTargetStillActive(target))draw(row)}
+    catch(err){
+      if(err?.name==='AbortError'||!noticeTargetStillActive(target))return;
+      if(status)status.textContent='SOOP 공지 조회 실패'+(previous?' · 마지막 조회 기록 유지':' · 새로고침으로 다시 시도');
+      if(!previous&&list)list.innerHTML='<div class="empty">공지를 불러오지 못했습니다.</div>';
+    }
+  }
+  window.addEventListener('mws:workspace-tab-v1',()=>{if(noticeViewActive())void loadDashboardNotices(false)});
+  window.addEventListener('mws:app-ready',()=>{if(noticeViewActive())void loadDashboardNotices(false)});
+`+safeFeatures.slice(noticeEnd);
     run(safeFeatures);
     if(typeof sharedSearchOwner.contactMatches==='function'){
       window.contactMatches=sharedSearchOwner.contactMatches;

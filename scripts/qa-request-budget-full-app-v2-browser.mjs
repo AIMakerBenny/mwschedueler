@@ -38,6 +38,8 @@ const originalFetch=globalThis.fetch;
 globalThis.fetch=async input=>{
  const u=new URL(typeof input==='string'?input:input.url||input.href);upstream.push(u.hostname+u.pathname);
  if(u.hostname==='api-channel.sooplive.co.kr'){if(featureOnly)await new Promise(resolve=>setTimeout(resolve,250));return Response.json({data:{}})}
+ if(u.hostname==='store.steampowered.com')return new Response('<a data-ds-appid="123" href="https://store.steampowered.com/app/123/"><div class="match_name">Fixture Steam Game</div></a>',{headers:{'content-type':'text/html'}});
+ if(u.hostname==='chapi.sooplive.co.kr'&&u.pathname.endsWith('/board/'))return Response.json({data:[],notice_data:[]});
  if(u.hostname==='chapi.sooplive.co.kr'){const page=Number(u.searchParams.get('page')||1),post=Number(u.pathname.split('/').at(-2));return Response.json({data:[{title_no:post,user_id:page===1&&post===1?'mawang0216':'user'+post+'_'+page,p_comment_no:page,user_nick:'Fixture',like_cnt:post*10+page,comment:'fixture'}],meta:{last_page:post===1?3:4,total:post===1?3:4,current_page:page}})}
  if(u.hostname.startsWith('liveimg.'))return new Response(png,{headers:{'content-type':'image/png'}});
  if(u.hostname==='live.sooplive.com')return new Response('[]',{headers:{'content-type':'application/json'}});
@@ -155,6 +157,34 @@ try{
   await pause(1200);
   assert.equal(syncCount(),expiredBefore,'Expired campaign triggered sync');
   console.log('V3_APPLICATION_SNAPSHOT_OK '+JSON.stringify({sources:2,applicants:7,initialWorker:1,simulatedUpstreamPages:commentCount,freshReloadWorker:0,manualWorker:1,expiredWorker:0}));
+  // Populate a notice board only in the local workspace, without saving.
+  await nav(['calendar']);
+  const noticeOffset=upstream.length;
+  await browser.evaluate("data.dashboardNoticeUrl='https://www.sooplive.com/station/fixture/board/123';renderDashboard();true");
+  await pause(600);
+  const boardCount=()=>upstream.slice(noticeOffset).filter(x=>x==='chapi.sooplive.co.kr/api/fixture/board/').length;
+  assert.equal(boardCount(),0,'Hidden dashboard fetched notices');
+  await nav(['dashboard']);
+  await until(()=>browser.evaluate("document.getElementById('dashboardNoticeStatus')?.textContent.includes('최근 조회')"),'Empty notice snapshot rendered');
+  assert.equal(boardCount(),1);
+  await nav(['calendar','dashboard','calendar','dashboard']);
+  assert.equal(boardCount(),1,'Empty notice result refetched');
+  await browser.evaluate("document.getElementById('dashboardNoticeRefreshBtn').click()");
+  await until(()=>Promise.resolve(boardCount()===2),'Manual notice refresh');
+  console.log('V3_NOTICE_CACHE_OK '+JSON.stringify({hidden:0,initial:1,reentry:0,manual:1}));
+  await nav(['calendar']);
+  await browser.evaluate("window.openSteamGamePickerV111('fixture-event');true");
+  await until(()=>browser.evaluate("document.getElementById('eventModal')?.classList.contains('open')&&!!document.getElementById('eventGameSearchV112')"),'Steam editor opened');
+  const steamCount=()=>arrivals.filter(r=>r.path==='/api/steam/search').length;
+  const steamBefore=steamCount();
+  await browser.evaluate("(()=>{const input=document.getElementById('eventGameSearchV112');input.value='Fixture';input.dispatchEvent(new Event('input',{bubbles:true}));document.getElementById('eventGameSearchBtnV112').click();return true})()");
+  await until(()=>browser.evaluate("document.getElementById('eventGameResultsV112')?.innerText.includes('Fixture Steam Game')"),'Steam search rendered');
+  await pause(550);assert.equal(steamCount(),steamBefore+1);
+  await browser.evaluate("document.getElementById('eventGameSearchBtnV112').click()");
+  await pause(550);assert.equal(steamCount(),steamBefore+1,'Cached search sent a request');
+  await browser.evaluate("(()=>{const input=document.getElementById('eventGameSearchV112');input.value='Abandoned';input.dispatchEvent(new Event('input',{bubbles:true}));document.getElementById('eventModal').classList.remove('open');return true})()");
+  await pause(600);assert.equal(steamCount(),steamBefore+1,'Closed editor sent a scheduled search');
+  console.log('V3_STEAM_SEARCH_OK '+JSON.stringify({initial:1,duplicateClick:0,cached:0,closed:0}));
   assert.equal(errors.length,0,JSON.stringify(errors));
  }else if(process.env.MWS_QA_LONG_IDLE==='1'||process.env.MWS_QA_SESSION==='1'){
   const mode=process.env.MWS_QA_IDLE_MODE||'public',visibility=process.env.MWS_QA_IDLE_VISIBILITY||'visible';
