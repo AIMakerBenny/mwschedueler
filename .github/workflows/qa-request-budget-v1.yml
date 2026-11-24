@@ -1,0 +1,34 @@
+name: Request budget offline QA
+on:
+  pull_request:
+    branches: [cloudflare-production]
+    paths:
+      - 'assets/**'
+      - 'src/**'
+      - 'scripts/qa-request-budget*'
+      - 'scripts/qa-workspace-read-batch-v1.test.mjs'
+      - 'scripts/qa-public-read-sharing-v1.test.mjs'
+      - '.github/workflows/qa-request-budget-v1.yml'
+      - 'index.html'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: request-budget-offline-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  offline-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Network optimization and storage contracts
+        run: |
+          node --test scripts/qa-request-budget-v1.test.mjs scripts/qa-workspace-read-batch-v1.test.mjs scripts/qa-public-read-sharing-v1.test.mjs scripts/qa-request-budget-meter-v1.test.mjs
+          node scripts/qa-achievement-cache-quota.mjs
+          node --test scripts/qa-live-cloud-save-contract-v1.test.mjs
+      - name: Local rank UI fixture
+        run: node scripts/qa-content-applications-v1-browser.mjs

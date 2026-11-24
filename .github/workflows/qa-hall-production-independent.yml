@@ -1,17 +1,14 @@
 name: Hall of Fame independent Cloudflare production verification
 on:
-  push:
-    branches: [cloudflare-production]
-  pull_request:
-    branches: [cloudflare-production]
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: hall-production-verify-${{ github.ref }}
-  cancel-in-progress: true
+  group: cloudflare-production
+  cancel-in-progress: false
 jobs:
   hall-live:
+    if: github.ref == 'refs/heads/cloudflare-production'
     name: Actual live Hall and first-paint, no injected candidate
     runs-on: ubuntu-latest
     timeout-minutes: 15

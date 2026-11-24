@@ -1,10 +1,12 @@
 name: Deploy Cloudflare Production
 
 on:
-  push:
-    branches:
-      - cloudflare-production
   workflow_dispatch:
+    inputs:
+      full_live:
+        description: 'Run extended production browser and historical live checks'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -12,10 +14,11 @@ permissions:
 
 concurrency:
   group: cloudflare-production
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    if: github.ref == 'refs/heads/cloudflare-production'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -379,6 +382,12 @@ jobs:
           node --check scripts/run-phase156-tool-planner-regression-audit.mjs
           node --check scripts/run-current-full-integration-audit.mjs
 
+      - name: Verify request optimization contracts offline
+        run: |
+          node --test scripts/qa-request-budget-v1.test.mjs scripts/qa-workspace-read-batch-v1.test.mjs scripts/qa-public-read-sharing-v1.test.mjs scripts/qa-request-budget-meter-v1.test.mjs
+          node scripts/qa-achievement-cache-quota.mjs
+          node --test scripts/qa-live-cloud-save-contract-v1.test.mjs
+
       - name: Install dependencies
         run: npm install
 
@@ -389,19 +398,38 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
 
+      - name: Bounded production smoke - three requests maximum
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://mawang-scheduler.majoku.workers.dev'
+          curl --fail --silent --show-error --max-time 15 "$base/api/health" -o /tmp/mws-budget-health.json
+          curl --fail --silent --show-error --max-time 20 "$base/?deploy=$GITHUB_SHA" -o /tmp/mws-budget-index.html
+          curl --fail --silent --show-error --max-time 20 "$base/api/parts-batch?parts=core,events" -o /tmp/mws-budget-parts.json
+          node -e "const fs=require('fs'),h=JSON.parse(fs.readFileSync('/tmp/mws-budget-health.json')),p=JSON.parse(fs.readFileSync('/tmp/mws-budget-parts.json'));if(!h.ok||!String(h.backend).includes('D1')||!['core','events'].every(k=>p.results?.[k]?.status===200&&p.results[k].row?.part===k))process.exit(1)"
+          grep -Fq 'assets/request-budget-meter-v1.js?v=1' /tmp/mws-budget-index.html
+          grep -Fq 'assets/public-read-sharing-v1.js?v=1' /tmp/mws-budget-index.html
+          grep -Fq 'id="mwsAccessGate"' /tmp/mws-budget-index.html
+          echo 'Bounded production smoke passed; no production browser loop.'
+
       - name: Recovery H F1 live browser QA
+        if: inputs.full_live == true
         run: node scripts/diagnose-recovery-h-f1-live.mjs
 
       - name: Phase 154 live layout geometry
+        if: inputs.full_live == true
         run: node scripts/diagnose-phase154-live-layout.mjs
 
       - name: Phase 155 live tier planner UI
+        if: inputs.full_live == true
         run: node scripts/diagnose-phase155-tier-planner-ui.mjs
 
       - name: Phase 156 live tool planner regression
+        if: inputs.full_live == true
         run: node scripts/diagnose-phase156-tool-planner-regression.mjs
 
       - name: Diagnose live data shape
+        if: inputs.full_live == true
         shell: bash
         run: |
           set -euo pipefail
@@ -621,6 +649,7 @@ jobs:
           NODE
 
       - name: Verify live Worker
+        if: inputs.full_live == true
         shell: bash
         run: |
           set -euo pipefail
@@ -2899,6 +2928,7 @@ jobs:
 
 
       - name: Verify deployed Hall of Fame in real Chromium
+        if: inputs.full_live == true
         env:
           MWS_HALL_PRODUCTION: '1'
           MWS_HALL_CAPTURE: '1'
@@ -2923,5 +2953,5 @@ jobs:
           set -euo pipefail
           state="$JOB_STATUS"
           if [ "$state" != 'success' ]; then state='failure'; fi
-          STATE="$state" node -e "process.stdout.write(JSON.stringify({state:process.env.STATE,context:'Cloudflare Production',description:process.env.STATE==='success'?'Audit, syntax, deploy and live verification passed':'Production workflow did not complete successfully',target_url:process.env.RUN_URL}))" > /tmp/cloudflare-status.json
+          STATE="$state" node -e "process.stdout.write(JSON.stringify({state:process.env.STATE,context:'Cloudflare Production',description:process.env.STATE==='success'?'Audit, syntax, deploy and bounded smoke passed':'Production workflow did not complete successfully',target_url:process.env.RUN_URL}))" > /tmp/cloudflare-status.json
           curl -fsSL -X POST             -H "Authorization: Bearer $GH_TOKEN"             -H 'Accept: application/vnd.github+json'             -H 'X-GitHub-Api-Version: 2022-11-28'             "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}"             --data-binary @/tmp/cloudflare-status.json

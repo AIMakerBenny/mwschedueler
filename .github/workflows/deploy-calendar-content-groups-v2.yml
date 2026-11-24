@@ -1,99 +1,18 @@
 name: Deploy Calendar Editor Sidebar V5 - Scoped Production
 on:
-  push:
-    branches:
-      - cloudflare-production
-    paths:
-      - '.github/workflows/deploy-calendar-content-groups-v2.yml'
-      - 'assets/calendar-timeline-v1.js'
-      - 'assets/workspace-clean-v1.css'
-      - 'assets/calendar-details-v1.js'
-      - 'assets/calendar-details-v1.css'
-      - 'assets/ui-interactions-v1.css'
-      - 'assets/ui-interactions-v1.js'
-      - 'assets/mawang-archive-*.js'
-      - 'assets/mawang-archive-v1.css'
-      - 'assets/mawang-archive-portraits/**'
-      - 'src/mawang-archive-gallery-v1.js'
-      - 'scripts/qa-mawang-archive-*.mjs'
-      - 'assets/content-applications-v1.js'
-      - 'assets/content-applications-model-v1.js'
-      - 'assets/content-applications-v1.css'
-      - 'scripts/qa-content-applications-v1.test.mjs'
-      - 'scripts/qa-content-applications-v1-browser.mjs'
-      - 'scripts/qa-ui-interactions-v1.test.mjs'
-      - 'scripts/qa-ui-interactions-v1-browser.mjs'
-      - 'scripts/qa-ui-workspace-mutations-v2-browser.mjs'
-      - 'scripts/qa-ui-workspace-live-v2.mjs'
-      - 'scripts/qa-ladder-wizard-v1-browser.mjs'
-      - 'scripts/qa-workspace-navigation-v1-browser.mjs'
-      - 'assets/online-v5-loader.js'
-      - 'assets/ladder-wizard-v1.js'
-      - 'assets/tools.js'
-      - 'assets/content-planner-host.js'
-      - 'scripts/qa-calendar-details-v1-browser.mjs'
-      - 'scripts/qa-calendar-month-viewport-v2-browser.mjs'
-      - 'scripts/qa-calendar-details-motion-v3-browser.mjs'
-      - 'scripts/qa-calendar-details-frame-pacing-v5-browser.mjs'
-      - 'scripts/calendar-browser-realtime.mjs'
-      - 'scripts/qa-live-calendar-drawer-motion-v6.mjs'
-      - 'scripts/qa-mobile-calendar-layout-v2.mjs'
-      - 'assets/posts-responsive-layout-v2.css'
-      - 'assets/posts-focus-layout-v3.js'
-      - 'scripts/qa-posts-responsive-layout-v2.mjs'
-      - 'assets/mobile-calendar-v130.css'
-      - 'assets/device-ui.js'
-      - 'assets/mobile-calendar-quick-add-v130.js'
-      - 'assets/mobile-calendar-day-detail-v130.js'
-      - 'scripts/qa-calendar-game-preview-v3.test.mjs'
-      - 'scripts/qa-workspace-clean-v1-browser.mjs'
-      - 'assets/calendar-timeline-v1.css'
-      - 'scripts/qa-calendar-timeline-v1.test.mjs'
-      - 'scripts/qa-calendar-timeline-v1-browser.mjs'
-      - 'assets/calendar-responsive-cards-v1.css'
-      - 'assets/calendar-stable-layout-v1.css'
-      - 'assets/app-core.js'
-      - 'scripts/qa-dashboard-upcoming-v1.test.mjs'
-      - 'src/cf-v111-entry.js'
-      - 'scripts/qa-login-ready-v2.test.mjs'
-      - 'assets/legacy-hub-v1.css'
-      - 'scripts/qa-legacy-hub-v1.test.mjs'
-      - 'scripts/run-phase116-wardogs-navigation-shell-audit.mjs'
-      - 'scripts/qa-calendar-stable-layout-v1-browser.mjs'
-      - 'assets/sidebar-rail-scrollbar-v1.css'
-      - 'scripts/qa-sidebar-rail-scrollbar-v1-browser.mjs'
-      - 'index.html'
-      - 'scripts/qa-calendar-responsive-v1-browser.mjs'
-      - 'assets/steam-game-v111.js'
-      - 'assets/calendar-content-groups-v2.js'
-      - 'assets/calendar-group-recovery-v1.css'
-      - 'scripts/qa-calendar-group-recovery-v1-browser.mjs'
-      - 'scripts/qa-calendar-content-groups-v2-browser.mjs'
-      - 'scripts/qa-calendar-content-groups-v3-search-browser.mjs'
-      - 'scripts/qa-calendar-groups-cloud-save-v1.test.mjs'
-      - 'assets/cloud-v1.1.js'
-      - 'assets/cloud-runtime-v130.js'
-      - 'assets/cloud-v1.1-loader.js'
-      - 'scripts/qa-live-cloud-save-contract-v1.test.mjs'
-      - 'scripts/run-phase38-calendar-preview-mousemove-audit.mjs'
-      - 'scripts/run-phase174-calendar-pointer-drag-audit.mjs'
-      - 'src/index.js'
-      - 'src/cf-v111-auth.js'
-      - 'scripts/qa-active-cloudflare-core-groups-v1.test.mjs'
-      - 'scripts/qa-live-calendar-core-summary-v1.mjs'
-      - 'scripts/qa-game-library-v1.test.mjs'
-      - 'scripts/qa-game-library-v1-browser.mjs'
+  workflow_dispatch:
 
 permissions:
   contents: read
   statuses: write
 
 concurrency:
-  group: calendar-content-groups-v2-single-deploy
+  group: cloudflare-production
   cancel-in-progress: false
 
 jobs:
   scoped-calendar-deploy:
+    if: github.ref == 'refs/heads/cloudflare-production'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
