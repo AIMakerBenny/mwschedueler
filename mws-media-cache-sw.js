@@ -5,9 +5,10 @@ function cacheKey(url){
   const u=new URL(url,self.location.origin);
   if(u.origin!==self.location.origin)return null;
   const contact=u.pathname.match(/^\/media\/contact\/[A-Za-z0-9_-]{1,160}$/);
+  const workspace=u.pathname.match(/^\/media\/workspace\/[A-Za-z0-9_-]{1,160}$/);
   const profile=u.pathname.match(/^\/media\/mawang-profile\/[a-z0-9-]+$/);
   const portrait=u.pathname.match(/^\/assets\/mawang-archive-portraits\/[a-z0-9-]+\.(?:jpg|webp|png)$/);
-  if(contact&&/^[1-9]\d*$/.test(u.searchParams.get('v')||'')&&/^[a-f0-9]{32}$/.test(u.searchParams.get('h')||'')&&[...u.searchParams.keys()].every(k=>['v','h','r'].includes(k))&&u.searchParams.getAll('v').length===1&&u.searchParams.getAll('h').length===1)return {version:u.searchParams.get('v')+'-'+u.searchParams.get('h')};
+  if((contact||workspace)&&/^[1-9]\d*$/.test(u.searchParams.get('v')||'')&&/^[a-f0-9]{32}$/.test(u.searchParams.get('h')||'')&&[...u.searchParams.keys()].every(k=>(contact?['v','h','r']:['v','h']).includes(k))&&u.searchParams.getAll('v').length===1&&u.searchParams.getAll('h').length===1)return {version:u.searchParams.get('v')+'-'+u.searchParams.get('h')};
   if(contact&&/^[1-9]\d*$/.test(u.searchParams.get('v')||'')&&/^\d+$/.test(u.searchParams.get('r')||'')&&[...u.searchParams.keys()].sort().join(',')==='r,v')return {version:'legacy-'+u.searchParams.get('v')};
   if(profile&&/^\d{1,15}-[a-f0-9]{0,80}$/i.test(u.searchParams.get('rev')||'')&&[...u.searchParams.keys()].length===1)return {version:u.searchParams.get('rev')};
   if(portrait&&/^archive-v\d+$/.test(u.searchParams.get('rev')||'')&&[...u.searchParams.keys()].length===1)return {static:true};

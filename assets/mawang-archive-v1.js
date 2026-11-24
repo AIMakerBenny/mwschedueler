@@ -141,7 +141,7 @@
     if(reset&&!confirm(c.name+'의 프로필 사진을 기본 상태로 되돌리시겠습니까?'))return;
     if(!reset&&(!file||!validTypes.has(file.type)||!file.size||file.size>32*1024*1024)){messages.set(c.id,'프로필 사진 형식 또는 32MB 용량 제한');updateProfileUI(c);return}
     busy.add(c.id);messages.set(c.id,'프로필 사진 저장 중…');updateProfileUI(c);
-    try{const body=await request('/api/mawang-profile/'+c.id,reset?{method:'DELETE'}:{method:'PUT',headers:{'content-type':file.type},body:file});if(reset)profiles.delete(c.id);else{const p=normalizeProfile(body.profile);if(!p||p.character!==c.id)throw Error('프로필 저장 응답 오류');profiles.set(c.id,p)}storeProfileList();messages.set(c.id,reset?'프로필 초기화 완료':'프로필 사진 저장 완료')}
+    try{const body=await request('/api/mawang-profile/'+c.id,reset?{method:'DELETE'}:{method:'PUT',headers:{'content-type':file.type},body:file});if(reset)profiles.delete(c.id);else{const p=normalizeProfile(body.profile);if(!p||p.character!==c.id)throw Error('프로필 저장 응답 오류');profiles.set(c.id,p)}storeProfileList();window.mwsPublicReadSharingV1?.invalidateWorkspace?.();messages.set(c.id,reset?'프로필 초기화 완료':'프로필 사진 저장 완료')}
     catch(error){messages.set(c.id,error.message)}finally{busy.delete(c.id);updateProfileUI(c)}
   }
   function render(){

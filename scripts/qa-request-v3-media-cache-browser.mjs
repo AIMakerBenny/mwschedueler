@@ -14,9 +14,10 @@ const server=createServer((req,res)=>{
  const url=new URL(req.url,'http://127.0.0.1');
  if(url.pathname==='/'){res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store'}).end('<!doctype html><title>Local cache fixture</title><script>window.registration=navigator.serviceWorker.register("/mws-media-cache-sw.js")</script>');return}
  if(url.pathname==='/mws-media-cache-sw.js'){res.writeHead(200,{'content-type':'text/javascript','cache-control':'no-cache'}).end(sw);return}
- if(/^\/media\/contact\/qa\d+$/.test(url.pathname)){
+ if(/^\/media\/(contact|workspace)\/qa\d+$/.test(url.pathname)){
   mediaRequests++;
-  res.writeHead(200,{'content-type':'image/png','content-length':png.length,'cache-control':'public, max-age=31536000, immutable','x-mws-cache-version':url.searchParams.get('v')+'-'+url.searchParams.get('h')}).end(png);return
+  const bad=url.searchParams.get('h')==='b'.repeat(32),privateRow=url.searchParams.get('h')==='c'.repeat(32);
+  res.writeHead(200,{'content-type':'image/png','content-length':png.length,'cache-control':privateRow?'private, no-store':bad?'no-store':'public, max-age=31536000, immutable','x-mws-cache-version':bad?'mismatch':url.searchParams.get('v')+'-'+url.searchParams.get('h')}).end(png);return
  }
  res.writeHead(404).end();
 });
@@ -41,6 +42,16 @@ try{
  await fetchAll([updated]);await until(async()=>await size()===count+1,'Updated revision not cached');
  assert.equal(mediaRequests,first+1);
  console.log('V3_MEDIA_CACHE_BROWSER_OK '+JSON.stringify({images:count,cold:count,warm:0,restart:0,changed:1,retained:await size(),origin:'loopback'}));
+ const workspace=Array.from({length:30},(_,i)=>'/media/workspace/qa'+i+'?v=1&h='+String(i+1).padStart(32,'0'));
+ const beforeWorkspace=mediaRequests;
+ await fetchAll(workspace);await until(async()=>await size()===count+31,'Workspace images not persisted');
+ assert.equal(mediaRequests-beforeWorkspace,30);
+ await fetchAll(workspace);assert.equal(mediaRequests-beforeWorkspace,30);
+ const bad='/media/workspace/qa0?v=2&h='+'b'.repeat(32),priv='/media/workspace/qa0?v=2&h='+'c'.repeat(32);
+ await fetchAll([bad,priv]);await fetchAll([bad,priv]);
+ assert.equal(mediaRequests-beforeWorkspace,34,'Unverified or private image reused');
+ assert.equal(await size(),count+31);
+ console.log('V3_WORKSPACE_MEDIA_OK '+JSON.stringify({cold:30,warm:0,unverifiedRequests:4,unverifiedRetained:0}));
 }finally{
  if(browser)await browser.close();
  await new Promise(r=>server.close(r));

@@ -18,7 +18,7 @@ jobs:
       - name: No-network contracts and generated runtime equivalence
         run: |
           bash scripts/mws-v3-network-only.sh node scripts/build-cf-static-runtime.mjs --check
-          bash scripts/mws-v3-network-only.sh node --test scripts/qa-request-v3-shared-workspace.test.mjs scripts/qa-request-v3-read-defaults.test.mjs scripts/qa-request-v3-feature-guards.test.mjs
+          bash scripts/mws-v3-network-only.sh node --test scripts/qa-request-v3-shared-workspace.test.mjs scripts/qa-request-v3-read-defaults.test.mjs scripts/qa-request-v3-feature-guards.test.mjs scripts/qa-request-v3-cache-integrity.test.mjs
           bash scripts/mws-v3-network-only.sh node --check mws-media-cache-sw.js
   local-browser:
     needs: local-contracts

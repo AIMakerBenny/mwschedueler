@@ -35,7 +35,7 @@ window.addEventListener('error',event=>{
 <script id="mws-motion-preference">
 (()=>{const key='mws-screen-motion-v1',system=matchMedia('(prefers-reduced-motion: reduce)');let mode='system';try{const saved=localStorage.getItem(key);if(['full','reduced','system'].includes(saved))mode=saved}catch(_){}const apply=()=>{const reduced=mode==='reduced'||(mode==='system'&&system.matches);document.documentElement.dataset.mwsMotion=reduced?'reduced':'full';window.dispatchEvent(new Event('mws-motion-change'))};window.mwsMotionReduced=()=>document.documentElement.dataset.mwsMotion==='reduced';apply();system.addEventListener('change',apply);document.addEventListener('DOMContentLoaded',()=>{const select=document.getElementById('mwsScreenMotion');if(!select)return;select.value=mode;select.addEventListener('change',()=>{mode=select.value;try{localStorage.setItem(key,mode)}catch(_){}apply()})})})();
 </script>
-<script src="assets/public-read-sharing-v1.js?v=1"></script>
+<script src="assets/public-read-sharing-v1.js?v=2"></script>
 <script>
 // Start the authoritative calendar read before CSS and the large UI runtime.
 (()=>{
@@ -57,7 +57,7 @@ window.addEventListener('error',event=>{
  const read=async()=>{
   const sharing=window.mwsPublicReadSharingV1;
   if(!canShare||typeof sharing?.read!=='function')return load();
-  const {value}=await sharing.read('calendar-startup-v3:'+hints,{ttl,load,valid});
+  const {value}=await (sharing.readWorkspace||sharing.read)('calendar-startup-v3:'+hints,{ttl,load,valid});
   return value==null?null:structuredClone(value);
  };
  window.__mwsCalendarStartupRequestV2=read().then(batch=>{if(Array.isArray(batch?.profiles))window.__mwsStartupProfiles=batch.profiles;if(Array.isArray(batch?.applicationSnapshots))window.__mwsApplicationSnapshotsV1=batch.applicationSnapshots;return batch}).catch(()=>null);
@@ -5168,7 +5168,7 @@ body.mws-premium #mwsAccessGate .mws-login-title{font-size:22px!important;margin
 <script src="assets/calendar-day-expand-v1.js?v=1"></script>
 <link rel="stylesheet" href="assets/mawang-archive-v1.css?v=12">
 <script defer src="assets/mawang-archive-data-v1.js?v=11"></script>
-<script defer src="assets/mawang-archive-v1.js?v=20&startup=1"></script>
+<script defer src="assets/mawang-archive-v1.js?v=21&startup=1"></script>
 <link rel="stylesheet" href="assets/sidebar-compact-v1.css?v=3">
 <link rel="stylesheet" href="assets/topbar-context-v1.css?v=2">
 <link rel="stylesheet" href="assets/mawang-archive-header-v1.css?v=3">

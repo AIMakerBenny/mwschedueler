@@ -2,7 +2,7 @@
 (()=>{
 'use strict';
 if(window.mwsPublicReadSharingV1)return;
-function createPublicReadSharing({channel,locks,now=Date.now,delay=setTimeout,cancel=clearTimeout}){
+function createPublicReadSharing({channel,locks,storage,now=Date.now,delay=setTimeout,cancel=clearTimeout}){
  const cache=new Map(),waiting=new Map();let seq=0;
  const validAge=(record,ttl)=>record&&Number.isFinite(record.at)&&record.at<=now()&&now()-record.at<ttl;
  const save=(key,record)=>{
@@ -38,8 +38,26 @@ function createPublicReadSharing({channel,locks,now=Date.now,delay=setTimeout,ca
    return fetchNew();
   })}catch(error){if(entered)throw error;return fetchNew()}
  }
- return {read};
+ // A confirmed same-browser save invalidates startup/parts sharing without a
+ // polling timer or sending private data. New tabs read the same storage epoch.
+ const workspaceEpochKey='mws-public-workspace-epoch-v3';
+ function workspaceEpoch(){
+  if(storage===null)return null;
+  if(storage===undefined)return '0'; // injectable non-browser unit-test adapter
+  try{return storage.getItem(workspaceEpochKey)||'0'}catch(_){return null}
+ }
+ function invalidateWorkspace(){
+  if(!storage)return false;
+  try{storage.setItem(workspaceEpochKey,String(now())+':'+Math.random().toString(36).slice(2));return true}catch(_){return false}
+ }
+ function readWorkspace(key,policy){
+  const epoch=workspaceEpoch();
+  if(epoch===null)return Promise.resolve().then(policy.load).then(value=>({at:now(),value}));
+  return read('workspace-epoch:'+epoch+':'+key,policy);
+ }
+ return {read,readWorkspace,invalidateWorkspace};
 }
 let channel=null,locks=null;try{locks=typeof navigator==='object'?navigator.locks:null;if(typeof BroadcastChannel==='function'&&locks?.request)channel=new BroadcastChannel('mws-public-read-sharing-v1')}catch(_){}
-window.mwsPublicReadSharingV1=createPublicReadSharing({channel,locks});
+let storage=null;try{storage=window.localStorage}catch(_){}
+window.mwsPublicReadSharingV1=createPublicReadSharing({channel,locks,storage});
 })();

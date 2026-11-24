@@ -123,7 +123,7 @@
     const pairs=[...parts].sort().map(part=>[part,versions?.[part]]);
     if(!allowed||typeof sharing?.read!=='function'||pairs.some(([,version])=>!Number.isSafeInteger(version)||version<1))return load();
     const key='workspace-parts-v3:'+JSON.stringify(pairs);
-    const {value}=await sharing.read(key,{ttl:8000,load,valid:body=>valid(body,versions)});
+    const {value}=await (sharing.readWorkspace||sharing.read)(key,{ttl:8000,load,valid:body=>valid(body,versions)});
     return clone(value);
   }
   async function flushPartReads(queue,shareAllowed=false){
@@ -502,7 +502,11 @@
             else{const merged=mergeSaveChanges(payload[part],local,serverValue,part);if(merged.ok)mergePart(part,merged.value,data)}
             manifest.parts[part]=version;normalizedReadBaseline.delete(part);baselineJson.set(part,JSON.stringify(serverValue));
             void putCachedPart('admin',part,version,serverValue);
+            // The server commits identical normalized public/admin rows. Cache only
+            // that acknowledged public value, never uncommitted local edits.
+            void putCachedPart('public',part,version,serverValue);
           }
+          window.mwsPublicReadSharingV1?.invalidateWorkspace?.();
           markDirty();persistSaveDraft();recoveries=0;
         }
         if(draftBlocked){setSaveStatus('저장 완료 · 충돌 복구본 별도 확인',true);showDraftExport();return false}
