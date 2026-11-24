@@ -5,8 +5,9 @@ const THUMB_HOSTS=['liveimg.sooplive.com','liveimg.sooplive.co.kr'];
 const CATEGORY_URL='https://live.sooplive.com/script/locale/ko_KR/broad_category.js';
 const LIVE_TTL_MS=30000;
 const CATEGORY_TTL_MS=6*60*60*1000;
-const BATCH_MAX=120;
-const CONCURRENCY=48;
+const BATCH_MAX=12;
+const CONCURRENCY=4;
+const MAX_LIVE_REDIRECTS=3;
 const FETCH_TIMEOUT_MS=5000;
 const liveCache=new Map();
 let categoryCache={at:0,categories:[]};
@@ -38,7 +39,14 @@ function parseChannelUrl(raw){
 async function fetchText(target){
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),FETCH_TIMEOUT_MS);
   try{
-    const res=await fetch(target.toString(),{headers:browserHeaders(target),redirect:'follow',signal:controller.signal});
+    let current=target,res;
+    for(let n=0;n<=MAX_LIVE_REDIRECTS;n++){
+      res=await fetch(current.toString(),{headers:browserHeaders(current),redirect:'manual',signal:controller.signal});
+      if(![301,302,303,307,308].includes(res.status))break;
+      const location=res.headers.get('location');await res.body?.cancel().catch(()=>{});
+      if(!location||n===MAX_LIVE_REDIRECTS)throw Error('SOOP redirect limit');
+      current=parseChannelUrl(new URL(location,current).href);if(!current)throw Error('SOOP redirect target not allowed');
+    }
     const body=await res.text();
     return {url:target.href,status:res.status,contentType:res.headers.get('content-type')||'application/json; charset=utf-8',body};
   }catch(error){

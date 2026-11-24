@@ -135,8 +135,8 @@
       }
     }catch(error){for(const part of parts)deliver(part,null,error)}
   }
-  async function loadPartWithCache(scope,part,serverManifest,{allowStale=true}={}){
-    const wanted=Number(serverManifest?.parts?.[part])||0,cacheCheck=await timeout(getCachedPart(scope,part),1500,'로컬 캐시 확인').then(cached=>({cached}),()=>({cached:null,timedOut:true})),cached=cacheCheck.cached;
+  async function loadPartWithCache(scope,part,serverManifest,{allowStale=true,checkedCache=null}={}){
+    const wanted=Number(serverManifest?.parts?.[part])||0,cacheCheck=checkedCache||await checkPartCache(scope,part),cached=cacheCheck.cached;
     if(serverManifest?.parts&&!ownSave(serverManifest.parts,part)){
       if(cacheCheck.timedOut||Number(cached?.version)>0)throw Error('서버 데이터가 없어 기존 캐시를 보호합니다: '+part);
       return{data:extractPart(part,freshSkeleton()),version:0,source:'absent'};
@@ -148,9 +148,22 @@
     void putCachedPart(scope,part,row.version,row.data).catch(()=>{});return{data:row.data,version:Number(row.version),source:'network'};
   }
 
+  function checkPartCache(scope,part){return timeout(getCachedPart(scope,part),1500,'로컬 캐시 확인').then(cached=>({cached}),()=>({cached:null,timedOut:true}))}
+  // Resolve IndexedDB checks together before issuing any network reads. The
+  // existing part queue then sends all misses in one request, not per tab.
+  async function loadWorkspaceParts(scope,parts,serverManifest,startupParts={}){
+    const ready=part=>{const row=startupParts[part],wanted=Number(serverManifest?.parts?.[part]);return row&&ownSave(row,'data')&&Number.isInteger(wanted)&&Number(row.version)===wanted?row:null};
+    const checks=await Promise.all(parts.map(part=>ready(part)?null:checkPartCache(scope,part)));
+    return Promise.allSettled(parts.map((part,i)=>{
+      const row=ready(part);
+      if(row){void putCachedPart(scope,part,Number(row.version),row.data).catch(()=>{});return row}
+      return loadPartWithCache(scope,part,serverManifest,{allowStale:true,checkedCache:checks[i]});
+    }));
+  }
+  let remainingWorkspaceLoad=null,remainingRetryAt=0;
   async function hydrate(chosen){
     const generation=++hydrationSeq;hydrating=true;window.__mwsAppReadyV130=false;mode=chosen;
-    loadedParts.clear();baselineJson.clear();dirtyParts.clear();lazyPartLoads.clear();manifest=null;draftBlocked=null;lastDraft=null;draftOrigin=null;
+    loadedParts.clear();baselineJson.clear();dirtyParts.clear();lazyPartLoads.clear();remainingWorkspaceLoad=null;remainingRetryAt=0;manifest=null;draftBlocked=null;lastDraft=null;draftOrigin=null;
     const scope=chosen==='admin'?'admin':'public',required=chosen==='admin'?ALL_PARTS:INITIAL_PARTS;
     let serverManifest=null,offline=false,startupParts={},startupUsed=false;
     setLoginError('로그인 완료 · 서버 버전을 확인하는 중입니다.');
@@ -171,16 +184,8 @@
       const showProgress=()=>{if(generation===hydrationSeq&&mode===chosen)setLoginError(`로그인 완료 · 필수 데이터 ${transferred}/${required.length} 확인 중`)};
       showProgress();
       const loadBatch=async parts=>{
-      const results=await Promise.allSettled(parts.map(async part=>{
-        try{
-          const row=startupParts[part],wanted=Number(serverManifest?.parts?.[part]);
-          if(row&&ownSave(row,'data')&&Number.isInteger(wanted)&&Number(row.version)===wanted){
-            void putCachedPart(scope,part,wanted,row.data).catch(()=>{});
-            return row;
-          }
-          return await loadPartWithCache(scope,part,serverManifest,{allowStale:true});
-        }finally{transferred++;showProgress()}
-      }));
+      const results=await loadWorkspaceParts(scope,parts,serverManifest,startupParts);
+      transferred+=parts.length;showProgress();
       if(generation!==hydrationSeq||mode!==chosen)throw Error('데이터 로딩이 취소되었습니다.');
       for(let i=0;i<parts.length;i++){
         const part=parts[i],result=results[i];let row=result.status==='fulfilled'?result.value:null;
@@ -191,7 +196,8 @@
       }};
       // All calendar dependencies load together. Do not paint a partial or
       // empty month and replace its DOM again a frame later.
-      await loadBatch(required);
+      await loadBatch(INITIAL_PARTS);
+      if(chosen==='admin')await loadBatch(required.filter(part=>!loadedParts.has(part)));
       setLoginError('로그인 완료 · 화면을 준비하는 중입니다.');
       data=next;normalizeDataShape();const recovered=chosen==='admin'&&!offline?await recoverSaveDraft():false;
       normalizeAndRender(offline?'IndexedDB 오프라인 캐시':'Cloudflare D1 데이터',true);
@@ -204,32 +210,44 @@
       try{window.dispatchEvent(new CustomEvent('mws:app-ready',{detail:{scope,online:!offline,adminReady:window.__mwsAppReadyV130}}))}catch(_){}
       if(recovered&&dirtyParts.size){hydrating=false;queueCloudSave()}else if(draftBlocked)setSaveStatus('미저장 복구본 충돌 · 다운로드 후 확인',true);
     }catch(error){if(generation===hydrationSeq){loadedParts.clear();baselineJson.clear();dirtyParts.clear();window.__mwsAppReadyV130=false}throw error}finally{if(generation===hydrationSeq)hydrating=false}
+    // Public calendar is already painted. Schedule one remaining-data read;
+    // early navigation joins this same in-flight operation.
+    if(chosen==='public'&&!offline&&generation===hydrationSeq)requestAnimationFrame(()=>{if(generation===hydrationSeq&&mode==='public')void ensureRemainingWorkspace().catch(()=>{})});
+  }
+  async function ensureRemainingWorkspace(){
+    const missing=ALL_PARTS.filter(part=>!loadedParts.has(part));
+    if(!missing.length)return true;
+    if(remainingWorkspaceLoad)return remainingWorkspaceLoad;
+    if(Date.now()<remainingRetryAt)return false;
+    const scope=mode==='admin'?'admin':'public',generation=hydrationSeq;
+    const current=()=>generation===hydrationSeq&&scope===(mode==='admin'?'admin':'public');
+    const loading=(async()=>{
+      let changed=false;
+      try{
+        if(!manifest){const fresh=await fetchManifest();if(!current())return false;manifest=clone(fresh)}
+        if(!current())return false;
+        const rows=await loadWorkspaceParts(scope,missing,manifest);
+        if(!current())return false;
+        for(let i=0;i<missing.length;i++){
+          const part=missing[i],result=rows[i];if(result.status!=='fulfilled'||loadedParts.has(part))continue;
+          const row=result.value;mergePart(part,row.data,data);loadedParts.add(part);baselineJson.set(part,JSON.stringify(row.data));
+          if(manifest?.parts)manifest.parts[part]=Number(row.version);changed=true;
+        }
+        if(changed){
+          // Background data hydration must not redraw unrelated hidden screens.
+          normalizeDataShape();
+          try{window.dispatchEvent(new CustomEvent('mws:parts-loaded',{detail:{tab:'export',parts:missing.filter(part=>loadedParts.has(part))}}))}catch(_){}
+        }
+        return missing.every(part=>loadedParts.has(part));
+      }catch(e){console.error('Workspace preload failed',e);return false}
+    })().then(ok=>{if(current()&&!ok)remainingRetryAt=Date.now()+30000;return ok}).finally(()=>{if(remainingWorkspaceLoad===loading)remainingWorkspaceLoad=null});
+    remainingWorkspaceLoad=loading;return loading;
   }
   async function ensurePartsForTab(tab){
     const extras=PARTS_BY_TAB[tab]||[];if(!extras.length||extras.every(part=>loadedParts.has(part)))return true;
-    const scope=mode==='admin'?'admin':'public',generation=hydrationSeq;let changed=false;
-    if(!manifest){try{const fresh=await fetchManifest();if(generation!==hydrationSeq||scope!==(mode==='admin'?'admin':'public'))return false;manifest=clone(fresh)}catch(_){}}
-    if(generation!==hydrationSeq||scope!==(mode==='admin'?'admin':'public'))return false;
-    const results=await Promise.all(extras.map(async part=>{
-      if(loadedParts.has(part))return true;
-      if(!lazyPartLoads.has(part)){
-        const loading=(async()=>{
-          try{
-            const row=await loadPartWithCache(scope,part,manifest,{allowStale:true});
-            if(generation!==hydrationSeq||scope!==(mode==='admin'?'admin':'public'))return false;
-            if(!loadedParts.has(part)){
-              mergePart(part,row.data,data);loadedParts.add(part);baselineJson.set(part,JSON.stringify(row.data));
-              if(manifest?.parts)manifest.parts[part]=Number(row.version);changed=true;
-            }
-            return true;
-          }catch(e){console.error('Lazy part load failed',part,e);return false}
-          finally{if(lazyPartLoads.get(part)===loading)lazyPartLoads.delete(part)}
-        })();lazyPartLoads.set(part,loading);
-      }
-      return lazyPartLoads.get(part);
-    }));
-    if(changed){normalizeAndRender(`${tab} lazy data`);try{window.dispatchEvent(new CustomEvent('mws:parts-loaded',{detail:{tab,parts:[...extras]}}))}catch(_){}}
-    if(results.some(ok=>!ok)){setSaveStatus(tab+' 데이터 로딩 실패',true);return false}
+    const generation=hydrationSeq;await ensureRemainingWorkspace();
+    if(generation!==hydrationSeq)return false;
+    if(!extras.every(part=>loadedParts.has(part))){setSaveStatus(tab+' 데이터 로딩 실패',true);return false}
     return true;
   }
   window.mwsV55EnsureParts=ensurePartsForTab;window.mwsV55EnsureAllParts=()=>ensurePartsForTab('export');

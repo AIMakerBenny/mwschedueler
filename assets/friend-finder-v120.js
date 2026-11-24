@@ -10,6 +10,8 @@ const liveByUserId=new Map();
 const LIVE_CACHE_MS=10000;
 const THUMB_REFRESH_MS=10000;
 const ACTIVE_REFRESH_MS=30000;
+const LIVE_BATCH_SIZE=12;
+const liveAttempts=new Map();
 let batchPromise=null;
 let categoriesPromise=null;
 let forceNextBatch=false;
@@ -104,23 +106,45 @@ function dispatchLiveUpdate(){window.dispatchEvent(new CustomEvent('mws:friend-l
 
 async function runBatch(extraTarget,force=false){
   const urls=allContactTargets();
-  if(extraTarget){const i=urls.indexOf(extraTarget.href);if(i>0){urls.splice(i,1);urls.unshift(extraTarget.href)}else if(i<0)urls.unshift(extraTarget.href)}
-  if(!urls.length)return;
-  const load=async()=>{
-    const response=await baseFetch('/api/soop/live-batch',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'content-type':'application/json'},body:JSON.stringify({urls,force})});
-    if(!response.ok)throw new Error(`LIVE batch HTTP ${response.status}`);
-    return response.json();
-  };
+  if(extraTarget&&!urls.includes(extraTarget.href))urls.unshift(extraTarget.href);
+  const now=Date.now();
+  for(const [url,at] of liveAttempts)if(now-at>=LIVE_CACHE_MS)liveAttempts.delete(url);
+  const targets=urls.filter(url=>force||(!liveAttempts.has(url)&&!(liveCache.has(url)&&now-liveCache.get(url).at<LIVE_CACHE_MS)));
+  if(!targets.length)return;
+  const groups=[];for(let i=0;i<targets.length;i+=LIVE_BATCH_SIZE)groups.push(targets.slice(i,i+LIVE_BATCH_SIZE));
+  for(const url of targets)liveAttempts.set(url,now);
   const shared=window.mwsPublicReadSharingV1,scope=document.body?.dataset?.mwsMode;
-  const valid=payload=>{const rows=payload?.results;if(!Array.isArray(rows)||rows.length!==urls.length)return false;const requested=new Set(urls);return rows.every(row=>requested.delete(row.url)&&Number(row.status)>=200&&Number(row.status)<300)};
-  const result=shared&&['admin','public'].includes(scope)?await shared.read('live:'+scope+':'+JSON.stringify([...urls].sort()),{ttl:LIVE_CACHE_MS,force,load,valid}):{at:Date.now(),value:await load()};
-  const payload=result.value;
-  for(const row of Array.isArray(payload?.results)?payload.results:[])rememberRow(row,result.at);
+  let cursor=0;
+  async function worker(){
+    while(cursor<groups.length){
+      const urls=groups[cursor++];
+      // Keep individual failures within the batch; never fall back to N requests.
+      try{
+        const load=async()=>{
+          const response=await baseFetch('/api/soop/live-batch',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'content-type':'application/json'},body:JSON.stringify({urls,force})});
+          if(!response.ok)throw new Error(`LIVE batch HTTP ${response.status}`);
+          return response.json();
+        };
+        const valid=payload=>{const rows=payload?.results;if(!Array.isArray(rows)||rows.length!==urls.length)return false;const requested=new Set(urls);return rows.every(row=>requested.delete(row.url)&&Number(row.status)>=200&&Number(row.status)<300)};
+        const result=shared&&['admin','public'].includes(scope)?await shared.read('live:'+scope+':'+JSON.stringify([...urls].sort()),{ttl:LIVE_CACHE_MS,force,load,valid}):{at:Date.now(),value:await load()};
+        const requested=new Set(urls);
+        for(const row of Array.isArray(result.value?.results)?result.value.results:[]){
+          if(!requested.delete(row.url))continue;
+          const status=Number(row.status);
+          if((status>=200&&status<300)||status===404)rememberRow(row,result.at);
+        }
+      }catch(error){console.warn('LIVE batch unavailable; retain last result',error)}
+    }
+  }
+  await Promise.all(Array.from({length:Math.min(3,groups.length)},worker));
+  // Start the failure cooldown at completion, not before slow upstream reads.
+  for(const url of targets)liveAttempts.set(url,Date.now());
   dispatchLiveUpdate();
 }
 async function ensureBatch(target,{force=false}={}){
   const cached=liveCache.get(target.href);
   if(!force&&cached&&Date.now()-cached.at<LIVE_CACHE_MS)return cached.row;
+  if(!force&&!forceNextBatch&&!batchPromise&&liveAttempts.has(target.href)&&Date.now()-liveAttempts.get(target.href)<LIVE_CACHE_MS)return cached?.row||null;
   if(!batchPromise){
     const runForce=force||forceNextBatch;forceNextBatch=false;
     batchPromise=runBatch(target,runForce).finally(()=>{batchPromise=null});
@@ -156,8 +180,8 @@ window.fetch=async function(input,init={}){
   try{
     const row=await ensureBatch(target,{force:false});
     if(row)return syntheticResponse(row);
-  }catch(error){console.warn('Friend Finder batch fallback',error)}
-  return baseFetch(input,init);
+  }catch(error){console.warn('Friend Finder batch unavailable',error)}
+  return new Response(JSON.stringify({error:'LIVE 조회 일시 지연'}),{status:503,headers:{'content-type':'application/json','cache-control':'no-store','retry-after':'10'}});
 };
 
 function friendRoot(){
