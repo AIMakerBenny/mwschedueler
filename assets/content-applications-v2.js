@@ -206,7 +206,8 @@ function tick(){if(!active()){stopTimer();return}updateClocks();loadVisible();if
 function loadVisible(){
  if(!sectionActive())return;
  const c=current();if(c){if(campaignDue(c))refresh(c);return}
- const candidates=records().filter(c=>campaignDue(c)).sort((a,b)=>(attempts.get(a.id)||0)-(attempts.get(b.id)||0));if(candidates.length&&!pending.size)refresh(candidates[0]);
+ const candidates=records().filter(c=>campaignDue(c)).sort((a,b)=>(attempts.get(a.id)||0)-(attempts.get(b.id)||0));
+ if(candidates.length&&!pending.size){if(candidates.length===1)refresh(candidates[0]);else void refreshCampaignBatch(candidates.slice(0,5))}
 }
 function activate(){if(!active()){stopTimer();return}render();if(records().some(c=>!countdown(c.deadline).expired)){if(!timer)timer=setInterval(tick,1000)}else stopTimer();loadVisible()}
 async function fetchPage(source,page){
@@ -285,6 +286,66 @@ async function fetchCampaign(c,canContinue,manual){
  }
  throw Error('Application sync interrupted');
 }
+
+async function refreshCampaignBatch(group){
+ if(!active()||!sectionActive()||selected||pending.size)return;
+ const generation=epoch,token=Symbol(),signatures=new Map(group.map(c=>[c.id,signature(c)]));
+ const eligible=id=>{
+  if(generation!==epoch||!active()||!sectionActive()||pending.get(id)!==token)return false;
+  const c=records().find(c=>c.id===id);
+  return !!c&&signature(c)===signatures.get(id)&&!countdown(c.deadline).expired;
+ };
+ const canContinue=()=>!selected&&group.some(c=>eligible(c.id));
+ for(const c of group){pending.set(c.id,token);attempts.set(c.id,Date.now())}
+ render();
+ const fallback=[];
+ let remaining=group.map(c=>c.id),continuation=false;
+ try{
+  const load=async()=>{
+   if(!canContinue())throw new DOMException('Campaign list changed','AbortError');
+   const response=await fetch('/api/soop/application-batch',{method:'POST',headers:{'content-type':'application/json',accept:'application/json'},credentials:'same-origin',cache:'no-store',mwsTrace:{module:'content-applications-v2',automatic:true,retry:false},signal:AbortSignal.timeout(60000),body:JSON.stringify({ids:remaining,continue:continuation})});
+   if(response.status===404||response.status===405)return {unsupported:true};
+   if(!response.ok)throw Error('Application batch HTTP '+response.status);
+   const body=await response.json();
+   if(!Array.isArray(body?.results)||body.results.length!==remaining.length||new Set(body.results.map(x=>x.id)).size!==remaining.length||body.results.some(x=>!remaining.includes(x.id)))throw Error('Invalid campaign batch response');
+   return body;
+  };
+  for(let round=0;remaining.length&&canContinue()&&round<600;round++){
+   remaining=remaining.filter(eligible);if(!remaining.length)break;
+   const shared=window.mwsPublicReadSharingV1;
+   const key='campaign-group:'+document.body.dataset.mwsMode+':'+JSON.stringify(remaining.map(id=>[id,signatures.get(id)]))+':'+continuation;
+   const valid=body=>Array.isArray(body?.results)&&body.results.length===remaining.length&&body.results.every(r=>r.done===true&&!r.error&&!r.oversize&&r.snapshot?.complete===true&&r.snapshot.signature===signatures.get(r.id)&&Date.now()-Date.parse(r.snapshot.checkedAt)<60000);
+   const value=shared?(await shared.read(key,{ttl:60000,load,valid})).value:await load();
+   if(value.unsupported){fallback.push(...remaining);break}
+   const next=[];
+   for(const row of value.results){
+    if(!eligible(row.id))continue;
+    const c=records().find(c=>c.id===row.id);
+    if(row.oversize){fallback.push(row.id);continue}
+    if(row.snapshot?.signature===signature(c)&&Array.isArray(row.snapshot.applicants)&&typeof row.snapshot.complete==='boolean'&&Number.isFinite(Date.parse(row.snapshot.checkedAt))){
+     const previous=snapshot(c),incoming=row.snapshot;
+     if(!previous||Date.parse(incoming.checkedAt)>=Date.parse(previous.checkedAt)&&(!previous.complete||incoming.complete)){
+      snapshots.set(c.id,incoming);archiveSnapshot(c,incoming);
+      const all=Array.isArray(window.__mwsApplicationSnapshotsV1)?window.__mwsApplicationSnapshotsV1:[];
+      window.__mwsApplicationSnapshotsV1=[...all.filter(s=>s.id!==c.id),{id:c.id,...incoming}];
+     }
+    }
+    if(!row.done&&!row.busy&&!row.error)next.push(row.id);
+   }
+   remaining=next;continuation=true;
+   if(generation===epoch&&active())render();
+  }
+ }catch(error){if(error?.name!=='AbortError')console.warn('Application group unavailable',error)}
+ finally{
+  if(generation===epoch){
+   for(const c of group)if(pending.get(c.id)===token){pending.delete(c.id);attempts.set(c.id,Date.now())}
+   if(active())render();
+   for(const id of fallback){if(!active()||!sectionActive()||selected)break;const c=records().find(x=>x.id===id);if(c&&signature(c)===signatures.get(id)&&!countdown(c.deadline).expired)await refresh(c)}
+   if(active()&&sectionActive()&&!selected)loadVisible();
+  }
+ }
+}
+
 async function refresh(c,manual=false){
  if(!c||countdown(c.deadline).expired||pending.has(c.id)||!active()||!sectionActive()||(!manual&&campaignSnapshotFresh(c)))return;
  const token=Symbol(),generation=epoch,sig=signature(c);

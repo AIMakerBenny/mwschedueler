@@ -42,7 +42,7 @@ globalThis.fetch=async input=>{
  if(u.hostname==='api-channel.sooplive.co.kr'){if(featureOnly)await new Promise(resolve=>setTimeout(resolve,250));return Response.json({data:{}})}
  if(u.hostname==='store.steampowered.com')return new Response('<a data-ds-appid="123" href="https://store.steampowered.com/app/123/"><div class="match_name">Fixture Steam Game</div></a>',{headers:{'content-type':'text/html'}});
  if(u.hostname==='chapi.sooplive.co.kr'&&u.pathname.endsWith('/board/'))return Response.json({data:[],notice_data:[]});
- if(u.hostname==='chapi.sooplive.co.kr'){const page=Number(u.searchParams.get('page')||1),post=Number(u.pathname.split('/').at(-2));return Response.json({data:[{title_no:post,user_id:page===1&&post===1?'mawang0216':'user'+post+'_'+page,p_comment_no:page,user_nick:'Fixture',like_cnt:post*10+page,comment:'fixture'}],meta:{last_page:post===1?3:4,total:post===1?3:4,current_page:page}})}
+ if(u.hostname==='chapi.sooplive.co.kr'){const page=Number(u.searchParams.get('page')||1),post=Number(u.pathname.split('/').at(-2));return Response.json({data:[{title_no:post,user_id:page===1&&post===1?'mawang0216':'user'+post+'_'+page,p_comment_no:page,user_nick:'Fixture',like_cnt:post*10+page,comment:'fixture'}],meta:{last_page:post>=100?1:post===1?3:4,total:post>=100?1:post===1?3:4,current_page:page}})}
  if(u.hostname.startsWith('liveimg.'))return new Response(png,{headers:{'content-type':'image/png'}});
  if(u.hostname==='live.sooplive.com')return new Response('[]',{headers:{'content-type':'application/json'}});
  return new Response('{}',{status:404,headers:{'content-type':'application/json'}});
@@ -238,6 +238,20 @@ try{
   await browser.evaluate("(()=>{const input=document.getElementById('eventGameSearchV112');input.value='Abandoned';input.dispatchEvent(new Event('input',{bubbles:true}));document.getElementById('eventModal').classList.remove('open');return true})()");
   await pause(600);assert.equal(steamCount(),steamBefore+1,'Closed editor sent a scheduled search');
   console.log('V3_STEAM_SEARCH_OK '+JSON.stringify({initial:1,duplicateClick:0,cached:0,closed:0}));
+  const group=Array.from({length:60},(_,i)=>({id:'group-'+i,title:'Group '+i,deadline:new Date(Date.now()+(i<10?3600000:-3600000)).toISOString(),entries:[{url:'https://www.sooplive.com/station/group'+i+'/post/'+(100+i)}]}));
+  parts.core.contentApplications=group;
+  db.prepare("UPDATE workspace_parts SET data=?,version=version+1 WHERE scope='public' AND part='core'").run(JSON.stringify(parts.core));
+  await browser.evaluate('(()=>{data.contentApplications='+JSON.stringify(group)+';window.dispatchEvent(new CustomEvent("mawang:datachange"));return true})()');
+  const batchBefore=arrivals.length,upBefore=upstream.length;
+  await nav(['contentApplications']);
+  await until(()=>browser.evaluate("Array.from(document.querySelectorAll('[data-ca-open]')).filter(el=>!el.classList.contains('is-closed')&&el.innerText.includes('1명')).length===10"),'Ten batched campaigns rendered',300);
+  const batchRows=arrivals.slice(batchBefore).filter(r=>r.path==='/api/soop/application-batch'||r.path==='/api/soop/application-sync');
+  assert.equal(batchRows.length,2,'Ten one-page campaigns should use two bounded batch requests');assert(batchRows.every(r=>r.path==='/api/soop/application-batch'));
+  const groupPages=upstream.slice(upBefore).filter(x=>x.startsWith('chapi.sooplive.co.kr'));
+  assert.equal(groupPages.length,10);assert(groupPages.every(x=>Number(x.split('/').at(-2))<110),'Expired campaign fetched');
+  await nav(['calendar','contentApplications','calendar','contentApplications']);
+  assert.equal(arrivals.slice(batchBefore).filter(r=>r.path==='/api/soop/application-batch'||r.path==='/api/soop/application-sync').length,2);
+  console.log('V3_APPLICATION_BATCH_OK '+JSON.stringify({active:10,expired:50,worker:2,upstream:10,warm:0,expiredRequests:0}));
   assert.equal(errors.length,0,JSON.stringify(errors));
  }else if(process.env.MWS_QA_LONG_IDLE==='1'||process.env.MWS_QA_SESSION==='1'){
   const mode=process.env.MWS_QA_IDLE_MODE||'public',visibility=process.env.MWS_QA_IDLE_VISIBILITY||'visible';

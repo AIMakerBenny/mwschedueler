@@ -39,7 +39,7 @@ async function readPage(proxy,origin,source,page){
   const value=parseCommentPage(await res.json(),source);if(value.page!==page)throw Error('page mismatch');return value;
  }catch{return null}
 }
-export async function handleApplicationSync(request,env,proxy){
+export async function handleApplicationSync(request,env,proxy,budget={remaining:PAGE_BUDGET}){
  if(request.method!=='GET')return json({error:'Method not allowed'},405);
  const url=new URL(request.url),id=url.searchParams.get('id')||'';
  if(!id||id.length>80)return json({error:'Invalid campaign'},400);
@@ -53,6 +53,7 @@ export async function handleApplicationSync(request,env,proxy){
   const pending=continuation?await env.DB.prepare('SELECT config_key FROM mws_application_sync_jobs WHERE campaign_id=?').bind(id).first():null;
   if(!pending||pending.config_key!==key)return json({done:true,snapshot:previous,cached:true});
  }
+ if(budget.remaining<=0)return json({done:false,deferred:true,snapshot:previous});
  const token=crypto.randomUUID();
  const initial={sources:c.entries.map(()=>({next:1,pages:0,total:null,rows:[],failed:false})),complete:c.entries.length>0};
  const initialText=JSON.stringify(initial);
@@ -63,15 +64,16 @@ export async function handleApplicationSync(request,env,proxy){
   if(!job)return json({done:false,busy:true,retryAfterMs:1800,snapshot:previous});
   const state=parse(job.state)||initial;
   let used=0;
-  while(used<PAGE_BUDGET&&!expired(c)){
+  const pageLimit=Math.min(PAGE_BUDGET,budget.remaining);
+  while(used<pageLimit&&!expired(c)){
    const tasks=[];
-   for(let i=0;i<state.sources.length&&tasks.length<Math.min(3,PAGE_BUDGET-used);i++){
+   for(let i=0;i<state.sources.length&&tasks.length<Math.min(3,pageLimit-used);i++){
     const x=state.sources[i];if(!x.failed&&x.next===1){tasks.push({i,page:1});x.next=2}
    }
-   for(let i=0;i<state.sources.length&&tasks.length<Math.min(3,PAGE_BUDGET-used);i++){
-    const x=state.sources[i];while(!x.failed&&x.pages&&x.next<=Math.min(MAX_PAGES,x.pages)&&tasks.length<Math.min(3,PAGE_BUDGET-used))tasks.push({i,page:x.next++});
+   for(let i=0;i<state.sources.length&&tasks.length<Math.min(3,pageLimit-used);i++){
+    const x=state.sources[i];while(!x.failed&&x.pages&&x.next<=Math.min(MAX_PAGES,x.pages)&&tasks.length<Math.min(3,pageLimit-used))tasks.push({i,page:x.next++});
    }
-   if(!tasks.length)break;used+=tasks.length;
+   if(!tasks.length)break;used+=tasks.length;budget.remaining-=tasks.length;
    const rows=await Promise.all(tasks.map(t=>readPage(proxy,url,c.entries[t.i],t.page)));
    for(let j=0;j<tasks.length;j++){
     const t=tasks[j],x=state.sources[t.i],row=rows[j];
@@ -110,4 +112,25 @@ export async function handleApplicationSync(request,env,proxy){
   await env.DB.prepare('UPDATE mws_application_sync_jobs SET lease_until=0 WHERE campaign_id=? AND lease_token=?').bind(id,token).run().catch(()=>{});
   throw error;
  }
+}
+
+// Share the original nine-page allowance across the complete invocation.
+// Five campaigns bound D1 statements and response size. No new storage schema.
+export async function handleApplicationBatch(request,env,proxy){
+ if(request.method!=='POST')return json({error:'Method not allowed'},405);
+ let body;try{body=await request.json()}catch{return json({error:'JSON body required'},400)}
+ const raw=body?.ids;
+ if(!Array.isArray(raw)||!raw.length||raw.length>5||raw.some(id=>typeof id!=='string'||!id||id.length>80)||new Set(raw).size!==raw.length)return json({error:'Invalid campaign IDs'},400);
+ const budget={remaining:PAGE_BUDGET},results=[];
+ for(const id of raw){
+  if(budget.remaining<=0){results.push({id,done:false,deferred:true});continue}
+  const url=new URL('/api/soop/application-sync',request.url);url.searchParams.set('id',id);
+  if(body.continue===true)url.searchParams.set('continue','1');
+  try{
+   const response=await handleApplicationSync(new Request(url),env,proxy,budget);
+   const result=await response.json();
+   results.push(response.ok?{id,...result}:{id,done:true,error:true,status:response.status});
+  }catch(error){console.warn('Application batch item failed',error);results.push({id,done:true,error:true,status:503})}
+ }
+ return json({ok:true,results,pagesUsed:PAGE_BUDGET-budget.remaining});
 }
