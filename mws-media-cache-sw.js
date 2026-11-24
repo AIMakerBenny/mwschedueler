@@ -1,4 +1,9 @@
 'use strict';
+// V4 is opt-in; no new requests or public origin until a reviewed release enables it.
+const V4_PUBLIC_MEDIA_ENABLED=false;
+let v4Delivery=null;
+if(V4_PUBLIC_MEDIA_ENABLED){try{importScripts('/assets/media-v4-delivery.js','/assets/media-v4-catalog.js');v4Delivery=self.MWSMediaV4.create(self.MWS_PUBLIC_MEDIA_V4_CATALOG)}catch(_){}}
+async function fetchVersionedImage(request){return (v4Delivery?await v4Delivery(request):null)||fetch(request)}
 const CACHE='mws-public-versioned-media-v1';
 const MAX_BYTES=32*1024*1024;
 function cacheKey(url){
@@ -119,7 +124,7 @@ self.addEventListener('fetch',event=>{
         const release=()=>{if(filling.get(request.url)===pending)filling.delete(request.url);finish()};
         try{
           const lateHit=await lookup();if(lateHit){release();return deliverHit(lateHit)}
-          const response=await fetch(request);traceDelivery(event.clientId,request.url,'service-worker-fetch');
+          const response=await fetchVersionedImage(request);traceDelivery(event.clientId,request.url,'service-worker-fetch');
           if(canStore(response,key)){
             const save=store(cache,request,response.clone()).finally(release);
             return {response,save};
@@ -128,7 +133,7 @@ self.addEventListener('fetch',event=>{
         }catch(error){release();throw error}
       }
     }
-    const response=await fetch(request);traceDelivery(event.clientId,request.url,'service-worker-fetch');
+    const response=await fetchVersionedImage(request);traceDelivery(event.clientId,request.url,'service-worker-fetch');
     return {response,save:cache&&canStore(response,key)?store(cache,request,response.clone()):null};
   })();
   event.respondWith(task.then(result=>result.response));
