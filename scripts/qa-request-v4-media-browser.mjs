@@ -75,6 +75,7 @@ try{
  }
  const beforeRestart=snapshot();await browser.close();browser=null;await open();assert.equal(await size(),2000);
  await fetchAll(entries.slice(0,2000));assert.equal(delta(beforeRestart).cdn,0);assert.equal(delta(beforeRestart).worker,0);
+ const restart=delta(beforeRestart);
  const sibling=await browser.sibling(origin);await until(()=>sibling.evaluate('!!navigator.serviceWorker.controller'),'second tab control');
  const beforeChange=snapshot();await Promise.all([fetchAll(changed.slice(0,1)),fetchAll(changed.slice(0,1),sibling)]);
  await until(async()=>await size()===2001,'changed cache');assert.equal(delta(beforeChange).cdn,1);assert.equal(delta(beforeChange).worker,0);
@@ -86,6 +87,6 @@ try{
  assert.equal(delta(beforeFallback).worker,2);assert.equal(delta(beforeFallback).cdn,2);
  const beforeWarm=snapshot();await fetchAll([broken,unavailable]);assert.equal(delta(beforeWarm).worker,0);assert.equal(delta(beforeWarm).cdn,0);
  const displayMs=await browser.evaluate('(async()=>{const t=performance.now();const i=new Image();i.src='+JSON.stringify(entries[0].url)+';await i.decode();return performance.now()-t})()');
- console.log('V4_MEDIA_BROWSER_DELTA '+JSON.stringify({restart:delta(beforeRestart),changedOne:1,changedNineAndNew:delta(beforeMany),fallback:delta(beforeFallback),displayMs,fixture:true}));
+ console.log('V4_MEDIA_BROWSER_DELTA '+JSON.stringify({restart,changedOne:1,changedNineAndNew:delta(beforeMany),fallback:delta(beforeFallback),displayMs,fixture:true}));
  await browser.closeTarget(sibling.targetId);
 }finally{if(browser)await browser.close();await close(app);await close(cdn);await rm(dir,{recursive:true,force:true})}

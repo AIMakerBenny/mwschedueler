@@ -18,7 +18,7 @@ jobs:
           node-version: '24'
       - name: V4 candidate and existing V3 contracts, loopback only
         run: |
-          bash scripts/mws-v3-network-only.sh node --test scripts/qa-request-v4-delivery.test.mjs scripts/qa-request-v3-cache-integrity.test.mjs scripts/qa-request-v3-live-cache.test.mjs scripts/qa-request-v3-feature-guards.test.mjs
+          bash scripts/mws-v3-network-only.sh node --test scripts/qa-request-v4-delivery.test.mjs scripts/qa-request-v4-builder.test.mjs scripts/qa-request-v3-cache-integrity.test.mjs scripts/qa-request-v3-live-cache.test.mjs scripts/qa-request-v3-feature-guards.test.mjs
           bash scripts/mws-v3-network-only.sh node --check mws-media-cache-sw.js
           bash scripts/mws-v3-network-only.sh node scripts/build-cf-static-runtime.mjs --check
   local-browser:
@@ -48,3 +48,8 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           MWS_EXPECTED_SHA: e34ad783397e67d088bb4687dd8b0b17bcf4ec05
         run: node scripts/verify-cloudflare-deployment-v3.mjs
+      - name: Read-only domain and bucket inventory
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node scripts/audit-cloudflare-media-v4.mjs
