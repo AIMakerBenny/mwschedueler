@@ -1,0 +1,37 @@
+'use strict';
+const CACHE='mws-public-versioned-media-v1';
+const MAX_ENTRIES=320, MAX_BYTES=32*1024*1024;
+function cacheKey(url){
+  const u=new URL(url,self.location.origin);
+  if(u.origin!==self.location.origin)return null;
+  const contact=u.pathname.match(/^\/media\/contact\/[A-Za-z0-9_-]{1,160}$/);
+  const profile=u.pathname.match(/^\/media\/mawang-profile\/[a-z0-9-]+$/);
+  const portrait=u.pathname.match(/^\/assets\/mawang-archive-portraits\/[a-z0-9-]+\.(?:jpg|webp|png)$/);
+  if(contact&&/^[1-9]\d*$/.test(u.searchParams.get('v')||'')&&/^[a-f0-9]{32}$/.test(u.searchParams.get('h')||'')&&[...u.searchParams.keys()].every(k=>['v','h','r'].includes(k))&&u.searchParams.getAll('v').length===1&&u.searchParams.getAll('h').length===1)return {version:u.searchParams.get('v')+'-'+u.searchParams.get('h')};
+  if(profile&&/^\d{1,15}-[a-f0-9]{0,80}$/i.test(u.searchParams.get('rev')||'')&&[...u.searchParams.keys()].length===1)return {version:u.searchParams.get('rev')};
+  if(portrait&&/^archive-v\d+$/.test(u.searchParams.get('rev')||'')&&[...u.searchParams.keys()].length===1)return {static:true};
+  return null;
+}
+function canStore(res,key){
+  const type=res.headers.get('content-type')||'',size=Number(res.headers.get('content-length')||0);
+  return res.status===200&&!res.redirected&&/^image\/(?:jpeg|png|webp|gif|avif)(?:;|$)/i.test(type)&&size<=MAX_BYTES&&!/no-store|private/i.test(res.headers.get('cache-control')||'')&&(key.static||res.headers.get('x-mws-cache-version')===key.version);
+}
+self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
+self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
+let writes=0;
+async function store(cache,request,response){
+  try{await cache.put(request,response);if(++writes%12===1){const keys=await cache.keys();await Promise.all(keys.slice(0,Math.max(0,keys.length-MAX_ENTRIES)).map(key=>cache.delete(key)))}}catch(_){}
+}
+self.addEventListener('fetch',event=>{
+  const request=event.request;
+  if(request.method!=='GET'||request.headers.has('range'))return;
+  const key=cacheKey(request.url);if(!key)return;
+  const task=(async()=>{
+    let cache;
+    try{cache=await caches.open(CACHE);const hit=await cache.match(request);if(hit)return {response:hit}}catch(_){}
+    const response=await fetch(request);
+    return {response,save:cache&&canStore(response,key)?store(cache,request,response.clone()):null};
+  })();
+  event.respondWith(task.then(result=>result.response));
+  event.waitUntil(task.then(result=>result.save).catch(()=>{}));
+});

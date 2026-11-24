@@ -50,7 +50,11 @@ export async function handleArchiveGallery(request,env,currentAdmin){
     if(!object)return json({error:'사진을 찾을 수 없습니다.'},404);
     const headers=new Headers();object.writeHttpMetadata(headers);
     headers.set('etag',object.httpEtag);headers.set('x-content-type-options','nosniff');
-    headers.set('cache-control','public, max-age=300');headers.set('content-length',String(object.size));
+    const rev=new URL(request.url).searchParams.get('rev');
+    const exact=profileMedia&&rev&&profile(object)?.revision===rev;
+    headers.set('cache-control',exact?'public, max-age=31536000, immutable':profileMedia&&rev?'no-store':'public, max-age=300');
+    if(exact)headers.set('x-mws-cache-version',rev);
+    headers.set('content-length',String(object.size));
     headers.set('x-mws-image-policy','original-bytes-no-reencode');
     return new Response(method==='HEAD'?null:object.body,{headers});
   }

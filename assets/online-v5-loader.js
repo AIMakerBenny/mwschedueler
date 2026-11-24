@@ -55,6 +55,6 @@
     }
     if(typeof sharedSearchOwner.mwsKoreanInitials==='function')window.mwsKoreanInitials=sharedSearchOwner.mwsKoreanInitials;
     if(typeof sharedSearchOwner.mwsTextMatches==='function')window.mwsTextMatches=sharedSearchOwner.mwsTextMatches;
-    const v54=document.createElement('script');v54.src=document.querySelector('meta[name="mws-static-runtime"]')?.content==='1'?'assets/cf-static-bootstrap-v1.js?v=1':'assets/cloud-v5.5.js';v54.onload=()=>window.dispatchEvent(new Event('mws:v55-features-ready'));v54.onerror=()=>{const e=document.getElementById('mwsLoginError');if(e)e.textContent='V5.5 cloud 로딩 실패';};document.body.appendChild(v54);
+    const v54=document.createElement('script');v54.src=document.querySelector('meta[name="mws-static-runtime"]')?.content==='1'?'assets/cf-static-bootstrap-v1.js?v=2':'assets/cloud-v5.5.js';v54.onload=()=>window.dispatchEvent(new Event('mws:v55-features-ready'));v54.onerror=()=>{const e=document.getElementById('mwsLoginError');if(e)e.textContent='V5.5 cloud 로딩 실패';};document.body.appendChild(v54);
   })().catch(err=>{console.error('MAWANG V5 loader failed',err);const e=document.getElementById('mwsLoginError');if(e)e.textContent='업데이트 로딩 실패: '+(err?.message||String(err));});
 })();
