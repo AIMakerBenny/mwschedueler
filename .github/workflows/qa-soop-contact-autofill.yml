@@ -32,6 +32,7 @@ jobs:
       - name: Station lookup and contact preservation tests
         run: node --test scripts/qa-soop-contact-autofill-v1.test.mjs
       - name: Probe public SOOP station API and avatar
+        if: github.event_name == 'workflow_dispatch'
         id: live_api_probe
         continue-on-error: true
         run: node scripts/qa-soop-contact-live-v1.mjs

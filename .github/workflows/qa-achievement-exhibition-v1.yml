@@ -10,6 +10,7 @@ on:
       - 'scripts/qa-achievement-live-browser.mjs'
       - 'scripts/qa-first-paint-guard-v1-browser.mjs'
       - '.github/workflows/qa-achievement-exhibition-v1.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -61,6 +62,10 @@ jobs:
           path: visual-first-paint/*.jpg
           if-no-files-found: ignore
   public-smoke:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/cloudflare-production'
+    concurrency:
+      group: cloudflare-production
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:

@@ -6,7 +6,7 @@ import path from 'node:path';
 export async function launchCalendarBrowser(dir){
   const chrome=['google-chrome','google-chrome-stable','chromium','chromium-browser'].map(n=>spawnSync('which',[n],{encoding:'utf8'})).find(r=>r.status===0)?.stdout.trim();
   assert(chrome,'Chromium required');
-  const browser=spawn(chrome,['--headless=new','--no-sandbox','--disable-dev-shm-usage','--no-first-run','--disable-background-networking','--disable-background-timer-throttling','--disable-renderer-backgrounding','--remote-debugging-pipe',`--user-data-dir=${path.join(dir,'profile')}`,'about:blank'],{stdio:['ignore','ignore','ignore','pipe','pipe']});
+  const browser=spawn(chrome,['--headless=new','--no-sandbox','--disable-dev-shm-usage','--no-first-run','--disable-background-networking','--disable-background-timer-throttling','--disable-renderer-backgrounding',...(process.env.MWS_QA_OFFLINE==='1'?['--host-resolver-rules=MAP mawang-scheduler.majoku.workers.dev ~NOTFOUND','--no-proxy-server']:[]),'--remote-debugging-pipe',`--user-data-dir=${path.join(dir,'profile')}`,'about:blank'],{stdio:['ignore','ignore','ignore','pipe','pipe']});
   const pending=new Map();let serial=0,buffer='';
   const fail=error=>{for(const entry of pending.values()){clearTimeout(entry.timer);entry.reject(error)}pending.clear()};
   browser.on('error',fail);browser.on('exit',()=>fail(new Error('Chromium exited')));browser.stdio[3].on('error',fail);browser.stdio[4].on('error',fail);

@@ -1,5 +1,7 @@
 name: Request budget offline QA
 on:
+  push:
+    branches: [request-budget-v1-safe-candidate]
   pull_request:
     branches: [cloudflare-production]
     paths:
@@ -20,11 +22,18 @@ jobs:
   offline-contracts:
     runs-on: ubuntu-latest
     timeout-minutes: 12
+    env:
+      MWS_QA_OFFLINE: '1'
+      NO_PROXY: 'localhost,127.0.0.1,mawang-scheduler.majoku.workers.dev'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Block production hostname for offline tests
+        run: |
+          printf '\n127.0.0.1 mawang-scheduler.majoku.workers.dev\n::1 mawang-scheduler.majoku.workers.dev\n' | sudo tee -a /etc/hosts >/dev/null
+          node -e "require('node:dns').lookup('mawang-scheduler.majoku.workers.dev',{all:true},(e,a)=>{if(e||!a.length||a.some(x=>!['127.0.0.1','::1'].includes(x.address)))process.exit(1)})"
       - name: Network optimization and storage contracts
         run: |
           node --test scripts/qa-request-budget-v1.test.mjs scripts/qa-workspace-read-batch-v1.test.mjs scripts/qa-public-read-sharing-v1.test.mjs scripts/qa-request-budget-meter-v1.test.mjs
