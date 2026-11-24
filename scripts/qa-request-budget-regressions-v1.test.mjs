@@ -125,7 +125,14 @@ test('Friend Finder only queries favorite contacts used by its actual legacy vie
 });
 test('contact image URLs are withheld until observation, external images remain unchanged',()=>{
  const app=read('assets/app-core.js'),code=extract(app,'function mwsDeferredContactAttrsV1','let mwsDeferredContactObserverV1');
- const attrs=new Function('esc','IntersectionObserver',code+'\nreturn mwsDeferredContactAttrsV1')(v=>v,()=>{});
+ const win={};
+ const attrs=new Function('esc','IntersectionObserver','window',code+'\nreturn mwsDeferredContactAttrsV1')(v=>v,()=>{},win);
+ const img={setAttribute(k,v){this[k]=v}};
+ win.mwsSetDeferredContactImageV1(img,'/media/contact/id?v=1');
+ assert.equal(img['data-mws-deferred-contact-src'],'/media/contact/id?v=1');assert.equal(img.src,undefined);
+ const external={setAttribute(){throw Error('external image should not be deferred')}};
+ win.mwsSetDeferredContactImageV1(external,'https://example.test/image.jpg');
+ assert.equal(external.src,'https://example.test/image.jpg');
  assert.equal(attrs('/media/contact/id?v=1'),'data-mws-deferred-contact-src="/media/contact/id?v=1"');
  assert.equal(attrs('https://example.test/image.jpg'),'src="https://example.test/image.jpg"');
  assert(app.includes('entry.isIntersecting)mwsActivateDeferredContactImageV1(entry.target)'));
