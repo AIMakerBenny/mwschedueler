@@ -16,7 +16,7 @@ const server=createServer(async(req,res)=>{
  try{
   const origin='http://127.0.0.1:'+server.address().port,u=new URL(req.url,origin);
   if(u.pathname==='/'){res.writeHead(200,{'content-type':'text/html','cache-control':'no-store'}).end('<!doctype html><title>Demand batch fixture</title><script type="module">import {getDemandedContact} from "/assets/media-batch-client-v5.js";window.loadDemand=getDemandedContact;</script>');return}
-  if(['/assets/media-batch-client-v5.js','/assets/media-batch-protocol-v5.js','/mws-media-cache-sw.js'].includes(u.pathname)){res.writeHead(200,{'content-type':'text/javascript','cache-control':'no-store'}).end(readFileSync(new URL('..'+u.pathname,import.meta.url)));return}
+  if(['/assets/media-batch-client-v5.js','/assets/media-batch-protocol-v5.js','/assets/media-batch-sw-runtime-v51.js','/mws-media-cache-sw.js'].includes(u.pathname)){res.writeHead(200,{'content-type':'text/javascript','cache-control':'no-store'}).end(readFileSync(new URL('..'+u.pathname,import.meta.url)));return}
   if(u.pathname==='/api/media-batch-v5'){
     batches++;const r=await handleMediaBatch(new Request(u.href,{method:'POST',headers:req.headers,body:Readable.toWeb(req),duplex:'half'}),env);
     res.writeHead(r.status,Object.fromEntries(r.headers));if(r.body)await pipeline(Readable.fromWeb(r.body),res);else res.end();return;
@@ -33,7 +33,14 @@ try{
  const open=async()=>{browser=await launchCalendarBrowser(dir);await browser.navigate(origin,1280,720);await until(()=>browser.evaluate('!!window.loadDemand'),'module not ready')};
  await open();assert.equal(await browser.evaluate('!!navigator.serviceWorker.controller'),false);
  for(const [n,offset] of [[8,0],[102,100],[200,500]]){const before=batches,reads=gets;assert((await display(urls(n,offset))).every(Boolean));assert.equal(batches-before,1);assert.equal(gets-reads,n);const cold=batches;assert((await display(urls(n,offset))).every(Boolean));assert.equal(batches,cold);console.log('V5_BROWSER '+JSON.stringify({n,cold:1,warm:0,r2:n,uncontrolled:true}))}
- await browser.evaluate('navigator.serviceWorker.register("/mws-media-cache-sw.js").then(()=>true)');await until(()=>browser.evaluate('!!navigator.serviceWorker.controller'),'SW not controlling');
+ await browser.evaluate('navigator.serviceWorker.register("/mws-media-cache-sw.js?batch=51").then(()=>true)');await until(()=>browser.evaluate('!!navigator.serviceWorker.controller'),'SW not controlling');
+ const direct=urls(102,1000),beforeDirect=batches;
+ assert(await browser.evaluate('(async()=>{const u='+JSON.stringify(direct)+';return (await Promise.all(u.map(async p=>(await fetch(p)).ok))).every(Boolean)})()'));
+ assert.equal(individual,0);assert.equal(batches-beforeDirect,1,'Controlled requests must share a batch');
+ const cardUrls=['/media/achievement/card01','/media/wardogs/card02','/media/achievement/card03'];
+ const beforeCards=batches;assert((await display(cardUrls)).every(Boolean));assert.equal(batches-beforeCards,1);
+ assert.equal(await browser.evaluate('(async()=>!!await (await caches.open("mws-public-versioned-media-v1")).match("/media/achievement/card01"))()'),false,'Mutable ID cache policy must remain IndexedDB-owned');
+ console.log('V51_CONTROLLED_AND_CARDS '+JSON.stringify({direct:102,workerBatches:1,cardCount:3,cardBatches:1,individual}));
  const warm=batches;const all=[...urls(8),...urls(102,100),...urls(200,500)];
  assert(await browser.evaluate('(async()=>{const u='+JSON.stringify(all)+';return (await Promise.all(u.map(async p=>(await fetch(p)).ok))).every(Boolean)})()'));assert.equal(individual,0);
  await browser.close();browser=null;await open();assert((await display(all)).every(Boolean));assert.equal(batches,warm);

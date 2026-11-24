@@ -8,6 +8,7 @@ function createMeter(origin){
   let u;try{u=new URL(entry.name,origin)}catch(_){return null}
   if(u.origin!==origin)return null;
   const p=u.pathname;
+  if(p==='/api/media-batch-v5')return '이미지 일괄 요청';
   if(p==='/api/soop/application-sync'||p==='/api/soop/application-batch')return '신청 콘텐츠 통합 조회';
   if(p==='/api/soop/comment-batch')return u.searchParams.get('legacy')==='1'?'게시글 관리 동기화':'신청 콘텐츠 댓글';
   if(p==='/api/soop/proxy'){try{const t=new URL(u.searchParams.get('url'));if(t.hostname==='chapi.sooplive.co.kr'&&/\/comment\/?$/.test(t.pathname))return '신청 콘텐츠 댓글'}catch(_){}return 'SOOP 기타 조회'}
@@ -93,7 +94,7 @@ function record(entry){
  const category=categories.findLast(item=>item.at<=entry.startTime)?.category||'unknown';
  const kind=entry.workerStart>0?'service-worker':entry.deliveryType==='cache'?'browser-cache':entry.transferSize>0?'network':'unknown';
  // Only route families are retained. Raw paths, query strings and headers can identify people.
- const route=['/api/soop/live-batch','/api/soop/live-thumb','/api/soop/application-sync','/api/soop/application-batch','/api/soop/comment-batch','/api/calendar-startup','/api/parts-batch','/api/save','/api/manifest','/api/bootstrap','/api/health','/','/index.html'].includes(url.pathname)?url.pathname:group;
+ const route=['/api/media-batch-v5','/api/soop/live-batch','/api/soop/live-thumb','/api/soop/application-sync','/api/soop/application-batch','/api/soop/comment-batch','/api/calendar-startup','/api/parts-batch','/api/save','/api/manifest','/api/bootstrap','/api/health','/','/index.html'].includes(url.pathname)?url.pathname:group;
  const id=fingerprint(url.href),duplicate=fingerprints.has(id);
  if(fingerprints.size>=4000&&!duplicate)fingerprints.delete(fingerprints.keys().next().value);
  fingerprints.set(id,true);

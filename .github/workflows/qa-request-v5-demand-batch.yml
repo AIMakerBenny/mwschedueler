@@ -1,7 +1,7 @@
 name: Demand media batch V5 isolated QA
 on:
   push:
-    branches: [request-v5-demand-batch-nov24]
+    branches: [request-v5-demand-batch-nov24, request-v51-unified-media-nov24]
 permissions:
   contents: read
 jobs:
@@ -22,6 +22,8 @@ jobs:
           bash scripts/mws-v3-network-only.sh node --check src/cf-v111-auth.js
           bash scripts/mws-v3-network-only.sh node --check src/cf-v111-entry.js
           bash scripts/mws-v3-network-only.sh node scripts/build-cf-static-runtime.mjs --check
+          bash scripts/mws-v3-network-only.sh node scripts/build-media-batch-sw-v51.mjs --check
+          bash scripts/mws-v3-network-only.sh node --check mws-media-cache-sw.js
   local-browser:
     needs: local-contracts
     runs-on: ubuntu-latest

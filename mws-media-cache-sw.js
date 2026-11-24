@@ -2,7 +2,7 @@
 const CACHE='mws-public-versioned-media-v1';
 const MAX_BYTES=32*1024*1024;
 // Registration URL opt-in permits rollback without clearing existing cache.
-const BATCH_ENABLED=new URL(self.location.href).searchParams.get('batch')==='51';
+const BATCH_ENABLED=new URL(self.location.href||self.location.origin).searchParams.get('batch')==='51';
 if(BATCH_ENABLED)importScripts('/assets/media-batch-sw-runtime-v51.js');
 function cacheKey(url){
   const u=new URL(url,self.location.origin);
