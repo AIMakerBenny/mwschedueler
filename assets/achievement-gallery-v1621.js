@@ -5,6 +5,7 @@ if(window.__mwsAchievementGalleryRuntimeV1621)return;
 window.__mwsAchievementGalleryRuntimeV1621=true;
 
 let renderToken=0;
+let gallerySignature=null,galleryGrid=null,galleryPending=Promise.resolve(true),galleryObserver=null;
 let galleryObjectUrls=[];
 let detailObjectUrls=[];
 let detailToken=0;
@@ -1153,32 +1154,43 @@ function bindManagerEntry(){
   return true;
 }
 
-async function render(){
+async function render(force=false){
   const section=document.getElementById('achievements');
   const grid=document.getElementById('achievementGallery');
   const empty=document.getElementById('achievementEmptyState');
   const count=document.getElementById('achievementCountChip');
   if(!section||!grid||!empty||!count)return false;
 
+  const list=cards(),signature=JSON.stringify(list);
+  if(!force&&galleryGrid===grid&&gallerySignature===signature)return galleryPending;
+  galleryGrid=grid;gallerySignature=signature;
+  galleryObserver?.disconnect();galleryObserver=null;
   const token=++renderToken;
   const preview=document.getElementById('achievementExhibitionPreview');
   preview?.replaceChildren();
   clearGalleryObjectUrls();
-  const list=cards();
   count.textContent=`${list.length}장`;
   grid.replaceChildren();
   empty.hidden=list.length>0;
   grid.hidden=list.length===0;
-  if(!list.length)return true;
+  if(!list.length){galleryPending=Promise.resolve(true);return galleryPending}
 
   const pending=[];
-  const previewViews=[];
+  const previewViews=[],deferred=new Map();
   for(const card of list){
     const view=makeTile(card);
     grid.appendChild(view.tile);
-    if(previewViews.length<3)previewViews.push(view);
-    pending.push(loadFront(card,view,token));
+    if(previewViews.length<3){previewViews.push(view);pending.push(loadFront(card,view,token))}
+    else deferred.set(view.tile,{card,view});
   }
+  // Only the hero and near-visible cards request media; retain unchanged tiles.
+  if(typeof IntersectionObserver==='function'){
+    galleryObserver=new IntersectionObserver(entries=>{
+      if(token!==renderToken||!section.classList.contains('active'))return;
+      for(const entry of entries){if(!entry.isIntersecting)continue;const item=deferred.get(entry.target);if(!item)continue;deferred.delete(entry.target);galleryObserver?.unobserve(entry.target);void loadFront(item.card,item.view,token)}
+    },{rootMargin:'180px 0px'});
+    for(const tile of deferred.keys())galleryObserver.observe(tile);
+  }else for(const item of deferred.values())pending.push(loadFront(item.card,item.view,token));
   // Reuse the gallery object URLs. No secondary media requests or fake cards.
   if(preview)void Promise.allSettled(pending.slice(0,3)).then(()=>{
     if(token!==renderToken)return;
@@ -1189,9 +1201,8 @@ async function render(){
       image.onerror=()=>image.remove();image.src=front.src;preview.appendChild(image);
     }
   });
-  await Promise.allSettled(pending);
-  try{window.mwsScheduleImageTune?.()}catch(_){}
-  return token===renderToken;
+  galleryPending=Promise.allSettled(pending).then(()=>{try{window.mwsScheduleImageTune?.()}catch(_){}return token===renderToken});
+  return galleryPending;
 }
 
 window.mwsRenderAchievementGalleryV1621=render;
@@ -1207,7 +1218,8 @@ window.addEventListener('mawang:datachange',event=>{
   if(managerModal&&!managerModal.hidden&&String(event?.detail?.reason||'').startsWith('업적 카드'))renderManager();
 });
 window.addEventListener('mws:achievement-media-ready',()=>{
-  if(document.getElementById('achievements')?.classList.contains('active'))render();
+  gallerySignature=null;
+  if(document.getElementById('achievements')?.classList.contains('active'))render(true);
 });
 document.addEventListener('keydown',event=>{
   if(event.key!=='Escape')return;
@@ -1215,6 +1227,7 @@ document.addEventListener('keydown',event=>{
   if(detailModal&&!detailModal.hidden){event.preventDefault();closeDetail()}
 });
 window.addEventListener('beforeunload',()=>{
+  galleryObserver?.disconnect();
   clearGalleryObjectUrls();
   clearDetailObjectUrls();
   clearManagerObjectUrls();

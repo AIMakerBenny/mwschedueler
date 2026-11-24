@@ -30,7 +30,6 @@ try{
  for(const [width,height,columns] of [[1366,768,4],[1920,1080,5],[2560,1440,6],[390,844,2]]){
   await browser.navigate(pathToFileURL(file).href+'?width='+width,width,height);
   const result=await browser.evaluate(`(async()=>{
-   window.fixtureMediaRequests=0;
    await window.mwsRenderAchievementGalleryV1621();
    const grid=document.getElementById('achievementGallery'),tiles=[...grid.children],r=e=>e.getBoundingClientRect(),first=tiles[0],thumb=first.querySelector('.achievement-card-thumb'),button=first.querySelector('button'),caption=first.querySelector('.achievement-card-caption'),img=thumb.querySelector('img');
    await img.decode();
@@ -49,7 +48,9 @@ try{
   assert.equal(result.actualColumns,columns,JSON.stringify(result));
   assert(result.previewsMatch&&result.heroFits&&result.laurels,JSON.stringify(result));
   assert.equal(result.previewVisible,width>760);
-  assert.equal(result.mediaRequests,26);
+  assert(result.mediaRequests>=3&&result.mediaRequests<26,JSON.stringify(result));
+  const repeat=await browser.evaluate(`(async()=>{await new Promise(r=>setTimeout(r,100));const section=document.getElementById('achievements'),first=document.querySelector('.achievement-card-tile'),before=window.fixtureMediaRequests;section.classList.remove('active');section.classList.add('active');await window.mwsRenderAchievementGalleryV1621();return {same:first===document.querySelector('.achievement-card-tile'),before,after:window.fixtureMediaRequests}})()`);
+  assert(repeat.same&&repeat.before===repeat.after,JSON.stringify(repeat));
   assert.equal(result.collectionHeading,'전체 컬렉션');
   assert.equal(result.cardCount,26);assert.equal(result.count,'26장');assert.equal(result.heading,'명예의 전당');
   assert(result.sorted&&result.oneTitle&&result.ratio&&result.imageFit&&result.frame&&result.caption&&result.rootFits&&result.imageReady,JSON.stringify(result));
@@ -146,6 +147,8 @@ try{
   if(capture)writeFileSync(path.join(output,'hall-'+width+'-detail-long.jpg'),Buffer.from(await browser.captureScreenshot(),'base64'));
   await browser.evaluate(`(()=>{document.querySelector('.achievement-detail-close').click();window.mwsGetAchievementCardsV1621=()=>fixtureCards})()`);
   assert(await browser.evaluate(`document.getElementById('achievementDetailModal').hidden`));
+  const scrolled=await browser.evaluate(`(async()=>{await window.mwsRenderAchievementGalleryV1621();const last=[...document.querySelectorAll('.achievement-card-tile')].at(-1);last.scrollIntoView({block:'center'});for(let n=0;n<100&&!last.querySelector('img');n++)await new Promise(r=>setTimeout(r,20));return !!last.querySelector('img')})()`);
+  assert(scrolled,'Offscreen achievement must load after scrolling into view');
   const empty=await browser.evaluate(`(async()=>{window.mwsGetAchievementCardsV1621=()=>[];await window.mwsRenderAchievementGalleryV1621();return !document.getElementById('achievementEmptyState').hidden&&document.getElementById('achievementGallery').hidden&&document.getElementById('achievementCountChip').textContent==='0장'&&!document.getElementById('achievementExhibitionPreview').children.length})()`);
   assert(empty,'Empty collection state failed');
   console.log('ACHIEVEMENT_EXHIBITION_OK',width,height,JSON.stringify(result));

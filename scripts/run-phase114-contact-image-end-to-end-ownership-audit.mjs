@@ -95,7 +95,7 @@ export function runPhase114ContactImageEndToEndOwnershipAudit(){
     'window.mwsRecoverContactMediaImageV110=img=>',
     'const observer=new MutationObserver(records=>'
   ])if(!app.includes(token))issues.push('shared contact image recovery missing: '+token);
-  if(!app.includes("img.src=\`/media/contact/\${encodeURIComponent(id)}?fallback=110&cb=\${Date.now().toString(36)}\`"))issues.push('same-origin contact retry URL missing');
+  if(!app.includes("url:\`/media/contact/\${encodeURIComponent(id)}?fallback=110&cb=\${now.toString(36)}\`")||!app.includes('img.src=attempt.url;'))issues.push('shared same-origin contact retry URL missing');
 
   if(!mobileDay.includes("typeof window.mwsRecoverContactMediaImageV110==='function'&&window.mwsRecoverContactMediaImageV110(target)"))issues.push('mobile calendar does not delegate participant image failure to shared contact recovery');
 
