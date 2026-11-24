@@ -48,7 +48,7 @@ test('quota failure still delivers all bytes',async()=>{
 });
 test('malformed, disabled, cross-origin and oversized requests rejected before R2',async()=>{
  const s=setup(),make=(urls,headers={})=>new Request(origin+'/api/media-batch-v5',{method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify({urls})});
- for(const u of ['https://other.invalid/a','/media/workspace/tag-1?v=1&h='+token,'/media/contact/qa0?v=1&v=2&h='+token,'/media/contact/qa0?v=1','/media/contact/../qa0?v=1&h='+token])assert.equal((await handleMediaBatch(make([u]),s.env)).status,400);
+ for(const u of ['https://other.invalid/a','/media/workspace/arbitrary-1?v=1&h='+token,'/media/contact/qa0?v=1&v=2&h='+token,'/media/contact/qa0?v=1','/media/contact/../qa0?v=1&h='+token])assert.equal((await handleMediaBatch(make([u]),s.env)).status,400);
  assert.equal((await handleMediaBatch(make([url(1),url(1)]),s.env)).status,400);
  assert.equal((await handleMediaBatch(make(Array.from({length:257},(_,i)=>url(i))),s.env)).status,400);
  assert.equal((await handleMediaBatch(make([url(1)],{origin:'https://other.invalid'}),s.env)).status,403);

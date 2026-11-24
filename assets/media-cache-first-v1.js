@@ -8,7 +8,7 @@ let started=false;
 const ready=async()=>{
   if(!('serviceWorker' in navigator)||!('caches' in window)||!window.isSecureContext)return false;
   try{
-    await navigator.serviceWorker.register('/mws-media-cache-sw.js',{scope:'/',updateViaCache:'none'});
+    await navigator.serviceWorker.register('/mws-media-cache-sw.js'+(document.querySelector('meta[name="mws-media-batch-v5"]')?.content==='1'?'?batch=51':''),{scope:'/',updateViaCache:'none'});
     if(navigator.serviceWorker.controller)return true;
     return await new Promise(resolve=>{let t;const done=()=>{clearTimeout(t);navigator.serviceWorker.removeEventListener('controllerchange',changed);resolve(Boolean(navigator.serviceWorker.controller))};const changed=()=>done();navigator.serviceWorker.addEventListener('controllerchange',changed);t=setTimeout(done,4000);if(navigator.serviceWorker.controller)done()});
   }catch(_){return false}
@@ -24,6 +24,13 @@ async function warm(urls,limit){
     if(missing.length>=limit)break;
   }
   let count=0;
+  if(document.querySelector('meta[name="mws-media-batch-v5"]')?.content==='1'&&missing.length&&missing.every(raw=>new URL(raw).pathname.startsWith('/media/contact/'))){
+    try{
+      const {getDemandedMedia}=await import('/assets/media-batch-client-v5.js');
+      const rows=await Promise.all(missing.map(raw=>{const u=new URL(raw);return getDemandedMedia(u.pathname+u.search)}));
+      return rows.filter(Boolean).length;
+    }catch{return 0} // Optional preload must never fan out on failure.
+  }
   for(let i=0;i<missing.length&&!document.hidden;i+=3){
     await Promise.all(missing.slice(i,i+3).map(async url=>{try{const res=await fetch(url,{mwsTrace:{module:'media-cache-first-v1',automatic:true,retry:false},cache:'default',credentials:'same-origin',signal:AbortSignal.timeout(8000)});if(res.ok){await res.arrayBuffer();count++}}catch(_){}}));
   }

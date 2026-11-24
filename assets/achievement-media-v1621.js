@@ -107,7 +107,11 @@ async function fetchCloudBlob(id){
       }else await response.body?.cancel();
     }catch(_){/* Canonical Worker remains authoritative on CDN failure. */}
   }
-  const res=await fetch(canonical,{method:'GET',credentials:'same-origin',cache:'default'});
+  let res=null;
+  if(document.querySelector('meta[name="mws-media-batch-v5"]')?.content==='1'){
+    try{res=await (await import('/assets/media-batch-client-v5.js')).getDemandedMedia(cloudUrl(id))}catch{}
+  }
+  res??=await fetch(cloudUrl(id),{method:'GET',credentials:'same-origin',cache:'default'});
   if(res.status===404)return null;
   if(!res.ok)throw new Error('Achievement cloud media read failed: HTTP '+res.status);
   const blob=await res.blob();

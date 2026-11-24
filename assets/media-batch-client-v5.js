@@ -1,10 +1,10 @@
-import {exactContact,verified,imageType,BATCH_PATH,CACHE_NAME,MAX_ITEMS,MAX_IMAGE,MAX_HEADER} from './media-batch-protocol-v5.js';
+import {batchEntry,verified,imageType,BATCH_PATH,CACHE_NAME,MAX_ITEMS,MAX_IMAGE,MAX_HEADER} from './media-batch-protocol-v5.js';
 // No polling. Callers submit only images already demanded by the current view.
 export function createMediaBatchClient({origin=location.origin,storage=caches,network=fetch,windowMs=20}={}){
   const pending=new Map();let timer=null,active=false;
-  const cacheLookup=async(cache,entry)=>{try{const hit=await cache?.match(new URL(entry.url,origin).href);return verified(hit,entry)?hit:null}catch{return null}};
+  const cacheLookup=async(cache,entry)=>{try{if(!entry.persist)return null;const hit=await cache?.match(new URL(entry.url,origin).href);return verified(hit,entry)?hit:null}catch{return null}};
   function get(raw){
-    const entry=exactContact(raw,origin);if(!entry)return Promise.resolve(null);
+    const entry=batchEntry(raw,origin);if(!entry)return Promise.resolve(null);
     if(pending.has(entry.url))return pending.get(entry.url).promise.then(r=>r?.clone()||null);
     let resolve;const promise=new Promise(r=>{resolve=r});pending.set(entry.url,{entry,promise,resolve,queued:true});
     schedule();return promise.then(r=>r?.clone()||null);
@@ -40,11 +40,11 @@ export function createMediaBatchClient({origin=location.origin,storage=caches,ne
           const meta=JSON.parse(new TextDecoder().decode(await read(n)));
           if(meta.end===true)break;
           const row=missing.get(meta.url);if(!row)throw Error('unknown frame');
-          if(meta.status!==200){missing.delete(meta.url);finish(row,null);continue}
+          if(meta.status!==200){missing.delete(meta.url);finish(row,meta.status===404&&!row.entry.persist?new Response(null,{status:404}):null);continue}
           if(meta.version!==row.entry.version||!imageType(meta.type)||!Number.isSafeInteger(meta.size)||meta.size<=0||meta.size>MAX_IMAGE)throw Error('invalid media metadata');
           const bytes=await read(meta.size);
           const result=new Response(bytes,{headers:{'content-type':meta.type,'content-length':String(meta.size),'cache-control':'public, max-age=31536000, immutable','x-mws-cache-version':meta.version}});
-          try{await cache?.put(new URL(row.entry.url,origin).href,result.clone())}catch{}
+          try{if(row.entry.persist)await cache?.put(new URL(row.entry.url,origin).href,result.clone())}catch{}
           missing.delete(meta.url);finish(row,result);
         }
       }catch{}finally{abort.abort();try{await reader?.cancel()}catch{}for(const row of missing.values())finish(row,null)}
@@ -55,3 +55,4 @@ export function createMediaBatchClient({origin=location.origin,storage=caches,ne
 }
 let client;
 export function getDemandedContact(raw){client??=createMediaBatchClient();return client.get(raw)}
+export const getDemandedMedia=getDemandedContact;

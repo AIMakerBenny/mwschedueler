@@ -2881,7 +2881,7 @@ function mwsActivateDeferredContactImageV1(img){
   const src=img.getAttribute('data-mws-deferred-contact-src');if(!src)return;
   mwsDeferredContactObserverV1?.unobserve(img);
   img.removeAttribute('data-mws-deferred-contact-src');
-  if(document.querySelector('meta[name="mws-media-batch-v5"]')?.content==='1'&&/^\/media\/contact\/[A-Za-z0-9_-]+\?/.test(src)){
+  if(document.querySelector('meta[name="mws-media-batch-v5"]')?.content==='1'&&!navigator.serviceWorker?.controller?.scriptURL?.endsWith('?batch=51')&&/^\/media\/contact\/[A-Za-z0-9_-]+\?/.test(src)){
     const ticket=Symbol();img.__mwsBatchTicketV5=ticket;
     import('/assets/media-batch-client-v5.js').then(m=>m.getDemandedContact(src)).then(async response=>{
       if(!img.isConnected||img.__mwsBatchTicketV5!==ticket||img.hasAttribute('data-mws-deferred-contact-src'))return;

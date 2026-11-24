@@ -1,4 +1,4 @@
-import {exactContact,frame,imageType,MAX_ITEMS,MAX_IMAGE,MAX_REQUEST,MAX_BATCH_BYTES} from '../assets/media-batch-protocol-v5.js';
+import {batchEntry,frame,imageType,MAX_ITEMS,MAX_IMAGE,MAX_REQUEST,MAX_BATCH_BYTES} from '../assets/media-batch-protocol-v5.js';
 const fail=(status)=>new Response('Media batch unavailable',{status,headers:{'cache-control':'no-store'}});
 async function readInput(request){
   if(!request.body)throw Error('missing body');
@@ -18,7 +18,7 @@ export async function handleMediaBatch(request,env){
   let entries;try{
     const input=await readInput(request);
     if(!Array.isArray(input.urls)||!input.urls.length||input.urls.length>MAX_ITEMS)return fail(400);
-    entries=input.urls.map(u=>exactContact(u,origin));
+    entries=input.urls.map(u=>batchEntry(u,origin));
     if(entries.some(e=>!e)||new Set(entries.map(e=>e.url)).size!==entries.length)return fail(400);
   }catch{return fail(400)}
   let reader=null,cancelled=false;

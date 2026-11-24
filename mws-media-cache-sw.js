@@ -1,6 +1,9 @@
 'use strict';
 const CACHE='mws-public-versioned-media-v1';
 const MAX_BYTES=32*1024*1024;
+// Registration URL opt-in permits rollback without clearing existing cache.
+const BATCH_ENABLED=new URL(self.location.href).searchParams.get('batch')==='51';
+if(BATCH_ENABLED)importScripts('/assets/media-batch-sw-runtime-v51.js');
 function cacheKey(url){
   const u=new URL(url,self.location.origin);
   if(u.origin!==self.location.origin)return null;
@@ -119,7 +122,12 @@ self.addEventListener('fetch',event=>{
         const release=()=>{if(filling.get(request.url)===pending)filling.delete(request.url);finish()};
         try{
           const lateHit=await lookup();if(lateHit){release();return deliverHit(lateHit)}
-          const response=await fetch(request);traceDelivery(event.clientId,request.url,'service-worker-fetch');
+          let response=null;
+          if(BATCH_ENABLED&&!request.headers.has('authorization')&&!request.headers.has('if-none-match')&&!request.headers.has('if-modified-since')){
+            const u=new URL(request.url);response=await self.mwsBatchGetV51(u.pathname+u.search);
+          }
+          if(response){release();traceDelivery(event.clientId,request.url,'service-worker-fetch');return {response}}
+          response=await fetch(request);traceDelivery(event.clientId,request.url,'service-worker-fetch');
           if(canStore(response,key)){
             const save=store(cache,request,response.clone()).finally(release);
             return {response,save};
