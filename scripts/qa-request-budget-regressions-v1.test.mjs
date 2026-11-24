@@ -9,7 +9,7 @@ test('Friend Finder retains thirty-second refresh, pauses hidden or inactive tab
  const timers=new Map();let n=0,active=true,requests=0,forced=[];
  const doc={hidden:false};
  const code=extract(friend,'function stopActiveRefresh()','window.fetch=async function');
- const run=new Function('document','activeFriendRoot','allContactTargets','ensureBatch','scheduleUi','setTimeout','clearTimeout','URL','console','let activeRefreshTimer=0;const ACTIVE_REFRESH_MS=30000;'+code+'\nreturn {scheduleActiveRefresh,stopActiveRefresh}')(
+ const run=new Function('document','activeFriendRoot','allContactTargets','ensureBatch','scheduleUi','setTimeout','clearTimeout','URL','console','let activeRefreshTimer=0;const ACTIVE_REFRESH_MS=30000,LIVE_CACHE_MS=30000,liveAttempts=new Map(),liveCache=new Map();'+code+'\nreturn {scheduleActiveRefresh,stopActiveRefresh}')(
   doc,()=>active,()=>['https://api-channel.sooplive.co.kr/v1.1/channel/a/home/section/broad'],
   async(_,opts)=>{requests++;forced.push(opts.force)},()=>{},(fn,ms)=>{timers.set(++n,{fn,ms});return n},id=>timers.delete(id),URL,{warn(){}});
  const fire=async()=>{const [id,timer]=timers.entries().next().value;timers.delete(id);await timer.fn();return timer.ms};
@@ -57,7 +57,7 @@ test('one virtual hour on calendar issues no Friend Finder polls, active mode ke
  const timers=new Map();let n=0,active=false,requests=0,clock=0;
  const doc={hidden:false};
  const code=extract(friend,'function stopActiveRefresh()','window.fetch=async function');
- const run=new Function('document','activeFriendRoot','allContactTargets','ensureBatch','scheduleUi','setTimeout','clearTimeout','URL','console','let activeRefreshTimer=0;const ACTIVE_REFRESH_MS=30000;'+code+'\nreturn {scheduleActiveRefresh,stopActiveRefresh}')(
+ const run=new Function('document','activeFriendRoot','allContactTargets','ensureBatch','scheduleUi','setTimeout','clearTimeout','URL','console','let activeRefreshTimer=0;const ACTIVE_REFRESH_MS=30000,LIVE_CACHE_MS=30000,liveAttempts=new Map(),liveCache=new Map();'+code+'\nreturn {scheduleActiveRefresh,stopActiveRefresh}')(
  doc,()=>active,()=>['https://api-channel.sooplive.co.kr/v1.1/channel/a/home/section/broad'],async()=>{requests++},()=>{},(fn,ms)=>{timers.set(++n,{fn,at:clock+ms});return n},id=>timers.delete(id),URL,{warn(){}});
  const advance=async ms=>{const until=clock+ms;while(timers.size){const [id,t]=[...timers].sort((a,b)=>a[1].at-b[1].at)[0];if(t.at>until)break;timers.delete(id);clock=t.at;await t.fn()}clock=until};
  run.scheduleActiveRefresh();await advance(3600000);assert.equal(requests,0);
@@ -69,8 +69,8 @@ test('application rank polling keeps 60-second freshness, stops outside relevant
  const src=read('assets/content-applications-v2.js'),code=extract(src,'function stopTimer()','async function fetchPage(');
  let now=100000,visible=false,onApplications=false,clocks=0,requests=0,stopped=0;
  const attempts=new Map(),pending=new Map(),campaign={id:'one',deadline:100000+10800000};
- const api=new Function('active','updateClocks','sectionActive','current','records','countdown','attempts','pending','refresh','render','setInterval','clearInterval','Date','let timer=1;'+code+'\nreturn {tick,activate}')(
- ()=>visible,()=>clocks++,()=>onApplications,()=>null,()=>[campaign],deadline=>({expired:now>=deadline}),attempts,pending,c=>{requests++;attempts.set(c.id,now)},()=>{},()=>1,()=>stopped++,{now:()=>now});
+ const api=new Function('active','updateClocks','sectionActive','current','records','countdown','attempts','pending','refresh','render','setInterval','clearInterval','Date','snapshot','let timer=1;'+code+'\nreturn {tick,activate}')(
+ ()=>visible,()=>clocks++,()=>onApplications,()=>null,()=>[campaign],deadline=>({expired:now>=deadline}),attempts,pending,c=>{requests++;attempts.set(c.id,now)},()=>{},()=>1,()=>stopped++,{now:()=>now},()=>null);
  for(let n=0;n<3600;n++){now+=1000;api.tick()}assert.equal(requests,0);assert.equal(clocks,0);
  visible=true;for(let n=0;n<3600;n++){api.tick();now+=1000}assert.equal(requests,0);
  onApplications=true;for(let n=0;n<3600;n++){api.tick();now+=1000}assert.equal(requests,60);assert.equal(clocks,7200);
@@ -150,12 +150,12 @@ test('Friend Finder reacts to actual workspace transitions, not only sidebar cli
  const nav=extract(src,'function setTab(tab)',"document.querySelectorAll('.nav button').forEach(b=>b.onclick");
  assert(nav.includes("window.dispatchEvent(new CustomEvent('mws:workspace-tab-v1'"));
  const code=extract(friend,"window.addEventListener('mws:workspace-tab-v1'", "document.addEventListener('input'");
- let handler,active=false,stops=0,binds=0,ui=0,scheduled=[];
+ let handler,active=false,stops=0,binds=0,ui=0,scheduled=[],invalidations=0;
  const doc={hidden:false};
- new Function('window','document','stopActiveRefresh','activeFriendRoot','bindFriendGridObserver','scheduleUi','scheduleActiveRefresh',code)({addEventListener:(_,fn)=>handler=fn},doc,()=>stops++,()=>active,()=>binds++,()=>ui++,ms=>scheduled.push(ms));
+ new Function('window','document','stopActiveRefresh','activeFriendRoot','bindFriendGridObserver','scheduleUi','scheduleActiveRefresh','invalidateFriendReads',code)({addEventListener:(_,fn)=>handler=fn},doc,()=>stops++,()=>active,()=>binds++,()=>ui++,ms=>scheduled.push(ms),()=>invalidations++);
  active=true;handler();assert.deepEqual(scheduled,[0]);assert.equal(binds,1);assert.equal(ui,1);
  active=false;handler();assert.equal(stops,2);assert.deepEqual(scheduled,[0]);
- active=true;doc.hidden=true;handler();assert.equal(stops,3);assert.deepEqual(scheduled,[0]);
+ active=true;doc.hidden=true;handler();assert.equal(stops,3);assert.deepEqual(scheduled,[0]);assert.equal(invalidations,2);
 });
 
 test('public image CDN is opt-in, preserves canonical paths, and rejects unversioned or nonpublic routes',async()=>{

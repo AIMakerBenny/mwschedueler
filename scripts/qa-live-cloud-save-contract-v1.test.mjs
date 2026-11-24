@@ -36,7 +36,8 @@ test('startup activity indexing matches the old per-date sync without a calendar
  const runtime=source('assets/today-people-runtime-v130.js');
  const methods=sourceFunction(runtime,'function validDateKey(value)','  let lastTodayPeopleSyncSignatureV130=');
  const inputs={selfContactId:'self',contacts:[{id:'self'},{id:'a'},{id:'b'},{id:'c'}],todayPeopleByDate:{'2026-11-20':['a'],'2026-11-22':['b']},todayPeopleManualByDate:{'2026-11-20':['b','missing','self'],'2026-11-23':['c']},events:[{date:'2026-11-20',title:'broadcast',participants:['a','b','self','missing']},{date:'2026-11-21',restDay:true,participants:['c']},{date:'2026-11-22',title:'휴방',participants:['a']},{date:'2026-11-24',title:'game',participants:['a','a','c']}]};
- const run=expression=>{const ctx={data:JSON.parse(JSON.stringify(inputs))};ctx.contact=id=>ctx.data.contacts.find(c=>c.id===id);vm.runInNewContext(methods+'\n'+expression,ctx);return JSON.stringify(ctx.data.todayPeopleByDate)};
+ const shared=sourceFunction(source('assets/app-core.js'),'function mwsNormalizeActivityWorkspaceV3(d)','function mwsNormalizeLoadedReadDefaultsV3(');
+ const run=expression=>{const ctx={data:JSON.parse(JSON.stringify(inputs)),window:{}};ctx.contact=id=>ctx.data.contacts.find(c=>c.id===id);vm.runInNewContext(shared+'\nwindow.mwsNormalizeActivityWorkspaceV3=mwsNormalizeActivityWorkspaceV3;\n'+methods+'\n'+expression,ctx);return JSON.stringify(ctx.data.todayPeopleByDate)};
  const expected=run(`const dates=new Set([...Object.keys(data.todayPeopleByDate),...Object.keys(data.todayPeopleManualByDate)]);for(const event of data.events)if(validDateKey(event?.date))dates.add(String(event.date));for(const date of dates)syncDate(date);`);
  assert.equal(run('syncAll()'),expected);
  assert(!runtime.includes("renderAll('Mawang Scheduler v1.3.0 자동 함께한 사람 동기화')"));
@@ -92,7 +93,7 @@ function makeRuntime(code,remote,versions,opts={}){
  const parts=Object.keys(remote),status={textContent:'',dataset:{}},writes=[],cache=[],alerts=[],events=[];
  const ctx={mode:null,currentAdmin:{id:1},loadedParts:new Set(),baselineJson:new Map(),dirtyParts:new Set(),manifest:null,
   ALL_PARTS:parts,INITIAL_PARTS:parts,PARTS_BY_TAB:{memos:['notebook']},data:null,cloudSaving:false,cloudSaveTimer:0,
-  localStorage,sessionStorage,crypto:{randomUUID:()=> 'tab-1'},window:{dispatchEvent:e=>events.push(e),confirm:()=>false},
+  localStorage,sessionStorage,location:{hostname:'127.0.0.1',href:'http://127.0.0.1/',origin:'http://127.0.0.1'},document:{body:{dataset:{}}},crypto:{randomUUID:()=> 'tab-1'},window:{dispatchEvent:e=>events.push(e),confirm:()=>false},
   CustomEvent:class{constructor(type,o){this.type=type;this.detail=o.detail}},console:{error(){},warn(){}},setTimeout:(f,ms)=>setTimeout(f,Math.min(ms,10)),clearTimeout,
   $:id=>id==='syncStatusText'?status:null,toast:(...args)=>alerts.push(args),setManualSaveProgress(){},
   freshSkeleton:()=>({}),mergePart:(p,v,target)=>{target[p]=cp(v)},extractPart:p=>cp(ctx.data[p]),
