@@ -1,0 +1,8 @@
+# Cache-first calendar and public media
+
+- Existing IndexedDB is authoritative only after server version validation. A complete public cache may be painted earlier as a read-only preview; admin mode never uses the preview path. No cache schema bump or workspace reset.
+- The service worker is scoped to exact revisioned public contact and character-profile GET requests and release-versioned built-in character portraits. It never handles API, HTML, write requests, workspace/private images, or authentication. Responses must have the exact version marker, successful status, image MIME type, and non-private cache policy. Fallback responses must never be persisted as the requested revision.
+- Built-in character portraits currently use archive-v11. Bump this release identifier when replacing the repository portrait bytes. Uploaded profiles are individually revisioned by R2 object metadata automatically.
+- After first paint, the public profile index refreshes once per page; a cached index is displayed immediately. Preload at most 12 missing character images and 8 favorite/recent-calendar contacts, with 3 requests in each batch. Cached images do not hit the network. Skip background image downloads when hidden, Save-Data or slow connections are detected. CDN-enabled contact preloading remains disabled until a dedicated CDN cache strategy is tested.
+- Cache capacity is best-effort and subject to the browser's quota/eviction. Deleting site data removes the cache. No production polling, API caching, or Admin data caching was added.
+- Rollback: serve a replacement service worker at the same path that deletes only mws-public-versioned-media-v1 and unregisters itself; do not delete workspace IndexedDB or other caches.

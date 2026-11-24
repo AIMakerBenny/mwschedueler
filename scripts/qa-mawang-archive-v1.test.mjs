@@ -131,10 +131,10 @@ test('archive registered between timeline and achievements; only gallery API wri
   assert(css.includes('prefers-reduced-motion:reduce')&&css.includes('data-mws-motion=reduced'));
 });
 test('gallery stores originals, exposes public reads, enforces admin writes, and isolates characters',async()=>{
-  const objects=new Map();
+  const objects=new Map();let revisionCounter=0;
   const bucket={
     async list({prefix}){return {objects:[...objects.values()].filter(x=>x.key.startsWith(prefix)),truncated:false}},
-    async put(key,bytes,{httpMetadata}){const object={key,uploaded:new Date(),size:bytes.byteLength,body:bytes,httpEtag:'"test"',writeHttpMetadata(h){h.set('content-type',httpMetadata.contentType)}};objects.set(key,object);return object},
+    async put(key,bytes,{httpMetadata}){const object={key,uploaded:new Date(1700000000000+(++revisionCounter)),etag:revisionCounter.toString(16).padStart(32,'0'),size:bytes.byteLength,body:bytes,httpEtag:'"test"',writeHttpMetadata(h){h.set('content-type',httpMetadata.contentType)}};objects.set(key,object);return object},
     async get(key){return objects.get(key)},
     async delete(key){objects.delete(key)}
   };
@@ -156,10 +156,12 @@ test('gallery stores originals, exposes public reads, enforces admin writes, and
   assert.equal((await call('/api/mawang-profile/ae',{...profileUpload,body:'invalid'},true)).status,415);
   const profileResponse=await call('/api/mawang-profile/ae',profileUpload,true);assert.equal(profileResponse.status,200);
   const {profile}=await profileResponse.json();assert.equal(profile.character,'ae');
-  assert.deepEqual(Buffer.from(await (await call(profile.url)).arrayBuffer()),data);
+  const firstProfile=await call(profile.url);assert.equal(firstProfile.headers.get('x-mws-cache-version'),profile.revision);assert.match(firstProfile.headers.get('cache-control'),/immutable/);assert.deepEqual(Buffer.from(await firstProfile.arrayBuffer()),data);
   const replacement=readFileSync(new URL('../assets/mawang-archive-portraits/mi.jpg',import.meta.url));
   const replaced=await (await call('/api/mawang-profile/ae',{...profileUpload,body:replacement},true)).json();
-  assert.deepEqual(Buffer.from(await (await call(replaced.profile.url)).arrayBuffer()),replacement);
+  assert.notEqual(replaced.profile.revision,profile.revision);
+  const newProfile=await call(replaced.profile.url);assert.equal(newProfile.headers.get('x-mws-cache-version'),replaced.profile.revision);assert.deepEqual(Buffer.from(await newProfile.arrayBuffer()),replacement);
+  const staleProfile=await call(profile.url);assert.equal(staleProfile.headers.get('x-mws-cache-version'),null);assert.equal(staleProfile.headers.get('cache-control'),'no-store');
   const withProfile=await (await call('/api/mawang-gallery')).json();assert.equal(withProfile.profiles.length,1);assert.equal(withProfile.photos.length,2);
   const profileOnly=await (await call('/api/mawang-profile')).json();assert.equal(profileOnly.profiles.length,1);assert(!('photos' in profileOnly));
   assert.equal((await call('/api/mawang-profile/kkomwang',profileUpload,true)).status,200);
@@ -227,7 +229,7 @@ test('workspace header keeps only page-relevant actions and links to the exact M
   assert.match(archive,/\.mws-archive-wiki/);
   assert.match(archive,/\.ma-header-filters/);
   assert.match(html,/assets\/mawang-archive-finish-v1\.css\?v=1/);
-  assert.match(html,/assets\/mawang-archive-v1\.js\?v=19/);
+  assert.match(html,/assets\/mawang-archive-v1\.js\?v=20/);
   const finish=read('assets/mawang-archive-finish-v1.css'),archiveRuntime=read('assets/mawang-archive-v1.js');
   for(const marker of ['.ma-character-card:hover','.ma-stage-art::after','.ma-page-arrow','ma-portrait-focus','prefers-reduced-motion'])assert(finish.includes(marker));
   assert(!archiveRuntime.includes('등록된 프로필 사진'));
@@ -250,4 +252,18 @@ test('workspace header keeps only page-relevant actions and links to the exact M
   assert.doesNotMatch(global,/min-height:57px!important/);
   assert.match(html,/id="postRegisterMenu"/);
   assert.match(html,/class="post-menu-trigger post-register-trigger" aria-label="새 게시글 등록"/);
+});
+
+test('media cache worker accepts only exact, public, versioned image responses',()=>{
+  const code=read('mws-media-cache-sw.js'),handlers={};
+  const ctx={URL,Headers,Response,self:{location:{origin:'https://example.test'},addEventListener:(name,fn)=>handlers[name]=fn}};
+  const worker=vm.runInNewContext(code+'\n;({cacheKey,canStore})',ctx);
+  const token='a'.repeat(32),path='/media/contact/test?v=2&h='+token+'&r=2';
+  assert.equal(worker.cacheKey(path).version,'2-'+token);
+  for(const p of ['/api/manifest','/api/mawang-profile','/media/contact/test?v=2','/media/workspace/test?v=2&h='+token,'/media/mawang-profile/mi','https://evil.test'+path])assert.equal(worker.cacheKey(p),null,p);
+  const key=worker.cacheKey(path),response=(version,policy='public, immutable')=>new Response('x',{headers:{'content-type':'image/png','cache-control':policy,'x-mws-cache-version':version}});
+  assert(worker.canStore(response('2-'+token),key));assert(!worker.canStore(response('1-'+token),key));assert(!worker.canStore(response('2-'+token,'no-store'),key));
+  assert.equal(worker.cacheKey('/media/mawang-profile/mi?rev=123-abcd').version,'123-abcd');
+  assert(worker.cacheKey('/assets/mawang-archive-portraits/yoo.jpg?rev=archive-v11').static);
+  assert.equal(worker.cacheKey('/assets/mawang-archive-portraits/yoo.jpg'),null);
 });
