@@ -8,6 +8,7 @@ on:
       - 'assets/workspace-density-v1.css'
       - 'index.html'
       - 'scripts/qa-career-sticky-no-jump.mjs'
+      - 'scripts/qa-ui-workspace-live-v2.mjs'
       - '.github/workflows/qa-career-sticky-no-jump.yml'
 permissions:
   contents: read
@@ -29,6 +30,8 @@ jobs:
         env:
           MWS_TIMELINE_CAPTURE: '1'
         run: node scripts/qa-career-sticky-no-jump.mjs
+      - name: Real public live workspace six-viewport regression
+        run: node scripts/qa-ui-workspace-live-v2.mjs
       - name: Verify existing timeline desktop navigation, search, and animations
         env:
           CAREER_QA_MODE: desktop
