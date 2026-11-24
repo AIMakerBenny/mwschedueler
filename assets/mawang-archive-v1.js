@@ -19,7 +19,7 @@
   // Category cards stay grouped; arrows follow one continuous archive when not searching.
   const navigation=()=>normalize(query)?matching():entries;
   const rosterPages=(list=matching())=>['jeong','classic','mascot'].map(group=>list.filter(c=>c.group===group)).filter(items=>items.length);
-  const profilePhoto=c=>profiles.get(c.id)||(c.image?.startsWith('/assets/mawang-archive-portraits/')?{url:c.image}:null);
+  const profilePhoto=c=>profiles.get(c.id)||(c.image?.startsWith('/assets/mawang-archive-portraits/')?{url:c.image+'?rev=archive-v11'}:null);
   function pic(c,hero=false){
     const p=profilePhoto(c),failed=!p||missing.has(p.url);
     return `<div class="ma-portrait${failed?' ma-image-missing':''}" style="--ma-color:${c.color}"><div class="ma-monogram" aria-hidden="true"><span>${escape(c.name.slice(0,1))}</span>${hero?`<small>${p?'사진 불러오기 실패':'프로필 사진 미등록'}</small>`:''}</div>${!failed?`<img class="ma-character-image" data-ma-image="${escape(p.url)}" src="${escape(p.url)}" alt="${escape(c.name)} 프로필 사진" loading="${hero?'eager':'lazy'}" decoding="async" draggable="false">`:''}</div>`;
@@ -118,23 +118,30 @@
   }
   function normalizeProfile(p){
     if(!entries.some(c=>c.id===p?.character)||!/^\d{1,15}-[a-f0-9]{0,80}$/i.test(p?.revision||''))return null;
-    return {character:p.character,url:'/media/mawang-profile/'+p.character+'?rev='+p.revision};
+    return {character:p.character,revision:p.revision,url:'/media/mawang-profile/'+p.character+'?rev='+p.revision};
   }
   async function request(url,options={}){
     const response=await fetch(url,{credentials:'same-origin',cache:'no-store',...options}),body=await response.json().catch(()=>null);
     if(!response.ok||!body)throw Error(body?.error||'사진 서버 연결 실패');return body;
   }
+  const profileCacheKey='mws_public_character_revisions_v1';
+  function storeProfileList(){try{localStorage.setItem(profileCacheKey,JSON.stringify([...profiles.values()].map(p=>({character:p.character,revision:p.revision}))))}catch(_){}}
+  try{const stored=JSON.parse(localStorage.getItem(profileCacheKey)||'[]');if(Array.isArray(stored))for(const raw of stored){const p=normalizeProfile(raw);if(p)profiles.set(p.character,p)}}catch(_){}
+  let profileLoad=null;
   async function loadProfiles(){
-    try{const body=await request('/api/mawang-profile');if(!Array.isArray(body.profiles))throw Error('프로필 목록을 불러올 수 없습니다.');profiles.clear();for(const raw of body.profiles){const p=normalizeProfile(raw);if(p)profiles.set(p.character,p)}profileError='';profileReady=true;roster();profilePanel()}
-    catch(error){profileError='등록 프로필을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.';profilePanel()}
+    if(profileLoad)return profileLoad;
+    profileLoad=(async()=>{try{const body=await request('/api/mawang-profile');if(!Array.isArray(body.profiles))throw Error('프로필 목록을 불러올 수 없습니다.');const before=JSON.stringify([...profiles.values()]);profiles.clear();for(const raw of body.profiles){const p=normalizeProfile(raw);if(p)profiles.set(p.character,p)}storeProfileList();profileError='';profileReady=true;if(mounted){if(before!==JSON.stringify([...profiles.values()]))roster();profilePanel(before!==JSON.stringify([...profiles.values()]))}}
+    catch(error){profileError='등록 프로필을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.';if(mounted)profilePanel(false)}})();
+    return profileLoad;
   }
+  window.mwsPrepareCharacterMediaV1=async()=>{await loadProfiles();return entries.map(c=>profilePhoto(c)?.url).filter(Boolean)};
   function updateProfileUI(c){roster();if(c===selected)profilePanel()}
   async function changeProfile(c,file,reset=false){
     if(!isAdmin()||!profileReady||busy.has(c.id))return;
     if(reset&&!confirm(c.name+'의 프로필 사진을 기본 상태로 되돌리시겠습니까?'))return;
     if(!reset&&(!file||!validTypes.has(file.type)||!file.size||file.size>32*1024*1024)){messages.set(c.id,'프로필 사진 형식 또는 32MB 용량 제한');updateProfileUI(c);return}
     busy.add(c.id);messages.set(c.id,'프로필 사진 저장 중…');updateProfileUI(c);
-    try{const body=await request('/api/mawang-profile/'+c.id,reset?{method:'DELETE'}:{method:'PUT',headers:{'content-type':file.type},body:file});if(reset)profiles.delete(c.id);else{const p=normalizeProfile(body.profile);if(!p||p.character!==c.id)throw Error('프로필 저장 응답 오류');profiles.set(c.id,p)}messages.set(c.id,reset?'프로필 초기화 완료':'프로필 사진 저장 완료')}
+    try{const body=await request('/api/mawang-profile/'+c.id,reset?{method:'DELETE'}:{method:'PUT',headers:{'content-type':file.type},body:file});if(reset)profiles.delete(c.id);else{const p=normalizeProfile(body.profile);if(!p||p.character!==c.id)throw Error('프로필 저장 응답 오류');profiles.set(c.id,p)}storeProfileList();messages.set(c.id,reset?'프로필 초기화 완료':'프로필 사진 저장 완료')}
     catch(error){messages.set(c.id,error.message)}finally{busy.delete(c.id);updateProfileUI(c)}
   }
   function render(){

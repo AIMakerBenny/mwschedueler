@@ -74,11 +74,18 @@ try{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));browser=await launchCalendarBrowser(dir);
  await browser.navigate(base+':'+server.address().port+'/',1366,768);
  await until(()=>browser.evaluate("(()=>{document.querySelector('#mwsAnnouncementDialog[open] .mws-notice-close')?.click();if(document.body.classList.contains('mws-gated')){document.querySelector('#mwsModePublic')?.click();document.querySelector('#mwsLoginSubmit')?.click()}return !!window.__mwsAppReadyV130&&document.body.dataset.mwsMode==='public'&&!document.body.classList.contains('mws-gated')&&!document.body.classList.contains('mws-app-loading')})()"),'Full app public readiness');
+ await until(()=>browser.evaluate('!!window.__mwsMediaPreloadPromiseV1'),'Media preloader scheduled');
+ await browser.evaluate('window.__mwsMediaPreloadPromiseV1.then(()=>true)');
  await pause(1800);
  const startup=calls.slice();console.log('FULL_APP_STARTUP '+JSON.stringify(summary(startup)));
  assert.deepEqual(startup.filter(common).map(r=>r.path),['/api/calendar-startup','/api/parts-batch']);
  assert.equal(startup.filter(r=>['/assets/cloud-v5.5.js','/assets/cloud-v1.1.js','/assets/boss-manager-v121.js'].includes(r.path)).length,0);
  assert.equal(await browser.evaluate("!!window.__mwsCloudV110Loaded"),true);
+ if(!useCdn){
+  await until(()=>browser.evaluate('!!navigator.serviceWorker.controller'),'Media service worker control');
+  const url=contacts[0].image;
+  await until(()=>browser.evaluate('(async()=>!!await (await caches.open("mws-public-versioned-media-v1")).match('+JSON.stringify(url)+'))()'),'Versioned portrait persisted');
+ }
  const routes=['calendar','contacts','dashboard','memos','careerTimeline','achievements','mawangArchive','gameLadder','gameMultiDraw','contentPlanner','toolTier','toolMatrix','toolRelations','settings','calendar'];
  const nav=async list=>browser.evaluate('(async()=>{for(const id of '+JSON.stringify(list)+'){window.setTab(id);await new Promise(r=>setTimeout(r,120));if(!document.getElementById(id)?.classList.contains("active"))throw Error("route "+id)}return true})()');
  let before=calls.length;
@@ -134,6 +141,14 @@ try{
  await browser.evaluate("document.querySelector('[data-ca-open=\"app-qa\"]').click()");
  await until(()=>browser.evaluate("document.querySelector('#caDetail').classList.contains('is-closed')&&document.querySelector('[data-ca-stat=likes]')?.textContent==='11'"),'Expired snapshot restored');
  assert.equal(calls.slice(before).filter(r=>r.path.startsWith('/api/soop/application-sync')).length,0);
+ if(!useCdn){
+  await until(()=>browser.evaluate('!!navigator.serviceWorker.controller'),'Reload controlled');
+  const url=contacts[0].image,beforeCacheRead=calls.length;
+  assert.equal(await browser.evaluate('(async()=>{const r=await fetch('+JSON.stringify(url)+',{cache:"reload"});return r.ok&&!!(await r.blob()).size})()'),true);
+  assert.equal(calls.slice(beforeCacheRead).filter(r=>r.path==='/media/contact/qa0').length,0,'Persisted portrait must not hit Worker after reload');
+  assert.equal(await browser.evaluate('window.__mwsV55NetworkMetrics.requests.some(r=>r.type==="calendar-local-first-paint")'),true,'Complete public calendar cache painted before verification');
+  console.log('FULL_APP_CACHE_FIRST_OK '+JSON.stringify({portraitReloadWorker:0,calendarLocalFirst:true}));
+ }
  console.log('FULL_APP_APPLICATION_SNAPSHOT_OK '+JSON.stringify({activeSync:1,archivedApplicants:7,expiredSync:0}));
  assert.equal(errors.length,0,JSON.stringify(errors));
  console.log('FULL_APP_REQUEST_BUDGET_OK '+JSON.stringify({startup:summary(startup),cold:summary(cold),warm:summary(warm),friend:summary(live),idle:summary(idle),upstreamSimulated:upstream.length}));

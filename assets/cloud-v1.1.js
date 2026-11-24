@@ -165,7 +165,21 @@
     const generation=++hydrationSeq;hydrating=true;window.__mwsAppReadyV130=false;mode=chosen;
     loadedParts.clear();baselineJson.clear();dirtyParts.clear();lazyPartLoads.clear();remainingWorkspaceLoad=null;remainingRetryAt=0;manifest=null;draftBlocked=null;lastDraft=null;draftOrigin=null;
     const scope=chosen==='admin'?'admin':'public',required=chosen==='admin'?ALL_PARTS:INITIAL_PARTS;
-    let serverManifest=null,offline=false,startupParts={},startupUsed=false;
+    let serverManifest=null,offline=false,startupParts={},startupUsed=false,previewVersions=null;
+    // Only the initial Public calendar may paint a complete local snapshot.
+    // Keep the shell inert and Admin version/save guards intact until verified.
+    if(chosen==='public'&&window.mwsCacheFirstCalendarV1===true&&document.body.dataset.calendarStartup==='pending'&&typeof window.mwsRenderHydratedCalendarV1==='function'){
+      try{
+        const cached=await Promise.all(INITIAL_PARTS.map(part=>checkPartCache('public',part)));
+        if(generation===hydrationSeq&&mode===chosen&&cached.every(x=>x.cached&&Number.isInteger(Number(x.cached.version))&&Number(x.cached.version)>0&&ownSave(x.cached,'data'))){
+          const preview=freshSkeleton();INITIAL_PARTS.forEach((part,i)=>mergePart(part,cached[i].cached.data,preview));
+          data=preview;normalizeDataShape();window.mwsRenderHydratedCalendarV1('로컬 캐시 · 최신 버전 확인 중',INITIAL_PARTS);
+          previewVersions=Object.fromEntries(INITIAL_PARTS.map((part,i)=>[part,Number(cached[i].cached.version)]));
+          metric('calendar-local-first-paint',{scope,versions:previewVersions});
+          const status=$('syncStatusText');if(status)status.textContent='로컬 일정 · 최신 버전 확인 중';
+        }
+      }catch(_){}
+    }
     setLoginError('로그인 완료 · 서버 버전을 확인하는 중입니다.');
     try{
       const prefetched=window.__mwsCalendarStartupRequestV2;
@@ -200,7 +214,10 @@
       if(chosen==='admin')await loadBatch(required.filter(part=>!loadedParts.has(part)));
       setLoginError('로그인 완료 · 화면을 준비하는 중입니다.');
       data=next;normalizeDataShape();const recovered=chosen==='admin'&&!offline?await recoverSaveDraft():false;
-      normalizeAndRender(offline?'IndexedDB 오프라인 캐시':'Cloudflare D1 데이터',true);
+      // Do not replace the visible calendar a second time when nothing changed.
+      const previewUnchanged=previewVersions&&serverManifest?.parts&&INITIAL_PARTS.every(part=>previewVersions[part]===Number(serverManifest.parts[part]));
+      if(!previewUnchanged)normalizeAndRender(offline?'IndexedDB 오프라인 캐시':'Cloudflare D1 데이터',true);
+      else metric('calendar-local-first-reused',{scope});
       if(startupUsed&&!offline&&serverManifest?.parts){try{const hints={};for(const p of INITIAL_PARTS)if(loadedParts.has(p)&&Number.isSafeInteger(Number(serverManifest.parts[p])))hints[p]=Number(serverManifest.parts[p]);localStorage.setItem('mws_calendar_startup_versions_v2:'+scope,JSON.stringify(hints))}catch(_){}}
       metric('calendar-startup-commit',{scope,loaded:[...loadedParts]});
       try{localStorage.removeItem('mawangSchedulerBeta')}catch(_){}
