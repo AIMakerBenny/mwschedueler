@@ -92,3 +92,16 @@ test('global renders never construct hidden mini-game contact palettes; tab entr
  const palette=extract(src,"function renderMiniContactPalette(game,q='')",'function renderMiniGame(game)');
  assert(palette.includes('loading="lazy" decoding="async"'));
 });
+
+test('expired campaign detail, manual refresh and in-flight continuation cannot issue more reads',async()=>{
+ const src=read('assets/content-applications-v2.js');
+ const polling=extract(src,'function stopTimer()','async function fetchPage(');
+ let now=200000,requests=0;const campaign={id:'one',deadline:now-1,entries:[]};
+ const attempts=new Map(),pending=new Map();
+ const api=new Function('active','updateClocks','sectionActive','current','records','countdown','attempts','pending','refresh','render','setInterval','clearInterval','Date','let timer=0;'+polling+'\nreturn {tick,activate,loadVisible}')(()=>true,()=>{},()=>true,()=>campaign,()=>[campaign],deadline=>({expired:now>=deadline}),attempts,pending,()=>requests++,()=>{},()=>1,()=>{},{now:()=>now});
+ api.activate();api.loadVisible();for(let i=0;i<3600;i++){now+=1000;api.tick()}assert.equal(requests,0);
+ const refresh=extract(src,'async function refresh(c,','function addAuthorInput');
+ const run=new Function('countdown','pending','active','epoch','signature','records','sectionActive','selected','attempts','snapshot','render','detail','readSource','Date',refresh+'\nreturn refresh')(
+ d=>({expired:now>=d}),new Map(),()=>true,1,()=> 'same',()=>[campaign],()=>true,'one',new Map(),()=>null,()=>{},null,async()=>{requests++},{now:()=>now});
+ await run(campaign,true);assert.equal(requests,0);
+});

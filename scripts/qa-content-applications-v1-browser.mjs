@@ -74,14 +74,21 @@ try{
   await evalJS("setTab('dashboard')");await delay(80);
   assert(await evalJS("!!document.querySelector('#dashboardApplicationSupport .ca-state.urgent')"));
   await evalJS("setTab('contentApplications')");await delay(80);
+  const beforeExpiry=await evalJS('reads');
   await evalJS(`(()=>{document.querySelector('[data-ca-edit]').click();document.querySelector('#caDeadline').value=toKstInput(new Date(Date.now()-900000).toISOString());document.querySelector('#caSave').click()})()`);await delay(150);
-  assert(await evalJS(`document.querySelector('#caDetail .ca-state').textContent==='만료'&&!document.querySelector('.ca-vote')&&document.querySelector('.ca-support a').href.endsWith('#comment_noti2')`));
-  assert.equal(await evalJS(`document.querySelector('.ca-countdown-panel .ca-time').textContent`),'만료');
+  assert(await evalJS(`document.querySelector('#caDetail .ca-state').textContent==='종료'&&document.querySelector('#caDetail').classList.contains('is-closed')&&!document.querySelector('[data-ca-refresh]')&&!document.querySelector('.ca-vote')&&document.querySelector('.ca-support a').href.endsWith('#comment_noti2')`));
+  assert.equal(await evalJS(`document.querySelector('.ca-countdown-panel .ca-time').textContent`),'조회 종료');
   await evalJS("setTab('dashboard')");await delay(100);assert(await evalJS("document.querySelector('#dashboardApplicationSupport').hidden"));await evalJS("setTab('contentApplications')");await delay(100);
   await evalJS(`(()=>{document.body.dataset.mwsMode='public';window.dispatchEvent(new CustomEvent('mws:app-ready'));document.querySelector('[data-ca-open]').click()})()`);await delay(100);
   const pub=await evalJS(`(()=>({newHidden:document.querySelector('#caNewBtn').hidden,edit:!!document.querySelector('[data-ca-edit]'),writes,onlineSaves,rank:document.querySelector('.ca-hero')?.innerText}))()`);
   assert.equal(pub.newHidden,true);assert.equal(pub.edit,false);assert.equal(pub.writes,3);assert.equal(pub.onlineSaves,3);assert.match(pub.rank,/마왕0216/);
-  await evalJS(`document.querySelector('[data-ca-refresh]').click()`);await delay(150);assert.equal(await evalJS('writes'),3);
+  assert.equal(await evalJS('reads'),beforeExpiry);
+  assert(await evalJS("document.querySelector('[data-ca-stat=likes]').textContent==='40'&&!document.querySelector('[data-ca-refresh]')"));
+  await evalJS("document.querySelector('[data-ca-back]').click()");
+  assert(await evalJS("document.querySelector('.ca-campaign.is-closed')&&getComputedStyle(document.querySelector('.ca-campaign.is-closed')).filter==='grayscale(1)'"));
+  await evalJS("document.querySelector('[data-ca-open]').click()");await delay(150);assert.equal(await evalJS('reads'),beforeExpiry);assert.equal(await evalJS('writes'),3);
+  await evalJS(`(()=>{data.contentApplications.push({...data.contentApplications[0],id:'never-read',title:'No history'});window.dispatchEvent(new CustomEvent('mawang:datachange'));document.querySelector('[data-ca-back]').click();document.querySelector('[data-ca-open="never-read"]').click()})()`);await delay(150);
+  assert.equal(await evalJS('reads'),beforeExpiry);assert.match(await evalJS("document.querySelector('.ca-ranking').innerText"),/조회 기록이 없습니다/);
   console.log('CONTENT_APPLICATIONS_BROWSER_OK',w,h,'create, compare, expiry, read-only public, no horizontal overflow');
  }
 }finally{await browser?.close();rmSync(dir,{recursive:true,force:true})}

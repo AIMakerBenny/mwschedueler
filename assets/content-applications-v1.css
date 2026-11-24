@@ -426,3 +426,23 @@ html[data-mws-motion="reduced"] #contentApplications .ca-my-rank-jump,
 html[data-mws-motion="reduced"] #contentApplications .ca-rank-change,
 html[data-mws-motion="reduced"] #contentApplications .ca-like-change,
 html[data-mws-motion="reduced"] #contentApplications .ca-stat-trend{animation:none!important;transition:none!important}
+
+/* Finished applications are readable archives, not live support controls. */
+#contentApplications .ca-campaign.is-closed{
+  filter:grayscale(1);background:linear-gradient(145deg,color-mix(in srgb,var(--muted) 9%,var(--ca-surface)),var(--ca-surface));
+  border-color:var(--border);box-shadow:0 2px 8px #00000012;
+}
+#contentApplications .ca-campaign.is-closed:hover{
+  transform:translateY(-1px);border-color:var(--muted);box-shadow:0 4px 12px #00000018;
+}
+#contentApplications .ca-campaign.is-closed .ca-card-action{color:var(--text)}
+#contentApplications .ca-state.expired{color:var(--text);background:var(--input);border-color:var(--border)}
+#contentApplications #caDetail.is-closed :is(.ca-hero,.ca-countdown-panel,.ca-ranking,.ca-ranking-head){filter:grayscale(1)}
+#contentApplications #caDetail.is-closed .ca-countdown-panel{
+  border-color:var(--border);background:color-mix(in srgb,var(--muted) 8%,var(--ca-surface));
+}
+#contentApplications #caDetail.is-closed .ca-hero{border-color:var(--border);background:var(--ca-surface);box-shadow:0 3px 12px #00000012}
+#contentApplications .ca-campaign.ca-just-ended,#contentApplications #caDetail.ca-just-ended .ca-hero{animation:ca-close-transition 500ms ease-out both}
+@keyframes ca-close-transition{from{filter:grayscale(0);opacity:.8}to{filter:grayscale(1);opacity:1}}
+@media(prefers-reduced-motion:reduce){#contentApplications .ca-just-ended,#contentApplications .ca-just-ended .ca-hero{animation:none!important}}
+html[data-mws-motion="reduced"] #contentApplications :is(.ca-just-ended,.ca-just-ended .ca-hero){animation:none!important}

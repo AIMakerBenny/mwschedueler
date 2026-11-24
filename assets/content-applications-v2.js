@@ -18,7 +18,34 @@ const records=()=>normalizeCampaigns(typeof data==='object'?data.contentApplicat
 const current=()=>records().find(c=>c.id===selected);
 const kst=v=>toKstInput(v).replace('T',' ')+' KST';
 const signature=c=>c.entries.map(e=>e.id).join('|');
-const snapshot=c=>{const s=snapshots.get(c.id);return s?.signature===signature(c)?s:null};
+// Last observed public comment results, local only. Never fetch expired campaigns
+// to fill missing history. Keep the cache bounded and tolerate unavailable storage.
+const ARCHIVE_KEY='mws-ca-last-read-v1',ARCHIVE_MAX=1500000;
+function readArchive(){
+ try{const raw=localStorage.getItem(ARCHIVE_KEY);const rows=raw&&raw.length<=ARCHIVE_MAX?JSON.parse(raw):[];return Array.isArray(rows)?rows:[]}catch(_){return []}
+}
+let archive=readArchive();
+function archiveSnapshot(c,s){
+ try{
+  const byId=new Map(readArchive().filter(x=>x&&typeof x.id==='string').map(x=>[x.id,x]));
+  const old=byId.get(c.id);
+  if(old?.signature===s.signature&&Date.parse(old.checkedAt)>Date.parse(s.checkedAt))return;
+  byId.set(c.id,{id:c.id,...s});
+  const validIds=new Set(records().map(x=>x.id));
+  const rows=[...byId.values()].filter(x=>validIds.has(x.id)).sort((a,b)=>Date.parse(b.checkedAt)-Date.parse(a.checkedAt)).slice(0,MAX_CAMPAIGNS);
+  const kept=[];let size=2;
+  for(const row of rows){const len=JSON.stringify(row).length+1;if(size+len>ARCHIVE_MAX)continue;kept.push(row);size+=len}
+  localStorage.setItem(ARCHIVE_KEY,JSON.stringify(kept));archive=kept;
+ }catch(_){}
+}
+function archivedSnapshot(c){
+ const row=archive.find(s=>s?.id===c.id&&s.signature===signature(c));
+ if(!row||!Number.isFinite(Date.parse(row.checkedAt))||typeof row.complete!=='boolean'||!Array.isArray(row.applicants))return null;
+ const ids=new Set(c.entries.map(e=>e.id));
+ if(!row.applicants.every(e=>e&&typeof e.id==='string'&&typeof e.userId==='string'&&typeof e.nickname==='string'&&ids.has(e.sourceId)&&(e.likes===null||Number.isSafeInteger(e.likes)&&e.likes>=0)))return null;
+ return row;
+}
+const snapshot=c=>{const s=snapshots.get(c.id);return s?.signature===signature(c)?s:countdown(c.deadline).expired?archivedSnapshot(c):null};
 const rankOf=c=>rankEntries(snapshot(c)?.applicants||[]);
 const reduceMotion=()=>document.documentElement.dataset.mwsMotion==='reduced'||window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
 const sameApplicants=(a,b)=>{
@@ -27,9 +54,9 @@ const sameApplicants=(a,b)=>{
  return b.every(e=>{const p=old.get(e.userId);return !!p&&['id','likes','comment','nickname','avatar','best'].every(k=>p[k]===e[k])});
 };
 const stat=(kind,value,prefix='',suffix='')=>`<strong data-ca-stat="${kind}" data-ca-value="${value==null?'':value}" data-ca-prefix="${esc(prefix)}" data-ca-suffix="${esc(suffix)}">${value==null?'–':esc(prefix)+number(value)+esc(suffix)}</strong>`;
-function status(c){const phase=campaignStatus(c.deadline);return `<span class="ca-state${phase==='expired'?' expired':phase==='urgent'?' urgent':''}" data-ca-state="${esc(c.deadline)}" data-ca-phase="${phase}">${phase==='expired'?'만료':phase==='urgent'?'마감임박':'진행중'}</span>`}
+function status(c){const phase=campaignStatus(c.deadline);return `<span class="ca-state${phase==='expired'?' expired':phase==='urgent'?' urgent':''}" data-ca-state="${esc(c.deadline)}" data-ca-phase="${phase}">${phase==='expired'?'종료':phase==='urgent'?'마감임박':'진행중'}</span>`}
 const authorLine=(c,extra='')=>c.authors?.length?`<div class="ca-author-line ${extra}"><span>게시글 작성자</span><strong>${c.authors.map(esc).join(' · ')}</strong></div>`:'';
-function time(c){return `<span class="ca-time" data-ca-time="${esc(c.deadline)}">${esc(countdown(c.deadline).label)}</span>`}
+function time(c){return `<span class="ca-time" data-ca-time="${esc(c.deadline)}">${esc(countdown(c.deadline).expired?'조회 종료':countdown(c.deadline).label)}</span>`}
 const postLink=(e,cls='ca-origin',label=e?.commentNo?'SOOP 댓글 바로가기':'모집 글 보기')=>commentPermalink(e)?`<a class="${cls}" href="${esc(commentPermalink(e))}" target="_blank" rel="noopener noreferrer">${label} ${external}</a>`:'';
 function avatar(e,own=false){return `<span class="ca-avatar${own?' own':''}">${esc((e?.nickname||(own?'마왕':'?')).slice(0,2))}${e?.avatar?`<img src="${esc(e.avatar)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:''}</span>`}
 function confirmed(s,r){return !!s&&s.complete&&r.allKnown}
@@ -48,8 +75,8 @@ function renderDashboardSupport(){
  dashboardSupport.innerHTML=`<div class="ca-dash-head"><div><span class="ca-dash-kicker">FAN SUPPORT</span><h3>마왕 신청 콘텐츠</h3></div><span class="ca-dash-count">${campaigns.length}개 진행 중</span></div><div class="ca-dash-list">${campaigns.map(row).join('')}</div>`;
 }
 function card(c){
- const s=snapshot(c),r=rankOf(c),own=r.mawang;
- return `<button type="button" class="ca-campaign" data-ca-open="${esc(c.id)}"><div class="ca-campaign-top">${status(c)}<span>${s?number(r.total)+'명 댓글 신청자':pending.has(c.id)?'댓글 확인 중':'신청 현황 보기'}</span></div><div class="ca-campaign-title"><span class="ca-eyebrow">MAWANG SUPPORT</span><strong>${esc(c.title)}</strong><small>${esc(c.entries[0]?.title||'SOOP 모집 게시글')}</small>${authorLine(c)}</div><div class="ca-card-person">${avatar(own,true)}<div><span>응원할 신청자</span><b>마왕0216</b></div><div class="ca-card-metric"><small>좋아요</small><b>${own?number(own.likes):'–'}</b></div><div class="ca-card-metric"><small>순위</small><b>${rankLabel(s,r)}</b></div></div><div class="ca-campaign-bottom"><span class="ca-campaign-timing">${clock}${time(c)}</span><span class="ca-card-action">응원 현황 보기 →</span></div></button>`;
+ const s=snapshot(c),r=rankOf(c),own=r.mawang,expired=countdown(c.deadline).expired;
+ return `<button type="button" class="ca-campaign${expired?' is-closed':''}" data-ca-open="${esc(c.id)}"><div class="ca-campaign-top">${status(c)}<span>${s?number(r.total)+'명 댓글 신청자':expired?'조회 기록 없음':pending.has(c.id)?'댓글 확인 중':'신청 현황 보기'}</span></div><div class="ca-campaign-title"><span class="ca-eyebrow">MAWANG SUPPORT</span><strong>${esc(c.title)}</strong><small>${esc(c.entries[0]?.title||'SOOP 모집 게시글')}</small>${authorLine(c)}</div><div class="ca-card-person">${avatar(own,true)}<div><span>${expired?'신청자':'응원할 신청자'}</span><b>마왕0216</b></div><div class="ca-card-metric"><small>좋아요</small><b>${own?number(own.likes):'–'}</b></div><div class="ca-card-metric"><small>순위</small><b>${rankLabel(s,r)}</b></div></div><div class="ca-campaign-bottom"><span class="ca-campaign-timing">${clock}${time(c)}</span><span class="ca-card-action">${expired?'조회 기록 보기':'응원 현황 보기'} →</span></div></button>`;
 }
 function renderList(){
  const rows=records().sort((a,b)=>Number(countdown(a.deadline).expired)-Number(countdown(b.deadline).expired)||Date.parse(a.deadline)-Date.parse(b.deadline)),open=rows.filter(c=>!countdown(c.deadline).expired),closed=rows.filter(c=>countdown(c.deadline).expired);
@@ -114,17 +141,19 @@ const trend=(kind,change)=>{
 };
 function renderDetail(){
  const c=current();if(!c){selected='';render();return}
- const movement=rankMotions.get(c.id)||null;rankMotions.delete(c.id);
+ const closed=countdown(c.deadline).expired;
+ detail.classList.toggle('is-closed',closed);
+ const movement=closed?null:rankMotions.get(c.id)||null;rankMotions.delete(c.id);
  const beforeRects=movement&&!reduceMotion()?new Map([...detail.querySelectorAll('.ca-person[data-ca-user]')].map(el=>[el.dataset.caUser,el.getBoundingClientRect()])):null;
  const beforeBars=movement&&!reduceMotion()?new Map([...detail.querySelectorAll('.ca-person[data-ca-user]')].map(el=>[el.dataset.caUser,el.querySelector('.ca-mini-progress span')?.style.width||'0%'])):null;
  const beforeProgress=movement?detail.querySelector('.ca-comparison .ca-progress span')?.style.width:null;
  const beforeStats=movement?new Map([...detail.querySelectorAll('[data-ca-stat]')].map(el=>[el.dataset.caStat,el.dataset.caValue])):null;
- const s=snapshot(c),r=rankOf(c),own=r.mawang,expired=countdown(c.deadline).expired,loading=pending.has(c.id),complete=confirmed(s,r);
+ const s=snapshot(c),r=rankOf(c),own=r.mawang,expired=countdown(c.deadline).expired,loading=!expired&&pending.has(c.id),complete=confirmed(s,r);
  const gap=own?.likes!=null&&r.leader?Math.max(0,r.leader.likes-own.likes):null,pct=gap!==null?(r.leader.likes?Math.round(100*own.likes/r.leader.likes):100):0;
  const source=own||c.entries[0],next=r.ahead&&own?.likes!=null?r.ahead.likes-own.likes+1:null;
- const metrics=`<div class="ca-stats"><div class="ca-stat-card"><span>${heart} 받은 좋아요</span><div class="ca-stat-value">${stat('likes',own?.likes)}${trend('likes',movement?.own?.likesDelta)}</div><small>마왕의 신청 댓글</small></div><div class="ca-stat-card"><span>현재 순위</span><div class="ca-stat-value">${stat('rank',r.ownRank,'','위')}${trend('rank',movement?.own?.rankDelta)}</div><small>${s?number(r.total)+'명 중'+(complete?'':' · 일부 확인'):'댓글 조회 필요'}</small></div><div class="ca-stat-card"><span>1위와 차이</span><div class="ca-stat-value">${stat('gap',gap)}</div><small>${gap===0?'현재 공동 선두 이상':'좋아요 수 차이'}</small></div></div>`;
+ const metrics=`<div class="ca-stats"><div class="ca-stat-card"><span>${heart} 받은 좋아요</span><div class="ca-stat-value">${stat('likes',own?.likes)}${trend('likes',movement?.own?.likesDelta)}</div><small>마왕의 신청 댓글</small></div><div class="ca-stat-card"><span>${expired?'마지막 확인 순위':'현재 순위'}</span><div class="ca-stat-value">${stat('rank',r.ownRank,'','위')}${trend('rank',movement?.own?.rankDelta)}</div><small>${s?number(r.total)+'명 중'+(complete?'':' · 일부 확인'):'댓글 조회 필요'}</small></div><div class="ca-stat-card"><span>1위와 차이</span><div class="ca-stat-value">${stat('gap',gap)}</div><small>${gap===0?'현재 공동 선두 이상':'좋아요 수 차이'}</small></div></div>`;
  const description=own?.comment?`<details class="ca-application"><summary>마왕의 신청 댓글 보기</summary><p>${esc(own.comment)}</p></details>`:'';
- const hero=`<article class="ca-hero"><div class="ca-hero-head"><div class="ca-hero-person">${avatar(own,true)}<div><span class="ca-feature-label">FEATURED APPLICANT</span><h3>마왕0216</h3><div class="ca-post-title">${own?(own.best?'BEST 댓글 · ':'')+'참가 신청 댓글':loading?'신청 댓글을 확인하고 있습니다':s?.complete?'등록된 모집 글에서 신청 댓글을 찾지 못했습니다':'신청 댓글 정보 확인 전'}</div></div></div><span class="ca-hero-mark">${heart} 마왕 응원</span></div><div class="ca-hero-body"><div class="ca-hero-data">${metrics}<div class="ca-comparison"><div><strong>${gap===null?'좋아요 비교 정보 확인 중':gap===0?'현재 확인된 댓글 중 선두입니다':`1위까지 좋아요 ${number(gap)}개 차이`}</strong><span>${gap!==null?pct+'%':''}</span></div><div class="ca-progress" role="progressbar" aria-label="선두 좋아요 대비" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></div><small>${next!=null?'바로 앞 순위 추월까지 '+number(next)+'개 · ':''}${complete?'모든 댓글 조회 완료':'확인된 댓글의 수치만 비교'}</small></div></div><div class="ca-support"><span class="ca-eyebrow">SUPPORT MAWANG</span><h4>${expired?'신청이 마감되었습니다':'여러분의 좋아요가 힘이 됩니다'}</h4><p>${own?(expired?'마왕의 신청 댓글 원문을 확인할 수 있습니다.':'마왕의 신청 댓글로 바로 이동해 좋아요를 눌러 주세요.'):'모집 글에서 신청 댓글을 확인할 수 있습니다.'}</p>${postLink(source,expired||!own?'ca-secondary':'ca-vote',own?(expired?'마왕 신청 댓글 보기':heart+' 마왕 좋아요 하러 가기'):'모집 원문 보기')}</div></div>${description}</article>`;
+ const hero=`<article class="ca-hero"><div class="ca-hero-head"><div class="ca-hero-person">${avatar(own,true)}<div><span class="ca-feature-label">FEATURED APPLICANT</span><h3>마왕0216</h3><div class="ca-post-title">${own?(own.best?'BEST 댓글 · ':'')+'참가 신청 댓글':loading?'신청 댓글을 확인하고 있습니다':s?.complete?'등록된 모집 글에서 신청 댓글을 찾지 못했습니다':'신청 댓글 정보 확인 전'}</div></div></div><span class="ca-hero-mark">${expired?clock+' 조회 종료':heart+' 마왕 응원'}</span></div><div class="ca-hero-body"><div class="ca-hero-data">${metrics}<div class="ca-comparison"><div><strong>${gap===null?'좋아요 비교 정보 확인 중':gap===0?'현재 확인된 댓글 중 선두입니다':`1위까지 좋아요 ${number(gap)}개 차이`}</strong><span>${gap!==null?pct+'%':''}</span></div><div class="ca-progress" role="progressbar" aria-label="선두 좋아요 대비" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></div><small>${next!=null?'바로 앞 순위 추월까지 '+number(next)+'개 · ':''}${complete?'모든 댓글 조회 완료':'확인된 댓글의 수치만 비교'}</small></div></div><div class="ca-support"><span class="ca-eyebrow">SUPPORT MAWANG</span><h4>${expired?'신청이 마감되었습니다':'여러분의 좋아요가 힘이 됩니다'}</h4><p>${own?(expired?'마왕의 신청 댓글 원문을 확인할 수 있습니다.':'마왕의 신청 댓글로 바로 이동해 좋아요를 눌러 주세요.'):'모집 글에서 신청 댓글을 확인할 수 있습니다.'}</p>${postLink(source,expired||!own?'ca-secondary':'ca-vote',own?(expired?'마왕 신청 댓글 보기':heart+' 마왕 좋아요 하러 가기'):'모집 원문 보기')}</div></div>${description}</article>`;
  const everyone=[...r.ordered,...(s?.applicants||[]).filter(e=>!r.ranks.has(e.id)).sort((a,b)=>a.userId.localeCompare(b.userId))];
  const row=e=>{
   const rank=r.ranks.get(e.id),p=r.leader?.likes>0&&e.likes!=null?Math.round(100*e.likes/r.leader.likes):0;
@@ -133,7 +162,7 @@ function renderDetail(){
   const likeTag=gain?`<small class="ca-like-change ${gain>0?'up':'down'}" aria-label="좋아요 ${Math.abs(gain)}개 ${gain>0?'증가':'감소'}">${gain>0?'+':''}${number(gain)}</small>`:'';
   return `<article class="ca-person${ownRow?' is-mawang':''}" data-ca-user="${esc(e.userId)}" ${ownRow?'data-ca-own="" tabindex="-1" aria-label="마왕0216의 현재 순위"':''}><span class="ca-rank${rank===1?' first':''}">${rank?rank+'위':'–'}${movementTag}</span>${avatar(e,ownRow)}<div class="ca-person-name"><strong>${esc(e.nickname||e.userId)} ${ownRow?'<span class="ca-own-label">MAWANG</span>':''} ${e.best?'<span class="ca-best">BEST</span>':''}</strong><span class="ca-excerpt">${esc(e.comment||'신청 댓글')}</span><div class="ca-mini-progress"><span style="width:${p}%"></span></div></div><div class="ca-person-likes">${heart}<strong>${number(e.likes)}</strong>${likeTag}</div><details class="ca-row-details"><summary>댓글 보기</summary><p>${esc(e.comment)}</p>${postLink(e)}</details></article>`;
  };
- detail.innerHTML=`<div class="ca-detail-top"><button type="button" class="ca-back" data-ca-back aria-label="신청 콘텐츠 목록으로 돌아가기">← 목록으로</button><div class="ca-detail-title"><span class="ca-eyebrow">APPLICATION TRACKER</span><h2>${esc(c.title)}</h2><div>${status(c)}</div>${authorLine(c,'ca-detail-authors')}</div><div class="ca-countdown-panel${campaignStatus(c.deadline)==='urgent'?' urgent':''}"><div class="ca-countdown-label">${clock}<span>${expired?'신청 마감':'신청 마감까지 남은 시간'}</span></div>${time(c)}<time class="ca-deadline" datetime="${esc(c.deadline)}">마감 ${esc(kst(c.deadline))}</time></div><div class="ca-detail-actions"><button class="ca-secondary" data-ca-refresh ${loading?'disabled':''}>${loading?'갱신 중…':'새로고침'}</button>${isAdmin()?'<button class="ca-secondary" data-ca-edit>수정</button>':''}</div></div>${hero}<div class="ca-ranking-head"><div><h3>전체 신청 댓글 순위 <span class="ca-count">${s?number(r.total):'–'}</span></h3><p>댓글 좋아요 내림차순 · 같은 계정은 가장 많은 좋아요를 받은 댓글 기준 · 모집 글 작성자 제외</p></div><div class="ca-ranking-tools">${own?`<button type="button" class="ca-my-rank-jump" data-ca-my-rank>마왕 순위로 이동${r.ownRank?` · ${r.ownRank}위`:``}</button>`:``}<span class="ca-update">${s?'최근 조회 '+esc(kst(s.checkedAt)):'조회 대기'}${expired?' · 마감 당시 수치 아님':''}</span></div></div>${s&&!s.complete?'<div class="ca-warning" role="status">일부 댓글 페이지 조회에 실패했습니다. 순위는 확인된 댓글 기준입니다. 새로고침을 시도해 주세요.</div>':''}<div class="ca-ranking">${everyone.length?everyone.map(row).join(''):`<div class="ca-empty-row">${loading?'신청 댓글을 불러오는 중입니다.':s?.complete?'다른 신청 댓글이 없습니다.':'아직 댓글 정보를 확인하지 못했습니다.'}</div>`}</div>`;
+ detail.innerHTML=`<div class="ca-detail-top"><button type="button" class="ca-back" data-ca-back aria-label="신청 콘텐츠 목록으로 돌아가기">← 목록으로</button><div class="ca-detail-title"><span class="ca-eyebrow">APPLICATION TRACKER</span><h2>${esc(c.title)}</h2><div>${status(c)}</div>${authorLine(c,'ca-detail-authors')}</div><div class="ca-countdown-panel${campaignStatus(c.deadline)==='urgent'?' urgent':''}"><div class="ca-countdown-label">${clock}<span>${expired?'신청 종료':'신청 마감까지 남은 시간'}</span></div>${time(c)}<time class="ca-deadline" datetime="${esc(c.deadline)}">마감 ${esc(kst(c.deadline))}</time></div><div class="ca-detail-actions">${expired?'':`<button class="ca-secondary" data-ca-refresh ${loading?'disabled':''}>${loading?'갱신 중…':'새로고침'}</button>`}${isAdmin()?'<button class="ca-secondary" data-ca-edit>수정</button>':''}</div></div>${hero}<div class="ca-ranking-head"><div><h3>전체 신청 댓글 순위 <span class="ca-count">${s?number(r.total):'–'}</span></h3><p>댓글 좋아요 내림차순 · 같은 계정은 가장 많은 좋아요를 받은 댓글 기준 · 모집 글 작성자 제외</p></div><div class="ca-ranking-tools">${own?`<button type="button" class="ca-my-rank-jump" data-ca-my-rank>마왕 순위로 이동${r.ownRank?` · ${r.ownRank}위`:``}</button>`:``}<span class="ca-update">${s?(expired?'마지막 조회 ':'최근 조회 ')+esc(kst(s.checkedAt)):expired?'조회 기록 없음':'조회 대기'}${expired&&s?' · 마감 당시 수치 아님':''}</span></div></div>${s&&!s.complete?`<div class="ca-warning" role="status">일부 댓글 페이지 조회에 실패했습니다. 순위는 확인된 댓글 기준입니다.${expired?' 종료된 게시글은 추가 조회하지 않습니다.':' 새로고침을 시도해 주세요.'}</div>`:''}<div class="ca-ranking">${everyone.length?everyone.map(row).join(''):`<div class="ca-empty-row">${loading?'신청 댓글을 불러오는 중입니다.':s?.complete?'다른 신청 댓글이 없습니다.':expired?'저장된 조회 기록이 없습니다. 종료된 게시글은 추가 조회하지 않습니다.':'아직 댓글 정보를 확인하지 못했습니다.'}</div>`}</div>`;
  if(movement?.changed)animateLeaderboardChanges(movement,beforeRects,beforeBars,beforeProgress,beforeStats);
 }
 function render(){
@@ -149,29 +178,38 @@ function render(){
 function updateClocks(){
  if(!active())return;
  const root=sectionActive()?(selected?detail:list):dashboardSupport;
- root?.querySelectorAll('[data-ca-time]').forEach(el=>{const t=countdown(el.dataset.caTime);if(el.textContent!==t.label)el.textContent=t.label});
- let changed=false;root?.querySelectorAll('[data-ca-state]').forEach(el=>{if(el.dataset.caPhase!==campaignStatus(el.dataset.caState))changed=true});if(changed)render();
+ root?.querySelectorAll('[data-ca-time]').forEach(el=>{const t=countdown(el.dataset.caTime),label=t.expired?'조회 종료':t.label;if(el.textContent!==label)el.textContent=label});
+ let changed=false;const ended=new Set();
+ root?.querySelectorAll('[data-ca-state]').forEach(el=>{const phase=campaignStatus(el.dataset.caState);if(el.dataset.caPhase!==phase){changed=true;if(phase==='expired')ended.add(el.closest('[data-ca-open]')?.dataset.caOpen||(root===detail?selected:''))}});
+ if(changed){
+  render();
+  if(!reduceMotion()&&sectionActive())for(const id of ended){
+   const node=selected===id?detail:[...list.querySelectorAll('[data-ca-open]')].find(el=>el.dataset.caOpen===id);
+   if(node?.classList.contains('is-closed')){node.classList.add('ca-just-ended');setTimeout(()=>node.classList.remove('ca-just-ended'),550)}
+  }
+ }
 }
 function stopTimer(){clearInterval(timer);timer=0}
 function refreshInterval(){return 60000}
-function tick(){if(!active()){stopTimer();return}updateClocks();loadVisible()}
+function tick(){if(!active()){stopTimer();return}updateClocks();loadVisible();if(!records().some(c=>!countdown(c.deadline).expired))stopTimer()}
 function loadVisible(){
- const c=sectionActive()?current():null;if(c){if(!attempts.has(c.id)||(!countdown(c.deadline).expired&&Date.now()-(attempts.get(c.id)||0)>=refreshInterval(c)))refresh(c);return}
+ const c=sectionActive()?current():null;if(c){if(!countdown(c.deadline).expired&&(!attempts.has(c.id)||Date.now()-(attempts.get(c.id)||0)>=refreshInterval(c)))refresh(c);return}
  const candidates=records().filter(c=>!countdown(c.deadline).expired&&Date.now()-(attempts.get(c.id)||0)>=refreshInterval(c)).sort((a,b)=>(attempts.get(a.id)||0)-(attempts.get(b.id)||0));if(candidates.length&&!pending.size)refresh(candidates[0]);
 }
-function activate(){if(!active()){stopTimer();return}render();if(!timer)timer=setInterval(tick,1000);loadVisible()}
+function activate(){if(!active()){stopTimer();return}render();if(records().some(c=>!countdown(c.deadline).expired)){if(!timer)timer=setInterval(tick,1000)}else stopTimer();loadVisible()}
 async function fetchPage(source,page){
  const target=`https://chapi.sooplive.co.kr/api/${encodeURIComponent(source.station)}/title/${encodeURIComponent(source.postNo)}/comment?page=${page}&orderby=reg_date`;
  const res=await fetch('/api/soop/proxy?url='+encodeURIComponent(target),{headers:{accept:'application/json'},cache:'no-store',signal:AbortSignal.timeout(16000)});
  if(!res.ok)throw Error('SOOP HTTP '+res.status);
  const parsed=parseCommentPage(await res.json(),source);if(parsed.page!==page)throw Error('댓글 페이지 번호 불일치');return parsed;
 }
-async function fetchPageGroup(source,pages){
+async function fetchPageGroup(source,pages,canContinue=()=>true){
+ if(!canContinue())throw Error('조회 중단');
  if(pages.length===1)return Promise.allSettled(pages.map(page=>fetchPage(source,page)));
  const query='station='+encodeURIComponent(source.station)+'&post='+encodeURIComponent(source.postNo)+'&pages='+pages.join(',');
  const res=await fetch('/api/soop/comment-batch?'+query,{headers:{accept:'application/json'},cache:'no-store',signal:AbortSignal.timeout(60000)});
  if(res.status===404||res.status===405){
-  const results=[];for(let i=0;i<pages.length;i+=3)results.push(...await Promise.allSettled(pages.slice(i,i+3).map(page=>fetchPage(source,page))));return results;
+  const results=[];for(let i=0;i<pages.length;i+=3){if(!canContinue())throw Error('조회 중단');results.push(...await Promise.allSettled(pages.slice(i,i+3).map(page=>fetchPage(source,page))))}return results;
  }
  if(!res.ok)throw Error('SOOP batch HTTP '+res.status);
  const payload=await res.json();
@@ -188,7 +226,7 @@ async function fetchSource(source,canContinue=()=>true){
  for(let start=2;start<=limit;start+=9){
   if(!canContinue())throw Error('조회 중단');
   const pages=Array.from({length:Math.min(9,limit-start+1)},(_,i)=>start+i);
-  let results;try{results=await fetchPageGroup(source,pages)}catch(error){results=pages.map(()=>({status:'rejected',reason:error}))}
+  let results;try{results=await fetchPageGroup(source,pages,canContinue)}catch(error){results=pages.map(()=>({status:'rejected',reason:error}))}
   for(const result of results){if(result.status==='fulfilled'){rows.push(...result.value.applicants);if(result.value.pages!==first.pages||result.value.total!==first.total)complete=false}else complete=false}
  }return {rows,complete};
 }
@@ -211,9 +249,13 @@ async function readSource(source,canContinue,manual=false){
  return result;
 }
 async function refresh(c,manual=false){
- if(!c||pending.has(c.id)||!active())return;
+ if(!c||countdown(c.deadline).expired||pending.has(c.id)||!active())return;
  const token=Symbol(),generation=epoch,sig=signature(c);
- const canContinue=()=>generation===epoch&&pending.get(c.id)===token&&active()&&(!sectionActive()||!selected||selected===c.id);
+ const canContinue=()=>{
+  if(generation!==epoch||pending.get(c.id)!==token||!active()||(sectionActive()&&selected&&selected!==c.id))return false;
+  const latest=records().find(x=>x.id===c.id);
+  return !!latest&&signature(latest)===sig&&!countdown(latest.deadline).expired;
+ };
  pending.set(c.id,token);attempts.set(c.id,Date.now());
  if(!snapshot(c))render();
  else if(sectionActive()&&selected===c.id){
@@ -240,7 +282,7 @@ async function refresh(c,manual=false){
    const diff=compareRankSnapshots(previous.applicants,next.applicants);
    if(diff.changed)rankMotions.set(c.id,diff);
   }
-  snapshots.set(c.id,next);
+  snapshots.set(c.id,next);archiveSnapshot(c,next);
   // Shared results retain their original sample time, including for the next refresh deadline.
   if(complete)attempts.set(c.id,Math.min(attempts.get(c.id)||sampledAt,sampledAt));
   if(manual&&!complete&&typeof toast==='function')toast('신청 콘텐츠','일부 댓글을 확인하지 못했습니다.');
@@ -320,6 +362,6 @@ const viewObserver=new MutationObserver(activate);
 for(const node of [section,dashboard,overview])if(node)viewObserver.observe(node,{attributes:true,attributeFilter:['class']});
 document.addEventListener('visibilitychange',activate);
 window.addEventListener('mws:app-ready',activate);
-window.addEventListener('mawang:datachange',()=>{if(active()){render();loadVisible()}});
+window.addEventListener('mawang:datachange',()=>{if(active())activate()});
 activate();
 }
