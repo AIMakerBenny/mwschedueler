@@ -6711,7 +6711,7 @@ function miniGameArray(game){
   return [];
 }
 function miniContactEntry(contactId){const c=contact(contactId);if(!c)return null;return{id:crypto.randomUUID(),contactId:c.id,name:c.name,image:c.image||'',weight:1}}
-function miniEntryAvatar(x){return x.image?`<img class="mini-entry-avatar" src="${x.image}">`:`<div class="mini-entry-avatar">${esc(initials(x.name))}</div>`}
+function miniEntryAvatar(x){return x.image?`<img class="mini-entry-avatar" loading="lazy" decoding="async" src="${x.image}">`:`<div class="mini-entry-avatar">${esc(initials(x.name))}</div>`}
 function miniUniqueContact(game,contactId){return !miniGameArray(game).some(x=>x.contactId&&x.contactId===contactId)}
 function resetGameRuntimeOnRosterChange(game){
   if(game==='ladder'){miniGameRuntime.ladder.generated=false;miniGameRuntime.ladder.rungs=[];miniGameRuntime.ladder.activePlayer=-1}
@@ -6745,7 +6745,7 @@ function renderMiniContactPalette(game,q=''){
   const arr=(data.contacts||[]).filter(c=>!c.pendingSetup&&contactMatches(c,query));
   const counter=document.getElementById(`${game}ContactCount`);if(counter)counter.textContent=`${arr.length}명`;
   box.innerHTML=arr.map(c=>`<div class="mini-contact-item" draggable="true" ondragstart="miniContactDragStart('${c.id}',event)" ondragend="miniContactDragEnd(event)" title="게임 영역으로 끌어 놓으세요">
-    ${c.image?`<img src="${c.image}">`:`<div class="mini-contact-avatar">${esc(initials(c.name))}</div>`}
+    ${c.image?`<img loading="lazy" decoding="async" src="${c.image}">`:`<div class="mini-contact-avatar">${esc(initials(c.name))}</div>`}
     <div style="min-width:0"><div class="mini-contact-name">${esc(c.name)}</div><div class="mini-contact-tags">${esc((c.labels||[]).join(' · ')||'라벨 없음')}</div></div>
     <button class="ghost mini-contact-add" onclick="event.stopPropagation();miniAddContact('${game}','${c.id}')">+</button>
   </div>`).join('')||'<div class="empty small">검색 결과가 없습니다</div>';
@@ -6942,7 +6942,7 @@ function renderAll(reason=lastSyncReason){
     safeRenderView('캘린더',renderCalendar),
     safeRenderView('설정',renderSettings),
     safeRenderView('세계 시간',renderWorldTime),
-    safeRenderView('미니게임',renderAllMiniGames),
+    safeRenderView('미니게임',renderActiveMiniGameV2),
     safeRenderView('저장 상태',()=>updateStorageStatus(true)),
     safeRenderView('시계',tickClock)
   ];
@@ -8135,6 +8135,15 @@ window.miniRenameEntry=(game,id,value)=>{
 };
 function renderMiniGame(game){({ladder:renderLadder,rps:renderRps,pachinko:renderPachinko,multiDraw:renderMultiDraw}[game]||(()=>{}))()}
 function renderAllMiniGames(){renderLadder();renderRps();renderPachinko();renderMultiDraw()}
+// Global data changes only need to repaint the active game. setTab renders
+// each game from current data on entry; explicit game actions remain intact.
+function renderActiveMiniGameV2(){
+  const tab=document.querySelector('.section.active')?.id;
+  if(tab==='gameLadder')renderLadder();
+  else if(tab==='gameRps')renderRps();
+  else if(tab==='gamePachinko')renderPachinko();
+  else if(tab==='gameMultiDraw')renderMultiDraw();
+}
 
 window.setMultiDrawTarget=value=>{
   const max=Math.max(1,multiDrawPlayers().length||150),n=Math.max(1,Math.min(max,Math.floor(Number(value)||8)));

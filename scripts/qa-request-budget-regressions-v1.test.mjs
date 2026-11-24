@@ -76,3 +76,19 @@ test('application rank polling keeps 60-second freshness, stops outside relevant
  now=campaign.deadline;api.tick();assert.equal(requests,60);
  visible=false;api.tick();assert(stopped>0);assert.equal(requests,60);
 });
+
+test('global renders never construct hidden mini-game contact palettes; tab entry still renders each game',()=>{
+ const src=read('assets/app-core.js');
+ const code=extract(src,'function renderActiveMiniGameV2()','window.setMultiDrawTarget');
+ const calls=[];let tab='calendar';
+ const run=new Function('document','renderLadder','renderRps','renderPachinko','renderMultiDraw',code+'\nreturn renderActiveMiniGameV2')({querySelector:()=>({id:tab})},()=>calls.push('gameLadder'),()=>calls.push('gameRps'),()=>calls.push('gamePachinko'),()=>calls.push('gameMultiDraw'));
+ for(const id of ['calendar','contacts','dashboard','achievements','settings']){tab=id;run()}
+ assert.deepEqual(calls,[]);
+ for(const id of ['gameLadder','gameRps','gamePachinko','gameMultiDraw']){tab=id;run();assert.equal(calls.at(-1),id)}
+ assert.equal(calls.length,4);
+ const nav=extract(src,'function setTab(tab)','document.querySelectorAll(\'.nav button\').forEach(b=>b.onclick');
+ for(const [id,fn] of [['gameLadder','renderLadder'],['gameRps','renderRps'],['gamePachinko','renderPachinko'],['gameMultiDraw','renderMultiDraw']]){assert(nav.includes("if(tab==='"+id+"')"));assert(nav.includes(fn))}
+ assert(src.includes("safeRenderView('미니게임',renderActiveMiniGameV2)"));
+ const palette=extract(src,"function renderMiniContactPalette(game,q='')",'function renderMiniGame(game)');
+ assert(palette.includes('loading="lazy" decoding="async"'));
+});
