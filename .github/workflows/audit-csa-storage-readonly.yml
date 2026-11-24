@@ -1,0 +1,25 @@
+name: CSA storage read-only audit
+on:
+  push:
+    branches: [audit-csa-storage-nov24]
+permissions:
+  contents: read
+jobs:
+  metrics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Read account R2 size and count only
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          node --input-type=module <<'NODE'
+          const account=process.env.CLOUDFLARE_ACCOUNT_ID, token=process.env.CLOUDFLARE_API_TOKEN;
+          if(!/^[a-f0-9]{32}$/i.test(account||'')||!token) throw Error('No management credentials');
+          const r=await fetch('https://api.cloudflare.com/client/v4/accounts/'+account+'/r2/metrics',{method:'GET',headers:{authorization:'Bearer '+token,accept:'application/json'},redirect:'error',signal:AbortSignal.timeout(15000)});
+          const j=await r.json();
+          if(!r.ok||!j.success){console.log('CSA_R2_METRICS_UNAVAILABLE '+r.status);process.exit(1)}
+          const result={};for(const k of ['standard','infrequentAccess']){result[k]={};for(const s of ['published','uploaded']){const v=j.result?.[k]?.[s];if(v)result[k][s]={objects:v.objects,payloadSize:v.payloadSize,metadataSize:v.metadataSize}}}
+          console.log('CSA_R2_METRICS '+JSON.stringify(result));
+          NODE
