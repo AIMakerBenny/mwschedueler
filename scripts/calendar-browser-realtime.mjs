@@ -53,6 +53,7 @@ export async function launchCalendarBrowser(dir){
       const result=await send('Page.captureScreenshot',{format:'jpeg',quality:53,captureBeyondViewport:false},sessionId);
       return result.data;
     };
-    return {navigate,evaluate,clickPoint,movePoint,mouseDown,mouseDrag,mouseUp,keyPress,enablePerformance,performanceMetrics,setReducedMotion,captureScreenshot,close};
+    const openBackgroundTestTab=async()=>{const other=await send('Target.createTarget',{url:'about:blank'});await send('Target.activateTarget',{targetId:other.targetId})};
+    return {openBackgroundTestTab,navigate,evaluate,clickPoint,movePoint,mouseDown,mouseDrag,mouseUp,keyPress,enablePerformance,performanceMetrics,setReducedMotion,captureScreenshot,close};
   }catch(error){await close();throw error}
 }

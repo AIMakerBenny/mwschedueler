@@ -70,11 +70,18 @@ jobs:
           node scripts/qa-achievement-exhibition-v1-browser.mjs
           node scripts/qa-first-paint-guard-v1-browser.mjs
   calendar-idle:
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [public, admin]
+        visibility: [visible, hidden]
     runs-on: ubuntu-latest
     timeout-minutes: 70
     env:
       MWS_QA_OFFLINE: '1'
       MWS_QA_LONG_IDLE: '1'
+      MWS_QA_IDLE_MODE: ${{ matrix.mode }}
+      MWS_QA_IDLE_VISIBILITY: ${{ matrix.visibility }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

@@ -8,6 +8,7 @@ function cacheKey(url){
   const profile=u.pathname.match(/^\/media\/mawang-profile\/[a-z0-9-]+$/);
   const portrait=u.pathname.match(/^\/assets\/mawang-archive-portraits\/[a-z0-9-]+\.(?:jpg|webp|png)$/);
   if(contact&&/^[1-9]\d*$/.test(u.searchParams.get('v')||'')&&/^[a-f0-9]{32}$/.test(u.searchParams.get('h')||'')&&[...u.searchParams.keys()].every(k=>['v','h','r'].includes(k))&&u.searchParams.getAll('v').length===1&&u.searchParams.getAll('h').length===1)return {version:u.searchParams.get('v')+'-'+u.searchParams.get('h')};
+  if(contact&&/^[1-9]\d*$/.test(u.searchParams.get('v')||'')&&/^\d+$/.test(u.searchParams.get('r')||'')&&[...u.searchParams.keys()].sort().join(',')==='r,v')return {version:'legacy-'+u.searchParams.get('v')};
   if(profile&&/^\d{1,15}-[a-f0-9]{0,80}$/i.test(u.searchParams.get('rev')||'')&&[...u.searchParams.keys()].length===1)return {version:u.searchParams.get('rev')};
   if(portrait&&/^archive-v\d+$/.test(u.searchParams.get('rev')||'')&&[...u.searchParams.keys()].length===1)return {static:true};
   return null;
@@ -19,8 +20,26 @@ function canStore(res,key){
 self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
 self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
 let writes=0;
+const recent=new Map();
+function touch(url){
+  recent.delete(url);recent.set(url,Date.now());
+  if(recent.size>4096)recent.delete(recent.keys().next().value);
+}
+async function trim(cache,force=false){
+  const estimate=await self.navigator?.storage?.estimate?.().catch(()=>null);
+  // The old count is a fallback for browsers without a usable storage estimate.
+  if(!force&&estimate?.quota>0&&estimate.usage<estimate.quota*0.8)return;
+  const keys=await cache.keys();
+  const count=force||estimate?.quota>0?Math.ceil(keys.length/10):Math.max(0,keys.length-MAX_ENTRIES);
+  keys.sort((a,b)=>(recent.get(a.url)||0)-(recent.get(b.url)||0));
+  for(const key of keys.slice(0,count)){await cache.delete(key);recent.delete(key.url)}
+}
 async function store(cache,request,response){
-  try{await cache.put(request,response);if(++writes%12===1){const keys=await cache.keys();await Promise.all(keys.slice(0,Math.max(0,keys.length-MAX_ENTRIES)).map(key=>cache.delete(key)))}}catch(_){}
+  try{
+    // A quota failure may consume the response stream. Evict for the next read.
+    await cache.put(request,response);touch(request.url);
+    if(++writes%12===1)await trim(cache);
+  }catch(error){if(error.name==='QuotaExceededError')await trim(cache,true).catch(()=>{})}
 }
 self.addEventListener('fetch',event=>{
   const request=event.request;
@@ -28,7 +47,7 @@ self.addEventListener('fetch',event=>{
   const key=cacheKey(request.url);if(!key)return;
   const task=(async()=>{
     let cache;
-    try{cache=await caches.open(CACHE);const hit=await cache.match(request);if(hit)return {response:hit}}catch(_){}
+    try{cache=await caches.open(CACHE);const hit=await cache.match(request);if(hit){touch(request.url);return {response:hit}}}catch(_){}
     const response=await fetch(request);
     return {response,save:cache&&canStore(response,key)?store(cache,request,response.clone()):null};
   })();

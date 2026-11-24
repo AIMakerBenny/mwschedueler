@@ -122,13 +122,27 @@ try{
  assert.equal(live.filter(r=>r.path==='/api/soop/proxy').length,0);
  before=calls.length;
  if(process.env.MWS_QA_LONG_IDLE==='1'){
+  const mode=process.env.MWS_QA_IDLE_MODE||'public',visibility=process.env.MWS_QA_IDLE_VISIBILITY||'visible';
+  if(mode==='admin'){
+   await browser.evaluate("document.querySelector('#mwsChangeModeBtn').click()");
+   await until(()=>browser.evaluate("document.querySelector('#mwsLoginForm').dataset.mode==='admin'"),'Admin login form');
+   await browser.evaluate("document.querySelector('#mwsLoginId').value='Majoku0216';document.querySelector('#mwsLoginPw').value='local-fixture-only';document.querySelector('#mwsLoginForm').requestSubmit()");
+   await until(()=>browser.evaluate("document.body.dataset.mwsMode==='admin'&&!document.body.classList.contains('mws-app-loading')&&!document.body.classList.contains('mws-gated')"),'Admin ready');
+   await nav(['calendar']);await pause(3000);
+  }
+  if(visibility==='hidden')await browser.openBackgroundTestTab();
+  assert.equal(await browser.evaluate('document.visibilityState'),visibility);
+  before=calls.length;
   const started=performance.now();
   for(const minutes of [1,5,10,30,60]){
    await pause(Math.max(0,minutes*60000-(performance.now()-started)));
-   console.log('PUBLIC_CALENDAR_IDLE '+JSON.stringify({minutes,elapsedMs:Math.round(performance.now()-started),worker:summary(calls.slice(before))}));
+   console.log('CALENDAR_IDLE '+JSON.stringify({mode,visibility,minutes,elapsedMs:Math.round(performance.now()-started),worker:summary(calls.slice(before))}));
   }
+  assert.deepEqual(calls.slice(before),[],'Idle calendar emitted a Worker request');
+  console.log('LONG_IDLE_OK');
  }else await pause(1200);
  const idle=calls.slice(before);assert.equal(idle.filter(common).length,0);assert.equal(idle.filter(r=>r.path==='/api/soop/live-batch').length,0);
+ if(process.env.MWS_QA_LONG_IDLE!=='1'){
  // Register a synthetic campaign after baseline navigation; the actual UI
  // module and Worker aggregate both posts and retain results across reload.
  const campaign={id:'app-qa',title:'Application fixture',deadline:new Date(Date.now()+3600000).toISOString(),entries:[{url:'https://www.sooplive.com/station/host1/post/1'},{url:'https://www.sooplive.com/station/host2/post/2'}]};
@@ -161,4 +175,5 @@ try{
  console.log('FULL_APP_APPLICATION_SNAPSHOT_OK '+JSON.stringify({activeSync:1,archivedApplicants:7,expiredSync:0}));
  assert.equal(errors.length,0,JSON.stringify(errors));
  console.log('FULL_APP_REQUEST_BUDGET_OK '+JSON.stringify({startup:summary(startup),cold:summary(cold),warm:summary(warm),friend:summary(live),idle:summary(idle),upstreamSimulated:upstream.length}));
+ }
 }finally{await browser?.close();await new Promise(r=>server.close(r));if(cdnServer.listening)await new Promise(r=>cdnServer.close(r));db.close();globalThis.fetch=originalFetch;rmSync(dir,{recursive:true,force:true})}
