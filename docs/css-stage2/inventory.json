@@ -1,0 +1,6093 @@
+{
+  "summary": {
+    "baseline": "bfe8529df667a5b6b4b731ff999fc1711068a850",
+    "cssFiles": 68,
+    "sourceFiles": 106,
+    "staticLinks": 64,
+    "inlineBlocks": 19,
+    "staticBytes": 1124210,
+    "staticRules": 7511,
+    "staticSelectors": 8420,
+    "staticDeclarations": 27252,
+    "staticImportant": 5320,
+    "allRules": 7760,
+    "allDeclarations": 28324,
+    "allImportant": 5600,
+    "initialRepeated": 814,
+    "initialExact": 51,
+    "initialExactExtra": 53,
+    "initialConflict": 1202,
+    "initialCrossFile": 173,
+    "allRepeated": 826,
+    "allExact": 51,
+    "allConflict": 1229,
+    "dynamicInjectionFiles": 21,
+    "warnings": 0
+  },
+  "inventory": [
+    {
+      "file": "index.html#mws-first-paint-guard",
+      "type": "inline",
+      "order": 0,
+      "bytes": 1322,
+      "blocks": 15,
+      "selectors": 19,
+      "declarations": 49,
+      "important": 2,
+      "atRules": [
+        {
+          "head": "@media(max-width:760px)",
+          "line": 22,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "index.html#mws-calendar-startup-v2-style",
+      "type": "inline",
+      "order": 1,
+      "bytes": 317,
+      "blocks": 2,
+      "selectors": 2,
+      "declarations": 8,
+      "important": 0,
+      "atRules": [],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/mawang-cursor-v1.css",
+      "type": "link",
+      "order": 2,
+      "bytes": 4347,
+      "blocks": 32,
+      "selectors": 36,
+      "declarations": 128,
+      "important": 22,
+      "atRules": [
+        {
+          "head": "@media (any-hover:hover) and (any-pointer:fine)",
+          "line": 2,
+          "context": ""
+        },
+        {
+          "head": "@media (max-width:480px)",
+          "line": 35,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/legacy-hub-v1.css",
+      "type": "link",
+      "order": 3,
+      "bytes": 1965,
+      "blocks": 17,
+      "selectors": 20,
+      "declarations": 66,
+      "important": 1,
+      "atRules": [
+        {
+          "head": "@media(max-width:600px)",
+          "line": 17,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/app-core.css",
+      "type": "link",
+      "order": 4,
+      "bytes": 372075,
+      "blocks": 2610,
+      "selectors": 2922,
+      "declarations": 9789,
+      "important": 1461,
+      "atRules": [
+        {
+          "head": "@keyframes toastIn",
+          "line": 97,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 146,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 206,
+          "context": ""
+        },
+        {
+          "head": "@keyframes recentPulse",
+          "line": 276,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 279,
+          "context": ""
+        },
+        {
+          "head": "@keyframes collabHotPulse",
+          "line": 334,
+          "context": ""
+        },
+        {
+          "head": "@keyframes sniperScanLine",
+          "line": 534,
+          "context": ""
+        },
+        {
+          "head": "@keyframes sniperSparkTwinkle",
+          "line": 559,
+          "context": ""
+        },
+        {
+          "head": "@property --sniper-angle",
+          "line": 589,
+          "context": ""
+        },
+        {
+          "head": "@keyframes sniperFireRotate",
+          "line": 594,
+          "context": ""
+        },
+        {
+          "head": "@keyframes sniperFirePulse",
+          "line": 595,
+          "context": ""
+        },
+        {
+          "head": "@keyframes sniperInferno",
+          "line": 637,
+          "context": ""
+        },
+        {
+          "head": "@keyframes sniperEmberShift",
+          "line": 643,
+          "context": ""
+        },
+        {
+          "head": "@keyframes rank1EdgePulse",
+          "line": 802,
+          "context": ""
+        },
+        {
+          "head": "@keyframes rank2Scanner",
+          "line": 837,
+          "context": ""
+        },
+        {
+          "head": "@keyframes rank2InnerSweep",
+          "line": 843,
+          "context": ""
+        },
+        {
+          "head": "@keyframes rank3Spark",
+          "line": 883,
+          "context": ""
+        },
+        {
+          "head": "@keyframes rank3GlowPulse",
+          "line": 889,
+          "context": ""
+        },
+        {
+          "head": "@keyframes rank4InfernoRotate",
+          "line": 925,
+          "context": ""
+        },
+        {
+          "head": "@keyframes rank4Heat",
+          "line": 926,
+          "context": ""
+        },
+        {
+          "head": "@keyframes rank4Ember",
+          "line": 930,
+          "context": ""
+        },
+        {
+          "head": "@keyframes rank5OuterBurn",
+          "line": 989,
+          "context": ""
+        },
+        {
+          "head": "@keyframes rank5Ash",
+          "line": 995,
+          "context": ""
+        },
+        {
+          "head": "@keyframes rank5Pulse",
+          "line": 999,
+          "context": ""
+        },
+        {
+          "head": "@keyframes fx1flow",
+          "line": 1224,
+          "context": ""
+        },
+        {
+          "head": "@keyframes fx2scan",
+          "line": 1251,
+          "context": ""
+        },
+        {
+          "head": "@keyframes fx2pulse",
+          "line": 1255,
+          "context": ""
+        },
+        {
+          "head": "@keyframes fx3spark",
+          "line": 1281,
+          "context": ""
+        },
+        {
+          "head": "@keyframes fx3beam",
+          "line": 1287,
+          "context": ""
+        },
+        {
+          "head": "@keyframes fx4fire",
+          "line": 1320,
+          "context": ""
+        },
+        {
+          "head": "@keyframes fx4heat",
+          "line": 1325,
+          "context": ""
+        },
+        {
+          "head": "@keyframes fx5inferno",
+          "line": 1353,
+          "context": ""
+        },
+        {
+          "head": "@keyframes fx5ember",
+          "line": 1358,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1100px)",
+          "line": 1401,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:820px)",
+          "line": 1404,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:850px)",
+          "line": 1497,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1050px)",
+          "line": 1700,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 1704,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1050px)",
+          "line": 1900,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 1907,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1100px)",
+          "line": 2040,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 2049,
+          "context": ""
+        },
+        {
+          "head": "@keyframes targetFlash",
+          "line": 2306,
+          "context": ""
+        },
+        {
+          "head": "@keyframes targetClearText",
+          "line": 2320,
+          "context": ""
+        },
+        {
+          "head": "@keyframes wingOpenLeft",
+          "line": 2339,
+          "context": ""
+        },
+        {
+          "head": "@keyframes wingOpenRight",
+          "line": 2345,
+          "context": ""
+        },
+        {
+          "head": "@keyframes targetFadeContent",
+          "line": 2376,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 2401,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 2513,
+          "context": ""
+        },
+        {
+          "head": "@keyframes mascotRainFall",
+          "line": 2674,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 2688,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 2949,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 3389,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 3882,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 4658,
+          "context": ""
+        },
+        {
+          "head": "@media(max-height:780px)",
+          "line": 4704,
+          "context": ""
+        },
+        {
+          "head": "@media(max-height:640px)",
+          "line": 4712,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:980px)",
+          "line": 4737,
+          "context": ""
+        },
+        {
+          "head": "@keyframes repeatPanelIn",
+          "line": 4766,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1380px)",
+          "line": 4795,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1150px)",
+          "line": 4798,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1050px)",
+          "line": 4875,
+          "context": ""
+        },
+        {
+          "head": "@keyframes capsuleShake",
+          "line": 4938,
+          "context": ""
+        },
+        {
+          "head": "@keyframes coinFlipFront",
+          "line": 4944,
+          "context": ""
+        },
+        {
+          "head": "@keyframes coinFlipBack",
+          "line": 4944,
+          "context": ""
+        },
+        {
+          "head": "@keyframes lotsShake",
+          "line": 4947,
+          "context": ""
+        },
+        {
+          "head": "@keyframes lotReveal",
+          "line": 4947,
+          "context": ""
+        },
+        {
+          "head": "@keyframes confettiFall",
+          "line": 4950,
+          "context": ""
+        },
+        {
+          "head": "@keyframes celebrationFade",
+          "line": 4950,
+          "context": ""
+        },
+        {
+          "head": "@keyframes celebrationPulse",
+          "line": 4950,
+          "context": ""
+        },
+        {
+          "head": "@keyframes starBlink",
+          "line": 4950,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1250px)",
+          "line": 4952,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:850px)",
+          "line": 4953,
+          "context": ""
+        },
+        {
+          "head": "@keyframes rpsPulse",
+          "line": 4985,
+          "context": ""
+        },
+        {
+          "head": "@keyframes coinSpark",
+          "line": 5000,
+          "context": ""
+        },
+        {
+          "head": "@keyframes pachinkoWinner",
+          "line": 5016,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1550px)",
+          "line": 5018,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 5019,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1550px)",
+          "line": 5029,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 5030,
+          "context": ""
+        },
+        {
+          "head": "@keyframes horseGallop",
+          "line": 5052,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1500px)",
+          "line": 5053,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 5054,
+          "context": ""
+        },
+        {
+          "head": "@keyframes horseGallop",
+          "line": 5090,
+          "context": ""
+        },
+        {
+          "head": "@keyframes ladderResultPop",
+          "line": 5100,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1150px)",
+          "line": 5105,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:700px)",
+          "line": 5105,
+          "context": ""
+        },
+        {
+          "head": "@keyframes postGamePop",
+          "line": 5126,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:800px)",
+          "line": 5127,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:800px)",
+          "line": 5148,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1500px)",
+          "line": 5204,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1150px)",
+          "line": 5205,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 5206,
+          "context": ""
+        },
+        {
+          "head": "@property --self-angle",
+          "line": 5254,
+          "context": ""
+        },
+        {
+          "head": "@keyframes selfBorderSpin",
+          "line": 5254,
+          "context": ""
+        },
+        {
+          "head": "@keyframes selfCardBreath",
+          "line": 5254,
+          "context": ""
+        },
+        {
+          "head": "@keyframes selfShine",
+          "line": 5254,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1250px)",
+          "line": 5263,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1100px)",
+          "line": 5363,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:700px)",
+          "line": 5364,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiWarning",
+          "line": 5378,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiRecoil",
+          "line": 5379,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiMuzzle",
+          "line": 5380,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiShellFly",
+          "line": 5381,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiStageShake",
+          "line": 5382,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiImpact",
+          "line": 5382,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiCardEmerge",
+          "line": 5383,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiCardSettle",
+          "line": 5383,
+          "context": ""
+        },
+        {
+          "head": "@keyframes gachaShine",
+          "line": 5384,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiDust",
+          "line": 5385,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1550px)",
+          "line": 5389,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:960px)",
+          "line": 5390,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:620px)",
+          "line": 5437,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiMuzzle49",
+          "line": 5458,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiRecoil49",
+          "line": 5459,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiWarning49",
+          "line": 5463,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiSmoke49",
+          "line": 5469,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiCardEmerge49",
+          "line": 5470,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiCardSettle49",
+          "line": 5470,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiStageShake49",
+          "line": 5472,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiShellFly49",
+          "line": 5475,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiDockIn",
+          "line": 5477,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1500px)",
+          "line": 5483,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1050px)",
+          "line": 5484,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiHeadSpark411",
+          "line": 5516,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiSeamPulse411",
+          "line": 5533,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiSmoke411",
+          "line": 5538,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiImpactFlash411",
+          "line": 5540,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiStageShake411",
+          "line": 5541,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiCardEmerge411",
+          "line": 5543,
+          "context": ""
+        },
+        {
+          "head": "@keyframes multiCardSettle411",
+          "line": 5543,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1540px)",
+          "line": 5548,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1100px)",
+          "line": 5555,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:980px)",
+          "line": 5606,
+          "context": ""
+        },
+        {
+          "head": "@keyframes v412Smoke",
+          "line": 5630,
+          "context": ""
+        },
+        {
+          "head": "@keyframes v412Reveal",
+          "line": 5640,
+          "context": ""
+        },
+        {
+          "head": "@keyframes v412StageShake",
+          "line": 5677,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1500px)",
+          "line": 5679,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1180px)",
+          "line": 5685,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:980px)",
+          "line": 5759,
+          "context": ""
+        },
+        {
+          "head": "@keyframes v413Smoke",
+          "line": 5796,
+          "context": ""
+        },
+        {
+          "head": "@keyframes v413Reveal",
+          "line": 5806,
+          "context": ""
+        },
+        {
+          "head": "@keyframes v413Flicker",
+          "line": 5807,
+          "context": ""
+        },
+        {
+          "head": "@keyframes v413Flash",
+          "line": 5841,
+          "context": ""
+        },
+        {
+          "head": "@keyframes v413StageShake",
+          "line": 5843,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1420px)",
+          "line": 5845,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1180px)",
+          "line": 5849,
+          "context": ""
+        },
+        {
+          "head": "@keyframes holoSparkV416",
+          "line": 5910,
+          "context": ""
+        },
+        {
+          "head": "@keyframes holoCardRiseV416",
+          "line": 5929,
+          "context": ""
+        },
+        {
+          "head": "@keyframes holoRingSlowV416",
+          "line": 5957,
+          "context": ""
+        },
+        {
+          "head": "@keyframes holoRingReverseV416",
+          "line": 5958,
+          "context": ""
+        },
+        {
+          "head": "@keyframes holoShuffle1V416",
+          "line": 5959,
+          "context": ""
+        },
+        {
+          "head": "@keyframes holoShuffle2V416",
+          "line": 5960,
+          "context": ""
+        },
+        {
+          "head": "@keyframes holoShuffle3V416",
+          "line": 5961,
+          "context": ""
+        },
+        {
+          "head": "@keyframes holoShuffle4V416",
+          "line": 5962,
+          "context": ""
+        },
+        {
+          "head": "@keyframes holoShuffle5V416",
+          "line": 5963,
+          "context": ""
+        },
+        {
+          "head": "@keyframes holoFlareV416",
+          "line": 5964,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1250px)",
+          "line": 5965,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 6221,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:700px)",
+          "line": 6297,
+          "context": ""
+        }
+      ],
+      "keyframes": 99,
+      "warnings": []
+    },
+    {
+      "file": "assets/calendar-broadcast-duration-v1.css",
+      "type": "link",
+      "order": 5,
+      "bytes": 1171,
+      "blocks": 5,
+      "selectors": 5,
+      "declarations": 25,
+      "important": 0,
+      "atRules": [
+        {
+          "head": "@media(max-width:620px)",
+          "line": 34,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/calendar-continuous-series-v1.css",
+      "type": "link",
+      "order": 6,
+      "bytes": 2144,
+      "blocks": 13,
+      "selectors": 13,
+      "declarations": 47,
+      "important": 4,
+      "atRules": [
+        {
+          "head": "@media(max-width:850px)",
+          "line": 52,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 55,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/calendar-content-groups-v2.css",
+      "type": "link",
+      "order": 7,
+      "bytes": 12458,
+      "blocks": 81,
+      "selectors": 98,
+      "declarations": 354,
+      "important": 53,
+      "atRules": [
+        {
+          "head": "@media(max-width:650px)",
+          "line": 17,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 246,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:1100px)",
+          "line": 269,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1099px)",
+          "line": 281,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/calendar-group-recovery-v1.css",
+      "type": "link",
+      "order": 8,
+      "bytes": 1758,
+      "blocks": 14,
+      "selectors": 15,
+      "declarations": 60,
+      "important": 1,
+      "atRules": [],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/event-sidebar-tabs-v5.css",
+      "type": "link",
+      "order": 9,
+      "bytes": 3850,
+      "blocks": 28,
+      "selectors": 30,
+      "declarations": 99,
+      "important": 9,
+      "atRules": [
+        {
+          "head": "@media(max-width:1050px)",
+          "line": 147,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/calendar-toolbar-v4.css",
+      "type": "link",
+      "order": 10,
+      "bytes": 5711,
+      "blocks": 45,
+      "selectors": 45,
+      "declarations": 140,
+      "important": 3,
+      "atRules": [
+        {
+          "head": "@media(min-width:1300px)",
+          "line": 183,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1299px)",
+          "line": 189,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 193,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/calendar-timeline-v1.css",
+      "type": "link",
+      "order": 11,
+      "bytes": 8694,
+      "blocks": 66,
+      "selectors": 67,
+      "declarations": 248,
+      "important": 10,
+      "atRules": [
+        {
+          "head": "@media(max-width:600px)",
+          "line": 31,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 85,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/calendar-stable-layout-v1.css",
+      "type": "link",
+      "order": 12,
+      "bytes": 3188,
+      "blocks": 10,
+      "selectors": 10,
+      "declarations": 48,
+      "important": 43,
+      "atRules": [
+        {
+          "head": "@container mws-calendar-day (max-width:185px)",
+          "line": 51,
+          "context": ""
+        },
+        {
+          "head": "@media (min-width:761px)",
+          "line": 71,
+          "context": ""
+        },
+        {
+          "head": "@container mws-calendar-day (min-width:185.01px) and (max-width:215px)",
+          "line": 78,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/calendar-responsive-cards-v1.css",
+      "type": "link",
+      "order": 13,
+      "bytes": 3570,
+      "blocks": 16,
+      "selectors": 17,
+      "declarations": 61,
+      "important": 13,
+      "atRules": [
+        {
+          "head": "@container mws-calendar-day (max-width:185px)",
+          "line": 58,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 95,
+          "context": ""
+        },
+        {
+          "head": "@container mws-calendar-day (min-width:185.01px) and (max-width:215px)",
+          "line": 102,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/sidebar-rail-scrollbar-v1.css",
+      "type": "link",
+      "order": 14,
+      "bytes": 2869,
+      "blocks": 8,
+      "selectors": 10,
+      "declarations": 29,
+      "important": 27,
+      "atRules": [
+        {
+          "head": "@media (min-width:761px)",
+          "line": 3,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/f1-racing-v1.css",
+      "type": "link",
+      "order": 15,
+      "bytes": 81022,
+      "blocks": 611,
+      "selectors": 659,
+      "declarations": 2129,
+      "important": 218,
+      "atRules": [
+        {
+          "head": "@media(max-width:800px)",
+          "line": 102,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1050px)",
+          "line": 140,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 170,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1PreviewPulseV184",
+          "line": 182,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 183,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1180px)",
+          "line": 215,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1TransitionFadeV187",
+          "line": 230,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1RaceReadyPulseV187",
+          "line": 231,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:700px)",
+          "line": 232,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1280px)",
+          "line": 276,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:800px)",
+          "line": 277,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 394,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:1500px)",
+          "line": 450,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1100px)",
+          "line": 455,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:700px)",
+          "line": 483,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:1500px)",
+          "line": 546,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:1500px)",
+          "line": 600,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:720px)",
+          "line": 633,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1BattlePulseV252",
+          "line": 642,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1OvertakePulseV252",
+          "line": 643,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1PassFlashV252",
+          "line": 644,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 659,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1100px)",
+          "line": 676,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 695,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1BattleLinkFlowV256",
+          "line": 699,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 706,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 719,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1LiveCutinSpeedV264",
+          "line": 759,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1LiveCutinBurstV264",
+          "line": 760,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1LiveCutinShakeV264",
+          "line": 761,
+          "context": ""
+        },
+        {
+          "head": "@media (prefers-reduced-motion:reduce)",
+          "line": 762,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1PodiumRevealV265",
+          "line": 797,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1WinnerGlowV265",
+          "line": 798,
+          "context": ""
+        },
+        {
+          "head": "@media (prefers-reduced-motion:reduce)",
+          "line": 799,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 820,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:720px)",
+          "line": 853,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1GridShuffleFastV273",
+          "line": 866,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1GridCardLandV273",
+          "line": 869,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1GridSlotFlashV273",
+          "line": 870,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 876,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 893,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 894,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 914,
+          "context": ""
+        }
+      ],
+      "keyframes": 15,
+      "warnings": []
+    },
+    {
+      "file": "assets/f1-racing-r283-r287.css",
+      "type": "link",
+      "order": 16,
+      "bytes": 6021,
+      "blocks": 48,
+      "selectors": 51,
+      "declarations": 135,
+      "important": 22,
+      "atRules": [
+        {
+          "head": "@media(max-width:900px)",
+          "line": 27,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1280px)",
+          "line": 57,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1120px)",
+          "line": 80,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/f1-racing-r288-r290.css",
+      "type": "link",
+      "order": 17,
+      "bytes": 5284,
+      "blocks": 24,
+      "selectors": 29,
+      "declarations": 47,
+      "important": 38,
+      "atRules": [
+        {
+          "head": "@keyframes f1GridShuffleSmoothV290",
+          "line": 34,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1GridCardLandSmoothV290",
+          "line": 46,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 58,
+          "context": ""
+        }
+      ],
+      "keyframes": 2,
+      "warnings": []
+    },
+    {
+      "file": "assets/f1-racing-r291-r295.css",
+      "type": "link",
+      "order": 18,
+      "bytes": 5815,
+      "blocks": 40,
+      "selectors": 45,
+      "declarations": 154,
+      "important": 1,
+      "atRules": [
+        {
+          "head": "@keyframes f1WinnerSweepV304",
+          "line": 40,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1000px)",
+          "line": 41,
+          "context": ""
+        }
+      ],
+      "keyframes": 1,
+      "warnings": []
+    },
+    {
+      "file": "assets/f1-racing-r303.css",
+      "type": "link",
+      "order": 19,
+      "bytes": 5952,
+      "blocks": 32,
+      "selectors": 33,
+      "declarations": 112,
+      "important": 61,
+      "atRules": [
+        {
+          "head": "@keyframes f1GridShuffleTradeV303",
+          "line": 55,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1180px)",
+          "line": 70,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 73,
+          "context": ""
+        }
+      ],
+      "keyframes": 1,
+      "warnings": []
+    },
+    {
+      "file": "assets/f1-racing-r305.css",
+      "type": "link",
+      "order": 20,
+      "bytes": 8004,
+      "blocks": 34,
+      "selectors": 58,
+      "declarations": 65,
+      "important": 28,
+      "atRules": [
+        {
+          "head": "@media(max-width:1500px)",
+          "line": 70,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1180px)",
+          "line": 74,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/f1-racing-r306.css",
+      "type": "link",
+      "order": 21,
+      "bytes": 686,
+      "blocks": 4,
+      "selectors": 5,
+      "declarations": 10,
+      "important": 5,
+      "atRules": [
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 15,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/f1-racing-r307.css",
+      "type": "link",
+      "order": 22,
+      "bytes": 912,
+      "blocks": 4,
+      "selectors": 4,
+      "declarations": 17,
+      "important": 1,
+      "atRules": [
+        {
+          "head": "@keyframes f1LiveMergeCopyV307",
+          "line": 10,
+          "context": ""
+        }
+      ],
+      "keyframes": 1,
+      "warnings": []
+    },
+    {
+      "file": "assets/f1-racing-r308.css",
+      "type": "link",
+      "order": 23,
+      "bytes": 4130,
+      "blocks": 25,
+      "selectors": 25,
+      "declarations": 97,
+      "important": 33,
+      "atRules": [
+        {
+          "head": "@keyframes f1LiveTrackEnterV308",
+          "line": 21,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1100px)",
+          "line": 45,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 52,
+          "context": ""
+        }
+      ],
+      "keyframes": 1,
+      "warnings": []
+    },
+    {
+      "file": "assets/f1-racing-r309.css",
+      "type": "link",
+      "order": 24,
+      "bytes": 621,
+      "blocks": 4,
+      "selectors": 4,
+      "declarations": 13,
+      "important": 4,
+      "atRules": [],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/f1-racing-r313.css",
+      "type": "link",
+      "order": 25,
+      "bytes": 4852,
+      "blocks": 35,
+      "selectors": 35,
+      "declarations": 167,
+      "important": 13,
+      "atRules": [
+        {
+          "head": "@keyframes f1GridGachaPulseV313",
+          "line": 12,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1GridDockInV313",
+          "line": 18,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 23,
+          "context": ""
+        }
+      ],
+      "keyframes": 2,
+      "warnings": []
+    },
+    {
+      "file": "assets/f1-racing-r319.css",
+      "type": "link",
+      "order": 26,
+      "bytes": 5239,
+      "blocks": 26,
+      "selectors": 27,
+      "declarations": 117,
+      "important": 111,
+      "atRules": [
+        {
+          "head": "@media(max-width:1100px)",
+          "line": 31,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/f1-racing-r324.css",
+      "type": "link",
+      "order": 27,
+      "bytes": 3185,
+      "blocks": 15,
+      "selectors": 15,
+      "declarations": 84,
+      "important": 84,
+      "atRules": [],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/f1-racing-r330-r333.css",
+      "type": "link",
+      "order": 28,
+      "bytes": 4871,
+      "blocks": 25,
+      "selectors": 25,
+      "declarations": 70,
+      "important": 70,
+      "atRules": [
+        {
+          "head": "@media(max-height:680px)",
+          "line": 106,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1100px)",
+          "line": 120,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/f1-racing-r335-r341.css",
+      "type": "link",
+      "order": 29,
+      "bytes": 7412,
+      "blocks": 30,
+      "selectors": 34,
+      "declarations": 113,
+      "important": 27,
+      "atRules": [
+        {
+          "head": "@keyframes f1LiveGlowV339",
+          "line": 51,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1LiveSweepV339",
+          "line": 55,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1BestLapPopV338",
+          "line": 96,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1BestLapAuraV338",
+          "line": 97,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1BestLapNewV338",
+          "line": 98,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1100px)",
+          "line": 130,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 134,
+          "context": ""
+        }
+      ],
+      "keyframes": 5,
+      "warnings": []
+    },
+    {
+      "file": "assets/f1-racing-r342.css",
+      "type": "link",
+      "order": 30,
+      "bytes": 1305,
+      "blocks": 5,
+      "selectors": 7,
+      "declarations": 17,
+      "important": 14,
+      "atRules": [],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/f1-racing-r343-r345.css",
+      "type": "link",
+      "order": 31,
+      "bytes": 861,
+      "blocks": 6,
+      "selectors": 6,
+      "declarations": 17,
+      "important": 7,
+      "atRules": [
+        {
+          "head": "@media(max-width:760px)",
+          "line": 21,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/f1-racing-r401.css",
+      "type": "link",
+      "order": 32,
+      "bytes": 3067,
+      "blocks": 20,
+      "selectors": 21,
+      "declarations": 85,
+      "important": 2,
+      "atRules": [
+        {
+          "head": "@keyframes f1SkillEnterV401",
+          "line": 12,
+          "context": ""
+        },
+        {
+          "head": "@keyframes f1SkillStreakV401",
+          "line": 13,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:790px)",
+          "line": 22,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 23,
+          "context": ""
+        }
+      ],
+      "keyframes": 2,
+      "warnings": []
+    },
+    {
+      "file": "index.html#mws-cloud-access-style",
+      "type": "inline",
+      "order": 33,
+      "bytes": 3829,
+      "blocks": 39,
+      "selectors": 42,
+      "declarations": 154,
+      "important": 1,
+      "atRules": [
+        {
+          "head": "@media(max-width:650px)",
+          "line": 115,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "index.html#mws-test-v53-version-style",
+      "type": "inline",
+      "order": 34,
+      "bytes": 364,
+      "blocks": 3,
+      "selectors": 3,
+      "declarations": 14,
+      "important": 1,
+      "atRules": [],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/mawang-premium-v1621.css",
+      "type": "link",
+      "order": 35,
+      "bytes": 20179,
+      "blocks": 93,
+      "selectors": 131,
+      "declarations": 333,
+      "important": 133,
+      "atRules": [
+        {
+          "head": "@media(min-width:901px)",
+          "line": 150,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 518,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/wardogs-v1.css",
+      "type": "link",
+      "order": 36,
+      "bytes": 22131,
+      "blocks": 153,
+      "selectors": 168,
+      "declarations": 552,
+      "important": 9,
+      "atRules": [
+        {
+          "head": "@media(max-width:980px)",
+          "line": 102,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:640px)",
+          "line": 107,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 114,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:980px)",
+          "line": 180,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:640px)",
+          "line": 183,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:390px)",
+          "line": 189,
+          "context": ""
+        },
+        {
+          "head": "@media(hover:hover)",
+          "line": 204,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 316,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:520px)",
+          "line": 326,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 333,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 359,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:520px)",
+          "line": 373,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 422,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:981px)",
+          "line": 431,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:641px) and (max-width:980px)",
+          "line": 453,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 528,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/bsandong-v1.css",
+      "type": "link",
+      "order": 37,
+      "bytes": 7645,
+      "blocks": 80,
+      "selectors": 93,
+      "declarations": 260,
+      "important": 3,
+      "atRules": [
+        {
+          "head": "@media(hover:hover)",
+          "line": 55,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:650px)",
+          "line": 56,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 57,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:650px)",
+          "line": 73,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:900px)",
+          "line": 75,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/wardogs-intro-v1.css",
+      "type": "link",
+      "order": 38,
+      "bytes": 5161,
+      "blocks": 34,
+      "selectors": 36,
+      "declarations": 109,
+      "important": 1,
+      "atRules": [
+        {
+          "head": "@keyframes wd118Fade",
+          "line": 135,
+          "context": ""
+        },
+        {
+          "head": "@keyframes wd118FadeUp",
+          "line": 136,
+          "context": ""
+        },
+        {
+          "head": "@keyframes wd118Line",
+          "line": 137,
+          "context": ""
+        },
+        {
+          "head": "@keyframes wd118Status",
+          "line": 138,
+          "context": ""
+        },
+        {
+          "head": "@keyframes wd118Scan",
+          "line": 139,
+          "context": ""
+        },
+        {
+          "head": "@keyframes wd118OverlayOut",
+          "line": 145,
+          "context": ""
+        },
+        {
+          "head": "@keyframes wd118QuickOverlay",
+          "line": 149,
+          "context": ""
+        },
+        {
+          "head": "@keyframes wd118QuickScan",
+          "line": 153,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:640px)",
+          "line": 158,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 163,
+          "context": ""
+        }
+      ],
+      "keyframes": 8,
+      "warnings": []
+    },
+    {
+      "file": "assets/wardogs-manager-v1.css",
+      "type": "link",
+      "order": 39,
+      "bytes": 16334,
+      "blocks": 128,
+      "selectors": 132,
+      "declarations": 445,
+      "important": 8,
+      "atRules": [
+        {
+          "head": "@media(max-width:860px)",
+          "line": 77,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:560px)",
+          "line": 85,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:860px)",
+          "line": 131,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:560px)",
+          "line": 134,
+          "context": ""
+        },
+        {
+          "head": "@media(pointer:coarse)",
+          "line": 154,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:860px)",
+          "line": 186,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:560px)",
+          "line": 216,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:560px)",
+          "line": 274,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/career-timeline.css",
+      "type": "link",
+      "order": 40,
+      "bytes": 19808,
+      "blocks": 185,
+      "selectors": 215,
+      "declarations": 653,
+      "important": 26,
+      "atRules": [
+        {
+          "head": "@supports(interpolate-size:allow-keywords)",
+          "line": 150,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:700px)",
+          "line": 170,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 222,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/sidebar-stable-v1.css",
+      "type": "link",
+      "order": 41,
+      "bytes": 1598,
+      "blocks": 9,
+      "selectors": 9,
+      "declarations": 31,
+      "important": 15,
+      "atRules": [
+        {
+          "head": "@media(min-width:761px)",
+          "line": 2,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/calendar-historical-v1.css",
+      "type": "link",
+      "order": 42,
+      "bytes": 1194,
+      "blocks": 12,
+      "selectors": 13,
+      "declarations": 38,
+      "important": 1,
+      "atRules": [],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "index.html#mws-nav-first-paint",
+      "type": "inline",
+      "order": 43,
+      "bytes": 710,
+      "blocks": 6,
+      "selectors": 6,
+      "declarations": 17,
+      "important": 0,
+      "atRules": [],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "index.html#v415-post-schedule-style",
+      "type": "inline",
+      "order": 44,
+      "bytes": 2815,
+      "blocks": 21,
+      "selectors": 21,
+      "declarations": 76,
+      "important": 0,
+      "atRules": [
+        {
+          "head": "@media(max-width:1150px)",
+          "line": 155,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "index.html#v418-random-gacha-style",
+      "type": "inline",
+      "order": 45,
+      "bytes": 16956,
+      "blocks": 106,
+      "selectors": 107,
+      "declarations": 426,
+      "important": 5,
+      "atRules": [
+        {
+          "head": "@keyframes gachaSparkV418",
+          "line": 206,
+          "context": ""
+        },
+        {
+          "head": "@keyframes gachaRevealFinalV418",
+          "line": 228,
+          "context": ""
+        },
+        {
+          "head": "@keyframes gachaCardShineV418",
+          "line": 231,
+          "context": ""
+        },
+        {
+          "head": "@keyframes gachaDeckShuffleV418",
+          "line": 284,
+          "context": ""
+        },
+        {
+          "head": "@keyframes gachaFlashV418",
+          "line": 290,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1500px)",
+          "line": 291,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1180px)",
+          "line": 297,
+          "context": ""
+        }
+      ],
+      "keyframes": 5,
+      "warnings": []
+    },
+    {
+      "file": "index.html#v419-gacha-auto-style",
+      "type": "inline",
+      "order": 46,
+      "bytes": 2231,
+      "blocks": 14,
+      "selectors": 14,
+      "declarations": 56,
+      "important": 0,
+      "atRules": [
+        {
+          "head": "@media(max-width:980px)",
+          "line": 330,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "index.html#v500-public-post-gacha-style",
+      "type": "inline",
+      "order": 47,
+      "bytes": 2219,
+      "blocks": 16,
+      "selectors": 16,
+      "declarations": 59,
+      "important": 14,
+      "atRules": [
+        {
+          "head": "@media(max-width:980px)",
+          "line": 347,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "index.html#v520-public-session-style",
+      "type": "inline",
+      "order": 48,
+      "bytes": 259,
+      "blocks": 2,
+      "selectors": 2,
+      "declarations": 3,
+      "important": 3,
+      "atRules": [],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "index.html#v510-post-source-removal-style",
+      "type": "inline",
+      "order": 49,
+      "bytes": 185,
+      "blocks": 1,
+      "selectors": 3,
+      "declarations": 1,
+      "important": 1,
+      "atRules": [],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "index.html#v530-ui-enhancement-style",
+      "type": "inline",
+      "order": 50,
+      "bytes": 8752,
+      "blocks": 52,
+      "selectors": 60,
+      "declarations": 190,
+      "important": 36,
+      "atRules": [
+        {
+          "head": "@media(max-width:1180px)",
+          "line": 368,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 393,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 396,
+          "context": ""
+        },
+        {
+          "head": "@keyframes rankingGoldPulseV53",
+          "line": 416,
+          "context": ""
+        },
+        {
+          "head": "@keyframes rankingCrownV53",
+          "line": 417,
+          "context": ""
+        },
+        {
+          "head": "@keyframes rankingShineV53",
+          "line": 418,
+          "context": ""
+        },
+        {
+          "head": "@keyframes rankingStepShineV53",
+          "line": 419,
+          "context": ""
+        },
+        {
+          "head": "@keyframes rankingStarsV53",
+          "line": 420,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 421,
+          "context": ""
+        }
+      ],
+      "keyframes": 5,
+      "warnings": []
+    },
+    {
+      "file": "index.html#v540-ui-style",
+      "type": "inline",
+      "order": 51,
+      "bytes": 9014,
+      "blocks": 52,
+      "selectors": 56,
+      "declarations": 224,
+      "important": 79,
+      "atRules": [
+        {
+          "head": "@keyframes v54SelectedSweep",
+          "line": 468,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1180px)",
+          "line": 501,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:720px)",
+          "line": 502,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 516,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:761px)",
+          "line": 524,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 532,
+          "context": ""
+        }
+      ],
+      "keyframes": 1,
+      "warnings": []
+    },
+    {
+      "file": "index.html#v550-style",
+      "type": "inline",
+      "order": 52,
+      "bytes": 5724,
+      "blocks": 38,
+      "selectors": 41,
+      "declarations": 151,
+      "important": 22,
+      "atRules": [
+        {
+          "head": "@media (min-width:761px)",
+          "line": 540,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1250px)",
+          "line": 602,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1050px)",
+          "line": 603,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 604,
+          "context": ""
+        },
+        {
+          "head": "@keyframes mascotRainFallV55",
+          "line": 614,
+          "context": ""
+        }
+      ],
+      "keyframes": 1,
+      "warnings": []
+    },
+    {
+      "file": "index.html#v560-ui-style",
+      "type": "inline",
+      "order": 53,
+      "bytes": 14106,
+      "blocks": 57,
+      "selectors": 73,
+      "declarations": 209,
+      "important": 22,
+      "atRules": [
+        {
+          "head": "@media (min-width:761px)",
+          "line": 627,
+          "context": ""
+        },
+        {
+          "head": "@keyframes fx6PlasmaSweep",
+          "line": 718,
+          "context": ""
+        },
+        {
+          "head": "@keyframes fx6Pulse",
+          "line": 719,
+          "context": ""
+        },
+        {
+          "head": "@keyframes fx7Storm",
+          "line": 725,
+          "context": ""
+        },
+        {
+          "head": "@keyframes fx8Prism",
+          "line": 730,
+          "context": ""
+        },
+        {
+          "head": "@keyframes fx8Beam",
+          "line": 731,
+          "context": ""
+        },
+        {
+          "head": "@keyframes fx9VoidPulse",
+          "line": 737,
+          "context": ""
+        },
+        {
+          "head": "@keyframes fx9Orbit",
+          "line": 738,
+          "context": ""
+        },
+        {
+          "head": "@keyframes fx10MythicPulse",
+          "line": 744,
+          "context": ""
+        },
+        {
+          "head": "@keyframes fx10Sweep",
+          "line": 745,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 753,
+          "context": ""
+        }
+      ],
+      "keyframes": 9,
+      "warnings": []
+    },
+    {
+      "file": "index.html#mws-v57-style",
+      "type": "inline",
+      "order": 54,
+      "bytes": 4496,
+      "blocks": 28,
+      "selectors": 28,
+      "declarations": 130,
+      "important": 6,
+      "atRules": [
+        {
+          "head": "@media(max-width:980px)",
+          "line": 762,
+          "context": ""
+        },
+        {
+          "head": "@keyframes mwsV57RecommendedGlow",
+          "line": 771,
+          "context": ""
+        }
+      ],
+      "keyframes": 1,
+      "warnings": []
+    },
+    {
+      "file": "index.html#mws-v572-predeploy-style",
+      "type": "inline",
+      "order": 55,
+      "bytes": 1680,
+      "blocks": 11,
+      "selectors": 11,
+      "declarations": 41,
+      "important": 3,
+      "atRules": [
+        {
+          "head": "@keyframes mwsSavePulseV572",
+          "line": 798,
+          "context": ""
+        }
+      ],
+      "keyframes": 1,
+      "warnings": []
+    },
+    {
+      "file": "index.html#mws-v574-style",
+      "type": "inline",
+      "order": 56,
+      "bytes": 1972,
+      "blocks": 15,
+      "selectors": 15,
+      "declarations": 64,
+      "important": 21,
+      "atRules": [],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/device-ui.css",
+      "type": "link",
+      "order": 57,
+      "bytes": 12198,
+      "blocks": 80,
+      "selectors": 99,
+      "declarations": 251,
+      "important": 133,
+      "atRules": [],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/ui-frame-presets.css",
+      "type": "link",
+      "order": 58,
+      "bytes": 25056,
+      "blocks": 161,
+      "selectors": 235,
+      "declarations": 425,
+      "important": 418,
+      "atRules": [
+        {
+          "head": "@media(min-width:901px)",
+          "line": 42,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:901px)",
+          "line": 67,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:901px)",
+          "line": 92,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:901px)",
+          "line": 127,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:901px)",
+          "line": 144,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:901px)",
+          "line": 167,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:901px)",
+          "line": 181,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 204,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 232,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/calendar-space-efficiency-v1.css",
+      "type": "link",
+      "order": 59,
+      "bytes": 4391,
+      "blocks": 11,
+      "selectors": 16,
+      "declarations": 30,
+      "important": 27,
+      "atRules": [
+        {
+          "head": "@media (min-width:901px)",
+          "line": 5,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/contact-card-readable-layout-v1.css",
+      "type": "link",
+      "order": 60,
+      "bytes": 4127,
+      "blocks": 22,
+      "selectors": 28,
+      "declarations": 84,
+      "important": 74,
+      "atRules": [
+        {
+          "head": "@media (max-width:760px)",
+          "line": 116,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/workspace-clean-v1.css",
+      "type": "link",
+      "order": 61,
+      "bytes": 21076,
+      "blocks": 132,
+      "selectors": 140,
+      "declarations": 354,
+      "important": 163,
+      "atRules": [
+        {
+          "head": "@media(max-width:760px)",
+          "line": 123,
+          "context": ""
+        },
+        {
+          "head": "@container dashboard-overview (max-width:960px)",
+          "line": 230,
+          "context": ""
+        },
+        {
+          "head": "@container dashboard-overview (max-width:730px)",
+          "line": 233,
+          "context": ""
+        },
+        {
+          "head": "@container dashboard-overview (max-width:540px)",
+          "line": 236,
+          "context": ""
+        },
+        {
+          "head": "@media(hover:hover) and (pointer:fine)",
+          "line": 275,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 282,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 287,
+          "context": ""
+        },
+        {
+          "head": "@media (min-width:761px)",
+          "line": 297,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/calendar-details-v1.css",
+      "type": "link",
+      "order": 62,
+      "bytes": 40822,
+      "blocks": 232,
+      "selectors": 249,
+      "declarations": 823,
+      "important": 319,
+      "atRules": [
+        {
+          "head": "@media(max-width:760px)",
+          "line": 110,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:901px)",
+          "line": 143,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:901px)",
+          "line": 160,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 164,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:901px)",
+          "line": 219,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:600px)",
+          "line": 231,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:1050px)",
+          "line": 266,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:901px)",
+          "line": 310,
+          "context": ""
+        },
+        {
+          "head": "@container mws-calendar-day (min-width:215px)",
+          "line": 334,
+          "context": "@media(min-width:901px)"
+        },
+        {
+          "head": "@media(min-width:901px)",
+          "line": 354,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:901px)",
+          "line": 358,
+          "context": ""
+        },
+        {
+          "head": "@container mws-calendar-day (max-width:125px)",
+          "line": 359,
+          "context": "@media(min-width:901px)"
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/posts-responsive-layout-v2.css",
+      "type": "link",
+      "order": 63,
+      "bytes": 13259,
+      "blocks": 107,
+      "selectors": 114,
+      "declarations": 408,
+      "important": 49,
+      "atRules": [
+        {
+          "head": "@container mws-post-applicants (max-width:660px)",
+          "line": 99,
+          "context": ""
+        },
+        {
+          "head": "@container mws-posts (max-width:480px)",
+          "line": 107,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/mobile-calendar-v130.css",
+      "type": "link",
+      "order": 64,
+      "bytes": 25611,
+      "blocks": 112,
+      "selectors": 122,
+      "declarations": 538,
+      "important": 313,
+      "atRules": [
+        {
+          "head": "@media(max-width:420px)",
+          "line": 272,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:350px)",
+          "line": 658,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/achievement-exhibition-v1.css",
+      "type": "link",
+      "order": 65,
+      "bytes": 25822,
+      "blocks": 153,
+      "selectors": 158,
+      "declarations": 540,
+      "important": 73,
+      "atRules": [
+        {
+          "head": "@media(hover:hover) and (pointer:fine)",
+          "line": 89,
+          "context": ""
+        },
+        {
+          "head": "@container achievement-exhibition (min-width:650px)",
+          "line": 97,
+          "context": ""
+        },
+        {
+          "head": "@container achievement-exhibition (min-width:1000px)",
+          "line": 100,
+          "context": ""
+        },
+        {
+          "head": "@container achievement-exhibition (min-width:1400px)",
+          "line": 103,
+          "context": ""
+        },
+        {
+          "head": "@container achievement-exhibition (min-width:1900px)",
+          "line": 106,
+          "context": ""
+        },
+        {
+          "head": "@container achievement-exhibition (max-width:649px)",
+          "line": 109,
+          "context": ""
+        },
+        {
+          "head": "@container achievement-exhibition (max-width:340px)",
+          "line": 126,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 129,
+          "context": ""
+        },
+        {
+          "head": "@media(hover:hover) and (pointer:fine)",
+          "line": 242,
+          "context": ""
+        },
+        {
+          "head": "@container achievement-exhibition (max-width:999px)",
+          "line": 249,
+          "context": ""
+        },
+        {
+          "head": "@container achievement-exhibition (max-width:749px)",
+          "line": 256,
+          "context": ""
+        },
+        {
+          "head": "@container achievement-exhibition (max-width:649px)",
+          "line": 260,
+          "context": ""
+        },
+        {
+          "head": "@container achievement-exhibition (max-width:340px)",
+          "line": 276,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 279,
+          "context": ""
+        },
+        {
+          "head": "@media(hover:hover) and (pointer:fine)",
+          "line": 291,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 304,
+          "context": ""
+        },
+        {
+          "head": "@media(hover:hover) and (pointer:fine)",
+          "line": 368,
+          "context": ""
+        },
+        {
+          "head": "@media(hover:hover) and (pointer:fine)",
+          "line": 393,
+          "context": ""
+        },
+        {
+          "head": "@keyframes achievement-hall-detail-in",
+          "line": 428,
+          "context": ""
+        },
+        {
+          "head": "@media(hover:none),(pointer:coarse)",
+          "line": 432,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 450,
+          "context": ""
+        }
+      ],
+      "keyframes": 1,
+      "warnings": []
+    },
+    {
+      "file": "assets/calendar-search-v173.css",
+      "type": "link",
+      "order": 66,
+      "bytes": 9280,
+      "blocks": 64,
+      "selectors": 65,
+      "declarations": 268,
+      "important": 2,
+      "atRules": [
+        {
+          "head": "@media(max-width:850px)",
+          "line": 50,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:600px)",
+          "line": 55,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 69,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/contact-directory-v177.css",
+      "type": "link",
+      "order": 67,
+      "bytes": 19679,
+      "blocks": 122,
+      "selectors": 124,
+      "declarations": 434,
+      "important": 135,
+      "atRules": [
+        {
+          "head": "@media(min-width:1800px)",
+          "line": 139,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:900px)",
+          "line": 140,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 145,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 163,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:1800px)",
+          "line": 223,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 224,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/modal-motion-v1.css",
+      "type": "link",
+      "order": 68,
+      "bytes": 3243,
+      "blocks": 20,
+      "selectors": 23,
+      "declarations": 48,
+      "important": 6,
+      "atRules": [
+        {
+          "head": "@supports (transition-behavior:allow-discrete)",
+          "line": 34,
+          "context": ""
+        },
+        {
+          "head": "@starting-style",
+          "line": 49,
+          "context": "@supports (transition-behavior:allow-discrete)"
+        },
+        {
+          "head": "@supports not (transition-behavior:allow-discrete)",
+          "line": 56,
+          "context": ""
+        },
+        {
+          "head": "@keyframes mws-modal-scrim-in-v2",
+          "line": 59,
+          "context": "@supports not (transition-behavior:allow-discrete)"
+        },
+        {
+          "head": "@keyframes mws-modal-panel-in-v2",
+          "line": 60,
+          "context": "@supports not (transition-behavior:allow-discrete)"
+        },
+        {
+          "head": "@supports not (transition-behavior:allow-discrete)",
+          "line": 67,
+          "context": ""
+        }
+      ],
+      "keyframes": 2,
+      "warnings": []
+    },
+    {
+      "file": "assets/ladder-wizard-v1.css",
+      "type": "link",
+      "order": 69,
+      "bytes": 24389,
+      "blocks": 161,
+      "selectors": 171,
+      "declarations": 706,
+      "important": 133,
+      "atRules": [
+        {
+          "head": "@media(max-width:850px)",
+          "line": 22,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:420px)",
+          "line": 23,
+          "context": ""
+        },
+        {
+          "head": "@keyframes ladder-wizard-enter",
+          "line": 29,
+          "context": ""
+        },
+        {
+          "head": "@keyframes ladder-wizard-fade",
+          "line": 30,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 31,
+          "context": ""
+        },
+        {
+          "head": "@container (min-width:1500px)",
+          "line": 90,
+          "context": ""
+        },
+        {
+          "head": "@keyframes ladder-result-pop",
+          "line": 125,
+          "context": ""
+        },
+        {
+          "head": "@container (max-width:680px)",
+          "line": 162,
+          "context": ""
+        }
+      ],
+      "keyframes": 3,
+      "warnings": []
+    },
+    {
+      "file": "assets/announcement-carousel-v1.css",
+      "type": "link",
+      "order": 70,
+      "bytes": 5361,
+      "blocks": 43,
+      "selectors": 45,
+      "declarations": 158,
+      "important": 32,
+      "atRules": [
+        {
+          "head": "@keyframes mwsNoticeAppearV1",
+          "line": 15,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:480px)",
+          "line": 62,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 72,
+          "context": ""
+        }
+      ],
+      "keyframes": 1,
+      "warnings": []
+    },
+    {
+      "file": "index.html#mws-public-entry-style",
+      "type": "inline",
+      "order": 71,
+      "bytes": 3028,
+      "blocks": 24,
+      "selectors": 29,
+      "declarations": 96,
+      "important": 34,
+      "atRules": [
+        {
+          "head": "@media(max-width:480px)",
+          "line": 854,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/ui-interactions-v1.css",
+      "type": "link",
+      "order": 72,
+      "bytes": 17260,
+      "blocks": 83,
+      "selectors": 124,
+      "declarations": 137,
+      "important": 62,
+      "atRules": [
+        {
+          "head": "@keyframes mws-ui-tooltip-in",
+          "line": 55,
+          "context": ""
+        },
+        {
+          "head": "@keyframes mws-ui-content-in",
+          "line": 56,
+          "context": ""
+        },
+        {
+          "head": "@keyframes mws-ui-nav-in",
+          "line": 91,
+          "context": ""
+        },
+        {
+          "head": "@media (hover:hover) and (pointer:fine), (hover:none) and (pointer:none) and (min-width:901px)",
+          "line": 107,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 133,
+          "context": ""
+        },
+        {
+          "head": "@media (hover:hover) and (pointer:fine), (hover:none) and (pointer:none) and (min-width:901px)",
+          "line": 162,
+          "context": ""
+        }
+      ],
+      "keyframes": 3,
+      "warnings": []
+    },
+    {
+      "file": "assets/content-applications-v1.css",
+      "type": "link",
+      "order": 73,
+      "bytes": 43625,
+      "blocks": 334,
+      "selectors": 393,
+      "declarations": 1127,
+      "important": 66,
+      "atRules": [
+        {
+          "head": "@media(max-width:700px)",
+          "line": 90,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 91,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:700px)",
+          "line": 128,
+          "context": ""
+        },
+        {
+          "head": "@media(hover:hover)",
+          "line": 166,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:850px)",
+          "line": 167,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:520px)",
+          "line": 168,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:520px)",
+          "line": 169,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:851px) and (max-height:800px)",
+          "line": 170,
+          "context": ""
+        },
+        {
+          "head": "@media(hover:hover)",
+          "line": 206,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:950px)",
+          "line": 208,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:580px)",
+          "line": 209,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 210,
+          "context": ""
+        },
+        {
+          "head": "@keyframes ca-urgent-breathe",
+          "line": 228,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 232,
+          "context": ""
+        },
+        {
+          "head": "@keyframes ca-stat-appear",
+          "line": 318,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:700px)",
+          "line": 398,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:520px)",
+          "line": 403,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 417,
+          "context": ""
+        },
+        {
+          "head": "@keyframes ca-close-transition",
+          "line": 446,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 447,
+          "context": ""
+        }
+      ],
+      "keyframes": 3,
+      "warnings": []
+    },
+    {
+      "file": "assets/calendar-people-view-v1.css",
+      "type": "link",
+      "order": 74,
+      "bytes": 5787,
+      "blocks": 43,
+      "selectors": 45,
+      "declarations": 184,
+      "important": 1,
+      "atRules": [
+        {
+          "head": "@media(hover:hover)",
+          "line": 38,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:700px)",
+          "line": 39,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/contact-frequency-v1.css",
+      "type": "link",
+      "order": 75,
+      "bytes": 6080,
+      "blocks": 54,
+      "selectors": 55,
+      "declarations": 206,
+      "important": 1,
+      "atRules": [
+        {
+          "head": "@keyframes cf-appear",
+          "line": 29,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 30,
+          "context": ""
+        },
+        {
+          "head": "@media(hover:hover)",
+          "line": 50,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:720px)",
+          "line": 52,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 53,
+          "context": ""
+        }
+      ],
+      "keyframes": 1,
+      "warnings": []
+    },
+    {
+      "file": "assets/calendar-day-expand-v1.css",
+      "type": "link",
+      "order": 76,
+      "bytes": 1082,
+      "blocks": 2,
+      "selectors": 2,
+      "declarations": 20,
+      "important": 16,
+      "atRules": [
+        {
+          "head": "@media(min-width:901px)",
+          "line": 3,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/mawang-archive-v1.css",
+      "type": "link",
+      "order": 77,
+      "bytes": 19090,
+      "blocks": 169,
+      "selectors": 179,
+      "declarations": 620,
+      "important": 9,
+      "atRules": [
+        {
+          "head": "@media(hover:hover) and (pointer:fine)",
+          "line": 28,
+          "context": ""
+        },
+        {
+          "head": "@keyframes ma-card-enter",
+          "line": 31,
+          "context": ""
+        },
+        {
+          "head": "@media(hover:hover) and (pointer:fine)",
+          "line": 58,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:680px)",
+          "line": 59,
+          "context": ""
+        },
+        {
+          "head": "@keyframes ma-photo-appear",
+          "line": 63,
+          "context": ""
+        },
+        {
+          "head": "@keyframes ma-appear",
+          "line": 65,
+          "context": ""
+        },
+        {
+          "head": "@media(hover:hover) and (pointer:fine)",
+          "line": 94,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1000px)",
+          "line": 96,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:680px)",
+          "line": 97,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:480px)",
+          "line": 98,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 101,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:1101px)",
+          "line": 118,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:680px)",
+          "line": 122,
+          "context": ""
+        }
+      ],
+      "keyframes": 3,
+      "warnings": []
+    },
+    {
+      "file": "assets/sidebar-compact-v1.css",
+      "type": "link",
+      "order": 78,
+      "bytes": 10903,
+      "blocks": 50,
+      "selectors": 72,
+      "declarations": 179,
+      "important": 113,
+      "atRules": [
+        {
+          "head": "@media (min-width:761px)",
+          "line": 2,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:761px)",
+          "line": 28,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:761px)",
+          "line": 46,
+          "context": ""
+        },
+        {
+          "head": "@container (max-width:145px)",
+          "line": 51,
+          "context": ""
+        },
+        {
+          "head": "@container (max-width:145px)",
+          "line": 71,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 86,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 91,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:761px)",
+          "line": 96,
+          "context": ""
+        },
+        {
+          "head": "@container (max-width:145px)",
+          "line": 112,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 116,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/topbar-context-v1.css",
+      "type": "link",
+      "order": 79,
+      "bytes": 6503,
+      "blocks": 37,
+      "selectors": 44,
+      "declarations": 160,
+      "important": 83,
+      "atRules": [
+        {
+          "head": "@media(max-width:760px)",
+          "line": 19,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:760px)",
+          "line": 59,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 64,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/mawang-archive-header-v1.css",
+      "type": "link",
+      "order": 80,
+      "bytes": 3964,
+      "blocks": 26,
+      "selectors": 28,
+      "declarations": 103,
+      "important": 35,
+      "atRules": [
+        {
+          "head": "@media(max-width:1100px)",
+          "line": 19,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:680px)",
+          "line": 20,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 21,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:1101px)",
+          "line": 25,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1100px)",
+          "line": 28,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/workspace-density-v1.css",
+      "type": "link",
+      "order": 81,
+      "bytes": 14202,
+      "blocks": 83,
+      "selectors": 85,
+      "declarations": 230,
+      "important": 203,
+      "atRules": [
+        {
+          "head": "@media(min-width:1101px)",
+          "line": 21,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1100px)",
+          "line": 205,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:700px)",
+          "line": 216,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 236,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:1101px)",
+          "line": 246,
+          "context": ""
+        },
+        {
+          "head": "@media(min-width:1101px)",
+          "line": 295,
+          "context": ""
+        },
+        {
+          "head": "@media (min-width:1101px)",
+          "line": 306,
+          "context": ""
+        },
+        {
+          "head": "@media (max-width:1100px)",
+          "line": 341,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/mawang-archive-finish-v1.css",
+      "type": "link",
+      "order": 82,
+      "bytes": 14332,
+      "blocks": 81,
+      "selectors": 88,
+      "declarations": 287,
+      "important": 22,
+      "atRules": [
+        {
+          "head": "@media(hover:hover) and (pointer:fine)",
+          "line": 166,
+          "context": ""
+        },
+        {
+          "head": "@keyframes ma-portrait-focus",
+          "line": 227,
+          "context": ""
+        },
+        {
+          "head": "@media(hover:hover) and (pointer:fine)",
+          "line": 271,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:1000px)",
+          "line": 292,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:680px)",
+          "line": 297,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:420px)",
+          "line": 312,
+          "context": ""
+        },
+        {
+          "head": "@media(prefers-reduced-motion:reduce)",
+          "line": 325,
+          "context": ""
+        }
+      ],
+      "keyframes": 1,
+      "warnings": []
+    },
+    {
+      "file": "assets/achievement-gallery-v1621.css",
+      "type": "not-linked",
+      "order": 83,
+      "bytes": 23831,
+      "blocks": 178,
+      "selectors": 194,
+      "declarations": 694,
+      "important": 9,
+      "atRules": [
+        {
+          "head": "@media(max-width:760px)",
+          "line": 826,
+          "context": ""
+        },
+        {
+          "head": "@media(pointer:coarse)",
+          "line": 902,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/calendar-drag-layout-fix.css",
+      "type": "not-linked",
+      "order": 84,
+      "bytes": 1449,
+      "blocks": 4,
+      "selectors": 12,
+      "declarations": 20,
+      "important": 20,
+      "atRules": [],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/mobile-drawer-v130.css",
+      "type": "not-linked",
+      "order": 85,
+      "bytes": 14754,
+      "blocks": 32,
+      "selectors": 65,
+      "declarations": 252,
+      "important": 250,
+      "atRules": [
+        {
+          "head": "@media(max-width:420px)",
+          "line": 349,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    },
+    {
+      "file": "assets/workspace-ui-v176.css",
+      "type": "not-linked",
+      "order": 86,
+      "bytes": 3544,
+      "blocks": 35,
+      "selectors": 36,
+      "declarations": 106,
+      "important": 1,
+      "atRules": [
+        {
+          "head": "@media(max-width:720px)",
+          "line": 18,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:460px)",
+          "line": 22,
+          "context": ""
+        },
+        {
+          "head": "@media(max-width:720px)",
+          "line": 58,
+          "context": ""
+        }
+      ],
+      "keyframes": 0,
+      "warnings": []
+    }
+  ],
+  "refs": [
+    {
+      "file": "assets/achievement-exhibition-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/achievement-gallery-v1621.css",
+      "linked": false,
+      "references": [
+        {
+          "file": "assets/post-login-runtime-v130.js",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/announcement-carousel-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/app-core.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/bsandong-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/calendar-broadcast-duration-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/calendar-content-groups-v2.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/calendar-continuous-series-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/calendar-day-expand-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/calendar-details-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/calendar-drag-layout-fix.css",
+      "linked": false,
+      "references": [
+        {
+          "file": "assets/device-ui.js",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/calendar-group-recovery-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/calendar-historical-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/calendar-people-view-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/calendar-responsive-cards-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/calendar-search-v173.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/calendar-space-efficiency-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/calendar-stable-layout-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/calendar-timeline-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/calendar-toolbar-v4.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/career-timeline.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/contact-card-readable-layout-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/contact-directory-v177.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/contact-frequency-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/content-applications-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/device-ui.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/event-sidebar-tabs-v5.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-r283-r287.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-r288-r290.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-r291-r295.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-r303.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-r305.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-r306.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-r307.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-r308.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-r309.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-r313.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-r319.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-r324.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-r330-r333.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-r335-r341.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-r342.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-r343-r345.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-r401.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/ladder-wizard-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/legacy-hub-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/mawang-archive-finish-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/mawang-archive-header-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/mawang-archive-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/mawang-cursor-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/mawang-premium-v1621.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/mobile-calendar-v130.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "assets/post-login-runtime-v130.js",
+          "count": 1
+        },
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/mobile-drawer-v130.css",
+      "linked": false,
+      "references": [
+        {
+          "file": "assets/post-login-runtime-v130.js",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/modal-motion-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/posts-responsive-layout-v2.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/sidebar-compact-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/sidebar-rail-scrollbar-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/sidebar-stable-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/topbar-context-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/ui-frame-presets.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/ui-interactions-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/wardogs-intro-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/wardogs-manager-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/wardogs-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/workspace-clean-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/workspace-density-v1.css",
+      "linked": true,
+      "references": [
+        {
+          "file": "index.html",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "file": "assets/workspace-ui-v176.css",
+      "linked": false,
+      "references": [
+        {
+          "file": "assets/post-login-runtime-v130.js",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "dynamic": [
+    {
+      "file": "assets/boss-manager-v121.js",
+      "hits": [
+        {
+          "line": 81,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/boss-raid-v116.js",
+      "hits": [
+        {
+          "line": 67,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/cf-static-bootstrap-v1.js",
+      "hits": [
+        {
+          "line": 43,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/cf-static-boss-manager-v1.js",
+      "hits": [
+        {
+          "line": 81,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/cloud-runtime-loader-v130.js",
+      "hits": [
+        {
+          "line": 47,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/cloud-v1.1-loader.js",
+      "hits": [
+        {
+          "line": 43,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/contact-runtime-v130.js",
+      "hits": [
+        {
+          "line": 31,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/content-planner-host.js",
+      "hits": [
+        {
+          "line": 12,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-v1.js",
+      "hits": [
+        {
+          "line": 2821,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/friend-finder-v120.js",
+      "hits": [
+        {
+          "line": 210,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/majoku-sidebar-v113.js",
+      "hits": [
+        {
+          "line": 21,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/mobile-access-tools-v130.js",
+      "hits": [
+        {
+          "line": 15,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/mobile-calendar-quick-add-v130.js",
+      "hits": [
+        {
+          "line": 19,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/online-v5-loader.js",
+      "hits": [
+        {
+          "line": 15,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/perf-runtime-base.js",
+      "hits": [
+        {
+          "line": 11,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/perf-runtime.js",
+      "hits": [
+        {
+          "line": 166,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/soop-contact-autofill-v1.js",
+      "hits": [
+        {
+          "line": 19,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/steam-game-v111.js",
+      "hits": [
+        {
+          "line": 205,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/today-people-wheel-v117.js",
+      "hits": [
+        {
+          "line": 13,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/tools.js",
+      "hits": [
+        {
+          "line": 43,
+          "kind": "createElement('style')"
+        }
+      ]
+    },
+    {
+      "file": "assets/ui-fixes-v121.js",
+      "hits": [
+        {
+          "line": 11,
+          "kind": "createElement('style')"
+        }
+      ]
+    }
+  ],
+  "domain": {
+    "sidebar": {
+      "selectors": 414,
+      "files": [
+        "index.html#mws-first-paint-guard",
+        "assets/app-core.css",
+        "assets/sidebar-rail-scrollbar-v1.css",
+        "assets/f1-racing-v1.css",
+        "assets/f1-racing-r283-r287.css",
+        "index.html#mws-test-v53-version-style",
+        "assets/mawang-premium-v1621.css",
+        "assets/sidebar-stable-v1.css",
+        "index.html#mws-nav-first-paint",
+        "index.html#v540-ui-style",
+        "index.html#v550-style",
+        "index.html#mws-v572-predeploy-style",
+        "index.html#mws-v574-style",
+        "assets/ui-frame-presets.css",
+        "assets/calendar-space-efficiency-v1.css",
+        "assets/workspace-clean-v1.css",
+        "assets/ui-interactions-v1.css",
+        "assets/sidebar-compact-v1.css"
+      ],
+      "repeated": 59,
+      "exact": 12,
+      "conflicts": 120,
+      "crossFile": 20,
+      "top": [
+        {
+          "selector": "body.sidebar-pinned .logo",
+          "context": "",
+          "property": "width",
+          "values": 3,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 2763,
+              "order": 4,
+              "value": "auto",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 3032,
+              "order": 4,
+              "value": "auto",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 3639,
+              "order": 4,
+              "value": "118px",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 3907,
+              "order": 4,
+              "value": "118px",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 4578,
+              "order": 4,
+              "value": "118px",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "body.sidebar-pinned .logo",
+          "context": "",
+          "property": "min-width",
+          "values": 2,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 2763,
+              "order": 4,
+              "value": "115px",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 3032,
+              "order": 4,
+              "value": "115px",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 3639,
+              "order": 4,
+              "value": "118px",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 3907,
+              "order": 4,
+              "value": "118px",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 4578,
+              "order": 4,
+              "value": "118px",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "body.sidebar-pinned .app",
+          "context": "",
+          "property": "grid-template-columns",
+          "values": 2,
+          "crossFile": true,
+          "locations": [
+            {
+              "file": "index.html#mws-first-paint-guard",
+              "line": 11,
+              "order": 0,
+              "value": "220px minmax(0,1fr)",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 2418,
+              "order": 4,
+              "value": "220px minmax(0,1fr)",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 2704,
+              "order": 4,
+              "value": "220px minmax(0,1fr)",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 3017,
+              "order": 4,
+              "value": "220px minmax(0,1fr)",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": ".sidebar",
+          "context": "",
+          "property": "padding",
+          "values": 3,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 45,
+              "order": 4,
+              "value": "18px 14px",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 2413,
+              "order": 4,
+              "value": "14px 10px",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 2709,
+              "order": 4,
+              "value": "12px 8px",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 4499,
+              "order": 4,
+              "value": "12px 8px",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": ".sidebar",
+          "context": "",
+          "property": "transition",
+          "values": 4,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 45,
+              "order": 4,
+              "value": "background .2s",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 2413,
+              "order": 4,
+              "value": "width .18s ease,background .2s,border-color .2s",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 2709,
+              "order": 4,
+              "value": "none",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 2969,
+              "order": 4,
+              "value": "width .15s cubic-bezier(.18,.82,.22,1),\n    min-width .15s cubic-bezier(.18,.82,.22,1),\n    box-shadow .15s ease,\n    background .15s ease",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "body.sidebar-pinned .sidebar",
+          "context": "",
+          "property": "width",
+          "values": 2,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 2419,
+              "order": 4,
+              "value": "220px",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 2722,
+              "order": 4,
+              "value": "220px",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 3020,
+              "order": 4,
+              "value": "220px",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 4613,
+              "order": 4,
+              "value": "220px",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": ".sidebar-head",
+          "context": "",
+          "property": "min-height",
+          "values": 3,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 2420,
+              "order": 4,
+              "value": "62px",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 2732,
+              "order": 4,
+              "value": "52px",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 3609,
+              "order": 4,
+              "value": "58px",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 4500,
+              "order": 4,
+              "value": "58px",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": ".sidebar-head",
+          "context": "",
+          "property": "display",
+          "values": 3,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 2420,
+              "order": 4,
+              "value": "flex",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 2732,
+              "order": 4,
+              "value": "flex",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 3609,
+              "order": 4,
+              "value": "block",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 4500,
+              "order": 4,
+              "value": "block",
+              "important": true
+            }
+          ]
+        }
+      ]
+    },
+    "calendar": {
+      "selectors": 769,
+      "files": [
+        "index.html#mws-calendar-startup-v2-style",
+        "assets/app-core.css",
+        "assets/calendar-broadcast-duration-v1.css",
+        "assets/calendar-continuous-series-v1.css",
+        "assets/calendar-content-groups-v2.css",
+        "assets/calendar-group-recovery-v1.css",
+        "assets/event-sidebar-tabs-v5.css",
+        "assets/calendar-toolbar-v4.css",
+        "assets/calendar-timeline-v1.css",
+        "assets/calendar-stable-layout-v1.css",
+        "assets/calendar-responsive-cards-v1.css",
+        "assets/mawang-premium-v1621.css",
+        "assets/calendar-historical-v1.css",
+        "assets/device-ui.css",
+        "assets/ui-frame-presets.css",
+        "assets/calendar-space-efficiency-v1.css",
+        "assets/workspace-clean-v1.css",
+        "assets/calendar-details-v1.css",
+        "assets/mobile-calendar-v130.css",
+        "assets/calendar-search-v173.css",
+        "assets/ui-interactions-v1.css",
+        "assets/calendar-people-view-v1.css",
+        "assets/calendar-day-expand-v1.css",
+        "assets/topbar-context-v1.css"
+      ],
+      "repeated": 40,
+      "exact": 3,
+      "conflicts": 45,
+      "crossFile": 14,
+      "top": [
+        {
+          "selector": "#calendar .calendar-topbar-v4 .calendar-view-tab-v172",
+          "context": "",
+          "property": "min-width",
+          "values": 3,
+          "crossFile": true,
+          "locations": [
+            {
+              "file": "assets/calendar-toolbar-v4.css",
+              "line": 20,
+              "order": 10,
+              "value": "77px",
+              "important": false
+            },
+            {
+              "file": "assets/calendar-timeline-v1.css",
+              "line": 47,
+              "order": 11,
+              "value": "68px",
+              "important": false
+            },
+            {
+              "file": "assets/calendar-details-v1.css",
+              "line": 133,
+              "order": 62,
+              "value": "48px",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": ".calendar",
+          "context": "",
+          "property": "gap",
+          "values": 2,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 79,
+              "order": 4,
+              "value": "6px",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 1506,
+              "order": 4,
+              "value": "7px",
+              "important": false
+            }
+          ]
+        },
+        {
+          "selector": ".mini-event",
+          "context": "",
+          "property": "padding",
+          "values": 2,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 87,
+              "order": 4,
+              "value": "5px 6px",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 1513,
+              "order": 4,
+              "value": "6px 7px",
+              "important": false
+            }
+          ]
+        },
+        {
+          "selector": ".mini-event",
+          "context": "",
+          "property": "margin",
+          "values": 2,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 87,
+              "order": 4,
+              "value": "4px 0",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 1513,
+              "order": 4,
+              "value": "5px 0",
+              "important": false
+            }
+          ]
+        },
+        {
+          "selector": ".mini-event",
+          "context": "",
+          "property": "white-space",
+          "values": 2,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 87,
+              "order": 4,
+              "value": "nowrap",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 1513,
+              "order": 4,
+              "value": "normal",
+              "important": false
+            }
+          ]
+        },
+        {
+          "selector": ".mini-event:hover",
+          "context": "",
+          "property": "filter",
+          "values": 2,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 88,
+              "order": 4,
+              "value": "brightness(1.13)",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 1523,
+              "order": 4,
+              "value": "brightness(1.16)",
+              "important": false
+            }
+          ]
+        },
+        {
+          "selector": ".mini-event:hover",
+          "context": "",
+          "property": "transform",
+          "values": 2,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 88,
+              "order": 4,
+              "value": "translateX(1px)",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 1523,
+              "order": 4,
+              "value": "translateY(-1px)",
+              "important": false
+            }
+          ]
+        },
+        {
+          "selector": ".calendar-event-preview",
+          "context": "",
+          "property": "z-index",
+          "values": 2,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 1546,
+              "order": 4,
+              "value": "96",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 1922,
+              "order": 4,
+              "value": "600",
+              "important": true
+            }
+          ]
+        }
+      ]
+    },
+    "shell": {
+      "selectors": 260,
+      "files": [
+        "index.html#mws-first-paint-guard",
+        "assets/app-core.css",
+        "assets/calendar-timeline-v1.css",
+        "assets/sidebar-rail-scrollbar-v1.css",
+        "assets/f1-racing-v1.css",
+        "assets/f1-racing-r283-r287.css",
+        "index.html#mws-cloud-access-style",
+        "assets/mawang-premium-v1621.css",
+        "assets/sidebar-stable-v1.css",
+        "index.html#v550-style",
+        "assets/device-ui.css",
+        "assets/ui-frame-presets.css",
+        "assets/calendar-space-efficiency-v1.css",
+        "assets/workspace-clean-v1.css",
+        "assets/calendar-details-v1.css",
+        "assets/mobile-calendar-v130.css",
+        "assets/ladder-wizard-v1.css",
+        "index.html#mws-public-entry-style",
+        "assets/ui-interactions-v1.css",
+        "assets/mawang-archive-v1.css",
+        "assets/sidebar-compact-v1.css",
+        "assets/topbar-context-v1.css",
+        "assets/mawang-archive-header-v1.css",
+        "assets/workspace-density-v1.css",
+        "assets/mawang-archive-finish-v1.css"
+      ],
+      "repeated": 12,
+      "exact": 1,
+      "conflicts": 15,
+      "crossFile": 8,
+      "top": [
+        {
+          "selector": ".app",
+          "context": "",
+          "property": "grid-template-columns",
+          "values": 4,
+          "crossFile": true,
+          "locations": [
+            {
+              "file": "index.html#mws-first-paint-guard",
+              "line": 10,
+              "order": 0,
+              "value": "72px minmax(0,1fr)",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 44,
+              "order": 4,
+              "value": "220px 1fr",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 2412,
+              "order": 4,
+              "value": "72px minmax(0,1fr)",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 2701,
+              "order": 4,
+              "value": "64px minmax(0,1fr)",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 2965,
+              "order": 4,
+              "value": "64px minmax(0,1fr)",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "body.sidebar-pinned .app",
+          "context": "",
+          "property": "grid-template-columns",
+          "values": 2,
+          "crossFile": true,
+          "locations": [
+            {
+              "file": "index.html#mws-first-paint-guard",
+              "line": 11,
+              "order": 0,
+              "value": "220px minmax(0,1fr)",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 2418,
+              "order": 4,
+              "value": "220px minmax(0,1fr)",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 2704,
+              "order": 4,
+              "value": "220px minmax(0,1fr)",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 3017,
+              "order": 4,
+              "value": "220px minmax(0,1fr)",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": ".app",
+          "context": "",
+          "property": "min-height",
+          "values": 2,
+          "crossFile": true,
+          "locations": [
+            {
+              "file": "index.html#mws-first-paint-guard",
+              "line": 10,
+              "order": 0,
+              "value": "100dvh",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 44,
+              "order": 4,
+              "value": "100vh",
+              "important": false
+            }
+          ]
+        },
+        {
+          "selector": ".app",
+          "context": "",
+          "property": "transition",
+          "values": 2,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 2412,
+              "order": 4,
+              "value": "grid-template-columns .18s ease",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 2965,
+              "order": 4,
+              "value": "grid-template-columns .15s cubic-bezier(.2,.78,.2,1)",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "body.f1-racing-immersive .app",
+          "context": "",
+          "property": "height",
+          "values": 2,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 732,
+              "order": 15,
+              "value": "100vh",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 824,
+              "order": 15,
+              "value": "100dvh",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "body.f1-racing-immersive .app",
+          "context": "",
+          "property": "min-height",
+          "values": 2,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 732,
+              "order": 15,
+              "value": "100vh",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 824,
+              "order": 15,
+              "value": "0",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "body.f1-racing-immersive .main",
+          "context": "",
+          "property": "height",
+          "values": 2,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 733,
+              "order": 15,
+              "value": "100vh",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 824,
+              "order": 15,
+              "value": "100dvh",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "body.mws-gated .app",
+          "context": "",
+          "property": "filter",
+          "values": 2,
+          "crossFile": true,
+          "locations": [
+            {
+              "file": "index.html#mws-cloud-access-style",
+              "line": 105,
+              "order": 33,
+              "value": "blur(5px)",
+              "important": false
+            },
+            {
+              "file": "index.html#mws-public-entry-style",
+              "line": 832,
+              "order": 71,
+              "value": "none",
+              "important": true
+            }
+          ]
+        }
+      ]
+    },
+    "f1": {
+      "selectors": 1066,
+      "files": [
+        "assets/f1-racing-v1.css",
+        "assets/f1-racing-r283-r287.css",
+        "assets/f1-racing-r288-r290.css",
+        "assets/f1-racing-r291-r295.css",
+        "assets/f1-racing-r303.css",
+        "assets/f1-racing-r305.css",
+        "assets/f1-racing-r306.css",
+        "assets/f1-racing-r307.css",
+        "assets/f1-racing-r308.css",
+        "assets/f1-racing-r309.css",
+        "assets/f1-racing-r313.css",
+        "assets/f1-racing-r319.css",
+        "assets/f1-racing-r324.css",
+        "assets/f1-racing-r330-r333.css",
+        "assets/f1-racing-r335-r341.css",
+        "assets/f1-racing-r342.css",
+        "assets/f1-racing-r343-r345.css",
+        "assets/f1-racing-r401.css",
+        "assets/workspace-clean-v1.css",
+        "assets/calendar-details-v1.css",
+        "assets/ui-interactions-v1.css",
+        "assets/topbar-context-v1.css"
+      ],
+      "repeated": 77,
+      "exact": 3,
+      "conflicts": 87,
+      "crossFile": 46,
+      "top": [
+        {
+          "selector": "#f1RacingViewRaceV185 .f1-racing-race-header-v188",
+          "context": "",
+          "property": "padding",
+          "values": 3,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 407,
+              "order": 15,
+              "value": "8px 10px",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 533,
+              "order": 15,
+              "value": "5px 8px",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 570,
+              "order": 15,
+              "value": "3px 6px",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "#f1RacingViewRaceV185 .f1-racing-race-header-v188 strong",
+          "context": "",
+          "property": "font-size",
+          "values": 3,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 412,
+              "order": 15,
+              "value": "14px",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 535,
+              "order": 15,
+              "value": "12px",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 572,
+              "order": 15,
+              "value": "11px",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "#f1RacingViewRaceV185 .f1-racing-race-status-v188 span",
+          "context": "",
+          "property": "min-width",
+          "values": 3,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 418,
+              "order": 15,
+              "value": "78px",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 536,
+              "order": 15,
+              "value": "66px",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 573,
+              "order": 15,
+              "value": "56px",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "#f1RacingViewRaceV185 .f1-racing-race-status-v188 span",
+          "context": "",
+          "property": "padding",
+          "values": 3,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 418,
+              "order": 15,
+              "value": "5px 7px",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 536,
+              "order": 15,
+              "value": "3px 6px",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 573,
+              "order": 15,
+              "value": "2px 5px",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "#f1RacingViewRaceV185 .f1-racing-workspace-toolbar-recovery-e",
+          "context": "",
+          "property": "padding",
+          "values": 3,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 423,
+              "order": 15,
+              "value": "5px 7px",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 538,
+              "order": 15,
+              "value": "3px 5px",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 576,
+              "order": 15,
+              "value": "2px 4px",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "#f1RacingViewRaceV185 .f1-racing-workspace-recovery-e",
+          "context": "",
+          "property": "grid-auto-rows",
+          "values": 2,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 428,
+              "order": 15,
+              "value": "72px",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 542,
+              "order": 15,
+              "value": "72px",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 580,
+              "order": 15,
+              "value": "68px",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "#f1RacingViewRaceV185 .f1-racing-workspace-recovery-e",
+          "context": "",
+          "property": "gap",
+          "values": 2,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 428,
+              "order": 15,
+              "value": "5px",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 542,
+              "order": 15,
+              "value": "5px",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 580,
+              "order": 15,
+              "value": "4px",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "#f1RacingViewRaceV185 .f1-racing-workspace-recovery-e",
+          "context": "",
+          "property": "min-height",
+          "values": 2,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 428,
+              "order": 15,
+              "value": "571px",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 542,
+              "order": 15,
+              "value": "571px",
+              "important": true
+            },
+            {
+              "file": "assets/f1-racing-v1.css",
+              "line": 580,
+              "order": 15,
+              "value": "572px",
+              "important": true
+            }
+          ]
+        }
+      ]
+    },
+    "contacts": {
+      "selectors": 546,
+      "files": [
+        "assets/app-core.css",
+        "assets/mawang-premium-v1621.css",
+        "index.html#v530-ui-enhancement-style",
+        "index.html#v540-ui-style",
+        "index.html#v550-style",
+        "index.html#v560-ui-style",
+        "index.html#mws-v574-style",
+        "assets/ui-frame-presets.css",
+        "assets/contact-card-readable-layout-v1.css",
+        "assets/workspace-clean-v1.css",
+        "assets/contact-directory-v177.css",
+        "assets/ui-interactions-v1.css"
+      ],
+      "repeated": 91,
+      "exact": 6,
+      "conflicts": 154,
+      "crossFile": 36,
+      "top": [
+        {
+          "selector": "#contacts .contact-card",
+          "context": "",
+          "property": "min-height",
+          "values": 3,
+          "crossFile": true,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 5245,
+              "order": 4,
+              "value": "132px",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 5582,
+              "order": 4,
+              "value": "160px",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 5725,
+              "order": 4,
+              "value": "160px",
+              "important": true
+            },
+            {
+              "file": "assets/contact-card-readable-layout-v1.css",
+              "line": 20,
+              "order": 60,
+              "value": "180px",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "#contacts .contact-card",
+          "context": "",
+          "property": "overflow",
+          "values": 2,
+          "crossFile": true,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 5245,
+              "order": 4,
+              "value": "visible",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 5582,
+              "order": 4,
+              "value": "hidden",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 5725,
+              "order": 4,
+              "value": "hidden",
+              "important": true
+            },
+            {
+              "file": "assets/contact-card-readable-layout-v1.css",
+              "line": 20,
+              "order": 60,
+              "value": "hidden",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": ".contact-modalbox",
+          "context": "",
+          "property": "max-height",
+          "values": 3,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 1411,
+              "order": 4,
+              "value": "min(820px,92vh)",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 4699,
+              "order": 4,
+              "value": "calc(100dvh - 24px)",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 5336,
+              "order": 4,
+              "value": "calc(100dvh - 18px)",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "#contacts .contact-grid",
+          "context": "",
+          "property": "grid-template-columns",
+          "values": 2,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 5244,
+              "order": 4,
+              "value": "repeat(auto-fill,minmax(335px,1fr))",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 5581,
+              "order": 4,
+              "value": "repeat(auto-fill,minmax(335px,1fr))",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 5718,
+              "order": 4,
+              "value": "repeat(auto-fill,minmax(330px,1fr))",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "#contacts .contact-grid",
+          "context": "",
+          "property": "gap",
+          "values": 2,
+          "crossFile": false,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 5244,
+              "order": 4,
+              "value": "13px",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 5581,
+              "order": 4,
+              "value": "13px",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 5718,
+              "order": 4,
+              "value": "14px",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "#contacts .contact-grid",
+          "context": "",
+          "property": "align-items",
+          "values": 2,
+          "crossFile": true,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 5581,
+              "order": 4,
+              "value": "stretch",
+              "important": false
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 5718,
+              "order": 4,
+              "value": "stretch",
+              "important": true
+            },
+            {
+              "file": "assets/contact-card-readable-layout-v1.css",
+              "line": 16,
+              "order": 60,
+              "value": "stretch",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "#contacts .contact-card",
+          "context": "",
+          "property": "height",
+          "values": 2,
+          "crossFile": true,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 5582,
+              "order": 4,
+              "value": "160px",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 5725,
+              "order": 4,
+              "value": "160px",
+              "important": true
+            },
+            {
+              "file": "assets/contact-card-readable-layout-v1.css",
+              "line": 20,
+              "order": 60,
+              "value": "auto",
+              "important": true
+            }
+          ]
+        },
+        {
+          "selector": "#contacts .contact-card",
+          "context": "",
+          "property": "max-height",
+          "values": 2,
+          "crossFile": true,
+          "locations": [
+            {
+              "file": "assets/app-core.css",
+              "line": 5582,
+              "order": 4,
+              "value": "160px",
+              "important": true
+            },
+            {
+              "file": "assets/app-core.css",
+              "line": 5725,
+              "order": 4,
+              "value": "160px",
+              "important": true
+            },
+            {
+              "file": "assets/contact-card-readable-layout-v1.css",
+              "line": 20,
+              "order": 60,
+              "value": "none",
+              "important": true
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
