@@ -34,6 +34,18 @@ const cdnServer=createServer((req,res)=>{
 });
 const featureOnly=process.env.MWS_QA_FEATURES_ONLY==='1';
 const firstPaintQA=process.env.MWS_QA_FIRST_PAINT==='1';
+const frameObserver=String.raw`
+  window.qaPaintFrames=[];
+  const take=()=>{
+   const q=s=>document.querySelector(s),side=q('.app>.sidebar'),main=q('.app>.main'),cal=q('#calendar'),tray=q('#calendarCopyTray'),tool=q('#calendarCopyTrayToggleV4'),y=q('#calendarYearSelect'),m=q('#calendarMonthSelect');
+   if(side&&main&&cal&&tray&&tool&&y&&m&&q('#calendarGrid')){
+    const css=getComputedStyle(tool),sr=side.getBoundingClientRect(),mr=main.getBoundingClientRect(),date=new Date();
+    const appVisible=main.getBoundingClientRect().width>0&&getComputedStyle(main).visibility==='visible'&&getComputedStyle(main).display!=='none'&&getComputedStyle(main).opacity!=='0';
+    if(appVisible&&window.qaPaintFrames.length<900)window.qaPaintFrames.push({t:performance.now(),ready:document.body.dataset.calendarStartup==='ready',loading:document.body.classList.contains('mws-app-loading'),tray:getComputedStyle(tray).display,toolFont:css.fontSize,toolIcon:getComputedStyle(tool,'::before').maskImage!=='none',year:y.value,month:m.value,correctDate:y.value===String(date.getFullYear())&&m.value===String(date.getMonth()),sideLeft:sr.left,sideWidth:sr.width,mainLeft:mr.left,mainBorder:getComputedStyle(main).borderColor,mainBg:getComputedStyle(main).backgroundColor});
+   }
+   if(window.qaPaintFrames.length<900)requestAnimationFrame(take);
+  };requestAnimationFrame(take);
+ `;
 const scale=Number(process.env.MWS_QA_SCALE_CONTACTS||0),scalePosts=scale>=500?50:10;
 assert(!scale||[100,300,500,1000].includes(scale),'Explicit synthetic scale only');
 const upstream=[];
@@ -74,13 +86,16 @@ const server=createServer(async(req,res)=>{
   for await(const chunk of req)body.push(chunk);
   if(firstPaintQA&&u.pathname==='/assets/app-core.js')await new Promise(r=>setTimeout(r,1200));
   if(firstPaintQA&&u.pathname==='/assets/calendar-details-v1.css')await new Promise(r=>setTimeout(r,400));
+  if(firstPaintQA&&u.pathname==='/api/calendar-startup')await new Promise(r=>setTimeout(r,350));
   const request=new Request(u,{method,headers:req.headers,...(!['GET','HEAD'].includes(method)?{body:Buffer.concat(body)}:{})});
   const counted=workerFirst(u.pathname);if(counted)arrivals.push({path:u.pathname,method,at:Date.now()});
   const response=await (counted?worker.fetch(request,env,ctx):ASSETS.fetch(request));
   if(counted)calls.push({path:u.pathname,method,status:response.status,...(u.pathname==='/api/save'&&method==='POST'?{parts:Object.keys(JSON.parse(Buffer.concat(body).toString()).parts||{})}:{})});
   res.statusCode=response.status;for(const [key,value] of response.headers)if(!['content-length','content-encoding','transfer-encoding'].includes(key))res.setHeader(key,value);
   if(u.pathname==='/'||u.pathname==='/index.html')res.setHeader('content-security-policy',useCdn?csp.replace("connect-src 'self'","connect-src 'self' "+cdnOrigin).replace("img-src 'self'","img-src 'self' "+cdnOrigin):csp);
-  res.end(method==='HEAD'?undefined:Buffer.from(await response.arrayBuffer()));
+  let bytes=Buffer.from(await response.arrayBuffer());
+  if(firstPaintQA&&(u.pathname==='/'||u.pathname==='/index.html')&&response.status===200)bytes=Buffer.from(bytes.toString('utf8').replace('<head>','<head><script>'+frameObserver+'</script>'));
+  res.end(method==='HEAD'?undefined:bytes);
  }catch(e){errors.push(String(e));res.writeHead(500).end('fixture error')}
 });
 const dir=mkdtempSync(path.join(tmpdir(),'mws-full-request-'));let browser;
@@ -91,18 +106,7 @@ const common=r=>r.path==='/api/calendar-startup'||r.path==='/api/manifest'||r.pa
 try{
  if(useCdn){await new Promise(r=>cdnServer.listen(0,'127.0.0.1',r));cdnOrigin=base+':'+cdnServer.address().port;env.MWS_PUBLIC_MEDIA_CDN_ORIGIN=cdnOrigin}
  await new Promise(r=>server.listen(0,'127.0.0.1',r));browser=await launchCalendarBrowser(dir);
- if(firstPaintQA)await browser.addInitScript(String.raw`
-  window.qaPaintFrames=[];
-  const take=()=>{
-   const q=s=>document.querySelector(s),side=q('.app>.sidebar'),main=q('.app>.main'),cal=q('#calendar'),tray=q('#calendarCopyTray'),tool=q('#calendarCopyTrayToggleV4'),y=q('#calendarYearSelect'),m=q('#calendarMonthSelect');
-   if(side&&main&&cal&&tray&&tool&&y&&m&&q('#calendarGrid')){
-    const css=getComputedStyle(tool),sr=side.getBoundingClientRect(),mr=main.getBoundingClientRect(),date=new Date();
-    const appVisible=main.getBoundingClientRect().width>0&&getComputedStyle(main).visibility==='visible'&&getComputedStyle(main).display!=='none'&&getComputedStyle(main).opacity!=='0';
-    if(appVisible&&window.qaPaintFrames.length<900)window.qaPaintFrames.push({t:performance.now(),ready:document.body.dataset.calendarStartup==='ready',loading:document.body.classList.contains('mws-app-loading'),tray:getComputedStyle(tray).display,toolFont:css.fontSize,toolIcon:getComputedStyle(tool,'::before').maskImage!=='none',year:y.value,month:m.value,correctDate:y.value===String(date.getFullYear())&&m.value===String(date.getMonth()),sideLeft:sr.left,sideWidth:sr.width,mainLeft:mr.left,mainBorder:getComputedStyle(main).borderColor,mainBg:getComputedStyle(main).backgroundColor});
-   }
-   if(window.qaPaintFrames.length<900)requestAnimationFrame(take);
-  };requestAnimationFrame(take);
- `);
+
  const viewport=firstPaintQA&&process.env.MWS_QA_FIRST_PAINT_WIDE==='1'?[1920,1080]:[1366,768];
  await browser.navigate(base+':'+server.address().port+'/',...viewport);
  await until(()=>browser.evaluate("(()=>{document.querySelector('#mwsAnnouncementDialog[open] .mws-notice-close')?.click();if(document.body.classList.contains('mws-gated')){document.querySelector('#mwsModePublic')?.click();document.querySelector('#mwsLoginSubmit')?.click()}return !!window.__mwsAppReadyV130&&document.body.dataset.mwsMode==='public'&&!document.body.classList.contains('mws-gated')&&!document.body.classList.contains('mws-app-loading')})()"),'Full app public readiness');

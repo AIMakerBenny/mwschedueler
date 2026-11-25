@@ -42,7 +42,6 @@ export async function launchCalendarBrowser(dir){
       await send('Input.dispatchMouseEvent',{type:'mouseReleased',x,y,button:'left',clickCount:1},sessionId);
     }
     const setReducedMotion=enabled=>send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:enabled?'reduce':'no-preference'}]},sessionId);
-    const addInitScript=source=>send('Page.addScriptToEvaluateOnNewDocument',{source},sessionId);
     const movePoint=(x,y)=>send('Input.dispatchMouseEvent',{type:'mouseMoved',x,y},sessionId);
     const enablePerformance=()=>send('Performance.enable',{},sessionId);
     const performanceMetrics=async()=>Object.fromEntries((await send('Performance.getMetrics',{},sessionId)).metrics.map(({name,value})=>[name,value]));
@@ -77,6 +76,6 @@ export async function launchCalendarBrowser(dir){
       return {targetId,evaluate};
     };
     const closeTarget=id=>send('Target.closeTarget',{targetId:id});
-    return {addInitScript,reload,sibling,closeTarget,minimizeWindow,openBackgroundTestTab,navigate,evaluate,clickPoint,movePoint,mouseDown,mouseDrag,mouseUp,keyPress,enablePerformance,performanceMetrics,setReducedMotion,captureScreenshot,close};
+    return {reload,sibling,closeTarget,minimizeWindow,openBackgroundTestTab,navigate,evaluate,clickPoint,movePoint,mouseDown,mouseDrag,mouseUp,keyPress,enablePerformance,performanceMetrics,setReducedMotion,captureScreenshot,close};
   }catch(error){await close();throw error}
 }
