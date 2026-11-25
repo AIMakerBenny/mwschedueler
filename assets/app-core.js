@@ -467,7 +467,7 @@ function normalizeDataShape(){
   {
     const groupIds=new Set();
     data.contentGroups=data.contentGroups.filter(g=>g&&typeof g==='object').map(g=>({
-      id:String(g.id||''),name:String(g.name||'').trim().slice(0,64),color:String(g.color||'#0f8c95')
+      id:String(g.id||''),name:String(g.name||'').trim().slice(0,64),color:String(g.color||'#0f8c95'),...(['bsandong','none'].includes(g.mawangContent)?{mawangContent:g.mawangContent}:{})
     })).filter(g=>{
       if(!g.id||!g.name||groupIds.has(g.id))return false;
       groupIds.add(g.id);

@@ -59,7 +59,9 @@ const parts={core:{version:52,categories:[],timezones:[],contentGroups:[],gameLi
 if(bsandongQA){
  const prior=n=>new Date(Date.now()+9*3600000-n*86400000).toISOString().slice(0,10);
  parts.core.categories.push({id:'qa-bsandong',name:'브산동',color:'#06b6d4'});
- parts.events.push(...[[21,['qa0']],[14,['qa0','qa1']],[7,['qa1']]].map(([n,participants])=>({id:'bs-qa-'+n,date:prior(n),title:'Fixture walk '+n,categoryId:'qa-bsandong',start:'12:00',end:'13:00',participants,participantStatuses:Object.fromEntries(participants.map(id=>[id,'confirmed']))})));
+ parts.core.categories.push({id:'qa-collab',name:'합방',color:'#8b5cf6'});
+ parts.core.contentGroups.push({id:'qa-club-group',name:'산책 프로젝트',color:'#06b6d4',mawangContent:'bsandong'},{id:'qa-other-group',name:'다른 프로젝트',color:'#334455'});
+ parts.events.push(...[[21,['qa0']],[14,['qa0','qa1']],[7,['qa1']]].map(([n,participants])=>({id:'bs-qa-'+n,date:prior(n),title:n===21?'브산동 - Fixture walk':n===14?'Fixture VR 산책':'Fixture walk '+n,categoryId:n===7?'qa-bsandong':'qa-collab',...(n===14?{contentGroupId:'qa-club-group'}:{}),start:'12:00',end:'13:00',participants,participantStatuses:Object.fromEntries(participants.map(id=>[id,'confirmed']))})));
 }
 for(const [part,data] of Object.entries(parts))db.prepare("INSERT OR REPLACE INTO workspace_parts(scope,part,data,version) VALUES('public',?,?,1)").run(part,JSON.stringify(data));
 const workerFirst=p=>config.assets.run_worker_first.some(pattern=>pattern.endsWith('*')?p.startsWith(pattern.slice(0,-1)):p===pattern);
@@ -125,6 +127,26 @@ try{
   const warm=calls.slice(warmOffset);assert.equal(warm.filter(r=>r.path.startsWith('/api/')).length,0,'Warm interactions emitted API request');
   assert.equal(errors.length,0,JSON.stringify(errors));
   console.log('BSANDONG_REAL_APP_OK '+JSON.stringify({mode,initial:summary(initial),warm:summary(warm),rows:result.rows.length,rate:result.rate}));
+  if(mode==='admin'){
+   await nav(['calendar']);await pause(300);
+   const geometry=()=>browser.evaluate("(()=>{const g=document.querySelector('#calendarGrid'),r=g.getBoundingClientRect(),days=[...g.querySelectorAll('.day[data-date]')];return {top:r.top,bottom:r.bottom,height:r.height,rows:days.length,last:days.at(-1)?.getBoundingClientRect().bottom,viewport:innerHeight,width:r.width}})()");
+   const closed=await geometry();
+   await browser.evaluate("document.getElementById('calendarGroupToggleV2').click()");await pause(450);
+   const open=await geometry();
+   assert.equal(open.rows,closed.rows);assert(open.height>=closed.height-15,'Group panel shrinks month '+JSON.stringify({closed,open}));assert(open.last<=open.viewport+2,'Last row outside viewport');
+   await browser.evaluate("document.getElementById('calendarGroupCancelV2').click()");await pause(400);
+   const restored=await geometry();assert(Math.abs(restored.height-closed.height)<=15,'Group close height not restored');
+   await browser.evaluate("document.getElementById('calendarGroupManageToggleV4').click()");await pause(450);
+   const managed=await geometry();assert(managed.height>=closed.height-15&&managed.last<=managed.viewport+2,'Manager shrinks month '+JSON.stringify({closed,managed}));
+   const beforeSave=await browser.evaluate("JSON.stringify(data.events.find(e=>e.id==='bs-qa-21'))");
+   await browser.evaluate("document.getElementById('calendarGroupBulkV2').open=true");await pause(150);
+   const candidates=await browser.evaluate("(()=>{document.getElementById('calendarGroupBulkPreviewV2').click();const rows=[...document.querySelectorAll('#calendarGroupBulkListV2 input[type=checkbox]')];document.getElementById('calendarGroupBulkAllV2').click();return {count:rows.length,selected:[...document.querySelectorAll('#calendarGroupBulkListV2 input:checked')].length}})()");
+   assert.equal(candidates.count,1);assert.equal(candidates.selected,1);
+   await browser.evaluate("window.confirm=()=>true;document.getElementById('calendarGroupBulkApplyV2').click()");
+   try{await until(()=>browser.evaluate("data.events.find(e=>e.id==='bs-qa-21')?.contentGroupId==='qa-club-group'&&document.querySelector('#calendarGroupManagerPanelV4')?.textContent.includes('저장 및 검증 완료')"),'Bulk persisted')}catch(error){console.log('BULK_DIAGNOSTICS '+JSON.stringify({ui:await browser.evaluate("({group:data.events.find(e=>e.id==='bs-qa-21')?.contentGroupId,status:document.querySelector('#calendarGroupManagerPanelV4 .calendar-group-persist-status-v1')?.textContent,bulk:document.getElementById('calendarGroupBulkStatusV2')?.textContent,disabled:document.getElementById('calendarGroupBulkApplyV2')?.disabled,groups:data.contentGroups})"),calls:summary(calls),errors}));throw error}
+   const afterSave=JSON.parse(await browser.evaluate("JSON.stringify(data.events.find(e=>e.id==='bs-qa-21'))"));const beforeEvent=JSON.parse(beforeSave);delete afterSave.contentGroupId;delete beforeEvent.contentGroupId;assert.deepEqual(afterSave,beforeEvent,'Non-group schedule fields changed');
+   console.log('BSANDONG_GROUP_LAYOUT_BULK_OK '+JSON.stringify({closed,open,managed,restored,bulk:candidates}));
+  }
  }else if(process.env.MWS_QA_V5_ATTRIBUTION==='1'){
   const mode=process.env.MWS_QA_IDLE_MODE||'public';
   if(mode==='admin'){

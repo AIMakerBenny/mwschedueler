@@ -174,7 +174,7 @@
       const header=document.querySelector('.topbar');if(header)observer.observe(header);
       const toolbar=document.querySelector('.calendar-topbar-v4');if(toolbar)observer.observe(toolbar);
     }
-    root.addEventListener('resize',fit);fit();
+    root.addEventListener('resize',fit);root.addEventListener('mws:calendar-group-layout-v2',fit);fit();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initMonthViewport,{once:true});else initMonthViewport();
 

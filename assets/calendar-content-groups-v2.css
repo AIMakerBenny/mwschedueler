@@ -250,3 +250,35 @@
   .calendar-group-current-v3{align-items:flex-start}
   .calendar-group-option-quick-v3{max-width:100%}
 }
+
+/* Group controls dock next to the month instead of consuming its vertical space. */
+#calendar #calendarGroupPanelV2,#calendar #calendarGroupManagerPanelV4{min-width:0;box-sizing:border-box}
+#calendar .mws-group-advanced-v2{border:1px solid var(--border);border-radius:10px;padding:8px;background:var(--input);min-width:0}
+#calendar .mws-group-advanced-v2 summary{font-size:12px;font-weight:650;cursor:pointer;color:var(--text)}
+#calendar .mws-group-advanced-v2[open]>div{margin-top:8px}
+#calendar .mws-group-bulk-v2{display:grid;gap:8px}
+#calendar .mws-group-bulk-v2 label{display:grid;gap:4px;font-size:12px}
+#calendar .mws-group-bulk-v2 input{min-width:0;max-width:100%}
+#calendar .mws-group-bulk-actions-v2{display:flex;gap:5px;flex-wrap:wrap}
+#calendar .mws-group-bulk-list-v2{max-height:240px;overflow:auto;display:grid;gap:4px}
+#calendar .mws-group-bulk-list-v2 label{display:flex;align-items:center;gap:8px;border:1px solid var(--border);padding:7px;border-radius:8px;min-width:0}
+#calendar .mws-group-bulk-list-v2 label>span{min-width:0;display:grid;gap:3px;overflow-wrap:anywhere}
+#calendar .mws-group-bulk-list-v2 input{flex:none;width:16px;height:16px}
+#calendar .mws-group-bulk-list-v2 small{font-size:11px;color:var(--muted)}
+#calendar .mws-group-bulk-v2 p{margin:0}
+@media(min-width:1100px){
+ #calendar #calendarMonthPanelV172:not([hidden]):has(>#calendarGroupPanelV2:not([hidden])),#calendar #calendarMonthPanelV172:not([hidden]):has(>#calendarGroupManagerPanelV4:not([hidden])){display:grid!important;grid-template-columns:minmax(0,1fr) clamp(265px,22vw,350px);grid-template-rows:auto;gap:10px;align-items:start}
+ #calendar #calendarMonthPanelV172:not([hidden]):has(>#calendarGroupPanelV2:not([hidden]))>.calendar-responsive-scroll-v1,#calendar #calendarMonthPanelV172:not([hidden]):has(>#calendarGroupManagerPanelV4:not([hidden]))>.calendar-responsive-scroll-v1{grid-column:1;grid-row:1;min-width:0}
+ #calendar #calendarGroupPanelV2:not([hidden]),#calendar #calendarGroupManagerPanelV4:not([hidden]){grid-column:2;grid-row:1;max-height:calc(100dvh - 95px);overflow:auto;overscroll-behavior:contain;margin:0!important;padding:10px!important;gap:8px;align-self:start}
+ #calendar #calendarMoveStatusV4:not([hidden]){grid-column:1/-1;grid-row:2}
+ #calendar #calendarGroupPanelV2 .calendar-group-controls-v2,#calendar #calendarGroupManagerPanelV4 .calendar-group-controls-v2{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px}
+ #calendar #calendarGroupPanelV2 .calendar-group-search-v3,#calendar #calendarGroupManagerPanelV4 .calendar-group-search-v3{min-width:0;width:100%;padding:8px;flex-basis:100%}
+ #calendar #calendarGroupPanelV2 .calendar-group-controls-v2>button,#calendar #calendarGroupManagerPanelV4 .calendar-group-controls-v2>button{flex:1 1 110px;min-width:0;font-size:12px}
+ #calendar #calendarGroupPanelV2 .calendar-group-controls-v2 label,#calendar #calendarGroupManagerPanelV4 .calendar-group-controls-v2 label{min-width:0;flex:1 1 100%;max-width:100%}
+ #calendar #calendarGroupPanelV2 .calendar-group-controls-v2 input:not([type=color]),#calendar #calendarGroupManagerPanelV4 .calendar-group-controls-v2 input:not([type=color]),#calendar #calendarGroupManagerPanelV4 select{width:100%;max-width:100%;min-width:0}
+ #calendar #calendarGroupPanelV2 .calendar-group-search-hint-v3,#calendar #calendarGroupPanelV2>.muted{display:none}
+}
+@media(max-width:1099px){
+ #calendar #calendarGroupPanelV2:not([hidden]),#calendar #calendarGroupManagerPanelV4:not([hidden]){max-height:min(42dvh,320px);overflow:auto;overscroll-behavior:contain;padding:8px!important;gap:6px}
+ #calendar #calendarMonthPanelV172:not([hidden]):has(>#calendarGroupPanelV2:not([hidden])) #calendarGrid,#calendar #calendarMonthPanelV172:not([hidden]):has(>#calendarGroupManagerPanelV4:not([hidden])) #calendarGrid{min-height:calc(var(--calendar-week-count-v2,6)*64px)!important}
+}

@@ -56,3 +56,20 @@
 @media(max-width:650px){#bsandong .bs-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#bsandong .bs-chart-head{align-items:flex-start;flex-direction:column}#bsandong .bs-tabs{width:100%;justify-content:space-between}#bsandong .bs-tabs button{padding:8px 9px}#bsandong .bs-rank{grid-template-columns:34px minmax(50px,1fr) minmax(30px,1fr) 39px 48px;gap:4px}#bsandong .bs-session-head{align-items:flex-start}}
 @media(prefers-reduced-motion:reduce){#bsandong *{transition:none!important}}
 html[data-mws-motion=reduced] #bsandong *{transition:none!important}
+
+#bsandong .bs-shell{max-width:1380px;margin-inline:auto}
+#bsandong .bs-dates{gap:7px}
+#bsandong .bs-dates [data-bs-preset]{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--muted);border-radius:8px;padding:7px 11px;min-height:34px;font:inherit;font-size:13px;transition:background .16s,border-color .16s}
+#bsandong .bs-dates [data-bs-preset].active{background:color-mix(in srgb,var(--bs-accent) 15%,var(--panel));border-color:var(--bs-accent);color:var(--text)}
+#bsandong .bs-dates [data-bs-preset]:hover{border-color:var(--bs-accent);color:var(--text)}
+#bsandong .bs-day{display:flex;align-items:center;gap:9px;margin:16px 0 8px;font-variant-numeric:tabular-nums}
+#bsandong .bs-day:before{content:'';width:7px;height:7px;border-radius:50%;background:var(--bs-accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--bs-accent) 12%,transparent)}
+#bsandong .bs-session{border-left:2px solid color-mix(in srgb,var(--bs-accent) 55%,var(--border));padding:12px 14px;margin-left:3px}
+#bsandong .bs-session-empty{border-left-color:var(--border);background:var(--panel);box-shadow:none}
+#bsandong .bs-session-head>div{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+#bsandong .bs-link-source{border:1px solid var(--border);border-radius:5px;padding:2px 5px}
+#bsandong .bs-session-empty .bs-people{margin-top:5px}
+#bsandong .bs-person .bs-ring{width:44px;height:44px}
+@media(max-width:650px){#bsandong .bs-shell{max-width:100%}#bsandong .bs-dates label{flex:1 1 125px}#bsandong .bs-session-head>div{display:grid}}
+
+@media(min-width:900px){#bsandong .bs-summary{grid-template-columns:repeat(5,minmax(0,1fr))}}
