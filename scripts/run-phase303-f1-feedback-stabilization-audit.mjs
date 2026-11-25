@@ -1,9 +1,10 @@
+import {readF1AuditIndex} from './f1-style-audit-input.mjs';
 import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
 
 export function runPhase303F1FeedbackStabilizationAudit(){
   const issues=[],warnings=[];
-  const index=fs.readFileSync('index.html','utf8');
+  const index=readF1AuditIndex();
   const base=fs.readFileSync('assets/f1-racing-v1.js','utf8');
   const patch=fs.readFileSync('assets/f1-racing-r303.js','utf8');
   const css=fs.readFileSync('assets/f1-racing-r303.css','utf8');

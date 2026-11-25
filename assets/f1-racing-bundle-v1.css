@@ -292,7 +292,7 @@
 .f1-racing-race-vehicle-v189 .car-profile-initials-v257{fill:#f8fafc;font:900 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#020305;stroke-width:1.2;dominant-baseline:middle}
 .f1-racing-race-vehicle-v189 .car-number-badge-v257{fill:#05080d;stroke:var(--f1-driver-color,#94a3b8);stroke-width:1.3}
 .f1-racing-race-vehicle-v189 .car-number-v232{font-size:5.6px;stroke-width:1.1}
-.f1-racing-race-vehicle-v189.leader .car-ring{filter:drop-shadow(0 0 4px var(--f1-driver-color,#e8cf76))}
+.f1-racing-race-vehicle-v189.leader .car-ring{stroke-width:4;filter:drop-shadow(0 0 4px var(--f1-driver-color,#e8cf76))}
 /* Phase 190: race distance, lap and sector telemetry */
 .f1-racing-timing-row-v188 .driver em[data-f1-current-sector]{flex:0 0 auto;margin-left:auto;padding:2px 5px;border:1px solid #2d3745;border-radius:4px;color:#8ea0b8;background:#0b1017;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-style:normal;letter-spacing:.06em}
 .f1-racing-timing-row-v188[data-sector="S1"] .driver em[data-f1-current-sector]{color:#9ac5ff}
@@ -407,7 +407,7 @@
 }
 #f1RacingViewRaceV185 .f1-racing-race-header-v188{
   grid-template-columns:minmax(190px,1fr) auto auto!important;
-  padding:8px 10px!important;border-radius:4px!important;
+  gap:8px!important;padding:8px 10px!important;border-radius:4px!important;
   border-color:#202732!important;background:#090d12!important
 }
 #f1RacingViewRaceV185 .f1-racing-race-header-v188 strong{
@@ -419,7 +419,7 @@
 #f1RacingViewRaceV185 .f1-racing-race-status-v188 span{
   min-width:78px!important;padding:5px 7px!important
 }
-#f1RacingViewRaceV185 .f1-racing-race-controls-v188{}
+#f1RacingViewRaceV185 .f1-racing-race-controls-v188{gap:3px!important}
 #f1RacingViewRaceV185 .f1-racing-race-controls-v188 button{min-height:27px;padding:4px 7px}
 #f1RacingViewRaceV185 .f1-racing-workspace-toolbar-recovery-e{
   margin-top:6px!important;padding:5px 7px!important;border-radius:3px!important;
@@ -427,17 +427,17 @@
 }
 #f1RacingViewRaceV185 .f1-racing-workspace-toolbar-label-recovery-e small{display:none}
 #f1RacingViewRaceV185 .f1-racing-workspace-recovery-e{
-  margin-top:5px!important;
-  padding:0!important
+  grid-auto-rows:72px!important;gap:5px!important;margin-top:5px!important;
+  min-height:571px!important;padding:0!important
 }
 #f1RacingViewRaceV185 .f1-racing-workspace-panel-recovery-e{
   border-radius:3px!important;border-color:#202732!important;background:#070a0f!important
 }
 #f1RacingViewRaceV185 .f1-racing-panel-title-v188{
-  background:#0b1016!important;
+  min-height:30px!important;padding:5px 7px!important;background:#0b1016!important;
   border-bottom-color:#202732!important
 }
-#f1RacingViewRaceV185 .f1-racing-panel-title-v188 span{}
+#f1RacingViewRaceV185 .f1-racing-panel-title-v188 span{font-size:9px!important}
 #f1RacingViewRaceV185 .f1-racing-panel-title-v188>small{font-size:8px!important;opacity:.7}
 #f1RacingViewRaceV185 .f1-racing-workspace-panel-controls-recovery-e button{padding:2px 4px!important;font-size:7px!important}
 #f1RacingViewRaceV185 .f1-racing-timing-head-v188{min-height:24px!important}
@@ -517,7 +517,7 @@
 
 /* Phase 216: distinct driver markers and interactive race camera */
 .f1-racing-timing-row-v188 .driver b::before{content:"";display:inline-block;width:7px;height:7px;margin-right:5px;border-radius:999px;background:var(--f1-driver-color,#60a5fa);box-shadow:0 0 8px color-mix(in srgb,var(--f1-driver-color,#60a5fa) 55%,transparent)}
-.f1-racing-race-map-stage-v188{overflow:hidden}
+.f1-racing-race-map-stage-v188{position:relative;overflow:hidden}
 .f1-racing-race-map-stage-v188.is-camera-dragging{cursor:grabbing}
 #f1RacingRaceTrackSvgV188{cursor:grab;user-select:none;touch-action:none}
 .f1-racing-camera-controls-v216{position:absolute;z-index:15;left:8px;top:8px;display:flex;align-items:center;gap:4px;padding:4px;border:1px solid #283241;border-radius:7px;background:rgba(6,10,15,.88);backdrop-filter:blur(8px);box-shadow:0 5px 18px rgba(0,0,0,.28)}
@@ -896,10 +896,10 @@ body.f1-racing-immersive #f1RacingWorkspaceRecoveryE .f1-racing-workspace-panel-
 
 
 /* Phase 360: four-lane wide race course */
-#f1RacingRaceTrackGlowV188{stroke:#1b2430;opacity:.98;filter:drop-shadow(0 0 6px rgba(2,6,12,.7))}
+#f1RacingRaceTrackGlowV188{stroke:#1b2430;stroke-width:58;opacity:.98;filter:drop-shadow(0 0 6px rgba(2,6,12,.7))}
 #f1RacingRaceTrackPathV188{stroke:rgba(226,232,240,.18);stroke-width:1.35;vector-effect:non-scaling-stroke}
 .f1-racing-race-lane-guides-v360{pointer-events:none}
-.f1-racing-race-lane-guide-v360{fill:none;stroke:rgba(226,232,240,.36);stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.f1-racing-race-lane-guide-v360{fill:none;stroke:rgba(226,232,240,.36);stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 
 
 /* Phase 361: corner occupancy readability and PIT IN HUD */

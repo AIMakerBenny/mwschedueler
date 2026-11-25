@@ -1,9 +1,10 @@
+import {readF1AuditIndex} from './f1-style-audit-input.mjs';
 import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
 
 export function runPhase309F1ViewportMarkerOvertakeFlowAudit(){
  const issues=[],warnings=[];
- const index=fs.readFileSync('index.html','utf8');
+ const index=readF1AuditIndex();
  const core=fs.readFileSync('assets/f1-racing-v1.js','utf8');
  const fit=fs.readFileSync('assets/f1-racing-r288-r290.js','utf8');
  const marker=fs.readFileSync('assets/f1-racing-r306.js','utf8');

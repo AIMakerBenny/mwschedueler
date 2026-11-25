@@ -1,7 +1,8 @@
+import {readF1AuditIndex} from './f1-style-audit-input.mjs';
 import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
 export function runPhase333F1GachaResponsiveViewportAudit(){
- const issues=[],warnings=[],core=fs.readFileSync('assets/f1-racing-v1.js','utf8'),css=fs.readFileSync('assets/f1-racing-r330-r333.css','utf8'),index=fs.readFileSync('index.html','utf8'),diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
+ const issues=[],warnings=[],core=fs.readFileSync('assets/f1-racing-v1.js','utf8'),css=fs.readFileSync('assets/f1-racing-r330-r333.css','utf8'),index=readF1AuditIndex(),diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
  for(const token of [
   "const VERSION333='phase333-f1-gacha-responsive-viewport';",
   'const GRID_GACHA_VIEWPORT_CONFIG_V333=Object.freeze({',

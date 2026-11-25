@@ -1,7 +1,8 @@
+import {readF1AuditIndex} from './f1-style-audit-input.mjs';
 import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
 export function runPhase338F1BestLapOverlayAudit(){
- const issues=[],warnings=[],core=fs.readFileSync('assets/f1-racing-v1.js','utf8'),css=fs.readFileSync('assets/f1-racing-r335-r341.css','utf8'),index=fs.readFileSync('index.html','utf8'),diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
+ const issues=[],warnings=[],core=fs.readFileSync('assets/f1-racing-v1.js','utf8'),css=fs.readFileSync('assets/f1-racing-r335-r341.css','utf8'),index=readF1AuditIndex(),diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
  for(const token of [
   "const VERSION338='phase338-f1-best-lap-overlay';",
   'const bestLapOverlayStateV338=',

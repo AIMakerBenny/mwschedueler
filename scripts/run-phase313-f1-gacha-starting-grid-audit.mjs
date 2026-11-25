@@ -1,9 +1,10 @@
+import {readF1AuditIndex} from './f1-style-audit-input.mjs';
 import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
 
 export function runPhase313F1GachaStartingGridAudit(){
  const issues=[],warnings=[];
- const index=fs.readFileSync('index.html','utf8');
+ const index=readF1AuditIndex();
  const core=fs.readFileSync('assets/f1-racing-v1.js','utf8');
  const css=fs.readFileSync('assets/f1-racing-r313.css','utf8');
  for(const token of [

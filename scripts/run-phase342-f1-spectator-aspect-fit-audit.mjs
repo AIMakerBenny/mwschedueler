@@ -1,10 +1,11 @@
+import {readF1AuditIndex} from './f1-style-audit-input.mjs';
 import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
 export function runPhase342F1SpectatorAspectFitAudit(){
  const issues=[],warnings=[];
  const fit=fs.readFileSync('assets/f1-racing-r288-r290.js','utf8');
  const css=fs.readFileSync('assets/f1-racing-r342.css','utf8');
- const index=fs.readFileSync('index.html','utf8');
+ const index=readF1AuditIndex();
  const diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
  for(const token of [
   "const VERSION342='phase342-f1-spectator-aspect-fit';",

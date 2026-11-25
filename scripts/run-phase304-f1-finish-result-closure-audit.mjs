@@ -1,10 +1,11 @@
+import {readF1AuditIndex} from './f1-style-audit-input.mjs';
 import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {runPhase301F1SpecClosureAudit} from './run-phase301-f1-spec-closure-audit.mjs';
 
 export function runPhase304F1FinishResultClosureAudit(){
  const issues=[],warnings=[];
- const index=fs.readFileSync('index.html','utf8');
+ const index=readF1AuditIndex();
  const patch=fs.readFileSync('assets/f1-racing-r291-r295.js','utf8');
  const css=fs.readFileSync('assets/f1-racing-r291-r295.css','utf8');
  const diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');

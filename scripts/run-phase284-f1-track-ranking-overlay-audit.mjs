@@ -1,8 +1,9 @@
+import {readF1AuditIndex} from './f1-style-audit-input.mjs';
 import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
 export function runPhase284F1TrackRankingOverlayAudit(){
  const issues=[],warnings=[];
- const index=fs.readFileSync('index.html','utf8'),patch=fs.readFileSync('assets/f1-racing-r283-r287.js','utf8'),css=fs.readFileSync('assets/f1-racing-r283-r287.css','utf8');
+ const index=readF1AuditIndex(),patch=fs.readFileSync('assets/f1-racing-r283-r287.js','utf8'),css=fs.readFileSync('assets/f1-racing-r283-r287.css','utf8');
  for(const token of ["const VERSION284='phase284-f1-r09-track-ranking-overlay';",'function ensureTrackRankingV284(){','function syncTrackRankingV284(force=false){','function qaTrackRankingOverlayV284(){','window.__mwsF1RacingV284=VERSION284;'])if(!patch.includes(token))issues.push('Phase 284 patch missing: '+token);
  for(const token of ['.f1-racing-track-ranking-v284{','.f1-racing-track-ranking-row-v284{'])if(!css.includes(token))issues.push('Phase 284 CSS missing: '+token);
  if(!index.includes('assets/f1-racing-r283-r287.js?phase=')||!index.includes('assets/f1-racing-r283-r287.css?phase='))issues.push('Phase 284 asset links missing');

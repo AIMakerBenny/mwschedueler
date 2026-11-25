@@ -1,3 +1,4 @@
+import {readF1AuditIndex} from './f1-style-audit-input.mjs';
 import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
 
@@ -6,7 +7,7 @@ export function runPhase319F1UiSpacingBattleAudit(){
  const core=fs.readFileSync('assets/f1-racing-v1.js','utf8');
  const patch=fs.readFileSync('assets/f1-racing-r283-r287.js','utf8');
  const css=fs.readFileSync('assets/f1-racing-r319.css','utf8');
- const index=fs.readFileSync('index.html','utf8');
+ const index=readF1AuditIndex();
  const diag=fs.readFileSync('scripts/diagnose-recovery-h-f1-live.mjs','utf8');
  for(const token of [
   "const VERSION319='phase319-f1-ui-spacing-battle-isolation';",
