@@ -1,7 +1,8 @@
+import {readF1AuditIndex} from './f1-style-audit-input.mjs';
 import {readFileSync} from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';
 export function runPhase401F1SkillAudit(){
  const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),js=readFileSync(path.join(root,'assets/f1-racing-v1.js'),'utf8');
- const css=readFileSync(path.join(root,'assets/f1-racing-r401.css'),'utf8'),html=readFileSync(path.join(root,'index.html'),'utf8');const issues=[];
+ const css=readFileSync(path.join(root,'assets/f1-racing-r401.css'),'utf8'),html=readF1AuditIndex();const issues=[];
  const test=(condition,description)=>{if(!condition)issues.push(description)};
  test(js.includes("window.__mwsF1RacingV401='phase401-ultimate-rank-boost'"),'runtime missing');
  test(js.includes('function specialChanceV401(')&&js.includes('Math.pow(rear,1.5)'),'rank-weighted probability missing');

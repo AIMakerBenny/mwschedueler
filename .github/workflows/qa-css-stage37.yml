@@ -4,6 +4,8 @@ on:
     branches:
       - 'refactor/css-runtime-stage3-7-20261126'
     paths:
+      - 'scripts/run-phase401-f1-skill-audit.mjs'
+      - 'scripts/migrate-f1-style-audits.mjs'
       - 'scripts/cleanup-css-stage37.mjs'
       - 'scripts/compare-css-stage37.mjs'
       - 'scripts/qa-request-budget-full-app-v2-browser.mjs'
