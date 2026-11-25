@@ -81,7 +81,7 @@ function attendanceBuckets(model,unit,person=''){
    const count=model.period.length,unique=new Set(model.period.flatMap(e=>e.confirmed)).size,avg=count?model.period.reduce((s,e)=>s+e.confirmed.length,0)/count:null;
    root.querySelectorAll('[data-bs-tab]').forEach(b=>{const active=b.dataset.bsTab===state.tab;b.setAttribute('aria-selected',String(active));b.classList.toggle('active',active)});
    root.querySelector('[data-bs-dates]').hidden=state.tab==='members';
-   root.querySelector('[data-bs-summary]').innerHTML=[['전체 일정',model.history.length+'회'],['참석 기록 확인',count+'회'],['참가자',unique+'명'],['기록 미확인',model.unknown+'회']].map(([k,v])=>'<div><small>'+k+'</small><strong>'+v+'</strong></div>').join('');
+   root.querySelector('[data-bs-summary]').innerHTML=[['전체 일정',model.history.length+'회'],['참석 기록 확인',count+'회'],['참가자',unique+'명'],['평균 참가 인원',avg===null?'—':avg.toFixed(1)+'명'],['기록 미확인',model.unknown+'회']].map(([k,v])=>'<div><small>'+k+'</small><strong>'+v+'</strong></div>').join('');
    root.querySelector('[data-bs-summary]').hidden=state.tab==='members';
    root.querySelectorAll('[data-bs-preset]').forEach(b=>{const active=(!state.from&&!state.to&&b.dataset.bsPreset==='0')||(state.preset===b.dataset.bsPreset&&!!state.from);b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
    root.querySelector('[data-bs-body]').innerHTML=state.tab==='history'?renderHistory(model):state.tab==='stats'?renderStats(model):renderMembers(model);

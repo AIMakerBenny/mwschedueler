@@ -184,8 +184,7 @@
     section?.classList.toggle('calendar-group-select-active-v2',mode);
     const toggle=$('calendarGroupToggleV2'),panel=$('calendarGroupPanelV2');
     if(toggle){toggle.setAttribute('aria-pressed',mode?'true':'false');toggle.textContent=mode?'그룹 선택 종료':'연속 콘텐츠 그룹 선택'}
-    if(panel)panel.hidden=!mode;
-    if(section)root.dispatchEvent(new Event('mws:calendar-group-layout-v2'));
+    if(panel&&panel.hidden===mode){panel.hidden=!mode;root.dispatchEvent(new Event('mws:calendar-group-layout-v2'));}
     const count=$('calendarGroupCountV2');
     if(count)count.textContent=selected.size+'개 일정 선택';
     grid?.querySelectorAll('.mini-event[data-evid]').forEach(el=>{
@@ -459,9 +458,8 @@
   }
   function closeManager(){
     const box=$('calendarGroupManagerPanelV4'),button=$('calendarGroupManageToggleV4');
-    if(box)box.hidden=true;
+    if(box&&!box.hidden){box.hidden=true;root.dispatchEvent(new Event('mws:calendar-group-layout-v2'));}
     if(button)button.setAttribute('aria-expanded','false');
-    root.dispatchEvent(new Event('mws:calendar-group-layout-v2'));
   }
   function toggleManager(){
     const box=$('calendarGroupManagerPanelV4'),button=$('calendarGroupManageToggleV4');

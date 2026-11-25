@@ -71,3 +71,5 @@ html[data-mws-motion=reduced] #bsandong *{transition:none!important}
 #bsandong .bs-session-empty .bs-people{margin-top:5px}
 #bsandong .bs-person .bs-ring{width:44px;height:44px}
 @media(max-width:650px){#bsandong .bs-shell{max-width:100%}#bsandong .bs-dates label{flex:1 1 125px}#bsandong .bs-session-head>div{display:grid}}
+
+@media(min-width:900px){#bsandong .bs-summary{grid-template-columns:repeat(5,minmax(0,1fr))}}

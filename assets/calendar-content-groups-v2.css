@@ -267,8 +267,8 @@
 #calendar .mws-group-bulk-list-v2 small{font-size:11px;color:var(--muted)}
 #calendar .mws-group-bulk-v2 p{margin:0}
 @media(min-width:1100px){
- #calendar #calendarMonthPanelV172:has(>#calendarGroupPanelV2:not([hidden])),#calendar #calendarMonthPanelV172:has(>#calendarGroupManagerPanelV4:not([hidden])){display:grid!important;grid-template-columns:minmax(0,1fr) clamp(265px,22vw,350px);grid-template-rows:auto;gap:10px;align-items:start}
- #calendar #calendarMonthPanelV172:has(>#calendarGroupPanelV2:not([hidden]))>.calendar-responsive-scroll-v1,#calendar #calendarMonthPanelV172:has(>#calendarGroupManagerPanelV4:not([hidden]))>.calendar-responsive-scroll-v1{grid-column:1;grid-row:1;min-width:0}
+ #calendar #calendarMonthPanelV172:not([hidden]):has(>#calendarGroupPanelV2:not([hidden])),#calendar #calendarMonthPanelV172:not([hidden]):has(>#calendarGroupManagerPanelV4:not([hidden])){display:grid!important;grid-template-columns:minmax(0,1fr) clamp(265px,22vw,350px);grid-template-rows:auto;gap:10px;align-items:start}
+ #calendar #calendarMonthPanelV172:not([hidden]):has(>#calendarGroupPanelV2:not([hidden]))>.calendar-responsive-scroll-v1,#calendar #calendarMonthPanelV172:not([hidden]):has(>#calendarGroupManagerPanelV4:not([hidden]))>.calendar-responsive-scroll-v1{grid-column:1;grid-row:1;min-width:0}
  #calendar #calendarGroupPanelV2:not([hidden]),#calendar #calendarGroupManagerPanelV4:not([hidden]){grid-column:2;grid-row:1;max-height:calc(100dvh - 95px);overflow:auto;overscroll-behavior:contain;margin:0!important;padding:10px!important;gap:8px;align-self:start}
  #calendar #calendarMoveStatusV4:not([hidden]){grid-column:1/-1;grid-row:2}
  #calendar #calendarGroupPanelV2 .calendar-group-controls-v2,#calendar #calendarGroupManagerPanelV4 .calendar-group-controls-v2{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px}
@@ -280,5 +280,5 @@
 }
 @media(max-width:1099px){
  #calendar #calendarGroupPanelV2:not([hidden]),#calendar #calendarGroupManagerPanelV4:not([hidden]){max-height:min(42dvh,320px);overflow:auto;overscroll-behavior:contain;padding:8px!important;gap:6px}
- #calendar #calendarMonthPanelV172:has(>#calendarGroupPanelV2:not([hidden])) #calendarGrid,#calendar #calendarMonthPanelV172:has(>#calendarGroupManagerPanelV4:not([hidden])) #calendarGrid{min-height:calc(var(--calendar-week-count-v2,6)*64px)!important}
+ #calendar #calendarMonthPanelV172:not([hidden]):has(>#calendarGroupPanelV2:not([hidden])) #calendarGrid,#calendar #calendarMonthPanelV172:not([hidden]):has(>#calendarGroupManagerPanelV4:not([hidden])) #calendarGrid{min-height:calc(var(--calendar-week-count-v2,6)*64px)!important}
 }

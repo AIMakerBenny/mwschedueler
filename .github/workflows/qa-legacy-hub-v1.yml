@@ -32,6 +32,9 @@ jobs:
         run: |
           node --check --input-type=commonjs < assets/app-core.js
           node --check assets/bsandong-v1.js
+          node --check assets/calendar-content-groups-v2.js
+          node --check assets/calendar-details-v1.js
+          node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs scripts/qa-active-cloudflare-core-groups-v1.test.mjs
           node --test scripts/qa-bsandong-v1.test.mjs scripts/qa-legacy-hub-v1.test.mjs
           node scripts/run-phase116-wardogs-navigation-shell-audit.mjs
           node scripts/qa-bsandong-v1-browser.mjs
