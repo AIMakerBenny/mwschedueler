@@ -180,6 +180,8 @@ body[data-device-mode="mobile"] #eventModal .mws-event-editor-v6{width:100%!impo
 body[data-device-mode="mobile"] #eventModal .mws-event-editor-v6 .event-modal-layout{display:block!important;grid-template-columns:minmax(0,1fr)!important;overflow:auto!important;overflow-x:hidden!important;scrollbar-gutter:stable}
 body[data-device-mode="mobile"] #eventModal .mws-event-editor-v6 :is(.event-info-panel,.event-editor-tools-v6){overflow:visible!important;border-inline-start:0!important}
 body[data-device-mode="mobile"] #eventModal .mws-event-editor-v6 .event-modal-header{position:static!important;margin:0!important;padding:10px 12px!important}
+@media(max-width:900px){#eventModal .event-modal-header [data-close="eventModal"]{min-height:44px!important;min-width:44px!important}}
+body[data-device-mode="mobile"] #eventModal .event-modal-header [data-close="eventModal"]{min-height:44px!important;min-width:44px!important}
 body[data-device-mode="mobile"] #eventModal .mws-event-editor-v6 .event-actions{padding-bottom:calc(10px + env(safe-area-inset-bottom))!important}
 body[data-device-mode="mobile"]:has(#eventModal.open) :is(#datePickerPopover,#timePickerPopover,#categoryColorPalette){z-index:5300!important}
 html[data-mws-motion=reduced] #eventModal *{animation-duration:0s!important;transition-duration:0s!important}
