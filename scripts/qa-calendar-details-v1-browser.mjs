@@ -12,7 +12,6 @@ const render=core.slice(core.indexOf('function renderCalendar(){'),core.indexOf(
 assert(!render.includes('calendar-event-drag-handle-v4'),'Monthly card must have no drag handle');
 assert(render.includes('calendar-start-v2'),'Monthly labels show the scheduled start time');
 assert(core.includes('el.onpointerdown=e=>{')&&core.includes('beginCalendarPointerEventDragV174(e,el);'));
-const gameMarkup=steam.match(/panel\.innerHTML=`([\s\S]*?)`;/)[1];
 const steamCSS=steam.match(/style\.textContent=`([\s\S]*?)`;/)[1];
 const inline=[...html.matchAll(/<style(?:\s[^>]*)?>([\s\S]*?)<\/style>/gi)].map(m=>m[1]).join('\n');
 const css=[read('assets/app-core.css'),inline,...[
@@ -51,34 +50,41 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const outsideCloses=!window.mwsCalendarDetailsV1.isOpen();
  $('.mini-event').click();await tick();$('#calendarDetailsEditV1').click();await tick();
  const editOnlyOnButton=editorOpens===1&&$('#eventModal').classList.contains('open')&&!window.mwsCalendarDetailsV1.isOpen();
- const game=document.createElement('aside');game.id='eventGamePanelV112';game.className='event-game-panel-v112';game.innerHTML=${JSON.stringify(gameMarkup)};
- $('.event-info-panel').insertAdjacentElement('afterend',game);await tick();
- $('.event-modalbox').classList.add('mws-game-panel-enabled-v112');
- const lateGameReparented=game.parentElement.classList.contains('event-editor-tools-v6');
+ const before=r($('.event-modalbox')),beforeInfo=r($('.event-info-panel'));
+ const module=document.createElement('script');module.textContent=${JSON.stringify(steam)};document.body.appendChild(module);await tick();
+ const game=$('#eventGamePanelV112');
+ const lateGameReparented=!!game&&game.parentElement.id==='eventGamePaneV7'&&game.closest('.event-editor-tools-v6')!==null;
+ const after=r($('.event-modalbox')),afterInfo=r($('.event-info-panel'));
+ const geometryStable=Math.abs(before.width-after.width)<1&&Math.abs(before.height-after.height)<1&&Math.abs(beforeInfo.width-afterInfo.width)<1;
  $('#evTitle').value=eventData.title;$('#evMemoContent').value='메모 유지';$('#evContentGroupV2').innerHTML='<option value="existing-group">기존 그룹</option>';$('#evContentGroupV2').value='existing-group';
  $('#evDateDisplay span').textContent='2026년 11월 18일';$('#evStartDisplay span').textContent='오후 01:55';$('#evEndDisplay span').textContent='오후 03:02';
  $('#selectedParticipants').innerHTML='<span>테스트 참가자 · 확정</span>';
  $('#participantResults').innerHTML=Array.from({length:20},(_,i)=>'<button type="button" class="secondary">테스트 참가자 '+(i+1)+'</button>').join('');
- const initialGameVisible=getComputedStyle(game).display!=='none'&&getComputedStyle($('.event-memo-panel')).display==='none';
- $('[data-editor-tool-v6="organize"]').click();$('#eventMemoTabV5').click();
+ const initialGameVisible=getComputedStyle(game).display!=='none'&&!$('#eventGamePaneV7').hidden&&$('#eventSeriesPaneV5').hidden&&$('#eventMemoPaneV5').hidden;
+ $('#eventMemoTabV5').click();
  const memoVisible=!$('#eventMemoPaneV5').hidden&&getComputedStyle($('.event-memo-panel')).display!=='none';
- $('[data-editor-tool-v6="game"]').click();$('[data-editor-tool-v6="organize"]').click();
+ $('#eventGameTabV7').click();$('#eventSeriesTabV5').click();
  const inputsRetained=$('#evMemoContent').value==='메모 유지'&&$('#evContentGroupV2').value==='existing-group'&&$('#evTitle').value===eventData.title;
  const uniqueInputs=['evTitle','evMemoContent','evContentGroupV2','gameManualNameV1'].every(id=>document.querySelectorAll('#'+id).length===1);
  const footer=$('.mws-event-editor-v6>.event-actions'),footerRect=r(footer);
  const footerVisible=footerRect.bottom<=innerHeight+1&&footerRect.top>=0&&r($('#saveEventBtn')).bottom<=innerHeight+1;
- const desktop=innerWidth>760;
+ const desktop=innerWidth>900;
  const boxFits=r($('.event-modalbox')).width<=innerWidth+1;
  const dateTimeRow=!desktop||Math.abs(r($('#evDateDisplay')).top-r($('#evStartDisplay')).top)<2&&Math.abs(r($('#evStartDisplay')).top-r($('#evEndDisplay')).top)<2;
  const noPaneOverlap=!desktop||r($('.event-info-panel')).right<=r($('.event-editor-tools-v6')).left+1;
  const oneCardRow=getComputedStyle($('.mini-event')).gridTemplateRows.trim().split(/\s+/).length===1;
  const cardTitle=$('.mini-event-main'),cover=$('.mws-steam-slot-v111');
  const cardNoOverlap=r(cardTitle).right<=r(cover).left+1;
+ const tabGeometryStable=Math.abs(r($('.event-modalbox')).width-after.width)<1&&Math.abs(r($('.event-modalbox')).height-after.height)<1;
+ $('.event-modalbox').classList.add('repeat-panel-open');$('#eventRepeatPanel').classList.add('open');
+ const repeatGeometryStable=Math.abs(r($('.event-modalbox')).width-after.width)<1&&Math.abs(r($('.event-modalbox')).height-after.height)<1&&Math.abs(r($('.event-info-panel')).width-afterInfo.width)<1&&getComputedStyle($('#eventRepeatPanel')).display!=='none';
+ $('.event-modalbox').classList.remove('repeat-panel-open');$('#eventRepeatPanel').classList.remove('open');
+ const repeatReturnsToGroup=!$('#eventSeriesPaneV5').hidden;
  const noSourceMutation=baseline===JSON.stringify(data)&&saves===0;
  const geometry={height:innerHeight,boxTop:r($('.event-modalbox')).top,boxBottom:r($('.event-modalbox')).bottom,footerTop:footerRect.top,footerBottom:footerRect.bottom,saveBottom:r($('#saveEventBtn')).bottom};
- const result={geometry,oneCardRow,readOnlyDrawer,refreshKeepsOpen,contentEscaped,drawerFits,escapeCloses,outsideCloses,editOnlyOnButton,lateGameReparented,initialGameVisible,memoVisible,inputsRetained,uniqueInputs,footerVisible,boxFits,dateTimeRow,noPaneOverlap,cardNoOverlap,noSourceMutation,noRootOverflow:document.documentElement.scrollWidth<=innerWidth+2};
+ const result={geometry,geometryStable,tabGeometryStable,repeatGeometryStable,repeatReturnsToGroup,oneCardRow,readOnlyDrawer,refreshKeepsOpen,contentEscaped,drawerFits,escapeCloses,outsideCloses,editOnlyOnButton,lateGameReparented,initialGameVisible,memoVisible,inputsRetained,uniqueInputs,footerVisible,boxFits,dateTimeRow,noPaneOverlap,cardNoOverlap,noSourceMutation,noRootOverflow:document.documentElement.scrollWidth<=innerWidth+2};
  $('#result').textContent=JSON.stringify(result);
- $('[data-editor-tool-v6="game"]').click();
+ $('#eventGameTabV7').click();
 });
 `;
 // Geometry is checked after the real-time drawer animation settles.
@@ -89,7 +95,7 @@ try{
  const dest=path.join(temp,'test.html');writeFileSync(dest,fixture);
  if(process.env.MWS_DETAILS_FIXTURE){writeFileSync(process.env.MWS_DETAILS_FIXTURE,fixture);if(process.env.MWS_FIXTURE_ONLY)process.exit(0);}
  browser=await launchCalendarBrowser(temp);
- for(const [width,height] of [[1366,768],[1920,1080],[2560,1440],[2560,1080],[700,900]]){
+ for(const [width,height] of [[1366,768],[1920,1080],[2560,1440],[2560,1080],[3840,2160],[700,900],[390,844]]){
   await browser.navigate(pathToFileURL(dest).href+'?size='+width+'x'+height,width,height);
   const result=await browser.evaluate(`new Promise((resolve,reject)=>{const start=performance.now();const check=()=>{const value=document.querySelector('#result')?.textContent;if(value&&value!=='pending'){resolve(JSON.parse(value));return}if(performance.now()-start>6000){reject(new Error('Missing details result'));return}setTimeout(check,25)};check()})`);
   for(const [key,value] of Object.entries(result))if(key!=='geometry')assert.equal(value,true,width+'x'+height+' '+key+' '+JSON.stringify(result));
