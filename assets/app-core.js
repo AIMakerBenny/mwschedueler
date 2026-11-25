@@ -3244,6 +3244,8 @@ function openEventRepeatPanel(){
   box?.classList.add('repeat-panel-open');panel?.classList.add('open');panel?.setAttribute('aria-hidden','false');
   document.getElementById('evRepeatButton')?.setAttribute('aria-expanded','true');
   updateRepeatEditorUI();
+  const tools=panel?.closest('.event-editor-tools-v6');
+  if(tools){tools.scrollTop=0;if(getComputedStyle(tools).overflowY==='visible')tools.scrollIntoView({block:'start',behavior:'auto'})}
 }
 function closeEventRepeatPanel(){
   const box=document.querySelector('#eventModal .event-modalbox');
@@ -3377,14 +3379,14 @@ function openEvent(id=null,date=null){
   document.getElementById('restDayBtn').style.display=e?'none':'';document.getElementById('saveEventBtn').style.display=e?.restDay?'none':'';
   const eventModal=document.getElementById('eventModal');
   eventModal.classList.add('open');
+  window.mwsSyncEventGameEditorV7?.();
+  if(e?.restDay)window.mwsEventSidebarTabsV5?.select('series');
   // 재사용되는 편집창은 이전 스크롤 위치를 이어받지 않고 항상 맨 위에서 시작한다.
   requestAnimationFrame(()=>{
     [
-      eventModal.querySelector('.event-modalbox'),
+      eventModal.querySelector('.event-modal-layout'),
       eventModal.querySelector('.event-info-panel'),
-      eventModal.querySelector('.event-memo-panel'),
-      eventModal.querySelector('.event-game-panel-v112'),
-      eventModal.querySelector('.event-repeat-panel')
+      eventModal.querySelector('.event-editor-tools-v6')
     ].forEach(target=>{if(target)target.scrollTop=0});
     renderParticipantPicker();
   });
@@ -3423,6 +3425,8 @@ document.getElementById('saveEventBtn').onclick=()=>{
   };
 
   const isEdit=Boolean(editingEventId);
+  // Preserve a previously linked game while the optional editor module loads.
+  if(isEdit&&!window.__mwsSteamGameV111){const previous=data.events.find(x=>x.id===editingEventId);if(previous?.steamGame)payload.steamGame=previous.steamGame;}
   const repeatResult=applyEventPayloadWithRepeat(payload,editingEventId);
 
   // 화면부터 즉시 닫아서 저장 작업 때문에 창이 남아 보이지 않도록 처리
