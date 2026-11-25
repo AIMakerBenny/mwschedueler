@@ -1,16 +1,20 @@
-function attendanceModel(source,today,from='',to=today){
+function bsandongTitleMatchV2(title){return String(title||'').normalize('NFKC').replace(/\s+/g,'').includes('브산동')}
+function bsandongGroupMatchV2(group){return group?.mawangContent==='bsandong'||(group?.mawangContent!=='none'&&String(group?.name||'').normalize('NFKC').replace(/\s+/g,'')==='브산동')}
+function attendanceModel(source,today,from='',to=today,now=''){
   const ids=new Set((source.categories||[]).filter(c=>String(c?.name||'').trim()==='브산동').map(c=>String(c.id)));
+  const groupIds=new Set((source.contentGroups||[]).filter(bsandongGroupMatchV2).map(g=>String(g.id)));
   const own=String(source.selfContactId||'');
   const contacts=new Map((source.contacts||[]).filter(c=>c?.id&&String(c.id)!==own).map(c=>[String(c.id),c]));
   const seen=new Set(),events=[];
   for(const e of source.events||[]){
-    if(!e?.id||seen.has(String(e.id))||!ids.has(String(e.categoryId))||!/^\d{4}-\d{2}-\d{2}$/.test(e.date)||e.restDay||e.cancelled===true||e.canceled===true||['cancelled','canceled'].includes(e.status)||String(e.title||'').trim()==='휴방')continue;
+    if(!e?.id||seen.has(String(e.id))||!(ids.has(String(e.categoryId))||groupIds.has(String(e.contentGroupId))||bsandongTitleMatchV2(e.title))||!/^\d{4}-\d{2}-\d{2}$/.test(e.date)||e.restDay||e.cancelled===true||e.canceled===true||['cancelled','canceled'].includes(e.status)||String(e.title||'').trim()==='휴방')continue;
     seen.add(String(e.id));
     const people=[...new Set((Array.isArray(e.participants)?e.participants:[]).map(String))].filter(id=>id&&id!==own&&id!==String(e.autoSelfParticipantId||''));
     const confirmed=people.filter(id=>e.participantStatuses?.[id]!=='planned');
     const planned=people.filter(id=>e.participantStatuses?.[id]==='planned');
-    const ended=e.date<today;
-    events.push({id:String(e.id),date:e.date,start:String(e.start||''),end:String(e.end||''),title:String(e.title||'제목 없음'),confirmed,planned,ended,recorded:ended&&confirmed.length>0});
+    const start=String(e.start||''),end=String(e.end||'');
+    const ended=e.date<today||(e.date===today&&/^\d{2}:\d{2}$/.test(end)&&(!/^\d{2}:\d{2}$/.test(start)||end>start)&&/^\d{2}:\d{2}$/.test(now)&&end<=now);
+    events.push({id:String(e.id),date:e.date,start:String(e.start||''),end:String(e.end||''),title:String(e.title||'제목 없음'),linkSource:groupIds.has(String(e.contentGroupId))?'그룹':ids.has(String(e.categoryId))?'분류':'제목 자동 인식',confirmed,planned,ended,recorded:ended&&confirmed.length>0});
   }
   events.sort((a,b)=>a.date.localeCompare(b.date)||a.start.localeCompare(b.start)||a.id.localeCompare(b.id));
   const completed=events.filter(e=>e.recorded),members=new Map();
@@ -54,7 +58,7 @@ function attendanceBuckets(model,unit,person=''){
  function renderHistory(m){
    const filtered=m.history.filter(e=>!state.search||e.title.includes(state.search)||[...e.confirmed,...e.planned].some(id=>nameMatch(m.contacts.get(id),state.search)));
    const limit=state.page*12;let date='';
-   const html=filtered.slice(0,limit).map(e=>{const header=e.date!==date?'<h3 class="bs-day">'+esc(e.date)+'</h3>':'';date=e.date;return header+'<article class="bs-session"><div class="bs-session-head"><div><button type="button" class="bs-title-button" data-bs-event="'+esc(e.id)+'">'+esc(e.title)+'</button><small>'+esc([e.start,e.end].filter(t=>t&&t!=='TBD').join(' - ')||'시간 미정')+'</small></div><span class="bs-pill">'+(e.recorded?'확정 기록 '+e.confirmed.length+'명':e.ended?'참석 기록 미확인':'예정 · 확정 '+e.confirmed.length+'명')+'</span></div><div class="bs-people">'+e.confirmed.map(id=>personChip(id,m)).join('')+e.planned.map(id=>personChip(id,m,true)).join('')+(!e.confirmed.length&&!e.planned.length?'<span class="bs-muted">등록된 참가자가 없습니다.</span>':'')+'</div></article>'}).join('');
+   const html=filtered.slice(0,limit).map(e=>{const header=e.date!==date?'<h3 class="bs-day">'+esc(e.date)+'</h3>':'';date=e.date;return header+'<article class="bs-session'+(!e.confirmed.length&&!e.planned.length?' bs-session-empty':'')+'"><div class="bs-session-head"><div><button type="button" class="bs-title-button" data-bs-event="'+esc(e.id)+'">'+esc(e.title)+'</button><small>'+esc([e.start,e.end].filter(t=>t&&t!=='TBD').join(' - ')||'시간 미정')+'</small><small class="bs-link-source">'+esc(e.linkSource)+'</small></div><span class="bs-pill">'+(e.recorded?'확정 기록 '+e.confirmed.length+'명':e.ended?'참석 기록 미확인':'예정 · 확정 '+e.confirmed.length+'명')+'</span></div><div class="bs-people">'+e.confirmed.map(id=>personChip(id,m)).join('')+e.planned.map(id=>personChip(id,m,true)).join('')+(!e.confirmed.length&&!e.planned.length?'<span class="bs-muted">등록된 참가자가 없습니다.</span>':'')+'</div></article>'}).join('');
    return (html||'<div class="bs-empty">해당 기간에 표시할 활동이 없습니다.</div>')+(filtered.length>limit?'<button type="button" data-bs-more>더 보기</button>':'');
  }
  function renderStats(m){
@@ -71,13 +75,15 @@ function attendanceBuckets(model,unit,person=''){
  }
  function draw(){
    if(!source||!today)return;
-   const model=attendanceModel(source,today,state.tab==='members'?'':state.from,state.tab==='members'?'9999-12-31':state.to||'9999-12-31');
+   const now=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date());
+   const model=attendanceModel(source,today,state.tab==='members'?'':state.from,state.tab==='members'?'9999-12-31':state.to||'9999-12-31',now);
    if(state.person&&!model.rows.some(r=>r.id===state.person))state.person='';
    const count=model.period.length,unique=new Set(model.period.flatMap(e=>e.confirmed)).size,avg=count?model.period.reduce((s,e)=>s+e.confirmed.length,0)/count:null;
    root.querySelectorAll('[data-bs-tab]').forEach(b=>{const active=b.dataset.bsTab===state.tab;b.setAttribute('aria-selected',String(active));b.classList.toggle('active',active)});
    root.querySelector('[data-bs-dates]').hidden=state.tab==='members';
-   root.querySelector('[data-bs-summary]').innerHTML=[['활동 기록',count+'회'],['참가자',unique+'명'],['평균 참가 인원',avg===null?'—':avg.toFixed(1)+'명'],['기록 미확인',model.unknown+'회']].map(([k,v])=>'<div><small>'+k+'</small><strong>'+v+'</strong></div>').join('');
+   root.querySelector('[data-bs-summary]').innerHTML=[['전체 일정',model.history.length+'회'],['참석 기록 확인',count+'회'],['참가자',unique+'명'],['기록 미확인',model.unknown+'회']].map(([k,v])=>'<div><small>'+k+'</small><strong>'+v+'</strong></div>').join('');
    root.querySelector('[data-bs-summary]').hidden=state.tab==='members';
+   root.querySelectorAll('[data-bs-preset]').forEach(b=>{const active=(!state.from&&!state.to&&b.dataset.bsPreset==='0')||(state.preset===b.dataset.bsPreset&&!!state.from);b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active))});
    root.querySelector('[data-bs-body]').innerHTML=state.tab==='history'?renderHistory(model):state.tab==='stats'?renderStats(model):renderMembers(model);
    try{window.mwsScheduleImageTune?.();if(typeof mwsScanContactMediaImagesV111==='function')mwsScanContactMediaImagesV111(root)}catch(_){}
  }
@@ -87,10 +93,10 @@ function attendanceBuckets(model,unit,person=''){
    if(b.dataset.bsTab){tab(b.dataset.bsTab);return}
    if(b.hasAttribute('data-bs-more')){state.page++;draw();return}
    if(b.dataset.bsEvent){if(typeof openCalendarEventDetailsV1==='function')openCalendarEventDetailsV1(b.dataset.bsEvent,b);return}
-   if(b.dataset.bsGraph||b.dataset.bsMember){const id=b.dataset.bsGraph||b.dataset.bsMember;if(!attendanceModel(source,today).rows.some(r=>r.id===id))return;state.person=id;tab('stats');return}
-   if(b.dataset.bsPreset){const n=Number(b.dataset.bsPreset);state.from='';state.to='';if(n){const d=new Date(today+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-n+1);state.from=d.toISOString().slice(0,10);state.to=today}root.querySelector('[data-bs-field=from]').value=state.from;root.querySelector('[data-bs-field=to]').value=state.to;state.page=1;draw()}
+   if(b.dataset.bsGraph||b.dataset.bsMember){const id=b.dataset.bsGraph||b.dataset.bsMember;if(!attendanceModel(source,today,'',today,new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date())).rows.some(r=>r.id===id))return;state.person=id;tab('stats');return}
+   if(b.dataset.bsPreset){const n=Number(b.dataset.bsPreset);state.preset=b.dataset.bsPreset;state.from='';state.to='';if(n){const d=new Date(today+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-n+1);state.from=d.toISOString().slice(0,10);state.to=today}root.querySelector('[data-bs-field=from]').value=state.from;root.querySelector('[data-bs-field=to]').value=state.to;state.page=1;draw()}
  });
- root.addEventListener('change',e=>{const k=e.target.dataset.bsField;if(!k)return;state[k]=k==='threshold'?Number(e.target.value):e.target.value;if(state.from&&state.to&&state.from>state.to){if(k==='from')state.to=state.from;else state.from=state.to;root.querySelector('[data-bs-field=from]').value=state.from;root.querySelector('[data-bs-field=to]').value=state.to}state.page=1;draw()});
+ root.addEventListener('change',e=>{const k=e.target.dataset.bsField;if(!k)return;state[k]=k==='threshold'?Number(e.target.value):e.target.value;if(k==='from'||k==='to')state.preset='';if(state.from&&state.to&&state.from>state.to){if(k==='from')state.to=state.from;else state.from=state.to;root.querySelector('[data-bs-field=from]').value=state.from;root.querySelector('[data-bs-field=to]').value=state.to}state.page=1;draw()});
  root.addEventListener('input',e=>{if(e.target.dataset.bsField==='search'){state.search=e.target.value;state.page=1;draw()}});
  window.mwsBsandongV1={render(s,t){source=s;today=t;draw()}};
 })();

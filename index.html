@@ -73,7 +73,7 @@ body[data-calendar-startup="pending"] #calendarGrid:empty::before{content:'일�
 <link rel="stylesheet" href="assets/app-core.css?v=1.6.21-profileimgfix1-calendarsearch171-searchtab172-drag174-workspace176-splitquick177&f1feedback303=1&charcoal=1&dashboardnav=1">
 <link rel="stylesheet" href="assets/calendar-broadcast-duration-v1.css?v=1">
 <link rel="stylesheet" href="assets/calendar-continuous-series-v1.css?v=2">
-<link rel="stylesheet" href="assets/calendar-content-groups-v2.css?v=3">
+<link rel="stylesheet" href="assets/calendar-content-groups-v2.css?v=3&club-layout=2">
 <link rel="stylesheet" href="assets/calendar-group-recovery-v1.css?v=2">
 <link rel="stylesheet" href="assets/event-sidebar-tabs-v5.css?v=1">
 <link rel="stylesheet" href="assets/calendar-toolbar-v4.css?v=1&calendarclipboard20261116=1">
@@ -122,7 +122,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <link rel="stylesheet" href="assets/mawang-premium-v1621.css?v=1.6.21-premium2-phase154">
 <link rel="stylesheet" href="assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136-aperture152-medicaperture165-classapertures166-unassigned168-framepreload169-consolidated170-all176">
 
-<link rel="stylesheet" href="assets/bsandong-v1.css?v=1">
+<link rel="stylesheet" href="assets/bsandong-v1.css?v=2">
 <link rel="stylesheet" href="assets/wardogs-intro-v1.css?v=1.0.0-phase118">
 <link rel="stylesheet" href="assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-frame140-frame144-aperture152-medicaperture165-classapertures166-unassigned168">
 <link rel="stylesheet" href="assets/career-timeline.css?v=18">
@@ -459,11 +459,11 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
             <button class="primary" type="button" id="calendarGroupApplyV2">선택 일정 연결</button>
             <button class="secondary" type="button" id="calendarGroupClearV2">선택 일정 연결 해제</button>
           </div>
-          <div class="calendar-group-controls-v2">
+          <details class="mws-group-advanced-v2"><summary>새 그룹 만들기</summary><div class="calendar-group-controls-v2">
             <label>새 그룹 이름 <input id="calendarGroupNewNameV2" placeholder="예: SBO" maxlength="64"></label>
             <label>그룹 색상 <input id="calendarGroupNewColorV2" type="color" value="#0f8c95"></label>
             <button class="secondary" type="button" id="calendarGroupCreateV2">그룹 만들기</button>
-          </div>
+          </div></details>
 
           <div class="muted small">그룹 선택 모드에서는 일정 카드를 클릭하면 여러 개를 선택할 수 있습니다. 방송 시간과 개별 제목은 바뀌지 않습니다.</div>
         </div>
@@ -488,11 +488,12 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
             <div class="calendar-group-controls-v2">
               <label>그룹 이름 <input id="calendarGroupRenameV2" maxlength="64" placeholder="그룹 선택 후 이름 수정"></label>
               <label>그룹 색상 <input id="calendarGroupRecolorV2" type="color" value="#0f8c95"></label>
+              <label>마왕 컨텐츠 연동 <select id="calendarGroupMawangLinkV2"><option value="">그룹 이름으로 자동 연동</option><option value="bsandong">브산동</option><option value="none">그룹 연동 안 함</option></select></label>
               <button class="secondary" type="button" id="calendarGroupUpdateV2">그룹 수정</button>
               <button class="danger" type="button" id="calendarGroupDeleteV2">그룹 삭제</button>
             </div>
           </div>
-          <p class="muted small calendar-group-manage-note-v4">그룹 이름과 색상만 변경됩니다. 연결된 방송의 제목, 시간, 참가자는 그대로 유지됩니다.</p>
+          <details class="mws-group-advanced-v2" id="calendarGroupBulkV2"><summary>기존 브산동 일정 일괄 연결</summary><div class="mws-group-bulk-v2"><label>제목 검색<input type="search" id="calendarGroupBulkSearchV2" value="브산동" placeholder="브산동, 재활센터 등"></label><div class="mws-group-bulk-actions-v2"><button type="button" class="secondary" id="calendarGroupBulkPreviewV2">검색</button><button type="button" class="secondary" id="calendarGroupBulkAllV2">전체 선택 / 해제</button></div><p id="calendarGroupBulkStatusV2" class="muted small" aria-live="polite">검색 후 연결할 일정을 확인하세요.</p><div id="calendarGroupBulkListV2" class="mws-group-bulk-list-v2"></div><button type="button" class="primary" id="calendarGroupBulkApplyV2" disabled>선택 일정 브산동 연결</button></div></details><p class="muted small calendar-group-manage-note-v4">기존 방송 제목, 시간, 참가자는 유지됩니다. 다른 그룹에 연결된 일정은 일괄 연결에서 제외됩니다.</p>
         </div>
         <div class="calendar-responsive-scroll-v1" role="region" tabindex="0" aria-label="월별 캘린더 - 날짜가 좁을 경우 가로 스크롤 가능">
           <div class="calendar-head"><div style="color:#ef8b9c">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div style="color:#7da8f7">토</div></div>
@@ -2630,9 +2631,9 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
 <script src="assets/contact-frequency-v1.js?v=2"></script>
 <script src="assets/career-activities-data-v1.js?v=2"></script>
 <script src="assets/calendar-historical-v1.js?v=1"></script>
-<script src="assets/bsandong-v1.js?v=1"></script>
-<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=1&contactgroup178=1&modalmotionv2=2&ladderdefaults=1&future-only=1&post-layout-v3=1&career=1&clipboard-people=1&dashboardnav=3&ui-interactions=2&contentapplications=1&peopleview=2&contact-frequency=2&historical-calendar=1&mawang-archive=1&request-budget=12&request-v3-stage4=1&media-batch-v5=1&unified-media-v51=1&bsandong=1"></script>
-<script src="assets/calendar-content-groups-v2.js?v=7-save-contract-bulk&proof=1"></script>
+<script src="assets/bsandong-v1.js?v=2"></script>
+<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=1&contactgroup178=1&modalmotionv2=2&ladderdefaults=1&future-only=1&post-layout-v3=1&career=1&clipboard-people=1&dashboardnav=3&ui-interactions=2&contentapplications=1&peopleview=2&contact-frequency=2&historical-calendar=1&mawang-archive=1&request-budget=12&request-v3-stage4=1&media-batch-v5=1&unified-media-v51=1&bsandong=1&club-link=2"></script>
+<script src="assets/calendar-content-groups-v2.js?v=7-save-contract-bulk&proof=1&club=2"></script>
 <script src="assets/event-sidebar-tabs-v5.js?v=1"></script>
 <script src="assets/calendar-move-guard-v4.js?v=1&quietmoves=1"></script>
 <script src="assets/soop-contact-autofill-v1.js?v=1"></script>
@@ -5127,7 +5128,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .sidebar-save-v572{padding-left:0
 <link rel="stylesheet" href="assets/calendar-search-v173.css?v=1">
 <link rel="stylesheet" href="assets/contact-directory-v177.css?v=3">
 <link rel="stylesheet" href="assets/modal-motion-v1.css?v=4">
-<script src="assets/calendar-details-v1.js?v=12&motion-fallback=1&peopleview=1"></script>
+<script src="assets/calendar-details-v1.js?v=12&motion-fallback=1&peopleview=1&group-layout=2"></script>
 <script src="assets/device-ui.js?v=1.3.0-perf87-mobile-layout-v2&frame-lazy=1"></script>
 <link rel="stylesheet" href="assets/ladder-wizard-v1.css?v=10">
 <script src="assets/ladder-wizard-v1.js?v=13"></script>

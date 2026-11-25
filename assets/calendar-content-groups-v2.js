@@ -185,6 +185,7 @@
     const toggle=$('calendarGroupToggleV2'),panel=$('calendarGroupPanelV2');
     if(toggle){toggle.setAttribute('aria-pressed',mode?'true':'false');toggle.textContent=mode?'그룹 선택 종료':'연속 콘텐츠 그룹 선택'}
     if(panel)panel.hidden=!mode;
+    if(section)root.dispatchEvent(new Event('mws:calendar-group-layout-v2'));
     const count=$('calendarGroupCountV2');
     if(count)count.textContent=selected.size+'개 일정 선택';
     grid?.querySelectorAll('.mini-event[data-evid]').forEach(el=>{
@@ -288,7 +289,7 @@
       toast('콘텐츠 그룹 저장 실패','온라인 저장 기능을 사용할 수 없습니다.');
       return false;
     }
-    const expectedGroups=groups().map(g=>({id:g.id,name:g.name,color:g.color}));
+    const expectedGroups=groups().map(g=>({id:g.id,name:g.name,color:g.color,mawangContent:g.mawangContent||''}));
     const eventMap=new Map((Array.isArray(data.events)?data.events:[]).map(e=>[String(e.id),String(e.contentGroupId||'')]));
     groupWriteStatus('Cloudflare D1에 저장하고 검증하는 중...');
     try{
@@ -313,7 +314,7 @@
       const serverGroups=Array.isArray(coreRow?.data?.contentGroups)?coreRow.data.contentGroups:[];
       for(const expected of expectedGroups){
         const actual=serverGroups.find(g=>g.id===expected.id);
-        if(!actual||actual.name!==expected.name||actual.color!==expected.color)
+        if(!actual||actual.name!==expected.name||actual.color!==expected.color||(actual.mawangContent||'')!==expected.mawangContent)
           throw new Error('그룹 정의가 서버에 반영되지 않았습니다.');
       }
       // A deleted group must also be absent from the core.
@@ -449,6 +450,7 @@
     const chosen=find(manager?.value);
     if($('calendarGroupRenameV2'))$('calendarGroupRenameV2').value=chosen?.name||'';
     if($('calendarGroupRecolorV2'))$('calendarGroupRecolorV2').value=chosen?.color||'#0f8c95';
+    if($('calendarGroupMawangLinkV2'))$('calendarGroupMawangLinkV2').value=chosen?.mawangContent||'';
     updateSelectionUI();
     renderGroupSearch('panel',false);
     renderGroupSearch('manager',false);
@@ -459,6 +461,7 @@
     const box=$('calendarGroupManagerPanelV4'),button=$('calendarGroupManageToggleV4');
     if(box)box.hidden=true;
     if(button)button.setAttribute('aria-expanded','false');
+    root.dispatchEvent(new Event('mws:calendar-group-layout-v2'));
   }
   function toggleManager(){
     const box=$('calendarGroupManagerPanelV4'),button=$('calendarGroupManageToggleV4');
@@ -469,6 +472,7 @@
       finish();
     }
     box.hidden=!opening;
+    root.dispatchEvent(new Event('mws:calendar-group-layout-v2'));
     if(button)button.setAttribute('aria-expanded',opening?'true':'false');
     if(opening){
       redrawSelects();
@@ -542,6 +546,7 @@
       toast('콘텐츠 그룹','같은 이름의 다른 그룹이 있습니다');return;
     }
     group.name=name;group.color=safeColor($('calendarGroupRecolorV2')?.value);
+    if($('calendarGroupMawangLinkV2')){const link=$('calendarGroupMawangLinkV2').value;if(['bsandong','none'].includes(link))group.mawangContent=link;else delete group.mawangContent;}
     const saved=await persistGroupChange('콘텐츠 그룹 이름·색상 변경');
     redrawSelects(undefined,group.id);
     if(saved)toast('콘텐츠 그룹',name+' 그룹 수정 및 온라인 저장 완료');
@@ -559,8 +564,50 @@
     redrawSelects(undefined,'');
     if(saved)toast('콘텐츠 그룹','그룹 정의와 연결 해제 온라인 저장 완료. 일정은 유지됩니다');
   }
+
+  const bulkSelection=new Set();
+  let bulkRows=[],bulkTargetId='',bulkBusy=false;
+  function bulkTarget(){return groups().find(g=>g.mawangContent==='bsandong'&&g.id===bulkTargetId)||groups().find(g=>g.mawangContent==='bsandong')||groups().find(g=>g.mawangContent!=='none'&&String(g.name).normalize('NFKC').replace(/\s+/g,'')==='브산동')||null}
+  function bulkStatus(){const target=bulkTarget(),status=$('calendarGroupBulkStatusV2'),apply=$('calendarGroupBulkApplyV2');if(status)status.textContent=bulkRows.length+'개 검색 · '+bulkSelection.size+'개 선택 · '+(target?'연결 대상: '+target.name:'연결 시 브산동 그룹 생성');if(apply)apply.disabled=bulkBusy||!bulkSelection.size||document.body.dataset.mwsMode!=='admin';}
+  function renderBulk(){
+    const box=$('calendarGroupBulkListV2');if(!box)return;
+    box.replaceChildren();
+    for(const e of bulkRows){
+      const group=find(e.contentGroupId),locked=Boolean(e.contentGroupId),row=document.createElement('label'),check=document.createElement('input'),body=document.createElement('span'),title=document.createElement('strong'),meta=document.createElement('small');
+      check.type='checkbox';check.checked=bulkSelection.has(String(e.id));check.disabled=locked||bulkBusy;
+      check.addEventListener('change',()=>{if(check.checked)bulkSelection.add(String(e.id));else bulkSelection.delete(String(e.id));bulkStatus()});
+      title.textContent=String(e.date||'')+' · '+String(e.title||'');
+      meta.textContent=(Array.isArray(e.participants)?new Set(e.participants).size:0)+'명 등록'+(locked?' · '+(group?.name||'기존 그룹')+' 연결됨':'');
+      body.append(title,meta);row.append(check,body);box.append(row);
+    }bulkStatus();
+  }
+  function previewBulk(){
+    const query=String($('calendarGroupBulkSearchV2')?.value||'').normalize('NFKC').replace(/\s+/g,'').toLowerCase();bulkSelection.clear();
+    const chosen=selectedManagedGroup();bulkTargetId=chosen?.mawangContent==='bsandong'?chosen.id:'';
+    bulkRows=query?(data.events||[]).filter(e=>e?.id&&!e.restDay&&!e.cancelled&&!e.canceled&&!['cancelled','canceled'].includes(e.status)&&String(e.title||'').normalize('NFKC').replace(/\s+/g,'').toLowerCase().includes(query)).sort((a,b)=>String(b.date).localeCompare(String(a.date))):[];
+    // Do not silently select a broad search. User explicitly chooses all or individual rows.
+    renderBulk();
+  }
+  function toggleBulkAll(){const eligible=bulkRows.filter(e=>!e.contentGroupId).map(e=>String(e.id));const all=eligible.every(id=>bulkSelection.has(id));bulkSelection.clear();if(!all)for(const id of eligible)bulkSelection.add(id);renderBulk()}
+  async function applyBulk(){
+    if(bulkBusy||!bulkSelection.size||!canWriteGroup())return;
+    const rows=(data.events||[]).filter(e=>bulkSelection.has(String(e.id))&&!e.contentGroupId&&!e.restDay);
+    if(!rows.length){previewBulk();return}
+    let target=bulkTarget();
+    if(!target&&groups().some(g=>String(g.name).trim()==='브산동')){toast('콘텐츠 그룹','브산동 그룹의 연동 설정을 먼저 확인해 주세요.');return}
+    if(!confirm(rows.length+'개 일정을 '+(target?target.name:'새 브산동')+' 그룹에 연결하시겠습니까?'))return;
+    if(!target){target=createGroup('브산동','#06b6d4');if(!target)return;target.mawangContent='bsandong'}
+    bulkBusy=true;const ids=rows.map(e=>String(e.id));for(const e of rows)e.contentGroupId=target.id;
+    renderBulk();
+    try{const saved=await persistGroupChange('브산동 기존 일정 일괄 연결',ids);redrawSelects(undefined,target.id);previewBulk();if(saved)toast('브산동',ids.length+'개 일정 온라인 연결 완료')}finally{bulkBusy=false;bulkStatus()}
+  }
+
   function init(){
     const toggleBtn=$('calendarGroupToggleV2');if(!toggleBtn)return;
+    $('calendarGroupBulkPreviewV2')?.addEventListener('click',previewBulk);
+    $('calendarGroupBulkAllV2')?.addEventListener('click',toggleBulkAll);
+    $('calendarGroupBulkApplyV2')?.addEventListener('click',applyBulk);
+    $('calendarGroupBulkV2')?.addEventListener('toggle',e=>{if(e.target.open)previewBulk()});
     bindGroupPicker('editor');
     bindGroupPicker('panel');
     bindGroupPicker('manager');
