@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {readFileSync,mkdtempSync,rmSync,statSync} from 'node:fs';
+import {readFileSync,mkdtempSync,rmSync,statSync,writeFileSync} from 'node:fs';
 import {createServer} from 'node:http';
 import {DatabaseSync} from 'node:sqlite';
 import {tmpdir} from 'node:os';
@@ -11,7 +11,7 @@ import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 
 // Real HTML, browser scripts and Worker route chain; all data and upstream
 // responses are synthetic. Neither Cloudflare nor SOOP is contacted.
-const root=fileURLToPath(new URL('../',import.meta.url));
+const root=process.env.MWS_QA_SOURCE_ROOT?path.resolve(process.env.MWS_QA_SOURCE_ROOT):fileURLToPath(new URL('../',import.meta.url));
 const config=JSON.parse(readFileSync(path.join(root,'wrangler.jsonc'),'utf8'));
 const db=new DatabaseSync(':memory:');
 function statement(sql,args=[]){return{bind:(...args)=>statement(sql,args),first:async()=>db.prepare(sql).get(...args)||null,all:async()=>({results:db.prepare(sql).all(...args)}),run:async()=>{const r=db.prepare(sql).run(...args);return{success:true,meta:{changes:r.changes}}}}}
@@ -78,7 +78,7 @@ if(bsandongQA){
 }
 for(const [part,data] of Object.entries(parts))db.prepare("INSERT OR REPLACE INTO workspace_parts(scope,part,data,version) VALUES('public',?,?,1)").run(part,JSON.stringify(data));
 const workerFirst=p=>config.assets.run_worker_first.some(pattern=>pattern.endsWith('*')?p.startsWith(pattern.slice(0,-1)):p===pattern);
-let calls=[],errors=[],arrivals=[];
+let calls=[],errors=[],arrivals=[],assetReads=[];
 const csp="default-src 'self' data: blob: 'unsafe-inline' 'unsafe-eval'; connect-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; frame-src 'self' data: blob:; worker-src 'self' blob:; object-src 'none'";
 const server=createServer(async(req,res)=>{
  try{
@@ -88,6 +88,7 @@ const server=createServer(async(req,res)=>{
   if(firstPaintQA&&u.pathname==='/assets/calendar-details-v1.css')await new Promise(r=>setTimeout(r,400));
   if(firstPaintQA&&u.pathname==='/api/calendar-startup')await new Promise(r=>setTimeout(r,350));
   const request=new Request(u,{method,headers:req.headers,...(!['GET','HEAD'].includes(method)?{body:Buffer.concat(body)}:{})});
+  if(/\.css$/.test(u.pathname)&&method==='GET')assetReads.push(u.pathname);
   const counted=workerFirst(u.pathname);if(counted)arrivals.push({path:u.pathname,method,at:Date.now()});
   const response=await (counted?worker.fetch(request,env,ctx):ASSETS.fetch(request));
   if(counted)calls.push({path:u.pathname,method,status:response.status,...(u.pathname==='/api/save'&&method==='POST'?{parts:Object.keys(JSON.parse(Buffer.concat(body).toString()).parts||{})}:{})});
@@ -107,8 +108,9 @@ try{
  if(useCdn){await new Promise(r=>cdnServer.listen(0,'127.0.0.1',r));cdnOrigin=base+':'+cdnServer.address().port;env.MWS_PUBLIC_MEDIA_CDN_ORIGIN=cdnOrigin}
  await new Promise(r=>server.listen(0,'127.0.0.1',r));browser=await launchCalendarBrowser(dir);
 
- const viewport=firstPaintQA&&process.env.MWS_QA_FIRST_PAINT_WIDE==='1'?[1920,1080]:[1366,768];
- await browser.navigate(base+':'+server.address().port+'/',...viewport);
+ const compareMode=process.env.MWS_QA_CSS_COMPARE==='1';
+ const viewport=compareMode?String(process.env.MWS_QA_VIEWPORT||'1366,768').split(',').map(Number):firstPaintQA&&process.env.MWS_QA_FIRST_PAINT_WIDE==='1'?[1920,1080]:[1366,768];
+ await browser.navigate(base+':'+server.address().port+'/',...viewport,compareMode&&viewport[0]<761);
  await until(()=>browser.evaluate("(()=>{document.querySelector('#mwsAnnouncementDialog[open] .mws-notice-close')?.click();if(document.body.classList.contains('mws-gated')){document.querySelector('#mwsModePublic')?.click();document.querySelector('#mwsLoginSubmit')?.click()}return !!window.__mwsAppReadyV130&&document.body.dataset.mwsMode==='public'&&!document.body.classList.contains('mws-gated')&&!document.body.classList.contains('mws-app-loading')})()"),'Full app public readiness');
  await until(()=>browser.evaluate('!!window.__mwsMediaPreloadPromiseV1'),'Media preloader scheduled');
  await browser.evaluate('window.__mwsMediaPreloadPromiseV1.then(()=>true)');
@@ -126,7 +128,37 @@ try{
  const routes=['calendar','contacts','dashboard','memos','careerTimeline','achievements','mawangArchive','gameLadder','gameMultiDraw','contentPlanner','toolTier','toolMatrix','toolRelations','settings','calendar'];
  const nav=async list=>browser.evaluate('(async()=>{for(const id of '+JSON.stringify(list)+'){window.setTab(id);await new Promise(r=>setTimeout(r,450));if(!document.getElementById(id)?.classList.contains("active"))throw Error("route "+id)}return true})()');
  let before=calls.length;
- if(firstPaintQA){
+ if(compareMode){
+  const snapshots=[];
+  const selectors=['.app','.app>.sidebar','.app>.main','.nav-scroll','.nav button.active','.nav button.active .nav-icon','.nav button.active .nav-label','.sidebar .logo','#pageTextScaleControlV54','.topbar','#pageTitle','#calendar .calendar-topbar-v4','#calendarYearSelect','#calendarMonthSelect','#calendarGrid','#calendarGrid .day','#calendarGrid .mini-event','#calendarGroupToggleV2','#calendarGroupManageToggleV4','#calendarCopyTray','#calendarGroupManagerPanelV4','#calendarGroupMawangLinkV2','#contacts .contact-grid','#contacts .contact-card','#bsandong .bs-tabs','#bsandong .bs-summary','#gameF1Racing','#wardogs','#achievements','#careerTimeline','.section.active','.section.active button','.section.active select'];
+  const take=async label=>{
+   await pause(250);
+   const data=await browser.evaluate('('+function(sel){
+    const out={};const props=['display','visibility','position','boxSizing','gridTemplateColumns','gridTemplateRows','flexDirection','alignItems','justifyContent','overflowX','overflowY','paddingTop','paddingRight','paddingBottom','paddingLeft','marginTop','marginRight','marginBottom','marginLeft','gap','fontSize','fontWeight','lineHeight','borderRadius','borderTopWidth','borderTopColor','backgroundColor','color','boxShadow','opacity','minWidth','maxWidth','minHeight','maxHeight','transitionProperty','transitionDuration'];
+    for(const s of sel){const e=document.querySelector(s);if(!e)continue;const c=getComputedStyle(e),r=e.getBoundingClientRect();out[s]={rect:[r.x,r.y,r.width,r.height].map(n=>Math.round(n*10)/10),css:Object.fromEntries(props.map(p=>[p,c[p]]))}}
+    return out
+   }.toString()+')('+JSON.stringify(selectors)+')');
+   snapshots.push({label,data});
+  };
+  await nav(['calendar']);await take('calendar-default');
+  if(viewport[0]>=761){
+   await browser.movePoint(500,300);
+   await browser.evaluate("(()=>{if(document.body.classList.contains('sidebar-pinned'))document.getElementById('sidebarPinBtn').click()})()");await take('calendar-rail');
+   await browser.movePoint(30,320);await take('calendar-expanded');
+   await browser.movePoint(500,300);await pause(250);
+   await browser.evaluate("(()=>{if(!document.body.classList.contains('sidebar-pinned'))document.getElementById('sidebarPinBtn').click()})()");await pause(250);
+   await browser.evaluate("document.getElementById('calendarGroupManageToggleV4').click()");await take('calendar-group-manager');
+   await browser.evaluate("document.getElementById('calendarGroupManageToggleV4').click()");
+   await browser.evaluate("document.getElementById('calendarCopyTrayToggleV4').click()");await take('calendar-copy-tray');
+   await browser.evaluate("document.getElementById('calendarCopyTrayCloseV4').click()");
+  }
+  for(const route of ['contacts','bsandong','wardogs','achievements','careerTimeline','gameF1Racing','gameLadder','posts','calendar']){await nav([route]);await take(route)}
+  await browser.evaluate("document.body.dataset.theme='light'");await take('calendar-light');
+  await browser.evaluate("document.body.dataset.theme='neon';window.applyTextScale?.(125,false)");await take('calendar-scale125');
+  const result={viewport,snapshots,startup:summary(startup),styles:[...new Set(assetReads)],api:summary(calls.filter(r=>r.path.startsWith('/api/'))),errors};
+  assert.equal(errors.length,0,JSON.stringify(errors));
+  const output=process.env.MWS_QA_COMPARE_OUTPUT;assert(output);writeFileSync(output,JSON.stringify(result,null,2));console.log('CSS_COMPARE_CAPTURE '+JSON.stringify({viewport,states:snapshots.length,styles:result.styles.length,api:result.api}));
+ }else if(firstPaintQA){
   const verify=async phase=>{
    const frames=await browser.evaluate('window.qaPaintFrames.slice()');
    const pending=frames.filter(f=>!f.ready),ready=frames.filter(f=>f.ready);

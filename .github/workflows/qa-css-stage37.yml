@@ -1,0 +1,94 @@
+name: CSS and startup stage 3–7 regression
+on:
+  push:
+    branches:
+      - 'refactor/css-runtime-stage3-7-20261126'
+    paths:
+      - 'scripts/cleanup-css-stage37.mjs'
+      - 'scripts/compare-css-stage37.mjs'
+      - 'scripts/qa-request-budget-full-app-v2-browser.mjs'
+      - '.github/workflows/qa-css-stage37.yml'
+permissions:
+  contents: write
+env:
+  MWS_QA_OFFLINE: '1'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Generate conservative source cleanup and F1 bundle
+        run: |
+          node scripts/cleanup-css-stage37.mjs
+          node --check assets/sidebar-hover-v2.js
+          node --check assets/cf-static-cloud-core-v1.js
+          node --check assets/post-login-runtime-v130.js
+          node --check scripts/qa-request-budget-full-app-v2-browser.mjs
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets index.html docs/css-stage37
+          git commit -m "Generate conservative CSS cleanup and consolidated F1 stylesheet"
+          git push origin HEAD:refs/heads/refactor/css-runtime-stage3-7-20261126
+      - name: Save candidate revision
+        id: head
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+    outputs:
+      sha: ${{ steps.head.outputs.sha }}
+  compare:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        viewport: ['1366,768', '1920,1080', '2560,1440', '390,844']
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.build.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Compare actual app in offline browser
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        env:
+          MWS_QA_VIEWPORT: ${{ matrix.viewport }}
+        run: |
+          git worktree add --detach /tmp/mws-baseline bfe8529df667a5b6b4b731ff999fc1711068a850
+          MWS_QA_CSS_COMPARE=1 MWS_QA_SOURCE_ROOT=/tmp/mws-baseline MWS_QA_COMPARE_OUTPUT=/tmp/baseline.json node scripts/qa-request-budget-full-app-v2-browser.mjs
+          MWS_QA_CSS_COMPARE=1 MWS_QA_COMPARE_OUTPUT=/tmp/candidate.json node scripts/qa-request-budget-full-app-v2-browser.mjs
+          node scripts/compare-css-stage37.mjs /tmp/baseline.json /tmp/candidate.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: css-compare-${{ strategy.job-index }}
+          path: |
+            /tmp/baseline.json
+            /tmp/candidate.json
+  regression:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.build.outputs.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Real app first paint, sidebar, group save and Request budgets
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: |
+          MWS_QA_FIRST_PAINT=1 node scripts/qa-request-budget-full-app-v2-browser.mjs
+          MWS_QA_FIRST_PAINT=1 MWS_QA_FIRST_PAINT_WIDE=1 node scripts/qa-request-budget-full-app-v2-browser.mjs
+          MWS_QA_SIDEBAR_HOVER=1 node scripts/qa-request-budget-full-app-v2-browser.mjs
+          MWS_QA_BSANDONG=1 MWS_QA_IDLE_MODE=public node scripts/qa-request-budget-full-app-v2-browser.mjs
+          MWS_QA_BSANDONG=1 MWS_QA_IDLE_MODE=admin node scripts/qa-request-budget-full-app-v2-browser.mjs
+          node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs scripts/qa-active-cloudflare-core-groups-v1.test.mjs scripts/qa-bsandong-v1.test.mjs

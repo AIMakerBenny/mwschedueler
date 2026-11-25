@@ -112,6 +112,14 @@ async function start(){
     load('contact-runtime-v130','/assets/contact-runtime-v130.js?v=1.3.0-search86&contactgroup178=1&modalmotionv2=1&sidebar-stable=1&request-budget=1','__mwsContactRuntimeV130')
   ]).then(recordOptionalResults).catch(()=>{});
 
+
+  // Download the already-required shell CSS during device JS loading, without
+  // applying it early or changing its cascade order. Exact URLs are reused.
+  for(const href of ['/assets/mobile-drawer-v130.css?v=1.6.21-navfix1','/assets/workspace-ui-v176.css?v=1.6.21-workspace176&workspace-nav-v1=1&contact-frequency=1']){
+    if(document.querySelector('link[href="'+href+'"]'))continue;
+    const link=document.createElement('link');link.rel='preload';link.as='style';link.href=href;link.dataset.mwsShellPreload='1';document.head.appendChild(link);
+  }
+
   // Keep the primary device shell ordered first, but cap the wait.
   const deviceUiResult=await load('device-ui','/assets/device-ui.js?v=1.3.0-perf87-mobile-layout-v2');
 
