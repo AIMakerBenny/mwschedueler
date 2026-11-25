@@ -7,6 +7,10 @@ on:
       - 'scripts/run-phase401-f1-skill-audit.mjs'
       - 'scripts/migrate-f1-style-audits.mjs'
       - 'scripts/run-recovery-*-f1-*-audit.mjs'
+      - 'scripts/qa-live-cloud-save-contract-v1.test.mjs'
+      - 'scripts/qa-game-library-v1.test.mjs'
+      - 'scripts/qa-request-budget-regressions-v1.test.mjs'
+      - 'scripts/qa-ui-audit-v2-browser.mjs'
       - 'scripts/cleanup-css-stage37.mjs'
       - 'scripts/compare-css-stage37.mjs'
       - 'scripts/qa-request-budget-full-app-v2-browser.mjs'
@@ -126,3 +130,16 @@ jobs:
           MWS_QA_ADMIN_BATCH=1 MWS_QA_SOURCE_ROOT=/tmp/mws-baseline MWS_QA_COMPARE_OUTPUT=/tmp/admin-before.json node scripts/qa-request-budget-full-app-v2-browser.mjs
           MWS_QA_ADMIN_BATCH=1 MWS_QA_ADMIN_EXPECT_MAX=1 MWS_QA_COMPARE_OUTPUT=/tmp/admin-after.json node scripts/qa-request-budget-full-app-v2-browser.mjs
           node --input-type=module -e 'import fs from "node:fs";import assert from "node:assert/strict";const b=JSON.parse(fs.readFileSync("/tmp/admin-before.json")),a=JSON.parse(fs.readFileSync("/tmp/admin-after.json"));assert.deepEqual(a.result,b.result);assert(a.partRequests<=b.partRequests);console.log("ADMIN_BATCH_COMPARE "+JSON.stringify({before:b.partRequests,after:a.partRequests,result:a.result}))'
+  compatibility-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify updated contracts and actual sidebar runtime fixture
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: |
+          node --test scripts/qa-live-cloud-save-contract-v1.test.mjs scripts/qa-game-library-v1.test.mjs scripts/qa-request-budget-regressions-v1.test.mjs
+          node scripts/qa-ui-audit-v2-browser.mjs

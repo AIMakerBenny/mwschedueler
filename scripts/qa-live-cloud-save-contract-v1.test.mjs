@@ -156,7 +156,8 @@ for(const path of clientPaths){
    h.ctx.window.mwsRenderCalendarFirstV1=()=>assert.fail('partial calendar must not render');
    h.ctx.normalizeAndRender=(reason,startup)=>{if(startup){commits++;assert.equal(h.ctx.data.events[0].favoriteFolderId,'f1');assert.equal(h.ctx.data.notebook.favoriteFolders[0].id,'f1')}};
    const pending=h.ctx.hydrate(mode);await new Promise(r=>setImmediate(r));
-   assert.deepEqual(calls.slice().sort(),Array.from(initial).filter(p=>!batchParts[p]).sort());assert.equal(commits,0);assert.equal(h.ctx.window.__mwsAppReadyV130,false);assert.equal(h.writes.length,0);
+   const concurrent=mode==='admin'&&path==='assets/cloud-v1.1.js'?required:Array.from(initial);
+   assert.deepEqual(calls.slice().sort(),concurrent.filter(p=>!batchParts[p]).sort());assert.equal(commits,0);assert.equal(h.ctx.window.__mwsAppReadyV130,false);assert.equal(h.writes.length,0);
    release();await pending;assert.equal(commits,1);assert.deepEqual(calls.slice().sort(),required.filter(p=>!batchParts[p]).sort());
    assert.deepEqual([...h.ctx.loadedParts].sort(),[...(mode==='admin'?Object.keys(remote):initial)].sort());
    if(mode==='public'){

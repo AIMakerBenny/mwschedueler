@@ -37,7 +37,7 @@ const bootstrap='let data={textScale:100};'+pageScale+
 const fixture='<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+
   '<style>'+css+'\n@media(min-width:1101px){.main>.topbar{height:48px!important;min-height:48px!important;max-height:48px!important}}'+'</style><body class="mws-premium" data-theme="neon" data-resolution="fhd" data-mws-mode="admin">'+
   '<div class="app">'+aside+'<main class="main">'+header+dashboard+moreSections+'</main></div>'+
-  '<script>'+bootstrap+'</script></body>';
+  '<script>'+bootstrap+'</script><script>'+read('assets/sidebar-hover-v2.js')+'</script></body>';
 const dir=mkdtempSync(path.join(os.tmpdir(),'mws-ui-audit-v2-'));
 let browser;
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));

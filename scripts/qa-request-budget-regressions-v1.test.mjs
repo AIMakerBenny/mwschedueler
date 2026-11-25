@@ -43,7 +43,7 @@ test('achievement startup migration verifies only legacy local blobs, retains re
  }}};return tx}};
  const window={indexedDB:true,mwsGetAchievementCardsV1621:()=>[{frontImageId:'confirmed'},{frontImageId:'old'},{frontImageId:'remote'}],dispatchEvent(){},addEventListener(){}};
  const fetch=async(url,init={})=>{if(url==='/api/auth/session'){stats.session++;return{ok:true,json:async()=>({authenticated:true})}}if(init.method==='HEAD'){stats.head++;return{ok:true}}if(init.method==='PUT'){stats.put++;return{ok:true,json:async()=>({ok:true})}}stats.get++;return{ok:true,blob:async()=>blob}};
- vm.runInNewContext(read('assets/achievement-media-v1621.js'),{window,indexedDB:{open(){const req={result:db};queueMicrotask(()=>req.onsuccess());return req}},Blob,fetch,setTimeout:()=>0,Event,CustomEvent:class{},console,document:{body:{dataset:{mwsMode:'admin'}}},crypto});
+ vm.runInNewContext(read('assets/achievement-media-v1621.js'),{window,indexedDB:{open(){const req={result:db};queueMicrotask(()=>req.onsuccess());return req}},Blob,fetch,setTimeout:()=>0,Event,CustomEvent:class{},console,document:{body:{dataset:{mwsMode:'admin'}},querySelector:()=>null},crypto});
  const api=window.mwsAchievementMediaV1;
  store.set('confirmed',{id:'confirmed',blob,cloudConfirmed:true,updatedAt:'old'});store.set('old',{id:'old',blob,updatedAt:'old'});
  await api.syncReferencedToCloud({localOnly:true});assert.equal(stats.head,1);assert.equal(stats.session,1);assert.equal(store.get('old').cloudConfirmed,true);
