@@ -3,6 +3,7 @@
   if(window.__mwsAnnouncementCarouselV1)return;
   window.__mwsAnnouncementCarouselV1=true;
   const announcements=[
+    {src:'assets/announcements/20261126-bis.webp',title:'마 왕 검은 남작의 단망토 획득 및 BiS 전체 수집 완료',width:1401,height:1123},
     {src:'assets/announcements/20261121-mount.webp',title:'마 왕 첫 스트리머 천골마 획득 성공'},
     {src:'assets/announcements/20261121-expedition.webp',title:'성검 원정대 달렌드의 성검 획득 성공'},
     {src:'assets/announcements/20261121-warrior.webp',title:'같이와포하자 길드 최초 만렙 분노 전사 마 왕'},
@@ -43,7 +44,7 @@
     let index=0,drag=null;
     for(const [i,notice] of announcements.entries()){
       const slide=document.createElement('figure');slide.className='mws-notice-slide';
-      const img=document.createElement('img');img.src=notice.src;img.alt=notice.title;img.width=1448;img.height=1086;
+      const img=document.createElement('img');img.src=notice.src;img.alt=notice.title;img.width=notice.width||1448;img.height=notice.height||1086;
       img.draggable=false;img.decoding='async';img.fetchPriority=i===0?'high':'low';slide.append(img);track.append(slide);slides.push(slide);
       const dot=document.createElement('button');dot.type='button';dot.className='mws-notice-dot';dot.setAttribute('aria-label',`${i+1}번 공지: ${notice.title}`);
       dot.addEventListener('click',()=>go(i));pagination.append(dot);dots.push(dot);
