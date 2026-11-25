@@ -27,7 +27,9 @@ jobs:
         run: |
           if test ! -f assets/f1-racing-bundle-v1.css; then node scripts/cleanup-css-stage37.mjs; fi
           if test ! -f docs/css-stage37/shadow-layout.json; then node scripts/cleanup-css-stage37.mjs --shadow-layout; fi
+          node scripts/build-f1-css-bundle.mjs
           node scripts/build-f1-css-bundle.mjs --check
+          node scripts/migrate-f1-style-audits.mjs
           node scripts/build-cf-static-runtime.mjs --check
           node --check assets/sidebar-hover-v2.js
           node --check assets/cf-static-cloud-core-v1.js
@@ -35,7 +37,7 @@ jobs:
           node --check scripts/qa-request-budget-full-app-v2-browser.mjs
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add assets index.html docs/css-stage37
+          git add assets index.html docs/css-stage37 scripts/run-phase*-f1-*-audit.mjs
           if ! git diff --cached --quiet; then
             git commit -m "Consolidate shadowed sidebar and calendar layout declarations"
             git push origin HEAD:refs/heads/refactor/css-runtime-stage3-7-20261126
@@ -101,6 +103,7 @@ jobs:
           node scripts/qa-calendar-month-viewport-v2-browser.mjs
           node scripts/qa-bsandong-v1-browser.mjs
           node scripts/qa-workspace-navigation-v1-browser.mjs
+          node scripts/run-current-full-integration-audit.mjs
   admin-batch:
     needs: build
     runs-on: ubuntu-latest

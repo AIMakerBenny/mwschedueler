@@ -109,6 +109,7 @@ try{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));browser=await launchCalendarBrowser(dir);
 
  const compareMode=process.env.MWS_QA_CSS_COMPARE==='1';
+ if(compareMode)await browser.setReducedMotion(true);
  const viewport=compareMode?String(process.env.MWS_QA_VIEWPORT||'1366,768').split(',').map(Number):firstPaintQA&&process.env.MWS_QA_FIRST_PAINT_WIDE==='1'?[1920,1080]:[1366,768];
  await browser.navigate(base+':'+server.address().port+'/',...viewport,compareMode&&viewport[0]<761);
  await until(()=>browser.evaluate("(()=>{document.querySelector('#mwsAnnouncementDialog[open] .mws-notice-close')?.click();if(document.body.classList.contains('mws-gated')){document.querySelector('#mwsModePublic')?.click();document.querySelector('#mwsLoginSubmit')?.click()}return !!window.__mwsAppReadyV130&&document.body.dataset.mwsMode==='public'&&!document.body.classList.contains('mws-gated')&&!document.body.classList.contains('mws-app-loading')})()"),'Full app public readiness');
