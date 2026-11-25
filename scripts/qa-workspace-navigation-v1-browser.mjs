@@ -25,7 +25,7 @@ const setup=()=>{
   document.querySelectorAll('.nav button[data-tab]').forEach(b=>b.onclick=()=>window.setTab(b.dataset.tab));
   // Simulate legacy notebook ordering; runtime must repair it.
   const memo=document.querySelector('[data-tab="memos"]');
-  const mini=document.querySelector('.nav-game-divider');
+  const mini=document.querySelector('[data-mws-nav-group="games"]');
   document.querySelector('[data-tab="posts"]').after(memo);
   mini.before(document.querySelector('[data-tab="gameMajoku"]'));
 };
@@ -37,9 +37,12 @@ const test=()=>{
   const clickContact=id=>q('.section.active [data-contact-view-v176="'+id+'"]').click();
   const visible=e=>getComputedStyle(e).display!=='none';
   try{
-    const mini=q('.nav-game-divider:not(#mwsToolsDivider)'),tools=q('#mwsToolsDivider');
+    const mini=q('[data-mws-nav-group="games"]'),tools=q('#mwsToolsDivider'),content=q('[data-mws-nav-group="mawangContent"]');
     check(mini.getAttribute('aria-expanded')==='false'&&tools.getAttribute('aria-expanded')==='false','New sidebar groups must start collapsed');
     check(!visible(tab('gameMajoku'))&&!visible(tab('contentPlanner')),'Collapsed groups still show items');
+    check(content.getAttribute('aria-expanded')==='false'&&!visible(tab('bsandong'))&&!visible(tab('wardogs')),'Content group default collapse');
+    content.click();check(visible(tab('bsandong'))&&visible(tab('wardogs'))&&!visible(tab('gameMajoku'))&&!visible(tab('contentPlanner')),'Content group affects other groups');
+    content.click();check(!visible(tab('bsandong'))&&!visible(tab('wardogs')),'Content group collapse');
     const precedes=(a,b)=>Boolean(a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING);
     check(tab('careerTimeline').nextElementSibling===tab('mawangArchive')&&tab('mawangArchive').nextElementSibling===tab('achievements')&&precedes(tab('achievements'),mini),'Timeline, archive and achievements must remain outside mini-games');
     check(tab('gameMultiDraw').nextElementSibling===tab('gameMajoku'),'Chat game must follow Gacha');

@@ -54,7 +54,13 @@ const contacts=Array.from({length:scale||200},(_,i)=>{const id='qa'+i,token=Stri
 const achievementCards=Array.from({length:scale?({100:50,300:100,500:300,1000:300}[scale]):26},(_,i)=>{const id='card'+i,frontImageId='image'+i;objects.set('achievements/'+frontImageId,true);return{id,frontImageId,order:i,gameName:'Fixture',contentName:'Card '+i,description:'Fixture only'}});
 const day=new Date(Date.now()+9*3600000).toISOString().slice(0,10);
 const fixturePosts=scale?Array.from({length:scalePosts},(_,i)=>({id:'scale-post-'+i,name:'Fixture post '+i,nameManual:true,bjId:'host'+i,postNo:String(i+100),url:'https://www.sooplive.com/station/host'+i+'/post/'+(i+100),lastSyncAt:new Date().toISOString(),comments:Array.from({length:20},(_,j)=>({id:'p'+i+'-c'+j,commentNo:String(j+1),userId:'qa'+((i*20+j)%scale),name:'Fixture '+((i*20+j)%scale),comment:'Synthetic applicant',regDate:'2026-11-20T00:00:00Z',status:'pending'}))})):[];
+const bsandongQA=process.env.MWS_QA_BSANDONG==='1';
 const parts={core:{version:52,categories:[],timezones:[],contentGroups:[],gameLibrary:[],achievementCards,contentApplications:[]},events:[{id:'fixture-event',title:'Fixture event',date:day,start:'12:00',end:'13:00',participants:['qa0'],checklist:[]}],contacts,contactMeta:{contactTags:[],contactTagBanners:{},emoticons:[]},activity:{collaborations:[],todayPeopleByDate:{},todayPeopleManualByDate:{},targetList:[]},clipboard:{scheduleClipboard:[]},notebook:{memos:[],favoriteFolders:[]},posts:fixturePosts,miniGames:{},wardogs:{schemaVersion:1,cards:[]}};
+if(bsandongQA){
+ const prior=n=>new Date(Date.now()+9*3600000-n*86400000).toISOString().slice(0,10);
+ parts.core.categories.push({id:'qa-bsandong',name:'브산동',color:'#06b6d4'});
+ parts.events.push(...[[21,['qa0']],[14,['qa0','qa1']],[7,['qa1']]].map(([n,participants])=>({id:'bs-qa-'+n,date:prior(n),title:'Fixture walk '+n,categoryId:'qa-bsandong',start:'12:00',end:'13:00',participants,participantStatuses:Object.fromEntries(participants.map(id=>[id,'confirmed']))})));
+}
 for(const [part,data] of Object.entries(parts))db.prepare("INSERT OR REPLACE INTO workspace_parts(scope,part,data,version) VALUES('public',?,?,1)").run(part,JSON.stringify(data));
 const workerFirst=p=>config.assets.run_worker_first.some(pattern=>pattern.endsWith('*')?p.startsWith(pattern.slice(0,-1)):p===pattern);
 let calls=[],errors=[],arrivals=[];
@@ -98,7 +104,28 @@ try{
  const routes=['calendar','contacts','dashboard','memos','careerTimeline','achievements','mawangArchive','gameLadder','gameMultiDraw','contentPlanner','toolTier','toolMatrix','toolRelations','settings','calendar'];
  const nav=async list=>browser.evaluate('(async()=>{for(const id of '+JSON.stringify(list)+'){window.setTab(id);await new Promise(r=>setTimeout(r,450));if(!document.getElementById(id)?.classList.contains("active"))throw Error("route "+id)}return true})()');
  let before=calls.length;
- if(process.env.MWS_QA_V5_ATTRIBUTION==='1'){
+ if(bsandongQA){
+  const mode=process.env.MWS_QA_IDLE_MODE||'public';
+  if(mode==='admin'){
+   await browser.evaluate("document.querySelector('#mwsChangeModeBtn').click()");
+   await until(()=>browser.evaluate("document.querySelector('#mwsLoginForm').dataset.mode==='admin'"),'Admin login form');
+   await browser.evaluate("document.querySelector('#mwsLoginId').value='Majoku0216';document.querySelector('#mwsLoginPw').value='local-fixture-only';document.querySelector('#mwsLoginForm').requestSubmit()");
+   await until(()=>browser.evaluate("document.body.dataset.mwsMode==='admin'&&!document.body.classList.contains('mws-app-loading')&&!document.body.classList.contains('mws-gated')"),'Admin ready');await pause(2000);
+  }
+  await nav(['calendar']);await pause(500);
+  const offset=calls.length;
+  await browser.evaluate("(()=>{const g=document.querySelector('[data-mws-nav-group=mawangContent]');if(g.getAttribute('aria-expanded')==='false')g.click();document.querySelector('.nav button[data-tab=bsandong]').click();return true})()");
+  await until(()=>browser.evaluate("document.querySelector('#bsandong').classList.contains('active')&&document.querySelectorAll('.bs-session').length===3"),'Bsandong real app history');
+  await pause(700);
+  const initial=calls.slice(offset);assert.equal(initial.filter(r=>r.path.startsWith('/api/')).length,0,'Unexpected first-entry API request');
+  const warmOffset=calls.length;
+  const result=await browser.evaluate(`(()=>{const q=s=>document.querySelector(s);q('[data-bs-tab=members]').click();const rows=[...document.querySelectorAll('.bs-member')].map(e=>e.innerText);q('[data-bs-tab=stats]').click();q('[data-bs-field=person]').value='qa0';q('[data-bs-field=person]').dispatchEvent(new Event('change',{bubbles:true}));const rate=q('.bs-big').textContent;q('[data-bs-preset="30"]').click();q('[data-bs-tab=history]').click();return {rows,rate,history:document.querySelectorAll('.bs-session').length}})()`);
+  assert.equal(result.rows.length,2);assert.equal(result.rate,'67%');assert.equal(result.history,3);assert(result.rows.some(s=>s.includes('Fixture 0')&&s.includes('1회')),'Missed session missing');
+  await nav(['calendar','bsandong','calendar','bsandong']);await pause(700);
+  const warm=calls.slice(warmOffset);assert.equal(warm.filter(r=>r.path.startsWith('/api/')).length,0,'Warm interactions emitted API request');
+  assert.equal(errors.length,0,JSON.stringify(errors));
+  console.log('BSANDONG_REAL_APP_OK '+JSON.stringify({mode,initial:summary(initial),warm:summary(warm),rows:result.rows.length,rate:result.rate}));
+ }else if(process.env.MWS_QA_V5_ATTRIBUTION==='1'){
   const mode=process.env.MWS_QA_IDLE_MODE||'public';
   if(mode==='admin'){
    await browser.evaluate("document.querySelector('#mwsChangeModeBtn').click()");

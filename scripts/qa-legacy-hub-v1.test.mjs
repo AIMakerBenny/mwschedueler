@@ -5,18 +5,20 @@ import assert from 'node:assert/strict';
 
 const html=fs.readFileSync('index.html','utf8');
 const app=fs.readFileSync('assets/app-core.js','utf8');
-const ids=['wardogs','gameRps','gamePachinko'];
-const titles=['워독스 전쟁견들','가위바위보','경마'];
+const ids=['gameRps','gamePachinko'];
+const titles=['가위바위보','경마'];
 const sidebar=html.match(/<aside class="sidebar">[\s\S]*?<\/aside>/)[0];
 const hub=html.match(/<section id="legacy" class="section">[\s\S]*?<\/section>/)[0];
 test('legacy follows active minigames and directly precedes import/export',()=>{
-  const tabs=[...sidebar.matchAll(/<button data-tab="([^"]+)"/g)].map(m=>m[1]);
+  const tabs=[...sidebar.matchAll(/<button(?: type="button")? data-tab="([^"]+)"/g)].map(m=>m[1]);
   assert.equal(tabs.indexOf('legacy')+1,tabs.indexOf('export'));
   for(const id of ids)assert.ok(!tabs.includes(id));
   for(const id of ['gameMajoku','gameLadder','gameF1Racing','gameMultiDraw'])assert.ok(tabs.includes(id));
   assert.ok(!sidebar.includes('wardogs-content-divider-v116'));
+  assert.ok(tabs.indexOf('bsandong')>=0&&tabs.indexOf('wardogs')===tabs.indexOf('bsandong')+1&&tabs.indexOf('wardogs')<tabs.indexOf('gameLadder'));
+  assert.match(sidebar,/data-mws-nav-group="mawangContent"/);
 });
-test('three legacy buttons resolve to original sections, back button and stylesheet are installed',()=>{
+test('two legacy buttons resolve to original sections, back button and stylesheet are installed',()=>{
   assert.deepEqual([...hub.matchAll(/data-tab="([^"]+)" data-legacy-link-v1/g)].map(m=>m[1]),ids);
   for(const id of ids)assert.equal([...html.matchAll(new RegExp('<section id="'+id+'"','g'))].length,1);
   assert.match(html,/id="mwsLegacyBackV1"[^>]+data-tab="legacy" data-legacy-link-v1 hidden/);
@@ -26,8 +28,8 @@ test('three legacy buttons resolve to original sections, back button and stylesh
 test('real setTab implementation routes legacy buttons and returns without breaking regular tabs',()=>{
   const makeEl=(tab)=>({id:tab,dataset:{tab},active:false,hidden:true,classList:{toggle(_name,active){this.owner.active=active}}});
   const setup=tab=>{const el=makeEl(tab);el.classList.owner=el;return el};
-  const nav=['calendar','legacy','export'].map(setup);
-  const sections=['calendar','legacy',...ids,'export'].map(setup);
+  const nav=['calendar','legacy','export','wardogs','bsandong'].map(setup);
+  const sections=['calendar','legacy',...ids,'export','wardogs','bsandong'].map(setup);
   const back=setup('legacy'), links=[...ids.map(setup),back], title={textContent:''};
   const renders=[],tabEvents=[];
   const doc={
@@ -58,5 +60,7 @@ test('real setTab implementation routes legacy buttons and returns without break
   nav[2].onclick();
   assertActive('export','export','가져오기 / 내보내기',true);
   assert.equal(renders.at(-1),'백업 이미지 상태');
-  assert.deepEqual(tabEvents,['legacy','wardogs','legacy','gameRps','legacy','gamePachinko','legacy','calendar','export']);
+  nav[3].onclick();assertActive('wardogs','wardogs','워독스 전쟁견들',true);
+  nav[4].onclick();assertActive('bsandong','bsandong','브산동',true);
+  assert.deepEqual(tabEvents,['legacy','gameRps','legacy','gamePachinko','legacy','calendar','export','wardogs','bsandong']);
 });

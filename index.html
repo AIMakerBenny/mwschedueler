@@ -122,6 +122,7 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 <link rel="stylesheet" href="assets/mawang-premium-v1621.css?v=1.6.21-premium2-phase154">
 <link rel="stylesheet" href="assets/wardogs-v1.css?v=1.0.0-phase125-mobile129-portrait138-gallery136-aperture152-medicaperture165-classapertures166-unassigned168-framepreload169-consolidated170-all176">
 
+<link rel="stylesheet" href="assets/bsandong-v1.css?v=1">
 <link rel="stylesheet" href="assets/wardogs-intro-v1.css?v=1.0.0-phase118">
 <link rel="stylesheet" href="assets/wardogs-manager-v1.css?v=1.0.0-phase127-mobile129-frame140-frame144-aperture152-medicaperture165-classapertures166-unassigned168">
 <link rel="stylesheet" href="assets/career-timeline.css?v=18">
@@ -230,6 +231,9 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
         </button>
 
 
+        <div class="nav-game-divider" data-mws-nav-group="mawangContent" role="button" tabindex="0" aria-expanded="false"><span></span><em>마왕 컨텐츠</em><span></span></div>
+        <button type="button" data-tab="bsandong" title="브산동"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><path d="m5 21 6-10 3 4 3-2 5 8H5Z"/></svg></span><span class="nav-label">브산동</span></button>
+        <button type="button" data-tab="wardogs" title="워독스"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V6l8-3Z"/></svg></span><span class="nav-label">워독스</span></button>
         <div class="nav-game-divider" data-mws-nav-group="games" role="button" tabindex="0" aria-expanded="true"><span></span><em>미니게임</em><span></span></div>
         <button data-tab="gameLadder" title="사다리타기">
           <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M7 3v18M17 3v18M7 7h10M7 12h10M7 17h10"/></svg></span><span class="nav-label">사다리타기</span>
@@ -267,7 +271,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
     </div>
     <script>
     // Restore group visibility before first paint, independently of late tool runtimes.
-    (()=>{const nav=document.querySelector('.nav-scroll'),key='mws-sidebar-nav-groups-v2',groups={tools:['contentPlanner','toolTier','toolMatrix','toolRelations','memos'],games:['gameMajoku','gameLadder','gameRps','gameF1Racing','gamePachinko','gameMultiDraw']};let prefs={tools:false,games:false};try{const saved=JSON.parse(localStorage.getItem(key)||'null');for(const k of Object.keys(prefs))if(typeof saved?.[k]==='boolean')prefs[k]=saved[k]}catch(_){}for(const [group,tabs] of Object.entries(groups)){const divider=nav.querySelector('[data-mws-nav-group="'+group+'"]'),label=divider.querySelector('em').textContent;const apply=()=>{const open=prefs[group];divider.classList.toggle('collapsed',!open);divider.setAttribute('aria-expanded',String(open));divider.title=label+' '+(open?'접기':'펼치기');for(const tab of tabs)nav.querySelector('[data-tab="'+tab+'"]')?.classList.toggle('mws-nav-group-hidden',!open)};const toggle=()=>{prefs[group]=!prefs[group];try{localStorage.setItem(key,JSON.stringify(prefs))}catch(_){}apply()};divider.onclick=toggle;divider.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}};apply()}window.__mwsSidebarGroupsInitial=true;let pending=0;nav.addEventListener('click',e=>{const token=++pending,b=e.target.closest('button[data-tab]'),tab=b?.dataset.tab;if(tab==='memos'||!groups.tools.includes(tab))return;const ready=()=>tab==='contentPlanner'?typeof window.mwsOpenDrawingBoardV1==='function':typeof window.mwsCleanToolsActivate==='function';if(ready())return;e.preventDefault();e.stopImmediatePropagation();let tries=0;const retry=()=>{if(token!==pending)return;if(ready())b.click();else if(++tries<100)setTimeout(retry,100)};retry()},true)})();
+    (()=>{const nav=document.querySelector('.nav-scroll'),key='mws-sidebar-nav-groups-v2',groups={mawangContent:['bsandong','wardogs'],tools:['contentPlanner','toolTier','toolMatrix','toolRelations','memos'],games:['gameMajoku','gameLadder','gameRps','gameF1Racing','gamePachinko','gameMultiDraw']};let prefs={mawangContent:false,tools:false,games:false};try{const saved=JSON.parse(localStorage.getItem(key)||'null');for(const k of Object.keys(prefs))if(typeof saved?.[k]==='boolean')prefs[k]=saved[k]}catch(_){}for(const [group,tabs] of Object.entries(groups)){const divider=nav.querySelector('[data-mws-nav-group="'+group+'"]'),label=divider.querySelector('em').textContent;const apply=()=>{const open=prefs[group];divider.classList.toggle('collapsed',!open);divider.setAttribute('aria-expanded',String(open));divider.title=label+' '+(open?'접기':'펼치기');for(const tab of tabs)nav.querySelector('[data-tab="'+tab+'"]')?.classList.toggle('mws-nav-group-hidden',!open)};const toggle=()=>{prefs[group]=!prefs[group];try{localStorage.setItem(key,JSON.stringify(prefs))}catch(_){}apply()};divider.onclick=toggle;divider.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}};apply()}window.__mwsSidebarGroupsInitial=true;let pending=0;nav.addEventListener('click',e=>{const token=++pending,b=e.target.closest('button[data-tab]'),tab=b?.dataset.tab;if(tab==='memos'||!groups.tools.includes(tab))return;const ready=()=>tab==='contentPlanner'?typeof window.mwsOpenDrawingBoardV1==='function':typeof window.mwsCleanToolsActivate==='function';if(ready())return;e.preventDefault();e.stopImmediatePropagation();let tries=0;const retry=()=>{if(token!==pending)return;if(ready())b.click();else if(++tries<100)setTimeout(retry,100)};retry()},true)})();
     </script>
     <div id="pageTextScaleControlV54" class="page-text-control-v54" role="group" aria-label="글자 크기 조절" title="이 화면의 글자 크기 조절">
       <button type="button" class="ghost" onclick="adjustPageTextScaleV54(-5)" title="글자 작게" aria-label="글자 작게">A−</button>
@@ -1377,6 +1381,7 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
       </div>
     </section>
 
+    <section id="bsandong" class="section"><div class="bs-shell"><div class="bs-tabs" role="tablist" aria-label="브산동"><button type="button" role="tab" aria-selected="true" data-bs-tab="history">활동 기록</button><button type="button" role="tab" aria-selected="false" data-bs-tab="stats">참석 통계</button><button type="button" role="tab" aria-selected="false" data-bs-tab="members">회원 현황</button></div><div class="bs-filters"><div class="bs-dates" data-bs-dates><button type="button" data-bs-preset="0">전체</button><button type="button" data-bs-preset="30">30일</button><button type="button" data-bs-preset="90">90일</button><button type="button" data-bs-preset="365">1년</button><label>시작<input type="date" data-bs-field="from"></label><label>종료<input type="date" data-bs-field="to"></label></div><input type="search" data-bs-field="search" placeholder="활동 또는 참가자 검색" aria-label="활동 또는 참가자 검색"></div><div class="bs-summary" data-bs-summary></div><div data-bs-body></div></div></section>
     <section id="wardogs" class="section" data-wardogs-shell-v116="1">
       <div class="wardogs-shell-v117" data-wardogs-ui-v117="1">
         <div id="wardogsEntryV118" class="wardogs-entry-v118" hidden aria-hidden="true" role="status" aria-live="polite">
@@ -1961,11 +1966,6 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
     <h2>이전 기능</h2>
     <p>기존 기능을 선택하여 사용할 수 있습니다.</p>
     <div class="mws-legacy-grid-v1">
-      <button type="button" class="mws-legacy-link-v1" data-tab="wardogs" data-legacy-link-v1>
-        <span class="mws-legacy-icon-v1" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 20 6v5c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V6l8-3Z"/><path d="M8 12h8M12 8v8"/></svg></span>
-        <span class="mws-legacy-label-v1"><span class="mws-legacy-category-v1">컨텐츠</span><strong>워독스 전쟁견들</strong></span>
-        <svg class="mws-legacy-chevron-v1" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
-      </button>
       <button type="button" class="mws-legacy-link-v1" data-tab="gameRps" data-legacy-link-v1>
         <span class="mws-legacy-icon-v1" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 18c3-1 4-4 4-7V7m0 4 3-7m-3 7 6-5m-6 5 8-1M5 18c2 3 9 3 12-1 2-3 2-6 0-7"/></svg></span>
         <span class="mws-legacy-label-v1"><span class="mws-legacy-category-v1">미니게임</span><strong>가위바위보</strong></span>
@@ -2630,7 +2630,8 @@ body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider[data-mws-nav-gr
 <script src="assets/contact-frequency-v1.js?v=2"></script>
 <script src="assets/career-activities-data-v1.js?v=2"></script>
 <script src="assets/calendar-historical-v1.js?v=1"></script>
-<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=1&contactgroup178=1&modalmotionv2=2&ladderdefaults=1&future-only=1&post-layout-v3=1&career=1&clipboard-people=1&dashboardnav=3&ui-interactions=2&contentapplications=1&peopleview=2&contact-frequency=2&historical-calendar=1&mawang-archive=1&request-budget=12&request-v3-stage4=1&media-batch-v5=1&unified-media-v51=1"></script>
+<script src="assets/bsandong-v1.js?v=1"></script>
+<script src="assets/app-core.js?v=1.3.0-search115-wardogs116-backup126-datetime149-calendarsearch171-searchtab172-drag174-endquick175-workspace176-splitquick177-circular178-f1shell180-f1contacts181-f1persistD&f1grid321=1&contentgroupsv2=1&calendartoolbarv4=1&contactsearchinitials20261114=1&calendarclipboard20261116=1&legacyhubv1=1&loginreadyv2=1&calendartimelinev1=4&workspaceclean=1&eventdetails=5&calendarcardnames=0&charcoal=1&calendarvrbadge=1&hall-v2=1&calendarsearchv173=1&contactgroup178=1&modalmotionv2=2&ladderdefaults=1&future-only=1&post-layout-v3=1&career=1&clipboard-people=1&dashboardnav=3&ui-interactions=2&contentapplications=1&peopleview=2&contact-frequency=2&historical-calendar=1&mawang-archive=1&request-budget=12&request-v3-stage4=1&media-batch-v5=1&unified-media-v51=1&bsandong=1"></script>
 <script src="assets/calendar-content-groups-v2.js?v=7-save-contract-bulk&proof=1"></script>
 <script src="assets/event-sidebar-tabs-v5.js?v=1"></script>
 <script src="assets/calendar-move-guard-v4.js?v=1&quietmoves=1"></script>
