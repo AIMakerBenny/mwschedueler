@@ -143,8 +143,9 @@ try{
   assert.equal(await browser.evaluate("document.getElementById('calendarCopyTray').hidden"),false);
   await browser.evaluate("document.getElementById('calendarCopyTrayCloseV4').click()");
   assert.equal(await browser.evaluate("document.getElementById('calendarCopyTray').hidden"),true);
+  const previousOrigin=await browser.evaluate('performance.timeOrigin');
   await browser.reload(false);
-  await until(()=>browser.evaluate("!!window.__mwsAppReadyV130&&!document.body.classList.contains('mws-app-loading')"),'Reload ready');
+  await until(async()=>{try{return await browser.evaluate("performance.timeOrigin!=="+previousOrigin+"&&!!window.__mwsAppReadyV130&&!document.body.classList.contains('mws-app-loading')&&document.body.dataset.calendarStartup==='ready'&&window.qaPaintFrames?.filter(f=>f.ready).length>=5")}catch{return false}},'Reload ready');
   await pause(350);await verify('warm');
  }else if(process.env.MWS_QA_SIDEBAR_HOVER==='1'){
   const state=()=>browser.evaluate("(()=>{const s=document.querySelector('.app>.sidebar'),r=s.getBoundingClientRect(),m=document.querySelector('.main').getBoundingClientRect(),l=s.querySelector('[data-tab=calendar] .nav-label');return {expanded:s.classList.contains('mws-sidebar-expanded-v2'),left:r.left,right:r.right,width:r.width,top:r.top,mainLeft:m.left,label:getComputedStyle(l).visibility,pinned:document.body.classList.contains('sidebar-pinned')}})()");
