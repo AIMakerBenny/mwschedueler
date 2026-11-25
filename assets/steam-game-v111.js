@@ -290,7 +290,7 @@ function ensurePanel(){
         <button type="button" class="primary" id="eventGameSearchBtnV112">검색</button>
       </div>
       <div id="eventGameSearchStatusV112" class="mws-game-search-status-v112">게임 이름을 입력해 검색하세요.</div>
-      <div id="eventGameResultsV112" class="mws-game-results-v112"><div class="mws-game-search-empty-v112">검색 결과가 여기에 표시됩니다.</div></div>
+      <div id="eventGameResultsV112" class="mws-game-results-v112"></div>
     </div>
     
     <section class="mws-game-library-v1" aria-label="게임 라이브러리">
@@ -369,7 +369,7 @@ function renderSearchResults(items,message=''){
   if(!box)return;
   if(message){
     if(status)status.textContent=message;
-    box.innerHTML=`<div class="mws-game-search-empty-v112">${esc(message)}</div>`;
+    box.innerHTML='';
     return;
   }
   const games=(Array.isArray(items)?items:[]).map(normalizeGame).filter(Boolean);
@@ -488,6 +488,8 @@ function syncEditorPanel(force=false){
   }
 }
 
+window.mwsSyncEventGameEditorV7=()=>{syncEditorPanel(true);eventModalWasOpen=Boolean($('eventModal')?.classList.contains('open'));};
+
 function applyDraftFallback(beforeIds,editingId,serialized){
   const modal=$('eventModal');
   if(modal?.classList.contains('open'))return;
@@ -552,7 +554,7 @@ function openEditorAtGame(eventId){
     return;
   }
   setTimeout(()=>{
-    syncEditorPanel(true);
+    window.mwsSyncEventGameEditorV7();
     window.mwsEventSidebarTabsV5?.select('game');
     $('eventGameSearchV112')?.focus();
   },0);
