@@ -1,168 +1,186 @@
-/* Event editor V5: use left pane for compact content series and memo tabs. */
-#eventModal .event-sidebar-tabs-enabled-v5{
-  display:flex;
-  flex-direction:column;
-  gap:0;
-  overflow:hidden;
-  min-width:0;
-  padding:12px;
+/* Event editor: one layout owner, static two-pane shell, independently scrollable desktop panes. */
+#eventModal{padding:clamp(8px,1.4vw,24px);--editor-gap:clamp(12px,1.2vw,20px);--editor-control:calc(38px + 8px * (var(--ui-text-scale,1) - 1))}
+#eventModal .mws-event-editor-v6{
+ box-sizing:border-box;width:min(1440px,calc(100vw - 48px))!important;max-width:100%!important;
+ height:min(790px,calc(100dvh - 48px))!important;max-height:calc(100dvh - 48px)!important;
+ min-width:0!important;min-height:0!important;overflow:hidden!important;
+ display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:0;
+ padding:0!important;border-radius:20px!important;
+ background:var(--sidebar);box-shadow:0 22px 80px #0006;
+}
+#eventModal .mws-event-editor-v6 .event-modal-header{
+ margin:0!important;padding:12px 18px!important;position:static!important;display:flex;
+ align-items:center;gap:12px;border-bottom:1px solid var(--border);background:transparent!important;
+}
+#eventModal .event-modal-header h2{margin:0!important;font-size:calc(19px * var(--ui-text-scale,1));line-height:1.4;overflow-wrap:anywhere}
+#eventModal .mws-event-editor-v6 .event-modal-layout{
+ display:grid!important;grid-template-columns:minmax(0,3fr) minmax(0,2fr)!important;
+ gap:0!important;min-height:0!important;max-height:none!important;min-width:0!important;
+ width:100%;overflow:hidden;align-items:stretch;
+}
+#eventModal .mws-event-editor-v6 .event-info-panel,
+#eventModal .mws-event-editor-v6 .event-editor-tools-v6{
+ box-sizing:border-box;min-height:0!important;min-width:0!important;width:100%;max-width:100%;
+ margin:0;border:0!important;border-radius:0!important;padding:var(--editor-gap)!important;
+ overflow:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;
+ scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--muted) 45%,transparent) transparent;
+ background:transparent;
+}
+#eventModal .mws-event-editor-v6 .event-editor-tools-v6{
+ background:color-mix(in srgb,var(--panel) 65%,var(--sidebar));border-inline-start:1px solid var(--border)!important;
+}
+#eventModal .mws-event-editor-v6 .event-memo-panel{
+ display:block;min-width:0;min-height:0;padding:0!important;margin:0;border:0!important;border-radius:0;background:none;overflow:visible!important;
 }
 #eventModal .event-side-tablist-v5{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:5px;
-  flex:0 0 auto;
-  padding:4px;
-  margin:0 0 11px;
-  border:1px solid var(--border);
-  border-radius:11px;
-  background:var(--input);
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;
+ margin:0 0 14px;background:var(--input);border-radius:12px;
 }
 #eventModal .event-side-tab-v5{
-  min-height:40px;
-  padding:8px 10px;
-  margin:0;
-  border:1px solid transparent;
-  border-radius:8px;
-  background:transparent;
-  color:var(--muted);
-  font-size:13px;
-  font-weight:800;
-  white-space:normal;
-  line-height:1.35;
-  cursor:var(--mws-cursor-pointer,pointer);
+ min-height:var(--editor-control);min-width:0;margin:0;padding:5px 8px;border:1px solid transparent;border-radius:9px;
+ background:transparent;color:var(--muted);font-weight:700;line-height:1.35;white-space:normal;
 }
-#eventModal .event-side-tab-v5.active,
-#eventModal .event-side-tab-v5[aria-selected="true"]{
-  color:var(--text);
-  background:color-mix(in srgb,var(--accent) 16%,var(--panel));
-  border-color:color-mix(in srgb,var(--accent) 60%,var(--border));
+#eventModal .event-side-tab-v5[aria-selected=true]{
+ color:var(--text);background:color-mix(in srgb,var(--accent) 16%,var(--panel));
+ border-color:color-mix(in srgb,var(--accent) 42%,var(--border));box-shadow:0 2px 6px #0002;
 }
-#eventModal .event-side-tab-v5:focus-visible{
-  outline:2px solid var(--accent);
-  outline-offset:2px;
+#eventModal .event-side-tabpanel-v5{min-width:0;min-height:0;overflow:visible!important;display:block}
+#eventModal .event-side-tabpanel-v5[hidden],#eventModal [hidden]{display:none!important}
+#eventModal .event-side-tabpanel-v5.active{animation:editorPaneIn .16s ease-out both}
+#eventModal .repeat-panel-open .event-memo-panel{display:none!important}
+#eventModal .mws-event-editor-v6 .event-repeat-panel{
+ border:0;border-radius:0;background:none;padding:0!important;overflow:visible!important;min-height:0!important;animation:editorPaneIn .16s ease-out both;
 }
-#eventModal .event-side-tabpanel-v5{
-  display:flex;
-  flex-direction:column;
-  flex:1 1 auto;
-  min-height:0;
-  min-width:0;
-  overflow-y:auto;
-  overflow-x:hidden;
-  overscroll-behavior:contain;
-  scrollbar-gutter:stable;
+@keyframes editorPaneIn{from{opacity:.25}to{opacity:1}}
+#eventModal .event-info-panel>.formgrid{display:grid;grid-template-columns:minmax(0,1fr)!important;gap:12px!important;min-width:0}
+#eventModal .event-info-panel .field{min-width:0;gap:5px}
+#eventModal .event-info-panel .field.full{grid-column:1/-1}
+#eventModal .field label,#eventModal .repeat-config-label{font-size:calc(12px * var(--ui-text-scale,1));line-height:1.45;font-weight:650;color:var(--muted)}
+#eventModal .mws-event-editor-v6 :is(input:not([type=hidden]):not([type=checkbox]):not([type=color]):not([type=file]),select:not(.calendar-group-underlying-select-v3),textarea,.picker-button,.repeat-launch-button){
+ box-sizing:border-box;min-width:0;max-width:100%;min-height:var(--editor-control);height:auto;
+ line-height:1.45;border-radius:9px;font-size:calc(13px * var(--ui-text-scale,1));padding:8px 10px;
 }
-#eventModal .event-side-tabpanel-v5[hidden]{display:none!important}
-#eventModal .event-series-title-v5{
-  font-size:14px;
-  font-weight:850;
-  color:var(--text);
-  line-height:1.4;
-  padding-top:2px;
+#eventModal .mws-event-editor-v6 :is(input:not([type=checkbox]):not([type=color]),select,textarea,.picker-button,.repeat-launch-button):focus-visible{
+ outline:2px solid color-mix(in srgb,var(--accent) 65%,transparent);outline-offset:1px;
 }
-#eventModal .event-series-intro-v5{
-  margin:5px 0 10px;
-  line-height:1.5;
-  font-size:11px;
-  white-space:normal;
-  overflow-wrap:anywhere;
+#eventModal .mws-event-editor-v6 button{
+ transition:background .16s,border-color .16s,box-shadow .16s,opacity .16s,transform .14s;
+ line-height:1.4;white-space:normal;overflow-wrap:anywhere;
 }
-#eventModal .event-series-tabpanel-v5 .calendar-group-event-editor-v2{
-  flex:0 0 auto;
-  display:flex!important;
-  width:100%;
-  max-width:100%;
-  min-width:0;
-  padding:10px;
-  border-radius:10px;
-  gap:9px;
+#eventModal .mws-event-editor-v6 button:not(:disabled):hover{border-color:var(--accent);box-shadow:0 2px 8px #0002}
+#eventModal .mws-event-editor-v6 button:not(:disabled):active{transform:scale(.98)}
+#eventModal .mws-event-editor-v6 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#eventModal .title-device.event-title-row{
+ display:grid;grid-template-columns:minmax(0,1fr) auto minmax(80px,7em)!important;align-items:end;gap:8px;
 }
-#eventModal .event-series-tabpanel-v5 .calendar-group-event-editor-v2>label{
-  display:none;
+#eventModal .event-favorite-field>label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+#eventModal .event-favorite-btn{width:var(--editor-control)!important;min-width:0;min-height:var(--editor-control);height:var(--editor-control)!important;padding:0!important}
+#eventModal .event-date-time-v7{display:grid!important;grid-template-columns:minmax(0,1.2fr) repeat(2,minmax(0,1fr));gap:8px!important}
+#eventModal .event-date-time-v7 .picker-button{gap:4px;white-space:normal;min-width:0}
+#eventModal .event-date-time-v7 .picker-button span:first-child{min-width:0;overflow-wrap:anywhere;line-height:1.4}
+#eventModal .category-line{grid-template-columns:minmax(0,1fr) auto!important;gap:8px}
+#eventModal #evCategoryColorButton{min-width:64px;min-height:var(--editor-control)}
+#eventModal .event-broadcast-duration-v1{
+ display:flex!important;flex-direction:row!important;align-items:center;flex-wrap:wrap;gap:8px!important;
+ padding:0!important;background:none!important;border:0!important;
 }
-#eventModal .event-series-tabpanel-v5 .calendar-group-search-v3{
-  padding:9px;
-  max-width:100%;
-  min-width:0;
-  gap:8px;
+#eventModal .event-broadcast-duration-output-v1{padding:0!important;min-height:0!important;border:0!important;background:none!important;font-size:calc(13px * var(--ui-text-scale,1))}
+#eventModal .event-fold-v7{display:block!important;border-top:1px solid var(--border);padding:6px 0;margin:0}
+#eventModal .event-fold-v7 summary{cursor:pointer;font-size:calc(13px * var(--ui-text-scale,1));font-weight:650;padding:6px 0;line-height:1.5}
+#eventModal .event-fold-v7[open]>:not(summary){animation:editorPaneIn .16s ease-out both;margin-top:8px}
+#eventModal .event-advanced-grid-v7{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+#eventModal .event-datetime-quick-v177{padding:0!important;background:none!important;border:0!important}
+#eventModal .event-datetime-quick-grid-v177{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+#eventModal .participant-box{padding:0!important;border:0!important;background:none!important;display:flex;flex-direction:column;gap:8px}
+#eventModal .participant-topline{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#eventModal .selected-people{min-height:0!important;margin:0!important;max-height:168px;overflow:auto;scrollbar-width:thin;align-content:start;gap:5px}
+#eventModal .selected-people .muted.small:only-child{padding:3px 0}
+#eventModal .participant-search-wrap{width:100%;min-width:0}
+#eventModal .participant-search-wrap input{width:100%;padding-left:34px!important}
+#eventModal .participant-results{margin:0!important;min-height:0;max-height:208px;overflow:auto;scrollbar-width:thin;gap:5px}
+#eventModal .person-result{min-width:0;gap:8px;min-height:42px}
+#eventModal .person-result>.row{min-width:0;flex-wrap:wrap}
+#eventModal .person-result>.row:first-child{flex:1}
+#eventModal .person-result span,#eventModal .person-chip span{overflow-wrap:anywhere}
+#eventModal .person-chip{max-width:100%;border-radius:11px;flex-wrap:wrap;animation:editorPaneIn .16s ease-out both}
+#eventModal .person-chip .participant-status-select,#eventModal .person-result .participant-status-select{min-height:30px!important;width:auto!important;max-width:100%;padding:3px 5px!important;font-size:calc(11px * var(--ui-text-scale,1))}
+#eventModal .mws-event-editor-v6 .event-game-panel-v112{min-width:0;min-height:0!important;padding:0!important;border:0!important;background:none;border-radius:0;overflow:visible!important;display:flex;gap:10px}
+#eventModal .mws-game-preview-v112{border:0!important;background:transparent!important}
+#eventModal .mws-game-preview-v112.has-game{display:grid;grid-template-columns:minmax(70px,38%) minmax(0,1fr);align-items:center;gap:10px;padding:9px!important;border-radius:10px;background:var(--input)!important}
+#eventModal .mws-game-preview-v112.has-game:not(:has(img)){grid-template-columns:minmax(0,1fr)}
+#eventModal .mws-game-preview-image-v112{width:100%!important;height:auto!important;aspect-ratio:auto!important;object-fit:contain!important;background:none!important;border-radius:6px;display:block}
+#eventModal .mws-game-preview-copy-v112{padding:0!important;min-width:0}
+#eventModal .mws-game-preview-name-v112{font-size:calc(15px * var(--ui-text-scale,1))!important;line-height:1.4;overflow-wrap:anywhere;word-break:normal}
+#eventModal .mws-game-preview-app-v112{font-size:calc(11px * var(--ui-text-scale,1));overflow-wrap:anywhere}
+#eventModal .mws-game-preview-empty-v112,.event-game-loading-v7{display:block!important;text-align:left;min-height:0!important;padding:6px 0!important;font-size:calc(12px * var(--ui-text-scale,1));color:var(--muted)}
+#eventModal .mws-game-search-section-v112,#eventModal .mws-game-library-v1{margin:0!important;padding:0!important;border:0!important;min-height:0;flex:none}
+#eventModal .mws-game-search-row-v112{grid-template-columns:minmax(0,1fr) auto!important;gap:6px}
+#eventModal .mws-game-search-status-v112{min-height:0!important;padding:5px 0!important;font-size:calc(11px * var(--ui-text-scale,1))}
+#eventModal .mws-game-results-v112,#eventModal .mws-game-library-list-v1{max-height:none!important;min-height:0!important;overflow:visible!important;padding:0!important;gap:5px}
+#eventModal .mws-game-search-empty-v112{padding:3px 0!important;border:0!important;text-align:left;font-size:calc(11px * var(--ui-text-scale,1))}
+#eventModal .mws-game-library-v1 h4{margin:4px 0 7px;font-size:calc(13px * var(--ui-text-scale,1))}
+#eventModal .mws-game-result-v112,#eventModal .mws-game-library-choose-v1{
+ grid-template-columns:minmax(48px,72px) minmax(0,1fr)!important;min-width:0;min-height:44px;padding:6px!important;gap:8px!important;border-radius:9px;
 }
-#eventModal .event-series-tabpanel-v5 .calendar-group-current-v3{
-  padding:8px;
-  min-height:36px;
+#eventModal .mws-game-result-v112 img,#eventModal .mws-game-library-choose-v1 img{width:100%!important;height:auto!important;object-fit:contain;background:none}
+#eventModal .mws-game-result-v112 strong,#eventModal .mws-game-library-choose-v1 strong{
+ font-size:calc(12px * var(--ui-text-scale,1))!important;line-height:1.4;white-space:normal;overflow-wrap:anywhere;
 }
-#eventModal .event-series-tabpanel-v5 .calendar-group-option-quick-v3{
-  max-width:100%;
+#eventModal .mws-game-result-v112 small,#eventModal .mws-game-library-choose-v1 small{font-size:calc(10px * var(--ui-text-scale,1));white-space:normal;overflow-wrap:anywhere}
+#eventModal .mws-game-panel-bottom-v112{margin:0!important;padding:0!important;border:0!important}
+#eventModal .mws-game-manual-form-v1{min-width:0;padding:10px;border-radius:10px}
+#eventModal .mws-game-manual-form-v1 input[type=file]{min-width:0;max-width:100%;width:100%}
+#eventModal .event-series-tabpanel-v5 .calendar-group-event-editor-v2,#eventModal .event-series-tabpanel-v5 .calendar-group-search-v3{
+ display:flex;flex-direction:column;gap:8px;padding:0!important;width:100%;min-width:0;max-width:100%;border:0!important;background:none!important;
 }
-#eventModal .event-series-tabpanel-v5 .calendar-group-search-input-v3>input{
-  height:39px!important;
-  min-height:39px!important;
-  font-size:13px!important;
+#eventModal .event-series-tabpanel-v5 .calendar-group-event-editor-v2>label,#eventModal .calendar-group-search-hint-v3{display:none}
+#eventModal .event-series-tabpanel-v5 .calendar-group-search-input-v3 input{width:100%}
+#eventModal .event-series-tabpanel-v5 .calendar-group-results-v3{max-height:none!important;overflow:visible!important}
+#eventModal .event-series-tabpanel-v5 #evContentGroupNewWrapV2{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+#eventModal .event-series-tabpanel-v5 #evContentGroupNewNameV2{flex:1;min-width:90px}
+#eventModal .event-memo-tabpanel-v5 .event-memo-library-box{border:0!important;background:none!important;padding:0!important;margin:10px 0!important}
+#eventModal .event-memo-tabpanel-v5 .row{flex-wrap:wrap;gap:6px}
+#eventModal .event-memo-tabpanel-v5 .space{flex-wrap:wrap;gap:8px}
+#eventModal .event-memo-tabpanel-v5 .event-memo-content-field{margin-top:10px;min-height:0}
+#eventModal #evMemoContent{width:100%;height:auto!important;min-height:200px!important;resize:vertical;max-width:100%}
+#eventModal .repeat-panel-kicker{display:none}
+#eventModal .repeat-panel-header{flex-wrap:wrap}
+#eventModal .repeat-endmode-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+#eventModal .repeat-pattern-grid button,#eventModal .repeat-endmode-grid button{font-size:calc(12px * var(--ui-text-scale,1));min-height:var(--editor-control)}
+#eventModal .repeat-preview-card{padding:8px}
+#eventModal .mws-event-editor-v6 .event-actions{
+ position:static!important;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;
+ padding:10px 18px!important;margin:0!important;bottom:auto!important;border-top:1px solid var(--border);background:var(--sidebar)!important;backdrop-filter:none;z-index:1;
 }
-#eventModal .event-series-tabpanel-v5 .calendar-group-quick-v3{
-  gap:6px;
+#eventModal .event-actions>.row{display:flex;flex-wrap:wrap;gap:6px}
+#eventModal .event-actions button,#eventModal .event-modal-header button{min-height:var(--editor-control);padding:7px 13px;font-size:calc(13px * var(--ui-text-scale,1))}
+body:has(#eventModal.open) :is(#mwsAccessTools,.mws-mobile-tabs){visibility:hidden!important;pointer-events:none!important}
+@media(max-width:900px){
+ #eventModal{padding:0!important;align-items:stretch!important}
+ #eventModal .mws-event-editor-v6{width:100%!important;height:100dvh!important;max-height:100dvh!important;max-width:100%!important;border-radius:0!important}
+ #eventModal .mws-event-editor-v6 .event-modal-layout{grid-template-columns:minmax(0,1fr)!important;display:block!important;overflow:auto!important;overflow-x:hidden!important}
+ #eventModal .mws-event-editor-v6 .event-info-panel,#eventModal .mws-event-editor-v6 .event-editor-tools-v6{overflow:visible!important;border-inline-start:0!important;min-height:0!important}
+ #eventModal .mws-event-editor-v6 .event-editor-tools-v6{border-top:1px solid var(--border)!important}
+ #eventModal .mws-event-editor-v6 .event-actions{padding-bottom:calc(10px + env(safe-area-inset-bottom))!important}
+ #eventModal .participant-results{max-height:240px}
 }
-#eventModal .event-series-tabpanel-v5 .calendar-group-option-v3{
-  font-size:12px!important;
+@media(max-width:560px){
+ #eventModal .event-date-time-v7{grid-template-columns:repeat(2,minmax(0,1fr));}
+ #eventModal .event-date-time-v7>.field:first-child{grid-column:1/-1}
+ #eventModal .event-datetime-quick-grid-v177{grid-template-columns:minmax(0,1fr)!important}
+ #eventModal .mws-event-editor-v6 .event-modal-header,#eventModal .mws-event-editor-v6 .event-actions{padding-inline:12px!important}
+ #eventModal .mws-event-editor-v6 .event-modal-header h2{font-size:calc(16px * var(--ui-text-scale,1))}
 }
-#eventModal .event-series-tabpanel-v5 .calendar-group-search-hint-v3,
-#eventModal .event-series-tabpanel-v5 .calendar-group-event-editor-v2>.muted{
-  font-size:11px!important;
-  line-height:1.5;
-  overflow-wrap:anywhere;
+@media(max-width:360px){
+ #eventModal .title-device.event-title-row{grid-template-columns:minmax(0,1fr) auto!important}
+ #eventModal .title-device.event-title-row>.field:last-child{grid-column:1/-1}
+ #eventModal .event-actions button{padding-inline:8px}
 }
-#eventModal .event-series-tabpanel-v5 #evContentGroupNewWrapV2{
-  width:100%;
-  min-width:0;
-  align-items:center;
-  gap:5px;
-}
-#eventModal .event-series-tabpanel-v5 #evContentGroupNewNameV2{
-  min-width:0;
-  width:100%;
-  max-width:100%;
-  flex:1 1 140px;
-}
-#eventModal .event-memo-tabpanel-v5{
-  gap:0;
-}
-#eventModal .event-memo-tabpanel-v5 .event-memo-content-field{
-  flex:1 1 200px;
-  min-height:140px;
-  display:flex;
-  flex-direction:column;
-}
-#eventModal .event-memo-tabpanel-v5 #evMemoContent{
-  width:100%;
-  min-height:180px!important;
-  height:100%;
-  flex:1 1 180px;
-}
-#eventModal .event-memo-tabpanel-v5 .event-memo-library-box{
-  flex:0 0 auto;
-}
-#eventModal .event-memo-tabpanel-v5 .event-memo-help{
-  flex:0 0 auto;
-}
-@media(max-width:1050px){
-  #eventModal .event-side-tabpanel-v5{overflow-y:visible;min-height:0}
-  #eventModal .event-sidebar-tabs-enabled-v5{overflow:visible}
-  #eventModal .event-memo-tabpanel-v5 #evMemoContent{min-height:220px!important}
-}
-
-/* V6 tools are a two-pane editor; keep game metadata compact and the
-   underlying admin controls out of the modal interaction layer. */
-#eventModal .mws-event-editor-v6 .event-info-panel>.formgrid>.field:has(#evTitle){grid-column:1/-1}
-#eventModal .mws-event-editor-v6 .mws-game-preview-v112.has-game{
-  display:grid;grid-template-columns:minmax(80px,36%) minmax(0,1fr);
-  align-items:center;gap:8px;padding:8px;
-}
-#eventModal .mws-event-editor-v6 .mws-game-preview-v112.has-game .mws-game-preview-image-v112{
-  width:100%;height:auto;max-height:110px;object-fit:contain;background:transparent;border-radius:6px;
-}
-#eventModal .mws-event-editor-v6 .mws-game-preview-copy-v112{padding:4px;min-width:0}
-#eventModal .mws-event-editor-v6 .mws-game-preview-name-v112{overflow-wrap:anywhere}
-body:has(#eventModal.open) #mwsAccessTools{visibility:hidden!important;pointer-events:none!important}
-@media(max-width:380px){
- #eventModal .mws-event-editor-v6 .mws-game-preview-v112.has-game{grid-template-columns:minmax(0,1fr)}
-}
+body[data-device-mode="mobile"] #eventModal .mws-event-editor-v6{width:100%!important;height:100dvh!important;max-height:100dvh!important;border-radius:0!important;overflow:hidden!important}
+body[data-device-mode="mobile"] #eventModal .mws-event-editor-v6 .event-modal-layout{display:block!important;grid-template-columns:minmax(0,1fr)!important;overflow:auto!important}
+body[data-device-mode="mobile"] #eventModal .mws-event-editor-v6 :is(.event-info-panel,.event-editor-tools-v6){overflow:visible!important;border-inline-start:0!important}
+body[data-device-mode="mobile"] #eventModal .mws-event-editor-v6 .event-modal-header{position:static!important;margin:0!important;padding:10px 12px!important}
+body[data-device-mode="mobile"] #eventModal .mws-event-editor-v6 .event-actions{padding-bottom:calc(10px + env(safe-area-inset-bottom))!important}
+body[data-device-mode="mobile"]:has(#eventModal.open) :is(#datePickerPopover,#timePickerPopover,#categoryColorPalette){z-index:5300!important}
+html[data-mws-motion=reduced] #eventModal *{animation-duration:0s!important;transition-duration:0s!important}
+@media(prefers-reduced-motion:reduce){#eventModal *{animation-duration:0s!important;transition-duration:0s!important}}
