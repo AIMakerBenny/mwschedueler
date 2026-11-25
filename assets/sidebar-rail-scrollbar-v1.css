@@ -6,7 +6,7 @@
   html body:not([data-resolution="mobile"]):not(.sidebar-pinned) .app{
     grid-template-columns:72px minmax(0,1fr)!important;
   }
-  html body:not([data-resolution="mobile"]):not(.sidebar-pinned) .app > .sidebar:not(:hover){
+  html body:not([data-resolution="mobile"]):not(.sidebar-pinned) .app > .sidebar:not(.mws-sidebar-expanded-v2){
     width:72px!important;
     min-width:72px!important;
     max-width:72px!important;
@@ -30,7 +30,7 @@
 
   /* 44px fits the 72px rail after both 8px sidebar paddings, a border and
      a reserved 8px scrollbar gutter. Icon stays precisely centered. */
-  html body:not([data-resolution="mobile"]):not(.sidebar-pinned) .app > .sidebar:not(:hover) .nav .nav-scroll > button{
+  html body:not([data-resolution="mobile"]):not(.sidebar-pinned) .app > .sidebar:not(.mws-sidebar-expanded-v2) .nav .nav-scroll > button{
     box-sizing:border-box!important;
     width:44px!important;
     min-width:44px!important;
@@ -38,14 +38,14 @@
     margin-left:auto!important;
     margin-right:auto!important;
   }
-  html body:not([data-resolution="mobile"]):not(.sidebar-pinned) .app > .sidebar:not(:hover) .nav .nav-scroll > button > .nav-icon{
+  html body:not([data-resolution="mobile"]):not(.sidebar-pinned) .app > .sidebar:not(.mws-sidebar-expanded-v2) .nav .nav-scroll > button > .nav-icon{
     left:50%!important;
     transform:translateX(-50%)!important;
   }
 
   /* The expanded and pinned menus also need to respect the scroll viewport
      rather than the 204px fixed button width inherited from v3.0. */
-  html body:not([data-resolution="mobile"]):not(.sidebar-pinned) .app > .sidebar:hover .nav .nav-scroll > button,
+  html body:not([data-resolution="mobile"]):not(.sidebar-pinned) .app > .sidebar.mws-sidebar-expanded-v2 .nav .nav-scroll > button,
   html body:not([data-resolution="mobile"]).sidebar-pinned .app > .sidebar .nav .nav-scroll > button{
     box-sizing:border-box!important;
     width:calc(100% - 4px)!important;
@@ -54,7 +54,7 @@
     margin-left:auto!important;
     margin-right:auto!important;
   }
-  html body:not([data-resolution="mobile"]):not(.sidebar-pinned) .app > .sidebar:hover .nav .nav-scroll > button > .nav-label,
+  html body:not([data-resolution="mobile"]):not(.sidebar-pinned) .app > .sidebar.mws-sidebar-expanded-v2 .nav .nav-scroll > button > .nav-label,
   html body:not([data-resolution="mobile"]).sidebar-pinned .app > .sidebar .nav .nav-scroll > button > .nav-label{
     width:calc(100% - 58px)!important;
     max-width:none!important;

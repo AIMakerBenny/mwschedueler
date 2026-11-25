@@ -106,7 +106,37 @@ try{
  const routes=['calendar','contacts','dashboard','memos','careerTimeline','achievements','mawangArchive','gameLadder','gameMultiDraw','contentPlanner','toolTier','toolMatrix','toolRelations','settings','calendar'];
  const nav=async list=>browser.evaluate('(async()=>{for(const id of '+JSON.stringify(list)+'){window.setTab(id);await new Promise(r=>setTimeout(r,450));if(!document.getElementById(id)?.classList.contains("active"))throw Error("route "+id)}return true})()');
  let before=calls.length;
- if(bsandongQA){
+ if(process.env.MWS_QA_SIDEBAR_HOVER==='1'){
+  const state=()=>browser.evaluate("(()=>{const s=document.querySelector('.app>.sidebar'),r=s.getBoundingClientRect(),m=document.querySelector('.main').getBoundingClientRect(),l=s.querySelector('[data-tab=calendar] .nav-label');return {expanded:s.classList.contains('mws-sidebar-expanded-v2'),left:r.left,right:r.right,width:r.width,top:r.top,mainLeft:m.left,label:getComputedStyle(l).visibility,pinned:document.body.classList.contains('sidebar-pinned')}})()");
+  await browser.movePoint(500,300);
+  await browser.evaluate("(()=>{if(document.body.classList.contains('sidebar-pinned'))document.getElementById('sidebarPinBtn').click();return true})()");await pause(250);
+  const closed=await state();assert(!closed.pinned&&!closed.expanded&&Math.abs(closed.width-72)<2,JSON.stringify(closed));
+  await browser.evaluate("window.qaSidebarTransitions=[];new MutationObserver(()=>{const s=document.querySelector('.app>.sidebar');const v=s.classList.contains('mws-sidebar-expanded-v2');if(window.qaSidebarTransitions.at(-1)!==v)window.qaSidebarTransitions.push(v)}).observe(document.querySelector('.app>.sidebar'),{attributes:true,attributeFilter:['class']});");
+  const offset=calls.length;
+  for(const x of [1,30,70,71,69,72,73,71,68]){
+   await browser.movePoint(x,320);await pause(45);
+  }
+  await pause(300);
+  const opened=await state();assert(opened.expanded&&opened.width>=180&&opened.label==='visible','Cannot expand '+JSON.stringify(opened));
+  assert(Math.abs(opened.left-closed.left)<1&&Math.abs(opened.top-closed.top)<1&&Math.abs(opened.mainLeft-closed.mainLeft)<1,'Sidebar geometry jumps');
+  for(let i=0;i<15;i++){await browser.movePoint(70+i%4,320);await pause(30)}
+  await browser.movePoint(opened.right-10,320);await pause(200);assert((await state()).expanded,'Expanded content is not reachable');
+  await browser.movePoint(opened.right+20,320);await pause(400);
+  const after=await state();assert(!after.expanded&&Math.abs(after.width-72)<2,'Close failed '+JSON.stringify(after));
+  const transitions=await browser.evaluate('window.qaSidebarTransitions');assert.deepEqual(transitions,[true,false],'Oscillating expansion');
+  await browser.movePoint(30,320);await pause(250);
+  const pin=await browser.evaluate("(()=>{const r=document.getElementById('sidebarPinBtn').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()");
+  await browser.clickPoint(pin.x,pin.y);await pause(250);assert((await state()).pinned,'Pin click failed');
+  await browser.movePoint(500,300);await pause(200);assert((await state()).pinned,'Pinned state lost');
+  assert.equal(calls.slice(offset).filter(r=>r.path.startsWith('/api/')).length,0,'Sidebar interactions emit data requests');
+  await nav(['calendar']);
+  await browser.evaluate("document.getElementById('calendarGroupManageToggleV4').click()");await pause(300);
+  const select=await browser.evaluate("(()=>{const s=document.getElementById('calendarGroupMawangLinkV2'),c=getComputedStyle(s),r=s.getBoundingClientRect();return {height:r.height,paddingTop:parseFloat(c.paddingTop),paddingBottom:parseFloat(c.paddingBottom),font:parseFloat(c.fontSize),lineHeight:c.lineHeight,width:r.width,scrollWidth:s.scrollWidth,clientWidth:s.clientWidth,display:c.display}})()");
+  assert(select.height>=42&&select.height-select.paddingTop-select.paddingBottom>=select.font*1.7&&select.width>120&&select.display==='block','Select line clipped '+JSON.stringify(select));
+  await browser.evaluate("document.getElementById('calendarGroupMawangLinkV2').focus();document.getElementById('calendarGroupMawangLinkV2').value='bsandong';");
+  assert.equal(await browser.evaluate("document.getElementById('calendarGroupMawangLinkV2').value"),'bsandong');
+  console.log('SIDEBAR_HOVER_SELECT_OK '+JSON.stringify({closed,opened,after,transitions,select}));
+ }else if(bsandongQA){
   const mode=process.env.MWS_QA_IDLE_MODE||'public';
   if(mode==='admin'){
    await browser.evaluate("document.querySelector('#mwsChangeModeBtn').click()");

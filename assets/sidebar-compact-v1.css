@@ -2,17 +2,17 @@
 @media (min-width:761px) {
   body.mws-premium.sidebar-pinned:not([data-resolution="mobile"]) .app {grid-template-columns:184px minmax(0,1fr)!important}
   body.mws-premium.sidebar-pinned:not([data-resolution="mobile"]) .sidebar,
-  body.mws-premium.sidebar-pinned:not([data-resolution="mobile"]) .sidebar:hover,
-  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .sidebar:hover {width:184px!important;min-width:184px!important}
+  body.mws-premium.sidebar-pinned:not([data-resolution="mobile"]) .sidebar.mws-sidebar-expanded-v2,
+  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .sidebar.mws-sidebar-expanded-v2 {width:184px!important;min-width:184px!important}
   body.mws-premium.sidebar-pinned[data-resolution="wide"] .app {grid-template-columns:174px minmax(0,1fr)!important}
   body.mws-premium.sidebar-pinned[data-resolution="wide"] .sidebar,
-  body.mws-premium.sidebar-pinned[data-resolution="wide"] .sidebar:hover {width:174px!important;min-width:174px!important}
+  body.mws-premium.sidebar-pinned[data-resolution="wide"] .sidebar.mws-sidebar-expanded-v2 {width:174px!important;min-width:174px!important}
   body.mws-premium.sidebar-pinned[data-resolution="2k"] .app {grid-template-columns:198px minmax(0,1fr)!important}
   body.mws-premium.sidebar-pinned[data-resolution="2k"] .sidebar,
-  body.mws-premium.sidebar-pinned[data-resolution="2k"] .sidebar:hover {width:198px!important;min-width:198px!important}
+  body.mws-premium.sidebar-pinned[data-resolution="2k"] .sidebar.mws-sidebar-expanded-v2 {width:198px!important;min-width:198px!important}
   body.mws-premium.sidebar-pinned[data-resolution="4k"] .app {grid-template-columns:226px minmax(0,1fr)!important}
   body.mws-premium.sidebar-pinned[data-resolution="4k"] .sidebar,
-  body.mws-premium.sidebar-pinned[data-resolution="4k"] .sidebar:hover {width:226px!important;min-width:226px!important}
+  body.mws-premium.sidebar-pinned[data-resolution="4k"] .sidebar.mws-sidebar-expanded-v2 {width:226px!important;min-width:226px!important}
 }
 body.mws-premium .sidebar .nav-scroll button[data-tab] {border-radius:10px;transition:background .14s ease,border-color .14s ease,color .14s ease,box-shadow .15s ease,transform .15s ease}
 body.mws-premium .sidebar .nav-scroll button[data-tab]:focus-visible,
@@ -26,7 +26,7 @@ body.mws-premium .sidebar .nav-scroll button[data-tab]:focus-visible,
 .mws-creator-links a:hover {transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 65%,var(--border));background:color-mix(in srgb,var(--accent) 12%,var(--panel));color:var(--text);box-shadow:0 5px 16px #0004}
 .mws-creator-links a:active {transform:translateY(0) scale(.95)}
 @media(min-width:761px) {
-  body:not(.sidebar-pinned):not([data-resolution="mobile"]) .sidebar:not(:hover) .mws-creator-links {display:none}
+  body:not(.sidebar-pinned):not([data-resolution="mobile"]) .sidebar:not(.mws-sidebar-expanded-v2) .mws-creator-links {display:none}
 }
 .sidebar #pageTextScaleControlV54 {display:grid!important;grid-template-columns:27px minmax(0,1fr) 27px 25px!important;gap:2px!important;align-items:center;width:100%;min-height:31px;box-sizing:border-box;margin:5px 0 0!important;padding:2px 3px!important;background:color-mix(in srgb,var(--panel) 82%,var(--input))!important;border:1px solid var(--border)!important;border-radius:10px!important;box-shadow:inset 0 1px 0 #ffffff06!important}
 .sidebar #pageTextScaleControlV54 button {width:27px!important;height:25px!important;min-height:25px!important;border:0!important;border-radius:6px!important;background:transparent!important;color:var(--muted)!important;font-size:12px!important;font-weight:700!important;cursor:pointer}
@@ -69,16 +69,16 @@ body.mws-premium .sidebar .nav-scroll button[data-tab]:focus-visible,
 /* Overrides the older, more specific :hover display rules during
    partial expansion. Hidden controls never bleed into the narrow rail. */
 @container (max-width:145px){
-  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar:hover .logo-full,
-  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar:hover .logo small,
-  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar:hover .nav-label,
-  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar:hover .sidebar-pin,
-  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar:hover #pageTextScaleControlV54{
+  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar.mws-sidebar-expanded-v2 .logo-full,
+  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar.mws-sidebar-expanded-v2 .logo small,
+  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar.mws-sidebar-expanded-v2 .nav-label,
+  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar.mws-sidebar-expanded-v2 .sidebar-pin,
+  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar.mws-sidebar-expanded-v2 #pageTextScaleControlV54{
     display:none!important;
     visibility:hidden!important;
     pointer-events:none!important;
   }
-  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar:hover .logo-mini{
+  body.mws-premium:not(.sidebar-pinned):not([data-resolution="mobile"]) .app>.sidebar.mws-sidebar-expanded-v2 .logo-mini{
     display:block!important;
     visibility:visible!important;
   }
@@ -91,3 +91,27 @@ body.mws-premium .sidebar .nav-scroll button[data-tab]:focus-visible,
 @media(prefers-reduced-motion:reduce) {
   .mws-creator-links a,.mws-access-tools #mwsSidebarSaveBtn {transition:none!important;animation:none!important}
 }
+
+/* Keep unpinned rail bounds and expanded overlay in one coordinate system. */
+@media(min-width:761px){
+ html body:not([data-resolution="mobile"]):not([data-device-mode="mobile"]):not(.sidebar-pinned) .app>.sidebar{
+  --mws-sidebar-expanded-width-v2:220px;
+  position:fixed!important;inset:0 auto 0 0!important;top:0!important;left:0!important;
+  height:100dvh!important;max-height:100dvh!important;margin:0!important;
+  box-sizing:border-box!important;padding:12px 8px!important;overflow:clip!important;
+  border-radius:0!important;transform:none!important;transition:width .16s cubic-bezier(.2,.8,.2,1),min-width .16s cubic-bezier(.2,.8,.2,1),max-width .16s cubic-bezier(.2,.8,.2,1)!important;
+  container-type:inline-size;z-index:500!important;
+ }
+ html body.mws-premium:not([data-resolution="mobile"]):not([data-device-mode="mobile"]):not(.sidebar-pinned) .app>.sidebar{--mws-sidebar-expanded-width-v2:184px}
+ html body:not([data-resolution="mobile"]):not([data-device-mode="mobile"]):not(.sidebar-pinned) .app>.sidebar:not(.mws-sidebar-expanded-v2){width:72px!important;min-width:72px!important;max-width:72px!important}
+ html body:not([data-resolution="mobile"]):not([data-device-mode="mobile"]):not(.sidebar-pinned) .app>.sidebar.mws-sidebar-expanded-v2{width:var(--mws-sidebar-expanded-width-v2)!important;min-width:var(--mws-sidebar-expanded-width-v2)!important;max-width:var(--mws-sidebar-expanded-width-v2)!important}
+ html body:not([data-resolution="mobile"]):not([data-device-mode="mobile"]):not(.sidebar-pinned) .app{grid-template-columns:72px minmax(0,1fr)!important}
+ html body:not([data-resolution="mobile"]):not([data-device-mode="mobile"]):not(.sidebar-pinned) .app>.sidebar.mws-sidebar-expanded-v2 .nav-scroll>button[data-tab] .nav-label{display:block!important;visibility:visible!important;opacity:1!important}
+ html body:not([data-resolution="mobile"]):not([data-device-mode="mobile"]):not(.sidebar-pinned) .app>.sidebar.mws-sidebar-expanded-v2 .sidebar-pin{display:flex!important;visibility:visible!important}
+}
+@container (max-width:145px){
+ html body:not(.sidebar-pinned) .app>.sidebar.mws-sidebar-expanded-v2 .nav-scroll>button[data-tab] .nav-label,
+ html body:not(.sidebar-pinned) .app>.sidebar.mws-sidebar-expanded-v2 .sidebar-pin{visibility:hidden!important;pointer-events:none!important}
+}
+@media(prefers-reduced-motion:reduce){html body:not(.sidebar-pinned) .app>.sidebar{transition:none!important}}
+html[data-mws-motion=reduced] body:not(.sidebar-pinned) .app>.sidebar{transition:none!important}
