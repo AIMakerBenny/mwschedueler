@@ -1,0 +1,27 @@
+name: UI regression repair
+on:
+  push:
+    branches: ['fix/ui-regression-sidebar-calendar-editor-20261126']
+  pull_request:
+    branches: ['cloudflare-production']
+permissions:
+  contents: read
+env:
+  MWS_QA_OFFLINE: '1'
+jobs:
+  ui-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: |
+          node --check assets/steam-game-v111.js
+          node --check assets/sidebar-hover-v2.js
+          node scripts/qa-ui-regression-20261126.mjs
+          node scripts/qa-calendar-details-v1-browser.mjs
+          node scripts/qa-calendar-month-viewport-v2-browser.mjs
+      - shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: MWS_QA_SIDEBAR_HOVER=1 node scripts/qa-request-budget-full-app-v2-browser.mjs
