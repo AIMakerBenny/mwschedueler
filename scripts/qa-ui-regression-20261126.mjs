@@ -35,8 +35,8 @@ try{
    assert(metrics.bottom<=metrics.limit+1&&metrics.textHeight>=metrics.line-1&&metrics.mainScroll<=metrics.mainHeight+1,JSON.stringify(metrics));
   }
   await browser.evaluate("document.getElementById('eventModal').classList.add('open')");await sleep(500);
-  const e=await browser.evaluate("(()=>{const g=document.querySelector('.event-modal-layout'),a=g.querySelector('.event-info-panel'),b=g.querySelector('.event-editor-tools-v6'),r=e=>e.getBoundingClientRect();return {cols:getComputedStyle(g).gridTemplateColumns,empty:r(g).right-r(b).right,left:r(a).width,overlap:r(a).right-r(b).left}})()");
-  assert(e.cols.trim().split(/\s+/).length===2&&Math.abs(e.empty)<3&&e.left>350&&e.overlap<2,JSON.stringify(e));
+  const e=await browser.evaluate("(()=>{const g=document.querySelector('.event-modal-layout'),a=g.querySelector('.event-info-panel'),b=g.querySelector('.event-editor-tools-v6'),r=e=>e.getBoundingClientRect();return {cols:getComputedStyle(g).gridTemplateColumns,empty:r(g).right-r(b).right,left:r(a).width,right:r(b).width,overlap:r(a).right-r(b).left}})()");
+  assert(e.cols.trim().split(/\s+/).length===2&&Math.abs(e.empty)<3&&e.left>350&&e.overlap<2&&Math.abs(e.left/(e.left+e.right)-.6)<.015,JSON.stringify(e));
   console.log('UI_REGRESSION_OK',w,h,JSON.stringify(e));
  }
 }finally{await browser?.close();rmSync(dir,{recursive:true,force:true})}
