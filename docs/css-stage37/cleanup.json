@@ -1,0 +1,2099 @@
+{
+  "filesChanged": 10,
+  "declarationsRemoved": 281,
+  "bytesRemoved": 5903,
+  "staticLinksBefore": 64,
+  "staticLinksAfter": 47,
+  "bundle": "assets/f1-racing-bundle-v1.css",
+  "sources": [
+    "assets/f1-racing-v1.css",
+    "assets/f1-racing-r283-r287.css",
+    "assets/f1-racing-r288-r290.css",
+    "assets/f1-racing-r291-r295.css",
+    "assets/f1-racing-r303.css",
+    "assets/f1-racing-r305.css",
+    "assets/f1-racing-r306.css",
+    "assets/f1-racing-r307.css",
+    "assets/f1-racing-r308.css",
+    "assets/f1-racing-r309.css",
+    "assets/f1-racing-r313.css",
+    "assets/f1-racing-r319.css",
+    "assets/f1-racing-r324.css",
+    "assets/f1-racing-r330-r333.css",
+    "assets/f1-racing-r335-r341.css",
+    "assets/f1-racing-r342.css",
+    "assets/f1-racing-r343-r345.css",
+    "assets/f1-racing-r401.css"
+  ],
+  "findings": [
+    {
+      "file": "assets/achievement-exhibition-v1.css",
+      "bytesBefore": 25822,
+      "bytesAfter": 25624,
+      "removed": [
+        {
+          "selector": "html[data-mws-motion=\"reduced\"] #achievements .achievement-card-open:hover",
+          "context": [],
+          "property": "transform",
+          "value": "none!important",
+          "line": 301
+        },
+        {
+          "selector": "#achievements .achievement-exhibition-emblem",
+          "context": [
+            "@container achievement-exhibition (max-width:340px)"
+          ],
+          "property": "display",
+          "value": "none",
+          "line": 127
+        },
+        {
+          "selector": "#achievements .achievement-card-game",
+          "context": [
+            "@container achievement-exhibition (max-width:649px)"
+          ],
+          "property": "font-size",
+          "value": "12px",
+          "line": 123
+        },
+        {
+          "selector": "#achievements .achievement-exhibition-kicker",
+          "context": [
+            "@container achievement-exhibition (max-width:649px)"
+          ],
+          "property": "letter-spacing",
+          "value": ".13em",
+          "line": 113
+        },
+        {
+          "selector": "#achievements .achievement-exhibition-kicker",
+          "context": [
+            "@container achievement-exhibition (max-width:649px)"
+          ],
+          "property": "font-size",
+          "value": "8px",
+          "line": 113
+        },
+        {
+          "selector": "#achievements .achievement-gallery-head",
+          "context": [
+            "@container achievement-exhibition (max-width:649px)"
+          ],
+          "property": "margin-bottom",
+          "value": "20px",
+          "line": 110
+        },
+        {
+          "selector": "#achievements .achievement-gallery-head",
+          "context": [
+            "@container achievement-exhibition (max-width:649px)"
+          ],
+          "property": "min-height",
+          "value": "0",
+          "line": 110
+        },
+        {
+          "selector": "#achievements .achievement-card-caption::after",
+          "context": [],
+          "property": "letter-spacing",
+          "value": ".05em",
+          "line": 78
+        },
+        {
+          "selector": "#achievements .achievement-exhibition-stat",
+          "context": [],
+          "property": "font-size",
+          "value": "12px",
+          "line": 36
+        },
+        {
+          "selector": "#achievements .achievement-gallery-head-copy p",
+          "context": [],
+          "property": "font-size",
+          "value": "13px",
+          "line": 33
+        },
+        {
+          "selector": "#achievements .achievement-gallery-head::after",
+          "context": [],
+          "property": "z-index",
+          "value": "-1",
+          "line": 20
+        },
+        {
+          "selector": "#achievements .achievement-gallery-head",
+          "context": [],
+          "property": "border-radius",
+          "value": "18px",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "file": "assets/app-core.css",
+      "bytesBefore": 372075,
+      "bytesAfter": 367398,
+      "removed": [
+        {
+          "selector": "#gameMultiDraw .multi-winner-slots",
+          "context": [],
+          "property": "gap",
+          "value": "12px",
+          "line": 5822
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-dock-list",
+          "context": [
+            "@media(max-width:1180px)"
+          ],
+          "property": "grid-template-columns",
+          "value": "repeat(auto-fit,minmax(190px,1fr))",
+          "line": 5690
+        },
+        {
+          "selector": "#gameMultiDraw .multi-winner-slots",
+          "context": [],
+          "property": "gap",
+          "value": "12px",
+          "line": 5655
+        },
+        {
+          "selector": "#gameMultiDraw .multi-winner-slots",
+          "context": [],
+          "property": "grid-template-columns",
+          "value": "repeat(auto-fit,minmax(260px,1fr))",
+          "line": 5655
+        },
+        {
+          "selector": "#gameMultiDraw .mini-drop-zone",
+          "context": [],
+          "property": "line-height",
+          "value": "1.55",
+          "line": 5654
+        },
+        {
+          "selector": "#gameMultiDraw .mini-drop-zone",
+          "context": [],
+          "property": "font-size",
+          "value": "13px",
+          "line": 5654
+        },
+        {
+          "selector": "#gameMultiDraw .mini-drop-zone",
+          "context": [],
+          "property": "place-items",
+          "value": "center",
+          "line": 5654
+        },
+        {
+          "selector": "#gameMultiDraw .mini-drop-zone",
+          "context": [],
+          "property": "display",
+          "value": "grid",
+          "line": 5654
+        },
+        {
+          "selector": "#gameMultiDraw .mini-drop-zone",
+          "context": [],
+          "property": "min-height",
+          "value": "96px",
+          "line": 5654
+        },
+        {
+          "selector": "#gameMultiDraw .multi-fire-btn",
+          "context": [],
+          "property": "border-color",
+          "value": "rgba(222,212,255,.68)!important",
+          "line": 5653
+        },
+        {
+          "selector": "#gameMultiDraw .multi-fire-btn",
+          "context": [],
+          "property": "background",
+          "value": "linear-gradient(135deg,#8f66ff,#6940df)!important",
+          "line": 5653
+        },
+        {
+          "selector": "#gameMultiDraw .multi-fire-btn",
+          "context": [],
+          "property": "letter-spacing",
+          "value": ".02em",
+          "line": 5653
+        },
+        {
+          "selector": "#gameMultiDraw .multi-fire-btn",
+          "context": [],
+          "property": "font-weight",
+          "value": "950",
+          "line": 5653
+        },
+        {
+          "selector": "#gameMultiDraw .multi-fire-btn",
+          "context": [],
+          "property": "font-size",
+          "value": "18px",
+          "line": 5653
+        },
+        {
+          "selector": "#gameMultiDraw .multi-fire-btn",
+          "context": [],
+          "property": "min-height",
+          "value": "58px",
+          "line": 5653
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-dock-empty",
+          "context": [],
+          "property": "text-align",
+          "value": "center",
+          "line": 5649
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-dock-empty",
+          "context": [],
+          "property": "line-height",
+          "value": "1.55",
+          "line": 5649
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-dock-empty",
+          "context": [],
+          "property": "font-size",
+          "value": "11px",
+          "line": 5649
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-dock-empty",
+          "context": [],
+          "property": "color",
+          "value": "#aeb8d3",
+          "line": 5649
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-dock-empty",
+          "context": [],
+          "property": "border-radius",
+          "value": "14px",
+          "line": 5649
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-dock-empty",
+          "context": [],
+          "property": "border",
+          "value": "1px dashed rgba(166,132,255,.34)",
+          "line": 5649
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-dock-empty",
+          "context": [],
+          "property": "padding",
+          "value": "14px 10px",
+          "line": 5649
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-dock-empty",
+          "context": [],
+          "property": "margin-top",
+          "value": "12px",
+          "line": 5649
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .order",
+          "context": [],
+          "property": "font-weight",
+          "value": "900",
+          "line": 5648
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .order",
+          "context": [],
+          "property": "color",
+          "value": "#c7b0ff",
+          "line": 5648
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .order",
+          "context": [],
+          "property": "letter-spacing",
+          "value": ".14em",
+          "line": 5648
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .order",
+          "context": [],
+          "property": "font-size",
+          "value": "10px",
+          "line": 5648
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .order",
+          "context": [],
+          "property": "margin-top",
+          "value": "5px",
+          "line": 5648
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .name",
+          "context": [],
+          "property": "text-overflow",
+          "value": "ellipsis",
+          "line": 5647
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .name",
+          "context": [],
+          "property": "overflow",
+          "value": "hidden",
+          "line": 5647
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .name",
+          "context": [],
+          "property": "white-space",
+          "value": "nowrap",
+          "line": 5647
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .name",
+          "context": [],
+          "property": "font-weight",
+          "value": "950",
+          "line": 5647
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .name",
+          "context": [],
+          "property": "font-size",
+          "value": "15px",
+          "line": 5647
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .thumb img",
+          "context": [],
+          "property": "object-fit",
+          "value": "cover",
+          "line": 5646
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .thumb img",
+          "context": [],
+          "property": "height",
+          "value": "100%",
+          "line": 5646
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .thumb img",
+          "context": [],
+          "property": "width",
+          "value": "100%",
+          "line": 5646
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .thumb",
+          "context": [],
+          "property": "font-weight",
+          "value": "1000",
+          "line": 5645
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .thumb",
+          "context": [],
+          "property": "place-items",
+          "value": "center",
+          "line": 5645
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .thumb",
+          "context": [],
+          "property": "display",
+          "value": "grid",
+          "line": 5645
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .thumb",
+          "context": [],
+          "property": "background",
+          "value": "#0d1320",
+          "line": 5645
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .thumb",
+          "context": [],
+          "property": "border",
+          "value": "1px solid rgba(255,255,255,.16)",
+          "line": 5645
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .thumb",
+          "context": [],
+          "property": "overflow",
+          "value": "hidden",
+          "line": 5645
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini .thumb",
+          "context": [],
+          "property": "border-radius",
+          "value": "12px",
+          "line": 5645
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini",
+          "context": [],
+          "property": "align-items",
+          "value": "center",
+          "line": 5644
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini",
+          "context": [],
+          "property": "border-radius",
+          "value": "15px",
+          "line": 5644
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini",
+          "context": [],
+          "property": "padding",
+          "value": "10px",
+          "line": 5644
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini",
+          "context": [],
+          "property": "gap",
+          "value": "10px",
+          "line": 5644
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-mini",
+          "context": [],
+          "property": "display",
+          "value": "grid",
+          "line": 5644
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-dock-list",
+          "context": [],
+          "property": "margin-top",
+          "value": "12px",
+          "line": 5643
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-dock-list",
+          "context": [],
+          "property": "padding-right",
+          "value": "2px",
+          "line": 5643
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-dock-list",
+          "context": [],
+          "property": "overflow",
+          "value": "auto",
+          "line": 5643
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-dock-list",
+          "context": [],
+          "property": "gap",
+          "value": "10px",
+          "line": 5643
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-dock-list",
+          "context": [],
+          "property": "grid-template-columns",
+          "value": "1fr",
+          "line": 5643
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-dock-list",
+          "context": [],
+          "property": "display",
+          "value": "grid",
+          "line": 5643
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-dock-head",
+          "context": [],
+          "property": "border-bottom",
+          "value": "1px solid rgba(255,255,255,.08)",
+          "line": 5642
+        },
+        {
+          "selector": "#gameMultiDraw .multi-selected-dock-head",
+          "context": [],
+          "property": "padding-bottom",
+          "value": "10px",
+          "line": 5642
+        },
+        {
+          "selector": "#gameMultiDraw .multi-reveal-card.settle",
+          "context": [],
+          "property": "transform",
+          "value": "translate(-50%,-50%) scale(1)",
+          "line": 5639
+        },
+        {
+          "selector": "#gameMultiDraw .multi-reveal-card.settle",
+          "context": [],
+          "property": "opacity",
+          "value": "1",
+          "line": 5639
+        },
+        {
+          "selector": "#gameMultiDraw .multi-reveal-card .gacha-card-name",
+          "context": [],
+          "property": "font-size",
+          "value": "34px!important",
+          "line": 5636
+        },
+        {
+          "selector": "#gameMultiDraw .multi-reveal-card .gacha-card-inner",
+          "context": [],
+          "property": "border-radius",
+          "value": "19px!important",
+          "line": 5634
+        },
+        {
+          "selector": "#gameMultiDraw .multi-reveal-card .gacha-card",
+          "context": [],
+          "property": "padding",
+          "value": "12px!important",
+          "line": 5633
+        },
+        {
+          "selector": "#gameMultiDraw .multi-reveal-card .gacha-card",
+          "context": [],
+          "property": "border-radius",
+          "value": "28px!important",
+          "line": 5633
+        },
+        {
+          "selector": "#gameMultiDraw .multi-reveal-card",
+          "context": [],
+          "property": "opacity",
+          "value": "0",
+          "line": 5632
+        },
+        {
+          "selector": "#gameMultiDraw .multi-reveal-card",
+          "context": [],
+          "property": "left",
+          "value": "50%",
+          "line": 5632
+        },
+        {
+          "selector": "#gameMultiDraw .multi-reveal-card",
+          "context": [],
+          "property": "position",
+          "value": "absolute",
+          "line": 5632
+        },
+        {
+          "selector": "#gameMultiDraw .multi-draw-stage-card",
+          "context": [],
+          "property": "overflow",
+          "value": "hidden",
+          "line": 5608
+        },
+        {
+          "selector": "#contacts .contact-card .contact-card-actions",
+          "context": [],
+          "property": "margin-top",
+          "value": "auto",
+          "line": 5594
+        },
+        {
+          "selector": "#contacts .contact-card .contact-card-info",
+          "context": [],
+          "property": "min-width",
+          "value": "0",
+          "line": 5588
+        },
+        {
+          "selector": "#contacts .contact-card .contact-card-info",
+          "context": [],
+          "property": "height",
+          "value": "100%",
+          "line": 5588
+        },
+        {
+          "selector": ".multi-inner-light",
+          "context": [],
+          "property": "z-index",
+          "value": "1!important",
+          "line": 5468
+        },
+        {
+          "selector": ".multi-shell",
+          "context": [],
+          "property": "opacity",
+          "value": "0",
+          "line": 5381
+        },
+        {
+          "selector": ".multi-muzzle",
+          "context": [],
+          "property": "border-radius",
+          "value": "50%",
+          "line": 5380
+        },
+        {
+          "selector": "body[data-resolution=\"mobile\"] #contacts .contact-grid",
+          "context": [],
+          "property": "grid-template-columns",
+          "value": "1fr!important",
+          "line": 5362
+        },
+        {
+          "selector": ".contact-maintenance-grid",
+          "context": [],
+          "property": "align-items",
+          "value": "stretch",
+          "line": 5266
+        },
+        {
+          "selector": "#contacts .contact-grid",
+          "context": [],
+          "property": "gap",
+          "value": "13px",
+          "line": 5244
+        },
+        {
+          "selector": "#contacts .contact-grid",
+          "context": [],
+          "property": "grid-template-columns",
+          "value": "repeat(auto-fill,minmax(335px,1fr))",
+          "line": 5244
+        },
+        {
+          "selector": ".post-view-controls",
+          "context": [],
+          "property": "flex-wrap",
+          "value": "wrap",
+          "line": 5186
+        },
+        {
+          "selector": ".post-view-controls",
+          "context": [],
+          "property": "gap",
+          "value": "10px",
+          "line": 5186
+        },
+        {
+          "selector": ".post-view-controls",
+          "context": [],
+          "property": "align-items",
+          "value": "center",
+          "line": 5186
+        },
+        {
+          "selector": ".post-view-controls",
+          "context": [],
+          "property": "display",
+          "value": "flex",
+          "line": 5186
+        },
+        {
+          "selector": ".post-source-photo",
+          "context": [],
+          "property": "border",
+          "value": "1px solid var(--border)",
+          "line": 5140
+        },
+        {
+          "selector": ".post-source-empty",
+          "context": [],
+          "property": "color",
+          "value": "var(--muted)",
+          "line": 5140
+        },
+        {
+          "selector": ".post-source-empty",
+          "context": [],
+          "property": "text-align",
+          "value": "center",
+          "line": 5140
+        },
+        {
+          "selector": ".horse-rank-chip",
+          "context": [],
+          "property": "color",
+          "value": "#fff",
+          "line": 5050
+        },
+        {
+          "selector": ".horse-rank-chip",
+          "context": [],
+          "property": "font-weight",
+          "value": "900",
+          "line": 5050
+        },
+        {
+          "selector": ".horse-rank-chip",
+          "context": [],
+          "property": "font-size",
+          "value": "9px",
+          "line": 5050
+        },
+        {
+          "selector": ".horse-rank-chip",
+          "context": [],
+          "property": "border",
+          "value": "1px solid color-mix(in srgb,var(--accent) 36%,var(--border))",
+          "line": 5050
+        },
+        {
+          "selector": ".horse-rank-chip",
+          "context": [],
+          "property": "background",
+          "value": "color-mix(in srgb,var(--accent) 10%,var(--input))",
+          "line": 5050
+        },
+        {
+          "selector": ".horse-rank-chip",
+          "context": [],
+          "property": "border-radius",
+          "value": "999px",
+          "line": 5050
+        },
+        {
+          "selector": ".horse-rank-chip",
+          "context": [],
+          "property": "padding",
+          "value": "5px 8px",
+          "line": 5050
+        },
+        {
+          "selector": ".horse-rank-meta",
+          "context": [],
+          "property": "text-overflow",
+          "value": "ellipsis",
+          "line": 5050
+        },
+        {
+          "selector": ".horse-rank-meta",
+          "context": [],
+          "property": "overflow",
+          "value": "hidden",
+          "line": 5050
+        },
+        {
+          "selector": ".horse-rank-meta",
+          "context": [],
+          "property": "white-space",
+          "value": "nowrap",
+          "line": 5050
+        },
+        {
+          "selector": ".horse-rank-meta",
+          "context": [],
+          "property": "margin-top",
+          "value": "2px",
+          "line": 5050
+        },
+        {
+          "selector": ".horse-rank-meta",
+          "context": [],
+          "property": "color",
+          "value": "var(--muted)",
+          "line": 5050
+        },
+        {
+          "selector": ".horse-rank-meta",
+          "context": [],
+          "property": "font-size",
+          "value": "9px",
+          "line": 5050
+        },
+        {
+          "selector": ".horse-runner-state",
+          "context": [],
+          "property": "text-overflow",
+          "value": "ellipsis",
+          "line": 5049
+        },
+        {
+          "selector": ".horse-runner-state",
+          "context": [],
+          "property": "overflow",
+          "value": "hidden",
+          "line": 5049
+        },
+        {
+          "selector": ".horse-runner-state",
+          "context": [],
+          "property": "white-space",
+          "value": "nowrap",
+          "line": 5049
+        },
+        {
+          "selector": ".horse-runner-state",
+          "context": [],
+          "property": "color",
+          "value": "#eef3ff",
+          "line": 5049
+        },
+        {
+          "selector": ".horse-runner-state",
+          "context": [],
+          "property": "font-weight",
+          "value": "850",
+          "line": 5049
+        },
+        {
+          "selector": ".horse-runner-state",
+          "context": [],
+          "property": "font-size",
+          "value": "9px",
+          "line": 5049
+        },
+        {
+          "selector": ".horse-runner-state",
+          "context": [],
+          "property": "border-radius",
+          "value": "999px",
+          "line": 5049
+        },
+        {
+          "selector": ".horse-name",
+          "context": [],
+          "property": "text-overflow",
+          "value": "ellipsis",
+          "line": 5048
+        },
+        {
+          "selector": ".horse-name",
+          "context": [],
+          "property": "overflow",
+          "value": "hidden",
+          "line": 5048
+        },
+        {
+          "selector": ".horse-name",
+          "context": [],
+          "property": "white-space",
+          "value": "nowrap",
+          "line": 5048
+        },
+        {
+          "selector": ".horse-name",
+          "context": [],
+          "property": "color",
+          "value": "#fff",
+          "line": 5048
+        },
+        {
+          "selector": ".horse-name",
+          "context": [],
+          "property": "font-weight",
+          "value": "950",
+          "line": 5048
+        },
+        {
+          "selector": ".horse-name",
+          "context": [],
+          "property": "font-size",
+          "value": "11px",
+          "line": 5048
+        },
+        {
+          "selector": ".horse-body",
+          "context": [],
+          "property": "align-items",
+          "value": "center",
+          "line": 5048
+        },
+        {
+          "selector": ".horse-body",
+          "context": [],
+          "property": "display",
+          "value": "flex",
+          "line": 5048
+        },
+        {
+          "selector": ".horse-avatar img",
+          "context": [],
+          "property": "object-fit",
+          "value": "cover",
+          "line": 5047
+        },
+        {
+          "selector": ".horse-avatar img",
+          "context": [],
+          "property": "height",
+          "value": "100%",
+          "line": 5047
+        },
+        {
+          "selector": ".horse-avatar img",
+          "context": [],
+          "property": "width",
+          "value": "100%",
+          "line": 5047
+        },
+        {
+          "selector": ".horse-avatar",
+          "context": [],
+          "property": "font-weight",
+          "value": "950",
+          "line": 5047
+        },
+        {
+          "selector": ".horse-avatar",
+          "context": [],
+          "property": "font-size",
+          "value": "12px",
+          "line": 5047
+        },
+        {
+          "selector": ".horse-avatar",
+          "context": [],
+          "property": "place-items",
+          "value": "center",
+          "line": 5047
+        },
+        {
+          "selector": ".horse-avatar",
+          "context": [],
+          "property": "display",
+          "value": "grid",
+          "line": 5047
+        },
+        {
+          "selector": ".horse-avatar",
+          "context": [],
+          "property": "background",
+          "value": "var(--chip)",
+          "line": 5047
+        },
+        {
+          "selector": ".horse-avatar",
+          "context": [],
+          "property": "overflow",
+          "value": "hidden",
+          "line": 5047
+        },
+        {
+          "selector": ".horse-avatar",
+          "context": [],
+          "property": "border-radius",
+          "value": "50%",
+          "line": 5047
+        },
+        {
+          "selector": ".horse-avatar",
+          "context": [],
+          "property": "height",
+          "value": "48px",
+          "line": 5047
+        },
+        {
+          "selector": ".horse-avatar",
+          "context": [],
+          "property": "width",
+          "value": "48px",
+          "line": 5047
+        },
+        {
+          "selector": ".horse-runner.finished .horse-body",
+          "context": [],
+          "property": "box-shadow",
+          "value": "0 0 0 1px rgba(255,222,89,.55),0 0 22px rgba(255,215,72,.3)",
+          "line": 5046
+        },
+        {
+          "selector": ".horse-runner",
+          "context": [],
+          "property": "z-index",
+          "value": "3",
+          "line": 5046
+        },
+        {
+          "selector": ".horse-runner",
+          "context": [],
+          "property": "align-items",
+          "value": "center",
+          "line": 5046
+        },
+        {
+          "selector": ".horse-runner",
+          "context": [],
+          "property": "display",
+          "value": "flex",
+          "line": 5046
+        },
+        {
+          "selector": ".horse-runner",
+          "context": [],
+          "property": "transform",
+          "value": "translateY(-50%)",
+          "line": 5046
+        },
+        {
+          "selector": ".horse-runner",
+          "context": [],
+          "property": "top",
+          "value": "50%",
+          "line": 5046
+        },
+        {
+          "selector": ".horse-runner",
+          "context": [],
+          "property": "left",
+          "value": "2%",
+          "line": 5046
+        },
+        {
+          "selector": ".horse-runner",
+          "context": [],
+          "property": "position",
+          "value": "absolute",
+          "line": 5046
+        },
+        {
+          "selector": ".horse-track-zone.z3",
+          "context": [],
+          "property": "left",
+          "value": "66%",
+          "line": 5045
+        },
+        {
+          "selector": ".horse-track-zone span",
+          "context": [],
+          "property": "border-radius",
+          "value": "999px",
+          "line": 5042
+        },
+        {
+          "selector": ".horse-track-zone",
+          "context": [],
+          "property": "z-index",
+          "value": "1",
+          "line": 5042
+        },
+        {
+          "selector": ".horse-track-zone",
+          "context": [],
+          "property": "color",
+          "value": "#fff",
+          "line": 5042
+        },
+        {
+          "selector": ".horse-track-zone",
+          "context": [],
+          "property": "letter-spacing",
+          "value": ".08em",
+          "line": 5042
+        },
+        {
+          "selector": ".horse-track-zone",
+          "context": [],
+          "property": "font-weight",
+          "value": "950",
+          "line": 5042
+        },
+        {
+          "selector": ".horse-track-zone",
+          "context": [],
+          "property": "font-size",
+          "value": "8px",
+          "line": 5042
+        },
+        {
+          "selector": ".horse-track-zone",
+          "context": [],
+          "property": "padding-bottom",
+          "value": "5px",
+          "line": 5042
+        },
+        {
+          "selector": ".horse-track-zone",
+          "context": [],
+          "property": "justify-content",
+          "value": "center",
+          "line": 5042
+        },
+        {
+          "selector": ".horse-track-zone",
+          "context": [],
+          "property": "align-items",
+          "value": "flex-end",
+          "line": 5042
+        },
+        {
+          "selector": ".horse-track-zone",
+          "context": [],
+          "property": "display",
+          "value": "flex",
+          "line": 5042
+        },
+        {
+          "selector": ".horse-track-zone",
+          "context": [],
+          "property": "bottom",
+          "value": "10px",
+          "line": 5042
+        },
+        {
+          "selector": ".horse-track-zone",
+          "context": [],
+          "property": "top",
+          "value": "10px",
+          "line": 5042
+        },
+        {
+          "selector": ".horse-track-zone",
+          "context": [],
+          "property": "position",
+          "value": "absolute",
+          "line": 5042
+        },
+        {
+          "selector": ".horse-track",
+          "context": [],
+          "property": "overflow",
+          "value": "hidden",
+          "line": 5039
+        },
+        {
+          "selector": ".horse-track",
+          "context": [],
+          "property": "position",
+          "value": "relative",
+          "line": 5039
+        },
+        {
+          "selector": ".horse-lane-index",
+          "context": [],
+          "property": "font-weight",
+          "value": "950",
+          "line": 5038
+        },
+        {
+          "selector": ".horse-lane-index",
+          "context": [],
+          "property": "font-size",
+          "value": "11px",
+          "line": 5038
+        },
+        {
+          "selector": ".horse-lane-index",
+          "context": [],
+          "property": "place-items",
+          "value": "center",
+          "line": 5038
+        },
+        {
+          "selector": ".horse-lane-index",
+          "context": [],
+          "property": "display",
+          "value": "grid",
+          "line": 5038
+        },
+        {
+          "selector": ".horse-lane-index",
+          "context": [],
+          "property": "border-radius",
+          "value": "12px",
+          "line": 5038
+        },
+        {
+          "selector": ".horse-lane-index",
+          "context": [],
+          "property": "height",
+          "value": "42px",
+          "line": 5038
+        },
+        {
+          "selector": ".horse-lane-index",
+          "context": [],
+          "property": "width",
+          "value": "42px",
+          "line": 5038
+        },
+        {
+          "selector": ".horse-lane",
+          "context": [],
+          "property": "align-items",
+          "value": "center",
+          "line": 5038
+        },
+        {
+          "selector": ".horse-lane",
+          "context": [],
+          "property": "gap",
+          "value": "10px",
+          "line": 5038
+        },
+        {
+          "selector": ".horse-lane",
+          "context": [],
+          "property": "grid-template-columns",
+          "value": "42px minmax(0,1fr)",
+          "line": 5038
+        },
+        {
+          "selector": ".horse-lane",
+          "context": [],
+          "property": "display",
+          "value": "grid",
+          "line": 5038
+        },
+        {
+          "selector": ".horse-race-stage",
+          "context": [],
+          "property": "overflow",
+          "value": "hidden",
+          "line": 5037
+        },
+        {
+          "selector": ".horse-race-stage",
+          "context": [],
+          "property": "min-height",
+          "value": "585px",
+          "line": 5037
+        },
+        {
+          "selector": ".horse-race-stage",
+          "context": [],
+          "property": "border",
+          "value": "1px solid var(--border)",
+          "line": 5037
+        },
+        {
+          "selector": ".horse-race-stage",
+          "context": [],
+          "property": "flex-direction",
+          "value": "column",
+          "line": 5037
+        },
+        {
+          "selector": ".horse-race-stage",
+          "context": [],
+          "property": "display",
+          "value": "flex",
+          "line": 5037
+        },
+        {
+          "selector": ".coin-emblem",
+          "context": [],
+          "property": "place-items",
+          "value": "center",
+          "line": 4996
+        },
+        {
+          "selector": ".coin-emblem",
+          "context": [],
+          "property": "display",
+          "value": "grid",
+          "line": 4996
+        },
+        {
+          "selector": ".coin-emblem",
+          "context": [],
+          "property": "border-radius",
+          "value": "50%",
+          "line": 4996
+        },
+        {
+          "selector": ".coin-back",
+          "context": [],
+          "property": "transform",
+          "value": "rotateY(180deg)",
+          "line": 4944
+        },
+        {
+          "selector": ".coin-face",
+          "context": [],
+          "property": "box-shadow",
+          "value": "inset -16px -16px 24px #d79c20,inset 14px 14px 20px #fff0a3,0 20px 40px rgba(0,0,0,.35)",
+          "line": 4944
+        },
+        {
+          "selector": ".coin-face",
+          "context": [],
+          "property": "border",
+          "value": "9px solid #ffd563",
+          "line": 4944
+        },
+        {
+          "selector": ".coin-face",
+          "context": [],
+          "property": "place-items",
+          "value": "center",
+          "line": 4944
+        },
+        {
+          "selector": ".coin-face",
+          "context": [],
+          "property": "display",
+          "value": "grid",
+          "line": 4944
+        },
+        {
+          "selector": ".coin-face",
+          "context": [],
+          "property": "backface-visibility",
+          "value": "hidden",
+          "line": 4944
+        },
+        {
+          "selector": ".coin-face",
+          "context": [],
+          "property": "border-radius",
+          "value": "50%",
+          "line": 4944
+        },
+        {
+          "selector": ".coin-face",
+          "context": [],
+          "property": "inset",
+          "value": "0",
+          "line": 4944
+        },
+        {
+          "selector": ".coin-face",
+          "context": [],
+          "property": "position",
+          "value": "absolute",
+          "line": 4944
+        },
+        {
+          "selector": ".coin-visual",
+          "context": [],
+          "property": "transform-style",
+          "value": "preserve-3d",
+          "line": 4944
+        },
+        {
+          "selector": ".coin-visual",
+          "context": [],
+          "property": "position",
+          "value": "relative",
+          "line": 4944
+        },
+        {
+          "selector": "body.sidebar-pinned .logo small,\nbody.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo small,\nbody.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo small",
+          "context": [],
+          "property": "transform",
+          "value": "none!important",
+          "line": 3935
+        },
+        {
+          "selector": "body.sidebar-pinned .logo small,\nbody.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo small,\nbody.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo small",
+          "context": [],
+          "property": "display",
+          "value": "block!important",
+          "line": 3933
+        },
+        {
+          "selector": "body.sidebar-pinned .logo-full,\nbody.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo-full,\nbody.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo-full",
+          "context": [],
+          "property": "transform",
+          "value": "none!important",
+          "line": 3928
+        },
+        {
+          "selector": "body.sidebar-pinned .logo-full,\nbody.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo-full,\nbody.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo-full",
+          "context": [],
+          "property": "padding",
+          "value": "0!important",
+          "line": 3927
+        },
+        {
+          "selector": "body.sidebar-pinned .logo-full,\nbody.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo-full,\nbody.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo-full",
+          "context": [],
+          "property": "margin",
+          "value": "0!important",
+          "line": 3926
+        },
+        {
+          "selector": "body.sidebar-pinned .logo-full,\nbody.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo-full,\nbody.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo-full",
+          "context": [],
+          "property": "display",
+          "value": "block!important",
+          "line": 3925
+        },
+        {
+          "selector": "body.sidebar-pinned .logo,\nbody.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo,\nbody.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo",
+          "context": [],
+          "property": "min-width",
+          "value": "118px!important",
+          "line": 3914
+        },
+        {
+          "selector": "body.sidebar-pinned .logo,\nbody.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo,\nbody.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo",
+          "context": [],
+          "property": "width",
+          "value": "118px!important",
+          "line": 3913
+        },
+        {
+          "selector": "body.sidebar-pinned .logo,\nbody.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo,\nbody.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo",
+          "context": [],
+          "property": "left",
+          "value": "8px!important",
+          "line": 3912
+        },
+        {
+          "selector": ".sidebar",
+          "context": [],
+          "property": "padding",
+          "value": "12px 8px!important",
+          "line": 2713
+        },
+        {
+          "selector": ".sidebar",
+          "context": [],
+          "property": "min-width",
+          "value": "64px!important",
+          "line": 2712
+        },
+        {
+          "selector": ".sidebar",
+          "context": [],
+          "property": "width",
+          "value": "64px!important",
+          "line": 2711
+        },
+        {
+          "selector": "body.sidebar-pinned .app",
+          "context": [],
+          "property": "grid-template-columns",
+          "value": "220px minmax(0,1fr)!important",
+          "line": 2705
+        },
+        {
+          "selector": ".app",
+          "context": [],
+          "property": "grid-template-columns",
+          "value": "64px minmax(0,1fr)!important",
+          "line": 2702
+        },
+        {
+          "selector": ".nav-icon",
+          "context": [],
+          "property": "place-items",
+          "value": "center!important",
+          "line": 2530
+        },
+        {
+          "selector": ".nav-icon",
+          "context": [],
+          "property": "display",
+          "value": "grid!important",
+          "line": 2529
+        },
+        {
+          "selector": ".logo-mini",
+          "context": [],
+          "property": "text-align",
+          "value": "center",
+          "line": 2422
+        },
+        {
+          "selector": "body.sidebar-pinned .app",
+          "context": [],
+          "property": "grid-template-columns",
+          "value": "220px minmax(0,1fr)!important",
+          "line": 2418
+        },
+        {
+          "selector": ".dashboard-person .avatar,\n.dashboard-person-avatar",
+          "context": [],
+          "property": "object-fit",
+          "value": "cover",
+          "line": 1643
+        },
+        {
+          "selector": "#sniper .collab-5 .sniper-fx-scorch",
+          "context": [],
+          "property": "mix-blend-mode",
+          "value": "multiply",
+          "line": 680
+        },
+        {
+          "selector": "#sniper .collab-5 .sniper-fx-border",
+          "context": [],
+          "property": "mask-composite",
+          "value": "exclude",
+          "line": 670
+        },
+        {
+          "selector": "#sniper .collab-5 .sniper-fx-border",
+          "context": [],
+          "property": "-webkit-mask-composite",
+          "value": "xor",
+          "line": 669
+        },
+        {
+          "selector": "#sniper .collab-5 .sniper-fx-border",
+          "context": [],
+          "property": "-webkit-mask",
+          "value": "linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0)",
+          "line": 668
+        },
+        {
+          "selector": "#sniper .collab-4 .sniper-fx-border",
+          "context": [],
+          "property": "mask-composite",
+          "value": "exclude",
+          "line": 621
+        },
+        {
+          "selector": "#sniper .collab-4 .sniper-fx-border",
+          "context": [],
+          "property": "-webkit-mask-composite",
+          "value": "xor",
+          "line": 620
+        },
+        {
+          "selector": "#sniper .collab-4 .sniper-fx-border",
+          "context": [],
+          "property": "-webkit-mask",
+          "value": "linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0)",
+          "line": 619
+        },
+        {
+          "selector": "#sniper .collab-2 .sniper-fx-border::after",
+          "context": [],
+          "property": "position",
+          "value": "absolute",
+          "line": 551
+        },
+        {
+          "selector": "#sniper .collab-2 .sniper-fx-border::after",
+          "context": [],
+          "property": "content",
+          "value": "\"\"",
+          "line": 550
+        },
+        {
+          "selector": "#sniper .collab-2 .sniper-fx-border",
+          "context": [],
+          "property": "overflow",
+          "value": "hidden",
+          "line": 547
+        },
+        {
+          "selector": "#sniper .contact-card.has-upcoming",
+          "context": [],
+          "property": "padding-bottom",
+          "value": "13px",
+          "line": 483
+        },
+        {
+          "selector": ".sniper-row",
+          "context": [],
+          "property": "gap",
+          "value": "12px",
+          "line": 433
+        },
+        {
+          "selector": "#sniper .contact-card",
+          "context": [],
+          "property": "overflow",
+          "value": "visible",
+          "line": 426
+        },
+        {
+          "selector": ".contact-card",
+          "context": [],
+          "property": "overflow",
+          "value": "visible",
+          "line": 240
+        },
+        {
+          "selector": ".world-layout",
+          "context": [
+            "@media(max-width:900px)"
+          ],
+          "property": "grid-template-columns",
+          "value": "1fr",
+          "line": 208
+        },
+        {
+          "selector": ".world-marker text",
+          "context": [],
+          "property": "stroke-linejoin",
+          "value": "round",
+          "line": 187
+        },
+        {
+          "selector": ".world-marker text",
+          "context": [],
+          "property": "paint-order",
+          "value": "stroke",
+          "line": 187
+        },
+        {
+          "selector": ".world-marker text",
+          "context": [],
+          "property": "font-weight",
+          "value": "800",
+          "line": 187
+        },
+        {
+          "selector": ".world-marker text",
+          "context": [],
+          "property": "fill",
+          "value": "var(--text)",
+          "line": 187
+        },
+        {
+          "selector": ".world-marker circle",
+          "context": [],
+          "property": "stroke",
+          "value": "#fff",
+          "line": 186
+        },
+        {
+          "selector": ".world-marker circle",
+          "context": [],
+          "property": "fill",
+          "value": "var(--accent)",
+          "line": 186
+        },
+        {
+          "selector": ".world-marker",
+          "context": [],
+          "property": "cursor",
+          "value": "var(--mws-cursor-pointer,pointer)",
+          "line": 185
+        },
+        {
+          "selector": ".world-map",
+          "context": [],
+          "property": "border-radius",
+          "value": "15px",
+          "line": 183
+        },
+        {
+          "selector": ".world-map",
+          "context": [],
+          "property": "border",
+          "value": "1px solid var(--border)",
+          "line": 183
+        },
+        {
+          "selector": ".world-map",
+          "context": [],
+          "property": "height",
+          "value": "auto",
+          "line": 183
+        },
+        {
+          "selector": ".world-map",
+          "context": [],
+          "property": "width",
+          "value": "100%",
+          "line": 183
+        },
+        {
+          "selector": ".world-layout",
+          "context": [],
+          "property": "gap",
+          "value": "14px",
+          "line": 181
+        },
+        {
+          "selector": ".world-layout",
+          "context": [],
+          "property": "display",
+          "value": "grid",
+          "line": 181
+        },
+        {
+          "selector": ".wheel-guide",
+          "context": [],
+          "property": "pointer-events",
+          "value": "none",
+          "line": 113
+        },
+        {
+          "selector": ".mini-event",
+          "context": [],
+          "property": "overflow",
+          "value": "hidden",
+          "line": 87
+        },
+        {
+          "selector": ".mini-event",
+          "context": [],
+          "property": "font-size",
+          "value": "11px",
+          "line": 87
+        },
+        {
+          "selector": ".day",
+          "context": [],
+          "property": "overflow",
+          "value": "hidden",
+          "line": 80
+        }
+      ]
+    },
+    {
+      "file": "assets/contact-directory-v177.css",
+      "bytesBefore": 19679,
+      "bytesAfter": 19403,
+      "removed": [
+        {
+          "selector": "#contacts .contact-card .station-link:hover",
+          "context": [],
+          "property": "border-color",
+          "value": "var(--accent)",
+          "line": 130
+        },
+        {
+          "selector": "#contacts .contact-card .station-link:hover",
+          "context": [],
+          "property": "color",
+          "value": "var(--text)",
+          "line": 130
+        },
+        {
+          "selector": "body.mws-premium #contacts .contact-card .station-link",
+          "context": [],
+          "property": "color",
+          "value": "var(--muted)",
+          "line": 126
+        },
+        {
+          "selector": "body.mws-premium #contacts .contact-card .contact-card-tags .chip",
+          "context": [],
+          "property": "border-radius",
+          "value": "5px",
+          "line": 115
+        },
+        {
+          "selector": "body.mws-premium #contacts .contact-card .contact-card-tags .chip",
+          "context": [],
+          "property": "font-weight",
+          "value": "550",
+          "line": 114
+        },
+        {
+          "selector": "body.mws-premium #contacts .contact-card .contact-card-tags",
+          "context": [],
+          "property": "gap",
+          "value": "4px!important",
+          "line": 112
+        },
+        {
+          "selector": "body.mws-premium #contacts .contact-card .contact-card-name",
+          "context": [],
+          "property": "line-height",
+          "value": "1.35!important",
+          "line": 111
+        },
+        {
+          "selector": "body.mws-premium #contacts .contact-grid > .contact-card.has-upcoming",
+          "context": [],
+          "property": "border-color",
+          "value": "color-mix(in srgb,#37c7a3 42%,var(--border))!important",
+          "line": 100
+        },
+        {
+          "selector": "body.mws-premium #contacts .contact-grid > .contact-card.is-self",
+          "context": [],
+          "property": "border-color",
+          "value": "color-mix(in srgb,#d4ad62 65%,var(--border))!important",
+          "line": 98
+        }
+      ]
+    },
+    {
+      "file": "assets/content-applications-v1.css",
+      "bytesBefore": 43625,
+      "bytesAfter": 43468,
+      "removed": [
+        {
+          "selector": "#contentApplications .ca-row-details",
+          "context": [
+            "@media(max-width:520px)"
+          ],
+          "property": "grid-column",
+          "value": "3/-1",
+          "line": 168
+        },
+        {
+          "selector": "#contentApplications .ca-rank",
+          "context": [],
+          "property": "font-variant-numeric",
+          "value": "tabular-nums",
+          "line": 70
+        },
+        {
+          "selector": "#contentApplications .ca-avatar img",
+          "context": [],
+          "property": "object-fit",
+          "value": "cover",
+          "line": 42
+        },
+        {
+          "selector": "#contentApplications .ca-avatar img",
+          "context": [],
+          "property": "height",
+          "value": "100%",
+          "line": 42
+        },
+        {
+          "selector": "#contentApplications .ca-avatar img",
+          "context": [],
+          "property": "width",
+          "value": "100%",
+          "line": 42
+        },
+        {
+          "selector": "#contentApplications .ca-avatar",
+          "context": [],
+          "property": "overflow",
+          "value": "hidden",
+          "line": 41
+        },
+        {
+          "selector": "#contentApplications .ca-state.expired",
+          "context": [],
+          "property": "border-color",
+          "value": "var(--border)",
+          "line": 27
+        },
+        {
+          "selector": "#contentApplications .ca-state.expired",
+          "context": [],
+          "property": "background",
+          "value": "var(--input)",
+          "line": 27
+        }
+      ]
+    },
+    {
+      "file": "assets/f1-racing-v1.css",
+      "bytesBefore": 81022,
+      "bytesAfter": 80770,
+      "removed": [
+        {
+          "selector": ".f1-racing-race-lane-guide-v360",
+          "context": [],
+          "property": "stroke-width",
+          "value": "1.15",
+          "line": 901
+        },
+        {
+          "selector": "#f1RacingRaceTrackGlowV188",
+          "context": [],
+          "property": "stroke-width",
+          "value": "58",
+          "line": 898
+        },
+        {
+          "selector": ".f1-racing-race-map-stage-v188",
+          "context": [],
+          "property": "position",
+          "value": "relative",
+          "line": 519
+        },
+        {
+          "selector": "#f1RacingViewRaceV185 .f1-racing-panel-title-v188 span",
+          "context": [],
+          "property": "font-size",
+          "value": "9px!important",
+          "line": 439
+        },
+        {
+          "selector": "#f1RacingViewRaceV185 .f1-racing-panel-title-v188",
+          "context": [],
+          "property": "padding",
+          "value": "5px 7px!important",
+          "line": 436
+        },
+        {
+          "selector": "#f1RacingViewRaceV185 .f1-racing-panel-title-v188",
+          "context": [],
+          "property": "min-height",
+          "value": "30px!important",
+          "line": 436
+        },
+        {
+          "selector": "#f1RacingViewRaceV185 .f1-racing-workspace-recovery-e",
+          "context": [],
+          "property": "min-height",
+          "value": "571px!important",
+          "line": 430
+        },
+        {
+          "selector": "#f1RacingViewRaceV185 .f1-racing-workspace-recovery-e",
+          "context": [],
+          "property": "gap",
+          "value": "5px!important",
+          "line": 429
+        },
+        {
+          "selector": "#f1RacingViewRaceV185 .f1-racing-workspace-recovery-e",
+          "context": [],
+          "property": "grid-auto-rows",
+          "value": "72px!important",
+          "line": 429
+        },
+        {
+          "selector": "#f1RacingViewRaceV185 .f1-racing-race-controls-v188",
+          "context": [],
+          "property": "gap",
+          "value": "3px!important",
+          "line": 421
+        },
+        {
+          "selector": "#f1RacingViewRaceV185 .f1-racing-race-header-v188",
+          "context": [],
+          "property": "gap",
+          "value": "8px!important",
+          "line": 409
+        },
+        {
+          "selector": ".f1-racing-race-vehicle-v189.leader .car-ring",
+          "context": [],
+          "property": "stroke-width",
+          "value": "4",
+          "line": 294
+        }
+      ]
+    },
+    {
+      "file": "assets/mawang-archive-v1.css",
+      "bytesBefore": 19090,
+      "bytesAfter": 19075,
+      "removed": [
+        {
+          "selector": ".ma-character-card .ma-portrait",
+          "context": [],
+          "property": "aspect-ratio",
+          "value": "1",
+          "line": 34
+        }
+      ]
+    },
+    {
+      "file": "assets/ui-interactions-v1.css",
+      "bytesBefore": 17260,
+      "bytesAfter": 17234,
+      "removed": [
+        {
+          "selector": "body #settings :is(input[type=checkbox],input[type=radio])",
+          "context": [],
+          "property": "accent-color",
+          "value": "var(--accent)",
+          "line": 92
+        }
+      ]
+    },
+    {
+      "file": "assets/wardogs-manager-v1.css",
+      "bytesBefore": 16334,
+      "bytesAfter": 16268,
+      "removed": [
+        {
+          "selector": ".wardogs-manager-layout-v122",
+          "context": [
+            "@media(max-width:860px)"
+          ],
+          "property": "grid-template-rows",
+          "value": "minmax(150px,30vh) minmax(0,1fr)",
+          "line": 80
+        },
+        {
+          "selector": ".wardogs-manager-dialog-v122",
+          "context": [
+            "@media(max-width:860px)"
+          ],
+          "property": "max-height",
+          "value": "96vh",
+          "line": 79
+        }
+      ]
+    },
+    {
+      "file": "assets/wardogs-v1.css",
+      "bytesBefore": 22131,
+      "bytesAfter": 21912,
+      "removed": [
+        {
+          "selector": ".wardogs-detail-media-frame-v125 img",
+          "context": [
+            "@media(max-width:520px)"
+          ],
+          "property": "max-height",
+          "value": "calc(48vh - 24px)",
+          "line": 330
+        },
+        {
+          "selector": ".wardogs-detail-layout-v125",
+          "context": [
+            "@media(max-width:520px)"
+          ],
+          "property": "grid-template-rows",
+          "value": "minmax(240px,48vh) minmax(0,1fr)",
+          "line": 329
+        },
+        {
+          "selector": ".wardogs-detail-media-frame-v125 img",
+          "context": [
+            "@media(max-width:900px)"
+          ],
+          "property": "max-height",
+          "value": "calc(55vh - 26px)",
+          "line": 322
+        },
+        {
+          "selector": ".wardogs-detail-layout-v125",
+          "context": [
+            "@media(max-width:900px)"
+          ],
+          "property": "grid-template-rows",
+          "value": "minmax(280px,55vh) minmax(0,1fr)",
+          "line": 319
+        },
+        {
+          "selector": ".wardogs-detail-dialog-v125",
+          "context": [
+            "@media(max-width:900px)"
+          ],
+          "property": "max-height",
+          "value": "96vh",
+          "line": 318
+        },
+        {
+          "selector": ".wardogs-detail-media-frame-v125 img",
+          "context": [],
+          "property": "max-height",
+          "value": "calc(94vh - 150px)",
+          "line": 261
+        },
+        {
+          "selector": ".wardogs-detail-dialog-v125",
+          "context": [],
+          "property": "max-height",
+          "value": "94vh",
+          "line": 213
+        }
+      ]
+    },
+    {
+      "file": "assets/workspace-clean-v1.css",
+      "bytesBefore": 21076,
+      "bytesAfter": 21059,
+      "removed": [
+        {
+          "selector": "#dashboard #dashboardOverviewMode .dashboard-insights-v55",
+          "context": [],
+          "property": "align-items",
+          "value": "start",
+          "line": 212
+        }
+      ]
+    }
+  ]
+}

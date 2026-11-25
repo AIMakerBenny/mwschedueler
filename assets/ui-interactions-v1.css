@@ -89,7 +89,7 @@ html body .app .sidebar .nav .nav-scroll>button[data-tab]:active{scale:.98}
 .nav-game-divider[data-mws-nav-group]:hover em{color:var(--text)}
 html body .app .sidebar .nav .nav-scroll>button:is([data-tab=gameMajoku],[data-tab=gameLadder],[data-tab=gameF1Racing],[data-tab=gameMultiDraw],[data-tab=contentPlanner],[data-tab=toolTier],[data-tab=toolMatrix],[data-tab=toolRelations],[data-tab=memos]):not(.mws-nav-group-hidden){animation:mws-ui-nav-in var(--mws-ui-menu) var(--mws-ui-ease) both}
 @keyframes mws-ui-nav-in{from{opacity:0;translate:0 -3px}to{opacity:1;translate:0 0}}
-body #settings :is(input[type=checkbox],input[type=radio]){accent-color:var(--accent)}
+body #settings :is(input[type=checkbox],input[type=radio]){}
 
 /* Embedded tools have their own palettes and documents. Keep game controls
    separate from the playfield and do not animate node coordinates on drag. */

@@ -209,7 +209,7 @@ body.mws-premium[data-theme=neon]:not(:has(#gameF1Racing.active)) .sidebar .nav 
 #dashboard[data-upcoming-count="0"] #dashboardOverviewMode #upcomingDashboardPanel{display:none!important}
 #dashboard[data-upcoming-count="0"] #dashboardOverviewMode .dashboard-preview-hint{display:none}
 #dashboard #dashboardOverviewMode .dashboard-upcoming-list{max-height:440px;scrollbar-gutter:stable}
-#dashboard #dashboardOverviewMode .dashboard-insights-v55{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px;align-items:start}
+#dashboard #dashboardOverviewMode .dashboard-insights-v55{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px;}
 #dashboard #dashboardOverviewMode .dashboard-insight-head-v55{gap:12px;margin-bottom:12px}
 #dashboard #dashboardOverviewMode .dashboard-insight-head-v55 .chip{flex:0 0 auto;white-space:nowrap}
 #dashboard #dashboardOverviewMode .dashboard-insight-head-v55 h3{font-size:15px;font-weight:750}

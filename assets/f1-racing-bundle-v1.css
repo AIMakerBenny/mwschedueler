@@ -1,0 +1,1846 @@
+/* Source: assets/f1-racing-v1.css */
+/* Mawang Scheduler F1 Racing
+   Phase 180: isolated navigation and page shell. */
+.f1-racing-section-v180{
+  min-height:calc(100vh - 112px);
+}
+.f1-racing-head-v180{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:24px;
+  margin-bottom:16px;
+}
+.f1-racing-head-v180 h2{
+  margin:4px 0 8px;
+  font-size:26px;
+  letter-spacing:-.02em;
+}
+.f1-racing-head-v180 p{
+  max-width:920px;
+  margin:0;
+  color:var(--muted);
+  line-height:1.65;
+}
+.f1-racing-kicker-v180,
+.f1-racing-console-label-v180,
+.f1-racing-placeholder-eyebrow-v180{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:10px;
+  letter-spacing:.18em;
+  color:#94a3b8;
+}
+.f1-racing-head-badge-v180,
+.f1-racing-phase-chip-v180{
+  flex:0 0 auto;
+  border:1px solid #313846;
+  border-radius:999px;
+  padding:7px 10px;
+  background:#0b0e13;
+  color:#d8dee9;
+  font:700 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  letter-spacing:.12em;
+}
+.f1-racing-shell-v180{
+  border:1px solid #242a35;
+  border-radius:14px;
+  overflow:hidden;
+  background:#07090d;
+  box-shadow:0 22px 60px rgba(0,0,0,.28);
+}
+.f1-racing-console-v180{min-height:620px}
+.f1-racing-console-top-v180{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+  min-height:58px;
+  padding:10px 14px;
+  border-bottom:1px solid #292f39;
+  background:#0d1015;
+}
+.f1-racing-console-top-v180 h3{
+  margin:4px 0 0;
+  color:#f8fafc;
+  font-size:15px;
+}
+.f1-racing-placeholder-v180{
+  position:relative;
+  min-height:560px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+}
+.f1-racing-placeholder-grid-v180{
+  position:absolute;
+  inset:0;
+  opacity:.32;
+  background-image:
+    linear-gradient(rgba(148,163,184,.08) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(148,163,184,.08) 1px,transparent 1px);
+  background-size:32px 32px;
+}
+.f1-racing-placeholder-content-v180{
+  position:relative;
+  width:min(620px,calc(100% - 40px));
+  border:1px solid #2b3340;
+  border-radius:12px;
+  padding:28px;
+  text-align:center;
+  background:rgba(10,13,18,.88);
+}
+.f1-racing-placeholder-content-v180 strong{
+  display:block;
+  margin:10px 0 8px;
+  color:#f8fafc;
+  font-size:20px;
+}
+.f1-racing-placeholder-content-v180 p{
+  margin:0;
+  color:#94a3b8;
+  line-height:1.6;
+}
+@media(max-width:800px){
+  .f1-racing-head-v180{flex-direction:column}
+  .f1-racing-console-v180{min-height:520px}
+  .f1-racing-placeholder-v180{min-height:460px}
+}
+
+/* Phase 181: contact-backed driver selection */
+.f1-racing-setup-v181{display:grid;grid-template-columns:minmax(320px,.9fr) minmax(420px,1.35fr);gap:12px;padding:12px;min-height:560px}
+.f1-racing-panel-v181{min-width:0;border:1px solid #252d39;border-radius:10px;background:#0a0d12;overflow:hidden}
+.f1-racing-panel-head-v181{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px;border-bottom:1px solid #202733;background:#0e1218}
+.f1-racing-panel-head-v181 h3{margin:3px 0 4px;color:#f8fafc;font-size:15px}
+.f1-racing-panel-head-v181 p{margin:0;color:#8995a8;font-size:11px;line-height:1.5}
+.f1-racing-panel-kicker-v181,.f1-racing-next-step-label-v181{font:700 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.16em;color:#64748b}
+.f1-racing-count-v181{flex:0 0 auto;border:1px solid #303846;border-radius:999px;padding:5px 8px;color:#d9e2ef;font:700 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-search-wrap-v181{position:relative;margin:12px 12px 8px}
+.f1-racing-search-mark-v181{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#758196;pointer-events:none}
+#f1RacingContactSearchV181{width:100%;padding-left:34px;background:#070a0f;border-color:#28303c}
+.f1-racing-contact-list-v181{height:430px;overflow:auto;padding:4px 8px 10px}
+.f1-racing-contact-row-v181{width:100%;min-height:54px;display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:10px;border:1px solid transparent;border-radius:8px;padding:7px 8px;background:transparent;color:#e6edf7;text-align:left}
+.f1-racing-contact-row-v181:hover{border-color:#2f3948;background:#10151d}
+.f1-racing-contact-row-v181.selected{border-color:#43516a;background:#121a25}
+.f1-racing-avatar-v181{width:36px;height:36px;border-radius:50%;object-fit:cover;border:1px solid #364152;background:#151b24;display:grid;place-items:center;color:#cbd5e1;font-size:11px;font-weight:800}
+.f1-racing-contact-name-v181{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:750}
+.f1-racing-contact-meta-v181{display:block;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#738095;font-size:10px}
+.f1-racing-contact-action-v181{min-width:38px;border:1px solid #303949;border-radius:7px;padding:5px 8px;background:#11161e;color:#dbe5f2;font-size:11px}
+.f1-racing-grid-summary-v181{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;border-bottom:1px solid #202733;background:#202733}
+.f1-racing-grid-summary-v181>div{padding:10px 12px;background:#090c11}
+.f1-racing-grid-summary-v181 span{display:block;color:#667287;font-size:9px;text-transform:uppercase;letter-spacing:.08em}
+.f1-racing-grid-summary-v181 strong{display:block;margin-top:4px;color:#f1f5f9;font:750 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-selected-list-v181{min-height:330px;max-height:390px;overflow:auto;padding:9px}
+.f1-racing-selected-row-v181{display:grid;grid-template-columns:34px 36px minmax(0,1fr) auto;gap:9px;align-items:center;min-height:52px;padding:6px 7px;border-bottom:1px solid #1c232d}
+.f1-racing-grid-pos-v181{color:#718096;font:800 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-selected-remove-v181{border:0;background:transparent;color:#778397;padding:5px;font-size:16px}
+.f1-racing-selected-remove-v181:hover{color:#e5e7eb}
+.f1-racing-empty-v181{min-height:90px;display:grid;place-items:center;padding:22px;color:#68758a;text-align:center;font-size:11px}
+.f1-racing-next-step-v181{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;margin:0 10px 10px;padding:11px 12px;border:1px solid #242d3a;border-radius:8px;background:#0d1219}
+.f1-racing-next-step-v181 strong{color:#dce5f2;font-size:12px}
+.f1-racing-next-step-v181 p{margin:3px 0 0;color:#758196;font-size:10px;line-height:1.5}
+@media(max-width:1050px){.f1-racing-setup-v181{grid-template-columns:1fr}.f1-racing-contact-list-v181{height:300px}.f1-racing-selected-list-v181{min-height:220px}}
+
+/* Phase 183: SVG circuit rendering */
+.f1-racing-track-panel-v183{margin:0 12px 12px;border:1px solid #252d39;border-radius:10px;background:#080b10;overflow:hidden}
+.f1-racing-track-head-v183{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:13px 14px;border-bottom:1px solid #202733;background:#0d1117}
+.f1-racing-track-head-v183 h3{margin:3px 0 4px;color:#f8fafc;font-size:15px}
+.f1-racing-track-head-v183 p{margin:0;color:#7f8b9f;font-size:11px;line-height:1.5}
+.f1-racing-track-stats-v183{display:flex;gap:1px;background:#252d39;border:1px solid #252d39;border-radius:7px;overflow:hidden;flex:0 0 auto}
+.f1-racing-track-stats-v183 span{min-width:88px;padding:7px 9px;background:#090c11}
+.f1-racing-track-stats-v183 small{display:block;color:#667287;font:700 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.1em}
+.f1-racing-track-stats-v183 strong{display:block;margin-top:3px;color:#e8eef8;font:750 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-track-stage-v183{position:relative;min-height:430px;background:radial-gradient(circle at 50% 48%,rgba(30,41,59,.34),rgba(3,5,8,.98) 62%)}
+.f1-racing-track-svg-v183{display:block;width:100%;height:430px;overflow:visible}
+.f1-racing-track-glow-v183{fill:none;stroke:rgba(148,163,184,.14);stroke-width:24;stroke-linecap:round;stroke-linejoin:round}
+.f1-racing-track-path-v183{fill:none;stroke:#dbe5f1;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+.f1-racing-track-annotation-v183 circle{stroke:#05070a;stroke-width:3}
+.f1-racing-track-annotation-v183 text{fill:#cbd5e1;font:800 13px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#05070a;stroke-width:4;stroke-linejoin:round}
+.f1-racing-track-annotation-v183.sector circle{fill:#60a5fa}
+.f1-racing-track-annotation-v183.trap circle{fill:#a78bfa}
+.f1-racing-track-annotation-v183.pit circle{fill:#f59e0b}
+.f1-racing-track-annotation-v183.start circle{fill:#22c55e}
+.f1-racing-track-corner-v183{position:absolute;right:12px;bottom:10px;display:flex;flex-direction:column;align-items:flex-end;gap:3px;color:#64748b;font:700 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.1em;pointer-events:none}
+.f1-racing-track-corner-v183 strong{color:#94a3b8;font-size:10px}
+.f1-racing-track-legend-v183{display:flex;flex-wrap:wrap;gap:15px;padding:9px 13px;border-top:1px solid #202733;color:#758196;font-size:10px}
+.f1-racing-track-legend-v183 span{display:inline-flex;align-items:center;gap:6px}
+.f1-racing-track-legend-v183 i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.f1-racing-track-legend-v183 i.sector{background:#60a5fa}
+.f1-racing-track-legend-v183 i.trap{background:#a78bfa}
+.f1-racing-track-legend-v183 i.pit{background:#f59e0b}
+.f1-racing-track-legend-v183 i.start{background:#22c55e}
+@media(max-width:900px){.f1-racing-track-head-v183{flex-direction:column}.f1-racing-track-stats-v183{width:100%}.f1-racing-track-stats-v183 span{flex:1;min-width:0}.f1-racing-track-stage-v183,.f1-racing-track-svg-v183{height:340px;min-height:340px}}
+
+/* Phase 184: requestAnimationFrame single-car smooth preview */
+.f1-racing-track-side-v184{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex:0 0 auto}
+.f1-racing-preview-controls-v184{display:flex;align-items:center;justify-content:flex-end;gap:6px;width:100%}
+.f1-racing-preview-controls-v184>span{margin-right:auto;color:#718096;font:700 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap}
+.f1-racing-preview-car-v184{pointer-events:none}
+.f1-racing-preview-car-v184 .car-halo{fill:rgba(248,250,252,.16)}
+.f1-racing-preview-car-v184 .car-body{fill:#f8fafc;stroke:#06080c;stroke-width:4}
+.f1-racing-preview-car-v184 .car-core{fill:#ef4444}
+.f1-racing-preview-car-v184 text{fill:#f8fafc;font:900 14px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#06080c;stroke-width:5;stroke-linejoin:round}
+.f1-racing-preview-car-v184.running .car-halo{animation:f1PreviewPulseV184 .9s ease-in-out infinite alternate}
+@keyframes f1PreviewPulseV184{from{opacity:.3}to{opacity:.85}}
+@media(max-width:900px){.f1-racing-track-side-v184{width:100%;align-items:stretch}.f1-racing-preview-controls-v184{justify-content:flex-start;flex-wrap:wrap}.f1-racing-preview-controls-v184>span{width:100%;margin:0 0 2px}}
+
+/* Phase 185: F1 internal screen state machine */
+.f1-racing-view-v185{min-height:0}
+.f1-racing-view-v185[hidden]{display:none!important}
+.f1-racing-state-placeholder-v185{min-height:520px;display:grid;place-items:center;align-content:center;gap:8px;background:radial-gradient(circle at center,rgba(30,41,59,.28),rgba(3,5,8,.98) 62%);color:#64748b;text-align:center}
+.f1-racing-state-placeholder-v185 span{font:800 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.2em}
+.f1-racing-state-placeholder-v185 strong{color:#dbe5f2;font-size:16px}
+
+/* Phase 186: setup page split between drivers and track selection */
+.f1-racing-setup-layout-v186{display:grid;grid-template-columns:minmax(360px,.9fr) minmax(520px,1.25fr);gap:12px;padding:12px}
+.f1-racing-drivers-panel-v186,.f1-racing-track-picker-v186{min-height:650px}
+.f1-racing-selected-head-v186{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-top:1px solid #202733;border-bottom:1px solid #202733;background:#0d1117}
+.f1-racing-selected-head-v186 strong{display:block;margin-top:3px;color:#e7edf7;font-size:12px}
+.f1-racing-selected-head-v186 .row{gap:8px}
+.f1-racing-selected-head-v186 #f1RacingSelectedCountV181{color:#cbd5e1;font:800 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-drivers-panel-v186 .f1-racing-contact-list-v181{height:300px}
+.f1-racing-drivers-panel-v186 .f1-racing-selected-list-v181{min-height:180px;max-height:220px}
+.f1-racing-track-options-v186{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;padding:12px;border-bottom:1px solid #202733}
+.f1-racing-track-card-v186{min-height:88px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;padding:10px 11px;border:1px solid #28313e;border-radius:8px;background:#090d13;color:#cbd5e1;text-align:left}
+
+.f1-racing-track-card-silhouette-v233{display:flex;align-items:center;justify-content:center;height:72px;padding:6px 8px;border:1px solid rgba(148,163,184,.18);border-radius:9px;background:rgba(2,6,23,.26);overflow:hidden}
+.f1-racing-track-card-silhouette-v233 svg{display:block;width:100%;height:100%;overflow:visible}
+.f1-racing-track-card-silhouette-v233 path{fill:none;stroke:#94a3b8;stroke-width:9;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.9}
+.f1-racing-track-card-v186.selected .f1-racing-track-card-silhouette-v233 path{stroke:#e2e8f0;opacity:1}
+.f1-racing-track-card-v186:hover{border-color:#445066;background:#0d131c}
+.f1-racing-track-card-v186.selected{border-color:#8da2bf;background:#111a26;box-shadow:inset 0 0 0 1px rgba(203,213,225,.12)}
+.f1-racing-track-card-title-v186{font-size:13px;font-weight:800;color:#f1f5f9}
+.f1-racing-track-card-meta-v186{font:700 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#748197}
+.f1-racing-track-preview-v186{margin:12px;border:1px solid #252d39;border-radius:9px;overflow:hidden;background:#080b10}
+.f1-racing-track-preview-v186 .f1-racing-track-stage-v183{min-height:360px}
+.f1-racing-track-preview-v186 .f1-racing-track-svg-v183{height:360px}
+@media(max-width:1180px){.f1-racing-setup-layout-v186{grid-template-columns:1fr}.f1-racing-drivers-panel-v186,.f1-racing-track-picker-v186{min-height:0}}
+
+/* Phase 187: setup proceed action and page-like race transition */
+.f1-racing-setup-action-v187{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 12px 12px;padding:13px 14px;border:1px solid #2a3340;border-radius:10px;background:#0c1118}
+.f1-racing-setup-ready-v187{min-width:0}
+.f1-racing-setup-ready-v187 strong{display:block;margin:4px 0 3px;color:#f8fafc;font-size:14px}
+.f1-racing-setup-ready-v187 small{display:block;color:#7d899c;line-height:1.4}
+.f1-racing-proceed-v187{min-width:150px;min-height:42px;font-weight:850;letter-spacing:.02em}
+.f1-racing-transition-v187{min-height:620px;background:#020305}
+.f1-racing-transition-stage-v187{min-height:620px;display:grid;place-items:center;align-content:center;gap:11px;text-align:center;background:radial-gradient(circle at center,rgba(30,41,59,.36),rgba(0,0,0,.98) 66%);animation:f1TransitionFadeV187 .45s ease-out both}
+.f1-racing-transition-kicker-v187{color:#8694a9;font:800 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.28em}
+.f1-racing-transition-stage-v187 strong{color:#f8fafc;font:900 clamp(28px,4vw,58px) ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.08em}
+.f1-racing-transition-stage-v187>span:not(.f1-racing-transition-kicker-v187){color:#aab5c5;font:800 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.12em}
+.f1-racing-transition-stage-v187 i{width:min(420px,70vw);height:1px;background:linear-gradient(90deg,transparent,#64748b,transparent)}
+.f1-racing-transition-stage-v187 b{color:#dbe5f2;font:850 13px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.22em;animation:f1RaceReadyPulseV187 .8s ease-in-out infinite alternate}
+@keyframes f1TransitionFadeV187{from{opacity:0;transform:scale(1.015)}to{opacity:1;transform:scale(1)}}
+@keyframes f1RaceReadyPulseV187{from{opacity:.45}to{opacity:1}}
+@media(max-width:700px){.f1-racing-setup-action-v187{align-items:stretch;flex-direction:column}.f1-racing-proceed-v187{width:100%}}
+
+/* Phase 188: Race Control frame */
+.f1-racing-race-control-v188{padding:12px;background:#05070a}
+.f1-racing-race-header-v188{display:grid;grid-template-columns:minmax(220px,1fr) auto auto;align-items:center;gap:14px;padding:12px 14px;border:1px solid #252d39;border-radius:10px;background:#0b0f14}
+.f1-racing-race-header-v188 strong{display:block;margin-top:4px;color:#f8fafc;font:900 17px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.06em}
+.f1-racing-race-status-v188{display:flex;gap:1px;background:#252d39;border:1px solid #252d39;border-radius:7px;overflow:hidden}
+.f1-racing-race-status-v188 span{min-width:88px;padding:7px 9px;background:#090c11;color:#69768a;font:700 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.08em}
+.f1-racing-race-status-v188 b{display:block;margin-top:3px;color:#edf2f7;font-size:10px;letter-spacing:.04em}
+.f1-racing-race-controls-v188{display:flex;gap:5px}
+.f1-racing-race-controls-v188 .active{border-color:#65738a;background:#17202c}
+.f1-racing-live-timing-v188,.f1-racing-race-map-v188,.f1-racing-commentary-v188{border:1px solid #252d39;border-radius:10px;background:#080b10;overflow:hidden}
+.f1-racing-live-timing-v188{margin-top:10px}
+.f1-racing-panel-title-v188{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:36px;padding:8px 10px;border-bottom:1px solid #202733;background:#0d1117}
+.f1-racing-panel-title-v188 span{color:#dbe4f0;font:850 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.12em}
+.f1-racing-panel-title-v188 small{color:#657186;font-size:9px}
+.f1-racing-timing-head-v188,.f1-racing-timing-row-v188{display:grid;grid-template-columns:46px minmax(150px,1.3fr) 48px 62px 56px 88px 88px 72px 66px 58px 66px 66px 66px;align-items:center}
+.f1-racing-timing-head-v188{min-height:28px;padding:0 8px;border-bottom:1px solid #202733;background:#090c11;color:#5f6c80;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.08em}
+.f1-racing-timing-row-v188{position:relative;min-height:42px;padding:0 8px;border-bottom:1px solid #171d26;color:#cbd5e1;font:750 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.f1-racing-timing-row-v188:last-child{border-bottom:0}
+.f1-racing-timing-row-v188 .pos{font-weight:900;color:#e5ebf5}
+.f1-racing-timing-row-v188 .driver{min-width:0;display:flex;align-items:baseline;gap:8px}
+.f1-racing-timing-row-v188 .driver b{font-size:11px;color:#f8fafc}
+.f1-racing-timing-row-v188 .driver small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#778398;font:600 9px var(--font)}
+.f1-racing-timing-row-v188 .driver{align-items:center;gap:6px}
+.f1-racing-driver-color-v251{flex:0 0 3px;width:3px;height:24px;border-radius:999px;background:var(--f1-driver-color,#64748b);box-shadow:0 0 8px color-mix(in srgb,var(--f1-driver-color,#64748b) 35%,transparent)}
+.f1-racing-timing-avatar-v251{position:relative;display:grid;place-items:center;flex:0 0 22px;width:22px;height:22px;border-radius:50%;overflow:hidden;border:1px solid color-mix(in srgb,var(--f1-driver-color,#94a3b8) 72%,#fff 8%);background:#111722;color:#dbe4f0;font:900 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-timing-avatar-v251 img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#111722}
+.f1-racing-timing-avatar-v251.has-loaded-image .f1-racing-timing-avatar-fallback-v251{visibility:hidden}
+.f1-racing-timing-avatar-fallback-v251{display:block;line-height:1}
+.f1-racing-driver-copy-v251{display:grid;min-width:0;line-height:1.05}
+.f1-racing-driver-copy-v251 b,.f1-racing-driver-copy-v251 small{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f1-racing-timing-row-v188.podium:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+.f1-racing-timing-row-v188.p1:before{background:#d8b74d}
+.f1-racing-timing-row-v188.p2:before{background:#aab3c2}
+.f1-racing-timing-row-v188.p3:before{background:#a96f45}
+.f1-racing-timing-row-v188.p1 .pos{color:#e8cf76}
+.f1-racing-timing-row-v188.p2 .pos{color:#d1d7e0}
+.f1-racing-timing-row-v188.p3 .pos{color:#c58a61}
+.f1-racing-race-grid-v188{display:grid;grid-template-columns:minmax(380px,1.15fr) minmax(340px,1fr);gap:10px;margin-top:10px}
+.f1-racing-race-map-stage-v188{height:330px;background:radial-gradient(circle at center,rgba(30,41,59,.3),rgba(3,5,8,.98) 64%)}
+#f1RacingRaceTrackSvgV188{display:block;width:100%;height:100%}
+.f1-racing-commentary-log-v188{height:330px;overflow:auto;padding:10px}
+.f1-racing-commentary-empty-v188{display:grid;place-items:center;min-height:90px;padding:18px;color:#64748b;text-align:center;font-size:10px;line-height:1.5}
+@media(max-width:1280px){.f1-racing-race-header-v188{grid-template-columns:1fr}.f1-racing-race-status-v188{width:max-content}.f1-racing-race-grid-v188{grid-template-columns:1fr 1fr}.f1-racing-live-timing-v188{overflow:auto}.f1-racing-timing-head-v188,.f1-racing-timing-row-v188{min-width:970px}}
+@media(max-width:800px){.f1-racing-race-grid-v188{grid-template-columns:1fr}.f1-racing-race-status-v188{width:100%}.f1-racing-race-status-v188 span{flex:1;min-width:0}}
+
+/* Phase 189: shared multi-car requestAnimationFrame renderer */
+.f1-racing-race-vehicle-v189{pointer-events:none;will-change:transform}
+.f1-racing-race-vehicle-v189 .car-halo{fill:var(--f1-driver-color,#60a5fa);fill-opacity:.16;stroke:var(--f1-driver-color,#94a3b8);stroke-opacity:.32;stroke-width:1}
+.f1-racing-race-vehicle-v189 .car-ring{fill:#0b1018;stroke:var(--f1-driver-color,#e2e8f0);stroke-width:3}
+.f1-racing-race-vehicle-v189 .car-core{fill:var(--f1-driver-color,#60a5fa)}
+.f1-racing-race-vehicle-v189 .car-number-v232{fill:#fff;font:900 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#020305;stroke-width:1.5;dominant-baseline:middle}
+.f1-racing-race-vehicle-v189 .car-label{fill:#f8fafc;font:900 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#020305;stroke-width:4;stroke-linejoin:round}
+/* Phase 257: driver portrait embedded directly inside live vehicle marker */
+.f1-racing-race-vehicle-v189 .car-profile-embedded-v257{pointer-events:none}
+.f1-racing-race-vehicle-v189 .car-pass-flash-halo-v257{fill:none;stroke:var(--f1-driver-color,#e8cf76);stroke-width:2;opacity:0;pointer-events:none}
+.f1-racing-race-vehicle-v189 .car-profile-image-v257{pointer-events:none}
+.f1-racing-race-vehicle-v189 .car-profile-fallback-bg-v257{fill:#0b1018}
+.f1-racing-race-vehicle-v189 .car-profile-initials-v257{fill:#f8fafc;font:900 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#020305;stroke-width:1.2;dominant-baseline:middle}
+.f1-racing-race-vehicle-v189 .car-number-badge-v257{fill:#05080d;stroke:var(--f1-driver-color,#94a3b8);stroke-width:1.3}
+.f1-racing-race-vehicle-v189 .car-number-v232{font-size:5.6px;stroke-width:1.1}
+.f1-racing-race-vehicle-v189.leader .car-ring{filter:drop-shadow(0 0 4px var(--f1-driver-color,#e8cf76))}
+/* Phase 190: race distance, lap and sector telemetry */
+.f1-racing-timing-row-v188 .driver em[data-f1-current-sector]{flex:0 0 auto;margin-left:auto;padding:2px 5px;border:1px solid #2d3745;border-radius:4px;color:#8ea0b8;background:#0b1017;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-style:normal;letter-spacing:.06em}
+.f1-racing-timing-row-v188[data-sector="S1"] .driver em[data-f1-current-sector]{color:#9ac5ff}
+.f1-racing-timing-row-v188[data-sector="S2"] .driver em[data-f1-current-sector]{color:#c8b5ff}
+.f1-racing-timing-row-v188[data-sector="S3"] .driver em[data-f1-current-sector]{color:#f2ca8a}
+.f1-racing-timing-row-v188[data-sector="GRID"] .driver em[data-f1-current-sector]{color:#64748b}
+
+/* Phase 191: official position, leader gap and interval telemetry */
+.f1-racing-timing-row-v188 .gap,.f1-racing-timing-row-v188 .interval{font-variant-numeric:tabular-nums;color:#aeb9c9}
+.f1-racing-timing-row-v188[data-position="1"] .gap{color:#e8cf76;font-weight:900}
+.f1-racing-race-vehicle-v189.leader .car-halo{fill:var(--f1-driver-color,#e8cf76);fill-opacity:.24;stroke:var(--f1-driver-color,#e8cf76);stroke-opacity:.72;stroke-width:2}
+.f1-racing-race-vehicle-v189.leader .car-ring{stroke:var(--f1-driver-color,#e8cf76);stroke-width:4}
+
+/* Phase 192: live simulation clock controls */
+#f1RacingRaceControlsV192 button{min-width:44px;transition:border-color .16s ease,background .16s ease,color .16s ease,box-shadow .16s ease}
+#f1RacingRaceControlsV192 button.active,#f1RacingRaceControlsV192 button[aria-pressed="true"]{border-color:#718096;background:#1a2432;color:#f8fafc;box-shadow:inset 0 0 0 1px rgba(148,163,184,.12)}
+#f1RacingPauseV192.active{border-color:#b7791f;background:#2b2112;color:#f6d48f}
+
+/* Phase 196: live vehicle dynamics telemetry */
+.f1-racing-timing-row-v188 .gear,.f1-racing-timing-row-v188 .rpm,.f1-racing-timing-row-v188 .speed{font-variant-numeric:tabular-nums;color:#dbe5f1}
+.f1-racing-timing-row-v188[data-brake]:not([data-brake="0.00"]) .speed{color:#f4b183}
+
+
+/* Recovery B: visible Start / Finish line in setup and live race maps */
+.f1-racing-start-finish-recovery-b{pointer-events:none}
+.f1-racing-start-finish-recovery-b .finish-underlay{stroke:#05070a;stroke-width:13;stroke-linecap:butt}
+.f1-racing-start-finish-recovery-b .finish-stripe{stroke:#f8fafc;stroke-width:8;stroke-linecap:butt;stroke-dasharray:9 7}
+.f1-racing-start-finish-recovery-b .finish-label{
+  fill:#ffffff;
+  font:900 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  letter-spacing:.08em;
+  paint-order:stroke;
+  stroke:#05070a;
+  stroke-width:5;
+  stroke-linejoin:round;
+}
+.f1-racing-start-finish-recovery-b.race .finish-underlay{stroke-width:15}
+.f1-racing-start-finish-recovery-b.race .finish-stripe{stroke-width:9;stroke-dasharray:10 7}
+.f1-racing-track-legend-v183 i.start{width:18px;height:6px;border-radius:1px;background:repeating-linear-gradient(90deg,#f8fafc 0 4px,#111827 4px 8px);border:1px solid #64748b}
+
+
+/* Recovery E: Premiere-style F1 race workspace foundation */
+.f1-racing-workspace-toolbar-recovery-e{
+  display:flex;align-items:center;gap:8px;margin-top:10px;padding:7px 9px;
+  border:1px solid #252d39;border-radius:8px;background:#0b0f14
+}
+.f1-racing-workspace-toolbar-label-recovery-e{display:flex;flex-direction:column;gap:2px;margin-right:auto}
+.f1-racing-workspace-toolbar-label-recovery-e span{color:#dbe4f0;font:900 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.16em}
+.f1-racing-workspace-toolbar-label-recovery-e small{color:#64748b;font-size:9px}
+.f1-racing-workspace-panel-toggles-recovery-e{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.f1-racing-workspace-panel-toggles-recovery-e button{font-size:9px;padding:5px 7px}
+.f1-racing-workspace-panel-toggles-recovery-e button.is-hidden{opacity:.42;text-decoration:line-through}
+.f1-racing-workspace-recovery-e{
+  position:relative;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));
+  grid-auto-rows:72px;gap:8px;margin-top:8px;min-height:650px;padding:1px;
+  align-items:stretch
+}
+.f1-racing-workspace-panel-recovery-e{
+  position:relative!important;display:flex!important;flex-direction:column!important;
+  min-width:0!important;min-height:0!important;height:auto!important;margin:0!important;
+  overflow:hidden!important;transition:box-shadow .12s ease,border-color .12s ease
+}
+.f1-racing-workspace-panel-recovery-e[hidden]{display:none!important}
+.f1-racing-workspace-panel-recovery-e.is-dragging{z-index:40;opacity:.86;box-shadow:0 20px 50px rgba(0,0,0,.55);pointer-events:none}
+.f1-racing-workspace-panel-recovery-e.is-resizing{z-index:30;border-color:#64748b}
+.f1-racing-workspace-panel-recovery-e>.f1-racing-panel-title-v188{flex:0 0 auto;cursor:grab;user-select:none}
+.f1-racing-workspace-panel-recovery-e>.f1-racing-panel-title-v188:active{cursor:grabbing}
+.f1-racing-workspace-panel-controls-recovery-e{display:flex;align-items:center;gap:3px;margin-left:auto}
+.f1-racing-workspace-panel-controls-recovery-e button{
+  border:1px solid #323b49;border-radius:4px;background:#111722;color:#8090a6;
+  padding:3px 5px;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;cursor:var(--mws-cursor-pointer,pointer)
+}
+.f1-racing-workspace-panel-controls-recovery-e button:hover{color:#eef4ff;border-color:#65738a;background:#17202c}
+.f1-racing-workspace-resize-recovery-e{
+  position:absolute;right:1px;bottom:1px;width:16px;height:16px;border:0;padding:0;
+  background:linear-gradient(135deg,transparent 0 48%,#536174 49% 56%,transparent 57% 66%,#7b899c 67% 74%,transparent 75%);
+  cursor:nwse-resize;z-index:8;opacity:.75
+}
+.f1-racing-workspace-tabs-recovery-e{display:flex;align-items:center;gap:2px;min-width:0;max-width:58%;overflow:auto}
+.f1-racing-workspace-tabs-recovery-e button{
+  flex:0 0 auto;border:0;border-bottom:2px solid transparent;background:transparent;color:#66748a;
+  padding:4px 6px;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;cursor:var(--mws-cursor-pointer,pointer)
+}
+.f1-racing-workspace-tabs-recovery-e button.active{color:#f1f5f9;border-bottom-color:#8fa4c2;background:#151c27}
+.f1-racing-workspace-dock-guide-recovery-e{
+  position:absolute;z-index:70;pointer-events:none;border:2px solid rgba(100,165,255,.85);
+  background:rgba(50,120,220,.18);box-shadow:inset 0 0 0 1px rgba(190,220,255,.18);border-radius:8px
+}
+.f1-racing-workspace-dock-guide-recovery-e.left{left:0!important;top:0!important;width:33.3333%!important;height:100%!important}
+.f1-racing-workspace-dock-guide-recovery-e.right{left:66.6667%!important;top:0!important;width:33.3333%!important;height:100%!important}
+.f1-racing-workspace-dock-guide-recovery-e.center{left:33.3333%!important;top:0!important;width:33.3333%!important;height:100%!important}
+.f1-racing-workspace-dock-guide-recovery-e.top{left:0!important;top:0!important;width:100%!important;height:50%!important}
+.f1-racing-workspace-dock-guide-recovery-e.bottom{left:0!important;top:50%!important;width:100%!important;height:50%!important}
+.f1-racing-workspace-recovery-e.has-maximized{min-height:720px}
+.f1-racing-workspace-recovery-e.has-maximized .f1-racing-workspace-panel-recovery-e.is-maximized{grid-column:1/-1!important;grid-row:1/span 10!important;z-index:25}
+#f1RacingWorkspaceRecoveryE .f1-racing-race-map-stage-v188{flex:1;height:auto;min-height:0}
+#f1RacingWorkspaceRecoveryE .f1-racing-commentary-log-v188{flex:1;height:auto;min-height:0}
+#f1RacingWorkspaceRecoveryE .f1-racing-live-timing-v188{overflow:auto}
+#f1RacingWorkspaceRecoveryE .f1-racing-timing-list-v188{min-height:0}
+@media(max-width:900px){
+  .f1-racing-workspace-toolbar-recovery-e{align-items:flex-start;flex-wrap:wrap}
+  .f1-racing-workspace-panel-toggles-recovery-e{width:100%;justify-content:flex-start}
+  .f1-racing-workspace-recovery-e{display:flex;flex-direction:column;min-height:0}
+  .f1-racing-workspace-panel-recovery-e{min-height:240px!important}
+  .f1-racing-workspace-resize-recovery-e{display:none}
+}
+
+
+/* Recovery F: dense race-control default presentation */
+#f1RacingViewRaceV185.f1-racing-race-control-v188{
+  padding:8px!important;background:#05070a!important
+}
+#f1RacingViewRaceV185 .f1-racing-race-header-v188{
+  grid-template-columns:minmax(190px,1fr) auto auto!important;
+  padding:8px 10px!important;border-radius:4px!important;
+  border-color:#202732!important;background:#090d12!important
+}
+#f1RacingViewRaceV185 .f1-racing-race-header-v188 strong{
+  margin-top:2px!important;font-size:14px!important
+}
+#f1RacingViewRaceV185 .f1-racing-race-status-v188{
+  border-radius:3px!important;border-color:#202732!important;background:#202732!important
+}
+#f1RacingViewRaceV185 .f1-racing-race-status-v188 span{
+  min-width:78px!important;padding:5px 7px!important
+}
+#f1RacingViewRaceV185 .f1-racing-race-controls-v188{}
+#f1RacingViewRaceV185 .f1-racing-race-controls-v188 button{min-height:27px;padding:4px 7px}
+#f1RacingViewRaceV185 .f1-racing-workspace-toolbar-recovery-e{
+  margin-top:6px!important;padding:5px 7px!important;border-radius:3px!important;
+  background:#080c11!important;border-color:#202732!important
+}
+#f1RacingViewRaceV185 .f1-racing-workspace-toolbar-label-recovery-e small{display:none}
+#f1RacingViewRaceV185 .f1-racing-workspace-recovery-e{
+  margin-top:5px!important;
+  padding:0!important
+}
+#f1RacingViewRaceV185 .f1-racing-workspace-panel-recovery-e{
+  border-radius:3px!important;border-color:#202732!important;background:#070a0f!important
+}
+#f1RacingViewRaceV185 .f1-racing-panel-title-v188{
+  background:#0b1016!important;
+  border-bottom-color:#202732!important
+}
+#f1RacingViewRaceV185 .f1-racing-panel-title-v188 span{}
+#f1RacingViewRaceV185 .f1-racing-panel-title-v188>small{font-size:8px!important;opacity:.7}
+#f1RacingViewRaceV185 .f1-racing-workspace-panel-controls-recovery-e button{padding:2px 4px!important;font-size:7px!important}
+#f1RacingViewRaceV185 .f1-racing-timing-head-v188{min-height:24px!important}
+#f1RacingViewRaceV185 .f1-racing-timing-row-v188{min-height:36px!important}
+#f1RacingViewRaceV185 .f1-racing-race-map-stage-v188{
+  background:radial-gradient(circle at 48% 48%,rgba(25,34,48,.34),rgba(2,4,7,.99) 68%)!important
+}
+#f1RacingViewRaceV185 .f1-racing-commentary-log-v188{padding:8px!important}
+#f1RacingViewRaceV185 .f1-racing-workspace-tabs-recovery-e{max-width:70%!important}
+#f1RacingViewRaceV185 .f1-racing-workspace-tabs-recovery-e button{padding:3px 5px!important}
+@media(min-width:1500px){
+  #f1RacingViewRaceV185 .f1-racing-workspace-recovery-e{
+    grid-auto-rows:80px!important;min-height:627px!important
+  }
+}
+@media(max-width:1100px){
+  #f1RacingViewRaceV185 .f1-racing-race-header-v188{grid-template-columns:1fr!important}
+}
+
+
+/* Recovery G: complete race lifecycle screens */
+.f1-racing-lifecycle-view-recovery-g{padding:18px 10px}
+.f1-racing-lifecycle-card-recovery-g{
+  width:min(760px,100%);margin:20px auto;padding:22px;border:1px solid #252d39;border-radius:8px;
+  background:linear-gradient(180deg,#0d1219,#070a0f);box-shadow:0 18px 50px rgba(0,0,0,.28)
+}
+.f1-racing-lifecycle-card-recovery-g.wide{width:min(920px,100%)}
+.f1-racing-lifecycle-card-recovery-g>strong{display:block;margin:7px 0 4px;color:#f8fafc;font:950 24px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.04em}
+.f1-racing-lifecycle-card-recovery-g>p{margin:0 0 18px;color:#8895a8;font-size:11px}
+.f1-racing-lifecycle-actions-recovery-g{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+.f1-racing-podium-recovery-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:18px}
+.f1-racing-podium-place-recovery-g{display:flex;flex-direction:column;gap:5px;padding:15px;border:1px solid #293342;border-radius:6px;background:#0b1017}
+.f1-racing-podium-place-recovery-g span{color:#7f8ea3;font:900 11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-podium-place-recovery-g strong{color:#f8fafc;font-size:16px}
+.f1-racing-podium-place-recovery-g small{color:#6f7d91}
+.f1-racing-podium-place-recovery-g.p1{border-color:#8f7934;background:linear-gradient(180deg,rgba(114,92,25,.25),#0b1017)}
+.f1-racing-result-list-recovery-g{display:grid;gap:4px;margin-top:16px;max-height:52vh;overflow:auto}
+.f1-racing-result-row-recovery-g{display:grid;grid-template-columns:58px minmax(160px,1fr) minmax(150px,.7fr) 100px;align-items:center;gap:8px;min-height:42px;padding:6px 10px;border:1px solid #202733;background:#090d12}
+.f1-racing-result-row-recovery-g>span{color:#e8edf5;font:900 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-result-row-recovery-g>strong{color:#f8fafc}
+.f1-racing-result-row-recovery-g>small{color:#6f7d91}
+.f1-racing-result-row-recovery-g>time{color:#9fb0c7;text-align:right;font:750 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-lifecycle-empty-recovery-g{padding:20px;color:#64748b;text-align:center}
+@media(max-width:700px){
+  .f1-racing-podium-recovery-g{grid-template-columns:1fr}
+  .f1-racing-result-row-recovery-g{grid-template-columns:48px 1fr}.f1-racing-result-row-recovery-g>small,.f1-racing-result-row-recovery-g>time{grid-column:2;text-align:left}
+}
+
+
+/* Recovery J: explicit drop preview for move, dock and tab targets */
+.f1-racing-workspace-dock-guide-recovery-e{
+  transition:left .08s ease,top .08s ease,width .08s ease,height .08s ease,background .08s ease;
+}
+.f1-racing-workspace-dock-guide-recovery-e.free{
+  border-style:dashed;background:rgba(84,133,205,.13);
+}
+.f1-racing-workspace-dock-guide-recovery-e.tab{
+  border-color:rgba(174,126,255,.92);background:rgba(125,76,210,.20);
+}
+.f1-racing-workspace-dock-guide-recovery-e::after{
+  content:attr(data-preview);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  padding:4px 7px;border-radius:3px;background:rgba(4,8,14,.82);color:#dbeafe;
+  font:900 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.12em
+}
+
+/* Phase 204: driving incident marker feedback */
+.f1-racing-race-vehicle-v189[data-incident="LOCK_UP"] .car-ring{stroke-width:4}
+.f1-racing-race-vehicle-v189[data-incident="UNDERSTEER"] .car-halo{opacity:.72}
+.f1-racing-race-vehicle-v189[data-incident="OVERSTEER"] .car-core{transform:scale(1.28);transform-box:fill-box;transform-origin:center}
+
+
+/* Recovery N: left / center / right triple-column dock preview */
+.f1-racing-workspace-dock-guide-recovery-e.left::after{content:"LEFT"}
+.f1-racing-workspace-dock-guide-recovery-e.center::after{content:"CENTER"}
+.f1-racing-workspace-dock-guide-recovery-e.right::after{content:"RIGHT"}
+
+
+/* Phase 216: distinct driver markers and interactive race camera */
+.f1-racing-timing-row-v188 .driver b::before{content:"";display:inline-block;width:7px;height:7px;margin-right:5px;border-radius:999px;background:var(--f1-driver-color,#60a5fa);box-shadow:0 0 8px color-mix(in srgb,var(--f1-driver-color,#60a5fa) 55%,transparent)}
+.f1-racing-race-map-stage-v188{overflow:hidden}
+.f1-racing-race-map-stage-v188.is-camera-dragging{cursor:grabbing}
+#f1RacingRaceTrackSvgV188{cursor:grab;user-select:none;touch-action:none}
+.f1-racing-camera-controls-v216{position:absolute;z-index:15;left:8px;top:8px;display:flex;align-items:center;gap:4px;padding:4px;border:1px solid #283241;border-radius:7px;background:rgba(6,10,15,.88);backdrop-filter:blur(8px);box-shadow:0 5px 18px rgba(0,0,0,.28)}
+.f1-racing-camera-controls-v216>span{padding:0 6px;color:#8595aa;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap}
+.f1-racing-camera-controls-v216 button{min-height:24px;padding:3px 7px;border:1px solid #323d4d;border-radius:5px;background:#111722;color:#9aa9bd;font-size:9px;font-weight:850;cursor:var(--mws-cursor-pointer,pointer)}
+.f1-racing-camera-controls-v216 button.active{border-color:#6fa8ef;background:#17283d;color:#eff7ff;box-shadow:inset 0 0 0 1px rgba(111,168,239,.18)}
+.f1-racing-camera-controls-v216 button:hover{color:#fff;border-color:#5a6a80}
+
+
+/* Phase 217: compact three-panel race workspace */
+#gameF1Racing[data-f1-screen="RACE"]>.f1-racing-head-v180{display:none!important}
+#gameF1Racing[data-f1-screen="RACE"] .f1-racing-console-top-v180{display:none!important}
+#gameF1Racing[data-f1-screen="RACE"] .f1-racing-console-v180{padding-top:0!important}
+#f1RacingViewRaceV185 .f1-racing-race-header-v188{min-height:44px!important;padding:5px 8px!important;align-items:center!important}
+#f1RacingViewRaceV185 .f1-racing-race-header-v188 .f1-racing-panel-kicker-v181{font-size:7px!important;line-height:1!important}
+#f1RacingViewRaceV185 .f1-racing-race-header-v188 strong{font-size:12px!important;line-height:1.1!important}
+#f1RacingViewRaceV185 .f1-racing-race-status-v188 span{min-width:66px!important;padding:3px 6px!important;font-size:7px!important}
+#f1RacingViewRaceV185 .f1-racing-race-controls-v188 button{min-height:24px!important;padding:3px 6px!important;font-size:9px!important}
+#f1RacingViewRaceV185 .f1-racing-workspace-toolbar-recovery-e{margin-top:4px!important;min-height:32px!important;padding:3px 5px!important;justify-content:flex-end!important}
+#f1RacingViewRaceV185 .f1-racing-workspace-panel-toggles-recovery-e{margin-left:auto!important;gap:3px!important}
+#f1RacingViewRaceV185 .f1-racing-workspace-panel-toggles-recovery-e button{padding:3px 6px!important;font-size:8px!important}
+#f1RacingViewRaceV185 #f1RacingWorkspaceResetRecoveryE{min-height:24px!important;padding:3px 7px!important;font-size:9px!important}
+#f1RacingViewRaceV185 .f1-racing-workspace-recovery-e{grid-auto-rows:72px!important;gap:5px!important;margin-top:4px!important;min-height:571px!important}
+#f1RacingViewRaceV185 [data-f1-workspace-panel="track"]{grid-column:1 / span 8;grid-row:1 / span 8}
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"]{grid-column:9 / span 4;grid-row:1 / span 3}
+#f1RacingViewRaceV185 [data-f1-workspace-panel="commentary"]{grid-column:9 / span 4;grid-row:4 / span 5}
+@media(min-width:1500px){
+  #f1RacingViewRaceV185 .f1-racing-workspace-recovery-e{grid-auto-rows:76px!important;min-height:603px!important}
+}
+
+/* Phase 219: live race commentary event feed */
+.f1-racing-commentary-entry-v219{display:grid;grid-template-columns:48px minmax(0,1fr);gap:8px;padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.055);font-size:12px;line-height:1.45}
+.f1-racing-commentary-entry-v219 .time{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;opacity:.58}
+.f1-racing-commentary-entry-v219 .message{min-width:0;word-break:keep-all}
+.f1-racing-commentary-entry-v219.pass .message,.f1-racing-commentary-entry-v219.lead .message{font-weight:700}
+.f1-racing-commentary-entry-v219.flag{border-left:3px solid currentColor}
+
+/* Phase 222: commentary flow hierarchy */
+.f1-racing-commentary-entry-v219.battle .message{font-weight:700}
+.f1-racing-commentary-entry-v219.strategy .message{opacity:.92}
+.f1-racing-commentary-entry-v219.flow .message{opacity:.78}
+
+/* Phase 223: track profile cards */
+.f1-racing-track-card-v186{min-height:132px;justify-content:flex-start}
+.f1-racing-track-card-type-v223{display:inline-flex;align-items:center;min-height:20px;padding:2px 7px;border:1px solid #344154;border-radius:999px;font-size:9px;font-weight:800;color:#c6d3e4;background:#0d141d}
+.f1-racing-track-card-profile-v223{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:2px;font-size:9px;color:#9aa7ba}
+.f1-racing-track-card-profile-v223 b{color:#eef4fb;font-size:10px}
+.f1-racing-track-card-profile-v223 small{font-size:8px;opacity:.58}
+
+/* Phase 224: desktop race UI density QA */
+#f1RacingViewRaceV185 .f1-racing-race-header-v188{min-height:38px!important;padding:3px 6px!important;gap:8px!important}
+#f1RacingViewRaceV185 .f1-racing-race-header-v188 .f1-racing-panel-kicker-v181{display:none!important}
+#f1RacingViewRaceV185 .f1-racing-race-header-v188 strong{margin-top:0!important;font-size:11px!important}
+#f1RacingViewRaceV185 .f1-racing-race-status-v188 span{min-width:56px!important;padding:2px 5px!important}
+#f1RacingViewRaceV185 .f1-racing-race-status-v188 b{margin-top:1px!important;font-size:9px!important}
+#f1RacingViewRaceV185 .f1-racing-race-controls-v188{gap:3px!important}
+#f1RacingViewRaceV185 .f1-racing-workspace-toolbar-recovery-e{min-height:28px!important;padding:2px 4px!important}
+#f1RacingViewRaceV185 .f1-racing-panel-title-v188{min-height:30px!important;padding:5px 7px!important}
+#f1RacingViewRaceV185 .f1-racing-panel-title-v188 span{font-size:9px!important}
+#f1RacingViewRaceV185 .f1-racing-panel-title-v188 small{font-size:8px!important}
+#f1RacingViewRaceV185 .f1-racing-workspace-recovery-e{grid-auto-rows:68px!important;gap:4px!important;min-height:572px!important}
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-head-v188,
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-row-v188{
+  grid-template-columns:38px minmax(105px,1.35fr) 48px 66px 66px 56px 54px 40px!important;
+  min-width:0!important
+}
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-head-v188>span:nth-child(3),
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-head-v188>span:nth-child(4),
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-head-v188>span:nth-child(11),
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-head-v188>span:nth-child(12),
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-head-v188>span:nth-child(13),
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-row-v188>.gear,
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-row-v188>.rpm,
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-row-v188>.s1,
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-row-v188>.s2,
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-row-v188>.s3{display:none!important}
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-head-v188{min-height:24px!important;padding:0 5px!important;font-size:7px!important}
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-row-v188{min-height:36px!important;padding:0 5px!important;font-size:9px!important}
+#f1RacingViewRaceV185 [data-f1-workspace-panel="timing"] .f1-racing-timing-list-v188{overflow:auto!important;min-height:0!important}
+#f1RacingViewRaceV185 [data-f1-workspace-panel="commentary"] .f1-racing-commentary-log-v188{padding:4px!important}
+@media(min-width:1500px){
+  #f1RacingViewRaceV185 .f1-racing-workspace-recovery-e{grid-auto-rows:70px!important;min-height:588px!important}
+}
+
+/* Phase 225: camera director controls */
+.f1-racing-camera-controls-v216{max-width:calc(100% - 16px);flex-wrap:wrap}
+.f1-racing-camera-controls-v216>span{min-width:74px}
+
+/* Phase 226: commentary readability */
+#f1RacingViewRaceV185 [data-f1-workspace-panel="commentary"]{position:relative!important}
+.f1-racing-commentary-entry-v219{grid-template-columns:42px minmax(0,1fr);gap:7px;padding:6px 7px;font-size:11px;line-height:1.48}
+.f1-racing-commentary-entry-v219[data-commentary-priority="critical"]{background:rgba(148,163,184,.075);border-left:3px solid currentColor}
+.f1-racing-commentary-entry-v219[data-commentary-priority="critical"] .message{font-weight:800;color:#eef4fb}
+.f1-racing-commentary-entry-v219[data-commentary-priority="high"] .message{font-weight:700;color:#dce6f2}
+.f1-racing-commentary-entry-v219[data-commentary-priority="medium"] .message{color:#b8c5d6}
+.f1-racing-commentary-entry-v219[data-commentary-priority="low"] .message{color:#8e9aad}
+.f1-racing-commentary-unread-v226{position:absolute;right:10px;bottom:10px;z-index:12;min-height:26px;padding:4px 8px;border:1px solid #53657e;border-radius:999px;background:rgba(12,20,31,.94);color:#eef5ff;font-size:9px;font-weight:850;box-shadow:0 6px 18px rgba(0,0,0,.32);cursor:var(--mws-cursor-pointer,pointer)}
+.f1-racing-commentary-unread-v226[hidden]{display:none!important}
+
+/* Phase 244: compact starting grid with top-right race actions */
+.f1-racing-grid-ready-recovery-m{padding:10px}
+.f1-racing-grid-stage-v244{min-height:520px;border:1px solid #232c38;border-radius:10px;background:linear-gradient(180deg,#080c12,#05080c);overflow:hidden}
+.f1-racing-grid-header-v244{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:16px 18px;border-bottom:1px solid #202935;background:linear-gradient(180deg,rgba(17,24,34,.96),rgba(9,13,19,.96))}
+.f1-racing-grid-heading-v244{min-width:0;display:flex;flex-direction:column;gap:5px}
+.f1-racing-grid-heading-v244>strong{color:#f8fafc;font:950 21px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.04em}
+.f1-racing-grid-meta-recovery-m{display:flex;gap:7px;flex-wrap:wrap}
+.f1-racing-grid-meta-recovery-m span{padding:4px 7px;border:1px solid #263140;border-radius:999px;background:#0a1018;color:#91a2b8;font:800 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-grid-actions-v244{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex:0 0 auto}
+.f1-racing-grid-actions-v244 button{min-height:32px;padding:6px 12px}
+.f1-racing-grid-brief-v244{width:min(620px,calc(100% - 36px));margin:28px auto;padding:22px;border:1px solid #1e2733;border-radius:10px;background:radial-gradient(circle at 50% 0,rgba(59,83,115,.16),rgba(7,10,15,.95) 62%);text-align:center}
+.f1-racing-grid-brief-v244>span{color:#64748b;font:900 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.18em}
+.f1-racing-grid-brief-v244>strong{display:block;margin-top:8px;color:#e8eef8;font-size:18px}
+.f1-racing-grid-brief-v244>p{margin:8px 0 0;color:#8190a3;font-size:11px;line-height:1.6}
+@media(max-width:720px){.f1-racing-grid-header-v244{flex-direction:column}.f1-racing-grid-actions-v244{width:100%}.f1-racing-grid-actions-v244 button{flex:1}}
+
+/* Phase 246: clean circuit annotations */
+.f1-racing-track-indicator-v246 line{stroke:#5f9ee8;stroke-width:2;stroke-linecap:round;opacity:.82}
+.f1-racing-track-indicator-v246 rect{fill:rgba(9,14,21,.94);stroke:#395a80;stroke-width:1.5}
+.f1-racing-track-indicator-v246 text{fill:#d8e8fb;font:900 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#05070a;stroke-width:2;dominant-baseline:middle}
+
+
+/* Phase 252: spectator battle, overtake, position-change and fastest-lap emphasis */
+@keyframes f1BattlePulseV252{0%,100%{opacity:.42;transform:scale(1)}50%{opacity:.95;transform:scale(1.16)}}
+@keyframes f1OvertakePulseV252{0%,100%{filter:drop-shadow(0 0 2px rgba(255,255,255,.25))}50%{filter:drop-shadow(0 0 7px rgba(255,214,102,.95))}}
+@keyframes f1PassFlashV252{0%{opacity:.25;transform:scale(.9)}45%{opacity:1;transform:scale(1.32)}100%{opacity:.38;transform:scale(1)}}
+.f1-racing-race-vehicle-v189.battle-pulse-v252 .car-halo{transform-box:fill-box;transform-origin:center;animation:f1BattlePulseV252 .78s ease-in-out infinite}
+.f1-racing-race-vehicle-v189.overtake-attempt-v252 .car-ring{stroke:#fff3c4;animation:f1OvertakePulseV252 .7s ease-in-out infinite}
+.f1-racing-race-vehicle-v189.pass-flash-v252 .car-pass-flash-halo-v257{opacity:.8;transform-box:fill-box;transform-origin:center;animation:f1PassFlashV252 .6s ease-out infinite}
+.f1-racing-race-vehicle-v189.fastest-lap-v252 .car-ring{stroke:#c084fc;filter:drop-shadow(0 0 5px rgba(192,132,252,.9))}
+.f1-racing-timing-row-v188 .pos{display:grid;place-items:center;align-content:center;line-height:1.05}
+.f1-racing-timing-row-v188 .pos::after{content:attr(data-position-delta-v252);display:block;min-height:8px;margin-top:1px;font:900 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:0}
+.f1-racing-timing-row-v188 .pos[data-position-trend-v252="up"]::after{color:#70d99a}
+.f1-racing-timing-row-v188 .pos[data-position-trend-v252="down"]::after{color:#ff8f8f}
+.f1-racing-timing-row-v188 .pos[data-position-trend-v252="same"]::after{opacity:0}
+.f1-racing-timing-row-v188[data-battle-visual-v252="1"] .f1-racing-driver-color-v251{animation:f1BattlePulseV252 .78s ease-in-out infinite}
+.f1-racing-timing-row-v188[data-overtake-attempt-v252="1"] .driver{border-radius:4px;background:linear-gradient(90deg,rgba(255,210,96,.08),transparent 78%)}
+.f1-racing-timing-row-v188[data-pass-flash-v252="1"] .driver b{color:#ffe49a;text-shadow:0 0 7px rgba(255,202,83,.72)}
+.f1-racing-timing-row-v188 .best.is-fastest-v252{color:#d8b4fe;font-weight:950;text-shadow:0 0 6px rgba(192,132,252,.35)}
+.f1-racing-timing-row-v188 .best.is-fastest-v252::after{content:" FL";font-size:7px;letter-spacing:.03em;color:#c084fc}
+@media(prefers-reduced-motion:reduce){
+  .f1-racing-race-vehicle-v189.battle-pulse-v252 .car-halo,
+  .f1-racing-race-vehicle-v189.overtake-attempt-v252 .car-ring,
+  .f1-racing-race-vehicle-v189.pass-flash-v252 .car-pass-flash-halo-v257,
+  .f1-racing-timing-row-v188[data-battle-visual-v252="1"] .f1-racing-driver-color-v251{animation:none}
+}
+
+
+/* Phase 253: compact Live Timing race status badges */
+.f1-racing-driver-state-v253{display:flex;align-items:center;gap:3px;flex:0 0 auto;margin-left:4px}
+.f1-racing-driver-state-v253 i{display:inline-flex;align-items:center;min-height:16px;padding:1px 4px;border:1px solid #334155;border-radius:999px;background:#0a1018;color:#aebdce;font:800 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-style:normal;line-height:1;white-space:nowrap}
+.f1-racing-driver-state-v253 i[hidden]{display:none!important}
+.f1-racing-driver-state-v253 [data-f1-status-tyre-v253][data-compound="SOFT"]{border-color:#9f424d;color:#ff9aa5}
+.f1-racing-driver-state-v253 [data-f1-status-tyre-v253][data-compound="MEDIUM"]{border-color:#8d7a39;color:#f4d96b}
+.f1-racing-driver-state-v253 [data-f1-status-tyre-v253][data-compound="HARD"]{border-color:#6b7280;color:#e5e7eb}
+.f1-racing-driver-state-v253 [data-f1-status-pit-v253]{border-color:#4f7aa3;color:#9ed0ff}
+.f1-racing-driver-state-v253 [data-f1-status-battle-v253]{border-color:#9a6f2b;color:#ffd98a}
+@media(max-width:1100px){.f1-racing-driver-state-v253{display:none}}
+
+
+/* Phase 254: live position tag attached to each track vehicle marker */
+.f1-racing-race-vehicle-v189 .car-position-tag-v254{pointer-events:none}
+.f1-racing-race-vehicle-v189 .car-position-box-v254{fill:#091019;fill-opacity:.95;stroke:var(--f1-driver-color,#94a3b8);stroke-width:1.5}
+.f1-racing-race-vehicle-v189 .car-position-text-v254{fill:#eef4fb;font:900 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;paint-order:stroke;stroke:#020305;stroke-width:1;dominant-baseline:auto}
+.f1-racing-race-vehicle-v189.top-three-v254 .car-position-box-v254{stroke-width:2}
+.f1-racing-race-vehicle-v189.leader-position-v254 .car-position-box-v254{fill:#211b08;stroke:#e8cf76}
+.f1-racing-race-vehicle-v189.leader-position-v254 .car-position-text-v254{fill:#ffe98c}
+
+
+/* Phase 255: compact race headline summary */
+.f1-racing-race-headline-v255{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:6px 0 8px}
+.f1-racing-race-headline-v255>span{display:flex;align-items:baseline;justify-content:center;gap:5px;min-width:0;padding:5px 8px;border:1px solid #252f3d;border-radius:7px;background:#0a0f15;color:#738196;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.05em;white-space:nowrap}
+.f1-racing-race-headline-v255 b{overflow:hidden;text-overflow:ellipsis;color:#e5edf7;font-size:10px;letter-spacing:0}
+.f1-racing-race-headline-v255 small{overflow:hidden;text-overflow:ellipsis;color:#8c9cb0;font:700 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-race-headline-v255 [data-f1-headline-fastest]{color:#d8b4fe}
+.f1-racing-race-headline-v255 [data-f1-headline-battles]:not(:empty){color:#ffd98a}
+@media(max-width:900px){.f1-racing-race-headline-v255{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Phase 256: active battle target link on the live track */
+@keyframes f1BattleLinkFlowV256{to{stroke-dashoffset:-22}}
+.f1-racing-battle-links-v256{pointer-events:none}
+.f1-racing-battle-link-v256 .battle-link-line-v256{stroke:var(--battle-link-color-v256,#ffd166);stroke-width:2;stroke-linecap:round;stroke-dasharray:7 5;opacity:.72;vector-effect:non-scaling-stroke;animation:f1BattleLinkFlowV256 .72s linear infinite;filter:drop-shadow(0 0 2px rgba(255,220,120,.45))}
+.f1-racing-battle-link-v256 .battle-link-arrow-v256{fill:#ffe29a;opacity:.94;filter:drop-shadow(0 0 2px rgba(255,216,96,.7))}
+.f1-racing-battle-link-v256[data-battle-state-v256="SIDE_BY_SIDE"] .battle-link-line-v256,
+.f1-racing-battle-link-v256[data-battle-state-v256="BRAKING_DUEL"] .battle-link-line-v256,
+.f1-racing-battle-link-v256[data-battle-state-v256="CORNER_BATTLE"] .battle-link-line-v256{opacity:.95;stroke-width:2.5}
+@media(prefers-reduced-motion:reduce){.f1-racing-battle-link-v256 .battle-link-line-v256{animation:none}}
+
+
+/* Phase 260: manual race lap control */
+.f1-racing-lap-control-v260{display:grid;grid-template-columns:minmax(150px,1fr) auto auto;align-items:center;gap:12px;margin:10px 0;padding:12px 14px;border:1px solid #283446;border-radius:10px;background:linear-gradient(135deg,rgba(12,18,28,.96),rgba(7,11,17,.96))}
+.f1-racing-lap-copy-v260{display:flex;flex-direction:column;gap:2px;min-width:0}
+.f1-racing-lap-copy-v260 strong{color:#edf4fc;font-size:14px}
+.f1-racing-lap-copy-v260 small,.f1-racing-lap-mode-v260{color:#8393a7;font:800 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-lap-stepper-v260{display:flex;align-items:center;gap:6px}
+.f1-racing-lap-stepper-v260 input{width:76px;height:34px;border:1px solid #3a4b62;border-radius:7px;background:#080d14;color:#f4f7fb;text-align:center;font:950 15px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;outline:none}
+.f1-racing-lap-stepper-v260 input:focus{border-color:#76a8e6;box-shadow:0 0 0 2px rgba(118,168,230,.14)}
+.f1-racing-lap-stepper-v260 button{min-width:34px}
+.f1-racing-lap-mode-v260{justify-self:end;white-space:nowrap}
+@media(max-width:900px){.f1-racing-lap-control-v260{grid-template-columns:1fr}.f1-racing-lap-stepper-v260{flex-wrap:wrap}.f1-racing-lap-mode-v260{justify-self:start}}
+
+
+/* Phase 261: immersive spectator mode */
+.f1-racing-immersive-button-v261{min-height:38px;padding:0 16px;font-weight:950;letter-spacing:.01em}
+.f1-racing-immersive-notice-v261{position:fixed;left:50%;top:22px;z-index:10040;transform:translate(-50%,-14px);opacity:0;pointer-events:none;padding:11px 18px;border:1px solid rgba(145,177,219,.42);border-radius:9px;background:rgba(5,9,15,.94);box-shadow:0 18px 50px rgba(0,0,0,.34);color:#f4f8ff;font:900 13px/1.3 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;transition:opacity .24s ease,transform .24s ease}
+.f1-racing-immersive-notice-v261.is-visible{opacity:1;transform:translate(-50%,0)}
+.f1-racing-immersive-notice-v261.is-hiding{opacity:0;transform:translate(-50%,-8px)}
+body.f1-racing-immersive{overflow:hidden!important;background:#05080d!important}
+body.f1-racing-immersive .sidebar,
+body.f1-racing-immersive #mobileNavToggle,
+body.f1-racing-immersive #mobileNavBackdrop,
+body.f1-racing-immersive .main>.topbar{display:none!important}
+body.f1-racing-immersive .app{display:block!important;width:100vw!important;height:100vh!important;min-height:100vh!important}
+body.f1-racing-immersive .main{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-width:none!important;margin:0!important;padding:0!important;overflow:hidden!important;background:#05080d!important}
+body.f1-racing-immersive .main>.section:not(#gameF1Racing){display:none!important}
+body.f1-racing-immersive #gameF1Racing{display:block!important;position:fixed!important;inset:0!important;z-index:9990!important;width:100vw!important;height:100vh!important;max-width:none!important;margin:0!important;padding:0!important;overflow:auto!important;background:#05080d!important}
+body.f1-racing-immersive #gameF1Racing>.f1-racing-head-v180{display:none!important}
+body.f1-racing-immersive #f1RacingShellV180{width:100%!important;max-width:none!important;min-height:100vh!important;margin:0!important;border-radius:0!important}
+body.f1-racing-immersive #f1RacingViewRaceV185{min-height:100vh!important;padding:10px 12px 16px!important}
+body.f1-racing-immersive #f1RacingWorkspaceToolbarRecoveryE{position:sticky;top:0;z-index:40;background:rgba(5,8,13,.94);backdrop-filter:blur(10px)}
+body.f1-racing-immersive #f1RacingWorkspaceRecoveryE{min-height:calc(100vh - 170px)}
+
+
+/* Phase 264: LIVE comic overtake cut-ins */
+.f1-racing-race-map-stage-v188{position:relative}
+.f1-racing-live-cutin-layer-v264{position:absolute;left:14px;bottom:14px;z-index:18;display:flex;flex-direction:column-reverse;gap:8px;width:min(360px,46%);pointer-events:none;overflow:visible}
+.f1-racing-live-cutin-v264{position:relative;min-height:96px;padding:9px 11px 11px;border:1px solid color-mix(in srgb,var(--cutin-driver-color) 60%,#fff 12%);border-left:4px solid var(--cutin-driver-color);border-radius:8px;background:linear-gradient(125deg,rgba(5,8,13,.96),rgba(14,19,29,.94));box-shadow:0 14px 32px rgba(0,0,0,.34);overflow:hidden;opacity:0;transform:translateX(-110%) scale(.98);transition:transform .3s cubic-bezier(.2,.86,.24,1),opacity .22s ease}
+.f1-racing-live-cutin-v264.is-visible{opacity:1;transform:translateX(0) scale(1);animation:f1LiveCutinShakeV264 .34s ease-out 1}
+.f1-racing-live-cutin-v264.is-leaving{opacity:0;transform:translateX(-110%) scale(.98)}
+.f1-racing-live-cutin-v264 header{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;text-transform:uppercase}
+.f1-racing-live-cutin-v264 header strong{font-size:12px;letter-spacing:.08em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f1-racing-live-cutin-v264 header span{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:900;letter-spacing:.12em}
+.f1-racing-live-cutin-v264 header i{width:7px;height:7px;border-radius:50%;background:#ff3b4f;box-shadow:0 0 0 4px rgba(255,59,79,.16)}
+.f1-racing-live-cutin-body-v264{position:relative;z-index:2;display:grid;grid-template-columns:58px 1fr;align-items:center;gap:10px}
+.f1-racing-live-cutin-avatar-v264{position:relative;z-index:3;width:58px;height:58px;border-radius:50%;object-fit:cover;border:2px solid var(--cutin-driver-color);background:#121927;box-shadow:0 0 0 4px rgba(255,255,255,.04)}
+.f1-racing-live-cutin-avatar-v264.fallback{display:grid;place-items:center;font-size:18px;font-weight:900}
+.f1-racing-live-cutin-body-v264 p{position:relative;z-index:3;margin:0;font-size:13px;font-weight:850;line-height:1.35;text-shadow:0 2px 10px #000}
+.f1-racing-live-cutin-speed-v264{position:absolute;inset:-20%;background:repeating-linear-gradient(165deg,transparent 0 12px,rgba(255,255,255,.09) 13px 14px,transparent 15px 24px);transform:translateX(-25%);opacity:.55;animation:f1LiveCutinSpeedV264 .8s linear infinite}
+.f1-racing-live-cutin-burst-v264{position:absolute;left:20px;top:50%;width:115px;height:115px;transform:translate(-50%,-50%);background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.18) 0 2deg,transparent 2deg 13deg);border-radius:50%;opacity:.62;animation:f1LiveCutinBurstV264 1.2s linear infinite}
+@keyframes f1LiveCutinSpeedV264{to{transform:translateX(20%)}}
+@keyframes f1LiveCutinBurstV264{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes f1LiveCutinShakeV264{0%{translate:-5px 0}35%{translate:4px 0}70%{translate:-2px 0}100%{translate:0 0}}
+@media (prefers-reduced-motion:reduce){.f1-racing-live-cutin-v264,.f1-racing-live-cutin-speed-v264,.f1-racing-live-cutin-burst-v264{animation:none!important;transition:none!important}}
+
+
+/* Phase 265: Grand Prix result podium redesign */
+.f1-racing-podium-stage-v265{position:relative;isolation:isolate;overflow:hidden;min-height:560px;padding:30px 34px 26px!important;background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.075),transparent 38%),linear-gradient(145deg,#090d14,#121a28 55%,#090d14)}
+.f1-racing-podium-track-v265{position:absolute;z-index:-1;inset:5% 8%;width:84%;height:82%;opacity:.075;filter:drop-shadow(0 0 14px rgba(255,255,255,.28))}
+.f1-racing-podium-track-v265 path{fill:none;stroke:currentColor;stroke-width:12;stroke-linecap:round;stroke-linejoin:round}
+.f1-racing-podium-header-v265{position:relative;z-index:2;display:grid;justify-items:center;text-align:center;gap:5px;margin-bottom:24px}
+.f1-racing-podium-header-v265>strong{font-size:clamp(25px,3vw,42px);line-height:1;letter-spacing:.04em}
+.f1-racing-podium-header-v265>small{font-size:11px;font-weight:850;letter-spacing:.18em;opacity:.68}
+.f1-racing-podium-grid-v265{position:relative;z-index:2;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr) minmax(0,1fr);align-items:end;gap:16px;min-height:350px}
+.f1-racing-podium-card-v265{position:relative;display:grid;justify-items:center;align-content:end;gap:8px;min-width:0;padding:20px 16px 18px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:linear-gradient(180deg,rgba(22,29,42,.96),rgba(9,13,20,.97));box-shadow:0 18px 42px rgba(0,0,0,.32);opacity:0;transform:translateY(32px) scale(.96);animation:f1PodiumRevealV265 .58s cubic-bezier(.18,.82,.22,1) forwards}
+.f1-racing-podium-card-v265.p1{grid-column:2;min-height:330px;border-color:rgba(255,210,75,.72);box-shadow:0 24px 60px rgba(0,0,0,.42),0 0 32px rgba(255,210,75,.12);animation-delay:.52s}
+.f1-racing-podium-card-v265.p2{grid-column:1;grid-row:1;min-height:280px;border-color:rgba(210,222,236,.45);animation-delay:.30s}
+.f1-racing-podium-card-v265.p3{grid-column:3;grid-row:1;min-height:250px;border-color:rgba(193,123,73,.48);animation-delay:.08s}
+.f1-racing-podium-card-v265.p1::after{content:"";position:absolute;inset:-2px;border-radius:18px;pointer-events:none;box-shadow:0 0 0 0 rgba(255,210,75,0);animation:f1WinnerGlowV265 1.1s ease .96s both}
+.f1-racing-podium-place-v265{position:absolute;top:12px;left:14px;font-size:26px;font-weight:950;letter-spacing:-.04em;opacity:.9}
+.f1-racing-podium-avatar-v265{width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid currentColor;background:#131b28;box-shadow:0 8px 24px rgba(0,0,0,.32)}
+.f1-racing-podium-card-v265.p1 .f1-racing-podium-avatar-v265{width:132px;height:132px;color:#ffd24b}
+.f1-racing-podium-card-v265.p2 .f1-racing-podium-avatar-v265{color:#d2deec}
+.f1-racing-podium-card-v265.p3 .f1-racing-podium-avatar-v265{color:#c17b49}
+.f1-racing-podium-avatar-v265.fallback{display:grid;place-items:center;font-size:30px;font-weight:950}
+.f1-racing-podium-medal-v265{font-size:10px;font-weight:950;letter-spacing:.18em}
+.f1-racing-podium-card-v265.p1 .f1-racing-podium-medal-v265{color:#ffd24b;font-size:12px}
+.f1-racing-podium-card-v265>strong{max-width:100%;font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f1-racing-podium-card-v265.p1>strong{font-size:25px}
+.f1-racing-podium-grid-v265{font-size:11px}
+.f1-racing-podium-card-v265 .f1-racing-podium-grid-v265{display:flex!important;min-height:0;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap}
+.f1-racing-podium-card-v265 .f1-racing-podium-grid-v265 b{font-size:14px}
+.f1-racing-podium-stats-v265{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%;margin-top:5px}
+.f1-racing-podium-stats-v265 span{display:grid;gap:2px;padding:7px 6px;border-radius:8px;background:rgba(255,255,255,.055);font-size:8px;letter-spacing:.08em}
+.f1-racing-podium-stats-v265 b{font-size:11px;letter-spacing:0}
+.f1-racing-podium-actions-v265{position:relative;z-index:2;justify-content:center!important;margin-top:22px}
+.f1-racing-podium-grid-v265[data-podium-count-v265="1"] .p1{grid-column:2}
+.f1-racing-podium-grid-v265[data-podium-count-v265="2"] .p1{grid-column:2}.f1-racing-podium-grid-v265[data-podium-count-v265="2"] .p2{grid-column:1}
+@keyframes f1PodiumRevealV265{to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes f1WinnerGlowV265{0%{box-shadow:0 0 0 0 rgba(255,210,75,0)}45%{box-shadow:0 0 32px 5px rgba(255,210,75,.30)}100%{box-shadow:0 0 22px 2px rgba(255,210,75,.16)}}
+@media (prefers-reduced-motion:reduce){.f1-racing-podium-card-v265,.f1-racing-podium-card-v265.p1::after{animation:none!important;opacity:1!important;transform:none!important}}
+
+
+/* Phase 266: F1 technical circuit selection cards */
+.f1-racing-track-options-v186{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.f1-racing-track-card-v266{min-height:250px;justify-content:flex-start;gap:9px;padding:12px;border-radius:10px;overflow:hidden;position:relative}
+.f1-racing-track-card-top-v266{display:flex;width:100%;align-items:flex-start;justify-content:space-between;gap:10px}
+.f1-racing-track-card-code-v266{flex:0 0 auto;color:#8ea0b7;font:850 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.14em}
+.f1-racing-track-card-silhouette-v266{width:100%;height:92px;padding:11px 14px;border-radius:7px;background:linear-gradient(180deg,rgba(15,23,42,.52),rgba(2,6,23,.12))}
+.f1-racing-track-card-silhouette-v266 svg{width:100%;height:100%;overflow:visible}
+.f1-racing-track-card-silhouette-v266 path{fill:none;stroke:#8fa0b5;stroke-width:5.2;stroke-linecap:square;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.92}
+.f1-racing-track-card-v266.selected .f1-racing-track-card-silhouette-v266 path{stroke:#f1f5f9;stroke-width:5.6}
+.f1-racing-track-card-character-v266{display:grid;gap:3px;width:100%}
+.f1-racing-track-card-character-v266 b{color:#e5edf7;font-size:11px}
+.f1-racing-track-card-character-v266 small{color:#758397;font-size:9px;line-height:1.45}
+.f1-racing-track-card-tech-v266{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;border-top:1px solid #222b38;border-bottom:1px solid #222b38;background:#070b11}
+.f1-racing-track-card-tech-v266>span{display:grid;gap:3px;padding:8px 7px;border-right:1px solid #222b38}
+.f1-racing-track-card-tech-v266>span:last-child{border-right:0}
+.f1-racing-track-card-tech-v266 small{color:#637086;font:750 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.11em}
+.f1-racing-track-card-tech-v266 b{color:#e8eef7;font:850 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-track-card-v266[data-f1-speed-tier-v266="HIGH"] .f1-racing-track-card-tech-v266>span:nth-child(2) b{letter-spacing:.08em}
+@media(max-width:900px){.f1-racing-track-options-v186{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}}
+
+
+/* Phase 268: fullscreen viewport fit repair */
+body.f1-racing-immersive,
+body.f1-racing-immersive .app,
+body.f1-racing-immersive .main,
+body.f1-racing-immersive #gameF1Racing,
+body.f1-racing-immersive #f1RacingShellV180{height:100dvh!important;min-height:0!important}
+body.f1-racing-immersive #gameF1Racing{overflow:hidden!important}
+body.f1-racing-immersive #f1RacingShellV180{display:flex!important;flex-direction:column!important;overflow:hidden!important}
+body.f1-racing-immersive #f1RacingViewRaceV185{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;height:auto!important;min-height:0!important;overflow:hidden!important}
+body.f1-racing-immersive #f1RacingViewRaceV185>.f1-racing-race-header-v188,
+body.f1-racing-immersive #f1RacingWorkspaceToolbarRecoveryE{flex:0 0 auto!important}
+body.f1-racing-immersive #f1RacingWorkspaceRecoveryE{
+  flex:1 1 auto!important;height:auto!important;min-height:0!important;overflow:hidden!important;
+  grid-template-rows:repeat(var(--f1-workspace-used-rows,10),minmax(0,1fr))!important;
+  grid-auto-rows:minmax(0,1fr)!important
+}
+body.f1-racing-immersive #f1RacingWorkspaceRecoveryE .f1-racing-workspace-panel-recovery-e{min-height:0!important}
+
+
+/* Phase 272: seeded random starting grid */
+.f1-racing-grid-brief-v244>small{display:block;margin-top:10px;color:#64748b;font:800 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-grid-list-v272{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;padding:0 18px 22px}
+.f1-racing-grid-card-v272{display:grid;grid-template-columns:48px 44px minmax(0,1fr);align-items:center;gap:10px;min-height:66px;padding:9px 11px;border:1px solid #222d3a;border-radius:9px;background:linear-gradient(145deg,#0d141d,#080c12);box-shadow:0 7px 18px rgba(0,0,0,.18)}
+.f1-racing-grid-card-v272.top-three{border-color:#4d5665;background:linear-gradient(145deg,#121a25,#090d13)}
+.f1-racing-grid-position-v272{color:#dbe7f5;font:950 18px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:-.04em}
+.f1-racing-grid-avatar-v272{width:42px;height:42px;border:1px solid #39485a;border-radius:50%;object-fit:cover;background:#111827;color:#dbe7f5;display:grid;place-items:center;font:900 11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-grid-avatar-v272.fallback{display:grid}
+.f1-racing-grid-driver-v272{min-width:0;display:flex;flex-direction:column;gap:3px}
+.f1-racing-grid-driver-v272 strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#eef4fb;font-size:12px}
+.f1-racing-grid-driver-v272 small{color:#718096;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.08em}
+@media(max-width:720px){.f1-racing-grid-list-v272{grid-template-columns:1fr;padding:0 12px 16px}.f1-racing-grid-actions-v244{flex-wrap:wrap}}
+
+
+/* Phase 273: contact-card shuffle and sequential grid reveal */
+.f1-racing-grid-stage-v244{position:relative}
+.f1-racing-grid-shuffle-stage-v273{position:absolute;left:50%;top:122px;z-index:30;width:240px;height:92px;transform:translateX(-50%);pointer-events:none;perspective:900px}
+.f1-racing-grid-shuffle-stage-v273[hidden]{display:none!important}
+.f1-racing-grid-shuffle-stage-v273.active{display:block}
+.f1-racing-shuffle-card-v273{--shuffle-i:0;--shuffle-rotate:0deg;position:absolute;left:50%;top:50%;display:grid;grid-template-columns:42px minmax(0,1fr);align-items:center;gap:9px;width:210px;height:64px;padding:9px 12px;border:1px solid #4c5d72;border-radius:10px;background:linear-gradient(145deg,#182332,#0a1018);box-shadow:0 16px 36px rgba(0,0,0,.5);transform:translate(-50%,-50%) rotate(var(--shuffle-rotate));transform-origin:center}
+.f1-racing-shuffle-card-v273 .f1-racing-grid-avatar-v272{width:38px;height:38px}
+.f1-racing-shuffle-card-v273 span{min-width:0;display:flex;flex-direction:column;gap:3px}
+.f1-racing-shuffle-card-v273 strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f4f8fd;font-size:11px}
+.f1-racing-shuffle-card-v273 small{color:#73869e;font:850 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+@keyframes f1GridShuffleFastV273{0%{transform:translate(-50%,-50%) rotate(var(--shuffle-rotate)) scale(.98)}20%{transform:translate(calc(-50% + 36px),calc(-50% - 9px)) rotate(8deg) scale(1.03)}40%{transform:translate(calc(-50% - 34px),calc(-50% + 7px)) rotate(-7deg) scale(.99)}60%{transform:translate(calc(-50% + 26px),calc(-50% + 10px)) rotate(5deg) scale(1.02)}80%{transform:translate(calc(-50% - 20px),calc(-50% - 8px)) rotate(-4deg) scale(1)}100%{transform:translate(-50%,-50%) rotate(var(--shuffle-rotate)) scale(.98)}}
+.f1-racing-grid-shuffle-stage-v273.shuffle-fast-v273 .f1-racing-shuffle-card-v273{animation:f1GridShuffleFastV273 .16s cubic-bezier(.2,.8,.2,1) infinite;animation-delay:calc(var(--shuffle-i) * -22ms)}
+.f1-racing-grid-card-v272.grid-card-hidden-v273{opacity:0;transform:translate3d(var(--grid-fly-x-v273,0),var(--grid-fly-y-v273,-80px),0) scale(.68);pointer-events:none}
+@keyframes f1GridCardLandV273{0%{opacity:0;transform:translate3d(var(--grid-fly-x-v273,0),var(--grid-fly-y-v273,-80px),0) scale(.68) rotate(-2deg)}68%{opacity:1;transform:translate3d(-2px,3px,0) scale(1.055) rotate(.4deg)}84%{transform:translate3d(1px,-1px,0) scale(.985)}100%{opacity:1;transform:none}}
+@keyframes f1GridSlotFlashV273{0%,100%{box-shadow:0 7px 18px rgba(0,0,0,.18)}42%{box-shadow:0 0 0 2px rgba(155,190,230,.6),0 0 24px rgba(125,170,225,.45),0 10px 24px rgba(0,0,0,.35)}}
+.f1-racing-grid-card-v272.grid-card-land-v273{animation:f1GridCardLandV273 .43s cubic-bezier(.2,.9,.25,1.15) both}
+.f1-racing-grid-card-v272.grid-card-flash-v273{animation:f1GridCardLandV273 .43s cubic-bezier(.2,.9,.25,1.15) both,f1GridSlotFlashV273 .43s ease-out both}
+.f1-racing-grid-card-v272.top-three.grid-card-flash-v273{border-color:#91a9c5;box-shadow:0 0 0 1px rgba(170,202,238,.34),0 0 26px rgba(122,168,222,.28)}
+#f1RacingGridStartRecoveryM.grid-reveal-locked-v273{visibility:hidden;pointer-events:none}
+#f1RacingGridShuffleV272:disabled{opacity:.42;cursor:default}
+@media(prefers-reduced-motion:reduce){
+ .f1-racing-grid-shuffle-stage-v273.shuffle-fast-v273 .f1-racing-shuffle-card-v273,
+ .f1-racing-grid-card-v272.grid-card-land-v273,
+ .f1-racing-grid-card-v272.grid-card-flash-v273{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
+
+
+/* Phase 276: LIVE conversation stack */
+.f1-racing-conversation-stack-v276{position:absolute;left:14px;bottom:14px;z-index:18;display:flex;flex-direction:column;justify-content:flex-end;gap:7px;width:min(390px,44%);max-height:52%;padding:6px;pointer-events:none;opacity:0;transform:translateX(-18px);transition:opacity .26s ease,transform .32s cubic-bezier(.2,.8,.2,1)}
+.f1-racing-conversation-stack-v276.active{opacity:1;transform:translateX(0)}
+.f1-racing-conversation-stack-v276.group-exit-v276{opacity:0;transform:translateX(-48px)}
+.f1-racing-conversation-bubble-v276{display:flex;flex-direction:column;gap:3px;max-width:84%;padding:8px 10px;border:1px solid rgba(133,153,180,.38);border-radius:12px;background:rgba(7,12,19,.90);box-shadow:0 8px 24px rgba(0,0,0,.30);backdrop-filter:blur(8px);opacity:0;transform:translateY(14px) scale(.97);transition:opacity .22s ease,transform .30s cubic-bezier(.2,.9,.25,1);word-break:keep-all}
+.f1-racing-conversation-bubble-v276.visible-v276{opacity:1;transform:translateY(0) scale(1)}
+.f1-racing-conversation-bubble-v276.left{align-self:flex-start;border-bottom-left-radius:4px}
+.f1-racing-conversation-bubble-v276.right{align-self:flex-end;border-bottom-right-radius:4px;background:rgba(15,24,36,.92)}
+.f1-racing-conversation-bubble-v276 .speaker{color:#c9d7e8;font:900 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.02em}
+.f1-racing-conversation-bubble-v276 .text{color:#f2f6fb;font-size:12px;font-weight:720;line-height:1.42;text-shadow:0 1px 2px rgba(0,0,0,.45)}
+@media(max-width:900px){.f1-racing-conversation-stack-v276{width:min(330px,56%);left:10px;bottom:10px}.f1-racing-conversation-bubble-v276{max-width:92%;font-size:11px}}
+@media(prefers-reduced-motion:reduce){.f1-racing-conversation-stack-v276,.f1-racing-conversation-bubble-v276{transition-duration:.01ms!important}}
+
+
+/* Phase 360: four-lane wide race course */
+#f1RacingRaceTrackGlowV188{stroke:#1b2430;opacity:.98;filter:drop-shadow(0 0 6px rgba(2,6,12,.7))}
+#f1RacingRaceTrackPathV188{stroke:rgba(226,232,240,.18);stroke-width:1.35;vector-effect:non-scaling-stroke}
+.f1-racing-race-lane-guides-v360{pointer-events:none}
+.f1-racing-race-lane-guide-v360{fill:none;stroke:rgba(226,232,240,.36);stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+
+
+/* Phase 361: corner occupancy readability and PIT IN HUD */
+.f1-racing-pit-hud-v361{position:absolute;right:14px;bottom:116px;z-index:21;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;width:min(310px,42%);max-height:58%;pointer-events:none;opacity:0;transform:translateY(8px);transition:opacity .2s ease,transform .24s ease}
+.f1-racing-pit-hud-v361.active{opacity:1;transform:translateY(0)}
+.f1-racing-pit-card-v361{display:grid;grid-template-columns:42px minmax(0,1fr);align-items:center;gap:9px;padding:7px 9px;border:1px solid color-mix(in srgb,var(--pit-driver-color) 50%,#fff 10%);border-left:3px solid var(--pit-driver-color);border-radius:10px;background:rgba(6,11,18,.93);box-shadow:0 8px 20px rgba(0,0,0,.32);backdrop-filter:blur(8px)}
+.pit-avatar-v361{width:38px;height:38px;border-radius:50%;overflow:hidden;border:2px solid var(--pit-driver-color);background:#111a27;display:grid;place-items:center;font-size:11px;font-weight:900}
+.pit-avatar-v361 img{width:100%;height:100%;object-fit:cover;display:block}
+.pit-copy-v361{min-width:0;display:grid;gap:4px}
+.pit-head-v361{display:flex;align-items:center;justify-content:space-between;gap:7px}.pit-head-v361 strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}.pit-head-v361 b{flex:none;color:#ffd166;font-size:10px;letter-spacing:.08em}
+.pit-meta-v361{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:9px;color:#c8d5e5}.pit-meta-v361 strong{color:#fff}.pit-tyres-v361{display:inline-flex;align-items:center;gap:4px;font-weight:900}.pit-tyres-v361 i{font-style:normal;color:#eef5ff}.pit-tyres-v361 em{font-style:normal;color:#7dd3fc}
+.f1-racing-pit-more-v361{align-self:flex-end;padding:4px 8px;border-radius:999px;background:rgba(6,11,18,.9);border:1px solid rgba(255,255,255,.16);font-size:9px;font-weight:900}
+@media(max-width:900px){.f1-racing-pit-hud-v361{right:10px;bottom:96px;width:min(270px,54%)}.f1-racing-pit-card-v361{grid-template-columns:34px minmax(0,1fr);padding:6px 8px}.pit-avatar-v361{width:32px;height:32px}}
+
+
+/* Phase 362: visibly separated four-lane race course */
+#f1RacingRaceTrackGlowV188{stroke-width:210}
+.f1-racing-race-lane-guide-v360{stroke:rgba(226,232,240,.46);stroke-width:1.25}
+
+
+/* Phase 365: restore normal track presentation, keep 4 guide lines */
+#f1RacingRaceTrackGlowV188{stroke-width:58}
+.f1-racing-race-lane-guide-v360{stroke:rgba(226,232,240,.34);stroke-width:1.15}
+
+/* Source: assets/f1-racing-r283-r287.css */
+/* Phase 284: compact track ranking overlay */
+.f1-racing-track-ranking-v284{
+  position:absolute;left:12px;top:12px;z-index:16;width:min(218px,34%);
+  border:1px solid rgba(120,139,166,.38);border-radius:9px;overflow:hidden;
+  background:rgba(5,9,15,.86);box-shadow:0 12px 28px rgba(0,0,0,.28);
+  backdrop-filter:blur(7px);pointer-events:none
+}
+.f1-racing-track-ranking-v284[hidden]{display:none!important}
+.f1-racing-track-ranking-v284 header{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:6px 8px;border-bottom:1px solid rgba(120,139,166,.22);
+  color:#dce7f5;font:900 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.12em
+}
+.f1-racing-track-ranking-v284 header small{color:#718198;font:800 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-track-ranking-row-v284{
+  position:relative;display:grid;grid-template-columns:32px minmax(0,1fr) 58px;align-items:center;gap:6px;
+  min-height:27px;padding:0 7px;border-bottom:1px solid rgba(120,139,166,.12);
+  color:#d8e3ef;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace
+}
+.f1-racing-track-ranking-row-v284:last-child{border-bottom:0}
+.f1-racing-track-ranking-row-v284:before{content:"";position:absolute;left:0;top:5px;bottom:5px;width:2px;border-radius:2px;background:var(--rank-driver-color-v284,#94a3b8)}
+.f1-racing-track-ranking-row-v284 b{color:#f4f7fb;font-size:9px}
+.f1-racing-track-ranking-row-v284 .driver{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f1-racing-track-ranking-row-v284 small{text-align:right;color:#8fa0b5;font-size:7px;font-variant-numeric:tabular-nums}
+.f1-racing-track-ranking-row-v284[data-position="1"]{background:rgba(223,189,74,.09)}
+.f1-racing-track-ranking-row-v284[data-position="1"] b{color:#f2d56b}
+@media(max-width:900px){.f1-racing-track-ranking-v284{width:min(190px,42%)}}
+
+
+/* Phase 287: compact race shell and automatic app chrome hide */
+body.f1-racing-r12-compact-v287 .app{display:block!important;width:100%!important;min-height:100vh!important}
+body.f1-racing-r12-compact-v287 .sidebar,
+body.f1-racing-r12-compact-v287 #mobileNavToggle,
+body.f1-racing-r12-compact-v287 #mobileNavBackdrop,
+body.f1-racing-r12-compact-v287 .main>.topbar{display:none!important}
+body.f1-racing-r12-compact-v287 .main{width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
+body.f1-racing-r12-compact-v287 #gameF1Racing{margin:0!important;padding:0!important;max-width:none!important}
+body.f1-racing-r12-compact-v287 #gameF1Racing>.f1-racing-head-v180{display:none!important}
+body.f1-racing-r12-compact-v287 #f1RacingShellV180{width:100%!important;max-width:none!important;margin:0!important;border-radius:0!important}
+body.f1-racing-r12-compact-v287 #f1RacingViewRaceV185{padding:6px 8px 10px!important}
+body.f1-racing-r12-compact-v287 .f1-racing-race-header-v188{
+  grid-template-columns:minmax(180px,1fr) auto auto;gap:8px;padding:6px 8px;border-radius:7px
+}
+body.f1-racing-r12-compact-v287 .f1-racing-race-header-v188 .f1-racing-panel-kicker-v181{display:none}
+body.f1-racing-r12-compact-v287 .f1-racing-race-header-v188 strong{margin-top:0;font-size:14px}
+body.f1-racing-r12-compact-v287 .f1-racing-race-status-v188 span{min-width:72px;padding:4px 7px}
+body.f1-racing-r12-compact-v287 .f1-racing-race-controls-v188{gap:3px;flex-wrap:wrap;justify-content:flex-end}
+body.f1-racing-r12-compact-v287 .f1-racing-race-controls-v188 button{min-height:30px!important;padding:5px 8px!important}
+body.f1-racing-r12-compact-v287 .f1-racing-race-headline-v255{gap:4px;margin:4px 0}
+body.f1-racing-r12-compact-v287 .f1-racing-race-headline-v255>span{padding:4px 6px}
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceToolbarRecoveryE{margin-top:4px;padding:4px 6px;border-radius:6px}
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceToolbarRecoveryE button{padding:4px 6px!important;font-size:8px!important}
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceRecoveryE{margin-top:4px;gap:6px}
+body.f1-racing-r12-compact-v287 .f1-racing-panel-title-v188{min-height:29px;padding:5px 7px}
+body.f1-racing-r12-compact-v287 .f1-racing-panel-title-v188 span{font-size:9px}
+body.f1-racing-r12-compact-v287 .f1-racing-panel-title-v188 small{font-size:8px}
+@media(max-width:1280px){
+  body.f1-racing-r12-compact-v287 .f1-racing-race-header-v188{grid-template-columns:1fr auto}
+  body.f1-racing-r12-compact-v287 .f1-racing-race-controls-v188{grid-column:1/-1}
+}
+
+/* Phase 302: live ranking stable rows, max-2 status badges, FLIP movement */
+.f1-racing-track-ranking-row-v284{
+  grid-template-columns:32px minmax(0,1fr) 58px minmax(52px,auto);
+  will-change:transform;transform:translate3d(0,0,0)
+}
+.f1-racing-track-ranking-status-v302{display:flex;justify-content:flex-end;gap:3px;min-width:0}
+.f1-racing-track-ranking-status-v302 em{
+  min-width:0;padding:2px 4px;border:1px solid rgba(120,139,166,.3);border-radius:999px;
+  background:rgba(15,23,34,.88);color:#9aacbf;font:900 6px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  letter-spacing:.04em;white-space:nowrap;font-style:normal
+}
+.f1-racing-track-ranking-status-v302 em[data-rank-status="PIT"]{color:#f3d07a;border-color:rgba(243,208,122,.45)}
+.f1-racing-track-ranking-status-v302 em[data-rank-status="SIDE"]{color:#f0b3ff;border-color:rgba(240,179,255,.42)}
+.f1-racing-track-ranking-status-v302 em[data-rank-status="ATTACK"]{color:#ff9f8f;border-color:rgba(255,159,143,.4)}
+.f1-racing-track-ranking-status-v302 em[data-rank-status="DEFEND"]{color:#90c8ff;border-color:rgba(144,200,255,.42)}
+.f1-racing-track-ranking-status-v302 em[data-rank-status="BLUE"]{color:#8fb8ff;border-color:rgba(143,184,255,.42)}
+.f1-racing-track-ranking-row-v284.rank-up-v302{background:rgba(81,185,125,.12)}
+.f1-racing-track-ranking-row-v284.rank-down-v302{background:rgba(194,102,102,.08);opacity:.88}
+@media(max-width:1120px){
+ .f1-racing-track-ranking-row-v284{grid-template-columns:30px minmax(0,1fr) 54px}
+ .f1-racing-track-ranking-status-v302{display:none}
+}
+
+/* Source: assets/f1-racing-r288-r290.css */
+/* Phase 288 / F1-R13: reset workspace fits the desktop viewport without a large bottom void */
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceRecoveryE.f1-racing-workspace-fit-v288{
+  margin-bottom:0!important;align-content:stretch!important;overflow:hidden!important
+}
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceRecoveryE.f1-racing-workspace-fit-v288 .f1-racing-workspace-panel-recovery-e{
+  min-height:0!important
+}
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceRecoveryE.f1-racing-workspace-fit-v288.has-maximized{
+  min-height:0!important
+}
+
+/* Phase 289 / F1-R14: compact pre-race screens around essential race information and the starting grid */
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-stage-v244{padding:8px 10px 12px!important;min-height:0!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-header-v244{padding:7px 9px!important;gap:8px!important;align-items:center!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-heading-v244 .f1-racing-panel-kicker-v181{display:none!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-heading-v244 strong{margin:0!important;font-size:15px!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-meta-recovery-m{margin-top:3px!important;gap:8px!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-actions-v244{gap:4px!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-actions-v244 button{min-height:30px!important;padding:5px 8px!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-brief-v244{display:flex!important;align-items:center!important;gap:8px!important;margin:6px 0!important;padding:5px 8px!important;min-height:0!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-brief-v244>span,
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-brief-v244>p{display:none!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 .f1-racing-grid-brief-v244>strong{font-size:10px!important;margin:0!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 #f1RacingGridShuffleRoundV272{margin-left:auto!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewGridV185 #f1RacingGridListV272{margin-top:4px!important;gap:6px!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewTransitionV185 .f1-racing-transition-stage-v187{min-height:220px!important;padding:20px!important;gap:7px!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewTransitionV185 .f1-racing-transition-kicker-v187,
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewTransitionV185 .f1-racing-transition-stage-v187>i,
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewTransitionV185 .f1-racing-transition-stage-v187>b{display:none!important}
+body.f1-racing-r14-prerace-compact-v289 #f1RacingViewTransitionV185 .f1-racing-transition-stage-v187>strong{font-size:20px!important;margin:0!important}
+
+/* Phase 290 / F1-R15: transform-only 3-cycle shuffle and smooth slot landing */
+.f1-racing-grid-smooth-v290 .f1-racing-shuffle-card-v273{will-change:transform;backface-visibility:hidden;transform-origin:center}
+@keyframes f1GridShuffleSmoothV290{
+  0%{transform:translate3d(-50%,-50%,0) rotate(var(--shuffle-rotate)) scale(.98)}
+  24%{transform:translate3d(calc(-50% + 30px),calc(-50% - 7px),0) rotate(6deg) scale(1.025)}
+  50%{transform:translate3d(calc(-50% - 28px),calc(-50% + 6px),0) rotate(-5deg) scale(.995)}
+  76%{transform:translate3d(calc(-50% + 16px),calc(-50% + 4px),0) rotate(3deg) scale(1.01)}
+  100%{transform:translate3d(-50%,-50%,0) rotate(var(--shuffle-rotate)) scale(.98)}
+}
+.f1-racing-grid-smooth-v290 .f1-racing-grid-shuffle-stage-v273.shuffle-fast-v273 .f1-racing-shuffle-card-v273{
+  animation:f1GridShuffleSmoothV290 .18s cubic-bezier(.22,.78,.24,1) 3 both;
+  animation-delay:calc(var(--shuffle-i) * -14ms)
+}
+.f1-racing-grid-smooth-v290 .f1-racing-grid-card-v272{will-change:transform,opacity;transform-origin:center}
+@keyframes f1GridCardLandSmoothV290{
+  0%{opacity:0;transform:translate3d(var(--grid-fly-x-v273,0),var(--grid-fly-y-v273,-80px),0) scale(.72) rotate(-1.4deg)}
+  62%{opacity:1;transform:translate3d(-1px,2px,0) scale(1.035) rotate(.25deg)}
+  82%{transform:translate3d(.5px,-.5px,0) scale(.992)}
+  100%{opacity:1;transform:translate3d(0,0,0) scale(1) rotate(0)}
+}
+.f1-racing-grid-smooth-v290 .f1-racing-grid-card-v272.grid-card-land-v273{
+  animation:f1GridCardLandSmoothV290 .46s cubic-bezier(.18,.86,.22,1.06) both
+}
+.f1-racing-grid-smooth-v290 .f1-racing-grid-card-v272.grid-card-flash-v273{
+  animation:f1GridCardLandSmoothV290 .46s cubic-bezier(.18,.86,.22,1.06) both,f1GridSlotFlashV273 .46s ease-out both
+}
+@media(prefers-reduced-motion:reduce){
+ .f1-racing-grid-smooth-v290 .f1-racing-grid-shuffle-stage-v273.shuffle-fast-v273 .f1-racing-shuffle-card-v273,
+ .f1-racing-grid-smooth-v290 .f1-racing-grid-card-v272.grid-card-land-v273,
+ .f1-racing-grid-smooth-v290 .f1-racing-grid-card-v272.grid-card-flash-v273{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
+
+/* Source: assets/f1-racing-r291-r295.css */
+/* Phase 291 / F1-R16: keep the race screen visible and present podium + full results as one overlay */
+#f1RacingViewRaceV185{position:relative}
+.f1-racing-finish-overlay-v291{position:absolute;inset:0;z-index:95;display:grid;place-items:center;padding:14px;background:rgba(2,5,10,.78);backdrop-filter:blur(7px);overflow:auto}
+.f1-racing-finish-overlay-v291[hidden]{display:none!important}
+.f1-racing-finish-overlay-panel-v291{width:min(1080px,96%);max-height:calc(100% - 10px);display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid #303b4b;border-radius:10px;background:linear-gradient(180deg,rgba(12,17,24,.98),rgba(5,8,13,.98));box-shadow:0 24px 70px rgba(0,0,0,.55)}
+.f1-racing-finish-overlay-panel-v291>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:8px;border-bottom:1px solid #202936}
+.f1-racing-finish-overlay-panel-v291>header>div:first-child{min-width:0;display:flex;flex-direction:column;gap:3px}
+.f1-racing-finish-overlay-panel-v291>header span{color:#708098;font:900 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.16em}
+.f1-racing-finish-overlay-panel-v291>header strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f8fafc;font:950 17px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-finish-overlay-panel-v291>header small{color:#8c9cb2;font:800 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-finish-overlay-panel-v291 .actions{display:flex;gap:5px;flex:0 0 auto}
+.f1-racing-finish-overlay-panel-v291 .actions button{min-height:31px;padding:5px 9px}
+.f1-racing-finish-podium-v291{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.f1-racing-finish-podium-v291 .place{display:grid;grid-template-columns:36px 44px minmax(0,1fr) auto;align-items:center;gap:8px;min-width:0;padding:8px 9px;border:1px solid #283342;border-radius:7px;background:#0a0f16}
+.f1-racing-finish-podium-v291 .place.p1{border-color:#74652e;background:linear-gradient(180deg,rgba(104,83,24,.24),#0a0f16)}
+.f1-racing-finish-podium-v291 .place>b{color:#f3f6fa;font:950 12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-finish-podium-v291 .place img,.f1-racing-finish-podium-v291 .fallback{width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid #39475a;background:#111925;display:grid;place-items:center;color:#cad5e3;font-size:9px;font-weight:900}
+.f1-racing-finish-podium-v291 .place>div{min-width:0}
+.f1-racing-finish-podium-v291 .place strong,.f1-racing-finish-podium-v291 .place small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f1-racing-finish-podium-v291 .place strong{color:#f8fafc;font-size:11px}
+.f1-racing-finish-podium-v291 .place small{margin-top:2px;color:#7f8da1;font-size:8px}
+.f1-racing-finish-podium-v291 .place>span{color:#9cacbf;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap}
+.f1-racing-finish-result-head-v291,.f1-racing-finish-results-v291 .row{display:grid;grid-template-columns:48px minmax(150px,1fr) 62px 72px 48px 96px 74px 96px;align-items:center;gap:7px}
+.f1-racing-finish-result-head-v291{padding:0 8px;color:#637289;font:900 7px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.1em}
+.f1-racing-finish-results-v291{display:grid;gap:3px;min-height:0;max-height:38vh;overflow:auto}
+.f1-racing-finish-results-v291 .row{min-height:36px;padding:5px 8px;border:1px solid #202835;background:#080c12}
+.f1-racing-finish-results-v291 .row>b{color:#eef3f9;font:950 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-finish-results-v291 .row>strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f8fafc;font-size:10px}
+.f1-racing-finish-results-v291 .row>span,.f1-racing-finish-results-v291 .row>time{color:#8797ab;font:800 8px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+/* Phase 304: close final-result PIT, start-to-finish delta and winner emphasis */
+.f1-racing-finish-results-v291 .row.winner-v304{border-color:#806f2c;background:linear-gradient(90deg,rgba(132,103,25,.25),#080c12 58%);box-shadow:inset 3px 0 0 rgba(243,199,73,.8)}
+.f1-racing-finish-results-v291 .movement-v304{display:inline-flex;align-items:center;justify-content:center;width:max-content;min-width:44px;padding:2px 5px;border:1px solid #2b3747;border-radius:999px;background:#0d141e}
+.f1-racing-finish-results-v291 .movement-up-v304 .movement-v304{border-color:#275d48;color:#70d8a4}
+.f1-racing-finish-results-v291 .movement-down-v304 .movement-v304{border-color:#65333b;color:#e9959f}
+.f1-racing-finish-results-v291 .movement-same-v304 .movement-v304{color:#8391a4}
+.f1-racing-finish-results-v291 .pit-v304{color:#c6d2e1}
+.f1-racing-finish-podium-v291 .winner-v304{position:relative;overflow:hidden;box-shadow:0 0 0 1px rgba(236,196,76,.16),0 8px 30px rgba(0,0,0,.22)}
+.f1-racing-finish-podium-v291 .winner-v304:after{content:"";position:absolute;inset:-40% auto -40% -28%;width:22%;transform:rotate(18deg);background:linear-gradient(90deg,transparent,rgba(255,239,177,.18),transparent);animation:f1WinnerSweepV304 2.8s ease-out 1 both;pointer-events:none}
+.f1-racing-finish-podium-v291 .winner-tag-v304{display:inline-flex;margin-right:5px;padding:2px 5px;border:1px solid #7e6b27;border-radius:3px;color:#f0cf65;background:#191507;font-style:normal;font-size:7px;letter-spacing:.09em}
+@keyframes f1WinnerSweepV304{0%{left:-28%;opacity:0}20%{opacity:1}100%{left:118%;opacity:0}}
+@media(max-width:1000px){.f1-racing-finish-podium-v291{grid-template-columns:1fr}.f1-racing-finish-podium-v291 .place{grid-template-columns:34px 40px minmax(0,1fr) auto}.f1-racing-finish-result-head-v291,.f1-racing-finish-results-v291 .row{grid-template-columns:42px minmax(110px,1fr) 52px 60px 42px 82px 62px 86px}}
+
+/* Source: assets/f1-racing-r303.css */
+/* Phase 303: user-feedback stabilization */
+
+/* Remove redundant overlays from the track itself. */
+#f1RacingTrackRankingV284{display:none!important}
+#f1RacingConversationStackV276{display:none!important}
+
+/* Driver solo-thought bubble attached directly to the racer marker. */
+.f1-racing-driver-thought-v303{pointer-events:none;opacity:0;transform:translateY(5px) scale(.94);transform-origin:center;transition:opacity .18s ease,transform .22s cubic-bezier(.2,.85,.25,1)}
+.f1-racing-driver-thought-v303.show-v303{opacity:1;transform:translateY(0) scale(1)}
+.f1-racing-driver-thought-v303 .thought-box-v303{fill:rgba(6,10,16,.94);stroke:var(--f1-driver-color,#d8e4f2);stroke-width:1.2;vector-effect:non-scaling-stroke;filter:drop-shadow(0 3px 7px rgba(0,0,0,.42))}
+.f1-racing-driver-thought-v303 .thought-tail-v303{fill:rgba(6,10,16,.94);stroke:var(--f1-driver-color,#d8e4f2);stroke-width:1;vector-effect:non-scaling-stroke}
+.f1-racing-driver-thought-v303 .thought-text-v303{fill:#f7fbff;font:850 8px/1.15 Pretendard,"Noto Sans KR",sans-serif;paint-order:stroke;stroke:#05080d;stroke-width:.7;letter-spacing:-.02em}
+
+/* Move LIVE cut-ins into the commentary panel instead of covering the track. */
+.f1-racing-commentary-v188{position:relative;display:flex;flex-direction:column;min-height:0}
+.f1-racing-live-cutin-layer-v264.docked-v303{
+ position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
+ z-index:2!important;width:100%!important;max-width:none!important;min-height:0!important;max-height:164px!important;
+ display:flex!important;flex-direction:column-reverse!important;gap:5px!important;padding:6px 7px 2px!important;
+ overflow:hidden!important;pointer-events:none!important
+}
+.f1-racing-live-cutin-layer-v264.docked-v303 .f1-racing-live-cutin-v264{
+ min-height:68px!important;padding:6px 8px 7px!important;border-radius:7px!important
+}
+.f1-racing-live-cutin-layer-v264.docked-v303 .f1-racing-live-cutin-body-v264{grid-template-columns:42px 1fr!important;gap:7px!important}
+.f1-racing-live-cutin-layer-v264.docked-v303 .f1-racing-live-cutin-avatar-v264{width:42px!important;height:42px!important}
+.f1-racing-live-cutin-layer-v264.docked-v303 .f1-racing-live-cutin-body-v264 p{font-size:10px!important;line-height:1.3!important}
+.f1-racing-live-cutin-layer-v264.docked-v303+.f1-racing-commentary-log-v188{min-height:0!important;flex:1 1 auto!important}
+
+/* True trade-card proportion for the temporary pre-race shuffle. */
+#f1RacingGridShuffleStageV273{
+ top:104px!important;width:min(720px,calc(100% - 36px))!important;height:176px!important;
+ transform:translateX(-50%)!important;overflow:visible!important
+}
+#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273{
+ width:104px!important;height:146px!important;padding:9px!important;
+ display:grid!important;grid-template-columns:1fr!important;grid-template-rows:68px minmax(0,1fr)!important;
+ align-items:center!important;justify-items:center!important;gap:7px!important;
+ border-radius:9px!important;transform-origin:50% 92%!important
+}
+#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273 .f1-racing-grid-avatar-v272{
+ width:62px!important;height:62px!important;border-radius:10px!important
+}
+#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273 span{width:100%!important;align-items:center!important;text-align:center!important;gap:4px!important}
+#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273 strong{width:100%;font-size:9px!important}
+#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273 small{font-size:6px!important}
+#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273:nth-child(1){--v303-x:-196px;--v303-y:17px;--v303-r:-12deg}
+#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273:nth-child(2){--v303-x:-140px;--v303-y:8px;--v303-r:-8deg}
+#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273:nth-child(3){--v303-x:-84px;--v303-y:2px;--v303-r:-5deg}
+#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273:nth-child(4){--v303-x:-28px;--v303-y:0px;--v303-r:-2deg}
+#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273:nth-child(5){--v303-x:28px;--v303-y:0px;--v303-r:2deg}
+#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273:nth-child(6){--v303-x:84px;--v303-y:2px;--v303-r:5deg}
+#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273:nth-child(7){--v303-x:140px;--v303-y:8px;--v303-r:8deg}
+#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273:nth-child(8){--v303-x:196px;--v303-y:17px;--v303-r:12deg}
+@keyframes f1GridShuffleTradeV303{
+ 0%{transform:translate3d(calc(-50% + var(--v303-x,0px)),calc(-50% + var(--v303-y,0px)),0) rotate(var(--v303-r,0deg)) scale(.98)}
+ 36%{transform:translate3d(calc(-50% + var(--v303-x,0px) + 12px),calc(-50% + var(--v303-y,0px) - 5px),0) rotate(calc(var(--v303-r,0deg) + 2deg)) scale(1.015)}
+ 68%{transform:translate3d(calc(-50% + var(--v303-x,0px) - 9px),calc(-50% + var(--v303-y,0px) + 4px),0) rotate(calc(var(--v303-r,0deg) - 1deg)) scale(.995)}
+ 100%{transform:translate3d(calc(-50% + var(--v303-x,0px)),calc(-50% + var(--v303-y,0px)),0) rotate(var(--v303-r,0deg)) scale(.98)}
+}
+#f1RacingGridShuffleStageV273 .f1-racing-shuffle-card-v273{
+ transform:translate3d(calc(-50% + var(--v303-x,0px)),calc(-50% + var(--v303-y,0px)),0) rotate(var(--v303-r,0deg)) scale(.98)!important
+}
+#f1RacingGridShuffleStageV273.shuffle-fast-v273 .f1-racing-shuffle-card-v273{
+ animation:f1GridShuffleTradeV303 .23s cubic-bezier(.22,.78,.24,1) 3 both!important;
+ animation-delay:calc(var(--shuffle-i) * -13ms)!important
+}
+
+/* Keep compact card fan readable on narrower desktop windows. */
+@media(max-width:1180px){
+ #f1RacingGridShuffleStageV273{transform:translateX(-50%) scale(.82)!important;transform-origin:top center!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .f1-racing-driver-thought-v303,#f1RacingGridShuffleStageV273.shuffle-fast-v273 .f1-racing-shuffle-card-v273{transition:none!important;animation:none!important}
+}
+
+/* Source: assets/f1-racing-r305.css */
+/* Phase 305: adaptive F1 workspace layout and panel-density stabilization */
+#f1RacingViewRaceV185,#f1RacingWorkspaceRecoveryE,#f1RacingWorkspaceRecoveryE *{box-sizing:border-box}
+#f1RacingWorkspaceRecoveryE{width:100%;max-width:100%;overflow:visible}
+#f1RacingWorkspaceRecoveryE .f1-racing-workspace-panel-recovery-e{max-width:100%;max-height:100%;min-width:0!important;min-height:0!important}
+#f1RacingWorkspaceRecoveryE .f1-racing-race-map-stage-v188,
+#f1RacingWorkspaceRecoveryE .f1-racing-commentary-log-v188,
+#f1RacingWorkspaceRecoveryE .f1-racing-timing-list-v188{min-width:0!important;max-width:100%!important}
+#f1RacingWorkspaceToolbarRecoveryE{max-width:100%;min-width:0;flex-wrap:wrap;overflow:hidden}
+#f1RacingWorkspaceToolbarRecoveryE .f1-racing-workspace-panel-toggles-recovery-e{min-width:0;max-width:100%}
+#f1RacingViewRaceV185 .f1-racing-race-header-v188{min-width:0;max-width:100%}
+#f1RacingViewRaceV185 .f1-racing-race-controls-v188{min-width:0;flex-wrap:wrap}
+
+/* Panel titles must yield space to MAX/HIDE instead of drawing underneath them. */
+#f1RacingWorkspaceRecoveryE .f1-racing-panel-title-v188{min-width:0;overflow:hidden}
+#f1RacingWorkspaceRecoveryE .f1-racing-panel-title-v188>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#f1RacingWorkspaceRecoveryE .f1-racing-panel-title-v188>small{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#f1RacingWorkspaceRecoveryE [data-f1-panel-density-v305="compact"] .f1-racing-panel-title-v188>small{display:none!important}
+#f1RacingWorkspaceRecoveryE [data-f1-panel-density-v305="compact"] .f1-racing-workspace-panel-controls-recovery-e button{padding:2px 3px!important;font-size:6px!important}
+
+/* Timing table responds to the actual panel width, not only the browser width. */
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"]{overflow:hidden!important}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"] .f1-racing-timing-head-v188,
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"] .f1-racing-timing-row-v188{width:100%;max-width:100%;min-width:0!important;overflow:hidden}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="wide"] .f1-racing-timing-head-v188,
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="wide"] .f1-racing-timing-row-v188{
+ grid-template-columns:38px minmax(150px,1.45fr) 54px 76px 76px 62px 56px 44px!important
+}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="standard"] .f1-racing-timing-head-v188,
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="standard"] .f1-racing-timing-row-v188{
+ grid-template-columns:36px minmax(130px,1.5fr) 50px 72px 58px 52px 42px!important
+}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="standard"] .f1-racing-timing-head-v188>span:nth-child(6),
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="standard"] .f1-racing-timing-row-v188>.last{display:none!important}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="compact"] .f1-racing-timing-head-v188,
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="compact"] .f1-racing-timing-row-v188{
+ grid-template-columns:34px minmax(104px,1.5fr) 48px 58px 52px 40px!important
+}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="compact"] .f1-racing-timing-head-v188>span:nth-child(6),
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="compact"] .f1-racing-timing-head-v188>span:nth-child(7),
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="compact"] .f1-racing-timing-row-v188>.last,
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="compact"] .f1-racing-timing-row-v188>.best{display:none!important}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="compact"] .f1-racing-driver-state-v253,
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="compact"] [data-f1-current-sector]{display:none!important}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="micro"] .f1-racing-timing-head-v188,
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="micro"] .f1-racing-timing-row-v188{
+ grid-template-columns:32px minmax(92px,1fr) 58px 50px!important
+}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="micro"] .f1-racing-timing-head-v188>span:nth-child(5),
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="micro"] .f1-racing-timing-head-v188>span:nth-child(6),
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="micro"] .f1-racing-timing-head-v188>span:nth-child(7),
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="micro"] .f1-racing-timing-head-v188>span:nth-child(10),
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="micro"] .f1-racing-timing-row-v188>.speed,
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="micro"] .f1-racing-timing-row-v188>.last,
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="micro"] .f1-racing-timing-row-v188>.best,
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="micro"] .f1-racing-timing-row-v188>.tyre,
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="micro"] .f1-racing-driver-state-v253,
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="micro"] [data-f1-current-sector]{display:none!important}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="compact"] .f1-racing-timing-avatar-v251,
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="micro"] .f1-racing-timing-avatar-v251{width:18px;height:18px;flex-basis:18px}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="timing"][data-f1-timing-density-v305="micro"] .f1-racing-driver-copy-v251 small{display:none!important}
+
+/* Commentary uses its own scroll region and never expands over adjacent panels. */
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="commentary"]{overflow:hidden!important}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="commentary"] .f1-racing-commentary-log-v188{overflow:auto!important;overscroll-behavior:contain}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="commentary"][data-f1-commentary-density-v305="compact"] .f1-racing-live-cutin-layer-v264.docked-v303{max-height:112px!important;padding:4px 5px 1px!important}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="commentary"][data-f1-commentary-density-v305="compact"] .f1-racing-live-cutin-v264{min-height:54px!important;padding:4px 6px!important}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="commentary"][data-f1-commentary-density-v305="compact"] .f1-racing-commentary-entry-v219{padding:4px 5px!important;font-size:9px!important}
+
+/* Narrow desktop and zoomed 2K: keep controls and panels inside their columns. */
+@media(max-width:1500px){
+ #f1RacingViewRaceV185 .f1-racing-race-header-v188{grid-template-columns:minmax(180px,1fr) auto!important}
+ #f1RacingViewRaceV185 .f1-racing-race-controls-v188{grid-column:1/-1!important;justify-content:flex-end}
+}
+@media(max-width:1180px){
+ #f1RacingWorkspaceToolbarRecoveryE{align-items:flex-start}
+ #f1RacingWorkspaceToolbarRecoveryE .f1-racing-workspace-panel-toggles-recovery-e{width:100%;justify-content:flex-end}
+}
+
+/* Source: assets/f1-racing-r306.css */
+/* Phase 306: collision-aware racer thoughts and position badges */
+.f1-racing-driver-thought-v303{
+ --v306-thought-x:0px;--v306-thought-y:0px;
+ transform:translate(var(--v306-thought-x),calc(var(--v306-thought-y) + 5px)) scale(.94)!important;
+ transition:opacity .18s ease!important
+}
+.f1-racing-driver-thought-v303.show-v303{
+ transform:translate(var(--v306-thought-x),var(--v306-thought-y)) scale(1)!important
+}
+.car-position-tag-v254{
+ --v306-tag-x:0px;--v306-tag-y:0px;
+ transform:translate(var(--v306-tag-x),var(--v306-tag-y));
+ transition:none!important
+}
+@media(prefers-reduced-motion:reduce){
+ .f1-racing-driver-thought-v303,.car-position-tag-v254{transition:none!important}
+}
+
+/* Source: assets/f1-racing-r307.css */
+/* Phase 307: quieter, merged and longer-lived LIVE panel */
+.f1-racing-live-cutin-v264 header span [data-f1-live-merge-count-v307]{
+ display:inline-flex;align-items:center;justify-content:center;min-width:18px;margin-left:4px;padding:1px 4px;
+ border:1px solid rgba(255,255,255,.22);border-radius:999px;font-style:normal;font-size:7px;line-height:1.2;letter-spacing:.03em;
+ background:rgba(255,255,255,.08);color:#f4f8ff
+}
+.f1-racing-live-cutin-v264 header span [data-f1-live-merge-count-v307][hidden]{display:none!important}
+.f1-racing-live-cutin-v264.is-merged-v307{box-shadow:0 0 0 1px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 45%,transparent),0 8px 22px rgba(0,0,0,.28)}
+.f1-racing-live-cutin-v264.is-merged-v307 .f1-racing-live-cutin-body-v264 p{animation:f1LiveMergeCopyV307 .28s ease-out}
+@keyframes f1LiveMergeCopyV307{0%{opacity:.35;transform:translateY(3px)}100%{opacity:1;transform:none}}
+
+/* Source: assets/f1-racing-r308.css */
+/* Phase 308: track-corner LIVE + bottom-right driver reaction HUD */
+#f1RacingViewRaceV185 .f1-racing-race-map-stage-v188{position:relative!important;overflow:hidden!important}
+#f1RacingViewRaceV185 .f1-racing-driver-thought-v303{display:none!important}
+
+#f1RacingViewRaceV185 #f1RacingLiveCutinLayerV264.track-docked-v308{
+ position:absolute!important;left:16px!important;right:auto!important;top:auto!important;bottom:16px!important;
+ z-index:24!important;width:min(420px,46%)!important;max-width:420px!important;min-height:0!important;max-height:none!important;
+ display:block!important;padding:0!important;overflow:visible!important;pointer-events:none!important
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264{
+ width:100%!important;min-height:72px!important;padding:7px 9px 8px!important;border-radius:9px!important;
+ box-shadow:0 14px 34px rgba(0,0,0,.46),0 0 0 1px rgba(255,255,255,.04)!important;
+ backdrop-filter:blur(10px);transform-origin:left bottom
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264.is-visible{
+ animation:f1LiveTrackEnterV308 .42s cubic-bezier(.16,.86,.24,1) both
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-body-v264{grid-template-columns:46px minmax(0,1fr)!important;gap:8px!important}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-avatar-v264{width:46px!important;height:46px!important}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-body-v264 p{font-size:10px!important;line-height:1.38!important}
+@keyframes f1LiveTrackEnterV308{
+ 0%{opacity:0;transform:translate3d(-24px,12px,0) scale(.96);filter:brightness(1.7)}
+ 55%{opacity:1;transform:translate3d(3px,0,0) scale(1.01);filter:brightness(1.15)}
+ 100%{opacity:1;transform:none;filter:none}
+}
+
+.f1-racing-dialogue-hud-v308{
+ position:absolute;right:16px;bottom:16px;z-index:23;width:min(340px,38%);pointer-events:none;
+ opacity:0;transform:translate3d(18px,8px,0);transition:opacity .22s ease,transform .3s cubic-bezier(.18,.86,.24,1)
+}
+.f1-racing-dialogue-hud-v308.visible-v308{opacity:1;transform:none}
+.f1-racing-dialogue-hud-v308.leaving-v308{opacity:0;transform:translate3d(18px,6px,0)}
+.f1-racing-dialogue-card-v308{
+ display:grid;grid-template-columns:48px minmax(0,1fr);align-items:center;gap:9px;padding:8px 10px 8px 8px;
+ border:1px solid color-mix(in srgb,var(--dialogue-driver-v308,#6fb7ff) 62%,#46515f);border-radius:14px;
+ background:linear-gradient(105deg,rgba(5,9,15,.95),rgba(10,16,24,.91));box-shadow:0 12px 30px rgba(0,0,0,.42);
+ backdrop-filter:blur(9px)
+}
+.f1-racing-dialogue-profile-v308{width:48px;height:48px;border-radius:50%;overflow:hidden;border:2px solid var(--dialogue-driver-v308,#6fb7ff);box-shadow:0 0 0 3px rgba(0,0,0,.34)}
+.f1-racing-dialogue-avatar-v308{display:flex;width:100%;height:100%;object-fit:cover;align-items:center;justify-content:center}
+.f1-racing-dialogue-avatar-v308.fallback{background:#17202c;color:#f4f8ff;font:900 12px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.f1-racing-dialogue-copy-v308{min-width:0}
+.f1-racing-dialogue-copy-v308 strong{display:block;margin-bottom:3px;color:var(--dialogue-driver-v308,#8fc7ff);font:900 9px/1.1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f1-racing-dialogue-copy-v308 p{margin:0;color:#f5f8fc;font-size:12px;font-weight:780;line-height:1.38;word-break:keep-all;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+@media(max-width:1100px){
+ #f1RacingViewRaceV185 #f1RacingLiveCutinLayerV264.track-docked-v308{left:10px!important;bottom:10px!important;width:min(390px,50%)!important}
+ .f1-racing-dialogue-hud-v308{right:10px;bottom:10px;width:min(300px,40%)}
+ .f1-racing-dialogue-card-v308{grid-template-columns:40px minmax(0,1fr);padding:7px}
+ .f1-racing-dialogue-profile-v308{width:40px;height:40px}
+ .f1-racing-dialogue-copy-v308 p{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ #f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264.is-visible{animation:none!important}
+ .f1-racing-dialogue-hud-v308{transition:none!important}
+}
+
+/* Source: assets/f1-racing-r309.css */
+/* Phase 309: viewport-fit reset, fixed below-marker identity/rank */
+#f1RacingViewRaceV185 .f1-racing-race-vehicle-v189 .car-label{
+  text-anchor:middle!important;
+  paint-order:stroke fill;
+  stroke:#05070a;
+  stroke-width:3px;
+  stroke-linejoin:round;
+  pointer-events:none
+}
+#f1RacingViewRaceV185 .car-position-tag-v254{
+  transform:none!important;
+  transition:none!important;
+  pointer-events:none
+}
+#f1RacingViewRaceV185 .car-position-text-v254{
+  paint-order:stroke fill;
+  stroke:#05070a;
+  stroke-width:2px
+}
+#f1RacingWorkspaceRecoveryE.f1-racing-workspace-fit-v288{
+  max-height:calc(100dvh - 8px)!important
+}
+
+/* Source: assets/f1-racing-r313.css */
+#f1RacingGridListV272.f1-racing-grid-gacha-active-v313{display:block!important;position:relative;min-height:360px;padding:0!important;overflow:hidden}
+#f1RacingGridListV272.f1-racing-grid-gacha-active-v313>.f1-racing-grid-card-v272{position:absolute!important;width:1px!important;height:1px!important;min-width:0!important;min-height:0!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important;padding:0!important;margin:0!important;border:0!important}
+.f1-racing-grid-gacha-stage-v313{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:14px;min-height:360px;border:1px solid #263349;border-radius:16px;background:#070c14;overflow:hidden}
+.f1-grid-gacha-main-v313{position:relative;min-width:0;display:grid;place-items:center;padding:46px 24px 22px;background:radial-gradient(circle at 50% 45%,rgba(99,77,218,.24),transparent 34%),linear-gradient(180deg,#0b1428,#05080e)}
+.f1-grid-gacha-main-v313:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.16;background-image:linear-gradient(rgba(255,255,255,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.12) 1px,transparent 1px);background-size:38px 38px;mask-image:linear-gradient(to bottom,transparent,#000 35%,#000)}
+.f1-grid-gacha-brand-v313{position:absolute;left:18px;top:16px;z-index:2;display:flex;flex-direction:column;gap:2px;letter-spacing:.18em}
+.f1-grid-gacha-brand-v313 strong{font-size:14px;color:#eef2ff}.f1-grid-gacha-brand-v313 small{font-size:8px;color:#8291b0}
+.f1-grid-gacha-caption-v313{position:absolute;right:18px;top:18px;z-index:2;font-size:11px;font-weight:900;letter-spacing:.06em;color:#c6d4ef}
+.f1-grid-gacha-reveal-v313{position:relative;z-index:2;width:min(270px,72%);height:305px;display:grid;place-items:center;perspective:900px}
+.f1-grid-gacha-reveal-v313 .gacha-result-card-v418{width:100%;height:100%;max-height:305px}
+.f1-grid-gacha-reveal-v313.is-pulsing{animation:f1GridGachaPulseV313 .36s ease-out}
+@keyframes f1GridGachaPulseV313{0%{transform:scale(.92);opacity:.25;filter:brightness(1.65)}55%{transform:scale(1.025);opacity:1}100%{transform:scale(1);filter:none}}
+.f1-grid-gacha-dock-v313{min-width:0;padding:13px;background:#0b111c;border-left:1px solid #263349;display:flex;flex-direction:column}
+.f1-grid-gacha-dock-v313 header{display:flex;align-items:center;justify-content:space-between;padding:3px 4px 11px;border-bottom:1px solid #202b3d;font-size:10px;letter-spacing:.14em;color:#9cadca}
+.f1-grid-gacha-dock-v313 header strong{font-size:12px;color:#f1f5ff}
+.f1-grid-gacha-dock-list-v313{display:flex;flex-direction:column;gap:7px;overflow:auto;padding-top:10px;max-height:320px}
+.f1-grid-gacha-dock-item-v313{display:grid;grid-template-columns:38px 42px minmax(0,1fr);gap:9px;align-items:center;min-height:54px;padding:7px 9px;border:1px solid #28354d;border-radius:10px;background:#0e1726;animation:f1GridDockInV313 .28s ease-out}
+@keyframes f1GridDockInV313{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+.f1-grid-gacha-dock-item-v313>b{font-size:15px;color:#f4f7ff}.f1-grid-gacha-dock-item-v313 .avatar{width:40px;height:40px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#18243a;font-size:12px;font-weight:900}
+.f1-grid-gacha-dock-item-v313 .avatar img{width:100%;height:100%;object-fit:cover}.f1-grid-gacha-dock-item-v313 .meta{min-width:0;display:flex;flex-direction:column}.f1-grid-gacha-dock-item-v313 .meta strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:#f4f7ff}.f1-grid-gacha-dock-item-v313 .meta small{margin-top:3px;font-size:8px;letter-spacing:.12em;color:#7485a5}
+.f1-grid-gacha-fallback-card-v313{width:100%;height:100%;border:2px solid #6c63d9;border-radius:18px;overflow:hidden;background:#111a2b;box-shadow:0 18px 48px rgba(0,0,0,.45),0 0 34px rgba(106,85,220,.25);display:flex;flex-direction:column}
+.f1-grid-gacha-fallback-card-v313 .media{flex:1;min-height:0;display:grid;place-items:center;overflow:hidden;background:#162037}.f1-grid-gacha-fallback-card-v313 .media img{width:100%;height:100%;object-fit:cover}.f1-grid-gacha-fallback-card-v313 .media .fallback{font-size:54px;font-weight:1000}.f1-grid-gacha-fallback-card-v313 .copy{padding:13px;text-align:center;display:flex;flex-direction:column;gap:4px}.f1-grid-gacha-fallback-card-v313 .copy small{font-size:8px;letter-spacing:.16em;color:#9eaee0}.f1-grid-gacha-fallback-card-v313 .copy strong{font-size:22px;color:#fff}.f1-grid-gacha-fallback-card-v313 .copy b{font-size:13px;color:#ffd166}
+@media(max-width:900px){.f1-racing-grid-gacha-stage-v313{grid-template-columns:1fr;min-height:520px}.f1-grid-gacha-dock-v313{border-left:0;border-top:1px solid #263349}.f1-grid-gacha-dock-list-v313{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));max-height:170px}.f1-grid-gacha-reveal-v313{height:270px}}
+
+/* Source: assets/f1-racing-r319.css */
+/* Phase 319: F1 Gacha card containment and readable live markers */
+#f1RacingGridListV272.f1-racing-grid-gacha-active-v313{min-height:330px!important}
+#f1RacingGridGachaStageV313.f1-racing-grid-gacha-stage-v313{min-height:330px!important;max-height:430px}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-main-v313{min-height:0!important;padding:42px 20px 18px!important;overflow:hidden}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313{
+ width:min(220px,48%)!important;height:min(286px,calc(100% - 58px))!important;min-height:220px!important;max-height:286px!important;
+ align-self:center!important;justify-self:center!important;overflow:visible
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313>.gacha-card{
+ position:relative!important;inset:auto!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
+ padding:7px!important;border-radius:18px!important;box-sizing:border-box!important
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313 .gacha-card-inner{
+ width:100%!important;height:100%!important;min-height:0!important;border-radius:13px!important;display:flex!important;flex-direction:column!important
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313 .gacha-card-image{
+ flex:1 1 auto!important;height:auto!important;min-height:0!important;max-height:none!important;background:#0d1422!important;overflow:hidden!important
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313 .gacha-card-image img{
+ display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
+ object-fit:contain!important;object-position:center center!important
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313 .gacha-card-info{
+ flex:0 0 68px!important;min-height:68px!important;padding:8px 10px!important;box-sizing:border-box!important
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313 .gacha-card-name{margin-top:3px!important;font-size:18px!important;line-height:1.2!important}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313 .gacha-card-kicker{font-size:7px!important}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313 .gacha-card-desc{margin-top:3px!important;font-size:8px!important}
+#f1RacingViewRaceV185 .f1-racing-race-vehicle-v189 .car-label{font-size:10px!important;stroke-width:3px!important}
+#f1RacingViewRaceV185 .f1-racing-race-vehicle-v189[data-battle-blocked-v319="1"]{opacity:.92}
+@media(max-width:1100px){
+ #f1RacingGridGachaStageV313.f1-racing-grid-gacha-stage-v313{max-height:none}
+ #f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313{width:min(210px,60%)!important;height:274px!important;max-height:274px!important}
+}
+/* Phase 321: fallback-safe F1 Gacha containment */
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313>.f1-grid-gacha-fallback-card-v313{
+ position:relative!important;inset:auto!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
+ min-width:0!important;min-height:0!important;box-sizing:border-box!important;overflow:hidden!important
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313>.f1-grid-gacha-fallback-card-v313 .media{
+ flex:1 1 auto!important;min-height:0!important;height:auto!important;overflow:hidden!important
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313>.f1-grid-gacha-fallback-card-v313 .media img{
+ display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
+ object-fit:contain!important;object-position:center center!important
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313>.f1-grid-gacha-fallback-card-v313 .copy{
+ flex:0 0 68px!important;min-height:68px!important;box-sizing:border-box!important;padding:8px 10px!important
+}
+
+/* Phase 323: deterministic F1 Gacha host */
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-host-v323{
+ position:relative!important;display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
+ min-width:0!important;min-height:0!important;overflow:hidden!important;box-sizing:border-box!important;border-radius:18px
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-host-v323>.gacha-card,
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-host-v323>.f1-grid-gacha-fallback-card-v313{
+ position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
+ min-width:0!important;min-height:0!important;box-sizing:border-box!important;margin:0!important
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-host-v323>.gacha-card .gacha-card-inner{height:100%!important;min-height:0!important}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-host-v323>.gacha-card .gacha-card-image{flex:1 1 auto!important;height:auto!important;min-height:0!important;overflow:hidden!important}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-host-v323>.gacha-card .gacha-card-image img{width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-host-v323>.gacha-card .gacha-card-info{flex:0 0 68px!important;min-height:68px!important;box-sizing:border-box!important}
+
+/* Source: assets/f1-racing-r324.css */
+#f1RacingGridListV272.f1-racing-grid-gacha-active-v313{min-height:440px!important}
+#f1RacingGridGachaStageV313.f1-racing-grid-gacha-stage-v313{height:420px!important;min-height:420px!important;max-height:420px!important;grid-template-columns:minmax(0,1fr) 280px!important}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-main-v313{min-height:0!important;height:100%!important;padding:48px 20px 20px!important;overflow:hidden!important;box-sizing:border-box!important}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313{width:230px!important;height:320px!important;min-width:230px!important;min-height:320px!important;max-width:230px!important;max-height:320px!important;align-self:center!important;justify-self:center!important;overflow:hidden!important;box-sizing:border-box!important}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-host-v323{position:relative!important;width:230px!important;height:320px!important;min-width:230px!important;min-height:320px!important;max-width:230px!important;max-height:320px!important;overflow:hidden!important;box-sizing:border-box!important;border-radius:18px!important}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-host-v323>.gacha-card.f1-grid-gacha-card-v324{position:absolute!important;inset:0!important;width:230px!important;height:320px!important;min-width:0!important;min-height:0!important;max-width:230px!important;max-height:320px!important;margin:0!important;padding:7px!important;box-sizing:border-box!important;overflow:hidden!important}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-v324>.gacha-card-inner{width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;max-width:100%!important;max-height:100%!important;box-sizing:border-box!important;overflow:hidden!important}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-v324 .gacha-card-image{flex:1 1 0!important;width:100%!important;height:auto!important;min-width:0!important;min-height:0!important;max-height:none!important;overflow:hidden!important;box-sizing:border-box!important}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-v324 .gacha-card-image img{display:block!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;object-position:center center!important}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-v324 .gacha-card-info{flex:0 0 72px!important;width:100%!important;height:72px!important;min-height:72px!important;max-height:72px!important;padding:8px 10px!important;box-sizing:border-box!important;overflow:hidden!important}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-v324 .gacha-card-name{font-size:18px!important;line-height:1.15!important;margin-top:3px!important}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-v324 .gacha-card-desc{font-size:8px!important;margin-top:4px!important}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-list-v313{max-height:352px!important}
+#f1RacingViewRaceV185 .f1-racing-race-vehicle-v189 .car-label{font-size:8.5px!important;stroke-width:2.5px!important}
+#f1RacingViewRaceV185 .f1-racing-race-vehicle-v189 .car-position-text-v254{font-size:8.5px!important}
+
+/* Source: assets/f1-racing-r330-r333.css */
+/* Phase 332: readable LIVE cut-ins */
+#f1RacingViewRaceV185 #f1RacingLiveCutinLayerV264.track-docked-v308{
+  width:min(470px,50%)!important;
+  max-width:470px!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264{
+  min-height:86px!important;
+  padding:9px 12px 10px!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264 header{
+  margin-bottom:7px!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264 header strong{
+  font-size:13px!important;
+  line-height:1.15!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264 header span{
+  font-size:11px!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-body-v264{
+  grid-template-columns:52px minmax(0,1fr)!important;
+  gap:10px!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-avatar-v264{
+  width:52px!important;
+  height:52px!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-body-v264 p{
+  font-size:13px!important;
+  line-height:1.48!important;
+  font-weight:820!important;
+  letter-spacing:-.01em!important;
+  word-break:keep-all!important;
+}
+
+/* Phase 333: starting-grid Gacha follows the current viewport */
+#f1RacingViewGridV185{
+  max-height:calc(100dvh - 12px)!important;
+  overflow:hidden!important;
+}
+#f1RacingViewGridV185 .f1-racing-grid-stage-v244{
+  display:flex!important;
+  flex-direction:column!important;
+  min-height:0!important;
+  max-height:calc(100dvh - 24px)!important;
+  overflow:hidden!important;
+}
+#f1RacingViewGridV185 #f1RacingGridListV272.f1-racing-grid-gacha-active-v313{
+  flex:0 1 auto!important;
+  min-height:var(--f1-grid-stage-h-v333,420px)!important;
+  height:var(--f1-grid-stage-h-v333,420px)!important;
+  max-height:var(--f1-grid-stage-h-v333,420px)!important;
+  overflow:hidden!important;
+}
+#f1RacingGridGachaStageV313.f1-racing-grid-gacha-stage-v313{
+  height:var(--f1-grid-stage-h-v333,420px)!important;
+  min-height:var(--f1-grid-stage-h-v333,420px)!important;
+  max-height:var(--f1-grid-stage-h-v333,420px)!important;
+  grid-template-columns:minmax(0,1fr) var(--f1-grid-dock-w-v333,280px)!important;
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-main-v313{
+  height:100%!important;
+  min-height:0!important;
+  padding:clamp(36px,6vh,48px) clamp(12px,2vw,20px) clamp(12px,2vh,20px)!important;
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-reveal-v313{
+  width:var(--f1-grid-card-w-v333,230px)!important;
+  height:var(--f1-grid-card-h-v333,320px)!important;
+  min-width:var(--f1-grid-card-w-v333,230px)!important;
+  min-height:var(--f1-grid-card-h-v333,320px)!important;
+  max-width:var(--f1-grid-card-w-v333,230px)!important;
+  max-height:var(--f1-grid-card-h-v333,320px)!important;
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-host-v323{
+  width:var(--f1-grid-card-w-v333,230px)!important;
+  height:var(--f1-grid-card-h-v333,320px)!important;
+  min-width:var(--f1-grid-card-w-v333,230px)!important;
+  min-height:var(--f1-grid-card-h-v333,320px)!important;
+  max-width:var(--f1-grid-card-w-v333,230px)!important;
+  max-height:var(--f1-grid-card-h-v333,320px)!important;
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-host-v323>.gacha-card.f1-grid-gacha-card-v324{
+  width:var(--f1-grid-card-w-v333,230px)!important;
+  height:var(--f1-grid-card-h-v333,320px)!important;
+  max-width:var(--f1-grid-card-w-v333,230px)!important;
+  max-height:var(--f1-grid-card-h-v333,320px)!important;
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-v324 .gacha-card-info{
+  flex:0 0 var(--f1-grid-card-info-h-v333,72px)!important;
+  height:var(--f1-grid-card-info-h-v333,72px)!important;
+  min-height:var(--f1-grid-card-info-h-v333,72px)!important;
+  max-height:var(--f1-grid-card-info-h-v333,72px)!important;
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-card-v324 .gacha-card-name{
+  font-size:clamp(14px,2vh,18px)!important;
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-v313{
+  min-height:0!important;
+  overflow:hidden!important;
+}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-list-v313{
+  min-height:0!important;
+  max-height:calc(var(--f1-grid-stage-h-v333,420px) - 60px)!important;
+  flex:1 1 auto!important;
+}
+@media(max-height:680px){
+  #f1RacingViewGridV185 .f1-racing-grid-header-v244{
+    padding:5px 8px!important;
+  }
+  #f1RacingViewGridV185 .f1-racing-grid-actions-v244 button{
+    min-height:27px!important;
+    padding:4px 7px!important;
+    font-size:10px!important;
+  }
+  #f1RacingViewGridV185 .f1-racing-grid-brief-v244{
+    margin:4px 0!important;
+    padding:4px 7px!important;
+  }
+}
+@media(max-width:1100px){
+  #f1RacingViewRaceV185 #f1RacingLiveCutinLayerV264.track-docked-v308{
+    width:min(430px,54%)!important;
+  }
+  #f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-body-v264 p{
+    font-size:12px!important;
+  }
+}
+
+/* Source: assets/f1-racing-r335-r341.css */
+/* Phase 339: stronger LIVE broadcast presence */
+#f1RacingViewRaceV185 #f1RacingLiveCutinLayerV264.track-docked-v308{
+  width:min(520px,54%)!important;
+  max-width:520px!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264{
+  position:relative!important;
+  overflow:hidden!important;
+  border:1px solid color-mix(in srgb,var(--cutin-driver-color,#ffd166) 78%,#ffffff 8%)!important;
+  background:
+    linear-gradient(110deg,color-mix(in srgb,var(--cutin-driver-color,#ffd166) 10%,rgba(5,9,15,.97)),rgba(5,9,15,.95) 42%,rgba(8,13,20,.94))!important;
+  box-shadow:
+    0 14px 34px rgba(0,0,0,.52),
+    0 0 0 1px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 34%,transparent),
+    0 0 20px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 34%,transparent),
+    0 0 44px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 18%,transparent)!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264::before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:4px;
+  background:var(--cutin-driver-color,#ffd166);
+  box-shadow:0 0 12px var(--cutin-driver-color,#ffd166),0 0 24px var(--cutin-driver-color,#ffd166);
+  opacity:.95;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264::after{
+  content:"";
+  position:absolute;
+  top:-45%;
+  left:-28%;
+  width:34%;
+  height:190%;
+  pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
+  transform:rotate(13deg) translateX(-150%);
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264.is-visible{
+  animation:f1LiveTrackEnterV308 .42s cubic-bezier(.16,.86,.24,1) both,f1LiveGlowV339 2.4s ease-in-out infinite!important;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264.is-visible::after{
+  animation:f1LiveSweepV339 3.2s ease-in-out infinite;
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264 header span{
+  color:#fff!important;
+  text-shadow:0 0 8px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 88%,transparent);
+}
+#f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264 header span i{
+  box-shadow:0 0 7px #ff365e,0 0 14px #ff365e;
+}
+@keyframes f1LiveGlowV339{
+  0%,100%{box-shadow:0 14px 34px rgba(0,0,0,.52),0 0 0 1px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 30%,transparent),0 0 16px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 26%,transparent),0 0 34px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 12%,transparent)}
+  50%{box-shadow:0 14px 34px rgba(0,0,0,.52),0 0 0 1px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 72%,transparent),0 0 28px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 50%,transparent),0 0 58px color-mix(in srgb,var(--cutin-driver-color,#ffd166) 22%,transparent)}
+}
+@keyframes f1LiveSweepV339{
+  0%,62%{transform:rotate(13deg) translateX(-170%);opacity:0}
+  72%{opacity:1}
+  90%,100%{transform:rotate(13deg) translateX(520%);opacity:0}
+}
+
+/* Phase 338: persistent top-right BEST LAP card */
+#f1RacingBestLapOverlayV338.f1-racing-best-lap-v338{
+  position:absolute;
+  top:16px;
+  right:16px;
+  z-index:25;
+  width:min(268px,36%);
+  padding:10px 12px;
+  border:1px solid rgba(192,132,252,.62);
+  border-radius:12px;
+  background:linear-gradient(135deg,rgba(18,10,28,.94),rgba(7,10,16,.94));
+  box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 18px rgba(192,132,252,.2);
+  backdrop-filter:blur(10px);
+  pointer-events:none;
+}
+#f1RacingBestLapOverlayV338[hidden]{display:none!important}
+.f1-best-lap-kicker-v338{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+.f1-best-lap-kicker-v338 span{color:#d8b4fe;font:950 9px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.18em}
+.f1-best-lap-kicker-v338 em{
+  opacity:.34;padding:3px 6px;border:1px solid rgba(244,114,182,.55);border-radius:999px;color:#f9a8d4;
+  font:950 8px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.12em
+}
+.f1-best-lap-main-v338{display:grid;grid-template-columns:42px minmax(0,1fr);gap:10px;align-items:center}
+.f1-best-lap-avatar-v338{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;overflow:hidden;border:2px solid #c084fc;background:#171024;color:#f3e8ff;font:900 11px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;box-shadow:0 0 0 3px rgba(192,132,252,.12)}
+.f1-best-lap-avatar-v338 img{display:block;width:100%;height:100%;object-fit:cover}
+.f1-best-lap-copy-v338{min-width:0;display:grid;gap:3px}
+.f1-best-lap-copy-v338 strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f8fafc;font-size:12px}
+.f1-best-lap-copy-v338 b{color:#e9d5ff;font:950 18px/1.08 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+#f1RacingBestLapOverlayV338.is-new-v338{
+  animation:f1BestLapPopV338 .7s cubic-bezier(.17,.88,.28,1.18) both,f1BestLapAuraV338 1.25s ease-in-out 3;
+}
+#f1RacingBestLapOverlayV338.is-new-v338 .f1-best-lap-kicker-v338 em{
+  opacity:1;background:#f472b6;color:#1b0a18;border-color:#f9a8d4;box-shadow:0 0 12px rgba(244,114,182,.78);
+  animation:f1BestLapNewV338 .68s ease-in-out infinite alternate
+}
+@keyframes f1BestLapPopV338{0%{opacity:0;transform:translate3d(18px,-8px,0) scale(.92)}55%{opacity:1;transform:translate3d(-2px,1px,0) scale(1.04)}100%{opacity:1;transform:none}}
+@keyframes f1BestLapAuraV338{0%,100%{box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 14px rgba(192,132,252,.22)}50%{box-shadow:0 12px 30px rgba(0,0,0,.45),0 0 30px rgba(192,132,252,.68),0 0 54px rgba(244,114,182,.22)}}
+@keyframes f1BestLapNewV338{from{transform:scale(.96)}to{transform:scale(1.08)}}
+
+/* Phase 340: use the available vertical viewport instead of a fixed short letterbox */
+#f1RacingWorkspaceRecoveryE.f1-racing-workspace-fit-v288{
+  margin-bottom:0!important;
+  max-height:calc(100dvh - 8px)!important;
+  align-content:stretch!important;
+}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="track"]:not([hidden]),
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="commentary"]:not([hidden]){
+  display:flex!important;
+  flex-direction:column!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel][hidden]{display:none!important}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="track"] .f1-racing-race-map-stage-v188{
+  flex:1 1 auto!important;
+  height:auto!important;
+  min-height:0!important;
+}
+#f1RacingWorkspaceRecoveryE [data-f1-workspace-panel="commentary"] .f1-racing-commentary-log-v188{
+  flex:1 1 auto!important;
+  height:auto!important;
+  min-height:0!important;
+}
+
+/* Phase 341: dialogue HUD stays readable for wall-clock time even at 2x/4x */
+#f1RacingDialogueHudV308.f1-racing-dialogue-hud-v308{
+  transition-duration:.22s,.30s!important;
+}
+
+@media(max-width:1100px){
+  #f1RacingViewRaceV185 #f1RacingLiveCutinLayerV264.track-docked-v308{width:min(470px,58%)!important}
+  #f1RacingBestLapOverlayV338.f1-racing-best-lap-v338{top:10px;right:10px;width:min(238px,40%)}
+}
+@media(prefers-reduced-motion:reduce){
+  #f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264.is-visible,
+  #f1RacingLiveCutinLayerV264.track-docked-v308 .f1-racing-live-cutin-v264.is-visible::after,
+  #f1RacingBestLapOverlayV338.is-new-v338,
+  #f1RacingBestLapOverlayV338.is-new-v338 .f1-best-lap-kicker-v338 em{animation:none!important}
+}
+
+/* Source: assets/f1-racing-r342.css */
+/* Phase 342: keep the live race console from stretching into an ultra-wide letterbox */
+body.f1-racing-r12-compact-v287 #f1RacingViewRaceV185{
+  width:min(100%,var(--f1-race-fit-width-v342,100%))!important;
+  max-width:var(--f1-race-fit-width-v342,100%)!important;
+  margin-inline:auto!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+}
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceRecoveryE{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+}
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceRecoveryE .f1-racing-workspace-panel-recovery-e{
+  min-width:0!important;
+  max-width:100%!important;
+}
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceRecoveryE .f1-racing-race-map-stage-v188,
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceRecoveryE .f1-racing-commentary-log-v188,
+body.f1-racing-r12-compact-v287 #f1RacingWorkspaceRecoveryE .f1-racing-live-timing-v188{
+  min-width:0!important;
+  max-width:100%!important;
+}
+body.f1-racing-r12-compact-v287 #f1RacingViewRaceV185[data-f1-aspect-fit-v342="capped"]{
+  border-left:1px solid rgba(98,116,142,.18);
+  border-right:1px solid rgba(98,116,142,.18);
+  box-shadow:-20px 0 42px rgba(0,0,0,.16),20px 0 42px rgba(0,0,0,.16);
+}
+
+/* Source: assets/f1-racing-r343-r345.css */
+/* Phase 345: explicit 3-lap high-variance race entry */
+.f1-racing-start-actions-v345{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.f1-racing-fast-race-v345{
+  border-color:#7c3aed!important;
+  background:linear-gradient(135deg,rgba(91,33,182,.92),rgba(124,58,237,.88))!important;
+  color:#fff!important;
+  box-shadow:0 0 0 1px rgba(167,139,250,.16),0 8px 22px rgba(76,29,149,.24);
+  font-weight:900!important;
+}
+.f1-racing-fast-race-v345:hover:not(:disabled){
+  border-color:#a78bfa!important;
+  box-shadow:0 0 0 1px rgba(196,181,253,.24),0 0 18px rgba(139,92,246,.28);
+}
+.f1-racing-fast-race-v345:disabled{opacity:.42!important;box-shadow:none!important}
+@media(max-width:760px){
+  .f1-racing-start-actions-v345{width:100%;justify-content:stretch}
+  .f1-racing-start-actions-v345>button{flex:1 1 180px}
+}
+
+/* Source: assets/f1-racing-r401.css */
+/* Phase 401: cinematic skill on the actual track map. */
+#f1SkillStageV401.f1-skill-stage-v401{position:absolute;inset:0;z-index:45;display:grid;place-items:center;pointer-events:none;overflow:hidden;background:radial-gradient(ellipse,rgba(24,15,60,.30),rgba(1,3,10,.58))}
+.f1-skill-bar-v401{position:relative;isolation:isolate;display:grid;grid-template-columns:clamp(66px,10vw,112px) minmax(0,1fr);gap:clamp(12px,3vw,28px);align-items:center;width:min(95%,880px);min-height:clamp(105px,20vh,200px);padding:clamp(12px,2vw,27px);border-block:3px solid #ffdc8a;background:linear-gradient(100deg,#070f22,#33215a,#070f22);box-shadow:0 0 48px #b48cff66,0 18px 40px #000c;animation:f1SkillEnterV401 .34s cubic-bezier(.15,.88,.23,1) both}
+.f1-skill-bar-v401[data-chain="1"]{border-color:#80dcff;background:linear-gradient(100deg,#051629,#105778,#051629);box-shadow:0 0 48px #31b6ff77,0 18px 40px #000c}
+.f1-skill-stripes-v401{position:absolute;inset:0;z-index:-1;opacity:.22;background:repeating-linear-gradient(112deg,transparent 0 18px,#fff 18px 20px,transparent 20px 36px);animation:f1SkillStreakV401 .6s linear infinite}
+.f1-skill-portrait-v401{aspect-ratio:1;border-radius:50%;overflow:hidden;border:3px solid #ffe5aa;background:#192139;display:grid;place-items:center;font-size:30px;font-weight:900;color:#fff;box-shadow:0 0 0 5px #ffffff14,0 0 25px #f5d57e77}
+.f1-skill-portrait-v401 img{width:100%;height:100%;object-fit:cover}
+.f1-skill-copy-v401{display:grid;gap:9px;min-width:0;word-break:keep-all}
+.f1-skill-copy-v401 small{color:#ffe2a2;font-size:clamp(9px,1vw,13px);letter-spacing:.17em;font-weight:950}
+.f1-skill-copy-v401 strong{color:#fff;font-size:clamp(20px,3vw,42px);font-weight:950;line-height:1.15;text-shadow:0 0 18px #ffecc077}
+.f1-skill-copy-v401 span{color:#dce7ff;font-size:clamp(11px,1.25vw,18px);font-weight:850}
+@keyframes f1SkillEnterV401{from{opacity:0;transform:translateX(-12%) scaleX(.6)}to{opacity:1;transform:none}}
+@keyframes f1SkillStreakV401{to{background-position:110px 0}}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-v313{padding:15px!important;background:#101d30}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-v313 header{font-size:12px;font-weight:900}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-list-v313{gap:8px;padding-top:12px}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-item-v313{grid-template-columns:43px 46px minmax(0,1fr);gap:11px;min-height:63px;padding:8px 10px;border-color:#37516f;background:#162842}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-item-v313>b{font-size:18px;color:#ffe5a7}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-item-v313 .avatar{width:44px;height:44px}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-item-v313 .meta strong{font-size:14px;line-height:1.3}
+#f1RacingGridGachaStageV313 .f1-grid-gacha-dock-item-v313 .meta small{font-size:10px;color:#b3c1d6}
+@media(max-width:790px){.f1-skill-bar-v401{width:99%;grid-template-columns:60px 1fr;gap:10px;padding:10px}}
+@media(prefers-reduced-motion:reduce){.f1-skill-bar-v401,.f1-skill-stripes-v401{animation:none!important}}

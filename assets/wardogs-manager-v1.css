@@ -76,8 +76,8 @@
 body.mws-wardogs-manager-open-v122{overflow:hidden}
 @media(max-width:860px){
   .wardogs-manager-modal-v122{padding:8px}
-  .wardogs-manager-dialog-v122{width:98vw;max-height:96vh}
-  .wardogs-manager-layout-v122{grid-template-columns:1fr;grid-template-rows:minmax(150px,30vh) minmax(0,1fr)}
+  .wardogs-manager-dialog-v122{width:98vw;}
+  .wardogs-manager-layout-v122{grid-template-columns:1fr;}
   .wardogs-manager-list-pane-v122{border-right:0;border-bottom:1px solid rgba(255,255,255,.08)}
   .wardogs-manager-form-v122{grid-template-columns:1fr}
   .wardogs-manager-drop-v122{min-height:320px}

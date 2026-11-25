@@ -95,9 +95,9 @@ body.mws-premium #contacts .contact-grid > .contact-card:hover {
   background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 5%,var(--panel2)),var(--contact-surface-v177) 74%)!important;
 }
 body.mws-premium #contacts .contact-grid > .contact-card.dragging {opacity:.5; transform:scale(.98)!important}
-body.mws-premium #contacts .contact-grid > .contact-card.is-self {border-color:color-mix(in srgb,#d4ad62 65%,var(--border))!important; animation:none!important}
+body.mws-premium #contacts .contact-grid > .contact-card.is-self { animation:none!important}
 body.mws-premium #contacts .contact-grid > .contact-card.is-self::before {display:none}
-body.mws-premium #contacts .contact-grid > .contact-card.has-upcoming {border-color:color-mix(in srgb,#37c7a3 42%,var(--border))!important}
+body.mws-premium #contacts .contact-grid > .contact-card.has-upcoming {}
 body.mws-premium #contacts .contact-grid > .contact-card .contact-card-core {
   grid-template-columns:var(--mws-contact-card-photo) minmax(0,1fr)!important;
   column-gap:14px!important; min-height:0!important; flex:1 1 auto; align-items:start!important;
@@ -108,11 +108,11 @@ body.mws-premium #contacts .contact-grid > .contact-card .contact-card-avatar-lg
   border-radius:12px!important; box-shadow:0 4px 12px #0004; background:var(--panel2);
 }
 #contacts .contact-card .contact-card-name-row {gap:5px!important}
-body.mws-premium #contacts .contact-card .contact-card-name {font-size:calc(16px * var(--ui-text-scale,1)); font-weight:800; letter-spacing:-.025em; line-height:1.35!important}
-body.mws-premium #contacts .contact-card .contact-card-tags {gap:4px!important; margin-top:5px!important}
+body.mws-premium #contacts .contact-card .contact-card-name {font-size:calc(16px * var(--ui-text-scale,1)); font-weight:800; letter-spacing:-.025em; }
+body.mws-premium #contacts .contact-card .contact-card-tags { margin-top:5px!important}
 body.mws-premium #contacts .contact-card .contact-card-tags .chip {
-  font-size:calc(11px * var(--ui-text-scale,1)); font-weight:550; line-height:1.3;
-  padding:3px 7px; border-radius:5px; border:1px solid color-mix(in srgb,var(--accent) 14%,var(--border));
+  font-size:calc(11px * var(--ui-text-scale,1));  line-height:1.3;
+  padding:3px 7px;  border:1px solid color-mix(in srgb,var(--accent) 14%,var(--border));
   background:color-mix(in srgb,var(--accent) 7%,var(--input)); color:var(--text);
 }
 body.mws-premium #contacts .contact-card .contact-card-last {
@@ -123,11 +123,11 @@ body.mws-premium #contacts .contact-card .contact-card-last {
 body.mws-premium #contacts .contact-card .contact-card-actions {padding-top:8px!important; gap:6px; justify-content:flex-end; align-items:center}
 body.mws-premium #contacts .contact-card .station-link {
   display:inline-flex; align-items:center; gap:6px; padding:5px 8px; min-height:26px;
-  border-radius:6px; font-size:10px; color:var(--muted); background:var(--input);
+  border-radius:6px; font-size:10px;  background:var(--input);
   transition:color .15s ease,border-color .15s ease,background .15s ease;
 }
 #contacts .contact-card .station-link::after {content:'↗'; font-size:13px; line-height:1}
-#contacts .contact-card .station-link:hover {color:var(--text); background:var(--panel2); border-color:var(--accent)}
+#contacts .contact-card .station-link:hover { background:var(--panel2); }
 #contacts .contact-grid > .empty:not([hidden]) {grid-column:1/-1; padding:34px 16px; text-align:center; border:1px dashed var(--border); border-radius:12px}
 
 body.mws-premium #contacts :is(#pendingContacts,#incompleteContacts,#favoriteContacts).card {border-radius:13px!important; background:var(--contact-surface-v177)!important}

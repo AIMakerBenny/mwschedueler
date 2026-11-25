@@ -210,7 +210,7 @@
   background:rgba(3,5,8,.88);color:#eef2f6
 }
 .wardogs-detail-dialog-v125{
-  width:min(1420px,97vw);max-height:94vh;overflow:hidden;
+  width:min(1420px,97vw);overflow:hidden;
   display:grid;grid-template-rows:auto minmax(0,1fr);
   border:1px solid rgba(255,103,44,.32);border-radius:16px;
   background:#080c11;
@@ -258,7 +258,7 @@
 }
 .wardogs-detail-media-frame-v125 img{
   display:block;width:auto;height:auto;
-  max-width:100%;max-height:calc(94vh - 150px);
+  max-width:100%;
   object-fit:contain
 }
 .wardogs-detail-media-state-v125{
@@ -315,19 +315,19 @@
 body.mws-wardogs-detail-open-v125{overflow:hidden!important}
 @media(max-width:900px){
   .wardogs-detail-modal-v125{padding:8px}
-  .wardogs-detail-dialog-v125{width:98vw;max-height:96vh}
-  .wardogs-detail-layout-v125{grid-template-columns:1fr;grid-template-rows:minmax(280px,55vh) minmax(0,1fr)}
+  .wardogs-detail-dialog-v125{width:98vw;}
+  .wardogs-detail-layout-v125{grid-template-columns:1fr;}
   .wardogs-detail-media-v125{border-right:0;border-bottom:1px solid rgba(255,255,255,.08);padding:12px}
   .wardogs-detail-media-frame-v125{width:100%;min-height:260px}
-  .wardogs-detail-media-frame-v125 img{max-height:calc(55vh - 26px)}
+  .wardogs-detail-media-frame-v125 img{}
   .wardogs-detail-media-state-v125{min-height:260px}
   .wardogs-detail-info-v125{padding:18px 16px 24px}
 }
 @media(max-width:520px){
   .wardogs-detail-head-v125{padding:10px 12px}
   .wardogs-detail-close-v125{width:38px;height:38px}
-  .wardogs-detail-layout-v125{grid-template-rows:minmax(240px,48vh) minmax(0,1fr)}
-  .wardogs-detail-media-frame-v125 img{max-height:calc(48vh - 24px)}
+  .wardogs-detail-layout-v125{}
+  .wardogs-detail-media-frame-v125 img{}
   .wardogs-detail-grid-v125{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){
