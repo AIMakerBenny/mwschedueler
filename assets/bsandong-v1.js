@@ -45,7 +45,7 @@ function attendanceBuckets(model,unit,person=''){
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const pct=v=>v===null?'—':Math.round(v*100)+'%';
  const state={tab:'history',from:'',to:'',unit:'month',person:'',search:'',sort:'recent',threshold:3,page:1};
- let source,today,signature='';
+ let source,today;
  const avatar=(c,rate=null,missed=0)=>'<span class="bs-ring" style="--bs-progress:'+Math.round((rate||0)*100)+'%;--bs-ring:'+ (missed>=state.threshold?'#e6a23c':rate===null?'var(--muted)':rate>=.75?'#42c9ad':rate>=.4?'#7c9dfb':'#a4a4b5')+'">'+(typeof participantAvatarHTMLV109==='function'?participantAvatarHTMLV109(c):'<span>'+esc(String(c.name||'?').slice(0,2))+'</span>')+'</span>';
  const label=m=>m.missed>=state.threshold?'최근 미참석':m.missed===0?'최근 참석':'참석 기록 있음';
  const nameMatch=(c,q)=>window.mwsCalendarPeopleViewV1?.matchesName(c?.name||'',q)??String(c?.name||'').toLowerCase().includes(q.toLowerCase());
@@ -54,7 +54,7 @@ function attendanceBuckets(model,unit,person=''){
    const filtered=m.history.filter(e=>!state.search||e.title.includes(state.search)||[...e.confirmed,...e.planned].some(id=>nameMatch(m.contacts.get(id),state.search)));
    const limit=state.page*12;let date='';
    const html=filtered.slice(0,limit).map(e=>{const header=e.date!==date?'<h3 class="bs-day">'+esc(e.date)+'</h3>':'';date=e.date;return header+'<article class="bs-session"><div class="bs-session-head"><div><button type="button" class="bs-title-button" data-bs-event="'+esc(e.id)+'">'+esc(e.title)+'</button><small>'+esc([e.start,e.end].filter(t=>t&&t!=='TBD').join(' - ')||'시간 미정')+'</small></div><span class="bs-pill">'+(e.recorded?'확정 기록 '+e.confirmed.length+'명':e.ended?'참석 기록 미확인':'예정 · 확정 '+e.confirmed.length+'명')+'</span></div><div class="bs-people">'+e.confirmed.map(id=>personChip(id,m)).join('')+e.planned.map(id=>personChip(id,m,true)).join('')+(!e.confirmed.length&&!e.planned.length?'<span class="bs-muted">등록된 참가자가 없습니다.</span>':'')+'</div></article>'}).join('');
-   return html||'<div class="bs-empty">해당 기간에 표시할 활동이 없습니다.</div>';
+   return (html||'<div class="bs-empty">해당 기간에 표시할 활동이 없습니다.</div>')+(filtered.length>limit?'<button type="button" data-bs-more>더 보기</button>':'');
  }
  function renderStats(m){
    const buckets=attendanceBuckets(m,state.unit,state.person);
@@ -71,12 +71,13 @@ function attendanceBuckets(model,unit,person=''){
  function draw(){
    if(!source||!today)return;
    const model=attendanceModel(source,today,state.from,state.to||'9999-12-31');
+   if(state.person&&!model.rows.some(r=>r.id===state.person))state.person='';
    const count=model.period.length,unique=new Set(model.period.flatMap(e=>e.confirmed)).size,avg=count?model.period.reduce((s,e)=>s+e.confirmed.length,0)/count:null;
    root.querySelectorAll('[data-bs-tab]').forEach(b=>{const active=b.dataset.bsTab===state.tab;b.setAttribute('aria-selected',String(active));b.classList.toggle('active',active)});
    root.querySelector('[data-bs-dates]').hidden=state.tab==='members';
    root.querySelector('[data-bs-summary]').innerHTML=[['활동 기록',count+'회'],['참가자',unique+'명'],['평균 참가 인원',avg===null?'—':avg.toFixed(1)+'명'],['기록 미확인',model.unknown+'회']].map(([k,v])=>'<div><small>'+k+'</small><strong>'+v+'</strong></div>').join('');
    root.querySelector('[data-bs-summary]').hidden=state.tab==='members';
-   root.querySelector('[data-bs-body]').innerHTML=state.tab==='history'?renderHistory(model)+(model.history.length>state.page*12?'<button type="button" data-bs-more>더 보기</button>':''):state.tab==='stats'?renderStats(model):renderMembers(model);
+   root.querySelector('[data-bs-body]').innerHTML=state.tab==='history'?renderHistory(model):state.tab==='stats'?renderStats(model):renderMembers(model);
    try{window.mwsScheduleImageTune?.();if(typeof mwsScanContactMediaImagesV111==='function')mwsScanContactMediaImagesV111(root)}catch(_){}
  }
  function tab(t){state.tab=t;state.page=1;draw()}

@@ -11,7 +11,8 @@ export function runPhase116WardogsNavigationShellAudit(){
     'data-tab="wardogs"',
     'data-tab="legacy"',
     '<section id="legacy" class="section">',
-    'data-tab="wardogs" data-legacy-link-v1',
+    'data-mws-nav-group="mawangContent"',
+    'data-tab="bsandong"',
     '<section id="wardogs" class="section" data-wardogs-shell-v116="1">',
     'assets/app-core.js?v=1.3.0-search115-wardogs116'
   ])if(!index.includes(token))issues.push('WARDOGS navigation shell missing: '+token);
@@ -22,11 +23,14 @@ export function runPhase116WardogsNavigationShellAudit(){
 
   const sidebar=index.slice(index.indexOf('<aside'),index.indexOf('</aside>'));
   const achievement=sidebar.indexOf('data-tab="achievements"');
+  const content=sidebar.indexOf('<em>마왕 컨텐츠</em>');
+  const bsandong=sidebar.indexOf('data-tab="bsandong"');
+  const wardogs=sidebar.indexOf('data-tab="wardogs"');
   const mini=sidebar.indexOf('<em>미니게임</em>');
   const legacy=sidebar.indexOf('data-tab="legacy"');
   const exportTab=sidebar.indexOf('data-tab="export"');
-  if(!(achievement>=0&&mini>achievement&&legacy>mini&&exportTab>legacy)||sidebar.includes('data-tab="wardogs"')||sidebar.includes('wardogs-content-divider-v116')){
-    issues.push('sidebar must list achievements, minigames, legacy, export; WARDOGS must only appear in legacy');
+  if(!(achievement>=0&&content>achievement&&bsandong>content&&wardogs>bsandong&&mini>wardogs&&legacy>mini&&exportTab>legacy)||index.includes('data-tab="wardogs" data-legacy-link-v1')||sidebar.includes('wardogs-content-divider-v116')){
+    issues.push('sidebar must list achievements, Mawang content, Bsandong, Wardogs, minigames, legacy and export in order');
   }
 
   const achievementSection=index.indexOf('<section id="achievements" class="section">');
