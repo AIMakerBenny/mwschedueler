@@ -188,7 +188,7 @@
     function position(){if(isOpen())tray.style.setProperty('--calendar-copy-tray-top-v4',Math.max(12,button.getBoundingClientRect().bottom+8)+'px')}
     function setOpen(open,restoreFocus=false){
       open=Boolean(open&&available());
-      tray.classList.toggle('is-open',open);tray.setAttribute('aria-hidden',String(!open));tray.inert=!open;
+      tray.classList.toggle('is-open',open);tray.hidden=!open;tray.setAttribute('aria-hidden',String(!open));tray.inert=!open;
       button.setAttribute('aria-expanded',String(open));
       if(open)position();else if(restoreFocus)button.focus({preventScroll:true});
     }
