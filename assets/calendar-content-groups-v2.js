@@ -570,13 +570,15 @@
   function renderBulk(){
     const box=$('calendarGroupBulkListV2');if(!box)return;
     box.replaceChildren();
+    const contactNames=new Map((data.contacts||[]).map(c=>[String(c.id),String(c.name||'이름 없음')]));
     for(const e of bulkRows){
       const group=find(e.contentGroupId),locked=Boolean(e.contentGroupId),row=document.createElement('label'),check=document.createElement('input'),body=document.createElement('span'),title=document.createElement('strong'),meta=document.createElement('small');
       check.type='checkbox';check.checked=bulkSelection.has(String(e.id));check.disabled=locked||bulkBusy;
       check.addEventListener('change',()=>{if(check.checked)bulkSelection.add(String(e.id));else bulkSelection.delete(String(e.id));bulkStatus()});
       title.textContent=String(e.date||'')+' · '+String(e.title||'');
       meta.textContent=(Array.isArray(e.participants)?new Set(e.participants).size:0)+'명 등록'+(locked?' · '+(group?.name||'기존 그룹')+' 연결됨':'');
-      body.append(title,meta);row.append(check,body);box.append(row);
+      const names=[...new Set(Array.isArray(e.participants)?e.participants.map(String):[])].map(id=>contactNames.get(id)||'확인 불가');
+      if(names.length){const people=document.createElement('small');people.textContent=names.join(' · ');body.append(title,meta,people)}else body.append(title,meta);row.append(check,body);box.append(row);
     }bulkStatus();
   }
   function previewBulk(){
@@ -605,7 +607,7 @@
     $('calendarGroupBulkPreviewV2')?.addEventListener('click',previewBulk);
     $('calendarGroupBulkAllV2')?.addEventListener('click',toggleBulkAll);
     $('calendarGroupBulkApplyV2')?.addEventListener('click',applyBulk);
-    $('calendarGroupBulkV2')?.addEventListener('toggle',e=>{if(e.target.open)previewBulk()});
+    $('calendarGroupBulkV2')?.addEventListener('toggle',e=>{if(e.target.open&&!bulkRows.length)previewBulk()});
     bindGroupPicker('editor');
     bindGroupPicker('panel');
     bindGroupPicker('manager');
