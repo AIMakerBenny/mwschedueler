@@ -6,9 +6,9 @@ export function runPhase28EventEditorScrollResetAudit(){
   const core=fs.readFileSync('assets/app-core.js','utf8');
   const index=fs.readFileSync('index.html','utf8');
 
-  if(!core.includes("eventModal.querySelector('.event-modalbox')"))issues.push('event editor does not reset the outer modal scroll container');
+  if(!core.includes("eventModal.querySelector('.event-modal-layout')"))issues.push('event editor does not reset the mobile middle-row scroll container');
   if(!core.includes("eventModal.querySelector('.event-info-panel')"))issues.push('event editor does not reset its information-panel scroll container');
-  if(!core.includes("eventModal.querySelector('.event-memo-panel')"))issues.push('event editor does not reset its memo-panel scroll container');
+  if(!core.includes("eventModal.querySelector('.event-editor-tools-v6')"))issues.push('event editor does not reset its auxiliary-panel scroll container');
   if(!core.includes('target.scrollTop=0'))issues.push('event editor scroll targets are not returned to the top on open');
   if(!index.includes('assets/app-core.js?v=1.3.0-'))issues.push('app-core cache-bust revision is missing');
 
