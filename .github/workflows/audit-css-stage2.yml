@@ -1,0 +1,34 @@
+name: CSS stage 2 offline source audit
+on:
+  push:
+    branches:
+      - 'audit/css-stage2-20261126'
+    paths:
+      - 'scripts/audit-css-stage2.mjs'
+      - '.github/workflows/audit-css-stage2.yml'
+permissions:
+  contents: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Audit tracked CSS and references
+        run: |
+          node scripts/audit-css-stage2.mjs bfe8529df667a5b6b4b731ff999fc1711068a850
+          git diff --exit-code -- index.html assets src
+          cat docs/css-stage2/report.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Save audit evidence on audit branch only
+        run: |
+          test "${GITHUB_REF_NAME}" = 'audit/css-stage2-20261126'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/css-stage2
+          git commit -m "Record stage 2 CSS audit findings and line-level evidence"
+          git push origin HEAD:refs/heads/audit/css-stage2-20261126
