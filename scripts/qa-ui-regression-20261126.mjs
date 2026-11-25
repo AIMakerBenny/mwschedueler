@@ -12,9 +12,9 @@ const aside=html.slice(html.indexOf('<aside class="sidebar">'),html.indexOf('</a
 const css=[...html.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="(assets\/[^"?]+\.css)[^"]*"[^>]*>|<style(?:\s[^>]*)?>([\s\S]*?)<\/style>/gi)].map(m=>m[1]?read(m[1]):m[2]).join('\n')+'\n'+steamCSS;
 const dir=mkdtempSync(path.join(tmpdir(),'mws-ui-regression-'));let browser;
 const file=path.join(dir,'fixture.html');
-const modal='<div id="eventModal" class="modal"><div class="modalbox event-modalbox mws-event-editor-v6 mws-game-panel-enabled-v112"><div class="event-modal-header">일정 수정</div><div class="event-modal-layout"><section class="event-info-panel">기본 정보</section><aside class="event-editor-tools-v6">게임</aside></div><div class="event-actions"><button>저장</button></div></div></div>';
+const modal=html.slice(html.indexOf('<div id="eventModal"'),html.indexOf('<div id="datePickerPopover"'));
 const card='<div class="day" style="width:190px"><div class="calendar-day-events-v2"><div class="mini-event mws-steam-host-v111" data-evid="qa"><span class="mini-event-main"><time class="calendar-start-v2">17:11</time><span class="calendar-card-title-v2">와포 성검 원정대</span></span><button class="mws-steam-slot-v111">+</button></div></div></div>';
-writeFileSync(file,'<!doctype html><html><meta charset="utf-8"><style>'+css+'</style><body class="mws-premium" data-resolution="fhd" data-theme="neon" data-mws-mode="admin"><div class="app">'+aside+'<main class="main"><section id="calendar" class="section active"><div id="calendarGrid">'+card+'</div></section></main></div>'+modal+'<script>'+read('assets/sidebar-hover-v2.js')+'</script></body></html>');
+writeFileSync(file,'<!doctype html><html><meta charset="utf-8"><style>'+css+'</style><body class="mws-premium" data-resolution="fhd" data-theme="neon" data-mws-mode="admin"><div class="app">'+aside+'<main class="main"><section id="calendar" class="section active"><div id="calendarGrid">'+card+'</div></section></main></div>'+modal+'<script>'+read('assets/sidebar-hover-v2.js')+'</script><script>'+read('assets/event-sidebar-tabs-v5.js')+'</script></body></html>');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 try{
  browser=await launchCalendarBrowser(dir);
