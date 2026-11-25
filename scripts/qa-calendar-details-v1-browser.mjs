@@ -50,6 +50,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
  const outsideCloses=!window.mwsCalendarDetailsV1.isOpen();
  $('.mini-event').click();await tick();$('#calendarDetailsEditV1').click();await tick();
  const editOnlyOnButton=editorOpens===1&&$('#eventModal').classList.contains('open')&&!window.mwsCalendarDetailsV1.isOpen();
+ await new Promise(resolve=>setTimeout(resolve,420));
  const before=r($('.event-modalbox')),beforeInfo=r($('.event-info-panel'));
  const module=document.createElement('script');module.textContent=${JSON.stringify(steam)};document.body.appendChild(module);await tick();
  const game=$('#eventGamePanelV112');
