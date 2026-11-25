@@ -128,7 +128,7 @@ body[data-ui-frame="material"] input,body[data-ui-frame="material"] select,body[
 body[data-ui-frame="linear"] .main{max-width:1520px!important;margin:0 auto!important;padding:28px 42px 50px!important}
 }
 body[data-ui-frame="linear"] .sidebar{background:transparent!important;border-right:1px solid color-mix(in srgb,var(--border) 55%,transparent)!important}
-body[data-ui-frame="linear"] .topbar{padding-bottom:16px!important;border-bottom:1px solid color-mix(in srgb,var(--border) 58%,transparent)!important}
+body[data-ui-frame="linear"] .topbar{border-bottom:1px solid color-mix(in srgb,var(--border) 58%,transparent)!important}
 body[data-ui-frame="linear"] .top-left h1{font-size:22px!important;font-weight:720!important}
 body[data-ui-frame="linear"] .card{background:transparent!important;border:0!important;border-bottom:1px solid color-mix(in srgb,var(--border) 52%,transparent)!important;border-radius:0!important;box-shadow:none!important;padding:18px 4px!important}
 body[data-ui-frame="linear"] .card:hover{transform:none!important;background:color-mix(in srgb,var(--panel) 12%,transparent)!important}

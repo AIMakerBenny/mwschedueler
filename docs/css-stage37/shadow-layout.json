@@ -1,0 +1,359 @@
+{
+  "filesChanged": 3,
+  "declarationsRemoved": 28,
+  "bytesRemoved": 435,
+  "staticLinksBefore": 47,
+  "staticLinksAfter": 47,
+  "bundle": "assets/f1-racing-bundle-v1.css",
+  "sources": [
+    "assets/f1-racing-v1.css",
+    "assets/f1-racing-r283-r287.css",
+    "assets/f1-racing-r288-r290.css",
+    "assets/f1-racing-r291-r295.css",
+    "assets/f1-racing-r303.css",
+    "assets/f1-racing-r305.css",
+    "assets/f1-racing-r306.css",
+    "assets/f1-racing-r307.css",
+    "assets/f1-racing-r308.css",
+    "assets/f1-racing-r309.css",
+    "assets/f1-racing-r313.css",
+    "assets/f1-racing-r319.css",
+    "assets/f1-racing-r324.css",
+    "assets/f1-racing-r330-r333.css",
+    "assets/f1-racing-r335-r341.css",
+    "assets/f1-racing-r342.css",
+    "assets/f1-racing-r343-r345.css",
+    "assets/f1-racing-r401.css"
+  ],
+  "findings": [
+    {
+      "file": "assets/app-core.css",
+      "bytesBefore": 367398,
+      "bytesAfter": 367006,
+      "removed": [
+        {
+          "selector": ".nav,\n.sidebar.mws-sidebar-expanded-v2 .nav,\nbody.sidebar-pinned .nav,\nbody.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .nav,\nbody.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .nav",
+          "context": [],
+          "property": "gap",
+          "value": "6px!important",
+          "line": 4514,
+          "shadowedBy": {
+            "line": 4890,
+            "value": "0!important"
+          }
+        },
+        {
+          "selector": ".nav-label",
+          "context": [],
+          "property": "display",
+          "value": "none!important",
+          "line": 2844,
+          "shadowedBy": {
+            "line": 2994,
+            "value": "block!important"
+          }
+        },
+        {
+          "selector": ".sidebar",
+          "context": [],
+          "property": "overflow",
+          "value": "visible!important",
+          "line": 2714,
+          "shadowedBy": {
+            "line": 2972,
+            "value": "hidden!important"
+          }
+        },
+        {
+          "selector": ".sidebar-pin",
+          "context": [],
+          "property": "display",
+          "value": "flex",
+          "line": 2431,
+          "shadowedBy": {
+            "line": 2785,
+            "value": "none!important"
+          }
+        },
+        {
+          "selector": ".sidebar-head",
+          "context": [],
+          "property": "gap",
+          "value": "7px",
+          "line": 2420,
+          "shadowedBy": {
+            "line": 2738,
+            "value": "7px!important"
+          }
+        },
+        {
+          "selector": ".sidebar-head",
+          "context": [],
+          "property": "display",
+          "value": "flex",
+          "line": 2420,
+          "shadowedBy": {
+            "line": 2735,
+            "value": "flex!important"
+          }
+        },
+        {
+          "selector": ".sidebar-head",
+          "context": [],
+          "property": "min-height",
+          "value": "62px",
+          "line": 2420,
+          "shadowedBy": {
+            "line": 2734,
+            "value": "52px!important"
+          }
+        },
+        {
+          "selector": ".sidebar.mws-sidebar-expanded-v2",
+          "context": [],
+          "property": "width",
+          "value": "220px",
+          "line": 2417,
+          "shadowedBy": {
+            "line": 2981,
+            "value": "220px!important"
+          }
+        },
+        {
+          "selector": ".sidebar",
+          "context": [],
+          "property": "overflow",
+          "value": "hidden",
+          "line": 2414,
+          "shadowedBy": {
+            "line": 2972,
+            "value": "hidden!important"
+          }
+        },
+        {
+          "selector": ".sidebar",
+          "context": [],
+          "property": "padding",
+          "value": "14px 10px!important",
+          "line": 2414,
+          "shadowedBy": {
+            "line": 4499,
+            "value": "12px 8px!important"
+          }
+        },
+        {
+          "selector": ".sidebar",
+          "context": [],
+          "property": "width",
+          "value": "72px",
+          "line": 2414,
+          "shadowedBy": {
+            "line": 2970,
+            "value": "64px!important"
+          }
+        },
+        {
+          "selector": ".calendar-preview-person .avatar",
+          "context": [],
+          "property": "border-radius",
+          "value": "9px",
+          "line": 1588,
+          "shadowedBy": {
+            "line": 1996,
+            "value": "14px!important"
+          }
+        },
+        {
+          "selector": ".calendar-preview-person .avatar",
+          "context": [],
+          "property": "height",
+          "value": "34px",
+          "line": 1587,
+          "shadowedBy": {
+            "line": 1995,
+            "value": "68px!important"
+          }
+        },
+        {
+          "selector": ".calendar-preview-person .avatar",
+          "context": [],
+          "property": "width",
+          "value": "34px",
+          "line": 1586,
+          "shadowedBy": {
+            "line": 1994,
+            "value": "68px!important"
+          }
+        },
+        {
+          "selector": ".calendar-preview-person",
+          "context": [],
+          "property": "border-radius",
+          "value": "10px",
+          "line": 1583,
+          "shadowedBy": {
+            "line": 1991,
+            "value": "13px!important"
+          }
+        },
+        {
+          "selector": ".calendar-preview-person",
+          "context": [],
+          "property": "padding",
+          "value": "6px 7px",
+          "line": 1580,
+          "shadowedBy": {
+            "line": 1989,
+            "value": "9px 10px!important"
+          }
+        },
+        {
+          "selector": ".calendar-preview-person",
+          "context": [],
+          "property": "gap",
+          "value": "7px",
+          "line": 1578,
+          "shadowedBy": {
+            "line": 1988,
+            "value": "11px!important"
+          }
+        },
+        {
+          "selector": ".calendar-preview-people",
+          "context": [],
+          "property": "margin-top",
+          "value": "9px",
+          "line": 1573,
+          "shadowedBy": {
+            "line": 1985,
+            "value": "11px!important"
+          }
+        },
+        {
+          "selector": ".calendar-preview-people",
+          "context": [],
+          "property": "gap",
+          "value": "7px",
+          "line": 1572,
+          "shadowedBy": {
+            "line": 1984,
+            "value": "10px!important"
+          }
+        },
+        {
+          "selector": ".calendar-event-preview",
+          "context": [],
+          "property": "border-radius",
+          "value": "14px",
+          "line": 1557,
+          "shadowedBy": {
+            "line": 1965,
+            "value": "17px!important"
+          }
+        },
+        {
+          "selector": ".calendar-event-preview",
+          "context": [],
+          "property": "padding",
+          "value": "13px",
+          "line": 1554,
+          "shadowedBy": {
+            "line": 1964,
+            "value": "18px!important"
+          }
+        },
+        {
+          "selector": ".calendar-event-preview",
+          "context": [],
+          "property": "max-height",
+          "value": "70vh",
+          "line": 1551,
+          "shadowedBy": {
+            "line": 1963,
+            "value": "78vh!important"
+          }
+        },
+        {
+          "selector": ".mini-event",
+          "context": [],
+          "property": "margin",
+          "value": "4px 0",
+          "line": 87,
+          "shadowedBy": {
+            "line": 1516,
+            "value": "5px 0"
+          }
+        },
+        {
+          "selector": ".mini-event",
+          "context": [],
+          "property": "padding",
+          "value": "5px 6px",
+          "line": 87,
+          "shadowedBy": {
+            "line": 1515,
+            "value": "6px 7px"
+          }
+        },
+        {
+          "selector": ".calendar",
+          "context": [],
+          "property": "gap",
+          "value": "6px",
+          "line": 79,
+          "shadowedBy": {
+            "line": 1506,
+            "value": "7px"
+          }
+        },
+        {
+          "selector": ".sidebar",
+          "context": [],
+          "property": "padding",
+          "value": "18px 14px",
+          "line": 45,
+          "shadowedBy": {
+            "line": 4499,
+            "value": "12px 8px!important"
+          }
+        }
+      ]
+    },
+    {
+      "file": "assets/calendar-content-groups-v2.css",
+      "bytesBefore": 12458,
+      "bytesAfter": 12445,
+      "removed": [
+        {
+          "selector": ".calendar-group-event-editor-v2",
+          "context": [],
+          "property": "padding",
+          "value": "10px",
+          "line": 15,
+          "shadowedBy": {
+            "line": 27,
+            "value": "14px"
+          }
+        }
+      ]
+    },
+    {
+      "file": "assets/ui-frame-presets.css",
+      "bytesBefore": 25056,
+      "bytesAfter": 25026,
+      "removed": [
+        {
+          "selector": "body[data-ui-frame=\"linear\"] .topbar",
+          "context": [],
+          "property": "padding-bottom",
+          "value": "16px!important",
+          "line": 131,
+          "shadowedBy": {
+            "line": 230,
+            "value": "10px!important"
+          }
+        }
+      ]
+    }
+  ]
+}
