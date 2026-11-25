@@ -9,7 +9,9 @@ const chrome=['google-chrome','google-chrome-stable','chromium','chromium-browse
   .find(x=>x.status===0)?.stdout.trim();
 assert(chrome,'Chromium required for manual game picker browser QA');
 const load=name=>readFileSync(new URL('../'+name,import.meta.url),'utf8');
-const core=load('assets/app-core.css');
+const core=load('assets/app-core.css')+'\n'+load('assets/event-sidebar-tabs-v5.css');
+const html=load('index.html');
+const modal=html.slice(html.indexOf('<div id="eventModal"'),html.indexOf('<div id="datePickerPopover"')).replace('id="eventModal" class="modal"','id="eventModal" class="modal open"');
 const steam=load('assets/steam-game-v111.js');
 const boot=`
 let editingEventId='e1';
@@ -105,7 +107,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   unchangedBefore,opened,added,librarySaved,notTouchEvents,gamePicked,filtered,linked,
   unchangedAfter,names,editOpened,edited,eventSnapshotRetained,fileStored,publicBlocked,noRootOverflow,
   saves:saved,gameLibraryLength:data.gameLibrary.length,notices,formHidden:$('gameManualFormV1').hidden});
-})().catch(error=>{$('qa-result').textContent=JSON.stringify({ok:false,error:String(error),stack:error.stack})});
+})().catch(error=>{document.getElementById('qa-result').textContent=JSON.stringify({ok:false,error:String(error),stack:error.stack})});
 });
 `;
 const tmp=mkdtempSync(path.join(os.tmpdir(),'mws-manual-game-v1-'));
@@ -119,10 +121,7 @@ try{
  #calendarGrid{display:none}
  </style></head><body data-mws-mode="admin">
  <div id="calendarGrid"></div><div id="upcomingDashboard"></div>
- <div id="eventModal" class="modal open"><div class="event-modalbox"><div class="event-modal-layout">
- <aside class="event-memo-panel">기존 왼쪽 연속 콘텐츠 및 메모장</aside>
- <section class="event-info-panel"><input id="evTitle" value="방송 1"><button id="saveEventBtn">스케줄 저장</button></section>
- </div></div></div><pre id="qa-result">pending</pre>
+ ${modal}<pre id="qa-result">pending</pre>
  <script>${boot}</script><script>${steam}</script><script>${check}</script>
  </body></html>`,'utf8');
  for(const [width,height] of [[1920,1080],[1366,768],[900,768]]){
