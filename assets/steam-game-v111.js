@@ -214,8 +214,8 @@ function installCss(){
 .dashboard-upcoming-card>.mws-steam-slot-v111{position:absolute!important;right:7px!important;top:7px!important;bottom:7px!important;width:40px!important;min-width:40px!important;padding:0!important;border:1px solid color-mix(in srgb,var(--accent) 68%,var(--border))!important;border-radius:8px!important;background:var(--input)!important;color:var(--text)!important;display:flex!important;align-items:center!important;justify-content:center!important;z-index:30!important;font-size:22px!important;font-weight:1000!important;overflow:hidden!important;cursor:var(--mws-cursor-pointer,pointer)!important}
 .dashboard-upcoming-card>.mws-steam-slot-v111 img{width:100%!important;height:100%!important;object-fit:cover!important;display:block!important}
 
-#eventModal .event-modalbox.mws-game-panel-enabled-v112{width:min(1760px,98vw)!important}
-#eventModal .event-modalbox.mws-game-panel-enabled-v112 .event-modal-layout{grid-template-columns:minmax(300px,370px) minmax(560px,1fr) minmax(300px,350px)!important;gap:14px!important}
+#eventModal .event-modalbox.mws-game-panel-enabled-v112:not(.mws-event-editor-v6){width:min(1760px,98vw)!important}
+#eventModal .event-modalbox.mws-game-panel-enabled-v112:not(.mws-event-editor-v6) .event-modal-layout{grid-template-columns:minmax(300px,370px) minmax(560px,1fr) minmax(300px,350px)!important;gap:14px!important}
 .event-game-panel-v112{min-width:0;min-height:0;border:1px solid var(--border);border-radius:14px;background:color-mix(in srgb,var(--panel) 96%,transparent);padding:14px;display:flex;flex-direction:column;overflow:hidden}
 .event-game-panel-v112[hidden]{display:none!important}
 .mws-game-panel-head-v112{align-items:flex-start!important;margin-bottom:13px}
@@ -267,15 +267,15 @@ function installCss(){
 .mws-game-search-empty-v112{padding:16px 11px;border:1px dashed var(--border);border-radius:10px;text-align:center;color:var(--muted);font-size:9px;line-height:1.55}
 .mws-game-panel-bottom-v112{display:flex;justify-content:flex-end;gap:7px;margin-top:11px;padding-top:11px;border-top:1px solid color-mix(in srgb,var(--border) 72%,transparent)}
 .mws-game-panel-bottom-v112 button{font-size:10px;padding:7px 9px}
-#eventModal .event-modalbox.mws-game-panel-enabled-v112.repeat-panel-open .event-game-panel-v112{display:none!important}
-#eventModal .event-modalbox.mws-game-panel-enabled-v112.repeat-panel-open .event-modal-layout{grid-template-columns:minmax(300px,370px) minmax(590px,1fr) minmax(320px,380px)!important}
+#eventModal .event-modalbox.mws-game-panel-enabled-v112:not(.mws-event-editor-v6).repeat-panel-open .event-game-panel-v112{display:none!important}
+#eventModal .event-modalbox.mws-game-panel-enabled-v112:not(.mws-event-editor-v6).repeat-panel-open .event-modal-layout{grid-template-columns:minmax(300px,370px) minmax(590px,1fr) minmax(320px,380px)!important}
 @media(max-width:1380px){
-  #eventModal .event-modalbox.mws-game-panel-enabled-v112 .event-modal-layout{grid-template-columns:minmax(270px,320px) minmax(500px,1fr) minmax(280px,310px)!important}
+  #eventModal .event-modalbox.mws-game-panel-enabled-v112:not(.mws-event-editor-v6) .event-modal-layout{grid-template-columns:minmax(270px,320px) minmax(500px,1fr) minmax(280px,310px)!important}
 }
 @media(max-width:1150px){
-  #eventModal .event-modalbox.mws-game-panel-enabled-v112{width:min(980px,97vw)!important;overflow:auto!important}
-  #eventModal .event-modalbox.mws-game-panel-enabled-v112 .event-modal-layout,
-  #eventModal .event-modalbox.mws-game-panel-enabled-v112.repeat-panel-open .event-modal-layout{grid-template-columns:1fr!important}
+  #eventModal .event-modalbox.mws-game-panel-enabled-v112:not(.mws-event-editor-v6){width:min(980px,97vw)!important;overflow:auto!important}
+  #eventModal .event-modalbox.mws-game-panel-enabled-v112:not(.mws-event-editor-v6) .event-modal-layout,
+  #eventModal .event-modalbox.mws-game-panel-enabled-v112:not(.mws-event-editor-v6).repeat-panel-open .event-modal-layout{grid-template-columns:1fr!important}
   .event-game-panel-v112{min-height:520px;overflow:visible}
   .mws-game-results-v112{max-height:300px}
 }
