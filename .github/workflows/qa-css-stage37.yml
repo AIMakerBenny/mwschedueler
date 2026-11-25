@@ -25,7 +25,9 @@ jobs:
           node-version: '24'
       - name: Generate conservative source cleanup and F1 bundle
         run: |
-          node scripts/cleanup-css-stage37.mjs
+          if test ! -f assets/f1-racing-bundle-v1.css; then node scripts/cleanup-css-stage37.mjs; fi
+          node scripts/cleanup-css-stage37.mjs --shadow-layout
+          node scripts/build-f1-css-bundle.mjs --check
           node --check assets/sidebar-hover-v2.js
           node --check assets/cf-static-cloud-core-v1.js
           node --check assets/post-login-runtime-v130.js
@@ -33,8 +35,10 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add assets index.html docs/css-stage37
-          git commit -m "Generate conservative CSS cleanup and consolidated F1 stylesheet"
-          git push origin HEAD:refs/heads/refactor/css-runtime-stage3-7-20261126
+          if ! git diff --cached --quiet; then
+            git commit -m "Consolidate shadowed sidebar and calendar layout declarations"
+            git push origin HEAD:refs/heads/refactor/css-runtime-stage3-7-20261126
+          fi
       - name: Save candidate revision
         id: head
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
@@ -92,3 +96,26 @@ jobs:
           MWS_QA_BSANDONG=1 MWS_QA_IDLE_MODE=public node scripts/qa-request-budget-full-app-v2-browser.mjs
           MWS_QA_BSANDONG=1 MWS_QA_IDLE_MODE=admin node scripts/qa-request-budget-full-app-v2-browser.mjs
           node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs scripts/qa-active-cloudflare-core-groups-v1.test.mjs scripts/qa-bsandong-v1.test.mjs
+          node scripts/qa-calendar-toolbar-v4-browser.mjs
+          node scripts/qa-calendar-month-viewport-v2-browser.mjs
+          node scripts/qa-bsandong-v1-browser.mjs
+          node scripts/qa-workspace-navigation-v1-browser.mjs
+  admin-batch:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.build.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Compare cold Admin data reads and loaded parts
+        shell: bash scripts/mws-v3-network-only.sh bash -eo pipefail {0}
+        run: |
+          git worktree add --detach /tmp/mws-baseline bfe8529df667a5b6b4b731ff999fc1711068a850
+          MWS_QA_ADMIN_BATCH=1 MWS_QA_SOURCE_ROOT=/tmp/mws-baseline MWS_QA_COMPARE_OUTPUT=/tmp/admin-before.json node scripts/qa-request-budget-full-app-v2-browser.mjs
+          MWS_QA_ADMIN_BATCH=1 MWS_QA_ADMIN_EXPECT_MAX=1 MWS_QA_COMPARE_OUTPUT=/tmp/admin-after.json node scripts/qa-request-budget-full-app-v2-browser.mjs
+          node --input-type=module -e 'import fs from "node:fs";import assert from "node:assert/strict";const b=JSON.parse(fs.readFileSync("/tmp/admin-before.json")),a=JSON.parse(fs.readFileSync("/tmp/admin-after.json"));assert.deepEqual(a.result,b.result);assert(a.partRequests<=b.partRequests);console.log("ADMIN_BATCH_COMPARE "+JSON.stringify({before:b.partRequests,after:a.partRequests,result:a.result}))'

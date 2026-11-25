@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 const read=p=>fs.readFileSync(p,'utf8');
 const files=execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\0').filter(p=>p.endsWith('.css'));
 function scan(s,start,end,cb){let q='',par=0,br=0;for(let i=start;i<end;i++){const c=s[i],n=s[i+1];if(q){if(c==='\\')i++;else if(c===q)q='';continue}if(c==='/'&&n==='*'){const j=s.indexOf('*/',i+2);i=j<0?end:j+1;continue}if(c==='\\'){i++;continue}if(c==='"'||c==="'"){q=c;continue}if(c==='(')par++;else if(c===')')par=Math.max(0,par-1);else if(c==='[')br++;else if(c===']')br=Math.max(0,br-1);else if(!par&&!br&&cb(c,i)===false)return i}return end}
-function removeDuplicates(s){
+function removeDuplicates(s,shadowOnly=false){
  const declarations=[],skip=[];
  function walk(start,end,ctx){let from=start;while(from<end){let kind='';const open=scan(s,from,end,c=>{if(c==='{'||c===';'||c==='}'){kind=c;return false}});if(open===end)break;if(kind!=='{'){from=open+1;continue}
   const header=s.slice(from,open).replace(/^\s*(?:\/\*[\s\S]*?\*\/\s*)*/,'').trim();
@@ -27,30 +27,51 @@ function removeDuplicates(s){
   }from=close+1;
  }}
  walk(0,s.length,[]);
- const seen=new Set(),removed=[];
- for(let i=declarations.length-1;i>=0;i--){const d=declarations[i];if(seen.has(d.key))removed.push(d);else seen.add(d.key)}
+ const seen=new Set(),removed=[],later=new Map();
+ const owned=/(?:\.sidebar\b|\.nav-scroll\b|\.nav-label\b|\.nav-game-divider\b|\.sidebar-pin\b|#calendar\b|#calendarGrid\b|\.calendar(?:[-\w]*)\b|\.mini-event\b|\.app\b|\.main\b|\.topbar\b)/;
+ const numeric=/^(?:0|auto|-?(?:\d+(?:\.\d+)?|\.\d+)(?:px|em|rem|%|vh|vw))$/;
+ const stable=d=>{
+  const v=d.value.replace(/\s*!\s*important\s*$/i,'').trim();
+  if(/^(?:width|min-width|max-width|height|min-height|max-height|padding(?:-(?:top|right|bottom|left))?|margin(?:-(?:top|right|bottom|left))?|gap|row-gap|column-gap|top|right|bottom|left|border-radius)$/.test(d.property))return v.split(/\s+/).every(x=>numeric.test(x));
+  if(d.property==='display')return /^(none|block|inline|inline-block|flex|grid|inline-flex)$/.test(v);
+  if(d.property==='position')return /^(static|relative|absolute|fixed)$/.test(v);
+  if(d.property==='box-sizing')return /^(border-box|content-box)$/.test(v);
+  if(/^overflow(?:-[xy])?$/.test(d.property))return /^(visible|hidden|auto|scroll)$/.test(v);
+  return false;
+ };
+ for(let i=declarations.length-1;i>=0;i--){
+  const d=declarations[i];
+  if(!shadowOnly){if(seen.has(d.key))removed.push(d);else seen.add(d.key);continue}
+  if(!owned.test(d.selector)||!stable(d))continue;
+  const key=JSON.stringify([d.context,d.selector,d.property]),important=/!\s*important\s*$/i.test(d.value),next=later.get(key);
+  if(next&&(!important||next.important)){removed.push({...d,shadowedBy:{line:next.line,value:next.value}});continue}
+  if(!next||important)later.set(key,{...d,important});
+ }
  let out=s;for(const d of removed.sort((a,b)=>b.a-a.a))out=out.slice(0,d.a)+out.slice(d.a,d.b).replace(/[^\n\r]/g,'')+out.slice(d.b);
  return {out,removed};
 }
 const fixture='.x{color:red; padding:1px}.x{color:blue}.x{color:red; padding:1px}@media(max-width:2px){.x{color:red}}';
 const check=removeDuplicates(fixture);assert.equal(check.removed.length,2);assert(check.out.includes('color:blue'));assert(check.out.includes('@media(max-width:2px){.x{color:red}}'));assert.equal(removeDuplicates(check.out).removed.length,0);
+const shadowOnly=process.argv.includes('--shadow-layout');
+if(shadowOnly){const x=removeDuplicates('.sidebar{padding:4px!important}.sidebar{padding:5px}.sidebar{padding:6px!important}@media(max-width:2px){.sidebar{padding:3px}}',true);assert.equal(x.removed.length,2);assert(x.out.includes('padding:6px!important'));}
 let html=read('index.html');const initial=[...html.matchAll(/<link\b[^>]*rel="stylesheet"[^>]*href="([^"]+)"[^>]*>/g)];
 const findings=[];for(const file of files){
- const source=read(file);if(/@(?:import|namespace|layer|scope)\b/.test(source))continue;
- const {out,removed}=removeDuplicates(source);if(!removed.length)continue;
- assert.equal(removeDuplicates(out).removed.length,0,'Cleanup idempotence '+file);
- fs.writeFileSync(file,out);findings.push({file,bytesBefore:Buffer.byteLength(source),bytesAfter:Buffer.byteLength(out),removed:removed.map(({selector,context,property,value,line})=>({selector,context,property,value,line}))});
+ const source=read(file);if(file==='assets/f1-racing-bundle-v1.css'||/@(?:import|namespace|layer|scope)\b/.test(source))continue;
+ const {out,removed}=removeDuplicates(source,shadowOnly);if(!removed.length)continue;
+ assert.equal(removeDuplicates(out,shadowOnly).removed.length,0,'Cleanup idempotence '+file);
+ fs.writeFileSync(file,out);findings.push({file,bytesBefore:Buffer.byteLength(source),bytesAfter:Buffer.byteLength(out),removed:removed.map(({selector,context,property,value,line,shadowedBy})=>({selector,context,property,value,line,...(shadowedBy?{shadowedBy}:{})}))});
  // Preserve cache keys for untouched CSS, revise only changed URLs.
  const hash=crypto.createHash('sha256').update(out).digest('hex').slice(0,12);
  html=html.replace(new RegExp('(href="'+file.replaceAll('.','\\.')+'\\?[^"]+)(")','g'),'$1&clean='+hash+'$2');
 }
 // Keep original F1 source files as the editable canonical inputs; merge only the
 // contiguous linked run. All reside in assets/ so relative URLs retain meaning.
-const f1links=[...html.matchAll(/^<link rel="stylesheet" href="(assets\/f1-racing[^"]+\.css\?[^"]+)">[ \t]*$/gm)];
-assert(f1links.length>=2,'F1 style list');
+const f1links=[...html.matchAll(/^<link rel="stylesheet" href="(assets\/f1-racing[^"]+\.css\?[^"]+)"(?: data-mws-style-sources="([^"]+)")?>[ \t]*$/gm)];
+assert(f1links.length>=1,'F1 style list');
 const start=f1links[0].index,end=f1links.at(-1).index+f1links.at(-1)[0].length;
-assert.equal(html.slice(start,end).replace(/^<link rel="stylesheet" href="assets\/f1-racing[^"]+\.css\?[^"]+">[ \t]*$/gm,'').trim(),'','F1 links must be contiguous');
-const sources=f1links.map(m=>m[1].split('?')[0]);
+const sources=f1links.length===1&&f1links[0][2]?f1links[0][2].split(' '):f1links.map(m=>m[1].split('?')[0]);
+assert(sources.length>=2&&sources.every(p=>/^assets\/f1-racing[-\w]+\.css$/.test(p)&&p!=='assets/f1-racing-bundle-v1.css'));
+if(f1links.length>1)assert.equal(html.slice(start,end).replace(/^<link rel="stylesheet" href="assets\/f1-racing[^"]+\.css\?[^"]+">[ \t]*$/gm,'').trim(),'','F1 links must be contiguous');
 const runtimeFiles=execFileSync('git',['ls-files','-z'],{encoding:'utf8'}).split('\0').filter(p=>/^(assets|src)\/.*\.(?:js|mjs)$/.test(p));
 for(const p of runtimeFiles){const code=read(p);for(const file of sources)assert(!code.includes(file.split('/').at(-1)),'Runtime references F1 stylesheet: '+p+' '+file)}
 const combined=sources.map(file=>{const css=read(file);assert(!/@(?:import|namespace|charset)\b/.test(css),'Cannot concatenate '+file);return '/* Source: '+file+' */\n'+css.trimEnd()+'\n'}).join('\n');
@@ -59,5 +80,5 @@ fs.writeFileSync(bundle,combined);
 html=html.slice(0,start)+'<link rel="stylesheet" href="'+bundle+'?v='+hash+'" data-mws-style-sources="'+sources.join(' ')+'">'+html.slice(end);
 fs.writeFileSync('index.html',html);
 const output={filesChanged:findings.length,declarationsRemoved:findings.reduce((n,f)=>n+f.removed.length,0),bytesRemoved:findings.reduce((n,f)=>n+f.bytesBefore-f.bytesAfter,0),staticLinksBefore:initial.length,staticLinksAfter:[...html.matchAll(/<link\b[^>]*rel="stylesheet"/g)].length,bundle,sources,findings};
-fs.mkdirSync('docs/css-stage37',{recursive:true});fs.writeFileSync('docs/css-stage37/cleanup.json',JSON.stringify(output,null,2)+'\n');
+fs.mkdirSync('docs/css-stage37',{recursive:true});fs.writeFileSync('docs/css-stage37/'+(shadowOnly?'shadow-layout.json':'cleanup.json'),JSON.stringify(output,null,2)+'\n');
 console.log('CSS_CLEANUP '+JSON.stringify({...output,findings:findings.map(f=>({file:f.file,removed:f.removed.length,bytes:f.bytesBefore-f.bytesAfter}))}));

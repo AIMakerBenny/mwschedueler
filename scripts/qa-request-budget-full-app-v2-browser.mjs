@@ -155,9 +155,23 @@ try{
   for(const route of ['contacts','bsandong','wardogs','achievements','careerTimeline','gameF1Racing','gameLadder','posts','calendar']){await nav([route]);await take(route)}
   await browser.evaluate("document.body.dataset.theme='light'");await take('calendar-light');
   await browser.evaluate("document.body.dataset.theme='neon';window.applyTextScale?.(125,false)");await take('calendar-scale125');
-  const result={viewport,snapshots,startup:summary(startup),styles:[...new Set(assetReads)],api:summary(calls.filter(r=>r.path.startsWith('/api/'))),errors};
+  const result={viewport,snapshots,startup:summary(startup),styles:[...new Set(assetReads)],styleRequests:assetReads.length,api:summary(calls.filter(r=>r.path.startsWith('/api/'))),errors};
   assert.equal(errors.length,0,JSON.stringify(errors));
   const output=process.env.MWS_QA_COMPARE_OUTPUT;assert(output);writeFileSync(output,JSON.stringify(result,null,2));console.log('CSS_COMPARE_CAPTURE '+JSON.stringify({viewport,states:snapshots.length,styles:result.styles.length,api:result.api}));
+ }else if(process.env.MWS_QA_ADMIN_BATCH==='1'){
+  const offset=calls.length;
+  await browser.evaluate("document.querySelector('#mwsChangeModeBtn').click()");
+  await until(()=>browser.evaluate("document.querySelector('#mwsLoginForm').dataset.mode==='admin'"),'Admin login form');
+  await browser.evaluate("document.querySelector('#mwsLoginId').value='Majoku0216';document.querySelector('#mwsLoginPw').value='local-fixture-only';document.querySelector('#mwsLoginForm').requestSubmit()");
+  await until(()=>browser.evaluate("document.body.dataset.mwsMode==='admin'&&!document.body.classList.contains('mws-app-loading')&&!document.body.classList.contains('mws-gated')&&!!window.__mwsAppReadyV130"),'Admin ready');
+  await pause(600);
+  const result=await browser.evaluate("(()=>{const r=window.mwsV55EgressReport();return {parts:r.loadedParts.slice().sort(),dirty:r.dirtyParts,scope:r.mode,events:data.events.length,contacts:data.contacts.length}})()");
+  assert.equal(result.scope,'admin');assert.equal(result.parts.length,10);assert.equal(result.dirty.length,0);
+  assert.equal(result.events,parts.events.length);assert.equal(result.contacts,parts.contacts.length);
+  const login=calls.slice(offset),batch=login.filter(r=>r.path==='/api/parts-batch'||r.path.startsWith('/api/parts/'));
+  const report={login:summary(login),partRequests:batch.length,result};
+  if(process.env.MWS_QA_ADMIN_EXPECT_MAX)assert(batch.length<=Number(process.env.MWS_QA_ADMIN_EXPECT_MAX),'Admin data reads '+JSON.stringify(report));
+  writeFileSync(process.env.MWS_QA_COMPARE_OUTPUT,JSON.stringify(report,null,2));console.log('ADMIN_BATCH_OK '+JSON.stringify(report));
  }else if(firstPaintQA){
   const verify=async phase=>{
    const frames=await browser.evaluate('window.qaPaintFrames.slice()');
