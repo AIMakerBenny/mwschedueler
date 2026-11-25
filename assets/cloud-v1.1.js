@@ -20,7 +20,7 @@
   const CORE_KEYS=['version','categories','dashboardNoticeUrl','selfContactId','timezones','achievementCards','contentGroups','gameLibrary','contentApplications'];
   const $=id=>document.getElementById(id);
   const clone=v=>{try{return structuredClone(v)}catch(_){return JSON.parse(JSON.stringify(v))}};
-  const timeout=(promise,ms,label='요청')=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(`${label} 응답 시간이 초과되었습니다.`)),ms))]);
+  const timeout=(promise,ms,label='요청')=>{let timer;return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(`${label} 응답 시간이 초과되었습니다.`)),ms)})]).finally(()=>clearTimeout(timer))};
   const byteLen=v=>{try{return new TextEncoder().encode(typeof v==='string'?v:JSON.stringify(v??null)).byteLength}catch(_){return 0}};
 
   let mode=null,manifest=null,cloudSaveTimer=0,cloudSaving=false,cacheDbPromise=null,wardogsCacheDbPromise=null,currentAdmin=null;
@@ -222,8 +222,10 @@
       }};
       // All calendar dependencies load together. Do not paint a partial or
       // empty month and replace its DOM again a frame later.
-      await loadBatch(INITIAL_PARTS);
-      if(chosen==='admin')await loadBatch(required.filter(part=>!loadedParts.has(part)));
+      // Preserve merge order and version checks, but combine Admin cache misses
+      // into the same part-read queue instead of two sequential batches.
+      const hydrationParts=chosen==='admin'?[...INITIAL_PARTS,...required.filter(part=>!INITIAL_PARTS.includes(part))]:INITIAL_PARTS;
+      await loadBatch(hydrationParts);
       setLoginError('로그인 완료 · 화면을 준비하는 중입니다.');
       data=next;normalizeDataShape();
       // Set known legacy derived/default view fields before measuring dirty parts.

@@ -26,8 +26,9 @@ jobs:
       - name: Generate conservative source cleanup and F1 bundle
         run: |
           if test ! -f assets/f1-racing-bundle-v1.css; then node scripts/cleanup-css-stage37.mjs; fi
-          node scripts/cleanup-css-stage37.mjs --shadow-layout
+          if test ! -f docs/css-stage37/shadow-layout.json; then node scripts/cleanup-css-stage37.mjs --shadow-layout; fi
           node scripts/build-f1-css-bundle.mjs --check
+          node scripts/build-cf-static-runtime.mjs --check
           node --check assets/sidebar-hover-v2.js
           node --check assets/cf-static-cloud-core-v1.js
           node --check assets/post-login-runtime-v130.js
