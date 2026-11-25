@@ -7,6 +7,9 @@ on:
       - 'assets/app-core.js'
       - 'assets/legacy-hub-v1.css'
       - 'assets/bsandong-v1.js'
+      - 'assets/sidebar-hover-v2.js'
+      - 'assets/sidebar-compact-v1.css'
+      - 'assets/calendar-content-groups-v2.css'
       - 'assets/bsandong-v1.css'
       - 'scripts/qa-bsandong-v1.test.mjs'
       - 'scripts/qa-bsandong-v1-browser.mjs'
@@ -32,6 +35,8 @@ jobs:
         run: |
           node --check --input-type=commonjs < assets/app-core.js
           node --check assets/bsandong-v1.js
+          node --check assets/sidebar-hover-v2.js
+          MWS_QA_SIDEBAR_HOVER=1 node scripts/qa-request-budget-full-app-v2-browser.mjs
           node --check assets/calendar-content-groups-v2.js
           node --check assets/calendar-details-v1.js
           node --test scripts/qa-calendar-groups-cloud-save-v1.test.mjs scripts/qa-active-cloudflare-core-groups-v1.test.mjs

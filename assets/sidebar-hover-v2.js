@@ -22,7 +22,7 @@
  window.addEventListener('blur',reset);
  document.addEventListener('visibilitychange',()=>{if(document.hidden)reset()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape')reset()});
- side.addEventListener('focusin',()=>{if(enabled()){set(true);inside=true}});
+ side.addEventListener('focusin',()=>{if(enabled()&&!side.classList.contains(cls)){set(true);inside=true}});
  side.addEventListener('focusout',()=>{if(enabled()&&!side.contains(document.activeElement)&&last)track({clientX:last.x,clientY:last.y})});
  media.addEventListener('change',reset);
  new MutationObserver(()=>{if(!enabled())reset()}).observe(document.body,{attributes:true,attributeFilter:['class','data-resolution','data-device-mode']});
