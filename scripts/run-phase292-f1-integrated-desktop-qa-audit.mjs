@@ -1,8 +1,9 @@
+import {readF1AuditIndex} from './f1-style-audit-input.mjs';
 import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
 export function runPhase292F1IntegratedDesktopQaAudit(){
  const issues=[],warnings=[];
- const index=fs.readFileSync('index.html','utf8'),patch=fs.readFileSync('assets/f1-racing-r291-r295.js','utf8');
+ const index=readF1AuditIndex(),patch=fs.readFileSync('assets/f1-racing-r291-r295.js','utf8');
  for(const token of ["const VERSION292='phase292-f1-r17-integrated-desktop-qa';",'function installFinalDesktopQaV292(){','function qaFinalDesktopV292(){','liveConversation:typeof window.mwsF1QaLiveConversationStackV276','dialogueCadence:typeof window.mwsF1QaDialogueCadenceV281','layoutReset:typeof window.mwsF1QaWorkspaceViewportFitV288','finishOverlay:typeof window.mwsF1QaFinishOverlayV291','window.mwsF1QaFinalDesktopV292=qaFinalDesktopV292;','window.__mwsF1RacingV292=VERSION292;'])if(!patch.includes(token))issues.push('Phase 292 patch missing: '+token);
  const jsMatch=index.match(/assets\/f1-racing-r291-r295\.js\?phase=(\d+)/),cssMatch=index.match(/assets\/f1-racing-r291-r295\.css\?phase=(\d+)/);if(!jsMatch||!cssMatch||Number(jsMatch[1])<292||Number(cssMatch[1])<292)issues.push('Phase 292 asset cache links missing or stale');
  const syntax=spawnSync(process.execPath,['--check','assets/f1-racing-r291-r295.js'],{encoding:'utf8'});if(syntax.status!==0)issues.push('Phase 292 patch syntax failed: '+String(syntax.stderr||syntax.stdout||'').trim());

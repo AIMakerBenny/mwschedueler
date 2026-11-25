@@ -1,3 +1,4 @@
+import {readF1AuditIndex} from './f1-style-audit-input.mjs';
 import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
 
@@ -9,7 +10,7 @@ function runNode(file,issues){
 
 export function runPhase295F1FinalRegressionGate(){
   const issues=[],warnings=[];
-  const index=fs.readFileSync('index.html','utf8');
+  const index=readF1AuditIndex();
   const patch=fs.readFileSync('assets/f1-racing-r291-r295.js','utf8');
   const cumulative=fs.readFileSync('scripts/run-current-full-integration-audit.mjs','utf8');
   const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');

@@ -1,10 +1,11 @@
+import {readF1AuditIndex} from './f1-style-audit-input.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {spawnSync} from 'node:child_process';
 
 export function runRecoveryBF1StartFinishAudit(){
   const issues=[],warnings=[];
-  const index=fs.readFileSync('index.html','utf8');
+  const index=readF1AuditIndex();
   const trackSource=fs.readFileSync('assets/f1-track-v1.js','utf8');
   const racing=fs.readFileSync('assets/f1-racing-v1.js','utf8');
   const css=fs.readFileSync('assets/f1-racing-v1.css','utf8');

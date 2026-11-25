@@ -6,6 +6,7 @@ on:
     paths:
       - 'scripts/run-phase401-f1-skill-audit.mjs'
       - 'scripts/migrate-f1-style-audits.mjs'
+      - 'scripts/run-recovery-*-f1-*-audit.mjs'
       - 'scripts/cleanup-css-stage37.mjs'
       - 'scripts/compare-css-stage37.mjs'
       - 'scripts/qa-request-budget-full-app-v2-browser.mjs'

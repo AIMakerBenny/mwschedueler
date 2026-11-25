@@ -1,9 +1,10 @@
+import {readF1AuditIndex} from './f1-style-audit-input.mjs';
 import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
 export function runPhase293F1ProductionAuditGate(){
  const issues=[],warnings=[];
  const workflow=fs.readFileSync('.github/workflows/deploy-cloudflare-production.yml','utf8');
- const index=fs.readFileSync('index.html','utf8');
+ const index=readF1AuditIndex();
  for(const token of [
   'node --check scripts/run-phase283-f1-general-overtake-defence-audit.mjs',
   'node --check scripts/run-phase288-f1-layout-reset-viewport-fit-audit.mjs',
