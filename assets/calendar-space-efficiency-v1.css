@@ -19,16 +19,8 @@
     max-width:200px!important;
   }
 
-  /* Unpinned rail reserves only 72px; its expanded menu overlays content. */
-  body.mws-premium:not([data-resolution="mobile"]):not(.sidebar-pinned):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]) .app > .sidebar:hover {
-    width:200px!important;
-    min-width:200px!important;
-    max-width:200px!important;
-  }
-
   /* Preserve the pin control, brand mark and readable category names. */
-  body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]).sidebar-pinned .sidebar-head .logo,
-  body.mws-premium:not([data-resolution="mobile"]):not(.sidebar-pinned):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]) .sidebar:hover .sidebar-head .logo {
+  body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]).sidebar-pinned .sidebar-head .logo {
     left:1px!important;
     width:92px!important;
     min-width:92px!important;
@@ -37,21 +29,18 @@
     font-size:17px!important;
     letter-spacing:.07em!important;
   }
-  body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]).sidebar-pinned .sidebar-head .sidebar-pin,
-  body.mws-premium:not([data-resolution="mobile"]):not(.sidebar-pinned):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]) .sidebar:hover .sidebar-head .sidebar-pin {
+  body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]).sidebar-pinned .sidebar-head .sidebar-pin {
     right:3px!important;
     min-width:64px!important;
     padding:0 5px!important;
     gap:4px!important;
   }
-  body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]).sidebar-pinned .nav .nav-scroll > button,
-  body.mws-premium:not([data-resolution="mobile"]):not(.sidebar-pinned):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]) .sidebar:hover .nav .nav-scroll > button {
+  body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]).sidebar-pinned .nav .nav-scroll > button {
     gap:8px!important;
     padding-left:7px!important;
     padding-right:7px!important;
   }
-  body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]).sidebar-pinned .nav .nav-label,
-  body.mws-premium:not([data-resolution="mobile"]):not(.sidebar-pinned):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]) .sidebar:hover .nav .nav-label {
+  body.mws-premium:not([data-resolution="mobile"]):not([data-ui-frame="agenda"]):not([data-ui-frame="messenger"]):not([data-ui-frame="workshop"]).sidebar-pinned .nav .nav-label {
     min-width:0!important;
     text-overflow:ellipsis!important;
   }

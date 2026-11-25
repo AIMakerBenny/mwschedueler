@@ -40,17 +40,16 @@
   object-fit:cover!important;
   display:block!important;
 }
-/* Reserve exact text rows even when a one-line title receives a game cover.
-   CSS Grid can no longer grow a week just because a title wraps later. */
+/* Reserve a minimum text track, allowing the actual scaled line boxes to fit. */
 #calendar #calendarGrid .mini-event:not(.rest-event){
-  grid-template-rows:2.8em!important;
+  grid-template-rows:minmax(2.8em,auto)!important;
 }
 #calendar #calendarGrid .mini-event:not(.rest-event) .mini-event-main{
-  max-height:2.8em;
+  min-height:0;
 }
 @container mws-calendar-day (max-width:185px){
   #calendar #calendarGrid .mini-event.mws-steam-host-v111:not(.rest-event){
-    grid-template-rows:28px 2.8em!important;
+    grid-template-rows:28px minmax(2.8em,auto)!important;
   }
   /* On narrow dates the cover occupies its dedicated first-row cell.
      This is the same compact geometry as calendar-responsive-cards-v1.css. */
@@ -83,4 +82,21 @@
     width:34px!important;
     min-width:34px!important;
   }
+}
+
+/* The month overview keeps its fixed week height. Cards inside the day list
+   use intrinsic text height rather than shrinking the second line. */
+@media(min-width:901px){
+ body #calendar.section #calendarGrid .day .mini-event[data-evid]:not(:has(.calendar-event-drag-handle-v4)){
+   grid-template-rows:auto!important;flex-shrink:0;min-height:30px!important;height:auto!important;
+ }
+ body #calendar.section #calendarGrid .day .mini-event[data-evid] .mini-event-main{
+   max-height:none!important;min-height:0;overflow:visible!important;
+ }
+ body #calendar.section #calendarGrid .day .mini-event[data-evid] :is(.calendar-start-v2,.calendar-card-title-v2){
+   flex-shrink:0;line-height:1.35!important;min-height:1.35em;
+ }
+ @container mws-calendar-day (min-width:215px){
+   body #calendar.section #calendarGrid .day .mini-event[data-evid] .calendar-card-title-v2{flex-shrink:1}
+ }
 }

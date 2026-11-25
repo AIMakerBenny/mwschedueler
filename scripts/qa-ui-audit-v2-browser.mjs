@@ -94,23 +94,23 @@ try{
     assert.deepEqual(scale,['115%','100%','115%'],JSON.stringify({width,scale}));
     if(width>760){
       await browser.movePoint(width-80,height-80);await sleep(220);
-      const collapsed=await browser.evaluate("(()=>({width:document.querySelector('.sidebar').getBoundingClientRect().width,"+
-        "text:getComputedStyle(document.querySelector('#pageTextScaleControlV54')).display,"+
-        "logo:getComputedStyle(document.querySelector('.logo-full')).display,navLabel:getComputedStyle(document.querySelector('.nav-label')).display,navVisibility:getComputedStyle(document.querySelector('.nav-label')).visibility,navPointer:getComputedStyle(document.querySelector('.nav-label')).pointerEvents}))()");
-      assert(collapsed.width<100&&collapsed.text==='none'&&collapsed.logo==='none',JSON.stringify({width,collapsed}));
-      await browser.movePoint(30,20);await sleep(25);
-      const intermediate=await browser.evaluate("(()=>({width:document.querySelector('.sidebar').getBoundingClientRect().width,"+
-        "text:getComputedStyle(document.querySelector('#pageTextScaleControlV54')).display,"+
-        "logo:getComputedStyle(document.querySelector('.logo-full')).display,navLabel:getComputedStyle(document.querySelector('.nav-label')).display,navVisibility:getComputedStyle(document.querySelector('.nav-label')).visibility,navPointer:getComputedStyle(document.querySelector('.nav-label')).pointerEvents}))()");
-      if(intermediate.width<145){
-        assert.equal(intermediate.text,'none',JSON.stringify({width,intermediate}));
-        assert.equal(intermediate.logo,'none',JSON.stringify({width,intermediate}));
-        assert(intermediate.navLabel==='none'||(intermediate.navVisibility==='hidden'&&intermediate.navPointer==='none'),JSON.stringify({width,intermediate}));
+      const sample=()=>browser.evaluate("(()=>{const s=document.querySelector('.sidebar'),r=e=>e.getBoundingClientRect(),i=s.querySelector('[data-tab=calendar] .nav-icon'),l=s.querySelector('[data-tab=calendar] .nav-label'),f=document.querySelector('#pageTextScaleControlV54'),n=s.querySelector('.nav-scroll');return {width:r(s).width,label:getComputedStyle(l).visibility,footer:getComputedStyle(f).visibility,ix:r(i).x,iy:r(i).y,navHeight:r(n).height,mainLeft:r(document.querySelector('.main')).left}})()");
+      const collapsed=await sample();
+      assert(collapsed.width<100&&collapsed.label==='hidden'&&collapsed.footer==='hidden',JSON.stringify({width,collapsed}));
+      await browser.movePoint(30,20);
+      const frames=[];
+      for(let i=0;i<14;i++){await sleep(16);frames.push(await sample())}
+      await sleep(100);
+      const expanded=await sample();
+      assert(expanded.width>=165&&expanded.footer==='visible'&&expanded.label==='visible',JSON.stringify({width,expanded}));
+      await browser.movePoint(width-80,height-80);
+      for(let i=0;i<25;i++){await sleep(16);frames.push(await sample())}
+      const closed=await sample();
+      assert(closed.width<100&&closed.label==='hidden'&&closed.footer==='hidden',JSON.stringify({width,closed}));
+      for(const f of [...frames,expanded,closed]){
+        assert(Math.abs(f.mainLeft-collapsed.mainLeft)<2&&Math.abs(f.ix-collapsed.ix)<2&&Math.abs(f.iy-collapsed.iy)<2&&Math.abs(f.navHeight-collapsed.navHeight)<2,JSON.stringify({width,collapsed,f}));
       }
-      await sleep(260);
-      const expanded=await browser.evaluate("(()=>({width:document.querySelector('.sidebar').getBoundingClientRect().width,"+
-        "text:getComputedStyle(document.querySelector('#pageTextScaleControlV54')).display}))()");
-      assert(expanded.width>=165&&expanded.text!=='none',JSON.stringify({width,expanded}));
+      await browser.movePoint(30,20);await sleep(260);
       await browser.evaluate("window.__qaActivate('posts')");
       const inlinePosts=await browser.evaluate("(()=>{const title=document.querySelector('#pageTitle').getBoundingClientRect(),"+
         "bar=document.querySelector('#posts .posts-head').getBoundingClientRect();return {titleY:(title.top+title.bottom)/2,barY:(bar.top+bar.bottom)/2}})()");

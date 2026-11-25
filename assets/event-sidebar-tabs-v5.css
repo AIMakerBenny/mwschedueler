@@ -149,3 +149,20 @@
   #eventModal .event-sidebar-tabs-enabled-v5{overflow:visible}
   #eventModal .event-memo-tabpanel-v5 #evMemoContent{min-height:220px!important}
 }
+
+/* V6 tools are a two-pane editor; keep game metadata compact and the
+   underlying admin controls out of the modal interaction layer. */
+#eventModal .mws-event-editor-v6 .event-info-panel>.formgrid>.field:has(#evTitle){grid-column:1/-1}
+#eventModal .mws-event-editor-v6 .mws-game-preview-v112.has-game{
+  display:grid;grid-template-columns:minmax(80px,36%) minmax(0,1fr);
+  align-items:center;gap:8px;padding:8px;
+}
+#eventModal .mws-event-editor-v6 .mws-game-preview-v112.has-game .mws-game-preview-image-v112{
+  width:100%;height:auto;max-height:110px;object-fit:contain;background:transparent;border-radius:6px;
+}
+#eventModal .mws-event-editor-v6 .mws-game-preview-copy-v112{padding:4px;min-width:0}
+#eventModal .mws-event-editor-v6 .mws-game-preview-name-v112{overflow-wrap:anywhere}
+body:has(#eventModal.open) #mwsAccessTools{visibility:hidden!important;pointer-events:none!important}
+@media(max-width:380px){
+ #eventModal .mws-event-editor-v6 .mws-game-preview-v112.has-game{grid-template-columns:minmax(0,1fr)}
+}
