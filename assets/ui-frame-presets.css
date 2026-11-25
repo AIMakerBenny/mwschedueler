@@ -42,7 +42,7 @@ body[data-ui-frame]:not([data-ui-frame="classic"]) button{transition:transform .
 @media(min-width:901px){
 body[data-ui-frame="workshop"]:not([data-resolution="mobile"]) .app{grid-template-columns:250px minmax(0,1fr)!important;background:var(--bg)!important}
 body[data-ui-frame="workshop"]:not([data-resolution="mobile"]) .sidebar,
-body[data-ui-frame="workshop"]:not([data-resolution="mobile"]) .sidebar:hover,
+body[data-ui-frame="workshop"]:not([data-resolution="mobile"]) .sidebar.mws-sidebar-expanded-v2,
 body[data-ui-frame="workshop"]:not([data-resolution="mobile"]).sidebar-pinned .sidebar{position:sticky!important;top:0!important;left:auto!important;width:auto!important;height:100vh!important;max-height:100vh!important;border-radius:0!important;border-width:0 1px 0 0!important;padding:18px 14px!important;box-shadow:none!important}
 body[data-ui-frame="workshop"] .main{padding:0 28px 34px!important}
 body[data-ui-frame="workshop"] .topbar{height:76px!important;margin:0 -28px 22px!important;padding:0 28px!important;border-bottom:1px solid var(--border)!important;background:var(--sidebar)!important}
@@ -67,7 +67,7 @@ body[data-ui-frame="workshop"] .modalbox{border-radius:8px!important;box-shadow:
 @media(min-width:901px){
 body[data-ui-frame="agenda"]:not([data-resolution="mobile"]) .app{grid-template-columns:92px minmax(0,1fr)!important;gap:18px!important;padding:18px!important}
 body[data-ui-frame="agenda"]:not([data-resolution="mobile"]) .sidebar,
-body[data-ui-frame="agenda"]:not([data-resolution="mobile"]) .sidebar:hover,
+body[data-ui-frame="agenda"]:not([data-resolution="mobile"]) .sidebar.mws-sidebar-expanded-v2,
 body[data-ui-frame="agenda"]:not([data-resolution="mobile"]).sidebar-pinned .sidebar{position:sticky!important;top:18px!important;left:auto!important;width:auto!important;height:calc(100vh - 36px)!important;max-height:calc(100vh - 36px)!important;border:1px solid var(--border)!important;border-radius:24px!important;padding:16px 10px!important;box-shadow:0 22px 56px rgba(0,0,0,.28)!important;background:color-mix(in srgb,var(--sidebar) var(--neo-surface-opacity,90%),transparent)!important;backdrop-filter:blur(18px)!important}
 body[data-ui-frame="agenda"] .logo-full,body[data-ui-frame="agenda"] .logo small,body[data-ui-frame="agenda"] .sidebar-pin-label,body[data-ui-frame="agenda"] .nav-label,body[data-ui-frame="agenda"] .nav-game-divider em{display:none!important}
 body[data-ui-frame="agenda"] .logo{text-align:center!important;margin:5px 0 14px!important}.frame{}
@@ -92,7 +92,7 @@ body[data-ui-frame="agenda"] .modalbox{border-radius:24px!important;box-shadow:0
 @media(min-width:901px){
 body[data-ui-frame="messenger"]:not([data-resolution="mobile"]) .app{grid-template-columns:78px minmax(0,1fr)!important}
 body[data-ui-frame="messenger"]:not([data-resolution="mobile"]) .sidebar,
-body[data-ui-frame="messenger"]:not([data-resolution="mobile"]) .sidebar:hover,
+body[data-ui-frame="messenger"]:not([data-resolution="mobile"]) .sidebar.mws-sidebar-expanded-v2,
 body[data-ui-frame="messenger"]:not([data-resolution="mobile"]).sidebar-pinned .sidebar{position:sticky!important;top:0!important;left:auto!important;width:auto!important;height:100vh!important;max-height:100vh!important;border-radius:0!important;border:0!important;border-right:1px solid var(--border)!important;padding:12px 8px!important}
 body[data-ui-frame="messenger"] .logo-full,body[data-ui-frame="messenger"] .logo small,body[data-ui-frame="messenger"] .sidebar-pin-label,body[data-ui-frame="messenger"] .nav-label,body[data-ui-frame="messenger"] .nav-game-divider em{display:none!important}
 body[data-ui-frame="messenger"] .logo{text-align:center!important;margin:7px 0 13px!important}

@@ -2414,15 +2414,15 @@ body.target-shooting .target-person-card:not(.clearing):hover::after{
   width:72px;padding:14px 10px!important;overflow:hidden;z-index:180;
   transition:width .18s ease,background .2s,border-color .2s!important
 }
-.sidebar:hover{width:220px}
+.sidebar.mws-sidebar-expanded-v2{width:220px}
 body.sidebar-pinned .app{grid-template-columns:220px minmax(0,1fr)!important}
 body.sidebar-pinned .sidebar{width:220px}
 .sidebar-head{min-height:62px;display:flex;align-items:flex-start;justify-content:space-between;gap:7px}
 .logo{margin:3px 7px 17px!important;white-space:nowrap;min-width:38px}
 .logo-full,.logo-mini{display:block}.logo-mini{display:none;text-align:center}
-.sidebar:not(:hover) .logo-full{display:none}
-.sidebar:not(:hover) .logo-mini{display:block}
-.sidebar:not(:hover) .logo small{display:none}
+.sidebar:not(.mws-sidebar-expanded-v2) .logo-full{display:none}
+.sidebar:not(.mws-sidebar-expanded-v2) .logo-mini{display:block}
+.sidebar:not(.mws-sidebar-expanded-v2) .logo small{display:none}
 body.sidebar-pinned .sidebar .logo-full{display:block}
 body.sidebar-pinned .sidebar .logo-mini{display:none}
 body.sidebar-pinned .sidebar .logo small{display:block}
@@ -2438,8 +2438,8 @@ body.sidebar-pinned .sidebar .logo small{display:block}
 .sidebar-pin-icon{width:17px;height:17px;display:grid;place-items:center}
 .sidebar-pin-icon svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .sidebar-pin-label{display:none;font-size:11px;font-weight:800}
-.sidebar:hover .sidebar-pin,body.sidebar-pinned .sidebar-pin{width:auto;min-width:62px;padding:0 9px}
-.sidebar:hover .sidebar-pin-label,body.sidebar-pinned .sidebar-pin-label{display:inline}
+.sidebar.mws-sidebar-expanded-v2 .sidebar-pin,body.sidebar-pinned .sidebar-pin{width:auto;min-width:62px;padding:0 9px}
+.sidebar.mws-sidebar-expanded-v2 .sidebar-pin-label,body.sidebar-pinned .sidebar-pin-label{display:inline}
 .nav{gap:5px!important}
 .nav button{
   width:100%;min-height:44px;padding:8px 10px!important;display:flex;align-items:center;
@@ -2454,8 +2454,8 @@ body.sidebar-pinned .sidebar .logo small{display:block}
   opacity:0;transform:translateX(-4px);
   transition:opacity .12s,transform .12s;font-weight:700
 }
-.sidebar:hover .nav-label,body.sidebar-pinned .nav-label{opacity:1;transform:none}
-.sidebar:not(:hover) .nav button{justify-content:center}
+.sidebar.mws-sidebar-expanded-v2 .nav-label,body.sidebar-pinned .nav-label{opacity:1;transform:none}
+.sidebar:not(.mws-sidebar-expanded-v2) .nav button{justify-content:center}
 body.sidebar-pinned .sidebar .nav button{justify-content:flex-start}
 
 /* =========================================================
@@ -2549,15 +2549,15 @@ body.sidebar-pinned .sidebar .nav button{justify-content:flex-start}
   background:color-mix(in srgb,var(--accent) 30%,var(--panel2));
   box-shadow:0 0 13px color-mix(in srgb,var(--accent) 22%,transparent);
 }
-.sidebar:not(:hover) .nav button{
+.sidebar:not(.mws-sidebar-expanded-v2) .nav button{
   padding-left:9px!important;
   padding-right:9px!important;
 }
-.sidebar:not(:hover) .nav-icon{
+.sidebar:not(.mws-sidebar-expanded-v2) .nav-icon{
   transform:translateX(0);
 }
 body.sidebar-pinned .nav-icon,
-.sidebar:hover .nav-icon{
+.sidebar.mws-sidebar-expanded-v2 .nav-icon{
   flex-basis:32px!important;
 }
 
@@ -2719,7 +2719,7 @@ body.sidebar-pinned .app{
 }
 
 /* The expanded state becomes an overlay over the content instead of resizing/clipping */
-.sidebar:hover,
+.sidebar.mws-sidebar-expanded-v2,
 body.sidebar-pinned .sidebar{
   width:220px!important;
   min-width:220px!important;
@@ -2737,7 +2737,7 @@ body.sidebar-pinned .sidebar{
   justify-content:center!important;
   gap:7px!important;
 }
-.sidebar:hover .sidebar-head,
+.sidebar.mws-sidebar-expanded-v2 .sidebar-head,
 body.sidebar-pinned .sidebar-head{
   justify-content:space-between!important;
 }
@@ -2760,22 +2760,22 @@ body.sidebar-pinned .sidebar-head{
 }
 .logo small{display:none!important}
 
-.sidebar:hover .logo,
+.sidebar.mws-sidebar-expanded-v2 .logo,
 body.sidebar-pinned .logo{
   width:auto;
   min-width:115px!important;
   margin-left:8px!important;
   align-items:flex-start!important;
 }
-.sidebar:hover .logo-full,
+.sidebar.mws-sidebar-expanded-v2 .logo-full,
 body.sidebar-pinned .logo-full{
   display:block!important;
 }
-.sidebar:hover .logo-mini,
+.sidebar.mws-sidebar-expanded-v2 .logo-mini,
 body.sidebar-pinned .logo-mini{
   display:none!important;
 }
-.sidebar:hover .logo small,
+.sidebar.mws-sidebar-expanded-v2 .logo small,
 body.sidebar-pinned .logo small{
   display:block!important;
 }
@@ -2784,7 +2784,7 @@ body.sidebar-pinned .logo small{
 .sidebar-pin{
   display:none!important;
 }
-.sidebar:hover .sidebar-pin,
+.sidebar.mws-sidebar-expanded-v2 .sidebar-pin,
 body.sidebar-pinned .sidebar-pin{
   display:flex!important;
   width:auto!important;
@@ -2793,7 +2793,7 @@ body.sidebar-pinned .sidebar-pin{
   padding:0 9px!important;
   margin-right:6px;
 }
-.sidebar:hover .sidebar-pin-label,
+.sidebar.mws-sidebar-expanded-v2 .sidebar-pin-label,
 body.sidebar-pinned .sidebar-pin-label{
   display:inline!important;
 }
@@ -2847,7 +2847,7 @@ body.sidebar-pinned .sidebar-pin-label{
 }
 
 /* Expanded overlay layout */
-.sidebar:hover .nav button,
+.sidebar.mws-sidebar-expanded-v2 .nav button,
 body.sidebar-pinned .nav button{
   width:calc(100% - 12px)!important;
   max-width:none!important;
@@ -2858,7 +2858,7 @@ body.sidebar-pinned .nav button{
   gap:12px!important;
   overflow:visible!important;
 }
-.sidebar:hover .nav-label,
+.sidebar.mws-sidebar-expanded-v2 .nav-label,
 body.sidebar-pinned .nav-label{
   display:inline!important;
   white-space:nowrap!important;
@@ -2867,7 +2867,7 @@ body.sidebar-pinned .nav-label{
   font-size:12px!important;
   font-weight:750!important;
 }
-.sidebar:hover .nav-icon,
+.sidebar.mws-sidebar-expanded-v2 .nav-icon,
 body.sidebar-pinned .nav-icon{
   flex:0 0 34px!important;
 }
@@ -2884,11 +2884,11 @@ body.sidebar-pinned .nav-icon{
 }
 
 /* Ensure no old left-shift/clip rules survive */
-.sidebar:not(:hover) .nav button{
+.sidebar:not(.mws-sidebar-expanded-v2) .nav button{
   justify-content:center!important;
   padding:0!important;
 }
-.sidebar:not(:hover) .nav-icon{
+.sidebar:not(.mws-sidebar-expanded-v2) .nav-icon{
   transform:none!important;
 }
 body.sidebar-pinned .sidebar .nav button{
@@ -2977,7 +2977,7 @@ body.sidebar-pinned .sidebar .nav button{
     background .15s ease!important;
   will-change:width;
 }
-.sidebar:hover{
+.sidebar.mws-sidebar-expanded-v2{
   width:220px!important;
   min-width:220px!important;
 }
@@ -3002,12 +3002,12 @@ body.sidebar-pinned .sidebar .nav button{
     max-width .14s cubic-bezier(.18,.82,.22,1),
     transform .14s cubic-bezier(.18,.82,.22,1)!important;
 }
-.sidebar:hover .nav-label{
+.sidebar.mws-sidebar-expanded-v2 .nav-label{
   opacity:1!important;
   max-width:150px!important;
   transform:translateX(0)!important;
 }
-.sidebar:not(:hover) .nav-label{
+.sidebar:not(.mws-sidebar-expanded-v2) .nav-label{
   opacity:0!important;
   max-width:0!important;
   transform:translateX(-9px)!important;
@@ -3018,7 +3018,7 @@ body.sidebar-pinned .app{
   grid-template-columns:220px minmax(0,1fr)!important;
 }
 body.sidebar-pinned .sidebar,
-body.sidebar-pinned .sidebar:hover{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2{
   width:220px!important;
   min-width:220px!important;
   overflow:hidden!important;
@@ -3026,30 +3026,30 @@ body.sidebar-pinned .sidebar:hover{
   transition:none!important;
 }
 body.sidebar-pinned .sidebar-head,
-body.sidebar-pinned .sidebar:hover .sidebar-head{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .sidebar-head{
   justify-content:space-between!important;
 }
 body.sidebar-pinned .logo,
-body.sidebar-pinned .sidebar:hover .logo{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo{
   width:auto!important;
   min-width:115px!important;
   margin-left:8px!important;
   align-items:flex-start!important;
 }
 body.sidebar-pinned .logo-full,
-body.sidebar-pinned .sidebar:hover .logo-full{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo-full{
   display:block!important;
 }
 body.sidebar-pinned .logo-mini,
-body.sidebar-pinned .sidebar:hover .logo-mini{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo-mini{
   display:none!important;
 }
 body.sidebar-pinned .logo small,
-body.sidebar-pinned .sidebar:hover .logo small{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo small{
   display:block!important;
 }
 body.sidebar-pinned .sidebar-pin,
-body.sidebar-pinned .sidebar:hover .sidebar-pin{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .sidebar-pin{
   display:flex!important;
   width:auto!important;
   min-width:64px!important;
@@ -3058,7 +3058,7 @@ body.sidebar-pinned .sidebar:hover .sidebar-pin{
   margin-right:6px!important;
 }
 body.sidebar-pinned .nav button,
-body.sidebar-pinned .sidebar:hover .nav button{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .nav button{
   width:calc(100% - 12px)!important;
   min-width:0!important;
   max-width:none!important;
@@ -3071,7 +3071,7 @@ body.sidebar-pinned .sidebar:hover .nav button{
   transition:none!important;
 }
 body.sidebar-pinned .nav-icon,
-body.sidebar-pinned .sidebar:hover .nav-icon{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .nav-icon{
   flex:0 0 34px!important;
   width:34px!important;
   min-width:34px!important;
@@ -3080,7 +3080,7 @@ body.sidebar-pinned .sidebar:hover .nav-icon{
   transform:none!important;
 }
 body.sidebar-pinned .nav-label,
-body.sidebar-pinned .sidebar:hover .nav-label{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .nav-label{
   display:block!important;
   opacity:1!important;
   width:auto!important;
@@ -3090,7 +3090,7 @@ body.sidebar-pinned .sidebar:hover .nav-label{
   font-size:12px!important;
   font-weight:750!important;
 }
-body.sidebar-pinned .sidebar:hover{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2{
   background:var(--sidebar)!important;
   backdrop-filter:none!important;
 }
@@ -3408,9 +3408,9 @@ body.sidebar-pinned .sidebar:hover{
 
 /* =========================================================
    v2.5.1 - pinned/non-hover specificity fix
-   이전 .sidebar:not(:hover) 규칙보다 강한 선택자로 완전 고정
+   이전 .sidebar:not(.mws-sidebar-expanded-v2) 규칙보다 강한 선택자로 완전 고정
    ========================================================= */
-body.sidebar-pinned .sidebar:not(:hover) .nav button{
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .nav button{
   width:calc(100% - 12px)!important;
   min-width:0!important;
   max-width:none!important;
@@ -3423,7 +3423,7 @@ body.sidebar-pinned .sidebar:not(:hover) .nav button{
   overflow:hidden!important;
   transition:none!important;
 }
-body.sidebar-pinned .sidebar:not(:hover) .nav-icon{
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .nav-icon{
   flex:0 0 34px!important;
   width:34px!important;
   min-width:34px!important;
@@ -3431,7 +3431,7 @@ body.sidebar-pinned .sidebar:not(:hover) .nav-icon{
   margin:0!important;
   transform:none!important;
 }
-body.sidebar-pinned .sidebar:not(:hover) .nav-label{
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .nav-label{
   display:block!important;
   opacity:1!important;
   width:auto!important;
@@ -3443,16 +3443,16 @@ body.sidebar-pinned .sidebar:not(:hover) .nav-label{
   font-size:12px!important;
   font-weight:750!important;
 }
-body.sidebar-pinned .sidebar:not(:hover) .logo{
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo{
   width:auto!important;
   min-width:115px!important;
   margin-left:8px!important;
   align-items:flex-start!important;
 }
-body.sidebar-pinned .sidebar:not(:hover) .logo-full{display:block!important}
-body.sidebar-pinned .sidebar:not(:hover) .logo-mini{display:none!important}
-body.sidebar-pinned .sidebar:not(:hover) .logo small{display:block!important}
-body.sidebar-pinned .sidebar:not(:hover) .sidebar-pin{
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo-full{display:block!important}
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo-mini{display:none!important}
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo small{display:block!important}
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .sidebar-pin{
   display:flex!important;
   width:auto!important;
   min-width:64px!important;
@@ -3460,7 +3460,7 @@ body.sidebar-pinned .sidebar:not(:hover) .sidebar-pin{
   padding:0 9px!important;
   margin-right:6px!important;
 }
-body.sidebar-pinned .sidebar:not(:hover) .sidebar-pin-label{display:inline!important}
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .sidebar-pin-label{display:inline!important}
 
 
 /* =========================================================
@@ -3468,7 +3468,7 @@ body.sidebar-pinned .sidebar:not(:hover) .sidebar-pin-label{display:inline!impor
    ========================================================= */
 .sidebar,
 body.sidebar-pinned .sidebar,
-body.sidebar-pinned .sidebar:hover{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2{
   position:sticky!important;
   top:0!important;
   align-self:start!important;
@@ -3478,7 +3478,7 @@ body.sidebar-pinned .sidebar:hover{
   overflow-x:hidden!important;
   scrollbar-width:thin;
 }
-.sidebar:hover{
+.sidebar.mws-sidebar-expanded-v2{
   position:sticky!important;
   top:0!important;
   height:100vh!important;
@@ -3607,9 +3607,9 @@ body.sidebar-pinned .sidebar:hover{
    v2.7 - sidebar vertical geometry is identical collapsed/hovered
    ========================================================= */
 .sidebar-head,
-.sidebar:hover .sidebar-head,
+.sidebar.mws-sidebar-expanded-v2 .sidebar-head,
 body.sidebar-pinned .sidebar-head,
-body.sidebar-pinned .sidebar:hover .sidebar-head{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .sidebar-head{
   position:relative!important;
   display:block!important;
   height:58px!important;
@@ -3620,9 +3620,9 @@ body.sidebar-pinned .sidebar:hover .sidebar-head{
   padding:0!important;
 }
 .logo,
-.sidebar:hover .logo,
+.sidebar.mws-sidebar-expanded-v2 .logo,
 body.sidebar-pinned .logo,
-body.sidebar-pinned .sidebar:hover .logo{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo{
   position:absolute!important;
   top:0!important;
   height:48px!important;
@@ -3630,41 +3630,41 @@ body.sidebar-pinned .sidebar:hover .logo{
   margin-top:0!important;
   margin-bottom:0!important;
 }
-.sidebar:not(:hover):not(.sidebar-never) .logo{
+.sidebar:not(.mws-sidebar-expanded-v2):not(.sidebar-never) .logo{
   left:0!important;
   width:48px!important;
   min-width:48px!important;
   align-items:center!important;
 }
-.sidebar:hover .logo,
+.sidebar.mws-sidebar-expanded-v2 .logo,
 body.sidebar-pinned .logo,
-body.sidebar-pinned .sidebar:hover .logo{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo{
   left:8px!important;
   width:118px!important;
   min-width:118px!important;
   align-items:flex-start!important;
 }
 .sidebar-pin,
-.sidebar:hover .sidebar-pin,
+.sidebar.mws-sidebar-expanded-v2 .sidebar-pin,
 body.sidebar-pinned .sidebar-pin,
-body.sidebar-pinned .sidebar:hover .sidebar-pin{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .sidebar-pin{
   position:absolute!important;
   top:0!important;
   right:6px!important;
   margin:0!important;
 }
 .nav,
-.sidebar:hover .nav,
+.sidebar.mws-sidebar-expanded-v2 .nav,
 body.sidebar-pinned .nav,
-body.sidebar-pinned .sidebar:hover .nav{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .nav{
   margin-top:0!important;
   padding-top:0!important;
   gap:6px!important;
 }
 .nav button,
-.sidebar:hover .nav button,
+.sidebar.mws-sidebar-expanded-v2 .nav button,
 body.sidebar-pinned .nav button,
-body.sidebar-pinned .sidebar:hover .nav button{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .nav button{
   height:46px!important;
   min-height:46px!important;
   max-height:46px!important;
@@ -3672,19 +3672,19 @@ body.sidebar-pinned .sidebar:hover .nav button{
   margin-bottom:0!important;
 }
 .nav-icon,
-.sidebar:hover .nav-icon,
+.sidebar.mws-sidebar-expanded-v2 .nav-icon,
 body.sidebar-pinned .nav-icon,
-body.sidebar-pinned .sidebar:hover .nav-icon{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .nav-icon{
   height:34px!important;
   min-height:34px!important;
   max-height:34px!important;
 }
 /* Keep the collapsed label visually hidden without changing row height */
-.sidebar:not(:hover) .nav-label{
+.sidebar:not(.mws-sidebar-expanded-v2) .nav-label{
   height:18px!important;
   line-height:18px!important;
 }
-body.sidebar-pinned .sidebar:not(:hover) .nav-label{
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .nav-label{
   height:18px!important;
   line-height:18px!important;
 }
@@ -3905,8 +3905,8 @@ body.sidebar-pinned .sidebar:not(:hover) .nav-label{
    v2.8 - pin logo remains pixel-identical with/without hover
    ========================================================= */
 body.sidebar-pinned .logo,
-body.sidebar-pinned .sidebar:hover .logo,
-body.sidebar-pinned .sidebar:not(:hover) .logo{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo{
   position:absolute!important;
   top:0!important;
   left:8px!important;
@@ -3920,16 +3920,16 @@ body.sidebar-pinned .sidebar:not(:hover) .logo{
   align-items:flex-start!important;
 }
 body.sidebar-pinned .logo-full,
-body.sidebar-pinned .sidebar:hover .logo-full,
-body.sidebar-pinned .sidebar:not(:hover) .logo-full{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo-full,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo-full{
   display:block!important;
   margin:0!important;
   padding:0!important;
   transform:none!important;
 }
 body.sidebar-pinned .logo small,
-body.sidebar-pinned .sidebar:hover .logo small,
-body.sidebar-pinned .sidebar:not(:hover) .logo small{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo small,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo small{
   display:block!important;
   margin-top:3px!important;
   transform:none!important;
@@ -4498,46 +4498,46 @@ body.sidebar-pinned.calendar-template-dragging #calendar.active .calendar-copy-t
    ========================================================= */
 .sidebar{padding:12px 8px!important}
 .sidebar-head,
-.sidebar:hover .sidebar-head,
+.sidebar.mws-sidebar-expanded-v2 .sidebar-head,
 body.sidebar-pinned .sidebar-head,
-body.sidebar-pinned .sidebar:hover .sidebar-head,
-body.sidebar-pinned .sidebar:not(:hover) .sidebar-head{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .sidebar-head,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .sidebar-head{
   position:relative!important;display:block!important;width:100%!important;
   height:58px!important;min-height:58px!important;max-height:58px!important;
   margin:0!important;padding:0!important
 }
 .nav,
-.sidebar:hover .nav,
+.sidebar.mws-sidebar-expanded-v2 .nav,
 body.sidebar-pinned .nav,
-body.sidebar-pinned .sidebar:hover .nav,
-body.sidebar-pinned .sidebar:not(:hover) .nav{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .nav,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .nav{
   display:flex!important;flex-direction:column!important;gap:6px!important;
   margin:0!important;padding:0!important
 }
 .nav button,
-.sidebar:hover .nav button,
+.sidebar.mws-sidebar-expanded-v2 .nav button,
 body.sidebar-pinned .nav button,
-body.sidebar-pinned .sidebar:hover .nav button,
-body.sidebar-pinned .sidebar:not(:hover) .nav button{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .nav button,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .nav button{
   position:relative!important;display:block!important;box-sizing:border-box!important;
   height:46px!important;min-height:46px!important;max-height:46px!important;flex:0 0 46px!important;
   margin:0!important;padding:0!important;gap:0!important;justify-content:initial!important;
   overflow:hidden!important;transition:background-color .11s,border-color .11s,color .11s!important
 }
-body:not(.sidebar-pinned) .sidebar:not(:hover) .nav button{
+body:not(.sidebar-pinned) .sidebar:not(.mws-sidebar-expanded-v2) .nav button{
   width:48px!important;min-width:48px!important;max-width:48px!important
 }
-body:not(.sidebar-pinned) .sidebar:hover .nav button,
+body:not(.sidebar-pinned) .sidebar.mws-sidebar-expanded-v2 .nav button,
 body.sidebar-pinned .nav button,
-body.sidebar-pinned .sidebar:hover .nav button,
-body.sidebar-pinned .sidebar:not(:hover) .nav button{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .nav button,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .nav button{
   width:204px!important;min-width:204px!important;max-width:204px!important
 }
 .nav-icon,
-.sidebar:hover .nav-icon,
+.sidebar.mws-sidebar-expanded-v2 .nav-icon,
 body.sidebar-pinned .nav-icon,
-body.sidebar-pinned .sidebar:hover .nav-icon,
-body.sidebar-pinned .sidebar:not(:hover) .nav-icon{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .nav-icon,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .nav-icon{
   position:absolute!important;left:7px!important;top:6px!important;
   width:34px!important;min-width:34px!important;max-width:34px!important;
   height:34px!important;min-height:34px!important;max-height:34px!important;
@@ -4545,74 +4545,74 @@ body.sidebar-pinned .sidebar:not(:hover) .nav-icon{
   transition:background-color .11s,border-color .11s,color .11s,box-shadow .11s!important
 }
 .nav-label,
-.sidebar:hover .nav-label,
+.sidebar.mws-sidebar-expanded-v2 .nav-label,
 body.sidebar-pinned .nav-label,
-body.sidebar-pinned .sidebar:hover .nav-label,
-body.sidebar-pinned .sidebar:not(:hover) .nav-label{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .nav-label,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .nav-label{
   position:absolute!important;left:53px!important;top:0!important;
   width:142px!important;max-width:142px!important;height:46px!important;line-height:46px!important;
   margin:0!important;padding:0!important;overflow:hidden!important;text-overflow:ellipsis!important;
   white-space:nowrap!important;font-size:12px!important;font-weight:750!important
 }
-body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-label{
+body:not(.sidebar-pinned) .sidebar:not(.mws-sidebar-expanded-v2) .nav-label{
   opacity:0!important;visibility:hidden!important;transform:translateX(-8px)!important;
   transition:opacity .11s ease,transform .11s ease,visibility .11s!important
 }
-body:not(.sidebar-pinned) .sidebar:hover .nav-label{
+body:not(.sidebar-pinned) .sidebar.mws-sidebar-expanded-v2 .nav-label{
   opacity:1!important;visibility:visible!important;transform:translateX(0)!important;
   transition:opacity .11s ease,transform .11s ease,visibility .11s!important
 }
 body.sidebar-pinned .nav-label,
-body.sidebar-pinned .sidebar:hover .nav-label,
-body.sidebar-pinned .sidebar:not(:hover) .nav-label{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .nav-label,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .nav-label{
   opacity:1!important;visibility:visible!important;transform:none!important;transition:none!important
 }
 .logo,
-.sidebar:hover .logo,
+.sidebar.mws-sidebar-expanded-v2 .logo,
 body.sidebar-pinned .logo,
-body.sidebar-pinned .sidebar:hover .logo,
-body.sidebar-pinned .sidebar:not(:hover) .logo{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo{
   position:absolute!important;top:0!important;margin:0!important;padding:0!important;
   height:48px!important;min-height:48px!important;max-height:48px!important;transform:none!important
 }
 body.sidebar-pinned .logo,
-body.sidebar-pinned .sidebar:hover .logo,
-body.sidebar-pinned .sidebar:not(:hover) .logo{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo{
   left:8px!important;width:118px!important;min-width:118px!important;max-width:118px!important
 }
 body.sidebar-pinned .logo-full,
-body.sidebar-pinned .sidebar:hover .logo-full,
-body.sidebar-pinned .sidebar:not(:hover) .logo-full{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo-full,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo-full{
   display:block!important;margin:0!important;padding:0!important;transform:none!important
 }
 body.sidebar-pinned .logo-mini,
-body.sidebar-pinned .sidebar:hover .logo-mini,
-body.sidebar-pinned .sidebar:not(:hover) .logo-mini{display:none!important}
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo-mini,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo-mini{display:none!important}
 body.sidebar-pinned .logo small,
-body.sidebar-pinned .sidebar:hover .logo small,
-body.sidebar-pinned .sidebar:not(:hover) .logo small{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .logo small,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .logo small{
   display:block!important;margin:3px 0 0!important;padding:0!important;transform:none!important
 }
 .sidebar-pin,
-.sidebar:hover .sidebar-pin,
+.sidebar.mws-sidebar-expanded-v2 .sidebar-pin,
 body.sidebar-pinned .sidebar-pin,
-body.sidebar-pinned .sidebar:hover .sidebar-pin,
-body.sidebar-pinned .sidebar:not(:hover) .sidebar-pin{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .sidebar-pin,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .sidebar-pin{
   position:absolute!important;top:0!important;right:6px!important;margin:0!important;transform:none!important
 }
 body.sidebar-pinned .sidebar-pin,
-body.sidebar-pinned .sidebar:hover .sidebar-pin,
-body.sidebar-pinned .sidebar:not(:hover) .sidebar-pin{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .sidebar-pin,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .sidebar-pin{
   display:flex!important;width:82px!important;min-width:82px!important;max-width:82px!important;
   height:34px!important;padding:0 9px!important;
   transition:background-color .11s,border-color .11s,color .11s!important
 }
 body.sidebar-pinned .sidebar-pin-label,
-body.sidebar-pinned .sidebar:hover .sidebar-pin-label,
-body.sidebar-pinned .sidebar:not(:hover) .sidebar-pin-label{display:inline!important}
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .sidebar-pin-label,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .sidebar-pin-label{display:inline!important}
 body.sidebar-pinned .sidebar,
-body.sidebar-pinned .sidebar:hover,
-body.sidebar-pinned .sidebar:not(:hover){
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2){
   width:220px!important;min-width:220px!important;max-width:220px!important;
   padding:12px 8px!important;box-shadow:none!important;backdrop-filter:none!important;transition:none!important
 }
@@ -4621,8 +4621,8 @@ body.sidebar-pinned .sidebar:not(:hover){
 /* Sidebar nav groups: collapsed rows must stay hidden even when pinned/hover geometry forces button display. */
 html body .app .sidebar .nav .nav-scroll>button.mws-nav-group-hidden,
 html body.sidebar-pinned .app .sidebar .nav .nav-scroll>button.mws-nav-group-hidden,
-html body.sidebar-pinned .app .sidebar:hover .nav .nav-scroll>button.mws-nav-group-hidden,
-html body.sidebar-pinned .app .sidebar:not(:hover) .nav .nav-scroll>button.mws-nav-group-hidden{
+html body.sidebar-pinned .app .sidebar.mws-sidebar-expanded-v2 .nav .nav-scroll>button.mws-nav-group-hidden,
+html body.sidebar-pinned .app .sidebar:not(.mws-sidebar-expanded-v2) .nav .nav-scroll>button.mws-nav-group-hidden{
   display:none!important;
 }
 
@@ -4882,10 +4882,10 @@ body.modal-active{
    ========================================================= */
 .sidebar{display:flex!important;flex-direction:column!important}
 .nav,
-.sidebar:hover .nav,
+.sidebar.mws-sidebar-expanded-v2 .nav,
 body.sidebar-pinned .nav,
-body.sidebar-pinned .sidebar:hover .nav,
-body.sidebar-pinned .sidebar:not(:hover) .nav{
+body.sidebar-pinned .sidebar.mws-sidebar-expanded-v2 .nav,
+body.sidebar-pinned .sidebar:not(.mws-sidebar-expanded-v2) .nav{
   flex:1 1 auto!important;min-height:0!important;height:calc(100vh - 82px)!important;
   overflow:hidden!important;gap:0!important
 }
@@ -4897,9 +4897,9 @@ body.sidebar-pinned .sidebar:not(:hover) .nav{
 .nav-game-divider em{font-style:normal;font-size:9px;font-weight:900;letter-spacing:.16em;color:var(--muted);white-space:nowrap}
 .nav-bottom-divider{margin:0 5px 4px}
 .nav-settings-divider{height:1px;margin:9px 7px 6px;background:linear-gradient(90deg,transparent,var(--border),transparent);flex:0 0 auto}
-body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-settings-divider{margin-left:8px;margin-right:8px}
-body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider em{display:none}
-body:not(.sidebar-pinned) .sidebar:not(:hover) .nav-game-divider{grid-template-columns:1fr;padding:0 6px}
+body:not(.sidebar-pinned) .sidebar:not(.mws-sidebar-expanded-v2) .nav-settings-divider{margin-left:8px;margin-right:8px}
+body:not(.sidebar-pinned) .sidebar:not(.mws-sidebar-expanded-v2) .nav-game-divider em{display:none}
+body:not(.sidebar-pinned) .sidebar:not(.mws-sidebar-expanded-v2) .nav-game-divider{grid-template-columns:1fr;padding:0 6px}
 
 /* common mini game */
 .mini-game-section{padding-bottom:40px}
@@ -5356,9 +5356,9 @@ body[data-resolution="wide"] .resolution-live-preview{grid-template-columns:34px
 
 /* Resolution-specific layout presets. FHD is the default and mostly follows the native layout. */
 body[data-resolution="fhd"] .main{padding:22px!important}
-body[data-resolution="2k"] .main{padding:28px!important}body[data-resolution="2k"].sidebar-pinned .app{grid-template-columns:240px minmax(0,1fr)!important}body[data-resolution="2k"].sidebar-pinned .sidebar,body[data-resolution="2k"].sidebar-pinned .sidebar:hover{width:240px!important;min-width:240px!important}body[data-resolution="2k"] #contacts .contact-grid{grid-template-columns:repeat(auto-fill,minmax(380px,1fr))}body[data-resolution="2k"] .contact-card-avatar-lg{width:102px;height:102px}body[data-resolution="2k"] .contact-card-core{grid-template-columns:102px minmax(0,1fr)}body[data-resolution="2k"] .contact-modalbox{width:min(1580px,98vw)!important}
-body[data-resolution="4k"] .main{padding:36px!important}body[data-resolution="4k"].sidebar-pinned .app{grid-template-columns:280px minmax(0,1fr)!important}body[data-resolution="4k"].sidebar-pinned .sidebar,body[data-resolution="4k"].sidebar-pinned .sidebar:hover{width:280px!important;min-width:280px!important}body[data-resolution="4k"] #contacts .contact-grid{grid-template-columns:repeat(auto-fill,minmax(430px,1fr))}body[data-resolution="4k"] .contact-card-avatar-lg{width:116px;height:116px}body[data-resolution="4k"] .contact-card-core{grid-template-columns:116px minmax(0,1fr)}body[data-resolution="4k"] .contact-modalbox{width:min(1760px,98vw)!important}body[data-resolution="4k"] .ladder-auto-result-slots{grid-template-columns:repeat(auto-fit,minmax(270px,1fr))!important}
-body[data-resolution="wide"] .main{padding:18px 24px!important}body[data-resolution="wide"].sidebar-pinned .app{grid-template-columns:205px minmax(0,1fr)!important}body[data-resolution="wide"].sidebar-pinned .sidebar,body[data-resolution="wide"].sidebar-pinned .sidebar:hover{width:205px!important;min-width:205px!important}body[data-resolution="wide"] #contacts .contact-grid{grid-template-columns:repeat(auto-fill,minmax(305px,1fr))}body[data-resolution="wide"] .contact-card-avatar-lg{width:86px;height:86px}body[data-resolution="wide"] .contact-card-core{grid-template-columns:86px minmax(0,1fr)}body[data-resolution="wide"] .ladder-auto-result-slots{grid-template-columns:repeat(auto-fit,minmax(205px,1fr))!important}
+body[data-resolution="2k"] .main{padding:28px!important}body[data-resolution="2k"].sidebar-pinned .app{grid-template-columns:240px minmax(0,1fr)!important}body[data-resolution="2k"].sidebar-pinned .sidebar,body[data-resolution="2k"].sidebar-pinned .sidebar.mws-sidebar-expanded-v2{width:240px!important;min-width:240px!important}body[data-resolution="2k"] #contacts .contact-grid{grid-template-columns:repeat(auto-fill,minmax(380px,1fr))}body[data-resolution="2k"] .contact-card-avatar-lg{width:102px;height:102px}body[data-resolution="2k"] .contact-card-core{grid-template-columns:102px minmax(0,1fr)}body[data-resolution="2k"] .contact-modalbox{width:min(1580px,98vw)!important}
+body[data-resolution="4k"] .main{padding:36px!important}body[data-resolution="4k"].sidebar-pinned .app{grid-template-columns:280px minmax(0,1fr)!important}body[data-resolution="4k"].sidebar-pinned .sidebar,body[data-resolution="4k"].sidebar-pinned .sidebar.mws-sidebar-expanded-v2{width:280px!important;min-width:280px!important}body[data-resolution="4k"] #contacts .contact-grid{grid-template-columns:repeat(auto-fill,minmax(430px,1fr))}body[data-resolution="4k"] .contact-card-avatar-lg{width:116px;height:116px}body[data-resolution="4k"] .contact-card-core{grid-template-columns:116px minmax(0,1fr)}body[data-resolution="4k"] .contact-modalbox{width:min(1760px,98vw)!important}body[data-resolution="4k"] .ladder-auto-result-slots{grid-template-columns:repeat(auto-fit,minmax(270px,1fr))!important}
+body[data-resolution="wide"] .main{padding:18px 24px!important}body[data-resolution="wide"].sidebar-pinned .app{grid-template-columns:205px minmax(0,1fr)!important}body[data-resolution="wide"].sidebar-pinned .sidebar,body[data-resolution="wide"].sidebar-pinned .sidebar.mws-sidebar-expanded-v2{width:205px!important;min-width:205px!important}body[data-resolution="wide"] #contacts .contact-grid{grid-template-columns:repeat(auto-fill,minmax(305px,1fr))}body[data-resolution="wide"] .contact-card-avatar-lg{width:86px;height:86px}body[data-resolution="wide"] .contact-card-core{grid-template-columns:86px minmax(0,1fr)}body[data-resolution="wide"] .ladder-auto-result-slots{grid-template-columns:repeat(auto-fit,minmax(205px,1fr))!important}
 body[data-resolution="mobile"] .grid.cols-2,body[data-resolution="mobile"] .mini-game-layout,body[data-resolution="mobile"] .ladder-layout,body[data-resolution="mobile"] .rps-layout,body[data-resolution="mobile"] .horse-race-top,body[data-resolution="mobile"] .horse-race-bottom{grid-template-columns:1fr!important}body[data-resolution="mobile"] #contacts .contact-grid{grid-template-columns:1fr!important}body[data-resolution="mobile"] .contact-modalbox{width:99vw!important;padding:13px!important}body[data-resolution="mobile"] .contact-modal-layout{grid-template-columns:1fr!important;min-height:0!important}body[data-resolution="mobile"] .contact-profile-name-row{grid-template-columns:80px minmax(0,1fr)}body[data-resolution="mobile"] .contact-header-avatar{width:80px;height:80px}body[data-resolution="mobile"] .ladder-auto-result-slots{grid-template-columns:1fr!important}body[data-resolution="mobile"] .resolution-preset-grid{grid-template-columns:repeat(2,1fr)}
 @media(max-width:1100px){.resolution-preset-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.contact-modal-layout{grid-template-columns:1fr!important;min-height:0!important}}
 @media(max-width:700px){.resolution-preset-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ladder-auto-result-slots{grid-template-columns:1fr!important}.ladder-auto-result-slot{grid-template-columns:minmax(0,1fr) minmax(100px,.8fr)!important}.contact-profile-name-row{grid-template-columns:84px minmax(0,1fr)}.contact-header-avatar{width:84px;height:84px}}
@@ -6299,9 +6299,9 @@ body:not([data-device-mode="mobile"]):not([data-resolution="mobile"]) #calendar.
 }
 
 /* Phase 303: clean compact category rail when unpinned */
-body:not(.sidebar-pinned) .sidebar:not(:hover){
+body:not(.sidebar-pinned) .sidebar:not(.mws-sidebar-expanded-v2){
   border-right-color:transparent!important;
   box-shadow:none!important
 }
-body:not(.sidebar-pinned) .sidebar:not(:hover)::before,
-body:not(.sidebar-pinned) .sidebar:not(:hover)::after{display:none!important}
+body:not(.sidebar-pinned) .sidebar:not(.mws-sidebar-expanded-v2)::before,
+body:not(.sidebar-pinned) .sidebar:not(.mws-sidebar-expanded-v2)::after{display:none!important}
