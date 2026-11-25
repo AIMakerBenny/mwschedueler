@@ -11,6 +11,7 @@ on:
       - 'scripts/qa-game-library-v1.test.mjs'
       - 'scripts/qa-request-budget-regressions-v1.test.mjs'
       - 'scripts/qa-ui-audit-v2-browser.mjs'
+      - 'assets/sidebar-compact-v1.css'
       - 'scripts/cleanup-css-stage37.mjs'
       - 'scripts/compare-css-stage37.mjs'
       - 'scripts/qa-request-budget-full-app-v2-browser.mjs'

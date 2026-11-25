@@ -111,8 +111,8 @@ body.mws-premium .sidebar .nav-scroll button[data-tab]:focus-visible,
  html body:not([data-resolution="mobile"]):not([data-device-mode="mobile"]):not(.sidebar-pinned) .app>.sidebar.mws-sidebar-expanded-v2 .sidebar-pin{display:flex!important;visibility:visible!important}
 }
 @container (max-width:145px){
- html body:not(.sidebar-pinned) .app>.sidebar.mws-sidebar-expanded-v2 .nav-scroll>button[data-tab] .nav-label,
- html body:not(.sidebar-pinned) .app>.sidebar.mws-sidebar-expanded-v2 .sidebar-pin{visibility:hidden!important;pointer-events:none!important}
+ html body:not([data-resolution="mobile"]):not([data-device-mode="mobile"]):not(.sidebar-pinned) .app>.sidebar.mws-sidebar-expanded-v2 .nav-scroll>button[data-tab] .nav-label,
+ html body:not([data-resolution="mobile"]):not([data-device-mode="mobile"]):not(.sidebar-pinned) .app>.sidebar.mws-sidebar-expanded-v2 .sidebar-pin{display:none!important;visibility:hidden!important;pointer-events:none!important}
 }
 @media(prefers-reduced-motion:reduce){html body:not(.sidebar-pinned) .app>.sidebar{transition:none!important}}
 html[data-mws-motion=reduced] body:not(.sidebar-pinned) .app>.sidebar{transition:none!important}
