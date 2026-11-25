@@ -1,7 +1,7 @@
 name: UI regression repair
 on:
   push:
-    branches: ['fix/ui-regression-sidebar-calendar-editor-20261126']
+    branches: ['fix/ui-regression-sidebar-calendar-editor-20261126','fix/event-editor-two-pane-20261126']
   pull_request:
     branches: ['cloudflare-production']
 permissions:
@@ -20,6 +20,10 @@ jobs:
       - run: |
           node --check assets/steam-game-v111.js
           node --check assets/sidebar-hover-v2.js
+          node --check assets/event-sidebar-tabs-v5.js
+          node --check assets/app-core.js
+          node --check assets/ui-fixes-v121.js
+          node --check assets/cf-static-bootstrap-v1.js
           node scripts/qa-ui-regression-20261126.mjs
           node scripts/qa-calendar-details-v1-browser.mjs
           node scripts/qa-calendar-month-viewport-v2-browser.mjs
