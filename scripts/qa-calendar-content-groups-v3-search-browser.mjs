@@ -20,7 +20,7 @@ const between=(a,b)=>{
  return mainHTML.slice(first,last);
 };
 const panel=between('<div class="calendar-group-toolbar-v2">','<div class="calendar-head">');
-const editor=between('<div class="field full calendar-group-event-editor-v2">','<div class="field">\n            <label>시작 시간</label>');
+const editor=between('<div class="field full calendar-group-event-editor-v2">','<div id="eventMemoPaneV5"').replace(/<\/div>\s*$/,'');
 const initialGroups=Array.from({length:80},(_,i)=>({
   id:'group-'+i,name:'장기 게임 콘텐츠 / 시즌 '+String(i).padStart(3,'0')+' 특별 방송',color:'#335577'
 }));

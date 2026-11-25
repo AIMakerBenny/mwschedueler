@@ -1828,34 +1828,6 @@ button.contact-history-item:hover{
 /* =========================================================
    v1.9 - Event editor two-column layout with large memo panel
    ========================================================= */
-.event-modalbox{
-  width:min(1420px,97vw)!important;
-  max-height:95vh!important;
-  overflow:hidden!important;
-}
-.event-modal-header{margin-bottom:13px}
-.event-modal-layout{
-  display:grid;
-  grid-template-columns:minmax(340px,430px) minmax(620px,1fr);
-  gap:14px;
-  max-height:calc(95vh - 82px);
-  min-height:680px;
-}
-.event-memo-panel,
-.event-info-panel{
-  min-height:0;
-  border:1px solid var(--border);
-  border-radius:14px;
-  background:color-mix(in srgb,var(--panel) 96%,transparent);
-  padding:14px;
-}
-.event-memo-panel{
-  display:flex;
-  flex-direction:column;
-}
-.event-info-panel{
-  overflow:auto;
-}
 .event-memo-library-box{
   margin-top:13px;
   padding:10px;
@@ -1886,23 +1858,9 @@ button.contact-history-item:hover{
   margin-top:8px;
   line-height:1.5;
 }
-.event-actions{
-  position:sticky;
-  bottom:-14px;
-  margin:16px -14px -14px;
-  padding:12px 14px;
-  border-top:1px solid var(--border);
-  background:color-mix(in srgb,var(--sidebar) 96%,transparent);
-  backdrop-filter:blur(10px);
-  z-index:9;
-}
-
 @media(max-width:1050px){
   .memo-workspace{grid-template-columns:1fr;min-height:0}
   .memo-library-panel,.memo-editor-panel{min-height:360px}
-  .event-modalbox{overflow:auto!important}
-  .event-modal-layout{grid-template-columns:1fr;max-height:none;min-height:0}
-  .event-memo-textarea{min-height:280px!important}
 }
 @media(max-width:760px){
   .dashboard-person{min-width:0}
@@ -4682,37 +4640,10 @@ body.modal-active{
   overscroll-behavior:contain!important;
   scrollbar-gutter:stable;
 }
-.event-modalbox{
-  max-height:calc(100dvh - 24px)!important;
-  overflow:auto!important;
-}
-.event-modal-layout{
-  max-height:none!important;
-  min-height:0!important;
-}
-.event-info-panel{
-  overflow:visible!important;
-}
-.event-actions{
-  bottom:0!important;
-}
 .contact-modalbox,
 .target-picker-modalbox{
   max-height:calc(100dvh - 24px)!important;
   overflow:auto!important;
-}
-@media(max-height:780px){
-  .event-memo-textarea{
-    min-height:300px!important;
-  }
-  .event-modal-layout{
-    min-height:0!important;
-  }
-}
-@media(max-height:640px){
-  .event-memo-textarea{
-    min-height:220px!important;
-  }
 }
 
 
@@ -4764,10 +4695,6 @@ body.modal-active{
 }
 .event-repeat-panel.open{display:flex;flex-direction:column;animation:repeatPanelIn .16s ease both}
 @keyframes repeatPanelIn{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
-.event-modalbox.repeat-panel-open{width:min(1780px,98vw)!important}
-.event-modalbox.repeat-panel-open .event-modal-layout{
-  grid-template-columns:minmax(300px,370px) minmax(590px,1fr) minmax(320px,380px)!important
-}
 .repeat-panel-header{align-items:flex-start;margin-bottom:4px}
 .repeat-panel-kicker{font-size:9px;font-weight:950;letter-spacing:.14em;color:var(--accent)}
 .repeat-config-section{padding:12px 0;border-bottom:1px solid color-mix(in srgb,var(--border) 74%,transparent)}
@@ -4792,13 +4719,6 @@ body.modal-active{
 .repeat-preview-more{padding:6px 8px;color:var(--muted);font-size:9px;font-weight:800}
 .repeat-series-note{margin-top:10px;padding:9px 10px;border:1px solid color-mix(in srgb,var(--accent) 28%,var(--border));border-radius:9px;color:var(--muted);font-size:9px;line-height:1.55}
 .repeat-panel-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:auto;padding-top:14px}
-@media(max-width:1380px){
-  .event-modalbox.repeat-panel-open .event-modal-layout{grid-template-columns:minmax(290px,350px) minmax(530px,1fr) minmax(300px,340px)!important}
-}
-@media(max-width:1150px){
-  .event-modalbox.repeat-panel-open .event-modal-layout{grid-template-columns:1fr!important}
-  .event-repeat-panel.open{min-height:420px}
-}
 
 
 /* =========================================================

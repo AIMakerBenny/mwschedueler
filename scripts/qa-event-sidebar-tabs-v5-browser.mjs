@@ -16,16 +16,11 @@ const tabCSS=load('assets/event-sidebar-tabs-v5.css');
 const groupsJS=load('assets/calendar-content-groups-v2.js');
 const tabsJS=load('assets/event-sidebar-tabs-v5.js');
 
-const start='<aside class="event-memo-panel event-sidebar-tabs-enabled-v5">';
-const end='</aside>';
-const a=html.indexOf(start),b=html.indexOf(end,a+start.length);
-assert(a>=0&&b>a,'V5 left sidebar markup missing');
-const aside=html.slice(a,b+end.length);
-assert(aside.includes('id="evMemoContent"'));
-assert(aside.includes('id="evContentGroupV2"'));
-assert(aside.includes('id="eventSeriesPaneV5"'));
-assert(!html.slice(html.indexOf('<section class="event-info-panel">'),html.indexOf('<label>시작 시간</label>'))
-  .includes('calendar-group-event-editor-v2'),'Group UI must no longer consume middle panel space');
+const a=html.indexOf('<div id="eventModal"'),b=html.indexOf('<div id="datePickerPopover"',a);
+assert(a>=0&&b>a,'Actual event editor markup missing');
+const modal=html.slice(a,b).replace('id="eventModal" class="modal"','id="eventModal" class="modal open"');
+assert(modal.includes('id="evMemoContent"')&&modal.includes('id="evContentGroupV2"')&&modal.includes('id="eventSeriesPaneV5"'));
+assert(modal.indexOf('class="event-info-panel"')<modal.indexOf('class="event-editor-tools-v6"'));
 assert.equal((html.match(/id="evContentGroupV2"/g)||[]).length,1);
 assert.equal((html.match(/id="evMemoContent"/g)||[]).length,1);
 assert(app.includes("window.mwsCalendarContentGroupsV2?.syncEditor(e)"));
@@ -60,11 +55,12 @@ const check=`
   const left=$('eventSeriesPaneV5').closest('.event-memo-panel');
   const center=document.querySelector('.event-info-panel');
   const insideLeft=left.contains($('evContentGroupV2'))&&!center.contains($('evContentGroupV2'));
-  const defaultSeries=!$('eventSeriesPaneV5').hidden&&$('eventMemoPaneV5').hidden
-    &&$('eventSeriesTabV5').getAttribute('aria-selected')==='true';
+  const defaultSeries=$('eventSeriesPaneV5').hidden&&$('eventMemoPaneV5').hidden
+    &&$('eventGameTabV7').getAttribute('aria-selected')==='true';
   manager.syncEditor(data.events[1]);
   const existing=$('evContentGroupV2').value==='wow'&&
-    $('eventSeriesTabV5').getAttribute('aria-selected')==='true';
+    $('eventGameTabV7').getAttribute('aria-selected')==='true';
+  $('eventSeriesTabV5').click();
   const input=$('evContentGroupSearchV3');
   input.value='SBO';input.dispatchEvent(new Event('input',{bubbles:true}));
   const result=$('evContentGroupResultsV3').querySelector('button');
@@ -86,8 +82,9 @@ const check=`
   const memoRetained=$('evMemoTitle').value==='방송 준비'&&
     $('evMemoContent').value==='기존 메모와 일정은 유지';
   manager.syncEditor(data.events[1]);
-  const resets=$('eventSeriesTabV5').getAttribute('aria-selected')==='true'
+  const resets=$('eventGameTabV7').getAttribute('aria-selected')==='true'
     &&$('evContentGroupV2').value==='wow';
+  $('eventSeriesTabV5').click();
   $('evContentGroupToggleNewV2').click();
   const formOpened=!$('evContentGroupNewWrapV2').hidden;
   $('evContentGroupNewNameV2').value='새 게임 시리즈';
@@ -98,8 +95,8 @@ const check=`
   const noSaveOnToggle=saved===1;
   const leftBox=left.getBoundingClientRect();
   const centerBox=center.getBoundingClientRect();
-  const desktop=window.innerWidth>1050;
-  const columnsValid=!desktop||centerBox.left>=leftBox.right-2;
+  const desktop=window.innerWidth>900;
+  const columnsValid=!desktop||leftBox.left>=centerBox.right-2;
   const noOverflow=document.documentElement.scrollWidth<=document.documentElement.clientWidth+2;
   const ok=insideLeft&&defaultSeries&&existing&&searchable&&selected&&memoVisible&&
      groupRetained&&memoRetained&&resets&&formOpened&&created&&eventsUnchanged&&
@@ -115,16 +112,8 @@ try{
   writeFileSync(file,`<!doctype html><html lang="ko"><head><meta charset="utf-8">
    <meta name="viewport" content="width=device-width,initial-scale=1">
    <style>${baseCSS}\n${groupCSS}\n${tabCSS}
-   #eventModal{position:static!important;display:block!important}
-   #eventModal .event-modalbox{position:relative!important;width:min(1760px,98vw)!important}
-   #eventModal .event-modal-layout{grid-template-columns:minmax(270px,340px) minmax(500px,1fr) minmax(280px,320px)!important}
-   @media(max-width:1050px){#eventModal .event-modal-layout{grid-template-columns:1fr!important}}
    </style></head><body>
-   <div id="eventModal" class="modal open"><div class="modalbox event-modalbox">
-   <div class="event-modal-layout">${aside}
-   <section class="event-info-panel"><input id="evTitle" value="SBO 연습"></section>
-   <aside class="event-game-panel-v112">게임 패널</aside>
-   </div></div></div>
+   ${modal}
    <button id="calendarGroupToggleV2" hidden></button>
    <pre id="qa-result">pending</pre>
    <script>${boot}</script><script>${groupsJS}</script><script>${tabsJS}</script><script>${check}</script>
