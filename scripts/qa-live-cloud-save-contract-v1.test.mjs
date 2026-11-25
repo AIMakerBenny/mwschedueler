@@ -74,7 +74,7 @@ test('encoded calendar feature no longer injects bottom participant strips, but 
 
 test('dashboard and shared action have one responsive layout owner; sidebar defaults closed',()=>{
  const html=source('index.html'),tools=source('assets/tools.js'),style=source('assets/workspace-clean-v1.css'),calendar=source('assets/calendar-details-v1.css');
- assert(html.includes("key='mws-sidebar-nav-groups-v2'")&&html.includes('let prefs={tools:false,games:false}'));
+ assert(html.includes("key='mws-sidebar-nav-groups-v2'")&&html.includes('let prefs={mawangContent:false,tools:false,games:false}'));
  assert(tools.includes("NAV_GROUP_PREFS_KEY='mws-sidebar-nav-groups-v2'")&&tools.includes('const out={tools:false,games:false}'));
  assert(calendar.includes('body .main>.topbar #newEventBtn::before')&&calendar.includes('body .main>.topbar #newEventBtn{'));
  assert(/id="newEventBtn" title="컨텐츠 추가" aria-label="컨텐츠 추가"><\/button>/.test(html));

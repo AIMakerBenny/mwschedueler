@@ -6,7 +6,7 @@ function attendanceModel(source,today,from='',to=today){
   for(const e of source.events||[]){
     if(!e?.id||seen.has(String(e.id))||!ids.has(String(e.categoryId))||!/^\d{4}-\d{2}-\d{2}$/.test(e.date)||e.restDay||e.cancelled===true||e.canceled===true||['cancelled','canceled'].includes(e.status)||String(e.title||'').trim()==='휴방')continue;
     seen.add(String(e.id));
-    const people=[...new Set((Array.isArray(e.participants)?e.participants:[]).map(String))].filter(id=>id!==own&&id!==String(e.autoSelfParticipantId||''));
+    const people=[...new Set((Array.isArray(e.participants)?e.participants:[]).map(String))].filter(id=>id&&id!==own&&id!==String(e.autoSelfParticipantId||''));
     const confirmed=people.filter(id=>e.participantStatuses?.[id]!=='planned');
     const planned=people.filter(id=>e.participantStatuses?.[id]==='planned');
     const ended=e.date<today;
@@ -16,26 +16,27 @@ function attendanceModel(source,today,from='',to=today){
   const completed=events.filter(e=>e.recorded),members=new Map();
   completed.forEach((e,i)=>{for(const id of e.confirmed){if(!members.has(id))members.set(id,{id,contact:contacts.get(id)||{id,name:'삭제되었거나 확인할 수 없는 연락처'},first:e.date,last:e.date,firstIndex:i,lastIndex:i,count:0});const m=members.get(id);m.last=e.date;m.lastIndex=i;m.count++;}});
   const inRange=e=>(!from||e.date>=from)&&(!to||e.date<=to);
-  const period=completed.filter(inRange),periodSet=new Set(period.map(e=>e.id));
+  const period=completed.filter(inRange),indices=new Map(completed.map((e,i)=>[e.id,i])),periodCounts=new Map();
+  for(const e of period)for(const id of e.confirmed)periodCounts.set(id,(periodCounts.get(id)||0)+1);
   const rows=[...members.values()].map(m=>{
-    const eligible=completed.slice(m.firstIndex).filter(e=>periodSet.has(e.id));
-    const count=eligible.filter(e=>e.confirmed.includes(m.id)).length;
+    const eligible=period.filter(e=>indices.get(e.id)>=m.firstIndex);
+    const count=periodCounts.get(m.id)||0;
     const missed=completed.length-1-m.lastIndex;
     const lifetime=completed.length-m.firstIndex;
     return {...m,lifetime,missed,rate:m.count/lifetime,periodCount:count,periodEligible:eligible.length,periodRate:eligible.length?count/eligible.length:null};
   }).sort((a,b)=>b.lastIndex-a.lastIndex||String(a.contact.name||'').localeCompare(String(b.contact.name||''),'ko'));
   const history=events.filter(inRange).reverse(),unknown=history.filter(e=>e.ended&&!e.recorded).length;
-  return {events,history,completed,period,rows,contacts,unknown};
+  return {events,history,completed,period,rows,contacts,unknown,byId:new Map(rows.map(r=>[r.id,r]))};
 }
 function attendanceBuckets(model,unit,person=''){
   const groups=new Map();
   const key=e=>{if(unit==='day')return e.date;if(unit==='week'){const d=new Date(e.date+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7));return d.toISOString().slice(0,10)}return e.date.slice(0,7)};
   const indices=new Map(model.completed.map((e,i)=>[e.id,i]));
-  const memberMap=new Map(model.rows.map(m=>[m.id,m]));
+  const memberMap=model.byId;
   for(const e of model.period){const k=key(e);if(!groups.has(k))groups.set(k,{key:k,sessions:0,attended:0,eligible:0});const g=groups.get(k);g.sessions++;
     const i=indices.get(e.id);
-    const eligible=person?(memberMap.has(person)&&memberMap.get(person).firstIndex<=i?[person]:[]):model.rows.filter(m=>m.firstIndex<=i).map(m=>m.id);
-    g.eligible+=eligible.length;g.attended+=eligible.filter(id=>e.confirmed.includes(id)).length;
+    if(person){if(memberMap.has(person)&&memberMap.get(person).firstIndex<=i){g.eligible++;if(e.confirmed.includes(person))g.attended++}}
+    else {g.eligible+=model.rows.reduce((n,m)=>n+(m.firstIndex<=i?1:0),0);g.attended+=e.confirmed.length;}
   }
   return [...groups.values()].map(g=>({...g,rate:g.eligible?g.attended/g.eligible:null}));
 }
@@ -49,7 +50,7 @@ function attendanceBuckets(model,unit,person=''){
  const avatar=(c,rate=null,missed=0)=>'<span class="bs-ring" style="--bs-progress:'+Math.round((rate||0)*100)+'%;--bs-ring:'+ (missed>=state.threshold?'#e6a23c':rate===null?'var(--muted)':rate>=.75?'#42c9ad':rate>=.4?'#7c9dfb':'#a4a4b5')+'">'+(typeof participantAvatarHTMLV109==='function'?participantAvatarHTMLV109(c):'<span>'+esc(String(c.name||'?').slice(0,2))+'</span>')+'</span>';
  const label=m=>m.missed>=state.threshold?'최근 미참석':m.missed===0?'최근 참석':'참석 기록 있음';
  const nameMatch=(c,q)=>window.mwsCalendarPeopleViewV1?.matchesName(c?.name||'',q)??String(c?.name||'').toLowerCase().includes(q.toLowerCase());
- function personChip(id,model,planned=false){const m=model.rows.find(x=>x.id===id),c=model.contacts.get(id)||{id,name:'확인 불가'};return '<button type="button" class="bs-person'+(planned?' bs-planned':'')+'" data-bs-member="'+esc(id)+'">'+avatar(c,m?.rate??null,m?.missed??0)+'<span>'+esc(c.name)+(planned?' <small>예정</small>':'')+'</span></button>'}
+ function personChip(id,model,planned=false){const m=model.byId.get(id),c=model.contacts.get(id)||{id,name:'확인 불가'};return '<button type="button" class="bs-person'+(planned?' bs-planned':'')+'" data-bs-member="'+esc(id)+'">'+avatar(c,m?.rate??null,m?.missed??0)+'<span>'+esc(c.name)+(planned?' <small>예정</small>':'')+'</span></button>'}
  function renderHistory(m){
    const filtered=m.history.filter(e=>!state.search||e.title.includes(state.search)||[...e.confirmed,...e.planned].some(id=>nameMatch(m.contacts.get(id),state.search)));
    const limit=state.page*12;let date='';
@@ -70,7 +71,7 @@ function attendanceBuckets(model,unit,person=''){
  }
  function draw(){
    if(!source||!today)return;
-   const model=attendanceModel(source,today,state.from,state.to||'9999-12-31');
+   const model=attendanceModel(source,today,state.tab==='members'?'':state.from,state.tab==='members'?'9999-12-31':state.to||'9999-12-31');
    if(state.person&&!model.rows.some(r=>r.id===state.person))state.person='';
    const count=model.period.length,unique=new Set(model.period.flatMap(e=>e.confirmed)).size,avg=count?model.period.reduce((s,e)=>s+e.confirmed.length,0)/count:null;
    root.querySelectorAll('[data-bs-tab]').forEach(b=>{const active=b.dataset.bsTab===state.tab;b.setAttribute('aria-selected',String(active));b.classList.toggle('active',active)});

@@ -9,6 +9,8 @@ on:
       - 'assets/bsandong-v1.js'
       - 'assets/bsandong-v1.css'
       - 'scripts/qa-bsandong-v1.test.mjs'
+      - 'scripts/qa-bsandong-v1-browser.mjs'
+      - 'scripts/qa-workspace-navigation-v1-browser.mjs'
       - 'scripts/qa-legacy-hub-v1.test.mjs'
       - 'scripts/run-phase116-wardogs-navigation-shell-audit.mjs'
       - '.github/workflows/qa-legacy-hub-v1.yml'
@@ -31,3 +33,5 @@ jobs:
           node --check assets/bsandong-v1.js
           node --test scripts/qa-bsandong-v1.test.mjs scripts/qa-legacy-hub-v1.test.mjs
           node scripts/run-phase116-wardogs-navigation-shell-audit.mjs
+          node scripts/qa-bsandong-v1-browser.mjs
+          node scripts/qa-workspace-navigation-v1-browser.mjs
