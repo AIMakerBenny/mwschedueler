@@ -33,6 +33,19 @@ const cdnServer=createServer((req,res)=>{
  res.end(req.method==='HEAD'?undefined:png);
 });
 const featureOnly=process.env.MWS_QA_FEATURES_ONLY==='1';
+const firstPaintQA=process.env.MWS_QA_FIRST_PAINT==='1';
+const frameObserver=String.raw`
+  window.qaPaintFrames=[];
+  const take=()=>{
+   const q=s=>document.querySelector(s),side=q('.app>.sidebar'),main=q('.app>.main'),cal=q('#calendar'),tray=q('#calendarCopyTray'),tool=q('#calendarCopyTrayToggleV4'),y=q('#calendarYearSelect'),m=q('#calendarMonthSelect');
+   if(side&&main&&cal&&tray&&tool&&y&&m&&q('#calendarGrid')){
+    const css=getComputedStyle(tool),sr=side.getBoundingClientRect(),mr=main.getBoundingClientRect(),date=new Date();
+    const appVisible=main.getBoundingClientRect().width>0&&getComputedStyle(main).visibility==='visible'&&getComputedStyle(main).display!=='none'&&getComputedStyle(main).opacity!=='0';
+    if(appVisible&&window.qaPaintFrames.length<900)window.qaPaintFrames.push({t:performance.now(),ready:document.body.dataset.calendarStartup==='ready',loading:document.body.classList.contains('mws-app-loading'),tray:getComputedStyle(tray).display,toolFont:css.fontSize,toolIcon:getComputedStyle(tool,'::before').maskImage!=='none',year:y.value,month:m.value,correctDate:y.value===String(date.getFullYear())&&m.value===String(date.getMonth()),sideLeft:sr.left,sideWidth:sr.width,mainLeft:mr.left,mainBorder:getComputedStyle(main).borderColor,mainBg:getComputedStyle(main).backgroundColor});
+   }
+   if(window.qaPaintFrames.length<900)requestAnimationFrame(take);
+  };requestAnimationFrame(take);
+ `;
 const scale=Number(process.env.MWS_QA_SCALE_CONTACTS||0),scalePosts=scale>=500?50:10;
 assert(!scale||[100,300,500,1000].includes(scale),'Explicit synthetic scale only');
 const upstream=[];
@@ -71,13 +84,18 @@ const server=createServer(async(req,res)=>{
  try{
   const u=new URL(req.url,base+':'+server.address().port),method=req.method||'GET',body=[];
   for await(const chunk of req)body.push(chunk);
+  if(firstPaintQA&&u.pathname==='/assets/app-core.js')await new Promise(r=>setTimeout(r,1200));
+  if(firstPaintQA&&u.pathname==='/assets/calendar-details-v1.css')await new Promise(r=>setTimeout(r,400));
+  if(firstPaintQA&&u.pathname==='/api/calendar-startup')await new Promise(r=>setTimeout(r,350));
   const request=new Request(u,{method,headers:req.headers,...(!['GET','HEAD'].includes(method)?{body:Buffer.concat(body)}:{})});
   const counted=workerFirst(u.pathname);if(counted)arrivals.push({path:u.pathname,method,at:Date.now()});
   const response=await (counted?worker.fetch(request,env,ctx):ASSETS.fetch(request));
   if(counted)calls.push({path:u.pathname,method,status:response.status,...(u.pathname==='/api/save'&&method==='POST'?{parts:Object.keys(JSON.parse(Buffer.concat(body).toString()).parts||{})}:{})});
   res.statusCode=response.status;for(const [key,value] of response.headers)if(!['content-length','content-encoding','transfer-encoding'].includes(key))res.setHeader(key,value);
   if(u.pathname==='/'||u.pathname==='/index.html')res.setHeader('content-security-policy',useCdn?csp.replace("connect-src 'self'","connect-src 'self' "+cdnOrigin).replace("img-src 'self'","img-src 'self' "+cdnOrigin):csp);
-  res.end(method==='HEAD'?undefined:Buffer.from(await response.arrayBuffer()));
+  let bytes=Buffer.from(await response.arrayBuffer());
+  if(firstPaintQA&&(u.pathname==='/'||u.pathname==='/index.html')&&response.status===200)bytes=Buffer.from(bytes.toString('utf8').replace('<head>','<head><script>'+frameObserver+'</script>'));
+  res.end(method==='HEAD'?undefined:bytes);
  }catch(e){errors.push(String(e));res.writeHead(500).end('fixture error')}
 });
 const dir=mkdtempSync(path.join(tmpdir(),'mws-full-request-'));let browser;
@@ -88,7 +106,9 @@ const common=r=>r.path==='/api/calendar-startup'||r.path==='/api/manifest'||r.pa
 try{
  if(useCdn){await new Promise(r=>cdnServer.listen(0,'127.0.0.1',r));cdnOrigin=base+':'+cdnServer.address().port;env.MWS_PUBLIC_MEDIA_CDN_ORIGIN=cdnOrigin}
  await new Promise(r=>server.listen(0,'127.0.0.1',r));browser=await launchCalendarBrowser(dir);
- await browser.navigate(base+':'+server.address().port+'/',1366,768);
+
+ const viewport=firstPaintQA&&process.env.MWS_QA_FIRST_PAINT_WIDE==='1'?[1920,1080]:[1366,768];
+ await browser.navigate(base+':'+server.address().port+'/',...viewport);
  await until(()=>browser.evaluate("(()=>{document.querySelector('#mwsAnnouncementDialog[open] .mws-notice-close')?.click();if(document.body.classList.contains('mws-gated')){document.querySelector('#mwsModePublic')?.click();document.querySelector('#mwsLoginSubmit')?.click()}return !!window.__mwsAppReadyV130&&document.body.dataset.mwsMode==='public'&&!document.body.classList.contains('mws-gated')&&!document.body.classList.contains('mws-app-loading')})()"),'Full app public readiness');
  await until(()=>browser.evaluate('!!window.__mwsMediaPreloadPromiseV1'),'Media preloader scheduled');
  await browser.evaluate('window.__mwsMediaPreloadPromiseV1.then(()=>true)');
@@ -106,7 +126,28 @@ try{
  const routes=['calendar','contacts','dashboard','memos','careerTimeline','achievements','mawangArchive','gameLadder','gameMultiDraw','contentPlanner','toolTier','toolMatrix','toolRelations','settings','calendar'];
  const nav=async list=>browser.evaluate('(async()=>{for(const id of '+JSON.stringify(list)+'){window.setTab(id);await new Promise(r=>setTimeout(r,450));if(!document.getElementById(id)?.classList.contains("active"))throw Error("route "+id)}return true})()');
  let before=calls.length;
- if(process.env.MWS_QA_SIDEBAR_HOVER==='1'){
+ if(firstPaintQA){
+  const verify=async phase=>{
+   const frames=await browser.evaluate('window.qaPaintFrames.slice()');
+   const pending=frames.filter(f=>!f.ready),ready=frames.filter(f=>f.ready);
+   assert(pending.length>=3&&ready.length>=3,'Insufficient startup frames '+JSON.stringify({pending:pending.length,ready:ready.length}));
+   const bad=frames.filter(f=>f.tray!=='none'||f.toolFont!=='0px'||!f.toolIcon||!f.correctDate);
+   assert.equal(bad.length,0,'Legacy controls visible: '+JSON.stringify(bad.slice(0,4)));
+   const settled=ready.at(-1);
+   const geometry=frames.filter(f=>Math.abs(f.sideLeft-settled.sideLeft)>2||Math.abs(f.sideWidth-settled.sideWidth)>2||Math.abs(f.mainLeft-settled.mainLeft)>2||f.mainBorder!==settled.mainBorder||f.mainBg!==settled.mainBg);
+   assert.equal(geometry.length,0,'Visible layout changed: '+JSON.stringify({first:geometry.slice(0,3),settled}));
+   console.log('FIRST_PAINT_STAGE1_OK '+JSON.stringify({phase,viewport,frames:frames.length,pending:pending.length,ready:ready.length,first:frames[0],last:settled}));
+  };
+  await verify('cold');
+  await browser.evaluate("document.getElementById('calendarCopyTrayToggleV4').click()");
+  assert.equal(await browser.evaluate("document.getElementById('calendarCopyTray').hidden"),false);
+  await browser.evaluate("document.getElementById('calendarCopyTrayCloseV4').click()");
+  assert.equal(await browser.evaluate("document.getElementById('calendarCopyTray').hidden"),true);
+  const previousOrigin=await browser.evaluate('performance.timeOrigin');
+  await browser.reload(false);
+  await until(async()=>{try{return await browser.evaluate("performance.timeOrigin!=="+previousOrigin+"&&!!window.__mwsAppReadyV130&&!document.body.classList.contains('mws-app-loading')&&document.body.dataset.calendarStartup==='ready'&&window.qaPaintFrames?.filter(f=>f.ready).length>=5")}catch{return false}},'Reload ready');
+  await pause(350);await verify('warm');
+ }else if(process.env.MWS_QA_SIDEBAR_HOVER==='1'){
   const state=()=>browser.evaluate("(()=>{const s=document.querySelector('.app>.sidebar'),r=s.getBoundingClientRect(),m=document.querySelector('.main').getBoundingClientRect(),l=s.querySelector('[data-tab=calendar] .nav-label');return {expanded:s.classList.contains('mws-sidebar-expanded-v2'),left:r.left,right:r.right,width:r.width,top:r.top,mainLeft:m.left,label:getComputedStyle(l).visibility,pinned:document.body.classList.contains('sidebar-pinned')}})()");
   await browser.movePoint(500,300);
   await browser.evaluate("(()=>{if(document.body.classList.contains('sidebar-pinned'))document.getElementById('sidebarPinBtn').click();return true})()");await pause(250);

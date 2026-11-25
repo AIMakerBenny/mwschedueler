@@ -36,6 +36,9 @@ jobs:
           node --check --input-type=commonjs < assets/app-core.js
           node --check assets/bsandong-v1.js
           node --check assets/sidebar-hover-v2.js
+          node --check assets/calendar-details-v1.js
+          MWS_QA_FIRST_PAINT=1 node scripts/qa-request-budget-full-app-v2-browser.mjs
+          MWS_QA_FIRST_PAINT=1 MWS_QA_FIRST_PAINT_WIDE=1 node scripts/qa-request-budget-full-app-v2-browser.mjs
           MWS_QA_SIDEBAR_HOVER=1 node scripts/qa-request-budget-full-app-v2-browser.mjs
           node --check assets/calendar-content-groups-v2.js
           node --check assets/calendar-details-v1.js

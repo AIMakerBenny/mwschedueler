@@ -18,6 +18,7 @@ body.sidebar-pinned .app{grid-template-columns:220px minmax(0,1fr)}
 .mws-archive-wiki svg{display:block;width:14px;height:14px;max-width:100%;max-height:100%}
 .mws-archive-kicker,.mws-archive-wiki,.ma-header-filters{display:none}
 body.mws-app-loading .main>.section:not(.active){display:none!important}
+#calendarCopyTray[hidden]{display:none!important}
 @media(max-width:760px){.app,body.sidebar-pinned .app{grid-template-columns:minmax(0,1fr)}}
 </style>
 <script id="mws-first-paint-asset-monitor">
@@ -136,6 +137,733 @@ body[data-mws-mode="admin"] .sidebar-build-version-v53{display:block}
 .nav-game-divider[data-mws-nav-group].collapsed em:after{transform:rotate(-45deg)}
 body:not(.sidebar-pinned) .sidebar:not(.mws-sidebar-expanded-v2) .nav-game-divider[data-mws-nav-group] em{display:none}
 </style>
+<!-- Preserve the existing static cascade; all layout styles must precede visible markup. -->
+<style id="v415-post-schedule-style">
+.post-detail-actions-v415{display:flex;flex-direction:column;align-items:flex-end;gap:9px;flex:0 0 auto}
+.post-detail-actions-main-v415{justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.post-schedule-create-btn-v415{
+  min-width:174px;min-height:40px;padding:9px 16px;border-radius:11px;
+  border:1px solid rgba(132,225,255,.76);color:#effbff;font-weight:950;font-size:12px;
+  background:linear-gradient(135deg,#14c8ef,#2476ff);cursor:var(--mws-cursor-pointer,pointer);
+  box-shadow:0 10px 24px rgba(20,133,255,.22),0 0 18px rgba(20,200,239,.12);
+  transition:transform .14s ease,filter .14s ease,box-shadow .14s ease;
+}
+.post-schedule-create-btn-v415:hover{transform:translateY(-1px);filter:brightness(1.07);box-shadow:0 13px 30px rgba(20,133,255,.28),0 0 22px rgba(20,200,239,.17)}
+.post-schedule-create-btn-v415:active{transform:translateY(0) scale(.985)}
+.post-schedule-create-btn-v415:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:none}
+.post-schedule-prefill-note-v415{margin:0 0 12px;padding:10px 12px;border:1px solid rgba(43,161,255,.32);border-radius:11px;background:rgba(20,112,200,.08);color:#acd9ff;font-size:11px;line-height:1.55}
+@media(max-width:1150px){.post-detail-actions-v415{width:100%;align-items:stretch}.post-detail-actions-main-v415{justify-content:flex-start}.post-schedule-create-btn-v415{align-self:flex-start}}
+body[data-resolution="mobile"] .post-detail-actions-v415{width:100%;align-items:stretch}
+body[data-resolution="mobile"] .post-detail-actions-main-v415{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+body[data-resolution="mobile"] .post-schedule-create-btn-v415{width:100%;min-height:44px;font-size:13px}
+
+/* v4.17 - contact photo folder updater */
+#contactPhotoFolderStatus.photo-status-working{
+  color:#9fdcff;border-color:rgba(52,179,255,.58);background:rgba(30,142,216,.12)
+}
+#contactPhotoFolderStatus.photo-status-success{
+  color:#8df0bd;border-color:rgba(62,205,137,.58);background:rgba(42,174,112,.12)
+}
+#contactPhotoFolderStatus.photo-status-warning{
+  color:#ffd48c;border-color:rgba(224,164,59,.58);background:rgba(201,139,37,.12)
+}
+#contactPhotoFolderStatus.photo-status-error{
+  color:#ff9da9;border-color:rgba(225,78,98,.58);background:rgba(189,48,68,.12)
+}
+.photo-folder-result-v416 .photo-update-summary{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px
+}
+.photo-folder-result-v416 .photo-update-stat{
+  padding:9px 10px;border:1px solid var(--border);border-radius:10px;background:color-mix(in srgb,var(--panel) 58%,var(--input))
+}
+.photo-folder-result-v416 .photo-update-stat strong{
+  display:block;font-size:17px;line-height:1.1;margin-top:2px
+}
+.photo-folder-result-v416 .photo-update-detail{
+  margin-top:7px;padding-top:7px;border-top:1px solid var(--border);color:var(--muted)
+}
+
+</style>
+<style id="v418-random-gacha-style">
+#gameMultiDraw .gacha-stage-card-v418{overflow:hidden!important}
+#gameMultiDraw .gacha-topbar-v418{margin-bottom:0}
+#gameMultiDraw .gacha-layout-v418{display:grid;grid-template-columns:minmax(0,1fr) 318px;gap:20px;min-height:880px;align-items:stretch}
+#gameMultiDraw .gacha-main-stage-v418{
+  position:relative;min-height:820px;border-radius:28px;overflow:hidden;
+  border:1px solid rgba(136,162,255,.18);
+  background:linear-gradient(180deg,rgba(7,11,24,.98),rgba(3,6,15,1));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.035),0 24px 55px rgba(0,0,0,.32)
+}
+#gameMultiDraw .gacha-stage-bg-v418{position:absolute;inset:0;background:
+  radial-gradient(circle at 50% 58%,rgba(81,113,255,.12),transparent 24%),
+  radial-gradient(circle at 50% 74%,rgba(160,112,255,.14),transparent 28%),
+  linear-gradient(180deg,rgba(14,24,53,.62),rgba(5,9,19,.95) 45%,rgba(3,5,10,.98));}
+#gameMultiDraw .gacha-stage-grid-v418{position:absolute;left:-10%;right:-10%;bottom:-16%;height:58%;background-image:linear-gradient(rgba(92,122,204,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(92,122,204,.08) 1px,transparent 1px);background-size:46px 46px;transform:perspective(780px) rotateX(67deg);opacity:.58;mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.75) 20%,rgba(0,0,0,.96) 100%)}
+#gameMultiDraw .gacha-stage-glow-v418{position:absolute;left:50%;bottom:9%;width:70%;height:19%;transform:translateX(-50%);background:radial-gradient(ellipse at center,rgba(103,112,255,.2),rgba(56,74,167,.08) 42%,transparent 76%);filter:blur(10px)}
+#gameMultiDraw .gacha-stage-flash-v418{position:absolute;inset:0;background:radial-gradient(circle at center,rgba(255,255,255,.94),rgba(163,183,255,.46) 14%,rgba(104,123,255,.18) 28%,transparent 52%);opacity:0;pointer-events:none;mix-blend-mode:screen}
+#gameMultiDraw .gacha-stage-sparks-v418{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:7}
+#gameMultiDraw .gacha-spark-v418{position:absolute;width:4px;height:4px;border-radius:50%;background:#fff;box-shadow:0 0 10px rgba(255,255,255,.95),0 0 18px rgba(126,189,255,.85);opacity:0;animation:gachaSparkV418 .82s ease-out forwards}
+@keyframes gachaSparkV418{0%{transform:translateY(0) scale(.6);opacity:0}20%{opacity:1}100%{transform:translateY(-110px) scale(1.15);opacity:0}}
+#gameMultiDraw .gacha-stage-brand-v418{position:absolute;left:28px;top:24px;z-index:6;display:flex;flex-direction:column;gap:2px;color:#edf1ff;letter-spacing:.18em;text-shadow:0 0 18px rgba(113,120,255,.2)}
+#gameMultiDraw .gacha-stage-brand-v418 span{font-size:18px;font-weight:1000}
+#gameMultiDraw .gacha-stage-brand-v418 small{font-size:8px;font-weight:900;color:#97a4c5;letter-spacing:.22em}
+#gameMultiDraw .gacha-stage-caption-v418{position:absolute;left:50%;top:28px;transform:translateX(-50%);z-index:6;padding:10px 18px;border-radius:999px;border:1px solid rgba(154,174,255,.18);background:rgba(7,11,22,.68);color:#c5d0ee;font-size:12px;font-weight:850;letter-spacing:.06em;backdrop-filter:blur(8px)}
+#gameMultiDraw .gacha-stage-nameplate-v418{position:absolute;left:50%;top:84px;transform:translateX(-50%);z-index:6;font-size:clamp(24px,2vw,36px);font-weight:1000;letter-spacing:.08em;color:#f5f8ff;text-shadow:0 0 24px rgba(131,143,255,.35)}
+#gameMultiDraw .gacha-deck-zone-v418{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);width:min(40%,280px);height:380px;z-index:5;display:flex;align-items:center;justify-content:center;transition:transform .25s ease,opacity .35s ease,filter .25s ease}
+#gameMultiDraw .gacha-deck-shadow-v418{position:absolute;left:50%;bottom:2%;width:92%;height:64px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse at center,rgba(98,102,255,.28),rgba(26,31,63,.08) 42%,transparent 74%);filter:blur(7px)}
+#gameMultiDraw .gacha-deck-stack-v418{position:relative;width:220px;height:316px;filter:drop-shadow(0 24px 34px rgba(0,0,0,.42))}
+#gameMultiDraw .gacha-deck-stack-v418 .deck-card{position:absolute;inset:0;border-radius:24px;border:1px solid rgba(200,210,255,.22);background:linear-gradient(160deg,rgba(29,44,93,.98),rgba(13,18,34,.98) 42%,rgba(61,40,128,.94));overflow:hidden}
+#gameMultiDraw .gacha-deck-stack-v418 .deck-card::before{content:'MW';position:absolute;inset:0;display:grid;place-items:center;font-size:56px;font-weight:1000;letter-spacing:.05em;color:rgba(238,242,255,.9);text-shadow:0 0 34px rgba(117,108,255,.6)}
+#gameMultiDraw .gacha-deck-stack-v418 .deck-card::after{content:'';position:absolute;inset:16px;border-radius:18px;border:1px solid rgba(117,190,255,.16);background:linear-gradient(112deg,transparent 12%,rgba(255,255,255,.08) 34%,transparent 55%);transform:translateX(-35%)}
+#gameMultiDraw .gacha-deck-stack-v418 .c1{transform:translate(-24px,15px) rotate(-6deg);opacity:.38}
+#gameMultiDraw .gacha-deck-stack-v418 .c2{transform:translate(-12px,8px) rotate(-3.2deg);opacity:.5}
+#gameMultiDraw .gacha-deck-stack-v418 .c3{transform:translate(0,4px);opacity:.78}
+#gameMultiDraw .gacha-deck-stack-v418 .c4{transform:translate(10px,8px) rotate(3deg);opacity:.55}
+#gameMultiDraw .gacha-deck-stack-v418 .c5{transform:translate(22px,15px) rotate(6deg);opacity:.38}
+#gameMultiDraw .gacha-deck-chip-v418{position:absolute;bottom:0;padding:8px 13px;border-radius:999px;border:1px solid rgba(131,151,255,.22);background:rgba(6,10,21,.84);font-size:9px;font-weight:950;letter-spacing:.22em;color:#aab8dd}
+#gameMultiDraw .gacha-reveal-anchor-v418{position:absolute;inset:0;display:grid;place-items:center;z-index:8;pointer-events:none}
+#gameMultiDraw .gacha-reveal-card-v418{position:relative;width:min(72%,540px);height:min(84%,720px);opacity:0;transform:translateY(20px) scale(.42);transition:opacity .25s ease,transform .25s ease}
+#gameMultiDraw .gacha-reveal-card-v418.show{opacity:1}
+#gameMultiDraw .gacha-reveal-card-v418.final{transform:translateY(0) scale(1);animation:gachaRevealFinalV418 .95s cubic-bezier(.2,.78,.17,1) forwards}
+@keyframes gachaRevealFinalV418{0%{transform:translateY(90px) scale(.32) rotate(-7deg);filter:brightness(1.2)}55%{transform:translateY(-10px) scale(1.05) rotate(1deg)}100%{transform:translateY(0) scale(1) rotate(0deg);filter:brightness(1)}}
+#gameMultiDraw .gacha-result-card-v418{position:relative;width:100%;height:100%;border-radius:34px;padding:14px;background:linear-gradient(155deg,rgba(255,255,255,.92),rgba(153,135,255,.58) 16%,rgba(25,33,63,.98) 46%,rgba(69,52,142,.98) 78%,rgba(255,255,255,.75));box-shadow:0 0 0 2px rgba(255,255,255,.72),0 0 0 9px rgba(130,89,255,.22),0 34px 80px rgba(0,0,0,.58),0 0 70px rgba(117,119,255,.42);overflow:hidden}
+#gameMultiDraw .gacha-result-card-v418::before{content:'';position:absolute;inset:-40%;background:linear-gradient(112deg,transparent 32%,rgba(255,255,255,.38) 45%,rgba(125,214,255,.3) 52%,transparent 62%);transform:translateX(-78%) rotate(6deg);animation:gachaCardShineV418 2.2s ease-in-out infinite}
+@keyframes gachaCardShineV418{58%,100%{transform:translateX(78%) rotate(6deg)}}
+#gameMultiDraw .gacha-result-inner-v418{position:relative;height:100%;border-radius:25px;background:linear-gradient(180deg,#121a31,#080d18);overflow:hidden;border:1px solid rgba(255,255,255,.2);display:flex;flex-direction:column}
+#gameMultiDraw .gacha-result-media-v418{height:80%;background:radial-gradient(circle at 50% 28%,rgba(160,132,255,.28),transparent 58%),#0d1423;display:grid;place-items:center;overflow:hidden}
+#gameMultiDraw .gacha-result-media-v418 img{width:100%;height:100%;object-fit:cover}
+#gameMultiDraw .gacha-result-fallback-v418{width:170px;height:170px;border-radius:50%;display:grid;place-items:center;border:5px solid rgba(255,255,255,.68);background:linear-gradient(145deg,#9367ff,#402d80);font-size:56px;font-weight:1000;color:#fff;box-shadow:0 0 42px rgba(137,99,246,.56)}
+#gameMultiDraw .gacha-result-body-v418{flex:1;padding:18px 22px;background:linear-gradient(180deg,rgba(22,30,52,.96),rgba(6,10,20,.98));text-align:center;display:flex;flex-direction:column;justify-content:center;gap:8px}
+#gameMultiDraw .gacha-result-kicker-v418{font-size:12px;letter-spacing:.22em;color:#c8b3ff;font-weight:1000}
+#gameMultiDraw .gacha-result-name-v418{font-size:clamp(38px,2.6vw,50px);line-height:1.02;font-weight:1000;color:#fff;text-shadow:0 0 18px rgba(110,105,255,.24)}
+#gameMultiDraw .gacha-result-sub-v418{font-size:14px;color:#b7c1d9;letter-spacing:.08em}
+#gameMultiDraw .gacha-result-order-v418{font-size:15px;font-weight:1000;color:#ffd971;letter-spacing:.12em}
+#gameMultiDraw .gacha-result-card-v418.compact{border-radius:18px;padding:6px;box-shadow:0 0 0 1px rgba(255,255,255,.18),0 14px 28px rgba(0,0,0,.18),0 0 20px rgba(117,119,255,.16)}
+#gameMultiDraw .gacha-result-card-v418.compact::before{display:none}
+#gameMultiDraw .gacha-result-card-v418.compact .gacha-result-inner-v418{border-radius:14px}
+#gameMultiDraw .gacha-result-card-v418.compact .gacha-result-media-v418{height:100%;min-height:82px}
+#gameMultiDraw .gacha-result-card-v418.compact .gacha-result-body-v418{padding:8px 10px;gap:2px}
+#gameMultiDraw .gacha-result-card-v418.compact .gacha-result-kicker-v418{font-size:8px;letter-spacing:.12em}
+#gameMultiDraw .gacha-result-card-v418.compact .gacha-result-name-v418{font-size:16px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#gameMultiDraw .gacha-result-card-v418.compact .gacha-result-sub-v418{font-size:9px;text-align:left}
+#gameMultiDraw .gacha-result-card-v418.compact .gacha-result-order-v418{font-size:10px;text-align:left}
+#gameMultiDraw .gacha-selected-dock-v418{display:flex;flex-direction:column;min-height:820px;padding:16px;border-radius:24px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(8,11,22,.94),rgba(12,17,30,.92));overflow:hidden}
+#gameMultiDraw .gacha-selected-head-v418{padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.08)}
+#gameMultiDraw .gacha-selected-head-v418 span{letter-spacing:.16em;font-size:12px;color:#c4b4ff;font-weight:1000}
+#gameMultiDraw .gacha-selected-head-v418 strong{font-size:22px}
+#gameMultiDraw .gacha-selected-list-v418{display:grid;grid-template-columns:1fr;gap:12px;overflow:auto;padding-right:4px;margin-top:12px;align-content:start}
+#gameMultiDraw .gacha-selected-item-v418{display:grid;grid-template-columns:72px minmax(0,1fr);gap:10px;padding:10px;border-radius:16px;border:1px solid rgba(146,118,255,.24);background:linear-gradient(145deg,rgba(86,57,169,.16),rgba(6,9,17,.96));align-items:center}
+#gameMultiDraw .gacha-selected-item-v418 .thumb{width:72px;height:96px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.14);background:#0d1320;display:grid;place-items:center}
+#gameMultiDraw .gacha-selected-item-v418 .thumb img{width:100%;height:100%;object-fit:cover}
+#gameMultiDraw .gacha-selected-item-v418 .meta{min-width:0}
+#gameMultiDraw .gacha-selected-item-v418 .name{font-size:16px;font-weight:1000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#gameMultiDraw .gacha-selected-item-v418 .order{margin-top:6px;font-size:10px;letter-spacing:.15em;color:#c5b2ff;font-weight:900}
+#gameMultiDraw .gacha-selected-empty-v418{margin-top:12px;padding:14px 12px;border:1px dashed rgba(166,132,255,.34);border-radius:14px;color:#aeb8d3;font-size:11px;line-height:1.55;text-align:center}
+#gameMultiDraw .gacha-charge-panel-v418{margin-top:18px}
+#gameMultiDraw .gacha-gauge-track-v418{height:18px}
+#gameMultiDraw .gacha-gauge-fill-v418{background:linear-gradient(90deg,#4ce0ff,#737bff 46%,#c77bff 100%)!important;box-shadow:0 0 20px rgba(89,153,255,.35),0 0 28px rgba(160,104,255,.28)}
+#gameMultiDraw .gacha-fire-btn-v418{min-height:60px;font-size:20px;font-weight:1000;letter-spacing:.04em;background:linear-gradient(135deg,#3fc2ff,#3276ff)!important;border-color:rgba(199,230,255,.8)!important;box-shadow:0 18px 36px rgba(36,110,255,.22),0 0 30px rgba(63,194,255,.14)}
+#gameMultiDraw .gacha-fire-btn-v418.charging{background:linear-gradient(135deg,#7c59ff,#b06fff)!important;box-shadow:0 22px 38px rgba(102,77,255,.28),0 0 30px rgba(176,111,255,.18)}
+#gameMultiDraw .gacha-winner-board-v418{margin-top:16px}
+#gameMultiDraw .gacha-winner-slots-v418{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+#gameMultiDraw .gacha-winner-slot-v418{display:grid;grid-template-columns:74px minmax(0,1fr);gap:12px;align-items:center;padding:12px;border-radius:16px;border:1px solid rgba(143,117,255,.24);background:linear-gradient(145deg,rgba(82,48,155,.14),rgba(7,11,20,.96))}
+#gameMultiDraw .gacha-winner-slot-v418 .thumb{width:74px;height:98px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.14);background:#0d1320;display:grid;place-items:center}
+#gameMultiDraw .gacha-winner-slot-v418 .thumb img{width:100%;height:100%;object-fit:cover}
+#gameMultiDraw .gacha-winner-slot-v418 .name{font-size:20px;font-weight:1000;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#gameMultiDraw .gacha-winner-slot-v418 .order{font-size:11px;letter-spacing:.18em;color:#c8b1ff;font-weight:900}
+#gameMultiDraw .gacha-winner-slot-v418 .sub{margin-top:5px;font-size:11px;color:#9fb0cf}
+#gameMultiDraw .gacha-empty-slot-v418{min-height:122px;display:grid;place-items:center;padding:14px;border-radius:16px;border:1px dashed rgba(143,117,255,.24);color:#7080a3;font-size:12px;text-align:center}
+#gameMultiDraw .gacha-main-stage-v418.is-charging .gacha-deck-zone-v418{transform:translate(-50%,-52%) scale(1.04);filter:brightness(1.06)}
+#gameMultiDraw .gacha-main-stage-v418.is-charging .gacha-stage-glow-v418{background:radial-gradient(ellipse at center,rgba(151,112,255,.3),rgba(71,80,186,.08) 42%,transparent 76%)}
+#gameMultiDraw .gacha-main-stage-v418.is-charging .gacha-stage-caption-v418{color:#f1e9ff;border-color:rgba(194,165,255,.32);box-shadow:0 0 24px rgba(152,109,255,.14)}
+#gameMultiDraw .gacha-main-stage-v418.is-charging .gacha-deck-stack-v418 .c1{animation:gachaDeckShuffleV418 .55s ease-in-out infinite}
+#gameMultiDraw .gacha-main-stage-v418.is-charging .gacha-deck-stack-v418 .c2{animation:gachaDeckShuffleV418 .62s ease-in-out infinite reverse}
+#gameMultiDraw .gacha-main-stage-v418.is-charging .gacha-deck-stack-v418 .c3{animation:gachaDeckShuffleV418 .5s ease-in-out infinite}
+#gameMultiDraw .gacha-main-stage-v418.is-charging .gacha-deck-stack-v418 .c4{animation:gachaDeckShuffleV418 .66s ease-in-out infinite reverse}
+#gameMultiDraw .gacha-main-stage-v418.is-charging .gacha-deck-stack-v418 .c5{animation:gachaDeckShuffleV418 .58s ease-in-out infinite}
+@keyframes gachaDeckShuffleV418{0%,100%{}25%{transform:translate(-10px,-8px) rotate(-4deg)}50%{transform:translate(10px,-14px) rotate(5deg)}75%{transform:translate(-5px,-6px) rotate(-2deg)}}
+#gameMultiDraw .gacha-main-stage-v418.is-shuffling .gacha-deck-zone-v418{transform:translate(-50%,-58%) scale(.94)}
+#gameMultiDraw .gacha-main-stage-v418.is-shuffling .gacha-stage-caption-v418{color:#eaf3ff}
+#gameMultiDraw .gacha-main-stage-v418.is-shuffling .gacha-stage-flash-v418{animation:gachaFlashV418 .7s ease-out 1}
+#gameMultiDraw .gacha-main-stage-v418.has-result .gacha-deck-zone-v418{opacity:.12;transform:translate(-50%,-55%) scale(.84);filter:blur(2px)}
+#gameMultiDraw .gacha-main-stage-v418.has-result .gacha-stage-glow-v418{background:radial-gradient(ellipse at center,rgba(178,144,255,.32),rgba(73,81,194,.08) 42%,transparent 76%)}
+@keyframes gachaFlashV418{0%{opacity:0}20%{opacity:1}100%{opacity:0}}
+@media(max-width:1500px){
+  #gameMultiDraw .gacha-layout-v418{grid-template-columns:minmax(0,1fr) 290px;min-height:820px}
+  #gameMultiDraw .gacha-main-stage-v418,#gameMultiDraw .gacha-selected-dock-v418{min-height:760px}
+  #gameMultiDraw .gacha-reveal-card-v418{width:min(70%,500px);height:min(82%,660px)}
+  #gameMultiDraw .gacha-result-name-v418{font-size:42px}
+}
+@media(max-width:1180px){
+  #gameMultiDraw .gacha-layout-v418{grid-template-columns:1fr;min-height:auto}
+  #gameMultiDraw .gacha-selected-dock-v418{min-height:240px}
+  #gameMultiDraw .gacha-selected-list-v418{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+}
+body[data-resolution="mobile"] #gameMultiDraw .gacha-layout-v418{grid-template-columns:1fr;gap:14px;min-height:auto}
+body[data-resolution="mobile"] #gameMultiDraw .gacha-main-stage-v418{min-height:560px;border-radius:22px}
+body[data-resolution="mobile"] #gameMultiDraw .gacha-selected-dock-v418{min-height:220px;padding:12px}
+body[data-resolution="mobile"] #gameMultiDraw .gacha-reveal-card-v418{width:min(78%,340px);height:min(78%,470px)}
+body[data-resolution="mobile"] #gameMultiDraw .gacha-result-name-v418{font-size:30px}
+body[data-resolution="mobile"] #gameMultiDraw .gacha-result-body-v418{padding:14px 16px}
+body[data-resolution="mobile"] #gameMultiDraw .gacha-stage-caption-v418{top:16px;left:14px;right:14px;transform:none;text-align:center}
+body[data-resolution="mobile"] #gameMultiDraw .gacha-stage-nameplate-v418{top:64px;font-size:22px}
+body[data-resolution="mobile"] #gameMultiDraw .gacha-fire-btn-v418{font-size:18px;min-height:56px}
+</style>
+<style id="v419-gacha-auto-style">
+#gameMultiDraw .gacha-action-row-v419{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(230px,.7fr);gap:12px;align-items:stretch}
+#gameMultiDraw .gacha-action-row-v419 .gacha-fire-btn-v418{width:100%;margin:0}
+#gameMultiDraw .gacha-auto-btn-v419{
+  min-height:60px;padding:0 18px;border-radius:13px;cursor:var(--mws-cursor-pointer,pointer);
+  border:1px solid rgba(94,238,199,.62);color:#eafff8;font-size:17px;font-weight:1000;letter-spacing:.02em;
+  background:linear-gradient(135deg,rgba(16,168,139,.96),rgba(34,118,183,.96));
+  box-shadow:0 16px 34px rgba(16,148,132,.18),0 0 24px rgba(57,218,185,.1);
+  transition:transform .14s ease,filter .14s ease,box-shadow .14s ease,opacity .14s ease
+}
+#gameMultiDraw .gacha-auto-btn-v419:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.07);box-shadow:0 19px 38px rgba(16,148,132,.23),0 0 29px rgba(57,218,185,.16)}
+#gameMultiDraw .gacha-auto-btn-v419:active:not(:disabled){transform:translateY(0) scale(.99)}
+#gameMultiDraw .gacha-auto-btn-v419.running{border-color:rgba(255,196,102,.72);background:linear-gradient(135deg,#c27b21,#a94b37);box-shadow:0 16px 34px rgba(189,103,31,.2),0 0 24px rgba(255,178,72,.12)}
+#gameMultiDraw .gacha-auto-btn-v419:disabled{opacity:.44;cursor:not-allowed;transform:none;filter:none}
+#gameMultiDraw.auto-running-v419 .gacha-controls-grid-v418{pointer-events:none;opacity:.56;filter:saturate(.78)}
+#gameMultiDraw.auto-running-v419 .gacha-charge-panel-v418 .gacha-fire-btn-v418{opacity:.5}
+#gameMultiDraw .gacha-auto-progress-v419{position:absolute;right:28px;top:24px;z-index:8;padding:8px 13px;border-radius:999px;border:1px solid rgba(84,226,195,.26);background:rgba(6,18,22,.72);color:#a7f7df;font-size:10px;font-weight:950;letter-spacing:.12em;backdrop-filter:blur(8px);opacity:0;transform:translateY(-4px);transition:opacity .2s ease,transform .2s ease;pointer-events:none}
+#gameMultiDraw.auto-running-v419 .gacha-auto-progress-v419{opacity:1;transform:translateY(0)}
+@media(max-width:980px){#gameMultiDraw .gacha-action-row-v419{grid-template-columns:1fr}#gameMultiDraw .gacha-auto-btn-v419{min-height:56px;font-size:16px}}
+body[data-resolution="mobile"] #gameMultiDraw .gacha-action-row-v419{grid-template-columns:1fr}
+</style>
+<style id="v500-public-post-gacha-style">
+/* v5.0 - Public read-only + post Gacha decision workflow */
+.post-status-badge.gacha{color:#ff9df2!important;border-color:#cf4bc1!important;background:rgba(207,75,193,.10)!important;box-shadow:0 0 12px rgba(207,75,193,.12)}
+.post-decision-row{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.post-decision-btn.gacha{color:#d9a7ff!important;border-color:#6c478d!important;background:rgba(100,63,139,.08)!important}
+.post-decision-btn.gacha.active{color:#ffd2fa!important;border-color:#df55d0!important;background:linear-gradient(135deg,rgba(188,62,182,.22),rgba(92,82,211,.18))!important;box-shadow:0 0 13px rgba(208,79,196,.16)}
+.post-bulk-gacha-v50{border:1px solid #d44fc7;border-radius:10px;padding:8px 11px;color:#ffe0fb;background:linear-gradient(135deg,rgba(186,54,176,.24),rgba(85,67,183,.22));font-weight:900;cursor:var(--mws-cursor-pointer,pointer);box-shadow:0 0 14px rgba(198,66,187,.12)}
+.post-bulk-gacha-v50:hover{filter:brightness(1.12);box-shadow:0 0 20px rgba(198,66,187,.22)}
+.gacha-speed-control-v50{min-height:60px;display:grid;grid-template-columns:auto 88px;gap:9px;align-items:center;padding:0 14px;border-radius:13px;border:1px solid rgba(185,137,255,.34);background:linear-gradient(135deg,rgba(76,48,128,.42),rgba(32,48,93,.48));color:#e9ddff}
+.gacha-speed-control-v50 label{font-size:11px;font-weight:950;letter-spacing:.08em;color:#cbb5ff}.gacha-speed-control-v50 select{min-width:88px;font-size:13px;font-weight:900}
+#gameMultiDraw .gacha-action-row-v419{grid-template-columns:minmax(0,1.65fr) minmax(220px,.72fr) minmax(170px,.46fr)!important}
+.gacha-post-confirm-v50{margin-top:7px;width:100%;border:1px solid rgba(82,218,145,.52);border-radius:9px;padding:7px 9px;background:rgba(42,151,93,.13);color:#a9f2ca;font-size:10px;font-weight:950;cursor:var(--mws-cursor-pointer,pointer)}
+.gacha-post-confirm-v50:hover{background:rgba(42,151,93,.22);border-color:#5cd995}.gacha-post-confirm-v50.done{opacity:.62;cursor:default}
+body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!important}
+@media(max-width:980px){#gameMultiDraw .gacha-action-row-v419{grid-template-columns:1fr!important}.gacha-speed-control-v50{grid-template-columns:1fr auto;min-height:54px}}
+</style>
+<style id="v520-public-session-style">
+/* v5.2 - Public is a fully interactive sandbox. Only Admin management remains privileged. */
+body.mws-public-mode [data-mws-public-hidden="true"]{display:revert!important}
+body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!important}
+</style>
+<style id="v510-post-source-removal-style">
+/* v5.2 - Source preview and source-article payload sync removed. External source link remains available. */
+#postSourceTab,#postSourcePanel,#postSourceContent{display:none!important}
+</style>
+<style id="v530-ui-enhancement-style">
+/* v5.3 - requested usability and visual refinements */
+#posts .post-view-btn{display:inline-flex!important;align-items:center!important;gap:8px!important;min-height:42px!important;padding:8px 13px!important;font-size:11px!important}
+#posts .post-view-icon-v53{width:22px;height:22px;flex:0 0 22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#posts .post-view-btn.active .post-view-icon-v53{filter:drop-shadow(0 0 4px rgba(255,255,255,.26))}
+#posts .post-partial-confirm-v53{display:flex;align-items:center;gap:7px;margin-left:18px;padding-left:18px;border-left:1px solid color-mix(in srgb,var(--border) 78%,transparent)}
+#posts .post-partial-confirm-btn-v53{min-height:40px;padding:8px 15px;border:1px solid #5b8cff;border-radius:10px;background:rgba(67,112,255,.10);color:#b9d0ff;font-weight:950;cursor:var(--mws-cursor-pointer,pointer)}
+#posts .post-partial-confirm-btn-v53:hover{background:rgba(67,112,255,.18);box-shadow:0 0 18px rgba(67,112,255,.12)}
+#posts .post-partial-count-v53{display:flex;align-items:center;gap:5px;white-space:nowrap;color:var(--muted);font-size:10px;font-weight:850}
+#posts #postPartialConfirmCountV53{width:64px;height:40px;padding:6px 7px;text-align:center;font-weight:950}
+@media(max-width:1180px){#posts .post-partial-confirm-v53{margin-left:0;padding-left:0;border-left:0}}
+
+#gameMultiDraw .gacha-apply-post-wrap-v53{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid color-mix(in srgb,var(--border) 74%,transparent)}
+#gameMultiDraw .gacha-apply-post-btn-v53{min-width:250px;min-height:48px;padding:10px 22px;border-radius:12px;border:1px solid rgba(104,220,173,.72);background:linear-gradient(135deg,rgba(18,151,113,.96),rgba(28,113,168,.96));color:#f1fff9;font-size:14px;font-weight:1000;cursor:var(--mws-cursor-pointer,pointer);box-shadow:0 12px 30px rgba(20,140,112,.16),0 0 24px rgba(80,224,180,.09)}
+#gameMultiDraw .gacha-apply-post-btn-v53:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px)}
+#gameMultiDraw .gacha-apply-post-btn-v53:disabled{opacity:.38;cursor:not-allowed;filter:grayscale(.35)}
+#gameMultiDraw .gacha-apply-post-help-v53{max-width:780px;text-align:center;color:var(--muted);font-size:10px;line-height:1.55}
+.gacha-apply-post-box-v53{width:min(760px,94vw)!important}
+.gacha-apply-note-v53{margin:13px 0;padding:11px 12px;border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));border-radius:10px;background:color-mix(in srgb,var(--accent) 7%,var(--input));color:var(--muted);font-size:10px;line-height:1.55}
+.gacha-apply-post-list-v53{display:flex;flex-direction:column;gap:8px;max-height:54vh;overflow:auto;padding-right:3px}
+.gacha-post-choice-v53{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 12px;border:1px solid var(--border);border-radius:11px;background:var(--input);cursor:var(--mws-cursor-pointer,pointer)}
+.gacha-post-choice-v53:hover{border-color:color-mix(in srgb,var(--accent) 55%,var(--border));background:color-mix(in srgb,var(--accent) 6%,var(--input))}
+.gacha-post-choice-v53 input{width:17px;height:17px}
+.gacha-post-choice-title-v53{font-size:12px;font-weight:950;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gacha-post-choice-meta-v53{margin-top:4px;color:var(--muted);font-size:9px}
+.gacha-post-choice-count-v53{font-size:9px;color:#b9c7df;white-space:nowrap}
+.gacha-apply-actions-v53{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+
+#gamePachinko .horse-race-bottom{align-items:stretch!important}
+#gamePachinko .horse-race-contact-dock,#gamePachinko .horse-race-config{min-height:690px!important}
+#gamePachinko .horse-race-config{display:flex!important;flex-direction:column}
+#gamePachinko .horse-race-entry-list{max-height:565px!important;flex:1 1 auto}
+#gamePachinko .horse-entry-row{grid-template-columns:36px minmax(0,1fr) 38px 58px!important}
+#gamePachinko .horse-entry-remove-v53{height:34px;padding:0 9px!important;border-color:rgba(232,93,117,.48)!important;color:#ffc3cf!important;background:rgba(232,93,117,.08)!important;font-size:9px!important;font-weight:950!important}
+#gamePachinko .horse-entry-remove-v53:hover{background:rgba(232,93,117,.16)!important}
+@media(max-width:900px){#gamePachinko .horse-race-contact-dock,#gamePachinko .horse-race-config{min-height:auto!important}}
+
+#contacts.active .contact-tag-panel{position:sticky!important;top:18px!important;align-self:start!important;z-index:55!important;max-height:calc(100vh - 36px)!important;box-shadow:0 16px 36px rgba(0,0,0,.18)}
+@media(max-width:900px){#contacts.active .contact-tag-panel{position:static!important;max-height:none!important}}
+body[data-resolution="mobile"] #contacts.active .contact-tag-panel{position:static!important;max-height:none!important}
+
+/* More theatrical ranking presentation without altering ranking math. */
+#sniper .ranking-stage{position:relative;background:radial-gradient(circle at 50% 16%,color-mix(in srgb,var(--accent) 13%,transparent),transparent 34%),linear-gradient(180deg,color-mix(in srgb,var(--panel) 96%,#070912),var(--panel));box-shadow:inset 0 0 70px rgba(0,0,0,.18),0 14px 42px rgba(0,0,0,.16)}
+#sniper .ranking-stage::before,#sniper .ranking-stage::after{content:"✦  ✧  ✦  ·  ✧  ✦  ·  ✦";position:absolute;left:50%;transform:translateX(-50%);width:94%;text-align:center;pointer-events:none;white-space:pre;letter-spacing:clamp(16px,3vw,52px);color:color-mix(in srgb,var(--accent) 62%,#fff);opacity:.18;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 60%,transparent));animation:rankingStarsV53 3.6s ease-in-out infinite alternate}
+#sniper .ranking-stage::before{top:18px}
+#sniper .ranking-stage::after{bottom:14px;animation-delay:-1.7s}
+#sniper .ranking-podium-card{transition:transform .2s ease,box-shadow .2s ease,filter .2s ease!important}
+#sniper .ranking-podium-slot.first .ranking-podium-card{box-shadow:0 0 0 1px rgba(255,211,72,.23),0 0 34px rgba(240,184,30,.22),0 18px 48px rgba(0,0,0,.24)!important;animation:rankingGoldPulseV53 2.6s ease-in-out infinite}
+#sniper .ranking-podium-slot.second .ranking-podium-card{box-shadow:0 0 0 1px rgba(211,224,241,.14),0 0 25px rgba(183,201,222,.13),0 16px 38px rgba(0,0,0,.20)}
+#sniper .ranking-podium-slot.third .ranking-podium-card{box-shadow:0 0 0 1px rgba(216,145,81,.15),0 0 25px rgba(190,112,50,.13),0 16px 38px rgba(0,0,0,.20)}
+#sniper .ranking-podium-card::before{content:"";position:absolute;inset:-60% -35%;z-index:-1;background:linear-gradient(105deg,transparent 36%,rgba(255,255,255,.14) 48%,transparent 60%);transform:translateX(-60%) rotate(7deg);animation:rankingShineV53 4.6s ease-in-out infinite}
+#sniper .ranking-crown{animation:rankingCrownV53 1.8s ease-in-out infinite;filter:drop-shadow(0 0 10px rgba(255,204,49,.58))!important}
+#sniper .ranking-podium-slot.first .ranking-podium-avatar{box-shadow:0 0 0 4px rgba(255,218,84,.10),0 0 28px rgba(255,205,52,.32),0 10px 24px rgba(0,0,0,.30)!important}
+#sniper .ranking-podium-slot.second .ranking-podium-avatar{box-shadow:0 0 20px rgba(205,221,241,.22),0 10px 22px rgba(0,0,0,.26)!important}
+#sniper .ranking-podium-slot.third .ranking-podium-avatar{box-shadow:0 0 20px rgba(219,139,75,.20),0 10px 22px rgba(0,0,0,.26)!important}
+#sniper .ranking-step{position:relative;overflow:hidden;box-shadow:0 10px 24px rgba(0,0,0,.20)}
+#sniper .ranking-step::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.25) 50%,transparent 70%);transform:translateX(-120%);animation:rankingStepShineV53 3.4s ease-in-out infinite}
+#sniper .ranking-list-row:nth-child(-n+3){box-shadow:inset 3px 0 0 color-mix(in srgb,var(--accent) 55%,transparent)}
+@keyframes rankingGoldPulseV53{50%{transform:translateY(-3px) scale(1.006);filter:brightness(1.06);box-shadow:0 0 0 1px rgba(255,226,111,.32),0 0 48px rgba(240,184,30,.31),0 21px 54px rgba(0,0,0,.28)}}
+@keyframes rankingCrownV53{50%{transform:translateY(-4px) scale(1.08) rotate(-1deg)}}
+@keyframes rankingShineV53{0%,58%{transform:translateX(-70%) rotate(7deg);opacity:0}70%{opacity:1}88%,100%{transform:translateX(70%) rotate(7deg);opacity:0}}
+@keyframes rankingStepShineV53{0%,62%{transform:translateX(-120%)}82%,100%{transform:translateX(120%)}}
+@keyframes rankingStarsV53{from{opacity:.10;transform:translateX(-50%) translateY(0) scale(.98)}to{opacity:.29;transform:translateX(-50%) translateY(-3px) scale(1.02)}}
+@media(prefers-reduced-motion:reduce){#sniper .ranking-stage::before,#sniper .ranking-stage::after,#sniper .ranking-podium-slot.first .ranking-podium-card,#sniper .ranking-crown,#sniper .ranking-podium-card::before,#sniper .ranking-step::after{animation:none!important}}
+</style>
+<style id="v540-ui-style">
+/* =========================================================
+   v5.4 - Gacha selected dock, compact controls, sticky tags,
+          page-specific text scale, restored mascot
+   ========================================================= */
+
+/* Gacha selected dock: readable cards, glow-on-hover, no horizontal squeezing. */
+#gameMultiDraw .gacha-selected-list-v418{
+  grid-template-columns:1fr!important;
+  gap:12px!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  padding:4px 5px 10px 3px!important;
+}
+#gameMultiDraw .gacha-selected-item-v54{
+  position:relative;
+  display:grid;
+  grid-template-columns:82px minmax(0,1fr);
+  gap:12px;
+  align-items:center;
+  padding:11px;
+  border:1px solid rgba(146,118,255,.30);
+  border-radius:17px;
+  background:linear-gradient(145deg,rgba(87,57,170,.19),rgba(7,10,19,.97));
+  cursor:var(--mws-cursor-pointer,pointer);
+  overflow:hidden;
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,filter .16s ease;
+}
+#gameMultiDraw .gacha-selected-item-v54::after{
+  content:"";position:absolute;inset:-45%;pointer-events:none;
+  background:linear-gradient(105deg,transparent 36%,rgba(255,255,255,.18) 49%,transparent 62%);
+  transform:translateX(-70%) rotate(8deg);opacity:0;
+}
+#gameMultiDraw .gacha-selected-item-v54:hover{
+  transform:translateY(-2px) scale(1.01);
+  border-color:rgba(177,148,255,.92);
+  box-shadow:0 0 0 1px rgba(143,105,255,.20),0 0 28px rgba(126,87,255,.34),0 14px 34px rgba(0,0,0,.28);
+  filter:brightness(1.08);
+}
+#gameMultiDraw .gacha-selected-item-v54:hover::after{opacity:1;animation:v54SelectedSweep .75s ease forwards}
+#gameMultiDraw .gacha-selected-item-v54 .thumb{width:82px;height:108px;border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.15);background:#0d1320;display:grid;place-items:center;font-size:22px;font-weight:950}
+#gameMultiDraw .gacha-selected-item-v54 .thumb img{width:100%;height:100%;object-fit:cover}
+#gameMultiDraw .gacha-selected-item-v54 .name{font-size:17px;font-weight:1000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#gameMultiDraw .gacha-selected-item-v54 .order{margin-top:6px;font-size:10px;letter-spacing:.15em;color:#cbb8ff;font-weight:950}
+#gameMultiDraw .gacha-selected-item-v54 .hint{margin-top:6px;font-size:9px;color:var(--muted);font-weight:800}
+@keyframes v54SelectedSweep{to{transform:translateX(72%) rotate(8deg);opacity:0}}
+
+/* Selected card popup. */
+#gachaSelectedCardModalV54{z-index:1100}
+#gachaSelectedCardModalV54 .gacha-selected-popup-box-v54{width:min(610px,94vw)!important;padding:18px!important;background:radial-gradient(circle at 50% 5%,rgba(112,82,255,.18),transparent 38%),linear-gradient(180deg,#11162a,#090d17)!important;border-color:rgba(151,123,255,.50)!important;box-shadow:0 28px 85px rgba(0,0,0,.58),0 0 44px rgba(105,78,255,.20)}
+.gacha-selected-popup-card-v54{display:grid;grid-template-rows:minmax(300px,52vh) auto;border:1px solid rgba(170,144,255,.48);border-radius:22px;overflow:hidden;background:linear-gradient(180deg,rgba(40,35,88,.72),rgba(8,12,22,.98));box-shadow:0 0 0 2px rgba(137,105,255,.10),0 0 40px rgba(126,87,255,.22)}
+.gacha-selected-popup-image-v54{background:#0a0f1a;display:grid;place-items:center;overflow:hidden}
+.gacha-selected-popup-image-v54 img{width:100%;height:100%;object-fit:cover}
+.gacha-selected-popup-initials-v54{font-size:70px;font-weight:1000;color:#d6c9ff}
+.gacha-selected-popup-meta-v54{padding:20px 22px 22px;text-align:center}
+.gacha-selected-popup-kicker-v54{font-size:10px;letter-spacing:.24em;color:#bda8ff;font-weight:1000}
+.gacha-selected-popup-name-v54{font-size:34px;line-height:1.15;font-weight:1000;margin-top:8px}
+.gacha-selected-popup-order-v54{margin-top:9px;color:#ffd86b;font-size:13px;font-weight:950;letter-spacing:.10em}
+.gacha-selected-popup-help-v54{margin-top:9px;color:var(--muted);font-size:10px}
+
+/* Gacha contact palette readability. */
+#gameMultiDraw .multi-draw-contact-palette{gap:9px!important}
+#gameMultiDraw .multi-draw-contact-palette .mini-contact-item{min-height:62px!important;padding:9px 10px!important;gap:11px!important;border-radius:12px!important}
+#gameMultiDraw .multi-draw-contact-palette .mini-contact-item img,
+#gameMultiDraw .multi-draw-contact-palette .mini-contact-avatar{width:42px!important;height:42px!important;flex-basis:42px!important;border-radius:10px!important}
+#gameMultiDraw .multi-draw-contact-palette .mini-contact-name{font-size:calc(16px * var(--ui-text-scale))!important;line-height:1.2!important;font-weight:1000!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+#gameMultiDraw .multi-draw-contact-palette .mini-contact-tags{font-size:calc(11px * var(--ui-text-scale))!important;line-height:1.25!important;margin-top:4px!important;color:#aebad0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+#gameMultiDraw .multi-draw-contact-palette .mini-contact-add{width:36px!important;height:36px!important;min-width:36px!important;padding:0!important;font-size:18px!important}
+
+/* Compact speed and target bubbles in the action row. */
+#gameMultiDraw .gacha-action-row-v419{grid-template-columns:minmax(0,1.65fr) minmax(220px,.82fr) 138px 188px!important;gap:10px!important;align-items:stretch!important}
+#gameMultiDraw .gacha-speed-control-v50{min-height:52px!important;grid-template-columns:auto 65px!important;gap:7px!important;padding:0 10px!important;border-radius:12px!important}
+#gameMultiDraw .gacha-speed-control-v50 label{font-size:9px!important;letter-spacing:.05em!important}
+#gameMultiDraw .gacha-speed-control-v50 select{min-width:65px!important;width:65px!important;padding:7px 7px!important;font-size:12px!important}
+#gameMultiDraw .gacha-target-control-v54{min-height:52px;display:grid;grid-template-columns:auto 30px 50px 30px;gap:5px;align-items:center;padding:0 9px;border:1px solid rgba(116,210,255,.32);border-radius:12px;background:linear-gradient(135deg,rgba(30,91,128,.32),rgba(46,49,111,.42));color:#d9f3ff}
+#gameMultiDraw .gacha-target-control-v54 label{font-size:9px;font-weight:1000;line-height:1.1;color:#bde8ff;white-space:nowrap}
+#gameMultiDraw .gacha-target-control-v54 button{width:30px;height:30px;padding:0;border-radius:8px;font-size:16px;font-weight:1000}
+#gameMultiDraw #multiGachaTargetV54{width:50px;height:34px;padding:5px;text-align:center;font-size:12px;font-weight:1000}
+@media(max-width:1180px){#gameMultiDraw .gacha-action-row-v419{grid-template-columns:1fr 1fr!important}.gacha-speed-control-v50,.gacha-target-control-v54{min-height:50px!important}}
+@media(max-width:720px){#gameMultiDraw .gacha-action-row-v419{grid-template-columns:1fr!important}}
+
+/* Contact tags remain visible while the contact page itself scrolls. */
+#contacts.active,#contacts.active .contact-board-layout,#contacts.active .contact-board-main{overflow:visible!important}
+#contacts.active .contact-tag-panel{
+  position:sticky!important;
+  top:12px!important;
+  align-self:start!important;
+  z-index:90!important;
+  height:max-content!important;
+  max-height:calc(100vh - 24px)!important;
+  overflow:auto!important;
+  box-shadow:0 18px 40px rgba(0,0,0,.26),0 0 0 1px color-mix(in srgb,var(--accent) 8%,transparent)!important;
+}
+@media(max-width:760px){#contacts.active .contact-tag-panel{position:sticky!important;top:6px!important;max-height:46vh!important}}
+
+/* Per-page text size controller below the settings menu, outside navigation
+   button bindings and scrolling. Keep the full header free for content. */
+.sidebar #pageTextScaleControlV54{display:grid;grid-template-columns:28px minmax(0,1fr) 28px 26px;align-items:center;gap:4px;flex:0 0 auto;min-width:0;margin:6px 0 0;padding:5px;border:1px solid var(--border);border-radius:9px;background:var(--panel);box-shadow:none}
+.sidebar #pageTextScaleControlV54 .page-text-label-v54{min-width:0;text-align:center;color:var(--muted);font-size:10px;font-weight:650;white-space:nowrap}
+.sidebar #pageTextScaleControlV54 button{display:grid!important;place-items:center;width:100%;min-width:0;height:28px;min-height:28px;padding:0!important;border-radius:6px!important;font-size:11px!important;line-height:1;font-weight:650;color:var(--text);box-shadow:none!important}
+.sidebar #pageTextScaleControlV54 .page-text-reset-v54{color:var(--muted)}
+@media(min-width:761px){body:not(.sidebar-pinned):not([data-resolution=mobile]) .sidebar:not(.mws-sidebar-expanded-v2) #pageTextScaleControlV54{display:none!important}}
+
+/* Restored creator mascot. */
+#settings .creator-signature{min-width:132px;align-items:center!important}
+#settings .creator-mascot{width:128px!important;max-height:112px!important;object-fit:contain!important}
+#settings .creator-credit{text-align:center!important}
+.mascot-rain-item.v54{animation-iteration-count:1!important;animation-fill-mode:forwards!important}
+
+@media(prefers-reduced-motion:reduce){#gameMultiDraw .gacha-selected-item-v54:hover{transform:none}.mascot-rain-item.v54{animation-duration:.01ms!important}}
+</style>
+<style id="v550-style">
+/* =========================================================
+   v5.5 - fixed navigation, contact URL action, dashboard
+   ========================================================= */
+
+/* The desktop navigation rail must never move with document scrolling. */
+@media (min-width:761px){
+  body:not([data-resolution="mobile"]) .app{position:relative!important}
+  body:not([data-resolution="mobile"]) .sidebar,
+  body:not([data-resolution="mobile"]) .sidebar.mws-sidebar-expanded-v2,
+  body:not([data-resolution="mobile"]).sidebar-pinned .sidebar,
+  body:not([data-resolution="mobile"]).sidebar-pinned .sidebar.mws-sidebar-expanded-v2{
+    position:fixed!important;
+    inset:0 auto 0 0!important;
+    top:0!important;
+    left:0!important;
+    height:100vh!important;
+    max-height:100vh!important;
+    align-self:auto!important;
+    overflow:hidden!important;
+    z-index:500!important;
+  }
+  body:not([data-resolution="mobile"]) .main{grid-column:2!important;min-width:0!important}
+}
+body[data-resolution="mobile"] .main{grid-column:auto!important}
+
+/* Keep the Contacts tag/category board visible while its page scrolls. */
+#contacts .contact-board-layout{overflow:visible!important;align-items:start!important}
+#contacts .contact-board-main{overflow:visible!important}
+#contacts .contact-tag-panel{
+  position:sticky!important;
+  top:12px!important;
+  align-self:start!important;
+  max-height:calc(100vh - 24px)!important;
+  overflow-y:auto!important;
+  z-index:20!important;
+}
+
+.contact-station-row-v55{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:stretch}
+.contact-station-row-v55 #ctStationVisitBtn{min-width:76px;font-weight:850}
+
+.dashboard-insights-v55{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:14px}
+.dashboard-insight-card-v55{min-height:330px;overflow:hidden}
+.dashboard-insight-head-v55{align-items:flex-start;margin-bottom:13px}
+.dashboard-insight-head-v55 h3{font-size:18px;margin:3px 0 4px}
+.dashboard-insight-kicker-v55{font-size:9px;letter-spacing:.18em;color:var(--accent);font-weight:950}
+.dashboard-week-snapshot-v55{display:flex;flex-direction:column;gap:8px}
+.dashboard-week-row-v55{
+  display:grid;grid-template-columns:68px minmax(0,1fr) auto;gap:10px;align-items:center;
+  width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:12px;background:var(--input);color:var(--text);text-align:left;
+  transition:transform .14s,border-color .14s,background .14s,box-shadow .14s;
+}
+.dashboard-week-row-v55:hover{transform:translateX(3px);border-color:var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--input));box-shadow:0 0 16px color-mix(in srgb,var(--accent) 10%,transparent)}
+.dashboard-week-date-v55{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:48px;border-radius:10px;background:color-mix(in srgb,var(--accent) 10%,var(--panel));border:1px solid color-mix(in srgb,var(--accent) 26%,var(--border));font-size:10px;font-weight:900;color:var(--muted)}
+.dashboard-week-date-v55 strong{font-size:15px;color:var(--text);line-height:1.1;margin-bottom:2px}
+.dashboard-week-title-v55{font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dashboard-week-meta-v55{margin-top:4px;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dashboard-week-progress-v55{min-width:64px;text-align:right;font-size:10px;color:var(--muted);font-weight:800}
+.dashboard-week-progress-v55 strong{display:block;font-size:15px;color:var(--text);margin-bottom:2px}
+.dashboard-ops-grid-v55{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.dashboard-stat-v55{
+  min-width:0;min-height:120px;padding:13px;border:1px solid var(--border);border-radius:13px;background:var(--input);color:var(--text);text-align:left;
+  display:flex;flex-direction:column;justify-content:center;transition:transform .14s,border-color .14s,background .14s,box-shadow .14s;
+}
+.dashboard-stat-v55:hover{transform:translateY(-2px);border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--input));box-shadow:0 9px 24px rgba(0,0,0,.18),0 0 16px color-mix(in srgb,var(--accent) 10%,transparent)}
+.dashboard-stat-label-v55{font-size:10px;color:var(--muted);font-weight:850}
+.dashboard-stat-v55 strong{display:block;font-size:25px;line-height:1.1;margin:7px 0 5px;font-weight:950;letter-spacing:-.03em}
+.dashboard-stat-v55 small{font-size:9px;color:var(--muted);line-height:1.4;white-space:normal}
+@media(max-width:1250px){.dashboard-ops-grid-v55{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1050px){.dashboard-insights-v55{grid-template-columns:1fr}}
+@media(max-width:760px){.dashboard-ops-grid-v55{grid-template-columns:1fr 1fr}.dashboard-week-row-v55{grid-template-columns:58px minmax(0,1fr)}.dashboard-week-progress-v55{display:none}.contact-station-row-v55{grid-template-columns:1fr}}
+
+/* A separate high-z rain layer avoids old easter-egg state conflicts. */
+#mascotRainLayerV55{position:fixed;inset:0;z-index:5000;overflow:hidden;pointer-events:none;display:none}
+#mascotRainLayerV55.active{display:block}
+.mascot-rain-item-v55{
+  position:absolute;left:var(--rain-x);top:-26vh;width:var(--rain-size);height:auto;opacity:.98;object-fit:contain;
+  filter:drop-shadow(0 9px 10px rgba(0,0,0,.32));will-change:transform,opacity;
+  animation:mascotRainFallV55 var(--rain-duration) cubic-bezier(.22,.5,.34,1) var(--rain-delay) 1 both;
+}
+@keyframes mascotRainFallV55{
+  0%{transform:translate3d(0,-18vh,0) rotate(var(--rain-rot-start));opacity:0}
+  6%{opacity:1}
+  78%{opacity:1}
+  100%{transform:translate3d(var(--rain-drift),150vh,0) rotate(var(--rain-rot-end));opacity:.92}
+}
+</style>
+<style id="v560-ui-style">
+/* =========================================================
+   v5.6 - contact tag dock, profile card, 10-tier collab FX
+   ========================================================= */
+
+/* Contact tag panel: switch from normal flow to a true viewport dock after it reaches the top. */
+@media (min-width:761px){
+  body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout:not(.maintenance-mode) .contact-board-main{grid-column:2!important;min-width:0!important}
+body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout.maintenance-mode{grid-template-columns:minmax(0,1fr)!important}
+body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout.maintenance-mode .contact-board-main{grid-column:1!important;min-width:0!important}
+body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout.maintenance-mode .contact-tag-banner-area{display:none!important}
+  body:not([data-resolution="mobile"]) #contacts .contact-tag-placeholder-v56{grid-column:1;display:none;visibility:hidden;pointer-events:none}
+  body:not([data-resolution="mobile"]) #contacts .contact-tag-panel.v56-fixed{
+    position:fixed!important;
+    margin:0!important;
+    z-index:470!important;
+    max-height:calc(100vh - 24px)!important;
+    overflow:auto!important;
+    box-shadow:0 20px 50px rgba(0,0,0,.34),0 0 0 1px color-mix(in srgb,var(--accent) 20%,transparent)!important;
+  }
+}
+
+/* Contact header profile image is now an interactive Profile Card launcher. */
+#contactModal #ctHeaderAvatar.v56-profile-launcher{
+  cursor:var(--mws-cursor-pointer,pointer)!important;
+  position:relative;
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,filter .16s ease;
+}
+#contactModal #ctHeaderAvatar.v56-profile-launcher::after{
+  content:"PROFILE";
+  position:absolute;
+  left:50%;bottom:-10px;transform:translateX(-50%);
+  padding:3px 7px;border-radius:999px;
+  background:#161c30;border:1px solid rgba(153,125,255,.48);
+  color:#d7cbff;font-size:7px;font-weight:1000;letter-spacing:.12em;
+  opacity:0;pointer-events:none;transition:opacity .14s ease,bottom .14s ease;
+}
+#contactModal #ctHeaderAvatar.v56-profile-launcher:hover,
+#contactModal #ctHeaderAvatar.v56-profile-launcher:focus-visible{
+  transform:translateY(-2px) scale(1.035);
+  border-color:#987cff!important;
+  box-shadow:0 0 0 2px rgba(143,105,255,.18),0 0 28px rgba(127,88,255,.36)!important;
+  filter:brightness(1.08);
+  outline:none;
+}
+#contactModal #ctHeaderAvatar.v56-profile-launcher:hover::after,
+#contactModal #ctHeaderAvatar.v56-profile-launcher:focus-visible::after{opacity:1;bottom:-15px}
+
+#contactProfileCardModalV56{z-index:1160!important}
+#contactProfileCardModalV56 .contact-profile-card-box-v56{
+  width:min(650px,94vw)!important;
+  padding:18px!important;
+  background:radial-gradient(circle at 50% 4%,rgba(112,82,255,.20),transparent 38%),linear-gradient(180deg,#11162a,#090d17)!important;
+  border-color:rgba(151,123,255,.52)!important;
+  box-shadow:0 30px 92px rgba(0,0,0,.62),0 0 46px rgba(105,78,255,.22)!important;
+}
+.contact-profile-card-v56{
+  display:grid;grid-template-rows:minmax(330px,56vh) auto;
+  border:1px solid rgba(170,144,255,.52);border-radius:24px;overflow:hidden;
+  background:linear-gradient(180deg,rgba(40,35,88,.76),rgba(8,12,22,.99));
+  box-shadow:0 0 0 2px rgba(137,105,255,.11),0 0 44px rgba(126,87,255,.23);
+}
+.contact-profile-card-image-v56{background:#090e19;display:grid;place-items:center;overflow:hidden;position:relative}
+.contact-profile-card-image-v56 img{width:100%;height:100%;object-fit:cover}
+.contact-profile-card-initials-v56{font-size:82px;font-weight:1000;color:#d7caff}
+.contact-profile-card-meta-v56{padding:22px 24px 24px;text-align:center}
+.contact-profile-card-kicker-v56{font-size:10px;letter-spacing:.25em;color:#bca8ff;font-weight:1000}
+.contact-profile-card-name-v56{font-size:36px;line-height:1.15;font-weight:1000;margin-top:8px}
+.contact-profile-card-tags-v56{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.contact-profile-card-tags-v56 .chip{font-size:10px;padding:6px 10px}
+.contact-profile-card-url-v56{margin-top:15px;padding:11px 12px;border:1px solid var(--border);border-radius:11px;background:rgba(7,11,20,.72);font-size:11px;color:#b7c7e1;word-break:break-all;text-align:left}
+.contact-profile-card-actions-v56{display:flex;justify-content:center;margin-top:12px}
+
+/* Recent-collab filter colors 6-10. */
+.sniper-tier-filter[data-tier="6"]{--rank:#ff35d4;--rank2:#6d7cff}
+.sniper-tier-filter[data-tier="7"]{--rank:#9a5cff;--rank2:#62d8ff}
+.sniper-tier-filter[data-tier="8"]{--rank:#4ef5ff;--rank2:#ff5df0}
+.sniper-tier-filter[data-tier="9"]{--rank:#8b5cff;--rank2:#ffcc5c}
+.sniper-tier-filter[data-tier="10"]{--rank:#fff0a8;--rank2:#b76dff}
+.sniper-tier-filter[data-tier="6"],.sniper-tier-filter[data-tier="7"],.sniper-tier-filter[data-tier="8"],.sniper-tier-filter[data-tier="9"],.sniper-tier-filter[data-tier="10"]{
+  border-color:color-mix(in srgb,var(--rank) 70%,var(--border));
+  color:color-mix(in srgb,var(--rank) 90%,#fff);
+  background:color-mix(in srgb,var(--rank) 11%,var(--input));
+}
+.sniper-tier-filter[data-tier="6"].active,.sniper-tier-filter[data-tier="7"].active,.sniper-tier-filter[data-tier="8"].active,.sniper-tier-filter[data-tier="9"].active,.sniper-tier-filter[data-tier="10"].active{
+  background:linear-gradient(135deg,color-mix(in srgb,var(--rank) 74%,#090b15),color-mix(in srgb,var(--rank2) 55%,#090b15));
+  border-color:var(--rank2);color:#fff;
+  box-shadow:0 0 17px color-mix(in srgb,var(--rank) 56%,transparent),inset 0 0 14px color-mix(in srgb,var(--rank2) 26%,transparent);
+}
+
+/* Card envelope intensity rises with the history tier. */
+#sniper .collab-6{border-color:#f43bd7;box-shadow:0 0 22px rgba(244,59,215,.25)}
+#sniper .collab-7{border-color:#9b63ff;box-shadow:0 0 26px rgba(132,95,255,.30)}
+#sniper .collab-8{border-color:#5cf3ff;box-shadow:0 0 30px rgba(83,230,255,.32),0 0 20px rgba(255,77,226,.18)}
+#sniper .collab-9{border-color:#bb82ff;box-shadow:0 0 35px rgba(126,86,255,.38),0 0 24px rgba(255,196,80,.20)}
+#sniper .collab-10{border-color:#ffe98a;box-shadow:0 0 42px rgba(255,219,98,.42),0 0 32px rgba(153,92,255,.34),0 0 58px rgba(55,214,255,.18)}
+
+@keyframes fx6PlasmaSweep{0%{transform:translateX(-125%) skewX(-18deg)}100%{transform:translateX(420%) skewX(-18deg)}}
+@keyframes fx6Pulse{0%,100%{opacity:.58;filter:brightness(1)}50%{opacity:1;filter:brightness(1.5)}}
+.fx-tier-6{border-color:#ff3bd7;background:radial-gradient(circle at 25% 50%,rgba(255,45,208,.25),transparent 34%),radial-gradient(circle at 76% 50%,rgba(92,87,255,.24),transparent 35%),#100815;box-shadow:inset 0 0 36px rgba(255,40,211,.19),0 0 17px rgba(255,45,213,.20)}
+.fx-tier-6 .fx-core::before,.fx-tier-6 .fx-core::after{content:"";position:absolute;top:-25%;bottom:-25%;left:0;width:22%;background:linear-gradient(90deg,transparent,#fff,#ff4cda,#7771ff,transparent);filter:blur(1px) drop-shadow(0 0 10px #ff4cda);animation:fx6PlasmaSweep 1.85s linear infinite}
+.fx-tier-6 .fx-core::after{animation-delay:-.92s;width:13%;opacity:.65}
+.fx-tier-6 .fx-particles{background:radial-gradient(circle at 8% 25%,#fff 0 1px,#ff65e3 1.5px 3px,transparent 3.8px),radial-gradient(circle at 28% 72%,#8f85ff 0 2px,transparent 3.5px),radial-gradient(circle at 54% 18%,#fff 0 1px,#ff46d8 1.5px 3px,transparent 3.8px),radial-gradient(circle at 77% 78%,#8d86ff 0 2px,transparent 3.6px),radial-gradient(circle at 96% 30%,#fff 0 1px,#ff5ae0 1.5px 3px,transparent 3.8px);animation:fx6Pulse 1.05s ease-in-out infinite;filter:drop-shadow(0 0 7px #ff46d8)}
+
+@keyframes fx7Storm{0%,100%{opacity:.48;filter:brightness(1)}22%{opacity:1;filter:brightness(2)}26%{opacity:.35}55%{opacity:.9}60%{opacity:.42}82%{opacity:1;filter:brightness(1.8)}}
+.fx-tier-7{border-color:#9a67ff;background:linear-gradient(180deg,#10091d,#080b18),radial-gradient(circle at center,rgba(103,97,255,.28),transparent 60%);box-shadow:inset 0 0 40px rgba(106,87,255,.24),0 0 22px rgba(108,84,255,.28)}
+.fx-tier-7 .fx-core{background:linear-gradient(112deg,transparent 0 18%,#dfffff 19% 19.7%,#8e7cff 20% 21%,transparent 22% 42%,#fff 43% 43.5%,#63dfff 44% 45%,transparent 46% 71%,#d9ccff 72% 72.6%,#9c6cff 73% 74%,transparent 75%);filter:drop-shadow(0 0 9px #8b79ff);animation:fx7Storm .9s steps(2,end) infinite}
+.fx-tier-7 .fx-particles{background:repeating-linear-gradient(180deg,transparent 0 8px,rgba(125,106,255,.12) 9px,transparent 10px),radial-gradient(circle at 12% 30%,#fff 0 1px,#79ddff 1.5px 3px,transparent 3.8px),radial-gradient(circle at 64% 70%,#fff 0 1px,#ab78ff 1.5px 3px,transparent 3.8px),radial-gradient(circle at 89% 24%,#fff 0 1px,#78dbff 1.5px 3px,transparent 3.8px);animation:fx7Storm 1.25s ease-in-out infinite}
+
+@keyframes fx8Prism{0%{filter:hue-rotate(0deg) brightness(1);transform:scaleX(.95)}50%{filter:hue-rotate(55deg) brightness(1.55);transform:scaleX(1.04)}100%{filter:hue-rotate(0deg) brightness(1);transform:scaleX(.95)}}
+@keyframes fx8Beam{0%{transform:translateX(-140%)}100%{transform:translateX(430%)}}
+.fx-tier-8{border-color:#5cf7ff;background:radial-gradient(circle at center,rgba(255,255,255,.12),transparent 32%),linear-gradient(90deg,#07131b,#170a22,#07131b);box-shadow:inset 0 0 44px rgba(68,239,255,.22),0 0 28px rgba(63,229,255,.30),0 0 22px rgba(255,70,224,.18)}
+.fx-tier-8 .fx-core{inset:9px 4%;background:linear-gradient(90deg,transparent,#67f7ff,#fff,#ff6ee8,#b374ff,#fff,#5ef4ff,transparent);height:4px;top:50%;bottom:auto;box-shadow:0 0 12px #65efff,0 0 25px rgba(255,78,226,.55);animation:fx8Prism .8s ease-in-out infinite}
+.fx-tier-8 .fx-core::after{content:"";position:absolute;top:-30px;bottom:-30px;width:18%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);filter:blur(2px);animation:fx8Beam 1.55s linear infinite}
+.fx-tier-8 .fx-particles{background:radial-gradient(circle at 5% 18%,#fff 0 1px,#4ef4ff 1.5px 3.2px,transparent 4px),radial-gradient(circle at 21% 76%,#fff 0 1px,#ff57e5 1.5px 3.2px,transparent 4px),radial-gradient(circle at 42% 15%,#fff 0 1px,#a76cff 1.5px 3.2px,transparent 4px),radial-gradient(circle at 63% 78%,#fff 0 1px,#5cf5ff 1.5px 3.2px,transparent 4px),radial-gradient(circle at 83% 20%,#fff 0 1px,#ff65e9 1.5px 3.2px,transparent 4px),radial-gradient(circle at 97% 70%,#fff 0 1px,#9b75ff 1.5px 3.2px,transparent 4px);filter:drop-shadow(0 0 8px #fff);animation:fx8Prism 1.2s ease-in-out infinite}
+
+@keyframes fx9VoidPulse{0%,100%{transform:scale(.78);opacity:.65}50%{transform:scale(1.18);opacity:1}}
+@keyframes fx9Orbit{to{transform:rotate(360deg)}}
+.fx-tier-9{border-color:#b67cff;background:radial-gradient(circle at 50% 50%,#010108 0 13%,rgba(72,33,126,.92) 15% 22%,rgba(151,79,255,.38) 25% 39%,transparent 52%),linear-gradient(90deg,#07070f,#12051b,#07070f);box-shadow:inset 0 0 50px rgba(108,57,203,.34),0 0 35px rgba(135,83,255,.38),0 0 24px rgba(255,190,80,.20)}
+.fx-tier-9 .fx-core{inset:5px 12%;border-radius:50%;border:2px solid rgba(190,145,255,.65);box-shadow:0 0 12px #a768ff,inset 0 0 16px rgba(255,204,93,.25);animation:fx9VoidPulse 1s ease-in-out infinite}
+.fx-tier-9 .fx-core::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:2px dashed rgba(255,216,111,.65);animation:fx9Orbit 2.2s linear infinite}
+.fx-tier-9 .fx-particles{background:radial-gradient(circle at 8% 22%,#fff 0 1px,#c497ff 1.5px 3px,transparent 3.8px),radial-gradient(circle at 18% 72%,#ffd66d 0 1.5px,transparent 3px),radial-gradient(circle at 81% 18%,#fff 0 1px,#ba84ff 1.5px 3px,transparent 3.8px),radial-gradient(circle at 94% 72%,#ffd46e 0 1.5px,transparent 3px);filter:drop-shadow(0 0 9px #a26cff);animation:fx9VoidPulse .82s ease-in-out infinite}
+
+@keyframes fx10MythicPulse{0%,100%{filter:brightness(1) saturate(1);transform:scale(.97)}50%{filter:brightness(1.7) saturate(1.35);transform:scale(1.035)}}
+@keyframes fx10Sweep{0%{transform:translateX(-150%) skewX(-14deg)}100%{transform:translateX(460%) skewX(-14deg)}}
+.fx-tier-10{border-color:#fff0a2;background:radial-gradient(circle at center,rgba(255,244,180,.28),transparent 32%),linear-gradient(90deg,#150c21,#091525,#1b0b25);box-shadow:inset 0 0 55px rgba(255,223,111,.30),0 0 43px rgba(255,219,98,.46),0 0 34px rgba(160,92,255,.40),0 0 60px rgba(70,224,255,.20)}
+.fx-tier-10 .fx-core{background:linear-gradient(90deg,transparent 0 7%,#69f5ff 8% 9%,transparent 10% 22%,#fff6bd 23% 24%,transparent 25% 44%,#c28bff 45% 46.5%,transparent 48% 64%,#fff 65% 66.5%,transparent 68% 82%,#ff86eb 83% 84.5%,transparent 86%),radial-gradient(ellipse at center,rgba(255,245,190,.38),transparent 64%);filter:drop-shadow(0 0 10px #fff0a2);animation:fx10MythicPulse .7s ease-in-out infinite}
+.fx-tier-10 .fx-core::before,.fx-tier-10 .fx-core::after{content:"";position:absolute;top:-35%;bottom:-35%;left:0;width:16%;background:linear-gradient(90deg,transparent,#fff,#ffe379,#ae7aff,#64efff,transparent);filter:blur(1px) drop-shadow(0 0 13px #fff);animation:fx10Sweep 1.25s linear infinite}
+.fx-tier-10 .fx-core::after{animation-delay:-.62s;width:10%;opacity:.75}
+.fx-tier-10 .fx-particles{background:radial-gradient(circle at 4% 18%,#fff 0 1.3px,#ffdf68 1.8px 3.5px,transparent 4.3px),radial-gradient(circle at 14% 78%,#fff 0 1.3px,#6ff4ff 1.8px 3.5px,transparent 4.3px),radial-gradient(circle at 31% 15%,#fff 0 1.3px,#c685ff 1.8px 3.5px,transparent 4.3px),radial-gradient(circle at 48% 82%,#fff 0 1.3px,#ffd970 1.8px 3.5px,transparent 4.3px),radial-gradient(circle at 65% 18%,#fff 0 1.3px,#64efff 1.8px 3.5px,transparent 4.3px),radial-gradient(circle at 82% 76%,#fff 0 1.3px,#dc8cff 1.8px 3.5px,transparent 4.3px),radial-gradient(circle at 96% 24%,#fff 0 1.3px,#ffe379 1.8px 3.5px,transparent 4.3px);filter:drop-shadow(0 0 10px #fff);animation:fx10MythicPulse .58s ease-in-out infinite}
+.fx-tier-10 .fx-overlay{background:linear-gradient(180deg,rgba(255,255,255,.12),transparent 26% 72%,rgba(255,221,100,.13)),repeating-linear-gradient(90deg,transparent 0 42px,rgba(255,255,255,.05) 43px,transparent 45px)}
+
+@media(prefers-reduced-motion:reduce){.fx-tier-6 *, .fx-tier-7 *, .fx-tier-8 *, .fx-tier-9 *, .fx-tier-10 *{animation:none!important}}
+</style>
+<style id="mws-v57-style">
+.post-minigame-entry-v57{display:flex;align-items:center;gap:12px;padding-left:16px;margin-left:6px;border-left:1px solid color-mix(in srgb,var(--border) 86%, transparent);order:3}
+.post-mini-game-btn-v57{min-height:42px;padding:9px 16px;border-radius:12px;border:1px solid rgba(74,222,128,.38);background:linear-gradient(135deg,rgba(16,185,129,.18),rgba(45,212,191,.14));color:#d7fff0;font-weight:950;letter-spacing:-.01em;box-shadow:0 12px 28px rgba(16,185,129,.14), inset 0 1px 0 rgba(255,255,255,.05);transition:transform .16s ease,filter .16s ease,box-shadow .16s ease,border-color .16s ease;white-space:nowrap}
+.post-mini-game-btn-v57:hover{transform:translateY(-1px);filter:brightness(1.06);border-color:rgba(110,231,183,.55);box-shadow:0 16px 34px rgba(16,185,129,.2),0 0 18px rgba(45,212,191,.18)}
+.post-mini-game-btn-v57:active{transform:translateY(0) scale(.985)}
+.post-mini-game-btn-v57::before{content:'▶';display:inline-block;margin-right:8px;font-size:12px;opacity:.85}
+.post-view-controls .post-column-control{order:4}
+@media(max-width:980px){.post-minigame-entry-v57{order:4;width:100%;margin-left:0;padding-left:0;border-left:0;padding-top:4px}.post-mini-game-btn-v57{width:100%}.post-view-controls .post-column-control{order:5}}
+.post-game-card.recommended{position:relative;overflow:hidden;border-color:rgba(250,204,21,.48);background:radial-gradient(circle at 78% 22%,rgba(250,204,21,.12),transparent 32%),linear-gradient(180deg,rgba(255,235,140,.03),rgba(124,58,237,.04)),var(--input);box-shadow:0 16px 38px rgba(250,204,21,.09),0 0 0 1px rgba(250,204,21,.08) inset}
+.post-game-card.recommended:hover:not(:disabled){border-color:rgba(251,191,36,.72);box-shadow:0 18px 44px rgba(250,204,21,.16),0 0 22px rgba(244,114,182,.18),0 0 0 1px rgba(251,191,36,.18) inset}
+.post-game-card.recommended::after{content:'';position:absolute;inset:-28% auto auto 58%;width:150px;height:150px;background:radial-gradient(circle,rgba(255,255,255,.28),rgba(250,204,21,.12) 28%,transparent 70%);filter:blur(6px);opacity:.82;animation:mwsV57RecommendedGlow 3.1s ease-in-out infinite;pointer-events:none}
+.post-game-best-ribbon-v57{position:absolute;top:0;left:0;padding:6px 14px 6px 12px;border-radius:14px 0 14px 0;background:linear-gradient(135deg,#fde047,#f59e0b);color:#2b1800;font-size:11px;font-weight:1000;letter-spacing:.04em;box-shadow:0 10px 26px rgba(245,158,11,.25);z-index:2}
+.post-game-rec-chip-v57{display:inline-flex;align-items:center;gap:4px;margin-top:10px;padding:5px 9px;border-radius:999px;border:1px solid rgba(251,191,36,.35);background:rgba(251,191,36,.1);font-size:11px;font-weight:850;color:#ffeab2}
+.post-game-card-title-wrap-v57{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.post-game-card-title-wrap-v57 .post-game-card-title{margin-top:0}
+.post-game-picker-box .post-game-card{position:relative}
+@keyframes mwsV57RecommendedGlow{0%,100%{transform:translate3d(0,0,0) scale(1);opacity:.55}50%{transform:translate3d(0,6px,0) scale(1.08);opacity:.92}}
+.post-schedule-notice-modal-v57{z-index:1150!important}
+.post-schedule-notice-box-v57{width:min(560px,94vw)!important;border-radius:22px!important;padding:22px!important;background:linear-gradient(180deg,rgba(19,27,53,.98),rgba(11,17,36,.99))!important;border:1px solid rgba(96,165,250,.26)!important;box-shadow:0 28px 68px rgba(0,0,0,.45),0 0 0 1px rgba(129,140,248,.08) inset}
+.post-schedule-notice-kicker-v57{font-size:11px;letter-spacing:.18em;font-weight:900;color:#7dd3fc;margin-bottom:8px}
+.post-schedule-notice-title-v57{font-size:31px;font-weight:1000;line-height:1.1;margin:0 0 12px}
+.post-schedule-notice-body-v57{font-size:15px;line-height:1.75;color:#dbe6ff}
+.post-schedule-notice-body-v57 strong{color:#ffffff}
+.post-schedule-notice-check-v57{display:flex;align-items:center;gap:10px;margin-top:16px;padding:12px 14px;border-radius:14px;border:1px solid rgba(99,102,241,.22);background:rgba(99,102,241,.08);cursor:var(--mws-cursor-pointer,pointer)}
+.post-schedule-notice-check-v57 input{width:17px;height:17px}
+.post-schedule-notice-actions-v57{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;flex-wrap:wrap}
+.post-schedule-notice-ok-v57{min-width:112px;padding:11px 16px;border-radius:12px;border:1px solid rgba(56,189,248,.28);background:linear-gradient(135deg,rgba(59,130,246,.92),rgba(6,182,212,.95));color:#fff;font-weight:950;box-shadow:0 14px 34px rgba(37,99,235,.22)}
+.post-schedule-notice-sub-v57{font-size:12px;color:var(--muted);margin-top:12px}
+</style>
+<style id="mws-v572-predeploy-style">
+/* Checklist presentation is removed from the dashboard summary. */
+#dashboard .dashboard-week-row-v55{grid-template-columns:58px minmax(0,1fr)!important}
+#dashboard .dashboard-week-progress-v55{display:none!important}
+
+/* Bottom manual online SAVE action. */
+.sidebar-save-v572{flex:0 0 auto;width:100%;min-height:47px;margin-top:8px;padding:9px 11px;border-radius:12px;border:1px solid rgba(52,211,153,.38);background:linear-gradient(135deg,rgba(16,185,129,.17),rgba(20,184,166,.10));color:#dffff3;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:1000;letter-spacing:.08em;box-shadow:0 10px 25px rgba(16,185,129,.10);transition:.16s ease}
+.sidebar-save-v572[hidden]{display:none!important}
+.sidebar-save-v572:hover:not(:disabled){transform:translateY(-1px);border-color:rgba(110,231,183,.65);background:linear-gradient(135deg,rgba(16,185,129,.26),rgba(20,184,166,.17));box-shadow:0 14px 30px rgba(16,185,129,.16)}
+.sidebar-save-v572:disabled{cursor:wait;opacity:.72}
+.sidebar-save-v572.saving{animation:mwsSavePulseV572 .9s ease-in-out infinite alternate}
+.sidebar-save-icon-v572{width:21px;height:21px;display:grid;place-items:center}.sidebar-save-icon-v572 svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+body:not(.sidebar-pinned) .sidebar:not(.mws-sidebar-expanded-v2) .sidebar-save-label-v572{display:none}
+body:not(.sidebar-pinned) .sidebar:not(.mws-sidebar-expanded-v2) .sidebar-save-v572{padding-left:0;padding-right:0}
+@keyframes mwsSavePulseV572{from{box-shadow:0 8px 20px rgba(16,185,129,.08)}to{box-shadow:0 8px 28px rgba(16,185,129,.28),0 0 18px rgba(45,212,191,.16)}}
+</style>
+<style id="mws-v574-style">
+.sidebar-save-v572{position:relative!important;overflow:hidden!important;isolation:isolate}
+.sidebar-save-v572::after{content:"";position:absolute;inset:0 auto 0 0;width:var(--save-progress-v574,0%);background:linear-gradient(90deg,rgba(34,197,94,.30),rgba(45,212,191,.32),rgba(56,189,248,.30));transition:width .18s linear;z-index:-1;pointer-events:none}
+.sidebar-save-v572.saving{border-color:rgba(45,212,191,.48)!important;box-shadow:0 0 22px rgba(45,212,191,.12)!important}
+.sidebar-save-v572.save-failed-v574{border-color:rgba(248,113,113,.62)!important}
+.contact-modal-actions-v574{justify-content:flex-end}
+.contact-favorite-btn-v574{width:48px;height:48px;border-radius:13px;border:1px solid var(--border);background:var(--input);color:#aab5d2;font-size:26px;line-height:1;display:grid;place-items:center;transition:.18s ease}
+.contact-favorite-btn-v574:hover{border-color:#facc15;color:#fde68a;transform:translateY(-1px)}
+.contact-favorite-btn-v574.active{color:#facc15;border-color:rgba(250,204,21,.62);background:rgba(250,204,21,.10);box-shadow:0 0 20px rgba(250,204,21,.16)}
+#contacts #favoriteContacts{width:100%!important;min-width:0!important;max-width:none!important;padding:18px!important;overflow:hidden!important}
+#contacts #favoriteContacts>.space{align-items:flex-start!important;flex-wrap:wrap!important}
+#contacts #favoriteContacts .empty{grid-column:1/-1!important;width:100%!important;min-width:0!important;min-height:110px!important;padding:24px!important;display:grid!important;place-items:center!important;text-align:center!important}
+.contact-favorite-card-v574{position:relative;border-color:color-mix(in srgb,#facc15 32%,var(--border))!important}
+.contact-favorite-card-v574::after{content:"★";position:absolute;right:14px;top:10px;color:#facc15;font-size:18px;opacity:.9}
+.contact-favorite-tags-v574{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;padding-right:24px}
+.contact-favorite-tags-v574 .chip{font-size:10px;padding:3px 7px}
+</style>
+<link rel="stylesheet" href="assets/device-ui.css?v=4">
+<link rel="stylesheet" href="assets/ui-frame-presets.css?v=3.0.0-space132-space153&hover-state=2">
+<link rel="stylesheet" href="assets/calendar-space-efficiency-v1.css?v=1">
+<link rel="stylesheet" href="assets/contact-card-readable-layout-v1.css?v=1">
+<link rel="stylesheet" href="assets/workspace-clean-v1.css?v=8">
+<link rel="stylesheet" href="assets/calendar-details-v1.css?v=21">
+<link rel="stylesheet" href="assets/posts-responsive-layout-v2.css?v=2">
+<link rel="stylesheet" data-mws-post-login-style="mobile-calendar-v130" href="assets/mobile-calendar-v130.css?v=1.3.0-mobile-calendar-viewport-p29-layout-v2">
+<link rel="stylesheet" href="assets/achievement-exhibition-v1.css?v=5">
+<link rel="stylesheet" href="assets/calendar-search-v173.css?v=1">
+<link rel="stylesheet" href="assets/contact-directory-v177.css?v=3">
+<link rel="stylesheet" href="assets/modal-motion-v1.css?v=4">
+<link rel="stylesheet" href="assets/ladder-wizard-v1.css?v=10">
+<link rel="stylesheet" href="assets/announcement-carousel-v1.css?v=1">
+<style id="mws-public-entry-style">
+body.mws-gated .app{filter:none!important;opacity:1!important}
+body.mws-premium #mwsAccessGate{background:var(--bg,#080c15)!important;overflow:auto;align-items:flex-start;padding:clamp(24px,10vh,96px) 16px}
+#mwsAccessGate.hidden,#mwsAccessGate [hidden],#mwsAccessTools [hidden],#mwsAccessTools[hidden]{display:none!important}
+body.mws-premium #mwsAccessGate::before,body.mws-premium #mwsAccessGate::after{display:none!important}
+body.mws-premium #mwsAccessGate .mws-login-shell{box-sizing:border-box;width:min(410px,100%)!important;padding:30px!important;background:var(--panel,#111722)!important;border:1px solid var(--border,#303743)!important;border-radius:18px!important;box-shadow:none!important;backdrop-filter:none!important;text-align:center}
+#mwsAccessGate .mws-login-shell::before{display:none!important}
+#mwsAccessGate .mws-login-lock{width:48px;height:48px;display:grid;place-items:center;margin:0 auto 16px;border:1px solid var(--border);border-radius:50%;color:var(--muted);background:var(--input)}
+#mwsAccessGate .mws-login-lock svg{width:23px;height:23px}
+body.mws-premium #mwsAccessGate .mws-login-title{font-size:22px!important;margin:0!important;line-height:1.35!important;text-shadow:none!important;color:var(--text)}
+#mwsAccessGate .mws-login-sub{font-size:12px!important;line-height:1.55!important;margin:7px 0 24px!important;color:var(--muted)!important}
+#mwsAccessGate #mwsAdminFields{grid-template-columns:1fr;gap:7px;text-align:left;margin:0!important}
+#mwsAccessGate #mwsAdminFields label{font-size:12px;color:var(--muted);margin-top:7px}
+#mwsAccessGate #mwsAdminFields input{box-sizing:border-box;width:100%;min-height:42px;background:var(--input)!important;border:1px solid var(--border)!important;color:var(--text)!important;border-radius:10px!important;padding:10px 12px!important}
+#mwsAccessGate #mwsAdminFields input:focus{border-color:var(--accent)!important}
+#mwsAccessGate .mws-login-error{min-height:0;margin:9px 0;text-align:left;color:var(--danger,#ff8b9b)}
+#mwsAccessGate .mws-login-actions{display:grid;gap:14px;margin-top:14px;text-align:left}
+#mwsAccessGate .mws-remember{font-size:12px;color:var(--muted);justify-content:flex-start}
+#mwsAccessGate .mws-login-submit{width:100%;min-height:42px;background:var(--text,#e5e7eb)!important;color:var(--bg,#080c15)!important;border:0!important;border-radius:10px!important;box-shadow:none!important}
+#mwsAccessGate .mws-login-close{position:absolute;top:12px;right:12px;background:transparent;border:0;color:var(--muted);font-size:22px;line-height:1;width:32px;height:32px;padding:0;box-shadow:none}
+#mwsAccessGate .mws-login-back{margin-top:15px;padding:6px 8px;background:transparent;border:0;color:var(--muted);font-size:12px;box-shadow:none}
+#mwsAccessGate .mws-login-back:hover,#mwsAccessGate .mws-login-close:hover{color:var(--text)}
+#mwsChangeModeBtn:disabled{opacity:.55;cursor:wait}
+@media(max-width:480px){body.mws-premium #mwsAccessGate{padding:24px 12px}body.mws-premium #mwsAccessGate .mws-login-shell{padding:22px!important}}
+</style>
+<link rel="stylesheet" href="assets/ui-interactions-v1.css?v=5">
+<link rel="stylesheet" href="assets/content-applications-v1.css?v=8">
+<link rel="stylesheet" href="assets/calendar-people-view-v1.css?v=2">
+<link rel="stylesheet" href="assets/contact-frequency-v1.css?v=2">
+<link rel="stylesheet" href="assets/calendar-day-expand-v1.css?v=1">
+<link rel="stylesheet" href="assets/mawang-archive-v1.css?v=12">
+<link rel="stylesheet" href="assets/sidebar-compact-v1.css?v=3&hover-state=2">
+<link rel="stylesheet" href="assets/topbar-context-v1.css?v=2">
+<link rel="stylesheet" href="assets/mawang-archive-header-v1.css?v=3">
+<link rel="stylesheet" href="assets/workspace-density-v1.css?v=8">
+<link rel="stylesheet" href="assets/mawang-archive-finish-v1.css?v=1">
 </head>
 <body data-theme="neon" class="mws-premium mws-public-mode mws-app-loading" data-mws-mode="public" data-build-version="MWS V 1.4.0" data-calendar-startup="pending">
 <script id="mws-sidebar-bootstrap-v1">
@@ -426,6 +1154,9 @@ body:not(.sidebar-pinned) .sidebar:not(.mws-sidebar-expanded-v2) .nav-game-divid
               <option value="6">7월</option><option value="7">8월</option><option value="8">9월</option>
               <option value="9">10월</option><option value="10">11월</option><option value="11">12월</option>
             </select>
+            <script id="mws-calendar-date-firstpaint-v1">
+(()=>{const y=document.getElementById('calendarYearSelect'),m=document.getElementById('calendarMonthSelect');if(!y||!m)return;const now=new Date(),year=now.getFullYear();for(let n=year-12;n<=year+12;n++)y.add(new Option(n+'년',String(n)));y.value=String(year);m.value=String(now.getMonth())})();
+</script>
             <div class="big calendar-month-label" id="monthLabel"></div>
           </div>
         </div>
@@ -500,7 +1231,7 @@ body:not(.sidebar-pinned) .sidebar:not(.mws-sidebar-expanded-v2) .nav-game-divid
           <div id="calendarGrid" class="calendar"></div>
         </div>
 
-        <div id="calendarCopyTray" class="calendar-copy-tray">
+        <div id="calendarCopyTray" class="calendar-copy-tray" hidden inert aria-hidden="true">
           <div class="calendar-copy-tray-head">
             <div>
               <div class="calendar-copy-tray-title">복사 보관함</div>
@@ -2657,52 +3388,7 @@ body:not(.sidebar-pinned) .sidebar:not(.mws-sidebar-expanded-v2) .nav-game-divid
 
 
 
-<style id="v415-post-schedule-style">
-.post-detail-actions-v415{display:flex;flex-direction:column;align-items:flex-end;gap:9px;flex:0 0 auto}
-.post-detail-actions-main-v415{justify-content:flex-end;gap:8px;flex-wrap:wrap}
-.post-schedule-create-btn-v415{
-  min-width:174px;min-height:40px;padding:9px 16px;border-radius:11px;
-  border:1px solid rgba(132,225,255,.76);color:#effbff;font-weight:950;font-size:12px;
-  background:linear-gradient(135deg,#14c8ef,#2476ff);cursor:var(--mws-cursor-pointer,pointer);
-  box-shadow:0 10px 24px rgba(20,133,255,.22),0 0 18px rgba(20,200,239,.12);
-  transition:transform .14s ease,filter .14s ease,box-shadow .14s ease;
-}
-.post-schedule-create-btn-v415:hover{transform:translateY(-1px);filter:brightness(1.07);box-shadow:0 13px 30px rgba(20,133,255,.28),0 0 22px rgba(20,200,239,.17)}
-.post-schedule-create-btn-v415:active{transform:translateY(0) scale(.985)}
-.post-schedule-create-btn-v415:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:none}
-.post-schedule-prefill-note-v415{margin:0 0 12px;padding:10px 12px;border:1px solid rgba(43,161,255,.32);border-radius:11px;background:rgba(20,112,200,.08);color:#acd9ff;font-size:11px;line-height:1.55}
-@media(max-width:1150px){.post-detail-actions-v415{width:100%;align-items:stretch}.post-detail-actions-main-v415{justify-content:flex-start}.post-schedule-create-btn-v415{align-self:flex-start}}
-body[data-resolution="mobile"] .post-detail-actions-v415{width:100%;align-items:stretch}
-body[data-resolution="mobile"] .post-detail-actions-main-v415{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-body[data-resolution="mobile"] .post-schedule-create-btn-v415{width:100%;min-height:44px;font-size:13px}
 
-/* v4.17 - contact photo folder updater */
-#contactPhotoFolderStatus.photo-status-working{
-  color:#9fdcff;border-color:rgba(52,179,255,.58);background:rgba(30,142,216,.12)
-}
-#contactPhotoFolderStatus.photo-status-success{
-  color:#8df0bd;border-color:rgba(62,205,137,.58);background:rgba(42,174,112,.12)
-}
-#contactPhotoFolderStatus.photo-status-warning{
-  color:#ffd48c;border-color:rgba(224,164,59,.58);background:rgba(201,139,37,.12)
-}
-#contactPhotoFolderStatus.photo-status-error{
-  color:#ff9da9;border-color:rgba(225,78,98,.58);background:rgba(189,48,68,.12)
-}
-.photo-folder-result-v416 .photo-update-summary{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px
-}
-.photo-folder-result-v416 .photo-update-stat{
-  padding:9px 10px;border:1px solid var(--border);border-radius:10px;background:color-mix(in srgb,var(--panel) 58%,var(--input))
-}
-.photo-folder-result-v416 .photo-update-stat strong{
-  display:block;font-size:17px;line-height:1.1;margin-top:2px
-}
-.photo-folder-result-v416 .photo-update-detail{
-  margin-top:7px;padding-top:7px;border-top:1px solid var(--border);color:var(--muted)
-}
-
-</style>
 
 <script id="v415-post-schedule-script">
 (function(){
@@ -3091,131 +3777,7 @@ body[data-resolution="mobile"] .post-schedule-create-btn-v415{width:100%;min-hei
 </script>
 
 
-<style id="v418-random-gacha-style">
-#gameMultiDraw .gacha-stage-card-v418{overflow:hidden!important}
-#gameMultiDraw .gacha-topbar-v418{margin-bottom:0}
-#gameMultiDraw .gacha-layout-v418{display:grid;grid-template-columns:minmax(0,1fr) 318px;gap:20px;min-height:880px;align-items:stretch}
-#gameMultiDraw .gacha-main-stage-v418{
-  position:relative;min-height:820px;border-radius:28px;overflow:hidden;
-  border:1px solid rgba(136,162,255,.18);
-  background:linear-gradient(180deg,rgba(7,11,24,.98),rgba(3,6,15,1));
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.035),0 24px 55px rgba(0,0,0,.32)
-}
-#gameMultiDraw .gacha-stage-bg-v418{position:absolute;inset:0;background:
-  radial-gradient(circle at 50% 58%,rgba(81,113,255,.12),transparent 24%),
-  radial-gradient(circle at 50% 74%,rgba(160,112,255,.14),transparent 28%),
-  linear-gradient(180deg,rgba(14,24,53,.62),rgba(5,9,19,.95) 45%,rgba(3,5,10,.98));}
-#gameMultiDraw .gacha-stage-grid-v418{position:absolute;left:-10%;right:-10%;bottom:-16%;height:58%;background-image:linear-gradient(rgba(92,122,204,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(92,122,204,.08) 1px,transparent 1px);background-size:46px 46px;transform:perspective(780px) rotateX(67deg);opacity:.58;mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.75) 20%,rgba(0,0,0,.96) 100%)}
-#gameMultiDraw .gacha-stage-glow-v418{position:absolute;left:50%;bottom:9%;width:70%;height:19%;transform:translateX(-50%);background:radial-gradient(ellipse at center,rgba(103,112,255,.2),rgba(56,74,167,.08) 42%,transparent 76%);filter:blur(10px)}
-#gameMultiDraw .gacha-stage-flash-v418{position:absolute;inset:0;background:radial-gradient(circle at center,rgba(255,255,255,.94),rgba(163,183,255,.46) 14%,rgba(104,123,255,.18) 28%,transparent 52%);opacity:0;pointer-events:none;mix-blend-mode:screen}
-#gameMultiDraw .gacha-stage-sparks-v418{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:7}
-#gameMultiDraw .gacha-spark-v418{position:absolute;width:4px;height:4px;border-radius:50%;background:#fff;box-shadow:0 0 10px rgba(255,255,255,.95),0 0 18px rgba(126,189,255,.85);opacity:0;animation:gachaSparkV418 .82s ease-out forwards}
-@keyframes gachaSparkV418{0%{transform:translateY(0) scale(.6);opacity:0}20%{opacity:1}100%{transform:translateY(-110px) scale(1.15);opacity:0}}
-#gameMultiDraw .gacha-stage-brand-v418{position:absolute;left:28px;top:24px;z-index:6;display:flex;flex-direction:column;gap:2px;color:#edf1ff;letter-spacing:.18em;text-shadow:0 0 18px rgba(113,120,255,.2)}
-#gameMultiDraw .gacha-stage-brand-v418 span{font-size:18px;font-weight:1000}
-#gameMultiDraw .gacha-stage-brand-v418 small{font-size:8px;font-weight:900;color:#97a4c5;letter-spacing:.22em}
-#gameMultiDraw .gacha-stage-caption-v418{position:absolute;left:50%;top:28px;transform:translateX(-50%);z-index:6;padding:10px 18px;border-radius:999px;border:1px solid rgba(154,174,255,.18);background:rgba(7,11,22,.68);color:#c5d0ee;font-size:12px;font-weight:850;letter-spacing:.06em;backdrop-filter:blur(8px)}
-#gameMultiDraw .gacha-stage-nameplate-v418{position:absolute;left:50%;top:84px;transform:translateX(-50%);z-index:6;font-size:clamp(24px,2vw,36px);font-weight:1000;letter-spacing:.08em;color:#f5f8ff;text-shadow:0 0 24px rgba(131,143,255,.35)}
-#gameMultiDraw .gacha-deck-zone-v418{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);width:min(40%,280px);height:380px;z-index:5;display:flex;align-items:center;justify-content:center;transition:transform .25s ease,opacity .35s ease,filter .25s ease}
-#gameMultiDraw .gacha-deck-shadow-v418{position:absolute;left:50%;bottom:2%;width:92%;height:64px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse at center,rgba(98,102,255,.28),rgba(26,31,63,.08) 42%,transparent 74%);filter:blur(7px)}
-#gameMultiDraw .gacha-deck-stack-v418{position:relative;width:220px;height:316px;filter:drop-shadow(0 24px 34px rgba(0,0,0,.42))}
-#gameMultiDraw .gacha-deck-stack-v418 .deck-card{position:absolute;inset:0;border-radius:24px;border:1px solid rgba(200,210,255,.22);background:linear-gradient(160deg,rgba(29,44,93,.98),rgba(13,18,34,.98) 42%,rgba(61,40,128,.94));overflow:hidden}
-#gameMultiDraw .gacha-deck-stack-v418 .deck-card::before{content:'MW';position:absolute;inset:0;display:grid;place-items:center;font-size:56px;font-weight:1000;letter-spacing:.05em;color:rgba(238,242,255,.9);text-shadow:0 0 34px rgba(117,108,255,.6)}
-#gameMultiDraw .gacha-deck-stack-v418 .deck-card::after{content:'';position:absolute;inset:16px;border-radius:18px;border:1px solid rgba(117,190,255,.16);background:linear-gradient(112deg,transparent 12%,rgba(255,255,255,.08) 34%,transparent 55%);transform:translateX(-35%)}
-#gameMultiDraw .gacha-deck-stack-v418 .c1{transform:translate(-24px,15px) rotate(-6deg);opacity:.38}
-#gameMultiDraw .gacha-deck-stack-v418 .c2{transform:translate(-12px,8px) rotate(-3.2deg);opacity:.5}
-#gameMultiDraw .gacha-deck-stack-v418 .c3{transform:translate(0,4px);opacity:.78}
-#gameMultiDraw .gacha-deck-stack-v418 .c4{transform:translate(10px,8px) rotate(3deg);opacity:.55}
-#gameMultiDraw .gacha-deck-stack-v418 .c5{transform:translate(22px,15px) rotate(6deg);opacity:.38}
-#gameMultiDraw .gacha-deck-chip-v418{position:absolute;bottom:0;padding:8px 13px;border-radius:999px;border:1px solid rgba(131,151,255,.22);background:rgba(6,10,21,.84);font-size:9px;font-weight:950;letter-spacing:.22em;color:#aab8dd}
-#gameMultiDraw .gacha-reveal-anchor-v418{position:absolute;inset:0;display:grid;place-items:center;z-index:8;pointer-events:none}
-#gameMultiDraw .gacha-reveal-card-v418{position:relative;width:min(72%,540px);height:min(84%,720px);opacity:0;transform:translateY(20px) scale(.42);transition:opacity .25s ease,transform .25s ease}
-#gameMultiDraw .gacha-reveal-card-v418.show{opacity:1}
-#gameMultiDraw .gacha-reveal-card-v418.final{transform:translateY(0) scale(1);animation:gachaRevealFinalV418 .95s cubic-bezier(.2,.78,.17,1) forwards}
-@keyframes gachaRevealFinalV418{0%{transform:translateY(90px) scale(.32) rotate(-7deg);filter:brightness(1.2)}55%{transform:translateY(-10px) scale(1.05) rotate(1deg)}100%{transform:translateY(0) scale(1) rotate(0deg);filter:brightness(1)}}
-#gameMultiDraw .gacha-result-card-v418{position:relative;width:100%;height:100%;border-radius:34px;padding:14px;background:linear-gradient(155deg,rgba(255,255,255,.92),rgba(153,135,255,.58) 16%,rgba(25,33,63,.98) 46%,rgba(69,52,142,.98) 78%,rgba(255,255,255,.75));box-shadow:0 0 0 2px rgba(255,255,255,.72),0 0 0 9px rgba(130,89,255,.22),0 34px 80px rgba(0,0,0,.58),0 0 70px rgba(117,119,255,.42);overflow:hidden}
-#gameMultiDraw .gacha-result-card-v418::before{content:'';position:absolute;inset:-40%;background:linear-gradient(112deg,transparent 32%,rgba(255,255,255,.38) 45%,rgba(125,214,255,.3) 52%,transparent 62%);transform:translateX(-78%) rotate(6deg);animation:gachaCardShineV418 2.2s ease-in-out infinite}
-@keyframes gachaCardShineV418{58%,100%{transform:translateX(78%) rotate(6deg)}}
-#gameMultiDraw .gacha-result-inner-v418{position:relative;height:100%;border-radius:25px;background:linear-gradient(180deg,#121a31,#080d18);overflow:hidden;border:1px solid rgba(255,255,255,.2);display:flex;flex-direction:column}
-#gameMultiDraw .gacha-result-media-v418{height:80%;background:radial-gradient(circle at 50% 28%,rgba(160,132,255,.28),transparent 58%),#0d1423;display:grid;place-items:center;overflow:hidden}
-#gameMultiDraw .gacha-result-media-v418 img{width:100%;height:100%;object-fit:cover}
-#gameMultiDraw .gacha-result-fallback-v418{width:170px;height:170px;border-radius:50%;display:grid;place-items:center;border:5px solid rgba(255,255,255,.68);background:linear-gradient(145deg,#9367ff,#402d80);font-size:56px;font-weight:1000;color:#fff;box-shadow:0 0 42px rgba(137,99,246,.56)}
-#gameMultiDraw .gacha-result-body-v418{flex:1;padding:18px 22px;background:linear-gradient(180deg,rgba(22,30,52,.96),rgba(6,10,20,.98));text-align:center;display:flex;flex-direction:column;justify-content:center;gap:8px}
-#gameMultiDraw .gacha-result-kicker-v418{font-size:12px;letter-spacing:.22em;color:#c8b3ff;font-weight:1000}
-#gameMultiDraw .gacha-result-name-v418{font-size:clamp(38px,2.6vw,50px);line-height:1.02;font-weight:1000;color:#fff;text-shadow:0 0 18px rgba(110,105,255,.24)}
-#gameMultiDraw .gacha-result-sub-v418{font-size:14px;color:#b7c1d9;letter-spacing:.08em}
-#gameMultiDraw .gacha-result-order-v418{font-size:15px;font-weight:1000;color:#ffd971;letter-spacing:.12em}
-#gameMultiDraw .gacha-result-card-v418.compact{border-radius:18px;padding:6px;box-shadow:0 0 0 1px rgba(255,255,255,.18),0 14px 28px rgba(0,0,0,.18),0 0 20px rgba(117,119,255,.16)}
-#gameMultiDraw .gacha-result-card-v418.compact::before{display:none}
-#gameMultiDraw .gacha-result-card-v418.compact .gacha-result-inner-v418{border-radius:14px}
-#gameMultiDraw .gacha-result-card-v418.compact .gacha-result-media-v418{height:100%;min-height:82px}
-#gameMultiDraw .gacha-result-card-v418.compact .gacha-result-body-v418{padding:8px 10px;gap:2px}
-#gameMultiDraw .gacha-result-card-v418.compact .gacha-result-kicker-v418{font-size:8px;letter-spacing:.12em}
-#gameMultiDraw .gacha-result-card-v418.compact .gacha-result-name-v418{font-size:16px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#gameMultiDraw .gacha-result-card-v418.compact .gacha-result-sub-v418{font-size:9px;text-align:left}
-#gameMultiDraw .gacha-result-card-v418.compact .gacha-result-order-v418{font-size:10px;text-align:left}
-#gameMultiDraw .gacha-selected-dock-v418{display:flex;flex-direction:column;min-height:820px;padding:16px;border-radius:24px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,rgba(8,11,22,.94),rgba(12,17,30,.92));overflow:hidden}
-#gameMultiDraw .gacha-selected-head-v418{padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.08)}
-#gameMultiDraw .gacha-selected-head-v418 span{letter-spacing:.16em;font-size:12px;color:#c4b4ff;font-weight:1000}
-#gameMultiDraw .gacha-selected-head-v418 strong{font-size:22px}
-#gameMultiDraw .gacha-selected-list-v418{display:grid;grid-template-columns:1fr;gap:12px;overflow:auto;padding-right:4px;margin-top:12px;align-content:start}
-#gameMultiDraw .gacha-selected-item-v418{display:grid;grid-template-columns:72px minmax(0,1fr);gap:10px;padding:10px;border-radius:16px;border:1px solid rgba(146,118,255,.24);background:linear-gradient(145deg,rgba(86,57,169,.16),rgba(6,9,17,.96));align-items:center}
-#gameMultiDraw .gacha-selected-item-v418 .thumb{width:72px;height:96px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.14);background:#0d1320;display:grid;place-items:center}
-#gameMultiDraw .gacha-selected-item-v418 .thumb img{width:100%;height:100%;object-fit:cover}
-#gameMultiDraw .gacha-selected-item-v418 .meta{min-width:0}
-#gameMultiDraw .gacha-selected-item-v418 .name{font-size:16px;font-weight:1000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#gameMultiDraw .gacha-selected-item-v418 .order{margin-top:6px;font-size:10px;letter-spacing:.15em;color:#c5b2ff;font-weight:900}
-#gameMultiDraw .gacha-selected-empty-v418{margin-top:12px;padding:14px 12px;border:1px dashed rgba(166,132,255,.34);border-radius:14px;color:#aeb8d3;font-size:11px;line-height:1.55;text-align:center}
-#gameMultiDraw .gacha-charge-panel-v418{margin-top:18px}
-#gameMultiDraw .gacha-gauge-track-v418{height:18px}
-#gameMultiDraw .gacha-gauge-fill-v418{background:linear-gradient(90deg,#4ce0ff,#737bff 46%,#c77bff 100%)!important;box-shadow:0 0 20px rgba(89,153,255,.35),0 0 28px rgba(160,104,255,.28)}
-#gameMultiDraw .gacha-fire-btn-v418{min-height:60px;font-size:20px;font-weight:1000;letter-spacing:.04em;background:linear-gradient(135deg,#3fc2ff,#3276ff)!important;border-color:rgba(199,230,255,.8)!important;box-shadow:0 18px 36px rgba(36,110,255,.22),0 0 30px rgba(63,194,255,.14)}
-#gameMultiDraw .gacha-fire-btn-v418.charging{background:linear-gradient(135deg,#7c59ff,#b06fff)!important;box-shadow:0 22px 38px rgba(102,77,255,.28),0 0 30px rgba(176,111,255,.18)}
-#gameMultiDraw .gacha-winner-board-v418{margin-top:16px}
-#gameMultiDraw .gacha-winner-slots-v418{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
-#gameMultiDraw .gacha-winner-slot-v418{display:grid;grid-template-columns:74px minmax(0,1fr);gap:12px;align-items:center;padding:12px;border-radius:16px;border:1px solid rgba(143,117,255,.24);background:linear-gradient(145deg,rgba(82,48,155,.14),rgba(7,11,20,.96))}
-#gameMultiDraw .gacha-winner-slot-v418 .thumb{width:74px;height:98px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.14);background:#0d1320;display:grid;place-items:center}
-#gameMultiDraw .gacha-winner-slot-v418 .thumb img{width:100%;height:100%;object-fit:cover}
-#gameMultiDraw .gacha-winner-slot-v418 .name{font-size:20px;font-weight:1000;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#gameMultiDraw .gacha-winner-slot-v418 .order{font-size:11px;letter-spacing:.18em;color:#c8b1ff;font-weight:900}
-#gameMultiDraw .gacha-winner-slot-v418 .sub{margin-top:5px;font-size:11px;color:#9fb0cf}
-#gameMultiDraw .gacha-empty-slot-v418{min-height:122px;display:grid;place-items:center;padding:14px;border-radius:16px;border:1px dashed rgba(143,117,255,.24);color:#7080a3;font-size:12px;text-align:center}
-#gameMultiDraw .gacha-main-stage-v418.is-charging .gacha-deck-zone-v418{transform:translate(-50%,-52%) scale(1.04);filter:brightness(1.06)}
-#gameMultiDraw .gacha-main-stage-v418.is-charging .gacha-stage-glow-v418{background:radial-gradient(ellipse at center,rgba(151,112,255,.3),rgba(71,80,186,.08) 42%,transparent 76%)}
-#gameMultiDraw .gacha-main-stage-v418.is-charging .gacha-stage-caption-v418{color:#f1e9ff;border-color:rgba(194,165,255,.32);box-shadow:0 0 24px rgba(152,109,255,.14)}
-#gameMultiDraw .gacha-main-stage-v418.is-charging .gacha-deck-stack-v418 .c1{animation:gachaDeckShuffleV418 .55s ease-in-out infinite}
-#gameMultiDraw .gacha-main-stage-v418.is-charging .gacha-deck-stack-v418 .c2{animation:gachaDeckShuffleV418 .62s ease-in-out infinite reverse}
-#gameMultiDraw .gacha-main-stage-v418.is-charging .gacha-deck-stack-v418 .c3{animation:gachaDeckShuffleV418 .5s ease-in-out infinite}
-#gameMultiDraw .gacha-main-stage-v418.is-charging .gacha-deck-stack-v418 .c4{animation:gachaDeckShuffleV418 .66s ease-in-out infinite reverse}
-#gameMultiDraw .gacha-main-stage-v418.is-charging .gacha-deck-stack-v418 .c5{animation:gachaDeckShuffleV418 .58s ease-in-out infinite}
-@keyframes gachaDeckShuffleV418{0%,100%{}25%{transform:translate(-10px,-8px) rotate(-4deg)}50%{transform:translate(10px,-14px) rotate(5deg)}75%{transform:translate(-5px,-6px) rotate(-2deg)}}
-#gameMultiDraw .gacha-main-stage-v418.is-shuffling .gacha-deck-zone-v418{transform:translate(-50%,-58%) scale(.94)}
-#gameMultiDraw .gacha-main-stage-v418.is-shuffling .gacha-stage-caption-v418{color:#eaf3ff}
-#gameMultiDraw .gacha-main-stage-v418.is-shuffling .gacha-stage-flash-v418{animation:gachaFlashV418 .7s ease-out 1}
-#gameMultiDraw .gacha-main-stage-v418.has-result .gacha-deck-zone-v418{opacity:.12;transform:translate(-50%,-55%) scale(.84);filter:blur(2px)}
-#gameMultiDraw .gacha-main-stage-v418.has-result .gacha-stage-glow-v418{background:radial-gradient(ellipse at center,rgba(178,144,255,.32),rgba(73,81,194,.08) 42%,transparent 76%)}
-@keyframes gachaFlashV418{0%{opacity:0}20%{opacity:1}100%{opacity:0}}
-@media(max-width:1500px){
-  #gameMultiDraw .gacha-layout-v418{grid-template-columns:minmax(0,1fr) 290px;min-height:820px}
-  #gameMultiDraw .gacha-main-stage-v418,#gameMultiDraw .gacha-selected-dock-v418{min-height:760px}
-  #gameMultiDraw .gacha-reveal-card-v418{width:min(70%,500px);height:min(82%,660px)}
-  #gameMultiDraw .gacha-result-name-v418{font-size:42px}
-}
-@media(max-width:1180px){
-  #gameMultiDraw .gacha-layout-v418{grid-template-columns:1fr;min-height:auto}
-  #gameMultiDraw .gacha-selected-dock-v418{min-height:240px}
-  #gameMultiDraw .gacha-selected-list-v418{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
-}
-body[data-resolution="mobile"] #gameMultiDraw .gacha-layout-v418{grid-template-columns:1fr;gap:14px;min-height:auto}
-body[data-resolution="mobile"] #gameMultiDraw .gacha-main-stage-v418{min-height:560px;border-radius:22px}
-body[data-resolution="mobile"] #gameMultiDraw .gacha-selected-dock-v418{min-height:220px;padding:12px}
-body[data-resolution="mobile"] #gameMultiDraw .gacha-reveal-card-v418{width:min(78%,340px);height:min(78%,470px)}
-body[data-resolution="mobile"] #gameMultiDraw .gacha-result-name-v418{font-size:30px}
-body[data-resolution="mobile"] #gameMultiDraw .gacha-result-body-v418{padding:14px 16px}
-body[data-resolution="mobile"] #gameMultiDraw .gacha-stage-caption-v418{top:16px;left:14px;right:14px;transform:none;text-align:center}
-body[data-resolution="mobile"] #gameMultiDraw .gacha-stage-nameplate-v418{top:64px;font-size:22px}
-body[data-resolution="mobile"] #gameMultiDraw .gacha-fire-btn-v418{font-size:18px;min-height:56px}
-</style>
+
 
 
 <script id="v418-random-gacha-script">
@@ -3547,27 +4109,7 @@ body[data-resolution="mobile"] #gameMultiDraw .gacha-fire-btn-v418{font-size:18p
 </script>
 
 
-<style id="v419-gacha-auto-style">
-#gameMultiDraw .gacha-action-row-v419{display:grid;grid-template-columns:minmax(0,1.9fr) minmax(230px,.7fr);gap:12px;align-items:stretch}
-#gameMultiDraw .gacha-action-row-v419 .gacha-fire-btn-v418{width:100%;margin:0}
-#gameMultiDraw .gacha-auto-btn-v419{
-  min-height:60px;padding:0 18px;border-radius:13px;cursor:var(--mws-cursor-pointer,pointer);
-  border:1px solid rgba(94,238,199,.62);color:#eafff8;font-size:17px;font-weight:1000;letter-spacing:.02em;
-  background:linear-gradient(135deg,rgba(16,168,139,.96),rgba(34,118,183,.96));
-  box-shadow:0 16px 34px rgba(16,148,132,.18),0 0 24px rgba(57,218,185,.1);
-  transition:transform .14s ease,filter .14s ease,box-shadow .14s ease,opacity .14s ease
-}
-#gameMultiDraw .gacha-auto-btn-v419:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.07);box-shadow:0 19px 38px rgba(16,148,132,.23),0 0 29px rgba(57,218,185,.16)}
-#gameMultiDraw .gacha-auto-btn-v419:active:not(:disabled){transform:translateY(0) scale(.99)}
-#gameMultiDraw .gacha-auto-btn-v419.running{border-color:rgba(255,196,102,.72);background:linear-gradient(135deg,#c27b21,#a94b37);box-shadow:0 16px 34px rgba(189,103,31,.2),0 0 24px rgba(255,178,72,.12)}
-#gameMultiDraw .gacha-auto-btn-v419:disabled{opacity:.44;cursor:not-allowed;transform:none;filter:none}
-#gameMultiDraw.auto-running-v419 .gacha-controls-grid-v418{pointer-events:none;opacity:.56;filter:saturate(.78)}
-#gameMultiDraw.auto-running-v419 .gacha-charge-panel-v418 .gacha-fire-btn-v418{opacity:.5}
-#gameMultiDraw .gacha-auto-progress-v419{position:absolute;right:28px;top:24px;z-index:8;padding:8px 13px;border-radius:999px;border:1px solid rgba(84,226,195,.26);background:rgba(6,18,22,.72);color:#a7f7df;font-size:10px;font-weight:950;letter-spacing:.12em;backdrop-filter:blur(8px);opacity:0;transform:translateY(-4px);transition:opacity .2s ease,transform .2s ease;pointer-events:none}
-#gameMultiDraw.auto-running-v419 .gacha-auto-progress-v419{opacity:1;transform:translateY(0)}
-@media(max-width:980px){#gameMultiDraw .gacha-action-row-v419{grid-template-columns:1fr}#gameMultiDraw .gacha-auto-btn-v419{min-height:56px;font-size:16px}}
-body[data-resolution="mobile"] #gameMultiDraw .gacha-action-row-v419{grid-template-columns:1fr}
-</style>
+
 
 
 <script id="v419-gacha-auto-script">
@@ -3758,22 +4300,7 @@ body[data-resolution="mobile"] #gameMultiDraw .gacha-action-row-v419{grid-templa
 </script>
 
 
-<style id="v500-public-post-gacha-style">
-/* v5.0 - Public read-only + post Gacha decision workflow */
-.post-status-badge.gacha{color:#ff9df2!important;border-color:#cf4bc1!important;background:rgba(207,75,193,.10)!important;box-shadow:0 0 12px rgba(207,75,193,.12)}
-.post-decision-row{grid-template-columns:repeat(3,minmax(0,1fr))!important}
-.post-decision-btn.gacha{color:#d9a7ff!important;border-color:#6c478d!important;background:rgba(100,63,139,.08)!important}
-.post-decision-btn.gacha.active{color:#ffd2fa!important;border-color:#df55d0!important;background:linear-gradient(135deg,rgba(188,62,182,.22),rgba(92,82,211,.18))!important;box-shadow:0 0 13px rgba(208,79,196,.16)}
-.post-bulk-gacha-v50{border:1px solid #d44fc7;border-radius:10px;padding:8px 11px;color:#ffe0fb;background:linear-gradient(135deg,rgba(186,54,176,.24),rgba(85,67,183,.22));font-weight:900;cursor:var(--mws-cursor-pointer,pointer);box-shadow:0 0 14px rgba(198,66,187,.12)}
-.post-bulk-gacha-v50:hover{filter:brightness(1.12);box-shadow:0 0 20px rgba(198,66,187,.22)}
-.gacha-speed-control-v50{min-height:60px;display:grid;grid-template-columns:auto 88px;gap:9px;align-items:center;padding:0 14px;border-radius:13px;border:1px solid rgba(185,137,255,.34);background:linear-gradient(135deg,rgba(76,48,128,.42),rgba(32,48,93,.48));color:#e9ddff}
-.gacha-speed-control-v50 label{font-size:11px;font-weight:950;letter-spacing:.08em;color:#cbb5ff}.gacha-speed-control-v50 select{min-width:88px;font-size:13px;font-weight:900}
-#gameMultiDraw .gacha-action-row-v419{grid-template-columns:minmax(0,1.65fr) minmax(220px,.72fr) minmax(170px,.46fr)!important}
-.gacha-post-confirm-v50{margin-top:7px;width:100%;border:1px solid rgba(82,218,145,.52);border-radius:9px;padding:7px 9px;background:rgba(42,151,93,.13);color:#a9f2ca;font-size:10px;font-weight:950;cursor:var(--mws-cursor-pointer,pointer)}
-.gacha-post-confirm-v50:hover{background:rgba(42,151,93,.22);border-color:#5cd995}.gacha-post-confirm-v50.done{opacity:.62;cursor:default}
-body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!important}
-@media(max-width:980px){#gameMultiDraw .gacha-action-row-v419{grid-template-columns:1fr!important}.gacha-speed-control-v50{grid-template-columns:1fr auto;min-height:54px}}
-</style>
+
 <script id="v500-public-post-gacha-script">
 (function(){
   window.mwsGachaSpeedV50=Math.max(.5,Number(localStorage.getItem('mws_gacha_speed_v50'))||1);
@@ -3913,16 +4440,9 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
 </script>
 
 
-<style id="v520-public-session-style">
-/* v5.2 - Public is a fully interactive sandbox. Only Admin management remains privileged. */
-body.mws-public-mode [data-mws-public-hidden="true"]{display:revert!important}
-body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!important}
-</style>
 
-<style id="v510-post-source-removal-style">
-/* v5.2 - Source preview and source-article payload sync removed. External source link remains available. */
-#postSourceTab,#postSourcePanel,#postSourceContent{display:none!important}
-</style>
+
+
 <script id="v510-post-source-removal-script">
 (function(){
   /* The source-preview feature intentionally no longer exists. Only the external '원문 열기' link remains. */
@@ -4006,71 +4526,7 @@ body.mws-public-mode .post-applicant-card{opacity:1!important;filter:none!import
 })();
 </script>
 
-<style id="v530-ui-enhancement-style">
-/* v5.3 - requested usability and visual refinements */
-#posts .post-view-btn{display:inline-flex!important;align-items:center!important;gap:8px!important;min-height:42px!important;padding:8px 13px!important;font-size:11px!important}
-#posts .post-view-icon-v53{width:22px;height:22px;flex:0 0 22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-#posts .post-view-btn.active .post-view-icon-v53{filter:drop-shadow(0 0 4px rgba(255,255,255,.26))}
-#posts .post-partial-confirm-v53{display:flex;align-items:center;gap:7px;margin-left:18px;padding-left:18px;border-left:1px solid color-mix(in srgb,var(--border) 78%,transparent)}
-#posts .post-partial-confirm-btn-v53{min-height:40px;padding:8px 15px;border:1px solid #5b8cff;border-radius:10px;background:rgba(67,112,255,.10);color:#b9d0ff;font-weight:950;cursor:var(--mws-cursor-pointer,pointer)}
-#posts .post-partial-confirm-btn-v53:hover{background:rgba(67,112,255,.18);box-shadow:0 0 18px rgba(67,112,255,.12)}
-#posts .post-partial-count-v53{display:flex;align-items:center;gap:5px;white-space:nowrap;color:var(--muted);font-size:10px;font-weight:850}
-#posts #postPartialConfirmCountV53{width:64px;height:40px;padding:6px 7px;text-align:center;font-weight:950}
-@media(max-width:1180px){#posts .post-partial-confirm-v53{margin-left:0;padding-left:0;border-left:0}}
 
-#gameMultiDraw .gacha-apply-post-wrap-v53{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid color-mix(in srgb,var(--border) 74%,transparent)}
-#gameMultiDraw .gacha-apply-post-btn-v53{min-width:250px;min-height:48px;padding:10px 22px;border-radius:12px;border:1px solid rgba(104,220,173,.72);background:linear-gradient(135deg,rgba(18,151,113,.96),rgba(28,113,168,.96));color:#f1fff9;font-size:14px;font-weight:1000;cursor:var(--mws-cursor-pointer,pointer);box-shadow:0 12px 30px rgba(20,140,112,.16),0 0 24px rgba(80,224,180,.09)}
-#gameMultiDraw .gacha-apply-post-btn-v53:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px)}
-#gameMultiDraw .gacha-apply-post-btn-v53:disabled{opacity:.38;cursor:not-allowed;filter:grayscale(.35)}
-#gameMultiDraw .gacha-apply-post-help-v53{max-width:780px;text-align:center;color:var(--muted);font-size:10px;line-height:1.55}
-.gacha-apply-post-box-v53{width:min(760px,94vw)!important}
-.gacha-apply-note-v53{margin:13px 0;padding:11px 12px;border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));border-radius:10px;background:color-mix(in srgb,var(--accent) 7%,var(--input));color:var(--muted);font-size:10px;line-height:1.55}
-.gacha-apply-post-list-v53{display:flex;flex-direction:column;gap:8px;max-height:54vh;overflow:auto;padding-right:3px}
-.gacha-post-choice-v53{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 12px;border:1px solid var(--border);border-radius:11px;background:var(--input);cursor:var(--mws-cursor-pointer,pointer)}
-.gacha-post-choice-v53:hover{border-color:color-mix(in srgb,var(--accent) 55%,var(--border));background:color-mix(in srgb,var(--accent) 6%,var(--input))}
-.gacha-post-choice-v53 input{width:17px;height:17px}
-.gacha-post-choice-title-v53{font-size:12px;font-weight:950;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.gacha-post-choice-meta-v53{margin-top:4px;color:var(--muted);font-size:9px}
-.gacha-post-choice-count-v53{font-size:9px;color:#b9c7df;white-space:nowrap}
-.gacha-apply-actions-v53{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
-
-#gamePachinko .horse-race-bottom{align-items:stretch!important}
-#gamePachinko .horse-race-contact-dock,#gamePachinko .horse-race-config{min-height:690px!important}
-#gamePachinko .horse-race-config{display:flex!important;flex-direction:column}
-#gamePachinko .horse-race-entry-list{max-height:565px!important;flex:1 1 auto}
-#gamePachinko .horse-entry-row{grid-template-columns:36px minmax(0,1fr) 38px 58px!important}
-#gamePachinko .horse-entry-remove-v53{height:34px;padding:0 9px!important;border-color:rgba(232,93,117,.48)!important;color:#ffc3cf!important;background:rgba(232,93,117,.08)!important;font-size:9px!important;font-weight:950!important}
-#gamePachinko .horse-entry-remove-v53:hover{background:rgba(232,93,117,.16)!important}
-@media(max-width:900px){#gamePachinko .horse-race-contact-dock,#gamePachinko .horse-race-config{min-height:auto!important}}
-
-#contacts.active .contact-tag-panel{position:sticky!important;top:18px!important;align-self:start!important;z-index:55!important;max-height:calc(100vh - 36px)!important;box-shadow:0 16px 36px rgba(0,0,0,.18)}
-@media(max-width:900px){#contacts.active .contact-tag-panel{position:static!important;max-height:none!important}}
-body[data-resolution="mobile"] #contacts.active .contact-tag-panel{position:static!important;max-height:none!important}
-
-/* More theatrical ranking presentation without altering ranking math. */
-#sniper .ranking-stage{position:relative;background:radial-gradient(circle at 50% 16%,color-mix(in srgb,var(--accent) 13%,transparent),transparent 34%),linear-gradient(180deg,color-mix(in srgb,var(--panel) 96%,#070912),var(--panel));box-shadow:inset 0 0 70px rgba(0,0,0,.18),0 14px 42px rgba(0,0,0,.16)}
-#sniper .ranking-stage::before,#sniper .ranking-stage::after{content:"✦  ✧  ✦  ·  ✧  ✦  ·  ✦";position:absolute;left:50%;transform:translateX(-50%);width:94%;text-align:center;pointer-events:none;white-space:pre;letter-spacing:clamp(16px,3vw,52px);color:color-mix(in srgb,var(--accent) 62%,#fff);opacity:.18;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--accent) 60%,transparent));animation:rankingStarsV53 3.6s ease-in-out infinite alternate}
-#sniper .ranking-stage::before{top:18px}
-#sniper .ranking-stage::after{bottom:14px;animation-delay:-1.7s}
-#sniper .ranking-podium-card{transition:transform .2s ease,box-shadow .2s ease,filter .2s ease!important}
-#sniper .ranking-podium-slot.first .ranking-podium-card{box-shadow:0 0 0 1px rgba(255,211,72,.23),0 0 34px rgba(240,184,30,.22),0 18px 48px rgba(0,0,0,.24)!important;animation:rankingGoldPulseV53 2.6s ease-in-out infinite}
-#sniper .ranking-podium-slot.second .ranking-podium-card{box-shadow:0 0 0 1px rgba(211,224,241,.14),0 0 25px rgba(183,201,222,.13),0 16px 38px rgba(0,0,0,.20)}
-#sniper .ranking-podium-slot.third .ranking-podium-card{box-shadow:0 0 0 1px rgba(216,145,81,.15),0 0 25px rgba(190,112,50,.13),0 16px 38px rgba(0,0,0,.20)}
-#sniper .ranking-podium-card::before{content:"";position:absolute;inset:-60% -35%;z-index:-1;background:linear-gradient(105deg,transparent 36%,rgba(255,255,255,.14) 48%,transparent 60%);transform:translateX(-60%) rotate(7deg);animation:rankingShineV53 4.6s ease-in-out infinite}
-#sniper .ranking-crown{animation:rankingCrownV53 1.8s ease-in-out infinite;filter:drop-shadow(0 0 10px rgba(255,204,49,.58))!important}
-#sniper .ranking-podium-slot.first .ranking-podium-avatar{box-shadow:0 0 0 4px rgba(255,218,84,.10),0 0 28px rgba(255,205,52,.32),0 10px 24px rgba(0,0,0,.30)!important}
-#sniper .ranking-podium-slot.second .ranking-podium-avatar{box-shadow:0 0 20px rgba(205,221,241,.22),0 10px 22px rgba(0,0,0,.26)!important}
-#sniper .ranking-podium-slot.third .ranking-podium-avatar{box-shadow:0 0 20px rgba(219,139,75,.20),0 10px 22px rgba(0,0,0,.26)!important}
-#sniper .ranking-step{position:relative;overflow:hidden;box-shadow:0 10px 24px rgba(0,0,0,.20)}
-#sniper .ranking-step::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.25) 50%,transparent 70%);transform:translateX(-120%);animation:rankingStepShineV53 3.4s ease-in-out infinite}
-#sniper .ranking-list-row:nth-child(-n+3){box-shadow:inset 3px 0 0 color-mix(in srgb,var(--accent) 55%,transparent)}
-@keyframes rankingGoldPulseV53{50%{transform:translateY(-3px) scale(1.006);filter:brightness(1.06);box-shadow:0 0 0 1px rgba(255,226,111,.32),0 0 48px rgba(240,184,30,.31),0 21px 54px rgba(0,0,0,.28)}}
-@keyframes rankingCrownV53{50%{transform:translateY(-4px) scale(1.08) rotate(-1deg)}}
-@keyframes rankingShineV53{0%,58%{transform:translateX(-70%) rotate(7deg);opacity:0}70%{opacity:1}88%,100%{transform:translateX(70%) rotate(7deg);opacity:0}}
-@keyframes rankingStepShineV53{0%,62%{transform:translateX(-120%)}82%,100%{transform:translateX(120%)}}
-@keyframes rankingStarsV53{from{opacity:.10;transform:translateX(-50%) translateY(0) scale(.98)}to{opacity:.29;transform:translateX(-50%) translateY(-3px) scale(1.02)}}
-@media(prefers-reduced-motion:reduce){#sniper .ranking-stage::before,#sniper .ranking-stage::after,#sniper .ranking-podium-slot.first .ranking-podium-card,#sniper .ranking-crown,#sniper .ranking-podium-card::before,#sniper .ranking-step::after{animation:none!important}}
-</style>
 
 <script id="v530-feature-script">
 (function(){
@@ -4155,207 +4611,11 @@ body[data-resolution="mobile"] #contacts.active .contact-tag-panel{position:stat
 </script>
 
 
-<style id="v540-ui-style">
-/* =========================================================
-   v5.4 - Gacha selected dock, compact controls, sticky tags,
-          page-specific text scale, restored mascot
-   ========================================================= */
-
-/* Gacha selected dock: readable cards, glow-on-hover, no horizontal squeezing. */
-#gameMultiDraw .gacha-selected-list-v418{
-  grid-template-columns:1fr!important;
-  gap:12px!important;
-  overflow-y:auto!important;
-  overflow-x:hidden!important;
-  padding:4px 5px 10px 3px!important;
-}
-#gameMultiDraw .gacha-selected-item-v54{
-  position:relative;
-  display:grid;
-  grid-template-columns:82px minmax(0,1fr);
-  gap:12px;
-  align-items:center;
-  padding:11px;
-  border:1px solid rgba(146,118,255,.30);
-  border-radius:17px;
-  background:linear-gradient(145deg,rgba(87,57,170,.19),rgba(7,10,19,.97));
-  cursor:var(--mws-cursor-pointer,pointer);
-  overflow:hidden;
-  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,filter .16s ease;
-}
-#gameMultiDraw .gacha-selected-item-v54::after{
-  content:"";position:absolute;inset:-45%;pointer-events:none;
-  background:linear-gradient(105deg,transparent 36%,rgba(255,255,255,.18) 49%,transparent 62%);
-  transform:translateX(-70%) rotate(8deg);opacity:0;
-}
-#gameMultiDraw .gacha-selected-item-v54:hover{
-  transform:translateY(-2px) scale(1.01);
-  border-color:rgba(177,148,255,.92);
-  box-shadow:0 0 0 1px rgba(143,105,255,.20),0 0 28px rgba(126,87,255,.34),0 14px 34px rgba(0,0,0,.28);
-  filter:brightness(1.08);
-}
-#gameMultiDraw .gacha-selected-item-v54:hover::after{opacity:1;animation:v54SelectedSweep .75s ease forwards}
-#gameMultiDraw .gacha-selected-item-v54 .thumb{width:82px;height:108px;border-radius:13px;overflow:hidden;border:1px solid rgba(255,255,255,.15);background:#0d1320;display:grid;place-items:center;font-size:22px;font-weight:950}
-#gameMultiDraw .gacha-selected-item-v54 .thumb img{width:100%;height:100%;object-fit:cover}
-#gameMultiDraw .gacha-selected-item-v54 .name{font-size:17px;font-weight:1000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#gameMultiDraw .gacha-selected-item-v54 .order{margin-top:6px;font-size:10px;letter-spacing:.15em;color:#cbb8ff;font-weight:950}
-#gameMultiDraw .gacha-selected-item-v54 .hint{margin-top:6px;font-size:9px;color:var(--muted);font-weight:800}
-@keyframes v54SelectedSweep{to{transform:translateX(72%) rotate(8deg);opacity:0}}
-
-/* Selected card popup. */
-#gachaSelectedCardModalV54{z-index:1100}
-#gachaSelectedCardModalV54 .gacha-selected-popup-box-v54{width:min(610px,94vw)!important;padding:18px!important;background:radial-gradient(circle at 50% 5%,rgba(112,82,255,.18),transparent 38%),linear-gradient(180deg,#11162a,#090d17)!important;border-color:rgba(151,123,255,.50)!important;box-shadow:0 28px 85px rgba(0,0,0,.58),0 0 44px rgba(105,78,255,.20)}
-.gacha-selected-popup-card-v54{display:grid;grid-template-rows:minmax(300px,52vh) auto;border:1px solid rgba(170,144,255,.48);border-radius:22px;overflow:hidden;background:linear-gradient(180deg,rgba(40,35,88,.72),rgba(8,12,22,.98));box-shadow:0 0 0 2px rgba(137,105,255,.10),0 0 40px rgba(126,87,255,.22)}
-.gacha-selected-popup-image-v54{background:#0a0f1a;display:grid;place-items:center;overflow:hidden}
-.gacha-selected-popup-image-v54 img{width:100%;height:100%;object-fit:cover}
-.gacha-selected-popup-initials-v54{font-size:70px;font-weight:1000;color:#d6c9ff}
-.gacha-selected-popup-meta-v54{padding:20px 22px 22px;text-align:center}
-.gacha-selected-popup-kicker-v54{font-size:10px;letter-spacing:.24em;color:#bda8ff;font-weight:1000}
-.gacha-selected-popup-name-v54{font-size:34px;line-height:1.15;font-weight:1000;margin-top:8px}
-.gacha-selected-popup-order-v54{margin-top:9px;color:#ffd86b;font-size:13px;font-weight:950;letter-spacing:.10em}
-.gacha-selected-popup-help-v54{margin-top:9px;color:var(--muted);font-size:10px}
-
-/* Gacha contact palette readability. */
-#gameMultiDraw .multi-draw-contact-palette{gap:9px!important}
-#gameMultiDraw .multi-draw-contact-palette .mini-contact-item{min-height:62px!important;padding:9px 10px!important;gap:11px!important;border-radius:12px!important}
-#gameMultiDraw .multi-draw-contact-palette .mini-contact-item img,
-#gameMultiDraw .multi-draw-contact-palette .mini-contact-avatar{width:42px!important;height:42px!important;flex-basis:42px!important;border-radius:10px!important}
-#gameMultiDraw .multi-draw-contact-palette .mini-contact-name{font-size:calc(16px * var(--ui-text-scale))!important;line-height:1.2!important;font-weight:1000!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-#gameMultiDraw .multi-draw-contact-palette .mini-contact-tags{font-size:calc(11px * var(--ui-text-scale))!important;line-height:1.25!important;margin-top:4px!important;color:#aebad0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-#gameMultiDraw .multi-draw-contact-palette .mini-contact-add{width:36px!important;height:36px!important;min-width:36px!important;padding:0!important;font-size:18px!important}
-
-/* Compact speed and target bubbles in the action row. */
-#gameMultiDraw .gacha-action-row-v419{grid-template-columns:minmax(0,1.65fr) minmax(220px,.82fr) 138px 188px!important;gap:10px!important;align-items:stretch!important}
-#gameMultiDraw .gacha-speed-control-v50{min-height:52px!important;grid-template-columns:auto 65px!important;gap:7px!important;padding:0 10px!important;border-radius:12px!important}
-#gameMultiDraw .gacha-speed-control-v50 label{font-size:9px!important;letter-spacing:.05em!important}
-#gameMultiDraw .gacha-speed-control-v50 select{min-width:65px!important;width:65px!important;padding:7px 7px!important;font-size:12px!important}
-#gameMultiDraw .gacha-target-control-v54{min-height:52px;display:grid;grid-template-columns:auto 30px 50px 30px;gap:5px;align-items:center;padding:0 9px;border:1px solid rgba(116,210,255,.32);border-radius:12px;background:linear-gradient(135deg,rgba(30,91,128,.32),rgba(46,49,111,.42));color:#d9f3ff}
-#gameMultiDraw .gacha-target-control-v54 label{font-size:9px;font-weight:1000;line-height:1.1;color:#bde8ff;white-space:nowrap}
-#gameMultiDraw .gacha-target-control-v54 button{width:30px;height:30px;padding:0;border-radius:8px;font-size:16px;font-weight:1000}
-#gameMultiDraw #multiGachaTargetV54{width:50px;height:34px;padding:5px;text-align:center;font-size:12px;font-weight:1000}
-@media(max-width:1180px){#gameMultiDraw .gacha-action-row-v419{grid-template-columns:1fr 1fr!important}.gacha-speed-control-v50,.gacha-target-control-v54{min-height:50px!important}}
-@media(max-width:720px){#gameMultiDraw .gacha-action-row-v419{grid-template-columns:1fr!important}}
-
-/* Contact tags remain visible while the contact page itself scrolls. */
-#contacts.active,#contacts.active .contact-board-layout,#contacts.active .contact-board-main{overflow:visible!important}
-#contacts.active .contact-tag-panel{
-  position:sticky!important;
-  top:12px!important;
-  align-self:start!important;
-  z-index:90!important;
-  height:max-content!important;
-  max-height:calc(100vh - 24px)!important;
-  overflow:auto!important;
-  box-shadow:0 18px 40px rgba(0,0,0,.26),0 0 0 1px color-mix(in srgb,var(--accent) 8%,transparent)!important;
-}
-@media(max-width:760px){#contacts.active .contact-tag-panel{position:sticky!important;top:6px!important;max-height:46vh!important}}
-
-/* Per-page text size controller below the settings menu, outside navigation
-   button bindings and scrolling. Keep the full header free for content. */
-.sidebar #pageTextScaleControlV54{display:grid;grid-template-columns:28px minmax(0,1fr) 28px 26px;align-items:center;gap:4px;flex:0 0 auto;min-width:0;margin:6px 0 0;padding:5px;border:1px solid var(--border);border-radius:9px;background:var(--panel);box-shadow:none}
-.sidebar #pageTextScaleControlV54 .page-text-label-v54{min-width:0;text-align:center;color:var(--muted);font-size:10px;font-weight:650;white-space:nowrap}
-.sidebar #pageTextScaleControlV54 button{display:grid!important;place-items:center;width:100%;min-width:0;height:28px;min-height:28px;padding:0!important;border-radius:6px!important;font-size:11px!important;line-height:1;font-weight:650;color:var(--text);box-shadow:none!important}
-.sidebar #pageTextScaleControlV54 .page-text-reset-v54{color:var(--muted)}
-@media(min-width:761px){body:not(.sidebar-pinned):not([data-resolution=mobile]) .sidebar:not(.mws-sidebar-expanded-v2) #pageTextScaleControlV54{display:none!important}}
-
-/* Restored creator mascot. */
-#settings .creator-signature{min-width:132px;align-items:center!important}
-#settings .creator-mascot{width:128px!important;max-height:112px!important;object-fit:contain!important}
-#settings .creator-credit{text-align:center!important}
-.mascot-rain-item.v54{animation-iteration-count:1!important;animation-fill-mode:forwards!important}
-
-@media(prefers-reduced-motion:reduce){#gameMultiDraw .gacha-selected-item-v54:hover{transform:none}.mascot-rain-item.v54{animation-duration:.01ms!important}}
-</style>
 
 
 
-<style id="v550-style">
-/* =========================================================
-   v5.5 - fixed navigation, contact URL action, dashboard
-   ========================================================= */
 
-/* The desktop navigation rail must never move with document scrolling. */
-@media (min-width:761px){
-  body:not([data-resolution="mobile"]) .app{position:relative!important}
-  body:not([data-resolution="mobile"]) .sidebar,
-  body:not([data-resolution="mobile"]) .sidebar.mws-sidebar-expanded-v2,
-  body:not([data-resolution="mobile"]).sidebar-pinned .sidebar,
-  body:not([data-resolution="mobile"]).sidebar-pinned .sidebar.mws-sidebar-expanded-v2{
-    position:fixed!important;
-    inset:0 auto 0 0!important;
-    top:0!important;
-    left:0!important;
-    height:100vh!important;
-    max-height:100vh!important;
-    align-self:auto!important;
-    overflow:hidden!important;
-    z-index:500!important;
-  }
-  body:not([data-resolution="mobile"]) .main{grid-column:2!important;min-width:0!important}
-}
-body[data-resolution="mobile"] .main{grid-column:auto!important}
 
-/* Keep the Contacts tag/category board visible while its page scrolls. */
-#contacts .contact-board-layout{overflow:visible!important;align-items:start!important}
-#contacts .contact-board-main{overflow:visible!important}
-#contacts .contact-tag-panel{
-  position:sticky!important;
-  top:12px!important;
-  align-self:start!important;
-  max-height:calc(100vh - 24px)!important;
-  overflow-y:auto!important;
-  z-index:20!important;
-}
-
-.contact-station-row-v55{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:stretch}
-.contact-station-row-v55 #ctStationVisitBtn{min-width:76px;font-weight:850}
-
-.dashboard-insights-v55{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:14px}
-.dashboard-insight-card-v55{min-height:330px;overflow:hidden}
-.dashboard-insight-head-v55{align-items:flex-start;margin-bottom:13px}
-.dashboard-insight-head-v55 h3{font-size:18px;margin:3px 0 4px}
-.dashboard-insight-kicker-v55{font-size:9px;letter-spacing:.18em;color:var(--accent);font-weight:950}
-.dashboard-week-snapshot-v55{display:flex;flex-direction:column;gap:8px}
-.dashboard-week-row-v55{
-  display:grid;grid-template-columns:68px minmax(0,1fr) auto;gap:10px;align-items:center;
-  width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:12px;background:var(--input);color:var(--text);text-align:left;
-  transition:transform .14s,border-color .14s,background .14s,box-shadow .14s;
-}
-.dashboard-week-row-v55:hover{transform:translateX(3px);border-color:var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--input));box-shadow:0 0 16px color-mix(in srgb,var(--accent) 10%,transparent)}
-.dashboard-week-date-v55{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:48px;border-radius:10px;background:color-mix(in srgb,var(--accent) 10%,var(--panel));border:1px solid color-mix(in srgb,var(--accent) 26%,var(--border));font-size:10px;font-weight:900;color:var(--muted)}
-.dashboard-week-date-v55 strong{font-size:15px;color:var(--text);line-height:1.1;margin-bottom:2px}
-.dashboard-week-title-v55{font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dashboard-week-meta-v55{margin-top:4px;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dashboard-week-progress-v55{min-width:64px;text-align:right;font-size:10px;color:var(--muted);font-weight:800}
-.dashboard-week-progress-v55 strong{display:block;font-size:15px;color:var(--text);margin-bottom:2px}
-.dashboard-ops-grid-v55{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
-.dashboard-stat-v55{
-  min-width:0;min-height:120px;padding:13px;border:1px solid var(--border);border-radius:13px;background:var(--input);color:var(--text);text-align:left;
-  display:flex;flex-direction:column;justify-content:center;transition:transform .14s,border-color .14s,background .14s,box-shadow .14s;
-}
-.dashboard-stat-v55:hover{transform:translateY(-2px);border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--input));box-shadow:0 9px 24px rgba(0,0,0,.18),0 0 16px color-mix(in srgb,var(--accent) 10%,transparent)}
-.dashboard-stat-label-v55{font-size:10px;color:var(--muted);font-weight:850}
-.dashboard-stat-v55 strong{display:block;font-size:25px;line-height:1.1;margin:7px 0 5px;font-weight:950;letter-spacing:-.03em}
-.dashboard-stat-v55 small{font-size:9px;color:var(--muted);line-height:1.4;white-space:normal}
-@media(max-width:1250px){.dashboard-ops-grid-v55{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:1050px){.dashboard-insights-v55{grid-template-columns:1fr}}
-@media(max-width:760px){.dashboard-ops-grid-v55{grid-template-columns:1fr 1fr}.dashboard-week-row-v55{grid-template-columns:58px minmax(0,1fr)}.dashboard-week-progress-v55{display:none}.contact-station-row-v55{grid-template-columns:1fr}}
-
-/* A separate high-z rain layer avoids old easter-egg state conflicts. */
-#mascotRainLayerV55{position:fixed;inset:0;z-index:5000;overflow:hidden;pointer-events:none;display:none}
-#mascotRainLayerV55.active{display:block}
-.mascot-rain-item-v55{
-  position:absolute;left:var(--rain-x);top:-26vh;width:var(--rain-size);height:auto;opacity:.98;object-fit:contain;
-  filter:drop-shadow(0 9px 10px rgba(0,0,0,.32));will-change:transform,opacity;
-  animation:mascotRainFallV55 var(--rain-duration) cubic-bezier(.22,.5,.34,1) var(--rain-delay) 1 both;
-}
-@keyframes mascotRainFallV55{
-  0%{transform:translate3d(0,-18vh,0) rotate(var(--rain-rot-start));opacity:0}
-  6%{opacity:1}
-  78%{opacity:1}
-  100%{transform:translate3d(var(--rain-drift),150vh,0) rotate(var(--rain-rot-end));opacity:.92}
-}
-</style>
 
 <script id="v540-feature-script">
 (function(){
@@ -4606,140 +4866,7 @@ body[data-resolution="mobile"] .main{grid-column:auto!important}
 </script>
 
 
-<style id="v560-ui-style">
-/* =========================================================
-   v5.6 - contact tag dock, profile card, 10-tier collab FX
-   ========================================================= */
 
-/* Contact tag panel: switch from normal flow to a true viewport dock after it reaches the top. */
-@media (min-width:761px){
-  body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout:not(.maintenance-mode) .contact-board-main{grid-column:2!important;min-width:0!important}
-body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout.maintenance-mode{grid-template-columns:minmax(0,1fr)!important}
-body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout.maintenance-mode .contact-board-main{grid-column:1!important;min-width:0!important}
-body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout.maintenance-mode .contact-tag-banner-area{display:none!important}
-  body:not([data-resolution="mobile"]) #contacts .contact-tag-placeholder-v56{grid-column:1;display:none;visibility:hidden;pointer-events:none}
-  body:not([data-resolution="mobile"]) #contacts .contact-tag-panel.v56-fixed{
-    position:fixed!important;
-    margin:0!important;
-    z-index:470!important;
-    max-height:calc(100vh - 24px)!important;
-    overflow:auto!important;
-    box-shadow:0 20px 50px rgba(0,0,0,.34),0 0 0 1px color-mix(in srgb,var(--accent) 20%,transparent)!important;
-  }
-}
-
-/* Contact header profile image is now an interactive Profile Card launcher. */
-#contactModal #ctHeaderAvatar.v56-profile-launcher{
-  cursor:var(--mws-cursor-pointer,pointer)!important;
-  position:relative;
-  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,filter .16s ease;
-}
-#contactModal #ctHeaderAvatar.v56-profile-launcher::after{
-  content:"PROFILE";
-  position:absolute;
-  left:50%;bottom:-10px;transform:translateX(-50%);
-  padding:3px 7px;border-radius:999px;
-  background:#161c30;border:1px solid rgba(153,125,255,.48);
-  color:#d7cbff;font-size:7px;font-weight:1000;letter-spacing:.12em;
-  opacity:0;pointer-events:none;transition:opacity .14s ease,bottom .14s ease;
-}
-#contactModal #ctHeaderAvatar.v56-profile-launcher:hover,
-#contactModal #ctHeaderAvatar.v56-profile-launcher:focus-visible{
-  transform:translateY(-2px) scale(1.035);
-  border-color:#987cff!important;
-  box-shadow:0 0 0 2px rgba(143,105,255,.18),0 0 28px rgba(127,88,255,.36)!important;
-  filter:brightness(1.08);
-  outline:none;
-}
-#contactModal #ctHeaderAvatar.v56-profile-launcher:hover::after,
-#contactModal #ctHeaderAvatar.v56-profile-launcher:focus-visible::after{opacity:1;bottom:-15px}
-
-#contactProfileCardModalV56{z-index:1160!important}
-#contactProfileCardModalV56 .contact-profile-card-box-v56{
-  width:min(650px,94vw)!important;
-  padding:18px!important;
-  background:radial-gradient(circle at 50% 4%,rgba(112,82,255,.20),transparent 38%),linear-gradient(180deg,#11162a,#090d17)!important;
-  border-color:rgba(151,123,255,.52)!important;
-  box-shadow:0 30px 92px rgba(0,0,0,.62),0 0 46px rgba(105,78,255,.22)!important;
-}
-.contact-profile-card-v56{
-  display:grid;grid-template-rows:minmax(330px,56vh) auto;
-  border:1px solid rgba(170,144,255,.52);border-radius:24px;overflow:hidden;
-  background:linear-gradient(180deg,rgba(40,35,88,.76),rgba(8,12,22,.99));
-  box-shadow:0 0 0 2px rgba(137,105,255,.11),0 0 44px rgba(126,87,255,.23);
-}
-.contact-profile-card-image-v56{background:#090e19;display:grid;place-items:center;overflow:hidden;position:relative}
-.contact-profile-card-image-v56 img{width:100%;height:100%;object-fit:cover}
-.contact-profile-card-initials-v56{font-size:82px;font-weight:1000;color:#d7caff}
-.contact-profile-card-meta-v56{padding:22px 24px 24px;text-align:center}
-.contact-profile-card-kicker-v56{font-size:10px;letter-spacing:.25em;color:#bca8ff;font-weight:1000}
-.contact-profile-card-name-v56{font-size:36px;line-height:1.15;font-weight:1000;margin-top:8px}
-.contact-profile-card-tags-v56{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:12px}
-.contact-profile-card-tags-v56 .chip{font-size:10px;padding:6px 10px}
-.contact-profile-card-url-v56{margin-top:15px;padding:11px 12px;border:1px solid var(--border);border-radius:11px;background:rgba(7,11,20,.72);font-size:11px;color:#b7c7e1;word-break:break-all;text-align:left}
-.contact-profile-card-actions-v56{display:flex;justify-content:center;margin-top:12px}
-
-/* Recent-collab filter colors 6-10. */
-.sniper-tier-filter[data-tier="6"]{--rank:#ff35d4;--rank2:#6d7cff}
-.sniper-tier-filter[data-tier="7"]{--rank:#9a5cff;--rank2:#62d8ff}
-.sniper-tier-filter[data-tier="8"]{--rank:#4ef5ff;--rank2:#ff5df0}
-.sniper-tier-filter[data-tier="9"]{--rank:#8b5cff;--rank2:#ffcc5c}
-.sniper-tier-filter[data-tier="10"]{--rank:#fff0a8;--rank2:#b76dff}
-.sniper-tier-filter[data-tier="6"],.sniper-tier-filter[data-tier="7"],.sniper-tier-filter[data-tier="8"],.sniper-tier-filter[data-tier="9"],.sniper-tier-filter[data-tier="10"]{
-  border-color:color-mix(in srgb,var(--rank) 70%,var(--border));
-  color:color-mix(in srgb,var(--rank) 90%,#fff);
-  background:color-mix(in srgb,var(--rank) 11%,var(--input));
-}
-.sniper-tier-filter[data-tier="6"].active,.sniper-tier-filter[data-tier="7"].active,.sniper-tier-filter[data-tier="8"].active,.sniper-tier-filter[data-tier="9"].active,.sniper-tier-filter[data-tier="10"].active{
-  background:linear-gradient(135deg,color-mix(in srgb,var(--rank) 74%,#090b15),color-mix(in srgb,var(--rank2) 55%,#090b15));
-  border-color:var(--rank2);color:#fff;
-  box-shadow:0 0 17px color-mix(in srgb,var(--rank) 56%,transparent),inset 0 0 14px color-mix(in srgb,var(--rank2) 26%,transparent);
-}
-
-/* Card envelope intensity rises with the history tier. */
-#sniper .collab-6{border-color:#f43bd7;box-shadow:0 0 22px rgba(244,59,215,.25)}
-#sniper .collab-7{border-color:#9b63ff;box-shadow:0 0 26px rgba(132,95,255,.30)}
-#sniper .collab-8{border-color:#5cf3ff;box-shadow:0 0 30px rgba(83,230,255,.32),0 0 20px rgba(255,77,226,.18)}
-#sniper .collab-9{border-color:#bb82ff;box-shadow:0 0 35px rgba(126,86,255,.38),0 0 24px rgba(255,196,80,.20)}
-#sniper .collab-10{border-color:#ffe98a;box-shadow:0 0 42px rgba(255,219,98,.42),0 0 32px rgba(153,92,255,.34),0 0 58px rgba(55,214,255,.18)}
-
-@keyframes fx6PlasmaSweep{0%{transform:translateX(-125%) skewX(-18deg)}100%{transform:translateX(420%) skewX(-18deg)}}
-@keyframes fx6Pulse{0%,100%{opacity:.58;filter:brightness(1)}50%{opacity:1;filter:brightness(1.5)}}
-.fx-tier-6{border-color:#ff3bd7;background:radial-gradient(circle at 25% 50%,rgba(255,45,208,.25),transparent 34%),radial-gradient(circle at 76% 50%,rgba(92,87,255,.24),transparent 35%),#100815;box-shadow:inset 0 0 36px rgba(255,40,211,.19),0 0 17px rgba(255,45,213,.20)}
-.fx-tier-6 .fx-core::before,.fx-tier-6 .fx-core::after{content:"";position:absolute;top:-25%;bottom:-25%;left:0;width:22%;background:linear-gradient(90deg,transparent,#fff,#ff4cda,#7771ff,transparent);filter:blur(1px) drop-shadow(0 0 10px #ff4cda);animation:fx6PlasmaSweep 1.85s linear infinite}
-.fx-tier-6 .fx-core::after{animation-delay:-.92s;width:13%;opacity:.65}
-.fx-tier-6 .fx-particles{background:radial-gradient(circle at 8% 25%,#fff 0 1px,#ff65e3 1.5px 3px,transparent 3.8px),radial-gradient(circle at 28% 72%,#8f85ff 0 2px,transparent 3.5px),radial-gradient(circle at 54% 18%,#fff 0 1px,#ff46d8 1.5px 3px,transparent 3.8px),radial-gradient(circle at 77% 78%,#8d86ff 0 2px,transparent 3.6px),radial-gradient(circle at 96% 30%,#fff 0 1px,#ff5ae0 1.5px 3px,transparent 3.8px);animation:fx6Pulse 1.05s ease-in-out infinite;filter:drop-shadow(0 0 7px #ff46d8)}
-
-@keyframes fx7Storm{0%,100%{opacity:.48;filter:brightness(1)}22%{opacity:1;filter:brightness(2)}26%{opacity:.35}55%{opacity:.9}60%{opacity:.42}82%{opacity:1;filter:brightness(1.8)}}
-.fx-tier-7{border-color:#9a67ff;background:linear-gradient(180deg,#10091d,#080b18),radial-gradient(circle at center,rgba(103,97,255,.28),transparent 60%);box-shadow:inset 0 0 40px rgba(106,87,255,.24),0 0 22px rgba(108,84,255,.28)}
-.fx-tier-7 .fx-core{background:linear-gradient(112deg,transparent 0 18%,#dfffff 19% 19.7%,#8e7cff 20% 21%,transparent 22% 42%,#fff 43% 43.5%,#63dfff 44% 45%,transparent 46% 71%,#d9ccff 72% 72.6%,#9c6cff 73% 74%,transparent 75%);filter:drop-shadow(0 0 9px #8b79ff);animation:fx7Storm .9s steps(2,end) infinite}
-.fx-tier-7 .fx-particles{background:repeating-linear-gradient(180deg,transparent 0 8px,rgba(125,106,255,.12) 9px,transparent 10px),radial-gradient(circle at 12% 30%,#fff 0 1px,#79ddff 1.5px 3px,transparent 3.8px),radial-gradient(circle at 64% 70%,#fff 0 1px,#ab78ff 1.5px 3px,transparent 3.8px),radial-gradient(circle at 89% 24%,#fff 0 1px,#78dbff 1.5px 3px,transparent 3.8px);animation:fx7Storm 1.25s ease-in-out infinite}
-
-@keyframes fx8Prism{0%{filter:hue-rotate(0deg) brightness(1);transform:scaleX(.95)}50%{filter:hue-rotate(55deg) brightness(1.55);transform:scaleX(1.04)}100%{filter:hue-rotate(0deg) brightness(1);transform:scaleX(.95)}}
-@keyframes fx8Beam{0%{transform:translateX(-140%)}100%{transform:translateX(430%)}}
-.fx-tier-8{border-color:#5cf7ff;background:radial-gradient(circle at center,rgba(255,255,255,.12),transparent 32%),linear-gradient(90deg,#07131b,#170a22,#07131b);box-shadow:inset 0 0 44px rgba(68,239,255,.22),0 0 28px rgba(63,229,255,.30),0 0 22px rgba(255,70,224,.18)}
-.fx-tier-8 .fx-core{inset:9px 4%;background:linear-gradient(90deg,transparent,#67f7ff,#fff,#ff6ee8,#b374ff,#fff,#5ef4ff,transparent);height:4px;top:50%;bottom:auto;box-shadow:0 0 12px #65efff,0 0 25px rgba(255,78,226,.55);animation:fx8Prism .8s ease-in-out infinite}
-.fx-tier-8 .fx-core::after{content:"";position:absolute;top:-30px;bottom:-30px;width:18%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);filter:blur(2px);animation:fx8Beam 1.55s linear infinite}
-.fx-tier-8 .fx-particles{background:radial-gradient(circle at 5% 18%,#fff 0 1px,#4ef4ff 1.5px 3.2px,transparent 4px),radial-gradient(circle at 21% 76%,#fff 0 1px,#ff57e5 1.5px 3.2px,transparent 4px),radial-gradient(circle at 42% 15%,#fff 0 1px,#a76cff 1.5px 3.2px,transparent 4px),radial-gradient(circle at 63% 78%,#fff 0 1px,#5cf5ff 1.5px 3.2px,transparent 4px),radial-gradient(circle at 83% 20%,#fff 0 1px,#ff65e9 1.5px 3.2px,transparent 4px),radial-gradient(circle at 97% 70%,#fff 0 1px,#9b75ff 1.5px 3.2px,transparent 4px);filter:drop-shadow(0 0 8px #fff);animation:fx8Prism 1.2s ease-in-out infinite}
-
-@keyframes fx9VoidPulse{0%,100%{transform:scale(.78);opacity:.65}50%{transform:scale(1.18);opacity:1}}
-@keyframes fx9Orbit{to{transform:rotate(360deg)}}
-.fx-tier-9{border-color:#b67cff;background:radial-gradient(circle at 50% 50%,#010108 0 13%,rgba(72,33,126,.92) 15% 22%,rgba(151,79,255,.38) 25% 39%,transparent 52%),linear-gradient(90deg,#07070f,#12051b,#07070f);box-shadow:inset 0 0 50px rgba(108,57,203,.34),0 0 35px rgba(135,83,255,.38),0 0 24px rgba(255,190,80,.20)}
-.fx-tier-9 .fx-core{inset:5px 12%;border-radius:50%;border:2px solid rgba(190,145,255,.65);box-shadow:0 0 12px #a768ff,inset 0 0 16px rgba(255,204,93,.25);animation:fx9VoidPulse 1s ease-in-out infinite}
-.fx-tier-9 .fx-core::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:2px dashed rgba(255,216,111,.65);animation:fx9Orbit 2.2s linear infinite}
-.fx-tier-9 .fx-particles{background:radial-gradient(circle at 8% 22%,#fff 0 1px,#c497ff 1.5px 3px,transparent 3.8px),radial-gradient(circle at 18% 72%,#ffd66d 0 1.5px,transparent 3px),radial-gradient(circle at 81% 18%,#fff 0 1px,#ba84ff 1.5px 3px,transparent 3.8px),radial-gradient(circle at 94% 72%,#ffd46e 0 1.5px,transparent 3px);filter:drop-shadow(0 0 9px #a26cff);animation:fx9VoidPulse .82s ease-in-out infinite}
-
-@keyframes fx10MythicPulse{0%,100%{filter:brightness(1) saturate(1);transform:scale(.97)}50%{filter:brightness(1.7) saturate(1.35);transform:scale(1.035)}}
-@keyframes fx10Sweep{0%{transform:translateX(-150%) skewX(-14deg)}100%{transform:translateX(460%) skewX(-14deg)}}
-.fx-tier-10{border-color:#fff0a2;background:radial-gradient(circle at center,rgba(255,244,180,.28),transparent 32%),linear-gradient(90deg,#150c21,#091525,#1b0b25);box-shadow:inset 0 0 55px rgba(255,223,111,.30),0 0 43px rgba(255,219,98,.46),0 0 34px rgba(160,92,255,.40),0 0 60px rgba(70,224,255,.20)}
-.fx-tier-10 .fx-core{background:linear-gradient(90deg,transparent 0 7%,#69f5ff 8% 9%,transparent 10% 22%,#fff6bd 23% 24%,transparent 25% 44%,#c28bff 45% 46.5%,transparent 48% 64%,#fff 65% 66.5%,transparent 68% 82%,#ff86eb 83% 84.5%,transparent 86%),radial-gradient(ellipse at center,rgba(255,245,190,.38),transparent 64%);filter:drop-shadow(0 0 10px #fff0a2);animation:fx10MythicPulse .7s ease-in-out infinite}
-.fx-tier-10 .fx-core::before,.fx-tier-10 .fx-core::after{content:"";position:absolute;top:-35%;bottom:-35%;left:0;width:16%;background:linear-gradient(90deg,transparent,#fff,#ffe379,#ae7aff,#64efff,transparent);filter:blur(1px) drop-shadow(0 0 13px #fff);animation:fx10Sweep 1.25s linear infinite}
-.fx-tier-10 .fx-core::after{animation-delay:-.62s;width:10%;opacity:.75}
-.fx-tier-10 .fx-particles{background:radial-gradient(circle at 4% 18%,#fff 0 1.3px,#ffdf68 1.8px 3.5px,transparent 4.3px),radial-gradient(circle at 14% 78%,#fff 0 1.3px,#6ff4ff 1.8px 3.5px,transparent 4.3px),radial-gradient(circle at 31% 15%,#fff 0 1.3px,#c685ff 1.8px 3.5px,transparent 4.3px),radial-gradient(circle at 48% 82%,#fff 0 1.3px,#ffd970 1.8px 3.5px,transparent 4.3px),radial-gradient(circle at 65% 18%,#fff 0 1.3px,#64efff 1.8px 3.5px,transparent 4.3px),radial-gradient(circle at 82% 76%,#fff 0 1.3px,#dc8cff 1.8px 3.5px,transparent 4.3px),radial-gradient(circle at 96% 24%,#fff 0 1.3px,#ffe379 1.8px 3.5px,transparent 4.3px);filter:drop-shadow(0 0 10px #fff);animation:fx10MythicPulse .58s ease-in-out infinite}
-.fx-tier-10 .fx-overlay{background:linear-gradient(180deg,rgba(255,255,255,.12),transparent 26% 72%,rgba(255,221,100,.13)),repeating-linear-gradient(90deg,transparent 0 42px,rgba(255,255,255,.05) 43px,transparent 45px)}
-
-@media(prefers-reduced-motion:reduce){.fx-tier-6 *, .fx-tier-7 *, .fx-tier-8 *, .fx-tier-9 *, .fx-tier-10 *{animation:none!important}}
-</style>
 
 
 <script id="v560-feature-script">
@@ -4843,35 +4970,7 @@ body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout.main
 </script>
 
 
-<style id="mws-v57-style">
-.post-minigame-entry-v57{display:flex;align-items:center;gap:12px;padding-left:16px;margin-left:6px;border-left:1px solid color-mix(in srgb,var(--border) 86%, transparent);order:3}
-.post-mini-game-btn-v57{min-height:42px;padding:9px 16px;border-radius:12px;border:1px solid rgba(74,222,128,.38);background:linear-gradient(135deg,rgba(16,185,129,.18),rgba(45,212,191,.14));color:#d7fff0;font-weight:950;letter-spacing:-.01em;box-shadow:0 12px 28px rgba(16,185,129,.14), inset 0 1px 0 rgba(255,255,255,.05);transition:transform .16s ease,filter .16s ease,box-shadow .16s ease,border-color .16s ease;white-space:nowrap}
-.post-mini-game-btn-v57:hover{transform:translateY(-1px);filter:brightness(1.06);border-color:rgba(110,231,183,.55);box-shadow:0 16px 34px rgba(16,185,129,.2),0 0 18px rgba(45,212,191,.18)}
-.post-mini-game-btn-v57:active{transform:translateY(0) scale(.985)}
-.post-mini-game-btn-v57::before{content:'▶';display:inline-block;margin-right:8px;font-size:12px;opacity:.85}
-.post-view-controls .post-column-control{order:4}
-@media(max-width:980px){.post-minigame-entry-v57{order:4;width:100%;margin-left:0;padding-left:0;border-left:0;padding-top:4px}.post-mini-game-btn-v57{width:100%}.post-view-controls .post-column-control{order:5}}
-.post-game-card.recommended{position:relative;overflow:hidden;border-color:rgba(250,204,21,.48);background:radial-gradient(circle at 78% 22%,rgba(250,204,21,.12),transparent 32%),linear-gradient(180deg,rgba(255,235,140,.03),rgba(124,58,237,.04)),var(--input);box-shadow:0 16px 38px rgba(250,204,21,.09),0 0 0 1px rgba(250,204,21,.08) inset}
-.post-game-card.recommended:hover:not(:disabled){border-color:rgba(251,191,36,.72);box-shadow:0 18px 44px rgba(250,204,21,.16),0 0 22px rgba(244,114,182,.18),0 0 0 1px rgba(251,191,36,.18) inset}
-.post-game-card.recommended::after{content:'';position:absolute;inset:-28% auto auto 58%;width:150px;height:150px;background:radial-gradient(circle,rgba(255,255,255,.28),rgba(250,204,21,.12) 28%,transparent 70%);filter:blur(6px);opacity:.82;animation:mwsV57RecommendedGlow 3.1s ease-in-out infinite;pointer-events:none}
-.post-game-best-ribbon-v57{position:absolute;top:0;left:0;padding:6px 14px 6px 12px;border-radius:14px 0 14px 0;background:linear-gradient(135deg,#fde047,#f59e0b);color:#2b1800;font-size:11px;font-weight:1000;letter-spacing:.04em;box-shadow:0 10px 26px rgba(245,158,11,.25);z-index:2}
-.post-game-rec-chip-v57{display:inline-flex;align-items:center;gap:4px;margin-top:10px;padding:5px 9px;border-radius:999px;border:1px solid rgba(251,191,36,.35);background:rgba(251,191,36,.1);font-size:11px;font-weight:850;color:#ffeab2}
-.post-game-card-title-wrap-v57{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.post-game-card-title-wrap-v57 .post-game-card-title{margin-top:0}
-.post-game-picker-box .post-game-card{position:relative}
-@keyframes mwsV57RecommendedGlow{0%,100%{transform:translate3d(0,0,0) scale(1);opacity:.55}50%{transform:translate3d(0,6px,0) scale(1.08);opacity:.92}}
-.post-schedule-notice-modal-v57{z-index:1150!important}
-.post-schedule-notice-box-v57{width:min(560px,94vw)!important;border-radius:22px!important;padding:22px!important;background:linear-gradient(180deg,rgba(19,27,53,.98),rgba(11,17,36,.99))!important;border:1px solid rgba(96,165,250,.26)!important;box-shadow:0 28px 68px rgba(0,0,0,.45),0 0 0 1px rgba(129,140,248,.08) inset}
-.post-schedule-notice-kicker-v57{font-size:11px;letter-spacing:.18em;font-weight:900;color:#7dd3fc;margin-bottom:8px}
-.post-schedule-notice-title-v57{font-size:31px;font-weight:1000;line-height:1.1;margin:0 0 12px}
-.post-schedule-notice-body-v57{font-size:15px;line-height:1.75;color:#dbe6ff}
-.post-schedule-notice-body-v57 strong{color:#ffffff}
-.post-schedule-notice-check-v57{display:flex;align-items:center;gap:10px;margin-top:16px;padding:12px 14px;border-radius:14px;border:1px solid rgba(99,102,241,.22);background:rgba(99,102,241,.08);cursor:var(--mws-cursor-pointer,pointer)}
-.post-schedule-notice-check-v57 input{width:17px;height:17px}
-.post-schedule-notice-actions-v57{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;flex-wrap:wrap}
-.post-schedule-notice-ok-v57{min-width:112px;padding:11px 16px;border-radius:12px;border:1px solid rgba(56,189,248,.28);background:linear-gradient(135deg,rgba(59,130,246,.92),rgba(6,182,212,.95));color:#fff;font-weight:950;box-shadow:0 14px 34px rgba(37,99,235,.22)}
-.post-schedule-notice-sub-v57{font-size:12px;color:var(--muted);margin-top:12px}
-</style>
+
 <script id="mws-v57-script">
 (function(){
   if(window.__mwsV57Loaded)return; window.__mwsV57Loaded=true;
@@ -5071,43 +5170,12 @@ body:not([data-resolution="mobile"]) #contacts.active .contact-board-layout.main
 
 <!-- mws-v5.7.1-storage-title-hotfix -->
 
-<style id="mws-v572-predeploy-style">
-/* Checklist presentation is removed from the dashboard summary. */
-#dashboard .dashboard-week-row-v55{grid-template-columns:58px minmax(0,1fr)!important}
-#dashboard .dashboard-week-progress-v55{display:none!important}
 
-/* Bottom manual online SAVE action. */
-.sidebar-save-v572{flex:0 0 auto;width:100%;min-height:47px;margin-top:8px;padding:9px 11px;border-radius:12px;border:1px solid rgba(52,211,153,.38);background:linear-gradient(135deg,rgba(16,185,129,.17),rgba(20,184,166,.10));color:#dffff3;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:1000;letter-spacing:.08em;box-shadow:0 10px 25px rgba(16,185,129,.10);transition:.16s ease}
-.sidebar-save-v572[hidden]{display:none!important}
-.sidebar-save-v572:hover:not(:disabled){transform:translateY(-1px);border-color:rgba(110,231,183,.65);background:linear-gradient(135deg,rgba(16,185,129,.26),rgba(20,184,166,.17));box-shadow:0 14px 30px rgba(16,185,129,.16)}
-.sidebar-save-v572:disabled{cursor:wait;opacity:.72}
-.sidebar-save-v572.saving{animation:mwsSavePulseV572 .9s ease-in-out infinite alternate}
-.sidebar-save-icon-v572{width:21px;height:21px;display:grid;place-items:center}.sidebar-save-icon-v572 svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-body:not(.sidebar-pinned) .sidebar:not(.mws-sidebar-expanded-v2) .sidebar-save-label-v572{display:none}
-body:not(.sidebar-pinned) .sidebar:not(.mws-sidebar-expanded-v2) .sidebar-save-v572{padding-left:0;padding-right:0}
-@keyframes mwsSavePulseV572{from{box-shadow:0 8px 20px rgba(16,185,129,.08)}to{box-shadow:0 8px 28px rgba(16,185,129,.28),0 0 18px rgba(45,212,191,.16)}}
-</style>
 <!-- mws-v5.7.2-predeploy -->
 
 
 <!-- mws-v5.7.4-save-contact-favorites -->
-<style id="mws-v574-style">
-.sidebar-save-v572{position:relative!important;overflow:hidden!important;isolation:isolate}
-.sidebar-save-v572::after{content:"";position:absolute;inset:0 auto 0 0;width:var(--save-progress-v574,0%);background:linear-gradient(90deg,rgba(34,197,94,.30),rgba(45,212,191,.32),rgba(56,189,248,.30));transition:width .18s linear;z-index:-1;pointer-events:none}
-.sidebar-save-v572.saving{border-color:rgba(45,212,191,.48)!important;box-shadow:0 0 22px rgba(45,212,191,.12)!important}
-.sidebar-save-v572.save-failed-v574{border-color:rgba(248,113,113,.62)!important}
-.contact-modal-actions-v574{justify-content:flex-end}
-.contact-favorite-btn-v574{width:48px;height:48px;border-radius:13px;border:1px solid var(--border);background:var(--input);color:#aab5d2;font-size:26px;line-height:1;display:grid;place-items:center;transition:.18s ease}
-.contact-favorite-btn-v574:hover{border-color:#facc15;color:#fde68a;transform:translateY(-1px)}
-.contact-favorite-btn-v574.active{color:#facc15;border-color:rgba(250,204,21,.62);background:rgba(250,204,21,.10);box-shadow:0 0 20px rgba(250,204,21,.16)}
-#contacts #favoriteContacts{width:100%!important;min-width:0!important;max-width:none!important;padding:18px!important;overflow:hidden!important}
-#contacts #favoriteContacts>.space{align-items:flex-start!important;flex-wrap:wrap!important}
-#contacts #favoriteContacts .empty{grid-column:1/-1!important;width:100%!important;min-width:0!important;min-height:110px!important;padding:24px!important;display:grid!important;place-items:center!important;text-align:center!important}
-.contact-favorite-card-v574{position:relative;border-color:color-mix(in srgb,#facc15 32%,var(--border))!important}
-.contact-favorite-card-v574::after{content:"★";position:absolute;right:14px;top:10px;color:#facc15;font-size:18px;opacity:.9}
-.contact-favorite-tags-v574{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;padding-right:24px}
-.contact-favorite-tags-v574 .chip{font-size:10px;padding:3px 7px}
-</style>
+
 
 <!-- mws-contact-search-performance-v1 -->
 <script src="assets/perf-runtime.js?v=1.4.0-phase87&workspace-nav-v1=1&firstpaint=1&dashboardnav=1"></script>
@@ -5115,68 +5183,44 @@ body:not(.sidebar-pinned) .sidebar:not(.mws-sidebar-expanded-v2) .sidebar-save-v
 <script src="assets/media-cache-first-v1.js?v=1&unified-media-v51=1"></script>
 <script src="assets/online-v5-loader.js?v=1.3.0-search73&firstpaint=1&peoplehover=2&friendfinder=2&ui-interactions=2&static-runtime=1&cache-first=1&request-v3=8"></script>
 <script defer src="assets/calendar-today-people-hover-v1.js?v=1"></script>
-<link rel="stylesheet" href="assets/device-ui.css?v=4">
-<link rel="stylesheet" href="assets/ui-frame-presets.css?v=3.0.0-space132-space153&hover-state=2">
-<link rel="stylesheet" href="assets/calendar-space-efficiency-v1.css?v=1">
-<link rel="stylesheet" href="assets/contact-card-readable-layout-v1.css?v=1">
-<link rel="stylesheet" href="assets/workspace-clean-v1.css?v=8">
-<link rel="stylesheet" href="assets/calendar-details-v1.css?v=21">
-<link rel="stylesheet" href="assets/posts-responsive-layout-v2.css?v=2">
+
+
+
+
+
+
+
 <script src="assets/posts-focus-layout-v3.js?v=2" defer></script>
-<link rel="stylesheet" data-mws-post-login-style="mobile-calendar-v130" href="assets/mobile-calendar-v130.css?v=1.3.0-mobile-calendar-viewport-p29-layout-v2">
-<link rel="stylesheet" href="assets/achievement-exhibition-v1.css?v=5">
-<link rel="stylesheet" href="assets/calendar-search-v173.css?v=1">
-<link rel="stylesheet" href="assets/contact-directory-v177.css?v=3">
-<link rel="stylesheet" href="assets/modal-motion-v1.css?v=4">
-<script src="assets/calendar-details-v1.js?v=12&motion-fallback=1&peopleview=1&group-layout=2"></script>
+
+
+
+
+
+<script src="assets/calendar-details-v1.js?v=12&motion-fallback=1&peopleview=1&group-layout=2&firstpaint=1"></script>
 <script src="assets/device-ui.js?v=1.3.0-perf87-mobile-layout-v2&frame-lazy=1"></script>
-<link rel="stylesheet" href="assets/ladder-wizard-v1.css?v=10">
+
 <script src="assets/ladder-wizard-v1.js?v=13"></script>
-<link rel="stylesheet" href="assets/announcement-carousel-v1.css?v=1">
-<style id="mws-public-entry-style">
-body.mws-gated .app{filter:none!important;opacity:1!important}
-body.mws-premium #mwsAccessGate{background:var(--bg,#080c15)!important;overflow:auto;align-items:flex-start;padding:clamp(24px,10vh,96px) 16px}
-#mwsAccessGate.hidden,#mwsAccessGate [hidden],#mwsAccessTools [hidden],#mwsAccessTools[hidden]{display:none!important}
-body.mws-premium #mwsAccessGate::before,body.mws-premium #mwsAccessGate::after{display:none!important}
-body.mws-premium #mwsAccessGate .mws-login-shell{box-sizing:border-box;width:min(410px,100%)!important;padding:30px!important;background:var(--panel,#111722)!important;border:1px solid var(--border,#303743)!important;border-radius:18px!important;box-shadow:none!important;backdrop-filter:none!important;text-align:center}
-#mwsAccessGate .mws-login-shell::before{display:none!important}
-#mwsAccessGate .mws-login-lock{width:48px;height:48px;display:grid;place-items:center;margin:0 auto 16px;border:1px solid var(--border);border-radius:50%;color:var(--muted);background:var(--input)}
-#mwsAccessGate .mws-login-lock svg{width:23px;height:23px}
-body.mws-premium #mwsAccessGate .mws-login-title{font-size:22px!important;margin:0!important;line-height:1.35!important;text-shadow:none!important;color:var(--text)}
-#mwsAccessGate .mws-login-sub{font-size:12px!important;line-height:1.55!important;margin:7px 0 24px!important;color:var(--muted)!important}
-#mwsAccessGate #mwsAdminFields{grid-template-columns:1fr;gap:7px;text-align:left;margin:0!important}
-#mwsAccessGate #mwsAdminFields label{font-size:12px;color:var(--muted);margin-top:7px}
-#mwsAccessGate #mwsAdminFields input{box-sizing:border-box;width:100%;min-height:42px;background:var(--input)!important;border:1px solid var(--border)!important;color:var(--text)!important;border-radius:10px!important;padding:10px 12px!important}
-#mwsAccessGate #mwsAdminFields input:focus{border-color:var(--accent)!important}
-#mwsAccessGate .mws-login-error{min-height:0;margin:9px 0;text-align:left;color:var(--danger,#ff8b9b)}
-#mwsAccessGate .mws-login-actions{display:grid;gap:14px;margin-top:14px;text-align:left}
-#mwsAccessGate .mws-remember{font-size:12px;color:var(--muted);justify-content:flex-start}
-#mwsAccessGate .mws-login-submit{width:100%;min-height:42px;background:var(--text,#e5e7eb)!important;color:var(--bg,#080c15)!important;border:0!important;border-radius:10px!important;box-shadow:none!important}
-#mwsAccessGate .mws-login-close{position:absolute;top:12px;right:12px;background:transparent;border:0;color:var(--muted);font-size:22px;line-height:1;width:32px;height:32px;padding:0;box-shadow:none}
-#mwsAccessGate .mws-login-back{margin-top:15px;padding:6px 8px;background:transparent;border:0;color:var(--muted);font-size:12px;box-shadow:none}
-#mwsAccessGate .mws-login-back:hover,#mwsAccessGate .mws-login-close:hover{color:var(--text)}
-#mwsChangeModeBtn:disabled{opacity:.55;cursor:wait}
-@media(max-width:480px){body.mws-premium #mwsAccessGate{padding:24px 12px}body.mws-premium #mwsAccessGate .mws-login-shell{padding:22px!important}}
-</style>
+
+
 <script src="assets/announcement-carousel-v1.js?v=3"></script>
 <script defer src="assets/career-visualizer.js?v=20&single-view=1"></script>
-<link rel="stylesheet" href="assets/ui-interactions-v1.css?v=5">
+
 <script src="assets/ui-interactions-v1.js?v=2"></script>
-<link rel="stylesheet" href="assets/content-applications-v1.css?v=8">
+
 <script type="module" src="assets/content-applications-v2.js?v=8&request-budget=5&closed=1&snapshot=1&dashboard-local=1&request-v3-stage4=1"></script>
-<link rel="stylesheet" href="assets/calendar-people-view-v1.css?v=2">
-<link rel="stylesheet" href="assets/contact-frequency-v1.css?v=2">
-<link rel="stylesheet" href="assets/calendar-day-expand-v1.css?v=1">
+
+
+
 <script src="assets/calendar-day-expand-v1.js?v=1"></script>
-<link rel="stylesheet" href="assets/mawang-archive-v1.css?v=12">
+
 <script defer src="assets/mawang-archive-data-v1.js?v=11"></script>
 <script defer src="assets/mawang-archive-v1.js?v=21&startup=1"></script>
-<link rel="stylesheet" href="assets/sidebar-compact-v1.css?v=3&hover-state=2">
+
 <script src="assets/sidebar-hover-v2.js?v=2"></script>
-<link rel="stylesheet" href="assets/topbar-context-v1.css?v=2">
-<link rel="stylesheet" href="assets/mawang-archive-header-v1.css?v=3">
-<link rel="stylesheet" href="assets/workspace-density-v1.css?v=8">
-<link rel="stylesheet" href="assets/mawang-archive-finish-v1.css?v=1">
+
+
+
+
 <script defer src="assets/topbar-context-v1.js?v=1"></script>
 </body>
 </html>
