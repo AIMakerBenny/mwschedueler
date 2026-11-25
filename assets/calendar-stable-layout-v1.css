@@ -43,14 +43,14 @@
 /* Reserve exact text rows even when a one-line title receives a game cover.
    CSS Grid can no longer grow a week just because a title wraps later. */
 #calendar #calendarGrid .mini-event:not(.rest-event){
-  grid-template-rows:2.8em!important;
+  grid-template-rows:minmax(2.8em,auto)!important;
 }
 #calendar #calendarGrid .mini-event:not(.rest-event) .mini-event-main{
-  max-height:2.8em;
+  min-height:0;
 }
 @container mws-calendar-day (max-width:185px){
   #calendar #calendarGrid .mini-event.mws-steam-host-v111:not(.rest-event){
-    grid-template-rows:28px 2.8em!important;
+    grid-template-rows:28px minmax(2.8em,auto)!important;
   }
   /* On narrow dates the cover occupies its dedicated first-row cell.
      This is the same compact geometry as calendar-responsive-cards-v1.css. */
