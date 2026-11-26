@@ -13,7 +13,7 @@ let draftRun=null,draftRender=false;
 const draftLater=(run,ms,fn)=>{run.timers.push(setTimeout(()=>{if(draftRun===run&&root.classList.contains('active'))fn()},ms))};
 function clearRankMotion(){clearTimeout(rankTimer);rankTimer=0;rankPhaseTimers.forEach(clearTimeout);rankPhaseTimers=[];root.querySelectorAll('.op-rank-beam').forEach(x=>x.remove())}
 function rankAfter(ms,fn){rankPhaseTimers.push(setTimeout(fn,ms))}
-let deckPhase='pick',deckEpoch=0,skipMotion=false,paused=false,deckEffects=[],deckTimers=[];
+let deckPhase='pick',deckEpoch=0,skipMotion=false,paused=false,deckEffects=[],deckTimers=[],rebuildingGuided=false;
 function stopShuffle(){
   deckEpoch++;deckEffects.forEach(a=>a.cancel());deckEffects=[];deckTimers.forEach(clearTimeout);deckTimers=[];
   if(['shuffle','draw','flip'].includes(deckPhase))deckPhase='pick';
@@ -137,7 +137,7 @@ function shuffleDeck(){
   queue=ROSTER.filter(n=>current(n)&&!state.tiers[n]);
   for(let i=queue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[queue[i],queue[j]]=[queue[j],queue[i]]}
   if(!queue.length){guided=false;render();return}
-  deckPhase='shuffle';render();const epoch=deckEpoch;
+  deckPhase='shuffle';rebuildingGuided=true;try{render()}finally{rebuildingGuided=false}const epoch=deckEpoch;
   const stage=root.querySelector('.op-guided-stage'),deck=stage?.querySelector('.op-deck-reserve'),center=stage?.querySelector('.op-single-center');
   if(!guidedMotion()||!stage||!deck||!center){finishShuffle(epoch);return}
   const from=deck.getBoundingClientRect(),to=center.getBoundingClientRect(),scale=draftScale();
@@ -181,7 +181,7 @@ function completedTray(){
   return '<div class="op-completed-tray" aria-label="분류 완료">'+TIERS.map(t=>{const names=ROSTER.filter(n=>state.tiers[n]===t);return '<div class="op-completed-slot" data-tier="'+t+'" data-op-completed="'+t+'"><span class="op-completed-rank">'+crest(t)+'<strong>'+t+'</strong></span><span class="op-completed-names" title="'+esc(names.map(display).join(', '))+'">'+names.slice(-2).map(n=>'<span>'+esc(display(n))+'</span>').join('')+'</span><b>'+names.length+'</b></div>'}).join('')+'</div>';
 }
 function guidedCard(n,hidden=false){
-  const c=document.createElement('article');c.className='op-reveal-card op-card'+(hidden?' op-face-down':'');c.dataset.rarity='neutral';c.dataset.opCurrent=n;c.innerHTML=cardFace(current(n),display(n))+cardBack();return c;
+  const c=document.createElement('article');c.className='op-reveal-card op-card'+(hidden?' op-face-down':' op-face-open');c.dataset.rarity='neutral';c.dataset.opCurrent=n;c.innerHTML=cardFace(current(n),display(n))+cardBack();return c;
 }
 function guidedBoard(){
   queue=queue.filter(n=>current(n)&&!state.tiers[n]);
@@ -244,9 +244,9 @@ function nextGuided(){
   if(!paused)drawCard(0);
 }
 function skipGuidedMotion(){
+  if(rankLock){skipMotion=true;nextGuided();return}
   skipMotion=!skipMotion;
   if(!skipMotion){refreshGuided();return}
-  if(rankLock){nextGuided();return}
   if(deckPhase==='shuffle'){stopShuffle();finishShuffle(deckEpoch);return}
   if(['draw','flip'].includes(deckPhase)){stopShuffle();const card=root.querySelector('.op-single-center .op-reveal-card');if(card)openDraw(card,deckEpoch);else{refreshGuided();if(!paused)drawCard(0)}return}
   refreshGuided();
@@ -256,8 +256,8 @@ function confirmRank(t,source){
   const n=queue[0],card=root.querySelector('.op-reveal-card'),panel=root.querySelector('.op-guided');
   if(!current(n)||state.tiers[n]||!card||!panel)return;
   queue.shift();state.tiers[n]=t;state.teams=[];guidedHistory.push(n);save();rankLock=true;
-  deckPhase='confirm';const motion=guidedMotion(),charge=motion?240:0,hold=motion?{S:900,A:740,B:640,C:540,D:440}[t]:0,flight=motion?480:0;
-  root.querySelectorAll('[data-op-assign]').forEach(x=>x.disabled=true);source.classList.add('op-rank-chosen');
+  deckPhase='confirm';panel.classList.remove('op-deck-phase-reveal');panel.classList.add('op-deck-phase-confirm');const motion=guidedMotion(),charge=motion?240:0,hold=motion?{S:900,A:740,B:640,C:540,D:440}[t]:0,flight=motion?480:0;
+  root.querySelectorAll('[data-op-assign]').forEach(x=>x.disabled=true);panel.querySelector('[data-op-action="undo-guided"]').disabled=true;source.classList.add('op-rank-chosen');
   const target=panel.querySelector('[data-op-completed="'+t+'"]');
   const finish=nextGuided;
   const apply=()=>{
@@ -268,8 +268,8 @@ function confirmRank(t,source){
     if(!rankLock||!card.isConnected)return;
     if(!motion||!target){finish();return}
     const r=card.getBoundingClientRect(),d=target.getBoundingClientRect(),scale=root.offsetWidth?root.getBoundingClientRect().width/root.offsetWidth:1,dx=(d.left+d.width/2-r.left-r.width/2)/(scale||1),dy=(d.top+d.height/2-r.top-r.height/2)/(scale||1);
-    card.classList.add('op-rank-flight');
-    if(card.animate)card.animate([{transform:'none',opacity:1},{transform:'translate('+dx+'px,'+dy+'px) scale(.22)',opacity:.45}],{duration:flight,easing:'cubic-bezier(.4,.1,.6,1)',fill:'forwards'});
+    card.classList.add('op-rank-flight');card.getAnimations().forEach(a=>a.cancel());
+    if(card.animate)card.animate([{transform:'none',opacity:1},{offset:.22,transform:'translate('+dx*.08+'px,'+(dy*.08-8)+'px) scale(1.025)',opacity:1},{transform:'translate('+dx+'px,'+dy+'px) scale(.22)',opacity:.45}],{duration:flight,easing:'cubic-bezier(.4,.1,.6,1)',fill:'forwards'});
     rankTimer=setTimeout(()=>{target.classList.remove('op-completed-impact');void target.offsetWidth;target.classList.add('op-completed-impact');refreshGuided();finish()},flight);
   };
   if(!motion){apply();rankTimer=setTimeout(finish,0);return}
@@ -429,7 +429,7 @@ function render(){
     root.innerHTML='<div class="op-shell"><div class="op-result-empty">'+(workspaceError?'인물 설정을 불러오지 못했습니다. '+button('retry','다시 시도'):'<span class="op-loading-indicator" aria-hidden="true"></span>참가자 정보를 불러오는 중…')+'</div></div>';return;
   }
   if(rankLock||draftRun&&!draftRender)return;
-  if(guided&&['draw','flip'].includes(deckPhase)&&root.querySelector('.op-single-stage'))return;
+  if(guided&&['draw','flip','shuffle'].includes(deckPhase)&&root.querySelector('.op-single-stage')&&!rebuildingGuided)return;
   const view=tab+(choosingMode?':choice':guided?':guided':'');
   const entering=lastView!==view;
   const scrolls=lastView===view?Object.fromEntries([...root.querySelectorAll('.op-tier-row')].map(r=>[r.dataset.tier,r.querySelector('.op-player-grid')?.scrollTop||0])):{};
@@ -463,7 +463,7 @@ function measureLayout(){
   const available=Math.max(180,(bottom-areaTop)/scale);
   const set=(key,value)=>{const next=Math.floor(value)+'px';if(root.style.getPropertyValue(key)!==next)root.style.setProperty(key,next)};
   set('--op-available',available);set('--op-workspace-height',Math.max(240,(bottom-rootTop)/scale));
-  if(area.classList.contains('op-single-stage')){const center=area.querySelector('.op-single-center');set('--op-single-card',Math.max(132,Math.min(480,(center?.clientWidth||area.clientWidth)-20,available-190)));return}
+  if(area.classList.contains('op-single-stage')){const center=area.querySelector('.op-single-center');set('--op-single-card',Math.max(132,Math.min(480,(center?.clientWidth||area.clientWidth)-20,(center?.clientHeight||available)-60)));return}
   if(area.classList.contains('op-guided')){
     const stage=area.querySelector('.op-guided-stage'),card=area.querySelector('.op-reveal-card'),width=stage?.clientWidth||area.clientWidth;
     const style=getComputedStyle(area),stageStyle=stage?getComputedStyle(stage):null;
@@ -581,7 +581,7 @@ root.addEventListener('click',e=>{
   }
   if(b.dataset.opAssign){if(e.detail<=1)confirmRank(b.dataset.opAssign,b);return}
   if(rankLock&&b.dataset.opAction==='skip-guided'){skipGuidedMotion();return}
-  if(rankLock&&b.dataset.opAction==='toggle-pause'){paused=!paused;refreshGuided();return}
+  if(rankLock&&b.dataset.opAction==='toggle-pause'){paused=!paused;b.textContent=paused?'계속 진행':'일시정지';b.setAttribute('aria-pressed',String(paused));return}
   if(rankLock){if(!['choose-mode','exit-guided','tab-roster','tab-tier','tab-result'].includes(b.dataset.opAction))return;clearRankMotion();rankLock=false;deckPhase='pick';}
   switch(b.dataset.opAction){
     case 'choose-mode':chooseMode();break;

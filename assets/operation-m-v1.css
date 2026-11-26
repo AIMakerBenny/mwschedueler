@@ -490,25 +490,13 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-guided-stage{padding:8px 10px;min-height:0}
 #operationM .op-guided-ranks[hidden]{display:none!important}
 #operationM .op-deck{position:relative;isolation:isolate;width:100%;min-width:0}
-#operationM .op-deck-shuffling{height:clamp(215px,calc(var(--op-available,60dvh) - 114px),390px);perspective:850px;overflow:hidden}
 #operationM .op-deck-card{position:relative;display:block;padding:0;min-width:0;aspect-ratio:3/4;border:0;border-radius:8px;background:none;box-shadow:0 6px 12px #0007}
 #operationM .op-deck-card .op-card-back,#operationM .op-deck-reserve .op-card-back{visibility:visible;transform:none}
 #operationM .op-deck-card .op-card-back{pointer-events:none}
-#operationM .op-deck-shuffling .op-deck-card{position:absolute;width:clamp(68px,12cqw,132px);left:50%;top:50%;transform:translate(-50%,-50%);animation:op-deck-riffle 900ms var(--op-stagger) cubic-bezier(.25,.8,.2,1) both}
-@keyframes op-deck-riffle{
-  0%{transform:translate(-50%,-50%) translateX(calc(var(--op-offset)*19px)) translateY(-24px) rotate(calc(var(--op-offset)*5deg)) rotateY(165deg);opacity:0}
-  18%{transform:translate(-50%,-50%) translate(calc(var(--op-offset)*2px),calc(var(--op-i)*-.6px)) rotate(0);opacity:1}
-  42%{transform:translate(-50%,-50%) translateX(calc(var(--op-group)*70%)) translateY(calc(var(--op-i)*-1px)) rotate(calc(var(--op-group)*-19deg))}
-  64%{transform:translate(-50%,-50%) translateX(calc(var(--op-group)*-55%)) translateY(calc(var(--op-group)*19% + var(--op-i)*-1px)) rotate(calc(var(--op-group)*17deg))}
-  82%{transform:translate(-50%,-50%) translateX(calc(var(--op-offset)*3px)) rotate(calc(var(--op-offset)*1deg))}
-  100%{transform:translate(-50%,-50%) translateY(calc(var(--op-i)*-.55px)) rotate(0);opacity:1}
-}
-#operationM .op-deck-pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,70px),1fr));gap:7px;max-width:820px;padding:10px 8px;align-items:center;justify-items:center}
-#operationM button.op-deck-card{width:100%;max-width:110px;cursor:pointer;transition:transform .19s ease,filter .19s ease,box-shadow .19s ease;transform:rotate(calc(var(--op-group)*1.2deg));animation:op-deck-spread .32s var(--op-stagger) ease-out both}
+
 #operationM button.op-deck-card:focus-visible{outline:2px solid #e4c6ff;outline-offset:3px;z-index:3}
 #operationM button.op-deck-card:active{transform:scale(.94)}
 @media(hover:hover) and (pointer:fine){#operationM button.op-deck-card:hover{transform:translateY(-8px) scale(1.07);filter:brightness(1.15);box-shadow:0 10px 18px #0009,0 0 12px #c4a4ff80;z-index:3}}
-@keyframes op-deck-spread{from{opacity:0;translate:calc(var(--op-offset)*-3px) 12px}to{opacity:1;translate:0 0}}
 #operationM .op-deck-controls{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap}
 #operationM .op-deck-controls button{white-space:nowrap}
 #operationM .op-deck-controls button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:white}
@@ -628,7 +616,6 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-tier-row .op-player-grid::-webkit-scrollbar{width:5px}
 #operationM .op-tier-row .op-player-grid::-webkit-scrollbar-thumb{border-radius:5px;background:color-mix(in srgb,var(--muted) 44%,transparent)}
 #operationM .op-guided-stage{box-sizing:border-box}
-#operationM .op-deck-pick{grid-template-columns:repeat(auto-fit,minmax(min(100%,70px),1fr));max-width:min(100%,820px)}
 #operationM .op-guided-ranks{min-width:0}
 #operationM .op-team header strong{min-width:0}
 #operationM .op-team .op-score-gain{right:8px;top:auto;bottom:2px}
@@ -636,3 +623,76 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 @container(max-width:600px){#operationM .op-deck-pick{grid-template-columns:repeat(auto-fit,minmax(47px,1fr))}#operationM .op-toolbar{gap:5px}#operationM .op-actions{gap:5px}#operationM .op-page-label{display:none}#operationM .op-actions button:not(.op-player){padding:6px 8px;font-size:12px}#operationM .op-guided-ranks{gap:4px}#operationM button.op-guide-rank{min-width:0;padding:4px}#operationM .op-guided-ranks .op-rank-crest{width:20px}}
 @container(max-width:360px){#operationM .op-pool .op-player-grid{grid-template-columns:repeat(3,minmax(0,1fr))}#operationM .op-team footer>span svg{display:none}#operationM .op-guided-ranks .op-rank-crest{width:16px}#operationM button.op-guide-rank strong{font-size:19px}}
 @media(prefers-reduced-motion:reduce){#operationM .op-player.op-tilt,#operationM .op-player.op-selected,#operationM .op-player:active{transform:none!important}}
+
+/* Continuous single-card stage. Stable layout during all deal, flip and rank phases. */
+#operationM .op-single-stage{width:min(100%,1600px);max-width:100%;padding:4px 0 10px;display:grid;grid-template-rows:auto auto auto auto;gap:12px;margin:0 auto;min-height:0}
+#operationM .op-single-stage .op-guided-top{gap:12px;min-height:38px}
+#operationM .op-single-stage .op-guided-count{font-size:clamp(17px,1.6cqw,26px);letter-spacing:-.03em}
+#operationM .op-single-stage .op-guided-track{height:8px;max-width:none;background:color-mix(in srgb,var(--panel2,var(--input)) 75%,#000)}
+#operationM .op-single-stage .op-guided-stage{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(100px,.8fr) minmax(0,2.3fr) minmax(135px,1fr);align-items:center;justify-items:stretch;gap:clamp(12px,2cqw,34px);height:clamp(340px,calc(var(--op-available,70dvh) - 175px),760px);padding:clamp(12px,1.8cqw,26px);overflow:visible;border:1px solid color-mix(in srgb,var(--border) 65%,transparent);border-radius:22px;background:radial-gradient(ellipse at 50% 49%,#8c6bc022,transparent 55%),linear-gradient(140deg,#ffffff05,transparent 68%);box-shadow:inset 0 1px 0 #ffffff0a,0 12px 36px #0002}
+#operationM .op-single-stage .op-stage-halo{width:min(60%,760px);height:96%;background:radial-gradient(ellipse,#9d75ff24 0,transparent 68%)}
+#operationM .op-single-deck{display:grid;justify-items:center;align-content:center;gap:18px;min-width:0;min-height:0}
+#operationM .op-single-stage button.op-deck-reserve{display:block;position:relative;inset:auto;transform:none;z-index:1;width:clamp(86px,12cqw,182px);max-width:calc(100% - 16px);aspect-ratio:3/4;padding:0;border:0;background:none;border-radius:11px;box-shadow:0 15px 26px #0007;opacity:1;cursor:pointer;transition:filter .2s,transform .2s}
+#operationM .op-single-stage button.op-deck-reserve:disabled{cursor:default;opacity:1}
+#operationM .op-single-stage button.op-deck-reserve:not(:disabled):hover{transform:translateY(-5px);filter:brightness(1.13)}
+#operationM .op-single-stage button.op-deck-reserve:focus-visible{outline:2px solid #c7adf3;outline-offset:5px}
+#operationM .op-single-stage .op-deck-reserve .op-stack-sheet{position:absolute;inset:0;display:block;border-radius:inherit;transform:translate(calc((4 - var(--op-i))*3px),calc((4 - var(--op-i))*-3px)) rotate(calc((4 - var(--op-i))*.8deg));z-index:calc(1 + var(--op-i));pointer-events:none}
+#operationM .op-single-stage .op-deck-reserve .op-stack-sheet:last-child{transform:none}
+#operationM .op-single-stage .op-deck-reserve .op-card-back{visibility:visible;transform:none}
+#operationM .op-single-stage .op-stack-empty{box-shadow:none!important;outline:1px dashed #b7a8d240;outline-offset:-1px;opacity:.4!important}
+#operationM .op-single-stage .op-stack-shuffling{visibility:hidden}
+#operationM .op-single-stage .op-deck-remaining{font-size:clamp(12px,1.15cqw,17px);color:var(--text);white-space:nowrap}
+#operationM .op-single-center{position:relative;display:grid;place-items:center;align-self:stretch;min-width:0;min-height:0;perspective:1300px}
+#operationM .op-single-center::before{content:"";position:absolute;width:min(80%,var(--op-single-card,320px));aspect-ratio:1/1.13;border-radius:18px;border:1px dashed #b6a0dc24;background:radial-gradient(ellipse,#b397eb09,transparent);pointer-events:none}
+#operationM .op-single-stage .op-reveal-card{width:min(100%,var(--op-single-card,340px));max-width:none;position:relative;z-index:5;padding:8px;gap:0;transform-origin:50% 50%;perspective:1100px;overflow:visible;will-change:auto}
+#operationM .op-single-stage .op-card-on-stack{position:absolute;inset:0;width:100%;height:100%;z-index:10;max-width:none;margin:0;pointer-events:none}
+#operationM .op-single-stage .op-reveal-card .op-card-front,#operationM .op-single-stage .op-reveal-card .op-card-back{animation:none;backface-visibility:hidden}
+#operationM .op-single-stage .op-reveal-card .op-card-front{gap:8px}
+#operationM .op-single-stage .op-reveal-card .op-player-name{padding:6px 4px;line-height:1.4;font-size:clamp(16px,2cqw,28px);min-height:1.5em}
+#operationM .op-single-stage .op-reveal-card.op-face-down .op-card-front{visibility:hidden;transform:rotateY(180deg)}
+#operationM .op-single-stage .op-reveal-card.op-face-down .op-card-back{visibility:visible;transform:rotateY(0deg)}
+#operationM .op-single-stage .op-reveal-card.op-is-flipping .op-card-front,#operationM .op-single-stage .op-reveal-card.op-is-flipping .op-card-back{visibility:visible}
+#operationM .op-single-stage .op-reveal-card.op-face-open .op-card-front{visibility:visible;transform:none}
+#operationM .op-single-stage .op-reveal-card.op-face-open .op-card-back,#operationM .op-single-stage .op-reveal-card.op-rank-confirm .op-card-back{visibility:hidden;transform:rotateY(-180deg)}
+#operationM .op-single-stage .op-reveal-card.op-card-on-stack .op-card-front{visibility:hidden}
+#operationM .op-single-stage .op-reveal-card.op-card-on-stack .op-card-back{visibility:visible;transform:none}
+#operationM .op-single-stage .op-reveal-card.op-rank-flight{animation:none!important;z-index:8}
+#operationM .op-single-stage .op-completed-tray{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(5,minmax(0,1fr));align-self:stretch;align-content:stretch;width:100%;max-width:330px;justify-self:center;margin:0;gap:8px;min-width:0}
+#operationM .op-single-stage .op-completed-slot{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;justify-content:stretch;gap:8px;padding:8px 10px;min-width:0;border-radius:9px;box-shadow:inset 0 1px 0 #ffffff0c}
+#operationM .op-completed-rank{display:flex;align-items:center;gap:5px;font-size:clamp(15px,1.5cqw,25px);line-height:1}
+#operationM .op-single-stage .op-completed-rank svg{width:clamp(16px,1.6cqw,27px);height:auto}
+#operationM .op-single-stage .op-completed-slot b{font-size:clamp(15px,1.55cqw,25px);font-variant-numeric:tabular-nums}
+#operationM .op-completed-names{display:grid;gap:3px;min-width:0;font-size:clamp(10px,.95cqw,14px);line-height:1.3;color:var(--text);opacity:.85}
+#operationM .op-completed-names>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#operationM .op-single-stage .op-guided-ranks{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:clamp(5px,1cqw,16px);width:100%;margin:0}
+#operationM .op-single-stage button.op-guide-rank{min-height:clamp(78px,9cqh,108px);padding:9px 6px;gap:5px}
+#operationM .op-single-stage .op-guide-rank strong{font-size:clamp(26px,3.1cqw,44px)}
+#operationM .op-single-stage .op-guide-rank .op-rank-crest{width:clamp(23px,2.7cqw,39px);height:auto}
+#operationM .op-single-stage .op-guide-rank:disabled{opacity:.55;cursor:default;transform:none;filter:none}
+#operationM .op-single-stage .op-guide-rank.op-rank-chosen:disabled{opacity:1;filter:brightness(1.22)}
+#operationM .op-single-stage .op-deck-controls{gap:8px;justify-content:center}
+#operationM .op-single-stage .op-rank-beam{height:7px;animation-duration:.24s;z-index:12}
+#operationM .op-shuffle-layer{position:absolute;inset:0;pointer-events:none;z-index:9}
+#operationM .op-shuffle-token{position:absolute;left:var(--op-shuffle-x,50%);top:var(--op-shuffle-y,50%);border-radius:10px;transform:translate(-50%,-50%);box-shadow:0 10px 20px #0008}
+#operationM .op-shuffle-token .op-card-back{visibility:visible;transform:none}
+@container(max-width:760px){
+ #operationM .op-single-stage{gap:8px}
+ #operationM .op-single-stage .op-guided-stage{grid-template-columns:minmax(70px,.65fr) minmax(0,1.9fr);grid-template-rows:clamp(245px,64cqw,420px) auto;height:auto;padding:10px;gap:10px;border-radius:14px}
+ #operationM .op-single-stage .op-completed-tray{grid-column:1/-1;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:auto;max-width:none;gap:4px}
+ #operationM .op-single-stage .op-completed-slot{grid-template-columns:auto auto;justify-content:space-between;padding:6px 4px;gap:3px}
+ #operationM .op-single-stage .op-completed-names{display:none}
+ #operationM .op-single-stage .op-completed-rank{font-size:14px;gap:2px}
+ #operationM .op-single-stage .op-completed-rank svg{width:15px}
+ #operationM .op-single-stage .op-completed-slot b{font-size:13px}
+ #operationM .op-single-stage button.op-deck-reserve{width:clamp(58px,15cqw,105px);max-width:100%}
+ #operationM .op-single-deck{gap:11px}
+ #operationM .op-single-stage .op-deck-remaining{font-size:11px}
+ #operationM .op-single-stage .op-reveal-card{padding:5px}
+ #operationM .op-single-stage .op-reveal-card .op-player-name{font-size:clamp(14px,3.5cqw,20px);padding:4px}
+ #operationM .op-single-stage button.op-guide-rank{min-height:68px;padding:5px 2px}
+ #operationM .op-single-stage .op-guide-rank strong{font-size:clamp(22px,5cqw,32px);gap:3px}
+ #operationM .op-single-stage .op-guide-rank .op-rank-crest{width:clamp(17px,4cqw,26px)}
+ #operationM .op-single-stage .op-guided-top{flex-wrap:wrap;gap:5px}
+}
+@container(max-width:360px){#operationM .op-single-stage .op-completed-rank svg{display:none}#operationM .op-single-stage .op-guide-rank .op-rank-crest{width:16px}#operationM .op-single-stage .op-completed-slot{padding:5px 3px}}
+@media(prefers-reduced-motion:reduce){#operationM .op-single-stage .op-shuffle-layer{display:none}#operationM .op-single-stage .op-reveal-card.op-face-open .op-card-front{visibility:visible;transform:none}}
