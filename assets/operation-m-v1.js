@@ -169,6 +169,18 @@ function move(n,t){
   state.teams=[];selected='';notice='';arrived=n;save();render();
 }
 function showPicker(n){picker=n;query='';render();root.querySelector('[data-op-search]')?.focus()}
+// Only the hovered portrait moves; pointer position is never used for game state.
+const hoverFine=matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)');
+let hoverCard=null;
+root.addEventListener('pointermove',e=>{
+  if(!hoverFine.matches||dragName)return;
+  const card=e.target.closest('.op-player[data-rarity]');if(!card||!root.contains(card))return;
+  if(hoverCard&&hoverCard!==card){hoverCard.style.removeProperty('--op-rx');hoverCard.style.removeProperty('--op-ry');hoverCard.classList.remove('op-tilt')}
+  hoverCard=card;const r=card.getBoundingClientRect();if(!r.width||!r.height)return;
+  const x=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y=Math.max(0,Math.min(1,(e.clientY-r.top)/r.height));
+  card.style.setProperty('--op-rx',((.5-y)*9).toFixed(2)+'deg');card.style.setProperty('--op-ry',((x-.5)*9).toFixed(2)+'deg');card.style.setProperty('--op-light-x',(x*100).toFixed(1)+'%');card.style.setProperty('--op-light-y',(y*100).toFixed(1)+'%');card.classList.add('op-tilt');
+});
+root.addEventListener('pointerout',e=>{if(hoverCard&&!hoverCard.contains(e.relatedTarget)){hoverCard.classList.remove('op-tilt');hoverCard.style.removeProperty('--op-rx');hoverCard.style.removeProperty('--op-ry');hoverCard=null}});
 root.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b||!root.contains(b))return;
   const n=b.dataset.opPlayer;
