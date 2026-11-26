@@ -1,0 +1,26 @@
+name: Operation M tier and draft QA
+on:
+  pull_request:
+    branches: ['cloudflare-production']
+    paths:
+      - 'assets/operation-m-*'
+      - 'scripts/qa-operation-m-*'
+      - 'index.html'
+      - '.github/workflows/qa-operation-m.yml'
+permissions:
+  contents: read
+env:
+  MWS_QA_OFFLINE: '1'
+jobs:
+  operation-m:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: |
+          node --check assets/operation-m-v1.js
+          node --test scripts/qa-operation-m-model.test.mjs
+          node scripts/qa-operation-m-browser.mjs
