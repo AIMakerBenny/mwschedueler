@@ -126,10 +126,8 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-guided-track{height:6px;background:var(--input);flex:1;border-radius:8px;overflow:hidden}
 #operationM .op-guided-track i{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,var(--accent),#b98aff);transition:width .25s}
 #operationM .op-guided-stage{display:grid;place-items:center;min-height:0;padding:8px}
-#operationM .op-reveal-card{display:grid;width:min(100%,clamp(165px,calc(var(--op-available) - 198px),440px));gap:10px;padding:9px;border:1px solid color-mix(in srgb,var(--accent) 65%,var(--border));border-radius:17px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 20%,var(--panel)),var(--panel));box-shadow:0 12px 42px #0005,0 0 26px color-mix(in srgb,var(--accent) 24%,transparent);animation:op-card-reveal .42s cubic-bezier(.2,.8,.25,1) both}
-#operationM .op-reveal-card strong{font-size:clamp(17px,2cqw,25px);line-height:1.3;text-align:center;padding:4px;overflow-wrap:anywhere}
+#operationM .op-reveal-card{display:grid;width:min(100%,clamp(165px,calc(var(--op-available) - 198px),440px));gap:10px;padding:9px;border:1px solid color-mix(in srgb,var(--accent) 65%,var(--border));border-radius:17px;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 20%,var(--panel)),var(--panel));box-shadow:0 12px 42px #0005,0 0 26px color-mix(in srgb,var(--accent) 24%,transparent);animation:none}
 #operationM .op-reveal-card .op-portrait{border-radius:12px}
-@keyframes op-card-reveal{0%{opacity:0;transform:perspective(800px) rotateY(-26deg) translateY(14px) scale(.9)}100%{opacity:1;transform:none}}
 #operationM .op-guided-ranks{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
 #operationM button.op-guide-rank{display:flex;flex-direction:column;min-height:76px;justify-content:center}
 #operationM button.op-guide-rank:hover{background:linear-gradient(145deg,color-mix(in srgb,var(--tier) 72%,white),var(--tier));border-color:var(--tier);box-shadow:0 0 23px color-mix(in srgb,var(--tier) 40%,transparent)}
@@ -150,9 +148,9 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-rank-crest{font-size:.65em;line-height:1;display:inline-block}
 #operationM .op-tier-row{background:radial-gradient(ellipse at 50% 0%,color-mix(in srgb,var(--tier) 18%,var(--panel)),var(--panel) 68%);border-color:color-mix(in srgb,var(--tier) 65%,var(--border))}
 
-#operationM .op-player[data-rarity],#operationM .op-reveal-card[data-rarity]{position:relative;isolation:isolate;overflow:hidden;border:2px solid transparent;padding:6px;background:linear-gradient(155deg,var(--dark),var(--input)) padding-box,var(--foil) border-box;box-shadow:0 5px 12px #0005,0 0 13px color-mix(in srgb,var(--glow) 22%,transparent)}
-#operationM .op-player[data-rarity] .op-portrait{outline:1px solid color-mix(in srgb,var(--tier) 65%,transparent);border-radius:5px}
-#operationM .op-player[data-rarity] .op-player-name{position:relative;z-index:3;color:var(--tier);font-weight:800;text-shadow:0 1px 3px #000;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--dark) 88%,transparent),transparent)}
+#operationM .op-card{position:relative;isolation:isolate;overflow:hidden;border:2px solid transparent;padding:6px;background:linear-gradient(155deg,var(--dark),var(--input)) padding-box,var(--foil) border-box;box-shadow:0 5px 12px #0005,0 0 13px color-mix(in srgb,var(--glow) 22%,transparent)}
+#operationM .op-card .op-portrait{outline:1px solid color-mix(in srgb,var(--tier) 65%,transparent);border-radius:5px}
+#operationM .op-card .op-player-name{position:relative;z-index:3;color:var(--tier);font-weight:800;text-shadow:0 1px 3px #000;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--dark) 88%,transparent),transparent)}
 #operationM .op-rarity-art{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden;border-radius:inherit}
 #operationM .op-rarity-art i{position:absolute;width:19%;height:19%;border:0 solid var(--tier);filter:drop-shadow(0 0 3px var(--glow))}
 #operationM .op-rarity-art i:nth-child(1){left:3px;top:3px;border-top-width:2px;border-left-width:2px}
@@ -180,7 +178,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM [data-rarity="holo"] .op-chip{clip-path:polygon(8% 0,92% 0,100% 25%,100% 75%,92% 100%,8% 100%,0 75%,0 25%);height:27px}
 #operationM [data-rarity="gold"] .op-chip{border-radius:2px 8px}
 #operationM [data-rarity="crystal"] .op-chip{border-radius:2px 9px}
-#operationM .op-player[data-rarity]:hover{box-shadow:0 0 22px color-mix(in srgb,var(--glow) 50%,transparent);transform:translateY(-3px) scale(1.025)}
+#operationM .op-player.op-card:hover{box-shadow:0 0 22px color-mix(in srgb,var(--glow) 50%,transparent);transform:translateY(-3px) scale(1.025)}
 #operationM .op-rank-confirm{animation:op-rank-pop .48s cubic-bezier(.2,.8,.2,1) both}
 #operationM .op-rank-confirm[data-rarity="holo"]{animation:op-rank-pop .62s cubic-bezier(.2,.8,.2,1) both;box-shadow:0 0 65px #fbdc9d80,0 0 36px #b292ff90}
 #operationM .op-confirm-rank{position:absolute;z-index:5;top:10px;left:10px;display:flex;align-items:center;gap:8px;font-size:clamp(24px,4cqw,46px);font-weight:950;background:var(--foil);color:#202029;border:1px solid #fff9;border-radius:10px;padding:6px 14px;box-shadow:0 5px 20px #0007;animation:op-rank-pop .3s ease both}
@@ -204,7 +202,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-tier-label .op-rank-crest{width:46px;height:46px;filter:drop-shadow(0 0 5px var(--glow))}
 #operationM .op-rank-heading{display:grid;gap:3px;min-width:0}
 #operationM .op-tier-label .op-rank-heading strong{display:block;font-size:34px;line-height:1;text-shadow:0 0 10px color-mix(in srgb,var(--glow) 40%,transparent)}
-#operationM .op-rank-heading>span{font-size:10px;font-weight:800;letter-spacing:.07em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
 #operationM .op-rank-meta{display:grid;gap:3px;text-align:right;white-space:nowrap}
 #operationM .op-rank-meta b{font-size:15px;color:#f6f4ff}
 #operationM .op-rank-meta small{font-size:12px;font-weight:650;color:var(--tier)}
@@ -229,14 +227,14 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 
 #operationM [data-rarity="holo"] .op-rarity-art b{background:linear-gradient(120deg,transparent 20%,#c3aaff60 32%,#92eaff90 42%,#ffd0f580 52%,transparent 65%)}
 #operationM [data-rarity="holo"] .op-chip{color:#1d1830}
-@container(max-width:1000px){#operationM .op-tier-label{grid-template-columns:32px minmax(0,1fr) auto;min-height:64px;padding:6px;gap:5px}#operationM .op-tier-label .op-rank-crest{width:32px;height:32px}#operationM .op-rank-heading>span{font-size:8px}#operationM .op-rank-meta b{font-size:13px}#operationM .op-rank-meta small{font-size:11px}#operationM .op-tier-label .op-rank-heading strong{font-size:27px}}
-@container(max-width:800px){#operationM .op-tier-label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:100px;text-align:center}#operationM .op-rank-meta{display:flex;gap:4px;align-items:center}#operationM .op-rank-heading>span{font-size:9px}#operationM .op-tier-row .op-empty{min-height:120px}#operationM .op-slot-grid{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:1fr;inset:8px}#operationM .op-empty-center .op-rank-crest{width:30px}#operationM .op-empty-center{gap:4px;padding:7px;font-size:11px}}
+@container(max-width:1000px){#operationM .op-tier-label{grid-template-columns:32px minmax(0,1fr) auto;min-height:64px;padding:6px;gap:5px}#operationM .op-tier-label .op-rank-crest{width:32px;height:32px}#operationM .op-rank-meta b{font-size:13px}#operationM .op-rank-meta small{font-size:11px}#operationM .op-tier-label .op-rank-heading strong{font-size:27px}}
+@container(max-width:800px){#operationM .op-tier-label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:100px;text-align:center}#operationM .op-rank-meta{display:flex;gap:4px;align-items:center}#operationM .op-tier-row .op-empty{min-height:120px}#operationM .op-slot-grid{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:1fr;inset:8px}#operationM .op-empty-center .op-rank-crest{width:30px}#operationM .op-empty-center{gap:4px;padding:7px;font-size:11px}}
 
 #operationM .op-player.op-tilt:not(.op-dragging){transform:perspective(700px) rotateX(var(--op-rx,0deg)) rotateY(var(--op-ry,0deg)) translateY(-2px);transition:transform .08s,box-shadow .16s;z-index:5}
 #operationM .op-player.op-tilt .op-rarity-art::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at var(--op-light-x,50%) var(--op-light-y,50%),#ffffff45,transparent 54%);mix-blend-mode:screen}
 
 /* Compact frame allowance preserves the image at narrow desktop widths. */
-#operationM .op-tier-row .op-player[data-rarity]{padding:4px}
+#operationM .op-tier-row .op-player.op-card{padding:4px}
 
 /* Interaction polish: fixed geometry while choosing, a stage that uses actual free height,
    and distinct rarity controls without adding a second heading. */
@@ -260,8 +258,6 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-guided-stage{position:relative;isolation:isolate;overflow:hidden;min-height:0;padding:16px;border-radius:18px;background:radial-gradient(ellipse at 50% 52%,#9d76ff18,transparent 66%),linear-gradient(150deg,#ffffff04,transparent 75%)}
 #operationM .op-stage-halo{position:absolute;z-index:-1;left:50%;top:50%;width:min(85%,650px);height:80%;transform:translate(-50%,-50%);background:radial-gradient(ellipse,#9d75ff24,transparent 65%);pointer-events:none}
 #operationM .op-reveal-card{width:min(100%,var(--op-guided-card,340px));transform-origin:50% 55%;isolation:isolate}
-#operationM .op-reveal-card:not(.op-rank-confirm)::after{content:"";position:absolute;inset:0;z-index:5;background:linear-gradient(125deg,#171225,#503775 50%,#19152a);border:2px solid #bea7ef99;border-radius:inherit;pointer-events:none;opacity:0;animation:op-card-back .38s ease-out both}
-@keyframes op-card-back{0%,16%{opacity:1;transform:rotateY(0deg)}60%,100%{opacity:0;transform:rotateY(85deg)}}
 #operationM .op-reveal-card[data-rarity="holo"] .op-confirm-rank{box-shadow:0 0 28px #d3afff99,0 6px 20px #0008}
 #operationM .op-reveal-card[data-rarity="gold"].op-rank-confirm{animation:op-gold-confirm .5s ease-out both}
 #operationM .op-reveal-card[data-rarity="crystal"].op-rank-confirm{animation:op-crystal-confirm .4s ease-out both}
@@ -279,7 +275,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-team footer span{min-width:29px;text-align:center;font-variant-numeric:tabular-nums}
 
 @container(max-width:600px){#operationM .op-guided{padding:4px 0 8px;gap:7px}#operationM .op-guided-stage{padding:8px}#operationM .op-guided-top{gap:5px;flex-wrap:wrap}#operationM .op-guided-count{font-size:14px}#operationM .op-guided-top button{font-size:11px;padding:6px 8px}#operationM button.op-guide-rank{min-height:68px;padding:5px;gap:3px}#operationM .op-guide-rank .op-rank-crest{width:22px;height:22px}#operationM .op-guide-rank strong{font-size:24px;gap:3px}#operationM .op-keyhint{display:none}#operationM .op-pool-actions{flex-wrap:wrap;justify-content:flex-end}#operationM .op-pool .op-block-head{align-items:flex-start}#operationM .op-pool .op-block-head h2{white-space:nowrap}#operationM .op-toolbar .op-actions{margin-left:auto}}
-@media(prefers-reduced-motion:reduce){#operationM *,#operationM *::before,#operationM *::after{animation:none!important;transition:none!important}#operationM .op-reveal-card:not(.op-rank-confirm)::after{display:none}#operationM .op-player.op-tilt,#operationM .op-player.op-selected{transform:none}}
+@media(prefers-reduced-motion:reduce){#operationM *,#operationM *::before,#operationM *::after{animation:none!important;transition:none!important}#operationM .op-player.op-tilt,#operationM .op-player.op-selected{transform:none}}
 
 /* Density follows the available content width, not the physical monitor size.
    Keep high-density tiers readable rather than shrinking 20 portraits into one row. */
@@ -294,7 +290,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 #operationM .op-pool-actions button[data-op-action="undo-move"]{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,var(--border))}
 #operationM .op-actions .op-progress{max-width:clamp(120px,22cqw,300px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #operationM .op-player[draggable="true"] .op-portrait img{pointer-events:none}
-#operationM .op-rank-heading>span{line-height:1.25}
+
 #operationM .op-rank-meta b,#operationM .op-rank-meta small{font-variant-numeric:tabular-nums}
 @container(min-width:1900px){
   #operationM .op-tier-row:is([data-count="9"],[data-count="10"],[data-count="11"],[data-count="12"],[data-count="13"],[data-count="14"],[data-count="15"],[data-count="16"],[data-count="17"],[data-count="18"],[data-count="19"],[data-count="20"]) .op-player-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -312,7 +308,7 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 @container(max-width:480px){
   #operationM .op-tier-row{grid-template-columns:82px minmax(0,1fr);min-height:115px}
 
-  #operationM .op-rank-heading>span{font-size:8px}
+  
   #operationM .op-actions .op-progress{max-width:112px}
 }
 
@@ -330,4 +326,78 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
   #operationM .op-team-players .op-player:last-child{grid-column:4/span 2;width:100%}
   #operationM .op-team .op-player-name{font-size:12px}
   #operationM .op-team footer span{padding:4px 7px}
+}
+
+/* Shared character card: outer metal, inner bevel, face, engraved plate and reusable back.
+   Layout stays on the existing player/reveal elements; effects never participate in sizing. */
+#operationM .op-card{--frame-depth:1px;--corner-size:16%;--plate-edge:var(--tier);--op-plate-radius:4px;min-width:0;box-sizing:border-box;perspective:900px;transform-style:preserve-3d}
+#operationM .op-card[data-rarity="neutral"]{--tier:#b9becd;--dark:#222631;--foil:linear-gradient(142deg,#a4aabb,#383e4c 32%,#606879 66%,#222631);--glow:#aeb7cb;--plate-edge:#858d9d;border-radius:8px;box-shadow:0 3px 9px #0005,inset 0 0 0 1px #ffffff12}
+#operationM .op-card-front{position:relative;display:grid;grid-template-columns:minmax(0,1fr);align-content:start;gap:4px;min-width:0;width:100%;border-radius:inherit;backface-visibility:hidden;transform-origin:center;isolation:isolate}
+#operationM .op-card-front::before{content:"";position:absolute;inset:-2px;z-index:4;border:var(--frame-depth) solid color-mix(in srgb,var(--plate-edge) 46%,transparent);border-radius:inherit;box-shadow:inset 0 1px 0 #ffffff30,inset 0 -1px 0 #0007;pointer-events:none}
+#operationM .op-card .op-portrait{min-width:0;box-shadow:inset 0 0 0 1px #0007;outline:1px solid color-mix(in srgb,var(--tier) 50%,transparent)}
+#operationM .op-card .op-player-name{box-sizing:border-box;display:block;min-width:0;max-width:100%;min-height:1.55em;line-height:1.35;padding:2px 3px 3px;border-top:1px solid color-mix(in srgb,var(--plate-edge) 65%,transparent);border-radius:var(--op-plate-radius);background:linear-gradient(180deg,color-mix(in srgb,var(--dark) 78%,white),var(--dark) 37%,#10131b);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:750;color:var(--tier);text-shadow:0 1px 2px #000}
+#operationM .op-card[data-rarity="neutral"] .op-player-name{color:#e0e4ed;font-weight:650}
+#operationM .op-card[data-rarity="neutral"] .op-rarity-art i{width:9%;height:9%;border-color:#b4bacb75;filter:none}
+#operationM .op-card[data-rarity="neutral"] .op-rarity-art b{opacity:0;background:linear-gradient(115deg,transparent 32%,#ffffff35 48%,transparent 64%);transform:translateX(-120%)}
+#operationM .op-card[data-rarity="neutral"]:hover .op-rarity-art b{opacity:.8;animation:op-holo-sweep .8s ease-out both}
+#operationM .op-card .op-rarity-art{inset:0}
+#operationM .op-card .op-rarity-art i{width:var(--corner-size);height:var(--corner-size)}
+#operationM .op-card .op-rarity-art i:nth-child(1){left:0;top:0}
+#operationM .op-card .op-rarity-art i:nth-child(2){right:0;top:0}
+#operationM .op-card .op-rarity-art i:nth-child(3){left:0;bottom:0}
+#operationM .op-card .op-rarity-art i:nth-child(4){right:0;bottom:0}
+#operationM .op-card .op-chip{top:3px;left:3px}
+#operationM .op-card .op-link-mark{position:relative;z-index:3}
+#operationM .op-reveal-card .op-card-front{gap:7px}
+#operationM .op-reveal-card .op-player-name{font-size:clamp(15px,1.7cqw,23px);line-height:1.3;padding:4px;min-height:1.6em}
+#operationM .op-card-back{position:absolute;inset:0;z-index:6;display:grid;place-items:center;border:2px solid transparent;border-radius:inherit;box-sizing:border-box;background:repeating-linear-gradient(45deg,#171c2a 0 2px,#1c2334 2px 4px) padding-box,linear-gradient(135deg,#d5c4ec,#615779 28%,#272b40 55%,#d1c4e5) border-box;color:#d9c9ee;box-shadow:inset 0 0 0 3px #232336,inset 0 0 0 4px #a99ac75c,inset 0 0 24px #0008,0 7px 15px #0005;backface-visibility:hidden;pointer-events:none;visibility:hidden;transform:rotateY(-180deg)}
+#operationM .op-card-back svg{width:92%;height:92%;max-width:100%;max-height:100%;filter:drop-shadow(0 1px 0 #090b12) drop-shadow(0 0 5px #a48ee46b)}
+#operationM .op-card-back::after{content:"";position:absolute;inset:3px;border-radius:inherit;background:linear-gradient(125deg,#ffffff20,transparent 28%,transparent 70%,#cdbaf41b);pointer-events:none}
+#operationM .op-reveal-card:not(.op-rank-confirm) .op-card-back{animation:op-back-turn .52s cubic-bezier(.3,.6,.25,1) both}
+#operationM .op-reveal-card:not(.op-rank-confirm) .op-card-front{animation:op-front-turn .52s cubic-bezier(.3,.6,.25,1) both}
+#operationM .op-card.op-face-down .op-card-back{visibility:visible;transform:rotateY(0);animation:none}
+#operationM .op-card.op-face-down .op-card-front{visibility:hidden;transform:rotateY(180deg);animation:none}
+@keyframes op-back-turn{0%{visibility:visible;transform:rotateY(0)}48%{visibility:visible;transform:rotateY(-90deg)}49%,100%{visibility:hidden;transform:rotateY(-180deg)}}
+@keyframes op-front-turn{0%,48%{visibility:hidden;transform:rotateY(90deg)}49%{visibility:visible;transform:rotateY(90deg)}100%{visibility:visible;transform:rotateY(0)}}
+
+/* Distinct material geometries. Embellishments are decorative only, leaving the portrait readable. */
+#operationM .op-card[data-rarity="holo"]{--frame-depth:2px;--corner-size:23%;--plate-edge:#e3c9ff;--op-plate-radius:8px;border-radius:13px;box-shadow:0 0 15px #a693ff65,0 0 6px #8cecf475,inset 0 0 0 1px #fff8}
+#operationM .op-card[data-rarity="holo"] .op-card-front::before{border-color:#e3d6fa8c;box-shadow:inset 0 0 0 1px #75e5f34c,0 0 4px #dcacff8c}
+#operationM .op-card[data-rarity="holo"] .op-player-name{background:linear-gradient(120deg,#24213c,#4c355c 45%,#223746);color:#f2e2ff}
+#operationM .op-card[data-rarity="gold"]{--frame-depth:2px;--corner-size:19%;--plate-edge:#edbf61;--op-plate-radius:2px 8px;border-radius:5px 12px;box-shadow:0 0 12px #e9ba584a,inset 0 0 0 1px #fff0b2}
+#operationM .op-card[data-rarity="gold"] .op-card-front::before{border-style:double;border-color:#e5bb6a}
+#operationM .op-card[data-rarity="gold"] .op-player-name{background:linear-gradient(180deg,#624718,#31200e 42%,#20170d);color:#ffe0a2}
+#operationM .op-card[data-rarity="crystal"]{--corner-size:17%;--frame-depth:1px;--plate-edge:#b98aef;--op-plate-radius:2px 9px;border-radius:3px 13px 3px 13px}
+#operationM .op-card[data-rarity="crystal"] .op-rarity-art i{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%,50% 21%,79% 50%,50% 79%,21% 50%)}
+#operationM .op-card[data-rarity="crystal"] .op-player-name{background:linear-gradient(135deg,#422c63,#20172f 55%,#372450);color:#e7d0ff}
+#operationM .op-card[data-rarity="steel"]{--frame-depth:3px;--corner-size:12%;--plate-edge:#7ec0ed;--op-plate-radius:3px;border-radius:7px}
+#operationM .op-card[data-rarity="steel"] .op-card-front::before{border-style:double;border-color:#a8d4f1a6}
+#operationM .op-card[data-rarity="steel"] .op-player-name{background:linear-gradient(180deg,#3b6280,#182b3e 45%,#142133);color:#c4e5ff}
+#operationM .op-card[data-rarity="silver"]{--frame-depth:1px;--corner-size:7%;--plate-edge:#aeb9c9;--op-plate-radius:2px;border-radius:5px;box-shadow:0 3px 8px #0006,inset 0 0 0 1px #d4dce54d}
+#operationM .op-card[data-rarity="silver"] .op-player-name{background:linear-gradient(180deg,#444c57,#242932 45%,#1c2028);color:#e4e9ef}
+#operationM .op-card-particles{position:absolute;inset:0;pointer-events:none;opacity:0}
+#operationM .op-card[data-rarity="holo"] .op-card-particles{opacity:.75;background:radial-gradient(circle at 12% 12%,#fff 0 1px,transparent 3px),radial-gradient(circle at 91% 25%,#a9eeff 0 1px,transparent 3px),radial-gradient(circle at 9% 86%,#f4c4ff 0 1px,transparent 3px),radial-gradient(circle at 89% 84%,#fff 0 1px,transparent 3px)}
+#operationM .op-card[data-rarity="gold"] .op-card-particles{opacity:.65;background:radial-gradient(circle at 13% 12%,#ffde91 0 1px,transparent 3px),radial-gradient(circle at 88% 88%,#ffcf66 0 1px,transparent 3px)}
+#operationM .op-card[data-rarity="crystal"] .op-card-particles{opacity:.6;background:radial-gradient(circle at 92% 12%,#e2b4ff 0 1px,transparent 3px),radial-gradient(circle at 8% 88%,#a77bff 0 1px,transparent 3px)}
+#operationM .op-card[data-rarity="steel"] .op-rarity-art b{opacity:.25;background:linear-gradient(120deg,transparent 30%,#bfe5ff60 46%,transparent 62%);transform:translateX(-120%)}
+#operationM .op-card[data-rarity="silver"] .op-rarity-art b{opacity:.12;background:linear-gradient(120deg,transparent 35%,#ffffff75 48%,transparent 58%);transform:translateX(-120%)}
+#operationM .op-card[data-rarity="steel"]:hover .op-rarity-art b,#operationM .op-card[data-rarity="silver"]:hover .op-rarity-art b{animation:op-holo-sweep 1s ease-out both}
+#operationM .op-card:is([data-rarity="holo"],[data-rarity="gold"],[data-rarity="crystal"]):not(:hover):not(.op-rank-confirm) .op-rarity-art b,#operationM .op-card[data-rarity="holo"]:not(:hover):not(.op-rank-confirm) .op-rarity-art::after{animation-play-state:paused}
+#operationM .op-card:is([data-rarity="holo"],[data-rarity="gold"],[data-rarity="crystal"]):hover .op-card-particles{animation:op-stars 1.6s ease-in-out infinite}
+#operationM .op-reveal-card.op-rank-confirm .op-card-front{animation:none}
+#operationM .op-reveal-card.op-rank-confirm .op-card-back{visibility:hidden;animation:none}
+#operationM .op-reveal-card.op-rank-confirm .op-card-front::after{content:"";position:absolute;inset:-3px;z-index:5;border-radius:inherit;pointer-events:none;opacity:0}
+#operationM .op-reveal-card[data-rarity="holo"].op-rank-confirm .op-card-front::after{background:conic-gradient(from 45deg,#cbb0ff80,transparent 16%,#a9ecff70,transparent 42%,#f4c9ff70,transparent 70%,#cbb0ff80);animation:op-prism-burst .62s ease-out both}
+#operationM .op-reveal-card[data-rarity="gold"].op-rank-confirm .op-card-front::after{border:2px solid #ffd87a;box-shadow:0 0 22px #ffd87a;animation:op-ring-burst .5s ease-out both}
+#operationM .op-reveal-card[data-rarity="crystal"].op-rank-confirm .op-card-front::after{background:linear-gradient(135deg,transparent 35%,#d1aaff70 48%,transparent 63%);animation:op-crystal-flash .4s ease-out both}
+#operationM .op-reveal-card[data-rarity="steel"].op-rank-confirm .op-card-front::after{background:linear-gradient(90deg,transparent,#acd9ff80,transparent);animation:op-crystal-flash .3s ease-out both}
+#operationM .op-reveal-card[data-rarity="silver"].op-rank-confirm .op-card-front::after{box-shadow:inset 0 0 15px #d4deedb0;animation:op-silver-flash .24s ease-out both}
+@keyframes op-prism-burst{0%{opacity:0;transform:scale(.84) rotate(-5deg)}35%{opacity:.8}100%{opacity:0;transform:scale(1.09) rotate(5deg)}}
+@keyframes op-ring-burst{0%{opacity:.9;transform:scale(.9)}100%{opacity:0;transform:scale(1.12)}}
+@keyframes op-crystal-flash{0%{opacity:0;transform:translateX(-20%)}40%{opacity:.8}100%{opacity:0;transform:translateX(20%)}}
+@keyframes op-silver-flash{0%{opacity:.8}100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){
+  #operationM .op-card-front,#operationM .op-card-back,#operationM .op-card-particles,#operationM .op-card .op-rarity-art *{animation:none!important;transition:none!important}
+  #operationM .op-reveal-card:not(.op-face-down) .op-card-front{visibility:visible;transform:none}
+  #operationM .op-reveal-card:not(.op-face-down) .op-card-back{visibility:hidden}
 }
