@@ -225,7 +225,7 @@ function refreshGuided(){
   panel.querySelector('.op-guided-count').textContent=done+' / 20';
   const track=panel.querySelector('.op-guided-track');track.setAttribute('aria-valuenow',done);track.querySelector('i').style.width=done*5+'%';
   const progress=root.querySelector('.op-actions .op-progress');if(progress)progress.textContent=done+' / 20';
-  for(const t of TIERS){const names=ROSTER.filter(n=>state.tiers[n]===t),slot=panel.querySelector('[data-op-completed="'+t+'"]'),label=slot.querySelector('.op-completed-names');const countNode=slot.querySelector('b');if(countNode.textContent!==String(names.length)){countNode.textContent=names.length;pulseCount(countNode)}const key=names.join('|');if(label.dataset.members!==key){label.dataset.members=key;label.title=names.map(display).join(', ');label.innerHTML=tierNames(names)}const btn=panel.querySelector('[data-op-assign="'+t+'"]');btn.disabled=deckPhase!=='reveal'||rankLock;btn.classList.remove('op-rank-chosen');btn.querySelector('small').textContent=names.length+'명'}
+  for(const t of TIERS){const names=ROSTER.filter(n=>state.tiers[n]===t),slot=panel.querySelector('[data-op-completed="'+t+'"]'),label=slot.querySelector('.op-completed-names');const countNode=slot.querySelector('b');if(countNode.textContent!==String(names.length)){countNode.textContent=names.length;countNode.animate?.([{transform:'translateY(2px)',opacity:.65},{transform:'translateY(-2px)',opacity:1},{transform:'none'}],{duration:200,easing:'ease-out'})}const key=JSON.stringify(names.map(n=>[n,display(n),current(n)?.image]));if(label.dataset.members!==key){label.dataset.members=key;label.title=names.map(display).join(', ');label.innerHTML=tierNames(names)}const btn=panel.querySelector('[data-op-assign="'+t+'"]');btn.disabled=deckPhase!=='reveal'||rankLock;btn.classList.remove('op-rank-chosen');btn.querySelector('small').textContent=names.length+'명'}
   panel.querySelector('[data-op-action="undo-guided"]').disabled=!guidedHistory.length||!['pick','reveal'].includes(deckPhase)||rankLock;
   panel.querySelector('[data-op-action="shuffle-guided"]').disabled=!['pick','reveal'].includes(deckPhase)||rankLock;
   const pause=panel.querySelector('[data-op-action="toggle-pause"]');pause.textContent=paused?'계속 진행':'일시정지';pause.setAttribute('aria-pressed',String(paused));
@@ -301,7 +301,7 @@ function confirmRank(t,source){
   if(!current(n)||state.tiers[n]||!card||!panel)return;
   const target=panel.querySelector('[data-op-completed="'+t+'"]'),portrait=card.querySelector('.op-portrait'),front=card.querySelector('.op-card-front'),name=card.querySelector('.op-player-name');
   if(!target||!portrait||!front||!name)return;
-  queue.shift();state.tiers[n]=t;state.teams=[];guidedHistory.push(n);save();rankLock=true;
+  deckEffects.forEach(a=>a.cancel());deckEffects=[];queue.shift();state.tiers[n]=t;state.teams=[];guidedHistory.push(n);save();rankLock=true;
   deckPhase='confirm';guidedMode=motionPreference();markMotion('confirm',t);panel.classList.remove('op-deck-phase-reveal');panel.classList.add('op-deck-phase-confirm');panel.classList.toggle('op-motion-full',guidedFull());panel.classList.toggle('op-motion-reduced',!guidedFull());
   panel.querySelector('[data-op-action="skip-guided"]').disabled=false;
   root.querySelectorAll('[data-op-assign]').forEach(x=>x.disabled=true);panel.querySelector('[data-op-action="undo-guided"]').disabled=true;source.classList.add('op-rank-chosen');
@@ -494,7 +494,7 @@ function render(){
   const entering=lastView!==view;
   const scrolls=lastView===view?Object.fromEntries([...root.querySelectorAll('.op-tier-row')].map(r=>[r.dataset.tier,r.querySelector('.op-player-grid')?.scrollTop||0])):{};
   lastView=view;
-  sync();const assigned=ROSTER.filter(n=>TIERS.includes(state.tiers[n])).length;
+  if(!guided)sync();const assigned=ROSTER.filter(n=>TIERS.includes(state.tiers[n])).length;
   const action=tab==='roster'||guided||choosingMode?'':button('draft',state.teams.length?'다시 자동 드래프트':'자동 드래프트','class="op-primary" '+(!available()||draftRun?'disabled':''))+(draftRun?button('skip-draft','연출 건너뛰기','class="op-skip-draft"'):tab==='result'&&state.teams.length===4?button('copy-results','명단 복사'):'');
   const scoreSpread=state.teams.length?Math.max(...state.teams.map(t=>teamStats(t,state.tiers).score))-Math.min(...state.teams.map(t=>teamStats(t,state.tiers).score)):null;
   const status=notice||(saveFailed?'브라우저 저장 불가':missing.length?'연락처 미연결 '+missing.length+'명 · 관리자 설정이 필요합니다.':'');
@@ -663,7 +663,7 @@ root.addEventListener('click',e=>{
     case 'start-list':stopShuffle();choosingMode=false;guided=false;tab='tier';selected='';notice='';render();break;
     case 'undo-move':{const m=lastMove;lastMove=null;if(m&&current(m.n)&&(state.tiers[m.n]||'')===m.to){if(m.from)state.tiers[m.n]=m.from;else delete state.tiers[m.n];state.teams=[];selected='';save();refreshBoard(m.n,m.to,m.from)}break;}
     case 'exit-guided':stopShuffle();choosingMode=false;guided=false;render();break;
-    case 'undo-guided':{if(!['pick','reveal'].includes(deckPhase))break;const n=guidedHistory.pop();if(n){stopShuffle();delete state.tiers[n];state.teams=[];queue=[n,...queue.filter(x=>x!==n)];guided=true;deckPhase='reveal';save();const center=root.querySelector('.op-single-center'),card=guidedCard(n);center?.replaceChildren(card);refreshGuided();card.animate?.([{transform:'translateY(12px) scale(.94)',opacity:.5},{transform:'none',opacity:1}],{duration:250,easing:'ease-out'})}break;}
+    case 'undo-guided':{if(!['pick','reveal'].includes(deckPhase))break;const n=guidedHistory.pop();if(n){stopShuffle();delete state.tiers[n];state.teams=[];queue=[n,...queue.filter(x=>x!==n)];guided=true;deckPhase='reveal';save();const center=root.querySelector('.op-single-center'),card=guidedCard(n);center?.replaceChildren(card);refreshGuided();if(card.animate)deckAnimate(card,[{transform:'translateY(12px) scale(.94)',opacity:.5},{transform:'none',opacity:1}],{duration:250,easing:'ease-out'})}break;}
     case 'retry':void enter();break;
     case 'tab-roster':stopShuffle();choosingMode=false;guided=false;tab='roster';selected='';notice='';render();break;
     case 'tab-tier':chooseMode(e.detail===0);break;
@@ -680,7 +680,7 @@ root.addEventListener('click',e=>{
 });
 root.addEventListener('error',e=>{if(e.target instanceof HTMLImageElement)e.target.style.visibility='hidden'},true);
 root.addEventListener('keydown',e=>{if(e.key==='Escape'&&root.querySelector('.op-tier-members')){root.querySelector('.op-tier-members')?.remove();root.querySelector('[data-op-completed="'+expandedTier+'"]')?.focus({preventScroll:true});expandedTier=''}else if(e.key==='Escape'&&root.querySelector('.op-copy-overlay')){root.querySelector('.op-copy-overlay')?.remove();root.querySelector('[data-op-action="copy-results"]')?.focus({preventScroll:true})}else if(e.key==='Escape'&&dragName){clearDrag(true)}else if(e.key==='Escape'&&picker){picker='';query='';render()}else if(e.key==='Escape'&&configDraft&&!configSaving){configDraft=null;notice='';render()}else if(e.key==='Escape'&&selected){selected='';updateSelection()}});
-window.addEventListener('keydown',e=>{if(!root.classList.contains('active')||!guided||deckPhase!=='reveal'||rankLock||configDraft||e.repeat||e.ctrlKey||e.altKey||e.metaKey||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName||'')||e.target?.isContentEditable)return;const i=Number(e.key)-1;if(/^[1-5]$/.test(e.key)&&TIERS[i]){e.preventDefault();root.querySelector('[data-op-assign="'+TIERS[i]+'"]')?.click()}});
+window.addEventListener('keydown',e=>{if(!root.classList.contains('active')||!guided||deckPhase!=='reveal'||rankLock||configDraft||root.querySelector('.op-tier-members')||e.repeat||e.ctrlKey||e.altKey||e.metaKey||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName||'')||e.target?.isContentEditable)return;const i=Number(e.key)-1;if(/^[1-5]$/.test(e.key)&&TIERS[i]){e.preventDefault();root.querySelector('[data-op-assign="'+TIERS[i]+'"]')?.click()}});
 root.addEventListener('input',e=>{
   if(!e.target.hasAttribute('data-op-search'))return;
   query=e.target.value;const box=root.querySelector('.op-picker-results'),temp=document.createElement('div');temp.innerHTML=pickerHtml();box.replaceChildren(...temp.querySelector('.op-picker-results').childNodes);
@@ -702,6 +702,6 @@ document.addEventListener('visibilitychange',()=>{
   if(guided&&!paused&&deckPhase==='pick'&&!rankLock)drawCard(0);
 });
 window.addEventListener('mawang:datachange',()=>window.mwsOperationM?.refresh());
-window.mwsOperationM={render,motionReport(){return{phase:deckPhase,mode:guidedMode,paused,settings:{app:typeof window.mwsMotionReduced==='function'?window.mwsMotionReduced():null,system:reducedMotion(),hidden:document.hidden},events:motionTrace.map(x=>({...x}))}},refresh(){if(!root.classList.contains('active')||!workspaceReady)return;if(guided){return}sync();if(signature()!==lastSignature){finishDraft(false);render()}}};
+window.mwsOperationM={render,motionReport(){return{phase:deckPhase,mode:guidedMode,paused,settings:{app:typeof window.mwsMotionReduced==='function'?window.mwsMotionReduced():null,system:reducedMotion(),hidden:document.hidden},events:motionTrace.map(x=>({...x}))}},refresh(){if(!root.classList.contains('active')||!workspaceReady)return;if(guided){for(const c of getData()?.contacts||[]){if(c&&c.id!=null&&c.name)byId.set(String(c.id),c)}return}sync();if(signature()!==lastSignature){finishDraft(false);render()}}};
 if(root.classList.contains('active'))void enter();
 }
