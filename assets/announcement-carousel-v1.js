@@ -3,7 +3,7 @@
   if(window.__mwsAnnouncementCarouselV1)return;
   window.__mwsAnnouncementCarouselV1=true;
   const announcements=[
-    {src:'assets/announcements/20261126-bis.webp',title:'마 왕 검은 남작의 단망토 획득 및 BiS 전체 수집 완료',width:1401,height:1123},
+    {src:'assets/announcements/20261126-bis.webp?v=2',title:'마 왕 BiS 전체 장비 수집 완료 · 21일차',width:1448,height:1086},
     {src:'assets/announcements/20261121-mount.webp',title:'마 왕 첫 스트리머 천골마 획득 성공'},
     {src:'assets/announcements/20261121-expedition.webp',title:'성검 원정대 달렌드의 성검 획득 성공'},
     {src:'assets/announcements/20261121-warrior.webp',title:'같이와포하자 길드 최초 만렙 분노 전사 마 왕'},

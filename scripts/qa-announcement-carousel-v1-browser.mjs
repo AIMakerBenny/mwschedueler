@@ -8,10 +8,10 @@ import {launchCalendarBrowser} from './calendar-browser-realtime.mjs';
 
 const read=p=>readFileSync(new URL('../'+p,import.meta.url));
 const index=read('index.html').toString();
-assert(index.includes('assets/announcement-carousel-v1.js?v=4')&&index.includes('assets/announcement-carousel-v1.css?v=1'));
+assert(index.includes('assets/announcement-carousel-v1.js?v=5')&&index.includes('assets/announcement-carousel-v1.css?v=1'));
 const styles=[...index.matchAll(/<link rel="stylesheet" href="(assets\/[^"?]+)[^"]*">|<style(?:\s[^>]*)?>([\s\S]*?)<\/style>/gi)]
   .map(m=>m[1]?m[0]:m[0]).join('\n');
-const fixture='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+styles+'</head><body class="mws-gated mws-premium" data-theme="neon"><div id="mwsAccessGate">Login gate</div><div class="app"><main class="main"><button id="background">Background action</button></main></div><script src="assets/announcement-carousel-v1.js?v=4"></script></body></html>';
+const fixture='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+styles+'</head><body class="mws-gated mws-premium" data-theme="neon"><div id="mwsAccessGate">Login gate</div><div class="app"><main class="main"><button id="background">Background action</button></main></div><script src="assets/announcement-carousel-v1.js?v=5"></script></body></html>';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const server=createServer((req,res)=>{
   const route=new URL(req.url,'http://localhost').pathname;
@@ -48,7 +48,7 @@ try{
       const d=document.getElementById('mwsAnnouncementDialog'),v=d.querySelector('.mws-notice-viewport'),footer=d.querySelector('.mws-notice-footer');
       const imgs=[...d.querySelectorAll('img')];await Promise.all(imgs.map(i=>i.decode()));
       const r=d.getBoundingClientRect(),a=v.getBoundingClientRect(),f=footer.getBoundingClientRect();
-      return {open:d.open,modal:d.matches(':modal'),index:d.dataset.noticeIndex,allImages:imgs.length===4&&imgs[0].src.endsWith('/assets/announcements/20261126-bis.webp')&&imgs[0].naturalWidth===1401&&imgs[0].naturalHeight===1123&&imgs.slice(1).every(i=>i.naturalWidth===1448&&i.naturalHeight===1086)&&imgs.every(i=>getComputedStyle(i).objectFit==='contain'),fit:r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight,ratio:a.width/a.height,footer:f.width,footerFits:footer.scrollWidth<=footer.clientWidth+1,viewport:{x:a.x,y:a.y,w:a.width,h:a.height}}
+      return {open:d.open,modal:d.matches(':modal'),index:d.dataset.noticeIndex,allImages:imgs.length===4&&imgs[0].src.endsWith('/assets/announcements/20261126-bis.webp?v=2')&&imgs[0].naturalWidth===1448&&imgs[0].naturalHeight===1086&&imgs.slice(1).every(i=>i.naturalWidth===1448&&i.naturalHeight===1086)&&imgs.every(i=>getComputedStyle(i).objectFit==='contain'),fit:r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight,ratio:a.width/a.height,footer:f.width,footerFits:footer.scrollWidth<=footer.clientWidth+1,viewport:{x:a.x,y:a.y,w:a.width,h:a.height}}
     })()`);
     assert(initial.open&&initial.modal&&initial.allImages&&initial.fit&&initial.footerFits&&initial.index==='0'&&Math.abs(initial.ratio-4/3)<.01,JSON.stringify(initial));
     const {x,y,w,h}=initial.viewport;
