@@ -4,8 +4,8 @@
 #operationM .op-shell{max-width:none;margin:0;padding:0 0 14px;display:grid;gap:8px;min-width:0}
 
 #operationM .op-actions,#operationM .op-tabs{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-#operationM button:not(.op-player):not(.op-tier-label):not(.op-guide-rank):not(.op-empty):not(.op-mode-card){border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:9px;padding:9px 13px;line-height:1.4;font-size:13px;min-width:0;min-height:0;box-shadow:none;cursor:pointer;transition:background .15s,transform .15s,border-color .15s}
-#operationM button:not(.op-player):not(.op-tier-label):not(.op-guide-rank):not(.op-empty):not(.op-mode-card):hover:not(:disabled){background:var(--input);border-color:var(--accent);transform:translateY(-1px)}
+#operationM button:not(.op-player):not(.op-tier-label):not(.op-guide-rank):not(.op-empty):not(.op-mode-card):not(.op-deck-card){border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:9px;padding:9px 13px;line-height:1.4;font-size:13px;min-width:0;min-height:0;box-shadow:none;cursor:pointer;transition:background .15s,transform .15s,border-color .15s}
+#operationM button:not(.op-player):not(.op-tier-label):not(.op-guide-rank):not(.op-empty):not(.op-mode-card):not(.op-deck-card):hover:not(:disabled){background:var(--input);border-color:var(--accent);transform:translateY(-1px)}
 #operationM .op-actions button.op-primary,#operationM .op-tabs button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
 #operationM button:disabled{opacity:.42;cursor:not-allowed;transform:none}
 #operationM button:focus-visible,#operationM select:focus-visible,#operationM input:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
@@ -476,3 +476,53 @@ body:has(#operationM.active) .main>.topbar:not(:has(.mws-sync-needs-attention)){
 @keyframes op-view-arrive{from{opacity:.72}to{opacity:1}}
 @container(max-width:600px){#operationM .op-mode-choice{margin:10px auto;gap:10px}#operationM .op-mode-options{gap:12px;grid-template-columns:minmax(0,1fr)}#operationM .op-mode-preview{min-height:172px;padding:8px}#operationM .op-preview-board{height:150px}#operationM .op-preview-stack{width:145px;padding-bottom:135px}#operationM .op-mode-caption{padding:12px 8px 14px}}
 @media(prefers-reduced-motion:reduce){#operationM .op-mode-card,#operationM .op-coach{transform:none!important}#operationM .op-mode-options .op-mode-card{opacity:1!important}}
+
+/* Board interactions keep the original node and its cached portrait. */
+#operationM .op-tier-workspace .op-player[draggable="true"]{cursor:grab}
+#operationM .op-tier-workspace .op-player.op-dragging{opacity:.26;transform:scale(.94);cursor:grabbing;outline:1px dashed var(--tier,#aeb7cb);outline-offset:1px;box-shadow:none}
+#operationM .op-tier-workspace .op-player.op-dragging .op-card-front{opacity:.22}
+#operationM .op-tier-workspace .op-player.op-dragging .op-rarity-art{visibility:hidden}
+#operationM .op-tier-row.op-drop-active,#operationM .op-pool.op-drop-active{outline:2px solid var(--tier,var(--accent));outline-offset:-2px;box-shadow:inset 0 0 24px color-mix(in srgb,var(--tier,var(--accent)) 18%,transparent),0 0 16px color-mix(in srgb,var(--tier,var(--accent)) 22%,transparent)}
+#operationM .op-pool.op-awaiting-drop{cursor:pointer}
+#operationM .op-empty-center{padding:6px;background:none;border:0;box-shadow:none}
+#operationM .op-empty-center .op-rank-crest{opacity:.42}
+#operationM .op-board.op-awaiting-drop .op-empty-center .op-rank-crest{opacity:1}
+#operationM .op-board-confirm .op-card-front{animation:op-board-frame-set .3s ease-out}
+@keyframes op-board-frame-set{0%{filter:brightness(1.5)}100%{filter:brightness(1)}}
+#operationM .op-pool-actions button:active,#operationM .op-guided-top button:active,#operationM .op-deck-controls button:active{transform:translateY(1px) scale(.98)}
+
+/* Guided mode: all hidden cards have independent transforms and two interleaving packets. */
+#operationM .op-guided{grid-template-rows:auto auto auto auto auto;gap:8px}
+#operationM .op-guided-stage{padding:8px 10px;min-height:0}
+#operationM .op-guided-ranks[hidden]{display:none!important}
+#operationM .op-deck{position:relative;isolation:isolate;width:100%;min-width:0}
+#operationM .op-deck-shuffling{height:clamp(215px,calc(var(--op-available,60dvh) - 114px),390px);perspective:850px;overflow:hidden}
+#operationM .op-deck-card{position:relative;display:block;padding:0;min-width:0;aspect-ratio:3/4;border:0;border-radius:8px;background:none;box-shadow:0 6px 12px #0007}
+#operationM .op-deck-card .op-card-back,#operationM .op-deck-reserve .op-card-back{visibility:visible;transform:none}
+#operationM .op-deck-card .op-card-back{pointer-events:none}
+#operationM .op-deck-shuffling .op-deck-card{position:absolute;width:clamp(68px,12cqw,132px);left:50%;top:50%;transform:translate(-50%,-50%);animation:op-deck-riffle 900ms var(--op-stagger) cubic-bezier(.25,.8,.2,1) both}
+@keyframes op-deck-riffle{
+  0%{transform:translate(-50%,-50%) translateX(calc(var(--op-offset)*19px)) translateY(-24px) rotate(calc(var(--op-offset)*5deg)) rotateY(165deg);opacity:0}
+  18%{transform:translate(-50%,-50%) translate(calc(var(--op-offset)*2px),calc(var(--op-i)*-.6px)) rotate(0);opacity:1}
+  42%{transform:translate(-50%,-50%) translateX(calc(var(--op-group)*70%)) translateY(calc(var(--op-i)*-1px)) rotate(calc(var(--op-group)*-19deg))}
+  64%{transform:translate(-50%,-50%) translateX(calc(var(--op-group)*-55%)) translateY(calc(var(--op-group)*19% + var(--op-i)*-1px)) rotate(calc(var(--op-group)*17deg))}
+  82%{transform:translate(-50%,-50%) translateX(calc(var(--op-offset)*3px)) rotate(calc(var(--op-offset)*1deg))}
+  100%{transform:translate(-50%,-50%) translateY(calc(var(--op-i)*-.55px)) rotate(0);opacity:1}
+}
+#operationM .op-deck-pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,70px),1fr));gap:7px;max-width:820px;padding:10px 8px;align-items:center;justify-items:center}
+#operationM button.op-deck-card{width:100%;max-width:110px;cursor:pointer;transition:transform .19s ease,filter .19s ease,box-shadow .19s ease;transform:rotate(calc(var(--op-group)*1.2deg));animation:op-deck-spread .32s var(--op-stagger) ease-out both}
+#operationM button.op-deck-card:focus-visible{outline:2px solid #e4c6ff;outline-offset:3px;z-index:3}
+#operationM button.op-deck-card:active{transform:scale(.94)}
+@media(hover:hover) and (pointer:fine){#operationM button.op-deck-card:hover{transform:translateY(-8px) scale(1.07);filter:brightness(1.15);box-shadow:0 10px 18px #0009,0 0 12px #c4a4ff80;z-index:3}}
+@keyframes op-deck-spread{from{opacity:0;translate:calc(var(--op-offset)*-3px) 12px}to{opacity:1;translate:0 0}}
+#operationM .op-deck-controls{display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap}
+#operationM .op-deck-controls button{white-space:nowrap}
+#operationM .op-deck-controls button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:white}
+#operationM .op-deck-remaining{display:block;text-align:center;color:var(--muted);font-size:11px;line-height:1.2;font-variant-numeric:tabular-nums}
+#operationM .op-deck-reserve{position:absolute;left:calc(50% + min(21%,130px));top:50%;width:clamp(42px,9cqw,100px);aspect-ratio:3/4;transform:translate(-50%,-50%);pointer-events:none;z-index:-1}
+#operationM .op-deck-reserve>span{position:absolute;inset:0;border-radius:8px;transform:translate(calc(var(--op-i)*7px),calc(var(--op-i)*-2px)) rotate(calc(var(--op-i)*4deg))}
+#operationM .op-guided.op-skip-motion *,#operationM .op-guided.op-skip-motion *::before,#operationM .op-guided.op-skip-motion *::after{animation:none!important;transition:none!important}
+#operationM .op-guided.op-skip-motion .op-reveal-card .op-card-front{visibility:visible;transform:none}
+#operationM .op-guided.op-skip-motion .op-reveal-card .op-card-back{visibility:hidden}
+@container(max-width:600px){#operationM .op-guided-stage{padding:5px}#operationM .op-deck-pick{grid-template-columns:repeat(auto-fit,minmax(47px,1fr));gap:5px;padding:8px 4px}#operationM .op-deck-controls{gap:4px}#operationM .op-deck-controls button{font-size:11px;padding:6px 7px}#operationM .op-deck-shuffling .op-deck-card{width:70px}}
+@media(prefers-reduced-motion:reduce){#operationM .op-deck-card,#operationM .op-deck-card:hover{transform:none!important}}
