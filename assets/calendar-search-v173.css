@@ -67,3 +67,18 @@
   #calendarSearchPanelV172 .calendar-search-arrow-v173{display:none;}
 }
 @media(prefers-reduced-motion:reduce){#calendarSearchPanelV172 *{transition:none!important;}}
+
+/* Inline search next to the existing magnifier tab; no new requests or search engine. */
+#calendar .calendar-topbar-v4 .calendar-quick-search-v174{position:relative;display:flex;align-items:center;flex:0 1 clamp(126px,14vw,230px);min-width:100px;max-width:260px;margin-left:-7px;min-height:34px;box-sizing:border-box}
+#calendar #calendarQuickSearchV174{width:100%;min-width:0;height:34px;box-sizing:border-box;padding:0 28px 0 10px;border:1px solid color-mix(in srgb,var(--muted) 25%,transparent);border-radius:8px;background:color-mix(in srgb,var(--panel) 86%,var(--bg));color:var(--text);font-size:13px;line-height:1.35;transition:border-color .15s,box-shadow .15s;appearance:none}
+#calendar #calendarQuickSearchV174::-webkit-search-cancel-button{appearance:none}
+#calendar #calendarQuickSearchV174:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 16%,transparent)}
+#calendar #calendarQuickSearchClearV174{position:absolute;right:3px;top:50%;transform:translateY(-50%);width:25px;height:25px;min-height:0;display:grid;place-items:center;padding:0;border:0;background:transparent;border-radius:6px;color:var(--muted);cursor:pointer;box-shadow:none}
+#calendar #calendarQuickSearchClearV174[hidden]{display:none!important}
+#calendar #calendarQuickSearchClearV174:hover{background:var(--panel2);color:var(--text)}
+#calendar #calendarQuickSearchClearV174 svg{width:14px;height:14px}
+#calendar.calendar-inline-search-ready-v174 #calendarSearchPanelV172 .calendar-searchbox-v171{display:none}
+#calendar.calendar-inline-search-ready-v174 #calendarSearchPanelV172 .calendar-search-head-v172{display:none}
+#calendar.calendar-inline-search-ready-v174 #calendarSearchPanelV172 .calendar-searchbar-v171{margin:0 0 9px}
+@media(max-width:1299px){#calendar .calendar-topbar-v4 .calendar-quick-search-v174{flex:0 1 180px}}
+@media(max-width:760px){#calendar .calendar-topbar-v4 .calendar-view-tabs-v172{width:auto;flex:0 0 auto}#calendar .calendar-topbar-v4 .calendar-quick-search-v174{flex:1 1 100px;min-width:85px;max-width:none;margin-left:-4px}#calendar #calendarQuickSearchV174{font-size:14px}}
