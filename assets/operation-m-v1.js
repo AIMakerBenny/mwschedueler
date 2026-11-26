@@ -454,15 +454,19 @@ function render(){
 function measureLayout(){
   if(!root.classList.contains('active'))return;
   const area=root.querySelector('.op-teams,.op-board,.op-guided');if(!area)return;
-  const rect=area.getBoundingClientRect(),rootRect=root.getBoundingClientRect(),scale=root.offsetWidth?rootRect.width/root.offsetWidth||1:1;
+  const rootRect=root.getBoundingClientRect(),scale=root.offsetWidth?rootRect.width/root.offsetWidth||1:1;
   const access=document.getElementById('mwsAccessTools'),accessRect=access?.getBoundingClientRect(),viewport=window.visualViewport;
   const viewportBottom=viewport?Math.min(innerHeight,viewport.offsetTop+viewport.height):innerHeight;
   const bottom=accessRect&&accessRect.height&&accessRect.top>0?Math.min(viewportBottom-14,accessRect.top-10):viewportBottom-18;
-  // Relative coordinates remain stable when a long board is scrolled off the viewport.
-  const rootTop=Math.max(0,rootRect.top),areaTop=rootTop+Math.max(0,rect.top-rootRect.top);
-  const available=Math.max(180,(bottom-areaTop)/scale);
+  const rootTop=Math.max(0,rootRect.top);
   const set=(key,value)=>{const next=Math.floor(value)+'px';if(root.style.getPropertyValue(key)!==next)root.style.setProperty(key,next)};
-  set('--op-available',available);set('--op-workspace-height',Math.max(240,(bottom-rootTop)/scale));
+  // Set the pool sizing budget first. The pool's new card sizes affect the board's top.
+  set('--op-workspace-height',Math.max(240,(bottom-rootTop)/scale));
+  // Read the resulting layout, not the pre-budget geometry or a transient entrance transform.
+  const layoutTop=el=>{let y=0;for(let e=el;e;e=e.offsetParent)y+=e.offsetTop;return y};
+  const areaTop=rootTop+Math.max(0,(layoutTop(area)-layoutTop(root))*scale);
+  const available=Math.max(180,(bottom-areaTop)/scale);
+  set('--op-available',available);
   if(area.classList.contains('op-single-stage')){
     const stage=area.querySelector('.op-guided-stage'),center=area.querySelector('.op-single-center'),style=getComputedStyle(area);
     const chrome=[...area.children].filter(el=>el!==stage).reduce((sum,el)=>sum+el.offsetHeight,0)+(parseFloat(style.rowGap)||0)*3+(parseFloat(style.paddingTop)||0)+(parseFloat(style.paddingBottom)||0);
